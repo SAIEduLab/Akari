@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import {loadApi} from './browser/legacy/audit-lib.cjs';
+import {snapshot,withBrowser,pageFor} from './lib/product-test-host.mjs';
+import {verifySurfaceResults} from './lib/verify-surface-results.mjs';
+const [browser,output]=process.argv.slice(2), product='Akari.html', before=snapshot(product);
+if(!output || fs.existsSync(output)) throw Error('Supply a new evidence output path');
+const suite=fs.readFileSync('audit/suites/editor-surface.js','utf8');
+const forms=JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json')).cases;
+let browserVersion;
+const report=browser==='--node' ? vm.runInNewContext(suite+'\nrunEditorSurface10',{structuredClone})(loadApi(fs.readFileSync(product,'utf8')),forms)
+  : await withBrowser(browser,b=>{browserVersion=b.version();return pageFor(b,product,async p=>{await p.evaluate(suite);return p.evaluate(forms=>runEditorSurface10(Akari,forms),forms);});});
+assert.deepEqual(snapshot(product),before);
+const bound={...report,status:report.failed?'FAIL':'PASS',environment:browser==='--node'?'node':'chromium',browser:browserVersion,snapshot:before};
+fs.writeFileSync(output,JSON.stringify(bound,null,2)+'\n');
+verifySurfaceResults(bound,'editor',before,bound.environment);
+console.log(JSON.stringify({total:report.total,failed:report.failed}));
+for(const r of report.results.filter(r=>r.status!=='PASS'))console.error(r);
+process.exitCode=report.failed?1:0;

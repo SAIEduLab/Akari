@@ -1,0 +1,72 @@
+{
+  "candidateCommit": "a241c0a17cf6cd136107b9512924e97efba317ce",
+  "candidateProductSha256": "e375335a99f93457945d5d3206bc2ac6090f1997711863b5d3740d64fe0a9737",
+  "unchangedAfterExecution": true,
+  "browser": "153.0.8010.53",
+  "embeddedTotal": 884,
+  "externalTotal": 884,
+  "allIdsPassDetailsEqual": true,
+  "baselineIdSha256": "f7a7a0b630a5b37d4e067c0729a5558edb30d1ca9bcb2c6714f54df114b172b3",
+  "suites": [
+    {
+      "name": "runExtendedTests07",
+      "total": 42,
+      "failed": 0
+    },
+    {
+      "name": "runEditorCore09Tests",
+      "total": 21,
+      "failed": 0
+    },
+    {
+      "name": "runProductVersion09Tests",
+      "total": 6,
+      "failed": 0
+    },
+    {
+      "name": "runLimitBoundary09Tests",
+      "total": 37,
+      "failed": 0
+    },
+    {
+      "name": "runSemanticContract09Tests",
+      "total": 26,
+      "failed": 0
+    },
+    {
+      "name": "runAkariSelfTests",
+      "total": 279,
+      "failed": 0
+    },
+    {
+      "name": "runAkariAsyncSelfTests",
+      "total": 5,
+      "failed": 0
+    },
+    {
+      "name": "runVersion08Tests",
+      "total": 183,
+      "failed": 0
+    },
+    {
+      "name": "runSyntax09Tests",
+      "total": 86,
+      "failed": 0
+    },
+    {
+      "name": "runBlockCodec09Tests",
+      "total": 159,
+      "failed": 0
+    },
+    {
+      "name": "runDesignResize09Tests",
+      "total": 23,
+      "failed": 0
+    },
+    {
+      "name": "runColorPicker09Tests",
+      "total": 17,
+      "failed": 0
+    }
+  ]
+}

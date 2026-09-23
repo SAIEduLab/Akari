@@ -1,0 +1,215 @@
+{
+  "html": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-ui/candidate/Akari.html",
+  "sha256": "48b440829174256952ab3f12e13553c64cba95f392e30e8f79768ff7411c0acf",
+  "sourceUnchanged": true,
+  "browser": "140.0.7339.16",
+  "timestamp": "2026-09-23T03:59:10.547Z",
+  "total": 19,
+  "failed": 0,
+  "results": [
+    {
+      "id": "UI09-empty-body-switch",
+      "pass": true,
+      "evidence": {
+        "source": "",
+        "history": 2,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-pending-number-commit-cancel",
+      "pass": true,
+      "evidence": {
+        "source": "点数を7にする\n点数に2を足す",
+        "history": 3,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-statement-duplicate-order-delete",
+      "pass": true,
+      "evidence": {
+        "source": "点数を1にする。\n点数に2を足す",
+        "history": 4,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-else-annotation-and-comment-lines",
+      "pass": true,
+      "evidence": {
+        "source": "※ 一行目  \n※ 二行目 ",
+        "history": 7,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-variadic-order-size-and-nested-replace",
+      "pass": true,
+      "evidence": {
+        "source": "［（0＋0）、3、0］と言う。",
+        "history": 6,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-variadic-40-input-paging",
+      "pass": true,
+      "evidence": {
+        "source": "［1、2、3、4、5、6、7、8、9、10、11、12、13、14、15、16、17、18、19、20、21、22、23、24、25、26、27、28、29、30、31、32、33、34、35、36、37、38、39、99］と言う",
+        "history": 3,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-required-body-noop-replacement",
+      "pass": true,
+      "evidence": {
+        "source": "次のことを2回くり返す。\n  何もしない。",
+        "history": 3,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-pointer-preview-single-drop-cancel",
+      "pass": true,
+      "evidence": {
+        "source": "2と言う。\n3と言う。\n1と言う。",
+        "history": 3,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-IME-switch-hold-end-commit",
+      "pass": true,
+      "evidence": {
+        "source": "24と言う",
+        "history": 3,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-palette-drag-new-nested-location",
+      "pass": true,
+      "evidence": {
+        "source": "次のことを2回くり返す。\n  何もしない。\n  「」と言う。",
+        "history": 3,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-expression-move-atomic-replacement",
+      "pass": true,
+      "evidence": {
+        "source": "［0、1］と言う",
+        "history": 3,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-deep-expression-move-prompt-reachable",
+      "pass": true,
+      "evidence": {
+        "source": "（1＋2）＋（3＋4）と言う。\n0＋（1＋2＋（3＋4））と言う。",
+        "history": 4,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-else-branch-focus-nested-comments",
+      "pass": true,
+      "evidence": {
+        "source": "もし 真なら、次のことをする。\n  もし 偽なら、次のことをする。\n    何もしない。\n  そうでなければ、次のことをする。 ※ 内側\n    ※ 本文コメント\n    何もしない。\n※ 外側枝の前\nそうでなければ、次のことをする。 ※ 外側\n  何もしない。",
+        "history": 2,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-else-selection-follows-formatting",
+      "pass": true,
+      "evidence": {
+        "source": "もし 真なら、次のことをする。\n  何もしない。\nそうでなければ、次のことをする。  ※ 位置確認\n  何もしない。",
+        "history": 3,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-touch-pointer-drag",
+      "pass": true,
+      "evidence": {
+        "source": "2と言う。\n3と言う。\n1と言う。",
+        "history": 3,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-pen-pointer-drag",
+      "pass": true,
+      "evidence": {
+        "source": "2と言う。\n3と言う。\n1と言う。",
+        "history": 3,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-outside-drop-preserves-state",
+      "pass": true,
+      "evidence": {
+        "source": "1と言う。\n2と言う。",
+        "history": 2,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-keyboard-only-create-move-delete-history",
+      "pass": true,
+      "evidence": {
+        "source": "何もしない。",
+        "history": 5,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-page-errors",
+      "pass": true
+    }
+  ],
+  "pageErrors": [],
+  "networkRequests": []
+}

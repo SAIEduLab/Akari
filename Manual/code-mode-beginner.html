@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>あかり 1.0.0 コードモード 初級</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#edf2f8;
+  --surface:#ffffff;
+  --surface2:#f7f9fc;
+  --line:#cbd7e6;
+  --ink:#223044;
+  --muted:#607084;
+  --accent:#2f6fd6;
+  --accent-soft:#eaf2ff;
+  --good:#19733e;
+  --warn:#9a6500;
+  --danger:#a93636;
+  --code:#182231;
+  --code-ink:#f2f6fc;
+  --code-muted:#a9b8cc;
+  --shadow:0 8px 28px rgba(36,54,82,.10);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:"Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif;
+  color:var(--ink);
+  background:linear-gradient(180deg,#f8fbff 0,var(--bg) 430px);
+  line-height:1.75;
+}
+a{color:var(--accent)}
+header{
+  background:linear-gradient(135deg,#315a96,#527fc4);
+  color:#fff;
+  padding:48px 20px 42px;
+}
+.header-inner,.layout{max-width:1180px;margin:auto}
+.kicker{font-size:.9rem;font-weight:700;letter-spacing:.08em;opacity:.9}
+h1{margin:.25rem 0 .5rem;font-size:clamp(2rem,4vw,3.2rem);line-height:1.25}
+.lead{max-width:800px;margin:0;color:#f4f7ff;font-size:1.08rem}
+.layout{
+  display:grid;
+  grid-template-columns:250px minmax(0,1fr);
+  gap:26px;
+  padding:26px 20px 64px;
+}
+nav{
+  position:sticky;
+  top:18px;
+  align-self:start;
+  background:rgba(255,255,255,.95);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  box-shadow:var(--shadow);
+}
+nav strong{display:block;margin:2px 6px 8px}
+nav a{
+  display:block;
+  text-decoration:none;
+  color:#34465d;
+  padding:7px 9px;
+  border-radius:8px;
+  font-size:.94rem;
+}
+nav a:hover{background:var(--accent-soft);color:#1d4f9f}
+main{min-width:0}
+section{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:clamp(20px,3vw,34px);
+  margin-bottom:22px;
+  box-shadow:var(--shadow);
+}
+h2{margin:0 0 16px;font-size:1.65rem;line-height:1.35}
+h3{margin:28px 0 10px;font-size:1.2rem}
+p{margin:.7rem 0}
+ul,ol{padding-left:1.5rem}
+li+li{margin-top:.42rem}
+kbd{
+  background:#f2f5f9;
+  border:1px solid #bac7d7;
+  border-bottom-width:2px;
+  border-radius:5px;
+  padding:.05rem .35rem;
+  font:inherit;
+  font-size:.9em;
+}
+code.inline{
+  font-family:"BIZ UDGothic","Yu Gothic UI",monospace;
+  background:#f3f6fa;
+  border-radius:5px;
+  padding:.08rem .3rem;
+}
+.code{
+  margin:14px 0;
+  border-radius:12px;
+  overflow:auto;
+  background:var(--code);
+  color:var(--code-ink);
+  border:1px solid #28384d;
+  box-shadow:0 5px 18px rgba(24,34,49,.14);
+}
+.code .bar{
+  padding:7px 12px;
+  background:#263448;
+  color:#cbd7e7;
+  font-size:.82rem;
+  border-bottom:1px solid #34465f;
+}
+pre{
+  margin:0;
+  padding:15px 17px;
+  white-space:pre;
+  overflow:auto;
+  font-family:"BIZ UDGothic","Yu Gothic UI","Meiryo",monospace;
+  line-height:1.8;
+  font-size:.96rem;
+}
+.comment{color:#9db0c7}
+.callout{
+  border-left:5px solid var(--accent);
+  background:var(--accent-soft);
+  padding:13px 16px;
+  border-radius:9px;
+  margin:16px 0;
+}
+.callout.good{border-color:var(--good);background:#edf8f1}
+.callout.warn{border-color:#d18b00;background:#fff7df}
+.callout.danger{border-color:var(--danger);background:#fff0f0}
+.steps{counter-reset:step;list-style:none;padding:0}
+.steps>li{position:relative;padding:0 0 22px 54px;min-height:44px}
+.steps>li::before{
+  counter-increment:step;
+  content:counter(step);
+  position:absolute;
+  left:0;top:0;
+  width:36px;height:36px;
+  display:grid;place-items:center;
+  border-radius:50%;
+  background:var(--accent);
+  color:#fff;
+  font-weight:800;
+}
+.steps>li:not(:last-child)::after{
+  content:"";
+  position:absolute;
+  left:17px;top:39px;bottom:3px;
+  width:2px;background:#d7e2ef;
+}
+.cards,.rules,.examples{
+  display:grid;
+  gap:12px;
+}
+.cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rules{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card,.rule{
+  border:1px solid #d8e1ec;
+  border-radius:12px;
+  padding:14px;
+  background:var(--surface2);
+}
+.card strong,.rule strong{display:block;margin-bottom:4px}
+.editor-mock{
+  border:1px solid #bac8da;
+  border-radius:13px;
+  overflow:hidden;
+  margin:18px 0;
+  background:#fff;
+}
+.editor-head{
+  padding:10px 12px;
+  background:#e9eff7;
+  border-bottom:1px solid #cbd7e6;
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  font-weight:700;
+}
+.editor-toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  padding:9px 12px;
+  background:#f7f9fc;
+  border-bottom:1px solid #d7e1ec;
+}
+.editor-toolbar span{
+  border:1px solid #b8c6d7;
+  background:#fff;
+  border-radius:7px;
+  padding:4px 8px;
+  font-size:.87rem;
+}
+.editor-code{
+  min-height:150px;
+  padding:14px 16px;
+  background:#fbfcfe;
+  font-family:"BIZ UDGothic","Yu Gothic UI",monospace;
+  white-space:pre-wrap;
+}
+.hints{
+  border-top:1px solid #d7e1ec;
+  padding:10px 12px;
+  color:#536579;
+  background:#f8fbff;
+}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem}
+th,td{border:1px solid #d5deea;padding:9px 10px;text-align:left;vertical-align:top}
+th{background:#eef3f9}
+.checklist{list-style:"✓  ";padding-left:1.45rem}
+.checklist li::marker{color:var(--good);font-weight:800}
+.flow{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:7px;
+  margin:14px 0;
+}
+.flow span{
+  border:1px solid #b9c8da;
+  background:#fff;
+  border-radius:999px;
+  padding:5px 10px;
+  font-weight:700;
+}
+.flow b{color:#8190a2}
+footer{
+  max-width:1180px;
+  margin:0 auto 40px;
+  padding:0 20px;
+  color:var(--muted);
+  font-size:.9rem;
+}
+@media(max-width:860px){
+  .layout{grid-template-columns:1fr}
+  nav{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
+  nav strong{grid-column:1/-1}
+  .cards,.rules{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  nav{grid-template-columns:1fr}
+  header{padding-top:34px}
+}
+@media print{
+  body{background:#fff}
+  header{background:#fff;color:#000;padding:20px 0}
+  .lead{color:#333}
+  .layout{display:block;padding:0}
+  nav{display:none}
+  section{box-shadow:none;break-inside:avoid}
+}
+
+/* Shared reading conventions; no external fonts, images or scripts. */
+html{scroll-padding-top:24px}
+a:focus-visible,summary:focus-visible{outline:3px solid #a65300;outline-offset:4px}
+.skip-link{position:absolute;left:16px;top:-100px;z-index:10;padding:12px 18px;background:#fff;color:#173f72}
+.skip-link:focus{top:12px}
+.book-links{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}
+.book-links a{color:#fff;background:#244b7b;border:1px solid #b5ccea;border-radius:99px;padding:8px 14px;text-decoration:none;font-weight:700}
+.chapter-links{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 0}
+.chapter-links a{padding:10px 14px;background:#eaf2ff;border:1px solid #aac0de;border-radius:10px;text-decoration:none;font-weight:700}
+.reading-note{padding:14px 18px;border-left:5px solid #33704c;background:#eff8f1;border-radius:8px;margin:18px 0}
+.table-scroll{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid #cbd7e6}
+th{background:#edf3fa;color:#233d5e}
+pre{max-width:100%;overflow-x:auto;tab-size:2}
+p,li,td,a{overflow-wrap:anywhere}
+details{border:1px solid #cbd7e6;border-radius:12px;padding:14px 18px;margin:12px 0;background:#fbfdff}
+summary{font-weight:800;cursor:pointer;color:#234f93}
+.mini-label{font-size:.85rem;letter-spacing:.05em;font-weight:800;color:#355d87}
+.task-list{counter-reset:task;list-style:none;padding:0;display:grid;gap:12px}
+.task-list>li{counter-increment:task;position:relative;padding:18px 18px 18px 62px;border:1px solid #cfdeec;border-radius:14px;background:#f8fbff}
+.task-list>li::before{content:counter(task,decimal-leading-zero);position:absolute;left:16px;top:16px;color:#234f93;font-size:1.25rem;font-weight:900}
+.code-sample{padding:20px;background:#182b42;color:#f5f9ff;border-radius:12px;line-height:1.8}
+.quick-nav{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.quick-nav a{padding:8px 12px;border:1px solid #b3c9e0;border-radius:99px;background:#f3f8ff;text-decoration:none}
+@media(min-width:901px){nav[aria-label="目次"]{max-height:calc(100vh - 36px);overflow-y:auto}}
+@media(max-width:520px){th,td{padding:9px;font-size:.94rem}.task-list>li{padding-right:12px}.hero h1{font-size:2.5rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{.book-links,.chapter-links,.skip-link,.quick-nav{display:none}details{break-inside:avoid}a{color:#163a64}}
+
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">本文へ進む</a>
+<header>
+  <div class="header-inner">
+    <div class="kicker">AKARI 1.0.0 CODE MODE · BEGINNER</div>
+    <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../Akari.html">あかりを使う</a><a href="../MANUAL.html#save">保存・開く</a></div>
+<h1>コードモード 初級</h1>
+    <p class="lead">日本語の文を1行ずつ書いて、キャラクターを動かし、条件やくり返しを使い、作品を保存するところまでを学びます。プログラミングが初めてでも、上から順に試せる構成です。</p>
+  </div>
+</header>
+
+<div class="layout">
+<nav aria-label="目次">
+  <strong>目次</strong>
+  <a href="#start">1. 最初の1行</a>
+  <a href="#screen">2. コード画面の見方</a>
+  <a href="#rules">3. 基本の書き方</a>
+  <a href="#commands">4. 命令を増やす</a>
+  <a href="#hints">5. 入力候補を使う</a>
+  <a href="#repeat">6. くり返す</a>
+  <a href="#if">7. 条件で分ける</a>
+  <a href="#data">8. 変数を使う</a>
+  <a href="#comments">9. コメントを書く</a>
+  <a href="#check">10. エラーを直す</a>
+  <a href="#run">11. 実行・保存</a>
+  <a href="#block">12. ブロックとの関係</a>
+  <a href="#short-forms">13. 短い書き方も</a>
+</nav>
+
+<main id="main-content">
+<section id="start">
+  <h2>1. 最初の1行を書いてみよう</h2>
+  <p>まず、キャラクターをクリックしたら10歩動く作品を作ります。</p>
+  <ol class="steps">
+    <li><strong>キャラクターを置く。</strong><br>道具箱から、マスコットなどの標準キャラクターを作品の画面へ追加します。</li>
+    <li><strong>動かすものを選ぶ。</strong><br>コード欄の上にある「動かすもの」で、追加したキャラクターを選びます。</li>
+    <li><strong>できごとを選ぶ。</strong><br>「できごと」で「クリックしたとき」を選びます。</li>
+    <li><strong>コードを書く。</strong><br>本文へ次の1行を入力します。</li>
+  </ol>
+
+  <div class="code">
+    <div class="bar">クリックしたとき</div>
+    <pre>10歩動く。</pre>
+  </div>
+
+  <ol class="steps" start="5">
+    <li><strong>「▶ 動かす」を押す。</strong><br>作品の画面でキャラクターをクリックします。</li>
+    <li><strong>動いたら成功。</strong><br>「■ 止める」で編集へ戻ります。</li>
+  </ol>
+
+  <div class="callout good"><strong>あかりでは、できごとの名前をコード本文には書きません。</strong> 「動かすもの」と「できごと」は画面上で選び、その組合せに対する本文だけを書きます。</div>
+</section>
+
+<section id="screen">
+  <h2>2. コード画面の見方</h2>
+  <div class="editor-mock" aria-label="コードモードの模式図">
+    <div class="editor-head">
+      <span>動かすもの：キャラクター1</span>
+      <span>できごと：クリックしたとき</span>
+    </div>
+    <div class="editor-toolbar">
+      <span>コードを整える</span>
+      <span>コード</span>
+      <span>ブロック</span>
+      <span>入力を取り消す</span>
+    </div>
+    <div class="editor-code">10歩動く。
+「こんにちは」と言う。</div>
+    <div class="hints">✓ 書き方をチェック中　／　入力候補</div>
+  </div>
+
+  <div class="cards">
+    <div class="card"><strong>動かすもの</strong>どの画面・部品・キャラクターの処理を書くかを選びます。</div>
+    <div class="card"><strong>できごと</strong>いつ処理を始めるかを選びます。開始、クリック、キー、知らせなどがあります。</div>
+    <div class="card"><strong>コード本文</strong>日本語の命令を書く場所です。原則として1行に1つの命令を書きます。</div>
+    <div class="card"><strong>入力候補</strong>使える命令・値・名前を検索して、本文へ挿入できます。</div>
+  </div>
+
+  <p>最初はコード表示です。「コード」と「ブロック」は同じ本文の二つの見せ方で、実行できる機能や実行結果は変わりません。</p>
+</section>
+
+<section id="rules">
+  <h2>3. まず覚える書き方</h2>
+  <div class="rules">
+    <div class="rule"><strong>1行に1命令</strong>命令は基本的に1行ずつ書きます。</div>
+    <div class="rule"><strong>句点「。」は省略できる</strong>入力時はなくても構いません。「コードを整える」と標準形では句点が付きます。</div>
+    <div class="rule"><strong>文字は「」で囲む</strong>文字列は「こんにちは」のように、かぎ括弧で囲みます。</div>
+    <div class="rule"><strong>字下げは半角スペース</strong>「もし」や「くり返し」の中身は深く字下げします。タブと全角空白は使いません。</div>
+    <div class="rule"><strong>上から順に実行</strong>同じ本文では、基本的に上の命令から順に進みます。</div>
+    <div class="rule"><strong>空行は使える</strong>読みやすくするための空行を入れられます。</div>
+  </div>
+
+  <h3>「。」はあってもなくてもよい</h3>
+  <p>次の2行は入力としてどちらも使えます。</p>
+  <div class="code"><pre>10歩動く
+10歩動く。</pre></div>
+  <p>「コードを整える」を使うと、標準的な書き方へ整えられます。</p>
+
+  <h3>文字を書くとき</h3>
+  <div class="code"><pre>「こんにちは」と言う。
+「スタート」と知らせる。</pre></div>
+  <div class="callout warn">文字の外側に使うのは、日本語のかぎ括弧「 」です。文字の中に同じかぎ括弧を入れるための特別な書き方はありません。文字の中には「 」を入れずに書きます。</div>
+</section>
+
+<section id="commands">
+  <h2>4. 命令を増やしてみよう</h2>
+  <p>1行動いたら、次は複数の命令を上から順に実行させます。</p>
+
+  <div class="code">
+    <div class="bar">キャラクター ／ クリックしたとき</div>
+    <pre>10歩動く。
+右に15度回る。
+「動いたよ」と言う。
+1秒待つ。
+10歩動く。</pre>
+  </div>
+
+  <p>この本文では、クリックすると「動く → 回る → 話す → 待つ → 動く」の順に進みます。</p>
+
+  <h3>初級で使いやすい命令</h3>
+  <table>
+    <thead><tr><th>やりたいこと</th><th>例</th></tr></thead>
+    <tbody>
+      <tr><td>前へ動く</td><td><code class="inline">10歩動く。</code></td></tr>
+      <tr><td>右へ回る</td><td><code class="inline">右に15度回る。</code></td></tr>
+      <tr><td>位置を決める</td><td><code class="inline">横100、縦50の位置へ行く。</code></td></tr>
+      <tr><td>言葉を表示する</td><td><code class="inline">「こんにちは」と言う。</code></td></tr>
+      <tr><td>少し待つ</td><td><code class="inline">1秒待つ。</code></td></tr>
+      <tr><td>隠す・見せる</td><td><code class="inline">隠れる。</code> ／ <code class="inline">現れる。</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="hints">
+  <h2>5. 分からない命令は「入力候補」で探す</h2>
+  <p>すべての文型を暗記する必要はありません。コード表示の「入力候補」を開くと、命令・値・名前を検索できます。</p>
+
+  <ol>
+    <li>「入力候補」の見出しを押して開きます。</li>
+    <li>検索欄へ「動く」「待つ」「点数」などの言葉を入れます。</li>
+    <li>候補を押して本文へ入れます。</li>
+    <li>候補内の数値や文字は例なので、目的に合わせて書き換えます。</li>
+  </ol>
+
+  <p>候補が多いときは「前」「次」でページを切り替えられます。「使えないものも表示」を選ぶと、現在の対象や場所では使えない候補と、その理由も確認できます。</p>
+
+  <div class="callout"><strong>おすすめの使い方：</strong> 文型を思い出せないときは、推測して書き続けるより入力候補から入れる方が確実です。名前や現在の場所に合わせた候補も表示されます。</div>
+</section>
+
+<section id="repeat">
+  <h2>6. 同じことをくり返す</h2>
+  <p>同じ命令を何行もコピーする代わりに、くり返しを使えます。</p>
+
+  <div class="code">
+    <div class="bar">10回くり返す</div>
+    <pre>次のことを10回くり返す。
+  10歩動く。
+  右に15度回る。</pre>
+  </div>
+
+  <p>1行目が「くり返しの始まり」です。その下の2行を<strong>半角スペースで深く字下げ</strong>すると、その2行がくり返されます。</p>
+
+  <div class="callout warn">
+    <strong>字下げが範囲を決めます。</strong> あかり 1.0.0 では「ここまで」とは書きません。字下げを元へ戻すと、くり返しが終わります。
+  </div>
+
+  <h3>くり返しの後に続ける</h3>
+  <div class="code"><pre>次のことを3回くり返す。
+  10歩動く。
+「終わりました」と言う。</pre></div>
+  <p>最後の「言う」は字下げしていないため、3回のくり返しが全部終わったあとに1回だけ実行されます。</p>
+</section>
+
+<section id="if">
+  <h2>7. 条件によって動きを変える</h2>
+  <div class="reading-note"><strong>この例の準備：</strong>上部の「データ」で、作品全体の変数「点数」を先に作ります。数の初期値を10にし、キャラクターの「クリックしたとき」に下の例を入れます。動かしてクリックすると「10点以上です」と表示されます。止めて初期値を9に変えると、下の分岐例では別の言葉が出ます。変数の説明は次の章です。</div>
+  <p>「もし」を使うと、条件が成り立つときだけ命令を実行できます。</p>
+
+  <div class="code">
+    <div class="bar">もし</div>
+    <pre>もし 点数が10以上なら、次のことをする。
+  「10点以上です」と言う。</pre>
+  </div>
+
+  <p>条件が偽のときにも別の処理をしたい場合は、「そうでなければ」を続けます。</p>
+
+  <div class="code">
+    <div class="bar">もし／そうでなければ</div>
+    <pre>もし 点数が10以上なら、次のことをする。
+  「10点以上です」と言う。
+そうでなければ、次のことをする。
+  「まだ10点未満です」と言う。</pre>
+  </div>
+
+  <div class="callout">「そうでなければ」は、直前にある同じ字下げ位置の「もし」と組になります。</div>
+</section>
+
+<section id="data">
+  <h2>8. 変数で値を覚える</h2>
+  <p>点数や回数など、変わる値を覚えておくには変数を使います。まず上部の<strong>「データ」</strong>で変数を作ります。</p>
+
+  <h3>例：クリックするたびに点数を増やす</h3>
+  <p>「データ」で作品の変数「点数」を作ったら、画面の「開始したとき」に初期値を入れます。</p>
+
+  <div class="code">
+    <div class="bar">画面 ／ 開始したとき</div>
+    <pre>点数を0にする。</pre>
+  </div>
+
+  <p>次に、キャラクターの「クリックしたとき」で増やします。</p>
+
+  <div class="code">
+    <div class="bar">キャラクター ／ クリックしたとき</div>
+    <pre>点数に1を足す。
+点数と言う。</pre>
+  </div>
+
+  <p>これで、作品を始めると点数が0になり、キャラクターをクリックするたびに1ずつ増えます。</p>
+
+  <h3>変数の基本4つ</h3>
+  <div class="cards">
+    <div class="card"><strong>値を入れる</strong><code class="inline">点数を0にする。</code></div>
+    <div class="card"><strong>増やす</strong><code class="inline">点数に1を足す。</code></div>
+    <div class="card"><strong>値として使う</strong><code class="inline">点数と言う。</code> のように、名前を値として使えます。</div>
+    <div class="card"><strong>条件に使う</strong><code class="inline">点数が10以上</code> のように比較できます。</div>
+  </div>
+</section>
+
+<section id="comments">
+  <h2>9. コメントを残す</h2>
+  <p><strong>※</strong> から行末まではコメントです。実行されず、自分やほかの人への説明として残せます。</p>
+
+  <div class="code"><pre><span class="comment">※ クリックすると右へ進む</span>
+10歩動く。
+
+10歩動く。 <span class="comment">※ ここで2回目</span></pre></div>
+
+  <p>空行とコメント行は、「もし」や「くり返し」の範囲そのものを変えません。</p>
+</section>
+
+<section id="check">
+  <h2>10. うまく動かないとき</h2>
+  <h3>まず「作品チェック」</h3>
+  <p>「作品チェック」は、どの本文の何行目に、どんな問題があるかを表示します。実行する前に見つけられる書き方・名前・対象の誤りがあります。</p>
+
+  <h3>よくある初級のミス</h3>
+  <table>
+    <thead><tr><th>症状</th><th>確認すること</th></tr></thead>
+    <tbody>
+      <tr><td>「もし」や「くり返し」でエラーになる</td><td>中の命令を半角スペースで字下げしているか確認します。タブ・全角空白は使いません。</td></tr>
+      <tr><td>文字が正しく読まれない</td><td>文字を日本語の「」で囲んでいるか確認します。</td></tr>
+      <tr><td>変数名でエラーになる</td><td>「データ」で変数を作っているか、名前が合っているか確認します。</td></tr>
+      <tr><td>ある命令だけ使えない</td><td>その命令が現在選んでいる対象で使えるか、入力候補の「使えないものも表示」で理由を確認します。</td></tr>
+      <tr><td>ブロック表示へ切り替えられない</td><td>本文に書き方エラーがあります。コード表示でエラーを直すと切り替えられます。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>「コードを整える」を使う</h3>
+  <p>文法として読める本文は「コードを整える」で標準形へ整えられます。句点が付き、字下げは1段につき半角スペース2個になります。</p>
+</section>
+
+<section id="run">
+  <h2>11. 実行して、作品を保存する</h2>
+  <div class="flow" aria-label="基本の作業の流れ">
+    <span>コードを書く</span><b>→</b>
+    <span>作品チェック</span><b>→</b>
+    <span>▶ 動かす</span><b>→</b>
+    <span>■ 止める</span><b>→</b>
+    <span>保存</span>
+  </div>
+
+  <h3>実行</h3>
+  <ul>
+    <li><strong>▶ 動かす</strong>：作品を実行します。</li>
+    <li><strong>■ 止める</strong>：実行を終了して編集へ戻ります。</li>
+    <li>実行中・一時停止中は本文を変更できません。</li>
+  </ul>
+
+  <h3>保存</h3>
+  <p>「保存」は、あとで編集を続けられる <code class="inline">.akari.md</code> の作品ファイルを作ります。開き直すときは、あかりを開いてから「開く」で読み込みます。</p>
+  <p>ブラウザー内の自動保存もありますが、その端末・ブラウザー内だけです。残したい作品はファイルとして保存します。</p>
+
+  <h3>完成した作品を書き出す</h3>
+  <p>「書き出し」を使うと、編集画面なしで作品を動かす単体HTMLを作れます。書き出しには作品全体の文法・参照の検査への合格が必要です。</p>
+</section>
+
+<section id="block">
+  <h2>12. コードとブロックは同じ本文</h2>
+  <p>切り替えるだけでは書いた言葉を整え直しません。値を変えたときはその場所を直し、命令を追加するなど構造を変えたときは、必要な範囲を書き直します。「コードを整える」は自分で標準の書き方へそろえたいときの操作です。</p>
+  <p>コードモードで書いたプログラムとブロックモードで組んだプログラムは、別々には保存されません。どちらも同じ日本語本文を編集しています。</p>
+
+  <ul class="checklist">
+    <li>コードからブロックへ切り替えても、実行結果は変わりません。</li>
+    <li>表示を切り替えただけでは、本文や編集履歴は変わりません。</li>
+    <li>コードに文法エラーがあると、ブロック表示への切替は保留されます。</li>
+    <li>保存されるプログラムは日本語本文で、ブロック専用の別データではありません。</li>
+  </ul>
+
+  <div class="callout good"><strong>初級の到達点：</strong> 「動かすもの・できごとを選ぶ → 日本語の命令を書く → くり返し・もし・変数を使う → 作品チェック → 実行 → 保存」までできれば、コードモードの基本は身に付いています。</div>
+</section>
+
+<section id="short-forms">
+  <h2>13. 慣れたら、短い書き方も</h2>
+  <p>あかりは、決まったいくつかの書き方を同じ意味で受け取ります。何でも自由な日本語で書けるわけではありません。まずはこの冊子の書き方と「入力候補」を使いましょう。</p>
+  <h3>一つの命令なら、条件と同じ行へ</h3>
+  <p>作品の変数「点数」を作り、キャラクターの「クリックしたとき」で試します。上の例と下の例は同じ動きです。一度に両方入れず、一つずつ試してください。</p>
+  <div class="code"><pre>もし 点数が10以上なら、次のことをする。
+  「やったね」と言う。
+そうでなければ、次のことをする。
+  「あと少し」と言う。</pre></div>
+  <div class="code"><pre>もし 点数が10以上なら、「やったね」と言う。
+でなければ、「あと少し」と言う。</pre></div>
+  <p>「でなければ」は次の行へ書きます。同じ行に命令をいくつも続けたり、その中へさらに「もし」を入れたりはできません。二つ以上の命令を入れるときは、字下げの形を使います。</p>
+  <h3>「何を」「どこへ」が分かる書き方</h3>
+  <div class="table-scroll"><table><thead><tr><th>この冊子の書き方</th><th>同じ意味の別の書き方</th></tr></thead><tbody>
+    <tr><td><code>点数に1を足す。</code></td><td><code>1を点数に足す。</code></td></tr>
+    <tr><td><code>横100、縦50の位置へ行く。</code></td><td><code>縦50、横100の位置へ行く。</code></td></tr>
+    <tr><td><code>右に15度回る。</code></td><td><code>15度右に回る。</code></td></tr>
+  </tbody></table></div>
+  <p>「横」「縦」「度」「を」「に」など、役割を表す言葉を落とさないことが大切です。<code>点数を10にする</code>は10へ変えること、<code>点数を10増やす</code>は今の数に10を足すことです。</p>
+  <div class="callout">一行の「もし」へブロックで命令を追加すると、その「もし」は字下げの形へ広がります。「元に戻す」で編集前へ戻せます。</div>
+</section>
+</main>
+</div>
+
+<footer>
+<div class="chapter-links"><a href="../MANUAL.html#faq">困ったとき</a><a href="./block-mode.html">ブロック →</a><a href="./code-mode-intermediate.html">コード中級 →</a><a href="./code-mode-advanced.html">コード上級 →</a></div>
+  <p>対象：あかり 1.0.0。内容はリポジトリの <a href="../LANGUAGE.md">LANGUAGE.md</a> と <a href="../Akari.html">Akari.html</a> の現行仕様・実装に基づきます。詳細な文法・意味論・制限は LANGUAGE.md を参照してください。</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,292 @@
+{
+  "total": 38,
+  "failed": 0,
+  "results": [
+    {
+      "id": "A10-EDIT/value-first",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/assign",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/target-first",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/increase",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/decrease",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/subtract",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/append",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/insert-index",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/insert-value",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/delete-index",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/input",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/turn",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/goto-x",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/goto-y",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/glide-x",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/glide-y",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/glide-time",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/tone-frequency",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/tone-time",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/wait",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/compare-left",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/compare-right",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/nested-expression",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/inline-body",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/inline-condition",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/target-role",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/crlf-unicode",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/all-forms-noop",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/inline-expand",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/insert-remove-move",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/atomic-stale-ime-limit",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/inline-comments-and-position",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/batch-role-offsets",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/predicate-in-expression-slot",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/condition-connective-operands",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/condition-wait-and-inline-ranges",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/condition-replacement-keeps-body",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-EDIT/inline-finite-statement-composition",
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS",
+  "environment": "chromium",
+  "browser": "140.0.7339.16",
+  "snapshot": {
+    "head": "2f455619440f5abbfbb564927769c85341f25074",
+    "productSha256": "48b440829174256952ab3f12e13553c64cba95f392e30e8f79768ff7411c0acf",
+    "files": {
+      ".github/workflows/akari-audit.yml": "b8beff27ad5fc70c202e884be97a59260c67ca846f1b11ad117e73ce866543a7",
+      ".gitignore": "32331e386bd611cd116750983edb3f4e85749d218b79462b08495b44cb502403",
+      "AUDIT.md": "e5d1bb9fb2be077747f19c8904190622276cd4ea985935ca458c46db936679a2",
+      "Akari.html": "48b440829174256952ab3f12e13553c64cba95f392e30e8f79768ff7411c0acf",
+      "LANGUAGE.md": "67f5b4c85f8f3469f583adea8af839d8e2ff45df19d097fd11427cbae4920aca",
+      "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "MANUAL.html": "dd0a574f8092db3f535aee30178f3610b866af0b406714d3233335bb4e85f289",
+      "Manual/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "Manual/block-mode.html": "51efa0d4ee8ca7ee3a9f1f19c79e5d57b2748991461343eb2d0948be74aec617",
+      "Manual/code-mode-advanced.html": "f80779840d785621f6f33753a2b51397d488a9b8aa4c0ba0d07c5bb6a50d95c0",
+      "Manual/code-mode-beginner.html": "dcdbd911fe2ba65b6dd5675eb90ef19266a02bcdd67867e8bb9c670a7e30d6b1",
+      "Manual/code-mode-intermediate.html": "337123375a9d637955d06795c9d0872002a454812beaa8f2a0dddff64a83146e",
+      "README.md": "732b406f338291ea0234a8800de0c403cef603d0fb35122ef3d5f3d9b0c91433",
+      "audit/EXTERNALIZATION.md": "0772ddea6f3cac317aeec81f44f92d2a83959ae1a4935fb30820d984c0740111",
+      "audit/LANGUAGE_FORMS.md": "3531124e53854e921671e4b2a88d1c074100ea75c622a5aafc9f53774c8d2f3e",
+      "audit/README.md": "bb698908934524018832b178c2aa243588611c42ca93e3538ccef217fa0178b3",
+      "audit/browser/browser-audit-manifest.json": "01e30c627c00f75fb0b3c075cbd6b47ee6cf1a3abc43db2ed233adda6bef6b4f",
+      "audit/browser/legacy/audit-lib.cjs": "78c1b42d1ceea06da1aa4793eb979eeb19a208ac613cbddc22df3b8aa8f2a84a",
+      "audit/browser/legacy/browser-asset-limits.cjs": "218a88693e94080fdd5759931391019e01f1605b1e03e55ea0d7358b905bc70c",
+      "audit/browser/legacy/browser-boundaries.cjs": "458fecd587cdb37f83ab595c8a6260e7989deed2590d0e9c0a1ce0e24db7349b",
+      "audit/browser/legacy/browser-condition.cjs": "0e8a25eddab65f81f4348b8f55c2df2d0440534b41fe4f9d4d68b3df6709f191",
+      "audit/browser/legacy/browser-design-limits.cjs": "2afe6b1623ff458475feb74b9cd1cc70b95949bb03232f52c9c9c4b523d289d2",
+      "audit/browser/legacy/browser-event-traces.cjs": "02d5936c7f44e965046650b4f0182cfbdcb14a9f4ea20bcd48bbbc65ce664e45",
+      "audit/browser/legacy/browser-events.cjs": "93ba8f3a0d9e6ea95ae020e534a14d4cc9791f7d95fd7d6bb3f9bbe862f906fc",
+      "audit/browser/legacy/browser-media-boundaries.cjs": "aa4c83fe0d98dba5fae034ee2dd9391a674ec79d0e78ae6aed6136191721c444",
+      "audit/browser/legacy/browser-owner-delete.cjs": "f610563a0c2bbfe823ba7c9b757dff30c7e2c81be035ae50b5e6347c78752d69",
+      "audit/browser/legacy/browser-product.cjs": "34da0f648ddf16f155bd7cab9cf03bfaee743dcb52d1bf57f267f6f91791d372",
+      "audit/browser/legacy/browser-runtime-limits.cjs": "a355b54882e351d9930dfbdb26968ac3b3ca21e10f190ca7c923c0a0aa6016f3",
+      "audit/browser/legacy/browser-runtime.cjs": "b9d6b15dd86b9f93697d5bca72343a42d6632ba6f818647970b927f0da6d0f23",
+      "audit/browser/legacy/browser-schemas.cjs": "815bf3c037627a45700b7fedf6d235532dd1e3bd1e9181d8fa24ea48d8c5d4ba",
+      "audit/browser/legacy/browser-session.cjs": "55ed55383a0794e203ed8d815da7437d3cf48c9486be1988f1c9d69f7219c65c",
+      "audit/browser/legacy/browser-storage-media.cjs": "894c24fb368499c5b0b59e1aeb24bc33f94953dbc64b5b8336dcfc22543c5f09",
+      "audit/browser/legacy/long-regression.cjs": "7abd4462948c02b3fe3a3c5d53f377514c302ccec09b0567cdd142bdcd2363e4",
+      "audit/browser/legacy/media-fixtures.cjs": "6147cb729d3496b5e08dc54f9cb722578e8da48ad3e6903dcdc930460e7b6752",
+      "audit/browser/legacy/modern-browser.cjs": "3908522875a4eb12a14c79295ecb9045a4521bb72225320adbe9d58dea01233b",
+      "audit/browser/legacy/native-focus.cjs": "40b82437c0edf5471c26dfd3c5d36bbf9797d1706525f860b3bac122e4f62f10",
+      "audit/browser/legacy/parent-qa.cjs": "f1c11254a19f0902a360a1bce4629d089fc01dbb53631b6d9deadbdc999f712a",
+      "audit/browser/legacy/perf-input.cjs": "5fff4d51fdee68164982623628b442aaf891ea2993c2e4592b6181dc2a62f494",
+      "audit/browser/legacy/prepare-media.py": "e70e68a3b4ba051170b2a8327c141b1ec01788db9ba1b30a3c166ec61d6c1381",
+      "audit/browser/legacy/run-editor-regression.cjs": "6fac2bfba6018400e8c2953aa9d5b7bbf320a98553b1439efd5f15e89f324314",
+      "audit/browser/legacy/schema-shards.cjs": "59fb3d5c0584c78dd7c6155ac00f0c4c02c9f699ed2545ebe5350b5125d039e9",
+      "audit/browser/legacy/ui-case.cjs": "6df27709fa7d30766a178b8f762f7f235058465d737b10968eb83d0bd8b996d3",
+      "audit/browser/legacy/ui-compact-menu.cjs": "c044932648a37a9bbdac02a2b9fcff05f5fa9c50e6b15f7bbbf1434799cae979",
+      "audit/browser/legacy/ui-compact-routes.cjs": "6735a381f5e3c0a28537962524e02ed5ae9ec22c58821ad40cadcec4f49aab8b",
+      "audit/browser/legacy/ui-interactions.cjs": "582cc73b51b0babed98685f3921c68a66767b832971416021cc871e26cf56bf4",
+      "audit/browser/legacy/ui-routes.cjs": "9ecdc66afa1094b01d374f8f00d5bc85a963122eb7ecfd4ad528920166d8ecb4",
+      "audit/browser/legacy/ui-shell.cjs": "9a7efdadfae2b42969ae9325d1f47f8242fb1899d4351f66718060a42880d481",
+      "audit/browser/legacy/ui-stage-gesture.cjs": "bb6f41b484028ab855e36e0fb2a9f434ce0defeb67f7dd2ea13f7b9b96b1c4e8",
+      "audit/browser/legacy/workbench-direct.cjs": "acaef06e058e91d53747e61689aac10630f71fc6feeabe6dcb3f54af4a9ef5b6",
+      "audit/browser/legacy/workbench-matrix.cjs": "506bdc8c7e7b6394dccab17a83bcb8dbc24e260404cd60c332a383b512e2aca2",
+      "audit/browser/run-full-browser-audit.mjs": "b633d294bf3bf7f253bf942f3dd46a8bf5e1692e677b6ec9dd8ef4bad1237cb6",
+      "audit/build-audit-inventory.mjs": "c1f94f862c032905211e3a174fa611a95aa62ae099562318b5a2ea0087d0b7d7",
+      "audit/fixtures/0.8/AUDIT.md": "9b4de42424ba9a849395f2aac00f08f509c06e830d55bbff93948a716c76f088",
+      "audit/fixtures/0.8/Akari.html": "05b62d0cf475352c058f7f2d4f2a8bd5a46d9be2d72365ff1cbaa5560fad6e5c",
+      "audit/fixtures/0.8/LANGUAGE.md": "2ad83e6407aedc621a6119c2d88fa4cb21828b209ccf439f7e27d62ed060e420",
+      "audit/fixtures/0.8/akari-audit.yml": "875c20d657eeadb4341f0ffaa800caee97d7c94ab9cf6620c1ef35bb4e38723c",
+      "audit/fixtures/0.8/manifest.json": "38b1cc4414741160263c938b55fdbe54fa86c895e879781c1025fea4ffb5d549",
+      "audit/fixtures/language/forms.mjs": "bffc4a8c680689a5e0dbeb304900ab637306b40a940dd61a2d1c04d660368bc6",
+      "audit/fixtures/language/inline.mjs": "6a7a92bb7cd053c362ec909d7276b2cda869608935dfd2d8b95b4eddd2844856",
+      "audit/lib/browser-environment.mjs": "6650295cfc003df1585dd36f30d08fc9bec161cf24b74db4b93238885fda8a95",
+      "audit/lib/evidence-bundle.mjs": "608f778930e1ebc6a666965979dc7cc19dceb8d1fa5cecd9287841e371409969",
+      "audit/lib/gate-contract.mjs": "ab17fe377f58098361ace41a58d9a394e7365ba3b72b8bb03450aa0142c68c62",
+      "audit/lib/phase3-runtime-contract.mjs": "1545547e22cbb859746e8855e77feb65b192a3c190fb0e6aa42a3c0e54cd9b03",
+      "audit/lib/product-test-host.mjs": "04ba2779459052fade8046f3e6a2d3d0ff30828dcdb3eb17c2ae3fecb5975618",
+      "audit/lib/verify-browser-results.mjs": "85ae7a796846f7a7e0b2abc5aeb5feb0474a4371dbeb6863582cc09a74762ea6",
+      "audit/lib/verify-gate-results.mjs": "dec9eff05711bc9ea7d5ac17dfd8e8b29d8c6162a82eafbb666e348cc9191565",
+      "audit/lib/verify-language-results.mjs": "be53ff69478e9d9bfbd40b54c07b308d0707a149642571c0f4523308acd29c45",
+      "audit/lib/verify-surface-results.mjs": "0a3cc49bd92fdc9a770c5566015318f733ea44d48bad46772709f9d09b010b2b",
+      "audit/lib/verify-test-results.mjs": "239641ef162eee43779c575b706a75b6a1370976427ba85ecfcb500f313e55b1",
+      "audit/manifests/browser-obligations.json": "691dd5742d5f37f8c652f8f704af16c893dead931f227f93e17ef03d26dfd06f",
+      "audit/manifests/browser-results.json": "c88fdc08bed9d3371844faf4e3eb92330dcb71d08c73e4f60de7471bab38a0ee",
+      "audit/manifests/externalization-map.json": "8b6f3dc34b74a48bd30f2d4c8d1a3c740cad26f1147dc6a46d03cabadd18fbc2",
+      "audit/manifests/language-form-coverage.json": "3ff2cb94e6dcb7d54d7c05b578bc2415644cae614911fd3223b815d19a888eb2",
+      "audit/manifests/product-tests.json": "a8701e2f6f46fbaa5633c2ce2fa730db3171a49a5f91eb424877bb879bca4378",
+      "audit/manifests/quality-1.0.0.json": "62a25dcbed74ed573f37f8c9323ce3e8e05a95b2e6b10954f64132bafc3931d3",
+      "audit/records/externalization-equivalence.json": "dd03d28f1df464c5f52b9d888203097339454b4d2413ee5e51552e810af2495c",
+      "audit/records/language-source-review.md": "58e6825ae9f23b4ce6eb2a89c9a672aa4e027b3257fc758c8ee789690fe1ac8a",
+      "audit/records/language-transition.json": "805808d38aa92d28431774d5f7765ea2b577a26bb3bedd74334c29bd50abe153",
+      "audit/records/phase3-guarantee-transition.json": "e587145d8ed5e0c17edb96640f33f01ca50ee326411bc0cad71904b425c2214a",
+      "audit/records/phase4-audit-inventory.json": "28623ae751a6e834af09e619ccec42c1b55e55dde9fe8e43eca4528c77c0a2cd",
+      "audit/records/phase4-reviewed-inputs.json": "477400ff23b42156de816185c1af5fca87841f457d98c00f9dafa470e303dd88",
+      "audit/records/phase4-semantic-review.md": "8105b656a3f8d9168d61ba1d16af6258260478d597cc2cc365876ab9657b9495",
+      "audit/run-editor-surface-tests.mjs": "04b9214c4dab35f8b69a5c5abd3f6609df357b5b270ab6dd14809e7dda51e683",
+      "audit/run-headless-selftest.mjs": "7f93805ded109ca69ce0ffbfd00fdd220c23e96c16c1ccaa134fbb9ba822626c",
+      "audit/run-language-tests.mjs": "774429a7c4b6169c73fc5654741ce9456d2a3ed26a07015fa3df6fa0e71033cd",
+      "audit/run-local-gate.mjs": "b26e59c4c8d2f03bf346e94868f8572ea5d142acd4e1d61326257c9c232e78bc",
+      "audit/run-product-tests.mjs": "44bbd7768bbe7fba696d2f78638b7f09a25b8cef3fd38d88f2480889d12471f5",
+      "audit/suites/bindings.js": "b38cf70b96382e31a192dcb53cdaec1055478189c9b60ffce5400f7c38e0f6d8",
+      "audit/suites/editor-surface.js": "4ac37bba3435ff2627cd986133fbaed1146f40f509eb4fbd1efc06ba5d9e5263",
+      "audit/suites/language-forms.js": "a18fb8ca9156a01f292411ead78817230b168a87afc6ac55c551cc35769f55c4",
+      "audit/suites/runAkariAsyncSelfTests.js": "a30ddf723df1cfb666209aceec2cfb9e743c9756c73cb695a881c27393b71a0e",
+      "audit/suites/runAkariSelfTests.js": "c83f777e78fd381d10217b7baf8adef3ebec6e40f48d8756dc41e3e207a33c17",
+      "audit/suites/runBlockCodec09Tests.js": "c95648509cb37c53ad97d0b6448bbc3bb49bc3f0d441cd96e5a24f37678b09e3",
+      "audit/suites/runColorPicker09Tests.js": "f7aed3414183e628b0d6a7e45653a1ba06b5dff67b77cbb322ee0969c16290f6",
+      "audit/suites/runDesignResize09Tests.js": "3677372b567ff90a5cd109e6d5e08bf401cd759c8be209e01e06f27f7b640350",
+      "audit/suites/runEditorCore09Tests.js": "741e31d956f79aef0edbd2b21d61c5a32e71e9b770bc998974bff3e62b30cda2",
+      "audit/suites/runExtendedTests07.js": "dfe01fb5e1ec780c79d527c362fe92c7be257cc34b0017f06257ed9fdd555ff7",
+      "audit/suites/runLimitBoundary09Tests.js": "37b603f02d4fc9fcc0bb522c81e0a02d0f560dd9e41225d48265762ace9aab16",
+      "audit/suites/runProductVersion09Tests.js": "f6035cd61e89192621946ec81bd0055b343b750904fef9790cd40fd032e79c8f",
+      "audit/suites/runReleaseTests.js": "e7e16408138249a36651907926ef9a92dcfa4d1351324eb5ca3848227a9b3685",
+      "audit/suites/runSemanticContract09Tests.js": "20fc04b0135d62a80fe81df62a22ad745a7af693457dfb7aa1a0d3530ad15214",
+      "audit/suites/runSyntax09Tests.js": "4fc3548d4addf11d38b6599814f882acf3ed58dde4f8a3d58e74c4a21b506c58",
+      "audit/suites/runVersion08Tests.js": "8fd7b6c630d0cc8dfc0f1566607be98871d2dfe758f537373d0b5a82893d4032",
+      "audit/tests/browser-environment.mjs": "4033d2523c4db6fa5f238722a7d098d55606a96d3f46b4255f008776ea045dbd",
+      "audit/tests/ci-regression.mjs": "2c443b83d4226966f712d1228f902a15e6bc20969cfea1cb24a111bbdf162cb1",
+      "audit/tests/dom-render-regression.cjs": "c721b14dfe5f97567a2b81090fd6cfd8ed2fc34aafb37471fb529e4434cf8363",
+      "audit/tests/evidence-negative.mjs": "32fcec658955d9491e82b65a8be4c6f5727c96b26a7e454368738f7ce4f71047",
+      "audit/tests/execution-continuity.mjs": "fb08b9cd324f23ecc0421652517fab92f6e1b34b804dec2c1aee508232b21544",
+      "audit/tests/externalization-static.mjs": "052bad445ac6495a1727836b043054649a98037aa730590ad67f89572f76e040",
+      "audit/tests/harness-negative.mjs": "0d8ea2cb47c6001357f1b9ba0eb49fa4fc4addcfcdf05b8c897dc7032235e430",
+      "audit/tests/language-boundaries.mjs": "e7e858a9535f65ad5b2df1184e0d4ae51b0a54d2d5d4fb21e74242887bf4e7a2",
+      "audit/tests/language-harness-negative.mjs": "f29d605ca0d881b2eea492e882f6bcef99fb5ba8992eceb2c8d6bf7f9ea26db5",
+      "audit/tests/language-inventory.mjs": "afd44e791cc27da1e896a0c870e6def5eaf1c1b63a1fe9a81234799671f8d882",
+      "audit/tests/manual-docs.mjs": "f33249b0265cc16ea7927fccc258c484ae2e4853696b784f353ca2041fe464f4",
+      "audit/tests/node-product.mjs": "964dea30c49ce4a02a75445279d81af6f71fab6037f3d71b5fe05bb697f7076d",
+      "audit/tests/normal-product.mjs": "8ad0e996337b519a08b4b853524c0543f2e7069a28c24b1a17d712086acb681e",
+      "audit/tests/phase3-browser.mjs": "2491b7690c2ae8ef0e91b2239120b665635f4ef6b2c39925c0b9be4e210942b6",
+      "audit/tests/product-diff.mjs": "c2ccee92158ba26c35cbd79fe24b3157e4f2b3d86d32a3553e1f89e1f2679f46",
+      "audit/tests/quality-policy-negative.mjs": "867578e99a46de4a9bb0a55cb621214ce6ff93ad61cd26fe5991becf42cdf339",
+      "audit/tests/static-contract.py": "d7743c8c5062416595c75f7ed106c4711a42bb57cd692d508b3e06eb58b2eb6a",
+      "audit/tests/surface-negative.mjs": "a4a10419c96608701b1d3f7a90cbe261dfc7934375290abc193a0697829ef05d",
+      "audit/tests/workflow-preflight.py": "e81d209b237dabb2c638d9855acbe7e6848185da654e931733e6a677aab85de7",
+      "audit/verify-evidence.mjs": "0dd75e00547f520081591d75f631933b5a2e130b0bc184e76b86e89c06ec91fc",
+      "audit/verify-reviewed-inputs.mjs": "60b595da149c280a58a35c39f0af4803d1830c85facf605bb33b517988aca2f6",
+      "index.html": "e027298877b90c9d86cc8752684718813ec5266f1700c9da10fb4d5e95a6716d"
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "sourceFile": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-ui/candidate/Akari.html",
+  "htmlSha256": "48b440829174256952ab3f12e13553c64cba95f392e30e8f79768ff7411c0acf",
+  "htmlBytes": 914546,
+  "node": "v24.20.0",
+  "browser": "140.0.7339.16",
+  "results": [
+    {
+      "id": "editor-input-format-comments-undo-redo",
+      "pass": true,
+      "evidence": {
+        "input": "※ はじめの注釈\n点数を0にする ※ 初期値\n次のことを3回くり返す ※ 反復\n  点数に1を足す ※ 加算\n「回帰」と言う",
+        "formatted": "※ はじめの注釈\n点数を0にする。  ※ 初期値\n次のことを3回くり返す。  ※ 反復\n  点数に1を足す。  ※ 加算\n「回帰」と言う。",
+        "undoExact": true,
+        "redoExact": true
+      }
+    },
+    {
+      "id": "diagnose-run-stop",
+      "pass": true,
+      "evidence": {
+        "diagnosis": "✓ 作品は実行できます\n書き方と内容に問題はありません。",
+        "runtimeScore": 3,
+        "stopState": "停止中",
+        "sourcePreserved": true
+      }
+    },
+    {
+      "id": "callable-draft-save-action-function-run",
+      "pass": true,
+      "evidence": {
+        "draftsUnregisteredUntilSave": true,
+        "action": "増加（値）",
+        "function": "二倍（元値）",
+        "runtimeScore": 6
+      }
+    },
+    {
+      "id": "responsive-controls-resize-preservation",
+      "pass": true,
+      "evidence": {
+        "resizeSequence": [
+          1440,
+          390,
+          320,
+          1440
+        ],
+        "exactSourceSelectionProjectRetained": true,
+        "dimensions": [
+          {
+            "width": 390,
+            "scrollWidth": 390
+          },
+          {
+            "width": 320,
+            "scrollWidth": 320
+          },
+          {
+            "width": 1440,
+            "scrollWidth": 1440
+          }
+        ],
+        "diagnosisAndCallableControlsExercised": [
+          1440,
+          390,
+          320
+        ]
+      }
+    },
+    {
+      "id": "save-download-new-open-exact-project",
+      "pass": true,
+      "evidence": {
+        "downloadName": "はじめてのあかり.akari.md",
+        "savedBytes": 13893,
+        "reopenedProjectExactlyEqual": true
+      }
+    },
+    {
+      "id": "standalone-download-offline-player-run",
+      "pass": true,
+      "evidence": {
+        "downloadName": "はじめてのあかり.html",
+        "bytes": 174722,
+        "licenseRetained": true,
+        "output": "検証完了：6",
+        "stage": "押してね実行中です。キャラクターをクリックしてみよう",
+        "stopped": true
+      }
+    }
+  ],
+  "pageErrors": [],
+  "networkRequests": [],
+  "passed": 6,
+  "failed": 0
+}

@@ -1,0 +1,44 @@
+{
+  "schema": "akari-browser-audit-manifest-v1",
+  "fixedBaseline": "ec43018d5ba546d5aa9df9c2799b18260a3ab2d7",
+  "runnerProvenance": "SAIEduLab/Akari-dev@12cd6403d843f05d74df9154991c1f4085637e04",
+  "groups": {
+    "session": [
+      "browser-session",
+      "browser-storage-media",
+      "browser-events",
+      "browser-event-traces",
+      "browser-condition",
+      "browser-runtime",
+      "browser-boundaries"
+    ],
+    "ui": [
+      "ui-interactions",
+      "ui-compact-menu",
+      "ui-shell",
+      "ui-stage-gesture",
+      "ui-compact-routes",
+      "workbench-matrix",
+      "workbench-direct",
+      "run-editor-regression",
+      "browser-owner-delete"
+    ],
+    "limits": [
+      "browser-design-limits",
+      "browser-runtime-limits",
+      "browser-product",
+      "browser-asset-limits",
+      "browser-media-boundaries"
+    ],
+    "schemas": [
+      "schema-shards"
+    ],
+    "extra": [
+      "parent-qa",
+      "perf-input:keyboard-insert",
+      "perf-input:clipboard-paste",
+      "modern-browser",
+      "long-regression"
+    ]
+  }
+}

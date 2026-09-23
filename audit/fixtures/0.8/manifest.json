@@ -1,0 +1,28 @@
+{
+  "schema": "akari-audit-baseline-v1",
+  "sourceRepository": "SAIEduLab/Akari-dev",
+  "sourceCommit": "ec43018d5ba546d5aa9df9c2799b18260a3ab2d7",
+  "purpose": "Immutable public fixture for AUDIT.md 0.8 non-regression. Public CI must not fetch the private repository.",
+  "files": {
+    "Akari.html": {
+      "originalPath": "Akari.html",
+      "bytes": 423205,
+      "gitBlobSha1": "576a3c5e966622fe3bca212a1ae3e48b523f18d0"
+    },
+    "LANGUAGE.md": {
+      "originalPath": "LANGUAGE.md",
+      "bytes": 27215,
+      "gitBlobSha1": "6399ac96408413c7051e1541c3e08e9f121b2825"
+    },
+    "AUDIT.md": {
+      "originalPath": "AUDIT.md",
+      "bytes": 35708,
+      "gitBlobSha1": "12e307ca82c639b0f17a7db48b90b4a275e17a4b"
+    },
+    "akari-audit.yml": {
+      "originalPath": ".github/workflows/akari-audit.yml",
+      "bytes": 6209,
+      "gitBlobSha1": "2f4f3aa9aacc7c49cb89296df9c97659888bddea"
+    }
+  }
+}

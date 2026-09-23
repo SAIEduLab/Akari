@@ -1,0 +1,151 @@
+name: Akari audit
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact audited snapshot
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+
+      - name: Validate audit contract and extract JavaScript
+        shell: python
+        run: |
+          from pathlib import Path
+          import json
+          import re
+
+          html = Path('Akari.html').read_text(encoding='utf-8')
+          audit = Path('AUDIT.md').read_text(encoding='utf-8')
+
+          if 'CAPABILITY_REQUIREMENTS08' in html:
+              raise SystemExit('audit capability ledger must not be embedded in Akari.html')
+          if '08 capability traceability' in html:
+              raise SystemExit('Akari.html must not self-judge audit traceability')
+          if "searchParams.get('selftest')==='1'" not in html:
+              raise SystemExit('embedded self-test entry point is missing')
+
+          marker = '## 0.8 能力・自己検査追跡台帳'
+          if marker not in audit:
+              raise SystemExit('AUDIT.md capability ledger section is missing')
+          section = audit.split(marker, 1)[1]
+          match = re.search(r'```json\s*(\{.*?\})\s*```', section, re.S)
+          if not match:
+              raise SystemExit('machine-readable capability ledger JSON is missing')
+          ledger = json.loads(match.group(1))
+          if ledger.get('baseline') != '6f1e9c63c7e8dd8485e8aad34e1220366aa6b5a6':
+              raise SystemExit('unexpected capability ledger baseline')
+          entries = ledger.get('entries')
+          if not isinstance(entries, list) or not entries:
+              raise SystemExit('capability ledger entries are missing')
+
+          ids = []
+          for entry in entries:
+              capability_id = entry.get('id')
+              tests = entry.get('tests')
+              if not isinstance(capability_id, str) or not capability_id:
+                  raise SystemExit('capability ledger contains an invalid id')
+              if not isinstance(tests, list) or not tests or any(not isinstance(x, str) or not x for x in tests):
+                  raise SystemExit(f'capability {capability_id} has invalid test ids')
+              if len(tests) != len(set(tests)):
+                  raise SystemExit(f'capability {capability_id} repeats a test id')
+              ids.append(capability_id)
+          if len(ids) != len(set(ids)):
+              raise SystemExit('capability ledger contains duplicate capability ids')
+
+          start = html.index('<script>') + len('<script>')
+          end = html.rindex('</script>')
+          Path('/tmp/akari.js').write_text(html[start:end], encoding='utf-8')
+          print(f'ledger entries: {len(entries)}')
+          print(f'Akari.html bytes: {len(html.encode("utf-8"))}')
+
+      - name: Check JavaScript syntax
+        run: node --check /tmp/akari.js
+
+      - name: Locate browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          browser="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$browser"
+          "$browser" --version
+          echo "AKARI_BROWSER=$browser" >> "$GITHUB_ENV"
+
+      - name: Run embedded self-test in real browser
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="file://${GITHUB_WORKSPACE}/Akari.html?selftest=1"
+          "$AKARI_BROWSER" \
+            --headless=new \
+            --no-sandbox \
+            --disable-gpu \
+            --allow-file-access-from-files \
+            --virtual-time-budget=120000 \
+            --dump-dom \
+            "$url" > /tmp/akari-dom.html
+          test -s /tmp/akari-dom.html
+
+      - name: Verify self-test and capability traceability
+        shell: python
+        run: |
+          from pathlib import Path
+          import html as html_module
+          import json
+          import re
+
+          dom = Path('/tmp/akari-dom.html').read_text(encoding='utf-8')
+          audit = Path('AUDIT.md').read_text(encoding='utf-8')
+
+          if 'data-selftest-failed="0"' not in dom:
+              raise SystemExit('embedded self-test did not finish with zero failures')
+          match = re.search(r'<pre id="selfTestReport"[^>]*>(.*?)</pre>', dom, re.S)
+          if not match:
+              raise SystemExit('selfTestReport was not emitted')
+          report = json.loads(html_module.unescape(match.group(1)))
+          results = report.get('results')
+          if report.get('failed') != 0 or not isinstance(results, list) or not results:
+              raise SystemExit('selfTestReport is missing results or contains failures')
+
+          by_id = {}
+          for result in results:
+              test_id = result.get('id')
+              if not isinstance(test_id, str) or not test_id:
+                  raise SystemExit('self-test result contains an invalid id')
+              if test_id in by_id:
+                  raise SystemExit(f'duplicate self-test id: {test_id}')
+              by_id[test_id] = result
+
+          marker = '## 0.8 能力・自己検査追跡台帳'
+          section = audit.split(marker, 1)[1]
+          ledger_match = re.search(r'```json\s*(\{.*?\})\s*```', section, re.S)
+          ledger = json.loads(ledger_match.group(1))
+
+          required = set()
+          for entry in ledger['entries']:
+              for test_id in entry['tests']:
+                  required.add(test_id)
+                  result = by_id.get(test_id)
+                  if result is None:
+                      raise SystemExit(f'ledger test id is missing from selfTestReport: {test_id}')
+                  if result.get('pass') is not True:
+                      raise SystemExit(f'ledger test did not pass: {test_id}')
+
+          print(f'self-test results: {len(results)}')
+          print(f'ledger entries: {len(ledger["entries"])}')
+          print(f'unique required test ids: {len(required)}')
+          print('Akari audit CI: PASS')

@@ -1,0 +1,373 @@
+{
+  "schema": "akari-completed-release-evidence-v1",
+  "repository": "SAIEduLab/Akari",
+  "commit": "2f455619440f5abbfbb564927769c85341f25074",
+  "runId": "35816378510",
+  "runAttempt": "1",
+  "artifacts": [
+    {
+      "id": 10732111205,
+      "name": "akari-full-browser-session-35816378510-1",
+      "size_in_bytes": 1658686,
+      "url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10732111205",
+      "archive_download_url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10732111205/zip",
+      "expired": false,
+      "created_at": "2026-09-23T04:03:49Z",
+      "expires_at": "2026-09-26T04:03:48Z",
+      "updated_at": "2026-09-23T04:03:49Z",
+      "digest": "sha256:488a8a6b2073a31f1e744724cf635f3887dad1eed58b8b9135c9310f6b27faec",
+      "workflow_run": {
+        "id": 35816378510,
+        "repository_id": 1379187704,
+        "head_repository_id": 1379187704,
+        "head_branch": "main",
+        "head_sha": "2f455619440f5abbfbb564927769c85341f25074"
+      }
+    },
+    {
+      "id": 10732090748,
+      "name": "akari-static-evidence-35816378510-1",
+      "size_in_bytes": 193654,
+      "url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10732090748",
+      "archive_download_url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10732090748/zip",
+      "expired": false,
+      "created_at": "2026-09-23T03:57:45Z",
+      "expires_at": "2026-09-26T03:57:44Z",
+      "updated_at": "2026-09-23T03:57:45Z",
+      "digest": "sha256:4b142a7b5d0a298f2fff10fb270cc4f4033466ff0f25e85748811563a2723c4b",
+      "workflow_run": {
+        "id": 35816378510,
+        "repository_id": 1379187704,
+        "head_repository_id": 1379187704,
+        "head_branch": "main",
+        "head_sha": "2f455619440f5abbfbb564927769c85341f25074"
+      }
+    },
+    {
+      "id": 10731933638,
+      "name": "akari-full-browser-extra-35816378510-1",
+      "size_in_bytes": 32263584,
+      "url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731933638",
+      "archive_download_url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731933638/zip",
+      "expired": false,
+      "created_at": "2026-09-23T04:09:56Z",
+      "expires_at": "2026-09-26T04:09:52Z",
+      "updated_at": "2026-09-23T04:09:56Z",
+      "digest": "sha256:6896b931576b4e60f870d8189486921cc9435054e2c11bc99c734b768062eddb",
+      "workflow_run": {
+        "id": 35816378510,
+        "repository_id": 1379187704,
+        "head_repository_id": 1379187704,
+        "head_branch": "main",
+        "head_sha": "2f455619440f5abbfbb564927769c85341f25074"
+      }
+    },
+    {
+      "id": 10731588364,
+      "name": "akari-full-browser-schemas-35816378510-1",
+      "size_in_bytes": 5286837,
+      "url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731588364",
+      "archive_download_url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731588364/zip",
+      "expired": false,
+      "created_at": "2026-09-23T04:01:51Z",
+      "expires_at": "2026-09-26T04:01:50Z",
+      "updated_at": "2026-09-23T04:01:51Z",
+      "digest": "sha256:f1a100d2f066fc73eb95d2d69ea762e1f7d26f87fa662d14662c9c2b090d06d3",
+      "workflow_run": {
+        "id": 35816378510,
+        "repository_id": 1379187704,
+        "head_repository_id": 1379187704,
+        "head_branch": "main",
+        "head_sha": "2f455619440f5abbfbb564927769c85341f25074"
+      }
+    },
+    {
+      "id": 10731429578,
+      "name": "akari-aggregate-35816378510-1",
+      "size_in_bytes": 18500,
+      "url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731429578",
+      "archive_download_url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731429578/zip",
+      "expired": false,
+      "created_at": "2026-09-23T04:10:08Z",
+      "expires_at": "2026-09-26T04:10:07Z",
+      "updated_at": "2026-09-23T04:10:08Z",
+      "digest": "sha256:fb9202d9fd12bab517f68a721bde0786f185bbc1b3540d2a4de6a3f9597a879f",
+      "workflow_run": {
+        "id": 35816378510,
+        "repository_id": 1379187704,
+        "head_repository_id": 1379187704,
+        "head_branch": "main",
+        "head_sha": "2f455619440f5abbfbb564927769c85341f25074"
+      }
+    },
+    {
+      "id": 10731387315,
+      "name": "akari-full-browser-ui-35816378510-1",
+      "size_in_bytes": 11058883,
+      "url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731387315",
+      "archive_download_url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731387315/zip",
+      "expired": false,
+      "created_at": "2026-09-23T04:02:26Z",
+      "expires_at": "2026-09-26T04:02:24Z",
+      "updated_at": "2026-09-23T04:02:26Z",
+      "digest": "sha256:b555acbfd03298fedc391056af217fa0350505b95bd042d643f5405cf5b02342",
+      "workflow_run": {
+        "id": 35816378510,
+        "repository_id": 1379187704,
+        "head_repository_id": 1379187704,
+        "head_branch": "main",
+        "head_sha": "2f455619440f5abbfbb564927769c85341f25074"
+      }
+    },
+    {
+      "id": 10731288517,
+      "name": "akari-full-browser-limits-35816378510-1",
+      "size_in_bytes": 1983751,
+      "url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731288517",
+      "archive_download_url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731288517/zip",
+      "expired": false,
+      "created_at": "2026-09-23T04:00:06Z",
+      "expires_at": "2026-09-26T04:00:05Z",
+      "updated_at": "2026-09-23T04:00:06Z",
+      "digest": "sha256:00040a0f2afd13cc1297984999bd981a6a9df9253c2568902052a961f5af37e4",
+      "workflow_run": {
+        "id": 35816378510,
+        "repository_id": 1379187704,
+        "head_repository_id": 1379187704,
+        "head_branch": "main",
+        "head_sha": "2f455619440f5abbfbb564927769c85341f25074"
+      }
+    },
+    {
+      "id": 10731162469,
+      "name": "akari-selftest-evidence-35816378510-1",
+      "size_in_bytes": 403793,
+      "url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731162469",
+      "archive_download_url": "https://api.github.com/repos/SAIEduLab/Akari/actions/artifacts/10731162469/zip",
+      "expired": false,
+      "created_at": "2026-09-23T03:59:20Z",
+      "expires_at": "2026-09-26T03:59:19Z",
+      "updated_at": "2026-09-23T03:59:20Z",
+      "digest": "sha256:9adec937a451398a42689a69a0aa89dd02cd3dcf8dbb970b1a7ce50f56d9431a",
+      "workflow_run": {
+        "id": 35816378510,
+        "repository_id": 1379187704,
+        "head_repository_id": 1379187704,
+        "head_branch": "main",
+        "head_sha": "2f455619440f5abbfbb564927769c85341f25074"
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "id": 107038678377,
+      "name": "GA-STATIC contract and snapshot",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 35816378510,
+      "logs_url": null
+    },
+    {
+      "id": 107038727570,
+      "name": "Product-impact browser GA (extra)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 35816378510,
+      "logs_url": null
+    },
+    {
+      "id": 107038727592,
+      "name": "Product-impact browser GA (session)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 35816378510,
+      "logs_url": null
+    },
+    {
+      "id": 107038727603,
+      "name": "GA-EXEC self-tests and fixed-0.8 non-regression",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 35816378510,
+      "logs_url": null
+    },
+    {
+      "id": 107038727662,
+      "name": "Product-impact browser GA (schemas)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 35816378510,
+      "logs_url": null
+    },
+    {
+      "id": 107038727668,
+      "name": "Product-impact browser GA (ui)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 35816378510,
+      "logs_url": null
+    },
+    {
+      "id": 107038727743,
+      "name": "Product-impact browser GA (limits)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 35816378510,
+      "logs_url": null
+    },
+    {
+      "id": 107041200261,
+      "name": "Independent complete evidence gate",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 35816378510,
+      "logs_url": null
+    }
+  ],
+  "verification": {
+    "status": "PASS",
+    "repository": "SAIEduLab/Akari",
+    "commit": "2f455619440f5abbfbb564927769c85341f25074",
+    "runId": "35816378510",
+    "runAttempt": "1",
+    "inputFiles": 125,
+    "evidenceFiles": 1793,
+    "aggregateSha256": "f99b3ea9449ba2f79a858f4de64eea656d2de5b4c335392c9a417025c4caf507",
+    "bundles": [
+      {
+        "kind": "full-browser-session",
+        "result": {
+          "group": "session",
+          "tasks": 7,
+          "cases": 96
+        },
+        "files": 213,
+        "bundleSha256": "56165bbf1bd39fba583e371c01efb32344347ab11702da4fe8526ef352bda339"
+      },
+      {
+        "kind": "static",
+        "result": {
+          "selftestRequired": true,
+          "fullBrowserRequired": true
+        },
+        "files": 4,
+        "bundleSha256": "62d7ec336e6ba7da994c8ca87c921c47c81584b49233239651a1623baaac6ef4"
+      },
+      {
+        "kind": "full-browser-extra",
+        "result": {
+          "group": "extra",
+          "tasks": 5,
+          "cases": 60
+        },
+        "files": 215,
+        "bundleSha256": "d0c410887f3b7fb47d23669ba0c6062da608fbe91bab3b7bdfaaa9ab04d40afd"
+      },
+      {
+        "kind": "full-browser-schemas",
+        "result": {
+          "group": "schemas",
+          "tasks": 1,
+          "cases": 153
+        },
+        "files": 822,
+        "bundleSha256": "cd79b3cdf411a84167536e9041f3ac33934f418790be93fff4f632463d3d64d3"
+      },
+      {
+        "kind": "full-browser-ui",
+        "result": {
+          "group": "ui",
+          "tasks": 9,
+          "cases": 66
+        },
+        "files": 261,
+        "bundleSha256": "75406fe8b4156e14cf4d64a05429d687aefd1704930f431b8593ed65780214e9"
+      },
+      {
+        "kind": "full-browser-limits",
+        "result": {
+          "group": "limits",
+          "tasks": 5,
+          "cases": 41
+        },
+        "files": 242,
+        "bundleSha256": "26d113f5b3e99b39706f29a379ebcf268fc88cf3d52c1b5595bd9f0171a52770"
+      },
+      {
+        "kind": "selftest",
+        "result": {
+          "fixedSourceCommit": "ec43018d5ba546d5aa9df9c2799b18260a3ab2d7",
+          "baselineCapabilities": 122,
+          "baselineRequiredTestIds": 130,
+          "currentResults": 884,
+          "currentCapabilityRows": 257
+        },
+        "files": 36,
+        "bundleSha256": "d0b015e6414d860cb68c4da0d1d9a8bc1d48bdcb95c54393d786a9b32fb822cc"
+      }
+    ]
+  },
+  "approval": {
+    "authority": "Explicit user instruction after the 1.0.0 completion decision and merge of public PR #2",
+    "publicPullRequest": "https://github.com/SAIEduLab/Akari/pull/2",
+    "mergedAt": "2026-09-23T03:57:29Z",
+    "mergeCommit": "2f455619440f5abbfbb564927769c85341f25074",
+    "semanticReview": "source/audit/records/phase4-semantic-review.md",
+    "scope": "Completed release baseline approval; machine results alone do not approve the current candidate."
+  },
+  "retainedEvidence": [
+    "evidence/akari-full-browser-session-35816378510-1/bundle.json",
+    "evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-session.json",
+    "evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-storage-media.json",
+    "evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-runtime.json",
+    "evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-boundaries.json",
+    "evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-condition.json",
+    "evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-events.json",
+    "evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-event-traces.json",
+    "evidence/akari-static-evidence-35816378510-1/bundle.json",
+    "evidence/akari-full-browser-extra-35816378510-1/bundle.json",
+    "evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/parent-qa.json",
+    "evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/modern-browser.json",
+    "evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/long-evidence/results.json",
+    "evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/perf-keyboard-insert-16666.json",
+    "evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/perf-clipboard-paste-16666.json",
+    "evidence/akari-full-browser-extra-35816378510-1/manual-docs/manual-docs.json",
+    "evidence/akari-full-browser-schemas-35816378510-1/bundle.json",
+    "evidence/akari-full-browser-schemas-35816378510-1/full-browser-schemas/candidate/browser-schemas.json",
+    "evidence/akari-aggregate-35816378510-1/aggregate.json",
+    "evidence/akari-full-browser-ui-35816378510-1/bundle.json",
+    "evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/browser-owner-delete.json",
+    "evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-interactions.json",
+    "evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-compact-menu.json",
+    "evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-shell.json",
+    "evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-compact-routes.json",
+    "evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-stage-gesture.json",
+    "evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/editor-regression-result.json",
+    "evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/workbench-direct.json",
+    "evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/workbench-matrix.json",
+    "evidence/akari-full-browser-limits-35816378510-1/bundle.json",
+    "evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-product.json",
+    "evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-design-limits.json",
+    "evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-runtime-limits.json",
+    "evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-asset-limits.json",
+    "evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/media-boundaries.json",
+    "evidence/akari-selftest-evidence-35816378510-1/bundle.json",
+    "evidence/akari-selftest-evidence-35816378510-1/current-selftest.json",
+    "evidence/akari-selftest-evidence-35816378510-1/baseline-selftest.json",
+    "evidence/akari-selftest-evidence-35816378510-1/language-node.json",
+    "evidence/akari-selftest-evidence-35816378510-1/language-browser.json",
+    "evidence/akari-selftest-evidence-35816378510-1/editor-node.json",
+    "evidence/akari-selftest-evidence-35816378510-1/editor-browser.json",
+    "evidence/akari-selftest-evidence-35816378510-1/gui.json",
+    "evidence/akari-selftest-evidence-35816378510-1/language-boundaries.json",
+    "evidence/akari-selftest-evidence-35816378510-1/normal-product.json",
+    "evidence/akari-selftest-evidence-35816378510-1/browser-environment.json"
+  ],
+  "limits": [
+    "physical mobile devices unverified",
+    "native Japanese IME input unverified",
+    "user study unperformed",
+    "learning effectiveness unverified"
+  ],
+  "retention": "Original full artifacts were independently verified before expiry. Exact retained JSON, bundle file hashes, ZIP digests and source input hashes persist here; screenshots and complete logs remain in the original artifacts and may expire."
+}

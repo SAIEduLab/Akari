@@ -1,0 +1,192 @@
+{
+  "schema": "akari-phase3-guarantee-transition-v1",
+  "status": "IMPLEMENTED_SPECIFICATION_REPLACEMENT",
+  "origin": "audit/manifests/externalization-map.json",
+  "baselineUnchanged": "ec43018d5ba546d5aa9df9c2799b18260a3ab2d7",
+  "entries": [
+    {
+      "suite": "runAkariSelfTests",
+      "oldId": "VERSION-001 初版の版情報",
+      "source": "audit/suites/runAkariSelfTests.js",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "originalSource": "    test('VERSION-001 初版の版情報', () =>\n      eq([VERSION, LANGUAGE_VERSION, FORMAT_VERSION], ['0.9', '0.9', 2]));",
+      "originalSourceSha256": "ef3320ce9da42a7bdfc65e6410dbce721d9b33740015d356e4c04d24ed2c67a4",
+      "replacementIds": [
+        "A10-VERSION-001 製品言語保存形式の契約"
+      ],
+      "reason": "Define the 1.0.0 product/language and independently numbered format3.",
+      "retainedGuarantees": "Define the 1.0.0 product/language and independently numbered format3.",
+      "oldGuarantee": "Replace exact 0.9 constants with the separately defined product 1.0.0 and format identifiers.",
+      "disposition": "replace"
+    },
+    {
+      "suite": "runAkariSelfTests",
+      "oldId": "SCHEMA 別版の拒否",
+      "source": "audit/suites/runAkariSelfTests.js",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "originalSource": "    test('SCHEMA 別版の拒否', () => {\n      const p = makeDefaultProject();\n      p.appVersion = '9.9';\n      reject(() => validateProject(p), 'F501');\n    });",
+      "originalSourceSha256": "ed60c7333962f423a03c8ee99869db9b8dffc77b9089fb7920f5d4ddf114b53e",
+      "replacementIds": [
+        "A10-PROJECT-METADATA"
+      ],
+      "reason": "Remove dedicated other-release identification; retain required metadata structure validation.",
+      "retainedGuarantees": "Remove dedicated other-release identification; retain required metadata structure validation.",
+      "oldGuarantee": "Replace the fixed release mismatch fixture with the explicit 1.0.0 metadata/format consistency rule. Dedicated old-version identification is not required; malformed or inconsistent data validation remains.",
+      "disposition": "replace"
+    },
+    {
+      "suite": "runProductVersion09Tests",
+      "oldId": "T09-VERSION-CONTRACT",
+      "source": "audit/suites/runProductVersion09Tests.js",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "originalSource": "    await test('T09-VERSION-CONTRACT', async () => {\n      const expected = {\n        appVersion: '0.9',\n        runtimeVersion: '0.9',\n        languageVersion: '0.9',\n        programFormatVersion: 2,\n        projectFormatVersion: 2,\n      };\n      if (JSON.stringify(AKARI_RUNTIME.EXECUTABLE_VERSION) !== JSON.stringify(expected))\n        throw new Error('実行版の契約が一致しません');\n      const p = makeDefaultProject(),\n        text = serializeProject(p, new AssetStore());\n      if (\n        !text.startsWith('# あかり 0.9 の作品') ||\n        !text.includes('<!-- AKARI09-DATA-BEGIN -->') ||\n        !text.includes('<!-- AKARI09-DATA-END -->')\n      )\n        throw new Error('作品の版またはマーカーが一致しません');\n      const loaded = await parseProjectFile(text);\n      if (JSON.stringify(loaded.project) !== JSON.stringify(p))\n        throw new Error('0.9作品の往復で変化しました');\n    });",
+      "originalSourceSha256": "8c6acc4fa82ac1f58f0176534d67d249fb98fbc57f7f4b66db39769b8ffab7b2",
+      "replacementIds": [
+        "A10-VERSION-CONTRACT"
+      ],
+      "reason": "Define canonical current metadata, markers and lossless project roundtrip.",
+      "retainedGuarantees": "Define canonical current metadata, markers and lossless project roundtrip.",
+      "oldGuarantee": "Keep valid source/project roundtrip and consistency; replace old 0.9 marker and format constraints by 1.0.0 specification.",
+      "disposition": "replace"
+    },
+    {
+      "suite": "runProductVersion09Tests",
+      "oldId": "T09-VERSION-REJECT-PROJECT",
+      "source": "audit/suites/runProductVersion09Tests.js",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "originalSource": "    await test('T09-VERSION-REJECT-PROJECT', async () => {\n      for (const version of ['0.7', '0.8', '1.0'])\n        for (const key of ['appVersion', 'languageVersion']) {\n          const p = makeDefaultProject();\n          p[key] = version;\n          await reject(() => serializeProject(p, new AssetStore()));\n        }\n      const current = serializeProject(makeDefaultProject(), new AssetStore());\n      for (const old of ['AKARI07', 'AKARI08'])\n        await reject(() => parseProjectFile(current.replaceAll('AKARI09', old)));\n    });",
+      "originalSourceSha256": "f412c135967d0d931dc835e37bf80b3221b2fb134f07f6083c1f90c1e76145ad",
+      "replacementIds": [],
+      "reason": "Withdraw only enumerated old-release identification and old marker rejection; current structural, material and state protections remain covered.",
+      "retainedGuarantees": "Withdraw only enumerated old-release identification and old marker rejection; current structural, material and state protections remain covered.",
+      "oldGuarantee": "Dedicated old/future version and old marker rejection is no longer an acceptance guarantee. No malformed-data or state-protection test may be removed with it.",
+      "disposition": "withdraw-old-version-only"
+    },
+    {
+      "suite": "runProductVersion09Tests",
+      "oldId": "T09-VERSION-REJECT-EXECUTABLE",
+      "source": "audit/suites/runProductVersion09Tests.js",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "originalSource": "    await test('T09-VERSION-REJECT-EXECUTABLE', async () => {\n      for (const version of ['0.7', '0.8', '1.0'])\n        for (const key of ['appVersion', 'languageVersion', 'runtimeVersion']) {\n          const payload = packExecutable(makeDefaultProject(), new AssetStore());\n          payload[key] = version;\n          await reject(() => AKARI_RUNTIME.restoreExecutable(payload));\n        }\n      const p = makeDefaultProject(),\n        payload = packExecutable(p, new AssetStore()),\n        restored = AKARI_RUNTIME.restoreExecutable(payload);\n      if (restored.project.name !== p.name || restored.compiled.errors?.length)\n        throw new Error('0.9実行作品を復元できません');\n    });",
+      "originalSourceSha256": "2b3b5bd5f5c8b490929c377ceba7f0117e89999681cc142ecd1a6d05fa9f6dd7",
+      "replacementIds": [
+        "A10-EXECUTABLE-MALFORMED",
+        "A10-EXECUTABLE-ROUNDTRIP"
+      ],
+      "reason": "Split valid executable restoration from malformed metadata checks; withdraw enumerated old-release rejection.",
+      "retainedGuarantees": "Split valid executable restoration from malformed metadata checks; withdraw enumerated old-release rejection.",
+      "oldGuarantee": "Withdraw old-version-only rejection; retain valid executable restore, project identity and no compile errors under 1.0.0.",
+      "disposition": "replace"
+    },
+    {
+      "suite": "runExtendedTests07",
+      "oldId": "AUDIT SCHEMA wrong release duplicate IDs invalid data and excessive input",
+      "source": "audit/suites/runExtendedTests07.js",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "originalSource": "    await test('SCHEMA wrong release duplicate IDs invalid data and excessive input', async () => {\n      const bad = make();\n      bad.appVersion = '0.7';\n      await reject(() => A.serializeProject(bad), 'F501');\n      const dup = make();\n      dup.projectData.variables[0].id = dup.components[0].id;\n      await reject(() => A.serializeProject(dup), 'F505');\n      const inf = make();\n      inf.projectData.variables[0].initialValue = Infinity;\n      await reject(() => A.serializeProject(inf));\n      await reject(() => A.parseProjectFile('x'.repeat(A.LIMITS.fileBytes + 1)), 'F504');\n    });",
+      "originalSourceSha256": "c1ce219be5ac7cde631ca86c979c5a53c4579effa80b1deed387924f372e1e73",
+      "replacementIds": [
+        "AUDIT SCHEMA10 structure duplicate IDs invalid data and excessive input"
+      ],
+      "reason": "Replace old release sentinel with malformed metadata; preserve duplicate IDs, nonfinite data and byte limit assertions.",
+      "retainedGuarantees": "Replace old release sentinel with malformed metadata; preserve duplicate IDs, nonfinite data and byte limit assertions.",
+      "oldGuarantee": "Split old-release-only assertion from duplicate IDs, nonfinite values and excessive input. Preserve all structural and limit guarantees in 1.0.0; replace release-specific assertion under phase 3.",
+      "disposition": "replace"
+    },
+    {
+      "suite": "runExtendedTests07",
+      "oldId": "AUDIT MARKDOWN readable code initial data and material manifest",
+      "source": "audit/suites/runExtendedTests07.js",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "originalSource": "    await test('MARKDOWN readable code initial data and material manifest', async () => {\n      const p = make(say('\\u300c\\u4fdd\\u5b58\\u8a66\\u9a13\\u300d')),\n        s = A.serializeProject(p);\n      ok(s.startsWith('# '));\n      for (const part of [p.scripts[0].source, N, L, 'SHA-256', 'AKARI09-DATA-BEGIN'])\n        ok(s.includes(part) || (part === 'SHA-256' && !p.sounds.length));\n      const r = await A.parseProjectFile(s);\n      eq(r.project, p);\n    });",
+      "originalSourceSha256": "6e65ad060505d05df17bdd98770b356c5ffc9394636e1c25444de3c21c005b2f",
+      "replacementIds": [
+        "AUDIT MARKDOWN10 readable code initial data and material manifest"
+      ],
+      "reason": "Use current format marker; preserve readable source, data, materials and exact roundtrip.",
+      "retainedGuarantees": "Use current format marker; preserve readable source, data, materials and exact roundtrip.",
+      "oldGuarantee": "Preserve readable source/data/material manifest and valid roundtrip; replace the literal AKARI09 output marker assertion by the phase-3 1.0.0 format contract.",
+      "disposition": "replace"
+    }
+  ],
+  "addedTests": [
+    {
+      "suite": "runProductVersion09Tests",
+      "id": "A10-PROJECT-MARKER-BOUNDARIES",
+      "guarantee": "Current marker-like strings remain ordinary body data and malformed current envelopes are rejected."
+    }
+  ],
+  "language": [
+    {
+      "oldId": "A09-SURFACE-NEG-032",
+      "newId": "A10-INLINE-REPLACES-A09-SURFACE-NEG-032",
+      "source": "もし 真なら、何もしない",
+      "sourceFile": "audit/suites/language-forms.js",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "oldGuarantee": "Reject inline form in phase 2",
+      "reason": "Phase 3 explicitly introduces exactly one non-block statement after the protected comma; preserve all other negatives and stable numbering.",
+      "retainedGuarantee": "Unrelated malformed syntax and indented-body constraints remain rejected."
+    },
+    {
+      "oldId": "A09-SURFACE-NEG-033",
+      "newId": "A10-INLINE-REPLACES-A09-SURFACE-NEG-033",
+      "source": "もし 真なら\n  何もしない\nでなければ、何もしない",
+      "sourceFile": "audit/suites/language-forms.js",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "oldGuarantee": "Reject inline form in phase 2",
+      "reason": "Phase 3 explicitly introduces exactly one non-block statement after the protected comma; preserve all other negatives and stable numbering.",
+      "retainedGuarantee": "Unrelated malformed syntax and indented-body constraints remain rejected."
+    }
+  ],
+  "browser": [
+    {
+      "oldId": "browser-storage-media:old-future-mismatch-and-corrupt-file-rejection",
+      "newId": "browser-storage-media:format3-malformed-mismatch-and-state-protection",
+      "source": "audit/browser/legacy/browser-storage-media.cjs",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "originalSource": "await run('old-future-mismatch-and-corrupt-file-rejection',async()=>{await (await reveal09(p.locator('#editorModecode09'))).click();await (await reveal09(p.locator('#codeEditor'))).fill('点数を71にする。');await p.waitForTimeout(350);await (await reveal09(p.locator('#editorModeblocks09'))).click();const before=await state(),original=L.read(saved);const files=[['old08',original.replaceAll('AKARI09-DATA','AKARI08-DATA').replaceAll('\"0.9\"','\"0.8\"')],['old07',original.replaceAll('AKARI09-DATA','AKARI07-DATA').replaceAll('\"0.9\"','\"0.7\"')],['future',original.replaceAll('\"0.9\"','\"0.10\"')],['mismatch',original.replace('\"languageVersion\": \"0.9\"','\"languageVersion\": \"0.8\"')],['body-tamper',original.replace('# あかり 0.9 の作品','# 改変')],['corrupt-payload',original.replace('\"schema\": \"akari-project\"','\"schema\": BAD')]],evidence=[];\n const codes={old08:'F502',old07:'F502',future:'F501',mismatch:'F501','body-tamper':'F512','corrupt-payload':'F502'};for(const[id,text]of files){const file=L.path.join(dir,id+'.akari.md');L.fs.writeFileSync(file,text);const logs=await p.locator('#console').textContent();await p.locator('#fileInput').setInputFiles(file);await waitForConsoleAppend(logs,codes[id]);await p.waitForFunction(()=>Akari09.app.editorState09.state==='DESIGN');assert.deepEqual(await state(),before,id);const current=await p.locator('#console').textContent(),diagnostic=current.startsWith(logs)?current.slice(logs.length):current;assert.ok(diagnostic.includes(codes[id]),id+' missing '+codes[id]);evidence.push({id,code:codes[id],diagnostic:diagnostic.slice(-220)});}return{cases:evidence,projectSourceHistoryRedoDirtyPreserved:true};});",
+      "reason": "Withdraw enumerated old releases only; preserve mismatch F512, malformed JSON, metadata structure and exact project/source/history/redo/dirty state after failure.",
+      "originalSourceSha256": "7fb3976ec9e2b98ee8723fdb156de5e67165dc8e4efeb1fa42b7dadd38285142"
+    },
+    {
+      "oldId": "browser-storage-media:invalid-syntax-save-and-09-storage-isolation",
+      "newId": "browser-storage-media:invalid-syntax-save-and-format3-storage-isolation",
+      "source": "audit/browser/legacy/browser-storage-media.cjs",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "originalSource": "await run('invalid-syntax-save-and-09-storage-isolation',async()=>{await (await reveal09(p.locator('#editorModecode09'))).click();await (await reveal09(p.locator('#codeEditor'))).fill('もし');await p.waitForTimeout(350);const before=await getProject(),pending=p.waitForEvent('download');await (await reveal09(p.locator('#saveBtn'))).click();const d=await pending,file=L.path.join(dir,'invalid-source.akari.md');await d.saveAs(file);assert.equal(await p.evaluate(t=>Akari09.parseProjectFile(t).then(x=>x.project.scripts.find(s=>s.targetId==='stage'&&s.event==='start').source),L.read(file)),'もし');await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));const calls=await p.evaluate(()=>__storageCalls);assert.ok(calls.some(x=>String(x[1]).includes('09')||String(x[1]).includes('v09')));assert.ok(calls.every(x=>!/(?:08|07|v08|v07)/.test(String(x[1]))));await p.reload();await p.locator('#recoveryModal.show').waitFor();await (await reveal09(p.locator('#recoveryRestore'))).click();assert.deepEqual(await getProject(),before);assert.equal(await p.locator('#codeEditor').inputValue(),'もし');return{invalidSyntaxSavedAndRestored:true,calls};});",
+      "reason": "Preserve invalid-source download and autosave restoration, replace historical version-key exclusions with exact canonical format3 storage namespace.",
+      "originalSourceSha256": "3ef85fa79487228f2ba8841c3eb95365acec4ad4069ca4cd963e353f72428217"
+    },
+    {
+      "oldId": "browser-storage-media:media-editor-run-and-save-roundtrip",
+      "newId": "browser-storage-media:media-editor-run-and-save-roundtrip",
+      "source": "audit/browser/legacy/browser-storage-media.cjs",
+      "sourceCommit": "77c479425253aad5385095f7a4dd24a96414612c",
+      "originalSource": "await run('media-editor-run-and-save-roundtrip',async()=>{await (await reveal09(p.locator('#objectSelect'))).selectOption('stage');await (await reveal09(p.locator('#eventSelect'))).selectOption('start');source='背景を「picture」にする。\\n「tone」を鳴らし、終わるまで待つ。\\n「silence」を鳴らし、終わるまで待つ。\\n「素材完了」と言う。';await (await reveal09(p.locator('#codeEditor'))).fill(source);await p.waitForTimeout(350);const compile=await p.evaluate(()=>Akari09.app.compile().errors);assert.deepEqual(compile,[]);await (await reveal09(p.locator('#editorModeblocks09'))).click();const runConsole=await p.locator('#console').textContent();await (await reveal09(p.locator('#runBtn'))).click();await waitForConsoleAppend(runConsole,'素材完了');await (await reveal09(p.locator('#stopBtn'))).click();projectBefore=await getProject();const pending=p.waitForEvent('download');await (await reveal09(p.locator('#saveBtn'))).click();const download=await pending;saved=L.path.join(dir,'media-saved.akari.md');await download.saveAs(saved);const text=L.read(saved);assert.ok(text.includes('AKARI09-DATA-BEGIN'));assert.ok(!text.includes('blockView'));const loaded=await p.evaluate(t=>Akari09.parseProjectFile(t).then(x=>({project:x.project,assets:[...x.assetStore.snapshotRefs().values()].map(a=>({id:a.id,sha256:a.sha256,byteLength:a.byteLength}))})),text);assert.deepEqual(loaded.project,projectBefore);assert.deepEqual(loaded.assets.sort((a,b)=>a.id.localeCompare(b.id)),assetsBefore.map(a=>({id:a.id,sha256:a.sha256,byteLength:a.byteLength})).sort((a,b)=>a.id.localeCompare(b.id)));await (await reveal09(p.locator('#newBtn'))).click();await p.locator('#fileInput').setInputFiles(saved);await p.waitForFunction(()=>Akari09.app.project.sounds.length===2);assert.deepEqual(await getProject(),projectBefore);return{source,saveBytes:L.fs.statSync(saved).size,download:download.suggestedFilename(),sourceOnly:true,projectAndAssetBytesPreserved:true};});",
+      "reason": "Same full quality guarantee and ID: change only the exact current marker, preserving actual media bytes, project roundtrip and history.",
+      "originalSourceSha256": "3abf6a3f6f59b24edd7af7c1f2b737e6a208061b48ed64027fd557a21fd4cfc3"
+    },
+    {
+      "oldId": "browser-asset-limits:imageAssets/audioAssets/assets/imageBytes/audioBytes/assetRawTotal/sounds",
+      "newId": "browser-asset-limits:imageAssets/audioAssets/assets/imageBytes/audioBytes/assetRawTotal/sounds",
+      "source": "audit/browser/legacy/browser-asset-limits.cjs",
+      "sourceCommit": "c2c320e7f6d733e7c64aed2eac8d5f497606baea",
+      "originalSource": "function fixture(name,assets,{sounds=null}={}){const project=JSON.parse(JSON.stringify(A.makeDefaultProject())),allAssets=[...builtinAssets(),...assets];project.name='素材境界-'+name;project.scripts=[];project.stage.backdrops=[project.stage.backdrops[0],...assets.filter(a=>a.kind==='image').map((a,i)=>({id:'backdrop-limit-'+i,name:'画像'+i,kind:'image',assetId:a.id,fit:'contain',fill:'#ffffff'}))];project.sounds=assets.filter(a=>a.kind==='audio').map((a,i)=>({id:'sound-limit-'+i,name:'音'+i,assetId:a.id}));if(sounds!==null)project.sounds=Array.from({length:sounds},(_,i)=>({id:'sound-limit-'+i,name:'音'+i,assetId:assets.find(a=>a.kind==='audio').id}));const root={...project,assets:allAssets.map(({bytes,...a})=>({...a,dataBase64:Buffer.from(bytes).toString('base64')}))},text=A.fixtureMarkdown(root)+'<!-- AKARI09-DATA-BEGIN -->\\n```json\\n'+JSON.stringify(root,null,2)+'\\n```\\n<!-- AKARI09-DATA-END -->\\n',file=L.path.join(fixtureDir,name+'.akari.md');L.fs.writeFileSync(file,text);return{file,project,rawBytes:allAssets.reduce((n,a)=>n+a.byteLength,0),assetCount:allAssets.length};}\r",
+      "reason": "Same seven boundary guarantees and IDs: update only the independent fixture envelope to canonical format3 so valid near-limit files reach decoding and boundary assertions. No limits, counts, malformed cases or expected state protections change.",
+      "failureEvidence": "c2c320e actual-browser asset-limit load timeouts; old envelope markers prevented entry into the intended assertions.",
+      "originalSourceSha256": "120c034a6d9b526387ec49f094327f7d130fa7b679a4629a15fabbb3b3a102b1",
+      "sourceTransport": "Original quotation retains a trailing CR from the Windows checkout; historical source comparison normalizes CRLF/CR to LF and trims only trailing whitespace."
+    }
+  ],
+  "workflow": {
+    "source": ".github/workflows/akari-audit.yml",
+    "oldGuarantee": "Exact product/runtime/language0.9 and project/program format2 markers",
+    "newGuarantee": "Exact product/runtime/language1.0.0 and project/program format3 markers",
+    "fixed08": "Unchanged fixture, runner, capability matching and aggregation"
+  },
+  "runtime": {
+    "oldGuarantee": "Phase2 entire runtime and EXECUTABLE_VERSION unchanged from HA",
+    "newGuarantee": "Whole runtime equality after reversing only the explicit metadata and diagnostic-location additions",
+    "validator": "audit/lib/completed-runtime-contract.mjs"
+  }
+}

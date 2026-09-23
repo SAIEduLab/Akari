@@ -1,0 +1,36 @@
+{
+  "status": "IMPLEMENTED_SPECIFICATION_REPLACEMENT",
+  "baseline": "05789beae52221fb8aa259f1de0f778c236afbf9",
+  "entries": [
+    {
+      "key": "indent-reject-12",
+      "oldId": "08 indent reject 12",
+      "oldSuite": "audit/suites/runVersion08Tests.js",
+      "oldSource": "点数が10以上なら\n  何もしない",
+      "oldGuarantee": "Reject the entire syntax tree at line 1, even with a nonempty indented body.",
+      "oldResult": "P201 at line 1",
+      "newJpf": [
+        "JPF-004",
+        "JPF-005"
+      ],
+      "newRule": "An omitted-if condition ending in なら or ならば, optionally followed by one comma, must have a nonempty indented body. No inline statement is introduced in phase 2.",
+      "newGuarantee": "The condition and indented body form the existing IfStatement, with identical condition evaluation and branch execution. Missing bodies, bad indentation, orphan else and inline forms remain rejected.",
+      "proposal": "Replace the obsolete syntax rejection by new acceptance IDs under the first formal 1.0.0 specification-change instruction. The original stable ID is retired, never reused.",
+      "testCoverage": "Finite JPF-004 cases with transition=indent-reject-12; body/indentation/orphan/inline negative cases; canonical AST, execution, conditions and punctuation tests. Editing and save compatibility remain phase 3.",
+      "fixed08": "Fixture, hash, sourceCommit and embedded comparison runner unchanged and required until 1.0.0 completion. The retired current-suite rejection is not referenced by the fixed-0.8 capability ledger; its 122 capability entries and required test IDs remain checked.",
+      "authorization": "User first formal 1.0.0 specification change and subsequent correction: retain JPF-001–042, withdraw 0.9 work compatibility, retain fixed-0.8 quality/capability comparison through completion. Replace this conflicting syntax rejection with explicit new JPF guarantees; no runtime capability is removed.",
+      "currentAction": "Retire only 08 indent reject 12 from the current core suite; preserve IDs 0–11 and 13. Test all eight formerly blocked finite forms with new A09-SURFACE IDs and retain body/indentation/inline negative tests.",
+      "replacementIds": [
+        "A09-SURFACE-JPF-004/omitted/なら/short",
+        "A09-SURFACE-JPF-004/omitted/なら/short/period",
+        "A09-SURFACE-JPF-004/omitted/なら/、",
+        "A09-SURFACE-JPF-004/omitted/なら/、/period",
+        "A09-SURFACE-JPF-004/omitted/ならば/short",
+        "A09-SURFACE-JPF-004/omitted/ならば/short/period",
+        "A09-SURFACE-JPF-004/omitted/ならば/、",
+        "A09-SURFACE-JPF-004/omitted/ならば/、/period"
+      ]
+    }
+  ],
+  "historicalScope": "Phase 2 only. Inline-negative statements in this record describe that checkpoint. Current inline acceptance and explicit negative-ID replacements are in phase3-guarantee-transition.json; current semantic review is phase4-semantic-review.md."
+}

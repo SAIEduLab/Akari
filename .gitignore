@@ -1,0 +1,4 @@
+.audit-deps/
+audit-evidence/
+audit/browser/legacy/media/
+__pycache__/
