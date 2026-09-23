@@ -5,7 +5,7 @@
   "inventory": "audit/records/phase4-audit-inventory.json",
   "scope": "Source and contract review only; actual committed HEAD and machine results belong to execution evidence. Re-record only after impact review.",
   "files": {
-    ".github/workflows/akari-audit.yml": "7dc352f5815f3be09ad0e92da7ad37047b4724fac2b406623998570466331583",
+    ".github/workflows/akari-audit.yml": "4941cb2cf60f19810d6eea7fd8109702d8309abfcb0a6c8d6253c012aaa2bb8c",
     ".gitignore": "32331e386bd611cd116750983edb3f4e85749d218b79462b08495b44cb502403",
     "AUDIT.md": "5d9291088c501c0e6c69a6a4b2225c0be9c69b1ab8e58924d5d756b6ce5db2d1",
     "Akari.html": "c10214e6486bd8127f1b1898924e4a37db04a4cb106a1bf30f710146238b02b3",
@@ -169,7 +169,7 @@
     "audit/records/launch-identifier-map.json": "d0dc64f99da28ca8fa7baac90e9af45d22307570cdae31b62d1f1b23beb129bc",
     "audit/records/phase3-guarantee-transition.json": "e69184ac17959241e18a4efddd73af8983b546b6543bcab67b9164d9ec8be0ee",
     "audit/records/phase4-audit-inventory.json": "415bdd233644885a47db09aa36ca62ca4090929b5d9808035ebf982245870115",
-    "audit/records/phase4-semantic-review.md": "49419ddf8bbd443ea5554a7ebe34ad8bf376db4261807eab71293b52cef58c6d",
+    "audit/records/phase4-semantic-review.md": "57714dbcf7a96f7c65755e232a56610f9c9f41ffd44a9ae8e4059c8673c8d3b4",
     "audit/run-editor-surface-tests.mjs": "2c7031580145d7f8d651dab0b6b8015a119227c44231ed57262f0f3f2d83adb1",
     "audit/run-fixed-baseline.mjs": "917c93eaca6b04a0e8233e48219204200e2fc75c1cd45b3747bd008954bb4bbd",
     "audit/run-headless-selftest.mjs": "7f93805ded109ca69ce0ffbfd00fdd220c23e96c16c1ccaa134fbb9ba822626c",
@@ -211,7 +211,7 @@
     "audit/tests/quality-policy-negative.mjs": "c2773d59ea56144cdf279a9e433f459e8651a381cd1f9f58ff4c0a1373c68525",
     "audit/tests/static-contract.py": "d7743c8c5062416595c75f7ed106c4711a42bb57cd692d508b3e06eb58b2eb6a",
     "audit/tests/surface-negative.mjs": "a4a10419c96608701b1d3f7a90cbe261dfc7934375290abc193a0697829ef05d",
-    "audit/tests/workflow-preflight.py": "654cbba20bff3dedb09a6549cbc597150fc872d02906c45562176481d4c6205c",
+    "audit/tests/workflow-preflight.py": "ffac27d5167b96bc4c97bbaa6d8f4d3b319d991b55c010530aeaaf56a83bbbe6",
     "audit/verify-evidence.mjs": "05aacfd87d1d4ac95355f805fcf15a5e498ef875031a25c45d62dfd82b7574df",
     "audit/verify-reviewed-inputs.mjs": "60b595da149c280a58a35c39f0af4803d1830c85facf605bb33b517988aca2f6",
     "index.html": "e027298877b90c9d86cc8752684718813ec5266f1700c9da10fb4d5e95a6716d"

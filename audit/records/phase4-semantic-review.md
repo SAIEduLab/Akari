@@ -386,3 +386,25 @@ line endings; the mode selectors now address the renamed real controls. All 16
 execution-continuity steps, all seven aggregate bundles and all nine GUI cases
 remain required. The original failed reports are retained separately; final
 evidence is regenerated for the corrected committed HEAD.
+
+## New public repository audit provenance
+
+The initial commit of the new public `Akari` repository, `abada1c732150a8ad7e55577567ecdd10ef36f9c`,
+contains the same tracked tree as the completed `Akari2` public main, but no
+earlier Git objects. Its first Actions run (35849183004) therefore could not
+read the fixed completed-release public Git objects. Static and self-test jobs
+failed on missing Git objects; all five browser groups passed. This is an
+audit-host provenance failure, not evidence that the fixed baselines changed.
+
+Each Actions job now clones the public `Akari2` main history into runner temporary
+storage, checks the required public source commits, and exposes its objects through
+`GIT_ALTERNATE_OBJECT_DIRECTORIES`. The new repository's Git database, refs,
+commit graph, tracked fixtures, baseline hashes, assertions, thresholds and
+expected case sets remain unchanged by this mechanism. The historical Git
+objects are not captured in the source snapshot or evidence artifacts. The
+0.8 fixture retains the private sourceCommit and its independently checked Git
+blob hashes; public CI does not fetch the private repository. The
+workflow preflight now requires this isolated provenance step immediately after
+checkout in all four job definitions and rejects its removal. The reviewed-input
+binding is renewed for the workflow, preflight and this review record;
+only a complete audit on the final committed HEAD establishes a new PASS.
