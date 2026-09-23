@@ -16,11 +16,20 @@ File names, runner layout, CI workflow names, and tool choices in this directory
 
 Keep audit implementation, the product snapshot, and `AUDIT.md` bound to the same commit. Public GitHub Actions should execute every applicable GA check and preserve the resulting evidence for that snapshot. This README alone is not an executable audit implementation; missing required runners/tests remain `UNVERIFIED` until implemented and run. Fixed-baseline comparisons must use public, immutable fixtures with source-commit and hash provenance; public CI must not require access to the private repository.
 
+Historical source lookup is self-contained. `fixtures/provenance/public-sources.json`
+and `lib/historical-source.mjs` verify selected source bytes through their original
+commit/tree/blob hashes without fetching the former public repository or importing
+its Git history. Deleting that repository does not invalidate these local proofs.
+See [BASELINE.md](BASELINE.md#self-contained-source-provenance) for the preserved
+sources and integrity checks. The current checkout still supplies its own HEAD and
+tracked-file snapshot; ordinary tool dependencies retain their existing installation steps.
+
 Current core tests run externally against the unmodified product file:
 
 ```sh
 # Install playwright@1.55.0; expose its node_modules through NODE_PATH.
 node audit/tests/externalization-static.mjs
+node audit/tests/historical-source-negative.mjs
 node audit/run-product-tests.mjs "$AKARI_BROWSER" Akari.html audit-evidence/current-selftest.json
 node audit/lib/verify-test-results.mjs audit-evidence/current-selftest.json Akari.html
 node audit/tests/harness-negative.mjs "$AKARI_BROWSER" audit-evidence/current-selftest.json

@@ -387,7 +387,7 @@ execution-continuity steps, all seven aggregate bundles and all nine GUI cases
 remain required. The original failed reports are retained separately; final
 evidence is regenerated for the corrected committed HEAD.
 
-## New public repository audit provenance
+## Initial new public repository repair (superseded)
 
 The initial commit of the new public `Akari` repository, `abada1c732150a8ad7e55577567ecdd10ef36f9c`,
 contains the same tracked tree as the completed `Akari2` public main, but no
@@ -396,15 +396,40 @@ read the fixed completed-release public Git objects. Static and self-test jobs
 failed on missing Git objects; all five browser groups passed. This is an
 audit-host provenance failure, not evidence that the fixed baselines changed.
 
-Each Actions job now clones the public `Akari2` main history into runner temporary
-storage, checks the required public source commits, and exposes its objects through
-`GIT_ALTERNATE_OBJECT_DIRECTORIES`. The new repository's Git database, refs,
-commit graph, tracked fixtures, baseline hashes, assertions, thresholds and
-expected case sets remain unchanged by this mechanism. The historical Git
-objects are not captured in the source snapshot or evidence artifacts. The
-0.8 fixture retains the private sourceCommit and its independently checked Git
-blob hashes; public CI does not fetch the private repository. The
-workflow preflight now requires this isolated provenance step immediately after
-checkout in all four job definitions and rejects its removal. The reviewed-input
-binding is renewed for the workflow, preflight and this review record;
-only a complete audit on the final committed HEAD establishes a new PASS.
+Repair `17171240bfbe3021d6b437322944e23fb74dec8e` used an isolated temporary clone
+of the former public repository. Its Actions run 35852820483 passed all eight
+jobs, but that mechanism required the former repository to remain available.
+The user requires that repository to be removable, so the mechanism is superseded
+by the self-contained source proofs below.
+
+## Self-contained audit provenance
+
+The archive contains 43 public source paths from the five already fixed source
+commits, with their commit headers and only the tree paths needed to prove each
+file's Git identity. Before recording it, every source byte and root tree was
+checked against the pinned public Git objects; the five root tree hashes were
+also confirmed through GitHub's commit API. No current candidate results supply
+historical expectations. Existing 1.0.0 and 0.8 fixtures remain byte-for-byte intact.
+
+The archive digest is fixed in `lib/historical-source.mjs`. Verification recomputes
+Git commit/tree/blob hashes, validates path traversal and complete 0.8 directory
+membership, checks SHA-256 and size, and bounds decompression. Missing or substituted
+sources reject verification. The 31 completed-release source files and five 0.8
+fixture files reuse their existing copies; seven additional historical sources
+support the original guarantee quotations and phase-specific analysis tools.
+Private sourceCommit metadata remains in the original 0.8 fixture. No private
+repository is fetched or copied into this archive.
+
+All historical Git reads now use this verified local archive. Current-candidate
+HEAD and tracked-file operations still use the new repository's own Git database.
+The workflow removes all old-repository clones and alternate object directories;
+preflight rejects their reintroduction and requires the new provenance negative
+gate. Twenty-one corrupt/missing/substituted proof cases and a child process with
+Git unavailable exercise the verification boundary. Product/runtime behavior,
+all existing assertion IDs, fixed hashes, thresholds and expected sets are retained.
+
+The reviewed-input binding must be renewed after this source review. Final local
+and Actions evidence belongs to the final committed HEAD. Historical phase-1
+product-diff and language-inventory tools keep their original scopes; they do not
+claim that the completed product equals a pre-release snapshot. Physical mobile,
+native Japanese IME input, user studies and learning effectiveness remain unverified.

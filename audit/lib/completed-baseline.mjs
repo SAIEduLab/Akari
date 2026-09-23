@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import cp from 'node:child_process';
 import assert from 'node:assert/strict';
 import {currentNames} from './launch-identifiers.cjs';
 import {root,sha} from './product-test-host.mjs';
 import {editorIds,guiIds} from './verify-surface-results.mjs';
 import {expectedLanguageIds} from './verify-language-results.mjs';
+import {readHistoricalSource,gitObjectHash,verifyHistoricalSources} from './historical-source.mjs';
 
 export const completedCommit='2f455619440f5abbfbb564927769c85341f25074';
 export const completedManifestSha256='db939bbcde1c86ae51c39189d05357d27635e405511d667d6b7588b79f74bd63';
@@ -62,10 +62,9 @@ export function verifyCompletedProvenance(){
   assert.deepEqual(aggregate.provenance,{runId:completion.runId,runAttempt:completion.runAttempt});
   assert.equal(completion.verification.aggregateSha256,m.files['evidence/'+aggregateArtifact.name+'/aggregate.json'].sha256);
   const sourceFiles=Object.entries(m.files).filter(([,f])=>f.sourcePath);
-  // Compare archived source bytes with actual immutable public Git objects in one process.
-  const raw=cp.execFileSync('git',['cat-file','--batch'],{cwd:root,input:sourceFiles.map(([,f])=>completedCommit+':'+f.sourcePath+'\n').join(''),maxBuffer:32e6});
-  let offset=0;
-  for(const [p,f] of sourceFiles){const end=raw.indexOf(10,offset),header=raw.subarray(offset,end).toString().split(' ');assert.equal(header[1],'blob');const count=Number(header[2]);const bytes=raw.subarray(end+1,end+1+count);offset=end+count+2;assert.equal(header[0],f.gitBlobSha1,p);assert.equal(sha(bytes),f.sha256,p);assert.equal(aggregate.snapshot.files[f.sourcePath],f.sha256,p);}
+  // The archived commit/tree proofs bind each exact source blob without remote history.
+  const offlineProvenance=verifyHistoricalSources();
+  for(const [p,f] of sourceFiles){const bytes=readHistoricalSource(completedCommit,f.sourcePath);assert.equal(gitObjectHash('blob',bytes),f.gitBlobSha1,p);assert.equal(sha(bytes),f.sha256,p);assert.equal(aggregate.snapshot.files[f.sourcePath],f.sha256,p);}
   let evidenceFiles=0;
   for(const a of artifacts){
     assert.equal(a.expired,false);assert.equal(a.workflow_run.head_sha,completedCommit);assert.match(a.digest,/^sha256:[a-f0-9]{64}$/);
@@ -80,7 +79,7 @@ export function verifyCompletedProvenance(){
   assert.equal(Object.keys(aggregate.snapshot.files).length,125);
   assert.equal(aggregate.coverage.capabilities.length,257);assert.equal(aggregate.coverage.language.length,42);
   assert.equal(aggregate.coverage.phases.length,16);assert.equal(aggregate.coverage.d09.length,28);
-  return {sourceCommit:completedCommit,manifestSha256:completedManifestSha256,productSha256:m.productSha256,contractHashes:m.contractHashes,sourceFiles:sourceFiles.length,originalRun:completion.runId,originalAttempt:completion.runAttempt,inputFiles:125,evidenceFiles};
+  return {sourceCommit:completedCommit,manifestSha256:completedManifestSha256,productSha256:m.productSha256,contractHashes:m.contractHashes,sourceFiles:sourceFiles.length,originalRun:completion.runId,originalAttempt:completion.runAttempt,inputFiles:125,evidenceFiles,offlineProvenance};
 }
 export function verifyFixedCore(report,expectedSnapshot){
   const m=completedManifest(),spec=read(completedFixture+'/source/audit/manifests/product-tests.json');

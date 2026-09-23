@@ -36,16 +36,6 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
-      - name: Read fixed public provenance in runner temporary storage
-        run: |
-          provenance_repo="$RUNNER_TEMP/akari2-provenance.git"
-          git clone --bare --single-branch --branch main https://github.com/SAIEduLab/Akari2.git "$provenance_repo"
-          git --git-dir="$provenance_repo" cat-file -e '2f455619440f5abbfbb564927769c85341f25074^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '77c479425253aad5385095f7a4dd24a96414612c^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e 'c2c320e7f6d733e7c64aed2eac8d5f497606baea^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '41d787b664ed00467bf55881c419ba4f3727add9^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '05789beae52221fb8aa259f1de0f778c236afbf9^{commit}'
-          echo "GIT_ALTERNATE_OBJECT_DIRECTORIES=$provenance_repo/objects" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -80,6 +70,7 @@ jobs:
           python audit/tests/workflow-preflight.py audit-evidence/workflow-preflight.json || status=1
           node audit/tests/evidence-negative.mjs || status=1
           node audit/tests/completed-baseline-negative.mjs || status=1
+          node audit/tests/historical-source-negative.mjs || status=1
           node audit/tests/ci-regression.mjs || status=1
           node audit/tests/execution-continuity.mjs || status=1
           node audit/tests/dom-render-regression.cjs || status=1
@@ -108,16 +99,6 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
-      - name: Read fixed public provenance in runner temporary storage
-        run: |
-          provenance_repo="$RUNNER_TEMP/akari2-provenance.git"
-          git clone --bare --single-branch --branch main https://github.com/SAIEduLab/Akari2.git "$provenance_repo"
-          git --git-dir="$provenance_repo" cat-file -e '2f455619440f5abbfbb564927769c85341f25074^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '77c479425253aad5385095f7a4dd24a96414612c^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e 'c2c320e7f6d733e7c64aed2eac8d5f497606baea^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '41d787b664ed00467bf55881c419ba4f3727add9^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '05789beae52221fb8aa259f1de0f778c236afbf9^{commit}'
-          echo "GIT_ALTERNATE_OBJECT_DIRECTORIES=$provenance_repo/objects" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -168,16 +149,6 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
-      - name: Read fixed public provenance in runner temporary storage
-        run: |
-          provenance_repo="$RUNNER_TEMP/akari2-provenance.git"
-          git clone --bare --single-branch --branch main https://github.com/SAIEduLab/Akari2.git "$provenance_repo"
-          git --git-dir="$provenance_repo" cat-file -e '2f455619440f5abbfbb564927769c85341f25074^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '77c479425253aad5385095f7a4dd24a96414612c^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e 'c2c320e7f6d733e7c64aed2eac8d5f497606baea^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '41d787b664ed00467bf55881c419ba4f3727add9^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '05789beae52221fb8aa259f1de0f778c236afbf9^{commit}'
-          echo "GIT_ALTERNATE_OBJECT_DIRECTORIES=$provenance_repo/objects" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -227,16 +198,6 @@ jobs:
         with:
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
-      - name: Read fixed public provenance in runner temporary storage
-        run: |
-          provenance_repo="$RUNNER_TEMP/akari2-provenance.git"
-          git clone --bare --single-branch --branch main https://github.com/SAIEduLab/Akari2.git "$provenance_repo"
-          git --git-dir="$provenance_repo" cat-file -e '2f455619440f5abbfbb564927769c85341f25074^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '77c479425253aad5385095f7a4dd24a96414612c^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e 'c2c320e7f6d733e7c64aed2eac8d5f497606baea^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '41d787b664ed00467bf55881c419ba4f3727add9^{commit}'
-          git --git-dir="$provenance_repo" cat-file -e '05789beae52221fb8aa259f1de0f778c236afbf9^{commit}'
-          echo "GIT_ALTERNATE_OBJECT_DIRECTORIES=$provenance_repo/objects" >> "$GITHUB_ENV"
       - uses: actions/setup-node@v4
         with:
           node-version: '24'

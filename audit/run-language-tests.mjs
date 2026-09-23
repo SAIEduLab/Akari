@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
-import cp from 'node:child_process';
 import assert from 'node:assert/strict';
 import {loadApi} from './browser/legacy/audit-lib.cjs';
 import {finiteCases} from './fixtures/language/forms.mjs';
 import {inlineCases,inlineNegative} from './fixtures/language/inline.mjs';
 import {snapshot,sha,withBrowser,pageFor} from './lib/product-test-host.mjs';
 import {expectedLanguageIds,verifyLanguageResults} from './lib/verify-language-results.mjs';
+import {readHistoricalSource} from './lib/historical-source.mjs';
 const product='Akari.html', browser=process.argv[2], nodeOnly=browser==='--node';
 const output=process.argv[3] || `audit-evidence/phase3/language-${nodeOnly?'node':'browser'}.json`;
 if(fs.existsSync(output))throw Error('Evidence already exists: '+output);
@@ -15,7 +15,7 @@ const manifest=JSON.parse(fs.readFileSync('audit/manifests/language-form-coverag
 assert.equal(manifest.cases.length,256);
 assert.deepEqual(manifest.cases.map(({id,key,source,canonical,phase,transition})=>({id,key,source,canonical,phase,transition})),finiteCases.map(({id,key,source,canonical,phase,transition})=>({id,key,source,canonical,phase,transition})));
 assert.equal(new Set(manifest.cases.map(c=>c.id+'/'+c.key)).size,256);
-const baseBytes=cp.execFileSync('git',['show',manifest.baseline+':Akari.html'],{maxBuffer:4e6});
+const baseBytes=readHistoricalSource(manifest.baseline,'Akari.html');
 assert.equal(sha(baseBytes),manifest.productSha256);
 const base=loadApi(baseBytes.toString('utf8')), api=loadApi(fs.readFileSync(product,'utf8'));
 const suite=fs.readFileSync('audit/suites/language-forms.js','utf8');

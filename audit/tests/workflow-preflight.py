@@ -4,13 +4,6 @@ import yaml
 
 workflow = Path('.github/workflows/akari-audit.yml')
 document = yaml.load(workflow.read_text(encoding='utf-8'), Loader=yaml.BaseLoader)
-public_provenance = (
-    '2f455619440f5abbfbb564927769c85341f25074',
-    '77c479425253aad5385095f7a4dd24a96414612c',
-    'c2c320e7f6d733e7c64aed2eac8d5f497606baea',
-    '41d787b664ed00467bf55881c419ba4f3727add9',
-    '05789beae52221fb8aa259f1de0f778c236afbf9',
-)
 
 def verify(doc):
     assert 'Akari_1_0_0' in doc['on']['push']['branches'], 'candidate push trigger'
@@ -18,6 +11,9 @@ def verify(doc):
     assert 'fixed-1.0.0' in doc['jobs']['selftest']['name'], 'completed checkpoint job label'
     static_scripts = '\n'.join(s.get('run', '') for s in doc['jobs']['static']['steps'])
     assert 'node audit/tests/completed-baseline-negative.mjs || status=1' in static_scripts, 'completed baseline negative gate'
+    assert 'node audit/tests/historical-source-negative.mjs || status=1' in static_scripts, 'offline provenance negative gate'
+    assert 'GIT_ALTERNATE_OBJECT_DIRECTORIES' not in str(doc), 'external Git object dependency'
+    assert 'Akari2' not in str(doc), 'old repository dependency'
     for event in ['push', 'pull_request']:
         assert 'index.html' in doc['on'][event]['paths'], 'public entrance must trigger audit'
     assert set(doc['jobs']) == {'static', 'selftest', 'full-browser-gate', 'aggregate'}
@@ -42,13 +38,9 @@ def verify(doc):
         assert len(checkout) == 1 and checkout[0]['with']['fetch-depth'] == '0'
         assert checkout[0]['with']['ref'] == "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
         assert job['steps'][0] is checkout[0], name + ': checkout must be first'
-        provenance = job['steps'][1].get('run', '')
-        assert 'git clone --bare --single-branch --branch main https://github.com/SAIEduLab/Akari2.git' in provenance, name + ': missing public provenance clone'
-        assert 'GIT_ALTERNATE_OBJECT_DIRECTORIES=$provenance_repo/objects' in provenance, name + ': missing isolated Git objects'
-        assert 'Akari-dev' not in provenance, name + ': private source must not be fetched'
-        for commit in public_provenance:
-            assert "cat-file -e '" + commit + "^{commit}'" in provenance, name + ': missing fixed public commit ' + commit
+        assert 'repository' not in checkout[0]['with'], name + ': checkout must use this repository'
         scripts = '\n'.join(s.get('run', '') for s in job['steps'])
+        assert not re.search(r'\bgit\s+(?:clone|fetch|pull)\b', scripts), name + ': external Git fetch is unnecessary'
         for command in expected[name]:
             assert command in scripts, name + ': missing runner/validator ' + command
         for ref in re.findall(r'(audit/[A-Za-z0-9_./-]+\.(?:mjs|cjs|py))', scripts):
@@ -107,8 +99,12 @@ bad_checkpoint_name = copy.deepcopy(document); bad_checkpoint_name['jobs']['self
 bad_checkpoint_gate = copy.deepcopy(document)
 for step in bad_checkpoint_gate['jobs']['static']['steps']:
     step['run'] = step.get('run', '').replace('node audit/tests/completed-baseline-negative.mjs || status=1', '')
-bad_provenance = copy.deepcopy(document); bad_provenance['jobs']['static']['steps'].pop(1)
-for invalid in [bad_checkpoint_trigger, bad_checkpoint_name, bad_checkpoint_gate, bad_display, bad, bad_dependency, bad_retention, bad_validator, bad_hidden, bad_browser, bad_probe, bad_skips, bad_early, bad_provenance]:
+bad_provenance = copy.deepcopy(document); bad_provenance['jobs']['static']['steps'].insert(1, {'run': 'git clone https://example.invalid/old.git old'})
+bad_alternates = copy.deepcopy(document); bad_alternates['env'] = {'GIT_ALTERNATE_OBJECT_DIRECTORIES': '/external/objects'}
+bad_archive_gate = copy.deepcopy(document)
+for step in bad_archive_gate['jobs']['static']['steps']:
+    step['run'] = step.get('run', '').replace('node audit/tests/historical-source-negative.mjs || status=1', '')
+for invalid in [bad_checkpoint_trigger, bad_checkpoint_name, bad_checkpoint_gate, bad_display, bad, bad_dependency, bad_retention, bad_validator, bad_hidden, bad_browser, bad_probe, bad_skips, bad_early, bad_provenance, bad_alternates, bad_archive_gate]:
     try:
         verify(invalid)
     except AssertionError:
@@ -140,5 +136,5 @@ output = Path(sys.argv[1])
 assert not output.exists(), 'new evidence path required'
 output.parent.mkdir(parents=True, exist_ok=True)
 output.write_text(json.dumps({'status': 'PASS', 'workflowSha256': hashlib.sha256(workflow.read_bytes()).hexdigest(),
-    'jobs': list(document['jobs']), 'browserTasks': 27, 'negativeCases': 14, 'syntaxChecked': checked}, indent=2) + '\n', encoding='utf-8')
-print('Workflow preflight: PASS; 14 negative cases; 27 browser tasks; ' + str(len(checked)) + ' JavaScript files')
+    'jobs': list(document['jobs']), 'browserTasks': 27, 'negativeCases': 16, 'syntaxChecked': checked}, indent=2) + '\n', encoding='utf-8')
+print('Workflow preflight: PASS; 16 negative cases; 27 browser tasks; ' + str(len(checked)) + ' JavaScript files')

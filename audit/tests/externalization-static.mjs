@@ -6,6 +6,7 @@ import {sha} from '../lib/product-test-host.mjs';
 import {verifyAuthority} from '../lib/verify-test-results.mjs';
 import {currentNames} from '../lib/launch-identifiers.cjs';
 import {verifyCompletedProvenance} from '../lib/completed-baseline.mjs';
+import {readHistoricalSource,historicalPaths} from '../lib/historical-source.mjs';
 const map=JSON.parse(fs.readFileSync('audit/manifests/externalization-map.json'));
 const manifest=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
 const policy=JSON.parse(fs.readFileSync('audit/manifests/quality-1.0.0.json'));
@@ -44,12 +45,14 @@ for(const [name,meta] of Object.entries(fixture.files)){
  assert.ok(local.equals(canonical)||local.equals(Buffer.from(canonical.toString('utf8').replace(/\n/g,'\r\n'))),'fixture differs beyond Git checkout EOL conversion');
  fixed.push({name,canonicalBytes:canonical.length,gitBlobSha1:blob,executedWorktreeBytes:local.length,worktreeSha256:sha(local)});
 }
-assert.equal(cp.execFileSync('git',['diff','--name-only',map.sourceCommit,'--','audit/fixtures/0.8'],{encoding:'utf8'}).trim(),'');
+const historicalFixturePaths=historicalPaths(map.sourceCommit,'audit/fixtures/0.8');
+assert.deepEqual(fs.readdirSync('audit/fixtures/0.8').map(p=>'audit/fixtures/0.8/'+p).sort(),historicalFixturePaths,'historical fixture file set changed');
+for(const p of historicalFixturePaths)assert.equal(sha(Buffer.from(fs.readFileSync(p,'utf8').replace(/\r\n/g,'\n'))),sha(readHistoricalSource(map.sourceCommit,p)),'historical fixture changed: '+p);
 // Reviewable withdrawal provenance must refer to actual historical source, not
 // just a self-consistent quote/hash pair in the current record.
 const transition=JSON.parse(fs.readFileSync('audit/records/phase3-guarantee-transition.json'));
 for(const entry of [...transition.entries,...transition.browser]){
-  const historical=cp.execFileSync('git',['show',entry.sourceCommit+':'+entry.source],{maxBuffer:8e6}).toString('utf8').replace(/\r\n?/g,'\n');
+  const historical=readHistoricalSource(entry.sourceCommit,entry.source).toString('utf8').replace(/\r\n?/g,'\n');
   assert.equal(sha(entry.originalSource),entry.originalSourceSha256,'historical quotation digest');
   assert.ok(historical.includes(entry.originalSource.replace(/\r\n?/g,'\n').trimEnd()),'quotation is absent from historical source: '+entry.oldId);
 }

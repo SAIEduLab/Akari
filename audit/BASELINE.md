@@ -1,6 +1,6 @@
 # Completed 1.0.0 comparison checkpoint
 
-The active non-regression source is public `SAIEduLab/Akari` commit
+The active non-regression source is historical public `SAIEduLab/Akari` commit
 `2f455619440f5abbfbb564927769c85341f25074` (the merged 1.0.0 release).
 It is immutable. Neither a floating branch nor the current candidate supplies
 expected values. Product version 1.0.0, internal design document version 2.1,
@@ -19,14 +19,33 @@ capability/test mappings and historical guarantee ledger are retained under
 the frozen contract records the completed source and is never substituted for
 the current contract. Windows checkout CRLF conversion is allowed only as that
 exact text conversion for immutable fixture hashes; execution snapshots record
-the actual bytes used. Source provenance is also checked against the public Git
-objects at the exact commit.
+the actual bytes used. Source provenance is checked offline through the archived
+commit, tree-path and blob hashes at the exact commit.
+
+## Self-contained source provenance
+
+`fixtures/provenance/public-sources.json` retains 43 selected public source paths
+from five fixed commits. `lib/historical-source.mjs` pins its SHA-256, recomputes
+the original Git commit and tree hashes, follows each source path, and verifies
+both the resulting Git blob identity and the source SHA-256. The 31 completed
+source files and five historical 0.8 fixture files reuse their existing immutable
+copies; seven other historical sources are stored as bounded compressed bytes.
+The complete 0.8 directory file set is also checked against its public source tree.
+
+Only the selected commit headers and required tree-path proofs are retained as
+audit data. No old refs, ancestor history or Git database is imported. Runners
+read the verified bytes locally, including language/performance comparisons and
+historical guarantee quotations. The old repository can be deleted without
+affecting these checks. Git is still used for the current candidate's own HEAD
+and tracked-file snapshot. Workflow preflight rejects external Git retrieval and
+alternate object directories; provenance negatives exercise corrupt, missing and
+substituted records and verify the complete release provenance with Git unavailable.
 
 ## Completion evidence and its limits
 
 The user authorized this switch after the release completion decision and merge
-of [PR #2](https://github.com/SAIEduLab/Akari/pull/2). The merge commit itself has
-[Actions run 35816378510, attempt 1](https://github.com/SAIEduLab/Akari/actions/runs/35816378510):
+of historical public PR #2. The merge commit itself was validated by
+Actions run `35816378510`, attempt 1:
 all eight jobs succeeded. Before freezing the checkpoint, all eight downloaded
 ZIP digests, 125 source input hashes, seven sealed bundles, 1,793 evidence-file
 hashes, independent validators and aggregate results were checked. The aggregate
@@ -40,6 +59,8 @@ are not all vendored and the original Actions artifacts expire after three days.
 The retained reports are historical evidence for this source only, never proof
 that a future candidate executed successfully. The frozen semantic review and
 explicit completion authorization remain distinct from MACHINE_PASS.
+URLs in the frozen records identify the original repository and run; verification
+uses the retained evidence and offline source proofs rather than those endpoints.
 
 ## Required comparison
 

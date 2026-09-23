@@ -1,10 +1,10 @@
 import fs from 'node:fs';
-import cp from 'node:child_process';
 import assert from 'node:assert/strict';
 import {loadApi, sha} from '../browser/legacy/audit-lib.cjs';
 import {finiteCases} from '../fixtures/language/forms.mjs';
+import {readHistoricalSource} from '../lib/historical-source.mjs';
 const baseline = '05789beae52221fb8aa259f1de0f778c236afbf9';
-const html = cp.execFileSync('git', ['show', baseline + ':Akari.html'], {maxBuffer: 4e6}).toString('utf8');
+const html = readHistoricalSource(baseline,'Akari.html').toString('utf8');
 const api = loadApi(html);
 const semantic = value => JSON.parse(JSON.stringify(value, (k,v) => ['source','sourceSpan','endLine','raw'].includes(k) ? undefined : v));
 const rows = finiteCases.map(c => {

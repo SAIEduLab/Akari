@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
-import cp from 'node:child_process';
 import {sha} from '../lib/product-test-host.mjs';
+import {readHistoricalSource} from '../lib/historical-source.mjs';
 const map=JSON.parse(fs.readFileSync('audit/manifests/externalization-map.json'));
-const original=cp.execFileSync('git',['show',map.sourceCommit+':Akari.html'],{encoding:'utf8',maxBuffer:8*1024*1024});
+const original=readHistoricalSource(map.sourceCommit,'Akari.html').toString('utf8');
 const candidate=fs.readFileSync('Akari.html','utf8').replace(/\r\n/g,'\n');
 let expected=original;
 const start=expected.indexOf('  async function runExtendedTests07()'),end=expected.indexOf('  // ─────',expected.indexOf('  async function runReleaseTests()'));
