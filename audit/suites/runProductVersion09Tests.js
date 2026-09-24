@@ -23,7 +23,7 @@ async function runProductVersion09Tests() {
       };
     await test('A10-VERSION-CONTRACT', async () => {
       const expected = {
-        appVersion: '1.0.0',
+        appVersion: '1.0.1',
         runtimeVersion: '1.0.0',
         languageVersion: '1.0.0',
         programFormatVersion: 3,
@@ -34,7 +34,7 @@ async function runProductVersion09Tests() {
       const p = makeDefaultProject(),
         text = serializeProject(p, new AssetStore());
       if (
-        !text.startsWith('# あかり 1.0.0 の作品') ||
+        !text.startsWith('# あかり 1.0.1 の作品') ||
         !text.includes('<!-- AKARI-PROJECT-F3-DATA-BEGIN -->') ||
         !text.includes('<!-- AKARI-PROJECT-F3-DATA-END -->')
       )

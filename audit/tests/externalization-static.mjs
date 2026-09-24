@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import {sha} from '../lib/product-test-host.mjs';
 import {verifyAuthority} from '../lib/verify-test-results.mjs';
 import {currentNames} from '../lib/launch-identifiers.cjs';
+import {release101Assertions} from '../lib/release-101-contract.mjs';
 import {verifyCompletedProvenance} from '../lib/completed-baseline.mjs';
 import {readHistoricalSource,historicalPaths} from '../lib/historical-source.mjs';
 const map=JSON.parse(fs.readFileSync('audit/manifests/externalization-map.json'));
@@ -31,7 +32,7 @@ for(const entry of map.entries){
  const approved=policy.overrides.find(e=>e.suite===entry.symbol);
  const frozen=fs.readFileSync('audit/fixtures/1.0.0/source/'+entry.destination,'utf8').replace(/\r\n/g,'\n').trimEnd();
  assert.equal(sha(frozen),approved?.bodySha256||entry.bodySha256,'Frozen suite authority changed: '+entry.symbol);
- assert.equal(source,currentNames(frozen),'Assertion changed beyond identifier correspondence: '+entry.symbol);
+ assert.equal(source,release101Assertions(entry.destination,currentNames(frozen)),'Assertion changed beyond recorded identifiers and 1.0.1 metadata: '+entry.symbol);
  if(!process.argv.includes('--parallel'))assert.ok(!html.includes(entry.symbol),'Embedded audit remains '+entry.symbol);
 }
 if(!process.argv.includes('--parallel'))for(const token of ['selfTestReport','data-selftest-failed',"searchParams.get('selftest')"])assert.ok(!html.includes(token),'audit entry/output remains');

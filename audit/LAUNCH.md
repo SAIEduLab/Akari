@@ -1,7 +1,7 @@
 # Initial public release: 1.0.0
 
-Akari's initial public release is 1.0.0. The current product and user documents
-describe that release directly. Project and executable format 3 are independent
+Akari's initial public release is 1.0.0. The current candidate is product 1.0.1;
+language and runtime remain 1.0.0. Project and executable format 3 are independent
 data-structure identifiers; their values and validation remain unchanged.
 
 The product's implementation identifiers, DOM IDs, CSS classes and data
@@ -21,7 +21,11 @@ its exported property references after execution; the browser fixed-release
 runner uses its own frozen bindings and suites. No adapter is shipped in the
 product. `completed-runtime-contract.mjs` compares the entire runtime against
 the completed 1.0.0 source using only the recorded identifier correspondence.
-It does not reverse version constants or diagnostics to a development snapshot.
+For 1.0.1 it also permits exactly the product appVersion metadata change.
+`release-101-contract.mjs` records three exact version expectations in two
+current suites. The full frozen assertions are otherwise preserved, and the
+frozen suites still execute unchanged against the frozen product. Fifteen new
+real-browser feature cases and report-validator negatives are added to the gate.
 
 The immutable fixtures, completion evidence, source commit and hashes described
 in [BASELINE.md](BASELINE.md) remain intact. Historical quotations and provenance

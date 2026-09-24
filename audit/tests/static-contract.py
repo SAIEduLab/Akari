@@ -100,7 +100,7 @@ if "audit-inventory:" in html or "D09-AUDIT-REQUIREMENTS" in html:
 if any(x in html for x in ["runReleaseTests", "selfTestReport", "data-selftest-failed"]):
     raise SystemExit("embedded audit remains in product")
 for needle in [
-    "appVersion: '1.0.0'", "runtimeVersion: '1.0.0'",
+    "appVersion: '1.0.1'", "runtimeVersion: '1.0.0'",
     "languageVersion: '1.0.0'", "programFormatVersion: 3",
     "projectFormatVersion: 3",
 ]:

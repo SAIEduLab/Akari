@@ -57,7 +57,7 @@ if(process.argv[2]==='--worker') {
   assert.deepEqual([...Object.keys(api)], [...Object.keys(base)],'public API changed');
   verifyCompletedRuntime(api.createAkariRuntime.toString(),base.createAkariRuntime.toString());
   for(const key of ['COMMAND_CATALOG','LIMITS']) assert.equal(JSON.stringify(api[key]),JSON.stringify(base[key]),key);
-  assert.equal(JSON.stringify(api.EXECUTABLE_VERSION),JSON.stringify({appVersion:'1.0.0',runtimeVersion:'1.0.0',languageVersion:'1.0.0',programFormatVersion:3,projectFormatVersion:3}));
+  assert.equal(JSON.stringify(api.EXECUTABLE_VERSION),JSON.stringify({appVersion:'1.0.1',runtimeVersion:'1.0.0',languageVersion:'1.0.0',programFormatVersion:3,projectFormatVersion:3}));
   assert.equal(JSON.stringify(api.BLOCK_SCHEMAS.map(s=>s.id)),JSON.stringify(base.BLOCK_SCHEMAS.map(s=>s.id)));
   assert.deepEqual(snapshot('Akari.html'),before);
   const output=process.argv[2]||'audit-evidence/phase3/language-boundaries.json';

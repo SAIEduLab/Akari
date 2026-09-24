@@ -59,6 +59,14 @@ Use a fresh evidence directory per candidate/run; the full-browser runner refuse
 
 ## Current complete gate
 
+Product 1.0.1 adds 15 real-browser cases for component duplication, paint tools,
+transparent cropping/padding, history, failure/cancel protection, touch/layout,
+save/reload/export and validated 1.0.0 project import. Run
+`node audit/tests/editor-assets-101.mjs "$AKARI_BROWSER" <fresh-report.json>`.
+The local gate and Actions require this report and its validator negatives in
+addition to every existing completed-release guarantee. The exact metadata-only
+assertion transition is documented in `lib/release-101-contract.mjs` and AUDIT.md.
+
 Use `node audit/run-local-gate.mjs "$AKARI_BROWSER" <fresh-evidence-directory>` for the same self-test gate as Actions: browser core 884, Node supplement 793, fixed 1.0.0 core 884 with all 257 capability mappings, plus historical 0.8 508 and 122/130 mapping, language 605 in both environments, editor 38 in both environments, GUI 9, 90 performance samples, and validator negatives. `tests/static-contract.py` and `tests/workflow-preflight.py` reproduce static preflight (PyYAML 6.0.3). Full-browser groups retain all 27 runners and independently checked case tuples. Do not overwrite earlier evidence.
 
 The workflow runs on main, `fix/**`, `audit/**` and `Akari_1_0_0`, forces full scope for the release branch and new branches, seals each job artifact, and independently verifies all seven artifacts in `aggregate`. Default retention is three days. `verify-evidence.mjs` rejects missing, failing, stale or changed artifacts; `MACHINE_PASS` does not assert a completed release. Current review and inventory are in `records/phase4-semantic-review.md` and `records/phase4-audit-inventory.json`.

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Akari 1.0.0: shared AST, code/block editors, transactional history and versioned storage. -->
+<!-- Akari 1.0.1: shared AST, code/block editors, transactional history and versioned storage. -->
 <!-- SPDX-License-Identifier: Apache-2.0; full license text is embedded in AKARI_APACHE_LICENSE below. -->
 <html lang="ja">
 <head>
@@ -8,7 +8,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src blob:; media-src blob:; connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
-<title>あかり 1.0.0</title>
+<title>あかり 1.0.1</title>
 <style id="akari-editor-styles">
 /* Editor stylesheet: original cascade order preserved; redundant declarations removed. */
 :root {
@@ -4656,6 +4656,7 @@ body.runtime #formSurface .design-resize-outline {
   box-shadow: 0 2px 5px #20374b0d;
 }
 #properties .prop-actions strong {
+  flex: 1;
   min-width: 0;
   font-size: 12px;
   overflow: hidden;
@@ -4675,6 +4676,53 @@ body.runtime #formSurface .design-resize-outline {
   background: #ffecec;
   border-color: #b83b3b;
 }
+#properties .prop-duplicate {
+  flex: none;
+  min-height: 34px;
+  padding: 4px 9px;
+  font-size: 12px;
+}
+#paintModal > .paint-dialog {
+  width: min(620px, 96vw);
+  height: auto;
+  max-height: calc(100dvh - 24px);
+  display: flex;
+  flex-direction: column;
+}
+.paint-dialog .dialog-body { overflow: auto; min-height: 0; }
+.paint-tools, .paint-options, .paint-colors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+#paintModal .paint-tools button[aria-pressed="true"] {
+  background: #dcecff;
+  border-color: #2466b4;
+  color: #173f70;
+}
+.paint-options label { display: inline-flex; align-items: center; gap: 5px; }
+.paint-options input[type="range"] { width: 100px; }
+#paintColors button {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  background: var(--paint-color);
+  border: 1px solid #7c8b9a;
+}
+.paint-colors button[aria-pressed="true"] { outline: 2px solid #2466b4; outline-offset: 2px; }
+.paint-canvas-wrap {
+  width: min(500px, 100%);
+  margin: auto;
+  border: 1px solid #8b9aab;
+  background-color: white;
+  background-image: conic-gradient(#e1e5ea 25%, transparent 0 50%, #e1e5ea 0 75%, transparent 0);
+  background-size: 16px 16px;
+}
+#paintCanvas { display: block; width: 100%; height: auto; touch-action: none; cursor: crosshair; }
+#paintStatus { min-height: 1.5em; margin: 8px 0 0; font-size: 12px; }
 #properties .prop-section {
   margin: 0;
   padding: 0;
@@ -5000,7 +5048,7 @@ body.runtime #formSurface .design-resize-outline {
 </head>
 <body>
 <div id="app">
-  <div class="titlebar"><span class="lamp">💡</span>あかり 1.0.0</div>
+  <div class="titlebar"><span class="lamp">💡</span>あかり 1.0.1</div>
   <div class="menutool">
     <button id="newBtn">新しく作る</button>
     <button id="openBtn">開く</button>
@@ -5014,6 +5062,7 @@ body.runtime #formSurface .design-resize-outline {
     <button id="resetBtn">最初に戻す</button>
     <span class="sep"></span>
     <button id="imageObjectAdd" title="画像ファイルをキャラクターとして画面に置く">🖼 画像を置く</button>
+    <button id="paintAdd" title="絵を描いてキャラクターとして画面に置く">🎨 お絵かき</button>
     <button id="soundQuickAdd" title="MP3またはWAVの音声ファイルを取り込む">🔊 音声を追加</button>
     <button id="assetBtn">画像・音声を管理</button>
     <button id="procBtn">動作・計算</button>
@@ -5262,11 +5311,38 @@ body.runtime #formSurface .design-resize-outline {
         <textarea id="codeEditor" spellcheck="false" aria-label="あかりのコード"></textarea>
       </div>
       <div class="code-assist"><span id="codeIssue">✓ 書き方をチェック中</span><div class="hint-panel"><div class="hint-controls"><input id="hintSearch" type="search" aria-label="候補を検索" placeholder="命令・値・名前を検索"><label><input id="hintUnavailable" type="checkbox">使えないものも表示</label><button id="hintPrev">前</button><span id="hintCount"></span><button id="hintNext">次</button></div><div class="code-hints" id="codeHints"></div></div></div>
-      <div class="console" id="console">あかり1.0.0を起動しました。</div>
+      <div class="console" id="console">あかり1.0.1を起動しました。</div>
     </section>
   </div>
 
   <div class="status"><span id="statusText">準備完了</span><span class="dirty-state" id="dirtyState">変更なし</span><span class="runstate run-off" id="runState">停止中</span></div>
+</div>
+
+<div class="modal" id="paintModal" role="dialog" aria-modal="true" aria-labelledby="paintTitle">
+  <div class="dialog paint-dialog">
+    <div class="win-title" id="paintTitle">🎨 お絵かき</div>
+    <div class="dialog-body">
+      <div class="paint-tools" role="group" aria-label="描く道具">
+        <button type="button" data-paint-tool="pen" aria-pressed="true">ペン</button>
+        <button type="button" data-paint-tool="eraser" aria-pressed="false">消しゴム</button>
+        <button type="button" data-paint-tool="fill" aria-pressed="false">塗りつぶし</button>
+        <button type="button" data-paint-tool="line" aria-pressed="false">直線</button>
+        <button type="button" data-paint-tool="rectangle" aria-pressed="false">四角</button>
+        <button type="button" data-paint-tool="ellipse" aria-pressed="false">楕円</button>
+      </div>
+      <div class="paint-options">
+        <label>色 <input id="paintColor" type="color" value="#111111"></label>
+        <label>線幅 <input id="paintWidth" type="range" min="1" max="40" value="4"><output id="paintWidthValue">4</output></label>
+        <label>図形 <select id="paintShape"><option value="outline">輪郭のみ</option><option value="filled">塗りつぶし</option></select></label>
+        <button type="button" id="paintUndo">↶ 元に戻す</button>
+        <button type="button" id="paintRedo">↷ やり直し</button>
+      </div>
+      <div class="paint-colors" id="paintColors" role="group" aria-label="色見本"></div>
+      <div class="paint-canvas-wrap"><canvas id="paintCanvas" width="500" height="500" aria-label="お絵かき用の500×500ピクセルのキャンバス"></canvas></div>
+      <p id="paintStatus" role="status" aria-live="polite">市松模様は透明な部分です。</p>
+    </div>
+    <div class="dialog-foot"><button type="button" id="paintCancel">キャンセル</button><button type="button" id="paintCommit" disabled>決定して置く</button></div>
+  </div>
 </div>
 
 <div class="modal" id="assetModal" role="dialog" aria-modal="true" aria-label="画像・音声">
@@ -8504,7 +8580,7 @@ body.runtime #formSurface .design-resize-outline {
       }
     }
     const EXECUTABLE_VERSION = Object.freeze({
-      appVersion: '1.0.0',
+      appVersion: '1.0.1',
       runtimeVersion: '1.0.0',
       languageVersion: '1.0.0',
       programFormatVersion: 3,
@@ -9975,7 +10051,7 @@ body.runtime #formSurface .design-resize-outline {
       throw new AkariError('F503', `作品データの項目が${VERSION}仕様と一致しません`);
     if (
       p.schema !== 'akari-project' ||
-      p.appVersion !== VERSION ||
+      ![VERSION, '1.0.0'].includes(p.appVersion) ||
       p.languageVersion !== LANGUAGE_VERSION ||
       p.formatVersion !== FORMAT_VERSION
     )
@@ -14398,7 +14474,7 @@ body.runtime #formSurface .design-resize-outline {
   }
   function markdownBody(root) {
     const out = [
-      '# あかり ' + VERSION + ' の作品',
+      '# あかり ' + root.appVersion + ' の作品',
       '',
       `\u4f5c\u54c1\u540d\uff1a${markdownText(root.name)}`,
       '',
@@ -14522,7 +14598,7 @@ body.runtime #formSurface .design-resize-outline {
     } catch (_) {
       throw new AkariError(
         'F502',
-        '\u4f5c\u54c1\u30c7\u30fc\u30bf\u3092\u8aad\u3081\u307e\u305b\u3093\u3002\u3042\u304b\u308a1.0.0\u3067\u4fdd\u5b58\u3057\u305f .akari.md \u3092\u9078\u3093\u3067\u304f\u3060\u3055\u3044',
+        '\u4f5c\u54c1\u30c7\u30fc\u30bf\u3092\u8aad\u3081\u307e\u305b\u3093\u3002\u3042\u304b\u308a1.0.1\u3067\u4fdd\u5b58\u3057\u305f .akari.md \u3092\u9078\u3093\u3067\u304f\u3060\u3055\u3044',
       );
     }
     const { assetIds } = validateSerializedProjectStructure(root);
@@ -14536,6 +14612,7 @@ body.runtime #formSurface .design-resize-outline {
     const project = { ...root };
     delete project.assets;
     validateAssetReferences(project, store, { serializedAssetIds: assetIds });
+    project.appVersion = VERSION;
     return { project, assetStore: store, diagnostics: compileProject(project).errors };
   }
   async function validateLoadedAssetRecord(a) {
@@ -19125,6 +19202,250 @@ body.runtime #formSurface .design-resize-outline {
   // ────────────────────────────────────────────────────────────────────────
   // 11 — Application coordination, persistence and shared history
   // ────────────────────────────────────────────────────────────────────────
+  function createPaintEditor(onCommit) {
+    const modal = document.querySelector('#paintModal'),
+      canvas = modal.querySelector('canvas'),
+      cx = canvas.getContext('2d', { willReadFrequently: true }),
+      app = document.querySelector('#app'),
+      color = modal.querySelector('#paintColor'),
+      width = modal.querySelector('#paintWidth'),
+      shape = modal.querySelector('#paintShape'),
+      status = modal.querySelector('#paintStatus'),
+      undo = modal.querySelector('#paintUndo'),
+      redo = modal.querySelector('#paintRedo'),
+      commit = modal.querySelector('#paintCommit');
+    const size = 500;
+    let tool = 'pen', history = [], historyIndex = -1, gesture = null,
+      busy = false, returnFocus = null;
+    const pixels = () => cx.getImageData(0, 0, size, size);
+    const hasInk = (data = pixels().data) => {
+      for (let i = 3; i < data.length; i += 4) if (data[i]) return true;
+      return false;
+    };
+    const refresh = () => {
+      for (const control of modal.querySelectorAll('button,input,select')) control.disabled = busy;
+      undo.disabled = busy || !!gesture || historyIndex <= 0;
+      redo.disabled = busy || !!gesture || historyIndex >= history.length - 1;
+      commit.disabled = busy || !!gesture || !hasInk();
+      shape.disabled = busy || !['rectangle', 'ellipse'].includes(tool);
+      for (const b of modal.querySelectorAll('[data-paint-tool]'))
+        b.setAttribute('aria-pressed', String(b.dataset.paintTool === tool));
+      for (const b of modal.querySelectorAll('[data-paint-color]'))
+        b.setAttribute('aria-pressed', String(b.dataset.paintColor === color.value));
+      modal.querySelector('#paintWidthValue').textContent = width.value;
+    };
+    const record = () => {
+      const next = pixels(), previous = history[historyIndex];
+      if (previous && next.data.every((v, i) => v === previous.data[i])) return;
+      history.splice(historyIndex + 1);
+      history.push(next);
+      if (history.length > 31) history.shift();
+      historyIndex = history.length - 1;
+    };
+    const travel = (delta) => {
+      if (busy || gesture) return;
+      const next = historyIndex + delta;
+      if (next < 0 || next >= history.length) return;
+      historyIndex = next;
+      cx.putImageData(history[historyIndex], 0, 0);
+      status.textContent = delta < 0 ? '元に戻しました。' : 'やり直しました。';
+      refresh();
+    };
+    function point(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: clamp((event.clientX - rect.left) * size / rect.width, 0, size),
+        y: clamp((event.clientY - rect.top) * size / rect.height, 0, size),
+      };
+    }
+    function stroke(from, to, g) {
+      cx.save();
+      cx.globalCompositeOperation = g.tool === 'eraser' ? 'destination-out' : 'source-over';
+      cx.strokeStyle = cx.fillStyle = g.color;
+      cx.lineWidth = g.width;
+      cx.lineCap = cx.lineJoin = 'round';
+      cx.beginPath();
+      if (from.x === to.x && from.y === to.y) {
+        cx.arc(to.x, to.y, g.width / 2, 0, Math.PI * 2);
+        cx.fill();
+      } else {
+        cx.moveTo(from.x, from.y);
+        cx.lineTo(to.x, to.y);
+        cx.stroke();
+      }
+      cx.restore();
+    }
+    function drawShape(to, g) {
+      cx.putImageData(g.before, 0, 0);
+      if (g.tool === 'line') return stroke(g.start, to, g);
+      const x = Math.min(g.start.x, to.x), y = Math.min(g.start.y, to.y),
+        w = Math.abs(to.x - g.start.x), h = Math.abs(to.y - g.start.y);
+      cx.save();
+      cx.strokeStyle = cx.fillStyle = g.color;
+      cx.lineWidth = g.width;
+      cx.lineJoin = 'round';
+      cx.beginPath();
+      if (g.tool === 'rectangle') cx.rect(x, y, w, h);
+      else cx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+      if (g.filled) cx.fill();
+      else cx.stroke();
+      cx.restore();
+    }
+    function flood(at) {
+      const image = pixels(), data = image.data,
+        start = Math.min(size - 1, Math.floor(at.y)) * size + Math.min(size - 1, Math.floor(at.x)),
+        target = Array.from(data.slice(start * 4, start * 4 + 4)),
+        ink = [1, 3, 5].map(i => parseInt(color.value.slice(i, i + 2), 16));
+      if (target[3] === 255 && ink.every((v, i) => v === target[i])) return;
+      const seen = new Uint8Array(size * size), queue = new Int32Array(size * size);
+      let head = 0, tail = 0;
+      const visit = (p) => {
+        if (seen[p]) return;
+        seen[p] = 1;
+        const i = p * 4, a = data[i + 3];
+        if (a === target[3] && (a === 0 || target.every((v, k) => data[i + k] === v))) {
+          data.set([...ink, 255], i);
+          queue[tail++] = p;
+        } else if (target[3] === 0 && a > 0 && a < 255) {
+          // Fill behind the smooth boundary without crossing it.
+          for (let k = 0; k < 3; k++) data[i + k] = Math.round((data[i + k] * a + ink[k] * (255 - a)) / 255);
+          data[i + 3] = 255;
+        }
+      };
+      visit(start);
+      while (head < tail) {
+        const p = queue[head++], x = p % size, y = Math.floor(p / size);
+        if (x > 0) visit(p - 1);
+        if (x + 1 < size) visit(p + 1);
+        if (y > 0) visit(p - size);
+        if (y + 1 < size) visit(p + size);
+      }
+      cx.putImageData(image, 0, 0);
+    }
+    function finishGesture(cancel = false) {
+      if (!gesture) return;
+      const g = gesture;
+      gesture = null;
+      if (cancel) cx.putImageData(g.before, 0, 0);
+      else record();
+      if (canvas.hasPointerCapture(g.id)) canvas.releasePointerCapture(g.id);
+      refresh();
+    }
+    function close() {
+      finishGesture(true);
+      modal.classList.remove('show');
+      app.inert = false;
+      cx.clearRect(0, 0, size, size);
+      history = [];
+      historyIndex = -1;
+      returnFocus?.focus({ preventScroll: true });
+    }
+    function cancel() {
+      if (busy) return;
+      if (hasInk() && !confirm('描いた絵を捨てて閉じますか？')) return;
+      close();
+    }
+    function cropped() {
+      const data = pixels().data;
+      let left = size, top = size, right = -1, bottom = -1;
+      for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+        if (!data[(y * size + x) * 4 + 3]) continue;
+        left = Math.min(left, x); top = Math.min(top, y);
+        right = Math.max(right, x); bottom = Math.max(bottom, y);
+      }
+      if (right < left) return null;
+      const out = document.createElement('canvas'), w = right - left + 1, h = bottom - top + 1;
+      out.width = Math.max(8, w); out.height = Math.max(8, h);
+      out.getContext('2d').drawImage(canvas, left, top, w, h,
+        Math.floor((out.width - w) / 2), Math.floor((out.height - h) / 2), w, h);
+      return out;
+    }
+    canvas.addEventListener('pointerdown', (event) => {
+      if (busy || gesture || event.button !== 0 || event.isPrimary === false) return;
+      event.preventDefault();
+      const at = point(event);
+      if (tool === 'fill') {
+        flood(at); record(); refresh(); return;
+      }
+      gesture = { id: event.pointerId, before: pixels(), start: at, last: at,
+        tool, color: color.value, width: Number(width.value), filled: shape.value === 'filled' };
+      canvas.setPointerCapture(event.pointerId);
+      if (tool === 'pen' || tool === 'eraser') stroke(at, at, gesture);
+      refresh();
+    });
+    canvas.addEventListener('pointermove', (event) => {
+      if (gesture?.id !== event.pointerId) return;
+      event.preventDefault();
+      const at = point(event);
+      if (gesture.tool === 'pen' || gesture.tool === 'eraser') stroke(gesture.last, at, gesture);
+      else drawShape(at, gesture);
+      gesture.last = at;
+    });
+    canvas.addEventListener('pointerup', (event) => {
+      if (gesture?.id !== event.pointerId) return;
+      const at = point(event);
+      if (gesture.tool === 'pen' || gesture.tool === 'eraser') stroke(gesture.last, at, gesture);
+      else drawShape(at, gesture);
+      finishGesture();
+    });
+    for (const name of ['pointercancel', 'lostpointercapture'])
+      canvas.addEventListener(name, (event) => { if (gesture?.id === event.pointerId) finishGesture(true); });
+    window.addEventListener('blur', () => finishGesture(true));
+    for (const button of modal.querySelectorAll('[data-paint-tool]'))
+      button.onclick = () => { if (!gesture) { tool = button.dataset.paintTool; refresh(); } };
+    for (const [name, value] of [
+      ['黒', '#111111'], ['白', '#ffffff'], ['灰', '#888888'], ['赤', '#e53935'],
+      ['橙', '#f57c00'], ['黄', '#fdd835'], ['緑', '#43a047'], ['水色', '#29b6f6'],
+      ['青', '#1e5bd7'], ['紫', '#8e24aa'], ['桃', '#ec407a'], ['茶', '#795548'],
+    ]) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.dataset.paintColor = value;
+      b.style.setProperty('--paint-color', value);
+      b.setAttribute('aria-label', name); b.title = name;
+      b.onclick = () => { color.value = value; refresh(); };
+      modal.querySelector('#paintColors').append(b);
+    }
+    color.oninput = width.oninput = refresh;
+    undo.onclick = () => travel(-1);
+    redo.onclick = () => travel(1);
+    modal.querySelector('#paintCancel').onclick = cancel;
+    document.addEventListener('keydown', (event) => {
+      if (!modal.classList.contains('show') || event.isComposing || event.keyCode === 229) return;
+      if (event.key === 'Escape') {
+        event.preventDefault(); event.stopPropagation();
+        if (gesture) finishGesture(true); else cancel();
+      } else if ((event.ctrlKey || event.metaKey) && !event.altKey && ['z', 'y'].includes(event.key.toLowerCase())) {
+        event.preventDefault(); event.stopPropagation();
+        travel(event.key.toLowerCase() === 'y' || event.shiftKey ? 1 : -1);
+      }
+    }, true);
+    commit.onclick = async () => {
+      if (busy || gesture) return;
+      const out = cropped();
+      if (!out) return;
+      busy = true; refresh(); status.textContent = '画像を配置しています…';
+      try {
+        await onCommit(out);
+        close();
+      } catch (error) {
+        status.textContent = `配置できませんでした: ${error.message}`;
+      } finally { busy = false; refresh(); }
+    };
+    return {
+      open() {
+        if (busy || modal.classList.contains('show')) return;
+        returnFocus = document.activeElement;
+        cx.clearRect(0, 0, size, size);
+        history = [pixels()]; historyIndex = 0; tool = 'pen';
+        color.value = '#111111'; width.value = '4'; shape.value = 'outline';
+        status.textContent = '市松模様は透明な部分です。';
+        modal.classList.add('show'); app.inert = true;
+        refresh(); modal.querySelector('[data-paint-tool="pen"]').focus();
+      },
+      hasDrawing: () => modal.classList.contains('show') && hasInk(),
+    };
+  }
+
   function initApp() {
     const $ = (s) => document.querySelector(s),
       $$ = (s) => [...document.querySelectorAll(s)];
@@ -19774,6 +20095,7 @@ body.runtime #formSurface .design-resize-outline {
       tools.append(title);
       for (const id of [
         'imageObjectAdd',
+        'paintAdd',
         'soundQuickAdd',
         'assetBtn',
         'procBtn',
@@ -20049,6 +20371,7 @@ body.runtime #formSurface .design-resize-outline {
         'openBtn',
         'resetBtn',
         'imageObjectAdd',
+        'paintAdd',
         'soundQuickAdd',
         'assetBtn',
         'procBtn',
@@ -20084,13 +20407,13 @@ body.runtime #formSurface .design-resize-outline {
       if (mainEditor.view) renderEditorBinding(mainEditor);
       updateDirty();
     }
-    function ensureUniqueId(prefix) {
-      const ids = allIds();
+    function ensureUniqueId(prefix, ids = allIds()) {
       let n = 1,
         id;
       do {
         id = `${prefix}-${n++}`;
       } while (ids.has(id));
+      ids.add(id);
       return id;
     }
 
@@ -20145,7 +20468,7 @@ body.runtime #formSurface .design-resize-outline {
       $('#undoBtn').disabled =
         locked || (history.length <= 1 && history[0]?.stateFingerprint === stateFingerprintCore());
       $('#redoBtn').disabled = locked || !redo.length;
-      document.title = `${dirty || draft ? '● ' : ''}あかり 1.0.0 — ${project.name}`;
+      document.title = `${dirty || draft ? '● ' : ''}あかり 1.0.1 — ${project.name}`;
     }
     function restoreSnap(e) {
       validateAssetReferences(e.project, new AssetStore(e.assets));
@@ -20574,13 +20897,20 @@ body.runtime #formSurface .design-resize-outline {
       actions.className = 'prop-actions';
       const title = document.createElement('strong');
       title.textContent = c.name;
+      const duplicate = document.createElement('button');
+      duplicate.type = 'button';
+      duplicate.className = 'prop-duplicate';
+      duplicate.textContent = '複製';
+      duplicate.title = '見た目・設定を複製します（コードは含みません）';
+      duplicate.disabled = modelLocked() || project.components.length >= LIMITS.components;
+      duplicate.onclick = duplicateSelectedComponent;
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'prop-delete';
       del.textContent = '\ud83d\uddd1 \u90e8\u54c1\u3092\u524a\u9664';
       del.disabled = modelLocked();
       del.onclick = deleteSelectedComponent;
-      actions.append(title, del);
+      actions.append(title, duplicate, del);
       el.props.append(actions);
       el.props.append(
         propSection(
@@ -21227,6 +21557,57 @@ body.runtime #formSurface .design-resize-outline {
       try {
         el.form.setPointerCapture(pointerId);
       } catch (_) {}
+    }
+    function duplicateSelectedComponent() {
+      if (modelLocked() || selectedId === 'stage' || !flushActiveEditor()) return;
+      const source = componentById(selectedId);
+      if (!source) return;
+      try {
+        if (project.components.length >= LIMITS.components)
+          throw new AkariError('F504', '部品数が上限です');
+        const next = cloneDesignProject(project), copy = cloneDesignProject(source), ids = allIds(),
+          names = new Set(project.components.map(c => c.name));
+        let n = 2;
+        do {
+          const suffix = `_${n++}`;
+          copy.name = Array.from(source.name).slice(0, 80 - suffix.length).join('') + suffix;
+        } while (names.has(copy.name));
+        copy.id = ensureUniqueId(source.type, ids);
+        for (const d of copy.localData.variables) d.id = ensureUniqueId('ivar', ids);
+        for (const d of copy.localData.lists) d.id = ensureUniqueId('ilist', ids);
+        for (const costume of copy.costumes || []) {
+          const oldId = costume.id;
+          costume.id = ensureUniqueId('costume', ids);
+          if (oldId === source.costumeId) copy.costumeId = costume.id;
+        }
+        const angle = (copy.direction % 360) * Math.PI / 180,
+          cs = Math.abs(Math.cos(angle)), sn = Math.abs(Math.sin(angle)), scale = copy.scalePercent / 100,
+          visibleW = (copy.w * cs + copy.h * sn) * scale,
+          visibleH = (copy.w * sn + copy.h * cs) * scale;
+        const offset = (position, size, visible, stageSize) => {
+          const half = Math.min(visible, stageSize) / 2;
+          return clamp(position + size / 2 + 16, half, stageSize - half) - size / 2;
+        };
+        copy.x = offset(source.x, copy.w, visibleW, next.stage.width);
+        copy.y = offset(source.y, copy.h, visibleH, next.stage.height);
+        next.components.push(copy);
+        // Validate before committing; image bytes remain shared immutable assets.
+        serializeProject(next, assetStore);
+        clearTimeout(historyTimer);
+        pushHistoryNow();
+        project = next;
+        selectedId = copy.id;
+        currentEvent = 'start';
+        markDirty();
+        renderAll();
+        loadEditor();
+        refreshEditor();
+        clearTimeout(historyTimer);
+        pushHistoryNow();
+        setStatus(`「${source.name}」を「${copy.name}」として複製しました`);
+      } catch (error) {
+        log(`${error.code || ''} 複製できませんでした: ${error.message}`, 'error');
+      }
     }
     function deleteSelectedComponent() {
       if (modelLocked() || selectedId === 'stage' || !flushActiveEditor()) return;
@@ -22279,7 +22660,7 @@ body.runtime #formSurface .design-resize-outline {
         log(
           diagnostics.length
             ? `作品を開きました。コードに${diagnostics.length}件の問題があります。`
-            : 'あかり1.0.0作品を開きました',
+            : 'あかり1.0.1作品を開きました',
           diagnostics.length ? 'error' : 'ok',
         );
       } catch (err) {
@@ -22954,7 +23335,7 @@ body.runtime #formSurface .design-resize-outline {
       refreshEditor();
       log(message, 'ok');
     }
-    async function runAssetImport(label, work) {
+    async function runAssetImport(label, work, onError) {
       if (modelLocked()) return;
       if (!flushActiveEditor()) return;
       clearTimeout(historyTimer);
@@ -22965,8 +23346,11 @@ body.runtime #formSurface .design-resize-outline {
       renderAppearance();
       try {
         await work();
+        return true;
       } catch (e) {
         log(`${e.code || ''} ${label}の取り込みに失敗: ${e.message}`, 'error');
+        onError?.(e);
+        return false;
       } finally {
         if (appState === 'IMPORTING') {
           appState = 'DESIGN';
@@ -22976,7 +23360,7 @@ body.runtime #formSurface .design-resize-outline {
         }
       }
     }
-    async function importImageObject(file) {
+    async function importImageObject(file, { nativeSize = false, onError } = {}) {
       if (!file) return;
       return runAssetImport('画像', async () => {
         if (project.components.length >= LIMITS.components)
@@ -23002,16 +23386,18 @@ body.runtime #formSurface .design-resize-outline {
           asset = await makeAssetBlob(ensureUniqueId('asset'), 'image', canonical);
           store.addImmutable(asset);
         }
-        let scale = Math.min(1, 180 / canonical.width, 180 / canonical.height),
+        let scale = nativeSize ? 1 : Math.min(1, 180 / canonical.width, 180 / canonical.height),
           w = Math.max(8, Math.round(canonical.width * scale)),
           h = Math.max(8, Math.round(canonical.height * scale));
-        if (Math.max(w, h) < 48) {
+        if (!nativeSize && Math.max(w, h) < 48) {
           const up = 48 / Math.max(w, h);
           w = Math.max(8, Math.round(w * up));
           h = Math.max(8, Math.round(h * up));
         }
-        w = Math.min(w, next.stage.width);
-        h = Math.min(h, next.stage.height);
+        if (!nativeSize) {
+          w = Math.min(w, next.stage.width);
+          h = Math.min(h, next.stage.height);
+        }
         const id = ensureUniqueId('sprite'),
           costumeId = ensureUniqueId('costume'),
           sprite = {
@@ -23027,7 +23413,7 @@ body.runtime #formSurface .design-resize-outline {
             fontSize: 44,
             visible: true,
             direction: 0,
-            scalePercent: 100,
+            scalePercent: nativeSize ? 100 * Math.min(1, next.stage.width / w, next.stage.height / h) : 100,
             text: '',
             localData: { variables: [], lists: [] },
             costumes: [{ id: costumeId, name, kind: 'image', assetId: asset.id }],
@@ -23039,7 +23425,7 @@ body.runtime #formSurface .design-resize-outline {
         selectedId = id;
         currentEvent = 'start';
         finishAssetCommit(next, store, `画像「${name}」をオブジェクトとして追加しました`);
-      });
+      }, onError);
     }
     async function importBackdropImage(file) {
       if (!file) return;
@@ -23340,6 +23726,19 @@ body.runtime #formSurface .design-resize-outline {
     $('#imageObjectAdd').onclick = () => {
       if (!modelLocked()) $('#imageObjectInput').click();
     };
+    const paintEditor = createPaintEditor(async (canvas) => {
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('画像を作れませんでした');
+      let errorMessage = '画像を配置できませんでした';
+      const ok = await importImageObject(new File([blob], 'お絵かき.png', { type: 'image/png' }), {
+        nativeSize: true,
+        onError: error => { errorMessage = error.message; },
+      });
+      if (!ok) throw new Error(errorMessage);
+    });
+    $('#paintAdd').onclick = () => {
+      if (!modelLocked() && flushActiveEditor()) paintEditor.open();
+    };
     $('#soundQuickAdd').onclick = () => {
       if (!modelLocked()) $('#soundInput').click();
     };
@@ -23494,6 +23893,7 @@ body.runtime #formSurface .design-resize-outline {
     window.addEventListener('beforeunload', (e) => {
       if (
         dirty ||
+        paintEditor.hasDrawing() ||
         hasCallableDraft() ||
         (colorEdit && colorEdit.value !== colorEdit.original) ||
         headerPending ||
@@ -23616,7 +24016,7 @@ body.runtime #formSurface .design-resize-outline {
       'click',
       (event) => {
         const target = event.target.closest('button,.tree-item,.tool');
-        if (!target || modelLocked() || target.closest('#colorModal')) return;
+        if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes') ||
           target.matches('#undoBtn,#redoBtn,[data-blockui-action="cancel"]')
@@ -23637,7 +24037,7 @@ body.runtime #formSurface .design-resize-outline {
       (event) => {
         if (
           modelLocked() ||
-          event.target.closest('#blockEditor,#callableBlocks,#colorModal') ||
+          event.target.closest('#blockEditor,#callableBlocks,#colorModal,#paintModal') ||
           event.target.matches('#objectSelect,#eventSelect,#callableType,#callableSelect')
         )
           return;
@@ -23710,7 +24110,7 @@ body.runtime #formSurface .design-resize-outline {
     renderAll();
     loadEditor();
     setupModalAccessibility();
-    setStatus('準備完了 — あかり1.0.0');
+    setStatus('準備完了 — あかり1.0.1');
     app = {
       get editorState() {
         return {

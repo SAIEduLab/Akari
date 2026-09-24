@@ -7,6 +7,7 @@ import {verifySurfaceResults} from './verify-surface-results.mjs';
 import {gateSteps} from './gate-contract.mjs';
 import {ledger08,ledger09} from '../browser/legacy/audit-lib.cjs';
 import {completedCommit,verifyFixedCore} from './completed-baseline.mjs';
+import {verifyEditorAssets} from './release-101-contract.mjs';
 export function verifyGateResults(dir,currentSnapshot) {
   const read=name=>JSON.parse(fs.readFileSync(path.join(dir,name)));
   const manifest=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
@@ -43,6 +44,7 @@ export function verifyGateResults(dir,currentSnapshot) {
     verifySurfaceResults(read('editor-'+env+'.json'),'editor',currentSnapshot,env==='node'?'node':'chromium');
   }
   verifySurfaceResults(read('gui.json'),'gui',currentSnapshot,'chromium');
+  verifyEditorAssets(read('editor-assets-101.json'),currentSnapshot);
   const normal=read('normal-product.json');assert.equal(normal.status,'PASS');assert.deepEqual(normal.snapshot,currentSnapshot);
   for(const k of ['sourcePreserved','saveReload','exportOffline','noAuditGlobal','stringNotExecuted','freshContextIsolation'])assert.equal(normal[k],true);
   const bounds=read('language-boundaries.json');assert.equal(bounds.status,'PASS');assert.deepEqual(bounds.snapshot,currentSnapshot);

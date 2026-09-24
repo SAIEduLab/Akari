@@ -18,5 +18,7 @@ export function gateSteps(browser,dir) {
     ['editor-browser','audit/run-editor-surface-tests.mjs',browser,out('editor-browser.json')],
     ['gui','audit/tests/phase3-browser.mjs',browser,out('gui.json')],
     ['surface-negative','audit/tests/surface-negative.mjs',out('editor-browser.json'),out('gui.json')],
+    ['editor-assets-101','audit/tests/editor-assets-101.mjs',browser,out('editor-assets-101.json')],
+    ['release-101-negative','audit/tests/release-101-negative.mjs',out('editor-assets-101.json')],
   ];
 }
