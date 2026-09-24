@@ -8545,21 +8545,21 @@
       "disposition": "replace",
       "reason": "Preserve source, corrupt-data rejection, executable roundtrip and unsaved-state protection; define the 1.0.0 formats in phase 3. No dedicated old-version identification obligation.",
       "core": "SAVE Markdown往復; SAVE 作りかけのコード保持; AUDIT MARKDOWN canonical-body mismatch rejected F512; A10-VERSION-CONTRACT; A10-PROJECT-MARKER-BOUNDARIES",
-      "browser": "B09-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:invalid-syntax-save-and-format3-storage-isolation"
+      "browser": "B09-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:invalid-syntax-file-roundtrip-without-persistence"
     },
     {
-      "id": "save:autosave",
+      "id": "save:manual-only",
       "disposition": "replace",
-      "reason": "Preserve source, corrupt-data rejection, executable roundtrip and unsaved-state protection; define the 1.0.0 formats in phase 3. No dedicated old-version identification obligation.",
+      "reason": "User-approved complete autosave retirement: require no automatic project/draft persistence; retain manual file roundtrip, draft separation, invalid-input and unsaved-state protection.",
       "core": "外部core test対象外（browser suiteで検査）",
-      "browser": "B09-PRODUCT; browser-session:autosave-draft-recovery; browser-storage-media:invalid-syntax-save-and-format3-storage-isolation"
+      "browser": "B09-PRODUCT; browser-session:draft-session-without-persistence; browser-storage-media:invalid-syntax-file-roundtrip-without-persistence"
     },
     {
       "id": "save:version09",
       "disposition": "replace",
       "reason": "Preserve source, corrupt-data rejection, executable roundtrip and unsaved-state protection; define the 1.0.0 formats in phase 3. No dedicated old-version identification obligation.",
       "core": "A10-VERSION-CONTRACT; A10-PROJECT-MARKER-BOUNDARIES; A10-EXECUTABLE-MALFORMED; A10-EXECUTABLE-ROUNDTRIP (legacy assertions awaiting phase-3 split; not release acceptance)",
-      "browser": "B09-PRODUCT; browser-storage-media:format3-malformed-mismatch-and-state-protection; browser-storage-media:invalid-syntax-save-and-format3-storage-isolation"
+      "browser": "B09-PRODUCT; browser-storage-media:format3-malformed-mismatch-and-state-protection; browser-storage-media:invalid-syntax-file-roundtrip-without-persistence"
     },
     {
       "id": "save:standalone",
@@ -8594,7 +8594,7 @@
       "disposition": "maintain",
       "reason": "Retain the explicit capability and its core/browser coverage.",
       "core": "T09-EDITOR semantics and incomplete definition header keep AST; T09-EDITOR source total bound and independent definition draft",
-      "browser": "B09-PRODUCT; browser-session:callable-draft-history; browser-session:autosave-draft-recovery; browser-boundaries:unknown-callee-and-all-arguments-after-definition-change"
+      "browser": "B09-PRODUCT; browser-session:callable-draft-history; browser-session:draft-session-without-persistence; browser-boundaries:unknown-callee-and-all-arguments-after-definition-change"
     },
     {
       "id": "product:diagnostics",
@@ -9002,7 +9002,7 @@
   "implemented": [
     {
       "phase": 3,
-      "area": "version/save/export/autosave",
+      "area": "version/save/export/manual-only",
       "tests": [
         "VERSION-001 初版の版情報",
         "T09-VERSION-CONTRACT",
@@ -9014,9 +9014,9 @@
       ],
       "browserTests": [
         "browser-storage-media:format3-malformed-mismatch-and-state-protection",
-        "browser-storage-media:invalid-syntax-save-and-format3-storage-isolation"
+        "browser-storage-media:invalid-syntax-file-roundtrip-without-persistence"
       ],
-      "requirements": "Split mixed old-version cases from malformed JSON, source/payload mismatch and state protection; define product vs format numbers, 1.0.0 source/save/restore/generated HTML/autosave consistency; no old conversion/rejection branches.",
+      "requirements": "Split mixed old-version cases from malformed JSON, source/payload mismatch and state protection; define product vs format numbers, 1.0.0 source/save/restore/generated HTML/manual-file consistency; no old conversion/rejection branches.",
       "workflow": ".github/workflows/akari-audit.yml static exact version markers and mixed version tests: replace in phase 3 without removing fixed 0.8 capability comparison",
       "record": "audit/records/phase3-guarantee-transition.json",
       "verification": "Requires the current committed candidate reports; implementation status alone is not PASS."

@@ -482,7 +482,7 @@ block node の例は `{id, schemaId, fields, inputs, bodies, annotations}` で�
 4. 原文範囲に対する局所編集、または構造変更に必要な最小範囲のformatter出力で候補 source を作り、共通構文解析で再び完全な AST を得る。候補と再解析 AST の D09-LANG-003 の同値性を確認する。
 5. 同じ作品の候補状態で source 長・作品全体の上限を検査し、共通意味診断を再計算する。構文解析可能な意味エラーは内容を保持して診断する。
 6. すべての確定条件を満たしたら、本文所有者の source、AST、block view、行対応、診断を同じ世代としてまとめて置換する。
-7. 前後で source／下書きが変わった場合だけ共通履歴に一操作を記録し、dirty と自動保存を更新する。同じ位置への drop 等の無変更操作は履歴に入れない。
+7. 前後で source／下書きが変わった場合だけ共通履歴に一操作を記録し、dirty を更新する。同じ位置への drop 等の無変更操作は履歴に入れない。
 
 失敗時は理由を該当欄に示し、元の本文・AST・block・選択・履歴・dirty・redo を保持します。特に上限違反を捕まえた後で textarea だけを元に戻し、block 表示だけが新しい状態になるような部分 rollback を禁止します。
 
@@ -530,7 +530,7 @@ GUI の実行ボタンも確定済み source → `compileProject` → 既存 run
 
 ### D09-SAVE-002 — 1.0.0の版・保存・実行形式の整合
 
-製品版は1.0.0、保存・実行形式番号は構造契約を識別する別の値とします。過去の形式番号・版マーカーの維持は制約にしません。製品・言語・runtime版を1.0.0、保存・実行形式番号を3と定義し、共通定義、payload、本文、生成HTML、自動保存、表示、試験を同じ規則へ揃えます。自動保存は形式3の領域を使用します。
+製品版は1.0.0、保存・実行形式番号は構造契約を識別する別の値とします。過去の形式番号・版マーカーの維持は制約にしません。製品・言語・runtime版を1.0.0、保存・実行形式番号を3と定義し、共通定義、payload、本文、生成HTML、表示、試験を同じ規則へ揃えます。作品の自動保存・自動復元は行いません。
 
 | 接点 | 1.0.0の必須保証 |
 | --- | --- |
@@ -538,7 +538,7 @@ GUI の実行ボタンも確定済み source → `compileProject` → 既存 run
 | 保存・再読込み | source正本、作りかけ本文、素材を保ち、1.0.0内で往復する |
 | 入力検証 | 不正・破損、本文と復元データの不一致、素材不整合、上限超過を検出する |
 | 失敗時 | 現在作品・未保存内容・未登録下書きを壊さない |
-| 自動保存 | 確定定義と未登録の下書きを区別して検証・復元する |
+| 手動保存と下書き | 確定定義と未登録の下書きを区別し、下書きは登録後に作品ファイルへ保存する。作品・下書きはブラウザー内へ永続化しない |
 | 生成HTML | 同じcompile・pack・runtimeで単体offline実行し、保存版と実行データの仕様を整合させる |
 
 入力本文は1.0.0の文法で解析します。作品・実行データは1.0.0の版情報と形式3の構造契約で検証し、不正・破損データ、本文と復元データの不一致、素材不整合、上限超過を拒否します。失敗時には現在作品・未保存内容を保護します。
@@ -859,7 +859,7 @@ D09-SAVE-002の正例・負例を1.0.0の仕様で検査します。
 5. 長い本文の表示境界をまたいで移動・挿入・取消・Undo/Redoする。深い囲いと横長の式でも入力欄・menu・接続先へ到達する。
 6. 対象・きっかけ・定義を切り替え、部品を追加して再訪する。表示モードと作業位置の維持、構文エラー時の一時退避を確認する。
 7. 作業台の拡張、panel開閉、画面幅変更を行い、組立て・対象選択・実行・停止・結果確認・元の配置への復帰を確認する。通常本文と定義下書きの両方で行う。
-8. 同じ基本編集をkeyboardとtouch/pointerでも行い、入力欄・IME・menu・自動保存待機とdragの競合を確認する。
+8. 同じ基本編集をkeyboardとtouch/pointerでも行い、入力欄・IME・menuとdragの競合を確認する。
 
 代表viewportは少なくとも `1366x768`、`768x1024`、`390x844` CSS pixelを含め、作業台倍率は `75%`、`100%`、`125%` を代表点として検査する。製品の対応範囲全体をこの9組だけで代用してはならない。長い本文は段階読込み等の表示境界をまたぐ量とし、実際に用いた文数、入れ子深さ、式の幅を記録する。
 
@@ -1343,14 +1343,14 @@ PR を使う場合は、PR 本文または追跡可能な監査記録に最終 s
 | runtime:pause-step | pause/resume/1命令実行で時計を早送りしない | 実行snapshot | 共通runtime接続 | pauseBtn / continueBtn / stepBtn + switchEditorMode / modelLocked | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | pause / stepOne / runtime.now | AUDIT SCHEDULER pause does not complete time waits | B09-PRODUCT; browser-session:running-paused-lock-switch; browser-runtime:runtime-fixed-seed-mode-switch-trace; browser-runtime:preparing-importing-lock-and-decode-failure-rollback | step と時計の意味は既存 self-test、Switch と readonly は browser-session で別に検査する |
 | runtime:clone | clone生成・個体データ分離・開始・削除 | CloneCommand / cloneStart | analyzeProject / compileProject | CloneCommand palette / args slot + cloneStart event selector | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | execClone / createClone / deleteClone | CLONE 個体データを複製; AUDIT CLONE collision transform ordering and clone data independence; 08 event sprite:cloneStart; T09-LIMIT clones | B09-PRODUCT; browser-event-traces:event-trace:sprite:cloneStart; browser-events:event:sprite:cloneStart | clone個体データ・接触の代表例と500個の生成/超過拒否をself-testで検査。開始はevent suite、削除/終了とmode同値はevent-traces suiteで別検査。CLONE 個体データを複製 のprojectVars自己比較は作品データ共有の証拠に数えない |
 | runtime:error | エラーの場所・call frame・値を固定して記録 | sourceSpan + owner key | compileProject | paintExecutionLocation / debugSourceKey → nodeMap / view.highlight | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | taskError / errorRecords | AUDIT ERROR nested functions preserve inner failure and both frames; AUDIT ERROR long scalar and list snapshot remains complete | B09-PRODUCT; browser-event-traces:event-trace:stage:start; browser-session:debug-function-owner | 失敗時の本文key・line・値の固定は self-test、block位置とdebug ownerは browser-session で検査する |
-| save:project | source正本の保存・復元・作りかけ保持 | project.scripts/actions/functions.source | serializeProject / parseProjectFile | flushActiveEditor → saveProject; readSource は現在ownerの確定sourceを読む | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | 保存はcompile成功に依存しない | SAVE Markdown往復; SAVE 作りかけのコード保持; AUDIT MARKDOWN canonical-body mismatch rejected F512; A10-VERSION-CONTRACT; A10-PROJECT-MARKER-BOUNDARIES | B09-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:invalid-syntax-save-and-format3-storage-isolation | 構文不正 source の保存と1.0.0形式・F512拒否。素材付き実往復はbrowser suite |
-| save:autosave | 作品と定義下書きの自動復元 | callableDraft.source | writeAutosave / read restore record | writeAutosave / readAutosave / restoreCallableDraft; callableDraft.source | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | editor session | 外部core test対象外（browser suiteで検査） | B09-PRODUCT; browser-session:autosave-draft-recovery; browser-storage-media:invalid-syntax-save-and-format3-storage-isolation | pure core test で復元UIを代用しない。形式3領域の分離と下書き復元はbrowser suite |
-| save:version09 | 1.0.0製品版と形式の整合 | EXECUTABLE_VERSION / project payload | serializeProject / parseProjectFile | 製品版と形式の共通定義 / 形式3の自動復元 | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | restoreExecutable | A10-VERSION-CONTRACT; A10-PROJECT-MARKER-BOUNDARIES; A10-EXECUTABLE-MALFORMED; A10-EXECUTABLE-ROUNDTRIP | B09-PRODUCT; browser-storage-media:format3-malformed-mismatch-and-state-protection; browser-storage-media:invalid-syntax-save-and-format3-storage-isolation | D09-SAVE-002の版・形式・project/runtime整合。不正入力・保存整合・実行データ往復・状態保護を個別に検証 |
+| save:project | source正本の保存・復元・作りかけ保持 | project.scripts/actions/functions.source | serializeProject / parseProjectFile | flushActiveEditor → saveProject; readSource は現在ownerの確定sourceを読む | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | 保存はcompile成功に依存しない | SAVE Markdown往復; SAVE 作りかけのコード保持; AUDIT MARKDOWN canonical-body mismatch rejected F512; A10-VERSION-CONTRACT; A10-PROJECT-MARKER-BOUNDARIES | B09-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:invalid-syntax-file-roundtrip-without-persistence | 構文不正 source の保存と1.0.0形式・F512拒否。素材付き実往復はbrowser suite |
+| save:manual-only | 手動保存のみ・作品と下書きの自動永続化なし | project / callableDraft | saveProject / openProject; explicit file only | saveBtn / fileInput; no persistence or recovery UI | LANGUAGE.mdの現行意味 + 本書の自動保存廃止契約 | editor session only | 外部core test対象外（browser suiteで検査） | B09-PRODUCT; browser-session:draft-session-without-persistence; browser-storage-media:invalid-syntax-file-roundtrip-without-persistence | GA-STATICで専用コード・UIの不在、GA-EXECで旧領域へのアクセスなし・手動保存・下書き分離を検査。A10-GUI/retired-storage-isolationで有効・破損の旧記録を無視し無変更で保持 |
+| save:version09 | 1.0.0製品版と形式の整合 | EXECUTABLE_VERSION / project payload | serializeProject / parseProjectFile | 製品版と形式の共通定義 / 形式3の自動復元 | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | restoreExecutable | A10-VERSION-CONTRACT; A10-PROJECT-MARKER-BOUNDARIES; A10-EXECUTABLE-MALFORMED; A10-EXECUTABLE-ROUNDTRIP | B09-PRODUCT; browser-storage-media:format3-malformed-mismatch-and-state-protection; browser-storage-media:invalid-syntax-file-roundtrip-without-persistence | D09-SAVE-002の版・形式・project/runtime整合。不正入力・保存整合・実行データ往復・状態保護を個別に検証 |
 | save:standalone | 共通runtimeの単体HTML書き出し | 実行AST（comment/GUI fieldを除外） | compileProject / packExecutable | flushActiveEditor → exportProject → generateStandaloneHtml | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | generateStandaloneHtml / restoreExecutable | EXPORT 復元後の動作一致; AUDIT EXPORT deterministic runtime result equals design runtime; A10-EXECUTABLE-MALFORMED; A10-EXECUTABLE-ROUNDTRIP | B09-PRODUCT; browser-storage-media:real-media-standalone-player | 同じcompile/pack/runtimeを使用。生成payloadの除去field・実オフライン実行は完成監査で確認 |
 | product:designer | 部品追加・選択・移動・サイズ変更・色・削除・properties・標準キャラクター | project.components | 既存designer UI | addComponent / selectObject / design resize / color properties / deleteSelectedComponent / propRow; 共通history | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | design/runtimeの分離 | STATE 実行と設計の分離; `T09-DESIGN-RESIZE-*`; `T09-COLOR *`（存在する現在実装ではpure geometry / 色登録・変換を検査） | B09-PRODUCT; B09-DESIGNER; browser-product:designer-property-delete-mixed-history; ui-stage-gesture:*; DESIGN09-COMPONENT-REACHABILITY; DESIGN09-STANDARD-SPRITES; DESIGN09-RESIZE-POINTER; DESIGN09-RESIZE-KEYBOARD; DESIGN09-COLOR-COMMIT-CANCEL; DESIGN09-DELETE-UNDO | 部品候補の可視到達性、追加、properties、位置移動とresizeの分離、色の確定/取消、削除、共通履歴を実ブラウザーで検査する。pure resize/color test は計算層だけを保証し、pointer/keyboard/scroll/履歴を代用しない |
 | product:data | 作品/個体データの編集・保存 | projectData / localData | 既存data UI | renderDataModal / addData; markDirty / snapshot / restoreSnap | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | RuntimeModel.reset | SCHEMA ID重複の拒否 | B09-PRODUCT; browser-product:project-self-data-create-delete-and-shadowing | 作品/個体データUIの作成・削除・同名参照と共通履歴をbrowser-productで検査 |
 | product:assets | 画像オブジェクト・背景・衣装・音素材の登録・保持 | assets/backdrops/costumes/sounds + 画像部品 | AssetStore / asset UI | quick media entrypoints / runAssetImport → canonicalizeImage/Audio → finishAssetCommit; asset UI | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | AssetRuntimeCache | SAVE 不足素材拒否; AUDIT ASSET decoded dimension mismatch releases own object URL | B09-PRODUCT; B09-DESIGNER; DESIGN09-MEDIA-ENTRYPOINTS; DESIGN09-MIXED-HISTORY-STORAGE; browser-storage-media:real-media-import-and-history; browser-storage-media:media-editor-run-and-save-roundtrip; browser-runtime:preparing-importing-lock-and-decode-failure-rollback | 模擬decodeと拒否例はself-test、PNG/JPEG/WebP/MP3/WAVの実decodeはstorage-media suiteで別検査する。画像オブジェクト/背景/衣装/音声の入口の到達性と追加先の区別、候補一覧展開後の操作可能性は実ブラウザーで確認する |
-| product:callable-draft | 定義下書きと明示保存の境界 | actions/functions + callableDraft | readCallableDraft / saveCallable | callableName/Args/Code + callableBlocks; syncCallableDraft / saveCallable / confirmCallableDiscard | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | 登録済み定義のみ実行 | T09-EDITOR semantics and incomplete definition header keep AST; T09-EDITOR source total bound and independent definition draft | B09-PRODUCT; browser-session:callable-draft-history; browser-session:autosave-draft-recovery; browser-boundaries:unknown-callee-and-all-arguments-after-definition-change | 純粋candidateがprojectへ下書きを登録しないことと、実保存・Undo・復元を分けて検査する |
+| product:callable-draft | 定義下書きと明示保存の境界 | actions/functions + callableDraft | readCallableDraft / saveCallable | callableName/Args/Code + callableBlocks; syncCallableDraft / saveCallable / confirmCallableDiscard | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | 登録済み定義のみ実行 | T09-EDITOR semantics and incomplete definition header keep AST; T09-EDITOR source total bound and independent definition draft | B09-PRODUCT; browser-session:callable-draft-history; browser-session:draft-session-without-persistence; browser-boundaries:unknown-callee-and-all-arguments-after-definition-change | 純粋candidateがprojectへ下書きを登録しないことと、明示登録・Undo・ファイル再読込みを分けて検査する |
 | product:diagnostics | 場所・行・理由つき作品診断 | 全構文AST + owner | parseSyntax / analyzeAst / analyzeProject | refreshEditor / diagnosticSummary / nodeDiagnostics; syntaxAst null時はcode | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | compileProjectはerrorを実行拒否 | TARGET 画面には動き命令なし; TARGET ボタンには衣装なし; 09 syntax errors discard entire AST; 09 semantic errors retain complete source AST; 09 AST analysis checks caller context and purity without execution | B09-PRODUCT; browser-session:switch-semantic-errors; browser-session:switch-invalid-syntax | 共通analyzeAstの内容保持と、GUIの位置・理由表示を別々に検査する |
 | product:hints | 対象/event/スコープ別の候補・理由 | 共通grammar/schema | hintCandidates | renderPalette → blockInsertionAvailability → editorInsertionHints / hintCandidates / analyzeAst | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | 実行前検査と同じ制約 | AUDIT HINT event-specific values and target restrictions; AUDIT HINT all enabled default expressions parse and diagnose; T09-EDITOR availability shares definite context restrictions and preserves dynamic types; T09-EDITOR availability preview preserves pending transaction and commit gate; T09-EDITOR availability generated names stay valid through collision boundary; AUDIT HINT generated names stay valid through collision boundary | B09-PRODUCT; browser-product:cui-hint-insertion-and-palette-availability; browser-product:cui-generated-name-collision-boundary; browser-schemas:ForEach; browser-schemas:ReturnStatement; browser-session:palette-generated-name-collision-boundary; ui-shell:disclosure-discoverability-source-invariant | CUI候補とGUI availability が同じ文脈/意味診断を用いる。自動生成名はCUI候補とGUI availabilityの双方で、引数・反復項目・局所宣言との連続衝突でも32文字上限内の未使用名を生成し、実際の候補・パレットから追加できる。個別候補の実操作はschema suite |
 | product:monitor | 実行モニターと現在位置 | owner key/sourceSpan | paintExecutionLocation / sourceLocation | paintExecutionLocation → view.highlight / nodeMap; debug ownerはreadOnly | LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件 | runtime / scheduler | AUDIT ERROR action arguments local9 correct line and detached state | B09-PRODUCT; browser-session:debug-function-owner | 失敗記録はself-test、画面描画・block位置・owner対応はbrowser-sessionで別検査 |
@@ -1566,7 +1566,7 @@ JPF-001〜042の現行受理実測、既存AST接続、有限な許可組合せ�
 
 原文範囲はUTF-16半開区間の編集用side tableとし、保存schemaへ入れない。利用者向け列はコードポイントへ変換する。値・target・index・横・縦・時間・周波数・比較左右を役割へ接続し、無編集往復は原文と履歴を変えない。複数編集は同じrevisionから後ろ順に適用して再解析・意味一致・上限検証を通して一度に確定する。構造変更は必要な最小範囲だけを標準形にし、失敗時の作品・原文・履歴を保護する。
 
-`run-language-tests.mjs` の605 ID（256有限形、旧陰性からの明示移行2件を含む37件、288一行組合せ、15追加陰性、既存意味9件）、`run-editor-surface-tests.mjs` の38 ID、`tests/phase3-browser.mjs` の9実GUI IDを追加義務とする。後者は原文・役割選択・フォーカス・履歴、IME、一行構造の展開とundo/redo、ステップと式エラー位置、保存/再読込/生成HTMLオフライン、未登録下書きの自動復元/確定/取り消し、破損自動保存の拒否を含む。Node成功でbrowser義務を代用しない。既存全browser群・素材/上限/不正入力/状態保護を維持する。固定1.0.0比較を必須とし、0.8の既存補助回帰も維持する。
+`run-language-tests.mjs` の605 ID（256有限形、旧陰性からの明示移行2件を含む37件、288一行組合せ、15追加陰性、既存意味9件）、`run-editor-surface-tests.mjs` の38 ID、`tests/phase3-browser.mjs` の9実GUI IDを追加義務とする。後者は原文・役割選択・フォーカス・履歴、IME、一行構造の展開とundo/redo、ステップと式エラー位置、保存/再読込/生成HTMLオフライン、未登録下書きの明示登録/取り消し/Undo・Redo、有効・破損の旧自動保存へのアクセス禁止を含む。Node成功でbrowser義務を代用しない。既存全browser群・素材/上限/不正入力/状態保護を維持する。固定1.0.0比較を必須とし、0.8の既存補助回帰も維持する。
 
 ## フェーズ4の実行接続と証拠の集約
 
@@ -1575,3 +1575,16 @@ JPF-001〜042の現行受理実測、既存AST接続、有限な許可組合せ�
 `Akari_1_0_0` へのPushは全jobの対象とする。`static` → `selftest` → `full-browser-gate`（session/ui/limits/schemas/extra）→ `aggregate` が接続される。`aggregate` は同じrun ID・attemptの7 artifactを読み戻し、必須job成功、HEAD、製品・契約・suite・runner・fixtureのhash、全ID／case tuple、browser環境、結果とartifact内容のhashを独立に再検証する。欠落、重複、異なるSHA、FAIL、SKIP、期限切れはPASSではない。保持期間はデフォルト3日。`MACHINE_PASS` は機械監査の状態であり、意味審査や1.0.0完成認定を自動生成しない。
 
 `manifests/browser-results.json` は27 runnerの独立した必須case tupleを固定する。`manifests/browser-obligations.json` はWB09／DESIGN09の恒久IDを実行caseへ展開する対応を明示する。統合されたcase内のkeyboard、各viewport、modeも含め、対応先の全caseを要求する。形の分かりやすさや自然さの意味判断は別途残す。フェーズ4で追加した4編集IDと1実GUI IDは条件接続の原文範囲・本文保護・一行組込みを検査する。
+
+## 自動保存の完全撤去と監査契約の移行
+
+自動保存に起因する事故経路を除くため、作品・素材・未登録下書きのブラウザー内自動保存と起動時の復元を廃止する。自動保存専用のコード、UI、タイマー、キュー、復元用状態、保存領域キー、各編集操作からの呼出しを製品から撤去する。既存の保存領域は読取り・書込み・削除・移行せず、UI表示設定 `akari.uiLevel.v1` だけを独立して保持する。旧記録を削除する移行処理は追加しない。
+
+ユーザーは2026-09-24の打ち合わせで完全撤去と監査非弱体化の範囲内の基準変更を承認し、続けてDraft PRまでの実行を明示した。変更前のpublic mainは `f330b0c8b52ab1cce8d6c5bd59fd355b107ba5a4`。撤去対象、旧保証、新試験、維持する保証は `audit/records/autosave-retirement.json` に対応付ける。
+
+- GA-STATIC：`verifyNoAutomaticPersistence` が製品内の専用コード・UI・永続化API残存を拒否する。固定版の能力表・試験集合から、記録された1能力と4試験IDの移行だけを導出し、他の変更・欠落・重複を拒否する。陰性試験で例外の拡大・対象外保証の削減・残存コードの再混入を拒否する。
+- GA-EXEC：`draft-session-without-persistence` は編集中の下書き分離と待機中の状態維持、再読込み後に復元されないことを検査する。`invalid-syntax-file-roundtrip-without-persistence` は不正文法を含む素材付き作品の手動保存とファイル再読込みを維持する。`A10-GUI/unregistered-draft-explicit-registration` は未登録下書きの原文・未知名保持、明示登録とUndo・Redoを維持する。`A10-GUI/retired-storage-isolation` は有効・破損双方の旧IndexedDB/localStorage記録を置き、起動・編集・待機・Undo・Redo・保存・新規・読込みで作品の永続化APIへアクセスせず、旧記録も変更されないことを確認する。
+- SEMANTIC：共有の `validateCallableDraft`、未保存判定・破棄確認・終了確認、履歴、手動保存・読込み、素材・構造・不正入力・資源上限の検証を維持する。製品版・保存形式、実行と書き出しは変更しない。
+- HYBRID：上記の機械検査と変更全体の意味審査を合わせて受け入れる。自動復旧の廃止以外に保証を減らさない。
+
+固定1.0.0と0.8のソース・証拠・hash・実行runnerは不変。旧 `save:autosave` と4試験IDの廃止は明示した仕様変更であり、旧IDを別保証へ無説明に転用しない。その他の能力と全core・言語・editor試験、ブラウザー義務、上限・不正入力・素材・未保存内容保護、全Actions群、独立集約、欠落・timeoutをFAILとする条件を維持する。

@@ -22,7 +22,7 @@
         "callable-draft-history",
         "running-paused-lock-switch",
         "debug-function-owner",
-        "autosave-draft-recovery",
+        "draft-session-without-persistence",
         "responsive-mode-state"
       ]
     },
@@ -37,7 +37,7 @@
         "media-editor-run-and-save-roundtrip",
         "real-media-standalone-player",
         "format3-malformed-mismatch-and-state-protection",
-        "invalid-syntax-save-and-format3-storage-isolation"
+        "invalid-syntax-file-roundtrip-without-persistence"
       ]
     },
     {

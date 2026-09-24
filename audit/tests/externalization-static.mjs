@@ -1,3 +1,5 @@
+import {verifyNoAutomaticPersistence} from '../lib/persistence-transition.mjs';
+import './persistence-negative.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import cp from 'node:child_process';
@@ -13,6 +15,7 @@ const policy=JSON.parse(fs.readFileSync('audit/manifests/quality-1.0.0.json'));
 verifyAuthority(manifest);
 const completedBaseline=verifyCompletedProvenance();
 const html=fs.readFileSync('Akari.html','utf8');
+verifyNoAutomaticPersistence(html);
 for(const file of ['README.md','LANGUAGE.md','MANUAL.html','index.html',...fs.readdirSync('Manual').filter(p=>p.endsWith('.html')).map(p=>'Manual/'+p)]) {
  const text=fs.readFileSync(file,'utf8');
  assert.doesNotMatch(text,/過去版|旧版|以前の版|(?:あかり|Akari)\s*0\.[789]/i,'prelaunch release explanation in '+file);

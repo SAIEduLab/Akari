@@ -332,7 +332,7 @@
       "sources": [
         "Akari.html#serializeProject",
         "Akari.html#parseProjectFile",
-        "Akari.html#writeAutosave",
+        "Akari.html#saveProject",
         "Akari.html#packExecutable",
         "Akari.html#restoreExecutable"
       ],
@@ -39927,7 +39927,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -39944,7 +39944,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -40063,7 +40063,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -40080,7 +40080,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -40183,7 +40183,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -40200,7 +40200,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -40343,7 +40343,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -40360,7 +40360,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -40483,7 +40483,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -40500,7 +40500,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -40615,7 +40615,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -40632,7 +40632,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -40735,7 +40735,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -40752,7 +40752,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -40871,7 +40871,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -40888,7 +40888,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -40983,7 +40983,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -41000,7 +41000,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -41095,7 +41095,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -41112,7 +41112,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -41219,7 +41219,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -41236,7 +41236,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -41343,7 +41343,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -41360,7 +41360,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -41467,7 +41467,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -41484,7 +41484,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -41599,7 +41599,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -41616,7 +41616,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -41755,7 +41755,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -41772,7 +41772,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -41891,7 +41891,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -41908,7 +41908,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -42039,7 +42039,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -42056,7 +42056,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -42105,11 +42105,11 @@
           "artifact": "full-browser-session/candidate/browser-storage-media.json"
         },
         {
-          "reference": "browser-storage-media:invalid-syntax-save-and-format3-storage-isolation",
+          "reference": "browser-storage-media:invalid-syntax-file-roundtrip-without-persistence",
           "task": "browser-storage-media",
           "source": "audit/browser/legacy/browser-storage-media.cjs",
           "ids": [
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -42126,19 +42126,19 @@
       "pass": "All required IDs/case tuples PASS, expected environment, unchanged inputs, no missing/duplicate results; semantic review is separate"
     },
     {
-      "id": "save:autosave",
-      "requirement": "作品と定義下書きの自動復元",
+      "id": "save:manual-only",
+      "requirement": "手動保存のみ・作品と下書きの自動永続化なし",
       "classification": "HYBRID",
       "source": {
         "product": "Akari.html",
-        "ast": "callableDraft.source",
-        "cui": "writeAutosave / read restore record",
-        "gui": "writeAutosave / readAutosave / restoreCallableDraft; callableDraft.source",
-        "runtime": "editor session"
+        "ast": "project / callableDraft",
+        "cui": "saveProject / openProject; explicit file only",
+        "gui": "saveBtn / fileInput; no persistence or recovery UI",
+        "runtime": "editor session only"
       },
       "independentExpectation": {
-        "semantic": "LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件",
-        "guarantee": "pure core test で復元UIを代用しない。形式3領域の分離と下書き復元はbrowser suite"
+        "semantic": "LANGUAGE.mdの現行意味 + 本書の自動保存廃止契約",
+        "guarantee": "GA-STATICで専用コード・UIの不在、GA-EXECで旧領域へのアクセスなし・手動保存・下書き分離を検査。A10-GUI/retired-storage-isolationで有効・破損の旧記録を無視し無変更で保持"
       },
       "core": [],
       "coreExecution": {
@@ -42166,7 +42166,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -42183,7 +42183,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -42220,11 +42220,11 @@
           "artifact": "full-browser-limits/candidate/browser-product.json"
         },
         {
-          "reference": "browser-session:autosave-draft-recovery",
+          "reference": "browser-session:draft-session-without-persistence",
           "task": "browser-session",
           "source": "audit/browser/legacy/browser-session.cjs",
           "ids": [
-            "autosave-draft-recovery"
+            "draft-session-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -42232,11 +42232,11 @@
           "artifact": "full-browser-session/candidate/browser-session.json"
         },
         {
-          "reference": "browser-storage-media:invalid-syntax-save-and-format3-storage-isolation",
+          "reference": "browser-storage-media:invalid-syntax-file-roundtrip-without-persistence",
           "task": "browser-storage-media",
           "source": "audit/browser/legacy/browser-storage-media.cjs",
           "ids": [
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -42310,7 +42310,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -42327,7 +42327,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -42376,11 +42376,11 @@
           "artifact": "full-browser-session/candidate/browser-storage-media.json"
         },
         {
-          "reference": "browser-storage-media:invalid-syntax-save-and-format3-storage-isolation",
+          "reference": "browser-storage-media:invalid-syntax-file-roundtrip-without-persistence",
           "task": "browser-storage-media",
           "source": "audit/browser/legacy/browser-storage-media.cjs",
           "ids": [
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -42454,7 +42454,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -42471,7 +42471,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -42734,7 +42734,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -42751,7 +42751,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -43241,7 +43241,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -43258,7 +43258,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -43365,7 +43365,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -43382,7 +43382,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -43635,7 +43635,7 @@
       },
       "independentExpectation": {
         "semantic": "LANGUAGE.mdの現行意味 + 本書の該当D09恒久監査要件",
-        "guarantee": "純粋candidateがprojectへ下書きを登録しないことと、実保存・Undo・復元を分けて検査する"
+        "guarantee": "純粋candidateがprojectへ下書きを登録しないことと、明示登録・Undo・ファイル再読込みを分けて検査する"
       },
       "core": [
         {
@@ -43672,7 +43672,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -43689,7 +43689,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -43738,11 +43738,11 @@
           "artifact": "full-browser-session/candidate/browser-session.json"
         },
         {
-          "reference": "browser-session:autosave-draft-recovery",
+          "reference": "browser-session:draft-session-without-persistence",
           "task": "browser-session",
           "source": "audit/browser/legacy/browser-session.cjs",
           "ids": [
-            "autosave-draft-recovery"
+            "draft-session-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -43832,7 +43832,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -43849,7 +43849,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -43984,7 +43984,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -44001,7 +44001,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -44164,7 +44164,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -44181,7 +44181,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -44292,7 +44292,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -44309,7 +44309,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -44496,7 +44496,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -44513,7 +44513,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -44683,7 +44683,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -44700,7 +44700,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -44851,7 +44851,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -45446,7 +45446,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -45633,7 +45633,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -45689,7 +45689,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -45729,7 +45729,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -45824,7 +45824,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -45841,7 +45841,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -46144,7 +46144,7 @@
             "callable-draft-history",
             "running-paused-lock-switch",
             "debug-function-owner",
-            "autosave-draft-recovery",
+            "draft-session-without-persistence",
             "responsive-mode-state"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
@@ -46161,7 +46161,7 @@
             "media-editor-run-and-save-roundtrip",
             "real-media-standalone-player",
             "format3-malformed-mismatch-and-state-protection",
-            "invalid-syntax-save-and-format3-storage-isolation"
+            "invalid-syntax-file-roundtrip-without-persistence"
           ],
           "runner": "audit/browser/run-full-browser-audit.mjs",
           "validator": "audit/lib/verify-browser-results.mjs",
@@ -53371,8 +53371,8 @@
     "A10-GUI/inline-structure-single-history",
     "A10-GUI/inline-step-and-error-role",
     "A10-GUI/save-reload-generated-offline",
-    "A10-GUI/unregistered-draft-autosave-registration",
-    "A10-GUI/corrupt-autosave-preserves-current",
+    "A10-GUI/unregistered-draft-explicit-registration",
+    "A10-GUI/retired-storage-isolation",
     "A10-GUI/condition-connective-local-edit",
     "A10-GUI/else-surface-branch-position"
   ],

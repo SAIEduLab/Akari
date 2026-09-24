@@ -999,7 +999,6 @@ button:focus-visible {
   background: #eef5ff;
   border-color: #b7c9e2;
 }
-.save-state,
 .dirty-state {
   margin-left: 14px;
   color: #67778a;
@@ -5267,7 +5266,7 @@ body.runtime #formSurface .design-resize-outline {
     </section>
   </div>
 
-  <div class="status"><span id="statusText">準備完了</span><span class="save-state" id="autosaveState">自動保存：待機</span><span class="dirty-state" id="dirtyState">変更なし</span><span class="runstate run-off" id="runState">停止中</span></div>
+  <div class="status"><span id="statusText">準備完了</span><span class="dirty-state" id="dirtyState">変更なし</span><span class="runstate run-off" id="runState">停止中</span></div>
 </div>
 
 <div class="modal" id="assetModal" role="dialog" aria-modal="true" aria-label="画像・音声">
@@ -5369,15 +5368,6 @@ body.runtime #formSurface .design-resize-outline {
     <div class="dialog-foot"><button id="diagnosisClose">閉じる</button></div>
   </div>
 </div>
-
-<div class="modal" id="recoveryModal" role="dialog" aria-modal="true" aria-label="自動保存からもどす">
-  <div class="dialog" style="width:min(560px,92vw);height:auto;max-height:80vh">
-    <div class="win-title">自動保存された作品</div>
-    <div class="dialog-body"><p id="recoveryText">前回の自動保存があります。</p></div>
-    <div class="dialog-foot"><button id="recoveryDiscard">使わない</button> <button id="recoveryRestore">もどす</button></div>
-  </div>
-</div>
-
 
 <div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-label="あかりの質問">
   <div class="dialog">
@@ -8741,8 +8731,6 @@ body.runtime #formSurface .design-resize-outline {
   const LANGUAGE_VERSION = AKARI_RUNTIME.EXECUTABLE_VERSION.languageVersion;
   const FORMAT_VERSION = AKARI_RUNTIME.EXECUTABLE_VERSION.projectFormatVersion;
   const STORAGE_KEYS = Object.freeze({
-    database: 'akari-workspace-f' + FORMAT_VERSION,
-    fallback: 'akari.autosave.f' + FORMAT_VERSION,
     uiLevel: 'akari.uiLevel.v1',
   });
 
@@ -19141,9 +19129,6 @@ body.runtime #formSurface .design-resize-outline {
     const $ = (s) => document.querySelector(s),
       $$ = (s) => [...document.querySelectorAll(s)];
     let initialSnapshot = null,
-      autosaveQueue = Promise.resolve(),
-      recoveryEpoch = 0,
-      autosaveRevisionTime = 0,
       lastObservedFingerprint = null,
       activeDragCleanup = null,
       designResizePreview = null,
@@ -19169,8 +19154,6 @@ body.runtime #formSurface .design-resize-outline {
       history = [],
       redo = [],
       historyTimer = null,
-      autosaveTimer = null,
-      recoveryData = null,
       appState = 'DESIGN',
       generationToken = 0,
       designObjectUrls = new Map(),
@@ -19192,7 +19175,6 @@ body.runtime #formSurface .design-resize-outline {
       console: $('#console'),
       status: $('#statusText'),
       runState: $('#runState'),
-      autosave: $('#autosaveState'),
       dirty: $('#dirtyState'),
       projectName: $('#projectName'),
       fileInput: $('#fileInput'),
@@ -20163,11 +20145,9 @@ body.runtime #formSurface .design-resize-outline {
       const fp = stateFingerprintCore();
       if (fp === lastObservedFingerprint) return;
       lastObservedFingerprint = fp;
-      recoveryEpoch++;
       if (history.at(-1)?.stateFingerprint !== fp) redo = [];
       updateDirty();
       queueHistory();
-      scheduleAutosave();
     }
     function updateDirty() {
       dirty = currentFingerprint() !== lastSavedFingerprint;
@@ -20181,7 +20161,6 @@ body.runtime #formSurface .design-resize-outline {
       document.title = `${dirty || draft ? '● ' : ''}あかり 1.0.0 — ${project.name}`;
     }
     function restoreSnap(e) {
-      recoveryEpoch++;
       validateAssetReferences(e.project, new AssetStore(e.assets));
       disposeRuntime();
       revokeDesignUrls();
@@ -20213,7 +20192,6 @@ body.runtime #formSurface .design-resize-outline {
       loadEditor();
       if ($('#procModal').classList.contains('show')) renderEditorBinding(draftEditor);
       updateDirty();
-      scheduleAutosave();
     }
     function undo() {
       if (modelLocked() || !flushActiveEditor()) return;
@@ -20881,7 +20859,6 @@ body.runtime #formSurface .design-resize-outline {
         composing: false,
         pointer: null,
       };
-      recoveryEpoch++;
       $('#colorTitle').textContent = c.name + ' \u2014 ' + label;
       $('#colorNone').hidden = field !== 'bg';
       $('#colorAdvanced').open = false;
@@ -20907,7 +20884,6 @@ body.runtime #formSurface .design-resize-outline {
             .querySelector(`[data-color-field="${edit.field}"] .color-more`)
             ?.focus({ preventScroll: true });
       });
-      if (dirty || hasCallableDraft()) scheduleAutosave();
     }
     function installColorPicker() {
       const canvas = $('#colorCanvas'),
@@ -21083,7 +21059,6 @@ body.runtime #formSurface .design-resize-outline {
       if (!c) return;
       clearTimeout(historyTimer);
       pushHistoryNow();
-      clearTimeout(autosaveTimer);
       const pointerId = ev.pointerId,
         before = { ...c },
         toStage = (e) => {
@@ -21138,7 +21113,6 @@ body.runtime #formSurface .design-resize-outline {
         renderComponents();
         if (changed) refreshEditor();
         releaseShellPointer();
-        scheduleAutosave();
         if (cancel) setStatus('\u79fb\u52d5\u3092\u53d6\u308a\u6d88\u3057\u307e\u3057\u305f');
       };
       const up = (e) => {
@@ -21173,7 +21147,6 @@ body.runtime #formSurface .design-resize-outline {
       if (!designResizeMode(c)) return;
       clearTimeout(historyTimer);
       pushHistoryNow();
-      clearTimeout(autosaveTimer);
       const pointerId = ev.pointerId,
         before = { ...c },
         toStage = (e) => {
@@ -21232,7 +21205,6 @@ body.runtime #formSurface .design-resize-outline {
         renderComponents();
         if (changed) refreshEditor();
         releaseShellPointer();
-        scheduleAutosave();
         if (cancel)
           setStatus(
             '\u30b5\u30a4\u30ba\u5909\u66f4\u3092\u53d6\u308a\u6d88\u3057\u307e\u3057\u305f',
@@ -22288,9 +22260,7 @@ body.runtime #formSurface .design-resize-outline {
         lastSavedFingerprint = currentFingerprint();
         dirty = false;
         updateDirty();
-        clearTimeout(autosaveTimer);
-        writeAutosave();
-        log(`${a.download} のダウンロードを開始しました。自動保存も保持します`, 'ok');
+        log(`${a.download} のダウンロードを開始しました`, 'ok');
       } catch (err) {
         log(`${err.code || ''} 保存失敗: ${err.message}`, 'error');
       }
@@ -22298,15 +22268,12 @@ body.runtime #formSurface .design-resize-outline {
     async function openProject(file) {
       if (modelLocked() || !confirmLose()) return;
       clearTimeout(historyTimer);
-      clearTimeout(autosaveTimer);
-      recoveryEpoch++;
       appState = 'IMPORTING';
       updateRunState();
       try {
         if (file.size > LIMITS.fileBytes)
           throw new AkariError('F504', 'ファイルが24MiBを超えています');
         const loaded = await parseProjectFile(await file.text());
-        await clearAutosave();
         closeEditingModals();
         clearCallable();
         disposeRuntime();
@@ -22333,399 +22300,9 @@ body.runtime #formSurface .design-resize-outline {
       } finally {
         appState = 'DESIGN';
         renderAll();
-        if (dirty || hasCallableDraft()) scheduleAutosave();
       }
     }
 
-    function openAutosaveDB() {
-      return new Promise((resolve, reject) => {
-        let settled = false,
-          request = null;
-        const timer = setTimeout(
-          () =>
-            fail(
-              new Error(
-                '\u81ea\u52d5\u4fdd\u5b58DB\u306e\u5fdc\u7b54\u304c\u3042\u308a\u307e\u305b\u3093',
-              ),
-            ),
-          4000,
-        );
-        function fail(error) {
-          if (settled) return;
-          settled = true;
-          clearTimeout(timer);
-          reject(
-            error || new Error('\u81ea\u52d5\u4fdd\u5b58DB\u3092\u958b\u3051\u307e\u305b\u3093'),
-          );
-        }
-        try {
-          request = indexedDB.open(STORAGE_KEYS.database, 1);
-          request.onupgradeneeded = () => {
-            try {
-              const db = request.result;
-              if (!db.objectStoreNames.contains('workspace'))
-                db.createObjectStore('workspace', { keyPath: 'id' });
-            } catch (e) {
-              fail(e);
-            }
-          };
-          request.onsuccess = () => {
-            const db = request.result;
-            if (settled) {
-              db.close();
-              return;
-            }
-            settled = true;
-            clearTimeout(timer);
-            db.onversionchange = () => db.close();
-            resolve(db);
-          };
-          request.onerror = () => fail(request.error);
-          request.onblocked = () =>
-            fail(
-              new Error(
-                '\u4ed6\u306e\u753b\u9762\u304c\u81ea\u52d5\u4fdd\u5b58DB\u3092\u4f7f\u7528\u4e2d\u3067\u3059',
-              ),
-            );
-        } catch (e) {
-          fail(e);
-        }
-      });
-    }
-
-    function autosaveTransaction(db, operation) {
-      return new Promise((resolve, reject) => {
-        let settled = false,
-          tx = null;
-        const finish = (error) => {
-            if (settled) return;
-            settled = true;
-            clearTimeout(timer);
-            error ? reject(error) : resolve();
-          },
-          timer = setTimeout(() => {
-            try {
-              tx?.abort();
-            } catch (_) {}
-            finish(new Error('Autosave transaction timeout'));
-          }, 5000);
-        try {
-          tx = db.transaction('workspace', 'readwrite');
-          tx.oncomplete = () => finish();
-          tx.onerror = () => finish(tx.error || new Error('Autosave transaction failed'));
-          tx.onabort = () => finish(tx.error || new Error('Autosave transaction aborted'));
-          operation(tx.objectStore('workspace'));
-        } catch (error) {
-          finish(error);
-        }
-      });
-    }
-
-    function writeAutosave() {
-      if (hasPendingEditor()) {
-        scheduleAutosave();
-        return Promise.resolve(false);
-      }
-      if (!flushActiveEditor()) return Promise.resolve(false);
-      let rec, fingerprint;
-      try {
-        fingerprint = currentFingerprint();
-        const ids = [...collectReachableAssetIds(project)].filter((id) => {
-            if (id !== DEFAULT_MASCOT_ASSET_ID) return true;
-            const a = assetStore.get(id);
-            return (
-              !a ||
-              a.kind !== 'image' ||
-              a.mime !== 'image/png' ||
-              a.byteLength !== 5476 ||
-              a.sha256 !== DEFAULT_MASCOT_SHA256
-            );
-          }),
-          assets = ids.map((id) => {
-            const a = assetStore.get(id);
-            if (!a)
-              throw new AkariError(
-                'F503',
-                '\u81ea\u52d5\u4fdd\u5b58\u3059\u308b\u7d20\u6750\u304c\u3042\u308a\u307e\u305b\u3093',
-              );
-            return {
-              id: a.id,
-              kind: a.kind,
-              mime: a.mime,
-              byteLength: a.byteLength,
-              sha256: a.sha256,
-              blob: new Blob([a.bytes], { type: a.mime }),
-            };
-          });
-        autosaveRevisionTime = Math.max(Date.now(), autosaveRevisionTime + 1);
-        rec = {
-          id: 'latest',
-          updatedAt: autosaveRevisionTime,
-          project: cloneDesignProject(project),
-          assets,
-          selectedId,
-          currentEvent,
-          lastSavedFingerprint,
-          callableDraft: captureCallableDraft(),
-        };
-      } catch (e) {
-        el.autosave.textContent = '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5931\u6557';
-        log(e.message, 'error');
-        return Promise.resolve(false);
-      }
-      const status = (text) => {
-        if (
-          !hasPendingEditor() &&
-          currentFingerprint() === fingerprint &&
-          JSON.stringify(captureCallableDraft()) === JSON.stringify(rec.callableDraft)
-        )
-          el.autosave.textContent = text;
-      };
-      const fallback = () => {
-        if (rec.assets.length) {
-          status(
-            '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5229\u7528\u3067\u304d\u307e\u305b\u3093\uff08\u7d20\u6750\u3092\u542b\u3080\u4f5c\u54c1\uff09',
-          );
-          return false;
-        }
-        try {
-          const txt = JSON.stringify(rec);
-          if (txt.length > 500000) throw new Error('large');
-          localStorage.setItem(STORAGE_KEYS.fallback, txt);
-          status('\u81ea\u52d5\u4fdd\u5b58\uff1a\u6e08\u307f');
-          return true;
-        } catch (_) {
-          status('\u81ea\u52d5\u4fdd\u5b58\uff1a\u5931\u6557');
-          return false;
-        }
-      };
-      return (autosaveQueue = autosaveQueue
-        .catch(() => {})
-        .then(async () => {
-          let db;
-          try {
-            db = await openAutosaveDB();
-          } catch (_) {
-            return fallback();
-          }
-          try {
-            await autosaveTransaction(db, (store) => store.put(rec));
-            try {
-              localStorage.removeItem(STORAGE_KEYS.fallback);
-            } catch (_) {}
-            status('\u81ea\u52d5\u4fdd\u5b58\uff1a\u6e08\u307f');
-            return true;
-          } catch (_) {
-            return fallback();
-          } finally {
-            try {
-              db.close();
-            } catch (_) {}
-          }
-        }));
-    }
-    function scheduleAutosave() {
-      clearTimeout(autosaveTimer);
-      el.autosave.textContent = '自動保存：待機';
-      autosaveTimer = setTimeout(writeAutosave, 1200);
-    }
-    async function readAutosave() {
-      let latest = null;
-      try {
-        const db = await openAutosaveDB();
-        try {
-          latest = await new Promise((resolve, reject) => {
-            let settled = false,
-              tx = null;
-            const finish = (error, value) => {
-                if (settled) return;
-                settled = true;
-                clearTimeout(timer);
-                error ? reject(error) : resolve(value || null);
-              },
-              timer = setTimeout(() => {
-                try {
-                  tx?.abort();
-                } catch (_) {}
-                finish(new Error('Autosave read timeout'));
-              }, 5000);
-            try {
-              tx = db.transaction('workspace', 'readonly');
-              const req = tx.objectStore('workspace').get('latest');
-              req.onsuccess = () => finish(null, req.result);
-              req.onerror = () => finish(req.error || new Error('Autosave read failed'));
-              tx.onabort = () => finish(tx.error || new Error('Autosave read aborted'));
-              tx.onerror = () => finish(tx.error || new Error('Autosave read failed'));
-            } catch (error) {
-              finish(error);
-            }
-          });
-        } finally {
-          db.close();
-        }
-      } catch (_) {}
-      try {
-        const fallback = JSON.parse(localStorage.getItem(STORAGE_KEYS.fallback) || 'null');
-        if (fallback && (!latest || Number(fallback.updatedAt) >= Number(latest.updatedAt)))
-          latest = fallback;
-      } catch (_) {}
-      if (latest && Number.isFinite(latest.updatedAt))
-        autosaveRevisionTime = Math.max(autosaveRevisionTime, latest.updatedAt);
-      return latest;
-    }
-
-    function clearAutosave() {
-      clearTimeout(autosaveTimer);
-      const epoch = ++recoveryEpoch;
-      return (autosaveQueue = autosaveQueue
-        .catch(() => {})
-        .then(async () => {
-          let db,
-            ok = true;
-          try {
-            db = await openAutosaveDB();
-            await autosaveTransaction(db, (store) => store.delete('latest'));
-          } catch (_) {
-            ok = false;
-          } finally {
-            try {
-              db?.close();
-            } catch (_) {}
-          }
-          try {
-            localStorage.removeItem(STORAGE_KEYS.fallback);
-          } catch (_) {
-            ok = false;
-          }
-          if (epoch === recoveryEpoch)
-            el.autosave.textContent = ok
-              ? '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5f85\u6a5f'
-              : '\u81ea\u52d5\u4fdd\u5b58\uff1a\u524a\u9664\u3092\u78ba\u8a8d\u3067\u304d\u307e\u305b\u3093';
-          return ok;
-        }));
-    }
-    async function checkRecovery() {
-      const epoch = recoveryEpoch;
-      try {
-        const rec = await readAutosave();
-        if (
-          !rec?.project ||
-          epoch !== recoveryEpoch ||
-          dirty ||
-          hasCallableDraft() ||
-          hasPendingEditor() ||
-          modelLocked()
-        )
-          return;
-        validateDesignProject(rec.project);
-        const callableDraft = validateCallableDraft(rec.callableDraft);
-        if (!Array.isArray(rec.assets || []) || (rec.assets || []).length > LIMITS.assets)
-          throw new AkariError(
-            'F504',
-            '\u81ea\u52d5\u4fdd\u5b58\u306e\u7d20\u6750\u6570\u304c\u4e0d\u6b63\u3067\u3059',
-          );
-        let total = 0;
-        const records = [];
-        for (const ar of rec.assets || []) {
-          if (!ar || !(ar.blob instanceof Blob) || !['image', 'audio'].includes(ar.kind))
-            throw new AkariError(
-              'F503',
-              '\u81ea\u52d5\u4fdd\u5b58\u306e\u7d20\u6750\u304c\u4e0d\u6b63\u3067\u3059',
-            );
-          const cap = ar.kind === 'image' ? LIMITS.imageBytes : LIMITS.audioBytes;
-          total += ar.blob.size;
-          if (
-            ar.blob.size < 1 ||
-            ar.blob.size > cap ||
-            ar.blob.size !== ar.byteLength ||
-            total > LIMITS.assetRawTotal
-          )
-            throw new AkariError(
-              'F504',
-              '\u81ea\u52d5\u4fdd\u5b58\u306e\u7d20\u6750\u30b5\u30a4\u30ba\u304c\u4e0d\u6b63\u3067\u3059',
-            );
-        }
-        for (const ar of rec.assets || []) {
-          const bytes = new Uint8Array(await ar.blob.arrayBuffer());
-          records.push({
-            id: ar.id,
-            kind: ar.kind,
-            mime: ar.mime,
-            byteLength: ar.byteLength,
-            sha256: ar.sha256,
-            dataBase64: encodeBase64(bytes),
-          });
-        }
-        const serializedAssets = records.slice();
-        if (
-          collectReachableAssetIds(rec.project).has(DEFAULT_MASCOT_ASSET_ID) &&
-          !serializedAssets.some((a) => a.id === DEFAULT_MASCOT_ASSET_ID)
-        ) {
-          const a = defaultMascotAssetRecord();
-          serializedAssets.push({
-            id: a.id,
-            kind: a.kind,
-            mime: a.mime,
-            byteLength: a.byteLength,
-            sha256: a.sha256,
-            dataBase64: encodeBase64(a.bytes),
-          });
-        }
-        const { assetIds } = validateSerializedProjectStructure({
-            ...rec.project,
-            assets: serializedAssets,
-          }),
-          st = new AssetStore();
-        for (const record of serializedAssets)
-          st.addImmutable(await validateLoadedAssetRecord(record));
-        validateAssetReferences(rec.project, st, { serializedAssetIds: assetIds });
-        if (
-          epoch !== recoveryEpoch ||
-          dirty ||
-          hasCallableDraft() ||
-          hasPendingEditor() ||
-          modelLocked()
-        )
-          return;
-        const validId =
-            rec.selectedId === 'stage' ||
-            rec.project.components.some((c) => c.id === rec.selectedId)
-              ? rec.selectedId
-              : 'stage',
-          type =
-            validId === 'stage'
-              ? 'stage'
-              : rec.project.components.find((c) => c.id === validId).type,
-          validEvent = EVENT_BY_TYPE[type].includes(rec.currentEvent) ? rec.currentEvent : 'start';
-        recoveryData = {
-          ...rec,
-          callableDraft,
-          assetStore: st,
-          selectedId: validId,
-          currentEvent: validEvent,
-          lastSavedFingerprint:
-            typeof rec.lastSavedFingerprint === 'string' ? rec.lastSavedFingerprint : '',
-        };
-        $('#recoveryText').textContent =
-          `${new Date(rec.updatedAt).toLocaleString()} \u306e\u81ea\u52d5\u4fdd\u5b58\u304c\u3042\u308a\u307e\u3059\u3002`;
-        $('#recoveryModal').classList.add('show');
-      } catch (err) {
-        if (
-          epoch === recoveryEpoch &&
-          !dirty &&
-          !hasCallableDraft() &&
-          !hasPendingEditor() &&
-          !modelLocked()
-        ) {
-          el.autosave.textContent =
-            '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5fa9\u5143\u691c\u8a3c\u306b\u5931\u6557\uff08\u4fdd\u5b58\u30c7\u30fc\u30bf\u306f\u4fdd\u6301\uff09';
-          log(
-            `\u81ea\u52d5\u4fdd\u5b58\u3092\u691c\u8a3c\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u5143\u306e\u4fdd\u5b58\u30c7\u30fc\u30bf\u306f\u524a\u9664\u3057\u3066\u3044\u307e\u305b\u3093\u3002 ${err.code || ''} ${err.message}`,
-            'error',
-          );
-        }
-      }
-    }
     function renderDataModal() {
       const body = $('#dataBody');
       body.textContent = '';
@@ -22923,26 +22500,6 @@ body.runtime #formSurface .design-resize-outline {
         throw new AkariError('F503', '\u4e0b\u66f8\u304d\u306eID\u304c\u4e0d\u6b63\u3067\u3059');
       return { ...d };
     }
-    function captureCallableDraft() {
-      return hasCallableDraft() ? validateCallableDraft(callableDraftCore) : null;
-    }
-    function restoreCallableDraft(d) {
-      const old = [...project.actions, ...project.functions].find((x) => x.id === d.editId);
-      if (old) loadCallable(`${project.actions.includes(old) ? 'action' : 'function'}:${old.id}`);
-      else clearCallable(d.type);
-      callableDraftCore = {
-        ...validateCallableDraft(d),
-        editId: old?.id || '',
-        loadedKey: old ? d.loadedKey : '',
-      };
-      callableLoadedKey = callableDraftCore.loadedKey;
-      invalidateEditors();
-      paintCallable();
-      renderCallableOptions(callableLoadedKey);
-      $('#procModal').classList.add('show');
-      renderEditorBinding(draftEditor);
-    }
-
     function callableSignature() {
       const d = callableDraftCore;
       return JSON.stringify([d.type, d.name, d.argsText, d.source]);
@@ -23405,7 +22962,6 @@ body.runtime #formSurface .design-resize-outline {
       pushHistoryNow();
       dirty = currentFingerprint() !== lastSavedFingerprint;
       updateDirty();
-      scheduleAutosave();
       renderAll();
       renderAppearance();
       refreshEditor();
@@ -23416,7 +22972,6 @@ body.runtime #formSurface .design-resize-outline {
       if (!flushActiveEditor()) return;
       clearTimeout(historyTimer);
       pushHistoryNow();
-      recoveryEpoch++;
       appState = 'IMPORTING';
       setAssetProgress(`${label}を検査しています…`);
       updateRunState();
@@ -23663,7 +23218,6 @@ body.runtime #formSurface .design-resize-outline {
         t.dispatchEvent(new Event('input', { bubbles: true }));
       });
       t.addEventListener('compositionstart', () => {
-        recoveryEpoch++;
         composingEditors.add(t);
       });
       t.addEventListener('compositionend', () => {
@@ -23772,7 +23326,6 @@ body.runtime #formSurface .design-resize-outline {
       renderAll();
       loadEditor();
       resetHistory();
-      clearAutosave();
       setStatus('新しい作品');
     };
     $('#saveBtn').onclick = saveProject;
@@ -23936,43 +23489,6 @@ body.runtime #formSurface .design-resize-outline {
         $('#questionSubmit').click();
       }
     });
-    $('#recoveryRestore').onclick = () => {
-      if (!recoveryData) return;
-      const restoredDraft = recoveryData.callableDraft;
-      try {
-        disposeRuntime();
-        revokeDesignUrls();
-        project = cloneDesignProject(recoveryData.project);
-        assetStore = recoveryData.assetStore || new AssetStore();
-        selectedId = recoveryData.selectedId || 'stage';
-        currentEvent = recoveryData.currentEvent || 'start';
-        lastSavedFingerprint = recoveryData.lastSavedFingerprint || '';
-        appState = 'DESIGN';
-        renderAll();
-        loadEditor();
-        clearCallable();
-        if (restoredDraft) restoreCallableDraft(restoredDraft);
-        editorSessions.clear();
-        invalidateEditors();
-        initialSnapshot = snapshot();
-        lastObservedFingerprint = initialSnapshot.stateFingerprint;
-        history = [initialSnapshot];
-        redo = [];
-        updateDirty();
-        $('#recoveryModal').classList.remove('show');
-        recoveryData = null;
-        recoveryEpoch++;
-        log('自動保存からもどしました', 'ok');
-      } catch (err) {
-        log('自動保存からもどせませんでした', 'error');
-      }
-    };
-    $('#recoveryDiscard').onclick = () => {
-      $('#recoveryModal').classList.remove('show');
-      recoveryData = null;
-      clearAutosave();
-    };
-
     window.addEventListener('keydown', (e) => {
       if (
         e.isComposing ||
@@ -24024,7 +23540,6 @@ body.runtime #formSurface .design-resize-outline {
         isLocked: modelLocked,
         onOperation: (operation) => operateBlock(binding, operation),
         onPending: (pending) => {
-          if (pending) recoveryEpoch++;
           if (binding.session) binding.session.pendingEdit = pending;
         },
         onCancel: () => {
@@ -24068,7 +23583,6 @@ body.runtime #formSurface .design-resize-outline {
     }
     for (const t of [$('#callableName'), $('#callableArgs')]) {
       t.addEventListener('compositionstart', () => {
-        recoveryEpoch++;
         composingEditors.add(t);
         headerPending = { ownerKey: draftOwner(), composing: true };
       });
@@ -24189,7 +23703,6 @@ body.runtime #formSurface .design-resize-outline {
     $('#procClose').onclick = () => {
       if (confirmCallableDiscard()) {
         $('#procModal').classList.remove('show');
-        scheduleAutosave();
       }
     };
     $('#callableType').onchange = () => {
@@ -24210,7 +23723,6 @@ body.runtime #formSurface .design-resize-outline {
     renderAll();
     loadEditor();
     setupModalAccessibility();
-    checkRecovery();
     setStatus('準備完了 — あかり1.0.0');
     app = {
       get editorState() {
