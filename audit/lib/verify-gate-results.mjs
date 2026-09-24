@@ -6,7 +6,9 @@ import {verifyLanguageResults} from './verify-language-results.mjs';
 import {verifySurfaceResults} from './verify-surface-results.mjs';
 import {gateSteps} from './gate-contract.mjs';
 import {ledger08,ledger09} from '../browser/legacy/audit-lib.cjs';
-import {completedCommit,verifyFixedCore} from './completed-baseline.mjs';
+import {completedCommit,verifyFixedCore,verifyFixedFeatures} from './completed-baseline.mjs';
+import {verifyFixedCore as verifyHistoricalCore} from './historical-release-baseline.mjs';
+import {verifyEditorAssets} from './release-101-contract.mjs';
 export function verifyGateResults(dir,currentSnapshot) {
   const read=name=>JSON.parse(fs.readFileSync(path.join(dir,name)));
   const manifest=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
@@ -15,7 +17,9 @@ export function verifyGateResults(dir,currentSnapshot) {
   assert.deepEqual(receipt.steps.map(s=>s.id),gateSteps('',dir).map(s=>s[0]));
   for(const s of receipt.steps){assert.equal(s.exit,0);assert.equal(s.signal,null);assert.ok(!s.error);assert.ok(fs.existsSync(path.join(dir,s.log)));}
   const current=read('current-selftest.json');verifyAuthority(manifest);verify(current,manifest,currentSnapshot);
+  const historical100=verifyHistoricalCore(read('historical-100-selftest.json'),currentSnapshot);
   const completed=verifyFixedCore(read('completed-baseline-selftest.json'),currentSnapshot);
+  const fixedFeatures=verifyFixedFeatures(read('fixed101-editor-assets.json'),currentSnapshot);
   assert.deepEqual(current.results.map(r=>r.id).sort(),read('completed-baseline-selftest.json').results.map(r=>r.id).sort(),'candidate lost a completed-release core guarantee');
   const baseline=read('baseline-selftest.json');
   assert.ok(typeof baseline.browser==='string'&&baseline.browser.length>0);
@@ -43,6 +47,8 @@ export function verifyGateResults(dir,currentSnapshot) {
     verifySurfaceResults(read('editor-'+env+'.json'),'editor',currentSnapshot,env==='node'?'node':'chromium');
   }
   verifySurfaceResults(read('gui.json'),'gui',currentSnapshot,'chromium');
+  verifyEditorAssets(read('editor-assets-101.json'),currentSnapshot);
+  assert.deepEqual(read('editor-assets-101.json').results.map(r=>r.id).sort(),read('fixed101-editor-assets.json').results.map(r=>r.id).sort(),'candidate lost a 1.0.1 feature guarantee');
   const normal=read('normal-product.json');assert.equal(normal.status,'PASS');assert.deepEqual(normal.snapshot,currentSnapshot);
   for(const k of ['sourcePreserved','saveReload','exportOffline','noAuditGlobal','stringNotExecuted','freshContextIsolation'])assert.equal(normal[k],true);
   const bounds=read('language-boundaries.json');assert.equal(bounds.status,'PASS');assert.deepEqual(bounds.snapshot,currentSnapshot);
@@ -51,6 +57,6 @@ export function verifyGateResults(dir,currentSnapshot) {
   const node=read('node-product.json');assert.equal(node.environment,'node');assert.equal(node.requiredBrowserComplete,false);
   assert.equal(node.reports.reduce((n,s)=>n+s.total,0),793);
   const external=read('externalization-static.json');assert.equal(external.status,'PASS');assert.equal(external.ids,884);
-  return {fixedSourceCommit:completedCommit,completedBaseline:completed,baselineCapabilities:257,baselineRequiredTestIds:884,currentResults:884,currentCapabilityRows:257,
+  return {fixedSourceCommit:completedCommit,historical100,fixedFeatures,completedBaseline:completed,baselineCapabilities:257,baselineRequiredTestIds:884,currentResults:884,currentCapabilityRows:257,
     historical08:{sourceCommit:'ec43018d5ba546d5aa9df9c2799b18260a3ab2d7',capabilities:122,requiredTestIds:130,results:508}};
 }

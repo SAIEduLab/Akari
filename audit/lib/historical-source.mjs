@@ -29,6 +29,9 @@ const fixtureBytes=file=>Buffer.from(fs.readFileSync(path.join(root,file),'utf8'
 // Commit headers and only the required tree paths are proof data. No old refs,
 // parent commits, Git object database, network or Git process are needed.
 export function verifyHistoricalArchive(archive,readFixture=fixtureBytes){
+  return verifyGitSourceArchive(archive,{commits,fixturePattern:/^audit\/fixtures\/(?:1\.0\.0\/source\/|0\.8\/)/},readFixture);
+}
+export function verifyGitSourceArchive(archive,{commits,fixturePattern},readFixture=fixtureBytes){
   assert.equal(archive.schema,'akari-offline-git-provenance-v1');
   assert.deepEqual(keys(archive.commits),commits,'fixed source commits changed');
   assert.deepEqual(keys(archive.sources),commits,'source commit set changed');
@@ -63,7 +66,7 @@ export function verifyHistoricalArchive(archive,readFixture=fixtureBytes){
     assert.notEqual('fixture' in record,'deflateBase64' in record,'exactly one blob storage form required');
     let bytes;
     if('fixture' in record){
-      safePath(record.fixture);assert.match(record.fixture,/^audit\/fixtures\/(?:1\.0\.0\/source\/|0\.8\/)/,'unapproved fixture location');
+      safePath(record.fixture);assert.match(record.fixture,fixturePattern,'unapproved fixture location');
       bytes=readFixture(record.fixture);
     }else bytes=zlib.inflateSync(base64(record.deflateBase64),{maxOutputLength:record.bytes+1});
     assert.equal(bytes.length,record.bytes,'historical source size');assert.equal(sha(bytes),record.sha256,'historical source SHA-256');

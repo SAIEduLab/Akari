@@ -1,0 +1,1397 @@
+{
+  "file": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-ui/candidate/Akari.html",
+  "sha": "4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387",
+  "sha256": "4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387",
+  "finalSha": "4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387",
+  "sourceFileUnchanged": true,
+  "sourceUnchanged": true,
+  "browser": "140.0.7339.16",
+  "scope": "Targeted real-browser stage gesture and source-owner regression checks; not a full release audit.",
+  "results": [
+    {
+      "id": "stage-gesture:drag-owner-layout-and-coordinates",
+      "pass": true,
+      "evidence": {
+        "before": {
+          "owner": "script:stage:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「STAGE」と言う。\n20秒待つ。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": []
+        },
+        "down": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            }
+          ]
+        },
+        "moved": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 253,
+            "y": 133
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            }
+          ]
+        },
+        "released": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 253,
+          "y": 133,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 253,
+            "y": 133
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 4,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "pointerup",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 0,
+              "target": "formSurface"
+            }
+          ]
+        },
+        "undo": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 1,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "pointerup",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 0,
+              "target": "formSurface"
+            }
+          ]
+        },
+        "redo": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 253,
+          "y": 133,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 253,
+            "y": 133
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 4,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "pointerup",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 0,
+              "target": "formSurface"
+            }
+          ]
+        },
+        "after": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 253,
+          "y": 133,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 253,
+            "y": 133
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 4,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "pointerup",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 0,
+              "target": "formSurface"
+            }
+          ]
+        },
+        "sourceUnchanged": true
+      }
+    },
+    {
+      "id": "stage-gesture:held-redo-does-not-cross-source-owners",
+      "pass": true,
+      "evidence": {
+        "before": {
+          "owner": "script:stage:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「STAGE」と言う。\n20秒待つ。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": []
+        },
+        "down": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            }
+          ]
+        },
+        "shortcut": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            }
+          ]
+        },
+        "after": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "pointerup",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 0,
+              "target": "component ak-sprite design-selected"
+            }
+          ]
+        },
+        "sourceUnchanged": true
+      }
+    },
+    {
+      "id": "stage-gesture:trusted-pointercancel-cleans-up",
+      "pass": true,
+      "evidence": {
+        "before": {
+          "owner": "script:stage:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「STAGE」と言う。\n20秒待つ。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": []
+        },
+        "down": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 2,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            }
+          ]
+        },
+        "cancelled": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 2,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "pointercancel",
+              "trusted": true,
+              "pointerId": 2,
+              "buttons": 0,
+              "target": "formSurface"
+            }
+          ]
+        },
+        "after": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 2,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "pointercancel",
+              "trusted": true,
+              "pointerId": 2,
+              "buttons": 0,
+              "target": "formSurface"
+            }
+          ]
+        },
+        "sourceUnchanged": true
+      }
+    },
+    {
+      "id": "stage-gesture:window-blur-cleans-up",
+      "pass": true,
+      "evidence": {
+        "before": {
+          "owner": "script:stage:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「STAGE」と言う。\n20秒待つ。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": []
+        },
+        "environment": {
+          "phase": "gesture",
+          "headless": false,
+          "adapters": [
+            {
+              "playwright": "1.55.0",
+              "session": "playwright-main-frame",
+              "enabled": false
+            },
+            {
+              "playwright": "1.55.0",
+              "session": "playwright-main-frame",
+              "enabled": false
+            }
+          ],
+          "lostFocus": {
+            "focused": false,
+            "events": [
+              {
+                "type": "blur",
+                "trusted": true,
+                "pointerId": null,
+                "buttons": null,
+                "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+              },
+              {
+                "type": "blur",
+                "trusted": true,
+                "pointerId": null,
+                "buttons": null,
+                "target": "window"
+              }
+            ]
+          },
+          "regainedFocus": true
+        },
+        "focusBeforeDrag": {
+          "focused": true,
+          "headless": false
+        },
+        "down": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            }
+          ]
+        },
+        "blurred": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "window"
+            }
+          ]
+        },
+        "blurredFocus": false,
+        "reentered": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "window"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "window"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            }
+          ]
+        },
+        "after": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "window"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "window"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "pointerup",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 0,
+              "target": "component ak-sprite design-selected"
+            }
+          ]
+        },
+        "sourceUnchanged": true
+      }
+    },
+    {
+      "id": "stage-gesture:execution-lock-cleans-up",
+      "pass": true,
+      "evidence": {
+        "before": {
+          "owner": "script:stage:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「STAGE」と言う。\n20秒待つ。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": []
+        },
+        "down": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            }
+          ]
+        },
+        "running": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "RUNNING",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "runBtn"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "runBtn"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "formSurface"
+            }
+          ]
+        },
+        "moveWhileRunning": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "RUNNING",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "runBtn"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "runBtn"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "formSurface"
+            }
+          ]
+        },
+        "after": {
+          "owner": "script:sprite-1:start",
+          "mode": "blocks",
+          "shell": "blocks",
+          "source": "「SPRITE」と言う。",
+          "textarea": "「STAGE」と言う。\n20秒待つ。",
+          "sources": "{\"scripts\":[{\"targetId\":\"stage\",\"event\":\"start\",\"source\":\"「STAGE」と言う。\\n20秒待つ。\"},{\"targetId\":\"sprite-1\",\"event\":\"start\",\"source\":\"「SPRITE」と言う。\"},{\"targetId\":\"button-1\",\"event\":\"click\",\"source\":\"「スタート」と知らせる\"},{\"targetId\":\"sprite-1\",\"event\":\"click\",\"source\":\"点数に1を足す\\n右に15度回る\\nつなぐ（「点数: 」、点数）と言う\"},{\"targetId\":\"sprite-1\",\"event\":\"message\",\"source\":\"もし 受け取った知らせが「スタート」と同じなら、次のことをする。\\n  次のことを4回くり返す。\\n    20歩動く。\\n    端に触れていれば跳ね返る。\"}],\"actions\":[],\"functions\":[]}",
+          "x": 230,
+          "y": 110,
+          "stageWidth": 640,
+          "stageHeight": 400,
+          "preview": {
+            "x": 230,
+            "y": 110
+          },
+          "rect": {
+            "left": 1121.4381103515625,
+            "top": 128.5804901123047,
+            "width": 280.3714599609375,
+            "height": 175.23219299316406
+          },
+          "history": 3,
+          "redo": 0,
+          "state": "DESIGN",
+          "events": [
+            {
+              "type": "pointerdown",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 1,
+              "target": "component ak-sprite"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "blockui-node blockui-statement blockui-selected blockui-focused"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "component ak-sprite design-selected"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "runBtn"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "runBtn"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "formSurface"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "formSurface"
+            },
+            {
+              "type": "focus",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "stopBtn"
+            },
+            {
+              "type": "blur",
+              "trusted": true,
+              "pointerId": null,
+              "buttons": null,
+              "target": "stopBtn"
+            },
+            {
+              "type": "pointerup",
+              "trusted": true,
+              "pointerId": 1,
+              "buttons": 0,
+              "target": "component ak-sprite design-selected"
+            }
+          ]
+        },
+        "sourceUnchanged": true
+      }
+    }
+  ],
+  "pageErrors": [],
+  "networkRequests": []
+}

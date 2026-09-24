@@ -7,7 +7,7 @@ import {loadApi} from '../browser/legacy/audit-lib.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 import {verifyCompletedRuntime} from '../lib/completed-runtime-contract.mjs';
 import {completedCommit} from '../lib/completed-baseline.mjs';
-import {readHistoricalSource} from '../lib/historical-source.mjs';
+import {readCheckpointSource} from '../lib/checkpoint-source.mjs';
 const baseline=completedCommit;
 const make=(name,n)=>({
   'unclosed-string':'「'+'をにから秒'.repeat(n)+'という',
@@ -26,7 +26,7 @@ const make=(name,n)=>({
 })[name];
 if(process.argv[2]==='--worker') {
   const [name,count,version]=process.argv.slice(3), source=make(name,Number(count));
-  const html=version==='baseline'?readHistoricalSource(baseline,'Akari.html').toString():fs.readFileSync('Akari.html','utf8');
+  const html=version==='baseline'?readCheckpointSource(baseline,'Akari.html').toString():fs.readFileSync('Akari.html','utf8');
   const api=loadApi(html), start=performance.now(), memory=process.memoryUsage().heapUsed;
   const parsed=api.parseSyntax(source);
   const result={name,count:Number(count),version,chars:[...source].length,ms:performance.now()-start,heapDelta:process.memoryUsage().heapUsed-memory,accepted:!!parsed.ast,diagnostic:parsed.syntaxDiagnostics[0]?.code};
@@ -53,11 +53,11 @@ if(process.argv[2]==='--worker') {
   assert.equal(api.parseSyntax('※'+'a'.repeat(api.LIMITS.sourceEach)).ast,null);
   assert.equal(api.parseSyntax('（'.repeat(129)+'1'+'）'.repeat(129)+'を点数に加える').ast,null);
   assert.equal(api.parseSyntax('3を点数に加える\n'+' '.repeat(2)+'何もしない').ast,null);
-  const base=loadApi(readHistoricalSource(baseline,'Akari.html').toString());
+  const base=loadApi(readCheckpointSource(baseline,'Akari.html').toString());
   assert.deepEqual([...Object.keys(api)], [...Object.keys(base)],'public API changed');
   verifyCompletedRuntime(api.createAkariRuntime.toString(),base.createAkariRuntime.toString());
   for(const key of ['COMMAND_CATALOG','LIMITS']) assert.equal(JSON.stringify(api[key]),JSON.stringify(base[key]),key);
-  assert.equal(JSON.stringify(api.EXECUTABLE_VERSION),JSON.stringify({appVersion:'1.0.0',runtimeVersion:'1.0.0',languageVersion:'1.0.0',programFormatVersion:3,projectFormatVersion:3}));
+  assert.equal(JSON.stringify(api.EXECUTABLE_VERSION),JSON.stringify({appVersion:'1.0.1',runtimeVersion:'1.0.0',languageVersion:'1.0.0',programFormatVersion:3,projectFormatVersion:3}));
   assert.equal(JSON.stringify(api.BLOCK_SCHEMAS.map(s=>s.id)),JSON.stringify(base.BLOCK_SCHEMAS.map(s=>s.id)));
   assert.deepEqual(snapshot('Akari.html'),before);
   const output=process.argv[2]||'audit-evidence/phase3/language-boundaries.json';

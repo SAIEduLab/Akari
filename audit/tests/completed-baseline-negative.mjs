@@ -4,9 +4,9 @@ import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {gateSteps} from '../lib/gate-contract.mjs';
 import {completedCommit,completedFixture,completedProduct,completedManifestSha256,completedManifest,verifyFixedCore,verifyCompletedProvenance} from '../lib/completed-baseline.mjs';
 const m=completedManifest();verifyCompletedProvenance();
-assert.ok(gateSteps('browser','output').some(s=>s[0]==='fixed100'&&s[1]==='audit/run-fixed-baseline.mjs'));
+assert.ok(gateSteps('browser','output').some(s=>s[0]==='fixed101'&&s[1]==='audit/run-fixed-baseline.mjs'));
 assert.ok(gateSteps('browser','output').some(s=>s[0]==='fixed08'&&s[1]==='audit/run-headless-selftest.mjs'));
-const report=JSON.parse(fs.readFileSync(completedFixture+'/evidence/akari-selftest-evidence-35816378510-1/current-selftest.json'));
+const report=JSON.parse(fs.readFileSync(completedFixture+'/evidence/akari-selftest-evidence-36017186869-1/current-selftest.json'));
 Object.assign(report,{schema:'akari-fixed-release-report-v1',snapshot:snapshot('Akari.html'),sourceCommit:completedCommit,manifestSha256:completedManifestSha256,canonicalProductSha256:m.productSha256,executedProductSha256:sha(fs.readFileSync(completedProduct))});
 verifyFixedCore(report,report.snapshot);
 const mutations=[r=>r.results.pop(),r=>r.results.push(r.results[0]),r=>r.results[0].pass=false,r=>r.results[0].status='SKIP',

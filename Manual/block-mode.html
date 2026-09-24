@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>あかり 1.0.0 ブロックモード マニュアル</title>
+<title>あかり 1.0.1 ブロックモード マニュアル</title>
 <style>
 :root{color-scheme:light;--bg:#edf2f8;--surface:#fff;--surface2:#f7f9fc;--line:#cbd7e6;--ink:#223044;--muted:#607084;--accent:#2f6fd6;--accent-soft:#eaf2ff;--good:#19733e;--warn:#8a5a00;--danger:#a93636;--shadow:0 8px 28px rgba(36,54,82,.10)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:"Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#f8fbff 0,var(--bg) 420px);line-height:1.75}
@@ -59,7 +59,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <a class="skip-link" href="#main-content">本文へ進む</a>
 <header>
   <div class="header-inner">
-    <div class="kicker">AKARI 1.0.0 USER MANUAL</div>
+    <div class="kicker">AKARI 1.0.1 USER MANUAL</div>
     <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../Akari.html">あかりを使う</a><a href="../MANUAL.html#save">保存・開く</a></div>
 <h1>ブロックモード マニュアル</h1>
     <p class="lead">日本語の命令を、つないだり、囲んだり、穴にはめたりして作品を作るためのガイドです。コードモードと同じ本文を編集するので、どちらで作っても実行結果は同じです。</p>
@@ -348,12 +348,17 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
     <li><strong>実行前に「作品チェック」、残したい作品は「保存」。</strong></li>
   </ol>
 </section>
+<section id="drawing">
+  <h2>部品の複製とお絵かき</h2>
+  <p>作品の部品を選び、設定欄の「複製」で見た目・衣装・個体データを持つ別の部品を追加できます。部品のコードは複製しません。ブロックの「複製」とは対象が異なります。</p>
+  <p>「画像を置く」の下の「🎨 お絵かき」では、透明な500×500ピクセルの画面に描けます。「決定して置く」で絵の外側の透明余白を切り、通常の画像キャラクターとして配置します。小さな絵は透明な余白で幅・高さを8ピクセル以上にします。配置後の再編集と下書き保存はありません。</p>
+</section>
 </main>
 </div>
 
 <footer>
 <div class="chapter-links"><a href="../MANUAL.html#faq">困ったとき</a><a href="./code-mode-beginner.html">コード初級 →</a><a href="./code-mode-intermediate.html">コード中級 →</a><a href="./code-mode-advanced.html">コード上級 →</a></div>
-  <p>対象：あかり 1.0.0。内容はリポジトリの <a href="../LANGUAGE.md">LANGUAGE.md</a> と <a href="../Akari.html">Akari.html</a> の現行仕様・実装に基づきます。詳細な言語仕様は LANGUAGE.md を参照してください。</p>
+  <p>対象：あかり 1.0.1。内容はリポジトリの <a href="../LANGUAGE.md">LANGUAGE.md</a> と <a href="../Akari.html">Akari.html</a> の現行仕様・実装に基づきます。詳細な言語仕様は LANGUAGE.md を参照してください。</p>
 </footer>
 </body>
 </html>

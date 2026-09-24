@@ -70,6 +70,7 @@ jobs:
           python audit/tests/workflow-preflight.py audit-evidence/workflow-preflight.json || status=1
           node audit/tests/evidence-negative.mjs || status=1
           node audit/tests/completed-baseline-negative.mjs || status=1
+          node audit/tests/checkpoint-101-negative.mjs || status=1
           node audit/tests/historical-source-negative.mjs || status=1
           node audit/tests/ci-regression.mjs || status=1
           node audit/tests/execution-continuity.mjs || status=1
@@ -89,7 +90,7 @@ jobs:
           include-hidden-files: true
 
   selftest:
-    name: GA-EXEC self-tests and fixed-1.0.0 non-regression
+    name: GA-EXEC self-tests and fixed-1.0.1 non-regression
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (needs.static.result != 'success' || needs.static.outputs.selftest_required == 'true') }}
     needs: [static]
     runs-on: ubuntu-latest

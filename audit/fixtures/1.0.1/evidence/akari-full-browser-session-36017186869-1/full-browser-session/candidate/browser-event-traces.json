@@ -1,0 +1,1762 @@
+{
+  "manifest": {
+    "provenanceVersion": 1,
+    "capturedAt": "2026-09-24T15:03:40.050Z",
+    "head": "62359484a646651dd81806ef97a6cfef87f85d4b",
+    "baseline": "2f455619440f5abbfbb564927769c85341f25074",
+    "main": "2f455619440f5abbfbb564927769c85341f25074",
+    "candidate": "Akari.html",
+    "files": [
+      {
+        "path": ".github/workflows/akari-audit.yml",
+        "bytes": 10539,
+        "sha256": "d2a03af75042b8cc3a83aa2c03d4f00f326a67de64d8f752be555b54da3183f1"
+      },
+      {
+        "path": ".gitignore",
+        "bytes": 70,
+        "sha256": "32331e386bd611cd116750983edb3f4e85749d218b79462b08495b44cb502403"
+      },
+      {
+        "path": "AUDIT.md",
+        "bytes": 281216,
+        "sha256": "0a651a5df4bf0b1b8c3be473b8d1af207a691130d806d3a8b86248b0dde8fedb"
+      },
+      {
+        "path": "Akari.html",
+        "bytes": 915962,
+        "sha256": "4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387"
+      },
+      {
+        "path": "LANGUAGE.md",
+        "bytes": 51594,
+        "sha256": "4b398dd031409d0807c4068bf6bd19c0601539716eb8ca1d9f3af267c9c0415d"
+      },
+      {
+        "path": "LICENSE",
+        "bytes": 11357,
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      {
+        "path": "MANUAL.html",
+        "bytes": 29346,
+        "sha256": "2eab82a33253040e9bb76b847af0fd4bb5ad84575c60e33790ff4218966e95cb"
+      },
+      {
+        "path": "Manual/.gitkeep",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "Manual/block-mode.html",
+        "bytes": 34070,
+        "sha256": "7e4d9b6bd47cbc3c9c277dd610f2e6d292d3253ae7dc8405cfbad627bcb4dd37"
+      },
+      {
+        "path": "Manual/code-mode-advanced.html",
+        "bytes": 30464,
+        "sha256": "59a5f00d1b69a442cac814933b9cf35c91cb70a1474e942ff489b9df4eb95079"
+      },
+      {
+        "path": "Manual/code-mode-beginner.html",
+        "bytes": 29199,
+        "sha256": "06418712ec982e3225606e7f2549e9a24c4bb58e3029b592fcf6d62b54661afd"
+      },
+      {
+        "path": "Manual/code-mode-intermediate.html",
+        "bytes": 27057,
+        "sha256": "c6e7567304cad2b46d1b55425193843212e23e37a3c6a1dcb495c49f23f6f88e"
+      },
+      {
+        "path": "README.md",
+        "bytes": 5275,
+        "sha256": "fd6702c4ab7c8c0287a67e4935fb2c4d88c4b9a6d626b2823f0f3712dc92cb68"
+      },
+      {
+        "path": "audit/BASELINE.md",
+        "bytes": 6136,
+        "sha256": "45ca655697f2f502a1120874138ede6ff4e806774f4cd2e1f08c07aca2011d1b"
+      },
+      {
+        "path": "audit/EXTERNALIZATION.md",
+        "bytes": 4640,
+        "sha256": "4d29dd03879855b73ce7fa9893df605c32a46f1d9c6b226b41b2d5efdb5c878e"
+      },
+      {
+        "path": "audit/LANGUAGE_FORMS.md",
+        "bytes": 14080,
+        "sha256": "0b93a4589910c2897ed6a8bec7e284e8d5a73554e5f0927e2195c22d16ebc576"
+      },
+      {
+        "path": "audit/LAUNCH.md",
+        "bytes": 2424,
+        "sha256": "c8d9d05143a375d1685e56ea833535038ad358f33e5de57148f9a8fb2e96faf7"
+      },
+      {
+        "path": "audit/README.md",
+        "bytes": 10449,
+        "sha256": "cb5e0971e7950de98bbb303fa6c833212281cc31b3762ac2716a0a9ee2685846"
+      },
+      {
+        "path": "audit/browser/browser-audit-manifest.json",
+        "bytes": 1129,
+        "sha256": "e4ebaa1c8245a509e60b90368548eec4ebb2b3293fb15bd6c221f871abbd8849"
+      },
+      {
+        "path": "audit/browser/legacy/audit-lib.cjs",
+        "bytes": 3299,
+        "sha256": "251314c030e5c55bcb0a0f2732adb57d509c0126473b63daa8021372bf9a30c9"
+      },
+      {
+        "path": "audit/browser/legacy/browser-asset-limits.cjs",
+        "bytes": 10622,
+        "sha256": "fb42d53634e18010ec3018a50b8703834febb2739f04b08d5516904f66c2e0c6"
+      },
+      {
+        "path": "audit/browser/legacy/browser-boundaries.cjs",
+        "bytes": 13010,
+        "sha256": "a8d1662f07c3ea86808c988692b26feb7ef257605fd8223f0ac7aa25e75320e7"
+      },
+      {
+        "path": "audit/browser/legacy/browser-condition.cjs",
+        "bytes": 9024,
+        "sha256": "fb2e044933e0ace4f4ba8c5e0834df311fee260a4f8d1b4874ee417bf57c0cfb"
+      },
+      {
+        "path": "audit/browser/legacy/browser-design-limits.cjs",
+        "bytes": 7407,
+        "sha256": "fa56d4120bad026133259b366737333b6120feb4b4ef8c189f901fab05b2891e"
+      },
+      {
+        "path": "audit/browser/legacy/browser-event-traces.cjs",
+        "bytes": 14507,
+        "sha256": "dd92509e62bfc963523a5fd9713553586fffc8ec83f4a15e6e62013a1f8439e8"
+      },
+      {
+        "path": "audit/browser/legacy/browser-events.cjs",
+        "bytes": 6131,
+        "sha256": "7bcdef0ea7feb07789f513ddb495ad37ab464a91b273000498be4496f2ab5816"
+      },
+      {
+        "path": "audit/browser/legacy/browser-media-boundaries.cjs",
+        "bytes": 13089,
+        "sha256": "87f347bac7fe938402cee8a9961650bc9e0f83c4b21581cbff5d1064a5013944"
+      },
+      {
+        "path": "audit/browser/legacy/browser-owner-delete.cjs",
+        "bytes": 5738,
+        "sha256": "485d597b015e474bac88eb29395b00c3f31473b3bde684d60df96100f47fd350"
+      },
+      {
+        "path": "audit/browser/legacy/browser-product.cjs",
+        "bytes": 12474,
+        "sha256": "b5e794e5a496c9d8484abca05d5e4411a43095a37d778f3c3711babf88dac026"
+      },
+      {
+        "path": "audit/browser/legacy/browser-runtime-limits.cjs",
+        "bytes": 13117,
+        "sha256": "3751908e74d5871a415ce73814c62780e2a493c66d2cd2b3024e4adeaff2ebb8"
+      },
+      {
+        "path": "audit/browser/legacy/browser-runtime.cjs",
+        "bytes": 9086,
+        "sha256": "fea05c223d89684963f5c7a0a5b7970472a9485943c9095dff3bf45db6970594"
+      },
+      {
+        "path": "audit/browser/legacy/browser-schemas.cjs",
+        "bytes": 17782,
+        "sha256": "e6292e1fc7d465209d8ce87a012d55ef3e141529d9f11b8a37527acf0b461abf"
+      },
+      {
+        "path": "audit/browser/legacy/browser-session.cjs",
+        "bytes": 22507,
+        "sha256": "4b28f8f042e6b91a2ba82661ad9feed8634ef796654dbf037613cd490c19efe9"
+      },
+      {
+        "path": "audit/browser/legacy/browser-storage-media.cjs",
+        "bytes": 11336,
+        "sha256": "301e340e9fa1e74ec0b4cc9044d7372c1fd6229a2770f48b317743629b43345e"
+      },
+      {
+        "path": "audit/browser/legacy/long-regression.cjs",
+        "bytes": 5494,
+        "sha256": "e7ec2a82c0ff006d26419bef6126d4cf82119bd9a3c49d33a9980d1141246efc"
+      },
+      {
+        "path": "audit/browser/legacy/media-fixtures.cjs",
+        "bytes": 2737,
+        "sha256": "6147cb729d3496b5e08dc54f9cb722578e8da48ad3e6903dcdc930460e7b6752"
+      },
+      {
+        "path": "audit/browser/legacy/modern-browser.cjs",
+        "bytes": 13122,
+        "sha256": "527a355096b7ffd95564c261559423cd1f458668fb29c13866e53431a2a72e82"
+      },
+      {
+        "path": "audit/browser/legacy/native-focus.cjs",
+        "bytes": 1065,
+        "sha256": "40b82437c0edf5471c26dfd3c5d36bbf9797d1706525f860b3bac122e4f62f10"
+      },
+      {
+        "path": "audit/browser/legacy/parent-qa.cjs",
+        "bytes": 9778,
+        "sha256": "ce4139071f169a95ebfb5706d975a1993ef65d0c100225288d9f98ae1a1108a7"
+      },
+      {
+        "path": "audit/browser/legacy/perf-input.cjs",
+        "bytes": 3839,
+        "sha256": "8f77f76f3859a0161b2a3ecf21653551b397be0b76e91028537f5f933494f8c4"
+      },
+      {
+        "path": "audit/browser/legacy/persistence-probe.cjs",
+        "bytes": 3312,
+        "sha256": "7c94feee707b41a26505f511845b397630b512394d84a0091186aad36a08b1f3"
+      },
+      {
+        "path": "audit/browser/legacy/prepare-media.py",
+        "bytes": 1821,
+        "sha256": "e70e68a3b4ba051170b2a8327c141b1ec01788db9ba1b30a3c166ec61d6c1381"
+      },
+      {
+        "path": "audit/browser/legacy/run-editor-regression.cjs",
+        "bytes": 12921,
+        "sha256": "99a9571d2bb9c75261ab199b5cbc94344cc92e24e15f22f690323e89a0d15037"
+      },
+      {
+        "path": "audit/browser/legacy/schema-shards.cjs",
+        "bytes": 2276,
+        "sha256": "a26181c17955ede86fb66aa20e46b14e5e0147ea072a988b6ba0c8119dc81d14"
+      },
+      {
+        "path": "audit/browser/legacy/ui-case.cjs",
+        "bytes": 705,
+        "sha256": "6df27709fa7d30766a178b8f762f7f235058465d737b10968eb83d0bd8b996d3"
+      },
+      {
+        "path": "audit/browser/legacy/ui-compact-menu.cjs",
+        "bytes": 8692,
+        "sha256": "751664d54254f8bdb9c02e778966a2ec30b538e94ddbedd8c130a18d7ffe2671"
+      },
+      {
+        "path": "audit/browser/legacy/ui-compact-routes.cjs",
+        "bytes": 2379,
+        "sha256": "355012a497257c15cd5122ca98a5f1ab845a71dd6d88bc5586dc140a00582ed3"
+      },
+      {
+        "path": "audit/browser/legacy/ui-interactions.cjs",
+        "bytes": 21365,
+        "sha256": "5a19c578834c3a082a16ee88a91328afff4db7a17995fb551d74cf98dd4f67dd"
+      },
+      {
+        "path": "audit/browser/legacy/ui-routes.cjs",
+        "bytes": 4082,
+        "sha256": "1f4b0f2de500a4e0acfae8e936b746ee00c012c50ec6adf671448662db42137f"
+      },
+      {
+        "path": "audit/browser/legacy/ui-shell.cjs",
+        "bytes": 5521,
+        "sha256": "61e3af274820b76eea1107ea3c94ec823812507530e1d49272cc318bb5df40bd"
+      },
+      {
+        "path": "audit/browser/legacy/ui-stage-gesture.cjs",
+        "bytes": 11823,
+        "sha256": "d44bde4d429d82a32e7aa2e509715f3f165200e4d63b074972b8719bba2af871"
+      },
+      {
+        "path": "audit/browser/legacy/workbench-direct.cjs",
+        "bytes": 7925,
+        "sha256": "745683332a23e535ebbd7bc952abd70a2887c034f09bebff144a8e394fdb5afb"
+      },
+      {
+        "path": "audit/browser/legacy/workbench-matrix.cjs",
+        "bytes": 7225,
+        "sha256": "832ec7904c938f7b145777e1f30f03f3890bd781cb58ace236a58eeaa905f22c"
+      },
+      {
+        "path": "audit/browser/run-full-browser-audit.mjs",
+        "bytes": 7018,
+        "sha256": "aa3bf6318bd2156b426e49296d9ab9cbb2cabd72f3640948a583edbb986f2d82"
+      },
+      {
+        "path": "audit/build-audit-inventory.mjs",
+        "bytes": 10339,
+        "sha256": "addab798a88bca7af1a8ebec0ce79f1b450a3d1ef82c36248754a94a8f1da897"
+      },
+      {
+        "path": "audit/fixtures/0.8/AUDIT.md",
+        "bytes": 35708,
+        "sha256": "9b4de42424ba9a849395f2aac00f08f509c06e830d55bbff93948a716c76f088"
+      },
+      {
+        "path": "audit/fixtures/0.8/Akari.html",
+        "bytes": 423205,
+        "sha256": "05b62d0cf475352c058f7f2d4f2a8bd5a46d9be2d72365ff1cbaa5560fad6e5c"
+      },
+      {
+        "path": "audit/fixtures/0.8/LANGUAGE.md",
+        "bytes": 27215,
+        "sha256": "2ad83e6407aedc621a6119c2d88fa4cb21828b209ccf439f7e27d62ed060e420"
+      },
+      {
+        "path": "audit/fixtures/0.8/akari-audit.yml",
+        "bytes": 6209,
+        "sha256": "875c20d657eeadb4341f0ffaa800caee97d7c94ab9cf6620c1ef35bb4e38723c"
+      },
+      {
+        "path": "audit/fixtures/0.8/manifest.json",
+        "bytes": 911,
+        "sha256": "38b1cc4414741160263c938b55fdbe54fa86c895e879781c1025fea4ffb5d549"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/completion.json",
+        "bytes": 15820,
+        "sha256": "02666417ad586eb18da2b3436bd0d02d13e961fbca93dbdd9ce0cfacc9c79338"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-aggregate-35816378510-1/aggregate.json",
+        "bytes": 133738,
+        "sha256": "f99b3ea9449ba2f79a858f4de64eea656d2de5b4c335392c9a417025c4caf507"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/bundle.json",
+        "bytes": 42934,
+        "sha256": "d0c410887f3b7fb47d23669ba0c6062da608fbe91bab3b7bdfaaa9ab04d40afd"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/long-evidence/results.json",
+        "bytes": 28149,
+        "sha256": "7cbfacba48e305a7612f52d1dbddffad32fa96816d62b51027fce7560823b63b"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/modern-browser.json",
+        "bytes": 83479,
+        "sha256": "874e9d88af945bf8eba050bce249470da9d1e3dadea72620d079341b042acfcc"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/perf-clipboard-paste-16666.json",
+        "bytes": 25364,
+        "sha256": "eef480600db3e4f7562fb2dc0c7cf63dabd708c647aa1052c74fd5c92e1943d8"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/perf-keyboard-insert-16666.json",
+        "bytes": 25406,
+        "sha256": "8bb7689ba9ad1bf25a53de91700082bcac693fe163587368d7c97719a473cd0b"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/parent-qa.json",
+        "bytes": 895,
+        "sha256": "8a07a40a2a5cd0befbc398e81bfde2d65fbf4cb5a239edee430d300e1696ca5f"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/manual-docs/manual-docs.json",
+        "bytes": 27150,
+        "sha256": "9f1fd71b5e2f8ff1d00f23adc9f5d11666dfe220e581f7437cdc14584c078663"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/bundle.json",
+        "bytes": 47732,
+        "sha256": "26d113f5b3e99b39706f29a379ebcf268fc88cf3d52c1b5595bd9f0171a52770"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-asset-limits.json",
+        "bytes": 64236,
+        "sha256": "7c396db4284dc75e81fdb76739ecbfd813d1e82651fd80fdc74e1d38f99794ef"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-design-limits.json",
+        "bytes": 30206,
+        "sha256": "fc77454524cec87d3da3f6479a3322ab89b1bf93a54bb46fba841ba60afe2228"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-product.json",
+        "bytes": 27272,
+        "sha256": "5a32032f0e53fef350be3b42c7ef6af9a7bf301cf71a5b364dd568c108437f0c"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-runtime-limits.json",
+        "bytes": 32939,
+        "sha256": "808f654940b9de12ce763698ee31e1e3e82e3c1f4831e10a3398329cf107cd69"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/media-boundaries.json",
+        "bytes": 12069,
+        "sha256": "e790fff7a7c0a82451011bd041adee2eaa796176911862046e5cddfbaab8d7f9"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-schemas-35816378510-1/bundle.json",
+        "bytes": 135296,
+        "sha256": "cd79b3cdf411a84167536e9041f3ac33934f418790be93fff4f632463d3d64d3"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-schemas-35816378510-1/full-browser-schemas/candidate/browser-schemas.json",
+        "bytes": 245748,
+        "sha256": "e26e78fc2dbce2b89b0d5160a08a6826e86a597ee110185edb2f53b1efd3daaf"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/bundle.json",
+        "bytes": 43406,
+        "sha256": "56165bbf1bd39fba583e371c01efb32344347ab11702da4fe8526ef352bda339"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-boundaries.json",
+        "bytes": 26906,
+        "sha256": "1dd51bcd29afb28e25367415df5baa13dac42ccbca10bf79e8679a2042c5ec53"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-condition.json",
+        "bytes": 40210,
+        "sha256": "694eb5ce5677d5e9015fbd1eee457e9ef729f643648e2c7f802f5fc0161b836b"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-event-traces.json",
+        "bytes": 39572,
+        "sha256": "10b6d7c51b53e3d06028ddfb9c30f9aa0485cd136a2e4c44658821f5e9faed2c"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-events.json",
+        "bytes": 33463,
+        "sha256": "446d02fd3864dcab82948281880e1337c86b9ac9e8267116f1b1e5fa2602c915"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-runtime.json",
+        "bytes": 26502,
+        "sha256": "4a74ed57ca19b3d0f8d8d6960cb773d4e274b8c7f48b0a015c8ed7f2ffa364c4"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-session.json",
+        "bytes": 29340,
+        "sha256": "bd273a47a678d4d9c7d466e5f20d6e042b0332ea17b6daab025cc95110e7135c"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-storage-media.json",
+        "bytes": 32223,
+        "sha256": "10141fe856a4295d848d269b029808f1a8df1de5ea23cdc3be4ec379496db5ab"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/bundle.json",
+        "bytes": 48762,
+        "sha256": "75406fe8b4156e14cf4d64a05429d687aefd1704930f431b8593ed65780214e9"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/browser-owner-delete.json",
+        "bytes": 40110,
+        "sha256": "3de1ec129f98c8855361cedd3d4aa09f596289e2fcbf4334e27385deddaaf544"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/editor-regression-result.json",
+        "bytes": 2755,
+        "sha256": "495ed330c0e5d4f7df5907ad2c045ebe6c488ed0daba11f281e045f00052b7c6"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/workbench-direct.json",
+        "bytes": 37406,
+        "sha256": "912a326c653cebcf6c849003fcf58ecec0b296351e1e61a0b2313c61fc905ca0"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/workbench-matrix.json",
+        "bytes": 27689,
+        "sha256": "d8b6469bbc55a287ae82388d822e53ec107a1821e8d9c93a4ce68968af8f2731"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-compact-menu.json",
+        "bytes": 8275,
+        "sha256": "13cabdba104183138361c9417043b5bb0f939996edde9b03c9f24b22c9c01175"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-compact-routes.json",
+        "bytes": 2347,
+        "sha256": "ed7b8c680518067c706781739e91e421db1c4ac35907177846451d96f33ebaa1"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-interactions.json",
+        "bytes": 5740,
+        "sha256": "4ffab2f5fd7a9289441df61d8c581b9e26e6edd2282fc37862ca0546d1036664"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-shell.json",
+        "bytes": 3363,
+        "sha256": "45ebdb253accaa3b4f4648efaeb9b0148d0008d1038f5deb396f4bfd30235da1"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-stage-gesture.json",
+        "bytes": 58992,
+        "sha256": "ab1752cde50ece86177cafdab8ccd322548a79e6d2243746aca45124412863a5"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/baseline-selftest.json",
+        "bytes": 49520,
+        "sha256": "bda2d68bd5ef817e7cbd2c8cbdaf4fc48fd4d8168d5f29d7353f518cd6bd7f56"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/browser-environment.json",
+        "bytes": 14855,
+        "sha256": "40c686bf2440f5af48fb2ab675c3ae6bf14789e6e41c203a1e63b993b7990899"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/bundle.json",
+        "bytes": 17907,
+        "sha256": "d0b015e6414d860cb68c4da0d1d9a8bc1d48bdcb95c54393d786a9b32fb822cc"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/current-selftest.json",
+        "bytes": 214457,
+        "sha256": "8f51718a358ec5b951b2c40ec74bc6b18e4f1c23c83086df52b8e29a317c7c33"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/editor-browser.json",
+        "bytes": 17106,
+        "sha256": "3fd69ea77b71694b87dbf0a94f7348ce87b489b98b5ca75b2003d82ffd5fec8c"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/editor-node.json",
+        "bytes": 17072,
+        "sha256": "005ab3e6ec1cd312753ced0c39695f1414313e8ad82fbea3b9d79a3fb3b28a7e"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/gui.json",
+        "bytes": 18013,
+        "sha256": "75c5864843bfaa53f3d8df2eaeba8ccfabe2a16c0a689c25c8c111d73d0215ec"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/language-boundaries.json",
+        "bytes": 35046,
+        "sha256": "a607ebd5c0790fe9a66ed8f00e54be3ae2c19b945f684f691ae97d45ef52bb88"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/language-browser.json",
+        "bytes": 79529,
+        "sha256": "c0d2ab137d855fd3febabcb0bd5b0a2f0ef4374ccbe4e14be66d202673173f25"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/language-node.json",
+        "bytes": 79496,
+        "sha256": "0a2b85a3383117793408ab098866f6bc82bbb1d5789ae1e879b43092de55882c"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/normal-product.json",
+        "bytes": 14571,
+        "sha256": "2150d2717a68e10e40c684edea5b40194d892c043709a81c7372bd76ee2b24bb"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/evidence/akari-static-evidence-35816378510-1/bundle.json",
+        "bytes": 14756,
+        "sha256": "62d7ec336e6ba7da994c8ca87c921c47c81584b49233239651a1623baaac6ef4"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/manifest.json",
+        "bytes": 25554,
+        "sha256": "db939bbcde1c86ae51c39189d05357d27635e405511d667d6b7588b79f74bd63"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/.github/workflows/akari-audit.yml",
+        "bytes": 10384,
+        "sha256": "b8beff27ad5fc70c202e884be97a59260c67ca846f1b11ad117e73ce866543a7"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/AUDIT.md",
+        "bytes": 276940,
+        "sha256": "e5d1bb9fb2be077747f19c8904190622276cd4ea985935ca458c46db936679a2"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/Akari.html",
+        "bytes": 914546,
+        "sha256": "48b440829174256952ab3f12e13553c64cba95f392e30e8f79768ff7411c0acf"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/LANGUAGE.md",
+        "bytes": 50007,
+        "sha256": "67f5b4c85f8f3469f583adea8af839d8e2ff45df19d097fd11427cbae4920aca"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/browser/browser-audit-manifest.json",
+        "bytes": 1063,
+        "sha256": "01e30c627c00f75fb0b3c075cbd6b47ee6cf1a3abc43db2ed233adda6bef6b4f"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/fixtures/language/forms.mjs",
+        "bytes": 7388,
+        "sha256": "bffc4a8c680689a5e0dbeb304900ab637306b40a940dd61a2d1c04d660368bc6"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/fixtures/language/inline.mjs",
+        "bytes": 2296,
+        "sha256": "6a7a92bb7cd053c362ec909d7276b2cda869608935dfd2d8b95b4eddd2844856"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/manifests/browser-obligations.json",
+        "bytes": 3613,
+        "sha256": "691dd5742d5f37f8c652f8f704af16c893dead931f227f93e17ef03d26dfd06f"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/manifests/browser-results.json",
+        "bytes": 21537,
+        "sha256": "c88fdc08bed9d3371844faf4e3eb92330dcb71d08c73e4f60de7471bab38a0ee"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/manifests/externalization-map.json",
+        "bytes": 509260,
+        "sha256": "8b6f3dc34b74a48bd30f2d4c8d1a3c740cad26f1147dc6a46d03cabadd18fbc2"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/manifests/language-form-coverage.json",
+        "bytes": 357006,
+        "sha256": "3ff2cb94e6dcb7d54d7c05b578bc2415644cae614911fd3223b815d19a888eb2"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/manifests/product-tests.json",
+        "bytes": 38659,
+        "sha256": "a8701e2f6f46fbaa5633c2ce2fa730db3171a49a5f91eb424877bb879bca4378"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/manifests/quality-1.0.0.json",
+        "bytes": 424786,
+        "sha256": "62a25dcbed74ed573f37f8c9323ce3e8e05a95b2e6b10954f64132bafc3931d3"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/records/phase4-audit-inventory.json",
+        "bytes": 2120384,
+        "sha256": "28623ae751a6e834af09e619ccec42c1b55e55dde9fe8e43eca4528c77c0a2cd"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/records/phase4-semantic-review.md",
+        "bytes": 47561,
+        "sha256": "8105b656a3f8d9168d61ba1d16af6258260478d597cc2cc365876ab9657b9495"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/bindings.js",
+        "bytes": 1715,
+        "sha256": "b38cf70b96382e31a192dcb53cdaec1055478189c9b60ffce5400f7c38e0f6d8"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/editor-surface.js",
+        "bytes": 12180,
+        "sha256": "4ac37bba3435ff2627cd986133fbaed1146f40f509eb4fbd1efc06ba5d9e5263"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/language-forms.js",
+        "bytes": 13468,
+        "sha256": "a18fb8ca9156a01f292411ead78817230b168a87afc6ac55c551cc35769f55c4"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runAkariAsyncSelfTests.js",
+        "bytes": 2171,
+        "sha256": "a30ddf723df1cfb666209aceec2cfb9e743c9756c73cb695a881c27393b71a0e"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runAkariSelfTests.js",
+        "bytes": 23021,
+        "sha256": "c83f777e78fd381d10217b7baf8adef3ebec6e40f48d8756dc41e3e207a33c17"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runBlockCodec09Tests.js",
+        "bytes": 15553,
+        "sha256": "c95648509cb37c53ad97d0b6448bbc3bb49bc3f0d441cd96e5a24f37678b09e3"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runColorPicker09Tests.js",
+        "bytes": 2862,
+        "sha256": "f7aed3414183e628b0d6a7e45653a1ba06b5dff67b77cbb322ee0969c16290f6"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runDesignResize09Tests.js",
+        "bytes": 4534,
+        "sha256": "3677372b567ff90a5cd109e6d5e08bf401cd759c8be209e01e06f27f7b640350"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runEditorCore09Tests.js",
+        "bytes": 25682,
+        "sha256": "741e31d956f79aef0edbd2b21d61c5a32e71e9b770bc998974bff3e62b30cda2"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runExtendedTests07.js",
+        "bytes": 33820,
+        "sha256": "dfe01fb5e1ec780c79d527c362fe92c7be257cc34b0017f06257ed9fdd555ff7"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runLimitBoundary09Tests.js",
+        "bytes": 17373,
+        "sha256": "37b603f02d4fc9fcc0bb522c81e0a02d0f560dd9e41225d48265762ace9aab16"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runProductVersion09Tests.js",
+        "bytes": 5727,
+        "sha256": "f6035cd61e89192621946ec81bd0055b343b750904fef9790cd40fd032e79c8f"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runReleaseTests.js",
+        "bytes": 728,
+        "sha256": "e7e16408138249a36651907926ef9a92dcfa4d1351324eb5ca3848227a9b3685"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runSemanticContract09Tests.js",
+        "bytes": 15905,
+        "sha256": "20fc04b0135d62a80fe81df62a22ad745a7af693457dfb7aa1a0d3530ad15214"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runSyntax09Tests.js",
+        "bytes": 15875,
+        "sha256": "4fc3548d4addf11d38b6599814f882acf3ed58dde4f8a3d58e74c4a21b506c58"
+      },
+      {
+        "path": "audit/fixtures/1.0.0/source/audit/suites/runVersion08Tests.js",
+        "bytes": 16463,
+        "sha256": "8fd7b6c630d0cc8dfc0f1566607be98871d2dfe758f537373d0b5a82893d4032"
+      },
+      {
+        "path": "audit/fixtures/language/forms.mjs",
+        "bytes": 7388,
+        "sha256": "bffc4a8c680689a5e0dbeb304900ab637306b40a940dd61a2d1c04d660368bc6"
+      },
+      {
+        "path": "audit/fixtures/language/inline.mjs",
+        "bytes": 2296,
+        "sha256": "6a7a92bb7cd053c362ec909d7276b2cda869608935dfd2d8b95b4eddd2844856"
+      },
+      {
+        "path": "audit/fixtures/provenance/public-sources.json",
+        "bytes": 662517,
+        "sha256": "cedf2050812e4df7cf1386241dc0adee08dff70a4e34fe47e275dba651afd36b"
+      },
+      {
+        "path": "audit/lib/browser-environment.mjs",
+        "bytes": 1004,
+        "sha256": "6650295cfc003df1585dd36f30d08fc9bec161cf24b74db4b93238885fda8a95"
+      },
+      {
+        "path": "audit/lib/completed-baseline.mjs",
+        "bytes": 9088,
+        "sha256": "4195e8841d93a31ed726c975bba71c5d59d1b82fff36660b901a4b0f1f97e429"
+      },
+      {
+        "path": "audit/lib/completed-runtime-contract.mjs",
+        "bytes": 629,
+        "sha256": "0160c789c075ee4281607739df78d94fff9bf518e5442dd286854780ea61eb1d"
+      },
+      {
+        "path": "audit/lib/evidence-bundle.mjs",
+        "bytes": 4403,
+        "sha256": "5cdca6e2576aa7b197af0e4182fe9c3393f633c5b85238e4aedb89e0dbe2d323"
+      },
+      {
+        "path": "audit/lib/gate-contract.mjs",
+        "bytes": 1867,
+        "sha256": "36158fcbdd6a89ba937109e2d2ce944b7a7db77eae07f4ce80642062616998a0"
+      },
+      {
+        "path": "audit/lib/historical-source.mjs",
+        "bytes": 6508,
+        "sha256": "dcbb2235bad877565b0e521b12cc1c7ae2ee3e4328aa730a1414926da6615578"
+      },
+      {
+        "path": "audit/lib/launch-identifiers.cjs",
+        "bytes": 1500,
+        "sha256": "6ef5ad261bc4fed9c4bbfb6ef660c008014d14250ea2bacd3b7e16f23ffbbe57"
+      },
+      {
+        "path": "audit/lib/persistence-transition.mjs",
+        "bytes": 3946,
+        "sha256": "3d44315b802f30ba51c0271f2f861e3199ad88dc2fca09742b8682acb8ec136b"
+      },
+      {
+        "path": "audit/lib/product-test-host.mjs",
+        "bytes": 3495,
+        "sha256": "93d02d1670cb6569141dad1b95426319f40b8556d5626dc16290923741425033"
+      },
+      {
+        "path": "audit/lib/release-101-contract.mjs",
+        "bytes": 1757,
+        "sha256": "ed6e99e15b3d11ce6e0e1ea2fe8444a7c877c843af1051ce67a5e226433ca6e6"
+      },
+      {
+        "path": "audit/lib/verify-browser-results.mjs",
+        "bytes": 6860,
+        "sha256": "7f5ed98eb6a580354019faa4260bad4f9c93b7bedeb3f6d67eb0664e0fe17180"
+      },
+      {
+        "path": "audit/lib/verify-gate-results.mjs",
+        "bytes": 4949,
+        "sha256": "f15882b1b4617bab713f08a65325ce6ed1fc138f84cbfe04f6d8ba668a4908b6"
+      },
+      {
+        "path": "audit/lib/verify-language-results.mjs",
+        "bytes": 2285,
+        "sha256": "be53ff69478e9d9bfbd40b54c07b308d0707a149642571c0f4523308acd29c45"
+      },
+      {
+        "path": "audit/lib/verify-surface-results.mjs",
+        "bytes": 2032,
+        "sha256": "996fe2549180d3ac196c61b4adb2d5f52ef5a45cf0a5ddda2ae754ba5709c270"
+      },
+      {
+        "path": "audit/lib/verify-test-results.mjs",
+        "bytes": 7626,
+        "sha256": "e382d484db460b8499fa2730c64efc8a2c25317fe180650e23336cfcf6336bf3"
+      },
+      {
+        "path": "audit/manifests/browser-obligations.json",
+        "bytes": 3613,
+        "sha256": "691dd5742d5f37f8c652f8f704af16c893dead931f227f93e17ef03d26dfd06f"
+      },
+      {
+        "path": "audit/manifests/browser-results.json",
+        "bytes": 21547,
+        "sha256": "5ef6166f324dfef02dc36937ca26173b9932ce506fcb0b33f0c4e40ff7593da2"
+      },
+      {
+        "path": "audit/manifests/externalization-map.json",
+        "bytes": 509260,
+        "sha256": "8b6f3dc34b74a48bd30f2d4c8d1a3c740cad26f1147dc6a46d03cabadd18fbc2"
+      },
+      {
+        "path": "audit/manifests/language-form-coverage.json",
+        "bytes": 357270,
+        "sha256": "982c91cfd8d20ad4f1469f4e95bfc41909b994ce12b03660cc0b025888220a6c"
+      },
+      {
+        "path": "audit/manifests/product-tests.json",
+        "bytes": 38659,
+        "sha256": "a8701e2f6f46fbaa5633c2ce2fa730db3171a49a5f91eb424877bb879bca4378"
+      },
+      {
+        "path": "audit/manifests/quality-1.0.0.json",
+        "bytes": 425263,
+        "sha256": "45c538fedd889e2a26c42a90cdc7f2429ef602af10a73169844ac57b63f624e7"
+      },
+      {
+        "path": "audit/records/autosave-retirement.json",
+        "bytes": 7545,
+        "sha256": "352456a6b6e0864934b09622fffc5ec4ed0a1cea964156fe3c85bff510d784af"
+      },
+      {
+        "path": "audit/records/externalization-equivalence.json",
+        "bytes": 1482,
+        "sha256": "dd03d28f1df464c5f52b9d888203097339454b4d2413ee5e51552e810af2495c"
+      },
+      {
+        "path": "audit/records/language-source-review.md",
+        "bytes": 5391,
+        "sha256": "58e6825ae9f23b4ce6eb2a89c9a672aa4e027b3257fc758c8ee789690fe1ac8a"
+      },
+      {
+        "path": "audit/records/language-transition.json",
+        "bytes": 2976,
+        "sha256": "805808d38aa92d28431774d5f7765ea2b577a26bb3bedd74334c29bd50abe153"
+      },
+      {
+        "path": "audit/records/launch-identifier-map.json",
+        "bytes": 10174,
+        "sha256": "d0dc64f99da28ca8fa7baac90e9af45d22307570cdae31b62d1f1b23beb129bc"
+      },
+      {
+        "path": "audit/records/phase3-guarantee-transition.json",
+        "bytes": 21214,
+        "sha256": "e69184ac17959241e18a4efddd73af8983b546b6543bcab67b9164d9ec8be0ee"
+      },
+      {
+        "path": "audit/records/phase4-audit-inventory.json",
+        "bytes": 2145492,
+        "sha256": "db2c12b249924601e502cd3b2a9f2e2dbf151db71e54d0c5585170ffa7332b03"
+      },
+      {
+        "path": "audit/records/phase4-reviewed-inputs.json",
+        "bytes": 28577,
+        "sha256": "1a4ecc0fc5427ef60a6ac2f3b3f03ad3711371652da9d1992aeb0115ee5a19f2"
+      },
+      {
+        "path": "audit/records/phase4-semantic-review.md",
+        "bytes": 65290,
+        "sha256": "2829efe851963efb8fc75e863421cec71787822ccfa25e186fb06bf6534ed1c9"
+      },
+      {
+        "path": "audit/run-editor-surface-tests.mjs",
+        "bytes": 1499,
+        "sha256": "2c7031580145d7f8d651dab0b6b8015a119227c44231ed57262f0f3f2d83adb1"
+      },
+      {
+        "path": "audit/run-fixed-baseline.mjs",
+        "bytes": 1922,
+        "sha256": "917c93eaca6b04a0e8233e48219204200e2fc75c1cd45b3747bd008954bb4bbd"
+      },
+      {
+        "path": "audit/run-headless-selftest.mjs",
+        "bytes": 5286,
+        "sha256": "7f93805ded109ca69ce0ffbfd00fdd220c23e96c16c1ccaa134fbb9ba822626c"
+      },
+      {
+        "path": "audit/run-language-tests.mjs",
+        "bytes": 3776,
+        "sha256": "843ab8dcb340503d73deff6e9e5bb7c5e66d4939a10c6ee881d93182f46f3a02"
+      },
+      {
+        "path": "audit/run-local-gate.mjs",
+        "bytes": 1732,
+        "sha256": "b26e59c4c8d2f03bf346e94868f8572ea5d142acd4e1d61326257c9c232e78bc"
+      },
+      {
+        "path": "audit/run-product-tests.mjs",
+        "bytes": 1290,
+        "sha256": "44bbd7768bbe7fba696d2f78638b7f09a25b8cef3fd38d88f2480889d12471f5"
+      },
+      {
+        "path": "audit/suites/bindings.js",
+        "bytes": 1637,
+        "sha256": "13b8d6ab109cae8d6a91ad660c03562a0deefd3949109529525b25fc41c0d74d"
+      },
+      {
+        "path": "audit/suites/editor-surface.js",
+        "bytes": 12150,
+        "sha256": "15187f20090da90d8186f820b0816a012978a43be6dc906e774570c6550dd101"
+      },
+      {
+        "path": "audit/suites/language-forms.js",
+        "bytes": 13450,
+        "sha256": "aa6fb40efd72aaaa8ff5cd6d1f0101272c91e62259de36e3f8b871cc1418f798"
+      },
+      {
+        "path": "audit/suites/runAkariAsyncSelfTests.js",
+        "bytes": 2171,
+        "sha256": "a30ddf723df1cfb666209aceec2cfb9e743c9756c73cb695a881c27393b71a0e"
+      },
+      {
+        "path": "audit/suites/runAkariSelfTests.js",
+        "bytes": 23019,
+        "sha256": "6a9b0df1885d18c549dd8b5056413e2b25f354f0b7ba91b9e2806a6d8aad4c6e"
+      },
+      {
+        "path": "audit/suites/runBlockCodec09Tests.js",
+        "bytes": 15457,
+        "sha256": "ac945068c6ac5f0c699efb93cfd0257bae6c75d6d8c134f26482ec77450ff2e1"
+      },
+      {
+        "path": "audit/suites/runColorPicker09Tests.js",
+        "bytes": 2828,
+        "sha256": "7804f2d9ce81ccc562c185ea8a407563985e631ca19c77975f9d6c7d5acc0489"
+      },
+      {
+        "path": "audit/suites/runDesignResize09Tests.js",
+        "bytes": 4490,
+        "sha256": "7fe67486ddae7c6941c862dc28fca2d955ffc71df59ea8d5f39e253edca02788"
+      },
+      {
+        "path": "audit/suites/runEditorCore09Tests.js",
+        "bytes": 25590,
+        "sha256": "9f1a6914ec8d17f230c75db1cb1926b2cac75d9994a69c7553099496af462bd1"
+      },
+      {
+        "path": "audit/suites/runExtendedTests07.js",
+        "bytes": 33778,
+        "sha256": "68244b0212dde9f7aa99aeacd383aed179693281a9ba66d4fbfd1f93cb0c3531"
+      },
+      {
+        "path": "audit/suites/runLimitBoundary09Tests.js",
+        "bytes": 17373,
+        "sha256": "37b603f02d4fc9fcc0bb522c81e0a02d0f560dd9e41225d48265762ace9aab16"
+      },
+      {
+        "path": "audit/suites/runProductVersion09Tests.js",
+        "bytes": 5713,
+        "sha256": "e064f49784f4fa9af31e303e6f2df4a3f9fb0c9874813c4affd4146749e7de0d"
+      },
+      {
+        "path": "audit/suites/runReleaseTests.js",
+        "bytes": 728,
+        "sha256": "e7e16408138249a36651907926ef9a92dcfa4d1351324eb5ca3848227a9b3685"
+      },
+      {
+        "path": "audit/suites/runSemanticContract09Tests.js",
+        "bytes": 15895,
+        "sha256": "6879bd66cfdbbab3109e1613dc1266844b5e589569bdac34f1edc3ca6488edec"
+      },
+      {
+        "path": "audit/suites/runSyntax09Tests.js",
+        "bytes": 15839,
+        "sha256": "498e10c13eb411c9b23a2fab392708fee1ebbd3ef2009ecf864dfd63f89146d6"
+      },
+      {
+        "path": "audit/suites/runVersion08Tests.js",
+        "bytes": 16449,
+        "sha256": "98531851607fc35dc0fbfea1589f65ccce23c1f192bcc77c012d4d34dc301a18"
+      },
+      {
+        "path": "audit/tests/browser-environment.mjs",
+        "bytes": 2407,
+        "sha256": "4033d2523c4db6fa5f238722a7d098d55606a96d3f46b4255f008776ea045dbd"
+      },
+      {
+        "path": "audit/tests/ci-regression.mjs",
+        "bytes": 6208,
+        "sha256": "2c443b83d4226966f712d1228f902a15e6bc20969cfea1cb24a111bbdf162cb1"
+      },
+      {
+        "path": "audit/tests/completed-baseline-negative.mjs",
+        "bytes": 2013,
+        "sha256": "fc26ea89325c04c82a7b70fc49f4a65e0d575f7a49b57a8125bbe6cb44bae2a0"
+      },
+      {
+        "path": "audit/tests/dom-render-regression.cjs",
+        "bytes": 3445,
+        "sha256": "b8a0caf2fa416ea93e91d75a88da1e2060086ce70a0c05de31e107305a29be7e"
+      },
+      {
+        "path": "audit/tests/editor-assets-101.mjs",
+        "bytes": 19680,
+        "sha256": "01a2664bc7ccf4e54d5bc0bb766e835f87cbdc4b0236d19917853a45bb1523e3"
+      },
+      {
+        "path": "audit/tests/evidence-negative.mjs",
+        "bytes": 4067,
+        "sha256": "8509f8bb14f92c3d5ebe683e6e65522e5c319489e02066dc8bb7ebc9aaba3ca2"
+      },
+      {
+        "path": "audit/tests/execution-continuity.mjs",
+        "bytes": 3550,
+        "sha256": "633a073e44a4574d655d16fb740c48a6c31a03e40efbe5e925cccfb760a5f796"
+      },
+      {
+        "path": "audit/tests/externalization-static.mjs",
+        "bytes": 5396,
+        "sha256": "e885e64c58880a89f43ea12d5c9a760cd26bd35ca04d7315af4d4e9945a28edc"
+      },
+      {
+        "path": "audit/tests/harness-negative.mjs",
+        "bytes": 3023,
+        "sha256": "0d8ea2cb47c6001357f1b9ba0eb49fa4fc4addcfcdf05b8c897dc7032235e430"
+      },
+      {
+        "path": "audit/tests/historical-source-negative.mjs",
+        "bytes": 4429,
+        "sha256": "3df04f010705bd840d4e36399c3ee0703c24ce8c5e7071fad77fc553b0ec7c0f"
+      },
+      {
+        "path": "audit/tests/language-boundaries.mjs",
+        "bytes": 5309,
+        "sha256": "c4d7a143bb343df9797f655ba3b3d3af332d5f651f226dceec23950236387025"
+      },
+      {
+        "path": "audit/tests/language-harness-negative.mjs",
+        "bytes": 984,
+        "sha256": "f29d605ca0d881b2eea492e882f6bcef99fb5ba8992eceb2c8d6bf7f9ea26db5"
+      },
+      {
+        "path": "audit/tests/language-inventory.mjs",
+        "bytes": 2357,
+        "sha256": "b3d9bc017a51c9d36368afe872daafdcc6929a4ccff43d4902dd4a0dc1924a53"
+      },
+      {
+        "path": "audit/tests/manual-docs.mjs",
+        "bytes": 7873,
+        "sha256": "c6376cc7683bad45a17c8baf12a9fb68bf4f92bf6bb132a58ee7d7ed48591670"
+      },
+      {
+        "path": "audit/tests/node-product.mjs",
+        "bytes": 1751,
+        "sha256": "964dea30c49ce4a02a75445279d81af6f71fab6037f3d71b5fe05bb697f7076d"
+      },
+      {
+        "path": "audit/tests/normal-product.mjs",
+        "bytes": 4772,
+        "sha256": "df4df91fbf52a9a084159dcf236a31863fb2153d8b7616157ad8bc404368ac8b"
+      },
+      {
+        "path": "audit/tests/persistence-negative.mjs",
+        "bytes": 2188,
+        "sha256": "48ff6d2005f1ff12d0d1abd9ae76320020c782aba9891e125f7603adb0f73178"
+      },
+      {
+        "path": "audit/tests/phase3-browser.mjs",
+        "bytes": 14175,
+        "sha256": "1f7508e105838c2d5829dc770bed826704c163000c05a3719bbf5ddafa567e99"
+      },
+      {
+        "path": "audit/tests/product-diff.mjs",
+        "bytes": 2371,
+        "sha256": "bcd84059079b208f67b676ef0e539234ab0e90732124c332eec8c1c18d93f9ad"
+      },
+      {
+        "path": "audit/tests/quality-policy-negative.mjs",
+        "bytes": 1421,
+        "sha256": "c2773d59ea56144cdf279a9e433f459e8651a381cd1f9f58ff4c0a1373c68525"
+      },
+      {
+        "path": "audit/tests/release-101-negative.mjs",
+        "bytes": 1525,
+        "sha256": "ce111cac9b6b9ba11f2b7eb42e157ac3c6e09726f03bb9be831f251f3e4958b0"
+      },
+      {
+        "path": "audit/tests/static-contract.py",
+        "bytes": 7194,
+        "sha256": "f09c13ca994526d025422abda5b046f7c2a4e92c6d1fb748ee12422847e52bf1"
+      },
+      {
+        "path": "audit/tests/surface-negative.mjs",
+        "bytes": 855,
+        "sha256": "a4a10419c96608701b1d3f7a90cbe261dfc7934375290abc193a0697829ef05d"
+      },
+      {
+        "path": "audit/tests/workflow-preflight.py",
+        "bytes": 10618,
+        "sha256": "bcc2cba43d6347da580c6aafb3242be5b643821c8a0738f8817e72b730b3b578"
+      },
+      {
+        "path": "audit/verify-evidence.mjs",
+        "bytes": 4545,
+        "sha256": "05aacfd87d1d4ac95355f805fcf15a5e498ef875031a25c45d62dfd82b7574df"
+      },
+      {
+        "path": "audit/verify-reviewed-inputs.mjs",
+        "bytes": 1111,
+        "sha256": "60b595da149c280a58a35c39f0af4803d1830c85facf605bb33b517988aca2f6"
+      },
+      {
+        "path": "index.html",
+        "bytes": 12910,
+        "sha256": "e4683d86abdb0bef4f0ebd41f883ba1a0daa7164b90c317b657d3c707fad3847"
+      },
+      {
+        "path": "baseline/Akari.html",
+        "gitRef": "2f455619440f5abbfbb564927769c85341f25074",
+        "bytes": 914546,
+        "sha256": "48b440829174256952ab3f12e13553c64cba95f392e30e8f79768ff7411c0acf"
+      },
+      {
+        "path": "baseline/AUDIT.md",
+        "gitRef": "2f455619440f5abbfbb564927769c85341f25074",
+        "bytes": 276940,
+        "sha256": "e5d1bb9fb2be077747f19c8904190622276cd4ea985935ca458c46db936679a2"
+      },
+      {
+        "path": "baseline/LANGUAGE.md",
+        "gitRef": "2f455619440f5abbfbb564927769c85341f25074",
+        "bytes": 50007,
+        "sha256": "67f5b4c85f8f3469f583adea8af839d8e2ff45df19d097fd11427cbae4920aca"
+      },
+      {
+        "path": "baseline/.github/workflows/akari-audit.yml",
+        "gitRef": "2f455619440f5abbfbb564927769c85341f25074",
+        "bytes": 10384,
+        "sha256": "b8beff27ad5fc70c202e884be97a59260c67ca846f1b11ad117e73ce866543a7"
+      }
+    ],
+    "runnerFiles": [
+      {
+        "path": "audit/browser/legacy/media/fixture-manifest.json",
+        "snapshotPath": "media/fixture-manifest.json",
+        "sha256": "447a1a77f02b07a20f7e9f0cc71f5f64ed46d6a10cc0a94e9e7dd90a3ac88860"
+      },
+      {
+        "path": "audit/browser/legacy/media/picture.jpg",
+        "snapshotPath": "media/picture.jpg",
+        "sha256": "6080067b94951007feca61e5628628a3eb7a7714d9a6288c9015cdbc087a8157"
+      },
+      {
+        "path": "audit/browser/legacy/media/picture.png",
+        "snapshotPath": "media/picture.png",
+        "sha256": "15ef1334a6bb6a55a132207fa5363198c9aa588c69205314fd4ef67c95429801"
+      },
+      {
+        "path": "audit/browser/legacy/media/picture.webp",
+        "snapshotPath": "media/picture.webp",
+        "sha256": "ab31041ce953e7878847c0d78fc7d8bf8032bb957de01cd8f41e9b1d33106d04"
+      },
+      {
+        "path": "audit/browser/legacy/media/silence.mp3",
+        "snapshotPath": "media/silence.mp3",
+        "sha256": "32be434f6ff85d244a31761686464d155f261489a82896d1ee69dfcbbb6f0774"
+      },
+      {
+        "path": "audit/browser/legacy/media/tone.wav",
+        "snapshotPath": "media/tone.wav",
+        "sha256": "7f06907d59dced52f89dd0d5b5a89ac5b4c0bcd06d6776cdc14b00ecfefa2513"
+      }
+    ],
+    "auditContract": "AUDIT.md",
+    "runnerProvenance": "SAIEduLab/Akari-dev@12cd6403d843f05d74df9154991c1f4085637e04"
+  },
+  "browser": "140.0.7339.16",
+  "results": [
+    {
+      "id": "event-trace:stage:start",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:stage:click",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:stage:keyDown",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:stage:message",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:stage:backdropChanged",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:button:start",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:button:click",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:button:keyDown",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:button:message",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:button:backdropChanged",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:sprite:start",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:sprite:click",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:sprite:keyDown",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:sprite:message",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:sprite:backdropChanged",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:sprite:cloneStart",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:label:start",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:label:click",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:label:keyDown",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:label:message",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:label:backdropChanged",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:box:start",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:box:click",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:box:keyDown",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:box:message",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:box:backdropChanged",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:input:start",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:input:click",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:input:keyDown",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:input:message",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:input:backdropChanged",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    },
+    {
+      "id": "event-trace:input:valueChanged",
+      "pass": true,
+      "initialProjectEqual": true,
+      "realGuiBodyEdit": true,
+      "realDomEventInput": true,
+      "fixedSeed": 12345,
+      "fixedClock": true,
+      "compared": [
+        "command order",
+        "wait/block/unblock",
+        "error R401",
+        "explicit stop/delete",
+        "random calls/state/value",
+        "final runtime",
+        "stop cleanup"
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "networkRequests": [],
+  "traceFiles": [
+    "event-trace-code-stop.json",
+    "event-trace-blocks-stop.json",
+    "event-trace-code-error.json",
+    "event-trace-blocks-error.json"
+  ]
+}

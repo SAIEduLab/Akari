@@ -1,0 +1,566 @@
+{
+  "schema": "akari-verified-checkpoint-v1",
+  "productVersion": "1.0.1",
+  "sourceRepository": "SAIEduLab/Akari",
+  "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+  "productSha256": "4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387",
+  "productBytes": 915962,
+  "projectFormatVersion": 3,
+  "programFormatVersion": 3,
+  "historicalBaseline": {
+    "sourceCommit": "ec43018d5ba546d5aa9df9c2799b18260a3ab2d7",
+    "fixture": "audit/fixtures/0.8",
+    "role": "Preserved completion history and supplementary archival regression; no relabeling or mutation"
+  },
+  "previousCheckpoint": {
+    "sourceCommit": "2f455619440f5abbfbb564927769c85341f25074",
+    "manifest": "audit/fixtures/1.0.0/manifest.json",
+    "manifestSha256": "db939bbcde1c86ae51c39189d05357d27635e405511d667d6b7588b79f74bd63"
+  },
+  "contractHashes": {
+    "AUDIT.md": "0a651a5df4bf0b1b8c3be473b8d1af207a691130d806d3a8b86248b0dde8fedb",
+    "LANGUAGE.md": "4b398dd031409d0807c4068bf6bd19c0601539716eb8ca1d9f3af267c9c0415d"
+  },
+  "files": {
+    "source/.github/workflows/akari-audit.yml": {
+      "sourcePath": ".github/workflows/akari-audit.yml",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 10539,
+      "sha256": "d2a03af75042b8cc3a83aa2c03d4f00f326a67de64d8f752be555b54da3183f1",
+      "gitBlobSha1": "dc42ce3352a5e45ec225338dcec81a4ca8631286"
+    },
+    "source/AUDIT.md": {
+      "sourcePath": "AUDIT.md",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 281216,
+      "sha256": "0a651a5df4bf0b1b8c3be473b8d1af207a691130d806d3a8b86248b0dde8fedb",
+      "gitBlobSha1": "628d9a477aa345c1784c4845ae310d81139148b7"
+    },
+    "source/Akari.html": {
+      "sourcePath": "Akari.html",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 915962,
+      "sha256": "4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387",
+      "gitBlobSha1": "e1d36fb2fb9532bf0c1772b366518ccb4dce0510"
+    },
+    "source/LANGUAGE.md": {
+      "sourcePath": "LANGUAGE.md",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 51594,
+      "sha256": "4b398dd031409d0807c4068bf6bd19c0601539716eb8ca1d9f3af267c9c0415d",
+      "gitBlobSha1": "6bcbb7fbcfbc8eea864506573e5784781f173544"
+    },
+    "source/audit/browser/browser-audit-manifest.json": {
+      "sourcePath": "audit/browser/browser-audit-manifest.json",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 1129,
+      "sha256": "e4ebaa1c8245a509e60b90368548eec4ebb2b3293fb15bd6c221f871abbd8849",
+      "gitBlobSha1": "2da3202809349c4cecf264e2f9fcee09275e6ecc"
+    },
+    "source/audit/fixtures/language/forms.mjs": {
+      "sourcePath": "audit/fixtures/language/forms.mjs",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 7388,
+      "sha256": "bffc4a8c680689a5e0dbeb304900ab637306b40a940dd61a2d1c04d660368bc6",
+      "gitBlobSha1": "6529b005e643df0c000806e124e7fd7d514bc9ce"
+    },
+    "source/audit/fixtures/language/inline.mjs": {
+      "sourcePath": "audit/fixtures/language/inline.mjs",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 2296,
+      "sha256": "6a7a92bb7cd053c362ec909d7276b2cda869608935dfd2d8b95b4eddd2844856",
+      "gitBlobSha1": "875dd4d1b0ce393581ffb97020107d24f6eb3ad0"
+    },
+    "source/audit/lib/release-101-contract.mjs": {
+      "sourcePath": "audit/lib/release-101-contract.mjs",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 1757,
+      "sha256": "ed6e99e15b3d11ce6e0e1ea2fe8444a7c877c843af1051ce67a5e226433ca6e6",
+      "gitBlobSha1": "248c1857df56ac990e24a8da27b45f41fc094f62"
+    },
+    "source/audit/manifests/browser-obligations.json": {
+      "sourcePath": "audit/manifests/browser-obligations.json",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 3613,
+      "sha256": "691dd5742d5f37f8c652f8f704af16c893dead931f227f93e17ef03d26dfd06f",
+      "gitBlobSha1": "7b53c07ef8a2d66cb8e2684f6052d752184cff2f"
+    },
+    "source/audit/manifests/browser-results.json": {
+      "sourcePath": "audit/manifests/browser-results.json",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 21547,
+      "sha256": "5ef6166f324dfef02dc36937ca26173b9932ce506fcb0b33f0c4e40ff7593da2",
+      "gitBlobSha1": "778d497da27cc75f6ae2312d768a20eec34e9fe2"
+    },
+    "source/audit/manifests/externalization-map.json": {
+      "sourcePath": "audit/manifests/externalization-map.json",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 509260,
+      "sha256": "8b6f3dc34b74a48bd30f2d4c8d1a3c740cad26f1147dc6a46d03cabadd18fbc2",
+      "gitBlobSha1": "290f3de6e4ae160d675844cf7e7b8300023449bb"
+    },
+    "source/audit/manifests/language-form-coverage.json": {
+      "sourcePath": "audit/manifests/language-form-coverage.json",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 357270,
+      "sha256": "982c91cfd8d20ad4f1469f4e95bfc41909b994ce12b03660cc0b025888220a6c",
+      "gitBlobSha1": "3e007df871b4d6a44497615f46f46cf727675074"
+    },
+    "source/audit/manifests/product-tests.json": {
+      "sourcePath": "audit/manifests/product-tests.json",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 38659,
+      "sha256": "a8701e2f6f46fbaa5633c2ce2fa730db3171a49a5f91eb424877bb879bca4378",
+      "gitBlobSha1": "1096181bdae6d9a5f3514548ed8f1754b9c94454"
+    },
+    "source/audit/manifests/quality-1.0.0.json": {
+      "sourcePath": "audit/manifests/quality-1.0.0.json",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 425263,
+      "sha256": "45c538fedd889e2a26c42a90cdc7f2429ef602af10a73169844ac57b63f624e7",
+      "gitBlobSha1": "1811a502fccd56ddbcc8a2d5b971dcd04faf0507"
+    },
+    "source/audit/records/autosave-retirement.json": {
+      "sourcePath": "audit/records/autosave-retirement.json",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 7545,
+      "sha256": "352456a6b6e0864934b09622fffc5ec4ed0a1cea964156fe3c85bff510d784af",
+      "gitBlobSha1": "539a46db2bf00dcef5ed1fc553c3b323fac9d20a"
+    },
+    "source/audit/records/phase4-audit-inventory.json": {
+      "sourcePath": "audit/records/phase4-audit-inventory.json",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 2145492,
+      "sha256": "db2c12b249924601e502cd3b2a9f2e2dbf151db71e54d0c5585170ffa7332b03",
+      "gitBlobSha1": "96041d26bff288695eb43d17e6eca632d6c84f85"
+    },
+    "source/audit/records/phase4-semantic-review.md": {
+      "sourcePath": "audit/records/phase4-semantic-review.md",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 65290,
+      "sha256": "2829efe851963efb8fc75e863421cec71787822ccfa25e186fb06bf6534ed1c9",
+      "gitBlobSha1": "1d128e76105dbb3368652076b3d19abb56f08a13"
+    },
+    "source/audit/suites/bindings.js": {
+      "sourcePath": "audit/suites/bindings.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 1637,
+      "sha256": "13b8d6ab109cae8d6a91ad660c03562a0deefd3949109529525b25fc41c0d74d",
+      "gitBlobSha1": "7f1a49992446c29ce178c77fa7767ca4224c789a"
+    },
+    "source/audit/suites/editor-surface.js": {
+      "sourcePath": "audit/suites/editor-surface.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 12150,
+      "sha256": "15187f20090da90d8186f820b0816a012978a43be6dc906e774570c6550dd101",
+      "gitBlobSha1": "1669e94395b08312e64bb829e78cd3af08c98851"
+    },
+    "source/audit/suites/language-forms.js": {
+      "sourcePath": "audit/suites/language-forms.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 13450,
+      "sha256": "aa6fb40efd72aaaa8ff5cd6d1f0101272c91e62259de36e3f8b871cc1418f798",
+      "gitBlobSha1": "a2fc79a4d2d62f815cede22596df99d2d7435136"
+    },
+    "source/audit/suites/runAkariAsyncSelfTests.js": {
+      "sourcePath": "audit/suites/runAkariAsyncSelfTests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 2171,
+      "sha256": "a30ddf723df1cfb666209aceec2cfb9e743c9756c73cb695a881c27393b71a0e",
+      "gitBlobSha1": "758bbd87f528bf263a5fc9c664855ec2ed424801"
+    },
+    "source/audit/suites/runAkariSelfTests.js": {
+      "sourcePath": "audit/suites/runAkariSelfTests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 23019,
+      "sha256": "6a9b0df1885d18c549dd8b5056413e2b25f354f0b7ba91b9e2806a6d8aad4c6e",
+      "gitBlobSha1": "f4113b565377c4fed4497aefdf652490ad1eaae4"
+    },
+    "source/audit/suites/runBlockCodec09Tests.js": {
+      "sourcePath": "audit/suites/runBlockCodec09Tests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 15457,
+      "sha256": "ac945068c6ac5f0c699efb93cfd0257bae6c75d6d8c134f26482ec77450ff2e1",
+      "gitBlobSha1": "47780eb60fe878e9711e056297d328ce956ef4e9"
+    },
+    "source/audit/suites/runColorPicker09Tests.js": {
+      "sourcePath": "audit/suites/runColorPicker09Tests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 2828,
+      "sha256": "7804f2d9ce81ccc562c185ea8a407563985e631ca19c77975f9d6c7d5acc0489",
+      "gitBlobSha1": "142093a0dcdd04a708fa1ef327df9a8bac01b974"
+    },
+    "source/audit/suites/runDesignResize09Tests.js": {
+      "sourcePath": "audit/suites/runDesignResize09Tests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 4490,
+      "sha256": "7fe67486ddae7c6941c862dc28fca2d955ffc71df59ea8d5f39e253edca02788",
+      "gitBlobSha1": "c73367f28f44b9fd89f2ecefb1ac0012abd38642"
+    },
+    "source/audit/suites/runEditorCore09Tests.js": {
+      "sourcePath": "audit/suites/runEditorCore09Tests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 25590,
+      "sha256": "9f1a6914ec8d17f230c75db1cb1926b2cac75d9994a69c7553099496af462bd1",
+      "gitBlobSha1": "819eea213c382bbdeb2ab2c8800003991f43cf1d"
+    },
+    "source/audit/suites/runExtendedTests07.js": {
+      "sourcePath": "audit/suites/runExtendedTests07.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 33778,
+      "sha256": "68244b0212dde9f7aa99aeacd383aed179693281a9ba66d4fbfd1f93cb0c3531",
+      "gitBlobSha1": "0d0185522c44e97cf3f3adf11b9b7e30a31a7fa5"
+    },
+    "source/audit/suites/runLimitBoundary09Tests.js": {
+      "sourcePath": "audit/suites/runLimitBoundary09Tests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 17373,
+      "sha256": "37b603f02d4fc9fcc0bb522c81e0a02d0f560dd9e41225d48265762ace9aab16",
+      "gitBlobSha1": "46f14a2c234437092b816a173eec99acde6211ae"
+    },
+    "source/audit/suites/runProductVersion09Tests.js": {
+      "sourcePath": "audit/suites/runProductVersion09Tests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 5713,
+      "sha256": "e064f49784f4fa9af31e303e6f2df4a3f9fb0c9874813c4affd4146749e7de0d",
+      "gitBlobSha1": "8d5a4f1de547a25ed8a8a2a356493bf8c7d5e670"
+    },
+    "source/audit/suites/runReleaseTests.js": {
+      "sourcePath": "audit/suites/runReleaseTests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 728,
+      "sha256": "e7e16408138249a36651907926ef9a92dcfa4d1351324eb5ca3848227a9b3685",
+      "gitBlobSha1": "31fd29dff64066ac75cc5b0177235743eeb017a1"
+    },
+    "source/audit/suites/runSemanticContract09Tests.js": {
+      "sourcePath": "audit/suites/runSemanticContract09Tests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 15895,
+      "sha256": "6879bd66cfdbbab3109e1613dc1266844b5e589569bdac34f1edc3ca6488edec",
+      "gitBlobSha1": "c436fbf5d3756fa7e3c4b24ebf4b3dae9b928f56"
+    },
+    "source/audit/suites/runSyntax09Tests.js": {
+      "sourcePath": "audit/suites/runSyntax09Tests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 15839,
+      "sha256": "498e10c13eb411c9b23a2fab392708fee1ebbd3ef2009ecf864dfd63f89146d6",
+      "gitBlobSha1": "a54c9faee0de7de2e43d8cabc6ef0a1a1bd54e10"
+    },
+    "source/audit/suites/runVersion08Tests.js": {
+      "sourcePath": "audit/suites/runVersion08Tests.js",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 16449,
+      "sha256": "98531851607fc35dc0fbfea1589f65ccce23c1f192bcc77c012d4d34dc301a18",
+      "gitBlobSha1": "cf84b9deeeb20c484cf2f31f305777bd2a436581"
+    },
+    "source/audit/tests/editor-assets-101.mjs": {
+      "sourcePath": "audit/tests/editor-assets-101.mjs",
+      "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+      "bytes": 19680,
+      "sha256": "01a2664bc7ccf4e54d5bc0bb766e835f87cbdc4b0236d19917853a45bb1523e3",
+      "gitBlobSha1": "bed5e3a7da3c3d01ddff72d0be887c84233254b3"
+    },
+    "evidence/akari-full-browser-session-36017186869-1/bundle.json": {
+      "artifactId": 10815297363,
+      "artifactPath": "bundle.json",
+      "bytes": 75947,
+      "sha256": "e0c449c5db80e1806d23fbcfbdf531b665ba78e628f44ec1a930c00be309c791"
+    },
+    "evidence/akari-full-browser-session-36017186869-1/full-browser-session/candidate/browser-session.json": {
+      "artifactId": 10815297363,
+      "artifactPath": "full-browser-session/candidate/browser-session.json",
+      "bytes": 51211,
+      "sha256": "4cf4d2342625b548ebc54a634c960995f418bba47fc33a4671fcc273fe36891c"
+    },
+    "evidence/akari-full-browser-session-36017186869-1/full-browser-session/candidate/browser-storage-media.json": {
+      "artifactId": 10815297363,
+      "artifactPath": "full-browser-session/candidate/browser-storage-media.json",
+      "bytes": 52844,
+      "sha256": "5eeb231bfe910a172108829929a7712b3d5c7607b52201ce30003de4dfd2d7bb"
+    },
+    "evidence/akari-full-browser-session-36017186869-1/full-browser-session/candidate/browser-runtime.json": {
+      "artifactId": 10815297363,
+      "artifactPath": "full-browser-session/candidate/browser-runtime.json",
+      "bytes": 47824,
+      "sha256": "d91158c3f4c78592d0dbee0c57ec139f5b1ddb1d659b8b29f233945a938622fd"
+    },
+    "evidence/akari-full-browser-session-36017186869-1/full-browser-session/candidate/browser-boundaries.json": {
+      "artifactId": 10815297363,
+      "artifactPath": "full-browser-session/candidate/browser-boundaries.json",
+      "bytes": 48228,
+      "sha256": "7f185949e341fc3167e9d5feb5afb640364c995007fd0d0e4113c3de37adf4b0"
+    },
+    "evidence/akari-full-browser-session-36017186869-1/full-browser-session/candidate/browser-condition.json": {
+      "artifactId": 10815297363,
+      "artifactPath": "full-browser-session/candidate/browser-condition.json",
+      "bytes": 61532,
+      "sha256": "a7f56f20540fc519fc60cac78ad32cc09d93f5cab8b795dc71e3326697cb5d3c"
+    },
+    "evidence/akari-full-browser-session-36017186869-1/full-browser-session/candidate/browser-events.json": {
+      "artifactId": 10815297363,
+      "artifactPath": "full-browser-session/candidate/browser-events.json",
+      "bytes": 54785,
+      "sha256": "6eb698874eaa45f9ae4ef320f1592e7a921000bd71ef2385e3f26a39ee883466"
+    },
+    "evidence/akari-full-browser-session-36017186869-1/full-browser-session/candidate/browser-event-traces.json": {
+      "artifactId": 10815297363,
+      "artifactPath": "full-browser-session/candidate/browser-event-traces.json",
+      "bytes": 60894,
+      "sha256": "dfb384ebb75c06ad9b124c9beb9e6dbea2950406465ab868f90f9d074fca6996"
+    },
+    "evidence/akari-static-evidence-36017186869-1/bundle.json": {
+      "artifactId": 10814833144,
+      "artifactPath": "bundle.json",
+      "bytes": 29567,
+      "sha256": "48bf94fce25f4c90162459e8c5034e3af7144237ea65cab2129817560b52a454"
+    },
+    "evidence/akari-full-browser-extra-36017186869-1/bundle.json": {
+      "artifactId": 10814714664,
+      "artifactPath": "bundle.json",
+      "bytes": 75281,
+      "sha256": "c65d9e5c1be004ada59868a7a6e733156f09fb65a4e0a41322b09ddd2efad99b"
+    },
+    "evidence/akari-full-browser-extra-36017186869-1/full-browser-extra/parent-qa.json": {
+      "artifactId": 10814714664,
+      "artifactPath": "full-browser-extra/parent-qa.json",
+      "bytes": 895,
+      "sha256": "3e8da1263e3756e92a54a670a0a91c818d8abdf6369b92644ba506e3891c1d4e"
+    },
+    "evidence/akari-full-browser-extra-36017186869-1/full-browser-extra/candidate/modern-browser.json": {
+      "artifactId": 10814714664,
+      "artifactPath": "full-browser-extra/candidate/modern-browser.json",
+      "bytes": 104801,
+      "sha256": "5268a9ad504f165e5cc45ef9d59e2d0985ebb869801385faa504fbbd83fecf19"
+    },
+    "evidence/akari-full-browser-extra-36017186869-1/full-browser-extra/candidate/long-evidence/results.json": {
+      "artifactId": 10814714664,
+      "artifactPath": "full-browser-extra/candidate/long-evidence/results.json",
+      "bytes": 49492,
+      "sha256": "e3af8623343c32e065aa875d487d3eb2415179e69a93e5edd81811d2d14cc7a0"
+    },
+    "evidence/akari-full-browser-extra-36017186869-1/full-browser-extra/candidate/perf-keyboard-insert-16666.json": {
+      "artifactId": 10814714664,
+      "artifactPath": "full-browser-extra/candidate/perf-keyboard-insert-16666.json",
+      "bytes": 46715,
+      "sha256": "17e1c4dd52abbd8b4ae25ee198c75a811a989cbbc5a291e9d2ebc6759ec7c408"
+    },
+    "evidence/akari-full-browser-extra-36017186869-1/full-browser-extra/candidate/perf-clipboard-paste-16666.json": {
+      "artifactId": 10814714664,
+      "artifactPath": "full-browser-extra/candidate/perf-clipboard-paste-16666.json",
+      "bytes": 46686,
+      "sha256": "8787a3b3c41ff56a85ef896dff1cff91c34172c243d39de5e5bcac6a58e35d52"
+    },
+    "evidence/akari-full-browser-extra-36017186869-1/manual-docs/manual-docs.json": {
+      "artifactId": 10814714664,
+      "artifactPath": "manual-docs/manual-docs.json",
+      "bytes": 41961,
+      "sha256": "59ecf7178735d142d78842db63b76294849dd11a49bb47b4546a6f9fbb967857"
+    },
+    "evidence/akari-full-browser-schemas-36017186869-1/bundle.json": {
+      "artifactId": 10815481726,
+      "artifactPath": "bundle.json",
+      "bytes": 206207,
+      "sha256": "b771a9c955dfe6b58b9d13329e10084fca8293b3b033e550c1d611a503df8d03"
+    },
+    "evidence/akari-full-browser-schemas-36017186869-1/full-browser-schemas/candidate/browser-schemas.json": {
+      "artifactId": 10815481726,
+      "artifactPath": "full-browser-schemas/candidate/browser-schemas.json",
+      "bytes": 267070,
+      "sha256": "06a44b3d66cd09152a5be43164f714f5e00e24ce1948191bf7cb29a492716489"
+    },
+    "evidence/akari-aggregate-36017186869-1/aggregate.json": {
+      "artifactId": 10816120310,
+      "artifactPath": "aggregate.json",
+      "bytes": 149724,
+      "sha256": "9d9421041600f3ec25ac19491b481480d449ab0bce079a859721dade02d43e22"
+    },
+    "evidence/akari-full-browser-ui-36017186869-1/bundle.json": {
+      "artifactId": 10815711211,
+      "artifactPath": "bundle.json",
+      "bytes": 80818,
+      "sha256": "70b5302dfb146b6d52e24f26e7fcd55768f7df2599907dde059095e3db67af5c"
+    },
+    "evidence/akari-full-browser-ui-36017186869-1/full-browser-ui/candidate/browser-owner-delete.json": {
+      "artifactId": 10815711211,
+      "artifactPath": "full-browser-ui/candidate/browser-owner-delete.json",
+      "bytes": 61432,
+      "sha256": "d0020047da4c33561fe136399f7d510bdae1687c80499cece7c32668048c9e27"
+    },
+    "evidence/akari-full-browser-ui-36017186869-1/full-browser-ui/ui-interactions.json": {
+      "artifactId": 10815711211,
+      "artifactPath": "full-browser-ui/ui-interactions.json",
+      "bytes": 5740,
+      "sha256": "404cb1c82d4e2139058b82cd729e5b368328279511ce390453bb32b247820670"
+    },
+    "evidence/akari-full-browser-ui-36017186869-1/full-browser-ui/ui-compact-menu.json": {
+      "artifactId": 10815711211,
+      "artifactPath": "full-browser-ui/ui-compact-menu.json",
+      "bytes": 8275,
+      "sha256": "a9c0605a2de3c046595b9f25c18ac5f436dcf434cd9cbbe33fcaf6cafb5f7f0d"
+    },
+    "evidence/akari-full-browser-ui-36017186869-1/full-browser-ui/ui-shell.json": {
+      "artifactId": 10815711211,
+      "artifactPath": "full-browser-ui/ui-shell.json",
+      "bytes": 3363,
+      "sha256": "9e20bc61cb2c2a6c65e8a2288583d8b97ae7dda560e151bb7155828939e022aa"
+    },
+    "evidence/akari-full-browser-ui-36017186869-1/full-browser-ui/ui-compact-routes.json": {
+      "artifactId": 10815711211,
+      "artifactPath": "full-browser-ui/ui-compact-routes.json",
+      "bytes": 2347,
+      "sha256": "1a9953cd57a43c8cb5e0e044ddb577d4f19d15c87ad98095fbca82b938136fef"
+    },
+    "evidence/akari-full-browser-ui-36017186869-1/full-browser-ui/ui-stage-gesture.json": {
+      "artifactId": 10815711211,
+      "artifactPath": "full-browser-ui/ui-stage-gesture.json",
+      "bytes": 59328,
+      "sha256": "219afd4d1f7d37e723d642eccafdab23d1549ade15e48f71de756c0f117bbda1"
+    },
+    "evidence/akari-full-browser-ui-36017186869-1/full-browser-ui/candidate/editor-regression-result.json": {
+      "artifactId": 10815711211,
+      "artifactPath": "full-browser-ui/candidate/editor-regression-result.json",
+      "bytes": 2755,
+      "sha256": "7587c5c4455590b4af5b4b67568a7e7cc6debab041876704114bfa0cd14f66d1"
+    },
+    "evidence/akari-full-browser-ui-36017186869-1/full-browser-ui/candidate/workbench-direct.json": {
+      "artifactId": 10815711211,
+      "artifactPath": "full-browser-ui/candidate/workbench-direct.json",
+      "bytes": 58728,
+      "sha256": "de08b0db83e126e4d6b9cbd2e8525ce9d61816488e0214f15399dcc618d023e9"
+    },
+    "evidence/akari-full-browser-ui-36017186869-1/full-browser-ui/candidate/workbench-matrix.json": {
+      "artifactId": 10815711211,
+      "artifactPath": "full-browser-ui/candidate/workbench-matrix.json",
+      "bytes": 49011,
+      "sha256": "2224e9fc01daed3c2eb38a0cfb1f502d62f4c4d199352e158ac16c85098567b0"
+    },
+    "evidence/akari-full-browser-limits-36017186869-1/bundle.json": {
+      "artifactId": 10815211704,
+      "artifactPath": "bundle.json",
+      "bytes": 80176,
+      "sha256": "b4690832b58b869d5a3d7082670db26cdf85cef696c070b38c74c03fa687d8ea"
+    },
+    "evidence/akari-full-browser-limits-36017186869-1/full-browser-limits/candidate/browser-product.json": {
+      "artifactId": 10815211704,
+      "artifactPath": "full-browser-limits/candidate/browser-product.json",
+      "bytes": 48594,
+      "sha256": "d8367865542cf29d4a9bd38f30b435e2e6cb6accad81af61705f8d8c73c2a79d"
+    },
+    "evidence/akari-full-browser-limits-36017186869-1/full-browser-limits/candidate/browser-design-limits.json": {
+      "artifactId": 10815211704,
+      "artifactPath": "full-browser-limits/candidate/browser-design-limits.json",
+      "bytes": 51531,
+      "sha256": "b2117ca557d2c9eb540bd44778eaecf0f17c6681660effe51f7e88aed51d9f0d"
+    },
+    "evidence/akari-full-browser-limits-36017186869-1/full-browser-limits/candidate/browser-runtime-limits.json": {
+      "artifactId": 10815211704,
+      "artifactPath": "full-browser-limits/candidate/browser-runtime-limits.json",
+      "bytes": 54261,
+      "sha256": "3eea5929d9f719a1ee5607cd8f5e7ec84bfdaaf31fb07449e8bc5c7439a4f75a"
+    },
+    "evidence/akari-full-browser-limits-36017186869-1/full-browser-limits/candidate/browser-asset-limits.json": {
+      "artifactId": 10815211704,
+      "artifactPath": "full-browser-limits/candidate/browser-asset-limits.json",
+      "bytes": 85558,
+      "sha256": "81580a17cf49efdf51071ab54c5518c60c27d7646beeb1448b40e11b8264c246"
+    },
+    "evidence/akari-full-browser-limits-36017186869-1/full-browser-limits/media-boundaries.json": {
+      "artifactId": 10815211704,
+      "artifactPath": "full-browser-limits/media-boundaries.json",
+      "bytes": 12069,
+      "sha256": "cb8688fafed3ed1cb5b40c70348e52bca8e213371313049627c500a2a6952aca"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/bundle.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "bundle.json",
+      "bytes": 34696,
+      "sha256": "ac427df71a9efd0efe3112491c1a1b09ed7201e3b4695a7e223ec5a604acf99e"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/current-selftest.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "current-selftest.json",
+      "bytes": 229268,
+      "sha256": "53cc943b5541217d01cb15a6ff6dd449f22979fc4ac149b2525770ee34da27ad"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/baseline-selftest.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "baseline-selftest.json",
+      "bytes": 49520,
+      "sha256": "bda2d68bd5ef817e7cbd2c8cbdaf4fc48fd4d8168d5f29d7353f518cd6bd7f56"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/language-node.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "language-node.json",
+      "bytes": 94307,
+      "sha256": "6de44cdbe2765149316f17a510101c2b55a9554ea64a1b15d7913b3c58a8227c"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/language-browser.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "language-browser.json",
+      "bytes": 94340,
+      "sha256": "6fcb394e79c8ebbe89f6e2de3643c7c22fbe23d7916d14985b9aa211c7e9f2d6"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/editor-node.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "editor-node.json",
+      "bytes": 31883,
+      "sha256": "f7ec7636b97da9ad42c92ee459f59c08e14d141f738c187631eeb051c255265c"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/editor-browser.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "editor-browser.json",
+      "bytes": 31917,
+      "sha256": "9fa75482bc6e3f6bc949070c2c1a19b854610162754f85de74fbe26e308edba2"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/gui.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "gui.json",
+      "bytes": 33538,
+      "sha256": "c6a3bb14332d266066713370321910ed4ee1003108c91e166821aa0dffb98207"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/language-boundaries.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "language-boundaries.json",
+      "bytes": 49911,
+      "sha256": "e95e3027163f03d18e1b1b99056be289557c6f586795c5629fc3278e0d9b252c"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/normal-product.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "normal-product.json",
+      "bytes": 29382,
+      "sha256": "5b730a836ee0061621c5e6a5f0db180368d21f5a60911805a26549444727d2d1"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/browser-environment.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "browser-environment.json",
+      "bytes": 29672,
+      "sha256": "a5428a42474973251705939d83c4e06aca31ab88d2ad20e9fbb2487ea59f4533"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/editor-assets-101.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "editor-assets-101.json",
+      "bytes": 30563,
+      "sha256": "ad85901bde1f7622b833599f72d6f7e75930c425728383261861a7da0512a973"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/gate.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "gate.json",
+      "bytes": 36429,
+      "sha256": "b875bb72cec7de9375a467b34fb011eef2fa713c72fbc7a54181fcece30af69d"
+    },
+    "evidence/akari-selftest-evidence-36017186869-1/completed-baseline-selftest.json": {
+      "artifactId": 10815426502,
+      "artifactPath": "completed-baseline-selftest.json",
+      "bytes": 229595,
+      "sha256": "6ad098a08c5c628e243b9599c96d1aa70daf106647a02535e454cdd0e09cb597"
+    },
+    "checkpoint.json": {
+      "bytes": 9881,
+      "sha256": "a01d0766a2dd248ef654030f07805517c0ca5e9802f171284c16a73c9b1bc9ac"
+    },
+    "git-provenance.json": {
+      "bytes": 19540,
+      "sha256": "2f47734530e2e0032b5d5a105cfb4c9026909269b568b2fae2eaa29be32caa38"
+    }
+  }
+}

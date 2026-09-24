@@ -8,9 +8,10 @@ document = yaml.load(workflow.read_text(encoding='utf-8'), Loader=yaml.BaseLoade
 def verify(doc):
     assert 'Akari_1_0_0' in doc['on']['push']['branches'], 'candidate push trigger'
     assert 'audit/**' in doc['on']['push']['branches'], 'audit branch push trigger'
-    assert 'fixed-1.0.0' in doc['jobs']['selftest']['name'], 'completed checkpoint job label'
+    assert 'fixed-1.0.1' in doc['jobs']['selftest']['name'], 'completed checkpoint job label'
     static_scripts = '\n'.join(s.get('run', '') for s in doc['jobs']['static']['steps'])
     assert 'node audit/tests/completed-baseline-negative.mjs || status=1' in static_scripts, 'completed baseline negative gate'
+    assert 'node audit/tests/checkpoint-101-negative.mjs || status=1' in static_scripts, '1.0.1 checkpoint negative gate'
     assert 'node audit/tests/historical-source-negative.mjs || status=1' in static_scripts, 'offline provenance negative gate'
     assert 'GIT_ALTERNATE_OBJECT_DIRECTORIES' not in str(doc), 'external Git object dependency'
     assert 'Akari2' not in str(doc), 'old repository dependency'
@@ -104,7 +105,10 @@ bad_alternates = copy.deepcopy(document); bad_alternates['env'] = {'GIT_ALTERNAT
 bad_archive_gate = copy.deepcopy(document)
 for step in bad_archive_gate['jobs']['static']['steps']:
     step['run'] = step.get('run', '').replace('node audit/tests/historical-source-negative.mjs || status=1', '')
-for invalid in [bad_checkpoint_trigger, bad_checkpoint_name, bad_checkpoint_gate, bad_display, bad, bad_dependency, bad_retention, bad_validator, bad_hidden, bad_browser, bad_probe, bad_skips, bad_early, bad_provenance, bad_alternates, bad_archive_gate]:
+bad_checkpoint101_gate = copy.deepcopy(document)
+for step in bad_checkpoint101_gate['jobs']['static']['steps']:
+    step['run'] = step.get('run', '').replace('node audit/tests/checkpoint-101-negative.mjs || status=1', '')
+for invalid in [bad_checkpoint_trigger, bad_checkpoint_name, bad_checkpoint_gate, bad_display, bad, bad_dependency, bad_retention, bad_validator, bad_hidden, bad_browser, bad_probe, bad_skips, bad_early, bad_provenance, bad_alternates, bad_archive_gate, bad_checkpoint101_gate]:
     try:
         verify(invalid)
     except AssertionError:
@@ -136,5 +140,5 @@ output = Path(sys.argv[1])
 assert not output.exists(), 'new evidence path required'
 output.parent.mkdir(parents=True, exist_ok=True)
 output.write_text(json.dumps({'status': 'PASS', 'workflowSha256': hashlib.sha256(workflow.read_bytes()).hexdigest(),
-    'jobs': list(document['jobs']), 'browserTasks': 27, 'negativeCases': 16, 'syntaxChecked': checked}, indent=2) + '\n', encoding='utf-8')
-print('Workflow preflight: PASS; 16 negative cases; 27 browser tasks; ' + str(len(checked)) + ' JavaScript files')
+    'jobs': list(document['jobs']), 'browserTasks': 27, 'negativeCases': 17, 'syntaxChecked': checked}, indent=2) + '\n', encoding='utf-8')
+print('Workflow preflight: PASS; 17 negative cases; 27 browser tasks; ' + str(len(checked)) + ' JavaScript files')

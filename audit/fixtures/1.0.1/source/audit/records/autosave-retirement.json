@@ -1,0 +1,126 @@
+{
+  "schema": "akari-autosave-retirement-v1",
+  "sourceRepository": "SAIEduLab/Akari",
+  "sourceCommit": "f330b0c8b52ab1cce8d6c5bd59fd355b107ba5a4",
+  "fixedBaseline": "2f455619440f5abbfbb564927769c85341f25074",
+  "authorization": {
+    "date": "2026-09-24",
+    "scope": "Complete autosave removal, including recovery and migration code; revise audit criteria without weakening unrelated guarantees; implement through Draft PR."
+  },
+  "reason": "Remove the automatic persistence/recovery path reported as a cause of accidents. This record does not claim a diagnosis of all reported incidents.",
+  "capabilityChanges": [
+    {
+      "oldId": "save:project",
+      "before": {
+        "id": "save:project",
+        "disposition": "replace",
+        "reason": "Preserve source, corrupt-data rejection, executable roundtrip and unsaved-state protection; define the 1.0.0 formats in phase 3. No dedicated old-version identification obligation.",
+        "core": "SAVE Markdown往復; SAVE 作りかけのコード保持; AUDIT MARKDOWN canonical-body mismatch rejected F512; A10-VERSION-CONTRACT; A10-PROJECT-MARKER-BOUNDARIES",
+        "browser": "B09-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:invalid-syntax-save-and-format3-storage-isolation"
+      },
+      "after": {
+        "id": "save:project",
+        "disposition": "replace",
+        "reason": "Preserve source, corrupt-data rejection, executable roundtrip and unsaved-state protection; define the 1.0.0 formats in phase 3. No dedicated old-version identification obligation.",
+        "core": "SAVE Markdown往復; SAVE 作りかけのコード保持; AUDIT MARKDOWN canonical-body mismatch rejected F512; A10-VERSION-CONTRACT; A10-PROJECT-MARKER-BOUNDARIES",
+        "browser": "B09-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:invalid-syntax-file-roundtrip-without-persistence"
+      }
+    },
+    {
+      "oldId": "save:autosave",
+      "before": {
+        "id": "save:autosave",
+        "disposition": "replace",
+        "reason": "Preserve source, corrupt-data rejection, executable roundtrip and unsaved-state protection; define the 1.0.0 formats in phase 3. No dedicated old-version identification obligation.",
+        "core": "外部core test対象外（browser suiteで検査）",
+        "browser": "B09-PRODUCT; browser-session:autosave-draft-recovery; browser-storage-media:invalid-syntax-save-and-format3-storage-isolation"
+      },
+      "after": {
+        "id": "save:manual-only",
+        "disposition": "replace",
+        "reason": "User-approved complete autosave retirement: require no automatic project/draft persistence; retain manual file roundtrip, draft separation, invalid-input and unsaved-state protection.",
+        "core": "外部core test対象外（browser suiteで検査）",
+        "browser": "B09-PRODUCT; browser-session:draft-session-without-persistence; browser-storage-media:invalid-syntax-file-roundtrip-without-persistence"
+      }
+    },
+    {
+      "oldId": "save:version09",
+      "before": {
+        "id": "save:version09",
+        "disposition": "replace",
+        "reason": "Preserve source, corrupt-data rejection, executable roundtrip and unsaved-state protection; define the 1.0.0 formats in phase 3. No dedicated old-version identification obligation.",
+        "core": "A10-VERSION-CONTRACT; A10-PROJECT-MARKER-BOUNDARIES; A10-EXECUTABLE-MALFORMED; A10-EXECUTABLE-ROUNDTRIP (legacy assertions awaiting phase-3 split; not release acceptance)",
+        "browser": "B09-PRODUCT; browser-storage-media:format3-malformed-mismatch-and-state-protection; browser-storage-media:invalid-syntax-save-and-format3-storage-isolation"
+      },
+      "after": {
+        "id": "save:version09",
+        "disposition": "replace",
+        "reason": "Preserve source, corrupt-data rejection, executable roundtrip and unsaved-state protection; define the 1.0.0 formats in phase 3. No dedicated old-version identification obligation.",
+        "core": "A10-VERSION-CONTRACT; A10-PROJECT-MARKER-BOUNDARIES; A10-EXECUTABLE-MALFORMED; A10-EXECUTABLE-ROUNDTRIP (legacy assertions awaiting phase-3 split; not release acceptance)",
+        "browser": "B09-PRODUCT; browser-storage-media:format3-malformed-mismatch-and-state-protection; browser-storage-media:invalid-syntax-file-roundtrip-without-persistence"
+      }
+    },
+    {
+      "oldId": "product:callable-draft",
+      "before": {
+        "id": "product:callable-draft",
+        "disposition": "maintain",
+        "reason": "Retain the explicit capability and its core/browser coverage.",
+        "core": "T09-EDITOR semantics and incomplete definition header keep AST; T09-EDITOR source total bound and independent definition draft",
+        "browser": "B09-PRODUCT; browser-session:callable-draft-history; browser-session:autosave-draft-recovery; browser-boundaries:unknown-callee-and-all-arguments-after-definition-change"
+      },
+      "after": {
+        "id": "product:callable-draft",
+        "disposition": "maintain",
+        "reason": "Retain the explicit capability and its core/browser coverage.",
+        "core": "T09-EDITOR semantics and incomplete definition header keep AST; T09-EDITOR source total bound and independent definition draft",
+        "browser": "B09-PRODUCT; browser-session:callable-draft-history; browser-session:draft-session-without-persistence; browser-boundaries:unknown-callee-and-all-arguments-after-definition-change"
+      }
+    }
+  ],
+  "browserReplacements": [
+    {
+      "task": "browser-session",
+      "oldId": "autosave-draft-recovery",
+      "newId": "draft-session-without-persistence",
+      "withdrawn": "Automatic project and unregistered-draft recovery",
+      "retained": "Draft separation and source preservation during editing",
+      "added": "No persistence on edit/wait/reload; fresh session after reload"
+    },
+    {
+      "task": "browser-storage-media",
+      "oldId": "invalid-syntax-save-and-format3-storage-isolation",
+      "newId": "invalid-syntax-file-roundtrip-without-persistence",
+      "withdrawn": "Automatic recovery and format-3 autosave namespace use",
+      "retained": "Invalid-syntax source and material-bearing manual file save/parse/reopen",
+      "added": "No automatic storage access before and after manual save/reopen"
+    }
+  ],
+  "guiReplacements": [
+    {
+      "oldId": "A10-GUI/unregistered-draft-autosave-registration",
+      "newId": "A10-GUI/unregistered-draft-explicit-registration",
+      "withdrawn": "Automatic draft recovery",
+      "retained": "Unregistered source, unknown names, explicit registration, Undo/Redo"
+    },
+    {
+      "oldId": "A10-GUI/corrupt-autosave-preserves-current",
+      "newId": "A10-GUI/retired-storage-isolation",
+      "withdrawn": "Validate corrupt autosave before recovery",
+      "retained": "Old data cannot replace the current project",
+      "added": "Neither valid nor corrupt retired records are read/written/deleted; manual editing/save/open remain functional"
+    }
+  ],
+  "unchanged": [
+    "All 884 core IDs, 605 language IDs and 38 editor IDs",
+    "All browser cases other than the 2 listed replacements; all browser obligations and task groups",
+    "Fixed 1.0.0 and 0.8 sources, hashes, archived evidence and runners",
+    "Manual save/open, invalid-input rejection, material validation, limits, pending-input protection, unsaved confirmation, history, runtime and export"
+  ],
+  "classifications": [
+    "GA-STATIC",
+    "GA-EXEC",
+    "SEMANTIC",
+    "HYBRID"
+  ]
+}

@@ -1,0 +1,222 @@
+name: Akari audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["Akari.html", "LANGUAGE.md", "AUDIT.md", "LICENSE", "README.md", "index.html", "MANUAL.html", "Manual/**", "audit/**", ".github/workflows/**"]
+  push:
+    branches: [main, "fix/**", "audit/**", Akari_1_0_0]
+    paths: ["Akari.html", "LANGUAGE.md", "AUDIT.md", "LICENSE", "README.md", "index.html", "MANUAL.html", "Manual/**", "audit/**", ".github/workflows/**"]
+  workflow_dispatch:
+    inputs:
+      full_audit:
+        description: Force the product-impact GA gate
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: akari-audit-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: GA-STATIC contract and snapshot
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      selftest_required: ${{ steps.scope.outputs.selftest_required }}
+      full_browser_required: ${{ steps.scope.outputs.full_browser_required }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install DOM regression dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/akari-static-deps" --no-package-lock --no-audit --no-fund jsdom@26.1.0
+          echo "NODE_PATH=$RUNNER_TEMP/akari-static-deps/node_modules" >> "$GITHUB_ENV"
+      - name: Install workflow parser
+        run: python -m pip install PyYAML==6.0.3
+      - name: Classify scope and validate deterministic audit contract
+        if: always()
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          FORCE_FULL: ${{ github.event_name == 'workflow_dispatch' && inputs.full_audit || 'false' }}
+        run: python audit/tests/static-contract.py audit-evidence
+      - name: Check embedded JavaScript syntax
+        if: always()
+        run: node --check audit-evidence/akari.js
+      - name: Verify external authority and immutable fixed baseline
+        if: always()
+        run: node audit/tests/externalization-static.mjs audit-evidence/externalization-static.json
+      - name: Preflight workflow, runner graph and validators
+        if: always()
+        run: |
+          status=0
+          python audit/tests/workflow-preflight.py audit-evidence/workflow-preflight.json || status=1
+          node audit/tests/evidence-negative.mjs || status=1
+          node audit/tests/completed-baseline-negative.mjs || status=1
+          node audit/tests/historical-source-negative.mjs || status=1
+          node audit/tests/ci-regression.mjs || status=1
+          node audit/tests/execution-continuity.mjs || status=1
+          node audit/tests/dom-render-regression.cjs || status=1
+          exit "$status"
+      - name: Seal verified static evidence
+        if: always()
+        run: node audit/verify-evidence.mjs seal static audit-evidence
+      - name: Upload static evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akari-static-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true
+
+  selftest:
+    name: GA-EXEC self-tests and fixed-1.0.0 non-regression
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (needs.static.result != 'success' || needs.static.outputs.selftest_required == 'true') }}
+    needs: [static]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install external audit host dependency
+        run: |
+          npm install --prefix "$RUNNER_TEMP/akari-audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0
+          echo "NODE_PATH=$RUNNER_TEMP/akari-audit-deps/node_modules" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/akari-audit-deps/node_modules/.bin/playwright" install --with-deps --no-shell chromium
+          NODE_PATH="$RUNNER_TEMP/akari-audit-deps/node_modules" node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"AKARI_BROWSER="+require("playwright").chromium.executablePath()+"\n")'
+      - name: Verify matching browser environment
+        if: always()
+        run: node audit/tests/browser-environment.mjs "$AKARI_BROWSER" audit-evidence/browser-environment.json
+      - name: Run exact local and Actions regression gate
+        if: always()
+        run: node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/selftest
+      - name: Preserve browser environment diagnostics
+        if: always()
+        run: |
+          if [ -f audit-evidence/browser-environment.json ]; then
+            mkdir -p audit-evidence/selftest
+            cp audit-evidence/browser-environment.json audit-evidence/selftest/browser-environment.json
+          fi
+      - name: Seal independently verified self-test evidence
+        if: always()
+        run: node audit/verify-evidence.mjs seal selftest audit-evidence/selftest
+      - name: Upload self-test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akari-selftest-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/selftest/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true
+
+  full-browser-gate:
+    name: Product-impact browser GA (${{ matrix.group }})
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (needs.static.result != 'success' || needs.static.outputs.full_browser_required == 'true') }}
+    needs: [static]
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [session, ui, limits, schemas, extra]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install full-browser audit dependencies
+        run: |
+          npm install --prefix "$RUNNER_TEMP/akari-audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 @babel/parser@7.28.4
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3-pil ffmpeg fonts-noto-cjk xvfb xauth
+          echo "NODE_PATH=$RUNNER_TEMP/akari-audit-deps/node_modules" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/akari-audit-deps/node_modules/.bin/playwright" install --with-deps --no-shell chromium
+          NODE_PATH="$RUNNER_TEMP/akari-audit-deps/node_modules" node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"AKARI_BROWSER="+require("playwright").chromium.executablePath()+"\n")'
+          echo "AKARI_PYTHON=/usr/bin/python3" >> "$GITHUB_ENV"
+      - name: Verify matching browser environment
+        if: always()
+        run: node audit/tests/browser-environment.mjs "$AKARI_BROWSER" audit-evidence/browser-environment.json
+      - name: Run complete real-browser group
+        if: always()
+        run: |
+          status=0
+          node audit/browser/run-full-browser-audit.mjs --product Akari.html --audit AUDIT.md --manifest audit/browser/browser-audit-manifest.json --group "${{ matrix.group }}" --evidence "audit-evidence/full-browser-${{ matrix.group }}" || status=1
+          # Public guide coverage belongs to extra; run it even when that group fails.
+          if [ "${{ matrix.group }}" = extra ]; then
+            node audit/tests/manual-docs.mjs "$AKARI_BROWSER" audit-evidence/manual-docs || status=1
+          fi
+          exit "$status"
+      - name: Seal independently verified browser evidence
+        if: always()
+        run: node audit/verify-evidence.mjs seal "full-browser-${{ matrix.group }}" audit-evidence
+      - name: Upload full-browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akari-full-browser-${{ matrix.group }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true
+
+  aggregate:
+    name: Independent complete evidence gate
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    needs: [static, selftest, full-browser-gate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Download this run and attempt only
+        uses: actions/download-artifact@v4
+        with:
+          pattern: akari-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: downloaded-evidence
+      - name: Verify jobs, environments, complete IDs, provenance and artifact contents
+        if: always()
+        env:
+          AKARI_NEEDS: ${{ toJSON(needs) }}
+        run: node audit/verify-evidence.mjs aggregate downloaded-evidence audit-evidence/aggregate.json
+      - name: Upload final machine audit result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akari-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true

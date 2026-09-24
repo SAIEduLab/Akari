@@ -115,7 +115,7 @@ await withBrowser(browser,async b=>{
     await fill(p,source);await mode(p,'blocks');await number(p).fill('3');await number(p).press('Enter');
     const save=async(id,name)=>{const pending=p.waitForEvent('download');await click(p,id);const f=path.join(dir,name);await (await pending).saveAs(f);return f;};
     const file=await save('saveBtn','phase3.akari.md'),saved=fs.readFileSync(file,'utf8');
-    assert.ok(saved.startsWith('# あかり 1.0.0 の作品'));assert.ok(saved.includes('AKARI-PROJECT-F3-DATA-BEGIN'));
+    assert.ok(saved.startsWith('# あかり 1.0.1 の作品'));assert.ok(saved.includes('AKARI-PROJECT-F3-DATA-BEGIN'));
     const initial=await state(p);await click(p,'newBtn');await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);assert.equal((await state(p)).project,initial.project);
     const generated=await save('exportBtn','phase3-player.html');
     const c=await b.newContext({offline:true}),errors=[],network=[];

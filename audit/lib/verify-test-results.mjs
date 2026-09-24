@@ -30,11 +30,11 @@ export function verify(report, manifest, expectedSnapshot) {
   assert.equal(sha(JSON.stringify(results.map(r=>r.id).sort())),manifest.baselineIdSha256,'baseline expected set changed');
   return true;
 }
-export function verifyAuthority(manifest, policy=JSON.parse(fs.readFileSync(path.join(root,'audit/manifests/quality-1.0.0.json')))) {
+export function verifyAuthority(manifest, policy=JSON.parse(fs.readFileSync(path.join(root,'audit/manifests/quality-1.0.1.json')))) {
   const map=JSON.parse(fs.readFileSync(path.join(root,'audit/manifests/externalization-map.json')));
   const specs=map.entries.filter(e=>e.symbol!=='runReleaseTests');
   assert.equal(policy.schema,'akari-quality-policy-v1');
-  assert.equal(policy.targetProductVersion,'1.0.0');
+  assert.equal(policy.targetProductVersion,'1.0.1');
   verifyCompletedAuthority(policy,manifest);
   assert.deepEqual(policy.entries.map(e=>[e.suite,e.id]),specs.flatMap(s=>s.testIds.map(id=>[s.symbol,id])),'guarantee inventory incomplete');
   const release=JSON.parse(fs.readFileSync(path.join(root,'audit/records/phase3-guarantee-transition.json')));
@@ -90,7 +90,7 @@ export function verifyAuthority(manifest, policy=JSON.parse(fs.readFileSync(path
   const ledger=JSON.parse(old.match(/```json\s*(\{[\s\S]*?\})\s*```/)[1]);
   assert.equal(ledger.entries.length,122);
   for(const entry of ledger.entries) for(const id of entry.tests) assert.ok(ids.has(id),'fixed baseline capability missing '+id);
-  assert.equal(policy.comparison.switchAfterCompletedRelease,true);
+  assert.equal(policy.comparison.switchAfterVerifiedCheckpoint,true);
 }
 if(process.argv[1] && path.resolve(process.argv[1])===path.resolve(import.meta.filename)) {
   const [reportPath,product='Akari.html']=process.argv.slice(2);

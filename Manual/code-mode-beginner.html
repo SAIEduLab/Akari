@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>あかり 1.0.0 コードモード 初級</title>
+<title>あかり 1.0.1 コードモード 初級</title>
 <style>
 :root{
   color-scheme:light;
@@ -292,7 +292,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <a class="skip-link" href="#main-content">本文へ進む</a>
 <header>
   <div class="header-inner">
-    <div class="kicker">AKARI 1.0.0 CODE MODE · BEGINNER</div>
+    <div class="kicker">AKARI 1.0.1 CODE MODE · BEGINNER</div>
     <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../Akari.html">あかりを使う</a><a href="../MANUAL.html#save">保存・開く</a></div>
 <h1>コードモード 初級</h1>
     <p class="lead">日本語の文を1行ずつ書いて、キャラクターを動かし、条件やくり返しを使い、作品を保存するところまでを学びます。プログラミングが初めてでも、上から順に試せる構成です。</p>
@@ -451,7 +451,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p>1行目が「くり返しの始まり」です。その下の2行を<strong>半角スペースで深く字下げ</strong>すると、その2行がくり返されます。</p>
 
   <div class="callout warn">
-    <strong>字下げが範囲を決めます。</strong> あかり 1.0.0 では「ここまで」とは書きません。字下げを元へ戻すと、くり返しが終わります。
+    <strong>字下げが範囲を決めます。</strong> あかり 1.0.1 では「ここまで」とは書きません。字下げを元へ戻すと、くり返しが終わります。
   </div>
 
   <h3>くり返しの後に続ける</h3>
@@ -610,12 +610,17 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p>「横」「縦」「度」「を」「に」など、役割を表す言葉を落とさないことが大切です。<code>点数を10にする</code>は10へ変えること、<code>点数を10増やす</code>は今の数に10を足すことです。</p>
   <div class="callout">一行の「もし」へブロックで命令を追加すると、その「もし」は字下げの形へ広がります。「元に戻す」で編集前へ戻せます。</div>
 </section>
+<section id="drawing">
+  <h2>部品の複製とお絵かき</h2>
+  <p>部品を選び、設定欄の「複製」で見た目・衣装・個体データを引き継いだ部品を増やせます。コードは複製しないため、新しい部品の動きは必要に応じて書きます。</p>
+  <p>「画像を置く」の下の「🎨 お絵かき」で透明な500×500ピクセルの画面に描き、「決定して置く」で画像キャラクターにできます。外側の透明余白を切り、小さな絵は透明な余白で幅・高さを8ピクセル以上にします。描いた画像も作品の保存に含まれます。配置後の再編集と下書き保存はありません。</p>
+</section>
 </main>
 </div>
 
 <footer>
 <div class="chapter-links"><a href="../MANUAL.html#faq">困ったとき</a><a href="./block-mode.html">ブロック →</a><a href="./code-mode-intermediate.html">コード中級 →</a><a href="./code-mode-advanced.html">コード上級 →</a></div>
-  <p>対象：あかり 1.0.0。内容はリポジトリの <a href="../LANGUAGE.md">LANGUAGE.md</a> と <a href="../Akari.html">Akari.html</a> の現行仕様・実装に基づきます。詳細な文法・意味論・制限は LANGUAGE.md を参照してください。</p>
+  <p>対象：あかり 1.0.1。内容はリポジトリの <a href="../LANGUAGE.md">LANGUAGE.md</a> と <a href="../Akari.html">Akari.html</a> の現行仕様・実装に基づきます。詳細な文法・意味論・制限は LANGUAGE.md を参照してください。</p>
 </footer>
 </body>
 </html>
