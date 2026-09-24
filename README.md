@@ -83,7 +83,7 @@ Apache License 2.0の条件に従って、自由にfork・改変・再配布で�
 
 ## 開発者
 
-あかり（Akari）は **SAIEL** が作成・開発しています。
+あかり（Akari）は **[SAIEL](https://sites.google.com/shimane-edu.org/saiel/%E3%83%9B%E3%83%BC%E3%83%A0)** が作成・開発しています。
 
 ## License
 
