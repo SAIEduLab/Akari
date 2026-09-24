@@ -62,7 +62,7 @@ Reviewed scheduler waiting and failure boundaries, frozen diagnostic records, so
 
 ## S09 — Manual files, retired automatic persistence and drafts
 
-Reviewed the removal against public main `f330b0c8b52ab1cce8d6c5bd59fd355b107ba5a4`: automatic write/read/delete, IndexedDB/fallback, recovery modal and handlers, scheduling hooks, queue/revision/epoch state, and persistence-only draft capture/restore are removed. No cleanup or migration accesses old browser data. UI-level persistence remains separate.
+Reviewed the removal against public main `f330b0c8b52ab1cce8d6c5bd59fd355b107ba5a4`: automatic write/read/delete, IndexedDB/fallback, recovery modal and handlers, scheduling hooks, queue/revision/epoch state, and persistence-only draft capture/restore and the now-unreferenced `hasPendingEditor` guard are removed. No cleanup or migration accesses old browser data. UI-level persistence remains separate.
 
 `validateCallableDraft` still validates both normal source/header editing paths. `lastSavedFingerprint`, `initialSnapshot`, dirty display, beforeunload, discard confirmations, common history, pending/IME guards, color/drag transactions, asset validation and file import rollback remain. Removing recovery epochs cannot loosen file import locking: the epochs only guarded the deleted asynchronous recovery path, while `modelLocked` and import state gates are retained.
 

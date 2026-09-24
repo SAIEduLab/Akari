@@ -41,7 +41,7 @@ export function verifyRetirementRecord(record=read('audit/records/autosave-retir
 }
 export function verifyNoAutomaticPersistence(html) {
   const decoded=html.replace(/\\u([0-9a-f]{4})/gi,(_,hex)=>String.fromCharCode(parseInt(hex,16)));
-  assert.doesNotMatch(decoded,/autosave|自動保存|recovery(?:Epoch|Data|Modal|Restore|Discard|Text)?|captureCallableDraft|restoreCallableDraft|save-state|akari-workspace/i,'retired code/UI remains');
+  assert.doesNotMatch(decoded,/autosave|自動保存|recovery(?:Epoch|Data|Modal|Restore|Discard|Text)?|hasPendingEditor|captureCallableDraft|restoreCallableDraft|save-state|akari-workspace/i,'retired code/UI remains');
   assert.doesNotMatch(decoded,/indexedDB|sessionStorage|\bStorage\b|\bcaches\b|navigator\s*\.\s*storage|showSaveFilePicker|showDirectoryPicker/,'automatic persistence API remains');
   assert.match(html,/const STORAGE_KEYS = Object\.freeze\(\{\s*uiLevel: 'akari\.uiLevel\.v1',\s*\}\);/);
   const allowed=["localStorage.setItem(STORAGE_KEYS.uiLevel, $('#uiLevel').value)","localStorage.getItem(STORAGE_KEYS.uiLevel)"];

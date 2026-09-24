@@ -19307,19 +19307,6 @@ body.runtime #formSurface .design-resize-outline {
     function invalidateEditors() {
       editorContextRevision++;
     }
-    function hasPendingEditor() {
-      return !!(
-        activeDragCleanup ||
-        colorEdit ||
-        headerPending ||
-        mainEditor.session?.pendingEdit ||
-        draftEditor.session?.pendingEdit ||
-        composingEditors.has(el.editor) ||
-        composingEditors.has(draftEditor.textarea) ||
-        composingEditors.has($('#callableName')) ||
-        composingEditors.has($('#callableArgs'))
-      );
-    }
     function captureEditorView(binding) {
       const s = binding.session;
       if (!s) return;
