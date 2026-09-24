@@ -1,6 +1,6 @@
 {
   "schema": "akari-phase4-inventory-v1",
-  "scope": "All applicable product acceptance against the completed 1.0.0 checkpoint; candidate machine and semantic verdicts are separately bound",
+  "scope": "All applicable product acceptance against the verified 1.0.1 checkpoint; candidate machine and semantic verdicts are separately bound",
   "binding": "Final execution snapshot and review attestation contain actual HEAD and hashes; this file does not contain its own commit SHA",
   "statusLegend": {
     "local": "Final committed HEAD: gate.json, static/preflight and review attestation; per-item results resolved from required IDs",
@@ -53552,13 +53552,38 @@
       ]
     }
   ],
+  "editorAssets101": {
+    "ids": [
+      "duplicate-types-settings-identities",
+      "duplicate-images-data-history",
+      "duplicate-limit",
+      "paint-entry-empty-focus",
+      "paint-tools-colors-fill",
+      "paint-history-cancelled-gesture",
+      "paint-crop-native-transparent-padding",
+      "paint-large-stage-fit",
+      "paint-discard",
+      "paint-failed-commit-preserves-drawing",
+      "paint-save-reload-export",
+      "paint-runtime-lock",
+      "paint-small-viewport-touch",
+      "release-versions-and-100-import",
+      "release-malformed-state-protection"
+    ],
+    "candidateRunner": "audit/tests/editor-assets-101.mjs",
+    "fixedRunner": "audit/run-fixed-features.mjs",
+    "validator": "audit/lib/completed-baseline.mjs",
+    "job": "selftest",
+    "candidateArtifact": "editor-assets-101.json",
+    "fixedArtifact": "fixed101-editor-assets.json"
+  },
   "nonTechnicalLimits": [
     "No user study or learning-effect measurement",
     "No physical mobile-device or native Japanese IME study"
   ],
   "completedBaseline": {
-    "sourceCommit": "2f455619440f5abbfbb564927769c85341f25074",
-    "manifest": "audit/fixtures/1.0.0/manifest.json"
+    "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
+    "manifest": "audit/fixtures/1.0.1/manifest.json"
   },
   "remainingReleaseDecisions": [
     "Actions on the current candidate SHA",

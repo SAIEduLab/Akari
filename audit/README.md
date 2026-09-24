@@ -35,8 +35,11 @@ node audit/lib/verify-test-results.mjs audit-evidence/current-selftest.json Akar
 node audit/tests/harness-negative.mjs "$AKARI_BROWSER" audit-evidence/current-selftest.json
 node audit/tests/node-product.mjs
 node audit/tests/normal-product.mjs "$AKARI_BROWSER" Akari.html audit-evidence/normal-product.json
-# Active completed 1.0.0 checkpoint uses its frozen external suites:
+# Active verified 1.0.1 checkpoint uses its frozen core and feature suites:
 node audit/run-fixed-baseline.mjs "$AKARI_BROWSER" audit-evidence/completed-baseline-selftest.json
+node audit/run-fixed-features.mjs "$AKARI_BROWSER" audit-evidence/fixed101-editor-assets.json
+# Historical 1.0.0 supplementary replay:
+node audit/run-historical-baseline.mjs "$AKARI_BROWSER" audit-evidence/historical-100-selftest.json
 # Historical 0.8 keeps its original embedded supplementary path:
 node --experimental-websocket audit/run-headless-selftest.mjs "$AKARI_BROWSER" audit/fixtures/0.8/Akari.html audit-evidence/baseline-selftest.json
 ```
@@ -45,7 +48,7 @@ The Node supplement executes eight pure suites (793 IDs); it does not replace th
 
 Language surface additions have their own finite manifest and actual-product runner; see [LANGUAGE_FORMS.md](LANGUAGE_FORMS.md). Run `node audit/run-language-tests.mjs --node`, then `node audit/run-language-tests.mjs "$AKARI_BROWSER"`, `node audit/tests/language-harness-negative.mjs audit-evidence/phase3/language-browser.json` and `node audit/tests/language-boundaries.mjs`. The first formal 1.0.0 specification replaces the documented short-header rejection with eight acceptance cases; the retired core ID is never reused. Phase 3 implements the six deferred inline cases, with 605 total language assertions and no deferred acceptance. These tests add guarantees; they do not replace any existing core or browser obligation. The phase-1-only `product-diff.mjs` must not be used to claim the intentional language changes are invariant.
 
-The active checkpoint is completed 1.0.0 at `2f455619440f5abbfbb564927769c85341f25074`. See [the checkpoint record](BASELINE.md) for immutable product/contract hashes, completion evidence and the comparison coverage. `manifests/quality-1.0.0.json` records that source release as complete and retains all 884 origin guarantees and 257 capabilities. This does not approve a new candidate. Historical 0.8 content, provenance and supplementary execution remain intact. Version/save and browser replacements are recorded in records/phase3-guarantee-transition.json, retaining malformed-data validation and unsaved-state protection.
+The active checkpoint is verified 1.0.1 at `62359484a646651dd81806ef97a6cfef87f85d4b`, explicitly authorized by the user after all eight jobs of Actions `36017186869/1` succeeded. See [the checkpoint record](BASELINE.md) for immutable source hashes, Git proofs and evidence. `manifests/quality-1.0.1.json` retains all 884 origin guarantees and 257 capabilities and freezes the 15 duplication/drawing cases. Core and feature suites execute against both the fixed product and the current candidate. `checkpointApproved: true` and `releaseComplete: false` record the authorization boundary. Historical 1.0.0 and 0.8 sources, evidence and supplementary execution remain intact. Version/save and browser replacements are recorded in records/phase3-guarantee-transition.json, retaining malformed-data validation and unsaved-state protection.
 
 Editor and GUI validation additionally requires:
 

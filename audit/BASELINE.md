@@ -1,98 +1,88 @@
-# Completed 1.0.0 comparison checkpoint
+# Verified 1.0.1 comparison checkpoint
 
-The active non-regression source is historical public `SAIEduLab/Akari` commit
-`2f455619440f5abbfbb564927769c85341f25074` (the merged 1.0.0 release).
-It is immutable. Neither a floating branch nor the current candidate supplies
-expected values. Product version 1.0.0, internal design document version 2.1,
-and project/program format 3 describe different things.
+The active fixed source is public `SAIEduLab/Akari` commit
+`62359484a646651dd81806ef97a6cfef87f85d4b` (product 1.0.1).
+The user explicitly authorized this audit checkpoint after the implementation
+passed all eight jobs in Actions run `36017186869`, attempt 1. The same commit
+also passed all eight jobs in PR run `36018691411`, attempt 1.
+Language/runtime remain 1.0.0 and project/program formats remain 3.
 
 | Canonical Git UTF-8/LF source | SHA-256 |
 |---|---|
-| Akari.html (914,546 bytes) | `48b440829174256952ab3f12e13553c64cba95f392e30e8f79768ff7411c0acf` |
-| AUDIT.md at the completed source | `e5d1bb9fb2be077747f19c8904190622276cd4ea985935ca458c46db936679a2` |
-| LANGUAGE.md at the completed source | `67f5b4c85f8f3469f583adea8af839d8e2ff45df19d097fd11427cbae4920aca` |
-| fixtures/1.0.0/manifest.json | `db939bbcde1c86ae51c39189d05357d27635e405511d667d6b7588b79f74bd63` |
+| Akari.html (915,962 bytes) | `4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387` |
+| AUDIT.md at the fixed source | `0a651a5df4bf0b1b8c3be473b8d1af207a691130d806d3a8b86248b0dde8fedb` |
+| LANGUAGE.md at the fixed source | `4b398dd031409d0807c4068bf6bd19c0601539716eb8ca1d9f3af267c9c0415d` |
+| fixtures/1.0.1/manifest.json | `c6097c4d34dce97146563c12213d82737a1691545523060569d6b63c18d91fc5` |
+| fixtures/1.0.1/git-provenance.json | `2f47734530e2e0032b5d5a105cfb4c9026909269b568b2fae2eaa29be32caa38` |
 
-The source product, contracts, external assertions, finite language inputs,
-capability/test mappings and historical guarantee ledger are retained under
-`fixtures/1.0.0/source/`. The current root AUDIT.md governs candidate acceptance;
-the frozen contract records the completed source and is never substituted for
-the current contract. Windows checkout CRLF conversion is allowed only as that
-exact text conversion for immutable fixture hashes; execution snapshots record
-the actual bytes used. Source provenance is checked offline through the archived
-commit, tree-path and blob hashes at the exact commit.
+## Immutable source and evidence
 
-## Self-contained source provenance
+`fixtures/1.0.1/source/` retains 34 exact source files from that commit: product,
+contracts, frozen core/language/editor/feature assertions, finite language inputs,
+capability and browser mappings, inventory and source review. The current root
+AUDIT.md governs candidate acceptance. Frozen documents describe the archived
+source; their historical baseline references do not override the current contract.
 
-`fixtures/provenance/public-sources.json` retains 43 selected public source paths
-from five fixed commits. `lib/historical-source.mjs` pins its SHA-256, recomputes
-the original Git commit and tree hashes, follows each source path, and verifies
-both the resulting Git blob identity and the source SHA-256. The 31 completed
-source files and five historical 0.8 fixture files reuse their existing immutable
-copies; seven other historical sources are stored as bounded compressed bytes.
-The complete 0.8 directory file set is also checked against its public source tree.
+`checkpoint-source.mjs` verifies the pinned archive, original Git commit header,
+required tree paths and every selected blob. It needs no remote repository,
+old refs or Git object database. Fixture hashes permit only exact CRLF-to-LF
+checkout normalization; fresh execution snapshots record actual input bytes.
 
-Only the selected commit headers and required tree-path proofs are retained as
-audit data. No old refs, ancestor history or Git database is imported. Runners
-read the verified bytes locally, including language/performance comparisons and
-historical guarantee quotations. The old repository can be deleted without
-affecting these checks. Git is still used for the current candidate's own HEAD
-and tracked-file snapshot. Workflow preflight rejects external Git retrieval and
-alternate object directories; provenance negatives exercise corrupt, missing and
-substituted records and verify the complete release provenance with Git unavailable.
-
-## Completion evidence and its limits
-
-The user authorized this switch after the release completion decision and merge
-of historical public PR #2. The merge commit itself was validated by
-Actions run `35816378510`, attempt 1:
-all eight jobs succeeded. Before freezing the checkpoint, all eight downloaded
-ZIP digests, 125 source input hashes, seven sealed bundles, 1,793 evidence-file
-hashes, independent validators and aggregate results were checked. The aggregate
-SHA-256 is `f99b3ea9449ba2f79a858f4de64eea656d2de5b4c335392c9a417025c4caf507`.
-
-`fixtures/1.0.0/completion.json` retains job and artifact identities/digests,
-independent verification and the approval boundary. Exact selected reports,
-all bundle manifests and the aggregate are retained under `evidence/`; every
-selected report is matched to the original bundle hash. Full logs/screenshots
-are not all vendored and the original Actions artifacts expire after three days.
-The retained reports are historical evidence for this source only, never proof
-that a future candidate executed successfully. The frozen semantic review and
-explicit completion authorization remain distinct from MACHINE_PASS.
-URLs in the frozen records identify the original repository and run; verification
-uses the retained evidence and offline source proofs rather than those endpoints.
+During capture, all eight original artifact ZIP digests, 221 executed input
+hashes against Git source, seven complete sealed file sets and 2,485 evidence-file
+hashes were verified. Original selected reports, every bundle manifest and the
+MACHINE_PASS aggregate are stored unchanged under `fixtures/1.0.1/evidence/`.
+`checkpoint.json` records the jobs, artifact identities/digests, verification and
+user authorization. Each retained report is checked against its original sealed
+bundle hash. Full logs and screenshots are not all vendored; GitHub artifacts
+expire after three days. Offline verification uses retained records and proofs.
 
 ## Required comparison
 
-The gate executes the frozen product with its frozen external core assertions
-(884 IDs), executes the candidate independently and compares complete ID sets.
-Candidate language comparisons derive canonical semantics from the frozen
-completed Git product, retaining all 605 IDs and independent literal oracles.
-The 38 editor IDs, nine real GUI IDs, all 257 capability mappings, 42 JPF groups,
-16 phases, 28 D09 requirements, 26 browser obligations and 27 browser tasks / 416
-case tuples are preserved. The candidate still executes all required browser,
-save/restore, generated/offline, invalid-input, resource and state-protection
-checks. Frozen browser completion reports record the source's results; fresh
-candidate browser results and exact mapping/expected sets are mandatory.
+The same 20-step runner graph is used locally and in Actions. It executes:
 
-The local gate and Actions share the same runner graph. Missing/duplicate IDs,
-wrong source/hash/environment, skipped or failing results and stale execution
-snapshots fail verification. The workflow's aggregate verifies every required
-bundle against one candidate commit/run/attempt. `quality-1.0.0.json` has
-`releaseComplete: true` for the **fixed source release**; aggregate retains
-`releaseComplete: false` because it cannot grant semantic acceptance or release
-approval to the **current candidate**. Its `completedBaseline` field identifies
-the independently validated fixed comparison source.
+- The fixed 1.0.1 product with its own frozen core assertions: 884 IDs.
+- The fixed 1.0.1 product with its own frozen duplication/drawing suite: 15 IDs.
+- The current product with complete core and feature assertions, independently.
+- Both language environments (605 IDs each), editor environments (38 each),
+  nine GUI IDs, invalid-report/policy checks and 90 boundary measurements.
+- Historical 1.0.0 core (884) and historical 0.8 self-tests (508).
 
-## Historical 0.8
+The fixed feature loader changes only import locations, target product path and
+screenshot directory, each exactly once. Assertions and observed results remain
+unchanged. Fixed receipts bind source commit, manifest, assertion suite and actual
+product bytes. Missing, duplicate, skipped, failed or substituted results fail
+independent validation. The candidate's feature/core sets must equal the fixed
+sets. Frozen suites and the current assertion sources are compared in full.
 
-`fixtures/0.8/` remains byte-for-byte the original Git fixture, with sourceCommit
-`ec43018d5ba546d5aa9df9c2799b18260a3ab2d7`, original hashes and history.
-Its original embedded runner still runs 508 checks, and the 122 capabilities /
-130 required IDs remain checked against the candidate as supplementary regression.
-It is not renamed or described as 1.0.0. Its AUDIT.md and LANGUAGE.md describe
-that historical source; the same-named root documents describe current 1.0.0.
+Language goldens and runtime source equality now use the fixed 1.0.1 product.
+Browser snapshot copies and independent hash validation also use 1.0.1. The
+257 capability mappings, 42 JPF groups, 16 phases, 28 D09 requirements, 26 browser
+obligations and 27 browser tasks / 416 case tuples remain mandatory. Fresh
+candidate browser, save/restore, offline export, resource and state-protection
+evidence is required. The aggregate validates every required bundle against one
+current commit/run/attempt; archived success does not replace fresh execution.
 
-Physical mobile devices, native Japanese IME input, user studies and learning
-effectiveness remain unverified. Browser viewport/composition automation does
-not establish those claims.
+## Authorization boundary and history
+
+`manifests/quality-1.0.1.json` records `checkpointApproved: true` and
+`releaseComplete: false`. This is an explicitly authorized verified checkpoint.
+Ready for review, merge and release publication require their own authorization.
+The aggregate continues to report `releaseComplete: false`. The retained
+`completedBaseline` API/receipt field identifies the fixed comparison source;
+it does not grant release approval to the current candidate.
+
+The completed 1.0.0 fixture at
+`2f455619440f5abbfbb564927769c85341f25074`, manifest digest
+`db939bbcde1c86ae51c39189d05357d27635e405511d667d6b7588b79f74bd63`,
+and its original completion evidence are unchanged. The historical verifier
+still checks the 1.0.0 release and the original five-commit/43-source offline
+archive. Its frozen product and core assertions still execute independently.
+
+`fixtures/0.8/` retains original commit
+`ec43018d5ba546d5aa9df9c2799b18260a3ab2d7`, hashes and content. Its 508 checks
+and 122 capabilities / 130 required IDs remain supplementary obligations.
+Neither historical fixture is relabeled or rewritten as 1.0.1.
+
+Physical devices, native Japanese IME, user studies and learning effectiveness
+are not established by browser viewport/composition automation.

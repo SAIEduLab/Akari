@@ -52,7 +52,7 @@ reject(()=>verifyHistoricalArchive(partial).paths(original,'audit/fixtures/0.8')
 const environment=Object.fromEntries(Object.entries(process.env).filter(([key])=>key.toLowerCase()!=='path'&&!/^GIT_(?:DIR|WORK_TREE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES)$/.test(key)));
 environment.PATH='';
 const child=cp.spawnSync(process.execPath,['--input-type=module','-e',
-  "import {verifyCompletedProvenance} from './audit/lib/completed-baseline.mjs'; const p=verifyCompletedProvenance(); console.log(JSON.stringify({commit:p.sourceCommit,files:p.sourceFiles,offline:p.offlineProvenance.sourceFiles}));"],
+  "import {verifyCompletedProvenance} from './audit/lib/historical-release-baseline.mjs'; const p=verifyCompletedProvenance(); console.log(JSON.stringify({commit:p.sourceCommit,files:p.sourceFiles,offline:p.offlineProvenance.sourceFiles}));"],
   {env:environment,encoding:'utf8',timeout:15000});
 assert.equal(child.status,0,child.error?.message||child.stderr);
 assert.deepEqual(JSON.parse(child.stdout),{commit:fixed,files:31,offline:43});

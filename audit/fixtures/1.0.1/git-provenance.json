@@ -1,0 +1,230 @@
+{
+  "schema": "akari-offline-git-provenance-v1",
+  "commits": {
+    "62359484a646651dd81806ef97a6cfef87f85d4b": "dHJlZSA0ODM1ZDg2NmRlNjhlMmE0MTczY2MwYjhiZTkxMDA3MTU1NWYzYzZiCnBhcmVudCBmOGNiODRiNWRhNGM4YmEwMWMwMjY3NTI2ZmZlZTZkMzhlYWY3YmQ0CmF1dGhvciBDb2RleCA8Y29kZXhAbG9jYWwuaW52YWxpZD4gMTc5MDI2MTc0NiArMDkwMApjb21taXR0ZXIgQ29kZXggPGNvZGV4QGxvY2FsLmludmFsaWQ+IDE3OTAyNjE3NDYgKzA5MDAKCmZlYXQ6IGFkZCBjb21wb25lbnQgZHVwbGljYXRpb24gYW5kIGRyYXdpbmcgZm9yIEFrYXJpIDEuMC4xCg=="
+  },
+  "trees": {
+    "4835d866de68e2a4173cc0b8be910071555f3c6b": "NDAwMDAgLmdpdGh1YgBT4x9VavBqnFSeX2loCeZfPVxWzzEwMDY0NCAuZ2l0aWdub3JlABgORvVcahs+OjFZFbReo5fUb8eNMTAwNjQ0IEFVRElULm1kAGKNmkd6o0XBeExIRa4xDYETkUi3MTAwNjQ0IEFrYXJpLmh0bWwA4dNvsvuVMr8MF3KzZlGMy03OBRAxMDA2NDQgTEFOR1VBR0UubWQAa8u3+8+8juqGRQZXPleEeB8XNUQxMDA2NDQgTElDRU5TRQAmHuuen4srSw0Rk2bdqZxv19NcZDEwMDY0NCBNQU5VQUwuaHRtbABHiZ0rv9mm44HC8RUPvpqaw9Py1TQwMDAwIE1hbnVhbACTehKtvn6Pzh8YW7hpwIfmOr8B9jEwMDY0NCBSRUFETUUubWQAN6hBLNzDRHLiD2EtcGXQHMWkqgk0MDAwMCBhdWRpdAA7GTBmPjOgCNgztnb3nAVgKFVABzEwMDY0NCBpbmRleC5odG1sABGp1aQ9G9Z68Ihplju6N51gGIUM",
+    "53e31f556af06a9c549e5f696809e65f3d5c56cf": "NDAwMDAgd29ya2Zsb3dzAGgNafclv83Ng4bHOSUwfkm+XZAq",
+    "680d69f725bfcdcd8386c73925307e49be5d902a": "MTAwNjQ0IGFrYXJpLWF1ZGl0LnltbADcQs4zUqXkXsIlM43OyBpMqGMShg==",
+    "3b1930663e33a008d833b676f79c056028554007": "MTAwNjQ0IEJBU0VMSU5FLm1kAByR3lDK0rXiazGEIcmi/Zs9lDqlMTAwNjQ0IEVYVEVSTkFMSVpBVElPTi5tZABnJ16kUwVnClwiJrSWJ4QGmD5jLTEwMDY0NCBMQU5HVUFHRV9GT1JNUy5tZAAgy0KXJgpeXsI6sCZIsIPYYyHKCTEwMDY0NCBMQVVOQ0gubWQA/CaFGe27rYh6e+lNqerNYLNUs9QxMDA2NDQgUkVBRE1FLm1kAJHgA8G8Wkjdk7t0LgMBZpm65imJNDAwMDAgYnJvd3NlcgCyZrpqDOeDIBI5PjvChvFGo8yvEzEwMDY0NCBidWlsZC1hdWRpdC1pbnZlbnRvcnkubWpzACIbaXGj+2xzJNaQvu82j1CGf6hRNDAwMDAgZml4dHVyZXMA+zWwn+czQAgMvg1XQwXwM3BAZXk0MDAwMCBsaWIA9izoeFVUYwTMCRuQ5ToCdohkFso0MDAwMCBtYW5pZmVzdHMA8txMXJ5uSt36oGJ7+ZNkhrdMUjU0MDAwMCByZWNvcmRzAJxfQDl6yjCwep4oiwwWH4myRQ2uMTAwNjQ0IHJ1bi1lZGl0b3Itc3VyZmFjZS10ZXN0cy5tanMA57jb1lr6HHHblcvQhtnmJr/Ed7AxMDA2NDQgcnVuLWZpeGVkLWJhc2VsaW5lLm1qcwBffh2IHlvFAWpmLslngkXqVzm4zDEwMDY0NCBydW4taGVhZGxlc3Mtc2VsZnRlc3QubWpzAEINSzb8aUauIqlvWsiRXv9sIMhTMTAwNjQ0IHJ1bi1sYW5ndWFnZS10ZXN0cy5tanMAdypSNM/KcHpplUtNkQz89nDLUPcxMDA2NDQgcnVuLWxvY2FsLWdhdGUubWpzAL18foIDSAhU/R/ln8yuKEm/Pxt/MTAwNjQ0IHJ1bi1wcm9kdWN0LXRlc3RzLm1qcwCC+NjOiyiE6lzWmasRAuwOzOunvjQwMDAwIHN1aXRlcwDXzl2CiNO8jgOq9aEEHcxMmhFlETQwMDAwIHRlc3RzABivoJLPjjKhWbCv4Pou9rmN/7j8MTAwNjQ0IHZlcmlmeS1ldmlkZW5jZS5tanMAbFjLZNun/SbSH8uKhg8VrjTLbXUxMDA2NDQgdmVyaWZ5LXJldmlld2VkLWlucHV0cy5tanMAguu6Z5Wkvakn7S5kEuQbAElD7uY=",
+    "b266ba6a0ce7832012393e3bc286f146a3ccaf13": "MTAwNjQ0IGJyb3dzZXItYXVkaXQtbWFuaWZlc3QuanNvbgAtoyAoCTScTOzyZOL5/O4JJ15uzDQwMDAwIGxlZ2FjeQB2lLcA8ENsSKxiowxD+MuKySu10TEwMDY0NCBydW4tZnVsbC1icm93c2VyLWF1ZGl0Lm1qcwBRWZma3XuCkoVRb3odNbfvcVgxyQ==",
+    "fb35b09fe73340080cbe0d574305f03370406579": "NDAwMDAgMC44AGmhdyyeuwDqu0C0IOpoul53UNK/NDAwMDAgMS4wLjAAxEyQ8EP0xLhBe7lsr+FZ/BI2KdM0MDAwMCBsYW5ndWFnZQAyFFEFe5CjDNMwv+Yk0MmbRWxh6jQwMDAwIHByb3ZlbmFuY2UArgLVbuXPkPP+/ffnPTO6464GEio=",
+    "321451057b90a30cd330bfe624d0c99b456c61ea": "MTAwNjQ0IGZvcm1zLm1qcwBlKbAF5kPfDAAIBuEk5/19UUvJzjEwMDY0NCBpbmxpbmUubWpzAIdd1NGwzjk1gf+5cCAQfST26zrQ",
+    "f62ce87855546304cc091b90e53a0276886416ca": "MTAwNjQ0IGJyb3dzZXItZW52aXJvbm1lbnQubWpzAPvQ0TPmjPqPoopdll527pOxJbp6MTAwNjQ0IGNvbXBsZXRlZC1iYXNlbGluZS5tanMAsps1fR61I9x5TzzLpqjTuoqZmHoxMDA2NDQgY29tcGxldGVkLXJ1bnRpbWUtY29udHJhY3QubWpzALItFu3MvgjRIJisWwD90oYa6WiRMTAwNjQ0IGV2aWRlbmNlLWJ1bmRsZS5tanMAEEeEp1riyMqf7Ki4HDX32nlJsAIxMDA2NDQgZ2F0ZS1jb250cmFjdC5tanMAsRPARJ0iigy+HPVwVEPhtbAkuL0xMDA2NDQgaGlzdG9yaWNhbC1zb3VyY2UubWpzAHCzBvnVUm9JJ/iKtoNcM55Da/89MTAwNjQ0IGxhdW5jaC1pZGVudGlmaWVycy5janMAA8yGptXu2jt9KQMb9idE9wpXD3wxMDA2NDQgcGVyc2lzdGVuY2UtdHJhbnNpdGlvbi5tanMAqzZIxH44OQmjo1QR+qcbwRuG6z0xMDA2NDQgcHJvZHVjdC10ZXN0LWhvc3QubWpzAAdsXSLTAX7+MzPk8boPxgDcC5GvMTAwNjQ0IHJlbGVhc2UtMTAxLWNvbnRyYWN0Lm1qcwAkjBhX31asmQ4kqNontF9B/AlPYjEwMDY0NCB2ZXJpZnktYnJvd3Nlci1yZXN1bHRzLm1qcwASeKwOjFa8+qq9XJQQSqRqoCm3hTEwMDY0NCB2ZXJpZnktZ2F0ZS1yZXN1bHRzLm1qcwDzRrz19PyZ2AHY7gCiF1vL9XaSAzEwMDY0NCB2ZXJpZnktbGFuZ3VhZ2UtcmVzdWx0cy5tanMA/pkt76wmfOR44i7V67SM4lbwf7QxMDA2NDQgdmVyaWZ5LXN1cmZhY2UtcmVzdWx0cy5tanMATFLLzhFUlmNl8tyjByrZ+vNQ51QxMDA2NDQgdmVyaWZ5LXRlc3QtcmVzdWx0cy5tanMAX8VvElTTZu35AB3XuV7JxgpFbrY=",
+    "f2dc4c5c9e6e4addfaa0627bf9936486b74c5235": "MTAwNjQ0IGJyb3dzZXItb2JsaWdhdGlvbnMuanNvbgB7U8B++KLWbLjiaE9gUtdSGEz/LzEwMDY0NCBicm93c2VyLXJlc3VsdHMuanNvbgB3jUl9onzHX2riMS12iiDuw06f4jEwMDY0NCBleHRlcm5hbGl6YXRpb24tbWFwLmpzb24AKQ895uSuFg1nWETPfnuDAAI0SbsxMDA2NDQgbGFuZ3VhZ2UtZm9ybS1jb3ZlcmFnZS5qc29uAD4AffhxtNakRJdhX0b0bPcnZ1B0MTAwNjQ0IHByb2R1Y3QtdGVzdHMuanNvbgAQlhgb2ubZpfNRRUjtjxdUuclEVDEwMDY0NCBxdWFsaXR5LTEuMC4wLmpzb24AGBGlAvzNVt28yKLVuXHc0E+vBQc=",
+    "9c5f40397aca30b07a9e288b0c161f89b2450dae": "MTAwNjQ0IGF1dG9zYXZlLXJldGlyZW1lbnQuanNvbgBTmkbbK/ANzvXtH8VTw7Mj+snSCjEwMDY0NCBleHRlcm5hbGl6YXRpb24tZXF1aXZhbGVuY2UuanNvbgDxMwR8zFa2Ey0q/5bbv4xgyQ8hxjEwMDY0NCBsYW5ndWFnZS1zb3VyY2UtcmV2aWV3Lm1kAFTKl0VeKoh6/981T3kheq4PSDNxMTAwNjQ0IGxhbmd1YWdlLXRyYW5zaXRpb24uanNvbgCfL44GWCxkBvgYLzkMWF5t5CA5SDEwMDY0NCBsYXVuY2gtaWRlbnRpZmllci1tYXAuanNvbgChj+ODR3UZoa/yfNF0GqsPixX9JzEwMDY0NCBwaGFzZTMtZ3VhcmFudGVlLXRyYW5zaXRpb24uanNvbgBFim+XB9WjHnQ5yD4hpKBbP+2FUDEwMDY0NCBwaGFzZTQtYXVkaXQtaW52ZW50b3J5Lmpzb24AlgQdJr/yiGletD0X5uymMtbIT4UxMDA2NDQgcGhhc2U0LXJldmlld2VkLWlucHV0cy5qc29uABDs3FzzaUZQCa4gogYDZLdkiJBqMTAwNjQ0IHBoYXNlNC1zZW1hbnRpYy1yZXZpZXcubWQAHRKOdhBduzNoZSB2s9Gau1bwihM=",
+    "d7ce5d8288d3bc8e03aaf5a1041dcc4c9a116511": "MTAwNjQ0IGJpbmRpbmdzLmpzAH8aSZkkRsKc4XjHf6d2fKQiTHiaMTAwNjQ0IGVkaXRvci1zdXJmYWNlLmpzABZp6UOVsIMS5ku4KeeM068IyYhRMTAwNjQ0IGxhbmd1YWdlLWZvcm1zLmpzAKL8eaTS1i+BXO3iJZbfmdLXQ1E2MTAwNjQ0IHJ1bkFrYXJpQXN5bmNTZWxmVGVzdHMuanMAdYu9h/UovyY6X8nGZIVewu1CSAExMDA2NDQgcnVuQWthcmlTZWxmVGVzdHMuanMA9BE7VlN3xP7USXrv32UkkK0equQxMDA2NDQgcnVuQmxvY2tDb2RlYzA5VGVzdHMuanMAR3gOtg/oeOlxHgVil9MozpVu9OkxMDA2NDQgcnVuQ29sb3JQaWNrZXIwOVRlc3RzLmpzABQgk6Dc3QSnCPoe8yffmousAbl0MTAwNjQ0IHJ1bkRlc2lnblJlc2l6ZTA5VGVzdHMuanMAxzNn8o9Euf2J8uzvsawAEqvThkIxMDA2NDQgcnVuRWRpdG9yQ29yZTA5VGVzdHMuanMAgZ7qITw4K73rKrLIgAADmR9Dzx0xMDA2NDQgcnVuRXh0ZW5kZWRUZXN0czA3LmpzAA0BhVIsROl88/Ot8RubfjCjGn+lMTAwNjQ0IHJ1bkxpbWl0Qm91bmRhcnkwOVRlc3RzLmpzAEbxSiwjRDcJK4FqFz7smazeYhGuMTAwNjQ0IHJ1blByb2R1Y3RWZXJzaW9uMDlUZXN0cy5qcwCNWk8d5UeiXtiooqNWSTv4x9XmcDEwMDY0NCBydW5SZWxlYXNlVGVzdHMuanMAMf0p3/ZAZqx1zFsBdyNXQ+6wF6ExMDA2NDQgcnVuU2VtYW50aWNDb250cmFjdDA5VGVzdHMuanMAxDb79dN1b6fjxLJOv0s9rpuSj1YxMDA2NDQgcnVuU3ludGF4MDlUZXN0cy5qcwClTJ+u4N594uQ9jKvG7woaG9VOEDEwMDY0NCBydW5WZXJzaW9uMDhUZXN0cy5qcwDPhLne7rIMSEzy8x8wV3e9KkNlgQ==",
+    "18afa092cf8e32a159b0afe0fa2ef6b98dffb8fc": "MTAwNjQ0IGJyb3dzZXItZW52aXJvbm1lbnQubWpzAFdS4HELgFQZbyKan8IswZY3NEOUMTAwNjQ0IGNpLXJlZ3Jlc3Npb24ubWpzAEGHry0d83pQIkmDQGzbaDfzqCVzMTAwNjQ0IGNvbXBsZXRlZC1iYXNlbGluZS1uZWdhdGl2ZS5tanMA4w5zwRqny1GdRLv2V6fTG428vnIxMDA2NDQgZG9tLXJlbmRlci1yZWdyZXNzaW9uLmNqcwBYRU8zHgiIKWPwhF9paCBtYa5GHjEwMDY0NCBlZGl0b3ItYXNzZXRzLTEwMS5tanMAvtXjp9o8PQHd/3LQvoh8hCMyVLMxMDA2NDQgZXZpZGVuY2UtbmVnYXRpdmUubWpzAHixsabEDQXH/agwaYqPF4KkV1SoMTAwNjQ0IGV4ZWN1dGlvbi1jb250aW51aXR5Lm1qcwC1/AqyC1NQFfRwbthA/8Ia52IUwTEwMDY0NCBleHRlcm5hbGl6YXRpb24tc3RhdGljLm1qcwA6s+MfgnfIyF7ULkWzerBtZICe1jEwMDY0NCBoYXJuZXNzLW5lZ2F0aXZlLm1qcwCmJOrVVHIV0Ijj5bMuOZtPGQa8mjEwMDY0NCBoaXN0b3JpY2FsLXNvdXJjZS1uZWdhdGl2ZS5tanMAeA/ObU59B7tiGK4zXYJZz+HDg+MxMDA2NDQgbGFuZ3VhZ2UtYm91bmRhcmllcy5tanMA6qe7qZdtS+Y91T69EKiHrv8lTBExMDA2NDQgbGFuZ3VhZ2UtaGFybmVzcy1uZWdhdGl2ZS5tanMAcqa0HC8QHkTeCi6/CSEwbaBRx3wxMDA2NDQgbGFuZ3VhZ2UtaW52ZW50b3J5Lm1qcwBVys9yg1SxklXjExkIGPP2JGBgfDEwMDY0NCBtYW51YWwtZG9jcy5tanMARIcauXJON4D7nr28DlefRKgdgeQxMDA2NDQgbm9kZS1wcm9kdWN0Lm1qcwBqZ+hnwYEyNXBkAajgEhNfMXSLzjEwMDY0NCBub3JtYWwtcHJvZHVjdC5tanMA8qhqBZFosNhUwLTwkvLrJlgnLCUxMDA2NDQgcGVyc2lzdGVuY2UtbmVnYXRpdmUubWpzAC1pI6cAMQHXhca/svg315Y50TTdMTAwNjQ0IHBoYXNlMy1icm93c2VyLm1qcwCaIZsrjUgXbXnjjJ72CpIc82khSTEwMDY0NCBwcm9kdWN0LWRpZmYubWpzALi8htrXGy0937NuanSi4rUYkOd5MTAwNjQ0IHF1YWxpdHktcG9saWN5LW5lZ2F0aXZlLm1qcwCwruleThGnT2u2dzC/RDKR2u6s7zEwMDY0NCByZWxlYXNlLTEwMS1uZWdhdGl2ZS5tanMA75EpThf6WaxqAI5pvblEzBqRUusxMDA2NDQgc3RhdGljLWNvbnRyYWN0LnB5APIp7msOzdUOO0lZiWbsxSVP6REjMTAwNjQ0IHN1cmZhY2UtbmVnYXRpdmUubWpzALNA0YnD1Gz0/YBgVyCW8TgCSqGXMTAwNjQ0IHdvcmtmbG93LXByZWZsaWdodC5weQCQqa5NZ8bezeaKRcFusZ2jR5MkVw=="
+  },
+  "blobs": {
+    "dc42ce3352a5e45ec225338dcec81a4ca8631286": {
+      "bytes": 10539,
+      "sha256": "d2a03af75042b8cc3a83aa2c03d4f00f326a67de64d8f752be555b54da3183f1",
+      "fixture": "audit/fixtures/1.0.1/source/.github/workflows/akari-audit.yml"
+    },
+    "628d9a477aa345c1784c4845ae310d81139148b7": {
+      "bytes": 281216,
+      "sha256": "0a651a5df4bf0b1b8c3be473b8d1af207a691130d806d3a8b86248b0dde8fedb",
+      "fixture": "audit/fixtures/1.0.1/source/AUDIT.md"
+    },
+    "e1d36fb2fb9532bf0c1772b366518ccb4dce0510": {
+      "bytes": 915962,
+      "sha256": "4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387",
+      "fixture": "audit/fixtures/1.0.1/source/Akari.html"
+    },
+    "6bcbb7fbcfbc8eea864506573e5784781f173544": {
+      "bytes": 51594,
+      "sha256": "4b398dd031409d0807c4068bf6bd19c0601539716eb8ca1d9f3af267c9c0415d",
+      "fixture": "audit/fixtures/1.0.1/source/LANGUAGE.md"
+    },
+    "2da3202809349c4cecf264e2f9fcee09275e6ecc": {
+      "bytes": 1129,
+      "sha256": "e4ebaa1c8245a509e60b90368548eec4ebb2b3293fb15bd6c221f871abbd8849",
+      "fixture": "audit/fixtures/1.0.1/source/audit/browser/browser-audit-manifest.json"
+    },
+    "6529b005e643df0c000806e124e7fd7d514bc9ce": {
+      "bytes": 7388,
+      "sha256": "bffc4a8c680689a5e0dbeb304900ab637306b40a940dd61a2d1c04d660368bc6",
+      "fixture": "audit/fixtures/1.0.1/source/audit/fixtures/language/forms.mjs"
+    },
+    "875dd4d1b0ce393581ffb97020107d24f6eb3ad0": {
+      "bytes": 2296,
+      "sha256": "6a7a92bb7cd053c362ec909d7276b2cda869608935dfd2d8b95b4eddd2844856",
+      "fixture": "audit/fixtures/1.0.1/source/audit/fixtures/language/inline.mjs"
+    },
+    "248c1857df56ac990e24a8da27b45f41fc094f62": {
+      "bytes": 1757,
+      "sha256": "ed6e99e15b3d11ce6e0e1ea2fe8444a7c877c843af1051ce67a5e226433ca6e6",
+      "fixture": "audit/fixtures/1.0.1/source/audit/lib/release-101-contract.mjs"
+    },
+    "7b53c07ef8a2d66cb8e2684f6052d752184cff2f": {
+      "bytes": 3613,
+      "sha256": "691dd5742d5f37f8c652f8f704af16c893dead931f227f93e17ef03d26dfd06f",
+      "fixture": "audit/fixtures/1.0.1/source/audit/manifests/browser-obligations.json"
+    },
+    "778d497da27cc75f6ae2312d768a20eec34e9fe2": {
+      "bytes": 21547,
+      "sha256": "5ef6166f324dfef02dc36937ca26173b9932ce506fcb0b33f0c4e40ff7593da2",
+      "fixture": "audit/fixtures/1.0.1/source/audit/manifests/browser-results.json"
+    },
+    "290f3de6e4ae160d675844cf7e7b8300023449bb": {
+      "bytes": 509260,
+      "sha256": "8b6f3dc34b74a48bd30f2d4c8d1a3c740cad26f1147dc6a46d03cabadd18fbc2",
+      "fixture": "audit/fixtures/1.0.1/source/audit/manifests/externalization-map.json"
+    },
+    "3e007df871b4d6a44497615f46f46cf727675074": {
+      "bytes": 357270,
+      "sha256": "982c91cfd8d20ad4f1469f4e95bfc41909b994ce12b03660cc0b025888220a6c",
+      "fixture": "audit/fixtures/1.0.1/source/audit/manifests/language-form-coverage.json"
+    },
+    "1096181bdae6d9a5f3514548ed8f1754b9c94454": {
+      "bytes": 38659,
+      "sha256": "a8701e2f6f46fbaa5633c2ce2fa730db3171a49a5f91eb424877bb879bca4378",
+      "fixture": "audit/fixtures/1.0.1/source/audit/manifests/product-tests.json"
+    },
+    "1811a502fccd56ddbcc8a2d5b971dcd04faf0507": {
+      "bytes": 425263,
+      "sha256": "45c538fedd889e2a26c42a90cdc7f2429ef602af10a73169844ac57b63f624e7",
+      "fixture": "audit/fixtures/1.0.1/source/audit/manifests/quality-1.0.0.json"
+    },
+    "539a46db2bf00dcef5ed1fc553c3b323fac9d20a": {
+      "bytes": 7545,
+      "sha256": "352456a6b6e0864934b09622fffc5ec4ed0a1cea964156fe3c85bff510d784af",
+      "fixture": "audit/fixtures/1.0.1/source/audit/records/autosave-retirement.json"
+    },
+    "96041d26bff288695eb43d17e6eca632d6c84f85": {
+      "bytes": 2145492,
+      "sha256": "db2c12b249924601e502cd3b2a9f2e2dbf151db71e54d0c5585170ffa7332b03",
+      "fixture": "audit/fixtures/1.0.1/source/audit/records/phase4-audit-inventory.json"
+    },
+    "1d128e76105dbb3368652076b3d19abb56f08a13": {
+      "bytes": 65290,
+      "sha256": "2829efe851963efb8fc75e863421cec71787822ccfa25e186fb06bf6534ed1c9",
+      "fixture": "audit/fixtures/1.0.1/source/audit/records/phase4-semantic-review.md"
+    },
+    "7f1a49992446c29ce178c77fa7767ca4224c789a": {
+      "bytes": 1637,
+      "sha256": "13b8d6ab109cae8d6a91ad660c03562a0deefd3949109529525b25fc41c0d74d",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/bindings.js"
+    },
+    "1669e94395b08312e64bb829e78cd3af08c98851": {
+      "bytes": 12150,
+      "sha256": "15187f20090da90d8186f820b0816a012978a43be6dc906e774570c6550dd101",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/editor-surface.js"
+    },
+    "a2fc79a4d2d62f815cede22596df99d2d7435136": {
+      "bytes": 13450,
+      "sha256": "aa6fb40efd72aaaa8ff5cd6d1f0101272c91e62259de36e3f8b871cc1418f798",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/language-forms.js"
+    },
+    "758bbd87f528bf263a5fc9c664855ec2ed424801": {
+      "bytes": 2171,
+      "sha256": "a30ddf723df1cfb666209aceec2cfb9e743c9756c73cb695a881c27393b71a0e",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runAkariAsyncSelfTests.js"
+    },
+    "f4113b565377c4fed4497aefdf652490ad1eaae4": {
+      "bytes": 23019,
+      "sha256": "6a9b0df1885d18c549dd8b5056413e2b25f354f0b7ba91b9e2806a6d8aad4c6e",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runAkariSelfTests.js"
+    },
+    "47780eb60fe878e9711e056297d328ce956ef4e9": {
+      "bytes": 15457,
+      "sha256": "ac945068c6ac5f0c699efb93cfd0257bae6c75d6d8c134f26482ec77450ff2e1",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runBlockCodec09Tests.js"
+    },
+    "142093a0dcdd04a708fa1ef327df9a8bac01b974": {
+      "bytes": 2828,
+      "sha256": "7804f2d9ce81ccc562c185ea8a407563985e631ca19c77975f9d6c7d5acc0489",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runColorPicker09Tests.js"
+    },
+    "c73367f28f44b9fd89f2ecefb1ac0012abd38642": {
+      "bytes": 4490,
+      "sha256": "7fe67486ddae7c6941c862dc28fca2d955ffc71df59ea8d5f39e253edca02788",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runDesignResize09Tests.js"
+    },
+    "819eea213c382bbdeb2ab2c8800003991f43cf1d": {
+      "bytes": 25590,
+      "sha256": "9f1a6914ec8d17f230c75db1cb1926b2cac75d9994a69c7553099496af462bd1",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runEditorCore09Tests.js"
+    },
+    "0d0185522c44e97cf3f3adf11b9b7e30a31a7fa5": {
+      "bytes": 33778,
+      "sha256": "68244b0212dde9f7aa99aeacd383aed179693281a9ba66d4fbfd1f93cb0c3531",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runExtendedTests07.js"
+    },
+    "46f14a2c234437092b816a173eec99acde6211ae": {
+      "bytes": 17373,
+      "sha256": "37b603f02d4fc9fcc0bb522c81e0a02d0f560dd9e41225d48265762ace9aab16",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runLimitBoundary09Tests.js"
+    },
+    "8d5a4f1de547a25ed8a8a2a356493bf8c7d5e670": {
+      "bytes": 5713,
+      "sha256": "e064f49784f4fa9af31e303e6f2df4a3f9fb0c9874813c4affd4146749e7de0d",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runProductVersion09Tests.js"
+    },
+    "31fd29dff64066ac75cc5b0177235743eeb017a1": {
+      "bytes": 728,
+      "sha256": "e7e16408138249a36651907926ef9a92dcfa4d1351324eb5ca3848227a9b3685",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runReleaseTests.js"
+    },
+    "c436fbf5d3756fa7e3c4b24ebf4b3dae9b928f56": {
+      "bytes": 15895,
+      "sha256": "6879bd66cfdbbab3109e1613dc1266844b5e589569bdac34f1edc3ca6488edec",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runSemanticContract09Tests.js"
+    },
+    "a54c9faee0de7de2e43d8cabc6ef0a1a1bd54e10": {
+      "bytes": 15839,
+      "sha256": "498e10c13eb411c9b23a2fab392708fee1ebbd3ef2009ecf864dfd63f89146d6",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runSyntax09Tests.js"
+    },
+    "cf84b9deeeb20c484cf2f31f305777bd2a436581": {
+      "bytes": 16449,
+      "sha256": "98531851607fc35dc0fbfea1589f65ccce23c1f192bcc77c012d4d34dc301a18",
+      "fixture": "audit/fixtures/1.0.1/source/audit/suites/runVersion08Tests.js"
+    },
+    "bed5e3a7da3c3d01ddff72d0be887c84233254b3": {
+      "bytes": 19680,
+      "sha256": "01a2664bc7ccf4e54d5bc0bb766e835f87cbdc4b0236d19917853a45bb1523e3",
+      "fixture": "audit/fixtures/1.0.1/source/audit/tests/editor-assets-101.mjs"
+    }
+  },
+  "sources": {
+    "62359484a646651dd81806ef97a6cfef87f85d4b": {
+      ".github/workflows/akari-audit.yml": "dc42ce3352a5e45ec225338dcec81a4ca8631286",
+      "AUDIT.md": "628d9a477aa345c1784c4845ae310d81139148b7",
+      "Akari.html": "e1d36fb2fb9532bf0c1772b366518ccb4dce0510",
+      "LANGUAGE.md": "6bcbb7fbcfbc8eea864506573e5784781f173544",
+      "audit/browser/browser-audit-manifest.json": "2da3202809349c4cecf264e2f9fcee09275e6ecc",
+      "audit/fixtures/language/forms.mjs": "6529b005e643df0c000806e124e7fd7d514bc9ce",
+      "audit/fixtures/language/inline.mjs": "875dd4d1b0ce393581ffb97020107d24f6eb3ad0",
+      "audit/lib/release-101-contract.mjs": "248c1857df56ac990e24a8da27b45f41fc094f62",
+      "audit/manifests/browser-obligations.json": "7b53c07ef8a2d66cb8e2684f6052d752184cff2f",
+      "audit/manifests/browser-results.json": "778d497da27cc75f6ae2312d768a20eec34e9fe2",
+      "audit/manifests/externalization-map.json": "290f3de6e4ae160d675844cf7e7b8300023449bb",
+      "audit/manifests/language-form-coverage.json": "3e007df871b4d6a44497615f46f46cf727675074",
+      "audit/manifests/product-tests.json": "1096181bdae6d9a5f3514548ed8f1754b9c94454",
+      "audit/manifests/quality-1.0.0.json": "1811a502fccd56ddbcc8a2d5b971dcd04faf0507",
+      "audit/records/autosave-retirement.json": "539a46db2bf00dcef5ed1fc553c3b323fac9d20a",
+      "audit/records/phase4-audit-inventory.json": "96041d26bff288695eb43d17e6eca632d6c84f85",
+      "audit/records/phase4-semantic-review.md": "1d128e76105dbb3368652076b3d19abb56f08a13",
+      "audit/suites/bindings.js": "7f1a49992446c29ce178c77fa7767ca4224c789a",
+      "audit/suites/editor-surface.js": "1669e94395b08312e64bb829e78cd3af08c98851",
+      "audit/suites/language-forms.js": "a2fc79a4d2d62f815cede22596df99d2d7435136",
+      "audit/suites/runAkariAsyncSelfTests.js": "758bbd87f528bf263a5fc9c664855ec2ed424801",
+      "audit/suites/runAkariSelfTests.js": "f4113b565377c4fed4497aefdf652490ad1eaae4",
+      "audit/suites/runBlockCodec09Tests.js": "47780eb60fe878e9711e056297d328ce956ef4e9",
+      "audit/suites/runColorPicker09Tests.js": "142093a0dcdd04a708fa1ef327df9a8bac01b974",
+      "audit/suites/runDesignResize09Tests.js": "c73367f28f44b9fd89f2ecefb1ac0012abd38642",
+      "audit/suites/runEditorCore09Tests.js": "819eea213c382bbdeb2ab2c8800003991f43cf1d",
+      "audit/suites/runExtendedTests07.js": "0d0185522c44e97cf3f3adf11b9b7e30a31a7fa5",
+      "audit/suites/runLimitBoundary09Tests.js": "46f14a2c234437092b816a173eec99acde6211ae",
+      "audit/suites/runProductVersion09Tests.js": "8d5a4f1de547a25ed8a8a2a356493bf8c7d5e670",
+      "audit/suites/runReleaseTests.js": "31fd29dff64066ac75cc5b0177235743eeb017a1",
+      "audit/suites/runSemanticContract09Tests.js": "c436fbf5d3756fa7e3c4b24ebf4b3dae9b928f56",
+      "audit/suites/runSyntax09Tests.js": "a54c9faee0de7de2e43d8cabc6ef0a1a1bd54e10",
+      "audit/suites/runVersion08Tests.js": "cf84b9deeeb20c484cf2f31f305777bd2a436581",
+      "audit/tests/editor-assets-101.mjs": "bed5e3a7da3c3d01ddff72d0be887c84233254b3"
+    }
+  }
+}

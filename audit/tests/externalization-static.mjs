@@ -12,7 +12,7 @@ import {verifyCompletedProvenance} from '../lib/completed-baseline.mjs';
 import {readHistoricalSource,historicalPaths} from '../lib/historical-source.mjs';
 const map=JSON.parse(fs.readFileSync('audit/manifests/externalization-map.json'));
 const manifest=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
-const policy=JSON.parse(fs.readFileSync('audit/manifests/quality-1.0.0.json'));
+const policy=JSON.parse(fs.readFileSync('audit/manifests/quality-1.0.1.json'));
 verifyAuthority(manifest);
 const completedBaseline=verifyCompletedProvenance();
 const html=fs.readFileSync('Akari.html','utf8');
@@ -33,6 +33,7 @@ for(const entry of map.entries){
  const frozen=fs.readFileSync('audit/fixtures/1.0.0/source/'+entry.destination,'utf8').replace(/\r\n/g,'\n').trimEnd();
  assert.equal(sha(frozen),approved?.bodySha256||entry.bodySha256,'Frozen suite authority changed: '+entry.symbol);
  assert.equal(source,release101Assertions(entry.destination,currentNames(frozen)),'Assertion changed beyond recorded identifiers and 1.0.1 metadata: '+entry.symbol);
+ assert.equal(source,fs.readFileSync('audit/fixtures/1.0.1/source/'+entry.destination,'utf8').replace(/\r\n/g,'\n').trimEnd(),'Frozen 1.0.1 core assertion changed: '+entry.symbol);
  if(!process.argv.includes('--parallel'))assert.ok(!html.includes(entry.symbol),'Embedded audit remains '+entry.symbol);
 }
 if(!process.argv.includes('--parallel'))for(const token of ['selfTestReport','data-selftest-failed',"searchParams.get('selftest')"])assert.ok(!html.includes(token),'audit entry/output remains');
@@ -63,4 +64,4 @@ for(const entry of [...transition.entries,...transition.browser]){
 
 fs.mkdirSync('audit-evidence',{recursive:true});
 fs.writeFileSync(process.argv.find(a=>a.endsWith('.json')) || 'audit-evidence/externalization-static.json',JSON.stringify({status:'PASS',suites:map.entries.length-1,ids:manifest.suites.reduce((n,s)=>n+s.ids.length,0),completedBaseline,historical08:fixed},null,2)+'\n');
-console.log('Externalization structure, 1.0.0 guarantee authority, historical archive provenance: PASS');
+console.log('Externalization structure, 1.0.1 checkpoint authority, historical archive provenance: PASS');

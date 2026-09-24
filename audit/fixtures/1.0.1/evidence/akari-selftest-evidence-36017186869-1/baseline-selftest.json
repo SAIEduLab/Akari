@@ -1,0 +1,2550 @@
+{
+  "version": "0.8",
+  "passed": 508,
+  "failed": 0,
+  "total": 508,
+  "results": [
+    {
+      "id": "VERSION-001 初版の版情報",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "DEFAULT-001 初期作品",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 2＋3×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 2＋3×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR （2＋3）×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT （2＋3）×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 2＾3＾2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 2＾3＾2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR －2＾2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT －2＾2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 2＾－2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 2＾－2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 10÷4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 10÷4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 余り（10、3）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 余り（10、3）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 四捨五入（－1.5）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 四捨五入（－1.5）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 平方根（9）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 平方根（9）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 絶対値（－3）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 絶対値（－3）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 最小（3、1、2）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 最小（3、1、2）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 最大（3、1、2）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 最大（3、1、2）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 数（「12」）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 数（「12」）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 文字（真）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 文字（真）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR つなぐ（「点：」、3）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT つなぐ（「点：」、3）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 「😀あ」の文字数",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 「😀あ」の文字数",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 「😀あ」の1文字目",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 「😀あ」の1文字目",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR ［1、2］の2番目",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT ［1、2］の2番目",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR ［1、2］の長さ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT ［1、2］の長さ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR ［1、2］に2が含まれている",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT ［1、2］に2が含まれている",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 「あいう」で「い」が最初にある番号",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 「あいう」で「い」が最初にある番号",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR ［1、2］で5が最初にある番号",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT ［1、2］で5が最初にある番号",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 1が2より小さい",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 1が2より小さい",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 2が2以上",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 2が2以上",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 2が2以下",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 2が2以下",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 2が1より大きい",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 2が1より大きい",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 2が2と同じ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 2が2と同じ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 2が3と違う",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 2が3と違う",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 真ではない",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 真ではない",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 偽かつ1÷0が0と同じ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 偽かつ1÷0が0と同じ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 真または1÷0が0と同じ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 真または1÷0が0と同じ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPR 【点数】",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 【点数】",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ERROR 1÷0",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ERROR 平方根（－1）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ERROR 数（「abc」）",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ERROR ［1］の2番目",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ERROR 「a」の0文字目",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "NORMALIZE 文字列を変更しない",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "NORMALIZE 全角数字・半角演算子",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "IF もし・そうでなければ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "LOOP 回数",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "LOOP 零回",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "LOOP あいだ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "LOOP まで",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "LOOP 最初から成立",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "LOOP break",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "LOOP continue",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "LIST スナップショットと順番",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "LIST 空の反復",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "LIST 追加・挿入・変更・削除",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "MOVE 移動と回転",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "LOOK 衣装と拡大",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "CLONE 個体データを複製",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "STATE 実行と設計の分離",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FUNCTION 初期化と反復",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ACTION 名前を動詞として接続しない",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 本文の再解析",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "REJECT ここまで",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "REJECT 点数が1以上なら",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "REJECT このくり返しを終える",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "REJECT 存在しない名前を1にする",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "REJECT 点数に1を足すです",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "REJECT 合計という変数を0で作る",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "REJECT 名前一覧のそれぞれを 項目 として扱う",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "REJECT 点数が3以上あいだ、次のことをくり返す。",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "REJECT 真あいだ、次のことをくり返す。",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "TYPE 変数にリストを代入しない",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "TARGET 画面には動き命令なし",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "TARGET ボタンには衣装なし",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SCOPE 別の個体の変数",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SCOPE 反復項目は読み取り専用",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FUNCTION 外部副作用の拒否",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SECURITY JSを実行しない",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SECURITY 名前と文字列の境界",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SCHEDULER 公平な命令順",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "NOTIFY 受け手の完了待ち",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "WAIT 時間は論理時計",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "WAIT 条件の再評価",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "STOP 待機処理の破棄",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SCHEMA 未知項目の拒否",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SCHEMA ID重複の拒否",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SCHEMA 別版の拒否",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ASSET SHA256",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ASSET Base64往復",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ASSET 非標準Base64拒否",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPORT 実行形式の復元",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPORT Apache-2.0ライセンス保持",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPORT HTMLの境界保護",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "JAPANESE 句点と接続",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4＋1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4－1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4×1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4÷1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4＋2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4－2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4×2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4÷2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4＋3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4－3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4×3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4÷3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4＋4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4－4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -4÷4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3＋1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3－1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3×1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3÷1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3＋2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3－2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3×2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3÷2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3＋3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3－3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3×3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3÷3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3＋4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3－4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -3÷4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2＋1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2－1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2×1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2÷1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2＋2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2－2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2×2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2÷2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2＋3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2－3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2×3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2÷3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2＋4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2－4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -2÷4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1＋1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1－1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1×1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1÷1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1＋2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1－2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1×2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1÷2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1＋3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1－3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1×3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1÷3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1＋4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1－4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE -1÷4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0＋1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0－1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0×1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0÷1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0＋2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0－2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0×2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0÷2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0＋3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0－3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0×3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0÷3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0＋4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0－4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 0÷4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1＋1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1－1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1×1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1÷1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1＋2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1－2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1×2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1÷2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1＋3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1－3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1×3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1÷3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1＋4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1－4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 1÷4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2＋1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2－1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2×1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2÷1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2＋2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2－2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2×2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2÷2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2＋3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2－3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2×3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2÷3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2＋4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2－4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 2÷4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3＋1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3－1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3×1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3÷1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3＋2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3－2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3×2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3÷2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3＋3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3－3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3×3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3÷3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3＋4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3－4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 3÷4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4＋1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4－1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4×1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4÷1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4＋2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4－2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4×2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4÷2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4＋3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4－3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4×3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4÷3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4＋4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4－4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4×4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "COMPOSE 4÷4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ACTION 引数は値渡し",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ACTION 整形後の呼び出し",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "ERROR 失敗処理の資源を解放",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "QUESTION 答えの受け渡し",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SOUND 再生終了通知まで待つ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "KEY 日本語名の判定",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "PEN 描画命令の順序",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "FORMAT 全命令種の往復",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "EXPORT 復元後の動作一致",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "HINTS stage",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "HINTS button-1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "HINTS sprite-1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SAVE Markdown往復",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SAVE 作りかけのコード保持",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SAVE 文字列の完全保持",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SAVE 不正JSON拒否",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "SAVE 不足素材拒否",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT CONDITION count-to-three independent result",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT CONDITION until-ten without optional suffix",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT CONDITION predicate inflection matrix and stable formatting",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT CONDITION malformed forms rejected",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT WAIT natural key edge and release",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT NAME registry additions removals leave existing AST meaning unchanged",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT NAME literal words require explicit data quoting in every scope",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT NAME qualified escaping and canonical formatting",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT NAME particle-containing callable and arguments",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT FORMAT empty branches nested loops and every boundary comment",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT FORMAT independent string Unicode and punctuation preservation",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT HINT dynamic argument list operations and lexical locals",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT HINT function declaration and return positions",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT HINT event-specific values and target restrictions",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT HINT all enabled default expressions parse and diagnose",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT HINT source insertion preserves exact selection surroundings",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT HINT mid-line statement insertion refused",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT HINT unfinished programs remain inspectable",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT ERROR action arguments local9 correct line and detached state",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT ERROR nested functions preserve inner failure and both frames",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT ERROR ring retention repeated failure and continuation",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT ERROR long scalar and list snapshot remains complete",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT QUESTION duplicate reply cannot answer another queued question",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT STOP clears questions timers all waits and physical input",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT CLONE collision transform ordering and clone data independence",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT SCHEDULER pause does not complete time waits",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT LIMIT expression nesting and function nontermination are bounded",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT SCHEDULER condition failure stops before another task can run",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT MARKDOWN readable code initial data and material manifest",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT MARKDOWN unfinished empty and boundary-like strings round trip",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT MARKDOWN canonical-body mismatch rejected F512",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT MARKDOWN malformed JSON missing markers old JSON rejected",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT MARKDOWN transport CRLF and BOM do not alter project",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT SCHEMA wrong release duplicate IDs invalid data and excessive input",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT EXPORT deterministic runtime result equals design runtime",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT EXPORT hostile HTML remains escaped data",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT AUDIO suspended resume rejection is visible",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT ASSET canceled pending image cannot retain URLs or repopulate cache",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT ASSET decoded dimension mismatch releases own object URL",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT AUDIO per-handle completion stop and voice cap with simulated nodes",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "AUDIT AUDIO unrelated completion cannot release a waiter",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 AST roundtrip 0",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 AST roundtrip 1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 AST roundtrip 2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 AST roundtrip 3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 AST roundtrip 4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent triple nesting execution",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent comments else and line numbers",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 0",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 1",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 2",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 3",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 4",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 5",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 6",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 7",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 8",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 9",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 10",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 11",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 12",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 indent reject 13",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 arbitrary boolean loops and innermost control",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 NoOperation callable and standalone",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 hint indentation scopes",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 hint every block parses",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 hint whole indented line replacement",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 hint nested insertion and following sibling",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog Assignment",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog NumericUpdate:ADD",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog NumericUpdate:SUB",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog ListAppend",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog ListReplace",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog ListInsert",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog ListDelete",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog ListClear",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog IfStatement",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog Say",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog RepeatCount",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog RepeatWhile",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog RepeatUntil",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog WaitTime",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog WaitUntil",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog ForEach",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog MotionCommand:MOVE",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog MotionCommand:GOTO",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog MotionCommand:GLIDE",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog MotionCommand:TURN_RIGHT",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog MotionCommand:TURN_LEFT",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog MotionCommand:SET_DIRECTION",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog MotionCommand:SET_X",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog MotionCommand:SET_Y",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog MotionCommand:POINT_TO",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog MotionCommand:BOUNCE",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:SET_SCALE",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:SET_COLOR",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:HIDE",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:SHOW",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:FRONT",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:BACK",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:FORWARD_LAYERS",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:BACKWARD_LAYERS",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog PenCommand:DOWN",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog PenCommand:SET_COLOR",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog PenCommand:SET_SIZE",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog PenCommand:UP",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog PenCommand:STAMP",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog PenCommand:CLEAR",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:SET_BACKDROP",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:NEXT_BACKDROP",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:PREV_BACKDROP",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:SET_COSTUME",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:NEXT_COSTUME",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:PREV_COSTUME",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:SET_TARGET_TEXT",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog SoundCommand:TONE",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog SoundCommand:TONE_WAIT",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog SoundCommand:SET_VOLUME",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog SoundCommand:PITCH_UP",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog SoundCommand:PITCH_DOWN",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog SoundCommand:STOP_ALL",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog Broadcast",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog BroadcastAndWait",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog Ask",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LocalVariableDeclaration",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog ReturnStatement",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog CloneCommand:CREATE_SELF",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog CloneCommand:CREATE_TARGET",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog CloneCommand:DELETE_SELF",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog StopCommand:THIS",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog StopCommand:OTHERS",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog StopCommand:ALL",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:SET_SELF_TEXT",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LooksCommand:SET_INPUT",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog SoundCommand:SAMPLE",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog SoundCommand:SAMPLE_WAIT",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog Break",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog Continue",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog LocalListDeclaration",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog Forever",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog UserActionCall",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 catalog NoOperation",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 runtime motion",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 runtime looks layers text backdrop costumes",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 runtime pen and volume pitch",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 乱数",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 余り",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 四捨五入",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 切り上げ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 切り捨て",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 絶対値",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 平方根",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 正弦",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 余弦",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 正接",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 逆正弦",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 逆余弦",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 逆正接",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 自然対数",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 常用対数",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 指数",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 数",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 文字",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 最小",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin 最大",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 builtin つなぐ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event stage:start",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event stage:click",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event stage:keyDown",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event stage:message",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event stage:backdropChanged",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event label:start",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event label:click",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event label:keyDown",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event label:message",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event label:backdropChanged",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event button:start",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event button:click",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event button:keyDown",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event button:message",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event button:backdropChanged",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event box:start",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event box:click",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event box:keyDown",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event box:message",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event box:backdropChanged",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event input:start",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event input:click",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event input:keyDown",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event input:message",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event input:backdropChanged",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event input:valueChanged",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event sprite:start",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event sprite:click",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event sprite:keyDown",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event sprite:message",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event sprite:backdropChanged",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 event sprite:cloneStart",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor マウスが押されている",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor マウスの横位置",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor マウスの縦位置",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 以前の背景名",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 新しい背景名",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 受け取った知らせ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 押されたキー",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor クローンである",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 背景番号",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 背景名",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 衣装番号",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 衣装名",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 横位置",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 縦位置",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 方向",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 大きさ",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor タイマー",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 答え",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 音量",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 音程",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 以前の値",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 新しい値",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 空白キーが押されている",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 端に触れている",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor 「赤」の色に触れている",
+      "pass": true,
+      "detail": "PASS"
+    },
+    {
+      "id": "08 sensor マウスまでの距離",
+      "pass": true,
+      "detail": "PASS"
+    }
+  ],
+  "browser": "Chrome/140.0.7339.16",
+  "fixtureSha256": "05b62d0cf475352c058f7f2d4f2a8bd5a46d9be2d72365ff1cbaa5560fad6e5c"
+}

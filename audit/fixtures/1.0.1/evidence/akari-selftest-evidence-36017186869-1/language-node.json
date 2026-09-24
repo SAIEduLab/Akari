@@ -1,0 +1,2659 @@
+{
+  "results": [
+    {
+      "id": "A09-SURFACE-JPF-001/punctuation",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-001/no-punctuation",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-002/くり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-002/くり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-009/2回くり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-009/2回くり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-009/2回だけくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-009/2回だけくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-010/2回、次のことをくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-010/2回、次のことをくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-011/ずっとくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-011/ずっとくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-028/くり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-028/くり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-002/繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-002/繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-009/2回繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-009/2回繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-009/2回だけ繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-009/2回だけ繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-010/2回、次のことを繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-010/2回、次のことを繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-011/ずっと繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-011/ずっと繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-028/繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-028/繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-003/もし /なら/、次のことをする",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-003/もし /なら/、次のことをする/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-005/もし /なら/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-005/もし /なら/short/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-005/もし /なら/、",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-005/もし /なら/、/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-003/もし /ならば/、次のことをする",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-003/もし /ならば/、次のことをする/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-005/もし /ならば/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-005/もし /ならば/short/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-005/もし /ならば/、",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-005/もし /ならば/、/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/なら/、次のことをする",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/なら/、次のことをする/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/なら/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/なら/short/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/なら/、",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/なら/、/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/ならば/、次のことをする",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/ならば/、次のことをする/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/ならば/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/ならば/short/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/ならば/、",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-004/omitted/ならば/、/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-006/inline-if",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-006/inline-if/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-007/そうでなければ",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-007/そうでなければ/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-007/そうでなければ、",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-007/そうでなければ、/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-007/そうでなければ、次のことをする",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-007/そうでなければ、次のことをする/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-008/そうでなければ/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-008/そうでなければ/inline/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-029/でなければ",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-029/でなければ/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-029/でなければ、",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-029/でなければ、/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-029/でなければ、次のことをする",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-029/でなければ、次のことをする/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-029/でなければ/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-029/でなければ/inline/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-012/あいだくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-012/あいだくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-012/あいだ繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-012/あいだ繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-012/間くり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-012/間くり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-012/間繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-012/間繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/未満",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/未満/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/を超える",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/を超える/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/を超えている",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/を超えている/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/と等しい",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/と等しい/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/と異なる",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/と異なる/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/と等しくない",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/と等しくない/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-017/点数に3を加える",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-017/点数に3を加える/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-018/点数を3増やす",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-018/点数を3増やす/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-018/点数を3だけ増やす",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-018/点数を3だけ増やす/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-019/点数を3減らす",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-019/点数を3減らす/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-019/点数を3だけ減らす",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-019/点数を3だけ減らす/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-022/名前一覧の末尾に3を追加する",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-022/名前一覧の末尾に3を追加する/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-023/名前一覧から1番目を削除する",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-023/名前一覧から1番目を削除する/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-024/名前一覧のすべての要素を削除する",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-024/名前一覧のすべての要素を削除する/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-025/0秒間待つ",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-025/0秒間待つ/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-026/「名前は？」と尋ねる",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-026/「名前は？」と尋ねる/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-027/「こんにちは」という",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-027/「こんにちは」という/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-030/名前一覧のすべてを削除する",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-030/名前一覧のすべてを削除する/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-031/「名前は？」と聞いて待つ",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-031/「名前は？」と聞いて待つ/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-032/点数に3を代入する",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-032/点数に3を代入する/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-032/3を点数に代入する",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-032/3を点数に代入する/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-034/点数から3を引く",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-034/点数から3を引く/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-034/3を点数から引く",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-034/3を点数から引く/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-036/名前一覧の1番目に3を挿入する",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-036/名前一覧の1番目に3を挿入する/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-036/3を名前一覧の1番目に挿入する",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-036/3を名前一覧の1番目に挿入する/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-037/「入力欄」に「値」を入れる",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-037/「入力欄」に「値」を入れる/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-037/「値」を「入力欄」に入れる",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-037/「値」を「入力欄」に入れる/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-033/target-first足す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-033/target-first足す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-033/value-first足す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-033/value-first足す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-033/target-first加える",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-033/target-first加える/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-033/value-first加える",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-033/value-first加える/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-035/target-firstに",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-035/target-firstに/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-035/value-firstに",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-035/value-firstに/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-035/target-firstの末尾に",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-035/target-firstの末尾に/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-035/value-firstの末尾に",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-035/value-firstの末尾に/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-038/direction-first右",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-038/direction-first右/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-038/angle-first右",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-038/angle-first右/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-038/direction-first左",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-038/direction-first左/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-038/angle-first左",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-038/angle-first左/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-020/横100、縦50へ",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-020/横100、縦50へ/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-020/横100、縦50に",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-020/横100、縦50に/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-021/横100、縦50滑る",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-021/横100、縦50滑る/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/横100、縦50滑るno-comma",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/横100、縦50滑るno-comma/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/横100、縦50滑る、",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/横100、縦50滑る、/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-021/横100、縦50すべる",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-021/横100、縦50すべる/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/横100、縦50すべるno-comma",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/横100、縦50すべるno-comma/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/横100、縦50すべる、",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/横100、縦50すべる、/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-039/縦50、横100へ",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-039/縦50、横100へ/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-039/縦50、横100に",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-039/縦50、横100に/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-021/縦50、横100滑る",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-021/縦50、横100滑る/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/縦50、横100滑るno-comma",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/縦50、横100滑るno-comma/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/縦50、横100滑る、",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/縦50、横100滑る、/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-021/縦50、横100すべる",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-021/縦50、横100すべる/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/縦50、横100すべるno-comma",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/縦50、横100すべるno-comma/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/縦50、横100すべる、",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-040/縦50、横100すべる、/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-041/frequency-first/false",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-041/frequency-first/false/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-041/time-first/false",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-041/time-first/false/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-041/frequency-first/true",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-041/frequency-first/true/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-041/time-first/true",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-041/time-first/true/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-042/大きい",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-042/大きい/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-042/小さい",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-042/小さい/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満のあいだくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満のあいだくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満のあいだ繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満のあいだ繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満の間くり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満の間くり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満の間繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満の間繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満であるあいだくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満であるあいだくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満であるあいだ繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満であるあいだ繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満である間くり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満である間くり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満である間繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満である間繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超えているあいだくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超えているあいだくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超えているあいだ繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超えているあいだ繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超えている間くり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超えている間くり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超えている間繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超えている間繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しいあいだくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しいあいだくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しいあいだ繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しいあいだ繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しい間くり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しい間くり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しい間繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しい間繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/点数が10と異なるあいだくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/点数が10と異なるあいだくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/点数が10と異なるあいだ繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/点数が10と異なるあいだ繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/点数が10と異なる間くり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/点数が10と異なる間くり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/点数が10と異なる間繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-016/点数が10と異なる間繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満になる/wait",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満になる/wait/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満になるくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満になるくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満になる繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-013/点数が10未満になる繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超える/wait",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超える/wait/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超えるくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超えるくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超える繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-014/点数が10を超える繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しくなる/wait",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しくなる/wait/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しくなるくり返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しくなるくり返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しくなる繰り返す",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-JPF-015/点数が10と等しくなる繰り返す/period",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-ORDER-009",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-ORDER-012",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-ORDER-006",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-ORDER-007",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-001",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-002",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-003",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-004",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-005",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-006",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-007",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-008",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-009",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-010",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-011",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-012",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-013",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-014",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-015",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-016",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-017",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-018",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-019",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-020",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-021",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-022",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-023",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-024",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-025",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-026",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-027",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-028",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-029",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-030",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-031",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-REPLACES-A09-SURFACE-NEG-032",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-REPLACES-A09-SURFACE-NEG-033",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-034",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-035",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-036",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-NEG-037",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/bare/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/真/period/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/bare/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/なら/偽/period/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/bare/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/真/period/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/bare/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/omitted/ならば/偽/period/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/bare/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/真/period/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/bare/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/なら/偽/period/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/bare/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/真/period/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/bare/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/そうでなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/そうでなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/そうでなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/そうでなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/そうでなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/そうでなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/そうでなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/そうでなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/そうでなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/でなければ/inline/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/でなければ/inline/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/でなければ/inline/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/でなければ/short/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/でなければ/short/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/でなければ/short/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/でなければ/long/inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/でなければ/long/short",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE/explicit/ならば/偽/period/でなければ/long/long",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/missing-comma",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/two-statements",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/same-line-else",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/nested-inline",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/inline-repeat",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/comment-only",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/mixed-then",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/mixed-else",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/orphan",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/duplicate",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/intervening",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/wrong-indent",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/empty-condition",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/empty-body",
+      "status": "PASS"
+    },
+    {
+      "id": "A10-INLINE-NEG/inline-header",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-ORDER-003",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-ORDER-004",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-ORDER-005",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-ORDER-015",
+      "status": "PASS"
+    },
+    {
+      "id": "A09-SURFACE-INDEPENDENT-VALUES",
+      "status": "PASS"
+    }
+  ],
+  "total": 605,
+  "failed": 0,
+  "blocked": 0,
+  "deferred": 0,
+  "environment": "node",
+  "snapshot": {
+    "head": "62359484a646651dd81806ef97a6cfef87f85d4b",
+    "productSha256": "4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387",
+    "files": {
+      ".github/workflows/akari-audit.yml": "d2a03af75042b8cc3a83aa2c03d4f00f326a67de64d8f752be555b54da3183f1",
+      ".gitignore": "32331e386bd611cd116750983edb3f4e85749d218b79462b08495b44cb502403",
+      "AUDIT.md": "0a651a5df4bf0b1b8c3be473b8d1af207a691130d806d3a8b86248b0dde8fedb",
+      "Akari.html": "4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387",
+      "LANGUAGE.md": "4b398dd031409d0807c4068bf6bd19c0601539716eb8ca1d9f3af267c9c0415d",
+      "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "MANUAL.html": "2eab82a33253040e9bb76b847af0fd4bb5ad84575c60e33790ff4218966e95cb",
+      "Manual/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "Manual/block-mode.html": "7e4d9b6bd47cbc3c9c277dd610f2e6d292d3253ae7dc8405cfbad627bcb4dd37",
+      "Manual/code-mode-advanced.html": "59a5f00d1b69a442cac814933b9cf35c91cb70a1474e942ff489b9df4eb95079",
+      "Manual/code-mode-beginner.html": "06418712ec982e3225606e7f2549e9a24c4bb58e3029b592fcf6d62b54661afd",
+      "Manual/code-mode-intermediate.html": "c6e7567304cad2b46d1b55425193843212e23e37a3c6a1dcb495c49f23f6f88e",
+      "README.md": "fd6702c4ab7c8c0287a67e4935fb2c4d88c4b9a6d626b2823f0f3712dc92cb68",
+      "audit/BASELINE.md": "45ca655697f2f502a1120874138ede6ff4e806774f4cd2e1f08c07aca2011d1b",
+      "audit/EXTERNALIZATION.md": "4d29dd03879855b73ce7fa9893df605c32a46f1d9c6b226b41b2d5efdb5c878e",
+      "audit/LANGUAGE_FORMS.md": "0b93a4589910c2897ed6a8bec7e284e8d5a73554e5f0927e2195c22d16ebc576",
+      "audit/LAUNCH.md": "c8d9d05143a375d1685e56ea833535038ad358f33e5de57148f9a8fb2e96faf7",
+      "audit/README.md": "cb5e0971e7950de98bbb303fa6c833212281cc31b3762ac2716a0a9ee2685846",
+      "audit/browser/browser-audit-manifest.json": "e4ebaa1c8245a509e60b90368548eec4ebb2b3293fb15bd6c221f871abbd8849",
+      "audit/browser/legacy/audit-lib.cjs": "251314c030e5c55bcb0a0f2732adb57d509c0126473b63daa8021372bf9a30c9",
+      "audit/browser/legacy/browser-asset-limits.cjs": "fb42d53634e18010ec3018a50b8703834febb2739f04b08d5516904f66c2e0c6",
+      "audit/browser/legacy/browser-boundaries.cjs": "a8d1662f07c3ea86808c988692b26feb7ef257605fd8223f0ac7aa25e75320e7",
+      "audit/browser/legacy/browser-condition.cjs": "fb2e044933e0ace4f4ba8c5e0834df311fee260a4f8d1b4874ee417bf57c0cfb",
+      "audit/browser/legacy/browser-design-limits.cjs": "fa56d4120bad026133259b366737333b6120feb4b4ef8c189f901fab05b2891e",
+      "audit/browser/legacy/browser-event-traces.cjs": "dd92509e62bfc963523a5fd9713553586fffc8ec83f4a15e6e62013a1f8439e8",
+      "audit/browser/legacy/browser-events.cjs": "7bcdef0ea7feb07789f513ddb495ad37ab464a91b273000498be4496f2ab5816",
+      "audit/browser/legacy/browser-media-boundaries.cjs": "87f347bac7fe938402cee8a9961650bc9e0f83c4b21581cbff5d1064a5013944",
+      "audit/browser/legacy/browser-owner-delete.cjs": "485d597b015e474bac88eb29395b00c3f31473b3bde684d60df96100f47fd350",
+      "audit/browser/legacy/browser-product.cjs": "b5e794e5a496c9d8484abca05d5e4411a43095a37d778f3c3711babf88dac026",
+      "audit/browser/legacy/browser-runtime-limits.cjs": "3751908e74d5871a415ce73814c62780e2a493c66d2cd2b3024e4adeaff2ebb8",
+      "audit/browser/legacy/browser-runtime.cjs": "fea05c223d89684963f5c7a0a5b7970472a9485943c9095dff3bf45db6970594",
+      "audit/browser/legacy/browser-schemas.cjs": "e6292e1fc7d465209d8ce87a012d55ef3e141529d9f11b8a37527acf0b461abf",
+      "audit/browser/legacy/browser-session.cjs": "4b28f8f042e6b91a2ba82661ad9feed8634ef796654dbf037613cd490c19efe9",
+      "audit/browser/legacy/browser-storage-media.cjs": "301e340e9fa1e74ec0b4cc9044d7372c1fd6229a2770f48b317743629b43345e",
+      "audit/browser/legacy/long-regression.cjs": "e7ec2a82c0ff006d26419bef6126d4cf82119bd9a3c49d33a9980d1141246efc",
+      "audit/browser/legacy/media-fixtures.cjs": "6147cb729d3496b5e08dc54f9cb722578e8da48ad3e6903dcdc930460e7b6752",
+      "audit/browser/legacy/modern-browser.cjs": "527a355096b7ffd95564c261559423cd1f458668fb29c13866e53431a2a72e82",
+      "audit/browser/legacy/native-focus.cjs": "40b82437c0edf5471c26dfd3c5d36bbf9797d1706525f860b3bac122e4f62f10",
+      "audit/browser/legacy/parent-qa.cjs": "ce4139071f169a95ebfb5706d975a1993ef65d0c100225288d9f98ae1a1108a7",
+      "audit/browser/legacy/perf-input.cjs": "8f77f76f3859a0161b2a3ecf21653551b397be0b76e91028537f5f933494f8c4",
+      "audit/browser/legacy/persistence-probe.cjs": "7c94feee707b41a26505f511845b397630b512394d84a0091186aad36a08b1f3",
+      "audit/browser/legacy/prepare-media.py": "e70e68a3b4ba051170b2a8327c141b1ec01788db9ba1b30a3c166ec61d6c1381",
+      "audit/browser/legacy/run-editor-regression.cjs": "99a9571d2bb9c75261ab199b5cbc94344cc92e24e15f22f690323e89a0d15037",
+      "audit/browser/legacy/schema-shards.cjs": "a26181c17955ede86fb66aa20e46b14e5e0147ea072a988b6ba0c8119dc81d14",
+      "audit/browser/legacy/ui-case.cjs": "6df27709fa7d30766a178b8f762f7f235058465d737b10968eb83d0bd8b996d3",
+      "audit/browser/legacy/ui-compact-menu.cjs": "751664d54254f8bdb9c02e778966a2ec30b538e94ddbedd8c130a18d7ffe2671",
+      "audit/browser/legacy/ui-compact-routes.cjs": "355012a497257c15cd5122ca98a5f1ab845a71dd6d88bc5586dc140a00582ed3",
+      "audit/browser/legacy/ui-interactions.cjs": "5a19c578834c3a082a16ee88a91328afff4db7a17995fb551d74cf98dd4f67dd",
+      "audit/browser/legacy/ui-routes.cjs": "1f4b0f2de500a4e0acfae8e936b746ee00c012c50ec6adf671448662db42137f",
+      "audit/browser/legacy/ui-shell.cjs": "61e3af274820b76eea1107ea3c94ec823812507530e1d49272cc318bb5df40bd",
+      "audit/browser/legacy/ui-stage-gesture.cjs": "d44bde4d429d82a32e7aa2e509715f3f165200e4d63b074972b8719bba2af871",
+      "audit/browser/legacy/workbench-direct.cjs": "745683332a23e535ebbd7bc952abd70a2887c034f09bebff144a8e394fdb5afb",
+      "audit/browser/legacy/workbench-matrix.cjs": "832ec7904c938f7b145777e1f30f03f3890bd781cb58ace236a58eeaa905f22c",
+      "audit/browser/run-full-browser-audit.mjs": "aa3bf6318bd2156b426e49296d9ab9cbb2cabd72f3640948a583edbb986f2d82",
+      "audit/build-audit-inventory.mjs": "addab798a88bca7af1a8ebec0ce79f1b450a3d1ef82c36248754a94a8f1da897",
+      "audit/fixtures/0.8/AUDIT.md": "9b4de42424ba9a849395f2aac00f08f509c06e830d55bbff93948a716c76f088",
+      "audit/fixtures/0.8/Akari.html": "05b62d0cf475352c058f7f2d4f2a8bd5a46d9be2d72365ff1cbaa5560fad6e5c",
+      "audit/fixtures/0.8/LANGUAGE.md": "2ad83e6407aedc621a6119c2d88fa4cb21828b209ccf439f7e27d62ed060e420",
+      "audit/fixtures/0.8/akari-audit.yml": "875c20d657eeadb4341f0ffaa800caee97d7c94ab9cf6620c1ef35bb4e38723c",
+      "audit/fixtures/0.8/manifest.json": "38b1cc4414741160263c938b55fdbe54fa86c895e879781c1025fea4ffb5d549",
+      "audit/fixtures/1.0.0/completion.json": "02666417ad586eb18da2b3436bd0d02d13e961fbca93dbdd9ce0cfacc9c79338",
+      "audit/fixtures/1.0.0/evidence/akari-aggregate-35816378510-1/aggregate.json": "f99b3ea9449ba2f79a858f4de64eea656d2de5b4c335392c9a417025c4caf507",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/bundle.json": "d0c410887f3b7fb47d23669ba0c6062da608fbe91bab3b7bdfaaa9ab04d40afd",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/long-evidence/results.json": "7cbfacba48e305a7612f52d1dbddffad32fa96816d62b51027fce7560823b63b",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/modern-browser.json": "874e9d88af945bf8eba050bce249470da9d1e3dadea72620d079341b042acfcc",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/perf-clipboard-paste-16666.json": "eef480600db3e4f7562fb2dc0c7cf63dabd708c647aa1052c74fd5c92e1943d8",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/candidate/perf-keyboard-insert-16666.json": "8bb7689ba9ad1bf25a53de91700082bcac693fe163587368d7c97719a473cd0b",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/full-browser-extra/parent-qa.json": "8a07a40a2a5cd0befbc398e81bfde2d65fbf4cb5a239edee430d300e1696ca5f",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-extra-35816378510-1/manual-docs/manual-docs.json": "9f1fd71b5e2f8ff1d00f23adc9f5d11666dfe220e581f7437cdc14584c078663",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/bundle.json": "26d113f5b3e99b39706f29a379ebcf268fc88cf3d52c1b5595bd9f0171a52770",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-asset-limits.json": "7c396db4284dc75e81fdb76739ecbfd813d1e82651fd80fdc74e1d38f99794ef",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-design-limits.json": "fc77454524cec87d3da3f6479a3322ab89b1bf93a54bb46fba841ba60afe2228",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-product.json": "5a32032f0e53fef350be3b42c7ef6af9a7bf301cf71a5b364dd568c108437f0c",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/candidate/browser-runtime-limits.json": "808f654940b9de12ce763698ee31e1e3e82e3c1f4831e10a3398329cf107cd69",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-limits-35816378510-1/full-browser-limits/media-boundaries.json": "e790fff7a7c0a82451011bd041adee2eaa796176911862046e5cddfbaab8d7f9",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-schemas-35816378510-1/bundle.json": "cd79b3cdf411a84167536e9041f3ac33934f418790be93fff4f632463d3d64d3",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-schemas-35816378510-1/full-browser-schemas/candidate/browser-schemas.json": "e26e78fc2dbce2b89b0d5160a08a6826e86a597ee110185edb2f53b1efd3daaf",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/bundle.json": "56165bbf1bd39fba583e371c01efb32344347ab11702da4fe8526ef352bda339",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-boundaries.json": "1dd51bcd29afb28e25367415df5baa13dac42ccbca10bf79e8679a2042c5ec53",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-condition.json": "694eb5ce5677d5e9015fbd1eee457e9ef729f643648e2c7f802f5fc0161b836b",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-event-traces.json": "10b6d7c51b53e3d06028ddfb9c30f9aa0485cd136a2e4c44658821f5e9faed2c",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-events.json": "446d02fd3864dcab82948281880e1337c86b9ac9e8267116f1b1e5fa2602c915",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-runtime.json": "4a74ed57ca19b3d0f8d8d6960cb773d4e274b8c7f48b0a015c8ed7f2ffa364c4",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-session.json": "bd273a47a678d4d9c7d466e5f20d6e042b0332ea17b6daab025cc95110e7135c",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-session-35816378510-1/full-browser-session/candidate/browser-storage-media.json": "10141fe856a4295d848d269b029808f1a8df1de5ea23cdc3be4ec379496db5ab",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/bundle.json": "75406fe8b4156e14cf4d64a05429d687aefd1704930f431b8593ed65780214e9",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/browser-owner-delete.json": "3de1ec129f98c8855361cedd3d4aa09f596289e2fcbf4334e27385deddaaf544",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/editor-regression-result.json": "495ed330c0e5d4f7df5907ad2c045ebe6c488ed0daba11f281e045f00052b7c6",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/workbench-direct.json": "912a326c653cebcf6c849003fcf58ecec0b296351e1e61a0b2313c61fc905ca0",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/candidate/workbench-matrix.json": "d8b6469bbc55a287ae82388d822e53ec107a1821e8d9c93a4ce68968af8f2731",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-compact-menu.json": "13cabdba104183138361c9417043b5bb0f939996edde9b03c9f24b22c9c01175",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-compact-routes.json": "ed7b8c680518067c706781739e91e421db1c4ac35907177846451d96f33ebaa1",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-interactions.json": "4ffab2f5fd7a9289441df61d8c581b9e26e6edd2282fc37862ca0546d1036664",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-shell.json": "45ebdb253accaa3b4f4648efaeb9b0148d0008d1038f5deb396f4bfd30235da1",
+      "audit/fixtures/1.0.0/evidence/akari-full-browser-ui-35816378510-1/full-browser-ui/ui-stage-gesture.json": "ab1752cde50ece86177cafdab8ccd322548a79e6d2243746aca45124412863a5",
+      "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/baseline-selftest.json": "bda2d68bd5ef817e7cbd2c8cbdaf4fc48fd4d8168d5f29d7353f518cd6bd7f56",
+      "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/browser-environment.json": "40c686bf2440f5af48fb2ab675c3ae6bf14789e6e41c203a1e63b993b7990899",
+      "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/bundle.json": "d0b015e6414d860cb68c4da0d1d9a8bc1d48bdcb95c54393d786a9b32fb822cc",
+      "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/current-selftest.json": "8f51718a358ec5b951b2c40ec74bc6b18e4f1c23c83086df52b8e29a317c7c33",
+      "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/editor-browser.json": "3fd69ea77b71694b87dbf0a94f7348ce87b489b98b5ca75b2003d82ffd5fec8c",
+      "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/editor-node.json": "005ab3e6ec1cd312753ced0c39695f1414313e8ad82fbea3b9d79a3fb3b28a7e",
+      "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/gui.json": "75c5864843bfaa53f3d8df2eaeba8ccfabe2a16c0a689c25c8c111d73d0215ec",
+      "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/language-boundaries.json": "a607ebd5c0790fe9a66ed8f00e54be3ae2c19b945f684f691ae97d45ef52bb88",
+      "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/language-browser.json": "c0d2ab137d855fd3febabcb0bd5b0a2f0ef4374ccbe4e14be66d202673173f25",
+      "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/language-node.json": "0a2b85a3383117793408ab098866f6bc82bbb1d5789ae1e879b43092de55882c",
+      "audit/fixtures/1.0.0/evidence/akari-selftest-evidence-35816378510-1/normal-product.json": "2150d2717a68e10e40c684edea5b40194d892c043709a81c7372bd76ee2b24bb",
+      "audit/fixtures/1.0.0/evidence/akari-static-evidence-35816378510-1/bundle.json": "62d7ec336e6ba7da994c8ca87c921c47c81584b49233239651a1623baaac6ef4",
+      "audit/fixtures/1.0.0/manifest.json": "db939bbcde1c86ae51c39189d05357d27635e405511d667d6b7588b79f74bd63",
+      "audit/fixtures/1.0.0/source/.github/workflows/akari-audit.yml": "b8beff27ad5fc70c202e884be97a59260c67ca846f1b11ad117e73ce866543a7",
+      "audit/fixtures/1.0.0/source/AUDIT.md": "e5d1bb9fb2be077747f19c8904190622276cd4ea985935ca458c46db936679a2",
+      "audit/fixtures/1.0.0/source/Akari.html": "48b440829174256952ab3f12e13553c64cba95f392e30e8f79768ff7411c0acf",
+      "audit/fixtures/1.0.0/source/LANGUAGE.md": "67f5b4c85f8f3469f583adea8af839d8e2ff45df19d097fd11427cbae4920aca",
+      "audit/fixtures/1.0.0/source/audit/browser/browser-audit-manifest.json": "01e30c627c00f75fb0b3c075cbd6b47ee6cf1a3abc43db2ed233adda6bef6b4f",
+      "audit/fixtures/1.0.0/source/audit/fixtures/language/forms.mjs": "bffc4a8c680689a5e0dbeb304900ab637306b40a940dd61a2d1c04d660368bc6",
+      "audit/fixtures/1.0.0/source/audit/fixtures/language/inline.mjs": "6a7a92bb7cd053c362ec909d7276b2cda869608935dfd2d8b95b4eddd2844856",
+      "audit/fixtures/1.0.0/source/audit/manifests/browser-obligations.json": "691dd5742d5f37f8c652f8f704af16c893dead931f227f93e17ef03d26dfd06f",
+      "audit/fixtures/1.0.0/source/audit/manifests/browser-results.json": "c88fdc08bed9d3371844faf4e3eb92330dcb71d08c73e4f60de7471bab38a0ee",
+      "audit/fixtures/1.0.0/source/audit/manifests/externalization-map.json": "8b6f3dc34b74a48bd30f2d4c8d1a3c740cad26f1147dc6a46d03cabadd18fbc2",
+      "audit/fixtures/1.0.0/source/audit/manifests/language-form-coverage.json": "3ff2cb94e6dcb7d54d7c05b578bc2415644cae614911fd3223b815d19a888eb2",
+      "audit/fixtures/1.0.0/source/audit/manifests/product-tests.json": "a8701e2f6f46fbaa5633c2ce2fa730db3171a49a5f91eb424877bb879bca4378",
+      "audit/fixtures/1.0.0/source/audit/manifests/quality-1.0.0.json": "62a25dcbed74ed573f37f8c9323ce3e8e05a95b2e6b10954f64132bafc3931d3",
+      "audit/fixtures/1.0.0/source/audit/records/phase4-audit-inventory.json": "28623ae751a6e834af09e619ccec42c1b55e55dde9fe8e43eca4528c77c0a2cd",
+      "audit/fixtures/1.0.0/source/audit/records/phase4-semantic-review.md": "8105b656a3f8d9168d61ba1d16af6258260478d597cc2cc365876ab9657b9495",
+      "audit/fixtures/1.0.0/source/audit/suites/bindings.js": "b38cf70b96382e31a192dcb53cdaec1055478189c9b60ffce5400f7c38e0f6d8",
+      "audit/fixtures/1.0.0/source/audit/suites/editor-surface.js": "4ac37bba3435ff2627cd986133fbaed1146f40f509eb4fbd1efc06ba5d9e5263",
+      "audit/fixtures/1.0.0/source/audit/suites/language-forms.js": "a18fb8ca9156a01f292411ead78817230b168a87afc6ac55c551cc35769f55c4",
+      "audit/fixtures/1.0.0/source/audit/suites/runAkariAsyncSelfTests.js": "a30ddf723df1cfb666209aceec2cfb9e743c9756c73cb695a881c27393b71a0e",
+      "audit/fixtures/1.0.0/source/audit/suites/runAkariSelfTests.js": "c83f777e78fd381d10217b7baf8adef3ebec6e40f48d8756dc41e3e207a33c17",
+      "audit/fixtures/1.0.0/source/audit/suites/runBlockCodec09Tests.js": "c95648509cb37c53ad97d0b6448bbc3bb49bc3f0d441cd96e5a24f37678b09e3",
+      "audit/fixtures/1.0.0/source/audit/suites/runColorPicker09Tests.js": "f7aed3414183e628b0d6a7e45653a1ba06b5dff67b77cbb322ee0969c16290f6",
+      "audit/fixtures/1.0.0/source/audit/suites/runDesignResize09Tests.js": "3677372b567ff90a5cd109e6d5e08bf401cd759c8be209e01e06f27f7b640350",
+      "audit/fixtures/1.0.0/source/audit/suites/runEditorCore09Tests.js": "741e31d956f79aef0edbd2b21d61c5a32e71e9b770bc998974bff3e62b30cda2",
+      "audit/fixtures/1.0.0/source/audit/suites/runExtendedTests07.js": "dfe01fb5e1ec780c79d527c362fe92c7be257cc34b0017f06257ed9fdd555ff7",
+      "audit/fixtures/1.0.0/source/audit/suites/runLimitBoundary09Tests.js": "37b603f02d4fc9fcc0bb522c81e0a02d0f560dd9e41225d48265762ace9aab16",
+      "audit/fixtures/1.0.0/source/audit/suites/runProductVersion09Tests.js": "f6035cd61e89192621946ec81bd0055b343b750904fef9790cd40fd032e79c8f",
+      "audit/fixtures/1.0.0/source/audit/suites/runReleaseTests.js": "e7e16408138249a36651907926ef9a92dcfa4d1351324eb5ca3848227a9b3685",
+      "audit/fixtures/1.0.0/source/audit/suites/runSemanticContract09Tests.js": "20fc04b0135d62a80fe81df62a22ad745a7af693457dfb7aa1a0d3530ad15214",
+      "audit/fixtures/1.0.0/source/audit/suites/runSyntax09Tests.js": "4fc3548d4addf11d38b6599814f882acf3ed58dde4f8a3d58e74c4a21b506c58",
+      "audit/fixtures/1.0.0/source/audit/suites/runVersion08Tests.js": "8fd7b6c630d0cc8dfc0f1566607be98871d2dfe758f537373d0b5a82893d4032",
+      "audit/fixtures/language/forms.mjs": "bffc4a8c680689a5e0dbeb304900ab637306b40a940dd61a2d1c04d660368bc6",
+      "audit/fixtures/language/inline.mjs": "6a7a92bb7cd053c362ec909d7276b2cda869608935dfd2d8b95b4eddd2844856",
+      "audit/fixtures/provenance/public-sources.json": "cedf2050812e4df7cf1386241dc0adee08dff70a4e34fe47e275dba651afd36b",
+      "audit/lib/browser-environment.mjs": "6650295cfc003df1585dd36f30d08fc9bec161cf24b74db4b93238885fda8a95",
+      "audit/lib/completed-baseline.mjs": "4195e8841d93a31ed726c975bba71c5d59d1b82fff36660b901a4b0f1f97e429",
+      "audit/lib/completed-runtime-contract.mjs": "0160c789c075ee4281607739df78d94fff9bf518e5442dd286854780ea61eb1d",
+      "audit/lib/evidence-bundle.mjs": "5cdca6e2576aa7b197af0e4182fe9c3393f633c5b85238e4aedb89e0dbe2d323",
+      "audit/lib/gate-contract.mjs": "36158fcbdd6a89ba937109e2d2ce944b7a7db77eae07f4ce80642062616998a0",
+      "audit/lib/historical-source.mjs": "dcbb2235bad877565b0e521b12cc1c7ae2ee3e4328aa730a1414926da6615578",
+      "audit/lib/launch-identifiers.cjs": "6ef5ad261bc4fed9c4bbfb6ef660c008014d14250ea2bacd3b7e16f23ffbbe57",
+      "audit/lib/persistence-transition.mjs": "3d44315b802f30ba51c0271f2f861e3199ad88dc2fca09742b8682acb8ec136b",
+      "audit/lib/product-test-host.mjs": "93d02d1670cb6569141dad1b95426319f40b8556d5626dc16290923741425033",
+      "audit/lib/release-101-contract.mjs": "ed6e99e15b3d11ce6e0e1ea2fe8444a7c877c843af1051ce67a5e226433ca6e6",
+      "audit/lib/verify-browser-results.mjs": "7f5ed98eb6a580354019faa4260bad4f9c93b7bedeb3f6d67eb0664e0fe17180",
+      "audit/lib/verify-gate-results.mjs": "f15882b1b4617bab713f08a65325ce6ed1fc138f84cbfe04f6d8ba668a4908b6",
+      "audit/lib/verify-language-results.mjs": "be53ff69478e9d9bfbd40b54c07b308d0707a149642571c0f4523308acd29c45",
+      "audit/lib/verify-surface-results.mjs": "996fe2549180d3ac196c61b4adb2d5f52ef5a45cf0a5ddda2ae754ba5709c270",
+      "audit/lib/verify-test-results.mjs": "e382d484db460b8499fa2730c64efc8a2c25317fe180650e23336cfcf6336bf3",
+      "audit/manifests/browser-obligations.json": "691dd5742d5f37f8c652f8f704af16c893dead931f227f93e17ef03d26dfd06f",
+      "audit/manifests/browser-results.json": "5ef6166f324dfef02dc36937ca26173b9932ce506fcb0b33f0c4e40ff7593da2",
+      "audit/manifests/externalization-map.json": "8b6f3dc34b74a48bd30f2d4c8d1a3c740cad26f1147dc6a46d03cabadd18fbc2",
+      "audit/manifests/language-form-coverage.json": "982c91cfd8d20ad4f1469f4e95bfc41909b994ce12b03660cc0b025888220a6c",
+      "audit/manifests/product-tests.json": "a8701e2f6f46fbaa5633c2ce2fa730db3171a49a5f91eb424877bb879bca4378",
+      "audit/manifests/quality-1.0.0.json": "45c538fedd889e2a26c42a90cdc7f2429ef602af10a73169844ac57b63f624e7",
+      "audit/records/autosave-retirement.json": "352456a6b6e0864934b09622fffc5ec4ed0a1cea964156fe3c85bff510d784af",
+      "audit/records/externalization-equivalence.json": "dd03d28f1df464c5f52b9d888203097339454b4d2413ee5e51552e810af2495c",
+      "audit/records/language-source-review.md": "58e6825ae9f23b4ce6eb2a89c9a672aa4e027b3257fc758c8ee789690fe1ac8a",
+      "audit/records/language-transition.json": "805808d38aa92d28431774d5f7765ea2b577a26bb3bedd74334c29bd50abe153",
+      "audit/records/launch-identifier-map.json": "d0dc64f99da28ca8fa7baac90e9af45d22307570cdae31b62d1f1b23beb129bc",
+      "audit/records/phase3-guarantee-transition.json": "e69184ac17959241e18a4efddd73af8983b546b6543bcab67b9164d9ec8be0ee",
+      "audit/records/phase4-audit-inventory.json": "db2c12b249924601e502cd3b2a9f2e2dbf151db71e54d0c5585170ffa7332b03",
+      "audit/records/phase4-reviewed-inputs.json": "1a4ecc0fc5427ef60a6ac2f3b3f03ad3711371652da9d1992aeb0115ee5a19f2",
+      "audit/records/phase4-semantic-review.md": "2829efe851963efb8fc75e863421cec71787822ccfa25e186fb06bf6534ed1c9",
+      "audit/run-editor-surface-tests.mjs": "2c7031580145d7f8d651dab0b6b8015a119227c44231ed57262f0f3f2d83adb1",
+      "audit/run-fixed-baseline.mjs": "917c93eaca6b04a0e8233e48219204200e2fc75c1cd45b3747bd008954bb4bbd",
+      "audit/run-headless-selftest.mjs": "7f93805ded109ca69ce0ffbfd00fdd220c23e96c16c1ccaa134fbb9ba822626c",
+      "audit/run-language-tests.mjs": "843ab8dcb340503d73deff6e9e5bb7c5e66d4939a10c6ee881d93182f46f3a02",
+      "audit/run-local-gate.mjs": "b26e59c4c8d2f03bf346e94868f8572ea5d142acd4e1d61326257c9c232e78bc",
+      "audit/run-product-tests.mjs": "44bbd7768bbe7fba696d2f78638b7f09a25b8cef3fd38d88f2480889d12471f5",
+      "audit/suites/bindings.js": "13b8d6ab109cae8d6a91ad660c03562a0deefd3949109529525b25fc41c0d74d",
+      "audit/suites/editor-surface.js": "15187f20090da90d8186f820b0816a012978a43be6dc906e774570c6550dd101",
+      "audit/suites/language-forms.js": "aa6fb40efd72aaaa8ff5cd6d1f0101272c91e62259de36e3f8b871cc1418f798",
+      "audit/suites/runAkariAsyncSelfTests.js": "a30ddf723df1cfb666209aceec2cfb9e743c9756c73cb695a881c27393b71a0e",
+      "audit/suites/runAkariSelfTests.js": "6a9b0df1885d18c549dd8b5056413e2b25f354f0b7ba91b9e2806a6d8aad4c6e",
+      "audit/suites/runBlockCodec09Tests.js": "ac945068c6ac5f0c699efb93cfd0257bae6c75d6d8c134f26482ec77450ff2e1",
+      "audit/suites/runColorPicker09Tests.js": "7804f2d9ce81ccc562c185ea8a407563985e631ca19c77975f9d6c7d5acc0489",
+      "audit/suites/runDesignResize09Tests.js": "7fe67486ddae7c6941c862dc28fca2d955ffc71df59ea8d5f39e253edca02788",
+      "audit/suites/runEditorCore09Tests.js": "9f1a6914ec8d17f230c75db1cb1926b2cac75d9994a69c7553099496af462bd1",
+      "audit/suites/runExtendedTests07.js": "68244b0212dde9f7aa99aeacd383aed179693281a9ba66d4fbfd1f93cb0c3531",
+      "audit/suites/runLimitBoundary09Tests.js": "37b603f02d4fc9fcc0bb522c81e0a02d0f560dd9e41225d48265762ace9aab16",
+      "audit/suites/runProductVersion09Tests.js": "e064f49784f4fa9af31e303e6f2df4a3f9fb0c9874813c4affd4146749e7de0d",
+      "audit/suites/runReleaseTests.js": "e7e16408138249a36651907926ef9a92dcfa4d1351324eb5ca3848227a9b3685",
+      "audit/suites/runSemanticContract09Tests.js": "6879bd66cfdbbab3109e1613dc1266844b5e589569bdac34f1edc3ca6488edec",
+      "audit/suites/runSyntax09Tests.js": "498e10c13eb411c9b23a2fab392708fee1ebbd3ef2009ecf864dfd63f89146d6",
+      "audit/suites/runVersion08Tests.js": "98531851607fc35dc0fbfea1589f65ccce23c1f192bcc77c012d4d34dc301a18",
+      "audit/tests/browser-environment.mjs": "4033d2523c4db6fa5f238722a7d098d55606a96d3f46b4255f008776ea045dbd",
+      "audit/tests/ci-regression.mjs": "2c443b83d4226966f712d1228f902a15e6bc20969cfea1cb24a111bbdf162cb1",
+      "audit/tests/completed-baseline-negative.mjs": "fc26ea89325c04c82a7b70fc49f4a65e0d575f7a49b57a8125bbe6cb44bae2a0",
+      "audit/tests/dom-render-regression.cjs": "b8a0caf2fa416ea93e91d75a88da1e2060086ce70a0c05de31e107305a29be7e",
+      "audit/tests/editor-assets-101.mjs": "01a2664bc7ccf4e54d5bc0bb766e835f87cbdc4b0236d19917853a45bb1523e3",
+      "audit/tests/evidence-negative.mjs": "8509f8bb14f92c3d5ebe683e6e65522e5c319489e02066dc8bb7ebc9aaba3ca2",
+      "audit/tests/execution-continuity.mjs": "633a073e44a4574d655d16fb740c48a6c31a03e40efbe5e925cccfb760a5f796",
+      "audit/tests/externalization-static.mjs": "e885e64c58880a89f43ea12d5c9a760cd26bd35ca04d7315af4d4e9945a28edc",
+      "audit/tests/harness-negative.mjs": "0d8ea2cb47c6001357f1b9ba0eb49fa4fc4addcfcdf05b8c897dc7032235e430",
+      "audit/tests/historical-source-negative.mjs": "3df04f010705bd840d4e36399c3ee0703c24ce8c5e7071fad77fc553b0ec7c0f",
+      "audit/tests/language-boundaries.mjs": "c4d7a143bb343df9797f655ba3b3d3af332d5f651f226dceec23950236387025",
+      "audit/tests/language-harness-negative.mjs": "f29d605ca0d881b2eea492e882f6bcef99fb5ba8992eceb2c8d6bf7f9ea26db5",
+      "audit/tests/language-inventory.mjs": "b3d9bc017a51c9d36368afe872daafdcc6929a4ccff43d4902dd4a0dc1924a53",
+      "audit/tests/manual-docs.mjs": "c6376cc7683bad45a17c8baf12a9fb68bf4f92bf6bb132a58ee7d7ed48591670",
+      "audit/tests/node-product.mjs": "964dea30c49ce4a02a75445279d81af6f71fab6037f3d71b5fe05bb697f7076d",
+      "audit/tests/normal-product.mjs": "df4df91fbf52a9a084159dcf236a31863fb2153d8b7616157ad8bc404368ac8b",
+      "audit/tests/persistence-negative.mjs": "48ff6d2005f1ff12d0d1abd9ae76320020c782aba9891e125f7603adb0f73178",
+      "audit/tests/phase3-browser.mjs": "1f7508e105838c2d5829dc770bed826704c163000c05a3719bbf5ddafa567e99",
+      "audit/tests/product-diff.mjs": "bcd84059079b208f67b676ef0e539234ab0e90732124c332eec8c1c18d93f9ad",
+      "audit/tests/quality-policy-negative.mjs": "c2773d59ea56144cdf279a9e433f459e8651a381cd1f9f58ff4c0a1373c68525",
+      "audit/tests/release-101-negative.mjs": "ce111cac9b6b9ba11f2b7eb42e157ac3c6e09726f03bb9be831f251f3e4958b0",
+      "audit/tests/static-contract.py": "f09c13ca994526d025422abda5b046f7c2a4e92c6d1fb748ee12422847e52bf1",
+      "audit/tests/surface-negative.mjs": "a4a10419c96608701b1d3f7a90cbe261dfc7934375290abc193a0697829ef05d",
+      "audit/tests/workflow-preflight.py": "bcc2cba43d6347da580c6aafb3242be5b643821c8a0738f8817e72b730b3b578",
+      "audit/verify-evidence.mjs": "05aacfd87d1d4ac95355f805fcf15a5e498ef875031a25c45d62dfd82b7574df",
+      "audit/verify-reviewed-inputs.mjs": "60b595da149c280a58a35c39f0af4803d1830c85facf605bb33b517988aca2f6",
+      "index.html": "e4683d86abdb0bef4f0ebd41f883ba1a0daa7164b90c317b657d3c707fad3847"
+    }
+  },
+  "phase3LanguageComplete": false,
+  "status": "PASS",
+  "legacyCorpus": 95
+}

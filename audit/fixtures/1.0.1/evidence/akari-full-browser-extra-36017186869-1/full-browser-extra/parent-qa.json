@@ -1,0 +1,43 @@
+{
+  "html": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-extra/candidate/Akari.html",
+  "sha256": "4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387",
+  "browser": "140.0.7339.16",
+  "results": [
+    {
+      "id": "parent-switch-edit-history",
+      "pass": true
+    },
+    {
+      "id": "parent-pending-keeps-owner",
+      "pass": true
+    },
+    {
+      "id": "parent-definition-draft",
+      "pass": true
+    },
+    {
+      "id": "parent-syntax-semantic-switch",
+      "pass": true
+    },
+    {
+      "id": "parent-code-native-history",
+      "pass": true
+    },
+    {
+      "id": "parent-syntax-undo-fallback",
+      "pass": true
+    },
+    {
+      "id": "parent-pending-header-owner",
+      "pass": true
+    },
+    {
+      "id": "parent-header-limit-switch",
+      "pass": true
+    },
+    {
+      "id": "parent-tool-drag-pending",
+      "pass": true
+    }
+  ]
+}

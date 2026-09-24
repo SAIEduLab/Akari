@@ -19,13 +19,16 @@ historical identities, not product version declarations.
 The frozen product executes unchanged. The headless audit adapter changes only
 its exported property references after execution; the browser fixed-release
 runner uses its own frozen bindings and suites. No adapter is shipped in the
-product. `completed-runtime-contract.mjs` compares the entire runtime against
-the completed 1.0.0 source using only the recorded identifier correspondence.
-For 1.0.1 it also permits exactly the product appVersion metadata change.
+product. `completed-runtime-contract.mjs` now compares the entire runtime exactly with
+the verified 1.0.1 checkpoint, which already includes the authorized names and
+product appVersion change. The 1.0.0 source remains an immutable historical
+checkpoint with its own supplementary core replay.
 `release-101-contract.mjs` records three exact version expectations in two
 current suites. The full frozen assertions are otherwise preserved, and the
 frozen suites still execute unchanged against the frozen product. Fifteen new
-real-browser feature cases and report-validator negatives are added to the gate.
+real-browser feature cases execute from frozen 1.0.1 source as well as against
+the current candidate. Independent validators reject missing, changed, skipped
+or failing IDs and mismatched source, suite, product or snapshot hashes.
 
 The immutable fixtures, completion evidence, source commit and hashes described
 in [BASELINE.md](BASELINE.md) remain intact. Historical quotations and provenance

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {ledger09} from './browser/legacy/audit-lib.cjs';
 import {editorIds,guiIds} from './lib/verify-surface-results.mjs';
+import {editorAssetIds} from './lib/release-101-contract.mjs';
 const read=p=>JSON.parse(fs.readFileSync(p));
 const audit=fs.readFileSync('AUDIT.md','utf8'),core=read('audit/manifests/product-tests.json');
 const browser=read('audit/manifests/browser-results.json'),obligations=read('audit/manifests/browser-obligations.json');
@@ -91,11 +92,12 @@ const language=Array.from({length:42},(_,i)=>{
     validator:'audit/lib/verify-language-results.mjs',job:'selftest',environments:['node','chromium'],
     review:'phase4-semantic-review.md#S02-S05',result:'SOURCE_REVIEW_COMPLETE; MACHINE_RESULTS_SEPARATELY_BOUND',notApplicable:null,...machine};
 });
-const inventory={schema:'akari-phase4-inventory-v1',scope:'All applicable product acceptance against the completed 1.0.0 checkpoint; candidate machine and semantic verdicts are separately bound',
+const inventory={schema:'akari-phase4-inventory-v1',scope:'All applicable product acceptance against the verified 1.0.1 checkpoint; candidate machine and semantic verdicts are separately bound',
   binding:'Final execution snapshot and review attestation contain actual HEAD and hashes; this file does not contain its own commit SHA',
   statusLegend:machine,phases,d09,capabilities,language,editorIds,guiIds,browserObligations:obligations.entries,
+  editorAssets101:{ids:editorAssetIds,candidateRunner:'audit/tests/editor-assets-101.mjs',fixedRunner:'audit/run-fixed-features.mjs',validator:'audit/lib/completed-baseline.mjs',job:'selftest',candidateArtifact:'editor-assets-101.json',fixedArtifact:'fixed101-editor-assets.json'},
   nonTechnicalLimits:['No user study or learning-effect measurement','No physical mobile-device or native Japanese IME study'],
-  completedBaseline:{sourceCommit:'2f455619440f5abbfbb564927769c85341f25074',manifest:'audit/fixtures/1.0.0/manifest.json'},
+  completedBaseline:{sourceCommit:'62359484a646651dd81806ef97a6cfef87f85d4b',manifest:'audit/fixtures/1.0.1/manifest.json'},
   remainingReleaseDecisions:['Actions on the current candidate SHA','Current candidate semantic acceptance; completed baseline is not current PASS']};
 const target='audit/records/phase4-audit-inventory.json',text=JSON.stringify(inventory,null,2)+'\n';
 if(process.argv.includes('--check'))assert.equal(fs.readFileSync(target,'utf8').replace(/\r\n/g,'\n'),text,'inventory drift');
