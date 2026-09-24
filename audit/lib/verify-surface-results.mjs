@@ -9,8 +9,8 @@ export const editorIds = ['value-first','assign','target-first','increase','decr
   'condition-connective-operands','condition-wait-and-inline-ranges','inline-finite-statement-composition','condition-replacement-keeps-body']
   .map(id=>'A10-EDIT/'+id);
 export const guiIds = ['source-selection-history-focus','inline-ime','inline-structure-single-history',
-  'inline-step-and-error-role','save-reload-generated-offline','unregistered-draft-autosave-registration',
-  'corrupt-autosave-preserves-current','condition-connective-local-edit','else-surface-branch-position'].map(id=>'A10-GUI/'+id);
+  'inline-step-and-error-role','save-reload-generated-offline','unregistered-draft-explicit-registration',
+  'retired-storage-isolation','condition-connective-local-edit','else-surface-branch-position'].map(id=>'A10-GUI/'+id);
 export function verifySurfaceResults(report,kind,currentSnapshot,environment) {
   const ids=kind==='editor'?editorIds:kind==='gui'?guiIds:null;
   assert.ok(ids,'unknown surface suite');

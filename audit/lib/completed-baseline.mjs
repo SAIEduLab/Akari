@@ -1,3 +1,4 @@
+import {currentCapabilities,currentBrowserContract,currentGuiIds,verifyRetirementRecord} from './persistence-transition.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -34,13 +35,14 @@ export function verifyCompletedAuthority(policy,currentCore){
   assert.equal(policy.comparison.switchAfterCompletedRelease,true);
   assert.deepEqual(currentCore,fixed('audit/manifests/product-tests.json'),'completed core authority reduced/changed');
   const old=fixed('audit/manifests/quality-1.0.0.json');
-  assert.deepEqual(policy.capabilities,old.capabilities,'completed capability/test mapping changed');
-  assert.deepEqual(read('audit/manifests/browser-results.json'),fixed('audit/manifests/browser-results.json'),'completed browser case set changed');
+  verifyRetirementRecord();
+  assert.deepEqual(policy.capabilities,currentCapabilities(old.capabilities),'unapproved capability/test mapping change');
+  assert.deepEqual(read('audit/manifests/browser-results.json'),currentBrowserContract(fixed('audit/manifests/browser-results.json')),'unapproved browser case set change');
   assert.deepEqual(read('audit/manifests/browser-obligations.json'),fixed('audit/manifests/browser-obligations.json'),'completed browser obligations changed');
   const forms=read('audit/manifests/language-form-coverage.json'),oldForms=fixed('audit/manifests/language-form-coverage.json');
   assert.deepEqual(forms.cases,oldForms.cases,'completed finite language cases changed');
   const inventory=fixed('audit/records/phase4-audit-inventory.json');
-  assert.deepEqual(editorIds,inventory.editorIds,'completed editor IDs changed');assert.deepEqual(guiIds,inventory.guiIds,'completed GUI IDs changed');
+  assert.deepEqual(editorIds,inventory.editorIds,'completed editor IDs changed');assert.deepEqual(guiIds,currentGuiIds(inventory.guiIds),'unapproved GUI IDs change');
   const language=read(completedFixture+'/evidence/akari-selftest-evidence-35816378510-1/language-browser.json');
   sameIds(expectedLanguageIds(forms),language.results.map(r=>r.id),'completed language IDs');
   for(const p of ['audit/suites/language-forms.js','audit/suites/editor-surface.js'])assert.equal(canonical(p).toString(),currentNames(canonical(completedFixture+'/source/'+p).toString()),'completed assertion suite changed beyond identifier correspondence: '+p);

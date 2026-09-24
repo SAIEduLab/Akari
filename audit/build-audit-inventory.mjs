@@ -21,7 +21,7 @@ const phaseSpecs=[
   [7,'HYBRID','S07',['analyzeAst','resolveBinding','parseTargetPrefix'],['selftest','full-browser-gate:limits','full-browser-gate:schemas']],
   [8,'HYBRID','S08',['EventScheduler','RuntimeModel','evalExpression'],['selftest','full-browser-gate:session','full-browser-gate:limits']],
   [9,'HYBRID','S08',['sourceSpan','nodeMap','runtimeError','debug'],['selftest','full-browser-gate:session']],
-  [10,'HYBRID','S09',['serializeProject','parseProjectFile','writeAutosave','packExecutable','restoreExecutable'],['selftest','full-browser-gate:session','full-browser-gate:limits']],
+  [10,'HYBRID','S09',['serializeProject','parseProjectFile','saveProject','packExecutable','restoreExecutable'],['selftest','full-browser-gate:session','full-browser-gate:limits']],
   [11,'HYBRID','S06',['prepareBlockEdit','createEditorSession','modelLocked','createBlockEditorView'],['selftest','full-browser-gate:ui','full-browser-gate:extra']],
   [12,'HYBRID','S10',['COMMAND_CATALOG','GRAMMAR_REGISTRY','BLOCK_SCHEMAS','LIMITS'],['selftest','full-browser-gate']],
   [13,'HYBRID','S13',['mountAkariPlayer','serializeProject','packExecutable','createAkariRuntime'],['static','selftest','full-browser-gate:session']],

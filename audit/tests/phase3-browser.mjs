@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/legacy/ui-routes.cjs';
+import P from '../browser/legacy/persistence-probe.cjs';
 import {verifySurfaceResults} from '../lib/verify-surface-results.mjs';
 const [browser,output]=process.argv.slice(2), product='Akari.html', before=snapshot(product);
 if(!output||fs.existsSync(output))throw Error('Supply a new output path');
@@ -122,26 +123,35 @@ await withBrowser(browser,async b=>{
     assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
     return{sourceExact:true,offline:true,saveSha256:sha(saved),generatedSha256:sha(fs.readFileSync(generated))};
   });
-  await run('A10-GUI/unregistered-draft-autosave-registration',async p=>{
+  await run('A10-GUI/unregistered-draft-explicit-registration',async p=>{
     await click(p,'procBtn');await click(p,'callableNewFunction');
     const set=async(id,text)=>{await p.locator('#'+id).fill(text);await p.waitForTimeout(350);};
     await set('callableName','仮計算');await set('callableArgs','値');await set('callableCode','もし 値が0より大きいなら、値を返す\nでなければ、未知名を返す ※ 下書き');
     const initial=await state(p);assert.equal(JSON.parse(initial.project).functions.length,0);assert.equal(initial.hasDraft,true);
     await click(p,'callableModeblocks');await click(p,'callableModecode');assert.deepEqual(await state(p),initial);
-    await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));await p.reload();await p.locator('#recoveryModal.show').waitFor();await click(p,'recoveryRestore');
-    const recovered=await state(p);assert.equal(JSON.parse(recovered.project).functions.length,0);assert.equal(recovered.draft.source,initial.draft.source);
     await p.locator('#procModal.show').waitFor();await click(p,'callableSave');assert.equal(JSON.parse((await state(p)).project).functions[0].source,initial.draft.source);
     await p.keyboard.press('Control+z');assert.equal(JSON.parse((await state(p)).project).functions.length,0);assert.equal((await state(p)).hasDraft,true);
     await p.keyboard.press('Control+y');assert.equal(JSON.parse((await state(p)).project).functions.length,1);
-    return{draftSeparate:true,unknownNamePreserved:true,autosaveRecovery:true,registrationUndoRedo:true};
+    return{draftSeparate:true,unknownNamePreserved:true,registrationUndoRedo:true};
   });
-  await run('A10-GUI/corrupt-autosave-preserves-current',async p=>{
-    const initial=await state(p);await fill(p,source);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));
-    await p.evaluate(async()=>{await new Promise((resolve,reject)=>{const q=indexedDB.open('akari-workspace-f3');q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readwrite'),s=tx.objectStore('workspace'),get=s.get('latest');get.onsuccess=()=>{const v=get.result;if(!v){reject(Error('missing latest autosave'));return;}v.project.components[1].id=v.project.components[0].id;s.put(v);};tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};});});
-    await p.reload();await p.waitForFunction(()=>document.querySelector('#console').textContent.includes('F505'));
-    assert.equal(await p.locator('#recoveryModal.show').count(),0);
-    const current=await state(p);assert.notEqual(current.source,source);assert.equal(current.project,initial.project);
-    return{invalidRecordNotInstalled:true};
+  await run('A10-GUI/retired-storage-isolation',async p=>{
+    const initial=await state(p),evidence=[];
+    await P.installStorageProbe(p);
+    for(const corrupt of [false,true]){
+      const seeded=await P.seedRetiredRecords(p,corrupt);
+      await p.reload();await p.waitForFunction(()=>!!Akari.app);
+      await p.waitForTimeout(1500);assert.equal((await state(p)).project,initial.project);
+      await fill(p,source);const edited=await state(p);await p.waitForTimeout(1500);assert.deepEqual(await state(p),edited);
+      await mode(p,'blocks');await number(p).fill('7');await number(p).press('Enter');
+      await click(p,'undoBtn');assert.equal((await state(p)).source,source);await click(p,'redoBtn');
+      await mode(p,'code');
+      const savedState=await state(p),save=p.waitForEvent('download');await click(p,'saveBtn');const file=path.join(dir,'manual-only-'+corrupt+'.akari.md');await (await save).saveAs(file);
+      await click(p,'newBtn');await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(source=>Akari.app.editorState.main.sourceText===source,savedState.source);assert.equal((await state(p)).project,savedState.project);
+      await p.waitForTimeout(1500);const calls=await P.assertNoPersistence(p);
+      assert.deepEqual(await P.readRetiredRecords(p),seeded,'retired data must remain untouched');
+      evidence.push({corrupt,calls,oldRecordIgnored:true,oldRecordUnchanged:true,manualSaveOpen:true,undoRedo:true});
+    }
+    return{cases:evidence};
   });
 });
 assert.deepEqual(snapshot(product),before);
