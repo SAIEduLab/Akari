@@ -17,7 +17,7 @@
     "Manual/code-mode-advanced.html": "b020e8456cf19a49e33682892ec12eaca97160db92033041c4a85c3f8f09fdbb",
     "Manual/code-mode-beginner.html": "3defea54ea5ef128f14d6e9bf4f3a9303b30b3eeb8bf10411b6513ae7afd06cc",
     "Manual/code-mode-intermediate.html": "337123375a9d637955d06795c9d0872002a454812beaa8f2a0dddff64a83146e",
-    "README.md": "31aef2f8ca4b27f7f75d4d7782e6d92f9f55b1f247e14a3038e393da5eea9de0",
+    "README.md": "7ef2f8cf867f45a4c649fd234fe594bb9f72bb07286f8ee1bdec95f1536e6cac",
     "audit/BASELINE.md": "45ca655697f2f502a1120874138ede6ff4e806774f4cd2e1f08c07aca2011d1b",
     "audit/EXTERNALIZATION.md": "4d29dd03879855b73ce7fa9893df605c32a46f1d9c6b226b41b2d5efdb5c878e",
     "audit/LANGUAGE_FORMS.md": "0b93a4589910c2897ed6a8bec7e284e8d5a73554e5f0927e2195c22d16ebc576",
@@ -174,7 +174,7 @@
     "audit/records/launch-identifier-map.json": "d0dc64f99da28ca8fa7baac90e9af45d22307570cdae31b62d1f1b23beb129bc",
     "audit/records/phase3-guarantee-transition.json": "e69184ac17959241e18a4efddd73af8983b546b6543bcab67b9164d9ec8be0ee",
     "audit/records/phase4-audit-inventory.json": "db2c12b249924601e502cd3b2a9f2e2dbf151db71e54d0c5585170ffa7332b03",
-    "audit/records/phase4-semantic-review.md": "6c410af116cc60b91f0ab9fd43b29df3e626cc2a99173790288a724dab0b26a6",
+    "audit/records/phase4-semantic-review.md": "adef8b4b2b804cdb4ea2f25fa6f20ecbee3fdf6caf018066cd7371b75557fd30",
     "audit/run-editor-surface-tests.mjs": "2c7031580145d7f8d651dab0b6b8015a119227c44231ed57262f0f3f2d83adb1",
     "audit/run-fixed-baseline.mjs": "917c93eaca6b04a0e8233e48219204200e2fc75c1cd45b3747bd008954bb4bbd",
     "audit/run-headless-selftest.mjs": "7f93805ded109ca69ce0ffbfd00fdd220c23e96c16c1ccaa134fbb9ba822626c",
@@ -221,6 +221,6 @@
     "audit/tests/workflow-preflight.py": "bcc2cba43d6347da580c6aafb3242be5b643821c8a0738f8817e72b730b3b578",
     "audit/verify-evidence.mjs": "05aacfd87d1d4ac95355f805fcf15a5e498ef875031a25c45d62dfd82b7574df",
     "audit/verify-reviewed-inputs.mjs": "60b595da149c280a58a35c39f0af4803d1830c85facf605bb33b517988aca2f6",
-    "index.html": "e027298877b90c9d86cc8752684718813ec5266f1700c9da10fb4d5e95a6716d"
+    "index.html": "0369c207f75036206890062ee9f0b4aaee3fbaa9a76bb886b1410f04f381bee1"
   }
 }
