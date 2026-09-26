@@ -1,6 +1,6 @@
 {
   "schema": "akari-browser-audit-manifest-v1",
-  "fixedBaseline": "62359484a646651dd81806ef97a6cfef87f85d4b",
+  "fixedBaseline": "1207f8a44b783afbb2274e794759de4c58edb450",
   "runnerProvenance": "SAIEduLab/Akari-dev@12cd6403d843f05d74df9154991c1f4085637e04",
   "groups": {
     "session": [

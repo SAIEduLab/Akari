@@ -20,4 +20,4 @@ const report=await withBrowser(browserPath,async browser=>{
     sourceCommit:completedCommit,manifestSha256:completedManifestSha256,canonicalProductSha256:fixed.productSha256,executedProductSha256:sha(fs.readFileSync(completedProduct)),suites,results,total:results.length,passed,failed:results.length-passed};
 });
 assert.deepEqual(snapshot('Akari.html'),before);fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
-verifyFixedCore(report,before);console.log('Verified 1.0.1 fixed checkpoint: 884/884 PASS');
+verifyFixedCore(report,before);console.log('Completed 1.0.2 fixed checkpoint: 884/884 PASS');

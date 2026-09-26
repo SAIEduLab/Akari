@@ -80,9 +80,15 @@ export function verifyFreeze102(record=JSON.parse(fs.readFileSync('audit/manifes
   assert.deepEqual(record,featureFreeze102(),'1.0.2 feature freeze drift: impact review and renewed freeze before Push required');
   const policy=JSON.parse(fs.readFileSync('audit/manifests/quality-1.0.2.json')),
     previous=JSON.parse(fs.readFileSync('audit/manifests/quality-1.0.1.json'));
-  const normalized={...policy,targetProductVersion:previous.targetProductVersion,featureFreeze:previous.featureFreeze};
+  const normalized={...policy,policy:previous.policy,targetProductVersion:previous.targetProductVersion,featureFreeze:previous.featureFreeze,
+    releaseComplete:previous.releaseComplete,completedBaseline:previous.completedBaseline,
+    comparison:{...policy.comparison,requiredBaseline:previous.comparison.requiredBaseline,reason:previous.comparison.reason}};
+  delete normalized.completionRecord;delete normalized.audioIds;
   if(previous.featureFreeze===undefined)delete normalized.featureFreeze;
-  assert.deepEqual(normalized,previous,'1.0.1 audit guarantees must remain exact');
+  assert.deepEqual(normalized,previous,'all 1.0.1 guarantees must remain exact after the authorized checkpoint switch');
+  assert.equal(policy.releaseComplete,true);assert.deepEqual(policy.audioIds,audioIds102);
+  assert.equal(policy.completedBaseline.sourceCommit,'1207f8a44b783afbb2274e794759de4c58edb450');
+  assert.equal(policy.comparison.requiredBaseline,policy.completedBaseline.sourceCommit);
   assert.equal(policy.featureFreeze,'audit/manifests/release-1.0.2.json');
   return true;
 }

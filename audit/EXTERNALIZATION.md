@@ -1,6 +1,6 @@
 # Release audit externalization
 
-Historical phase-1 relocation record. Byte-for-byte runtime and product-diff invariance below applies only to H0 → HA. Current language/editing/version changes are reviewed in `records/phase4-semantic-review.md`; `lib/completed-runtime-contract.mjs` now checks exact runtime equality with the verified 1.0.1 checkpoint; the prior identifier and version correspondence remains recorded as history.
+Historical phase-1 relocation record. Byte-for-byte runtime and product-diff invariance below applies only to H0 → HA. Current language/editing/version changes are reviewed in `records/phase4-semantic-review.md`; `lib/completed-runtime-contract.mjs` now checks exact runtime equality with the completed 1.0.2 checkpoint; the prior identifier and version correspondence remains recorded as history.
 
 The migration baseline is public commit `41d787b664ed00467bf55881c419ba4f3727add9`, product blob `eef9f71d0721c376e73885268726f5ee341c5a5a`.
 

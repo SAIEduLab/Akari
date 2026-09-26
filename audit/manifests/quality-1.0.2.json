@@ -1,13 +1,13 @@
 {
   "schema": "akari-quality-policy-v1",
   "targetProductVersion": "1.0.2",
-  "policy": "user-authorized-verified-checkpoint",
-  "releaseComplete": false,
+  "policy": "user-authorized-completed-release",
+  "releaseComplete": true,
   "completedBaseline": {
-    "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
-    "manifest": "audit/fixtures/1.0.1/manifest.json",
-    "manifestSha256": "c6097c4d34dce97146563c12213d82737a1691545523060569d6b63c18d91fc5",
-    "productSha256": "4827785ffa8818edacd66aef30e22c2b74156a5779872e27dfdec70f50d12387"
+    "sourceCommit": "1207f8a44b783afbb2274e794759de4c58edb450",
+    "manifest": "audit/fixtures/1.0.2/manifest.json",
+    "manifestSha256": "76a2e673285ec05ca8d4e81d096d08a89ee3bd3c461b4ad194abd5b51aa03732",
+    "productSha256": "4f3678e5a3fb03e313f967ef3d9aa0e5291d5f5d180fc7f2b521a9254239bfa2"
   },
   "origin": {
     "commit": "41d787b664ed00467bf55881c419ba4f3727add9",
@@ -8998,14 +8998,14 @@
   ],
   "pending": [],
   "comparison": {
-    "requiredBaseline": "62359484a646651dd81806ef97a6cfef87f85d4b",
+    "requiredBaseline": "1207f8a44b783afbb2274e794759de4c58edb450",
     "completionEvidence": [
       "commit",
       "artifact hashes",
       "capability/test mapping",
       "validation results"
     ],
-    "reason": "User-authorized 1.0.1 audit checkpoint at the exact successful commit. All eight jobs of run 36017186869/1 passed; source and evidence are immutable. Ready, merge and release approval remain separate. Historical 1.0.0 and 0.8 checkpoints remain preserved and executed.",
+    "reason": "Completed 1.0.2 at the exact merged source 1207f8a44b783afbb2274e794759de4c58edb450, with ten successful jobs and nine verified input bundles from 36235604048/1. Completion applies only to this fixed source. Every candidate requires fresh machine and semantic review; historical 1.0.1, 1.0.0 and 0.8 guarantees remain mandatory.",
     "historicalBaseline": "ec43018d5ba546d5aa9df9c2799b18260a3ab2d7",
     "switchAfterVerifiedCheckpoint": true
   },
@@ -9051,5 +9051,31 @@
     "release-versions-and-100-import",
     "release-malformed-state-protection"
   ],
-  "featureFreeze": "audit/manifests/release-1.0.2.json"
+  "featureFreeze": "audit/manifests/release-1.0.2.json",
+  "completionRecord": {
+    "sourceCommit": "1207f8a44b783afbb2274e794759de4c58edb450",
+    "path": "audit/fixtures/1.0.2/completion.json",
+    "sha256": "964a3c9bf52e03d68d3a25db2e4f83f4cb3532afc623c6b2bb77c601ec06cbfb",
+    "scope": "fixed-source-only"
+  },
+  "audioIds": [
+    "audio-import-mp3",
+    "audio-import-wav",
+    "audio-import-m4a",
+    "audio-import-m4a-mono",
+    "audio-import-flac",
+    "audio-import-flac-mono",
+    "audio-import-opus",
+    "audio-import-opus-mono",
+    "audio-file-picker",
+    "audio-unsupported-codecs",
+    "audio-aac-profile",
+    "audio-malformed-containers",
+    "audio-ogg-crc",
+    "audio-container-limits",
+    "audio-saved-mime-and-metadata",
+    "audio-ui-failure-atomic",
+    "audio-old-project-compatibility",
+    "audio-runtime-mime-rejection"
+  ]
 }

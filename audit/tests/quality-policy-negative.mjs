@@ -5,12 +5,15 @@ const manifest=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'))
 const policy=JSON.parse(fs.readFileSync('audit/manifests/quality-1.0.2.json'));
 verifyAuthority(manifest,policy);
 const mutations=[
+ p=>p.comparison.completionEvidence.pop(),p=>p.comparison.reason="stale",p=>p.policy="user-authorized-verified-checkpoint",
+ p=>p.completionRecord.sourceCommit='main',p=>p.completionRecord.sha256='changed',
+ p=>p.completionRecord.scope='current-candidate',p=>p.audioIds.pop(),p=>p.audioIds.push(p.audioIds[0]),
  p=>p.entries.pop(),p=>p.entries.push(p.entries[0]),
  p=>p.entries[0].currentTest=null,p=>p.entries[0].disposition='skip',
  p=>p.overrides[0].removedIds.push('DEFAULT-001 初期作品'),
  p=>p.capabilities.pop(),p=>p.capabilities[0].id='fake',
  p=>p.comparison.requiredBaseline='main',p=>p.comparison.switchAfterVerifiedCheckpoint=false,
-  p=>p.checkpointApproved=false,p=>p.editorAssetIds.pop(),p=>p.editorAssetIds.push(p.editorAssetIds[0]),p=>p.completedBaseline='unfinished-head',p=>p.releaseComplete=true,
+  p=>p.checkpointApproved=false,p=>p.editorAssetIds.pop(),p=>p.editorAssetIds.push(p.editorAssetIds[0]),p=>p.completedBaseline='unfinished-head',p=>p.releaseComplete=false,
   p=>p.completedBaseline=null,p=>p.completedBaseline.sourceCommit='main',
   p=>p.completedBaseline.productSha256='candidate-output',p=>p.completedBaseline.manifestSha256='changed',
   p=>p.comparison.historicalBaseline='rewritten',

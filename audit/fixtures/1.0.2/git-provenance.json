@@ -1,0 +1,382 @@
+{
+  "schema": "akari-offline-git-provenance-v1",
+  "commits": {
+    "1207f8a44b783afbb2274e794759de4c58edb450": "dHJlZSA4N2VmMjgwOWU3YzlkZWM4NThjNGZlOTU4ZGI3ZTI5ZTFmMDFiOWM2CnBhcmVudCBmM2NiODVjNDA3NjI1YTc3ODE5ODMzMDg4NWUyZDQ2OTdlMTU1YzcwCnBhcmVudCBmZmZkNmI5NDg3YTY3ZjE4MDQ0NzE4NWJhMDYzNDk2OTE0ZTNjNWExCmF1dGhvciBEZW5rYSA8MzA0NjYyMzcyK1NBSUVkdUxhYkB1c2Vycy5ub3JlcGx5LmdpdGh1Yi5jb20+IDE3OTA0MTgxNTcgKzA5MDAKY29tbWl0dGVyIEdpdEh1YiA8bm9yZXBseUBnaXRodWIuY29tPiAxNzkwNDE4MTU3ICswOTAwCmdwZ3NpZyAtLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0tLQogCiB3c0ZjQkFBQkNBQVFCUUpxdDV6dENSQzFhUTd1dTVVaGxBQUF5aWtRQUNnaE5FN3ljdkpNNGl0MCt0ZjliOTRRCiBlaForSFJuUGhMRGxFWDF1TTVMNVdaUjQvbU5qRUYzaXpHL2JjblZKdlNQTWRITE5MRVNvclFxK2MyNG8zdUdmCiBWbXErOTJ5OG13dFcxWTZUZHZ3Z1UzdWd0ZUs2b3dpM3dBMU00cVNzQ01wM1I0YnJKeWFWbkJVeW5QOWZ6dkRsCiB1SlQ0NURxQnovcHlTMHIydFZ3NEc2bWgwRmtQbHdCejdnTVBLSjdzaGM0bFZ2Q0YwWTdtcEJMcDZGcmlQTkY1CiBnM3A4bEVVblg3Tm9FU0dGamxoMnJQVmN5RFZyNCsrdkVQeDZENUtVdU5ZK0V1SCt6YkxJUmMyR1JOdjlrOXJKCiB1aXVrdm50a2RFU1lGQ243czMrb29Ha3N6NWNPVzhDenBFUkVjY1ZmZWFQMVpVK1YxcUxjdlQ0eFB0dHhEMEM5CiAyTGhGUFZzVllDRE04RXFicU50Nm05bFBBZVVEL0xHY25PdTFxcFB3dE0vQ2dydlJUTEFCL3lXL2RVVllEK2ZJCiBVc0lTWmdFRERCSHRJQ0tkUTJWd2hQK3ZYVDJsSlY5NVc1RzlsMmp0Z1BDSWNLNjVaUGJwY2MzN0I3Y09La1dMCiBFUzBXeENGY2FjU2Rua2x3dEM2ZmZvRGtMWW85cDBUK0ZIaGp6MEo0bWJ0dkhQZUJTTDhuQXpPUlhMSkdMSzV4CiBiZWZndk1haDMxZ1R3Vno3bUkyVUQrdVMzUGRKTjF6Qm5aSGlzZHM5RjA4eWFNMU02NS9xdDRUbGpza2liZ3A3CiBuSjFRMmdBMURyTlF0UWZsUEVsRktXdmI2Znc0a3RzQVFDa3g3TmV2L2pMeCtZSnpNbGhIdXljQUlaeHIrWmNuCiBoTXdWQVp6YkROZ3ZGSEpPT01XaAogPVFLUVUKIC0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQogCgpNZXJnZSBwdWxsIHJlcXVlc3QgIzQ6IEFrYXJpIDEuMC4yIGF1ZGlvIGNvZGVjIHN1cHBvcnQKCkFsbCAxMCByZXF1aXJlZCBqb2JzIHBhc3NlZCBvbiBmZmZkNmI5NDg3YTY3ZjE4MDQ0NzE4NWJhMDYzNDk2OTE0ZTNjNWExLgpBdWRpdCBydW46IGh0dHBzOi8vZ2l0aHViLmNvbS9TQUlFZHVMYWIvQWthcmkvYWN0aW9ucy9ydW5zLzM2MjM0ODM1NzcyCkZlYXR1cmUgZnJlZXplLCBwcmVzZXJ2ZWQgYXVkaXQgZ3VhcmFudGVlcywgc291cmNlIHJldmlldyBhbmQgb2ZmbGluZSBjb2RlYyBhY2NlcHRhbmNlIHZlcmlmaWVkLg=="
+  },
+  "trees": {
+    "87ef2809e7c9dec858c4fe958db7e29e1f01b9c6": "NDAwMDAgLmdpdGh1YgCwO/SPibBhtNn33q8Tnp+Bi4z7XDEwMDY0NCAuZ2l0aWdub3JlABgORvVcahs+OjFZFbReo5fUb8eNMTAwNjQ0IEFVRElULm1kAA5CLNExWiRw5780e+lHFhT2UAyTMTAwNjQ0IEFrYXJpLmh0bWwAD6UUXHfXvPX0q7U8mYtl93gMHGExMDA2NDQgTEFOR1VBR0UubWQAV5IFr9lmIIML8CLklxtjBqOKXFYxMDA2NDQgTElDRU5TRQAmHuuen4srSw0Rk2bdqZxv19NcZDEwMDY0NCBNQU5VQUwuaHRtbADxu5BMZvv3osAlpj3PLdrRDs51XTQwMDAwIE1hbnVhbADMFagJSDpHgrH8EqZhvDZz2oR/9zEwMDY0NCBSRUFETUUubWQAJiFutTqnlKAVcqi0zCn2Q5R7QcQ0MDAwMCBhdWRpdADtd1MRn1LpShZU2lHmZ7j1RdtsvjEwMDY0NCBpbmRleC5odG1sAPcusTJyOjfHLjp6xuCcO/DbKuJw",
+    "b03bf48f89b061b4d9f7deaf139e9f818b8cfb5c": "NDAwMDAgd29ya2Zsb3dzAGr3UC2msiTV27Xb7BBPHCeP2Z3m",
+    "6af7502da6b224d5dbb5dbec104f1c278fd99de6": "MTAwNjQ0IGFrYXJpLWF1ZGl0LnltbACLOCUfkM3eDVjd04t/uSf6a62Ppg==",
+    "cc15a809483a4782b1fc12a661bc3673da847ff7": "MTAwNjQ0IC5naXRrZWVwAOad4puy0dZDS4sprnda2MLkjFORMTAwNjQ0IGJsb2NrLW1vZGUuaHRtbABuwPtq0C+pDt5LhvE6q0lRubwiNDEwMDY0NCBjb2RlLW1vZGUtYWR2YW5jZWQuaHRtbAAJC+bTnQ/1h4cD7KgnWZf2DTFd2zEwMDY0NCBjb2RlLW1vZGUtYmVnaW5uZXIuaHRtbAAdkqNd64ZT5xgW6qdKAqFvD+dsNjEwMDY0NCBjb2RlLW1vZGUtaW50ZXJtZWRpYXRlLmh0bWwAMEQDDIX1EJn1LNznUovsGcfRg5g=",
+    "ed7753119f52e94a1654da51e667b8f545db6cbe": "MTAwNjQ0IEJBU0VMSU5FLm1kAMyD/Zpa9p6BhHUxvr2kB0Yt7jGDMTAwNjQ0IEVYVEVSTkFMSVpBVElPTi5tZACKEzqtHy/QRLDEPeX0vbYP7dvYfDEwMDY0NCBMQU5HVUFHRV9GT1JNUy5tZAA5xEoh3vhyyn/jBObUv95utTLejzEwMDY0NCBMQVVOQ0gubWQAhyb7d0r6l8DLMg5cdDlyW38HvxkxMDA2NDQgUkVBRE1FLm1kAA5ihMADfDD1EblrvCYDP1QxK3oRNDAwMDAgYnJvd3NlcgCokOE/JOCGbmFO9db25cDxFQePrjEwMDY0NCBidWlsZC1hdWRpdC1pbnZlbnRvcnkubWpzAJZZC1F/Zo9qVtJs+n55eiscgWfCNDAwMDAgZml4dHVyZXMAnsWHKPlU/f2zSNNM41c+GwSdYg4xMDA2NDQgZnJlZXplLXJlbGVhc2UtMTAyLm1qcwA/ILedhKIBF0N0ek6PgN/hIk8uFDEwMDY0NCBnZW5lcmF0ZS1hdWRpby0xMDIucHkAL3Bt33TLcUDCs1mEVmRrFikKKcMxMDA2NDQgaW5zdGFsbC1jb2RlYy1icm93c2VyLnB5AJ3NIWqAfrhvL+GObOU06JWQxf7DNDAwMDAgbGliAG1s5clxCJlsoFBmvZNw8m8N4E+2NDAwMDAgbWFuaWZlc3RzAPyi65r2kk1f5255gdokn9HobzE9NDAwMDAgcmVjb3JkcwCwYDEUyPkR4rohXVQQvTGiZ/1iHTEwMDY0NCBydW4tZWRpdG9yLXN1cmZhY2UtdGVzdHMubWpzAOe429Za+hxx25XL0IbZ5ia/xHewMTAwNjQ0IHJ1bi1maXhlZC1iYXNlbGluZS5tanMAsj1Fgj22OqMryoSCbOluniiiTuUxMDA2NDQgcnVuLWZpeGVkLWZlYXR1cmVzLm1qcwCE54BUk6qRQJ8e1mVQeP3yAZK+HzEwMDY0NCBydW4taGVhZGxlc3Mtc2VsZnRlc3QubWpzAEINSzb8aUauIqlvWsiRXv9sIMhTMTAwNjQ0IHJ1bi1oaXN0b3JpY2FsLWJhc2VsaW5lLm1qcwCDK5OtL27Zf5FQxkSQScI0EWDm6TEwMDY0NCBydW4tbGFuZ3VhZ2UtdGVzdHMubWpzAP0ihm8fnxTtPesmcHmQ7Hd4iV57MTAwNjQ0IHJ1bi1sb2NhbC1nYXRlLm1qcwC9fH6CA0gIVP0f5Z/MrihJvz8bfzEwMDY0NCBydW4tcHJvZHVjdC10ZXN0cy5tanMAgvjYzosohOpc1pmrEQLsDszrp740MDAwMCBzdWl0ZXMAibGHbFtPpUPNlD9NYfkDAbVPH2o0MDAwMCB0ZXN0cwA//GHkphZMQdAQqKbxHfbbKJlSvzEwMDY0NCB2ZXJpZnktZXZpZGVuY2UubWpzAE2knQovMJfUKj6NnYjR79m+MUJbMTAwNjQ0IHZlcmlmeS1yZXZpZXdlZC1pbnB1dHMubWpzAKbAEw9mbEMH3qY9AB+fx9ikT275",
+    "a890e13f24e0866e614ef5d6f6e5c0f115078fae": "MTAwNjQ0IGJyb3dzZXItYXVkaXQtbWFuaWZlc3QuanNvbgDwU65I1XJAcXh3UlaVJKdsBvrcjDQwMDAwIGxlZ2FjeQAsHBh40yx0Xc+muJCnkCJB6VtkzDEwMDY0NCBydW4tZnVsbC1icm93c2VyLWF1ZGl0Lm1qcwA/sA8TXBN1rOV/kiJjjwOZ3TJesw==",
+    "9ec58728f954fdfdb348d34ce3573e1b049d620e": "NDAwMDAgMC44AGmhdyyeuwDqu0C0IOpoul53UNK/NDAwMDAgMS4wLjAAxEyQ8EP0xLhBe7lsr+FZ/BI2KdM0MDAwMCAxLjAuMQBmiaX8ileR2KfvAtLC8uxTiPLCyzQwMDAwIGF1ZGlvLTEuMC4yAKVLxHIcLVHlmOp7DYfCqPMk8N6cNDAwMDAgbGFuZ3VhZ2UAMhRRBXuQowzTML/mJNDJm0VsYeo0MDAwMCBwcm92ZW5hbmNlAK4C1W7lz5Dz/v335z0zuuOuBhIq",
+    "a54bc4721c2d51e598ea7b0d87c2a8f324f0de9c": "MTAwNjQ0IG1hbmlmZXN0Lmpzb24AdZbiUijTQ1WKfRnum4WiCOMgCcQxMDA2NDQgbW9uby5mbGFjAHxPPMsmeV5rnS3Vq5xcVFiWyR5vMTAwNjQ0IG1vbm8ubTRhAPFmiaLkT0cudmmA2CVfRzMHs0fGMTAwNjQ0IG1vbm8ub3B1cwC4cPQqRydRTpfmS7KkdigxbKvpZjEwMDY0NCBvdmVycmF0ZS5mbGFjAHhEnkX2j5MUMuCUkmygStFasj/EMTAwNjQ0IHRvbmUuZmxhYwDKRj/y+CVhyViS9N0xGDtC+ROAyjEwMDY0NCB0b25lLm00YQDloqh4fGavNtw8kFnTmBJHfYaDSDEwMDY0NCB0b25lLm1wMwB24sj9qo0Yn7+AGuZE6l/mCIixyDEwMDY0NCB0b25lLm9nZwAXnIsjB3xzfm75HFgY4sOD6ON8hzEwMDY0NCB0b25lLndhdgDDxofnpR7qVF2xJA/DHEeKKQjizjEwMDY0NCB1bnN1cHBvcnRlZC1hZHRzLmFhYwBtYWyhjB/zkZ2Wuax5lEiAiovA2DEwMDY0NCB1bnN1cHBvcnRlZC1hbGFjLm00YQA+N2Z4di+GAANCD2OF9a2a9MViRjEwMDY0NCB1bnN1cHBvcnRlZC12b3JiaXMub2dnAGzUb4SF7cECE0o5KXXypgDiBBC1",
+    "321451057b90a30cd330bfe624d0c99b456c61ea": "MTAwNjQ0IGZvcm1zLm1qcwBlKbAF5kPfDAAIBuEk5/19UUvJzjEwMDY0NCBpbmxpbmUubWpzAIdd1NGwzjk1gf+5cCAQfST26zrQ",
+    "6d6ce5c97108996ca05066bd9370f26f0de04fb6": "MTAwNjQ0IGJyb3dzZXItZW52aXJvbm1lbnQubWpzAPvQ0TPmjPqPoopdll527pOxJbp6MTAwNjQ0IGNoZWNrcG9pbnQtc291cmNlLm1qcwBjUQG1TPIda0LL8TSkP8yAXlxHvDEwMDY0NCBjb21wbGV0ZWQtYmFzZWxpbmUubWpzALvJTjSivA8XGPILbVu3QgulhLVzMTAwNjQ0IGNvbXBsZXRlZC1ydW50aW1lLWNvbnRyYWN0Lm1qcwBCvPl/czcY1WmB66vikGmAHyQMFjEwMDY0NCBldmlkZW5jZS1idW5kbGUubWpzAGsBo7FrEHXl6HxQR7iBbivYzSyQMTAwNjQ0IGdhdGUtY29udHJhY3QubWpzAFsTpFAfa1QqxlvFmmmGIVX/K/v3MTAwNjQ0IGhpc3RvcmljYWwtcmVsZWFzZS1iYXNlbGluZS5tanMAsps1fR61I9x5TzzLpqjTuoqZmHoxMDA2NDQgaGlzdG9yaWNhbC1zb3VyY2UubWpzAHOTE/txYJMK2xhOrkmFv02NJEM4MTAwNjQ0IGxhdW5jaC1pZGVudGlmaWVycy5janMAA8yGptXu2jt9KQMb9idE9wpXD3wxMDA2NDQgcGVyc2lzdGVuY2UtdHJhbnNpdGlvbi5tanMAqzZIxH44OQmjo1QR+qcbwRuG6z0xMDA2NDQgcHJvZHVjdC10ZXN0LWhvc3QubWpzAAdsXSLTAX7+MzPk8boPxgDcC5GvMTAwNjQ0IHJlbGVhc2UtMTAxLWNvbnRyYWN0Lm1qcwAkjBhX31asmQ4kqNontF9B/AlPYjEwMDY0NCByZWxlYXNlLTEwMi1jb250cmFjdC5tanMAA75EPqxvaH1jfBpt0I3ZprgMngwxMDA2NDQgdmVyaWZ5LWJyb3dzZXItcmVzdWx0cy5tanMAF4Vdck8B36kauPT0Drxin+j1Ax0xMDA2NDQgdmVyaWZ5LWdhdGUtcmVzdWx0cy5tanMAt1WyDjrBxOxSX4xlraWiAe71FKQxMDA2NDQgdmVyaWZ5LWxhbmd1YWdlLXJlc3VsdHMubWpzAP6ZLe+sJnzkeOIu1eu0jOJW8H+0MTAwNjQ0IHZlcmlmeS1zdXJmYWNlLXJlc3VsdHMubWpzAExSy84RVJZjZfLcowcq2frzUOdUMTAwNjQ0IHZlcmlmeS10ZXN0LXJlc3VsdHMubWpzAI/NEIM96bG5JopOMBQ3gJAZH6HS",
+    "fca2eb9af6924d5fe76e7981da249fd1e86f313d": "MTAwNjQ0IGJyb3dzZXItb2JsaWdhdGlvbnMuanNvbgB7U8B++KLWbLjiaE9gUtdSGEz/LzEwMDY0NCBicm93c2VyLXJlc3VsdHMuanNvbgB3jUl9onzHX2riMS12iiDuw06f4jEwMDY0NCBleHRlcm5hbGl6YXRpb24tbWFwLmpzb24AKQ895uSuFg1nWETPfnuDAAI0SbsxMDA2NDQgbGFuZ3VhZ2UtZm9ybS1jb3ZlcmFnZS5qc29uAOawbsCEyvXuygmS61dhdwxSFYv/MTAwNjQ0IHByb2R1Y3QtdGVzdHMuanNvbgAQlhgb2ubZpfNRRUjtjxdUuclEVDEwMDY0NCBxdWFsaXR5LTEuMC4wLmpzb24AGBGlAvzNVt28yKLVuXHc0E+vBQcxMDA2NDQgcXVhbGl0eS0xLjAuMS5qc29uAKzOKQ7XT60wo8txjQtq57tGrp8TMTAwNjQ0IHF1YWxpdHktMS4wLjIuanNvbgDQTao/CJNx7KSrZ0tJjbT5pA1VWzEwMDY0NCByZWxlYXNlLTEuMC4yLmpzb24AC6D3EuHIzI7dfr9lu11+qfz5SxQ=",
+    "b0603114c8f911e2ba215d5410bd31a267fd621d": "MTAwNjQ0IGF1dG9zYXZlLXJldGlyZW1lbnQuanNvbgBTmkbbK/ANzvXtH8VTw7Mj+snSCjEwMDY0NCBleHRlcm5hbGl6YXRpb24tZXF1aXZhbGVuY2UuanNvbgDxMwR8zFa2Ey0q/5bbv4xgyQ8hxjEwMDY0NCBsYW5ndWFnZS1zb3VyY2UtcmV2aWV3Lm1kAFTKl0VeKoh6/981T3kheq4PSDNxMTAwNjQ0IGxhbmd1YWdlLXRyYW5zaXRpb24uanNvbgCfL44GWCxkBvgYLzkMWF5t5CA5SDEwMDY0NCBsYXVuY2gtaWRlbnRpZmllci1tYXAuanNvbgChj+ODR3UZoa/yfNF0GqsPixX9JzEwMDY0NCBwaGFzZTMtZ3VhcmFudGVlLXRyYW5zaXRpb24uanNvbgBFim+XB9WjHnQ5yD4hpKBbP+2FUDEwMDY0NCBwaGFzZTQtYXVkaXQtaW52ZW50b3J5Lmpzb24AwYWzaL3LaZmMvXY9v8Lp2gZFxeIxMDA2NDQgcGhhc2U0LXJldmlld2VkLWlucHV0cy5qc29uAI7NAOkZuY2G7jjSPuPFsxxMR7ddMTAwNjQ0IHBoYXNlNC1zZW1hbnRpYy1yZXZpZXcubWQA+KZ7muMtv4yUygqmi6s99E9Mzpw=",
+    "89b1876c5b4fa543cd943f4d61f90301b54f1f6a": "MTAwNjQ0IGJpbmRpbmdzLmpzAH8aSZkkRsKc4XjHf6d2fKQiTHiaMTAwNjQ0IGVkaXRvci1zdXJmYWNlLmpzABZp6UOVsIMS5ku4KeeM068IyYhRMTAwNjQ0IGxhbmd1YWdlLWZvcm1zLmpzAKL8eaTS1i+BXO3iJZbfmdLXQ1E2MTAwNjQ0IHJ1bkFrYXJpQXN5bmNTZWxmVGVzdHMuanMAdYu9h/UovyY6X8nGZIVewu1CSAExMDA2NDQgcnVuQWthcmlTZWxmVGVzdHMuanMAbf/4elGa6syIoV+hFoq2YP8k0XcxMDA2NDQgcnVuQmxvY2tDb2RlYzA5VGVzdHMuanMAR3gOtg/oeOlxHgVil9MozpVu9OkxMDA2NDQgcnVuQ29sb3JQaWNrZXIwOVRlc3RzLmpzABQgk6Dc3QSnCPoe8yffmousAbl0MTAwNjQ0IHJ1bkRlc2lnblJlc2l6ZTA5VGVzdHMuanMAxzNn8o9Euf2J8uzvsawAEqvThkIxMDA2NDQgcnVuRWRpdG9yQ29yZTA5VGVzdHMuanMAgZ7qITw4K73rKrLIgAADmR9Dzx0xMDA2NDQgcnVuRXh0ZW5kZWRUZXN0czA3LmpzAA0BhVIsROl88/Ot8RubfjCjGn+lMTAwNjQ0IHJ1bkxpbWl0Qm91bmRhcnkwOVRlc3RzLmpzAEbxSiwjRDcJK4FqFz7smazeYhGuMTAwNjQ0IHJ1blByb2R1Y3RWZXJzaW9uMDlUZXN0cy5qcwA0XoFNQy3IGzJh7XmUOIyFCUzhLTEwMDY0NCBydW5SZWxlYXNlVGVzdHMuanMAMf0p3/ZAZqx1zFsBdyNXQ+6wF6ExMDA2NDQgcnVuU2VtYW50aWNDb250cmFjdDA5VGVzdHMuanMAxDb79dN1b6fjxLJOv0s9rpuSj1YxMDA2NDQgcnVuU3ludGF4MDlUZXN0cy5qcwClTJ+u4N594uQ9jKvG7woaG9VOEDEwMDY0NCBydW5WZXJzaW9uMDhUZXN0cy5qcwDPhLne7rIMSEzy8x8wV3e9KkNlgQ==",
+    "3ffc61e4a6164c41d010a8a6f11df6db289952bf": "MTAwNjQ0IGF1ZGlvLWNvZGVjcy0xMDIubWpzAEHydSIYTDuL8PvNes9mtC+2cuW7MTAwNjQ0IGJyb3dzZXItZW52aXJvbm1lbnQubWpzAFdS4HELgFQZbyKan8IswZY3NEOUMTAwNjQ0IGNoZWNrcG9pbnQtMTAxLW5lZ2F0aXZlLm1qcwDJOLEk9QrMtzsvtGpT7Mz7Qc6d7jEwMDY0NCBjaS1yZWdyZXNzaW9uLm1qcwBBh68tHfN6UCJJg0Bs22g386glczEwMDY0NCBjb21wbGV0ZWQtYmFzZWxpbmUtbmVnYXRpdmUubWpzAOIFB8REZMH5XdcfN/vcU8blMBgTMTAwNjQ0IGRvbS1yZW5kZXItcmVncmVzc2lvbi5janMAWEVPMx4IiClj8IRfaWggbWGuRh4xMDA2NDQgZWRpdG9yLWFzc2V0cy0xMDEubWpzADSkjwzW+apwd2RtY0IVZ6E2+RfFMTAwNjQ0IGV2aWRlbmNlLW5lZ2F0aXZlLm1qcwB4sbGmxA0Fx/2oMGmKjxeCpFdUqDEwMDY0NCBleGVjdXRpb24tY29udGludWl0eS5tanMAxBDrHizgod5kqlIq3JRmMl8XJ80xMDA2NDQgZXh0ZXJuYWxpemF0aW9uLXN0YXRpYy5tanMAn0oQZ1aIVOnuhU/Hst6hsn/i9uwxMDA2NDQgaGFybmVzcy1uZWdhdGl2ZS5tanMApiTq1VRyFdCI4+WzLjmbTxkGvJoxMDA2NDQgaGlzdG9yaWNhbC1zb3VyY2UtbmVnYXRpdmUubWpzAM8HEH7kyurAbSs/x3zHaHKV/YP6MTAwNjQ0IGxhbmd1YWdlLWJvdW5kYXJpZXMubWpzAH0HVUPacb0Y6tWerEdt3uHKOMwzMTAwNjQ0IGxhbmd1YWdlLWhhcm5lc3MtbmVnYXRpdmUubWpzAHKmtBwvEB5E3gouvwkhMG2gUcd8MTAwNjQ0IGxhbmd1YWdlLWludmVudG9yeS5tanMAVcrPcoNUsZJV4xMZCBjz9iRgYHwxMDA2NDQgbWFudWFsLWRvY3MubWpzAESHGrlyTjeA+569vA5Xn0SoHYHkMTAwNjQ0IG5vZGUtcHJvZHVjdC5tanMAamfoZ8GBMjVwZAGo4BITXzF0i84xMDA2NDQgbm9ybWFsLXByb2R1Y3QubWpzAPKoagWRaLDYVMC08JLy6yZYJywlMTAwNjQ0IHBlcnNpc3RlbmNlLW5lZ2F0aXZlLm1qcwAdbUvt3UkKUK0hE0wEvukBP3h3IzEwMDY0NCBwaGFzZTMtYnJvd3Nlci5tanMATGvbaUQYq6gDM4+S1Tvqp5c1+HIxMDA2NDQgcHJvZHVjdC1kaWZmLm1qcwC4vIba1xstPd+zbmp0ouK1GJDneTEwMDY0NCBxdWFsaXR5LXBvbGljeS1uZWdhdGl2ZS5tanMAboqXArqiZcKT+/1g3acaLuHb+loxMDA2NDQgcmVsZWFzZS0xMDEtbmVnYXRpdmUubWpzAFJN+VwLbzoTf93G3FfrcEDzDbVQMTAwNjQ0IHJlbGVhc2UtMTAyLW5lZ2F0aXZlLm1qcwBpJR8NvHeKIoGOTFfk8LvcIxpy4jEwMDY0NCBzdGF0aWMtY29udHJhY3QucHkAbqGzsOTNjfw1ry3vhV5KqCfljK4xMDA2NDQgc3VyZmFjZS1uZWdhdGl2ZS5tanMAs0DRicPUbPT9gGBXIJbxOAJKoZcxMDA2NDQgd29ya2Zsb3ctcHJlZmxpZ2h0LnB5AGsEBGa9NLnihWqRZjtDQuhvPGmO"
+  },
+  "blobs": {
+    "8b38251f90cdde0d58ddd38b7fb927fa6bad8fa6": {
+      "bytes": 13139,
+      "sha256": "08a3ef72d07ed7f1a4c71e0ee1a947f00dfa07f034f292c350a282c3eb06fb57",
+      "fixture": "audit/fixtures/1.0.2/source/.github/workflows/akari-audit.yml"
+    },
+    "0e422cd1315a2470e7bf347be9471614f6500c93": {
+      "bytes": 285254,
+      "sha256": "d30821adfe2911bff7c0554ff5a8bf215a2d47af3ac6608ea28a3fc88550a112",
+      "fixture": "audit/fixtures/1.0.2/source/AUDIT.md"
+    },
+    "0fa5145c77d7bcf5f4abb53c998b65f7780c1c61": {
+      "bytes": 931877,
+      "sha256": "4f3678e5a3fb03e313f967ef3d9aa0e5291d5f5d180fc7f2b521a9254239bfa2",
+      "fixture": "audit/fixtures/1.0.2/source/Akari.html"
+    },
+    "579205afd96620830bf022e4971b6306a38a5c56": {
+      "bytes": 52873,
+      "sha256": "0b7c9c993ed2e90a43856878337d3830a5df990f8b069f8ec6477b332a62e82b",
+      "fixture": "audit/fixtures/1.0.2/source/LANGUAGE.md"
+    },
+    "f1bb904c66fbf7a2c025a63dcf2ddad10ece755d": {
+      "bytes": 29346,
+      "sha256": "d9fba1bf32baf9863f452728ad9c4770620065618b453597ad3f8f4577c65649",
+      "fixture": "audit/fixtures/1.0.2/source/MANUAL.html"
+    },
+    "6ec0fb6ad02fa90ede4b86f13aab4951b9bc2234": {
+      "bytes": 34070,
+      "sha256": "d594871df38deb08cf9effba0b74342a6e94cd9966b16f7a713e15c1a83bb36b",
+      "fixture": "audit/fixtures/1.0.2/source/Manual/block-mode.html"
+    },
+    "090be6d39d0ff5878703eca8275997f60d315ddb": {
+      "bytes": 30472,
+      "sha256": "882d8a8999cb1a9e7df80fd60c973ae99e2391123f53014d90a63df4f2f07831",
+      "fixture": "audit/fixtures/1.0.2/source/Manual/code-mode-advanced.html"
+    },
+    "1d92a35deb8653e71816eaa74a02a16f0fe76c36": {
+      "bytes": 29199,
+      "sha256": "99f43642c6bafc9eb25b52885cc189339e6c4117d5dc422bf2a504be433dd701",
+      "fixture": "audit/fixtures/1.0.2/source/Manual/code-mode-beginner.html"
+    },
+    "3044030c85f51099f52cdce7528bec19c7d18398": {
+      "bytes": 27340,
+      "sha256": "883165e1406049bcca6e4a790c29fcf96fbae60d308c310358a344460b8ca40a",
+      "fixture": "audit/fixtures/1.0.2/source/Manual/code-mode-intermediate.html"
+    },
+    "26216eb53aa794a01572a8b4cc29f643947b41c4": {
+      "bytes": 5386,
+      "sha256": "0f5743e171f6adbcd0155c63ff2e362c4c397a6eac8cd0d71802bba089963232",
+      "fixture": "audit/fixtures/1.0.2/source/README.md"
+    },
+    "f053ae48d5724071787752569524a76c06fadc8c": {
+      "bytes": 1129,
+      "sha256": "ae3b2b55d0fe3030ffe3ec0dfcc084c347d5909fcab3cd73a470d42d8e4d08f9",
+      "fixture": "audit/fixtures/1.0.2/source/audit/browser/browser-audit-manifest.json"
+    },
+    "7596e25228d343558a7d19ee9b85a208e32009c4": {
+      "bytes": 6278,
+      "sha256": "7ef4e605eac09986fc3f338592c63ce6bd736dd0df17f763bb20a8389de708d3",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/manifest.json"
+    },
+    "7c4f3ccb26795e6b9d2dd5ab9c5c545896c91e6f": {
+      "bytes": 9440,
+      "sha256": "d96dfaa7af3b3524a894c268b46627b9a50f6327eb8204bd8b36f6ffad7f45b6",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/mono.flac"
+    },
+    "f16689a2e44f472e766980d8255f473307b347c6": {
+      "bytes": 3511,
+      "sha256": "5b95c4067aa46d2162f4899f1de084736d995f4fe5b682111642d4672258259f",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/mono.m4a"
+    },
+    "b870f42a4727514e97e64bb2a47628316cabe966": {
+      "bytes": 1060,
+      "sha256": "41f9b19323e653470c03dbdf1d4966c17ad1fac76d851c5a676f17c6929e8c38",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/mono.opus"
+    },
+    "78449e45f68f931432e094926ca04ad15ab23fc4": {
+      "bytes": 22720,
+      "sha256": "ebdf765a93be54a5c20beeda1e26b21521c29ad431fa2112850c57119c419383",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/overrate.flac"
+    },
+    "ca463ff2f82561c95892f4dd31183b42f91380ca": {
+      "bytes": 16584,
+      "sha256": "c4c3fef17cfd6b0d52a9ca745fab1b0604456b1c8576c6deabdfe8f14eea3cc5",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/tone.flac"
+    },
+    "e5a2a8787c66af36dc3c9059d39812477d868348": {
+      "bytes": 4837,
+      "sha256": "5f2288b7bce3addf370f80c6ad861a6909fd15ba19551ccf7f9bc42e16c2b55a",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/tone.m4a"
+    },
+    "76e2c8fdaa8d189fbf801ae644ea5fe60888b1c8": {
+      "bytes": 5112,
+      "sha256": "cf03828daf6ce3dd1c83fc537f83a68dc926316153fbcf36d33d2da9a631cd6f",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/tone.mp3"
+    },
+    "179c8b23077c737e6ef91c5818e2c383e8e37c87": {
+      "bytes": 3108,
+      "sha256": "0dbeb7131913a543ac4025a5241501500ce37cbf39d92b19b9df5c48be7ae34b",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/tone.ogg"
+    },
+    "c3c687e7a51eea545db1240fc31c478a2908e2ce": {
+      "bytes": 48044,
+      "sha256": "ba93bc6e5422a3f387b38d6ce6fbd3074892a5b974fbcb8f33ddb2514c22bf9f",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/tone.wav"
+    },
+    "6d616ca18c1ff3919d96b9ac799448808a8bc0d8": {
+      "bytes": 3970,
+      "sha256": "13e1351f740963ecf4c509c0e7af9a09dd27fac2f7f1a41e8f5f405730bb047a",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/unsupported-adts.aac"
+    },
+    "3e376678762f860003420f6385f5ad9af4c56246": {
+      "bytes": 11195,
+      "sha256": "c40c4e034ea8a64bf30adf64690d18616226eeb212b249b014a36fef4b53e64c",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/unsupported-alac.m4a"
+    },
+    "6cd46f8485edc102134a392975f2a600e20410b5": {
+      "bytes": 5450,
+      "sha256": "8406301c575d19dbc637549392bf42b403831bf3d632cbfe362f138b56d53972",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/audio-1.0.2/unsupported-vorbis.ogg"
+    },
+    "6529b005e643df0c000806e124e7fd7d514bc9ce": {
+      "bytes": 7388,
+      "sha256": "bffc4a8c680689a5e0dbeb304900ab637306b40a940dd61a2d1c04d660368bc6",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/language/forms.mjs"
+    },
+    "875dd4d1b0ce393581ffb97020107d24f6eb3ad0": {
+      "bytes": 2296,
+      "sha256": "6a7a92bb7cd053c362ec909d7276b2cda869608935dfd2d8b95b4eddd2844856",
+      "fixture": "audit/fixtures/1.0.2/source/audit/fixtures/language/inline.mjs"
+    },
+    "248c1857df56ac990e24a8da27b45f41fc094f62": {
+      "bytes": 1757,
+      "sha256": "ed6e99e15b3d11ce6e0e1ea2fe8444a7c877c843af1051ce67a5e226433ca6e6",
+      "fixture": "audit/fixtures/1.0.2/source/audit/lib/release-101-contract.mjs"
+    },
+    "03be443eac6f687d637c1a6dd08dd9a6b80c9e0c": {
+      "bytes": 5280,
+      "sha256": "659f7721722a0270eba0926a7d460be1aa6d29124592bdb519cba7559df740f7",
+      "fixture": "audit/fixtures/1.0.2/source/audit/lib/release-102-contract.mjs"
+    },
+    "7b53c07ef8a2d66cb8e2684f6052d752184cff2f": {
+      "bytes": 3613,
+      "sha256": "691dd5742d5f37f8c652f8f704af16c893dead931f227f93e17ef03d26dfd06f",
+      "fixture": "audit/fixtures/1.0.2/source/audit/manifests/browser-obligations.json"
+    },
+    "778d497da27cc75f6ae2312d768a20eec34e9fe2": {
+      "bytes": 21547,
+      "sha256": "5ef6166f324dfef02dc36937ca26173b9932ce506fcb0b33f0c4e40ff7593da2",
+      "fixture": "audit/fixtures/1.0.2/source/audit/manifests/browser-results.json"
+    },
+    "290f3de6e4ae160d675844cf7e7b8300023449bb": {
+      "bytes": 509260,
+      "sha256": "8b6f3dc34b74a48bd30f2d4c8d1a3c740cad26f1147dc6a46d03cabadd18fbc2",
+      "fixture": "audit/fixtures/1.0.2/source/audit/manifests/externalization-map.json"
+    },
+    "e6b06ec084caf5eeca0992eb5761770c52158bff": {
+      "bytes": 357270,
+      "sha256": "7217298ad22d9c648b6682c1f03fde04f324826d33196efba73c9fada015376d",
+      "fixture": "audit/fixtures/1.0.2/source/audit/manifests/language-form-coverage.json"
+    },
+    "1096181bdae6d9a5f3514548ed8f1754b9c94454": {
+      "bytes": 38659,
+      "sha256": "a8701e2f6f46fbaa5633c2ce2fa730db3171a49a5f91eb424877bb879bca4378",
+      "fixture": "audit/fixtures/1.0.2/source/audit/manifests/product-tests.json"
+    },
+    "1811a502fccd56ddbcc8a2d5b971dcd04faf0507": {
+      "bytes": 425263,
+      "sha256": "45c538fedd889e2a26c42a90cdc7f2429ef602af10a73169844ac57b63f624e7",
+      "fixture": "audit/fixtures/1.0.2/source/audit/manifests/quality-1.0.0.json"
+    },
+    "d04daa3f089371eca4ab674b498db4f9a40d555b": {
+      "bytes": 426622,
+      "sha256": "d301a0a3507064f5a255e8133afd33682b3da48cc04f00db15de45c7b1cf6333",
+      "fixture": "audit/fixtures/1.0.2/source/audit/manifests/quality-1.0.2.json"
+    },
+    "0ba0f712e1c8cc8edd7ebf65bb5d7ea9fcf94b14": {
+      "bytes": 3124,
+      "sha256": "7d0de7b1d8ca56f4c880b7ef2b8edf328634cc726827fef6cab06f43324887ab",
+      "fixture": "audit/fixtures/1.0.2/source/audit/manifests/release-1.0.2.json"
+    },
+    "539a46db2bf00dcef5ed1fc553c3b323fac9d20a": {
+      "bytes": 7545,
+      "sha256": "352456a6b6e0864934b09622fffc5ec4ed0a1cea964156fe3c85bff510d784af",
+      "fixture": "audit/fixtures/1.0.2/source/audit/records/autosave-retirement.json"
+    },
+    "c185b368bdcb69998cbd763dbfc2e9da0645c5e2": {
+      "bytes": 2147234,
+      "sha256": "6684105a5394d095b8b996d77981ccf42580eb31d4c92c411e4f10bdc20b0d06",
+      "fixture": "audit/fixtures/1.0.2/source/audit/records/phase4-audit-inventory.json"
+    },
+    "8ecd00e919b98d86ee38d23ee3c5b31c4c47b75d": {
+      "bytes": 45410,
+      "sha256": "65b0d6ba82dae24c0e32d4033b990240db4db51555cbdac76160ce311e26ea1f",
+      "fixture": "audit/fixtures/1.0.2/source/audit/records/phase4-reviewed-inputs.json"
+    },
+    "f8a67b9ae32dbf8c94ca0aa68bab3df44f4cce9c": {
+      "bytes": 73304,
+      "sha256": "4b613dbb9eb8f32f0d94cc199b68af3465f7849ca1423a4bee2ba917ed677af0",
+      "fixture": "audit/fixtures/1.0.2/source/audit/records/phase4-semantic-review.md"
+    },
+    "7f1a49992446c29ce178c77fa7767ca4224c789a": {
+      "bytes": 1637,
+      "sha256": "13b8d6ab109cae8d6a91ad660c03562a0deefd3949109529525b25fc41c0d74d",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/bindings.js"
+    },
+    "1669e94395b08312e64bb829e78cd3af08c98851": {
+      "bytes": 12150,
+      "sha256": "15187f20090da90d8186f820b0816a012978a43be6dc906e774570c6550dd101",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/editor-surface.js"
+    },
+    "a2fc79a4d2d62f815cede22596df99d2d7435136": {
+      "bytes": 13450,
+      "sha256": "aa6fb40efd72aaaa8ff5cd6d1f0101272c91e62259de36e3f8b871cc1418f798",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/language-forms.js"
+    },
+    "758bbd87f528bf263a5fc9c664855ec2ed424801": {
+      "bytes": 2171,
+      "sha256": "a30ddf723df1cfb666209aceec2cfb9e743c9756c73cb695a881c27393b71a0e",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runAkariAsyncSelfTests.js"
+    },
+    "6dfff87a519aeacc88a15fa1168ab660ff24d177": {
+      "bytes": 23019,
+      "sha256": "f1af30d4fee94ff5c5a3a253de4442a7699953ab96c1c688a424049c0b084132",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runAkariSelfTests.js"
+    },
+    "47780eb60fe878e9711e056297d328ce956ef4e9": {
+      "bytes": 15457,
+      "sha256": "ac945068c6ac5f0c699efb93cfd0257bae6c75d6d8c134f26482ec77450ff2e1",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runBlockCodec09Tests.js"
+    },
+    "142093a0dcdd04a708fa1ef327df9a8bac01b974": {
+      "bytes": 2828,
+      "sha256": "7804f2d9ce81ccc562c185ea8a407563985e631ca19c77975f9d6c7d5acc0489",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runColorPicker09Tests.js"
+    },
+    "c73367f28f44b9fd89f2ecefb1ac0012abd38642": {
+      "bytes": 4490,
+      "sha256": "7fe67486ddae7c6941c862dc28fca2d955ffc71df59ea8d5f39e253edca02788",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runDesignResize09Tests.js"
+    },
+    "819eea213c382bbdeb2ab2c8800003991f43cf1d": {
+      "bytes": 25590,
+      "sha256": "9f1a6914ec8d17f230c75db1cb1926b2cac75d9994a69c7553099496af462bd1",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runEditorCore09Tests.js"
+    },
+    "0d0185522c44e97cf3f3adf11b9b7e30a31a7fa5": {
+      "bytes": 33778,
+      "sha256": "68244b0212dde9f7aa99aeacd383aed179693281a9ba66d4fbfd1f93cb0c3531",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runExtendedTests07.js"
+    },
+    "46f14a2c234437092b816a173eec99acde6211ae": {
+      "bytes": 17373,
+      "sha256": "37b603f02d4fc9fcc0bb522c81e0a02d0f560dd9e41225d48265762ace9aab16",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runLimitBoundary09Tests.js"
+    },
+    "345e814d432dc81b3261ed7994388c85094ce12d": {
+      "bytes": 5713,
+      "sha256": "0ba1fb31a925cdb1d4e2dd32b0a1981784949527e4233c434e6fa6179c0d9629",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runProductVersion09Tests.js"
+    },
+    "31fd29dff64066ac75cc5b0177235743eeb017a1": {
+      "bytes": 728,
+      "sha256": "e7e16408138249a36651907926ef9a92dcfa4d1351324eb5ca3848227a9b3685",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runReleaseTests.js"
+    },
+    "c436fbf5d3756fa7e3c4b24ebf4b3dae9b928f56": {
+      "bytes": 15895,
+      "sha256": "6879bd66cfdbbab3109e1613dc1266844b5e589569bdac34f1edc3ca6488edec",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runSemanticContract09Tests.js"
+    },
+    "a54c9faee0de7de2e43d8cabc6ef0a1a1bd54e10": {
+      "bytes": 15839,
+      "sha256": "498e10c13eb411c9b23a2fab392708fee1ebbd3ef2009ecf864dfd63f89146d6",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runSyntax09Tests.js"
+    },
+    "cf84b9deeeb20c484cf2f31f305777bd2a436581": {
+      "bytes": 16449,
+      "sha256": "98531851607fc35dc0fbfea1589f65ccce23c1f192bcc77c012d4d34dc301a18",
+      "fixture": "audit/fixtures/1.0.2/source/audit/suites/runVersion08Tests.js"
+    },
+    "41f27522184c3b8bf0fbcd7acf66b42fb672e5bb": {
+      "bytes": 14295,
+      "sha256": "92475dd15fcc66ccf2287c35f0690f2d2b4a3a6f562ce4969c69066b26578df3",
+      "fixture": "audit/fixtures/1.0.2/source/audit/tests/audio-codecs-102.mjs"
+    },
+    "34a48f0cd6f9aa7077646d63421567a136f917c5": {
+      "bytes": 19680,
+      "sha256": "7f213393658d11672d011040a2ca4601f59b0b64f2993361e54eef5f311fb766",
+      "fixture": "audit/fixtures/1.0.2/source/audit/tests/editor-assets-101.mjs"
+    },
+    "f72eb132723a37c72e3a7ac6e09c3bf0db2ae270": {
+      "bytes": 12910,
+      "sha256": "9a2dfd88f738fec959a4c87fa45810719558ae3e6de9074fb870580cbbbc090b",
+      "fixture": "audit/fixtures/1.0.2/source/index.html"
+    }
+  },
+  "sources": {
+    "1207f8a44b783afbb2274e794759de4c58edb450": {
+      ".github/workflows/akari-audit.yml": "8b38251f90cdde0d58ddd38b7fb927fa6bad8fa6",
+      "AUDIT.md": "0e422cd1315a2470e7bf347be9471614f6500c93",
+      "Akari.html": "0fa5145c77d7bcf5f4abb53c998b65f7780c1c61",
+      "LANGUAGE.md": "579205afd96620830bf022e4971b6306a38a5c56",
+      "MANUAL.html": "f1bb904c66fbf7a2c025a63dcf2ddad10ece755d",
+      "Manual/block-mode.html": "6ec0fb6ad02fa90ede4b86f13aab4951b9bc2234",
+      "Manual/code-mode-advanced.html": "090be6d39d0ff5878703eca8275997f60d315ddb",
+      "Manual/code-mode-beginner.html": "1d92a35deb8653e71816eaa74a02a16f0fe76c36",
+      "Manual/code-mode-intermediate.html": "3044030c85f51099f52cdce7528bec19c7d18398",
+      "README.md": "26216eb53aa794a01572a8b4cc29f643947b41c4",
+      "audit/browser/browser-audit-manifest.json": "f053ae48d5724071787752569524a76c06fadc8c",
+      "audit/fixtures/audio-1.0.2/manifest.json": "7596e25228d343558a7d19ee9b85a208e32009c4",
+      "audit/fixtures/audio-1.0.2/mono.flac": "7c4f3ccb26795e6b9d2dd5ab9c5c545896c91e6f",
+      "audit/fixtures/audio-1.0.2/mono.m4a": "f16689a2e44f472e766980d8255f473307b347c6",
+      "audit/fixtures/audio-1.0.2/mono.opus": "b870f42a4727514e97e64bb2a47628316cabe966",
+      "audit/fixtures/audio-1.0.2/overrate.flac": "78449e45f68f931432e094926ca04ad15ab23fc4",
+      "audit/fixtures/audio-1.0.2/tone.flac": "ca463ff2f82561c95892f4dd31183b42f91380ca",
+      "audit/fixtures/audio-1.0.2/tone.m4a": "e5a2a8787c66af36dc3c9059d39812477d868348",
+      "audit/fixtures/audio-1.0.2/tone.mp3": "76e2c8fdaa8d189fbf801ae644ea5fe60888b1c8",
+      "audit/fixtures/audio-1.0.2/tone.ogg": "179c8b23077c737e6ef91c5818e2c383e8e37c87",
+      "audit/fixtures/audio-1.0.2/tone.wav": "c3c687e7a51eea545db1240fc31c478a2908e2ce",
+      "audit/fixtures/audio-1.0.2/unsupported-adts.aac": "6d616ca18c1ff3919d96b9ac799448808a8bc0d8",
+      "audit/fixtures/audio-1.0.2/unsupported-alac.m4a": "3e376678762f860003420f6385f5ad9af4c56246",
+      "audit/fixtures/audio-1.0.2/unsupported-vorbis.ogg": "6cd46f8485edc102134a392975f2a600e20410b5",
+      "audit/fixtures/language/forms.mjs": "6529b005e643df0c000806e124e7fd7d514bc9ce",
+      "audit/fixtures/language/inline.mjs": "875dd4d1b0ce393581ffb97020107d24f6eb3ad0",
+      "audit/lib/release-101-contract.mjs": "248c1857df56ac990e24a8da27b45f41fc094f62",
+      "audit/lib/release-102-contract.mjs": "03be443eac6f687d637c1a6dd08dd9a6b80c9e0c",
+      "audit/manifests/browser-obligations.json": "7b53c07ef8a2d66cb8e2684f6052d752184cff2f",
+      "audit/manifests/browser-results.json": "778d497da27cc75f6ae2312d768a20eec34e9fe2",
+      "audit/manifests/externalization-map.json": "290f3de6e4ae160d675844cf7e7b8300023449bb",
+      "audit/manifests/language-form-coverage.json": "e6b06ec084caf5eeca0992eb5761770c52158bff",
+      "audit/manifests/product-tests.json": "1096181bdae6d9a5f3514548ed8f1754b9c94454",
+      "audit/manifests/quality-1.0.0.json": "1811a502fccd56ddbcc8a2d5b971dcd04faf0507",
+      "audit/manifests/quality-1.0.2.json": "d04daa3f089371eca4ab674b498db4f9a40d555b",
+      "audit/manifests/release-1.0.2.json": "0ba0f712e1c8cc8edd7ebf65bb5d7ea9fcf94b14",
+      "audit/records/autosave-retirement.json": "539a46db2bf00dcef5ed1fc553c3b323fac9d20a",
+      "audit/records/phase4-audit-inventory.json": "c185b368bdcb69998cbd763dbfc2e9da0645c5e2",
+      "audit/records/phase4-reviewed-inputs.json": "8ecd00e919b98d86ee38d23ee3c5b31c4c47b75d",
+      "audit/records/phase4-semantic-review.md": "f8a67b9ae32dbf8c94ca0aa68bab3df44f4cce9c",
+      "audit/suites/bindings.js": "7f1a49992446c29ce178c77fa7767ca4224c789a",
+      "audit/suites/editor-surface.js": "1669e94395b08312e64bb829e78cd3af08c98851",
+      "audit/suites/language-forms.js": "a2fc79a4d2d62f815cede22596df99d2d7435136",
+      "audit/suites/runAkariAsyncSelfTests.js": "758bbd87f528bf263a5fc9c664855ec2ed424801",
+      "audit/suites/runAkariSelfTests.js": "6dfff87a519aeacc88a15fa1168ab660ff24d177",
+      "audit/suites/runBlockCodec09Tests.js": "47780eb60fe878e9711e056297d328ce956ef4e9",
+      "audit/suites/runColorPicker09Tests.js": "142093a0dcdd04a708fa1ef327df9a8bac01b974",
+      "audit/suites/runDesignResize09Tests.js": "c73367f28f44b9fd89f2ecefb1ac0012abd38642",
+      "audit/suites/runEditorCore09Tests.js": "819eea213c382bbdeb2ab2c8800003991f43cf1d",
+      "audit/suites/runExtendedTests07.js": "0d0185522c44e97cf3f3adf11b9b7e30a31a7fa5",
+      "audit/suites/runLimitBoundary09Tests.js": "46f14a2c234437092b816a173eec99acde6211ae",
+      "audit/suites/runProductVersion09Tests.js": "345e814d432dc81b3261ed7994388c85094ce12d",
+      "audit/suites/runReleaseTests.js": "31fd29dff64066ac75cc5b0177235743eeb017a1",
+      "audit/suites/runSemanticContract09Tests.js": "c436fbf5d3756fa7e3c4b24ebf4b3dae9b928f56",
+      "audit/suites/runSyntax09Tests.js": "a54c9faee0de7de2e43d8cabc6ef0a1a1bd54e10",
+      "audit/suites/runVersion08Tests.js": "cf84b9deeeb20c484cf2f31f305777bd2a436581",
+      "audit/tests/audio-codecs-102.mjs": "41f27522184c3b8bf0fbcd7acf66b42fb672e5bb",
+      "audit/tests/editor-assets-101.mjs": "34a48f0cd6f9aa7077646d63421567a136f917c5",
+      "index.html": "f72eb132723a37c72e3a7ac6e09c3bf0db2ae270"
+    }
+  }
+}

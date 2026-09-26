@@ -35,9 +35,9 @@ node audit/lib/verify-test-results.mjs audit-evidence/current-selftest.json Akar
 node audit/tests/harness-negative.mjs "$AKARI_BROWSER" audit-evidence/current-selftest.json
 node audit/tests/node-product.mjs
 node audit/tests/normal-product.mjs "$AKARI_BROWSER" Akari.html audit-evidence/normal-product.json
-# Active verified 1.0.1 checkpoint uses its frozen core and feature suites:
+# Active completed 1.0.2 checkpoint uses its frozen core and feature suites:
 node audit/run-fixed-baseline.mjs "$AKARI_BROWSER" audit-evidence/completed-baseline-selftest.json
-node audit/run-fixed-features.mjs "$AKARI_BROWSER" audit-evidence/fixed101-editor-assets.json
+node audit/run-fixed-features.mjs "$AKARI_BROWSER" audit-evidence/fixed102-editor-assets.json
 # Historical 1.0.0 supplementary replay:
 node audit/run-historical-baseline.mjs "$AKARI_BROWSER" audit-evidence/historical-100-selftest.json
 # Historical 0.8 keeps its original embedded supplementary path:
@@ -48,7 +48,7 @@ The Node supplement executes eight pure suites (793 IDs); it does not replace th
 
 Language surface additions have their own finite manifest and actual-product runner; see [LANGUAGE_FORMS.md](LANGUAGE_FORMS.md). Run `node audit/run-language-tests.mjs --node`, then `node audit/run-language-tests.mjs "$AKARI_BROWSER"`, `node audit/tests/language-harness-negative.mjs audit-evidence/phase3/language-browser.json` and `node audit/tests/language-boundaries.mjs`. The first formal 1.0.0 specification replaces the documented short-header rejection with eight acceptance cases; the retired core ID is never reused. Phase 3 implements the six deferred inline cases, with 605 total language assertions and no deferred acceptance. These tests add guarantees; they do not replace any existing core or browser obligation. The phase-1-only `product-diff.mjs` must not be used to claim the intentional language changes are invariant.
 
-The active checkpoint is verified 1.0.1 at `62359484a646651dd81806ef97a6cfef87f85d4b`, explicitly authorized by the user after all eight jobs of Actions `36017186869/1` succeeded. See [the checkpoint record](BASELINE.md) for immutable source hashes, Git proofs and evidence. `manifests/quality-1.0.1.json` retains all 884 origin guarantees and 257 capabilities and freezes the 15 duplication/drawing cases. Core and feature suites execute against both the fixed product and the current candidate. `checkpointApproved: true` and `releaseComplete: false` record the authorization boundary. Historical 1.0.0 and 0.8 sources, evidence and supplementary execution remain intact. Version/save and browser replacements are recorded in records/phase3-guarantee-transition.json, retaining malformed-data validation and unsaved-state protection.
+The active completed checkpoint is 1.0.2 at `1207f8a44b783afbb2274e794759de4c58edb450`, from ten successful jobs in Actions `36235604048/1`. The user authorized its completion record and promotion after merge. See [BASELINE.md](BASELINE.md). `manifests/quality-1.0.2.json` binds 884 core IDs, 257 capabilities, 15 editor-asset cases and 18 audio IDs. `releaseComplete: true` applies only to the immutable source named by `completionRecord`; every new candidate still needs fresh execution and semantic review. The original 1.0.1, 1.0.0 and 0.8 fixtures, provenance and replay remain mandatory.
 
 Editor and GUI validation additionally requires:
 
@@ -70,9 +70,9 @@ The local gate and Actions require this report and its validator negatives in
 addition to every existing completed-release guarantee. The exact metadata-only
 assertion transition is documented in `lib/release-101-contract.mjs` and AUDIT.md.
 
-Use `node audit/run-local-gate.mjs "$AKARI_BROWSER" <fresh-evidence-directory>` for the same self-test gate as Actions: browser core 884, Node supplement 793, fixed 1.0.0 core 884 with all 257 capability mappings, plus historical 0.8 508 and 122/130 mapping, language 605 in both environments, editor 38 in both environments, GUI 9, 90 performance samples, and validator negatives. `tests/static-contract.py` and `tests/workflow-preflight.py` reproduce static preflight (PyYAML 6.0.3). Full-browser groups retain all 27 runners and independently checked case tuples. Do not overwrite earlier evidence.
+Use `node audit/run-local-gate.mjs "$AKARI_BROWSER" <fresh-evidence-directory>` for the same self-test gate as Actions: browser core 884, Node supplement 793, fixed 1.0.2 core 884 and 15 feature cases with all 257 capability mappings, historical 1.0.1 core 884 and 15 feature cases, historical 1.0.0 core 884, plus historical 0.8 508 and 122/130 mapping, language 605 in both environments, editor 38 in both environments, GUI 9, 90 performance samples, and validator negatives. `tests/static-contract.py` and `tests/workflow-preflight.py` reproduce static preflight (PyYAML 6.0.3). Full-browser groups retain all 27 runners and independently checked case tuples. Do not overwrite earlier evidence.
 
-The workflow runs on main, `fix/**`, `audit/**` and `Akari_1_0_0`, forces full scope for the release branch and new branches, seals each job artifact, and independently verifies all seven artifacts in `aggregate`. Default retention is three days. `verify-evidence.mjs` rejects missing, failing, stale or changed artifacts; `MACHINE_PASS` does not assert a completed release. Current review and inventory are in `records/phase4-semantic-review.md` and `records/phase4-audit-inventory.json`.
+The workflow runs on main, `fix/**`, `audit/**`, `feat/**` and `Akari_1_0_0`, forces full scope for the release branch and new branches, seals each job artifact, and independently verifies all nine input artifacts in `aggregate`. Default retention is three days. `verify-evidence.mjs` rejects missing, failing, stale or changed artifacts; `MACHINE_PASS` does not assert a completed release. Current review and inventory are in `records/phase4-semantic-review.md` and `records/phase4-audit-inventory.json`.
 
 ## Diagnose and recover an interrupted Actions runner
 
@@ -94,7 +94,7 @@ For a confirmed runner interruption, preserve the original attempt's logs and
 metadata, then rerun **all jobs** on the same commit, on fresh hosted runners.
 The workflow's root `GA-STATIC contract and snapshot` job is also a supported
 rerun entry point: GitHub reruns that job and its dependent jobs, which currently
-cover selftest, all five browser groups and aggregate. Verify that all eight
+cover selftest, all five browser groups, both audio platforms and aggregate. Verify that all ten
 jobs actually have records in the new attempt; do not infer completion merely
 from the accepted rerun request. See the [GitHub job rerun API](https://docs.github.com/en/rest/actions/workflow-runs#re-run-a-job-from-a-workflow-run).
 
@@ -102,7 +102,7 @@ Do not use "Re-run failed jobs" alone for this workflow's complete verdict.
 Artifacts are named and bound to a single run ID **and attempt**. Successful
 artifacts from an earlier attempt cannot fill gaps in a later attempt. Never
 rename, copy, merge or relax provenance checks to make a partial rerun pass.
-A complete recovery requires all eight successful jobs, seven fresh input
+A complete recovery requires all ten successful jobs, nine fresh input
 bundles and the aggregate from the same attempt, with independent validator,
 input-hash, artifact-hash and expected-ID checks.
 
@@ -114,6 +114,8 @@ tracked-file change creates a new snapshot requiring its own execution evidence.
 
 ## Product 1.0.2 audio acceptance
 
-Current policy is `manifests/quality-1.0.2.json`; the verified 1.0.1 checkpoint and all its guarantees remain immutable. Before every candidate Push, review the changes and run `node audit/freeze-release-102.mjs --record`. The resulting 1.0.2 feature freeze fixes the formats, limits, versions, exact added IDs and normalized source hashes. Then renew the reviewed-input binding and execute the current snapshot.
+Current policy is `manifests/quality-1.0.2.json`; the completed 1.0.2 checkpoint is active, while historical 1.0.1 and all its guarantees remain immutable. Before every candidate Push, review the changes and run `node audit/freeze-release-102.mjs --record`. The resulting 1.0.2 feature freeze fixes the formats, limits, versions, exact added IDs and normalized source hashes. Then renew the reviewed-input binding and execute the current snapshot.
 
 The existing Chromium gate remains mandatory. Two additional Actions jobs run `tests/audio-codecs-102.mjs` using pinned Chrome for Testing on Linux and Windows, including real AAC-LC decoding. Install the isolated browser with `python audit/install-codec-browser.py <isolated-directory>`; pass the printed executable and a fresh report path to the runner. Each positive file must complete ordinary GUI import, history, actual non-silent decoding, save/reload and generated offline playback. The aggregate requires both complete independently verified reports. Negative report mutations and workflow mutations reject skips and removed platforms.
+
+Each audio job additionally runs `run-fixed-audio.mjs` against the immutable 1.0.2 product and its exact frozen suite. The seal requires both candidate and fixed reports, full ID equality and matching source/fixture provenance. The local core gate also replays historical 1.0.1 through `run-historical-101.mjs` and `run-historical-101-features.mjs`. Aggregate exposes the fixed `completedRelease` separately from `candidateApproved: false`.

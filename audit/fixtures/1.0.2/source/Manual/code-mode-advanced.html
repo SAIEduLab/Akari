@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>あかり 1.0.2 コードモード 上級</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#edf2f8;
+  --surface:#fff;
+  --surface2:#f7f9fc;
+  --line:#cbd7e6;
+  --ink:#223044;
+  --muted:#607084;
+  --accent:#2f6fd6;
+  --accent-soft:#eaf2ff;
+  --good:#19733e;
+  --warn:#9a6500;
+  --danger:#a93636;
+  --code:#182231;
+  --code-ink:#f2f6fc;
+  --shadow:0 8px 28px rgba(36,54,82,.10);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:"Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif;
+  color:var(--ink);
+  background:linear-gradient(180deg,#f8fbff 0,var(--bg) 480px);
+  line-height:1.75;
+}
+a{color:var(--accent)}
+header{
+  background:linear-gradient(135deg,#315a96,#527fc4);
+  color:#fff;
+  padding:48px 20px 42px;
+}
+.header-inner,.layout{max-width:1180px;margin:auto}
+.kicker{font-size:.9rem;font-weight:700;letter-spacing:.08em;opacity:.9}
+h1{margin:.25rem 0 .5rem;font-size:clamp(2rem,4vw,3.2rem);line-height:1.25}
+.lead{max-width:860px;margin:0;color:#f4f7ff;font-size:1.08rem}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:26px;padding:26px 20px 64px}
+nav{
+  position:sticky;
+  top:18px;
+  align-self:start;
+  background:rgba(255,255,255,.95);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  box-shadow:var(--shadow);
+}
+nav strong{display:block;margin:2px 6px 8px}
+nav a{
+  display:block;
+  text-decoration:none;
+  color:#34465d;
+  padding:7px 9px;
+  border-radius:8px;
+  font-size:.92rem;
+}
+nav a:hover{background:var(--accent-soft);color:#1d4f9f}
+main{min-width:0}
+section{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:clamp(20px,3vw,34px);
+  margin-bottom:22px;
+  box-shadow:var(--shadow);
+}
+h2{margin:0 0 16px;font-size:1.65rem;line-height:1.35}
+h3{margin:28px 0 10px;font-size:1.2rem}
+p{margin:.7rem 0}
+ul,ol{padding-left:1.5rem}
+li+li{margin-top:.42rem}
+code.inline{
+  font-family:"BIZ UDGothic","Yu Gothic UI",monospace;
+  background:#f3f6fa;
+  border-radius:5px;
+  padding:.08rem .3rem;
+}
+kbd{
+  background:#f2f5f9;
+  border:1px solid #bac7d7;
+  border-bottom-width:2px;
+  border-radius:5px;
+  padding:.05rem .35rem;
+  font:inherit;
+  font-size:.9em;
+}
+.code{
+  margin:14px 0;
+  border-radius:12px;
+  overflow:auto;
+  background:var(--code);
+  color:var(--code-ink);
+  border:1px solid #28384d;
+  box-shadow:0 5px 18px rgba(24,34,49,.14);
+}
+.code .bar{
+  padding:7px 12px;
+  background:#263448;
+  color:#cbd7e7;
+  font-size:.82rem;
+  border-bottom:1px solid #34465f;
+}
+pre{
+  margin:0;
+  padding:15px 17px;
+  white-space:pre;
+  overflow:auto;
+  font-family:"BIZ UDGothic","Yu Gothic UI","Meiryo",monospace;
+  line-height:1.8;
+  font-size:.96rem;
+}
+.callout{
+  border-left:5px solid var(--accent);
+  background:var(--accent-soft);
+  padding:13px 16px;
+  border-radius:9px;
+  margin:16px 0;
+}
+.callout.good{border-color:var(--good);background:#edf8f1}
+.callout.warn{border-color:#d18b00;background:#fff7df}
+.callout.danger{border-color:var(--danger);background:#fff0f0}
+.cards,.grid3{display:grid;gap:12px}
+.cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{
+  border:1px solid #d8e1ec;
+  border-radius:12px;
+  padding:14px;
+  background:var(--surface2);
+}
+.card strong{display:block;margin-bottom:4px}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem}
+th,td{border:1px solid #d5deea;padding:9px 10px;text-align:left;vertical-align:top}
+th{background:#eef3f9}
+.checklist{list-style:"✓  ";padding-left:1.45rem}
+.checklist li::marker{color:var(--good);font-weight:800}
+.flow{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:7px;
+  margin:14px 0;
+}
+.flow span{
+  border:1px solid #b9c8da;
+  background:#fff;
+  border-radius:999px;
+  padding:5px 10px;
+  font-weight:700;
+}
+.flow b{color:#8190a2}
+.scope{
+  display:grid;
+  grid-template-columns:36px 1fr;
+  gap:8px 12px;
+  align-items:start;
+}
+.scope .n{
+  width:32px;height:32px;
+  border-radius:50%;
+  display:grid;place-items:center;
+  background:#eaf2ff;color:#235aab;font-weight:800;
+}
+.badge{
+  display:inline-block;
+  border-radius:999px;
+  padding:2px 8px;
+  font-size:.78rem;
+  font-weight:700;
+  background:#eaf2ff;
+  color:#235aab;
+  vertical-align:middle;
+}
+footer{
+  max-width:1180px;
+  margin:0 auto 40px;
+  padding:0 20px;
+  color:var(--muted);
+  font-size:.9rem;
+}
+@media(max-width:920px){
+  .layout{grid-template-columns:1fr}
+  nav{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
+  nav strong{grid-column:1/-1}
+  .cards,.grid3{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  nav{grid-template-columns:1fr}
+  header{padding-top:34px}
+}
+@media print{
+  body{background:#fff}
+  header{background:#fff;color:#000;padding:20px 0}
+  .lead{color:#333}
+  .layout{display:block;padding:0}
+  nav{display:none}
+  section{box-shadow:none;break-inside:avoid}
+}
+
+/* Shared reading conventions; no external fonts, images or scripts. */
+html{scroll-padding-top:24px}
+a:focus-visible,summary:focus-visible{outline:3px solid #a65300;outline-offset:4px}
+.skip-link{position:absolute;left:16px;top:-100px;z-index:10;padding:12px 18px;background:#fff;color:#173f72}
+.skip-link:focus{top:12px}
+.book-links{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}
+.book-links a{color:#fff;background:#244b7b;border:1px solid #b5ccea;border-radius:99px;padding:8px 14px;text-decoration:none;font-weight:700}
+.chapter-links{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 0}
+.chapter-links a{padding:10px 14px;background:#eaf2ff;border:1px solid #aac0de;border-radius:10px;text-decoration:none;font-weight:700}
+.reading-note{padding:14px 18px;border-left:5px solid #33704c;background:#eff8f1;border-radius:8px;margin:18px 0}
+.table-scroll{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid #cbd7e6}
+th{background:#edf3fa;color:#233d5e}
+pre{max-width:100%;overflow-x:auto;tab-size:2}
+p,li,td,a{overflow-wrap:anywhere}
+details{border:1px solid #cbd7e6;border-radius:12px;padding:14px 18px;margin:12px 0;background:#fbfdff}
+summary{font-weight:800;cursor:pointer;color:#234f93}
+.mini-label{font-size:.85rem;letter-spacing:.05em;font-weight:800;color:#355d87}
+.task-list{counter-reset:task;list-style:none;padding:0;display:grid;gap:12px}
+.task-list>li{counter-increment:task;position:relative;padding:18px 18px 18px 62px;border:1px solid #cfdeec;border-radius:14px;background:#f8fbff}
+.task-list>li::before{content:counter(task,decimal-leading-zero);position:absolute;left:16px;top:16px;color:#234f93;font-size:1.25rem;font-weight:900}
+.code-sample{padding:20px;background:#182b42;color:#f5f9ff;border-radius:12px;line-height:1.8}
+.quick-nav{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.quick-nav a{padding:8px 12px;border:1px solid #b3c9e0;border-radius:99px;background:#f3f8ff;text-decoration:none}
+@media(min-width:901px){nav[aria-label="目次"]{max-height:calc(100vh - 36px);overflow-y:auto}}
+@media(max-width:520px){th,td{padding:9px;font-size:.94rem}.task-list>li{padding-right:12px}.hero h1{font-size:2.5rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{.book-links,.chapter-links,.skip-link,.quick-nav{display:none}details{break-inside:avoid}a{color:#163a64}}
+
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">本文へ進む</a>
+<header>
+  <div class="header-inner">
+    <div class="kicker">AKARI 1.0.2 CODE MODE · ADVANCED</div>
+    <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../Akari.html">あかりを使う</a><a href="../MANUAL.html#save">保存・開く</a></div>
+<h1>コードモード 上級</h1>
+    <p class="lead">名前解決、実行順序、動作と計算、複数処理、クローン、停止、失敗記録、保存形式、資源上限まで踏み込み、大きな作品を壊れにくく設計するためのガイドです。</p>
+  </div>
+</header>
+
+<div class="layout">
+<nav aria-label="目次">
+  <strong>目次</strong>
+  <a href="#model">1. 実行モデルを理解する</a>
+  <a href="#scope">2. 名前解決とスコープ</a>
+  <a href="#names">3. 名前を曖昧にしない</a>
+  <a href="#actions">4. 動作を設計する</a>
+  <a href="#functions">5. 計算を設計する</a>
+  <a href="#parallel">6. 複数処理と待機</a>
+  <a href="#broadcast">7. 知らせの同期</a>
+  <a href="#clones">8. クローンを使う</a>
+  <a href="#stop">9. 停止命令を使い分ける</a>
+  <a href="#debug">10. 失敗記録を読む</a>
+  <a href="#errors">11. エラー種別を読む</a>
+  <a href="#limits">12. 資源上限を意識する</a>
+  <a href="#storage">13. 保存・復元・書き出し</a>
+  <a href="#architecture">14. 大きな作品の設計</a>
+</nav>
+
+<main id="main-content">
+<section id="model">
+  <h2>1. あかりの実行モデルを理解する</h2>
+  <p>上級では、コードの文型だけでなく「いつ、どの本文が、どの順番で進むか」を意識します。</p>
+
+  <div class="cards">
+    <div class="card"><strong>本文は対象×できごとごと</strong>「動かすもの」と「できごと」の組合せに、1つの本文を登録します。</div>
+    <div class="card"><strong>開始処理の順序</strong>開始時は、画面、その後に部品の登録順で処理が作られます。</div>
+    <div class="card"><strong>命令単位で進む</strong>複数の処理は命令単位で順番に進みます。</div>
+    <div class="card"><strong>待機は処理ごと</strong>ある処理が待っていても、待っていないほかの処理は進みます。</div>
+  </div>
+
+  <div class="callout"><strong>「同時に見える」と「同じ瞬間に実行する」は別です。</strong> あかりでは、複数処理が命令単位で交互に進むため、共有する作品データを書き換える処理では順序を意識して設計します。</div>
+
+  <h3>開始本文が終わっても作品は動き続ける</h3>
+  <p>「開始したとき」の本文が終わっても、作品全体が自動停止するわけではありません。「■ 止める」まで、クリック、キー、知らせなどの新しいできごとを受け付けます。</p>
+</section>
+
+<section id="scope">
+  <h2>2. 名前解決とスコープ</h2>
+  <p>同じ名前が複数の場所にある場合、修飾していない名前は次の優先順位で読まれます。</p>
+
+  <div class="scope">
+    <div class="n">1</div><div><strong>反復の項目名</strong><br>「各要素を項目として」のような、現在の反復内だけの読み取り専用名。</div>
+    <div class="n">2</div><div><strong>局所データ</strong><br>動作・計算の中で作った局所変数・局所リスト。</div>
+    <div class="n">3</div><div><strong>引数</strong><br>動作・計算が受け取った値。</div>
+    <div class="n">4</div><div><strong>個体データ</strong><br>現在の部品・キャラクター自身が持つ変数・リスト。</div>
+    <div class="n">5</div><div><strong>作品データ</strong><br>作品全体で共有する変数・リスト。</div>
+  </div>
+
+  <h3>同じ名前がある例</h3>
+  <p>個体にも作品にも「点数」がある状態で、単に <code class="inline">点数</code> と書くと、現在の個体側が先に見つかります。作品全体の値を必ず読みたいときは明示します。</p>
+
+  <div class="code"><pre>自分の点数に1を足す。
+作品の点数に1を足す。</pre></div>
+
+  <div class="callout good"><strong>大きな作品ほど所属を明示する。</strong> 同名データを使う可能性がある場所では、<code class="inline">自分の</code> と <code class="inline">作品の</code> を書いておくと、後からデータを追加しても意味が変わりにくくなります。</div>
+</section>
+
+<section id="names">
+  <h2>3. 名前を曖昧にしない</h2>
+<p>例を実行するには、作品変数「手がかり」（文字の「北」）と「端」（数の0）を先に作ります。ここで【 】は名前を区切る印で、データの名前に付けて登録する文字ではありません。</p>
+  <p>名前は1〜32文字で、空白・括弧・制御文字・予約語などは使えません。普通の名前はそのまま書けますが、文法上の語とぶつかる名前は区切りを明示します。</p>
+
+  <div class="code"><pre>もし 【手がかり】が「北」と同じなら、「北へ進もう」と言う。
+作品の【端】を0にする。</pre></div>
+
+  <p>助詞や演算子を含む名前、数字で始まる名前、「端」「空白」のような固定語と同じ名前は、<code class="inline">【 】</code> で囲めます。</p>
+
+  <h3>【 】と所属は役割が違う</h3>
+  <table>
+    <thead><tr><th>書き方</th><th>役割</th></tr></thead>
+    <tbody>
+      <tr><td><code class="inline">【手がかり】</code></td><td>名前の区切りを明確にする。</td></tr>
+      <tr><td><code class="inline">自分の点数</code></td><td>個体データを明示する。</td></tr>
+      <tr><td><code class="inline">作品の点数</code></td><td>作品データを明示する。</td></tr>
+      <tr><td><code class="inline">作品の【手がかり】</code></td><td>区切りと所属の両方を明示する。</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="actions">
+  <h2>4. 「動作」を設計する</h2>
+  <p>動作は、複数の命令を1つの名前にまとめる仕組みです。呼び出した個体を対象として実行されるため、キャラクター固有の動きを部品化するのに向いています。</p>
+
+  <div class="code">
+    <div class="bar">動作「ジャンプ」／引数「高さ」</div>
+    <pre>縦位置を縦位置－高さにする。
+0.2秒待つ。
+縦位置を縦位置＋高さにする。</pre>
+  </div>
+
+  <div class="code"><pre>ジャンプ（30）を実行する。</pre></div>
+
+  <h3>引数は値渡し</h3>
+  <p>引数は呼出し時の値として渡されます。リストも複製して渡されるため、受け取った引数リストを動作内で変更しても、呼出し元のリストそのものを直接変更することにはなりません。</p>
+
+  <h3>局所データを使う</h3>
+  <p>動作・計算では、本文の先頭で局所変数や局所リストを作れます。途中計算の値や一時的な作業用データは、作品データを増やさず局所データへ閉じ込めると整理しやすくなります。</p>
+
+  <div class="code"><pre>作業値という変数を作り、初期値を0にする。
+結果というリストを作る。</pre></div>
+
+  <div class="callout warn">動作の呼出しが深くなりすぎると実行時エラーになります。呼出し深さの上限は64です。再帰的・相互再帰的な設計では特に注意します。</div>
+</section>
+
+<section id="functions">
+  <h2>5. 「計算」を副作用のない処理として設計する</h2>
+  <p>計算は、値を計算して返すための定義です。動作と違い、外部へ副作用を起こす命令や待機は使えません。</p>
+
+  <h3>計算でできること</h3>
+  <ul class="checklist">
+    <li>引数・局所変数・局所リストを使う。</li>
+    <li>条件分岐や反復を使う。</li>
+    <li>式を評価し、最後に値を返す。</li>
+    <li>外部の値を読み取って計算に使う。</li>
+  </ul>
+
+  <h3>計算でしてはいけないこと</h3>
+  <ul>
+    <li>作品データ・個体データなど外部データの変更。</li>
+    <li>移動・見た目・ペン・音・クローンなど外部へ影響する命令。</li>
+    <li>「待つ」、質問、知らせ、動作呼出しなどの副作用や待機。</li>
+  </ul>
+
+  <div class="code">
+    <div class="bar">計算「合計値」／引数「数一覧」</div>
+    <pre>合計という変数を作り、初期値を0にする。
+数一覧の各要素を項目として、次のことをくり返す。
+  合計に項目を足す。
+合計を返す。</pre>
+  </div>
+
+  <p>計算の最後には「〜を返す」を1つ置きます。返却がない計算は正しい定義になりません。</p>
+
+  <h3>計算には実行量の上限がある</h3>
+  <p>計算は、止まらない計算を防ぐため、式評価や反復を含めた処理量に上限があります。現行の <code class="inline">functionOps</code> は100,000です。また、計算の呼出し深さは64です。</p>
+
+  <div class="callout good"><strong>設計の目安：</strong> 画面や音を変える処理は「動作」、値を求める処理は「計算」に分けると、役割が明確になります。</div>
+</section>
+
+<section id="parallel">
+  <h2>6. 複数処理と待機を設計する</h2>
+  <p>クリック・キー・知らせなどから複数の処理が動く作品では、共有データと待機の関係が重要です。</p>
+
+  <h3>待つ処理と進む処理</h3>
+  <div class="code"><pre>「準備中」と言う。
+2秒待つ。
+「完了」と言う。</pre></div>
+
+  <p>この本文が2秒待っている間も、別の実行中処理は進めます。したがって、作品データを複数処理から変更する場合は、「待っている間に別処理が値を変える」ことを前提にします。</p>
+
+  <h3>共有データを使うときの考え方</h3>
+  <ul>
+    <li>初期化は「開始したとき」へ集める。</li>
+    <li>同じ作品変数を複数処理が更新するなら、どのイベントがいつ更新するかを決める。</li>
+    <li>処理間の順序が必要なら、知らせと「受け手の処理が終わるまで待つ」を使う。</li>
+    <li>個体ごとに独立させたい値は作品データではなく個体データへ置く。</li>
+  </ul>
+
+  <div class="callout warn">「待つ」を同期処理の代わりに秒数で調整する設計は壊れやすくなります。完了順序が重要な処理は、知らせや状態条件で明示します。</div>
+</section>
+
+<section id="broadcast">
+  <h2>7. 知らせの同期を使い分ける</h2>
+
+  <h3>非同期に開始する</h3>
+  <div class="code"><pre>「演出開始」と知らせる。
+「次の処理」と言う。</pre></div>
+  <p>通常の「知らせる」は受け手を起動し、送信側は次へ進みます。</p>
+
+  <h3>直接の受け手を待つ</h3>
+  <div class="code"><pre>「演出開始」と知らせ、受け手の処理が終わるまで待つ。
+「演出完了」と言う。</pre></div>
+
+  <p>この形は、その通知によって<strong>直接起動した処理</strong>の終了を待ちます。受け手が途中で別の知らせを通常送信した場合、その先の処理まで自動的に待つわけではありません。</p>
+
+  <div class="callout danger"><strong>自己再通知に注意。</strong> 「知らせを受けたとき」の本文で、条件なしに同じ知らせを送り直すと再通知が続きます。メッセージ名や条件を分けて循環を避けます。</div>
+</section>
+
+<section id="clones">
+  <h2>8. クローンを実行時の個体として使う</h2>
+  <p>クローンは、キャラクターを実行中だけ複製する仕組みです。</p>
+
+  <div class="code"><pre>自分のクローンを作る。
+「星」のクローンを作る。</pre></div>
+
+  <h3>複製されるもの・共有するもの</h3>
+  <div class="cards">
+    <div class="card"><strong>複製される</strong>個体データと見た目。</div>
+    <div class="card"><strong>共有される</strong>作品データ。</div>
+  </div>
+
+  <p>クローンが作られると、そのクローンでは「クローンされたとき」の本文が新しく起動します。</p>
+
+  <div class="code">
+    <div class="bar">クローンされたとき</div>
+    <pre>10歩動く。
+1秒待つ。
+このクローンを削除する。</pre>
+  </div>
+
+  <div class="callout">実行中に作られたクローンや、実行によって変わった個体状態は作品ファイルの保存内容には反映されません。次の実行は初期状態から始まります。</div>
+
+  <p>クローン数の現行上限は500です。大量生成する処理では、削除条件を必ず設けます。</p>
+</section>
+
+<section id="stop">
+  <h2>9. 停止命令を使い分ける</h2>
+<p>次は三つの選択肢です。全部を続けて使う例ではありません。目的に合う一つを本文へ入れます。</p>
+  <div class="code"><pre>このスクリプトを止める。
+ほかのスクリプトを止める。
+すべてを止める。</pre></div>
+
+  <table>
+    <thead><tr><th>命令</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td>このスクリプトを止める</td><td>現在実行している処理だけを終了する。</td></tr>
+      <tr><td>ほかのスクリプトを止める</td><td>現在の処理を残し、ほかの実行中処理を止める。</td></tr>
+      <tr><td>すべてを止める</td><td>作品全体の実行を停止する。</td></tr>
+    </tbody>
+  </table>
+
+  <p>反復だけを途中で抜けたい場合は、停止命令ではなく <code class="inline">このくり返しを終える。</code> を使います。次の回へ飛ばしたい場合は <code class="inline">次のくり返しへ進む。</code> を使います。</p>
+</section>
+
+<section id="debug">
+  <h2>10. 失敗記録から原因を追う</h2>
+  <p>実行エラーが起きると処理は一時停止し、失敗した瞬間の情報を記録します。大きな作品では、表示されたエラー文だけでなく記録の中身を見ます。</p>
+
+  <h3>失敗記録に残る情報</h3>
+  <ul class="checklist">
+    <li>失敗した動作・計算自身の行と命令。</li>
+    <li>呼出し順。</li>
+    <li>引数。</li>
+    <li>局所変数・局所リスト。</li>
+    <li>作品データと個体データ。</li>
+  </ul>
+
+  <p>「全文」を使うと、長い値をページごとに、リストを要素番号ごとに確認できます。実行を続けて現在値が変わっても、失敗時の記録は変わりません。</p>
+
+  <h3>記録の保持</h3>
+  <p>失敗記録は直近20件以内、かつ記録JSON合計8,388,608文字を目安に古いものから削除されます。最新1件はこの長さを超えても保持されます。「停止」と次回実行で記録は消えます。</p>
+
+  <div class="callout danger">失敗した処理そのものは終了します。原因を修正したあとは、その処理を途中から再開するのではなく、改めて実行します。</div>
+</section>
+
+<section id="errors">
+  <h2>11. エラーコードの種類を読む</h2>
+  <p>エラーコードの先頭文字を見ると、どの段階の問題かを切り分けやすくなります。</p>
+
+  <table>
+    <thead><tr><th>先頭</th><th>意味</th><th>主な確認先</th></tr></thead>
+    <tbody>
+      <tr><td>F</td><td>ファイル・保存・読込み</td><td>作品ファイル、素材、保存形式</td></tr>
+      <tr><td>N / P</td><td>文字・文法</td><td>名前の書き方、字下げ、文型</td></tr>
+      <tr><td>S</td><td>参照・意味</td><td>未登録名、対象制約、引数数、計算の副作用</td></tr>
+      <tr><td>R</td><td>実行時</td><td>型、値の範囲、0除算、リスト範囲、呼出し深さ</td></tr>
+      <tr><td>X</td><td>書き出し形式</td><td>単体HTML生成時の条件</td></tr>
+    </tbody>
+  </table>
+
+  <p>文法・名前・対象の問題はできるだけ実行前に「作品チェック」で検出されます。一方、値の型や範囲など実際の値が必要な問題は実行時に検出されることがあります。</p>
+</section>
+
+<section id="limits">
+  <h2>12. 資源上限を設計条件として扱う</h2>
+  <p>大きな作品では、上限に近づいてから直すより、最初から上限を意識して構成します。</p>
+
+  <table>
+    <thead><tr><th>項目</th><th>現行上限</th></tr></thead>
+    <tbody>
+      <tr><td>部品</td><td>500</td></tr>
+      <tr><td>クローン</td><td>500</td></tr>
+      <tr><td>スクリプト</td><td>1,000</td></tr>
+      <tr><td>作品変数</td><td>1,000</td></tr>
+      <tr><td>作品リスト</td><td>500</td></tr>
+      <tr><td>リスト要素数</td><td>100,000</td></tr>
+      <tr><td>文字の長さ</td><td>100,000文字</td></tr>
+      <tr><td>動作・計算</td><td>500</td></tr>
+      <tr><td>利用者定義の引数</td><td>32</td></tr>
+      <tr><td>動作・計算の呼出し深さ</td><td>64</td></tr>
+      <tr><td>計算の処理量</td><td>100,000</td></tr>
+      <tr><td>反復回数</td><td>1,000,000</td></tr>
+      <tr><td>同時に存在する実行処理</td><td>2,000</td></tr>
+    </tbody>
+  </table>
+
+  <p>素材には別途、個数・ファイルサイズ・画像寸法・音声時間などの上限があります。詳細は <a href="../LANGUAGE.md">LANGUAGE.md</a> の「資源の上限」を参照してください。</p>
+
+  <div class="callout warn"><strong>上限は単なる目安ではありません。</strong> 保存、素材、実行、言語処理で共通して検査されます。上限を超える設計は、環境依存で動くことを期待せず構造を見直します。</div>
+</section>
+
+<section id="storage">
+  <h2>13. 保存・復元・書き出しの契約を理解する</h2>
+
+  <h3>.akari.md は読むための本文と復元用データを持つ</h3>
+  <p>「保存」で作る <code class="inline">.akari.md</code> には、コード・初期データ・部品・素材一覧と、末尾の復元用データが含まれます。Markdown部分は人が読むためのもので、直接編集する場所ではありません。</p>
+
+  <p>本文と復元データが一致しない作品ファイルは <code class="inline">F512</code> で拒否され、現在開いている作品は保たれます。</p>
+
+  <h3>1.0.2の保存・実行形式</h3>
+  <p>製品版は1.0.2、言語・runtime版は1.0.0、保存・実行形式番号は3です。1.0.0・1.0.1の作品も開けます。1.0.2内での往復と不正データ検証を保証します。</p>
+
+  <h3>書き出し</h3>
+<p>下書きの定義を登録し、作品全体の文法・参照検査に合格してから書き出します。操作順とファイルの使い分けは<a href="../MANUAL.html#export">総合ガイド</a>を参照してください。</p>
+  <p>「書き出し」は、編集機能を含まない単体HTMLを作ります。コード表示・ブロック表示のどちらからでも同じ確定済み本文を検査し、実行処理と素材を含めます。書き出したHTMLの実行にブロックエディタや外部ファイルは必要ありません。</p>
+
+  <h3>終了前の保存</h3>
+  <p>作業内容や動作・計算の未登録下書きは、自動保存されません。下書きを残すには定義を登録したうえで、作品ファイルを保存します。保存前に終了した場合は復元できません。</p>
+
+  <div class="callout good">あかり本体は外部通信や外部スクリプトの読込みを行わない構成です。作品の保存・書き出しも、現行仕様ではローカルで完結する前提です。</div>
+</section>
+
+<section id="architecture">
+  <h2>14. 大きな作品を壊れにくく設計する</h2>
+  <h3>別の語順でも、値を調べる順番は同じ</h3>
+  <p>横・縦の句を逆に書いても、値は横、縦の順に調べます。「滑る」は時間、横、縦、「音」は周波数、時間の順です。乱数を含む式でも、文に書いた順へ評価を入れ替えるわけではありません。単語を自由に並べ替えられる機能ではなく、役割を示す句の決まった並びを受け付けます。</p>
+  <p>上級では「書ける」だけでなく、変更しても意味が崩れにくい構造を作ることが重要です。</p>
+
+  <h3>おすすめの分け方</h3>
+  <div class="flow" aria-label="設計の分割例">
+    <span>できごとで入口を分ける</span><b>→</b>
+    <span>動作へ副作用をまとめる</span><b>→</b>
+    <span>計算へ値計算をまとめる</span><b>→</b>
+    <span>知らせで処理を接続する</span><b>→</b>
+    <span>作品データを最小限にする</span>
+  </div>
+
+  <h3>設計チェック</h3>
+  <ul class="checklist">
+    <li>共有する必要のない値を作品データにしていないか。</li>
+    <li>同名データがある場所では <code class="inline">自分の</code> / <code class="inline">作品の</code> を明示しているか。</li>
+    <li>外部へ影響する処理と値計算を、動作と計算で分離できているか。</li>
+    <li>秒数待機だけで処理順を合わせていないか。</li>
+    <li>知らせが循環していないか。</li>
+    <li>クローンに削除条件があるか。</li>
+    <li>再帰・反復・同時処理が上限へ近づかないか。</li>
+    <li>失敗時に追えるよう、処理を小さな動作・計算へ分けられているか。</li>
+  </ul>
+
+  <div class="callout good"><strong>上級の到達点：</strong> 文法だけでなく、スコープ、実行順序、副作用、同期、保存形式、上限、失敗時の観測まで含めて作品を設計できれば、あかり 1.0.2 のコードモードを実践的に扱える状態です。</div>
+</section>
+</main>
+</div>
+
+<footer>
+<div class="chapter-links"><a href="../MANUAL.html#faq">困ったとき</a><a href="./block-mode.html">ブロック →</a><a href="./code-mode-beginner.html">コード初級 →</a><a href="./code-mode-intermediate.html">コード中級 →</a></div>
+  <p>対象：あかり 1.0.2。内容はリポジトリの <a href="../LANGUAGE.md">LANGUAGE.md</a> と <a href="../Akari.html">Akari.html</a> の現行仕様・実装に基づきます。厳密な文法・意味論・全上限は LANGUAGE.md を参照してください。</p>
+</footer>
+</body>
+</html>

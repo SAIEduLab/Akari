@@ -1,6 +1,6 @@
 {
   "schema": "akari-phase4-inventory-v1",
-  "scope": "All applicable product acceptance against the verified 1.0.1 checkpoint; candidate machine and semantic verdicts are separately bound",
+  "scope": "All applicable product acceptance against the completed 1.0.2 checkpoint; candidate machine and semantic verdicts are separately bound",
   "binding": "Final execution snapshot and review attestation contain actual HEAD and hashes; this file does not contain its own commit SHA",
   "statusLegend": {
     "local": "Final committed HEAD: gate.json, static/preflight and review attestation; per-item results resolved from required IDs",
@@ -53580,6 +53580,9 @@
       "audio-codecs:win32"
     ],
     "artifact": "report.json",
+    "fixedRunner": "audit/run-fixed-audio.mjs",
+    "fixedValidator": "audit/lib/completed-baseline.mjs",
+    "fixedArtifact": "fixed/report.json",
     "freeze": "audit/manifests/release-1.0.2.json"
   },
   "editorAssets101": {
@@ -53605,15 +53608,17 @@
     "validator": "audit/lib/completed-baseline.mjs",
     "job": "selftest",
     "candidateArtifact": "editor-assets-101.json",
-    "fixedArtifact": "fixed101-editor-assets.json"
+    "fixedArtifact": "fixed102-editor-assets.json",
+    "historical101Runner": "audit/run-historical-101-features.mjs",
+    "historical101Artifact": "fixed101-editor-assets.json"
   },
   "nonTechnicalLimits": [
     "No user study or learning-effect measurement",
     "No physical mobile-device or native Japanese IME study"
   ],
   "completedBaseline": {
-    "sourceCommit": "62359484a646651dd81806ef97a6cfef87f85d4b",
-    "manifest": "audit/fixtures/1.0.1/manifest.json"
+    "sourceCommit": "1207f8a44b783afbb2274e794759de4c58edb450",
+    "manifest": "audit/fixtures/1.0.2/manifest.json"
   },
   "remainingReleaseDecisions": [
     "Actions on the current candidate SHA",

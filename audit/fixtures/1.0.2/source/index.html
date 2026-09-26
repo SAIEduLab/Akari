@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="あかりは、自然な日本語でプログラムを書ける学習用プログラミング言語です。ブロックとコードを行き来しながら学べます。">
+<title>あかり — 日本語で学ぶプログラミング</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f2f6fb;
+  --surface:#ffffff;
+  --surface-soft:#f8fbff;
+  --line:#d6e0ec;
+  --ink:#223044;
+  --muted:#64748a;
+  --accent:#2f6fd6;
+  --accent-deep:#234f93;
+  --accent-soft:#eaf2ff;
+  --shadow:0 16px 42px rgba(37,55,84,.12);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:"Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 88% 4%,rgba(90,137,210,.18),transparent 28rem),
+    linear-gradient(180deg,#fbfdff 0,var(--bg) 520px);
+  line-height:1.75;
+}
+a{color:var(--accent)}
+a:focus-visible{outline:3px solid rgba(47,111,214,.28);outline-offset:4px;border-radius:7px}
+.wrap{width:min(1120px,calc(100% - 40px));margin:auto}
+.site-header{
+  padding:18px 0;
+  position:absolute;
+  inset:0 0 auto;
+  z-index:2;
+}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{font-weight:900;letter-spacing:.04em;color:#fff;text-decoration:none;font-size:1.08rem}
+.nav-links{display:flex;flex-wrap:wrap;gap:16px}
+.nav-links a{color:#eef4ff;text-decoration:none;font-weight:700;font-size:.92rem}
+.hero{
+  min-height:610px;
+  display:flex;
+  align-items:center;
+  position:relative;
+  overflow:hidden;
+  color:#fff;
+  background:linear-gradient(135deg,#284d80 0%,#4778bd 56%,#7395cb 100%);
+  padding:112px 0 76px;
+}
+.hero::before,.hero::after{
+  content:"";
+  position:absolute;
+  border-radius:50%;
+  border:54px solid rgba(255,255,255,.07);
+}
+.hero::before{width:390px;height:390px;right:-110px;top:-170px}
+.hero::after{width:250px;height:250px;left:-130px;bottom:-160px}
+.hero-content{position:relative;z-index:1;max-width:820px}
+.eyebrow{font-weight:900;letter-spacing:.14em;font-size:.82rem;color:#dce9ff}
+h1{
+  font-size:clamp(3rem,8vw,6.3rem);
+  line-height:1;
+  margin:.18em 0 .26em;
+  letter-spacing:.02em;
+}
+.lead{font-size:clamp(1.08rem,2vw,1.28rem);max-width:730px;color:#f3f7ff;margin:0}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.button{
+  display:inline-block;
+  padding:11px 18px;
+  border-radius:999px;
+  text-decoration:none;
+  font-weight:900;
+  border:1px solid rgba(255,255,255,.45);
+}
+.button.primary{background:#fff;color:var(--accent-deep);box-shadow:0 8px 22px rgba(19,37,66,.18)}
+.button.secondary{color:#fff;background:rgba(255,255,255,.08)}
+main{padding:36px 0 72px}
+section{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  padding:clamp(24px,4vw,42px);
+  margin-bottom:24px;
+}
+h2{margin:0 0 12px;font-size:clamp(1.7rem,3vw,2.3rem);line-height:1.3}
+.section-intro{color:var(--muted);max-width:780px}
+.features,.links{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+  margin-top:24px;
+}
+.card{
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:linear-gradient(180deg,#fff,var(--surface-soft));
+  padding:20px;
+}
+.icon{
+  width:48px;height:48px;
+  display:grid;place-items:center;
+  border-radius:14px;
+  background:var(--accent-soft);
+  color:var(--accent-deep);
+  font-weight:900;
+  font-size:1.2rem;
+}
+.card h3{margin:14px 0 6px;font-size:1.18rem}
+.card p{margin:0;color:var(--muted)}
+.link-card{
+  display:flex;
+  flex-direction:column;
+  text-decoration:none;
+  color:inherit;
+  min-height:200px;
+  transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease;
+}
+.link-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(42,64,99,.11);border-color:#9fb9dd}
+.open{margin-top:auto;padding-top:18px;font-weight:900;color:var(--accent)}
+.note{
+  margin-top:22px;
+  padding:15px 18px;
+  border-left:5px solid #7498ca;
+  background:#f1f6fd;
+  border-radius:10px;
+}
+footer{padding:0 0 42px;color:var(--muted);font-size:.9rem}
+footer a{color:inherit}
+@media(max-width:820px){
+  .features,.links{grid-template-columns:1fr}
+  .hero{min-height:auto}
+}
+@media(max-width:620px){
+  .wrap{width:min(100% - 28px,1120px)}
+  .site-header{position:relative;background:#294f82}
+  .nav{align-items:flex-start;flex-direction:column;gap:8px}
+  .nav-links{gap:12px}
+  .hero{padding-top:64px}
+}
+@media print{
+  body{background:#fff}
+  .site-header,.hero-actions{display:none}
+  .hero{min-height:auto;background:#fff;color:#000;padding:30px 0}
+  .lead,.eyebrow{color:#333}
+  section{box-shadow:none}
+}
+
+/* Shared reading conventions; no external fonts, images or scripts. */
+html{scroll-padding-top:24px}
+.hero::before,.hero::after{pointer-events:none}
+a:focus-visible,summary:focus-visible{outline:3px solid #a65300;outline-offset:4px}
+.skip-link{position:absolute;left:16px;top:-100px;z-index:10;padding:12px 18px;background:#fff;color:#173f72}
+.skip-link:focus{top:12px}
+.book-links{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}
+.book-links a{color:#fff;background:#244b7b;border:1px solid #b5ccea;border-radius:99px;padding:8px 14px;text-decoration:none;font-weight:700}
+.chapter-links{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 0}
+.chapter-links a{padding:10px 14px;background:#eaf2ff;border:1px solid #aac0de;border-radius:10px;text-decoration:none;font-weight:700}
+.reading-note{padding:14px 18px;border-left:5px solid #33704c;background:#eff8f1;border-radius:8px;margin:18px 0}
+.table-scroll{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid #cbd7e6}
+th{background:#edf3fa;color:#233d5e}
+pre{max-width:100%;overflow-x:auto;tab-size:2}
+p,li,td,a{overflow-wrap:anywhere}
+details{border:1px solid #cbd7e6;border-radius:12px;padding:14px 18px;margin:12px 0;background:#fbfdff}
+summary{font-weight:800;cursor:pointer;color:#234f93}
+.mini-label{font-size:.85rem;letter-spacing:.05em;font-weight:800;color:#355d87}
+.task-list{counter-reset:task;list-style:none;padding:0;display:grid;gap:12px}
+.task-list>li{counter-increment:task;position:relative;padding:18px 18px 18px 62px;border:1px solid #cfdeec;border-radius:14px;background:#f8fbff}
+.task-list>li::before{content:counter(task,decimal-leading-zero);position:absolute;left:16px;top:16px;color:#234f93;font-size:1.25rem;font-weight:900}
+.code-sample{padding:20px;background:#182b42;color:#f5f9ff;border-radius:12px;line-height:1.8}
+.quick-nav{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.quick-nav a{padding:8px 12px;border:1px solid #b3c9e0;border-radius:99px;background:#f3f8ff;text-decoration:none}
+@media(min-width:901px){nav[aria-label="目次"]{max-height:calc(100vh - 36px);overflow-y:auto}}
+@media(max-width:520px){th,td{padding:9px;font-size:.94rem}.task-list>li{padding-right:12px}.hero h1{font-size:2.5rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{.book-links,.chapter-links,.skip-link,.quick-nav{display:none}details{break-inside:avoid}a{color:#163a64}}
+
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">本文へ進む</a>
+<header class="site-header">
+  <div class="wrap nav">
+    <a class="brand" href="./index.html">あかり / Akari</a>
+    <nav class="nav-links" aria-label="主要リンク">
+      <a href="./Akari.html">あかりを使う</a>
+      <a href="./MANUAL.html">マニュアル</a>
+      <a href="./README.md">あかりについて</a>
+      <a href="https://github.com/SAIEduLab/Akari">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-content">
+    <div class="eyebrow">あかり 1.0.2 · 日本語でつくろう</div>
+    <h1>あかり</h1>
+    <p class="lead">「動く」「回る」「話す」を組み合わせて、自分の作品をつくろう。ブロックをつないでも、日本語の決まった書き方で入力しても、同じ作品を動かせます。</p>
+    <div class="hero-actions">
+      <a class="button primary" href="./Akari.html">あかりを使う</a>
+      <a class="button secondary" href="./MANUAL.html">マニュアルを見る</a>
+    </div>
+  </div>
+</section>
+
+<main id="main-content" class="wrap">
+  <section id="first-steps">
+    <p class="mini-label">はじめての人へ</p>
+    <h2>開く。動かす。残しておく。</h2>
+    <ol class="task-list">
+      <li><strong>あかりを開く</strong><br>上の「あかりを使う」を押します。アカウント登録は必要ありません。</li>
+      <li><strong>まず動かしてみる</strong><br>「▶ 動かす」を押して、マスコットをクリック。点数が増えたら成功です。「■ 止める」で作る画面へ戻ります。</li>
+      <li><strong>自分の作品を残す</strong><br>作ったら「保存」を押します。続きは「あかり」の「開く」から。<a href="./MANUAL.html#save">保存の手順を見る →</a></li>
+    </ol>
+    <div class="note">初めから自分で作るときは、<a href="./MANUAL.html#first">「クリックしたら動く」作品</a>を試してみましょう。</div>
+  </section>
+  <section>
+    <h2>あかりとは</h2>
+    <p class="section-intro">プログラミングの考え方に集中できるよう、日本語で読み書きできることと、ブロックとコードを自然に行き来できることを大切にしています。</p>
+    <div class="features">
+      <div class="card">
+        <div class="icon" aria-hidden="true">日</div>
+        <h3>日本語で書ける</h3>
+        <p>コードモードでは、日本語に近い形で命令や条件を書いてプログラムを組み立てます。</p>
+      </div>
+      <div class="card">
+        <div class="icon" aria-hidden="true">↔</div>
+        <h3>ブロックとコード</h3>
+        <p>同じ作品をブロックモードとコードモードの両方から編集し、学び方に合わせて切り替えられます。</p>
+      </div>
+      <div class="card">
+        <div class="icon" aria-hidden="true">◎</div>
+        <h3>すぐに試せる</h3>
+        <p>ブラウザーであかり本体を開き、作品を作って実行できます。アカウント登録は必要ありません。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>ここから始める</h2>
+    <p class="section-intro">やりたいことに合わせて入口を選んでください。</p>
+    <div class="links">
+      <a class="card link-card" href="./Akari.html">
+        <div class="icon" aria-hidden="true">▶</div>
+        <h3>あかりを使う</h3>
+        <p>エディターを開いて、ブロックや日本語コードで作品を作ります。</p>
+        <span class="open">Akari.html を開く →</span>
+      </a>
+      <a class="card link-card" href="./MANUAL.html">
+        <div class="icon" aria-hidden="true">?</div>
+        <h3>マニュアル</h3>
+        <p>ブロックモードとコードモードを、習熟度に合わせたガイドから学べます。</p>
+        <span class="open">マニュアルを見る →</span>
+      </a>
+      <a class="card link-card" href="./README.md">
+        <div class="icon" aria-hidden="true">{ }</div>
+        <h3>あかりについて</h3>
+        <p>ファイルの使い方、開発元、ライセンス、詳しい仕様や検査の文書への入口です。</p>
+        <span class="open">README.md を見る →</span>
+      </a>
+    </div>
+    <div class="note">このページは「あかり」の紹介と入口です。詳しい使い方はマニュアル、詳しい書き方の決まりは <a href="./LANGUAGE.md">LANGUAGE.md</a>、検査の決まりは <a href="./AUDIT.md">AUDIT.md</a> にまとめています。</div>
+  </section>
+  <section id="offline">
+    <h2>インターネットがない場所でも</h2>
+    <p>あかり本体の <a href="./Akari.html" download="Akari.html">Akari.html を保存</a>して、ブラウザーで開きます。本体はこの1ファイルで編集・実行できます。リンクで開くだけでは、端末へ保存したことにはなりません。</p>
+    <p>マニュアルも手元で読む場合は、<code>MANUAL.html</code> と <code>Manual</code> フォルダーを同じ配置で残します。<a href="./MANUAL.html#offline">保存するものを確認する →</a></p>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>あかり（Akari）は <a href="https://sites.google.com/shimane-edu.org/saiel/%E3%83%9B%E3%83%BC%E3%83%A0">SAIEL</a> が開発しています。ソースコードは <a href="https://github.com/SAIEduLab/Akari">GitHub</a> で公開しています。</p>
+</footer>
+</body>
+</html>
