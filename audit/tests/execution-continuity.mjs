@@ -30,10 +30,12 @@ for(const failureAt of [-2,-1,0,1,2,3,6,8]){
     readFileSync:()=>JSON.stringify({phases:[],d09:[],capabilities:[],language:[],browserObligations:[]})};
   let threw=false;
   try{vm.runInNewContext(aggregateSource,{fs:memoryFs,path:path.posix,assert:{...assert,deepEqual:(a,b,message)=>assert.deepEqual(JSON.parse(JSON.stringify(a)),JSON.parse(JSON.stringify(b)),message)},process,cp:{execFileSync(){if(failureAt===-2)throw Error('injected inventory/binding failure');}},snapshot:()=>({head:'fixture'}),
+    verifyCompletedProvenance(){return {releaseComplete:true,sourceCommit:'completed-fixed-fixture'};},
     verifyBundle(kind){calls.push(kind);if(kind===kinds[failureAt])throw Error('injected invalid bundle');return {kind,result:kind==='static'?{selftestRequired:true,fullBrowserRequired:true}:{}};},console:{log(){}}});}
   catch{threw=true;}
   assert.deepEqual(calls,kinds,'aggregate must inspect all nine bundles even if an earlier one fails');
   const report=JSON.parse(written.get('/aggregate/result.json'));
-  assert.equal(threw,failureAt!==-1);assert.equal(report.status,failureAt===-1?'MACHINE_PASS':'FAIL');assert.equal(report.releaseComplete,false);
+  assert.equal(threw,failureAt!==-1);assert.equal(report.status,failureAt===-1?'MACHINE_PASS':'FAIL');assert.equal(report.candidateApproved,false);
+  if(failureAt===-1)assert.equal(report.completedRelease.releaseComplete,true);
 }
 console.log('Aggregate continuity: all 9 bundles inspected; failure artifact written and failure exit retained');

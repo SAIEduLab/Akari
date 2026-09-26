@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import cp from 'node:child_process';
 import {snapshot} from './lib/product-test-host.mjs';
 import {sealBundle,verifyBundle} from './lib/evidence-bundle.mjs';
+import {verifyCompletedProvenance} from './lib/completed-baseline.mjs';
 const [mode,kind,dir]=process.argv.slice(2);
 const provenance={runId:process.env.GITHUB_RUN_ID||'local',runAttempt:process.env.GITHUB_RUN_ATTEMPT||'local'};
 if(mode==='seal')console.log(JSON.stringify({kind,files:Object.keys(sealBundle(kind,dir,provenance).files).length}));
@@ -39,13 +40,14 @@ else if(mode==='aggregate'){
   }
   const required=requiredKinds.map(kind=>path.basename(locate(kind))).sort();
   check('artifact set',()=>assert.deepEqual(fs.readdirSync(root).sort(),required,'missing/unexpected job artifact'));
+  const completedRelease=check('completed release provenance',()=>verifyCompletedProvenance());
   if(problems.length)throw new Error(JSON.stringify({status:'FAIL',problems},null,2));
   if(fs.existsSync(output))throw Error('Aggregate output already exists');
   fs.mkdirSync(path.dirname(output),{recursive:true});
-  const result={status:scope.fullBrowserRequired?'MACHINE_PASS':'SCOPE_ONLY',releaseComplete:false,snapshot:inputs,provenance,
+  const result={status:scope.fullBrowserRequired?'MACHINE_PASS':'SCOPE_ONLY',candidateApproved:false,completedRelease,snapshot:inputs,provenance,
     jobs:bundles.map(b=>({kind:b.kind,result:b.result})),semanticReview:'audit/records/phase4-semantic-review.md',
     completedBaseline:bundles.find(b=>b.kind==='selftest')?.result.completedBaseline,
-    completion:'The fixed 1.0.0 baseline has a separately recorded completion decision. Machine results do not approve this candidate or replace its semantic review.'};
+    completion:'Completed 1.0.2 is bound to its immutable source and completion record. This machine result does not approve the current candidate or replace its semantic review.'};
   if(scope.fullBrowserRequired){
     const inventory=JSON.parse(fs.readFileSync('audit/records/phase4-audit-inventory.json'));
     result.coverage={phases:inventory.phases.map(r=>({id:r.id,machine:'PASS',semantic:'separate source review and local attestation'})),
@@ -57,7 +59,7 @@ else if(mode==='aggregate'){
   fs.writeFileSync(output,JSON.stringify(result,null,2)+'\n');console.log(result.status);
   } catch(error) {
     const output=dir;fs.mkdirSync(path.dirname(output),{recursive:true});
-    fs.writeFileSync(output,JSON.stringify({status:'FAIL',releaseComplete:false,snapshot:snapshot('Akari.html'),provenance,needs:JSON.parse(process.env.AKARI_NEEDS||'{}'),error:error.stack},null,2)+'\n');
+    fs.writeFileSync(output,JSON.stringify({status:'FAIL',candidateApproved:false,snapshot:snapshot('Akari.html'),provenance,needs:JSON.parse(process.env.AKARI_NEEDS||'{}'),error:error.stack},null,2)+'\n');
     throw error;
   }
 }else throw Error('Expected seal <kind> <directory> or aggregate <downloads> <new-output>');

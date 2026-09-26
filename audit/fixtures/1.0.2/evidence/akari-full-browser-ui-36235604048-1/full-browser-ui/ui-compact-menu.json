@@ -1,0 +1,365 @@
+{
+  "html": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-ui/candidate/Akari.html",
+  "sha256": "4f3678e5a3fb03e313f967ef3d9aa0e5291d5f5d180fc7f2b521a9254239bfa2",
+  "sourceUnchanged": true,
+  "browser": "140.0.7339.16",
+  "pageErrors": [],
+  "networkRequests": [],
+  "results": [
+    {
+      "id": "UI09-MENU-left-first-number",
+      "pass": true,
+      "evidence": {
+        "menu": {
+          "x": 319,
+          "y": 217,
+          "right": 539,
+          "bottom": 311
+        },
+        "workspace": {
+          "x": 311,
+          "y": 189,
+          "right": 1099,
+          "bottom": 859
+        },
+        "reachable": [
+          {
+            "action": "move",
+            "enabled": true
+          },
+          {
+            "action": "duplicate",
+            "enabled": true
+          },
+          {
+            "action": "replace-expression",
+            "enabled": true
+          }
+        ],
+        "moveCancelled": true,
+        "sourceHistoryRedoPreserved": true
+      }
+    },
+    {
+      "id": "UI09-MENU-bottom-last-number",
+      "pass": true,
+      "evidence": {
+        "menu": {
+          "x": 319,
+          "y": 512,
+          "right": 539,
+          "bottom": 606
+        },
+        "workspace": {
+          "x": 311,
+          "y": 189,
+          "right": 1099,
+          "bottom": 859
+        },
+        "reachable": [
+          {
+            "action": "move",
+            "enabled": true
+          },
+          {
+            "action": "duplicate",
+            "enabled": true
+          },
+          {
+            "action": "replace-expression",
+            "enabled": true
+          }
+        ],
+        "expressionDestinationSelected": true,
+        "sourceHistoryRedoPreserved": true,
+        "screenshot": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-ui/ui-compact-menu-bottom.png"
+      }
+    },
+    {
+      "id": "UI09-MENU-bottom-annotation-undo",
+      "pass": true,
+      "evidence": {
+        "menu": {
+          "x": 319,
+          "y": 573,
+          "right": 539,
+          "bottom": 747
+        },
+        "workspace": {
+          "x": 311,
+          "y": 230,
+          "right": 1099,
+          "bottom": 859
+        },
+        "reachable": [
+          {
+            "action": "move",
+            "enabled": true
+          },
+          {
+            "action": "duplicate",
+            "enabled": true
+          },
+          {
+            "action": "move-up",
+            "enabled": true
+          },
+          {
+            "action": "move-down",
+            "enabled": false
+          },
+          {
+            "action": "remove",
+            "enabled": true
+          },
+          {
+            "action": "replace-noop",
+            "enabled": true
+          },
+          {
+            "action": "collapse",
+            "enabled": true
+          },
+          {
+            "action": "annotations",
+            "enabled": true
+          }
+        ],
+        "lastMenuActionEditedAnnotation": true,
+        "undoRestoredSource": true
+      }
+    },
+    {
+      "id": "UI09-MENU-open-scroll-reposition",
+      "pass": true,
+      "evidence": {
+        "before": {
+          "menu": {
+            "x": 319,
+            "y": 278,
+            "right": 539,
+            "bottom": 452
+          },
+          "workspace": {
+            "x": 311,
+            "y": 230,
+            "right": 1099,
+            "bottom": 859
+          },
+          "reachable": [
+            {
+              "action": "move",
+              "enabled": true
+            },
+            {
+              "action": "duplicate",
+              "enabled": true
+            },
+            {
+              "action": "move-up",
+              "enabled": true
+            },
+            {
+              "action": "move-down",
+              "enabled": true
+            },
+            {
+              "action": "remove",
+              "enabled": true
+            },
+            {
+              "action": "replace-noop",
+              "enabled": true
+            },
+            {
+              "action": "collapse",
+              "enabled": true
+            },
+            {
+              "action": "annotations",
+              "enabled": true
+            }
+          ]
+        },
+        "after": {
+          "menu": {
+            "x": 319,
+            "y": 238,
+            "right": 539,
+            "bottom": 412
+          },
+          "workspace": {
+            "x": 311,
+            "y": 230,
+            "right": 1099,
+            "bottom": 859
+          },
+          "reachable": [
+            {
+              "action": "move",
+              "enabled": true
+            },
+            {
+              "action": "duplicate",
+              "enabled": true
+            },
+            {
+              "action": "move-up",
+              "enabled": true
+            },
+            {
+              "action": "move-down",
+              "enabled": true
+            },
+            {
+              "action": "remove",
+              "enabled": true
+            },
+            {
+              "action": "replace-noop",
+              "enabled": true
+            },
+            {
+              "action": "collapse",
+              "enabled": true
+            },
+            {
+              "action": "annotations",
+              "enabled": true
+            }
+          ]
+        },
+        "sourceHistoryRedoPreserved": true
+      }
+    },
+    {
+      "id": "UI09-MENU-resize-closes-preserves",
+      "pass": true,
+      "evidence": {
+        "width": 900,
+        "openMenuCount": 0,
+        "sourceHistoryRedoPreserved": true
+      }
+    },
+    {
+      "id": "UI09-MENU-right-long-statement",
+      "pass": true,
+      "evidence": {
+        "menu": {
+          "x": 243,
+          "y": 226,
+          "right": 463,
+          "bottom": 400
+        },
+        "workspace": {
+          "x": 235,
+          "y": 189,
+          "right": 629,
+          "bottom": 859
+        },
+        "reachable": [
+          {
+            "action": "move",
+            "enabled": true
+          },
+          {
+            "action": "duplicate",
+            "enabled": true
+          },
+          {
+            "action": "move-up",
+            "enabled": false
+          },
+          {
+            "action": "move-down",
+            "enabled": false
+          },
+          {
+            "action": "remove",
+            "enabled": true
+          },
+          {
+            "action": "replace-noop",
+            "enabled": true
+          },
+          {
+            "action": "collapse",
+            "enabled": true
+          },
+          {
+            "action": "annotations",
+            "enabled": true
+          }
+        ],
+        "sourceHistoryRedoPreserved": true,
+        "screenshot": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-ui/ui-compact-menu-right.png"
+      }
+    },
+    {
+      "id": "UI09-MENU-narrow-390",
+      "pass": true,
+      "evidence": {
+        "menu": {
+          "x": 171,
+          "y": 380,
+          "right": 374,
+          "bottom": 564
+        },
+        "workspace": {
+          "x": 163,
+          "y": 341,
+          "right": 382,
+          "bottom": 839
+        },
+        "reachable": [
+          {
+            "action": "move",
+            "enabled": true
+          },
+          {
+            "action": "duplicate",
+            "enabled": true
+          },
+          {
+            "action": "move-up",
+            "enabled": false
+          },
+          {
+            "action": "move-down",
+            "enabled": false
+          },
+          {
+            "action": "remove",
+            "enabled": true
+          },
+          {
+            "action": "replace-noop",
+            "enabled": true
+          },
+          {
+            "action": "collapse",
+            "enabled": true
+          },
+          {
+            "action": "annotations",
+            "enabled": true
+          }
+        ],
+        "width": 390,
+        "sourceHistoryRedoPreserved": true,
+        "screenshot": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-ui/ui-compact-menu-narrow.png"
+      }
+    },
+    {
+      "id": "UI09-MENU-errors-network-source",
+      "pass": true,
+      "evidence": {
+        "pageErrors": 0,
+        "networkRequests": 0,
+        "sourceUnchanged": true
+      }
+    }
+  ],
+  "total": 8,
+  "failed": 0
+}

@@ -489,3 +489,27 @@ Reviewed all active references in the quality policy, core and language runners,
 The shared gate now has 20 steps: historical 0.8 and 1.0.0 replay, fixed 1.0.1 core (884) and frozen feature (15) replay, plus the current product and all previous checks. The frozen feature loader resolves only three import locations, the fixed target product and a separate screenshot directory; every substitution must occur exactly once, and no assertion or observed result is rewritten. Fixed feature receipts bind source commit, manifest, suite and actual product bytes. Independent verification also compares fixed/current feature ID sets. Thirty-three proof/report mutants, 23 fixed-core report mutants, policy mutants and a child process with Git unavailable exercise these boundaries. The original 1.0.0 and 0.8 fixtures and provenance are untouched.
 
 The full local supplementary browser run on implementation commit 6235948 finished 26/27 runners successfully. The sole failure was ui-stage-gesture under installed Chrome 153; the same unmodified runner failed on parent 1.0.0, while the required pinned CI environment passed all five gesture cases on 1.0.1. No threshold, expectation or product behavior was changed to conceal that difference. New checkpoint execution and current Actions must bind the correction commit; the archived success does not replace fresh acceptance.
+
+
+## Completed 1.0.2 checkpoint and audit documentation correction
+
+User authorized local correction, public branch/PR, full required Actions success,
+Ready/merge, shared-only private main synchronization and local main alignment.
+The promoted product is the already merged `1207f8a44b783afbb2274e794759de4c58edb450`,
+whose `36235604048/1` run has ten successful jobs and nine sealed input bundles.
+Capture checked all ten ZIP digests, 334 Git input hashes and 3,322 sealed file
+hashes. Original execution records are unchanged; a separate hash-bound completion
+record now certifies only that fixed source.
+
+Active core/features, language/runtime and browser snapshots now compare with the
+immutable 1.0.2 source. Both codec jobs add the exact frozen 18-ID audio suite on
+the fixed product and require candidate/fixed ID equality. Historical 1.0.1 core
+and feature execution remain mandatory alongside 1.0.0 and 0.8. No test ID,
+threshold, fail/skip rejection, platform or historical provenance is removed.
+The guarantee policy changes only checkpoint/completion metadata and adds audio
+guarantees. Validators reject completion/source substitutions and missing fixed
+audio evidence. Docs reflect ten jobs and nine input bundles.
+
+The current candidate still requires fresh full machine evidence on its final
+committed HEAD; archived success is not its verdict. Product implementation,
+language/runtime versions, formats, audio acceptance and user manuals are unchanged.

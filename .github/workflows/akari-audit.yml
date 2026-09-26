@@ -71,6 +71,7 @@ jobs:
           node audit/tests/evidence-negative.mjs || status=1
           node audit/tests/completed-baseline-negative.mjs || status=1
           node audit/tests/checkpoint-101-negative.mjs || status=1
+          node audit/tests/checkpoint-102-negative.mjs || status=1
           node audit/tests/historical-source-negative.mjs || status=1
           node audit/tests/release-102-negative.mjs || status=1
           node audit/tests/ci-regression.mjs || status=1
@@ -91,7 +92,7 @@ jobs:
           include-hidden-files: true
 
   selftest:
-    name: GA-EXEC self-tests and fixed-1.0.1 non-regression
+    name: GA-EXEC self-tests and fixed-1.0.2 non-regression
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (needs.static.result != 'success' || needs.static.outputs.selftest_required == 'true') }}
     needs: [static]
     runs-on: ubuntu-latest
@@ -231,7 +232,11 @@ jobs:
           python audit/install-codec-browser.py "$RUNNER_TEMP/akari-codec-browser"
       - name: Run every audio format through import save reload and offline playback
         if: always()
-        run: node audit/tests/audio-codecs-102.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio102/report.json
+        run: |
+          status=0
+          node audit/tests/audio-codecs-102.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio102/report.json || status=1
+          node audit/run-fixed-audio.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio102/fixed/report.json || status=1
+          exit "$status"
       - name: Seal independently verified audio evidence
         if: always()
         run: node audit/verify-evidence.mjs seal "audio-codecs-${{ matrix.platform }}" audit-evidence/audio102

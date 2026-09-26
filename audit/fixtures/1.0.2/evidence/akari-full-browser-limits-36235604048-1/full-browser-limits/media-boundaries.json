@@ -1,0 +1,426 @@
+{
+  "html": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-limits/candidate/Akari.html",
+  "sha256": "4f3678e5a3fb03e313f967ef3d9aa0e5291d5f5d180fc7f2b521a9254239bfa2",
+  "sourceUnchanged": true,
+  "browser": "140.0.7339.16",
+  "results": [
+    {
+      "id": "imageWidth",
+      "pass": true,
+      "evidence": [
+        {
+          "value": 4095,
+          "bytes": 102,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 2,
+          "nativeAudioDecodes": 0,
+          "message": "\n✓ 背景画像「境界1」を追加しました"
+        },
+        {
+          "value": 4096,
+          "bytes": 100,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 2,
+          "nativeAudioDecodes": 0,
+          "message": "\n✓ 背景画像「境界2」を追加しました"
+        },
+        {
+          "value": 4097,
+          "bytes": 102,
+          "accepted": false,
+          "code": "F504",
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 0,
+          "message": "\n❌ F504 背景画像の取り込みに失敗: 画像の寸法または画素数が上限を超えています"
+        }
+      ]
+    },
+    {
+      "id": "imageHeight",
+      "pass": true,
+      "evidence": [
+        {
+          "value": 4095,
+          "bytes": 116,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 2,
+          "nativeAudioDecodes": 0,
+          "message": "\n✓ 背景画像「境界4」を追加しました"
+        },
+        {
+          "value": 4096,
+          "bytes": 114,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 2,
+          "nativeAudioDecodes": 0,
+          "message": "\n✓ 背景画像「境界5」を追加しました"
+        },
+        {
+          "value": 4097,
+          "bytes": 116,
+          "accepted": false,
+          "code": "F504",
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 0,
+          "message": "\n❌ F504 背景画像の取り込みに失敗: 画像の寸法または画素数が上限を超えています"
+        }
+      ]
+    },
+    {
+      "id": "imagePixels",
+      "pass": true,
+      "evidence": [
+        {
+          "width": 2047,
+          "height": 2049,
+          "pixels": 4194303,
+          "bytes": 20965,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 2,
+          "nativeAudioDecodes": 0,
+          "message": "\n✓ 背景画像「境界7」を追加しました"
+        },
+        {
+          "width": 2048,
+          "height": 2048,
+          "pixels": 4194304,
+          "bytes": 21146,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 2,
+          "nativeAudioDecodes": 0,
+          "message": "\n✓ 背景画像「境界8」を追加しました"
+        },
+        {
+          "width": 1985,
+          "height": 2113,
+          "pixels": 4194305,
+          "bytes": 21069,
+          "accepted": false,
+          "code": "F504",
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 0,
+          "message": "\n❌ F504 背景画像の取り込みに失敗: 画像の寸法または画素数が上限を超えています"
+        }
+      ]
+    },
+    {
+      "id": "imagePixelsTotal",
+      "pass": true,
+      "evidence": {
+        "before": {
+          "value": 16777215,
+          "bytes": 487327,
+          "nativeImageDecodes": 16,
+          "nativeAudioDecodes": 0
+        },
+        "at": {
+          "value": 16777216,
+          "bytes": 70,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 2,
+          "nativeAudioDecodes": 0,
+          "message": "\n✓ 背景画像「境界11」を追加しました"
+        },
+        "above": {
+          "value": 16777217,
+          "bytes": 70,
+          "accepted": false,
+          "code": "F504",
+          "nativeImageDecodes": 2,
+          "nativeAudioDecodes": 0,
+          "message": "\n❌ F504 背景画像の取り込みに失敗: 作品内素材の合計が上限を超えています"
+        }
+      }
+    },
+    {
+      "id": "audioDuration",
+      "pass": true,
+      "evidence": [
+        {
+          "seconds": 59,
+          "bytes": 944044,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n✓ 音「境界13」を追加しました"
+        },
+        {
+          "seconds": 60,
+          "bytes": 960044,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n✓ 音「境界14」を追加しました"
+        },
+        {
+          "seconds": 61,
+          "bytes": 976044,
+          "accepted": false,
+          "code": "F504",
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n❌ F504 音の取り込みに失敗: 音声の長さが範囲外です"
+        }
+      ]
+    },
+    {
+      "id": "audioDurationTotal",
+      "pass": true,
+      "evidence": {
+        "before": {
+          "value": 119,
+          "bytes": 2551585,
+          "nativeImageDecodes": 1,
+          "nativeAudioDecodes": 4
+        },
+        "at": {
+          "value": 120,
+          "bytes": 16044,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n✓ 音「境界17」を追加しました"
+        },
+        "above": {
+          "value": 121,
+          "bytes": 16044,
+          "accepted": false,
+          "code": "F504",
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n❌ F504 音の取り込みに失敗: 作品内素材の合計が上限を超えています"
+        }
+      }
+    },
+    {
+      "id": "audioChannels",
+      "pass": true,
+      "evidence": [
+        {
+          "channels": 1,
+          "bytes": 844,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n✓ 音「境界19」を追加しました"
+        },
+        {
+          "channels": 2,
+          "bytes": 1644,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n✓ 音「境界20」を追加しました"
+        },
+        {
+          "channels": 3,
+          "bytes": 2444,
+          "accepted": false,
+          "code": "F511",
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 0,
+          "message": "\n❌ F511 音の取り込みに失敗: 音声チャンネル数が範囲外です"
+        }
+      ]
+    },
+    {
+      "id": "audioSampleRateMin",
+      "pass": true,
+      "evidence": [
+        {
+          "sampleRate": 7999,
+          "bytes": 16042,
+          "accepted": false,
+          "code": "F511",
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 0,
+          "message": "\n❌ F511 音の取り込みに失敗: 音声sampleRateが範囲外です"
+        },
+        {
+          "sampleRate": 8000,
+          "bytes": 16044,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n✓ 音「境界23」を追加しました"
+        },
+        {
+          "sampleRate": 8001,
+          "bytes": 16046,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n✓ 音「境界24」を追加しました"
+        }
+      ]
+    },
+    {
+      "id": "audioSampleRateMax",
+      "pass": true,
+      "evidence": [
+        {
+          "sampleRate": 47999,
+          "bytes": 96042,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n✓ 音「境界25」を追加しました"
+        },
+        {
+          "sampleRate": 48000,
+          "bytes": 96044,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n✓ 音「境界26」を追加しました"
+        },
+        {
+          "sampleRate": 48001,
+          "bytes": 96046,
+          "accepted": false,
+          "code": "F511",
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 0,
+          "message": "\n❌ F511 音の取り込みに失敗: 音声sampleRateが範囲外です"
+        }
+      ]
+    },
+    {
+      "id": "importFileBytes",
+      "pass": true,
+      "evidence": [
+        {
+          "kind": "image",
+          "value": 12582911,
+          "bytes": 12582911,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 2,
+          "nativeAudioDecodes": 0,
+          "message": "\n✓ 背景画像「境界28」を追加しました"
+        },
+        {
+          "kind": "image",
+          "value": 12582912,
+          "bytes": 12582912,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 2,
+          "nativeAudioDecodes": 0,
+          "message": "\n✓ 背景画像「境界29」を追加しました"
+        },
+        {
+          "kind": "image",
+          "value": 12582913,
+          "bytes": 12582913,
+          "accepted": false,
+          "code": "F504",
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 0,
+          "message": "\n❌ F504 背景画像の取り込みに失敗: 取込元ファイルが12MiBを超えています"
+        },
+        {
+          "kind": "mp3",
+          "value": 12582911,
+          "bytes": 12582911,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n✓ 音「境界31」を追加しました"
+        },
+        {
+          "kind": "mp3",
+          "value": 12582912,
+          "bytes": 12582912,
+          "accepted": true,
+          "code": null,
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 1,
+          "message": "\n✓ 音「境界32」を追加しました"
+        },
+        {
+          "kind": "mp3",
+          "value": 12582913,
+          "bytes": 12582913,
+          "accepted": false,
+          "code": "F504",
+          "nativeImageDecodes": 0,
+          "nativeAudioDecodes": 0,
+          "message": "\n❌ F504 音の取り込みに失敗: 取込元ファイルが12MiBを超えています"
+        }
+      ]
+    },
+    {
+      "id": "fileBytes",
+      "pass": true,
+      "evidence": {
+        "scope": "Invalid-text fixture proves the file-input byte gate and refusal atomicity, not successful project decoding at 24 MiB.",
+        "cases": [
+          {
+            "value": 25165823,
+            "code": "F502",
+            "projectSourceHistoryRedoDirtyAssetsPreserved": true
+          },
+          {
+            "value": 25165824,
+            "code": "F502",
+            "projectSourceHistoryRedoDirtyAssetsPreserved": true
+          },
+          {
+            "value": 25165825,
+            "code": "F504",
+            "projectSourceHistoryRedoDirtyAssetsPreserved": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "activeAudioVoices",
+      "pass": true,
+      "evidence": [
+        {
+          "requested": 31,
+          "realOscillatorStarts": 31,
+          "realOscillatorsCreated": 31,
+          "overLimitError": null,
+          "volume": 0
+        },
+        {
+          "requested": 32,
+          "realOscillatorStarts": 32,
+          "realOscillatorsCreated": 32,
+          "overLimitError": null,
+          "volume": 0
+        },
+        {
+          "requested": 33,
+          "realOscillatorStarts": 32,
+          "realOscillatorsCreated": 33,
+          "overLimitError": "R416",
+          "volume": 0
+        }
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "networkRequests": [],
+  "total": 12,
+  "failed": 0
+}

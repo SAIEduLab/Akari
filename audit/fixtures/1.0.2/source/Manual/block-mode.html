@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>あかり 1.0.2 ブロックモード マニュアル</title>
+<style>
+:root{color-scheme:light;--bg:#edf2f8;--surface:#fff;--surface2:#f7f9fc;--line:#cbd7e6;--ink:#223044;--muted:#607084;--accent:#2f6fd6;--accent-soft:#eaf2ff;--good:#19733e;--warn:#8a5a00;--danger:#a93636;--shadow:0 8px 28px rgba(36,54,82,.10)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:"Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#f8fbff 0,var(--bg) 420px);line-height:1.75}
+a{color:var(--accent)}header{background:linear-gradient(135deg,#315a96,#527fc4);color:#fff;padding:48px 20px 42px}.header-inner,.layout{max-width:1180px;margin:auto}.kicker{font-size:.9rem;font-weight:700;letter-spacing:.08em;opacity:.9}h1{margin:.25rem 0 .5rem;font-size:clamp(2rem,4vw,3.2rem);line-height:1.25}.lead{max-width:780px;margin:0;color:#f4f7ff;font-size:1.08rem}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:26px;padding:26px 20px 64px}nav{position:sticky;top:18px;align-self:start;background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}nav strong{display:block;margin:2px 6px 8px}nav a{display:block;text-decoration:none;color:#34465d;padding:7px 9px;border-radius:8px;font-size:.94rem}nav a:hover{background:var(--accent-soft);color:#1d4f9f}
+main{min-width:0}section{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(20px,3vw,34px);margin-bottom:22px;box-shadow:var(--shadow)}h2{margin:0 0 16px;font-size:1.65rem;line-height:1.35}h3{margin:28px 0 10px;font-size:1.2rem}p{margin:.7rem 0}ul,ol{padding-left:1.5rem}li+li{margin-top:.42rem}
+kbd{background:#f2f5f9;border:1px solid #bac7d7;border-bottom-width:2px;border-radius:5px;padding:.05rem .35rem;font:inherit;font-size:.9em}code{font-family:"BIZ UDGothic","Yu Gothic UI",monospace;background:#f3f6fa;border-radius:5px;padding:.08rem .3rem}
+.callout{border-left:5px solid var(--accent);background:var(--accent-soft);padding:13px 16px;border-radius:9px;margin:16px 0}.callout.good{border-color:var(--good);background:#edf8f1}.callout.warn{border-color:#d18b00;background:#fff7df}.callout.danger{border-color:var(--danger);background:#fff0f0}
+.steps{counter-reset:step;list-style:none;padding:0}.steps>li{position:relative;padding:0 0 22px 54px;min-height:44px}.steps>li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:0;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:var(--accent);color:#fff;font-weight:800}.steps>li:not(:last-child)::after{content:"";position:absolute;left:17px;top:39px;bottom:3px;width:2px;background:#d7e2ef}
+.ui-map,.cards,.category-grid{display:grid;gap:12px}.ui-map,.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.category-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.card,.ui-item,.category{border:1px solid #d8e1ec;border-radius:12px;padding:14px;background:var(--surface2)}.card strong,.ui-item strong,.category strong{display:block;margin-bottom:4px}
+.mock{border:1px solid #b8c8da;border-radius:13px;overflow:hidden;margin:18px 0;background:#fff}.mock-top{padding:9px 12px;background:#e9eff7;border-bottom:1px solid #cbd7e6;font-weight:700}.mock-grid{display:grid;grid-template-columns:minmax(180px,28%) 1fr;min-height:270px}.mock-palette{padding:12px;border-right:1px solid #d5dfeb;background:#f8fbff}.mock-workspace{padding:18px;background:#f1f5fa}.mock-search{border:1px solid #afbed0;border-radius:7px;padding:7px 9px;margin-bottom:9px;color:#66778a;background:#fff}.mock-tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}.mock-tabs span{font-size:.78rem;border:1px solid #c4d0df;border-radius:999px;padding:3px 7px;background:#fff}
+.block{display:block;width:max-content;max-width:100%;margin:8px 0;padding:8px 12px;border:1px solid #aac0da;border-radius:9px;background:#dcecff;font-weight:700}.block.control{background:#fff0cf}.block.data{background:#e5f4e8}.block.look{background:#eee4ff}.block .slot{display:inline-block;min-width:48px;padding:1px 7px;margin:0 2px;background:#fff;border:1px solid #9fb0c5;border-radius:999px;font-weight:500}.block-body{margin:5px 0 5px 28px;padding-left:13px;border-left:4px solid rgba(120,98,30,.25)}
+.toolbar-demo{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.toolbar-demo span{border:1px solid #b8c6d7;background:#fff;border-radius:7px;padding:5px 9px;font-weight:700;font-size:.9rem}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem}th,td{border:1px solid #d5deea;padding:9px 10px;text-align:left;vertical-align:top}th{background:#eef3f9}.small{font-size:.9rem;color:var(--muted)}.checklist{list-style:"✓  ";padding-left:1.45rem}.checklist li::marker{color:var(--good);font-weight:800}
+footer{max-width:1180px;margin:0 auto 40px;padding:0 20px;color:var(--muted);font-size:.9rem}
+@media(max-width:860px){.layout{grid-template-columns:1fr}nav{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}nav strong{grid-column:1/-1}.ui-map,.cards,.category-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.mock-grid{grid-template-columns:1fr}.mock-palette{border-right:0;border-bottom:1px solid #d5dfeb}nav{grid-template-columns:1fr}header{padding-top:34px}}
+@media print{body{background:#fff}header{background:#fff;color:#000;padding:20px 0}.lead{color:#333}.layout{display:block;padding:0}nav{display:none}section{box-shadow:none;break-inside:avoid}}
+
+/* Shared reading conventions; no external fonts, images or scripts. */
+html{scroll-padding-top:24px}
+a:focus-visible,summary:focus-visible{outline:3px solid #a65300;outline-offset:4px}
+.skip-link{position:absolute;left:16px;top:-100px;z-index:10;padding:12px 18px;background:#fff;color:#173f72}
+.skip-link:focus{top:12px}
+.book-links{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}
+.book-links a{color:#fff;background:#244b7b;border:1px solid #b5ccea;border-radius:99px;padding:8px 14px;text-decoration:none;font-weight:700}
+.chapter-links{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 0}
+.chapter-links a{padding:10px 14px;background:#eaf2ff;border:1px solid #aac0de;border-radius:10px;text-decoration:none;font-weight:700}
+.reading-note{padding:14px 18px;border-left:5px solid #33704c;background:#eff8f1;border-radius:8px;margin:18px 0}
+.table-scroll{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid #cbd7e6}
+th{background:#edf3fa;color:#233d5e}
+pre{max-width:100%;overflow-x:auto;tab-size:2}
+p,li,td,a{overflow-wrap:anywhere}
+details{border:1px solid #cbd7e6;border-radius:12px;padding:14px 18px;margin:12px 0;background:#fbfdff}
+summary{font-weight:800;cursor:pointer;color:#234f93}
+.mini-label{font-size:.85rem;letter-spacing:.05em;font-weight:800;color:#355d87}
+.task-list{counter-reset:task;list-style:none;padding:0;display:grid;gap:12px}
+.task-list>li{counter-increment:task;position:relative;padding:18px 18px 18px 62px;border:1px solid #cfdeec;border-radius:14px;background:#f8fbff}
+.task-list>li::before{content:counter(task,decimal-leading-zero);position:absolute;left:16px;top:16px;color:#234f93;font-size:1.25rem;font-weight:900}
+.code-sample{padding:20px;background:#182b42;color:#f5f9ff;border-radius:12px;line-height:1.8}
+.quick-nav{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.quick-nav a{padding:8px 12px;border:1px solid #b3c9e0;border-radius:99px;background:#f3f8ff;text-decoration:none}
+@media(min-width:901px){nav[aria-label="目次"]{max-height:calc(100vh - 36px);overflow-y:auto}}
+@media(max-width:520px){th,td{padding:9px;font-size:.94rem}.task-list>li{padding-right:12px}.hero h1{font-size:2.5rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{.book-links,.chapter-links,.skip-link,.quick-nav{display:none}details{break-inside:avoid}a{color:#163a64}}
+
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">本文へ進む</a>
+<header>
+  <div class="header-inner">
+    <div class="kicker">AKARI 1.0.2 USER MANUAL</div>
+    <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../Akari.html">あかりを使う</a><a href="../MANUAL.html#save">保存・開く</a></div>
+<h1>ブロックモード マニュアル</h1>
+    <p class="lead">日本語の命令を、つないだり、囲んだり、穴にはめたりして作品を作るためのガイドです。コードモードと同じ本文を編集するので、どちらで作っても実行結果は同じです。</p>
+  </div>
+</header>
+
+<div class="layout">
+<nav aria-label="目次">
+  <strong>目次</strong>
+  <a href="#first">1. まず1つ動かす</a>
+  <a href="#screen">2. 画面の見方</a>
+  <a href="#basics">3. ブロックの基本</a>
+  <a href="#edit">4. 追加・移動・編集</a>
+  <a href="#control">5. もし・くり返し</a>
+  <a href="#data">6. データを使う</a>
+  <a href="#recipes">7. 作品づくりの例</a>
+  <a href="#run">8. 実行・確認・保存</a>
+  <a href="#undo">9. 元に戻す・未確定入力</a>
+  <a href="#code">10. コードとの関係</a>
+  <a href="#trouble">11. 困ったとき</a>
+  <a href="#keyboard">12. キーボード操作</a>
+</nav>
+
+<main id="main-content">
+<section id="first">
+  <h2>1. まず1つ動かしてみよう</h2>
+  <p>最初は、キャラクターをクリックしたら10歩動く作品を作ります。ブロックモードの基本操作が一通り分かります。</p>
+  <ol class="steps">
+    <li><strong>キャラクターを置く。</strong><br>左側の道具箱から、マスコットなどの標準キャラクターをクリックして作品の画面へ追加します。</li>
+    <li><strong>動かすものを選ぶ。</strong><br>作品の画面か「作品」の一覧で、追加したキャラクターを選びます。</li>
+    <li><strong>できごとを選ぶ。</strong><br>本文欄の「動かすもの」でキャラクター、「できごと」で「クリックしたとき」を選びます。</li>
+    <li><strong>「ブロック」を押す。</strong><br>本文欄の表示を「コード」から「ブロック」へ切り替えます。</li>
+    <li><strong>「10歩動く」を入れる。</strong><br>ブロックの道具箱で「動き」を選ぶか、検索欄に「動く」と入れます。「10歩動く」のブロックを作業台へ入れます。</li>
+    <li><strong>「▶ 動かす」で実行する。</strong><br>作品の画面でキャラクターをクリックします。10歩動けば完成です。「■ 止める」で編集へ戻ります。</li>
+  </ol>
+  <div class="callout good"><strong>覚えることは3つだけ。</strong> 命令は上下につなぐ。条件や計算は白い穴にはめる。「もし」や「くり返し」の中には命令を入れる。この3つがブロックモードの基本です。</div>
+</section>
+
+<section id="screen">
+  <h2>2. 画面の見方</h2>
+<p>下の図は、場所と役割を示す説明図です。実際の画面は、表示の設定や画面幅によって並び方が変わります。</p>
+  <div class="ui-map">
+    <div class="ui-item"><strong>作品の画面</strong>文字・ボタン・入力欄・四角・キャラクターなどを配置する場所です。部品を選ぶと「せってい」で名前、位置、大きさ、色などを変更できます。</div>
+    <div class="ui-item"><strong>動かすもの・できごと</strong>「何を」「いつ」動かすかを選びます。開始、クリック、キー、知らせ、背景の変化、入力値の変化、クローン開始などのきっかけがあります。</div>
+    <div class="ui-item"><strong>ブロックの道具箱</strong>使える命令・値・条件・計算を探します。検索、分類、候補の絞り込みができます。</div>
+    <div class="ui-item"><strong>ブロックの作業台</strong>現在選んでいる「動かすもの・できごと」の本文を組み立てます。長い本文は上下左右へ移動できます。</div>
+  </div>
+
+  <div class="mock" aria-label="ブロックモードの模式図">
+    <div class="mock-top">本文：キャラクター1 ／ クリックしたとき　［コード］［ブロック］</div>
+    <div class="mock-grid">
+      <div class="mock-palette">
+        <div class="mock-search">ブロックを探す</div>
+        <div class="mock-tabs"><span>動き</span><span>見た目</span><span>もし・くり返し</span><span>データ</span><span>計算</span></div>
+        <span class="block">10歩動く</span>
+        <span class="block look">「こんにちは」と言う</span>
+      </div>
+      <div class="mock-workspace">
+        <span class="block">10歩動く</span>
+        <div class="block control">もし <span class="slot">条件</span> なら
+          <div class="block-body"><span class="block look">「できた！」と言う</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>作業台の表示ボタン</h3>
+  <div class="toolbar-demo" aria-label="作業台の主な表示操作">
+    <span>道具箱</span><span>はじめへ</span><span>見わたす</span><span>−</span><span>100%</span><span>＋</span><span>作業台を広く</span>
+  </div>
+  <ul>
+    <li><strong>道具箱</strong>：ブロックの道具箱を隠したり、もう一度表示したりします。</li>
+    <li><strong>はじめへ</strong>：作業台の先頭へ戻ります。</li>
+    <li><strong>見わたす</strong>：本文全体が見えるように表示を合わせます。</li>
+    <li><strong>−／＋／100%</strong>：作業台の拡大率を変えたり100%へ戻したりします。</li>
+    <li><strong>作業台を広く</strong>：通常本文では作品の画面をたたんで編集領域を広げます。押すと「画面も見る」に変わり、元へ戻せます。</li>
+  </ul>
+</section>
+
+<section id="basics">
+  <h2>3. ブロックの基本</h2>
+  <h3>道具箱で探す</h3>
+  <p>検索欄に言葉を入れるか、分類ボタンから探します。現在の分類は次のとおりです。</p>
+  <div class="category-grid">
+    <div class="category"><strong>動き</strong>移動、回転、位置、向き</div>
+    <div class="category"><strong>見た目</strong>大きさ、表示、背景、衣装、文字</div>
+    <div class="category"><strong>もし・くり返し</strong>条件分岐、反復、待つ、停止</div>
+    <div class="category"><strong>知らせ</strong>知らせ、イベントに関係する値</div>
+    <div class="category"><strong>データ</strong>変数、リスト、値の読み取り・変更</div>
+    <div class="category"><strong>計算</strong>四則計算、比較、論理、組み込み計算</div>
+    <div class="category"><strong>しらべる</strong>キー、マウス、接触、位置などの状態</div>
+    <div class="category"><strong>音</strong>音、音量、音程</div>
+    <div class="category"><strong>ペン</strong>線、色、太さ、スタンプ</div>
+    <div class="category"><strong>動作</strong>自分で作った動作・計算の呼び出し</div>
+    <div class="category"><strong>分身</strong>クローンの作成・削除</div>
+    <div class="category"><strong>メモ</strong>コメント</div>
+  </div>
+
+  <h3>「候補の表示」で絞り込む</h3>
+  <p>「候補の表示」を開くと、<strong>すべてのブロック</strong>、<strong>つなぐ命令</strong>、<strong>はめる値</strong>を切り替えられます。</p>
+  <ul>
+    <li><strong>つなぐ命令</strong>：上から順に実行する命令です。</li>
+    <li><strong>はめる値</strong>：数、文字、真偽、データ、計算、条件など、白い穴へ入れるものです。</li>
+    <li><strong>使えない候補も表示</strong>：現在の場所では使えないブロックも確認できます。押すと使えない理由が表示され、本文には追加されません。</li>
+  </ul>
+
+  <h3>命令と値は入る場所が違う</h3>
+  <div class="cards">
+    <div class="card"><strong>命令ブロック</strong>本文の中で上下につなぎます。例：10歩動く、1秒待つ、「こんにちは」と言う。</div>
+    <div class="card"><strong>値・条件ブロック</strong>命令や別の式の穴にはめます。例：点数、1＋2、点数が10以上、マウスの横位置。</div>
+  </div>
+  <div class="callout warn">命令を値の穴へ入れたり、値を命令の並びへ直接入れたりはできません。入る場所を選ぶと、道具箱の候補もその場所に合わせて変わります。</div>
+</section>
+
+<section id="edit">
+  <h2>4. ブロックを追加・移動・編集する</h2>
+  <h3>追加する</h3>
+  <p>道具箱のブロックをつかんで作業台へ運ぶと、入れられる位置が先に表示されます。命令は命令どうしの間へ、値や条件は対応する穴へ置きます。クリックやキーボードでも追加できます。</p>
+  <h3>入力欄を変える</h3>
+  <p>数、文字、名前、所属、真偽などはブロック内の欄で編集します。データ・部品・素材・動作・求値の名前は候補から選べます。まだ登録していない名前が本文にある場合も、勝手に削除せず保持します。</p>
+  <h3>「…」メニューを使う</h3>
+  <table>
+    <thead><tr><th>操作</th><th>何をするか</th></tr></thead>
+    <tbody>
+      <tr><td>移動</td><td>別の位置へ移します。値の場合は別の穴へ移せます。</td></tr>
+      <tr><td>複製</td><td>同じブロックを複製します。</td></tr>
+      <tr><td>↑ 上へ／↓ 下へ</td><td>同じ本文の中で順番を変えます。</td></tr>
+      <tr><td>削除</td><td>ブロックを削除します。必須本文の最後の実行文など、削除できない場合があります。</td></tr>
+      <tr><td>何もしないへ</td><td>命令を「何もしない」に置き換えます。必須本文を空にしたいときに使います。</td></tr>
+      <tr><td>開く／畳む</td><td>中身や入力を持つブロックの表示量を切り替えます。</td></tr>
+      <tr><td>注釈</td><td>命令の行末コメントを編集します。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>ドラッグで組み替える</h3>
+  <p>入力欄や「…」以外のブロック本体をつかんでも移動できます。「もし」や「くり返し」の囲いを動かすと、中の命令も一緒に動きます。ブロックを作業台の端へ運ぶと、その方向へ作業台が自動で動きます。</p>
+  <div class="callout">ドラッグ中は本文そのものはまだ変更されません。正しい場所で離したときに一度だけ確定します。領域外で離す、<kbd>Esc</kbd>で取り消す、ポインター操作が中断する、といった場合は元の本文と履歴を保ちます。</div>
+
+  <h3>入力が複数あるブロック</h3>
+  <p>引数などを増減できる場所では「＋」で入力を増やします。入力を選ぶと「↑」「↓」「外す」が現れ、順番を変えたり削除したりできます。</p>
+
+  <h3>コメント</h3>
+  <ul>
+    <li>独立したコメント行は「メモ」のブロックで編集します。</li>
+    <li>命令の行末コメントは「…」→「注釈」から編集します。</li>
+    <li>コメント欄に改行を入れると、複数のコメント行として保持されます。</li>
+  </ul>
+</section>
+
+<section id="control">
+  <h2>5. 「もし」と「くり返し」</h2>
+<p>下の「点数」の例では、先に「データ」で作品全体の変数「点数」を作ります。キャラクターの「クリックしたとき」の本文で試しましょう。</p>
+  <p>条件分岐や反復は、囲いの中へ命令を入れます。新しく追加した条件分岐・反復には、最初から<strong>「何もしない」</strong>が1つ入っています。</p>
+  <h3>もし</h3>
+  <div class="block control">もし <span class="slot">点数が10以上</span> なら
+    <div class="block-body"><span class="block look">「10点！」と言う</span></div>
+  </div>
+  <p>条件の穴には、真または偽になるブロックを入れます。「…」メニューの「そうでなければ」を「あり」にすると、もう一つの枝を追加できます。「なし」に戻すとその枝を外します。</p>
+  <h3>回数を決めてくり返す</h3>
+  <div class="block control"><span class="slot">10</span> 回くり返す
+    <div class="block-body"><span class="block">10歩動く</span></div>
+  </div>
+  <h3>条件でくり返す・待つ</h3>
+  <p>「条件が成り立つあいだ」「条件が成り立つまで」の反復や、「〜まで待つ」を使えます。条件を作るときは、比較や論理のブロックを穴にはめて組み立てます。</p>
+  <div class="callout warn"><strong>囲いの中は完全な空にはできません。</strong> 条件分岐の各枝と反復の本文には、少なくとも1つの実行文が必要です。最後の実行文を消したいときは「何もしないへ」を使うか、囲い全体を削除します。最上位の本文だけは空にできます。</div>
+  <h3>必須の式を移動するとき</h3>
+  <p>条件など、空にできない穴から式を別の場所へ移すときは、移動元に代わりに置く式も選びます。元の穴を壊した状態を途中保存しないための仕組みです。</p>
+</section>
+
+<section id="data">
+  <h2>6. データを使う</h2>
+  <p>作品全体または各部品で使う変数・リストは、上部の<strong>「データ」</strong>で先に作ります。作った名前はブロックの候補に現れます。</p>
+  <h3>変数</h3>
+  <div class="block data"><span class="slot">点数</span> を <span class="slot">0</span> にする</div>
+  <div class="block data"><span class="slot">点数</span> に <span class="slot">1</span> を足す</div>
+  <p>変数には数・文字・真偽を入れられます。作品全体の値と、部品ごとの値を使い分けられます。</p>
+  <h3>リスト</h3>
+  <p>リストには複数の値を順番に保存できます。追加、変更、挿入、削除、空にする、各要素を順番に処理する、といった操作があります。</p>
+  <h3>名前の所属</h3>
+  <p>名前の左にある所属の選択欄で、<strong>指定なし</strong>、<strong>【 】</strong>、<strong>自分の</strong>、<strong>作品の</strong>を選べます。助詞を含む名前など、区切りが必要な名前は「【 】」を使います。コード表示との切替でもこの情報は保たれます。</p>
+</section>
+
+<section id="recipes">
+  <h2>7. 作品づくりの例</h2>
+  <h3>例1：クリックするたびに点数を増やす</h3>
+  <ol>
+    <li>「データ」で、作品全体の変数「点数」を作る。初期値は数の0にする。</li>
+    <li>画面の「開始したとき」に、点数を0にするブロックを置く。</li>
+    <li>キャラクターの「クリックしたとき」に、点数に1を足すブロックを置く。</li>
+    <li>必要なら、その下に点数を「言う」ためのブロックを置く。</li>
+  </ol>
+  <h3>例2：10点以上になったらメッセージを出す</h3>
+<p>例1で点数を増やす命令の下へ、次の「もし」をつなぎます。10回クリックすると表示され、11回目以降も条件が成り立ちます。</p>
+  <ol>
+    <li>クリック処理の中に「もし」を追加する。</li>
+    <li>条件の穴へ「点数が10以上」になる比較を組み立てる。</li>
+    <li>「もし」の中の「何もしない」を、「10点達成！」と言う命令へ置き換える。</li>
+  </ol>
+  <h3>例3：同じ動きを10回行う</h3>
+  <ol>
+    <li>「もし・くり返し」から回数指定のくり返しを追加する。</li>
+    <li>回数を10にする。</li>
+    <li>囲いの中の「何もしない」を「10歩動く」に置き換える。</li>
+  </ol>
+</section>
+
+<section id="run">
+  <h2>8. 実行・確認・保存</h2>
+  <h3>作品チェック</h3>
+  <p>「作品チェック」は、文法、名前、対象などの問題を実行前に調べ、場所・行・理由を表示します。ブロックモードでも、内部では同じ日本語本文を検査します。</p>
+  <h3>実行</h3>
+  <ul>
+    <li><strong>▶ 動かす</strong>：作品を最初の状態から実行します。</li>
+    <li><strong>■ 止める</strong>：実行状態を破棄し、編集へ戻ります。</li>
+    <li>実行中・一時停止中は本文を変更できません。</li>
+    <li>実行中でも「コード」「ブロック」の表示切替はでき、同じ実行位置を確認できます。</li>
+  </ul>
+  <h3>保存</h3>
+  <ol><li>ブロックの欄を入力し終え、「入力を確定」で反映します。</li><li>上部の「保存」を押し、ダウンロードされた <code>.akari.md</code> を確認します。</li><li>続きはあかりの「開く」でそのファイルを選び、「ブロック」を押します。</li></ol>
+  <p>ファイル保存・書き出しの違いは、<a href="../MANUAL.html#save">共通の保存ガイド</a>で確認できます。</p>
+  <p>「保存」は編集を続けるための <code>.akari.md</code> を作ります。ブロック表示のまま保存でき、コード表示へ切り替える必要はありません。作業内容は自動保存されないため、残したい作品はファイルとして保存します。</p>
+  <h3>書き出し</h3>
+  <p>完成した作品は「書き出し」で、編集画面を含まない単体HTMLにできます。ブロック表示からでもコード表示からでも、確定済みの本文から同じ実行内容が作られます。</p>
+  <div class="callout warn">「動作・計算」で編集中の定義は、先にその画面の「保存」で定義全体を作品へ登録してください。下書きのままでは、作品の登録済み定義にはなりません。</div>
+</section>
+
+<section id="undo">
+  <h2>9. 元に戻す・やり直しと、未確定の入力</h2>
+  <h3>元に戻す・やり直す</h3>
+  <p>「元に戻す」「やり直し」と、<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>＋<kbd>Z</kbd>、<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>＋<kbd>Y</kbd> または <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>＋<kbd>Shift</kbd>＋<kbd>Z</kbd> は、コードとブロックで共通の履歴を使います。</p>
+  <p>一つのブロック編集は、本文や注釈を含めて一つの操作として戻せます。表示方法を切り替えただけでは新しい履歴は作りません。</p>
+  <h3>「入力を確定」と「取消」</h3>
+  <p>入力途中の空欄、「－」だけの数、日本語IMEの変換中、ドラッグ途中などは、まだ本文へ反映されていません。必要なときはブロック編集上部の<strong>「入力を確定」</strong>で確定し、やめるときは<strong>「取消」</strong>または本文欄の<strong>「入力を取り消す」</strong>を使います。</p>
+  <div class="callout danger">不完全な入力が残っている間は、保存・実行・書き出し・編集対象の変更・モード切替などが保留されます。表示された理由を確認し、入力を完成させるか取り消してください。</div>
+</section>
+
+<section id="code">
+  <h2>10. コードモードとの関係</h2>
+  <p>コードとブロックは、別々のプログラムではありません。選んだ「動かすもの・できごと」に対する<strong>同じ日本語本文</strong>を、文字で見るかブロックで見るかの違いです。</p>
+  <ul class="checklist">
+    <li>表示を切り替えるだけでは、本文、句点、空行、字下げ、コメント、未保存状態、元に戻す・やり直しの履歴を変更しません。</li>
+    <li>値や名前の変更は該当部分だけへ反映し、変更しない語順・空白・コメントを保ちます。追加・移動などの構造変更では、必要な範囲だけを日本語の標準形へ整えます。</li>
+    <li>コード側に文法エラーがある本文は、ブロックへ切り替えられません。コード表示で書き方を直します。</li>
+    <li>文法として読める本文なら、未登録の名前や、その対象では使えない命令も消さず、診断付きでブロック表示できます。</li>
+    <li>保存するのは日本語本文です。ブロック専用の別プログラムや、作業台上のブロック座標は保存しません。</li>
+    <li>保存した作品を開き直して「ブロック」を選ぶと、日本語本文から命令・式・コメントの構造を再構成します。</li>
+  </ul>
+</section>
+
+<section id="trouble">
+  <h2>11. 困ったとき</h2>
+  <table>
+    <thead><tr><th>状態</th><th>確認すること</th></tr></thead>
+    <tbody>
+      <tr><td>「ブロック」を押せない</td><td>コード本文に書き方エラーがある可能性があります。コード表示でエラーを直すとブロック表示へ切り替えられます。</td></tr>
+      <tr><td>欲しいブロックが見つからない</td><td>検索語を短くする、分類を「すべて」にする、「候補の表示」を「すべてのブロック」にする、の順に確認します。</td></tr>
+      <tr><td>候補はあるが追加できない</td><td>「使えない候補も表示」で表示している可能性があります。候補を押すと、現在の対象・場所で使えない理由が表示されます。</td></tr>
+      <tr><td>値ブロックを追加できない</td><td>先に白い穴を選ぶか、値ブロックを対応する穴へドラッグします。命令の並びには値だけを置けません。</td></tr>
+      <tr><td>最後の命令を削除できない</td><td>「もし」の枝や「くり返し」の中は実行文が必須です。「何もしないへ」で置き換えるか、囲い全体を削除します。</td></tr>
+      <tr><td>保存や実行へ進めない</td><td>入力途中やドラッグ途中が残っていないか確認します。「入力を確定」または「取消」を使います。日本語変換中なら、まずIMEの変換を確定します。</td></tr>
+      <tr><td>作業台で迷子になった</td><td>「見わたす」で全体表示、「はじめへ」で先頭へ戻します。−／＋で縮尺も調整できます。</td></tr>
+      <tr><td>実行中に編集できない</td><td>実行中・一時停止中は本文変更がロックされます。「■ 止める」で編集状態へ戻ります。</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="keyboard">
+  <h2>12. キーボードでも操作できる</h2>
+  <ul>
+    <li><kbd>Tab</kbd>：ブロックの欄やボタンなどへ順番に移動します。</li>
+    <li><kbd>Enter</kbd>：「…」を開いたり、選んだ操作を実行したりします。通常の1行入力では入力確定にも使えます。</li>
+    <li><kbd>Esc</kbd>：メニュー、入力、移動、ドラッグなどを取り消します。</li>
+    <li>作品の一覧は矢印キー、<kbd>Home</kbd>、<kbd>End</kbd>で選択し、<kbd>Enter</kbd>で開けます。</li>
+  </ul>
+  <p>ブロックの追加・移動はポインターだけでなくキーボードでも行えるようになっています。日本語IMEで変換中は、変換を確定してから次の操作へ進んでください。</p>
+</section>
+
+<section>
+  <h2>ブロックモードで大切な考え方</h2>
+  <ol>
+    <li><strong>最初に「動かすもの」と「できごと」を決める。</strong></li>
+    <li><strong>命令は上から下へつなぐ。</strong></li>
+    <li><strong>値・計算・条件は穴にはめる。</strong></li>
+    <li><strong>「もし」「くり返し」は囲いの中に命令を入れる。</strong></li>
+    <li><strong>分からないときは検索と「使えない候補も表示」で理由を調べる。</strong></li>
+    <li><strong>実行前に「作品チェック」、残したい作品は「保存」。</strong></li>
+  </ol>
+</section>
+<section id="drawing">
+  <h2>部品の複製とお絵かき</h2>
+  <p>作品の部品を選び、設定欄の「複製」で見た目・衣装・個体データを持つ別の部品を追加できます。部品のコードは複製しません。ブロックの「複製」とは対象が異なります。</p>
+  <p>「画像を置く」の下の「🎨 お絵かき」では、透明な500×500ピクセルの画面に描けます。「決定して置く」で絵の外側の透明余白を切り、通常の画像キャラクターとして配置します。小さな絵は透明な余白で幅・高さを8ピクセル以上にします。配置後の再編集と下書き保存はありません。</p>
+</section>
+</main>
+</div>
+
+<footer>
+<div class="chapter-links"><a href="../MANUAL.html#faq">困ったとき</a><a href="./code-mode-beginner.html">コード初級 →</a><a href="./code-mode-intermediate.html">コード中級 →</a><a href="./code-mode-advanced.html">コード上級 →</a></div>
+  <p>対象：あかり 1.0.2。内容はリポジトリの <a href="../LANGUAGE.md">LANGUAGE.md</a> と <a href="../Akari.html">Akari.html</a> の現行仕様・実装に基づきます。詳細な言語仕様は LANGUAGE.md を参照してください。</p>
+</footer>
+</body>
+</html>

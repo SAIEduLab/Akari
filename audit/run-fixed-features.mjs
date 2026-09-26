@@ -22,7 +22,7 @@ for(const [from,to] of [
   ['../lib/release-101-contract.mjs',completedFixture+'/source/audit/lib/release-101-contract.mjs'],
 ])replaceOnce("'"+from+"'",JSON.stringify(pathToFileURL(path.join(root,to)).href));
 replaceOnce("pageFor(browser,'Akari.html',",'pageFor(browser,'+JSON.stringify(completedProduct)+',');
-replaceOnce("'editor-assets-101'","'fixed101-editor-assets'");
+replaceOnce("'editor-assets-101'","'fixed102-editor-assets'");
 await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 assert.deepEqual(snapshot('Akari.html'),before,'inputs changed during fixed feature replay');
 const report=JSON.parse(fs.readFileSync(output));
@@ -32,4 +32,4 @@ Object.assign(report,{schema:'akari-fixed-editor-assets-v1',sourceCommit:complet
   suiteSha256:manifest.files['source/audit/tests/editor-assets-101.mjs'].sha256});
 verifyFixedFeatures(report,before);
 fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
-console.log('Verified 1.0.1 fixed features: 15/15 PASS');
+console.log('Completed 1.0.2 fixed features: 15/15 PASS');

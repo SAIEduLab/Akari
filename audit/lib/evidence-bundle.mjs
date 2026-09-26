@@ -5,7 +5,7 @@ import {snapshot,sha} from './product-test-host.mjs';
 import {verifyGateResults} from './verify-gate-results.mjs';
 import {verifyBrowserEnvironment} from './browser-environment.mjs';
 import {verifyBrowserGroup} from './verify-browser-results.mjs';
-import {verifyCompletedProvenance} from './completed-baseline.mjs';
+import {verifyCompletedProvenance,verifyFixedAudio} from './completed-baseline.mjs';
 import {verifyAudio102} from './release-102-contract.mjs';
 export function evidenceFiles(dir,prefix='') {
   return fs.readdirSync(path.join(dir,prefix),{withFileTypes:true}).flatMap(e=>{
@@ -17,7 +17,10 @@ export function verifyEvidence(kind,dir,inputs) {
   if(kind.startsWith('audio-codecs-')){
     const report=JSON.parse(fs.readFileSync(path.join(dir,'report.json')));
     verifyAudio102(report,inputs,kind.slice(13));
-    return {status:'PASS',platform:report.platform,cases:report.results.length};
+    const fixedReport=JSON.parse(fs.readFileSync(path.join(dir,'fixed/report.json')));
+    const fixed=verifyFixedAudio(fixedReport,inputs,kind.slice(13));
+    assert.deepEqual(report.results.map(r=>r.id).sort(),fixedReport.results.map(r=>r.id).sort(),'candidate lost a completed audio guarantee');
+    return {status:'PASS',platform:report.platform,cases:report.results.length,fixed};
   }
   if(kind==='selftest'||kind.startsWith('full-browser-'))verifyBrowserEnvironment(JSON.parse(fs.readFileSync(path.join(dir,'browser-environment.json'))),inputs);
   if(kind==='selftest')return verifyGateResults(dir,inputs);

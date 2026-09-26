@@ -48,10 +48,10 @@ for(const rel of tracked){
   files.push({path:rel,bytes:bytes.length,sha256:sha(bytes)});
 }
 const baselineMap=[
-  ['audit/fixtures/1.0.1/source/Akari.html','baseline/Akari.html'],
-  ['audit/fixtures/1.0.1/source/AUDIT.md','baseline/AUDIT.md'],
-  ['audit/fixtures/1.0.1/source/LANGUAGE.md','baseline/LANGUAGE.md'],
-  ['audit/fixtures/1.0.1/source/.github/workflows/akari-audit.yml','baseline/.github/workflows/akari-audit.yml'],
+  ['audit/fixtures/1.0.2/source/Akari.html','baseline/Akari.html'],
+  ['audit/fixtures/1.0.2/source/AUDIT.md','baseline/AUDIT.md'],
+  ['audit/fixtures/1.0.2/source/LANGUAGE.md','baseline/LANGUAGE.md'],
+  ['audit/fixtures/1.0.2/source/.github/workflows/akari-audit.yml','baseline/.github/workflows/akari-audit.yml'],
 ];
 for(const [srcRel,dstRel] of baselineMap){
   const src=path.join(root,srcRel),dst=path.join(candidate,dstRel);

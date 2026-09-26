@@ -9,10 +9,11 @@ def verify(doc):
     assert 'Akari_1_0_0' in doc['on']['push']['branches'], 'candidate push trigger'
     assert 'audit/**' in doc['on']['push']['branches'], 'audit branch push trigger'
     assert 'feat/**' in doc['on']['push']['branches'], 'feature branch push trigger'
-    assert 'fixed-1.0.1' in doc['jobs']['selftest']['name'], 'completed checkpoint job label'
+    assert 'fixed-1.0.2' in doc['jobs']['selftest']['name'], 'completed checkpoint job label'
     static_scripts = '\n'.join(s.get('run', '') for s in doc['jobs']['static']['steps'])
     assert 'node audit/tests/completed-baseline-negative.mjs || status=1' in static_scripts, 'completed baseline negative gate'
     assert 'node audit/tests/checkpoint-101-negative.mjs || status=1' in static_scripts, '1.0.1 checkpoint negative gate'
+    assert 'node audit/tests/checkpoint-102-negative.mjs || status=1' in static_scripts, '1.0.2 completed checkpoint negative gate'
     assert 'node audit/tests/historical-source-negative.mjs || status=1' in static_scripts, 'offline provenance negative gate'
     assert 'GIT_ALTERNATE_OBJECT_DIRECTORIES' not in str(doc), 'external Git object dependency'
     assert 'Akari2' not in str(doc), 'old repository dependency'
@@ -35,6 +36,9 @@ def verify(doc):
     codec_scripts = '\n'.join(s.get('run','') for s in codec['steps'])
     assert 'playwright@1.55.0' in codec_scripts
     assert 'audit/install-codec-browser.py' in codec_scripts
+    codec_execution = next(s['run'] for s in codec['steps'] if 'node audit/tests/audio-codecs-102.mjs' in s.get('run',''))
+    assert 'node audit/run-fixed-audio.mjs' in codec_execution, 'fixed 1.0.2 audio execution required'
+    assert codec_execution.count('|| status=1') == 2 and 'exit "$status"' in codec_execution, 'both candidate and fixed audio must execute on failure'
     assert 'node audit/tests/release-102-negative.mjs || status=1' in static_scripts
     for step in codec['steps']:
         if 'node audit/tests/audio-codecs-102.mjs' in step.get('run','') or 'seal ' in step.get('run',''):
@@ -131,7 +135,16 @@ bad_audio_platform = copy.deepcopy(document); bad_audio_platform['jobs']['audio-
 bad_audio_skip = copy.deepcopy(document); bad_audio_skip['jobs']['audio-codecs']['if'] = 'false'
 bad_audio_soft = copy.deepcopy(document); bad_audio_soft['jobs']['audio-codecs']['continue-on-error'] = 'true'
 bad_feature_trigger = copy.deepcopy(document); bad_feature_trigger['on']['push']['branches'].remove('feat/**')
-for invalid in [bad_audio_dependency, bad_audio_platform, bad_audio_skip, bad_audio_soft, bad_feature_trigger, bad_checkpoint_trigger, bad_checkpoint_name, bad_checkpoint_gate, bad_display, bad, bad_dependency, bad_retention, bad_validator, bad_hidden, bad_browser, bad_probe, bad_skips, bad_early, bad_provenance, bad_alternates, bad_archive_gate, bad_checkpoint101_gate]:
+bad_checkpoint102_gate = copy.deepcopy(document)
+for step in bad_checkpoint102_gate['jobs']['static']['steps']:
+    step['run'] = step.get('run', '').replace('node audit/tests/checkpoint-102-negative.mjs || status=1', '')
+bad_fixed_audio = copy.deepcopy(document)
+bad_audio_early = copy.deepcopy(document)
+for step in bad_fixed_audio['jobs']['audio-codecs']['steps']:
+    step['run'] = step.get('run', '').replace('node audit/run-fixed-audio.mjs', 'missing-fixed-audio')
+for step in bad_audio_early['jobs']['audio-codecs']['steps']:
+    step['run'] = step.get('run', '').replace('|| status=1', '')
+for invalid in [bad_checkpoint102_gate, bad_fixed_audio, bad_audio_early, bad_audio_dependency, bad_audio_platform, bad_audio_skip, bad_audio_soft, bad_feature_trigger, bad_checkpoint_trigger, bad_checkpoint_name, bad_checkpoint_gate, bad_display, bad, bad_dependency, bad_retention, bad_validator, bad_hidden, bad_browser, bad_probe, bad_skips, bad_early, bad_provenance, bad_alternates, bad_archive_gate, bad_checkpoint101_gate]:
     try:
         verify(invalid)
     except AssertionError:
@@ -163,5 +176,5 @@ output = Path(sys.argv[1])
 assert not output.exists(), 'new evidence path required'
 output.parent.mkdir(parents=True, exist_ok=True)
 output.write_text(json.dumps({'status': 'PASS', 'workflowSha256': hashlib.sha256(workflow.read_bytes()).hexdigest(),
-    'jobs': list(document['jobs']), 'browserTasks': 27, 'negativeCases': 22, 'syntaxChecked': checked}, indent=2) + '\n', encoding='utf-8')
-print('Workflow preflight: PASS; 22 negative cases; 27 browser tasks; ' + str(len(checked)) + ' JavaScript files')
+    'jobs': list(document['jobs']), 'browserTasks': 27, 'negativeCases': 25, 'syntaxChecked': checked}, indent=2) + '\n', encoding='utf-8')
+print('Workflow preflight: PASS; 25 negative cases; 27 browser tasks; ' + str(len(checked)) + ' JavaScript files')

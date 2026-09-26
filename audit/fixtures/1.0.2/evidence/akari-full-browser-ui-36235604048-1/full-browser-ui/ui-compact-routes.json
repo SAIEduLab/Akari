@@ -1,0 +1,85 @@
+{
+  "html": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-ui/candidate/Akari.html",
+  "sha256": "4f3678e5a3fb03e313f967ef3d9aa0e5291d5f5d180fc7f2b521a9254239bfa2",
+  "sourceUnchanged": true,
+  "browser": "140.0.7339.16",
+  "timestamp": "2026-09-26T10:24:30.369Z",
+  "finished": "2026-09-26T10:24:41.993Z",
+  "total": 6,
+  "failed": 0,
+  "results": [
+    {
+      "id": "UI09-statement-duplicate-order-delete",
+      "pass": true,
+      "evidence": {
+        "source": "点数を1にする。\n点数に2を足す",
+        "history": 4,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-else-annotation-and-comment-lines",
+      "pass": true,
+      "evidence": {
+        "source": "※ 一行目  \n※ 二行目 ",
+        "history": 7,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-variadic-order-size-and-nested-replace",
+      "pass": true,
+      "evidence": {
+        "source": "［（0＋0）、3、0］と言う。",
+        "history": 6,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-expression-move-atomic-replacement",
+      "pass": true,
+      "evidence": {
+        "source": "［0、1］と言う",
+        "history": 3,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-deep-expression-move-prompt-reachable",
+      "pass": true,
+      "evidence": {
+        "source": "（1＋2）＋（3＋4）と言う。\n0＋（1＋2＋（3＋4））と言う。",
+        "history": 4,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    },
+    {
+      "id": "UI09-keyboard-only-create-move-delete-history",
+      "pass": true,
+      "evidence": {
+        "source": "何もしない。",
+        "history": 5,
+        "redo": 0,
+        "mode": "blocks",
+        "pending": null
+      }
+    }
+  ],
+  "pageErrors": [],
+  "networkRequests": [],
+  "environmentPass": true,
+  "detailArtifact": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-ui/ui-compact-routes-details-1790418270369.json",
+  "screenshot": "/home/runner/work/Akari/Akari/audit-evidence/full-browser-ui/ui-compact-routes-details-1790418270369.png",
+  "runnerExit": 0,
+  "runnerError": null
+}

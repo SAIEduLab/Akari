@@ -58,7 +58,7 @@ export function verifyBrowserGroup(dir,group,expectedSnapshot) {
   assert.equal(manifest.head,expectedSnapshot.head);assert.equal(manifest.baseline,config.fixedBaseline);
   const fixedFiles={'baseline/Akari.html':'Akari.html','baseline/AUDIT.md':'AUDIT.md','baseline/LANGUAGE.md':'LANGUAGE.md','baseline/.github/workflows/akari-audit.yml':'.github/workflows/akari-audit.yml'};
   assert.deepEqual(manifest.files.filter(f=>f.gitRef).map(f=>f.path).sort(),Object.keys(fixedFiles).sort());
-  for(const [p,source] of Object.entries(fixedFiles)){const f=manifest.files.find(f=>f.path===p);assert.equal(f.gitRef,config.fixedBaseline);assert.equal(f.sha256,expectedSnapshot.files['audit/fixtures/1.0.1/source/'+source],'browser baseline substituted: '+p);}
+  for(const [p,source] of Object.entries(fixedFiles)){const f=manifest.files.find(f=>f.path===p);assert.equal(f.gitRef,config.fixedBaseline);assert.equal(f.sha256,expectedSnapshot.files['audit/fixtures/1.0.2/source/'+source],'browser baseline substituted: '+p);}
   assert.deepEqual(Object.fromEntries(manifest.files.filter(f=>!f.gitRef).map(f=>[f.path,f.sha256]).sort(([a],[b])=>a.localeCompare(b))),
     Object.fromEntries(Object.entries(expectedSnapshot.files).sort(([a],[b])=>a.localeCompare(b))),'browser snapshot input coverage');
   for(const f of manifest.files)assert.equal(sha(fs.readFileSync(path.join(dir,'candidate',f.path))),f.sha256,'changed browser input '+f.path);

@@ -3,8 +3,8 @@ import cp from 'node:child_process';
 import assert from 'node:assert/strict';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {gateSteps} from '../lib/gate-contract.mjs';
-import {checkpointCommit,checkpointArchive,verifyCheckpointArchive,verifyCheckpointArchiveBytes} from '../lib/checkpoint-source.mjs';
-import {completedFixture,completedProduct,completedManifestSha256,completedManifest,verifyFixedFeatures} from '../lib/completed-baseline.mjs';
+import {checkpointCommit,checkpointArchive,verifyCheckpointArchive,verifyCheckpointArchiveBytes} from '../lib/checkpoint-101-source.mjs';
+import {completedFixture,completedProduct,completedManifestSha256,completedManifest,verifyFixedFeatures} from '../lib/historical-checkpoint-101.mjs';
 
 const manifest=completedManifest(),bytes=fs.readFileSync(checkpointArchive),archive=JSON.parse(bytes);
 verifyCheckpointArchiveBytes(bytes);
@@ -27,7 +27,7 @@ reject(()=>verifyCheckpointArchive(archive,p=>{
   return p===archive.blobs[blob].fixture?Buffer.concat([b,Buffer.from('x')]):b;
 }));
 const steps=gateSteps('browser','output');
-for(const [id,runner] of [['fixed100','audit/run-historical-baseline.mjs'],['fixed101','audit/run-fixed-baseline.mjs'],['fixed101-features','audit/run-fixed-features.mjs']])
+for(const [id,runner] of [['fixed100','audit/run-historical-baseline.mjs'],['fixed101','audit/run-historical-101.mjs'],['fixed101-features','audit/run-historical-101-features.mjs']])
   assert.equal(steps.filter(s=>s[0]===id&&s[1]===runner).length,1,'required checkpoint runner '+id);
 const report=JSON.parse(fs.readFileSync(completedFixture+'/evidence/akari-selftest-evidence-36017186869-1/editor-assets-101.json'));
 Object.assign(report,{schema:'akari-fixed-editor-assets-v1',snapshot:snapshot('Akari.html'),sourceCommit:checkpointCommit,
@@ -46,7 +46,7 @@ for(const mutate of [
 const env=Object.fromEntries(Object.entries(process.env).filter(([k])=>k.toLowerCase()!=='path'&&!/^GIT_(?:DIR|WORK_TREE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES)$/.test(k)));
 env.PATH='';
 const child=cp.spawnSync(process.execPath,['--input-type=module','-e',
-  "import {verifyCompletedProvenance} from './audit/lib/completed-baseline.mjs';const p=verifyCompletedProvenance();console.log(JSON.stringify({commit:p.sourceCommit,files:p.sourceFiles,offline:p.offlineProvenance.sourceFiles}));"],
+  "import {verifyCompletedProvenance} from './audit/lib/historical-checkpoint-101.mjs';const p=verifyCompletedProvenance();console.log(JSON.stringify({commit:p.sourceCommit,files:p.sourceFiles,offline:p.offlineProvenance.sourceFiles}));"],
   {env,encoding:'utf8',timeout:15000});
 assert.equal(child.status,0,child.error?.message||child.stderr);
 assert.deepEqual(JSON.parse(child.stdout),{commit:checkpointCommit,files:34,offline:34});

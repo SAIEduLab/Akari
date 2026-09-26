@@ -1,0 +1,180 @@
+{
+  "schema": "akari-browser-obligations-v1",
+  "authority": "AUDIT.md B09-WORKBENCH and B09-DESIGNER stable obligations. Each obligation expands to all independently required case tuples of its listed runners; this is a traceability mapping, not a renamed or substituted test. Shape readability additionally needs screenshot/source review. DESIGN09-RESIZE-KEYBOARD is asserted in modern-browser resize/resizeBounds; responsive reachability uses every viewport and both modes.",
+  "entries": [
+    {
+      "id": "WB09-SHAPE-MEANING",
+      "tasks": [
+        "workbench-direct"
+      ]
+    },
+    {
+      "id": "WB09-DRAG-CONNECT",
+      "tasks": [
+        "ui-interactions",
+        "workbench-direct"
+      ]
+    },
+    {
+      "id": "WB09-NESTED-MOVE",
+      "tasks": [
+        "workbench-direct",
+        "workbench-matrix"
+      ]
+    },
+    {
+      "id": "WB09-EXPRESSION-DROP",
+      "tasks": [
+        "ui-interactions",
+        "browser-owner-delete"
+      ]
+    },
+    {
+      "id": "WB09-CONTAINER-GROUP",
+      "tasks": [
+        "workbench-direct"
+      ]
+    },
+    {
+      "id": "WB09-VIEWPORT",
+      "tasks": [
+        "workbench-matrix",
+        "workbench-direct"
+      ]
+    },
+    {
+      "id": "WB09-EDGE-SCROLL-CANCEL",
+      "tasks": [
+        "workbench-matrix"
+      ]
+    },
+    {
+      "id": "WB09-LONG-BODY",
+      "tasks": [
+        "long-regression",
+        "perf-input:keyboard-insert",
+        "perf-input:clipboard-paste"
+      ]
+    },
+    {
+      "id": "WB09-SHELL",
+      "tasks": [
+        "ui-shell",
+        "ui-stage-gesture"
+      ]
+    },
+    {
+      "id": "WB09-COMPACT",
+      "tasks": [
+        "ui-compact-menu",
+        "ui-compact-routes"
+      ]
+    },
+    {
+      "id": "WB09-RESPONSIVE",
+      "tasks": [
+        "workbench-matrix",
+        "browser-session",
+        "run-editor-regression"
+      ]
+    },
+    {
+      "id": "WB09-PREVIOUS-FIXES",
+      "tasks": [
+        "ui-interactions",
+        "browser-owner-delete"
+      ]
+    },
+    {
+      "id": "WB09-KEYBOARD",
+      "tasks": [
+        "ui-interactions",
+        "workbench-matrix"
+      ]
+    },
+    {
+      "id": "WB09-TOUCH",
+      "tasks": [
+        "ui-interactions"
+      ]
+    },
+    {
+      "id": "WB09-PENDING-IME",
+      "tasks": [
+        "browser-session",
+        "ui-interactions"
+      ]
+    },
+    {
+      "id": "WB09-RUNTIME-LOCKS",
+      "tasks": [
+        "browser-session",
+        "browser-runtime"
+      ]
+    },
+    {
+      "id": "WB09-DEFINITION-DRAFT",
+      "tasks": [
+        "browser-session",
+        "run-editor-regression",
+        "parent-qa"
+      ]
+    },
+    {
+      "id": "DESIGN09-COMPONENT-REACHABILITY",
+      "tasks": [
+        "modern-browser"
+      ]
+    },
+    {
+      "id": "DESIGN09-STANDARD-SPRITES",
+      "tasks": [
+        "modern-browser"
+      ]
+    },
+    {
+      "id": "DESIGN09-MEDIA-ENTRYPOINTS",
+      "tasks": [
+        "modern-browser"
+      ]
+    },
+    {
+      "id": "DESIGN09-RESIZE-POINTER",
+      "tasks": [
+        "modern-browser"
+      ]
+    },
+    {
+      "id": "DESIGN09-RESIZE-KEYBOARD",
+      "tasks": [
+        "modern-browser"
+      ]
+    },
+    {
+      "id": "DESIGN09-COLOR-COMMIT-CANCEL",
+      "tasks": [
+        "modern-browser"
+      ]
+    },
+    {
+      "id": "DESIGN09-DELETE-UNDO",
+      "tasks": [
+        "modern-browser"
+      ]
+    },
+    {
+      "id": "DESIGN09-RESPONSIVE-REACHABILITY",
+      "tasks": [
+        "modern-browser",
+        "ui-shell",
+        "run-editor-regression"
+      ]
+    },
+    {
+      "id": "DESIGN09-MIXED-HISTORY-STORAGE",
+      "tasks": [
+        "modern-browser"
+      ]
+    }
+  ]
+}
