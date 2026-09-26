@@ -64,7 +64,7 @@
   "playwright": "1.55.0",
   "inputSha256": {
     ".github/workflows/akari-audit.yml": "08a3ef72d07ed7f1a4c71e0ee1a947f00dfa07f034f292c350a282c3eb06fb57",
-    "AUDIT.md": "581c7dfb756fafc4cd02686f006b1ab3310bc2eb2dd58afafcececb5378c3d3d",
+    "AUDIT.md": "d30821adfe2911bff7c0554ff5a8bf215a2d47af3ac6608ea28a3fc88550a112",
     "Akari.html": "4f3678e5a3fb03e313f967ef3d9aa0e5291d5f5d180fc7f2b521a9254239bfa2",
     "LANGUAGE.md": "0b7c9c993ed2e90a43856878337d3830a5df990f8b069f8ec6477b332a62e82b",
     "MANUAL.html": "d9fba1bf32baf9863f452728ad9c4770620065618b453597ad3f8f4577c65649",
