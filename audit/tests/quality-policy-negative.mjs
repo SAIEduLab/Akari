@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {verifyAuthority} from '../lib/verify-test-results.mjs';
 const manifest=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
-const policy=JSON.parse(fs.readFileSync('audit/manifests/quality-1.0.1.json'));
+const policy=JSON.parse(fs.readFileSync('audit/manifests/quality-1.0.2.json'));
 verifyAuthority(manifest,policy);
 const mutations=[
  p=>p.entries.pop(),p=>p.entries.push(p.entries[0]),

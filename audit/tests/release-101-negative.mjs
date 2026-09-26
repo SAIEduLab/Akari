@@ -1,9 +1,10 @@
+import {release102Runtime} from '../lib/release-102-contract.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {release101Assertions,verifyEditorAssets} from '../lib/release-101-contract.mjs';
 import {verifyCompletedRuntime} from '../lib/completed-runtime-contract.mjs';
-const baseline = "runtime() { appVersion: '1.0.1'; runtimeVersion: '1.0.0'; return 42; }";
-const current = baseline;
+const baseline = "runtime() { appVersion: '1.0.1'; runtimeVersion: '1.0.0'; const audio = ['audio/mpeg', 'audio/wav']; return 42; }";
+const current = release102Runtime(baseline);
 verifyCompletedRuntime(current, baseline);
 for (const changed of [current.replace('42','41'), current.replace("runtimeVersion: '1.0.0'", "runtimeVersion: '1.0.1'"), baseline.replace("appVersion: '1.0.1'","appVersion: '1.0.0'")])
   assert.throws(() => verifyCompletedRuntime(changed, baseline));

@@ -6,6 +6,7 @@ import {verifyGateResults} from './verify-gate-results.mjs';
 import {verifyBrowserEnvironment} from './browser-environment.mjs';
 import {verifyBrowserGroup} from './verify-browser-results.mjs';
 import {verifyCompletedProvenance} from './completed-baseline.mjs';
+import {verifyAudio102} from './release-102-contract.mjs';
 export function evidenceFiles(dir,prefix='') {
   return fs.readdirSync(path.join(dir,prefix),{withFileTypes:true}).flatMap(e=>{
     assert.ok(!e.isSymbolicLink(),'evidence symlink');const rel=prefix+e.name;
@@ -13,6 +14,11 @@ export function evidenceFiles(dir,prefix='') {
   }).sort();
 }
 export function verifyEvidence(kind,dir,inputs) {
+  if(kind.startsWith('audio-codecs-')){
+    const report=JSON.parse(fs.readFileSync(path.join(dir,'report.json')));
+    verifyAudio102(report,inputs,kind.slice(13));
+    return {status:'PASS',platform:report.platform,cases:report.results.length};
+  }
   if(kind==='selftest'||kind.startsWith('full-browser-'))verifyBrowserEnvironment(JSON.parse(fs.readFileSync(path.join(dir,'browser-environment.json'))),inputs);
   if(kind==='selftest')return verifyGateResults(dir,inputs);
   if(kind.startsWith('full-browser-')){

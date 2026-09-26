@@ -53552,6 +53552,36 @@
       ]
     }
   ],
+  "audio102": {
+    "ids": [
+      "audio-import-mp3",
+      "audio-import-wav",
+      "audio-import-m4a",
+      "audio-import-m4a-mono",
+      "audio-import-flac",
+      "audio-import-flac-mono",
+      "audio-import-opus",
+      "audio-import-opus-mono",
+      "audio-file-picker",
+      "audio-unsupported-codecs",
+      "audio-aac-profile",
+      "audio-malformed-containers",
+      "audio-ogg-crc",
+      "audio-container-limits",
+      "audio-saved-mime-and-metadata",
+      "audio-ui-failure-atomic",
+      "audio-old-project-compatibility",
+      "audio-runtime-mime-rejection"
+    ],
+    "runner": "audit/tests/audio-codecs-102.mjs",
+    "validator": "audit/lib/release-102-contract.mjs",
+    "jobs": [
+      "audio-codecs:linux",
+      "audio-codecs:win32"
+    ],
+    "artifact": "report.json",
+    "freeze": "audit/manifests/release-1.0.2.json"
+  },
   "editorAssets101": {
     "ids": [
       "duplicate-types-settings-identities",

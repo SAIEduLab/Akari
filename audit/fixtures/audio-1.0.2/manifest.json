@@ -1,0 +1,252 @@
+{
+  "schema": "akari-audio-fixtures-v1",
+  "source": "Generated stereo PCM, 48000 Hz, 0.25 s; left 440 Hz, right 660 Hz.",
+  "encoder": "ffmpeg version 7.1-essentials_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers",
+  "commands": {
+    "tone.mp3": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      "audit\\fixtures\\audio-1.0.2\\tone.wav",
+      "-metadata",
+      "title=AKARI_PRIVATE_METADATA_102",
+      "-metadata",
+      "artist=AKARI_PRIVATE_METADATA_102",
+      "-c:a",
+      "libmp3lame",
+      "-b:a",
+      "128k",
+      "audit\\fixtures\\audio-1.0.2\\tone.mp3"
+    ],
+    "tone.m4a": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      "audit\\fixtures\\audio-1.0.2\\tone.wav",
+      "-metadata",
+      "title=AKARI_PRIVATE_METADATA_102",
+      "-metadata",
+      "artist=AKARI_PRIVATE_METADATA_102",
+      "-c:a",
+      "aac",
+      "-profile:a",
+      "aac_low",
+      "-b:a",
+      "128k",
+      "audit\\fixtures\\audio-1.0.2\\tone.m4a"
+    ],
+    "mono.m4a": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      "audit\\fixtures\\audio-1.0.2\\tone.wav",
+      "-metadata",
+      "title=AKARI_PRIVATE_METADATA_102",
+      "-metadata",
+      "artist=AKARI_PRIVATE_METADATA_102",
+      "-ac",
+      "1",
+      "-ar",
+      "44100",
+      "-c:a",
+      "aac",
+      "-profile:a",
+      "aac_low",
+      "-movflags",
+      "+faststart",
+      "audit\\fixtures\\audio-1.0.2\\mono.m4a"
+    ],
+    "tone.flac": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      "audit\\fixtures\\audio-1.0.2\\tone.wav",
+      "-metadata",
+      "title=AKARI_PRIVATE_METADATA_102",
+      "-metadata",
+      "artist=AKARI_PRIVATE_METADATA_102",
+      "-c:a",
+      "flac",
+      "audit\\fixtures\\audio-1.0.2\\tone.flac"
+    ],
+    "mono.flac": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      "audit\\fixtures\\audio-1.0.2\\tone.wav",
+      "-metadata",
+      "title=AKARI_PRIVATE_METADATA_102",
+      "-metadata",
+      "artist=AKARI_PRIVATE_METADATA_102",
+      "-ac",
+      "1",
+      "-ar",
+      "8000",
+      "-c:a",
+      "flac",
+      "audit\\fixtures\\audio-1.0.2\\mono.flac"
+    ],
+    "tone.ogg": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      "audit\\fixtures\\audio-1.0.2\\tone.wav",
+      "-metadata",
+      "title=AKARI_PRIVATE_METADATA_102",
+      "-metadata",
+      "artist=AKARI_PRIVATE_METADATA_102",
+      "-c:a",
+      "libopus",
+      "-b:a",
+      "64k",
+      "audit\\fixtures\\audio-1.0.2\\tone.ogg"
+    ],
+    "mono.opus": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      "audit\\fixtures\\audio-1.0.2\\tone.wav",
+      "-metadata",
+      "title=AKARI_PRIVATE_METADATA_102",
+      "-metadata",
+      "artist=AKARI_PRIVATE_METADATA_102",
+      "-ac",
+      "1",
+      "-c:a",
+      "libopus",
+      "-b:a",
+      "32k",
+      "audit\\fixtures\\audio-1.0.2\\mono.opus"
+    ],
+    "unsupported-alac.m4a": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      "audit\\fixtures\\audio-1.0.2\\tone.wav",
+      "-metadata",
+      "title=AKARI_PRIVATE_METADATA_102",
+      "-metadata",
+      "artist=AKARI_PRIVATE_METADATA_102",
+      "-c:a",
+      "alac",
+      "audit\\fixtures\\audio-1.0.2\\unsupported-alac.m4a"
+    ],
+    "unsupported-vorbis.ogg": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      "audit\\fixtures\\audio-1.0.2\\tone.wav",
+      "-metadata",
+      "title=AKARI_PRIVATE_METADATA_102",
+      "-metadata",
+      "artist=AKARI_PRIVATE_METADATA_102",
+      "-c:a",
+      "libvorbis",
+      "audit\\fixtures\\audio-1.0.2\\unsupported-vorbis.ogg"
+    ],
+    "unsupported-adts.aac": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      "audit\\fixtures\\audio-1.0.2\\tone.wav",
+      "-metadata",
+      "title=AKARI_PRIVATE_METADATA_102",
+      "-metadata",
+      "artist=AKARI_PRIVATE_METADATA_102",
+      "-c:a",
+      "aac",
+      "-profile:a",
+      "aac_low",
+      "-f",
+      "adts",
+      "audit\\fixtures\\audio-1.0.2\\unsupported-adts.aac"
+    ],
+    "overrate.flac": [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      "audit\\fixtures\\audio-1.0.2\\tone.wav",
+      "-metadata",
+      "title=AKARI_PRIVATE_METADATA_102",
+      "-metadata",
+      "artist=AKARI_PRIVATE_METADATA_102",
+      "-ar",
+      "96000",
+      "-c:a",
+      "flac",
+      "audit\\fixtures\\audio-1.0.2\\overrate.flac"
+    ]
+  },
+  "files": {
+    "mono.flac": {
+      "bytes": 9440,
+      "sha256": "d96dfaa7af3b3524a894c268b46627b9a50f6327eb8204bd8b36f6ffad7f45b6"
+    },
+    "mono.m4a": {
+      "bytes": 3511,
+      "sha256": "5b95c4067aa46d2162f4899f1de084736d995f4fe5b682111642d4672258259f"
+    },
+    "mono.opus": {
+      "bytes": 1060,
+      "sha256": "41f9b19323e653470c03dbdf1d4966c17ad1fac76d851c5a676f17c6929e8c38"
+    },
+    "overrate.flac": {
+      "bytes": 22720,
+      "sha256": "ebdf765a93be54a5c20beeda1e26b21521c29ad431fa2112850c57119c419383"
+    },
+    "tone.flac": {
+      "bytes": 16584,
+      "sha256": "c4c3fef17cfd6b0d52a9ca745fab1b0604456b1c8576c6deabdfe8f14eea3cc5"
+    },
+    "tone.m4a": {
+      "bytes": 4837,
+      "sha256": "5f2288b7bce3addf370f80c6ad861a6909fd15ba19551ccf7f9bc42e16c2b55a"
+    },
+    "tone.mp3": {
+      "bytes": 5112,
+      "sha256": "cf03828daf6ce3dd1c83fc537f83a68dc926316153fbcf36d33d2da9a631cd6f"
+    },
+    "tone.ogg": {
+      "bytes": 3108,
+      "sha256": "0dbeb7131913a543ac4025a5241501500ce37cbf39d92b19b9df5c48be7ae34b"
+    },
+    "tone.wav": {
+      "bytes": 48044,
+      "sha256": "ba93bc6e5422a3f387b38d6ce6fbd3074892a5b974fbcb8f33ddb2514c22bf9f"
+    },
+    "unsupported-adts.aac": {
+      "bytes": 3970,
+      "sha256": "13e1351f740963ecf4c509c0e7af9a09dd27fac2f7f1a41e8f5f405730bb047a"
+    },
+    "unsupported-alac.m4a": {
+      "bytes": 11195,
+      "sha256": "c40c4e034ea8a64bf30adf64690d18616226eeb212b249b014a36fef4b53e64c"
+    },
+    "unsupported-vorbis.ogg": {
+      "bytes": 5450,
+      "sha256": "8406301c575d19dbc637549392bf42b403831bf3d632cbfe362f138b56d53972"
+    }
+  }
+}

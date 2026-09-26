@@ -204,12 +204,12 @@ const cases = {
     await p.screenshot({path:path.join(artifacts,'drawing-mobile.png'),fullPage:true});
   },
   async 'release-versions-and-100-import'(p) {
-    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_VERSION),{appVersion:'1.0.1',runtimeVersion:'1.0.0',languageVersion:'1.0.0',programFormatVersion:3,projectFormatVersion:3});
+    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_VERSION),{appVersion:'1.0.2',runtimeVersion:'1.0.0',languageVersion:'1.0.0',programFormatVersion:3,projectFormatVersion:3});
     await p.locator('#fileInput').setInputFiles({name:'completed-100.akari.md',mimeType:'text/plain',buffer:Buffer.from(oldFile)});
     await p.waitForFunction(()=>Akari.app.project.name==='1.0.0 互換性確認'&&Akari.app.editorState.state==='DESIGN');
-    assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),'1.0.1');
-    const text=await p.evaluate(()=>Akari.serializeProject(Akari.app.project,Akari.app.assetStore));assert.ok(text.startsWith('# あかり 1.0.1 の作品'));
-    assert.equal(await p.evaluate(async text=>(await Akari.parseProjectFile(text)).project.appVersion,text),'1.0.1');
+    assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),'1.0.2');
+    const text=await p.evaluate(()=>Akari.serializeProject(Akari.app.project,Akari.app.assetStore));assert.ok(text.startsWith('# あかり 1.0.2 の作品'));
+    assert.equal(await p.evaluate(async text=>(await Akari.parseProjectFile(text)).project.appVersion,text),'1.0.2');
   },
   async 'release-malformed-state-protection'(p) {
     const before=await state(p);

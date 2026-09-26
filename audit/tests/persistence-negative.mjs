@@ -10,7 +10,7 @@ for(const mutate of [r=>r.capabilityChanges.pop(),r=>r.browserReplacements.pop()
   const bad=structuredClone(record);mutate(bad);assert.throws(()=>verifyRetirementRecord(bad));
 }
 const prefix='audit/fixtures/1.0.0/source/';
-const frozen=read(prefix+'audit/manifests/quality-1.0.0.json').capabilities,current=read('audit/manifests/quality-1.0.1.json').capabilities;
+const frozen=read(prefix+'audit/manifests/quality-1.0.0.json').capabilities,current=read('audit/manifests/quality-1.0.2.json').capabilities;
 assert.deepEqual(current,currentCapabilities(frozen));
 for(const mutate of [a=>a.pop(),a=>a[0].core='',a=>a.find(x=>x.id==='save:manual-only').browser='',a=>a.push(a[0])]){const bad=structuredClone(current);mutate(bad);assert.throws(()=>assert.deepEqual(bad,currentCapabilities(frozen)));}
 const browser=currentBrowserContract(read(prefix+'audit/manifests/browser-results.json'));

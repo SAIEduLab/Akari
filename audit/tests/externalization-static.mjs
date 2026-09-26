@@ -1,6 +1,8 @@
+import {verifyFreeze102,release102Assertions} from '../lib/release-102-contract.mjs';
 import {verifyNoAutomaticPersistence} from '../lib/persistence-transition.mjs';
 import './persistence-negative.mjs';
 import fs from 'node:fs';
+verifyFreeze102();
 import assert from 'node:assert/strict';
 import cp from 'node:child_process';
 import crypto from 'node:crypto';
@@ -12,7 +14,7 @@ import {verifyCompletedProvenance} from '../lib/completed-baseline.mjs';
 import {readHistoricalSource,historicalPaths} from '../lib/historical-source.mjs';
 const map=JSON.parse(fs.readFileSync('audit/manifests/externalization-map.json'));
 const manifest=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
-const policy=JSON.parse(fs.readFileSync('audit/manifests/quality-1.0.1.json'));
+const policy=JSON.parse(fs.readFileSync('audit/manifests/quality-1.0.2.json'));
 verifyAuthority(manifest);
 const completedBaseline=verifyCompletedProvenance();
 const html=fs.readFileSync('Akari.html','utf8');
@@ -32,8 +34,8 @@ for(const entry of map.entries){
  const approved=policy.overrides.find(e=>e.suite===entry.symbol);
  const frozen=fs.readFileSync('audit/fixtures/1.0.0/source/'+entry.destination,'utf8').replace(/\r\n/g,'\n').trimEnd();
  assert.equal(sha(frozen),approved?.bodySha256||entry.bodySha256,'Frozen suite authority changed: '+entry.symbol);
- assert.equal(source,release101Assertions(entry.destination,currentNames(frozen)),'Assertion changed beyond recorded identifiers and 1.0.1 metadata: '+entry.symbol);
- assert.equal(source,fs.readFileSync('audit/fixtures/1.0.1/source/'+entry.destination,'utf8').replace(/\r\n/g,'\n').trimEnd(),'Frozen 1.0.1 core assertion changed: '+entry.symbol);
+ assert.equal(source,release102Assertions(entry.destination,release101Assertions(entry.destination,currentNames(frozen))),'Assertion changed beyond recorded identifiers and 1.0.1 metadata: '+entry.symbol);
+ assert.equal(source,release102Assertions(entry.destination,fs.readFileSync('audit/fixtures/1.0.1/source/'+entry.destination,'utf8').replace(/\r\n/g,'\n').trimEnd()),'Frozen 1.0.1 core assertion changed: '+entry.symbol);
  if(!process.argv.includes('--parallel'))assert.ok(!html.includes(entry.symbol),'Embedded audit remains '+entry.symbol);
 }
 if(!process.argv.includes('--parallel'))for(const token of ['selfTestReport','data-selftest-failed',"searchParams.get('selftest')"])assert.ok(!html.includes(token),'audit entry/output remains');
