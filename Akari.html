@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Akari 1.0.1: shared AST, code/block editors, transactional history and versioned storage. -->
+<!-- Akari 1.0.2: shared AST, code/block editors, transactional history and versioned storage. -->
 <!-- SPDX-License-Identifier: Apache-2.0; full license text is embedded in AKARI_APACHE_LICENSE below. -->
 <html lang="ja">
 <head>
@@ -8,7 +8,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src blob:; media-src blob:; connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
-<title>あかり 1.0.1</title>
+<title>あかり 1.0.2</title>
 <style id="akari-editor-styles">
 /* Editor stylesheet: original cascade order preserved; redundant declarations removed. */
 :root {
@@ -5048,7 +5048,7 @@ body.runtime #formSurface .design-resize-outline {
 </head>
 <body>
 <div id="app">
-  <div class="titlebar"><span class="lamp">💡</span>あかり 1.0.1</div>
+  <div class="titlebar"><span class="lamp">💡</span>あかり 1.0.2</div>
   <div class="menutool">
     <button id="newBtn">新しく作る</button>
     <button id="openBtn">開く</button>
@@ -5063,7 +5063,7 @@ body.runtime #formSurface .design-resize-outline {
     <span class="sep"></span>
     <button id="imageObjectAdd" title="画像ファイルをキャラクターとして画面に置く">🖼 画像を置く</button>
     <button id="paintAdd" title="絵を描いてキャラクターとして画面に置く">🎨 お絵かき</button>
-    <button id="soundQuickAdd" title="MP3またはWAVの音声ファイルを取り込む">🔊 音声を追加</button>
+    <button id="soundQuickAdd" title="MP3 / WAV / M4A（AAC-LC）/ FLAC / Ogg Opusの音声を取り込む">🔊 音声を追加</button>
     <button id="assetBtn">画像・音声を管理</button>
     <button id="procBtn">動作・計算</button>
     <button id="dataBtn">データ</button>
@@ -5311,7 +5311,7 @@ body.runtime #formSurface .design-resize-outline {
         <textarea id="codeEditor" spellcheck="false" aria-label="あかりのコード"></textarea>
       </div>
       <div class="code-assist"><span id="codeIssue">✓ 書き方をチェック中</span><div class="hint-panel"><div class="hint-controls"><input id="hintSearch" type="search" aria-label="候補を検索" placeholder="命令・値・名前を検索"><label><input id="hintUnavailable" type="checkbox">使えないものも表示</label><button id="hintPrev">前</button><span id="hintCount"></span><button id="hintNext">次</button></div><div class="code-hints" id="codeHints"></div></div></div>
-      <div class="console" id="console">あかり1.0.1を起動しました。</div>
+      <div class="console" id="console">あかり1.0.2を起動しました。</div>
     </section>
   </div>
 
@@ -5367,7 +5367,7 @@ body.runtime #formSurface .design-resize-outline {
         </div>
         <div class="asset-import-card">
           <strong>音声を使う</strong>
-          <small>MP3またはWAVを取り込みます。取り込んだ名前は「素材の音を鳴らす」で使えます。</small>
+          <small>MP3 / WAV / M4A（AAC-LC） / FLAC / Ogg Opusを取り込みます。取り込んだ名前は「素材の音を鳴らす」で使えます。</small>
           <button id="soundAdd">🔊 音声ファイルを追加</button>
         </div>
       </div>
@@ -5386,7 +5386,7 @@ body.runtime #formSurface .design-resize-outline {
       <input id="imageObjectInput" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden>
       <input id="imageBackdropInput" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden>
       <input id="imageCostumeInput" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden>
-      <input id="soundInput" type="file" accept="audio/mpeg,audio/wav,.mp3,.wav" hidden>
+      <input id="soundInput" type="file" accept="audio/mpeg,audio/wav,audio/mp4,audio/flac,audio/ogg,.mp3,.wav,.m4a,.flac,.ogg,.opus" hidden>
       <div id="assetBody"></div>
     </div>
     <div class="dialog-foot"><button id="assetClose">閉じる</button></div>
@@ -8580,7 +8580,7 @@ body.runtime #formSurface .design-resize-outline {
       }
     }
     const EXECUTABLE_VERSION = Object.freeze({
-      appVersion: '1.0.1',
+      appVersion: '1.0.2',
       runtimeVersion: '1.0.0',
       languageVersion: '1.0.0',
       programFormatVersion: 3,
@@ -8660,7 +8660,7 @@ body.runtime #formSurface .design-resize-outline {
           !(
             a.kind === 'image'
               ? ['image/png', 'image/jpeg', 'image/webp']
-              : ['audio/mpeg', 'audio/wav']
+              : ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/flac', 'audio/ogg']
           ).includes(a.mime)
         )
           fail('\u7d20\u6750\u306e\u7a2e\u985e\u304c\u4e0d\u6b63\u3067\u3059');
@@ -10051,7 +10051,7 @@ body.runtime #formSurface .design-resize-outline {
       throw new AkariError('F503', `作品データの項目が${VERSION}仕様と一致しません`);
     if (
       p.schema !== 'akari-project' ||
-      ![VERSION, '1.0.0'].includes(p.appVersion) ||
+      ![VERSION, '1.0.1', '1.0.0'].includes(p.appVersion) ||
       p.languageVersion !== LANGUAGE_VERSION ||
       p.formatVersion !== FORMAT_VERSION
     )
@@ -13991,12 +13991,268 @@ body.runtime #formSurface .design-resize-outline {
     parseMp3FrameMeta(out);
     return out;
   }
+  function parseFlac(bytes) {
+    const bad = () => { throw new AkariError('F511', 'FLACの構造が不正です'); };
+    let pos = 4, stream = null, last = false;
+    while (!last) {
+      if (pos + 4 > bytes.length) bad();
+      const type = bytes[pos] & 127, size = (bytes[pos + 1] << 16) | (bytes[pos + 2] << 8) | bytes[pos + 3];
+      last = !!(bytes[pos] & 128);
+      if (type === 127 || pos + 4 + size > bytes.length || (!stream && type !== 0)) bad();
+      if (type === 0) {
+        if (stream || size !== 34) bad();
+        stream = bytes.slice(pos + 4, pos + 38);
+      }
+      pos += 4 + size;
+    }
+    if (!stream || pos + 2 > bytes.length || bytes[pos] !== 255 || (bytes[pos + 1] & 254) !== 248) bad();
+    const sampleRate = (stream[10] << 12) | (stream[11] << 4) | (stream[12] >> 4),
+      channels = ((stream[12] >> 1) & 7) + 1,
+      bits = (((stream[12] & 1) << 4) | (stream[13] >> 4)) + 1,
+      samples = (stream[13] & 15) * 4294967296 + u32be(stream, 14);
+    if (u16be(stream, 0) < 16 || u16be(stream, 2) < u16be(stream, 0) || bits < 4 || bits > 32) bad();
+    const clean = new Uint8Array(42 + bytes.length - pos);
+    clean.set([102, 76, 97, 67, 128, 0, 0, 34]);
+    clean.set(stream, 8); clean.set(bytes.subarray(pos), 42);
+    return { mime: 'audio/flac', clean, frameMeta: { sampleRate, channels },
+      duration: samples ? samples / sampleRate : null };
+  }
+  function parseOggOpus(bytes) {
+    const bad = () => { throw new AkariError('F511', 'Ogg Opusの構造または検査値が不正です'); };
+    const table = Uint32Array.from({ length: 256 }, (_, n) => {
+      let crc = n << 24;
+      for (let i = 0; i < 8; i++) crc = (crc << 1) ^ (crc & 0x80000000 ? 0x04c11db7 : 0);
+      return crc >>> 0;
+    });
+    const crc = (data, start, end) => {
+      let value = 0;
+      for (let p = start; p < end; p++) {
+        const byte = p >= start + 22 && p < start + 26 ? 0 : data[p];
+        value = ((value << 8) ^ table[((value >>> 24) ^ byte) & 255]) >>> 0;
+      }
+      return value;
+    };
+    const pages = [], packets = [], clean = bytes.slice();
+    let pos = 0, serial = null, sequence = 0, parts = [], packetSize = 0, count = 0,
+      ended = false, finalGranule = null, previousGranule = 0;
+    while (pos < bytes.length) {
+      if (ended || pos + 27 > bytes.length || ascii(bytes, pos, 4) !== 'OggS' || bytes[pos + 4] !== 0) bad();
+      const flags = bytes[pos + 5], segments = bytes[pos + 26], headerEnd = pos + 27 + segments,
+        stream = u32le(bytes, pos + 14), seq = u32le(bytes, pos + 18);
+      if (flags & ~7 || headerEnd > bytes.length || !segments) bad();
+      if (serial === null) { serial = stream; if (flags !== 2 || seq !== 0) bad(); }
+      else if (stream !== serial || flags & 2) bad();
+      if (seq !== sequence++ || !!(flags & 1) !== !!parts.length) bad();
+      let end = headerEnd;
+      for (let i = 0; i < segments; i++) end += bytes[pos + 27 + i];
+      if (end > bytes.length || crc(bytes, pos, end) !== u32le(bytes, pos + 22)) bad();
+      let body = headerEnd;
+      for (let i = 0; i < segments; i++) {
+        const size = bytes[pos + 27 + i];
+        parts.push([body, size]); packetSize += size; body += size;
+        if (size < 255) {
+          if (!packetSize) bad();
+          if (count < 2) {
+            const packet = new Uint8Array(packetSize); let at = 0;
+            for (const [start, length] of parts) { packet.set(bytes.subarray(start, start + length), at); at += length; }
+            packets.push({ bytes: packet, parts });
+          }
+          count++; parts = []; packetSize = 0;
+        }
+      }
+      const lo = u32le(bytes, pos + 6), hi = u32le(bytes, pos + 10);
+      const granule = hi === 0xffffffff && lo === 0xffffffff ? null : hi * 4294967296 + lo;
+      if (granule !== null) {
+        if (!Number.isSafeInteger(granule) || granule < previousGranule) bad();
+        previousGranule = granule;
+      }
+      if (pages.length === 0 && (count !== 1 || parts.length || granule !== 0)) bad();
+      ended = !!(flags & 4); if (ended) finalGranule = granule;
+      pages.push([pos, end]); pos = end;
+    }
+    if (!ended || parts.length || count < 3 || finalGranule === null) bad();
+    const head = packets[0].bytes, tags = packets[1].bytes;
+    if (head.length < 19 || ascii(head, 0, 8) !== 'OpusHead')
+      throw new AkariError('F509', 'OggはOpusだけ対応しています');
+    if (head[8] < 1 || head[8] > 15 || head[9] < 1) bad();
+    const channels = head[9], mapping = head[18], preSkip = u16le(head, 10);
+    if (mapping === 0) { if (channels > 2 || (head[8] === 1 && head.length !== 19)) bad(); }
+    else {
+      if (mapping !== 1 || head.length < 21 + channels || !head[19] || head[20] > head[19]) bad();
+      for (let i = 0; i < channels; i++) if (head[21 + i] !== 255 && head[21 + i] >= head[19] + head[20]) bad();
+    }
+    if (tags.length < 16 || ascii(tags, 0, 8) !== 'OpusTags') bad();
+    let tagPos = 12 + u32le(tags, 8);
+    if (tagPos + 4 > tags.length) bad();
+    const comments = u32le(tags, tagPos); tagPos += 4;
+    if (comments > (tags.length - tagPos) / 4) bad();
+    for (let i = 0; i < comments; i++) {
+      if (tagPos + 4 > tags.length) bad();
+      const size = u32le(tags, tagPos); tagPos += 4 + size;
+      if (tagPos > tags.length) bad();
+    }
+    // Keep packet/page boundaries and granule positions; replace comments and
+    // vendor data with a valid empty OpusTags packet plus zero padding.
+    const empty = new Uint8Array(tags.length); empty.set([79,112,117,115,84,97,103,115]);
+    let at = 0;
+    for (const [start, length] of packets[1].parts) { clean.set(empty.subarray(at, at + length), start); at += length; }
+    for (const [start, end] of pages) new DataView(clean.buffer).setUint32(start + 22, crc(clean, start, end), true);
+    if (finalGranule <= preSkip) bad();
+    return { mime: 'audio/ogg', clean, frameMeta: { channels, sampleRate: 48000 },
+      duration: (finalGranule - preSkip) / 48000 };
+  }
+  function parseM4a(bytes) {
+    const bad = () => { throw new AkariError('F511', 'M4Aの構造が不正です'); };
+    const unsupported = () => { throw new AkariError('F509', 'M4Aは単一のAAC-LC音声だけ対応しています'); };
+    const boxes = (start, end) => {
+      const result = [];
+      while (start < end) {
+        if (start + 8 > end) bad();
+        let size = u32be(bytes, start), header = 8;
+        if (size === 1) {
+          if (start + 16 > end) bad();
+          size = u32be(bytes, start + 8) * 4294967296 + u32be(bytes, start + 12); header = 16;
+        } else if (size === 0) size = end - start;
+        if (!Number.isSafeInteger(size) || size < header || start + size > end) bad();
+        result.push({ type: ascii(bytes, start + 4, 4), start, data: start + header, end: start + size });
+        start += size;
+      }
+      return result;
+    };
+    const one = (list, type) => { const found = list.filter(b => b.type === type); if (found.length !== 1) bad(); return found[0]; };
+    const children = box => boxes(box.data, box.end);
+    const top = boxes(0, bytes.length), ftyp = one(top, 'ftyp'), moov = one(top, 'moov'),
+      mdats = top.filter(b => b.type === 'mdat');
+    if (top[0] !== ftyp || ftyp.end - ftyp.data < 8 || (ftyp.end - ftyp.data) % 4 || !mdats.length) bad();
+    const brands = [ascii(bytes, ftyp.data, 4)];
+    for (let p = ftyp.data + 8; p < ftyp.end; p += 4) brands.push(ascii(bytes, p, 4));
+    if (!brands.some(b => ['M4A ', 'isom', 'iso2', 'mp41', 'mp42'].includes(b)) || top.some(b => b.type === 'moof')) unsupported();
+    const movie = children(moov), tracks = movie.filter(b => b.type === 'trak');
+    if (tracks.length !== 1 || movie.some(b => b.type === 'mvex')) unsupported();
+    const track = children(tracks[0]), mdia = one(track, 'mdia'), media = children(mdia),
+      hdlr = one(media, 'hdlr'), mdhd = one(media, 'mdhd');
+    if (hdlr.end - hdlr.data < 24 || ascii(bytes, hdlr.data + 8, 4) !== 'soun') unsupported();
+    const minf = one(media, 'minf'), mediaInfo = children(minf), stbl = one(mediaInfo, 'stbl'),
+      table = children(stbl), stsd = one(table, 'stsd');
+    if (stsd.data + 8 > stsd.end || u32be(bytes, stsd.data) !== 0 || u32be(bytes, stsd.data + 4) !== 1) unsupported();
+    const entries = boxes(stsd.data + 8, stsd.end), entry = one(entries, 'mp4a'), p = entry.data;
+    if (entries.length !== 1 || p + 28 > entry.end) bad();
+    const entryVersion = u16be(bytes, p + 8);
+    if (entryVersion > 1) unsupported();
+    const entryChildren = boxes(p + 28 + (entryVersion === 1 ? 16 : 0), entry.end), esds = one(entryChildren, 'esds');
+    const descriptor = (start, end) => {
+      if (start >= end) bad();
+      const type = bytes[start++]; let size = 0, terminated = false;
+      for (let i = 0; i < 4; i++) {
+        if (start >= end) bad();
+        const byte = bytes[start++]; size = size * 128 + (byte & 127);
+        if (!(byte & 128)) { terminated = true; break; }
+      }
+      if (!terminated || start + size > end) bad();
+      return { type, data: start, end: start + size };
+    };
+    if (esds.data + 4 > esds.end || u32be(bytes, esds.data) !== 0) bad();
+    const es = descriptor(esds.data + 4, esds.end);
+    if (es.type !== 3 || es.data + 3 > es.end) bad();
+    const flags = bytes[es.data + 2]; let at = es.data + 3;
+    if (flags & 128) at += 2;
+    if (flags & 64) { if (at >= es.end) bad(); at += 1 + bytes[at]; }
+    if (flags & 32) at += 2;
+    const config = descriptor(at, es.end);
+    if (config.type !== 4 || config.data + 13 > config.end) bad();
+    if (bytes[config.data] !== 0x40 || (bytes[config.data + 1] >> 2) !== 5) unsupported();
+    const asc = descriptor(config.data + 13, config.end);
+    if (asc.type !== 5) bad();
+    let bit = asc.data * 8;
+    const read = n => {
+      if (bit + n > asc.end * 8) bad(); let value = 0;
+      while (n--) { value = value * 2 + ((bytes[bit >> 3] >> (7 - (bit & 7))) & 1); bit++; }
+      return value;
+    };
+    const objectType = read(5), rateIndex = read(4),
+      sampleRate = rateIndex === 15 ? read(24) : [96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350][rateIndex],
+      channels = read(4);
+    if (objectType !== 2 || !sampleRate || ![1,2].includes(channels)) unsupported();
+    read(1); if (read(1) || read(1)) unsupported();
+    if (asc.end * 8 - bit >= 11) {
+      if (read(11) !== 0x2b7 || read(5) !== 5 || read(1)) unsupported();
+    }
+    while (bit < asc.end * 8) if (read(1)) unsupported();
+    const stsz = one(table, 'stsz'), stsc = one(table, 'stsc'), stts = one(table, 'stts'),
+      offsets = table.filter(b => b.type === 'stco' || b.type === 'co64');
+    if (offsets.length !== 1 || stsz.data + 12 > stsz.end || stsc.data + 8 > stsc.end || stts.data + 8 > stts.end) bad();
+    const size = u32be(bytes, stsz.data + 4), sampleCount = u32be(bytes, stsz.data + 8),
+      chunkMapCount = u32be(bytes, stsc.data + 4), times = u32be(bytes, stts.data + 4), offset = offsets[0], width = offset.type === 'stco' ? 4 : 8;
+    if (offset.data + 8 > offset.end) bad();
+    const chunks = u32be(bytes, offset.data + 4);
+    if (!sampleCount || sampleCount > bytes.length || !chunks || !chunkMapCount || !times ||
+      stsz.end !== stsz.data + 12 + (size ? 0 : sampleCount * 4) ||
+      stsc.end !== stsc.data + 8 + chunkMapCount * 12 || stts.end !== stts.data + 8 + times * 8 ||
+      offset.end !== offset.data + 8 + chunks * width) bad();
+    const chunkMap = [];
+    for (let i = 0; i < chunkMapCount; i++) {
+      const start = stsc.data + 8 + i * 12, first = u32be(bytes, start), perChunk = u32be(bytes, start + 4);
+      if (!first || first > chunks || !perChunk || perChunk > sampleCount || u32be(bytes, start + 8) !== 1 ||
+        (i === 0 ? first !== 1 : first <= chunkMap[i - 1].first)) bad();
+      chunkMap.push({ first, perChunk });
+    }
+    let sample = 0, mapIndex = 0;
+    const ranges = [];
+    for (let i = 1; i <= chunks; i++) {
+      if (mapIndex + 1 < chunkMap.length && i === chunkMap[mapIndex + 1].first) mapIndex++;
+      const start = offset.data + 8 + (i - 1) * width;
+      let address = width === 4 ? u32be(bytes, start) : u32be(bytes, start) * 4294967296 + u32be(bytes, start + 4);
+      const chunkStart = address;
+      for (let n = 0; n < chunkMap[mapIndex].perChunk; n++) {
+        if (sample >= sampleCount) bad();
+        const length = size || u32be(bytes, stsz.data + 12 + sample * 4); sample++;
+        if (!length) bad(); address += length;
+      }
+      if (!Number.isSafeInteger(address) || !mdats.some(b => chunkStart >= b.data && address <= b.end)) bad();
+      ranges.push([chunkStart, address]);
+    }
+    ranges.sort((a, b) => a[0] - b[0]);
+    for (let i = 1; i < ranges.length; i++) if (ranges[i][0] < ranges[i - 1][1]) bad();
+    let totalSamples = 0;
+    for (let i = 0; i < times; i++) {
+      const count = u32be(bytes, stts.data + 8 + i * 8), delta = u32be(bytes, stts.data + 12 + i * 8);
+      if (!count || !delta) bad(); totalSamples += count;
+    }
+    if (sample !== sampleCount || totalSamples !== sampleCount) bad();
+    const clean = bytes.slice(), zeroBox = box => {
+      clean.set([102,114,101,101], box.start + 4); clean.fill(0, box.data, box.end);
+    };
+    // Replacing metadata by same-sized free boxes preserves every chunk offset.
+    const sanitize = (list, allowed) => { for (const box of list) if (!allowed.includes(box.type)) zeroBox(box); };
+    sanitize(top, ['ftyp','moov','mdat']); sanitize(movie, ['mvhd','trak']);
+    sanitize(track, ['tkhd','edts','mdia']); sanitize(media, ['mdhd','hdlr','minf']);
+    sanitize(mediaInfo, ['smhd','dinf','stbl']);
+    sanitize(table, ['stsd','stts','stsc','stsz','stco','co64','ctts','stss','sgpd','sbgp']);
+    sanitize(entryChildren, ['esds','btrt']);
+    for (const box of [...movie, ...track, mdhd]) if (['mvhd','tkhd','mdhd'].includes(box.type)) {
+      const length = bytes[box.data] === 0 ? 8 : bytes[box.data] === 1 ? 16 : 0;
+      if (!length || box.data + 4 + length > box.end) bad();
+      clean.fill(0, box.data + 4, box.data + 4 + length);
+    }
+    clean.fill(0, hdlr.data + 24, hdlr.end);
+    for (const box of track.filter(b => b.type === 'edts')) sanitize(children(box), ['elst']);
+    for (const box of mediaInfo.filter(b => b.type === 'dinf')) {
+      const list = children(box), dref = one(list, 'dref'); sanitize(list, ['dref']);
+      if (dref.data + 8 > dref.end || u32be(bytes, dref.data + 4) !== 1) bad();
+      const refs = boxes(dref.data + 8, dref.end);
+      if (refs.length !== 1 || refs[0].type !== 'url ' || refs[0].end - refs[0].data !== 4 || u32be(bytes, refs[0].data) !== 1) unsupported();
+    }
+    return { mime: 'audio/mp4', clean, frameMeta: { channels, sampleRate } };
+  }
   function sniffAudio(bytes) {
     if (bytes.length >= 12 && ascii(bytes, 0, 4) === 'RIFF' && ascii(bytes, 8, 4) === 'WAVE')
       return { mime: 'audio/wav', parsed: parseWav(bytes) };
+    if (bytes.length >= 4 && ascii(bytes, 0, 4) === 'fLaC') return parseFlac(bytes);
+    if (bytes.length >= 4 && ascii(bytes, 0, 4) === 'OggS') return parseOggOpus(bytes);
+    if (bytes.length >= 12 && ascii(bytes, 4, 4) === 'ftyp') return parseM4a(bytes);
     const id3 = bytes.length >= 10 && ascii(bytes, 0, 3) === 'ID3',
       frame = bytes.length >= 4 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0;
-    if (!id3 && !frame) throw new AkariError('F509', '使える音声はMP3またはPCM WAVだけです');
+    if (!id3 && !frame) throw new AkariError('F509', '使える音声はMP3 / PCM WAV / M4A（AAC-LC）/ FLAC / Ogg Opusです');
     const clean = stripMp3Metadata(bytes);
     return { mime: 'audio/mpeg', clean, frameMeta: parseMp3FrameMeta(clean) };
   }
@@ -14152,12 +14408,15 @@ body.runtime #formSurface .design-resize-outline {
     const sn = sniffAudio(bytes),
       containerMeta = audioContainerMeta(sn);
     checkAudioContainerLimits(containerMeta);
+    if (sn.duration != null) checkAudioLimits({ ...containerMeta, duration: sn.duration });
     const out = sn.mime === 'audio/wav' ? rebuildCanonicalWav(sn.parsed) : sn.clean;
     if (out.length > LIMITS.audioBytes)
       throw new AkariError('F504', '標準化後の音声が6MiBを超えています');
     const decoded = await decodeAudioMeta(out);
     if (decoded.channels !== containerMeta.channels)
       throw new AkariError('F511', '音声containerとdecode後のチャンネル数が一致しません');
+    if (sn.duration != null && Math.abs(decoded.duration - sn.duration) > 0.02)
+      throw new AkariError('F511', '音声containerとdecode後の長さが一致しません');
     const meta = {
       duration: decoded.duration,
       channels: containerMeta.channels,
@@ -14437,7 +14696,7 @@ body.runtime #formSurface .design-resize-outline {
           throw new AkariError('F504', '画像asset byteLengthが上限外です');
       } else if (a.kind === 'audio') {
         ac++;
-        if (!['audio/mpeg', 'audio/wav'].includes(a.mime))
+        if (!['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/flac', 'audio/ogg'].includes(a.mime))
           throw new AkariError('F509', 'audio assetのMIMEが未対応です');
         if (!Number.isInteger(a.byteLength) || a.byteLength < 1 || a.byteLength > LIMITS.audioBytes)
           throw new AkariError('F504', '音asset byteLengthが上限外です');
@@ -14598,7 +14857,7 @@ body.runtime #formSurface .design-resize-outline {
     } catch (_) {
       throw new AkariError(
         'F502',
-        '\u4f5c\u54c1\u30c7\u30fc\u30bf\u3092\u8aad\u3081\u307e\u305b\u3093\u3002\u3042\u304b\u308a1.0.1\u3067\u4fdd\u5b58\u3057\u305f .akari.md \u3092\u9078\u3093\u3067\u304f\u3060\u3055\u3044',
+        '\u4f5c\u54c1\u30c7\u30fc\u30bf\u3092\u8aad\u3081\u307e\u305b\u3093\u3002\u3042\u304b\u308a1.0.2\u3067\u4fdd\u5b58\u3057\u305f .akari.md \u3092\u9078\u3093\u3067\u304f\u3060\u3055\u3044',
       );
     }
     const { assetIds } = validateSerializedProjectStructure(root);
@@ -14650,11 +14909,16 @@ body.runtime #formSurface .design-resize-outline {
       if (!bytesEqual(rebuilt, bytes))
         throw new AkariError('F508', '保存WAVがcanonical形ではありません');
     }
+    if (['audio/mp4', 'audio/flac', 'audio/ogg'].includes(a.mime) && !bytesEqual(sn.clean, bytes))
+      throw new AkariError('F508', '保存音声がmetadata除去後のcanonical形ではありません');
     const containerMeta = audioContainerMeta(sn);
     checkAudioContainerLimits(containerMeta);
+    if (sn.duration != null) checkAudioLimits({ ...containerMeta, duration: sn.duration });
     const decoded = await decodeAudioMeta(bytes);
     if (decoded.channels !== containerMeta.channels)
       throw new AkariError('F511', '音声containerとdecode後のチャンネル数が一致しません');
+    if (sn.duration != null && Math.abs(decoded.duration - sn.duration) > 0.02)
+      throw new AkariError('F511', '音声containerとdecode後の長さが一致しません');
     const meta = {
       duration: decoded.duration,
       channels: containerMeta.channels,
@@ -20468,7 +20732,7 @@ body.runtime #formSurface .design-resize-outline {
       $('#undoBtn').disabled =
         locked || (history.length <= 1 && history[0]?.stateFingerprint === stateFingerprintCore());
       $('#redoBtn').disabled = locked || !redo.length;
-      document.title = `${dirty || draft ? '● ' : ''}あかり 1.0.1 — ${project.name}`;
+      document.title = `${dirty || draft ? '● ' : ''}あかり 1.0.2 — ${project.name}`;
     }
     function restoreSnap(e) {
       validateAssetReferences(e.project, new AssetStore(e.assets));
@@ -22660,7 +22924,7 @@ body.runtime #formSurface .design-resize-outline {
         log(
           diagnostics.length
             ? `作品を開きました。コードに${diagnostics.length}件の問題があります。`
-            : 'あかり1.0.1作品を開きました',
+            : 'あかり1.0.2作品を開きました',
           diagnostics.length ? 'error' : 'ok',
         );
       } catch (err) {
@@ -24110,7 +24374,7 @@ body.runtime #formSurface .design-resize-outline {
     renderAll();
     loadEditor();
     setupModalAccessibility();
-    setStatus('準備完了 — あかり1.0.1');
+    setStatus('準備完了 — あかり1.0.2');
     app = {
       get editorState() {
         return {

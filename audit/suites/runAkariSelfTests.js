@@ -59,7 +59,7 @@ function runAkariSelfTests() {
       return h;
     };
     test('A10-VERSION-001 製品言語保存形式の契約', () =>
-      eq([VERSION, LANGUAGE_VERSION, FORMAT_VERSION], ['1.0.1', '1.0.0', 3]));
+      eq([VERSION, LANGUAGE_VERSION, FORMAT_VERSION], ['1.0.2', '1.0.0', 3]));
     test('DEFAULT-001 初期作品', () => compile(makeDefaultProject()));
     const sy = buildSymbols(makeDefaultProject()),
       r = new RuntimeModel(makeDefaultProject(), {}),

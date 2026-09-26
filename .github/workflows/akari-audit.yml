@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths: ["Akari.html", "LANGUAGE.md", "AUDIT.md", "LICENSE", "README.md", "index.html", "MANUAL.html", "Manual/**", "audit/**", ".github/workflows/**"]
   push:
-    branches: [main, "fix/**", "audit/**", Akari_1_0_0]
+    branches: [main, "fix/**", "audit/**", "feat/**", Akari_1_0_0]
     paths: ["Akari.html", "LANGUAGE.md", "AUDIT.md", "LICENSE", "README.md", "index.html", "MANUAL.html", "Manual/**", "audit/**", ".github/workflows/**"]
   workflow_dispatch:
     inputs:
@@ -72,6 +72,7 @@ jobs:
           node audit/tests/completed-baseline-negative.mjs || status=1
           node audit/tests/checkpoint-101-negative.mjs || status=1
           node audit/tests/historical-source-negative.mjs || status=1
+          node audit/tests/release-102-negative.mjs || status=1
           node audit/tests/ci-regression.mjs || status=1
           node audit/tests/execution-continuity.mjs || status=1
           node audit/tests/dom-render-regression.cjs || status=1
@@ -188,10 +189,66 @@ jobs:
           retention-days: 3
           include-hidden-files: true
 
+  audio-codecs:
+    name: Audio 1.0.2 real decoding (${{ matrix.platform }})
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && (needs.static.result != 'success' || needs.static.outputs.full_browser_required == 'true') }}
+    needs: [static]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: win32
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned audio browser and host
+        run: |
+          npm install --prefix "$RUNNER_TEMP/akari-codec-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"akari-codec-deps/node_modules")+"\n")'
+          if [ "${{ matrix.platform }}" = linux ]; then
+            "$RUNNER_TEMP/akari-codec-deps/node_modules/.bin/playwright" install-deps chromium
+          fi
+          python audit/install-codec-browser.py "$RUNNER_TEMP/akari-codec-browser"
+      - name: Run every audio format through import save reload and offline playback
+        if: always()
+        run: node audit/tests/audio-codecs-102.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio102/report.json
+      - name: Seal independently verified audio evidence
+        if: always()
+        run: node audit/verify-evidence.mjs seal "audio-codecs-${{ matrix.platform }}" audit-evidence/audio102
+      - name: Upload audio evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: akari-audio-codecs-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/audio102/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true
+
   aggregate:
     name: Independent complete evidence gate
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    needs: [static, selftest, full-browser-gate]
+    needs: [static, selftest, full-browser-gate, audio-codecs]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

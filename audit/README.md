@@ -111,3 +111,9 @@ If the new attempt has a test failure, investigate it; if it loses another
 runner, retain the infrastructure limitation. Do not rerun until green or claim
 that a repository change can guarantee hosted-runner availability. Any later
 tracked-file change creates a new snapshot requiring its own execution evidence.
+
+## Product 1.0.2 audio acceptance
+
+Current policy is `manifests/quality-1.0.2.json`; the verified 1.0.1 checkpoint and all its guarantees remain immutable. Before every candidate Push, review the changes and run `node audit/freeze-release-102.mjs --record`. The resulting 1.0.2 feature freeze fixes the formats, limits, versions, exact added IDs and normalized source hashes. Then renew the reviewed-input binding and execute the current snapshot.
+
+The existing Chromium gate remains mandatory. Two additional Actions jobs run `tests/audio-codecs-102.mjs` using pinned Chrome for Testing on Linux and Windows, including real AAC-LC decoding. Install the isolated browser with `python audit/install-codec-browser.py <isolated-directory>`; pass the printed executable and a fresh report path to the runner. Each positive file must complete ordinary GUI import, history, actual non-silent decoding, save/reload and generated offline playback. The aggregate requires both complete independently verified reports. Negative report mutations and workflow mutations reject skips and removed platforms.

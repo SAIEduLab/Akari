@@ -1,3 +1,4 @@
+import {release102Assertions} from './release-102-contract.mjs';
 import {verifyRetirementRecord} from './persistence-transition.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -55,7 +56,7 @@ export function verifyCompletedAuthority(policy,currentCore){
   assert.deepEqual(read('audit/browser/browser-audit-manifest.json').groups,fixed('audit/browser/browser-audit-manifest.json').groups);
   assert.deepEqual(policy.editorAssetIds,editorAssetIds,'1.0.1 feature guarantee inventory');
   for(const p of ['audit/tests/editor-assets-101.mjs','audit/lib/release-101-contract.mjs'])
-    assert.equal(canonical(p).toString(),canonical(completedFixture+'/source/'+p).toString(),'frozen 1.0.1 feature assertions changed: '+p);
+    assert.equal(canonical(p).toString(),release102Assertions(p,canonical(completedFixture+'/source/'+p).toString()),'1.0.1 feature assertions changed beyond authorized version expectations: '+p);
   return m;
 }
 export function verifyCompletedProvenance(){

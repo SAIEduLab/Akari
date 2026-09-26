@@ -8,6 +8,7 @@ document = yaml.load(workflow.read_text(encoding='utf-8'), Loader=yaml.BaseLoade
 def verify(doc):
     assert 'Akari_1_0_0' in doc['on']['push']['branches'], 'candidate push trigger'
     assert 'audit/**' in doc['on']['push']['branches'], 'audit branch push trigger'
+    assert 'feat/**' in doc['on']['push']['branches'], 'feature branch push trigger'
     assert 'fixed-1.0.1' in doc['jobs']['selftest']['name'], 'completed checkpoint job label'
     static_scripts = '\n'.join(s.get('run', '') for s in doc['jobs']['static']['steps'])
     assert 'node audit/tests/completed-baseline-negative.mjs || status=1' in static_scripts, 'completed baseline negative gate'
@@ -17,24 +18,41 @@ def verify(doc):
     assert 'Akari2' not in str(doc), 'old repository dependency'
     for event in ['push', 'pull_request']:
         assert 'index.html' in doc['on'][event]['paths'], 'public entrance must trigger audit'
-    assert set(doc['jobs']) == {'static', 'selftest', 'full-browser-gate', 'aggregate'}
+    assert set(doc['jobs']) == {'static', 'selftest', 'full-browser-gate', 'audio-codecs', 'aggregate'}
     jobs = doc['jobs']
     assert jobs['selftest']['needs'] == ['static']
     assert jobs['full-browser-gate']['needs'] == ['static']
     for name in ['selftest','full-browser-gate']:
         assert 'always()' in jobs[name]['if']
         assert "needs.static.result != 'success'" in jobs[name]['if']
-    assert jobs['aggregate']['needs'] == ['static', 'selftest', 'full-browser-gate']
+    assert jobs['aggregate']['needs'] == ['static', 'selftest', 'full-browser-gate', 'audio-codecs']
+    codec = jobs['audio-codecs']
+    assert codec['needs'] == ['static']
+    assert codec['env'] == {'GIT_CONFIG_COUNT':'1','GIT_CONFIG_KEY_0':'core.autocrlf','GIT_CONFIG_VALUE_0':'false'}, 'both platforms must execute exact Git bytes'
+    assert 'always()' in codec['if'] and "needs.static.result != 'success'" in codec['if']
+    assert codec['strategy']['fail-fast'] == 'false'
+    assert codec['strategy']['matrix']['include'] == [{'os':'ubuntu-latest','platform':'linux'},{'os':'windows-latest','platform':'win32'}]
+    codec_scripts = '\n'.join(s.get('run','') for s in codec['steps'])
+    assert 'playwright@1.55.0' in codec_scripts
+    assert 'audit/install-codec-browser.py' in codec_scripts
+    assert 'node audit/tests/release-102-negative.mjs || status=1' in static_scripts
+    for step in codec['steps']:
+        if 'node audit/tests/audio-codecs-102.mjs' in step.get('run','') or 'seal ' in step.get('run',''):
+            assert step['if'] == 'always()' and 'continue-on-error' not in step
     assert 'always()' in jobs['aggregate']['if']
     assert jobs['full-browser-gate']['strategy']['matrix']['group'] == ['session', 'ui', 'limits', 'schemas', 'extra']
     expected = {
         'static': ['audit/tests/static-contract.py', 'audit/tests/workflow-preflight.py', 'audit/tests/externalization-static.mjs', 'audit/tests/evidence-negative.mjs', 'audit/tests/ci-regression.mjs', 'audit/tests/execution-continuity.mjs', 'audit/tests/dom-render-regression.cjs', 'seal static'],
         'selftest': ['audit/run-local-gate.mjs', 'seal selftest'],
         'full-browser-gate': ['audit/browser/run-full-browser-audit.mjs', 'audit/tests/manual-docs.mjs', 'seal "full-browser-'],
+        'audio-codecs': ['audit/tests/audio-codecs-102.mjs', 'seal "audio-codecs-'],
         'aggregate': ['audit/verify-evidence.mjs aggregate'],
     }
     for name, job in jobs.items():
-        assert job['runs-on'] == 'ubuntu-latest'
+        assert job['runs-on'] == ('${{ matrix.os }}' if name == 'audio-codecs' else 'ubuntu-latest')
+        assert 'continue-on-error' not in job
+        for step in job['steps']:
+            assert 'continue-on-error' not in step
         checkout = [s for s in job['steps'] if s.get('uses', '').startswith('actions/checkout@')]
         assert len(checkout) == 1 and checkout[0]['with']['fetch-depth'] == '0'
         assert checkout[0]['with']['ref'] == "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}"
@@ -75,7 +93,7 @@ def verify(doc):
     assert len(downloads) == 1 and downloads[0]['with']['pattern'] == 'akari-*-${{ github.run_id }}-${{ github.run_attempt }}'
     assert doc['permissions'] == {'contents': 'read'}
 
-    verify(document)
+verify(document)
 subprocess.run(['node', 'audit/build-audit-inventory.mjs', '--check'], check=True)
 subprocess.run(['node', 'audit/verify-reviewed-inputs.mjs'], check=True)
 bad = copy.deepcopy(document); bad['on']['push']['branches'].remove('Akari_1_0_0')
@@ -108,7 +126,12 @@ for step in bad_archive_gate['jobs']['static']['steps']:
 bad_checkpoint101_gate = copy.deepcopy(document)
 for step in bad_checkpoint101_gate['jobs']['static']['steps']:
     step['run'] = step.get('run', '').replace('node audit/tests/checkpoint-101-negative.mjs || status=1', '')
-for invalid in [bad_checkpoint_trigger, bad_checkpoint_name, bad_checkpoint_gate, bad_display, bad, bad_dependency, bad_retention, bad_validator, bad_hidden, bad_browser, bad_probe, bad_skips, bad_early, bad_provenance, bad_alternates, bad_archive_gate, bad_checkpoint101_gate]:
+bad_audio_dependency = copy.deepcopy(document); bad_audio_dependency['jobs']['aggregate']['needs'].remove('audio-codecs')
+bad_audio_platform = copy.deepcopy(document); bad_audio_platform['jobs']['audio-codecs']['strategy']['matrix']['include'].pop()
+bad_audio_skip = copy.deepcopy(document); bad_audio_skip['jobs']['audio-codecs']['if'] = 'false'
+bad_audio_soft = copy.deepcopy(document); bad_audio_soft['jobs']['audio-codecs']['continue-on-error'] = 'true'
+bad_feature_trigger = copy.deepcopy(document); bad_feature_trigger['on']['push']['branches'].remove('feat/**')
+for invalid in [bad_audio_dependency, bad_audio_platform, bad_audio_skip, bad_audio_soft, bad_feature_trigger, bad_checkpoint_trigger, bad_checkpoint_name, bad_checkpoint_gate, bad_display, bad, bad_dependency, bad_retention, bad_validator, bad_hidden, bad_browser, bad_probe, bad_skips, bad_early, bad_provenance, bad_alternates, bad_archive_gate, bad_checkpoint101_gate]:
     try:
         verify(invalid)
     except AssertionError:
@@ -140,5 +163,5 @@ output = Path(sys.argv[1])
 assert not output.exists(), 'new evidence path required'
 output.parent.mkdir(parents=True, exist_ok=True)
 output.write_text(json.dumps({'status': 'PASS', 'workflowSha256': hashlib.sha256(workflow.read_bytes()).hexdigest(),
-    'jobs': list(document['jobs']), 'browserTasks': 27, 'negativeCases': 17, 'syntaxChecked': checked}, indent=2) + '\n', encoding='utf-8')
-print('Workflow preflight: PASS; 17 negative cases; 27 browser tasks; ' + str(len(checked)) + ' JavaScript files')
+    'jobs': list(document['jobs']), 'browserTasks': 27, 'negativeCases': 22, 'syntaxChecked': checked}, indent=2) + '\n', encoding='utf-8')
+print('Workflow preflight: PASS; 22 negative cases; 27 browser tasks; ' + str(len(checked)) + ' JavaScript files')

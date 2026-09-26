@@ -1,0 +1,83 @@
+{
+  "schema": "akari-feature-freeze-v1",
+  "productVersion": "1.0.2",
+  "languageVersion": "1.0.0",
+  "runtimeVersion": "1.0.0",
+  "projectFormat": 3,
+  "programFormat": 3,
+  "status": "FROZEN_BEFORE_PUSH",
+  "acceptance": "Fresh complete execution and semantic review remain required; this freeze is not a PASS claim.",
+  "formats": [
+    "MP3",
+    "WAV (PCM)",
+    "M4A (AAC-LC)",
+    "FLAC",
+    "Ogg Opus"
+  ],
+  "compatibility": [
+    "1.0.0",
+    "1.0.1"
+  ],
+  "limits": {
+    "sourceBytes": 12582912,
+    "canonicalAudioBytes": 6291456,
+    "durationSeconds": 60,
+    "channels": 2,
+    "minSampleRate": 8000,
+    "maxSampleRate": 48000
+  },
+  "preserved": {
+    "coreIds": 884,
+    "capabilities": 257,
+    "languageIds": 605,
+    "editorIds": 38,
+    "guiIds": 9,
+    "browserTasks": 27,
+    "browserCases": 416,
+    "editorAssets101": 15
+  },
+  "audioIds": [
+    "audio-import-mp3",
+    "audio-import-wav",
+    "audio-import-m4a",
+    "audio-import-m4a-mono",
+    "audio-import-flac",
+    "audio-import-flac-mono",
+    "audio-import-opus",
+    "audio-import-opus-mono",
+    "audio-file-picker",
+    "audio-unsupported-codecs",
+    "audio-aac-profile",
+    "audio-malformed-containers",
+    "audio-ogg-crc",
+    "audio-container-limits",
+    "audio-saved-mime-and-metadata",
+    "audio-ui-failure-atomic",
+    "audio-old-project-compatibility",
+    "audio-runtime-mime-rejection"
+  ],
+  "platforms": [
+    "linux",
+    "win32"
+  ],
+  "browser": "140.0.7339.207",
+  "playwright": "1.55.0",
+  "inputSha256": {
+    ".github/workflows/akari-audit.yml": "08a3ef72d07ed7f1a4c71e0ee1a947f00dfa07f034f292c350a282c3eb06fb57",
+    "AUDIT.md": "581c7dfb756fafc4cd02686f006b1ab3310bc2eb2dd58afafcececb5378c3d3d",
+    "Akari.html": "4f3678e5a3fb03e313f967ef3d9aa0e5291d5f5d180fc7f2b521a9254239bfa2",
+    "LANGUAGE.md": "0b7c9c993ed2e90a43856878337d3830a5df990f8b069f8ec6477b332a62e82b",
+    "MANUAL.html": "d9fba1bf32baf9863f452728ad9c4770620065618b453597ad3f8f4577c65649",
+    "Manual/block-mode.html": "d594871df38deb08cf9effba0b74342a6e94cd9966b16f7a713e15c1a83bb36b",
+    "Manual/code-mode-advanced.html": "882d8a8999cb1a9e7df80fd60c973ae99e2391123f53014d90a63df4f2f07831",
+    "Manual/code-mode-beginner.html": "99f43642c6bafc9eb25b52885cc189339e6c4117d5dc422bf2a504be433dd701",
+    "Manual/code-mode-intermediate.html": "883165e1406049bcca6e4a790c29fcf96fbae60d308c310358a344460b8ca40a",
+    "README.md": "0f5743e171f6adbcd0155c63ff2e362c4c397a6eac8cd0d71802bba089963232",
+    "audit/fixtures/audio-1.0.2/manifest.json": "7ef4e605eac09986fc3f338592c63ce6bd736dd0df17f763bb20a8389de708d3",
+    "audit/lib/release-102-contract.mjs": "659f7721722a0270eba0926a7d460be1aa6d29124592bdb519cba7559df740f7",
+    "audit/manifests/quality-1.0.2.json": "d301a0a3507064f5a255e8133afd33682b3da48cc04f00db15de45c7b1cf6333",
+    "audit/tests/audio-codecs-102.mjs": "92475dd15fcc66ccf2287c35f0690f2d2b4a3a6f562ce4969c69066b26578df3",
+    "audit/tests/release-102-negative.mjs": "aa847b3cb949dc12c0ea838bfc41fcc9e53e9d72d886197357819cd46dfe75e3",
+    "index.html": "9a2dfd88f738fec959a4c87fa45810719558ae3e6de9074fb870580cbbbc090b"
+  }
+}

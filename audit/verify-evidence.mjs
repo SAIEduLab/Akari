@@ -26,6 +26,11 @@ else if(mode==='aggregate'){
     const b=check('selftest bundle',()=>verifyBundle('selftest',locate('selftest'),inputs,provenance));if(b)bundles.push(b);
   }
   if(scope.fullBrowserRequired){
+    check('audio jobs',()=>assert.equal(needs['audio-codecs']?.result,'success','audio matrix failed/skipped/cancelled'));
+    for(const platform of ['linux','win32']){
+      const kind='audio-codecs-'+platform;requiredKinds.push(kind);
+      const b=check(kind,()=>verifyBundle(kind,locate(kind),inputs,provenance));if(b)bundles.push(b);
+    }
     check('browser jobs',()=>assert.equal(needs['full-browser-gate']?.result,'success','browser matrix failed/skipped/cancelled'));
     for(const group of ['session','ui','limits','schemas','extra']){
       const kind='full-browser-'+group;requiredKinds.push(kind);
