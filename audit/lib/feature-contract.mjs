@@ -4,7 +4,7 @@ export const editorAssetIds = [
   'paint-entry-empty-focus', 'paint-tools-colors-fill', 'paint-history-cancelled-gesture',
   'paint-crop-native-transparent-padding', 'paint-large-stage-fit', 'paint-discard',
   'paint-failed-commit-preserves-drawing', 'paint-save-reload-export', 'paint-runtime-lock',
-  'paint-small-viewport-touch', 'release-versions-and-import', 'release-malformed-state-protection',
+  'paint-small-viewport-touch', 'format-contract-and-import', 'format-malformed-state-protection',
 ];
 export function verifyEditorAssets(report, inputs) {
   assert.equal(report.status, 'PASS');

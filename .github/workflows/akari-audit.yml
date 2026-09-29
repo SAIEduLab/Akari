@@ -21,9 +21,13 @@ jobs:
         with:
           node-version: '24'
       - run: |
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund @babel/parser@7.28.4
+          echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
+      - run: |
           mkdir -p audit-evidence/static
           node audit/freeze-release.mjs
           node audit/tests/static-contract.mjs audit-evidence/static/static.json
+          node audit/tests/release-policy-negative.mjs
           node audit/verify-evidence.mjs seal static audit-evidence/static
       - uses: actions/upload-artifact@v4
         if: always()
@@ -43,7 +47,7 @@ jobs:
         with:
           node-version: '24'
       - run: |
-          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 jsdom@26.1.0
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 jsdom@26.1.0 @babel/parser@7.28.4
           echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
           "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install --with-deps --no-shell chromium
           python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"

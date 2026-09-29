@@ -58,8 +58,8 @@ function runAkariSelfTests() {
       if (h.errors.length) throw h.errors[0];
       return h;
     };
-    test('RELEASE-VERSION-001 製品言語保存形式の契約', () =>
-      eq([VERSION, LANGUAGE_VERSION, FORMAT_VERSION], ['1.0.0', '1.0.0', 1]));
+    test('FORMAT-PROJECT-METADATA-001 作成元と保存契約', () =>
+      eq([PRODUCT_RELEASE, LANGUAGE_CONTRACT_ID, PROJECT_FORMAT_ID], ['1.0.0', 1, 1]));
     test('DEFAULT-001 初期作品', () => compile(makeDefaultProject()));
     const sy = buildSymbols(makeDefaultProject()),
       r = new RuntimeModel(makeDefaultProject(), {}),

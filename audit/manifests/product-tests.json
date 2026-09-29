@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "90f5239ef8c24384613d9d5d16288122cd7f6c5d319cf9b537fc1230335544c5",
+  "fixedIdSha256": "52eb23154b2f05a03880f984a97256fffbbf2d54590f4909d80bb512ea36a154",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -84,7 +84,7 @@
     {
       "name": "runProductContractTests",
       "ids": [
-        "RELEASE-VERSION-CONTRACT",
+        "FORMAT-EXECUTABLE-CONTRACT",
         "RELEASE-PROJECT-MARKER-BOUNDARIES",
         "RELEASE-EXECUTABLE-MALFORMED",
         "RELEASE-EXECUTABLE-ROUNDTRIP",
@@ -178,7 +178,7 @@
     {
       "name": "runAkariSelfTests",
       "ids": [
-        "RELEASE-VERSION-001 製品言語保存形式の契約",
+        "FORMAT-PROJECT-METADATA-001 作成元と保存契約",
         "DEFAULT-001 初期作品",
         "EXPR 2＋3×4",
         "FORMAT 2＋3×4",

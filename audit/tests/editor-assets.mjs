@@ -205,17 +205,17 @@ const cases = {
     assert.ok(await ink(p));await commit(p);assert.ok((await current(p)).w>=40);
     await p.screenshot({path:path.join(artifacts,'drawing-mobile.png'),fullPage:true});
   },
-  async 'release-versions-and-import'(p) {
-    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_VERSION),{appVersion:'1.0.0',runtimeVersion:'1.0.0',languageVersion:'1.0.0',programFormatVersion:1,projectFormatVersion:1});
+  async 'format-contract-and-import'(p) {
+    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1});
     await p.locator('#fileInput').setInputFiles({name:'saved-project.akari.md',mimeType:'text/plain',buffer:Buffer.from(savedFile)});
     await p.waitForFunction(()=>Akari.app.project.name==='作品の保存確認'&&Akari.app.editorState.state==='DESIGN');
     assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),'1.0.0');
     const text=await p.evaluate(()=>Akari.serializeProject(Akari.app.project,Akari.app.assetStore));assert.ok(text.startsWith('# あかり 1.0.0 の作品'));
     assert.equal(await p.evaluate(async text=>(await Akari.parseProjectFile(text)).project.appVersion,text),'1.0.0');
   },
-  async 'release-malformed-state-protection'(p) {
+  async 'format-malformed-state-protection'(p) {
     const before=await state(p);
-    for(const text of [savedFile.replace('# あかり 1.0.0 の作品','# tampered'),savedFile.replaceAll('1.0.0','9.9.9'),savedFile.replace('"formatVersion": 1','"formatVersion": "1"')]) {
+    for(const text of [savedFile.replace('# あかり 1.0.0 の作品','# tampered'),savedFile.replace('"languageContractId": 1','"languageContractId": 2'),savedFile.replace('"formatVersion": 1','"formatVersion": "1"')]) {
       const result=await p.evaluate(async text=>{try{await Akari.parseProjectFile(text);return 'accepted';}catch(e){return e.code;}},text);
       assert.notEqual(result,'accepted');assert.deepEqual(await state(p),before);
     }

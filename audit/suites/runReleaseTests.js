@@ -15,7 +15,7 @@ async function runReleaseTests() {
       ],
       results = reports.flatMap((x) => x.results);
     return {
-      version: VERSION,
+      version: PRODUCT_RELEASE,
       passed: results.filter((x) => x.pass).length,
       failed: results.filter((x) => !x.pass).length,
       total: results.length,

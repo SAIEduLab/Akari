@@ -211,9 +211,9 @@ const cases = {
     assert.equal(await p.evaluate(() => Akari.app.project.appVersion), '1.0.0'); await assertFit(p);
     assert.equal(await p.evaluate(() => Akari.app.project.stage.height), 600);
     const before = await state(p);
-    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replaceAll('1.0.0', '9.0.0'))});
+    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replace('"formatVersion": 1', '"formatVersion": 2'))});
     await p.waitForFunction(() => /F\d{3}/.test(document.querySelector('#console').textContent));
-    assert.deepEqual(await state(p), before, 'unknown-version rejection retains current work');
+    assert.deepEqual(await state(p), before, 'unsupported-format rejection retains current work');
   },
   async 'DESIGN-ZOOM-NARROW-TOUCH'(p) {
     await p.setViewportSize({width: 390, height: 844}); await size(p, 1200, 800);

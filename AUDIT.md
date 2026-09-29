@@ -2,11 +2,22 @@
 
 ## 対象と固定
 
-製品・言語・runtimeの版は1.0.0、保存・実行形式番号は1です。公開用の製品、仕様、マニュアル、試験、fixture、runner、workflowを一つの入力snapshotとして検証します。Git履歴や別リポジトリは実行条件に含めません。
+製品版は1.0.0です。保存・実行形式番号、言語契約番号、runtime契約番号はそれぞれ1で、製品版とは独立して管理します。公開用の製品、仕様、マニュアル、試験、fixture、runner、workflowを一つの入力snapshotとして検証します。Git履歴や別リポジトリは実行条件に含めません。
 
-`audit/manifests/features.json` は命令カタログ・ブロックスキーマ・上限・版の固定契約です。`audit/manifests/release-1.0.0.json` は公開ファイルのSHA-256集合です。固定記録自体は合格の証拠ではありません。監査は実際の製品を読み、結果をそのsnapshotへ結び付けます。必須結果の欠落、重複、偽のPASS、例外、タイムアウト、環境不足はFAILです。未実施の環境をPASSと呼びません。
+`audit/manifests/features.json` は命令カタログ・ブロックスキーマ・上限・データ契約と公開ラベルの固定記録です。`audit/manifests/release-1.0.0.json` は公開ファイルのSHA-256集合です。固定記録自体は合格の証拠ではありません。監査は実際の製品を読み、結果をそのsnapshotへ結び付けます。必須結果の欠落、重複、偽のPASS、例外、タイムアウト、環境不足はFAILです。未実施の環境をPASSと呼びません。
 
 能力台帳と試験の安定IDは、対象機能・操作・保証を名前で示します。製品の版番号をIDに埋め込まず、新しい監査項目は既存IDと重複しない機能名で追加します。追加時は期待値、実行入口、能力台帳との対応を固定し、既存試験の削除やIDの転用で件数を合わせません。
+
+## 製品版から独立した命名と受入判定
+
+- 関数・変数・監査IDは機能・責務を示す名前にします。`restoreV103`、`runVersion09Tests`、`parseRelease104`のようにリリース番号を組み込まず、整理番号が必要なら`validateCase001`や`FORMAT-PROJECT-001`のように機能名から区切ります。番号の対応先は製品版ではありません。
+- 製品のリリースラベルは一か所に定義し、UI表示・保存と書出しの作成元記録・公開APIへの露出だけで参照します。`appVersion`は型・長さ・文字種を検証する記録項目で、現在製品版との一致や大小比較を受入条件にしません。
+- 保存形式・プログラム形式・言語・runtimeは独立した整数契約番号で検証します。同じ契約の別製品版を受け入れ、契約不一致・型不正・欠落・破損を拒否します。所有者、素材、上限、本文一致、原子的な失敗の保証を維持します。自動変換・暗黙の補完は加えません。
+- `audit/lib/release-policy.mjs`をstatic gateで必須実行し、製品の識別子と監査コードの関数名をASTで検査します。製品版・作成元ラベルの参照は許可した構文と用途に限定し、別名経由の読取りや複製した版文字列を拒否します。外部の形式番号・標準API名まで一律禁止しません。`release-policy-negative.mjs`で禁止名・版比較・別名・計算プロパティ等の不正な追加を拒否できることを確認します。違反は警告ではなくFAILです。
+- `format-compatibility.mjs`の固定9件は、製品のリリース表示値だけを変更した候補から作品を作り、同じ契約の別製品による読込み・実保存・自動復元・生成HTMLのオフライン実行を検査します。未保存内容とclean/dirtyの保持、作成元だけを除く指紋、未知の契約と不正データの拒否を含めます。結果の欠落・重複・失敗・別snapshotは独立したvalidatorで拒否します。
+- SEMANTICでは、製品版を動作判定へ戻す間接参照や動的プロパティ名、静的検査の許可用途の拡張も差分レビューします。静的検査だけで任意の間接参照の不存在を証明したとは扱いません。HYBRIDではUI経由の読込み・復元と未保存保護を実ブラウザーで確認します。
+
+保存の受入基準は「製品版の完全一致」から「データの構造・意味を識別する契約の一致」へ変更します。この受入基準を`FORMAT-EXECUTABLE-CONTRACT`と`FORMAT-PROJECT-METADATA-001 作成元と保存契約`で固定します。製品試験884件を維持し、形式互換の9件と命名規則の拒否検査を追加します。従来の破損・契約不一致の拒否試験を残し、作成元が異なるだけで拒否する期待値を、受入れと内容保持の期待値へ置き換えます。
 
 ## コードの所属と到達性
 
@@ -34,8 +45,8 @@
 
 | 区分 | 検証 |
 |---|---|
-| GA-STATIC | JavaScript構文、版、所有モデル、全公開ファイルhash、能力・ID集合、workflowと実行入口、資料整合 |
-| GA-EXEC | 884件の製品試験、605件の言語表面試験、38件の編集試験、9件の編集GUI試験、27タスク416ケースのブラウザー試験、15件の素材編集試験、18件の音声試験、9件の画面ズーム試験、コード所属試験、保存・生成HTML・マニュアル |
+| GA-STATIC | JavaScript構文、版、所有モデル、全公開ファイルhash、能力・ID集合、workflowと実行入口、資料整合、自作識別子と製品版参照のAST検査・拒否能力 |
+| GA-EXEC | 884件の製品試験、605件の言語表面試験、38件の編集試験、9件の編集GUI試験、27タスク416ケースのブラウザー試験、15件の素材編集試験、18件の音声試験、9件の画面ズーム試験、コード所属試験、9件の形式互換試験、保存・生成HTML・マニュアル |
 | SEMANTIC | 仕様と実装の一致、主要処理の可読性、命令・求値の機能保持、監査の非弱体化、教材操作の妥当性 |
 | HYBRID | 所属と全本文への到達性、表示と実行対象の分離、エラー本文と下書きの保持、UIの読みやすさ |
 
@@ -49,7 +60,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 
 ## 能力台帳
 
-各行の実装要素、コード表示、ブロック表示、意味検査、実行、自己試験、ブラウザー試験を対応させます。257行すべてを必須とします。
+各行の実装要素、コード表示、ブロック表示、意味検査、実行、自己試験、ブラウザー試験を対応させます。259行すべてを必須とします。
 
 | ID | 能力 | AST | CUI | GUI | 意味 | 実行 | 自己試験 | ブラウザー | 保証 |
 |---|---|---|---|---|---|---|---|---|---|
@@ -270,9 +281,11 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | runtime:pause-step | pause/resume/1命令実行で時計を早送りしない | 実行snapshot | 共通runtime接続 | pauseBtn / continueBtn / stepBtn + switchEditorMode / modelLocked | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | pause / stepOne / runtime.now | AUDIT SCHEDULER pause does not complete time waits | BROWSER-PRODUCT; browser-session:running-paused-lock-switch; browser-runtime:runtime-fixed-seed-mode-switch-trace; browser-runtime:preparing-importing-lock-and-decode-failure-rollback | step と時計の意味は既存 self-test、Switch と readonly は browser-session で別に検査する |
 | runtime:clone | clone生成・個体データ分離・開始・削除 | CloneCommand / cloneStart | analyzeProject / compileProject | CloneCommand palette / args slot + cloneStart event selector | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | execClone / createClone / deleteClone | CLONE 個体データを複製; AUDIT CLONE collision transform ordering and clone data independence; CORE event sprite:cloneStart; TEST-LIMIT clones | BROWSER-PRODUCT; browser-event-traces:event-trace:sprite:cloneStart; browser-events:event:sprite:cloneStart | clone個体データ・接触の代表例と500個の生成/超過拒否をself-testで検査。開始はevent suite、削除/終了とmode同値はevent-traces suiteで別検査。CLONE 個体データを複製 のprojectVars自己比較は作品データ共有の証拠に数えない |
 | runtime:error | エラーの場所・call frame・値を固定して記録 | sourceSpan + owner key | compileProject | paintExecutionLocation / debugSourceKey → nodeMap / view.highlight | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | taskError / errorRecords | AUDIT ERROR nested functions preserve inner failure and both frames; AUDIT ERROR long scalar and list snapshot remains complete | BROWSER-PRODUCT; browser-event-traces:event-trace:stage:start; browser-session:debug-function-owner | 失敗時の本文key・line・値の固定は self-test、block位置とdebug ownerは browser-session で検査する |
-| save:project | source正本の保存・復元・作りかけ保持 | project.scripts/actions/functions.source | serializeProject / parseProjectFile | flushActiveEditor → saveProject; readSource は現在ownerの確定sourceを読む | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 保存はcompile成功に依存しない | SAVE Markdown往復; SAVE 作りかけのコード保持; AUDIT MARKDOWN canonical-body mismatch rejected F512; RELEASE-VERSION-CONTRACT; RELEASE-PROJECT-MARKER-BOUNDARIES | BROWSER-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:invalid-syntax-save-and-format1-storage-isolation | 構文不正 source の保存と1.0.0形式・F512拒否。素材付き実往復はbrowser suite |
-| save:autosave | 作品と定義下書きの自動復元 | callableDraft.source | writeAutosave / read restore record | writeAutosave / readAutosave / restoreCallableDraft; callableDraft.source | LANGUAGE.mdの現行意味 + 本書の1.0.0自動保存契約 | editor session | 外部core test対象外（browser suiteで検査） | BROWSER-PRODUCT; browser-session:autosave-draft-recovery; browser-storage-media:invalid-syntax-save-and-format1-storage-isolation | GA-STATICで専用コード・UIと保存領域を固定し、GA-EXECで作品・素材・下書きの復元、破損拒否、現在作品保護を検査する |
-| save:version | 1.0.0製品版と形式の整合 | EXECUTABLE_VERSION / project payload | serializeProject / parseProjectFile | 製品版と形式の共通定義 / 形式1の自動復元 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | restoreExecutable | RELEASE-VERSION-CONTRACT; RELEASE-PROJECT-MARKER-BOUNDARIES; RELEASE-EXECUTABLE-MALFORMED; RELEASE-EXECUTABLE-ROUNDTRIP | BROWSER-PRODUCT; browser-storage-media:format1-malformed-mismatch-and-state-protection; browser-storage-media:invalid-syntax-save-and-format1-storage-isolation | 保存契約の版・形式・project/runtime整合。不正入力・保存整合・実行データ往復・状態保護を個別に検証 |
+| save:project | source正本の保存・復元・作りかけ保持 | project.scripts/actions/functions.source | serializeProject / parseProjectFile | flushActiveEditor → saveProject; readSource は現在ownerの確定sourceを読む | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 保存はcompile成功に依存しない | SAVE Markdown往復; SAVE 作りかけのコード保持; AUDIT MARKDOWN canonical-body mismatch rejected F512; FORMAT-EXECUTABLE-CONTRACT; RELEASE-PROJECT-MARKER-BOUNDARIES | BROWSER-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:invalid-syntax-save-and-format1-storage-isolation | 構文不正 source の保存と現行保存形式・F512拒否。素材付き実往復はbrowser suite |
+| save:autosave | 作品と定義下書きの自動復元 | callableDraft.source | writeAutosave / read restore record | writeAutosave / readAutosave / restoreCallableDraft; callableDraft.source | LANGUAGE.mdの現行意味 + 本書の自動保存契約 | editor session | 外部core test対象外（browser suiteで検査） | BROWSER-PRODUCT; browser-session:autosave-draft-recovery; browser-storage-media:invalid-syntax-save-and-format1-storage-isolation | GA-STATICで専用コード・UIと保存領域を固定し、GA-EXECで作品・素材・下書きの復元、破損拒否、現在作品保護を検査する |
+| save:format-contract | 保存・実行の構造と言語・runtime契約の整合 | EXECUTABLE_CONTRACT / project payload | serializeProject / parseProjectFile | 契約番号を基準とする検証 / 自動復元 | LANGUAGE.mdの現行意味 + 本書「製品版から独立した命名と受入判定」 | restoreExecutable | FORMAT-EXECUTABLE-CONTRACT; FORMAT-PROJECT-METADATA-001 作成元と保存契約; FORMAT-PROJECT-CONTRACT-REJECTION; FORMAT-RUNTIME-CONTRACT-REJECTION | FORMAT-BROWSER-IMPORT-ATOMICITY | 形式と意味の不一致・型不正・欠落を拒否し、現在作品を保持する |
+| save:producer-metadata | 作成元ラベルと作品内容の独立 | appVersion / assetStateFingerprint | serializeProject / parseProjectFile | 作成元保持・実保存・未保存指紋・自動復元 | LANGUAGE.mdの現行意味 + 本書「製品版から独立した命名と受入判定」 | packExecutable / restoreExecutable | FORMAT-EXECUTABLE-CONTRACT; FORMAT-PROJECT-PRODUCER-INDEPENDENT; FORMAT-RUNTIME-PRODUCER-INDEPENDENT; FORMAT-FINGERPRINT-METADATA-EXCLUSION | FORMAT-BROWSER-FILE-ROUNDTRIP; FORMAT-BROWSER-AUTOSAVE-RECOVERY; FORMAT-BROWSER-STANDALONE-OFFLINE | 作成元だけで拒否せず、実行意味・本文・clean/dirtyを保持する |
+| maint:identifier-policy | 機能由来の自作名と製品版参照の用途制限 | 製品と監査ソースのAST | release-policy / static-contract | 製品ラベルの一元表示 | 本書「製品版から独立した命名と受入判定」 | 対象外（静的規則） | 対象外（static gateで検査） | 対象外（static gateで検査） | 静的ゲートのrelease-policy-negativeで版由来名・受入への版参照をFAILにし、間接参照も意味レビューする |
 | save:standalone | 共通runtimeの単体HTML書き出し | 実行AST（comment/GUI fieldを除外） | compileProject / packExecutable | flushActiveEditor → exportProject → generateStandaloneHtml | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | generateStandaloneHtml / restoreExecutable | EXPORT 復元後の動作一致; AUDIT EXPORT deterministic runtime result equals design runtime; RELEASE-EXECUTABLE-MALFORMED; RELEASE-EXECUTABLE-ROUNDTRIP | BROWSER-PRODUCT; browser-storage-media:real-media-standalone-player | 同じcompile/pack/runtimeを使用。生成payloadの除去field・実オフライン実行は完成監査で確認 |
 | product:designer | 部品追加・選択・移動・サイズ変更・色・削除・properties・標準キャラクター | project.components | 既存designer UI | addComponent / selectObject / design resize / color properties / deleteSelectedComponent / propRow; 共通history | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | design/runtimeの分離 | STATE 実行と設計の分離; `TEST-DESIGN-RESIZE-*`; `TEST-COLOR *`（存在する現在実装ではpure geometry / 色登録・変換を検査） | BROWSER-PRODUCT; BROWSER-DESIGNER; browser-product:designer-property-delete-mixed-history; ui-stage-gesture:*; DESIGN-COMPONENT-REACHABILITY; DESIGN-STANDARD-SPRITES; DESIGN-RESIZE-POINTER; DESIGN-RESIZE-KEYBOARD; DESIGN-COLOR-COMMIT-CANCEL; DESIGN-DELETE-UNDO | 部品候補の可視到達性、追加、properties、位置移動とresizeの分離、色の確定/取消、削除、共通履歴を実ブラウザーで検査する。pure resize/color test は計算層だけを保証し、pointer/keyboard/scroll/履歴を代用しない |
 | product:data | 作品/個体データの編集・保存 | projectData / localData | 既存data UI | renderDataModal / addData; markDirty / snapshot / restoreSnap | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | RuntimeModel.reset | SCHEMA ID重複の拒否 | BROWSER-PRODUCT; browser-product:project-self-data-create-delete-and-shadowing | 作品/個体データUIの作成・削除・同名参照と共通履歴をbrowser-productで検査 |

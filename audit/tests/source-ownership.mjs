@@ -50,7 +50,7 @@ await test('OWNER-SAVE-ROUNDTRIP',async()=>{
   }
 });
 await test('OWNER-FORMAT-REJECTION',async()=>{
-  for(const [key,value]of [['appVersion','9.9.9'],['formatVersion',2],['languageVersion','9.9.9']]){
+  for(const [key,value]of [['appVersion',null],['formatVersion',2],['languageContractId',2]]){
     const p=fixture();p[key]=value;assert.throws(()=>api.serializeProject(p));assert.ok(api.compileProject(p).errors.length);
   }
 });

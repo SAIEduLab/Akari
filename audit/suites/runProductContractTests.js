@@ -21,16 +21,15 @@ async function runProductContractTests() {
         }
         if (!rejected) throw new Error('不正データが受理されました');
       };
-    await test('RELEASE-VERSION-CONTRACT', async () => {
+    await test('FORMAT-EXECUTABLE-CONTRACT', async () => {
       const expected = {
-        appVersion: '1.0.0',
-        runtimeVersion: '1.0.0',
-        languageVersion: '1.0.0',
+        languageContractId: 1,
+        runtimeContractId: 1,
         programFormatVersion: 1,
         projectFormatVersion: 1,
       };
-      if (JSON.stringify(AKARI_RUNTIME.EXECUTABLE_VERSION) !== JSON.stringify(expected))
-        throw new Error('実行版の契約が一致しません');
+      if (JSON.stringify(AKARI_RUNTIME.EXECUTABLE_CONTRACT) !== JSON.stringify(expected))
+        throw new Error('実行データの契約が一致しません');
       const p = makeDefaultProject(),
         text = serializeProject(p, new AssetStore());
       if (
@@ -42,6 +41,14 @@ async function runProductContractTests() {
       const loaded = await parseProjectFile(text);
       if (JSON.stringify(loaded.project) !== JSON.stringify(p))
         throw new Error('作品の往復で変化しました');
+      const otherProducer = text.replaceAll('1.0.0', '7.8.9');
+      const imported = await parseProjectFile(otherProducer);
+      if (imported.project.appVersion !== '7.8.9' || imported.diagnostics.length)
+        throw new Error('作成元の版だけで同じ形式の作品を拒否しました');
+      const payload = packExecutable(p, new AssetStore());
+      payload.appVersion = '7.8.9';
+      if (AKARI_RUNTIME.restoreExecutable(payload).project.name !== p.name)
+        throw new Error('作成元の版だけで実行作品を拒否しました');
     });
     await test('RELEASE-PROJECT-MARKER-BOUNDARIES', async () => {
       const p = makeDefaultProject();
@@ -53,7 +60,7 @@ async function runProductContractTests() {
     });
     await test('RELEASE-EXECUTABLE-MALFORMED', async () => {
       for (const value of [null, true, {}, ''])
-        for (const key of ['appVersion', 'languageVersion', 'runtimeVersion', 'programFormatVersion', 'projectFormatVersion']) {
+        for (const key of ['appVersion', 'languageContractId', 'runtimeContractId', 'programFormatVersion', 'projectFormatVersion']) {
           const payload = packExecutable(makeDefaultProject(), new AssetStore());
           payload[key] = value;
           await reject(() => AKARI_RUNTIME.restoreExecutable(payload));

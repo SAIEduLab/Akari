@@ -51,7 +51,7 @@ if(process.argv[2]==='--worker') {
   assert.equal(api.parseSyntax('（'.repeat(129)+'1'+'）'.repeat(129)+'を点数に加える').ast,null);
   assert.equal(api.parseSyntax('3を点数に加える\n'+' '.repeat(2)+'何もしない').ast,null);
   const frozen=JSON.parse(fs.readFileSync('audit/manifests/features.json'));
-  for(const key of ['COMMAND_CATALOG','LIMITS','EXECUTABLE_VERSION']) assert.deepEqual(JSON.parse(JSON.stringify(api[key])),frozen[key],key);
+  for(const key of ['COMMAND_CATALOG','LIMITS','EXECUTABLE_CONTRACT']) assert.deepEqual(JSON.parse(JSON.stringify(api[key])),frozen[key],key);
   assert.deepEqual([...api.BLOCK_SCHEMAS.map(s=>s.id)],frozen.schemaIds);
   assert.deepEqual(snapshot('Akari.html'),before);
   const output=process.argv[2]||'audit-evidence/phase3/language-boundaries.json';

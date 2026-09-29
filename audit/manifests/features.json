@@ -486,10 +486,9 @@
     "repeatCount": 1000000,
     "activeTasks": 2000
   },
-  "EXECUTABLE_VERSION": {
-    "appVersion": "1.0.0",
-    "runtimeVersion": "1.0.0",
-    "languageVersion": "1.0.0",
+  "EXECUTABLE_CONTRACT": {
+    "languageContractId": 1,
+    "runtimeContractId": 1,
     "programFormatVersion": 1,
     "projectFormatVersion": 1
   },

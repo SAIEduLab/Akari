@@ -1,6 +1,7 @@
 import path from 'node:path';
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
   ['static','audit/tests/static-contract.mjs',file('static')],
+  ['release-policy-negative','audit/tests/release-policy-negative.mjs'],
   ['integrity','audit/tests/execution-continuity.mjs',file('integrity')],
   ['browser-environment','audit/tests/browser-environment.mjs',browser,file('browser-environment')],
   ['ci-regression','audit/tests/ci-regression.mjs'],
@@ -14,6 +15,7 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['editor-gui','audit/tests/editor-browser.mjs',browser,file('editor-gui')],
   ['normal','audit/tests/normal-product.mjs',browser,'Akari.html',file('normal')],
   ['ownership','audit/tests/source-ownership.mjs',browser,path.join(dir,'ownership','report.json')],
+  ['format-compatibility','audit/tests/format-compatibility.mjs',browser,file('format-compatibility')],
   ['editor-assets','audit/tests/editor-assets.mjs',browser,file('editor-assets')],
   ['designer','audit/tests/designer-zoom.mjs',browser,file('designer')],
   ['manual','audit/tests/manual-docs.mjs',browser,path.join(dir,'manual')],

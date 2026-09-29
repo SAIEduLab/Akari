@@ -19,8 +19,8 @@ export function verifyEvidence(kind,dir,inputs){
     verifyAudio(report,inputs,kind.slice(13));return {status:'PASS',cases:report.results.length,platform:report.platform};
   }
   assert.equal(kind,'static');const report=JSON.parse(fs.readFileSync(path.join(dir,'static.json')));
-  assert.equal(report.status,'PASS');assert.deepEqual(report.snapshot,inputs);assert.equal(report.capabilities,257);
-  return {status:'PASS',capabilities:257};
+  assert.equal(report.status,'PASS');assert.deepEqual(report.snapshot,inputs);assert.equal(report.capabilities,259);
+  return {status:'PASS',capabilities:259};
 }
 export function sealBundle(kind,dir,provenance={}){
   assert.ok(!fs.existsSync(path.join(dir,'bundle.json')));

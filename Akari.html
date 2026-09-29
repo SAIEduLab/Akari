@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Akari 1.0.0: shared AST, code/block editors, transactional history and versioned storage. -->
+<!-- Akari: shared AST, code/block editors, transactional history and explicit data contracts. -->
 <!-- SPDX-License-Identifier: Apache-2.0; full license text is embedded in AKARI_APACHE_LICENSE below. -->
 <html lang="ja">
 <head>
@@ -8,7 +8,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src blob:; media-src blob:; connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
-<title>あかり 1.0.0</title>
+<title>あかり</title>
 <style id="akari-editor-styles">
 /* Editor stylesheet: original cascade order preserved; redundant declarations removed. */
 :root {
@@ -5116,7 +5116,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
 </head>
 <body>
 <div id="app">
-  <div class="titlebar"><span class="lamp">💡</span>あかり 1.0.0</div>
+  <div class="titlebar">あかり</div>
   <div class="menutool">
     <button id="newBtn">新しく作る</button>
     <button id="openBtn">開く</button>
@@ -5386,7 +5386,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         <textarea id="codeEditor" spellcheck="false" aria-label="あかりのコード"></textarea>
       </div>
       <div class="code-assist"><span id="codeIssue">✓ 書き方をチェック中</span><div class="hint-panel"><div class="hint-controls"><input id="hintSearch" type="search" aria-label="候補を検索" placeholder="命令・値・名前を検索"><label><input id="hintUnavailable" type="checkbox">使えないものも表示</label><button id="hintPrev">前</button><span id="hintCount"></span><button id="hintNext">次</button></div><div class="code-hints" id="codeHints"></div></div></div>
-      <div class="console" id="console">あかり1.0.0を起動しました。</div>
+      <div class="console" id="console"></div>
     </section>
   </div>
 
@@ -5567,6 +5567,11 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
 <script>
 (() => {
   'use strict';
+  // Release labels identify the producer; data contracts determine acceptance.
+  const PRODUCT_RELEASE = '1.0.0';
+  function productLabel(compact = false) {
+    return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
+  }
   const AKARI_APACHE_LICENSE = `                                 Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -8663,21 +8668,25 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
           if (t.runtimeId === runtimeId && t !== except) this.cancelTask(t);
       }
     }
-    const EXECUTABLE_VERSION = Object.freeze({
-      appVersion: '1.0.0',
-      runtimeVersion: '1.0.0',
-      languageVersion: '1.0.0',
+    const EXECUTABLE_CONTRACT = Object.freeze({
+      languageContractId: 1,
+      runtimeContractId: 1,
       programFormatVersion: 1,
       projectFormatVersion: 1,
     });
+    function validProducerLabel(value) {
+      return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9.+_-]{0,79}$/.test(value);
+    }
     function restoreExecutable(data) {
       const fail = (message) => {
         throw new AkariError('X602', message);
       };
       if (
-        !data ||
+        !exactKeys(data, ['schema', 'appVersion', 'languageContractId', 'runtimeContractId',
+          'programFormatVersion', 'projectFormatVersion', 'project', 'program', 'assets']) ||
         data.schema !== 'akari-executable' ||
-        Object.entries(EXECUTABLE_VERSION).some(([k, v]) => data[k] !== v)
+        !validProducerLabel(data.appVersion) ||
+        Object.entries(EXECUTABLE_CONTRACT).some(([k, v]) => data[k] !== v)
       )
         fail(
           '\u3053\u306e\u4f5c\u54c1\u306e\u5b9f\u884c\u5f62\u5f0f\u306b\u306f\u5bfe\u5fdc\u3057\u3066\u3044\u307e\u305b\u3093',
@@ -8843,7 +8852,8 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       execListMutation,
       EventScheduler,
       BUILTIN_DEFINITIONS,
-      EXECUTABLE_VERSION,
+      EXECUTABLE_CONTRACT,
+      validProducerLabel,
       restoreExecutable,
     };
   }
@@ -8904,12 +8914,11 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     execListMutation,
     EventScheduler,
   } = AKARI_RUNTIME;
-  const VERSION = AKARI_RUNTIME.EXECUTABLE_VERSION.appVersion;
-  const LANGUAGE_VERSION = AKARI_RUNTIME.EXECUTABLE_VERSION.languageVersion;
-  const FORMAT_VERSION = AKARI_RUNTIME.EXECUTABLE_VERSION.projectFormatVersion;
+  const LANGUAGE_CONTRACT_ID = AKARI_RUNTIME.EXECUTABLE_CONTRACT.languageContractId;
+  const PROJECT_FORMAT_ID = AKARI_RUNTIME.EXECUTABLE_CONTRACT.projectFormatVersion;
   const STORAGE_KEYS = Object.freeze({
-    database: 'akari-workspace-f' + FORMAT_VERSION,
-    fallback: 'akari.autosave.f' + FORMAT_VERSION,
+    database: 'akari-workspace-f' + PROJECT_FORMAT_ID,
+    fallback: 'akari.autosave.f' + PROJECT_FORMAT_ID,
     uiLevel: 'akari.uiLevel.v1',
   });
 
@@ -10045,9 +10054,9 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
   function makeDefaultProject() {
     return {
       schema: 'akari-project',
-      appVersion: VERSION,
-      languageVersion: LANGUAGE_VERSION,
-      formatVersion: FORMAT_VERSION,
+      appVersion: PRODUCT_RELEASE,
+      languageContractId: LANGUAGE_CONTRACT_ID,
+      formatVersion: PROJECT_FORMAT_ID,
       name: 'はじめてのあかり',
       stage: {
         id: 'stage',
@@ -10139,7 +10148,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       !exactKeys(p, [
         'schema',
         'appVersion',
-        'languageVersion',
+        'languageContractId',
         'formatVersion',
         'name',
         'stage',
@@ -10151,14 +10160,14 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         'sounds',
       ])
     )
-      throw new AkariError('F503', `作品データの項目が${VERSION}仕様と一致しません`);
+      throw new AkariError('F503', '作品データの項目が保存形式の契約と一致しません');
     if (
       p.schema !== 'akari-project' ||
-      p.appVersion !== VERSION ||
-      p.languageVersion !== LANGUAGE_VERSION ||
-      p.formatVersion !== FORMAT_VERSION
+      !AKARI_RUNTIME.validProducerLabel(p.appVersion) ||
+      p.languageContractId !== LANGUAGE_CONTRACT_ID ||
+      p.formatVersion !== PROJECT_FORMAT_ID
     )
-      throw new AkariError('F501', `この作品は あかり ${VERSION} 形式ではありません`);
+      throw new AkariError('F501', 'この作品の保存形式・言語契約または作成元の記録には対応していません');
     if (typeof p.name !== 'string' || cpLen(p.name) < 1 || cpLen(p.name) > 80)
       throw new AkariError('F503', '作品名が不正です');
     if (
@@ -10647,7 +10656,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     predicate() {
       const start = this.i;
       try {
-        const legacy = this.standardPredicate();
+        const standard = this.standardPredicate();
         if (this.starts('より')) {
           const saved = this.i;
           this.i = start;
@@ -10655,7 +10664,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
           if (alternative) return alternative;
           this.i = saved;
         }
-        return legacy;
+        return standard;
       } catch (error) {
         if (!(error instanceof AkariError)) throw error;
         this.i = start;
@@ -14568,7 +14577,9 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       const a = store.get(id);
       return a ? `${a.id}:${a.kind}:${a.mime}:${a.byteLength}:${a.sha256}` : `${id}:MISSING`;
     });
-    return stableJson(project) + '|' + meta.join('|');
+    // Producer metadata is not an edit to the child's work.
+    const { appVersion: producerLabel, ...content } = project;
+    return stableJson(content) + '|' + meta.join('|');
   }
   function validateAssetReferences(project, store, { serializedAssetIds = null } = {}) {
     validateDesignProject(project);
@@ -14729,8 +14740,8 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     }
     return {
       schema: project.schema,
-      appVersion: VERSION,
-      languageVersion: project.languageVersion,
+      appVersion: PRODUCT_RELEASE,
+      languageContractId: project.languageContractId,
       formatVersion: project.formatVersion,
       name: project.name,
       stage: {
@@ -14774,7 +14785,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       !exactKeys(root, [
         'schema',
         'appVersion',
-        'languageVersion',
+        'languageContractId',
         'formatVersion',
         'name',
         'stage',
@@ -14793,7 +14804,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     const design = {
       schema: root.schema,
       appVersion: root.appVersion,
-      languageVersion: root.languageVersion,
+      languageContractId: root.languageContractId,
       formatVersion: root.formatVersion,
       name: root.name,
       stage: root.stage,
@@ -14955,8 +14966,8 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     );
     return out.join('\n') + '\n';
   }
-  const MARKDOWN_BEGIN = '<!-- AKARI-PROJECT-F' + FORMAT_VERSION + '-DATA-BEGIN -->\n```json\n';
-  const MARKDOWN_END = '\n```\n<!-- AKARI-PROJECT-F' + FORMAT_VERSION + '-DATA-END -->\n';
+  const MARKDOWN_BEGIN = '<!-- AKARI-PROJECT-F' + PROJECT_FORMAT_ID + '-DATA-BEGIN -->\n```json\n';
+  const MARKDOWN_END = '\n```\n<!-- AKARI-PROJECT-F' + PROJECT_FORMAT_ID + '-DATA-END -->\n';
 
   function serializeProject(project, assetStore = new AssetStore()) {
     assetStore = withDefaultMascotAsset(project, assetStore);
@@ -14989,7 +15000,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     } catch (_) {
       throw new AkariError(
         'F502',
-        '\u4f5c\u54c1\u30c7\u30fc\u30bf\u3092\u8aad\u3081\u307e\u305b\u3093\u3002\u3042\u304b\u308a1.0.0\u3067\u4fdd\u5b58\u3057\u305f .akari.md \u3092\u9078\u3093\u3067\u304f\u3060\u3055\u3044',
+        '作品データを読めません。対応する保存形式の .akari.md を選んでください',
       );
     }
     const { assetIds } = validateSerializedProjectStructure(root);
@@ -15003,7 +15014,6 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     const project = { ...root };
     delete project.assets;
     validateAssetReferences(project, store, { serializedAssetIds: assetIds });
-    project.appVersion = VERSION;
     return { project, assetStore: store, diagnostics: compileProject(project).errors };
   }
   async function validateLoadedAssetRecord(a) {
@@ -15867,7 +15877,8 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       .map((a) => ({ ...a, meta: { ...assetStore.get(a.id).meta } }));
     return {
       schema: 'akari-executable',
-      ...AKARI_RUNTIME.EXECUTABLE_VERSION,
+      appVersion: PRODUCT_RELEASE,
+      ...AKARI_RUNTIME.EXECUTABLE_CONTRACT,
       project: p,
       program,
       assets,
@@ -20936,7 +20947,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       $('#undoBtn').disabled =
         locked || (history.length <= 1 && history[0]?.stateFingerprint === stateFingerprintCore());
       $('#redoBtn').disabled = locked || !redo.length;
-      document.title = `${dirty || draft ? '● ' : ''}あかり 1.0.0 — ${project.name}`;
+      document.title = `${dirty || draft ? '● ' : ''}${productLabel()} — ${project.name}`;
     }
     function restoreSnap(e) {
       recoveryEpoch++;
@@ -23281,7 +23292,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         log(
           diagnostics.length
             ? `作品を開きました。コードに${diagnostics.length}件の問題があります。`
-            : 'あかり1.0.0作品を開きました',
+            : '作品を開きました',
           diagnostics.length ? 'error' : 'ok',
         );
       } catch (err) {
@@ -23575,7 +23586,6 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
           return;
         validateDesignProject(rec.project);
         if (!Number.isFinite(rec.updatedAt)) throw new AkariError('F503', '自動保存時刻が不正です');
-        const sourceVersion = rec.project.appVersion;
         const callableDraft = validateCallableDraft(rec.callableDraft);
         if (!Array.isArray(rec.assets || []) || (rec.assets || []).length > LIMITS.assets)
           throw new AkariError(
@@ -23657,13 +23667,13 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
           validEvent = EVENT_BY_TYPE[type].includes(rec.currentEvent) ? rec.currentEvent : 'start';
         recoveryData = {
           ...rec,
-          project: {...rec.project, appVersion: VERSION},
+          project: { ...rec.project },
           callableDraft,
           assetStore: st,
           selectedId: validId,
           currentEvent: validEvent,
           lastSavedFingerprint:
-            sourceVersion === VERSION && typeof rec.lastSavedFingerprint === 'string' ? rec.lastSavedFingerprint : '',
+            typeof rec.lastSavedFingerprint === 'string' ? rec.lastSavedFingerprint : '',
         };
         $('#recoveryText').textContent =
           `${new Date(rec.updatedAt).toLocaleString()} \u306e\u81ea\u52d5\u4fdd\u5b58\u304c\u3042\u308a\u307e\u3059\u3002`;
@@ -25192,6 +25202,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       if ($('#procModal').classList.contains('show')) renderEditorBinding(draftEditor);
     });
 
+    $('#console').textContent = `${productLabel(true)}を起動しました。`;
     installColorPicker();
     resetHistory();
     renderAll();
@@ -25199,7 +25210,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     setupModalAccessibility();
     showSourceOverview();
     checkRecovery();
-    setStatus('準備完了 — あかり1.0.0');
+    setStatus(`準備完了 — ${productLabel(true)}`);
     app = {
       get editorState() {
         return {
@@ -25243,6 +25254,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       DEFAULT_MASCOT_SHA256,
       DESIGN_RESIZE_DIRECTIONS,
       STANDARD_AKARI_MASCOT,
+      assetStateFingerprint,
       assertRuntimeValueLimit,
       blockBodyRanges,
       blockInsertionAvailability,
@@ -25294,13 +25306,13 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     packExecutable,
     generateStandaloneHtml,
     restoreExecutable: AKARI_RUNTIME.restoreExecutable,
-    EXECUTABLE_VERSION: AKARI_RUNTIME.EXECUTABLE_VERSION,
+    EXECUTABLE_CONTRACT: AKARI_RUNTIME.EXECUTABLE_CONTRACT,
     get app() {
       return app;
     },
-    VERSION,
-    LANGUAGE_VERSION,
-    FORMAT_VERSION,
+    PRODUCT_RELEASE,
+    LANGUAGE_CONTRACT_ID,
+    PROJECT_FORMAT_ID,
     LIMITS,
     GRAMMAR_REGISTRY,
     EVENT_BY_TYPE,
