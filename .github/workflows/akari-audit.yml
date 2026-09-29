@@ -1,0 +1,162 @@
+name: Akari 1.0.0 audit
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, "codex/**"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: akari-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  static:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: |
+          mkdir -p audit-evidence/static
+          node audit/freeze-release.mjs
+          node audit/tests/static-contract.mjs audit-evidence/static/static.json
+          node audit/verify-evidence.mjs seal static audit-evidence/static
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-static-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/static/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true
+  selftest:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: |
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 jsdom@26.1.0
+          echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install --with-deps --no-shell chromium
+          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"AKARI_BROWSER="+require("path").join(process.env.RUNNER_TEMP,"functional-browser/chrome-linux64/chrome")+"\n")'
+      - run: node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/selftest
+      - run: node audit/verify-evidence.mjs seal selftest audit-evidence/selftest
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-selftest-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/selftest/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true
+  full-browser-gate:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [session, ui, limits, schemas, extra]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0 @babel/parser@7.28.4
+          echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install --with-deps --no-shell chromium
+          python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"AKARI_BROWSER="+require("path").join(process.env.RUNNER_TEMP,"functional-browser/chrome-linux64/chrome")+"\n")'
+          python -m pip install Pillow
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-noto-cjk xvfb xauth
+          echo "AKARI_PYTHON=python" >> "$GITHUB_ENV"
+      - run: node audit/browser/run-full-browser-audit.mjs --group "${{ matrix.group }}" --evidence "audit-evidence/full-browser-${{ matrix.group }}"
+      - run: node audit/verify-evidence.mjs seal "full-browser-${{ matrix.group }}" "audit-evidence/full-browser-${{ matrix.group }}"
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-full-browser-${{ matrix.group }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/full-browser-${{ matrix.group }}/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true
+  audio-codecs:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: win32
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0
+          node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"NODE_PATH="+require("path").join(process.env.RUNNER_TEMP,"audit-deps/node_modules")+"\n")'
+          if [ "${{ matrix.platform }}" = linux ]; then
+            "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install-deps chromium
+          fi
+          python audit/install-codec-browser.py "$RUNNER_TEMP/codec-browser"
+      - run: node audit/tests/audio-codecs.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/report.json
+      - run: node audit/verify-evidence.mjs seal "audio-codecs-${{ matrix.platform }}" audit-evidence/audio
+        if: always()
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-audio-codecs-${{ matrix.platform }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/audio/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true
+  aggregate:
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    needs: [static, selftest, full-browser-gate, audio-codecs]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: akari-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: downloaded-evidence
+      - run: node audit/verify-evidence.mjs aggregate downloaded-evidence audit-evidence/aggregate.json
+        env:
+          AKARI_NEEDS: ${{ toJSON(needs) }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-aggregate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/aggregate.json
+          if-no-files-found: error
+          retention-days: 3

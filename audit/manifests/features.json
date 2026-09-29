@@ -1,0 +1,651 @@
+{
+  "productVersion": "1.0.0",
+  "COMMAND_CATALOG": [
+    {
+      "id": "Assignment",
+      "kind": "Assignment",
+      "op": "",
+      "source": "点数を0にする。"
+    },
+    {
+      "id": "NumericUpdate:ADD",
+      "kind": "NumericUpdate",
+      "op": "ADD",
+      "source": "点数に1を足す。"
+    },
+    {
+      "id": "NumericUpdate:SUB",
+      "kind": "NumericUpdate",
+      "op": "SUB",
+      "source": "点数から1を引く。"
+    },
+    {
+      "id": "ListAppend",
+      "kind": "ListAppend",
+      "op": "",
+      "source": "名前一覧に「あかり」を追加する。"
+    },
+    {
+      "id": "ListReplace",
+      "kind": "ListReplace",
+      "op": "",
+      "source": "名前一覧の1番目を「ひかり」にする。"
+    },
+    {
+      "id": "ListInsert",
+      "kind": "ListInsert",
+      "op": "",
+      "source": "名前一覧の1番目に「ほたる」を挿入する。"
+    },
+    {
+      "id": "ListDelete",
+      "kind": "ListDelete",
+      "op": "",
+      "source": "名前一覧の1番目を削除する。"
+    },
+    {
+      "id": "ListClear",
+      "kind": "ListClear",
+      "op": "",
+      "source": "名前一覧を空にする。"
+    },
+    {
+      "id": "IfStatement",
+      "kind": "IfStatement",
+      "op": "",
+      "source": "もし 点数が10以上なら、次のことをする。\n  何もしない。"
+    },
+    {
+      "id": "Say",
+      "kind": "Say",
+      "op": "",
+      "source": "「10点以上です」と言う。"
+    },
+    {
+      "id": "RepeatCount",
+      "kind": "RepeatCount",
+      "op": "",
+      "source": "次のことを3回くり返す。\n  何もしない。"
+    },
+    {
+      "id": "RepeatWhile",
+      "kind": "RepeatWhile",
+      "op": "",
+      "source": "点数が100より小さいあいだ、次のことをくり返す。\n  何もしない。"
+    },
+    {
+      "id": "RepeatUntil",
+      "kind": "RepeatUntil",
+      "op": "",
+      "source": "空白キーが押されるまで、次のことをくり返す。\n  何もしない。"
+    },
+    {
+      "id": "WaitTime",
+      "kind": "WaitTime",
+      "op": "",
+      "source": "0.1秒待つ。"
+    },
+    {
+      "id": "WaitUntil",
+      "kind": "WaitUntil",
+      "op": "",
+      "source": "点数が100以上になるまで待つ。"
+    },
+    {
+      "id": "ForEach",
+      "kind": "ForEach",
+      "op": "",
+      "source": "名前一覧の各要素を項目として、次のことをくり返す。\n  何もしない。"
+    },
+    {
+      "id": "MotionCommand:MOVE",
+      "kind": "MotionCommand",
+      "op": "MOVE",
+      "source": "10歩動く。"
+    },
+    {
+      "id": "MotionCommand:GOTO",
+      "kind": "MotionCommand",
+      "op": "GOTO",
+      "source": "横100、縦50の位置へ行く。"
+    },
+    {
+      "id": "MotionCommand:GLIDE",
+      "kind": "MotionCommand",
+      "op": "GLIDE",
+      "source": "1秒で横200、縦100の位置へ滑る。"
+    },
+    {
+      "id": "MotionCommand:TURN_RIGHT",
+      "kind": "MotionCommand",
+      "op": "TURN_RIGHT",
+      "source": "右に15度回る。"
+    },
+    {
+      "id": "MotionCommand:TURN_LEFT",
+      "kind": "MotionCommand",
+      "op": "TURN_LEFT",
+      "source": "左に15度回る。"
+    },
+    {
+      "id": "MotionCommand:SET_DIRECTION",
+      "kind": "MotionCommand",
+      "op": "SET_DIRECTION",
+      "source": "方向を90度にする。"
+    },
+    {
+      "id": "MotionCommand:SET_X",
+      "kind": "MotionCommand",
+      "op": "SET_X",
+      "source": "横位置を100にする。"
+    },
+    {
+      "id": "MotionCommand:SET_Y",
+      "kind": "MotionCommand",
+      "op": "SET_Y",
+      "source": "縦位置を50にする。"
+    },
+    {
+      "id": "MotionCommand:POINT_TO",
+      "kind": "MotionCommand",
+      "op": "POINT_TO",
+      "source": "「マウス」の方向を向く。"
+    },
+    {
+      "id": "MotionCommand:BOUNCE",
+      "kind": "MotionCommand",
+      "op": "BOUNCE",
+      "source": "端に触れていれば跳ね返る。"
+    },
+    {
+      "id": "LooksCommand:SET_SCALE",
+      "kind": "LooksCommand",
+      "op": "SET_SCALE",
+      "source": "大きさを120％にする。"
+    },
+    {
+      "id": "LooksCommand:SET_COLOR",
+      "kind": "LooksCommand",
+      "op": "SET_COLOR",
+      "source": "表示色を「赤」にする。"
+    },
+    {
+      "id": "LooksCommand:HIDE",
+      "kind": "LooksCommand",
+      "op": "HIDE",
+      "source": "隠れる。"
+    },
+    {
+      "id": "LooksCommand:SHOW",
+      "kind": "LooksCommand",
+      "op": "SHOW",
+      "source": "現れる。"
+    },
+    {
+      "id": "LooksCommand:FRONT",
+      "kind": "LooksCommand",
+      "op": "FRONT",
+      "source": "前面へ出す。"
+    },
+    {
+      "id": "LooksCommand:BACK",
+      "kind": "LooksCommand",
+      "op": "BACK",
+      "source": "背面へ下げる。"
+    },
+    {
+      "id": "LooksCommand:FORWARD_LAYERS",
+      "kind": "LooksCommand",
+      "op": "FORWARD_LAYERS",
+      "source": "1層前へ出す。"
+    },
+    {
+      "id": "LooksCommand:BACKWARD_LAYERS",
+      "kind": "LooksCommand",
+      "op": "BACKWARD_LAYERS",
+      "source": "1層後ろへ下げる。"
+    },
+    {
+      "id": "PenCommand:DOWN",
+      "kind": "PenCommand",
+      "op": "DOWN",
+      "source": "ペンを下ろす。"
+    },
+    {
+      "id": "PenCommand:SET_COLOR",
+      "kind": "PenCommand",
+      "op": "SET_COLOR",
+      "source": "ペンの色を「青」にする。"
+    },
+    {
+      "id": "PenCommand:SET_SIZE",
+      "kind": "PenCommand",
+      "op": "SET_SIZE",
+      "source": "ペンの太さを3にする。"
+    },
+    {
+      "id": "PenCommand:UP",
+      "kind": "PenCommand",
+      "op": "UP",
+      "source": "ペンを上げる。"
+    },
+    {
+      "id": "PenCommand:STAMP",
+      "kind": "PenCommand",
+      "op": "STAMP",
+      "source": "スタンプを押す。"
+    },
+    {
+      "id": "PenCommand:CLEAR",
+      "kind": "PenCommand",
+      "op": "CLEAR",
+      "source": "描いた線とスタンプを消す。"
+    },
+    {
+      "id": "LooksCommand:SET_BACKDROP",
+      "kind": "LooksCommand",
+      "op": "SET_BACKDROP",
+      "source": "背景を「空色」にする。"
+    },
+    {
+      "id": "LooksCommand:NEXT_BACKDROP",
+      "kind": "LooksCommand",
+      "op": "NEXT_BACKDROP",
+      "source": "次の背景にする。"
+    },
+    {
+      "id": "LooksCommand:PREV_BACKDROP",
+      "kind": "LooksCommand",
+      "op": "PREV_BACKDROP",
+      "source": "前の背景にする。"
+    },
+    {
+      "id": "LooksCommand:SET_COSTUME",
+      "kind": "LooksCommand",
+      "op": "SET_COSTUME",
+      "source": "衣装を「星」にする。"
+    },
+    {
+      "id": "LooksCommand:NEXT_COSTUME",
+      "kind": "LooksCommand",
+      "op": "NEXT_COSTUME",
+      "source": "次の衣装にする。"
+    },
+    {
+      "id": "LooksCommand:PREV_COSTUME",
+      "kind": "LooksCommand",
+      "op": "PREV_COSTUME",
+      "source": "前の衣装にする。"
+    },
+    {
+      "id": "LooksCommand:SET_TARGET_TEXT",
+      "kind": "LooksCommand",
+      "op": "SET_TARGET_TEXT",
+      "source": "「ボタン1」の文字を「始める」にする。"
+    },
+    {
+      "id": "SoundCommand:TONE",
+      "kind": "SoundCommand",
+      "op": "TONE",
+      "source": "440Hzの音を0.2秒鳴らす。"
+    },
+    {
+      "id": "SoundCommand:TONE_WAIT",
+      "kind": "SoundCommand",
+      "op": "TONE_WAIT",
+      "source": "440Hzの音を0.2秒鳴らし、終わるまで待つ。"
+    },
+    {
+      "id": "SoundCommand:SET_VOLUME",
+      "kind": "SoundCommand",
+      "op": "SET_VOLUME",
+      "source": "音量を50％にする。"
+    },
+    {
+      "id": "SoundCommand:PITCH_UP",
+      "kind": "SoundCommand",
+      "op": "PITCH_UP",
+      "source": "音程を1段階上げる。"
+    },
+    {
+      "id": "SoundCommand:PITCH_DOWN",
+      "kind": "SoundCommand",
+      "op": "PITCH_DOWN",
+      "source": "音程を1段階下げる。"
+    },
+    {
+      "id": "SoundCommand:STOP_ALL",
+      "kind": "SoundCommand",
+      "op": "STOP_ALL",
+      "source": "すべての音を止める。"
+    },
+    {
+      "id": "Broadcast",
+      "kind": "Broadcast",
+      "op": "",
+      "source": "「開始」と知らせる。"
+    },
+    {
+      "id": "BroadcastAndWait",
+      "kind": "BroadcastAndWait",
+      "op": "",
+      "source": "「開始」と知らせ、受け手の処理が終わるまで待つ。"
+    },
+    {
+      "id": "Ask",
+      "kind": "Ask",
+      "op": "",
+      "source": "「名前は？」とたずねる。"
+    },
+    {
+      "id": "LocalVariableDeclaration",
+      "kind": "LocalVariableDeclaration",
+      "op": "",
+      "source": "合計という変数を作り、初期値を0にする。"
+    },
+    {
+      "id": "ReturnStatement",
+      "kind": "ReturnStatement",
+      "op": "",
+      "source": "合計を返す。"
+    },
+    {
+      "id": "CloneCommand:CREATE_SELF",
+      "kind": "CloneCommand",
+      "op": "CREATE_SELF",
+      "source": "自分のクローンを作る。"
+    },
+    {
+      "id": "CloneCommand:CREATE_TARGET",
+      "kind": "CloneCommand",
+      "op": "CREATE_TARGET",
+      "source": "「マスコット」のクローンを作る。"
+    },
+    {
+      "id": "CloneCommand:DELETE_SELF",
+      "kind": "CloneCommand",
+      "op": "DELETE_SELF",
+      "source": "このクローンを削除する。"
+    },
+    {
+      "id": "StopCommand:THIS",
+      "kind": "StopCommand",
+      "op": "THIS",
+      "source": "このスクリプトを止める。"
+    },
+    {
+      "id": "StopCommand:OTHERS",
+      "kind": "StopCommand",
+      "op": "OTHERS",
+      "source": "ほかのスクリプトを止める。"
+    },
+    {
+      "id": "StopCommand:ALL",
+      "kind": "StopCommand",
+      "op": "ALL",
+      "source": "すべてを止める。"
+    },
+    {
+      "id": "LooksCommand:SET_SELF_TEXT",
+      "kind": "LooksCommand",
+      "op": "SET_SELF_TEXT",
+      "source": "文字を「文字」にする。"
+    },
+    {
+      "id": "LooksCommand:SET_INPUT",
+      "kind": "LooksCommand",
+      "op": "SET_INPUT",
+      "source": "「入力欄1」に「答え」を入れる。"
+    },
+    {
+      "id": "SoundCommand:SAMPLE",
+      "kind": "SoundCommand",
+      "op": "SAMPLE",
+      "source": "「ベル」を鳴らす。"
+    },
+    {
+      "id": "SoundCommand:SAMPLE_WAIT",
+      "kind": "SoundCommand",
+      "op": "SAMPLE_WAIT",
+      "source": "「ベル」を鳴らし、終わるまで待つ。"
+    },
+    {
+      "id": "Break",
+      "kind": "Break",
+      "op": "",
+      "source": "このくり返しを終える。"
+    },
+    {
+      "id": "Continue",
+      "kind": "Continue",
+      "op": "",
+      "source": "次のくり返しへ進む。"
+    },
+    {
+      "id": "LocalListDeclaration",
+      "kind": "LocalListDeclaration",
+      "op": "",
+      "source": "結果というリストを作る。"
+    },
+    {
+      "id": "Forever",
+      "kind": "Forever",
+      "op": "",
+      "source": "次のことをずっとくり返す。\n  何もしない。"
+    },
+    {
+      "id": "UserActionCall",
+      "kind": "UserActionCall",
+      "op": "",
+      "source": "増やす（3）を実行する。"
+    },
+    {
+      "id": "NoOperation",
+      "kind": "NoOperation",
+      "op": "",
+      "source": "何もしない。"
+    }
+  ],
+  "LIMITS": {
+    "fileBytes": 25165824,
+    "importFileBytes": 12582912,
+    "assetRawTotal": 16777216,
+    "assets": 128,
+    "imageAssets": 64,
+    "audioAssets": 64,
+    "imageBytes": 4194304,
+    "audioBytes": 6291456,
+    "imageWidth": 4096,
+    "imageHeight": 4096,
+    "imagePixels": 4194304,
+    "imagePixelsTotal": 16777216,
+    "audioDuration": 60,
+    "audioDurationTotal": 120,
+    "audioChannels": 2,
+    "audioSampleRateMin": 8000,
+    "audioSampleRateMax": 48000,
+    "activeAudioVoices": 32,
+    "backdrops": 256,
+    "costumesPerSprite": 256,
+    "sounds": 256,
+    "components": 500,
+    "clones": 500,
+    "scripts": 1000,
+    "sourceEach": 100000,
+    "sourceTotal": 1000000,
+    "projectVars": 1000,
+    "projectLists": 500,
+    "listItems": 100000,
+    "stringChars": 100000,
+    "callables": 500,
+    "args": 32,
+    "callDepth": 64,
+    "functionOps": 100000,
+    "blockDepth": 128,
+    "expressionDepth": 128,
+    "repeatCount": 1000000,
+    "activeTasks": 2000
+  },
+  "EXECUTABLE_VERSION": {
+    "appVersion": "1.0.0",
+    "runtimeVersion": "1.0.0",
+    "languageVersion": "1.0.0",
+    "programFormatVersion": 1,
+    "projectFormatVersion": 1
+  },
+  "schemaIds": [
+    "Script",
+    "TargetReference",
+    "CommentLine",
+    "Assignment",
+    "NumericUpdate:ADD",
+    "NumericUpdate:SUB",
+    "ListAppend",
+    "ListInsert",
+    "ListReplace",
+    "ListDelete",
+    "ListClear",
+    "NoOperation",
+    "Break",
+    "Continue",
+    "IfStatement",
+    "RepeatCount",
+    "RepeatWhile",
+    "RepeatUntil",
+    "Forever",
+    "ForEach",
+    "WaitTime",
+    "WaitUntil",
+    "Say",
+    "ReturnStatement",
+    "Ask",
+    "Broadcast",
+    "BroadcastAndWait",
+    "UserActionCall",
+    "LocalVariableDeclaration",
+    "LocalListDeclaration",
+    "StopCommand:THIS",
+    "StopCommand:OTHERS",
+    "StopCommand:ALL",
+    "MotionCommand:MOVE",
+    "MotionCommand:GOTO",
+    "MotionCommand:GLIDE",
+    "MotionCommand:SET_DIRECTION",
+    "MotionCommand:TURN_RIGHT",
+    "MotionCommand:TURN_LEFT",
+    "MotionCommand:SET_X",
+    "MotionCommand:SET_Y",
+    "MotionCommand:POINT_TO",
+    "MotionCommand:BOUNCE",
+    "LooksCommand:FRONT",
+    "LooksCommand:BACK",
+    "LooksCommand:HIDE",
+    "LooksCommand:SHOW",
+    "LooksCommand:NEXT_COSTUME",
+    "LooksCommand:PREV_COSTUME",
+    "LooksCommand:NEXT_BACKDROP",
+    "LooksCommand:PREV_BACKDROP",
+    "LooksCommand:SET_SCALE",
+    "LooksCommand:FORWARD_LAYERS",
+    "LooksCommand:BACKWARD_LAYERS",
+    "LooksCommand:SET_COLOR",
+    "LooksCommand:SET_COSTUME",
+    "LooksCommand:SET_BACKDROP",
+    "LooksCommand:SET_SELF_TEXT",
+    "LooksCommand:SET_TARGET_TEXT",
+    "LooksCommand:SET_INPUT",
+    "PenCommand:DOWN",
+    "PenCommand:UP",
+    "PenCommand:CLEAR",
+    "PenCommand:STAMP",
+    "PenCommand:SET_COLOR",
+    "PenCommand:SET_SIZE",
+    "SoundCommand:STOP_ALL",
+    "SoundCommand:TONE_WAIT",
+    "SoundCommand:TONE",
+    "SoundCommand:SAMPLE_WAIT",
+    "SoundCommand:SAMPLE",
+    "SoundCommand:SET_VOLUME",
+    "SoundCommand:PITCH_UP",
+    "SoundCommand:PITCH_DOWN",
+    "CloneCommand:CREATE_SELF",
+    "CloneCommand:DELETE_SELF",
+    "CloneCommand:CREATE_TARGET",
+    "NumberLiteral",
+    "StringLiteral",
+    "BooleanLiteral",
+    "ListLiteral",
+    "VariableRead",
+    "UnaryExpression:POS",
+    "UnaryExpression:NEG",
+    "UnaryExpression:NOT",
+    "BinaryExpression:ADD",
+    "BinaryExpression:SUB",
+    "BinaryExpression:MUL",
+    "BinaryExpression:DIV",
+    "BinaryExpression:POW",
+    "CompareExpression:GTE",
+    "CompareExpression:LTE",
+    "CompareExpression:GT",
+    "CompareExpression:LT",
+    "CompareExpression:EQ",
+    "CompareExpression:NEQ",
+    "LogicalExpression:AND",
+    "LogicalExpression:OR",
+    "ListRead",
+    "UserFunctionCall",
+    "BuiltinCall:乱数",
+    "BuiltinCall:余り",
+    "BuiltinCall:四捨五入",
+    "BuiltinCall:切り上げ",
+    "BuiltinCall:切り捨て",
+    "BuiltinCall:絶対値",
+    "BuiltinCall:平方根",
+    "BuiltinCall:正弦",
+    "BuiltinCall:余弦",
+    "BuiltinCall:正接",
+    "BuiltinCall:逆正弦",
+    "BuiltinCall:逆余弦",
+    "BuiltinCall:逆正接",
+    "BuiltinCall:自然対数",
+    "BuiltinCall:常用対数",
+    "BuiltinCall:指数",
+    "BuiltinCall:数",
+    "BuiltinCall:文字",
+    "BuiltinCall:最小",
+    "BuiltinCall:最大",
+    "BuiltinCall:つなぐ",
+    "BuiltinCall:CONTAINS",
+    "BuiltinCall:INDEX_OF",
+    "BuiltinCall:LENGTH",
+    "BuiltinCall:STRING_LENGTH",
+    "BuiltinCall:STRING_CHAR",
+    "SensorRead:マウスが押されている",
+    "SensorRead:マウスの横位置",
+    "SensorRead:マウスの縦位置",
+    "SensorRead:以前の背景名",
+    "SensorRead:新しい背景名",
+    "SensorRead:受け取った知らせ",
+    "SensorRead:押されたキー",
+    "SensorRead:クローンである",
+    "SensorRead:背景番号",
+    "SensorRead:背景名",
+    "SensorRead:衣装番号",
+    "SensorRead:衣装名",
+    "SensorRead:横位置",
+    "SensorRead:縦位置",
+    "SensorRead:方向",
+    "SensorRead:大きさ",
+    "SensorRead:タイマー",
+    "SensorRead:答え",
+    "SensorRead:音量",
+    "SensorRead:音程",
+    "SensorRead:以前の値",
+    "SensorRead:新しい値",
+    "SensorRead:INPUT_VALUE",
+    "SensorRead:DISTANCE_TO",
+    "SensorRead:KEY_DOWN",
+    "SensorRead:TOUCHING_COLOR",
+    "SensorRead:TOUCHING"
+  ]
+}

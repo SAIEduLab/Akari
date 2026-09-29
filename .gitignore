@@ -1,0 +1,6 @@
+.audit-deps/
+audit-evidence/
+audit/browser/cases/media/
+__pycache__/
+
+.publication/
