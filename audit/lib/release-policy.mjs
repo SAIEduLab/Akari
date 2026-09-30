@@ -1,3 +1,4 @@
+import { currentProductFile } from "./product-path.cjs";
 import {createRequire} from 'node:module';
 
 const require=createRequire(import.meta.url);
@@ -56,7 +57,7 @@ function isNamedIdentifier(node,parent){
 
 function productSource(html){
   const start=html.indexOf('<script>'),end=html.lastIndexOf('</script>');
-  if(start<0||end<=start)throw new Error('Akari.html product script missing');
+  if(start<0||end<=start)throw new Error('product HTML script missing');
   return html.slice(start+8,end);
 }
 
@@ -82,7 +83,7 @@ function nameIssues(ast,file,{callablesOnly=false}={}){
 
 function productIssues(ast){
   const issues=[];
-  const report=(node,message)=>issues.push(`Akari.html:${location(node)} ${message}`);
+  const report=(node,message)=>issues.push(`${currentProductFile()}:${location(node)} ${message}`);
   let releaseDeclaration=0,contractDeclaration=0;
   walk(ast,(node,parents)=>{
     const parent=parents.at(-1),fn=functionName(parents);
@@ -124,8 +125,8 @@ function productIssues(ast){
       if(propertyKey(property)==='PRODUCT_RELEASE')report(property,'PRODUCT_RELEASE read through destructuring');
     }
   });
-  if(releaseDeclaration!==1)issues.push(`Akari.html: expected one PRODUCT_RELEASE declaration, found ${releaseDeclaration}`);
-  if(contractDeclaration!==1)issues.push(`Akari.html: expected one EXECUTABLE_CONTRACT declaration, found ${contractDeclaration}`);
+  if(releaseDeclaration!==1)issues.push(`${currentProductFile()}: expected one PRODUCT_RELEASE declaration, found ${releaseDeclaration}`);
+  if(contractDeclaration!==1)issues.push(`${currentProductFile()}: expected one EXECUTABLE_CONTRACT declaration, found ${contractDeclaration}`);
   return issues;
 }
 
@@ -133,8 +134,8 @@ export function releasePolicyIssues(html,auditSources=[]){
   const script=productSource(html),issues=[];
   try{
     const ast=parsed(script,'script');
-    issues.push(...nameIssues(ast,'Akari.html'),...productIssues(ast));
-  }catch(error){issues.push(`Akari.html: parse failed: ${error.message}`);}
+    issues.push(...nameIssues(ast,currentProductFile()),...productIssues(ast));
+  }catch(error){issues.push(`${currentProductFile()}: parse failed: ${error.message}`);}
   for(const {file,source} of auditSources){
     try{issues.push(...nameIssues(parsed(source),file,{callablesOnly:true}));}
     catch(error){issues.push(`${file}: parse failed: ${error.message}`);}

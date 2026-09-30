@@ -33,7 +33,7 @@ async function runProductContractTests() {
       const p = makeDefaultProject(),
         text = serializeProject(p, new AssetStore());
       if (
-        !text.startsWith('# あかり 1.0.0 の作品') ||
+        !text.startsWith('# あかり ' + PRODUCT_RELEASE + ' の作品') ||
         !text.includes('<!-- AKARI-PROJECT-F1-DATA-BEGIN -->') ||
         !text.includes('<!-- AKARI-PROJECT-F1-DATA-END -->')
       )
@@ -41,7 +41,7 @@ async function runProductContractTests() {
       const loaded = await parseProjectFile(text);
       if (JSON.stringify(loaded.project) !== JSON.stringify(p))
         throw new Error('作品の往復で変化しました');
-      const otherProducer = text.replaceAll('1.0.0', '7.8.9');
+      const otherProducer = text.replaceAll(PRODUCT_RELEASE, '7.8.9');
       const imported = await parseProjectFile(otherProducer);
       if (imported.project.appVersion !== '7.8.9' || imported.diagnostics.length)
         throw new Error('作成元の版だけで同じ形式の作品を拒否しました');

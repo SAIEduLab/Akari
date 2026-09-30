@@ -1,3 +1,4 @@
+import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -12,7 +13,7 @@ const root=path.resolve(here,'../..');
 const casesDir=path.join(here,'cases');
 const args=process.argv.slice(2);
 const value=(flag,def='')=>{const i=args.indexOf(flag);return i>=0?args[i+1]:def;};
-const product=value('--product','Akari.html');
+const product=value('--product',currentProductFile());
 const audit=value('--audit','AUDIT.md');
 const manifestPath=value('--manifest',path.join(here,'browser-audit-manifest.json'));
 const evidence=path.resolve(root,value('--evidence','audit-evidence/full-browser'));

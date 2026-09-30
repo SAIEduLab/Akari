@@ -1,3 +1,4 @@
+import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -12,11 +13,11 @@ const [browserPath,output]=process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output),'fresh format evidence path required');
 fs.mkdirSync(path.dirname(output),{recursive:true});
 checkFormatValidatorNegatives();
-const product='Akari.html',before=snapshot(product),source=fs.readFileSync(product,'utf8');
+const product=currentProductFile(),before=snapshot(product),source=fs.readFileSync(product,'utf8');
 const producerPattern=/(const PRODUCT_RELEASE\s*=\s*['"])([^'"]+)(['"])/g;
 const found=[...source.matchAll(producerPattern)];
 assert.equal(found.length,1,'one product release declaration required');
-const currentRelease=found[0][2],priorRelease=currentRelease==='9.8.7'?'9.8.8':'9.8.7';
+const currentRelease=found[0][2],priorRelease=currentRelease==='1.0.0'?'0.9.9':'1.0.0';
 assert.notEqual(currentRelease,priorRelease);
 const priorSource=source.replace(producerPattern,(_all,a,_value,b)=>a+priorRelease+b);
 assert.notEqual(priorSource,source,'prior producer fixture must be a different product build');

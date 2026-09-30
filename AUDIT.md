@@ -1,14 +1,16 @@
-# あかり 1.0.0 — 監査契約
+# あかり 1.0.1 — 監査契約
 
 ## 対象と固定
 
-製品版は1.0.0です。保存・実行形式番号、言語契約番号、runtime契約番号はそれぞれ1で、製品版とは独立して管理します。公開用の製品、仕様、マニュアル、試験、fixture、runner、workflowを一つの入力snapshotとして検証します。Git履歴や別リポジトリは実行条件に含めません。
+製品版は1.0.1です。保存・実行形式番号、言語契約番号、runtime契約番号はそれぞれ1で、製品版とは独立して管理します。公開用の製品、仕様、マニュアル、試験、fixture、runner、workflowを一つの入力snapshotとして検証します。Git履歴や別リポジトリは実行条件に含めません。
 
-`audit/manifests/features.json` は命令カタログ・ブロックスキーマ・上限・データ契約と公開ラベルの固定記録です。`audit/manifests/release-1.0.0.json` は公開ファイルのSHA-256集合です。固定記録自体は合格の証拠ではありません。監査は実際の製品を読み、結果をそのsnapshotへ結び付けます。必須結果の欠落、重複、偽のPASS、例外、タイムアウト、環境不足はFAILです。未実施の環境をPASSと呼びません。
+`audit/manifests/features.json` は命令カタログ・ブロックスキーマ・上限・データ契約と公開ラベルの固定記録です。`audit/manifests/release-1.0.1.json` は公開ファイルのSHA-256集合です。固定記録自体は合格の証拠ではありません。監査は実際の製品を読み、結果をそのsnapshotへ結び付けます。必須結果の欠落、重複、偽のPASS、例外、タイムアウト、環境不足はFAILです。未実施の環境をPASSと呼びません。
 
 能力台帳と試験の安定IDは、対象機能・操作・保証を名前で示します。製品の版番号をIDに埋め込まず、新しい監査項目は既存IDと重複しない機能名で追加します。追加時は期待値、実行入口、能力台帳との対応を固定し、既存試験の削除やIDの転用で件数を合わせません。
 
 ## 製品版から独立した命名と受入判定
+
+配布する製品HTMLは `Akari<major>_<minor>_<patch>.html` とし、`audit/public-files.json` の `productFile` を現行pathの正本にします。製品版、ファイル名、公開リンクを一致させ、現行ツリーには製品HTMLを1つだけ置き、入れ替えた旧製品HTMLを削除します。製品ファイルとrelease freezeの版表示は配布ラベルであり、機能名・安定test ID・保存形式・言語とruntimeの契約番号には流用しません。
 
 - 関数・変数・監査IDは機能・責務を示す名前にします。`restoreV103`、`runVersion09Tests`、`parseRelease104`のようにリリース番号を組み込まず、整理番号が必要なら`validateCase001`や`FORMAT-PROJECT-001`のように機能名から区切ります。番号の対応先は製品版ではありません。
 - 製品のリリースラベルは一か所に定義し、UI表示・保存と書出しの作成元記録・公開APIへの露出だけで参照します。`appVersion`は型・長さ・文字種を検証する記録項目で、現在製品版との一致や大小比較を受入条件にしません。
@@ -57,12 +59,18 @@
 | UI-BUTTON-BLOCK-COMMANDS | 主本文と動作・計算で、追加・移動・複製・削除・式置換・可変入力操作、パレットの分類／検索／ページ／フィルター、作業台の拡大率／道具箱／表示範囲へ到達でき、必須入力と境界の制限を守る。 |
 | UI-BUTTON-RESPONSIVE | 狭い画面でも本文・部品操作・未確定入力の確定／取消へ到達できる。表示幅だけで本文や履歴を変えない。 |
 
+## ブロック入力欄の表示
+
+短い入力値は実際のフォント、文字間隔、padding、border、候補リスト矢印を含む幅を確保します。入力・フォント読込み・ズーム・動作と計算の編集にも同じ処理を適用します。長い値は幅上限と入力中のスクロールを保ち、titleを全文へ更新します。
+
+`audit/tests/block-field-width.mjs` の8件を必須とします。日本語、英字・数字・絵文字・結合文字、入力による拡縮、フォント変更、ズーム、長い値、定義モーダルを実ブラウザーで検査し、独立したDOM文字幅測定で見切れを判定します。幅を故意に狭くした拒否試験も維持します。LinuxとWindowsの証拠を必須bundleへ含め、結果欠落・重複・失敗・例外をPASSにしません。
+
 ## 実行区分と合格条件
 
 | 区分 | 検証 |
 |---|---|
-| GA-STATIC | JavaScript構文、版、所有モデル、全公開ファイルhash、能力・ID集合、workflowと実行入口、資料整合、自作識別子と製品版参照のAST検査・拒否能力 |
-| GA-EXEC | 884件の製品試験、605件の言語表面試験、38件の編集試験、9件の編集GUI試験、27タスク416ケースのブラウザー試験、15件の素材編集試験、18件の音声試験、9件の画面ズーム試験、コード所属試験、9件の形式互換試験、9件のUIボタン整合性試験、保存・生成HTML・マニュアル |
+| GA-STATIC | 現行製品HTMLの単一性・版付きpathと製品版の一致・旧製品混入の拒否、JavaScript構文、版、所有モデル、全公開ファイルhash、能力・ID集合、workflowと実行入口、資料整合、自作識別子と製品版参照のAST検査・拒否能力 |
+| GA-EXEC | 884件の製品試験、605件の言語表面試験、38件の編集試験、9件の編集GUI試験、27タスク416ケースのブラウザー試験、15件の素材編集試験、18件の音声試験、9件の画面ズーム試験、コード所属試験、9件の形式互換試験、9件のUIボタン整合性試験、8件のブロック入力欄表示試験（LinuxとWindows）、保存・生成HTML・マニュアル |
 | SEMANTIC | 仕様と実装の一致、主要処理の可読性、命令・求値の機能保持、監査の非弱体化、教材操作の妥当性 |
 | HYBRID | 所属と全本文への到達性、表示と実行対象の分離、エラー本文と下書きの保持、UIの読みやすさ、UIとボタンの整合性 |
 
@@ -312,11 +320,11 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | product:hints | 対象/event/スコープ別の候補・理由 | 共通grammar/schema | hintCandidates | renderPalette → blockInsertionAvailability → editorInsertionHints / hintCandidates / analyzeAst | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 実行前検査と同じ制約 | AUDIT HINT event-specific values and target restrictions; AUDIT HINT all enabled default expressions parse and diagnose; TEST-EDITOR availability shares definite context restrictions and preserves dynamic types; TEST-EDITOR availability preview preserves pending transaction and commit gate; TEST-EDITOR availability generated names stay valid through collision boundary; AUDIT HINT generated names stay valid through collision boundary | BROWSER-PRODUCT; browser-product:cui-hint-insertion-and-palette-availability; browser-product:cui-generated-name-collision-boundary; browser-schemas:ForEach; browser-schemas:ReturnStatement; browser-session:palette-generated-name-collision-boundary; ui-shell:disclosure-discoverability-source-invariant | CUI候補とGUI availability が同じ文脈/意味診断を用いる。自動生成名はCUI候補とGUI availabilityの双方で、引数・反復項目・局所宣言との連続衝突でも32文字上限内の未使用名を生成し、実際の候補・パレットから追加できる。個別候補の実操作はschema suite |
 | product:monitor | 実行モニターと現在位置 | owner key/sourceSpan | paintExecutionLocation / sourceLocation | paintExecutionLocation → view.highlight / nodeMap; debug ownerはreadOnly | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | runtime / scheduler | AUDIT ERROR action arguments local9 correct line and detached state | BROWSER-PRODUCT; browser-session:debug-function-owner | 失敗記録はself-test、画面描画・block位置・owner対応はbrowser-sessionで別検査 |
 | editor:switch | 無編集Switchで原文/dirty/履歴/redo不変 | EditorSession / syntaxAst / blockView | readSource / commitSource / flushActiveEditor | switchEditorMode / renderEditorBinding / view.focus; source正本とmodeを分離 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 実行snapshotを保持 | TEST-EDITOR creation refresh and syntax error preserve source; TEST-EDITOR context refresh preserves edited IDs selection and rebuilt node maps; TEST-EDITOR no op cancel same place preserve original text and do not validate | BROWSER-PRODUCT; browser-session:switch-no-edit; browser-session:switch-semantic-errors; browser-session:switch-invalid-syntax; browser-session:running-paused-lock-switch; browser-runtime:runtime-fixed-seed-mode-switch-trace; browser-runtime:preparing-importing-lock-and-decode-failure-rollback | 純粋no-opと実モード往復・元source/dirty/history/redo・実行snapshot維持を分けて検査する |
-| editor:transaction | GUI操作の原子的なsource反映・取消 | block tree → AST → source | prepareBlockEdit / operateBlock / commitSource | editInput / completeMove → prepareBlockEdit → operateBlock → commitSource | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 共通compile/runtime | TEST-EDITOR owner revision lock pending and atomic rejection; TEST-EDITOR field annotation and batch update all values once; TEST-EDITOR insert duplicate replace remove and fresh IDs; TEST-EDITOR statement moves reorder and nest with comments; TEST-EDITOR required body removal and invalid field leave everything; TEST-EDITOR expression replacement and move require a complete source replacement; TEST-EDITOR candidate validator rejection is before commit | BROWSER-PRODUCT; browser-session:block-edit-common-history; browser-session:pending-input-blocks-transitions; browser-session:ime-code-and-block; browser-session:callable-block-escape-cancels-inner-transaction; browser-session:has-else-limit-refusal-restores-control; browser-boundaries:empty-required-body-refusal-and-noop-replacement; browser-boundaries:source-each-limit-refusal-keeps-source-history | 純粋candidateの不変条件と、DOM/owner/共通historyの原子的反映を別々に検査する。動作・求値モーダル内のEscape取消と、構造操作拒否時の表示ロールバックも実DOMで確認する |
+| editor:transaction | GUI操作の原子的なsource反映・取消 | block tree → AST → source | prepareBlockEdit / operateBlock / commitSource | editInput / completeMove → prepareBlockEdit → operateBlock → commitSource | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 共通compile/runtime | TEST-EDITOR owner revision lock pending and atomic rejection; TEST-EDITOR field annotation and batch update all values once; TEST-EDITOR insert duplicate replace remove and fresh IDs; TEST-EDITOR statement moves reorder and nest with comments; TEST-EDITOR required body removal and invalid field leave everything; TEST-EDITOR expression replacement and move require a complete source replacement; TEST-EDITOR candidate validator rejection is before commit | BROWSER-PRODUCT; browser-session:block-edit-common-history; browser-session:pending-input-blocks-transitions; browser-session:ime-code-and-block; browser-session:callable-block-escape-cancels-inner-transaction; browser-session:has-else-limit-refusal-restores-control; FIELD-SHORT-JAPANESE; FIELD-MIXED-UNICODE; FIELD-EDIT-GROW-SHRINK; FIELD-FONT-CHANGE; FIELD-ZOOM-BOUNDS; FIELD-LONG-EDIT; FIELD-CALLABLE; FIELD-CLIPPING-ORACLE; browser-boundaries:empty-required-body-refusal-and-noop-replacement; browser-boundaries:source-each-limit-refusal-keeps-source-history | 純粋candidateの不変条件と、DOM/owner/共通historyの原子的反映を別々に検査する。動作・求値モーダル内のEscape取消と、構造操作拒否時の表示ロールバックも実DOMで確認する |
 | editor:history | コード/GUI/下書き/作品共通Undo/Redo | project + draft history | snapshot / restoreSnap / undo / redoDo | undo / redoDo / snapshot / restoreSnap; beforeinput・keydownと共通history | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | designのみ編集 | 外部core test対象外（browser suiteで検査） | BROWSER-PRODUCT; browser-session:block-edit-common-history; browser-session:callable-draft-history; browser-storage-media:real-media-import-and-history; browser-boundaries:body-pagination-and-comment-multiline; browser-boundaries:empty-required-body-refusal-and-noop-replacement | 履歴の前後snapshot・下書きbaseline/loadedKey・native Undoは実browser経路で検査する |
 | product:block-workbench | 形で構造を示し、直接つかんで接続できる連続作業台 | EditorSession / block tree / view state | 同じsource正本とAST/codec | palette preview / block body drag / snap preview / C-body / expression socket / pan / zoom / fit / home / workspace expand / edge auto-scroll / continuous long body | EDITOR-GUI-001/002、EDITOR-EDIT-001/002、EDITOR-SWITCH-001 と LANG-WB-001〜006 | runtimeは変更せず確定sourceだけを共通compile/runtimeへ渡す | TEST-EDITOR workbench shape paths and viewport zoom are presentation only | BROWSER-WORKBENCH; WORKBENCH-SHAPE-MEANING; WORKBENCH-DRAG-CONNECT; WORKBENCH-NESTED-MOVE; WORKBENCH-EXPRESSION-DROP; WORKBENCH-CONTAINER-GROUP; WORKBENCH-VIEWPORT; WORKBENCH-EDGE-SCROLL-CANCEL; WORKBENCH-LONG-BODY; WORKBENCH-SHELL; WORKBENCH-COMPACT; WORKBENCH-RESPONSIVE; WORKBENCH-PREVIOUS-FIXES; WORKBENCH-KEYBOARD; WORKBENCH-TOUCH; WORKBENCH-PENDING-IME; WORKBENCH-RUNTIME-LOCKS; WORKBENCH-DEFINITION-DRAFT | 形・直接操作・接続予告・広い作業領域・長い本文・対象/結果把握・代替操作を同じsnapshotの実ブラウザーで検査し、未実施経路を過去結果やpure testで補完しない |
 | product:responsive | responsive/縮尺/スクロール到達性/キーボード/IME/pointer | 表示状態のみ | 既存CSS/editor/coordinate変換 | container CSS / viewport CSS / scroll container / Pointer Events / keyboard代替操作 / composition handlers | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 論理座標とruntime保持 | 外部core test対象外（browser suiteで検査） | BROWSER-PRODUCT; BROWSER-SHELL; BROWSER-DESIGNER; DESIGN-RESPONSIVE-REACHABILITY; browser-session:responsive-mode-state; browser-session:ime-code-and-block; ui-shell:* | 既存6 viewport・resize・200%・composition・touchに加え、部品候補・素材入口・設定・resize handle の可視到達性と正しい scroll container を実ブラウザーで検査する |
-| product:offline-license | 単一HTML/オフライン/CSP/Apache-2.0保持 | 製品本体・実行HTML | generateStandaloneHtml | 単一 Akari.html / generateStandaloneHtml; ローカル起動 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 共通runtime | EXPORT Apache-2.0ライセンス保持; AUDIT EXPORT hostile HTML remains escaped data | BROWSER-PRODUCT; browser-storage-media:real-media-standalone-player | licenseとescapeの自動追跡。実オフライン動作は別検証 |
+| product:offline-license | 単一HTML/オフライン/CSP/Apache-2.0保持 | 製品本体・実行HTML | generateStandaloneHtml | 単一 Akari1_0_1.html / generateStandaloneHtml; ローカル起動 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 共通runtime | EXPORT Apache-2.0ライセンス保持; AUDIT EXPORT hostile HTML remains escaped data | BROWSER-PRODUCT; browser-storage-media:real-media-standalone-player | licenseとescapeの自動追跡。実オフライン動作は別検証 |
 
 ### 資源上限
 

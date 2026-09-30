@@ -1,3 +1,4 @@
+import { currentProductFile } from "./lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -7,7 +8,7 @@ const [mode,kindOrDirectory,directoryOrOutput]=process.argv.slice(2);
 const provenance={run:process.env.GITHUB_RUN_ID||'local',attempt:process.env.GITHUB_RUN_ATTEMPT||'1'};
 if(mode==='seal')sealBundle(kindOrDirectory,directoryOrOutput,provenance);
 else {
-  assert.equal(mode,'aggregate');const inputs=snapshot('Akari.html');
+  assert.equal(mode,'aggregate');const inputs=snapshot(currentProductFile());
   const kinds=['static','selftest','audio-codecs-linux','audio-codecs-win32',...['session','ui','limits','schemas','extra'].map(g=>'full-browser-'+g)];
   const results=[];
   for(const kind of kinds){

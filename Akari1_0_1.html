@@ -1549,7 +1549,9 @@ body {
   clip-path: inset(50%);
 }
 .blockui-field input {
-  width: calc(var(--blockui-ch, 6) * 1ch + 14px);
+  --blockui-picker-space: 20px;
+  width: var(--blockui-field-width, 72px);
+  flex-shrink: 0;
   min-width: 34px;
   max-width: 42ch;
   height: 27px;
@@ -1561,6 +1563,11 @@ body {
   height: 27px;
   max-width: 110px;
   padding: 1px 3px;
+}
+.blockui-field input::-webkit-calendar-picker-indicator {
+  width: 16px;
+  padding: 0;
+  margin: 0 0 0 4px;
 }
 .blockui-field select.blockui-qualifier-empty {
   width: 24px;
@@ -3598,6 +3605,7 @@ body[data-editor-mode="blocks"] .prop-name {
 .blockui-world .blockui-field {
   font-weight: 500;
   max-width: none;
+  flex-shrink: 0;
 }
 .blockui-world .blockui-field input {
   height: 28px;
@@ -5562,7 +5570,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.0.0';
+  const PRODUCT_RELEASE = '1.0.1';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -17895,19 +17903,10 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       input.disabled = isLocked();
       input.dataset.focusKey = node.id + ':' + (annotation ? 'annotation:' : 'field:') + field.key;
       if (input.tagName === 'INPUT') {
-        const size = () =>
-          input.style.setProperty(
-            '--blockui-ch',
-            Math.max(
-              field.type === 'number' ? 3 : 4,
-              Math.min(
-                field.type === 'number' ? 12 : 42,
-                [...input.value].reduce((n, c) => n + (c.codePointAt(0) > 255 ? 2 : 1), 0) + 1,
-              ),
-            ),
-          );
-        size();
-        listen(input, 'input', size);
+        listen(input, 'input', () => {
+          input.title = input.value;
+          scheduleGeometry();
+        });
         input.title = input.value;
       }
       if (field.key === 'hasElse') {
@@ -18952,8 +18951,36 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         });
       return { svg, w, h, d: blockShapePath(w, h, box.dataset.shapeKind, cavities) };
     }
+    let fieldMeasureContext = null;
+    function updateFieldWidths() {
+      if (!fieldMeasureContext && typeof doc.defaultView.CanvasRenderingContext2D === 'function')
+        fieldMeasureContext = doc.createElement('canvas').getContext('2d');
+      const writes = [];
+      for (const input of root.querySelectorAll('.blockui-field input')) {
+        const style = doc.defaultView.getComputedStyle(input), text = input.value || input.placeholder || ' ';
+        let textWidth;
+        if (fieldMeasureContext) {
+          fieldMeasureContext.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+          fieldMeasureContext.fontKerning = style.fontKerning;
+          if ('letterSpacing' in fieldMeasureContext)
+            fieldMeasureContext.letterSpacing = style.letterSpacing === 'normal' ? '0px' : style.letterSpacing;
+          textWidth = fieldMeasureContext.measureText(text).width;
+        } else {
+          // Non-rendering DOM hosts have no canvas; real browser sizing uses font metrics.
+          textWidth = [...text].reduce((n, c) => n + (c.codePointAt(0) > 255 ? 1 : 0.7), 0) * (parseFloat(style.fontSize) || 14);
+        }
+        const edges = ['paddingLeft', 'paddingRight', 'borderLeftWidth', 'borderRightWidth']
+          .reduce((sum, key) => sum + (parseFloat(style[key]) || 0), 0);
+        const picker = input.hasAttribute('list') ? parseFloat(style.getPropertyValue('--blockui-picker-space')) || 20 : 0;
+        const width = Math.ceil(textWidth + edges + picker + 2) + 'px';
+        if (input.style.getPropertyValue('--blockui-field-width') !== width) writes.push([input, width]);
+      }
+      // Batch style writes before the existing shape-measurement pass.
+      for (const [input, width] of writes) input.style.setProperty('--blockui-field-width', width);
+    }
     function updateGeometry() {
       if (destroyed) return;
+      updateFieldWidths();
       world.style.transform = `scale(${zoom})`;
       // Measure every shape before writing SVG attributes: alternating reads and
       // writes forces a whole-workspace layout for each block in a long body.
@@ -19453,6 +19480,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       root.replaceChildren();
       root.classList.remove('blockui-editor');
     }
+    if (doc.fonts) listen(doc.fonts, 'loadingdone', scheduleGeometry);
     render({ force: true });
     return { render, flush, cancel, destroy, highlight, focus };
   }

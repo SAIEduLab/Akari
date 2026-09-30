@@ -1,3 +1,4 @@
+import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {releasePolicyIssues} from '../lib/release-policy.mjs';
@@ -38,7 +39,7 @@ reject(base.replace('</script>',`function test(project){const {appVersion:label}
 reject(base.replace('languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1','languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:0'),[],/EXECUTABLE_CONTRACT/);
 
 // Mutate the actual candidate source, so the guard is checked against its real syntax.
-const actual=fs.readFileSync('Akari.html','utf8');
+const actual=fs.readFileSync(currentProductFile(),'utf8');
 assert.deepEqual(issues(actual),[],'candidate product must satisfy the release policy');
 const inject=code=>actual.replace(/<\/script>(?![\s\S]*<\/script>)/,`${code}\n</script>`);
 reject(inject('function restoreV103(){}'),[],/release-derived identifier/);

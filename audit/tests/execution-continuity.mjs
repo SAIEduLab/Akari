@@ -1,3 +1,4 @@
+import { currentProductFile, currentProductVersion, currentReleaseFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -5,7 +6,7 @@ import path from 'node:path';
 import {gateSteps} from '../lib/gate-contract.mjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {sealBundle,verifyBundle} from '../lib/evidence-bundle.mjs';
-const inputs=snapshot('Akari.html'),results=[];
+const inputs=snapshot(currentProductFile()),results=[];
 const check=(id,fn)=>{fn();results.push({id,pass:true});};
 const clone=x=>JSON.parse(JSON.stringify(x));
 const relaxed={...assert,deepEqual:(a,b,m)=>assert.deepEqual(clone(a),clone(b),m)};
@@ -16,7 +17,7 @@ for(const failureAt of [-1,0,Math.floor(expected.length/2),expected.length-1])ch
   const process={argv:['node','runner','/browser','/evidence'],execPath:'/node'};
   const cp={spawnSync(){const i=launched++;return {status:i===failureAt?1:0,signal:null,stdout:'',stderr:''};}};
   const memoryFs={existsSync:()=>false,mkdirSync(){},writeFileSync(p,s){written.set(p,s);}};
-  vm.runInNewContext(source,{fs:memoryFs,path:path.posix,cp,assert:relaxed,process,gateSteps,snapshot:()=>({fixture:true}),
+  vm.runInNewContext(source,{fs:memoryFs,path:path.posix,cp,assert:relaxed,process,gateSteps,snapshot:()=>({fixture:true}),currentProductFile,currentProductVersion,currentReleaseFile,
     verifyGateResults(){verified++;},console:{log(){},error(){}}});
   assert.equal(launched,expected.length);
   const receipt=JSON.parse(written.get('/evidence/gate.json'));
@@ -36,7 +37,7 @@ for(const scenario of ['pass',...kinds,'missing-jobs','empty-jobs','cancelled-jo
   const process={argv:['node','verifier','aggregate','/downloads','/aggregate/result.json'],env:{GITHUB_RUN_ID:'fixture',GITHUB_RUN_ATTEMPT:'1',AKARI_NEEDS:JSON.stringify(n)}};
   if(scenario==='missing-jobs')delete process.env.AKARI_NEEDS;
   if(scenario==='empty-jobs')process.env.AKARI_NEEDS='{}';
-  vm.runInNewContext(aggregate,{fs:{mkdirSync(){},writeFileSync(p,s){written.set(p,s);}},path:path.posix,assert:relaxed,process,snapshot:()=>({fixture:true}),
+  vm.runInNewContext(aggregate,{fs:{mkdirSync(){},writeFileSync(p,s){written.set(p,s);}},path:path.posix,assert:relaxed,process,snapshot:()=>({fixture:true}),currentProductFile,currentProductVersion,currentReleaseFile,
     verifyBundle(kind){calls.push(kind);if(kind===scenario)throw Error('invalid evidence');return {result:{status:'PASS'}};}});
   assert.deepEqual(calls,kinds,'every bundle inspected after a failure');
   const report=JSON.parse(written.get('/aggregate/result.json'));
@@ -62,10 +63,10 @@ for(const mode of ['valid','missing-file','extra-file','changed-bytes','changed-
 });
 const freeze=fs.readFileSync('audit/freeze-release.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
 let frozen;
-function freezeRun(record,changed){const fake={productSha256:'abc',files:{'Akari.html':changed?'def':'abc','audit/manifests/release-1.0.0.json':'self'}};
- vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readFileSync(){return frozen;}},assert:relaxed,snapshot:()=>fake,sha,process:{argv:record?['--record']:[]},console:{log(){}}});}
+function freezeRun(record,changed){const fake={productSha256:'abc',files:{[currentProductFile()]:changed?'def':'abc',[currentReleaseFile()]:'self'}};
+ vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readFileSync(){return frozen;}},assert:relaxed,snapshot:()=>fake,sha,currentProductFile,currentProductVersion,currentReleaseFile,process:{argv:record?['--record']:[]},console:{log(){}}});}
 check('freeze-record-and-verify',()=>{freezeRun(true,false);freezeRun(false,false);});
 check('freeze-changed-file-refused',()=>assert.throws(()=>freezeRun(false,true)));
-assert.deepEqual(snapshot('Akari.html'),inputs);
+assert.deepEqual(snapshot(currentProductFile()),inputs);
 fs.writeFileSync(output,JSON.stringify({status:'PASS',snapshot:inputs,results},null,2)+'\n');
 console.log('Audit integrity: '+results.length+' PASS');

@@ -1,3 +1,4 @@
+import { currentProductFile } from "./product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ export function verifyBrowserReport(report,spec,expectedSnapshot) {
   for(const key of ['failed'])if(key in report)assert.equal(report[key],0);
   for(const key of ['sourceUnchanged','sourceFileUnchanged','environmentPass','complete'])if(key in report)assert.equal(report[key],true);
   for(const key of ['sha256','htmlSha256','sha','finalSha'])if(key in report)assert.equal(report[key],expectedSnapshot.productSha256,'wrong product '+spec.task);
-  if(report.manifest){assert.equal(report.manifest.head,expectedSnapshot.productSha256);assert.equal(report.manifest.files.find(f=>f.path==='Akari.html')?.sha256,expectedSnapshot.productSha256);}
+  if(report.manifest){assert.equal(report.manifest.candidate,currentProductFile());assert.equal(report.manifest.head,expectedSnapshot.productSha256);assert.equal(report.manifest.files.find(f=>f.path===currentProductFile())?.sha256,expectedSnapshot.productSha256);}
   if(spec.task!=='schema-shards')assert.ok(typeof report.browser==='string'&&report.browser.length>0,'missing browser '+spec.task);
   if(spec.key==='single'){
     assert.equal(report.pass,true);assert.equal(report.method,spec.keys[0]);assert.equal(report.lines,16666);
@@ -54,7 +55,7 @@ export function verifyBrowserGroup(dir,group,expectedSnapshot) {
   assert.equal(summary.failed,0);assert.equal(summary.passed,tasks.length);
   assert.deepEqual(summary.records.map(r=>r.task).sort(),[...tasks].sort());
   for(const r of summary.records){assert.equal(r.status,0);assert.equal(r.signal,null);assert.ok(fs.existsSync(path.join(dir,r.log)));}
-  const manifest=read(path.join(dir,'candidate/manifest.json'));
+  const manifest=read(path.join(dir,'candidate/manifest.json'));assert.equal(manifest.candidate,currentProductFile());
   assert.equal(manifest.head,expectedSnapshot.productSha256);  assert.deepEqual(Object.fromEntries(manifest.files.filter(f=>!f.gitRef).map(f=>[f.path,f.sha256]).sort(([a],[b])=>a.localeCompare(b))),
     Object.fromEntries(Object.entries(expectedSnapshot.files).sort(([a],[b])=>a.localeCompare(b))),'browser snapshot input coverage');
   for(const f of manifest.files)assert.equal(sha(fs.readFileSync(path.join(dir,'candidate',f.path))),f.sha256,'changed browser input '+f.path);

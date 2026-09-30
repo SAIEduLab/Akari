@@ -1,9 +1,10 @@
+import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {suiteExpression} from '../lib/product-test-host.mjs';
-const html=fs.readFileSync('Akari.html','utf8'),script=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
+const html=fs.readFileSync(currentProductFile(),'utf8'),script=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
 assert.equal((html.match(/^<script>\r?$/gm)||[]).length,1);
 new vm.Script(script);
 const manifest=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));

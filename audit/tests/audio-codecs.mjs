@@ -1,3 +1,4 @@
+import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ const require=createRequire(import.meta.url);
 const [browserPath,output]=process.argv.slice(2);
 assert.ok(output&&!fs.existsSync(output),'fresh audio evidence required');
 const dir=path.resolve(path.dirname(output));fs.mkdirSync(dir,{recursive:true});
-const inputs=snapshot('Akari.html'),results=[],pageErrors=[],networkRequests=[];
+const inputs=snapshot(currentProductFile()),results=[],pageErrors=[],networkRequests=[];
 const fixtureDir='audit/fixtures/audio/';
 const manifest=JSON.parse(fs.readFileSync(fixtureDir+'manifest.json'));
 for(const [file,record] of Object.entries(manifest.files)){
@@ -84,7 +85,7 @@ for(const [name,file,mime,channels,rate] of audioFixtures)cases['audio-import-'+
   await click(p,'#stopBtn');
   const saved=path.join(dir,name+'.akari.md');let pending=p.waitForEvent('download');
   await click(p,'#saveBtn');await(await pending).saveAs(saved);
-  assert.ok(fs.readFileSync(saved,'utf8').startsWith('# あかり 1.0.0 の作品'));
+  assert.ok(fs.readFileSync(saved,'utf8').startsWith(("# あかり "+currentProductVersion()+" の作品")));
   await click(p,'#newBtn');await p.locator('#fileInput').setInputFiles(saved);
   await p.waitForFunction(()=>Akari.app.project.sounds.length===1&&Akari.app.editorState.state==='DESIGN');
   assert.equal(await p.evaluate(()=>Akari.app.assetStore.get(Akari.app.project.sounds[0].assetId).sha256),info.hash);
@@ -93,9 +94,9 @@ for(const [name,file,mime,channels,rate] of audioFixtures)cases['audio-import-'+
   await player(browser,generated,marker);
 };
 cases['audio-file-picker']=async p=>{
-  assert.ok((await p.title()).includes('あかり 1.0.0'));
+  assert.ok((await p.title()).includes(("あかり "+currentProductVersion()+"")));
   assert.equal(await p.locator('.titlebar').textContent(),'Akari');
-  assert.ok((await p.locator('#console').textContent()).includes('あかり1.0.0'));
+  assert.ok((await p.locator('#console').textContent()).includes(("あかり"+currentProductVersion()+"")));
   const accept=(await p.locator('#soundInput').getAttribute('accept')).split(',');
   assert.deepEqual(accept,['audio/mpeg','audio/wav','audio/mp4','audio/flac','audio/ogg','.mp3','.wav','.m4a','.flac','.ogg','.opus']);
 };
@@ -155,11 +156,11 @@ cases['audio-ui-failure-atomic']=async p=>{
   assert.deepEqual(await state(p),before);
 };
 cases['audio-project-roundtrip']=async p=>{
-  const api=loadApi(fs.readFileSync('Akari.html','utf8'));
+  const api=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
   const project=api.makeDefaultProject();project.name='音声作品の保存';
   const text=api.serializeProject(project,api.makeDefaultAssetStore());
-  assert.deepEqual(await p.evaluate(async text=>{const r=await Akari.parseProjectFile(text);return [r.project.appVersion,r.project.name,r.diagnostics.length];},text),['1.0.0',project.name,0]);
-  const bad=text.replace('# あかり 1.0.0 の作品','# あかり 9.9.9 の作品');
+  assert.deepEqual(await p.evaluate(async text=>{const r=await Akari.parseProjectFile(text);return [r.project.appVersion,r.project.name,r.diagnostics.length];},text),[(""+currentProductVersion()+""),project.name,0]);
+  const bad=text.replace(("# あかり "+currentProductVersion()+" の作品"),'# あかり 9.9.9 の作品');
   assert.equal(await p.evaluate(async t=>{try{await Akari.parseProjectFile(t);return 'ACCEPTED';}catch(e){return e.code;}},bad),'F512');
 };
 cases['audio-runtime-mime-rejection']=async(p,browser)=>{
@@ -182,17 +183,17 @@ const browserVersion=await withBrowser(browserPath,async browser=>{
   for(const id of audioIds){
     assert.equal(typeof cases[id],'function',id);
     try{
-      await pageFor(browser,'Akari.html',p=>cases[id](p,browser));
+      await pageFor(browser,currentProductFile(),p=>cases[id](p,browser));
       results.push({id,pass:true,detail:'PASS'});console.log(id+': PASS');
     }catch(error){results.push({id,pass:false,detail:error.stack});console.error(id+': FAIL: '+error.stack);}
   }
   return browser.version();
 },600000);
-assert.deepEqual(snapshot('Akari.html'),inputs);
+assert.deepEqual(snapshot(currentProductFile()),inputs);
 const report={schema:'akari-audio-v1',status:results.every(r=>r.pass)?'PASS':'FAIL',snapshot:inputs,browser:browserVersion,playwright:require('playwright/package.json').version,
   platform:process.platform,executableSha256:sha(fs.readFileSync(browserPath)),fixtureManifestSha256:sha(fs.readFileSync(fixtureDir+'manifest.json')),results,pageErrors,networkRequests};
 fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');verifyAudio(report,inputs,process.platform);
-console.log('Audio 1.0.0: all '+results.length+' cases PASS');
+console.log(("Audio "+currentProductVersion()+": all ")+results.length+' cases PASS');
 
 // Enter the visible body editor before exercising editing operations.
 async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

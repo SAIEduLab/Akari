@@ -58,8 +58,10 @@ function runAkariSelfTests() {
       if (h.errors.length) throw h.errors[0];
       return h;
     };
-    test('FORMAT-PROJECT-METADATA-001 作成元と保存契約', () =>
-      eq([PRODUCT_RELEASE, LANGUAGE_CONTRACT_ID, PROJECT_FORMAT_ID], ['1.0.0', 1, 1]));
+    test('FORMAT-PROJECT-METADATA-001 作成元と保存契約', () => {
+      if (!/^\d+\.\d+\.\d+$/.test(PRODUCT_RELEASE)) throw Error('作成元ラベルが不正です');
+      eq([makeDefaultProject().appVersion, LANGUAGE_CONTRACT_ID, PROJECT_FORMAT_ID], [PRODUCT_RELEASE, 1, 1]);
+    });
     test('DEFAULT-001 初期作品', () => compile(makeDefaultProject()));
     const sy = buildSymbols(makeDefaultProject()),
       r = new RuntimeModel(makeDefaultProject(), {}),

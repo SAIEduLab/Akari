@@ -1,3 +1,4 @@
+import { currentProductFile } from "./product-path.cjs";
 import assert from 'node:assert/strict';
 
 // Feature names are stable across producer releases and candidate snapshots.
@@ -39,7 +40,7 @@ export function verifyFormatCompatibility(report, currentSnapshot) {
 }
 
 export function checkFormatValidatorNegatives() {
-  const snapshot = {productSha256:'a'.repeat(64),files:{'Akari.html':'a'.repeat(64)}};
+  const snapshot = {productSha256:'a'.repeat(64),files:{[currentProductFile()]:'a'.repeat(64)}};
   const valid = () => ({schema:'akari-format-compatibility-v1',status:'PASS',snapshot:structuredClone(snapshot),
     environment:'chromium',browser:'fixed-browser',total:formatCompatibilityIds.length,
     fixture:{currentRelease:'1.0.0',priorRelease:'9.8.7',priorProductSha256:'b'.repeat(64),priorFileSha256:'c'.repeat(64)},

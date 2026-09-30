@@ -1,3 +1,4 @@
+import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -6,7 +7,7 @@ import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
 import P from '../browser/cases/persistence-probe.cjs';
 import {verifySurfaceResults} from '../lib/verify-surface-results.mjs';
-const [browser,output]=process.argv.slice(2), product='Akari.html', before=snapshot(product);
+const [browser,output]=process.argv.slice(2), product=currentProductFile(), before=snapshot(product);
 if(!output||fs.existsSync(output))throw Error('Supply a new output path');
 const dir=path.dirname(output);fs.mkdirSync(dir,{recursive:true});
 let browserVersion;
@@ -115,7 +116,7 @@ await withBrowser(browser,async b=>{
     await fill(p,source);await mode(p,'blocks');await number(p).fill('3');await number(p).press('Enter');
     const save=async(id,name)=>{const pending=p.waitForEvent('download');await click(p,id);const f=path.join(dir,name);await (await pending).saveAs(f);return f;};
     const file=await save('saveBtn','phase3.akari.md'),saved=fs.readFileSync(file,'utf8');
-    assert.ok(saved.startsWith('# あかり 1.0.0 の作品'));assert.ok(saved.includes('AKARI-PROJECT-F1-DATA-BEGIN'));
+    assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F1-DATA-BEGIN'));
     const initial=await state(p);await click(p,'newBtn');await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);assert.equal((await state(p)).project,initial.project);
     const generated=await save('exportBtn','phase3-player.html');
     const c=await b.newContext({offline:true}),errors=[],network=[];
@@ -152,13 +153,13 @@ await withBrowser(browser,async b=>{
     await p.reload();await p.locator('#recoveryModal.show').waitFor();
     assert.equal((await state(p)).project,initial.project,'recovery offer must not replace current project');
     await click(p,'recoveryRestore');
-    assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),'1.0.0');
+    assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),(""+currentProductVersion()+""));
     assert.equal(await p.evaluate(()=>Akari.app.project.name),'自動保存の復元');
     await p.evaluate(()=>{indexedDB.open=()=>{throw Error('database unavailable');};localStorage.removeItem('akari.autosave.f1');});
     await fill(p,'点数を88にする。');
     await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));
     const fallback=await p.evaluate(()=>JSON.parse(localStorage.getItem('akari.autosave.f1')));
-    assert.equal(fallback.project.appVersion,'1.0.0');assert.deepEqual(fallback.assets,[]);
+    assert.equal(fallback.project.appVersion,(""+currentProductVersion()+""));assert.deepEqual(fallback.assets,[]);
     return{invalidRecordNotInstalled:true,fallbackValidatedBeforeRestore:true,mediaFreeFallbackWrites:true};
   });
 });

@@ -1,4 +1,4 @@
-name: Akari 1.0.0 audit
+name: Akari audit
 on:
   pull_request:
     branches: [main]
@@ -131,6 +131,7 @@ jobs:
           fi
           python audit/install-codec-browser.py "$RUNNER_TEMP/codec-browser"
       - run: node audit/tests/audio-codecs.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/report.json
+      - run: node audit/tests/block-field-width.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/block-field-width.json
       - run: node audit/verify-evidence.mjs seal "audio-codecs-${{ matrix.platform }}" audit-evidence/audio
         if: always()
       - uses: actions/upload-artifact@v4

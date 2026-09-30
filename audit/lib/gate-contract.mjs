@@ -1,3 +1,4 @@
+import { currentProductFile } from "./product-path.cjs";
 import path from 'node:path';
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
   ['static','audit/tests/static-contract.mjs',file('static')],
@@ -7,15 +8,16 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['ci-regression','audit/tests/ci-regression.mjs'],
   ['dom-regression','audit/tests/dom-render-regression.cjs'],
   ['node-product','audit/tests/node-product.mjs',file('node-product')],
-  ['product','audit/run-product-tests.mjs',browser,'Akari.html',file('product')],
+  ['product','audit/run-product-tests.mjs',browser,currentProductFile(),file('product')],
   ['language-node','audit/run-language-tests.mjs','--node',file('language-node')],
   ['language-browser','audit/run-language-tests.mjs',browser,file('language-browser')],
   ['editor-node','audit/run-editor-surface-tests.mjs','--node',file('editor-node')],
   ['editor-browser-core','audit/run-editor-surface-tests.mjs',browser,file('editor-browser-core')],
   ['editor-gui','audit/tests/editor-browser.mjs',browser,file('editor-gui')],
-  ['normal','audit/tests/normal-product.mjs',browser,'Akari.html',file('normal')],
+  ['normal','audit/tests/normal-product.mjs',browser,currentProductFile(),file('normal')],
   ['ownership','audit/tests/source-ownership.mjs',browser,path.join(dir,'ownership','report.json')],
   ['ui-buttons','audit/tests/ui-buttons.mjs',browser,file('ui-buttons')],
+  ['block-fields','audit/tests/block-field-width.mjs',browser,file('block-fields')],
   ['format-compatibility','audit/tests/format-compatibility.mjs',browser,file('format-compatibility')],
   ['editor-assets','audit/tests/editor-assets.mjs',browser,file('editor-assets')],
   ['designer','audit/tests/designer-zoom.mjs',browser,file('designer')],
