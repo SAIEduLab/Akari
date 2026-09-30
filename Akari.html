@@ -21198,13 +21198,15 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         clearTimeout(historyTimer);
         pushHistoryNow();
       }
+      const sameObject = selectedId === id;
       selectedId = id;
       hideSourceOverview();
       const evs = eventsFor(id);
       if (!evs.includes(currentEvent)) currentEvent = evs[0];
+      if (!sameObject && !readSource(mainEditor, `script:${id}:${currentEvent}`).trim())
+        currentEvent = evs.find(event => readSource(mainEditor, `script:${id}:${event}`).trim()) || currentEvent;
       renderTree();
       renderProperties();
-      showSourceOverview();
       loadEditor();
       renderComponents();
       return true;
@@ -23284,9 +23286,9 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         selectedId = 'stage';
         currentEvent = 'start';
         appState = 'DESIGN';
+        hideSourceOverview();
         renderAll();
         loadEditor();
-        showSourceOverview();
         resetHistory();
         const diagnostics = loaded.diagnostics || [];
         log(
@@ -24748,9 +24750,9 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       selectedId = 'stage';
       currentEvent = 'start';
       appState = 'DESIGN';
+      hideSourceOverview();
       renderAll();
       loadEditor();
-      showSourceOverview();
       resetHistory();
       clearAutosave();
       setStatus('新しい作品');
@@ -25181,7 +25183,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     };
     $('#sourceOverviewBtn').onclick = () => { if (flushActiveEditor()) showSourceOverview(); };
     $('#sourceEditBtn').onclick = () => { hideSourceOverview(); loadEditor(); };
-    $('#sourceStageBtn').onclick = () => selectObject('stage');
+    $('#sourceStageBtn').onclick = () => { if (selectObject('stage')) showSourceOverview(); };
     $('#procClose').onclick = () => {
       if (confirmCallableDiscard()) {
         $('#procModal').classList.remove('show');
@@ -25208,7 +25210,6 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     renderAll();
     loadEditor();
     setupModalAccessibility();
-    showSourceOverview();
     checkRecovery();
     setStatus(`準備完了 — ${productLabel(true)}`);
     app = {

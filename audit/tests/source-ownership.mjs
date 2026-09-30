@@ -9,11 +9,12 @@ const inputs=snapshot('Akari.html'), api=loadApi(fs.readFileSync('Akari.html','u
 const plain=value=>JSON.parse(JSON.stringify(value));
 const fixture=()=>{
   const p=api.makeDefaultProject();p.name='コードの所属を読む';
+  p.components.push({...p.components.find(c=>c.id==='button-1'),id:'button-empty',name:'空のボタン',y:300});
   const sprite=p.components.find(c=>c.id==='sprite-1');
   sprite.costumes=[{id:'costume-test',name:'顔',kind:'text',value:'🙂'}];sprite.costumeId='costume-test';
   p.scripts=[
     {targetId:'stage',event:'message',source:'「画面の知らせ」と言う'},
-    {targetId:'button-1',event:'click',source:'表示（倍（3））を実行する'},
+    {targetId:'button-1',event:'click',source:'表示（倍（3））を実行する。'},
     {targetId:'sprite-1',event:'start',source:'「はじめ」と言う'},
     {targetId:'sprite-1',event:'message',source:'「受け取った」と言う'},
   ];
@@ -76,11 +77,54 @@ await withBrowser(browserPath,async browser=>{
   browserVersion=browser.version();
   await pageFor(browser,'Akari.html',async p=>{
     p.on('dialog',d=>d.accept());await p.setViewportSize({width:1440,height:1000});
+    const startup={overview:await p.locator('#sourceOverview').isVisible(),editable:await p.locator('#codeEditor').isEditable()};
     await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');
     await test('OWNER-GUI-DIRECT-BUTTON',async()=>{
+      assert.deepEqual(startup,{overview:false,editable:true});
+      const original='表示（倍（3））を実行する。',changed='表示（倍（4））を実行する。';
+      for(const mode of ['code','blocks']){
+        await p.locator('#editorMode'+mode).click();
+        await p.locator('#sourceOverviewBtn').click();await p.locator('#newBtn').click();
+        assert.equal(await p.locator('#sourceOverview').isVisible(),false,'new project opens the editor');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'start');
+        const editor=mode==='code'?p.locator('#codeEditor'):p.locator('#blockEditor');
+        assert.ok(await editor.isVisible());
+        if(mode==='code')assert.ok(await editor.isEditable());
+        else assert.equal(await editor.locator('[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first().isEditable(),true);
+        await p.locator('#sourceOverviewBtn').click();
+        await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');
+        assert.equal(await p.locator('#sourceOverview').isVisible(),false,'import closes a previous overview');
+        await p.locator('#formSurface .component[data-id="button-1"]').click();
+        assert.equal(await p.locator('#objectSelect').inputValue(),'button-1');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'click','nonempty click body opens instead of empty start');
+        assert.equal(await p.locator('#sourceOverview').isVisible(),false);
+        await p.screenshot({path:path.join(dir,`ownership-direct-${mode}.png`)});
+        if(mode==='code')await p.locator('#codeEditor').fill(changed);
+        else{
+          const value=p.locator('#blockEditor [data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first();
+          assert.ok(await value.isEditable());await value.fill('4');await value.press('Enter');
+        }
+        const source=()=>p.evaluate(()=>Akari.app.editorState.main.sourceText);
+        assert.equal(await source(),changed);
+        await p.locator('#undoBtn').click();assert.equal(await source(),original);
+        await p.locator('#redoBtn').click();assert.equal(await source(),changed);
+        await p.locator('#objectSelect').selectOption('sprite-1');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'start','first nonempty compatible event opens');
+        await p.locator('#eventSelect').selectOption('message');
+        await p.locator('#objectSelect').selectOption('stage');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'message','current event with source is preserved');
+        await p.locator('#objectSelect').selectOption('button-1');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'click');assert.equal(await source(),changed,'selection preserves edited source');
+        await p.locator('#eventSelect').selectOption('start');
+        await p.locator('#formSurface .component[data-id="button-1"]').click();
+        assert.equal(await p.locator('#eventSelect').inputValue(),'start','reselection preserves an explicitly selected empty event');
+        await p.locator('#objectSelect').selectOption('button-empty');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'start','all-empty target preserves current valid event');
+      }
       await p.locator('#editorModeblocks').click();
       await p.locator('#formSurface .component[data-id="button-1"]').click();
       assert.equal(await p.locator('#objectSelect').inputValue(),'button-1');
+      await p.locator('#sourceOverviewBtn').click();
       assert.equal(await p.locator('#eventSelect').inputValue(),'all');
       const card=p.locator('[data-source-key="script:button-1:click"]');
       await card.locator('.blockui-script').waitFor({state:'visible'});
@@ -94,6 +138,7 @@ await withBrowser(browserPath,async browser=>{
     });
     await test('OWNER-GUI-ALL-EVENTS',async()=>{
       await p.locator('#objectSelect').selectOption('sprite-1');
+      await p.locator('#sourceOverviewBtn').click();
       for(const event of ['start','message']){const card=p.locator(`[data-source-key="script:sprite-1:${event}"]`);await card.scrollIntoViewIfNeeded();await card.locator('.blockui-script').waitFor({state:'visible'});assert.equal(await card.locator('.blockui-script').count(),1);}
     });
     await test('OWNER-GUI-UNUSED-STAGE-DEFINITIONS',async()=>{
@@ -131,16 +176,19 @@ await withBrowser(browserPath,async browser=>{
       await p.locator('#fileInput').setInputFiles({name:'references.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(data))});
       await p.waitForFunction(()=>Akari.app.project.name==='再帰の参照');
       await p.locator('#objectSelect').selectOption('button-1');
+      await p.locator('#sourceOverviewBtn').click();
       const keys=await p.locator('#sourceOverview [data-source-key]').evaluateAll(ns=>ns.map(n=>n.dataset.sourceKey));
       assert.deepEqual(keys.sort(),['script:button-1:click','action:a','action:b','function:f'].sort());
       assert.equal(await p.locator('[data-source-key="action:b"] .source-references a').count(),1);
       await p.locator('#objectSelect').selectOption('sprite-1');
+      await p.locator('#sourceOverviewBtn').click();
       assert.equal(await p.locator('#sourceOverview [data-source-key]').count(),2);
     });
     await test('OWNER-GUI-VIEWPORT-AND-UNDO-REACHABILITY',async()=>{
       for(const width of [1440,768,390]){
         await p.setViewportSize({width,height:900});await p.locator('#editorModecode').click();
         await p.locator('#objectSelect').selectOption('button-1');
+        await p.locator('#sourceOverviewBtn').click();
         const body=p.locator('[data-source-key="script:button-1:click"] pre');
         assert.ok(await body.isVisible());
         const r=await body.boundingBox(),panel=await p.locator('#sourceOverview').boundingBox();
