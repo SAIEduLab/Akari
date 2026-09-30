@@ -33,6 +33,7 @@ const browserVersion = await withBrowser(browserPath,async browser => {
     await p.setViewportSize({width:1440,height:1000});
     await p.locator('#fileInput').setInputFiles({name:'field-width.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(fixture))});
     await p.waitForFunction(()=>Akari.app.project.name==='入力欄の全文表示');
+    await p.locator('#eventSelect').selectOption('message');
     await p.locator('#editorModeblocks').click();
     const fields=p.locator('#blockEditor .blockui-world .blockui-field input');
     const literal=p.locator('#blockEditor [data-schema-id="StringLiteral"] input').first();
@@ -61,8 +62,8 @@ const browserVersion = await withBrowser(browserPath,async browser => {
           if(await p.locator('#sourceEditBtn').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModeblocks').click();await settle(p);
           await literal.evaluate(i=>i.style.width='20px');await assert.rejects(()=>checkFields(fields),/clipped/);await literal.evaluate(i=>i.style.removeProperty('width'));await checkFields(fields);
         }
-        results.push({id,pass:true});
-      } catch(error) {results.push({id,pass:false,error:String(error.stack||error)});}
+        results.push({id,pass:true});console.log(id+': PASS');
+      } catch(error) {const detail=String(error.stack||error);results.push({id,pass:false,error:detail});console.error(id+': FAIL\n'+detail);}
     }
     await p.screenshot({path:path.join(dir,'block-fields.png'),fullPage:true});
   });return browser.version();

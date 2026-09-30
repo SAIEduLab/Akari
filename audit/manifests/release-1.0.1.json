@@ -119,7 +119,7 @@
     "audit/suites/runSemanticContractTests.js": "408e48fe53ff20f1ec8f3e3bd26503bda9a5812c41843663f820d3232852e540",
     "audit/suites/runSyntaxTests.js": "bc4230f6cdb4f652b961a3d0bec4d1494b7e09ff8287aa3f3d318898017a3be3",
     "audit/tests/audio-codecs.mjs": "a4b8d66f5395ad288e178d8d8e1a06c117cb1601235f3433066e7cd41c87cde0",
-    "audit/tests/block-field-width.mjs": "8d220c45ceee11d4852dcc3c41a58b3d45c892048d8e2130647e02c4ee4edda7",
+    "audit/tests/block-field-width.mjs": "0b00054e6ef69ec0dc17c59a9d6f1f79d11a5ad9080bb634f32dd43aeeb3fa14",
     "audit/tests/browser-environment.mjs": "898e2b27b04969b76ce45e0cc00236fbb2561edd558d68b1bb983595d1066294",
     "audit/tests/ci-regression.mjs": "df52941ec0d33b0e893c20c5a57fd766c4e546a75740593ecd92f7507000537f",
     "audit/tests/designer-zoom.mjs": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c",
