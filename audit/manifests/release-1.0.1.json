@@ -51,7 +51,7 @@
     "audit/browser/cases/ui-case.cjs": "6df27709fa7d30766a178b8f762f7f235058465d737b10968eb83d0bd8b996d3",
     "audit/browser/cases/ui-compact-menu.cjs": "86d7c9ff0c3c157526db9be26bb274955c780c92f9b379630a3fbacc8c737224",
     "audit/browser/cases/ui-compact-routes.cjs": "001f40208b6a1117cd245b5be6be76ccad506df86a75ea637d9725653e2cc4e1",
-    "audit/browser/cases/ui-interactions.cjs": "645a81a78ed5c762f8322c86aff6b4fc9f287e3e93b9766fb4339e9bd19f236b",
+    "audit/browser/cases/ui-interactions.cjs": "51c684d58f724f67ee8ac1457e6224c896b0d4457714261e78ac72901c873fcc",
     "audit/browser/cases/ui-routes.cjs": "1d0d53217d304de9e96fc1e3f58d6981c84ae1f982ef64a3d767534809ce79e3",
     "audit/browser/cases/ui-shell.cjs": "893763f1c9b6ff3545f166db785bdce1a1deb595a62ff488f9b2e9f3a115fa24",
     "audit/browser/cases/ui-stage-gesture.cjs": "187309a89bdc6f730533d1bdc279d72c503a9762e91f06ca9a2d847e5ab9b699",
