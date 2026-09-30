@@ -46,7 +46,7 @@ for(const scenario of ['pass',...kinds,'missing-jobs','empty-jobs','cancelled-jo
 const output=process.argv[2]||'audit-evidence/integrity.json';fs.mkdirSync(path.dirname(output),{recursive:true});
 const base=fs.mkdtempSync(path.join(path.dirname(output),'integrity-'));
 const provenance={run:'fixture',attempt:'1'};
-function fixture(name){const dir=path.join(base,name);fs.mkdirSync(dir);fs.writeFileSync(path.join(dir,'static.json'),JSON.stringify({status:'PASS',snapshot:inputs,capabilities:259}));sealBundle('static',dir,provenance);return dir;}
+function fixture(name){const dir=path.join(base,name);fs.mkdirSync(dir);fs.writeFileSync(path.join(dir,'static.json'),JSON.stringify({status:'PASS',snapshot:inputs,capabilities:260}));sealBundle('static',dir,provenance);return dir;}
 for(const mode of ['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','changed-kind','changed-result','rehashed-failure'])check('bundle:'+mode,()=>{
   const dir=fixture(mode),file=path.join(dir,'bundle.json'),b=JSON.parse(fs.readFileSync(file));
   if(mode==='missing-file')fs.renameSync(path.join(dir,'static.json'),path.join(dir,'moved.json'));

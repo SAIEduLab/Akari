@@ -23,7 +23,7 @@
 
 1. 全イベント本文に実在する画面・部品の `targetId` が必要です。共通動作・計算・定義下書きには画面を示す `ownerId: "stage"` が必要です。
 2. 所属なし、存在しない対象、対象外イベント、重複識別子を読込み・保存・コンパイル・書出しで拒否します。無視・切り捨て・暗黙の所属補完で通しません。
-3. 起動・新規作成・作品読込みと、部品の選択では、コード／ブロックの本文を追加の編集ボタン操作なしで編集できます。別の部品では現在のできごとに本文があれば維持し、空なら対応イベント順で最初の本文があるものを開きます。すべて空なら現在の有効イベントを、同じ部品の再選択では明示選択した空の本文も維持します。開始が空でクリックに処理があるボタンを実ポインターで選び、直接編集・Undo・Redoを検査します。「この部品のすべてのコード」から全本文一覧を開けることも検査します。
+3. 起動・新規作成・作品読込みと、部品の選択では、コード／ブロックの本文を追加の編集ボタン操作なしで編集できます。別の部品では現在のできごとに本文があれば維持し、空なら対応イベント順で最初の本文があるものを開きます。すべて空なら現在の有効イベントを、同じ部品の再選択では明示選択した空の本文も維持します。開始が空でクリックに処理があるボタンを実ポインターで選び、直接編集・Undo・Redoを検査します。「すべてのコード」から全本文一覧を開けることも検査します。
 4. 複数イベント、式内の計算呼出し、共通動作から別の共通処理への呼出し、未使用定義、非表示部品、未完成・書き方エラーの本文を含めます。再帰は一度だけ表示してリンクで辿れることを検査します。
 5. 参照表示は登録本文を複製しません。表示・編集・構文コンパイルが同じ本文識別子を使い、保存前後で所有者と本文が一致することを検査します。
 6. ソースの所有者を実行対象と混同しません。画面所属の共通動作が呼出し元の部品で実行され、引数、局所値、再帰、求値の意味を保持することを検査します。
@@ -41,14 +41,30 @@
 - 作品画面のズーム・自動フィット・スクロール・ポインター座標・タッチ・狭い画面・ウィンドウのフォーカス喪失を検査します。必要なネイティブイベントを合成イベントで代用しません。
 - 実行用HTMLは同梱runtimeでオフライン実行し、素材・版・プログラム所属を検証します。監査fixtureや自己テストを製品へ埋め込みません。
 
+## UIとボタンの整合性
+
+`audit/tests/ui-buttons.mjs`を実ブラウザーで実行します。次の安定IDを必須とし、GA-EXECで操作・表示・本文・履歴の期待値を検証します。HYBRIDではコード／ブロックと動作・計算の本文、かんたん／くわしく、狭い画面・マウス・キーボード・タッチを確認し、不要な有効ボタンや到達できない操作がないことをレビューします。代替操作の存在だけで、見えるボタンの不動作を合格にしません。
+
+| 安定ID | 期待値 |
+|---|---|
+| UI-BUTTON-SOURCE-NAV | 「すべてのコード」で一覧を開く。「本文の編集に戻る」は一覧表示中だけ表示。「画面のコード」は部品選択時だけ表示し、画面の一覧へ進む。 |
+| UI-BUTTON-BASIC-HISTORY | かんたんでもUndo/Redoを表示し、履歴なし・編集lock時は無効。本文と部品編集の履歴を共通に戻し、やり直せる。 |
+| UI-BUTTON-SIDE-ACTIONS | コードのせってい／動きのようすは通常の見出し。ブロックの折り畳みは維持し、部品一覧直下の複製／削除は設定欄を開かず使える。コードでは設定欄に同じ操作を置く。 |
+| UI-BUTTON-LEVELS | 表示設定はかんたん／くわしくの2段階。保存済みallはadvanced扱い。変更によって本文と履歴を変えない。 |
+| UI-BUTTON-PENDING | 動作・計算の「入力を取り消す」は未確定／失敗入力時だけ表示し、反映済みの下書き全体は捨てない。入力確定は未確定入力があるときだけ表示する。定義保存と閉じる際の破棄確認を維持。 |
+| UI-BUTTON-BLOCK-DESTINATION | 命令／式の追加先選択を取消とEscapeで解除し、本文と履歴を変えない。移動・複製・移動元の式の置換を取り消せる。 |
+| UI-BUTTON-BLOCK-INSERTION | 命令の途中と末尾の追加先ボタンを可視の高さ28pxで表示し、マウス／タッチで選べる。ドラッグ／キーボードの代替も維持。 |
+| UI-BUTTON-BLOCK-COMMANDS | 主本文と動作・計算で、追加・移動・複製・削除・式置換・可変入力操作、パレットの分類／検索／ページ／フィルター、作業台の拡大率／道具箱／表示範囲へ到達でき、必須入力と境界の制限を守る。 |
+| UI-BUTTON-RESPONSIVE | 狭い画面でも本文・部品操作・未確定入力の確定／取消へ到達できる。表示幅だけで本文や履歴を変えない。 |
+
 ## 実行区分と合格条件
 
 | 区分 | 検証 |
 |---|---|
 | GA-STATIC | JavaScript構文、版、所有モデル、全公開ファイルhash、能力・ID集合、workflowと実行入口、資料整合、自作識別子と製品版参照のAST検査・拒否能力 |
-| GA-EXEC | 884件の製品試験、605件の言語表面試験、38件の編集試験、9件の編集GUI試験、27タスク416ケースのブラウザー試験、15件の素材編集試験、18件の音声試験、9件の画面ズーム試験、コード所属試験、9件の形式互換試験、保存・生成HTML・マニュアル |
+| GA-EXEC | 884件の製品試験、605件の言語表面試験、38件の編集試験、9件の編集GUI試験、27タスク416ケースのブラウザー試験、15件の素材編集試験、18件の音声試験、9件の画面ズーム試験、コード所属試験、9件の形式互換試験、9件のUIボタン整合性試験、保存・生成HTML・マニュアル |
 | SEMANTIC | 仕様と実装の一致、主要処理の可読性、命令・求値の機能保持、監査の非弱体化、教材操作の妥当性 |
-| HYBRID | 所属と全本文への到達性、表示と実行対象の分離、エラー本文と下書きの保持、UIの読みやすさ |
+| HYBRID | 所属と全本文への到達性、表示と実行対象の分離、エラー本文と下書きの保持、UIの読みやすさ、UIとボタンの整合性 |
 
 Node実行は決定的な検査を補助します。DOM、pointer、IME、focus、drag、resize、touch、音声デコード、download、IndexedDB、生成HTMLには実ブラウザーが必要です。音声はLinuxとWindowsを対象にします。複数の表示幅・入力方法の試験を代表1件で代用しません。
 
@@ -60,7 +76,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 
 ## 能力台帳
 
-各行の実装要素、コード表示、ブロック表示、意味検査、実行、自己試験、ブラウザー試験を対応させます。259行すべてを必須とします。
+各行の実装要素、コード表示、ブロック表示、意味検査、実行、自己試験、ブラウザー試験を対応させます。260行すべてを必須とします。
 
 | ID | 能力 | AST | CUI | GUI | 意味 | 実行 | 自己試験 | ブラウザー | 保証 |
 |---|---|---|---|---|---|---|---|---|---|
@@ -287,6 +303,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | save:producer-metadata | 作成元ラベルと作品内容の独立 | appVersion / assetStateFingerprint | serializeProject / parseProjectFile | 作成元保持・実保存・未保存指紋・自動復元 | LANGUAGE.mdの現行意味 + 本書「製品版から独立した命名と受入判定」 | packExecutable / restoreExecutable | FORMAT-EXECUTABLE-CONTRACT; FORMAT-PROJECT-PRODUCER-INDEPENDENT; FORMAT-RUNTIME-PRODUCER-INDEPENDENT; FORMAT-FINGERPRINT-METADATA-EXCLUSION | FORMAT-BROWSER-FILE-ROUNDTRIP; FORMAT-BROWSER-AUTOSAVE-RECOVERY; FORMAT-BROWSER-STANDALONE-OFFLINE | 作成元だけで拒否せず、実行意味・本文・clean/dirtyを保持する |
 | maint:identifier-policy | 機能由来の自作名と製品版参照の用途制限 | 製品と監査ソースのAST | release-policy / static-contract | 製品ラベルの一元表示 | 本書「製品版から独立した命名と受入判定」 | 対象外（静的規則） | 対象外（static gateで検査） | 対象外（static gateで検査） | 静的ゲートのrelease-policy-negativeで版由来名・受入への版参照をFAILにし、間接参照も意味レビューする |
 | save:standalone | 共通runtimeの単体HTML書き出し | 実行AST（comment/GUI fieldを除外） | compileProject / packExecutable | flushActiveEditor → exportProject → generateStandaloneHtml | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | generateStandaloneHtml / restoreExecutable | EXPORT 復元後の動作一致; AUDIT EXPORT deterministic runtime result equals design runtime; RELEASE-EXECUTABLE-MALFORMED; RELEASE-EXECUTABLE-ROUNDTRIP | BROWSER-PRODUCT; browser-storage-media:real-media-standalone-player | 同じcompile/pack/runtimeを使用。生成payloadの除去field・実オフライン実行は完成監査で確認 |
+| product:ui-buttons | コード／ブロックのボタン表示・到達性・操作一致 | projectとeditor session（言語ASTは変更しない） | source navigation / code headings / 共通history | source navigation / component actions / block controls / callable editor | 本書「UIとボタンの整合性」 | design/runtimeの分離、表示変更は本文・履歴を変更しない | 外部core test対象外（browser suiteで検査） | UI-BUTTON-SOURCE-NAV; UI-BUTTON-BASIC-HISTORY; UI-BUTTON-SIDE-ACTIONS; UI-BUTTON-LEVELS; UI-BUTTON-PENDING; UI-BUTTON-BLOCK-DESTINATION; UI-BUTTON-BLOCK-INSERTION; UI-BUTTON-BLOCK-COMMANDS; UI-BUTTON-RESPONSIVE | audit/tests/ui-buttons.mjsをGA-EXECで実行し、HYBRIDでモード・表示段階・入力方法・狭い画面を確認。未確定入力、追加先解除、部品操作と必要な代替操作を保持する |
 | product:designer | 部品追加・選択・移動・サイズ変更・色・削除・properties・標準キャラクター | project.components | 既存designer UI | addComponent / selectObject / design resize / color properties / deleteSelectedComponent / propRow; 共通history | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | design/runtimeの分離 | STATE 実行と設計の分離; `TEST-DESIGN-RESIZE-*`; `TEST-COLOR *`（存在する現在実装ではpure geometry / 色登録・変換を検査） | BROWSER-PRODUCT; BROWSER-DESIGNER; browser-product:designer-property-delete-mixed-history; ui-stage-gesture:*; DESIGN-COMPONENT-REACHABILITY; DESIGN-STANDARD-SPRITES; DESIGN-RESIZE-POINTER; DESIGN-RESIZE-KEYBOARD; DESIGN-COLOR-COMMIT-CANCEL; DESIGN-DELETE-UNDO | 部品候補の可視到達性、追加、properties、位置移動とresizeの分離、色の確定/取消、削除、共通履歴を実ブラウザーで検査する。pure resize/color test は計算層だけを保証し、pointer/keyboard/scroll/履歴を代用しない |
 | product:data | 作品/個体データの編集・保存 | projectData / localData | 既存data UI | renderDataModal / addData; markDirty / snapshot / restoreSnap | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | RuntimeModel.reset | SCHEMA ID重複の拒否 | BROWSER-PRODUCT; browser-product:project-self-data-create-delete-and-shadowing | 作品/個体データUIの作成・削除・同名参照と共通履歴をbrowser-productで検査 |
 | product:assets | 画像オブジェクト・背景・衣装・音素材の登録・保持 | assets/backdrops/costumes/sounds + 画像部品 | AssetStore / asset UI | quick media entrypoints / runAssetImport → canonicalizeImage/Audio → finishAssetCommit; asset UI | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | AssetRuntimeCache | SAVE 不足素材拒否; AUDIT ASSET decoded dimension mismatch releases own object URL | BROWSER-PRODUCT; BROWSER-DESIGNER; DESIGN-MEDIA-ENTRYPOINTS; DESIGN-MIXED-HISTORY-STORAGE; browser-storage-media:real-media-import-and-history; browser-storage-media:media-editor-run-and-save-roundtrip; browser-runtime:preparing-importing-lock-and-decode-failure-rollback | 模擬decodeと拒否例はself-test、PNG/JPEG/WebP/MP3/WAVの実decodeはstorage-media suiteで別検査する。画像オブジェクト/背景/衣装/音声の入口の到達性と追加先の区別、候補一覧展開後の操作可能性は実ブラウザーで確認する |

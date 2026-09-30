@@ -7,6 +7,12 @@ import {snapshot,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 const [browserPath,output='audit-evidence/source-ownership.json']=process.argv.slice(2);
 const inputs=snapshot('Akari.html'), api=loadApi(fs.readFileSync('Akari.html','utf8'));
 const plain=value=>JSON.parse(JSON.stringify(value));
+async function openStageSources(page) {
+  if(await page.locator('#objectSelect').inputValue() !== 'stage') await page.locator('#sourceStageBtn').click();
+  else if(!await page.locator('#sourceOverview').isVisible()) await page.locator('#sourceOverviewBtn').click();
+  assert.equal(await page.locator('#objectSelect').inputValue(), 'stage');
+  assert.equal(await page.locator('#sourceOverview').isVisible(), true);
+}
 const fixture=()=>{
   const p=api.makeDefaultProject();p.name='コードの所属を読む';
   p.components.push({...p.components.find(c=>c.id==='button-1'),id:'button-empty',name:'空のボタン',y:300});
@@ -142,7 +148,7 @@ await withBrowser(browserPath,async browser=>{
       for(const event of ['start','message']){const card=p.locator(`[data-source-key="script:sprite-1:${event}"]`);await card.scrollIntoViewIfNeeded();await card.locator('.blockui-script').waitFor({state:'visible'});assert.equal(await card.locator('.blockui-script').count(),1);}
     });
     await test('OWNER-GUI-UNUSED-STAGE-DEFINITIONS',async()=>{
-      await p.locator('#sourceStageBtn').click();
+      await openStageSources(p);
       const all=await p.locator('#sourceOverview [data-source-key]').evaluateAll(ns=>ns.map(n=>n.dataset.sourceKey));
       for(const key of ['script:stage:message','action:action-show','function:function-double','function:function-unused'])assert.ok(all.includes(key),key);
       await p.locator('[data-source-edit="function:function-unused"]').click();
@@ -159,13 +165,13 @@ await withBrowser(browserPath,async browser=>{
     });
     await test('OWNER-GUI-DRAFT-OWNERSHIP',async()=>{
       // Open the existing definition via its visible card, then type an incomplete body.
-      await p.locator('#sourceStageBtn').click();await p.locator('[data-source-edit="function:function-unused"]').click();
+      await openStageSources(p);await p.locator('[data-source-edit="function:function-unused"]').click();
       await p.locator('#callableCode').fill('下書きのまま');
       assert.equal(await p.evaluate(()=>Akari.app.editorState.callableDraft.ownerId),'stage');
       assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'7を返す');
       await p.locator('#callableSave').click();
       assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'下書きのまま');
-      await p.locator('#procClose').click();await p.locator('#sourceStageBtn').click();
+      await p.locator('#procClose').click();await openStageSources(p);
       assert.equal(await p.locator('[data-source-key="function:function-unused"] pre').textContent(),'下書きのまま');
     });
     await test('OWNER-GUI-RECURSION-AND-HIDDEN-OBJECT',async()=>{

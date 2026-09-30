@@ -15,6 +15,7 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['editor-gui','audit/tests/editor-browser.mjs',browser,file('editor-gui')],
   ['normal','audit/tests/normal-product.mjs',browser,'Akari.html',file('normal')],
   ['ownership','audit/tests/source-ownership.mjs',browser,path.join(dir,'ownership','report.json')],
+  ['ui-buttons','audit/tests/ui-buttons.mjs',browser,file('ui-buttons')],
   ['format-compatibility','audit/tests/format-compatibility.mjs',browser,file('format-compatibility')],
   ['editor-assets','audit/tests/editor-assets.mjs',browser,file('editor-assets')],
   ['designer','audit/tests/designer-zoom.mjs',browser,file('designer')],

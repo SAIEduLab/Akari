@@ -1064,15 +1064,15 @@ body[data-ui-level="basic"] .main {
 body[data-ui-level="basic"] .side {
   display: none;
 }
-body[data-ui-level="basic"] #undoBtn,
-body[data-ui-level="basic"] #redoBtn,
 body[data-ui-level="basic"] #resetBtn,
 body[data-ui-level="basic"] #procBtn,
 body[data-ui-level="basic"] #dataBtn,
-body[data-ui-level="basic"] #diagnoseBtn {
-  display: none;
-}
-body[data-ui-level="basic"] .debugbar {
+body[data-ui-level="basic"] #diagnoseBtn,
+body[data-ui-level="basic"] #pauseBtn,
+body[data-ui-level="basic"] #continueBtn,
+body[data-ui-level="basic"] #stepBtn,
+body[data-ui-level="basic"] #formatBtn,
+body[data-ui-level="basic"] #execLocation {
   display: none;
 }
 body[data-ui-level="basic"] .menutool .sep {
@@ -2871,6 +2871,10 @@ body[data-editor-mode]:has(#editorPending:not([hidden])) #editorCancel {
 }
 body[data-editor-mode] #callableCancel {
   min-width: 0;
+  display: none;
+}
+body[data-editor-mode]:has(#callablePending:not([hidden])) #callableCancel {
+  display: block;
 }
 body[data-editor-mode] .status {
   min-height: 30px;
@@ -3696,19 +3700,19 @@ body[data-editor-mode="blocks"] .prop-name {
 .blockui-world .blockui-insertion {
   position: relative;
   z-index: 3;
-  height: 1px !important;
-  min-height: 1px !important;
+  height: 28px !important;
+  min-height: 28px !important;
   margin: 0;
   padding: 0;
-  line-height: 1px;
-  border: 0;
-  border-radius: 0;
-  color: transparent !important;
+  line-height: 26px;
+  border: 1px dashed #8aa5b8;
+  border-radius: 7px;
+  color: #47677f !important;
   opacity: 1 !important;
   overflow: visible;
   transition: none;
   width: 100%;
-  background: transparent !important;
+  background: #f5f9fc !important;
   box-shadow: none;
   max-width: none;
 }
@@ -3740,23 +3744,8 @@ body[data-editor-mode="blocks"] .prop-name {
   background: #b34040;
   box-shadow: 0 0 0 3px #e99b9b66;
 }
-.blockui-world .blockui-insertion:last-child::after {
-  content: "+";
-  position: absolute;
-  top: 11px;
-  left: 17px;
-  color: #6e879c;
-  border: 1px dashed #8aa5b8;
-  background: #fff9;
-  border-radius: 7px;
-  width: 40px;
-  height: 28px;
-  line-height: 25px;
-  font-size: 20px;
-  text-align: center;
-}
 .blockui-world .blockui-body:has(> .blockui-insertion:last-child) {
-  padding-bottom: 49px;
+  padding-bottom: 8px;
 }
 .blockui-world .blockui-script > .blockui-node-content > .blockui-body {
   padding-bottom: 42px;
@@ -4083,13 +4072,13 @@ body[data-editor-mode="blocks"] .designer-wrap {
 }
 /* Side panels may scroll rather than collapse the chooser when settings open. */
 body[data-editor-mode="blocks"] .side > .objects-window {
-  flex: 1 0 180px;
-  min-height: 180px;
+  flex: 1 0 230px;
+  min-height: 230px;
   overflow: hidden;
 }
 body[data-editor-mode="blocks"] .side > .objects-window:has(.blockui-component-picker[open]) {
-  flex-basis: 320px;
-  min-height: 320px;
+  flex-basis: 370px;
+  min-height: 370px;
 }
 body[data-editor-mode="blocks"] .objects-window .tree {
   display: flex;
@@ -4222,7 +4211,12 @@ body[data-editor-mode="code"] .blockui-component-picker {
   display: none;
 }
 body[data-editor-mode="code"] .blockui-side-toggle {
-  pointer-events: none;
+  display: none;
+}
+body[data-editor-mode="blocks"] .blockui-side-label,
+body[data-editor-mode="code"] #componentActions,
+#componentActions:empty {
+  display: none;
 }
 @media (max-width: 1250px) {
   body[data-editor-mode="blocks"] .main {
@@ -4686,7 +4680,7 @@ body.runtime #formSurface .design-resize-outline {
 #properties {
   scroll-padding-top: 58px;
 }
-#properties .prop-actions {
+.prop-actions {
   position: sticky;
   top: 0;
   z-index: 4;
@@ -4699,7 +4693,7 @@ body.runtime #formSurface .design-resize-outline {
   border-bottom: 1px solid var(--line);
   box-shadow: 0 2px 5px #20374b0d;
 }
-#properties .prop-actions strong {
+.prop-actions strong {
   flex: 1;
   min-width: 0;
   font-size: 12px;
@@ -4707,7 +4701,7 @@ body.runtime #formSurface .design-resize-outline {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-#properties .prop-delete {
+.prop-delete {
   flex: none;
   min-height: 34px;
   padding: 4px 9px;
@@ -4716,11 +4710,11 @@ body.runtime #formSurface .design-resize-outline {
   background: #fff8f8;
   font-size: 12px;
 }
-#properties .prop-delete:hover:not(:disabled) {
+.prop-delete:hover:not(:disabled) {
   background: #ffecec;
   border-color: #b83b3b;
 }
-#properties .prop-duplicate {
+.prop-duplicate {
   flex: none;
   min-height: 34px;
   padding: 4px 9px;
@@ -5136,7 +5130,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     <button id="procBtn">動作・計算</button>
     <button id="dataBtn">データ</button>
     <button id="diagnoseBtn">作品チェック</button>
-    <label class="ui-level-label">表示 <select id="uiLevel"><option value="basic">かんたん</option><option value="advanced" selected>くわしく</option><option value="all">全部</option></select></label>
+    <label class="ui-level-label">表示 <select id="uiLevel"><option value="basic">かんたん</option><option value="advanced" selected>くわしく</option></select></label>
     <input id="projectName" value="はじめてのあかり" aria-label="作品名" style="margin-left:auto;width:210px;height:26px;padding:2px 5px">
     <input id="fileInput" type="file" accept=".akari.md,.md,text/markdown,text/plain">
   </div>
@@ -5371,7 +5365,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         <label>動かすもの <select id="objectSelect"></select></label>
         <label>できごと <select id="eventSelect"></select></label>
       </div>
-      <div class="source-nav"><button id="sourceOverviewBtn" type="button">この部品のすべてのコード</button><button id="sourceEditBtn" type="button">本文を編集</button><button id="sourceStageBtn" type="button">画面の共通コード</button></div>
+      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button></div>
       <div id="sourceOverview" aria-label="選んだもののすべてのコード" hidden></div>
       <div class="debugbar">
         <button id="pauseBtn">⏸ いったん止める</button>
@@ -17332,6 +17326,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     function cancel() {
       const field = pending;
       pending = null;
+      destination = null;
       replacement = null;
       moving = null;
       cancelDrag();
@@ -17354,8 +17349,9 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       return { ok: true };
     }
     function updateControls() {
+      commitButton.hidden = !pending;
       commitButton.disabled = isLocked() || !pending;
-      cancelButton.disabled = !pending && !moving && !drag && !replacement;
+      cancelButton.disabled = !pending && !moving && !drag && !replacement && !destination;
       controls.hidden = !pending && !moving && !drag && !replacement && !destination;
       root.classList.toggle('blockui-interacting', !controls.hidden);
       root.classList.toggle('blockui-moving', !!moving || !!drag?.started);
@@ -19419,7 +19415,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     });
     listen(root, 'keydown', (event) => {
       if (event.isComposing) return;
-      if (event.key === 'Escape' && (pending || moving || drag || replacement)) {
+      if (event.key === 'Escape' && (pending || moving || drag || replacement || destination)) {
         event.preventDefault();
         event.stopPropagation();
         cancel();
@@ -20570,6 +20566,9 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
 
       side.children[0].classList.add('objects-window');
       side.children[1].classList.add('properties-window');
+      const componentActions = document.createElement('div');
+      componentActions.id = 'componentActions';
+      side.children[0].append(componentActions);
       const componentPicker = document.createElement('details');
       componentPicker.className = 'blockui-component-picker';
       componentPicker.id = 'componentPickerCore';
@@ -20593,7 +20592,10 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
           toggle.textContent = (folded ? '\u25b8 ' : '\u25be ') + title.dataset.label;
         });
         title.dataset.label = title.textContent;
-        title.replaceChildren(toggle);
+        const label = document.createElement('span');
+        label.className = 'blockui-side-label';
+        label.textContent = title.textContent;
+        title.replaceChildren(label, toggle);
       }
 
       const akariMascotIcon = document.querySelector('[data-sprite-preset="akariMascot"] .ico');
@@ -20686,6 +20688,8 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       $('.codewin > .win-title').textContent = block ? 'ブロック' : 'コード';
       $('#designerHeading').textContent = block ? '画面' : '画面づくり';
       $('.objects-window > .win-title').textContent = block ? 'キャラクター・部品' : '作品';
+      const actions = $('.prop-actions');
+      if (actions) (block ? $('#componentActions') : el.props).prepend(actions);
       $('#formatBtn').hidden = block;
     }
 
@@ -21029,6 +21033,9 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       refreshEditor();
     }
     function renderSelectors() {
+      $('#sourceOverviewBtn').hidden = sourceOverviewOpen;
+      $('#sourceEditBtn').hidden = !sourceOverviewOpen;
+      $('#sourceStageBtn').hidden = selectedId === 'stage';
       el.obj.innerHTML = '';
       const add = (v, t) => {
         const o = document.createElement('option');
@@ -21479,6 +21486,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       const scroll = el.props.dataset.owner === selectedId ? el.props.scrollTop : 0;
       el.props.dataset.owner = selectedId;
       el.props.textContent = '';
+      $('#componentActions').replaceChildren();
       if (selectedId === 'stage') {
         el.props.append(
           propSection(
@@ -21537,7 +21545,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       del.disabled = modelLocked();
       del.onclick = deleteSelectedComponent;
       actions.append(title, duplicate, del);
-      el.props.append(actions);
+      (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions);
       el.props.append(
         propSection(
           '\u57fa\u672c',
@@ -24875,7 +24883,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     try {
       storedUiLevel = localStorage.getItem(STORAGE_KEYS.uiLevel);
     } catch (_) {}
-    document.body.dataset.uiLevel = ['basic', 'advanced', 'all'].includes(storedUiLevel)
+    document.body.dataset.uiLevel = ['basic', 'advanced'].includes(storedUiLevel)
       ? storedUiLevel
       : 'advanced';
     $('#uiLevel').value = document.body.dataset.uiLevel;
