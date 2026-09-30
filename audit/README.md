@@ -11,7 +11,7 @@ node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/local
 node audit/browser/run-full-browser-audit.mjs --group all --evidence audit-evidence/browser
 ```
 
-static gateで機能由来の命名と製品版参照の用途をASTで検査し、拒否fixtureも実行します。local gateには作成元ラベルに依存しない形式互換の9件を含め、実ブラウザーで保存・復元・生成HTMLを確認します。
+static gateで機能由来の命名と製品版参照の用途をASTで検査し、拒否fixtureも実行します。local gateには作成元ラベルに依存しない形式互換の9件と、`audit/tests/ui-buttons.mjs`のUIボタン整合性9件を含めます。実ブラウザーで保存・復元・生成HTMLに加え、一覧への往復、2段階の表示設定、かんたんの履歴、部品操作、未確定入力、追加先の取消、途中挿入と狭い画面での到達性を確認します。安定IDと期待値は[AUDIT.md「UIとボタンの整合性」](../AUDIT.md#uiとボタンの整合性)に対応します。GA-EXECで実行し、HYBRIDでもコード／ブロックと動作・計算の操作を確認します。
 
 必須の結果集合を独立したvalidatorで検証します。省略・重複・例外・timeout・環境不足をPASSにしません。公開ファイルを変更したら固定記録を更新し、その入力に対して再検証します。固定記録の作成は監査合格を意味しません。
 
