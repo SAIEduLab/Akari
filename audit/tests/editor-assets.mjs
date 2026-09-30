@@ -1,3 +1,4 @@
+import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -10,8 +11,8 @@ const [browserPath, output] = process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output), 'fresh feature evidence required');
 const artifacts = path.join(path.dirname(output), 'editor-assets');
 fs.mkdirSync(artifacts, {recursive:true});
-const inputs = snapshot('Akari.html'), results = [], pageErrors = [], networkRequests = [];
-const fixtureApi = loadApi(fs.readFileSync('Akari.html','utf8'));
+const inputs = snapshot(currentProductFile()), results = [], pageErrors = [], networkRequests = [];
+const fixtureApi = loadApi(fs.readFileSync(currentProductFile(),'utf8'));
 const savedProject = fixtureApi.makeDefaultProject();
 savedProject.name = '作品の保存確認';
 const savedFile = fixtureApi.serializeProject(savedProject, fixtureApi.makeDefaultAssetStore());
@@ -209,13 +210,13 @@ const cases = {
     assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1});
     await p.locator('#fileInput').setInputFiles({name:'saved-project.akari.md',mimeType:'text/plain',buffer:Buffer.from(savedFile)});
     await p.waitForFunction(()=>Akari.app.project.name==='作品の保存確認'&&Akari.app.editorState.state==='DESIGN');
-    assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),'1.0.0');
-    const text=await p.evaluate(()=>Akari.serializeProject(Akari.app.project,Akari.app.assetStore));assert.ok(text.startsWith('# あかり 1.0.0 の作品'));
-    assert.equal(await p.evaluate(async text=>(await Akari.parseProjectFile(text)).project.appVersion,text),'1.0.0');
+    assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),(""+currentProductVersion()+""));
+    const text=await p.evaluate(()=>Akari.serializeProject(Akari.app.project,Akari.app.assetStore));assert.ok(text.startsWith(("# あかり "+currentProductVersion()+" の作品")));
+    assert.equal(await p.evaluate(async text=>(await Akari.parseProjectFile(text)).project.appVersion,text),(""+currentProductVersion()+""));
   },
   async 'format-malformed-state-protection'(p) {
     const before=await state(p);
-    for(const text of [savedFile.replace('# あかり 1.0.0 の作品','# tampered'),savedFile.replace('"languageContractId": 1','"languageContractId": 2'),savedFile.replace('"formatVersion": 1','"formatVersion": "1"')]) {
+    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": 1','"languageContractId": 2'),savedFile.replace('"formatVersion": 1','"formatVersion": "1"')]) {
       const result=await p.evaluate(async text=>{try{await Akari.parseProjectFile(text);return 'accepted';}catch(e){return e.code;}},text);
       assert.notEqual(result,'accepted');assert.deepEqual(await state(p),before);
     }
@@ -227,7 +228,7 @@ await withBrowser(browserPath,async browser=>{
   version=browser.version();
   for(const [id,run] of Object.entries(cases)) {
     try {
-      await pageFor(browser,'Akari.html',async p=>{
+      await pageFor(browser,currentProductFile(),async p=>{
         await p.setViewportSize({width:1440,height:1100});p.acceptDialogs=true;p.dialogLog=[];
         p.on('dialog',d=>{p.dialogLog.push(d.message());return p.acceptDialogs?d.accept():d.dismiss();});
         p.on('pageerror',e=>pageErrors.push(id+': '+e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))networkRequests.push(r.url());});
@@ -237,7 +238,7 @@ await withBrowser(browserPath,async browser=>{
     } catch(error) { results.push({id,pass:false,detail:error.stack});console.error('FAIL '+id+': '+error.message); }
   }
 },300000);
-assert.deepEqual(snapshot('Akari.html'),inputs);
+assert.deepEqual(snapshot(currentProductFile()),inputs);
 const report={status:results.every(r=>r.pass)&&!pageErrors.length&&!networkRequests.length?'PASS':'FAIL',snapshot:inputs,environment:'chromium',browser:version,results,pageErrors,networkRequests};
 fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 verifyEditorAssets(report,inputs);

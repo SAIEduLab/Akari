@@ -1,3 +1,4 @@
+const { currentProductFile } = require("./../lib/product-path.cjs");
 // Simulate synchronous removal events using the actual product view. Real browser tests remain mandatory.
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),{JSDOM,VirtualConsole}=require('jsdom');
 function check(html){
@@ -17,7 +18,7 @@ function check(html){
  const observed={errors,ok:result.ok,calls,blurChanges,focused:w.document.activeElement===current,pending:!!s.pendingEdit,source:s.sourceText};
  view.destroy();dom.window.close();return observed;
 }
-const html=fs.readFileSync('Akari.html','utf8'),good=check(html);
+const html=fs.readFileSync(currentProductFile(),'utf8'),good=check(html);
 assert.deepEqual(good.errors,[]);assert.equal(good.calls,1);assert.equal(good.blurChanges,1);
 assert.equal(good.focused,true);assert.equal(good.pending,false);assert.equal(good.ok,true);
 assert.equal(good.source,'4 が 8 未満の間、次のことを繰り返す ※ 頭  \n  3 を 点数 に 加える ※ 本文  \n「😀」 という\n');

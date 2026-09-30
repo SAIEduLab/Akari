@@ -1,3 +1,4 @@
+import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ const [browserPath, output] = process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output), 'fresh designer evidence required');
 const artifacts = path.join(path.dirname(output), 'designer-zoom');
 fs.mkdirSync(artifacts, {recursive: true});
-const inputs = snapshot('Akari.html'), results = [];
+const inputs = snapshot(currentProductFile()), results = [];
 const settle = p => p.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
 const near = (a, b, label) => assert.ok(Math.abs(a - b) < 0.001, `${label}: ${a} vs ${b}`);
 async function reveal(locator) {
@@ -190,7 +191,7 @@ const cases = {
     const before = await state(p); await p.locator('#stageZoomReset').click(); await p.locator('#stageZoomIn').click();
     assert.deepEqual(await state(p), before);
     const second = await download(p, '#saveBtn', 'zoom-again.akari.md');
-    assert.equal(fs.readFileSync(second, 'utf8'), original); assert.ok(original.startsWith('# あかり 1.0.0 の作品'));
+    assert.equal(fs.readFileSync(second, 'utf8'), original); assert.ok(original.startsWith(("# あかり "+currentProductVersion()+" の作品")));
     await p.waitForFunction(() => document.querySelector('#autosaveState').textContent.includes('済み'));
     await p.reload(); await p.locator('#recoveryModal.show').waitFor();
     await p.locator('#recoveryDiscard').click();
@@ -202,13 +203,13 @@ const cases = {
     assert.equal(await p.locator('.stage-zoom-controls').count(), 0);
   },
   async 'DESIGN-ZOOM-FORMAT'(p) {
-    const api = loadApi(fs.readFileSync('Akari.html', 'utf8'));
+    const api = loadApi(fs.readFileSync(currentProductFile(), 'utf8'));
     const project = api.makeDefaultProject(); project.name = '画面サイズの保存';
     project.stage.width = 900; project.stage.height = 600;
     const text = api.serializeProject(project, api.makeDefaultAssetStore());
     await openFile(p, {name: 'size.akari.md', mimeType: 'text/plain', buffer: Buffer.from(text)});
     await p.waitForFunction(name => Akari.app.project.name === name, project.name);
-    assert.equal(await p.evaluate(() => Akari.app.project.appVersion), '1.0.0'); await assertFit(p);
+    assert.equal(await p.evaluate(() => Akari.app.project.appVersion), (""+currentProductVersion()+"")); await assertFit(p);
     assert.equal(await p.evaluate(() => Akari.app.project.stage.height), 600);
     const before = await state(p);
     await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replace('"formatVersion": 1', '"formatVersion": 2'))});
@@ -237,7 +238,7 @@ assert.deepEqual(Object.keys(cases), designerZoomIds);
 const browserVersion = await withBrowser(browserPath, async browser => {
   for (const [id, run] of Object.entries(cases)) {
     try {
-      const evidence = await pageFor(browser, 'Akari.html', async p => {
+      const evidence = await pageFor(browser, currentProductFile(), async p => {
         p.on('dialog', d => d.accept()); await p.setViewportSize({width: 1440, height: 900});
         return await run(p);
       });
@@ -246,12 +247,12 @@ const browserVersion = await withBrowser(browserPath, async browser => {
   }
   return browser.version();
 }, 240000);
-assert.deepEqual(snapshot('Akari.html'), inputs, 'test must not change source inputs');
+assert.deepEqual(snapshot(currentProductFile()), inputs, 'test must not change source inputs');
 const report = {schema: 'akari-designer-v1', status: results.every(r => r.pass) ? 'PASS' : 'FAIL',
   environment: 'chromium', browser: browserVersion, snapshot: inputs, results, pageErrors: [], networkRequests: []};
 fs.writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
 verifyDesignerZoom(report, inputs);
-console.log('Designer 1.0.0: 9/9 cases PASS');
+console.log(("Designer "+currentProductVersion()+": 9/9 cases PASS"));
 
 // Enter the visible body editor before exercising editing operations.
 async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

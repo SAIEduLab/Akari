@@ -1,3 +1,4 @@
+const { currentProductFile } = require("./../../lib/product-path.cjs");
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
@@ -7,7 +8,7 @@ const {chromium} = require('playwright');
 
 async function main() {
   const root=path.resolve(__dirname,'..');
-  const sourceFile=process.argv[2] ? path.resolve(process.argv[2]) : path.join(root,'Akari.html');
+  const sourceFile=process.argv[2] ? path.resolve(process.argv[2]) : path.join(root,currentProductFile());
   const bytes=fs.readFileSync(sourceFile), hash=crypto.createHash('sha256').update(bytes).digest('hex');
   const outputDir=process.argv[3]?path.resolve(process.argv[3]):__dirname;fs.mkdirSync(outputDir,{recursive:true});
   const file=path.join(outputDir,'editor-regression.html');

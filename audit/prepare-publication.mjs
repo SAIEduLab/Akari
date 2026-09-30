@@ -1,8 +1,9 @@
+import { currentProductVersion } from "./lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {root,sha} from './lib/product-test-host.mjs';
-const output=path.resolve(process.argv[2]||'.publication/1.0.0');
+const output=path.resolve(process.argv[2]||'.publication/'+currentProductVersion());
 assert.ok(output.startsWith(root+path.sep),'Publication must be inside this checkout');
 assert.ok(!fs.existsSync(output),'Choose an empty publication directory');
 const {files}=JSON.parse(fs.readFileSync('audit/public-files.json'));
@@ -13,4 +14,4 @@ for(const file of files){
   fs.copyFileSync(path.join(root,file),destination);
   assert.equal(sha(fs.readFileSync(destination)),sha(fs.readFileSync(path.join(root,file))));
 }
-console.log(JSON.stringify({output,files:files.length,productVersion:'1.0.0',gitHistoryIncluded:false}));
+console.log(JSON.stringify({output,files:files.length,productVersion:currentProductVersion(),gitHistoryIncluded:false}));

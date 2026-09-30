@@ -1,7 +1,8 @@
+const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Re-run the six real compact UI route regressions against explicit product bytes.
 // Usage: node audit-evidence/browser/ui-compact-routes.cjs [html] [output-prefix]
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),cp=require('child_process');
-const html=path.resolve(process.argv[2]||'Akari.html'),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/ui-compact-routes');
+const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/ui-compact-routes');
 const ids=['UI-statement-duplicate-order-delete','UI-else-annotation-and-comment-lines','UI-variadic-order-size-and-nested-replace','UI-expression-move-atomic-replacement','UI-deep-expression-move-prompt-reachable','UI-keyboard-only-create-move-delete-history'];
 const hash=()=>crypto.createHash('sha256').update(fs.readFileSync(html)).digest('hex'),sha256=hash(),started=new Date().toISOString();
 const detailPrefix=prefix+'-details-'+Date.now(); // A failed run cannot read a prior report.

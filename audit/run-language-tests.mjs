@@ -1,3 +1,4 @@
+import { currentProductFile } from "./lib/product-path.cjs";
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -6,7 +7,7 @@ import {finiteCases} from './fixtures/language/forms.mjs';
 import {inlineCases,inlineNegative} from './fixtures/language/inline.mjs';
 import {snapshot,sha,withBrowser,pageFor} from './lib/product-test-host.mjs';
 import {expectedLanguageIds,verifyLanguageResults} from './lib/verify-language-results.mjs';
-const product='Akari.html', browser=process.argv[2], nodeOnly=browser==='--node';
+const product=currentProductFile(), browser=process.argv[2], nodeOnly=browser==='--node';
 const output=process.argv[3] || `audit-evidence/language/language-${nodeOnly?'node':'browser'}.json`;
 if(fs.existsSync(output))throw Error('Evidence already exists: '+output);
 let browserVersion;

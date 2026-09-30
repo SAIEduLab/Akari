@@ -1,7 +1,8 @@
+const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Real media decoder + application input paths. No decoder, runtime, or limit is stubbed.
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=require('assert/strict'),F=require('./media-fixtures.cjs'),{pathToFileURL}=require('url');
 const {chromium}=require('playwright');
-const html=path.resolve(process.argv[2]||'Akari.html'),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/media-boundaries'),selected=new Set((process.argv[4]||'').split(',').filter(Boolean));
+const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/media-boundaries'),selected=new Set((process.argv[4]||'').split(',').filter(Boolean));
 (async()=>{
  const browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true,args:['--allow-file-access-from-files']}),context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true}),page=await context.newPage(),results=[],errors=[],network=[];let sequence=0;
  page.setDefaultTimeout(30000);page.on('pageerror',e=>errors.push(e.stack));page.on('dialog',d=>d.accept(d.type()==='prompt'?d.defaultValue():undefined));await context.route(/^https?:\/\//,route=>{network.push(route.request().url());return route.abort();});

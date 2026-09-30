@@ -1,3 +1,4 @@
+import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {verify,verifyAuthority} from '../lib/verify-test-results.mjs';
@@ -27,12 +28,12 @@ negative('incomplete',r=>r.complete=false);
 const m=structuredClone(manifest);m.suites[0].ids.pop();assert.throws(()=>verify(report,m,report.snapshot));results.push({id:'shrunk manifest',pass:true});
 await assert.rejects(()=>withBrowser('',async()=>{}),/environment missing/);results.push({id:'missing browser executable',pass:true});
 await withBrowser(browserPath,async browser=>{
- await assert.rejects(()=>externalReports(browser,'Akari.html',[]),/Empty/);
- await assert.rejects(()=>externalReports(browser,'Akari.html',['runMissingTests']),/ENOENT/);
- await assert.rejects(()=>pageFor(browser,'Akari.html',p=>p.evaluate(()=>{throw Error('negative registration exception');})),/negative registration exception/);
- await assert.rejects(()=>pageFor(browser,'Akari.html',p=>p.evaluate('(() => { invalid syntax !!! })()')),/Unexpected/);
+ await assert.rejects(()=>externalReports(browser,currentProductFile(),[]),/Empty/);
+ await assert.rejects(()=>externalReports(browser,currentProductFile(),['runMissingTests']),/ENOENT/);
+ await assert.rejects(()=>pageFor(browser,currentProductFile(),p=>p.evaluate(()=>{throw Error('negative registration exception');})),/negative registration exception/);
+ await assert.rejects(()=>pageFor(browser,currentProductFile(),p=>p.evaluate('(() => { invalid syntax !!! })()')),/Unexpected/);
 });
 results.push(...['empty registration','missing suite file','registration exception','registration syntax error'].map(id=>({id,pass:true})));
-await assert.rejects(()=>withBrowser(browserPath,async browser=>pageFor(browser,'Akari.html',p=>p.evaluate(()=>new Promise(()=>{}))),1000),/timeout/);
+await assert.rejects(()=>withBrowser(browserPath,async browser=>pageFor(browser,currentProductFile(),p=>p.evaluate(()=>new Promise(()=>{}))),1000),/timeout/);
 results.push({id:'actual nonsettling browser evaluation timeout and cleanup',pass:true});
 fs.writeFileSync(output,JSON.stringify({status:'PASS',results},null,2)+'\n');console.log('Harness negatives: '+results.length+' PASS');

@@ -1,3 +1,4 @@
+import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -8,7 +9,7 @@ import U from '../browser/cases/ui-routes.cjs';
 export const uiButtonIds = ['UI-BUTTON-SOURCE-NAV','UI-BUTTON-BASIC-HISTORY','UI-BUTTON-SIDE-ACTIONS','UI-BUTTON-LEVELS','UI-BUTTON-PENDING','UI-BUTTON-BLOCK-DESTINATION','UI-BUTTON-BLOCK-INSERTION','UI-BUTTON-BLOCK-COMMANDS','UI-BUTTON-RESPONSIVE'];
 const [browserPath, output] = process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output), 'fresh button evidence required');
-const inputs = snapshot('Akari.html'), results = [];
+const inputs = snapshot(currentProductFile()), results = [];
 const fingerprint = p => p.evaluate(() => { const s=Akari.app.editorState; return {project:JSON.stringify(Akari.app.project),source:s.main.sourceText,history:s.history,redo:s.redo,dirty:s.dirty,draft:s.callableDraft,hasDraft:s.hasDraft}; });
 async function reveal(l) {
   if (!await l.isVisible()) for (const panel of await l.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all()) await panel.locator('.blockui-side-toggle').click();
@@ -109,7 +110,7 @@ const cases = {
     roots.push({root,boundaries:4,sizes,pointerInsertion:true,dragAlternative:true});
     }
     const touchContext=await p.context().browser().newContext({offline:true,hasTouch:true,viewport:{width:1024,height:768}}),errors=[],network=[];
-    try { await touchContext.route(/^https?:/,route=>{network.push(route.request().url());return route.abort();}); const t=await touchContext.newPage(); t.on('pageerror',e=>errors.push(e.message)); await t.goto(pathToFileURL(path.resolve('Akari.html')).href); await t.waitForFunction(()=>!!globalThis.Akari?.app); await select(t,'stage'); await fill(t,'1と言う。'); await mode(t,'blocks'); const before=await fingerprint(t);
+    try { await touchContext.route(/^https?:/,route=>{network.push(route.request().url());return route.abort();}); const t=await touchContext.newPage(); t.on('pageerror',e=>errors.push(e.message)); await t.goto(pathToFileURL(path.resolve(currentProductFile())).href); await t.waitForFunction(()=>!!globalThis.Akari?.app); await select(t,'stage'); await fill(t,'1と言う。'); await mode(t,'blocks'); const before=await fingerprint(t);
       async function tap(l) { await l.scrollIntoViewIfNeeded(); const r=await l.boundingBox(); assert.ok(r&&r.width>=24&&r.height>=24); await t.touchscreen.tap(r.x+r.width/2,r.y+r.height/2); }
       await tap(t.locator('#blockEditor [data-blockui-action="body-insert"]').first()); assert.ok(await t.locator('#blockEditor .blockui-chosen-destination').count()); await tap(t.locator('#blockEditor [data-blockui-action="cancel"]')); assert.equal(await t.locator('#blockEditor .blockui-chosen-destination').count(),0); assert.deepEqual(await fingerprint(t),before);
     } finally { await touchContext.close(); } assert.deepEqual(errors,[]); assert.deepEqual(network,[]); return {roots,touch:true};
@@ -138,8 +139,8 @@ const cases = {
   },
 };
 assert.deepEqual(Object.keys(cases),uiButtonIds);
-const version=await withBrowser(browserPath,async b=> { for(const [id,run] of Object.entries(cases)) { try { const evidence=await pageFor(b,'Akari.html',async p=> { p.on('dialog',d=>d.accept()); await p.setViewportSize({width:1440,height:1000}); await select(p,'stage'); return run(p); }); results.push({id,status:'PASS',pass:true,detail:'PASS',evidence}); } catch(error) { results.push({id,status:'FAIL',pass:false,detail:error.stack}); } console.log(results.at(-1).status+' '+id); if(!results.at(-1).pass) console.error(results.at(-1).detail); } return b.version(); },360000);
-assert.deepEqual(snapshot('Akari.html'),inputs,'test must not modify product inputs');
+const version=await withBrowser(browserPath,async b=> { for(const [id,run] of Object.entries(cases)) { try { const evidence=await pageFor(b,currentProductFile(),async p=> { p.on('dialog',d=>d.accept()); await p.setViewportSize({width:1440,height:1000}); await select(p,'stage'); return run(p); }); results.push({id,status:'PASS',pass:true,detail:'PASS',evidence}); } catch(error) { results.push({id,status:'FAIL',pass:false,detail:error.stack}); } console.log(results.at(-1).status+' '+id); if(!results.at(-1).pass) console.error(results.at(-1).detail); } return b.version(); },360000);
+assert.deepEqual(snapshot(currentProductFile()),inputs,'test must not modify product inputs');
 const report={schema:'akari-ui-buttons-v1',status:results.every(r=>r.pass)?'PASS':'FAIL',environment:'chromium',browser:version,snapshot:inputs,total:results.length,results,pageErrors:[],networkRequests:[]};
 fs.mkdirSync(path.dirname(output),{recursive:true}); fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 assert.equal(report.status,'PASS',results.filter(r=>!r.pass).map(r=>r.id+': '+r.detail).join('\n'));

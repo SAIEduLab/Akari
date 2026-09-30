@@ -1,3 +1,4 @@
+const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Targeted UI regression check, not a substitute for the complete product audit.
 // Usage: node ui-stage-gesture.cjs <snapshot.html> <output-prefix>
 const L=require('./audit-lib.cjs');
@@ -5,7 +6,7 @@ const assert=require('assert/strict');
 const {pathToFileURL}=require('url');
 const {chromium}=require('playwright');
 const {disableFocusEmulation}=require('./native-focus.cjs');
-const file=L.path.resolve(process.argv[2]||'Akari.html');
+const file=L.path.resolve(process.argv[2]||currentProductFile());
 const prefix=L.path.resolve(process.argv[3]||L.path.join(__dirname,'ui-stage-gesture'));
 const sha=L.sha(L.fs.readFileSync(file));
 const results=[],pageErrors=[],networkRequests=[];

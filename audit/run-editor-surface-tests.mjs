@@ -1,10 +1,11 @@
+import { currentProductFile } from "./lib/product-path.cjs";
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {loadApi} from './browser/cases/audit-lib.cjs';
 import {snapshot,withBrowser,pageFor} from './lib/product-test-host.mjs';
 import {verifySurfaceResults} from './lib/verify-surface-results.mjs';
-const [browser,output]=process.argv.slice(2), product='Akari.html', before=snapshot(product);
+const [browser,output]=process.argv.slice(2), product=currentProductFile(), before=snapshot(product);
 if(!output || fs.existsSync(output)) throw Error('Supply a new evidence output path');
 const suite=fs.readFileSync('audit/suites/editor-surface.js','utf8');
 const forms=JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json')).cases;

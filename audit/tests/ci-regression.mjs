@@ -1,3 +1,4 @@
+import { currentProductFile } from "./../lib/product-path.cjs";
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -5,7 +6,7 @@ import {createRequire} from 'node:module';
 import {browserEnvironment as expected,verifyBrowserEnvironment} from '../lib/browser-environment.mjs';
 const {withFreshPage}=createRequire(import.meta.url)('../browser/cases/ui-case.cjs');
 // Reproduce the actual product's 350 ms post-cancel click guard with a controlled clock.
-const source=fs.readFileSync('Akari.html','utf8');
+const source=fs.readFileSync(currentProductFile(),'utf8');
 const start=source.indexOf('    function cancelDrag() {'),end=source.indexOf('    function previewDrag(',start);
 assert.ok(start>0&&end>start);
 const sandbox={Date:{now:()=>1000},drag:{started:true},ghost:null,snapPreview:null,dragFrame:null,
@@ -23,10 +24,10 @@ let contexts=0,closed=0,calls=0;const routeCallbacks=[],pages=[];
 const browser={async newContext(options){
   contexts++;assert.deepEqual(options,{viewport:{width:1440,height:1800}});
   const page={suppressed:false,storage:{},listeners:{},setDefaultTimeout(ms){assert.equal(ms,10000);},
-    on(name,fn){this.listeners[name]=fn;},async goto(url){assert.equal(url,'file:///Akari.html');}};
+    on(name,fn){this.listeners[name]=fn;},async goto(url){assert.equal(url,'file:///fixture.html');}};
   pages.push(page);return {async route(pattern,fn){assert.ok(pattern.test('https://example.test'));routeCallbacks.push(fn);},async newPage(){return page;},async close(){closed++;}};
 }};
-const config={url:'file:///Akari.html',errors:[],networkRequests:[]};
+const config={url:'file:///fixture.html',errors:[],networkRequests:[]};
 await withFreshPage(browser,config,async p=>{p.suppressed=true;p.storage.draft='prior';});
 await withFreshPage(browser,config,async p=>{assert.equal(p.suppressed,false);assert.deepEqual(p.storage,{});});
 const failure=new Error('real test failure');

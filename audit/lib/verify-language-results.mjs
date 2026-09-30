@@ -1,3 +1,4 @@
+import { currentProductFile } from "./product-path.cjs";
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
@@ -33,6 +34,6 @@ export function verifyLanguageResults(report,manifest,currentSnapshot) {
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href) {
   const report=JSON.parse(fs.readFileSync(process.argv[2]));
-  console.log(verifyLanguageResults(report,JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json')),snapshot('Akari.html')));
+  console.log(verifyLanguageResults(report,JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json')),snapshot(currentProductFile())));
   process.exitCode=report.phase3LanguageComplete?0:2;
 }

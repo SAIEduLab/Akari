@@ -1,9 +1,10 @@
+const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Bounded real pointer QA for compact block menus. No forced or hidden clicks.
 // node audit-evidence/browser/ui-compact-menu.cjs [html] [output-prefix]
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=require('assert/strict'),{pathToFileURL}=require('url');
 const {chromium}=require('playwright');
 const U=require('./ui-routes.cjs');
-const html=path.resolve(process.argv[2]||'Akari.html'),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/ui-compact-menu');
+const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/ui-compact-menu');
 const hash=()=>crypto.createHash('sha256').update(fs.readFileSync(html)).digest('hex'),sha256=hash();
 (async()=>{
  const browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true});

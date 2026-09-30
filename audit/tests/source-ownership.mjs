@@ -1,3 +1,4 @@
+import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -5,7 +6,7 @@ import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {snapshot,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 
 const [browserPath,output='audit-evidence/source-ownership.json']=process.argv.slice(2);
-const inputs=snapshot('Akari.html'), api=loadApi(fs.readFileSync('Akari.html','utf8'));
+const inputs=snapshot(currentProductFile()), api=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
 const plain=value=>JSON.parse(JSON.stringify(value));
 async function openStageSources(page) {
   if(await page.locator('#objectSelect').inputValue() !== 'stage') await page.locator('#sourceStageBtn').click();
@@ -81,7 +82,7 @@ const md=path.join(dir,'ownership.akari.md');fs.writeFileSync(md,api.serializePr
 let browserVersion;
 await withBrowser(browserPath,async browser=>{
   browserVersion=browser.version();
-  await pageFor(browser,'Akari.html',async p=>{
+  await pageFor(browser,currentProductFile(),async p=>{
     p.on('dialog',d=>d.accept());await p.setViewportSize({width:1440,height:1000});
     const startup={overview:await p.locator('#sourceOverview').isVisible(),editable:await p.locator('#codeEditor').isEditable()};
     await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');
@@ -205,7 +206,7 @@ await withBrowser(browserPath,async browser=>{
     });
   });
 });
-assert.deepEqual(snapshot('Akari.html'),inputs);
+assert.deepEqual(snapshot(currentProductFile()),inputs);
 const report={schema:'akari-source-ownership-v1',status:results.every(r=>r.pass)?'PASS':'FAIL',environment:'chromium',browser:browserVersion,snapshot:inputs,results};
 fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 console.log(`Source ownership: ${results.filter(r=>r.pass).length}/${results.length}`);

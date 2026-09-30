@@ -1,3 +1,4 @@
+import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import cp from 'node:child_process';
@@ -23,16 +24,16 @@ const make=(name,n)=>({
 })[name];
 if(process.argv[2]==='--worker') {
   const [name,count,version]=process.argv.slice(3), source=make(name,Number(count));
-  const html=fs.readFileSync('Akari.html','utf8');
+  const html=fs.readFileSync(currentProductFile(),'utf8');
   const api=loadApi(html), start=performance.now(), memory=process.memoryUsage().heapUsed;
   const parsed=api.parseSyntax(source);
   const result={name,count:Number(count),version,chars:[...source].length,ms:performance.now()-start,heapDelta:process.memoryUsage().heapUsed-memory,accepted:!!parsed.ast,diagnostic:parsed.syntaxDiagnostics[0]?.code};
   console.log(JSON.stringify(result));
 } else {
-  const before=snapshot('Akari.html'),results=[];
+  const before=snapshot(currentProductFile()),results=[];
   for(const name of ['unclosed-string','unclosed-name','unclosed-parens','duplicate-particles','duplicate-time','duplicate-coordinates','long-valid',
     'missing-slide-destination','missing-slide-duration','comparison-late-failure','comparison-missing-marker','missing-tone-frequency','duplicate-input-value'])
-    for(const n of [1000,4000,12000]) for(const version of ['1.0.0']) {
+    for(const n of [1000,4000,12000]) for(const version of [currentProductVersion()]) {
       const r=cp.spawnSync(process.execPath,[import.meta.filename,'--worker',name,String(n),version],{encoding:'utf8',timeout:5000,maxBuffer:1e6});
       assert.equal(r.status,0,`${name}/${n}/${version}: ${r.error||r.stderr}`);
       const row=JSON.parse(r.stdout);assert.equal(row.accepted,name==='long-valid');results.push(row);
@@ -40,12 +41,12 @@ if(process.argv[2]==='--worker') {
   // Exercise malformed late failures just below the product limit as well.
   for(const [name,n] of Object.entries({'missing-slide-destination':32000,'missing-slide-duration':10000,
     'comparison-late-failure':45000,'comparison-missing-marker':32000,'missing-tone-frequency':32000,'duplicate-input-value':45000}))
-    for(const version of ['1.0.0']) {
+    for(const version of [currentProductVersion()]) {
       const r=cp.spawnSync(process.execPath,[import.meta.filename,'--worker',name,String(n),version],{encoding:'utf8',timeout:5000,maxBuffer:1e6});
       assert.equal(r.status,0,`${name}/${n}/${version}: ${r.error||r.stderr}`);
       const row=JSON.parse(r.stdout);assert.equal(row.accepted,false);assert.ok(row.chars<=100000);results.push(row);
     }
-  const api=loadApi(fs.readFileSync('Akari.html','utf8'));
+  const api=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
   assert.ok(api.parseSyntax('※'+'a'.repeat(api.LIMITS.sourceEach-1)).ast);
   assert.equal(api.parseSyntax('※'+'a'.repeat(api.LIMITS.sourceEach)).ast,null);
   assert.equal(api.parseSyntax('（'.repeat(129)+'1'+'）'.repeat(129)+'を点数に加える').ast,null);
@@ -53,7 +54,7 @@ if(process.argv[2]==='--worker') {
   const frozen=JSON.parse(fs.readFileSync('audit/manifests/features.json'));
   for(const key of ['COMMAND_CATALOG','LIMITS','EXECUTABLE_CONTRACT']) assert.deepEqual(JSON.parse(JSON.stringify(api[key])),frozen[key],key);
   assert.deepEqual([...api.BLOCK_SCHEMAS.map(s=>s.id)],frozen.schemaIds);
-  assert.deepEqual(snapshot('Akari.html'),before);
+  assert.deepEqual(snapshot(currentProductFile()),before);
   const output=process.argv[2]||'audit-evidence/phase3/language-boundaries.json';
   if(fs.existsSync(output))throw Error('Evidence already exists');
   fs.mkdirSync(path.dirname(output),{recursive:true});

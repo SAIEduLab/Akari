@@ -1,6 +1,7 @@
+const { currentProductFile } = require("./../../lib/product-path.cjs");
 const fs=require('fs'),path=require('path'),assert=require('assert/strict'),crypto=require('crypto'),{pathToFileURL}=require('url');
 const {chromium}=require('playwright');
-const html=path.resolve(process.argv[2]||'Akari.html'),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/shell-'+Date.now());
+const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/shell-'+Date.now());
 (async()=>{const bytes=fs.readFileSync(html),b=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true}),results=[],errors=[],network=[];try{
  const p=await b.newPage({viewport:{width:1440,height:1000}});p.on('pageerror',e=>errors.push(e.stack));p.on('dialog',d=>d.accept());await p.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});
  const state=()=>p.evaluate(()=>{const a=Akari.app,s=a.editorState;return{source:s.main.sourceText,project:JSON.stringify(a.project),history:s.history,redo:s.redo,dirty:s.dirty};});

@@ -1,6 +1,6 @@
-# あかり1.0.0の監査
+# あかり1.0.1の監査
 
-契約は [AUDIT.md](../AUDIT.md)、機能固定は `manifests/features.json`、公開ファイル固定は `manifests/release-1.0.0.json` です。
+契約は [AUDIT.md](../AUDIT.md)、機能固定は `manifests/features.json`、公開ファイル固定は `manifests/release-1.0.1.json` です。
 
 ## 実行
 
@@ -19,3 +19,5 @@ static gateで機能由来の命名と製品版参照の用途をASTで検査し
 node audit/freeze-release.mjs --record
 node audit/freeze-release.mjs
 ```
+
+現行製品pathと製品版は `public-files.json` の `productFile` / `productVersion` から `lib/product-path.cjs` を通じて取得します。版更新は製品HTMLとrelease freezeを入れ替え、公開対象・リンクも同時に更新します。ブロック入力欄の全文表示は `tests/block-field-width.mjs` で実ブラウザー検査し、selftestとLinux / Windowsの必須証拠へ含めます。

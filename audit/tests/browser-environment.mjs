@@ -1,3 +1,4 @@
+import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ assert.equal(require('playwright/package.json').version,expected.playwright);
 const metadata={revision:expected.revision,browserVersion:expected.version};
 assert.equal(metadata.revision,expected.revision);assert.equal(metadata.browserVersion,expected.version);
 assert.ok(!fs.existsSync(output),'fresh environment evidence required');
-const report={status:'RUNNING',snapshot:snapshot('Akari.html'),playwright:expected.playwright,revision:metadata.revision,
+const report={status:'RUNNING',snapshot:snapshot(currentProductFile()),playwright:expected.playwright,revision:metadata.revision,
   executablePath,executableSha256:sha(fs.readFileSync(executablePath)),launchTimeout:expected.launchTimeout,launches:[]};
 fs.mkdirSync(path.dirname(output),{recursive:true});
 const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
@@ -26,7 +27,7 @@ try{
       report.launches.push({id,browser:browser.version(),ms,...result});save();
     }finally{if(browser)await browser.close();}
   }
-  assert.deepEqual(snapshot('Akari.html'),report.snapshot);report.status='PASS';
+  assert.deepEqual(snapshot(currentProductFile()),report.snapshot);report.status='PASS';
   verifyBrowserEnvironment(report,report.snapshot);save();
   console.log('Matching browser environment: PASS (3 independent starts)');
 }catch(error){report.status='FAIL';report.error=error.stack;save();throw error;}

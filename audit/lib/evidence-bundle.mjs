@@ -1,3 +1,5 @@
+import {verifyBlockFields} from './block-field-contract.mjs';
+import { currentProductFile } from "./product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -16,7 +18,8 @@ export function verifyEvidence(kind,dir,inputs){
   if(kind.startsWith('full-browser-'))return verifyBrowserGroup(dir,kind.slice(13),inputs);
   if(kind.startsWith('audio-codecs-')){
     const report=JSON.parse(fs.readFileSync(path.join(dir,'report.json')));
-    verifyAudio(report,inputs,kind.slice(13));return {status:'PASS',cases:report.results.length,platform:report.platform};
+    verifyAudio(report,inputs,kind.slice(13));
+    const fields=JSON.parse(fs.readFileSync(path.join(dir,'block-field-width.json')));verifyBlockFields(fields,inputs);return {status:'PASS',cases:report.results.length,platform:report.platform};
   }
   assert.equal(kind,'static');const report=JSON.parse(fs.readFileSync(path.join(dir,'static.json')));
   assert.equal(report.status,'PASS');assert.deepEqual(report.snapshot,inputs);assert.equal(report.capabilities,260);
@@ -24,7 +27,7 @@ export function verifyEvidence(kind,dir,inputs){
 }
 export function sealBundle(kind,dir,provenance={}){
   assert.ok(!fs.existsSync(path.join(dir,'bundle.json')));
-  const inputs=snapshot('Akari.html'),result=verifyEvidence(kind,dir,inputs);
+  const inputs=snapshot(currentProductFile()),result=verifyEvidence(kind,dir,inputs);
   const files=Object.fromEntries(evidenceFiles(dir).map(f=>[f,sha(fs.readFileSync(path.join(dir,f)))]));
   const bundle={schema:'akari-evidence-v1',kind,status:'PASS',snapshot:inputs,provenance,result,files};
   fs.writeFileSync(path.join(dir,'bundle.json'),JSON.stringify(bundle,null,2)+'\n');return bundle;

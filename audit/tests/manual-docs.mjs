@@ -1,3 +1,4 @@
+import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -10,8 +11,8 @@ const [browserPath,output]=process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output),'new documentation evidence directory required');
 fs.mkdirSync(output,{recursive:true});
 const pages=['index.html','MANUAL.html','Manual/block-mode.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html','Manual/code-mode-advanced.html'];
-const before=snapshot('Akari.html');
-const html=fs.readFileSync('Akari.html','utf8');
+const before=snapshot(currentProductFile());
+const html=fs.readFileSync(currentProductFile(),'utf8');
 const context=vm.createContext({console,TextEncoder,TextDecoder,Blob,URL,structuredClone,setTimeout,clearTimeout});
 vm.runInContext(html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>')),context,{timeout:30000});
 const api=vm.runInContext('Akari',context);
@@ -78,7 +79,7 @@ if(browserPath!=='--static'){
       await page.setViewportSize({width:1366,height:900});
       await page.goto(pathToFileURL(path.resolve('MANUAL.html')).href);
       const first=await page.locator('[data-example="first-move"]').textContent();
-      await page.goto(pathToFileURL(path.resolve('Akari.html')).href);
+      await page.goto(pathToFileURL(path.resolve(currentProductFile())).href);
       await page.waitForFunction(()=>!!globalThis.Akari?.app);
       page.on('dialog',d=>d.accept());
       async function reveal(l){
@@ -108,7 +109,7 @@ if(browserPath!=='--static'){
   });
   report.status='PASS';
 }
-assert.deepEqual(snapshot('Akari.html'),before);
+assert.deepEqual(snapshot(currentProductFile()),before);
 fs.writeFileSync(path.join(output,'manual-docs.json'),JSON.stringify(report,null,2)+'\n');
 console.log('Documentation: '+report.status+'; '+snippets.length+' syntax examples; '+links.length+' local links; '+report.views.length+' browser views');
 

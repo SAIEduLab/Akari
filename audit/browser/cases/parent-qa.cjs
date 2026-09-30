@@ -1,7 +1,8 @@
+const { currentProductFile } = require("./../../lib/product-path.cjs");
 const U=require('./ui-routes.cjs');
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=require('assert/strict'),{pathToFileURL}=require('url');
 const{chromium}=require('playwright');
-const html=path.resolve(process.argv[2]||'Akari.html'),output=path.resolve(process.argv[3]||'audit-evidence/browser/parent-qa.json');
+const html=path.resolve(process.argv[2]||currentProductFile()),output=path.resolve(process.argv[3]||'audit-evidence/browser/parent-qa.json');
 (async()=>{const browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true,args:['--allow-file-access-from-files']});const results=[];try{const test=async(id,fn)=>{const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.stack));page.on('dialog',d=>d.accept());try{await page.goto(pathToFileURL(html).href);await fn(page);assert.deepEqual(errors,[]);results.push({id,pass:true});}catch(e){results.push({id,pass:false,error:e.stack,pageErrors:errors});await page.screenshot({path:path.join(path.dirname(output),id+'.png'),fullPage:true});}finally{await page.close();}console.log(results.at(-1));};
 const state=p=>p.evaluate(()=>{const a=Akari.app,s=a.editorState;return{source:s.main.sourceText,owner:s.main.ownerKey,mode:s.main.mode,project:JSON.stringify(a.project),history:s.history,redo:s.redo,dirty:s.dirty,draft:s.callableDraft,hasDraft:s.hasDraft};});
 const field=p=>p.locator('#blockEditor article[data-schema-id="NumberLiteral"] input[data-blockui-field="value"]').first();

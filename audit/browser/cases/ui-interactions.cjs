@@ -1,9 +1,10 @@
+const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Real browser interactions. Run: node audit-evidence/browser/ui-interactions.cjs [html] [output-prefix]
 const U=require('./ui-routes.cjs');
 const {withFreshPage}=require('./ui-case.cjs');
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=require('assert/strict'),{pathToFileURL}=require('url');
 const {chromium}=require('playwright');
-const html=path.resolve(process.argv[2]||'Akari.html'),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/ui-interactions'),initialHash=crypto.createHash('sha256').update(fs.readFileSync(html)).digest('hex');
+const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/ui-interactions'),initialHash=crypto.createHash('sha256').update(fs.readFileSync(html)).digest('hex');
 (async()=>{
  const browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true});
  const browserVersion=browser.version(),results=[],errors=[],networkRequests=[];

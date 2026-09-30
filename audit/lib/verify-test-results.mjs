@@ -1,3 +1,4 @@
+import { currentProductFile } from "./product-path.cjs";
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -69,7 +70,7 @@ export function verifyAuthority(manifest) {
   return true;
 }
 if(process.argv[1] && path.resolve(process.argv[1])===path.resolve(import.meta.filename)) {
-  const [reportPath,product='Akari.html']=process.argv.slice(2);
+  const [reportPath,product=currentProductFile()]=process.argv.slice(2);
   const manifest=JSON.parse(fs.readFileSync(path.join(root,'audit/manifests/product-tests.json')));
   verifyAuthority(manifest);verify(JSON.parse(fs.readFileSync(reportPath)),manifest,snapshot(product));
   console.log('External product report: PASS');

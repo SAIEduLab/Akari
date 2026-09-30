@@ -1,3 +1,4 @@
+import {verifyBlockFields} from './block-field-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -22,6 +23,7 @@ export function verifyGateResults(dir,inputs){
   verifyEditorAssets(read('editor-assets'),inputs);verifyDesignerZoom(read('designer'),inputs);
   verifyFormatCompatibility(read('format-compatibility'),inputs);
   verifyUiButtons(read('ui-buttons'),inputs);
+  verifyBlockFields(read('block-fields'),inputs);
   const ids=['OWNER-COMPLETE-REGISTRY','OWNER-REJECT-UNOWNED-AT-BOUNDARIES','OWNER-SAVE-ROUNDTRIP','OWNER-FORMAT-REJECTION','OWNER-CALLER-RECEIVER-AND-FUNCTION','OWNER-REFERENCES-INCLUDING-EXPRESSION','OWNER-INCOMPLETE-AND-UNUSED','OWNER-GUI-DIRECT-BUTTON','OWNER-GUI-ALL-EVENTS','OWNER-GUI-UNUSED-STAGE-DEFINITIONS','OWNER-GUI-SYNTAX-ERROR-RAW-BODY','OWNER-GUI-DRAFT-OWNERSHIP','OWNER-GUI-RECURSION-AND-HIDDEN-OBJECT','OWNER-GUI-VIEWPORT-AND-UNDO-REACHABILITY'];
   const ownership=read('ownership/report');assert.equal(ownership.status,'PASS');assert.deepEqual(ownership.snapshot,inputs);assert.ok(ownership.browser);assert.deepEqual(ownership.results.map(r=>r.id),ids);for(const r of ownership.results)assert.equal(r.pass,true,r.id);
   for(const name of ['static','integrity','normal','language-boundaries','manual/manual-docs']){const r=read(name);assert.equal(r.status,'PASS');assert.deepEqual(r.snapshot,inputs);}

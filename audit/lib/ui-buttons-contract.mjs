@@ -1,3 +1,4 @@
+import { currentProductFile } from "./product-path.cjs";
 import assert from 'node:assert/strict';
 
 export const uiButtonIds = Object.freeze([
@@ -33,7 +34,7 @@ export function verifyUiButtons(report, currentSnapshot) {
 }
 
 export function checkUiButtonValidatorNegatives() {
-  const inputs = {productSha256:'a'.repeat(64), files:{'Akari.html':'a'.repeat(64)}};
+  const inputs = {productSha256:'a'.repeat(64), files:{[currentProductFile()]:'a'.repeat(64)}};
   const valid = () => ({schema:'akari-ui-buttons-v1', status:'PASS', snapshot:structuredClone(inputs),
     environment:'chromium', browser:'fixture-browser', total:uiButtonIds.length,
     results:uiButtonIds.map(id => ({id, status:'PASS', pass:true, evidence:{checked:true}})),
