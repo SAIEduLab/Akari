@@ -131,10 +131,10 @@
     "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
     "MANUAL.html": "08dbc0c0a055e951ccb547b314b1786a425e8150e60c072b951d0439b7ec4fed",
     "Manual/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "Manual/block-mode.html": "210869985bfb11ca1686ee073887ff4ad3d17cf6e68a50599109d46949a703cc",
-    "Manual/code-mode-advanced.html": "95a14a3c379046e7af0a426d1cfe09b9d49026556cf0a3e0aec1188c05c5bb13",
-    "Manual/code-mode-beginner.html": "d130a8f988c80c588bfefec35fcce9380afbcd0136462dee8395a24724e67d4b",
-    "Manual/code-mode-intermediate.html": "a8aa58b4cd878adc9f8064f472d52056a11325039796ccb82a8906186c8bfdef",
+    "Manual/block-mode.html": "9b09cd270bf7c863b6a5301c3e2f43455b4ec774bbc99d697b8bb8f0c927f721",
+    "Manual/code-mode-advanced.html": "e3369d9efab71ebc066d60b902c419f94c613b7ac51d1129b0ddf7a0b6552cd4",
+    "Manual/code-mode-beginner.html": "f87ed20c99e4b897fa32a33dab470a9dd57d5c20f11cb550044ff2e40106d7c1",
+    "Manual/code-mode-intermediate.html": "8dcc8ed99fa73d465fc36bf311d5799dbf3c8a3f9f2a9ad84ea5a29f4c6e4e8c",
     "README.md": "f71343cecbefbd2352b13d6d872e312f35b0ae2ecd29d9cbdcd9306e6e7f3b19"
   },
   "inventorySha256": "dc72cf7d1b1bba6dd0af97ec60991e2f13a332aaa11d69b465cfaa7c010c1aff"
