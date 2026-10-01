@@ -77,7 +77,7 @@ async function main() {
       }
       for(const [width,height]of [[1440,900],[390,844],[320,568]]){
         await page.setViewportSize({width,height});await (await reveal(page.locator('#diagnoseBtn'))).click();await page.locator('#diagnosisModal.show').waitFor();assert.match(await page.locator('#diagnosisBody').innerText(),/作品は実行できます/);await (await reveal(page.locator('#diagnosisClose'))).click();
-        await (await reveal(page.locator('#procBtn'))).click();await page.locator('#procModal.show').waitFor();await (await reveal(page.locator('#callableSelect'))).selectOption({label:'計算：二倍'});assert.equal(await page.locator('#callableCode').inputValue(),'元値×2を返す。');await (await reveal(page.locator('#procClose'))).click();
+        await (await reveal(page.locator('#procBtn'))).click();await page.locator('#procModal.show').waitFor();await (await reveal(page.locator('#callableSelect'))).selectOption({label:'答えを求める：二倍'});assert.equal(await page.locator('#callableCode').inputValue(),'元値×2を返す。');await (await reveal(page.locator('#procClose'))).click();
       }
       await page.setViewportSize({width:1440,height:900});
       return {resizeSequence:[1440,390,320,1440],exactSourceSelectionProjectRetained:true,dimensions,diagnosisAndCallableControlsExercised:[1440,390,320]};

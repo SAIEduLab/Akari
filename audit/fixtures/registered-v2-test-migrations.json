@@ -20568,6 +20568,13 @@
       "newText": "['akari.autosave.f2','akari.uiLevel.v1','akari.editorMode.v1'].includes(x.key)",
       "preservedMeaning": "Explicit user request on 2026-10-01 adds a dedicated code/blocks preference; first startup uses blocks. F1 isolation, exact valid/pending source retention, refusal, recovery, cancellation and history guarantees remain. The new preference has exact-name isolation and independent reload/Undo/Redo regression in review-first-use.",
       "sourceLedger": "audit/fixtures/browser-v2-input-migration.json"
+    },
+    {
+      "testId": "browser/responsive-controls-resize-preservation",
+      "oldText": "{label:'計算：二倍'}",
+      "newText": "{label:'答えを求める：二倍'}",
+      "preservedMeaning": "Explicit UI terminology alignment changes only the option label used to select the same saved function 二倍. Stable case ID, 1440/390/320 viewport checks, exact source/selection/project retention, callable source 元値×2を返す。, and real pointer/select routes remain unchanged. CI run 36932794815 demonstrates the old-label lookup failure; no behavioral assertion is removed.",
+      "sourceLedger": "audit/fixtures/browser-v2-input-migration.json"
     }
   ]
 }

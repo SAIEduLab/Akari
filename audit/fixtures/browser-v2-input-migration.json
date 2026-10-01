@@ -1067,7 +1067,7 @@
       "originalPath": "audit/browser/cases/run-editor-regression.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/run-editor-regression.cjs",
       "originalSha256": "a4a3e68f32574287dcdfff686dc727d5edc6f18542533b1a241e078b26f1258e",
-      "candidateSha256": "36ab6bf0e5ee73c88f7cfdd02921edfa0bc6f29065940763dfb7ff8506ea19d8",
+      "candidateSha256": "62c4dd4b06ae6955f8ed8d4c73dc53120b1fba20ddf2bd3feb88897ed31bf3d6",
       "stableIds": [
         "editor-input-format-comments-undo-redo",
         "diagnose-run-stop",
@@ -3932,6 +3932,16 @@
       "oldText": "['akari.autosave.f2','akari.uiLevel.v1'].includes(x.key)",
       "newText": "['akari.autosave.f2','akari.uiLevel.v1','akari.editorMode.v1'].includes(x.key)",
       "preservedMeaning": "Explicit user request: persist code/blocks selection separately from detail level, default to blocks without a preference. Only the specific UI preference key is added; all F1 isolation, invalid draft, valid project/history/redo/dirty, refusal, cancellation and recovery assertions remain."
+    },
+    {
+      "id": "browser-callable-label-001",
+      "path": "audit/browser/cases/run-editor-regression.cjs",
+      "testIds": [
+        "responsive-controls-resize-preservation"
+      ],
+      "oldText": "{label:'計算：二倍'}",
+      "newText": "{label:'答えを求める：二倍'}",
+      "preservedMeaning": "Explicit UI terminology alignment changes only the option label used to select the same saved function 二倍. Stable case ID, 1440/390/320 viewport checks, exact source/selection/project retention, callable source 元値×2を返す。, and real pointer/select routes remain unchanged. CI run 36932794815 demonstrates the old-label lookup failure; no behavioral assertion is removed."
     }
   ],
   "explicitSetup": {

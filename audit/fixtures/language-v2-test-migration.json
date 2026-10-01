@@ -47028,7 +47028,7 @@
     {
       "path": "audit/browser/cases/run-editor-regression.cjs",
       "originalSha256": "a4a3e68f32574287dcdfff686dc727d5edc6f18542533b1a241e078b26f1258e",
-      "candidateSha256": "36ab6bf0e5ee73c88f7cfdd02921edfa0bc6f29065940763dfb7ff8506ea19d8",
+      "candidateSha256": "62c4dd4b06ae6955f8ed8d4c73dc53120b1fba20ddf2bd3feb88897ed31bf3d6",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/run-editor-regression.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
