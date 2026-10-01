@@ -1,3 +1,4 @@
+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
 import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,7 +23,7 @@ async function mode(p, m) { await body(p); await click(p,'#editorMode'+m); }
 async function select(p,id) { await (await reveal(p.locator('#objectSelect'))).selectOption(id); }
 async function fill(p, source) { await mode(p,'code'); await p.locator('#codeEditor').fill(source); await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source); await p.waitForTimeout(350); }
 const number = (p, root='#blockEditor') => p.locator(root+' .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first();
-async function callable(p,kind='Function') { await click(p,'#procBtn'); await click(p,'#callableNew'+kind); await p.locator('#callableName').fill('ボタン検証'); await p.locator('#callableName').press('Tab'); await p.locator('#callableCode').fill(kind==='Function'?'1を返す。':'1と言う。'); await p.waitForTimeout(350); }
+async function callable(p,kind='Function') { await click(p,'#procBtn'); await click(p,'#callableNew'+kind); await p.locator('#callableName').fill('ボタン検証'); await p.locator('#callableName').press('Tab'); await p.locator('#callableCode').fill(kind==='Function'?'1を答えとして返す。':'1を言う。'); await p.waitForTimeout(350); }
 async function visible(p,s,value=true) { assert.equal(await p.locator(s).isVisible(),value,s+' visibility'); }
 async function reachable(l) { await l.scrollIntoViewIfNeeded(); const r=await l.boundingBox(); assert.ok(r&&r.width>0&&r.height>0); const v=l.page().viewportSize(); assert.ok(r.x>=-1&&r.y>=-1&&r.x+r.width<=v.width+1&&r.y+r.height<=v.height+1,'control must be reachable by ordinary scrolling'); await l.click(); return {width:r.width,height:r.height}; }
 const cases = {
@@ -42,12 +43,12 @@ const cases = {
   async 'UI-BUTTON-BASIC-HISTORY'(p) {
     await p.locator('#uiLevel').selectOption('basic'); await body(p); const initial=await fingerprint(p);
     await visible(p,'#undoBtn'); await visible(p,'#redoBtn'); assert.equal(await p.locator('#redoBtn').isDisabled(),true);
-    await fill(p,'1と言う。'); const one=await fingerprint(p); assert.ok(one.history>initial.history);
+    await fill(p,'1を言う。'); const one=await fingerprint(p); assert.ok(one.history>initial.history);
     await click(p,'#undoBtn'); assert.equal((await fingerprint(p)).source,initial.source);
-    await click(p,'#redoBtn'); assert.equal((await fingerprint(p)).source,'1と言う。');
+    await click(p,'#redoBtn'); assert.equal((await fingerprint(p)).source,'1を言う。');
     await mode(p,'blocks'); const before=await fingerprint(p); await number(p).fill('2'); await number(p).press('Enter');
-    assert.equal((await fingerprint(p)).source,'2と言う。'); assert.equal((await fingerprint(p)).history,before.history+1);
-    await click(p,'#undoBtn'); assert.equal((await fingerprint(p)).source,'1と言う。'); await click(p,'#redoBtn'); assert.equal((await fingerprint(p)).source,'2と言う。');
+    assert.equal((await fingerprint(p)).source,'2を言う。'); assert.equal((await fingerprint(p)).history,before.history+1);
+    await click(p,'#undoBtn'); assert.equal((await fingerprint(p)).source,'1を言う。'); await click(p,'#redoBtn'); assert.equal((await fingerprint(p)).source,'2を言う。');
     return {basic:true,codeUndoRedo:true,blockUndoRedo:true,atomicBlockHistory:true};
   },
   async 'UI-BUTTON-SIDE-ACTIONS'(p) {
@@ -71,10 +72,10 @@ const cases = {
     return {levels:['basic','advanced'],legacyAll:'advanced',reload:true};
   },
   async 'UI-BUTTON-PENDING'(p) {
-    await fill(p,'1と言う。'); await mode(p,'blocks'); const mainBefore=await fingerprint(p);
+    await fill(p,'1を言う。'); await mode(p,'blocks'); const mainBefore=await fingerprint(p);
     await number(p).fill('bad'); await number(p).press('Enter'); assert.equal(await number(p).getAttribute('aria-invalid'),'true'); assert.deepEqual(await fingerprint(p),mainBefore); await click(p,'#blockEditor [data-blockui-action="cancel"]'); assert.deepEqual(await fingerprint(p),mainBefore);
     await number(p).fill('4'); await visible(p,'#blockEditor [data-blockui-action="commit"]'); await click(p,'#blockEditor [data-blockui-action="cancel"]'); assert.deepEqual(await fingerprint(p),mainBefore);
-    await number(p).fill('5'); await click(p,'#blockEditor [data-blockui-action="commit"]'); assert.equal((await fingerprint(p)).source,'5と言う。'); assert.equal((await fingerprint(p)).history,mainBefore.history+1); await visible(p,'#blockEditor [data-blockui-action="commit"]',false);
+    await number(p).fill('5'); await click(p,'#blockEditor [data-blockui-action="commit"]'); assert.equal((await fingerprint(p)).source,'5を言う。'); assert.equal((await fingerprint(p)).history,mainBefore.history+1); await visible(p,'#blockEditor [data-blockui-action="commit"]',false);
     await callable(p); await visible(p,'#callableCancel',false); await visible(p,'#callablePending',false);
     await click(p,'#callableModeblocks'); const before=await fingerprint(p), n=number(p,'#callableBlocks');
     await n.fill('invalid'); await n.press('Enter'); assert.equal(await n.getAttribute('aria-invalid'),'true'); await visible(p,'#callableBlocks [data-blockui-action="cancel"]'); assert.deepEqual(await fingerprint(p),before);
@@ -82,11 +83,11 @@ const cases = {
     await p.locator('#callableName').fill('長'.repeat(501)); await visible(p,'#callablePending'); await visible(p,'#callableCancel'); assert.deepEqual(await fingerprint(p),before); await click(p,'#callableCancel'); assert.deepEqual(await fingerprint(p),before); await visible(p,'#callableCancel',false);
     await number(p,'#callableBlocks').fill('2'); await number(p,'#callableBlocks').press('Enter'); await visible(p,'#callableCancel',false);
     assert.equal(await p.evaluate(()=>Akari.app.project.functions.length),0); assert.equal((await fingerprint(p)).hasDraft,true);
-    await click(p,'#callableSave'); assert.equal(await p.evaluate(()=>Akari.app.project.functions.length),1); assert.equal(await p.evaluate(()=>Akari.app.project.functions[0].source),'2を返す。');
+    await click(p,'#callableSave'); assert.equal(await p.evaluate(()=>Akari.app.project.functions.length),1); assert.equal(await p.evaluate(()=>Akari.app.project.functions[0].source),'2を答えとして返す。');
     return {invalidInputCancelable:true,validDraftCancelHidden:true,registrationSeparate:true};
   },
   async 'UI-BUTTON-BLOCK-DESTINATION'(p) {
-    await fill(p,'1と言う。'); await mode(p,'blocks');
+    await fill(p,'1を言う。'); await mode(p,'blocks');
     for(const root of ['#blockEditor','#callableBlocks']) {
       if(root==='#callableBlocks') { await callable(p); await click(p,'#callableModeblocks'); }
       const before=await fingerprint(p);
@@ -101,7 +102,7 @@ const cases = {
   },
   async 'UI-BUTTON-BLOCK-INSERTION'(p) {
     const roots=[]; for (const root of ['#blockEditor','#callableBlocks']) {
-    if(root==='#blockEditor') { await fill(p,'1と言う。\n2と言う。\n3と言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1と言う。\n2と言う。\n3と言う。'); await p.waitForTimeout(350); await click(p,'#callableModeblocks'); } const before=await fingerprint(p);
+    if(root==='#blockEditor') { await fill(p,'1を言う。\n2を言う。\n3を言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1を言う。\n2を言う。\n3を言う。'); await p.waitForTimeout(350); await click(p,'#callableModeblocks'); } const before=await fingerprint(p);
     const insertions=p.locator(root+' .blockui-script > .blockui-node-content > .blockui-body > [data-blockui-action="body-insert"]'); assert.equal(await insertions.count(),4,'three statements need four insertion boundaries');
     const sizes=[]; for(let i=0;i<4;i++) { const b=insertions.nth(i); assert.equal(await b.isVisible(),true); const r=await reachable(b); assert.ok(r.width>=24&&r.height>=24,'minimum pointer target 24px'); sizes.push(r); assert.ok(await p.locator(root+' .blockui-chosen-destination').count()); await p.keyboard.press('Escape'); }
     assert.deepEqual(await fingerprint(p),before); assert.ok(await p.locator(root+' [data-blockui-drag="node"]').count()>=3,'drag alternative remains available');
@@ -110,14 +111,14 @@ const cases = {
     roots.push({root,boundaries:4,sizes,pointerInsertion:true,dragAlternative:true});
     }
     const touchContext=await p.context().browser().newContext({offline:true,hasTouch:true,viewport:{width:1024,height:768}}),errors=[],network=[];
-    try { await touchContext.route(/^https?:/,route=>{network.push(route.request().url());return route.abort();}); const t=await touchContext.newPage(); t.on('pageerror',e=>errors.push(e.message)); await t.goto(pathToFileURL(path.resolve(currentProductFile())).href); await t.waitForFunction(()=>!!globalThis.Akari?.app); await select(t,'stage'); await fill(t,'1と言う。'); await mode(t,'blocks'); const before=await fingerprint(t);
+    try { await touchContext.route(/^https?:/,route=>{network.push(route.request().url());return route.abort();}); const t=await touchContext.newPage(); t.on('pageerror',e=>errors.push(e.message)); await t.goto(pathToFileURL(path.resolve(currentProductFile())).href); await t.waitForFunction(()=>!!globalThis.Akari?.app); await installRegressionProject(t); await select(t,'stage'); await fill(t,'1を言う。'); await mode(t,'blocks'); const before=await fingerprint(t);
       async function tap(l) { await l.scrollIntoViewIfNeeded(); const r=await l.boundingBox(); assert.ok(r&&r.width>=24&&r.height>=24); await t.touchscreen.tap(r.x+r.width/2,r.y+r.height/2); }
       await tap(t.locator('#blockEditor [data-blockui-action="body-insert"]').first()); assert.ok(await t.locator('#blockEditor .blockui-chosen-destination').count()); await tap(t.locator('#blockEditor [data-blockui-action="cancel"]')); assert.equal(await t.locator('#blockEditor .blockui-chosen-destination').count(),0); assert.deepEqual(await fingerprint(t),before);
     } finally { await touchContext.close(); } assert.deepEqual(errors,[]); assert.deepEqual(network,[]); return {roots,touch:true};
   },
   async 'UI-BUTTON-BLOCK-COMMANDS'(p) {
     const roots=[]; for (const root of ['#blockEditor','#callableBlocks']) {
-    if(root==='#blockEditor') { await fill(p,'1と言う。\n2と言う。\n3と言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1と言う。\n2と言う。\n3と言う。'); await p.waitForTimeout(350); await click(p,'#callableModeblocks'); }
+    if(root==='#blockEditor') { await fill(p,'1を言う。\n2を言う。\n3を言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1を言う。\n2を言う。\n3を言う。'); await p.waitForTimeout(350); await click(p,'#callableModeblocks'); }
     const says=()=>p.locator(root+' .blockui-node[data-schema-id="'+'Say'+'"]'); const values=()=>p.locator(root+' .blockui-node[data-schema-id="NumberLiteral"] input').evaluateAll(es=>es.map(e=>e.value));
     async function action(index,a,expected) { const before=await fingerprint(p); await U.nodeAction(says().nth(index),a); assert.deepEqual(await values(),expected); assert.equal((await fingerprint(p)).history,before.history+1,a+' changes once'); }
     await action(0,'duplicate',['1','1','2','3']); await action(1,'move-down',['1','2','1','3']); await action(3,'move-up',['1','2','3','1']); await action(3,'remove',['1','2','3']);
@@ -130,7 +131,7 @@ const cases = {
   async 'UI-BUTTON-RESPONSIVE'(p) {
     const evidence=[];
     for(const viewport of [{width:1440,height:1000},{width:1280,height:720},{width:1024,height:768},{width:768,height:1024},{width:390,height:844}]) {
-      await p.setViewportSize(viewport); await fill(p,'1と言う。');
+      await p.setViewportSize(viewport); await fill(p,'1を言う。');
       for(const m of ['code','blocks']) { await mode(p,m); const before=await fingerprint(p); await reachable(p.locator('#sourceOverviewBtn')); await reachable(p.locator('#sourceEditBtn')); assert.deepEqual(await fingerprint(p),before); await reachable(p.locator('#undoBtn')); await reachable(p.locator('#redoBtn')); }
       await U.openNodeMenu(p.locator('#blockEditor .blockui-node[data-schema-id="Say"]').first()); const command=p.locator('#blockEditor .blockui-node[data-schema-id="Say"]').first().locator(':scope > .blockui-node-head [data-blockui-action="duplicate"]'); await reachable(command); assert.equal(await p.locator('#blockEditor .blockui-node[data-schema-id="Say"]').count(),2);
       const toggle=p.locator('.properties-window .blockui-side-toggle'); await reachable(toggle); const expanded=await toggle.getAttribute('aria-expanded'); await reachable(toggle); assert.notEqual(await toggle.getAttribute('aria-expanded'),expanded); evidence.push(viewport);
@@ -139,7 +140,7 @@ const cases = {
   },
 };
 assert.deepEqual(Object.keys(cases),uiButtonIds);
-const version=await withBrowser(browserPath,async b=> { for(const [id,run] of Object.entries(cases)) { try { const evidence=await pageFor(b,currentProductFile(),async p=> { p.on('dialog',d=>d.accept()); await p.setViewportSize({width:1440,height:1000}); await select(p,'stage'); return run(p); }); results.push({id,status:'PASS',pass:true,detail:'PASS',evidence}); } catch(error) { results.push({id,status:'FAIL',pass:false,detail:error.stack}); } console.log(results.at(-1).status+' '+id); if(!results.at(-1).pass) console.error(results.at(-1).detail); } return b.version(); },360000);
+const version=await withBrowser(browserPath,async b=> { for(const [id,run] of Object.entries(cases)) { try { const evidence=await pageFor(b,currentProductFile(),async p=> { p.on('dialog',d=>d.accept()); await p.setViewportSize({width:1440,height:1000}); await installRegressionProject(p); await select(p,'stage'); return run(p); }); results.push({id,status:'PASS',pass:true,detail:'PASS',evidence}); } catch(error) { results.push({id,status:'FAIL',pass:false,detail:error.stack}); } console.log(results.at(-1).status+' '+id); if(!results.at(-1).pass) console.error(results.at(-1).detail); } return b.version(); },360000);
 assert.deepEqual(snapshot(currentProductFile()),inputs,'test must not modify product inputs');
 const report={schema:'akari-ui-buttons-v1',status:results.every(r=>r.pass)?'PASS':'FAIL',environment:'chromium',browser:version,snapshot:inputs,total:results.length,results,pageErrors:[],networkRequests:[]};
 fs.mkdirSync(path.dirname(output),{recursive:true}); fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');

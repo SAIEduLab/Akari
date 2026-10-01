@@ -1,3 +1,4 @@
+const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 // Actual keyboard/pointer regressions for owner deletion and expression movement.
 const L=require('./audit-lib.cjs'),U=require('./ui-routes.cjs'),assert=require('assert/strict');
 const {pathToFileURL}=require('url'),{chromium}=require('playwright');
@@ -14,7 +15,7 @@ const {pathToFileURL}=require('url'),{chromium}=require('playwright');
   p.on('pageerror',e=>pageErrors.push({id,error:e.message}));
   p.on('dialog',async d=>{dialogs.push(d.message());await d.accept();});
   try{
-   await p.goto(pathToFileURL(L.path.join(dir,manifest.candidate)).href);
+   await p.goto(pathToFileURL(L.path.join(dir,manifest.candidate)).href);await setupRegressionPage(p);
    await (await reveal(p.locator('#objectSelect'))).selectOption('sprite-1');await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();
    await (async()=>{const control=await reveal(p.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();await p.waitForTimeout(400);
    results.push({id,pass:true,evidence:await test(p,dialogs)});
@@ -24,7 +25,7 @@ const {pathToFileURL}=require('url'),{chromium}=require('playwright');
   L.result(L.path.join(dir,'browser-owner-delete.json'),{manifest,browser:browser.version(),results,pageErrors,networkRequests});
  };
  try{
-  await run('pending-expression-owner-delete-refused','［1、2］と言う。',async(p,dialogs)=>{
+  await run('pending-expression-owner-delete-refused','［1、2］を言う。',async(p,dialogs)=>{
    const root=p.locator('#blockEditor'),list=root.locator('[data-schema-id="ListLiteral"]');
    await U.nodeAction(list.locator('[data-schema-id="NumberLiteral"]').first(),'move');
    await U.slotAction(U.ownedSlots(list).nth(1));
@@ -36,7 +37,7 @@ const {pathToFileURL}=require('url'),{chromium}=require('playwright');
    await (await reveal(root.locator('[data-blockui-action="cancel-expression-move"]'))).click();assert.equal((await read(p)).pending,null);
    return{route,before,after,cancelled:true};
   });
-  await run('confirmed-owner-delete-common-history','1と言う。\n2と言う。',async(p,dialogs)=>{
+  await run('confirmed-owner-delete-common-history','1を言う。\n2を言う。',async(p,dialogs)=>{
    await (async()=>{const control=await reveal(p.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();const route=await outsideButton(p),before=await read(p);
    await p.keyboard.press('Delete');const deleted=await read(p);
    assert.equal(JSON.parse(deleted.project).components.some(c=>c.id==='sprite-1'),false);assert.equal(dialogs.length,1);
@@ -44,7 +45,7 @@ const {pathToFileURL}=require('url'),{chromium}=require('playwright');
    await (await reveal(p.locator('#redoBtn'))).click();assert.equal((await read(p)).project,deleted.project);
    return{route,before,deleted,confirmationCount:dialogs.length,undoRedoExact:true};
   });
-  await run('expression-move-destination-not-obscured','1と言う。\n2と言う。',async p=>{
+  await run('expression-move-destination-not-obscured','1を言う。\n2を言う。',async p=>{
    const root=p.locator('#blockEditor'),before=await read(p);
    await U.nodeAction(root.locator('[data-schema-id="NumberLiteral"]').first(),'move');
    await U.slotAction(U.ownedSlots(root.locator('[data-schema-id="Say"]').nth(1)).first());

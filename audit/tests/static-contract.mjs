@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {snapshot} from '../lib/product-test-host.mjs';
+import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {verifyAuthority} from '../lib/verify-test-results.mjs';
 import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
@@ -38,7 +38,13 @@ assert.equal(capabilities.length,260);
 for(const row of capabilities)functionalId(row.split('|')[1].trim(),'capability');
 const files=JSON.parse(fs.readFileSync('audit/public-files.json')).files;
 assert.equal(new Set(files).size,files.length);assert.ok(files.includes(currentProductFile())&&files.includes('LANGUAGE.md')&&files.includes('AUDIT.md'));
-for(const file of files){assert.ok(!path.isAbsolute(file)&&!file.split('/').includes('..'));assert.ok(fs.existsSync(file),file);assert.ok(!/(AGENTS|PROJECT_INSTRUCTIONS|PUBLIC_SYNC|fixtures\/(?:0\.|1\.)|historical|checkpoint|records\/)/.test(file),file);if(file.startsWith('audit/suites/run'))functionalId(path.basename(file,'.js'),'suite file');}
+// One approved, byte-pinned independent oracle is public. Other historical
+// fixture paths and private/checkpoint records retain the existing prohibition.
+const approvedBaselinePath='audit/fixtures/1.0.2-baseline-capabilities.json';
+const publicationPathAllowed=file=>!/(AGENTS|PROJECT_INSTRUCTIONS|PUBLIC_SYNC|historical|checkpoint|records\/)/.test(file)&&
+  (!/fixtures\/(?:0\.|1\.)/.test(file)||file===approvedBaselinePath);
+for(const bad of ['audit/fixtures/1.0.1.json','audit/fixtures/0.9.9.json','audit/fixtures/1.0.2-other.json','audit/checkpoint/report.json','PROJECT_INSTRUCTIONS.md'])assert.equal(publicationPathAllowed(bad),false,bad);
+for(const file of files){assert.ok(!path.isAbsolute(file)&&!file.split('/').includes('..'));assert.ok(fs.existsSync(file),file);assert.ok(publicationPathAllowed(file),file);if(file===approvedBaselinePath)assert.equal(sha(fs.readFileSync(file)),'35c7dabee4066a17fdd43fefe3c8f34ac30e4059087b0a46579574f2cda536f5','approved independent oracle bytes');if(file.startsWith('audit/suites/run'))functionalId(path.basename(file,'.js'),'suite file');}
 for(const file of files.filter(p=>/\.(mjs|cjs|js)$/.test(p))){
   const source=fs.readFileSync(file,'utf8');
   for(const m of source.matchAll(/(?:from\s*|require\(\s*|import\s*)['"](\.[^'"]+)['"]/g)){

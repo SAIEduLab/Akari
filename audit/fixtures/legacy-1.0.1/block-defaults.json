@@ -1,0 +1,3065 @@
+{
+  "Script": {
+    "id": "blockui-1",
+    "schemaId": "Script",
+    "fields": {},
+    "inputs": {},
+    "bodies": {
+      "body": []
+    },
+    "annotations": {}
+  },
+  "TargetReference": {
+    "id": "blockui-1",
+    "schemaId": "TargetReference",
+    "fields": {
+      "name": "値",
+      "qualifier": null
+    },
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "CommentLine": {
+    "id": "blockui-1",
+    "schemaId": "CommentLine",
+    "fields": {
+      "text": ""
+    },
+    "inputs": {},
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "Assignment": {
+    "id": "blockui-1",
+    "schemaId": "Assignment",
+    "fields": {},
+    "inputs": {
+      "target": {
+        "id": "blockui-2",
+        "schemaId": "TargetReference",
+        "fields": {
+          "name": "値",
+          "qualifier": null
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "value": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "NumericUpdate:ADD": {
+    "id": "blockui-1",
+    "schemaId": "NumericUpdate:ADD",
+    "fields": {},
+    "inputs": {
+      "target": {
+        "id": "blockui-2",
+        "schemaId": "TargetReference",
+        "fields": {
+          "name": "値",
+          "qualifier": null
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "value": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "NumericUpdate:SUB": {
+    "id": "blockui-1",
+    "schemaId": "NumericUpdate:SUB",
+    "fields": {},
+    "inputs": {
+      "target": {
+        "id": "blockui-2",
+        "schemaId": "TargetReference",
+        "fields": {
+          "name": "値",
+          "qualifier": null
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "value": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "ListAppend": {
+    "id": "blockui-1",
+    "schemaId": "ListAppend",
+    "fields": {},
+    "inputs": {
+      "target": {
+        "id": "blockui-2",
+        "schemaId": "TargetReference",
+        "fields": {
+          "name": "値",
+          "qualifier": null
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "value": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "ListInsert": {
+    "id": "blockui-1",
+    "schemaId": "ListInsert",
+    "fields": {},
+    "inputs": {
+      "target": {
+        "id": "blockui-2",
+        "schemaId": "TargetReference",
+        "fields": {
+          "name": "値",
+          "qualifier": null
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "index": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 1
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "value": {
+        "id": "blockui-4",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "ListReplace": {
+    "id": "blockui-1",
+    "schemaId": "ListReplace",
+    "fields": {},
+    "inputs": {
+      "target": {
+        "id": "blockui-2",
+        "schemaId": "TargetReference",
+        "fields": {
+          "name": "値",
+          "qualifier": null
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "index": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 1
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "value": {
+        "id": "blockui-4",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "ListDelete": {
+    "id": "blockui-1",
+    "schemaId": "ListDelete",
+    "fields": {},
+    "inputs": {
+      "target": {
+        "id": "blockui-2",
+        "schemaId": "TargetReference",
+        "fields": {
+          "name": "値",
+          "qualifier": null
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "index": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 1
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "ListClear": {
+    "id": "blockui-1",
+    "schemaId": "ListClear",
+    "fields": {},
+    "inputs": {
+      "target": {
+        "id": "blockui-2",
+        "schemaId": "TargetReference",
+        "fields": {
+          "name": "値",
+          "qualifier": null
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "NoOperation": {
+    "id": "blockui-1",
+    "schemaId": "NoOperation",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "Break": {
+    "id": "blockui-1",
+    "schemaId": "Break",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "Continue": {
+    "id": "blockui-1",
+    "schemaId": "Continue",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "IfStatement": {
+    "id": "blockui-1",
+    "schemaId": "IfStatement",
+    "fields": {
+      "hasElse": false
+    },
+    "inputs": {
+      "condition": {
+        "id": "blockui-2",
+        "schemaId": "BooleanLiteral",
+        "fields": {
+          "value": true
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {
+      "thenBody": [
+        {
+          "id": "blockui-3",
+          "schemaId": "NoOperation",
+          "fields": {},
+          "inputs": {},
+          "bodies": {},
+          "annotations": {
+            "inlineComment": ""
+          }
+        }
+      ],
+      "elseBody": []
+    },
+    "annotations": {
+      "inlineComment": "",
+      "elseComment": ""
+    }
+  },
+  "RepeatCount": {
+    "id": "blockui-1",
+    "schemaId": "RepeatCount",
+    "fields": {},
+    "inputs": {
+      "count": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 3
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {
+      "body": [
+        {
+          "id": "blockui-3",
+          "schemaId": "NoOperation",
+          "fields": {},
+          "inputs": {},
+          "bodies": {},
+          "annotations": {
+            "inlineComment": ""
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "RepeatWhile": {
+    "id": "blockui-1",
+    "schemaId": "RepeatWhile",
+    "fields": {},
+    "inputs": {
+      "condition": {
+        "id": "blockui-2",
+        "schemaId": "BooleanLiteral",
+        "fields": {
+          "value": true
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {
+      "body": [
+        {
+          "id": "blockui-3",
+          "schemaId": "NoOperation",
+          "fields": {},
+          "inputs": {},
+          "bodies": {},
+          "annotations": {
+            "inlineComment": ""
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "RepeatUntil": {
+    "id": "blockui-1",
+    "schemaId": "RepeatUntil",
+    "fields": {},
+    "inputs": {
+      "condition": {
+        "id": "blockui-2",
+        "schemaId": "BooleanLiteral",
+        "fields": {
+          "value": true
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {
+      "body": [
+        {
+          "id": "blockui-3",
+          "schemaId": "NoOperation",
+          "fields": {},
+          "inputs": {},
+          "bodies": {},
+          "annotations": {
+            "inlineComment": ""
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "Forever": {
+    "id": "blockui-1",
+    "schemaId": "Forever",
+    "fields": {},
+    "inputs": {},
+    "bodies": {
+      "body": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NoOperation",
+          "fields": {},
+          "inputs": {},
+          "bodies": {},
+          "annotations": {
+            "inlineComment": ""
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "ForEach": {
+    "id": "blockui-1",
+    "schemaId": "ForEach",
+    "fields": {
+      "binder": "項目"
+    },
+    "inputs": {
+      "list": {
+        "id": "blockui-2",
+        "schemaId": "ListLiteral",
+        "fields": {},
+        "inputs": {
+          "items": []
+        },
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {
+      "body": [
+        {
+          "id": "blockui-3",
+          "schemaId": "NoOperation",
+          "fields": {},
+          "inputs": {},
+          "bodies": {},
+          "annotations": {
+            "inlineComment": ""
+          }
+        }
+      ]
+    },
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "WaitTime": {
+    "id": "blockui-1",
+    "schemaId": "WaitTime",
+    "fields": {},
+    "inputs": {
+      "seconds": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 1
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "WaitUntil": {
+    "id": "blockui-1",
+    "schemaId": "WaitUntil",
+    "fields": {},
+    "inputs": {
+      "condition": {
+        "id": "blockui-2",
+        "schemaId": "BooleanLiteral",
+        "fields": {
+          "value": true
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "Say": {
+    "id": "blockui-1",
+    "schemaId": "Say",
+    "fields": {},
+    "inputs": {
+      "value": {
+        "id": "blockui-2",
+        "schemaId": "StringLiteral",
+        "fields": {
+          "value": ""
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "ReturnStatement": {
+    "id": "blockui-1",
+    "schemaId": "ReturnStatement",
+    "fields": {},
+    "inputs": {
+      "value": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "Ask": {
+    "id": "blockui-1",
+    "schemaId": "Ask",
+    "fields": {},
+    "inputs": {
+      "question": {
+        "id": "blockui-2",
+        "schemaId": "StringLiteral",
+        "fields": {
+          "value": ""
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "Broadcast": {
+    "id": "blockui-1",
+    "schemaId": "Broadcast",
+    "fields": {},
+    "inputs": {
+      "message": {
+        "id": "blockui-2",
+        "schemaId": "StringLiteral",
+        "fields": {
+          "value": ""
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "BroadcastAndWait": {
+    "id": "blockui-1",
+    "schemaId": "BroadcastAndWait",
+    "fields": {},
+    "inputs": {
+      "message": {
+        "id": "blockui-2",
+        "schemaId": "StringLiteral",
+        "fields": {
+          "value": ""
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "UserActionCall": {
+    "id": "blockui-1",
+    "schemaId": "UserActionCall",
+    "fields": {
+      "name": "動作"
+    },
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LocalVariableDeclaration": {
+    "id": "blockui-1",
+    "schemaId": "LocalVariableDeclaration",
+    "fields": {
+      "name": "結果"
+    },
+    "inputs": {
+      "initial": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LocalListDeclaration": {
+    "id": "blockui-1",
+    "schemaId": "LocalListDeclaration",
+    "fields": {
+      "name": "結果"
+    },
+    "inputs": {},
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "StopCommand:THIS": {
+    "id": "blockui-1",
+    "schemaId": "StopCommand:THIS",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "StopCommand:OTHERS": {
+    "id": "blockui-1",
+    "schemaId": "StopCommand:OTHERS",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "StopCommand:ALL": {
+    "id": "blockui-1",
+    "schemaId": "StopCommand:ALL",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:MOVE": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:MOVE",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:GOTO": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:GOTO",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:GLIDE": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:GLIDE",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-4",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:SET_DIRECTION": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:SET_DIRECTION",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:TURN_RIGHT": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:TURN_RIGHT",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:TURN_LEFT": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:TURN_LEFT",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:SET_X": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:SET_X",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:SET_Y": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:SET_Y",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:POINT_TO": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:POINT_TO",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:BOUNCE": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:BOUNCE",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:FRONT": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:FRONT",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:BACK": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:BACK",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:HIDE": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:HIDE",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:SHOW": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:SHOW",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:NEXT_COSTUME": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:NEXT_COSTUME",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:PREV_COSTUME": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:PREV_COSTUME",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:NEXT_BACKDROP": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:NEXT_BACKDROP",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:PREV_BACKDROP": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:PREV_BACKDROP",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:SET_SCALE": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:SET_SCALE",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:FORWARD_LAYERS": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:FORWARD_LAYERS",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:BACKWARD_LAYERS": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:BACKWARD_LAYERS",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:SET_COLOR": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:SET_COLOR",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:SET_COSTUME": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:SET_COSTUME",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:SET_BACKDROP": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:SET_BACKDROP",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:SET_SELF_TEXT": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:SET_SELF_TEXT",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:SET_TARGET_TEXT": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:SET_TARGET_TEXT",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "LooksCommand:SET_INPUT": {
+    "id": "blockui-1",
+    "schemaId": "LooksCommand:SET_INPUT",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "PenCommand:DOWN": {
+    "id": "blockui-1",
+    "schemaId": "PenCommand:DOWN",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "PenCommand:UP": {
+    "id": "blockui-1",
+    "schemaId": "PenCommand:UP",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "PenCommand:CLEAR": {
+    "id": "blockui-1",
+    "schemaId": "PenCommand:CLEAR",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "PenCommand:STAMP": {
+    "id": "blockui-1",
+    "schemaId": "PenCommand:STAMP",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "PenCommand:SET_COLOR": {
+    "id": "blockui-1",
+    "schemaId": "PenCommand:SET_COLOR",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "PenCommand:SET_SIZE": {
+    "id": "blockui-1",
+    "schemaId": "PenCommand:SET_SIZE",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "SoundCommand:STOP_ALL": {
+    "id": "blockui-1",
+    "schemaId": "SoundCommand:STOP_ALL",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "SoundCommand:TONE_WAIT": {
+    "id": "blockui-1",
+    "schemaId": "SoundCommand:TONE_WAIT",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "SoundCommand:TONE": {
+    "id": "blockui-1",
+    "schemaId": "SoundCommand:TONE",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "SoundCommand:SAMPLE_WAIT": {
+    "id": "blockui-1",
+    "schemaId": "SoundCommand:SAMPLE_WAIT",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "SoundCommand:SAMPLE": {
+    "id": "blockui-1",
+    "schemaId": "SoundCommand:SAMPLE",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "SoundCommand:SET_VOLUME": {
+    "id": "blockui-1",
+    "schemaId": "SoundCommand:SET_VOLUME",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "SoundCommand:PITCH_UP": {
+    "id": "blockui-1",
+    "schemaId": "SoundCommand:PITCH_UP",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "SoundCommand:PITCH_DOWN": {
+    "id": "blockui-1",
+    "schemaId": "SoundCommand:PITCH_DOWN",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "CloneCommand:CREATE_SELF": {
+    "id": "blockui-1",
+    "schemaId": "CloneCommand:CREATE_SELF",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "CloneCommand:DELETE_SELF": {
+    "id": "blockui-1",
+    "schemaId": "CloneCommand:DELETE_SELF",
+    "fields": {},
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "CloneCommand:CREATE_TARGET": {
+    "id": "blockui-1",
+    "schemaId": "CloneCommand:CREATE_TARGET",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "NumberLiteral": {
+    "id": "blockui-1",
+    "schemaId": "NumberLiteral",
+    "fields": {
+      "value": 0
+    },
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "StringLiteral": {
+    "id": "blockui-1",
+    "schemaId": "StringLiteral",
+    "fields": {
+      "value": ""
+    },
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "BooleanLiteral": {
+    "id": "blockui-1",
+    "schemaId": "BooleanLiteral",
+    "fields": {
+      "value": true
+    },
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "ListLiteral": {
+    "id": "blockui-1",
+    "schemaId": "ListLiteral",
+    "fields": {},
+    "inputs": {
+      "items": []
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "VariableRead": {
+    "id": "blockui-1",
+    "schemaId": "VariableRead",
+    "fields": {
+      "name": "値",
+      "qualifier": null
+    },
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "UnaryExpression:POS": {
+    "id": "blockui-1",
+    "schemaId": "UnaryExpression:POS",
+    "fields": {},
+    "inputs": {
+      "value": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "UnaryExpression:NEG": {
+    "id": "blockui-1",
+    "schemaId": "UnaryExpression:NEG",
+    "fields": {},
+    "inputs": {
+      "value": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "UnaryExpression:NOT": {
+    "id": "blockui-1",
+    "schemaId": "UnaryExpression:NOT",
+    "fields": {},
+    "inputs": {
+      "value": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BinaryExpression:ADD": {
+    "id": "blockui-1",
+    "schemaId": "BinaryExpression:ADD",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BinaryExpression:SUB": {
+    "id": "blockui-1",
+    "schemaId": "BinaryExpression:SUB",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BinaryExpression:MUL": {
+    "id": "blockui-1",
+    "schemaId": "BinaryExpression:MUL",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BinaryExpression:DIV": {
+    "id": "blockui-1",
+    "schemaId": "BinaryExpression:DIV",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BinaryExpression:POW": {
+    "id": "blockui-1",
+    "schemaId": "BinaryExpression:POW",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "CompareExpression:GTE": {
+    "id": "blockui-1",
+    "schemaId": "CompareExpression:GTE",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "CompareExpression:LTE": {
+    "id": "blockui-1",
+    "schemaId": "CompareExpression:LTE",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "CompareExpression:GT": {
+    "id": "blockui-1",
+    "schemaId": "CompareExpression:GT",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "CompareExpression:LT": {
+    "id": "blockui-1",
+    "schemaId": "CompareExpression:LT",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "CompareExpression:EQ": {
+    "id": "blockui-1",
+    "schemaId": "CompareExpression:EQ",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "CompareExpression:NEQ": {
+    "id": "blockui-1",
+    "schemaId": "CompareExpression:NEQ",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "LogicalExpression:AND": {
+    "id": "blockui-1",
+    "schemaId": "LogicalExpression:AND",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "LogicalExpression:OR": {
+    "id": "blockui-1",
+    "schemaId": "LogicalExpression:OR",
+    "fields": {},
+    "inputs": {
+      "left": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "right": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "ListRead": {
+    "id": "blockui-1",
+    "schemaId": "ListRead",
+    "fields": {},
+    "inputs": {
+      "list": {
+        "id": "blockui-2",
+        "schemaId": "ListLiteral",
+        "fields": {},
+        "inputs": {
+          "items": []
+        },
+        "bodies": {},
+        "annotations": {}
+      },
+      "index": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 1
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "UserFunctionCall": {
+    "id": "blockui-1",
+    "schemaId": "UserFunctionCall",
+    "fields": {
+      "name": "計算"
+    },
+    "inputs": {
+      "args": []
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:乱数": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:乱数",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:余り": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:余り",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:四捨五入": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:四捨五入",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:切り上げ": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:切り上げ",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:切り捨て": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:切り捨て",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:絶対値": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:絶対値",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:平方根": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:平方根",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:正弦": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:正弦",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:余弦": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:余弦",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:正接": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:正接",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:逆正弦": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:逆正弦",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:逆余弦": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:逆余弦",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:逆正接": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:逆正接",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:自然対数": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:自然対数",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:常用対数": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:常用対数",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:指数": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:指数",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:数": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:数",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:文字": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:文字",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:最小": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:最小",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:最大": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:最大",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:つなぐ": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:つなぐ",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:CONTAINS": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:CONTAINS",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:INDEX_OF": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:INDEX_OF",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:LENGTH": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:LENGTH",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:STRING_LENGTH": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:STRING_LENGTH",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "BuiltinCall:STRING_CHAR": {
+    "id": "blockui-1",
+    "schemaId": "BuiltinCall:STRING_CHAR",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        },
+        {
+          "id": "blockui-3",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:マウスが押されている": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:マウスが押されている",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:マウスの横位置": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:マウスの横位置",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:マウスの縦位置": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:マウスの縦位置",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:以前の背景名": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:以前の背景名",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:新しい背景名": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:新しい背景名",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:受け取った知らせ": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:受け取った知らせ",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:押されたキー": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:押されたキー",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:クローンである": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:クローンである",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:背景番号": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:背景番号",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:背景名": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:背景名",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:衣装番号": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:衣装番号",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:衣装名": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:衣装名",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:横位置": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:横位置",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:縦位置": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:縦位置",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:方向": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:方向",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:大きさ": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:大きさ",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:タイマー": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:タイマー",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:答え": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:答え",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:音量": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:音量",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:音程": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:音程",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:以前の値": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:以前の値",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:新しい値": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:新しい値",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:INPUT_VALUE": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:INPUT_VALUE",
+    "fields": {},
+    "inputs": {
+      "arg": {
+        "id": "blockui-2",
+        "schemaId": "StringLiteral",
+        "fields": {
+          "value": "入力欄1"
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:DISTANCE_TO": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:DISTANCE_TO",
+    "fields": {},
+    "inputs": {
+      "arg": {
+        "id": "blockui-2",
+        "schemaId": "StringLiteral",
+        "fields": {
+          "value": "マウス"
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:KEY_DOWN": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:KEY_DOWN",
+    "fields": {},
+    "inputs": {
+      "arg": {
+        "id": "blockui-2",
+        "schemaId": "StringLiteral",
+        "fields": {
+          "value": "空白"
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:TOUCHING_COLOR": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:TOUCHING_COLOR",
+    "fields": {},
+    "inputs": {
+      "arg": {
+        "id": "blockui-2",
+        "schemaId": "StringLiteral",
+        "fields": {
+          "value": "#ff0000"
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  },
+  "SensorRead:TOUCHING": {
+    "id": "blockui-1",
+    "schemaId": "SensorRead:TOUCHING",
+    "fields": {},
+    "inputs": {
+      "arg": {
+        "id": "blockui-2",
+        "schemaId": "StringLiteral",
+        "fields": {
+          "value": "マウス"
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {}
+  }
+}

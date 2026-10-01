@@ -1,0 +1,314 @@
+{
+  "schema": "akari-format-v2-input-migration-v1",
+  "baselineCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+  "pins": [
+    {
+      "originalPath": "audit/tests/format-compatibility.mjs",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/format-compatibility.mjs",
+      "originalSha256": "cfa3d38864fd887622f4cb296b186feafe7715e65a795fc6d82fdbc0a8298c2b",
+      "candidateSha256": "51e30fe0c9b4ea8ecaae36eebb8ffc56fa38ff7d935aff4576d81c063bf1b1c4",
+      "stableIds": [
+        "FORMAT-PROJECT-PRODUCER-INDEPENDENT",
+        "FORMAT-PROJECT-CONTRACT-REJECTION",
+        "FORMAT-RUNTIME-PRODUCER-INDEPENDENT",
+        "FORMAT-RUNTIME-CONTRACT-REJECTION",
+        "FORMAT-FINGERPRINT-METADATA-EXCLUSION",
+        "FORMAT-BROWSER-FILE-ROUNDTRIP",
+        "FORMAT-BROWSER-IMPORT-ATOMICITY",
+        "FORMAT-BROWSER-AUTOSAVE-RECOVERY",
+        "FORMAT-BROWSER-STANDALONE-OFFLINE"
+      ],
+      "testCount": 9
+    }
+  ],
+  "changes": [
+    {
+      "testId": "FORMAT-PROJECT-PRODUCER-INDEPENDENT",
+      "oldText": "languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1",
+      "newText": "languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2",
+      "preservedMeaning": "Approved contract generation is 2; producer independence and rejection of mismatched contracts remain required."
+    },
+    {
+      "testId": "FORMAT-PROJECT-CONTRACT-REJECTION",
+      "oldText": "languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1",
+      "newText": "languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2",
+      "preservedMeaning": "Approved contract generation is 2; producer independence and rejection of mismatched contracts remain required."
+    },
+    {
+      "testId": "FORMAT-RUNTIME-PRODUCER-INDEPENDENT",
+      "oldText": "languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1",
+      "newText": "languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2",
+      "preservedMeaning": "Approved contract generation is 2; producer independence and rejection of mismatched contracts remain required."
+    },
+    {
+      "testId": "FORMAT-RUNTIME-CONTRACT-REJECTION",
+      "oldText": "languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1",
+      "newText": "languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2",
+      "preservedMeaning": "Approved contract generation is 2; producer independence and rejection of mismatched contracts remain required."
+    },
+    {
+      "testId": "FORMAT-FINGERPRINT-METADATA-EXCLUSION",
+      "oldText": "languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1",
+      "newText": "languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2",
+      "preservedMeaning": "Approved contract generation is 2; producer independence and rejection of mismatched contracts remain required."
+    },
+    {
+      "testId": "FORMAT-BROWSER-FILE-ROUNDTRIP",
+      "oldText": "languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1",
+      "newText": "languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2",
+      "preservedMeaning": "Approved contract generation is 2; producer independence and rejection of mismatched contracts remain required."
+    },
+    {
+      "testId": "FORMAT-BROWSER-IMPORT-ATOMICITY",
+      "oldText": "languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1",
+      "newText": "languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2",
+      "preservedMeaning": "Approved contract generation is 2; producer independence and rejection of mismatched contracts remain required."
+    },
+    {
+      "testId": "FORMAT-BROWSER-AUTOSAVE-RECOVERY",
+      "oldText": "languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1",
+      "newText": "languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2",
+      "preservedMeaning": "Approved contract generation is 2; producer independence and rejection of mismatched contracts remain required."
+    },
+    {
+      "testId": "FORMAT-BROWSER-STANDALONE-OFFLINE",
+      "oldText": "languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1",
+      "newText": "languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2",
+      "preservedMeaning": "Approved contract generation is 2; producer independence and rejection of mismatched contracts remain required."
+    },
+    {
+      "testId": "FORMAT-PROJECT-PRODUCER-INDEPENDENT",
+      "oldText": "source:'値と言う'",
+      "newText": "source:'値を言う'",
+      "preservedMeaning": "Say the same argument value, preserving nested function/action evaluation."
+    },
+    {
+      "testId": "FORMAT-PROJECT-CONTRACT-REJECTION",
+      "oldText": "source:'値と言う'",
+      "newText": "source:'値を言う'",
+      "preservedMeaning": "Say the same argument value, preserving nested function/action evaluation."
+    },
+    {
+      "testId": "FORMAT-RUNTIME-PRODUCER-INDEPENDENT",
+      "oldText": "source:'値と言う'",
+      "newText": "source:'値を言う'",
+      "preservedMeaning": "Say the same argument value, preserving nested function/action evaluation."
+    },
+    {
+      "testId": "FORMAT-RUNTIME-CONTRACT-REJECTION",
+      "oldText": "source:'値と言う'",
+      "newText": "source:'値を言う'",
+      "preservedMeaning": "Say the same argument value, preserving nested function/action evaluation."
+    },
+    {
+      "testId": "FORMAT-FINGERPRINT-METADATA-EXCLUSION",
+      "oldText": "source:'値と言う'",
+      "newText": "source:'値を言う'",
+      "preservedMeaning": "Say the same argument value, preserving nested function/action evaluation."
+    },
+    {
+      "testId": "FORMAT-BROWSER-FILE-ROUNDTRIP",
+      "oldText": "source:'値と言う'",
+      "newText": "source:'値を言う'",
+      "preservedMeaning": "Say the same argument value, preserving nested function/action evaluation."
+    },
+    {
+      "testId": "FORMAT-BROWSER-IMPORT-ATOMICITY",
+      "oldText": "source:'値と言う'",
+      "newText": "source:'値を言う'",
+      "preservedMeaning": "Say the same argument value, preserving nested function/action evaluation."
+    },
+    {
+      "testId": "FORMAT-BROWSER-AUTOSAVE-RECOVERY",
+      "oldText": "source:'値と言う'",
+      "newText": "source:'値を言う'",
+      "preservedMeaning": "Say the same argument value, preserving nested function/action evaluation."
+    },
+    {
+      "testId": "FORMAT-BROWSER-STANDALONE-OFFLINE",
+      "oldText": "source:'値と言う'",
+      "newText": "source:'値を言う'",
+      "preservedMeaning": "Say the same argument value, preserving nested function/action evaluation."
+    },
+    {
+      "testId": "FORMAT-PROJECT-PRODUCER-INDEPENDENT",
+      "oldText": "source:'値 * 2を返す'",
+      "newText": "source:'値 * 2を答えとして返す'",
+      "preservedMeaning": "Return the same double of the argument; no numeric/output assertion changes."
+    },
+    {
+      "testId": "FORMAT-PROJECT-CONTRACT-REJECTION",
+      "oldText": "source:'値 * 2を返す'",
+      "newText": "source:'値 * 2を答えとして返す'",
+      "preservedMeaning": "Return the same double of the argument; no numeric/output assertion changes."
+    },
+    {
+      "testId": "FORMAT-RUNTIME-PRODUCER-INDEPENDENT",
+      "oldText": "source:'値 * 2を返す'",
+      "newText": "source:'値 * 2を答えとして返す'",
+      "preservedMeaning": "Return the same double of the argument; no numeric/output assertion changes."
+    },
+    {
+      "testId": "FORMAT-RUNTIME-CONTRACT-REJECTION",
+      "oldText": "source:'値 * 2を返す'",
+      "newText": "source:'値 * 2を答えとして返す'",
+      "preservedMeaning": "Return the same double of the argument; no numeric/output assertion changes."
+    },
+    {
+      "testId": "FORMAT-FINGERPRINT-METADATA-EXCLUSION",
+      "oldText": "source:'値 * 2を返す'",
+      "newText": "source:'値 * 2を答えとして返す'",
+      "preservedMeaning": "Return the same double of the argument; no numeric/output assertion changes."
+    },
+    {
+      "testId": "FORMAT-BROWSER-FILE-ROUNDTRIP",
+      "oldText": "source:'値 * 2を返す'",
+      "newText": "source:'値 * 2を答えとして返す'",
+      "preservedMeaning": "Return the same double of the argument; no numeric/output assertion changes."
+    },
+    {
+      "testId": "FORMAT-BROWSER-IMPORT-ATOMICITY",
+      "oldText": "source:'値 * 2を返す'",
+      "newText": "source:'値 * 2を答えとして返す'",
+      "preservedMeaning": "Return the same double of the argument; no numeric/output assertion changes."
+    },
+    {
+      "testId": "FORMAT-BROWSER-AUTOSAVE-RECOVERY",
+      "oldText": "source:'値 * 2を返す'",
+      "newText": "source:'値 * 2を答えとして返す'",
+      "preservedMeaning": "Return the same double of the argument; no numeric/output assertion changes."
+    },
+    {
+      "testId": "FORMAT-BROWSER-STANDALONE-OFFLINE",
+      "oldText": "source:'値 * 2を返す'",
+      "newText": "source:'値 * 2を答えとして返す'",
+      "preservedMeaning": "Return the same double of the argument; no numeric/output assertion changes."
+    },
+    {
+      "testId": "FORMAT-PROJECT-PRODUCER-INDEPENDENT",
+      "oldText": "`\"${key}\": 1`",
+      "newText": "`\"${key}\": 2`",
+      "preservedMeaning": "Mutate the current generation-2 file header, keeping exact one-header cardinality."
+    },
+    {
+      "testId": "FORMAT-PROJECT-CONTRACT-REJECTION",
+      "oldText": "`\"${key}\": 1`",
+      "newText": "`\"${key}\": 2`",
+      "preservedMeaning": "Mutate the current generation-2 file header, keeping exact one-header cardinality."
+    },
+    {
+      "testId": "FORMAT-RUNTIME-PRODUCER-INDEPENDENT",
+      "oldText": "`\"${key}\": 1`",
+      "newText": "`\"${key}\": 2`",
+      "preservedMeaning": "Mutate the current generation-2 file header, keeping exact one-header cardinality."
+    },
+    {
+      "testId": "FORMAT-RUNTIME-CONTRACT-REJECTION",
+      "oldText": "`\"${key}\": 1`",
+      "newText": "`\"${key}\": 2`",
+      "preservedMeaning": "Mutate the current generation-2 file header, keeping exact one-header cardinality."
+    },
+    {
+      "testId": "FORMAT-FINGERPRINT-METADATA-EXCLUSION",
+      "oldText": "`\"${key}\": 1`",
+      "newText": "`\"${key}\": 2`",
+      "preservedMeaning": "Mutate the current generation-2 file header, keeping exact one-header cardinality."
+    },
+    {
+      "testId": "FORMAT-BROWSER-FILE-ROUNDTRIP",
+      "oldText": "`\"${key}\": 1`",
+      "newText": "`\"${key}\": 2`",
+      "preservedMeaning": "Mutate the current generation-2 file header, keeping exact one-header cardinality."
+    },
+    {
+      "testId": "FORMAT-BROWSER-IMPORT-ATOMICITY",
+      "oldText": "`\"${key}\": 1`",
+      "newText": "`\"${key}\": 2`",
+      "preservedMeaning": "Mutate the current generation-2 file header, keeping exact one-header cardinality."
+    },
+    {
+      "testId": "FORMAT-BROWSER-AUTOSAVE-RECOVERY",
+      "oldText": "`\"${key}\": 1`",
+      "newText": "`\"${key}\": 2`",
+      "preservedMeaning": "Mutate the current generation-2 file header, keeping exact one-header cardinality."
+    },
+    {
+      "testId": "FORMAT-BROWSER-STANDALONE-OFFLINE",
+      "oldText": "`\"${key}\": 1`",
+      "newText": "`\"${key}\": 2`",
+      "preservedMeaning": "Mutate the current generation-2 file header, keeping exact one-header cardinality."
+    },
+    {
+      "testId": "FORMAT-PROJECT-PRODUCER-INDEPENDENT",
+      "oldText": "loaded.project.languageContractId,1",
+      "newText": "loaded.project.languageContractId,2",
+      "preservedMeaning": "Verify current language contract 2 across producer versions."
+    },
+    {
+      "testId": "FORMAT-PROJECT-PRODUCER-INDEPENDENT",
+      "oldText": "loaded.project.formatVersion,1",
+      "newText": "loaded.project.formatVersion,2",
+      "preservedMeaning": "Verify current file format 2 across producer versions."
+    },
+    {
+      "testId": "FORMAT-PROJECT-CONTRACT-REJECTION",
+      "oldText": "[2,'1',null]",
+      "newText": "[1,'2',null]",
+      "preservedMeaning": "Reject a wrong numeric version, string-typed version and null; same count and rejection requirements."
+    },
+    {
+      "testId": "FORMAT-RUNTIME-CONTRACT-REJECTION",
+      "oldText": "[2,'1',null]",
+      "newText": "[1,'2',null]",
+      "preservedMeaning": "Reject a wrong numeric version, string-typed version and null; same count and rejection requirements."
+    },
+    {
+      "testId": "FORMAT-FINGERPRINT-METADATA-EXCLUSION",
+      "oldText": "p.name=priorProject.name;p.languageContractId=2",
+      "newText": "p.name=priorProject.name;p.languageContractId=1",
+      "preservedMeaning": "Changing current language contract 2 to invalid1 must change fingerprint."
+    },
+    {
+      "testId": "FORMAT-FINGERPRINT-METADATA-EXCLUSION",
+      "oldText": "p.languageContractId=1;p.formatVersion=2",
+      "newText": "p.languageContractId=2;p.formatVersion=1",
+      "preservedMeaning": "Restore current language2 and alter file format2 to1; fingerprint must still change."
+    },
+    {
+      "testId": "FORMAT-FINGERPRINT-METADATA-EXCLUSION",
+      "oldText": "p.formatVersion=1;p.scripts",
+      "newText": "p.formatVersion=2;p.scripts",
+      "preservedMeaning": "Restore current format2 before testing exact source changes."
+    },
+    {
+      "testId": "FORMAT-BROWSER-AUTOSAVE-RECOVERY",
+      "oldText": "'akari-workspace-f1'",
+      "newText": "'akari-workspace-f2'",
+      "preservedMeaning": "Exercise the actual current-generation autosave namespace; clean/dirty and invalid recovery semantics unchanged."
+    },
+    {
+      "testId": "FORMAT-BROWSER-IMPORT-ATOMICITY",
+      "oldText": "editSaved(savedPrior,'formatVersion',2)",
+      "newText": "editSaved(savedPrior,'formatVersion',1)",
+      "preservedMeaning": "Import an incompatible numeric contract and retain all unsaved work assertions."
+    },
+    {
+      "testId": "FORMAT-BROWSER-IMPORT-ATOMICITY",
+      "oldText": "editSaved(savedPrior,'languageContractId','1')",
+      "newText": "editSaved(savedPrior,'languageContractId','2')",
+      "preservedMeaning": "Reject string instead of numeric current contract; preserve import atomicity assertions."
+    },
+    {
+      "testId": "FORMAT-BROWSER-AUTOSAVE-RECOVERY",
+      "oldText": "p.formatVersion=2;}",
+      "newText": "p.formatVersion=1;}",
+      "preservedMeaning": "Autosave recovery must reject a different numeric file contract."
+    },
+    {
+      "testId": "FORMAT-BROWSER-AUTOSAVE-RECOVERY",
+      "oldText": "p.languageContractId='1';}",
+      "newText": "p.languageContractId='2';}",
+      "preservedMeaning": "Autosave recovery must reject current contract represented with the wrong type."
+    }
+  ]
+}

@@ -1,0 +1,4542 @@
+[
+  {
+    "id": "Script",
+    "kind": "Script",
+    "discriminator": null,
+    "category": "script",
+    "palette": "本文",
+    "label": "本文",
+    "fields": [],
+    "inputs": [],
+    "bodies": [
+      {
+        "key": "body",
+        "label": "本文",
+        "required": true,
+        "requiredExecutable": false
+      }
+    ],
+    "annotations": []
+  },
+  {
+    "id": "TargetReference",
+    "kind": "TargetReference",
+    "discriminator": null,
+    "category": "target",
+    "palette": "データ",
+    "label": "変更先",
+    "fields": [
+      {
+        "key": "name",
+        "label": "名前",
+        "type": "name",
+        "initial": "値",
+        "required": true,
+        "callable": false
+      },
+      {
+        "key": "qualifier",
+        "label": "使う場所",
+        "type": "qualifier",
+        "initial": null,
+        "required": true
+      }
+    ],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "CommentLine",
+    "kind": "CommentLine",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "コメント",
+    "label": "コメント",
+    "fields": [
+      {
+        "key": "text",
+        "label": "コメント本文",
+        "type": "comment",
+        "initial": "",
+        "required": true
+      }
+    ],
+    "inputs": [],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": false
+      }
+    ]
+  },
+  {
+    "id": "Assignment",
+    "kind": "Assignment",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "データ",
+    "label": "値を設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "target",
+        "label": "変更先",
+        "type": "target",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "value",
+        "label": "値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "NumericUpdate:ADD",
+    "kind": "NumericUpdate",
+    "discriminator": {
+      "key": "op",
+      "value": "ADD"
+    },
+    "category": "statement",
+    "palette": "データ",
+    "label": "値を足す",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "target",
+        "label": "変更先",
+        "type": "target",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "value",
+        "label": "値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "NumericUpdate:SUB",
+    "kind": "NumericUpdate",
+    "discriminator": {
+      "key": "op",
+      "value": "SUB"
+    },
+    "category": "statement",
+    "palette": "データ",
+    "label": "値を引く",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "target",
+        "label": "変更先",
+        "type": "target",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "value",
+        "label": "値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "ListAppend",
+    "kind": "ListAppend",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "リスト",
+    "label": "リストに追加",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "target",
+        "label": "変更先",
+        "type": "target",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "value",
+        "label": "追加する値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "ListInsert",
+    "kind": "ListInsert",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "リスト",
+    "label": "リストに挿入",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "target",
+        "label": "変更先",
+        "type": "target",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "index",
+        "label": "番号",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": 1
+      },
+      {
+        "key": "value",
+        "label": "値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "ListReplace",
+    "kind": "ListReplace",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "リスト",
+    "label": "リストを置換",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "target",
+        "label": "変更先",
+        "type": "target",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "index",
+        "label": "番号",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": 1
+      },
+      {
+        "key": "value",
+        "label": "値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "ListDelete",
+    "kind": "ListDelete",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "リスト",
+    "label": "リストから削除",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "target",
+        "label": "変更先",
+        "type": "target",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "index",
+        "label": "番号",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "ListClear",
+    "kind": "ListClear",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "リスト",
+    "label": "リストを空にする",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "target",
+        "label": "変更先",
+        "type": "target",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "NoOperation",
+    "kind": "NoOperation",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "条件・反復",
+    "label": "何もしない",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "Break",
+    "kind": "Break",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "条件・反復",
+    "label": "このくり返しを終える",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "Continue",
+    "kind": "Continue",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "条件・反復",
+    "label": "次のくり返しへ進む",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "IfStatement",
+    "kind": "IfStatement",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "条件・反復",
+    "label": "もし",
+    "fields": [
+      {
+        "key": "hasElse",
+        "label": "そうでなければ",
+        "type": "boolean",
+        "initial": false,
+        "required": true
+      }
+    ],
+    "inputs": [
+      {
+        "key": "condition",
+        "label": "条件",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": true
+      }
+    ],
+    "bodies": [
+      {
+        "key": "thenBody",
+        "label": "条件が成り立つとき",
+        "required": true,
+        "requiredExecutable": true
+      },
+      {
+        "key": "elseBody",
+        "label": "そうでなければ",
+        "required": true,
+        "requiredExecutable": true,
+        "when": "hasElse"
+      }
+    ],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      },
+      {
+        "key": "elseComment",
+        "label": "そうでなければの注釈",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "when": "hasElse"
+      }
+    ]
+  },
+  {
+    "id": "RepeatCount",
+    "kind": "RepeatCount",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "条件・反復",
+    "label": "回数を決めてくり返す",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "count",
+        "label": "回数",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": 3
+      }
+    ],
+    "bodies": [
+      {
+        "key": "body",
+        "label": "くり返す本文",
+        "required": true,
+        "requiredExecutable": true
+      }
+    ],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "RepeatWhile",
+    "kind": "RepeatWhile",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "条件・反復",
+    "label": "条件が成り立つあいだ",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "condition",
+        "label": "条件",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": true
+      }
+    ],
+    "bodies": [
+      {
+        "key": "body",
+        "label": "くり返す本文",
+        "required": true,
+        "requiredExecutable": true
+      }
+    ],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "RepeatUntil",
+    "kind": "RepeatUntil",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "条件・反復",
+    "label": "条件が成り立つまで",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "condition",
+        "label": "条件",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": true
+      }
+    ],
+    "bodies": [
+      {
+        "key": "body",
+        "label": "くり返す本文",
+        "required": true,
+        "requiredExecutable": true
+      }
+    ],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "Forever",
+    "kind": "Forever",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "条件・反復",
+    "label": "ずっとくり返す",
+    "fields": [],
+    "inputs": [],
+    "bodies": [
+      {
+        "key": "body",
+        "label": "くり返す本文",
+        "required": true,
+        "requiredExecutable": true
+      }
+    ],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "ForEach",
+    "kind": "ForEach",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "条件・反復",
+    "label": "各要素についてくり返す",
+    "fields": [
+      {
+        "key": "binder",
+        "label": "項目名",
+        "type": "name",
+        "initial": "項目",
+        "required": true,
+        "callable": false
+      }
+    ],
+    "inputs": [
+      {
+        "key": "list",
+        "label": "リスト",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": []
+      }
+    ],
+    "bodies": [
+      {
+        "key": "body",
+        "label": "くり返す本文",
+        "required": true,
+        "requiredExecutable": true
+      }
+    ],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "WaitTime",
+    "kind": "WaitTime",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "待機",
+    "label": "秒待つ",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "seconds",
+        "label": "秒",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "WaitUntil",
+    "kind": "WaitUntil",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "待機",
+    "label": "条件まで待つ",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "condition",
+        "label": "条件",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": true
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "Say",
+    "kind": "Say",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "表示・入力",
+    "label": "言う",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "value",
+        "label": "内容",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": ""
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "ReturnStatement",
+    "kind": "ReturnStatement",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "返す",
+    "label": "返す",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "value",
+        "label": "返す値",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": 0
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "Ask",
+    "kind": "Ask",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "表示・入力",
+    "label": "たずねる",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "question",
+        "label": "質問",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": ""
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "Broadcast",
+    "kind": "Broadcast",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "知らせ",
+    "label": "知らせる",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "message",
+        "label": "知らせ",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": ""
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "BroadcastAndWait",
+    "kind": "BroadcastAndWait",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "知らせ",
+    "label": "知らせて待つ",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "message",
+        "label": "知らせ",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": ""
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "UserActionCall",
+    "kind": "UserActionCall",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "動作",
+    "label": "動作を実行",
+    "fields": [
+      {
+        "key": "name",
+        "label": "動作名",
+        "type": "name",
+        "initial": "動作",
+        "required": true,
+        "callable": true
+      }
+    ],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "semanticArity": "definition"
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LocalVariableDeclaration",
+    "kind": "LocalVariableDeclaration",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "この中だけのデータ",
+    "label": "この中だけの変数を作る",
+    "fields": [
+      {
+        "key": "name",
+        "label": "変数名",
+        "type": "name",
+        "initial": "結果",
+        "required": true,
+        "callable": false
+      }
+    ],
+    "inputs": [
+      {
+        "key": "initial",
+        "label": "最初の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LocalListDeclaration",
+    "kind": "LocalListDeclaration",
+    "discriminator": null,
+    "category": "statement",
+    "palette": "この中だけのデータ",
+    "label": "この中だけのリストを作る",
+    "fields": [
+      {
+        "key": "name",
+        "label": "リスト名",
+        "type": "name",
+        "initial": "結果",
+        "required": true,
+        "callable": false
+      }
+    ],
+    "inputs": [],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "StopCommand:THIS",
+    "kind": "StopCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "THIS"
+    },
+    "category": "statement",
+    "palette": "停止",
+    "label": "このスクリプトを止める",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "StopCommand:OTHERS",
+    "kind": "StopCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "OTHERS"
+    },
+    "category": "statement",
+    "palette": "停止",
+    "label": "ほかのスクリプトを止める",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "StopCommand:ALL",
+    "kind": "StopCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "ALL"
+    },
+    "category": "statement",
+    "palette": "停止",
+    "label": "すべてを止める",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "MotionCommand:MOVE",
+    "kind": "MotionCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "MOVE"
+    },
+    "category": "statement",
+    "palette": "動き",
+    "label": "歩動く",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "歩数"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "MotionCommand:GOTO",
+    "kind": "MotionCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "GOTO"
+    },
+    "category": "statement",
+    "palette": "動き",
+    "label": "位置へ行く",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 2,
+        "maxItems": 2,
+        "labels": [
+          "横位置",
+          "縦位置"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "MotionCommand:GLIDE",
+    "kind": "MotionCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "GLIDE"
+    },
+    "category": "statement",
+    "palette": "動き",
+    "label": "位置へ滑る",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 3,
+        "maxItems": 3,
+        "labels": [
+          "秒",
+          "横位置",
+          "縦位置"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "MotionCommand:SET_DIRECTION",
+    "kind": "MotionCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_DIRECTION"
+    },
+    "category": "statement",
+    "palette": "動き",
+    "label": "方向を設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "方向"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "MotionCommand:TURN_RIGHT",
+    "kind": "MotionCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "TURN_RIGHT"
+    },
+    "category": "statement",
+    "palette": "動き",
+    "label": "右に回る",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "角度"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "MotionCommand:TURN_LEFT",
+    "kind": "MotionCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "TURN_LEFT"
+    },
+    "category": "statement",
+    "palette": "動き",
+    "label": "左に回る",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "角度"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "MotionCommand:SET_X",
+    "kind": "MotionCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_X"
+    },
+    "category": "statement",
+    "palette": "動き",
+    "label": "横位置を設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "横位置"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "MotionCommand:SET_Y",
+    "kind": "MotionCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_Y"
+    },
+    "category": "statement",
+    "palette": "動き",
+    "label": "縦位置を設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "縦位置"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "MotionCommand:POINT_TO",
+    "kind": "MotionCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "POINT_TO"
+    },
+    "category": "statement",
+    "palette": "動き",
+    "label": "対象の方向を向く",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "対象"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "MotionCommand:BOUNCE",
+    "kind": "MotionCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "BOUNCE"
+    },
+    "category": "statement",
+    "palette": "動き",
+    "label": "端で跳ね返る",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:FRONT",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "FRONT"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "前面へ出す",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:BACK",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "BACK"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "背面へ下げる",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:HIDE",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "HIDE"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "隠れる",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:SHOW",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SHOW"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "現れる",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:NEXT_COSTUME",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "NEXT_COSTUME"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "次の衣装",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:PREV_COSTUME",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "PREV_COSTUME"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "前の衣装",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:NEXT_BACKDROP",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "NEXT_BACKDROP"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "次の背景",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:PREV_BACKDROP",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "PREV_BACKDROP"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "前の背景",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:SET_SCALE",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_SCALE"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "大きさを設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "大きさ"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:FORWARD_LAYERS",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "FORWARD_LAYERS"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "層前へ出す",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "層数"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:BACKWARD_LAYERS",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "BACKWARD_LAYERS"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "層後ろへ下げる",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "層数"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:SET_COLOR",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_COLOR"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "表示色を設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "色"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:SET_COSTUME",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_COSTUME"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "衣装を設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "衣装"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:SET_BACKDROP",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_BACKDROP"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "背景を設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "背景"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:SET_SELF_TEXT",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_SELF_TEXT"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "自分の文字を設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "文字"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:SET_TARGET_TEXT",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_TARGET_TEXT"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "対象の文字を設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 2,
+        "maxItems": 2,
+        "labels": [
+          "対象",
+          "文字"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "LooksCommand:SET_INPUT",
+    "kind": "LooksCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_INPUT"
+    },
+    "category": "statement",
+    "palette": "見た目",
+    "label": "入力欄に入れる",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 2,
+        "maxItems": 2,
+        "labels": [
+          "入力欄",
+          "値"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "PenCommand:DOWN",
+    "kind": "PenCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "DOWN"
+    },
+    "category": "statement",
+    "palette": "ペン",
+    "label": "ペンを下ろす",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "PenCommand:UP",
+    "kind": "PenCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "UP"
+    },
+    "category": "statement",
+    "palette": "ペン",
+    "label": "ペンを上げる",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "PenCommand:CLEAR",
+    "kind": "PenCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "CLEAR"
+    },
+    "category": "statement",
+    "palette": "ペン",
+    "label": "線とスタンプを消す",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "PenCommand:STAMP",
+    "kind": "PenCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "STAMP"
+    },
+    "category": "statement",
+    "palette": "ペン",
+    "label": "スタンプを押す",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "PenCommand:SET_COLOR",
+    "kind": "PenCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_COLOR"
+    },
+    "category": "statement",
+    "palette": "ペン",
+    "label": "ペンの色を設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "色"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "PenCommand:SET_SIZE",
+    "kind": "PenCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_SIZE"
+    },
+    "category": "statement",
+    "palette": "ペン",
+    "label": "ペンの太さを設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "太さ"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "SoundCommand:STOP_ALL",
+    "kind": "SoundCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "STOP_ALL"
+    },
+    "category": "statement",
+    "palette": "音",
+    "label": "すべての音を止める",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "SoundCommand:TONE_WAIT",
+    "kind": "SoundCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "TONE_WAIT"
+    },
+    "category": "statement",
+    "palette": "音",
+    "label": "音を鳴らして待つ",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 2,
+        "maxItems": 2,
+        "labels": [
+          "周波数",
+          "秒"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "SoundCommand:TONE",
+    "kind": "SoundCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "TONE"
+    },
+    "category": "statement",
+    "palette": "音",
+    "label": "音を鳴らす",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 2,
+        "maxItems": 2,
+        "labels": [
+          "周波数",
+          "秒"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "SoundCommand:SAMPLE_WAIT",
+    "kind": "SoundCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SAMPLE_WAIT"
+    },
+    "category": "statement",
+    "palette": "音",
+    "label": "素材の音を鳴らして待つ",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "音"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "SoundCommand:SAMPLE",
+    "kind": "SoundCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SAMPLE"
+    },
+    "category": "statement",
+    "palette": "音",
+    "label": "素材の音を鳴らす",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "音"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "SoundCommand:SET_VOLUME",
+    "kind": "SoundCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "SET_VOLUME"
+    },
+    "category": "statement",
+    "palette": "音",
+    "label": "音量を設定",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "音量"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "SoundCommand:PITCH_UP",
+    "kind": "SoundCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "PITCH_UP"
+    },
+    "category": "statement",
+    "palette": "音",
+    "label": "音程を上げる",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "段階"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "SoundCommand:PITCH_DOWN",
+    "kind": "SoundCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "PITCH_DOWN"
+    },
+    "category": "statement",
+    "palette": "音",
+    "label": "音程を下げる",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "段階"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "CloneCommand:CREATE_SELF",
+    "kind": "CloneCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "CREATE_SELF"
+    },
+    "category": "statement",
+    "palette": "クローン",
+    "label": "自分のクローンを作る",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "CloneCommand:DELETE_SELF",
+    "kind": "CloneCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "DELETE_SELF"
+    },
+    "category": "statement",
+    "palette": "クローン",
+    "label": "このクローンを削除する",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 0,
+        "labels": []
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "CloneCommand:CREATE_TARGET",
+    "kind": "CloneCommand",
+    "discriminator": {
+      "key": "op",
+      "value": "CREATE_TARGET"
+    },
+    "category": "statement",
+    "palette": "クローン",
+    "label": "対象のクローンを作る",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "対象"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": [
+      {
+        "key": "inlineComment",
+        "label": "行末コメント",
+        "type": "annotation",
+        "initial": "",
+        "required": true,
+        "editable": true
+      }
+    ]
+  },
+  {
+    "id": "NumberLiteral",
+    "kind": "NumberLiteral",
+    "discriminator": null,
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "数",
+    "fields": [
+      {
+        "key": "value",
+        "label": "数",
+        "type": "number",
+        "initial": 0,
+        "required": true
+      }
+    ],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "StringLiteral",
+    "kind": "StringLiteral",
+    "discriminator": null,
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "文字",
+    "fields": [
+      {
+        "key": "value",
+        "label": "文字",
+        "type": "string",
+        "initial": "",
+        "required": true
+      }
+    ],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BooleanLiteral",
+    "kind": "BooleanLiteral",
+    "discriminator": null,
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "真偽",
+    "fields": [
+      {
+        "key": "value",
+        "label": "真偽",
+        "type": "boolean",
+        "initial": true,
+        "required": true
+      }
+    ],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "ListLiteral",
+    "kind": "ListLiteral",
+    "discriminator": null,
+    "category": "expression",
+    "palette": "リスト",
+    "label": "リスト",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "items",
+        "label": "要素",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "variadic": true
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "VariableRead",
+    "kind": "VariableRead",
+    "discriminator": null,
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "名前を読む",
+    "fields": [
+      {
+        "key": "name",
+        "label": "名前",
+        "type": "name",
+        "initial": "値",
+        "required": true,
+        "callable": false
+      },
+      {
+        "key": "qualifier",
+        "label": "使う場所",
+        "type": "qualifier",
+        "initial": null,
+        "required": true
+      }
+    ],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "UnaryExpression:POS",
+    "kind": "UnaryExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "POS"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "正の符号",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "value",
+        "label": "値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "UnaryExpression:NEG",
+    "kind": "UnaryExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "NEG"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "負の符号",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "value",
+        "label": "値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "UnaryExpression:NOT",
+    "kind": "UnaryExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "NOT"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "ではない",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "value",
+        "label": "値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BinaryExpression:ADD",
+    "kind": "BinaryExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "ADD"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "足す",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BinaryExpression:SUB",
+    "kind": "BinaryExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "SUB"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "引く",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BinaryExpression:MUL",
+    "kind": "BinaryExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "MUL"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "掛ける",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BinaryExpression:DIV",
+    "kind": "BinaryExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "DIV"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "割る",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BinaryExpression:POW",
+    "kind": "BinaryExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "POW"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "累乗",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "CompareExpression:GTE",
+    "kind": "CompareExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "GTE"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "以上",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "CompareExpression:LTE",
+    "kind": "CompareExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "LTE"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "以下",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "CompareExpression:GT",
+    "kind": "CompareExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "GT"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "より大きい",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "CompareExpression:LT",
+    "kind": "CompareExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "LT"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "より小さい",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "CompareExpression:EQ",
+    "kind": "CompareExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "EQ"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "と同じ",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "CompareExpression:NEQ",
+    "kind": "CompareExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "NEQ"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "と違う",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "LogicalExpression:AND",
+    "kind": "LogicalExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "AND"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "かつ",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "LogicalExpression:OR",
+    "kind": "LogicalExpression",
+    "discriminator": {
+      "key": "op",
+      "value": "OR"
+    },
+    "category": "expression",
+    "palette": "値・データ",
+    "label": "または",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "left",
+        "label": "左の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "key": "right",
+        "label": "右の値",
+        "type": "expression",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "ListRead",
+    "kind": "ListRead",
+    "discriminator": null,
+    "category": "expression",
+    "palette": "リスト",
+    "label": "リストの要素",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "list",
+        "label": "リスト",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": []
+      },
+      {
+        "key": "index",
+        "label": "番号",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "UserFunctionCall",
+    "kind": "UserFunctionCall",
+    "discriminator": null,
+    "category": "expression",
+    "palette": "計算",
+    "label": "計算する",
+    "fields": [
+      {
+        "key": "name",
+        "label": "計算名",
+        "type": "name",
+        "initial": "計算",
+        "required": true,
+        "callable": true
+      }
+    ],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "semanticArity": "definition"
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:乱数",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "乱数"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "乱数",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 2,
+        "semanticMin": 2,
+        "semanticMax": 2
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:余り",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "余り"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "余り",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 2,
+        "semanticMin": 2,
+        "semanticMax": 2
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:四捨五入",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "四捨五入"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "四捨五入",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:切り上げ",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "切り上げ"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "切り上げ",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:切り捨て",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "切り捨て"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "切り捨て",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:絶対値",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "絶対値"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "絶対値",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:平方根",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "平方根"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "平方根",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:正弦",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "正弦"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "正弦",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:余弦",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "余弦"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "余弦",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:正接",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "正接"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "正接",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:逆正弦",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "逆正弦"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "逆正弦",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:逆余弦",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "逆余弦"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "逆余弦",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:逆正接",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "逆正接"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "逆正接",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:自然対数",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "自然対数"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "自然対数",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:常用対数",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "常用対数"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "常用対数",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:指数",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "指数"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "指数",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:数",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "数"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "数",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:文字",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "文字"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "文字",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": 1
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:最小",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "最小"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "最小",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": null
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:最大",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "最大"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "最大",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 1,
+        "semanticMin": 1,
+        "semanticMax": null
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:つなぐ",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "つなぐ"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "つなぐ",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 0,
+        "maxItems": 100000,
+        "labels": [],
+        "variadic": true,
+        "initialItems": 2,
+        "semanticMin": 2,
+        "semanticMax": null
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:CONTAINS",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "CONTAINS"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "含まれている",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 2,
+        "maxItems": 2,
+        "labels": [
+          "リストまたは文字",
+          "探す値"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:INDEX_OF",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "INDEX_OF"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "最初にある番号",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 2,
+        "maxItems": 2,
+        "labels": [
+          "リストまたは文字",
+          "探す値"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:LENGTH",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "LENGTH"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "長さ",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "リストまたは文字"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:STRING_LENGTH",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "STRING_LENGTH"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "文字数",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 1,
+        "maxItems": 1,
+        "labels": [
+          "文字"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "BuiltinCall:STRING_CHAR",
+    "kind": "BuiltinCall",
+    "discriminator": {
+      "key": "name",
+      "value": "STRING_CHAR"
+    },
+    "category": "expression",
+    "palette": "用意された計算",
+    "label": "文字目",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "args",
+        "label": "受け取る値",
+        "type": "expression",
+        "required": true,
+        "multiple": true,
+        "minItems": 2,
+        "maxItems": 2,
+        "labels": [
+          "文字",
+          "番号"
+        ]
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:マウスが押されている",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "マウスが押されている"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "マウスが押されている",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:マウスの横位置",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "マウスの横位置"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "マウスの横位置",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:マウスの縦位置",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "マウスの縦位置"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "マウスの縦位置",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:以前の背景名",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "以前の背景名"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "以前の背景名",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:新しい背景名",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "新しい背景名"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "新しい背景名",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:受け取った知らせ",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "受け取った知らせ"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "受け取った知らせ",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:押されたキー",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "押されたキー"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "押されたキー",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:クローンである",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "クローンである"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "クローンである",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:背景番号",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "背景番号"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "背景番号",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:背景名",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "背景名"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "背景名",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:衣装番号",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "衣装番号"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "衣装番号",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:衣装名",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "衣装名"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "衣装名",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:横位置",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "横位置"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "横位置",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:縦位置",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "縦位置"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "縦位置",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:方向",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "方向"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "方向",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:大きさ",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "大きさ"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "大きさ",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:タイマー",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "タイマー"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "タイマー",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:答え",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "答え"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "答え",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:音量",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "音量"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "音量",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:音程",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "音程"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "音程",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:以前の値",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "以前の値"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "以前の値",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:新しい値",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "新しい値"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "新しい値",
+    "fields": [],
+    "inputs": [],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:INPUT_VALUE",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "INPUT_VALUE"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "入力欄の値",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "arg",
+        "label": "入力欄",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": "入力欄1"
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:DISTANCE_TO",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "DISTANCE_TO"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "対象までの距離",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "arg",
+        "label": "対象",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": "マウス"
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:KEY_DOWN",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "KEY_DOWN"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "キーが押されている",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "arg",
+        "label": "キー",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": "空白"
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:TOUCHING_COLOR",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "TOUCHING_COLOR"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "色に触れている",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "arg",
+        "label": "色",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": "#ff0000"
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  },
+  {
+    "id": "SensorRead:TOUCHING",
+    "kind": "SensorRead",
+    "discriminator": {
+      "key": "sensor",
+      "value": "TOUCHING"
+    },
+    "category": "expression",
+    "palette": "状態",
+    "label": "対象に触れている",
+    "fields": [],
+    "inputs": [
+      {
+        "key": "arg",
+        "label": "対象",
+        "type": "expression",
+        "required": true,
+        "multiple": false,
+        "initial": "マウス"
+      }
+    ],
+    "bodies": [],
+    "annotations": []
+  }
+]

@@ -1,3 +1,4 @@
+import {verifyContractReport,verifyMigrationReport,verifyIntentReport,verifyRuntimeReport,verifyNegativeReport} from './japanese-gate-contract.mjs';
 import {verifyBlockFields} from './block-field-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -28,5 +29,10 @@ export function verifyGateResults(dir,inputs){
   const ownership=read('ownership/report');assert.equal(ownership.status,'PASS');assert.deepEqual(ownership.snapshot,inputs);assert.ok(ownership.browser);assert.deepEqual(ownership.results.map(r=>r.id),ids);for(const r of ownership.results)assert.equal(r.pass,true,r.id);
   for(const name of ['static','integrity','normal','language-boundaries','manual/manual-docs']){const r=read(name);assert.equal(r.status,'PASS');assert.deepEqual(r.snapshot,inputs);}
   const integrity=read('integrity');assert.equal(integrity.results.length,30);assert.equal(new Set(integrity.results.map(r=>r.id)).size,30);for(const r of integrity.results)assert.equal(r.pass,true);
+  verifyContractReport(read('japanese-contract-static'),inputs);
+  verifyMigrationReport(read('language-migration-static'),inputs);
+  verifyIntentReport(read('japanese-intent-browser'),inputs);
+  verifyRuntimeReport(read('runtime-v2'),inputs,path.join(dir,'runtime-v2'));
+  verifyNegativeReport(read('japanese-gate-negative'),inputs);
   return {status:'PASS',steps:gate.steps.length};
 }

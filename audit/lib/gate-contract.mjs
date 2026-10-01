@@ -26,4 +26,9 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['harness-negative','audit/tests/harness-negative.mjs',browser,file('product'),file('harness-negative')],
   ['language-negative','audit/tests/language-harness-negative.mjs',file('language-browser')],
   ['surface-negative','audit/tests/surface-negative.mjs',file('editor-browser-core'),file('editor-gui')],
+  ['japanese-contract-static','audit/tests/contract-gate.mjs','static',file('japanese-contract-static')],
+  ['language-migration-static','audit/tests/contract-gate.mjs','migration',file('language-migration-static')],
+  ['japanese-intent-browser','audit/tests/japanese-intent-browser.mjs',browser,file('japanese-intent-browser')],
+  ['runtime-v2','audit/tests/runtime-boundary-gate.mjs',currentProductFile(),browser,path.join(dir,'runtime-v2'),file('runtime-v2')],
+  ['japanese-gate-negative','audit/tests/japanese-gate-negative.mjs',file('japanese-gate-negative')],
 ];}

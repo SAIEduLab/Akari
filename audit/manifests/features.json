@@ -1,5 +1,5 @@
 {
-  "productVersion": "1.0.1",
+  "productVersion": "1.0.2",
   "COMMAND_CATALOG": [
     {
       "id": "Assignment",
@@ -11,49 +11,49 @@
       "id": "NumericUpdate:ADD",
       "kind": "NumericUpdate",
       "op": "ADD",
-      "source": "点数に1を足す。"
+      "source": "点数を1増やす。"
     },
     {
       "id": "NumericUpdate:SUB",
       "kind": "NumericUpdate",
       "op": "SUB",
-      "source": "点数から1を引く。"
+      "source": "点数を1減らす。"
     },
     {
       "id": "ListAppend",
       "kind": "ListAppend",
       "op": "",
-      "source": "名前一覧に「あかり」を追加する。"
+      "source": "名前一覧の最後に「あかり」を入れる。"
     },
     {
       "id": "ListReplace",
       "kind": "ListReplace",
       "op": "",
-      "source": "名前一覧の1番目を「ひかり」にする。"
+      "source": "名前一覧の1番目を「ひかり」に変える。"
     },
     {
       "id": "ListInsert",
       "kind": "ListInsert",
       "op": "",
-      "source": "名前一覧の1番目に「ほたる」を挿入する。"
+      "source": "名前一覧の1番目に「ほたる」を入れる。"
     },
     {
       "id": "ListDelete",
       "kind": "ListDelete",
       "op": "",
-      "source": "名前一覧の1番目を削除する。"
+      "source": "名前一覧の1番目を消す。"
     },
     {
       "id": "ListClear",
       "kind": "ListClear",
       "op": "",
-      "source": "名前一覧を空にする。"
+      "source": "名前一覧の中身を全部消す。"
     },
     {
       "id": "IfStatement",
       "kind": "IfStatement",
       "op": "",
-      "source": "もし 点数が10以上なら、次のことをする。\n  何もしない。"
+      "source": "もし点数が10以上なら、\n  何もしない。"
     },
     {
       "id": "Say",
@@ -65,19 +65,19 @@
       "id": "RepeatCount",
       "kind": "RepeatCount",
       "op": "",
-      "source": "次のことを3回くり返す。\n  何もしない。"
+      "source": "3回くり返す。\n  何もしない。"
     },
     {
       "id": "RepeatWhile",
       "kind": "RepeatWhile",
       "op": "",
-      "source": "点数が100より小さいあいだ、次のことをくり返す。\n  何もしない。"
+      "source": "点数が100より小さいあいだ、くり返す。\n  何もしない。"
     },
     {
       "id": "RepeatUntil",
       "kind": "RepeatUntil",
       "op": "",
-      "source": "空白キーが押されるまで、次のことをくり返す。\n  何もしない。"
+      "source": "「空白」キーが押されるまで、くり返す。\n  何もしない。"
     },
     {
       "id": "WaitTime",
@@ -95,13 +95,13 @@
       "id": "ForEach",
       "kind": "ForEach",
       "op": "",
-      "source": "名前一覧の各要素を項目として、次のことをくり返す。\n  何もしない。"
+      "source": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  何もしない。"
     },
     {
       "id": "MotionCommand:MOVE",
       "kind": "MotionCommand",
       "op": "MOVE",
-      "source": "10歩動く。"
+      "source": "前へ10歩進む。"
     },
     {
       "id": "MotionCommand:GOTO",
@@ -113,7 +113,7 @@
       "id": "MotionCommand:GLIDE",
       "kind": "MotionCommand",
       "op": "GLIDE",
-      "source": "1秒で横200、縦100の位置へ滑る。"
+      "source": "横200、縦100の位置へ1秒かけて動く。"
     },
     {
       "id": "MotionCommand:TURN_RIGHT",
@@ -131,7 +131,7 @@
       "id": "MotionCommand:SET_DIRECTION",
       "kind": "MotionCommand",
       "op": "SET_DIRECTION",
-      "source": "方向を90度にする。"
+      "source": "向きを90度にする。"
     },
     {
       "id": "MotionCommand:SET_X",
@@ -149,13 +149,13 @@
       "id": "MotionCommand:POINT_TO",
       "kind": "MotionCommand",
       "op": "POINT_TO",
-      "source": "「マウス」の方向を向く。"
+      "source": "「マウス」の方を向く。"
     },
     {
       "id": "MotionCommand:BOUNCE",
       "kind": "MotionCommand",
       "op": "BOUNCE",
-      "source": "端に触れていれば跳ね返る。"
+      "source": "画面の端にふれていれば、はね返る。"
     },
     {
       "id": "LooksCommand:SET_SCALE",
@@ -173,37 +173,37 @@
       "id": "LooksCommand:HIDE",
       "kind": "LooksCommand",
       "op": "HIDE",
-      "source": "隠れる。"
+      "source": "姿をかくす。"
     },
     {
       "id": "LooksCommand:SHOW",
       "kind": "LooksCommand",
       "op": "SHOW",
-      "source": "現れる。"
+      "source": "姿を見せる。"
     },
     {
       "id": "LooksCommand:FRONT",
       "kind": "LooksCommand",
       "op": "FRONT",
-      "source": "前面へ出す。"
+      "source": "いちばん手前へ出る。"
     },
     {
       "id": "LooksCommand:BACK",
       "kind": "LooksCommand",
       "op": "BACK",
-      "source": "背面へ下げる。"
+      "source": "いちばん奥へ下がる。"
     },
     {
       "id": "LooksCommand:FORWARD_LAYERS",
       "kind": "LooksCommand",
       "op": "FORWARD_LAYERS",
-      "source": "1層前へ出す。"
+      "source": "重なりを1つ手前にする。"
     },
     {
       "id": "LooksCommand:BACKWARD_LAYERS",
       "kind": "LooksCommand",
       "op": "BACKWARD_LAYERS",
-      "source": "1層後ろへ下げる。"
+      "source": "重なりを1つ奥にする。"
     },
     {
       "id": "PenCommand:DOWN",
@@ -233,67 +233,67 @@
       "id": "PenCommand:STAMP",
       "kind": "PenCommand",
       "op": "STAMP",
-      "source": "スタンプを押す。"
+      "source": "今の姿のスタンプを押す。"
     },
     {
       "id": "PenCommand:CLEAR",
       "kind": "PenCommand",
       "op": "CLEAR",
-      "source": "描いた線とスタンプを消す。"
+      "source": "作品の線とスタンプを全部消す。"
     },
     {
       "id": "LooksCommand:SET_BACKDROP",
       "kind": "LooksCommand",
       "op": "SET_BACKDROP",
-      "source": "背景を「空色」にする。"
+      "source": "背景を「空色」に変える。"
     },
     {
       "id": "LooksCommand:NEXT_BACKDROP",
       "kind": "LooksCommand",
       "op": "NEXT_BACKDROP",
-      "source": "次の背景にする。"
+      "source": "次の背景に変える。"
     },
     {
       "id": "LooksCommand:PREV_BACKDROP",
       "kind": "LooksCommand",
       "op": "PREV_BACKDROP",
-      "source": "前の背景にする。"
+      "source": "前の背景に変える。"
     },
     {
       "id": "LooksCommand:SET_COSTUME",
       "kind": "LooksCommand",
       "op": "SET_COSTUME",
-      "source": "衣装を「星」にする。"
+      "source": "衣装を「星」に変える。"
     },
     {
       "id": "LooksCommand:NEXT_COSTUME",
       "kind": "LooksCommand",
       "op": "NEXT_COSTUME",
-      "source": "次の衣装にする。"
+      "source": "次の衣装に変える。"
     },
     {
       "id": "LooksCommand:PREV_COSTUME",
       "kind": "LooksCommand",
       "op": "PREV_COSTUME",
-      "source": "前の衣装にする。"
+      "source": "前の衣装に変える。"
     },
     {
       "id": "LooksCommand:SET_TARGET_TEXT",
       "kind": "LooksCommand",
       "op": "SET_TARGET_TEXT",
-      "source": "「ボタン1」の文字を「始める」にする。"
+      "source": "「ボタン1」の文字を「始める」に変える。"
     },
     {
       "id": "SoundCommand:TONE",
       "kind": "SoundCommand",
       "op": "TONE",
-      "source": "440Hzの音を0.2秒鳴らす。"
+      "source": "440Hzの音を0.2秒鳴らし始める。"
     },
     {
       "id": "SoundCommand:TONE_WAIT",
       "kind": "SoundCommand",
       "op": "TONE_WAIT",
-      "source": "440Hzの音を0.2秒鳴らし、終わるまで待つ。"
+      "source": "440Hzの音を0.2秒鳴らす。"
     },
     {
       "id": "SoundCommand:SET_VOLUME",
@@ -305,13 +305,13 @@
       "id": "SoundCommand:PITCH_UP",
       "kind": "SoundCommand",
       "op": "PITCH_UP",
-      "source": "音程を1段階上げる。"
+      "source": "音の高さを1段階上げる。"
     },
     {
       "id": "SoundCommand:PITCH_DOWN",
       "kind": "SoundCommand",
       "op": "PITCH_DOWN",
-      "source": "音程を1段階下げる。"
+      "source": "音の高さを1段階下げる。"
     },
     {
       "id": "SoundCommand:STOP_ALL",
@@ -323,73 +323,73 @@
       "id": "Broadcast",
       "kind": "Broadcast",
       "op": "",
-      "source": "「開始」と知らせる。"
+      "source": "みんなに「開始」と知らせる。"
     },
     {
       "id": "BroadcastAndWait",
       "kind": "BroadcastAndWait",
       "op": "",
-      "source": "「開始」と知らせ、受け手の処理が終わるまで待つ。"
+      "source": "みんなに「開始」と知らせて、知らせを受けて始めたことが全部終わるまで待つ。"
     },
     {
       "id": "Ask",
       "kind": "Ask",
       "op": "",
-      "source": "「名前は？」とたずねる。"
+      "source": "「名前は？」とたずねて、答えを待つ。"
     },
     {
       "id": "LocalVariableDeclaration",
       "kind": "LocalVariableDeclaration",
       "op": "",
-      "source": "合計という変数を作り、初期値を0にする。"
+      "source": "この中だけで使う変数【合計】を作り、最初は0にする。"
     },
     {
       "id": "ReturnStatement",
       "kind": "ReturnStatement",
       "op": "",
-      "source": "合計を返す。"
+      "source": "合計を答えとして返す。"
     },
     {
       "id": "CloneCommand:CREATE_SELF",
       "kind": "CloneCommand",
       "op": "CREATE_SELF",
-      "source": "自分のクローンを作る。"
+      "source": "自分の分身を作る。"
     },
     {
       "id": "CloneCommand:CREATE_TARGET",
       "kind": "CloneCommand",
       "op": "CREATE_TARGET",
-      "source": "「マスコット」のクローンを作る。"
+      "source": "「マスコット」の分身を作る。"
     },
     {
       "id": "CloneCommand:DELETE_SELF",
       "kind": "CloneCommand",
       "op": "DELETE_SELF",
-      "source": "このクローンを削除する。"
+      "source": "この分身だけを消す。"
     },
     {
       "id": "StopCommand:THIS",
       "kind": "StopCommand",
       "op": "THIS",
-      "source": "このスクリプトを止める。"
+      "source": "この実行を止める。"
     },
     {
       "id": "StopCommand:OTHERS",
       "kind": "StopCommand",
       "op": "OTHERS",
-      "source": "ほかのスクリプトを止める。"
+      "source": "ほかの実行をすべて止める。"
     },
     {
       "id": "StopCommand:ALL",
       "kind": "StopCommand",
       "op": "ALL",
-      "source": "すべてを止める。"
+      "source": "作品全体を止める。"
     },
     {
       "id": "LooksCommand:SET_SELF_TEXT",
       "kind": "LooksCommand",
       "op": "SET_SELF_TEXT",
-      "source": "文字を「文字」にする。"
+      "source": "自分の文字を「文字」に変える。"
     },
     {
       "id": "LooksCommand:SET_INPUT",
@@ -401,43 +401,43 @@
       "id": "SoundCommand:SAMPLE",
       "kind": "SoundCommand",
       "op": "SAMPLE",
-      "source": "「ベル」を鳴らす。"
+      "source": "音「ベル」を鳴らし始める。"
     },
     {
       "id": "SoundCommand:SAMPLE_WAIT",
       "kind": "SoundCommand",
       "op": "SAMPLE_WAIT",
-      "source": "「ベル」を鳴らし、終わるまで待つ。"
+      "source": "音「ベル」を鳴らす。"
     },
     {
       "id": "Break",
       "kind": "Break",
       "op": "",
-      "source": "このくり返しを終える。"
+      "source": "いまのくり返しを終える。"
     },
     {
       "id": "Continue",
       "kind": "Continue",
       "op": "",
-      "source": "次のくり返しへ進む。"
+      "source": "この回の残りをとばして、次の回へ進む。"
     },
     {
       "id": "LocalListDeclaration",
       "kind": "LocalListDeclaration",
       "op": "",
-      "source": "結果というリストを作る。"
+      "source": "この中だけで使うリスト【結果】を空で作る。"
     },
     {
       "id": "Forever",
       "kind": "Forever",
       "op": "",
-      "source": "次のことをずっとくり返す。\n  何もしない。"
+      "source": "ずっとくり返す。\n  何もしない。"
     },
     {
       "id": "UserActionCall",
       "kind": "UserActionCall",
       "op": "",
-      "source": "増やす（3）を実行する。"
+      "source": "（3）を渡して、【増やす】という手順を行う。"
     },
     {
       "id": "NoOperation",
@@ -487,13 +487,24 @@
     "activeTasks": 2000
   },
   "EXECUTABLE_CONTRACT": {
-    "languageContractId": 1,
-    "runtimeContractId": 1,
-    "programFormatVersion": 1,
-    "projectFormatVersion": 1
+    "languageContractId": 2,
+    "runtimeContractId": 2,
+    "programFormatVersion": 2,
+    "projectFormatVersion": 2
   },
   "schemaIds": [
     "Script",
+    "Hole:expression",
+    "Hole:statement",
+    "Hole:target",
+    "Hole:rule",
+    "QuantityLiteral",
+    "UnitlessRead",
+    "ActorQualifiedRead",
+    "ContinuousRule",
+    "MotionCommand:MOVE_DIRECTION",
+    "MotionCommand:GLIDE_DIRECTION",
+    "WaitBroadcastGroup",
     "TargetReference",
     "CommentLine",
     "Assignment",

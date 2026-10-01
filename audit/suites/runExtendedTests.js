@@ -37,7 +37,7 @@ async function runExtendedTests() {
       );
     };
     const make = (source = '', targetId = 'stage', event = 'start') => {
-      const p = A.makeDefaultProject();
+      const p = makeRegressionProject();
       p.scripts = [{ targetId, event, source }];
       return p;
     };
@@ -79,20 +79,16 @@ async function runExtendedTests() {
       if (h.errors.length) throw h.errors[0];
       return h;
     };
-    const say = (s) => s + '\u3068\u8a00\u3046',
+    const say = (s) => s.startsWith('「') && s.endsWith('」') ? s + 'と言う' : '（' + s + '）の値を言う',
       set = (name, value) => name + '\u3092' + value + '\u306b\u3059\u308b',
       add = (name) => name + '\u306b1\u3092\u8db3\u3059',
-      local = (name, value) =>
-        name +
-        '\u3068\u3044\u3046\u5909\u6570\u3092\u4f5c\u308a\u3001\u521d\u671f\u5024\u3092' +
-        value +
-        '\u306b\u3059\u308b';
+      local = (name, value) => 'この中だけで使う変数【' + name + '】を作り、最初は' + value + 'にする';
     await test('CONDITION count-to-three independent result', () => {
       const h = run(
         set(N, 0) +
           '\n' +
           N +
-          'が3より小さいあいだ、次のことをくり返す。\n  ' +
+          'が3点より小さいあいだ、くり返す。\n  ' +
           add(N) +
           '\n' +
           say(N),
@@ -101,22 +97,22 @@ async function runExtendedTests() {
     });
     await test('CONDITION until-ten without optional suffix', () =>
       eq(
-        run(N + 'が10以上になるまで、次のことをくり返す。\n  ' + add(N)).r.projectVars.get(N),
+        run(N + 'が10点以上になるまで、くり返す。\n  ' + add(N)).r.projectVars.get(N),
         10,
       ));
     const predicates = [
-      [N + '\u304c0\u4ee5\u4e0a\u3067\u3042\u308b\u3042\u3044\u3060', true],
-      [N + '\u304c0\u4ee5\u4e0b\u3067\u3042\u308b\u3042\u3044\u3060', true],
-      [N + '\u304c0\u3068\u540c\u3058\u3067\u3042\u308b\u3042\u3044\u3060', true],
-      [N + '\u304c1\u3068\u9055\u3046\u3042\u3044\u3060', true],
-      [N + '\u304c1\u3088\u308a\u5c0f\u3055\u3044\u3042\u3044\u3060', true],
-      [N + '\u304c1\u3088\u308a\u5927\u304d\u3044\u3042\u3044\u3060', false],
-      [N + '\u304c0\u4ee5\u4e0a\u306b\u306a\u308b\u307e\u3067', true],
-      [N + '\u304c0\u4ee5\u4e0b\u306b\u306a\u308b\u307e\u3067', true],
-      [N + '\u304c0\u3068\u540c\u3058\u306b\u306a\u308b\u307e\u3067', true],
-      [N + '\u304c1\u3068\u9055\u3046\u3088\u3046\u306b\u306a\u308b\u307e\u3067', true],
-      [N + '\u304c1\u3088\u308a\u5c0f\u3055\u304f\u306a\u308b\u307e\u3067', true],
-      [N + '\u304c1\u3088\u308a\u5927\u304d\u304f\u306a\u308b\u307e\u3067', false],
+      [N + '\u304c0\u70b9\u4ee5\u4e0a\u306e\u3042\u3044\u3060', true],
+      [N + '\u304c0\u70b9\u4ee5\u4e0b\u306e\u3042\u3044\u3060', true],
+      [N + '\u304c0\u70b9\u3068\u540c\u3058\u3067\u3042\u308b\u3042\u3044\u3060', true],
+      [N + '\u304c1\u70b9\u3068\u9055\u3046\u3042\u3044\u3060', true],
+      [N + '\u304c1\u70b9\u3088\u308a\u5c0f\u3055\u3044\u3042\u3044\u3060', true],
+      [N + '\u304c1\u70b9\u3088\u308a\u5927\u304d\u3044\u3042\u3044\u3060', false],
+      [N + '\u304c0\u70b9\u4ee5\u4e0a\u306b\u306a\u308b\u307e\u3067', true],
+      [N + '\u304c0\u70b9\u4ee5\u4e0b\u306b\u306a\u308b\u307e\u3067', true],
+      [N + '\u304c0\u70b9\u3068\u540c\u3058\u306b\u306a\u308b\u307e\u3067', true],
+      [N + '\u304c1\u70b9\u3068\u9055\u3046\u72b6\u614b\u306b\u306a\u308b\u307e\u3067', true],
+      [N + '\u304c1\u70b9\u3088\u308a\u5c0f\u3055\u304f\u306a\u308b\u307e\u3067', true],
+      [N + '\u304c1\u70b9\u3088\u308a\u5927\u304d\u304f\u306a\u308b\u307e\u3067', false],
       [
         '\u7a7a\u767d\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u308b\u3042\u3044\u3060',
         true,
@@ -130,10 +126,10 @@ async function runExtendedTests() {
         '\u7a7a\u767d\u30ad\u30fc\u304c\u62bc\u3055\u308c\u306a\u304f\u306a\u308b\u307e\u3067',
         false,
       ],
-      ['\u7aef\u306b\u89e6\u308c\u3066\u3044\u308b\u3042\u3044\u3060', false],
-      ['\u7aef\u306b\u89e6\u308c\u3066\u3044\u306a\u3044\u3042\u3044\u3060', true],
-      ['\u7aef\u306b\u89e6\u308c\u308b\u307e\u3067', false],
-      ['\u7aef\u306b\u89e6\u308c\u306a\u304f\u306a\u308b\u307e\u3067', true],
+      ['画面の端にふれているあいだ', false],
+      ['画面の端にふれていないあいだ', true],
+      ['画面の端にふれるまで', false],
+      ['画面の端にふれなくなるまで', true],
       [
         L +
           '\u306b\u300c\u3042\u304b\u308a\u300d\u304c\u542b\u307e\u308c\u3066\u3044\u308b\u3042\u3044\u3060',
@@ -153,15 +149,15 @@ async function runExtendedTests() {
       ['\u30de\u30a6\u30b9\u304c\u62bc\u3055\u308c\u308b\u307e\u3067', false],
       ['\u30de\u30a6\u30b9\u304c\u62bc\u3055\u308c\u306a\u304f\u306a\u308b\u307e\u3067', true],
       [
-        '\u6761\u4ef6\uff08\u771f\u304b\u3064\u507d\uff09\u304c\u6210\u308a\u7acb\u3064\u307e\u3067',
+        '条件（条件の答え（あてはまる）かつ条件の答え（あてはまらない））が成り立つまで',
         false,
       ],
       [
-        '\u6761\u4ef6\uff08\u507d\u307e\u305f\u306f\u771f\uff09\u304c\u6210\u308a\u7acb\u3064\u3042\u3044\u3060',
+        '条件（条件の答え（あてはまらない）または条件の答え（あてはまる））が成り立つあいだ',
         true,
       ],
       [
-        '\u6761\u4ef6\uff08\u771f\u3067\u306f\u306a\u3044\uff09\u304c\u6210\u308a\u7acb\u3064\u3042\u3044\u3060',
+        '条件（条件の答え（あてはまる））が成り立たないあいだ',
         false,
       ],
     ];
@@ -177,7 +173,7 @@ async function runExtendedTests() {
         };
       r.pressedKeys.add('空白');
       for (const [text, wanted] of predicates) {
-        const ast = A.parseScript(text + '、次のことをくり返す。\n  何もしない。', sy),
+        const ast = A.parseScript(text + '、くり返す。\n  何もしない。', sy),
           f = A.formatScript(ast);
         eq(A.evalExpression(ast.body[0].condition, ctx), wanted);
         eq(A.evalExpression(A.parseScript(f, sy).body[0].condition, ctx), wanted);
@@ -191,9 +187,9 @@ async function runExtendedTests() {
     });
     await test('CONDITION malformed forms rejected', () => {
       for (const s of [
-        N + '\u304c3\u4ee5\u4e0a\u3042\u3044\u3060',
-        N + '\u304c3\u3088\u308a\u5c0f\u3055\u3044\u306b\u306a\u308b\u307e\u3067',
-        '\u771f\u3042\u3044\u3060',
+        N + '\u304c3\u70b9\u4ee5\u4e0a\u3042\u3044\u3060',
+        N + '\u304c3\u70b9\u3088\u308a\u5c0f\u3055\u3044\u306b\u306a\u308b\u307e\u3067',
+        '条件の答え（あてはまる）あいだ',
         '\u7aef\u306b\u89e6\u308c\u308b\u306b\u306a\u308b\u307e\u3067',
       ])
         ok(A.compileProject(make(s + '\n' + END)).errors.length > 0, s);
@@ -254,11 +250,11 @@ async function runExtendedTests() {
       }
       const p = make();
       p.functions = [
-        {ownerId:'stage',  id: 'literal-function', name: '\u7aef', args: [], source: '1\u3092\u8fd4\u3059' },
+        {ownerId:'stage',  id: 'literal-function', name: '\u7aef', args: [], source: '1\u3092\u7b54\u3048\u3068\u3057\u3066\u8fd4\u3059' },
       ];
-      p.scripts[0].source = say('\u7aef\uff08\uff09');
+      p.scripts[0].source = '（端（））の値を言う';
       ok(A.compileProject(p).errors.length);
-      p.scripts[0].source = say('\u3010\u7aef\u3011\uff08\uff09');
+      p.scripts[0].source = '（【端】で求めた答え）を言う';
       eq(harness(p).run().out, [['stage', '1']]);
     });
     await test('NAME qualified escaping and canonical formatting', () => {
@@ -279,7 +275,7 @@ async function runExtendedTests() {
     });
     await test('NAME particle-containing callable and arguments', () => {
       const p = make(
-        '\u3010\u5024\u3092\u5897\u3084\u3059\u3011\uff083\uff09\u3092\u5b9f\u884c\u3059\u308b',
+        '足す値を3として、【値を増やす】という手順を行う',
       );
       p.actions = [
         {ownerId:'stage',
@@ -293,7 +289,7 @@ async function runExtendedTests() {
     });
     await test('FORMAT empty branches nested loops and every boundary comment', () => {
       const source =
-          '※ top\nもし 真なら、次のことをする。 ※ if\n  何もしない。\nそうでなければ、次のことをする。 ※ else\n  「never」と言う。\n※ if-end\n次のことを2回くり返す。 ※ outer\n  次のことを2回くり返す。 ※ inner\n    点数に1を足す。\n  ※ inner-end\n※ outer-end\n「A※Ａ＋  」と言う。',
+          '※ top\nもし 条件（条件の答え（あてはまる））が成り立つなら、 ※ if\n  何もしない。\nそうでなければ、 ※ else\n  「never」と言う。\n※ if-end\n2回くり返す。 ※ outer\n  2回くり返す。 ※ inner\n    点数に1を足す。\n  ※ inner-end\n※ outer-end\n「A※Ａ＋  」と言う。',
         p = make(source),
         f = A.formatScript(A.parseScript(source, A.buildSymbols(p)));
       for (const c of ['top', 'if', 'else', 'if-end', 'outer', 'inner', 'inner-end', 'outer-end'])
@@ -317,7 +313,7 @@ async function runExtendedTests() {
     });
     await test('HINT dynamic argument list operations and lexical locals', () => {
       const source =
-          local('合計', 0) + '\n数一覧の各要素を項目として、次のことをくり返す。\n  \n合計を返す',
+          local('合計', 0) + '\n数一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  \n合計を答えとして返す',
         at = source.indexOf('  \n') + 2,
         list = A.hintCandidates(make(), 'stage', {
           source,
@@ -326,7 +322,7 @@ async function runExtendedTests() {
           args: ['数一覧'],
           definitionKind: 'function',
         });
-      ok(list.some((x) => x.text === '数一覧を空にする' && x.enabled));
+      ok(list.some((x) => x.text === '数一覧の中身を全部消す' && x.enabled));
       ok(list.some((x) => x.id === 'Break' && x.enabled));
       ok(list.some((x) => x.mode === 'expression' && x.text === '項目'));
       ok(!list.some((x) => x.id === 'localScalar' || x.id.startsWith('return:')));
@@ -345,7 +341,7 @@ async function runExtendedTests() {
       const tail = A.hintCandidates(p, 'stage', { source: mid, definitionKind: 'function' });
       ok(!tail.some((x) => x.id === 'localScalar'));
       ok(tail.some((x) => x.id === 'return:\u5408\u8a08'));
-      const finished = mid + '\u5408\u8a08\u3092\u8fd4\u3059\n';
+      const finished = mid + '\u5408\u8a08\u3092\u7b54\u3048\u3068\u3057\u3066\u8fd4\u3059\n';
       ok(
         !A.hintCandidates(p, 'stage', { source: finished, definitionKind: 'function' }).some(
           (x) => x.id.startsWith('return:'),
@@ -432,7 +428,7 @@ async function runExtendedTests() {
         for (const h of A.hintCandidates(p, targetId).filter(
           (x) => x.enabled && x.mode === 'expression',
         )) {
-          p.scripts[0].source = h.text + '\u3068\u8a00\u3046';
+          p.scripts[0].source = '（' + h.text + '）の値を言う';
           const c = A.compileProject(p);
           ok(!c.errors.length, h.text + ': ' + JSON.stringify(c.errors));
         }
@@ -454,12 +450,12 @@ async function runExtendedTests() {
         '\u3082\u3057',
         '\u4f5c\u54c1\u306e\u3010',
         '3\u56de\u304f\u308a\u8fd4\u3059\n',
-        '\u6570\u4e00\u89a7\u306e\u8981\u7d20\u30921\u3064\u305a\u3064\u53d6\u308a\u51fa\u3057\u3001 \u3010\u624b \u3068\u3057\u3066\u6b21\u3092\u304f\u308a\u8fd4\u3059\n',
+        '数一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【手\n',
       ])
         ok(Array.isArray(A.hintCandidates(make(), 'stage', { source })));
     });
     await test('ERROR action arguments local9 correct line and detached state', () => {
-      const p = make('\u5897\u3084\u3059\uff087\uff09\u3092\u5b9f\u884c\u3059\u308b');
+      const p = make('量を7として、【増やす】という手順を行う');
       p.actions = [
         {ownerId:'stage',
           id: 'action-fault',
@@ -479,7 +475,7 @@ async function runExtendedTests() {
       eq(h.q.tasks.size, 0);
     });
     await test('ERROR nested functions preserve inner failure and both frames', () => {
-      const p = make(say('\u5916\u5074\uff087\uff09'));
+      const p = make('（量を7として、【外側】で求めた答え）を言う');
       p.functions = [
         {ownerId:'stage',
           id: 'f-outer',
@@ -487,13 +483,13 @@ async function runExtendedTests() {
           args: ['\u91cf'],
           source:
             local('\u5916\u5024', '\u91cf') +
-            '\n\u5185\u5074\uff08\u5916\u5024\uff09\u3092\u8fd4\u3059',
+            '\n（値を外値として、【内側】で求めた答え）を答えとして返す',
         },
         {ownerId:'stage',
           id: 'f-inner',
           name: '\u5185\u5074',
           args: ['\u5024'],
-          source: local('\u5185\u5024', '\u5024') + '\n\u5185\u5024\u00f70\u3092\u8fd4\u3059',
+          source: local('\u5185\u5024', '\u5024') + '\n\u5185\u5024\u00f70\u3092\u7b54\u3048\u3068\u3057\u3066\u8fd4\u3059',
         },
       ];
       const h = harness(p).run(),
@@ -541,11 +537,11 @@ async function runExtendedTests() {
       eq(f.projectLists[0][1].at(-1), 149);
     });
     await test('QUESTION duplicate reply cannot answer another queued question', () => {
-      const p = make('\u300cA\u300d\u3068\u305f\u305a\u306d\u308b\n' + say('\u7b54\u3048'));
+      const p = make('\u300cA\u300d\u3068\u305f\u305a\u306d\u3066\u3001\u7b54\u3048\u3092\u5f85\u3064\n' + say('\u7b54\u3048'));
       p.scripts.push({
         targetId: 'button-1',
         event: 'start',
-        source: '\u300cB\u300d\u3068\u305f\u305a\u306d\u308b\n' + say('\u7b54\u3048'),
+        source: '\u300cB\u300d\u3068\u305f\u305a\u306d\u3066\u3001\u7b54\u3048\u3092\u5f85\u3064\n' + say('\u7b54\u3048'),
       });
       const h = harness(p),
         callbacks = [];
@@ -570,7 +566,7 @@ async function runExtendedTests() {
       eq(h.q.tasks.size, 0);
     });
     await test('STOP clears questions timers all waits and physical input', () => {
-      const h = harness(make('\u300cA\u300d\u3068\u305f\u305a\u306d\u308b')).run();
+      const h = harness(make('\u300cA\u300d\u3068\u305f\u305a\u306d\u3066\u3001\u7b54\u3048\u3092\u5f85\u3064')).run();
       h.r.pressedKeys.add('a');
       h.r.mouseDown = true;
       h.q.stop();
@@ -614,13 +610,13 @@ async function runExtendedTests() {
     });
     await test('LIMIT expression nesting and function nontermination are bounded', () => {
       ok(A.compileProject(make(say('（'.repeat(140) + '1' + '）'.repeat(140)))).errors.length > 0);
-      const p = make(say('計算（）'));
+      const p = make('（【計算】で求めた答え）を言う');
       p.functions = [
         {ownerId:'stage',
           id: 'f-loop',
           name: '計算',
           args: [],
-          source: '次のことをずっとくり返す。\n  何もしない。\n0を返す',
+          source: 'ずっとくり返す。\n  何もしない。\n0を答えとして返す',
         },
       ];
       const h = harness(p).run();
@@ -629,9 +625,9 @@ async function runExtendedTests() {
 
     await test('SCHEDULER condition failure stops before another task can run', () => {
       const p = make(
-        '\u6761\u4ef6\uff081\u00f7' +
+        '\u6761\u4ef6\uff08\uff081\u00f7' +
           N +
-          '\u304c0\u3068\u540c\u3058\uff09\u304c\u6210\u308a\u7acb\u3064\u307e\u3067\u5f85\u3064',
+          '\uff09\u304c0\u3068\u540c\u3058\uff09\u304c\u6210\u308a\u7acb\u3064\u307e\u3067\u5f85\u3064',
       );
       p.projectData.variables[0].initialValue = 1;
       p.scripts.push({ targetId: 'button-1', event: 'start', source: set(N, 42) });
@@ -650,7 +646,7 @@ async function runExtendedTests() {
       const p = make(say('\u300c\u4fdd\u5b58\u8a66\u9a13\u300d')),
         s = A.serializeProject(p);
       ok(s.startsWith('# '));
-      for (const part of [p.scripts[0].source, N, L, 'SHA-256', 'AKARI-PROJECT-F1-DATA-BEGIN'])
+      for (const part of [p.scripts[0].source, N, L, 'SHA-256', 'AKARI-PROJECT-F2-DATA-BEGIN'])
         ok(s.includes(part) || (part === 'SHA-256' && !p.sounds.length));
       const r = await A.parseProjectFile(s);
       eq(r.project, p);
@@ -699,7 +695,7 @@ async function runExtendedTests() {
       await reject(() => A.parseProjectFile('x'.repeat(A.LIMITS.fileBytes + 1)), 'F504');
     });
     await test('EXPORT deterministic runtime result equals design runtime', () => {
-      const p = make('次のことを3回くり返す。\n  ' + add(N) + '\n' + say('乱数（1、100）')),
+      const p = make('3回くり返す。\n  ' + add(N) + '\n' + say('乱数（1、100）')),
         h = harness(p);
       h.r.reset(123);
       h.run();
@@ -834,7 +830,7 @@ async function runExtendedTests() {
     await test('AUDIO unrelated completion cannot release a waiter', () => {
       const h = harness(
         make(
-          '440Hz\u306e\u97f3\u30921\u79d2\u9cf4\u3089\u3057\u3001\u7d42\u308f\u308b\u307e\u3067\u5f85\u3064\n' +
+          '440Hz\u306e\u97f3\u30921\u79d2\u9cf4\u3089\u3059\n' +
             say('7'),
         ),
       );

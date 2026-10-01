@@ -1,3 +1,4 @@
+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -14,6 +15,7 @@ async function reveal(locator){
 const evidence=await withBrowser(browserPath,async browser=>{
  const files=await pageFor(browser,product,async p=>{
   p.on('dialog',d=>d.accept());
+  await installRegressionProject(p);
   assert.equal(await p.evaluate(()=>Object.keys(Akari).some(k=>/^run.*Tests/.test(k))),false);
   assert.equal(await p.locator('#selfTestReport').count(),0);
   await (await reveal(p.locator('#objectSelect'))).selectOption('stage');
@@ -63,4 +65,4 @@ assert.deepEqual(snapshot(product),before);
 fs.writeFileSync(output,JSON.stringify({status:'PASS',snapshot:before,...evidence},null,2)+'\n');console.log('Normal GUI save/reload/export/offline/isolation: PASS');
 
 // Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }
+async function openBodyForTest(page) { if (!await page.locator("#codeEditor").isVisible() && !await page.locator("#blockEditor").isVisible()) await page.locator("#editorModecode").click(); if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

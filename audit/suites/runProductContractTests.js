@@ -23,19 +23,19 @@ async function runProductContractTests() {
       };
     await test('FORMAT-EXECUTABLE-CONTRACT', async () => {
       const expected = {
-        languageContractId: 1,
-        runtimeContractId: 1,
-        programFormatVersion: 1,
-        projectFormatVersion: 1,
+        languageContractId: 2,
+        runtimeContractId: 2,
+        programFormatVersion: 2,
+        projectFormatVersion: 2,
       };
       if (JSON.stringify(AKARI_RUNTIME.EXECUTABLE_CONTRACT) !== JSON.stringify(expected))
         throw new Error('実行データの契約が一致しません');
-      const p = makeDefaultProject(),
+      const p = makeRegressionProject(),
         text = serializeProject(p, new AssetStore());
       if (
         !text.startsWith('# あかり ' + PRODUCT_RELEASE + ' の作品') ||
-        !text.includes('<!-- AKARI-PROJECT-F1-DATA-BEGIN -->') ||
-        !text.includes('<!-- AKARI-PROJECT-F1-DATA-END -->')
+        !text.includes('<!-- AKARI-PROJECT-F2-DATA-BEGIN -->') ||
+        !text.includes('<!-- AKARI-PROJECT-F2-DATA-END -->')
       )
         throw new Error('作品の版またはマーカーが一致しません');
       const loaded = await parseProjectFile(text);
@@ -51,8 +51,8 @@ async function runProductContractTests() {
         throw new Error('作成元の版だけで実行作品を拒否しました');
     });
     await test('RELEASE-PROJECT-MARKER-BOUNDARIES', async () => {
-      const p = makeDefaultProject();
-      p.scripts = [{targetId:'stage',event:'start',source:'※ <!-- AKARI-PROJECT-F1-DATA-BEGIN -->\n※ ```json\n※ <!-- AKARI-PROJECT-F1-DATA-END -->\nもし'}];
+      const p = makeRegressionProject();
+      p.scripts = [{targetId:'stage',event:'start',source:'※ <!-- AKARI-PROJECT-F2-DATA-BEGIN -->\n※ ```json\n※ <!-- AKARI-PROJECT-F2-DATA-END -->\nもし'}];
       const text = serializeProject(p, new AssetStore());
       if (JSON.stringify((await parseProjectFile(text)).project)!==JSON.stringify(p)) throw Error('本文境界が変化しました');
       await reject(() => parseProjectFile(text.slice(0,-40)));
@@ -61,13 +61,13 @@ async function runProductContractTests() {
     await test('RELEASE-EXECUTABLE-MALFORMED', async () => {
       for (const value of [null, true, {}, ''])
         for (const key of ['appVersion', 'languageContractId', 'runtimeContractId', 'programFormatVersion', 'projectFormatVersion']) {
-          const payload = packExecutable(makeDefaultProject(), new AssetStore());
+          const payload = packExecutable(makeRegressionProject(), new AssetStore());
           payload[key] = value;
           await reject(() => AKARI_RUNTIME.restoreExecutable(payload));
         }
     });
     await test('RELEASE-EXECUTABLE-ROUNDTRIP', async () => {
-      const p = makeDefaultProject(),
+      const p = makeRegressionProject(),
         payload = packExecutable(p, new AssetStore()),
         restored = AKARI_RUNTIME.restoreExecutable(payload);
       if (restored.project.name !== p.name || restored.compiled.errors?.length)
@@ -92,7 +92,7 @@ async function runProductContractTests() {
       if (
         !s ||
         s.type !== 'sprite' ||
-        s.name !== 'マスコット' ||
+        s.name !== 'あかり' ||
         s.x !== 230 ||
         s.y !== 110 ||
         s.w !== 180 ||
@@ -117,8 +117,8 @@ async function runProductContractTests() {
         throw new Error('デフォルトキャラクター作品の往復で変化しました');
     });
     await test('TEST-PALETTE-COLOR-DEFAULT', () => {
-      const p = makeDefaultProject();
-      p.scripts = [{ targetId: 'sprite-1', event: 'start', source: '真と言う。' }];
+      const p = makeRegressionProject();
+      p.scripts = [{ targetId: 'sprite-1', event: 'start', source: '条件の答え（あてはまる）の値を言う。' }];
       const s = createEditorSession(
           'script:sprite-1:start',
           p.scripts[0].source,

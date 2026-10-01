@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "52eb23154b2f05a03880f984a97256fffbbf2d54590f4909d80bb512ea36a154",
+  "fixedIdSha256": "068ee136fdfba06413de76adda172bb6d73a83fd4611f5102738b3604b3b3051",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -920,7 +920,18 @@
         "TEST-BLOCK-CURRENT-SLOTS",
         "TEST-BLOCK-SEMANTIC-ARITY",
         "TEST-BLOCK-REJECT",
-        "TEST-BLOCK-LIMITS"
+        "TEST-BLOCK-LIMITS",
+        "TEST-BLOCK-SCHEMA Hole:expression",
+        "TEST-BLOCK-SCHEMA Hole:statement",
+        "TEST-BLOCK-SCHEMA Hole:target",
+        "TEST-BLOCK-SCHEMA Hole:rule",
+        "TEST-BLOCK-SCHEMA QuantityLiteral",
+        "TEST-BLOCK-SCHEMA UnitlessRead",
+        "TEST-BLOCK-SCHEMA ActorQualifiedRead",
+        "TEST-BLOCK-SCHEMA ContinuousRule",
+        "TEST-BLOCK-SCHEMA MotionCommand:MOVE_DIRECTION",
+        "TEST-BLOCK-SCHEMA MotionCommand:GLIDE_DIRECTION",
+        "TEST-BLOCK-SCHEMA WaitBroadcastGroup"
       ],
       "environments": [
         "chromium"

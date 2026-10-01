@@ -1,3 +1,4 @@
+const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
 const fs = require('fs');
 const path = require('path');
@@ -29,10 +30,10 @@ async function main() {
   const score=()=>page.locator('#runtimeMonitor .monitor-row').filter({has:page.locator('.monitor-key',{hasText:/^点数$/})}).locator('.monitor-value');
   let source,formatted,projectBeforeSave;
   try {
-    await page.goto(pathToFileURL(file).href);
+    await page.goto(pathToFileURL(file).href);await setupRegressionPage(page);
     await page.waitForFunction(()=>!!(globalThis.Akari)?.app);
     await test('editor-input-format-comments-undo-redo',async()=>{
-      source='※ はじめの注釈\n点数を0にする ※ 初期値\n次のことを3回くり返す ※ 反復\n  点数に1を足す ※ 加算\n「回帰」と言う';
+      source='※ はじめの注釈\n点数を0にする ※ 初期値\n3回くり返す ※ 反復\n  点数に1を足す ※ 加算\n「回帰」と言う';
       await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();await waitHistory();
       assert.equal(await currentSource(),source);assert.deepEqual(await compileErrors(),[]);
       await (async()=>{const control=await reveal(page.locator('#formatBtn')); await openBodyForTest(control.page()); return control.click();})();await waitHistory();formatted=await page.locator('#codeEditor').inputValue();
@@ -58,7 +59,7 @@ async function main() {
       await (await reveal(page.locator('#callableNewFunction'))).click();await (await reveal(page.locator('#callableName'))).fill('二倍');await (await reveal(page.locator('#callableArgs'))).fill('元値');await (await reveal(page.locator('#callableCode'))).fill('元値×2を返す。');
       assert.equal(await page.evaluate(()=>(globalThis.Akari).app.project.functions.length),0);
       await (await reveal(page.locator('#callableSave'))).click();await (await reveal(page.locator('#procClose'))).click();
-      source='点数を0にする。\n増加（3）を実行する。\n点数を二倍（点数）にする。\nつなぐ（「検証完了：」、点数）と言う。';
+      source='点数を0にする。\n増加（3）を実行する。\n点数を二倍（点数）にする。\nつなぐ（「検証完了：」、点数）を言う。';
       await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();await waitHistory();assert.deepEqual(await compileErrors(),[]);
       await (await reveal(page.locator('#runBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='実行中');await score().filter({hasText:/^6$/}).waitFor();
       await (await reveal(page.locator('#stopBtn'))).click();assert.equal(await currentSource(),source);

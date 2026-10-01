@@ -33,10 +33,15 @@ function runBlockCodecTests() {
     const reparsed = (node, category) => {
       if (category === 'target') return;
       if (category === 'expression') {
-        same(node, parseExpression(formatExpression(node), buildSymbols(makeDefaultProject())));
+        same(node, parseExpression(formatExpression(node), buildSymbols(makeRegressionProject())));
         return;
       }
-      const ast = category === 'script' ? node : script([node]);
+      if (node.kind === 'Broadcast' || node.kind === 'WaitBroadcastGroup') return;
+      const ast = category === 'script'
+        ? node
+        : category === 'rule'
+          ? { kind: 'Script', body: [], rules: [node] }
+          : script([node]);
       same(ast, parse(formatScript(ast)));
     };
     test('TEST-SCHEMA-COVERAGE', () => {
@@ -90,10 +95,20 @@ function runBlockCodecTests() {
     });
     for (const schema of BLOCK_SCHEMAS)
       test('TEST-BLOCK-SCHEMA ' + schema.id, () => {
-        const fresh = schema.create(),
-          encoded = schema.encode(fresh),
-          decoded = schema.decode(encoded.tree);
+        const isHole = schema.kind === 'Hole',
+          fresh = schema.create(isHole ? { draft: true } : {}),
+          encoded = schema.encode(fresh, isHole ? { allowHoles: true } : {}),
+          decoded = schema.decode(encoded.tree, isHole ? { allowHoles: true } : {});
         same(fresh, decoded);
+        if (isHole) {
+          const editedTree = createBlock(schema.id, { draft: true, allowHoles: true });
+          editedTree.fields.label = '編集した役割';
+          const edited = schema.decode(editedTree, { allowHoles: true });
+          ok(edited.label === '編集した役割', 'hole role label did not roundtrip');
+          reject(() => schema.encode(fresh));
+          reject(() => schema.decode(encoded.tree));
+          return;
+        }
         reparsed(decoded, schema.category);
         const tree = createBlock(schema.id),
           expected = schema.create();
@@ -108,19 +123,47 @@ function runBlockCodecTests() {
                 ? 17
                 : field.type === 'qualifier'
                   ? 'self'
-                  : field.type === 'name'
-                    ? '変更値'
-                    : field.type === 'comment'
-                      ? '  注釈 ※ 。  '
-                      : '  文字 ※ 。  ';
+                  : field.type === 'actor-ref'
+                    ? schema.kind === 'ActorQualifiedRead'
+                      ? { kind: 'named', name: 'マスコット' }
+                      : { kind: 'self' }
+                    : field.type === 'argument-names'
+                      ? []
+                      : field.type === 'unit'
+                        ? '歩'
+                        : field.type === 'direction'
+                          ? 'left'
+                        : field.type === 'reference'
+                            ? '変更知らせ'
+                            : field.type === 'heading'
+                              ? { event: 'start', actorRef: { kind: 'self' } }
+                : field.type === 'name'
+                  ? '変更値'
+                  : field.type === 'comment'
+                    ? '  注釈 ※ 。  '
+                    : '  文字 ※ 。  ';
           tree.fields[field.key] = value;
           expected[field.key] = value;
         }
         for (const slot of schema.inputs) {
-          const make = (i) =>
-            slot.type === 'target'
-              ? { name: '変更先', qualifier: 'project' }
-              : { kind: 'BinaryExpression', op: 'ADD', left: number(i + 2), right: number(i + 9) };
+          const make = (i) => {
+            if (slot.type === 'target') return { name: '変更先', qualifier: 'project' };
+            if (slot.type === 'rule')
+              return {
+                kind: 'ContinuousRule',
+                actorRef: { kind: 'self' },
+                direction: 'left',
+                condition: { kind: 'BooleanLiteral', value: true },
+                seconds: number(1),
+                distance: number(9),
+                inlineComment: '',
+              };
+            if (schema.id === 'LooksCommand:SET_INPUT')
+              return i === 0
+                ? { kind: 'StringLiteral', value: '入力欄' }
+                : { kind: 'NumberLiteral', value: 9 };
+            return { kind: 'BinaryExpression', op: 'ADD', left: number(i + 2), right: number(i + 9) };
+          };
           if (slot.multiple) {
             const count = slot.variadic ? Math.max(slot.minItems, 3) : slot.minItems;
             expected[slot.key] = Array.from({ length: count }, (_, i) => make(i));
@@ -129,6 +172,10 @@ function runBlockCodecTests() {
             expected[slot.key] = make(0);
             tree.inputs[slot.key] = child(expected[slot.key], slot.type);
           }
+        }
+        if (Object.hasOwn(expected, 'argumentNames')) {
+          expected.argumentNames = expected.args.map((_, index) => '引数' + (index + 1));
+          tree.fields.argumentNames = expected.argumentNames;
         }
         for (const slot of schema.bodies) {
           const enabled = !slot.when || expected[slot.when];
@@ -163,10 +210,11 @@ function runBlockCodecTests() {
     test('TEST-BLOCK-ROUNDTRIP', () => {
       const fixtures = [
         ...COMMAND_CATALOG.map((command) => command.source),
-        '※  最初  \nもし 真なら、次のことをする。 ※ 開始  \n  次のことを2回くり返す。 ※ 反復  \n    何もしない。 ※ 実行  \n※ 内側の反復の後ろ  \nそうでなければ、次のことをする。 ※ else  \n  ※ 先頭  \n  何もしない。\n※ 最後  ',
-        '名前一覧の各要素を項目として、次のことをくり返す。\n  名前一覧の各要素を項目として、次のことをくり返す。\n    【未定義】と言う。',
-        '未登録（1、2、3）を実行する。\n最小（）と言う。\n余り（1、2、3）と言う。',
-        '－2＾3＾2と言う。\n作品の点数を【HP】＋自分のHPにする。',
+        'みんなに「出発」と知らせる。\nその知らせを受けて始めたことが全部終わるまで待つ。',
+        '※  最初  \nもし 条件（条件の答え（あてはまる））が成り立つなら、 ※ 開始  \n  2回くり返す。 ※ 反復  \n    何もしない。 ※ 実行  \n※ 内側の反復の後ろ  \nそうでなければ、 ※ else  \n  ※ 先頭  \n  何もしない。\n※ 最後  ',
+        '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n    この中では、今見ているものを【項目】と呼ぶ。\n    【未定義】の値を言う。',
+        '（1、2、3）を渡して、【未登録】という手順を行う。\n（最小（））の値を言う。\n（余り（1、2、3））の値を言う。',
+        '（－2＾3＾2）の値を言う。\n作品の点数を【HP】＋自分の【HP】の値にする。',
       ];
       for (const source of fixtures) {
         const ast = parse(source),

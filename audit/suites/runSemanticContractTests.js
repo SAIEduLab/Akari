@@ -30,7 +30,7 @@ function runSemanticContractTests() {
         eq(e?.code, code);
       },
       base = (source = '', targetId = 'stage') => {
-        const p = makeDefaultProject();
+        const p = makeRegressionProject();
         p.scripts = source ? [{ targetId, event: 'start', source }] : [];
         return p;
       };
@@ -130,7 +130,7 @@ function runSemanticContractTests() {
               Array(count)
                 .fill(name === '数' ? '「1」' : '1')
                 .join('、') +
-              '）と言う',
+              '）の値を言う',
             parsed = parseSyntax(source);
           ok(parsed.ast, source);
           const encoded = blockEncode(parsed.ast),
@@ -190,8 +190,8 @@ function runSemanticContractTests() {
         }
       }
       for (const [body, args] of [
-        ['重複値という変数を作り、初期値を1にする\n0を返す', ['重複値']],
-        ['重複値という変数を作り、初期値を1にする\n重複値というリストを作る\n0を返す', []],
+        ['この中だけで使う変数【重複値】を作り、最初は1にする\n0を返す', ['重複値']],
+        ['この中だけで使う変数【重複値】を作り、最初は1にする\nこの中だけで使うリスト【重複値】を空で作る\n0を返す', []],
       ]) {
         const x = base();
         x.functions = [{ownerId:'stage',  id: 'function-scope', name: '計算', args, source: body }];
@@ -199,8 +199,8 @@ function runSemanticContractTests() {
       }
       for (const [prefix, args] of [
         ['', ['重複値']],
-        ['重複値という変数を作り、初期値を1にする\n', []],
-        ['重複値というリストを作る\n', []],
+        ['この中だけで使う変数【重複値】を作り、最初は1にする\n', []],
+        ['この中だけで使うリスト【重複値】を空で作る\n', []],
       ]) {
         const x = base();
         x.functions = [
@@ -215,24 +215,24 @@ function runSemanticContractTests() {
         ok(compileProject(x).errors.some((d) => d.code === 'S312'));
       }
       const programs = [
-        ['重複値と言う', [], null, ['40']],
-        ['作品の重複値と言う\n自分の重複値と言う', [], null, ['50', '40']],
+        ['重複値の値を言う', [], null, ['40']],
+        ['作品の重複値の値を言う\n自分の重複値の値を言う', [], null, ['50', '40']],
         [
-          '［10］の各要素を重複値として、次のことをくり返す\n  重複値と言う\n重複値と言う',
+          '［10］の各要素を重複値として、次のことをくり返す\n  重複値の値を言う\n重複値の値を言う',
           [],
           null,
           ['10', '40'],
         ],
         [
-          '表示（30）を実行する',
+          '（30）を渡して、【表示】という手順を行う',
           ['重複値'],
-          '重複値と言う\n作品の重複値と言う\n自分の重複値と言う',
+          '重複値の値を言う\n作品の重複値の値を言う\n自分の重複値の値を言う',
           ['30', '50', '40'],
         ],
         [
-          '表示（）を実行する',
+          '【表示】という手順を行う',
           [],
-          '重複値という変数を作り、初期値を20にする\n重複値と言う\n作品の重複値と言う\n自分の重複値と言う',
+          'この中だけで使う変数【重複値】を作り、最初は20にする\n重複値の値を言う\n作品の重複値の値を言う\n自分の重複値の値を言う',
           ['20', '50', '40'],
         ],
       ];
@@ -254,16 +254,16 @@ function runSemanticContractTests() {
     });
     test('local declaration positions and use before initialization', () => {
       const cases = [
-        ['局所という変数を作り、初期値を局所にする\n0を返す', 'S303'],
+        ['この中だけで使う変数【局所】を作り、最初は局所にする\n0を返す', 'S303'],
         [
-          '先という変数を作り、初期値を後にする\n後という変数を作り、初期値を1にする\n0を返す',
+          'この中だけで使う変数【先】を作り、最初は後にする\nこの中だけで使う変数【後】を作り、最初は1にする\n0を返す',
           'S303',
         ],
-        ['先という変数を作り、初期値を後の長さにする\n後というリストを作る\n0を返す', 'S303'],
-        ['何もしない\n局所という変数を作り、初期値を1にする\n0を返す', 'S313'],
-        ['もし 真なら、次のことをする\n  局所というリストを作る\n0を返す', 'S313'],
-        ['次のことを1回くり返す\n  局所という変数を作り、初期値を1にする\n0を返す', 'S313'],
-        ['局所というリストを作る\n局所という変数を作り、初期値を1にする\n0を返す', 'S302'],
+        ['この中だけで使う変数【先】を作り、最初は後の長さにする\nこの中だけで使うリスト【後】を空で作る\n0を返す', 'S303'],
+        ['何もしない\nこの中だけで使う変数【局所】を作り、最初は1にする\n0を返す', 'S313'],
+        ['もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする\n  この中だけで使うリスト【局所】を空で作る\n0を返す', 'S313'],
+        ['1回くり返す\n  この中だけで使う変数【局所】を作り、最初は1にする\n0を返す', 'S313'],
+        ['この中だけで使うリスト【局所】を空で作る\nこの中だけで使う変数【局所】を作り、最初は1にする\n0を返す', 'S302'],
       ];
       for (const [source, code] of cases) {
         const p = base();
@@ -276,16 +276,16 @@ function runSemanticContractTests() {
         );
         ok(astEquivalent(ast, blockDecode(blockEncode(ast).tree)));
       }
-      for (const source of ['局所という変数を作り、初期値を1にする', '局所というリストを作る'])
+      for (const source of ['この中だけで使う変数【局所】を作り、最初は1にする', 'この中だけで使うリスト【局所】を空で作る'])
         ok(compileProject(base(source)).errors.some((d) => d.code === 'S313'));
-      const p = base('計算（）と言う');
+      const p = base('（【計算】で求めた答え）の値を言う');
       p.functions = [
         {ownerId:'stage',
           id: 'function-local',
           name: '計算',
           args: [],
           source:
-            '※ 先頭コメント\n先という変数を作り、初期値を1にする\n※ 宣言間コメント\n後という変数を作り、初期値を先＋1にする\n後を返す',
+            '※ 先頭コメント\nこの中だけで使う変数【先】を作り、最初は1にする\n※ 宣言間コメント\nこの中だけで使う変数【後】を作り、最初は先＋1にする\n後を返す',
         },
       ];
       const h = harness(p);
@@ -312,9 +312,68 @@ function runSemanticContractTests() {
           'StopCommand',
           'UserActionCall',
         ]),
-        schemas = BLOCK_SCHEMAS.filter((s) => kinds.has(s.kind));
+        schemas = BLOCK_SCHEMAS.filter((s) => kinds.has(s.kind) && !['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(s.discriminator?.value)),
+        newMotionSchemas = BLOCK_SCHEMAS.filter((s) => s.kind === 'MotionCommand' && ['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(s.discriminator?.value));
       ok(schemas.length === 54, 'effect inventory changed: ' + schemas.length);
-      for (const schema of schemas) {
+      // Pin the original identities as well as their count (d961dd3).
+      eq(schemas.map((s) => s.id).sort(), [
+        "Ask",
+        "Broadcast",
+        "BroadcastAndWait",
+        "CloneCommand:CREATE_SELF",
+        "CloneCommand:CREATE_TARGET",
+        "CloneCommand:DELETE_SELF",
+        "LooksCommand:BACK",
+        "LooksCommand:BACKWARD_LAYERS",
+        "LooksCommand:FORWARD_LAYERS",
+        "LooksCommand:FRONT",
+        "LooksCommand:HIDE",
+        "LooksCommand:NEXT_BACKDROP",
+        "LooksCommand:NEXT_COSTUME",
+        "LooksCommand:PREV_BACKDROP",
+        "LooksCommand:PREV_COSTUME",
+        "LooksCommand:SET_BACKDROP",
+        "LooksCommand:SET_COLOR",
+        "LooksCommand:SET_COSTUME",
+        "LooksCommand:SET_INPUT",
+        "LooksCommand:SET_SCALE",
+        "LooksCommand:SET_SELF_TEXT",
+        "LooksCommand:SET_TARGET_TEXT",
+        "LooksCommand:SHOW",
+        "MotionCommand:BOUNCE",
+        "MotionCommand:GLIDE",
+        "MotionCommand:GOTO",
+        "MotionCommand:MOVE",
+        "MotionCommand:POINT_TO",
+        "MotionCommand:SET_DIRECTION",
+        "MotionCommand:SET_X",
+        "MotionCommand:SET_Y",
+        "MotionCommand:TURN_LEFT",
+        "MotionCommand:TURN_RIGHT",
+        "PenCommand:CLEAR",
+        "PenCommand:DOWN",
+        "PenCommand:SET_COLOR",
+        "PenCommand:SET_SIZE",
+        "PenCommand:STAMP",
+        "PenCommand:UP",
+        "Say",
+        "SoundCommand:PITCH_DOWN",
+        "SoundCommand:PITCH_UP",
+        "SoundCommand:SAMPLE",
+        "SoundCommand:SAMPLE_WAIT",
+        "SoundCommand:SET_VOLUME",
+        "SoundCommand:STOP_ALL",
+        "SoundCommand:TONE",
+        "SoundCommand:TONE_WAIT",
+        "StopCommand:ALL",
+        "StopCommand:OTHERS",
+        "StopCommand:THIS",
+        "UserActionCall",
+        "WaitTime",
+        "WaitUntil"
+      ]);
+      ok(newMotionSchemas.length === 2, 'v2 direction movement inventory');
+      for (const schema of [...schemas, ...newMotionSchemas]) {
         const statement = blockDecode(createBlock(schema.id), { expected: 'statement' }),
           source = formatScript({
             kind: 'Script',
@@ -330,13 +389,25 @@ function runSemanticContractTests() {
           p = base();
         p.functions = [{ownerId:'stage',  id: 'function-pure', name: '計算', args: [], source }];
         const ast = parseSyntax(source).ast;
-        ok(ast);
+        ok(ast, schema.id + ': generated source must parse: ' + source);
         const diagnostics = compileProject(p).errors;
         ok(
           diagnostics.some((d) => d.code === 'S305'),
           schema.id,
         );
-        ok(astEquivalent(ast, blockDecode(blockEncode(ast).tree)));
+        ok(astEquivalent(ast, blockDecode(blockEncode(ast).tree)), schema.id + ': block roundtrip');
+      }
+      // V2 adds two effect kinds; preserve the complete legacy inventory above.
+      for (const [kind, source] of [
+        ['WaitBroadcastGroup', 'みんなに「出発」と知らせる\nその知らせを受けて始めたことが全部終わるまで待つ\n0を返す'],
+        ['ContinuousRule', '条件（条件の答え（あてはまる））が成り立つあいだ、自分は画面の右へ1秒に20歩の速さで動き続ける\n0を返す'],
+      ]) {
+        const p = base();
+        p.functions = [{ ownerId: 'stage', id: 'function-v2-effect', name: '計算', args: [], source }];
+        const ast = parseSyntax(source).ast;
+        ok(ast, kind + ' must parse before purity checking');
+        ok([...(ast.body || []), ...(ast.rules || [])].some((n) => n.kind === kind), kind);
+        ok(compileProject(p).errors.some((d) => d.code === 'S305'), kind + ' must remain forbidden in functions');
       }
       for (const source of [
         '点数を1にする',
@@ -346,7 +417,7 @@ function runSemanticContractTests() {
         '名前一覧の1番目を1にする',
         '名前一覧の1番目に1を挿入する',
         '名前一覧の1番目を削除する',
-        '名前一覧を空にする',
+        '名前一覧の中身を全部消す',
       ]) {
         const p = base();
         p.functions = [
@@ -360,14 +431,14 @@ function runSemanticContractTests() {
     });
     test('notify nested nonwaiting and waiting receiver boundary', () => {
       for (const wait of [false, true]) {
-        const p = base('「外」と知らせ、受け手の処理が終わるまで待つ\n「送信完了」と言う');
+        const p = base('みんなに「外」と知らせて、知らせを受けて始めたことが全部終わるまで待つ\n「送信完了」と言う');
         p.scripts.push(
           {
             targetId: 'button-1',
             event: 'message',
             source:
               'もし 受け取った知らせが「外」と同じなら、次のことをする\n  ' +
-              (wait ? '「内」と知らせ、受け手の処理が終わるまで待つ' : '「内」と知らせる') +
+              (wait ? 'みんなに「内」と知らせて、知らせを受けて始めたことが全部終わるまで待つ' : '「内」と知らせる') +
               '\n  「直接完了」と言う',
           },
           {

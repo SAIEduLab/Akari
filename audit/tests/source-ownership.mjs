@@ -1,3 +1,4 @@
+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
 import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,19 +16,19 @@ async function openStageSources(page) {
   assert.equal(await page.locator('#sourceOverview').isVisible(), true);
 }
 const fixture=()=>{
-  const p=api.makeDefaultProject();p.name='コードの所属を読む';
+  const p=makeRegressionProject(api);p.name='コードの所属を読む';
   p.components.push({...p.components.find(c=>c.id==='button-1'),id:'button-empty',name:'空のボタン',y:300});
   const sprite=p.components.find(c=>c.id==='sprite-1');
   sprite.costumes=[{id:'costume-test',name:'顔',kind:'text',value:'🙂'}];sprite.costumeId='costume-test';
   p.scripts=[
     {targetId:'stage',event:'message',source:'「画面の知らせ」と言う'},
-    {targetId:'button-1',event:'click',source:'表示（倍（3））を実行する。'},
+    {targetId:'button-1',event:'click',source:'（（（3）を渡して、【倍】で求めた答え））を渡して、【表示】という手順を行う。'},
     {targetId:'sprite-1',event:'start',source:'「はじめ」と言う'},
     {targetId:'sprite-1',event:'message',source:'「受け取った」と言う'},
   ];
-  p.actions=[{id:'action-show',ownerId:'stage',name:'表示',args:['数'],source:'数と言う'}];
-  p.functions=[{id:'function-double',ownerId:'stage',name:'倍',args:['数'],source:'数 * 2を返す'},
-    {id:'function-unused',ownerId:'stage',name:'未使用',args:[],source:'7を返す'}];
+  p.actions=[{id:'action-show',ownerId:'stage',name:'表示',args:['数'],source:'数の値を言う'}];
+  p.functions=[{id:'function-double',ownerId:'stage',name:'倍',args:['数'],source:'数 * 2を答えとして返す'},
+    {id:'function-unused',ownerId:'stage',name:'未使用',args:[],source:'7を答えとして返す'}];
   return p;
 };
 const results=[];
@@ -58,7 +59,7 @@ await test('OWNER-SAVE-ROUNDTRIP',async()=>{
   }
 });
 await test('OWNER-FORMAT-REJECTION',async()=>{
-  for(const [key,value]of [['appVersion',null],['formatVersion',2],['languageContractId',2]]){
+  for(const [key,value]of [['appVersion',null],['formatVersion',1],['languageContractId',1]]){
     const p=fixture();p[key]=value;assert.throws(()=>api.serializeProject(p));assert.ok(api.compileProject(p).errors.length);
   }
 });
@@ -85,10 +86,10 @@ await withBrowser(browserPath,async browser=>{
   await pageFor(browser,currentProductFile(),async p=>{
     p.on('dialog',d=>d.accept());await p.setViewportSize({width:1440,height:1000});
     const startup={overview:await p.locator('#sourceOverview').isVisible(),editable:await p.locator('#codeEditor').isEditable()};
-    await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');
+    await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');await p.locator('#uiLevel').selectOption('advanced');
     await test('OWNER-GUI-DIRECT-BUTTON',async()=>{
       assert.deepEqual(startup,{overview:false,editable:true});
-      const original='表示（倍（3））を実行する。',changed='表示（倍（4））を実行する。';
+      const original='（（（3）を渡して、【倍】で求めた答え））を渡して、【表示】という手順を行う。',changed='（（（4）を渡して、【倍】で求めた答え））を渡して、【表示】という手順を行う。';
       for(const mode of ['code','blocks']){
         await p.locator('#editorMode'+mode).click();
         await p.locator('#sourceOverviewBtn').click();await p.locator('#newBtn').click();
@@ -99,7 +100,7 @@ await withBrowser(browserPath,async browser=>{
         if(mode==='code')assert.ok(await editor.isEditable());
         else assert.equal(await editor.locator('[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first().isEditable(),true);
         await p.locator('#sourceOverviewBtn').click();
-        await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');
+        await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');await p.locator('#uiLevel').selectOption('advanced');
         assert.equal(await p.locator('#sourceOverview').isVisible(),false,'import closes a previous overview');
         await p.locator('#formSurface .component[data-id="button-1"]').click();
         assert.equal(await p.locator('#objectSelect').inputValue(),'button-1');
@@ -136,8 +137,8 @@ await withBrowser(browserPath,async browser=>{
       const card=p.locator('[data-source-key="script:button-1:click"]');
       await card.locator('.blockui-script').waitFor({state:'visible'});
       assert.equal(await card.locator('[data-blockui-schema]').count(),0,'read-only preview does not prepare editing candidates');
-      assert.equal(await card.locator('[data-schema-id="UserActionCall"] [data-blockui-field="name"]').first().textContent(),'表示');
-      assert.equal(await card.locator('[data-schema-id="UserFunctionCall"] [data-blockui-field="name"]').first().textContent(),'倍');
+      assert.deepEqual(await card.locator('[data-blockui-field="name"]').evaluateAll(es=>es.filter(e=>e.closest('[data-schema-id]')?.dataset.schemaId==='UserActionCall').map(e=>e.textContent)),['表示']);
+      assert.deepEqual(await card.locator('[data-blockui-field="name"]').evaluateAll(es=>es.filter(e=>e.closest('[data-schema-id]')?.dataset.schemaId==='UserFunctionCall').map(e=>e.textContent)),['倍']);
       assert.equal(await card.locator('.blockui-node input,.blockui-node textarea,.blockui-node select').count(),0,'read-only values are complete text, without clipped disabled inputs');
       assert.equal(await p.locator('[data-source-key="action:action-show"]').count(),1);
       assert.equal(await p.locator('[data-source-key="function:function-double"]').count(),1);
@@ -154,32 +155,53 @@ await withBrowser(browserPath,async browser=>{
       for(const key of ['script:stage:message','action:action-show','function:function-double','function:function-unused'])assert.ok(all.includes(key),key);
       await p.locator('[data-source-edit="function:function-unused"]').click();
       assert.equal(await p.locator('#callableName').inputValue(),'未使用');
-      assert.equal(await p.locator('#callableCode').inputValue(),'7を返す');
+      assert.equal(await p.locator('#callableCode').inputValue(),'7を答えとして返す');
       await p.locator('#procClose').click();
     });
     await test('OWNER-GUI-SYNTAX-ERROR-RAW-BODY',async()=>{
       await p.locator('#objectSelect').selectOption('button-1');await p.locator('#eventSelect').selectOption('message');
-      await p.locator('#editorModecode').click();await p.locator('#codeEditor').fill('もし');
+      await p.locator('#editorModecode').click();
+      const before=await p.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history,source:Akari.app.editorState.main.sourceText}));
+      await p.locator('#codeEditor').fill('もし');
       await p.locator('#sourceOverviewBtn').click();await p.locator('#editorModeblocks').click();
-      assert.equal(await p.locator('[data-source-key="script:button-1:message"] pre').textContent(),'もし');
+      assert.equal(await p.locator('#codeEditor').inputValue(),'もし','unfinished original remains visible');
+      assert.equal(await p.locator('#sourceOverview').isVisible(),false,'unfinished input guards navigation');
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.main.pendingEdit.ownerKey),'script:button-1:message');
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.state),'DESIGN');
+      assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),before.project);
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.history),before.history);
+      await p.locator('#editorCancel').click();
+      assert.equal(await p.locator('#codeEditor').inputValue(),before.source);
+      assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),before.project);
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.history),before.history);
+      await p.locator('#sourceOverviewBtn').click();await p.locator('#editorModeblocks').click();
       assert.equal(await p.locator('[data-source-key="script:button-1:click"] .blockui-script').count(),1);
     });
     await test('OWNER-GUI-DRAFT-OWNERSHIP',async()=>{
-      // Open the existing definition via its visible card, then type an incomplete body.
       await openStageSources(p);await p.locator('[data-source-edit="function:function-unused"]').click();
+      const before=await p.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history}));
       await p.locator('#callableCode').fill('下書きのまま');
       assert.equal(await p.evaluate(()=>Akari.app.editorState.callableDraft.ownerId),'stage');
-      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'7を返す');
+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'7を答えとして返す');
       await p.locator('#callableSave').click();
-      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'下書きのまま');
-      await p.locator('#procClose').click();await openStageSources(p);
-      assert.equal(await p.locator('[data-source-key="function:function-unused"] pre').textContent(),'下書きのまま');
+      assert.equal(await p.locator('#callableCode').inputValue(),'下書きのまま','unfinished callable original retained');
+      assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),before.project,'unfinished callable is not registered');
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.history),before.history);
+      await p.locator('#callableCancel').click();
+      const revised='※ 下書きのまま\n7を答えとして返す';
+      await p.locator('#callableCode').fill(revised);
+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'7を答えとして返す');
+      await p.locator('#callableSave').click();
+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),revised);
+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').ownerId),'stage');
+      await p.locator('#procClose').click();await openStageSources(p);await p.locator('#editorModecode').click();
+      assert.equal(await p.locator('[data-source-key="function:function-unused"] pre').textContent(),revised);
     });
     await test('OWNER-GUI-RECURSION-AND-HIDDEN-OBJECT',async()=>{
       const data=fixture();data.name='再帰の参照';data.components.find(c=>c.id==='sprite-1').visible=false;
-      data.scripts.find(s=>s.targetId==='button-1').source='甲（巡る（1））を実行する';
-      data.actions=[{id:'a',ownerId:'stage',name:'甲',args:['値'],source:'乙（値）を実行する'},{id:'b',ownerId:'stage',name:'乙',args:['値'],source:'甲（値）を実行する'}];
-      data.functions=[{id:'f',ownerId:'stage',name:'巡る',args:['値'],source:'巡る（値）を返す'}];
+      data.scripts.find(s=>s.targetId==='button-1').source='（（（1）を渡して、【巡る】で求めた答え））を渡して、【甲】という手順を行う';
+      data.actions=[{id:'a',ownerId:'stage',name:'甲',args:['値'],source:'（値）を渡して、【乙】という手順を行う'},{id:'b',ownerId:'stage',name:'乙',args:['値'],source:'（値）を渡して、【甲】という手順を行う'}];
+      data.functions=[{id:'f',ownerId:'stage',name:'巡る',args:['値'],source:'（（値）を渡して、【巡る】で求めた答え）を答えとして返す'}];
       await p.locator('#fileInput').setInputFiles({name:'references.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(data))});
       await p.waitForFunction(()=>Akari.app.project.name==='再帰の参照');
       await p.locator('#objectSelect').selectOption('button-1');

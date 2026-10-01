@@ -1,0 +1,78 @@
+{
+  "schema": "akari-product-manifest-migration-v1",
+  "pins": [
+    {
+      "originalPath": "audit/manifests/product-tests.json",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/manifests/product-tests.json",
+      "candidateSha256": "d9eca933391e87cd28c02d0a9e702ea024b0639976f112d85384510474542def"
+    }
+  ],
+  "changes": [
+    {
+      "testId": "TEST-BLOCK-SCHEMA Hole:expression",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA Hole:expression",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA Hole:statement",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA Hole:statement",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA Hole:target",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA Hole:target",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA Hole:rule",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA Hole:rule",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA QuantityLiteral",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA QuantityLiteral",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA UnitlessRead",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA UnitlessRead",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA ActorQualifiedRead",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA ActorQualifiedRead",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA ContinuousRule",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA ContinuousRule",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA MotionCommand:MOVE_DIRECTION",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA MotionCommand:MOVE_DIRECTION",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA MotionCommand:GLIDE_DIRECTION",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA MotionCommand:GLIDE_DIRECTION",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA WaitBroadcastGroup",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA WaitBroadcastGroup",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    }
+  ]
+}

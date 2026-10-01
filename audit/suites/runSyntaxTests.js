@@ -25,14 +25,14 @@ function runSyntaxTests() {
       return result.ast;
     };
     const make = (source) => {
-      const p = makeDefaultProject();
+      const p = makeRegressionProject();
       p.scripts = [{ targetId: 'stage', event: 'start', source }];
       return p;
     };
     test('syntax errors discard entire AST', () => {
       for (const [source, line] of [
         ['点数を0にする\n点数を', 2],
-        ['もし 真なら、次のことをする\n※ only', 1],
+        ['もし 条件（条件の答え（あてはまる））が成り立つなら、\n※ only', 1],
         ['何もしない\n  何もしない', 2],
         ['何もしない\n\t何もしない', 2],
       ]) {
@@ -62,19 +62,32 @@ function runSyntaxTests() {
       eq(stableJson(ast), before);
     });
     test('name syntax is independent of declaration and quoting', () => {
-      for (const name of ['何もしない', '値'.repeat(33), '値\u0001'])
+      for (const name of ['値'.repeat(33), '値\u0001'])
         for (const source of [
-          name + 'と言う',
-          '【' + name + '】と言う',
-          '自分の' + name + 'と言う',
-          '作品の' + name + 'と言う',
+          name + 'の値を言う',
+          '【' + name + '】の値を言う',
+          '自分の' + name + 'の値を言う',
+          '作品の' + name + 'の値を言う',
           name + 'を1にする',
           name + 'に1を足す',
           name + 'を空にする',
-        ])
-          ok(!parseSyntax(source).ast, 'invalid name accepted: ' + source);
+        ]) {
+          const result = parseSyntax(source), project = make(source);
+          let rejected = !result.ast;
+          if (result.ast) {
+            try {
+              const diagnostics = analyzeAst(result.ast, project);
+              rejected = diagnostics.some((d) => d.code === 'S301' || d.code === 'P210');
+            } catch (error) {
+              rejected = error.code === 'P210';
+            }
+          }
+          ok(rejected, 'invalid name compiled: ' + source);
+        }
+      const reserved = parsed('【何もしない】の値を言う');
+      ok(analyzeAst(reserved, make('')).some((d) => d.code === 'S301'));
       for (const name of ['値'.repeat(32), '未登録']) {
-        const source = name + 'と言う',
+        const source = name + 'の値を言う',
           ast = parsed(source);
         ok(analyzeAst(ast, make(source)).some((d) => d.code === 'S301'));
         ok(astEquivalent(ast, parsed(formatScript(ast))));
@@ -82,7 +95,7 @@ function runSyntaxTests() {
     });
     test('syntax preserves original text and normalized comment fields', () => {
       const source =
-        '※\t先頭　 \r\n\r\nもし 真なら、次のことをする ※開始  \r\n    何もしない ※本文　\t\r\nそうでなければ、次のことをする ※else \r\n   何もしない\r\n※末尾  ';
+        '※\t先頭　 \r\n\r\nもし 条件（条件の答え（あてはまる））が成り立つなら、 ※開始  \r\n    何もしない ※本文　\t\r\nそうでなければ、 ※else \r\n   何もしない\r\n※末尾  ';
       const ast = parsed(source);
       eq(ast.source, source);
       eq(ast.body[0].text, '\t先頭　 ');
@@ -97,16 +110,16 @@ function runSyntaxTests() {
     });
     test('semantic errors retain complete source AST', () => {
       const cases = [
-        ['未知名と言う', 'S301'],
-        ['作品の未登録を1にする', 'S301'],
-        ['自分のHPを1にする', 'S301'],
+        ['【未知名】の値を言う', 'S301'],
+        ['作品の【未登録】を1にする', 'S301'],
+        ['自分の【HP】を1にする', 'S301'],
         ['10歩動く', 'S304'],
-        ['押されたキーと言う', 'S311'],
-        ['乱数（1）と言う', 'S308'],
-        ['存在しない（1、2、3）を実行する', 'S301'],
+        ['押されたキーの値を言う', 'S311'],
+        ['（乱数（1））の値を言う', 'S308'],
+        ['（1、2、3）を渡して、【存在しない】という手順を行う', 'S301'],
         ['このくり返しを終える', 'S309'],
-        ['1を返す', 'S307'],
-        ['局所という変数を作り、初期値を1にする', 'S313'],
+        ['1を答えとして返す', 'S307'],
+        ['この中だけで使う変数【局所】を作り、最初は1にする', 'S313'],
       ];
       for (const [source, code] of cases) {
         const p = make(source),
@@ -125,11 +138,11 @@ function runSyntaxTests() {
       }
     });
     test('foreach collisions are shared semantic diagnostics', () => {
-      const each = '名前一覧の各要素を項目として、次のことをくり返す。\n  項目と言う。';
+      const each = '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  項目の値を言う。';
       for (const [prefix, args] of [
         ['', ['項目']],
-        ['項目という変数を作り、初期値を0にする。\n', []],
-        ['項目というリストを作る。\n', []],
+        ['この中だけで使う変数【項目】を作り、最初は0にする。\n', []],
+        ['この中だけで使うリスト【項目】を空で作る。\n', []],
       ]) {
         const source = prefix + each,
           p = make(''),
@@ -145,19 +158,19 @@ function runSyntaxTests() {
         ok(astEquivalent(ast, parsed(formatScript(ast), context)));
       }
       const source =
-          '名前一覧の各要素を項目として、次のことをくり返す。\n  ' + each.replaceAll('\n', '\n  '),
+          '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  ' + each.replaceAll('\n', '\n  '),
         p = make(source),
         ast = parsed(source);
-      ok(analyzeAst(ast, p).some((d) => d.code === 'S312' && d.line === 2));
+      ok(analyzeAst(ast, p).some((d) => d.code === 'S312' && d.line === 3));
       ok(compileProject(p).astByKey.has('script:stage:start'));
       const sibling = each + '\n' + each;
       eq(analyzeAst(parsed(sibling), make(sibling)), []);
     });
     test('AST analysis uses edited declarations instead of hidden source', () => {
-      const definition = {ownerId:'stage',  id: 'function-local', name: '計算', args: [], source: '0を返す' },
-        p = make('計算（）と言う');
+      const definition = {ownerId:'stage',  id: 'function-local', name: '計算', args: [], source: '0を答えとして返す' },
+        p = make('（【計算】で求めた答え）を言う');
       p.functions = [definition];
-      const ast = parsed('合計という変数を作り、初期値を1にする\n合計を返す', {
+      const ast = parsed('この中だけで使う変数【合計】を作り、最初は1にする\n合計を答えとして返す', {
         definition,
         definitionKind: 'function',
       });
@@ -173,7 +186,7 @@ function runSyntaxTests() {
       );
     });
     test('AST analysis checks caller context and purity without execution', () => {
-      const p = make('動く（）を実行する');
+      const p = make('【動く】という手順を行う');
       p.actions = [{ownerId:'stage',  id: 'action-move', name: '動く', args: [], source: '10歩動く' }];
       const ast = parsed(p.scripts[0].source),
         before = stableJson(p);
@@ -185,15 +198,15 @@ function runSyntaxTests() {
       eq(analyzeAst(ast, p, { targetId: 'sprite-1' }), []);
       eq(stableJson(p), before);
       const definition = {ownerId:'stage',  id: 'function-draft', name: '計算', args: ['量'], source: '' },
-        bad = parsed('点数に量を足す\n乱数（1、2）を返す');
+        bad = parsed('点数に量を足す\n乱数（1、2）を答えとして返す');
       ok(
         analyzeAst(bad, p, { definition, definitionKind: 'function' }).some(
           (d) => d.code === 'S305',
         ),
       );
       eq(p.functions, []);
-      for (const source of ['何もしない', '1を返す\n2を返す']) {
-        const called = make('計算（）と言う');
+      for (const source of ['何もしない', '1を答えとして返す\n2を答えとして返す']) {
+        const called = make('（【計算】で求めた答え）を言う');
         called.functions = [{ownerId:'stage',  id: 'function-incomplete', name: '計算', args: [], source }];
         const diagnostics = analyzeAst(parsed(called.scripts[0].source), called);
         ok(diagnostics.some((d) => d.code === 'S306'));
@@ -201,9 +214,9 @@ function runSyntaxTests() {
       }
       const called = make('');
       called.functions = [
-        {ownerId:'stage',  id: 'function-invalid', name: '計算', args: [], source: '未定義と言う' },
+        {ownerId:'stage',  id: 'function-invalid', name: '計算', args: [], source: '未定義の値を言う' },
       ];
-      const action = {ownerId:'stage',  id: 'action-draft', name: '動作', args: [], source: '計算（）と言う' };
+      const action = {ownerId:'stage',  id: 'action-draft', name: '動作', args: [], source: '（【計算】で求めた答え）を言う' };
       eq(
         analyzeAst(parsed(action.source), called, { definition: action, definitionKind: 'action' }),
         compileProject({ ...called, actions: [action] }).errors,
@@ -211,7 +224,7 @@ function runSyntaxTests() {
     });
     test('equivalence checks every annotation and else field', () => {
       const ast = parsed(
-        '※ before \nもし 真なら、次のことをする ※ head \n  何もしない ※ inside \nそうでなければ、次のことをする ※ branch \n  何もしない\n※ after ',
+        '※ before \nもし 条件（条件の答え（あてはまる））が成り立つなら、 ※ head \n  何もしない ※ inside \nそうでなければ、 ※ branch \n  何もしない\n※ after ',
       );
       for (const mutate of [
         (a) => (a.body[0].text += ' '),
@@ -236,7 +249,7 @@ function runSyntaxTests() {
       ok(astEquivalent(ast, metadata));
     });
     test('equivalence permits only comment closing-boundary reassociation', () => {
-      const ast = parsed('次のことを2回くり返す\n  何もしない\n※ closing \n点数と言う'),
+      const ast = parsed('2回くり返す\n  何もしない\n※ closing \n点数の値を言う'),
         other = copy(ast),
         comment = other.body[0].body.pop();
       eq(comment.kind, 'CommentLine');
@@ -250,8 +263,8 @@ function runSyntaxTests() {
       [right.body[0], right.body[1]] = [right.body[1], right.body[0]];
       ok(!astEquivalent(left, right));
       for (const source of [
-        '次のことを2回くり返す\n  ※ one\n  何もしない',
-        'もし 真なら、次のことをする\n  ※ one\n  何もしない',
+        '2回くり返す\n  ※ one\n  何もしない',
+        'もし 条件（条件の答え（あてはまる））が成り立つなら、\n  ※ one\n  何もしない',
       ]) {
         const node = parsed(source).body[0],
           changed = copy(node);
@@ -260,13 +273,13 @@ function runSyntaxTests() {
       }
     });
     test('equivalence preserves names scopes and parser negative-number shape', () => {
-      ok(astEquivalent(parsed('【点数】と言う'), parsed('点数と言う')));
-      ok(!astEquivalent(parsed('自分のHPと言う'), parsed('作品のHPと言う')));
-      const unsafe = parsed('【端】と言う'),
+      ok(astEquivalent(parsed('【点数】の値を言う'), parsed('点数の値を言う')));
+      ok(!astEquivalent(parsed('自分の【HP】の値を言う'), parsed('作品の【HP】の値を言う')));
+      const unsafe = parsed('【端】の値を言う'),
         invalid = copy(unsafe);
       invalid.body[0].value.qualifier = null;
       ok(!astEquivalent(unsafe, invalid));
-      const negative = parsed('－2＾2と言う'),
+      const negative = parsed('（－2＾2）の値を言う'),
         literal = copy(negative);
       literal.body[0].value = { kind: 'NumberLiteral', value: -4 };
       ok(!astEquivalent(negative, literal));
@@ -368,7 +381,7 @@ function runSyntaxTests() {
       for (let i = 0; i < 180; i++) {
         const expression = expr(3),
           ast = parsed(
-            '※先頭  \nもし 真なら、次のことをする ※開始\t\n  次のことを2回くり返す\n    0と言う ※出力　 \n  ※閉じる \nそうでなければ、次のことをする ※else \n  何もしない\n※最後　 ',
+            '※先頭  \nもし 条件（条件の答え（あてはまる））が成り立つなら、 ※開始\t\n  2回くり返す\n    0の値を言う ※出力　 \n  ※閉じる \nそうでなければ、 ※else \n  何もしない\n※最後　 ',
           );
         ast.body[1].thenBody[0].body[0].value = expression;
         const text = formatScript(ast),
