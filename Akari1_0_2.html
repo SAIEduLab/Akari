@@ -5427,7 +5427,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     <button id="paintAdd" title="絵を描いてキャラクターとして画面に置く">🎨 お絵かき</button>
     <button id="soundQuickAdd" title="MP3 / WAV / M4A（AAC-LC）/ FLAC / Ogg Opusの音声を取り込む">🔊 音声を追加</button>
     <button id="assetBtn">画像・音声を管理</button>
-    <button id="procBtn">動作・計算</button>
+    <button id="procBtn">手順・答えを求める</button>
     <button id="dataBtn">データ</button>
     <button id="diagnoseBtn">作品チェック</button>
     <label class="ui-level-label">表示 <select id="uiLevel"><option value="basic" selected>かんたん</option><option value="advanced">くわしく</option></select></label>
@@ -5763,9 +5763,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   </div>
 </div>
 
-<div class="modal" id="procModal" role="dialog" aria-modal="true" aria-label="動作・計算">
+<div class="modal" id="procModal" role="dialog" aria-modal="true" aria-label="手順・答えを求める">
   <div class="dialog">
-    <div class="win-title">画面の共通コード：動作・計算</div>
+    <div class="win-title">画面の共通コード：手順・答えを求める</div>
     <div class="dialog-body">
       <div class="proc-grid">
         <div class="proc-list">
@@ -5776,16 +5776,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         </div>
         <div class="proc-edit">
           <input id="callableEditingId" type="hidden">
-          <label>種類 <select id="callableType"><option value="action">動作</option><option value="function">計算</option></select></label>
+          <label>種類 <select id="callableType"><option value="action">手順</option><option value="function">答えを求める</option></select></label>
           <label>名前 <input id="callableName"></label>
           <label id="callablePhraseRow">短い呼び方（自由） <input id="callablePhrase" maxlength="80" placeholder="例：ジャンプする" aria-describedby="callablePhraseHelp"></label>
           <small id="callablePhraseHelp">この文を書くだけで、この手順を使えます。空欄でも名前で呼べます。</small>
           <label>受け取る値 <input id="callableArgs" placeholder="例：歩数、あいさつ（いらないときは空欄）" aria-describedby="callableArgsHelp"></label>
           <small id="callableArgsHelp">呼び出すときに渡す値の名前です。複数は「、」で区切ります。</small>
-          <div id="callableHeader" class="asset-target">新しい動作</div>
+          <div id="callableHeader" class="asset-target">新しい手順</div>
           <div class="editor-modes" role="group" aria-label="本文の表示"><button id="callableModecode" type="button" aria-pressed="true">コード</button><button id="callableModeblocks" type="button" aria-pressed="false">ブロック</button><button id="callableCancel" type="button">入力を取り消す</button></div><p id="callablePending" class="editor-pending" role="status" hidden></p><div id="callableBlocks" hidden></div>
           <textarea id="callableCode" spellcheck="false"></textarea>
-          <div class="hint-panel"><div class="hint-controls"><input id="callableHintSearch" type="search" aria-label="動作・計算の候補を検索" placeholder="命令・値・名前を検索"><button id="callableHintPrev">前</button><span id="callableHintCount"></span><button id="callableHintNext">次</button></div><div class="code-hints" id="callableHints" aria-label="動作・計算のコード候補"></div></div>
+          <div class="hint-panel"><div class="hint-controls"><input id="callableHintSearch" type="search" aria-label="手順・答えを求める定義の候補を検索" placeholder="命令・値・名前を検索"><button id="callableHintPrev">前</button><span id="callableHintCount"></span><button id="callableHintNext">次</button></div><div class="code-hints" id="callableHints" aria-label="手順・答えを求める定義のコード候補"></div></div>
         </div>
       </div>
     </div>
@@ -9342,7 +9342,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         ...p.functions.map(d => [`function:${d.id}`, d]),
       ]);
       if ([...definitionKeys.values()].some(d => d.ownerId !== 'stage'))
-        fail('動作・計算の所属先が不正です');
+        fail('手順・答えを求める定義の所属先が不正です');
       const items = [],
         astByKey = new Map();
       const validActorRef = ref => !ref ||
@@ -9412,7 +9412,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         astByKey.set(item.key, item.ast);
       }
       if ([...definitionKeys.keys()].some(key => !astByKey.has(key)))
-        fail('動作・計算の本文がありません');
+        fail('手順・答えを求める定義の本文がありません');
       const compiled = {
         items,
         rules: items.flatMap(item => (item.ast.rules || []).map((rule, index) => ({
@@ -9614,6 +9614,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     database: 'akari-workspace-f' + PROJECT_FORMAT_ID,
     fallback: 'akari.autosave.f' + PROJECT_FORMAT_ID,
     uiLevel: 'akari.uiLevel.v1',
+    editorMode: 'akari.editorMode.v1',
   });
 
   const EVENT_BY_TYPE = {
@@ -11063,7 +11064,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       !Array.isArray(p.functions) ||
       p.actions.length + p.functions.length > LIMITS.callables
     )
-      throw new AkariError('F504', '動作・計算数が上限を超えています');
+      throw new AkariError('F504', '手順・答えを求める定義数が上限を超えています');
     const callNames = new Set();
     for (const [arr, kind] of [
       [p.actions, '動作'],
@@ -11076,7 +11077,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           throw new AkariError('F503', `${kind}は画面に所属させてください`);
         addId(d.id);
         validateName(d.name, { callable: true });
-        if (callNames.has(d.name)) throw new AkariError('F503', '動作・計算に同じ名前があります');
+        if (callNames.has(d.name)) throw new AkariError('F503', '手順・答えを求める定義に同じ名前があります');
         callNames.add(d.name);
         if (
           !Array.isArray(d.args) ||
@@ -14675,7 +14676,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           };
           if (eventOnly[n.sensor]) {
             if (ctx.definition)
-              add('S311', `「${n.sensor}」は動作・計算の本文では直接使えません`, ctx.node, where);
+              add('S311', `「${n.sensor}」は手順・答えを求める定義の本文では直接使えません`, ctx.node, where);
             else if (ctx.event !== eventOnly[n.sensor])
               add('S311', `「${n.sensor}」はこのきっかけでは使えません`, ctx.node, where);
           }
@@ -14729,7 +14730,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         const c = actorContext(n.actorRef, { ...ctx, ...ctx.selfContext, node: n, availableLocalNames: new Set(available) }, n, where);
         if (n.kind === 'LocalVariableDeclaration' || n.kind === 'LocalListDeclaration') {
           if (!ctx.definition || !top || seenExecutable)
-            add('S313', 'この中だけのデータは動作・計算の本文先頭でだけ作れます', n, where);
+            add('S313', 'この中だけのデータは手順・答えを求める定義の本文先頭でだけ作れます', n, where);
           try {
             validateName(n.name);
           } catch (err) {
@@ -15082,7 +15083,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       ...[['action', project.actions], ['function', project.functions]].flatMap(([kind, definitions]) =>
         definitions.map(d => ({
           key: `${kind}:${d.id}`, ownerId: d.ownerId, kind, source: d.source,
-          title: `${kind === 'action' ? '動作' : '計算'}「${d.name}」`,
+          title: `${kind === 'action' ? '手順' : '答えを求める'}「${d.name}」`,
           context: { ownerId: d.ownerId, targetId: null, targetType: null, event: null,
             args: d.args, definition: d, definitionKind: kind },
         }))),
@@ -17630,6 +17631,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     };
     const fallback = (before, after) => {
       const location = surface(before), schema = BLOCK_SCHEMA_BY_ID.get(before.schemaId);
+      // A changed preceding topic only needs an explicit subject. Keep the
+      // original control header (including a legacy ForEach binder) and body.
+      if (schema.bodies.length && same(before, after) && location?.range && !sameActorContext(before, after))
+        return [{start:location.range.start, end:location.range.start, text:sentenceActorSource(after.fields.actorRef) + 'は、'}];
       if(before.schemaId==='ForEach' && after.schemaId==='ForEach' && before.fields.binder!==after.fields.binder &&
         same({...before.fields,binder:after.fields.binder},after.fields) && same(before.inputs,after.inputs) && same(before.bodies,after.bodies) && same(before.annotations,after.annotations)) {
         const binder=`【${after.fields.binder}】`;
@@ -22126,7 +22131,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const indicator = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
       indicator.textContent = ''; indicator.hidden = true;
     }
-    function showEditorFailure(binding, error) {
+    function showEditorFailure(binding, error, { preservePending = false } = {}) {
       const reason = error?.message || String(error),
         n = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
       n.textContent = reason;
@@ -22170,7 +22175,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       n.hidden = false;
       setStatus(reason);
-      if (binding.session?.pendingEdit) {
+      if (binding.session?.pendingEdit && !preservePending) {
         binding.session.pendingEdit.reason = reason;
         // Recovery stores the one visible diagnostic, not an unbounded list
         // or proposal sources. Compilation still retains every diagnostic.
@@ -22223,9 +22228,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           return showEditorFailure(
             binding,
             result?.reason || '入力を確定するか取り消してください',
+            { preservePending: true },
           );
         if (binding.session?.blockDraft)
-          return showEditorFailure(binding, '未確定の穴を選んで、命令や値を入れてください');
+          return showEditorFailure(binding, '未確定の穴を選んで、命令や値を入れてください', { preservePending: true });
         return true;
       }
       if (binding.session?.blockDraft) {
@@ -22380,6 +22386,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       binding.renderedOwner = session.ownerKey;
       if (!draft && sourceOverviewOpen) renderSourceOverview();
     }
+    function rememberEditorMode(kind, mode) {
+      editorModes.set(kind, mode);
+      if (kind === 'script') {
+        try { localStorage.setItem(STORAGE_KEYS.editorMode, mode); } catch (_) {}
+      }
+    }
     function switchEditorMode(binding, mode) {
       const draftSession = binding.session;
       if (draftSession?.blockDraft) {
@@ -22393,7 +22405,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           return switchEditorMode(binding, mode);
         }
         captureEditorView(binding);
-        editorModes.set(binding.kind, mode); session.mode = mode;
+        rememberEditorMode(binding.kind, mode); session.mode = mode;
         session.pendingEdit = session.blockDraft.pending;
         if (mode === 'code') binding.textarea.value = session.blockDraft.codeSource ?? session.blockDraft.source;
         renderEditorBinding(binding);
@@ -22403,7 +22415,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       if (binding === mainEditor && sourceOverviewOpen) {
         if (!flushActiveEditor()) return false;
-        editorModes.set('script', mode);
+        rememberEditorMode('script', mode);
         syncEditorShell(mode);
         renderSourceOverview();
         return true;
@@ -22474,7 +22486,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         session.codeOriginBlock = nearest;
         session.codeOriginRevision = session.sourceRevision;
       }
-      editorModes.set(binding.kind, mode);
+      rememberEditorMode(binding.kind, mode);
       session.mode = mode;
       renderEditorBinding(binding);
       if (mode === 'blocks') binding.view.focus?.({ id: session.blockSelection, line: focusLine });
@@ -22547,7 +22559,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         for (const d of type === 'action' ? project.actions : project.functions) {
           const o = document.createElement('option');
           o.value = `${type}:${d.id}`;
-          o.textContent = `${type === 'action' ? '動作' : '計算'}：${d.name}`;
+          o.textContent = `${type === 'action' ? '手順' : '答えを求める'}：${d.name}`;
           sel.appendChild(o);
         }
       sel.value = prefer;
@@ -22570,7 +22582,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         )
           draftEditor.textarea.value = d.source;
         $('#callableHeader').textContent =
-          `${d.type === 'action' ? '動作' : '計算'}「${d.name || '名前'}」／受け取る値（${d.argsText}）／本文${hasCallableDraft() ? ' （未保存）' : ''}`;
+          `${d.type === 'action' ? '手順' : '答えを求める'}「${d.name || '名前'}」／受け取る値（${d.argsText}）／本文${hasCallableDraft() ? ' （未保存）' : ''}`;
         $('#callableDelete').disabled = modelLocked() || !d.editId;
       } finally {
         syncingDraft = false;
@@ -23138,7 +23150,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       activeDragCleanup?.();
       return (
         (!dirty && !hasCallableDraft()) ||
-        confirm('作品または動作・計算に保存していない編集があります。今の編集を捨てて続けますか？')
+        confirm('作品または手順・答えを求める定義に保存していない編集があります。今の編集を捨てて続けますか？')
       );
     }
     function saveEditor() {
@@ -23332,7 +23344,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         const card = make('section', null, 'source-card source-draft');
         card.dataset.ownerId = callableDraftCore.ownerId;
         card.dataset.sourceKey = draftOwner();
-        card.append(make('h3', `編集中の${callableDraftCore.type === 'action' ? '動作' : '計算'}「${callableDraftCore.name || '名前を入力'}」`),
+        card.append(make('h3', `編集中の${callableDraftCore.type === 'action' ? '手順' : '答えを求める'}「${callableDraftCore.name || '名前を入力'}」`),
           make('pre', callableDraftCore.source || '本文は空です。'),
           button('編集を続ける', () => { $('#procModal').classList.add('show'); renderEditorBinding(draftEditor); }));
         root.append(card);
@@ -24896,7 +24908,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               ? project.functions.find((x) => x.id === parts[1])
               : null;
       const label = def
-        ? `${parts[0] === 'action' ? '動作' : '計算'} ${def.name}`
+        ? `${parts[0] === 'action' ? '手順' : '答えを求める'} ${def.name}`
         : `${targetById(loc.targetId)?.name || loc.targetId} / ${EVENT_LABELS[loc.event] || loc.event}`;
       $('#execLocation').textContent = `いまの場所：${label} / ${loc.line}行`;
       if (scheduler?.paused) {
@@ -25120,7 +25132,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       clearTimeout(historyTimer);
       pushHistoryNow();
       if (hasCallableDraft()) {
-        log('動作・計算の編集を保存してから実行します', 'error');
+        log('手順・答えを求める定義の編集を保存してから実行します', 'error');
         return;
       }
       if (!flushActiveEditor()) return;
@@ -25382,7 +25394,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (!flushActiveEditor()) return;
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
       if (hasCallableDraft()) {
-        log('動作・計算の編集を保存してから書き出してください', 'error');
+        log('手順・答えを求める定義の編集を保存してから書き出してください', 'error');
         return;
       }
       const errors = compileProject(project).errors;
@@ -26103,7 +26115,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         d.ownerId !== 'stage' ||
         !['action', 'function'].includes(d.type)
       )
-        throw new AkariError('F503', '動作・計算の下書きが正しくありません');
+        throw new AkariError('F503', '手順・答えを求める定義の下書きが正しくありません');
       for (const [k, limit] of [
         ['name', 500],
         ['argsText', 4096],
@@ -26152,7 +26164,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     function confirmCallableDiscard() {
       if (!flushActiveEditor()) return false;
       if (!hasCallableDraft()) return true;
-      if (!confirm('動作・計算に保存していない編集があります。編集を捨てて続けますか？'))
+      if (!confirm('手順・答えを求める定義に保存していない編集があります。編集を捨てて続けますか？'))
         return false;
       clearTimeout(historyTimer);
       pushHistoryNow();
@@ -26210,7 +26222,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (
           [...next.actions, ...next.functions].some((x) => x.id !== d.editId && x.name === d.name)
         )
-          throw new AkariError('F503', '動作・計算に同じ名前があります');
+          throw new AkariError('F503', '手順・答えを求める定義に同じ名前があります');
         next.actions = next.actions.filter((x) => x.id !== d.editId);
         next.functions = next.functions.filter((x) => x.id !== d.editId);
         const id = d.editId || ensureUniqueId(d.type);
@@ -26232,7 +26244,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         markDirty();
         pushHistoryNow();
         refreshEditor();
-        log(`${d.type === 'action' ? '動作' : '計算'}「${d.name}」を保存しました`, 'ok');
+        log(`${d.type === 'action' ? '手順' : '答えを求める'}「${d.name}」を保存しました`, 'ok');
       } catch (error) {
         showEditorFailure(draftEditor, error);
       }
@@ -27127,7 +27139,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       ? storedUiLevel
       : storedUiLevel === 'all' ? 'advanced' : 'basic';
     $('#uiLevel').value = document.body.dataset.uiLevel;
-    if (!editorModes.has('script')) editorModes.set('script', 'blocks');
+    let storedEditorMode = null;
+    try { storedEditorMode = localStorage.getItem(STORAGE_KEYS.editorMode); } catch (_) {}
+    editorModes.set('script', ['code', 'blocks'].includes(storedEditorMode) ? storedEditorMode : 'blocks');
     el.projectName.addEventListener('change', () => {
       if (modelLocked()) {
         el.projectName.value = project.name;

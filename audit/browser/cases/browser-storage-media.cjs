@@ -38,7 +38,7 @@ await run('invalid-syntax-save-and-format1-storage-isolation',async()=>{
   assert.equal(downloads.length,0,'unfinished source is not downloaded as a valid project');
   const calls=await p.evaluate(()=>__persistenceCalls);
   assert.ok(calls.some(x=>x.api==='indexedDB'&&x.method==='open'&&x.key==='akari-workspace-f2'));
-  assert.ok(calls.every(x=>x.api==='indexedDB'?x.key==='akari-workspace-f2':x.api==='localStorage'&&['akari.autosave.f2','akari.uiLevel.v1'].includes(x.key)));
+  assert.ok(calls.every(x=>x.api==='indexedDB'?x.key==='akari-workspace-f2':x.api==='localStorage'&&['akari.autosave.f2','akari.uiLevel.v1','akari.editorMode.v1'].includes(x.key)));
   await p.reload();await p.locator('#recoveryModal.show').waitFor();
   await (await reveal(p.locator('#recoveryRestore'))).click();
   assert.equal(JSON.stringify(await getProject()),before.project,'recovery keeps the last valid project byte-equivalent');

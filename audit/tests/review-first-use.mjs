@@ -149,7 +149,39 @@ async function reviewCancelledDiagnosis(page) {
   return observations;
 }
 
+async function reviewModePreference(page) {
+  const read=()=>page.evaluate(()=>{const a=Akari.app,s=a.editorState;return{project:JSON.stringify(a.project),source:s.main.sourceText,pending:s.main.pendingEdit,diagnostics:s.main.diagnostics,history:s.history,redo:s.redo,dirty:s.dirty};});
+  const selected=mode=>page.locator('#editorMode'+mode).getAttribute('aria-pressed');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('akari.editorMode.v1')),null,'empty storage has no editor preference');
+  assert.equal(await selected('blocks'),'true','first startup opens blocks');
+  assert.equal(await page.locator('#uiLevel').inputValue(),'basic','detail level is a separate preference');
+  const initial=await read(),observations=[];
+  for(const mode of ['code','blocks']) {
+    await page.locator('#editorMode'+mode).click();assert.deepEqual(await read(),initial,'mode selection preserves full design and history');
+    assert.equal(await page.evaluate(()=>localStorage.getItem('akari.editorMode.v1')),mode,'successful explicit selection persists');
+    await page.reload();await page.waitForFunction(()=>!!globalThis.Akari?.app);
+    assert.equal(await selected(mode),'true',mode+' survives restart');assert.deepEqual(await read(),initial,'restart with only a preference change preserves the initial design');
+    for(const level of ['advanced','basic']) {
+      await page.locator('#uiLevel').selectOption(level);assert.equal(await selected(mode),'true','detail level never switches code/blocks');assert.deepEqual(await read(),initial);
+    }
+    observations.push({mode,reloaded:true,source:initial.source,historyUnchanged:true});
+  }
+  await page.locator('#editorModecode').click();const edited=initial.source.replace('10歩','12歩');assert.notEqual(edited,initial.source);
+  await page.locator('#codeEditor').fill(edited);
+  await page.waitForFunction(source=>Akari.app.editorState.main.sourceText===source&&Akari.app.editorState.history>1,edited);
+  const committed=await read();
+  for(const mode of ['blocks','code']) {
+    await page.locator('#editorMode'+mode).click();assert.deepEqual(await read(),committed,'switching modes preserves the complete committed edit');
+    await page.locator('#undoBtn').click();assert.equal((await read()).source,initial.source,'Undo remains available in '+mode);
+    await page.locator('#redoBtn').click();assert.deepEqual(await read(),committed,'Redo restores full state in '+mode);
+  }
+  await page.locator('#undoBtn').click();assert.equal((await read()).source,initial.source);
+  await page.locator('#editorModeblocks').click();
+  return {initial,observations,committed,undoRedoBothModes:true};
+}
+
 async function reviewDefaults(page, capture) {
+  const modePreference=await reviewModePreference(page);
   await setup(page);
   const levelAccess = await reviewLevelAccess(page);
   const initial = await sourceFromModel(page);
@@ -193,7 +225,7 @@ async function reviewDefaults(page, capture) {
   const roundtrip = await roundTrip(page, source);
   const runtime = await runUntilVisible(page, 'こんにちは');
   const evidence = {
-    initialSource:initial,levelAccess,kanaIds,
+    initialSource:initial,modePreference,levelAccess,kanaIds,
     addedDefaults:{scale:size,turnDegrees:turn,say,waitSeconds:wait},
     searchAfterInsertion:afterSizeSearch,sizePalettePreview:sizePreview,sizeBlockMessage,
     scaleNodeInserted:await scaleNode.count()===1,

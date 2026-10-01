@@ -20561,6 +20561,13 @@
       "newText": "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available",
       "preservedMeaning": "Keep unitless, matching, unknown, unconstrained, argument and local-shadow updates available; preserve explicit unit removal.",
       "sourceLedger": "audit/fixtures/runtime-v2-input-migration.json"
+    },
+    {
+      "testId": "browser/invalid-syntax-save-and-format1-storage-isolation",
+      "oldText": "['akari.autosave.f2','akari.uiLevel.v1'].includes(x.key)",
+      "newText": "['akari.autosave.f2','akari.uiLevel.v1','akari.editorMode.v1'].includes(x.key)",
+      "preservedMeaning": "Explicit user request on 2026-10-01 adds a dedicated code/blocks preference; first startup uses blocks. F1 isolation, exact valid/pending source retention, refusal, recovery, cancellation and history guarantees remain. The new preference has exact-name isolation and independent reload/Undo/Redo regression in review-first-use.",
+      "sourceLedger": "audit/fixtures/browser-v2-input-migration.json"
     }
   ]
 }
