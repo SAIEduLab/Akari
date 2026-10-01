@@ -698,7 +698,7 @@
       "originalPath": "audit/browser/cases/browser-boundaries.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-boundaries.cjs",
       "originalSha256": "0fae3abb2408f97b95f20a42c60c8e4354fde1b9affa5c42e94d5f26d309c9c8",
-      "candidateSha256": "b8730ee718459aab6d961bdfbd730dc086b7864767b2e81a10c6e1f4dcb7c42e",
+      "candidateSha256": "fec8dd78d801851999e8e14f21c843bb371ff2e8438afdf8080c3e200ffa2673",
       "stableIds": [
         "variadic-35-inputs-edit-move-remove",
         "body-pagination-and-comment-multiline",
@@ -901,7 +901,7 @@
       "originalPath": "audit/browser/cases/browser-schemas.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-schemas.cjs",
       "originalSha256": "9528d18faa59da656402e786b75943504e032e829799d95bb5a4ee15be91e085",
-      "candidateSha256": "0afba116aa2d6859b4858f52059a19ea86ac888429a00bcafb6e6f4234295cd6",
+      "candidateSha256": "5c579659e455bfac7ca6357d41b749c5a31ae606190b86b79a4b091d58921bbd",
       "stableIds": [],
       "testCount": 0
     },
@@ -1500,8 +1500,8 @@
       ],
       "oldLine": 9,
       "newLine": 10,
-      "oldText": "await run('empty-required-body-refusal-and-noop-replacement',async p=>{await fill(p,'次のことを2回くり返す。\\n  点数に1を足す。');await block(p);let child=p.locator('#blockEditor .blockui-node[data-schema-id=\"NumericUpdate:ADD\"]');const before=await state(p);await openNodeMenu(child);await child.locator('[data-blockui-action=\"remove\"]').first().click();assert.deepEqual(await state(p),before);await openNodeMenu(child);await (await reveal(child.locator('[data-blockui-action=\"replace-noop\"]'))).click();assert.match((await state(p)).source,/何もしない/);assert.equal((await state(p)).history,before.history+1);await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await state(p)).source,before.source);return{emptyBodyRejectedAtomically:true,explicitNoOpReplacementUndo:true};});\nawait run('unknown-callee-and-all-arguments-after-definition-change',async p=>{await (await reveal(p.locator('#procBtn'))).click();await (await reveal(p.locator('#callableNewFunction'))).click();await (await reveal(p.locator('#callableName'))).fill('二倍');await (await reveal(p.locator('#callableArgs'))).fill('元値');await (await reveal(p.locator('#callableCode'))).fill('元値×2を返す。');await (await reveal(p.locator('#callableSave'))).click();await (await reveal(p.locator('#procClose'))).click();await fill(p,'二倍（1）と言う。');await block(p);const original=(await state(p)).source;await (await reveal(p.locator('#procBtn'))).click();await (await reveal(p.locator('#callableName'))).fill('改名');await (await reveal(p.locator('#callableArgs'))).fill('元値、追加');await (await reveal(p.locator('#callableSave'))).click();await (await reveal(p.locator('#procClose'))).click();assert.equal((await state(p)).source,original);assert.equal(await p.locator('#blockEditor .blockui-node[data-schema-id=\"UserFunctionCall\"] [data-blockui-field=\"name\"]').inputValue(),'二倍');assert.ok(await p.locator('#blockEditor .blockui-diagnostics').count());assert.equal((await tree(p)).bodies.body[0].inputs.value.inputs.args.length,1);await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await state(p)).source,original);return{callerNotRenamedOrReArityAdjusted:true,diagnosticsRefresh:true};});",
-      "newText": "await run('empty-required-body-refusal-and-noop-replacement',async p=>{await fill(p,'2回くり返す。\\n  点数に1を足す。');await block(p);let child=p.locator('#blockEditor .blockui-node[data-schema-id=\"NumericUpdate:ADD\"]');const before=await state(p);await openNodeMenu(child);await child.locator('[data-blockui-action=\"remove\"]').first().click();assert.deepEqual(await state(p),before);await openNodeMenu(child);await (await reveal(child.locator('[data-blockui-action=\"replace-noop\"]'))).click();assert.match((await state(p)).source,/何もしない/);assert.equal((await state(p)).history,before.history+1);await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await state(p)).source,before.source);return{emptyBodyRejectedAtomically:true,explicitNoOpReplacementUndo:true};});\nawait run('unknown-callee-and-all-arguments-after-definition-change',async p=>{await (await reveal(p.locator('#procBtn'))).click();await (await reveal(p.locator('#callableNewFunction'))).click();await (await reveal(p.locator('#callableName'))).fill('二倍');await (await reveal(p.locator('#callableArgs'))).fill('元値');await (await reveal(p.locator('#callableCode'))).fill('元値×2を返す。');await (await reveal(p.locator('#callableSave'))).click();await (await reveal(p.locator('#procClose'))).click();await fill(p,'二倍（1）を言う。');await block(p);const original=(await state(p)).source;await (await reveal(p.locator('#procBtn'))).click();await (await reveal(p.locator('#callableName'))).fill('改名');await (await reveal(p.locator('#callableArgs'))).fill('元値、追加');await (await reveal(p.locator('#callableSave'))).click();await (await reveal(p.locator('#procClose'))).click();assert.equal((await state(p)).source,original);assert.equal(await p.locator('#blockEditor .blockui-node[data-schema-id=\"UserFunctionCall\"] [data-blockui-field=\"name\"]').inputValue(),'二倍');assert.ok(await p.locator('#blockEditor .blockui-diagnostics').count());assert.equal((await tree(p)).bodies.body[0].inputs.value.inputs.args.length,1);await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await state(p)).source,original);return{callerNotRenamedOrReArityAdjusted:true,diagnosticsRefresh:true};});",
+      "oldText": "await run('empty-required-body-refusal-and-noop-replacement',async p=>{await fill(p,'次のことを2回くり返す。\\n  点数に1を足す。');await block(p);let child=p.locator('#blockEditor .blockui-node[data-schema-id=\"NumericUpdate:ADD\"]');const before=await state(p);await openNodeMenu(child);await child.locator('[data-blockui-action=\"remove\"]').first().click();assert.deepEqual(await state(p),before);await openNodeMenu(child);await (await reveal(child.locator('[data-blockui-action=\"replace-noop\"]'))).click();assert.match((await state(p)).source,/何もしない/);assert.equal((await state(p)).history,before.history+1);await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await state(p)).source,before.source);return{emptyBodyRejectedAtomically:true,explicitNoOpReplacementUndo:true};});\nawait run('unknown-callee-and-all-arguments-after-definition-change',async p=>{await (await reveal(p.locator('#procBtn'))).click();await (await reveal(p.locator('#callableNewFunction'))).click();await (await reveal(p.locator('#callableName'))).fill('二倍');await (await reveal(p.locator('#callableArgs'))).fill('元値');await (await reveal(p.locator('#callableCode'))).fill('元値×2を返す。');await (await reveal(p.locator('#callableSave'))).click();await (await reveal(p.locator('#procClose'))).click();await fill(p,'二倍（1）と言う。');await block(p);const original=(await state(p)).source;await (await reveal(p.locator('#procBtn'))).click();await (await reveal(p.locator('#callableName'))).fill('改名');await (await reveal(p.locator('#callableArgs'))).fill('元値、追加');await (await reveal(p.locator('#callableSave'))).click();await (await reveal(p.locator('#procClose'))).click();assert.equal((await state(p)).source,original);assert.equal(await p.locator('#blockEditor .blockui-node[data-schema-id=\"UserFunctionCall\"] [data-blockui-field=\"name\"]').inputValue(),'二倍');assert.ok(await p.locator('#blockEditor .blockui-diagnostics').count());assert.equal((await tree(p)).bodies.body[0].inputs.value.inputs.args.length,1);await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await state(p)).source,original);return{callerNotRenamedOrReArityAdjusted:true,diagnosticsRefresh:true};});\nawait run('source-each-limit-refusal-keeps-source-history',async p=>{await fill(p,'点数を1にする。');const source='「'+'a'.repeat(99995)+'」と言う';assert.equal([...source].length,100000);await fill(p,source);const before=await state(p);assert.equal(before.source.length,100000);await (async()=>{const control=await reveal(p.locator('#formatBtn')); await openBodyForTest(control.page()); return control.click();})();assert.deepEqual(await state(p),before);assert.equal(await p.locator('#codeEditor').inputValue(),source);await block(p);const original=await state(p);await (async()=>{const control=await reveal(p.locator('#blockEditor .blockui-node[data-schema-id=\"StringLiteral\"] [data-blockui-field=\"value\"]')); await openBodyForTest(control.page()); return control.fill('a'.repeat(99996));})();await (async()=>{const control=await reveal(p.locator('#blockEditor [data-blockui-action=\"commit\"]')); await openBodyForTest(control.page()); return control.click();})();assert.deepEqual(await state(p),original);return{maxCodePreserved:true,formatExpansionRejected:true,guiExpansionRejectedAtomically:true};});",
+      "newText": "await run('empty-required-body-refusal-and-noop-replacement',async p=>{await fill(p,'2回くり返す。\\n  点数に1を足す。');await block(p);let child=p.locator('#blockEditor .blockui-node[data-schema-id=\"NumericUpdate:ADD\"]');const before=await state(p);await openNodeMenu(child);await child.locator('[data-blockui-action=\"remove\"]').first().click();assert.deepEqual(await state(p),before);await openNodeMenu(child);await (await reveal(child.locator('[data-blockui-action=\"replace-noop\"]'))).click();assert.match((await state(p)).source,/何もしない/);assert.equal((await state(p)).history,before.history+1);await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await state(p)).source,before.source);return{emptyBodyRejectedAtomically:true,explicitNoOpReplacementUndo:true};});\nawait run('unknown-callee-and-all-arguments-after-definition-change',async p=>{await (await reveal(p.locator('#procBtn'))).click();await (await reveal(p.locator('#callableNewFunction'))).click();await (await reveal(p.locator('#callableName'))).fill('二倍');await (await reveal(p.locator('#callableArgs'))).fill('元値');await (await reveal(p.locator('#callableCode'))).fill('元値×2を返す。');await (await reveal(p.locator('#callableSave'))).click();await (await reveal(p.locator('#procClose'))).click();await fill(p,'二倍（1）を言う。');await block(p);const original=(await state(p)).source;await (await reveal(p.locator('#procBtn'))).click();await (await reveal(p.locator('#callableName'))).fill('改名');await (await reveal(p.locator('#callableArgs'))).fill('元値、追加');await (await reveal(p.locator('#callableSave'))).click();await (await reveal(p.locator('#procClose'))).click();assert.equal((await state(p)).source,original);assert.equal(await p.locator('#blockEditor .blockui-node[data-schema-id=\"UserFunctionCall\"] [data-blockui-field=\"name\"]').inputValue(),'二倍');assert.ok(await p.locator('#blockEditor .blockui-diagnostics').count());assert.equal((await tree(p)).bodies.body[0].inputs.value.inputs.args.length,1);await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await state(p)).source,original);return{callerNotRenamedOrReArityAdjusted:true,diagnosticsRefresh:true};});\nawait run('source-each-limit-refusal-keeps-source-history',async p=>{await fill(p,'点数を1にする。');const source='「'+'a'.repeat(99995)+'」と言う';assert.equal([...source].length,100000);const previousHistory=(await state(p)).history;await fill(p,source);await p.waitForFunction(h=>Akari.app.editorState.history===h+1,previousHistory);const before=await state(p);assert.equal(before.source.length,100000);await (async()=>{const control=await reveal(p.locator('#formatBtn')); await openBodyForTest(control.page()); return control.click();})();assert.deepEqual(await state(p),before);assert.equal(await p.locator('#codeEditor').inputValue(),source);await block(p);const original=await state(p);await (async()=>{const control=await reveal(p.locator('#blockEditor .blockui-node[data-schema-id=\"StringLiteral\"] [data-blockui-field=\"value\"]')); await openBodyForTest(control.page()); return control.fill('a'.repeat(99996));})();await (async()=>{const control=await reveal(p.locator('#blockEditor [data-blockui-action=\"commit\"]')); await openBodyForTest(control.page()); return control.click();})();assert.deepEqual(await state(p),original);return{maxCodePreserved:true,formatExpansionRejected:true,guiExpansionRejectedAtomically:true};});",
       "preservedMeaning": "Preserve all original IDs and assertions, arithmetic magnitudes, positions, ordering, elapsed times, limits, side effects, cleanup and refusal atomicity. Only canonical source spelling, F2 contract metadata and explicit UI prerequisite setup change."
     },
     {
@@ -2368,7 +2368,7 @@
       "oldLine": 12,
       "newLine": 14,
       "oldText": "const editField=async(id,f,annotation=false)=>{if(f.key==='hasElse')await U.openNodeMenu(node(id));if(annotation)await U.openAnnotations(node(id));let control=root().locator('['+(annotation?'data-blockui-annotation':'data-blockui-field')+'=\"'+f.key+'\"][data-block-id=\"'+id+'\"]');if(annotation){const details=control.locator('xpath=ancestor::details');if(!(await details.getAttribute('open')!==null))await (await reveal(details.locator('summary'))).click();}const before=await control.inputValue();let value;\n if(f.type==='boolean'){value=before==='true'?'false':'true';await (await reveal(control)).selectOption(value);}else if(f.type==='qualifier'){value=before==='project'?'exact':'project';await (await reveal(control)).selectOption(value);}else{value=annotation?(f.fixtureValue||'※ 注釈  '):f.type==='number'?'13':f.type==='comment'?' コメント改　 ':f.type==='string'?'文字改':f.key==='binder'?'要素改':'名前改';await (await reveal(control)).fill(value);await control.press('Tab');}\n const active=await session();assert.equal(active.pendingEdit,null,`${id}.${f.key} pending`);assert.notEqual(value,before);return{key:f.key,type:f.type,before,value,annotation};};",
-      "newText": "const editField=async(id,f,annotation=false)=>{if(f.key==='hasElse')await U.openNodeMenu(node(id));if(annotation)await U.openAnnotations(node(id));let control=root().locator('['+(annotation?'data-blockui-annotation':'data-blockui-field')+'=\"'+f.key+'\"][data-block-id=\"'+id+'\"]');if(annotation){const details=control.locator('xpath=ancestor::details');if(!(await details.getAttribute('open')!==null))await (await reveal(details.locator('summary'))).click();}const before=await control.inputValue(),signedNumber=f.type==='number'&&!!await control.getAttribute('data-signed-parent-id');let value;\n if(f.type==='boolean'){value=before==='true'?'false':'true';await (await reveal(control)).selectOption(value);}else if(f.type==='qualifier'){value=before==='project'?'exact':'project';await (await reveal(control)).selectOption(value);}else{value=annotation?(f.fixtureValue||'※ 注釈  '):f.type==='number'?(signedNumber?'-13':'13'):f.type==='comment'?' コメント改　 ':f.type==='string'?'文字改':f.key==='binder'?'要素改':'名前改';await (await reveal(control)).fill(value);await control.press('Tab');}\n if(f.key==='hasElse'&&value==='true')await completeRegressionHoles(p,rootId,id);\n const active=await session();assert.equal(active.pendingEdit,null,`${id}.${f.key} pending`);if(signedNumber){const nodes=[];const walk=n=>{nodes.push(n);for(const child of Object.values(n.inputs||{}).flat())walk(child);for(const child of Object.values(n.bodies||{}).flat())walk(child);};walk(active.blockView);const unary=nodes.find(n=>n.id===active.blockSelection);assert.equal(unary.schemaId,'UnaryExpression:NEG','merged signed control preserves the original negation');assert.equal(unary.inputs.value.schemaId,'NumberLiteral');assert.equal(unary.inputs.value.fields.value,13,'original child magnitude remains exactly13');}assert.notEqual(value,before);return{key:f.key,type:f.type,before,value,annotation};};",
+      "newText": "const editField=async(id,f,annotation=false)=>{if(f.key==='hasElse')await U.openNodeMenu(node(id));if(annotation)await U.openAnnotations(node(id));let control=root().locator('['+(annotation?'data-blockui-annotation':'data-blockui-field')+'=\"'+f.key+'\"][data-block-id=\"'+id+'\"]');if(annotation){const details=control.locator('xpath=ancestor::details');if(!(await details.getAttribute('open')!==null))await (await reveal(details.locator('summary'))).click();}const before=await control.inputValue(),signedParentId=await control.getAttribute('data-signed-parent-id'),signedNumber=f.type==='number'&&!!signedParentId;let value;\n if(f.type==='boolean'){value=before==='true'?'false':'true';await (await reveal(control)).selectOption(value);}else if(f.type==='qualifier'){value=before==='project'?'exact':'project';await (await reveal(control)).selectOption(value);}else{value=annotation?(f.fixtureValue||'※ 注釈  '):f.type==='number'?(signedNumber?'-13':'13'):f.type==='comment'?' コメント改　 ':f.type==='string'?'文字改':f.key==='binder'?'要素改':'名前改';await (await reveal(control)).fill(value);await control.press('Tab');}\n if(f.key==='hasElse'&&value==='true')await completeRegressionHoles(p,rootId,id);\n const active=await session();assert.equal(active.pendingEdit,null,`${id}.${f.key} pending`);if(signedNumber){const nodes=[];const walk=n=>{nodes.push(n);for(const child of Object.values(n.inputs||{}).flat())walk(child);for(const child of Object.values(n.bodies||{}).flat())walk(child);};walk(active.blockView);const unary=nodes.find(n=>n.id===signedParentId);assert.ok(unary,'original signed parent remains in the tree');assert.equal(unary.inputs.value.id,id,'edited magnitude remains under the original signed parent');assert.equal(unary.schemaId,'UnaryExpression:NEG','merged signed control preserves the original negation');assert.equal(unary.inputs.value.schemaId,'NumberLiteral');assert.equal(unary.inputs.value.fields.value,13,'original child magnitude remains exactly13');}assert.notEqual(value,before);return{key:f.key,type:f.type,before,value,annotation};};",
       "preservedMeaning": "Preserve all original IDs and assertions, arithmetic magnitudes, positions, ordering, elapsed times, limits, side effects, cleanup and refusal atomicity. Only canonical source spelling, F2 contract metadata and explicit UI prerequisite setup change."
     },
     {
@@ -4156,7 +4156,7 @@
         {
           "path": "audit/browser/cases/browser-schemas.cjs",
           "oldAssertions": 25,
-          "candidateAssertions": 35,
+          "candidateAssertions": 37,
           "noAssertionCountReduction": true
         },
         {
@@ -4353,6 +4353,15 @@
         "productSha256": "1f9fd303e70515dc52e3b9d4d638bfd2f93b1c7e9b99404e69de10d232450aff",
         "report": "/workspace/scratch/browser-v2-migration/owner-fix-isolated/candidate/browser-schemas-selected.json",
         "note": "All8 former CI failures pass on isolated initial-owner/signed fix snapshot. Later same-magnitude sign-flip correction is included in current product8ce7d0c; final Actions153 still required."
+      },
+      "finalNegativeRetest": {
+        "productSha256": "8ce7d0c33d82ec23859e9af1f2cfab6817f44e92d9110574b623d2fc07d58542",
+        "cases": 1,
+        "passed": 1,
+        "report": "/workspace/scratch/browser-v2-migration/neg-final-diagnostic/browser-schemas-selected.json",
+        "pageErrors": 0,
+        "networkRequests": 0,
+        "coverage": "Full UnaryExpression:NEG case, including original numeric operand role, nested duplicate/move, delete, undo/redo, exact source and saved source/AST roundtrip. Actual Chrome140 file://."
       }
     },
     "ownerPointerFollowup": {
@@ -4370,6 +4379,15 @@
       "cases": 7,
       "passed": 7,
       "report": "/workspace/scratch/akari-long-window-work/repo/long-candidate/long-evidence/results.json"
+    },
+    "boundaryCommitWaitFollowup": {
+      "status": "Static review complete; root is running the full7 actual-browser cases. No new PASS claim yet.",
+      "id": "source-each-limit-refusal-keeps-source-history",
+      "originalTimeoutMs": 12000,
+      "preservedLimits": [
+        100000,
+        100001
+      ]
     }
   },
   "tests": [
@@ -5344,7 +5362,20 @@
         "browser-input-008"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations.",
-      "literalInputRevisions": []
+      "literalInputRevisions": [
+        {
+          "old": "await fill(p,source);const before=await state(p);",
+          "new": "const previousHistory=(await state(p)).history;await fill(p,source);await p.waitForFunction(h=>Akari.app.editorState.history===h+1,previousHistory);const before=await state(p);",
+          "preservedMeaning": "Wait for the valid100000-character input to complete its single history commit before taking the refusal baseline. Preserve100000 acceptance/100001 rejection, all original source/history/state equality assertions, and the original12000ms page timeout; no enlarged fixed sleep or changed threshold.",
+          "kind": "explicit-ui-prerequisite-completion"
+        }
+      ],
+      "uiPrerequisite": {
+        "condition": "Akari.app.editorState.history===previousHistory+1",
+        "timeoutMs": 12000,
+        "reason": "The existing350ms helper delay can return before the100000-character input commit. Capture baseline after that commit, so a later history increment cannot be incorrectly attributed to the rejected format operation.",
+        "preservedMeaning": "Wait for the valid100000-character input to complete its single history commit before taking the refusal baseline. Preserve100000 acceptance/100001 rejection, all original source/history/state equality assertions, and the original12000ms page timeout; no enlarged fixed sleep or changed threshold."
+      }
     },
     {
       "task": "browser-boundaries",
@@ -8886,7 +8917,14 @@
       "sourceChanges": [
         "browser-input-084"
       ],
-      "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
+      "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations.",
+      "signedControlMigration": {
+        "id": "UnaryExpression:NEG",
+        "oldInput": "Edit child NumberLiteral magnitude to13 while NEG remains its parent.",
+        "newInput": "The combined signed GUI input receives -13. Capture data-signed-parent-id before editing, then independently assert that original parent remains UnaryExpression:NEG and still owns the edited original NumberLiteral child with magnitude13. Child focus/selection is not mistaken for parent structural identity.",
+        "preservedMeaning": "Exactly the original arithmetic value-13 and NEG/Number AST roles; original parent and child identity explicitly retained. Copy, move, delete, undo/redo, source/AST and saved source/AST assertions are unchanged.",
+        "diagnosis": "The final negative-to-negative editor fix deliberately preserves the child field/selection. The earlier audit incorrectly treated blockSelection as the NEG parent; exact candidate had source（－13）を言う。, NEG eCore-3 and Number child eCore-4 magnitude13."
+      }
     },
     {
       "task": "schema-shards",
@@ -10578,14 +10616,24 @@
     {
       "id": "UnaryExpression:NEG",
       "oldInput": "Edit child NumberLiteral magnitude to13 while NEG remains its parent.",
-      "newInput": "The combined signed GUI input receives -13; independently assert selected node is UnaryExpression:NEG with NumberLiteral child magnitude13.",
-      "preservedMeaning": "Exactly the same arithmetic value-13 and the same NEG/Number AST roles. No assertion removed or weakened."
+      "newInput": "The combined signed GUI input receives -13. Capture data-signed-parent-id before editing, then independently assert that original parent remains UnaryExpression:NEG and still owns the edited original NumberLiteral child with magnitude13. Child focus/selection is not mistaken for parent structural identity.",
+      "preservedMeaning": "Exactly the original arithmetic value-13 and NEG/Number AST roles; original parent and child identity explicitly retained. Copy, move, delete, undo/redo, source/AST and saved source/AST assertions are unchanged.",
+      "diagnosis": "The final negative-to-negative editor fix deliberately preserves the child field/selection. The earlier audit incorrectly treated blockSelection as the NEG parent; exact candidate had source（－13）を言う。, NEG eCore-3 and Number child eCore-4 magnitude13."
     },
     {
       "id": "schema-save-reopen-all153",
       "oldInput": "Derive target/event by splitting legacy script:target:event owner key.",
       "newInput": "Use saved context.targetId and the event dropdown option whose data-script-key exactly equals saved ownerKey.",
       "preservedMeaning": "Reopen exactly the same saved body for legacy keys and script:id keys; retain exact source and AST/comment roundtrip assertions."
+    }
+  ],
+  "uiPrerequisiteMigrations": [
+    {
+      "id": "source-each-limit-refusal-keeps-source-history",
+      "condition": "Akari.app.editorState.history===previousHistory+1",
+      "timeoutMs": 12000,
+      "reason": "The existing350ms helper delay can return before the100000-character input commit. Capture baseline after that commit, so a later history increment cannot be incorrectly attributed to the rejected format operation.",
+      "preservedMeaning": "Wait for the valid100000-character input to complete its single history commit before taking the refusal baseline. Preserve100000 acceptance/100001 rejection, all original source/history/state equality assertions, and the original12000ms page timeout; no enlarged fixed sleep or changed threshold."
     }
   ]
 }
