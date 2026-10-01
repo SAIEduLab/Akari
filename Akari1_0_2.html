@@ -22732,21 +22732,25 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         title.replaceChildren(label, toggle);
       }
 
-      const akariMascotIcon = document.querySelector('[data-sprite-preset="akariMascot"] .ico');
-      if (akariMascotIcon) {
+      for (const [preset, png] of [
+        ['akariMascot', DEFAULT_MASCOT_PNG_BASE64],
+        ['dango', DANGO_MASCOT_PNG_BASE64],
+      ]) {
+        const icon = document.querySelector(`[data-sprite-preset="${preset}"] .ico`);
+        if (!icon) continue;
         const img = document.createElement('img');
         img.alt = '';
         img.width = 34;
         img.height = 34;
         img.style.objectFit = 'contain';
         const paletteIconUrl = URL.createObjectURL(
-          new Blob([decodeBase64(DEFAULT_MASCOT_PNG_BASE64)], { type: 'image/png' }),
+          new Blob([decodeBase64(png)], { type: 'image/png' }),
         );
         img.src = paletteIconUrl;
         window.addEventListener('pagehide', (event) => {
           if (!event.persisted) URL.revokeObjectURL(paletteIconUrl);
         });
-        akariMascotIcon.replaceChildren(img);
+        icon.replaceChildren(img);
       }
       const hints = document.createElement('details');
       hints.className = 'hints-disclosure';

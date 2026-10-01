@@ -971,7 +971,7 @@
       "originalPath": "audit/browser/cases/modern-browser.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/modern-browser.cjs",
       "originalSha256": "27916fb3b0c96f82785d01d0d550fb1d0cdf39dfa3a8be0dae63c54d8d585a26",
-      "candidateSha256": "ccc7eb73678672f6370b52a371e2d6ed21ddf825fb6e9f03d13c8cdab9128935",
+      "candidateSha256": "44a466e48fd09cc191c8d8d244415ff3740c73678dafe8203ce375121b186667",
       "stableIds": [
         "DESIGN-STANDARD-SPRITES/1366/code",
         "DESIGN-STANDARD-SPRITES/1366/blocks",
@@ -3942,6 +3942,21 @@
       "oldText": "{label:'計算：二倍'}",
       "newText": "{label:'答えを求める：二倍'}",
       "preservedMeaning": "Explicit UI terminology alignment changes only the option label used to select the same saved function 二倍. Stable case ID, 1440/390/320 viewport checks, exact source/selection/project retention, callable source 元値×2を返す。, and real pointer/select routes remain unchanged. CI run 36932794815 demonstrates the old-label lookup failure; no behavioral assertion is removed."
+    },
+    {
+      "id": "browser-dango-registry-dependency-001",
+      "path": "audit/browser/cases/modern-browser.cjs",
+      "testIds": [
+        "DESIGN-STANDARD-SPRITES/1366/code",
+        "DESIGN-STANDARD-SPRITES/1366/blocks",
+        "DESIGN-STANDARD-SPRITES/768/code",
+        "DESIGN-STANDARD-SPRITES/768/blocks",
+        "DESIGN-STANDARD-SPRITES/390/code",
+        "DESIGN-STANDARD-SPRITES/390/blocks"
+      ],
+      "oldText": " await run('DESIGN-STANDARD-SPRITES',async()=>{const source=L.read(L.path.join(dir,manifest.candidate)),vm=require('vm'),sandbox={Object,STANDARD_AKARI_MASCOT:{kind:'image'}};const match=source.match(/const STANDARD_SPRITES\\s*=\\s*Object.freeze\\(\\s*(\\{[\\s\\S]*?\\})\\s*\\);/);assert(match);const registry=vm.runInNewContext('('+match[1]+')',sandbox);const buttons=p.locator('[data-sprite-preset]'),ids=await buttons.evaluateAll(ns=>ns.map(n=>n.dataset.spritePreset));assert.equal(new Set(ids).size,ids.length);assert.deepEqual(ids.slice().sort(),Object.keys(registry).sort());const images=p.locator('[data-sprite-preset] img');assert.equal(await images.count(),Object.values(registry).filter(v=>v.kind==='image').length);await p.waitForFunction(()=>[...document.querySelectorAll('[data-sprite-preset] img')].every(e=>e.complete&&e.naturalWidth>0&&e.naturalHeight>0));return{count:ids.length,unique:true,allRegistered:true,imagePresetsDecoded:await images.count()};});",
+      "newText": " await run('DESIGN-STANDARD-SPRITES',async()=>{\n  const source=L.read(L.path.join(dir,manifest.candidate)),vm=require('vm'),\n   sandbox={Object,STANDARD_AKARI_MASCOT:{kind:'image'}};\n  const dangoId=source.match(/const DANGO_MASCOT_ASSET_ID\\s*=\\s*('[^']*'|\"[^\"]*\")/);\n  assert(dangoId,'the Dango registry dependency is defined by the product');\n  sandbox.DANGO_MASCOT_ASSET_ID=vm.runInNewContext(dangoId[1]);\n  const match=source.match(/const STANDARD_SPRITES\\s*=\\s*Object.freeze\\(\\s*(\\{[\\s\\S]*?\\})\\s*\\);/);\n  assert(match);const registry=vm.runInNewContext('('+match[1]+')',sandbox);\n  const buttons=p.locator('[data-sprite-preset]'),ids=await buttons.evaluateAll(ns=>ns.map(n=>n.dataset.spritePreset));\n  assert.equal(new Set(ids).size,ids.length);\n  assert.deepEqual(ids.slice().sort(),Object.keys(registry).sort());\n  const images=p.locator('[data-sprite-preset] img');\n  assert.equal(await images.count(),Object.values(registry).filter(v=>v.kind==='image').length);\n  await p.waitForFunction(()=>[...document.querySelectorAll('[data-sprite-preset] img')].every(e=>e.complete&&e.naturalWidth>0&&e.naturalHeight>0));\n  return{count:ids.length,unique:true,allRegistered:true,imagePresetsDecoded:await images.count()};\n });",
+      "preservedMeaning": "Explicit user request adds Dango as a second image mascot. CI run 36938045944 fails all six DESIGN-STANDARD-SPRITES tuples because the isolated registry sandbox lacks DANGO_MASCOT_ASSET_ID. Bind that dependency from the product declaration, and retain every original registry/button uniqueness, complete registration, image count equality, and actual decoded image assertion. Product now supplies both original-PNG palette thumbnails. No skipped case, replaced ID, reduced viewport/mode matrix, lowered expectation, or asset-byte transformation."
     }
   ],
   "explicitSetup": {
@@ -9990,7 +10005,8 @@
       "path": "audit/browser/cases/modern-browser.cjs",
       "sourceChanges": [
         "browser-input-071",
-        "browser-input-072"
+        "browser-input-072",
+        "browser-dango-registry-dependency-001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -10000,7 +10016,8 @@
       "path": "audit/browser/cases/modern-browser.cjs",
       "sourceChanges": [
         "browser-input-071",
-        "browser-input-072"
+        "browser-input-072",
+        "browser-dango-registry-dependency-001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -10010,7 +10027,8 @@
       "path": "audit/browser/cases/modern-browser.cjs",
       "sourceChanges": [
         "browser-input-071",
-        "browser-input-072"
+        "browser-input-072",
+        "browser-dango-registry-dependency-001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -10020,7 +10038,8 @@
       "path": "audit/browser/cases/modern-browser.cjs",
       "sourceChanges": [
         "browser-input-071",
-        "browser-input-072"
+        "browser-input-072",
+        "browser-dango-registry-dependency-001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -10030,7 +10049,8 @@
       "path": "audit/browser/cases/modern-browser.cjs",
       "sourceChanges": [
         "browser-input-071",
-        "browser-input-072"
+        "browser-input-072",
+        "browser-dango-registry-dependency-001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -10040,7 +10060,8 @@
       "path": "audit/browser/cases/modern-browser.cjs",
       "sourceChanges": [
         "browser-input-071",
-        "browser-input-072"
+        "browser-input-072",
+        "browser-dango-registry-dependency-001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },

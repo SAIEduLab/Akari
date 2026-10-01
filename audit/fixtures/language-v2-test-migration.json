@@ -47004,7 +47004,7 @@
     {
       "path": "audit/browser/cases/modern-browser.cjs",
       "originalSha256": "27916fb3b0c96f82785d01d0d550fb1d0cdf39dfa3a8be0dae63c54d8d585a26",
-      "candidateSha256": "ccc7eb73678672f6370b52a371e2d6ed21ddf825fb6e9f03d13c8cdab9128935",
+      "candidateSha256": "44a466e48fd09cc191c8d8d244415ff3740c73678dafe8203ce375121b186667",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/modern-browser.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"

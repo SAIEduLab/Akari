@@ -229,6 +229,15 @@ const cases = {
     assert.equal(await mascot.count(),1,'the original mascot choice is retained');
     assert.equal(await dango.count(),1);
     assert.equal((await dango.locator('xpath=ancestor::details[1]').locator('summary').innerText()).replace(/\s+/g,''),'マスコット2種');
+    await p.waitForFunction(()=>{
+      const i=document.querySelector('[data-sprite-preset="dango"] img');
+      return i?.complete&&i.naturalWidth===1254&&i.naturalHeight===1254;
+    });
+    const thumbnailPixels=await dango.locator('img').evaluate(async i=>{
+      const cv=document.createElement('canvas');cv.width=i.naturalWidth;cv.height=i.naturalHeight;
+      const ctx=cv.getContext('2d');ctx.drawImage(i,0,0);
+      return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',ctx.getImageData(0,0,cv.width,cv.height).data)),b=>b.toString(16).padStart(2,'0')).join('');
+    });
     await (await reveal(dango)).click();
     const first=await current(p);
     assert.equal(first.name,'だんご');assert.equal(first.w,180);assert.equal(first.h,180);
@@ -239,6 +248,13 @@ const cases = {
       return {id:a.id,sha256:a.sha256,byteLength:a.byteLength,meta:a.meta};
     },first.id);
     assert.equal(asset.sha256,expected);assert.equal(asset.byteLength,1294239);assert.deepEqual(asset.meta,{width:1254,height:1254});
+    const originalPixels=await p.evaluate(async id=>{
+      const c=Akari.app.project.components.find(c=>c.id===id),a=Akari.app.assetStore.get(c.costumes[0].assetId),
+        bitmap=await createImageBitmap(new Blob([a.bytes],{type:a.mime})),cv=document.createElement('canvas');
+      cv.width=bitmap.width;cv.height=bitmap.height;const ctx=cv.getContext('2d');ctx.drawImage(bitmap,0,0);bitmap.close();
+      return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',ctx.getImageData(0,0,cv.width,cv.height).data)),b=>b.toString(16).padStart(2,'0')).join('');
+    },first.id);
+    assert.equal(thumbnailPixels,originalPixels,'the palette decodes the same original pixels');
     await p.screenshot({path:path.join(artifacts,'dango-preset.png'),fullPage:true});
     await (await reveal(dango)).click();const second=await current(p);
     assert.notEqual(second.name,first.name);assert.equal(second.costumes[0].assetId,asset.id,'repeated placement shares one original PNG');
