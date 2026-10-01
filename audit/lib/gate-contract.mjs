@@ -31,4 +31,10 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['japanese-intent-browser','audit/tests/japanese-intent-browser.mjs',browser,file('japanese-intent-browser')],
   ['runtime-v2','audit/tests/runtime-boundary-gate.mjs',currentProductFile(),browser,path.join(dir,'runtime-v2'),file('runtime-v2')],
   ['japanese-gate-negative','audit/tests/japanese-gate-negative.mjs',file('japanese-gate-negative')],
+  ['review-actor','audit/tests/review-actor.mjs',currentProductFile(),browser,path.join(dir,'review-actor')],
+  ['review-language','audit/tests/review-language.mjs',browser,currentProductFile(),file('review-language')],
+  ['review-units','audit/tests/review-units.mjs',browser,currentProductFile(),file('review-units')],
+  ['review-first-use','audit/tests/review-first-use.mjs',browser,currentProductFile(),file('review-first-use')],
+  ['review-readable','audit/tests/review-readable.mjs',browser,currentProductFile(),file('review-readable')],
+  ['review-harness-negative','audit/tests/review-harness-negative.mjs',file('review-harness-negative')],
 ];}

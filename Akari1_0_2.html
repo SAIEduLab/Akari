@@ -5282,6 +5282,122 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
 
 
 
+
+<style id="runtime-readability">
+/* Keep the basic runtime focused on the scene while retaining advanced monitoring. */
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] #app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  height: 100dvh;
+  min-height: 100dvh;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  padding: clamp(8px, 1.2vw, 16px);
+  overflow: hidden;
+}
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .toolbox,
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .codewin,
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side > :not(.designer) {
+  display: none !important;
+}
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side {
+  display: contents !important;
+}
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] #designerWindow,
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .side > #designerWindow {
+  grid-column: 1;
+  grid-row: 1;
+  height: auto !important;
+  min-height: 0;
+  flex: none !important;
+}
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .designer-wrap {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  padding: clamp(8px, 2vw, 24px);
+  overflow: hidden;
+}
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .stage-viewport {
+  flex: none;
+  margin: auto;
+  max-width: 100%;
+  max-height: 100%;
+}
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] #formFrame { margin: 0 auto; }
+body.runtime .sprite-bubble {
+  font-size: calc(14px / var(--stage-scale, 1));
+  line-height: 1.35;
+  padding: calc(8px / var(--stage-scale, 1)) calc(12px / var(--stage-scale, 1));
+  min-width: calc(40px / var(--stage-scale, 1));
+  max-width: calc(320px / var(--stage-scale, 1));
+  max-height: calc(340px / var(--stage-scale, 1));
+  overflow: hidden;
+  border: calc(1.5px / var(--stage-scale, 1)) solid #8c6f53;
+  border-radius: calc(12px / var(--stage-scale, 1));
+}
+/* Focused block text fields grow into a comfortable, scrollable editing surface. */
+body[data-editor-mode="blocks"] #blockEditor .blockui-workspace:has(.blockui-world .blockui-field:focus-within) {
+  position: relative;
+  z-index: 4;
+}
+body[data-editor-mode="blocks"] #blockEditor:has(.blockui-world .blockui-field:focus-within) .blockui-navigation {
+  visibility: hidden;
+  pointer-events: none;
+}
+@media (max-width: 760px) {
+  body[data-editor-mode="blocks"] #blockEditor .blockui-layout:has(.blockui-world .blockui-field:focus-within) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  body[data-editor-mode="blocks"] #blockEditor .blockui-layout:has(.blockui-world .blockui-field:focus-within) .blockui-palette {
+    display: none !important;
+  }
+  body[data-editor-mode="blocks"] #blockEditor .blockui-workspace { grid-column: 1; }
+  body[data-editor-mode="blocks"] .codewin:has(.blockui-world .blockui-field:focus-within) {
+    height: max(900px, 100dvh);
+    min-height: 900px;
+  }
+}
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field:has(> input:focus),
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field:has(> textarea:focus) {
+  position: relative;
+  z-index: 100;
+}
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > input:focus {
+  width: calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1)) !important;
+  max-width: calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1)) !important;
+  min-width: calc(min(50vw, 20rem) * var(--blockui-inverse-scale, 1));
+  height: calc(46px * var(--blockui-inverse-scale, 1));
+  padding: calc(6px * var(--blockui-inverse-scale, 1)) calc(12px * var(--blockui-inverse-scale, 1));
+  font-size: calc(18px * var(--blockui-inverse-scale, 1));
+  line-height: 1.4;
+  border: calc(2px * var(--blockui-inverse-scale, 1)) solid #145b8c;
+  background: #fff;
+  color: #172a3b;
+  box-shadow: 0 0 0 4px #d8efff, 0 6px 16px #18364b40;
+  text-overflow: clip;
+}
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > textarea:focus {
+  width: calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1));
+  max-width: calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1));
+  min-height: calc(150px * var(--blockui-inverse-scale, 1));
+  padding: calc(10px * var(--blockui-inverse-scale, 1)) calc(12px * var(--blockui-inverse-scale, 1));
+  font-size: calc(18px * var(--blockui-inverse-scale, 1));
+  line-height: 1.5;
+  border: calc(2px * var(--blockui-inverse-scale, 1)) solid #145b8c;
+  background: #fff;
+  color: #172a3b;
+  box-shadow: 0 0 0 4px #d8efff, 0 6px 16px #18364b40;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+</style>
 </head>
 <body>
 <div id="app">
@@ -11696,13 +11812,14 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     const compact=compactOutsideString(text),line=ctx.sourceLine;
     let positions=ctx.sourcePositions;
     if(!positions&&line?.mapped){const offset=compactOutsideString(line.code).indexOf(compact);if(offset>=0)positions=line.mapped.positions.slice(offset,offset+compact.length);}
-    const root=parseConditionCore(text,symbols,{...ctx,sourcePositions:positions},form),range=positions&&sourceRange(positions,compact.startsWith('もし')?2:0,compact.length-(compact.endsWith('、')?1:0));
+    const root=parseConditionCore(text,symbols,{...ctx,sourcePositions:positions},form),range=positions&&sourceRange(positions,compact.startsWith('もし、')?3:compact.startsWith('もし')?2:0,compact.length-(compact.endsWith('、')?1:0));
     if(range)SOURCE_RANGES.set(root,{range,conditionForm:form});
     return attachExpressionSourceSpans(root,line);
   }
   function parseConditionCore(text, symbols, ctx = {}, form = 'plain') {
     let source = compactOutsideString(text);
-    if (source.startsWith('もし')) {source=source.slice(2);ctx={...ctx,sourcePositions:ctx.sourcePositions?.slice(2)};}
+    const prefix=source.startsWith('もし、')?3:source.startsWith('もし')?2:0;
+    if (prefix) {source=source.slice(prefix);ctx={...ctx,sourcePositions:ctx.sourcePositions?.slice(prefix)};}
     if (source.endsWith('、')) {source=source.slice(0,-1);ctx={...ctx,sourcePositions:ctx.sourcePositions?.slice(0,-1)};}
     const mask=surfaceMask(source);
     const fail = message => { throw new AkariError('P205',message,ctx.lineNo||0,1); };
@@ -11958,7 +12075,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     ['StopCommand:OTHERS', /^ほかの実行をすべて止める$/d, 'StopCommand', 'OTHERS'],
     ['StopCommand:ALL', /^作品全体を止める$/d, 'StopCommand', 'ALL'],
     ['LooksCommand:HIDE', /^姿を(?:かくす|隠す)$/d, 'LooksCommand', 'HIDE'],
-    ['LooksCommand:SHOW', /^姿を見せる$/d, 'LooksCommand', 'SHOW'],
+    ['LooksCommand:SHOW', /^姿を(?:見せる|みせる)$/d, 'LooksCommand', 'SHOW'],
     ['LooksCommand:FRONT', /^いちばん手前へ出る$/d, 'LooksCommand', 'FRONT'],
     ['LooksCommand:BACK', /^いちばん奥へ下がる$/d, 'LooksCommand', 'BACK'],
     ['MotionCommand:BOUNCE', /^(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/d, 'MotionCommand', 'BOUNCE'],
@@ -12044,7 +12161,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     ['すすんで','すすむ'], ['進んで','進む'], ['まわって','まわる'], ['回って','回る'],
     ['むいて','むく'], ['向いて','向く'], ['行って','行う'], ['すべって','すべる'], ['滑って','滑る'],
     ['変えて','変える'], ['言って','言う'], ['いって','いう'], ['話して','話す'], ['はなして','はなす'],
-    ['待って','待つ'], ['まって','まつ'], ['見せて','見せる'], ['入れて','入れる'], ['いれて','いれる'],
+    ['待って','待つ'], ['まって','まつ'], ['見せて','見せる'], ['みせて','みせる'], ['入れて','入れる'], ['いれて','いれる'],
     ['足して','足す'], ['たして','たす'], ['引いて','引く'], ['ひいて','ひく'], ['消して','消す'], ['けして','けす'],
     ['知らせて','知らせる'], ['鳴らして','鳴らす'], ['くり返して','くり返す'], ['繰り返して','繰り返す'], ['くりかえして','くりかえす'], ['して','する'],
   ].map(Object.freeze));
@@ -12207,11 +12324,11 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       [/^(.+?)の中身が変わったとき、(.*)$/d,'valueChanged',0,1],
       [/^(.+?)の分身が作られたとき、(.*)$/d,'cloneStart',0,1],
     ];
-    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','見出しの絞り込みは「文字」で指定してください');heading.filter=event==='keyDown'?{key:text.slice(1,-1)}:{message:text.slice(1,-1)};}return {heading,body:parts[bodyIndex]};}
+    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','見出しの絞り込みは「文字」で指定してください');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','見出しの絞り込みは文字列一つで指定してください');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex]};}
     return null;
   }
   function sentenceHeadingSource(heading) {
-    const actor=sentenceActorSource(heading.actorRef), filter=heading.filter == null ? null : `「${heading.filter.key??heading.filter.message}」`;
+    const actor=sentenceActorSource(heading.actorRef), filter=heading.filter == null ? null : formatExpression(exprNode('StringLiteral',{value:heading.filter.key??heading.filter.message}));
     switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がクリックされたとき、`;case 'keyDown':return `${filter?filter+'キーを押すたびに':'キーが押されたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}知らせを受け取ったとき、${actor}は、`;case 'backdropChanged':return `背景が変わったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身が変わったとき、`;case 'cloneStart':return `${actor}の分身が作られたとき、`;default:throw new AkariError('P201','見出しのきっかけが不正です');}
   }
   function continuousCondition(text) {
@@ -12444,7 +12561,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       if(k===2)body=body.slice(0,-'言わせる'.length)+'言う';
       const part=surfaceLineSlice(working,parts[1].start,parts[1].end,k===2?body:null);part.comment=line.comment;
       const node=readSurfaceStatement(body,part,symbols,{...ctx,topicActor:actorRef});
-      if(node){node.actorRef=actorRef;STATEMENT_EXPLICIT_ACTORS.add(node);const location=SOURCE_RANGES.get(node);if(location){location.extent={start:working.start,end:working.end};location.range=sourceRange(working.mapped?.positions||[]);}return node;}
+      if(node){node.actorRef=actorRef;STATEMENT_EXPLICIT_ACTORS.add(node);const location=SOURCE_RANGES.get(node);if(location){location.extent={start:working.start,end:working.end};location.range=sourceRange(working.mapped?.positions||[]);location.inline=!!working.inline;}return node;}
     }
     const unclear=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる)$/d,code);
     if(unclear&&!unclear[0].text.startsWith('「'))throw sentenceDiagnostic('最後への追加か、項目の置き換えかを指定してください',working,[{label:'最後に追加する',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'項目を置き換える（位置を選ぶ）',source:`${unclear[0].text}の〔位置を選ぶ〕番目を${unclear[1].text}に変える`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
@@ -13434,7 +13551,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     for (const [kind, label, key, inputLabel, initial] of [
       ['WaitTime', '秒待つ', 'seconds', '秒', 1],
       ['WaitUntil', '条件まで待つ', 'condition', '条件', true],
-      ['Say', '言う', 'value', '内容', ''],
+      ['Say', '言う', 'value', '内容', 'こんにちは'],
       ['ReturnStatement', '返す', 'value', '返す値', 0],
       ['Ask', 'たずねる', 'question', '質問', ''],
       ['Broadcast', '知らせる', 'message', '知らせ', ''],
@@ -13755,7 +13872,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
           blockStructureError(error.message, path);
         }
       if (/[\r\n]/.test(value)) blockStructureError('一行の値にします', path);
-      if (type === 'string' && (value.includes('」') || cpLen(value) > LIMITS.stringChars))
+      if (type === 'string' && cpLen(value) > LIMITS.stringChars)
         blockStructureError('文字列の内容または長さが不正です', path);
       if (type === 'annotation' && value && value[0] !== '※')
         blockStructureError('注釈の内容が不正です', path);
@@ -13887,7 +14004,10 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     for (const slot of schema.inputs) {
       if (slot.required === false) continue;
       const make = () => draft ? hole(slot.type, slot.label)
-        : slot.type === 'target' ? { name: '値', qualifier: null } : valueNode(slot.initial ?? 0);
+        : slot.type === 'target' ? { name: '値', qualifier: null } : valueNode(slot.initial ?? (
+          schema.id === 'LooksCommand:SET_SCALE' ? 100 :
+          ['MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT'].includes(schema.id) ? 15 : 0
+        ));
       node[slot.key] = slot.multiple
         ? Array.from({ length: slot.initialItems ?? slot.minItems }, (_, index) =>
             !draft && schema.id === 'LooksCommand:SET_INPUT' && index === 0
@@ -14224,20 +14344,21 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     return withExpressionFormatOptions(options,()=>{
     validateSyntaxAst(ast,'script',{allowHoles:!!options.allowHoles});
     const out=[],line=(depth,text,comment='')=>out.push('  '.repeat(depth)+text+(text.endsWith('、')?'':'。')+(comment?'  '+comment:''));
-    const emit=(body,depth)=>{let previousActor={kind:'self'};for(const n of body){if(n.kind==='CommentLine'){out.push('  '.repeat(depth)+'※'+n.text);continue;}const actor=n.actorRef?.kind==='named'||(n.actorRef?.kind==='self'&&previousActor.kind==='named')?sentenceActorSource(n.actorRef)+'は':'',f=formatExpression,t=n.target?formatTarget(n.target):'',comment=n.inlineComment||'';let text;
+    // A nested suite inherits its surrounding topic, but its topic changes stay local.
+    const emit=(body,depth,inheritedActor={kind:'self'})=>{let previousActor={...inheritedActor};for(const n of body){if(n.kind==='CommentLine'){out.push('  '.repeat(depth)+'※'+n.text);continue;}const actorRef=n.actorRef||{kind:'self'},actor=!['Hole','WaitBroadcastGroup'].includes(n.kind)&&(actorRef.kind==='named'||(actorRef.kind==='self'&&previousActor.kind==='named'))?sentenceActorSource(actorRef)+'は':'',f=formatExpression,t=n.target?formatTarget(n.target):'',comment=n.inlineComment||'';let text;
       switch(n.kind){
         case 'Hole':text=formatHoleSource(n);break;
-        case 'IfStatement':line(depth,sentenceFormFor(n).render(n),comment);emit(n.thenBody,depth+1);if(n.hasElse){line(depth,'そうでなければ、',n.elseComment||'');emit(n.elseBody,depth+1);}continue;
-        case 'RepeatCount':line(depth,sentenceFormFor(n).render(n),comment);emit(n.body,depth+1);continue;
-        case 'RepeatWhile':case 'RepeatUntil':line(depth,sentenceFormFor(n).render(n),comment);emit(n.body,depth+1);continue;
-        case 'Forever':line(depth,sentenceFormFor(n).render(n),comment);emit(n.body,depth+1);continue;
-        case 'ForEach':line(depth,sentenceFormFor(n).render(n),comment);if(n.binder!=='今見ているもの')line(depth+1,`この中では、今見ているものを【${n.binder}】と呼ぶ`);emit(n.body,depth+1);continue;
+        case 'IfStatement':line(depth,sentenceFormFor(n).render(n),comment);emit(n.thenBody,depth+1,previousActor);if(n.hasElse){line(depth,'そうでなければ、',n.elseComment||'');emit(n.elseBody,depth+1,previousActor);}continue;
+        case 'RepeatCount':line(depth,sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,previousActor);continue;
+        case 'RepeatWhile':case 'RepeatUntil':line(depth,sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,previousActor);continue;
+        case 'Forever':line(depth,sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,previousActor);continue;
+        case 'ForEach':line(depth,sentenceFormFor(n).render(n),comment);if(n.binder!=='今見ているもの')line(depth+1,`この中では、今見ているものを【${n.binder}】と呼ぶ`);emit(n.body,depth+1,previousActor);continue;
         default:{const form=sentenceFormFor(n);if(!form)throw new AkariError('P201',`未対応の文 ${n.kind}`);text=form.render(n);break;}
       }
-      line(depth,actor+text,comment);previousActor=n.actorRef||previousActor;
+      line(depth,actor+text,comment);if(n.kind!=='Hole')previousActor=actorRef;
     }};
     if(ast.heading)line(0,sentenceHeadingSource(ast.heading));
-    emit(ast.body,ast.heading?1:0);
+    emit(ast.body,ast.heading?1:0,options.inheritedActor);
     for(const rule of ast.rules||[])line(ast.heading?1:0,rule.kind==='Hole'?formatHoleSource(rule):sentenceFormFor(rule).render(rule),rule.inlineComment||'');
     const source=out.join('\n');if(cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','整形後の本文が文字数の上限を超えます',1,1);return source;
     });
@@ -14301,6 +14422,48 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     if (symbols.individualNames.has(name)) return { scope: 'runtime', kind: 'dynamic' };
     return projectInfo();
   }
+  // Literal arithmetic can be checked without reading mutable data or running
+  // user code. Unknown values and arithmetic-domain failures stay runtime checks.
+  function staticNumericMagnitude(expr) {
+    if (!expr || typeof expr !== 'object') return undefined;
+    if (expr.kind === 'NumberLiteral') return expr.value;
+    if (['QuantityLiteral', 'UnitlessRead', 'ActorQualifiedRead'].includes(expr.kind))
+      return staticNumericMagnitude(expr.value);
+    if (expr.kind === 'UnaryExpression' && ['NEG', 'POS'].includes(expr.op)) {
+      const value = staticNumericMagnitude(expr.value);
+      return value === undefined ? undefined : expr.op === 'NEG' ? -value : value;
+    }
+    if (expr.kind !== 'BinaryExpression') return undefined;
+    const a = staticNumericMagnitude(expr.left), b = staticNumericMagnitude(expr.right);
+    if (a === undefined || b === undefined) return undefined;
+    let value;
+    if (expr.op === 'ADD') value = a + b;
+    else if (expr.op === 'SUB') value = a - b;
+    else if (expr.op === 'MUL') value = a * b;
+    else if (expr.op === 'DIV' && b !== 0) value = a / b;
+    else if (expr.op === 'POW' && !(a === 0 && b === 0)) value = Math.pow(a, b);
+    return Number.isFinite(value) ? value : undefined;
+  }
+  function staticScaleDiagnostics(ast, where) {
+    const diagnostics = [], pending = [ast];
+    while (pending.length) {
+      const node = pending.pop();
+      if (!node || typeof node !== 'object') continue;
+      if (node.kind === 'LooksCommand' && node.op === 'SET_SCALE') {
+        const value = staticNumericMagnitude(node.args?.[0]);
+        if (value !== undefined && (value < 1 || value > 1000)) diagnostics.push({
+          code: 'R412', message: '大きさは1〜1000％です。姿を消すときは「姿をかくす」を使います',
+          line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where,
+        });
+      }
+      for (const [key, value] of Object.entries(node)) {
+        if (key === 'sourceSpan' || key === 'actorRef') continue;
+        if (Array.isArray(value)) pending.push(...value.slice().reverse());
+        else if (value && typeof value === 'object') pending.push(value);
+      }
+    }
+    return diagnostics;
+  }
   function analyzeProject(project, compiled, { rootKeys = null } = {}) {
     const symbols = compiled.symbols,
       diags = [],
@@ -14351,6 +14514,78 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         def.args.some(name => !names.includes(name)) || names.some(name => !def.args.includes(name)))
         add('S308', `「${n.name}」の受け取る値の名前を一つずつ指定してください`, n, where);
     };
+    // Infer only units guaranteed by the expression contract. Mutable names,
+    // arguments and user calculations remain unknown; no value is evaluated.
+    // undefined is unknown, null is a known number without a unit.
+    const staticUnit = (expr, statement, where) => {
+      const units = new Map();
+      const mismatch = (message) => add('R417', message, statement, where);
+      const expect = (unit, expected) => {
+        if (unit !== undefined && unit !== null && unit !== expected)
+          mismatch(expected === null
+            ? 'この計算には単位のない数を使います。「の数だけ」で単位を外せます'
+            : `ここでは${expected}の数を使います。${unit}の値は使えません`);
+      };
+      const common = (values) => {
+        const tagged = [...new Set(values.filter(unit => unit !== undefined && unit !== null))];
+        if (tagged.length > 1) mismatch(`${tagged.join('と')}は同じ単位ではありません`);
+        return tagged.length === 1 ? tagged[0] : values.includes(undefined) ? undefined : null;
+      };
+      const infer = (n) => {
+        if (!n || typeof n !== 'object') return undefined;
+        if (units.has(n)) return units.get(n);
+        for (const [key, value] of Object.entries(n)) {
+          if (key === 'sourceSpan' || key === 'actorRef') continue;
+          if (Array.isArray(value)) value.forEach(infer);
+          else if (value && typeof value === 'object') infer(value);
+        }
+        const child = value => units.get(value), a = child(n.left), b = child(n.right);
+        let unit;
+        if (n.kind === 'NumberLiteral' || n.kind === 'UnitlessRead') unit = null;
+        else if (n.kind === 'QuantityLiteral') { expect(child(n.value), n.unit); unit = n.unit; }
+        else if (n.kind === 'ActorQualifiedRead') unit = child(n.value);
+        else if (n.kind === 'UnaryExpression' && n.op !== 'NOT') unit = child(n.value);
+        else if (n.kind === 'BinaryExpression') {
+          if (['ADD', 'SUB'].includes(n.op)) unit = common([a, b]);
+          else if (n.op === 'MUL') {
+            if (a != null && b != null) mismatch('単位どうしは掛けられません。「の数だけ」で単位を外せます');
+            unit = a != null ? a : b != null ? b : a === null && b === null ? null : undefined;
+          } else if (n.op === 'DIV') {
+            if (b != null && a !== undefined && a !== b)
+              mismatch('この単位どうしは割れません。「の数だけ」で単位を外せます');
+            unit = b === null ? a : b !== undefined ? null : undefined;
+          } else { expect(a, null); expect(b, null); unit = null; }
+        } else if (n.kind === 'CompareExpression') common([a, b]);
+        else if (n.kind === 'ListItemRead') expect(child(n.index), '番目');
+        else if (n.kind === 'SensorRead') {
+          unit = { 横位置: '歩', 縦位置: '歩', 方向: '度', 大きさ: '％',
+            マウスの横位置: '歩', マウスの縦位置: '歩', タイマー: '秒', 音量: '％',
+            DISTANCE_TO: '歩', 衣装番号: null, 背景番号: null, 音程: null }[n.sensor];
+        }
+        else if (n.kind === 'BuiltinCall') {
+          const args = (n.args || []).map(child);
+          if (['乱数', '余り', '最小', '最大'].includes(n.name)) unit = common(args);
+          else if (['四捨五入', '切り上げ', '切り捨て', '絶対値'].includes(n.name)) unit = args[0];
+          else if (['正弦', '余弦', '正接'].includes(n.name)) { expect(args[0], '度'); unit = null; }
+          else if (['逆正弦', '逆余弦', '逆正接'].includes(n.name)) { expect(args[0], null); unit = '度'; }
+          else if (['平方根', '自然対数', '常用対数', '指数'].includes(n.name)) { expect(args[0], null); unit = null; }
+          else if (['数', 'LENGTH', 'STRING_LENGTH', 'INDEX_OF'].includes(n.name)) unit = null;
+          else if (n.name === 'STRING_CHAR') expect(args[1], '番目');
+        }
+        units.set(n, unit);
+        return unit;
+      };
+      return infer(expr);
+    };
+    const checkStaticRoleUnits = (n, where) => {
+      for (const slot of sentenceFormFor(n)?.roleSlots || []) {
+        if (!slot.unit) continue;
+        const expr = slot.path.split('.').reduce((value, key) => value?.[key], n);
+        const unit = staticUnit(expr, n, where);
+        if (unit !== undefined && unit !== null && unit !== slot.unit)
+          add('R417', `ここでは${slot.unit}の数を使います。${unit}の値は使えません`, n, where);
+      }
+    };
     const analyzeExpr = (expr, initialContext, where) => {
       const scoped = [];
       const collect = (n, ctx) => {
@@ -14367,6 +14602,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         }
       };
       collect(expr, initialContext);
+      staticUnit(expr, initialContext.node || expr, where);
       for (const [n, ctx] of scoped) {
         if (n.kind === 'VariableRead') {
           const isLocal =
@@ -14497,6 +14733,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         ];
         for (const f of exprFields) if (n[f]) analyzeExpr(n[f], c, where);
         for (const x of n.args || []) analyzeExpr(x, c, where);
+        checkStaticRoleUnits(n, where);
         if (n.index) analyzeExpr(n.index, c, where);
         if (n.target && n.target.kind) analyzeExpr(n.target, c, where);
         if (
@@ -14523,6 +14760,15 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
               where,
             );
           } else {
+            if (n.kind === 'Assignment' && info.kind === 'scalar') {
+              const declaration = info.scope === 'project' ? symbols.projectVars.get(n.target.name)
+                : info.scope === 'self' ? symbols.individualByTargetId.get(c.targetId)?.variables.get(n.target.name) : null;
+              if (declaration?.expectedUnit != null) {
+                const unit = staticUnit(n.value, n, where);
+                if (unit !== undefined && unit !== null && unit !== declaration.expectedUnit)
+                  add('R417', `ここでは${declaration.expectedUnit}の数を使います。${unit}の値は使えません`, n, where);
+              }
+            }
             if (info.scope === 'binder')
               add('S312', `「${n.target.name}」はそれぞれ反復の読み取り専用名です`, n, where);
             const listOp = n.kind.startsWith('List');
@@ -14720,17 +14966,22 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         binders: [],
         availableLocalNames: new Set(),
       };
+      for (const d of staticScaleDiagnostics(item.ast, item.key))
+        add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
       walk(item.ast.body, base, item.key, 0, true);
       for (const rule of item.ast.rules || []) {
         const c = actorContext(rule.actorRef, { ...base, node: rule }, rule, item.key);
         if (c.targetType === 'stage') add('S304', '動き続ける対象に部品を選んでください', rule, item.key);
         if (item.definitionKind) add('S305', '動き続ける約束はきっかけの本文に置いてください', rule, item.key);
         for (const key of ['condition', 'seconds', 'distance']) analyzeExpr(rule[key], c, item.key);
+        checkStaticRoleUnits(rule, item.key);
       }
       checkReturn(item);
     }
     for (let i = 0; i < pendingCallContexts.length; i++) {
       const { item, base, key } = pendingCallContexts[i];
+      for (const d of staticScaleDiagnostics(item.ast, key))
+        add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
       walk(item.ast.body, base, key, 0, true);
       checkReturn(item);
     }
@@ -17315,18 +17566,39 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
     const surface = node => session.nodeMap.get(node.id)?.surface;
     const newline = source.includes('\r\n') ? '\r\n' : source.includes('\r') ? '\r' : '\n';
+    const inheritedActors = new Map(), originalActors = new Map();
+    const rememberTopics = (body, inherited = {kind:'self'}, topics = inheritedActors) => {
+      let topic = inherited;
+      for (const node of body) {
+        const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId);
+        topics.set(node.id, topic);
+        for (const slot of schema.bodies) rememberTopics(node.bodies[slot.key], topic, topics);
+        if (!schema.bodies.length && !['CommentLine','Hole'].includes(schema.kind))
+          topic = node.fields.actorRef || {kind:'self'};
+      }
+    };
+    rememberTopics(tree.bodies.body);
+    rememberTopics(session.blockView.bodies.body, {kind:'self'}, originalActors);
     const standard = node => {
       const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId), ast = blockDecode(node);
       if (schema.category === 'expression') return formatExpression(ast, PREC.ATOM);
       if (schema.category === 'target') return formatTarget(ast);
-      return formatScript({kind:'Script', body:[ast]}).replace(/\n/g, newline);
+      // Format a replacement in its destination scope, adding self only when needed.
+      return formatScript({kind:'Script', body:[ast]}, {inheritedActor:inheritedActors.get(node.id)}).replace(/\n/g, newline);
+    };
+    const sameActorContext = (before, after) => {
+      if (same(originalActors.get(before?.id), inheritedActors.get(after.id))) return true;
+      let originalAst = session.syntaxAst;
+      for (const key of session.nodeMap.get(before?.id)?.path || []) originalAst = originalAst?.[key];
+      return STATEMENT_EXPLICIT_ACTORS.has(originalAst);
     };
     const moved = (node, indent) => {
       const original = oldIndex.get(sourceOrigins.get(node.id)||node.id)?.node, location = original && surface(original);
       const equal=original&&(original.id===node.id?same(original,node):same(blockDecode(original),blockDecode(node)));
-      const text = equal && location?.extent
+      const reusable = equal && location?.extent && sameActorContext(original,node);
+      const text = reusable
         ? source.slice(location.extent.start, location.extent.end) : standard(node);
-      const oldIndent = equal && location?.extent ? location.indent : 0;
+      const oldIndent = reusable ? location.indent : 0;
       return text.split(/\r\n?|\n/).map((line, i) => i
         ? ' '.repeat(indent) + line.slice(Math.min(oldIndent, line.match(/^ */)[0].length)) : line).join(newline);
     };
@@ -17403,7 +17675,11 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       return changes;
     };
     const plan = (before, after) => {
-      if (same(before, after)) return [];
+      if (same(before, after)) {
+        const schema = BLOCK_SCHEMA_BY_ID.get(after.schemaId);
+        if (schema.category !== 'statement' || ['CommentLine','Hole'].includes(schema.kind) || sameActorContext(before,after)) return [];
+        return fallback(before,after);
+      }
       if (before.schemaId !== after.schemaId || !same(before.fields, after.fields) || !same(before.annotations, after.annotations))
         return fallback(before, after);
       const schema = BLOCK_SCHEMA_BY_ID.get(before.schemaId), changes = [];
@@ -18844,6 +19120,8 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       const result = operate(op);
       if (result.ok) {
         destination = null;
+        searchText = '';
+        search.value = '';
         page = 0;
         renderPalette();
         updateControls();
@@ -19910,7 +20188,22 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       }
       const parts = phrase(schema);
       if (parts) {
-        for (const part of parts)
+        const displayParts = [...parts];
+        const form = SENTENCE_FORMS.find(item =>
+          item.kind === schema.kind && (!item.op || item.op === schema.discriminator?.value));
+        for (let i = 0; i < displayParts.length; i++) {
+          const part = displayParts[i];
+          if (!part || typeof part !== 'object' || !part.slot) continue;
+          const path = part.slot.key + (part.index === undefined ? '' : '.' + part.index);
+          const unit = form?.roleSlots.find(role => role.path === path)?.unit;
+          const values = node.inputs?.[part.slot.key];
+          const value = Array.isArray(values) ? values[part.index] : values;
+          const following = displayParts[i + 1];
+          if (unit && value?.schemaId === 'QuantityLiteral' && value.fields?.unit === unit &&
+              typeof following === 'string' && following.startsWith(unit))
+            displayParts[i + 1] = following.slice(unit.length);
+        }
+        for (const part of displayParts)
           main.append(
             typeof part === 'string'
               ? E('span', 'blockui-phrase-text', part)
@@ -20529,6 +20822,8 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       if (destroyed) return;
       updateFieldWidths();
       world.style.transform = `scale(${zoom})`;
+      world.style.setProperty('--blockui-scale', zoom);
+      world.style.setProperty('--blockui-inverse-scale', 1 / zoom);
       // Measure every shape before writing SVG attributes: alternating reads and
       // writes forces a whole-workspace layout for each block in a long body.
       const shapes = [
@@ -21694,6 +21989,12 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         error.proposals = first.proposals || first.choices || [];
         throw error;
       }
+      const scaleErrors = staticScaleDiagnostics(parsed.ast, ownerKey);
+      if (scaleErrors.length) {
+        const first = scaleErrors[0], error = new AkariError(first.code, first.message, first.line, first.column);
+        error.diagnostics = scaleErrors;
+        throw error;
+      }
       const next = cloneDesignProject(project),
         [kind, id, event] = ownerKey.split(':');
       if (binding.kind === 'draft') {
@@ -21794,6 +22095,19 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       }
       n.hidden = false;
       setStatus(reason);
+      if (binding.session?.pendingEdit) {
+        binding.session.pendingEdit.reason = reason;
+        // Recovery stores the one visible diagnostic, not an unbounded list
+        // or proposal sources. Compilation still retains every diagnostic.
+        const first = error?.diagnostics?.[0] || (error?.code ? error :
+          binding.session.pendingEdit.diagnostics?.[0]);
+        binding.session.pendingEdit.diagnostics = [{
+          code: first?.code || '', message: first?.message || reason,
+          line: first?.line || 1, column: first?.column || 1,
+          ...(typeof first?.where === 'string' ? { where: first.where } : {}),
+        }];
+      }
+      if (binding === mainEditor && binding.session?.pendingEdit) refreshEditor();
       return false;
     }
     function saveCodeBinding(binding) {
@@ -22144,6 +22458,8 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       binding.textarea.value = readSource(binding);
       $(binding.kind === 'draft' ? '#callablePending' : '#editorPending').hidden = true;
       renderEditorBinding(binding);
+      if (binding === mainEditor) refreshEditor();
+      setStatus('入力を取り消しました');
     }
     function stateFingerprintCore() {
       return JSON.stringify([currentFingerprint(), hasCallableDraft() ? callableDraftCore : null]);
@@ -22440,6 +22756,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         Math.max(0.01, Math.min(1, (availableWidth - 1) / width, (availableHeight - 1) / height)),
       onFit: (scale) => {
         visibleStageScale = scale;
+        $('.designer-wrap').style.setProperty('--stage-scale', scale);
         $('#stageZoomReset').textContent = Math.round(scale * 100) + '%';
         $('#stageZoomOut').disabled = scale <= 0.1;
         $('#stageZoomIn').disabled = scale >= 2;
@@ -24561,8 +24878,22 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
 
     function refreshEditor() {
       if (!mainEditor.view) return;
-      const session = getEditorSession(mainEditor),
-        errs = session.diagnostics || [];
+      const session = getEditorSession(mainEditor), pending = session.pendingEdit;
+      let errs = session.diagnostics || [];
+      // The visible pending source can differ from the valid project baseline.
+      // Never show a baseline success message over a rejected code edit.
+      if (pending?.kind === 'code' && !session.blockDraft) {
+        const parsed = parseSyntax(pending.value, { ...bindingContext(mainEditor),
+          key: session.ownerKey, symbols: buildSymbols(project) });
+        errs = parsed.syntaxDiagnostics.length ? parsed.syntaxDiagnostics
+          : staticScaleDiagnostics(parsed.ast, session.ownerKey);
+        if (!errs.length) errs = [{ message: pending.reason || '入力を確定してください', line: 1 }];
+      } else if (session.blockDraft) {
+        errs = [{ message: pending?.reason || '未入力の場所を完成してください', line: 1 }];
+      } else if (pending) {
+        errs = pending.diagnostics?.length ? pending.diagnostics
+          : [{ message: pending.reason || '入力を確定してください', line: 1 }];
+      }
       if (errs.length) {
         el.issue.textContent = `${errs[0].code || ''} ${errs[0].line || 1}行目: ${errs[0].message}`;
         el.issue.className = 'issue-error';

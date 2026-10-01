@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {sha} from './product-test-host.mjs';
+import {pathToFileURL} from 'node:url';
 import {browserEnvironment} from './browser-environment.mjs';
 import {scenarios,ambiguities,corpusSha256} from './japanese-intent-oracles.mjs';
 import {verifyJapaneseContract} from '../tests/japanese-contract-static.mjs';
@@ -79,11 +80,17 @@ export function verifyMigrationReport(report,inputs){
   for(const[k,v]of Object.entries({status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153}))assert.equal(report.migration[k],v,k);
   return {status:'PASS',stableIds:605};
 }
-export function verifyIntentReport(report,inputs){
-  assert.equal(report.status,'PASS');assert.equal(report.filter,null);assert.equal(report.boot?.status,'PASS');
+export function verifyIntentCandidate(report,inputs,candidateFile=report.candidate.testedFile){
+  assert.ok(typeof report.candidate.testedFile==='string'&&report.candidate.testedFile.length>0);
   assert.equal(report.candidate.sha256,inputs.productSha256);
-  assert.equal(sha(fs.readFileSync(report.candidate.testedFile)),inputs.productSha256);
-  assert.match(report.candidate.url,/^file:\/\//);assert.equal(report.environment.protocol,'file:');
+  // Aggregation reads the sealed copy in its downloaded bundle, not a producer's absolute path.
+  assert.equal(sha(fs.readFileSync(candidateFile)),inputs.productSha256);
+  assert.equal(report.candidate.url,pathToFileURL(report.candidate.testedFile).href);
+  assert.equal(report.environment.protocol,'file:');
+}
+export function verifyIntentReport(report,inputs,candidateFile){
+  assert.equal(report.status,'PASS');assert.equal(report.filter,null);assert.equal(report.boot?.status,'PASS');
+  verifyIntentCandidate(report,inputs,candidateFile);
   assert.equal(report.environment.browser,browserEnvironment.version);assert.equal(report.environment.playwright,browserEnvironment.playwright);
   assert.deepEqual(report.auditInputs,inputHashes(intentInputPaths));assert.equal(report.oracle.corpusSha256,corpusSha256);
   const corpus=JSON.parse(fs.readFileSync('docs/1.0.2/child-intent-corpus.json'));

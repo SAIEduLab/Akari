@@ -11,6 +11,7 @@ import {verifyEditorAssets,verifyDesignerZoom} from './feature-contract.mjs';
 import {verifyBrowserEnvironment} from './browser-environment.mjs';
 import {verifyFormatCompatibility} from './format-compatibility-contract.mjs';
 import {verifyUiButtons} from './ui-buttons-contract.mjs';
+import {reviewGroups,verifyReviewReport,verifyReviewNegativeReport} from './review-regression-contract.mjs';
 export function verifyGateResults(dir,inputs){
   const read=n=>JSON.parse(fs.readFileSync(path.join(dir,n+'.json'))),gate=read('gate');
   assert.equal(gate.status,'PASS');assert.deepEqual(gate.snapshot,inputs);
@@ -31,8 +32,10 @@ export function verifyGateResults(dir,inputs){
   const integrity=read('integrity');assert.equal(integrity.results.length,30);assert.equal(new Set(integrity.results.map(r=>r.id)).size,30);for(const r of integrity.results)assert.equal(r.pass,true);
   verifyContractReport(read('japanese-contract-static'),inputs);
   verifyMigrationReport(read('language-migration-static'),inputs);
-  verifyIntentReport(read('japanese-intent-browser'),inputs);
+  verifyIntentReport(read('japanese-intent-browser'),inputs,path.join(dir,'japanese-intent-browser.artifacts','candidate.html'));
   verifyRuntimeReport(read('runtime-v2'),inputs,path.join(dir,'runtime-v2'));
   verifyNegativeReport(read('japanese-gate-negative'),inputs);
+  for(const group of Object.keys(reviewGroups))verifyReviewReport(read(group==='actor'?'review-actor/review-actor':'review-'+group),group,inputs);
+  verifyReviewNegativeReport(read('review-harness-negative'),inputs);
   return {status:'PASS',steps:gate.steps.length};
 }
