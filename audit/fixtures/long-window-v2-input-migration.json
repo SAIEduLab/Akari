@@ -1,0 +1,84 @@
+{
+  "schema": "akari-long-window-ui-migration-v1",
+  "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+  "originalPath": "audit/browser/cases/long-regression.cjs",
+  "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/long-regression.cjs",
+  "baselineSha256": "910b43ec3fa80d06f8de2b4f1f3070fb1c3370066727e4a9528ebbe72eb25f1a",
+  "beforeSha256": "1b226125c66deb0cf705be3f5306e9be2debd2c7eb0a0b1090cca40abd509be9",
+  "afterSha256": "2d4238a453a7581941e7ca4d51ad5eebd08a21da3491fa7cf9b5fb96046f0cf8",
+  "reason": "Product renders40 statements per batch to keep actual DOM below the unchanged5000 bound.120 initial visible rows and exactly3 gap clicks assumed60-row batches. Inspect bounded partial rows including both endpoints, then alternate real gap controls until every original statement is visible.",
+  "policy": "No product changes, no reduced16666/8333 input sizes, no relaxed120 rendered-row bound in long switches, no changed300-row source/order, no reduced cancellation/move/undo/redo/source/history/dirty guarantees.",
+  "entries": [
+    {
+      "id": "BROWSER-LONG-SWITCH",
+      "n": 8333,
+      "where": "start",
+      "change": "unchanged",
+      "preservedMeaning": "Same source length, selection line, focused visible shaped node, at most120 rendered statements, exact code/source/dirty/history/redo roundtrip."
+    },
+    {
+      "id": "BROWSER-LONG-SWITCH",
+      "n": 8333,
+      "where": "middle",
+      "change": "unchanged",
+      "preservedMeaning": "Same source length, selection line, focused visible shaped node, at most120 rendered statements, exact code/source/dirty/history/redo roundtrip."
+    },
+    {
+      "id": "BROWSER-LONG-SWITCH",
+      "n": 8333,
+      "where": "end",
+      "change": "unchanged",
+      "preservedMeaning": "Same source length, selection line, focused visible shaped node, at most120 rendered statements, exact code/source/dirty/history/redo roundtrip."
+    },
+    {
+      "id": "BROWSER-LONG-SWITCH",
+      "n": 16666,
+      "where": "start",
+      "change": "unchanged",
+      "preservedMeaning": "Same source length, selection line, focused visible shaped node, at most120 rendered statements, exact code/source/dirty/history/redo roundtrip."
+    },
+    {
+      "id": "BROWSER-LONG-SWITCH",
+      "n": 16666,
+      "where": "middle",
+      "change": "unchanged",
+      "preservedMeaning": "Same source length, selection line, focused visible shaped node, at most120 rendered statements, exact code/source/dirty/history/redo roundtrip."
+    },
+    {
+      "id": "BROWSER-LONG-SWITCH",
+      "n": 16666,
+      "where": "end",
+      "change": "unchanged",
+      "preservedMeaning": "Same source length, selection line, focused visible shaped node, at most120 rendered statements, exact code/source/dirty/history/redo roundtrip."
+    },
+    {
+      "id": "BROWSER-LONG-GAP",
+      "old": {
+        "initialVisible": 120,
+        "gapActions": [
+          "body-gap-next",
+          "body-gap-previous",
+          "body-gap-next"
+        ],
+        "totalStatements": 300
+      },
+      "new": {
+        "initialVisible": "nonempty proper subset, at most120, no duplicate IDs; first and selected last literal1/2 visible",
+        "gapActions": "alternate next/previous while gaps remain; require both directions, strict growth, retained prior IDs and unique IDs after every click",
+        "totalStatements": 300
+      },
+      "preservedMeaning": "All300 same-source rows become reachable without losing previous IDs; each view-only step leaves source/dirty/history/redo/pending unchanged. Escape cancels move; moving first speech after last produces[2,1] with one history entry; undo restores exact source and redo restores order."
+    }
+  ],
+  "diff": "--- before40window/audit/browser/cases/long-regression.cjs\n+++ audit/browser/cases/long-regression.cjs\n@@ -14,18 +14,23 @@\n   await p.screenshot({path:path.join(out,`${n}-${where}.png`)});const backStarted=Date.now();await (async()=>{const control=p.locator('#editorModecode'); await openBodyForTest(control.page()); return control.click();})();const backMs=Date.now()-backStarted;assert.deepEqual(await state(p),before);results.push({id:'BROWSER-LONG-SWITCH',n,characters:source.length,where,inputMs:p.inputMs,ms,backMs,redoPreserved:before.redo,...view,roundTrip:true});await p.close();\n  }\n  const source=['1を言う。',...Array(298).fill('何もしない。'),'2を言う。'].join('\\n'),p=await setup(source,source.length),before=await state(p);await (async()=>{const control=p.locator('#editorModeblocks'); await openBodyForTest(control.page()); return control.click();})();const root=p.locator('#blockEditor');\n- const ids=()=>root.locator('.blockui-statement').evaluateAll(ns=>ns.map(n=>n.dataset.blockId));let rendered=await ids();assert.equal(rendered.length,120);\n- for(const action of ['body-gap-next','body-gap-previous','body-gap-next']){\n-  await root.locator(`[data-blockui-action=\"${action}\"]`).click();const next=await ids();assert(rendered.every(id=>next.includes(id)));assert(next.length>rendered.length&&next.length<=300);rendered=next;\n+ const ids=()=>root.locator('.blockui-statement').evaluateAll(ns=>ns.map(n=>n.dataset.blockId));let rendered=await ids();assert(rendered.length>0&&rendered.length<=120&&rendered.length<300);assert.equal(new Set(rendered).size,rendered.length);\n+ assert.deepEqual(await root.locator('.blockui-workspace .blockui-statement[data-schema-id=\"Say\"] [data-schema-id=\"NumberLiteral\"] [data-blockui-field=\"value\"]').evaluateAll(ns=>ns.map(n=>n.value)),['1','2'],'opening and selected final statements remain visible');\n+ const gapActions=[];\n+ while(await root.locator('.blockui-body-gap').count()){\n+  assert(gapActions.length<300,'gap controls must reach every statement');\n+  const action=gapActions.length%2&&await root.locator('[data-blockui-action=\"body-gap-previous\"]').count()?'body-gap-previous':'body-gap-next';gapActions.push(action);\n+  await root.locator(`[data-blockui-action=\"${action}\"]`).first().click();const next=await ids();assert(rendered.every(id=>next.includes(id)));assert(next.length>rendered.length&&next.length<=300);assert.equal(new Set(next).size,next.length);rendered=next;\n   const current=await state(p);assert.deepEqual({...current,mode:'code'},before);\n  }\n+ assert(gapActions.includes('body-gap-next')&&gapActions.includes('body-gap-previous'),'both gap directions are exercised');\n  assert.equal(rendered.length,300);assert.equal(await root.locator('.blockui-body-gap').count(),0);\n  const say=root.locator('.blockui-node[data-schema-id=\"Say\"]').first();async function move(){await say.locator(':scope > .blockui-node-head .blockui-actions > summary').click();await say.locator(':scope > .blockui-node-head [data-blockui-action=\"move\"]').click();}\n  await move();await p.keyboard.press('Escape');assert.deepEqual({...await state(p),mode:'code'},before);\n  await move();await root.locator('.blockui-script > .blockui-node-content > .blockui-body > [data-insert-index=\"300\"]').click();\n  assert.deepEqual(await p.evaluate(()=>Akari.app.editorState.main.syntaxAst.body.slice(-2).map(n=>n.value.value)),[2,1]);assert.equal((await state(p)).history,before.history+1);\n  await p.locator('#undoBtn').click();assert.equal((await state(p)).source,source);assert.equal((await state(p)).redo,1);await p.locator('#redoBtn').click();assert.deepEqual(await p.evaluate(()=>Akari.app.editorState.main.syntaxAst.body.slice(-2).map(n=>n.value.value)),[2,1]);\n- results.push({id:'BROWSER-LONG-GAP',pagesRetained:true,all300Reachable:true,cancel:true,moveAcrossOriginalGap:true,undoRedo:true});await p.screenshot({path:path.join(out,'gap-move.png')});await p.close();\n+ results.push({id:'BROWSER-LONG-GAP',gapActions,renderedCount:rendered.length,pagesRetained:true,all300Reachable:true,cancel:true,moveAcrossOriginalGap:true,undoRedo:true});await p.screenshot({path:path.join(out,'gap-move.png')});await p.close();\n  }finally{await browser.close();fs.writeFileSync(path.join(out,'results.json'),JSON.stringify({manifest,browser:browser.version(),results},null,2));console.log('LONG_REGRESSION',JSON.stringify(results));}\n })().catch(e=>{console.error(e);process.exitCode=1});\n \n",
+  "validation": {
+    "status": "PASS",
+    "environment": "Chrome140.0.7339.207 file://",
+    "report": "/workspace/scratch/akari-long-window-work/repo/long-candidate/long-evidence/results.json",
+    "reportSha256": "8223aecfe916fc25692ded63a587416654458fe928810294d5cd598d893b4349",
+    "candidateSha256": "8ce7d0c33d82ec23859e9af1f2cfab6817f44e92d9110574b623d2fc07d58542",
+    "switchCases": 6,
+    "gapCases": 1,
+    "all300Reachable": true
+  }
+}

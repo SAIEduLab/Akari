@@ -94,7 +94,23 @@ export function verifyIntentReport(report,inputs){
   for(const scenario of scenarios){
     const original=report.results.find(r=>r.id===scenario.id+'/original-prose-ui').evidence;
     const prose=corpus.cases.find(c=>c.id===scenario.id).sections.filter(s=>s.label.startsWith('作文候補'));
-    assert.deepEqual(original.checks,prose.map(p=>({original:p.text,unchanged:true,automaticExecution:false})));
+    assert.equal(original.meaningAcceptance,'not asserted by this preservation route');
+    assert.deepEqual(original.checks.map(row=>row.original),prose.map(p=>p.text));
+    for(const row of original.checks){
+      for(const flag of ['unchanged','blocksDisabled','executionRejected','cancelRestoredSource'])assert.equal(row[flag],true,scenario.id+'/'+flag);
+      assert.equal(row.automaticExecution,false);assert.ok(typeof row.validOwnerKey==='string'&&row.validOwnerKey.length>0);
+      const valid=row.valid;assert.equal(valid.pending,false);assert.equal(valid.state,'DESIGN');
+      assert.ok(typeof valid.source==='string');assert.ok(typeof valid.project==='string');assert.ok(JSON.parse(valid.project));
+      for(const key of ['history','redo'])assert.ok(Number.isInteger(valid[key])&&valid[key]>=0);
+      assert.equal(typeof valid.dirty,'boolean');
+      assert.equal(row.pending.mode,'code');assert.equal(row.pending.ownerKey,row.validOwnerKey);
+      assert.equal(row.pending.pending.ownerKey,row.validOwnerKey);assert.equal(row.pending.pending.kind,'code');
+      assert.equal(row.pending.pending.value,row.original);assert.equal(row.initial.pending,true);
+      for(const key of ['source','project','history','redo','dirty','state'])assert.deepEqual(row.initial[key],valid[key]);
+      assert.deepEqual(row.afterRun,row.initial);assert.deepEqual(row.afterRunPending,row.pending);
+      assert.deepEqual(row.cancelled,valid);assert.equal(row.cancelledOwnerKey,row.validOwnerKey);assert.equal(row.cancelledPending,null);
+      for(const observed of [row.observedAfterRun,row.observedAfterCancel])assert.deepEqual(observed,{say:[],start:0,motion:[]});
+    }
     if(scenario.id==='CI-20')continue;
     const source=report.results.find(r=>r.id===scenario.id+'/parser-core').evidence;
     const block=report.results.find(r=>r.id===scenario.id+'/blocks-core').evidence;
@@ -155,6 +171,13 @@ export const negativeCaseIds = [
   'RUNTIME/child-timeout','RUNTIME/child-snapshot','RUNTIME/changed-child-report','RUNTIME/observation-promoted','RUNTIME/required-case-unverified',
   'STATIC/missing-check','STATIC/changed-doc-hash','STATIC/execution-claim',
   'MIGRATION/missing-stable-id','MIGRATION/stale-snapshot',
+  ...['unchanged','blocksDisabled','executionRejected','cancelRestoredSource','automaticExecution']
+    .flatMap(flag=>['INTENT/prose-missing-'+flag,'INTENT/prose-invalid-'+flag]),
+  ...['owner','pending-owner','pending-kind','pending-value','valid-pending','valid-state','initial-pending',
+    'initial-source','initial-project','initial-history','initial-redo','initial-dirty','initial-state',
+    'run-project','run-history','run-pending','run-speech','run-start','run-motion',
+    'cancel-project','cancel-history','cancel-owner','cancel-pending','cancel-execution']
+    .map(key=>'INTENT/prose-'+key),
 ];
 export function verifyNegativeReport(report,inputs){
   bind(report,inputs,['audit/tests/japanese-gate-negative.mjs','audit/lib/japanese-gate-contract.mjs']);

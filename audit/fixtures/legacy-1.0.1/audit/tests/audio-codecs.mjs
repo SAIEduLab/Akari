@@ -76,7 +76,7 @@ for(const [name,file,mime,channels,rate] of audioFixtures)cases['audio-import-'+
   await click(p,'#redoBtn');assert.equal((await state(p)).project,imported.project);
   await (await reveal(p.locator('#objectSelect'))).selectOption('stage');
   await (await reveal(p.locator('#eventSelect'))).selectOption('start');
-  const marker='音声検証完了-'+name,source='音「検証音」を鳴らす。\n「'+marker+'」と言う。';
+  const marker='音声検証完了-'+name,source='「検証音」を鳴らし、終わるまで待つ\n「'+marker+'」と言う';
   await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();
   await p.waitForFunction(source=>Akari.app.editorState.main.sourceText===source,source);
   await click(p,'#editorModeblocks');await click(p,'#editorModecode');
@@ -169,8 +169,8 @@ cases['audio-runtime-mime-rejection']=async(p,browser)=>{
   await p.waitForFunction(()=>Akari.app.project.sounds.length===1&&Akari.app.editorState.state==='DESIGN');
   await (await reveal(p.locator('#objectSelect'))).selectOption('stage');
   await (await reveal(p.locator('#eventSelect'))).selectOption('start');
-  await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('音「検証音」を鳴らし始める。');})();
-  await p.waitForFunction(()=>Akari.app.editorState.main.sourceText==='音「検証音」を鳴らし始める。');
+  await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「検証音」を鳴らす');})();
+  await p.waitForFunction(()=>Akari.app.editorState.main.sourceText==='「検証音」を鳴らす');
   await click(p,'#editorModeblocks');await click(p,'#editorModecode');
   const html=await p.evaluate(()=>Akari.generateStandaloneHtml(Akari.app.project,Akari.app.assetStore));
   assert.equal(html.split('"mime":"audio/mp4"').length,2);
@@ -196,8 +196,4 @@ fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');verifyAudio(report,i
 console.log(("Audio "+currentProductVersion()+": all ")+results.length+' cases PASS');
 
 // Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) {
-  await (await reveal(page.locator('#uiLevel'))).selectOption('advanced');
-  if (await page.locator('#sourceOverview').isVisible()) await click(page,'#sourceEditBtn');
-  await click(page,'#editorModecode');
-}
+async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

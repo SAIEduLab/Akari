@@ -12026,6 +12026,17 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     ['Assignment:variableInput', /^(.+?)を(.+?)という変数に(?:入れる|いれる)$/d, 'Assignment', null, 'assignReverse'],
     ['Assignment', /^(.+?)を(.+?)に(?:する|変える)$/d, 'Assignment', null, 'assign'],
   ].map(([id, pattern, kind, op, role]) => sentenceFormRecord(id,pattern,kind,op,role)));
+  // Check role endings before attempting multi-operand captures. A failed ending
+  // must not backtrack through every possible particle split in a long sentence.
+  const SENTENCE_ROLE_ENDINGS = Object.freeze({
+    toneReverse:/Hzの音を(?:鳴らし始める|鳴らす)$/,
+    appendReverse:/の最後に(?:入れる|いれる)$/,
+    insertReverse:/番目(?:の前)?に(?:入れる|いれる)$/,
+    assignReverse:/という変数に(?:入れる|いれる)$/,
+    update:/(?:増やす|ふやす|減らす|へらす|を足す|をたす|を引く|をひく)$/,
+    updateReverse:/(?:に足す|にたす|から引く|からひく)$/,
+    assign:/に(?:する|変える)$/,
+  });
   const STATEMENT_EXPLICIT_ACTORS = new WeakSet();
   const SENTENCE_TE_FORMS = Object.freeze([
     ['鳴らし始めて','鳴らし始める'], ['言わせて','言わせる'], ['かくして','かくす'], ['隠して','隠す'],
@@ -12098,8 +12109,11 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       if (!rawName.startsWith('【') || !rawName.endsWith('】')) throw new AkariError('P205','手順の名前を【】で囲んでください');
       return node('UserActionCall',{name:parsedDeclarationName(rawName),args,...(argumentNames ? {argumentNames} : {})});
     }
+    const protectedCode=surfaceMask(code);
     for (const form of SENTENCE_FORMS) {
       if(!form.pattern)continue;
+      const ending=SENTENCE_ROLE_ENDINGS[form.role];
+      if(ending&&!ending.test(protectedCode))continue;
       const parts=surfaceCapture(form.pattern,code);
       if (!parts) continue;
       const unit=path=>form.roleSlots.find(slot=>slot.path===path)?.unit;
@@ -12166,7 +12180,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     let remaining=body, base=0, seconds=null;
     p=surfaceCapture(/^(.+?)秒(?:で|かけて)(.+)$/d,remaining);
     if(p){seconds=q(p[0].text,'秒',p[0].start);remaining=p[1].text;base=p[1].start;}
-    else if((p=surfaceCapture(/^(.+?)(.+?)秒(?:で|かけて)$/d,remaining))) {
+    else if(/秒(?:で|かけて)$/.test(surfaceMask(remaining))) {
       // A trailing time phrase must follow a completed coordinate/distance role.
       const split=[...surfaceMask(remaining).matchAll(/(?:の位置(?:へ|に)|歩|(?:前|後ろ|右|左|上|下)(?:へ|に))/g)].at(-1);
       if(split){const at=split.index+split[0].length,tail=remaining.slice(at),time=surfaceCapture(/^、?(.+)秒(?:で|かけて)$/d,tail);if(time){seconds=q(time[0].text,'秒',at+time[0].start);remaining=remaining.slice(0,at);}}
@@ -12224,9 +12238,10 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     const nodes=[];let start=0;
     for(let i=0;i<mask.length;i++) {
       if(mask[i]!=='、')continue;
-      let prefix=code.slice(start,i),tail=prefix.endsWith('から')?prefix.slice(0,-2):prefix;
-      const protectedTail=surfaceMask(tail),pair=SENTENCE_TE_FORMS.find(([te])=>protectedTail.endsWith(te));
+      const end=mask.slice(Math.max(start,i-2),i)==='から'?i-2:i;
+      const pair=SENTENCE_TE_FORMS.find(([te])=>end-start>=te.length&&mask.startsWith(te,end-te.length));
       if(!pair)continue;
+      const tail=code.slice(start,end);
       let replacement=tail.slice(0,-pair[0].length)+pair[1];
       if(pair[0]==='行って'&&!replacement.endsWith('手順を行う'))replacement=tail.slice(0,-pair[0].length)+'行く';
       const part=surfaceLineSlice(line,start,i,replacement),head=readBlockHead(replacement,symbols,{...scope,sourceLine:part,lineNo:line.lineNo});
@@ -12422,6 +12437,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     // Actor extraction is permitted only when a complete action/data frame accepts its suffix.
     const actorPatterns=[/^(.+?)は、?(.+)$/d,/^(.+?)を(.+(?:動かす|うごかす))$/d,/^(.+?)に(.+(?:言わせる))$/d];
     for(let k=0;k<actorPatterns.length;k++){
+      if(k===1&&!/(?:動かす|うごかす)$/.test(code)||k===2&&!code.endsWith('言わせる'))continue;
       const parts=surfaceCapture(actorPatterns[k],code);if(!parts)continue;
       if(k===0&&parts[0].text==='この中で')continue;
       let actorRef;try{actorRef=sentenceActor(parts[0].text);}catch(error){if(error instanceof AkariError)continue;throw error;}let body=parts[1].text;
@@ -18466,8 +18482,13 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         return result;
       }
       if (session()?.ownerKey !== owner) {
-        announce('編集対象が変更されました', true);
-        return { ok: false, reason: '編集対象が変更されました' };
+        const transition=result.ownerTransition;
+        if(transition?.from!==owner||transition.to!==session()?.ownerKey){
+          announce('編集対象が変更されました', true);
+          return { ok: false, reason: '編集対象が変更されました' };
+        }
+        // Persisting a new event gives the same document its permanent key.
+        if(displaySession?.ownerKey===owner)displaySession={...displaySession,ownerKey:transition.to};
       }
       announce(result.changed === false ? '内容は変わっていません' : 'ブロックを変更しました');
       if (!fromPending) render({ force: true });
@@ -18477,7 +18498,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       if (field.type === 'boolean') return input.value === 'true';
       if (field.type === 'qualifier') return input.value === 'none' ? null : input.value;
       if (field.type === 'number') {
-        const text = normalizeCharsOutsideString(input.value).replace(/−/g, '-');
+        const text = normalizeCharsOutsideString(input.value).replace(/[－−]/g, '-').replace(/＋/g, '+');
         if (
           !/^[+-]?[0-9]+(?:\.[0-9]+)?$/.test(text) ||
           !Number.isFinite(Number(text))
@@ -18488,7 +18509,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       return input.value;
     }
     function editInput(input, node, field, annotation = false) {
-      const original = annotation ? node.annotations[field.key]
+      const original = () => annotation ? node.annotations[field.key]
         : input.dataset.signedParentId ? -node.fields[field.key] : node.fields[field.key];
       const read = () => readInputValue(input, field);
       const refresh = () => {
@@ -18496,7 +18517,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         if (!pending || pending.input !== input) {
           const f = flush();
           if (!f.ok && pending?.input !== input) {
-            input.value = String(original ?? '');
+            input.value = String(original() ?? '');
             pending?.input?.focus();
             return;
           }
@@ -18511,7 +18532,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
           ownerKey: previous?.ownerKey ?? session()?.ownerKey,
           sourceRevision: previous?.sourceRevision ?? session()?.sourceRevision,
           contextRevision: previous?.contextRevision ?? session()?.contextRevision,
-          original,
+          original:original(),
           composing: input.dataset.composing === 'true',
           read,
           error: '',
@@ -18614,9 +18635,11 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         let replacement = literal;
         if (value < 0 || Object.is(value, -0)) {
           replacement = createBlock('UnaryExpression:NEG');
-          replacement.inputs.value = literal;
+          replacement.inputs.value.fields.value = Math.abs(value);
         }
-        op = { type: 'replace', id: p.input.dataset.signedParentId || p.id, node: replacement };
+        op = p.input.dataset.signedParentId && (value < 0 || Object.is(value,-0))
+          ? {type:'field',id:p.id,key:p.key,value:Math.abs(value)}
+          : { type: 'replace', id: p.input.dataset.signedParentId || p.id, node: replacement };
       }
       if (p.field.type === 'comment' && /[\r\n]/.test(value))
         op = { type: 'comment-lines', id: p.id, lines: value.replace(/\r\n?/g, '\n').split('\n') };
@@ -18631,6 +18654,13 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       pending = null;
       notifyPending();
       render({ force: true });
+      if(focus&&p.field.type==='number'&&op.type==='replace'){
+        const node=index.get(session()?.blockSelection)?.node,
+          literal=node?.schemaId==='UnaryExpression:NEG'?node.inputs.value:node,
+          control=[...workspace.querySelectorAll('[data-focus-key]')].find(n=>n.dataset.focusKey===literal?.id+':field:value');
+        control?.focus({preventScroll:true});
+        if(control?.setSelectionRange)control.setSelectionRange(p.input.selectionStart,p.input.selectionEnd,p.input.selectionDirection);
+      }
       return { ok: true, changed: result.changed !== false };
     }
     function cancel() {
@@ -21863,8 +21893,12 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         const session = getEditorSession(binding),
           ownerKey = bindingOwner(binding),
           context = bindingContext(binding);
+        const pendingNode=session.pendingEdit?.id&&buildBlockIndex(session.blockView).get(session.pendingEdit.id),
+          signedReplacement=operation.type==='replace'&&pendingNode?.node.schemaId==='NumberLiteral'&&
+            pendingNode.parentId===operation.id&&pendingNode.input==='value'&&
+            buildBlockIndex(session.blockView).get(operation.id)?.node.schemaId==='UnaryExpression:NEG';
         const pendingEditId =
-          session.pendingEdit && operation.id === session.pendingEdit.id
+          session.pendingEdit && (operation.id === session.pendingEdit.id || signedReplacement)
             ? session.pendingEdit.id
             : undefined;
         const candidate = prepareBlockEdit(session, operation, {
@@ -21897,19 +21931,20 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         const source = candidate.source ?? candidate.sourceText;
         commitSource(binding, source, { atomic: true });
         binding.textarea.value = source;
-        binding.session = {
+        const committedOwner=bindingOwner(binding);
+        binding.session = refreshEditorSession({
           ...session,
           ...candidate,
+          ownerKey:committedOwner,
           mode: session.mode,
-          project,
-          context: bindingContext(binding),
-          contextRevision: editorContextRevision,
           pendingEdit: null,
-        };
-        editorSessions.set(`${binding.kind}:${ownerKey}`, binding.session);
+        },source,bindingContext(binding),project,editorContextRevision);
+        if(committedOwner!==ownerKey)editorSessions.delete(`${binding.kind}:${ownerKey}`);
+        editorSessions.set(`${binding.kind}:${committedOwner}`, binding.session);
         renderEditorBinding(binding);
         refreshEditor();
-        return { ok: true, changed: true };
+        return { ok: true, changed: true,
+          ...(committedOwner!==ownerKey?{ownerTransition:{from:ownerKey,to:committedOwner}}:{}) };
       } catch (error) {
         showEditorFailure(binding, error);
         return { ok: false, error, reason: error.message };

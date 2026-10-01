@@ -1,0 +1,225 @@
+{
+  "schema": "akari-audio-codecs-v2-input-migration-v1",
+  "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+  "policy": "Input spelling and visible editor selection only. All18 stable IDs, every original assert, audio bytes/hashes/MIME/channels/sampleRate/duration/RMS, timeout bounds, atomicity/history/undo/redo/save/reload/player/rejection guarantees remain unchanged. No candidate-derived expected values.",
+  "counts": {
+    "stableIds": 18,
+    "importFixtures": 8,
+    "inputMigrated": 9,
+    "unchangedCases": 9
+  },
+  "files": [
+    {
+      "path": "audit/tests/audio-codecs.mjs",
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "originalSha256": "a4b8d66f5395ad288e178d8d8e1a06c117cb1601235f3433066e7cd41c87cde0",
+      "candidateSha256": "50414edcdbe450c7ea5657c84d3bf5f362797406e9b0d5647e81aab13b806ea0",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/audio-codecs.mjs",
+      "ids": [
+        "audio-import-mp3",
+        "audio-import-wav",
+        "audio-import-m4a",
+        "audio-import-m4a-mono",
+        "audio-import-flac",
+        "audio-import-flac-mono",
+        "audio-import-opus",
+        "audio-import-opus-mono",
+        "audio-file-picker",
+        "audio-unsupported-codecs",
+        "audio-aac-profile",
+        "audio-malformed-containers",
+        "audio-ogg-crc",
+        "audio-container-limits",
+        "audio-saved-mime-and-metadata",
+        "audio-ui-failure-atomic",
+        "audio-project-roundtrip",
+        "audio-runtime-mime-rejection"
+      ],
+      "assertionCalls": {
+        "old": 39,
+        "new": 39
+      },
+      "diff": "--- baseline/audit/tests/audio-codecs.mjs\n+++ audit/tests/audio-codecs.mjs\n@@ -76,7 +76,7 @@\n   await click(p,'#redoBtn');assert.equal((await state(p)).project,imported.project);\n   await (await reveal(p.locator('#objectSelect'))).selectOption('stage');\n   await (await reveal(p.locator('#eventSelect'))).selectOption('start');\n-  const marker='音声検証完了-'+name,source='「検証音」を鳴らし、終わるまで待つ\\n「'+marker+'」と言う';\n+  const marker='音声検証完了-'+name,source='音「検証音」を鳴らす。\\n「'+marker+'」と言う。';\n   await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();\n   await p.waitForFunction(source=>Akari.app.editorState.main.sourceText===source,source);\n   await click(p,'#editorModeblocks');await click(p,'#editorModecode');\n@@ -169,8 +169,8 @@\n   await p.waitForFunction(()=>Akari.app.project.sounds.length===1&&Akari.app.editorState.state==='DESIGN');\n   await (await reveal(p.locator('#objectSelect'))).selectOption('stage');\n   await (await reveal(p.locator('#eventSelect'))).selectOption('start');\n-  await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「検証音」を鳴らす');})();\n-  await p.waitForFunction(()=>Akari.app.editorState.main.sourceText==='「検証音」を鳴らす');\n+  await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('音「検証音」を鳴らし始める。');})();\n+  await p.waitForFunction(()=>Akari.app.editorState.main.sourceText==='音「検証音」を鳴らし始める。');\n   await click(p,'#editorModeblocks');await click(p,'#editorModecode');\n   const html=await p.evaluate(()=>Akari.generateStandaloneHtml(Akari.app.project,Akari.app.assetStore));\n   assert.equal(html.split('\"mime\":\"audio/mp4\"').length,2);\n@@ -196,4 +196,8 @@\n console.log((\"Audio \"+currentProductVersion()+\": all \")+results.length+' cases PASS');\n \n // Enter the visible body editor before exercising editing operations.\n-async function openBodyForTest(page) { if (await page.locator(\"#sourceOverview\").isVisible()) await page.locator(\"#sourceEditBtn\").click(); }\n+async function openBodyForTest(page) {\n+  await (await reveal(page.locator('#uiLevel'))).selectOption('advanced');\n+  if (await page.locator('#sourceOverview').isVisible()) await click(page,'#sourceEditBtn');\n+  await click(page,'#editorModecode');\n+}\n"
+    }
+  ],
+  "changes": [
+    {
+      "testId": "audio-import-mp3",
+      "oldText": "「検証音」を鳴らし、終わるまで待つ\n「音声検証完了-mp3」と言う",
+      "newText": "音「検証音」を鳴らす。\n「音声検証完了-mp3」と言う。",
+      "preservedMeaning": "Same PLAY_WAIT sound, following exact marker only after sound completion; actual waveform RMS0.02..0.3, duration0.20..0.32, exact channels/sampleRate/MIME, metadata exclusion, one undo/redo transaction, saved canonical hash, restored sound, standalone offline playback/stop and no R415.",
+      "route": "Existing file-picker import → explicit advanced/body/code UI → same source→blocks→code/run/save/reopen/export/player.",
+      "uiInputChange": true
+    },
+    {
+      "testId": "audio-import-wav",
+      "oldText": "「検証音」を鳴らし、終わるまで待つ\n「音声検証完了-wav」と言う",
+      "newText": "音「検証音」を鳴らす。\n「音声検証完了-wav」と言う。",
+      "preservedMeaning": "Same PLAY_WAIT sound, following exact marker only after sound completion; actual waveform RMS0.02..0.3, duration0.20..0.32, exact channels/sampleRate/MIME, metadata exclusion, one undo/redo transaction, saved canonical hash, restored sound, standalone offline playback/stop and no R415.",
+      "route": "Existing file-picker import → explicit advanced/body/code UI → same source→blocks→code/run/save/reopen/export/player.",
+      "uiInputChange": true
+    },
+    {
+      "testId": "audio-import-m4a",
+      "oldText": "「検証音」を鳴らし、終わるまで待つ\n「音声検証完了-m4a」と言う",
+      "newText": "音「検証音」を鳴らす。\n「音声検証完了-m4a」と言う。",
+      "preservedMeaning": "Same PLAY_WAIT sound, following exact marker only after sound completion; actual waveform RMS0.02..0.3, duration0.20..0.32, exact channels/sampleRate/MIME, metadata exclusion, one undo/redo transaction, saved canonical hash, restored sound, standalone offline playback/stop and no R415.",
+      "route": "Existing file-picker import → explicit advanced/body/code UI → same source→blocks→code/run/save/reopen/export/player.",
+      "uiInputChange": true
+    },
+    {
+      "testId": "audio-import-m4a-mono",
+      "oldText": "「検証音」を鳴らし、終わるまで待つ\n「音声検証完了-m4a-mono」と言う",
+      "newText": "音「検証音」を鳴らす。\n「音声検証完了-m4a-mono」と言う。",
+      "preservedMeaning": "Same PLAY_WAIT sound, following exact marker only after sound completion; actual waveform RMS0.02..0.3, duration0.20..0.32, exact channels/sampleRate/MIME, metadata exclusion, one undo/redo transaction, saved canonical hash, restored sound, standalone offline playback/stop and no R415.",
+      "route": "Existing file-picker import → explicit advanced/body/code UI → same source→blocks→code/run/save/reopen/export/player.",
+      "uiInputChange": true
+    },
+    {
+      "testId": "audio-import-flac",
+      "oldText": "「検証音」を鳴らし、終わるまで待つ\n「音声検証完了-flac」と言う",
+      "newText": "音「検証音」を鳴らす。\n「音声検証完了-flac」と言う。",
+      "preservedMeaning": "Same PLAY_WAIT sound, following exact marker only after sound completion; actual waveform RMS0.02..0.3, duration0.20..0.32, exact channels/sampleRate/MIME, metadata exclusion, one undo/redo transaction, saved canonical hash, restored sound, standalone offline playback/stop and no R415.",
+      "route": "Existing file-picker import → explicit advanced/body/code UI → same source→blocks→code/run/save/reopen/export/player.",
+      "uiInputChange": true
+    },
+    {
+      "testId": "audio-import-flac-mono",
+      "oldText": "「検証音」を鳴らし、終わるまで待つ\n「音声検証完了-flac-mono」と言う",
+      "newText": "音「検証音」を鳴らす。\n「音声検証完了-flac-mono」と言う。",
+      "preservedMeaning": "Same PLAY_WAIT sound, following exact marker only after sound completion; actual waveform RMS0.02..0.3, duration0.20..0.32, exact channels/sampleRate/MIME, metadata exclusion, one undo/redo transaction, saved canonical hash, restored sound, standalone offline playback/stop and no R415.",
+      "route": "Existing file-picker import → explicit advanced/body/code UI → same source→blocks→code/run/save/reopen/export/player.",
+      "uiInputChange": true
+    },
+    {
+      "testId": "audio-import-opus",
+      "oldText": "「検証音」を鳴らし、終わるまで待つ\n「音声検証完了-opus」と言う",
+      "newText": "音「検証音」を鳴らす。\n「音声検証完了-opus」と言う。",
+      "preservedMeaning": "Same PLAY_WAIT sound, following exact marker only after sound completion; actual waveform RMS0.02..0.3, duration0.20..0.32, exact channels/sampleRate/MIME, metadata exclusion, one undo/redo transaction, saved canonical hash, restored sound, standalone offline playback/stop and no R415.",
+      "route": "Existing file-picker import → explicit advanced/body/code UI → same source→blocks→code/run/save/reopen/export/player.",
+      "uiInputChange": true
+    },
+    {
+      "testId": "audio-import-opus-mono",
+      "oldText": "「検証音」を鳴らし、終わるまで待つ\n「音声検証完了-opus-mono」と言う",
+      "newText": "音「検証音」を鳴らす。\n「音声検証完了-opus-mono」と言う。",
+      "preservedMeaning": "Same PLAY_WAIT sound, following exact marker only after sound completion; actual waveform RMS0.02..0.3, duration0.20..0.32, exact channels/sampleRate/MIME, metadata exclusion, one undo/redo transaction, saved canonical hash, restored sound, standalone offline playback/stop and no R415.",
+      "route": "Existing file-picker import → explicit advanced/body/code UI → same source→blocks→code/run/save/reopen/export/player.",
+      "uiInputChange": true
+    },
+    {
+      "testId": "audio-file-picker",
+      "oldText": "",
+      "newText": "",
+      "preservedMeaning": "Same title, current release console and exact supported audio MIME/extensions.",
+      "route": "Unchanged existing case body and assertion route.",
+      "uiInputChange": false
+    },
+    {
+      "testId": "audio-unsupported-codecs",
+      "oldText": "",
+      "newText": "",
+      "preservedMeaning": "ALAC, Vorbis and ADTS reject with the same F509/F511 codes.",
+      "route": "Unchanged existing case body and assertion route.",
+      "uiInputChange": false
+    },
+    {
+      "testId": "audio-aac-profile",
+      "oldText": "",
+      "newText": "",
+      "preservedMeaning": "Actual AAC ASC AOT1/5/29 reject F509.",
+      "route": "Unchanged existing case body and assertion route.",
+      "uiInputChange": false
+    },
+    {
+      "testId": "audio-malformed-containers",
+      "oldText": "",
+      "newText": "",
+      "preservedMeaning": "Same truncated/oversized invalid M4A/FLAC/Ogg structures and offsets reject.",
+      "route": "Unchanged existing case body and assertion route.",
+      "uiInputChange": false
+    },
+    {
+      "testId": "audio-ogg-crc",
+      "oldText": "",
+      "newText": "",
+      "preservedMeaning": "Corrupt CRC and chained streams reject F511.",
+      "route": "Unchanged existing case body and assertion route.",
+      "uiInputChange": false
+    },
+    {
+      "testId": "audio-container-limits",
+      "oldText": "",
+      "newText": "",
+      "preservedMeaning": "Same oversample-rate,61second duration and12MiB+1 bounds reject F511/F504.",
+      "route": "Unchanged existing case body and assertion route.",
+      "uiInputChange": false
+    },
+    {
+      "testId": "audio-saved-mime-and-metadata",
+      "oldText": "",
+      "newText": "",
+      "preservedMeaning": "Noncanonical saved audio rejects F508 and mismatched MIME rejects F509.",
+      "route": "Unchanged existing case body and assertion route.",
+      "uiInputChange": false
+    },
+    {
+      "testId": "audio-ui-failure-atomic",
+      "oldText": "",
+      "newText": "",
+      "preservedMeaning": "Broken import rejects F511 while exact project/history/redo/dirty remain unchanged.",
+      "route": "Unchanged existing case body and assertion route.",
+      "uiInputChange": false
+    },
+    {
+      "testId": "audio-project-roundtrip",
+      "oldText": "",
+      "newText": "",
+      "preservedMeaning": "Same project/version/name/file parse diagnostic and wrong9.9.9 rejection F512.",
+      "route": "Unchanged existing case body and assertion route.",
+      "uiInputChange": false
+    },
+    {
+      "testId": "audio-runtime-mime-rejection",
+      "oldText": "「検証音」を鳴らす",
+      "newText": "音「検証音」を鳴らし始める。",
+      "preservedMeaning": "Same nonwaiting PLAY effect and generated-player MIME corruption X602 rejection/start disabled; only spelling changes to explicit 音 and 鳴らし始める.",
+      "route": "Existing M4A import → explicit advanced/body/code UI → same nonwaiting sound operation → export and same malformed MIME player rejection.",
+      "uiInputChange": true
+    }
+  ],
+  "editorRoute": {
+    "oldText": "async function openBodyForTest(page) { if (await page.locator(\"#sourceOverview\").isVisible()) await page.locator(\"#sourceEditBtn\").click(); }",
+    "newText": "async function openBodyForTest(page) {  await (await reveal(page.locator('#uiLevel'))).selectOption('advanced');\n  if (await page.locator('#sourceOverview').isVisible()) await click(page,'#sourceEditBtn');\n  await click(page,'#editorModecode');\n}",
+    "preservedMeaning": "Only select advanced/body/code through real visible UI before filling the same editor; do not alter product API or initial project."
+  },
+  "pinnedAudioManifest": {
+    "path": "audit/fixtures/audio/manifest.json",
+    "sha256": "0ffb41c130f51a5610bcfc5c52400c6fec7dc2b96f755f83d25110d43d386690"
+  },
+  "runtimeBounds": {
+    "hostMilliseconds": 600000,
+    "individualLocatorMilliseconds": 30000
+  },
+  "executionEvidencePolicy": "Historical bound actual outputs are separate reports. This semantic migration ledger is not a product PASS promise.",
+  "meaningAuthority": [
+    {
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "path": "LANGUAGE.md",
+      "sha256": "00253701ffa14d34af66faf37c25b9154c10a5cc1010d95aee15a9bea1f73a5e",
+      "line": 302,
+      "meaning": "鳴らす starts without waiting; 鳴らし、終わるまで待つ waits only for that playback."
+    },
+    {
+      "path": "docs/1.0.2/仕様書.md",
+      "sha256": "6582e2044f8efffb12b77abad504dc63acf67d1de889ad235f18feaed69fd41e",
+      "lines": [
+        432,
+        435,
+        437,
+        442
+      ],
+      "meaning": "Explicit 音 name; 鳴らす waits for that sound; 鳴らし始める starts without waiting. Both old capabilities remain."
+    }
+  ]
+}

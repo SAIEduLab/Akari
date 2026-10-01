@@ -66,7 +66,7 @@ const registerArchivePins=value=>{
     addArchivedPin(value.path,value.sha256);
   for(const child of Object.values(value))registerArchivePins(child);
 };
-for(const ledger of ['editor-v2-input-migration.json','runtime-v2-input-migration.json','format-v2-input-migration.json','other-suites-v2-input-migration.json','browser-v2-input-migration.json','gate-ui-v2-input-migration.json','language-surface-v2-migration.json','product-manifest-v2-input-migration.json'])
+for(const ledger of ['editor-v2-input-migration.json','runtime-v2-input-migration.json','format-v2-input-migration.json','other-suites-v2-input-migration.json','browser-v2-input-migration.json','gate-ui-v2-input-migration.json','language-surface-v2-migration.json','product-manifest-v2-input-migration.json','audio-codecs-v2-input-migration.json'])
   registerArchivePins(JSON.parse(fs.readFileSync('audit/fixtures/'+ledger)));
 const isArchivedSourceData=file=>file.startsWith(archivedSourceRoot);
 const executableAuditFiles=files.filter(p=>/\.(mjs|cjs|js)$/.test(p)&&!isArchivedSourceData(p));

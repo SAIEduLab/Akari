@@ -26,8 +26,8 @@ const {pathToFileURL}=require('url'),{chromium}=require('playwright');
  };
  try{
   await run('pending-expression-owner-delete-refused','［1、2］を言う。',async(p,dialogs)=>{
-   const root=p.locator('#blockEditor'),list=root.locator('[data-schema-id="ListLiteral"]');
-   await U.nodeAction(list.locator('[data-schema-id="NumberLiteral"]').first(),'move');
+   const root=p.locator('#blockEditor'),list=root.locator('.blockui-node[data-schema-id="ListLiteral"]');
+   await U.nodeAction(list.locator('.blockui-node[data-schema-id="NumberLiteral"]').first(),'move');
    await U.slotAction(U.ownedSlots(list).nth(1));
    const before=await read(p);assert.ok(before.pending,'Replacement must actually be pending');
    const route=await outsideButton(p);assert.ok((await read(p)).pending,'Navigation must not discard pending replacement');
@@ -47,8 +47,8 @@ const {pathToFileURL}=require('url'),{chromium}=require('playwright');
   });
   await run('expression-move-destination-not-obscured','1を言う。\n2を言う。',async p=>{
    const root=p.locator('#blockEditor'),before=await read(p);
-   await U.nodeAction(root.locator('[data-schema-id="NumberLiteral"]').first(),'move');
-   await U.slotAction(U.ownedSlots(root.locator('[data-schema-id="Say"]').nth(1)).first());
+   await U.nodeAction(root.locator('.blockui-node[data-schema-id="NumberLiteral"]').first(),'move');
+   await U.slotAction(U.ownedSlots(root.locator('.blockui-node[data-schema-id="Say"]').nth(1)).first());
    assert.ok((await read(p)).pending,'Pointer click must reach the next statement slot');
    await (await reveal(root.locator('[data-blockui-action="cancel-expression-move"]'))).click();const after=await read(p);
    for(const key of ['project','source','history','redo','dirty'])assert.equal(after[key],before[key]);

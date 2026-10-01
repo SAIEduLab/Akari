@@ -31,6 +31,14 @@ Additional checks cover all advanced math families and postfix builtins; finite 
 
 Ambiguity UI checks require at least two distinct concrete alternatives through `[data-intent-choice]` and one `[data-intent-cancel]`. Missing controls are failures. No fallback test clicks an arbitrary interpretation or changes the original source.
 
+### Original-prose pending transaction
+
+The 20 `CI-xx/original-prose-ui` IDs cover all 23 unchanged original作文候補 texts. Each now requires a code pending transaction with the exact original text and owner, a disabled blocks button, no change to the valid source/project/history/redo/dirty state, rejected execution with no scheduler start or effects, and explicit editor cancellation restoring the prior valid source. Every case must satisfy every assertion; there is no conditional acceptance path. The seven ambiguity-choice checks remain separate and unchanged.
+
+Each check records the actual valid, pending, after-Run and cancelled snapshots, their owner keys, and execution observations. The aggregate validator can independently compare source/project/history/redo/dirty/state and owner preservation instead of relying only on success flags.
+
+The earlier preservation harness unconditionally clicked the blocks button, although it explicitly did not claim that narrative prose was executable. That interaction conflicted with the syntax-error disabled-button guarantee and the pending-edit contract in specification section11 and design section9. Specification AppendixD also states that the corpus is not a declaration that every original prose variant parses. The correction preserves all 20 IDs, all original corpus bytes, and all semantic oracles while replacing the inconsistent interaction with stricter pending/non-execution/cancellation observations. `audit/fixtures/intent-original-prose-pending-migration.json` records both routes, hashes, originals, and their guarantees. Product behavior is not relaxed for this audit correction.
+
 ## Evidence and limitations
 
 The report contains candidate, browser, executable, oracle, and audit-input hashes; every result; all 20 coverage rows; original sources; primitive runtime traces; and generated artifacts. Selected UI failures also save screenshots. `FAIL`, `PENDING`, `INCOMPLETE`, and `NOT_RUN` are never converted into PASS. Browser startup failure blocks execution and remains explicit.

@@ -62,6 +62,15 @@
       "candidateSha256": "d2e22db20b2a7eb2efb75dc8b27670e73c545839db69ad8fb356746ef8789931",
       "testCount": 7,
       "stableIdsPreserved": true
+    },
+    {
+      "path": "audit/tests/manual-docs.mjs",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/manual-docs.mjs",
+      "originalSha256": "6712dd52767293c4d5c0f5fa4b216680ff59cb91e7b8211ae948f4b784974f1b",
+      "candidateSha256": "4b2aff118ff12faeb0224064edbcb3824873ff34130303084f2ac95ea2ac3967",
+      "testCount": 1,
+      "stableIdsPreserved": true,
+      "checks": "One documentation browser flow: create a character through the toolbox, select its click event, enter the first-move manual sample through the visible source editor, run it, and verify a 10-step movement plus no compile errors. Static validation checks 45 syntax examples, 136 local links, IDs/headings/accessibility metadata across six pages."
     }
   ],
   "explicitlyApprovedContractChanges": [
@@ -228,13 +237,19 @@
       "oldText": "default mascot name マスコット",
       "newText": "default mascot name あかり",
       "preservedMeaning": "The test still inspects the real current product starter directly; its remaining geometry/asset/roundtrip assertions are unchanged."
+    },
+    {
+      "testId": "manual-docs first-work editor flow",
+      "oldText": "Fill the MANUAL first-move sample directly into #codeEditor immediately after creating a character; the editor started hidden because the starter opens in blocks mode, and the sample hard-coded the actor name ねこ.",
+      "newText": "Select code mode through #editorModecode, wait for #codeEditor to become visible, and substitute the newly created character’s visible selected name into the sample subject; keep the original rightward 10-step action, click trigger, movement assertion, and empty compile-error assertion.",
+      "preservedMeaning": "Exercise the real toolbox-created character and its click script using the manual’s first-move sample, then assert the clicked character moves exactly 10 steps and the program compiles without errors. Only the UI setup and sample subject are adapted to the v2 starter; the expected behavior is unchanged."
     }
   ],
   "browserVerification": {
     "environment": "Chromium via Playwright; product HTML loaded into an offline page with setContent because environment policy blocks file:// navigation",
-    "productSnapshot": "/workspace/scratch/akari-revised-spec-v2/product-under-test.html",
+    "productSnapshot": "/workspace/scratch/akari-revised-spec-v2/product-integrated-ee297243.html",
     "productRelease": "Akari1_0_2.html",
-    "productSha256": "73da0cb9b8220112e98c852e8b8f53c7d8b2ba74a3b6d03dac8d0f3197a57170",
+    "productSha256": "7823e61436ac7bb30de8b49acc1c78f626c8b7dd5606dcbd0a9654da451e608d",
     "results": {
       "runSyntaxTests": "86/86 PASS",
       "runBlockCodecTests": "170/170 PASS",
@@ -242,7 +257,16 @@
       "runProductContractTests": "7/7 PASS"
     },
     "unchangedSnapshot": true,
-    "evidenceReport": "/workspace/scratch/akari-revised-spec-v2/suites-browser-snapshot-report.json"
+    "evidenceReport": "/workspace/scratch/akari-revised-spec-v2/fresh-product-suites.json",
+    "manualDocs": {
+      "runner": "audit/tests/manual-docs.mjs",
+      "archivedBaselineSha256": "6712dd52767293c4d5c0f5fa4b216680ff59cb91e7b8211ae948f4b784974f1b",
+      "candidateSha256": "4b2aff118ff12faeb0224064edbcb3824873ff34130303084f2ac95ea2ac3967",
+      "static": "PASS: 45 syntax examples, 136 local links, six pages",
+      "firstWork": "PASS: v2 blocks mode switched through UI to code mode; toolbox-created character received the click script; observed X changed 80 to 90; compile errors empty.",
+      "evidenceReport": "/workspace/scratch/akari-revised-spec-v2/manual-docs-first-work-browser.json",
+      "limitation": "The full runner’s file:// documentation-page navigation is blocked by sandbox policy; browser verification loaded the unchanged product HTML with offline Playwright setContent and exercised the same first-work UI operations."
+    }
   },
   "knownUnresolvedFailures": []
 }

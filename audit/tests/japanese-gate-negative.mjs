@@ -18,7 +18,11 @@ try{
  const execution={execution:'real EventScheduler / RuntimeModel',errors:[],roundtrips:[{fixture:true}],trace:[],final:{actors:[{fixture:true}]}};
  const intent={status:'PASS',filter:null,boot:{status:'PASS'},candidate:{sha256:inputs.productSha256,testedFile:candidate,url:pathToFileURL(candidate).href},environment:{protocol:'file:',browser:browserEnvironment.version,playwright:browserEnvironment.playwright},auditInputs:inputHashes(intentInputPaths),oracle:{corpusSha256,cases:corpus.cases,structuredSources:scenarios},total:89,counts:{PASS:89,FAIL:0,PENDING:0},results:intentCaseIds.map(id=>({id,status:'PASS',evidence:{fixture:true}})),coverage:scenarios.map(s=>({id:s.id,originalProse:'PASS',semantic:'PASS',blocks:'PASS'}))};
  for(const scenario of scenarios){
-  intent.results.find(r=>r.id===scenario.id+'/original-prose-ui').evidence={checks:corpus.cases.find(c=>c.id===scenario.id).sections.filter(s=>s.label.startsWith('作文候補')).map(p=>({original:p.text,unchanged:true,automaticExecution:false}))};
+  intent.results.find(r=>r.id===scenario.id+'/original-prose-ui').evidence={meaningAcceptance:'not asserted by this preservation route',checks:corpus.cases.find(c=>c.id===scenario.id).sections.filter(s=>s.label.startsWith('作文候補')).map(p=>{
+    const validOwnerKey='script:fixture:start',valid={source:'10歩進む。',project:'{"fixture":true}',history:1,redo:0,dirty:false,state:'DESIGN',pending:false},
+      pending={ownerKey:validOwnerKey,mode:'code',pending:{ownerKey:validOwnerKey,kind:'code',value:p.text}},initial={...valid,pending:true},observed={say:[],start:0,motion:[]};
+    return{original:p.text,validOwnerKey,valid,pending,initial,afterRun:clone(initial),afterRunPending:clone(pending),cancelled:clone(valid),cancelledOwnerKey:validOwnerKey,cancelledPending:null,observedAfterRun:clone(observed),observedAfterCancel:clone(observed),unchanged:true,blocksDisabled:true,executionRejected:true,cancelRestoredSource:true,automaticExecution:false};
+   })};
   if(scenario.id!=='CI-20'){
    intent.results.find(r=>r.id===scenario.id+'/parser-core').evidence={structuredSource:scenario.source,original:clone(execution)};
    intent.results.find(r=>r.id===scenario.id+'/blocks-core').evidence={structuredSource:scenario.source,blocks:clone(execution),sourceTraceCompared:true};
@@ -60,6 +64,23 @@ try{
  check('STATIC/missing-check',fixed,vs,r=>r.contract.results.pop());check('STATIC/changed-doc-hash',fixed,vs,r=>r.contract.documentHashes[0].sha256='0'.repeat(64));
  check('STATIC/execution-claim',fixed,vs,r=>r.contract.productDynamic.status='PASS');
  check('MIGRATION/missing-stable-id',migration,vm,r=>r.migration.stableIds=604);check('MIGRATION/stale-snapshot',migration,vm,r=>r.snapshot.productSha256='0'.repeat(64));
+ const proseRow=r=>r.results.find(x=>x.id==='CI-01/original-prose-ui').evidence.checks[0];
+ for(const flag of ['unchanged','blocksDisabled','executionRejected','cancelRestoredSource','automaticExecution']){
+  check('INTENT/prose-missing-'+flag,intent,vi,r=>delete proseRow(r)[flag]);
+  check('INTENT/prose-invalid-'+flag,intent,vi,r=>proseRow(r)[flag]=flag==='automaticExecution');
+ }
+ const proseMutations={
+  'owner':row=>row.pending.ownerKey='changed','pending-owner':row=>row.pending.pending.ownerKey='changed',
+  'pending-kind':row=>row.pending.pending.kind='block-draft','pending-value':row=>row.pending.pending.value='changed',
+  'valid-pending':row=>row.valid.pending=true,'valid-state':row=>row.valid.state='RUNNING','initial-pending':row=>row.initial.pending=false,
+  'initial-source':row=>row.initial.source='changed','initial-project':row=>row.initial.project='changed',
+  'initial-history':row=>row.initial.history++,'initial-redo':row=>row.initial.redo++,'initial-dirty':row=>row.initial.dirty=true,'initial-state':row=>row.initial.state='RUNNING',
+  'run-project':row=>row.afterRun.project='changed','run-history':row=>row.afterRun.history++,'run-pending':row=>row.afterRunPending.pending.value='changed',
+  'run-speech':row=>row.observedAfterRun.say.push('changed'),'run-start':row=>row.observedAfterRun.start=1,'run-motion':row=>row.observedAfterRun.motion.push('changed'),
+  'cancel-project':row=>row.cancelled.project='changed','cancel-history':row=>row.cancelled.history++,'cancel-owner':row=>row.cancelledOwnerKey='changed',
+  'cancel-pending':row=>row.cancelledPending={},'cancel-execution':row=>row.observedAfterCancel.start=1,
+ };
+ for(const[key,mutate]of Object.entries(proseMutations))check('INTENT/prose-'+key,intent,vi,r=>mutate(proseRow(r)));
  assert.deepEqual(results.map(r=>r.id),negativeCaseIds);
  const report={schema:'akari-japanese-gate-negative-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(['audit/tests/japanese-gate-negative.mjs','audit/lib/japanese-gate-contract.mjs']),results};verifyNegativeReport(report,inputs);
  fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,JSON.stringify(report,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({status:'PASS',rejections:results.length,destination}));

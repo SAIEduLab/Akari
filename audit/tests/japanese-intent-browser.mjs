@@ -93,8 +93,29 @@ try{await withBrowser(chrome,async browser=>{
  // preservation and non-execution only, not that narrative prose is executable.
  for(const item of corpus.cases)await run(item.id+'/original-prose-ui',async p=>{
   const originals=item.sections.filter(s=>s.label.startsWith('作文候補'));const checks=[];
-  for(const entry of originals){await fill(p,entry.text);assert.equal(await p.locator('#codeEditor').inputValue(),entry.text);assert.equal((await uiState(p)).state,'DESIGN');const initial=await uiState(p);
-   await click(p,'editorModeblocks');await click(p,'editorModecode');assert.equal(await p.locator('#codeEditor').inputValue(),entry.text);assert.deepEqual(await uiState(p),initial,'mode switch changed original draft/model/history');checks.push({original:entry.text,unchanged:true,automaticExecution:false});}
+  await installProject(p,{id:item.id+'-preservation',source:'10歩進む。'});await click(p,'editorModecode');await observeUi(p);
+  const pendingState=()=>p.evaluate(()=>{const s=Akari.app.editorState.main;return{ownerKey:s.ownerKey,mode:s.mode,pending:s.pendingEdit};});
+  for(const entry of originals){
+   const valid=await uiState(p),owner=(await pendingState()).ownerKey;assert.equal(valid.pending,false);assert.equal(valid.state,'DESIGN');
+   await fill(p,entry.text);assert.equal(await p.locator('#codeEditor').inputValue(),entry.text);
+   const pending=await pendingState(),initial=await uiState(p);
+   assert.equal(pending.mode,'code');assert.equal(pending.ownerKey,owner);assert.equal(pending.pending?.ownerKey,owner);
+   assert.equal(pending.pending?.kind,'code');assert.equal(pending.pending?.value,entry.text);assert.equal(initial.pending,true);
+   for(const k of ['source','project','history','redo','dirty','state'])assert.deepEqual(initial[k],valid[k],k+' changed while preserving original prose');
+   assert.equal(await p.locator('#editorModeblocks').isDisabled(),true,'unparsed prose cannot become executable blocks');
+   await click(p,'runBtn');const afterRun=await uiState(p),afterRunPending=await pendingState(),observedAfterRun=await p.evaluate(()=>__intentObserved);
+   assert.deepEqual(afterRun,initial,'rejected execution changed the pending transaction');
+   assert.equal(await p.locator('#codeEditor').inputValue(),entry.text);assert.deepEqual(afterRunPending,pending,'rejected execution changed the pending owner/source');
+   assert.deepEqual(observedAfterRun,{say:[],start:0,motion:[]},'unparsed prose executed');
+   await click(p,'editorCancel');assert.equal(await p.locator('#codeEditor').inputValue(),valid.source);
+   const cancelled=await uiState(p),cancelledState=await pendingState(),observedAfterCancel=await p.evaluate(()=>__intentObserved);
+   assert.deepEqual(cancelled,valid,'explicit cancellation changed the valid project/history');
+   assert.equal(cancelledState.ownerKey,owner);assert.equal(cancelledState.pending,null);
+   assert.deepEqual(observedAfterCancel,{say:[],start:0,motion:[]});
+   checks.push({original:entry.text,valid,pending,validOwnerKey:owner,initial,afterRun,afterRunPending,observedAfterRun,
+    cancelled,cancelledOwnerKey:cancelledState.ownerKey,cancelledPending:cancelledState.pending,observedAfterCancel,
+    unchanged:true,blocksDisabled:true,executionRejected:true,cancelRestoredSource:true,automaticExecution:false});
+  }
   return{checks,meaningAcceptance:'not asserted by this preservation route'};
  });
  for(const ambiguity of ambiguities)await run(ambiguity.id+'/choices-nonexecution-cancel',async p=>{
