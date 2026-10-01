@@ -3,6 +3,7 @@ import { currentProductFile, currentProductVersion } from "./../lib/product-path
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
@@ -221,6 +222,52 @@ const cases = {
       const result=await p.evaluate(async text=>{try{await Akari.parseProjectFile(text);return 'accepted';}catch(e){return e.code;}},text);
       assert.notEqual(result,'accepted');assert.deepEqual(await state(p),before);
     }
+  },
+  async 'mascot-dango-original-save-standalone'(p) {
+    const expected='0af5226c316282da698bdaa08b52e3fac2a290736cdf70bbe2da9c6e4cba7b86';
+    const mascot=p.locator('[data-sprite-preset="akariMascot"]'),dango=p.locator('[data-sprite-preset="dango"]');
+    assert.equal(await mascot.count(),1,'the original mascot choice is retained');
+    assert.equal(await dango.count(),1);
+    assert.equal((await dango.locator('xpath=ancestor::details[1]').locator('summary').innerText()).replace(/\s+/g,''),'マスコット2種');
+    await (await reveal(dango)).click();
+    const first=await current(p);
+    assert.equal(first.name,'だんご');assert.equal(first.w,180);assert.equal(first.h,180);
+    const image=await imageInfo(p);
+    assert.equal(image.width,1254);assert.equal(image.height,1254);assert.equal(image.first[3],0,'the original alpha channel remains transparent');
+    const asset=await p.evaluate(id=>{
+      const c=Akari.app.project.components.find(c=>c.id===id),a=Akari.app.assetStore.get(c.costumes[0].assetId);
+      return {id:a.id,sha256:a.sha256,byteLength:a.byteLength,meta:a.meta};
+    },first.id);
+    assert.equal(asset.sha256,expected);assert.equal(asset.byteLength,1294239);assert.deepEqual(asset.meta,{width:1254,height:1254});
+    await p.screenshot({path:path.join(artifacts,'dango-preset.png'),fullPage:true});
+    await (await reveal(dango)).click();const second=await current(p);
+    assert.notEqual(second.name,first.name);assert.equal(second.costumes[0].assetId,asset.id,'repeated placement shares one original PNG');
+    const charged=await p.evaluate(expected=>Array.from(Akari.app.assetStore.snapshotRefs().values()).filter(a=>a.sha256===expected).map(a=>a.byteLength),expected);
+    assert.deepEqual(charged,[1294239]);
+    await click(p,'#undoBtn');assert.equal(await p.evaluate(id=>Akari.app.project.components.some(c=>c.id===id),second.id),false);
+    await click(p,'#redoBtn');assert.equal(await p.evaluate(id=>Akari.app.project.components.some(c=>c.id===id),second.id),true);
+    const saved=path.join(artifacts,'dango.akari.md');let pending=p.waitForEvent('download');await click(p,'#saveBtn');await (await pending).saveAs(saved);
+    const text=fs.readFileSync(saved,'utf8');assert.ok(Buffer.byteLength(text)<fixtureApi.LIMITS.fileBytes);
+    const restored=await p.evaluate(async text=>{
+      const r=await Akari.parseProjectFile(text),a=Array.from(r.assetStore.snapshotRefs().values()).find(a=>a.sha256==='0af5226c316282da698bdaa08b52e3fac2a290736cdf70bbe2da9c6e4cba7b86');
+      return {sha256:a.sha256,byteLength:a.byteLength,components:r.project.components.filter(c=>c.costumes?.some(co=>co.assetId===a.id)).map(c=>({name:c.name,w:c.w,h:c.h}))};
+    },text);
+    assert.equal(restored.sha256,expected);assert.equal(restored.byteLength,1294239);assert.deepEqual(restored.components,[{name:first.name,w:180,h:180},{name:second.name,w:180,h:180}]);
+    await click(p,'#newBtn');await p.locator('#fileInput').setInputFiles(saved);
+    await p.waitForFunction(id=>Akari.app.project.components.some(c=>c.id===id),second.id);await select(p,second.id);
+    assert.deepEqual(await imageInfo(p),image,'save and reload preserve decoded pixels');
+    const generated=path.join(artifacts,'dango.html');pending=p.waitForEvent('download');await click(p,'#exportBtn');await (await pending).saveAs(generated);
+    const html=fs.readFileSync(generated,'utf8');assert.ok(html.includes(expected));
+    const raw=Array.from(html.matchAll(/"dataBase64"\s*:\s*"([A-Za-z0-9+/=]+)"/g),match=>Buffer.from(match[1],'base64'));
+    assert.ok(raw.some(bytes=>bytes.length===1294239&&createHash('sha256').update(bytes).digest('hex')===expected),'standalone HTML carries the exact original PNG');
+    await p.goto(pathToFileURL(path.resolve(generated)).href);await p.locator('#playerStart').click();
+    await p.waitForFunction(()=>Array.from(document.querySelectorAll('#formSurface .costume-img')).some(i=>i.complete&&i.naturalWidth===1254&&i.naturalHeight===1254));
+    const shown=await p.evaluate(()=>{
+      const i=Array.from(document.querySelectorAll('#formSurface .costume-img')).find(i=>i.naturalWidth===1254),c=i.closest('.component'),canvas=document.createElement('canvas');
+      canvas.width=1254;canvas.height=1254;canvas.getContext('2d').drawImage(i,0,0);
+      return {width:c.style.width,height:c.style.height,fit:getComputedStyle(i).objectFit,alpha:canvas.getContext('2d').getImageData(0,0,1,1).data[3]};
+    });
+    assert.deepEqual(shown,{width:'180px',height:'180px',fit:'fill',alpha:0},'standalone displays the square original at the requested size without cropping');
   },
 };
 assert.deepEqual(Object.keys(cases).sort(),[...editorAssetIds].sort());
