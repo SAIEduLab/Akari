@@ -387,3 +387,5 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 六つの `docs/1.0.2/` 承認文書と旧能力fixtureはoracleであり、開発中製品に合わせて書き換えない。`language-v2-test-migration.json` の `pending` / `NOT_RUN` は設計時点の移行状態を表し、今回の実行結果の代用にしない。静的reportの `productDynamic: NOT_RUN` とSEMANTIC未実施は維持する。20作文は成人が作成した仮説であり、実児童による理解・操作観察はこの機械監査のPASS範囲に含まれない。
 
 実行の入口は `audit/lib/gate-contract.mjs`、新結果のvalidatorは `audit/lib/japanese-gate-contract.mjs`。期待集合はrunnerの観測出力から縮小せず、意図89 ID・実行境界20 IDを明示し、FAIL / PENDING / INCOMPLETE / NOT_RUN / timeout / 例外をPASSへ変換しない。
+
+ネイティブタブ可視性の補助行 `NATIVE-TAB-VISIBILITY-OBSERVATION` は `pass: null` / `UNVERIFIED` を保持し、20必須試験の成功数に含めない。aggregateはこの既知の観測行だけを別区分で許容し、PASSへの昇格や必須試験の未検証は拒否する。

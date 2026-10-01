@@ -38,7 +38,12 @@ try{
  const migration={schema:'akari-language-migration-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(migrationInputPaths),migration:{status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153}};
  const check=(id,base,verify,mutate)=>{const bad=clone(base);mutate(bad);assert.throws(()=>verify(bad));results.push({id,rejected:true});};
  const vi=r=>verifyIntentReport(r,inputs),vr=r=>verifyRuntimeReport(r,inputs,dir),vs=r=>verifyContractReport(r,inputs),vm=r=>verifyMigrationReport(r,inputs);
- vi(intent);vr(runtime);vs(fixed);vm(migration); // Validator control fixtures, no execution PASS claim.
+ vi(intent);vr(runtime);vs(fixed);vm(migration);
+ const observationControl=clone(runtime),entryFile=path.join(dir,'entry-browser-evidence.json');
+ const entryBytes=fs.readFileSync(entryFile),entry=JSON.parse(entryBytes);
+ const observation={id:'NATIVE-TAB-VISIBILITY-OBSERVATION',pass:null,status:'UNVERIFIED',observed:{hidden:false},note:'Synthetic validator control, no native visibility proof'};
+ observationControl.runtime.runs[2].reports.push(observation);observationControl.runtime.unverified=1;entry.reports.push(observation);
+ fs.writeFileSync(entryFile,JSON.stringify(entry));vr(observationControl);fs.writeFileSync(entryFile,entryBytes); // Validator control fixtures, no execution PASS claim.
  for(const status of ['FAIL','PENDING','INCOMPLETE','NOT_RUN']){check('INTENT/status-'+status,intent,vi,r=>r.status=status);check('RUNTIME/status-'+status,runtime,vr,r=>r.status=status);}
  check('INTENT/missing-case',intent,vi,r=>r.results.pop());check('INTENT/duplicate-case',intent,vi,r=>r.results[1]=r.results[0]);
  check('INTENT/false-total',intent,vi,r=>r.total--);check('INTENT/missing-evidence',intent,vi,r=>delete r.results[0].evidence);
@@ -50,6 +55,8 @@ try{
  check('RUNTIME/stale-product',runtime,vr,r=>r.runtime.productSha256='0'.repeat(64));check('RUNTIME/unverified',runtime,vr,r=>r.runtime.unverified=1);
  check('RUNTIME/child-timeout',runtime,vr,r=>r.runtime.runs[0].signal='SIGTERM');check('RUNTIME/child-snapshot',runtime,vr,r=>r.runtime.runs[0].snapshotMatches=false);
  check('RUNTIME/changed-child-report',runtime,vr,r=>r.runtime.runs[0].reports[0].fixture=false);
+ check('RUNTIME/observation-promoted',runtime,vr,r=>{r.runtime.runs[2].reports.push({id:'NATIVE-TAB-VISIBILITY-OBSERVATION',pass:true,status:'PASS',observed:{},note:'fixture'});});
+ check('RUNTIME/required-case-unverified',runtime,vr,r=>{r.runtime.runs[0].reports[0].pass=null;r.runtime.runs[0].reports[0].status='UNVERIFIED';});
  check('STATIC/missing-check',fixed,vs,r=>r.contract.results.pop());check('STATIC/changed-doc-hash',fixed,vs,r=>r.contract.documentHashes[0].sha256='0'.repeat(64));
  check('STATIC/execution-claim',fixed,vs,r=>r.contract.productDynamic.status='PASS');
  check('MIGRATION/missing-stable-id',migration,vm,r=>r.migration.stableIds=604);check('MIGRATION/stale-snapshot',migration,vm,r=>r.snapshot.productSha256='0'.repeat(64));

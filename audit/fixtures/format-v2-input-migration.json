@@ -6,7 +6,7 @@
       "originalPath": "audit/tests/format-compatibility.mjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/format-compatibility.mjs",
       "originalSha256": "cfa3d38864fd887622f4cb296b186feafe7715e65a795fc6d82fdbc0a8298c2b",
-      "candidateSha256": "51e30fe0c9b4ea8ecaae36eebb8ffc56fa38ff7d935aff4576d81c063bf1b1c4",
+      "candidateSha256": "ec9aa8b33e767b1c8705d8f56cd26a13648c57929b5b03054715fab919c419ea",
       "stableIds": [
         "FORMAT-PROJECT-PRODUCER-INDEPENDENT",
         "FORMAT-PROJECT-CONTRACT-REJECTION",
@@ -309,6 +309,60 @@
       "oldText": "p.languageContractId='1';}",
       "newText": "p.languageContractId='2';}",
       "preservedMeaning": "Autosave recovery must reject current contract represented with the wrong type."
+    },
+    {
+      "testId": "FORMAT-PROJECT-PRODUCER-INDEPENDENT",
+      "oldText": "priorApi.makeDefaultProject()",
+      "newText": "makeRegressionProject(priorApi)",
+      "preservedMeaning": "Explicitly retain the baseline stage/button/data/script preconditions after the approved starter simplification. The original producer, ownership, exact source, executable effects and malformed-input assertions remain unchanged."
+    },
+    {
+      "testId": "FORMAT-PROJECT-CONTRACT-REJECTION",
+      "oldText": "priorApi.makeDefaultProject()",
+      "newText": "makeRegressionProject(priorApi)",
+      "preservedMeaning": "Explicitly retain the baseline stage/button/data/script preconditions after the approved starter simplification. The original producer, ownership, exact source, executable effects and malformed-input assertions remain unchanged."
+    },
+    {
+      "testId": "FORMAT-RUNTIME-PRODUCER-INDEPENDENT",
+      "oldText": "priorApi.makeDefaultProject()",
+      "newText": "makeRegressionProject(priorApi)",
+      "preservedMeaning": "Explicitly retain the baseline stage/button/data/script preconditions after the approved starter simplification. The original producer, ownership, exact source, executable effects and malformed-input assertions remain unchanged."
+    },
+    {
+      "testId": "FORMAT-RUNTIME-CONTRACT-REJECTION",
+      "oldText": "priorApi.makeDefaultProject()",
+      "newText": "makeRegressionProject(priorApi)",
+      "preservedMeaning": "Explicitly retain the baseline stage/button/data/script preconditions after the approved starter simplification. The original producer, ownership, exact source, executable effects and malformed-input assertions remain unchanged."
+    },
+    {
+      "testId": "FORMAT-FINGERPRINT-METADATA-EXCLUSION",
+      "oldText": "priorApi.makeDefaultProject()",
+      "newText": "makeRegressionProject(priorApi)",
+      "preservedMeaning": "Explicitly retain the baseline stage/button/data/script preconditions after the approved starter simplification. The original producer, ownership, exact source, executable effects and malformed-input assertions remain unchanged."
+    },
+    {
+      "testId": "FORMAT-BROWSER-FILE-ROUNDTRIP",
+      "oldText": "priorApi.makeDefaultProject()",
+      "newText": "makeRegressionProject(priorApi)",
+      "preservedMeaning": "Explicitly retain the baseline stage/button/data/script preconditions after the approved starter simplification. The original producer, ownership, exact source, executable effects and malformed-input assertions remain unchanged."
+    },
+    {
+      "testId": "FORMAT-BROWSER-IMPORT-ATOMICITY",
+      "oldText": "priorApi.makeDefaultProject()",
+      "newText": "makeRegressionProject(priorApi)",
+      "preservedMeaning": "Explicitly retain the baseline stage/button/data/script preconditions after the approved starter simplification. The original producer, ownership, exact source, executable effects and malformed-input assertions remain unchanged."
+    },
+    {
+      "testId": "FORMAT-BROWSER-AUTOSAVE-RECOVERY",
+      "oldText": "priorApi.makeDefaultProject()",
+      "newText": "makeRegressionProject(priorApi)",
+      "preservedMeaning": "Explicitly retain the baseline stage/button/data/script preconditions after the approved starter simplification. The original producer, ownership, exact source, executable effects and malformed-input assertions remain unchanged."
+    },
+    {
+      "testId": "FORMAT-BROWSER-STANDALONE-OFFLINE",
+      "oldText": "priorApi.makeDefaultProject()",
+      "newText": "makeRegressionProject(priorApi)",
+      "preservedMeaning": "Explicitly retain the baseline stage/button/data/script preconditions after the approved starter simplification. The original producer, ownership, exact source, executable effects and malformed-input assertions remain unchanged."
     }
   ]
 }

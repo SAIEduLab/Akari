@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
 import P from '../browser/cases/persistence-probe.cjs';
@@ -10,6 +11,14 @@ import {verifySurfaceResults} from '../lib/verify-surface-results.mjs';
 const [browser,output]=process.argv.slice(2), product=currentProductFile(), before=snapshot(product);
 if(!output||fs.existsSync(output))throw Error('Supply a new output path');
 const dir=path.dirname(output);fs.mkdirSync(dir,{recursive:true});
+const require=createRequire(import.meta.url);
+const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
+const {loadApi}=require('../browser/cases/audit-lib.cjs');
+const regressionProject=makeRegressionProject(loadApi(fs.readFileSync(product,'utf8')));
+regressionProject.scripts=[{targetId:'stage',event:'start',source:'何もしない。'}];
+regressionProject.actions=[];regressionProject.functions=[];
+const regressionFixture=path.join(dir,'editor-surface-regression.akari.md');
+fs.writeFileSync(regressionFixture,loadApi(fs.readFileSync(product,'utf8')).serializeProject(regressionProject));
 let browserVersion;
 async function reveal(l){
   if(!await l.isVisible())for(const panel of await l.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all())await panel.locator('.blockui-side-toggle').click();
@@ -26,7 +35,7 @@ const results=[];
 await withBrowser(browser,async b=>{
   browserVersion=b.version();
   const run=async(id,fn)=>{
-    try{const evidence=await pageFor(b,product,async p=>{p.on('dialog',d=>d.accept());await (await reveal(p.locator('#uiLevel'))).selectOption('advanced');await (await reveal(p.locator('#objectSelect'))).selectOption('stage');await (await reveal(p.locator('#eventSelect'))).selectOption('start');return fn(p);});results.push({id,status:'PASS',evidence});}
+    try{const evidence=await pageFor(b,product,async p=>{p.on('dialog',d=>d.accept());await (await reveal(p.locator('#uiLevel'))).selectOption('advanced');if(id!=='RELEASE-GUI/corrupt-autosave-preserves-current'){await p.locator('#fileInput').setInputFiles(regressionFixture);await p.waitForFunction(name=>Akari.app.project.name===name,regressionProject.name);}await (await reveal(p.locator('#uiLevel'))).selectOption('advanced');await (await reveal(p.locator('#objectSelect'))).selectOption('stage');await (await reveal(p.locator('#eventSelect'))).selectOption('start');return fn(p);});results.push({id,status:'PASS',evidence});}
     catch(e){results.push({id,status:'FAIL',detail:e.stack});}
     console.log(id+': '+results.at(-1).status);
   };
@@ -59,9 +68,9 @@ await withBrowser(browser,async b=>{
   });
   await run('RELEASE-GUI/else-surface-branch-position',async p=>{
     const cases=[];
-    for(const lead of ['そうでなければ','そうではなければ'])for(const ending of ['', '、', '、次のことをする', '、2を言う。']){
-      const inline=ending==='、2を言う。',header=lead+ending+' ※ 枝  ',
-        source='もし条件（条件の答え（あてはまらない））が成り立つなら、1を言う。\n※ でなければ、次のことをする\n'+header+(inline?'':'\n  2を言う。')+'\n3を言う。',
+    for(const lead of ['そうでなければ'])for(const ending of ['、','、（2）の値を言う。']){
+      const inline=ending==='、（2）の値を言う。',header=lead+ending+' ※ 枝  ',
+        source='もし条件（条件の答え（あてはまらない））が成り立つなら、（1）の値を言う。\n※ でなければ、次のことをする\n'+header+(inline?'':'\n  （2）の値を言う。')+'\n（3）の値を言う。',
         at=source.indexOf(header);
       await fill(p,source);const before=await state(p);
       await p.locator('#codeEditor').evaluate((t,n)=>{t.focus();t.setSelectionRange(n,n);},at);
@@ -139,7 +148,7 @@ await withBrowser(browser,async b=>{
   });
   await run('RELEASE-GUI/corrupt-autosave-preserves-current',async p=>{
     const initial=await state(p);await fill(p,source);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));
-    await p.evaluate(async()=>{await new Promise((resolve,reject)=>{const q=indexedDB.open('akari-workspace-f2');q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readwrite'),s=tx.objectStore('workspace'),get=s.get('latest');get.onsuccess=()=>{const v=get.result;if(!v){reject(Error('missing latest autosave'));return;}v.project.components[1].id=v.project.components[0].id;s.put(v);};tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};});});
+    await p.evaluate(async()=>{await new Promise((resolve,reject)=>{const q=indexedDB.open('akari-workspace-f2');q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readwrite'),s=tx.objectStore('workspace'),get=s.get('latest');get.onsuccess=()=>{const v=get.result;if(!v){reject(Error('missing latest autosave'));return;}v.project.components[0].id='stage';s.put(v);};tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};});});
     await p.reload();await p.waitForFunction(()=>document.querySelector('#console').textContent.includes('F505'));
     assert.equal(await p.locator('#recoveryModal.show').count(),0);
     const current=await state(p);assert.notEqual(current.source,source);assert.equal(current.project,initial.project);

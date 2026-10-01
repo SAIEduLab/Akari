@@ -15,7 +15,51 @@ await run('media-editor-run-and-save-roundtrip',async()=>{await (await reveal(p.
 await run('real-media-standalone-player',async()=>{const pending=p.waitForEvent('download');await (await reveal(p.locator('#exportBtn'))).click();const download=await pending,file=L.path.join(dir,'media-player.html');await download.saveAs(file);const text=L.read(file);assert.ok(text.includes('Apache License'));const player=await c.newPage();await player.goto(pathToFileURL(file).href);await player.locator('#playerStart:not([disabled])').waitFor();await (await reveal(player.locator('#playerStart'))).click();await player.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('素材完了')||document.querySelector('#formSurface').textContent.includes('素材完了'));const output=await player.locator('#playerOutput').textContent();await (await reveal(player.locator('#playerStop'))).click();assert.equal(await player.locator('#playerStop').isDisabled(),true);const pictures=await player.locator('img').evaluateAll(xs=>xs.map(x=>({complete:x.complete,width:x.naturalWidth,height:x.naturalHeight})));await player.close();return{output,pictures,bytes:L.fs.statSync(file).size,offline:true};});
 await run('format1-malformed-mismatch-and-state-protection',async()=>{await (async()=>{const control=await reveal(p.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('点数を71にする。');})();await p.waitForTimeout(350);await (async()=>{const control=await reveal(p.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();const before=await state(),original=L.read(saved);const files=[['format-type',original.replace('"formatVersion": 2','"formatVersion": "2"')],['missing-app',original.replace('"appVersion": "'+currentProductVersion()+'",','')],['schema-type',original.replace('"schema": "akari-project"','"schema": null')],['mismatch',original.replace('"languageContractId": 2','"languageContractId": null')],['body-tamper',original.replace('# あかり '+currentProductVersion()+' の作品','# 改変')],['corrupt-payload',original.replace('"schema": "akari-project"','"schema": BAD')]],evidence=[];
  const codes={'format-type':'F501','missing-app':'F503','schema-type':'F501',mismatch:'F501','body-tamper':'F512','corrupt-payload':'F502'};for(const[id,text]of files){const file=L.path.join(dir,id+'.akari.md');L.fs.writeFileSync(file,text);const logs=await p.locator('#console').textContent();await p.locator('#fileInput').setInputFiles(file);await waitForConsoleAppend(logs,codes[id]);await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');assert.deepEqual(await state(),before,id);const current=await p.locator('#console').textContent(),diagnostic=current.startsWith(logs)?current.slice(logs.length):current;assert.ok(diagnostic.includes(codes[id]),id+' missing '+codes[id]);evidence.push({id,code:codes[id],diagnostic:diagnostic.slice(-220)});}return{cases:evidence,projectSourceHistoryRedoDirtyPreserved:true};});
-await run('invalid-syntax-save-and-format1-storage-isolation',async()=>{await (async()=>{const control=await reveal(p.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('もし');})();await p.waitForTimeout(350);const before=await getProject(),pending=p.waitForEvent('download');await (await reveal(p.locator('#saveBtn'))).click();const d=await pending,file=L.path.join(dir,'invalid-source.akari.md');await d.saveAs(file);assert.equal(await p.evaluate(t=>Akari.parseProjectFile(t).then(x=>x.project.scripts.find(s=>s.targetId==='stage'&&s.event==='start').source),L.read(file)),'もし');await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));const calls=await p.evaluate(()=>__persistenceCalls);assert.ok(calls.some(x=>x.api==='indexedDB'&&x.method==='open'&&x.key==='akari-workspace-f2'));assert.ok(calls.every(x=>x.api==='indexedDB'?x.key==='akari-workspace-f2':x.api==='localStorage'&&['akari.autosave.f2','akari.uiLevel.v1'].includes(x.key)));await p.reload();await p.locator('#recoveryModal.show').waitFor();await (await reveal(p.locator('#recoveryRestore'))).click();assert.deepEqual(await getProject(),before);assert.equal(await p.locator('#codeEditor').inputValue(),'もし');return{invalidSyntaxSavedAndRestored:true,calls};});
+await run('invalid-syntax-save-and-format1-storage-isolation',async()=>{
+ // Spec 11 L528-534 / design 9 L197: save refuses unfinished text; recovery retains its raw draft.
+ await (await reveal(p.locator('#editorModecode'))).click();
+ const before=await state(),raw='もし',downloads=[];
+ const observeDownload=d=>downloads.push(d);p.on('download',observeDownload);
+ try{
+  await (await reveal(p.locator('#codeEditor'))).fill(raw);await p.waitForTimeout(350);
+  assert.equal(await p.locator('#codeEditor').inputValue(),raw);
+  assert.equal(await p.evaluate(()=>Akari.app.editorState.main.pendingEdit.value),raw);
+  assert.deepEqual(await state(),before,'unfinished source leaves the valid project/history/redo/dirty unchanged');
+  await (await reveal(p.locator('#saveBtn'))).click();
+  assert.equal(await p.locator('#editorPending').isVisible(),true);
+  assert.equal(await p.locator('#editorCancel').isVisible(),true);
+  assert.deepEqual(await state(),before,'save refusal is atomic');
+  assert.equal(await p.locator('#codeEditor').inputValue(),raw);
+  await (await reveal(p.locator('#objectSelect'))).selectOption('sprite-1');
+  assert.deepEqual(await state(),before,'target transition refuses the same pending raw draft');
+  assert.equal(await p.locator('#codeEditor').inputValue(),raw);
+  assert.equal(await p.locator('#editorModeblocks').isDisabled(),true);
+  await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));
+  assert.equal(downloads.length,0,'unfinished source is not downloaded as a valid project');
+  const calls=await p.evaluate(()=>__persistenceCalls);
+  assert.ok(calls.some(x=>x.api==='indexedDB'&&x.method==='open'&&x.key==='akari-workspace-f2'));
+  assert.ok(calls.every(x=>x.api==='indexedDB'?x.key==='akari-workspace-f2':x.api==='localStorage'&&['akari.autosave.f2','akari.uiLevel.v1'].includes(x.key)));
+  await p.reload();await p.locator('#recoveryModal.show').waitFor();
+  await (await reveal(p.locator('#recoveryRestore'))).click();
+  assert.equal(JSON.stringify(await getProject()),before.project,'recovery keeps the last valid project byte-equivalent');
+  assert.equal(await p.locator('#codeEditor').inputValue(),raw,'recovery preserves the unfinished raw text separately');
+  assert.equal(await p.evaluate(()=>Akari.app.editorState.main.pendingEdit.value),raw);
+  const recovered=await state();
+  assert.equal(recovered.source,before.source);assert.equal(recovered.owner,before.owner);
+  await (await reveal(p.locator('#saveBtn'))).click();
+  assert.deepEqual(await state(),recovered,'recovered pending input still refuses save without history');
+  assert.equal(downloads.length,0);
+  await (await reveal(p.locator('#editorCancel'))).click();
+  assert.deepEqual(await state(),recovered,'cancel after recovery changes no valid project/history/redo/dirty state');
+  assert.equal(await p.locator('#codeEditor').inputValue(),before.source);
+  assert.equal(await p.evaluate(()=>Akari.app.editorState.main.pendingEdit),null);
+  const pending=p.waitForEvent('download');await (await reveal(p.locator('#saveBtn'))).click();
+  const download=await pending,file=L.path.join(dir,'cancelled-invalid-source.akari.md');await download.saveAs(file);
+  const loaded=await p.evaluate(t=>Akari.parseProjectFile(t).then(x=>x.project),L.read(file));
+  assert.equal(JSON.stringify(loaded),before.project,'explicit cancel restores successful source-only saving');
+  return{rawDraftRecovered:true,saveAndTargetChangeRefusedAtomically:true,confirmedHistoryUnchanged:true,cancelRestoresValidSource:true,validProjectSavedAfterCancel:true,calls};
+ }finally{p.off('download',observeDownload);}
+});
 }finally{await b.close();}console.log(JSON.stringify({passed:results.filter(r=>r.pass).length,failed:results.filter(r=>!r.pass).length,errors,network}));if(results.some(r=>!r.pass)||errors.length||network.length)process.exitCode=1;
 })().catch(e=>{console.error(e.message);process.exitCode=1;});
 

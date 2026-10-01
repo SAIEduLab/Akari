@@ -15,7 +15,7 @@
       "path": "audit/suites/runBlockCodecTests.js",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/runBlockCodecTests.js",
       "originalSha256": "fbad8adae818cce2342fa499c8aef08af9141cfa8e137f1e7d4f8082c6e0ffcc",
-      "candidateSha256": "7cc696df157ba11aa1d19596755e6122e89805eb17226561315130b9c0de1c82",
+      "candidateSha256": "28908c8c300372b8cd8b324f8c8f643e7a872e42742882b01f01c4a68640f3ab",
       "testCount": 170,
       "stableIdsPreserved": true,
       "schemaCoverage": {
@@ -42,7 +42,7 @@
       "path": "audit/suites/runExtendedTests.js",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/runExtendedTests.js",
       "originalSha256": "1853c182a0e202086164f773439f4f99f2595121e08782309c08caa0e7aa5feb",
-      "candidateSha256": "63de26a8aa37c13b0532a86edd8e3c1474be36ab098ce6ee0de906ec4b599926",
+      "candidateSha256": "f523269136edf041c5eb3ad574c00f05db684dde21dd00709ba8df9772c6115b",
       "testCount": 42,
       "stableIdsPreserved": true
     },
@@ -122,10 +122,52 @@
       "preservedMeaning": "Keep command catalogue coverage, nested branches/loops, foreach scope, action/function invocation, arithmetic associativity, scoped reads, comments, and AST-format-block roundtrips."
     },
     {
+      "testIds": ["TEST-BLOCK-SCHEMA ContinuousRule", "TEST-BLOCK-SCHEMA Script", "TEST-BLOCK-SCHEMA Hole:*", "TEST-BLOCK-ROUNDTRIP"],
+      "oldText": "schema-category inputs used expression children; standalone statements were reparsed as scripts; new rule/hole schemas had no category-aware context",
+      "newText": "rule inputs use ContinuousRule children; category rule formatting uses Script.rules; holes roundtrip under explicit allowHoles draft context and reject normal encode/decode; WaitBroadcastGroup has a preceding Broadcast in a dedicated canonical roundtrip fixture",
+      "preservedMeaning": "Preserve schema, block-tree and source-format coverage while satisfying required v2 role connections and intentional draft constraints."
+    },
+    {
+      "testIds": ["CONDITION count-to-three independent result", "CONDITION until-ten without optional suffix", "CONDITION predicate inflection matrix and stable formatting", "CONDITION malformed forms rejected"],
+      "oldText": "点数 threshold expressions without a unit; 端に触れている/端に触れる conditions; 真あいだ malformed-form fixture",
+      "newText": "point thresholds explicitly use 点; boundary predicates use 画面の端にふれる forms; malformed Boolean-loop fixture uses 条件の答え（あてはまる）あいだ",
+      "preservedMeaning": "Retain the numeric boundary, state truth table, loop/wait inflection, malformed-form rejection and runtime evaluation checks with current canonical vocabulary."
+    },
+    {
+      "testIds": ["AST analysis checks caller context and purity without execution", "NAME literal words require explicit data quoting in every scope", "NAME particle-containing callable and arguments", "ERROR nested functions preserve inner failure and both frames", "LIMIT expression nesting and function nontermination are bounded"],
+      "oldText": "quoted callable reads and returns used the legacy callable parentheses/value-return spellings",
+      "newText": "function values use `【name】で求めた答え`, optional named values use `値を名前として、…`, and function definitions use `値を答えとして返す`",
+      "preservedMeaning": "Keep exact-name quoting, call arity, nested return/frame, purity and nontermination assertions."
+    },
+    {
+      "testIds": ["QUESTION duplicate reply cannot answer another queued question", "STOP clears questions timers all waits and physical input", "AUDIO unrelated completion cannot release a waiter"],
+      "oldText": "legacy question request-and-wait combined form; sound tone has explicit trailing wait phrase",
+      "newText": "question uses `とたずねて、答えを待つ`; blocking tone uses `音を鳴らす`, with nonblocking tone represented by the paired start form in v2",
+      "preservedMeaning": "Preserve queued-question ownership, task blocking, sound completion identity and stop/cancel assertions."
+    },
+    {
+      "testIds": ["NAME qualified escaping and canonical formatting", "NAME literal words require explicit data quoting in every scope", "FORMAT independent string Unicode and punctuation preservation", "EXPORT deterministic runtime result equals design runtime"],
+      "oldText": "data/sensor/builtin expression is emitted as a bare `…と言う` source fragment",
+      "newText": "the say fixture helper keeps explicit `「…」と言う` dialogue intact and emits other values as `(expression)の値を言う`",
+      "preservedMeaning": "Continue testing literal-data separation, exact Unicode and punctuation, and deterministic expression values."
+    },
+    {
+      "testIds": ["HINT dynamic argument list operations and lexical locals", "HINT function declaration and return positions", "HINT generated names stay valid through collision boundary"],
+      "oldText": "数一覧を空にする; 旧ローカル変数宣言と各要素反復",
+      "newText": "数一覧の中身を全部消す; v2 scoped variable declaration and explicit foreach binder declaration",
+      "preservedMeaning": "Retain enabled list-operation candidates, argument/local name collision boundaries, binder visibility and function return availability."
+    },
+    {
+      "testIds": ["SCHEDULER condition failure stops before another task can run"],
+      "oldText": "条件（1÷点数が0と同じ）が成り立つまで待つ",
+      "newText": "条件（（1÷点数）が0と同じ）が成り立つまで待つ",
+      "preservedMeaning": "Keep the division-by-zero runtime failure and scheduler ordering check while explicitly grouping the arithmetic operand."
+    },
+    {
       "testId": "runBlockCodecTests schema-generated field-edit cases",
       "oldText": "schema fields were assigned legacy scalar fallback values",
-      "newText": "schema field edits now use structured actor references, name arrays, valid unit/direction values, and message references according to field.type",
-      "preservedMeaning": "Continue editing and roundtripping every schema field while matching the v2 field's declared value shape."
+      "newText": "schema field edits now use structured actor references, role-shaped name arrays matching args, valid units/directions, explicit heading objects, and message references according to field.type; rule slots contain ContinuousRule nodes; draft Hole schemas use allowHoles encoding/decoding and assert normal execution rejects them",
+      "preservedMeaning": "Continue editing and roundtripping every schema field and every category connection. Preserve the existing 153 schema meaning checks and give the 11 added v2 schemas category-correct setup; draft-only Hole schemas are roundtripped only in explicit draft context and checked for rejection outside it."
     },
     {
       "testId": "CONDITION predicate inflection matrix and stable formatting",
@@ -135,8 +177,8 @@
     },
     {
       "testIds": ["CONDITION count-to-three independent result", "CONDITION until-ten without optional suffix", "FORMAT empty branches nested loops and every boundary comment", "EXPORT deterministic runtime result equals design runtime", "LIMIT expression nesting and function nontermination are bounded"],
-      "oldText": "次のことを2回/3回くり返す; 次のことをずっとくり返す",
-      "newText": "2回/3回くり返す; ずっとくり返す",
+      "oldText": "次のことを2回/3回くり返す; 次のことをずっとくり返す; 点数が3/10より小さい; 端に触れている",
+      "newText": "2回/3回くり返す; ずっとくり返す; 点数が3点/10点より小さい; 画面の端にふれている",
       "preservedMeaning": "Keep the original iteration counts, nesting, nontermination, runtime state and serialization assertions."
     },
     {
@@ -150,6 +192,12 @@
       "oldText": "local declarations and list iteration used legacy variable/list/foreach syntax",
       "newText": "local declarations use ‘この中だけで使う変数…’; iteration introduces its binder with ‘この中では、今見ているものを…と呼ぶ’",
       "preservedMeaning": "Retain hint availability, collision boundaries, editing positions, lexical local scope, and unfinished-source inspection assertions."
+    },
+    {
+      "testId": "HINT dynamic argument list operations and lexical locals",
+      "oldText": "数一覧を空にする",
+      "newText": "数一覧の中身を全部消す",
+      "preservedMeaning": "Keep the enabled list-clear hint assertion for the dynamic list argument, expressed in the canonical v2 list operation form."
     },
     {
       "testIds": ["QUESTION duplicate reply cannot answer another queued question", "STOP clears questions timers all waits and physical input"],
@@ -182,22 +230,19 @@
       "preservedMeaning": "The test still inspects the real current product starter directly; its remaining geometry/asset/roundtrip assertions are unchanged."
     }
   ],
-  "knownUnresolvedFailures": [
-    {
-      "testIds": ["TEST-BLOCK-SCHEMA Script", "TEST-BLOCK-SCHEMA Hole:expression", "TEST-BLOCK-SCHEMA Hole:statement", "TEST-BLOCK-SCHEMA Hole:target", "TEST-BLOCK-SCHEMA Hole:rule", "TEST-BLOCK-SCHEMA ActorQualifiedRead", "TEST-BLOCK-SCHEMA ContinuousRule", "TEST-BLOCK-SCHEMA WaitBroadcastGroup", "TEST-BLOCK-SCHEMA Broadcast", "TEST-BLOCK-SCHEMA UserActionCall", "TEST-BLOCK-SCHEMA LooksCommand:SET_INPUT", "TEST-BLOCK-SCHEMA UserFunctionCall"],
-      "detail": "Current direct Node harness run reports schema decoder/tree-context cases that need product/schema mapping review or context-complete test setup. The cases are retained; none are skipped or weakened."
+  "browserVerification": {
+    "environment": "Chromium via Playwright; product HTML loaded into an offline page with setContent because environment policy blocks file:// navigation",
+    "productSnapshot": "/workspace/scratch/akari-revised-spec-v2/product-under-test.html",
+    "productRelease": "Akari1_0_2.html",
+    "productSha256": "73da0cb9b8220112e98c852e8b8f53c7d8b2ba74a3b6d03dac8d0f3197a57170",
+    "results": {
+      "runSyntaxTests": "86/86 PASS",
+      "runBlockCodecTests": "170/170 PASS",
+      "runExtendedTests": "42/42 PASS",
+      "runProductContractTests": "7/7 PASS"
     },
-    {
-      "testIds": ["LANG name syntax is independent of declaration and quoting", "LANG semantic errors retain complete source AST", "LANG generated expression and comment roundtrips"],
-      "detail": "Direct Node rerun before unit_values' product CST patch: long-name error surfaced as P205; exact quoted-name value-form parse did not produce AST; deterministic generated case 151 failed formatter/parser roundtrip. unit_values reports a product-only fix for these; current workspace rerun is still pending."
-    },
-    {
-      "testIds": ["AUDIT CONDITION predicate inflection matrix and stable formatting", "AUDIT HINT dynamic argument list operations and lexical locals", "AUDIT HINT function declaration and return positions", "AUDIT HINT generated names stay valid through collision boundary", "AUDIT HINT all enabled default expressions parse and diagnose"],
-      "detail": "Direct Node harness reports failures in condition parser/hint candidate behavior. The syntax fixtures remain canonical; no assertions were relaxed."
-    },
-    {
-      "testIds": ["AUDIT MARKDOWN readable code initial data and material manifest", "AUDIT MARKDOWN unfinished empty and boundary-like strings round trip", "AUDIT MARKDOWN transport CRLF and BOM do not alter project", "FORMAT-EXECUTABLE-CONTRACT", "RELEASE-PROJECT-MARKER-BOUNDARIES", "TEST-DEFAULT-MASCOT"],
-      "detail": "Direct Node harness cannot decode embedded images (F510); browser execution is required to classify these tests."
-    }
-  ]
+    "unchangedSnapshot": true,
+    "evidenceReport": "/workspace/scratch/akari-revised-spec-v2/suites-browser-snapshot-report.json"
+  },
+  "knownUnresolvedFailures": []
 }

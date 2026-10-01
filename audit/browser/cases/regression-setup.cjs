@@ -57,7 +57,7 @@ async function completeRegressionHoles(page, rootSelector = '#blockEditor', topI
       }
     }
     for (const [k, children] of Object.entries(node.bodies || {})) for (let i = 0; i < children.length; i++) {
-      const result = nextHole(children[i], expected?.bodies?.[k]?.[i] || legacyBlockDefaults[children[i].schemaId], node, k, i, true);
+      const result = nextHole(children[i], expected?.bodies?.[k]?.[i] || legacyBlockDefaults[children[i].schemaId] || legacyBlockDefaults.NoOperation, node, k, i, true);
       if (result) return result;
     }
     return null;

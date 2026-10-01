@@ -46874,6 +46874,22 @@
   ],
   "revisions": [
     {
+      "path": "audit/suites/editor-surface.js",
+      "originalSha256": "8971d6a2d524420e092c4c2c1accb5df3811135e2e46f5a2cd7db43a5adcad85",
+      "candidateSha256": "eb94cb21ee614c9247a4c88a26b398895ba2a322a92e30f9b94a430c7b048aae",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/editor-surface.js",
+      "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
+      "kind": "syntax-and-approved-contract-migration"
+    },
+    {
+      "path": "audit/tests/editor-browser.mjs",
+      "originalSha256": "ccc3158ce84f2c51127329d2b9ab48a99f0582874bfcfd8ad584bf4a31f718fb",
+      "candidateSha256": "2265b4d11e324f09c06f0a5c0cbc0201614bbd2a8a167686dda58fcac6d904ad",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-browser.mjs",
+      "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
+      "kind": "syntax-and-approved-contract-migration"
+    },
+    {
       "path": "audit/browser/cases/browser-asset-limits.cjs",
       "originalSha256": "971e34baeae454f98082c03c1e080b0998a6593873b94d6ac1f9e36d19efa372",
       "candidateSha256": "abfcfeb8da7daf3374e0bb15a79f7f20ee879a27eabbb0d1a99065348a6be296",
@@ -46924,7 +46940,7 @@
     {
       "path": "audit/browser/cases/browser-media-boundaries.cjs",
       "originalSha256": "64aabaf92976223e8b4e4fec49dafb703aa4e7fdd3a410ddcaa871d297fa2e04",
-      "candidateSha256": "2ea504f56a8b6f423709def3cdf2f64a374e111cb6cda3fb806aecd11be251e0",
+      "candidateSha256": "b3b4ce63c564c0a339e93a2de99c736485151ea1bfa6f281f7d202bfc8130a0c",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-media-boundaries.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -46940,7 +46956,7 @@
     {
       "path": "audit/browser/cases/browser-product.cjs",
       "originalSha256": "35ce185d849c4b997f7825639ff23618e91c7441e1795805c4e6260fdc00893c",
-      "candidateSha256": "791b806a7a19593980c7d5bfadf5b9497613858f71f633601c149c08f53420a0",
+      "candidateSha256": "32e7a20ff67d3741b093586a5a350ceb2ea1b909f6ed56cd775f0527521e34b8",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-product.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -46972,7 +46988,7 @@
     {
       "path": "audit/browser/cases/browser-storage-media.cjs",
       "originalSha256": "9a93019db1d3969f54f5ed1e52099a421184b0ab1419e0ebab871b5b08787d3c",
-      "candidateSha256": "04f9c7c707efe2cf42bd723b97a3407cf127773f8644a081fe6c5b2d159072ad",
+      "candidateSha256": "d83e5413cbb14215c32a96e4a81c57c9d22c3854f4f0fa7068b6f429a21a712d",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-storage-media.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -46996,7 +47012,7 @@
     {
       "path": "audit/browser/cases/parent-qa.cjs",
       "originalSha256": "8a3cc3397fc7cee5a4a6dbe88dbb0be946794c682181511c5456371c795e0eb0",
-      "candidateSha256": "98c4581364edc154c734bed34adb8922790e119b9bf2ce616f3e6f5056e7ba35",
+      "candidateSha256": "5b8bf631cff2fa0da6b6e20ac5d8737c9e6be5d73aca180f5c9bd3c3fb62a136",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/parent-qa.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -47036,7 +47052,7 @@
     {
       "path": "audit/browser/cases/ui-interactions.cjs",
       "originalSha256": "51c684d58f724f67ee8ac1457e6224c896b0d4457714261e78ac72901c873fcc",
-      "candidateSha256": "1a013673da4332986b163872546177f38cb02e6d86f8050dff3dd7cc4d462ddf",
+      "candidateSha256": "cff98b0e78096e569f934685cb2a06d6036e2870b1a24b748d13558a6c415435",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/ui-interactions.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -47126,6 +47142,22 @@
       "originalSha256": "bc4230f6cdb4f652b961a3d0bec4d1494b7e09ff8287aa3f3d318898017a3be3",
       "candidateSha256": "0e713cb16736a13a290c04c2c9a1814dbd34d90852a30dd7a7e977c29cec5c1b",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/runSyntaxTests.js",
+      "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
+      "kind": "syntax-and-approved-contract-migration"
+    },
+    {
+      "path": "audit/suites/runBlockCodecTests.js",
+      "originalSha256": "fbad8adae818cce2342fa499c8aef08af9141cfa8e137f1e7d4f8082c6e0ffcc",
+      "candidateSha256": "28908c8c300372b8cd8b324f8c8f643e7a872e42742882b01f01c4a68640f3ab",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/runBlockCodecTests.js",
+      "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
+      "kind": "syntax-and-approved-contract-migration"
+    },
+    {
+      "path": "audit/suites/runExtendedTests.js",
+      "originalSha256": "1853c182a0e202086164f773439f4f99f2595121e08782309c08caa0e7aa5feb",
+      "candidateSha256": "f523269136edf041c5eb3ad574c00f05db684dde21dd00709ba8df9772c6115b",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/runExtendedTests.js",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
     },

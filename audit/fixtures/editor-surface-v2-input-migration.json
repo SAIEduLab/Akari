@@ -1,0 +1,305 @@
+{
+  "schema": "akari-editor-surface-v2-input-migration-v1",
+  "baselineCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+  "suiteCounts": {
+    "editorSurface": 38,
+    "editorBrowser": 9
+  },
+  "sourcePins": [
+    {
+      "originalPath": "audit/suites/editor-surface.js",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/editor-surface.js",
+      "originalSha256": "8971d6a2d524420e092c4c2c1accb5df3811135e2e46f5a2cd7db43a5adcad85",
+      "candidateSha256": "eb94cb21ee614c9247a4c88a26b398895ba2a322a92e30f9b94a430c7b048aae"
+    },
+    {
+      "originalPath": "audit/tests/editor-browser.mjs",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-browser.mjs",
+      "originalSha256": "ccc3158ce84f2c51127329d2b9ab48a99f0582874bfcfd8ad584bf4a31f718fb",
+      "candidateSha256": "2265b4d11e324f09c06f0a5c0cbc0201614bbd2a8a167686dda58fcac6d904ad"
+    }
+  ],
+  "changes": [
+    {
+      "testId": "RELEASE-EDIT/value-first",
+      "oldText": " 3 を 点数 に 加える  ※  残す　 ",
+      "newText": "点数に3を足す。",
+      "preservedMeaning": "Updated target and value role while retaining the numeric update and trailing comment/spacing."
+    },
+    {
+      "testId": "RELEASE-EDIT/assign",
+      "oldText": "3を点数に代入する",
+      "newText": "点数を3にする。",
+      "preservedMeaning": "Assignment still sets 点数 to 3."
+    },
+    {
+      "testId": "RELEASE-EDIT/target-first",
+      "oldText": "点数 に 3 を 代入する",
+      "newText": "点数を3にする。",
+      "preservedMeaning": "Assignment target remains 点数; spacing normalized to the v2 canonical sentence."
+    },
+    {
+      "testId": "RELEASE-EDIT/increase",
+      "oldText": "点数を3だけ増やす",
+      "newText": "点数を3増やす。",
+      "preservedMeaning": "Adds 3 to 点数."
+    },
+    {
+      "testId": "RELEASE-EDIT/decrease",
+      "oldText": "点数を3減らす",
+      "newText": "点数を3減らす。",
+      "preservedMeaning": "Subtracts 3 from 点数."
+    },
+    {
+      "testId": "RELEASE-EDIT/subtract",
+      "oldText": "3を点数から引く",
+      "newText": "点数から3を引く。",
+      "preservedMeaning": "Subtracts 3 from 点数."
+    },
+    {
+      "testId": "RELEASE-EDIT/append",
+      "oldText": "3を名前一覧の末尾に追加する",
+      "newText": "名前一覧の最後に3を入れる。",
+      "preservedMeaning": "Appends 3 to 名前一覧."
+    },
+    {
+      "testId": "RELEASE-EDIT/insert-index",
+      "oldText": "3を名前一覧の3番目に挿入する",
+      "newText": "名前一覧の3番目に3を入れる。",
+      "preservedMeaning": "Inserts value 3 at index 3."
+    },
+    {
+      "testId": "RELEASE-EDIT/insert-value",
+      "oldText": "3を名前一覧の3番目に挿入する",
+      "newText": "名前一覧の3番目に3を入れる。",
+      "preservedMeaning": "Keeps insertion value 3 while the independently edited field remains index 3."
+    },
+    {
+      "testId": "RELEASE-EDIT/delete-index",
+      "oldText": "名前一覧から3番目を削除する",
+      "newText": "名前一覧の3番目を消す。",
+      "preservedMeaning": "Deletes index 3 from 名前一覧."
+    },
+    {
+      "testId": "RELEASE-EDIT/input",
+      "oldText": "3を「入力欄」に入れる",
+      "newText": "「入力欄」に3を入れる。",
+      "preservedMeaning": "Writes 3 into the named input."
+    },
+    {
+      "testId": "RELEASE-EDIT/turn",
+      "oldText": "３度左に回る",
+      "newText": "左に３度回る。",
+      "preservedMeaning": "Rotates left by 3 degrees."
+    },
+    {
+      "testId": "RELEASE-EDIT/goto-x",
+      "oldText": "縦3、横3の位置に行く",
+      "newText": "横3、縦3の位置へ行く。",
+      "preservedMeaning": "Keeps x/y coordinates and the selected x field."
+    },
+    {
+      "testId": "RELEASE-EDIT/goto-y",
+      "oldText": "縦3、横3の位置へ行く",
+      "newText": "横3、縦3の位置へ行く。",
+      "preservedMeaning": "Keeps x/y coordinates and the selected y field."
+    },
+    {
+      "testId": "RELEASE-EDIT/glide-x",
+      "oldText": "縦3、横3の位置へ、3秒ですべる",
+      "newText": "横3、縦3の位置へ3秒かけて動く。",
+      "preservedMeaning": "Keeps x/y coordinates and duration; selected x field stays x."
+    },
+    {
+      "testId": "RELEASE-EDIT/glide-y",
+      "oldText": "3秒で縦3、横3の位置へ滑る",
+      "newText": "横3、縦3の位置へ3秒かけて動く。",
+      "preservedMeaning": "Keeps x/y coordinates and duration; selected y field stays y."
+    },
+    {
+      "testId": "RELEASE-EDIT/glide-time",
+      "oldText": "縦3、横3の位置へ3秒で滑る",
+      "newText": "横3、縦3の位置へ3秒かけて動く。",
+      "preservedMeaning": "Keeps the two coordinates and selects the duration field."
+    },
+    {
+      "testId": "RELEASE-EDIT/tone-frequency",
+      "oldText": "3秒、3Hzの音を鳴らす",
+      "newText": "3Hzの音を3秒鳴らす。",
+      "preservedMeaning": "Keeps frequency and duration roles."
+    },
+    {
+      "testId": "RELEASE-EDIT/tone-time",
+      "oldText": "3秒、3Hzの音を鳴らし、終わるまで待つ",
+      "newText": "3Hzの音を3秒鳴らす。",
+      "preservedMeaning": "Keeps the duration field selected in the timed tone command."
+    },
+    {
+      "testId": "RELEASE-EDIT/wait",
+      "oldText": "3秒間待つ",
+      "newText": "3秒待つ。",
+      "preservedMeaning": "Waits for 3 seconds."
+    },
+    {
+      "testId": "RELEASE-EDIT/compare-left",
+      "oldText": "3より3が小さいという",
+      "newText": "（3が3より小さい）の値を言う。",
+      "preservedMeaning": "Reads the boolean result of the same less-than comparison; selects left operand."
+    },
+    {
+      "testId": "RELEASE-EDIT/compare-right",
+      "oldText": "3が3未満と言う",
+      "newText": "（3が3未満）の値を言う。",
+      "preservedMeaning": "Reads the boolean result of the same less-than comparison; selects right operand."
+    },
+    {
+      "testId": "RELEASE-EDIT/nested-expression",
+      "oldText": "（3 ＋ 3）を点数に加える",
+      "newText": "点数に（3＋3）を足す。",
+      "preservedMeaning": "Adds the nested sum to 点数."
+    },
+    {
+      "testId": "RELEASE-EDIT/inline-body",
+      "oldText": "もし 3より点数が小さいならば、3を点数に足す。",
+      "newText": "もし点数が3より大きいなら、点数に3を足す。",
+      "preservedMeaning": "Keeps a conditional numeric update and its edited body value; v2 comparison direction is preserved (3 < 点数)."
+    },
+    {
+      "testId": "RELEASE-EDIT/inline-condition",
+      "oldText": "もし 3より点数が小さいならば、3を点数に足す。",
+      "newText": "もし点数が3より小さいなら、点数に3を足す。",
+      "preservedMeaning": "Keeps the comparison meaning and changes only the left operand field."
+    },
+    {
+      "testId": "RELEASE-EDIT/target-role",
+      "oldText": "3を点数に代入する",
+      "newText": "点数を3にする。",
+      "preservedMeaning": "Changing the target name still changes only the assignment target."
+    },
+    {
+      "testId": "RELEASE-EDIT/crlf-unicode",
+      "oldText": "「😀é」を名前一覧に追加する / 3を点数に加える",
+      "newText": "名前一覧の最後に「😀é」を入れる。 / 点数に3を足す。",
+      "preservedMeaning": "Preserves Unicode value and CRLF-local edits across two source lines."
+    },
+    {
+      "testId": "RELEASE-EDIT/inline-expand",
+      "oldText": "もし 真なら、3を点数に加える",
+      "newText": "もし条件（条件の答え（あてはまる））が成り立つなら、点数に3を足す。",
+      "preservedMeaning": "Same true-branch inline update and body comment while adding a sibling block."
+    },
+    {
+      "testId": "RELEASE-EDIT/insert-remove-move",
+      "oldText": "1を点数に足す / 2を点数に加える / 3秒間待つ",
+      "newText": "点数に1を足す。 / 点数に2を足す。 / 3秒待つ。",
+      "preservedMeaning": "Retains statement ordering, blank line, move/remove meanings, and wait duration."
+    },
+    {
+      "testId": "RELEASE-EDIT/atomic-stale-ime-limit",
+      "oldText": "3を点数に加える",
+      "newText": "点数に3を足す。",
+      "preservedMeaning": "Retains one numeric-update input for stale revision, IME, validation, and source-limit cases."
+    },
+    {
+      "testId": "RELEASE-EDIT/inline-comments-and-position",
+      "oldText": "もし 真なら、 「😀」という / でなければ、 「é」という",
+      "newText": "もし条件（条件の答え（あてはまる））が成り立つなら、\n  「😀」を言う。 / そうでなければ、\n  「é」を言う。",
+      "preservedMeaning": "Retains true/else body comments and branch locations using canonical v2 block syntax."
+    },
+    {
+      "testId": "RELEASE-EDIT/batch-role-offsets",
+      "oldText": "縦3、横3の位置へ、3秒ですべる",
+      "newText": "横3、縦3の位置へ3秒かけて動く。",
+      "preservedMeaning": "Batch edit retains x/y/duration argument roles."
+    },
+    {
+      "testId": "RELEASE-EDIT/predicate-in-expression-slot",
+      "oldText": "0＋0という",
+      "newText": "（0＋0）の値を言う。",
+      "preservedMeaning": "Keeps the binary numeric expression in a value-expression slot while replacing child schemas."
+    },
+    {
+      "testId": "RELEASE-EDIT/condition-connective-operands",
+      "oldText": "3が8未満の間、次のことを繰り返す",
+      "newText": "3が8より小さいあいだ、くり返す。",
+      "preservedMeaning": "Keeps condition operator, loop body, comments, CRLF, and tests local operand replacement."
+    },
+    {
+      "testId": "RELEASE-EDIT/condition-wait-and-inline-ranges",
+      "oldText": "3 が 8 未満になるまで待つ / 3 が 8 と等しくなるまで待つ",
+      "newText": "条件（3が8未満）が成り立つまで待つ。 / 3が8と同じになるまで待つ。",
+      "preservedMeaning": "Keeps comparison semantics, nested-condition range, and optional inline-if context."
+    },
+    {
+      "testId": "RELEASE-EDIT/condition-replacement-keeps-body",
+      "oldText": "3 が 8 未満の間、次のことを繰り返す",
+      "newText": "3が8より小さいあいだ、くり返す。",
+      "preservedMeaning": "Keeps a while-condition replacement and preserves the same loop body/comments."
+    },
+    {
+      "testId": "RELEASE-EDIT/inline-finite-statement-composition",
+      "oldText": "もし 真なら、<statement>",
+      "newText": "もし条件（条件の答え（あてはまる））が成り立つなら、<statement>",
+      "preservedMeaning": "Compares inline finite statements against their multiline block equivalents under the v2 generic condition form."
+    },
+    {
+      "testId": "RELEASE-GUI/source-selection-history-focus",
+      "oldText": "3 を 点数 に 代入する; もし 点数が3と同じならば、2を点数に加える; 点数  という",
+      "newText": "点数を3にする。; もし点数が3と同じなら、点数に2を足す。; 点数  の値を言う。",
+      "preservedMeaning": "Same set/update/conditional/value-read; preserves source selection, focus, shared history, undo/redo, and argument selection."
+    },
+    {
+      "testId": "RELEASE-GUI/condition-connective-local-edit",
+      "oldText": "3 が 8 未満の間、次のことを繰り返す",
+      "newText": "3が8より小さいあいだ、くり返す。",
+      "preservedMeaning": "Same loop predicate/body and local numeric operand edit, preserving comments and history."
+    },
+    {
+      "testId": "RELEASE-GUI/else-surface-branch-position",
+      "oldText": "もし 偽なら、1と言う / でなければ、次のことをする",
+      "newText": "もし条件（条件の答え（あてはまらない））が成り立つなら、（1）の値を言う。 / そうでなければ、（2）の値を言う。",
+      "preservedMeaning": "Same conditional else branch selection, with v2 condition and branch terms."
+    },
+    {
+      "testId": "RELEASE-GUI/inline-ime",
+      "oldText": "もし 真なら、3を点数に加える",
+      "newText": "もし条件（条件の答え（あてはまる））が成り立つなら、点数に3を足す。",
+      "preservedMeaning": "Same condition/update; keeps IME composition and one-history assertions."
+    },
+    {
+      "testId": "RELEASE-GUI/inline-structure-single-history",
+      "oldText": "もし 真なら、3を点数に加える",
+      "newText": "もし条件（条件の答え（あてはまる））が成り立つなら、点数に3を足す。",
+      "preservedMeaning": "Same inline statement duplication, comments, undo/redo, and single transaction."
+    },
+    {
+      "testId": "RELEASE-GUI/inline-step-and-error-role",
+      "oldText": "もし 真なら、1秒間待つ / もし 真なら、（1÷0）を点数に加える",
+      "newText": "もし条件（条件の答え（あてはまる））が成り立つなら、1秒待つ。 / もし条件（条件の答え（あてはまる））が成り立つなら、点数に（1÷0）を足す。",
+      "preservedMeaning": "Same wait then divide-by-zero update; keeps step/pause and error-location assertions."
+    },
+    {
+      "testId": "RELEASE-GUI/save-reload-generated-offline",
+      "oldText": "AKARI-PROJECT-F1-DATA-BEGIN",
+      "newText": "AKARI-PROJECT-F2-DATA-BEGIN",
+      "preservedMeaning": "Tracks the format contract update from F1 to F2 while retaining save/reload and offline player behavior."
+    },
+    {
+      "testId": "RELEASE-GUI/unregistered-draft-autosave-registration",
+      "oldText": "もし 値が0より大きいなら、値を返す / でなければ、未知名を返す",
+      "newText": "もし値が0より大きければ、値を答えとして返す。 / そうでなければ、未知名を答えとして返す。",
+      "preservedMeaning": "Retains an unregistered draft with an unknown name, autosave recovery, save, and undo/redo behavior."
+    },
+    {
+      "testId": "RELEASE-GUI/corrupt-autosave-preserves-current",
+      "oldText": "akari-workspace-f1 / akari.autosave.f1",
+      "newText": "akari-workspace-f2 / akari.autosave.f2",
+      "preservedMeaning": "Updates storage names to the F2 contract while retaining corrupted-record isolation and validated fallback behavior."
+    }
+  ],
+  "testFixture": {
+    "helper": "audit/fixtures/regression-project.cjs#makeRegressionProject",
+    "usage": "Serialize the explicit legacy regression preconditions to F2 and load through the native #fileInput UI in each case; corrupt-autosave case keeps the stock fresh project so its original preservation invariant remains valid.",
+    "runtimeApiWrites": false
+  }
+}

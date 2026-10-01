@@ -4585,10 +4585,19 @@ body[data-editor-mode="code"] #componentActions,
   .blockui-navigation [data-blockui-action="workspace-fit"] {
     display: none;
   }
+  .blockui-workspace-shell {
+    display: flex;
+    flex-direction: column;
+  }
+  .blockui-workspace-shell > .blockui-workspace {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
   .blockui-navigation {
-    left: 6px;
-    right: 16px;
-    bottom: 16px;
+    position: static;
+    flex: none;
+    margin: 5px 8px;
     padding: 3px;
   }
   .blockui-navigation .blockui-button {
@@ -9956,15 +9965,16 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     let executable = false;
     for (const l of lines) {
       if (!l.code) continue;
-      const indent = l.raw.match(/^ */)[0].length;
-      while (stack.length && stack.at(-1).indent >= indent) stack.pop();
-      if (!/^(.+?)という(?:変数を作り、初期値を.+にする|リストを作る)$/.test(l.code))
-        executable = true;
-      const s = compactOutsideString(l.code),
-        loop = s.endsWith('くり返す') || s.endsWith('繰り返す');
-      if (loop || s.endsWith('なら、次のことをする') || s === 'そうでなければ、次のことをする') {
-        const m = s.match(/の各要素を(.+)として、次のことを(?:くり返す|繰り返す)$/);
-        stack.push({ indent, loop, binder: m ? declarationName(m[1]) : null });
+      const indent=l.raw.match(/^ */)[0].length,s=compactOutsideString(l.code);
+      while(stack.length&&stack.at(-1).indent>=indent)stack.pop();
+      const binding=s.match(/^この中では、今見ているものを(.+?)と呼ぶ$/);
+      if(binding&&stack.at(-1)?.kind==='ForEach'){stack.at(-1).binder=declarationName(binding[1]);continue;}
+      if(!/^(?:この中だけで使う変数.+?を作り、最初は.+?にする|この中だけで使うリスト.+?を空で作る|.+?という変数を作り、初期値を.+?にする|.+?というリストを作る)$/.test(s))executable=true;
+      let header=null;
+      try{header=readBlockHead(s,undefined,{lineNo:l.lineNo});}catch(error){if(!(error instanceof AkariError))throw error;}
+      if(header&&!header.inlineBody){
+        const loop=['RepeatCount','RepeatWhile','RepeatUntil','Forever','ForEach'].includes(header.kind);
+        stack.push({indent,loop,kind:header.kind,binder:header.kind==='ForEach'?header.binder:null});
       }
     }
     const selected = source.slice(start, end),
@@ -9985,7 +9995,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       binders: stack.filter((x) => x.binder).map((x) => x.binder),
       depth: stack.length,
       declarationSlot: !executable && !stack.length,
-      returnSlot: !stack.length && !suffix.length && !lines.some((x) => x.code.endsWith('を返す')),
+      returnSlot: !stack.length && !suffix.length && !lines.some((x) => /(?:を返す|を答えとして返す)$/.test(compactOutsideString(x.code))),
       locals: localDeclarationNames(before),
     };
   }
@@ -10198,7 +10208,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       }
       if (x.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(x.op)) {
         const snd = project.sounds[0];
-        text = `\u300c${snd?.name || '\u30d9\u30eb'}\u300d\u3092\u9cf4\u3089${x.op === 'SAMPLE' ? '\u3059' : '\u3057\u3001\u7d42\u308f\u308b\u307e\u3067\u5f85\u3064'}`;
+        text = `音「${snd?.name || 'ベル'}」を${x.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}`;
         if (!snd) reason = '\u97f3\u7d20\u6750\u3092\u5148\u306b\u8ffd\u52a0\u3057\u307e\u3059';
       }
       add(x.id, labels[x.kind] || '\u6761\u4ef6\u30fb\u53cd\u5fa9', text, 'statement', reason);
@@ -10232,7 +10242,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         add(
           'each:' + name,
           '\u30ea\u30b9\u30c8',
-          `${name}の中身を先頭から一つずつ見て、次のことを行う。\n  何もしない。`,
+          blockSource('ForEach',{list:name,binder:nameSource(binder)})+'。\n  何もしない。',
         );
         for (const suffix of [
           '\u306e\u9577\u3055',
@@ -10313,31 +10323,31 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       '\uff082\uff0b3\uff09\u00d74',
       '2\uff3e3',
       '\uff0d2',
-      '\u771f',
-      '\u507d',
+      '条件の答え（あてはまる）',
+      '条件の答え（あてはまらない）',
       '1\u304c2\u3088\u308a\u5c0f\u3055\u3044',
       '1\u304c0\u3088\u308a\u5927\u304d\u3044',
       '1\u304c1\u4ee5\u4e0a',
       '1\u304c1\u4ee5\u4e0b',
       '1\u304c1\u3068\u540c\u3058',
       '1\u304c2\u3068\u9055\u3046',
-      '\u771f\u3067\u306f\u306a\u3044',
-      '\u771f\u304b\u3064\u507d',
-      '\u771f\u307e\u305f\u306f\u507d',
+      '条件の答え（あてはまる）ではない',
+      '条件の答え（あてはまる）かつ条件の答え（あてはまらない）',
+      '条件の答え（あてはまる）または条件の答え（あてはまらない）',
       '\u300c\u3042\u304b\u308a\u300d\u306e\u6587\u5b57\u6570',
       '\u300c\u3042\u304b\u308a\u300d\u306e1\u6587\u5b57\u76ee',
       '\u300c\u3042\u304b\u308a\u300d\u3067\u300c\u304b\u300d\u304c\u6700\u521d\u306b\u3042\u308b\u756a\u53f7',
       '\uff3b1\u30012\u30013\uff3d',
-      '\u7a7a\u767d\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u308b',
+      '「空白」キーが押されている',
     ];
     if (type !== 'stage')
       exprs.push(
         '\u7aef\u306b\u89e6\u308c\u3066\u3044\u308b',
-        '\u30de\u30a6\u30b9\u307e\u3067\u306e\u8ddd\u96e2',
+        '「マウス」までの距離',
         '\u300c\u8d64\u300d\u306e\u8272\u306b\u89e6\u308c\u3066\u3044\u308b',
       );
     for (const c of project.components)
-      if (c.type === 'input') exprs.push(`\u300c${c.name}\u300d\u306e\u5024`);
+      if (c.type === 'input') exprs.push(`\u300c${c.name}\u300dの中身`);
     for (const text of exprs) add('expr:' + text, '\u5f0f', text, 'expression');
     for (const b of GRAMMAR_REGISTRY.builtins) {
       const args =
@@ -11032,12 +11042,13 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       lists = [];
     for (const l of lines) {
       if (!l.code) continue;
-      let m = l.code.match(/^(.+?)という変数を作り、初期値を(.+?)にする$/);
+      const code=compactOutsideString(l.code);
+      let m = code.match(/^この中だけで使う変数(.+?)を作り、最初は(.+?)にする$/)||code.match(/^(.+?)という変数を作り、初期値を(.+?)にする$/);
       if (m) {
         vars.push(declarationName(m[1]));
         continue;
       }
-      m = l.code.match(/^(.+?)というリストを作る$/);
+      m = code.match(/^この中だけで使うリスト(.+?)を空で作る$/)||code.match(/^(.+?)というリストを作る$/);
       if (m) {
         lists.push(declarationName(m[1]));
         continue;
@@ -12322,8 +12333,11 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         const fields={...head,actorRef:{...scope.topicActor}};delete fields.kind;delete fields.inlineBody;
         if(!child.nodes.some(n=>n.kind!=='CommentLine'))throw new AkariError('P202','本文に実行文が必要です',line.lineNo,1);
         i=child.index;
-        if(head.kind==='IfStatement'){fields.thenBody=child.nodes;fields.elseBody=[];fields.hasElse=false;fields.elseComment='';const sibling=lines[i]?.indent===indent?parseAt(lines[i],()=>readBlockHead(lines[i].code,symbols,{...scope,sourceLine:lines[i],lineNo:lines[i].lineNo})):null;
-          if(sibling?.kind==='Else'){const otherwise=lines[i],begin=nextCode(i+1);if(!sibling.inlineBody&&(begin>=lines.length||lines[begin].indent<=indent))throw new AkariError('P202','「そうでなければ」の本文が必要です',otherwise.lineNo,1);const other=sibling.inlineBody?{nodes:sibling.inlineBody,index:i+1}:block(i+1,lines[begin].indent,scope,depth+1);fields.hasElse=true;fields.elseComment=sibling.inlineBody?'':otherwise.comment;fields.elseBody=other.nodes;i=other.index;}}
+        if(head.kind==='IfStatement'){fields.thenBody=child.nodes;fields.elseBody=[];fields.hasElse=false;fields.elseComment='';
+          const branchIndex=nextCode(i),branchLine=lines[branchIndex],sibling=branchLine?.indent===indent?parseAt(branchLine,()=>readBlockHead(branchLine.code,symbols,{...scope,sourceLine:branchLine,lineNo:branchLine.lineNo})):null;
+          if(sibling?.kind==='Else'){
+            for(let j=i;j<branchIndex;j++)if(lines[j].comment)fields.thenBody.push(statementNode('CommentLine',lines[j],{text:lines[j].comment.slice(1),raw:lines[j].raw,actorRef:{...scope.topicActor}}));
+            i=branchIndex;const otherwise=lines[i],begin=nextCode(i+1);if(!sibling.inlineBody&&(begin>=lines.length||lines[begin].indent<=indent))throw new AkariError('P202','「そうでなければ」の本文が必要です',otherwise.lineNo,1);const other=sibling.inlineBody?{nodes:sibling.inlineBody,index:i+1}:block(i+1,lines[begin].indent,scope,depth+1);fields.hasElse=true;fields.elseComment=sibling.inlineBody?'':otherwise.comment;fields.elseBody=other.nodes;i=other.index;}}
         else fields.body=child.nodes;
         fields.endLine=lines[Math.max(start,i-1)]?.lineNo||line.lineNo;
         const node=statementNode(head.kind,line,fields),location=SOURCE_RANGES.get(node);if(head.inlineBody)node.inlineComment='';if(location){location.extent.end=lines[Math.max(start,i-1)]?.end??line.end;location.inlineContainer=!!head.inlineBody;if(head.kind==='ForEach'){location.binderRange=binderRange;location.binderInsert={at:line.end,indent:lines[firstChild]?.indent??indent+2};}}
@@ -17280,7 +17294,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     }
     return { tree: encoded.tree, nodeMap, nodeIds };
   }
-  function preserveBlockSource(session, tree) {
+  function preserveBlockSource(session, tree, sourceOrigins = new Map()) {
     const source = session.sourceText, oldIndex = buildBlockIndex(session.blockView);
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
     const surface = node => session.nodeMap.get(node.id)?.surface;
@@ -17292,10 +17306,11 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       return formatScript({kind:'Script', body:[ast]}).replace(/\n/g, newline);
     };
     const moved = (node, indent) => {
-      const original = oldIndex.get(node.id)?.node, location = original && surface(original);
-      const text = original && same(original, node) && location?.extent
+      const original = oldIndex.get(sourceOrigins.get(node.id)||node.id)?.node, location = original && surface(original);
+      const equal=original&&(original.id===node.id?same(original,node):same(blockDecode(original),blockDecode(node)));
+      const text = equal && location?.extent
         ? source.slice(location.extent.start, location.extent.end) : standard(node);
-      const oldIndent = original && same(original, node) && location?.extent ? location.indent : 0;
+      const oldIndent = equal && location?.extent ? location.indent : 0;
       return text.split(/\r\n?|\n/).map((line, i) => i
         ? ' '.repeat(indent) + line.slice(Math.min(oldIndent, line.match(/^ */)[0].length)) : line).join(newline);
     };
@@ -17391,6 +17406,17 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
           changes.push(...edits);
         }
       }
+      if(before.schemaId==='Say' && !same(before.inputs.value,after.inputs.value)) {
+        const value=blockDecode(after.inputs.value),needsNoun=value.kind==='VariableRead',
+          changesQuote=before.inputs.value.schemaId==='StringLiteral'&&value.kind!=='StringLiteral';
+        if(needsNoun||changesQuote){
+          const range=surface(before.inputs.value)?.range,
+            tail=range&&/^(\s*)(の\s*値\s*)?([をと])(?=\s*(?:言う|いう|話す|はなす))/.exec(source.slice(range.end));
+          if(!tail)return fallback(before,after);
+          if(needsNoun&&!tail[2])changes.push({start:range.end,end:range.end,text:'の値'});
+          if(tail[3]==='と'){const at=range.end+tail[1].length+(tail[2]?.length||0);changes.push({start:at,end:at+1,text:'を'});}
+        }
+      }
       for (const slot of schema.bodies) {
         const edits = bodyChanges(before.bodies[slot.key], after.bodies[slot.key], before, slot.key);
         if (!edits) return fallback(before, after);
@@ -17452,7 +17478,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
     if (!astEquivalent(original, session.syntaxAst))
       editorError('ブロックと本文の世代が一致しません');
     const tree = copyDraftBlock(session.blockView),
-      allocatedIds = new Set(buildBlockIndex(tree).keys());
+      allocatedIds = new Set(buildBlockIndex(tree).keys()), sourceOrigins=new Map();
     let nextId = session.nextBlockId || 1,
       selectedId = session.blockSelection,
       operationCount = 0;
@@ -17461,13 +17487,14 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       if (!result) editorError('対象のブロックが見つかりません');
       return result;
     };
-    const fresh = (node) => {
+    const fresh = (node, preserveSource = false) => {
       const copy = copyDraftBlock(node);
       for (const entry of buildBlockIndex(copy).values()) {
         let id;
         do {
           id = 'eCore-' + nextId++;
         } while (allocatedIds.has(id));
+        if(preserveSource)sourceOrigins.set(id,sourceOrigins.get(entry.node.id)||entry.node.id);
         entry.node.id = id;
         allocatedIds.add(id);
       }
@@ -17562,7 +17589,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       if (op.type === 'insert' || op.type === 'duplicate') {
         const destination = bodySlot(op.parentId, op.body),
           at = position(op.index, destination.array.length, true),
-          node = fresh(op.type === 'duplicate' ? lookup(op.id).node : op.node);
+          node = fresh(op.type === 'duplicate' ? lookup(op.id).node : op.node, op.type === 'duplicate');
         if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement')
           editorError('本文には命令を追加します');
         // A visible body placeholder is replaced by the command the child chooses.
@@ -17686,7 +17713,7 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         blockDraft: { baseline, ast: candidateAst, tree, source: draftSource, pending },
       };
     }
-    const source = session.blockDraft ? formatScript(candidateAst) : preserveBlockSource(session, tree),
+    const source = session.blockDraft ? formatScript(candidateAst) : preserveBlockSource(session, tree, sourceOrigins),
       parsed = parseSyntax(source, context);
     if (!parsed.ast) editorError(parsed.syntaxDiagnostics.map((x) => x.message).join('\n'));
     if (!astEquivalent(candidateAst, parsed.ast))
@@ -18141,7 +18168,8 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
       bodyExtraPages = new Map(),
       inputPages = new Map();
     const PAGE = 12,
-      BODY_PAGE = 60,
+      // Bound both the opening batch and a revealed later batch with role controls.
+      BODY_PAGE = 40,
       INPUT_PAGE = 20;
     let zoom = 1,
       pan = null,
@@ -19149,6 +19177,16 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
         };
       let input;
       if (['actor-ref', 'heading', 'argument-names'].includes(field.type)) {
+        if (options.readOnly) {
+          const actorText = actor => actor?.kind === 'named' ? actor.name : '自分';
+          const text = field.type === 'actor-ref' ? actorText(value)
+            : field.type === 'argument-names' ? (value || []).join('、')
+              : value ? (EVENT_LABELS[value.event] || value.event) + '、' + actorText(value.actorRef) +
+                (value.filter?.key !== undefined ? '、キー「' + value.filter.key + '」'
+                  : value.filter?.message !== undefined ? '、知らせ「' + value.filter.message + '」' : '') : '本文で指定';
+          wrap.append(title, E('span', 'blockui-readonly-value', text, attrs));
+          return wrap;
+        }
         // The group transports a structured value through the existing atomic
         // pending editor. Children are controls, never a JSON/source textbox.
         const group = E('fieldset', 'blockui-structured-field', null, { ...attrs, tabindex: '-1' });

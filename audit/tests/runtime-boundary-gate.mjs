@@ -9,4 +9,8 @@ assert.ok(!fs.existsSync(directory));assert.ok(!fs.existsSync(destination));cons
 const r=spawnSync(process.execPath,['audit/tests/runtime-v2.mjs',product,browser,directory],{encoding:'utf8',timeout:720000,maxBuffer:16*1024*1024});
 process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');
 const report={schema:'akari-runtime-boundary-gate-v1',status:r.status===0&&!r.signal?'PASS':'FAIL',snapshot:inputs,auditInputs:inputHashes(runtimeInputPaths),runtime:fs.existsSync(path.join(directory,'runtime-v2.json'))?JSON.parse(fs.readFileSync(path.join(directory,'runtime-v2.json'))):null,error:r.error?.message};
-fs.writeFileSync(destination,JSON.stringify(report,null,2)+'\n',{flag:'wx'});assert.equal(r.status,0,r.error?.message||'runtime boundary runner failed');assert.equal(r.signal,null);assert.deepEqual(snapshot(product),inputs,'candidate changed during runtime gate');verifyRuntimeReport(report,inputs,directory);
+try{
+ assert.equal(r.status,0,r.error?.message||'runtime boundary runner failed');assert.equal(r.signal,null);
+ assert.deepEqual(snapshot(product),inputs,'candidate changed during runtime gate');verifyRuntimeReport(report,inputs,directory);
+}catch(error){report.status='FAIL';report.error=error.message;fs.writeFileSync(destination,JSON.stringify(report,null,2)+'\n',{flag:'wx'});throw error;}
+fs.writeFileSync(destination,JSON.stringify(report,null,2)+'\n',{flag:'wx'});

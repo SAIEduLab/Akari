@@ -70,6 +70,7 @@
     "audit/fixtures/audio/unsupported-alac.m4a",
     "audit/fixtures/audio/unsupported-vorbis.ogg",
     "audit/fixtures/browser-v2-input-migration.json",
+    "audit/fixtures/editor-surface-v2-input-migration.json",
     "audit/fixtures/editor-v2-input-migration.json",
     "audit/fixtures/format-v2-input-migration.json",
     "audit/fixtures/gate-ui-v2-input-migration.json",

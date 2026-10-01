@@ -9,6 +9,7 @@ import {formatCompatibilityIds,verifyFormatCompatibility,checkFormatValidatorNeg
 
 const require=createRequire(import.meta.url);
 const {loadApi}=require('../browser/cases/audit-lib.cjs');
+const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
 const [browserPath,output]=process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output),'fresh format evidence path required');
 fs.mkdirSync(path.dirname(output),{recursive:true});
@@ -27,7 +28,7 @@ assert.deepEqual(plain(api.EXECUTABLE_CONTRACT),contracts);
 assert.equal(api.PRODUCT_RELEASE,currentRelease);
 assert.equal(priorApi.PRODUCT_RELEASE,priorRelease);
 const fixture=()=>{
-  const p=priorApi.makeDefaultProject();p.name='形式互換の作品';
+  const p=makeRegressionProject(priorApi);p.name='形式互換の作品';
   // Keep this fixture asset-free so Node-side file parsing tests the data contract,
   // while media decoding stays in its dedicated browser coverage.
   p.components=p.components.filter(component=>component.id!=='sprite-1');

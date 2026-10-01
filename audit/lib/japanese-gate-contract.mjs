@@ -123,17 +123,24 @@ export function verifyRuntimeReport(report,inputs,directory){
   const r=report.runtime;assert.equal(r.schema,'akari-runtime-v2-boundary-evidence-v1');assert.equal(r.status,'PASS');
   assert.equal(r.productSha256,inputs.productSha256);assert.equal(r.transport,'file://');
   assert.equal(sha(fs.readFileSync(path.join(directory,'candidate.html'))),inputs.productSha256);
-  assert.equal(r.expectedPassCount,20);assert.equal(r.passed,20);assert.equal(r.failed,0);assert.equal(r.unverified,0);
+  assert.equal(r.expectedPassCount,20);assert.equal(r.passed,20);assert.equal(r.failed,0);assert.ok(r.unverified===0||r.unverified===1);
   assert.equal(r.runs.length,6);
   for(let i=0;i<runtimeRuns.length;i++){
     const [script,file,expected]=runtimeRuns[i],run=r.runs[i];
     assert.equal(run.script,script);assert.equal(run.evidence,file);assert.equal(run.exitCode,0);assert.equal(run.signal,null);
-    assert.ok(!run.error);assert.equal(run.snapshotMatches,true);ids(run.reports,expected);
+    assert.ok(!run.error);assert.equal(run.snapshotMatches,true);
+    const observations=run.reports.filter(row=>row.id==='NATIVE-TAB-VISIBILITY-OBSERVATION');
+    assert.ok(observations.length<=1);if(observations.length){
+      assert.equal(script,'entry-browser.cjs');assert.equal(observations[0].pass,null);
+      assert.equal(observations[0].status,'UNVERIFIED');assert.ok(observations[0].observed);assert.ok(observations[0].note);
+    }
+    const mandatory=run.reports.filter(row=>row.id!=='NATIVE-TAB-VISIBILITY-OBSERVATION');ids(mandatory,expected);
     const evidence=JSON.parse(fs.readFileSync(path.join(directory,file)));
     assert.equal(evidence.productSha256,inputs.productSha256);assert.deepEqual(evidence.reports,run.reports);
-    for(const row of run.reports)assert.equal(row.pass,true,row.id);
+    for(const row of mandatory)assert.equal(row.pass,true,row.id);
     if(script.includes('browser')){assert.equal(evidence.transport,'file://');assert.equal(evidence.browser,browserEnvironment.version);}
   }
+  assert.equal(r.unverified,r.runs.flatMap(run=>run.reports).filter(row=>row.id==='NATIVE-TAB-VISIBILITY-OBSERVATION').length);
   const formal=JSON.parse(fs.readFileSync(path.join(directory,'formal-player-browser-evidence.json')));
   assert.equal(formal.playerSha256,sha(fs.readFileSync(path.join(directory,'formal-player.html'))));
   return {status:'PASS',checks:20,runners:6};
@@ -145,7 +152,7 @@ export const negativeCaseIds = [
   'INTENT/stale-product','INTENT/changed-oracle','INTENT/changed-audit-input','INTENT/wrong-browser',
   'INTENT/filtered-run','INTENT/unverified-coverage','INTENT/missing-runtime-primitives','INTENT/different-block-trace',
   'RUNTIME/missing-runner','RUNTIME/duplicate-case','RUNTIME/stale-product','RUNTIME/unverified',
-  'RUNTIME/child-timeout','RUNTIME/child-snapshot','RUNTIME/changed-child-report',
+  'RUNTIME/child-timeout','RUNTIME/child-snapshot','RUNTIME/changed-child-report','RUNTIME/observation-promoted','RUNTIME/required-case-unverified',
   'STATIC/missing-check','STATIC/changed-doc-hash','STATIC/execution-claim',
   'MIGRATION/missing-stable-id','MIGRATION/stale-snapshot',
 ];

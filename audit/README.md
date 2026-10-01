@@ -38,3 +38,5 @@ node audit/tests/japanese-gate-negative.mjs audit-evidence/new-validator-negativ
 各出力先は未使用pathにします。意図の絞込み診断は常に `INCOMPLETE` であり、必須89 checkの代わりにしません。原文の保持と構造化された意味の実行を分けて記録します。成人が作成した20作文の仮説は、実児童の観察実績を意味しません。
 
 GitHub Actionsは同一repositoryのbranch push / PRでstatic・selftest・既存full-browser・既存音声matrixを実行し、aggregateが最新checkoutの製品/監査入力hashとrun / attemptを照合します。新reportの集合・SHA・primitive実行証拠・child runner結果は `lib/japanese-gate-contract.mjs` で再検査します。古いPASS・欠落・重複・例外・timeout・未検証の結果は受理しません。
+
+実行境界の20必須試験とは別に、headless環境のネイティブタブ可視性観測は `UNVERIFIED` のまま記録します。補助観測を必須試験のPASSとして数えません。

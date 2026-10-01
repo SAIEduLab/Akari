@@ -17,7 +17,7 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
   if(selected.size&&!selected.has(id))return;
   try{
    await withFreshPage(browser,{url:pathToFileURL(html).href,errors,networkRequests},async fresh=>{
-    page=fresh;root=page.locator('#blockEditor');
+    page=fresh;await setupRegressionPage(page);root=page.locator('#blockEditor');
     try{
      await fn();const observed=await state();
      await page.screenshot({path:prefix+'.'+id+'.png',fullPage:true});
@@ -84,7 +84,7 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
    const moved=U.ownedSlots(destination).first().locator(':scope > .blockui-node');await U.nodeAction(moved,'move');await U.slotAction(U.ownedSlots(destination).nth(1));await (await reveal(root.locator('[data-blockui-action="confirm-expression-move"]'))).click();const ast=(await state()).ast;assert.equal(ast.body[1].value.left.value,0);assert.equal(ast.body[1].value.right.kind,'BinaryExpression');await page.setViewportSize({width:1440,height:1800});
   });
   await test('UI-else-branch-focus-nested-comments',async()=>{
-   const source='もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  もし 偽なら、次のことをする。\n    何もしない。\n  そうでなければ、次のことをする。 ※ 内側\n    ※ 本文コメント\n    何もしない。\n※ 外側枝の前\nそうでなければ、次のことをする。 ※ 外側\n  何もしない。';
+   const source='もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  もし 条件（条件の答え（あてはまらない））が成り立つなら、次のことをする。\n    何もしない。\n  そうでなければ、次のことをする。 ※ 内側\n    ※ 本文コメント\n    何もしない。\n※ 外側枝の前\nそうでなければ、次のことをする。 ※ 外側\n  何もしない。';
    await fixture(source);for(const line of [4,8]){await (async()=>{const control=await reveal(page.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();const offset=source.split('\n').slice(0,line-1).join('\n').length+1;await page.locator('#codeEditor').evaluate((e,at)=>{e.setSelectionRange(at,at);e.focus();},offset);await (async()=>{const control=await reveal(page.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();const active=await page.evaluate(()=>({body:document.activeElement.dataset.blockuiBodyWrapper,line:document.activeElement.dataset.sourceLine}));assert.equal(active.body,'elseBody');assert.equal(Number(active.line),line);assert.equal((await state()).source,source);}
    assert.equal(await root.locator('[data-blockui-body-wrapper="elseBody"][data-source-line]').count(),2);
   });
