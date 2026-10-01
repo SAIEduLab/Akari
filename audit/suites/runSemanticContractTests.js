@@ -509,6 +509,141 @@ function runSemanticContractTests() {
       }
       eq(traces[0], traces[1]);
     });
+    const actorUnitFixture = (source = '') => {
+      const p = Akari.makeDefaultProject(), sprite = p.components.find(c => c.type === 'sprite');
+      p.components = ['ねこ', 'いぬ'].map((name, i) => ({...structuredClone(sprite), id:i?'dog':'cat', name,
+        x:i?100:0, y:0, costumes:[{id:'core-costume-'+i,name:'顔',kind:'text',value:'🐈'}],costumeId:'core-costume-'+i,
+        localData:{variables:[{id:'core-local-'+i,name:'個体値',initialValue:i?10:20}],
+          lists:[{id:'core-list-'+i,name:'個体一覧',initialValue:i?[1,2,3]:[1,2]}]}}));
+      p.projectData={variables:[{id:'core-score',name:'点数',initialValue:0}],lists:[]};
+      p.scripts=[{id:'core-start',targetId:'cat',event:'start',source}];p.actions=[];p.functions=[];
+      return p;
+    };
+    const actorUnitRun = (p, packed = false, expectedError = null) => {
+      let api=Akari, compiled=api.compileProject(p);eq(compiled.errors,[]);
+      if(packed){api=Akari.createAkariRuntime();const loaded=api.restoreExecutable(Akari.packExecutable(p));p=loaded.project;compiled=loaded.compiled;}
+      const speech=[],r=new api.RuntimeModel(p,{}),q=new api.EventScheduler(p,compiled,r,{say:(id,text)=>speech.push([id,text])});
+      r.now=()=>0;q.schedule=()=>{};
+      try{q.start();for(let i=0;i<1000&&q.ready.length;i++)q.runTurn();eq(q.errorRecords.map(e=>e.code),expectedError?[expectedError]:[]);eq(q.tasks.size,0);
+        return{cat:r.actor('cat').x,dog:r.actor('dog').x,catValue:r.actor('cat').vars.get('個体値'),projectValues:Object.fromEntries(r.projectVars),speech};}
+      finally{q.stop();}
+    };
+    const actorUnitControls = [
+      ['IfStatement','もし点数が0と同じなら、',false],
+      ['RepeatCount','1回くり返す。',false],
+      ['RepeatWhile','点数が0と同じであるあいだ、くり返す。',true],
+      ['RepeatUntil','点数が1と同じになるまで、くり返す。',true],
+      ['Forever','ずっとくり返す。',true],
+      ['ForEach','［1］の中身を先頭から一つずつ見て、次のことを行う。',false],
+    ];
+    test('control actors survive move duplicate remove and header edits', () => {
+      const examples=[
+        ['もし横位置が0より大きければ、','  右へ2歩動く。',103,102],
+        ['個体値回くり返す。','  右へ2歩動く。',121,120],
+        ['横位置が110より小さいあいだ、くり返す。','  右へ2歩動く。',111,110],
+        ['横位置が110以上になるまで、くり返す。','  右へ2歩動く。',111,110],
+        ['ずっとくり返す。','  右へ2歩動く。\n  いまのくり返しを終える。',103,102],
+        ['個体一覧の中身を先頭から一つずつ見て、次のことを行う。','  右へ2歩動く。',107,106],
+      ];
+      for(const [header,body,movedX,removedX] of examples){
+        const source='いぬは右へ1歩動く。\n'+header+'\n'+body,p=actorUnitFixture(source),
+          s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0),b=s.blockView.bodies.body;
+        for(const remove of [false,true]){
+          const e=prepareBlockEdit(s,remove?{type:'remove',id:b[0].id}:{type:'move',id:b[1].id,parentId:s.blockView.id,body:'body',index:0}),
+            expected={...s.syntaxAst,body:remove?[s.syntaxAst.body[1]]:[s.syntaxAst.body[1],s.syntaxAst.body[0]]};
+          ok(astEquivalent(e.syntaxAst,expected),header+' actor and body AST');
+          let text=e.source;for(let round=0;round<3;round++){text=formatScript(blockDecode(blockEncode(parseSyntax(text).ast).tree));ok(astEquivalent(expected,parseSyntax(text).ast));}
+          for(const packed of [false,true]){const out=actorUnitRun(actorUnitFixture(text),packed);eq([out.cat,out.dog],[0,remove?removedX:movedX]);}
+        }
+      }
+      for(const [kind,header,breaks] of actorUnitControls){
+        const body='  右へ2歩動く。'+(breaks?'\n  いまのくり返しを終える。':''),source=header+'\n'+body+'\nいぬは右へ1歩動く。',p=actorUnitFixture(source),
+          s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0),b=s.blockView.bodies.body;
+        eq(s.syntaxAst.body[0].kind,kind);
+        for(const duplicate of [false,true]){
+          const e=prepareBlockEdit(s,{type:duplicate?'duplicate':'move',id:b[0].id,parentId:s.blockView.id,body:'body',index:2});
+          ok(e.source.includes('自分は、'),kind+' explicit relative control subject');
+          const out=actorUnitRun(actorUnitFixture(e.source));eq([out.cat,out.dog],[duplicate?4:2,101]);
+        }
+      }
+      const source='いぬは何もしない。\nもし横位置が0より大きければ、\n  右へ2歩動く。',p=actorUnitFixture(source),s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0),
+        e=prepareBlockEdit(s,{type:'field',id:s.blockView.bodies.body[1].id,key:'actorRef',value:{kind:'self'}});
+      eq(e.syntaxAst.body[1].actorRef,{kind:'self'});eq(e.syntaxAst.body[1].thenBody[0].actorRef,{kind:'named',name:'いぬ'});
+      eq(actorUnitRun(actorUnitFixture(e.source)).dog,100);
+    });
+    test('explicit control subjects preserve scope source and else', () => {
+      for(const [kind,header,breaks] of actorUnitControls){
+        const source='いぬは、'+header+'\n  自分は右へ2歩動く。'+(breaks?'\n  いまのくり返しを終える。':'')+'\n右へ3歩動く。',p=actorUnitFixture(source),ast=parseSyntax(source).ast;
+        ok(ast,source);eq(ast.body[0].kind,kind);eq(ast.body[0].actorRef,{kind:'named',name:'いぬ'});eq(ast.body[1].actorRef,{kind:'self'});
+        const text=formatScript(blockDecode(blockEncode(ast).tree));ok(astEquivalent(ast,parseSyntax(text).ast));
+        const s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0);eq(prepareBlockEdit(s,{type:'noop'}).source,source);
+        const out=actorUnitRun(p);eq([out.cat,out.dog],[5,100]);
+      }
+      for(const inline of [false,true]){
+        const source=inline?'いぬは、もし点数が1と同じなら、右へ9歩動く。\nそうでなければ、右へ2歩動く。\n右へ3歩動く。'
+          :'いぬは、もし点数が1と同じなら、\n  右へ9歩動く。\nそうでなければ、\n  右へ2歩動く。\n右へ3歩動く。';
+        const out=actorUnitRun(actorUnitFixture(source));eq([out.cat,out.dog],[3,102]);
+        const ast=parseSyntax(source).ast;ok(astEquivalent(ast,parseSyntax(formatScript(ast)).ast));
+      }
+      for(const source of ['いぬは、そうでなければ、\n  何もしない。','いぬは、自分は、1回くり返す。\n  何もしない。'])ok(!parseSyntax(source).ast,source);
+    });
+    test('self analysis uses event or action entry target through every control', () => {
+      for(const [kind,header,breaks] of actorUnitControls){
+        const source='いぬは何もしない。\n'+header+'\n  自分は個体値を1増やす。'+(breaks?'\n  いまのくり返しを終える。':'');
+        for(const action of [false,true]){
+          const p=actorUnitFixture(action?'【試験】という手順を行う。':source);p.components[1].localData.variables=[];
+          if(action)p.actions=[{id:'core-action',ownerId:'stage',name:'試験',args:[],source}];
+          const out=actorUnitRun(p);eq(out.catValue,21);
+        }
+      }
+      const stage=actorUnitFixture('画面は何もしない。\nもし点数が0と同じなら、\n  自分は右へ2歩動く。');eq(actorUnitRun(stage).cat,2);
+      const p=actorUnitFixture('いぬは何もしない。\nもし点数が0と同じなら、\n  自分は個体値を1増やす。');
+      p.components[0].localData.variables=[];
+      ok(compileProject(p).errors.some(d=>d.code==='S301'&&d.line===3),'reject missing self data even if dog has it');
+    });
+    test('function self stays at call entry through every control and nested call', () => {
+      for(const [kind,header,breaks] of actorUnitControls){
+        const source='この中だけで使う変数【結果】を作り、最初は0にする。\nいぬは何もしない。\n'+header+'\n  自分は【結果】を個体値にする。'+(breaks?'\n  いまのくり返しを終える。':'')+'\n【結果】を答えとして返す。',
+          p=actorUnitFixture('（【調査】で求めた答え）を言う。\nいぬは（【調査】で求めた答え）を言う。\n自分は（【調査】で求めた答え）を言う。');
+        p.functions=[{id:'core-function',ownerId:'stage',name:'調査',args:[],source}];
+        for(const packed of [false,true])eq(actorUnitRun(p,packed).speech,[['cat','20'],['dog','10'],['cat','20']]);
+        const ast=parseSyntax(source).ast;p.functions[0].source=formatScript(blockDecode(blockEncode(ast).tree));eq(actorUnitRun(p).speech,[['cat','20'],['dog','10'],['cat','20']]);
+      }
+      const p=actorUnitFixture('（【外側】で求めた答え）を言う。');p.functions=[
+        {id:'core-inner',ownerId:'stage',name:'内側',args:[],source:'個体値を答えとして返す。'},
+        {id:'core-outer',ownerId:'stage',name:'外側',args:[],source:'この中だけで使う変数【結果】を作り、最初は0にする。\nいぬは何もしない。\nもし点数が0と同じなら、\n  自分は【結果】を（【内側】で求めた答え）にする。\n【結果】を答えとして返す。'}];
+      eq(actorUnitRun(p,true).speech,[['cat','20']]);
+      const clone=actorUnitFixture('自分の分身を作る。');clone.functions=structuredClone(p.functions);
+      clone.scripts.push({id:'core-clone',targetId:'cat',event:'cloneStart',source:'個体値を30にする。\n（【外側】で求めた答え）を言う。'});
+      for(const packed of [false,true])eq(actorUnitRun(clone,packed).speech.map(row=>row[1]),['30']);
+    });
+    test('numeric updates reject known declaration unit mismatch before effects', () => {
+      const forms=['点数を1秒増やす。','点数を1秒減らす。','点数に1秒を足す。','点数から1秒を引く。','1秒を点数に足す。','1秒を点数から引く。'];
+      for(const statement of forms){
+        for(const individual of [false,true]){
+          const p=actorUnitFixture('右へ10歩動く。\n'+(individual?'いぬは':'')+statement),d={id:'core-unit-score',name:'点数',initialValue:{magnitude:0,unit:'点'},expectedUnit:'点'};
+          if(individual)p.components[1].localData.variables.push(d);else p.projectData.variables=[d];
+          const errors=compileProject(p).errors;ok(errors.some(d=>d.code==='R417'&&d.line===2),statement);reject(()=>packExecutable(p),'X601');
+          const ast=parseSyntax(p.scripts[0].source).ast;p.scripts[0].source=formatScript(blockDecode(blockEncode(ast).tree));ok(compileProject(p).errors.some(d=>d.code==='R417'));
+        }
+      }
+    });
+    test('unit updates keep unknown unitless and shadowed values available', () => {
+      for(const increment of ['1','1だけ','1点','1点だけ','（1秒）の数だけ','（1秒の数だけ）','増分']){
+        const p=actorUnitFixture('点数を'+increment+'増やす。');p.projectData.variables=[{id:'core-score',name:'点数',initialValue:{magnitude:0,unit:'点'},expectedUnit:'点'},{id:'core-delta',name:'増分',initialValue:1}];
+        eq(compileProject(p).errors,[]);eq(actorUnitRun(p).projectValues.点数,{magnitude:1,unit:'点'});
+        p.scripts[0].source=p.scripts[0].source.replace('増やす','減らす');eq(actorUnitRun(p).projectValues.点数,{magnitude:-1,unit:'点'});
+      }
+      const unknown=actorUnitFixture('点数を増分増やす。');unknown.projectData.variables=[{id:'core-score',name:'点数',initialValue:{magnitude:0,unit:'点'},expectedUnit:'点'},{id:'core-delta',name:'増分',initialValue:{magnitude:1,unit:'秒'}}];
+      eq(compileProject(unknown).errors,[]);ok(packExecutable(unknown),'mutable increment remains a runtime check');actorUnitRun(unknown,true,'R417');
+      const unconstrained=actorUnitFixture('点数を1秒増やす。');unconstrained.projectData.variables[0].initialValue={magnitude:0,unit:'点'};eq(compileProject(unconstrained).errors,[]);
+      for(const local of [false,true]){
+        const p=actorUnitFixture(local?'【試験】という手順を行う。':'（0秒）を渡して、【試験】という手順を行う。');
+        p.projectData.variables[0].expectedUnit='点';p.actions=[{id:'core-shadow',ownerId:'stage',name:'試験',args:local?[]:['点数'],source:(local?'この中だけで使う変数【点数】を作り、最初は0秒にする。\n':'')+'点数を1秒増やす。'}];
+        eq(compileProject(p).errors,[]);actorUnitRun(p);
+      }
+    });
+
     return {
       total: results.length,
       passed: results.filter((x) => x.pass).length,

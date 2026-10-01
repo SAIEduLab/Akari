@@ -4308,9 +4308,9 @@ body[data-editor-mode="blocks"] .project-tools {
   margin: 0;
   gap: 2px;
   flex: 0 0 auto;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
+  flex-wrap: wrap;
+  overflow-x: hidden;
+  overflow-y: visible;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
 }
@@ -4322,6 +4322,8 @@ body[data-editor-mode="blocks"] .project-tools > button {
   flex: 0 0 auto;
 }
 body[data-editor-mode="blocks"] .ui-level-label {
+  order: -1;
+  flex-basis: 100%;
   padding: 3px;
   font-size: 11px;
   flex: 0 0 auto;
@@ -5343,36 +5345,36 @@ body.runtime .sprite-bubble {
   border-radius: calc(12px / var(--stage-scale, 1));
 }
 /* Focused block text fields grow into a comfortable, scrollable editing surface. */
-body[data-editor-mode="blocks"] #blockEditor .blockui-workspace:has(.blockui-world .blockui-field:focus-within) {
+body[data-editor-mode="blocks"] #blockEditor .blockui-workspace:has(.blockui-world .blockui-field.blockui-editing-field) {
   position: relative;
   z-index: 4;
 }
-body[data-editor-mode="blocks"] #blockEditor:has(.blockui-world .blockui-field:focus-within) .blockui-navigation {
+body[data-editor-mode="blocks"] #blockEditor:has(.blockui-world .blockui-field.blockui-editing-field) .blockui-navigation {
   visibility: hidden;
   pointer-events: none;
 }
 @media (max-width: 760px) {
-  body[data-editor-mode="blocks"] #blockEditor .blockui-layout:has(.blockui-world .blockui-field:focus-within) {
+  body[data-editor-mode="blocks"] #blockEditor .blockui-layout:has(.blockui-world .blockui-field.blockui-editing-field) {
     grid-template-columns: minmax(0, 1fr) !important;
   }
-  body[data-editor-mode="blocks"] #blockEditor .blockui-layout:has(.blockui-world .blockui-field:focus-within) .blockui-palette {
+  body[data-editor-mode="blocks"] #blockEditor .blockui-layout:has(.blockui-world .blockui-field.blockui-editing-field) .blockui-palette {
     display: none !important;
   }
   body[data-editor-mode="blocks"] #blockEditor .blockui-workspace { grid-column: 1; }
-  body[data-editor-mode="blocks"] .codewin:has(.blockui-world .blockui-field:focus-within) {
+  body[data-editor-mode="blocks"] .codewin:has(.blockui-world .blockui-field.blockui-editing-field) {
     height: max(900px, 100dvh);
     min-height: 900px;
   }
 }
-body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field:has(> input:focus),
-body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field:has(> textarea:focus) {
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field:has(> input),
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field:has(> textarea) {
   position: relative;
   z-index: 100;
 }
-body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > input:focus {
-  width: calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1)) !important;
-  max-width: calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1)) !important;
-  min-width: calc(min(50vw, 20rem) * var(--blockui-inverse-scale, 1));
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field > input {
+  width: var(--blockui-edit-width, calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1))) !important;
+  max-width: var(--blockui-edit-width, calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1))) !important;
+  min-width: 0;
   height: calc(46px * var(--blockui-inverse-scale, 1));
   padding: calc(6px * var(--blockui-inverse-scale, 1)) calc(12px * var(--blockui-inverse-scale, 1));
   font-size: calc(18px * var(--blockui-inverse-scale, 1));
@@ -5383,7 +5385,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > inp
   box-shadow: 0 0 0 4px #d8efff, 0 6px 16px #18364b40;
   text-overflow: clip;
 }
-body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > textarea:focus {
+body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field > textarea {
   width: calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1));
   max-width: calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1));
   min-height: calc(150px * var(--blockui-inverse-scale, 1));
@@ -5397,6 +5399,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.blockui-field > .blockui-edit-text { order: 2; align-self: center; font-size: 11px; padding: 2px 5px; }
+.blockui-text-dialog { width: min(42rem, 90vw); max-width: 90vw; max-height: 85dvh; box-sizing: border-box; padding: 16px; border: 2px solid #145b8c; border-radius: 12px; background: #fff; color: #172a3b; }
+.blockui-text-dialog::backdrop { background: #18364b55; }
+.blockui-text-dialog h2 { margin: 0 0 12px; font-size: 20px; }
+.blockui-text-dialog textarea { box-sizing: border-box; width: 100%; min-height: min(300px, 45dvh); font: 18px/1.5 system-ui, sans-serif; padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: hidden; resize: vertical; }
+.blockui-text-dialog-controls { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; margin-top: 12px; }
+.blockui-text-dialog-controls button { min-width: 90px; min-height: 40px; font-size: 16px; }
 </style>
 </head>
 <body>
@@ -7812,6 +7821,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
         localLists: new Map(),
         name,
         id: def.id,
+        selfRuntimeId: ctx.runtimeId,
       };
       const fctx = { ...ctx, functionFrame: frame, callDepth: depth, budget };
       try {
@@ -7829,9 +7839,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
     function execFunctionNodes(nodes, inheritedContext, budget, loopDepth) {
       for (const n of nodes) {
         if (n.kind === 'CommentLine') continue;
-        const ctx = n.actorRef?.kind === 'named'
-          ? { ...inheritedContext, runtimeId: inheritedContext.runtime.resolveActorRef(n.actorRef, inheritedContext.runtimeId) }
-          : inheritedContext;
+        // A nested suite changes the effective subject, never the function's self.
+        const ctx = { ...inheritedContext, runtimeId: inheritedContext.runtime.resolveActorRef(
+          n.actorRef, inheritedContext.functionFrame.selfRuntimeId) };
         ctx.functionFrame.currentLine = n.sourceSpan?.startLine || 1;
         if (++budget.count > LIMITS.functionOps)
           throw new AkariError('R409', '計算の量が上限を超えました');
@@ -12134,8 +12144,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
     ['ListInsert:valueFirst', /^(.+?)を(.+)の(.+?)番目(?:の前)?に(?:入れる|いれる)$/d, 'ListInsert', null, 'insertReverse'],
     ['ListReplace', /^(.+)の(.+?)番目を(.+?)に(?:変える|する)$/d, 'ListReplace', null, 'replace'],
     ['ListDelete', /^(.+)の(.+?)番目を(?:消す|けす)$/d, 'ListDelete', null, 'delete'],
-    ['NumericUpdate:ADD', /^(.+?)を(.+?)(?:だけ)?(?:増やす|ふやす)$/d, 'NumericUpdate', 'ADD', 'update'],
-    ['NumericUpdate:SUB', /^(.+?)を(.+?)(?:だけ)?(?:減らす|へらす)$/d, 'NumericUpdate', 'SUB', 'update'],
+    ['NumericUpdate:ADD', /^(.+?)を(.+?)(?:(?<!の数)だけ)?(?:増やす|ふやす)$/d, 'NumericUpdate', 'ADD', 'update'],
+    ['NumericUpdate:SUB', /^(.+?)を(.+?)(?:(?<!の数)だけ)?(?:減らす|へらす)$/d, 'NumericUpdate', 'SUB', 'update'],
     ['NumericUpdate:ADD:targetFirst', /^(.+?)に(.+?)を(?:足す|たす)$/d, 'NumericUpdate', 'ADD', 'update'],
     ['NumericUpdate:SUB:targetFirst', /^(.+?)から(.+?)を(?:引く|ひく)$/d, 'NumericUpdate', 'SUB', 'update'],
     ['NumericUpdate:ADD:valueFirst', /^(.+?)を(.+?)に(?:足す|たす)$/d, 'NumericUpdate', 'ADD', 'updateReverse'],
@@ -12363,7 +12373,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
       if(pair[0]==='行って'&&!replacement.endsWith('手順を行う'))replacement=tail.slice(0,-pair[0].length)+'行く';
       const part=surfaceLineSlice(line,start,i,replacement),head=readBlockHead(replacement,symbols,{...scope,sourceLine:part,lineNo:line.lineNo});
       let node;
-      if(head?.inlineBody){const fields={...head};delete fields.inlineBody;delete fields.kind;node=statementNode(head.kind,part,{...fields,body:head.inlineBody,actorRef:{...(scope.topicActor||{kind:'self'})}});}
+      if(head?.inlineBody){const fields={...head};delete fields.inlineBody;delete fields.kind;node=statementNode(head.kind,part,{...fields,body:head.inlineBody,actorRef:{...(head.actorRef||scope.topicActor||{kind:'self'})}});}
       else node=parseSimpleStatement(part,symbols,scope);
       nodes.push(node);if(STATEMENT_EXPLICIT_ACTORS.has(node))scope.topicActor=node.actorRef;start=i+1;
     }
@@ -12452,7 +12462,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
         const rule=parseAt(line,()=>{try{return readContinuousSentence(line.code,line,symbols,local);}catch(error){if(error.draftRole?.kind==='ContinuousRule'){const next=lines[nextCode(i+1)],speed=next?surfaceCapture(/^(.+?秒に.+?歩の速さで)(?:動かす|動く)$/d,next.code):null;if(speed&&next.indent===indent){const motion=/(?:動き続ける|動かし続ける)$/.exec(surfaceMask(line.code));if(motion){const range=sourceRange(line.mapped.positions),last=sourceRange(next.mapped.positions);error.proposals=[{label:'二文を一つの継続ルールにまとめる',source:line.code.slice(0,motion.index)+speed[0].text+motion[0],start:range.start,end:last.end}];}}}throw error;}});if(rule){if(depth!==0)throw new AkariError('P205','継続のルールは作品の本文の最上位に書いてください',line.lineNo,1);rules.push(rule);i++;continue;}
         const head=parseAt(line,()=>readBlockHead(line.code,symbols,local));if(head?.kind==='Else')break;
         if(!head){const parts=parseAt(line,()=>parseSentenceSequence(line,symbols,local));nodes.push(...parts);for(const part of parts)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor={...part.actorRef};i++;continue;}
-        let childScope={...scope,binders:[...(scope.binders||[])]},childStart=i+1,firstChild=nextCode(childStart),binderRange=null;
+        const controlActor=head.actorRef||scope.topicActor;
+        let childScope={...scope,topicActor:{...controlActor},binders:[...(scope.binders||[])]},childStart=i+1,firstChild=nextCode(childStart),binderRange=null;
         if(head.kind==='ForEach'){
           const legacyBinder=surfaceCapture(/^(.+)の各要素を(.+)として、?(?:次のことを)?(?:くり返す|繰り返す|くりかえす)$/d,line.code);
           if(legacyBinder)binderRange=sourceRange(line.mapped.positions,legacyBinder[1].start,legacyBinder[1].end);
@@ -12462,14 +12473,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
         if(!head.inlineBody&&(firstChild>=lines.length||lines[firstChild].indent<=indent))throw Object.assign(sentenceDiagnostic('まとまりの本文が必要です。空にする意図なら「何もしない」と書けます',line,[],{kind:head.kind,missing:['body']}),{code:'P202'});
         if(head.inlineBody&&firstChild<lines.length&&lines[firstChild].indent>indent)throw new AkariError('P209','一行の本文と字下げの本文を重ねないでください',lines[firstChild].lineNo,1);
         const child=head.inlineBody?{nodes:head.inlineBody,index:i+1}:block(childStart,lines[firstChild].indent,childScope,depth+1);
-        const fields={...head,actorRef:{...scope.topicActor}};delete fields.kind;delete fields.inlineBody;
+        const fields={...head,actorRef:{...controlActor}};delete fields.kind;delete fields.inlineBody;
         if(!child.nodes.some(n=>n.kind!=='CommentLine'))throw new AkariError('P202','本文に実行文が必要です',line.lineNo,1);
         i=child.index;
         if(head.kind==='IfStatement'){fields.thenBody=child.nodes;fields.elseBody=[];fields.hasElse=false;fields.elseComment='';
-          const branchIndex=nextCode(i),branchLine=lines[branchIndex],sibling=branchLine?.indent===indent?parseAt(branchLine,()=>readBlockHead(branchLine.code,symbols,{...scope,sourceLine:branchLine,lineNo:branchLine.lineNo})):null;
+          const branchIndex=nextCode(i),branchLine=lines[branchIndex],sibling=branchLine?.indent===indent?parseAt(branchLine,()=>readBlockHead(branchLine.code,symbols,{...childScope,sourceLine:branchLine,lineNo:branchLine.lineNo})):null;
           if(sibling?.kind==='Else'){
             for(let j=i;j<branchIndex;j++)if(lines[j].comment)fields.thenBody.push(statementNode('CommentLine',lines[j],{text:lines[j].comment.slice(1),raw:lines[j].raw,actorRef:{...scope.topicActor}}));
-            i=branchIndex;const otherwise=lines[i],begin=nextCode(i+1);if(!sibling.inlineBody&&(begin>=lines.length||lines[begin].indent<=indent))throw new AkariError('P202','「そうでなければ」の本文が必要です',otherwise.lineNo,1);const other=sibling.inlineBody?{nodes:sibling.inlineBody,index:i+1}:block(i+1,lines[begin].indent,scope,depth+1);fields.hasElse=true;fields.elseComment=sibling.inlineBody?'':otherwise.comment;fields.elseBody=other.nodes;i=other.index;}}
+            i=branchIndex;const otherwise=lines[i],begin=nextCode(i+1);if(!sibling.inlineBody&&(begin>=lines.length||lines[begin].indent<=indent))throw new AkariError('P202','「そうでなければ」の本文が必要です',otherwise.lineNo,1);const other=sibling.inlineBody?{nodes:sibling.inlineBody,index:i+1}:block(i+1,lines[begin].indent,childScope,depth+1);fields.hasElse=true;fields.elseComment=sibling.inlineBody?'':otherwise.comment;fields.elseBody=other.nodes;i=other.index;}}
         else fields.body=child.nodes;
         fields.endLine=lines[Math.max(start,i-1)]?.lineNo||line.lineNo;
         const node=statementNode(head.kind,line,fields),location=SOURCE_RANGES.get(node);if(head.inlineBody)node.inlineComment='';if(location){location.extent.end=lines[Math.max(start,i-1)]?.end??line.end;location.inlineContainer=!!head.inlineBody;if(head.kind==='ForEach'){location.binderRange=binderRange;location.binderInsert={at:line.end,indent:lines[firstChild]?.indent??indent+2};}}
@@ -12498,6 +12509,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
     const code=compactOutsideString(text),mask=surfaceMask(code),line=ctx.sourceLine||{raw:text,code:text,lineNo:ctx.lineNo||0};
     const e=part=>parseMappedExpression(part.text,code,line,symbols,ctx,part.start);
     const inline=part=>{const fragment=surfaceLineSlice(line,part.start,part.end);fragment.comment=line.comment;return parseSentenceSequence(fragment,symbols,ctx);};
+    // A control's explicit subject is scoped to its header and child suites.
+    // Keep the comma mandatory, and accept only a complete finite control form.
+    if(!ctx.explicitControlActor){
+      const actor=surfaceCapture(/^(.+?)は、(.+)$/d,code);
+      if(actor){
+        const actorRef=sentenceActor(actor[0].text),fragment=surfaceLineSlice(line,actor[1].start,actor[1].end);
+        fragment.comment=line.comment;
+        const head=readBlockHead(actor[1].text,symbols,{...ctx,sourceLine:fragment,topicActor:actorRef,explicitControlActor:true});
+        if(head&&head.kind!=='Else')return {...head,actorRef};
+      }
+    }
     let parts;
     if((parts=surfaceCapture(/^(?:そうでなければ|でなければ|それ以外なら)、?(.*)$/d,code))) {
       const tail=parts[0].text;
@@ -14346,13 +14368,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
     const out=[],line=(depth,text,comment='')=>out.push('  '.repeat(depth)+text+(text.endsWith('、')?'':'。')+(comment?'  '+comment:''));
     // A nested suite inherits its surrounding topic, but its topic changes stay local.
     const emit=(body,depth,inheritedActor={kind:'self'})=>{let previousActor={...inheritedActor};for(const n of body){if(n.kind==='CommentLine'){out.push('  '.repeat(depth)+'※'+n.text);continue;}const actorRef=n.actorRef||{kind:'self'},actor=!['Hole','WaitBroadcastGroup'].includes(n.kind)&&(actorRef.kind==='named'||(actorRef.kind==='self'&&previousActor.kind==='named'))?sentenceActorSource(actorRef)+'は':'',f=formatExpression,t=n.target?formatTarget(n.target):'',comment=n.inlineComment||'';let text;
+      const controlActor=actorRef.kind!==previousActor.kind||(actorRef.kind==='named'&&actorRef.name!==previousActor.name)
+        ? sentenceActorSource(actorRef)+'は、' : '';
       switch(n.kind){
         case 'Hole':text=formatHoleSource(n);break;
-        case 'IfStatement':line(depth,sentenceFormFor(n).render(n),comment);emit(n.thenBody,depth+1,previousActor);if(n.hasElse){line(depth,'そうでなければ、',n.elseComment||'');emit(n.elseBody,depth+1,previousActor);}continue;
-        case 'RepeatCount':line(depth,sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,previousActor);continue;
-        case 'RepeatWhile':case 'RepeatUntil':line(depth,sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,previousActor);continue;
-        case 'Forever':line(depth,sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,previousActor);continue;
-        case 'ForEach':line(depth,sentenceFormFor(n).render(n),comment);if(n.binder!=='今見ているもの')line(depth+1,`この中では、今見ているものを【${n.binder}】と呼ぶ`);emit(n.body,depth+1,previousActor);continue;
+        case 'IfStatement':line(depth,controlActor+sentenceFormFor(n).render(n),comment);emit(n.thenBody,depth+1,actorRef);if(n.hasElse){line(depth,'そうでなければ、',n.elseComment||'');emit(n.elseBody,depth+1,actorRef);}continue;
+        case 'RepeatCount':line(depth,controlActor+sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,actorRef);continue;
+        case 'RepeatWhile':case 'RepeatUntil':line(depth,controlActor+sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,actorRef);continue;
+        case 'Forever':line(depth,controlActor+sentenceFormFor(n).render(n),comment);emit(n.body,depth+1,actorRef);continue;
+        case 'ForEach':line(depth,controlActor+sentenceFormFor(n).render(n),comment);if(n.binder!=='今見ているもの')line(depth+1,`この中では、今見ているものを【${n.binder}】と呼ぶ`);emit(n.body,depth+1,actorRef);continue;
         default:{const form=sentenceFormFor(n);if(!form)throw new AkariError('P201',`未対応の文 ${n.kind}`);text=form.render(n);break;}
       }
       line(depth,actor+text,comment);if(n.kind!=='Hole')previousActor=actorRef;
@@ -14694,13 +14718,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
       }
     };
     const walk = (nodes, ctx, where, loopDepth = 0, top = true) => {
+      // Preserve the event/call entry target independently of each statement target.
+      if(!ctx.selfContext)ctx={...ctx,selfContext:{targetId:ctx.targetId,targetType:ctx.targetType}};
       let seenExecutable = false;
       const available = new Set(ctx.availableLocalNames || []),
         declared = new Set(ctx.args || []);
       for (let idx = 0; idx < nodes.length; idx++) {
         const n = nodes[idx];
         if (n.kind === 'CommentLine') continue;
-        const c = actorContext(n.actorRef, { ...ctx, node: n, availableLocalNames: new Set(available) }, n, where);
+        const c = actorContext(n.actorRef, { ...ctx, ...ctx.selfContext, node: n, availableLocalNames: new Set(available) }, n, where);
         if (n.kind === 'LocalVariableDeclaration' || n.kind === 'LocalListDeclaration') {
           if (!ctx.definition || !top || seenExecutable)
             add('S313', 'この中だけのデータは動作・計算の本文先頭でだけ作れます', n, where);
@@ -14760,7 +14786,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
               where,
             );
           } else {
-            if (n.kind === 'Assignment' && info.kind === 'scalar') {
+            if (['Assignment', 'NumericUpdate'].includes(n.kind) && info.kind === 'scalar') {
               const declaration = info.scope === 'project' ? symbols.projectVars.get(n.target.name)
                 : info.scope === 'self' ? symbols.individualByTargetId.get(c.targetId)?.variables.get(n.target.name) : null;
               if (declaration?.expectedUnit != null) {
@@ -17572,7 +17598,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
       for (const node of body) {
         const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId);
         topics.set(node.id, topic);
-        for (const slot of schema.bodies) rememberTopics(node.bodies[slot.key], topic, topics);
+        for (const slot of schema.bodies) rememberTopics(node.bodies[slot.key], node.fields.actorRef || {kind:'self'}, topics);
         if (!schema.bodies.length && !['CommentLine','Hole'].includes(schema.kind))
           topic = node.fields.actorRef || {kind:'self'};
       }
@@ -17624,7 +17650,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
         }
       }
       if (schema.bodies.length && before.schemaId === after.schemaId && !location?.inlineContainer &&
-        location?.range && same(before.bodies, after.bodies) && same(before.annotations, after.annotations)) {
+        location?.range && same(before.bodies, after.bodies) && same(before.annotations, after.annotations) &&
+        same(before.fields.actorRef, after.fields.actorRef)) {
         const header = splitComment(standard(after).split(/\r\n?|\n/)[0]).code.trimEnd().replace(/。$/, '');
         return [{...location.range, text:header}];
       }
@@ -18352,6 +18379,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
     'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '向きを変える', '回転'],
     'LooksCommand:SHOW': ['見せる', '表示', '出す'],
     'LooksCommand:HIDE': ['隠す', 'かくす', '非表示'],
+    'LooksCommand:SET_SCALE': ['大きさ', 'おおきさ', 'サイズ'],
     Say: ['話す', 'はなす', 'しゃべる', '発言', 'こんにちは'],
     Ask: ['質問', 'たずねる', '答え'],
     WaitTime: ['待つ', 'まつ', '時間', '秒'],
@@ -18446,6 +18474,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
       showOutside = false,
       page = 0,
       paletteMode = 'all',
+      categoryExplicit = false,
       availabilityCache = new Map(),
       cacheSignature = '',
       diagnosticPage = 0,
@@ -18718,6 +18747,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
     listen(modeSelect, 'change', () => {
       paletteMode = modeSelect.value;
       category = '';
+      categoryExplicit = false;
       page = 0;
       renderPalette();
     });
@@ -18837,7 +18867,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
       });
       listen(input, 'blur', (event) => {
         if (rendering || committing || !input.isConnected) return;
-        if (pending?.input === input && !event.relatedTarget?.closest('[data-blockui-action="cancel"]'))
+        if (pending?.input === input && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action]'))
           flush({ focus: false });
       });
       listen(input, 'keydown', (event) => {
@@ -19020,6 +19050,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
       destination = { ...location };
       paletteMode = 'all';
       category = '';
+      categoryExplicit = false;
       page = 0;
       renderPalette();
       updateControls();
@@ -19312,9 +19343,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
       modeSelect.value = paletteMode;
       const query = searchText.trim().toLocaleLowerCase();
       const registry = BLOCK_SCHEMAS.filter((s) => !s.draftOnly && ['statement', 'expression'].includes(s.category));
-      const all = query
-        ? registry
-        : registry.filter((s) => paletteMode === 'all' || s.category === paletteMode);
+      const all = registry.filter((s) => paletteMode === 'all' || s.category === paletteMode);
       const groups = [
         ['basic', '基本'],
         ['', '\u3059\u3079\u3066'],
@@ -19341,6 +19370,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
           'palette-category',
           () => {
             category = g;
+            categoryExplicit = true;
             page = 0;
             paletteList.scrollTop = 0;
             renderPalette();
@@ -19358,7 +19388,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
         projectState = project();
       let candidates = all.filter(
         (s) =>
-          (query || !category || (category === 'basic'
+          ((query && !categoryExplicit) || !category || (category === 'basic'
             ? BASIC_BLOCK_SCHEMA_IDS.has(s.id)
             : blockPaletteGroup(s) === category)) &&
           (!query || (paletteLabel(s) + ' ' + blockPaletteSearchText(s, projectState)).includes(query)),
@@ -19574,7 +19604,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
           editInput(group, node, field, annotation);
           listen(group, 'change', event => { if (event.target.tagName === 'SELECT') flush(); });
           listen(group, 'focusout', event => {
-            if (!group.contains(event.relatedTarget) && !event.relatedTarget?.closest('[data-blockui-action="cancel"]'))
+            if (!group.contains(event.relatedTarget) && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action]'))
               flush({ focus: false });
           });
         }
@@ -19643,6 +19673,35 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
         return wrap;
       }
       input.disabled = isLocked();
+      if (field.type === 'string' && !annotation) {
+        const editText = button('全文を編集', 'edit-text', () => {
+          if (isLocked()) return;
+          const dialog = E('dialog', 'blockui-text-dialog'),
+            heading = E('h2', '', '文字を編集'),
+            editor = E('textarea', '', null, { rows: '8', wrap: 'soft', spellcheck: 'false', 'aria-label': '文字の全文' }),
+            controls = E('div', 'blockui-text-dialog-controls'),
+            apply = E('button', '', '確定', { type: 'button', 'data-blockui-text-action': 'commit' }),
+            discard = E('button', '', '取り消す', { type: 'button', 'data-blockui-text-action': 'cancel' });
+          editor.value = pending?.input === input ? input.value : String(index.get(node.id)?.node.fields[field.key] ?? value ?? '');
+          editor.dataset.focusKey = node.id + ':full-text:' + field.key;
+          const close = committed => {
+            if (committed && !flush({ focus: false }).ok) { editor.focus(); return; }
+            dialog.close(); dialog.remove();
+            if (!committed) cancel();
+          };
+          editInput(editor, node, field, false);
+          listen(apply, 'click', () => close(true));
+          listen(discard, 'click', () => close(false));
+          listen(dialog, 'cancel', event => { event.preventDefault(); close(false); });
+          listen(dialog, 'keydown', event => {
+            if (event.key === 'Escape' && !event.isComposing) { event.preventDefault(); event.stopPropagation(); close(false); }
+          }, { capture: true });
+          controls.append(apply, discard); dialog.append(heading, editor, controls); root.append(dialog);
+          dialog.showModal(); editor.focus();
+          editor.setSelectionRange(input.selectionStart ?? editor.value.length, input.selectionEnd ?? editor.value.length);
+        }, { 'aria-label': '文字の全文を折り返して編集' });
+        editText.classList.add('blockui-edit-text'); wrap.append(editText);
+      }
       input.dataset.focusKey = node.id + ':' + (annotation ? 'annotation:' : 'field:') + field.key;
       if (input.tagName === 'INPUT') {
         listen(input, 'input', () => {
@@ -21275,7 +21334,18 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
     listen(root, 'focusin', (event) => {
       if (event.target.closest('button,summary,.blockui-slot-head')) return;
       const slot = event.target.closest('.blockui-input-slot'),
-        node = event.target.closest('.blockui-node');
+        node = event.target.closest('.blockui-node'),
+        field = event.target.closest('.blockui-field');
+      for (const n of root.querySelectorAll('.blockui-editing-field')) n.classList.remove('blockui-editing-field');
+      if (field && event.target.matches('input,textarea')) {
+        const bounds = workspace.getBoundingClientRect(), position = event.target.getBoundingClientRect(),
+          editText = field.querySelector(':scope > .blockui-edit-text'),
+          buttonSpace = editText ? editText.getBoundingClientRect().width +
+            (parseFloat(doc.defaultView.getComputedStyle(field).columnGap) || 0) * zoom : 0,
+          available = Math.max(100, Math.min(bounds.right, doc.defaultView.innerWidth) - position.left - buttonSpace - 18);
+        field.style.setProperty('--blockui-edit-width', Math.min(672, available) / zoom + 'px');
+        field.classList.add('blockui-editing-field');
+      }
       for (const n of root.querySelectorAll('.blockui-focused')) n.classList.remove('blockui-focused');
       for (const n of root.querySelectorAll('.blockui-slot-active'))
         n.classList.remove('blockui-slot-active');
@@ -22043,6 +22113,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
       invalidateEditors();
       getEditorSession(binding, { force: true });
       binding.session.pendingEdit = null;
+      clearEditorFailure(binding);
       markDirty();
       if (atomic) {
         clearTimeout(historyTimer);
@@ -22050,6 +22121,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
       }
       if (binding.kind === 'draft') paintCallable();
       return true;
+    }
+    function clearEditorFailure(binding) {
+      const indicator = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
+      indicator.textContent = ''; indicator.hidden = true;
     }
     function showEditorFailure(binding, error) {
       const reason = error?.message || String(error),
@@ -22120,13 +22195,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
       // A textarea normalizes CRLF on display; that alone is not an edit of source.
       if (source === readSource(binding).replace(/\r\n?/g, '\n')) {
         if (binding.session) binding.session.pendingEdit = null;
-        $(binding.kind === 'draft' ? '#callablePending' : '#editorPending').hidden = true;
+        clearEditorFailure(binding);
         return true;
       }
       try {
         commitSource(binding, source);
         if (binding.session) binding.session.pendingEdit = null;
-        $(binding.kind === 'draft' ? '#callablePending' : '#editorPending').hidden = true;
+        clearEditorFailure(binding);
         return true;
       } catch (error) {
         if (binding.session)
@@ -22237,6 +22312,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
           editorSessions.set(`${binding.kind}:${ownerKey}`, binding.session);
           binding.textarea.value = candidate.draftSource;
           const pending = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
+          pending.textContent = '未確定の穴に命令や値を入れてください';
           pending.hidden = false;
           renderEditorBinding(binding);
           scheduleAutosave();
@@ -22456,7 +22532,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
         paintCallable();
       }
       binding.textarea.value = readSource(binding);
-      $(binding.kind === 'draft' ? '#callablePending' : '#editorPending').hidden = true;
+      clearEditorFailure(binding);
       renderEditorBinding(binding);
       if (binding === mainEditor) refreshEditor();
       setStatus('入力を取り消しました');
@@ -27226,6 +27302,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field > tex
           scheduleAutosave();
         },
         onCancel: () => {
+          clearEditorFailure(binding);
           if (binding.session) binding.session.pendingEdit = binding.session.blockDraft
             ? { kind: 'block-draft', ownerKey: bindingOwner(binding) } : null;
         },

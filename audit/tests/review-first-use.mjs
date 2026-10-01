@@ -101,10 +101,73 @@ async function runUntilVisible(page, phrase) {
   }), firstObservation);
 }
 
+
+async function reviewLevelAccess(page) {
+  const observations=[];
+  const before=await page.evaluate(()=>JSON.stringify(Akari.app.project));
+  for(const width of [1366,1024]) for(const level of ['basic','advanced']) {
+    await page.setViewportSize({width,height:768});
+    await page.locator('#uiLevel').selectOption(level);
+    const measurement=await page.locator('#uiLevel').evaluate(el=>{
+      const r=el.getBoundingClientRect(),parent=el.closest('.project-tools');
+      return {x:r.x,right:r.right,width:r.width,height:r.height,viewport:innerWidth,
+        parentWidth:parent.clientWidth,parentScrollWidth:parent.scrollWidth,scrollLeft:parent.scrollLeft};
+    });
+    assert.ok(measurement.x>=0&&measurement.right<=width&&measurement.height>0,'both detail levels remain visible without horizontal scrolling');
+    assert.equal(measurement.scrollLeft,0);
+    assert.equal(await page.evaluate(()=>JSON.stringify(Akari.app.project)),before,'switching detail levels preserves the full project, procedures and source');
+    observations.push({width,level,measurement});
+  }
+  await page.setViewportSize({width:1366,height:768});
+  return observations;
+}
+
+async function reviewCancelledDiagnosis(page) {
+  const observations=[];
+  for(const raw of ['あかりは右へ１０秒動く。','解釈できない命令。']) for(const [query,schemaId] of [['もし','IfStatement'],['ずっと','Forever']]) {
+    await page.locator('#editorModecode').click();
+    const before=await sourceFromModel(page);
+    await page.locator('#codeEditor').fill(raw);
+    await page.waitForFunction(()=>Akari.app.editorState.main.pendingEdit?.kind==='code');
+    const issue=await page.locator('#codeIssue').textContent(),old=await page.locator('#editorPending').textContent();
+    assert.match(issue,/P20[15]/,'the new invalid source still displays a real diagnosis');
+    assert.ok(old.trim());
+    await page.locator('#editorCancel').click();
+    assert.equal(await sourceFromModel(page),before);
+    assert.equal(await page.locator('#editorPending').textContent(),'','cancel removes the stored diagnosis');
+    await page.locator('#editorModeblocks').click();
+    await addBlock(page,query,schemaId);
+    const current=await page.locator('#editorPending').textContent();
+    const diagnostics=await page.evaluate(()=>Akari.app.editorState.main.diagnostics);
+    assert.notEqual(current,old,'an unrelated block draft does not reuse a cancelled diagnosis');
+    assert.deepEqual(diagnostics,[]);
+    if(await page.locator('#editorCancel').isVisible()) await page.locator('#editorCancel').click();
+    else { await page.locator('#undoBtn').click(); }
+    assert.equal(await sourceFromModel(page),before,'cancel or undo restores the original source');
+    observations.push({raw,query,schemaId,issue,old,current,diagnostics});
+  }
+  return observations;
+}
+
 async function reviewDefaults(page, capture) {
   await setup(page);
+  const levelAccess = await reviewLevelAccess(page);
   const initial = await sourceFromModel(page);
   const sizeSearch = page.locator('#blockEditor [data-blockui-search]:visible').first();
+  await sizeSearch.fill('おおきさ');
+  const kanaIds=await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="LooksCommand:SET_SCALE"]:visible').evaluateAll(nodes=>nodes.map(n=>n.dataset.blockuiSchema));
+  assert.deepEqual(kanaIds,['LooksCommand:SET_SCALE'],'kana finds the existing size block');
+  await openPaletteOptions(page);
+  const paletteMode=page.locator('#blockEditor [data-blockui-palette-mode]:visible').first();
+  await paletteMode.selectOption('expression');
+  await closePaletteOptions(page);
+  assert.equal(await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="LooksCommand:SET_SCALE"]:visible').count(),0,'kana alias respects the expression category filter');
+  await openPaletteOptions(page);await paletteMode.selectOption('statement');await closePaletteOptions(page);
+  await page.locator('#blockEditor [data-blockui-category="motion"]:visible').click();
+  assert.equal(await page.locator('#blockEditor [data-blockui-schema="LooksCommand:SET_SCALE"]:visible').count(),0,'kana respects a selected motion category');
+  await page.locator('#blockEditor [data-blockui-category="look"]:visible').click();
+  assert.equal(await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="LooksCommand:SET_SCALE"]:visible').count(),1,'kana finds size in its appearance category');
+  await page.locator('#blockEditor [data-blockui-category=""]:visible').click();
   await sizeSearch.fill('大きさ');
   const sizePalette = page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="LooksCommand:SET_SCALE"]:visible').first();
   const sizePreview = (await sizePalette.locator('.blockui-preview').innerText()).replace(/\s+/g,'');
@@ -130,7 +193,7 @@ async function reviewDefaults(page, capture) {
   const roundtrip = await roundTrip(page, source);
   const runtime = await runUntilVisible(page, 'こんにちは');
   const evidence = {
-    initialSource:initial,
+    initialSource:initial,levelAccess,kanaIds,
     addedDefaults:{scale:size,turnDegrees:turn,say,waitSeconds:wait},
     searchAfterInsertion:afterSizeSearch,sizePalettePreview:sizePreview,sizeBlockMessage,
     scaleNodeInserted:await scaleNode.count()===1,
@@ -192,6 +255,7 @@ async function reviewUnits(page, capture) {
 
 async function reviewConditionSearch(page, capture) {
   await setup(page);
+  const cancelledDiagnosis = await reviewCancelledDiagnosis(page);
   const search = await addBlock(page, 'もし', 'IfStatement');
   const searchAfterStatement = await search.inputValue();
   const conditionPicker = page.locator('#blockEditor [data-blockui-action="hole-select-expression"][aria-label="条件の値を選ぶ"]:visible');
@@ -221,7 +285,7 @@ async function reviewConditionSearch(page, capture) {
   const compile = await page.evaluate(() => Akari.app.compile().errors.map(error => ({code:error.code,message:error.message})));
   const roundtrip = await roundTrip(page, source);
   const runtime = await runUntilVisible(page, branchText);
-  const evidence = {searchAfterIfInsertion:searchAfterStatement,noBooleanResultBeforeManualClear:noResultsWithOldQuery,
+  const evidence = {cancelledDiagnosis,searchAfterIfInsertion:searchAfterStatement,noBooleanResultBeforeManualClear:noResultsWithOldQuery,
     booleanCandidateEnabled:enabled,source,compile,roundtrip,runtime};
   capture(evidence);
   assert.equal(searchAfterStatement, '', 'choosing a statement clears the now stale search query');
@@ -251,7 +315,8 @@ await withBrowser(browserPath, async browser => {
     group:'first-use',
     status:results.every(result=>result.pass) && pageErrors.length===0 && networkRequests.length===0 ? 'PASS' : 'FAIL',
     snapshot:inputs,
-    browser:{name:'Chromium',version,platform:process.platform,architecture:os.arch()},
+    browser:version,
+    browserEnvironment:{name:'Chromium',version,platform:process.platform,architecture:os.arch()},
     results,
     pageErrors,
     networkRequests,

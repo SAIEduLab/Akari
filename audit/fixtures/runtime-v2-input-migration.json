@@ -7,7 +7,7 @@
       "originalPath": "audit/suites/runSemanticContractTests.js",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/runSemanticContractTests.js",
       "originalSha256": "408e48fe53ff20f1ec8f3e3bd26503bda9a5812c41843663f820d3232852e540",
-      "candidateSha256": "7dc02a32c719fcce91d2f36fb9b6ec83b7302024493e2758ab0513ab70dd14ce",
+      "candidateSha256": "a3e308fbe65046de4c0179bb625a857d5e9a3808b9647dcebde70522b9d81df8",
       "stableIds": [
         "TEST-CONTRACT arity 乱数",
         "TEST-CONTRACT arity 余り",
@@ -2413,6 +2413,42 @@
       "oldText": "makeDefaultProject() as regression precondition",
       "newText": "makeRegressionProject() as explicit regression precondition",
       "preservedMeaning": "All legacy data names, initial numeric/list values, button/sprite capabilities, geometry, assets and event bodies remain available; new product onboarding defaults do not alter old test preconditions."
+    },
+    {
+      "testId": "TEST-CONTRACT control actors survive move duplicate remove and header edits",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT control actors survive move duplicate remove and header edits",
+      "preservedMeaning": "Preserve six control subjects and their children when crossing lexical topics; keep E901 semantic guard."
+    },
+    {
+      "testId": "TEST-CONTRACT explicit control subjects preserve scope source and else",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT explicit control subjects preserve scope source and else",
+      "preservedMeaning": "Make explicit control subjects roundtrip without leaking into siblings or changing else scope."
+    },
+    {
+      "testId": "TEST-CONTRACT self analysis uses event or action entry target through every control",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT self analysis uses event or action entry target through every control",
+      "preservedMeaning": "Resolve statement self against event/action entry without false missing-data diagnostics."
+    },
+    {
+      "testId": "TEST-CONTRACT function self stays at call entry through every control and nested call",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT function self stays at call entry through every control and nested call",
+      "preservedMeaning": "Resolve nested function self against each call entry in editor runtime and restored executable."
+    },
+    {
+      "testId": "TEST-CONTRACT numeric updates reject known declaration unit mismatch before effects",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT numeric updates reject known declaration unit mismatch before effects",
+      "preservedMeaning": "Reject all six numeric-update forms only when the resolved declaration and expression prove incompatible units."
+    },
+    {
+      "testId": "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available",
+      "preservedMeaning": "Keep unitless, matching, unknown, unconstrained, argument and local-shadow updates available; preserve explicit unit removal."
     }
   ],
   "approvedContracts": [
@@ -2493,7 +2529,7 @@
         100,
         "Math.hypot(320 - 35, 200 - 45)"
       ],
-      "magnitudeTolerance": 1e-09,
+      "magnitudeTolerance": 1e-9,
       "addedAssertions": [
         "exact per-sensor unit",
         "exact magnitude/unit object keys"

@@ -151,6 +151,88 @@ async function questionInputReview(browser){
   return {observations,coverage:{viewports,levels},checks:['canonical-question-parses','answer-field-focus','answer-accepted','stop-editor-return']};
 }
 
+
+async function openFocusedFullTextEditor(page, input, string, width) {
+  await input.click();
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const focused=await input.evaluate(el=>{
+    const r=el.getBoundingClientRect(),w=el.closest('.blockui-workspace').getBoundingClientRect(),
+      button=el.closest('.blockui-field').querySelector('[data-blockui-action="edit-text"]'),b=button.getBoundingClientRect();
+    return {left:r.left,right:r.right,workspaceLeft:w.left,workspaceRight:w.right,viewport:innerWidth,
+      button:{left:b.left,right:b.right,top:b.top,width:b.width,height:b.height},
+      scale:parseFloat(getComputedStyle(el.closest('.blockui-world')).getPropertyValue('--blockui-scale'))};
+  });
+  const edge=Math.min(focused.workspaceRight,width),b=focused.button;
+  assert.ok(focused.left>=focused.workspaceLeft-1&&focused.right<=edge+1,'focused string field fits inside its workspace');
+  assert.ok(b.left>=focused.workspaceLeft-1&&b.right<=edge+1&&b.width>0&&b.height>0,'the complete full-edit button fits inside its workspace');
+  const x=b.left+b.width/2,y=b.top+b.height/2;
+  assert.ok(await string.locator('[data-blockui-action="edit-text"]').evaluate((el,{x,y})=>el.contains(document.elementFromPoint(x,y)),{x,y}),'full-edit button center is accessible without scrolling');
+  await page.mouse.click(x,y);
+  await page.locator('.blockui-text-dialog textarea').waitFor({state:'visible'});
+  return focused;
+}
+
+async function fullTextEditorReview(browser) {
+  const short='あかりといっしょに、じぶんだけのものがたりをつくろう。第一場面は朝の森、第二場面は学校、第三場面は宇宙。最後の言葉も見えるかな。';
+  const long='長い物語の言葉'.repeat(55),observations=[];
+  assert.equal([...short].length,64);assert.equal([...long].length,385);
+  for(const width of [1366,1024]) for(const level of levels) {
+    const {page,context}=await openPage(browser,{width,height:768},level);
+    try {
+      await page.locator('#editorModecode').click();
+      const source='「'+short+'」と言う。';
+      await page.locator('#codeEditor').fill(source);
+      await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);
+      await page.locator('#editorModeblocks').click();
+      const string=page.locator('#blockEditor .blockui-node[data-schema-id="StringLiteral"]').first();
+      const input=string.locator('input[data-blockui-field="value"]');
+      const editor=page.locator('.blockui-text-dialog textarea');
+      const buttonAccess=[];
+      for(const action of ['zoom-reset','workspace-fit']) {
+        await page.locator('#blockEditor [data-blockui-action="'+action+'"]').click();
+        const geometry=await openFocusedFullTextEditor(page,input,string,width);
+        assert.equal(await editor.inputValue(),short);
+        await page.locator('[data-blockui-text-action="cancel"]').click();
+        assert.equal(await page.evaluate(()=>Akari.app.editorState.main.sourceText),source);
+        buttonAccess.push({action,characters:64,geometry,coordinateClick:true});
+      }
+      const focused=await openFocusedFullTextEditor(page,input,string,width);
+      assert.equal(await editor.inputValue(),short);
+      const surface=await editor.evaluate(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return {left:r.left,right:r.right,font:s.fontSize,wrap:el.wrap,width:el.clientWidth,scrollWidth:el.scrollWidth};});
+      assert.ok(surface.left>=0&&surface.right<=width&&surface.width>=300,'the wrapped edit surface is visible');
+      assert.equal(surface.wrap,'soft');assert.equal(surface.scrollWidth,surface.width);
+      await editor.fill(long);await editor.press('End');
+      assert.equal(await editor.inputValue(),long);
+      assert.equal(await editor.evaluate(el=>el.scrollWidth),await editor.evaluate(el=>el.clientWidth),'all long text wraps without horizontal clipping');
+      await page.screenshot({path:path.join(evidenceDir,'full-text-'+level+'-'+width+'.png'),fullPage:true});
+      await page.locator('[data-blockui-text-action="cancel"]').click();
+      assert.equal(await page.evaluate(()=>Akari.app.editorState.main.sourceText),source,'cancel keeps the exact original source');
+      assert.equal(await input.inputValue(),short);
+      await string.locator('[data-blockui-action="edit-text"]').click();await editor.fill(long);
+      await page.locator('[data-blockui-text-action="commit"]').click();
+      await page.waitForFunction(text=>Akari.app.editorState.main.sourceText.includes(text),long);
+      const committed=await page.evaluate(()=>Akari.app.editorState.main.sourceText);
+      assert.equal(await input.inputValue(),long);
+      await page.locator('#undoBtn').click();await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);
+      await page.locator('#redoBtn').click();await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,committed);
+      await string.locator('[data-blockui-action="edit-text"]').click();await editor.fill(short+'\n'+long);await editor.press('Escape');
+      assert.equal(await page.evaluate(()=>Akari.app.editorState.main.sourceText),committed,'Escape cancels a multiline draft exactly');
+      await page.locator('#editorModecode').click();assert.equal(await page.locator('#codeEditor').inputValue(),committed);
+      await page.locator('#editorModeblocks').click();assert.equal(await input.inputValue(),long);
+      for(const action of ['zoom-reset','workspace-fit']) {
+        await page.locator('#blockEditor [data-blockui-action="'+action+'"]').click();
+        const geometry=await openFocusedFullTextEditor(page,input,string,width);
+        assert.equal(await editor.inputValue(),long);
+        await page.locator('[data-blockui-text-action="cancel"]').click();
+        assert.equal(await page.evaluate(()=>Akari.app.editorState.main.sourceText),committed);
+        buttonAccess.push({action,characters:385,geometry,coordinateClick:true});
+      }
+      observations.push({width,level,focused,surface,buttonAccess,shortCharacters:64,longCharacters:385,cancelExact:true,commitExact:true,undoRedoExact:true,escapeExact:true,roundtripExact:true});
+    } finally { await context.close(); }
+  }
+  return observations;
+}
+
 async function longTextReview(browser){
   const long='長い文字列'.repeat(39),observations=[];
   for(const viewport of viewports) for(const level of levels) for(const targetZoom of [1,.55]){
@@ -212,6 +294,7 @@ async function longTextReview(browser){
       await page.locator('#editorModeblocks').click();
       const returned=await page.locator('#blockEditor .blockui-world .blockui-field input').evaluateAll(nodes=>nodes.find(node=>node.value.includes('長い文字列'))?.value||'');
       assert.equal(returned,long,'block view restores all 195 characters');
+      await page.waitForFunction(zoom=>document.querySelector('#stageZoomReset')?.textContent===zoom,before.stageZoom);
       const after=await page.evaluate(()=>({source:Akari.app.editorState.main.sourceText,stageZoom:document.querySelector('#stageZoomReset')?.textContent||'',world:document.querySelector('.blockui-world')?.style.transform||'',blockZoom:document.querySelector('#blockEditor [data-blockui-action="zoom-reset"]')?.textContent||''}));
       assert.equal(undone,before.source,'Undo restores the exact original source');
       assert.equal(redone,committed,'Redo restores the exact committed source');
@@ -223,7 +306,8 @@ async function longTextReview(browser){
       await context.close();
     }catch(error){await context.close();throw Error(`long text ${level} ${viewport.width}x${viewport.height}: ${error.message}`);}
   }
-  return {observations,coverage:{viewports,levels,workspaceZooms:[100,55]},checks:['focus-field-visible','18px-rendered-input','40px-rendered-height','keyboard-home-end-scroll','escape-cancels-draft','undo-redo-exact','code-block-roundtrip','stage-and-workspace-zoom-pan-preserved']};
+  const fullTextEditor=await fullTextEditorReview(browser);
+  return {observations,fullTextEditor,coverage:{viewports,levels,workspaceZooms:[100,55]},checks:['focus-field-visible','18px-rendered-input','40px-rendered-height','keyboard-home-end-scroll','escape-cancels-draft','undo-redo-exact','code-block-roundtrip','stage-and-workspace-zoom-pan-preserved']};
 }
 
 const browserReport=await withBrowser(browserPath,async browser=>{

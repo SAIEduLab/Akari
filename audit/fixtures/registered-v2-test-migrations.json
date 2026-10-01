@@ -14,8 +14,8 @@
     },
     {
       "path": "audit/fixtures/product-manifest-v2-input-migration.json",
-      "sha256": "0f01f5c260e55a7d31e28ffcd523bba5b3e9fce3c2aa135053b61ff0b01ad682",
-      "registeredChanges": 11
+      "sha256": "736a45264e5458fd84bef4f52f66f96078b8de557e5990dd6215c27fc6dd69c4",
+      "registeredChanges": 17
     },
     {
       "path": "audit/fixtures/editor-v2-input-migration.json",
@@ -24,8 +24,8 @@
     },
     {
       "path": "audit/fixtures/runtime-v2-input-migration.json",
-      "sha256": "3a118ae8598417c074a9498b04bfa6f86e2b88cd0be0c299c8b0720bdaf49bc3",
-      "registeredChanges": 667
+      "sha256": "0a54e8a891aab5ad790242cd3823dd18c4f7d22eac1e62cbea291970b99af986",
+      "registeredChanges": 673
     },
     {
       "path": "audit/fixtures/format-v2-input-migration.json",
@@ -20477,6 +20477,90 @@
       "newText": "p=>p.evaluate(()=>{\n  globalThis.__akariAuditNonsettlingPromise=new Promise(()=>{});\n  return globalThis.__akariAuditNonsettlingPromise;\n})",
       "preservedMeaning": "An actual page.evaluate remains unresolved until the same1000ms host timeout rejects. The same await/finally cleanup closes the browser. The global reference keeps that input Promise alive and is scoped to the isolated audit page; it does not settle the Promise or replace a product API.",
       "sourceLedger": "audit/fixtures/harness-timeout-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT control actors survive move duplicate remove and header edits",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT control actors survive move duplicate remove and header edits",
+      "preservedMeaning": "Preserve six control subjects and their children when crossing lexical topics; keep E901 semantic guard.",
+      "sourceLedger": "audit/fixtures/product-manifest-v2-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT explicit control subjects preserve scope source and else",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT explicit control subjects preserve scope source and else",
+      "preservedMeaning": "Make explicit control subjects roundtrip without leaking into siblings or changing else scope.",
+      "sourceLedger": "audit/fixtures/product-manifest-v2-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT self analysis uses event or action entry target through every control",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT self analysis uses event or action entry target through every control",
+      "preservedMeaning": "Resolve statement self against event/action entry without false missing-data diagnostics.",
+      "sourceLedger": "audit/fixtures/product-manifest-v2-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT function self stays at call entry through every control and nested call",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT function self stays at call entry through every control and nested call",
+      "preservedMeaning": "Resolve nested function self against each call entry in editor runtime and restored executable.",
+      "sourceLedger": "audit/fixtures/product-manifest-v2-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT numeric updates reject known declaration unit mismatch before effects",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT numeric updates reject known declaration unit mismatch before effects",
+      "preservedMeaning": "Reject all six numeric-update forms only when the resolved declaration and expression prove incompatible units.",
+      "sourceLedger": "audit/fixtures/product-manifest-v2-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available",
+      "preservedMeaning": "Keep unitless, matching, unknown, unconstrained, argument and local-shadow updates available; preserve explicit unit removal.",
+      "sourceLedger": "audit/fixtures/product-manifest-v2-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT control actors survive move duplicate remove and header edits",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT control actors survive move duplicate remove and header edits",
+      "preservedMeaning": "Preserve six control subjects and their children when crossing lexical topics; keep E901 semantic guard.",
+      "sourceLedger": "audit/fixtures/runtime-v2-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT explicit control subjects preserve scope source and else",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT explicit control subjects preserve scope source and else",
+      "preservedMeaning": "Make explicit control subjects roundtrip without leaking into siblings or changing else scope.",
+      "sourceLedger": "audit/fixtures/runtime-v2-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT self analysis uses event or action entry target through every control",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT self analysis uses event or action entry target through every control",
+      "preservedMeaning": "Resolve statement self against event/action entry without false missing-data diagnostics.",
+      "sourceLedger": "audit/fixtures/runtime-v2-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT function self stays at call entry through every control and nested call",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT function self stays at call entry through every control and nested call",
+      "preservedMeaning": "Resolve nested function self against each call entry in editor runtime and restored executable.",
+      "sourceLedger": "audit/fixtures/runtime-v2-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT numeric updates reject known declaration unit mismatch before effects",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT numeric updates reject known declaration unit mismatch before effects",
+      "preservedMeaning": "Reject all six numeric-update forms only when the resolved declaration and expression prove incompatible units.",
+      "sourceLedger": "audit/fixtures/runtime-v2-input-migration.json"
+    },
+    {
+      "testId": "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available",
+      "preservedMeaning": "Keep unitless, matching, unknown, unconstrained, argument and local-shadow updates available; preserve explicit unit removal.",
+      "sourceLedger": "audit/fixtures/runtime-v2-input-migration.json"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "068ee136fdfba06413de76adda172bb6d73a83fd4611f5102738b3604b3b3051",
+  "fixedIdSha256": "7f4909915db507623e6309a09d1b738f9f5513162717e9e8c566e128fc842304",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -169,7 +169,13 @@
         "TEST-CONTRACT local declaration positions and use before initialization",
         "TEST-CONTRACT purity every effect kind and command op",
         "TEST-CONTRACT notify nested nonwaiting and waiting receiver boundary",
-        "TEST-CONTRACT glide midpoint completion and concurrent task trace"
+        "TEST-CONTRACT glide midpoint completion and concurrent task trace",
+        "TEST-CONTRACT control actors survive move duplicate remove and header edits",
+        "TEST-CONTRACT explicit control subjects preserve scope source and else",
+        "TEST-CONTRACT self analysis uses event or action entry target through every control",
+        "TEST-CONTRACT function self stays at call entry through every control and nested call",
+        "TEST-CONTRACT numeric updates reject known declaration unit mismatch before effects",
+        "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available"
       ],
       "environments": [
         "chromium"

@@ -47092,7 +47092,7 @@
     {
       "path": "audit/manifests/product-tests.json",
       "originalSha256": "bf99a4eaa08bb77dc7019a4e7685208c2a3c73e8dead135d856fa4a5f34fc10e",
-      "candidateSha256": "d9eca933391e87cd28c02d0a9e702ea024b0639976f112d85384510474542def",
+      "candidateSha256": "8bf0992f7c97340e00e04a9b6c535b7a83aed83583a8798a54a07f163333ccee",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/manifests/product-tests.json",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -47108,7 +47108,7 @@
     {
       "path": "audit/suites/runSemanticContractTests.js",
       "originalSha256": "408e48fe53ff20f1ec8f3e3bd26503bda9a5812c41843663f820d3232852e540",
-      "candidateSha256": "7dc02a32c719fcce91d2f36fb9b6ec83b7302024493e2758ab0513ab70dd14ce",
+      "candidateSha256": "a3e308fbe65046de4c0179bb625a857d5e9a3808b9647dcebde70522b9d81df8",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/runSemanticContractTests.js",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
