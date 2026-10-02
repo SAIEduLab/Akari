@@ -42,11 +42,15 @@ try{await withBrowser(chrome,async browser=>{
  };
  for(const d of prose.drafts){
   await run(d.id+'/source-ui','SOURCE_ACCEPTANCE',async(page,capture)=>{
-   await install(page,d);await page.locator('#codeEditor').fill(d.mainFirstDraft);
+   await install(page,d);const inputHistoryBefore=await page.evaluate(()=>Akari.app.editorState.history);await page.locator('#codeEditor').fill(d.mainFirstDraft);
    const evidence=await page.evaluate(source=>({enteredSource:document.querySelector('#codeEditor').value,pending:Akari.app.editorState.main.pendingEdit,
     modelSource:Akari.app.editorState.main.sourceText,compileErrors:Akari.app.compile().errors,sourceShaMatches:document.querySelector('#codeEditor').value===source}),d.mainFirstDraft);capture(evidence);
    if(evidence.pending||evidence.modelSource!==d.mainFirstDraft){const error=new Error('Original prose must be accepted, not merely preserved as pending. '+JSON.stringify(evidence.pending));error.code='ACCEPTANCE_REQUIRED';throw error;}
    assert.equal(evidence.enteredSource,d.mainFirstDraft);assert.deepEqual(evidence.compileErrors,[]);
+   // Wait for the preceding input transaction to enter debounced history before
+   // measuring whether a view-only roundtrip adds another transaction.
+   await page.waitForFunction(history=>Akari.app.editorState.history===history+1,inputHistoryBefore);
+   evidence.inputHistoryBefore=inputHistoryBefore;evidence.inputHistoryAfter=await page.evaluate(()=>Akari.app.editorState.history);
    const before=await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history,redo:Akari.app.editorState.redo,dirty:Akari.app.editorState.dirty}));
    await page.locator('#editorModeblocks').click();await page.locator('#editorModecode').click();evidence.codeAfterRoundtrip=await page.locator('#codeEditor').inputValue();
    assert.equal(evidence.codeAfterRoundtrip,d.mainFirstDraft);assert.deepEqual(await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history,redo:Akari.app.editorState.redo,dirty:Akari.app.editorState.dirty})),before);

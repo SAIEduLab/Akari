@@ -10663,25 +10663,28 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   function normalizeSource(source) {
     const original = String(source ?? '');
-    source = original.replace(/\r\n?/g, '\n');
-    let offset = 0;
-    const lines = source.split('\n').map((raw, i) => {
-      const p = splitComment(raw);
-      const start = offset;
-      offset += raw.length + (original.slice(offset + raw.length, offset + raw.length + 2) === '\r\n' ? 2 : 1);
-      const mapped = compactSourceMap(p.code, start);
+    const lines=[];let start=0;
+    for(let i=0;i<=original.length;i++)if(i===original.length||original[i]==='\r'||original[i]==='\n'){
+      lines.push({raw:original.slice(start,i),start,end:i,lineNo:lines.length+1,code:'',comment:'',mapped:{text:'',positions:[]}});
+      if(original[i]==='\r'&&original[i+1]==='\n')i++;start=i+1;
+    }
+    let quote='',first=0;
+    for(let i=0;i<lines.length;i++){
+      const physical=lines[i];
+      for(let j=0;j<physical.raw.length;j++){
+        const ch=physical.raw[j];
+        if(quote){if(quote==='」'&&ch==='\\'){j++;continue;}if(ch===quote)quote='';}
+        else if(ch==='※')break;
+        else if(ch==='「'||ch==='【')quote=ch==='「'?'」':'】';
+      }
+      if(quote&&i+1<lines.length)continue;
+      const line=lines[first],raw=original.slice(line.start,physical.end),p=splitComment(raw),mapped=compactSourceMap(p.code,line.start);
       if (mapped.text.endsWith('。')) { mapped.text = mapped.text.slice(0, -1); mapped.positions.pop(); }
-      return {
-        raw,
-        start,
-        end: start + raw.length,
-        mapped,
-        lineNo: i + 1,
-        code: normalizeCharsOutsideString(p.code).trim().replace(/。$/, ''),
-        comment: p.comment,
-      };
-    });
-    return { source, lines };
+      Object.assign(line,{raw,end:physical.end,endLine:physical.lineNo,mapped,code:normalizeCharsOutsideString(p.code).trim().replace(/。$/,''),comment:p.comment});
+      for(let j=first+1;j<=i;j++)lines[j].continuation=true;
+      first=i+1;
+    }
+    return { source:original, lines };
   }
   function compactOutsideString(text) {
     return compactSourceMap(text).text;
@@ -11050,9 +11053,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     for (const x of p.scripts) {
       if (!exactKeys(x, ['targetId', 'event', 'source',
         ...(Object.hasOwn(x || {}, 'id') ? ['id'] : []),
+        ...(Object.hasOwn(x || {}, 'document') ? ['document'] : []),
         ...(Object.hasOwn(x || {}, 'filter') ? ['filter'] : [])]))
         throw new AkariError('F503', 'コード項目が不正です');
       if (x.id !== undefined) addId(x.id);
+      if(x.document!==undefined){
+        const d=x.document;
+        if(!x.id||!exactKeys(d,['revision','unitIds'])||!Number.isSafeInteger(d.revision)||d.revision<0||!Array.isArray(d.unitIds)||!d.unitIds.length||d.unitIds.length>LIMITS.scripts)
+          throw new AkariError('F503','文書の版・まとまりの識別子が不正です');
+        for(const id of d.unitIds)addId(id);
+      }
       const target =
         x.targetId === 'stage' ? { type: 'stage' } : p.components.find((c) => c.id === x.targetId);
       if (!target) throw new AkariError('F503', 'コード対象が存在しません');
@@ -11799,6 +11809,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   function parseExpression(text, symbols, ctx = {}) {
     const compact=compactOutsideString(text),mask=surfaceMask(compact),depth=(ctx._parserDepth||0)+1;
+    const located=node=>{const range=sourceRange(ctx.sourcePositions||[]);if(range)SOURCE_RANGES.set(node,{range});return checkExpressionTree(node,ctx.lineNo||0);};
     if(depth>LIMITS.expressionDepth)throw new AkariError('P208','式が深すぎます',ctx.lineNo||0,1);
     if(compact.startsWith('（')&&compact.endsWith('）')&&/^\u0001+$/.test(mask))
       return parseExpression(compact.slice(1,-1),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(1,-1)});
@@ -11808,12 +11819,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const roles=surfaceCapture(pattern,compact);
       if(roles){
         const operands=roles.map(part=>parseExpression(part.text,symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(part.start,part.end)}));
-        return checkExpressionTree(exprNode('BinaryExpression',{op,left:operands[0],right:operands[1]}),ctx.lineNo||0);
+        return located(exprNode('BinaryExpression',{op,left:operands[0],right:operands[1]}));
       }
     }
     if(mask.endsWith('で求めた答え')){
       const parser=new ExpressionParser('（'+compact+'）',symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?[null,...ctx.sourcePositions,null]:undefined});
-      return checkExpressionTree(parser.namedFunction(),ctx.lineNo||0);
+      return located(parser.namedFunction());
     }
     return new ExpressionParser(text, symbols, ctx).parse();
   }
@@ -12228,7 +12239,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   function surfaceLineSlice(line, start, end, replacement = null) {
     const code = compactOutsideString(line.code).slice(start, end), positions = line.mapped?.positions.slice(start, end) || [];
-    return {...line, code:replacement ?? code, mapped:{text:replacement ?? code, positions:replacement === null ? positions : []},
+    let mappedPositions=positions;
+    if(replacement!==null){
+      mappedPositions=Array(replacement.length);let prefix=0,suffix=0;
+      while(prefix<code.length&&prefix<replacement.length&&code[prefix]===replacement[prefix]){mappedPositions[prefix]=positions[prefix];prefix++;}
+      while(suffix<code.length-prefix&&suffix<replacement.length-prefix&&code[code.length-1-suffix]===replacement[replacement.length-1-suffix]){mappedPositions[replacement.length-1-suffix]=positions[code.length-1-suffix];suffix++;}
+    }
+    return {...line, code:replacement ?? code, mapped:{text:replacement ?? code, positions:mappedPositions},
       start:positions.length ? positions[0]-(line.indent||0) : line.start, physicalStart:line.physicalStart ?? line.start,
       startColumn:positions.length ? cpLen(line.raw.slice(0,positions[0]-(line.physicalStart??line.start)))+1 : line.startColumn||1, inline:true, comment:''};
   }
@@ -12491,8 +12508,34 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   function parseScript(source, symbols, ctx = {}) {
     if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','本文の文字数が上限を超えています',1,1);
+    const physical=normalizeSource(source).lines,headings=physical.filter(line=>!line.continuation&&line.code&&!/^[ \t\u3000]/u.test(line.raw)&&readSentenceHeading(compactOutsideString(line.code)));
+    const firstCode=physical.find(line=>!line.continuation&&line.code),hasPrefix=headings.length&&headings[0]!==firstCode;
+    if(headings.length<=1&&!hasPrefix)return parseScriptUnit(source,symbols,ctx);
+    if(ctx.definitionKind||ctx.definition)throw new AkariError('P205','手順・計算の本文へ別のできごとの見出しは置けません',headings[0].lineNo,1);
+    const starts=[{start:0,lineNo:1},...headings.slice(hasPrefix?0:1)];
+    if(starts.length>LIMITS.scripts)throw new AkariError('P208','できごとの数が上限を超えています',1,1);
+    const units=starts.map((entry,index)=>{
+      const end=starts[index+1]?.start??source.length,text=source.slice(entry.start,end);let unit;
+      try{unit=parseScriptUnit(text,symbols,ctx);}catch(error){if(error instanceof AkariError)error.line=(error.line||1)+entry.lineNo-1;throw error;}
+      const pending=[unit],shift=entry.lineNo-1;
+      while(pending.length){
+        const node=pending.pop();
+        if(node.sourceSpan){node.sourceSpan.startLine+=shift;node.sourceSpan.endLine+=shift;}
+        if(node.endLine)node.endLine+=shift;
+        const location=SOURCE_RANGES.get(node);
+        if(location){const move=value=>{if(!value||typeof value!=='object')return;for(const [key,child]of Object.entries(value)){if(['start','end','at'].includes(key)&&typeof child==='number')value[key]=child+entry.start;else if(child&&typeof child==='object')move(child);}};move(location);}
+        for(const child of Object.values(node))if(Array.isArray(child))pending.push(...child.filter(value=>value?.kind));else if(child?.kind)pending.push(child);
+      }
+      SOURCE_RANGES.set(unit,{range:{start:entry.start,end},extent:{start:entry.start,end},indent:0,inline:false});
+      return unit;
+    });
+    const document={...units[0],units:units.slice(1),source,sourceSpan:{startLine:1,startColumn:1,endLine:physical.length,endColumn:1}};
+    SOURCE_RANGES.set(document,SOURCE_RANGES.get(units[0]));return document;
+  }
+  function parseScriptUnit(source, symbols, ctx = {}) {
+    if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','本文の文字数が上限を超えています',1,1);
     const rawLines=normalizeSource(source).lines,lines=[];
-    for(const line of rawLines){const prefix=line.raw.match(/^\s*/u)[0];if(/[^ ]/u.test(prefix))throw new AkariError('P209','字下げは半角スペースで書きます。タブや全角空白の範囲を確認してください',line.lineNo,1);line.indent=prefix.length;const code=compactOutsideString(line.code);if(!code){lines.push(line);continue;}const mask=surfaceMask(code);let start=0;for(let i=0;i<=mask.length;i++)if(i===mask.length||mask[i]==='。'){if(i>start){const part=surfaceLineSlice(line,start,i);part.indent=line.indent;part.inline=start>0;part.comment=i===mask.length?line.comment:'';lines.push(part);}start=i+1;}}
+    for(const line of rawLines){if(line.continuation)continue;const prefix=line.raw.match(/^[ \t\u3000]*/u)[0];if(/[^ ]/u.test(prefix))throw new AkariError('P209','字下げは半角スペースで書きます。タブや全角空白の範囲を確認してください',line.lineNo,1);line.indent=prefix.length;const code=compactOutsideString(line.code);if(!code){lines.push(line);continue;}const mask=surfaceMask(code);let start=0;for(let i=0;i<=mask.length;i++)if(i===mask.length||mask[i]==='。'){if(i>start){const part=surfaceLineSlice(line,start,i);part.indent=line.indent;part.inline=start>0;part.comment=i===mask.length?line.comment:'';lines.push(part);}start=i+1;}}
     const baseCtx={...ctx,localNames:[...(ctx.localNames||[])],binders:[...(ctx.binders||[])],topicActor:{...(ctx.topicActor||{kind:'self'})}};
     if(ctx.definition){const names=localDeclarationNames(source);baseCtx.localNames.push(...names.vars,...names.lists);for(const line of lines){const p=surfaceCapture(/^この中だけで使う(?:変数|リスト)(.+?)を(?:作り、最初は.+にする|空で作る)$/d,line.code);if(p)baseCtx.localNames.push(parsedDeclarationName(p[0].text));}}
     const nextCode=i=>{while(i<lines.length&&!lines[i].code)i++;return i;};
@@ -12548,20 +12591,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     const indent=heading&&first<lines.length?lines[first].indent:0,result=block(0,indent,baseCtx,0);
     if(result.index<lines.length)throw new AkariError('P204','対応する同じ字下げ位置の「もし」がありません',lines[result.index].lineNo,1);
+    const point=offset=>{let lo=0,hi=rawLines.length;while(lo+1<hi){const mid=(lo+hi)>>1;if(rawLines[mid].start<=offset)lo=mid;else hi=mid;}return {line:rawLines[lo].lineNo,column:cpLen(source.slice(rawLines[lo].start,offset))+1};};
     const pending=[...result.nodes,...rules];
     while(pending.length){
       const node=pending.pop(),range=SOURCE_RANGES.get(node)?.range,
         physical=node.sourceSpan?rawLines[node.sourceSpan.startLine-1]:null;
-      if(range&&physical)node.sourceSpan={
-        startLine:physical.lineNo,startColumn:cpLen(physical.raw.slice(0,range.start-physical.start))+1,
-        endLine:physical.lineNo,endColumn:cpLen(physical.raw.slice(0,range.end-physical.start))+1,
-      };
+      if(range&&physical){const begin=point(range.start),end=point(range.end);node.sourceSpan={startLine:begin.line,startColumn:begin.column,endLine:end.line,endColumn:end.column};}
       for(const value of Object.values(node)){
         if(Array.isArray(value)){for(const child of value)if(child?.kind)pending.push(child);}
         else if(value?.kind)pending.push(value);
       }
     }
-    return {kind:'Script',body:result.nodes,...(heading?{heading}:{}),...(rules.length?{rules}:{}),source,sourceSpan:{startLine:1,startColumn:1,endLine:rawLines.length,endColumn:1}};
+    const ast={kind:'Script',body:result.nodes,...(heading?{heading}:{}),...(rules.length?{rules}:{}),source,sourceSpan:{startLine:1,startColumn:1,endLine:rawLines.length,endColumn:1}};
+    SOURCE_RANGES.set(ast,{range:{start:0,end:source.length},extent:{start:0,end:source.length},indent:0,inline:false});return ast;
   }
   function readBlockHead(text,symbols,ctx={}) {
     const code=compactOutsideString(text),mask=surfaceMask(code),line=ctx.sourceLine||{raw:text,code:text,lineNo:ctx.lineNo||0};
@@ -13521,6 +13563,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       [field('heading', 'できごとの見出し', 'heading', undefined, { required: false })],
       [input('rules', '続けて動くルール', 'rule', {
         required: false, multiple: true, minItems: 0, maxItems: LIMITS.activeTasks, variadic: true,
+      }),input('units','できごとのまとまり','script',{
+        required:false,multiple:true,minItems:1,maxItems:LIMITS.scripts,variadic:true,
       })], [body('body', '本文', false)]);
     for (const role of ['expression', 'statement', 'target', 'rule'])
       add('Hole', role, '未確定の穴', [field('label', '必要な役割', 'string', '値')],
@@ -13694,7 +13738,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         );
       }
     add('NumberLiteral', 'expression', '数', [field('value', '数', 'number', 0)]);
-    add('StringLiteral', 'expression', '文字', [field('value', '文字', 'string', '')]);
+    add('StringLiteral', 'expression', '文字', [field('value', '文字', 'string', '', { multiline:true })]);
     add('BooleanLiteral', 'expression', '条件の答え', [field('value', '条件の答え', 'boolean', true)]);
     add(
       'ListLiteral',
@@ -13960,7 +14004,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         } catch (error) {
           blockStructureError(error.message, path);
         }
-      if (/[\r\n]/.test(value)) blockStructureError('一行の値にします', path);
+      if (!field.multiline && /[\r\n]/.test(value)) blockStructureError('一行の値にします', path);
       if (type === 'string' && cpLen(value) > LIMITS.stringChars)
         blockStructureError('文字列の内容または長さが不正です', path);
       if (type === 'annotation' && value && value[0] !== '※')
@@ -13973,6 +14017,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     let count = 0;
     const visit = (node, type, path, blockDepth, expressionDepth) => {
       const schema = syntaxSchema(node, type);
+      if(node.units&&(type!=='script'||path!=='root'))
+        blockStructureError('できごとのまとまりは文書の最上位に置きます',path);
       if (schema.draftOnly && !allowHoles) blockStructureError('未確定の穴を確定してから実行してください', path);
       if (active.has(node)) blockStructureError('循環しています', path);
       active.add(node);
@@ -14451,6 +14497,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if(ast.heading)line(0,sentenceHeadingSource(ast.heading));
     emit(ast.body,ast.heading?1:0,options.inheritedActor);
     for(const rule of ast.rules||[])line(ast.heading?1:0,rule.kind==='Hole'?formatHoleSource(rule):sentenceFormFor(rule).render(rule),rule.inlineComment||'');
+    for(const unit of ast.units||[])out.push(formatScript(unit,options));
     const source=out.join('\n');if(cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','整形後の本文が文字数の上限を超えます',1,1);return source;
     });
   }
@@ -15114,6 +15161,21 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   function updateScriptSource(script, source, project) {
     const metadata = scriptHeadingMetadata(source, script, project);
+    const before=parseSyntax(script.source,{symbols:buildSymbols(project)}).ast,after=parseSyntax(source,{symbols:buildSymbols(project)}).ast;
+    if(after&&(after.units||script.document)){
+      const ids=new Set(),scan=value=>{if(!value||typeof value!=='object')return;for(const [key,child]of Object.entries(value)){if(key==='id'&&typeof child==='string')ids.add(child);else if(key==='unitIds'&&Array.isArray(child))child.forEach(id=>ids.add(id));else if(child&&typeof child==='object')scan(child);}};scan(project);
+      const fresh=()=>{let i=1;while(ids.has('unit-'+i))i++;const id='unit-'+i;ids.add(id);return id;};
+      if(!script.id){let i=1;while(ids.has('document-'+i))i++;script.id='document-'+i;ids.add(script.id);}
+      const list=ast=>ast?[ast,...(ast.units||[])]:[],oldUnits=list(before),newUnits=list(after),used=new Set(),unitIds=[];
+      const text=(unit,original)=>{const range=SOURCE_RANGES.get(unit)?.range;return range?original.slice(range.start,range.end).trim():unit.source?.trim();};
+      for(let i=0;i<newUnits.length;i++){
+        const value=text(newUnits[i],source),match=oldUnits.findIndex((unit,j)=>!used.has(j)&&text(unit,script.source)===value);
+        if(match>=0){used.add(match);unitIds[i]=script.document?.unitIds[match]||fresh();}
+      }
+      const unmatched=oldUnits.map((_,i)=>i).filter(i=>!used.has(i));
+      for(let i=0;i<newUnits.length;i++)if(!unitIds[i]){const old=unmatched.shift();unitIds[i]=old===undefined?fresh():script.document?.unitIds[old]||fresh();}
+      script.document={revision:(script.document?.revision||0)+(source===script.source?0:1),unitIds};
+    }
     Object.assign(script, metadata, { source });
     if (metadata.filter === undefined) delete script.filter;
     return script;
@@ -15142,7 +15204,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         key: scriptSourceKey(s), ownerId: s.targetId, id: s.id, scriptId: s.id,
         kind: 'script', event: s.event, filter: s.filter, source: s.source,
         title: EVENT_LABELS[s.event],
-        context: { id: s.id, scriptId: s.id, filter: s.filter, ownerId: s.targetId, targetId: s.targetId,
+        context: { id: s.id, scriptId: s.id, unitIds:s.document?.unitIds, filter: s.filter, ownerId: s.targetId, targetId: s.targetId,
           targetType: s.targetId === 'stage' ? 'stage' : project.components.find(c => c.id === s.targetId).type,
           event: s.event, args: [], definition: null, definitionKind: null },
       })),
@@ -15178,30 +15240,30 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const parseOne = (key, source, context) => {
       const parsed = parseSyntax(source, { ...context, key, symbols });
       errors.push(...parsed.syntaxDiagnostics);
-      if (parsed.ast) {
-        const heading = parsed.ast.heading;
-        let resolved = context;
-        if (heading) {
-          const ref = heading.actorRef;
-          const actor = ref?.kind === 'named'
-            ? ref.name === project.stage.name || ref.name === '画面'
-              ? { id: 'stage', type: 'stage' } : project.components.find(c => c.name === ref.name)
-            : context.targetId === 'stage' ? { id: 'stage', type: 'stage' }
-              : project.components.find(c => c.id === context.targetId);
-          if (!actor || !EVENT_BY_TYPE[actor.type]?.includes(heading.event))
-            errors.push({code:'S304', message:'この主語ではそのきっかけを使えません', line:1, column:1, where:key});
-          else resolved = {...context, ownerId:actor.id, targetId:actor.id, targetType:actor.type,
-            event:heading.event, filter:heading.filter || null};
-        }
-        items.push(syntaxItem(key, parsed.ast, resolved));
-      }
+      if (parsed.ast) items.push(...documentSyntaxItems(parsed.ast,key,context,project,errors));
     };
     for (const record of sourceRegistry(project))
       parseOne(record.key, record.source, record.context);
+    if(items.filter(item=>!item.definitionKind).length>LIMITS.scripts)errors.push({code:'F504',message:'できごとの数が上限を超えています',line:0,column:1,where:'project'});
     const rules = items.flatMap(item => (item.ast.rules || []).map((rule, index) => ({
       ...rule, id: `${item.key}:rule:${index}`, targetId: item.targetId || item.ownerId,
     })));
     return { symbols, items, errors, rules, astByKey: new Map(items.map((x) => [x.key, x.ast])) };
+  }
+  function documentSyntaxItems(ast,key,context,project,errors) {
+    const first={...ast};delete first.units;
+    return [first,...(ast.units||[])].map((unit,index)=>{
+      const id=context.unitIds?.[index]||(index?`${context.id||context.targetId+'-'+context.event}-unit-${index+1}`:context.id);
+      const unitKey=context.unitIds||index?'script:'+id:key,heading=unit.heading;
+      let resolved={...context,...(ast.units||context.unitIds?{id,scriptId:id,documentKey:key}:{})};
+      if(heading){
+        const ref=heading.actorRef,actor=ref?.kind==='named'?(ref.name===project.stage.name||ref.name==='画面'?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
+          context.targetId==='stage'?{id:'stage',type:'stage'}:project.components.find(c=>c.id===context.targetId);
+        if(!actor||!EVENT_BY_TYPE[actor.type]?.includes(heading.event))errors.push({code:'S304',message:'この主語ではそのきっかけを使えません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
+        else resolved={...resolved,ownerId:actor.id,targetId:actor.id,targetType:actor.type,event:heading.event,filter:heading.filter||null};
+      }
+      return syntaxItem(unitKey,unit,resolved);
+    });
   }
   function analyzeAst(ast, project, context = {}) {
     validateSyntaxAst(ast);
@@ -15234,7 +15296,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         : targetId === 'stage'
           ? 'stage'
           : candidate.components.find((x) => x.id === targetId)?.type;
-    const item = syntaxItem(key, ast, {
+    const items = documentSyntaxItems(ast, key, {
       ...context,
       targetId,
       targetType,
@@ -15242,11 +15304,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       definition,
       definitionKind: kind,
       args: context.args || definition?.args || [],
-    });
-    compiled.items = compiled.items.filter((x) => x.key !== key);
-    compiled.items.push(item);
-    compiled.astByKey.set(key, ast);
-    return analyzeProject(candidate, compiled, { rootKeys: new Set([key]) });
+    },candidate,compiled.errors);
+    compiled.items = compiled.items.filter((x) => x.key !== key && x.documentKey !== key);
+    compiled.items.push(...items);
+    for(const item of items)compiled.astByKey.set(item.key,item.ast);
+    return analyzeProject(candidate, compiled, { rootKeys: new Set(items.map(item=>item.key)) });
   }
   function compileProject(project) {
     try {
@@ -15318,7 +15380,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         } else if (Array.isArray(node.body)) walk(node.body);
       }
     };
-    if (ast.kind === 'Script') walk(ast.body);
+    if (ast.kind === 'Script') {walk(ast.body);for(const unit of ast.units||[])walk(unit.body);}
     else walk([ast]);
     return { execution: shape(ast), comments };
   }
@@ -16208,6 +16270,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         event: x.event,
         ...(x.filter !== undefined ? { filter: cloneDesignProject(x.filter) } : {}),
         source: x.source,
+        ...(x.document?{document:{revision:x.document.revision,unitIds:[...x.document.unitIds]}}:{}),
       })),
       actions: project.actions.map((x) => ({
         id: x.id,
@@ -17672,12 +17735,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     };
     rememberTopics(tree.bodies.body);
     rememberTopics(session.blockView.bodies.body, {kind:'self'}, originalActors);
+    for(const unit of tree.inputs.units||[])rememberTopics(unit.bodies.body);
+    for(const unit of session.blockView.inputs.units||[])rememberTopics(unit.bodies.body,{kind:'self'},originalActors);
+    const structuralLines=text=>normalizeSource(text).lines.filter(line=>!line.continuation).map(line=>line.raw);
     const standard = node => {
       const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId), ast = blockDecode(node);
       if (schema.category === 'expression') return formatExpression(ast, PREC.ATOM);
       if (schema.category === 'target') return formatTarget(ast);
+      if (schema.category === 'script') return structuralLines(formatScript(ast)).join(newline);
+      if (schema.category === 'rule') return structuralLines(formatScript({kind:'Script',body:[],rules:[ast]})).join(newline);
       // Format a replacement in its destination scope, adding self only when needed.
-      return formatScript({kind:'Script', body:[ast]}, {inheritedActor:inheritedActors.get(node.id)}).replace(/\n/g, newline);
+      return structuralLines(formatScript({kind:'Script', body:[ast]}, {inheritedActor:inheritedActors.get(node.id)})).join(newline);
     };
     const sameActorContext = (before, after) => {
       if (same(originalActors.get(before?.id), inheritedActors.get(after.id))) return true;
@@ -17692,7 +17760,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const text = reusable
         ? source.slice(location.extent.start, location.extent.end) : standard(node);
       const oldIndent = reusable ? location.indent : 0;
-      return text.split(/\r\n?|\n/).map((line, i) => i
+      return structuralLines(text).map((line, i) => i
         ? ' '.repeat(indent) + line.slice(Math.min(oldIndent, line.match(/^ */)[0].length)) : line).join(newline);
     };
     const fallback = (before, after) => {
@@ -17720,7 +17788,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           return [{...location.extent,text:rows.join(newline)}];
         }
       }
-      if (schema.bodies.length && before.schemaId === after.schemaId && !location?.inlineContainer &&
+      if (schema.category==='statement' && schema.bodies.length && before.schemaId === after.schemaId && !location?.inlineContainer &&
         location?.range && same(before.bodies, after.bodies) && same(before.annotations, after.annotations) &&
         same(before.fields.actorRef, after.fields.actorRef)) {
         const header = splitComment(standard(after).split(/\r\n?|\n/)[0]).code.trimEnd().replace(/。$/, '');
@@ -17728,6 +17796,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       const range = schema.category === 'statement' ? location?.extent : location?.range;
       if (!range) return null;
+      if(schema.category==='script')return [{...range,text:standard(after)+(/\s*$/.exec(source.slice(range.start,range.end))?.[0]||'')}];
       if (location.inline && (BLOCK_SCHEMA_BY_ID.get(after.schemaId)?.bodies.length || /[\r\n]/.test(standard(after)))) return null;
       return [{...range, text:schema.category === 'statement' ? moved(after, location.indent) : location?.conditionForm ? formatCondition(blockDecode(after),location.conditionForm) : standard(after)}];
     };
@@ -17773,6 +17842,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       return changes;
     };
     const plan = (before, after) => {
+      if(before.schemaId==='Script'&&after.schemaId==='Script'&&(before.inputs.units||after.inputs.units)){
+        const first=node=>{const inputs={...node.inputs};delete inputs.units;return {...node,inputs};};
+        const head=plan(first(before),first(after)),rest=bodyChanges(before.inputs.units||[],after.inputs.units||[],before,'units');
+        return head&&rest?[...head,...rest]:null;
+      }
       if (same(before, after)) {
         const schema = BLOCK_SCHEMA_BY_ID.get(after.schemaId);
         if (schema.category !== 'statement' || ['CommentLine','Hole'].includes(schema.kind) || sameActorContext(before,after)) return [];
@@ -17815,7 +17889,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       return changes;
     };
     const changes = plan(session.blockView, tree);
-    if (!changes) editorError('変更範囲を特定できません。コード表示で編集してください');
+    if (!changes) return reprintChangedUnits(session,tree);
     changes.sort((a,b) => b.start - a.start || b.end - a.end);
     let result = source, boundary = source.length;
     for (const change of changes) {
@@ -17825,6 +17899,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       boundary = change.start;
     }
     return result;
+  }
+  function reprintChangedUnits(session,tree) {
+    const units=root=>{const first={...root,inputs:{...root.inputs}};delete first.inputs.units;return [first,...(root.inputs.units||[])];};
+    const before=new Map(units(session.blockView).map(unit=>[unit.id,unit])),newline=session.sourceText.includes('\r\n')?'\r\n':'\n';
+    let source='';
+    for(const unit of units(tree)){
+      const original=before.get(unit.id),range=original&&session.nodeMap.get(original.id)?.surface?.range,raw=range?session.sourceText.slice(range.start,range.end):null;
+      const same=original&&JSON.stringify(original)===JSON.stringify(unit);
+      const formatted=same&&raw!==null?raw:normalizeSource(formatScript(blockDecode(unit))).lines.filter(line=>!line.continuation).map(line=>line.raw).join(newline)+(raw?.match(/\s*$/)?.[0]||'');
+      if(source&&!/[\r\n]$/.test(source))source+=newline;
+      source+=formatted;
+    }
+    return source;
   }
   function prepareBlockEdit(session, operation, options = {}) {
     const project = options.project || session.project,
@@ -18103,8 +18190,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         blockDraft: { baseline, ast: candidateAst, tree, source: draftSource, pending },
       };
     }
-    const source = session.blockDraft ? formatScript(candidateAst) : preserveBlockSource(session, tree, sourceOrigins),
+    let source = session.blockDraft ? formatScript(candidateAst) : preserveBlockSource(session, tree, sourceOrigins),
       parsed = parseSyntax(source, context);
+    if(!session.blockDraft&&(!parsed.ast||!astEquivalent(candidateAst,parsed.ast))){
+      source=reprintChangedUnits(session,tree);parsed=parseSyntax(source,context);
+    }
     if (!parsed.ast) editorError(parsed.syntaxDiagnostics.map((x) => x.message).join('\n'));
     if (!astEquivalent(candidateAst, parsed.ast))
       editorError('再解析で意味またはコメントが変わるため確定できません');
@@ -20491,6 +20581,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       for (const slot of schema.bodies) {
         const body = statementBody(node, slot);
         if (body) content.append(body);
+      }
+      if(schema.category==='script'&&node.inputs.units?.length){
+        const units=E('section','blockui-document-units');units.setAttribute('aria-label','同じ文書のできごと');
+        for(const unit of node.inputs.units)units.append(renderNode(unit));
+        content.append(units);
       }
       const annotations = schema.annotations.filter(
         (a) => a.editable !== false && (!a.when || node.fields[a.when]),
@@ -22974,6 +23069,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       for (const a of [...project.scripts, ...project.actions, ...project.functions, ...project.sounds])
         if (a.id) z.add(a.id);
+      for(const script of project.scripts)for(const id of script.document?.unitIds||[])z.add(id);
       for (const id of assetStore.ids()) z.add(id);
       return z;
     };

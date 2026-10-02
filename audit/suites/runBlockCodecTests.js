@@ -147,6 +147,7 @@ function runBlockCodecTests() {
         }
         for (const slot of schema.inputs) {
           const make = (i) => {
+            if (slot.type === 'script') return {kind:'Script',heading:{event:'message',actorRef:{kind:'self'},filter:{message:'知らせ'+i}},body:[{kind:'Say',value:{kind:'StringLiteral',value:'受け手'+i},inlineComment:''}]};
             if (slot.type === 'target') return { name: '変更先', qualifier: 'project' };
             if (slot.type === 'rule')
               return {
