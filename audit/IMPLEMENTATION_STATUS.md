@@ -10,7 +10,7 @@ counts and a successful composition subset do not establish release readiness.
 | FIX-002 connecting words | Original I07 source and runtime; protected quoted strings | Full original and variant manifest |
 | FIX-003 question/concatenation | Original I09 waiting and answer; 36 concatenation variants | Wider name and input variants |
 | FIX-004 search focus | Existing first-use and focus gates | Required click/Tab/IME/Escape journeys |
-| FIX-005 list input | Line-per-string-item form, retained whitespace/empty items, field-local errors | Same-head browser correction/cancel proof |
+| FIX-005 list input | Default line-per-string-item form, retained literal mode, whitespace/empty items and field-local errors | Same-head browser correction/cancel proof |
 | FIX-006 list iteration | Original I08 source, order and clock trace | Snapshot mutation and binder scope cases |
 | FIX-007 procedures/return | Original I10 source and runtime, arithmetic variants | Nested natural expressions and full parameter matrix |
 | FIX-008 multiple receivers | Original I11, independent event keys and source ranges | Isolated concurrent send groups, receiver failure/stop |

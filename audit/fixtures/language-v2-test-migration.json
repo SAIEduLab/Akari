@@ -46916,7 +46916,7 @@
     {
       "path": "audit/browser/cases/browser-design-limits.cjs",
       "originalSha256": "18b307d10edb81a81c55847952d4908d5882b7a70b069f3fe5003e1a3dfb276e",
-      "candidateSha256": "6d53e6d7495fe8069cdf452dff4c0f16ffed8390007161c1851e7497db650e60",
+      "candidateSha256": "f313ad37f9560267dc23954e1185c9ef2b20b7ea64d5660b9f3c145ef54bad29",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-design-limits.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -46956,7 +46956,7 @@
     {
       "path": "audit/browser/cases/browser-product.cjs",
       "originalSha256": "35ce185d849c4b997f7825639ff23618e91c7441e1795805c4e6260fdc00893c",
-      "candidateSha256": "32e7a20ff67d3741b093586a5a350ceb2ea1b909f6ed56cd775f0527521e34b8",
+      "candidateSha256": "f7d2a7395cfea2f3792796699a12f1acd7be96d284148df4dc956f9cb4d99407",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-product.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"

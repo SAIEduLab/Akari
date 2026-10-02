@@ -59,9 +59,9 @@ try{
  }
 }catch(error){results.push({file:'workspace-validator-negative',status:'FAIL',error:error.stack});}
 try{
- const control={schema:'akari-data-form-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:dataFormBrowserIds.map((id,i)=>({id,status:'PASS',observed:[{initial:{magnitude:0,unit:'点'},runtime:'3点',designUnchanged:true},{localError:true,inputPreserved:true,failedDesignUnchanged:true,items:['本','かさ','ぼうし']},{wrongUnitRejected:true,input:'0秒',designUnchanged:true}][i]}))};
+ const control={schema:'akari-data-form-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:dataFormBrowserIds.map((id,i)=>({id,status:'PASS',observed:[{initial:{magnitude:0,unit:'点'},runtime:'3点',designUnchanged:true},{defaultLines:true,localError:true,inputPreserved:true,failedDesignUnchanged:true,items:['本','かさ','ぼうし']},{wrongUnitRejected:true,input:'0秒',designUnchanged:true}][i]}))};
  verifyDataFormBrowser(control);
- for(const [id,mutate]of Object.entries({'data-lost-unit':r=>r.results[0].observed.initial=0,'data-wrong-order':r=>r.results[1].observed.items.reverse(),'data-silent-failure':r=>r.results[2].observed.wrongUnitRejected=false})){
+ for(const [id,mutate]of Object.entries({'data-default-literal':r=>r.results[1].observed.defaultLines=false,'data-lost-unit':r=>r.results[0].observed.initial=0,'data-wrong-order':r=>r.results[1].observed.items.reverse(),'data-silent-failure':r=>r.results[2].observed.wrongUnitRejected=false})){
   const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyDataFormBrowser(bad));negative.push({id,rejected:true});
  }
 }catch(error){results.push({file:'data-validator-negative',status:'FAIL',error:error.stack});}
@@ -109,7 +109,7 @@ try{
   }
  }
 }catch(error){results.push({file:'validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===60?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===61?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;
