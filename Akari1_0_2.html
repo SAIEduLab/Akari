@@ -9272,8 +9272,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           this.finishTask(task, 'DONE');
           return { requeue: false };
         }
-        const rid = this.runtime.createClone(src);
-        this.spawnForRuntime(rid, 'cloneStart', { sourceRuntimeId: src });
+        const count=n.count===undefined?1:numberValue(evalExpression(n.count,ctx));
+        if(!Number.isSafeInteger(count)||count<0)throw new AkariError('R410','分身の数は0以上の整数にしてください');
+        if([...this.runtime.actors.values()].filter(actor=>actor.isClone).length+count>LIMITS.clones)
+          throw new AkariError('R410','クローン数の上限です');
+        this.runtime.requireActor({runtimeId:src});
+        const component=this.runtime.component(src);
+        if(component?.type!=='sprite')throw new AkariError('R406','クローンを作れるのはキャラクターだけです');
+        const receivers=this.matchingScripts(component.id,'cloneStart',{sourceRuntimeId:src}).filter(script=>this.hasExecutable(this.scriptAst(component.id,'cloneStart',script.id))).length;
+        if(this.tasks.size+count*receivers>LIMITS.activeTasks)throw new AkariError('R413','同時実行コード数が上限を超えました');
+        for(let i=0;i<count;i++){
+          const rid = this.runtime.createClone(src);
+          this.spawnForRuntime(rid, 'cloneStart', { sourceRuntimeId: src });
+        }
       }
       cancelRuntimeTasks(runtimeId, except = null) {
         for (const t of this.tasks.values())
@@ -11727,9 +11738,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const positional = tailMask.lastIndexOf('を渡して、');
       const cut = marker >= 0 ? marker : positional;
       const nameText = cut < 0 ? tail : tail.slice(cut+(marker >= 0 ? 4 : 5));
-      const name = readNameToken(nameText);
-      if (!name || name.end !== nameText.length) this.err('P205','答えの名前を【名前】で指定してください');
-      validateName(name.name,{callable:true});
+      const name = callableSurfaceName(nameText);
       const args = [], argumentNames = [];
       const parse = (t,offset) => parseExpression(t,this.symbols,{...this.ctx,sourcePositions:this.ctx.sourcePositions?.slice(start+1+offset,start+1+offset+t.length),_parserDepth:(this.ctx._parserDepth||0)+this.depth+1});
       if (marker >= 0) {
@@ -11752,7 +11761,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         }
       }
       this.i=end+1;
-      return exprNode('UserFunctionCall',{name:name.name,args,...(marker>=0?{argumentNames}:{})});
+      return exprNode('UserFunctionCall',{name,args,...(marker>=0?{argumentNames}:{})});
     }
     readNamed(qualifier) {
       // An explicit owner reads its named data; it does not change loop scope.
@@ -11789,7 +11798,37 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     return root;
   }
   function parseExpression(text, symbols, ctx = {}) {
+    const compact=compactOutsideString(text),mask=surfaceMask(compact),depth=(ctx._parserDepth||0)+1;
+    if(depth>LIMITS.expressionDepth)throw new AkariError('P208','式が深すぎます',ctx.lineNo||0,1);
+    if(compact.startsWith('（')&&compact.endsWith('）')&&/^\u0001+$/.test(mask))
+      return parseExpression(compact.slice(1,-1),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(1,-1)});
+    const arithmetic=[['をかけた数',/^(.+?)と(.+?)をかけた数$/d,'MUL'],['を足した数',/^(.+?)に(.+?)を足した数$/d,'ADD'],['を引いた数',/^(.+?)から(.+?)を引いた数$/d,'SUB'],['で割った数',/^(.+?)を(.+?)で割った数$/d,'DIV']];
+    for(const [ending,pattern,op] of arithmetic){
+      if(!mask.endsWith(ending))continue;
+      const roles=surfaceCapture(pattern,compact);
+      if(roles){
+        const operands=roles.map(part=>parseExpression(part.text,symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(part.start,part.end)}));
+        return checkExpressionTree(exprNode('BinaryExpression',{op,left:operands[0],right:operands[1]}),ctx.lineNo||0);
+      }
+    }
+    if(mask.endsWith('で求めた答え')){
+      const parser=new ExpressionParser('（'+compact+'）',symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?[null,...ctx.sourcePositions,null]:undefined});
+      return checkExpressionTree(parser.namedFunction(),ctx.lineNo||0);
+    }
     return new ExpressionParser(text, symbols, ctx).parse();
+  }
+  function callableSurfaceName(text) {
+    let name;
+    if(text.startsWith('「')){
+      const literal=new ExpressionParser(text,null).parse();
+      if(literal.kind!=='StringLiteral')throw new AkariError('P205','呼び出す名前を指定してください');
+      name=literal.value;
+    }else{
+      const token=readNameToken(text);
+      if(!token||token.end!==text.length)throw new AkariError('P205','呼び出す名前を【名前】で指定してください');
+      name=token.name;
+    }
+    validateName(name,{callable:true});return name;
   }
   // Each record owns a predicate's accepted inflections; protected words are never rewritten.
   const CONDITION_FORMS = Object.freeze([
@@ -12097,6 +12136,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     ['PenCommand:CLEAR', /^作品の線とスタンプを全部(?:消す|けす)$/d, 'PenCommand', 'CLEAR'],
     ['SoundCommand:STOP_ALL', /^すべての音を止める$/d, 'SoundCommand', 'STOP_ALL'],
     ['CloneCommand:CREATE_SELF', /^自分の分身を作る$/d, 'CloneCommand', 'CREATE_SELF'],
+    ['CloneCommand:CREATE_SELF:count', /^自分の分身を(.+?)体作る$/d, 'CloneCommand', 'CREATE_SELF', 'cloneCount'],
     ['CloneCommand:DELETE_SELF', /^この分身だけを(?:消す|けす)$/d, 'CloneCommand', 'DELETE_SELF'],
     ['LooksCommand:NEXT_BACKDROP', /^次の背景に変える$/d, 'LooksCommand', 'NEXT_BACKDROP'],
     ['LooksCommand:PREV_BACKDROP', /^前の背景に変える$/d, 'LooksCommand', 'PREV_BACKDROP'],
@@ -12104,12 +12144,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     ['LooksCommand:PREV_COSTUME', /^前の衣装に変える$/d, 'LooksCommand', 'PREV_COSTUME'],
     ['WaitTime', /^(.+?)秒(?:間)?(?:待つ|まつ)$/d, 'WaitTime', null, 'seconds'],
     ['Say:concat', /^(.+?)をつなげて(?:言う|いう|話す|はなす)$/d, 'Say', null, 'concat'],
+    ['Say:concatReverse', /^(.+?に)つなげて(?:言う|いう|話す|はなす)$/d, 'Say', null, 'concat'],
+    ['Say:add', /^(.+?)に(.+?)を足して(?:言う|いう|話す|はなす)$/d, 'Say', null, 'addValue'],
     ['Say:quote', /^(.+?)と(?:言う|いう|話す|はなす)$/d, 'Say', null, 'quote'],
     ['Say:value', /^(.+?)を(?:言う|いう|話す|はなす)$/d, 'Say', null, 'value'],
     ['Ask', /^(.+?)と(?:たずねて|尋ねて|聞いて)、(?:答え|返事)を待つ$/d, 'Ask', null, 'question'],
     ['BroadcastAndWait', /^みんなに(.+?)と知らせて、知らせを受けて始めたことが全部終わるまで待つ$/d, 'BroadcastAndWait', null, 'message'],
     ['Broadcast', /^みんなに(.+?)と知らせる$/d, 'Broadcast', null, 'message'],
-    ['ReturnStatement', /^(.+?)を答えとして返す$/d, 'ReturnStatement', null, 'value'],
+    ['ReturnStatement', /^(.+?)を、?答えとして返す$/d, 'ReturnStatement', null, 'value'],
     ['LocalVariableDeclaration', /^この中だけで使う変数(.+?)を作り、最初は(.+?)にする$/d, 'LocalVariableDeclaration', null, 'local'],
     ['LocalListDeclaration', /^この中だけで使うリスト(.+?)を空で作る$/d, 'LocalListDeclaration', null, 'localList'],
     ['MotionCommand:SET_DIRECTION', /^(?:向き|方向)を(.+?)度にする$/d, 'MotionCommand', 'SET_DIRECTION', 'degree'],
@@ -12138,6 +12180,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     ['SoundCommand:SAMPLE', /^音(.+?)を鳴らし始める$/d, 'SoundCommand', 'SAMPLE', 'arg'],
     ['SoundCommand:SAMPLE_WAIT', /^音(.+?)を鳴らす$/d, 'SoundCommand', 'SAMPLE_WAIT', 'arg'],
     ['CloneCommand:CREATE_TARGET', /^(.+?)の分身を作る$/d, 'CloneCommand', 'CREATE_TARGET', 'arg'],
+    ['CloneCommand:CREATE_TARGET:count', /^(.+?)の分身を(.+?)体作る$/d, 'CloneCommand', 'CREATE_TARGET', 'cloneTargetCount'],
     ['ListClear', /^(.+?)の(?:中身を全部(?:消す|けす)|すべての要素を削除する)$/d, 'ListClear', null, 'target'],
     ['ListClear:empty', /^(.+?)を空にする$/d, 'ListClear', null, 'target'],
     ['ListAppend', /^(.+?)の最後に(.+?)を(?:入れる|いれる)$/d, 'ListAppend', null, 'append'],
@@ -12158,6 +12201,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   // Check role endings before attempting multi-operand captures. A failed ending
   // must not backtrack through every possible particle split in a long sentence.
   const SENTENCE_ROLE_ENDINGS = Object.freeze({
+    addValue:/を足して(?:言う|いう|話す|はなす)$/,
     toneReverse:/Hzの音を(?:鳴らし始める|鳴らす)$/,
     appendReverse:/の最後に(?:入れる|いれる)$/,
     insertReverse:/番目(?:の前)?に(?:入れる|いれる)$/,
@@ -12188,8 +12232,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       start:positions.length ? positions[0]-(line.indent||0) : line.start, physicalStart:line.physicalStart ?? line.start,
       startColumn:positions.length ? cpLen(line.raw.slice(0,positions[0]-(line.physicalStart??line.start)))+1 : line.startColumn||1, inline:true, comment:''};
   }
-  function sentenceActor(text) {
+  function sentenceActor(text,symbols) {
     if (text === '自分') return {kind:'self'};
+    if(symbols?.project?.components.some(component=>component.name===text)||symbols?.project?.stage.name===text)
+      return {kind:'named',name:text};
     const name = parsedDeclarationName(text);
     return {kind:'named',name};
   }
@@ -12215,7 +12261,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const target = part => sentenceTarget(part.text,code,line,symbols,ctx,part.start);
     const node = (kind,props={}) => statementNode(kind,line,{...props,actorRef:{...(ctx.topicActor || {kind:'self'})}});
     const callSplit=surfaceMask(code).lastIndexOf('、'),shortCall=symbols?.actionCallPhrases?.get(code.slice(callSplit+1));
-    const action = surfaceCapture(/^(.*?)という手順を(?:行う|おこなう)$/d,code)|| (shortCall?[{text:code.slice(0,callSplit+1)+`【${shortCall.name}】`}]:null);
+    const action = surfaceCapture(/^(.*?)という手順を(?:(.+?)回)?(?:行う|おこなう)$/d,code)|| (shortCall?[{text:code.slice(0,callSplit+1)+`【${shortCall.name}】`}]:null);
     if (action) {
       const text = action[0].text, mask = surfaceMask(text), split = mask.lastIndexOf('、');
       let rawName=text, args=[], argumentNames=null;
@@ -12235,8 +12281,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           for(const chunk of chunks){const pair=surfaceCapture(/^(.+?)を(.+)$/d,chunk.text);if(!pair)throw new AkariError('P205','受け取る名前と値が必要です');const name=parsedDeclarationName(pair[0].text);if(argumentNames.includes(name))throw new AkariError('S308','受け取る名前が重複しています');argumentNames.push(name);args.push(e({text:pair[1].text,start:chunk.start+pair[1].start}));}
         }
       }
-      if (!rawName.startsWith('【') || !rawName.endsWith('】')) throw new AkariError('P205','手順の名前を【】で囲んでください');
-      return node('UserActionCall',{name:parsedDeclarationName(rawName),args,...(argumentNames ? {argumentNames} : {})});
+      const name=callableSurfaceName(rawName);
+      const call=node('UserActionCall',{name,args,...(argumentNames ? {argumentNames} : {})});
+      return action[1]?node('RepeatCount',{count:q(action[1],'回'),body:[call]}):call;
     }
     const protectedCode=surfaceMask(code);
     for (const form of SENTENCE_FORMS) {
@@ -12248,6 +12295,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const unit=path=>form.roleSlots.find(slot=>slot.path===path)?.unit;
       let props=form.op ? {op:form.op} : {};
       switch(form.role) {
+        case 'cloneCount': props.count=e(parts[0]);break;
+        case 'cloneTargetCount': props.args=[e(parts[0])];props.count=e(parts[1]);break;
+        case 'addValue': props.value=exprNode('BinaryExpression',{op:'ADD',left:e(parts[0]),right:e(parts[1])});break;
         case 'arg': props.args=[e(parts[0])]; break;
         case 'args': props.args=parts.map(e); break;
         case 'degree': props.args=[q(parts[0],unit('args.0'))]; break;
@@ -12255,7 +12305,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         case 'tone': props.args=[q(parts[0],unit('args.0')),q(parts[1],unit('args.1'))]; break;
         case 'toneReverse': props.args=[q(parts[1],unit('args.0')),q(parts[0],unit('args.1'))]; break;
         case 'seconds': props.seconds=q(parts[0],unit('seconds')); break;
-        case 'concat': {const content=parts[0].text,mask=surfaceMask(content),args=[];let at=0;for(let i=0;i<=content.length;i++)if(i===content.length||mask[i]==='と'){args.push(e({text:content.slice(at,i),start:parts[0].start+at}));at=i+1;}if(args.length<2)throw new AkariError('P205','つなげる値を二つ以上指定してください');props.value=exprNode('BuiltinCall',{name:'つなぐ',args});break;}
+        case 'concat': {
+          const content=parts[0].text,mask=surfaceMask(content),args=[];
+          const reverse=surfaceCapture(/^(.+?)を(.+?)に$/d,content),forward=surfaceCapture(/^(.+?)(?:の後ろ)?に(.+)$/d,content);
+          if(reverse||forward){const pair=reverse?[reverse[1],reverse[0]]:forward;for(const part of pair)args.push(e({...part,start:parts[0].start+part.start}));}
+          else {let at=0;for(let i=0;i<=content.length;i++)if(i===content.length||mask[i]==='と'){args.push(e({text:content.slice(at,i),start:parts[0].start+at}));at=i+1;}}
+          if(args.length<2)throw new AkariError('P205','つなげる値を二つ以上指定してください');props.value=exprNode('BuiltinCall',{name:'つなぐ',args});break;
+        }
         case 'quote': props.value=e(parts[0]); if(props.value.kind!=='StringLiteral') throw new AkariError('P205','台詞は「文字」と言う、値は「値を言う」と書きます'); break;
         case 'value': {const part=parts[0], raw=part.text.endsWith('の値')?{...part,text:part.text.slice(0,-2)}:part;let error;try{props.value=e(raw);}catch(caught){if(!(caught instanceof AkariError))throw caught;error=caught;}
           const unknownWord=/^[\p{L}ー][\p{L}\p{N}ー]*$/u.test(raw.text)&&!symbols?.allDataNames?.has(raw.text)&&![...(ctx.localNames||[]),...(ctx.binders||[]),...(ctx.args||[])].includes(raw.text);
@@ -12318,7 +12374,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if(coords){if(coords[0].text===coords[2].text)throw new AkariError('P205','横と縦を一つずつ指定してください');const a=q(coords[1].text,'歩',base+coords[1].start,false),b=q(coords[3].text,'歩',base+coords[3].start,false),xy=coords[0].text==='横'?[a,b]:[b,a];return node(seconds?'GLIDE':'GOTO',seconds?[seconds,...xy]:xy);}
     let direction=null, distance=null;
     if((p=surfaceCapture(/^(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)(.+)歩$/d,remaining))){direction=directions[p[0].text];distance=q(p[1].text,'歩',base+p[1].start);}
-    else if((p=surfaceCapture(/^(.+)歩(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)$/d,remaining))){distance=q(p[0].text,'歩',base+p[0].start);direction=directions[p[1].text];}
+    else if((p=surfaceCapture(/^(.+)歩、?(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)$/d,remaining))){distance=q(p[0].text,'歩',base+p[0].start);direction=directions[p[1].text];}
     else if((p=surfaceCapture(/^(.+)歩$/d,remaining))){distance=q(p[0].text,'歩',base+p[0].start);direction='forward';}
     if(distance){if(['行く','滑る','すべる'].includes(verb)&&!seconds)throw new AkariError('P205','位置、または時間と方向・距離を指定してください');return node(seconds?'GLIDE_DIRECTION':direction==='forward'?'MOVE':'MOVE_DIRECTION',seconds?[seconds,distance]:[distance],seconds||direction!=='forward'?direction:null);}
     if(/(?:動く|うごく|進む|すすむ|動かす|うごかす|滑る|すべる)/.test(verb))throw new AkariError('P205','移動には歩数、必要なら方向と秒数を一つずつ指定してください');
@@ -12348,7 +12404,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     return suffix?text.slice(0,suffix.index)+'キーが押されている':text;
   }
   function readContinuousSentence(code,line,symbols,ctx) {
-    const parts=surfaceCapture(/^(.+?)(?:あいだ|間)(?:は)?、(.+?)(?:動き続ける|動かし続ける)$/d,code);
+    const parts=surfaceCapture(/^(.+?)(?:あいだ|間)(?:は)?、(.+?)(?:動き続ける|動かし続ける|動く|動かす)$/d,code);
     if(!parts)return null;
     let body=parts[1].text, actorRef=ctx.topicActor||{kind:'self'}, actor=surfaceCapture(/^(.+?)(?:は|を)(.+)$/d,body);
     if(actor){actorRef=sentenceActor(actor[0].text);body=actor[1].text;}
@@ -12539,7 +12595,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     if(/^(?:次のことを)?ずっと(?:くり返す|繰り返す|くりかえす)$/.test(mask))return {kind:'Forever'};
     if((parts=surfaceCapture(/^(?:次のことを)?(.+)回(?:だけ)?(?:、次のことを)?(?:くり返す|繰り返す|くりかえす)$/d,code)))return {kind:'RepeatCount',count:sentenceQuantity(e(parts[0]),'回')};
-    if((parts=surfaceCapture(/^(.+)の中身を先頭から一つずつ見て、次のことを行う$/d,code)))return {kind:'ForEach',list:e(parts[0]),binder:'今見ているもの'};
+    if((parts=surfaceCapture(/^(.+?)(?:の中身)?を先頭から一つずつ見て、次のことを行う$/d,code)))return {kind:'ForEach',list:e(parts[0]),binder:'今見ているもの'};
     if((parts=surfaceCapture(/^(.+)の各要素を(.+)として、?(?:次のことを)?(?:くり返す|繰り返す|くりかえす)$/d,code)))return {kind:'ForEach',list:e(parts[0]),binder:parsedDeclarationName(parts[1].text)};
     if((parts=surfaceCapture(/^(.+(?:あいだ|間|まで))、(?:次のことを)?(?:くり返す|繰り返す|くりかえす)$/d,code))){const clause=readConditionClause(parts[0].text,symbols,ctx);return {kind:clause.mode==='while'?'RepeatWhile':'RepeatUntil',condition:clause.condition};}
     if((parts=surfaceCapture(/^(.+)回((?:.*)(?:進んで|すすんで|動いて|うごいて))、(.+)$/d,code))){const first=sentenceInfinitive(parts[1].text),last=parts[2].text,indent=' '.repeat(line.indent||0);throw sentenceDiagnostic('くり返す範囲を選んでください',line,[{label:'前の動作だけをくり返す',source:`${parts[0].text}回くり返す。\n${indent}  ${first}。\n${indent}${last}`},{label:'二つの動作をくり返す',source:`${parts[0].text}回くり返す。\n${indent}  ${first}。\n${indent}  ${last}`}],{kind:'RepeatCount',missing:['scope']});}
@@ -12570,18 +12626,27 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   function readSurfaceStatement(code,line,symbols,ctx) {return readRoleStatement(code,line,symbols,ctx);}
   function parseSimpleStatement(line,symbols,ctx={}) {
     let code=compactOutsideString(line.code),working=line;
-    const lead=/^(?:そのあと|それから|次に)、/.exec(surfaceMask(code));
+    const lead=/^(?:そのあと|それから|次に|最後に)、/.exec(surfaceMask(code));
     if(lead){working=surfaceLineSlice(line,lead[0].length,code.length);working.comment=line.comment;code=working.code;}
     const parse=(text,at,topicActor)=>{const part=at?surfaceLineSlice(working,at,code.length):working;part.comment=line.comment;const local={...ctx,topicActor};return readSurfaceStatement(text,part,symbols,local);};
     let directError;
     try { const direct=parse(code,0,ctx.topicActor||{kind:'self'}); if(direct)return direct; } catch(error) {if(!(error instanceof AkariError))throw error;directError=error;}
+    const directionFirst=surfaceCapture(/^((?:画面の)?(?:前|後ろ|右|左|上|下)(?:へ|に))、(.+?)を(.+(?:動かす|うごかす))$/d,code);
+    if(directionFirst){
+      const [direction,actor,movement]=directionFirst,actorRef=sentenceActor(actor.text,symbols),text=direction.text+movement.text;
+      const positions=working.mapped?.positions,part={...working,code:text,mapped:{text,positions:positions?[...positions.slice(direction.start,direction.end),...positions.slice(movement.start,movement.end)]:[]}};
+      const result=readSentenceMotion(text,part,symbols,{...ctx,topicActor:actorRef});
+      if(result){STATEMENT_EXPLICIT_ACTORS.add(result);return result;}
+    }
     // Actor extraction is permitted only when a complete action/data frame accepts its suffix.
     const actorPatterns=[/^(.+?)は、?(.+)$/d,/^(.+?)を(.+(?:動かす|うごかす))$/d,/^(.+?)に(.+(?:言わせる))$/d];
     for(let k=0;k<actorPatterns.length;k++){
       if(k===1&&!/(?:動かす|うごかす)$/.test(code)||k===2&&!code.endsWith('言わせる'))continue;
-      const parts=surfaceCapture(actorPatterns[k],code);if(!parts)continue;
+      const particle=['は','を','に'][k],known=[...(symbols?.project?.components||[]),...(symbols?.project?.stage?[symbols.project.stage]:[])].sort((a,b)=>b.name.length-a.name.length).find(actor=>code.startsWith(actor.name+particle));
+      const offset=known?known.name.length+1+(k===0&&code[known.name.length+1]==='、'?1:0):0;
+      const parts=known?[{text:known.name,start:0,end:known.name.length},{text:code.slice(offset),start:offset,end:code.length}]:surfaceCapture(actorPatterns[k],code);if(!parts)continue;
       if(k===0&&parts[0].text==='この中で')continue;
-      let actorRef;try{actorRef=sentenceActor(parts[0].text);}catch(error){if(error instanceof AkariError)continue;throw error;}let body=parts[1].text;
+      let actorRef;try{actorRef=sentenceActor(parts[0].text,symbols);}catch(error){if(error instanceof AkariError)continue;throw error;}let body=parts[1].text;
       if(k===2)body=body.slice(0,-'言わせる'.length)+'言う';
       const part=surfaceLineSlice(working,parts[1].start,parts[1].end,k===2?body:null);part.comment=line.comment;
       const node=readSurfaceStatement(body,part,symbols,{...ctx,topicActor:actorRef});
@@ -13300,7 +13365,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         CREATE_SELF: Object.freeze({
           label: '自分の分身を作る',
           inputs: Object.freeze([]),
-          format: (a) => '自分の分身を作る',
+          format: (a,n) => n.count===undefined?'自分の分身を作る':`自分の分身を${formatExpression(n.count)}体作る`,
         }),
         DELETE_SELF: Object.freeze({
           label: 'この分身だけを消す',
@@ -13310,7 +13375,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         CREATE_TARGET: Object.freeze({
           label: '対象のクローンを作る',
           inputs: Object.freeze(['対象']),
-          format: (a) => `${a(0)}の分身を作る`,
+          format: (a,n) => `${a(0)}の分身を${n.count===undefined?'':formatExpression(n.count)+'体'}作る`,
         }),
       }),
     }),
@@ -13622,7 +13687,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           'statement',
           command.label,
           [],
-          [args([...command.inputs])],
+          [args([...command.inputs]),...(kind==='CloneCommand'&&value!=='DELETE_SELF'?[input('count','作る分身の数','expression',{required:false})]:[])],
           [],
           op('op', value),
           { palette: group.palette },

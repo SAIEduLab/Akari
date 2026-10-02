@@ -2,7 +2,7 @@
 
 ## 対象と判定の分離
 
-基準は public `SAIEduLab/Akari` main `9d8ef194af2a65e92f6419a5d51700aaec4fdf0e`、製品SHA256 `d5da5c93a7486a35fe84b42a1013092c594da989e02da76ad9b978c4453fa302`。監査専用ブランチで基盤のみ変更する。製品修正はUX監査一巡後にまとめ、mainへのmergeは別途判断する。
+比較基準は public `SAIEduLab/Akari` main `9d8ef194af2a65e92f6419a5d51700aaec4fdf0e`、製品SHA256 `d5da5c93a7486a35fe84b42a1013092c594da989e02da76ad9b978c4453fa302`。現在の作業は同じPRで製品の意味・編集・保存の修正と監査を進める。[公開仕様](reviewed/PUBLIC_SEMANTIC_UX_SPEC.md)と[再監査計画](reviewed/PUBLIC_UX_ACTIONS_ACCEPTANCE_PLAN.md)を完了条件とし、当該HEADの全必須機械ゲートと自己レビューが成功した後、明示された統合許可に従ってmainへmergeし、Pages公開を確認する。公開後の本人PCでのUX評価は別に記録する。仕様にある未実装項目を、部分的なPASSで完了扱いしない。
 
 主目的は、子どもが制作を始め、意図した作品を完成できるかを実操作で判断すること。機械化できる互換・境界・往復・安全・保存・ブラウザ回帰はActionsへ移し、本人PCで全命令・全式を重複して手操作する工程を作らない。
 
@@ -64,7 +64,7 @@ main push run [36948082810](https://github.com/SAIEduLab/Akari/actions/runs/3694
 - 追加受入検査は一つのジョブ内で固定browserを共有し、各ケースは独立contextで実行する。ケースの例外後も残りの結果を集めるが、例外・timeoutはFAILのまま。
 - 新しい受入workflowはPR/明示dispatchで起動し、pushとPRの二重起動を新たに増やさない。既存workflowの承認済みtrigger・matrixは保持する。
 - 同一SHAで完了済みの検査を根拠なく繰り返さない。診断用の部分実行はINCOMPLETEとし、最終候補は全必須suiteを通す。
-- artifactは3日、製品SHA・監査入力SHA・原文・期待動作・実測・失敗分類を記録。MACHINE_PASSからUX合格・Ready・mergeを自動決定しない。
+- artifactは3日、製品SHA・監査入力SHA・原文・期待動作・実測・失敗分類を記録。MACHINE_PASSはUX合格を意味しない。統合時は全必須結果・自己レビュー・現在HEADと明示された統合許可を照合する。
 
 ## 回帰分類と不足資料
 

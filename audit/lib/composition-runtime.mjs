@@ -18,12 +18,12 @@ export function compositionProject(A,d,source=d.mainFirstDraft){
 export function compositionExecution({draft:d,makeProject,mode='source',source=d.mainFirstDraft}){
  const A=globalThis.Akari,assert=(value,message)=>{if(!value)throw Error(message);},copy=x=>JSON.parse(JSON.stringify(x));
  const p=makeProject(A,d,source),syntax=A.parseSyntax(source,{targetId:'sprite-1',event:'start'});
- assert(syntax.ast,'original source was rejected: '+JSON.stringify(syntax.diagnostics));
+ assert(syntax.ast,'original source was rejected: '+JSON.stringify(syntax.syntaxDiagnostics));
  const roundtrip=[];
  for(const item of [...p.scripts,...p.actions,...p.functions]){
   const kind=p.functions.includes(item)?'function':p.actions.includes(item)?'action':null;
   const context=kind?{definitionKind:kind,args:item.args}:{targetId:item.targetId,event:item.event};
-  const parsed=A.parseSyntax(item.source,context);assert(parsed.ast,'original definition/source rejected: '+JSON.stringify(parsed.diagnostics));
+  const parsed=A.parseSyntax(item.source,context);assert(parsed.ast,'original definition/source rejected: '+JSON.stringify(parsed.syntaxDiagnostics));
   const decoded=A.blockDecode(A.blockEncode(parsed.ast).tree),formatted=A.formatScript(decoded),again=A.parseSyntax(formatted,context);
   assert(A.astEquivalent(parsed.ast,decoded),'block decode changed original meaning');
   assert(again.ast&&A.astEquivalent(parsed.ast,again.ast),'block-generated source changed original meaning');
