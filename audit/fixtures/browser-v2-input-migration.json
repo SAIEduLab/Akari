@@ -10723,6 +10723,20 @@
         "The mode preference edit still enters a real12-step movement and checks Undo/Redo in both modes.",
         "Additive UX browser cases check idle empty Run, click-only execution, explicit sample, normal removal and Undo."
       ]
+    },
+    {
+      "ids": [
+        "OWNER-GUI-DIRECT-BUTTON",
+        "REVIEW-STAGE-SPEECH-READABLE",
+        "REVIEW-LONG-TEXT-EDIT-VISIBLE"
+      ],
+      "authorization": "Reviewed PUBLIC_SEMANTIC_UX_SPEC section9.1 UX-01 requires empty new work and explicit sample selection.",
+      "oldContract": "The ownership new-work path and readable speech setup assumed the automatic greeting sample.",
+      "newIndependentGuarantees": [
+        "Ownership still clicks New and verifies editor/event selection, now asserts empty source and then explicitly opens the sample to retain the editable numeric field check. All import, call ownership, field editing, Undo/Redo, complete event and unused definition assertions are unchanged.",
+        "Readable review explicitly opens the sample through its visible control. Every original viewport, UI level, speech-size threshold, stage/control visibility, pause/resume and long-text assertion remains unchanged.",
+        "Additive empty-work native acceptance separately requires idle Run, click-only execution, editable sample removal and Undo."
+      ]
     }
   ],
   "schemaUiSetupMigrations": [

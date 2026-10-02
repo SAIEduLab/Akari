@@ -75,10 +75,10 @@ try{
  }
 }catch(error){results.push({file:'numeric-validator-negative',status:'FAIL',error:error.stack});}
 try{
- const observed=[{deleteRefused:true,cancelUnchanged:true,referenceOnlyRename:true,undoRedo:true,saveExact:true,assetsPreserved:true},{uncertaintyShown:true,projectHistoryAssetsUnchanged:true},{unusedDeletionAllowed:true,undoRestoresProjectAndAssets:true},{referenceShown:true,projectHistoryAssetsUnchanged:true}];
+ const observed=[{deleteRefused:true,cancelUnchanged:true,referenceOnlyRename:true,undoRedo:true,saveExact:true,assetsPreserved:true},{uncertaintyShown:true,projectHistoryAssetsUnchanged:true},{unusedDeletionAllowed:true,undoRestoresProjectAndAssets:true},{referenceShown:true,projectHistoryAssetsUnchanged:true},{"referenceOnly":true,"undoRedo":true,"runtimeX":260,"proseUnchanged":true},{"cancelUnchanged":true,"referenceOnly":true,"undoRedo":true,"saveExact":true,"runtimeValue":"3"},{"kind":"action","referenceOnly":true,"undoRedo":true,"runtimeValue":"250","designUnchanged":true},{"kind":"function","referenceOnly":true,"undoRedo":true,"runtimeValue":"250","designUnchanged":true}];
  const control={schema:'akari-resource-references-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:resourceBrowserIds.map((id,i)=>({id,status:'PASS',observed:observed[i]}))};
  verifyResourceBrowser(control);
- for(const[id,mutate]of Object.entries({'resource-deleted-reference':r=>r.results[0].observed.deleteRefused=false,'resource-uncertainty-hidden':r=>r.results[1].observed.uncertaintyShown=false,'resource-blocked-unused':r=>r.results[2].observed.unusedDeletionAllowed=false,'resource-changed-history':r=>r.results[3].observed.projectHistoryAssetsUnchanged=false})){
+ for(const[id,mutate]of Object.entries({'resource-deleted-reference':r=>r.results[0].observed.deleteRefused=false,'resource-uncertainty-hidden':r=>r.results[1].observed.uncertaintyShown=false,'resource-blocked-unused':r=>r.results[2].observed.unusedDeletionAllowed=false,'resource-changed-history':r=>r.results[3].observed.projectHistoryAssetsUnchanged=false,'rename-actor-drift':r=>r.results[4].observed.runtimeX=230,'rename-data-not-saved':r=>r.results[5].observed.saveExact=false,'rename-lost-calls':r=>r.results[6].observed.runtimeValue='240','rename-runtime-mutated-design':r=>r.results[7].observed.designUnchanged=false})){
   const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyResourceBrowser(bad));negative.push({id,rejected:true});
  }
 }catch(error){results.push({file:'resource-validator-negative',status:'FAIL',error:error.stack});}
@@ -127,7 +127,7 @@ try{
   }
  }
 }catch(error){results.push({file:'validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===77?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===81?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;

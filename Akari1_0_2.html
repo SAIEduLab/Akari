@@ -12389,7 +12389,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         }
         case 'quote': props.value=e(parts[0]); if(props.value.kind!=='StringLiteral') throw new AkariError('P205','台詞は「文字」と言う、値は「値を言う」と書きます'); break;
         case 'value': {const part=parts[0], raw=part.text.endsWith('の値')?{...part,text:part.text.slice(0,-2)}:part;let error;try{props.value=e(raw);}catch(caught){if(!(caught instanceof AkariError))throw caught;error=caught;}
-          const unknownWord=/^[\p{L}ー][\p{L}\p{N}ー]*$/u.test(raw.text)&&!symbols?.allDataNames?.has(raw.text)&&![...(ctx.localNames||[]),...(ctx.binders||[]),...(ctx.args||[])].includes(raw.text);
+          const resolvedName=props.value?.kind==='VariableRead'?props.value.name:raw.text,
+            unknownWord=/^[\p{L}ー][\p{L}\p{N}ー]*$/u.test(raw.text)&&!symbols?.allDataNames?.has(resolvedName)&&![...(ctx.localNames||[]),...(ctx.binders||[]),...(ctx.args||[])].includes(resolvedName);
           if(form.kind==='Say'&&unknownWord&&(error||props.value?.kind==='VariableRead')&&!part.text.endsWith('の値')){
             const name=raw.text;throw sentenceDiagnostic('台詞の文字か、素材の音かを選んでください',line,[{label:'台詞として画面に言う',source:`「${name}」と言う`},{label:'同じ名前の音を鳴らす',source:`音「${name}」を鳴らす`},{label:'データの値を言う（名前の定義を確認）',source:`【${name}】の値を言う`}],{kind:'Say',missing:['literalOrSoundOrData']});
           }
@@ -15342,11 +15343,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const location = node => ({ sourceKey: record.key, ownerId: record.ownerId, title: [ownerName, record.title || '本文'].filter(Boolean).join(' / '), line: node?.sourceSpan?.startLine || 1 });
       if (record.incomplete) uncertain.push({ ...location(), kind: null, reason: '確定していない入力があり、参照先をすべて調べられません' });
       if (!parsed.ast) { uncertain.push({ ...location(), kind: null, reason: '未完成の本文があり、参照先をすべて調べられません' }); continue; }
+      const paths = new WeakMap();
+      const indexPaths = (node,path=[]) => {if(!node||typeof node!=='object')return;paths.set(node,path);for(const [key,value]of Object.entries(node)){if(['sourceSpan','source'].includes(key))continue;if(Array.isArray(value))value.forEach((child,i)=>indexPaths(child,[...path,key,i]));else if(value&&typeof value==='object')indexPaths(value,[...path,key]);}};
+      indexPaths(parsed.ast);
       const local = syntaxItem(record.key, parsed.ast, record.context);
       const localNames = new Set([...(record.context.args || []), ...local.localVarNames, ...local.localListNames]);
       const add = (resource, node, binding = 'name') => {
         const range = SOURCE_RANGES.get(node)?.range;
-        references.push({ ...location(node), resourceKey: resource.key, name: resource.name, binding,
+        references.push({ ...location(node), resourceKey: resource.key, name: resource.name, binding, nodePath: paths.get(node),
           ...(range ? { range: { start: range.start, end: range.end } } : {}) });
       };
       const named = (kind, expr, ownerId, special = []) => {
@@ -15379,7 +15383,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           for (const r of resources.filter(r => r.kind === kind && r.name === node.name)) add(r, node);
         }
         if (node.kind === 'VariableRead') data(node, node, ownerId, bound);
-        if (node.target?.name) data(node.target, node, ownerId, bound);
+        if (node.target?.name) data(node.target, node.target, ownerId, bound);
         if (node.kind === 'LooksCommand' && node.op === 'SET_COSTUME') named('costume', node.args?.[0], ownerId);
         if (node.kind === 'LooksCommand' && node.op === 'SET_BACKDROP') named('backdrop', node.args?.[0]);
         if (node.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(node.op)) named('sound', node.args?.[0]);
@@ -15404,9 +15408,84 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     return { resource, references: graph.references.filter(r => r.resourceKey === resourceKey),
       uncertain: graph.uncertain.filter(r => (!r.kind || r.kind === resource.kind) && (!r.targetOwnerId || r.targetOwnerId === resource.ownerId)) };
   }
+  function prepareBindingRename(project, resourceKey, newName, options = {}) {
+    const graph = buildProjectReferenceGraph(project, options), resource = graph.resources.find(r => r.key === resourceKey);
+    if (!resource) throw new AkariError('F503', '変更する名前がありません');
+    validateResourceName(newName, '名前');
+    if (newName === resource.name) return cloneDesignProject(project);
+    if (graph.uncertain.some(r=>!r.kind||r.kind===resource.kind)) throw new AkariError('S301', '未完成または実行中に決まる参照があります。本文を確定してから名前を変えてください');
+    const next = cloneDesignProject(project), items = resource.kind === 'component' ? [next.stage, ...next.components]
+      : resource.kind === 'data' ? (resource.ownerId === 'stage' ? next.projectData : next.components.find(c => c.id === resource.ownerId).localData)
+      : next[resource.kind === 'action' ? 'actions' : 'functions'];
+    const siblings = Array.isArray(items) ? items : [...items.variables, ...items.lists];
+    if ((resource.kind === 'action' || resource.kind === 'function' ? [...next.actions, ...next.functions] : siblings).some(d => d.id !== resource.id && d.name === newName))
+      throw new AkariError('F503', '同じ所属に同じ名前があります。別の名前を選んでください');
+    siblings.find(d => d.id === resource.id).name = newName;
+    validateDesignProject(next);
+    const at = (root, path) => path.reduce((value,key) => value?.[key],root), grouped = new Map();
+    for (const ref of graph.references.filter(r => r.resourceKey === resourceKey)) {
+      if (options.drafts?.some(d => d.key === ref.sourceKey)) throw new AkariError('S301', '編集中の定義を保存してから名前を変えてください');
+      if (graph.references.some(r => r.sourceKey === ref.sourceKey && r.binding === ref.binding && stableJson(r.nodePath) === stableJson(ref.nodePath) && r.resourceKey !== resourceKey))
+        throw new AkariError('S301', '同じ呼び方が複数の対象を指します。所属や対象を明示してから名前を変えてください');
+      const rows = grouped.get(ref.sourceKey) || []; rows.push(ref); grouped.set(ref.sourceKey,rows);
+    }
+    for (const record of sourceRegistry(project)) {
+      const refs = grouped.get(record.key); if (!refs) continue;
+      const session = createEditorSession(record.key,record.source,record.context,project), tree = cloneDesignProject(session.blockView), index = buildBlockIndex(tree), edits = [];
+      if (!session.syntaxAst || !tree) throw new AkariError('S301', '本文の参照を確定できません');
+      for (const ref of refs) {
+        const entry = [...session.nodeMap].find(([,loc]) => stableJson(loc.path) === stableJson(ref.nodePath));
+        if (!entry) throw new AkariError('F503', '名前を使っている場所を確認できません');
+        const [id,loc] = entry, node = index.get(id).node, original = at(session.syntaxAst,ref.nodePath);
+        if (ref.binding === 'actor') {
+          const actor = node.fields.heading?.actorRef || node.fields.actorRef;
+          if (!actor || actor.name !== resource.name) continue; // The stable alias 画面 keeps its spelling.
+          actor.name = newName;
+        } else if (ref.binding === 'literal') node.fields.value = newName;
+        else node.fields.name = newName;
+        const range = loc.surface?.range;
+        if (!range) throw new AkariError('F503', '名前の原文位置を確認できません');
+        if (ref.binding === 'literal') { edits.push({...range,text:formatExpression({kind:'StringLiteral',value:newName})}); continue; }
+        const phrase=original.kind==='UserActionCall'&&project.actions.find(a=>a.id===resource.id)?.callPhrase;
+        if(phrase&&compactOutsideString(record.source.slice(range.start,range.end)).replace(/[。．.]$/,'').endsWith(actionCallPhraseKey(phrase)))continue;
+        let end = range.end;
+        if (original.kind === 'Script' && ref.binding === 'actor') {
+          const firstLine = /[\r\n]/.exec(record.source.slice(range.start,end)); if (firstLine) end = range.start + firstLine.index;
+        }
+        // Values, quoted speech and nested bodies are separate semantic nodes.
+        // A containing command's name must never rename text inside those nodes.
+        const protectedRanges = [...session.nodeMap.values()].filter(child => child.path.length > loc.path.length && loc.path.every((k,i) => child.path[i] === k)).map(child => child.surface?.range).filter(Boolean);
+        const candidates = [];
+        for (let pos=record.source.indexOf(resource.name,range.start);pos>=0&&pos+resource.name.length<=end;pos=record.source.indexOf(resource.name,pos+resource.name.length)) {
+          if (protectedRanges.some(r => pos>=r.start&&pos<r.end)) continue;
+          let start=pos,finish=pos+resource.name.length,text=nameSource(newName);
+          const before=record.source[pos-1],after=record.source[finish];
+          if (before==='【'&&after==='】') {start--;finish++;text=`【${newName}】`;}
+          else if (before==='「'&&after==='」') {start--;finish++;text=formatExpression({kind:'StringLiteral',value:newName});}
+          candidates.push({start,end:finish,text});
+        }
+        if (candidates.length>1) throw new AkariError('S301', '名前の参照位置が複数あります。対象を明示してから名前を変えてください');
+        if (candidates.length) edits.push(candidates[0]);
+        else if (ref.binding!=='actor'&&!(original.kind==='UserActionCall'&&project.actions.find(a=>a.id===resource.id)?.callPhrase))
+          throw new AkariError('F503', '名前の表記を確認できません');
+      }
+      let source=record.source,boundary=source.length;
+      const unique=[...new Map(edits.map(e=>[e.start+':'+e.end,e])).values()].sort((a,b)=>b.start-a.start);
+      for (const edit of unique) {if(edit.end>boundary)throw new AkariError('F503','名前の編集範囲が重なっています');source=source.slice(0,edit.start)+edit.text+source.slice(edit.end);boundary=edit.start;}
+      const parsed=parseSyntax(source,{...record.context,symbols:buildSymbols(next)});
+      if(!parsed.ast||!astEquivalent(parsed.ast,blockDecode(tree)))throw new AkariError('S301','この表記では参照を保った変更を確認できません。名前の引用や対象を明示してください');
+      const target=record.kind==='script'?scriptBySourceKey(next,record.key):next[record.kind==='action'?'actions':'functions'].find(d=>record.key===record.kind+':'+d.id);
+      target.source=source;if(target.document&&source!==record.source)target.document.revision++;
+    }
+    const identity = rows => rows.map(r => [r.sourceKey,r.resourceKey,r.binding,r.nodePath]).map(stableJson).sort(), after = buildProjectReferenceGraph(next);
+    if (after.uncertain.length!==graph.uncertain.length || stableJson(identity(graph.references)) !== stableJson(identity(after.references)))
+      throw new AkariError('S301', '変更先の名前では参照先や所属が変わります。別の名前を選ぶか所属を明示してください');
+    validateDesignProject(next);return next;
+  }
+
   function prepareResourceRename(project, resourceKey, newName, options = {}) {
     const impact = resourceChangeImpact(project, resourceKey, options), resource = impact.resource;
-    if (!['costume', 'backdrop', 'sound'].includes(resource.kind)) throw new AkariError('F503', 'この種類の名前変更には対応する編集画面を使ってください');
+    if (!['costume', 'backdrop', 'sound'].includes(resource.kind)) return prepareBindingRename(project,resourceKey,newName,options);
     validateResourceName(newName, '名前');
     if (newName === resource.name) return cloneDesignProject(project);
     if (impact.uncertain.length) throw new AkariError('S301', '参照先を調べられない本文があります。先に本文を確定してから名前を変えてください');
@@ -24404,7 +24483,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             propRow('\u540d\u524d', project.stage.name, (v) => {
               if (!v.trim())
                 throw new Error('\u540d\u524d\u306f\u7a7a\u306b\u3067\u304d\u307e\u305b\u3093');
-              project.stage.name = v.trim();
+              project = prepareResourceRename(project,'component:stage',v.trim(),{drafts:resourceDraftRecords()});
+              invalidateEditors();
             }),
           ),
           propSection(
@@ -24465,7 +24545,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               throw new Error(
                 '\u90e8\u54c1\u540d\u306f\u7a7a\u306b\u3067\u304d\u305a\u3001\u91cd\u8907\u3082\u3067\u304d\u307e\u305b\u3093',
               );
-            c.name = v;
+            project = prepareResourceRename(project,'component:'+c.id,v,{drafts:resourceDraftRecords()});
+            invalidateEditors();
           }),
           propRow('\u8868\u793a', c.visible, (v) => (c.visible = v), 'checkbox'),
           propRow(
@@ -26794,7 +26875,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             renderDataModal();
             refreshEditor();
           };
-          row.append(info, del);
+          const rename=document.createElement('button');rename.textContent='名前を変える';
+          rename.onclick=()=>{
+            if(modelLocked())return;
+            const name=prompt('データの名前',d.name);if(name===null||name.trim()===d.name)return;
+            try{
+              const next=prepareResourceRename(project,'data:'+d.id,name.trim(),{drafts:resourceDraftRecords()});
+              clearTimeout(historyTimer);pushHistoryNow();project=next;invalidateEditors();markDirty();pushHistoryNow();renderDataModal();refreshEditor();
+            }catch(error){showResourceImpact({resource:d,references:[],uncertain:[{title:'名前の変更',line:1,reason:error.message}]},body,'名前変更');}
+          };
+          row.append(info, rename, del);
           body.appendChild(row);
         }
     }
@@ -27016,8 +27106,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     function saveCallable() {
       if (modelLocked() || !flushActiveEditor()) return;
       try {
-        const d = readCallableDraft(),
-          next = cloneDesignProject(project);
+        const d = readCallableDraft();
+        let next = cloneDesignProject(project);
+        const previous=[...next.actions,...next.functions].find(x=>x.id===d.editId);
+        if(previous&&previous.name!==d.name){
+          const kind=next.actions.includes(previous)?'action':'function';
+          if(kind!==d.type)throw new AkariError('F503','名前と種類は一度に変えず、参照を確認してください');
+          previous.source=d.source;previous.args=d.args;
+          if(d.callPhrase)previous.callPhrase=d.callPhrase;else delete previous.callPhrase;
+          next=prepareResourceRename(next,kind+':'+previous.id,d.name,{drafts:resourceDraftRecords().filter(r=>r.key!=='draft-reference:callable')});
+          d.source=next[kind==='action'?'actions':'functions'].find(x=>x.id===previous.id).source;
+        }
         if (
           [...next.actions, ...next.functions].some((x) => x.id !== d.editId && x.name === d.name)
         )

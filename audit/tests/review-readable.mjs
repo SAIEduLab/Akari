@@ -26,6 +26,7 @@ async function openPage(browser,viewport,level='basic'){
   page.setDefaultTimeout(8000);
   await page.goto(pathToFileURL(product).href);
   await page.waitForFunction(()=>!!globalThis.Akari?.app);
+  await page.locator('#sampleBtn').click();
   await page.locator('#uiLevel').selectOption(level);
   return {page,context};
 }
