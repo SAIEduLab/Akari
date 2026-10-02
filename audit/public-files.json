@@ -225,6 +225,7 @@
     "audit/tests/actions-transfer-values.mjs",
     "audit/tests/actions-transfer-verify.mjs",
     "audit/tests/audio-codecs.mjs",
+    "audit/tests/basic-intents-browser.mjs",
     "audit/tests/basic-intents.mjs",
     "audit/tests/block-field-width.mjs",
     "audit/tests/browser-environment.mjs",

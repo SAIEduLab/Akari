@@ -698,7 +698,7 @@
       "originalPath": "audit/browser/cases/browser-boundaries.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-boundaries.cjs",
       "originalSha256": "0fae3abb2408f97b95f20a42c60c8e4354fde1b9affa5c42e94d5f26d309c9c8",
-      "candidateSha256": "fec8dd78d801851999e8e14f21c843bb371ff2e8438afdf8080c3e200ffa2673",
+      "candidateSha256": "8a1c84f59fabeb41a4158d831c056facf6585cf34e5b89ad74f540666e636889",
       "stableIds": [
         "variadic-35-inputs-edit-move-remove",
         "body-pagination-and-comment-multiline",

@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
 import {snapshot} from './product-test-host.mjs';
 import {currentProductFile} from './product-path.cjs';
 export const naturalRoleIds=[
@@ -103,3 +105,15 @@ export function verifyUxSurface(report){
 }
 
 export const basicIntentIds=['T01','T02','T03','T04','T05','T06','T13'];
+export function verifyBasicBrowser(report){
+ const count=verifySemanticExtension(report,'akari-basic-intents-browser-v1',basicIntentIds);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);
+ assert.equal(report.environment.browser,'140.0.7339.207');assert.equal(report.environment.playwright,'1.55.0');
+ const bytes=fs.readFileSync('audit/fixtures/basic-intents.json');assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),'cf9c3ea0c54801fc77d26f1b66c95bf383ddc89e468ddf9a4ae7121ca63c8d08');const fixture=JSON.parse(bytes);
+ const expected={T01:{beforeClick:100,afterClicks:[130,160],holdIdle:true,speech:'今日はどこへ行こう'},T02:{jumpY:76,returnY:100,repeatedDownIdle:true,secondPress:true},T04:{actorX:120,starX:185,speeches:['先に行くね','ついていくよ']},T05:{hiddenFirst:true,visibleAfterWait:true,speech:'ただいま'}};
+ for(const [i,row]of report.results.entries()){
+  const {detail,...o}=row.observed,d=fixture.cases[i];assert.deepEqual(o,{source:d.source,inputHash:d.sourceSha256,roundtrips:3,designUnchanged:true,savedAndReadBack:true});
+  if(expected[row.id])assert.deepEqual(detail,expected[row.id]);
+  else if(row.id==='T06'){assert.deepEqual(Object.keys(detail).sort(),['closedSquare','ink']);assert.equal(detail.closedSquare,true);assert.ok(Number.isFinite(detail.ink)&&detail.ink>=60);}
+  else{assert.deepEqual(Object.keys(detail).sort(),['distance','elapsed','rate','stopped']);assert.equal(detail.rate,row.id==='T03'?30:20);assert.equal(detail.stopped,true);assert.ok(Number.isFinite(detail.elapsed)&&detail.elapsed>=1);assert.ok(Number.isFinite(detail.distance)&&Math.abs(detail.distance-detail.rate*detail.elapsed)<=6);}
+ }return count;
+}

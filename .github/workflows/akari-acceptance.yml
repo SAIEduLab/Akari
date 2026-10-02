@@ -48,6 +48,9 @@ jobs:
         run: node audit/tests/resource-references.mjs audit-evidence/acceptance/resource-references.json
       - name: Verify intent search and typed name bindings
         run: node audit/tests/search-bindings.mjs audit-evidence/acceptance/search-bindings.json
+      - name: Enter original basic intentions and exercise native input and saving
+        if: always()
+        run: node audit/tests/basic-intents-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/basic-intents-browser.json
       - name: Require original composition acceptance, meaning and save roundtrip
         if: always()
         run: node audit/tests/composition-acceptance.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/composition.json
