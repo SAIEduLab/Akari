@@ -34,6 +34,10 @@ jobs:
           node audit/tests/actions-transfer-values.mjs audit-evidence/acceptance/values.json
       - name: Verify original basic intentions and separate continuous rates
         run: node audit/tests/basic-intents.mjs audit-evidence/acceptance/basic-intents.json
+      - name: Verify finite semantic variants and minimum-pair refusals
+        run: |
+          node audit/tests/finite-semantic-variants.mjs audit-evidence/acceptance/finite-semantic-variants.json
+          node audit/tests/semantic-negative-pairs.mjs audit-evidence/acceptance/semantic-negative-pairs.json
       - name: Verify natural role variants and atomic clone rejection
         run: node audit/tests/natural-roles.mjs audit-evidence/acceptance/natural-roles.json
       - name: Verify document units, source ownership and multiline editing

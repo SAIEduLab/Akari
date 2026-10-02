@@ -5,13 +5,13 @@ import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {transferFixtures,fixturePins,compositionIds,verifyTransferReport,verifyValuesReport,verifyCompositionReport} from '../lib/actions-transfer-contract.mjs';
-import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser,resourceReferenceIds,resourceBrowserIds,verifyResourceBrowser,searchBindingIds,searchBrowserIds,verifySearchBrowser,uxSurfaceIds,uxManualFiles,verifyUxSurface,basicIntentIds,verifyBasicBrowser} from '../lib/semantic-extension-contract.mjs';
+import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser,resourceReferenceIds,resourceBrowserIds,verifyResourceBrowser,searchBindingIds,searchBrowserIds,verifySearchBrowser,uxSurfaceIds,uxManualFiles,verifyUxSurface,basicIntentIds,verifyBasicBrowser,semanticNegativeIds,finiteVariantFixture,verifyFiniteVariants} from '../lib/semantic-extension-contract.mjs';
 const dir=path.resolve(process.argv[2]),results=[],negative=[];
-for(const [file,verify]of [['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser],['resource-references-browser.json',verifyResourceBrowser],['search-bindings-browser.json',verifySearchBrowser],['ux-surface-browser.json',verifyUxSurface],['basic-intents-browser.json',verifyBasicBrowser]]){
+for(const [file,verify]of [['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser],['resource-references-browser.json',verifyResourceBrowser],['search-bindings-browser.json',verifySearchBrowser],['ux-surface-browser.json',verifyUxSurface],['basic-intents-browser.json',verifyBasicBrowser],['finite-semantic-variants.json',verifyFiniteVariants]]){
  try{const r=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verify(r)});}
  catch(error){results.push({file,status:'FAIL',error:error.message});}
 }
-for(const [file,schema,ids]of [['natural-roles.json','akari-natural-roles-v1',naturalRoleIds],['document-units.json','akari-document-units-v1',documentUnitIds],['draft-persistence.json','akari-draft-persistence-v1',draftPersistenceIds],['data-form-values.json','akari-data-form-values-v1',dataFormIds],['numeric-display.json','akari-numeric-display-v1',numericDisplayIds],['resource-references.json','akari-resource-references-v1',resourceReferenceIds],['search-bindings.json','akari-search-bindings-v1',searchBindingIds],['basic-intents.json','akari-basic-intents-core-v1',basicIntentIds]]){
+for(const [file,schema,ids]of [['natural-roles.json','akari-natural-roles-v1',naturalRoleIds],['document-units.json','akari-document-units-v1',documentUnitIds],['draft-persistence.json','akari-draft-persistence-v1',draftPersistenceIds],['data-form-values.json','akari-data-form-values-v1',dataFormIds],['numeric-display.json','akari-numeric-display-v1',numericDisplayIds],['resource-references.json','akari-resource-references-v1',resourceReferenceIds],['search-bindings.json','akari-search-bindings-v1',searchBindingIds],['basic-intents.json','akari-basic-intents-core-v1',basicIntentIds],['semantic-negative-pairs.json','akari-semantic-negative-pairs-v1',semanticNegativeIds]]){
  try{
   const report=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verifySemanticExtension(report,schema,ids)});
   for(const [kind,mutate]of [['missing',r=>r.results.pop()],['wrong-snapshot',r=>r.snapshot.productSha256='0'.repeat(64)],['failed',r=>r.results[0].status='FAIL']]){
@@ -110,6 +110,10 @@ try{
  }
 }catch(error){results.push({file:'basic-browser-validator-negative',status:'FAIL',error:error.stack});}
 try{
+ const {fixture,hash}=finiteVariantFixture(),control={schema:'akari-finite-semantic-variants-report-v1',status:'PASS',uxAcceptance:false,snapshot:snapshot(currentProductFile()),fixtureHash:hash,results:fixture.cases.map(d=>({id:d.id,group:d.group,status:'PASS',inputHash:d.inputHash,expected:d.expected,actual:structuredClone(d.expected),blocks:structuredClone(d.expected),roundtrips:3}))};verifyFiniteVariants(control);
+ for(const[id,mutate]of Object.entries({'variant-missing':r=>r.results.pop(),'variant-duplicate':r=>r.results[1]=r.results[0],'variant-wrong-fixture':r=>r.fixtureHash='0'.repeat(64),'variant-wrong-snapshot':r=>r.snapshot.productSha256='0'.repeat(64),'variant-changed-source':r=>r.results[0].inputHash='0'.repeat(64),'variant-wrong-position':r=>r.results[0].actual[0].x=999,'variant-roundtrip-drift':r=>r.results[0].blocks[0].x=999,'variant-failure':r=>r.results[0].status='FAIL'})){const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyFiniteVariants(bad));negative.push({id,rejected:true});}
+}catch(error){results.push({file:'finite-variants-validator-negative',status:'FAIL',error:error.stack});}
+try{
  const control=syntheticComposition();verifyCompositionReport(control);
  const mutations={
   'failed-status':r=>r.status='FAIL','missing-case':r=>r.results.pop(),'duplicate-case':r=>r.results[1]=r.results[0],
@@ -136,7 +140,7 @@ try{
   }
  }
 }catch(error){results.push({file:'validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===89?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===100?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;

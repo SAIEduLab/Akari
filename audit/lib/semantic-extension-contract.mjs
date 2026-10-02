@@ -117,3 +117,13 @@ export function verifyBasicBrowser(report){
   else{assert.deepEqual(Object.keys(detail).sort(),['distance','elapsed','rate','stopped']);assert.equal(detail.rate,row.id==='T03'?30:20);assert.equal(detail.stopped,true);assert.ok(Number.isFinite(detail.elapsed)&&detail.elapsed>=1);assert.ok(Number.isFinite(detail.distance)&&Math.abs(detail.distance-detail.rate*detail.elapsed)<=6);}
  }return count;
 }
+
+export const semanticNegativeIds=["N01/relative-and-screen","N02/direction-and-rotation","N03/wait-and-duration","N04/edge-and-level","N05/inclusive-and-strict","N06/insert-and-replace","N07/data-and-literal","N08/unit-refusal","N09/repeat-scope-required","N10/duplicate-rate","N11/duplicate-direction","N12/missing-rate","N13/no-foreign-data-fallback","N14/else-and-event-boundary","N15/invalid-counts-and-ordinals","N16/callable-context","N17/named-arguments","N18/broadcast-reference-required","N19/original-is-not-clone","N20/quoted-connectors","N21/draft-never-becomes-zero","N22/nested-binder-scope","N25/semantic-drafts-save-and-refuse-execution"];
+export function finiteVariantFixture(){
+ const file='audit/fixtures/finite-semantic-variants.json',bytes=fs.readFileSync(file),hash=crypto.createHash('sha256').update(bytes).digest('hex');assert.equal(hash,'a0e56dde732081644c69e75fec79e7ac5c4aff30341f585b73a79b182794d0b1');return{fixture:JSON.parse(bytes),hash};
+}
+export function verifyFiniteVariants(report){
+ const {fixture,hash}=finiteVariantFixture();assert.equal(report.schema,'akari-finite-semantic-variants-report-v1');assert.equal(report.status,'PASS');assert.equal(report.uxAcceptance,false);assert.deepEqual(report.snapshot,snapshot(currentProductFile()));assert.equal(report.fixtureHash,hash);assert.deepEqual(report.results.map(r=>r.id),fixture.cases.map(c=>c.id));
+ const subset=(a,e)=>{for(const[k,v]of Object.entries(e)){if(typeof v==='number')assert.ok(Number.isFinite(a[k])&&Math.abs(a[k]-v)<1e-8);else if(v&&typeof v==='object'&&!Array.isArray(v))subset(a[k],v);else assert.deepEqual(a[k],v);}};
+ for(const [i,row]of report.results.entries()){const d=fixture.cases[i];assert.equal(row.status,'PASS');assert.equal(row.error,undefined);assert.equal(row.group,d.group);assert.equal(row.inputHash,d.inputHash);assert.deepEqual(row.expected,d.expected);assert.equal(row.roundtrips,3);assert.deepEqual(row.blocks,row.actual);assert.equal(row.actual.length,d.expected.length);row.actual.forEach((a,j)=>subset(a,d.expected[j]));}return report.results.length;
+}
