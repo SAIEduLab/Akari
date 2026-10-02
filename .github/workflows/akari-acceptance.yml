@@ -55,6 +55,9 @@ jobs:
       - name: Enter original basic intentions and exercise native input and saving
         if: always()
         run: node audit/tests/basic-intents-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/basic-intents-browser.json
+      - name: Record actual WebAudio output and verify sound command semantics
+        if: always()
+        run: node audit/tests/audio-output-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/audio-output-browser.json
       - name: Require original composition acceptance, meaning and save roundtrip
         if: always()
         run: node audit/tests/composition-acceptance.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/composition.json

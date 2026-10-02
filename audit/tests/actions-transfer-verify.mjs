@@ -4,9 +4,11 @@ import assert from 'node:assert/strict';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
+import {audioOutputCases,verifyAudioOutput} from '../lib/audio-output-contract.mjs';
 import {transferFixtures,fixturePins,compositionIds,verifyTransferReport,verifyValuesReport,verifyCompositionReport} from '../lib/actions-transfer-contract.mjs';
 import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser,resourceReferenceIds,resourceBrowserIds,verifyResourceBrowser,searchBindingIds,searchBrowserIds,verifySearchBrowser,uxSurfaceIds,uxManualFiles,verifyUxSurface,basicIntentIds,verifyBasicBrowser,semanticNegativeIds,finiteVariantFixture,verifyFiniteVariants} from '../lib/semantic-extension-contract.mjs';
 const dir=path.resolve(process.argv[2]),results=[],negative=[];
+try{const r=JSON.parse(fs.readFileSync(path.join(dir,'audio-output-browser.json')));results.push({file:'audio-output-browser.json',status:'PASS',cases:verifyAudioOutput(r,dir)});}catch(error){results.push({file:'audio-output-browser.json',status:'FAIL',error:error.message});}
 for(const [file,verify]of [['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser],['resource-references-browser.json',verifyResourceBrowser],['search-bindings-browser.json',verifySearchBrowser],['ux-surface-browser.json',verifyUxSurface],['basic-intents-browser.json',verifyBasicBrowser],['finite-semantic-variants.json',verifyFiniteVariants]]){
  try{const r=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verify(r)});}
  catch(error){results.push({file,status:'FAIL',error:error.message});}
@@ -140,7 +142,14 @@ try{
   }
  }
 }catch(error){results.push({file:'validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===100?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+try{
+ const control={schema:'akari-audio-output-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,observation:'WebAudio final output PCM; original destination connection retained',environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},pageErrors:[],networkRequests:[],results:audioOutputCases.map(c=>({id:c.id,status:'PASS',observed:{source:c.source,other:c.other||'',designUnchanged:true,marker:{text:'通過',time:c.wait===false?.02:c.id==='SET_VOLUME'?.5:c.id==='SAMPLE_WAIT'?.45:.35},otherMarker:c.id==='STOP_ALL'?{text:'解放',time:.35}:c.id==='SAMPLE_WAIT'?{text:'別音終了',time:1.1}:null,voices:c.frequencies.map((frequency,i)=>({file:'audio-output-browser.artifacts/'+c.id+'-'+i+'.wav',sha256:'a'.repeat(64),connectedAt:c.id==='SET_VOLUME'&&i===1?.2:0,endTime:c.id==='SET_VOLUME'?.2*(i+1):c.durations[i],measurement:{rate:48000,frames:96000,first:0,last:c.durations[i],duration:c.durations[i],frequency,rms:c.id==='SET_VOLUME'&&i===1?.025:.05,silentTail:.6}}))}}))};
+ verifyAudioOutput(control);
+ for(const[id,mutate]of Object.entries({'audio-missing':r=>r.results.pop(),'audio-duplicate':r=>r.results[1]=r.results[0],'audio-wrong-head':r=>r.snapshot.productSha256='0'.repeat(64),'audio-no-output':r=>r.results[0].observed.voices=[],'audio-wrong-frequency':r=>r.results[3].observed.voices[0].measurement.frequency=440,'audio-no-volume-change':r=>r.results[2].observed.voices[1].measurement.rms=.05,'audio-wait-early':r=>r.results[1].observed.marker.time=0,'audio-waits-other-sound':r=>r.results[7].observed.marker.time=1.1,'audio-restarts-after-stop':r=>r.results[5].observed.voices[0].measurement.silentTail=0,'audio-short-recording':r=>r.results[0].observed.voices[0].measurement.duration=.01})){
+  const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyAudioOutput(bad));negative.push({id,rejected:true});
+ }
+}catch(error){results.push({file:'audio-output-validator-negative',status:'FAIL',error:error.stack});}
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===110?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;
