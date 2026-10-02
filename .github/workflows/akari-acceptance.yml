@@ -38,12 +38,17 @@ jobs:
         run: node audit/tests/document-units.mjs audit-evidence/acceptance/document-units.json
       - name: Verify unfinished project files and structural rejection
         run: node audit/tests/draft-persistence.mjs audit-evidence/acceptance/draft-persistence.json
+      - name: Verify declared units and list form values
+        run: node audit/tests/data-form-values.mjs audit-evidence/acceptance/data-form-values.json
       - name: Require original composition acceptance, meaning and save roundtrip
         if: always()
         run: node audit/tests/composition-acceptance.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/composition.json
       - name: Restore native editor history, drafts and quota failure atomically
         if: always()
         run: node audit/tests/workspace-history-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/workspace-history-browser.json
+      - name: Verify visible data forms and runtime quantities
+        if: always()
+        run: node audit/tests/data-form-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/data-form-browser.json
       - name: Independently verify complete results and validator rejection ability
         if: always()
         run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance

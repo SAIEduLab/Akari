@@ -228,6 +228,8 @@
     "audit/tests/ci-regression.mjs",
     "audit/tests/composition-acceptance.mjs",
     "audit/tests/contract-gate.mjs",
+    "audit/tests/data-form-browser.mjs",
+    "audit/tests/data-form-values.mjs",
     "audit/tests/designer-zoom.mjs",
     "audit/tests/document-units.mjs",
     "audit/tests/dom-render-regression.cjs",

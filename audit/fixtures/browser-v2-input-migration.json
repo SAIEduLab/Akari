@@ -909,7 +909,7 @@
       "originalPath": "audit/browser/cases/browser-session.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-session.cjs",
       "originalSha256": "14b85a4ed08fa4e5924fd4c4dce4668e613a755c0faaaf9bb31b49b143cd03a2",
-      "candidateSha256": "a0c88b6e847bca294c2a99134a147e88f128fdfe502b700aab2ddd324135cdfb",
+      "candidateSha256": "e0079530882bc7381b86b1583e431f9adfc9320c4a14217be6bf9ce48cbc234c",
       "stableIds": [
         "crlf-no-edit-open-switch-save",
         "switch-no-edit",
@@ -933,7 +933,7 @@
       "originalPath": "audit/browser/cases/browser-storage-media.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-storage-media.cjs",
       "originalSha256": "9a93019db1d3969f54f5ed1e52099a421184b0ab1419e0ebab871b5b08787d3c",
-      "candidateSha256": "b0a7d74589efe95b50210c729bcfa42d6d5d8aa5ddb1d6aedf4440ecf28f1000",
+      "candidateSha256": "72e40c8b74cfac501912616b1b50588f6d577122e514948e4eee376acab25121",
       "stableIds": [
         "real-media-import-and-history",
         "media-editor-run-and-save-roundtrip",
@@ -10681,6 +10681,20 @@
         "Existing format-2 database/key isolation and invalid-file atomicity remain."
       ],
       "prohibition": "Keep every case ID and all original media execution, malformed input and storage isolation checks; do not derive expectations from candidate output."
+    },
+    {
+      "ids": [
+        "pending-input-blocks-transitions"
+      ],
+      "authorization": "Explicit full implementation request for reviewed PUBLIC_SEMANTIC_UX_SPEC sections 6.2 and 7.",
+      "oldContract": "Unfinished numeric text blocked save alongside execution and switching; only valid content was undoable.",
+      "newIndependentGuarantees": [
+        "Native save downloads exact unfinished numeric text and the unchanged valid design.",
+        "Switch/run/export/event changes remain blocked and explicit cancel restores the original value.",
+        "Uncommitted typing and refused actions leave memory history unchanged. Autosave retains the exact pending frame once alongside confirmed history; recovery restores Undo/Redo for it.",
+        "Separate native recovery/Undo/Redo test preserves minus sign rather than coercing to zero."
+      ],
+      "prohibition": "Same stable case ID and real browser route retained; no changed numeric, unit, runtime or capacity expectations."
     }
   ],
   "schemaUiSetupMigrations": [

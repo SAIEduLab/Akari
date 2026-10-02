@@ -10,14 +10,14 @@ counts and a successful composition subset do not establish release readiness.
 | FIX-002 connecting words | Original I07 source and runtime; protected quoted strings | Full original and variant manifest |
 | FIX-003 question/concatenation | Original I09 waiting and answer; 36 concatenation variants | Wider name and input variants |
 | FIX-004 search focus | Existing first-use and focus gates | Required click/Tab/IME/Escape journeys |
-| FIX-005 list input | Existing literal validation | One item per line input and local form errors |
+| FIX-005 list input | Line-per-string-item form, retained whitespace/empty items, field-local errors | Same-head browser correction/cancel proof |
 | FIX-006 list iteration | Original I08 source, order and clock trace | Snapshot mutation and binder scope cases |
 | FIX-007 procedures/return | Original I10 source and runtime, arithmetic variants | Nested natural expressions and full parameter matrix |
 | FIX-008 multiple receivers | Original I11, independent event keys and source ranges | Isolated concurrent send groups, receiver failure/stop |
 | FIX-009 counted clones | Original I12, atomic invalid-count rejection, existing schema and event-trace gates | Wider full-spec clone/receiver variants |
 | FIX-010 event Block edit | Stable script identity and unit identity core checks | All heading-only and body event-change GUI cases |
 | FIX-011 continuous quantity edit | Existing unit gates and continuous parser variants | Same-session edits, cancel, run across role orders |
-| FIX-012 declared data units | Existing expected-unit validation | Normalize unit-declared initial zero and GUI increment trace |
+| FIX-012 declared data units | Declared numeric initial values receive the declared unit; mismatches reject atomically | Same-head GUI zero-point and three-increment trace |
 | FIX-013 referenced assets | Existing current/history asset behavior | Name-reference deletion graph, rename and uncertain drafts |
 | FIX-014 intent search | Existing synonyms | All eight required searches with bindings and reasons |
 | FIX-015 Return hole | Palette insertion now produces a hole | Same-head native save/readback evidence |

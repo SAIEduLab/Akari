@@ -24,7 +24,7 @@ await run('invalid-syntax-save-and-format1-storage-isolation',async()=>{
  await (await reveal(p.locator('#codeEditor'))).fill(raw);await p.waitForTimeout(350);
  assert.equal(await p.locator('#codeEditor').inputValue(),raw);
  assert.equal(await p.evaluate(()=>Akari.app.editorState.main.pendingEdit.value),raw);
- const drafted=await state();assert.deepEqual(valid(drafted),valid(before));assert.equal(drafted.history,before.history+1);assert.equal(drafted.redo,0);assert.equal(drafted.dirty,before.dirty);
+ const drafted=await state();assert.deepEqual(valid(drafted),valid(before));assert.equal(drafted.history,before.history);assert.equal(drafted.redo,0);assert.equal(drafted.dirty,before.dirty);
  const pending=p.waitForEvent('download');await (await reveal(p.locator('#saveBtn'))).click();
  const download=await pending,file=L.path.join(dir,'unfinished-source.akari.md');await download.saveAs(file);
  const loaded=await p.evaluate(t=>Akari.parseProjectFile(t).then(x=>({project:x.project,editorState:x.editorState,assets:[...x.assetStore.snapshotRefs().values()].map(a=>({id:a.id,sha256:a.sha256,byteLength:a.byteLength}))})),L.read(file));
@@ -40,7 +40,7 @@ await run('invalid-syntax-save-and-format1-storage-isolation',async()=>{
  assert.ok(calls.every(x=>x.api==='indexedDB'?x.key==='akari-workspace-f2':x.api==='localStorage'&&['akari.autosave.f2','akari.uiLevel.v1','akari.editorMode.v1'].includes(x.key)));
  await p.reload();await p.locator('#recoveryModal.show').waitFor();await (await reveal(p.locator('#recoveryRestore'))).click();
  assert.equal(JSON.stringify(await getProject()),before.project);assert.equal(await p.locator('#codeEditor').inputValue(),raw);assert.equal(await p.evaluate(()=>Akari.app.editorState.main.pendingEdit.value),raw);
- const recovered=await state();assert.deepEqual(valid(recovered),valid(before));assert.equal(recovered.history,savedDraft.history);assert.equal(recovered.redo,savedDraft.redo);
+ const recovered=await state();assert.deepEqual(valid(recovered),valid(before));assert.equal(recovered.history,savedDraft.history+1);assert.equal(recovered.redo,savedDraft.redo);
  const again=p.waitForEvent('download');await (await reveal(p.locator('#saveBtn'))).click();const savedAgain=await again,againFile=L.path.join(dir,'recovered-unfinished-source.akari.md');await savedAgain.saveAs(againFile);
  assert.equal(await p.evaluate(t=>Akari.parseProjectFile(t).then(x=>x.editorState.pendingEditors[0].source),L.read(againFile)),raw);
  assert.deepEqual(await state(),recovered);

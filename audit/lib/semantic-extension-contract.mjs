@@ -37,3 +37,12 @@ export function verifyWorkspaceBrowser(report){
  assert.deepEqual(values[workspaceBrowserIds[2]],{name:'書きかけの答え',closed:true,reopened:true,hole:1});
  assert.deepEqual(values[workspaceBrowserIds[3]],{previousRecordUnchanged:true,pendingSource:'「容量不足でも編集中の文は残る',failureShown:true});return count;
 }
+export const dataFormIds=[...['0','０','0点','3','－2'].map(s=>'data/declared-point/'+s),...['0秒','「0」','条件の答え（あてはまる）'].map(s=>'data/reject-declared-point/'+s),
+ ...['本\nかさ\nぼうし','  空白  \r\n「引用」🐈\r\n\r\n最後',''].map(s=>'data/list-lines/'+s),'data/list-literals-and-invalid-input'];
+export const dataFormBrowserIds=['data/browser-declared-point-runtime','data/browser-list-lines-and-local-error','data/browser-unit-error-cancel'];
+export function verifyDataFormBrowser(report){
+ const count=verifySemanticExtension(report,'akari-data-form-browser-v1',dataFormBrowserIds);assert.deepEqual(report.pageErrors,[]);assert.ok(!report.hostFailure);
+ assert.equal(report.environment.browser,'140.0.7339.207');assert.equal(report.environment.playwright,'1.55.0');
+ assert.deepEqual(report.results.map(r=>r.observed),[{initial:{magnitude:0,unit:'点'},runtime:'3点',designUnchanged:true},
+  {localError:true,inputPreserved:true,failedDesignUnchanged:true,items:['本','かさ','ぼうし']},{wrongUnitRejected:true,input:'0秒',designUnchanged:true}]);return count;
+}

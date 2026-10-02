@@ -5801,11 +5801,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       <div class="asset-toolbar">
         <label>どこで使う <select id="dataScope"><option value="project">作品</option><option value="self">選んだ部品</option></select></label>
         <label>種類 <select id="dataKind"><option value="variable">変数</option><option value="list">リスト</option></select></label>
-        <input id="dataName" placeholder="名前" style="width:150px;padding:6px">
-        <input id="dataInitial" style="width:280px;padding:6px">
+        <input id="dataName" placeholder="名前" aria-label="データの名前" aria-describedby="dataFormError" style="width:150px;padding:6px">
+        <input id="dataInitial" aria-label="最初の値" aria-describedby="dataFormError" style="width:280px;padding:6px">
+        <label id="dataListModeLabel" hidden>リストの入れ方 <select id="dataListMode"><option value="literal">［値、値］で書く</option><option value="lines">一行に一つ、文字で入れる</option></select></label>
+        <label id="dataItemsLabel" hidden>最初の項目（文字）<textarea id="dataItems" rows="5" aria-describedby="dataItemsHelp dataFormError" placeholder="本&#10;かさ&#10;ぼうし" style="width:min(100%,420px);padding:6px"></textarea><small id="dataItemsHelp">一行が一つの文字の項目です。空の行は空の文字として残します。数や単位を入れるときは「［値、値］で書く」を選びます。</small></label>
         <label>使う単位 <select id="dataUnit"><option value="">決めない</option><option>歩</option><option>秒</option><option>度</option><option>回</option><option>番目</option><option>点</option><option>個</option><option>％</option><option>Hz</option></select></label>
         <button id="dataAdd">作る</button>
       </div>
+      <p id="dataFormError" role="alert" hidden></p>
       <div id="dataBody"></div>
     </div>
     <div class="dialog-foot"><button id="dataClose">閉じる</button></div>
@@ -16823,6 +16826,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     assertRuntimeValueLimit(value);
     return value;
   }
+  function parseDataFormInitial(text,kind,{mode='literal',expectedUnit=null}={}) {
+    if(!['variable','list'].includes(kind)||!['literal','lines'].includes(mode))throw new AkariError('F503','データの入れ方が正しくありません');
+    let value;
+    if(kind==='list'&&mode==='lines')value=String(text)===''?[]:String(text).replace(/\r\n?/g,'\n').split('\n');
+    else value=parseLiteralForData(text,kind);
+    if(kind==='variable'&&expectedUnit)value=quantity(numberInUnit(value,expectedUnit,'単位を決めた変数の初期値には数を入れてください'),expectedUnit);
+    assertRuntimeValueLimit(value);return value;
+  }
 
   // ────────────────────────────────────────────────────────────────────────
   // 08 — Portable stage view and standalone export
@@ -18918,6 +18929,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               field: pending.key,
               value: pending.input?.value ?? '',
               composing: !!pending.composing,
+              invalid: !!pending.invalid,
               reason: pending.error || '入力を確定してください',
             }
           : replacement
@@ -19215,11 +19227,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           composing: input.dataset.composing === 'true',
           read,
           error: '',
+          invalid: false,
         };
         try {
           read();
         } catch (error) {
           pending.error = error.message;
+          pending.invalid = true;
         }
         input.setAttribute('aria-invalid', pending.error ? 'true' : 'false');
         notifyPending();
@@ -19294,6 +19308,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         value = p.read();
       } catch (error) {
         p.error = error.message;
+        p.invalid = true;
         p.input.setAttribute('aria-invalid', 'true');
         announce(p.error, true);
         notifyPending();
@@ -22503,7 +22518,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const next = sourceCandidate(binding, ownerKey, source);
       if (atomic) {
         clearTimeout(historyTimer);
-        pushHistoryNow();
+        if(!hasPendingEditor())pushHistoryNow();
       }
       if (binding.kind === 'draft') callableDraftCore = { ...callableDraftCore, source };
       else {
@@ -22618,6 +22633,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             ownerKey: bindingOwner(binding),
             kind: 'code',
             value: source,
+            rejected: error.code === 'F504' || error.code === 'P208',
             reason: error.message,
           };
         scheduleAutosave();
@@ -22959,7 +22975,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         draftSource:d.draftTree?formatScript(blockDecode(d.draftTree,{allowHoles:true}),{allowHoles:true}):null}))]);
     }
     function stateFingerprintCore() {
-      const pending=[mainEditor,draftEditor].filter(b=>b.session?.pendingEdit||b.session?.blockDraft).map(b=>({kind:b.kind,ownerKey:bindingOwner(b),source:b.textarea.value,
+      const pending=[mainEditor,draftEditor].filter(b=>b.session?.blockDraft||b.session?.pendingEdit&&!b.session.pendingEdit.rejected&&(!b.session.pendingEdit.field||b.session.pendingEdit.invalid)).map(b=>({kind:b.kind,ownerKey:bindingOwner(b),source:b.textarea.value,
         pending:b.session.pendingEdit||{},draftTree:b.session.blockDraft?b.session.blockView:null}));
       const draft=headerPending?{...callableDraftCore,name:$('#callableName').value,argsText:$('#callableArgs').value,
         ...(callableDraftCore.type==='action'?{callPhrase:$('#callablePhrase').value}:{})}:hasCallableDraft()?callableDraftCore:null;
@@ -23510,8 +23526,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       document.title = `${dirty || draft ? '● ' : ''}${productLabel()} — ${project.name}`;
     }
     let restoringSnapshot=false;
-    function restoreSnap(e) {
+    function restoreSnap(e,{restoreView=false}={}) {
       restoringSnapshot=true;
+      const view={uiLevel:$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'}};
       try {
       recoveryEpoch++;
       validateAssetReferences(e.project, new AssetStore(e.assets));
@@ -23546,7 +23563,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       renderAll();
       loadEditor();
       if ($('#procModal').classList.contains('show')) renderEditorBinding(draftEditor);
-      if(e.editorState){restoreEditorState(e.editorState);callableBaseline=e.callableBaseline||callableBaseline;callableLoadedKey=e.callableLoadedKey||'';$('#procModal').classList.toggle('show',!!e.draftOpen);}
+      if(e.editorState){restoreEditorState({...e.editorState,...(restoreView?{}:view)});callableBaseline=e.callableBaseline||callableBaseline;callableLoadedKey=e.callableLoadedKey||'';$('#procModal').classList.toggle('show',!!e.draftOpen);}
       lastObservedFingerprint=stateFingerprintCore();
       e.stateFingerprint=lastObservedFingerprint;
       updateDirty();
@@ -25910,6 +25927,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function restoreEditorState(state) {
       validateEditorState(state,project);
+      for(const binding of [mainEditor,draftEditor]){binding.view?.cancel();if(binding.session){binding.session.pendingEdit=null;binding.session.blockDraft=null;}}
+      headerPending=null;
       selectedId=state.selectedId;currentEvent=state.currentEvent;selectedScriptId=state.selectedScriptId;
       $('#uiLevel').value=state.uiLevel;document.body.dataset.uiLevel=state.uiLevel;
       for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,mode);
@@ -26163,8 +26182,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if(restoringSnapshot)return;
       clearTimeout(autosaveTimer);
       recoveryEpoch++;
-      const fp=stateFingerprintCore();
-      if(!modelLocked()&&fp!==lastObservedFingerprint){lastObservedFingerprint=fp;redo=[];queueHistory();updateDirty();}
+      if(!modelLocked())updateDirty();
       el.autosave.textContent = '自動保存：待機';
       autosaveTimer = setTimeout(writeAutosave, 1200);
     }
@@ -26394,6 +26412,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
     }
     function renderDataModal() {
+      updateDataForm();
       const body = $('#dataBody');
       body.textContent = '';
       const scope = $('#dataScope').value;
@@ -26451,12 +26470,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             unit.onchange = () => {
               const selected = unit.value || null;
               unit.value = d.expectedUnit || '';
-              if (modelLocked() || !confirm(`「${d.name}」で使う単位を「${selected || '決めない'}」に変えますか？ 値は変わりません。`)) return;
+              if (modelLocked() || !confirm(`「${d.name}」で使う単位を「${selected || '決めない'}」に変えますか？ 単位のない初期値には選んだ単位を付けます。`)) return;
               try {
                 validateExpectedUnit(d.initialValue, selected);
+                if(selected)d.initialValue=quantity(numberInUnit(d.initialValue,selected),selected);
                 if (selected) d.expectedUnit = selected; else delete d.expectedUnit;
                 markDirty(); renderDataModal(); refreshEditor();
-              } catch (error) { log(`${error.code || ''} ${error.message}`, 'error'); }
+              } catch (error) { showDataFormError(error,unit); }
             };
             info.append(unit);
           }
@@ -26476,17 +26496,20 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     function addData() {
       if (modelLocked()) return;
       const before = cloneDesignProject(project);
+      let field=$('#dataName');
+      clearDataFormError();
       try {
         const scope = $('#dataScope').value,
           kind = $('#dataKind').value,
           name = normalizeCharsOutsideString($('#dataName').value.trim());
         validateName(name);
         const target =
-          scope === 'project' ? project.projectData : componentById(selectedId)?.localData;
+          scope === 'project' ? before.projectData : before.components.find(c=>c.id===selectedId)?.localData;
         if (!target) throw new Error('部品ごとのデータを作る部品を選んでください');
         if ([...target.variables, ...target.lists].some((x) => x.name === name))
           throw new Error('同じ場所に同じ名前のデータがあります');
-        const initial = parseLiteralForData($('#dataInitial').value, kind),
+        field=kind==='list'&&$('#dataListMode').value==='lines'?$('#dataItems'):$('#dataInitial');
+        const initial = parseDataFormInitial(field.value, kind,{mode:$('#dataListMode').value,expectedUnit:kind==='variable'?$('#dataUnit').value||null:null}),
           arr = kind === 'variable' ? target.variables : target.lists;
         arr.push({
           id: ensureUniqueId(kind === 'variable' ? 'var' : 'list'),
@@ -26494,15 +26517,29 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           initialValue: initial,
           ...(kind === 'variable' && $('#dataUnit').value ? { expectedUnit: $('#dataUnit').value } : {}),
         });
-        validateProject(project);
+        validateProject(before);
+        project=before;
         markDirty();
         renderDataModal();
         refreshEditor();
         $('#dataName').value = '';
       } catch (err) {
-        rollbackDesign(before);
-        log(`${err.code || ''} ${err.message}`, 'error');
+        showDataFormError(err,field);
       }
+    }
+    function clearDataFormError(){
+      $('#dataFormError').hidden=true;$('#dataFormError').textContent='';
+      for(const input of $('#dataModal').querySelectorAll('[aria-invalid]'))input.removeAttribute('aria-invalid');
+    }
+    function showDataFormError(error,field){
+      $('#dataFormError').hidden=false;$('#dataFormError').textContent=`${field?.getAttribute('aria-label')||'データ'}：${error.message}`;
+      log(`${error.code||''} ${error.message}`,'error');
+      field?.setAttribute('aria-invalid','true');field?.focus();
+    }
+    function updateDataForm(){
+      const list=$('#dataKind').value==='list',lines=list&&$('#dataListMode').value==='lines';
+      $('#dataListModeLabel').hidden=!list;$('#dataItemsLabel').hidden=!lines;$('#dataInitial').hidden=lines;
+      $('#dataUnit').disabled=list;$('#dataInitial').placeholder=list?'例：［「本」、「かさ」、3］':'例：0、0点、こんにちは';
     }
     function renderCallableList(prefer = '') {
       renderCallableOptions(prefer);
@@ -27529,6 +27566,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     };
     $('#dataClose').onclick = () => $('#dataModal').classList.remove('show');
     $('#dataScope').onchange = renderDataModal;
+    $('#dataKind').onchange=()=>{clearDataFormError();updateDataForm();};
+    $('#dataListMode').onchange=()=>{clearDataFormError();updateDataForm();};
     $('#dataAdd').onclick = addData;
     $('#callableSelect').onchange = () => {
       const next = $('#callableSelect').value;
@@ -27661,7 +27700,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           clearTimeout(historyTimer);clearTimeout(autosaveTimer);
           lastSavedFingerprint=recoveryData.lastSavedFingerprint;
           history=frames.slice(0,cursor+1);redo=frames.slice(cursor+1).reverse();
-          initialSnapshot=history[0];restoreSnap(history.at(-1));
+          initialSnapshot=history[0];restoreSnap(history.at(-1),{restoreView:true});
           $('#recoveryModal').classList.remove('show');recoveryData=null;
           log('自動保存から作品と編集履歴をもどしました','ok');return;
         }
@@ -28131,6 +28170,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     sha256Fallback,
     serializeProject,
     validateEditorState,
+    parseDataFormInitial,
     encodeWorkspaceHistory,
     decodeWorkspaceHistory,
     parseProjectFile,
