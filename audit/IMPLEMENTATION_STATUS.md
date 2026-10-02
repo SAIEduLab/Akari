@@ -9,7 +9,7 @@ counts and a successful composition subset do not establish release readiness.
 | FIX-001 event selection | Fixed browser identity regression; document unit identity and collision traces | Compound heading edits, Undo/Redo and selection coverage |
 | FIX-002 connecting words | Original I07 source and runtime; protected quoted strings | Full original and variant manifest |
 | FIX-003 question/concatenation | Original I09 waiting and answer; 36 concatenation variants | Wider name and input variants |
-| FIX-004 search focus | Existing first-use and focus gates | Required click/Tab/IME/Escape journeys |
+| FIX-004 search focus | Existing first-use/focus gates; added native click/Tab/composition/Escape at 1366/1024/390 | New same-head native evidence pending |
 | FIX-005 list input | Default line-per-string-item form, retained literal mode, whitespace/empty items and field-local errors | Same-head browser correction/cancel proof |
 | FIX-006 list iteration | Original I08 source, order and clock trace | Snapshot mutation and binder scope cases |
 | FIX-007 procedures/return | Original I10 source and runtime, arithmetic variants | Nested natural expressions and full parameter matrix |
@@ -19,7 +19,7 @@ counts and a successful composition subset do not establish release readiness.
 | FIX-011 continuous quantity edit | Existing unit gates and continuous parser variants | Same-session edits, cancel, run across role orders |
 | FIX-012 declared data units | Declared numeric initial values receive the declared unit; mismatches reject atomically | Same-head GUI zero-point and three-increment trace |
 | FIX-013 referenced assets | Shared semantic reference graph, deletion impact and uncertainty, literal-only costume/background/sound rename; 15 core cases | Same-head native deletion/rename/cancel/Undo/save evidence; broader actor/definition rename contract |
-| FIX-014 intent search | Existing synonyms | All eight required searches with bindings and reasons |
+| FIX-014 intent search | Shared purpose/readings/name index; typed and scoped candidate nodes; 21 core cases and seven native cases | Same-head native evidence pending; auxiliary custom readings remain explicit rather than inferred |
 | FIX-015 Return hole | Palette insertion now produces a hole | Same-head native save/readback evidence |
 | FIX-016 multiline strings | Lexer/codec/source core; three viewport native text edits | Draft save and Undo/Redo variants |
 | FIX-017 current diagnostics | Existing cancel gates | Full revised lifecycle matrix |
@@ -32,7 +32,7 @@ counts and a successful composition subset do not establish release readiness.
 | UX-01 new work and speech | Existing stage speech gate | Empty new work, explicit sample, clear events and bubble placement |
 | Semantic document contract | Multiple events, revisions, source ranges, persistent IDs | Complete editable definition units, ambiguous identity policy and actor references |
 | Full original/variant/negative matrix | Immutable I07-I12, Q76 and original definitions; additive variants | I01-I06, full V01-V14 and N01-N25, all capability groups |
-| Release evidence | Existing 36 gate workflow, fixed acceptance, exact release freeze | All required gates on one head, complete self-review, then merge and Pages verification |
+| Release evidence | 9d57bbb full CI including aggregate and fixed acceptance PASS; exact release freeze | Current changes need all required same-head gates, complete remaining specification/self-review, then merge and Pages verification |
 
 Editor project files retain the existing project-format 2 design and assets and
 add an optional `editorState` record with its own explicit version 1. This record
@@ -46,3 +46,7 @@ asset IDs remain separate so a reused ID cannot change an older frame's content.
 Native browser recovery and quota checks are required before acceptance.
 
 No completed release or human UX acceptance is claimed by this table.
+
+## Verified checkpoint 9d57bbb
+
+Full Actions37047035534 passed all producer jobs and aggregate, including all36 selftest gates, UI, session, limits, schemas, extra, static and both audio platforms. Fixed Actions37047035627 passed native composition/save22, recovery4, data forms3, numeric display10 and reference protection4. Independent review confirmed the repaired pending-view/history behavior. These results prove the listed implemented subset, not completion of every requirement above.

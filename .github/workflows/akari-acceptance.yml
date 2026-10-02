@@ -44,6 +44,8 @@ jobs:
         run: node audit/tests/numeric-display.mjs audit-evidence/acceptance/numeric-display.json
       - name: Verify resource references and atomic renames
         run: node audit/tests/resource-references.mjs audit-evidence/acceptance/resource-references.json
+      - name: Verify intent search and typed name bindings
+        run: node audit/tests/search-bindings.mjs audit-evidence/acceptance/search-bindings.json
       - name: Require original composition acceptance, meaning and save roundtrip
         if: always()
         run: node audit/tests/composition-acceptance.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/composition.json
@@ -59,6 +61,9 @@ jobs:
       - name: Protect referenced resources through native editing and undo
         if: always()
         run: node audit/tests/resource-references-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/resource-references-browser.json
+      - name: Verify search focus, visible bindings and insertion
+        if: always()
+        run: node audit/tests/search-bindings-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/search-bindings-browser.json
       - name: Independently verify complete results and validator rejection ability
         if: always()
         run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance

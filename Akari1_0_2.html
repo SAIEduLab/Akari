@@ -10242,7 +10242,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       '\u8a08\u7b97': ['計算', '答え', '値を求める'],
       '\u52d5\u4f5c': ['手順', '呼び出す', '実行'],
     };
-    const add = (id, category, text, mode = 'statement', reason = '') => {
+    let activeBinding = null;
+    const add = (id, category, text, mode = 'statement', reason = '', binding = activeBinding) => {
       const key = mode + '|' + text;
       if (seen.has(key)) return;
       seen.add(key);
@@ -10250,14 +10251,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         reason =
           reason ||
           '\u884c\u306e\u9014\u4e2d\u3067\u306f\u5f0f\u306e\u5019\u88dc\u3092\u4f7f\u3044\u307e\u3059';
-      const schemaKey = id.startsWith('action:') ? 'UserActionCall' :
-        id.startsWith('function:') ? 'UserFunctionCall' : id;
+      const schemaKey = hintSchemaId(id);
       const semanticForms = SENTENCE_FORMS.filter(form =>
         schemaKey === form.id ||
         (form.kind && schemaKey.startsWith(form.kind + ':') && (!form.op || schemaKey.includes(form.op)))
       );
       const idTerms = [
-        ...((BLOCK_SEARCH_SYNONYMS[schemaKey] || BLOCK_SEARCH_SYNONYMS[id]) || []),
+        ...((BLOCK_SEARCH_SYNONYMS[schemaKey] || BLOCK_SEARCH_SYNONYMS[id] || BLOCK_SEARCH_SYNONYMS[schemaKey.split(':')[0]]) || []),
         ...semanticForms.flatMap(form => [form.intent, ...(form.verbForms || []), ...(form.nounForms || []), ...(form.acceptedReadings || [])]),
       ];
       out.push({
@@ -10267,6 +10267,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         mode,
         enabled: !reason,
         reason,
+        binding,
         searchTerms: [...new Set([...(intentTerms[category] || []), ...idTerms])],
       });
     };
@@ -10276,7 +10277,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const text = nameSource(name, qualifier);
       if (names.has(text)) return;
       names.add(text);
-      bindings.push({ name, text, value, kind: bkind, readonly, local: !qualifier });
+      bindings.push({ name, text, value, kind: bkind, readonly, qualifier, local: !qualifier });
     };
     for (const a of options.args || []) bind(a, null, 0, 'dynamic');
     for (const a of place.locals.vars) bind(a, null, 0, 'scalar');
@@ -10397,7 +10398,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       add(x.id, labels[x.kind] || '\u6761\u4ef6\u30fb\u53cd\u5fa9', text, 'statement', reason);
     }
+    if (!pure) add('MotionCommand:MOVE_DIRECTION', '動き', '画面の右へ10歩動く。', 'statement',
+      type === 'stage' ? '部品を対象にします' : '');
     for (const b of bindings) {
+      activeBinding = {name:b.name, qualifier:b.qualifier, kind:b.kind};
       const name = b.text;
       add('read:' + name, '\u5024\u30fb\u30c7\u30fc\u30bf', name, 'expression');
       if (!b.readonly && (!pure || b.local)) {
@@ -10442,6 +10446,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           );
       }
     }
+    activeBinding = null;
     if (kind && place.declarationSlot) {
       const fresh = initialBlockName('\u7d50\u679c', usedNames);
       add(
@@ -10466,13 +10471,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           'action:' + d.id,
           '\u52d5\u4f5c',
           `${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】という手順を行う`,
+          'statement', '', {kind:'action', id:d.id, name:d.name},
         );
     for (const d of project.functions)
       add(
         'function:' + d.id,
         '計算',
         `（${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】で求めた答え）`,
-        'expression',
+        'expression', '', {kind:'function', id:d.id, name:d.name},
       );
     const exclusive = {
       '\u62bc\u3055\u308c\u305f\u30ad\u30fc': 'keyDown',
@@ -18679,6 +18685,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   const EDITOR_AVAILABILITY_CACHE = new WeakMap();
   function blockInsertionAvailability(session, schemaId, location, options = {}) {
+    if (options.candidateNode) return computeBlockInsertionAvailability(session, schemaId, location, options);
     const cacheKey = [
       options.ownerKey ?? session.ownerKey,
       options.sourceRevision ?? session.sourceRevision,
@@ -18757,7 +18764,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     // Values on simple command previews remain visible choices. Enclosures and
     // persistent rules start with visible holes, never an implicit true/0/no-op.
     const draft = schema.bodies.some(slot => slot.requiredExecutable) || ['ContinuousRule','ReturnStatement'].includes(schema.kind) || schema.inputs.some(slot => slot.type === 'target');
-    let node = createBlock(schemaId, { draft, allowHoles: draft });
+    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft });
     if (schemaId === 'NumberLiteral' && location?.input) {
       const parent = buildBlockIndex(session.blockView).get(location.parentId)?.node;
       if (parent?.schemaId === 'ContinuousRule' && ['seconds', 'distance'].includes(location.input))
@@ -18765,9 +18772,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     // These are initial names for new blocks, never changes to existing references.
     if (
-      schemaId === 'ForEach' ||
+      !options.candidateNode && (schemaId === 'ForEach' ||
       schemaId === 'LocalVariableDeclaration' ||
-      schemaId === 'LocalListDeclaration'
+      schemaId === 'LocalListDeclaration')
     ) {
       const used = new Set((options.context || session.context)?.args || []);
       for (const entry of buildBlockIndex(session.blockView).values()) {
@@ -18943,7 +18950,103 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     'UserActionCall',
   
   ]);
+  const SEARCH_READINGS = Object.freeze({
+    '点数':'てんすう','代金':'だいきん','持ち物':'もちもの','大きさ':'おおきさ',
+    '右':'みぎ','左':'ひだり','上':'うえ','下':'した','小さく':'ちいさく',
+    '変数':'へんすう','手順':'てじゅん','計算':'けいさん','挿入':'そうにゅう',
+  });
+  function normalizeSearchText(value) {
+    return String(value || '').normalize('NFKC').toLocaleLowerCase()
+      .replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).replace(/\s+/g, '');
+  }
+  function searchReading(value) {
+    let text = normalizeSearchText(value);
+    for (const [word, reading] of Object.entries(SEARCH_READINGS)) text = text.split(word).join(reading);
+    return text;
+  }
+  function searchIntent(value) {
+    const q = normalizeSearchText(value), direction = [
+      ['right', /右|みぎ/], ['left', /左|ひだり/], ['up', /上|うえ/], ['down', /下|した(?=へ|に|方向|$)/],
+    ].filter(([, re]) => re.test(q));
+    if (direction.length === 1 && /行[くき]|い[くき]|進[むみ]|すす[むみ]|動[くきか]|うご[くきか]|移動/.test(q)
+      && !/回|まわ|向[くき]|む[くき]/.test(q))
+      return {schemaId:'MotionCommand:MOVE_DIRECTION', direction:direction[0][0]};
+    if (/小さ|ちいさ|縮小|縮め/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:50};
+    if (/大きく|おおきく|拡大/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:150};
+    if (/(?:番目|ばんめ)/.test(q) && /入[れる]|いれ|挿入|そうにゅう/.test(q) && !/置き換|おきか|替え/.test(q)) {
+      const match = q.match(/(\d+)(?:番目|ばんめ)/), index = match ? Number(match[1]) : null;
+      return {schemaId:'ListInsert', ...(Number.isSafeInteger(index) && index >= 1 ? {index} : {})};
+    }
+    return null;
+  }
+  function hintSchemaId(id) {
+    const prefix = id.split(':')[0];
+    return ({read:'VariableRead',set:'Assignment',assignList:'Assignment',add:'NumericUpdate:ADD',
+      subtract:'NumericUpdate:SUB',append:'ListAppend',insert:'ListInsert',replace:'ListReplace',
+      delete:'ListDelete',clear:'ListClear',each:'ForEach',action:'UserActionCall',function:'UserFunctionCall'})[prefix] || id;
+  }
+  function matchesSearch(text, query) {
+    return normalizeSearchText(text).includes(normalizeSearchText(query)) || searchReading(text).includes(searchReading(query));
+  }
+  function configureSearchNode(node, intent) {
+    if (!intent || node.schemaId !== intent.schemaId) return node;
+    if (intent.direction) node.fields.direction = intent.direction;
+    if (intent.scale !== undefined) {
+      const oldId = node.inputs.args[0].id;
+      node.inputs.args[0] = createBlock('NumberLiteral');
+      node.inputs.args[0].id = oldId; node.inputs.args[0].fields.value = intent.scale;
+    }
+    if (intent.index !== undefined) {
+      const oldId = node.inputs.index.id;
+      node.inputs.index = createBlock('NumberLiteral'); node.inputs.index.id = oldId;
+      node.inputs.index.fields.value = intent.index;
+    }
+    return node;
+  }
+  function nodeForSearchHint(hint, project, context = {}, intent = null) {
+    const symbols = buildSymbols(project), ast = hint.mode === 'expression'
+      ? parseExpression(hint.text, symbols, context)
+      : parseScript(hint.text, symbols, context).body[0];
+    return configureSearchNode(blockEncode(ast).tree, intent);
+  }
+  function searchHintCandidates(candidates, query, project, context = {}) {
+    if (!query.trim()) return candidates;
+    const intent = searchIntent(query), matched = candidates.filter(h => intent
+      ? (h.binding && matchesSearch(h.binding.name, query)) || hintSchemaId(h.id) === intent.schemaId
+      : matchesSearch(h.text + ' ' + h.category + ' ' + h.searchTerms.join(' '), query));
+    return matched.map(h => {
+      if (!intent || !project) return h;
+      try { const node = nodeForSearchHint(h, project, context, intent);
+        return {...h, text:formatScript({kind:'Script',body:[blockDecode(node)]})};
+      } catch (_) { return h; }
+    }).sort((a,b) => Number(!!b.binding) - Number(!!a.binding));
+  }
+  function blockSearchCandidates(project, context, query, hints) {
+    const schemas = BLOCK_SCHEMAS.filter(s => !s.draftOnly && ['statement','expression'].includes(s.category));
+    if (!query.trim()) return schemas;
+    const intent = searchIntent(query), out = [], boundSchemas = new Set();
+    for (const hint of searchHintCandidates(hints, query, project, context)) {
+      if (!hint.binding) continue;
+      try {
+        const candidateNode = nodeForSearchHint(hint, project, context, intent), schema = BLOCK_SCHEMA_BY_ID.get(candidateNode.schemaId);
+        if (!schema || !schemas.includes(schema)) continue;
+        out.push({...schema, candidateNode, binding:hint.binding, searchLabel:hint.text,
+          candidateKey:hint.id, candidateReason:hint.reason}); boundSchemas.add(schema.id);
+      } catch (_) { /* An unavailable incomplete hint remains visible through the generic schema. */ }
+    }
+    for (const schema of schemas) {
+      if (boundSchemas.has(schema.id)) continue;
+      if (!(intent ? schema.id === intent.schemaId : matchesSearch(blockPaletteSearchText(schema), query))) continue;
+      const configured = intent && (intent.direction || intent.scale !== undefined || intent.index !== undefined);
+      out.push(configured ? {...schema, candidateNode:configureSearchNode(createBlock(schema.id, {
+        draft:schema.inputs.some(s=>s.type==='target'), allowHoles:true}), intent)} : schema);
+    }
+    return out;
+  }
+
   const BLOCK_SEARCH_SYNONYMS = Object.freeze({
+    'MotionCommand:MOVE_DIRECTION': ['画面の右', '画面の左', 'みぎ', 'ひだり', '方向へ進む', '移動'],
+    ListInsert: ['挿入', 'そうにゅう', '途中に入れる', '番号の前に入れる'],
     'MotionCommand:MOVE': ['うごく', '動く', '移動', '進む', 'すすむ', '右へ', '左へ', '前へ'],
     'MotionCommand:GOTO': ['場所へ行く', '座標', '移動', '位置'],
     'MotionCommand:GLIDE': ['すべる', 'なめらかに動く', '移動', '時間をかける'],
@@ -18971,19 +19074,6 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (form.kind !== schema.kind || (form.op && operation && form.op !== operation)) continue;
       words.push(form.intent, ...(form.verbForms || []), ...(form.nounForms || []),
         ...(form.acceptedReadings || []));
-    }
-    if (['UserActionCall', 'UserFunctionCall'].includes(schema.kind)) {
-      const definitions = schema.kind === 'UserActionCall' ? project.actions : project.functions;
-      words.push(...definitions.map((definition) => definition.name));
-    }
-    if (['VariableRead', 'Assignment', 'NumericUpdate', 'ListAppend', 'ListInsert',
-      'ListReplace', 'ListDelete', 'ListClear', 'UserActionCall', 'UserFunctionCall'].includes(schema.kind)) {
-      words.push(...(project.projectData?.variables || []).map((entry) => entry.name));
-      words.push(...(project.projectData?.lists || []).map((entry) => entry.name));
-      for (const component of project.components || []) {
-        words.push(...(component.localData?.variables || []).map((entry) => entry.name));
-        words.push(...(component.localData?.lists || []).map((entry) => entry.name));
-      }
     }
     return words.filter(Boolean).join(' ').toLocaleLowerCase();
   }
@@ -19667,7 +19757,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             }
           : null;
     }
-    function availability(schemaId, location) {
+    function availability(schemaId, location, candidateNode = null) {
       if (!tree || !location) return { enabled: false, reason: '追加する位置を選んでください' };
       const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
       if (schema.category !== (location.body ? 'statement' : 'expression'))
@@ -19675,13 +19765,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           enabled: false,
           reason: location.body ? '本文には命令を入れます' : '式の差込先を選んでください',
         };
-      const key = schemaId + '|' + JSON.stringify(location);
+      const key = schemaId + '|' + JSON.stringify(location) + '|' + (candidateNode ? JSON.stringify(candidateNode) : '');
       if (availabilityCache.has(key)) return availabilityCache.get(key);
       let result;
       try {
         result = blockInsertionAvailability(session(), schemaId, location, {
           project: project(),
           context: context(),
+          candidateNode,
         });
       } catch (error) {
         result = { enabled: false, reason: errorText(error) };
@@ -19689,7 +19780,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       availabilityCache.set(key, result);
       return result;
     }
-    function paletteAdd(schema, searchTerm = '') {
+    function paletteAdd(schema) {
       const location = destination || defaultDestination();
       if (schema.category === 'expression' && !location?.input) {
         announce(
@@ -19697,31 +19788,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         );
         return;
       }
-      const a = availability(schema.id, location);
+      const a = availability(schema.id, location, schema.candidateNode);
       if (!a.enabled) {
         announce(a.reason, true);
         return;
       }
       const node = a.node || createBlock(schema.id, { ...context(), idPrefix: viewId });
-      if (searchTerm) {
-        const schemaFields = schema.fields || [];
-        const projectState = project();
-        const knownNames = [
-          ...(projectState.projectData?.variables || []).map((entry) => entry.name),
-          ...(projectState.projectData?.lists || []).map((entry) => entry.name),
-          ...projectState.components.flatMap((component) => [
-            ...(component.localData?.variables || []).map((entry) => entry.name),
-            ...(component.localData?.lists || []).map((entry) => entry.name),
-          ]),
-          ...projectState.actions.map((entry) => entry.name),
-          ...projectState.functions.map((entry) => entry.name),
-        ];
-        const match = knownNames.find((name) => name.toLocaleLowerCase().includes(searchTerm.toLocaleLowerCase()));
-        if (match)
-          for (const field of schemaFields)
-            if (field.type === 'name' && Object.hasOwn(node.fields, field.key))
-              node.fields[field.key] = match;
-      }
       const op = location.body
         ? { type: 'insert', ...location, node }
         : { type: 'expression', ...location, node };
@@ -19905,15 +19977,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       return box;
     }
     function paletteAvailability(schema, location) {
+      if (schema.candidateReason) return {enabled:false, reason:schema.candidateReason, node:schema.candidateNode};
       // A value may be picked up before its destination is chosen. The actual
       // socket is checked by the existing common validator on preview and drop.
       if (schema.category === 'expression' && !location?.input)
         return {
           enabled: true,
           needsSlot: true,
+          node: schema.candidateNode,
           reason: '\u767d\u3044\u7a74\u3078\u306f\u3081\u308b\u30d6\u30ed\u30c3\u30af',
         };
-      return availability(schema.id, location);
+      return availability(schema.id, location, schema.candidateNode);
     }
     function renderPalette() {
       if (options.readOnly) return;
@@ -19964,12 +20038,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       categorySelect.scrollTop = categoryScroll;
       const location = destination || defaultDestination(),
         projectState = project();
-      let candidates = all.filter(
+      const hints = !query ? [] : location?.body ? editorInsertionHints(session(), location, {project:projectState,context:context()})
+        : hintCandidates(projectState, context().targetId, {source:session()?.sourceText || '', ...context()});
+      const searched = query ? blockSearchCandidates(projectState, context(), query, hints) : all;
+      let candidates = searched.filter(
         (s) =>
           ((query && !categoryExplicit) || !category || (category === 'basic'
             ? BASIC_BLOCK_SCHEMA_IDS.has(s.id)
             : blockPaletteGroup(s) === category)) &&
-          (!query || (paletteLabel(s) + ' ' + blockPaletteSearchText(s, projectState)).includes(query)),
+          (paletteMode === 'all' || s.category === paletteMode),
       );
       if (!showOutside)
         candidates = candidates.filter((s) => paletteAvailability(s, location).enabled);
@@ -20000,21 +20077,24 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               announce(a.reason, true);
               return;
             }
-            paletteAdd(schema, query);
+            paletteAdd(schema);
           },
           {
             'data-blockui-schema': schema.id,
             'data-schema-id': schema.id,
             title: a.reason || schema.label,
-            'aria-label': schema.label + '\u3092\u8ffd\u52a0',
+            'aria-label': (schema.searchLabel || schema.label) + '\u3092\u8ffd\u52a0',
+            'data-search-binding': schema.candidateKey || '',
             'aria-disabled': !a.enabled,
           },
         );
         b.disabled = isLocked();
+        b._akariSearchCandidate = schema;
         b.dataset.blockuiDrag = 'palette';
         b.dataset.blockuiDragSchema = schema.id;
         try {
           b.append(previewNode(schema, a.node));
+          if (schema.binding) b.append(E('small', 'blockui-bound-name', schema.searchLabel));
         } catch (_) {
           b.textContent = paletteLabel(schema);
         }
@@ -21756,7 +21836,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (!valid) reason = '自分の中には移動できません';
       }
       if (valid && drag.schemaId) {
-        const candidate = availability(drag.schemaId, location);
+        const candidate = availability(drag.schemaId, location, drag.candidate?.candidateNode);
         valid = candidate.enabled;
         if (!valid) reason = candidate.reason;
       }
@@ -21847,6 +21927,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         element: handle,
         id,
         schemaId,
+        candidate: handle._akariSearchCandidate,
         startX: event.clientX,
         startY: event.clientY,
         started: false,
@@ -21910,7 +21991,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       if (state.schemaId) {
         destination = state.location;
-        paletteAdd(BLOCK_SCHEMA_BY_ID.get(state.schemaId));
+        paletteAdd(state.candidate || BLOCK_SCHEMA_BY_ID.get(state.schemaId));
       } else completeMove(state.location, { id: state.id, type: 'move' });
     });
     listen(root, 'pointercancel', () => {
@@ -25679,13 +25760,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     function drawHints(root, candidates, search, offset, insert) {
       root.textContent = '';
       const query = search.trim().toLocaleLowerCase(),
-        filtered = candidates.filter(
-          (x) =>
-            !query ||
-            (x.text + ' ' + x.category + ' ' + (x.searchTerms || []).join(' '))
-              .toLocaleLowerCase()
-              .includes(query),
-        ),
+        filtered = searchHintCandidates(candidates, query, project),
         page = Math.min(offset, Math.max(0, Math.ceil(filtered.length / 24) - 1)),
         begin = page * 24;
       for (const h of filtered.slice(begin, begin + 24)) {
@@ -28393,6 +28468,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     blockSource,
     availableHints,
     hintCandidates,
+    searchHintCandidates,
+    blockSearchCandidates,
+    searchIntent,
     insertionContext,
     insertSource,
     nameSource,

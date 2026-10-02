@@ -270,6 +270,8 @@
     "audit/tests/runtime-v2/heading-browser.cjs",
     "audit/tests/runtime-v2/node.cjs",
     "audit/tests/runtime-v2/parser-tests.cjs",
+    "audit/tests/search-bindings-browser.mjs",
+    "audit/tests/search-bindings.mjs",
     "audit/tests/source-ownership.mjs",
     "audit/tests/static-contract.mjs",
     "audit/tests/surface-negative.mjs",
