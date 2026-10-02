@@ -283,6 +283,7 @@
     "audit/tests/semantic-negative-pairs.mjs",
     "audit/tests/source-ownership.mjs",
     "audit/tests/static-contract.mjs",
+    "audit/tests/structured-editing-browser.mjs",
     "audit/tests/surface-negative.mjs",
     "audit/tests/ui-buttons.mjs",
     "audit/tests/ux-surface-browser.mjs",

@@ -7,7 +7,7 @@
   "programFormat": 2,
   "files": {
     ".gitattributes": "16cc61b04666bb0cfd9c857ca50cbac734dad366b3999ca7043c6b3b1e01f2c9",
-    ".github/workflows/akari-acceptance.yml": "bdf180bab711815e892634733529280875f8c91e270f7e2b2a3fe69d19788fd7",
+    ".github/workflows/akari-acceptance.yml": "77e0d81d1fec1d0ebabed073a55959f12a6bfd63ef7b5e1ae1dc6ab34326f0c3",
     ".github/workflows/akari-audit.yml": "d8d52ef1893596c6a2ac74d0fccb22774372d166e7270801298e87fb1afbedc5",
     ".gitignore": "2964fc0110fb05cc44ef651bc13ad6d92af9e35b8a1de9eaabb6e9d852f9ff7f",
     "AUDIT.md": "0dc617731c1ceaf325766e57f788ecd53f827b37155405509ae98449dc2dca2e",
@@ -22,7 +22,7 @@
     "Manual/code-mode-intermediate.html": "fd3e4523f1ee7d64b6213e856ae3fed4707fa15ab20f7d0abd85fb2ac1aa7885",
     "README.md": "342599c76db9c3b94df9590923cc63eb4d8748a9e3b201fe083db3a9993937a5",
     "audit/ACTIONS_TRANSFER.md": "332c4ed765b8dc49203b8f32e415a357730e104bc15e07b85d1bf362a9f2868a",
-    "audit/IMPLEMENTATION_STATUS.md": "8ae95fc4e9f8de4955b132bfca3500c4fa8441b6b7f223a9f193297bc42fc468",
+    "audit/IMPLEMENTATION_STATUS.md": "f8d271d3937735750790b6c0b6e6a1e20e303245cc5b43852e394b497cdae736",
     "audit/LANGUAGE_FORMS.md": "b717c4c73c1b44502be2627bd3a9af0a272d271bae9234a029a5379c3d7887c1",
     "audit/README.md": "b30659c84874bbce153fc5d2840354dd61877dea69f057f4dfd76746e54f4db0",
     "audit/browser/browser-audit-manifest.json": "f31cdde638455f79f6c86a08343d9983311bf9bc49bc0b7fec0db3c78bbc56ac",
@@ -191,7 +191,7 @@
     "audit/lib/product-test-host.mjs": "3957f09e58d82d6b1f2535757dd27aa440d6857689a6137141ccf253e3bb0a85",
     "audit/lib/release-policy.mjs": "c5bbdc843a58b539ff45e0d1da1ccc136a59aed43c061aaf72f1abafc37fdafa",
     "audit/lib/review-regression-contract.mjs": "8f82f5688744de4b99b74fb492c44a8e99ba998ca03a5c4d437e1d53bbee6f63",
-    "audit/lib/semantic-extension-contract.mjs": "14d584390c84531264d394b55ac6bcfe8fc7886cecb78a6defddb4fbf7e107d4",
+    "audit/lib/semantic-extension-contract.mjs": "6cdcf5ec29d80d5270be0703a62cea82ec112dfc947b42a76488764603766d3f",
     "audit/lib/ui-buttons-contract.mjs": "c63e82ebe85a6c32700ca116c083ec9c1e7a00e539ebba06824e5ffff77ff53a",
     "audit/lib/verify-browser-results.mjs": "26b61daa25e569d4a42c8cbb365268bc5b904c5f682aa855d70518ae95c98714",
     "audit/lib/verify-gate-results.mjs": "17a593d4daaa2ef51b37dc25436c6d2d2a99d8c94741b99da2b2ee156c9dd337",
@@ -203,7 +203,7 @@
     "audit/manifests/language-form-coverage.json": "4dab65c87b3b25457fd8ed221a846d6e33a66150cd53b9e9bcf64c74a15b5c38",
     "audit/manifests/product-tests.json": "8bf0992f7c97340e00e04a9b6c535b7a83aed83583a8798a54a07f163333ccee",
     "audit/prepare-publication.mjs": "deb513ebb809a3b612f8044f459056840ee91c74ace00a8f542ee5363f15e883",
-    "audit/public-files.json": "0a02771cfb7d957a83daff3418b2867019f0f426def6cda63ecca173fae51f5c",
+    "audit/public-files.json": "e7153b393a252c55389a9e8fe4aec0cf86b6a74405098e38b5ba8ec2b6fde868",
     "audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md": "9ee2fef30736b1ca6a426b8f2be43bf8410717602faac4a4f67dbd531c15b44a",
     "audit/reviewed/PUBLIC_UX_ACTIONS_ACCEPTANCE_PLAN.md": "f00f66d6724d84e74b08fea33bae37819bde25ea577e77b564153f450c83969c",
     "audit/run-editor-surface-tests.mjs": "6aa866bc9f65143afce1fa5fb455292a0cf7926e7cb6c95a7d5762d5ef4df462",
@@ -228,9 +228,9 @@
     "audit/suites/runSyntaxTests.js": "0e713cb16736a13a290c04c2c9a1814dbd34d90852a30dd7a7e977c29cec5c1b",
     "audit/tests/actions-transfer-static.mjs": "bdbc3c8dd2c5bba6fc76c311e209093983671ef4b0b54d0fe870745461d574a1",
     "audit/tests/actions-transfer-values.mjs": "9ef7548a13b4bf80b5d3299967fe60a67aed4b97d517f1712b1e80839ffde308",
-    "audit/tests/actions-transfer-verify.mjs": "92dc616bb8542e1bfe13f753f157aa43810fad6b0e7af898aabc34799781432b",
+    "audit/tests/actions-transfer-verify.mjs": "6b2d01d55b7e1e372abc17bda68b1aaaf54694e896354173d6402b258159451d",
     "audit/tests/audio-codecs.mjs": "50414edcdbe450c7ea5657c84d3bf5f362797406e9b0d5647e81aab13b806ea0",
-    "audit/tests/audio-output-browser.mjs": "7abce1b290e77d1dd96ca31ca1213452551f051d0b8029db60822c9bf1aaf62a",
+    "audit/tests/audio-output-browser.mjs": "da55695ec39b47a5afb638c63be8363a19cea1c1470b3beef1f4f77e464a2f8a",
     "audit/tests/basic-intents-browser.mjs": "ed6279d27336259b555a66afe9e749947cf5233c9dec570779930a21ad4a225e",
     "audit/tests/basic-intents.mjs": "c000f2d0451beeccaa011f020c6e20a5284245d19e9f025535a04c06d6df580a",
     "audit/tests/block-field-width.mjs": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1",
@@ -286,6 +286,7 @@
     "audit/tests/semantic-negative-pairs.mjs": "00d8c6ce4fde4e97cf4906a16b219851c29aaf8d198952dbd0b1caf909f24d2b",
     "audit/tests/source-ownership.mjs": "ff0ca9550d1761c319ca545482110f59c88bef03d27aa772bc953b66fd9fd334",
     "audit/tests/static-contract.mjs": "e88c6d91044d3aedca0d16d318ea54f832633025b68fdf445ffacca0f4af197f",
+    "audit/tests/structured-editing-browser.mjs": "a88eac382d257aa623e61e2a92bc90ae185f21f2dcc76596867eb5d10cc6731b",
     "audit/tests/surface-negative.mjs": "a4a10419c96608701b1d3f7a90cbe261dfc7934375290abc193a0697829ef05d",
     "audit/tests/ui-buttons.mjs": "86faa0d1885d5f947eba3b6f411ff6c832b9142dc75bdb4136d5cd1bbaad754b",
     "audit/tests/ux-surface-browser.mjs": "eb972a88a81d6d75e153d79c9f31e3853edfb60e1d8e66931af78c7dcc649118",
@@ -300,5 +301,5 @@
     "docs/1.0.2/設計書.md": "0f06e7210831b88e6fc8653c2d61d550a7a5681b7ef67ce2678753a1b8831bec",
     "index.html": "66716d8d2bec434a1c3800523c2dc4307c2ef44a1d6cda961953f8825a46c303"
   },
-  "inventorySha256": "9750e5e6ee229360b1f14394c75d12963c69d6fdd4362a04e76d7c49dfdb475c"
+  "inventorySha256": "9205ba8ae87b1e7051354fb6bb03a8e9994113c3c39adeae293ba1e7ff664e5a"
 }

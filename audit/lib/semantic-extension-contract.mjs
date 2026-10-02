@@ -105,6 +105,13 @@ export function verifyUxSurface(report){
 }
 
 export const basicIntentIds=['T01','T02','T03','T04','T05','T06','T13'];
+export const structuredOrders=[['condition','seconds','distance'],['distance','condition','seconds'],['seconds','distance','condition']];
+export const structuredEditingIds=[...['empty','heading','body'].flatMap(k=>['keyDown','message'].map(e=>'heading/'+k+'/'+e)),...structuredOrders.map(o=>'continuous/'+o.join('-'))];
+export function verifyStructuredEditing(report){
+ const count=verifySemanticExtension(report,'akari-structured-editing-browser-v1',structuredEditingIds);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);assert.deepEqual(report.environment,{browser:'140.0.7339.207',playwright:'1.55.0'});
+ for(const[i,row]of report.results.entries()){const o=row.observed;if(i<6){const[,kind,event]=row.id.split('/');assert.deepEqual(o,{kind,event,filter:event==='keyDown'?'右':'出発',stableId:true,oneHistoryStep:true,undoRedo:true,cancelAtomic:true,bodyPreserved:true,run:true});}else{const{elapsed,moved,...rest}=o;assert.deepEqual(rest,{order:structuredOrders[i-6],key:'左',direction:'right',seconds:2,distance:40,rate:20,cancelAtomic:true,undoRedo:true,designUnchanged:true,stopped:true});assert.ok(Number.isFinite(elapsed)&&elapsed>=1);assert.ok(Number.isFinite(moved)&&Math.abs(moved-20*elapsed)<=6);}}
+ return count;
+}
 export function verifyBasicBrowser(report){
  const count=verifySemanticExtension(report,'akari-basic-intents-browser-v1',basicIntentIds);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);
  assert.equal(report.environment.browser,'140.0.7339.207');assert.equal(report.environment.playwright,'1.55.0');
