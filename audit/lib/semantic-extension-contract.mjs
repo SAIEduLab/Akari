@@ -85,3 +85,19 @@ export function verifySearchBrowser(report){
   {qualifier:'self',typed:true,oneHistoryStep:true,undoRedo:true},{name:'代金',args:2,argumentNames:['個数','ねだん']},
   {direction:'left',scale:50,index:2},{reasonShown:true,projectUnchanged:true}]);return count;
 }
+export const uxManualFiles=['MANUAL.html','Manual/block-mode.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html','Manual/code-mode-advanced.html'];
+export const uxSurfaceIds=['ux/browser-empty-sample-click',...[[1366,'fit'],[1366,'100'],[390,'fit']].map(([w,m])=>'ux/browser-bubble-'+w+'-'+m),...[1366,1024,390].flatMap(w=>['light','dark'].map(t=>'ux/browser-manual-'+w+'-'+t))];
+export function verifyUxSurface(report){
+ const count=verifySemanticExtension(report,'akari-ux-surface-browser-v1',uxSurfaceIds);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);
+ assert.equal(report.environment.browser,'140.0.7339.207');assert.equal(report.environment.playwright,'1.55.0');
+ assert.deepEqual(report.results[0].observed,{emptyStartup:true,emptyRunIdle:true,clickDistances:[30,60],explicitSample:true,removeUndo:true,emptyNew:true});
+ for(const [i,[width,mode]]of [[1366,'fit'],[1366,'100'],[390,'fit']].entries()){
+  const {scale,font,overlap,...o}=report.results[i+1].observed;assert.deepEqual(o,{width,height:width===390?844:768,mode,inside:true,fullTextExact:true});
+  assert.ok(Number.isFinite(scale)&&scale>0);assert.ok(Number.isFinite(font)&&font>=13.5);assert.ok(Number.isFinite(overlap)&&overlap>=0&&overlap<1);
+  if(mode==='100')assert.ok(Math.abs(scale-1)<.02);else if(width===1366)assert.ok(scale>=.39&&scale<=.43);
+ }
+ for(const [i,[width,theme]]of [1366,1024,390].flatMap(w=>['light','dark'].map(t=>[w,t])).entries()){
+  const {views,...o}=report.results[i+4].observed;assert.deepEqual(o,{width,height:width===390?844:768,theme,hoverAndSelection:true});assert.deepEqual(views.map(v=>v.file),uxManualFiles);
+  for(const v of views){assert.ok(Number.isFinite(v.body)&&v.body>=4.5);assert.ok(Number.isFinite(v.heading)&&v.heading>=3);assert.ok(Number.isFinite(v.selection)&&v.selection>=4.5);assert.equal(v.selected,true);assert.equal(v.overflow,false);}
+ }return count;
+}

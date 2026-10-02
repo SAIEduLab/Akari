@@ -5441,6 +5441,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   <div class="titlebar">あかり</div>
   <div class="menutool">
     <button id="newBtn">新しく作る</button>
+    <button id="sampleBtn">お手本を開く</button>
     <button id="openBtn">開く</button>
     <button id="saveBtn">保存</button>
     <button id="exportBtn">書き出し</button>
@@ -10858,6 +10859,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       functions: [],
       sounds: [],
     };
+  }
+  function makeEmptyProject() {
+    const project = makeDefaultProject();
+    project.name = '新しい作品';
+    project.scripts = [{id:'script-start', targetId:'sprite-1', event:'start', source:''}];
+    return project;
   }
   function validateResourceName(name, label = '素材名') {
     if (typeof name !== 'string' || cpLen(name) < 1 || cpLen(name) > 80)
@@ -17150,16 +17157,26 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           b.remove();
           return;
         }
-        const box = node.getBoundingClientRect();
-        b.style.left =
-          clamp(
-            (box.right - rect.left) / sx + 6,
-            0,
-            Math.max(0, form.clientWidth - b.offsetWidth),
-          ) + 'px';
-        b.style.top =
-          clamp((box.top - rect.top) / sy - 8, 0, Math.max(0, form.clientHeight - b.offsetHeight)) +
-          'px';
+        const box = node.getBoundingClientRect(), gap = 8 / sx,
+          actor = {left:(box.left-rect.left)/sx, right:(box.right-rect.left)/sx,
+            top:(box.top-rect.top)/sy, bottom:(box.bottom-rect.top)/sy},
+          sideWidth = Math.max(actor.left-gap, form.clientWidth-actor.right-gap),
+          availableWidth = sideWidth >= 80/sx ? sideWidth : form.clientWidth;
+        b.style.fontSize = 14/sx+'px'; b.style.padding = 8/sy+'px '+10/sx+'px';
+        b.style.maxWidth = Math.min(320/sx,availableWidth)+'px';
+        b.style.maxHeight = Math.min(160/sy,form.clientHeight)+'px';
+        const text = b.querySelector('.sprite-bubble-text');
+        if (text) text.style.maxHeight = Math.min(100/sy,Math.max(24/sy,form.clientHeight-60/sy))+'px';
+        const width=b.offsetWidth,height=b.offsetHeight, center=(actor.left+actor.right-width)/2,
+          positions=[[actor.right+gap,actor.top],[actor.left-width-gap,actor.top],
+            [center,actor.top-height-gap],[center,actor.bottom+gap]];
+        const candidates=positions.map(([left,top],order)=>{
+          left=clamp(left,0,Math.max(0,form.clientWidth-width));top=clamp(top,0,Math.max(0,form.clientHeight-height));
+          const overlap=Math.max(0,Math.min(left+width,actor.right)-Math.max(left,actor.left))*
+            Math.max(0,Math.min(top+height,actor.bottom)-Math.max(top,actor.top));
+          return {left,top,overlap,order};
+        }).sort((a,b)=>a.overlap-b.overlap||a.order-b.order);
+        b.style.left=candidates[0].left+'px'; b.style.top=candidates[0].top+'px';
       });
     }
     function renderComponents() {
@@ -17323,12 +17340,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       b.className = 'sprite-bubble';
       b.dataset.runtimeId = id;
       b.style.zIndex = '2000';
-      b.textContent = value;
-      if (presentation.rounded) {
+      const text = document.createElement('span');
+      text.className = 'sprite-bubble-text'; text.textContent = value;
+      text.style.display = 'block'; text.style.overflow = 'hidden';
+      b.appendChild(text);
+      if (presentation.rounded || Array.from(value).length > 80 || /[\r\n]/.test(value)) {
         const full = document.createElement('button');
         full.type = 'button';
-        full.textContent = '実値';
-        full.setAttribute('aria-label', '表示を丸めています。実値を見る');
+        full.textContent = presentation.rounded ? '実値' : '全文';
+        full.setAttribute('aria-label', presentation.rounded ? '表示を丸めています。実値を見る' : '吹出しの全文を見る');
         full.style.pointerEvents = 'auto';
         full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue); };
         b.appendChild(full);
@@ -17741,7 +17761,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             full.append(summary, raw); output.appendChild(full);
           }
         },
-        onValueDetails: value => message('表示を丸めています。実値（選択してコピーできます）：' + core.valueText(value)),
+        onValueDetails: value => message((typeof value === 'string' ? '吹出しの全文（選択してコピーできます）：' : '表示を丸めています。実値（選択してコピーできます）：') + core.valueText(value)),
       });
       flush();
       phase = 'READY';
@@ -20073,7 +20093,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           'palette-add',
           () => {
             if (!a.enabled) {
-              reason.hidden = !reason.hidden;
+              reason.hidden = false;
               announce(a.reason, true);
               return;
             }
@@ -20099,7 +20119,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           b.textContent = paletteLabel(schema);
         }
         item.append(b);
-        reason.hidden = true;
+        reason.hidden = a.enabled;
         if (!a.enabled) item.append(reason);
         paletteList.append(item);
       }
@@ -20759,7 +20779,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         more.classList.add('blockui-body-more');
         box.append(more);
       }
-      if (!children.length) box.append(E('p', 'blockui-empty', 'ここに命令を追加できます'));
+      if (!children.length) box.append(E('p', 'blockui-empty', parent.schemaId === 'Script'
+        ? '対象とできごとを選び、＋から命令を追加しましょう。動く例は「お手本を開く」で試せます。'
+        : 'ここに命令を追加できます'));
       return box;
     }
     function expressionSlot(parent, slot, child, i) {
@@ -22511,7 +22533,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       runtimePaintFrame = null,
       runtimePaintFlags = 0;
     const physicalKeys = new Map();
-    let project = makeDefaultProject(),
+    let project = makeEmptyProject(),
       assetStore = makeDefaultAssetStore(),
       selectedId = 'sprite-1',
       currentEvent = 'start',
@@ -23579,7 +23601,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           el.console.appendChild(full);
         }
       },
-      onValueDetails: value => showFullValue('吹出しの実値', value),
+      onValueDetails: value => showFullValue(typeof value === 'string' ? '吹出しの全文' : '吹出しの実値', value),
     });
     function setStageZoom(scale) {
       stageZoom = scale === null ? null : Math.max(0.1, Math.min(2, Math.round(scale * 100) / 100));
@@ -23699,6 +23721,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (locked && colorEdit) closeColorPicker();
       for (const id of [
         'newBtn',
+        'sampleBtn',
         'openBtn',
         'resetBtn',
         'imageObjectAdd',
@@ -27822,13 +27845,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     $('#formatBtn').onclick = formatCurrent;
     $('#diagnoseBtn').onclick = showDiagnosis;
     $('#diagnosisClose').onclick = () => $('#diagnosisModal').classList.remove('show');
-    $('#newBtn').onclick = () => {
+    function startProject(sample = false) {
       if (modelLocked() || !confirmLose()) return;
       closeEditingModals();
       clearCallable();
       disposeRuntime();
       revokeDesignUrls();
-      project = makeDefaultProject();
+      project = sample ? makeDefaultProject() : makeEmptyProject();
       assetStore = makeDefaultAssetStore();
       editorSessions.clear();
       invalidateEditors();
@@ -27841,8 +27864,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       loadEditor();
       resetHistory();
       clearAutosave();
-      setStatus('新しい作品');
-    };
+      setStatus(sample ? 'お手本：作品を動かしたときに、右へ10歩進んで話します' : '新しい作品');
+    }
+    $('#newBtn').onclick = () => startProject(false);
+    $('#sampleBtn').onclick = () => startProject(true);
     $('#saveBtn').onclick = saveProject;
     $('#callableSaveProject').onclick = saveProject;
     $('#exportBtn').onclick = exportProject;
@@ -28247,7 +28272,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes') ||
-          target.matches('#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          target.matches('#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         if (!flushActiveEditor()) {
@@ -28285,7 +28310,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (
           modelLocked() ||
           flushingEditor ||
-          event.target.closest('.editor-modes,#colorModal,#saveBtn,#callableSaveProject,#newBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          event.target.closest('.editor-modes,#colorModal,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;
@@ -28475,6 +28500,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     insertSource,
     nameSource,
     makeDefaultProject,
+    makeEmptyProject,
     makeDefaultAssetStore,
     validateProject: validateDesignProject,
     validateDesignProject,

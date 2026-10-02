@@ -10708,6 +10708,21 @@
         "Keep the same stable IDs, data values, shadowing result, item inspection, deletion and hard list-count boundaries.",
         "The additive native form case requires the initial mode to be lines and verifies correction to a three-item list."
       ]
+    },
+    {
+      "ids": [
+        "REVIEW-DEFAULTS-FIRST-RUN",
+        "REVIEW-QUANTITY-UNIT-SINGLE",
+        "REVIEW-CONDITION-SEARCH-SWITCH"
+      ],
+      "authorization": "Reviewed PUBLIC_SEMANTIC_UX_SPEC section9.1 UX-01 requires an empty new work and an explicitly selected sample.",
+      "oldContract": "Fresh application startup included the moving greeting sample automatically.",
+      "newIndependentGuarantees": [
+        "Fresh startup is explicitly checked to have empty source; mode preference and unchanged project/history across reload remain checked.",
+        "The existing default-block/unit/condition journeys explicitly click the visible sample control before executing the unchanged sample expectations.",
+        "The mode preference edit still enters a real12-step movement and checks Undo/Redo in both modes.",
+        "Additive UX browser cases check idle empty Run, click-only execution, explicit sample, normal removal and Undo."
+      ]
     }
   ],
   "schemaUiSetupMigrations": [

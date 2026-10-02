@@ -28,7 +28,7 @@ try{await withBrowser(chrome,async browser=>{
   const output=page.locator('.monitor-window .output-disclosure');if(!await output.evaluate(n=>n.open))await output.locator('summary').click();
  };
  for(const width of [1366,1024,390])await run(width===1366?'display/browser-monitor-save-and-text':'display/browser-monitor-'+width,async page=>{
-  await page.setViewportSize({width,height:768});
+  await page.setViewportSize({width,height:width===390?844:768});
   const source='文字（表示値）を言う。\n10秒待つ。';await install(page,source);await page.locator('#runBtn').click();await page.locator('.sprite-bubble').waitFor();assert.equal(await page.locator('.sprite-bubble').textContent(),'0.30000000000000004');
   await revealMonitor(page);
   const height=await page.locator('#runtimeMonitor').evaluate(n=>n.getBoundingClientRect().height);assert.ok(height>=120,'output must leave a readable monitor region: '+height);

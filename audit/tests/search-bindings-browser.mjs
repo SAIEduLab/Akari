@@ -22,7 +22,7 @@ try{await withBrowser(chrome,async browser=>{
  const schemas=page=>page.locator('#blockEditor [data-blockui-schema]').evaluateAll(es=>es.map(e=>e.dataset.blockuiSchema));
  const expected=[['右に行きたい','MotionCommand:MOVE_DIRECTION'],['小さくしたい','LooksCommand:SET_SCALE'],['おおきさ','LooksCommand:SET_SCALE'],['2番目に入れたい','ListInsert'],['点数','VariableRead'],['てんすう','VariableRead'],['おじぎ','UserActionCall'],['代金','UserFunctionCall']];
  for(const width of [1366,1024,390])await run('search/browser-discovery-focus-'+width,async page=>{
-  await page.setViewportSize({width,height:768});await install(page,'「本文を守る」と言う。');const before=await source(page);
+  await page.setViewportSize({width,height:width===390?844:768});await install(page,'「本文を守る」と言う。');const before=await source(page);
   for(const [query,schema]of expected){await search(page).click();await search(page).fill(query);assert.ok((await schemas(page)).includes(schema),query);assert.equal(await source(page),before);assert.equal(await search(page).evaluate(e=>document.activeElement===e),true);}
   await search(page).fill('');await search(page).dispatchEvent('compositionstart');await page.keyboard.insertText('てんすう');await search(page).dispatchEvent('compositionend',{data:'てんすう'});assert.ok((await schemas(page)).includes('VariableRead'));
   await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');assert.equal(await search(page).evaluate(e=>document.activeElement===e),true);await page.keyboard.press('Escape');assert.equal(await source(page),before);await search(page).fill('');await search(page).fill('おじぎ');assert.equal(await source(page),before);
@@ -34,7 +34,7 @@ try{await withBrowser(chrome,async browser=>{
   const after=await source(page);assert.doesNotMatch(after,/作品の点数/);assert.equal(await page.evaluate(()=>Akari.app.editorState.history),before+1);await page.locator('#undoBtn').click();assert.equal(await source(page),'');await page.locator('#redoBtn').click();assert.equal(await source(page),after);return{qualifier:'self',typed:true,oneHistoryStep:true,undoRedo:true};
  });
  await run('search/browser-function-binding',async page=>{
-  await page.setViewportSize({width:1366,height:768});await install(page,'0を言う。');await page.locator('#blockEditor .blockui-node[data-schema-id="Say"] [data-blockui-action="slot-select"]').first().click();await search(page).fill('だいきん');
+  await page.setViewportSize({width:1366,height:768});await install(page,'0を言う。');await page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] input').click();await page.locator('#blockEditor .blockui-node[data-schema-id="Say"] [data-blockui-action="slot-select"]').first().click();await search(page).fill('だいきん');
   await page.locator('#blockEditor [data-search-binding="function:price"]').click();const value=await page.evaluate(()=>{const p=Akari.app.project,s=p.scripts.find(s=>s.id==='search-body'),ast=Akari.parseSyntax(s.source,{symbols:Akari.buildSymbols(p)}).ast;return ast.body[0].value;});assert.equal(value.kind,'UserFunctionCall');assert.equal(value.name,'代金');assert.equal(value.args.length,2);assert.deepEqual(value.argumentNames,['個数','ねだん']);return{name:'代金',args:2,argumentNames:['個数','ねだん']};
  });
  await run('search/browser-intent-values',async page=>{
@@ -44,7 +44,7 @@ try{await withBrowser(chrome,async browser=>{
  });
  await run('search/browser-unavailable-reason',async page=>{
   await page.setViewportSize({width:1366,height:768});await install(page);await page.locator('#objectSelect').selectOption('stage');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await page.locator('#editorModeblocks').click();await search(page).fill('右に行きたい');
-  await page.locator('#blockEditor .blockui-palette-options summary').click();await page.locator('#blockEditor input[aria-label="使えない候補も表示"]').check();const b=page.locator('#blockEditor [data-blockui-schema="MotionCommand:MOVE_DIRECTION"]');assert.equal(await b.getAttribute('aria-disabled'),'true');const before=await page.evaluate(()=>JSON.stringify(Akari.app.project));await b.click();assert.match(await page.locator('#blockEditor .blockui-unavailable:visible').textContent(),/部品/);assert.equal(await page.evaluate(()=>JSON.stringify(Akari.app.project)),before);return{reasonShown:true,projectUnchanged:true};
+  await page.locator('#blockEditor .blockui-palette-options summary').click();await page.locator('#blockEditor input[aria-label="使えない候補も表示"]').check();const b=page.locator('#blockEditor [data-blockui-schema="MotionCommand:MOVE_DIRECTION"]');assert.equal(await b.getAttribute('aria-disabled'),'true');const before=await page.evaluate(()=>JSON.stringify(Akari.app.project));assert.match(await page.locator('#blockEditor .blockui-unavailable:visible').textContent(),/部品/);assert.equal(await page.evaluate(()=>JSON.stringify(Akari.app.project)),before);return{reasonShown:true,projectUnchanged:true};
  });
 },180000);}catch(error){report.hostFailure=error.stack;}
 report.status=!report.hostFailure&&!report.pageErrors.length&&!report.networkRequests.length&&report.results.length===7&&report.results.every(r=>r.status==='PASS')?'PASS':'FAIL';save();if(report.status!=='PASS')process.exitCode=1;

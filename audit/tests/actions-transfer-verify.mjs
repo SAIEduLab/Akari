@@ -5,9 +5,9 @@ import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {transferFixtures,fixturePins,compositionIds,verifyTransferReport,verifyValuesReport,verifyCompositionReport} from '../lib/actions-transfer-contract.mjs';
-import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser,resourceReferenceIds,resourceBrowserIds,verifyResourceBrowser,searchBindingIds,searchBrowserIds,verifySearchBrowser} from '../lib/semantic-extension-contract.mjs';
+import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser,resourceReferenceIds,resourceBrowserIds,verifyResourceBrowser,searchBindingIds,searchBrowserIds,verifySearchBrowser,uxSurfaceIds,uxManualFiles,verifyUxSurface} from '../lib/semantic-extension-contract.mjs';
 const dir=path.resolve(process.argv[2]),results=[],negative=[];
-for(const [file,verify]of [['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser],['resource-references-browser.json',verifyResourceBrowser],['search-bindings-browser.json',verifySearchBrowser]]){
+for(const [file,verify]of [['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser],['resource-references-browser.json',verifyResourceBrowser],['search-bindings-browser.json',verifySearchBrowser],['ux-surface-browser.json',verifyUxSurface]]){
  try{const r=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verify(r)});}
  catch(error){results.push({file,status:'FAIL',error:error.message});}
 }
@@ -91,6 +91,16 @@ try{
  }
 }catch(error){results.push({file:'search-validator-negative',status:'FAIL',error:error.stack});}
 try{
+ const observed=[{emptyStartup:true,emptyRunIdle:true,clickDistances:[30,60],explicitSample:true,removeUndo:true,emptyNew:true},
+  ...[[1366,'fit'],[1366,'100'],[390,'fit']].map(([width,mode])=>({width,height:width===390?844:768,mode,scale:mode==='100'?1:.41,font:14,overlap:0,inside:true,fullTextExact:true})),
+  ...[1366,1024,390].flatMap(width=>['light','dark'].map(theme=>({width,height:width===390?844:768,theme,hoverAndSelection:true,views:uxManualFiles.map(file=>({file,body:10,heading:10,selection:10,selected:true,overflow:false}))})))];
+ const control={schema:'akari-ux-surface-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:uxSurfaceIds.map((id,i)=>({id,status:'PASS',observed:observed[i]}))};
+ verifyUxSurface(control);
+ for(const[id,mutate]of Object.entries({'ux-not-empty':r=>r.results[0].observed.emptyStartup=false,'ux-click-extra':r=>r.results[0].observed.clickDistances=[60,90],'ux-overlap':r=>r.results[1].observed.overlap=20,'ux-small-font':r=>r.results[1].observed.font=6,'ux-lost-fulltext':r=>r.results[2].observed.fullTextExact=false,'ux-low-contrast':r=>r.results[4].observed.views[0].body=1.1,'ux-no-selection':r=>r.results[5].observed.views[0].selected=false,'ux-missing-manual':r=>r.results[9].observed.views.pop()})){
+  const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyUxSurface(bad));negative.push({id,rejected:true});
+ }
+}catch(error){results.push({file:'ux-validator-negative',status:'FAIL',error:error.stack});}
+try{
  const control=syntheticComposition();verifyCompositionReport(control);
  const mutations={
   'failed-status':r=>r.status='FAIL','missing-case':r=>r.results.pop(),'duplicate-case':r=>r.results[1]=r.results[0],
@@ -117,7 +127,7 @@ try{
   }
  }
 }catch(error){results.push({file:'validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===69?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===77?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;

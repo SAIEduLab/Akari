@@ -64,6 +64,9 @@ jobs:
       - name: Verify search focus, visible bindings and insertion
         if: always()
         run: node audit/tests/search-bindings-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/search-bindings-browser.json
+      - name: Verify empty work, sample, speech placement and manual contrast
+        if: always()
+        run: node audit/tests/ux-surface-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/ux-surface-browser.json
       - name: Independently verify complete results and validator rejection ability
         if: always()
         run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance

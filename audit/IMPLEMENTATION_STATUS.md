@@ -27,9 +27,9 @@ counts and a successful composition subset do not establish release readiness.
 | FIX-019 output/monitor | Open output reserves a readable monitor area; native disclosure routes at three widths | Same-head 1366/1024/390 execution and screenshots |
 | FIX-020 numeric display | Separate 12-significant-digit presentation; exact raw value details, semantic text conversion unchanged; 21 boundary/core cases | Same-head native bubble/monitor/save/offline browser proof |
 | FIX-021 unfinished files | Editor-state version 1, file and autosave integration, ten core cases | Same-head pending-number browser fix, autosave parity and all drafts |
-| FIX-022 explanation contrast | Existing manual gates | Required text/heading/hover/selection contrast observations |
+| FIX-022 explanation contrast | Explicit panel text and selection colors in five manuals; native matrix at three widths and two themes | Current native text/heading/hover/selection contrast evidence pending |
 | FIX-023 natural continuous roles | Name/quote/order/rate variants through parser, session, codec and runtime | Original 20 and 30 units/sec UI journeys |
-| UX-01 new work and speech | Existing stage speech gate | Empty new work, explicit sample, clear events and bubble placement |
+| UX-01 new work and speech | Empty initial/new work, explicit editable sample, scaled readable bubbles with overlap minimization and exact full text | Current native startup, click events, remove/Undo and placement evidence pending |
 | Semantic document contract | Multiple events, revisions, source ranges, persistent IDs | Complete editable definition units, ambiguous identity policy and actor references |
 | Full original/variant/negative matrix | Immutable I07-I12, Q76 and original definitions; additive variants | I01-I06, full V01-V14 and N01-N25, all capability groups |
 | Release evidence | 9d57bbb full CI including aggregate and fixed acceptance PASS; exact release freeze | Current changes need all required same-head gates, complete remaining specification/self-review, then merge and Pages verification |
@@ -46,6 +46,10 @@ asset IDs remain separate so a reused ID cannot change an older frame's content.
 Native browser recovery and quota checks are required before acceptance.
 
 No completed release or human UX acceptance is claimed by this table.
+
+## Search checkpoint 68291d6
+
+Full Actions37050362939 passed every producer and aggregate. Fixed Actions37050362966 passed all prior cases and the 21 search core cases, with five of seven new search browser cases passing. The two failures exposed a hidden value-slot selector in the new test and an inaccessible disabled-candidate reason; the current change reveals the selector through ordinary field focus and always displays the disabled candidate's reason. The correction requires a new same-head fixed run.
 
 ## Verified checkpoint 9d57bbb
 

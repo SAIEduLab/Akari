@@ -276,6 +276,7 @@
     "audit/tests/static-contract.mjs",
     "audit/tests/surface-negative.mjs",
     "audit/tests/ui-buttons.mjs",
+    "audit/tests/ux-surface-browser.mjs",
     "audit/tests/verify-japanese-gate.mjs",
     "audit/tests/workspace-history-browser.mjs",
     "audit/verify-evidence.mjs",
