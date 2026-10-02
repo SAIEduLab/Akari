@@ -1,0 +1,4530 @@
+{
+  "schema": "akari-fixed-plan-transfer-v1",
+  "source": {
+    "file": "Akari-zero-base-visible-audit-plan.md",
+    "sha256": "27673006b29ec3732fcab19b17c200db7b80146c8b794930a6151f82e7e4c405",
+    "policy": "Read-only extraction of original row text and independent expectations; no result or UX acceptance claim."
+  },
+  "groups": {
+    "C": [
+      {
+        "id": "C-Assignment",
+        "line": 1129,
+        "cells": [
+          "C-Assignment",
+          "W0",
+          "点数を0にする",
+          "点数10→0、型は数、他データ不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-NumericUpdate:ADD",
+        "line": 1130,
+        "cells": [
+          "C-NumericUpdate:ADD",
+          "W0",
+          "点数に1を足す",
+          "点数10→11",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-NumericUpdate:SUB",
+        "line": 1131,
+        "cells": [
+          "C-NumericUpdate:SUB",
+          "W0",
+          "点数から1を引く",
+          "点数10→9",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-ListAppend",
+        "line": 1132,
+        "cells": [
+          "C-ListAppend",
+          "W0",
+          "名前一覧の末尾へ「あかり」を追加",
+          "[本,ぼうし]→[本,ぼうし,あかり]",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-ListReplace",
+        "line": 1133,
+        "cells": [
+          "C-ListReplace",
+          "W0",
+          "名前一覧の1番目を「ひかり」に置換",
+          "[ひかり,ぼうし]、長さ2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-ListInsert",
+        "line": 1134,
+        "cells": [
+          "C-ListInsert",
+          "W0",
+          "名前一覧の1番目へ「ほたる」を挿入",
+          "[ほたる,本,ぼうし]、長さ3",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-ListDelete",
+        "line": 1135,
+        "cells": [
+          "C-ListDelete",
+          "W0",
+          "名前一覧の1番目を削除",
+          "[ぼうし]",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-ListClear",
+        "line": 1136,
+        "cells": [
+          "C-ListClear",
+          "W0",
+          "名前一覧を空にする",
+          "[]",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-IfStatement",
+        "line": 1137,
+        "cells": [
+          "C-IfStatement",
+          "W0",
+          "点数>=10。真枝「一致」、else「不一致」",
+          "点数10では一致だけ、別試行点数9では不一致だけ",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-Say",
+        "line": 1138,
+        "cells": [
+          "C-Say",
+          "W0",
+          "文字「10点以上です」",
+          "正対象の吹き出しが文字列と完全一致",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-RepeatCount",
+        "line": 1139,
+        "cells": [
+          "C-RepeatCount",
+          "W0、点数初期0",
+          "3回、本文は点数+1",
+          "点数0→3、0回の別試行では0のまま",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-RepeatWhile",
+        "line": 1140,
+        "cells": [
+          "C-RepeatWhile",
+          "W0、点数初期0/100",
+          "点数<100のあいだ、本文は点数+1",
+          "点数0→100で終了。初期100なら本文0回",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-RepeatUntil",
+        "line": 1141,
+        "cells": [
+          "C-RepeatUntil",
+          "W0、点数初期0、空白をOS入力",
+          "空白キーが押されるまで、本文は点数+1と0.1秒待つ",
+          "未押下中反復。押下すると終了し以後点数不変。初めから押されていれば0回",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-WaitTime",
+        "line": 1142,
+        "cells": [
+          "C-WaitTime",
+          "W0",
+          "0.1秒待つ→「完了」",
+          "0.1秒前に完了を出さない。0.1秒後の観測で完了（計測分解能別記）",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-WaitUntil",
+        "line": 1143,
+        "cells": [
+          "C-WaitUntil",
+          "W0、ボタンのクリックで点数100に設定",
+          "点数>=100になるまで待つ→「完了」",
+          "点数10の間は完了なし。他のクリック本文で点数100にすると完了",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-ForEach",
+        "line": 1144,
+        "cells": [
+          "C-ForEach",
+          "W0、表示列は空文字、各回0.5秒待つ",
+          "名前一覧を先頭から反復、項目を表示列へ連結",
+          "本→ぼうしの順、反復2回。項目名は反復内だけ。反復開始後に元一覧へ追加しても3回目は生じない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-MotionCommand:MOVE",
+        "line": 1145,
+        "cells": [
+          "C-MotionCommand:MOVE",
+          "W0",
+          "前へ10歩",
+          "方向0のあかりx100→110、y100不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-MotionCommand:GOTO",
+        "line": 1146,
+        "cells": [
+          "C-MotionCommand:GOTO",
+          "W0、あかりx25/y75",
+          "横100、縦50へ",
+          "x25/y75→x100/y50、他対象不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-MotionCommand:GLIDE",
+        "line": 1147,
+        "cells": [
+          "C-MotionCommand:GLIDE",
+          "W0、あかりx50/y50、時刻±0.2秒・座標±5歩",
+          "横200、縦100へ1秒かけて移動",
+          "t=0.5秒付近でx125/y75、1秒後x200/y100。次命令は完了前に出ない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-MotionCommand:TURN_RIGHT",
+        "line": 1148,
+        "cells": [
+          "C-MotionCommand:TURN_RIGHT",
+          "W0",
+          "右に15度",
+          "方向0→15、座標不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-MotionCommand:TURN_LEFT",
+        "line": 1149,
+        "cells": [
+          "C-MotionCommand:TURN_LEFT",
+          "W0",
+          "左に15度",
+          "方向0→−15（mod360では345）、座標不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-MotionCommand:SET_DIRECTION",
+        "line": 1150,
+        "cells": [
+          "C-MotionCommand:SET_DIRECTION",
+          "W0、方向15",
+          "方向90度",
+          "方向15→90",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-MotionCommand:SET_X",
+        "line": 1151,
+        "cells": [
+          "C-MotionCommand:SET_X",
+          "W0、x25",
+          "横位置100",
+          "x25→100、y100不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-MotionCommand:SET_Y",
+        "line": 1152,
+        "cells": [
+          "C-MotionCommand:SET_Y",
+          "W0",
+          "縦位置50",
+          "y100→50、x100不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-MotionCommand:POINT_TO",
+        "line": 1153,
+        "cells": [
+          "C-MotionCommand:POINT_TO",
+          "W0、作品上の論理マウス位置150/250",
+          "マウスを向く",
+          "部品中心150/150、マウス150/250で方向90（座標不変）",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-MotionCommand:BOUNCE",
+        "line": 1154,
+        "cells": [
+          "C-MotionCommand:BOUNCE",
+          "W0、640×480画面、100×100部品x540/y100/方向0",
+          "画面端ならはね返る",
+          "右辺に接触・右向きなら左向き180。非接触の別試行は方向0不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:SET_SCALE",
+        "line": 1155,
+        "cells": [
+          "C-LooksCommand:SET_SCALE",
+          "W0",
+          "120％",
+          "大きさ100→120％、設計の初期サイズ不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:SET_COLOR",
+        "line": 1156,
+        "cells": [
+          "C-LooksCommand:SET_COLOR",
+          "W0、四角1の色青",
+          "表示色「赤」",
+          "四角の表示色が青→赤。別試行の画像スプライトは画像の画素色を変更しない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:HIDE",
+        "line": 1157,
+        "cells": [
+          "C-LooksCommand:HIDE",
+          "W0",
+          "姿をかくす",
+          "表示→非表示、編集から再選択可能",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:SHOW",
+        "line": 1158,
+        "cells": [
+          "C-LooksCommand:SHOW",
+          "W0、初期非表示",
+          "姿を見せる",
+          "非表示→表示",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:FRONT",
+        "line": 1159,
+        "cells": [
+          "C-LooksCommand:FRONT",
+          "W0、同位置の赤/青/緑の四角、対象は最背面",
+          "いちばん手前",
+          "3つの重なった四角で指定対象が最前面、他2つの相対順は保持",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:BACK",
+        "line": 1160,
+        "cells": [
+          "C-LooksCommand:BACK",
+          "W0、同位置の赤/青/緑の四角を独立に登録、対象は最前面",
+          "いちばん奥",
+          "指定対象が最背面、他2つの相対順は保持",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:FORWARD_LAYERS",
+        "line": 1161,
+        "cells": [
+          "C-LooksCommand:FORWARD_LAYERS",
+          "W0、3つの四角を同位置、対象順位1",
+          "1つ手前",
+          "3層の対象順位1→2（背面から数える）、2層を飛び越えない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:BACKWARD_LAYERS",
+        "line": 1162,
+        "cells": [
+          "C-LooksCommand:BACKWARD_LAYERS",
+          "W0、3つの四角を同位置、対象順位3",
+          "1つ奥",
+          "3層の対象順位3→2、2層を飛び越えない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-PenCommand:DOWN",
+        "line": 1163,
+        "cells": [
+          "C-PenCommand:DOWN",
+          "W0、ペン青/太さ3、最初は上",
+          "ペンを下ろす→前へ20歩",
+          "中心150/150→170/150へ太さ3・青の線が1本",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-PenCommand:SET_COLOR",
+        "line": 1164,
+        "cells": [
+          "C-PenCommand:SET_COLOR",
+          "W0、ペン青/太さ3の既存線をUIで用意",
+          "ペン青→赤→下ろして20歩",
+          "新しい線は赤、既存の青線は青のまま",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-PenCommand:SET_SIZE",
+        "line": 1165,
+        "cells": [
+          "C-PenCommand:SET_SIZE",
+          "W0、太さ3の既存線をUIで用意",
+          "ペン太さ3→6→下ろして20歩",
+          "新しい線は太さ6、既存の線は太さ3",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-PenCommand:UP",
+        "line": 1166,
+        "cells": [
+          "C-PenCommand:UP",
+          "W0、最初ペン下",
+          "ペンを上げる→前へ20歩",
+          "移動するが新しい線なし、既存線保持",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-PenCommand:STAMP",
+        "line": 1167,
+        "cells": [
+          "C-PenCommand:STAMP",
+          "W0",
+          "今の姿のスタンプ",
+          "その位置/衣装/倍率/回転のスタンプ1つ。部品を動かしてもスタンプは残る",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-PenCommand:CLEAR",
+        "line": 1168,
+        "cells": [
+          "C-PenCommand:CLEAR",
+          "W0、2対象の線とスタンプを先に作成",
+          "全線とスタンプを消す",
+          "全対象が描いた線とスタンプ0、部品/背景は残る",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:SET_BACKDROP",
+        "line": 1169,
+        "cells": [
+          "C-LooksCommand:SET_BACKDROP",
+          "W0、背景「夜」→「空色」",
+          "背景「空色」",
+          "指定背景へ切替、以前/新しい背景名が正しい",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:NEXT_BACKDROP",
+        "line": 1170,
+        "cells": [
+          "C-LooksCommand:NEXT_BACKDROP",
+          "W0、空色/夜/森をこの順で登録",
+          "次の背景",
+          "3背景の1→2、別試行3→1",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:PREV_BACKDROP",
+        "line": 1171,
+        "cells": [
+          "C-LooksCommand:PREV_BACKDROP",
+          "W0、同3背景",
+          "前の背景",
+          "3背景の2→1、別試行1→3",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:SET_COSTUME",
+        "line": 1172,
+        "cells": [
+          "C-LooksCommand:SET_COSTUME",
+          "W0、原本/星/丸をこの順で登録",
+          "衣装「星」",
+          "指定スプライトの衣装名/見た目が星、他対象不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:NEXT_COSTUME",
+        "line": 1173,
+        "cells": [
+          "C-LooksCommand:NEXT_COSTUME",
+          "W0、同3衣装",
+          "次の衣装",
+          "1→2、別試行3→1",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:PREV_COSTUME",
+        "line": 1174,
+        "cells": [
+          "C-LooksCommand:PREV_COSTUME",
+          "W0、同3衣装",
+          "前の衣装",
+          "2→1、別試行1→3",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:SET_TARGET_TEXT",
+        "line": 1175,
+        "cells": [
+          "C-LooksCommand:SET_TARGET_TEXT",
+          "W0",
+          "ボタン1の文字を「始める」",
+          "ボタンだけの文字が始める、ID/クリック本文保持",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-SoundCommand:TONE",
+        "line": 1176,
+        "cells": [
+          "C-SoundCommand:TONE",
+          "W0",
+          "440Hzを0.2秒鳴らし始める→次の台詞",
+          "440Hz短音、台詞は音終了を待たない。音記録/実聴が必須",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-SoundCommand:TONE_WAIT",
+        "line": 1177,
+        "cells": [
+          "C-SoundCommand:TONE_WAIT",
+          "W0",
+          "440Hzを0.2秒鳴らす→次の台詞",
+          "音終了より前に台詞を出さない。音記録/実聴が必須",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-SoundCommand:SET_VOLUME",
+        "line": 1178,
+        "cells": [
+          "C-SoundCommand:SET_VOLUME",
+          "W0",
+          "音量50％",
+          "100→50％、次の音の振幅変化。音量の型/単位保持",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-SoundCommand:PITCH_UP",
+        "line": 1179,
+        "cells": [
+          "C-SoundCommand:PITCH_UP",
+          "W0",
+          "音の高さ1段階上げる",
+          "音程0→1、440Hz基準なら約466.164Hz",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-SoundCommand:PITCH_DOWN",
+        "line": 1180,
+        "cells": [
+          "C-SoundCommand:PITCH_DOWN",
+          "W0",
+          "音の高さ1段階下げる",
+          "音程0→−1、440Hz基準なら約415.305Hz",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-SoundCommand:STOP_ALL",
+        "line": 1181,
+        "cells": [
+          "C-SoundCommand:STOP_ALL",
+          "W0、2対象の5秒音を鳴らし1対象は音待ち",
+          "すべての音を止める",
+          "実音停止、待機音の終了待ちも解除、後から再開しない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-Broadcast",
+        "line": 1182,
+        "cells": [
+          "C-Broadcast",
+          "W0、2受け手が0.3/0.6秒後に固有台詞",
+          "「開始」と知らせる→次の台詞",
+          "2受け手がそれぞれ1回起動、送信側は受け手完了を待たない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-BroadcastAndWait",
+        "line": 1183,
+        "cells": [
+          "C-BroadcastAndWait",
+          "W0、同2受け手",
+          "「開始」と知らせて全受け手を待つ",
+          "2受け手が各1回起動、送信側の次台詞は0.6秒側終了後",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-Ask",
+        "line": 1184,
+        "cells": [
+          "C-Ask",
+          "W0",
+          "「名前は？」をたずねる",
+          "質問が出て未回答中は次命令なし。「はる」と回答後に答え=はる",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LocalVariableDeclaration",
+        "line": 1185,
+        "cells": [
+          "C-LocalVariableDeclaration",
+          "W0、計算定義内、作品合計99",
+          "局所合計を0で宣言→1を足す→値を返す",
+          "返却1、作品合計99は99のまま",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-ReturnStatement",
+        "line": 1186,
+        "cells": [
+          "C-ReturnStatement",
+          "W0、局所合計5、返却後に局所合計99の命令",
+          "合計を答えとして返す",
+          "計算の返却5、後続は実行しない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-CloneCommand:CREATE_SELF",
+        "line": 1187,
+        "cells": [
+          "C-CloneCommand:CREATE_SELF",
+          "W0、cloneStartで作品の分身開始数+1",
+          "自分の分身",
+          "指定元の分身1体、見た目/個体値を複製。作品データ共有、cloneStart1回だけ",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-CloneCommand:CREATE_TARGET",
+        "line": 1188,
+        "cells": [
+          "C-CloneCommand:CREATE_TARGET",
+          "W0、別スプライト「マスコット」を登録",
+          "マスコットの分身",
+          "指定マスコットの分身1体、呼出し元あかりの分身は0",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-CloneCommand:DELETE_SELF",
+        "line": 1189,
+        "cells": [
+          "C-CloneCommand:DELETE_SELF",
+          "W0、星の分身1体を先に作り、星には削除本文を設定しない",
+          "この分身だけ消す",
+          "あかりのcloneStartの分身だけ消える。あかり/星の元と星の分身は残る",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-StopCommand:THIS",
+        "line": 1190,
+        "cells": [
+          "C-StopCommand:THIS",
+          "W0、独立2本文が同時開始",
+          "この実行を止める",
+          "現在本文の後続台詞なし、別本文の後続台詞あり",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-StopCommand:OTHERS",
+        "line": 1191,
+        "cells": [
+          "C-StopCommand:OTHERS",
+          "W0、独立2本文が同時開始",
+          "ほかの実行を止める",
+          "現在本文の後続台詞あり、別本文の後続台詞なし",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-StopCommand:ALL",
+        "line": 1192,
+        "cells": [
+          "C-StopCommand:ALL",
+          "W0、独立2本文が同時開始",
+          "作品全体を止める",
+          "両本文の後続台詞なし、停止した処理の遅延副作用なし",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:SET_SELF_TEXT",
+        "line": 1193,
+        "cells": [
+          "C-LooksCommand:SET_SELF_TEXT",
+          "W0、labelを実行対象",
+          "自分の文字を「文字」",
+          "対象labelの文字だけ変わる、他対象不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LooksCommand:SET_INPUT",
+        "line": 1194,
+        "cells": [
+          "C-LooksCommand:SET_INPUT",
+          "W0、入力欄の初期文字「前」",
+          "入力欄1へ「答え」を入れる",
+          "入力値答え、valueChangedの旧値/新値が前/答え",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-SoundCommand:SAMPLE",
+        "line": 1195,
+        "cells": [
+          "C-SoundCommand:SAMPLE",
+          "W0、hash固定の0.4秒音ベル",
+          "音ベルを鳴らし始める→次の台詞",
+          "0.4秒ベル音が出る、台詞は完了を待たない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-SoundCommand:SAMPLE_WAIT",
+        "line": 1196,
+        "cells": [
+          "C-SoundCommand:SAMPLE_WAIT",
+          "W0、同ベルと別1秒音",
+          "音ベルを鳴らす→次の台詞",
+          "台詞は0.4秒ベル完了後、別の音終了を待たない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-Break",
+        "line": 1197,
+        "cells": [
+          "C-Break",
+          "W0、点数0",
+          "3回反復、+1→break→+100",
+          "点数0→1で反復終了、+100と次の回はなし",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-Continue",
+        "line": 1198,
+        "cells": [
+          "C-Continue",
+          "W0、点数0",
+          "3回反復、+1→continue→+100",
+          "点数0→3、各回+100は実行しない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-LocalListDeclaration",
+        "line": 1199,
+        "cells": [
+          "C-LocalListDeclaration",
+          "W0、計算定義内、作品結果[元]",
+          "局所結果を空で作る→「あかり」を追加→返す",
+          "返却[あかり]、作品結果[元]は不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-Forever",
+        "line": 1200,
+        "cells": [
+          "C-Forever",
+          "W0",
+          "ずっと15度回転",
+          "複数回動く。UI一時停止で方向が止まり、UI停止で編集へ戻る。有限反復へ置き換えない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-UserActionCall",
+        "line": 1201,
+        "cells": [
+          "C-UserActionCall",
+          "W0、あかりの個体点数10と星の個体点数20をUI作成。引数量を呼出し元の個体点数へ加える手順をUI定義",
+          "3を名前付き/位置付き引数で手順「増やす」へ渡す",
+          "呼出し元の個体点数10→13、手順を同期完走、星の個体点数20/作品点数10は不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "C-NoOperation",
+        "line": 1202,
+        "cells": [
+          "C-NoOperation",
+          "W0",
+          "何もしない→終わりマーカー",
+          "作品/対象の値不変、後続マーカーあり",
+          "未実施"
+        ]
+      }
+    ],
+    "Q": [
+      {
+        "id": "Q-expression:NumberLiteral",
+        "line": 1210,
+        "cells": [
+          "Q-expression:NumberLiteral",
+          "W0",
+          "5",
+          "数5",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-expression:StringLiteral",
+        "line": 1211,
+        "cells": [
+          "Q-expression:StringLiteral",
+          "W0",
+          "「青い空😀」",
+          "文字列完全一致",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-expression:BooleanLiteral",
+        "line": 1212,
+        "cells": [
+          "Q-expression:BooleanLiteral",
+          "W0",
+          "条件の答え（あてはまる/あてはまらない）",
+          "Boolean両値、文字「はい/いいえ」と別",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-expression:ListLiteral",
+        "line": 1213,
+        "cells": [
+          "Q-expression:ListLiteral",
+          "W0",
+          "[1,2,3]",
+          "数3要素の順/型保持",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-expression:VariableRead",
+        "line": 1214,
+        "cells": [
+          "Q-expression:VariableRead",
+          "W0",
+          "点数の値",
+          "10、修飾と所属の別試行もU20",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-expression:ListRead",
+        "line": 1215,
+        "cells": [
+          "Q-expression:ListRead",
+          "W0",
+          "名前一覧の2番目",
+          "ぼうし",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-expression:UserFunctionCall",
+        "line": 1216,
+        "cells": [
+          "Q-expression:UserFunctionCall",
+          "W0、引数nをn×2として返す計算をUI定義",
+          "3を倍にする計算へ渡す",
+          "6",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:POS",
+        "line": 1217,
+        "cells": [
+          "Q-operator:POS",
+          "W0",
+          "+2",
+          "2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:NEG",
+        "line": 1218,
+        "cells": [
+          "Q-operator:NEG",
+          "W0",
+          "−2",
+          "−2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:NOT",
+        "line": 1219,
+        "cells": [
+          "Q-operator:NOT",
+          "W0",
+          "not true",
+          "false",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:ADD",
+        "line": 1220,
+        "cells": [
+          "Q-operator:ADD",
+          "W0",
+          "2+3",
+          "5",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:SUB",
+        "line": 1221,
+        "cells": [
+          "Q-operator:SUB",
+          "W0",
+          "2−3",
+          "−1",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:MUL",
+        "line": 1222,
+        "cells": [
+          "Q-operator:MUL",
+          "W0",
+          "2×3",
+          "6",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:DIV",
+        "line": 1223,
+        "cells": [
+          "Q-operator:DIV",
+          "W0",
+          "6÷3",
+          "2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:POW",
+        "line": 1224,
+        "cells": [
+          "Q-operator:POW",
+          "W0",
+          "2＾3",
+          "8",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:GTE",
+        "line": 1225,
+        "cells": [
+          "Q-operator:GTE",
+          "W0",
+          "3>=3",
+          "true",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:LTE",
+        "line": 1226,
+        "cells": [
+          "Q-operator:LTE",
+          "W0",
+          "3<=3",
+          "true",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:GT",
+        "line": 1227,
+        "cells": [
+          "Q-operator:GT",
+          "W0",
+          "3>3",
+          "false",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:LT",
+        "line": 1228,
+        "cells": [
+          "Q-operator:LT",
+          "W0",
+          "3<3",
+          "false",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:EQ",
+        "line": 1229,
+        "cells": [
+          "Q-operator:EQ",
+          "W0",
+          "3=3",
+          "true",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:NEQ",
+        "line": 1230,
+        "cells": [
+          "Q-operator:NEQ",
+          "W0",
+          "3!=3",
+          "false",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:AND",
+        "line": 1231,
+        "cells": [
+          "Q-operator:AND",
+          "W0",
+          "true and false",
+          "false",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-operator:OR",
+        "line": 1232,
+        "cells": [
+          "Q-operator:OR",
+          "W0",
+          "true or false",
+          "true",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:乱数",
+        "line": 1233,
+        "cells": [
+          "Q-builtin:乱数",
+          "W0",
+          "(3,3); (1,10)",
+          "3; 1..10の整数（全端点の網羅を1値から主張しない）",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:余り",
+        "line": 1234,
+        "cells": [
+          "Q-builtin:余り",
+          "W0",
+          "(17,5)",
+          "2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:四捨五入",
+        "line": 1235,
+        "cells": [
+          "Q-builtin:四捨五入",
+          "W0",
+          "(1.5);(−1.5)",
+          "2;−2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:切り上げ",
+        "line": 1236,
+        "cells": [
+          "Q-builtin:切り上げ",
+          "W0",
+          "(1.2)",
+          "2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:切り捨て",
+        "line": 1237,
+        "cells": [
+          "Q-builtin:切り捨て",
+          "W0",
+          "(1.8)",
+          "1",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:絶対値",
+        "line": 1238,
+        "cells": [
+          "Q-builtin:絶対値",
+          "W0",
+          "(−3)",
+          "3",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:平方根",
+        "line": 1239,
+        "cells": [
+          "Q-builtin:平方根",
+          "W0",
+          "(81)",
+          "9",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:正弦",
+        "line": 1240,
+        "cells": [
+          "Q-builtin:正弦",
+          "W0",
+          "(30)",
+          "0.5",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:余弦",
+        "line": 1241,
+        "cells": [
+          "Q-builtin:余弦",
+          "W0",
+          "(60)",
+          "0.5",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:正接",
+        "line": 1242,
+        "cells": [
+          "Q-builtin:正接",
+          "W0",
+          "(45)",
+          "1",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:逆正弦",
+        "line": 1243,
+        "cells": [
+          "Q-builtin:逆正弦",
+          "W0",
+          "(0.5)",
+          "30度",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:逆余弦",
+        "line": 1244,
+        "cells": [
+          "Q-builtin:逆余弦",
+          "W0",
+          "(0.5)",
+          "60度",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:逆正接",
+        "line": 1245,
+        "cells": [
+          "Q-builtin:逆正接",
+          "W0",
+          "(1)",
+          "45度",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:自然対数",
+        "line": 1246,
+        "cells": [
+          "Q-builtin:自然対数",
+          "W0",
+          "(1)",
+          "0",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:常用対数",
+        "line": 1247,
+        "cells": [
+          "Q-builtin:常用対数",
+          "W0",
+          "(100)",
+          "2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:指数",
+        "line": 1248,
+        "cells": [
+          "Q-builtin:指数",
+          "W0",
+          "(0)",
+          "1",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:数",
+        "line": 1249,
+        "cells": [
+          "Q-builtin:数",
+          "W0",
+          "(「12.5」)",
+          "数12.5",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:文字",
+        "line": 1250,
+        "cells": [
+          "Q-builtin:文字",
+          "W0",
+          "(12)",
+          "文字12",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:最小",
+        "line": 1251,
+        "cells": [
+          "Q-builtin:最小",
+          "W0",
+          "(3,−2,5)",
+          "−2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:最大",
+        "line": 1252,
+        "cells": [
+          "Q-builtin:最大",
+          "W0",
+          "(3,−2,5)",
+          "5",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:つなぐ",
+        "line": 1253,
+        "cells": [
+          "Q-builtin:つなぐ",
+          "W0",
+          "(「点数：」,3)",
+          "文字「点数：3」",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:CONTAINS",
+        "line": 1254,
+        "cells": [
+          "Q-builtin:CONTAINS",
+          "W0",
+          "[本,かさ]にかさ;同リストに帽子",
+          "true;false",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:INDEX_OF",
+        "line": 1255,
+        "cells": [
+          "Q-builtin:INDEX_OF",
+          "W0",
+          "[本,かさ]のかさ;同リストの帽子",
+          "2;0",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:LENGTH",
+        "line": 1256,
+        "cells": [
+          "Q-builtin:LENGTH",
+          "W0",
+          "[本,かさ]",
+          "2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:STRING_LENGTH",
+        "line": 1257,
+        "cells": [
+          "Q-builtin:STRING_LENGTH",
+          "W0",
+          "「A😀B」",
+          "3 code points",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-builtin:STRING_CHAR",
+        "line": 1258,
+        "cells": [
+          "Q-builtin:STRING_CHAR",
+          "W0",
+          "「A😀B」の2文字目",
+          "😀",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:マウスが押されている",
+        "line": 1259,
+        "cells": [
+          "Q-state:マウスが押されている",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "OS mouse up/down/up",
+          "false/true/false",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:マウスの横位置",
+        "line": 1260,
+        "cells": [
+          "Q-state:マウスの横位置",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "作品上の論理位置300/200へOSポインター",
+          "300±2歩",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:マウスの縦位置",
+        "line": 1261,
+        "cells": [
+          "Q-state:マウスの縦位置",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "同論理位置300/200",
+          "200±2歩",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:以前の背景名",
+        "line": 1262,
+        "cells": [
+          "Q-state:以前の背景名",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "背景を空色→夜に変えるできごと",
+          "空色",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:新しい背景名",
+        "line": 1263,
+        "cells": [
+          "Q-state:新しい背景名",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "同背景変更できごと",
+          "夜",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:受け取った知らせ",
+        "line": 1264,
+        "cells": [
+          "Q-state:受け取った知らせ",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "「出発」を受信するできごと",
+          "出発",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:押されたキー",
+        "line": 1265,
+        "cells": [
+          "Q-state:押されたキー",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "aの押下できごと",
+          "a",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:クローンである",
+        "line": 1266,
+        "cells": [
+          "Q-state:クローンである",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "元/分身でそれぞれ読む",
+          "false/true",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:背景番号",
+        "line": 1267,
+        "cells": [
+          "Q-state:背景番号",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "空色/夜/森の2番目を選択",
+          "2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:背景名",
+        "line": 1268,
+        "cells": [
+          "Q-state:背景名",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "同2番目背景",
+          "夜",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:衣装番号",
+        "line": 1269,
+        "cells": [
+          "Q-state:衣装番号",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "原本/星/丸の2番目",
+          "2",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:衣装名",
+        "line": 1270,
+        "cells": [
+          "Q-state:衣装名",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "同2番目衣装",
+          "星",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:横位置",
+        "line": 1271,
+        "cells": [
+          "Q-state:横位置",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "あかりx100",
+          "100歩",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:縦位置",
+        "line": 1272,
+        "cells": [
+          "Q-state:縦位置",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "あかりy100",
+          "100歩",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:方向",
+        "line": 1273,
+        "cells": [
+          "Q-state:方向",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "あかり方向90",
+          "90度",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:大きさ",
+        "line": 1274,
+        "cells": [
+          "Q-state:大きさ",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "あかり大きさ120％",
+          "120％",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:タイマー",
+        "line": 1275,
+        "cells": [
+          "Q-state:タイマー",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "開始後0.5秒の論理時計を読む",
+          "0.5秒±0.2秒。一時停止中不変",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:答え",
+        "line": 1276,
+        "cells": [
+          "Q-state:答え",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "質問の回答「はる」",
+          "はる",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:音量",
+        "line": 1277,
+        "cells": [
+          "Q-state:音量",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "音量50％に設定",
+          "50％",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:音程",
+        "line": 1278,
+        "cells": [
+          "Q-state:音程",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "音程1に設定",
+          "1段階",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:以前の値",
+        "line": 1279,
+        "cells": [
+          "Q-state:以前の値",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "入力欄1の前→後のできごと",
+          "前",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-state:新しい値",
+        "line": 1280,
+        "cells": [
+          "Q-state:新しい値",
+          "W0＋指定イベント/状態。イベント専用値の不正文脈は別の拒否行",
+          "同値変更できごと",
+          "後",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-sensor:INPUT_VALUE",
+        "line": 1281,
+        "cells": [
+          "Q-sensor:INPUT_VALUE",
+          "W0、初期入力を青空に変更",
+          "入力欄1の値",
+          "青空",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-sensor:DISTANCE_TO",
+        "line": 1282,
+        "cells": [
+          "Q-sensor:DISTANCE_TO",
+          "W0、100×100のあかり100/100と星200/100、中心間100",
+          "星までの距離",
+          "100歩",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-sensor:KEY_DOWN",
+        "line": 1283,
+        "cells": [
+          "Q-sensor:KEY_DOWN",
+          "W0",
+          "aキーが押されている",
+          "OS up/down/upでfalse/true/false",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-sensor:TOUCHING_COLOR",
+        "line": 1284,
+        "cells": [
+          "Q-sensor:TOUCHING_COLOR",
+          "W0、赤四角を接触/非接触位置へ",
+          "赤にふれている",
+          "赤四角との外接矩形重なりでtrue、離すとfalse。透明画像画素/ペンの色を使わない",
+          "未実施"
+        ]
+      },
+      {
+        "id": "Q-sensor:TOUCHING",
+        "line": 1285,
+        "cells": [
+          "Q-sensor:TOUCHING",
+          "W0、星の位置100/100と300/100の独立試行",
+          "星にふれている",
+          "外接矩形重なりでtrue、離すとfalse。回転/scaleの別条件も固定",
+          "未実施"
+        ]
+      }
+    ],
+    "E": [
+      {
+        "id": "E-event:stage:start",
+        "line": 1293,
+        "cells": [
+          "E-event:stage:start",
+          "stage / start",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:stage:click",
+        "line": 1294,
+        "cells": [
+          "E-event:stage:click",
+          "stage / click",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:stage:keyDown",
+        "line": 1295,
+        "cells": [
+          "E-event:stage:keyDown",
+          "stage / keyDown",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:stage:message",
+        "line": 1296,
+        "cells": [
+          "E-event:stage:message",
+          "stage / message",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:stage:backdropChanged",
+        "line": 1297,
+        "cells": [
+          "E-event:stage:backdropChanged",
+          "stage / backdropChanged",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:label:start",
+        "line": 1298,
+        "cells": [
+          "E-event:label:start",
+          "label / start",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:label:click",
+        "line": 1299,
+        "cells": [
+          "E-event:label:click",
+          "label / click",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:label:keyDown",
+        "line": 1300,
+        "cells": [
+          "E-event:label:keyDown",
+          "label / keyDown",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:label:message",
+        "line": 1301,
+        "cells": [
+          "E-event:label:message",
+          "label / message",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:label:backdropChanged",
+        "line": 1302,
+        "cells": [
+          "E-event:label:backdropChanged",
+          "label / backdropChanged",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:button:start",
+        "line": 1303,
+        "cells": [
+          "E-event:button:start",
+          "button / start",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:button:click",
+        "line": 1304,
+        "cells": [
+          "E-event:button:click",
+          "button / click",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:button:keyDown",
+        "line": 1305,
+        "cells": [
+          "E-event:button:keyDown",
+          "button / keyDown",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:button:message",
+        "line": 1306,
+        "cells": [
+          "E-event:button:message",
+          "button / message",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:button:backdropChanged",
+        "line": 1307,
+        "cells": [
+          "E-event:button:backdropChanged",
+          "button / backdropChanged",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:box:start",
+        "line": 1308,
+        "cells": [
+          "E-event:box:start",
+          "box / start",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:box:click",
+        "line": 1309,
+        "cells": [
+          "E-event:box:click",
+          "box / click",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:box:keyDown",
+        "line": 1310,
+        "cells": [
+          "E-event:box:keyDown",
+          "box / keyDown",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:box:message",
+        "line": 1311,
+        "cells": [
+          "E-event:box:message",
+          "box / message",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:box:backdropChanged",
+        "line": 1312,
+        "cells": [
+          "E-event:box:backdropChanged",
+          "box / backdropChanged",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:input:start",
+        "line": 1313,
+        "cells": [
+          "E-event:input:start",
+          "input / start",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:input:click",
+        "line": 1314,
+        "cells": [
+          "E-event:input:click",
+          "input / click",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:input:keyDown",
+        "line": 1315,
+        "cells": [
+          "E-event:input:keyDown",
+          "input / keyDown",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:input:message",
+        "line": 1316,
+        "cells": [
+          "E-event:input:message",
+          "input / message",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:input:backdropChanged",
+        "line": 1317,
+        "cells": [
+          "E-event:input:backdropChanged",
+          "input / backdropChanged",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:input:valueChanged",
+        "line": 1318,
+        "cells": [
+          "E-event:input:valueChanged",
+          "input / valueChanged",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:sprite:start",
+        "line": 1319,
+        "cells": [
+          "E-event:sprite:start",
+          "sprite / start",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:sprite:click",
+        "line": 1320,
+        "cells": [
+          "E-event:sprite:click",
+          "sprite / click",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:sprite:keyDown",
+        "line": 1321,
+        "cells": [
+          "E-event:sprite:keyDown",
+          "sprite / keyDown",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:sprite:message",
+        "line": 1322,
+        "cells": [
+          "E-event:sprite:message",
+          "sprite / message",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:sprite:backdropChanged",
+        "line": 1323,
+        "cells": [
+          "E-event:sprite:backdropChanged",
+          "sprite / backdropChanged",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "E-event:sprite:cloneStart",
+        "line": 1324,
+        "cells": [
+          "E-event:sprite:cloneStart",
+          "sprite / cloneStart",
+          "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、分身はcloneだけ。",
+          "未実施"
+        ]
+      }
+    ],
+    "L": [
+      {
+        "id": "L-limit:fileBytes",
+        "line": 1332,
+        "cells": [
+          "L-limit:fileBytes",
+          "25165824",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:importFileBytes",
+        "line": 1333,
+        "cells": [
+          "L-limit:importFileBytes",
+          "12582912",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:assetRawTotal",
+        "line": 1334,
+        "cells": [
+          "L-limit:assetRawTotal",
+          "16777216",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:assets",
+        "line": 1335,
+        "cells": [
+          "L-limit:assets",
+          "128",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:imageAssets",
+        "line": 1336,
+        "cells": [
+          "L-limit:imageAssets",
+          "64",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:audioAssets",
+        "line": 1337,
+        "cells": [
+          "L-limit:audioAssets",
+          "64",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:imageBytes",
+        "line": 1338,
+        "cells": [
+          "L-limit:imageBytes",
+          "4194304",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:audioBytes",
+        "line": 1339,
+        "cells": [
+          "L-limit:audioBytes",
+          "6291456",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:imageWidth",
+        "line": 1340,
+        "cells": [
+          "L-limit:imageWidth",
+          "4096",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:imageHeight",
+        "line": 1341,
+        "cells": [
+          "L-limit:imageHeight",
+          "4096",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:imagePixels",
+        "line": 1342,
+        "cells": [
+          "L-limit:imagePixels",
+          "4194304",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:imagePixelsTotal",
+        "line": 1343,
+        "cells": [
+          "L-limit:imagePixelsTotal",
+          "16777216",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:audioDuration",
+        "line": 1344,
+        "cells": [
+          "L-limit:audioDuration",
+          "60",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:audioDurationTotal",
+        "line": 1345,
+        "cells": [
+          "L-limit:audioDurationTotal",
+          "120",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:audioChannels",
+        "line": 1346,
+        "cells": [
+          "L-limit:audioChannels",
+          "2",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:audioSampleRateMin",
+        "line": 1347,
+        "cells": [
+          "L-limit:audioSampleRateMin",
+          "8000",
+          "UI素材取り込み/再生",
+          "N−1拒否、N/N＋1受理。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:audioSampleRateMax",
+        "line": 1348,
+        "cells": [
+          "L-limit:audioSampleRateMax",
+          "48000",
+          "UI素材取り込み/再生",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:activeAudioVoices",
+        "line": 1349,
+        "cells": [
+          "L-limit:activeAudioVoices",
+          "32",
+          "UI実行/停止",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:backdrops",
+        "line": 1350,
+        "cells": [
+          "L-limit:backdrops",
+          "256",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:costumesPerSprite",
+        "line": 1351,
+        "cells": [
+          "L-limit:costumesPerSprite",
+          "256",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:sounds",
+        "line": 1352,
+        "cells": [
+          "L-limit:sounds",
+          "256",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:components",
+        "line": 1353,
+        "cells": [
+          "L-limit:components",
+          "500",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:clones",
+        "line": 1354,
+        "cells": [
+          "L-limit:clones",
+          "500",
+          "UI実行/停止",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:scripts",
+        "line": 1355,
+        "cells": [
+          "L-limit:scripts",
+          "1000",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:sourceEach",
+        "line": 1356,
+        "cells": [
+          "L-limit:sourceEach",
+          "100000",
+          "UI本文/値入力・開く・実行",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:sourceTotal",
+        "line": 1357,
+        "cells": [
+          "L-limit:sourceTotal",
+          "1000000",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:projectVars",
+        "line": 1358,
+        "cells": [
+          "L-limit:projectVars",
+          "1000",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:projectLists",
+        "line": 1359,
+        "cells": [
+          "L-limit:projectLists",
+          "500",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:listItems",
+        "line": 1360,
+        "cells": [
+          "L-limit:listItems",
+          "100000",
+          "UI本文/値入力・開く・実行",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:stringChars",
+        "line": 1361,
+        "cells": [
+          "L-limit:stringChars",
+          "100000",
+          "UI本文/値入力・開く・実行",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:callables",
+        "line": 1362,
+        "cells": [
+          "L-limit:callables",
+          "500",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:args",
+        "line": 1363,
+        "cells": [
+          "L-limit:args",
+          "32",
+          "UI開く/対応の追加・保存",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:callDepth",
+        "line": 1364,
+        "cells": [
+          "L-limit:callDepth",
+          "64",
+          "UI実行/停止",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。厳密な内部budgetをUIで誘発/観測できなければ非UI領域/未実施と記録、内部設定注入で可視PASSを付けない。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:functionOps",
+        "line": 1365,
+        "cells": [
+          "L-limit:functionOps",
+          "100000",
+          "UI実行/停止",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。厳密な内部budgetをUIで誘発/観測できなければ非UI領域/未実施と記録、内部設定注入で可視PASSを付けない。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:blockDepth",
+        "line": 1366,
+        "cells": [
+          "L-limit:blockDepth",
+          "128",
+          "UI本文/値入力・開く・実行",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:expressionDepth",
+        "line": 1367,
+        "cells": [
+          "L-limit:expressionDepth",
+          "128",
+          "UI本文/値入力・開く・実行",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:repeatCount",
+        "line": 1368,
+        "cells": [
+          "L-limit:repeatCount",
+          "1000000",
+          "UI実行/停止",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。",
+          "未実施"
+        ]
+      },
+      {
+        "id": "L-limit:activeTasks",
+        "line": 1369,
+        "cells": [
+          "L-limit:activeTasks",
+          "2000",
+          "UI実行/停止",
+          "N−1/N受理、N＋1拒否。拒否後に元作品/履歴を保持。厳密な内部budgetをUIで誘発/観測できなければ非UI領域/未実施と記録、内部設定注入で可視PASSを付けない。",
+          "未実施"
+        ]
+      }
+    ],
+    "S": [
+      {
+        "id": "S-Script",
+        "line": 684,
+        "cells": [
+          "Script / S-Script",
+          "ast:Script",
+          "対象/できごと見出し。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-Hole:expression",
+        "line": 685,
+        "cells": [
+          "Hole:expression / S-Hole:expression",
+          "明記なし",
+          "必要入力/規則の空穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。台帳にschemaを明記した行がない。現行のQuantity/対象/継続/方向移動/通知待ち等をU07/U14/U20/U24とI-*で別検査。欠落を旧機能合格で埋めない。"
+        ]
+      },
+      {
+        "id": "S-Hole:statement",
+        "line": 686,
+        "cells": [
+          "Hole:statement / S-Hole:statement",
+          "明記なし",
+          "必要入力/規則の空穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。台帳にschemaを明記した行がない。現行のQuantity/対象/継続/方向移動/通知待ち等をU07/U14/U20/U24とI-*で別検査。欠落を旧機能合格で埋めない。"
+        ]
+      },
+      {
+        "id": "S-Hole:target",
+        "line": 687,
+        "cells": [
+          "Hole:target / S-Hole:target",
+          "明記なし",
+          "必要入力/規則の空穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。台帳にschemaを明記した行がない。現行のQuantity/対象/継続/方向移動/通知待ち等をU07/U14/U20/U24とI-*で別検査。欠落を旧機能合格で埋めない。"
+        ]
+      },
+      {
+        "id": "S-Hole:rule",
+        "line": 688,
+        "cells": [
+          "Hole:rule / S-Hole:rule",
+          "明記なし",
+          "必要入力/規則の空穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。台帳にschemaを明記した行がない。現行のQuantity/対象/継続/方向移動/通知待ち等をU07/U14/U20/U24とI-*で別検査。欠落を旧機能合格で埋めない。"
+        ]
+      },
+      {
+        "id": "S-QuantityLiteral",
+        "line": 689,
+        "cells": [
+          "QuantityLiteral / S-QuantityLiteral",
+          "明記なし",
+          "数量/数だけ/対象所属の値。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。台帳にschemaを明記した行がない。現行のQuantity/対象/継続/方向移動/通知待ち等をU07/U14/U20/U24とI-*で別検査。欠落を旧機能合格で埋めない。"
+        ]
+      },
+      {
+        "id": "S-UnitlessRead",
+        "line": 690,
+        "cells": [
+          "UnitlessRead / S-UnitlessRead",
+          "明記なし",
+          "数量/数だけ/対象所属の値。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。台帳にschemaを明記した行がない。現行のQuantity/対象/継続/方向移動/通知待ち等をU07/U14/U20/U24とI-*で別検査。欠落を旧機能合格で埋めない。"
+        ]
+      },
+      {
+        "id": "S-ActorQualifiedRead",
+        "line": 691,
+        "cells": [
+          "ActorQualifiedRead / S-ActorQualifiedRead",
+          "明記なし",
+          "数量/数だけ/対象所属の値。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。台帳にschemaを明記した行がない。現行のQuantity/対象/継続/方向移動/通知待ち等をU07/U14/U20/U24とI-*で別検査。欠落を旧機能合格で埋めない。"
+        ]
+      },
+      {
+        "id": "S-ContinuousRule",
+        "line": 692,
+        "cells": [
+          "ContinuousRule / S-ContinuousRule",
+          "明記なし",
+          "押し続け等の継続規則。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。台帳にschemaを明記した行がない。現行のQuantity/対象/継続/方向移動/通知待ち等をU07/U14/U20/U24とI-*で別検査。欠落を旧機能合格で埋めない。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:MOVE_DIRECTION",
+        "line": 693,
+        "cells": [
+          "MotionCommand:MOVE_DIRECTION / S-MotionCommand:MOVE_DIRECTION",
+          "明記なし",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。台帳にschemaを明記した行がない。現行のQuantity/対象/継続/方向移動/通知待ち等をU07/U14/U20/U24とI-*で別検査。欠落を旧機能合格で埋めない。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:GLIDE_DIRECTION",
+        "line": 694,
+        "cells": [
+          "MotionCommand:GLIDE_DIRECTION / S-MotionCommand:GLIDE_DIRECTION",
+          "明記なし",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。台帳にschemaを明記した行がない。現行のQuantity/対象/継続/方向移動/通知待ち等をU07/U14/U20/U24とI-*で別検査。欠落を旧機能合格で埋めない。"
+        ]
+      },
+      {
+        "id": "S-WaitBroadcastGroup",
+        "line": 695,
+        "cells": [
+          "WaitBroadcastGroup / S-WaitBroadcastGroup",
+          "明記なし",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。台帳にschemaを明記した行がない。現行のQuantity/対象/継続/方向移動/通知待ち等をU07/U14/U20/U24とI-*で別検査。欠落を旧機能合格で埋めない。"
+        ]
+      },
+      {
+        "id": "S-TargetReference",
+        "line": 696,
+        "cells": [
+          "TargetReference / S-TargetReference",
+          "slot:TargetReference",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-CommentLine",
+        "line": 697,
+        "cells": [
+          "CommentLine / S-CommentLine",
+          "comment:line",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-Assignment",
+        "line": 698,
+        "cells": [
+          "Assignment / S-Assignment",
+          "command:Assignment",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-NumericUpdate:ADD",
+        "line": 699,
+        "cells": [
+          "NumericUpdate:ADD / S-NumericUpdate:ADD",
+          "command:NumericUpdate:ADD",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-NumericUpdate:SUB",
+        "line": 700,
+        "cells": [
+          "NumericUpdate:SUB / S-NumericUpdate:SUB",
+          "command:NumericUpdate:SUB",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-ListAppend",
+        "line": 701,
+        "cells": [
+          "ListAppend / S-ListAppend",
+          "command:ListAppend",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-ListInsert",
+        "line": 702,
+        "cells": [
+          "ListInsert / S-ListInsert",
+          "command:ListInsert",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-ListReplace",
+        "line": 703,
+        "cells": [
+          "ListReplace / S-ListReplace",
+          "command:ListReplace",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-ListDelete",
+        "line": 704,
+        "cells": [
+          "ListDelete / S-ListDelete",
+          "command:ListDelete",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-ListClear",
+        "line": 705,
+        "cells": [
+          "ListClear / S-ListClear",
+          "command:ListClear",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-NoOperation",
+        "line": 706,
+        "cells": [
+          "NoOperation / S-NoOperation",
+          "command:NoOperation",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-Break",
+        "line": 707,
+        "cells": [
+          "Break / S-Break",
+          "command:Break",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-Continue",
+        "line": 708,
+        "cells": [
+          "Continue / S-Continue",
+          "command:Continue",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-IfStatement",
+        "line": 709,
+        "cells": [
+          "IfStatement / S-IfStatement",
+          "command:IfStatement",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-RepeatCount",
+        "line": 710,
+        "cells": [
+          "RepeatCount / S-RepeatCount",
+          "command:RepeatCount",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-RepeatWhile",
+        "line": 711,
+        "cells": [
+          "RepeatWhile / S-RepeatWhile",
+          "command:RepeatWhile",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-RepeatUntil",
+        "line": 712,
+        "cells": [
+          "RepeatUntil / S-RepeatUntil",
+          "command:RepeatUntil",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-Forever",
+        "line": 713,
+        "cells": [
+          "Forever / S-Forever",
+          "command:Forever",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-ForEach",
+        "line": 714,
+        "cells": [
+          "ForEach / S-ForEach",
+          "command:ForEach",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-WaitTime",
+        "line": 715,
+        "cells": [
+          "WaitTime / S-WaitTime",
+          "command:WaitTime",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-WaitUntil",
+        "line": 716,
+        "cells": [
+          "WaitUntil / S-WaitUntil",
+          "command:WaitUntil",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-Say",
+        "line": 717,
+        "cells": [
+          "Say / S-Say",
+          "command:Say",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-ReturnStatement",
+        "line": 718,
+        "cells": [
+          "ReturnStatement / S-ReturnStatement",
+          "command:ReturnStatement",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-Ask",
+        "line": 719,
+        "cells": [
+          "Ask / S-Ask",
+          "command:Ask",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-Broadcast",
+        "line": 720,
+        "cells": [
+          "Broadcast / S-Broadcast",
+          "command:Broadcast",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BroadcastAndWait",
+        "line": 721,
+        "cells": [
+          "BroadcastAndWait / S-BroadcastAndWait",
+          "command:BroadcastAndWait",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-UserActionCall",
+        "line": 722,
+        "cells": [
+          "UserActionCall / S-UserActionCall",
+          "command:UserActionCall",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LocalVariableDeclaration",
+        "line": 723,
+        "cells": [
+          "LocalVariableDeclaration / S-LocalVariableDeclaration",
+          "command:LocalVariableDeclaration",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LocalListDeclaration",
+        "line": 724,
+        "cells": [
+          "LocalListDeclaration / S-LocalListDeclaration",
+          "command:LocalListDeclaration",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-StopCommand:THIS",
+        "line": 725,
+        "cells": [
+          "StopCommand:THIS / S-StopCommand:THIS",
+          "command:StopCommand:THIS",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-StopCommand:OTHERS",
+        "line": 726,
+        "cells": [
+          "StopCommand:OTHERS / S-StopCommand:OTHERS",
+          "command:StopCommand:OTHERS",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-StopCommand:ALL",
+        "line": 727,
+        "cells": [
+          "StopCommand:ALL / S-StopCommand:ALL",
+          "command:StopCommand:ALL",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:MOVE",
+        "line": 728,
+        "cells": [
+          "MotionCommand:MOVE / S-MotionCommand:MOVE",
+          "command:MotionCommand:MOVE",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:GOTO",
+        "line": 729,
+        "cells": [
+          "MotionCommand:GOTO / S-MotionCommand:GOTO",
+          "command:MotionCommand:GOTO",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:GLIDE",
+        "line": 730,
+        "cells": [
+          "MotionCommand:GLIDE / S-MotionCommand:GLIDE",
+          "command:MotionCommand:GLIDE",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:SET_DIRECTION",
+        "line": 731,
+        "cells": [
+          "MotionCommand:SET_DIRECTION / S-MotionCommand:SET_DIRECTION",
+          "command:MotionCommand:SET_DIRECTION",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:TURN_RIGHT",
+        "line": 732,
+        "cells": [
+          "MotionCommand:TURN_RIGHT / S-MotionCommand:TURN_RIGHT",
+          "command:MotionCommand:TURN_RIGHT",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:TURN_LEFT",
+        "line": 733,
+        "cells": [
+          "MotionCommand:TURN_LEFT / S-MotionCommand:TURN_LEFT",
+          "command:MotionCommand:TURN_LEFT",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:SET_X",
+        "line": 734,
+        "cells": [
+          "MotionCommand:SET_X / S-MotionCommand:SET_X",
+          "command:MotionCommand:SET_X",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:SET_Y",
+        "line": 735,
+        "cells": [
+          "MotionCommand:SET_Y / S-MotionCommand:SET_Y",
+          "command:MotionCommand:SET_Y",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:POINT_TO",
+        "line": 736,
+        "cells": [
+          "MotionCommand:POINT_TO / S-MotionCommand:POINT_TO",
+          "command:MotionCommand:POINT_TO",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:BOUNCE",
+        "line": 737,
+        "cells": [
+          "MotionCommand:BOUNCE / S-MotionCommand:BOUNCE",
+          "command:MotionCommand:BOUNCE",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:FRONT",
+        "line": 738,
+        "cells": [
+          "LooksCommand:FRONT / S-LooksCommand:FRONT",
+          "command:LooksCommand:FRONT",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:BACK",
+        "line": 739,
+        "cells": [
+          "LooksCommand:BACK / S-LooksCommand:BACK",
+          "command:LooksCommand:BACK",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:HIDE",
+        "line": 740,
+        "cells": [
+          "LooksCommand:HIDE / S-LooksCommand:HIDE",
+          "command:LooksCommand:HIDE",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:SHOW",
+        "line": 741,
+        "cells": [
+          "LooksCommand:SHOW / S-LooksCommand:SHOW",
+          "command:LooksCommand:SHOW",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:NEXT_COSTUME",
+        "line": 742,
+        "cells": [
+          "LooksCommand:NEXT_COSTUME / S-LooksCommand:NEXT_COSTUME",
+          "command:LooksCommand:NEXT_COSTUME",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:PREV_COSTUME",
+        "line": 743,
+        "cells": [
+          "LooksCommand:PREV_COSTUME / S-LooksCommand:PREV_COSTUME",
+          "command:LooksCommand:PREV_COSTUME",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:NEXT_BACKDROP",
+        "line": 744,
+        "cells": [
+          "LooksCommand:NEXT_BACKDROP / S-LooksCommand:NEXT_BACKDROP",
+          "command:LooksCommand:NEXT_BACKDROP",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:PREV_BACKDROP",
+        "line": 745,
+        "cells": [
+          "LooksCommand:PREV_BACKDROP / S-LooksCommand:PREV_BACKDROP",
+          "command:LooksCommand:PREV_BACKDROP",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:SET_SCALE",
+        "line": 746,
+        "cells": [
+          "LooksCommand:SET_SCALE / S-LooksCommand:SET_SCALE",
+          "command:LooksCommand:SET_SCALE",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:FORWARD_LAYERS",
+        "line": 747,
+        "cells": [
+          "LooksCommand:FORWARD_LAYERS / S-LooksCommand:FORWARD_LAYERS",
+          "command:LooksCommand:FORWARD_LAYERS",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:BACKWARD_LAYERS",
+        "line": 748,
+        "cells": [
+          "LooksCommand:BACKWARD_LAYERS / S-LooksCommand:BACKWARD_LAYERS",
+          "command:LooksCommand:BACKWARD_LAYERS",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:SET_COLOR",
+        "line": 749,
+        "cells": [
+          "LooksCommand:SET_COLOR / S-LooksCommand:SET_COLOR",
+          "command:LooksCommand:SET_COLOR",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:SET_COSTUME",
+        "line": 750,
+        "cells": [
+          "LooksCommand:SET_COSTUME / S-LooksCommand:SET_COSTUME",
+          "command:LooksCommand:SET_COSTUME",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:SET_BACKDROP",
+        "line": 751,
+        "cells": [
+          "LooksCommand:SET_BACKDROP / S-LooksCommand:SET_BACKDROP",
+          "command:LooksCommand:SET_BACKDROP",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:SET_SELF_TEXT",
+        "line": 752,
+        "cells": [
+          "LooksCommand:SET_SELF_TEXT / S-LooksCommand:SET_SELF_TEXT",
+          "command:LooksCommand:SET_SELF_TEXT",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:SET_TARGET_TEXT",
+        "line": 753,
+        "cells": [
+          "LooksCommand:SET_TARGET_TEXT / S-LooksCommand:SET_TARGET_TEXT",
+          "command:LooksCommand:SET_TARGET_TEXT",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LooksCommand:SET_INPUT",
+        "line": 754,
+        "cells": [
+          "LooksCommand:SET_INPUT / S-LooksCommand:SET_INPUT",
+          "command:LooksCommand:SET_INPUT",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-PenCommand:DOWN",
+        "line": 755,
+        "cells": [
+          "PenCommand:DOWN / S-PenCommand:DOWN",
+          "command:PenCommand:DOWN",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-PenCommand:UP",
+        "line": 756,
+        "cells": [
+          "PenCommand:UP / S-PenCommand:UP",
+          "command:PenCommand:UP",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-PenCommand:CLEAR",
+        "line": 757,
+        "cells": [
+          "PenCommand:CLEAR / S-PenCommand:CLEAR",
+          "command:PenCommand:CLEAR",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-PenCommand:STAMP",
+        "line": 758,
+        "cells": [
+          "PenCommand:STAMP / S-PenCommand:STAMP",
+          "command:PenCommand:STAMP",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-PenCommand:SET_COLOR",
+        "line": 759,
+        "cells": [
+          "PenCommand:SET_COLOR / S-PenCommand:SET_COLOR",
+          "command:PenCommand:SET_COLOR",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-PenCommand:SET_SIZE",
+        "line": 760,
+        "cells": [
+          "PenCommand:SET_SIZE / S-PenCommand:SET_SIZE",
+          "command:PenCommand:SET_SIZE",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SoundCommand:STOP_ALL",
+        "line": 761,
+        "cells": [
+          "SoundCommand:STOP_ALL / S-SoundCommand:STOP_ALL",
+          "command:SoundCommand:STOP_ALL",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SoundCommand:TONE_WAIT",
+        "line": 762,
+        "cells": [
+          "SoundCommand:TONE_WAIT / S-SoundCommand:TONE_WAIT",
+          "command:SoundCommand:TONE_WAIT",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SoundCommand:TONE",
+        "line": 763,
+        "cells": [
+          "SoundCommand:TONE / S-SoundCommand:TONE",
+          "command:SoundCommand:TONE",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SoundCommand:SAMPLE_WAIT",
+        "line": 764,
+        "cells": [
+          "SoundCommand:SAMPLE_WAIT / S-SoundCommand:SAMPLE_WAIT",
+          "command:SoundCommand:SAMPLE_WAIT",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SoundCommand:SAMPLE",
+        "line": 765,
+        "cells": [
+          "SoundCommand:SAMPLE / S-SoundCommand:SAMPLE",
+          "command:SoundCommand:SAMPLE",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SoundCommand:SET_VOLUME",
+        "line": 766,
+        "cells": [
+          "SoundCommand:SET_VOLUME / S-SoundCommand:SET_VOLUME",
+          "command:SoundCommand:SET_VOLUME",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SoundCommand:PITCH_UP",
+        "line": 767,
+        "cells": [
+          "SoundCommand:PITCH_UP / S-SoundCommand:PITCH_UP",
+          "command:SoundCommand:PITCH_UP",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SoundCommand:PITCH_DOWN",
+        "line": 768,
+        "cells": [
+          "SoundCommand:PITCH_DOWN / S-SoundCommand:PITCH_DOWN",
+          "command:SoundCommand:PITCH_DOWN",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-CloneCommand:CREATE_SELF",
+        "line": 769,
+        "cells": [
+          "CloneCommand:CREATE_SELF / S-CloneCommand:CREATE_SELF",
+          "command:CloneCommand:CREATE_SELF",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-CloneCommand:DELETE_SELF",
+        "line": 770,
+        "cells": [
+          "CloneCommand:DELETE_SELF / S-CloneCommand:DELETE_SELF",
+          "command:CloneCommand:DELETE_SELF",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-CloneCommand:CREATE_TARGET",
+        "line": 771,
+        "cells": [
+          "CloneCommand:CREATE_TARGET / S-CloneCommand:CREATE_TARGET",
+          "command:CloneCommand:CREATE_TARGET",
+          "命令の追加先。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-NumberLiteral",
+        "line": 772,
+        "cells": [
+          "NumberLiteral / S-NumberLiteral",
+          "expression:NumberLiteral",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-StringLiteral",
+        "line": 773,
+        "cells": [
+          "StringLiteral / S-StringLiteral",
+          "expression:StringLiteral",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BooleanLiteral",
+        "line": 774,
+        "cells": [
+          "BooleanLiteral / S-BooleanLiteral",
+          "expression:BooleanLiteral",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-ListLiteral",
+        "line": 775,
+        "cells": [
+          "ListLiteral / S-ListLiteral",
+          "expression:ListLiteral",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-VariableRead",
+        "line": 776,
+        "cells": [
+          "VariableRead / S-VariableRead",
+          "expression:VariableRead",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-UnaryExpression:POS",
+        "line": 777,
+        "cells": [
+          "UnaryExpression:POS / S-UnaryExpression:POS",
+          "operator:POS",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-UnaryExpression:NEG",
+        "line": 778,
+        "cells": [
+          "UnaryExpression:NEG / S-UnaryExpression:NEG",
+          "operator:NEG",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-UnaryExpression:NOT",
+        "line": 779,
+        "cells": [
+          "UnaryExpression:NOT / S-UnaryExpression:NOT",
+          "operator:NOT",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BinaryExpression:ADD",
+        "line": 780,
+        "cells": [
+          "BinaryExpression:ADD / S-BinaryExpression:ADD",
+          "operator:ADD",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BinaryExpression:SUB",
+        "line": 781,
+        "cells": [
+          "BinaryExpression:SUB / S-BinaryExpression:SUB",
+          "operator:SUB",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BinaryExpression:MUL",
+        "line": 782,
+        "cells": [
+          "BinaryExpression:MUL / S-BinaryExpression:MUL",
+          "operator:MUL",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BinaryExpression:DIV",
+        "line": 783,
+        "cells": [
+          "BinaryExpression:DIV / S-BinaryExpression:DIV",
+          "operator:DIV",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BinaryExpression:POW",
+        "line": 784,
+        "cells": [
+          "BinaryExpression:POW / S-BinaryExpression:POW",
+          "operator:POW",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-CompareExpression:GTE",
+        "line": 785,
+        "cells": [
+          "CompareExpression:GTE / S-CompareExpression:GTE",
+          "operator:GTE",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-CompareExpression:LTE",
+        "line": 786,
+        "cells": [
+          "CompareExpression:LTE / S-CompareExpression:LTE",
+          "operator:LTE",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-CompareExpression:GT",
+        "line": 787,
+        "cells": [
+          "CompareExpression:GT / S-CompareExpression:GT",
+          "operator:GT",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-CompareExpression:LT",
+        "line": 788,
+        "cells": [
+          "CompareExpression:LT / S-CompareExpression:LT",
+          "operator:LT",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-CompareExpression:EQ",
+        "line": 789,
+        "cells": [
+          "CompareExpression:EQ / S-CompareExpression:EQ",
+          "operator:EQ",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-CompareExpression:NEQ",
+        "line": 790,
+        "cells": [
+          "CompareExpression:NEQ / S-CompareExpression:NEQ",
+          "operator:NEQ",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LogicalExpression:AND",
+        "line": 791,
+        "cells": [
+          "LogicalExpression:AND / S-LogicalExpression:AND",
+          "operator:AND",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-LogicalExpression:OR",
+        "line": 792,
+        "cells": [
+          "LogicalExpression:OR / S-LogicalExpression:OR",
+          "operator:OR",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-ListRead",
+        "line": 793,
+        "cells": [
+          "ListRead / S-ListRead",
+          "expression:ListRead",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-UserFunctionCall",
+        "line": 794,
+        "cells": [
+          "UserFunctionCall / S-UserFunctionCall",
+          "expression:UserFunctionCall",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:乱数",
+        "line": 795,
+        "cells": [
+          "BuiltinCall:乱数 / S-BuiltinCall:乱数",
+          "builtin:乱数",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:余り",
+        "line": 796,
+        "cells": [
+          "BuiltinCall:余り / S-BuiltinCall:余り",
+          "builtin:余り",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:四捨五入",
+        "line": 797,
+        "cells": [
+          "BuiltinCall:四捨五入 / S-BuiltinCall:四捨五入",
+          "builtin:四捨五入",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:切り上げ",
+        "line": 798,
+        "cells": [
+          "BuiltinCall:切り上げ / S-BuiltinCall:切り上げ",
+          "builtin:切り上げ",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:切り捨て",
+        "line": 799,
+        "cells": [
+          "BuiltinCall:切り捨て / S-BuiltinCall:切り捨て",
+          "builtin:切り捨て",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:絶対値",
+        "line": 800,
+        "cells": [
+          "BuiltinCall:絶対値 / S-BuiltinCall:絶対値",
+          "builtin:絶対値",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:平方根",
+        "line": 801,
+        "cells": [
+          "BuiltinCall:平方根 / S-BuiltinCall:平方根",
+          "builtin:平方根",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:正弦",
+        "line": 802,
+        "cells": [
+          "BuiltinCall:正弦 / S-BuiltinCall:正弦",
+          "builtin:正弦",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:余弦",
+        "line": 803,
+        "cells": [
+          "BuiltinCall:余弦 / S-BuiltinCall:余弦",
+          "builtin:余弦",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:正接",
+        "line": 804,
+        "cells": [
+          "BuiltinCall:正接 / S-BuiltinCall:正接",
+          "builtin:正接",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:逆正弦",
+        "line": 805,
+        "cells": [
+          "BuiltinCall:逆正弦 / S-BuiltinCall:逆正弦",
+          "builtin:逆正弦",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:逆余弦",
+        "line": 806,
+        "cells": [
+          "BuiltinCall:逆余弦 / S-BuiltinCall:逆余弦",
+          "builtin:逆余弦",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:逆正接",
+        "line": 807,
+        "cells": [
+          "BuiltinCall:逆正接 / S-BuiltinCall:逆正接",
+          "builtin:逆正接",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:自然対数",
+        "line": 808,
+        "cells": [
+          "BuiltinCall:自然対数 / S-BuiltinCall:自然対数",
+          "builtin:自然対数",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:常用対数",
+        "line": 809,
+        "cells": [
+          "BuiltinCall:常用対数 / S-BuiltinCall:常用対数",
+          "builtin:常用対数",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:指数",
+        "line": 810,
+        "cells": [
+          "BuiltinCall:指数 / S-BuiltinCall:指数",
+          "builtin:指数",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:数",
+        "line": 811,
+        "cells": [
+          "BuiltinCall:数 / S-BuiltinCall:数",
+          "builtin:数",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:文字",
+        "line": 812,
+        "cells": [
+          "BuiltinCall:文字 / S-BuiltinCall:文字",
+          "builtin:文字",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:最小",
+        "line": 813,
+        "cells": [
+          "BuiltinCall:最小 / S-BuiltinCall:最小",
+          "builtin:最小",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:最大",
+        "line": 814,
+        "cells": [
+          "BuiltinCall:最大 / S-BuiltinCall:最大",
+          "builtin:最大",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:つなぐ",
+        "line": 815,
+        "cells": [
+          "BuiltinCall:つなぐ / S-BuiltinCall:つなぐ",
+          "builtin:つなぐ",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:CONTAINS",
+        "line": 816,
+        "cells": [
+          "BuiltinCall:CONTAINS / S-BuiltinCall:CONTAINS",
+          "builtin:CONTAINS",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:INDEX_OF",
+        "line": 817,
+        "cells": [
+          "BuiltinCall:INDEX_OF / S-BuiltinCall:INDEX_OF",
+          "builtin:INDEX_OF",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:LENGTH",
+        "line": 818,
+        "cells": [
+          "BuiltinCall:LENGTH / S-BuiltinCall:LENGTH",
+          "builtin:LENGTH",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:STRING_LENGTH",
+        "line": 819,
+        "cells": [
+          "BuiltinCall:STRING_LENGTH / S-BuiltinCall:STRING_LENGTH",
+          "builtin:STRING_LENGTH",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-BuiltinCall:STRING_CHAR",
+        "line": 820,
+        "cells": [
+          "BuiltinCall:STRING_CHAR / S-BuiltinCall:STRING_CHAR",
+          "builtin:STRING_CHAR",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:マウスが押されている",
+        "line": 821,
+        "cells": [
+          "SensorRead:マウスが押されている / S-SensorRead:マウスが押されている",
+          "state:マウスが押されている",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:マウスの横位置",
+        "line": 822,
+        "cells": [
+          "SensorRead:マウスの横位置 / S-SensorRead:マウスの横位置",
+          "state:マウスの横位置",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:マウスの縦位置",
+        "line": 823,
+        "cells": [
+          "SensorRead:マウスの縦位置 / S-SensorRead:マウスの縦位置",
+          "state:マウスの縦位置",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:以前の背景名",
+        "line": 824,
+        "cells": [
+          "SensorRead:以前の背景名 / S-SensorRead:以前の背景名",
+          "state:以前の背景名",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:新しい背景名",
+        "line": 825,
+        "cells": [
+          "SensorRead:新しい背景名 / S-SensorRead:新しい背景名",
+          "state:新しい背景名",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:受け取った知らせ",
+        "line": 826,
+        "cells": [
+          "SensorRead:受け取った知らせ / S-SensorRead:受け取った知らせ",
+          "state:受け取った知らせ",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:押されたキー",
+        "line": 827,
+        "cells": [
+          "SensorRead:押されたキー / S-SensorRead:押されたキー",
+          "state:押されたキー",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:クローンである",
+        "line": 828,
+        "cells": [
+          "SensorRead:クローンである / S-SensorRead:クローンである",
+          "state:クローンである",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:背景番号",
+        "line": 829,
+        "cells": [
+          "SensorRead:背景番号 / S-SensorRead:背景番号",
+          "state:背景番号",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:背景名",
+        "line": 830,
+        "cells": [
+          "SensorRead:背景名 / S-SensorRead:背景名",
+          "state:背景名",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:衣装番号",
+        "line": 831,
+        "cells": [
+          "SensorRead:衣装番号 / S-SensorRead:衣装番号",
+          "state:衣装番号",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:衣装名",
+        "line": 832,
+        "cells": [
+          "SensorRead:衣装名 / S-SensorRead:衣装名",
+          "state:衣装名",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:横位置",
+        "line": 833,
+        "cells": [
+          "SensorRead:横位置 / S-SensorRead:横位置",
+          "state:横位置",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:縦位置",
+        "line": 834,
+        "cells": [
+          "SensorRead:縦位置 / S-SensorRead:縦位置",
+          "state:縦位置",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:方向",
+        "line": 835,
+        "cells": [
+          "SensorRead:方向 / S-SensorRead:方向",
+          "state:方向",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:大きさ",
+        "line": 836,
+        "cells": [
+          "SensorRead:大きさ / S-SensorRead:大きさ",
+          "state:大きさ",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:タイマー",
+        "line": 837,
+        "cells": [
+          "SensorRead:タイマー / S-SensorRead:タイマー",
+          "state:タイマー",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:答え",
+        "line": 838,
+        "cells": [
+          "SensorRead:答え / S-SensorRead:答え",
+          "state:答え",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:音量",
+        "line": 839,
+        "cells": [
+          "SensorRead:音量 / S-SensorRead:音量",
+          "state:音量",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:音程",
+        "line": 840,
+        "cells": [
+          "SensorRead:音程 / S-SensorRead:音程",
+          "state:音程",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:以前の値",
+        "line": 841,
+        "cells": [
+          "SensorRead:以前の値 / S-SensorRead:以前の値",
+          "state:以前の値",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:新しい値",
+        "line": 842,
+        "cells": [
+          "SensorRead:新しい値 / S-SensorRead:新しい値",
+          "state:新しい値",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:INPUT_VALUE",
+        "line": 843,
+        "cells": [
+          "SensorRead:INPUT_VALUE / S-SensorRead:INPUT_VALUE",
+          "sensor:INPUT_VALUE",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:DISTANCE_TO",
+        "line": 844,
+        "cells": [
+          "SensorRead:DISTANCE_TO / S-SensorRead:DISTANCE_TO",
+          "sensor:DISTANCE_TO",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:KEY_DOWN",
+        "line": 845,
+        "cells": [
+          "SensorRead:KEY_DOWN / S-SensorRead:KEY_DOWN",
+          "sensor:KEY_DOWN",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:TOUCHING_COLOR",
+        "line": 846,
+        "cells": [
+          "SensorRead:TOUCHING_COLOR / S-SensorRead:TOUCHING_COLOR",
+          "sensor:TOUCHING_COLOR",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      },
+      {
+        "id": "S-SensorRead:TOUCHING",
+        "line": 847,
+        "cells": [
+          "SensorRead:TOUCHING / S-SensorRead:TOUCHING",
+          "sensor:TOUCHING",
+          "値/条件/対象の該当穴。U04/U05/U06/U13",
+          "未実施。全field/input/body/可変入力の意味と編集を確認。各対応能力の独立期待値を適用。"
+        ]
+      }
+    ],
+    "O": [
+      {
+        "id": "CAP-ast:Script",
+        "line": 491,
+        "cells": [
+          "ast:Script",
+          "最上位本文（空配列可）",
+          "本文/対象/注釈/分岐",
+          "U05, U13, U14",
+          "構造上限・本文owner/context。構造化した本文の入口。エラーsourceの保存と実行成功条件を区別; GUI-SCHEMA",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-comment:line",
+        "line": 492,
+        "cells": [
+          "comment:line",
+          "独立コメントの本文・位置・空白",
+          "本文/対象/注釈/分岐",
+          "U05, U13, U14",
+          "※直後から行末全文; コメントだけは必須本文を満たさない。※以降の全文・目印列・注釈付随先を比較。閉じ境界だけの所属差を許可; GUI-SCHEMA",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-branch:else",
+        "line": 493,
+        "cells": [
+          "branch:else",
+          "elseの有無・枝・注釈",
+          "本文/対象/注釈/分岐",
+          "U05, U13, U14",
+          "同じ字下げの直前Ifのみ; 存在する枝は実行文必須。分岐実行・hasElse・elseCommentの保持と差分検出。枝のGUI操作はBROWSER-LANGで別確認",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-slot:TargetReference",
+        "line": 494,
+        "cells": [
+          "slot:TargetReference",
+          "代入先の名前と所属修飾を独立に編集",
+          "本文/対象/注釈/分岐",
+          "U05, U13, U14",
+          "VariableRead式と代入先slotを区別; 元の名前/修飾保持。代入先のslotであり実行可能な独立ASTを追加しない; GUI-SCHEMA",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-scope:precedence",
+        "line": 603,
+        "cells": [
+          "scope:precedence",
+          "反復項目→局所→引数→個体→作品の解決順位",
+          "データ/定義/引数/所属→本文",
+          "U20, U21, U22, U13",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。31層組合せ×4修飾の名前解決、実行5例、局所/引数/反復項目の禁止衝突を検査。GUIの入力と診断表示はBROWSER-PRODUCTで別検査",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-scope:readonly",
+        "line": 604,
+        "cells": [
+          "scope:readonly",
+          "反復項目は読み取り専用",
+          "データ/定義/引数/所属→本文",
+          "U20, U21, U22, U13",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。readonly違反拒否",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-scope:arguments",
+        "line": 605,
+        "cells": [
+          "scope:arguments",
+          "動作・求値の引数を値渡しする",
+          "データ/定義/引数/所属→本文",
+          "U20, U21, U22, U13",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。元のリストを変更しない代表例",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-scope:local",
+        "line": 606,
+        "cells": [
+          "scope:local",
+          "局所変数・局所リストの先頭宣言と使用前検査",
+          "データ/定義/引数/所属→本文",
+          "U20, U21, U22, U13",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。先頭・途中・入れ子宣言、自己/後続局所の初期化前使用、重複、コメント間宣言を検査。GUIの位置制約表示はBROWSER-PRODUCTで別検査",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-scope:purity",
+        "line": 607,
+        "cells": [
+          "scope:purity",
+          "求値の外部副作用禁止",
+          "データ/定義/引数/所属→本文",
+          "U20, U21, U22, U13",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。副作用54kind/opと外部更新8文型のS305を検査し、拒否されたASTの保持も確認。GUI候補と診断表示はBROWSER-PRODUCTで別検査",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-runtime:fairness",
+        "line": 608,
+        "cells": [
+          "runtime:fairness",
+          "複数処理を命令単位で公平に進める",
+          "実行画面/質問/モニター/停止",
+          "U16, U17, U18, U24, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。A1/B1/A2/B2順序",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-runtime:time",
+        "line": 609,
+        "cells": [
+          "runtime:time",
+          "論理時計による待機",
+          "実行画面/質問/モニター/停止",
+          "U16, U17, U18, U24, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。deadline境界の待機",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-runtime:condition",
+        "line": 610,
+        "cells": [
+          "runtime:condition",
+          "条件待機の再評価・失敗時停止",
+          "実行画面/質問/モニター/停止",
+          "U16, U17, U18, U24, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。条件更新とエラー停止の順序",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-runtime:notify",
+        "line": 611,
+        "cells": [
+          "runtime:notify",
+          "直接起動した受け手だけの完了待ち",
+          "実行画面/質問/モニター/停止",
+          "U16, U17, U18, U24, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。入れ子通知の待つ/待たない両方について、999/1000msの出力順・待機group・残taskを検査。実イベント起動はbrowser suiteで別検査",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-runtime:question",
+        "line": 612,
+        "cells": [
+          "runtime:question",
+          "質問の直列化とtask別の答え",
+          "実行画面/質問/モニター/停止",
+          "U16, U17, U18, U24, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。古い回答callbackを無視し次の質問を保護",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-runtime:glide",
+        "line": 613,
+        "cells": [
+          "runtime:glide",
+          "滑走と他taskの並行実行",
+          "実行画面/質問/モニター/停止",
+          "U16, U17, U18, U24, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。499/500/999/1000msで途中/完了座標と並行taskの観測順を比較し、CUI/codec往復で一致を確認。実schedulerの中間座標と並行taskはbrowser-event-tracesで別検査",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-runtime:audio-wait",
+        "line": 614,
+        "cells": [
+          "runtime:audio-wait",
+          "開始した音のhandleだけを待つ",
+          "実行画面/質問/モニター/停止",
+          "U16, U17, U18, U24, U25, U30",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。simulate handleの個別完了はself-test、実decode/再生はstorage-media suiteで別検査",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-runtime:stop",
+        "line": 615,
+        "cells": [
+          "runtime:stop",
+          "停止後のtask/待機/質問/物理入力解放",
+          "実行画面/質問/モニター/停止",
+          "U16, U17, U18, U24, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。停止後の後始末",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-runtime:pause-step",
+        "line": 616,
+        "cells": [
+          "runtime:pause-step",
+          "pause/resume/1命令実行で時計を早送りしない",
+          "実行画面/質問/モニター/停止",
+          "U16, U17, U18, U24, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。step と時計の意味は既存 self-test、Switch と readonly は browser-session で別に検査する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-runtime:clone",
+        "line": 617,
+        "cells": [
+          "runtime:clone",
+          "clone生成・個体データ分離・開始・削除",
+          "実行画面/質問/モニター/停止",
+          "U16, U17, U18, U24, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。clone個体データ・接触の代表例と500個の生成/超過拒否をself-testで検査。開始はevent suite、削除/終了とmode同値はevent-traces suiteで別検査。CLONE 個体データを複製 のprojectVars自己比較は作品データ共有の証拠に数えない",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-runtime:error",
+        "line": 618,
+        "cells": [
+          "runtime:error",
+          "エラーの場所・call frame・値を固定して記録",
+          "実行画面/質問/モニター/停止",
+          "U16, U17, U18, U24, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。失敗時の本文key・line・値の固定は self-test、block位置とdebug ownerは browser-session で検査する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-save:project",
+        "line": 619,
+        "cells": [
+          "save:project",
+          "source正本の保存・復元・作りかけ保持",
+          "保存/開く/復元/書き出し",
+          "U31, U32, U33",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。構文不正 source の保存と現行保存形式・F512拒否。素材付き実往復はbrowser suite",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-save:autosave",
+        "line": 620,
+        "cells": [
+          "save:autosave",
+          "作品と定義下書きの自動復元",
+          "保存/開く/復元/書き出し",
+          "U31, U32, U33",
+          "LANGUAGE.mdの現行意味 + 本書の自動保存契約。GA-STATICで専用コード・UIと保存領域を固定し、GA-EXECで作品・素材・下書きの復元、破損拒否、現在作品保護を検査する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-save:format-contract",
+        "line": 621,
+        "cells": [
+          "save:format-contract",
+          "保存・実行の構造と言語・runtime契約の整合",
+          "保存/開く/復元/書き出し",
+          "U31, U32, U33",
+          "LANGUAGE.mdの現行意味 + 本書「製品版から独立した命名と受入判定」。形式と意味の不一致・型不正・欠落を拒否し、現在作品を保持する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-save:producer-metadata",
+        "line": 622,
+        "cells": [
+          "save:producer-metadata",
+          "作成元ラベルと作品内容の独立",
+          "保存/開く/復元/書き出し",
+          "U31, U32, U33",
+          "LANGUAGE.mdの現行意味 + 本書「製品版から独立した命名と受入判定」。作成元だけで拒否せず、実行意味・本文・clean/dirtyを保持する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-maint:identifier-policy",
+        "line": 623,
+        "cells": [
+          "maint:identifier-policy",
+          "機能由来の自作名と製品版参照の用途制限",
+          "直接操作用UIはなし",
+          "G0",
+          "本書「製品版から独立した命名と受入判定」。静的ゲートのrelease-policy-negativeで版由来名・受入への版参照をFAILにし、間接参照も意味レビューする",
+          "未実施。UIから証明できない内部命名・AST方針。新可視PASSにせず、同一SHAのActions証拠を別欄で照合。"
+        ]
+      },
+      {
+        "id": "CAP-save:standalone",
+        "line": 624,
+        "cells": [
+          "save:standalone",
+          "共通runtimeの単体HTML書き出し",
+          "保存/開く/復元/書き出し",
+          "U31, U32, U33",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。同じcompile/pack/runtimeを使用。生成payloadの除去field・実オフライン実行は完成監査で確認",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-product:ui-buttons",
+        "line": 625,
+        "cells": [
+          "product:ui-buttons",
+          "コード／ブロックのボタン表示・到達性・操作一致",
+          "全UI入口",
+          "U01, U02, U03, U04, U05, U06, U07, U08, U09, U10, U11, U12, U13, U14, U15, U16, U17, U18, U19, U20, U21, U22, U23, U24, U25, U26, U27, U28, U29, U30, U31, U32, U33, U34, U35, U36, U37, U38, U39, U40, U41, U42",
+          "本書「UIとボタンの整合性」。audit/tests/ui-buttons.mjsをGA-EXECで実行し、HYBRIDでモード・表示段階・入力方法・狭い画面を確認。未確定入力、追加先解除、部品操作と必要な代替操作を保持する",
+          "未実施。可視ボタンは全て作用を確認。代替入口だけの成功では合格にしない。"
+        ]
+      },
+      {
+        "id": "CAP-product:designer",
+        "line": 626,
+        "cells": [
+          "product:designer",
+          "部品追加・選択・移動・サイズ変更・色・削除・properties・標準キャラクター",
+          "画面づくり/部品/せってい",
+          "U26, U35",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。部品候補の可視到達性、追加、properties、位置移動とresizeの分離、色の確定/取消、削除、共通履歴を実ブラウザーで検査する。pure resize/color test は計算層だけを保証し、pointer/keyboard/scroll/履歴を代用しない",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-product:data",
+        "line": 627,
+        "cells": [
+          "product:data",
+          "作品/個体データの編集・保存",
+          "データ",
+          "U20",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。作品/個体データUIの作成・削除・同名参照と共通履歴をbrowser-productで検査",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-product:assets",
+        "line": 628,
+        "cells": [
+          "product:assets",
+          "画像オブジェクト・背景・衣装・音素材の登録・保持",
+          "画像を置く/お絵かき/画像・音声を管理",
+          "U27, U28, U29, U30",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。模擬decodeと拒否例はself-test、PNG/JPEG/WebP/MP3/WAVの実decodeはstorage-media suiteで別検査する。画像オブジェクト/背景/衣装/音声の入口の到達性と追加先の区別、候補一覧展開後の操作可能性は実ブラウザーで確認する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-product:callable-draft",
+        "line": 629,
+        "cells": [
+          "product:callable-draft",
+          "定義下書きと明示保存の境界",
+          "動作・計算",
+          "U21, U22, U11, U12",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。純粋candidateがprojectへ下書きを登録しないことと、明示登録・Undo・ファイル再読込みを分けて検査する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-product:diagnostics",
+        "line": 630,
+        "cells": [
+          "product:diagnostics",
+          "場所・行・理由つき作品診断",
+          "作品チェック/動きのようす/失敗記録",
+          "U19, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。共通analyzeAstの内容保持と、GUIの位置・理由表示を別々に検査する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-product:hints",
+        "line": 631,
+        "cells": [
+          "product:hints",
+          "対象/event/スコープ別の候補・理由",
+          "道具箱/本文/入力候補",
+          "U03, U04, U05, U06, U08, U09",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。CUI候補とGUI availability が同じ文脈/意味診断を用いる。自動生成名はCUI候補とGUI availabilityの双方で、引数・反復項目・局所宣言との連続衝突でも32文字上限内の未使用名を生成し、実際の候補・パレットから追加できる。個別候補の実操作はschema suite",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-product:monitor",
+        "line": 632,
+        "cells": [
+          "product:monitor",
+          "実行モニターと現在位置",
+          "作品チェック/動きのようす/失敗記録",
+          "U19, U25",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。失敗記録はself-test、画面描画・block位置・owner対応はbrowser-sessionで別検査",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-editor:switch",
+        "line": 633,
+        "cells": [
+          "editor:switch",
+          "無編集Switchで原文/dirty/履歴/redo不変",
+          "code/block",
+          "U13, U15",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。純粋no-opと実モード往復・元source/dirty/history/redo・実行snapshot維持を分けて検査する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-editor:transaction",
+        "line": 634,
+        "cells": [
+          "editor:transaction",
+          "GUI操作の原子的なsource反映・取消",
+          "入力/取消/確定",
+          "U07, U11, U19, U34",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。純粋candidateの不変条件と、DOM/owner/共通historyの原子的反映を別々に検査する。動作・求値モーダル内のEscape取消と、構造操作拒否時の表示ロールバックも実DOMで確認する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-editor:history",
+        "line": 635,
+        "cells": [
+          "editor:history",
+          "コード/GUI/下書き/作品共通Undo/Redo",
+          "元に戻す/やり直す",
+          "U12",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。履歴の前後snapshot・下書きbaseline/loadedKey・native Undoは実browser経路で検査する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-product:block-workbench",
+        "line": 636,
+        "cells": [
+          "product:block-workbench",
+          "形で構造を示し、直接つかんで接続できる連続作業台",
+          "道具箱/本文/入力候補",
+          "U03, U04, U05, U06, U08, U09",
+          "EDITOR-GUI-001/002、EDITOR-EDIT-001/002、EDITOR-SWITCH-001 と LANG-WB-001〜006。形・直接操作・接続予告・広い作業領域・長い本文・対象/結果把握・代替操作を同じsnapshotの実ブラウザーで検査し、未実施経路を過去結果やpure testで補完しない",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-product:responsive",
+        "line": 637,
+        "cells": [
+          "product:responsive",
+          "responsive/縮尺/スクロール到達性/キーボード/IME/pointer",
+          "表示幅/zoom/scroll",
+          "U35, U36",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。既存6 viewport・resize・200%・composition・touchに加え、部品候補・素材入口・設定・resize handle の可視到達性と正しい scroll container を実ブラウザーで検査する",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      },
+      {
+        "id": "CAP-product:offline-license",
+        "line": 638,
+        "cells": [
+          "product:offline-license",
+          "単一HTML/オフライン/CSP/Apache-2.0保持",
+          "オフライン起動/出力/配布案内",
+          "U33, U40",
+          "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」。licenseとescapeの自動追跡。実オフライン動作は別検証",
+          "未実施。個別の意味/実行・到達証拠が必要"
+        ]
+      }
+    ]
+  }
+}

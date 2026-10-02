@@ -1,0 +1,48 @@
+name: Akari fixed acceptance
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: akari-acceptance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  composition-acceptance:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the approved fixed browser in runner temporary storage
+        run: |
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0
+          echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install-deps chromium
+          python audit/install-codec-browser.py "$RUNNER_TEMP/acceptance-browser"
+      - name: Map the original fixed plan and verify the Q76 values
+        run: |
+          mkdir -p audit-evidence/acceptance
+          node audit/tests/actions-transfer-static.mjs audit-evidence/acceptance/transfer.json
+          node audit/tests/actions-transfer-values.mjs audit-evidence/acceptance/values.json
+      - name: Require original composition acceptance, meaning and save roundtrip
+        if: always()
+        run: node audit/tests/composition-acceptance.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/composition.json
+      - name: Independently verify complete results and validator rejection ability
+        if: always()
+        run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-fixed-acceptance-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/acceptance/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true
