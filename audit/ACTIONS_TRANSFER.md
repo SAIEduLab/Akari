@@ -20,7 +20,7 @@
 |---|---|---|---|
 | C74 命令保持 | `selftest`: product / language / editor。`runCoreTests`: `catalog <id>`。`runBlockCodecTests` | 74固定命令の解析、AST・block変換、登録集合、文型・単位・文脈。個別runtime・traceは各意味試験の範囲 | 固定集合と実行入口を対応表へ束縛。単なる解析成功を74命令全動作成功へ昇格しない。UXでは制作課題に現れる命令を使う |
 | Q76 式 | `selftest`: block codec / semantic / language。`full-browser-gate (schemas)`: `browser-schemas.cjs` の旧expression76行 | 固定式のブロック生成・各field/input編集、式移動・複製・再接続、code/block AST互換、保存再開。値・型・短絡・評価順は各runtime試験 | 同一Qに一律の取消・全幅等を追加しない。原計画の式IDと既存schema IDを対応させる。式・値・条件の説明理解はUX課題で判断 |
-| E32 対象×イベント | `selftest`: core event。`full-browser-gate (ui)`: `browser-events.cjs` / `browser-event-traces.cjs` | 32組合せの選択・登録・実ブラウザ発火、source/block trace、対象・event sensor、保存。filter/同種複数本文はruntime-v2 / intent | 既知のIDなし本文の見出し変更について、本文数・選択・編集内容の保持を成功必須の回帰として追加。製品は修正しない |
+| E32 対象×イベント | `selftest`: core event。`full-browser-gate (ui)`: `browser-events.cjs` / `browser-event-traces.cjs` | 32組合せの選択・登録・実ブラウザ発火、source/block trace、対象・event sensor、保存。filter/同種複数本文はruntime-v2 / intent | 既知のIDなし本文の見出し変更について、本文数・選択・編集内容の保持を成功必須の回帰として追加。製品修正は後続の承認済み仕様に従う |
 | L38 上限 | `selftest`: language-boundaries / product limit suites。`full-browser-gate (limits)` 各design/runtime/asset/media boundary | 38定義集合、直前/一致/超過、実GUI拒否、資源・性能・素材境界、原子的保護 | 対象上限へ既存ケースを対応。境界対象の試験を再利用し、UIが理由を理解できる場所に出すかは実操作で残す |
 | 別40能力（全260の残り） | 原固定表411〜678行と独立baselineのAST / Comment / Branch / Slot / Scope / Runtime / Save / Editor / Product / Maint | C/Q/E/Lの220行から独立した40能力。個々の既存product ID、browser task/case ID、形式互換・UIボタン・static policyへ照合 | `CAP-*` 40行を追加対応。schemaとの重複だけでカバー扱いしない。各能力で実際に登録された検査への参照が1つもなければ静的移管検査をFAILにする。登録成功から全意味条件の実行成功は主張しない |
 | schema164 | static feature manifest。product block codec。`schemas` は旧153全行 | 現行164登録の固定、旧153の各GUI編集・構造操作・保存・往復。新11は既存の個別言語/runtime/editor試験にも分散 | 現行164と旧153の差分を明記。全164のGUI全操作が済んだという誤った主張はしない。追加11のHole4は拒否/下書き、他7は受入/意味を別分類 |
@@ -71,3 +71,7 @@ main push run [36948082810](https://github.com/SAIEduLab/Akari/actions/runs/3694
 追加結果は `SOURCE_ACCEPTANCE`（日本語受入）、`EDITOR_IDENTITY`（本文選択）、`SEMANTIC_ROUNDTRIP`（意味互換）、`REJECTION_SAFETY`（拒否安全）、`PERSISTENCE`（保存）、`LAYOUT`（寸法）を分ける。製品既知不具合によるFAILは新テストの不具合とは区別し、製品一括修正まで不合格として残す。
 
 親から原本を受領・読取確認した。固定表 `Akari-zero-base-visible-audit-plan.md` のSHA256は `27673006b29ec3732fcab19b17c200db7b80146c8b794930a6151f82e7e4c405`、作文原本 `composition-first-drafts.json` は `0c2fe4d8b5f5921325eea053a6f685f3e40cb246e29323940b6cec59e2fd2479`。I07〜I12は無改変抽出して `composition-acceptance.json` に固定し、I10 extraも必須とする。`docs/1.0.2/` の成人作成23作文候補を代わりに使用しない。元可視計画のOS手操作を自動操作PASSへ読み替えず、この対応表と親のUX中心再計画で機械/UXの担当を分ける。
+
+## 最終の有限な実行対応
+
+命令74行は、登録/解析の対応に加えてcommand-meaningの66モデルケースとaudio-output-browserの8実出力ケースへ結合した。CodeとBlockの実行状態/副作用/時刻を比較し、UI・実描画・保存は既存full gateに残す。最新のFIX-001〜023、UX-01、N01〜N25とcapability/schema対応は[実装状態](IMPLEMENTATION_STATUS.md)を正本とする。以前のcheckpointのpending記述を現在の未解決件と混同しない。

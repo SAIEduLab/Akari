@@ -4,12 +4,13 @@ import assert from 'node:assert/strict';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
+import {verifyCommandMeaning} from '../lib/command-meaning-contract.mjs';
 import {audioOutputCases,verifyAudioOutput,wave,measureWave} from '../lib/audio-output-contract.mjs';
 import {transferFixtures,fixturePins,compositionIds,verifyTransferReport,verifyValuesReport,verifyCompositionReport} from '../lib/actions-transfer-contract.mjs';
 import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser,resourceReferenceIds,resourceBrowserIds,verifyResourceBrowser,searchBindingIds,searchBrowserIds,verifySearchBrowser,uxSurfaceIds,uxManualFiles,verifyUxSurface,basicIntentIds,verifyBasicBrowser,semanticNegativeIds,finiteVariantFixture,verifyFiniteVariants,structuredOrders,structuredEditingIds,verifyStructuredEditing} from '../lib/semantic-extension-contract.mjs';
 const dir=path.resolve(process.argv[2]),results=[],negative=[];
 try{const r=JSON.parse(fs.readFileSync(path.join(dir,'audio-output-browser.json')));results.push({file:'audio-output-browser.json',status:'PASS',cases:verifyAudioOutput(r,dir)});}catch(error){results.push({file:'audio-output-browser.json',status:'FAIL',error:error.message});}
-for(const [file,verify]of [['structured-editing-browser.json',verifyStructuredEditing],['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser],['resource-references-browser.json',verifyResourceBrowser],['search-bindings-browser.json',verifySearchBrowser],['ux-surface-browser.json',verifyUxSurface],['basic-intents-browser.json',verifyBasicBrowser],['finite-semantic-variants.json',verifyFiniteVariants]]){
+for(const [file,verify]of [['command-meaning.json',verifyCommandMeaning],['structured-editing-browser.json',verifyStructuredEditing],['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser],['resource-references-browser.json',verifyResourceBrowser],['search-bindings-browser.json',verifySearchBrowser],['ux-surface-browser.json',verifyUxSurface],['basic-intents-browser.json',verifyBasicBrowser],['finite-semantic-variants.json',verifyFiniteVariants]]){
  try{const r=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verify(r)});}
  catch(error){results.push({file,status:'FAIL',error:error.message});}
 }
@@ -21,6 +22,18 @@ for(const [file,schema,ids]of [['natural-roles.json','akari-natural-roles-v1',na
   }
  }catch(error){results.push({file,status:'FAIL',error:error.message});}
 }
+// Corrupt copies test result validation; the original rows are actual execution.
+try {
+ const actual=JSON.parse(fs.readFileSync(path.join(dir,'command-meaning.json')));verifyCommandMeaning(actual);
+ for(const [id,mutate]of [
+  ['command-missing',r=>r.results.pop()],['command-duplicate',r=>r.results[0]=r.results[1]],
+  ['command-wrong-head',r=>r.snapshot.productSha256='0'.repeat(64)],['command-failed',r=>r.results[0].status='FAIL'],
+  ['command-no-trace',r=>r.results[0].observed[0].routes[0].states=[]],
+  ['command-wrong-motion',r=>{for(const x of r.results.find(r=>r.id==='C-MotionCommand:MOVE').observed[0].routes)x.final.actors[0].x=100;}],
+  ['command-wrong-list',r=>{for(const x of r.results.find(r=>r.id==='C-ListInsert').observed[0].routes)x.final.lists.名前一覧=['ほたる','ぼうし'];}],
+  ['command-block-drift',r=>r.results[0].observed[0].routes[1].final.variables.点数=7]
+ ]){const bad=structuredClone(actual);mutate(bad);assert.throws(()=>verifyCommandMeaning(bad));negative.push({id,rejected:true});}
+}catch(error){results.push({file:'command-validator-negative',status:'FAIL',error:error.message});}
 // Synthetic control records test the validator. They are never execution evidence
 // and are not included in the acceptance success count.
 function syntheticComposition(){
@@ -163,7 +176,7 @@ try{
  verifyStructuredEditing(control);
  for(const[id,mutate]of Object.entries({'structured-missing':r=>r.results.pop(),'structured-identity-drift':r=>r.results[0].observed.stableId=false,'structured-lost-body':r=>r.results[4].observed.bodyPreserved=false,'structured-wrong-direction':r=>r.results[6].observed.direction='left','structured-rate-confusion':r=>r.results[7].observed.moved=33})){const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyStructuredEditing(bad));negative.push({id,rejected:true});}
 }catch(error){results.push({file:'structured-validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===118?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===126?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;

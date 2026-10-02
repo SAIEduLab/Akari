@@ -25,7 +25,8 @@ const rows=Object.entries(plan.groups).flatMap(([group,items])=>items.map(row=>{
   let references;
   if(group==='C'){
     const id='CORE catalog '+row.id.slice(2);assert.ok(core.ids.includes(id),id);
-    references=[{job:'selftest',suite:core.name,id,guarantee:'parse/registration; not a per-command runtime trace'}];
+    references=[{job:'selftest',suite:core.name,id,guarantee:'parse/registration'},
+      {job:'composition-acceptance',suite:row.id.startsWith('C-SoundCommand:')?'audio-output-browser':'command-meaning',id:row.id.startsWith('C-SoundCommand:')?row.id.split(':')[1]:row.id,guarantee:row.id.startsWith('C-SoundCommand:')?'actual PCM output, timing, wait and stop':'actual scheduler; independent values and effects, source/Block traces; native UI remains in full browser suites'}];
   } else if(group==='Q'){
     const id=schemaForExpression(row.id),entry=browsers.entries.find(e=>e.task==='schema-shards');assert.ok(entry.keys.includes(id));
     references=[{job:'full-browser-gate (schemas)',suite:entry.task,id,guarantee:'GUI fields/inputs, structural editing, source/block AST, save/reopen'},

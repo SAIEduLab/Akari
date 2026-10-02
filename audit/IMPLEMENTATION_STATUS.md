@@ -1,51 +1,57 @@
 # Implementation and acceptance status
 
-The reviewed public specification and acceptance plan are the completion contract.
-This table tracks unfinished work as well as implemented behavior. Registration
-counts and a successful composition subset do not establish release readiness.
+The reviewed public specification and acceptance plan remain the completion contract. This is the evidence index for the implemented finite requirements; it does not claim human UX acceptance. Fixture originals, stable capability IDs and existing thresholds remain unchanged.
 
-| Requirement | Implemented evidence | Still required |
-| --- | --- | --- |
-| FIX-001 event selection | Fixed browser identity regression; document unit identity and collision traces | Compound heading edits, Undo/Redo and selection coverage |
-| FIX-002 connecting words | Original I07 source and runtime; protected quoted strings | Full original and variant manifest |
-| FIX-003 question/concatenation | Original I09 waiting and answer; 36 concatenation variants | Wider name and input variants |
-| FIX-004 search focus | Existing first-use/focus gates; added native click/Tab/composition/Escape at 1366/1024/390 | Fixed92bf7a8 native click/Tab/composition/Escape PASS; rerun current head |
-| FIX-005 list input | Default line-per-string-item form, retained literal mode, whitespace/empty items and field-local errors | Fixed92bf7a8 native correction/cancel PASS; rerun current head |
-| FIX-006 list iteration | Original I08 source, order and clock trace | Snapshot mutation and binder scope cases |
-| FIX-007 procedures/return | Original I10 source and runtime, arithmetic variants | Nested natural expressions and full parameter matrix |
-| FIX-008 multiple receivers | Original I11, independent event keys and source ranges | Isolated concurrent send groups, receiver failure/stop |
-| FIX-009 counted clones | Original I12, atomic invalid-count rejection, existing schema and event-trace gates | Wider full-spec clone/receiver variants |
-| FIX-010 event Block edit | Stable script identity and unit identity core checks | All heading-only and body event-change GUI cases |
-| FIX-011 continuous quantity edit | Existing unit gates and continuous parser variants | Same-session edits, cancel, run across role orders |
-| FIX-012 declared data units | Declared numeric initial values receive the declared unit; mismatches reject atomically | Fixed92bf7a8 native declared-point trace PASS; rerun current head |
-| FIX-013 referenced assets | Shared semantic reference graph, deletion impact and uncertainty; resource and typed binding renames preserve IDs and other source tokens; 28 core cases | Fixed92bf7a8 native asset protection4 PASS; current actor/data/definition rename adds 13 core and four native cases, current native proof pending |
-| FIX-014 intent search | Shared purpose/readings/name index; typed and scoped candidate nodes; 21 core cases and seven native cases | Fixed92bf7a8 seven native cases PASS; custom readings remain explicit rather than inferred |
-| FIX-015 Return hole | Palette insertion now produces a hole | Same-head native save/readback evidence |
-| FIX-016 multiline strings | Lexer/codec/source core; three viewport native text edits | Draft save and Undo/Redo variants |
-| FIX-017 current diagnostics | Existing cancel gates | Full revised lifecycle matrix |
-| FIX-018 restored history | Persistent structural deltas, shared history-only assets, 30-frame cursor core checks | Same-head native Undo/Redo and quota-atomicity browser evidence |
-| FIX-019 output/monitor | Open output reserves a readable monitor area; native disclosure routes at three widths | Same-head 1366/1024/390 execution and screenshots |
-| FIX-020 numeric display | Separate 12-significant-digit presentation; exact raw value details, semantic text conversion unchanged; 21 boundary/core cases | Same-head native bubble/monitor/save/offline browser proof |
-| FIX-021 unfinished files | Editor-state version 1, file and autosave integration, ten core cases | Same-head pending-number browser fix, autosave parity and all drafts |
-| FIX-022 explanation contrast | Explicit panel text and selection colors in five manuals; native matrix at three widths and two themes | Fixed92bf7a8 all30 manual views PASS: body/heading11.70:1, selection8.87:1; rerun current head |
-| FIX-023 natural continuous roles | Name/quote/order/rate variants through parser, session, codec and runtime | Original 20 and 30 units/sec UI journeys |
-| UX-01 new work and speech | Empty initial/new work, explicit editable sample, scaled readable bubbles with overlap minimization and exact full text | Fixed92bf7a8 startup/click/remove/Undo and three bubble conditions PASS; font14px, overlap0, full text exact; rerun current head |
-| Semantic document contract | Multiple events, revisions, source ranges, persistent IDs | Complete editable definition units, ambiguous identity policy and actor references |
-| Full original/variant/negative matrix | Immutable I01-I12 and T13 core; seven original basic GUI journeys; frozen V01-V14 matrix267 with independent logical traces and three codec/format roundtrips; N01-N22/N25 core23 | Current T01 visible hit-target fix needs fixed CI; connect N13/N21-N25 external scope, file and boundary evidence plus capability groups |
-| Release evidence | 9d57bbb full CI including aggregate and fixed acceptance PASS; exact release freeze | Current changes need all required same-head gates, complete remaining specification/self-review, then merge and Pages verification |
+Product checkpoint: commit68b3f1660624a3a480f439d2bb5b76522213e548, HTML SHA2561ce42744228bf5f54845284b0cbfd26c8a85aee4d0e465c4a83a8216b09deac5. [Fixed acceptance37066551472](https://github.com/SAIEduLab/Akari/actions/runs/37066551472) and [full audit37066551404](https://github.com/SAIEduLab/Akari/actions/runs/37066551404) passed every producer and aggregate. The command-evidence addition changes tests/documentation only and must receive new same-head full/fixed results before merge.
 
-Editor project files retain the existing project-format 2 design and assets and
-add an optional `editorState` record with its own explicit version 1. This record
-contains pending source/Block trees, unfinished callable state, selection and
-view. Its validator checks structure and limits; it does not require executable
-source. Run and executable export retain their separate rejection gates. Assets
-remain in the single project asset collection. Autosave record version 2 stores
-the same editor state in a versioned history envelope: one base frame, structural
-and text deltas, a cursor, and asset bytes shared by digest. Original per-frame
-asset IDs remain separate so a reused ID cannot change an older frame's content.
-Native browser recovery and quota checks are required before acceptance.
+## Requirement evidence
 
-No completed release or human UX acceptance is claimed by this table.
+All browser references below are mandatory in fixed acceptance or the existing full audit. Model evidence is identified separately. The historical checkpoints further below describe earlier states, not current open failures.
+
+| Requirement | Required evidence and present implementation |
+| --- | --- |
+| FIX-001 event selection | composition EDITOR/idless-heading-selection; document20 stable IDs, reorder/insertion/collisions; structured heading6 exact owner/body/history |
+| FIX-002 connecting words | I07 original runtime; natural roles159 and frozen V01-V14; N20 quoted connectors |
+| FIX-003 question/concatenation | I09 native source/save and source/Block runtime; concat36, V07, N20; browser question answer/stop |
+| FIX-004 search focus | search browser7: native click/Tab/composition/Escape at1366/1024/390 with unchanged source |
+| FIX-005 list input | data browser3 and core12: direct item entry, local errors, correction/cancel and exact ordered values |
+| FIX-006 list iteration | I08 original timed trace; finite variants; N22 nested binder scope; command ForEach snapshot-mutation trace |
+| FIX-007 procedures/return | I10 main and both original definitions; V08-V11; named-argument N17; existing function purity/scope/limits |
+| FIX-008 multiple receivers | I11 original two receiver completion times and wrong-message exclusion; document identity; semantic notify nested/concurrent group tests |
+| FIX-009 counted clones | I12 original three clones/lifetime/design isolation; finite clone variants; N15 atomic invalid counts; full clone/event traces |
+| FIX-010 event Block edit | structured heading6: empty/headed/body-only × key/message, one edit, stable ID, owner/body, Undo/Redo, cancel and native runtime |
+| FIX-011 continuous quantity edit | structured continuous3: condition/time/distance edit orders, cancel, Undo3/Redo3, units and native20/sec run; input key left stays independent of world direction right |
+| FIX-012 declared data units | data core12/browser3: initial0 and0点 bind to point, three increments yield3点, wrong unit refused atomically |
+| FIX-013 referenced assets | references core28/browser8: deletion protection, uncertainty, unused deletion, asset/component/data/action/function rename, scope, Undo/Redo and saved IDs |
+| FIX-014 intent search | search core21/browser7: purpose/readings and registered bindings, scoped candidates and visible unavailability reasons |
+| FIX-015 Return hole | composition SAVE/unfinished-return-hole; history/browser-closed-return-hole; draft core10 |
+| FIX-016 multiline strings | document multiline codec/local editing; composition three-width native append/cancel/roundtrip; full long-text editing matrix |
+| FIX-017 current diagnostics | structured invalid edit/cancel, review-first-use, editor/session gates; accepted source and current diagnostics share revision |
+| FIX-018 restored history | history browser4: retained30 frames,27 Undo/3 Redo, pending number, closed definition hole, quota failure atomicity; delta/assets core |
+| FIX-019 output/monitor | numeric browser10 includes1366/1024/390 monitor height and full value disclosure; existing full UI matrix |
+| FIX-020 numeric display | numeric core21/browser10:12-significant-digit display, exact raw detail/save, unchanged semantic text, offline player |
+| FIX-021 unfinished files | composition real download/readback: open source, Return hole, pending number and semantic error; draft core10; full malformed/unsaved protection |
+| FIX-022 explanation contrast | ux browser10 includes five manuals × three widths × two themes with body/heading/selection contrast assertions |
+| FIX-023 continuous roles | immutable T03 native30/sec and T13 native20/sec with actual release timestamps/DOM coordinates;267 variants and N03/N04/N10-N12 |
+| UX-01 initial work and speech | ux browser empty new work, explicit editable sample, click/remove/Undo; bubbles at fit/100%/390,14px text, bounds, overlap and exact full text |
+| Semantic document | document20: revisions, ranges, persistent IDs, ambiguous same-event identity refusal; reference28 and typed binding browser8 |
+
+## Finite corpus and capability correspondence
+
+- T01-T06/T13 use the frozen original basic fixture through real UI, native inputs, three mode roundtrips, runtime and actual save/readback. I07-I12 use unchanged original prose and I10 auxiliary definitions through composition acceptance. None is counted as success merely because a draft was safely retained.
+- V01-V14 contain267 fixed, independently expected cases. N01-N22/N25 have23 model minimum-pair/refusal cases. N13 also uses the existing semantic scope precedence/collision contract; N21/N25 use actual unfinished/semantic file download/readback. N22 also uses nested notification groups and callable actor scope. N23 is the full38-limit family, with real boundary evidence. N24 is format-malformed-state-protection and the unsaved-work browser routes. Model results do not substitute for these browser gates.
+- C74 keep every original ID. command-meaning adds66 actual scheduler cases with independent values/effects and source versus three-roundtrip Block execution; the other8 are the existing PCM-output browser cases. The model observations do not claim physical input, canvas pixels or human listening. Native input, pen rendering, media/asset identity, pause/stop and UI field operations remain in the existing full browser gates. The original plan's Return probe includes a post-return assignment: the retained function contract diagnoses that unreachable tail as S306. The accepted terminal-return case returns5 and preserves the outer value99; the invalid tail is separately rejected unchanged, never reported as an accepted original program.
+- Q76 use independent fixed values across source, Block decode and regenerated source. E32 use actual browser dispatch and event traces. L38 use existing model and browser N−1/N/N+1 families. The independent40 capability rows retain explicit product/browser/static references. Registration424 alone proves no execution result.
+- All164 schemas remain registered and covered by codec/field contracts. The established153-schema browser matrix remains mandatory. The added11 are four draft Hole kinds and seven quantity/subject/continuous/motion/notification schemas, tied to the new draft, runtime, original prose, finite variant and direct Block regressions. This is not a claim that every new schema underwent every legacy GUI operation.
+- Main, procedure and function contexts retain the existing language605 and editor suites, their source/comment/ownership checks and three-roundtrip tests. Browser schema/session/extra routes retain the edit, cancellation, history, save/reopen and file obligations.
+
+The exact machine correspondence is in actions-transfer-plan.json, transfer.json, the product/browser/language manifests and their required result verifiers. The completed full gate includes36 selftest steps, all five browser groups, static and both audio platforms. Required same-head aggregate checks reject missing/duplicate/skip/timeout/wrong-snapshot results. The fixed aggregate now also rejects corrupt command outcomes; synthetic validator controls are never product evidence.
+
+## Final integration boundary
+
+No product behavior changed after68b3f16. Before merge, require the current full and fixed runs, exact freeze, public-file inventory and final diff review. After the authorized merge, report its SHA/PR immediately and verify the actual Pages content. Human UX-J1-J8, independent new-work Block creation and real OS Japanese input remain the parent's subsequent assessment. Machine PASS does not claim those results.
+
+## Historical checkpoints
 
 ## Search checkpoint 68291d6
 

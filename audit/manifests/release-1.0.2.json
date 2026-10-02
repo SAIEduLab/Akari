@@ -7,7 +7,7 @@
   "programFormat": 2,
   "files": {
     ".gitattributes": "16cc61b04666bb0cfd9c857ca50cbac734dad366b3999ca7043c6b3b1e01f2c9",
-    ".github/workflows/akari-acceptance.yml": "77e0d81d1fec1d0ebabed073a55959f12a6bfd63ef7b5e1ae1dc6ab34326f0c3",
+    ".github/workflows/akari-acceptance.yml": "6f65909efb9696a880cf732b0cdbe04fdb918ca57885a8390dd64535cc794ae8",
     ".github/workflows/akari-audit.yml": "d8d52ef1893596c6a2ac74d0fccb22774372d166e7270801298e87fb1afbedc5",
     ".gitignore": "2964fc0110fb05cc44ef651bc13ad6d92af9e35b8a1de9eaabb6e9d852f9ff7f",
     "AUDIT.md": "0dc617731c1ceaf325766e57f788ecd53f827b37155405509ae98449dc2dca2e",
@@ -21,8 +21,8 @@
     "Manual/code-mode-beginner.html": "92572509a478831ff184310f2d8f8a96b46b90874d1a2a5ed40d57df763d0fc0",
     "Manual/code-mode-intermediate.html": "fd3e4523f1ee7d64b6213e856ae3fed4707fa15ab20f7d0abd85fb2ac1aa7885",
     "README.md": "342599c76db9c3b94df9590923cc63eb4d8748a9e3b201fe083db3a9993937a5",
-    "audit/ACTIONS_TRANSFER.md": "332c4ed765b8dc49203b8f32e415a357730e104bc15e07b85d1bf362a9f2868a",
-    "audit/IMPLEMENTATION_STATUS.md": "6c93b2772345b8e99ce126a0ee9990b02aec79c89164f6aaaf41f0412170d175",
+    "audit/ACTIONS_TRANSFER.md": "b50c9572945dbd2764c6642fc526f0f69d63a778be3c0fbc8b9ae7882d75c1f2",
+    "audit/IMPLEMENTATION_STATUS.md": "2b70ddf392a2c5b86bc0caf04279989f31c4f62f3bd567b8c61242caf826b786",
     "audit/LANGUAGE_FORMS.md": "b717c4c73c1b44502be2627bd3a9af0a272d271bae9234a029a5379c3d7887c1",
     "audit/README.md": "b30659c84874bbce153fc5d2840354dd61877dea69f057f4dfd76746e54f4db0",
     "audit/browser/browser-audit-manifest.json": "f31cdde638455f79f6c86a08343d9983311bf9bc49bc0b7fec0db3c78bbc56ac",
@@ -178,6 +178,7 @@
     "audit/lib/basic-intents-runtime.mjs": "22f434d51ac4631a2b3a0026623c4032da9cb2676660b69d15b729bd547c3322",
     "audit/lib/block-field-contract.mjs": "48095f26181d184eef676fc8992f9009e1367a05ad05d2fb523cc65907294b00",
     "audit/lib/browser-environment.mjs": "7f3738f1df502146085376206abfb2c1eddc289ee5c2d62d3ab39e3e07c365a9",
+    "audit/lib/command-meaning-contract.mjs": "48098da795f6e109bbf4cd2fb2af8562aea0fe6d10babe72d9b5393e954a852e",
     "audit/lib/composition-runtime.mjs": "ce5b4ab0ebdb6ae47bc1a6d7a109168cf1c2c4a93cbaef2286ecb2778f6b1576",
     "audit/lib/evidence-bundle.mjs": "9e4fcac9caeadebfac5805d11200dc702b275302e4390ce68edee4fd4db865e6",
     "audit/lib/feature-contract.mjs": "b74189d5b17d2cfb0dc7251019a6e314effa69c866c089d9a42e1ba2b6e8f3a6",
@@ -203,7 +204,7 @@
     "audit/manifests/language-form-coverage.json": "4dab65c87b3b25457fd8ed221a846d6e33a66150cd53b9e9bcf64c74a15b5c38",
     "audit/manifests/product-tests.json": "8bf0992f7c97340e00e04a9b6c535b7a83aed83583a8798a54a07f163333ccee",
     "audit/prepare-publication.mjs": "deb513ebb809a3b612f8044f459056840ee91c74ace00a8f542ee5363f15e883",
-    "audit/public-files.json": "e7153b393a252c55389a9e8fe4aec0cf86b6a74405098e38b5ba8ec2b6fde868",
+    "audit/public-files.json": "604bb54606f69a7897941509a7c81a72df254094f5e7611b16dbf5c647cd4b1f",
     "audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md": "9ee2fef30736b1ca6a426b8f2be43bf8410717602faac4a4f67dbd531c15b44a",
     "audit/reviewed/PUBLIC_UX_ACTIONS_ACCEPTANCE_PLAN.md": "f00f66d6724d84e74b08fea33bae37819bde25ea577e77b564153f450c83969c",
     "audit/run-editor-surface-tests.mjs": "6aa866bc9f65143afce1fa5fb455292a0cf7926e7cb6c95a7d5762d5ef4df462",
@@ -226,9 +227,9 @@
     "audit/suites/runReleaseTests.js": "b308787bc41dea7a73907c5c1b1caaaf59f5e84d0710676f077b138ff68df9dc",
     "audit/suites/runSemanticContractTests.js": "a3e308fbe65046de4c0179bb625a857d5e9a3808b9647dcebde70522b9d81df8",
     "audit/suites/runSyntaxTests.js": "0e713cb16736a13a290c04c2c9a1814dbd34d90852a30dd7a7e977c29cec5c1b",
-    "audit/tests/actions-transfer-static.mjs": "bdbc3c8dd2c5bba6fc76c311e209093983671ef4b0b54d0fe870745461d574a1",
+    "audit/tests/actions-transfer-static.mjs": "9cdb679d9379579dfe69b38d1fd276743b60b8a19f154ef00397c90d1cf6e808",
     "audit/tests/actions-transfer-values.mjs": "9ef7548a13b4bf80b5d3299967fe60a67aed4b97d517f1712b1e80839ffde308",
-    "audit/tests/actions-transfer-verify.mjs": "a9e3d5ce8409d868d92182570a11ca4739ff19fa3a9939b8291143c23b0e03d9",
+    "audit/tests/actions-transfer-verify.mjs": "3aa1c5f61c1bbf74ce2b0dc5a1cedecf981e6e21abd52bca6a9fbb4da7eff8bd",
     "audit/tests/audio-codecs.mjs": "50414edcdbe450c7ea5657c84d3bf5f362797406e9b0d5647e81aab13b806ea0",
     "audit/tests/audio-output-browser.mjs": "da55695ec39b47a5afb638c63be8363a19cea1c1470b3beef1f4f77e464a2f8a",
     "audit/tests/basic-intents-browser.mjs": "08dd5e88e6aa48dceedeff9d45690a1d844c1a5a2dc4efcf6cd49dce1cff6a53",
@@ -236,6 +237,7 @@
     "audit/tests/block-field-width.mjs": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1",
     "audit/tests/browser-environment.mjs": "898e2b27b04969b76ce45e0cc00236fbb2561edd558d68b1bb983595d1066294",
     "audit/tests/ci-regression.mjs": "df52941ec0d33b0e893c20c5a57fd766c4e546a75740593ecd92f7507000537f",
+    "audit/tests/command-meaning.mjs": "b39f8e0ecc88711a247c58b56581ce76b832451da3bb2551aa9c412fc58cc851",
     "audit/tests/composition-acceptance.mjs": "0988af22facebf7b9c40cb3c2ad6b66c5fbb03e4dd90d198d2708514784f0144",
     "audit/tests/contract-gate.mjs": "82f6db6d3b7c48520327674776171859ce8ebfbb20fa58f5068f97dedfd1b563",
     "audit/tests/data-form-browser.mjs": "7182354266c4dae001f8862a7e8fcdbfc395ca17e79477c5b2b402f2a1bad254",
@@ -301,5 +303,5 @@
     "docs/1.0.2/設計書.md": "0f06e7210831b88e6fc8653c2d61d550a7a5681b7ef67ce2678753a1b8831bec",
     "index.html": "66716d8d2bec434a1c3800523c2dc4307c2ef44a1d6cda961953f8825a46c303"
   },
-  "inventorySha256": "9205ba8ae87b1e7051354fb6bb03a8e9994113c3c39adeae293ba1e7ff664e5a"
+  "inventorySha256": "55a7b56f0a0d13958627520e08572aa508a4e9cd837ece0ab7b2d91c0a0d3e00"
 }

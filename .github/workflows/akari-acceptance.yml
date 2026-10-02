@@ -32,6 +32,7 @@ jobs:
           mkdir -p audit-evidence/acceptance
           node audit/tests/actions-transfer-static.mjs audit-evidence/acceptance/transfer.json
           node audit/tests/actions-transfer-values.mjs audit-evidence/acceptance/values.json
+          node audit/tests/command-meaning.mjs audit-evidence/acceptance/command-meaning.json
       - name: Verify original basic intentions and separate continuous rates
         run: node audit/tests/basic-intents.mjs audit-evidence/acceptance/basic-intents.json
       - name: Verify finite semantic variants and minimum-pair refusals
