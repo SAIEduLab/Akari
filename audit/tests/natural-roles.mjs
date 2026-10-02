@@ -46,6 +46,17 @@ for(const direction of ['右','左'])for(const speed of [1,20,30])for(const endi
  assert.equal(ast.rules.length,1);assert.equal(ast.rules[0].direction,direction==='右'?'right':'left');assert.equal(ast.rules[0].distance.value.value,speed);assert.equal(A.compileProject(p).errors.length,0);return {source};
 });
 for(const source of ['「a」キーを押しているあいだ、画面の右へ20歩動く。','画面の右へ画面の左へ20歩動く。','「あいさつ」という手順を2回3回行う。'])check(`reject/${source}`,()=>{const p=project(undefined,source),r=A.parseSyntax(source,{symbols:A.buildSymbols(p)});assert.equal(r.ast,null);assert.ok(r.syntaxDiagnostics.length);return {source,diagnostics:plain(r.syntaxDiagnostics)};});
+for(const name of ['こはる','はなを','ねこは星'])for(const quoted of [false,true])for(const order of [0,1])for(const speed of [0,1,20])check(`continuous-actor/${name}/${quoted}/${order}/${speed}`,()=>{
+ const actor=quoted?`【${name}】`:name,roles=order?`1秒に${speed}歩の速さで画面の右へ`:`画面の右へ1秒に${speed}歩の速さで`,source=`「a」キーを押しているあいだ、${actor}は${roles}動く。`,p=project(name,source),{formatted}=roundtrip(source,p);
+ const execute=text=>{p.scripts[0].source=text;const compiled=A.compileProject(p);assert.deepEqual(plain(compiled.errors),[]);const runtime=new A.RuntimeModel(p,{}),errors=[];let time=0;runtime.now=()=>time;
+  const scheduler=new A.EventScheduler(p,compiled,runtime,{runtimeError:(task,error)=>errors.push(error.code)});scheduler.schedule=()=>{};
+  try{scheduler.start();time=1000;scheduler.advanceContinuous(time);assert.equal(runtime.actor('sprite-1').x,100);scheduler.setKeyState('a',true);time=2000;scheduler.advanceContinuous(time);const moved=runtime.actor('sprite-1').x;assert.ok(Math.abs(moved-(100+speed))<1e-8);scheduler.setKeyState('a',false);time=3000;scheduler.advanceContinuous(time);assert.equal(runtime.actor('sprite-1').x,moved);assert.deepEqual(errors,[]);return moved;}finally{scheduler.stop();}};
+ const x=execute(source);assert.equal(execute(formatted),x);return {source,formatted,x};
+});
+for(const name of ['こはる','はなを','ねこは星'])for(const quoted of [false,true])check(`heading-actor/${name}/${quoted}`,()=>{
+ const actor=quoted?`【${name}】`:name,source=`作品を動かしたとき、${actor}は、\n  「START」と言う。\n${actor}がクリックされたとき、\n  「CLICK」と言う。`,p=project(name,source),{ast,formatted}=roundtrip(source,p);
+ assert.equal(ast.heading.actorRef.name,name);assert.equal(ast.units[0].heading.actorRef.name,name);const original=run(p);assert.deepEqual(original.speech,['START']);p.scripts[0].source=formatted;assert.deepEqual(run(p),original);return {source,formatted};
+});
 const report={schema:'akari-natural-roles-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),environment:'node / actual parser, block codec, formatter and runtime',uxAcceptance:false,results};
 const output=path.resolve(process.argv[2]||'audit-evidence/natural-roles.json');fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 for(const r of results.filter(r=>r.status==='FAIL'))console.error(r.id+': '+r.error.split('\n').slice(0,4).join(' '));

@@ -34,8 +34,8 @@
     },
     {
       "path": "audit/fixtures/other-suites-v2-input-migration.json",
-      "sha256": "094761e475f532b5e1335694969fef9b32b3c735e90ec230df0384fb3a758831",
-      "registeredChanges": 63
+      "sha256": "d5bb28ef10cff87471375061d6040ac5cc1d74a9a95286fa773d67bcde95e68b",
+      "registeredChanges": 27
     },
     {
       "path": "audit/fixtures/language-surface-v2-migration.json",

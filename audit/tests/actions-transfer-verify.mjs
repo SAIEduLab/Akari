@@ -47,7 +47,8 @@ function syntheticComposition(){
  for(const kind of ['action','function'])r.results.push({id:'I10/'+kind+'-original',status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence:{kind,original:kind==='action'?extra.actionBody:extra.functionBody,compileErrors:[]}});
  const source='あかりがクリックされたとき、\n  あかりは画面の右へ30歩動いて、「今日はどこへ行こう」と言う。';
  const observation={textarea:source,event:'click',scripts:[{id:'synthetic-body-id',targetId:'sprite-1',event:'click',source}]};
- r.results.push({id:compositionIds.at(-1),status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence:{source,first:observation,second:structuredClone(observation)}});return r;
+ r.results.push({id:'EDITOR/idless-heading-selection',status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence:{source,first:observation,second:structuredClone(observation)}});
+ for(const width of [1366,1024,390]){const literal='1行目\n  2行目\n\t「青空」🐈';r.results.push({id:'EDITOR/multiline-native-'+width,status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence:{viewport:{width},literal,afterAppend:literal+'!',afterCancel:literal+'!',codeAfterRoundtrip:literal+'!',expectedCode:literal+'!',nativeControl:'TEXTAREA'}});}return r;
 }
 try{
  const control=syntheticComposition();verifyCompositionReport(control);
@@ -60,8 +61,10 @@ try{
   'wrong-meaning':r=>r.results.find(x=>x.id==='I10/semantic-roundtrip').evidence.source.states.at(-1).speech[0].text='240',
   'source-block-mismatch':r=>r.results[1].evidence.blocks.trace.push({kind:'say',text:'unexpected'}),
   'changed-time':r=>r.results.find(x=>x.id==='I11/semantic-roundtrip').evidence.source.states.at(-1).speech.at(-1).time=1999,
-  'duplicate-body':r=>r.results.at(-1).evidence.second.scripts.push({...r.results.at(-1).evidence.second.scripts[0]}),
-  'changed-identity':r=>r.results.at(-1).evidence.second.scripts[0].id='another-body',
+  'duplicate-body':r=>{const e=r.results.find(x=>x.id==='EDITOR/idless-heading-selection').evidence;e.second.scripts.push({...e.second.scripts[0]});},
+  'changed-identity':r=>r.results.find(x=>x.id==='EDITOR/idless-heading-selection').evidence.second.scripts[0].id='another-body',
+  'multiline-lost-lf':r=>r.results.at(-1).evidence.afterAppend=r.results.at(-1).evidence.literal.replace(/\n/g,'')+'!',
+  'multiline-cancel-committed':r=>r.results.at(-1).evidence.afterCancel+='?',
   'page-error':r=>r.pageErrors.push('exception'),'network':r=>r.networkRequests.push('https://example.invalid'),
  };
  for(const [id,change]of Object.entries(mutations)){const bad=structuredClone(control);change(bad);assert.throws(()=>verifyCompositionReport(bad),id);negative.push({id,rejected:true});}
@@ -72,7 +75,7 @@ try{
   }
  }
 }catch(error){results.push({file:'validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===28?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===30?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;

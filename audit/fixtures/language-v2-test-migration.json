@@ -47148,7 +47148,7 @@
     {
       "path": "audit/suites/runBlockCodecTests.js",
       "originalSha256": "fbad8adae818cce2342fa499c8aef08af9141cfa8e137f1e7d4f8082c6e0ffcc",
-      "candidateSha256": "28908c8c300372b8cd8b324f8c8f643e7a872e42742882b01f01c4a68640f3ab",
+      "candidateSha256": "50b3246fb1a2b0310c688d61762723c842432ce9a70574ec70b25fb9f9db96ab",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/runBlockCodecTests.js",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"

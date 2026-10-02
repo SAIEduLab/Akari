@@ -67,7 +67,8 @@ export function verifyValuesReport(r){
   return r.results.length;
 }
 export const compositionIds=[...['I07','I08','I09','I10','I11','I12'].flatMap(id=>[id+'/source-ui',id+'/semantic-roundtrip']),
-  'I10/action-original','I10/function-original','EDITOR/idless-heading-selection'];
+  'I10/action-original','I10/function-original','EDITOR/idless-heading-selection',
+  ...[1366,1024,390].map(width=>'EDITOR/multiline-native-'+width)];
 export function verifyCompositionMeaning(d,r){
   assert.equal(r.execution,'actual EventScheduler / RuntimeModel');assert.equal(r.source,d.mainFirstDraft);
   assert.deepEqual(r.errors,[]);assert.ok(r.roundtrip.length);
@@ -138,6 +139,13 @@ export function verifyCompositionReport(r){
   for(const observation of [identity.first,identity.second]){
     assert.equal(observation.scripts.length,1);assert.equal(observation.scripts[0].source,identity.source);
     assert.equal(observation.scripts[0].event,'click');assert.equal(observation.textarea,identity.source);assert.equal(observation.event,'click');
+  }
+  for(const width of [1366,1024,390]){
+    const e=r.results.find(x=>x.id==='EDITOR/multiline-native-'+width).evidence;
+    assert.equal(e.viewport.width,width);assert.equal(e.nativeControl,'TEXTAREA');
+    assert.equal(e.literal,'1行目\n  2行目\n\t「青空」🐈');assert.equal(e.afterAppend,e.literal+'!');
+    assert.equal(e.afterCancel,e.afterAppend);assert.equal(e.codeAfterRoundtrip,e.expectedCode);
+    assert.ok(e.codeAfterRoundtrip.includes('\n  2行目\n\t'),'saved source retains the actual LF and whitespace');
   }
   return r.results.length;
 }

@@ -71,6 +71,28 @@ await check('document/counted-call-reprint-only-changed-unit',()=>{
  const target=blockEntries(session.blockView).find(entry=>entry.node.schemaId==='NumberLiteral'&&entry.node.fields.value===2).node,edit=A.prepareBlockEdit(session,{type:'field',id:target.id,key:'value',value:3});
  assert.ok(edit.source.endsWith(tail));assert.equal(edit.syntaxAst.body[0].count.value.value,3);assert.equal(edit.syntaxAst.units.length,1);return {source:edit.source};
 });
+await check('document/derived-key-collision-independent-events',()=>{
+ const project=compositionProject(A,draft);project.scripts=[{id:'main',targetId:'sprite-1',event:'start',source:'作品を動かしたとき、あかりは、\n  「START」と言う。\nあかりがクリックされたとき、\n  「CLICK」と言う。'},
+  {id:'main-unit-2',targetId:'sprite-1',event:'keyDown',filter:{key:'a'},source:'「KEY」と言う。'}];
+ const compiled=A.compileProject(project);assert.deepEqual(plain(compiled.errors),[]);assert.equal(new Set(compiled.items.map(x=>x.key)).size,3);assert.equal(compiled.astByKey.size,3);
+ const runtime=new A.RuntimeModel(project,{}),trace=[],errors=[],scheduler=new A.EventScheduler(project,compiled,runtime,{say:(id,text)=>trace.push(text),runtimeError:(task,error)=>errors.push(error.code)});scheduler.schedule=()=>{};
+ const pump=()=>{let turns=0;while(scheduler.ready.length&&turns++<100)scheduler.runTurn(true);assert.ok(turns<100);};
+ try{scheduler.start();pump();assert.deepEqual(trace,['START']);scheduler.spawnForRuntime('sprite-1','click',{});pump();assert.deepEqual(trace,['START','CLICK']);scheduler.spawnDistributed('keyDown',{key:'b'});pump();assert.deepEqual(trace,['START','CLICK']);scheduler.spawnDistributed('keyDown',{key:'a'});pump();assert.deepEqual(trace,['START','CLICK','KEY']);assert.deepEqual(errors,[]);return {keys:compiled.items.map(x=>x.key),trace};}finally{scheduler.stop();}
+});
+await check('document/insert-and-edit-preserves-event-identity',()=>{
+ const source='作品を動かしたとき、あかりは、\n  「START」と言う。\nあかりがクリックされたとき、\n  「CLICK」と言う。',project=compositionProject(A,draft,source),script=project.scripts[0];A.updateScriptSource(script,source,project);const before=plain(script.document.unitIds);
+ A.updateScriptSource(script,'「a」キーを押すたびに、あかりは、\n  「NEW」と言う。\n'+source.replace('「CLICK」','「EDITED CLICK」'),project);
+ assert.deepEqual(plain(script.document.unitIds.slice(1)),before);assert.ok(!before.includes(script.document.unitIds[0]));return {before,after:plain(script.document.unitIds)};
+});
+await check('document/ambiguous-same-event-never-reassigns-by-position',()=>{
+ const source='あかりがクリックされたとき、\n  「ONE」と言う。\nあかりがクリックされたとき、\n  「TWO」と言う。',project=compositionProject(A,draft,source),script=project.scripts[0];A.updateScriptSource(script,source,project);const before=plain(script.document.unitIds);
+ A.updateScriptSource(script,source.replace('ONE','NEW ONE').replace('TWO','NEW TWO'),project);assert.ok(script.document.unitIds.every(id=>!before.includes(id)));return {before,after:plain(script.document.unitIds)};
+});
+await check('document/reject-invalid-persistent-unit-identities',()=>{
+ const project=compositionProject(A,draft);A.updateScriptSource(project.scripts[0],draft.mainFirstDraft,project);
+ project.scripts[0].document.unitIds.pop();assert.ok(A.compileProject(project).errors.some(e=>e.code==='F503'));
+ const ids=project.scripts[0].document.unitIds;ids.push(ids[0]);assert.ok(A.compileProject(project).errors.length);return {countMismatchRejected:true,duplicateRejected:true};
+});
 const report={schema:'akari-document-units-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),environment:'node / actual product',uxAcceptance:false,results};
 const output=path.resolve(process.argv[2]||'audit-evidence/document-units.json');fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 for(const result of results.filter(r=>r.status==='FAIL'))console.error(result.id+': '+result.error.split('\n').slice(0,5).join(' '));console.log(`Document units: ${results.filter(r=>r.status==='PASS').length}/${results.length} PASS`);if(report.status!=='PASS')process.exitCode=1;

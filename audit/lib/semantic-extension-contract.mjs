@@ -9,11 +9,15 @@ export const naturalRoleIds=[
  ...[0,1,3].map(count=>'clone/'+count),...['－1','1.5','「三」','501'].map(value=>'clone/reject/'+value),
  ...['右','左'].flatMap(direction=>[1,20,30].flatMap(speed=>['動く','動き続ける'].map(ending=>`continuous/${direction}/${speed}/${ending}`))),
  ...['「a」キーを押しているあいだ、画面の右へ20歩動く。','画面の右へ画面の左へ20歩動く。','「あいさつ」という手順を2回3回行う。'].map(source=>'reject/'+source),
+ ...['こはる','はなを','ねこは星'].flatMap(name=>[false,true].flatMap(quoted=>[0,1].flatMap(order=>[0,1,20].map(speed=>`continuous-actor/${name}/${quoted}/${order}/${speed}`)))),
+ ...['こはる','はなを','ねこは星'].flatMap(name=>[false,true].map(quoted=>`heading-actor/${name}/${quoted}`)),
 ];
 export const documentUnitIds=[...['I07','I08','I09','I10','I11','I12'].map(id=>id+'/actual-meaning'),
  ...['1行目\n  2行目\n\t3行目','名前は「空」。\n※これは台詞\n  次に、右へ','🐈\n  e\u0301\\おしまい'].map(text=>'multiline/'+text),
  'document/stable-ids-and-revision','document/reorder-and-insert','document/save-readback','document/source-lines-and-negative-scope',
- 'document/edit-second-unit-only','multiline/block-edit-retains-other-event','document/counted-call-reprint-only-changed-unit'];
+ 'document/edit-second-unit-only','multiline/block-edit-retains-other-event','document/counted-call-reprint-only-changed-unit',
+ 'document/derived-key-collision-independent-events','document/insert-and-edit-preserves-event-identity',
+ 'document/ambiguous-same-event-never-reassigns-by-position','document/reject-invalid-persistent-unit-identities'];
 export function verifySemanticExtension(report,schema,ids){
  assert.equal(report.schema,schema);assert.equal(report.status,'PASS');assert.equal(report.uxAcceptance,false);
  assert.deepEqual(report.snapshot,snapshot(currentProductFile()));assert.deepEqual(report.results.map(row=>row.id),ids);

@@ -96,7 +96,26 @@ try{await withBrowser(chrome,async browser=>{
   assert.equal(second.scripts[0].id,first.scripts[0].id,'re-entry preserves the edited body identity');
   const evidence={source,first,second};capture(evidence);return evidence;
  });
-},180000);}catch(error){report.hostFailure=error.stack;}
+ for(const viewport of [{width:1366,height:768},{width:1024,height:768},{width:390,height:844}])await run('EDITOR/multiline-native-'+viewport.width,'EDITOR_NATIVE_TEXT',async(page,capture)=>{
+  await page.setViewportSize(viewport);await install(page,prose.drafts[0]);
+  const literal='1行目\n  2行目\n\t「青空」🐈',source=await page.evaluate(value=>Akari.formatExpression({kind:'StringLiteral',value})+'と言う。',literal);
+  await page.locator('#codeEditor').fill(source);await page.locator('#editorModeblocks').click();
+  const root=page.locator('#blockEditor'),field=root.locator('.blockui-node[data-schema-id="StringLiteral"] textarea[data-blockui-field="value"]');
+  assert.equal(await field.inputValue(),literal,'native field must retain every LF before editing');
+  await field.click();await field.press('Control+End');await field.pressSequentially('!');assert.equal(await field.inputValue(),literal+'!');
+  await root.locator('[data-blockui-action="commit"]').click();
+  assert.equal(await page.evaluate(()=>Akari.app.editorState.main.syntaxAst.body[0].value.value),literal+'!');
+  await field.click();await field.press('Control+End');await field.pressSequentially('?');await field.press('Escape');
+  assert.equal(await field.inputValue(),literal+'!','Escape cancels only the new suffix');
+  const edit=root.locator('.blockui-node[data-schema-id="StringLiteral"] [data-blockui-action="edit-text"]');await edit.click();
+  const dialog=page.locator('.blockui-text-dialog'),full=dialog.locator('textarea');assert.equal(await full.inputValue(),literal+'!');
+  await full.fill('取り消す\n  仮の内容');await dialog.locator('[data-blockui-text-action="cancel"]').click();
+  assert.equal(await field.inputValue(),literal+'!');
+  await page.locator('#editorModecode').click();const actual=await page.locator('#codeEditor').inputValue(),expected=await page.evaluate(value=>Akari.formatExpression({kind:'StringLiteral',value})+'と言う。',literal+'!');assert.equal(actual,expected);
+  await page.locator('#editorModeblocks').click();assert.equal(await field.inputValue(),literal+'!');
+  const evidence={viewport,literal,afterAppend:literal+'!',afterCancel:await field.inputValue(),codeAfterRoundtrip:actual,expectedCode:expected,nativeControl:'TEXTAREA'};capture(evidence);return evidence;
+ });
+},240000);}catch(error){report.hostFailure=error.stack;}
 assert.deepEqual(snapshot(currentProductFile()),inputs);report.status=!report.hostFailure&&report.results.length===compositionIds.length&&report.results.every(x=>x.status==='PASS')&&report.pageErrors.length===0&&report.networkRequests.length===0?'PASS':'FAIL';
 report.counts={PASS:report.results.filter(x=>x.status==='PASS').length,FAIL:report.results.filter(x=>x.status==='FAIL').length,missing:compositionIds.filter(id=>!report.results.some(x=>x.id===id))};save();
 if(report.status==='PASS')verifyCompositionReport(json(report));else process.exitCode=1;

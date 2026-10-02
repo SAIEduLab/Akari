@@ -1708,7 +1708,7 @@ body {
 .blockui-field select.blockui-qualifier-empty option {
   font-size: 13px;
 }
-.blockui-comment-input {
+.blockui-comment-input, .blockui-multiline-input {
   width: 280px;
   max-width: 100%;
   min-height: 28px;
@@ -5386,8 +5386,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   text-overflow: clip;
 }
 body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field > textarea {
-  width: calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1));
-  max-width: calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1));
+  width: var(--blockui-edit-width, calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1)));
+  max-width: var(--blockui-edit-width, calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1)));
   min-height: calc(150px * var(--blockui-inverse-scale, 1));
   padding: calc(10px * var(--blockui-inverse-scale, 1)) calc(12px * var(--blockui-inverse-scale, 1));
   font-size: calc(18px * var(--blockui-inverse-scale, 1));
@@ -12397,7 +12397,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if(/(?:動く|うごく|進む|すすむ|動かす|うごかす|滑る|すべる)/.test(verb))throw new AkariError('P205','移動には歩数、必要なら方向と秒数を一つずつ指定してください');
     return null;
   }
-  function readSentenceHeading(code) {
+  function readSentenceHeading(code,symbols) {
     const forms=[
       [/^(?:作品を動かしたとき|始まったとき|開始したとき)、(.+?)は、(.*)$/d,'start',0,1],
       [/^(.+?)(?:がクリックされたとき|をクリックしたとき|をクリックするたびに)、(.*)$/d,'click',0,1],
@@ -12409,7 +12409,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       [/^(.+?)の中身が変わったとき、(.*)$/d,'valueChanged',0,1],
       [/^(.+?)の分身が作られたとき、(.*)$/d,'cloneStart',0,1],
     ];
-    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','見出しの絞り込みは「文字」で指定してください');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','見出しの絞り込みは文字列一つで指定してください');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex]};}
+    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','見出しの絞り込みは「文字」で指定してください');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','見出しの絞り込みは文字列一つで指定してください');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex]};}
     return null;
   }
   function sentenceHeadingSource(heading) {
@@ -12423,12 +12423,29 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   function readContinuousSentence(code,line,symbols,ctx) {
     const parts=surfaceCapture(/^(.+?)(?:あいだ|間)(?:は)?、(.+?)(?:動き続ける|動かし続ける|動く|動かす)$/d,code);
     if(!parts)return null;
-    let body=parts[1].text, actorRef=ctx.topicActor||{kind:'self'}, actor=surfaceCapture(/^(.+?)(?:は|を)(.+)$/d,body);
-    if(actor){actorRef=sentenceActor(actor[0].text);body=actor[1].text;}
-    let roles=surfaceCapture(/^(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)(.+?)秒に(.+?)歩の速さで$/d,body),direction,seconds,distance;
+    const body=parts[1].text, candidates=[];
+    const validRoles=roles=>{
+      try{parseExpression(roles.seconds,symbols,ctx);parseExpression(roles.distance,symbols,ctx);return roles;}
+      catch(error){if(!(error instanceof AkariError)||error.code==='P208')throw error;return null;}
+    };
+    const readRoles=text=>{
+      let roles=surfaceCapture(/^(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)(.+?)秒に(.+?)歩の速さで$/d,text);
+      if(roles)return validRoles({direction:roles[0].text,seconds:roles[1].text,distance:roles[2].text});
+      roles=surfaceCapture(/^(.+?)秒に(.+?)歩の速さで(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)$/d,text);
+      return roles?validRoles({direction:roles[2].text,seconds:roles[0].text,distance:roles[1].text}):null;
+    };
+    const implicit=readRoles(body);
+    if(implicit)candidates.push({...implicit,actorRef:ctx.topicActor||{kind:'self'}});
+    // A particle inside an actor name is not a boundary unless all remaining
+    // roles form a complete movement. Quoted names are protected by the lexer.
+    for(const match of surfaceMask(body).matchAll(/[はを]/g)){
+      if(match.index>66)break; // 32 code points, plus the two name delimiters.
+      const roles=readRoles(body.slice(match.index+1).replace(/^、/,''));
+      if(roles)candidates.push({...roles,actorRef:sentenceActor(body.slice(0,match.index),symbols)});
+    }
+    if(candidates.length!==1)throw sentenceDiagnostic(candidates.length?'主語と速さの区切りを確認してください':'継続移動には方向と「秒に歩の速さで」を指定してください',line,[],{kind:'ContinuousRule',actorRef:ctx.topicActor||{kind:'self'},missing:['speed']});
+    const {direction,seconds,distance,actorRef}=candidates[0];
     const e=t=>parseExpression(t,symbols,{...ctx,lineNo:line.lineNo});
-    if(roles){direction=roles[0].text;seconds=roles[1].text;distance=roles[2].text;}
-    else {roles=surfaceCapture(/^(.+?)秒に(.+?)歩の速さで(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)$/d,body);if(!roles)throw sentenceDiagnostic('継続移動には方向と「秒に歩の速さで」を指定してください',line,[],{kind:'ContinuousRule',actorRef,missing:['speed']});seconds=roles[0].text;distance=roles[1].text;direction=roles[2].text;}
     return statementNode('ContinuousRule',line,{actorRef:{...actorRef},condition:parseCondition(continuousCondition(parts[0].text)+'あいだ',symbols,{...ctx,lineNo:line.lineNo},'while'),direction:{前:'forward',後ろ:'backward',右:'right',左:'left',上:'up',下:'down'}[direction],seconds:sentenceQuantity(e(seconds),'秒'),distance:sentenceQuantity(e(distance),'歩')});
   }
   function parseSentenceSequence(line,symbols,ctx) {
@@ -12508,7 +12525,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   function parseScript(source, symbols, ctx = {}) {
     if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','本文の文字数が上限を超えています',1,1);
-    const physical=normalizeSource(source).lines,headings=physical.filter(line=>!line.continuation&&line.code&&!/^[ \t\u3000]/u.test(line.raw)&&readSentenceHeading(compactOutsideString(line.code)));
+    const physical=normalizeSource(source).lines,headings=physical.filter(line=>!line.continuation&&line.code&&!/^[ \t\u3000]/u.test(line.raw)&&readSentenceHeading(compactOutsideString(line.code),symbols));
     const firstCode=physical.find(line=>!line.continuation&&line.code),hasPrefix=headings.length&&headings[0]!==firstCode;
     if(headings.length<=1&&!hasPrefix)return parseScriptUnit(source,symbols,ctx);
     if(ctx.definitionKind||ctx.definition)throw new AkariError('P205','手順・計算の本文へ別のできごとの見出しは置けません',headings[0].lineNo,1);
@@ -12542,7 +12559,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const parseAt=(line,fn)=>{try{return fn();}catch(error){if(error instanceof AkariError&&!error.line){error.line=line.lineNo;error.column=error.column||1;}throw error;}};
     let first=nextCode(0),heading=null;
     if(first<lines.length&&lines[first].indent!==0)throw new AkariError('P209','最上位の文は字下げせずに書きます',lines[first].lineNo,1);
-    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code));if(found){heading=found.heading;const line=lines[first];if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','見出しの本文を字下げして書いてください',lines[first].lineNo,1);}}
+    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols));if(found){heading=found.heading;const line=lines[first];if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','見出しの本文を字下げして書いてください',lines[first].lineNo,1);}}
     const rules=[];
     function block(start,indent,scope,depth){
       if(depth>LIMITS.blockDepth)throw new AkariError('P208','ブロックが深すぎます',lines[start]?.lineNo||1,1);
@@ -15172,8 +15189,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         const value=text(newUnits[i],source),match=oldUnits.findIndex((unit,j)=>!used.has(j)&&text(unit,script.source)===value);
         if(match>=0){used.add(match);unitIds[i]=script.document?.unitIds[match]||fresh();}
       }
-      const unmatched=oldUnits.map((_,i)=>i).filter(i=>!used.has(i));
-      for(let i=0;i<newUnits.length;i++)if(!unitIds[i]){const old=unmatched.shift();unitIds[i]=old===undefined?fresh():script.document?.unitIds[old]||fresh();}
+      // Preserve edited units only when their event identity is unambiguous in
+      // both documents. Positional matching could give an inserted event the ID
+      // of a different event whose text was edited in the same transaction.
+      const signature=unit=>JSON.stringify(unit.heading||{event:script.event,actorRef:{kind:'self'},filter:script.filter||null});
+      for(let i=0;i<newUnits.length;i++)if(!unitIds[i]){
+        const sig=signature(newUnits[i]),old=oldUnits.map((unit,j)=>({unit,j})).filter(({unit,j})=>!used.has(j)&&signature(unit)===sig),
+          incoming=newUnits.filter((unit,j)=>!unitIds[j]&&signature(unit)===sig);
+        if(old.length===1&&incoming.length===1){used.add(old[0].j);unitIds[i]=script.document?.unitIds[old[0].j]||fresh();}
+      }
+      for(let i=0;i<newUnits.length;i++)if(!unitIds[i])unitIds[i]=fresh();
       script.document={revision:(script.document?.revision||0)+(source===script.source?0:1),unitIds};
     }
     Object.assign(script, metadata, { source });
@@ -15248,12 +15273,23 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const rules = items.flatMap(item => (item.ast.rules || []).map((rule, index) => ({
       ...rule, id: `${item.key}:rule:${index}`, targetId: item.targetId || item.ownerId,
     })));
-    return { symbols, items, errors, rules, astByKey: new Map(items.map((x) => [x.key, x.ast])) };
+    return { symbols, items, errors, rules, astByKey: syntaxItemMap(items,errors) };
+  }
+  function syntaxItemMap(items,errors) {
+    const map=new Map();
+    for(const item of items){
+      if(map.has(item.key))errors.push({code:'F503',message:'できごとの識別子が重複しています',line:0,column:1,where:item.documentKey||item.key});
+      else map.set(item.key,item.ast);
+    }
+    return map;
   }
   function documentSyntaxItems(ast,key,context,project,errors) {
     const first={...ast};delete first.units;
+    if(context.unitIds&&context.unitIds.length!==1+(ast.units?.length||0))errors.push({code:'F503',message:'文書のできごとと識別子の数が一致しません',line:0,column:1,where:key});
     return [first,...(ast.units||[])].map((unit,index)=>{
-      const id=context.unitIds?.[index]||(index?`${context.id||context.targetId+'-'+context.event}-unit-${index+1}`:context.id);
+      // Imported documents may not yet have persistent unit IDs. Their runtime
+      // keys use a separate namespace, never a guess in the user ID namespace.
+      const id=context.unitIds?.[index]||(index?`document:${key}:unit:${index+1}`:context.id);
       const unitKey=context.unitIds||index?'script:'+id:key,heading=unit.heading;
       let resolved={...context,...(ast.units||context.unitIds?{id,scriptId:id,documentKey:key}:{})};
       if(heading){
@@ -15307,7 +15343,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     },candidate,compiled.errors);
     compiled.items = compiled.items.filter((x) => x.key !== key && x.documentKey !== key);
     compiled.items.push(...items);
-    for(const item of items)compiled.astByKey.set(item.key,item.ast);
+    compiled.astByKey=syntaxItemMap(compiled.items,compiled.errors);
     return analyzeProject(candidate, compiled, { rootKeys: new Set(items.map(item=>item.key)) });
   }
   function compileProject(project) {
@@ -19804,8 +19840,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           input.title =
             '使う場所: ' + (values.find((v) => v[0] === input.value)?.[1] || '指定なし');
         }
-      } else if (field.type === 'comment') {
-        input = E('textarea', 'blockui-comment-input', null, {
+      } else if (field.type === 'comment' || field.multiline && /[\r\n]/.test(value)) {
+        input = E('textarea', field.type === 'comment' ? 'blockui-comment-input' : 'blockui-multiline-input', null, {
           ...attrs,
           rows: '1',
           spellcheck: 'false',
@@ -22247,7 +22283,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (old) {
         // Keep the edited body's identity when its heading changes event or actor.
         // Imported and initial bodies may predate explicit script IDs.
-        if (!old.id) old.id = ensureUniqueId('script');
+        const metadata = scriptHeadingMetadata(source, old, next);
+        if (!old.id && (metadata.targetId !== old.targetId || metadata.event !== old.event))
+          old.id = ensureUniqueId('script');
         updateScriptSource(old, source, next);
       }
       else if (source) {
