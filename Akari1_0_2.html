@@ -5295,6 +5295,9 @@ body[data-editor-mode="code"] .side:has(.monitor-window .output-disclosure[open]
     grid-template-rows: minmax(340px, auto);
   }
 }
+
+.reference-issue { padding: 10px; margin: 8px 0; border: 2px solid #9c3434; border-radius: 8px; background: #fff5f5; color: #602020; overflow-wrap: anywhere; }
+.reference-issue ul { margin: 6px 0; padding-left: 24px; }
 </style>
 
 
@@ -8651,7 +8654,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           case 'Say': {
             const v = evalExpression(n.value, ctx);
             if (Array.isArray(v)) throw new AkariError('R411', 'リストはそのまま言えません');
-            this.ui.say?.(ctx.runtimeId, valueText(v), v);
+            this.ui.prepareSpeech?.(v);
+            this.ui.say?.(ctx.runtimeId, valueText(v));
             return;
           }
           case 'Ask': {
@@ -15299,6 +15303,127 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     walk(parsed.ast);
     return [...refs];
   }
+  function projectResourceNodes(project) {
+    const nodes = [], add = (kind, item, ownerId = 'stage') => nodes.push({ key: `${kind}:${item.id}`, kind, id: item.id, name: item.name, ownerId });
+    add('component', project.stage);
+    for (const c of project.components) {
+      add('component', c, c.id);
+      for (const costume of c.costumes || []) add('costume', costume, c.id);
+      for (const d of [...c.localData.variables, ...c.localData.lists]) add('data', d, c.id);
+    }
+    for (const b of project.stage.backdrops) add('backdrop', b);
+    for (const s of project.sounds) add('sound', s);
+    for (const d of [...project.projectData.variables, ...project.projectData.lists]) add('data', d);
+    for (const kind of ['action', 'function']) for (const d of project[kind === 'action' ? 'actions' : 'functions']) add(kind, d);
+    return nodes;
+  }
+  // Code and Block share these parsed semantic references. Unknown source and
+  // computed resource names are explicit uncertainty, never evidence of no use.
+  function buildProjectReferenceGraph(project, { drafts = [] } = {}) {
+    const resources = projectResourceNodes(project), references = [], uncertain = [], symbols = buildSymbols(project);
+    const records = [...sourceRegistry(project), ...drafts];
+    const actor = ref => ref?.kind === 'named' ? ref.targetId || (ref.name === '画面' || ref.name === project.stage.name ? 'stage' : project.components.find(c => c.name === ref.name)?.id) : null;
+    for (const record of records) {
+      const parsed = parseSyntax(record.source, { ...record.context, symbols });
+      const ownerName = record.ownerId === 'stage' ? project.stage.name : project.components.find(c => c.id === record.ownerId)?.name;
+      const location = node => ({ sourceKey: record.key, ownerId: record.ownerId, title: [ownerName, record.title || '本文'].filter(Boolean).join(' / '), line: node?.sourceSpan?.startLine || 1 });
+      if (record.incomplete) uncertain.push({ ...location(), kind: null, reason: '確定していない入力があり、参照先をすべて調べられません' });
+      if (!parsed.ast) { uncertain.push({ ...location(), kind: null, reason: '未完成の本文があり、参照先をすべて調べられません' }); continue; }
+      const local = syntaxItem(record.key, parsed.ast, record.context);
+      const localNames = new Set([...(record.context.args || []), ...local.localVarNames, ...local.localListNames]);
+      const add = (resource, node, binding = 'name') => {
+        const range = SOURCE_RANGES.get(node)?.range;
+        references.push({ ...location(node), resourceKey: resource.key, name: resource.name, binding,
+          ...(range ? { range: { start: range.start, end: range.end } } : {}) });
+      };
+      const named = (kind, expr, ownerId, special = []) => {
+        if (expr?.kind !== 'StringLiteral') {
+          uncertain.push({ ...location(expr), kind, targetOwnerId: ownerId || null, reason: '実行中に決まる名前を使っています' }); return;
+        }
+        if (special.includes(expr.value)) return;
+        for (const r of resources.filter(r => r.kind === kind && r.name === expr.value && (!ownerId || r.ownerId === ownerId))) add(r, expr, 'literal');
+      };
+      const data = (ref, node, ownerId, bound) => {
+        if (!ref?.name || (!ref.qualifier || ref.qualifier === 'exact') && bound.has(ref.name)) return;
+        let matches = resources.filter(r => r.kind === 'data' && r.name === ref.name);
+        if (ref.qualifier === 'project') matches = matches.filter(r => r.ownerId === 'stage');
+        else if (ref.qualifier === 'self') matches = matches.filter(r => ownerId ? r.ownerId === ownerId : r.ownerId !== 'stage');
+        else if (ownerId) { const own = matches.filter(r => r.ownerId === ownerId); matches = own.length ? own : matches.filter(r => r.ownerId === 'stage'); }
+        for (const r of matches) add(r, node);
+      };
+      const walk = (node, ownerId, bound) => {
+        if (!node || typeof node !== 'object') return;
+        const ref = node.heading?.actorRef || node.actorRef;
+        const resolved = actor(ref);
+        if (resolved) {
+          ownerId = resolved;
+          const target = resources.find(r => r.key === 'component:' + resolved);
+          if (target) add(target, node, 'actor');
+        }
+        if (node.kind === 'Hole') uncertain.push({ ...location(node), kind: null, reason: 'まだ選んでいない役割があります' });
+        if (node.kind === 'UserActionCall' || node.kind === 'UserFunctionCall') {
+          const kind = node.kind === 'UserActionCall' ? 'action' : 'function';
+          for (const r of resources.filter(r => r.kind === kind && r.name === node.name)) add(r, node);
+        }
+        if (node.kind === 'VariableRead') data(node, node, ownerId, bound);
+        if (node.target?.name) data(node.target, node, ownerId, bound);
+        if (node.kind === 'LooksCommand' && node.op === 'SET_COSTUME') named('costume', node.args?.[0], ownerId);
+        if (node.kind === 'LooksCommand' && node.op === 'SET_BACKDROP') named('backdrop', node.args?.[0]);
+        if (node.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(node.op)) named('sound', node.args?.[0]);
+        if (node.kind === 'MotionCommand' && node.op === 'POINT_TO') named('component', node.args?.[0], null, ['マウス']);
+        if (node.kind === 'CloneCommand' && node.op === 'CREATE_TARGET') named('component', node.args?.[0]);
+        if (node.kind === 'LooksCommand' && ['SET_TARGET_TEXT', 'SET_INPUT'].includes(node.op)) named('component', node.args?.[0]);
+        if (node.kind === 'SensorRead' && ['INPUT_VALUE', 'DISTANCE_TO', 'TOUCHING'].includes(node.sensor)) named('component', node.arg, null, ['マウス', '端']);
+        for (const [key, value] of Object.entries(node)) {
+          if (['sourceSpan', 'actorRef', 'heading', 'source'].includes(key)) continue;
+          const scoped = key === 'body' && node.kind === 'ForEach' ? new Set([...bound, node.binder]) : bound;
+          if (Array.isArray(value)) value.forEach(child => walk(child, ownerId, scoped));
+          else if (value && typeof value === 'object') walk(value, ownerId, scoped);
+        }
+      };
+      walk(parsed.ast, record.kind === 'script' ? record.ownerId : null, localNames);
+    }
+    return { version: 1, resources, references, uncertain };
+  }
+  function resourceChangeImpact(project, resourceKey, options = {}) {
+    const graph = buildProjectReferenceGraph(project, options), resource = graph.resources.find(r => r.key === resourceKey);
+    if (!resource) throw new AkariError('F503', '変更する参照先がありません');
+    return { resource, references: graph.references.filter(r => r.resourceKey === resourceKey),
+      uncertain: graph.uncertain.filter(r => (!r.kind || r.kind === resource.kind) && (!r.targetOwnerId || r.targetOwnerId === resource.ownerId)) };
+  }
+  function prepareResourceRename(project, resourceKey, newName, options = {}) {
+    const impact = resourceChangeImpact(project, resourceKey, options), resource = impact.resource;
+    if (!['costume', 'backdrop', 'sound'].includes(resource.kind)) throw new AkariError('F503', 'この種類の名前変更には対応する編集画面を使ってください');
+    validateResourceName(newName, '名前');
+    if (newName === resource.name) return cloneDesignProject(project);
+    if (impact.uncertain.length) throw new AkariError('S301', '参照先を調べられない本文があります。先に本文を確定してから名前を変えてください');
+    const next = cloneDesignProject(project), items = resource.kind === 'costume'
+      ? next.components.find(c => c.id === resource.ownerId).costumes : resource.kind === 'backdrop' ? next.stage.backdrops : next.sounds;
+    if (items.some(x => x.id !== resource.id && x.name === newName)) throw new AkariError('F503', '同じ名前があります');
+    const graph = buildProjectReferenceGraph(project, options), grouped = new Map();
+    for (const ref of impact.references) {
+      if (ref.binding !== 'literal' || !ref.range || options.drafts?.some(r => r.key === ref.sourceKey)) throw new AkariError('S301', '書きかけを確定してから名前を変えてください');
+      if (graph.references.some(other => other.sourceKey === ref.sourceKey && other.range?.start === ref.range.start && other.range?.end === ref.range.end && other.resourceKey !== resourceKey))
+        throw new AkariError('S301', '同じ呼び方が複数の参照先を持っています。対象を明示してから名前を変えてください');
+      const edits = grouped.get(ref.sourceKey) || []; if (!edits.some(e => e.start === ref.range.start && e.end === ref.range.end)) edits.push(ref.range); grouped.set(ref.sourceKey, edits);
+    }
+    const replacement = formatExpression({ kind: 'StringLiteral', value: newName });
+    for (const [key, edits] of grouped) {
+      const record = key.startsWith('script:') ? scriptBySourceKey(next, key) : [...next.actions, ...next.functions].find(d => key.endsWith(':' + d.id));
+      if (!record) throw new AkariError('F503', '名前を変える本文がありません');
+      for (const { start, end } of edits.sort((a, b) => b.start - a.start)) {
+        const literal = parseExpression(record.source.slice(start, end), buildSymbols(project));
+        if (literal.kind !== 'StringLiteral' || literal.value !== resource.name) throw new AkariError('F503', '参照箇所の位置を確認できません');
+        record.source = record.source.slice(0, start) + replacement + record.source.slice(end);
+      }
+      // Only a literal token changed; document ownership and unit IDs stay fixed.
+      if (record.document) record.document.revision++;
+    }
+    items.find(x => x.id === resource.id).name = newName;
+    validateDesignProject(next);
+    return next;
+  }
+
   function parseProjectSyntax(project) {
     const symbols = buildSymbols(project),
       items = [],
@@ -17480,13 +17605,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         await localCache.prepare(session.project, session.requirements, token);
         if (token !== epoch) return;
         runtime = new core.RuntimeModel(session.project, {}, localCache);
+        let speechValue;
         const br = {
           render: requestPaint,
           penLine: view.penLine,
           penClear: view.clearPen,
           stamp: view.stamp,
-          say: (id, text, value) => {
+          prepareSpeech: value => { speechValue = value; },
+          say: (id, text) => {
             flush();
+            const value = speechValue; speechValue = undefined;
             view.showBubble(id, text, value);
           },
           ask,
@@ -24927,6 +25055,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (modelLocked() || selectedId === 'stage' || !flushActiveEditor()) return;
       const c = componentById(selectedId);
       if (!c) return;
+      if (!allowResourceDelete('component:' + c.id, $('#properties'), c.id)) return;
       if (!confirm('部品「' + c.name + '」を削除しますか？')) return;
       clearTimeout(historyTimer);
       pushHistoryNow();
@@ -25638,6 +25767,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
     }
     function bridge() {
+      let speechValue;
       return {
         render: () => requestRuntimePaint(3),
         allStopped: () => {
@@ -25650,8 +25780,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         penLine: stageView.penLine,
         penClear: stageView.clearPen,
         stamp: stageView.stamp,
-        say: (rid, text, value) => {
+        prepareSpeech: value => { speechValue = value; },
+        say: (rid, text) => {
           flushRuntimePaint();
+          const value = speechValue; speechValue = undefined;
           showBubble(rid, text, value);
         },
         beforeStatement: (task, node) => {
@@ -26558,6 +26690,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           del.textContent = '削除';
           del.onclick = () => {
             if (modelLocked()) return;
+            if (!allowResourceDelete('data:' + d.id, body)) return;
             arr.splice(arr.indexOf(d), 1);
             markDirty();
             renderDataModal();
@@ -26821,7 +26954,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (modelLocked() || !flushActiveEditor()) return;
       const id = callableDraftCore.editId,
         d = [...project.actions, ...project.functions].find((x) => x.id === id);
-      if (!d || !confirm(`「${d.name}」を削除しますか？`)) return;
+      if (!d) return;
+      const kind = project.actions.some(x => x.id === id) ? 'action' : 'function';
+      if (!allowResourceDelete(`${kind}:${id}`, $('#procModal .dialog-body'))) return;
+      if (!confirm(`「${d.name}」を削除しますか？`)) return;
       clearTimeout(historyTimer);
       pushHistoryNow();
       project.actions = project.actions.filter((x) => x.id !== id);
@@ -26832,6 +26968,45 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       markDirty();
       pushHistoryNow();
       refreshEditor();
+    }
+    function resourceDraftRecords() {
+      const drafts = [];
+      for (const binding of [mainEditor, draftEditor]) {
+        const session = binding.session;
+        if (!session?.pendingEdit && !session?.blockDraft) continue;
+        drafts.push({ key: 'draft-reference:' + binding.kind, ownerId: bindingContext(binding).targetId,
+          kind: binding.kind === 'script' ? 'script' : 'draft', title: '編集中の本文',
+          incomplete: true, source: session.blockDraft?.source || binding.textarea.value,
+          context: bindingContext(binding) });
+      }
+      if (hasCallableDraft() && !drafts.some(d => d.key === 'draft-reference:draft'))
+        drafts.push({ key: 'draft-reference:callable', ownerId: 'stage', kind: 'draft', title: '編集中の定義',
+          source: callableDraftCore.source, context: bindingContext(draftEditor) });
+      return drafts;
+    }
+    function showResourceImpact(impact, root, action = '削除') {
+      root.querySelector('.reference-issue')?.remove();
+      const box = document.createElement('div'), title = document.createElement('p'), list = document.createElement('ul');
+      box.className = 'reference-issue'; box.setAttribute('role', 'alert'); box.tabIndex = -1;
+      title.textContent = `「${impact.resource.name}」は${action}できません。参照先の本文を確認してください。`;
+      for (const row of [...impact.references, ...impact.uncertain]) {
+        const item = document.createElement('li');
+        item.textContent = `${row.title} ${row.line}行目：${row.reason || 'この名前を使っています'}`;
+        list.appendChild(item);
+      }
+      box.append(title, list); root.prepend(box); box.focus();
+      log(title.textContent, 'error');
+    }
+    function allowResourceDelete(key, root, removedOwner = null) {
+      const impact = resourceChangeImpact(project, key, { drafts: resourceDraftRecords() });
+      impact.references = impact.references.filter(r => r.sourceKey !== key);
+      impact.uncertain = impact.uncertain.filter(r => r.sourceKey !== key);
+      if (removedOwner) {
+        impact.references = impact.references.filter(r => r.ownerId !== removedOwner);
+        impact.uncertain = impact.uncertain.filter(r => r.ownerId !== removedOwner);
+      }
+      if (!impact.references.length && !impact.uncertain.length) return true;
+      showResourceImpact(impact, root); return false;
     }
     function renderAppearance() {
       const body = $('#assetBody');
@@ -26855,12 +27030,18 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             validateResourceName(v, label + '名');
             if (arr.some((x) => x !== obj && x.name === v))
               throw new AkariError('F503', `${label}名が重複しています`);
-            obj.name = v;
+            const kind = label === '衣装' ? 'costume' : label === '背景' ? 'backdrop' : 'sound';
+            const options = { drafts: resourceDraftRecords() }, impact = resourceChangeImpact(project, `${kind}:${obj.id}`, options);
+            if (impact.uncertain.length) { showResourceImpact(impact, body, '名前変更'); return; }
+            const next = prepareResourceRename(project, `${kind}:${obj.id}`, v, options);
+            clearTimeout(historyTimer); pushHistoryNow(); project = next;
             markDirty();
+            pushHistoryNow();
+            renderAll(); loadEditor();
             renderAppearance();
             refreshEditor();
           } catch (e) {
-            log(`${e.code || ''} ${e.message}`, 'error');
+            showResourceImpact({resource:obj,references:[],uncertain:[{title:'名前の変更',line:1,reason:e.message}]},body,'名前変更');
           }
         };
       if (hint)
@@ -26946,6 +27127,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           del.disabled = project.stage.backdrops.length <= 1 || modelLocked();
           del.onclick = () => {
             if (modelLocked()) return;
+            if (!allowResourceDelete('backdrop:' + b.id, body)) return;
             project.stage.backdrops.splice(project.stage.backdrops.indexOf(b), 1);
             if (project.stage.backdropId === b.id)
               project.stage.backdropId = project.stage.backdrops[0].id;
@@ -27003,6 +27185,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             del.disabled = c.costumes.length <= 1 || modelLocked();
             del.onclick = () => {
               if (modelLocked()) return;
+              if (!allowResourceDelete('costume:' + co.id, body)) return;
               c.costumes.splice(c.costumes.indexOf(co), 1);
               if (c.costumeId === co.id) c.costumeId = c.costumes[0].id;
               compactCurrentAssets();
@@ -27057,6 +27240,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           del.disabled = modelLocked();
           del.onclick = () => {
             if (modelLocked()) return;
+            if (!allowResourceDelete('sound:' + snd.id, body)) return;
             stopPreview();
             project.sounds.splice(project.sounds.indexOf(snd), 1);
             compactCurrentAssets();
@@ -28172,6 +28356,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     updateScriptSource,
     sourceRegistry,
     sourceReferences,
+    buildProjectReferenceGraph,
+    resourceChangeImpact,
+    prepareResourceRename,
     refreshEditorSession,
     prepareBlockEdit,
     parseSyntax,

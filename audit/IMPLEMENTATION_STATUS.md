@@ -18,7 +18,7 @@ counts and a successful composition subset do not establish release readiness.
 | FIX-010 event Block edit | Stable script identity and unit identity core checks | All heading-only and body event-change GUI cases |
 | FIX-011 continuous quantity edit | Existing unit gates and continuous parser variants | Same-session edits, cancel, run across role orders |
 | FIX-012 declared data units | Declared numeric initial values receive the declared unit; mismatches reject atomically | Same-head GUI zero-point and three-increment trace |
-| FIX-013 referenced assets | Existing current/history asset behavior | Name-reference deletion graph, rename and uncertain drafts |
+| FIX-013 referenced assets | Shared semantic reference graph, deletion impact and uncertainty, literal-only costume/background/sound rename; 15 core cases | Same-head native deletion/rename/cancel/Undo/save evidence; broader actor/definition rename contract |
 | FIX-014 intent search | Existing synonyms | All eight required searches with bindings and reasons |
 | FIX-015 Return hole | Palette insertion now produces a hole | Same-head native save/readback evidence |
 | FIX-016 multiline strings | Lexer/codec/source core; three viewport native text edits | Draft save and Undo/Redo variants |

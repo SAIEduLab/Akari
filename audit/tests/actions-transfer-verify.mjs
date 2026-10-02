@@ -5,13 +5,13 @@ import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {transferFixtures,fixturePins,compositionIds,verifyTransferReport,verifyValuesReport,verifyCompositionReport} from '../lib/actions-transfer-contract.mjs';
-import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser} from '../lib/semantic-extension-contract.mjs';
+import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser,resourceReferenceIds,resourceBrowserIds,verifyResourceBrowser} from '../lib/semantic-extension-contract.mjs';
 const dir=path.resolve(process.argv[2]),results=[],negative=[];
-for(const [file,verify]of [['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser]]){
+for(const [file,verify]of [['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser],['resource-references-browser.json',verifyResourceBrowser]]){
  try{const r=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verify(r)});}
  catch(error){results.push({file,status:'FAIL',error:error.message});}
 }
-for(const [file,schema,ids]of [['natural-roles.json','akari-natural-roles-v1',naturalRoleIds],['document-units.json','akari-document-units-v1',documentUnitIds],['draft-persistence.json','akari-draft-persistence-v1',draftPersistenceIds],['data-form-values.json','akari-data-form-values-v1',dataFormIds],['numeric-display.json','akari-numeric-display-v1',numericDisplayIds]]){
+for(const [file,schema,ids]of [['natural-roles.json','akari-natural-roles-v1',naturalRoleIds],['document-units.json','akari-document-units-v1',documentUnitIds],['draft-persistence.json','akari-draft-persistence-v1',draftPersistenceIds],['data-form-values.json','akari-data-form-values-v1',dataFormIds],['numeric-display.json','akari-numeric-display-v1',numericDisplayIds],['resource-references.json','akari-resource-references-v1',resourceReferenceIds]]){
  try{
   const report=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verifySemanticExtension(report,schema,ids)});
   for(const [kind,mutate]of [['missing',r=>r.results.pop()],['wrong-snapshot',r=>r.snapshot.productSha256='0'.repeat(64)],['failed',r=>r.results[0].status='FAIL']]){
@@ -75,6 +75,14 @@ try{
  }
 }catch(error){results.push({file:'numeric-validator-negative',status:'FAIL',error:error.stack});}
 try{
+ const observed=[{deleteRefused:true,cancelUnchanged:true,referenceOnlyRename:true,undoRedo:true,saveExact:true,assetsPreserved:true},{uncertaintyShown:true,projectHistoryAssetsUnchanged:true},{unusedDeletionAllowed:true,undoRestoresProjectAndAssets:true},{referenceShown:true,projectHistoryAssetsUnchanged:true}];
+ const control={schema:'akari-resource-references-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:resourceBrowserIds.map((id,i)=>({id,status:'PASS',observed:observed[i]}))};
+ verifyResourceBrowser(control);
+ for(const[id,mutate]of Object.entries({'resource-deleted-reference':r=>r.results[0].observed.deleteRefused=false,'resource-uncertainty-hidden':r=>r.results[1].observed.uncertaintyShown=false,'resource-blocked-unused':r=>r.results[2].observed.unusedDeletionAllowed=false,'resource-changed-history':r=>r.results[3].observed.projectHistoryAssetsUnchanged=false})){
+  const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyResourceBrowser(bad));negative.push({id,rejected:true});
+ }
+}catch(error){results.push({file:'resource-validator-negative',status:'FAIL',error:error.stack});}
+try{
  const control=syntheticComposition();verifyCompositionReport(control);
  const mutations={
   'failed-status':r=>r.status='FAIL','missing-case':r=>r.results.pop(),'duplicate-case':r=>r.results[1]=r.results[0],
@@ -101,7 +109,7 @@ try{
   }
  }
 }catch(error){results.push({file:'validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===53?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===60?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;

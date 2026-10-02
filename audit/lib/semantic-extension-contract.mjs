@@ -63,3 +63,12 @@ export function verifyNumericBrowser(report){
  assert.deepEqual(report.results.slice(8).map(r=>r.observed),[
   {shown:'0.5',raw:'0.49999999999999994',detailExact:true},{shown:'0.5',raw:'0.49999999999999994',offline:true}]);return count;
 }
+export const resourceReferenceIds=[...['costume','backdrop','sound','actor','sensor','action','function','local-data','list'].map(s=>'references/'+s),
+ 'references/quoted-prose-is-not-a-reference','references/shadowed-project-data','references/unfinished-and-dynamic-are-uncertain','references/rename-exact-resource-only','references/rename-duplicate-and-shared-context-rejected','references/rename-background-and-sound'];
+export const resourceBrowserIds=['references/browser-costume-delete-rename-undo','references/browser-uncertain-source-refuses-delete','references/browser-unused-delete-undo','references/browser-data-delete-refused'];
+export function verifyResourceBrowser(report){
+ const count=verifySemanticExtension(report,'akari-resource-references-browser-v1',resourceBrowserIds);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);
+ assert.equal(report.environment.browser,'140.0.7339.207');assert.equal(report.environment.playwright,'1.55.0');
+ assert.deepEqual(report.results.map(r=>r.observed),[{deleteRefused:true,cancelUnchanged:true,referenceOnlyRename:true,undoRedo:true,saveExact:true,assetsPreserved:true},
+  {uncertaintyShown:true,projectHistoryAssetsUnchanged:true},{unusedDeletionAllowed:true,undoRestoresProjectAndAssets:true},{referenceShown:true,projectHistoryAssetsUnchanged:true}]);return count;
+}

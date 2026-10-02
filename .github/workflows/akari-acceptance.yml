@@ -42,6 +42,8 @@ jobs:
         run: node audit/tests/data-form-values.mjs audit-evidence/acceptance/data-form-values.json
       - name: Verify display precision without changing values
         run: node audit/tests/numeric-display.mjs audit-evidence/acceptance/numeric-display.json
+      - name: Verify resource references and atomic renames
+        run: node audit/tests/resource-references.mjs audit-evidence/acceptance/resource-references.json
       - name: Require original composition acceptance, meaning and save roundtrip
         if: always()
         run: node audit/tests/composition-acceptance.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/composition.json
@@ -54,6 +56,9 @@ jobs:
       - name: Verify numeric displays, actual values and the offline player
         if: always()
         run: node audit/tests/numeric-display-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/numeric-display-browser.json
+      - name: Protect referenced resources through native editing and undo
+        if: always()
+        run: node audit/tests/resource-references-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/resource-references-browser.json
       - name: Independently verify complete results and validator rejection ability
         if: always()
         run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance

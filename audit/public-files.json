@@ -253,6 +253,8 @@
     "audit/tests/numeric-display-browser.mjs",
     "audit/tests/numeric-display.mjs",
     "audit/tests/release-policy-negative.mjs",
+    "audit/tests/resource-references-browser.mjs",
+    "audit/tests/resource-references.mjs",
     "audit/tests/review-actor.mjs",
     "audit/tests/review-first-use.mjs",
     "audit/tests/review-harness-negative.mjs",

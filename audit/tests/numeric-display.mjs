@@ -27,7 +27,7 @@ check('display/literal-file-and-runtime-unchanged',()=>{
  const source='0.12345678901234566を言う。',project=A.makeDefaultProject();project.scripts=[{id:'display-raw',targetId:'sprite-1',event:'start',source}];project.projectData.variables=[{id:'display-number',name:'実値',initialValue:0.12345678901234566}];
  const syntax=A.parseSyntax(source,{targetId:'sprite-1',event:'start',symbols:A.buildSymbols(project)});assert.ok(syntax.ast);assert.ok(A.formatScript(syntax.ast).includes('0.12345678901234566'));
  const file=A.serializeProject(project,A.makeDefaultAssetStore());assert.ok(file.includes('0.12345678901234566'));
- const compiled=A.compileProject(project),model=new A.RuntimeModel(project,{}),speech=[],scheduler=new A.EventScheduler(project,compiled,model,{say:(id,text,value)=>speech.push({text,value}),runtimeError:(_,e)=>{throw e;}});scheduler.schedule=()=>{};model.now=()=>0;
+ let speechValue;const compiled=A.compileProject(project),model=new A.RuntimeModel(project,{}),speech=[],scheduler=new A.EventScheduler(project,compiled,model,{prepareSpeech:value=>{speechValue=value;},say:(...args)=>{assert.equal(args.length,2,'existing speech notification keeps its two-argument contract');speech.push({text:args[1],value:speechValue});},runtimeError:(_,e)=>{throw e;}});scheduler.schedule=()=>{};model.now=()=>0;
  try{scheduler.start();let n=0;while(scheduler.ready.length&&n++<50)scheduler.runTurn(true);assert.ok(n<50);}finally{scheduler.stop();}
  assert.deepEqual(plain(speech),[{text:'0.12345678901234566',value:0.12345678901234566}]);assert.equal(model.projectVars.get('実値'),0.12345678901234566);return{source,fileExact:true,speech:plain(speech),valueUnchanged:true};
 });
