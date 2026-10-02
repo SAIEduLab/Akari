@@ -389,3 +389,13 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 実行の入口は `audit/lib/gate-contract.mjs`、新結果のvalidatorは `audit/lib/japanese-gate-contract.mjs`。期待集合はrunnerの観測出力から縮小せず、意図89 ID・実行境界20 IDを明示し、FAIL / PENDING / INCOMPLETE / NOT_RUN / timeout / 例外をPASSへ変換しない。
 
 ネイティブタブ可視性の補助行 `NATIVE-TAB-VISIBILITY-OBSERVATION` は `pass: null` / `UNVERIFIED` を保持し、20必須試験の成功数に含めない。aggregateはこの既知の観測行だけを別区分で許容し、PASSへの昇格や必須試験の未検証は拒否する。
+
+## 固定制作意図の成功必須ゲート
+
+承認された追加仕様と完了条件は `audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md`、`audit/reviewed/PUBLIC_UX_ACTIONS_ACCEPTANCE_PLAN.md` に記録する。これらは追加実装の要求であり、文書の取込みだけを実装済み・検証済みとは扱わない。凍結した原作文と既存期待値は維持する。`natural-roles.mjs` は3対象名、0/1/複数/小数/負の距離、4種類の文字結合、計算、手順回数、分身回数と原子的拒否、継続移動の表現差を実製品のparser/codec/runtimeで検証する。Nodeによるこの結果から画面操作の成功を主張しない。
+
+`audit/ACTIONS_TRANSFER.md` はC74/Q76/E32/L38、別40能力、S164と既存Actionsの対応、保証範囲、実操作に残すUX判断を示す。全260能力とschemaの424行を照合し、別40能力をschemaとの重複だけでカバー扱いしない。この照合は登録検査であり、実行成功とは扱わない。追加Q76は独立した値・単位・型とsource/block/generated-sourceの意味互換を実候補で確認し、Nodeからネイティブ入力の成功を主張しない。
+
+`akari-acceptance.yml` の `composition-acceptance` は別の必須チェックである。事前に書かれたI07〜I12原作文、I10の手順・計算定義、独立期待動作を改変せず固定し、15結果すべてに受入・意味・本文選択の成功を要求する。pending原文の保護・安全拒否はこのゲートの制作成功ではない。元の89意図チェックと36段階、全既存期待値・スキーマ/境界/保存/codec群を維持する。
+
+同workflowの集約は当該製品/公開入力snapshot、原文SHA、固定環境、完全な結果集合、観測値・時刻・source/block traceを再検証する。例外・欠落・skip・受理失敗をPASSにしない。validatorの合成controlは拒否能力の検査であり、製品実行結果には加算しない。既存Akari auditのgreenだけで、この追加必須チェックやUX監査の合格を主張しない。受入FAILが既知製品不具合による場合、原文の変更やskipでgreen化せず製品修正へ戻す。

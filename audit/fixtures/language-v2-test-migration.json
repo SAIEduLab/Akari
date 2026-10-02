@@ -46884,7 +46884,7 @@
     {
       "path": "audit/tests/editor-browser.mjs",
       "originalSha256": "ccc3158ce84f2c51127329d2b9ab48a99f0582874bfcfd8ad584bf4a31f718fb",
-      "candidateSha256": "2265b4d11e324f09c06f0a5c0cbc0201614bbd2a8a167686dda58fcac6d904ad",
+      "candidateSha256": "d62b14e88fd00ab6d2c512c6e50adfedf9e3705e8a48faa6933349bab66a28ab",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-browser.mjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -46900,7 +46900,7 @@
     {
       "path": "audit/browser/cases/browser-boundaries.cjs",
       "originalSha256": "0fae3abb2408f97b95f20a42c60c8e4354fde1b9affa5c42e94d5f26d309c9c8",
-      "candidateSha256": "fec8dd78d801851999e8e14f21c843bb371ff2e8438afdf8080c3e200ffa2673",
+      "candidateSha256": "8a1c84f59fabeb41a4158d831c056facf6585cf34e5b89ad74f540666e636889",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-boundaries.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -46916,7 +46916,7 @@
     {
       "path": "audit/browser/cases/browser-design-limits.cjs",
       "originalSha256": "18b307d10edb81a81c55847952d4908d5882b7a70b069f3fe5003e1a3dfb276e",
-      "candidateSha256": "6d53e6d7495fe8069cdf452dff4c0f16ffed8390007161c1851e7497db650e60",
+      "candidateSha256": "f313ad37f9560267dc23954e1185c9ef2b20b7ea64d5660b9f3c145ef54bad29",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-design-limits.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -46956,7 +46956,7 @@
     {
       "path": "audit/browser/cases/browser-product.cjs",
       "originalSha256": "35ce185d849c4b997f7825639ff23618e91c7441e1795805c4e6260fdc00893c",
-      "candidateSha256": "32e7a20ff67d3741b093586a5a350ceb2ea1b909f6ed56cd775f0527521e34b8",
+      "candidateSha256": "f7d2a7395cfea2f3792796699a12f1acd7be96d284148df4dc956f9cb4d99407",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-product.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -46980,7 +46980,7 @@
     {
       "path": "audit/browser/cases/browser-session.cjs",
       "originalSha256": "14b85a4ed08fa4e5924fd4c4dce4668e613a755c0faaaf9bb31b49b143cd03a2",
-      "candidateSha256": "a0c88b6e847bca294c2a99134a147e88f128fdfe502b700aab2ddd324135cdfb",
+      "candidateSha256": "e0079530882bc7381b86b1583e431f9adfc9320c4a14217be6bf9ce48cbc234c",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-session.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -46988,7 +46988,7 @@
     {
       "path": "audit/browser/cases/browser-storage-media.cjs",
       "originalSha256": "9a93019db1d3969f54f5ed1e52099a421184b0ab1419e0ebab871b5b08787d3c",
-      "candidateSha256": "a7506e03532fea9c99e94dcb8695ba41f65882f28fb299d80197811c575f9874",
+      "candidateSha256": "72e40c8b74cfac501912616b1b50588f6d577122e514948e4eee376acab25121",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-storage-media.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -47148,7 +47148,7 @@
     {
       "path": "audit/suites/runBlockCodecTests.js",
       "originalSha256": "fbad8adae818cce2342fa499c8aef08af9141cfa8e137f1e7d4f8082c6e0ffcc",
-      "candidateSha256": "28908c8c300372b8cd8b324f8c8f643e7a872e42742882b01f01c4a68640f3ab",
+      "candidateSha256": "50b3246fb1a2b0310c688d61762723c842432ce9a70574ec70b25fb9f9db96ab",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/runBlockCodecTests.js",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"

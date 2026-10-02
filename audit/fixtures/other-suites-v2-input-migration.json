@@ -15,7 +15,7 @@
       "path": "audit/suites/runBlockCodecTests.js",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/runBlockCodecTests.js",
       "originalSha256": "fbad8adae818cce2342fa499c8aef08af9141cfa8e137f1e7d4f8082c6e0ffcc",
-      "candidateSha256": "28908c8c300372b8cd8b324f8c8f643e7a872e42742882b01f01c4a68640f3ab",
+      "candidateSha256": "50b3246fb1a2b0310c688d61762723c842432ce9a70574ec70b25fb9f9db96ab",
       "testCount": 170,
       "stableIdsPreserved": true,
       "schemaCoverage": {
@@ -75,9 +75,23 @@
   ],
   "explicitlyApprovedContractChanges": [
     {
-      "testIds": ["FORMAT-EXECUTABLE-CONTRACT", "RELEASE-EXECUTABLE-MALFORMED", "RELEASE-EXECUTABLE-ROUNDTRIP"],
-      "old": {"languageContractId": 1, "runtimeContractId": 1, "programFormatVersion": 1, "projectFormatVersion": 1},
-      "new": {"languageContractId": 2, "runtimeContractId": 2, "programFormatVersion": 2, "projectFormatVersion": 2},
+      "testIds": [
+        "FORMAT-EXECUTABLE-CONTRACT",
+        "RELEASE-EXECUTABLE-MALFORMED",
+        "RELEASE-EXECUTABLE-ROUNDTRIP"
+      ],
+      "old": {
+        "languageContractId": 1,
+        "runtimeContractId": 1,
+        "programFormatVersion": 1,
+        "projectFormatVersion": 1
+      },
+      "new": {
+        "languageContractId": 2,
+        "runtimeContractId": 2,
+        "programFormatVersion": 2,
+        "projectFormatVersion": 2
+      },
       "preservedMeaning": "Continue checking exact product contract identity, project serialization/restoration, malformed contract rejection, and executable roundtrip under the approved v2 contract."
     },
     {
@@ -89,13 +103,21 @@
   ],
   "changes": [
     {
-      "testIds": ["syntax errors discard entire AST", "syntax preserves original text and normalized comment fields", "equivalence checks every annotation and else field", "equivalence permits only comment closing-boundary reassociation"],
+      "testIds": [
+        "syntax errors discard entire AST",
+        "syntax preserves original text and normalized comment fields",
+        "equivalence checks every annotation and else field",
+        "equivalence permits only comment closing-boundary reassociation"
+      ],
       "oldText": "もし 真なら、次のことをする",
       "newText": "もし 条件（条件の答え（あてはまる））が成り立つなら、",
       "preservedMeaning": "The true condition and branch structure remain the same, written with the v2 explicit condition-answer value and role grammar."
     },
     {
-      "testIds": ["equivalence permits only comment closing-boundary reassociation", "equivalence preserves names scopes and parser negative-number shape"],
+      "testIds": [
+        "equivalence permits only comment closing-boundary reassociation",
+        "equivalence preserves names scopes and parser negative-number shape"
+      ],
       "oldText": "次のことを2回くり返す / 点数と言う / 【点数】と言う / －2＾2と言う",
       "newText": "2回くり返す / 点数の値を言う / 【点数】の値を言う / （－2＾2）の値を言う",
       "preservedMeaning": "Retain repeat count, data lookup, explicit-name equivalence, and negative-expression AST-shape coverage using canonical v2 forms."
@@ -119,7 +141,11 @@
       "preservedMeaning": "Retain collisions between the foreach binder and existing argument/local variable/local list scopes and diagnostic line/AST assertions."
     },
     {
-      "testIds": ["AST analysis uses edited declarations instead of hidden source", "AST analysis checks caller context and purity without execution", "equivalence preserves names scopes and parser negative-number shape"],
+      "testIds": [
+        "AST analysis uses edited declarations instead of hidden source",
+        "AST analysis checks caller context and purity without execution",
+        "equivalence preserves names scopes and parser negative-number shape"
+      ],
       "oldText": "計算（）と言う; 0を返す; 動く（）を実行する; 何もしない; 1を返す; 2を返す",
       "newText": "（【計算】で求めた答え）を言う; 0を答えとして返す; 【動く】という手順を行う; 何もしない; 1を答えとして返す; 2を答えとして返す",
       "preservedMeaning": "Retain declaration edits, caller-context, purity, incomplete-function, and multiple-return diagnostic assertions."
@@ -131,43 +157,74 @@
       "preservedMeaning": "Keep command catalogue coverage, nested branches/loops, foreach scope, action/function invocation, arithmetic associativity, scoped reads, comments, and AST-format-block roundtrips."
     },
     {
-      "testIds": ["TEST-BLOCK-SCHEMA ContinuousRule", "TEST-BLOCK-SCHEMA Script", "TEST-BLOCK-SCHEMA Hole:*", "TEST-BLOCK-ROUNDTRIP"],
+      "testIds": [
+        "TEST-BLOCK-SCHEMA ContinuousRule",
+        "TEST-BLOCK-SCHEMA Script",
+        "TEST-BLOCK-SCHEMA Hole:*",
+        "TEST-BLOCK-ROUNDTRIP"
+      ],
       "oldText": "schema-category inputs used expression children; standalone statements were reparsed as scripts; new rule/hole schemas had no category-aware context",
       "newText": "rule inputs use ContinuousRule children; category rule formatting uses Script.rules; holes roundtrip under explicit allowHoles draft context and reject normal encode/decode; WaitBroadcastGroup has a preceding Broadcast in a dedicated canonical roundtrip fixture",
       "preservedMeaning": "Preserve schema, block-tree and source-format coverage while satisfying required v2 role connections and intentional draft constraints."
     },
     {
-      "testIds": ["CONDITION count-to-three independent result", "CONDITION until-ten without optional suffix", "CONDITION predicate inflection matrix and stable formatting", "CONDITION malformed forms rejected"],
+      "testIds": [
+        "CONDITION count-to-three independent result",
+        "CONDITION until-ten without optional suffix",
+        "CONDITION predicate inflection matrix and stable formatting",
+        "CONDITION malformed forms rejected"
+      ],
       "oldText": "点数 threshold expressions without a unit; 端に触れている/端に触れる conditions; 真あいだ malformed-form fixture",
       "newText": "point thresholds explicitly use 点; boundary predicates use 画面の端にふれる forms; malformed Boolean-loop fixture uses 条件の答え（あてはまる）あいだ",
       "preservedMeaning": "Retain the numeric boundary, state truth table, loop/wait inflection, malformed-form rejection and runtime evaluation checks with current canonical vocabulary."
     },
     {
-      "testIds": ["AST analysis checks caller context and purity without execution", "NAME literal words require explicit data quoting in every scope", "NAME particle-containing callable and arguments", "ERROR nested functions preserve inner failure and both frames", "LIMIT expression nesting and function nontermination are bounded"],
+      "testIds": [
+        "AST analysis checks caller context and purity without execution",
+        "NAME literal words require explicit data quoting in every scope",
+        "NAME particle-containing callable and arguments",
+        "ERROR nested functions preserve inner failure and both frames",
+        "LIMIT expression nesting and function nontermination are bounded"
+      ],
       "oldText": "quoted callable reads and returns used the legacy callable parentheses/value-return spellings",
       "newText": "function values use `【name】で求めた答え`, optional named values use `値を名前として、…`, and function definitions use `値を答えとして返す`",
       "preservedMeaning": "Keep exact-name quoting, call arity, nested return/frame, purity and nontermination assertions."
     },
     {
-      "testIds": ["QUESTION duplicate reply cannot answer another queued question", "STOP clears questions timers all waits and physical input", "AUDIO unrelated completion cannot release a waiter"],
+      "testIds": [
+        "QUESTION duplicate reply cannot answer another queued question",
+        "STOP clears questions timers all waits and physical input",
+        "AUDIO unrelated completion cannot release a waiter"
+      ],
       "oldText": "legacy question request-and-wait combined form; sound tone has explicit trailing wait phrase",
       "newText": "question uses `とたずねて、答えを待つ`; blocking tone uses `音を鳴らす`, with nonblocking tone represented by the paired start form in v2",
       "preservedMeaning": "Preserve queued-question ownership, task blocking, sound completion identity and stop/cancel assertions."
     },
     {
-      "testIds": ["NAME qualified escaping and canonical formatting", "NAME literal words require explicit data quoting in every scope", "FORMAT independent string Unicode and punctuation preservation", "EXPORT deterministic runtime result equals design runtime"],
+      "testIds": [
+        "NAME qualified escaping and canonical formatting",
+        "NAME literal words require explicit data quoting in every scope",
+        "FORMAT independent string Unicode and punctuation preservation",
+        "EXPORT deterministic runtime result equals design runtime"
+      ],
       "oldText": "data/sensor/builtin expression is emitted as a bare `…と言う` source fragment",
       "newText": "the say fixture helper keeps explicit `「…」と言う` dialogue intact and emits other values as `(expression)の値を言う`",
       "preservedMeaning": "Continue testing literal-data separation, exact Unicode and punctuation, and deterministic expression values."
     },
     {
-      "testIds": ["HINT dynamic argument list operations and lexical locals", "HINT function declaration and return positions", "HINT generated names stay valid through collision boundary"],
+      "testIds": [
+        "HINT dynamic argument list operations and lexical locals",
+        "HINT function declaration and return positions",
+        "HINT generated names stay valid through collision boundary"
+      ],
       "oldText": "数一覧を空にする; 旧ローカル変数宣言と各要素反復",
       "newText": "数一覧の中身を全部消す; v2 scoped variable declaration and explicit foreach binder declaration",
       "preservedMeaning": "Retain enabled list-operation candidates, argument/local name collision boundaries, binder visibility and function return availability."
     },
     {
-      "testIds": ["SCHEDULER condition failure stops before another task can run"],
+      "testIds": [
+        "SCHEDULER condition failure stops before another task can run"
+      ],
       "oldText": "条件（1÷点数が0と同じ）が成り立つまで待つ",
       "newText": "条件（（1÷点数）が0と同じ）が成り立つまで待つ",
       "preservedMeaning": "Keep the division-by-zero runtime failure and scheduler ordering check while explicitly grouping the arithmetic operand."
@@ -185,19 +242,35 @@
       "preservedMeaning": "Retain truth-table, predicate inflection, runtime evaluation, and stable-format assertions with canonical condition values."
     },
     {
-      "testIds": ["CONDITION count-to-three independent result", "CONDITION until-ten without optional suffix", "FORMAT empty branches nested loops and every boundary comment", "EXPORT deterministic runtime result equals design runtime", "LIMIT expression nesting and function nontermination are bounded"],
+      "testIds": [
+        "CONDITION count-to-three independent result",
+        "CONDITION until-ten without optional suffix",
+        "FORMAT empty branches nested loops and every boundary comment",
+        "EXPORT deterministic runtime result equals design runtime",
+        "LIMIT expression nesting and function nontermination are bounded"
+      ],
       "oldText": "次のことを2回/3回くり返す; 次のことをずっとくり返す; 点数が3/10より小さい; 端に触れている",
       "newText": "2回/3回くり返す; ずっとくり返す; 点数が3点/10点より小さい; 画面の端にふれている",
       "preservedMeaning": "Keep the original iteration counts, nesting, nontermination, runtime state and serialization assertions."
     },
     {
-      "testIds": ["NAME qualified escaping and canonical formatting", "NAME particle-containing callable and arguments", "ERROR action arguments local9 correct line and detached state", "ERROR nested functions preserve inner failure and both frames"],
+      "testIds": [
+        "NAME qualified escaping and canonical formatting",
+        "NAME particle-containing callable and arguments",
+        "ERROR action arguments local9 correct line and detached state",
+        "ERROR nested functions preserve inner failure and both frames"
+      ],
       "oldText": "expression/result used as a value-taking action or function call with legacy parentheses and generic return",
       "newText": "named values use ‘値を…として、【手順】という手順を行う’; function results use ‘（…で求めた答え）’; definitions return with ‘…を答えとして返す’",
       "preservedMeaning": "Preserve action argument order/frames, lexical scoping, nested function failures, return values and qualified-name behavior."
     },
     {
-      "testIds": ["HINT dynamic argument list operations and lexical locals", "HINT function declaration and return positions", "HINT generated names stay valid through collision boundary", "HINT unfinished programs remain inspectable"],
+      "testIds": [
+        "HINT dynamic argument list operations and lexical locals",
+        "HINT function declaration and return positions",
+        "HINT generated names stay valid through collision boundary",
+        "HINT unfinished programs remain inspectable"
+      ],
       "oldText": "local declarations and list iteration used legacy variable/list/foreach syntax",
       "newText": "local declarations use ‘この中だけで使う変数…’; iteration introduces its binder with ‘この中では、今見ているものを…と呼ぶ’",
       "preservedMeaning": "Retain hint availability, collision boundaries, editing positions, lexical local scope, and unfinished-source inspection assertions."
@@ -209,7 +282,10 @@
       "preservedMeaning": "Keep the enabled list-clear hint assertion for the dynamic list argument, expressed in the canonical v2 list operation form."
     },
     {
-      "testIds": ["QUESTION duplicate reply cannot answer another queued question", "STOP clears questions timers all waits and physical input"],
+      "testIds": [
+        "QUESTION duplicate reply cannot answer another queued question",
+        "STOP clears questions timers all waits and physical input"
+      ],
       "oldText": "「A」とたずねる / 「B」とたずねる",
       "newText": "「A」とたずねて、答えを待つ / 「B」とたずねて、答えを待つ",
       "preservedMeaning": "Asking still blocks until its own reply; duplicate replies, timers and input-state assertions are unchanged."
@@ -221,7 +297,12 @@
       "preservedMeaning": "Use the v2 waiting tone operation, preserving the test that unrelated audio completion cannot release its waiter."
     },
     {
-      "testIds": ["EXPORT markdown project roundtrip", "FORMAT-EXECUTABLE-CONTRACT", "RELEASE-PROJECT-MARKER-BOUNDARIES", "TEST-PALETTE-COLOR-DEFAULT"],
+      "testIds": [
+        "EXPORT markdown project roundtrip",
+        "FORMAT-EXECUTABLE-CONTRACT",
+        "RELEASE-PROJECT-MARKER-BOUNDARIES",
+        "TEST-PALETTE-COLOR-DEFAULT"
+      ],
       "oldText": "AKARI-PROJECT-F1-DATA-BEGIN/END",
       "newText": "AKARI-PROJECT-F2-DATA-BEGIN/END",
       "preservedMeaning": "Keep marker parsing, boundary protection and roundtrip assertions on project format v2."
@@ -243,6 +324,12 @@
       "oldText": "Fill the MANUAL first-move sample directly into #codeEditor immediately after creating a character; the editor started hidden because the starter opens in blocks mode, and the sample hard-coded the actor name ねこ.",
       "newText": "Select code mode through #editorModecode, wait for #codeEditor to become visible, and substitute the newly created character’s visible selected name into the sample subject; keep the original rightward 10-step action, click trigger, movement assertion, and empty compile-error assertion.",
       "preservedMeaning": "Exercise the real toolbox-created character and its click script using the manual’s first-move sample, then assert the clicked character moves exactly 10 steps and the program compiles without errors. Only the UI setup and sample subject are adapted to the v2 starter; the expected behavior is unchanged."
+    },
+    {
+      "testId": "runBlockCodecTests/Script",
+      "oldText": "Script schema has only heading, continuous rules and body slots.",
+      "newText": "Script schema also has an optional variadic script-unit slot; the generic fixture factory creates a complete event Script for that slot.",
+      "preservedMeaning": "Every existing schema codec roundtrip, generated test ID, count and assertion is retained. The fixture factory supplies a valid child for the new slot type instead of an expression."
     }
   ],
   "browserVerification": {

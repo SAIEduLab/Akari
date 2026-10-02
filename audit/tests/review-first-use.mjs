@@ -28,6 +28,7 @@ async function setup(page) {
     if (/^https?:/i.test(request.url())) networkRequests.push(request.url());
   });
   await page.waitForFunction(() => !!globalThis.Akari?.app);
+  await page.locator('#sampleBtn').click();
   await page.locator('#uiLevel').selectOption('advanced');
   await page.locator('#editorModeblocks').click();
   await page.waitForFunction(() => document.querySelector('#editorModeblocks')?.getAttribute('aria-pressed') === 'true');
@@ -156,6 +157,7 @@ async function reviewModePreference(page) {
   assert.equal(await selected('blocks'),'true','first startup opens blocks');
   assert.equal(await page.locator('#uiLevel').inputValue(),'basic','detail level is a separate preference');
   const initial=await read(),observations=[];
+  assert.equal(initial.source,'','first startup has an empty beginning; the sample is explicit');
   for(const mode of ['code','blocks']) {
     await page.locator('#editorMode'+mode).click();assert.deepEqual(await read(),initial,'mode selection preserves full design and history');
     assert.equal(await page.evaluate(()=>localStorage.getItem('akari.editorMode.v1')),mode,'successful explicit selection persists');
@@ -166,7 +168,7 @@ async function reviewModePreference(page) {
     }
     observations.push({mode,reloaded:true,source:initial.source,historyUnchanged:true});
   }
-  await page.locator('#editorModecode').click();const edited=initial.source.replace('10歩','12歩');assert.notEqual(edited,initial.source);
+  await page.locator('#editorModecode').click();const edited='画面の右へ12歩動く。';assert.notEqual(edited,initial.source);
   await page.locator('#codeEditor').fill(edited);
   await page.waitForFunction(source=>Akari.app.editorState.main.sourceText===source&&Akari.app.editorState.history>1,edited);
   const committed=await read();

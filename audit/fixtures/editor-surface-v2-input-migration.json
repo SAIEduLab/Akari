@@ -16,7 +16,7 @@
       "originalPath": "audit/tests/editor-browser.mjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-browser.mjs",
       "originalSha256": "ccc3158ce84f2c51127329d2b9ab48a99f0582874bfcfd8ad584bf4a31f718fb",
-      "candidateSha256": "2265b4d11e324f09c06f0a5c0cbc0201614bbd2a8a167686dda58fcac6d904ad"
+      "candidateSha256": "d62b14e88fd00ab6d2c512c6e50adfedf9e3705e8a48faa6933349bab66a28ab"
     }
   ],
   "changes": [
@@ -301,5 +301,30 @@
     "helper": "audit/fixtures/regression-project.cjs#makeRegressionProject",
     "usage": "Serialize the explicit legacy regression preconditions to F2 and load through the native #fileInput UI in each case; corrupt-autosave case keeps the stock fresh project so its original preservation invariant remains valid.",
     "runtimeApiWrites": false
-  }
+  },
+  "approvedContractMigrations": [
+    {
+      "ids": [
+        "RELEASE-GUI/corrupt-autosave-preserves-current"
+      ],
+      "authorization": "Reviewed PUBLIC_SEMANTIC_UX_SPEC sections 6.2 and 7 require persistent editor history.",
+      "oldContract": "The current project was stored directly in the latest record; corrupt its actor ID and verify F505 isolation. Verify media-free fallback and legacy fallback recovery.",
+      "newIndependentGuarantees": [
+        "Corrupt the same actor ID inside the version-2 history base frame. F505 must still reject it before offering or installing recovery.",
+        "Legacy fallback is still read through the existing legacy record fixture. New fallback is version 2 and references only embedded built-in assets without external bytes.",
+        "Keep the same stable case ID, real browser route and current-project preservation checks."
+      ]
+    },
+    {
+      "ids": [
+        "REVIEW-STATIC-SCALE-RANGE"
+      ],
+      "authorization": "Reviewed PUBLIC_SEMANTIC_UX_SPEC sections 6.2 and 7 require persistent Undo/Redo.",
+      "oldContract": "Recovery reset history to one valid baseline, even for an unfinished 100000-character editor.",
+      "newIndependentGuarantees": [
+        "Recovered history equals the pre-save confirmed history plus one pending frame. Undo returns to the valid source and Redo restores all 100000 unfinished characters and their diagnostic.",
+        "Keep all scale bounds, full compile diagnostic count, metadata capacity, raw input, execution refusal and explicit cancel assertions."
+      ]
+    }
+  ]
 }

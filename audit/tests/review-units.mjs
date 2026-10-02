@@ -155,17 +155,25 @@ try{await withBrowser(chrome,async browser=>{report.browser=browser.version();
     const recovered=await state(page);
     assert.equal(await page.locator('#codeEditor').inputValue(),largeSource,'all 100000 original characters recover exactly');
     for(const key of ['project','dirty','owner','source','state'])assert.deepEqual(recovered[key],largeBefore[key]);
-    assert.equal(recovered.history,1,'recovery begins from its valid baseline');assert.equal(recovered.redo,0);
+    assert.equal(recovered.history,largeBefore.history+1,'recovery retains confirmed history plus the exact unfinished frame');assert.equal(recovered.redo,largeBefore.redo);
     assert.equal(recovered.pending.diagnostics.length,1);assert.equal(recovered.pending.diagnostics[0].code,'R412');
     assert.equal(await page.locator('#editorModeblocks').isDisabled(),true);
+    await page.locator('#undoBtn').click();const recoveredUndo=await state(page);
+    assert.equal(recoveredUndo.pending,null);assert.equal(recoveredUndo.project,largeBefore.project);
+    assert.equal(recoveredUndo.history,largeBefore.history);assert.equal(recoveredUndo.redo,1);
+    assert.equal(await page.locator('#codeEditor').inputValue(),largeBefore.source);
+    await page.locator('#redoBtn').click();const recoveredRedo=await state(page);
+    assert.equal(await page.locator('#codeEditor').inputValue(),largeSource);
+    assert.equal(recoveredRedo.pending.diagnostics[0].code,'R412');
+    assert.equal(recoveredRedo.history,recovered.history);assert.equal(recoveredRedo.redo,recovered.redo);
     await observe(page);await page.locator('#runBtn').click();
-    assert.deepEqual(await state(page),recovered,'recovered invalid source cannot execute or alter history');
+    assert.deepEqual(await state(page),recoveredRedo,'recovered invalid source cannot execute or alter history');
     assert.deepEqual(await page.evaluate(()=>__unitsObserved),{starts:0,motions:[],says:[]});
     await page.locator('#editorCancel').click();const recoveredCancelled=await state(page);
     assert.equal(recoveredCancelled.pending,null);assert.equal(recoveredCancelled.project,largeBefore.project);
     assert.equal(recoveredCancelled.history,recovered.history);assert.equal(recoveredCancelled.redo,recovered.redo);
     return{before,compile,accepted,dynamic,edits,blockBefore,blockPending,blockIssue,blockCancelled,observed,
-      maxSourceRecovery:{sourceLength:largeSource.length,fullCompile,serializedLength,largeBefore,largePending,recovered,recoveredCancelled}};
+      maxSourceRecovery:{sourceLength:largeSource.length,fullCompile,serializedLength,largeBefore,largePending,recovered,recoveredUndo,recoveredRedo,recoveredCancelled}};
   });
 });assert.deepEqual(snapshot(product),inputs);report.status=report.results.length===3&&report.results.every(r=>r.pass)&&!report.pageErrors.length&&!report.networkRequests.length?'PASS':'FAIL';}
 catch(error){report.status='FAIL';report.error=error.stack;}

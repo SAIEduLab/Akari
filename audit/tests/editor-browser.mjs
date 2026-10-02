@@ -148,7 +148,7 @@ await withBrowser(browser,async b=>{
   });
   await run('RELEASE-GUI/corrupt-autosave-preserves-current',async p=>{
     const initial=await state(p);await fill(p,source);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));
-    await p.evaluate(async()=>{await new Promise((resolve,reject)=>{const q=indexedDB.open('akari-workspace-f2');q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readwrite'),s=tx.objectStore('workspace'),get=s.get('latest');get.onsuccess=()=>{const v=get.result;if(!v){reject(Error('missing latest autosave'));return;}v.project.components[0].id='stage';s.put(v);};tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};});});
+    await p.evaluate(async()=>{await new Promise((resolve,reject)=>{const q=indexedDB.open('akari-workspace-f2');q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readwrite'),s=tx.objectStore('workspace'),get=s.get('latest');get.onsuccess=()=>{const v=get.result;if(!v){reject(Error('missing latest autosave'));return;}v.workspace.base.project.components[0].id='stage';s.put(v);};tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};});});
     await p.reload();await p.waitForFunction(()=>document.querySelector('#console').textContent.includes('F505'));
     assert.equal(await p.locator('#recoveryModal.show').count(),0);
     const current=await state(p);assert.notEqual(current.source,source);assert.equal(current.project,initial.project);
@@ -168,7 +168,7 @@ await withBrowser(browser,async b=>{
     await fill(p,'点数を88にする。');
     await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));
     const fallback=await p.evaluate(()=>JSON.parse(localStorage.getItem('akari.autosave.f2')));
-    assert.equal(fallback.project.appVersion,(""+currentProductVersion()+""));assert.deepEqual(fallback.assets,[]);
+    assert.equal(fallback.version,2);assert.equal(fallback.workspace.base.project.appVersion,(""+currentProductVersion()+""));assert.ok(fallback.workspace.assets.every(a=>a.builtin&&a.blob===null));
     return{invalidRecordNotInstalled:true,fallbackValidatedBeforeRestore:true,mediaFreeFallbackWrites:true};
   });
 });

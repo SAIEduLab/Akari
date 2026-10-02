@@ -1,0 +1,96 @@
+name: Akari fixed acceptance
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: akari-acceptance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  composition-acceptance:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the approved fixed browser in runner temporary storage
+        run: |
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0
+          echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install-deps chromium
+          python audit/install-codec-browser.py "$RUNNER_TEMP/acceptance-browser"
+      - name: Map the original fixed plan and verify the Q76 values
+        run: |
+          mkdir -p audit-evidence/acceptance
+          node audit/tests/actions-transfer-static.mjs audit-evidence/acceptance/transfer.json
+          node audit/tests/actions-transfer-values.mjs audit-evidence/acceptance/values.json
+          node audit/tests/command-meaning.mjs audit-evidence/acceptance/command-meaning.json
+      - name: Verify original basic intentions and separate continuous rates
+        run: node audit/tests/basic-intents.mjs audit-evidence/acceptance/basic-intents.json
+      - name: Verify finite semantic variants and minimum-pair refusals
+        run: |
+          node audit/tests/finite-semantic-variants.mjs audit-evidence/acceptance/finite-semantic-variants.json
+          node audit/tests/semantic-negative-pairs.mjs audit-evidence/acceptance/semantic-negative-pairs.json
+      - name: Verify natural role variants and atomic clone rejection
+        run: node audit/tests/natural-roles.mjs audit-evidence/acceptance/natural-roles.json
+      - name: Verify document units, source ownership and multiline editing
+        run: node audit/tests/document-units.mjs audit-evidence/acceptance/document-units.json
+      - name: Verify unfinished project files and structural rejection
+        run: node audit/tests/draft-persistence.mjs audit-evidence/acceptance/draft-persistence.json
+      - name: Verify declared units and list form values
+        run: node audit/tests/data-form-values.mjs audit-evidence/acceptance/data-form-values.json
+      - name: Verify display precision without changing values
+        run: node audit/tests/numeric-display.mjs audit-evidence/acceptance/numeric-display.json
+      - name: Verify resource references and atomic renames
+        run: node audit/tests/resource-references.mjs audit-evidence/acceptance/resource-references.json
+      - name: Verify intent search and typed name bindings
+        run: node audit/tests/search-bindings.mjs audit-evidence/acceptance/search-bindings.json
+      - name: Enter original basic intentions and exercise native input and saving
+        if: always()
+        run: node audit/tests/basic-intents-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/basic-intents-browser.json
+      - name: Record actual WebAudio output and verify sound command semantics
+        if: always()
+        run: node audit/tests/audio-output-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/audio-output-browser.json
+      - name: Edit event headers and continuous roles through ordinary Block controls
+        if: always()
+        run: node audit/tests/structured-editing-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/structured-editing-browser.json
+      - name: Require original composition acceptance, meaning and save roundtrip
+        if: always()
+        run: node audit/tests/composition-acceptance.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/composition.json
+      - name: Restore native editor history, drafts and quota failure atomically
+        if: always()
+        run: node audit/tests/workspace-history-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/workspace-history-browser.json
+      - name: Verify visible data forms and runtime quantities
+        if: always()
+        run: node audit/tests/data-form-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/data-form-browser.json
+      - name: Verify numeric displays, actual values and the offline player
+        if: always()
+        run: node audit/tests/numeric-display-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/numeric-display-browser.json
+      - name: Protect referenced resources through native editing and undo
+        if: always()
+        run: node audit/tests/resource-references-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/resource-references-browser.json
+      - name: Verify search focus, visible bindings and insertion
+        if: always()
+        run: node audit/tests/search-bindings-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/search-bindings-browser.json
+      - name: Verify empty work, sample, speech placement and manual contrast
+        if: always()
+        run: node audit/tests/ux-surface-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/ux-surface-browser.json
+      - name: Independently verify complete results and validator rejection ability
+        if: always()
+        run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-fixed-acceptance-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/acceptance/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true

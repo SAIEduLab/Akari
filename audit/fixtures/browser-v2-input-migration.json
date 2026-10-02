@@ -698,7 +698,7 @@
       "originalPath": "audit/browser/cases/browser-boundaries.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-boundaries.cjs",
       "originalSha256": "0fae3abb2408f97b95f20a42c60c8e4354fde1b9affa5c42e94d5f26d309c9c8",
-      "candidateSha256": "fec8dd78d801851999e8e14f21c843bb371ff2e8438afdf8080c3e200ffa2673",
+      "candidateSha256": "8a1c84f59fabeb41a4158d831c056facf6585cf34e5b89ad74f540666e636889",
       "stableIds": [
         "variadic-35-inputs-edit-move-remove",
         "body-pagination-and-comment-multiline",
@@ -725,7 +725,7 @@
       "originalPath": "audit/browser/cases/browser-design-limits.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-design-limits.cjs",
       "originalSha256": "18b307d10edb81a81c55847952d4908d5882b7a70b069f3fe5003e1a3dfb276e",
-      "candidateSha256": "6d53e6d7495fe8069cdf452dff4c0f16ffed8390007161c1851e7497db650e60",
+      "candidateSha256": "f313ad37f9560267dc23954e1185c9ef2b20b7ea64d5660b9f3c145ef54bad29",
       "stableIds": [
         "limit:components",
         "limit:backdrops",
@@ -858,7 +858,7 @@
       "originalPath": "audit/browser/cases/browser-product.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-product.cjs",
       "originalSha256": "35ce185d849c4b997f7825639ff23618e91c7441e1795805c4e6260fdc00893c",
-      "candidateSha256": "32e7a20ff67d3741b093586a5a350ceb2ea1b909f6ed56cd775f0527521e34b8",
+      "candidateSha256": "f7d2a7395cfea2f3792796699a12f1acd7be96d284148df4dc956f9cb4d99407",
       "stableIds": [
         "designer-property-delete-mixed-history",
         "project-self-data-create-delete-and-shadowing",
@@ -909,7 +909,7 @@
       "originalPath": "audit/browser/cases/browser-session.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-session.cjs",
       "originalSha256": "14b85a4ed08fa4e5924fd4c4dce4668e613a755c0faaaf9bb31b49b143cd03a2",
-      "candidateSha256": "a0c88b6e847bca294c2a99134a147e88f128fdfe502b700aab2ddd324135cdfb",
+      "candidateSha256": "e0079530882bc7381b86b1583e431f9adfc9320c4a14217be6bf9ce48cbc234c",
       "stableIds": [
         "crlf-no-edit-open-switch-save",
         "switch-no-edit",
@@ -933,7 +933,7 @@
       "originalPath": "audit/browser/cases/browser-storage-media.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-storage-media.cjs",
       "originalSha256": "9a93019db1d3969f54f5ed1e52099a421184b0ab1419e0ebab871b5b08787d3c",
-      "candidateSha256": "a7506e03532fea9c99e94dcb8695ba41f65882f28fb299d80197811c575f9874",
+      "candidateSha256": "72e40c8b74cfac501912616b1b50588f6d577122e514948e4eee376acab25121",
       "stableIds": [
         "real-media-import-and-history",
         "media-editor-run-and-save-roundtrip",
@@ -10665,6 +10665,89 @@
         "The existing F2 workspace/fallback and F1 isolation assertions remain."
       ],
       "prohibition": "No project-data writes through preference storage, no new storage wildcard, no removed IDs or weakened semantic assertions."
+    },
+    {
+      "ids": [
+        "invalid-syntax-save-and-format1-storage-isolation"
+      ],
+      "authorization": "Explicit full implementation request for the reviewed PUBLIC_SEMANTIC_UX_SPEC sections 6.2 and 7.1-7.3.",
+      "specification": "audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md",
+      "oldContract": "Unfinished source refuses file download and remains outside all persistent undo history.",
+      "newIndependentGuarantees": [
+        "Actual unfinished file download contains the exact raw text plus the unchanged valid design and exact asset hashes.",
+        "The same saved raw text and 30-frame-capable history survive native IndexedDB recovery.",
+        "Owner switching continues to refuse unfinished text; executable export remains blocked by additive fixed acceptance.",
+        "Cancel removes the draft, keeps the valid design, and the next actual downloaded file has no pending input.",
+        "Existing format-2 database/key isolation and invalid-file atomicity remain."
+      ],
+      "prohibition": "Keep every case ID and all original media execution, malformed input and storage isolation checks; do not derive expectations from candidate output."
+    },
+    {
+      "ids": [
+        "pending-input-blocks-transitions"
+      ],
+      "authorization": "Explicit full implementation request for reviewed PUBLIC_SEMANTIC_UX_SPEC sections 6.2 and 7.",
+      "oldContract": "Unfinished numeric text blocked save alongside execution and switching; only valid content was undoable.",
+      "newIndependentGuarantees": [
+        "Native save downloads exact unfinished numeric text and the unchanged valid design.",
+        "Switch/run/export/event changes remain blocked and explicit cancel restores the original value.",
+        "Uncommitted typing and refused actions leave memory history unchanged. Autosave retains the exact pending frame once alongside confirmed history; recovery restores Undo/Redo for it.",
+        "Separate native recovery/Undo/Redo test preserves minus sign rather than coercing to zero."
+      ],
+      "prohibition": "Same stable case ID and real browser route retained; no changed numeric, unit, runtime or capacity expectations."
+    },
+    {
+      "ids": [
+        "project-self-data-create-delete-and-shadowing",
+        "limit:projectLists"
+      ],
+      "authorization": "Reviewed PUBLIC_SEMANTIC_UX_SPEC section 3.9 makes one-item-per-line the standard list form.",
+      "oldContract": "Literal list initial values were entered in the default field.",
+      "newIndependentGuarantees": [
+        "Explicitly select the retained literal-list mode, then enter the unchanged mixed-type or empty-list fixture.",
+        "Keep the same stable IDs, data values, shadowing result, item inspection, deletion and hard list-count boundaries.",
+        "The additive native form case requires the initial mode to be lines and verifies correction to a three-item list."
+      ]
+    },
+    {
+      "ids": [
+        "REVIEW-DEFAULTS-FIRST-RUN",
+        "REVIEW-QUANTITY-UNIT-SINGLE",
+        "REVIEW-CONDITION-SEARCH-SWITCH"
+      ],
+      "authorization": "Reviewed PUBLIC_SEMANTIC_UX_SPEC section9.1 UX-01 requires an empty new work and an explicitly selected sample.",
+      "oldContract": "Fresh application startup included the moving greeting sample automatically.",
+      "newIndependentGuarantees": [
+        "Fresh startup is explicitly checked to have empty source; mode preference and unchanged project/history across reload remain checked.",
+        "The existing default-block/unit/condition journeys explicitly click the visible sample control before executing the unchanged sample expectations.",
+        "The mode preference edit still enters a real12-step movement and checks Undo/Redo in both modes.",
+        "Additive UX browser cases check idle empty Run, click-only execution, explicit sample, normal removal and Undo."
+      ]
+    },
+    {
+      "ids": [
+        "OWNER-GUI-DIRECT-BUTTON",
+        "REVIEW-STAGE-SPEECH-READABLE",
+        "REVIEW-LONG-TEXT-EDIT-VISIBLE"
+      ],
+      "authorization": "Reviewed PUBLIC_SEMANTIC_UX_SPEC section9.1 UX-01 requires empty new work and explicit sample selection.",
+      "oldContract": "The ownership new-work path and readable speech setup assumed the automatic greeting sample.",
+      "newIndependentGuarantees": [
+        "Ownership still clicks New and verifies editor/event selection, now asserts empty source and then explicitly opens the sample to retain the editable numeric field check. All import, call ownership, field editing, Undo/Redo, complete event and unused definition assertions are unchanged.",
+        "Readable review explicitly opens the sample through its visible control. Every original viewport, UI level, speech-size threshold, stage/control visibility, pause/resume and long-text assertion remains unchanged.",
+        "Additive empty-work native acceptance separately requires idle Run, click-only execution, editable sample removal and Undo."
+      ]
+    },
+    {
+      "ids": [
+        "unknown-callee-and-all-arguments-after-definition-change"
+      ],
+      "authorization": "Reviewed PUBLIC_SEMANTIC_UX_SPEC SEM-09: name changes preserve references.",
+      "oldContract": "Renaming a callable deliberately left its caller dangling under the old name.",
+      "newIndependentGuarantees": [
+        "Renaming updates the bound name while preserving every actual argument; adding a formal argument still leaves one actual argument and refreshes the arity diagnostic.",
+        "Undo restores the original call text. An explicitly entered unknown callable retains its exact name, one actual argument with value1, original source and visible diagnostic. The original stable ID remains."
+      ]
     }
   ],
   "schemaUiSetupMigrations": [

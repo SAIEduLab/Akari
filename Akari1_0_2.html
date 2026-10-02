@@ -1708,7 +1708,7 @@ body {
 .blockui-field select.blockui-qualifier-empty option {
   font-size: 13px;
 }
-.blockui-comment-input {
+.blockui-comment-input, .blockui-multiline-input {
   width: 280px;
   max-width: 100%;
   min-height: 28px;
@@ -5270,6 +5270,34 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
   display: flex; flex-wrap: wrap; gap: 6px; max-width: 620px;
 }
 
+
+/* An open output drawer must not consume the monitor's readable area. */
+body[data-editor-mode] .monitor-window:not(.blockui-side-folded):has(.output-disclosure[open]),
+body[data-editor-mode="code"] .monitor-window:has(.output-disclosure[open]) {
+  min-height: 340px;
+  flex: 0 0 340px;
+}
+body[data-editor-mode] .monitor-window .runtime-monitor {
+  min-height: 120px;
+  flex: 1 1 150px;
+}
+body[data-editor-mode] .monitor-window .output-disclosure {
+  flex: 0 0 auto;
+}
+body[data-editor-mode] .side:has(.monitor-window .output-disclosure[open]) {
+  overflow-y: auto;
+}
+body[data-editor-mode="code"] .side:has(.monitor-window .output-disclosure[open]) {
+  grid-template-rows: minmax(130px, 1fr) minmax(180px, 1.2fr) minmax(340px, 0.8fr);
+}
+@media (max-width: 1000px) {
+  body[data-editor-mode="code"] .side:has(.monitor-window .output-disclosure[open]) {
+    grid-template-rows: minmax(340px, auto);
+  }
+}
+
+.reference-issue { padding: 10px; margin: 8px 0; border: 2px solid #9c3434; border-radius: 8px; background: #fff5f5; color: #602020; overflow-wrap: anywhere; }
+.reference-issue ul { margin: 6px 0; padding-left: 24px; }
 </style>
 
 
@@ -5386,8 +5414,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   text-overflow: clip;
 }
 body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field > textarea {
-  width: calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1));
-  max-width: calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1));
+  width: var(--blockui-edit-width, calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1)));
+  max-width: var(--blockui-edit-width, calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1)));
   min-height: calc(150px * var(--blockui-inverse-scale, 1));
   padding: calc(10px * var(--blockui-inverse-scale, 1)) calc(12px * var(--blockui-inverse-scale, 1));
   font-size: calc(18px * var(--blockui-inverse-scale, 1));
@@ -5413,6 +5441,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   <div class="titlebar">あかり</div>
   <div class="menutool">
     <button id="newBtn">新しく作る</button>
+    <button id="sampleBtn">お手本を開く</button>
     <button id="openBtn">開く</button>
     <button id="saveBtn">保存</button>
     <button id="exportBtn">書き出し</button>
@@ -5790,7 +5819,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         </div>
       </div>
     </div>
-    <div class="dialog-foot"><button id="callableFormat">本文を整える</button> <button id="callableSave">保存</button> <button id="procClose">閉じる</button></div>
+    <div class="dialog-foot"><button id="callableFormat">本文を整える</button> <button id="callableSave">定義を確定</button> <button id="callableSaveProject">書きかけを作品に保存</button> <button id="procClose">閉じる</button></div>
   </div>
 </div>
 
@@ -5801,11 +5830,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       <div class="asset-toolbar">
         <label>どこで使う <select id="dataScope"><option value="project">作品</option><option value="self">選んだ部品</option></select></label>
         <label>種類 <select id="dataKind"><option value="variable">変数</option><option value="list">リスト</option></select></label>
-        <input id="dataName" placeholder="名前" style="width:150px;padding:6px">
-        <input id="dataInitial" style="width:280px;padding:6px">
+        <input id="dataName" placeholder="名前" aria-label="データの名前" aria-describedby="dataFormError" style="width:150px;padding:6px">
+        <input id="dataInitial" aria-label="最初の値" aria-describedby="dataFormError" style="width:280px;padding:6px">
+        <label id="dataListModeLabel" hidden>リストの入れ方 <select id="dataListMode"><option value="lines">一行に一つ、文字で入れる</option><option value="literal">［値、値］で書く</option></select></label>
+        <label id="dataItemsLabel" hidden>最初の項目（文字）<textarea id="dataItems" rows="5" aria-describedby="dataItemsHelp dataFormError" placeholder="本&#10;かさ&#10;ぼうし" style="width:min(100%,420px);padding:6px"></textarea><small id="dataItemsHelp">一行が一つの文字の項目です。空の行は空の文字として残します。数や単位を入れるときは「［値、値］で書く」を選びます。</small></label>
         <label>使う単位 <select id="dataUnit"><option value="">決めない</option><option>歩</option><option>秒</option><option>度</option><option>回</option><option>番目</option><option>点</option><option>個</option><option>％</option><option>Hz</option></select></label>
         <button id="dataAdd">作る</button>
       </div>
+      <p id="dataFormError" role="alert" hidden></p>
       <div id="dataBody"></div>
     </div>
     <div class="dialog-foot"><button id="dataClose">閉じる</button></div>
@@ -5837,7 +5869,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   </div>
 </div>
 <div class="modal" id="failureModal" role="dialog" aria-modal="true" aria-label="失敗時の記録"><div class="dialog"><div class="win-title">失敗時の記録</div><div class="record-controls"><label for="failureSelect">記録</label><select id="failureSelect"></select></div><div class="dialog-body" id="failureBody"></div><div class="dialog-foot"><button id="failureClose">閉じる</button></div></div></div>
-<div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-label="値の全文"><div class="dialog"><div class="win-title" id="valueTitle">値の全文</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の要素</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の要素</button></div><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">閉じる</button></div></div></div>
+<div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-label="値の全文"><div class="dialog"><div class="win-title" id="valueTitle">値の全文</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の要素</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の要素</button></div><p id="valueNotice" class="dialog-body" role="status"></p><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">閉じる</button></div></div></div>
 
 
 <div class="modal" id="colorModal" role="dialog" aria-modal="true" aria-labelledby="colorTitle" aria-describedby="colorHelp">
@@ -6238,6 +6270,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const ensureFinite = (n) => {
       if (!Number.isFinite(n)) throw new AkariError('R403', '計算結果が有限な数ではありません');
       return Object.is(n, -0) ? 0 : n;
+    };
+    // Presentation only. Expressions, text conversion and files retain the value.
+    const displayValue = (v) => {
+      if (typeof v === 'number') ensureFinite(v);
+      const rawText = valueText(v);
+      if (!isNumberValue(v)) return { text: rawText, rawText, rounded: false };
+      const n = ensureFinite(isQuantity(v) ? v.magnitude : v);
+      const precise = n.toPrecision(12), parsed = Number(precise);
+      const shown = Number.isSafeInteger(n) ? String(n) : Number.isFinite(parsed) ? String(parsed) : precise;
+      const text = shown + (isQuantity(v) ? v.unit || '' : '');
+      return { text, rawText, rounded: text !== rawText };
     };
     const typeName = (v) =>
       Array.isArray(v)
@@ -7800,16 +7843,25 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       return value;
     }
 
+    function namedArgumentDetails(expected, supplied) {
+      if (!supplied?.length) return '';
+      const parts=[],quoted=names=>names.map(name=>`「${name}」`).join('、');
+      const missing=expected.filter(name=>!supplied.includes(name)),unknown=[...new Set(supplied.filter(name=>!expected.includes(name)))],duplicates=[...new Set(supplied.filter((name,i)=>supplied.indexOf(name)!==i))];
+      if(missing.length)parts.push('足りない名前: '+quoted(missing));
+      if(unknown.length)parts.push('定義にない名前: '+quoted(unknown));
+      if(duplicates.length)parts.push('重複した名前: '+quoted(duplicates));
+      return parts.length?'（'+parts.join('。')+'）':'';
+    }
     function runUserFunction(name, args, ctx, budget = null, depth = 1, argumentNames = []) {
       if (depth > LIMITS.callDepth) throw new AkariError('R408', '計算の呼び出しが深すぎます');
       const def = ctx.compiled.symbols.functions.get(name);
       if (!def) throw new AkariError('S301', `計算「${name}」がありません`);
       if (def.args.length !== args.length)
-        throw new AkariError('S308', `計算「${name}」が受け取る値は${def.args.length}個です`);
+        throw new AkariError('S308', `計算「${name}」が受け取る値は${def.args.length}個です`+namedArgumentDetails(def.args,argumentNames));
       if (argumentNames.length) {
         if (argumentNames.length !== args.length || new Set(argumentNames).size !== argumentNames.length ||
           argumentNames.some(n => !def.args.includes(n)) || def.args.some(n => !argumentNames.includes(n)))
-          throw new AkariError('S308', `計算「${name}」の受け取る値の名前が一致しません`);
+          throw new AkariError('S308', `計算「${name}」の受け取る値の名前が一致しません`+namedArgumentDetails(def.args,argumentNames));
         const named = new Map(argumentNames.map((n, i) => [n, args[i]]));
         args = def.args.map(n => named.get(n));
       }
@@ -8612,6 +8664,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           case 'Say': {
             const v = evalExpression(n.value, ctx);
             if (Array.isArray(v)) throw new AkariError('R411', 'リストはそのまま言えません');
+            this.ui.prepareSpeech?.(v);
             this.ui.say?.(ctx.runtimeId, valueText(v));
             return;
           }
@@ -8711,7 +8764,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (task.callFrames.length + 1 > LIMITS.callDepth)
           throw new AkariError('R408', '動作の呼び出しが深すぎます');
         if (def.args.length !== n.args.length)
-          throw new AkariError('S308', `動作「${n.name}」の受け取る値は${def.args.length}個です`);
+          throw new AkariError('S308', `動作「${n.name}」の受け取る値は${def.args.length}個です`+namedArgumentDetails(def.args,n.argumentNames));
         const sourceValues = n.args.map((x) => deepCopy(evalExpression(x, ctx)));
         const names = n.argumentNames || [];
         if (names.length && (names.length !== def.args.length || new Set(names).size !== names.length ||
@@ -9272,8 +9325,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           this.finishTask(task, 'DONE');
           return { requeue: false };
         }
-        const rid = this.runtime.createClone(src);
-        this.spawnForRuntime(rid, 'cloneStart', { sourceRuntimeId: src });
+        const count=n.count===undefined?1:numberValue(evalExpression(n.count,ctx));
+        if(!Number.isSafeInteger(count)||count<0)throw new AkariError('R410','分身の数は0以上の整数にしてください');
+        if([...this.runtime.actors.values()].filter(actor=>actor.isClone).length+count>LIMITS.clones)
+          throw new AkariError('R410','クローン数の上限です');
+        this.runtime.requireActor({runtimeId:src});
+        const component=this.runtime.component(src);
+        if(component?.type!=='sprite')throw new AkariError('R406','クローンを作れるのはキャラクターだけです');
+        const receivers=this.matchingScripts(component.id,'cloneStart',{sourceRuntimeId:src}).filter(script=>this.hasExecutable(this.scriptAst(component.id,'cloneStart',script.id))).length;
+        if(this.tasks.size+count*receivers>LIMITS.activeTasks)throw new AkariError('R413','同時実行コード数が上限を超えました');
+        for(let i=0;i<count;i++){
+          const rid = this.runtime.createClone(src);
+          this.spawnForRuntime(rid, 'cloneStart', { sourceRuntimeId: src });
+        }
       }
       cancelRuntimeTasks(runtimeId, except = null) {
         for (const t of this.tasks.values())
@@ -9503,6 +9567,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       listValue,
       assertRuntimeValueLimit,
       valueText,
+      displayValue,
       ensureFinite,
       typeName,
       sameValue,
@@ -9533,6 +9598,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       evalExpression,
       evalBuiltin,
       evalSensor,
+      namedArgumentDetails,
       runUserFunction,
       execFunctionNodes,
       execListMutation,
@@ -9565,6 +9631,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     listValue,
     assertRuntimeValueLimit,
     valueText,
+    displayValue,
     ensureFinite,
     typeName,
     sameValue,
@@ -9604,6 +9671,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     evalExpression,
     evalBuiltin,
     evalSensor,
+    namedArgumentDetails,
     runUserFunction,
     execFunctionNodes,
     execListMutation,
@@ -10186,7 +10254,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       '\u8a08\u7b97': ['計算', '答え', '値を求める'],
       '\u52d5\u4f5c': ['手順', '呼び出す', '実行'],
     };
-    const add = (id, category, text, mode = 'statement', reason = '') => {
+    let activeBinding = null;
+    const add = (id, category, text, mode = 'statement', reason = '', binding = activeBinding) => {
       const key = mode + '|' + text;
       if (seen.has(key)) return;
       seen.add(key);
@@ -10194,14 +10263,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         reason =
           reason ||
           '\u884c\u306e\u9014\u4e2d\u3067\u306f\u5f0f\u306e\u5019\u88dc\u3092\u4f7f\u3044\u307e\u3059';
-      const schemaKey = id.startsWith('action:') ? 'UserActionCall' :
-        id.startsWith('function:') ? 'UserFunctionCall' : id;
+      const schemaKey = hintSchemaId(id);
       const semanticForms = SENTENCE_FORMS.filter(form =>
         schemaKey === form.id ||
         (form.kind && schemaKey.startsWith(form.kind + ':') && (!form.op || schemaKey.includes(form.op)))
       );
       const idTerms = [
-        ...((BLOCK_SEARCH_SYNONYMS[schemaKey] || BLOCK_SEARCH_SYNONYMS[id]) || []),
+        ...((BLOCK_SEARCH_SYNONYMS[schemaKey] || BLOCK_SEARCH_SYNONYMS[id] || BLOCK_SEARCH_SYNONYMS[schemaKey.split(':')[0]]) || []),
         ...semanticForms.flatMap(form => [form.intent, ...(form.verbForms || []), ...(form.nounForms || []), ...(form.acceptedReadings || [])]),
       ];
       out.push({
@@ -10211,6 +10279,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         mode,
         enabled: !reason,
         reason,
+        binding,
         searchTerms: [...new Set([...(intentTerms[category] || []), ...idTerms])],
       });
     };
@@ -10220,7 +10289,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const text = nameSource(name, qualifier);
       if (names.has(text)) return;
       names.add(text);
-      bindings.push({ name, text, value, kind: bkind, readonly, local: !qualifier });
+      bindings.push({ name, text, value, kind: bkind, readonly, qualifier, local: !qualifier });
     };
     for (const a of options.args || []) bind(a, null, 0, 'dynamic');
     for (const a of place.locals.vars) bind(a, null, 0, 'scalar');
@@ -10341,7 +10410,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       add(x.id, labels[x.kind] || '\u6761\u4ef6\u30fb\u53cd\u5fa9', text, 'statement', reason);
     }
+    if (!pure) add('MotionCommand:MOVE_DIRECTION', '動き', '画面の右へ10歩動く。', 'statement',
+      type === 'stage' ? '部品を対象にします' : '');
     for (const b of bindings) {
+      activeBinding = {name:b.name, qualifier:b.qualifier, kind:b.kind};
       const name = b.text;
       add('read:' + name, '\u5024\u30fb\u30c7\u30fc\u30bf', name, 'expression');
       if (!b.readonly && (!pure || b.local)) {
@@ -10386,6 +10458,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           );
       }
     }
+    activeBinding = null;
     if (kind && place.declarationSlot) {
       const fresh = initialBlockName('\u7d50\u679c', usedNames);
       add(
@@ -10410,13 +10483,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           'action:' + d.id,
           '\u52d5\u4f5c',
           `${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】という手順を行う`,
+          'statement', '', {kind:'action', id:d.id, name:d.name},
         );
     for (const d of project.functions)
       add(
         'function:' + d.id,
         '計算',
         `（${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】で求めた答え）`,
-        'expression',
+        'expression', '', {kind:'function', id:d.id, name:d.name},
       );
     const exclusive = {
       '\u62bc\u3055\u308c\u305f\u30ad\u30fc': 'keyDown',
@@ -10652,25 +10726,28 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   function normalizeSource(source) {
     const original = String(source ?? '');
-    source = original.replace(/\r\n?/g, '\n');
-    let offset = 0;
-    const lines = source.split('\n').map((raw, i) => {
-      const p = splitComment(raw);
-      const start = offset;
-      offset += raw.length + (original.slice(offset + raw.length, offset + raw.length + 2) === '\r\n' ? 2 : 1);
-      const mapped = compactSourceMap(p.code, start);
+    const lines=[];let start=0;
+    for(let i=0;i<=original.length;i++)if(i===original.length||original[i]==='\r'||original[i]==='\n'){
+      lines.push({raw:original.slice(start,i),start,end:i,lineNo:lines.length+1,code:'',comment:'',mapped:{text:'',positions:[]}});
+      if(original[i]==='\r'&&original[i+1]==='\n')i++;start=i+1;
+    }
+    let quote='',first=0;
+    for(let i=0;i<lines.length;i++){
+      const physical=lines[i];
+      for(let j=0;j<physical.raw.length;j++){
+        const ch=physical.raw[j];
+        if(quote){if(quote==='」'&&ch==='\\'){j++;continue;}if(ch===quote)quote='';}
+        else if(ch==='※')break;
+        else if(ch==='「'||ch==='【')quote=ch==='「'?'」':'】';
+      }
+      if(quote&&i+1<lines.length)continue;
+      const line=lines[first],raw=original.slice(line.start,physical.end),p=splitComment(raw),mapped=compactSourceMap(p.code,line.start);
       if (mapped.text.endsWith('。')) { mapped.text = mapped.text.slice(0, -1); mapped.positions.pop(); }
-      return {
-        raw,
-        start,
-        end: start + raw.length,
-        mapped,
-        lineNo: i + 1,
-        code: normalizeCharsOutsideString(p.code).trim().replace(/。$/, ''),
-        comment: p.comment,
-      };
-    });
-    return { source, lines };
+      Object.assign(line,{raw,end:physical.end,endLine:physical.lineNo,mapped,code:normalizeCharsOutsideString(p.code).trim().replace(/。$/,''),comment:p.comment});
+      for(let j=first+1;j<=i;j++)lines[j].continuation=true;
+      first=i+1;
+    }
+    return { source:original, lines };
   }
   function compactOutsideString(text) {
     return compactSourceMap(text).text;
@@ -10793,6 +10870,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       functions: [],
       sounds: [],
     };
+  }
+  function makeEmptyProject() {
+    const project = makeDefaultProject();
+    project.name = '新しい作品';
+    project.scripts = [{id:'script-start', targetId:'sprite-1', event:'start', source:''}];
+    return project;
   }
   function validateResourceName(name, label = '素材名') {
     if (typeof name !== 'string' || cpLen(name) < 1 || cpLen(name) > 80)
@@ -11039,9 +11122,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     for (const x of p.scripts) {
       if (!exactKeys(x, ['targetId', 'event', 'source',
         ...(Object.hasOwn(x || {}, 'id') ? ['id'] : []),
+        ...(Object.hasOwn(x || {}, 'document') ? ['document'] : []),
         ...(Object.hasOwn(x || {}, 'filter') ? ['filter'] : [])]))
         throw new AkariError('F503', 'コード項目が不正です');
       if (x.id !== undefined) addId(x.id);
+      if(x.document!==undefined){
+        const d=x.document;
+        if(!x.id||!exactKeys(d,['revision','unitIds'])||!Number.isSafeInteger(d.revision)||d.revision<0||!Array.isArray(d.unitIds)||!d.unitIds.length||d.unitIds.length>LIMITS.scripts)
+          throw new AkariError('F503','文書の版・まとまりの識別子が不正です');
+        for(const id of d.unitIds)addId(id);
+      }
       const target =
         x.targetId === 'stage' ? { type: 'stage' } : p.components.find((c) => c.id === x.targetId);
       if (!target) throw new AkariError('F503', 'コード対象が存在しません');
@@ -11727,9 +11817,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const positional = tailMask.lastIndexOf('を渡して、');
       const cut = marker >= 0 ? marker : positional;
       const nameText = cut < 0 ? tail : tail.slice(cut+(marker >= 0 ? 4 : 5));
-      const name = readNameToken(nameText);
-      if (!name || name.end !== nameText.length) this.err('P205','答えの名前を【名前】で指定してください');
-      validateName(name.name,{callable:true});
+      const name = callableSurfaceName(nameText);
       const args = [], argumentNames = [];
       const parse = (t,offset) => parseExpression(t,this.symbols,{...this.ctx,sourcePositions:this.ctx.sourcePositions?.slice(start+1+offset,start+1+offset+t.length),_parserDepth:(this.ctx._parserDepth||0)+this.depth+1});
       if (marker >= 0) {
@@ -11740,7 +11828,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           if (split < 1 || split !== itemMask.lastIndexOf('を')) this.err('P205','受け取る値の名前と値を「を」で区切ってください');
           const t = readNameToken(item.slice(0,split));
           if (!t || t.end !== split) this.err('P205','引数名を確認してください');
-          if (argumentNames.includes(t.name)) this.err('P205','引数名が重複しています');
+          if (argumentNames.includes(t.name)) this.err('P205',`引数名「${t.name}」が重複しています`);
           argumentNames.push(t.name); args.push(parse(item.slice(split+1),begin+split+1)); begin=j+1;
         }
       } else if (positional >= 0) {
@@ -11752,7 +11840,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         }
       }
       this.i=end+1;
-      return exprNode('UserFunctionCall',{name:name.name,args,...(marker>=0?{argumentNames}:{})});
+      return exprNode('UserFunctionCall',{name,args,...(marker>=0?{argumentNames}:{})});
     }
     readNamed(qualifier) {
       // An explicit owner reads its named data; it does not change loop scope.
@@ -11789,7 +11877,38 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     return root;
   }
   function parseExpression(text, symbols, ctx = {}) {
+    const compact=compactOutsideString(text),mask=surfaceMask(compact),depth=(ctx._parserDepth||0)+1;
+    const located=node=>{const range=sourceRange(ctx.sourcePositions||[]);if(range)SOURCE_RANGES.set(node,{range});return checkExpressionTree(node,ctx.lineNo||0);};
+    if(depth>LIMITS.expressionDepth)throw new AkariError('P208','式が深すぎます',ctx.lineNo||0,1);
+    if(compact.startsWith('（')&&compact.endsWith('）')&&/^\u0001+$/.test(mask))
+      return located(parseExpression(compact.slice(1,-1),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(1,-1)}));
+    const arithmetic=[['をかけた数',/^(.+?)と(.+?)をかけた数$/d,'MUL'],['を足した数',/^(.+?)に(.+?)を足した数$/d,'ADD'],['を引いた数',/^(.+?)から(.+?)を引いた数$/d,'SUB'],['で割った数',/^(.+?)を(.+?)で割った数$/d,'DIV']];
+    for(const [ending,pattern,op] of arithmetic){
+      if(!mask.endsWith(ending))continue;
+      const roles=surfaceCapture(pattern,compact);
+      if(roles){
+        const operands=roles.map(part=>parseExpression(part.text,symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(part.start,part.end)}));
+        return located(exprNode('BinaryExpression',{op,left:operands[0],right:operands[1]}));
+      }
+    }
+    if(mask.endsWith('で求めた答え')){
+      const parser=new ExpressionParser('（'+compact+'）',symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?[null,...ctx.sourcePositions,null]:undefined});
+      return located(parser.namedFunction());
+    }
     return new ExpressionParser(text, symbols, ctx).parse();
+  }
+  function callableSurfaceName(text) {
+    let name;
+    if(text.startsWith('「')){
+      const literal=new ExpressionParser(text,null).parse();
+      if(literal.kind!=='StringLiteral')throw new AkariError('P205','呼び出す名前を指定してください');
+      name=literal.value;
+    }else{
+      const token=readNameToken(text);
+      if(!token||token.end!==text.length)throw new AkariError('P205','呼び出す名前を【名前】で指定してください');
+      name=token.name;
+    }
+    validateName(name,{callable:true});return name;
   }
   // Each record owns a predicate's accepted inflections; protected words are never rewritten.
   const CONDITION_FORMS = Object.freeze([
@@ -12097,6 +12216,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     ['PenCommand:CLEAR', /^作品の線とスタンプを全部(?:消す|けす)$/d, 'PenCommand', 'CLEAR'],
     ['SoundCommand:STOP_ALL', /^すべての音を止める$/d, 'SoundCommand', 'STOP_ALL'],
     ['CloneCommand:CREATE_SELF', /^自分の分身を作る$/d, 'CloneCommand', 'CREATE_SELF'],
+    ['CloneCommand:CREATE_SELF:count', /^自分の分身を(.+?)体作る$/d, 'CloneCommand', 'CREATE_SELF', 'cloneCount'],
     ['CloneCommand:DELETE_SELF', /^この分身だけを(?:消す|けす)$/d, 'CloneCommand', 'DELETE_SELF'],
     ['LooksCommand:NEXT_BACKDROP', /^次の背景に変える$/d, 'LooksCommand', 'NEXT_BACKDROP'],
     ['LooksCommand:PREV_BACKDROP', /^前の背景に変える$/d, 'LooksCommand', 'PREV_BACKDROP'],
@@ -12104,12 +12224,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     ['LooksCommand:PREV_COSTUME', /^前の衣装に変える$/d, 'LooksCommand', 'PREV_COSTUME'],
     ['WaitTime', /^(.+?)秒(?:間)?(?:待つ|まつ)$/d, 'WaitTime', null, 'seconds'],
     ['Say:concat', /^(.+?)をつなげて(?:言う|いう|話す|はなす)$/d, 'Say', null, 'concat'],
+    ['Say:concatReverse', /^(.+?に)つなげて(?:言う|いう|話す|はなす)$/d, 'Say', null, 'concat'],
+    ['Say:add', /^(.+?)に(.+?)を足して(?:言う|いう|話す|はなす)$/d, 'Say', null, 'addValue'],
     ['Say:quote', /^(.+?)と(?:言う|いう|話す|はなす)$/d, 'Say', null, 'quote'],
     ['Say:value', /^(.+?)を(?:言う|いう|話す|はなす)$/d, 'Say', null, 'value'],
     ['Ask', /^(.+?)と(?:たずねて|尋ねて|聞いて)、(?:答え|返事)を待つ$/d, 'Ask', null, 'question'],
     ['BroadcastAndWait', /^みんなに(.+?)と知らせて、知らせを受けて始めたことが全部終わるまで待つ$/d, 'BroadcastAndWait', null, 'message'],
     ['Broadcast', /^みんなに(.+?)と知らせる$/d, 'Broadcast', null, 'message'],
-    ['ReturnStatement', /^(.+?)を答えとして返す$/d, 'ReturnStatement', null, 'value'],
+    ['ReturnStatement', /^(.+?)を、?答えとして返す$/d, 'ReturnStatement', null, 'value'],
     ['LocalVariableDeclaration', /^この中だけで使う変数(.+?)を作り、最初は(.+?)にする$/d, 'LocalVariableDeclaration', null, 'local'],
     ['LocalListDeclaration', /^この中だけで使うリスト(.+?)を空で作る$/d, 'LocalListDeclaration', null, 'localList'],
     ['MotionCommand:SET_DIRECTION', /^(?:向き|方向)を(.+?)度にする$/d, 'MotionCommand', 'SET_DIRECTION', 'degree'],
@@ -12138,6 +12260,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     ['SoundCommand:SAMPLE', /^音(.+?)を鳴らし始める$/d, 'SoundCommand', 'SAMPLE', 'arg'],
     ['SoundCommand:SAMPLE_WAIT', /^音(.+?)を鳴らす$/d, 'SoundCommand', 'SAMPLE_WAIT', 'arg'],
     ['CloneCommand:CREATE_TARGET', /^(.+?)の分身を作る$/d, 'CloneCommand', 'CREATE_TARGET', 'arg'],
+    ['CloneCommand:CREATE_TARGET:count', /^(.+?)の分身を(.+?)体作る$/d, 'CloneCommand', 'CREATE_TARGET', 'cloneTargetCount'],
     ['ListClear', /^(.+?)の(?:中身を全部(?:消す|けす)|すべての要素を削除する)$/d, 'ListClear', null, 'target'],
     ['ListClear:empty', /^(.+?)を空にする$/d, 'ListClear', null, 'target'],
     ['ListAppend', /^(.+?)の最後に(.+?)を(?:入れる|いれる)$/d, 'ListAppend', null, 'append'],
@@ -12158,6 +12281,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   // Check role endings before attempting multi-operand captures. A failed ending
   // must not backtrack through every possible particle split in a long sentence.
   const SENTENCE_ROLE_ENDINGS = Object.freeze({
+    addValue:/を足して(?:言う|いう|話す|はなす)$/,
     toneReverse:/Hzの音を(?:鳴らし始める|鳴らす)$/,
     appendReverse:/の最後に(?:入れる|いれる)$/,
     insertReverse:/番目(?:の前)?に(?:入れる|いれる)$/,
@@ -12184,12 +12308,20 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   function surfaceLineSlice(line, start, end, replacement = null) {
     const code = compactOutsideString(line.code).slice(start, end), positions = line.mapped?.positions.slice(start, end) || [];
-    return {...line, code:replacement ?? code, mapped:{text:replacement ?? code, positions:replacement === null ? positions : []},
+    let mappedPositions=positions;
+    if(replacement!==null){
+      mappedPositions=Array(replacement.length);let prefix=0,suffix=0;
+      while(prefix<code.length&&prefix<replacement.length&&code[prefix]===replacement[prefix]){mappedPositions[prefix]=positions[prefix];prefix++;}
+      while(suffix<code.length-prefix&&suffix<replacement.length-prefix&&code[code.length-1-suffix]===replacement[replacement.length-1-suffix]){mappedPositions[replacement.length-1-suffix]=positions[code.length-1-suffix];suffix++;}
+    }
+    return {...line, code:replacement ?? code, mapped:{text:replacement ?? code, positions:mappedPositions},
       start:positions.length ? positions[0]-(line.indent||0) : line.start, physicalStart:line.physicalStart ?? line.start,
       startColumn:positions.length ? cpLen(line.raw.slice(0,positions[0]-(line.physicalStart??line.start)))+1 : line.startColumn||1, inline:true, comment:''};
   }
-  function sentenceActor(text) {
+  function sentenceActor(text,symbols) {
     if (text === '自分') return {kind:'self'};
+    if(symbols?.project?.components.some(component=>component.name===text)||symbols?.project?.stage.name===text)
+      return {kind:'named',name:text};
     const name = parsedDeclarationName(text);
     return {kind:'named',name};
   }
@@ -12215,7 +12347,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const target = part => sentenceTarget(part.text,code,line,symbols,ctx,part.start);
     const node = (kind,props={}) => statementNode(kind,line,{...props,actorRef:{...(ctx.topicActor || {kind:'self'})}});
     const callSplit=surfaceMask(code).lastIndexOf('、'),shortCall=symbols?.actionCallPhrases?.get(code.slice(callSplit+1));
-    const action = surfaceCapture(/^(.*?)という手順を(?:行う|おこなう)$/d,code)|| (shortCall?[{text:code.slice(0,callSplit+1)+`【${shortCall.name}】`}]:null);
+    const action = surfaceCapture(/^(.*?)という手順を(?:(.+?)回)?(?:行う|おこなう)$/d,code)|| (shortCall?[{text:code.slice(0,callSplit+1)+`【${shortCall.name}】`}]:null);
     if (action) {
       const text = action[0].text, mask = surfaceMask(text), split = mask.lastIndexOf('、');
       let rawName=text, args=[], argumentNames=null;
@@ -12232,11 +12364,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           let at=0;
           for(let i=0;i<=content.length;i++) if(i===content.length||protectedInput[i]==='、'){chunks.push({text:content.slice(at,i),start:at});at=i+1;}
           argumentNames=[];
-          for(const chunk of chunks){const pair=surfaceCapture(/^(.+?)を(.+)$/d,chunk.text);if(!pair)throw new AkariError('P205','受け取る名前と値が必要です');const name=parsedDeclarationName(pair[0].text);if(argumentNames.includes(name))throw new AkariError('S308','受け取る名前が重複しています');argumentNames.push(name);args.push(e({text:pair[1].text,start:chunk.start+pair[1].start}));}
+          for(const chunk of chunks){const pair=surfaceCapture(/^(.+?)を(.+)$/d,chunk.text);if(!pair)throw new AkariError('P205','受け取る名前と値が必要です');const name=parsedDeclarationName(pair[0].text);if(argumentNames.includes(name))throw new AkariError('S308',`受け取る名前「${name}」が重複しています`);argumentNames.push(name);args.push(e({text:pair[1].text,start:chunk.start+pair[1].start}));}
         }
       }
-      if (!rawName.startsWith('【') || !rawName.endsWith('】')) throw new AkariError('P205','手順の名前を【】で囲んでください');
-      return node('UserActionCall',{name:parsedDeclarationName(rawName),args,...(argumentNames ? {argumentNames} : {})});
+      const name=callableSurfaceName(rawName);
+      const call=node('UserActionCall',{name,args,...(argumentNames ? {argumentNames} : {})});
+      return action[1]?node('RepeatCount',{count:q(action[1],'回'),body:[call]}):call;
     }
     const protectedCode=surfaceMask(code);
     for (const form of SENTENCE_FORMS) {
@@ -12248,6 +12381,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const unit=path=>form.roleSlots.find(slot=>slot.path===path)?.unit;
       let props=form.op ? {op:form.op} : {};
       switch(form.role) {
+        case 'cloneCount': props.count=e(parts[0]);break;
+        case 'cloneTargetCount': props.args=[e(parts[0])];props.count=e(parts[1]);break;
+        case 'addValue': props.value=exprNode('BinaryExpression',{op:'ADD',left:e(parts[0]),right:e(parts[1])});break;
         case 'arg': props.args=[e(parts[0])]; break;
         case 'args': props.args=parts.map(e); break;
         case 'degree': props.args=[q(parts[0],unit('args.0'))]; break;
@@ -12255,10 +12391,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         case 'tone': props.args=[q(parts[0],unit('args.0')),q(parts[1],unit('args.1'))]; break;
         case 'toneReverse': props.args=[q(parts[1],unit('args.0')),q(parts[0],unit('args.1'))]; break;
         case 'seconds': props.seconds=q(parts[0],unit('seconds')); break;
-        case 'concat': {const content=parts[0].text,mask=surfaceMask(content),args=[];let at=0;for(let i=0;i<=content.length;i++)if(i===content.length||mask[i]==='と'){args.push(e({text:content.slice(at,i),start:parts[0].start+at}));at=i+1;}if(args.length<2)throw new AkariError('P205','つなげる値を二つ以上指定してください');props.value=exprNode('BuiltinCall',{name:'つなぐ',args});break;}
+        case 'concat': {
+          const content=parts[0].text,mask=surfaceMask(content),args=[];
+          const reverse=surfaceCapture(/^(.+?)を(.+?)に$/d,content),forward=surfaceCapture(/^(.+?)(?:の後ろ)?に(.+)$/d,content);
+          if(reverse||forward){const pair=reverse?[reverse[1],reverse[0]]:forward;for(const part of pair)args.push(e({...part,start:parts[0].start+part.start}));}
+          else {let at=0;for(let i=0;i<=content.length;i++)if(i===content.length||mask[i]==='と'){args.push(e({text:content.slice(at,i),start:parts[0].start+at}));at=i+1;}}
+          if(args.length<2)throw new AkariError('P205','つなげる値を二つ以上指定してください');props.value=exprNode('BuiltinCall',{name:'つなぐ',args});break;
+        }
         case 'quote': props.value=e(parts[0]); if(props.value.kind!=='StringLiteral') throw new AkariError('P205','台詞は「文字」と言う、値は「値を言う」と書きます'); break;
         case 'value': {const part=parts[0], raw=part.text.endsWith('の値')?{...part,text:part.text.slice(0,-2)}:part;let error;try{props.value=e(raw);}catch(caught){if(!(caught instanceof AkariError))throw caught;error=caught;}
-          const unknownWord=/^[\p{L}ー][\p{L}\p{N}ー]*$/u.test(raw.text)&&!symbols?.allDataNames?.has(raw.text)&&![...(ctx.localNames||[]),...(ctx.binders||[]),...(ctx.args||[])].includes(raw.text);
+          const resolvedName=props.value?.kind==='VariableRead'?props.value.name:raw.text,
+            unknownWord=/^[\p{L}ー][\p{L}\p{N}ー]*$/u.test(raw.text)&&!symbols?.allDataNames?.has(resolvedName)&&![...(ctx.localNames||[]),...(ctx.binders||[]),...(ctx.args||[])].includes(resolvedName);
           if(form.kind==='Say'&&unknownWord&&(error||props.value?.kind==='VariableRead')&&!part.text.endsWith('の値')){
             const name=raw.text;throw sentenceDiagnostic('台詞の文字か、素材の音かを選んでください',line,[{label:'台詞として画面に言う',source:`「${name}」と言う`},{label:'同じ名前の音を鳴らす',source:`音「${name}」を鳴らす`},{label:'データの値を言う（名前の定義を確認）',source:`【${name}】の値を言う`}],{kind:'Say',missing:['literalOrSoundOrData']});
           }
@@ -12306,6 +12449,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if((p=surfaceCapture(/^(?:画面の)?(右|左|上|下)を$/d,body)))return node('SET_DIRECTION',[sentenceQuantity(exprNode('NumberLiteral',{value:{右:0,下:90,左:180,上:270}[p[0].text]}),'度')]);
       return null;
     }
+    // Duration can follow the distance or direction role. Keep each capture's
+    // original offset so Block edits still address only that quantity.
+    if((p=surfaceCapture(/^(.+)歩、?(.+?)秒(?:で|かけて)、?(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)$/d,body)))
+      return node('GLIDE_DIRECTION',[q(p[1].text,'秒',p[1].start),q(p[0].text,'歩',p[0].start)],directions[p[2].text]);
+    if((p=surfaceCapture(/^(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)、?(.+?)秒(?:で|かけて)、?(.+)歩$/d,body)))
+      return node('GLIDE_DIRECTION',[q(p[1].text,'秒',p[1].start),q(p[2].text,'歩',p[2].start)],directions[p[0].text]);
     let remaining=body, base=0, seconds=null;
     p=surfaceCapture(/^(.+?)秒(?:で|かけて)(.+)$/d,remaining);
     if(p){seconds=q(p[0].text,'秒',p[0].start);remaining=p[1].text;base=p[1].start;}
@@ -12318,13 +12467,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if(coords){if(coords[0].text===coords[2].text)throw new AkariError('P205','横と縦を一つずつ指定してください');const a=q(coords[1].text,'歩',base+coords[1].start,false),b=q(coords[3].text,'歩',base+coords[3].start,false),xy=coords[0].text==='横'?[a,b]:[b,a];return node(seconds?'GLIDE':'GOTO',seconds?[seconds,...xy]:xy);}
     let direction=null, distance=null;
     if((p=surfaceCapture(/^(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)(.+)歩$/d,remaining))){direction=directions[p[0].text];distance=q(p[1].text,'歩',base+p[1].start);}
-    else if((p=surfaceCapture(/^(.+)歩(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)$/d,remaining))){distance=q(p[0].text,'歩',base+p[0].start);direction=directions[p[1].text];}
+    else if((p=surfaceCapture(/^(.+)歩、?(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)$/d,remaining))){distance=q(p[0].text,'歩',base+p[0].start);direction=directions[p[1].text];}
     else if((p=surfaceCapture(/^(.+)歩$/d,remaining))){distance=q(p[0].text,'歩',base+p[0].start);direction='forward';}
     if(distance){if(['行く','滑る','すべる'].includes(verb)&&!seconds)throw new AkariError('P205','位置、または時間と方向・距離を指定してください');return node(seconds?'GLIDE_DIRECTION':direction==='forward'?'MOVE':'MOVE_DIRECTION',seconds?[seconds,distance]:[distance],seconds||direction!=='forward'?direction:null);}
     if(/(?:動く|うごく|進む|すすむ|動かす|うごかす|滑る|すべる)/.test(verb))throw new AkariError('P205','移動には歩数、必要なら方向と秒数を一つずつ指定してください');
     return null;
   }
-  function readSentenceHeading(code) {
+  function readSentenceHeading(code,symbols) {
     const forms=[
       [/^(?:作品を動かしたとき|始まったとき|開始したとき)、(.+?)は、(.*)$/d,'start',0,1],
       [/^(.+?)(?:がクリックされたとき|をクリックしたとき|をクリックするたびに)、(.*)$/d,'click',0,1],
@@ -12336,7 +12485,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       [/^(.+?)の中身が変わったとき、(.*)$/d,'valueChanged',0,1],
       [/^(.+?)の分身が作られたとき、(.*)$/d,'cloneStart',0,1],
     ];
-    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','見出しの絞り込みは「文字」で指定してください');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','見出しの絞り込みは文字列一つで指定してください');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex]};}
+    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','見出しの絞り込みは「文字」で指定してください');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','見出しの絞り込みは文字列一つで指定してください');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex]};}
     return null;
   }
   function sentenceHeadingSource(heading) {
@@ -12348,14 +12497,31 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     return suffix?text.slice(0,suffix.index)+'キーが押されている':text;
   }
   function readContinuousSentence(code,line,symbols,ctx) {
-    const parts=surfaceCapture(/^(.+?)(?:あいだ|間)(?:は)?、(.+?)(?:動き続ける|動かし続ける)$/d,code);
+    const parts=surfaceCapture(/^(.+?)(?:あいだ|間)(?:は)?、(.+?)(?:動き続ける|動かし続ける|動く|動かす)$/d,code);
     if(!parts)return null;
-    let body=parts[1].text, actorRef=ctx.topicActor||{kind:'self'}, actor=surfaceCapture(/^(.+?)(?:は|を)(.+)$/d,body);
-    if(actor){actorRef=sentenceActor(actor[0].text);body=actor[1].text;}
-    let roles=surfaceCapture(/^(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)(.+?)秒に(.+?)歩の速さで$/d,body),direction,seconds,distance;
+    const body=parts[1].text, candidates=[];
+    const validRoles=roles=>{
+      try{parseExpression(roles.seconds,symbols,ctx);parseExpression(roles.distance,symbols,ctx);return roles;}
+      catch(error){if(!(error instanceof AkariError)||error.code==='P208')throw error;return null;}
+    };
+    const readRoles=text=>{
+      let roles=surfaceCapture(/^(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)(.+?)秒に(.+?)歩の速さで$/d,text);
+      if(roles)return validRoles({direction:roles[0].text,seconds:roles[1].text,distance:roles[2].text});
+      roles=surfaceCapture(/^(.+?)秒に(.+?)歩の速さで(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)$/d,text);
+      return roles?validRoles({direction:roles[2].text,seconds:roles[0].text,distance:roles[1].text}):null;
+    };
+    const implicit=readRoles(body);
+    if(implicit)candidates.push({...implicit,actorRef:ctx.topicActor||{kind:'self'}});
+    // A particle inside an actor name is not a boundary unless all remaining
+    // roles form a complete movement. Quoted names are protected by the lexer.
+    for(const match of surfaceMask(body).matchAll(/[はを]/g)){
+      if(match.index>66)break; // 32 code points, plus the two name delimiters.
+      const roles=readRoles(body.slice(match.index+1).replace(/^、/,''));
+      if(roles)candidates.push({...roles,actorRef:sentenceActor(body.slice(0,match.index),symbols)});
+    }
+    if(candidates.length!==1)throw sentenceDiagnostic(candidates.length?'主語と速さの区切りを確認してください':'継続移動には方向と「秒に歩の速さで」を指定してください',line,[],{kind:'ContinuousRule',actorRef:ctx.topicActor||{kind:'self'},missing:['speed']});
+    const {direction,seconds,distance,actorRef}=candidates[0];
     const e=t=>parseExpression(t,symbols,{...ctx,lineNo:line.lineNo});
-    if(roles){direction=roles[0].text;seconds=roles[1].text;distance=roles[2].text;}
-    else {roles=surfaceCapture(/^(.+?)秒に(.+?)歩の速さで(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)$/d,body);if(!roles)throw sentenceDiagnostic('継続移動には方向と「秒に歩の速さで」を指定してください',line,[],{kind:'ContinuousRule',actorRef,missing:['speed']});seconds=roles[0].text;distance=roles[1].text;direction=roles[2].text;}
     return statementNode('ContinuousRule',line,{actorRef:{...actorRef},condition:parseCondition(continuousCondition(parts[0].text)+'あいだ',symbols,{...ctx,lineNo:line.lineNo},'while'),direction:{前:'forward',後ろ:'backward',右:'right',左:'left',上:'up',下:'down'}[direction],seconds:sentenceQuantity(e(seconds),'秒'),distance:sentenceQuantity(e(distance),'歩')});
   }
   function parseSentenceSequence(line,symbols,ctx) {
@@ -12435,15 +12601,41 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   function parseScript(source, symbols, ctx = {}) {
     if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','本文の文字数が上限を超えています',1,1);
+    const physical=normalizeSource(source).lines,headings=physical.filter(line=>!line.continuation&&line.code&&!/^[ \t\u3000]/u.test(line.raw)&&readSentenceHeading(compactOutsideString(line.code),symbols));
+    const firstCode=physical.find(line=>!line.continuation&&line.code),hasPrefix=headings.length&&headings[0]!==firstCode;
+    if(headings.length<=1&&!hasPrefix)return parseScriptUnit(source,symbols,ctx);
+    if(ctx.definitionKind||ctx.definition)throw new AkariError('P205','手順・計算の本文へ別のできごとの見出しは置けません',headings[0].lineNo,1);
+    const starts=[{start:0,lineNo:1},...headings.slice(hasPrefix?0:1)];
+    if(starts.length>LIMITS.scripts)throw new AkariError('P208','できごとの数が上限を超えています',1,1);
+    const units=starts.map((entry,index)=>{
+      const end=starts[index+1]?.start??source.length,text=source.slice(entry.start,end);let unit;
+      try{unit=parseScriptUnit(text,symbols,ctx);}catch(error){if(error instanceof AkariError)error.line=(error.line||1)+entry.lineNo-1;throw error;}
+      const pending=[unit],shift=entry.lineNo-1;
+      while(pending.length){
+        const node=pending.pop();
+        if(node.sourceSpan){node.sourceSpan.startLine+=shift;node.sourceSpan.endLine+=shift;}
+        if(node.endLine)node.endLine+=shift;
+        const location=SOURCE_RANGES.get(node);
+        if(location){const move=value=>{if(!value||typeof value!=='object')return;for(const [key,child]of Object.entries(value)){if(['start','end','at'].includes(key)&&typeof child==='number')value[key]=child+entry.start;else if(child&&typeof child==='object')move(child);}};move(location);}
+        for(const child of Object.values(node))if(Array.isArray(child))pending.push(...child.filter(value=>value?.kind));else if(child?.kind)pending.push(child);
+      }
+      SOURCE_RANGES.set(unit,{range:{start:entry.start,end},extent:{start:entry.start,end},indent:0,inline:false});
+      return unit;
+    });
+    const document={...units[0],units:units.slice(1),source,sourceSpan:{startLine:1,startColumn:1,endLine:physical.length,endColumn:1}};
+    SOURCE_RANGES.set(document,SOURCE_RANGES.get(units[0]));return document;
+  }
+  function parseScriptUnit(source, symbols, ctx = {}) {
+    if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','本文の文字数が上限を超えています',1,1);
     const rawLines=normalizeSource(source).lines,lines=[];
-    for(const line of rawLines){const prefix=line.raw.match(/^\s*/u)[0];if(/[^ ]/u.test(prefix))throw new AkariError('P209','字下げは半角スペースで書きます。タブや全角空白の範囲を確認してください',line.lineNo,1);line.indent=prefix.length;const code=compactOutsideString(line.code);if(!code){lines.push(line);continue;}const mask=surfaceMask(code);let start=0;for(let i=0;i<=mask.length;i++)if(i===mask.length||mask[i]==='。'){if(i>start){const part=surfaceLineSlice(line,start,i);part.indent=line.indent;part.inline=start>0;part.comment=i===mask.length?line.comment:'';lines.push(part);}start=i+1;}}
+    for(const line of rawLines){if(line.continuation)continue;const prefix=line.raw.match(/^[ \t\u3000]*/u)[0];if(/[^ ]/u.test(prefix))throw new AkariError('P209','字下げは半角スペースで書きます。タブや全角空白の範囲を確認してください',line.lineNo,1);line.indent=prefix.length;const code=compactOutsideString(line.code);if(!code){lines.push(line);continue;}const mask=surfaceMask(code);let start=0;for(let i=0;i<=mask.length;i++)if(i===mask.length||mask[i]==='。'){if(i>start){const part=surfaceLineSlice(line,start,i);part.indent=line.indent;part.inline=start>0;part.comment=i===mask.length?line.comment:'';lines.push(part);}start=i+1;}}
     const baseCtx={...ctx,localNames:[...(ctx.localNames||[])],binders:[...(ctx.binders||[])],topicActor:{...(ctx.topicActor||{kind:'self'})}};
     if(ctx.definition){const names=localDeclarationNames(source);baseCtx.localNames.push(...names.vars,...names.lists);for(const line of lines){const p=surfaceCapture(/^この中だけで使う(?:変数|リスト)(.+?)を(?:作り、最初は.+にする|空で作る)$/d,line.code);if(p)baseCtx.localNames.push(parsedDeclarationName(p[0].text));}}
     const nextCode=i=>{while(i<lines.length&&!lines[i].code)i++;return i;};
     const parseAt=(line,fn)=>{try{return fn();}catch(error){if(error instanceof AkariError&&!error.line){error.line=line.lineNo;error.column=error.column||1;}throw error;}};
     let first=nextCode(0),heading=null;
     if(first<lines.length&&lines[first].indent!==0)throw new AkariError('P209','最上位の文は字下げせずに書きます',lines[first].lineNo,1);
-    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code));if(found){heading=found.heading;const line=lines[first];if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','見出しの本文を字下げして書いてください',lines[first].lineNo,1);}}
+    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols));if(found){heading=found.heading;const line=lines[first];if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','見出しの本文を字下げして書いてください',lines[first].lineNo,1);}}
     const rules=[];
     function block(start,indent,scope,depth){
       if(depth>LIMITS.blockDepth)throw new AkariError('P208','ブロックが深すぎます',lines[start]?.lineNo||1,1);
@@ -12492,20 +12684,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     const indent=heading&&first<lines.length?lines[first].indent:0,result=block(0,indent,baseCtx,0);
     if(result.index<lines.length)throw new AkariError('P204','対応する同じ字下げ位置の「もし」がありません',lines[result.index].lineNo,1);
+    const point=offset=>{let lo=0,hi=rawLines.length;while(lo+1<hi){const mid=(lo+hi)>>1;if(rawLines[mid].start<=offset)lo=mid;else hi=mid;}return {line:rawLines[lo].lineNo,column:cpLen(source.slice(rawLines[lo].start,offset))+1};};
     const pending=[...result.nodes,...rules];
     while(pending.length){
       const node=pending.pop(),range=SOURCE_RANGES.get(node)?.range,
         physical=node.sourceSpan?rawLines[node.sourceSpan.startLine-1]:null;
-      if(range&&physical)node.sourceSpan={
-        startLine:physical.lineNo,startColumn:cpLen(physical.raw.slice(0,range.start-physical.start))+1,
-        endLine:physical.lineNo,endColumn:cpLen(physical.raw.slice(0,range.end-physical.start))+1,
-      };
+      if(range&&physical){const begin=point(range.start),end=point(range.end);node.sourceSpan={startLine:begin.line,startColumn:begin.column,endLine:end.line,endColumn:end.column};}
       for(const value of Object.values(node)){
         if(Array.isArray(value)){for(const child of value)if(child?.kind)pending.push(child);}
         else if(value?.kind)pending.push(value);
       }
     }
-    return {kind:'Script',body:result.nodes,...(heading?{heading}:{}),...(rules.length?{rules}:{}),source,sourceSpan:{startLine:1,startColumn:1,endLine:rawLines.length,endColumn:1}};
+    const ast={kind:'Script',body:result.nodes,...(heading?{heading}:{}),...(rules.length?{rules}:{}),source,sourceSpan:{startLine:1,startColumn:1,endLine:rawLines.length,endColumn:1}};
+    SOURCE_RANGES.set(ast,{range:{start:0,end:source.length},extent:{start:0,end:source.length},indent:0,inline:false});return ast;
   }
   function readBlockHead(text,symbols,ctx={}) {
     const code=compactOutsideString(text),mask=surfaceMask(code),line=ctx.sourceLine||{raw:text,code:text,lineNo:ctx.lineNo||0};
@@ -12539,7 +12730,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     if(/^(?:次のことを)?ずっと(?:くり返す|繰り返す|くりかえす)$/.test(mask))return {kind:'Forever'};
     if((parts=surfaceCapture(/^(?:次のことを)?(.+)回(?:だけ)?(?:、次のことを)?(?:くり返す|繰り返す|くりかえす)$/d,code)))return {kind:'RepeatCount',count:sentenceQuantity(e(parts[0]),'回')};
-    if((parts=surfaceCapture(/^(.+)の中身を先頭から一つずつ見て、次のことを行う$/d,code)))return {kind:'ForEach',list:e(parts[0]),binder:'今見ているもの'};
+    if((parts=surfaceCapture(/^(.+?)(?:の中身)?を先頭から一つずつ見て、次のことを行う$/d,code)))return {kind:'ForEach',list:e(parts[0]),binder:'今見ているもの'};
     if((parts=surfaceCapture(/^(.+)の各要素を(.+)として、?(?:次のことを)?(?:くり返す|繰り返す|くりかえす)$/d,code)))return {kind:'ForEach',list:e(parts[0]),binder:parsedDeclarationName(parts[1].text)};
     if((parts=surfaceCapture(/^(.+(?:あいだ|間|まで))、(?:次のことを)?(?:くり返す|繰り返す|くりかえす)$/d,code))){const clause=readConditionClause(parts[0].text,symbols,ctx);return {kind:clause.mode==='while'?'RepeatWhile':'RepeatUntil',condition:clause.condition};}
     if((parts=surfaceCapture(/^(.+)回((?:.*)(?:進んで|すすんで|動いて|うごいて))、(.+)$/d,code))){const first=sentenceInfinitive(parts[1].text),last=parts[2].text,indent=' '.repeat(line.indent||0);throw sentenceDiagnostic('くり返す範囲を選んでください',line,[{label:'前の動作だけをくり返す',source:`${parts[0].text}回くり返す。\n${indent}  ${first}。\n${indent}${last}`},{label:'二つの動作をくり返す',source:`${parts[0].text}回くり返す。\n${indent}  ${first}。\n${indent}  ${last}`}],{kind:'RepeatCount',missing:['scope']});}
@@ -12570,18 +12761,27 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   function readSurfaceStatement(code,line,symbols,ctx) {return readRoleStatement(code,line,symbols,ctx);}
   function parseSimpleStatement(line,symbols,ctx={}) {
     let code=compactOutsideString(line.code),working=line;
-    const lead=/^(?:そのあと|それから|次に)、/.exec(surfaceMask(code));
+    const lead=/^(?:そのあと|それから|次に|最後に)、/.exec(surfaceMask(code));
     if(lead){working=surfaceLineSlice(line,lead[0].length,code.length);working.comment=line.comment;code=working.code;}
     const parse=(text,at,topicActor)=>{const part=at?surfaceLineSlice(working,at,code.length):working;part.comment=line.comment;const local={...ctx,topicActor};return readSurfaceStatement(text,part,symbols,local);};
     let directError;
     try { const direct=parse(code,0,ctx.topicActor||{kind:'self'}); if(direct)return direct; } catch(error) {if(!(error instanceof AkariError))throw error;directError=error;}
+    const directionFirst=surfaceCapture(/^((?:画面の)?(?:前|後ろ|右|左|上|下)(?:へ|に))、(.+?)を(.+(?:動かす|うごかす))$/d,code);
+    if(directionFirst){
+      const [direction,actor,movement]=directionFirst,actorRef=sentenceActor(actor.text,symbols),text=direction.text+movement.text;
+      const positions=working.mapped?.positions,part={...working,code:text,mapped:{text,positions:positions?[...positions.slice(direction.start,direction.end),...positions.slice(movement.start,movement.end)]:[]}};
+      const result=readSentenceMotion(text,part,symbols,{...ctx,topicActor:actorRef});
+      if(result){STATEMENT_EXPLICIT_ACTORS.add(result);return result;}
+    }
     // Actor extraction is permitted only when a complete action/data frame accepts its suffix.
     const actorPatterns=[/^(.+?)は、?(.+)$/d,/^(.+?)を(.+(?:動かす|うごかす))$/d,/^(.+?)に(.+(?:言わせる))$/d];
     for(let k=0;k<actorPatterns.length;k++){
       if(k===1&&!/(?:動かす|うごかす)$/.test(code)||k===2&&!code.endsWith('言わせる'))continue;
-      const parts=surfaceCapture(actorPatterns[k],code);if(!parts)continue;
+      const particle=['は','を','に'][k],known=[...(symbols?.project?.components||[]),...(symbols?.project?.stage?[symbols.project.stage]:[])].sort((a,b)=>b.name.length-a.name.length).find(actor=>code.startsWith(actor.name+particle));
+      const offset=known?known.name.length+1+(k===0&&code[known.name.length+1]==='、'?1:0):0;
+      const parts=known?[{text:known.name,start:0,end:known.name.length},{text:code.slice(offset),start:offset,end:code.length}]:surfaceCapture(actorPatterns[k],code);if(!parts)continue;
       if(k===0&&parts[0].text==='この中で')continue;
-      let actorRef;try{actorRef=sentenceActor(parts[0].text);}catch(error){if(error instanceof AkariError)continue;throw error;}let body=parts[1].text;
+      let actorRef;try{actorRef=sentenceActor(parts[0].text,symbols);}catch(error){if(error instanceof AkariError)continue;throw error;}let body=parts[1].text;
       if(k===2)body=body.slice(0,-'言わせる'.length)+'言う';
       const part=surfaceLineSlice(working,parts[1].start,parts[1].end,k===2?body:null);part.comment=line.comment;
       const node=readSurfaceStatement(body,part,symbols,{...ctx,topicActor:actorRef});
@@ -13300,7 +13500,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         CREATE_SELF: Object.freeze({
           label: '自分の分身を作る',
           inputs: Object.freeze([]),
-          format: (a) => '自分の分身を作る',
+          format: (a,n) => n.count===undefined?'自分の分身を作る':`自分の分身を${formatExpression(n.count)}体作る`,
         }),
         DELETE_SELF: Object.freeze({
           label: 'この分身だけを消す',
@@ -13310,7 +13510,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         CREATE_TARGET: Object.freeze({
           label: '対象のクローンを作る',
           inputs: Object.freeze(['対象']),
-          format: (a) => `${a(0)}の分身を作る`,
+          format: (a,n) => `${a(0)}の分身を${n.count===undefined?'':formatExpression(n.count)+'体'}作る`,
         }),
       }),
     }),
@@ -13456,6 +13656,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       [field('heading', 'できごとの見出し', 'heading', undefined, { required: false })],
       [input('rules', '続けて動くルール', 'rule', {
         required: false, multiple: true, minItems: 0, maxItems: LIMITS.activeTasks, variadic: true,
+      }),input('units','できごとのまとまり','script',{
+        required:false,multiple:true,minItems:1,maxItems:LIMITS.scripts,variadic:true,
       })], [body('body', '本文', false)]);
     for (const role of ['expression', 'statement', 'target', 'rule'])
       add('Hole', role, '未確定の穴', [field('label', '必要な役割', 'string', '値')],
@@ -13622,14 +13824,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           'statement',
           command.label,
           [],
-          [args([...command.inputs])],
+          [args([...command.inputs]),...(kind==='CloneCommand'&&value!=='DELETE_SELF'?[input('count','作る分身の数','expression',{required:false})]:[])],
           [],
           op('op', value),
           { palette: group.palette },
         );
       }
     add('NumberLiteral', 'expression', '数', [field('value', '数', 'number', 0)]);
-    add('StringLiteral', 'expression', '文字', [field('value', '文字', 'string', '')]);
+    add('StringLiteral', 'expression', '文字', [field('value', '文字', 'string', '', { multiline:true })]);
     add('BooleanLiteral', 'expression', '条件の答え', [field('value', '条件の答え', 'boolean', true)]);
     add(
       'ListLiteral',
@@ -13895,7 +14097,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         } catch (error) {
           blockStructureError(error.message, path);
         }
-      if (/[\r\n]/.test(value)) blockStructureError('一行の値にします', path);
+      if (!field.multiline && /[\r\n]/.test(value)) blockStructureError('一行の値にします', path);
       if (type === 'string' && cpLen(value) > LIMITS.stringChars)
         blockStructureError('文字列の内容または長さが不正です', path);
       if (type === 'annotation' && value && value[0] !== '※')
@@ -13908,6 +14110,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     let count = 0;
     const visit = (node, type, path, blockDepth, expressionDepth) => {
       const schema = syntaxSchema(node, type);
+      if(node.units&&(type!=='script'||path!=='root'))
+        blockStructureError('できごとのまとまりは文書の最上位に置きます',path);
       if (schema.draftOnly && !allowHoles) blockStructureError('未確定の穴を確定してから実行してください', path);
       if (active.has(node)) blockStructureError('循環しています', path);
       active.add(node);
@@ -14386,6 +14590,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if(ast.heading)line(0,sentenceHeadingSource(ast.heading));
     emit(ast.body,ast.heading?1:0,options.inheritedActor);
     for(const rule of ast.rules||[])line(ast.heading?1:0,rule.kind==='Hole'?formatHoleSource(rule):sentenceFormFor(rule).render(rule),rule.inlineComment||'');
+    for(const unit of ast.units||[])out.push(formatScript(unit,options));
     const source=out.join('\n');if(cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','整形後の本文が文字数の上限を超えます',1,1);return source;
     });
   }
@@ -14538,7 +14743,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const names = n.argumentNames;
       if (names.length !== n.args.length || new Set(names).size !== names.length ||
         def.args.some(name => !names.includes(name)) || names.some(name => !def.args.includes(name)))
-        add('S308', `「${n.name}」の受け取る値の名前を一つずつ指定してください`, n, where);
+        add('S308', `「${n.name}」の受け取る値の名前を一つずつ指定してください`+namedArgumentDetails(def.args,names), n, where);
     };
     // Infer only units guaranteed by the expression contract. Mutable names,
     // arguments and user calculations remain unknown; no value is evaluated.
@@ -14657,7 +14862,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           const f = symbols.functions.get(n.name);
           if (!f) add('S301', `計算「${n.name}」がありません`, ctx.node, where);
           else if (f.args.length !== n.args.length)
-            add('S308', `計算「${n.name}」の受け取る値は${f.args.length}個です`, ctx.node, where);
+            add('S308', `計算「${n.name}」の受け取る値は${f.args.length}個です`+namedArgumentDetails(f.args,n.argumentNames), ctx.node, where);
           else { checkArguments(n, f, where); analyzeCallable(f, 'function', ctx); }
         }
         if (n.kind === 'BuiltinCall' && BUILTIN_META.has(n.name)) {
@@ -14842,7 +15047,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           const a = symbols.actions.get(n.name);
           if (!a) add('S301', `動作「${n.name}」がありません`, n, where);
           else if (a.args.length !== n.args.length)
-            add('S308', `動作「${n.name}」の受け取る値は${a.args.length}個です`, n, where);
+            add('S308', `動作「${n.name}」の受け取る値は${a.args.length}個です`+namedArgumentDetails(a.args,n.argumentNames), n, where);
           else { checkArguments(n, a, where); analyzeCallable(a, 'action', c); }
         }
         if (n.kind === 'MotionCommand' && n.op === 'POINT_TO')
@@ -15049,6 +15254,29 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   function updateScriptSource(script, source, project) {
     const metadata = scriptHeadingMetadata(source, script, project);
+    const before=parseSyntax(script.source,{symbols:buildSymbols(project)}).ast,after=parseSyntax(source,{symbols:buildSymbols(project)}).ast;
+    if(after&&(after.units||script.document)){
+      const ids=new Set(),scan=value=>{if(!value||typeof value!=='object')return;for(const [key,child]of Object.entries(value)){if(key==='id'&&typeof child==='string')ids.add(child);else if(key==='unitIds'&&Array.isArray(child))child.forEach(id=>ids.add(id));else if(child&&typeof child==='object')scan(child);}};scan(project);
+      const fresh=()=>{let i=1;while(ids.has('unit-'+i))i++;const id='unit-'+i;ids.add(id);return id;};
+      if(!script.id){let i=1;while(ids.has('document-'+i))i++;script.id='document-'+i;ids.add(script.id);}
+      const list=ast=>ast?[ast,...(ast.units||[])]:[],oldUnits=list(before),newUnits=list(after),used=new Set(),unitIds=[];
+      const text=(unit,original)=>{const range=SOURCE_RANGES.get(unit)?.range;return range?original.slice(range.start,range.end).trim():unit.source?.trim();};
+      for(let i=0;i<newUnits.length;i++){
+        const value=text(newUnits[i],source),match=oldUnits.findIndex((unit,j)=>!used.has(j)&&text(unit,script.source)===value);
+        if(match>=0){used.add(match);unitIds[i]=script.document?.unitIds[match]||fresh();}
+      }
+      // Preserve edited units only when their event identity is unambiguous in
+      // both documents. Positional matching could give an inserted event the ID
+      // of a different event whose text was edited in the same transaction.
+      const signature=unit=>JSON.stringify(unit.heading||{event:script.event,actorRef:{kind:'self'},filter:script.filter||null});
+      for(let i=0;i<newUnits.length;i++)if(!unitIds[i]){
+        const sig=signature(newUnits[i]),old=oldUnits.map((unit,j)=>({unit,j})).filter(({unit,j})=>!used.has(j)&&signature(unit)===sig),
+          incoming=newUnits.filter((unit,j)=>!unitIds[j]&&signature(unit)===sig);
+        if(old.length===1&&incoming.length===1){used.add(old[0].j);unitIds[i]=script.document?.unitIds[old[0].j]||fresh();}
+      }
+      for(let i=0;i<newUnits.length;i++)if(!unitIds[i])unitIds[i]=fresh();
+      script.document={revision:(script.document?.revision||0)+(source===script.source?0:1),unitIds};
+    }
     Object.assign(script, metadata, { source });
     if (metadata.filter === undefined) delete script.filter;
     return script;
@@ -15077,7 +15305,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         key: scriptSourceKey(s), ownerId: s.targetId, id: s.id, scriptId: s.id,
         kind: 'script', event: s.event, filter: s.filter, source: s.source,
         title: EVENT_LABELS[s.event],
-        context: { id: s.id, scriptId: s.id, filter: s.filter, ownerId: s.targetId, targetId: s.targetId,
+        context: { id: s.id, scriptId: s.id, unitIds:s.document?.unitIds, filter: s.filter, ownerId: s.targetId, targetId: s.targetId,
           targetType: s.targetId === 'stage' ? 'stage' : project.components.find(c => c.id === s.targetId).type,
           event: s.event, args: [], definition: null, definitionKind: null },
       })),
@@ -15106,6 +15334,205 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     walk(parsed.ast);
     return [...refs];
   }
+  function projectResourceNodes(project) {
+    const nodes = [], add = (kind, item, ownerId = 'stage') => nodes.push({ key: `${kind}:${item.id}`, kind, id: item.id, name: item.name, ownerId });
+    add('component', project.stage);
+    for (const c of project.components) {
+      add('component', c, c.id);
+      for (const costume of c.costumes || []) add('costume', costume, c.id);
+      for (const d of [...c.localData.variables, ...c.localData.lists]) add('data', d, c.id);
+    }
+    for (const b of project.stage.backdrops) add('backdrop', b);
+    for (const s of project.sounds) add('sound', s);
+    for (const d of [...project.projectData.variables, ...project.projectData.lists]) add('data', d);
+    for (const kind of ['action', 'function']) for (const d of project[kind === 'action' ? 'actions' : 'functions']) add(kind, d);
+    return nodes;
+  }
+  // Code and Block share these parsed semantic references. Unknown source and
+  // computed resource names are explicit uncertainty, never evidence of no use.
+  function buildProjectReferenceGraph(project, { drafts = [] } = {}) {
+    const resources = projectResourceNodes(project), references = [], uncertain = [], symbols = buildSymbols(project);
+    const records = [...sourceRegistry(project), ...drafts];
+    const actor = ref => ref?.kind === 'named' ? ref.targetId || (ref.name === '画面' || ref.name === project.stage.name ? 'stage' : project.components.find(c => c.name === ref.name)?.id) : null;
+    for (const record of records) {
+      const parsed = parseSyntax(record.source, { ...record.context, symbols });
+      const ownerName = record.ownerId === 'stage' ? project.stage.name : project.components.find(c => c.id === record.ownerId)?.name;
+      const location = node => ({ sourceKey: record.key, ownerId: record.ownerId, title: [ownerName, record.title || '本文'].filter(Boolean).join(' / '), line: node?.sourceSpan?.startLine || 1 });
+      if (record.incomplete) uncertain.push({ ...location(), kind: null, reason: '確定していない入力があり、参照先をすべて調べられません' });
+      if (!parsed.ast) { uncertain.push({ ...location(), kind: null, reason: '未完成の本文があり、参照先をすべて調べられません' }); continue; }
+      const paths = new WeakMap();
+      const indexPaths = (node,path=[]) => {if(!node||typeof node!=='object')return;paths.set(node,path);for(const [key,value]of Object.entries(node)){if(['sourceSpan','source'].includes(key))continue;if(Array.isArray(value))value.forEach((child,i)=>indexPaths(child,[...path,key,i]));else if(value&&typeof value==='object')indexPaths(value,[...path,key]);}};
+      indexPaths(parsed.ast);
+      const local = syntaxItem(record.key, parsed.ast, record.context);
+      const localNames = new Set([...(record.context.args || []), ...local.localVarNames, ...local.localListNames]);
+      const add = (resource, node, binding = 'name') => {
+        const range = SOURCE_RANGES.get(node)?.range;
+        references.push({ ...location(node), resourceKey: resource.key, name: resource.name, binding, nodePath: paths.get(node),
+          ...(range ? { range: { start: range.start, end: range.end } } : {}) });
+      };
+      const named = (kind, expr, ownerId, special = []) => {
+        if (expr?.kind !== 'StringLiteral') {
+          uncertain.push({ ...location(expr), kind, targetOwnerId: ownerId || null, reason: '実行中に決まる名前を使っています' }); return;
+        }
+        if (special.includes(expr.value)) return;
+        for (const r of resources.filter(r => r.kind === kind && r.name === expr.value && (!ownerId || r.ownerId === ownerId))) add(r, expr, 'literal');
+      };
+      const data = (ref, node, ownerId, bound) => {
+        if (!ref?.name || (!ref.qualifier || ref.qualifier === 'exact') && bound.has(ref.name)) return;
+        let matches = resources.filter(r => r.kind === 'data' && r.name === ref.name);
+        if (ref.qualifier === 'project') matches = matches.filter(r => r.ownerId === 'stage');
+        else if (ref.qualifier === 'self') matches = matches.filter(r => ownerId ? r.ownerId === ownerId : r.ownerId !== 'stage');
+        else if (ownerId) { const own = matches.filter(r => r.ownerId === ownerId); matches = own.length ? own : matches.filter(r => r.ownerId === 'stage'); }
+        for (const r of matches) add(r, node);
+      };
+      const walk = (node, ownerId, bound) => {
+        if (!node || typeof node !== 'object') return;
+        const ref = node.heading?.actorRef || node.actorRef;
+        const resolved = actor(ref);
+        if (resolved) {
+          ownerId = resolved;
+          const target = resources.find(r => r.key === 'component:' + resolved);
+          if (target) add(target, node, 'actor');
+        }
+        if (node.kind === 'Hole') uncertain.push({ ...location(node), kind: null, reason: 'まだ選んでいない役割があります' });
+        if (node.kind === 'UserActionCall' || node.kind === 'UserFunctionCall') {
+          const kind = node.kind === 'UserActionCall' ? 'action' : 'function';
+          for (const r of resources.filter(r => r.kind === kind && r.name === node.name)) add(r, node);
+        }
+        if (node.kind === 'VariableRead') data(node, node, ownerId, bound);
+        if (node.target?.name) data(node.target, node.target, ownerId, bound);
+        if (node.kind === 'LooksCommand' && node.op === 'SET_COSTUME') named('costume', node.args?.[0], ownerId);
+        if (node.kind === 'LooksCommand' && node.op === 'SET_BACKDROP') named('backdrop', node.args?.[0]);
+        if (node.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(node.op)) named('sound', node.args?.[0]);
+        if (node.kind === 'MotionCommand' && node.op === 'POINT_TO') named('component', node.args?.[0], null, ['マウス']);
+        if (node.kind === 'CloneCommand' && node.op === 'CREATE_TARGET') named('component', node.args?.[0]);
+        if (node.kind === 'LooksCommand' && ['SET_TARGET_TEXT', 'SET_INPUT'].includes(node.op)) named('component', node.args?.[0]);
+        if (node.kind === 'SensorRead' && ['INPUT_VALUE', 'DISTANCE_TO', 'TOUCHING'].includes(node.sensor)) named('component', node.arg, null, ['マウス', '端']);
+        for (const [key, value] of Object.entries(node)) {
+          if (['sourceSpan', 'actorRef', 'heading', 'source'].includes(key)) continue;
+          const scoped = key === 'body' && node.kind === 'ForEach' ? new Set([...bound, node.binder]) : bound;
+          if (Array.isArray(value)) value.forEach(child => walk(child, ownerId, scoped));
+          else if (value && typeof value === 'object') walk(value, ownerId, scoped);
+        }
+      };
+      walk(parsed.ast, record.kind === 'script' ? record.ownerId : null, localNames);
+    }
+    return { version: 1, resources, references, uncertain };
+  }
+  function resourceChangeImpact(project, resourceKey, options = {}) {
+    const graph = buildProjectReferenceGraph(project, options), resource = graph.resources.find(r => r.key === resourceKey);
+    if (!resource) throw new AkariError('F503', '変更する参照先がありません');
+    return { resource, references: graph.references.filter(r => r.resourceKey === resourceKey),
+      uncertain: graph.uncertain.filter(r => (!r.kind || r.kind === resource.kind) && (!r.targetOwnerId || r.targetOwnerId === resource.ownerId)) };
+  }
+  function prepareBindingRename(project, resourceKey, newName, options = {}) {
+    const graph = buildProjectReferenceGraph(project, options), resource = graph.resources.find(r => r.key === resourceKey);
+    if (!resource) throw new AkariError('F503', '変更する名前がありません');
+    validateResourceName(newName, '名前');
+    if (newName === resource.name) return cloneDesignProject(project);
+    if (graph.uncertain.some(r=>!r.kind||r.kind===resource.kind)) throw new AkariError('S301', '未完成または実行中に決まる参照があります。本文を確定してから名前を変えてください');
+    const next = cloneDesignProject(project), items = resource.kind === 'component' ? [next.stage, ...next.components]
+      : resource.kind === 'data' ? (resource.ownerId === 'stage' ? next.projectData : next.components.find(c => c.id === resource.ownerId).localData)
+      : next[resource.kind === 'action' ? 'actions' : 'functions'];
+    const siblings = Array.isArray(items) ? items : [...items.variables, ...items.lists];
+    if ((resource.kind === 'action' || resource.kind === 'function' ? [...next.actions, ...next.functions] : siblings).some(d => d.id !== resource.id && d.name === newName))
+      throw new AkariError('F503', '同じ所属に同じ名前があります。別の名前を選んでください');
+    siblings.find(d => d.id === resource.id).name = newName;
+    validateDesignProject(next);
+    const at = (root, path) => path.reduce((value,key) => value?.[key],root), grouped = new Map();
+    for (const ref of graph.references.filter(r => r.resourceKey === resourceKey)) {
+      if (options.drafts?.some(d => d.key === ref.sourceKey)) throw new AkariError('S301', '編集中の定義を保存してから名前を変えてください');
+      if (graph.references.some(r => r.sourceKey === ref.sourceKey && r.binding === ref.binding && stableJson(r.nodePath) === stableJson(ref.nodePath) && r.resourceKey !== resourceKey))
+        throw new AkariError('S301', '同じ呼び方が複数の対象を指します。所属や対象を明示してから名前を変えてください');
+      const rows = grouped.get(ref.sourceKey) || []; rows.push(ref); grouped.set(ref.sourceKey,rows);
+    }
+    for (const record of sourceRegistry(project)) {
+      const refs = grouped.get(record.key); if (!refs) continue;
+      const session = createEditorSession(record.key,record.source,record.context,project), tree = cloneDesignProject(session.blockView), index = buildBlockIndex(tree), edits = [];
+      if (!session.syntaxAst || !tree) throw new AkariError('S301', '本文の参照を確定できません');
+      for (const ref of refs) {
+        const entry = [...session.nodeMap].find(([,loc]) => stableJson(loc.path) === stableJson(ref.nodePath));
+        if (!entry) throw new AkariError('F503', '名前を使っている場所を確認できません');
+        const [id,loc] = entry, node = index.get(id).node, original = at(session.syntaxAst,ref.nodePath);
+        if (ref.binding === 'actor') {
+          const actor = node.fields.heading?.actorRef || node.fields.actorRef;
+          if (!actor || actor.name !== resource.name) continue; // The stable alias 画面 keeps its spelling.
+          actor.name = newName;
+        } else if (ref.binding === 'literal') node.fields.value = newName;
+        else node.fields.name = newName;
+        const range = loc.surface?.range;
+        if (!range) throw new AkariError('F503', '名前の原文位置を確認できません');
+        if (ref.binding === 'literal') { edits.push({...range,text:formatExpression({kind:'StringLiteral',value:newName})}); continue; }
+        const phrase=original.kind==='UserActionCall'&&project.actions.find(a=>a.id===resource.id)?.callPhrase;
+        if(phrase&&compactOutsideString(record.source.slice(range.start,range.end)).replace(/[。．.]$/,'').endsWith(actionCallPhraseKey(phrase)))continue;
+        let end = range.end;
+        if (original.kind === 'Script' && ref.binding === 'actor') {
+          const firstLine = /[\r\n]/.exec(record.source.slice(range.start,end)); if (firstLine) end = range.start + firstLine.index;
+        }
+        // Values, quoted speech and nested bodies are separate semantic nodes.
+        // A containing command's name must never rename text inside those nodes.
+        const protectedRanges = [...session.nodeMap.values()].filter(child => child.path.length > loc.path.length && loc.path.every((k,i) => child.path[i] === k)).map(child => child.surface?.range).filter(Boolean);
+        const candidates = [];
+        for (let pos=record.source.indexOf(resource.name,range.start);pos>=0&&pos+resource.name.length<=end;pos=record.source.indexOf(resource.name,pos+resource.name.length)) {
+          if (protectedRanges.some(r => pos>=r.start&&pos<r.end)) continue;
+          let start=pos,finish=pos+resource.name.length,text=nameSource(newName);
+          const before=record.source[pos-1],after=record.source[finish];
+          if (before==='【'&&after==='】') {start--;finish++;text=`【${newName}】`;}
+          else if (before==='「'&&after==='」') {start--;finish++;text=formatExpression({kind:'StringLiteral',value:newName});}
+          candidates.push({start,end:finish,text});
+        }
+        if (candidates.length>1) throw new AkariError('S301', '名前の参照位置が複数あります。対象を明示してから名前を変えてください');
+        if (candidates.length) edits.push(candidates[0]);
+        else if (ref.binding!=='actor'&&!(original.kind==='UserActionCall'&&project.actions.find(a=>a.id===resource.id)?.callPhrase))
+          throw new AkariError('F503', '名前の表記を確認できません');
+      }
+      let source=record.source,boundary=source.length;
+      const unique=[...new Map(edits.map(e=>[e.start+':'+e.end,e])).values()].sort((a,b)=>b.start-a.start);
+      for (const edit of unique) {if(edit.end>boundary)throw new AkariError('F503','名前の編集範囲が重なっています');source=source.slice(0,edit.start)+edit.text+source.slice(edit.end);boundary=edit.start;}
+      const parsed=parseSyntax(source,{...record.context,symbols:buildSymbols(next)});
+      if(!parsed.ast||!astEquivalent(parsed.ast,blockDecode(tree)))throw new AkariError('S301','この表記では参照を保った変更を確認できません。名前の引用や対象を明示してください');
+      const target=record.kind==='script'?scriptBySourceKey(next,record.key):next[record.kind==='action'?'actions':'functions'].find(d=>record.key===record.kind+':'+d.id);
+      target.source=source;if(target.document&&source!==record.source)target.document.revision++;
+    }
+    const identity = rows => rows.map(r => [r.sourceKey,r.resourceKey,r.binding,r.nodePath]).map(stableJson).sort(), after = buildProjectReferenceGraph(next);
+    if (after.uncertain.length!==graph.uncertain.length || stableJson(identity(graph.references)) !== stableJson(identity(after.references)))
+      throw new AkariError('S301', '変更先の名前では参照先や所属が変わります。別の名前を選ぶか所属を明示してください');
+    validateDesignProject(next);return next;
+  }
+
+  function prepareResourceRename(project, resourceKey, newName, options = {}) {
+    const impact = resourceChangeImpact(project, resourceKey, options), resource = impact.resource;
+    if (!['costume', 'backdrop', 'sound'].includes(resource.kind)) return prepareBindingRename(project,resourceKey,newName,options);
+    validateResourceName(newName, '名前');
+    if (newName === resource.name) return cloneDesignProject(project);
+    if (impact.uncertain.length) throw new AkariError('S301', '参照先を調べられない本文があります。先に本文を確定してから名前を変えてください');
+    const next = cloneDesignProject(project), items = resource.kind === 'costume'
+      ? next.components.find(c => c.id === resource.ownerId).costumes : resource.kind === 'backdrop' ? next.stage.backdrops : next.sounds;
+    if (items.some(x => x.id !== resource.id && x.name === newName)) throw new AkariError('F503', '同じ名前があります');
+    const graph = buildProjectReferenceGraph(project, options), grouped = new Map();
+    for (const ref of impact.references) {
+      if (ref.binding !== 'literal' || !ref.range || options.drafts?.some(r => r.key === ref.sourceKey)) throw new AkariError('S301', '書きかけを確定してから名前を変えてください');
+      if (graph.references.some(other => other.sourceKey === ref.sourceKey && other.range?.start === ref.range.start && other.range?.end === ref.range.end && other.resourceKey !== resourceKey))
+        throw new AkariError('S301', '同じ呼び方が複数の参照先を持っています。対象を明示してから名前を変えてください');
+      const edits = grouped.get(ref.sourceKey) || []; if (!edits.some(e => e.start === ref.range.start && e.end === ref.range.end)) edits.push(ref.range); grouped.set(ref.sourceKey, edits);
+    }
+    const replacement = formatExpression({ kind: 'StringLiteral', value: newName });
+    for (const [key, edits] of grouped) {
+      const record = key.startsWith('script:') ? scriptBySourceKey(next, key) : [...next.actions, ...next.functions].find(d => key.endsWith(':' + d.id));
+      if (!record) throw new AkariError('F503', '名前を変える本文がありません');
+      for (const { start, end } of edits.sort((a, b) => b.start - a.start)) {
+        const literal = parseExpression(record.source.slice(start, end), buildSymbols(project));
+        if (literal.kind !== 'StringLiteral' || literal.value !== resource.name) throw new AkariError('F503', '参照箇所の位置を確認できません');
+        record.source = record.source.slice(0, start) + replacement + record.source.slice(end);
+      }
+      // Only a literal token changed; document ownership and unit IDs stay fixed.
+      if (record.document) record.document.revision++;
+    }
+    items.find(x => x.id === resource.id).name = newName;
+    validateDesignProject(next);
+    return next;
+  }
+
   function parseProjectSyntax(project) {
     const symbols = buildSymbols(project),
       items = [],
@@ -15113,30 +15540,41 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const parseOne = (key, source, context) => {
       const parsed = parseSyntax(source, { ...context, key, symbols });
       errors.push(...parsed.syntaxDiagnostics);
-      if (parsed.ast) {
-        const heading = parsed.ast.heading;
-        let resolved = context;
-        if (heading) {
-          const ref = heading.actorRef;
-          const actor = ref?.kind === 'named'
-            ? ref.name === project.stage.name || ref.name === '画面'
-              ? { id: 'stage', type: 'stage' } : project.components.find(c => c.name === ref.name)
-            : context.targetId === 'stage' ? { id: 'stage', type: 'stage' }
-              : project.components.find(c => c.id === context.targetId);
-          if (!actor || !EVENT_BY_TYPE[actor.type]?.includes(heading.event))
-            errors.push({code:'S304', message:'この主語ではそのきっかけを使えません', line:1, column:1, where:key});
-          else resolved = {...context, ownerId:actor.id, targetId:actor.id, targetType:actor.type,
-            event:heading.event, filter:heading.filter || null};
-        }
-        items.push(syntaxItem(key, parsed.ast, resolved));
-      }
+      if (parsed.ast) items.push(...documentSyntaxItems(parsed.ast,key,context,project,errors));
     };
     for (const record of sourceRegistry(project))
       parseOne(record.key, record.source, record.context);
+    if(items.filter(item=>!item.definitionKind).length>LIMITS.scripts)errors.push({code:'F504',message:'できごとの数が上限を超えています',line:0,column:1,where:'project'});
     const rules = items.flatMap(item => (item.ast.rules || []).map((rule, index) => ({
       ...rule, id: `${item.key}:rule:${index}`, targetId: item.targetId || item.ownerId,
     })));
-    return { symbols, items, errors, rules, astByKey: new Map(items.map((x) => [x.key, x.ast])) };
+    return { symbols, items, errors, rules, astByKey: syntaxItemMap(items,errors) };
+  }
+  function syntaxItemMap(items,errors) {
+    const map=new Map();
+    for(const item of items){
+      if(map.has(item.key))errors.push({code:'F503',message:'できごとの識別子が重複しています',line:0,column:1,where:item.documentKey||item.key});
+      else map.set(item.key,item.ast);
+    }
+    return map;
+  }
+  function documentSyntaxItems(ast,key,context,project,errors) {
+    const first={...ast};delete first.units;
+    if(context.unitIds&&context.unitIds.length!==1+(ast.units?.length||0))errors.push({code:'F503',message:'文書のできごとと識別子の数が一致しません',line:0,column:1,where:key});
+    return [first,...(ast.units||[])].map((unit,index)=>{
+      // Imported documents may not yet have persistent unit IDs. Their runtime
+      // keys use a separate namespace, never a guess in the user ID namespace.
+      const id=context.unitIds?.[index]||(index?`document:${key}:unit:${index+1}`:context.id);
+      const unitKey=context.unitIds||index?'script:'+id:key,heading=unit.heading;
+      let resolved={...context,...(ast.units||context.unitIds?{id,scriptId:id,documentKey:key}:{})};
+      if(heading){
+        const ref=heading.actorRef,actor=ref?.kind==='named'?(ref.name===project.stage.name||ref.name==='画面'?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
+          context.targetId==='stage'?{id:'stage',type:'stage'}:project.components.find(c=>c.id===context.targetId);
+        if(!actor||!EVENT_BY_TYPE[actor.type]?.includes(heading.event))errors.push({code:'S304',message:'この主語ではそのきっかけを使えません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
+        else resolved={...resolved,ownerId:actor.id,targetId:actor.id,targetType:actor.type,event:heading.event,filter:heading.filter||null};
+      }
+      return syntaxItem(unitKey,unit,resolved);
+    });
   }
   function analyzeAst(ast, project, context = {}) {
     validateSyntaxAst(ast);
@@ -15169,7 +15607,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         : targetId === 'stage'
           ? 'stage'
           : candidate.components.find((x) => x.id === targetId)?.type;
-    const item = syntaxItem(key, ast, {
+    const items = documentSyntaxItems(ast, key, {
       ...context,
       targetId,
       targetType,
@@ -15177,11 +15615,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       definition,
       definitionKind: kind,
       args: context.args || definition?.args || [],
-    });
-    compiled.items = compiled.items.filter((x) => x.key !== key);
-    compiled.items.push(item);
-    compiled.astByKey.set(key, ast);
-    return analyzeProject(candidate, compiled, { rootKeys: new Set([key]) });
+    },candidate,compiled.errors);
+    compiled.items = compiled.items.filter((x) => x.key !== key && x.documentKey !== key);
+    compiled.items.push(...items);
+    compiled.astByKey=syntaxItemMap(compiled.items,compiled.errors);
+    return analyzeProject(candidate, compiled, { rootKeys: new Set(items.map(item=>item.key)) });
   }
   function compileProject(project) {
     try {
@@ -15253,7 +15691,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         } else if (Array.isArray(node.body)) walk(node.body);
       }
     };
-    if (ast.kind === 'Script') walk(ast.body);
+    if (ast.kind === 'Script') {walk(ast.body);for(const unit of ast.units||[])walk(unit.body);}
     else walk([ast]);
     return { execution: shape(ast), comments };
   }
@@ -16143,6 +16581,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         event: x.event,
         ...(x.filter !== undefined ? { filter: cloneDesignProject(x.filter) } : {}),
         source: x.source,
+        ...(x.document?{document:{revision:x.document.revision,unitIds:[...x.document.unitIds]}}:{}),
       })),
       actions: project.actions.map((x) => ({
         id: x.id,
@@ -16179,6 +16618,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         'functions',
         'sounds',
         'assets',
+        ...(Object.hasOwn(root || {}, 'editorState') ? ['editorState'] : []),
       ])
     )
       throw new AkariError('F503', '保存Projectのroot項目が仕様と一致しません');
@@ -16199,6 +16639,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       sounds: root.sounds,
     };
     validateDesignProject(design);
+    if(root.editorState!==undefined)validateEditorState(root.editorState,design);
     const ids = designEntityIds(design),
       assetIds = new Set(),
       digestKeys = new Set();
@@ -16240,6 +16681,175 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if (ic > LIMITS.imageAssets || ac > LIMITS.audioAssets)
       throw new AkariError('F504', '画像または音asset数が上限を超えています');
     return { design, assetIds };
+  }
+
+  function validateCallableDraftState(d) {
+    if (d == null) return null;
+    if (
+      !(exactKeys(d, ['ownerId', 'type', 'name', 'argsText', 'source', 'editId', 'loadedKey']) ||
+        exactKeys(d, ['ownerId', 'type', 'name', 'argsText', 'callPhrase', 'source', 'editId', 'loadedKey'])) ||
+      d.ownerId !== 'stage' ||
+      !['action', 'function'].includes(d.type)
+    )
+      throw new AkariError('F503', '手順・答えを求める定義の下書きが正しくありません');
+    for (const [k, limit] of [
+      ['name', 500],
+      ['argsText', 4096],
+      ['source', LIMITS.sourceEach],
+      ['editId', 64],
+      ['loadedKey', 80],
+    ])
+      if (typeof d[k] !== 'string' || cpLen(d[k]) > limit)
+        throw new AkariError(
+          'F504',
+          '\u4e0b\u66f8\u304d\u306e\u6587\u5b57\u6570\u304c\u4e0a\u9650\u3092\u8d85\u3048\u3066\u3044\u307e\u3059',
+        );
+    if (d.callPhrase !== undefined && (d.type !== 'action' || typeof d.callPhrase !== 'string' || cpLen(d.callPhrase) > 80))
+      throw new AkariError('F503', '短い呼び方は80文字以内で書いてください');
+    if (d.editId && !safeId(d.editId))
+      throw new AkariError('F503', '\u4e0b\u66f8\u304d\u306eID\u304c\u4e0d\u6b63\u3067\u3059');
+    return { ...d };
+  }
+  function validateEditorState(state,project) {
+    if(!exactKeys(state,['version','revision','selectedId','currentEvent','selectedScriptId','uiLevel','sourceOverviewOpen','editorModes','callableDraft','pendingEditors','views'])||state.version!==1||!Number.isSafeInteger(state.revision)||state.revision<0)
+      throw new AkariError('F503','編集状態の契約または版が正しくありません');
+    const actor=state.selectedId==='stage'?{type:'stage'}:project.components.find(c=>c.id===state.selectedId);
+    if(!actor||!EVENT_BY_TYPE[actor.type]?.includes(state.currentEvent)||
+      state.selectedScriptId!==null&&!project.scripts.some(s=>s.id===state.selectedScriptId)||
+      !['basic','advanced'].includes(state.uiLevel)||typeof state.sourceOverviewOpen!=='boolean'||
+      !exactKeys(state.editorModes,['script','draft'])||!Object.values(state.editorModes).every(mode=>['code','blocks'].includes(mode)))
+      throw new AkariError('F503','編集画面の選択が正しくありません');
+    validateCallableDraftState(state.callableDraft);
+    const pending=state.pendingEditors;
+    if(!Array.isArray(pending)||pending.length>2||new Set(pending.map(d=>d.kind)).size!==pending.length)
+      throw new AkariError('F503','作文の下書きが正しくありません');
+    for(const saved of pending){
+      if(!exactKeys(saved,['kind','ownerKey','source','mode','pending','draftTree'])||!['script','draft'].includes(saved.kind)||!['code','blocks'].includes(saved.mode)||
+        typeof saved.ownerKey!=='string'||saved.ownerKey.length>150||typeof saved.source!=='string'||cpLen(saved.source)>LIMITS.sourceEach||
+        !saved.pending||typeof saved.pending!=='object'||Array.isArray(saved.pending)||JSON.stringify(saved.pending).length>LIMITS.sourceEach*4)
+        throw new AkariError('F503','作文の下書きが正しくありません');
+      if(saved.kind==='script'&&!sourceRegistry(project).some(row=>row.key===saved.ownerKey)&&saved.ownerKey!==`script:${state.selectedId}:${state.currentEvent}`)
+        throw new AkariError('F503','下書きの本文が見つかりません');
+      if(saved.kind==='script'&&saved.ownerKey!==(state.selectedScriptId?`script:${state.selectedScriptId}`:`script:${state.selectedId}:${state.currentEvent}`))
+        throw new AkariError('F503','下書きの選択先が一致しません');
+      if(saved.kind==='draft'&&!state.callableDraft)throw new AkariError('F503','定義の下書きが見つかりません');
+      if(saved.draftTree!==null){const ast=blockDecode(saved.draftTree,{allowHoles:true});validateSyntaxAst(ast,'script',{allowHoles:true});if(cpLen(formatScript(ast,{allowHoles:true}))>LIMITS.sourceEach)throw new AkariError('F504','ブロックの下書きが長すぎます');}
+      if(saved.pending.field){
+        const path=saved.pending.nodePath;
+        if(typeof saved.pending.field!=='string'||typeof saved.pending.value!=='string'||!Array.isArray(path)||path.length>LIMITS.blockDepth*4||path.some(k=>typeof k!=='string'&&!Number.isInteger(k)))
+          throw new AkariError('F503','書きかけの入力欄が正しくありません');
+        const record=sourceRegistry(project).find(row=>row.key===saved.ownerKey),context=saved.kind==='draft'?{definitionKind:state.callableDraft.type,args:[]}:(record?.context||{}),
+          ast=saved.draftTree?blockDecode(saved.draftTree,{allowHoles:true}):parseSyntax(saved.kind==='draft'?state.callableDraft.source:record?.source||'',{...context,symbols:buildSymbols(project)}).ast;
+        let node=saved.draftTree||blockEncode(ast,{allowHoles:true}).tree;for(const k of path){if(!node||!Object.hasOwn(node,k))throw new AkariError('F503','書きかけの入力先が見つかりません');node=node[k];}
+        const schema=BLOCK_SCHEMA_BY_ID.get(node?.schemaId),field=schema&&[...schema.fields,...schema.annotations].find(f=>f.key===saved.pending.field);
+        if(!field)throw new AkariError('F503','書きかけの入力項目が見つかりません');
+      }
+    }
+    const records=sourceRegistry(project);let total=records.reduce((n,row)=>n+cpLen(row.source),0);
+    for(const saved of pending.filter(d=>d.kind==='script'))total+=cpLen(saved.source)-cpLen(records.find(row=>row.key===saved.ownerKey)?.source||'');
+    if(state.callableDraft){const d=state.callableDraft;total+=cpLen(pending.find(row=>row.kind==='draft')?.source??d.source)-cpLen(records.find(row=>row.key===`${d.type}:${d.editId}`)?.source||'');}
+    if(total>LIMITS.sourceTotal)throw new AkariError('F504','書きかけを含む作品全体の本文が長すぎます');
+    if(!Array.isArray(state.views)||state.views.length>2)throw new AkariError('F503','編集位置が正しくありません');
+    for(const view of state.views){
+      if(!exactKeys(view,['kind','ownerKey','codeSelection','scrollState'])||!['script','draft'].includes(view.kind)||typeof view.ownerKey!=='string'||view.ownerKey.length>150||
+        !exactKeys(view.codeSelection,['start','end','direction'])||!['none','forward','backward'].includes(view.codeSelection.direction)||
+        ![view.codeSelection.start,view.codeSelection.end].every(n=>Number.isSafeInteger(n)&&n>=0&&n<=LIMITS.sourceEach*2)||
+        !exactKeys(view.scrollState,['codeTop','codeLeft'])||!Object.values(view.scrollState).every(n=>Number.isFinite(n)&&n>=0&&n<=1e9))throw new AkariError('F503','編集位置が正しくありません');
+    }
+    return state;
+  }
+  // Persistent history stores one design/editor frame and structural deltas. Asset
+  // bytes are shared by digest, while each frame retains its original asset IDs.
+  const WORKSPACE_HISTORY_LIMIT = 60;
+  function workspaceDelta(before, after) {
+    if (stableJson(before) === stableJson(after)) return null;
+    if (typeof before === 'string' && typeof after === 'string') {
+      let start=0,end=0;
+      while(start<before.length&&start<after.length&&before[start]===after[start])start++;
+      while(end<before.length-start&&end<after.length-start&&before[before.length-end-1]===after[after.length-end-1])end++;
+      return ['text',start,end,after.slice(start,after.length-end)];
+    }
+    if (Array.isArray(before)&&Array.isArray(after)) {
+      const changed={};for(let i=0;i<after.length;i++){const d=i<before.length?workspaceDelta(before[i],after[i]):['value',after[i]];if(d)changed[i]=d;}
+      return ['array',after.length,changed];
+    }
+    if(before&&after&&typeof before==='object'&&typeof after==='object'&&!Array.isArray(before)&&!Array.isArray(after)){
+      const changed={};for(const key of Object.keys(after)){const d=Object.hasOwn(before,key)?workspaceDelta(before[key],after[key]):['value',after[key]];if(d)Object.defineProperty(changed,key,{value:d,enumerable:true});}
+      return ['object',changed,Object.keys(before).filter(key=>!Object.hasOwn(after,key))];
+    }
+    return ['value',after];
+  }
+  function applyWorkspaceDelta(before,delta,depth=0) {
+    const fail=()=>{throw new AkariError('F503','編集履歴の差分が正しくありません');};
+    if(depth>LIMITS.blockDepth*4||!Array.isArray(delta))return fail();
+    const [kind,a,b,c]=delta;
+    if(kind==='value'&&delta.length===2)return cloneDesignProject(a);
+    if(kind==='text'&&delta.length===4&&typeof before==='string'&&typeof c==='string'&&
+      Number.isSafeInteger(a)&&Number.isSafeInteger(b)&&a>=0&&b>=0&&a+b<=before.length)return before.slice(0,a)+c+before.slice(before.length-b);
+    const record=value=>value&&typeof value==='object'&&!Array.isArray(value);
+    if(kind==='array'&&delta.length===3&&Array.isArray(before)&&Number.isSafeInteger(a)&&a>=0&&a<=LIMITS.sourceTotal&&record(b)){
+      const out=before.slice(0,a);out.length=a;
+      for(const [key,d]of Object.entries(b)){if(!/^(0|[1-9]\d*)$/.test(key)||Number(key)>=a)return fail();out[Number(key)]=applyWorkspaceDelta(before[Number(key)],d,depth+1);}
+      for(let i=0;i<a;i++)if(!Object.hasOwn(out,i))return fail();return out;
+    }
+    if(kind==='object'&&delta.length===3&&record(before)&&record(a)&&Array.isArray(b)&&b.every(key=>typeof key==='string'&&Object.hasOwn(before,key))){
+      const out={...before};for(const key of b)delete out[key];
+      for(const [key,d]of Object.entries(a))Object.defineProperty(out,key,{value:applyWorkspaceDelta(before[key],d,depth+1),enumerable:true,writable:true,configurable:true});
+      return out;
+    }
+    return fail();
+  }
+  function encodeWorkspaceHistory(frames,cursor) {
+    if(!Array.isArray(frames)||!frames.length||frames.length>WORKSPACE_HISTORY_LIMIT||!Number.isInteger(cursor)||cursor<0||cursor>=frames.length)
+      throw new AkariError('F503','編集履歴の位置が正しくありません');
+    const assets=[],assetIndexes=new Map(),packed=[];
+    for(const frame of frames){
+      const store=new AssetStore(frame.assets);validateAssetReferences(frame.project,store);validateEditorState(frame.editorState,frame.project);
+      const assetRefs=[];
+      for(const id of collectReachableAssetIds(frame.project)){
+        const a=store.get(id),key=`${a.kind}:${a.mime}:${a.byteLength}:${a.sha256}`;
+        if(!assetIndexes.has(key)){
+          const builtin=a.id===DEFAULT_MASCOT_ASSET_ID&&a.kind==='image'&&a.mime==='image/png'&&a.byteLength===5476&&a.sha256===DEFAULT_MASCOT_SHA256;
+          assetIndexes.set(key,assets.length);assets.push({kind:a.kind,mime:a.mime,byteLength:a.byteLength,sha256:a.sha256,builtin,
+            blob:builtin?null:new Blob([a.bytes],{type:a.mime})});
+        }
+        assetRefs.push([id,assetIndexes.get(key)]);
+      }
+      packed.push({project:cloneDesignProject(frame.project),editorState:cloneDesignProject(frame.editorState),assetRefs,
+        callableBaseline:frame.callableBaseline||'',callableLoadedKey:frame.callableLoadedKey||'',draftSerial:frame.draftSerial||0,draftOpen:!!frame.draftOpen});
+    }
+    return {version:1,cursor,base:packed[0],deltas:packed.slice(1).map((frame,i)=>workspaceDelta(packed[i],frame)||['object',{},[]]),assets};
+  }
+  async function decodeWorkspaceHistory(saved) {
+    const fail=()=>{throw new AkariError('F503','自動保存の編集履歴が正しくありません');};
+    if(!exactKeys(saved,['version','cursor','base','deltas','assets'])||saved.version!==1||!Array.isArray(saved.deltas)||saved.deltas.length>=WORKSPACE_HISTORY_LIMIT||
+      !Number.isInteger(saved.cursor)||saved.cursor<0||saved.cursor>saved.deltas.length||!Array.isArray(saved.assets)||saved.assets.length>LIMITS.assets*WORKSPACE_HISTORY_LIMIT)return fail();
+    const loaded=[],digests=new Set();let bytesTotal=0;
+    for(const a of saved.assets){
+      if(!exactKeys(a,['kind','mime','byteLength','sha256','builtin','blob'])||!['image','audio'].includes(a.kind)||typeof a.builtin!=='boolean'||
+        !Number.isSafeInteger(a.byteLength)||a.byteLength<1||a.byteLength>(a.kind==='image'?LIMITS.imageBytes:LIMITS.audioBytes))return fail();
+      bytesTotal+=a.byteLength;if(bytesTotal>LIMITS.assetRawTotal*WORKSPACE_HISTORY_LIMIT)return fail();
+      const key=`${a.kind}:${a.mime}:${a.byteLength}:${a.sha256}`;if(digests.has(key))return fail();digests.add(key);
+      if(a.builtin){const record=defaultMascotAssetRecord();if(a.blob!==null||a.kind!==record.kind||a.mime!==record.mime||a.byteLength!==record.byteLength||a.sha256!==record.sha256)return fail();loaded.push(record);}
+      else{
+        if(!(a.blob instanceof Blob)||a.blob.size!==a.byteLength||a.blob.type!==a.mime)return fail();
+        loaded.push(await validateLoadedAssetRecord({id:`history-asset-${loaded.length}`,kind:a.kind,mime:a.mime,byteLength:a.byteLength,sha256:a.sha256,dataBase64:encodeBase64(new Uint8Array(await a.blob.arrayBuffer()))}));
+      }
+    }
+    const frames=[];let frame=saved.base;
+    for(let i=0;i<=saved.deltas.length;i++){
+      if(i)frame=applyWorkspaceDelta(frame,saved.deltas[i-1]);
+      if(!exactKeys(frame,['project','editorState','assetRefs','callableBaseline','callableLoadedKey','draftSerial','draftOpen'])||
+        typeof frame.callableBaseline!=='string'||frame.callableBaseline.length>LIMITS.sourceEach*4+30000||typeof frame.callableLoadedKey!=='string'||frame.callableLoadedKey.length>80||
+        !Number.isSafeInteger(frame.draftSerial)||frame.draftSerial<0||typeof frame.draftOpen!=='boolean'||!Array.isArray(frame.assetRefs)||frame.assetRefs.length>LIMITS.assets)return fail();
+      validateDesignProject(frame.project);validateEditorState(frame.editorState,frame.project);
+      const st=new AssetStore();
+      for(const ref of frame.assetRefs){if(!Array.isArray(ref)||ref.length!==2||!safeId(ref[0])||!Number.isInteger(ref[1])||!loaded[ref[1]])return fail();st.addImmutable({...loaded[ref[1]],id:ref[0]});}
+      validateAssetReferences(frame.project,st,{serializedAssetIds:new Set(st.ids())});
+      frames.push({...cloneDesignProject(frame),assets:st.snapshotRefs(),fingerprint:assetStateFingerprint(frame.project,st)});
+    }
+    const used=new Set(frames.flatMap(f=>f.assetRefs.map(ref=>ref[1])));if(used.size!==saved.assets.length)return fail();
+    return {frames,cursor:saved.cursor};
   }
 
   function markdownText(value) {
@@ -16341,6 +16951,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     for (const a of root.assets)
       out.push(`- ${a.id} / ${a.kind} / ${a.mime} / ${a.byteLength} bytes / SHA-256: ${a.sha256}`);
     if (!root.assets.length) out.push('\u306a\u3057');
+    if(root.editorState)out.push('','## 書きかけと編集位置',markdownFence(JSON.stringify(root.editorState,null,2),'json'));
     out.push(
       '',
       '## \u5fa9\u5143\u30c7\u30fc\u30bf',
@@ -16352,9 +16963,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   const MARKDOWN_BEGIN = '<!-- AKARI-PROJECT-F' + PROJECT_FORMAT_ID + '-DATA-BEGIN -->\n```json\n';
   const MARKDOWN_END = '\n```\n<!-- AKARI-PROJECT-F' + PROJECT_FORMAT_ID + '-DATA-END -->\n';
 
-  function serializeProject(project, assetStore = new AssetStore()) {
+  function serializeProject(project, assetStore = new AssetStore(), editorState = null) {
     assetStore = withDefaultMascotAsset(project, assetStore);
     const root = serializedRoot(project, assetStore);
+    if(editorState!==null)root.editorState=validateEditorState(cloneDesignProject(editorState),project);
     validateSerializedProjectStructure(root);
     const payload = JSON.stringify(root, null, 2).replace(
       /[<>&\u2028\u2029]/g,
@@ -16396,8 +17008,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     for (const record of root.assets) store.addImmutable(await validateLoadedAssetRecord(record));
     const project = { ...root };
     delete project.assets;
+    delete project.editorState;
     validateAssetReferences(project, store, { serializedAssetIds: assetIds });
-    return { project, assetStore: store, diagnostics: compileProject(project).errors };
+    return { project, assetStore: store, diagnostics: compileProject(project).errors, ...(root.editorState?{editorState:root.editorState}:{}) };
   }
   async function validateLoadedAssetRecord(a) {
     const bytes = decodeBase64(a.dataBase64);
@@ -16484,6 +17097,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       throw new AkariError('R411', kind === 'variable' ? '変数の最初の値が正しくありません' : 'リストの最初の値は［値、値］の形で書きます');
     assertRuntimeValueLimit(value);
     return value;
+  }
+  function parseDataFormInitial(text,kind,{mode='literal',expectedUnit=null}={}) {
+    if(!['variable','list'].includes(kind)||!['literal','lines'].includes(mode))throw new AkariError('F503','データの入れ方が正しくありません');
+    let value;
+    if(kind==='list'&&mode==='lines')value=String(text)===''?[]:String(text).replace(/\r\n?/g,'\n').split('\n');
+    else value=parseLiteralForData(text,kind);
+    if(kind==='variable'&&expectedUnit)value=quantity(numberInUnit(value,expectedUnit,'単位を決めた変数の初期値には数を入れてください'),expectedUnit);
+    assertRuntimeValueLimit(value);return value;
   }
 
   // ────────────────────────────────────────────────────────────────────────
@@ -16632,16 +17253,26 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           b.remove();
           return;
         }
-        const box = node.getBoundingClientRect();
-        b.style.left =
-          clamp(
-            (box.right - rect.left) / sx + 6,
-            0,
-            Math.max(0, form.clientWidth - b.offsetWidth),
-          ) + 'px';
-        b.style.top =
-          clamp((box.top - rect.top) / sy - 8, 0, Math.max(0, form.clientHeight - b.offsetHeight)) +
-          'px';
+        const box = node.getBoundingClientRect(), gap = 8 / sx,
+          actor = {left:(box.left-rect.left)/sx, right:(box.right-rect.left)/sx,
+            top:(box.top-rect.top)/sy, bottom:(box.bottom-rect.top)/sy},
+          sideWidth = Math.max(actor.left-gap, form.clientWidth-actor.right-gap),
+          availableWidth = sideWidth >= 80/sx ? sideWidth : form.clientWidth;
+        b.style.fontSize = 14/sx+'px'; b.style.padding = 8/sy+'px '+10/sx+'px';
+        b.style.maxWidth = Math.min(320/sx,availableWidth)+'px';
+        b.style.maxHeight = Math.min(160/sy,form.clientHeight)+'px';
+        const text = b.querySelector('.sprite-bubble-text');
+        if (text) text.style.maxHeight = Math.min(100/sy,Math.max(24/sy,form.clientHeight-60/sy))+'px';
+        const width=b.offsetWidth,height=b.offsetHeight, center=(actor.left+actor.right-width)/2,
+          positions=[[actor.right+gap,actor.top],[actor.left-width-gap,actor.top],
+            [center,actor.top-height-gap],[center,actor.bottom+gap]];
+        const candidates=positions.map(([left,top],order)=>{
+          left=clamp(left,0,Math.max(0,form.clientWidth-width));top=clamp(top,0,Math.max(0,form.clientHeight-height));
+          const overlap=Math.max(0,Math.min(left+width,actor.right)-Math.max(left,actor.left))*
+            Math.max(0,Math.min(top+height,actor.bottom)-Math.max(top,actor.top));
+          return {left,top,overlap,order};
+        }).sort((a,b)=>a.overlap-b.overlap||a.order-b.order);
+        b.style.left=candidates[0].left+'px'; b.style.top=candidates[0].top+'px';
       });
     }
     function renderComponents() {
@@ -16786,14 +17417,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       renderComponents();
       fitStage();
     }
-    function showBubble(id, value) {
+    function showBubble(id, value, actualValue = value) {
+      const presentation = core.displayValue(actualValue);
+      value = presentation.text;
+      const details = { ...presentation, value: actualValue };
       if (id === 'stage') {
-        options.onStageMessage?.(value);
+        options.onStageMessage?.(value, details);
         return;
       }
       const node = form.querySelector(`[data-runtime-id="${CSS.escape(id)}"].component`);
       if (!node) {
-        options.onStageMessage?.(value);
+        options.onStageMessage?.(value, details);
         return;
       }
       for (const b of form.querySelectorAll('.sprite-bubble'))
@@ -16802,7 +17436,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       b.className = 'sprite-bubble';
       b.dataset.runtimeId = id;
       b.style.zIndex = '2000';
-      b.textContent = value;
+      const text = document.createElement('span');
+      text.className = 'sprite-bubble-text'; text.textContent = value;
+      text.style.display = 'block'; text.style.overflow = 'hidden';
+      b.appendChild(text);
+      if (presentation.rounded || Array.from(value).length > 80 || /[\r\n]/.test(value)) {
+        const full = document.createElement('button');
+        full.type = 'button';
+        full.textContent = presentation.rounded ? '実値' : '全文';
+        full.setAttribute('aria-label', presentation.rounded ? '表示を丸めています。実値を見る' : '吹出しの全文を見る');
+        full.style.pointerEvents = 'auto';
+        full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue); };
+        b.appendChild(full);
+      }
       form.appendChild(b);
       positionBubbles();
       const timer = setTimeout(() => {
@@ -16984,8 +17630,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const designUrls = new Map();
     const message = (text) => {
       output.hidden = false;
-      const next = output.textContent + (output.textContent ? '\n' : '') + String(text);
-      output.textContent = next.length > 100000 ? next.slice(-90000) : next;
+      const addition = (output.textContent ? '\n' : '') + String(text);
+      if (output.textContent.length + addition.length > 100000)
+        output.textContent = (output.textContent + addition).slice(-90000);
+      else output.appendChild(document.createTextNode(addition));
       output.scrollTop = output.scrollHeight;
     };
     function state() {
@@ -17079,14 +17727,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         await localCache.prepare(session.project, session.requirements, token);
         if (token !== epoch) return;
         runtime = new core.RuntimeModel(session.project, {}, localCache);
+        let speechValue;
         const br = {
           render: requestPaint,
           penLine: view.penLine,
           penClear: view.clearPen,
           stamp: view.stamp,
+          prepareSpeech: value => { speechValue = value; },
           say: (id, text) => {
             flush();
-            view.showBubble(id, text);
+            const value = speechValue; speechValue = undefined;
+            view.showBubble(id, text, value);
           },
           ask,
           closeQuestion,
@@ -17197,7 +17848,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         getImage: (id) => cache?.getImage(id),
         canInteract: () => !modal.classList.contains('show'),
         onError: fail,
-        onStageMessage: message,
+        onStageMessage: (text, details) => {
+          message(text);
+          if (details?.rounded) {
+            const full = document.createElement('details'), summary = document.createElement('summary'), raw = document.createElement('span');
+            summary.textContent = '表示を丸めています。実値を見る';
+            raw.textContent = details.rawText;
+            full.append(summary, raw); output.appendChild(full);
+          }
+        },
+        onValueDetails: value => message((typeof value === 'string' ? '吹出しの全文（選択してコピーできます）：' : '表示を丸めています。実値（選択してコピーできます）：') + core.valueText(value)),
       });
       flush();
       phase = 'READY';
@@ -17381,7 +18041,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if (!Number.isSafeInteger(contextRevision) || contextRevision < 0)
       editorError('文脈の世代が不正です');
     const ctx = editorContext(ownerKey, context),
-      parsed = parseSyntax(source, ctx),
+      parsed = parseSyntax(source, { ...ctx, ...(project ? {symbols:buildSymbols(project)} : {}) }),
       encoded = parsed.ast ? blockEncode(parsed.ast) : null;
     return {
       ownerKey,
@@ -17607,12 +18267,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     };
     rememberTopics(tree.bodies.body);
     rememberTopics(session.blockView.bodies.body, {kind:'self'}, originalActors);
+    for(const unit of tree.inputs.units||[])rememberTopics(unit.bodies.body);
+    for(const unit of session.blockView.inputs.units||[])rememberTopics(unit.bodies.body,{kind:'self'},originalActors);
+    const structuralLines=text=>normalizeSource(text).lines.filter(line=>!line.continuation).map(line=>line.raw);
     const standard = node => {
       const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId), ast = blockDecode(node);
       if (schema.category === 'expression') return formatExpression(ast, PREC.ATOM);
       if (schema.category === 'target') return formatTarget(ast);
+      if (schema.category === 'script') return structuralLines(formatScript(ast)).join(newline);
+      if (schema.category === 'rule') return structuralLines(formatScript({kind:'Script',body:[],rules:[ast]})).join(newline);
       // Format a replacement in its destination scope, adding self only when needed.
-      return formatScript({kind:'Script', body:[ast]}, {inheritedActor:inheritedActors.get(node.id)}).replace(/\n/g, newline);
+      return structuralLines(formatScript({kind:'Script', body:[ast]}, {inheritedActor:inheritedActors.get(node.id)})).join(newline);
     };
     const sameActorContext = (before, after) => {
       if (same(originalActors.get(before?.id), inheritedActors.get(after.id))) return true;
@@ -17627,7 +18292,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const text = reusable
         ? source.slice(location.extent.start, location.extent.end) : standard(node);
       const oldIndent = reusable ? location.indent : 0;
-      return text.split(/\r\n?|\n/).map((line, i) => i
+      return structuralLines(text).map((line, i) => i
         ? ' '.repeat(indent) + line.slice(Math.min(oldIndent, line.match(/^ */)[0].length)) : line).join(newline);
     };
     const fallback = (before, after) => {
@@ -17655,7 +18320,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           return [{...location.extent,text:rows.join(newline)}];
         }
       }
-      if (schema.bodies.length && before.schemaId === after.schemaId && !location?.inlineContainer &&
+      if (schema.category==='statement' && schema.bodies.length && before.schemaId === after.schemaId && !location?.inlineContainer &&
         location?.range && same(before.bodies, after.bodies) && same(before.annotations, after.annotations) &&
         same(before.fields.actorRef, after.fields.actorRef)) {
         const header = splitComment(standard(after).split(/\r\n?|\n/)[0]).code.trimEnd().replace(/。$/, '');
@@ -17663,6 +18328,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       const range = schema.category === 'statement' ? location?.extent : location?.range;
       if (!range) return null;
+      if(schema.category==='script')return [{...range,text:standard(after)+(/\s*$/.exec(source.slice(range.start,range.end))?.[0]||'')}];
       if (location.inline && (BLOCK_SCHEMA_BY_ID.get(after.schemaId)?.bodies.length || /[\r\n]/.test(standard(after)))) return null;
       return [{...range, text:schema.category === 'statement' ? moved(after, location.indent) : location?.conditionForm ? formatCondition(blockDecode(after),location.conditionForm) : standard(after)}];
     };
@@ -17708,6 +18374,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       return changes;
     };
     const plan = (before, after) => {
+      if(before.schemaId==='Script'&&after.schemaId==='Script'&&(before.inputs.units||after.inputs.units)){
+        const first=node=>{const inputs={...node.inputs};delete inputs.units;return {...node,inputs};};
+        const head=plan(first(before),first(after)),rest=bodyChanges(before.inputs.units||[],after.inputs.units||[],before,'units');
+        return head&&rest?[...head,...rest]:null;
+      }
       if (same(before, after)) {
         const schema = BLOCK_SCHEMA_BY_ID.get(after.schemaId);
         if (schema.category !== 'statement' || ['CommentLine','Hole'].includes(schema.kind) || sameActorContext(before,after)) return [];
@@ -17750,7 +18421,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       return changes;
     };
     const changes = plan(session.blockView, tree);
-    if (!changes) editorError('変更範囲を特定できません。コード表示で編集してください');
+    if (!changes) return reprintChangedUnits(session,tree);
     changes.sort((a,b) => b.start - a.start || b.end - a.end);
     let result = source, boundary = source.length;
     for (const change of changes) {
@@ -17760,6 +18431,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       boundary = change.start;
     }
     return result;
+  }
+  function reprintChangedUnits(session,tree) {
+    const units=root=>{const first={...root,inputs:{...root.inputs}};delete first.inputs.units;return [first,...(root.inputs.units||[])];};
+    const before=new Map(units(session.blockView).map(unit=>[unit.id,unit])),newline=session.sourceText.includes('\r\n')?'\r\n':'\n';
+    let source='';
+    for(const unit of units(tree)){
+      const original=before.get(unit.id),range=original&&session.nodeMap.get(original.id)?.surface?.range,raw=range?session.sourceText.slice(range.start,range.end):null;
+      const same=original&&JSON.stringify(original)===JSON.stringify(unit);
+      const formatted=same&&raw!==null?raw:normalizeSource(formatScript(blockDecode(unit))).lines.filter(line=>!line.continuation).map(line=>line.raw).join(newline)+(raw?.match(/\s*$/)?.[0]||'');
+      if(source&&!/[\r\n]$/.test(source))source+=newline;
+      source+=formatted;
+    }
+    return source;
   }
   function prepareBlockEdit(session, operation, options = {}) {
     const project = options.project || session.project,
@@ -18038,8 +18722,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         blockDraft: { baseline, ast: candidateAst, tree, source: draftSource, pending },
       };
     }
-    const source = session.blockDraft ? formatScript(candidateAst) : preserveBlockSource(session, tree, sourceOrigins),
-      parsed = parseSyntax(source, context);
+    const parseContext={...context,...(project?{symbols:buildSymbols(project)}:{})};
+    let source = session.blockDraft ? formatScript(candidateAst) : preserveBlockSource(session, tree, sourceOrigins),
+      parsed = parseSyntax(source, parseContext);
+    if(!session.blockDraft&&(!parsed.ast||!astEquivalent(candidateAst,parsed.ast))){
+      source=reprintChangedUnits(session,tree);parsed=parseSyntax(source,parseContext);
+    }
     if (!parsed.ast) editorError(parsed.syntaxDiagnostics.map((x) => x.message).join('\n'));
     if (!astEquivalent(candidateAst, parsed.ast))
       editorError('再解析で意味またはコメントが変わるため確定できません');
@@ -18113,6 +18801,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   const EDITOR_AVAILABILITY_CACHE = new WeakMap();
   function blockInsertionAvailability(session, schemaId, location, options = {}) {
+    if (options.candidateNode) return computeBlockInsertionAvailability(session, schemaId, location, options);
     const cacheKey = [
       options.ownerKey ?? session.ownerKey,
       options.sourceRevision ?? session.sourceRevision,
@@ -18190,8 +18879,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if (!schema) return { enabled: false, reason: '対応していないブロックです', diagnostics: [] };
     // Values on simple command previews remain visible choices. Enclosures and
     // persistent rules start with visible holes, never an implicit true/0/no-op.
-    const draft = schema.bodies.some(slot => slot.requiredExecutable) || schema.kind === 'ContinuousRule' || schema.inputs.some(slot => slot.type === 'target');
-    let node = createBlock(schemaId, { draft, allowHoles: draft });
+    const draft = schema.bodies.some(slot => slot.requiredExecutable) || ['ContinuousRule','ReturnStatement'].includes(schema.kind) || schema.inputs.some(slot => slot.type === 'target');
+    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft });
     if (schemaId === 'NumberLiteral' && location?.input) {
       const parent = buildBlockIndex(session.blockView).get(location.parentId)?.node;
       if (parent?.schemaId === 'ContinuousRule' && ['seconds', 'distance'].includes(location.input))
@@ -18199,9 +18888,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     // These are initial names for new blocks, never changes to existing references.
     if (
-      schemaId === 'ForEach' ||
+      !options.candidateNode && (schemaId === 'ForEach' ||
       schemaId === 'LocalVariableDeclaration' ||
-      schemaId === 'LocalListDeclaration'
+      schemaId === 'LocalListDeclaration')
     ) {
       const used = new Set((options.context || session.context)?.args || []);
       for (const entry of buildBlockIndex(session.blockView).values()) {
@@ -18377,7 +19066,103 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     'UserActionCall',
   
   ]);
+  const SEARCH_READINGS = Object.freeze({
+    '点数':'てんすう','代金':'だいきん','持ち物':'もちもの','大きさ':'おおきさ',
+    '右':'みぎ','左':'ひだり','上':'うえ','下':'した','小さく':'ちいさく',
+    '変数':'へんすう','手順':'てじゅん','計算':'けいさん','挿入':'そうにゅう',
+  });
+  function normalizeSearchText(value) {
+    return String(value || '').normalize('NFKC').toLocaleLowerCase()
+      .replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)).replace(/\s+/g, '');
+  }
+  function searchReading(value) {
+    let text = normalizeSearchText(value);
+    for (const [word, reading] of Object.entries(SEARCH_READINGS)) text = text.split(word).join(reading);
+    return text;
+  }
+  function searchIntent(value) {
+    const q = normalizeSearchText(value), direction = [
+      ['right', /右|みぎ/], ['left', /左|ひだり/], ['up', /上|うえ/], ['down', /下|した(?=へ|に|方向|$)/],
+    ].filter(([, re]) => re.test(q));
+    if (direction.length === 1 && /行[くき]|い[くき]|進[むみ]|すす[むみ]|動[くきか]|うご[くきか]|移動/.test(q)
+      && !/回|まわ|向[くき]|む[くき]/.test(q))
+      return {schemaId:'MotionCommand:MOVE_DIRECTION', direction:direction[0][0]};
+    if (/小さ|ちいさ|縮小|縮め/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:50};
+    if (/大きく|おおきく|拡大/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:150};
+    if (/(?:番目|ばんめ)/.test(q) && /入[れる]|いれ|挿入|そうにゅう/.test(q) && !/置き換|おきか|替え/.test(q)) {
+      const match = q.match(/(\d+)(?:番目|ばんめ)/), index = match ? Number(match[1]) : null;
+      return {schemaId:'ListInsert', ...(Number.isSafeInteger(index) && index >= 1 ? {index} : {})};
+    }
+    return null;
+  }
+  function hintSchemaId(id) {
+    const prefix = id.split(':')[0];
+    return ({read:'VariableRead',set:'Assignment',assignList:'Assignment',add:'NumericUpdate:ADD',
+      subtract:'NumericUpdate:SUB',append:'ListAppend',insert:'ListInsert',replace:'ListReplace',
+      delete:'ListDelete',clear:'ListClear',each:'ForEach',action:'UserActionCall',function:'UserFunctionCall'})[prefix] || id;
+  }
+  function matchesSearch(text, query) {
+    return normalizeSearchText(text).includes(normalizeSearchText(query)) || searchReading(text).includes(searchReading(query));
+  }
+  function configureSearchNode(node, intent) {
+    if (!intent || node.schemaId !== intent.schemaId) return node;
+    if (intent.direction) node.fields.direction = intent.direction;
+    if (intent.scale !== undefined) {
+      const oldId = node.inputs.args[0].id;
+      node.inputs.args[0] = createBlock('NumberLiteral');
+      node.inputs.args[0].id = oldId; node.inputs.args[0].fields.value = intent.scale;
+    }
+    if (intent.index !== undefined) {
+      const oldId = node.inputs.index.id;
+      node.inputs.index = createBlock('NumberLiteral'); node.inputs.index.id = oldId;
+      node.inputs.index.fields.value = intent.index;
+    }
+    return node;
+  }
+  function nodeForSearchHint(hint, project, context = {}, intent = null) {
+    const symbols = buildSymbols(project), ast = hint.mode === 'expression'
+      ? parseExpression(hint.text, symbols, context)
+      : parseScript(hint.text, symbols, context).body[0];
+    return configureSearchNode(blockEncode(ast).tree, intent);
+  }
+  function searchHintCandidates(candidates, query, project, context = {}) {
+    if (!query.trim()) return candidates;
+    const intent = searchIntent(query), matched = candidates.filter(h => intent
+      ? (h.binding && matchesSearch(h.binding.name, query)) || hintSchemaId(h.id) === intent.schemaId
+      : matchesSearch(h.text + ' ' + h.category + ' ' + h.searchTerms.join(' '), query));
+    return matched.map(h => {
+      if (!intent || !project) return h;
+      try { const node = nodeForSearchHint(h, project, context, intent);
+        return {...h, text:formatScript({kind:'Script',body:[blockDecode(node)]})};
+      } catch (_) { return h; }
+    }).sort((a,b) => Number(!!b.binding) - Number(!!a.binding));
+  }
+  function blockSearchCandidates(project, context, query, hints) {
+    const schemas = BLOCK_SCHEMAS.filter(s => !s.draftOnly && ['statement','expression'].includes(s.category));
+    if (!query.trim()) return schemas;
+    const intent = searchIntent(query), out = [], boundSchemas = new Set();
+    for (const hint of searchHintCandidates(hints, query, project, context)) {
+      if (!hint.binding) continue;
+      try {
+        const candidateNode = nodeForSearchHint(hint, project, context, intent), schema = BLOCK_SCHEMA_BY_ID.get(candidateNode.schemaId);
+        if (!schema || !schemas.includes(schema)) continue;
+        out.push({...schema, candidateNode, binding:hint.binding, searchLabel:hint.text,
+          candidateKey:hint.id, candidateReason:hint.reason}); boundSchemas.add(schema.id);
+      } catch (_) { /* An unavailable incomplete hint remains visible through the generic schema. */ }
+    }
+    for (const schema of schemas) {
+      if (boundSchemas.has(schema.id)) continue;
+      if (!(intent ? schema.id === intent.schemaId : matchesSearch(blockPaletteSearchText(schema), query))) continue;
+      const configured = intent && (intent.direction || intent.scale !== undefined || intent.index !== undefined);
+      out.push(configured ? {...schema, candidateNode:configureSearchNode(createBlock(schema.id, {
+        draft:schema.inputs.some(s=>s.type==='target'), allowHoles:true}), intent)} : schema);
+    }
+    return out;
+  }
+
   const BLOCK_SEARCH_SYNONYMS = Object.freeze({
+    'MotionCommand:MOVE_DIRECTION': ['画面の右', '画面の左', 'みぎ', 'ひだり', '方向へ進む', '移動'],
+    ListInsert: ['挿入', 'そうにゅう', '途中に入れる', '番号の前に入れる'],
     'MotionCommand:MOVE': ['うごく', '動く', '移動', '進む', 'すすむ', '右へ', '左へ', '前へ'],
     'MotionCommand:GOTO': ['場所へ行く', '座標', '移動', '位置'],
     'MotionCommand:GLIDE': ['すべる', 'なめらかに動く', '移動', '時間をかける'],
@@ -18405,19 +19190,6 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (form.kind !== schema.kind || (form.op && operation && form.op !== operation)) continue;
       words.push(form.intent, ...(form.verbForms || []), ...(form.nounForms || []),
         ...(form.acceptedReadings || []));
-    }
-    if (['UserActionCall', 'UserFunctionCall'].includes(schema.kind)) {
-      const definitions = schema.kind === 'UserActionCall' ? project.actions : project.functions;
-      words.push(...definitions.map((definition) => definition.name));
-    }
-    if (['VariableRead', 'Assignment', 'NumericUpdate', 'ListAppend', 'ListInsert',
-      'ListReplace', 'ListDelete', 'ListClear', 'UserActionCall', 'UserFunctionCall'].includes(schema.kind)) {
-      words.push(...(project.projectData?.variables || []).map((entry) => entry.name));
-      words.push(...(project.projectData?.lists || []).map((entry) => entry.name));
-      for (const component of project.components || []) {
-        words.push(...(component.localData?.variables || []).map((entry) => entry.name));
-        words.push(...(component.localData?.lists || []).map((entry) => entry.name));
-      }
     }
     return words.filter(Boolean).join(' ').toLocaleLowerCase();
   }
@@ -18548,9 +19320,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               sourceRevision: pending.sourceRevision,
               contextRevision: pending.contextRevision,
               id: pending.id,
+              nodePath: index.get(pending.id)?.path || [],
               field: pending.key,
               value: pending.input?.value ?? '',
               composing: !!pending.composing,
+              invalid: !!pending.invalid,
               reason: pending.error || '入力を確定してください',
             }
           : replacement
@@ -18848,11 +19622,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           composing: input.dataset.composing === 'true',
           read,
           error: '',
+          invalid: false,
         };
         try {
           read();
         } catch (error) {
           pending.error = error.message;
+          pending.invalid = true;
         }
         input.setAttribute('aria-invalid', pending.error ? 'true' : 'false');
         notifyPending();
@@ -18927,6 +19703,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         value = p.read();
       } catch (error) {
         p.error = error.message;
+        p.invalid = true;
         p.input.setAttribute('aria-invalid', 'true');
         announce(p.error, true);
         notifyPending();
@@ -19096,7 +19873,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             }
           : null;
     }
-    function availability(schemaId, location) {
+    function availability(schemaId, location, candidateNode = null) {
       if (!tree || !location) return { enabled: false, reason: '追加する位置を選んでください' };
       const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
       if (schema.category !== (location.body ? 'statement' : 'expression'))
@@ -19104,13 +19881,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           enabled: false,
           reason: location.body ? '本文には命令を入れます' : '式の差込先を選んでください',
         };
-      const key = schemaId + '|' + JSON.stringify(location);
+      const key = schemaId + '|' + JSON.stringify(location) + '|' + (candidateNode ? JSON.stringify(candidateNode) : '');
       if (availabilityCache.has(key)) return availabilityCache.get(key);
       let result;
       try {
         result = blockInsertionAvailability(session(), schemaId, location, {
           project: project(),
           context: context(),
+          candidateNode,
         });
       } catch (error) {
         result = { enabled: false, reason: errorText(error) };
@@ -19118,7 +19896,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       availabilityCache.set(key, result);
       return result;
     }
-    function paletteAdd(schema, searchTerm = '') {
+    function paletteAdd(schema) {
       const location = destination || defaultDestination();
       if (schema.category === 'expression' && !location?.input) {
         announce(
@@ -19126,31 +19904,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         );
         return;
       }
-      const a = availability(schema.id, location);
+      const a = availability(schema.id, location, schema.candidateNode);
       if (!a.enabled) {
         announce(a.reason, true);
         return;
       }
       const node = a.node || createBlock(schema.id, { ...context(), idPrefix: viewId });
-      if (searchTerm) {
-        const schemaFields = schema.fields || [];
-        const projectState = project();
-        const knownNames = [
-          ...(projectState.projectData?.variables || []).map((entry) => entry.name),
-          ...(projectState.projectData?.lists || []).map((entry) => entry.name),
-          ...projectState.components.flatMap((component) => [
-            ...(component.localData?.variables || []).map((entry) => entry.name),
-            ...(component.localData?.lists || []).map((entry) => entry.name),
-          ]),
-          ...projectState.actions.map((entry) => entry.name),
-          ...projectState.functions.map((entry) => entry.name),
-        ];
-        const match = knownNames.find((name) => name.toLocaleLowerCase().includes(searchTerm.toLocaleLowerCase()));
-        if (match)
-          for (const field of schemaFields)
-            if (field.type === 'name' && Object.hasOwn(node.fields, field.key))
-              node.fields[field.key] = match;
-      }
       const op = location.body
         ? { type: 'insert', ...location, node }
         : { type: 'expression', ...location, node };
@@ -19207,6 +19966,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             ast[field.key] = name;
           }
         for (const slot of schema.inputs) {
+          if(slot.required===false)continue;
           if (slot.multiple) {
             const count = slot.variadic ? 1 : slot.minItems;
             ast[slot.key] = Array.from({ length: count }, (_, i) =>
@@ -19333,15 +20093,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       return box;
     }
     function paletteAvailability(schema, location) {
+      if (schema.candidateReason) return {enabled:false, reason:schema.candidateReason, node:schema.candidateNode};
       // A value may be picked up before its destination is chosen. The actual
       // socket is checked by the existing common validator on preview and drop.
       if (schema.category === 'expression' && !location?.input)
         return {
           enabled: true,
           needsSlot: true,
+          node: schema.candidateNode,
           reason: '\u767d\u3044\u7a74\u3078\u306f\u3081\u308b\u30d6\u30ed\u30c3\u30af',
         };
-      return availability(schema.id, location);
+      return availability(schema.id, location, schema.candidateNode);
     }
     function renderPalette() {
       if (options.readOnly) return;
@@ -19392,12 +20154,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       categorySelect.scrollTop = categoryScroll;
       const location = destination || defaultDestination(),
         projectState = project();
-      let candidates = all.filter(
+      const hints = !query ? [] : location?.body ? editorInsertionHints(session(), location, {project:projectState,context:context()})
+        : hintCandidates(projectState, context().targetId, {source:session()?.sourceText || '', ...context()});
+      const searched = query ? blockSearchCandidates(projectState, context(), query, hints) : all;
+      let candidates = searched.filter(
         (s) =>
           ((query && !categoryExplicit) || !category || (category === 'basic'
             ? BASIC_BLOCK_SCHEMA_IDS.has(s.id)
             : blockPaletteGroup(s) === category)) &&
-          (!query || (paletteLabel(s) + ' ' + blockPaletteSearchText(s, projectState)).includes(query)),
+          (paletteMode === 'all' || s.category === paletteMode),
       );
       if (!showOutside)
         candidates = candidates.filter((s) => paletteAvailability(s, location).enabled);
@@ -19424,30 +20189,33 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           'palette-add',
           () => {
             if (!a.enabled) {
-              reason.hidden = !reason.hidden;
+              reason.hidden = false;
               announce(a.reason, true);
               return;
             }
-            paletteAdd(schema, query);
+            paletteAdd(schema);
           },
           {
             'data-blockui-schema': schema.id,
             'data-schema-id': schema.id,
             title: a.reason || schema.label,
-            'aria-label': schema.label + '\u3092\u8ffd\u52a0',
+            'aria-label': (schema.searchLabel || schema.label) + '\u3092\u8ffd\u52a0',
+            'data-search-binding': schema.candidateKey || '',
             'aria-disabled': !a.enabled,
           },
         );
         b.disabled = isLocked();
+        b._akariSearchCandidate = schema;
         b.dataset.blockuiDrag = 'palette';
         b.dataset.blockuiDragSchema = schema.id;
         try {
           b.append(previewNode(schema, a.node));
+          if (schema.binding) b.append(E('small', 'blockui-bound-name', schema.searchLabel));
         } catch (_) {
           b.textContent = paletteLabel(schema);
         }
         item.append(b);
-        reason.hidden = true;
+        reason.hidden = a.enabled;
         if (!a.enabled) item.append(reason);
         paletteList.append(item);
       }
@@ -19649,8 +20417,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           input.title =
             '使う場所: ' + (values.find((v) => v[0] === input.value)?.[1] || '指定なし');
         }
-      } else if (field.type === 'comment') {
-        input = E('textarea', 'blockui-comment-input', null, {
+      } else if (field.type === 'comment' || field.multiline && /[\r\n]/.test(value)) {
+        input = E('textarea', field.type === 'comment' ? 'blockui-comment-input' : 'blockui-multiline-input', null, {
           ...attrs,
           rows: '1',
           spellcheck: 'false',
@@ -20107,7 +20875,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         more.classList.add('blockui-body-more');
         box.append(more);
       }
-      if (!children.length) box.append(E('p', 'blockui-empty', 'ここに命令を追加できます'));
+      if (!children.length) box.append(E('p', 'blockui-empty', parent.schemaId === 'Script'
+        ? '対象とできごとを選び、＋から命令を追加しましょう。動く例は「お手本を開く」で試せます。'
+        : 'ここに命令を追加できます'));
       return box;
     }
     function expressionSlot(parent, slot, child, i) {
@@ -20281,7 +21051,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       main.append(E('span', 'blockui-phrase-text', schema.label));
       for (const field of schema.fields.filter((f) => f.key !== 'hasElse'))
         main.append(fieldControl(node, field));
-      for (const slot of schema.inputs) main.append(renderInput(node, slot));
+      for (const slot of schema.inputs) if(node.inputs[slot.key]!==undefined)main.append(renderInput(node, slot));
     }
     function renderNode(node) {
       const schema = schemaOf(node);
@@ -20371,6 +21141,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         } else if (schema.kind === 'QuantityLiteral') main.append(slot('value'), field('unit'));
         else if (schema.kind === 'UnitlessRead') main.append(slot('value'), E('span', '', 'の数だけ'));
         else if (schema.kind === 'ActorQualifiedRead') main.append(field('actorRef'), E('span', '', 'の'), slot('value'));
+        else if (schema.kind === 'CloneCommand' && ['CREATE_SELF','CREATE_TARGET'].includes(schema.discriminator?.value)) {
+          const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
+          if(schema.discriminator.value==='CREATE_TARGET')main.append(slot('args'));else main.append(E('span','','自分'));
+          main.append(E('span','','の分身を'));
+          if(node.inputs.count)main.append(slot('count'),E('span','','体'));
+          main.append(E('span','','作る'));
+        }
         else if (schema.kind === 'ContinuousRule') {
           main.style.flexWrap = 'wrap'; main.style.whiteSpace = 'normal';
           main.append(field('actorRef'), E('span', '', 'は、'), slot('condition'), E('span', '', 'にあてはまる間、'),
@@ -20426,6 +21203,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       for (const slot of schema.bodies) {
         const body = statementBody(node, slot);
         if (body) content.append(body);
+      }
+      if(schema.category==='script'&&node.inputs.units?.length){
+        const units=E('section','blockui-document-units');units.setAttribute('aria-label','同じ文書のできごと');
+        for(const unit of node.inputs.units)units.append(renderNode(unit));
+        content.append(units);
       }
       const annotations = schema.annotations.filter(
         (a) => a.editable !== false && (!a.when || node.fields[a.when]),
@@ -21172,7 +21954,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (!valid) reason = '自分の中には移動できません';
       }
       if (valid && drag.schemaId) {
-        const candidate = availability(drag.schemaId, location);
+        const candidate = availability(drag.schemaId, location, drag.candidate?.candidateNode);
         valid = candidate.enabled;
         if (!valid) reason = candidate.reason;
       }
@@ -21263,6 +22045,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         element: handle,
         id,
         schemaId,
+        candidate: handle._akariSearchCandidate,
         startX: event.clientX,
         startY: event.clientY,
         started: false,
@@ -21326,7 +22109,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       if (state.schemaId) {
         destination = state.location;
-        paletteAdd(BLOCK_SCHEMA_BY_ID.get(state.schemaId));
+        paletteAdd(state.candidate || BLOCK_SCHEMA_BY_ID.get(state.schemaId));
       } else completeMove(state.location, { id: state.id, type: 'move' });
     });
     listen(root, 'pointercancel', () => {
@@ -21400,7 +22183,21 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     if (doc.fonts) listen(doc.fonts, 'loadingdone', scheduleGeometry);
     render({ force: true });
-    return { render, flush, cancel, destroy, highlight, focus };
+    function restorePending(saved) {
+      if(!saved?.field||!Array.isArray(saved.nodePath))return false;
+      const entry=[...index.values()].find(item=>JSON.stringify(item.path)===JSON.stringify(saved.nodePath));
+      if(!entry)return false;
+      revealNode(entry.node.id);render({force:true});
+      let input=[...root.querySelectorAll('input,textarea,select')].find(el=>el.dataset.blockId===entry.node.id&&(el.dataset.blockuiField===saved.field||el.dataset.blockuiAnnotation===saved.field));
+      if(!input)return false;
+      if(input.tagName==='INPUT'&&/[\r\n]/.test(saved.value)){
+        input.closest('.blockui-field')?.querySelector('[data-blockui-action="edit-text"]')?.click();
+        input=root.querySelector('.blockui-text-dialog textarea');if(!input)return false;
+      }
+      input.value=saved.value;input.dispatchEvent(new doc.defaultView.Event('input',{bubbles:true}));
+      return true;
+    }
+    return { render, flush, cancel, destroy, highlight, focus, restorePending };
   }
   createBlockEditorView.sequence = 0;
 
@@ -21832,7 +22629,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       runtimePaintFrame = null,
       runtimePaintFlags = 0;
     const physicalKeys = new Map();
-    let project = makeDefaultProject(),
+    let project = makeEmptyProject(),
       assetStore = makeDefaultAssetStore(),
       selectedId = 'sprite-1',
       currentEvent = 'start',
@@ -22084,7 +22881,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       if (kind !== 'script') throw new AkariError('F503', '実行中の定義本文は編集できません');
       const old = scriptBySourceKey(next, ownerKey);
-      if (old) updateScriptSource(old, source, next);
+      if (old) {
+        // Keep the edited body's identity when its heading changes event or actor.
+        // Imported and initial bodies may predate explicit script IDs.
+        const metadata = scriptHeadingMetadata(source, old, next);
+        if (!old.id && (metadata.targetId !== old.targetId || metadata.event !== old.event))
+          old.id = ensureUniqueId('script');
+        updateScriptSource(old, source, next);
+      }
       else if (source) {
         const row = { id: event ? ensureUniqueId('script') : id,
           targetId: event ? id : selectedId, event: event || currentEvent, source: '' };
@@ -22102,12 +22906,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const next = sourceCandidate(binding, ownerKey, source);
       if (atomic) {
         clearTimeout(historyTimer);
-        pushHistoryNow();
+        if(!hasPendingEditor())pushHistoryNow();
       }
       if (binding.kind === 'draft') callableDraftCore = { ...callableDraftCore, source };
       else {
         const old = scriptBySourceKey(project, ownerKey),
-          row = scriptBySourceKey(next, ownerKey) || (!old ? next.scripts.at(-1) : null);
+          oldIndex = old ? project.scripts.indexOf(old) : -1,
+          row = scriptBySourceKey(next, ownerKey) ||
+            (oldIndex >= 0 ? next.scripts[oldIndex] : next.scripts.at(-1));
         project = next;
         if (row) {
           const changedOwner = selectedId !== row.targetId;
@@ -22215,6 +23021,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             ownerKey: bindingOwner(binding),
             kind: 'code',
             value: source,
+            rejected: error.code === 'F504' || error.code === 'P208',
             reason: error.message,
           };
         scheduleAutosave();
@@ -22550,8 +23357,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (binding === mainEditor) refreshEditor();
       setStatus('入力を取り消しました');
     }
+    function editorContentFingerprint(state) {
+      return stableJson([state.callableDraft,state.pendingEditors.map(d=>({kind:d.kind,ownerKey:d.kind==='draft'?'draft':d.ownerKey,source:d.source,
+        value:d.pending.value??null,field:d.pending.field??null,nodePath:d.pending.nodePath??null,
+        draftSource:d.draftTree?formatScript(blockDecode(d.draftTree,{allowHoles:true}),{allowHoles:true}):null}))]);
+    }
     function stateFingerprintCore() {
-      return JSON.stringify([currentFingerprint(), hasCallableDraft() ? callableDraftCore : null]);
+      const pending=[mainEditor,draftEditor].filter(b=>b.session?.blockDraft||b.session?.pendingEdit&&!b.session.pendingEdit.rejected&&(!b.session.pendingEdit.field||b.session.pendingEdit.invalid)).map(b=>({kind:b.kind,ownerKey:bindingOwner(b),source:b.textarea.value,
+        pending:b.session.pendingEdit||{},draftTree:b.session.blockDraft?b.session.blockView:null}));
+      const draft=headerPending?{...callableDraftCore,name:$('#callableName').value,argsText:$('#callableArgs').value,
+        ...(callableDraftCore.type==='action'?{callPhrase:$('#callablePhrase').value}:{})}:hasCallableDraft()?callableDraftCore:null;
+      return JSON.stringify([currentFingerprint(),editorContentFingerprint({callableDraft:draft,pendingEditors:pending})]);
     }
     function renderCallableOptions(prefer = '') {
       const sel = $('#callableSelect');
@@ -22871,7 +23687,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           throw e;
         }),
       onInputChanged: renderMonitor,
-      onStageMessage: (text) => log(text),
+      onStageMessage: (text, details) => {
+        log(text);
+        if (details?.rounded) {
+          const full = document.createElement('button');
+          full.type = 'button'; full.textContent = '実値';
+          full.setAttribute('aria-label', '表示を丸めています。出力の実値を見る');
+          full.onclick = () => showFullValue('出力の実値', details.value);
+          el.console.appendChild(full);
+        }
+      },
+      onValueDetails: value => showFullValue(typeof value === 'string' ? '吹出しの全文' : '吹出しの実値', value),
     });
     function setStageZoom(scale) {
       stageZoom = scale === null ? null : Math.max(0.1, Math.min(2, Math.round(scale * 100) / 100));
@@ -22885,9 +23711,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     $('#stageZoomFit').onclick = () => setStageZoom(null);
     const log = (m, type = '') => {
       const prefix = type === 'error' ? '❌ ' : type === 'ok' ? '✓ ' : '';
-      const next = el.console.textContent + (el.console.textContent ? '\n' : '') + prefix + m;
-      el.console.textContent =
-        next.length > 100000 ? '[古いログを省略]\n' + next.slice(-90000) : next;
+      const addition = (el.console.textContent ? '\n' : '') + prefix + m;
+      if (el.console.textContent.length + addition.length > 100000)
+        el.console.textContent = '[古いログを省略]\n' + (el.console.textContent + addition).slice(-90000);
+      else el.console.appendChild(document.createTextNode(addition));
       el.console.scrollTop = el.console.scrollHeight;
     };
     const setStatus = (m) => (el.status.textContent = m);
@@ -22902,6 +23729,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       for (const a of [...project.scripts, ...project.actions, ...project.functions, ...project.sounds])
         if (a.id) z.add(a.id);
+      for(const script of project.scripts)for(const id of script.document?.unitIds||[])z.add(id);
       for (const id of assetStore.ids()) z.add(id);
       return z;
     };
@@ -22989,6 +23817,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (locked && colorEdit) closeColorPicker();
       for (const id of [
         'newBtn',
+        'sampleBtn',
         'openBtn',
         'resetBtn',
         'imageObjectAdd',
@@ -23048,6 +23877,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         selectedScriptId,
         fingerprint: currentFingerprint(),
         stateFingerprint: stateFingerprintCore(),
+        editorState: captureEditorState(),
         draft: { ...callableDraftCore },
         callableBaseline,
         callableLoadedKey,
@@ -23086,8 +23916,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function updateDirty() {
       dirty = currentFingerprint() !== lastSavedFingerprint;
-      const draft = hasCallableDraft();
-      el.dirty.textContent = dirty ? '未保存' : draft ? '定義の下書きあり' : '変更なし';
+      const draft = hasCallableDraft() || hasPendingEditor();
+      el.dirty.textContent = dirty ? '未保存' : draft ? '書きかけあり' : '変更なし';
       el.dirty.className = dirty || draft ? 'dirty-state dirty' : 'dirty-state';
       const locked = modelLocked();
       $('#undoBtn').disabled =
@@ -23095,7 +23925,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       $('#redoBtn').disabled = locked || !redo.length;
       document.title = `${dirty || draft ? '● ' : ''}${productLabel()} — ${project.name}`;
     }
-    function restoreSnap(e) {
+    let restoringSnapshot=false;
+    function restoreSnap(e,{restoreView=false}={}) {
+      restoringSnapshot=true;
+      const view={uiLevel:$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'}};
+      try {
       recoveryEpoch++;
       validateAssetReferences(e.project, new AssetStore(e.assets));
       disposeRuntime();
@@ -23129,11 +23963,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       renderAll();
       loadEditor();
       if ($('#procModal').classList.contains('show')) renderEditorBinding(draftEditor);
+      if(e.editorState){restoreEditorState({...e.editorState,...(restoreView?{}:view)});callableBaseline=e.callableBaseline||callableBaseline;callableLoadedKey=e.callableLoadedKey||'';$('#procModal').classList.toggle('show',!!e.draftOpen);}
+      lastObservedFingerprint=stateFingerprintCore();
+      e.stateFingerprint=lastObservedFingerprint;
       updateDirty();
+      } finally { restoringSnapshot=false; }
       scheduleAutosave();
     }
     function undo() {
-      if (modelLocked() || !flushActiveEditor()) return;
+      if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit) return;
+      flushActiveEditor();
       clearTimeout(historyTimer);
       const cur = snapshot();
       if (history.at(-1)?.stateFingerprint !== cur.stateFingerprint) history.push(cur);
@@ -23143,7 +23982,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       setStatus('1つ前の状態へ戻しました');
     }
     function redoDo() {
-      if (modelLocked() || !flushActiveEditor() || !redo.length) return;
+      if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit || !redo.length) return;
+      flushActiveEditor();
+      if(history.at(-1)?.stateFingerprint!==stateFingerprintCore()){pushHistoryNow();return;}
       clearTimeout(historyTimer);
       const e = redo.pop();
       history.push(e);
@@ -23151,10 +23992,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       setStatus('やり直しました');
     }
     function confirmLose() {
-      if (!flushActiveEditor()) return false;
+      flushActiveEditor();
       activeDragCleanup?.();
       return (
-        (!dirty && !hasCallableDraft()) ||
+        (!dirty && !hasCallableDraft() && !hasPendingEditor()) ||
         confirm('作品または手順・答えを求める定義に保存していない編集があります。今の編集を捨てて続けますか？')
       );
     }
@@ -23381,6 +24222,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       renderProperties();
       loadEditor();
       renderComponents();
+      // Navigation changes the view of the current history frame, not its
+      // content. The next atomic field edit must undo to this selected owner.
+      if (!modelLocked()) pushHistoryNow();
       return true;
     }
     function applyStage() {
@@ -23659,7 +24503,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             propRow('\u540d\u524d', project.stage.name, (v) => {
               if (!v.trim())
                 throw new Error('\u540d\u524d\u306f\u7a7a\u306b\u3067\u304d\u307e\u305b\u3093');
-              project.stage.name = v.trim();
+              project = prepareResourceRename(project,'component:stage',v.trim(),{drafts:resourceDraftRecords()});
+              invalidateEditors();
             }),
           ),
           propSection(
@@ -23720,7 +24565,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               throw new Error(
                 '\u90e8\u54c1\u540d\u306f\u7a7a\u306b\u3067\u304d\u305a\u3001\u91cd\u8907\u3082\u3067\u304d\u307e\u305b\u3093',
               );
-            c.name = v;
+            project = prepareResourceRename(project,'component:'+c.id,v,{drafts:resourceDraftRecords()});
+            invalidateEditors();
           }),
           propRow('\u8868\u793a', c.visible, (v) => (c.visible = v), 'checkbox'),
           propRow(
@@ -24414,6 +25260,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (modelLocked() || selectedId === 'stage' || !flushActiveEditor()) return;
       const c = componentById(selectedId);
       if (!c) return;
+      if (!allowResourceDelete('component:' + c.id, $('#properties'), c.id)) return;
       if (!confirm('部品「' + c.name + '」を削除しますか？')) return;
       clearTimeout(historyTimer);
       pushHistoryNow();
@@ -24715,10 +25562,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         const b = document.createElement('div');
         b.className = 'monitor-value';
         b.textContent = monitorValue(v);
-        if (Array.isArray(v) || (typeof v === 'string' && cpLen(v) > 160)) {
+        if (Array.isArray(v) || (typeof v === 'string' && cpLen(v) > 160) || displayValue(v).rounded) {
           const full = document.createElement('button');
-          full.textContent = '\u5168\u6587';
-          full.setAttribute('aria-label', k + '\u306e\u5168\u6587');
+          full.textContent = isNumberValue(v) ? '実値' : '\u5168\u6587';
+          full.setAttribute('aria-label', k + (isNumberValue(v) ? 'の実値（表示を丸めています）' : '\u306e\u5168\u6587'));
           const copy = Array.isArray(v) ? v.slice() : v;
           full.onclick = () => showFullValue(k, copy);
           b.appendChild(full);
@@ -24743,6 +25590,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         pages = Math.max(1, Math.ceil(chars.length / 8000));
       v.page = clamp(v.page, 0, pages - 1);
       $('#valueTitle').textContent = v.label;
+      const rounded = item !== undefined && displayValue(item).rounded;
+      $('#valueNotice').textContent = rounded ? '通常の表示を丸めています。以下は丸める前の実値です。選択してコピーできます。' : '以下は値の全文です。選択してコピーできます。';
       $('#valueListControls').hidden = !list;
       $('#valueItem').value = String(v.index + 1);
       $('#valueItem').max = String(Math.max(1, v.value.length || 1));
@@ -24883,7 +25732,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function monitorValue(value) {
       const short = (v) => {
-        const text = valueText(v);
+        const text = displayValue(v).text;
         return cpLen(text) > 160 ? Array.from(text).slice(0, 160).join('') + '\u2026' : text;
       };
       return Array.isArray(value)
@@ -25035,13 +25884,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     function drawHints(root, candidates, search, offset, insert) {
       root.textContent = '';
       const query = search.trim().toLocaleLowerCase(),
-        filtered = candidates.filter(
-          (x) =>
-            !query ||
-            (x.text + ' ' + x.category + ' ' + (x.searchTerms || []).join(' '))
-              .toLocaleLowerCase()
-              .includes(query),
-        ),
+        filtered = searchHintCandidates(candidates, query, project),
         page = Math.min(offset, Math.max(0, Math.ceil(filtered.length / 24) - 1)),
         begin = page * 24;
       for (const h of filtered.slice(begin, begin + 24)) {
@@ -25123,6 +25966,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
     }
     function bridge() {
+      let speechValue;
       return {
         render: () => requestRuntimePaint(3),
         allStopped: () => {
@@ -25135,9 +25979,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         penLine: stageView.penLine,
         penClear: stageView.clearPen,
         stamp: stageView.stamp,
+        prepareSpeech: value => { speechValue = value; },
         say: (rid, text) => {
           flushRuntimePaint();
-          showBubble(rid, text);
+          const value = speechValue; speechValue = undefined;
+          showBubble(rid, text, value);
         },
         beforeStatement: (task, node) => {
           activeTaskId = task.taskId;
@@ -25164,6 +26010,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function startRun() {
       if (modelLocked() || !flushActiveEditor()) return;
+      if(hasPendingEditor()){log('書きかけの入力を完成させてから実行してください','error');return;}
       clearTimeout(historyTimer);
       pushHistoryNow();
       if (hasCallableDraft()) {
@@ -25270,8 +26117,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       $('#stopBtn').disabled = appState === 'DESIGN' || appState === 'IMPORTING';
       updateEditingLock();
     }
-    function showBubble(rid, text) {
-      stageView.showBubble(rid, text);
+    function showBubble(rid, text, value) {
+      stageView.showBubble(rid, text, value);
     }
     function limitInputValue(input) {
       return stageView.limitInputValue(input);
@@ -25427,6 +26274,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function exportProject() {
       if (!flushActiveEditor()) return;
+      if(hasPendingEditor()){log('書きかけの入力を完成させてから書き出してください','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
       if (hasCallableDraft()) {
         log('手順・答えを求める定義の編集を保存してから書き出してください', 'error');
@@ -25467,11 +26315,59 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
     }
 
+    function captureEditorState() {
+      for(const binding of [mainEditor,draftEditor])captureEditorView(binding);
+      const pendingEditors=[mainEditor,draftEditor].filter(binding=>binding.session?.pendingEdit||binding.session?.blockDraft)
+        .map(binding=>({kind:binding.kind,ownerKey:bindingOwner(binding),source:binding.textarea.value,mode:binding.session.mode,
+          pending:cloneDesignProject(binding.session.pendingEdit||{kind:'block-draft'}),
+          draftTree:binding.session.blockDraft?cloneDesignProject(binding.session.blockView):null}));
+      let callableDraft=captureCallableDraft();
+      if(headerPending||pendingEditors.some(d=>d.kind==='draft'))callableDraft=validateCallableDraft({...callableDraftCore,
+        name:$('#callableName').value,argsText:$('#callableArgs').value,...(callableDraftCore.type==='action'?{callPhrase:$('#callablePhrase').value}:{})});
+      return validateEditorState({version:1,revision:recoveryEpoch,selectedId,currentEvent,selectedScriptId,
+        uiLevel:$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'},callableDraft,pendingEditors,
+        views:[mainEditor,draftEditor].filter(binding=>binding.session).map(binding=>({kind:binding.kind,ownerKey:bindingOwner(binding),
+          codeSelection:{start:binding.textarea.selectionStart||0,end:binding.textarea.selectionEnd||0,direction:binding.textarea.selectionDirection||'none'},
+          scrollState:{codeTop:binding.textarea.scrollTop,codeLeft:binding.textarea.scrollLeft}}))},project);
+    }
+    function restoreEditorState(state) {
+      validateEditorState(state,project);
+      for(const binding of [mainEditor,draftEditor]){binding.view?.cancel();if(binding.session){binding.session.pendingEdit=null;binding.session.blockDraft=null;}}
+      headerPending=null;
+      selectedId=state.selectedId;currentEvent=state.currentEvent;selectedScriptId=state.selectedScriptId;
+      $('#uiLevel').value=state.uiLevel;document.body.dataset.uiLevel=state.uiLevel;
+      for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,mode);
+      editorSessions.clear();invalidateEditors();hideSourceOverview();renderAll();loadEditor();
+      if(state.callableDraft)restoreCallableDraft(state.callableDraft);
+      for(const saved of state.pendingEditors){
+        const binding=saved.kind==='draft'?draftEditor:mainEditor;
+        if(saved.kind==='script'&&bindingOwner(binding)!==saved.ownerKey)throw new AkariError('F503','下書きの選択先が一致しません');
+        const session=getEditorSession(binding,{force:true});session.pendingEdit={...cloneDesignProject(saved.pending),ownerKey:bindingOwner(binding)};
+        if(saved.draftTree!==null){
+          const ast=blockDecode(saved.draftTree,{allowHoles:true}),encoded=blockEncode(ast,{allowHoles:true}),baseline={sourceText:session.sourceText,syntaxAst:session.syntaxAst,
+            blockView:session.blockView,nodeMap:session.nodeMap,nodeIds:session.nodeIds,diagnostics:session.diagnostics,syntaxDiagnostics:session.syntaxDiagnostics,
+            nextBlockId:session.nextBlockId,blockSelection:session.blockSelection,sourceRevision:session.sourceRevision,contextRevision:session.contextRevision};
+          const source=formatScript(ast,{allowHoles:true});Object.assign(session,{syntaxAst:ast,blockView:encoded.tree,nodeMap:encoded.nodeMap,nodeIds:encoded.nodeIds,nextBlockId:encoded.nodeMap.size+1,
+            blockDraft:{baseline,ast,tree:encoded.tree,source,codeSource:saved.mode==='code'?saved.source:undefined,pending:session.pendingEdit}});
+        }
+        editorModes.set(binding.kind,saved.mode);session.mode=saved.mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
+        if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(saved.pending))throw new AkariError('F503','書きかけの入力欄を復元できません');
+        showEditorFailure(binding,saved.pending.reason||'書きかけの作文をもどしました',{preservePending:true});
+      }
+      for(const view of state.views){const binding=view.kind==='draft'?draftEditor:mainEditor;if(view.kind==='script'&&bindingOwner(binding)!==view.ownerKey)continue;
+        if(!binding.session)getEditorSession(binding,{force:true});
+        Object.assign(binding.session,{codeSelection:{...view.codeSelection},scrollState:{...binding.session?.scrollState,...view.scrollState}});
+        binding.textarea.setSelectionRange(view.codeSelection.start,view.codeSelection.end,view.codeSelection.direction);binding.textarea.scrollTop=view.scrollState.codeTop;binding.textarea.scrollLeft=view.scrollState.codeLeft;}
+      if(state.sourceOverviewOpen&&!state.pendingEditors.length)showSourceOverview();
+      updateDirty();
+    }
     function saveProject() {
-      if (appState === 'IMPORTING' || appState === 'PREPARING' || hasCallableDraft()) return;
-      if (!flushActiveEditor()) return;
+      if (appState === 'IMPORTING' || appState === 'PREPARING') return;
+      if(composingEditors.size){setStatus('日本語入力を確定してから保存してください');return;}
+      flushActiveEditor();
       try {
-        const md = serializeProject(project, assetStore),
+        const editorState=captureEditorState(),unfinished=editorState.pendingEditors.length||editorState.callableDraft||compileProject(project).errors.length;
+        const md = serializeProject(project, assetStore, editorState),
           blob = new Blob([md], { type: 'text/markdown;charset=utf-8' }),
           a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -25484,6 +26380,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         clearTimeout(autosaveTimer);
         writeAutosave();
         log(`${a.download} のダウンロードを開始しました。自動保存も保持します`, 'ok');
+        setStatus(unfinished?'書きかけを含むファイルのダウンロードを開始しました。動かす前に未完成の箇所を確認してください':'作品ファイルのダウンロードを開始しました');
       } catch (err) {
         log(`${err.code || ''} 保存失敗: ${err.message}`, 'error');
       }
@@ -25516,6 +26413,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         renderAll();
         loadEditor();
         resetHistory();
+        if(loaded.editorState){restoreEditorState(loaded.editorState);initialSnapshot=snapshot();history=[initialSnapshot];redo=[];lastObservedFingerprint=stateFingerprintCore();}
         const diagnostics = loaded.diagnostics || [];
         log(
           diagnostics.length
@@ -25624,51 +26522,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (!hasPendingEditor()) flushActiveEditor();
       let rec, fingerprint;
       try {
-        fingerprint = currentFingerprint();
-        const ids = [...collectReachableAssetIds(project)].filter((id) => {
-            if (id !== DEFAULT_MASCOT_ASSET_ID) return true;
-            const a = assetStore.get(id);
-            return (
-              !a ||
-              a.kind !== 'image' ||
-              a.mime !== 'image/png' ||
-              a.byteLength !== 5476 ||
-              a.sha256 !== DEFAULT_MASCOT_SHA256
-            );
-          }),
-          assets = ids.map((id) => {
-            const a = assetStore.get(id);
-            if (!a)
-              throw new AkariError(
-                'F503',
-                '\u81ea\u52d5\u4fdd\u5b58\u3059\u308b\u7d20\u6750\u304c\u3042\u308a\u307e\u305b\u3093',
-              );
-            return {
-              id: a.id,
-              kind: a.kind,
-              mime: a.mime,
-              byteLength: a.byteLength,
-              sha256: a.sha256,
-              blob: new Blob([a.bytes], { type: a.mime }),
-            };
-          });
-        autosaveRevisionTime = Math.max(Date.now(), autosaveRevisionTime + 1);
-        rec = {
-          id: 'latest',
-          updatedAt: autosaveRevisionTime,
-          project: cloneDesignProject(project),
-          assets,
-          selectedId,
-          currentEvent,
-          selectedScriptId,
-          lastSavedFingerprint,
-          callableDraft: captureCallableDraft(),
-          pendingEditors: [mainEditor, draftEditor].filter(binding => binding.session?.pendingEdit || binding.session?.blockDraft)
-            .map(binding => ({ kind: binding.kind, ownerKey: bindingOwner(binding),
-              source: binding.textarea.value, mode: binding.session.mode,
-              pending: cloneDesignProject(binding.session.pendingEdit || {kind: 'block-draft'}),
-              draftTree: binding.session.blockDraft ? cloneDesignProject(binding.session.blockView) : null })),
-        };
+        fingerprint = stateFingerprintCore();
+        const current=snapshot(),past=history.slice(-30);
+        if(past.at(-1)?.stateFingerprint===current.stateFingerprint)past[past.length-1]=current;
+        else{past.push(current);if(past.length>30)past.shift();}
+        const future=history.at(-1)?.stateFingerprint===current.stateFingerprint?redo.slice(-30).reverse():[];
+        const workspace=encodeWorkspaceHistory([...past,...future],past.length-1);
+        autosaveRevisionTime=Math.max(Date.now(),autosaveRevisionTime+1);
+        rec={id:'latest',version:2,updatedAt:autosaveRevisionTime,revision:recoveryEpoch,workspace,lastSavedFingerprint};
       } catch (e) {
         el.autosave.textContent = '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5931\u6557';
         log(e.message, 'error');
@@ -25676,13 +26537,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       const status = (text) => {
         if (
-          currentFingerprint() === fingerprint &&
-          JSON.stringify(captureCallableDraft()) === JSON.stringify(rec.callableDraft)
+          recoveryEpoch === rec.revision && stateFingerprintCore() === fingerprint
         )
           el.autosave.textContent = text;
       };
       const fallback = () => {
-        if (rec.assets.length) {
+        if (rec.workspace.assets.some(a=>!a.builtin)) {
           status(
             '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5229\u7528\u3067\u304d\u307e\u305b\u3093\uff08\u7d20\u6750\u3092\u542b\u3080\u4f5c\u54c1\uff09',
           );
@@ -25690,7 +26550,6 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         }
         try {
           const txt = JSON.stringify(rec);
-          if (txt.length > 500000) throw new Error('large');
           localStorage.setItem(STORAGE_KEYS.fallback, txt);
           status('\u81ea\u52d5\u4fdd\u5b58\uff1a\u6e08\u307f');
           return true;
@@ -25725,7 +26584,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         }));
     }
     function scheduleAutosave() {
+      if(restoringSnapshot)return;
       clearTimeout(autosaveTimer);
+      recoveryEpoch++;
+      if(!modelLocked())updateDirty();
       el.autosave.textContent = '自動保存：待機';
       autosaveTimer = setTimeout(writeAutosave, 1200);
     }
@@ -25809,7 +26671,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       try {
         const rec = await readAutosave();
         if (
-          !rec?.project ||
+          !(rec?.project || rec?.workspace) ||
           epoch !== recoveryEpoch ||
           dirty ||
           hasCallableDraft() ||
@@ -25817,6 +26679,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           modelLocked()
         )
           return;
+        if(rec.workspace){
+          if(!exactKeys(rec,['id','version','updatedAt','revision','workspace','lastSavedFingerprint'])||rec.id!=='latest'||rec.version!==2||
+            !Number.isFinite(rec.updatedAt)||!Number.isSafeInteger(rec.revision)||rec.revision<0||typeof rec.lastSavedFingerprint!=='string')throw new AkariError('F503','自動保存の契約が正しくありません');
+          const restored=await decodeWorkspaceHistory(rec.workspace);
+          if(epoch!==recoveryEpoch||dirty||hasCallableDraft()||hasPendingEditor()||modelLocked())return;
+          recoveryData={...rec,restored};
+          $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()} の自動保存があります。編集履歴ももどします。`;
+          $('#recoveryModal').classList.add('show');return;
+        }
         validateDesignProject(rec.project);
         if (!Number.isFinite(rec.updatedAt)) throw new AkariError('F503', '自動保存時刻が不正です');
         const callableDraft = validateCallableDraft(rec.callableDraft);
@@ -25946,6 +26817,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
     }
     function renderDataModal() {
+      updateDataForm();
       const body = $('#dataBody');
       body.textContent = '';
       const scope = $('#dataScope').value;
@@ -26003,12 +26875,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             unit.onchange = () => {
               const selected = unit.value || null;
               unit.value = d.expectedUnit || '';
-              if (modelLocked() || !confirm(`「${d.name}」で使う単位を「${selected || '決めない'}」に変えますか？ 値は変わりません。`)) return;
+              if (modelLocked() || !confirm(`「${d.name}」で使う単位を「${selected || '決めない'}」に変えますか？ 単位のない初期値には選んだ単位を付けます。`)) return;
               try {
                 validateExpectedUnit(d.initialValue, selected);
+                if(selected)d.initialValue=quantity(numberInUnit(d.initialValue,selected),selected);
                 if (selected) d.expectedUnit = selected; else delete d.expectedUnit;
                 markDirty(); renderDataModal(); refreshEditor();
-              } catch (error) { log(`${error.code || ''} ${error.message}`, 'error'); }
+              } catch (error) { showDataFormError(error,unit); }
             };
             info.append(unit);
           }
@@ -26016,29 +26889,42 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           del.textContent = '削除';
           del.onclick = () => {
             if (modelLocked()) return;
+            if (!allowResourceDelete('data:' + d.id, body)) return;
             arr.splice(arr.indexOf(d), 1);
             markDirty();
             renderDataModal();
             refreshEditor();
           };
-          row.append(info, del);
+          const rename=document.createElement('button');rename.textContent='名前を変える';
+          rename.onclick=()=>{
+            if(modelLocked())return;
+            const name=prompt('データの名前',d.name);if(name===null||name.trim()===d.name)return;
+            try{
+              const next=prepareResourceRename(project,'data:'+d.id,name.trim(),{drafts:resourceDraftRecords()});
+              clearTimeout(historyTimer);pushHistoryNow();project=next;invalidateEditors();markDirty();pushHistoryNow();renderDataModal();refreshEditor();
+            }catch(error){showResourceImpact({resource:d,references:[],uncertain:[{title:'名前の変更',line:1,reason:error.message}]},body,'名前変更');}
+          };
+          row.append(info, rename, del);
           body.appendChild(row);
         }
     }
     function addData() {
       if (modelLocked()) return;
       const before = cloneDesignProject(project);
+      let field=$('#dataName');
+      clearDataFormError();
       try {
         const scope = $('#dataScope').value,
           kind = $('#dataKind').value,
           name = normalizeCharsOutsideString($('#dataName').value.trim());
         validateName(name);
         const target =
-          scope === 'project' ? project.projectData : componentById(selectedId)?.localData;
+          scope === 'project' ? before.projectData : before.components.find(c=>c.id===selectedId)?.localData;
         if (!target) throw new Error('部品ごとのデータを作る部品を選んでください');
         if ([...target.variables, ...target.lists].some((x) => x.name === name))
           throw new Error('同じ場所に同じ名前のデータがあります');
-        const initial = parseLiteralForData($('#dataInitial').value, kind),
+        field=kind==='list'&&$('#dataListMode').value==='lines'?$('#dataItems'):$('#dataInitial');
+        const initial = parseDataFormInitial(field.value, kind,{mode:$('#dataListMode').value,expectedUnit:kind==='variable'?$('#dataUnit').value||null:null}),
           arr = kind === 'variable' ? target.variables : target.lists;
         arr.push({
           id: ensureUniqueId(kind === 'variable' ? 'var' : 'list'),
@@ -26046,15 +26932,29 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           initialValue: initial,
           ...(kind === 'variable' && $('#dataUnit').value ? { expectedUnit: $('#dataUnit').value } : {}),
         });
-        validateProject(project);
+        validateProject(before);
+        project=before;
         markDirty();
         renderDataModal();
         refreshEditor();
         $('#dataName').value = '';
       } catch (err) {
-        rollbackDesign(before);
-        log(`${err.code || ''} ${err.message}`, 'error');
+        showDataFormError(err,field);
       }
+    }
+    function clearDataFormError(){
+      $('#dataFormError').hidden=true;$('#dataFormError').textContent='';
+      for(const input of $('#dataModal').querySelectorAll('[aria-invalid]'))input.removeAttribute('aria-invalid');
+    }
+    function showDataFormError(error,field){
+      $('#dataFormError').hidden=false;$('#dataFormError').textContent=`${field?.getAttribute('aria-label')||'データ'}：${error.message}`;
+      log(`${error.code||''} ${error.message}`,'error');
+      field?.setAttribute('aria-invalid','true');field?.focus();
+    }
+    function updateDataForm(){
+      const list=$('#dataKind').value==='list',lines=list&&$('#dataListMode').value==='lines';
+      $('#dataListModeLabel').hidden=!list;$('#dataItemsLabel').hidden=!lines;$('#dataInitial').hidden=lines;
+      $('#dataUnit').disabled=list;$('#dataInitial').placeholder=list?'例：［「本」、「かさ」、3］':'例：0、0点、こんにちは';
     }
     function renderCallableList(prefer = '') {
       renderCallableOptions(prefer);
@@ -26142,33 +27042,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (draftEditor.view) renderEditorBinding(draftEditor);
     }
 
-    function validateCallableDraft(d) {
-      if (d == null) return null;
-      if (
-        !(exactKeys(d, ['ownerId', 'type', 'name', 'argsText', 'source', 'editId', 'loadedKey']) ||
-          exactKeys(d, ['ownerId', 'type', 'name', 'argsText', 'callPhrase', 'source', 'editId', 'loadedKey'])) ||
-        d.ownerId !== 'stage' ||
-        !['action', 'function'].includes(d.type)
-      )
-        throw new AkariError('F503', '手順・答えを求める定義の下書きが正しくありません');
-      for (const [k, limit] of [
-        ['name', 500],
-        ['argsText', 4096],
-        ['source', LIMITS.sourceEach],
-        ['editId', 64],
-        ['loadedKey', 80],
-      ])
-        if (typeof d[k] !== 'string' || cpLen(d[k]) > limit)
-          throw new AkariError(
-            'F504',
-            '\u4e0b\u66f8\u304d\u306e\u6587\u5b57\u6570\u304c\u4e0a\u9650\u3092\u8d85\u3048\u3066\u3044\u307e\u3059',
-          );
-      if (d.callPhrase !== undefined && (d.type !== 'action' || typeof d.callPhrase !== 'string' || cpLen(d.callPhrase) > 80))
-        throw new AkariError('F503', '短い呼び方は80文字以内で書いてください');
-      if (d.editId && !safeId(d.editId))
-        throw new AkariError('F503', '\u4e0b\u66f8\u304d\u306eID\u304c\u4e0d\u6b63\u3067\u3059');
-      return { ...d };
-    }
+    function validateCallableDraft(d) { return validateCallableDraftState(d); }
     function captureCallableDraft() {
       return hasCallableDraft() ? validateCallableDraft(callableDraftCore) : null;
     }
@@ -26252,8 +27126,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     function saveCallable() {
       if (modelLocked() || !flushActiveEditor()) return;
       try {
-        const d = readCallableDraft(),
-          next = cloneDesignProject(project);
+        const d = readCallableDraft();
+        let next = cloneDesignProject(project);
+        const previous=[...next.actions,...next.functions].find(x=>x.id===d.editId);
+        if(previous&&previous.name!==d.name){
+          const kind=next.actions.includes(previous)?'action':'function';
+          if(kind!==d.type)throw new AkariError('F503','名前と種類は一度に変えず、参照を確認してください');
+          previous.source=d.source;previous.args=d.args;
+          if(d.callPhrase)previous.callPhrase=d.callPhrase;else delete previous.callPhrase;
+          next=prepareResourceRename(next,kind+':'+previous.id,d.name,{drafts:resourceDraftRecords().filter(r=>r.key!=='draft-reference:callable')});
+          d.source=next[kind==='action'?'actions':'functions'].find(x=>x.id===previous.id).source;
+        }
         if (
           [...next.actions, ...next.functions].some((x) => x.id !== d.editId && x.name === d.name)
         )
@@ -26288,7 +27171,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (modelLocked() || !flushActiveEditor()) return;
       const id = callableDraftCore.editId,
         d = [...project.actions, ...project.functions].find((x) => x.id === id);
-      if (!d || !confirm(`「${d.name}」を削除しますか？`)) return;
+      if (!d) return;
+      const kind = project.actions.some(x => x.id === id) ? 'action' : 'function';
+      if (!allowResourceDelete(`${kind}:${id}`, $('#procModal .dialog-body'))) return;
+      if (!confirm(`「${d.name}」を削除しますか？`)) return;
       clearTimeout(historyTimer);
       pushHistoryNow();
       project.actions = project.actions.filter((x) => x.id !== id);
@@ -26299,6 +27185,45 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       markDirty();
       pushHistoryNow();
       refreshEditor();
+    }
+    function resourceDraftRecords() {
+      const drafts = [];
+      for (const binding of [mainEditor, draftEditor]) {
+        const session = binding.session;
+        if (!session?.pendingEdit && !session?.blockDraft) continue;
+        drafts.push({ key: 'draft-reference:' + binding.kind, ownerId: bindingContext(binding).targetId,
+          kind: binding.kind === 'script' ? 'script' : 'draft', title: '編集中の本文',
+          incomplete: true, source: session.blockDraft?.source || binding.textarea.value,
+          context: bindingContext(binding) });
+      }
+      if (hasCallableDraft() && !drafts.some(d => d.key === 'draft-reference:draft'))
+        drafts.push({ key: 'draft-reference:callable', ownerId: 'stage', kind: 'draft', title: '編集中の定義',
+          source: callableDraftCore.source, context: bindingContext(draftEditor) });
+      return drafts;
+    }
+    function showResourceImpact(impact, root, action = '削除') {
+      root.querySelector('.reference-issue')?.remove();
+      const box = document.createElement('div'), title = document.createElement('p'), list = document.createElement('ul');
+      box.className = 'reference-issue'; box.setAttribute('role', 'alert'); box.tabIndex = -1;
+      title.textContent = `「${impact.resource.name}」は${action}できません。参照先の本文を確認してください。`;
+      for (const row of [...impact.references, ...impact.uncertain]) {
+        const item = document.createElement('li');
+        item.textContent = `${row.title} ${row.line}行目：${row.reason || 'この名前を使っています'}`;
+        list.appendChild(item);
+      }
+      box.append(title, list); root.prepend(box); box.focus();
+      log(title.textContent, 'error');
+    }
+    function allowResourceDelete(key, root, removedOwner = null) {
+      const impact = resourceChangeImpact(project, key, { drafts: resourceDraftRecords() });
+      impact.references = impact.references.filter(r => r.sourceKey !== key);
+      impact.uncertain = impact.uncertain.filter(r => r.sourceKey !== key);
+      if (removedOwner) {
+        impact.references = impact.references.filter(r => r.ownerId !== removedOwner);
+        impact.uncertain = impact.uncertain.filter(r => r.ownerId !== removedOwner);
+      }
+      if (!impact.references.length && !impact.uncertain.length) return true;
+      showResourceImpact(impact, root); return false;
     }
     function renderAppearance() {
       const body = $('#assetBody');
@@ -26322,12 +27247,18 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             validateResourceName(v, label + '名');
             if (arr.some((x) => x !== obj && x.name === v))
               throw new AkariError('F503', `${label}名が重複しています`);
-            obj.name = v;
+            const kind = label === '衣装' ? 'costume' : label === '背景' ? 'backdrop' : 'sound';
+            const options = { drafts: resourceDraftRecords() }, impact = resourceChangeImpact(project, `${kind}:${obj.id}`, options);
+            if (impact.uncertain.length) { showResourceImpact(impact, body, '名前変更'); return; }
+            const next = prepareResourceRename(project, `${kind}:${obj.id}`, v, options);
+            clearTimeout(historyTimer); pushHistoryNow(); project = next;
             markDirty();
+            pushHistoryNow();
+            renderAll(); loadEditor();
             renderAppearance();
             refreshEditor();
           } catch (e) {
-            log(`${e.code || ''} ${e.message}`, 'error');
+            showResourceImpact({resource:obj,references:[],uncertain:[{title:'名前の変更',line:1,reason:e.message}]},body,'名前変更');
           }
         };
       if (hint)
@@ -26413,6 +27344,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           del.disabled = project.stage.backdrops.length <= 1 || modelLocked();
           del.onclick = () => {
             if (modelLocked()) return;
+            if (!allowResourceDelete('backdrop:' + b.id, body)) return;
             project.stage.backdrops.splice(project.stage.backdrops.indexOf(b), 1);
             if (project.stage.backdropId === b.id)
               project.stage.backdropId = project.stage.backdrops[0].id;
@@ -26470,6 +27402,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             del.disabled = c.costumes.length <= 1 || modelLocked();
             del.onclick = () => {
               if (modelLocked()) return;
+              if (!allowResourceDelete('costume:' + co.id, body)) return;
               c.costumes.splice(c.costumes.indexOf(co), 1);
               if (c.costumeId === co.id) c.costumeId = c.costumes[0].id;
               compactCurrentAssets();
@@ -26524,6 +27457,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           del.disabled = modelLocked();
           del.onclick = () => {
             if (modelLocked()) return;
+            if (!allowResourceDelete('sound:' + snd.id, body)) return;
             stopPreview();
             project.sounds.splice(project.sounds.indexOf(snd), 1);
             compactCurrentAssets();
@@ -27030,13 +27964,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     $('#formatBtn').onclick = formatCurrent;
     $('#diagnoseBtn').onclick = showDiagnosis;
     $('#diagnosisClose').onclick = () => $('#diagnosisModal').classList.remove('show');
-    $('#newBtn').onclick = () => {
+    function startProject(sample = false) {
       if (modelLocked() || !confirmLose()) return;
       closeEditingModals();
       clearCallable();
       disposeRuntime();
       revokeDesignUrls();
-      project = makeDefaultProject();
+      project = sample ? makeDefaultProject() : makeEmptyProject();
       assetStore = makeDefaultAssetStore();
       editorSessions.clear();
       invalidateEditors();
@@ -27049,9 +27983,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       loadEditor();
       resetHistory();
       clearAutosave();
-      setStatus('新しい作品');
-    };
+      setStatus(sample ? 'お手本：作品を動かしたときに、右へ10歩進んで話します' : '新しい作品');
+    }
+    $('#newBtn').onclick = () => startProject(false);
+    $('#sampleBtn').onclick = () => startProject(true);
     $('#saveBtn').onclick = saveProject;
+    $('#callableSaveProject').onclick = saveProject;
     $('#exportBtn').onclick = exportProject;
     $('#openBtn').onclick = () => {
       if (!modelLocked()) el.fileInput.click();
@@ -27106,6 +28043,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     };
     $('#dataClose').onclick = () => $('#dataModal').classList.remove('show');
     $('#dataScope').onchange = renderDataModal;
+    $('#dataKind').onchange=()=>{clearDataFormError();updateDataForm();};
+    $('#dataListMode').onchange=()=>{clearDataFormError();updateDataForm();};
     $('#dataAdd').onclick = addData;
     $('#callableSelect').onchange = () => {
       const next = $('#callableSelect').value;
@@ -27233,6 +28172,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (!recoveryData) return;
       const restoredDraft = recoveryData.callableDraft;
       try {
+        if(recoveryData.restored){
+          const {frames,cursor}=recoveryData.restored;
+          clearTimeout(historyTimer);clearTimeout(autosaveTimer);
+          lastSavedFingerprint=recoveryData.lastSavedFingerprint;
+          history=frames.slice(0,cursor+1);redo=frames.slice(cursor+1).reverse();
+          initialSnapshot=history[0];restoreSnap(history.at(-1),{restoreView:true});
+          $('#recoveryModal').classList.remove('show');recoveryData=null;
+          log('自動保存から作品と編集履歴をもどしました','ok');return;
+        }
         disposeRuntime();
         revokeDesignUrls();
         project = cloneDesignProject(recoveryData.project);
@@ -27443,7 +28391,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes') ||
-          target.matches('#undoBtn,#redoBtn,[data-blockui-action="cancel"]')
+          target.matches('#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         if (!flushActiveEditor()) {
@@ -27462,7 +28410,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (
           modelLocked() ||
           event.target.closest('#blockEditor,#callableBlocks,#colorModal,#paintModal') ||
-          event.target.matches('#objectSelect,#eventSelect,#callableType,#callableSelect')
+          event.target.matches('#objectSelect,#eventSelect,#callableType,#callableSelect,#fileInput')
         )
           return;
         if (!flushActiveEditor()) {
@@ -27481,7 +28429,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (
           modelLocked() ||
           flushingEditor ||
-          event.target.closest('.editor-modes,#colorModal,[data-blockui-action="cancel"]')
+          event.target.closest('.editor-modes,#colorModal,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;
@@ -27506,7 +28454,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       true,
     );
     $('#procBtn').onclick = () => {
-      if (!flushActiveEditor()) return;
+      if (!flushEditor(mainEditor)) return;
       if (!hasCallableDraft()) renderCallableList(callableLoadedKey);
       $('#procModal').classList.add('show');
       renderEditorBinding(draftEditor);
@@ -27515,11 +28463,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     $('#sourceEditBtn').onclick = () => { hideSourceOverview(); loadEditor(); };
     $('#sourceStageBtn').onclick = () => { if (selectObject('stage')) showSourceOverview(); };
     $('#procClose').onclick = () => {
-      if (confirmCallableDiscard()) {
+      flushActiveEditor();
+      try {
+        const saved=captureEditorState();if(saved.callableDraft)callableDraftCore={...saved.callableDraft};
         $('#procModal').classList.remove('show');
         if (sourceOverviewOpen) renderSourceOverview();
         scheduleAutosave();
-      }
+      } catch(error) { showEditorFailure(draftEditor,error); }
     };
     $('#callableType').onchange = () => {
       if (!flushEditor(draftEditor)) {
@@ -27625,6 +28575,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     updateScriptSource,
     sourceRegistry,
     sourceReferences,
+    buildProjectReferenceGraph,
+    resourceChangeImpact,
+    prepareResourceRename,
     refreshEditorSession,
     prepareBlockEdit,
     parseSyntax,
@@ -27637,6 +28590,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     blockEncode,
     blockDecode,
     createBlock,
+    blockInsertionAvailability,
     createAkariRuntime,
     createAkariStageView,
     packExecutable,
@@ -27658,10 +28612,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     blockSource,
     availableHints,
     hintCandidates,
+    searchHintCandidates,
+    blockSearchCandidates,
+    searchIntent,
     insertionContext,
     insertSource,
     nameSource,
     makeDefaultProject,
+    makeEmptyProject,
     makeDefaultAssetStore,
     validateProject: validateDesignProject,
     validateDesignProject,
@@ -27695,6 +28653,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     sha256,
     sha256Fallback,
     serializeProject,
+    validateEditorState,
+    parseDataFormInitial,
+    encodeWorkspaceHistory,
+    decodeWorkspaceHistory,
     parseProjectFile,
   };
   if (typeof globalThis !== 'undefined') globalThis.Akari = Akari;
