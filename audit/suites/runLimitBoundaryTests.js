@@ -40,7 +40,7 @@ async function runLimitBoundaryTests() {
       );
     };
     const base = () => {
-      const p = makeDefaultProject();
+      const p = makeRegressionProject();
       p.scripts = [];
       return p;
     };
@@ -50,7 +50,7 @@ async function runLimitBoundaryTests() {
       initialValue: list ? [] : 0,
     });
     const component = (i) => {
-      const original = makeDefaultProject().components.find((x) => x.type === 'button'),
+      const original = makeRegressionProject().components.find((x) => x.type === 'button'),
         c = cloneDesignProject(original);
       c.id = `comp-${i}`;
       c.name = `部品${i}`;
@@ -441,7 +441,7 @@ async function runLimitBoundaryTests() {
           r = new RuntimeModel(p, {}),
           q = new EventScheduler(p, c, r, {}),
           ctx = q.context(q.createTask('stage', 'stage', 'start')),
-          ast = (name) => parseExpression(`「${name}」の値`, c.symbols);
+          ast = (name) => parseExpression(`「${name}」の中身`, c.symbols);
         ok(evalExpression(ast(input.name), ctx) === '最初');
         r.actor(input.id).inputValue = '変更😀';
         ok(evalExpression(ast(input.name), ctx) === '変更😀');

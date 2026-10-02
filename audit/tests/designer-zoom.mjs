@@ -1,3 +1,4 @@
+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
 import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
@@ -204,7 +205,7 @@ const cases = {
   },
   async 'DESIGN-ZOOM-FORMAT'(p) {
     const api = loadApi(fs.readFileSync(currentProductFile(), 'utf8'));
-    const project = api.makeDefaultProject(); project.name = '画面サイズの保存';
+    const project = makeRegressionProject(api); project.name = '画面サイズの保存';
     project.stage.width = 900; project.stage.height = 600;
     const text = api.serializeProject(project, api.makeDefaultAssetStore());
     await openFile(p, {name: 'size.akari.md', mimeType: 'text/plain', buffer: Buffer.from(text)});
@@ -212,7 +213,7 @@ const cases = {
     assert.equal(await p.evaluate(() => Akari.app.project.appVersion), (""+currentProductVersion()+"")); await assertFit(p);
     assert.equal(await p.evaluate(() => Akari.app.project.stage.height), 600);
     const before = await state(p);
-    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replace('"formatVersion": 1', '"formatVersion": 2'))});
+    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replace('"formatVersion": 2', '"formatVersion": 1'))});
     await p.waitForFunction(() => /F\d{3}/.test(document.querySelector('#console').textContent));
     assert.deepEqual(await state(p), before, 'unsupported-format rejection retains current work');
   },
@@ -240,7 +241,7 @@ const browserVersion = await withBrowser(browserPath, async browser => {
     try {
       const evidence = await pageFor(browser, currentProductFile(), async p => {
         p.on('dialog', d => d.accept()); await p.setViewportSize({width: 1440, height: 900});
-        return await run(p);
+        await installRegressionProject(p);return await run(p);
       });
       results.push({id, pass: true, detail: 'PASS', evidence}); console.log('PASS ' + id);
     } catch (error) { results.push({id, pass: false, detail: error.stack}); console.error('FAIL ' + id + ': ' + error.message); }

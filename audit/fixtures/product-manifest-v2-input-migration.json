@@ -1,0 +1,114 @@
+{
+  "schema": "akari-product-manifest-migration-v1",
+  "pins": [
+    {
+      "originalPath": "audit/manifests/product-tests.json",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/manifests/product-tests.json",
+      "candidateSha256": "8bf0992f7c97340e00e04a9b6c535b7a83aed83583a8798a54a07f163333ccee"
+    }
+  ],
+  "changes": [
+    {
+      "testId": "TEST-BLOCK-SCHEMA Hole:expression",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA Hole:expression",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA Hole:statement",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA Hole:statement",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA Hole:target",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA Hole:target",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA Hole:rule",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA Hole:rule",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA QuantityLiteral",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA QuantityLiteral",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA UnitlessRead",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA UnitlessRead",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA ActorQualifiedRead",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA ActorQualifiedRead",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA ContinuousRule",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA ContinuousRule",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA MotionCommand:MOVE_DIRECTION",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA MotionCommand:MOVE_DIRECTION",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA MotionCommand:GLIDE_DIRECTION",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA MotionCommand:GLIDE_DIRECTION",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-BLOCK-SCHEMA WaitBroadcastGroup",
+      "oldText": "No pre-existing schema with this identity; all 884 baseline IDs remain present.",
+      "newText": "TEST-BLOCK-SCHEMA WaitBroadcastGroup",
+      "preservedMeaning": "Add separately identified schema roundtrip coverage for an approved language-v2 construct without removing or weakening an old test."
+    },
+    {
+      "testId": "TEST-CONTRACT control actors survive move duplicate remove and header edits",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT control actors survive move duplicate remove and header edits",
+      "preservedMeaning": "Preserve six control subjects and their children when crossing lexical topics; keep E901 semantic guard."
+    },
+    {
+      "testId": "TEST-CONTRACT explicit control subjects preserve scope source and else",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT explicit control subjects preserve scope source and else",
+      "preservedMeaning": "Make explicit control subjects roundtrip without leaking into siblings or changing else scope."
+    },
+    {
+      "testId": "TEST-CONTRACT self analysis uses event or action entry target through every control",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT self analysis uses event or action entry target through every control",
+      "preservedMeaning": "Resolve statement self against event/action entry without false missing-data diagnostics."
+    },
+    {
+      "testId": "TEST-CONTRACT function self stays at call entry through every control and nested call",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT function self stays at call entry through every control and nested call",
+      "preservedMeaning": "Resolve nested function self against each call entry in editor runtime and restored executable."
+    },
+    {
+      "testId": "TEST-CONTRACT numeric updates reject known declaration unit mismatch before effects",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT numeric updates reject known declaration unit mismatch before effects",
+      "preservedMeaning": "Reject all six numeric-update forms only when the resolved declaration and expression prove incompatible units."
+    },
+    {
+      "testId": "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available",
+      "oldText": "No prior independent regression case; all existing test IDs and assertions remain unchanged.",
+      "newText": "TEST-CONTRACT unit updates keep unknown unitless and shadowed values available",
+      "preservedMeaning": "Keep unitless, matching, unknown, unconstrained, argument and local-shadow updates available; preserve explicit unit removal."
+    }
+  ]
+}

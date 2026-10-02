@@ -1,0 +1,444 @@
+{
+  "schema": "akari-intent-original-prose-pending-migration-v1",
+  "sourceCommit": "14dbb1b5aa9be52158724dec4fad5ed0a906bcb0",
+  "reason": "Original prose preservation never claimed parser acceptance, but the previous harness unconditionally clicked a blocks button that must be disabled for unparsed pending code. Replace that inconsistent UI interaction with strict pending and explicit cancellation checks; do not change product guard or oracle.",
+  "contract": [
+    "docs/1.0.2/仕様書.md section11 pending transaction / source preservation",
+    "docs/1.0.2/仕様書.md AppendixD corpus is not universal parser acceptance",
+    "docs/1.0.2/設計書.md section9 atomic pending edits"
+  ],
+  "approval": "Parent explicitly authorized preservation-route correction with all20 IDs/originals/oracles unchanged; ordinary syntax-error blocks-disabled behavior remains required.",
+  "auditFile": {
+    "path": "audit/tests/japanese-intent-browser.mjs",
+    "oldSha256": "7e28ee7e0854c6a254c193767d3b6ed3c9a80449cf72d75cb6473827e2789348",
+    "newSha256": "e8330d8b0bc6e5c41c689b917a22f5add52b8e5411069901774892ef070b9248"
+  },
+  "unchangedInputs": {
+    "docs/1.0.2/child-intent-corpus.json": "97bfcdb36a2029edf0ed696ed15635cf5330364e37233168274173cc5bfd928f",
+    "audit/lib/japanese-intent-oracles.mjs": "1ed0317fb8c1017ca283b740bf2695b64bf231546f3608d76aaf6f6f22c1ed40",
+    "audit/lib/japanese-intent-browser-harness.mjs": "0e785cf05072bfe7f7f596d02aa4665c967c74b3162ed4451c0bb49263b71549"
+  },
+  "oldRoute": " for(const item of corpus.cases)await run(item.id+'/original-prose-ui',async p=>{\n  const originals=item.sections.filter(s=>s.label.startsWith('作文候補'));const checks=[];\n  for(const entry of originals){await fill(p,entry.text);assert.equal(await p.locator('#codeEditor').inputValue(),entry.text);assert.equal((await uiState(p)).state,'DESIGN');const initial=await uiState(p);\n   await click(p,'editorModeblocks');await click(p,'editorModecode');assert.equal(await p.locator('#codeEditor').inputValue(),entry.text);assert.deepEqual(await uiState(p),initial,'mode switch changed original draft/model/history');checks.push({original:entry.text,unchanged:true,automaticExecution:false});}\n  return{checks,meaningAcceptance:'not asserted by this preservation route'};\n });\n",
+  "newRoute": " for(const item of corpus.cases)await run(item.id+'/original-prose-ui',async p=>{\n  const originals=item.sections.filter(s=>s.label.startsWith('作文候補'));const checks=[];\n  await installProject(p,{id:item.id+'-preservation',source:'10歩進む。'});await click(p,'editorModecode');await observeUi(p);\n  const pendingState=()=>p.evaluate(()=>{const s=Akari.app.editorState.main;return{ownerKey:s.ownerKey,mode:s.mode,pending:s.pendingEdit};});\n  for(const entry of originals){\n   const valid=await uiState(p),owner=(await pendingState()).ownerKey;assert.equal(valid.pending,false);assert.equal(valid.state,'DESIGN');\n   await fill(p,entry.text);assert.equal(await p.locator('#codeEditor').inputValue(),entry.text);\n   const pending=await pendingState(),initial=await uiState(p);\n   assert.equal(pending.mode,'code');assert.equal(pending.ownerKey,owner);assert.equal(pending.pending?.ownerKey,owner);\n   assert.equal(pending.pending?.kind,'code');assert.equal(pending.pending?.value,entry.text);assert.equal(initial.pending,true);\n   for(const k of ['source','project','history','redo','dirty','state'])assert.deepEqual(initial[k],valid[k],k+' changed while preserving original prose');\n   assert.equal(await p.locator('#editorModeblocks').isDisabled(),true,'unparsed prose cannot become executable blocks');\n   await click(p,'runBtn');const afterRun=await uiState(p),afterRunPending=await pendingState(),observedAfterRun=await p.evaluate(()=>__intentObserved);\n   assert.deepEqual(afterRun,initial,'rejected execution changed the pending transaction');\n   assert.equal(await p.locator('#codeEditor').inputValue(),entry.text);assert.deepEqual(afterRunPending,pending,'rejected execution changed the pending owner/source');\n   assert.deepEqual(observedAfterRun,{say:[],start:0,motion:[]},'unparsed prose executed');\n   await click(p,'editorCancel');assert.equal(await p.locator('#codeEditor').inputValue(),valid.source);\n   const cancelled=await uiState(p),cancelledState=await pendingState(),observedAfterCancel=await p.evaluate(()=>__intentObserved);\n   assert.deepEqual(cancelled,valid,'explicit cancellation changed the valid project/history');\n   assert.equal(cancelledState.ownerKey,owner);assert.equal(cancelledState.pending,null);\n   assert.deepEqual(observedAfterCancel,{say:[],start:0,motion:[]});\n   checks.push({original:entry.text,valid,pending,validOwnerKey:owner,initial,afterRun,afterRunPending,observedAfterRun,\n    cancelled,cancelledOwnerKey:cancelledState.ownerKey,cancelledPending:cancelledState.pending,observedAfterCancel,\n    unchanged:true,blocksDisabled:true,executionRejected:true,cancelRestoredSource:true,automaticExecution:false});\n  }\n  return{checks,meaningAcceptance:'not asserted by this preservation route'};\n });\n",
+  "entries": [
+    {
+      "id": "CI-01/original-prose-ui",
+      "originals": [
+        "「ねこを画面の右に10歩動かす。そのあと、犬に『着いたよ』と言わせる。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-02/original-prose-ui",
+      "originals": [
+        "見出し「ねこの動き」。本文「10歩進む。そのあと、『できたよ』と言う。」。別の見出し「犬の動き」。本文「左を向く。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-03/original-prose-ui",
+      "originals": [
+        "「スペースキーをおすたびに、ねこを1回ジャンプさせる。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-04/original-prose-ui",
+      "originals": [
+        "「右の矢印キーをおしている間は、ねこを画面の右へ動かし続ける。1秒に20歩の速さで動かす。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-05/original-prose-ui",
+      "originals": [
+        "「スペースキーがおされるまで、ねこは待つ。おされたら、10歩進む。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-06/original-prose-ui",
+      "originals": [
+        "「ねこを2秒かけて画面の右へ40歩動かす。そのあと、犬に『ぼくも行くよ』と言わせる。」",
+        "「ねこの移動と犬のせりふを、同時に始める。ねこは、2秒かけて画面の右へ40歩動く。犬は、『ぼくも行くよ』と言う。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-07/original-prose-ui",
+      "originals": [
+        "「『10歩進む。そのあと、右に90度曲がる』を、4回くり返す。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-08/original-prose-ui",
+      "originals": [
+        "「『星を一つかく。そのあと、右へ20歩進む』を3回くり返して、1行を作る。1行ができたら、左のはしにもどり、20歩下へ進む。これをくり返して、全部で2行作る。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-09/original-prose-ui",
+      "originals": [
+        "「点数が10点以上なら、『できたね』と言う。そうでなければ、『もう一回』と言う。どちらの場合も、そのあとに点を見せる。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-10/original-prose-ui",
+      "originals": [
+        "「かぎを持っていることと、赤いドアか青いドアのどちらかにふれていることの、両方がそろったら、ドアを開ける。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-11/original-prose-ui",
+      "originals": [
+        "「はじめに、点数を0点にする。りんごを一つ取るたびに、点数を1点ふやす。そのあと、『いまは』、今の点数、『点だよ』をつなげて言う。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-12/original-prose-ui",
+      "originals": [
+        "「『名前は何ですか』とたずねて、返事を待つ。答えてもらった名前をおぼえておく。そのあと、その名前に『さん、こんにちは』をつけて言う。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-13/original-prose-ui",
+      "originals": [
+        "「持ち物の2番目に『かさ』を入れる。」",
+        "「持ち物の2番目を『かさ』にかえる。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-14/original-prose-ui",
+      "originals": [
+        "「参加者の名前を、1番目から一つずつ順に読む。一つの名前を2秒間見せてから、次の名前へ進む。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-15/original-prose-ui",
+      "originals": [
+        "「『ジャンプ』という手順を作る。その手順では、ねこを20歩上げてから、20歩下げる。スペースキーをおすたびに、『ジャンプ』をする。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-16/original-prose-ui",
+      "originals": [
+        "「一辺の長さを受け取って、四角をかく手順を作る。手順の名前は『四角をかく』にする。受け取った長さだけ進んで右に90度曲がることを、4回くり返す。『四角をかく』に20を渡して、一度やってみる。そのあと、50を渡してもう一度やってみる。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-17/original-prose-ui",
+      "originals": [
+        "「『代金をもとめる』という計算を作る。品物の数と、一つのねだんを受け取る。数とねだんをかけた答えを、よび出したところに返す。品物の数を3、一つのねだんを80として、代金をもとめる。その答えを合計にする。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-18/original-prose-ui",
+      "originals": [
+        "「みんなに『出発』と知らせる。知らせを受けて始めたことが全部終わるまで待つ。そのあと、ねこを10歩動かす。」",
+        "「みんなに『出発』と知らせる。そのあと、ねこを10歩動かす。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-19/original-prose-ui",
+      "originals": [
+        "「星のコピーを5個作る。できたコピーは、それぞれ10歩進んでから、自分だけ消える。もとの星は、そのまま残す。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    },
+    {
+      "id": "CI-20/original-prose-ui",
+      "originals": [
+        "「背景を『森の絵』にかえる。『こんにちは』の音を最後まで鳴らしてから、ねこを10歩進ませる。」"
+      ],
+      "preservedMeaning": "Preserve original narrative prose without asserting parser acceptance or executing it.",
+      "oldGuarantees": [
+        "exact original text before/after attempted mode clicks",
+        "DESIGN state",
+        "same draft/model/history after clicks"
+      ],
+      "newGuarantees": [
+        "exact original in code textarea and pending.value",
+        "pending owner stays with selected valid source",
+        "blocks button disabled for all originals",
+        "valid source/project/history/redo/dirty unchanged",
+        "Run rejected: no scheduler starts, speech or movement",
+        "explicit editor cancel restores valid source/project/history/owner and clears pending"
+      ]
+    }
+  ],
+  "counts": {
+    "stableIds": 20,
+    "originalProseTexts": 23,
+    "fullAuditChecks": 89
+  },
+  "rawObservationFields": [
+    "validOwnerKey",
+    "initial",
+    "afterRun",
+    "afterRunPending",
+    "observedAfterRun",
+    "cancelled",
+    "cancelledOwnerKey",
+    "cancelledPending",
+    "observedAfterCancel"
+  ]
+}

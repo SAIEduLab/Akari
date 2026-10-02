@@ -12,7 +12,8 @@ const clone=x=>JSON.parse(JSON.stringify(x));
 const relaxed={...assert,deepEqual:(a,b,m)=>assert.deepEqual(clone(a),clone(b),m)};
 const source=fs.readFileSync('audit/run-local-gate.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
 const expected=gateSteps('/browser','/evidence').map(s=>s[0]);
-for(const failureAt of [-1,0,Math.floor(expected.length/2),expected.length-1])check('gate-continuity:'+failureAt,()=>{
+// Keep baseline IDs stable when new gate steps are registered; still inject at the current first/middle/last steps.
+for(const [id,failureAt] of [['gate-continuity:-1',-1],['gate-continuity:0',0],['gate-continuity:12',Math.floor(expected.length/2)],['gate-continuity:24',expected.length-1]])check(id,()=>{
   let launched=0,verified=0;const written=new Map();
   const process={argv:['node','runner','/browser','/evidence'],execPath:'/node'};
   const cp={spawnSync(){const i=launched++;return {status:i===failureAt?1:0,signal:null,stdout:'',stderr:''};}};

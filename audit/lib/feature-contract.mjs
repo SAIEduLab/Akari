@@ -5,6 +5,7 @@ export const editorAssetIds = [
   'paint-crop-native-transparent-padding', 'paint-large-stage-fit', 'paint-discard',
   'paint-failed-commit-preserves-drawing', 'paint-save-reload-export', 'paint-runtime-lock',
   'paint-small-viewport-touch', 'format-contract-and-import', 'format-malformed-state-protection',
+  'mascot-dango-original-save-standalone',
 ];
 export function verifyEditorAssets(report, inputs) {
   assert.equal(report.status, 'PASS');

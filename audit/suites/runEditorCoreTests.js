@@ -126,7 +126,7 @@ function runEditorCoreTests() {
       ok(snapshot(session) === before);
       const broken = refreshEditorSession(
         session,
-        'もし 真なら、次のことをする',
+        'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする',
         session.context,
         session.project,
         5,
@@ -135,12 +135,12 @@ function runEditorCoreTests() {
         broken.syntaxAst === null &&
           broken.blockView === null &&
           broken.sourceRevision === 1 &&
-          broken.sourceText === 'もし 真なら、次のことをする',
+          broken.sourceText === 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする',
       );
     });
     test('context refresh preserves edited IDs selection and rebuilt node maps', () => {
       const project = makeDefaultProject(),
-        definition = {ownerId:'stage',  id: 'draft', name: '動作名', args: [], source: '1と言う。\n2と言う。' },
+        definition = {ownerId:'stage',  id: 'draft', name: '動作名', args: [], source: '1を言う。\n2を言う。' },
         context = { definitionKind: 'action', definition, args: [] };
       let session = createEditorSession('action:draft', definition.source, context, project, 4);
       session = accepted(
@@ -187,7 +187,7 @@ function runEditorCoreTests() {
         { contextRevision: 4 },
       );
       const edited = prepare(refreshed, { type: 'field', id: lastId, key: 'value', value: 9 });
-      ok(edited.source === '1と言う。\n1と言う。\n9と言う。');
+      ok(edited.source === '1を言う。\n1を言う。\n9を言う。');
       ok(snapshot(session) === before);
     });
     test('semantics and incomplete definition header keep AST', () => {
@@ -320,7 +320,7 @@ function runEditorCoreTests() {
     });
     test('statement moves reorder and nest with comments', () => {
       const session = setup(
-          '点数を1にする ※ 一緒 \n次のことを2回くり返す\n  何もしない\n点数を3にする',
+          '点数を1にする ※ 一緒 \n2回くり返す\n  何もしない\n点数を3にする',
         ),
         root = session.blockView.id,
         first = session.blockView.bodies.body[0].id,
@@ -338,7 +338,7 @@ function runEditorCoreTests() {
       fail(current, { type: 'move', id: loop.id, parentId: loop.id, body: 'body', index: 0 });
     });
     test('required body removal and invalid field leave everything', () => {
-      const session = setup('次のことを2回くり返す\n  何もしない'),
+      const session = setup('2回くり返す\n  何もしない'),
         loop = find(session, 'RepeatCount');
       fail(session, { type: 'remove', id: loop.bodies.body[0].id });
       fail(session, { type: 'field', id: loop.inputs.count.id, key: 'value', value: -1 });
@@ -350,7 +350,7 @@ function runEditorCoreTests() {
       });
     });
     test('else and multiline comments are atomic', () => {
-      let session = setup('※one\nもし 真なら、次のことをする\n  何もしない');
+      let session = setup('※one\nもし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする\n  何もしない');
       const conditional = find(session, 'IfStatement'),
         comment = find(session, 'CommentLine');
       session = accepted(
@@ -376,7 +376,7 @@ function runEditorCoreTests() {
       );
     });
     test('comment closing boundary reassociation keeps IDs and content', () => {
-      const session = setup('次のことを2回くり返す\n  何もしない\n点数を1にする\n※ tail  '),
+      const session = setup('2回くり返す\n  何もしない\n点数を1にする\n※ tail  '),
         root = session.blockView.id,
         loop = find(session, 'RepeatCount'),
         comment = find(session, 'CommentLine');
@@ -429,7 +429,7 @@ function runEditorCoreTests() {
       });
     });
     test('variadic insertion removal and move preserve arity errors', () => {
-      let session = setup('最小（1、2、3）と言う'),
+      let session = setup('最小（1、2、3）を言う'),
         call = find(session, 'BuiltinCall:最小');
       session = accepted(
         session,
@@ -532,7 +532,7 @@ function runEditorCoreTests() {
       }
     });
     test('availability preview preserves pending transaction and commit gate', () => {
-      const session = setup('1と言う。\n2と言う。'),
+      const session = setup('1を言う。\n2を言う。'),
         location = { parentId: session.blockView.id, body: 'body', index: 1 };
       session.pendingEdit = {
         ownerKey: session.ownerKey,
@@ -557,7 +557,7 @@ function runEditorCoreTests() {
       const chain = (base) => Array.from({ length: 31 }, (_, i) => base + '値'.repeat(i));
       const foreachNames = chain('項目'),
         foreachSource = foreachNames
-          .map((name) => `名前一覧の各要素を${name}として、次のことをくり返す\n  何もしない`)
+          .map((name) => `名前一覧の中身を先頭から一つずつ見て、次のことを行う\n  この中では、今見ているものを【${name}】と呼ぶ\n  何もしない`)
           .join('\n'),
         foreachSession = setup(foreachSource),
         foreachLocation = {
@@ -590,7 +590,7 @@ function runEditorCoreTests() {
       );
       const declarationNames = chain('結果'),
         declarationSource = declarationNames
-          .map((name) => `${name}という変数を作り、初期値を0にする`)
+          .map((name) => `この中だけで使う変数【${name}】を作り、最初は0にする`)
           .join('\n'),
         declarationDefinition = {ownerId:'stage',
           id: 'boundary-declarations',
@@ -628,7 +628,7 @@ function runEditorCoreTests() {
       ok(!blockInsertionAvailability(session, 'MotionCommand:MOVE', location).enabled);
       ok(!blockInsertionAvailability(session, 'Break', location).enabled);
       ok(blockInsertionAvailability(session, 'Assignment', location).enabled);
-      const loopSession = setup('名前一覧の各要素を項目として、次のことをくり返す\n  何もしない'),
+      const loopSession = setup('名前一覧の中身を先頭から一つずつ見て、次のことを行う\n  この中では、今見ているものを【項目】と呼ぶ\n  何もしない'),
         loop = find(loopSession, 'ForEach'),
         nested = blockInsertionAvailability(loopSession, 'ForEach', {
           parentId: loop.id,

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>あかり 1.0.1 ブロックモード マニュアル</title>
+<title>あかり 1.0.2 ブロックモード マニュアル</title>
 <style>
 :root{color-scheme:light;--bg:#edf2f8;--surface:#fff;--surface2:#f7f9fc;--line:#cbd7e6;--ink:#223044;--muted:#607084;--accent:#2f6fd6;--accent-soft:#eaf2ff;--good:#19733e;--warn:#8a5a00;--danger:#a93636;--shadow:0 8px 28px rgba(36,54,82,.10)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:"Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#f8fbff 0,var(--bg) 420px);line-height:1.75}
@@ -59,13 +59,13 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <a class="skip-link" href="#main-content">本文へ進む</a>
 <header>
   <div class="header-inner">
-    <div class="kicker">AKARI 1.0.1 USER MANUAL</div>
-    <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../Akari1_0_1.html">あかりを使う</a><a href="../MANUAL.html#save">保存・開く</a></div>
+    <div class="kicker">AKARI 1.0.2 USER MANUAL</div>
+    <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../Akari1_0_2.html">あかりを使う</a><a href="../MANUAL.html#save">保存・開く</a></div>
 <h1>ブロックモード マニュアル</h1><section class="section" id="code-ownership" style="padding:20px;margin:20px 0;border:1px solid #c6d8e6;border-radius:12px;background:#f3f8fc">
   <h2>画面のものから、プログラムを読む</h2>
   <p>作品画面で部品を選ぶと、表示された本文をすぐに編集できます。今のできごとが空で、別のできごとに本文があれば、その本文を開きます。</p>
-  <p>「コード」「ブロック」で表示を切り替えます。別の本文を編集したり追加したりするときは「できごと」を選びます。「すべてのコード」で開始・クリック・知らせを受け取ったときなどの全文を一覧にでき、一覧の「この本文を編集」で編集へ進めます。一覧を閉じるときは、一覧表示中だけ現れる「本文の編集に戻る」を押します。</p>
-  <p>共通の「動作」「計算」は画面のコードです。呼び出す側の一覧にも本文が表示されます。部品を選んでいるときに現れる「画面のコード」から、使っていない定義も開けます。画面を選んでいるときは「すべてのコード」を使います。書き方エラーがある本文は、入力したコードのまま表示されます。</p>
+  <p>「コード」「ブロック」で表示を切り替えます。別の本文を編集・追加するときは「できごと」で見出しを選び、その見出し自体も文として直接編集できます。「すべてのコード」で開始・クリック・知らせを受け取ったときなどの全文を一覧にでき、一覧の「この本文を編集」で編集へ進めます。一覧を閉じるときは、一覧表示中だけ現れる「本文の編集に戻る」を押します。</p>
+  <p>共通の「手順」「答えを求める」定義は画面のコードです。呼び出す側の一覧にも本文が表示されます。部品を選んでいるときに現れる「画面のコード」から、使っていない定義も開けます。画面を選んでいるときは「すべてのコード」を使います。書き方エラーがある本文は、入力したコードのまま表示されます。</p>
 </section>
 
     <p class="lead">日本語の命令を、つないだり、囲んだり、穴にはめたりして作品を作るためのガイドです。コードモードと同じ本文を編集するので、どちらで作っても実行結果は同じです。</p>
@@ -92,14 +92,14 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <main id="main-content">
 <section id="first">
   <h2>1. まず1つ動かしてみよう</h2>
-  <p>最初は、キャラクターをクリックしたら10歩動く作品を作ります。ブロックモードの基本操作が一通り分かります。</p>
+  <p>最初は、クリックをきっかけに、ねこが右へ10歩動く作文例を見ます。ブロックでも対象・方向・量を一つの文として組み立てます。</p>
   <ol class="steps">
     <li><strong>キャラクターを置く。</strong><br>左側の道具箱から、マスコットなどの標準キャラクターをクリックして作品の画面へ追加します。</li>
     <li><strong>動かすものを選ぶ。</strong><br>作品の画面か「作品」の一覧で、追加したキャラクターを選びます。</li>
-    <li><strong>できごとを選ぶ。</strong><br>本文欄の「動かすもの」でキャラクター、「できごと」で「クリックしたとき」を選びます。</li>
+    <li><strong>できごとを選ぶ。</strong><br>見出しを「ねこがクリックされたとき、」のように、いつ・だれがの文として確認します。</li>
     <li><strong>「ブロック」を押す。</strong><br>本文欄の表示を「コード」から「ブロック」へ切り替えます。</li>
-    <li><strong>「10歩動く」を入れる。</strong><br>ブロックの道具箱で「動き」を選ぶか、検索欄に「動く」と入れます。「10歩動く」のブロックを作業台へ入れます。</li>
-    <li><strong>「▶ 動かす」で実行する。</strong><br>作品の画面でキャラクターをクリックします。10歩動けば完成です。「■ 止める」で編集へ戻ります。</li>
+    <li><strong>一つの文を組み立てる。</strong><br>ブロックの道具箱で「動き」を選ぶか、検索欄に「動く」と入れます。「ねこは右へ10歩動く」という文のブロックを作業台へ入れます。</li>
+    <li><strong>「▶ 動かす」で実行する。</strong><br>作品の画面でキャラクターをクリックし、作文で示した対象・方向・量と動きを比べます。例の結果は実装後に確認します。「■ 止める」で編集へ戻ります。</li>
   </ol>
   <div class="callout good"><strong>覚えることは3つだけ。</strong> 命令は上下につなぐ。条件や計算は白い穴にはめる。「もし」や「くり返し」の中には命令を入れる。この3つがブロックモードの基本です。</div>
 </section>
@@ -115,16 +115,16 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   </div>
 
   <div class="mock" aria-label="ブロックモードの模式図">
-    <div class="mock-top">本文：キャラクター1 ／ クリックしたとき　［コード］［ブロック］</div>
+    <div class="mock-top">見出し：ねこがクリックされたとき、　［コード］［ブロック］</div>
     <div class="mock-grid">
       <div class="mock-palette">
         <div class="mock-search">ブロックを探す</div>
         <div class="mock-tabs"><span>動き</span><span>見た目</span><span>もし・くり返し</span><span>データ</span><span>計算</span></div>
-        <span class="block">10歩動く</span>
-        <span class="block look">「こんにちは」と言う</span>
+        <span class="block">ねこは右へ10歩動く</span>
+        <span class="block look">ねこは「こんにちは」と言う</span>
       </div>
       <div class="mock-workspace">
-        <span class="block">10歩動く</span>
+        <span class="block">ねこは右へ10歩動く</span>
         <div class="block control">もし <span class="slot">条件</span> なら
           <div class="block-body"><span class="block look">「できた！」と言う</span></div>
         </div>
@@ -161,7 +161,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
     <div class="category"><strong>しらべる</strong>キー、マウス、接触、位置などの状態</div>
     <div class="category"><strong>音</strong>音、音量、音程</div>
     <div class="category"><strong>ペン</strong>線、色、太さ、スタンプ</div>
-    <div class="category"><strong>動作</strong>自分で作った動作・計算の呼び出し</div>
+    <div class="category"><strong>手順・答え</strong>自分で作った手順と答えを求める定義の呼び出し</div>
     <div class="category"><strong>分身</strong>クローンの作成・削除</div>
     <div class="category"><strong>メモ</strong>コメント</div>
   </div>
@@ -170,7 +170,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p>「候補の表示」を開くと、<strong>すべてのブロック</strong>、<strong>つなぐ命令</strong>、<strong>はめる値</strong>を切り替えられます。</p>
   <ul>
     <li><strong>つなぐ命令</strong>：上から順に実行する命令です。</li>
-    <li><strong>はめる値</strong>：数、文字、真偽、データ、計算、条件など、白い穴へ入れるものです。</li>
+    <li><strong>はめる値</strong>：数、文字、条件の答え、データ、式、条件など、白い穴へ入れるものです。</li>
     <li><strong>使えない候補も表示</strong>：現在の場所では使えないブロックも確認できます。押すと使えない理由が表示され、本文には追加されません。</li>
   </ul>
 
@@ -187,7 +187,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <h3>追加する</h3>
   <p>道具箱のブロックをつかんで作業台へ運ぶと、入れられる位置が先に表示されます。命令は命令どうしの間へ、値や条件は対応する穴へ置きます。命令の間と末尾に見える「＋ ここに入れる」はマウスやタッチで押せます。クリックやキーボードでも追加できます。追加先を選んだあと、やめるときは「取消」またはEscapeで選択を解除します。本文や履歴は変わりません。</p>
   <h3>入力欄を変える</h3>
-  <p>数、文字、名前、所属、真偽などはブロック内の欄で編集します。データ・部品・素材・動作・求値の名前は候補から選べます。まだ登録していない名前が本文にある場合も、勝手に削除せず保持します。</p>
+  <p>数、文字、名前、所属、条件の答えなどはブロック内の欄で編集します。データ・部品・素材・手順・答えを求める定義の名前は候補から選べます。まだ登録していない名前が本文にある場合も、勝手に削除せず保持します。</p>
   <h3>「…」メニューを使う</h3>
   <table>
     <thead><tr><th>操作</th><th>何をするか</th></tr></thead>
@@ -195,8 +195,8 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
       <tr><td>移動</td><td>別の位置へ移します。値の場合は別の穴へ移せます。</td></tr>
       <tr><td>複製</td><td>同じブロックを複製します。</td></tr>
       <tr><td>↑ 上へ／↓ 下へ</td><td>同じ本文の中で順番を変えます。</td></tr>
-      <tr><td>削除</td><td>ブロックを削除します。必須本文の最後の実行文など、削除できない場合があります。</td></tr>
-      <tr><td>何もしないへ</td><td>命令を「何もしない」に置き換えます。必須本文を空にしたいときに使います。</td></tr>
+      <tr><td>削除</td><td>選んだブロックを本文から外します。範囲や必須値が未確定なら、空欄を下書きとして保ちます。</td></tr>
+      <tr><td>下書きを保つ</td><td>条件や本文が決まるまで空の囲いを下書きとして保持します。自動で「何もしない」へ変えません。</td></tr>
       <tr><td>開く／畳む</td><td>中身や入力を持つブロックの表示量を切り替えます。</td></tr>
       <tr><td>注釈</td><td>命令の行末コメントを編集します。</td></tr>
     </tbody>
@@ -219,22 +219,22 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 
 <section id="control">
   <h2>5. 「もし」と「くり返し」</h2>
-<p>下の「点数」の例では、先に「データ」で作品全体の変数「点数」を作ります。キャラクターの「クリックしたとき」の本文で試しましょう。</p>
-  <p>条件分岐や反復は、囲いの中へ命令を入れます。新しく追加した条件分岐・反復には、最初から<strong>「何もしない」</strong>が1つ入っています。</p>
+<p>下の「点数」の例では、先に「データ」で作品全体の変数「点数」を作ります。「ねこがクリックされたとき、」の見出しの本文で試しましょう。</p>
+  <p>条件分岐や反復は、文の中に囲いの範囲を示します。条件・回数・本文が決まるまでは空欄を下書きとして保ち、条件の答え・0・「何もしない」を自動で選びません。</p>
   <h3>もし</h3>
-  <div class="block control">もし <span class="slot">点数が10以上</span> なら
-    <div class="block-body"><span class="block look">「10点！」と言う</span></div>
+  <div class="block control">もし <span class="slot">点数が10点以上</span> なら
+    <div class="block-body"><span class="block look">ねこは「10点！」と言う</span></div>
   </div>
-  <p>条件の穴には、真または偽になるブロックを入れます。「…」メニューの「そうでなければ」を「あり」にすると、もう一つの枝を追加できます。「なし」に戻すとその枝を外します。</p>
+  <p>条件の穴には、文脈に合う述語の形を入れます。条件の答えをデータとして表示するときは「あてはまる／あてはまらない」を使います。「…」メニューの「そうでなければ」を「あり」にすると、もう一つの枝を追加できます。「なし」に戻すとその枝を外します。</p>
   <h3>回数を決めてくり返す</h3>
   <div class="block control"><span class="slot">10</span> 回くり返す
-    <div class="block-body"><span class="block">10歩動く</span></div>
+    <div class="block-body"><span class="block">ねこは右へ10歩動く</span></div>
   </div>
   <h3>条件でくり返す・待つ</h3>
   <p>「条件が成り立つあいだ」「条件が成り立つまで」の反復や、「〜まで待つ」を使えます。条件を作るときは、比較や論理のブロックを穴にはめて組み立てます。</p>
-  <div class="callout warn"><strong>囲いの中は完全な空にはできません。</strong> 条件分岐の各枝と反復の本文には、少なくとも1つの実行文が必要です。最後の実行文を消したいときは「何もしないへ」を使うか、囲い全体を削除します。最上位の本文だけは空にできます。</div>
+  <div class="callout warn"><strong>空の囲いは下書きです。</strong> 条件や本文が決まるまでは空欄を保ち、条件の答え・0・「何もしない」で自動的に埋めません。実行できる確定作品にする前に、利用者が必要な内容を決めます。</div>
   <h3>必須の式を移動するとき</h3>
-  <p>条件など、空にできない穴から式を別の場所へ移すときは、移動元に代わりに置く式も選びます。元の穴を壊した状態を途中保存しないための仕組みです。</p>
+  <p>条件や数量は、それぞれの役割が分かる場所に入れます。式を移動した後も元の文・値を失わず、まだ決めていない穴は下書きとして残します。</p>
 </section>
 
 <section id="data">
@@ -243,7 +243,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <h3>変数</h3>
   <div class="block data"><span class="slot">点数</span> を <span class="slot">0</span> にする</div>
   <div class="block data"><span class="slot">点数</span> に <span class="slot">1</span> を足す</div>
-  <p>変数には数・文字・真偽を入れられます。作品全体の値と、部品ごとの値を使い分けられます。</p>
+  <p>変数には数・文字・条件の答えを入れられます。条件値は「条件の答え（あてはまる／あてはまらない）」として区別し、作品全体と部品ごとの値を使い分けます。</p>
   <h3>リスト</h3>
   <p>リストには複数の値を順番に保存できます。追加、変更、挿入、削除、空にする、各要素を順番に処理する、といった操作があります。</p>
   <h3>名前の所属</h3>
@@ -254,23 +254,23 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <h2>7. 作品づくりの例</h2>
   <h3>例1：クリックするたびに点数を増やす</h3>
   <ol>
-    <li>「データ」で、作品全体の変数「点数」を作る。初期値は数の0にする。</li>
-    <li>画面の「開始したとき」に、点数を0にするブロックを置く。</li>
-    <li>キャラクターの「クリックしたとき」に、点数に1を足すブロックを置く。</li>
-    <li>必要なら、その下に点数を「言う」ためのブロックを置く。</li>
+    <li>「データ」で、作品全体の「点数」を点の単位で使う数値として作る。</li>
+    <li>開始見出しに <code>点数を0点にする。</code> の文を置く。</li>
+    <li>クリック見出しに <code>点数を1点増やす。</code> の文を置く。</li>
+    <li>値を見る場合は <code>点数の値を言う。</code> を加える。</li>
   </ol>
   <h3>例2：10点以上になったらメッセージを出す</h3>
 <p>例1で点数を増やす命令の下へ、次の「もし」をつなぎます。10回クリックすると表示され、11回目以降も条件が成り立ちます。</p>
   <ol>
     <li>クリック処理の中に「もし」を追加する。</li>
     <li>条件の穴へ「点数が10以上」になる比較を組み立てる。</li>
-    <li>「もし」の中の「何もしない」を、「10点達成！」と言う命令へ置き換える。</li>
+    <li>「もし」の条件を <code>点数が10点以上</code> とし、本文へ <code>「10点達成！」と言う。</code> を加える。</li>
   </ol>
   <h3>例3：同じ動きを10回行う</h3>
   <ol>
     <li>「もし・くり返し」から回数指定のくり返しを追加する。</li>
     <li>回数を10にする。</li>
-    <li>囲いの中の「何もしない」を「10歩動く」に置き換える。</li>
+    <li>囲いの本文へ <code>ねこは右へ10歩動く。</code> を加える。</li>
   </ol>
 </section>
 
@@ -291,7 +291,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p>「保存」は編集を続けるための <code>.akari.md</code> を作ります。ブロック表示のまま保存でき、コード表示へ切り替える必要はありません。作業内容はこの端末・ブラウザー内に自動保存されます。確実に残したい作品は別にファイルとして保存します。</p>
   <h3>書き出し</h3>
   <p>完成した作品は「書き出し」で、編集画面を含まない単体HTMLにできます。ブロック表示からでもコード表示からでも、確定済みの本文から同じ実行内容が作られます。</p>
-  <div class="callout warn">「動作・計算」で編集中の定義は、先にその画面の「保存」で定義全体を作品へ登録してください。下書きのままでは、作品の登録済み定義にはなりません。</div>
+  <div class="callout warn">「手順・答えを求める」で編集中の定義は、先にその画面の「保存」で定義全体を作品へ登録してください。下書きのままでは、作品の登録済み定義にはなりません。</div>
 </section>
 
 <section id="undo">
@@ -300,7 +300,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p>「元に戻す」「やり直し」と、<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>＋<kbd>Z</kbd>、<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>＋<kbd>Y</kbd> または <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>＋<kbd>Shift</kbd>＋<kbd>Z</kbd> は、コードとブロックで共通の履歴を使います。</p>
   <p>表示が「かんたん」でも履歴ボタンを表示します。履歴がないときや実行中は無効です。一つのブロック編集は、本文や注釈を含めて一つの操作として戻せます。表示方法を切り替えただけでは新しい履歴は作りません。</p>
   <h3>「入力を確定」と「取消」</h3>
-  <p>入力途中の空欄、「－」だけの数、日本語IMEの変換中、ドラッグ途中などは、まだ本文へ反映されていません。未確定の入力があるときだけ現れるブロック編集上部の<strong>「入力を確定」</strong>で確定し、やめるときは<strong>「取消」</strong>または本文欄の<strong>「入力を取り消す」</strong>を使います。動作・計算の「入力を取り消す」も未確定または失敗した入力があるときだけ表示し、反映済みの下書き全体は取り消しません。追加先だけを選んだときは「入力を確定」を表示せず、「取消」で選択を解除できます。</p>
+  <p>入力途中の空欄、「－」だけの数、日本語IMEの変換中、ドラッグ途中などは、まだ本文へ反映されていません。未確定の入力があるときだけ現れるブロック編集上部の<strong>「入力を確定」</strong>で確定し、やめるときは<strong>「取消」</strong>または本文欄の<strong>「入力を取り消す」</strong>を使います。手順・答えを求めるの「入力を取り消す」も未確定または失敗した入力があるときだけ表示し、反映済みの下書き全体は取り消しません。追加先だけを選んだときは「入力を確定」を表示せず、「取消」で選択を解除できます。</p>
   <div class="callout danger">不完全な入力が残っている間は、保存・実行・書き出し・編集対象の変更・モード切替などが保留されます。表示された理由を確認し、入力を完成させるか取り消してください。</div>
 </section>
 
@@ -326,7 +326,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
       <tr><td>欲しいブロックが見つからない</td><td>検索語を短くする、分類を「すべて」にする、「候補の表示」を「すべてのブロック」にする、の順に確認します。</td></tr>
       <tr><td>候補はあるが追加できない</td><td>「使えない候補も表示」で表示している可能性があります。候補を押すと、現在の対象・場所で使えない理由が表示されます。</td></tr>
       <tr><td>値ブロックを追加できない</td><td>先に白い穴を選ぶか、値ブロックを対応する穴へドラッグします。命令の並びには値だけを置けません。</td></tr>
-      <tr><td>最後の命令を削除できない</td><td>「もし」の枝や「くり返し」の中は実行文が必須です。「何もしないへ」で置き換えるか、囲い全体を削除します。</td></tr>
+      <tr><td>空の囲いが残っている</td><td>空欄は下書きとして保たれます。条件・範囲・本文を決めて確定するか、囲いを削除します。</td></tr>
       <tr><td>保存や実行へ進めない</td><td>入力途中やドラッグ途中が残っていないか確認します。「入力を確定」または「取消」を使います。日本語変換中なら、まずIMEの変換を確定します。</td></tr>
       <tr><td>作業台で迷子になった</td><td>「見わたす」で全体表示、「はじめへ」で先頭へ戻します。−／＋で縮尺も調整できます。</td></tr>
       <tr><td>実行中に編集できない</td><td>実行中・一時停止中は本文変更がロックされます。「■ 止める」で編集状態へ戻ります。</td></tr>
@@ -366,7 +366,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 
 <footer>
 <div class="chapter-links"><a href="../MANUAL.html#faq">困ったとき</a><a href="./code-mode-beginner.html">コード初級 →</a><a href="./code-mode-intermediate.html">コード中級 →</a><a href="./code-mode-advanced.html">コード上級 →</a></div>
-  <p>対象：あかり 1.0.1。内容はリポジトリの <a href="../LANGUAGE.md">LANGUAGE.md</a> と <a href="../Akari1_0_1.html">Akari1_0_1.html</a> の現行仕様・実装に基づきます。詳細な言語仕様は LANGUAGE.md を参照してください。</p>
+  <p>対象：あかり1.0.2の再設計仕様。文法・意味論は <a href="../LANGUAGE.md">LANGUAGE.md</a> を参照してください。作例は実装PASSや児童の利用評価を示すものではありません。</p>
 </footer>
 </body>
 </html>

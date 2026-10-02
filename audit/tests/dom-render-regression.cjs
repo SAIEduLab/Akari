@@ -1,3 +1,4 @@
+const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
 const { currentProductFile } = require("./../lib/product-path.cjs");
 // Simulate synchronous removal events using the actual product view. Real browser tests remain mandatory.
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),{JSDOM,VirtualConsole}=require('jsdom');
@@ -7,7 +8,7 @@ function check(html){
  let script=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));
  script=script.replace("  const Akari = {","  globalThis.__view = createBlockEditorView;\n  const Akari = {");
  const ctx={console,TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,Blob,URL,structuredClone,crypto:require('crypto').webcrypto,setTimeout,clearTimeout,AbortController:w.AbortController};
- vm.runInNewContext(script,ctx);const api=ctx.Akari,p=api.makeDefaultProject(),source='3 が 8 未満の間、次のことを繰り返す ※ 頭  \n  3 を 点数 に 加える ※ 本文  \n「😀」 という\n';
+ vm.runInNewContext(script,ctx);ctx.document=w.document;const api=ctx.Akari,p=makeRegressionProject(api),source='3 が 8 より小さい間、次のことを繰り返す ※ 頭  \n  3 を 点数 に 加える ※ 本文  \n「😀」 という\n';
  p.scripts=[{targetId:'stage',event:'start',source}];let s=api.createEditorSession('script:stage:start',source,{targetId:'stage',event:'start'},p,4);s.mode='blocks';let calls=0;
  const root=w.document.querySelector('#root');const view=ctx.__view({root,getSession:()=>s,getProject:()=>p,onPending:value=>s.pendingEdit=value,onOperation:op=>{calls++;const result=api.prepareBlockEdit(s,op,{pendingEditId:s.pendingEdit?.id});Object.assign(s,result);s.pendingEdit=null;return {ok:true,changed:result.changed};}});
  const world=root.querySelector('.blockui-world');assert(world);
@@ -21,7 +22,7 @@ function check(html){
 const html=fs.readFileSync(currentProductFile(),'utf8'),good=check(html);
 assert.deepEqual(good.errors,[]);assert.equal(good.calls,1);assert.equal(good.blurChanges,1);
 assert.equal(good.focused,true);assert.equal(good.pending,false);assert.equal(good.ok,true);
-assert.equal(good.source,'4 が 8 未満の間、次のことを繰り返す ※ 頭  \n  3 を 点数 に 加える ※ 本文  \n「😀」 という\n');
+assert.equal(good.source,'4 が 8 より小さい間、次のことを繰り返す ※ 頭  \n  3 を 点数 に 加える ※ 本文  \n「😀」 という\n');
 const guard='        if (rendering || committing || !input.isConnected) return;';
 assert.equal(html.split(guard).length,3);
 const bad=check(html.replaceAll(guard,'').replace('destroyed || committing || rendering','destroyed || committing'));

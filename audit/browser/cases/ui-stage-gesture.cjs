@@ -1,3 +1,4 @@
+const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Targeted UI regression check, not a substitute for the complete product audit.
 // Usage: node ui-stage-gesture.cjs <snapshot.html> <output-prefix>
@@ -22,7 +23,7 @@ async function setup(browser,id){
  const context=await browser.newContext({viewport:{width:1440,height:900},hasTouch:true});
  await context.route(/^https?:\/\//,route=>{networkRequests.push({id,url:route.request().url()});return route.abort();});
  const page=await context.newPage();page.setDefaultTimeout(7000);page.on('pageerror',error=>pageErrors.push({id,error:error.stack}));
- await page.goto(pathToFileURL(file).href);
+ await page.goto(pathToFileURL(file).href);await setupRegressionPage(page);
  await (await reveal(page.locator('#objectSelect'))).selectOption('sprite-1');await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「SPRITE」と言う。');})();
  await (await reveal(page.locator('#objectSelect'))).selectOption('stage');await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「STAGE」と言う。\n20秒待つ。');})();
  await (async()=>{const control=await reveal(page.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();

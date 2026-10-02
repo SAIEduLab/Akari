@@ -4021,7 +4021,7 @@
     "JPF-013/未満": {
       "out": [
         [
-          "真",
+          "あてはまる",
           0
         ]
       ],
@@ -4067,7 +4067,7 @@
     "JPF-013/未満/period": {
       "out": [
         [
-          "真",
+          "あてはまる",
           0
         ]
       ],
@@ -4113,7 +4113,7 @@
     "JPF-014/を超える": {
       "out": [
         [
-          "偽",
+          "あてはまらない",
           0
         ]
       ],
@@ -4159,7 +4159,7 @@
     "JPF-014/を超える/period": {
       "out": [
         [
-          "偽",
+          "あてはまらない",
           0
         ]
       ],
@@ -4205,7 +4205,7 @@
     "JPF-014/を超えている": {
       "out": [
         [
-          "偽",
+          "あてはまらない",
           0
         ]
       ],
@@ -4251,7 +4251,7 @@
     "JPF-014/を超えている/period": {
       "out": [
         [
-          "偽",
+          "あてはまらない",
           0
         ]
       ],
@@ -4297,7 +4297,7 @@
     "JPF-015/と等しい": {
       "out": [
         [
-          "偽",
+          "あてはまらない",
           0
         ]
       ],
@@ -4343,7 +4343,7 @@
     "JPF-015/と等しい/period": {
       "out": [
         [
-          "偽",
+          "あてはまらない",
           0
         ]
       ],
@@ -4389,7 +4389,7 @@
     "JPF-016/と異なる": {
       "out": [
         [
-          "真",
+          "あてはまる",
           0
         ]
       ],
@@ -4435,7 +4435,7 @@
     "JPF-016/と異なる/period": {
       "out": [
         [
-          "真",
+          "あてはまる",
           0
         ]
       ],
@@ -4481,7 +4481,7 @@
     "JPF-016/と等しくない": {
       "out": [
         [
-          "真",
+          "あてはまる",
           0
         ]
       ],
@@ -4527,7 +4527,7 @@
     "JPF-016/と等しくない/period": {
       "out": [
         [
-          "真",
+          "あてはまる",
           0
         ]
       ],
@@ -5309,6 +5309,7 @@
         1
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "question"
       },
       "vars": [
@@ -5352,6 +5353,7 @@
         1
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "question"
       },
       "vars": [
@@ -5553,6 +5555,7 @@
         1
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "question"
       },
       "vars": [
@@ -5596,6 +5599,7 @@
         1
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "question"
       },
       "vars": [
@@ -8557,6 +8561,7 @@
         0
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "audio",
         "handleId": "surface-tone"
       },
@@ -8603,6 +8608,7 @@
         0
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "audio",
         "handleId": "surface-tone"
       },
@@ -8649,6 +8655,7 @@
         0
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "audio",
         "handleId": "surface-tone"
       },
@@ -8695,6 +8702,7 @@
         0
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "audio",
         "handleId": "surface-tone"
       },
@@ -8725,7 +8733,7 @@
     "JPF-042/大きい": {
       "out": [
         [
-          "偽",
+          "あてはまらない",
           0
         ]
       ],
@@ -8771,7 +8779,7 @@
     "JPF-042/大きい/period": {
       "out": [
         [
-          "偽",
+          "あてはまらない",
           0
         ]
       ],
@@ -8817,7 +8825,7 @@
     "JPF-042/小さい": {
       "out": [
         [
-          "真",
+          "あてはまる",
           0
         ]
       ],
@@ -8863,7 +8871,7 @@
     "JPF-042/小さい/period": {
       "out": [
         [
-          "真",
+          "あてはまる",
           0
         ]
       ],
@@ -13793,6 +13801,7 @@
         0
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "condition",
         "condition": {
           "kind": "CompareExpression",
@@ -13857,6 +13866,7 @@
         0
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "condition",
         "condition": {
           "kind": "CompareExpression",
@@ -14581,6 +14591,7 @@
         0
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "condition",
         "condition": {
           "kind": "CompareExpression",
@@ -14645,6 +14656,7 @@
         0
       ],
       "blocked": {
+        "runtimeId": "sprite-1",
         "kind": "condition",
         "condition": {
           "kind": "CompareExpression",
@@ -15642,7 +15654,7 @@
       }
     },
     {
-      "source": "名前一覧を空にする。",
+      "source": "名前一覧の中身を全部消す。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -15778,7 +15790,7 @@
       }
     },
     {
-      "source": "次のことを3回くり返す。\n  何もしない。",
+      "source": "3回くり返す。\n  何もしない。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -15954,14 +15966,18 @@
           {
             "kind": "WaitTime",
             "seconds": {
-              "kind": "NumberLiteral",
-              "value": 0.1,
-              "sourceSpan": {
-                "startLine": 1,
-                "endLine": 1,
-                "startColumn": 1,
-                "endColumn": 4
-              }
+              "kind": "QuantityLiteral",
+              "value": {
+                "kind": "NumberLiteral",
+                "value": 0.1,
+                "sourceSpan": {
+                  "startLine": 1,
+                  "endLine": 1,
+                  "startColumn": 1,
+                  "endColumn": 4
+                }
+              },
+              "unit": "秒"
             },
             "sourceSpan": {
               "startLine": 1,
@@ -16096,14 +16112,18 @@
             "kind": "MotionCommand",
             "args": [
               {
-                "kind": "NumberLiteral",
-                "value": 10,
-                "sourceSpan": {
-                  "startLine": 1,
-                  "endLine": 1,
-                  "startColumn": 1,
-                  "endColumn": 3
-                }
+                "kind": "QuantityLiteral",
+                "value": {
+                  "kind": "NumberLiteral",
+                  "value": 10,
+                  "sourceSpan": {
+                    "startLine": 1,
+                    "endLine": 1,
+                    "startColumn": 1,
+                    "endColumn": 3
+                  }
+                },
+                "unit": "歩"
               }
             ],
             "op": "MOVE",
@@ -16182,14 +16202,18 @@
             "kind": "MotionCommand",
             "args": [
               {
-                "kind": "NumberLiteral",
-                "value": 1,
-                "sourceSpan": {
-                  "startLine": 1,
-                  "endLine": 1,
-                  "startColumn": 1,
-                  "endColumn": 2
-                }
+                "kind": "QuantityLiteral",
+                "value": {
+                  "kind": "NumberLiteral",
+                  "value": 1,
+                  "sourceSpan": {
+                    "startLine": 1,
+                    "endLine": 1,
+                    "startColumn": 1,
+                    "endColumn": 2
+                  }
+                },
+                "unit": "秒"
               },
               {
                 "kind": "NumberLiteral",
@@ -16240,14 +16264,18 @@
             "kind": "MotionCommand",
             "args": [
               {
-                "kind": "NumberLiteral",
-                "value": 15,
-                "sourceSpan": {
-                  "startLine": 1,
-                  "endLine": 1,
-                  "startColumn": 3,
-                  "endColumn": 5
-                }
+                "kind": "QuantityLiteral",
+                "value": {
+                  "kind": "NumberLiteral",
+                  "value": 15,
+                  "sourceSpan": {
+                    "startLine": 1,
+                    "endLine": 1,
+                    "startColumn": 3,
+                    "endColumn": 5
+                  }
+                },
+                "unit": "度"
               }
             ],
             "op": "TURN_RIGHT",
@@ -16278,14 +16306,18 @@
             "kind": "MotionCommand",
             "args": [
               {
-                "kind": "NumberLiteral",
-                "value": 15,
-                "sourceSpan": {
-                  "startLine": 1,
-                  "endLine": 1,
-                  "startColumn": 3,
-                  "endColumn": 5
-                }
+                "kind": "QuantityLiteral",
+                "value": {
+                  "kind": "NumberLiteral",
+                  "value": 15,
+                  "sourceSpan": {
+                    "startLine": 1,
+                    "endLine": 1,
+                    "startColumn": 3,
+                    "endColumn": 5
+                  }
+                },
+                "unit": "度"
               }
             ],
             "op": "TURN_LEFT",
@@ -16308,7 +16340,7 @@
       }
     },
     {
-      "source": "方向を90度にする。",
+      "source": "向きを90度にする。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16316,14 +16348,18 @@
             "kind": "MotionCommand",
             "args": [
               {
-                "kind": "NumberLiteral",
-                "value": 90,
-                "sourceSpan": {
-                  "startLine": 1,
-                  "endLine": 1,
-                  "startColumn": 4,
-                  "endColumn": 6
-                }
+                "kind": "QuantityLiteral",
+                "value": {
+                  "kind": "NumberLiteral",
+                  "value": 90,
+                  "sourceSpan": {
+                    "startLine": 1,
+                    "endLine": 1,
+                    "startColumn": 4,
+                    "endColumn": 6
+                  }
+                },
+                "unit": "度"
               }
             ],
             "op": "SET_DIRECTION",
@@ -16422,7 +16458,7 @@
       }
     },
     {
-      "source": "「マウス」の方向を向く。",
+      "source": "「マウス」の方を向く。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16460,7 +16496,7 @@
       }
     },
     {
-      "source": "端に触れていれば跳ね返る。",
+      "source": "画面の端にふれていれば、はね返る。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16495,14 +16531,18 @@
             "kind": "LooksCommand",
             "args": [
               {
-                "kind": "NumberLiteral",
-                "value": 120,
-                "sourceSpan": {
-                  "startLine": 1,
-                  "endLine": 1,
-                  "startColumn": 5,
-                  "endColumn": 8
-                }
+                "kind": "QuantityLiteral",
+                "value": {
+                  "kind": "NumberLiteral",
+                  "value": 120,
+                  "sourceSpan": {
+                    "startLine": 1,
+                    "endLine": 1,
+                    "startColumn": 5,
+                    "endColumn": 8
+                  }
+                },
+                "unit": "％"
               }
             ],
             "op": "SET_SCALE",
@@ -16563,7 +16603,7 @@
       }
     },
     {
-      "source": "隠れる。",
+      "source": "姿をかくす。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16590,7 +16630,7 @@
       }
     },
     {
-      "source": "現れる。",
+      "source": "姿を見せる。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16617,7 +16657,7 @@
       }
     },
     {
-      "source": "前面へ出す。",
+      "source": "いちばん手前へ出る。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16644,7 +16684,7 @@
       }
     },
     {
-      "source": "背面へ下げる。",
+      "source": "いちばん奥へ下がる。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16671,7 +16711,7 @@
       }
     },
     {
-      "source": "1層前へ出す。",
+      "source": "重なりを1つ手前にする。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16709,7 +16749,7 @@
       }
     },
     {
-      "source": "1層後ろへ下げる。",
+      "source": "重なりを1つ奥にする。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16877,7 +16917,7 @@
       }
     },
     {
-      "source": "スタンプを押す。",
+      "source": "今の姿のスタンプを押す。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16904,7 +16944,7 @@
       }
     },
     {
-      "source": "描いた線とスタンプを消す。",
+      "source": "作品の線とスタンプを全部消す。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16931,7 +16971,7 @@
       }
     },
     {
-      "source": "背景を「空色」にする。",
+      "source": "背景を「空色」に変える。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16969,7 +17009,7 @@
       }
     },
     {
-      "source": "次の背景にする。",
+      "source": "次の背景に変える。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -16996,7 +17036,7 @@
       }
     },
     {
-      "source": "前の背景にする。",
+      "source": "前の背景に変える。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17023,7 +17063,7 @@
       }
     },
     {
-      "source": "衣装を「星」にする。",
+      "source": "衣装を「星」に変える。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17061,7 +17101,7 @@
       }
     },
     {
-      "source": "次の衣装にする。",
+      "source": "次の衣装に変える。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17088,7 +17128,7 @@
       }
     },
     {
-      "source": "前の衣装にする。",
+      "source": "前の衣装に変える。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17115,7 +17155,7 @@
       }
     },
     {
-      "source": "「ボタン1」の文字を「始める」にする。",
+      "source": "「ボタン1」の文字を「始める」に変える。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17163,7 +17203,7 @@
       }
     },
     {
-      "source": "440Hzの音を0.2秒鳴らす。",
+      "source": "440Hzの音を0.2秒鳴らし始める。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17171,24 +17211,32 @@
             "kind": "SoundCommand",
             "args": [
               {
-                "kind": "NumberLiteral",
-                "value": 440,
-                "sourceSpan": {
-                  "startLine": 1,
-                  "endLine": 1,
-                  "startColumn": 1,
-                  "endColumn": 4
-                }
+                "kind": "QuantityLiteral",
+                "value": {
+                  "kind": "NumberLiteral",
+                  "value": 440,
+                  "sourceSpan": {
+                    "startLine": 1,
+                    "endLine": 1,
+                    "startColumn": 1,
+                    "endColumn": 4
+                  }
+                },
+                "unit": "Hz"
               },
               {
-                "kind": "NumberLiteral",
-                "value": 0.2,
-                "sourceSpan": {
-                  "startLine": 1,
-                  "endLine": 1,
-                  "startColumn": 9,
-                  "endColumn": 12
-                }
+                "kind": "QuantityLiteral",
+                "value": {
+                  "kind": "NumberLiteral",
+                  "value": 0.2,
+                  "sourceSpan": {
+                    "startLine": 1,
+                    "endLine": 1,
+                    "startColumn": 9,
+                    "endColumn": 12
+                  }
+                },
+                "unit": "秒"
               }
             ],
             "op": "TONE",
@@ -17211,7 +17259,7 @@
       }
     },
     {
-      "source": "440Hzの音を0.2秒鳴らし、終わるまで待つ。",
+      "source": "440Hzの音を0.2秒鳴らす。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17219,24 +17267,32 @@
             "kind": "SoundCommand",
             "args": [
               {
-                "kind": "NumberLiteral",
-                "value": 440,
-                "sourceSpan": {
-                  "startLine": 1,
-                  "endLine": 1,
-                  "startColumn": 1,
-                  "endColumn": 4
-                }
+                "kind": "QuantityLiteral",
+                "value": {
+                  "kind": "NumberLiteral",
+                  "value": 440,
+                  "sourceSpan": {
+                    "startLine": 1,
+                    "endLine": 1,
+                    "startColumn": 1,
+                    "endColumn": 4
+                  }
+                },
+                "unit": "Hz"
               },
               {
-                "kind": "NumberLiteral",
-                "value": 0.2,
-                "sourceSpan": {
-                  "startLine": 1,
-                  "endLine": 1,
-                  "startColumn": 9,
-                  "endColumn": 12
-                }
+                "kind": "QuantityLiteral",
+                "value": {
+                  "kind": "NumberLiteral",
+                  "value": 0.2,
+                  "sourceSpan": {
+                    "startLine": 1,
+                    "endLine": 1,
+                    "startColumn": 9,
+                    "endColumn": 12
+                  }
+                },
+                "unit": "秒"
               }
             ],
             "op": "TONE_WAIT",
@@ -17267,14 +17323,18 @@
             "kind": "SoundCommand",
             "args": [
               {
-                "kind": "NumberLiteral",
-                "value": 50,
-                "sourceSpan": {
-                  "startLine": 1,
-                  "endLine": 1,
-                  "startColumn": 4,
-                  "endColumn": 6
-                }
+                "kind": "QuantityLiteral",
+                "value": {
+                  "kind": "NumberLiteral",
+                  "value": 50,
+                  "sourceSpan": {
+                    "startLine": 1,
+                    "endLine": 1,
+                    "startColumn": 4,
+                    "endColumn": 6
+                  }
+                },
+                "unit": "％"
               }
             ],
             "op": "SET_VOLUME",
@@ -17297,7 +17357,7 @@
       }
     },
     {
-      "source": "音程を1段階上げる。",
+      "source": "音の高さを1段階上げる。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17335,7 +17395,7 @@
       }
     },
     {
-      "source": "音程を1段階下げる。",
+      "source": "音の高さを1段階下げる。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17400,7 +17460,7 @@
       }
     },
     {
-      "source": "「開始」と知らせる。",
+      "source": "みんなに「開始」と知らせる。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17435,7 +17495,7 @@
       }
     },
     {
-      "source": "「開始」と知らせ、受け手の処理が終わるまで待つ。",
+      "source": "みんなに「開始」と知らせて、知らせを受けて始めたことが全部終わるまで待つ。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17470,7 +17530,7 @@
       }
     },
     {
-      "source": "「名前は？」とたずねる。",
+      "source": "「名前は？」とたずねて、答えを待つ。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17505,7 +17565,7 @@
       }
     },
     {
-      "source": "合計という変数を作り、初期値を0にする。",
+      "source": "この中だけで使う変数【合計】を作り、最初は0にする。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17541,7 +17601,7 @@
       }
     },
     {
-      "source": "合計を返す。",
+      "source": "合計を答えとして返す。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17577,7 +17637,7 @@
       }
     },
     {
-      "source": "自分のクローンを作る。",
+      "source": "自分の分身を作る。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17604,7 +17664,7 @@
       }
     },
     {
-      "source": "「マスコット」のクローンを作る。",
+      "source": "「マスコット」の分身を作る。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17642,7 +17702,7 @@
       }
     },
     {
-      "source": "このクローンを削除する。",
+      "source": "この分身だけを消す。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17669,7 +17729,7 @@
       }
     },
     {
-      "source": "このスクリプトを止める。",
+      "source": "この実行を止める。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17695,7 +17755,7 @@
       }
     },
     {
-      "source": "ほかのスクリプトを止める。",
+      "source": "ほかの実行をすべて止める。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17721,7 +17781,7 @@
       }
     },
     {
-      "source": "すべてを止める。",
+      "source": "作品全体を止める。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17747,7 +17807,7 @@
       }
     },
     {
-      "source": "文字を「文字」にする。",
+      "source": "自分の文字を「文字」に変える。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17833,7 +17893,7 @@
       }
     },
     {
-      "source": "「ベル」を鳴らす。",
+      "source": "音「ベル」を鳴らし始める。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17871,7 +17931,7 @@
       }
     },
     {
-      "source": "「ベル」を鳴らし、終わるまで待つ。",
+      "source": "音「ベル」を鳴らす。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17909,7 +17969,7 @@
       }
     },
     {
-      "source": "このくり返しを終える。",
+      "source": "いまのくり返しを終える。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17934,7 +17994,7 @@
       }
     },
     {
-      "source": "次のくり返しへ進む。",
+      "source": "この回の残りをとばして、次の回へ進む。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17959,7 +18019,7 @@
       }
     },
     {
-      "source": "結果というリストを作る。",
+      "source": "この中だけで使うリスト【結果】を空で作る。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17985,7 +18045,7 @@
       }
     },
     {
-      "source": "次のことをずっとくり返す。\n  何もしない。",
+      "source": "ずっとくり返す。\n  何もしない。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18023,7 +18083,7 @@
       }
     },
     {
-      "source": "増やす（3）を実行する。",
+      "source": "（3）を渡して、【増やす】という手順を行う。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18080,7 +18140,7 @@
       }
     },
     {
-      "source": "値未満と言う",
+      "source": "【値未満】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18089,7 +18149,7 @@
             "value": {
               "kind": "VariableRead",
               "name": "値未満",
-              "qualifier": null,
+              "qualifier": "exact",
               "sourceSpan": {
                 "startLine": 1,
                 "endLine": 1,
@@ -18116,7 +18176,7 @@
       }
     },
     {
-      "source": "【値未満】と言う",
+      "source": "【値未満】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18152,7 +18212,7 @@
       }
     },
     {
-      "source": "値未満を1にする",
+      "source": "【値未満】を1にする",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18160,7 +18220,7 @@
             "kind": "Assignment",
             "target": {
               "name": "値未満",
-              "qualifier": null
+              "qualifier": "exact"
             },
             "value": {
               "kind": "NumberLiteral",
@@ -18191,7 +18251,7 @@
       }
     },
     {
-      "source": "値と等しいと言う",
+      "source": "【値と等しい】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18200,7 +18260,7 @@
             "value": {
               "kind": "VariableRead",
               "name": "値と等しい",
-              "qualifier": null,
+              "qualifier": "exact",
               "sourceSpan": {
                 "startLine": 1,
                 "endLine": 1,
@@ -18227,7 +18287,7 @@
       }
     },
     {
-      "source": "【値と等しい】と言う",
+      "source": "【値と等しい】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18263,7 +18323,7 @@
       }
     },
     {
-      "source": "値と等しいを1にする",
+      "source": "【値と等しい】を1にする",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18271,7 +18331,7 @@
             "kind": "Assignment",
             "target": {
               "name": "値と等しい",
-              "qualifier": null
+              "qualifier": "exact"
             },
             "value": {
               "kind": "NumberLiteral",
@@ -18302,7 +18362,7 @@
       }
     },
     {
-      "source": "値だけと言う",
+      "source": "【値だけ】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18311,7 +18371,7 @@
             "value": {
               "kind": "VariableRead",
               "name": "値だけ",
-              "qualifier": null,
+              "qualifier": "exact",
               "sourceSpan": {
                 "startLine": 1,
                 "endLine": 1,
@@ -18338,7 +18398,7 @@
       }
     },
     {
-      "source": "【値だけ】と言う",
+      "source": "【値だけ】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18374,7 +18434,7 @@
       }
     },
     {
-      "source": "値だけを1にする",
+      "source": "【値だけ】を1にする",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18382,7 +18442,7 @@
             "kind": "Assignment",
             "target": {
               "name": "値だけ",
-              "qualifier": null
+              "qualifier": "exact"
             },
             "value": {
               "kind": "NumberLiteral",
@@ -18413,7 +18473,7 @@
       }
     },
     {
-      "source": "値より値と言う",
+      "source": "【値より値】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18422,7 +18482,7 @@
             "value": {
               "kind": "VariableRead",
               "name": "値より値",
-              "qualifier": null,
+              "qualifier": "exact",
               "sourceSpan": {
                 "startLine": 1,
                 "endLine": 1,
@@ -18449,7 +18509,7 @@
       }
     },
     {
-      "source": "【値より値】と言う",
+      "source": "【値より値】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18485,7 +18545,7 @@
       }
     },
     {
-      "source": "値より値を1にする",
+      "source": "【値より値】を1にする",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18493,7 +18553,7 @@
             "kind": "Assignment",
             "target": {
               "name": "値より値",
-              "qualifier": null
+              "qualifier": "exact"
             },
             "value": {
               "kind": "NumberLiteral",
@@ -18524,7 +18584,7 @@
       }
     },
     {
-      "source": "もし値と言う",
+      "source": "【もし値】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18533,7 +18593,7 @@
             "value": {
               "kind": "VariableRead",
               "name": "もし値",
-              "qualifier": null,
+              "qualifier": "exact",
               "sourceSpan": {
                 "startLine": 1,
                 "endLine": 1,
@@ -18560,7 +18620,7 @@
       }
     },
     {
-      "source": "【もし値】と言う",
+      "source": "【もし値】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18596,7 +18656,7 @@
       }
     },
     {
-      "source": "もし値を1にする",
+      "source": "【もし値】を1にする",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18604,7 +18664,7 @@
             "kind": "Assignment",
             "target": {
               "name": "もし値",
-              "qualifier": null
+              "qualifier": "exact"
             },
             "value": {
               "kind": "NumberLiteral",
@@ -18635,7 +18695,7 @@
       }
     },
     {
-      "source": "ならばと言う",
+      "source": "【ならば】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18644,7 +18704,7 @@
             "value": {
               "kind": "VariableRead",
               "name": "ならば",
-              "qualifier": null,
+              "qualifier": "exact",
               "sourceSpan": {
                 "startLine": 1,
                 "endLine": 1,
@@ -18671,7 +18731,7 @@
       }
     },
     {
-      "source": "【ならば】と言う",
+      "source": "【ならば】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18707,7 +18767,7 @@
       }
     },
     {
-      "source": "ならばを1にする",
+      "source": "【ならば】を1にする",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18715,7 +18775,7 @@
             "kind": "Assignment",
             "target": {
               "name": "ならば",
-              "qualifier": null
+              "qualifier": "exact"
             },
             "value": {
               "kind": "NumberLiteral",
@@ -18746,7 +18806,7 @@
       }
     },
     {
-      "source": "横縦秒と言う",
+      "source": "【横縦秒】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18755,7 +18815,7 @@
             "value": {
               "kind": "VariableRead",
               "name": "横縦秒",
-              "qualifier": null,
+              "qualifier": "exact",
               "sourceSpan": {
                 "startLine": 1,
                 "endLine": 1,
@@ -18782,7 +18842,7 @@
       }
     },
     {
-      "source": "【横縦秒】と言う",
+      "source": "【横縦秒】の値を言う",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18818,7 +18878,7 @@
       }
     },
     {
-      "source": "横縦秒を1にする",
+      "source": "【横縦秒】を1にする",
       "ast": {
         "kind": "Script",
         "body": [
@@ -18826,7 +18886,7 @@
             "kind": "Assignment",
             "target": {
               "name": "横縦秒",
-              "qualifier": null
+              "qualifier": "exact"
             },
             "value": {
               "kind": "NumberLiteral",

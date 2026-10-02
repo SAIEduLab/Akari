@@ -1,3 +1,4 @@
+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -7,8 +8,8 @@ import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {blockFieldIds,verifyBlockFields} from '../lib/block-field-contract.mjs';
 const [browserPath,output='audit-evidence/block-field-width.json'] = process.argv.slice(2);
 const product = currentProductFile(), inputs = snapshot(product), api = loadApi(fs.readFileSync(product,'utf8'));
-const sample = 'もし 受け取った知らせが「表示更新」と同じなら、次のことをする。\n  文字をつなぐ（「得点：」、点数）にする。\nもし 受け取った知らせが「ゲーム開始」と同じなら、次のことをする。\n  文字をつなぐ（「得点：」、点数）にする。';
-const fixture = api.makeDefaultProject(); fixture.name = '入力欄の全文表示';
+const sample = 'もし 受け取った知らせが「表示更新」と同じなら、次のことをする。\n  自分の文字をつなぐ（「得点：」、点数）に変える。\nもし 受け取った知らせが「ゲーム開始」と同じなら、次のことをする。\n  自分の文字をつなぐ（「得点：」、点数）に変える。';
+const fixture = makeRegressionProject(api); fixture.name = '入力欄の全文表示';
 fixture.scripts = [{targetId:'stage',event:'message',source:sample}];
 fixture.actions = [{id:'field-action',ownerId:'stage',name:'文字幅',args:[],source:'「表示更新」と言う。'}];
 const dir = path.dirname(output);fs.mkdirSync(dir,{recursive:true});
@@ -32,7 +33,7 @@ const browserVersion = await withBrowser(browserPath,async browser => {
     p.on('pageerror',e=>pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))networkRequests.push(r.url());});p.on('dialog',d=>d.accept());
     await p.setViewportSize({width:1440,height:1000});
     await p.locator('#fileInput').setInputFiles({name:'field-width.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(fixture))});
-    await p.waitForFunction(()=>Akari.app.project.name==='入力欄の全文表示');
+    await p.waitForFunction(()=>Akari.app.project.name==='入力欄の全文表示');await showAdvancedCode(p);await p.locator('#objectSelect').selectOption('stage');
     await p.locator('#eventSelect').selectOption('message');
     await p.locator('#editorModeblocks').click();
     const fields=p.locator('#blockEditor .blockui-world .blockui-field input');
@@ -57,7 +58,7 @@ const browserVersion = await withBrowser(browserPath,async browser => {
           assert.ok(parseFloat(await literal.evaluate(i=>getComputedStyle(i).width))<1000);await literal.fill('表示更新');await literal.press('Tab');await settle(p);
         } else if(id==='FIELD-CALLABLE') {
           await p.locator('#sourceOverviewBtn').click();await p.locator('[data-source-edit="action:field-action"]').click();await p.locator('#callableModeblocks').click();await settle(p);
-          const callable=p.locator('#callableBlocks .blockui-field input');await callable.first().waitFor();await checkFields(callable);await p.locator('#procClose').click();
+          const callable=p.locator('#callableBlocks .blockui-field input:visible');await callable.first().waitFor();await checkFields(callable);await p.locator('#procClose').click();
         } else {
           if(await p.locator('#sourceEditBtn').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModeblocks').click();await settle(p);
           await literal.evaluate(i=>i.style.width='20px');await assert.rejects(()=>checkFields(fields),/clipped/);await literal.evaluate(i=>i.style.removeProperty('width'));await checkFields(fields);

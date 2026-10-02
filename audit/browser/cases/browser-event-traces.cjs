@@ -1,10 +1,11 @@
+const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 const L=require('./audit-lib.cjs'),assert=require('assert/strict'),{pathToFileURL}=require('url');
 const{chromium}=require('playwright');
 (async()=>{
  const dir=L.path.resolve(process.argv[2]||'audit-evidence/browser/candidate'),manifest=L.verifyManifest(dir),url=pathToFileURL(L.path.join(dir,manifest.candidate)).href,results=[],traces={},errors=[],network=[];
  const browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true,args:['--allow-file-access-from-files']});
  const api=L.loadApi(L.read(L.path.join(dir,manifest.candidate))),objects=[{id:'stage',type:'stage'},{id:'button-1',type:'button'},{id:'sprite-1',type:'sprite'},{id:'trace-label',type:'label'},{id:'trace-box',type:'box'},{id:'trace-input',type:'input'}],events=JSON.parse(JSON.stringify(api.EVENT_BY_TYPE)),expected=objects.flatMap(o=>events[o.type].map(event=>({id:'event:'+o.type+':'+event,...o,event}))),fixtures={};assert.equal(expected.length,32);
- function fixture(mode,error){const p=api.makeDefaultProject(),defaultSpriteName=p.components.find(x=>x.id==='sprite-1').name;p.name='全イベント観測';p.scripts=[];p.projectData.lists.find(x=>x.name==='名前一覧').initialValue=[];p.projectData.variables.find(x=>x.name==='点数').initialValue=error?1:0;
+ function fixture(mode,error){const p=makeRegressionProject(api),defaultSpriteName=p.components.find(x=>x.id==='sprite-1').name;p.name='全イベント観測';p.scripts=[];p.projectData.lists.find(x=>x.name==='名前一覧').initialValue=[];p.projectData.variables.find(x=>x.name==='点数').initialValue=error?1:0;
   p.components.find(x=>x.id==='button-1').x=30;p.components.find(x=>x.id==='button-1').y=30;p.components.find(x=>x.id==='sprite-1').x=420;p.components.find(x=>x.id==='sprite-1').y=200;
   // Keep the input clear of the sprite's settled (100, 200) bounds at every zoom.
   // Previously its right edge crossed the sprite's click center after pixel rounding.
@@ -13,9 +14,9 @@ const{chromium}=require('playwright');
   for(const e of expected){const tag=e.type+':'+e.event;let source='名前一覧に「'+(mode==='blocks'?'編集中':tag)+'」を追加する\n名前一覧に乱数（1、100000）を追加する\n0.1秒待つ\n名前一覧に乱数（1、100000）を追加する';
    if(e.type==='sprite'&&e.event==='start')source+='\n横0、縦0の位置へ行く\n0.1秒で横100、縦200の位置へ滑る';
    if(e.type==='stage'&&e.event==='start')source+='\n0.05秒待つ\n「滑走中」と言う\n0.05秒待つ';
-   if(e.type==='button'&&e.event==='click')source+='\n「観測知らせ」と知らせ、受け手の処理が終わるまで待つ\n次の背景にする\n「'+defaultSpriteName+'」のクローンを作る';
+   if(e.type==='button'&&e.event==='click')source+='\nみんなに「観測知らせ」と知らせて、知らせを受けて始めたことが全部終わるまで待つ\n次の背景にする\n「'+defaultSpriteName+'」のクローンを作る';
    const sensor={message:'受け取った知らせ',keyDown:'押されたキー',valueChanged:'新しい値',backdropChanged:'新しい背景名'}[e.event];if(sensor)source+='\n名前一覧に'+sensor+'を追加する';
-   source+='\nもし 点数が1と同じなら、次のことをする\n  1÷0と言う\n名前一覧に「完了:'+tag+'」を追加する';
+   source+='\nもし 点数が1と同じなら、次のことをする\n  1÷0を言う\n名前一覧に「完了:'+tag+'」を追加する';
    if(e.event==='cloneStart')source+='\nこのクローンを削除する';else source+='\nこのスクリプトを止める';
    const ast=api.parseSyntax(source).ast;assert.ok(ast);p.scripts.push({targetId:e.id,event:e.event,source:api.formatScript(ast)});
   }assert.deepEqual(JSON.parse(JSON.stringify(api.compileProject(p).errors)),[]);return p;
@@ -45,7 +46,7 @@ const{chromium}=require('playwright');
    assert.equal(s.tasks,0);return;
   }throw Error('event processing did not settle');}
  async function one(mode,error){const key=mode+'-'+(error?'error':'stop'),context=await browser.newContext({viewport:{width:1440,height:900}});await context.route(/^https?:\/\//,r=>{network.push(r.request().url());return r.abort();});await context.addInitScript(()=>{window.__auditClock=100000;Object.defineProperty(performance,'now',{value:()=>window.__auditClock});const fn=Crypto.prototype.getRandomValues;Crypto.prototype.getRandomValues=function(array){if(array instanceof Uint32Array&&array.length===1){array[0]=12345;return array;}return fn.call(this,array);};});const page=await context.newPage();page.setDefaultTimeout(12000);page.on('pageerror',e=>errors.push({key,message:e.message}));page.on('dialog',d=>d.accept(d.type()==='prompt'?d.defaultValue():undefined));
-  try{await page.goto(url);const project=fixture(mode,error),file=L.path.join(dir,'event-trace-'+key+'.akari.md');L.fs.writeFileSync(file,api.serializeProject(project,new api.AssetStore()));await page.locator('#fileInput').setInputFiles(file);await page.waitForFunction(()=>Akari.app.project.name==='全イベント観測');const edited=[];
+  try{await page.goto(url);await setupRegressionPage(page);const project=fixture(mode,error),file=L.path.join(dir,'event-trace-'+key+'.akari.md');L.fs.writeFileSync(file,api.serializeProject(project,new api.AssetStore()));await page.locator('#fileInput').setInputFiles(file);await page.waitForFunction(()=>Akari.app.project.name==='全イベント観測');const edited=[];
    for(const e of expected){await (await reveal(page.locator('#objectSelect'))).selectOption(e.id);await (await reveal(page.locator('#eventSelect'))).selectOption(e.event);await (async()=>{const control=page.locator('#editorMode'+mode); await openBodyForTest(control.page()); return control.click();})();if(mode==='blocks'){
      const node=await page.evaluate(()=>Akari.app.editorState.main.blockView.bodies.body[0].inputs.value);assert.equal(node.schemaId,'StringLiteral');const input=page.locator('#blockEditor [data-blockui-field="value"][data-block-id="'+node.id+'"]');await (await reveal(input)).fill(e.type+':'+e.event);await input.press('Enter');assert.equal(await page.evaluate(()=>Akari.app.editorState.main.pendingEdit),null);edited.push('event:'+e.type+':'+e.event);
     }assert.equal(await page.evaluate(()=>Akari.app.editorState.main.mode),mode);

@@ -28,6 +28,10 @@ jobs:
           node audit/freeze-release.mjs
           node audit/tests/static-contract.mjs audit-evidence/static/static.json
           node audit/tests/release-policy-negative.mjs
+          node audit/tests/contract-gate.mjs static audit-evidence/static/japanese-contract-static.json
+          node audit/tests/contract-gate.mjs migration audit-evidence/static/language-migration-static.json
+          node audit/tests/japanese-gate-negative.mjs audit-evidence/static/japanese-gate-negative.json
+          node audit/tests/verify-japanese-gate.mjs audit-evidence/static
           node audit/verify-evidence.mjs seal static audit-evidence/static
       - uses: actions/upload-artifact@v4
         if: always()

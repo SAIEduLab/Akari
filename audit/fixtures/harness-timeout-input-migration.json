@@ -1,0 +1,59 @@
+{
+  "schema": "akari-harness-timeout-input-migration-v1",
+  "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+  "policy": "Retain all24 stable negative IDs, the1000ms host deadline, /timeout/ rejection assertion, never-settling behavior, exception rejection and awaited browser cleanup. No product changes, timer increase, retries, exception-to-PASS conversion or assertion weakening.",
+  "cause": "CDP Runtime.callFunctionOn rejected code -32000 Promise was collected for the unreferenced unresolved Promise; Playwright Chromium rewriteError rewords protocol errors as Execution context was destroyed. The page did not navigate during evaluation.",
+  "files": [
+    {
+      "path": "audit/tests/harness-negative.mjs",
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "originalSha256": "bc8b1fe364f37f3c1579ffebfef91d1d26316ace2d06de6146a0872a126609a7",
+      "candidateSha256": "9db75b7bcae91ab7ec80025971617b576da71cc48ab519fc22d80846e12362cd",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/harness-negative.mjs",
+      "ids": [
+        "missing ID",
+        "duplicate ID",
+        "extra ID",
+        "missing suite",
+        "duplicate suite",
+        "empty suite",
+        "missing environment",
+        "wrong environment",
+        "exception status",
+        "timeout status",
+        "false pass",
+        "contradictory status",
+        "forged summary",
+        "forged aggregate",
+        "missing snapshot",
+        "changed product hash",
+        "incomplete",
+        "shrunk manifest",
+        "missing browser executable",
+        "empty registration",
+        "missing suite file",
+        "registration exception",
+        "registration syntax error",
+        "actual nonsettling browser evaluation timeout and cleanup"
+      ],
+      "assertionCalls": {
+        "old": 8,
+        "new": 8
+      }
+    }
+  ],
+  "changes": [
+    {
+      "testId": "actual nonsettling browser evaluation timeout and cleanup",
+      "oldText": "p=>p.evaluate(()=>new Promise(()=>{}))",
+      "newText": "p=>p.evaluate(()=>{\n  globalThis.__akariAuditNonsettlingPromise=new Promise(()=>{});\n  return globalThis.__akariAuditNonsettlingPromise;\n})",
+      "preservedMeaning": "An actual page.evaluate remains unresolved until the same1000ms host timeout rejects. The same await/finally cleanup closes the browser. The global reference keeps that input Promise alive and is scoped to the isolated audit page; it does not settle the Promise or replace a product API."
+    }
+  ],
+  "unchangedHost": {
+    "path": "audit/lib/product-test-host.mjs",
+    "sha256": "3957f09e58d82d6b1f2535757dd27aa440d6857689a6137141ccf253e3bb0a85",
+    "reason": "Promise.race deadline and awaited browser/context cleanup correctly reject and close. The early error comes from GC of the audit input, so the host needs no edit."
+  },
+  "executionEvidence": "Separate repeat and full harness reports, not a promise that future HEAD gates pass."
+}

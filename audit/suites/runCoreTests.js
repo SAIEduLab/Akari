@@ -19,7 +19,7 @@ function runCoreTests() {
     const ok = (v, m = 'assertion failed') => {
       if (!v) throw Error(m);
     };
-    const sy = buildSymbols(makeDefaultProject());
+    const sy = buildSymbols(makeRegressionProject());
     const clean = (v) =>
       Array.isArray(v)
         ? v.filter((x) => x?.kind !== 'CommentLine').map(clean)
@@ -43,7 +43,7 @@ function runCoreTests() {
             )
           : v;
     const run = (source, targetId = 'stage', edit = () => {}) => {
-      const p = makeDefaultProject();
+      const p = makeRegressionProject();
       p.scripts = [{ targetId, event: 'start', source }];
       edit(p);
       const compiled = compileProject(p);
@@ -75,11 +75,11 @@ function runCoreTests() {
       return { p, r, q, out, effects, stop: () => q.stop() };
     };
     const samples = [
-      'もし 点数が10以上なら、次のことをする。\n  次のことを3回くり返す。\n    10歩動く。\n  「終了」と言う。\nそうでなければ、次のことをする。\n  「不足」と言う。',
-      'もし 真なら、次のことをする\n    次のことを2回繰り返す\n         次のことを3回くり返す\n             点数に1を足す\n点数と言う',
-      '※ outer\nもし 真なら、次のことをする。\n※ comment does not close block\n  点数に1を足す。\n\nそうでなければ、次のことをする。\n   何もしない。\n点数と言う。',
-      '条件（真かつ偽）が成り立つあいだ、次のことをくり返す。\n  何もしない。\n条件（真または偽）が成り立つまで、次のことをくり返す。\n  何もしない。',
-      '名前一覧の各要素を項目として、次のことをくり返す。\n  項目と言う。',
+      'もし 点数が10以上なら、次のことをする。\n  3回くり返す。\n    10歩動く。\n  「終了」と言う。\nそうでなければ、次のことをする。\n  「不足」と言う。',
+      'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする\n    2回くり返す\n         3回くり返す\n             点数に1を足す\n点数の値を言う',
+      '※ outer\nもし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n※ comment does not close block\n  点数に1を足す。\n\nそうでなければ、次のことをする。\n   何もしない。\n点数の値を言う。',
+      '条件（条件の答え（あてはまる）かつ条件の答え（あてはまらない））が成り立つあいだ、次のことをくり返す。\n  何もしない。\n条件（条件の答え（あてはまる）または条件の答え（あてはまらない））が成り立つまで、次のことをくり返す。\n  何もしない。',
+      '名前一覧の各要素を項目として、次のことをくり返す。\n  項目の値を言う。',
     ];
     for (const [i, source] of samples.entries())
       test('AST roundtrip ' + i, () => {
@@ -106,27 +106,27 @@ function runCoreTests() {
     });
     const invalid = [
       [0, '  点数を1にする', 1],
-      [1, 'もし 真なら、次のことをする。\n点数を1にする', 1],
-      [2, 'もし 真なら、次のことをする。\n  何もしない。\n 点数を1にする', 3],
-      [3, 'もし 真なら、次のことをする。\n  何もしない。\n    点数を1にする', 3],
-      [4, 'もし 真なら、次のことをする。\n\t点数を1にする', 2],
-      [5, 'もし 真なら、次のことをする。\n　点数を1にする', 2],
+      [1, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n点数を1にする', 1],
+      [2, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない。\n 点数を1にする', 3],
+      [3, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない。\n    点数を1にする', 3],
+      [4, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n\t点数を1にする', 2],
+      [5, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n　点数を1にする', 2],
       [6, 'そうでなければ、次のことをする。\n  何もしない', 1],
       [7,
-        'もし 真なら、次のことをする。\n  何もしない\n点数を1にする\nそうでなければ、次のことをする。\n  何もしない',
+        'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない\n点数を1にする\nそうでなければ、次のことをする。\n  何もしない',
         4,
       ],
       [8,
-        'もし 真なら、次のことをする。\n  何もしない\n  そうでなければ、次のことをする。\n    何もしない',
+        'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない\n  そうでなければ、次のことをする。\n    何もしない',
         3,
       ],
       [9,
-        'もし 真なら、次のことをする。\n  何もしない\n名前一覧の各要素を【】として、次のことをくり返す。\n  何もしない',
+        'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない\n名前一覧の各要素を【】として、次のことをくり返す。\n  何もしない',
         3,
       ],
       [10, 'ここまで', 1],
-      [11, 'もし 真なら、次のことをする。\n  ※ コメントだけ', 1],
-      [13, '次のことを3回くり返す。\n  何もしない\nここまで', 3],
+      [11, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  ※ コメントだけ', 1],
+      [13, '3回くり返す。\n  何もしない\nここまで', 3],
     ];
     for (const [i, source, line] of invalid)
       test('indent reject ' + i, () => {
@@ -141,18 +141,18 @@ function runCoreTests() {
       });
     test('arbitrary boolean loops and innermost control', () => {
       const h = run(
-        '点数を0にする。\n条件（点数が4より小さいかつ真）が成り立つあいだ、次のことをくり返す。\n  点数に1を足す。\n  次のことをずっとくり返す。\n    このくり返しを終える。\n  次のくり返しへ進む。\n  点数に100を足す。\n点数と言う。',
+        '点数を0にする。\n条件（点数が4より小さいかつ条件の答え（あてはまる））が成り立つあいだ、次のことをくり返す。\n  点数に1を足す。\n  次のことをずっとくり返す。\n    このくり返しを終える。\n  この回の残りをとばして、次の回へ進む。\n  点数に100を足す。\n点数の値を言う。',
       );
       eq(h.out, ['4']);
       h.stop();
     });
     test('NoOperation callable and standalone', () => {
-      const p = makeDefaultProject();
+      const p = makeRegressionProject();
       p.scripts = [
         {
           targetId: 'stage',
           event: 'start',
-          source: '次のことを2回くり返す。\n  何もしない。\n1と言う。',
+          source: '2回くり返す。\n  何もしない。\n1を言う。',
         },
       ];
       const payload = packExecutable(p, new AssetStore()),
@@ -171,7 +171,7 @@ function runCoreTests() {
     });
     test('hint every block parses', () => {
       for (const target of ['stage', 'sprite-1'])
-        for (const hint of hintCandidates(makeDefaultProject(), target).filter(
+        for (const hint of hintCandidates(makeRegressionProject(), target).filter(
           (x) => x.enabled && x.mode === 'statement' && x.text.includes('次のこと'),
         )) {
           ok(!hint.text.includes('ここまで'));
@@ -179,7 +179,7 @@ function runCoreTests() {
         }
     });
     test('hint whole indented line replacement', () => {
-      const source = 'もし 真なら、次のことをする。\n  何もしない。\n点数と言う。',
+      const source = 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない。\n点数の値を言う。',
         start = source.indexOf('\n') + 1,
         end = source.indexOf('\n', start),
         result = insertSource(source, start, end, '点数に1を足す。');
@@ -188,9 +188,9 @@ function runCoreTests() {
       h.stop();
     });
     test('hint nested insertion and following sibling', () => {
-      const source = 'もし 真なら、次のことをする。\n  \n点数と言う。',
+      const source = 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  \n点数の値を言う。',
         at = source.indexOf('\n') + 3;
-      const result = insertSource(source, at, at, '次のことを3回くり返す。\n  点数に1を足す。');
+      const result = insertSource(source, at, at, '3回くり返す。\n  点数に1を足す。');
       const h = run(result.source);
       eq(h.out, ['3']);
       h.stop();
@@ -220,7 +220,7 @@ function runCoreTests() {
     });
     test('runtime looks layers text backdrop costumes', () => {
       const h = run(
-        '隠れる。\n現れる。\n大きさを120％にする。\n表示色を「赤」にする。\n前面へ出す。\n背面へ下げる。\n1層前へ出す。\n1層後ろへ下げる。\n次の背景にする。\n前の背景にする。\n背景を「空色」にする。\n次の衣装にする。\n前の衣装にする。\n衣装を「星」にする。\n「ボタン1」の文字を「始める」にする。',
+        '隠れる。\n現れる。\n大きさを120％にする。\n表示色を「赤」にする。\n前面へ出す。\n背面へ下げる。\n1層前へ出す。\n1層後ろへ下げる。\n次の背景にする。\n前の背景にする。\n背景を「空色」にする。\n次の衣装にする。\n前の衣装にする。\n衣装を「星」にする。\n「ボタン1」の文字を「始める」に変える。',
         'sprite-1',
       );
       const a = h.r.actor('sprite-1');
@@ -250,21 +250,21 @@ function runCoreTests() {
       ['正弦（30）', 0.5],
       ['余弦（60）', 0.5],
       ['正接（45）', 1],
-      ['逆正弦（0.5）', 30],
-      ['逆余弦（0.5）', 60],
-      ['逆正接（1）', 45],
+      ['逆正弦（0.5）', 30, '度'],
+      ['逆余弦（0.5）', 60, '度'],
+      ['逆正接（1）', 45, '度'],
       ['自然対数（1）', 0],
       ['常用対数（100）', 2],
       ['指数（0）', 1],
       ['数（「12」）', 12],
-      ['文字（真）', '真'],
+      ['文字（条件の答え（あてはまる））', 'あてはまる'],
       ['最小（2、1、3）', 1],
       ['最大（2、1、3）', 3],
-      ['つなぐ（「A」、1、真）', 'A1真'],
+      ['つなぐ（「A」、1、条件の答え（あてはまる））', 'A1あてはまる'],
     ];
-    for (const [source, wanted] of builtins)
+    for (const [source, wanted, expectedUnit] of builtins)
       test('builtin ' + source.split('（')[0], () => {
-        const p = makeDefaultProject(),
+        const p = makeRegressionProject(),
           r = new RuntimeModel(p, {});
         const actual = evalExpression(parseExpression(source, sy), {
           runtime: r,
@@ -272,14 +272,18 @@ function runCoreTests() {
           compiled: compileProject(p),
           task: { callFrames: [], execStack: [] },
         });
-        if (typeof wanted === 'number') ok(Math.abs(actual - wanted) < 1e-10, source);
+        if (expectedUnit) {
+          eq(actual.unit, expectedUnit);
+          ok(Math.abs(actual.magnitude - wanted) < 1e-10, source);
+          eq(Object.keys(actual).sort(), ['magnitude', 'unit']);
+        } else if (typeof wanted === 'number') ok(Math.abs(actual - wanted) < 1e-10, source);
         else eq(actual, wanted);
       });
 
     for (const [type, events] of Object.entries(EVENT_BY_TYPE))
       for (const event of events)
         test('event ' + type + ':' + event, () => {
-          const p = makeDefaultProject(),
+          const p = makeRegressionProject(),
             c = {
               ...p.components[0],
               id: 'event-target',
@@ -300,7 +304,7 @@ function runCoreTests() {
             valueChanged: '新しい値',
           }[event];
           p.scripts = [
-            { targetId: id, event, source: value ? value + 'と言う。' : '点数に1を足す。' },
+            { targetId: id, event, source: value ? value + 'の値を言う。' : '点数に1を足す。' },
           ];
           const compiled = compileProject(p);
           ok(!compiled.errors.length, JSON.stringify(compiled.errors));
@@ -360,7 +364,7 @@ function runCoreTests() {
     };
     for (const [source, wanted] of Object.entries(sensors))
       test('sensor ' + source, () => {
-        const p = makeDefaultProject(),
+        const p = makeRegressionProject(),
           r = new RuntimeModel(p, {});
         r.mouseX = 35;
         r.mouseY = 45;
@@ -382,8 +386,16 @@ function runCoreTests() {
             newValue: '新',
           },
         };
-        const actual = evalExpression(parseExpression(source, sy), ctx);
-        if (typeof wanted === 'number')
+        const actual = evalExpression(parseExpression(source, sy), ctx),
+          expectedUnit = {
+            マウスの横位置: '歩', マウスの縦位置: '歩', 横位置: '歩', 縦位置: '歩',
+            方向: '度', 大きさ: '％', タイマー: '秒', 音量: '％', マウスまでの距離: '歩',
+          }[source];
+        if (expectedUnit) {
+          eq(actual.unit, expectedUnit);
+          ok(Math.abs(actual.magnitude - wanted) < 1e-9, source + ': ' + actual.magnitude);
+          eq(Object.keys(actual).sort(), ['magnitude', 'unit']);
+        } else if (typeof wanted === 'number')
           ok(Math.abs(actual - wanted) < 1e-9, source + ': ' + actual);
         else eq(actual, wanted);
       });

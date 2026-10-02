@@ -1,3 +1,4 @@
+const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 // Actual local-file pointer and keyboard coverage, bound to the captured release.
 const L=require('./audit-lib.cjs'),U=require('./ui-routes.cjs'),assert=require('assert/strict'),{chromium}=require('playwright'),{pathToFileURL}=require('url');
 const dir=L.path.resolve(process.argv[2]),manifest=L.verifyManifest(dir),results=[],errors=[],network=[];
@@ -6,7 +7,7 @@ const state=p=>p.evaluate(()=>{const a=Akari.app,s=a.editorState;return{source:s
 (async()=>{const browser=await chromium.launch({headless:true,executablePath:process.env.AKARI_BROWSER});try{for(const viewport of [{width:1366,height:768},{width:768,height:1024},{width:390,height:844}]){
  const c=await browser.newContext({viewport}),p=await c.newPage();p.setDefaultTimeout(15000);p.on('pageerror',e=>errors.push(e.message));await p.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});
  try{
- await p.goto(pathToFileURL(L.path.join(dir,manifest.candidate)).href);const source='次のことを2回くり返す。 ※ 囲い\n  もし 真なら、次のことをする。\n    1＋2と言う。 ※ 中身\n    何もしない。\n  何もしない。\n9と言う。';
+ await p.goto(pathToFileURL(L.path.join(dir,manifest.candidate)).href);await setupRegressionPage(p);const source='2回くり返す。 ※ 囲い\n  もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n    1＋2を言う。 ※ 中身\n    何もしない。\n  何もしない。\n9を言う。';
  const initial=await state(p);await (async()=>{const control=p.locator('#codeEditor'); await openBodyForTest(control.page()); return control.fill(source);})();await p.waitForFunction(h=>Akari.app.editorState.history===h+1,initial.history);await (async()=>{const control=p.locator('#editorModeblocks'); await openBodyForTest(control.page()); return control.click();})();const root=p.locator('#blockEditor'),world=root.locator('.blockui-workspace');await root.locator('[data-blockui-action="workspace-expand"]').click();await root.locator('[data-blockui-action="library-toggle"]').click();
  await p.waitForFunction(()=>[...document.querySelectorAll('#blockEditor .blockui-node[data-schema-id][data-shape-kind],#blockEditor .blockui-event-hat[data-shape-kind]')].filter(e=>e.offsetWidth&&e.offsetHeight).every(e=>e.querySelector(':scope > .blockui-shape path')?.getAttribute('d')));
  const shapes=await root.locator('.blockui-node[data-schema-id][data-shape-kind],.blockui-event-hat[data-shape-kind]').evaluateAll(ns=>ns.filter(n=>n.offsetWidth&&n.offsetHeight).map(n=>({schema:n.classList.contains('blockui-event-hat')?'event-hat':n.dataset.schemaId,kind:n.dataset.shapeKind,path:n.querySelector(':scope > .blockui-shape path')?.getAttribute('d'),width:n.offsetWidth,height:n.offsetHeight})));

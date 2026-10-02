@@ -34,6 +34,11 @@ await withBrowser(browserPath,async browser=>{
  await assert.rejects(()=>pageFor(browser,currentProductFile(),p=>p.evaluate('(() => { invalid syntax !!! })()')),/Unexpected/);
 });
 results.push(...['empty registration','missing suite file','registration exception','registration syntax error'].map(id=>({id,pass:true})));
-await assert.rejects(()=>withBrowser(browserPath,async browser=>pageFor(browser,currentProductFile(),p=>p.evaluate(()=>new Promise(()=>{}))),1000),/timeout/);
+// Keep the never-settling promise reachable while DevTools awaits it:
+// Chromium may collect an unreferenced promise before the host deadline.
+await assert.rejects(()=>withBrowser(browserPath,async browser=>pageFor(browser,currentProductFile(),p=>p.evaluate(()=>{
+  globalThis.__akariAuditNonsettlingPromise=new Promise(()=>{});
+  return globalThis.__akariAuditNonsettlingPromise;
+})),1000),/timeout/);
 results.push({id:'actual nonsettling browser evaluation timeout and cleanup',pass:true});
 fs.writeFileSync(output,JSON.stringify({status:'PASS',results},null,2)+'\n');console.log('Harness negatives: '+results.length+' PASS');

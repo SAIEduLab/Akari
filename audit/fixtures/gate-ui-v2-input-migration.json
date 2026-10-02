@@ -1,0 +1,1511 @@
+{
+  "schema": "akari-gate-ui-v2-input-migration-v1",
+  "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+  "policy": "Preserve baseline IDs/counts and assertion meanings, numeric/timing/focus thresholds. No API/loadApi replacement; genuine product failures remain failures. Fixture projects enter through real file import.",
+  "migrationRules": [
+    "Use explicit regression project rather than newly simplified user default.",
+    "Choose visible code and advanced controls through real UI, preserving user mode tests.",
+    "Retired direct numeric speech becomes value speech; return and user calls use explicit answer/positional forms with original values.",
+    "Current executable/project/language/runtime contracts are2; malformed-format cases explicitly target1 or wrong type.",
+    "Callable field width targets visible inputs; newly hidden optional heading editor fields are not rendered text.",
+    "Specification11 and design9 require unfinished code/callable text to remain pending: test owner/raw text/project/history preservation and guarded navigation/save, then explicit cancellation. A valid comment plus the same return7 exercises subsequent atomic definition registration.",
+    "JSDOM real-view context receives its actual document after product API initialization, without replacing the view/parser."
+  ],
+  "files": [
+    {
+      "path": "audit/tests/normal-product.mjs",
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "originalSha256": "ec46d7e0ae5d2edbadbaee2301214b865503b433ac6884d68b1b9026398b1bb5",
+      "candidateSha256": "cf40662804016f21d0f8c33b0b47dccd89b5515c2374b9da400d67997fcc5694",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/normal-product.mjs",
+      "ids": [
+        "normal-product"
+      ],
+      "assertionCalls": {
+        "old": 14,
+        "new": 14
+      },
+      "diff": "--- baseline/audit/tests/normal-product.mjs\n+++ audit/tests/normal-product.mjs\n@@ -1,3 +1,4 @@\n+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';\n import fs from 'node:fs';\n import path from 'node:path';\n import assert from 'node:assert/strict';\n@@ -14,6 +15,7 @@\n const evidence=await withBrowser(browserPath,async browser=>{\n  const files=await pageFor(browser,product,async p=>{\n   p.on('dialog',d=>d.accept());\n+  await installRegressionProject(p);\n   assert.equal(await p.evaluate(()=>Object.keys(Akari).some(k=>/^run.*Tests/.test(k))),false);\n   assert.equal(await p.locator('#selfTestReport').count(),0);\n   await (await reveal(p.locator('#objectSelect'))).selectOption('stage');\n@@ -63,4 +65,4 @@\n fs.writeFileSync(output,JSON.stringify({status:'PASS',snapshot:before,...evidence},null,2)+'\\n');console.log('Normal GUI save/reload/export/offline/isolation: PASS');\n \n // Enter the visible body editor before exercising editing operations.\n-async function openBodyForTest(page) { if (await page.locator(\"#sourceOverview\").isVisible()) await page.locator(\"#sourceEditBtn\").click(); }\n+async function openBodyForTest(page) { if (!await page.locator(\"#codeEditor\").isVisible() && !await page.locator(\"#blockEditor\").isVisible()) await page.locator(\"#editorModecode\").click(); if (await page.locator(\"#sourceOverview\").isVisible()) await page.locator(\"#sourceEditBtn\").click(); }\n"
+    },
+    {
+      "path": "audit/tests/source-ownership.mjs",
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "originalSha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8",
+      "candidateSha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+      "ids": [
+        "OWNER-COMPLETE-REGISTRY",
+        "OWNER-REJECT-UNOWNED-AT-BOUNDARIES",
+        "OWNER-SAVE-ROUNDTRIP",
+        "OWNER-FORMAT-REJECTION",
+        "OWNER-CALLER-RECEIVER-AND-FUNCTION",
+        "OWNER-REFERENCES-INCLUDING-EXPRESSION",
+        "OWNER-INCOMPLETE-AND-UNUSED",
+        "OWNER-GUI-DIRECT-BUTTON",
+        "OWNER-GUI-ALL-EVENTS",
+        "OWNER-GUI-UNUSED-STAGE-DEFINITIONS",
+        "OWNER-GUI-SYNTAX-ERROR-RAW-BODY",
+        "OWNER-GUI-DRAFT-OWNERSHIP",
+        "OWNER-GUI-RECURSION-AND-HIDDEN-OBJECT",
+        "OWNER-GUI-VIEWPORT-AND-UNDO-REACHABILITY"
+      ],
+      "assertionCalls": {
+        "old": 67,
+        "new": 81
+      },
+      "diff": "--- baseline/audit/tests/source-ownership.mjs\n+++ audit/tests/source-ownership.mjs\n@@ -1,3 +1,4 @@\n+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';\n import { currentProductFile } from \"./../lib/product-path.cjs\";\n import fs from 'node:fs';\n import path from 'node:path';\n@@ -15,19 +16,19 @@\n   assert.equal(await page.locator('#sourceOverview').isVisible(), true);\n }\n const fixture=()=>{\n-  const p=api.makeDefaultProject();p.name='コードの所属を読む';\n+  const p=makeRegressionProject(api);p.name='コードの所属を読む';\n   p.components.push({...p.components.find(c=>c.id==='button-1'),id:'button-empty',name:'空のボタン',y:300});\n   const sprite=p.components.find(c=>c.id==='sprite-1');\n   sprite.costumes=[{id:'costume-test',name:'顔',kind:'text',value:'🙂'}];sprite.costumeId='costume-test';\n   p.scripts=[\n     {targetId:'stage',event:'message',source:'「画面の知らせ」と言う'},\n-    {targetId:'button-1',event:'click',source:'表示（倍（3））を実行する。'},\n+    {targetId:'button-1',event:'click',source:'（（（3）を渡して、【倍】で求めた答え））を渡して、【表示】という手順を行う。'},\n     {targetId:'sprite-1',event:'start',source:'「はじめ」と言う'},\n     {targetId:'sprite-1',event:'message',source:'「受け取った」と言う'},\n   ];\n-  p.actions=[{id:'action-show',ownerId:'stage',name:'表示',args:['数'],source:'数と言う'}];\n-  p.functions=[{id:'function-double',ownerId:'stage',name:'倍',args:['数'],source:'数 * 2を返す'},\n-    {id:'function-unused',ownerId:'stage',name:'未使用',args:[],source:'7を返す'}];\n+  p.actions=[{id:'action-show',ownerId:'stage',name:'表示',args:['数'],source:'数の値を言う'}];\n+  p.functions=[{id:'function-double',ownerId:'stage',name:'倍',args:['数'],source:'数 * 2を答えとして返す'},\n+    {id:'function-unused',ownerId:'stage',name:'未使用',args:[],source:'7を答えとして返す'}];\n   return p;\n };\n const results=[];\n@@ -58,7 +59,7 @@\n   }\n });\n await test('OWNER-FORMAT-REJECTION',async()=>{\n-  for(const [key,value]of [['appVersion',null],['formatVersion',2],['languageContractId',2]]){\n+  for(const [key,value]of [['appVersion',null],['formatVersion',1],['languageContractId',1]]){\n     const p=fixture();p[key]=value;assert.throws(()=>api.serializeProject(p));assert.ok(api.compileProject(p).errors.length);\n   }\n });\n@@ -85,10 +86,10 @@\n   await pageFor(browser,currentProductFile(),async p=>{\n     p.on('dialog',d=>d.accept());await p.setViewportSize({width:1440,height:1000});\n     const startup={overview:await p.locator('#sourceOverview').isVisible(),editable:await p.locator('#codeEditor').isEditable()};\n-    await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');\n+    await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');await p.locator('#uiLevel').selectOption('advanced');\n     await test('OWNER-GUI-DIRECT-BUTTON',async()=>{\n       assert.deepEqual(startup,{overview:false,editable:true});\n-      const original='表示（倍（3））を実行する。',changed='表示（倍（4））を実行する。';\n+      const original='（（（3）を渡して、【倍】で求めた答え））を渡して、【表示】という手順を行う。',changed='（（（4）を渡して、【倍】で求めた答え））を渡して、【表示】という手順を行う。';\n       for(const mode of ['code','blocks']){\n         await p.locator('#editorMode'+mode).click();\n         await p.locator('#sourceOverviewBtn').click();await p.locator('#newBtn').click();\n@@ -99,7 +100,7 @@\n         if(mode==='code')assert.ok(await editor.isEditable());\n         else assert.equal(await editor.locator('[data-schema-id=\"NumberLiteral\"] [data-blockui-field=\"value\"]').first().isEditable(),true);\n         await p.locator('#sourceOverviewBtn').click();\n-        await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');\n+        await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');await p.locator('#uiLevel').selectOption('advanced');\n         assert.equal(await p.locator('#sourceOverview').isVisible(),false,'import closes a previous overview');\n         await p.locator('#formSurface .component[data-id=\"button-1\"]').click();\n         assert.equal(await p.locator('#objectSelect').inputValue(),'button-1');\n@@ -136,8 +137,8 @@\n       const card=p.locator('[data-source-key=\"script:button-1:click\"]');\n       await card.locator('.blockui-script').waitFor({state:'visible'});\n       assert.equal(await card.locator('[data-blockui-schema]').count(),0,'read-only preview does not prepare editing candidates');\n-      assert.equal(await card.locator('[data-schema-id=\"UserActionCall\"] [data-blockui-field=\"name\"]').first().textContent(),'表示');\n-      assert.equal(await card.locator('[data-schema-id=\"UserFunctionCall\"] [data-blockui-field=\"name\"]').first().textContent(),'倍');\n+      assert.deepEqual(await card.locator('[data-blockui-field=\"name\"]').evaluateAll(es=>es.filter(e=>e.closest('[data-schema-id]')?.dataset.schemaId==='UserActionCall').map(e=>e.textContent)),['表示']);\n+      assert.deepEqual(await card.locator('[data-blockui-field=\"name\"]').evaluateAll(es=>es.filter(e=>e.closest('[data-schema-id]')?.dataset.schemaId==='UserFunctionCall').map(e=>e.textContent)),['倍']);\n       assert.equal(await card.locator('.blockui-node input,.blockui-node textarea,.blockui-node select').count(),0,'read-only values are complete text, without clipped disabled inputs');\n       assert.equal(await p.locator('[data-source-key=\"action:action-show\"]').count(),1);\n       assert.equal(await p.locator('[data-source-key=\"function:function-double\"]').count(),1);\n@@ -154,32 +155,55 @@\n       for(const key of ['script:stage:message','action:action-show','function:function-double','function:function-unused'])assert.ok(all.includes(key),key);\n       await p.locator('[data-source-edit=\"function:function-unused\"]').click();\n       assert.equal(await p.locator('#callableName').inputValue(),'未使用');\n-      assert.equal(await p.locator('#callableCode').inputValue(),'7を返す');\n+      assert.equal(await p.locator('#callableCode').inputValue(),'7を答えとして返す');\n       await p.locator('#procClose').click();\n     });\n     await test('OWNER-GUI-SYNTAX-ERROR-RAW-BODY',async()=>{\n       await p.locator('#objectSelect').selectOption('button-1');await p.locator('#eventSelect').selectOption('message');\n-      await p.locator('#editorModecode').click();await p.locator('#codeEditor').fill('もし');\n+      await p.locator('#editorModecode').click();\n+      const before=await p.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history,source:Akari.app.editorState.main.sourceText}));\n+      await p.locator('#codeEditor').fill('もし');\n+      await p.locator('#sourceOverviewBtn').click();\n+      await p.waitForFunction(()=>document.querySelector('#editorModeblocks').disabled,null,{timeout:3000});\n+      assert.equal(await p.locator('#editorModeblocks').isDisabled(),true,'unfinished syntax cannot enter blocks');\n+      assert.equal(await p.locator('#codeEditor').inputValue(),'もし','unfinished original remains visible');\n+      assert.equal(await p.locator('#sourceOverview').isVisible(),false,'unfinished input guards navigation');\n+      assert.equal(await p.evaluate(()=>Akari.app.editorState.main.pendingEdit.ownerKey),'script:button-1:message');\n+      assert.equal(await p.evaluate(()=>Akari.app.editorState.state),'DESIGN');\n+      assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),before.project);\n+      assert.equal(await p.evaluate(()=>Akari.app.editorState.history),before.history);\n+      await p.locator('#editorCancel').click();\n+      assert.equal(await p.locator('#codeEditor').inputValue(),before.source);\n+      assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),before.project);\n+      assert.equal(await p.evaluate(()=>Akari.app.editorState.history),before.history);\n       await p.locator('#sourceOverviewBtn').click();await p.locator('#editorModeblocks').click();\n-      assert.equal(await p.locator('[data-source-key=\"script:button-1:message\"] pre').textContent(),'もし');\n       assert.equal(await p.locator('[data-source-key=\"script:button-1:click\"] .blockui-script').count(),1);\n     });\n     await test('OWNER-GUI-DRAFT-OWNERSHIP',async()=>{\n-      // Open the existing definition via its visible card, then type an incomplete body.\n       await openStageSources(p);await p.locator('[data-source-edit=\"function:function-unused\"]').click();\n+      const before=await p.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history}));\n       await p.locator('#callableCode').fill('下書きのまま');\n       assert.equal(await p.evaluate(()=>Akari.app.editorState.callableDraft.ownerId),'stage');\n-      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'7を返す');\n+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'7を答えとして返す');\n       await p.locator('#callableSave').click();\n-      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'下書きのまま');\n-      await p.locator('#procClose').click();await openStageSources(p);\n-      assert.equal(await p.locator('[data-source-key=\"function:function-unused\"] pre').textContent(),'下書きのまま');\n+      assert.equal(await p.locator('#callableCode').inputValue(),'下書きのまま','unfinished callable original retained');\n+      assert.equal(await p.evaluate(()=>JSON.stringify(Akari.app.project)),before.project,'unfinished callable is not registered');\n+      assert.equal(await p.evaluate(()=>Akari.app.editorState.history),before.history);\n+      await p.locator('#callableCancel').click();\n+      const revised='※ 下書きのまま\\n7を答えとして返す';\n+      await p.locator('#callableCode').fill(revised);\n+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),'7を答えとして返す');\n+      await p.locator('#callableSave').click();\n+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').source),revised);\n+      assert.equal(await p.evaluate(()=>Akari.app.project.functions.find(d=>d.id==='function-unused').ownerId),'stage');\n+      await p.locator('#procClose').click();await openStageSources(p);await p.locator('#editorModecode').click();\n+      assert.equal(await p.locator('[data-source-key=\"function:function-unused\"] pre').textContent(),revised);\n     });\n     await test('OWNER-GUI-RECURSION-AND-HIDDEN-OBJECT',async()=>{\n       const data=fixture();data.name='再帰の参照';data.components.find(c=>c.id==='sprite-1').visible=false;\n-      data.scripts.find(s=>s.targetId==='button-1').source='甲（巡る（1））を実行する';\n-      data.actions=[{id:'a',ownerId:'stage',name:'甲',args:['値'],source:'乙（値）を実行する'},{id:'b',ownerId:'stage',name:'乙',args:['値'],source:'甲（値）を実行する'}];\n-      data.functions=[{id:'f',ownerId:'stage',name:'巡る',args:['値'],source:'巡る（値）を返す'}];\n+      data.scripts.find(s=>s.targetId==='button-1').source='（（（1）を渡して、【巡る】で求めた答え））を渡して、【甲】という手順を行う';\n+      data.actions=[{id:'a',ownerId:'stage',name:'甲',args:['値'],source:'（値）を渡して、【乙】という手順を行う'},{id:'b',ownerId:'stage',name:'乙',args:['値'],source:'（値）を渡して、【甲】という手順を行う'}];\n+      data.functions=[{id:'f',ownerId:'stage',name:'巡る',args:['値'],source:'（（値）を渡して、【巡る】で求めた答え）を答えとして返す'}];\n       await p.locator('#fileInput').setInputFiles({name:'references.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(data))});\n       await p.waitForFunction(()=>Akari.app.project.name==='再帰の参照');\n       await p.locator('#objectSelect').selectOption('button-1');\n"
+    },
+    {
+      "path": "audit/tests/ui-buttons.mjs",
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "originalSha256": "af0120f8e986d51cd8356a1f42b404366ead6fb1ae21a1858f906cf9acbe3409",
+      "candidateSha256": "86faa0d1885d5f947eba3b6f411ff6c832b9142dc75bdb4136d5cd1bbaad754b",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ui-buttons.mjs",
+      "ids": [
+        "UI-BUTTON-SOURCE-NAV",
+        "UI-BUTTON-BASIC-HISTORY",
+        "UI-BUTTON-SIDE-ACTIONS",
+        "UI-BUTTON-LEVELS",
+        "UI-BUTTON-PENDING",
+        "UI-BUTTON-BLOCK-DESTINATION",
+        "UI-BUTTON-BLOCK-INSERTION",
+        "UI-BUTTON-BLOCK-COMMANDS",
+        "UI-BUTTON-RESPONSIVE"
+      ],
+      "assertionCalls": {
+        "old": 75,
+        "new": 75
+      },
+      "diff": "--- baseline/audit/tests/ui-buttons.mjs\n+++ audit/tests/ui-buttons.mjs\n@@ -1,3 +1,4 @@\n+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';\n import { currentProductFile } from \"./../lib/product-path.cjs\";\n import fs from 'node:fs';\n import path from 'node:path';\n@@ -22,7 +23,7 @@\n async function select(p,id) { await (await reveal(p.locator('#objectSelect'))).selectOption(id); }\n async function fill(p, source) { await mode(p,'code'); await p.locator('#codeEditor').fill(source); await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source); await p.waitForTimeout(350); }\n const number = (p, root='#blockEditor') => p.locator(root+' .blockui-node[data-schema-id=\"NumberLiteral\"] [data-blockui-field=\"value\"]').first();\n-async function callable(p,kind='Function') { await click(p,'#procBtn'); await click(p,'#callableNew'+kind); await p.locator('#callableName').fill('ボタン検証'); await p.locator('#callableName').press('Tab'); await p.locator('#callableCode').fill(kind==='Function'?'1を返す。':'1と言う。'); await p.waitForTimeout(350); }\n+async function callable(p,kind='Function') { await click(p,'#procBtn'); await click(p,'#callableNew'+kind); await p.locator('#callableName').fill('ボタン検証'); await p.locator('#callableName').press('Tab'); await p.locator('#callableCode').fill(kind==='Function'?'1を答えとして返す。':'1を言う。'); await p.waitForTimeout(350); }\n async function visible(p,s,value=true) { assert.equal(await p.locator(s).isVisible(),value,s+' visibility'); }\n async function reachable(l) { await l.scrollIntoViewIfNeeded(); const r=await l.boundingBox(); assert.ok(r&&r.width>0&&r.height>0); const v=l.page().viewportSize(); assert.ok(r.x>=-1&&r.y>=-1&&r.x+r.width<=v.width+1&&r.y+r.height<=v.height+1,'control must be reachable by ordinary scrolling'); await l.click(); return {width:r.width,height:r.height}; }\n const cases = {\n@@ -42,12 +43,12 @@\n   async 'UI-BUTTON-BASIC-HISTORY'(p) {\n     await p.locator('#uiLevel').selectOption('basic'); await body(p); const initial=await fingerprint(p);\n     await visible(p,'#undoBtn'); await visible(p,'#redoBtn'); assert.equal(await p.locator('#redoBtn').isDisabled(),true);\n-    await fill(p,'1と言う。'); const one=await fingerprint(p); assert.ok(one.history>initial.history);\n+    await fill(p,'1を言う。'); const one=await fingerprint(p); assert.ok(one.history>initial.history);\n     await click(p,'#undoBtn'); assert.equal((await fingerprint(p)).source,initial.source);\n-    await click(p,'#redoBtn'); assert.equal((await fingerprint(p)).source,'1と言う。');\n+    await click(p,'#redoBtn'); assert.equal((await fingerprint(p)).source,'1を言う。');\n     await mode(p,'blocks'); const before=await fingerprint(p); await number(p).fill('2'); await number(p).press('Enter');\n-    assert.equal((await fingerprint(p)).source,'2と言う。'); assert.equal((await fingerprint(p)).history,before.history+1);\n-    await click(p,'#undoBtn'); assert.equal((await fingerprint(p)).source,'1と言う。'); await click(p,'#redoBtn'); assert.equal((await fingerprint(p)).source,'2と言う。');\n+    assert.equal((await fingerprint(p)).source,'2を言う。'); assert.equal((await fingerprint(p)).history,before.history+1);\n+    await click(p,'#undoBtn'); assert.equal((await fingerprint(p)).source,'1を言う。'); await click(p,'#redoBtn'); assert.equal((await fingerprint(p)).source,'2を言う。');\n     return {basic:true,codeUndoRedo:true,blockUndoRedo:true,atomicBlockHistory:true};\n   },\n   async 'UI-BUTTON-SIDE-ACTIONS'(p) {\n@@ -71,10 +72,10 @@\n     return {levels:['basic','advanced'],legacyAll:'advanced',reload:true};\n   },\n   async 'UI-BUTTON-PENDING'(p) {\n-    await fill(p,'1と言う。'); await mode(p,'blocks'); const mainBefore=await fingerprint(p);\n+    await fill(p,'1を言う。'); await mode(p,'blocks'); const mainBefore=await fingerprint(p);\n     await number(p).fill('bad'); await number(p).press('Enter'); assert.equal(await number(p).getAttribute('aria-invalid'),'true'); assert.deepEqual(await fingerprint(p),mainBefore); await click(p,'#blockEditor [data-blockui-action=\"cancel\"]'); assert.deepEqual(await fingerprint(p),mainBefore);\n     await number(p).fill('4'); await visible(p,'#blockEditor [data-blockui-action=\"commit\"]'); await click(p,'#blockEditor [data-blockui-action=\"cancel\"]'); assert.deepEqual(await fingerprint(p),mainBefore);\n-    await number(p).fill('5'); await click(p,'#blockEditor [data-blockui-action=\"commit\"]'); assert.equal((await fingerprint(p)).source,'5と言う。'); assert.equal((await fingerprint(p)).history,mainBefore.history+1); await visible(p,'#blockEditor [data-blockui-action=\"commit\"]',false);\n+    await number(p).fill('5'); await click(p,'#blockEditor [data-blockui-action=\"commit\"]'); assert.equal((await fingerprint(p)).source,'5を言う。'); assert.equal((await fingerprint(p)).history,mainBefore.history+1); await visible(p,'#blockEditor [data-blockui-action=\"commit\"]',false);\n     await callable(p); await visible(p,'#callableCancel',false); await visible(p,'#callablePending',false);\n     await click(p,'#callableModeblocks'); const before=await fingerprint(p), n=number(p,'#callableBlocks');\n     await n.fill('invalid'); await n.press('Enter'); assert.equal(await n.getAttribute('aria-invalid'),'true'); await visible(p,'#callableBlocks [data-blockui-action=\"cancel\"]'); assert.deepEqual(await fingerprint(p),before);\n@@ -82,11 +83,11 @@\n     await p.locator('#callableName').fill('長'.repeat(501)); await visible(p,'#callablePending'); await visible(p,'#callableCancel'); assert.deepEqual(await fingerprint(p),before); await click(p,'#callableCancel'); assert.deepEqual(await fingerprint(p),before); await visible(p,'#callableCancel',false);\n     await number(p,'#callableBlocks').fill('2'); await number(p,'#callableBlocks').press('Enter'); await visible(p,'#callableCancel',false);\n     assert.equal(await p.evaluate(()=>Akari.app.project.functions.length),0); assert.equal((await fingerprint(p)).hasDraft,true);\n-    await click(p,'#callableSave'); assert.equal(await p.evaluate(()=>Akari.app.project.functions.length),1); assert.equal(await p.evaluate(()=>Akari.app.project.functions[0].source),'2を返す。');\n+    await click(p,'#callableSave'); assert.equal(await p.evaluate(()=>Akari.app.project.functions.length),1); assert.equal(await p.evaluate(()=>Akari.app.project.functions[0].source),'2を答えとして返す。');\n     return {invalidInputCancelable:true,validDraftCancelHidden:true,registrationSeparate:true};\n   },\n   async 'UI-BUTTON-BLOCK-DESTINATION'(p) {\n-    await fill(p,'1と言う。'); await mode(p,'blocks');\n+    await fill(p,'1を言う。'); await mode(p,'blocks');\n     for(const root of ['#blockEditor','#callableBlocks']) {\n       if(root==='#callableBlocks') { await callable(p); await click(p,'#callableModeblocks'); }\n       const before=await fingerprint(p);\n@@ -101,7 +102,7 @@\n   },\n   async 'UI-BUTTON-BLOCK-INSERTION'(p) {\n     const roots=[]; for (const root of ['#blockEditor','#callableBlocks']) {\n-    if(root==='#blockEditor') { await fill(p,'1と言う。\\n2と言う。\\n3と言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1と言う。\\n2と言う。\\n3と言う。'); await p.waitForTimeout(350); await click(p,'#callableModeblocks'); } const before=await fingerprint(p);\n+    if(root==='#blockEditor') { await fill(p,'1を言う。\\n2を言う。\\n3を言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1を言う。\\n2を言う。\\n3を言う。'); await p.waitForTimeout(350); await click(p,'#callableModeblocks'); } const before=await fingerprint(p);\n     const insertions=p.locator(root+' .blockui-script > .blockui-node-content > .blockui-body > [data-blockui-action=\"body-insert\"]'); assert.equal(await insertions.count(),4,'three statements need four insertion boundaries');\n     const sizes=[]; for(let i=0;i<4;i++) { const b=insertions.nth(i); assert.equal(await b.isVisible(),true); const r=await reachable(b); assert.ok(r.width>=24&&r.height>=24,'minimum pointer target 24px'); sizes.push(r); assert.ok(await p.locator(root+' .blockui-chosen-destination').count()); await p.keyboard.press('Escape'); }\n     assert.deepEqual(await fingerprint(p),before); assert.ok(await p.locator(root+' [data-blockui-drag=\"node\"]').count()>=3,'drag alternative remains available');\n@@ -110,14 +111,14 @@\n     roots.push({root,boundaries:4,sizes,pointerInsertion:true,dragAlternative:true});\n     }\n     const touchContext=await p.context().browser().newContext({offline:true,hasTouch:true,viewport:{width:1024,height:768}}),errors=[],network=[];\n-    try { await touchContext.route(/^https?:/,route=>{network.push(route.request().url());return route.abort();}); const t=await touchContext.newPage(); t.on('pageerror',e=>errors.push(e.message)); await t.goto(pathToFileURL(path.resolve(currentProductFile())).href); await t.waitForFunction(()=>!!globalThis.Akari?.app); await select(t,'stage'); await fill(t,'1と言う。'); await mode(t,'blocks'); const before=await fingerprint(t);\n+    try { await touchContext.route(/^https?:/,route=>{network.push(route.request().url());return route.abort();}); const t=await touchContext.newPage(); t.on('pageerror',e=>errors.push(e.message)); await t.goto(pathToFileURL(path.resolve(currentProductFile())).href); await t.waitForFunction(()=>!!globalThis.Akari?.app); await installRegressionProject(t); await select(t,'stage'); await fill(t,'1を言う。'); await mode(t,'blocks'); const before=await fingerprint(t);\n       async function tap(l) { await l.scrollIntoViewIfNeeded(); const r=await l.boundingBox(); assert.ok(r&&r.width>=24&&r.height>=24); await t.touchscreen.tap(r.x+r.width/2,r.y+r.height/2); }\n       await tap(t.locator('#blockEditor [data-blockui-action=\"body-insert\"]').first()); assert.ok(await t.locator('#blockEditor .blockui-chosen-destination').count()); await tap(t.locator('#blockEditor [data-blockui-action=\"cancel\"]')); assert.equal(await t.locator('#blockEditor .blockui-chosen-destination').count(),0); assert.deepEqual(await fingerprint(t),before);\n     } finally { await touchContext.close(); } assert.deepEqual(errors,[]); assert.deepEqual(network,[]); return {roots,touch:true};\n   },\n   async 'UI-BUTTON-BLOCK-COMMANDS'(p) {\n     const roots=[]; for (const root of ['#blockEditor','#callableBlocks']) {\n-    if(root==='#blockEditor') { await fill(p,'1と言う。\\n2と言う。\\n3と言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1と言う。\\n2と言う。\\n3と言う。'); await p.waitForTimeout(350); await click(p,'#callableModeblocks'); }\n+    if(root==='#blockEditor') { await fill(p,'1を言う。\\n2を言う。\\n3を言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1を言う。\\n2を言う。\\n3を言う。'); await p.waitForTimeout(350); await click(p,'#callableModeblocks'); }\n     const says=()=>p.locator(root+' .blockui-node[data-schema-id=\"'+'Say'+'\"]'); const values=()=>p.locator(root+' .blockui-node[data-schema-id=\"NumberLiteral\"] input').evaluateAll(es=>es.map(e=>e.value));\n     async function action(index,a,expected) { const before=await fingerprint(p); await U.nodeAction(says().nth(index),a); assert.deepEqual(await values(),expected); assert.equal((await fingerprint(p)).history,before.history+1,a+' changes once'); }\n     await action(0,'duplicate',['1','1','2','3']); await action(1,'move-down',['1','2','1','3']); await action(3,'move-up',['1','2','3','1']); await action(3,'remove',['1','2','3']);\n@@ -130,7 +131,7 @@\n   async 'UI-BUTTON-RESPONSIVE'(p) {\n     const evidence=[];\n     for(const viewport of [{width:1440,height:1000},{width:1280,height:720},{width:1024,height:768},{width:768,height:1024},{width:390,height:844}]) {\n-      await p.setViewportSize(viewport); await fill(p,'1と言う。');\n+      await p.setViewportSize(viewport); await fill(p,'1を言う。');\n       for(const m of ['code','blocks']) { await mode(p,m); const before=await fingerprint(p); await reachable(p.locator('#sourceOverviewBtn')); await reachable(p.locator('#sourceEditBtn')); assert.deepEqual(await fingerprint(p),before); await reachable(p.locator('#undoBtn')); await reachable(p.locator('#redoBtn')); }\n       await U.openNodeMenu(p.locator('#blockEditor .blockui-node[data-schema-id=\"Say\"]').first()); const command=p.locator('#blockEditor .blockui-node[data-schema-id=\"Say\"]').first().locator(':scope > .blockui-node-head [data-blockui-action=\"duplicate\"]'); await reachable(command); assert.equal(await p.locator('#blockEditor .blockui-node[data-schema-id=\"Say\"]').count(),2);\n       const toggle=p.locator('.properties-window .blockui-side-toggle'); await reachable(toggle); const expanded=await toggle.getAttribute('aria-expanded'); await reachable(toggle); assert.notEqual(await toggle.getAttribute('aria-expanded'),expanded); evidence.push(viewport);\n@@ -139,7 +140,7 @@\n   },\n };\n assert.deepEqual(Object.keys(cases),uiButtonIds);\n-const version=await withBrowser(browserPath,async b=> { for(const [id,run] of Object.entries(cases)) { try { const evidence=await pageFor(b,currentProductFile(),async p=> { p.on('dialog',d=>d.accept()); await p.setViewportSize({width:1440,height:1000}); await select(p,'stage'); return run(p); }); results.push({id,status:'PASS',pass:true,detail:'PASS',evidence}); } catch(error) { results.push({id,status:'FAIL',pass:false,detail:error.stack}); } console.log(results.at(-1).status+' '+id); if(!results.at(-1).pass) console.error(results.at(-1).detail); } return b.version(); },360000);\n+const version=await withBrowser(browserPath,async b=> { for(const [id,run] of Object.entries(cases)) { try { const evidence=await pageFor(b,currentProductFile(),async p=> { p.on('dialog',d=>d.accept()); await p.setViewportSize({width:1440,height:1000}); await installRegressionProject(p); await select(p,'stage'); return run(p); }); results.push({id,status:'PASS',pass:true,detail:'PASS',evidence}); } catch(error) { results.push({id,status:'FAIL',pass:false,detail:error.stack}); } console.log(results.at(-1).status+' '+id); if(!results.at(-1).pass) console.error(results.at(-1).detail); } return b.version(); },360000);\n assert.deepEqual(snapshot(currentProductFile()),inputs,'test must not modify product inputs');\n const report={schema:'akari-ui-buttons-v1',status:results.every(r=>r.pass)?'PASS':'FAIL',environment:'chromium',browser:version,snapshot:inputs,total:results.length,results,pageErrors:[],networkRequests:[]};\n fs.mkdirSync(path.dirname(output),{recursive:true}); fs.writeFileSync(output,JSON.stringify(report,null,2)+'\\n');\n"
+    },
+    {
+      "path": "audit/tests/block-field-width.mjs",
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "originalSha256": "0b00054e6ef69ec0dc17c59a9d6f1f79d11a5ad9080bb634f32dd43aeeb3fa14",
+      "candidateSha256": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/block-field-width.mjs",
+      "ids": [
+        "FIELD-SHORT-JAPANESE",
+        "FIELD-MIXED-UNICODE",
+        "FIELD-EDIT-GROW-SHRINK",
+        "FIELD-FONT-CHANGE",
+        "FIELD-ZOOM-BOUNDS",
+        "FIELD-LONG-EDIT",
+        "FIELD-CALLABLE",
+        "FIELD-CLIPPING-ORACLE"
+      ],
+      "assertionCalls": {
+        "old": 9,
+        "new": 9
+      },
+      "diff": "--- baseline/audit/tests/block-field-width.mjs\n+++ audit/tests/block-field-width.mjs\n@@ -1,3 +1,4 @@\n+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';\n import fs from 'node:fs';\n import path from 'node:path';\n import assert from 'node:assert/strict';\n@@ -7,8 +8,8 @@\n import {blockFieldIds,verifyBlockFields} from '../lib/block-field-contract.mjs';\n const [browserPath,output='audit-evidence/block-field-width.json'] = process.argv.slice(2);\n const product = currentProductFile(), inputs = snapshot(product), api = loadApi(fs.readFileSync(product,'utf8'));\n-const sample = 'もし 受け取った知らせが「表示更新」と同じなら、次のことをする。\\n  文字をつなぐ（「得点：」、点数）にする。\\nもし 受け取った知らせが「ゲーム開始」と同じなら、次のことをする。\\n  文字をつなぐ（「得点：」、点数）にする。';\n-const fixture = api.makeDefaultProject(); fixture.name = '入力欄の全文表示';\n+const sample = 'もし 受け取った知らせが「表示更新」と同じなら、次のことをする。\\n  自分の文字をつなぐ（「得点：」、点数）に変える。\\nもし 受け取った知らせが「ゲーム開始」と同じなら、次のことをする。\\n  自分の文字をつなぐ（「得点：」、点数）に変える。';\n+const fixture = makeRegressionProject(api); fixture.name = '入力欄の全文表示';\n fixture.scripts = [{targetId:'stage',event:'message',source:sample}];\n fixture.actions = [{id:'field-action',ownerId:'stage',name:'文字幅',args:[],source:'「表示更新」と言う。'}];\n const dir = path.dirname(output);fs.mkdirSync(dir,{recursive:true});\n@@ -32,7 +33,7 @@\n     p.on('pageerror',e=>pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))networkRequests.push(r.url());});p.on('dialog',d=>d.accept());\n     await p.setViewportSize({width:1440,height:1000});\n     await p.locator('#fileInput').setInputFiles({name:'field-width.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(fixture))});\n-    await p.waitForFunction(()=>Akari.app.project.name==='入力欄の全文表示');\n+    await p.waitForFunction(()=>Akari.app.project.name==='入力欄の全文表示');await showAdvancedCode(p);await p.locator('#objectSelect').selectOption('stage');\n     await p.locator('#eventSelect').selectOption('message');\n     await p.locator('#editorModeblocks').click();\n     const fields=p.locator('#blockEditor .blockui-world .blockui-field input');\n@@ -57,7 +58,7 @@\n           assert.ok(parseFloat(await literal.evaluate(i=>getComputedStyle(i).width))<1000);await literal.fill('表示更新');await literal.press('Tab');await settle(p);\n         } else if(id==='FIELD-CALLABLE') {\n           await p.locator('#sourceOverviewBtn').click();await p.locator('[data-source-edit=\"action:field-action\"]').click();await p.locator('#callableModeblocks').click();await settle(p);\n-          const callable=p.locator('#callableBlocks .blockui-field input');await callable.first().waitFor();await checkFields(callable);await p.locator('#procClose').click();\n+          const callable=p.locator('#callableBlocks .blockui-field input:visible');await callable.first().waitFor();await checkFields(callable);await p.locator('#procClose').click();\n         } else {\n           if(await p.locator('#sourceEditBtn').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModeblocks').click();await settle(p);\n           await literal.evaluate(i=>i.style.width='20px');await assert.rejects(()=>checkFields(fields),/clipped/);await literal.evaluate(i=>i.style.removeProperty('width'));await checkFields(fields);\n"
+    },
+    {
+      "path": "audit/tests/editor-assets.mjs",
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "originalSha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4",
+      "candidateSha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+      "ids": [
+        "duplicate-types-settings-identities",
+        "duplicate-images-data-history",
+        "duplicate-limit",
+        "paint-entry-empty-focus",
+        "paint-tools-colors-fill",
+        "paint-history-cancelled-gesture",
+        "paint-crop-native-transparent-padding",
+        "paint-large-stage-fit",
+        "paint-discard",
+        "paint-failed-commit-preserves-drawing",
+        "paint-save-reload-export",
+        "paint-runtime-lock",
+        "paint-small-viewport-touch",
+        "format-contract-and-import",
+        "format-malformed-state-protection"
+      ],
+      "assertionCalls": {
+        "old": 103,
+        "new": 103
+      },
+      "diff": "--- baseline/audit/tests/editor-assets.mjs\n+++ audit/tests/editor-assets.mjs\n@@ -1,3 +1,4 @@\n+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';\n import { currentProductFile, currentProductVersion } from \"./../lib/product-path.cjs\";\n import fs from 'node:fs';\n import path from 'node:path';\n@@ -13,7 +14,7 @@\n fs.mkdirSync(artifacts, {recursive:true});\n const inputs = snapshot(currentProductFile()), results = [], pageErrors = [], networkRequests = [];\n const fixtureApi = loadApi(fs.readFileSync(currentProductFile(),'utf8'));\n-const savedProject = fixtureApi.makeDefaultProject();\n+const savedProject = makeRegressionProject(fixtureApi);\n savedProject.name = '作品の保存確認';\n const savedFile = fixtureApi.serializeProject(savedProject, fixtureApi.makeDefaultAssetStore());\n async function reveal(locator) {\n@@ -207,7 +208,7 @@\n     await p.screenshot({path:path.join(artifacts,'drawing-mobile.png'),fullPage:true});\n   },\n   async 'format-contract-and-import'(p) {\n-    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1});\n+    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2});\n     await p.locator('#fileInput').setInputFiles({name:'saved-project.akari.md',mimeType:'text/plain',buffer:Buffer.from(savedFile)});\n     await p.waitForFunction(()=>Akari.app.project.name==='作品の保存確認'&&Akari.app.editorState.state==='DESIGN');\n     assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),(\"\"+currentProductVersion()+\"\"));\n@@ -216,7 +217,7 @@\n   },\n   async 'format-malformed-state-protection'(p) {\n     const before=await state(p);\n-    for(const text of [savedFile.replace((\"# あかり \"+currentProductVersion()+\" の作品\"),'# tampered'),savedFile.replace('\"languageContractId\": 1','\"languageContractId\": 2'),savedFile.replace('\"formatVersion\": 1','\"formatVersion\": \"1\"')]) {\n+    for(const text of [savedFile.replace((\"# あかり \"+currentProductVersion()+\" の作品\"),'# tampered'),savedFile.replace('\"languageContractId\": 2','\"languageContractId\": 1'),savedFile.replace('\"formatVersion\": 2','\"formatVersion\": \"2\"')]) {\n       const result=await p.evaluate(async text=>{try{await Akari.parseProjectFile(text);return 'accepted';}catch(e){return e.code;}},text);\n       assert.notEqual(result,'accepted');assert.deepEqual(await state(p),before);\n     }\n@@ -232,7 +233,7 @@\n         await p.setViewportSize({width:1440,height:1100});p.acceptDialogs=true;p.dialogLog=[];\n         p.on('dialog',d=>{p.dialogLog.push(d.message());return p.acceptDialogs?d.accept():d.dismiss();});\n         p.on('pageerror',e=>pageErrors.push(id+': '+e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))networkRequests.push(r.url());});\n-        try { await run(p); } catch(e) { await p.screenshot({path:path.join(artifacts,id+'-failure.png'),fullPage:true}).catch(()=>{}); throw e; }\n+        try { await installRegressionProject(p); await run(p); } catch(e) { await p.screenshot({path:path.join(artifacts,id+'-failure.png'),fullPage:true}).catch(()=>{}); throw e; }\n       });\n       results.push({id,pass:true,detail:'PASS'});console.log('PASS '+id);\n     } catch(error) { results.push({id,pass:false,detail:error.stack});console.error('FAIL '+id+': '+error.message); }\n"
+    },
+    {
+      "path": "audit/tests/designer-zoom.mjs",
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "originalSha256": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c",
+      "candidateSha256": "daa183ce594b7ac57c7b788b6020efabbef8e8091d70b6fa11aceb8d3e0c05c4",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/designer-zoom.mjs",
+      "ids": [
+        "DESIGN-ZOOM-FIT-CODE",
+        "DESIGN-ZOOM-FIT-BLOCKS",
+        "DESIGN-ZOOM-ZOOM-SCROLL",
+        "DESIGN-ZOOM-STABLE-RESIZE",
+        "DESIGN-ZOOM-POINTER-HISTORY",
+        "DESIGN-ZOOM-RUNTIME",
+        "DESIGN-ZOOM-SAVE-EXPORT",
+        "DESIGN-ZOOM-FORMAT",
+        "DESIGN-ZOOM-NARROW-TOUCH"
+      ],
+      "assertionCalls": {
+        "old": 45,
+        "new": 45
+      },
+      "diff": "--- baseline/audit/tests/designer-zoom.mjs\n+++ audit/tests/designer-zoom.mjs\n@@ -1,3 +1,4 @@\n+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';\n import { currentProductFile, currentProductVersion } from \"./../lib/product-path.cjs\";\n import fs from 'node:fs';\n import path from 'node:path';\n@@ -204,7 +205,7 @@\n   },\n   async 'DESIGN-ZOOM-FORMAT'(p) {\n     const api = loadApi(fs.readFileSync(currentProductFile(), 'utf8'));\n-    const project = api.makeDefaultProject(); project.name = '画面サイズの保存';\n+    const project = makeRegressionProject(api); project.name = '画面サイズの保存';\n     project.stage.width = 900; project.stage.height = 600;\n     const text = api.serializeProject(project, api.makeDefaultAssetStore());\n     await openFile(p, {name: 'size.akari.md', mimeType: 'text/plain', buffer: Buffer.from(text)});\n@@ -212,7 +213,7 @@\n     assert.equal(await p.evaluate(() => Akari.app.project.appVersion), (\"\"+currentProductVersion()+\"\")); await assertFit(p);\n     assert.equal(await p.evaluate(() => Akari.app.project.stage.height), 600);\n     const before = await state(p);\n-    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replace('\"formatVersion\": 1', '\"formatVersion\": 2'))});\n+    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replace('\"formatVersion\": 2', '\"formatVersion\": 1'))});\n     await p.waitForFunction(() => /F\\d{3}/.test(document.querySelector('#console').textContent));\n     assert.deepEqual(await state(p), before, 'unsupported-format rejection retains current work');\n   },\n@@ -240,7 +241,7 @@\n     try {\n       const evidence = await pageFor(browser, currentProductFile(), async p => {\n         p.on('dialog', d => d.accept()); await p.setViewportSize({width: 1440, height: 900});\n-        return await run(p);\n+        await installRegressionProject(p);return await run(p);\n       });\n       results.push({id, pass: true, detail: 'PASS', evidence}); console.log('PASS ' + id);\n     } catch (error) { results.push({id, pass: false, detail: error.stack}); console.error('FAIL ' + id + ': ' + error.message); }\n"
+    },
+    {
+      "path": "audit/tests/dom-render-regression.cjs",
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "originalSha256": "30213264cf6d80f0ae7362c8a9898555b403ff03a458eed879a9eb43359a6f90",
+      "candidateSha256": "0cebf0ccdcca54b153d2f75d689a1107b814ce8edfc8568d12f470f310ad2ed1",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/dom-render-regression.cjs",
+      "ids": [
+        "dom-render-regression"
+      ],
+      "assertionCalls": {
+        "old": 10,
+        "new": 10
+      },
+      "diff": "--- baseline/audit/tests/dom-render-regression.cjs\n+++ audit/tests/dom-render-regression.cjs\n@@ -1,3 +1,4 @@\n+const {makeRegressionProject}=require('../fixtures/regression-project.cjs');\n const { currentProductFile } = require(\"./../lib/product-path.cjs\");\n // Simulate synchronous removal events using the actual product view. Real browser tests remain mandatory.\n const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),{JSDOM,VirtualConsole}=require('jsdom');\n@@ -7,7 +8,7 @@\n  let script=html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>'));\n  script=script.replace(\"  const Akari = {\",\"  globalThis.__view = createBlockEditorView;\\n  const Akari = {\");\n  const ctx={console,TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,Blob,URL,structuredClone,crypto:require('crypto').webcrypto,setTimeout,clearTimeout,AbortController:w.AbortController};\n- vm.runInNewContext(script,ctx);const api=ctx.Akari,p=api.makeDefaultProject(),source='3 が 8 未満の間、次のことを繰り返す ※ 頭  \\n  3 を 点数 に 加える ※ 本文  \\n「😀」 という\\n';\n+ vm.runInNewContext(script,ctx);ctx.document=w.document;const api=ctx.Akari,p=makeRegressionProject(api),source='3 が 8 より小さい間、次のことを繰り返す ※ 頭  \\n  3 を 点数 に 加える ※ 本文  \\n「😀」 という\\n';\n  p.scripts=[{targetId:'stage',event:'start',source}];let s=api.createEditorSession('script:stage:start',source,{targetId:'stage',event:'start'},p,4);s.mode='blocks';let calls=0;\n  const root=w.document.querySelector('#root');const view=ctx.__view({root,getSession:()=>s,getProject:()=>p,onPending:value=>s.pendingEdit=value,onOperation:op=>{calls++;const result=api.prepareBlockEdit(s,op,{pendingEditId:s.pendingEdit?.id});Object.assign(s,result);s.pendingEdit=null;return {ok:true,changed:result.changed};}});\n  const world=root.querySelector('.blockui-world');assert(world);\n@@ -21,7 +22,7 @@\n const html=fs.readFileSync(currentProductFile(),'utf8'),good=check(html);\n assert.deepEqual(good.errors,[]);assert.equal(good.calls,1);assert.equal(good.blurChanges,1);\n assert.equal(good.focused,true);assert.equal(good.pending,false);assert.equal(good.ok,true);\n-assert.equal(good.source,'4 が 8 未満の間、次のことを繰り返す ※ 頭  \\n  3 を 点数 に 加える ※ 本文  \\n「😀」 という\\n');\n+assert.equal(good.source,'4 が 8 より小さい間、次のことを繰り返す ※ 頭  \\n  3 を 点数 に 加える ※ 本文  \\n「😀」 という\\n');\n const guard='        if (rendering || committing || !input.isConnected) return;';\n assert.equal(html.split(guard).length,3);\n const bad=check(html.replaceAll(guard,'').replace('destroyed || committing || rendering','destroyed || committing'));\n"
+    },
+    {
+      "path": "audit/tests/ci-regression.mjs",
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "originalSha256": "df52941ec0d33b0e893c20c5a57fd766c4e546a75740593ecd92f7507000537f",
+      "candidateSha256": "df52941ec0d33b0e893c20c5a57fd766c4e546a75740593ecd92f7507000537f",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ci-regression.mjs",
+      "ids": [
+        "ci-regression",
+        "native-focus-adapter"
+      ],
+      "assertionCalls": {
+        "old": 33,
+        "new": 33
+      },
+      "diff": ""
+    },
+    {
+      "path": "audit/tests/execution-continuity.mjs",
+      "sourceCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+      "originalSha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35",
+      "candidateSha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788",
+      "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+      "ids": [
+        "gate-continuity:-1",
+        "gate-continuity:0",
+        "gate-continuity:12",
+        "gate-continuity:24",
+        "aggregate:pass",
+        "aggregate:static",
+        "aggregate:selftest",
+        "aggregate:audio-codecs-linux",
+        "aggregate:audio-codecs-win32",
+        "aggregate:full-browser-session",
+        "aggregate:full-browser-ui",
+        "aggregate:full-browser-limits",
+        "aggregate:full-browser-schemas",
+        "aggregate:full-browser-extra",
+        "aggregate:missing-jobs",
+        "aggregate:empty-jobs",
+        "aggregate:cancelled-job",
+        "aggregate:missing-job",
+        "aggregate:unexpected-job",
+        "bundle:valid",
+        "bundle:missing-file",
+        "bundle:extra-file",
+        "bundle:changed-bytes",
+        "bundle:changed-snapshot",
+        "bundle:changed-provenance",
+        "bundle:changed-kind",
+        "bundle:changed-result",
+        "bundle:rehashed-failure",
+        "freeze-record-and-verify",
+        "freeze-changed-file-refused"
+      ],
+      "assertionCalls": {
+        "old": 13,
+        "new": 13
+      },
+      "diff": "--- baseline/audit/tests/execution-continuity.mjs\n+++ audit/tests/execution-continuity.mjs\n@@ -12,7 +12,8 @@\n const relaxed={...assert,deepEqual:(a,b,m)=>assert.deepEqual(clone(a),clone(b),m)};\n const source=fs.readFileSync('audit/run-local-gate.mjs','utf8').replace(/^import .*;\\r?\\n/gm,'');\n const expected=gateSteps('/browser','/evidence').map(s=>s[0]);\n-for(const failureAt of [-1,0,Math.floor(expected.length/2),expected.length-1])check('gate-continuity:'+failureAt,()=>{\n+// Keep baseline IDs stable when new gate steps are registered; still inject at the current first/middle/last steps.\n+for(const [id,failureAt] of [['gate-continuity:-1',-1],['gate-continuity:0',0],['gate-continuity:12',Math.floor(expected.length/2)],['gate-continuity:24',expected.length-1]])check(id,()=>{\n   let launched=0,verified=0;const written=new Map();\n   const process={argv:['node','runner','/browser','/evidence'],execPath:'/node'};\n   const cp={spawnSync(){const i=launched++;return {status:i===failureAt?1:0,signal:null,stdout:'',stderr:''};}};\n"
+    }
+  ],
+  "entries": [
+    {
+      "id": "normal-product",
+      "file": "audit/tests/normal-product.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/normal-product.mjs",
+        "sha256": "ec46d7e0ae5d2edbadbaee2301214b865503b433ac6884d68b1b9026398b1bb5"
+      },
+      "new": {
+        "sourcePath": "audit/tests/normal-product.mjs",
+        "sha256": "cf40662804016f21d0f8c33b0b47dccd89b5515c2374b9da400d67997fcc5694"
+      },
+      "preservedMeaning": "No test exports/injection execution; exact source survives code/block/save/reload; offline player output and stop; fresh-context storage/listener/global isolation.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-COMPLETE-REGISTRY",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-REJECT-UNOWNED-AT-BOUNDARIES",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-SAVE-ROUNDTRIP",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-FORMAT-REJECTION",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-CALLER-RECEIVER-AND-FUNCTION",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-REFERENCES-INCLUDING-EXPRESSION",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-INCOMPLETE-AND-UNUSED",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-GUI-DIRECT-BUTTON",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-GUI-ALL-EVENTS",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-GUI-UNUSED-STAGE-DEFINITIONS",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-GUI-SYNTAX-ERROR-RAW-BODY",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Unfinished source remains visible and fully recoverable without corrupting the valid project or history; explicit cancellation restores the prior owner source.",
+      "status": "explicit-contract-migration",
+      "contractChange": {
+        "old": "Unfinished source was registered and appeared as a raw card in the overview.",
+        "new": "Unfinished source stays exactly in codeEditor; overview transition is blocked; valid project and history stay unchanged; DESIGN state prevents execution; explicit cancel restores the registered source. Blocks button must be disabled for the unfinished syntax; do not attempt to click a disabled control.",
+        "reason": "仕様書11 / 設計書9 define an atomic pending edit. Parent explicitly approved this replacement guarantee; the former raw overview card would require registering invalid code."
+      }
+    },
+    {
+      "id": "OWNER-GUI-DRAFT-OWNERSHIP",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration",
+      "contractChange": {
+        "old": "Save an invalid callable draft as registered source, retaining owner.",
+        "new": "Retain exact invalid draft and owner while rejecting registration; cancel it, then atomically register a valid comment plus the same return7 under the same owner.",
+        "reason": "仕様書11 / 設計書9 require failed edits to remain pending without replacing valid source. Definition owner, source preservation before save, and successful explicit registration remain tested."
+      }
+    },
+    {
+      "id": "OWNER-GUI-RECURSION-AND-HIDDEN-OBJECT",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "OWNER-GUI-VIEWPORT-AND-UNDO-REACHABILITY",
+      "file": "audit/tests/source-ownership.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+        "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+      },
+      "new": {
+        "sourcePath": "audit/tests/source-ownership.mjs",
+        "sha256": "eeebb454138e3686b1ce785c767d87ba83b114261a02ce81feaa53c41c3a1239"
+      },
+      "preservedMeaning": "Complete unique owner registry, caller identity/result6, references including nested expressions, corrupt-owner/format rejection, no-edit source ownership, direct editor selection/history, read-only previews, draft ownership, recursion references and viewport reachability.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "UI-BUTTON-SOURCE-NAV",
+      "file": "audit/tests/ui-buttons.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ui-buttons.mjs",
+        "sha256": "af0120f8e986d51cd8356a1f42b404366ead6fb1ae21a1858f906cf9acbe3409"
+      },
+      "new": {
+        "sourcePath": "audit/tests/ui-buttons.mjs",
+        "sha256": "86faa0d1885d5f947eba3b6f411ff6c832b9142dc75bdb4136d5cd1bbaad754b"
+      },
+      "preservedMeaning": "Visible/reachable controls, basic/advanced stored settings, code/block undo/redo, one history transaction, cancellation nonmutation, readonly-invalid fields, callable registration separation, all4 insertion boundaries, 24px hit targets, touchscreen and 5 viewports.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "UI-BUTTON-BASIC-HISTORY",
+      "file": "audit/tests/ui-buttons.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ui-buttons.mjs",
+        "sha256": "af0120f8e986d51cd8356a1f42b404366ead6fb1ae21a1858f906cf9acbe3409"
+      },
+      "new": {
+        "sourcePath": "audit/tests/ui-buttons.mjs",
+        "sha256": "86faa0d1885d5f947eba3b6f411ff6c832b9142dc75bdb4136d5cd1bbaad754b"
+      },
+      "preservedMeaning": "Visible/reachable controls, basic/advanced stored settings, code/block undo/redo, one history transaction, cancellation nonmutation, readonly-invalid fields, callable registration separation, all4 insertion boundaries, 24px hit targets, touchscreen and 5 viewports.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "UI-BUTTON-SIDE-ACTIONS",
+      "file": "audit/tests/ui-buttons.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ui-buttons.mjs",
+        "sha256": "af0120f8e986d51cd8356a1f42b404366ead6fb1ae21a1858f906cf9acbe3409"
+      },
+      "new": {
+        "sourcePath": "audit/tests/ui-buttons.mjs",
+        "sha256": "86faa0d1885d5f947eba3b6f411ff6c832b9142dc75bdb4136d5cd1bbaad754b"
+      },
+      "preservedMeaning": "Visible/reachable controls, basic/advanced stored settings, code/block undo/redo, one history transaction, cancellation nonmutation, readonly-invalid fields, callable registration separation, all4 insertion boundaries, 24px hit targets, touchscreen and 5 viewports.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "UI-BUTTON-LEVELS",
+      "file": "audit/tests/ui-buttons.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ui-buttons.mjs",
+        "sha256": "af0120f8e986d51cd8356a1f42b404366ead6fb1ae21a1858f906cf9acbe3409"
+      },
+      "new": {
+        "sourcePath": "audit/tests/ui-buttons.mjs",
+        "sha256": "86faa0d1885d5f947eba3b6f411ff6c832b9142dc75bdb4136d5cd1bbaad754b"
+      },
+      "preservedMeaning": "Visible/reachable controls, basic/advanced stored settings, code/block undo/redo, one history transaction, cancellation nonmutation, readonly-invalid fields, callable registration separation, all4 insertion boundaries, 24px hit targets, touchscreen and 5 viewports.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "UI-BUTTON-PENDING",
+      "file": "audit/tests/ui-buttons.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ui-buttons.mjs",
+        "sha256": "af0120f8e986d51cd8356a1f42b404366ead6fb1ae21a1858f906cf9acbe3409"
+      },
+      "new": {
+        "sourcePath": "audit/tests/ui-buttons.mjs",
+        "sha256": "86faa0d1885d5f947eba3b6f411ff6c832b9142dc75bdb4136d5cd1bbaad754b"
+      },
+      "preservedMeaning": "Visible/reachable controls, basic/advanced stored settings, code/block undo/redo, one history transaction, cancellation nonmutation, readonly-invalid fields, callable registration separation, all4 insertion boundaries, 24px hit targets, touchscreen and 5 viewports.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "UI-BUTTON-BLOCK-DESTINATION",
+      "file": "audit/tests/ui-buttons.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ui-buttons.mjs",
+        "sha256": "af0120f8e986d51cd8356a1f42b404366ead6fb1ae21a1858f906cf9acbe3409"
+      },
+      "new": {
+        "sourcePath": "audit/tests/ui-buttons.mjs",
+        "sha256": "86faa0d1885d5f947eba3b6f411ff6c832b9142dc75bdb4136d5cd1bbaad754b"
+      },
+      "preservedMeaning": "Visible/reachable controls, basic/advanced stored settings, code/block undo/redo, one history transaction, cancellation nonmutation, readonly-invalid fields, callable registration separation, all4 insertion boundaries, 24px hit targets, touchscreen and 5 viewports.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "UI-BUTTON-BLOCK-INSERTION",
+      "file": "audit/tests/ui-buttons.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ui-buttons.mjs",
+        "sha256": "af0120f8e986d51cd8356a1f42b404366ead6fb1ae21a1858f906cf9acbe3409"
+      },
+      "new": {
+        "sourcePath": "audit/tests/ui-buttons.mjs",
+        "sha256": "86faa0d1885d5f947eba3b6f411ff6c832b9142dc75bdb4136d5cd1bbaad754b"
+      },
+      "preservedMeaning": "Visible/reachable controls, basic/advanced stored settings, code/block undo/redo, one history transaction, cancellation nonmutation, readonly-invalid fields, callable registration separation, all4 insertion boundaries, 24px hit targets, touchscreen and 5 viewports.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "UI-BUTTON-BLOCK-COMMANDS",
+      "file": "audit/tests/ui-buttons.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ui-buttons.mjs",
+        "sha256": "af0120f8e986d51cd8356a1f42b404366ead6fb1ae21a1858f906cf9acbe3409"
+      },
+      "new": {
+        "sourcePath": "audit/tests/ui-buttons.mjs",
+        "sha256": "86faa0d1885d5f947eba3b6f411ff6c832b9142dc75bdb4136d5cd1bbaad754b"
+      },
+      "preservedMeaning": "Visible/reachable controls, basic/advanced stored settings, code/block undo/redo, one history transaction, cancellation nonmutation, readonly-invalid fields, callable registration separation, all4 insertion boundaries, 24px hit targets, touchscreen and 5 viewports.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "UI-BUTTON-RESPONSIVE",
+      "file": "audit/tests/ui-buttons.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ui-buttons.mjs",
+        "sha256": "af0120f8e986d51cd8356a1f42b404366ead6fb1ae21a1858f906cf9acbe3409"
+      },
+      "new": {
+        "sourcePath": "audit/tests/ui-buttons.mjs",
+        "sha256": "86faa0d1885d5f947eba3b6f411ff6c832b9142dc75bdb4136d5cd1bbaad754b"
+      },
+      "preservedMeaning": "Visible/reachable controls, basic/advanced stored settings, code/block undo/redo, one history transaction, cancellation nonmutation, readonly-invalid fields, callable registration separation, all4 insertion boundaries, 24px hit targets, touchscreen and 5 viewports.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "FIELD-SHORT-JAPANESE",
+      "file": "audit/tests/block-field-width.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/block-field-width.mjs",
+        "sha256": "0b00054e6ef69ec0dc17c59a9d6f1f79d11a5ad9080bb634f32dd43aeeb3fa14"
+      },
+      "new": {
+        "sourcePath": "audit/tests/block-field-width.mjs",
+        "sha256": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1"
+      },
+      "preservedMeaning": "All displayed field text fits measured typography, Unicode/combining marks retained, widths grow/shrink, font/zoom handling, long field tooltip/width ceiling, callable fields and clipping mutant rejection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "FIELD-MIXED-UNICODE",
+      "file": "audit/tests/block-field-width.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/block-field-width.mjs",
+        "sha256": "0b00054e6ef69ec0dc17c59a9d6f1f79d11a5ad9080bb634f32dd43aeeb3fa14"
+      },
+      "new": {
+        "sourcePath": "audit/tests/block-field-width.mjs",
+        "sha256": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1"
+      },
+      "preservedMeaning": "All displayed field text fits measured typography, Unicode/combining marks retained, widths grow/shrink, font/zoom handling, long field tooltip/width ceiling, callable fields and clipping mutant rejection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "FIELD-EDIT-GROW-SHRINK",
+      "file": "audit/tests/block-field-width.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/block-field-width.mjs",
+        "sha256": "0b00054e6ef69ec0dc17c59a9d6f1f79d11a5ad9080bb634f32dd43aeeb3fa14"
+      },
+      "new": {
+        "sourcePath": "audit/tests/block-field-width.mjs",
+        "sha256": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1"
+      },
+      "preservedMeaning": "All displayed field text fits measured typography, Unicode/combining marks retained, widths grow/shrink, font/zoom handling, long field tooltip/width ceiling, callable fields and clipping mutant rejection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "FIELD-FONT-CHANGE",
+      "file": "audit/tests/block-field-width.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/block-field-width.mjs",
+        "sha256": "0b00054e6ef69ec0dc17c59a9d6f1f79d11a5ad9080bb634f32dd43aeeb3fa14"
+      },
+      "new": {
+        "sourcePath": "audit/tests/block-field-width.mjs",
+        "sha256": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1"
+      },
+      "preservedMeaning": "All displayed field text fits measured typography, Unicode/combining marks retained, widths grow/shrink, font/zoom handling, long field tooltip/width ceiling, callable fields and clipping mutant rejection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "FIELD-ZOOM-BOUNDS",
+      "file": "audit/tests/block-field-width.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/block-field-width.mjs",
+        "sha256": "0b00054e6ef69ec0dc17c59a9d6f1f79d11a5ad9080bb634f32dd43aeeb3fa14"
+      },
+      "new": {
+        "sourcePath": "audit/tests/block-field-width.mjs",
+        "sha256": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1"
+      },
+      "preservedMeaning": "All displayed field text fits measured typography, Unicode/combining marks retained, widths grow/shrink, font/zoom handling, long field tooltip/width ceiling, callable fields and clipping mutant rejection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "FIELD-LONG-EDIT",
+      "file": "audit/tests/block-field-width.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/block-field-width.mjs",
+        "sha256": "0b00054e6ef69ec0dc17c59a9d6f1f79d11a5ad9080bb634f32dd43aeeb3fa14"
+      },
+      "new": {
+        "sourcePath": "audit/tests/block-field-width.mjs",
+        "sha256": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1"
+      },
+      "preservedMeaning": "All displayed field text fits measured typography, Unicode/combining marks retained, widths grow/shrink, font/zoom handling, long field tooltip/width ceiling, callable fields and clipping mutant rejection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "FIELD-CALLABLE",
+      "file": "audit/tests/block-field-width.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/block-field-width.mjs",
+        "sha256": "0b00054e6ef69ec0dc17c59a9d6f1f79d11a5ad9080bb634f32dd43aeeb3fa14"
+      },
+      "new": {
+        "sourcePath": "audit/tests/block-field-width.mjs",
+        "sha256": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1"
+      },
+      "preservedMeaning": "All displayed field text fits measured typography, Unicode/combining marks retained, widths grow/shrink, font/zoom handling, long field tooltip/width ceiling, callable fields and clipping mutant rejection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "FIELD-CLIPPING-ORACLE",
+      "file": "audit/tests/block-field-width.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/block-field-width.mjs",
+        "sha256": "0b00054e6ef69ec0dc17c59a9d6f1f79d11a5ad9080bb634f32dd43aeeb3fa14"
+      },
+      "new": {
+        "sourcePath": "audit/tests/block-field-width.mjs",
+        "sha256": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1"
+      },
+      "preservedMeaning": "All displayed field text fits measured typography, Unicode/combining marks retained, widths grow/shrink, font/zoom handling, long field tooltip/width ceiling, callable fields and clipping mutant rejection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "duplicate-types-settings-identities",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "duplicate-images-data-history",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "duplicate-limit",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "paint-entry-empty-focus",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "paint-tools-colors-fill",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "paint-history-cancelled-gesture",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "paint-crop-native-transparent-padding",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "paint-large-stage-fit",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "paint-discard",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "paint-failed-commit-preserves-drawing",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "paint-save-reload-export",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "paint-runtime-lock",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "paint-small-viewport-touch",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "format-contract-and-import",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "format-malformed-state-protection",
+      "file": "audit/tests/editor-assets.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+        "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+      },
+      "new": {
+        "sourcePath": "audit/tests/editor-assets.mjs",
+        "sha256": "dc61328ca1616f54cdee8ec0742bd09d515e85960fbe6e3717e304d72762f00e"
+      },
+      "preservedMeaning": "All5 component duplication capabilities, independent data/IDs, shared images, 500 component cap, drawing pixels/crop geometry, empty-draft/focus/modal cancellation, one history transaction, offline save/export and corrupt-current-format protection.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "DESIGN-ZOOM-FIT-CODE",
+      "file": "audit/tests/designer-zoom.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/designer-zoom.mjs",
+        "sha256": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c"
+      },
+      "new": {
+        "sourcePath": "audit/tests/designer-zoom.mjs",
+        "sha256": "daa183ce594b7ac57c7b788b6020efabbef8e8091d70b6fa11aceb8d3e0c05c4"
+      },
+      "preservedMeaning": "Stage dimensions, complete fit, exact zoom10..200%, scroll,60frame jitter<0.1px, pointer geometry<0.001, history/dirty preservation, runtime/pause states, byte-identical save, offline player and narrow touch.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "DESIGN-ZOOM-FIT-BLOCKS",
+      "file": "audit/tests/designer-zoom.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/designer-zoom.mjs",
+        "sha256": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c"
+      },
+      "new": {
+        "sourcePath": "audit/tests/designer-zoom.mjs",
+        "sha256": "daa183ce594b7ac57c7b788b6020efabbef8e8091d70b6fa11aceb8d3e0c05c4"
+      },
+      "preservedMeaning": "Stage dimensions, complete fit, exact zoom10..200%, scroll,60frame jitter<0.1px, pointer geometry<0.001, history/dirty preservation, runtime/pause states, byte-identical save, offline player and narrow touch.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "DESIGN-ZOOM-ZOOM-SCROLL",
+      "file": "audit/tests/designer-zoom.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/designer-zoom.mjs",
+        "sha256": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c"
+      },
+      "new": {
+        "sourcePath": "audit/tests/designer-zoom.mjs",
+        "sha256": "daa183ce594b7ac57c7b788b6020efabbef8e8091d70b6fa11aceb8d3e0c05c4"
+      },
+      "preservedMeaning": "Stage dimensions, complete fit, exact zoom10..200%, scroll,60frame jitter<0.1px, pointer geometry<0.001, history/dirty preservation, runtime/pause states, byte-identical save, offline player and narrow touch.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "DESIGN-ZOOM-STABLE-RESIZE",
+      "file": "audit/tests/designer-zoom.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/designer-zoom.mjs",
+        "sha256": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c"
+      },
+      "new": {
+        "sourcePath": "audit/tests/designer-zoom.mjs",
+        "sha256": "daa183ce594b7ac57c7b788b6020efabbef8e8091d70b6fa11aceb8d3e0c05c4"
+      },
+      "preservedMeaning": "Stage dimensions, complete fit, exact zoom10..200%, scroll,60frame jitter<0.1px, pointer geometry<0.001, history/dirty preservation, runtime/pause states, byte-identical save, offline player and narrow touch.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "DESIGN-ZOOM-POINTER-HISTORY",
+      "file": "audit/tests/designer-zoom.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/designer-zoom.mjs",
+        "sha256": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c"
+      },
+      "new": {
+        "sourcePath": "audit/tests/designer-zoom.mjs",
+        "sha256": "daa183ce594b7ac57c7b788b6020efabbef8e8091d70b6fa11aceb8d3e0c05c4"
+      },
+      "preservedMeaning": "Stage dimensions, complete fit, exact zoom10..200%, scroll,60frame jitter<0.1px, pointer geometry<0.001, history/dirty preservation, runtime/pause states, byte-identical save, offline player and narrow touch.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "DESIGN-ZOOM-RUNTIME",
+      "file": "audit/tests/designer-zoom.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/designer-zoom.mjs",
+        "sha256": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c"
+      },
+      "new": {
+        "sourcePath": "audit/tests/designer-zoom.mjs",
+        "sha256": "daa183ce594b7ac57c7b788b6020efabbef8e8091d70b6fa11aceb8d3e0c05c4"
+      },
+      "preservedMeaning": "Stage dimensions, complete fit, exact zoom10..200%, scroll,60frame jitter<0.1px, pointer geometry<0.001, history/dirty preservation, runtime/pause states, byte-identical save, offline player and narrow touch.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "DESIGN-ZOOM-SAVE-EXPORT",
+      "file": "audit/tests/designer-zoom.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/designer-zoom.mjs",
+        "sha256": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c"
+      },
+      "new": {
+        "sourcePath": "audit/tests/designer-zoom.mjs",
+        "sha256": "daa183ce594b7ac57c7b788b6020efabbef8e8091d70b6fa11aceb8d3e0c05c4"
+      },
+      "preservedMeaning": "Stage dimensions, complete fit, exact zoom10..200%, scroll,60frame jitter<0.1px, pointer geometry<0.001, history/dirty preservation, runtime/pause states, byte-identical save, offline player and narrow touch.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "DESIGN-ZOOM-FORMAT",
+      "file": "audit/tests/designer-zoom.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/designer-zoom.mjs",
+        "sha256": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c"
+      },
+      "new": {
+        "sourcePath": "audit/tests/designer-zoom.mjs",
+        "sha256": "daa183ce594b7ac57c7b788b6020efabbef8e8091d70b6fa11aceb8d3e0c05c4"
+      },
+      "preservedMeaning": "Stage dimensions, complete fit, exact zoom10..200%, scroll,60frame jitter<0.1px, pointer geometry<0.001, history/dirty preservation, runtime/pause states, byte-identical save, offline player and narrow touch.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "DESIGN-ZOOM-NARROW-TOUCH",
+      "file": "audit/tests/designer-zoom.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/designer-zoom.mjs",
+        "sha256": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c"
+      },
+      "new": {
+        "sourcePath": "audit/tests/designer-zoom.mjs",
+        "sha256": "daa183ce594b7ac57c7b788b6020efabbef8e8091d70b6fa11aceb8d3e0c05c4"
+      },
+      "preservedMeaning": "Stage dimensions, complete fit, exact zoom10..200%, scroll,60frame jitter<0.1px, pointer geometry<0.001, history/dirty preservation, runtime/pause states, byte-identical save, offline player and narrow touch.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "dom-render-regression",
+      "file": "audit/tests/dom-render-regression.cjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/dom-render-regression.cjs",
+        "sha256": "30213264cf6d80f0ae7362c8a9898555b403ff03a458eed879a9eb43359a6f90"
+      },
+      "new": {
+        "sourcePath": "audit/tests/dom-render-regression.cjs",
+        "sha256": "0cebf0ccdcca54b153d2f75d689a1107b814ce8edfc8568d12f470f310ad2ed1"
+      },
+      "preservedMeaning": "Real view simulated DOM: exactly1 commit and1 synchronous removal blur, focus restored, pending cleared, only edited numeric source changed; unguarded mutant commits2 and raises reentrant replacement error.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "ci-regression",
+      "file": "audit/tests/ci-regression.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ci-regression.mjs",
+        "sha256": "df52941ec0d33b0e893c20c5a57fd766c4e546a75740593ecd92f7507000537f"
+      },
+      "new": {
+        "sourcePath": "audit/tests/ci-regression.mjs",
+        "sha256": "df52941ec0d33b0e893c20c5a57fd766c4e546a75740593ecd92f7507000537f"
+      },
+      "preservedMeaning": "Actual350ms product click guard; fresh page context isolation and cleanup after failure;15 invalid environment receipts rejected; owning CDP session focus emulation and4 bad/error paths rejected.",
+      "status": "unchanged"
+    },
+    {
+      "id": "native-focus-adapter",
+      "file": "audit/tests/ci-regression.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/ci-regression.mjs",
+        "sha256": "df52941ec0d33b0e893c20c5a57fd766c4e546a75740593ecd92f7507000537f"
+      },
+      "new": {
+        "sourcePath": "audit/tests/ci-regression.mjs",
+        "sha256": "df52941ec0d33b0e893c20c5a57fd766c4e546a75740593ecd92f7507000537f"
+      },
+      "preservedMeaning": "Actual350ms product click guard; fresh page context isolation and cleanup after failure;15 invalid environment receipts rejected; owning CDP session focus emulation and4 bad/error paths rejected.",
+      "status": "unchanged"
+    },
+    {
+      "id": "gate-continuity:-1",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "gate-continuity:0",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "gate-continuity:12",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "gate-continuity:24",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:pass",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:static",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:selftest",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:audio-codecs-linux",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:audio-codecs-win32",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:full-browser-session",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:full-browser-ui",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:full-browser-limits",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:full-browser-schemas",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:full-browser-extra",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:missing-jobs",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:empty-jobs",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:cancelled-job",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:missing-job",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "aggregate:unexpected-job",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "bundle:valid",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "bundle:missing-file",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "bundle:extra-file",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "bundle:changed-bytes",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "bundle:changed-snapshot",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "bundle:changed-provenance",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "bundle:changed-kind",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "bundle:changed-result",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "bundle:rehashed-failure",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "freeze-record-and-verify",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    },
+    {
+      "id": "freeze-changed-file-refused",
+      "file": "audit/tests/execution-continuity.mjs",
+      "old": {
+        "sourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+        "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+      },
+      "new": {
+        "sourcePath": "audit/tests/execution-continuity.mjs",
+        "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+      },
+      "preservedMeaning": "Every gate step and evidence bundle still inspected after injected failures; canceled/missing jobs reject; bundle file/hash/provenance/state mutations reject; freeze record/verify refuses changed sources.",
+      "status": "explicit-contract-migration"
+    }
+  ],
+  "counts": {
+    "files": 9,
+    "ids": 89,
+    "perFile": {
+      "audit/tests/normal-product.mjs": 1,
+      "audit/tests/source-ownership.mjs": 14,
+      "audit/tests/ui-buttons.mjs": 9,
+      "audit/tests/block-field-width.mjs": 8,
+      "audit/tests/editor-assets.mjs": 15,
+      "audit/tests/designer-zoom.mjs": 9,
+      "audit/tests/dom-render-regression.cjs": 1,
+      "audit/tests/ci-regression.mjs": 2,
+      "audit/tests/execution-continuity.mjs": 30
+    }
+  },
+  "helpers": [
+    {
+      "path": "audit/lib/gate-ui-fixture.mjs",
+      "sha256": "375e1a5951ddf201c9e6af15ef77fcd401d902985d3b8265b833bad86f92aa1c",
+      "meaning": "Actual UI import of baseline fixture plus visible UI selection; no product API replacement."
+    }
+  ]
+}

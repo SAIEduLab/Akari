@@ -53,9 +53,10 @@ export async function pageFor(browser, product, fn) {
 }
 export function suiteExpression(name) {
   if (!/^run[A-Za-z0-9]+Tests(?:\d+)?$/.test(name)) throw Error('Invalid suite name');
+  const fixture=fs.readFileSync(path.join(root,'audit/fixtures/regression-project.cjs'),'utf8');
   const bindings=fs.readFileSync(path.join(root,'audit/suites/bindings.js'),'utf8');
   const body=fs.readFileSync(path.join(root,'audit/suites',name+'.js'),'utf8');
-  return `(async () => {\n${bindings}\n${body}\nreturn await ${name}();\n})()`;
+  return `(async () => {\n${fixture}\n${bindings}\n${body}\nreturn await ${name}();\n})()`;
 }
 export async function externalReports(browser, product, names) {
   if(!names.length || new Set(names).size!==names.length) throw Error('Empty or duplicate suite registration');

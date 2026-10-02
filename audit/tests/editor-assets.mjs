@@ -1,7 +1,9 @@
+import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
 import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
@@ -13,7 +15,7 @@ const artifacts = path.join(path.dirname(output), 'editor-assets');
 fs.mkdirSync(artifacts, {recursive:true});
 const inputs = snapshot(currentProductFile()), results = [], pageErrors = [], networkRequests = [];
 const fixtureApi = loadApi(fs.readFileSync(currentProductFile(),'utf8'));
-const savedProject = fixtureApi.makeDefaultProject();
+const savedProject = makeRegressionProject(fixtureApi);
 savedProject.name = '作品の保存確認';
 const savedFile = fixtureApi.serializeProject(savedProject, fixtureApi.makeDefaultAssetStore());
 async function reveal(locator) {
@@ -207,7 +209,7 @@ const cases = {
     await p.screenshot({path:path.join(artifacts,'drawing-mobile.png'),fullPage:true});
   },
   async 'format-contract-and-import'(p) {
-    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:1,runtimeContractId:1,programFormatVersion:1,projectFormatVersion:1});
+    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2});
     await p.locator('#fileInput').setInputFiles({name:'saved-project.akari.md',mimeType:'text/plain',buffer:Buffer.from(savedFile)});
     await p.waitForFunction(()=>Akari.app.project.name==='作品の保存確認'&&Akari.app.editorState.state==='DESIGN');
     assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),(""+currentProductVersion()+""));
@@ -216,10 +218,72 @@ const cases = {
   },
   async 'format-malformed-state-protection'(p) {
     const before=await state(p);
-    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": 1','"languageContractId": 2'),savedFile.replace('"formatVersion": 1','"formatVersion": "1"')]) {
+    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": 2','"languageContractId": 1'),savedFile.replace('"formatVersion": 2','"formatVersion": "2"')]) {
       const result=await p.evaluate(async text=>{try{await Akari.parseProjectFile(text);return 'accepted';}catch(e){return e.code;}},text);
       assert.notEqual(result,'accepted');assert.deepEqual(await state(p),before);
     }
+  },
+  async 'mascot-dango-original-save-standalone'(p) {
+    const expected='0af5226c316282da698bdaa08b52e3fac2a290736cdf70bbe2da9c6e4cba7b86';
+    const mascot=p.locator('[data-sprite-preset="akariMascot"]'),dango=p.locator('[data-sprite-preset="dango"]');
+    assert.equal(await mascot.count(),1,'the original mascot choice is retained');
+    assert.equal(await dango.count(),1);
+    assert.equal((await dango.locator('xpath=ancestor::details[1]').locator('summary').innerText()).replace(/\s+/g,''),'マスコット2種');
+    await p.waitForFunction(()=>{
+      const i=document.querySelector('[data-sprite-preset="dango"] img');
+      return i?.complete&&i.naturalWidth===1254&&i.naturalHeight===1254;
+    });
+    const thumbnailPixels=await dango.locator('img').evaluate(async i=>{
+      const cv=document.createElement('canvas');cv.width=i.naturalWidth;cv.height=i.naturalHeight;
+      const ctx=cv.getContext('2d');ctx.drawImage(i,0,0);
+      return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',ctx.getImageData(0,0,cv.width,cv.height).data)),b=>b.toString(16).padStart(2,'0')).join('');
+    });
+    await (await reveal(dango)).click();
+    const first=await current(p);
+    assert.equal(first.name,'だんご');assert.equal(first.w,180);assert.equal(first.h,180);
+    const image=await imageInfo(p);
+    assert.equal(image.width,1254);assert.equal(image.height,1254);assert.equal(image.first[3],0,'the original alpha channel remains transparent');
+    const asset=await p.evaluate(id=>{
+      const c=Akari.app.project.components.find(c=>c.id===id),a=Akari.app.assetStore.get(c.costumes[0].assetId);
+      return {id:a.id,sha256:a.sha256,byteLength:a.byteLength,meta:a.meta};
+    },first.id);
+    assert.equal(asset.sha256,expected);assert.equal(asset.byteLength,1294239);assert.deepEqual(asset.meta,{width:1254,height:1254});
+    const originalPixels=await p.evaluate(async id=>{
+      const c=Akari.app.project.components.find(c=>c.id===id),a=Akari.app.assetStore.get(c.costumes[0].assetId),
+        bitmap=await createImageBitmap(new Blob([a.bytes],{type:a.mime})),cv=document.createElement('canvas');
+      cv.width=bitmap.width;cv.height=bitmap.height;const ctx=cv.getContext('2d');ctx.drawImage(bitmap,0,0);bitmap.close();
+      return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',ctx.getImageData(0,0,cv.width,cv.height).data)),b=>b.toString(16).padStart(2,'0')).join('');
+    },first.id);
+    assert.equal(thumbnailPixels,originalPixels,'the palette decodes the same original pixels');
+    await p.screenshot({path:path.join(artifacts,'dango-preset.png'),fullPage:true});
+    await (await reveal(dango)).click();const second=await current(p);
+    assert.notEqual(second.name,first.name);assert.equal(second.costumes[0].assetId,asset.id,'repeated placement shares one original PNG');
+    const charged=await p.evaluate(expected=>Array.from(Akari.app.assetStore.snapshotRefs().values()).filter(a=>a.sha256===expected).map(a=>a.byteLength),expected);
+    assert.deepEqual(charged,[1294239]);
+    await click(p,'#undoBtn');assert.equal(await p.evaluate(id=>Akari.app.project.components.some(c=>c.id===id),second.id),false);
+    await click(p,'#redoBtn');assert.equal(await p.evaluate(id=>Akari.app.project.components.some(c=>c.id===id),second.id),true);
+    const saved=path.join(artifacts,'dango.akari.md');let pending=p.waitForEvent('download');await click(p,'#saveBtn');await (await pending).saveAs(saved);
+    const text=fs.readFileSync(saved,'utf8');assert.ok(Buffer.byteLength(text)<fixtureApi.LIMITS.fileBytes);
+    const restored=await p.evaluate(async text=>{
+      const r=await Akari.parseProjectFile(text),a=Array.from(r.assetStore.snapshotRefs().values()).find(a=>a.sha256==='0af5226c316282da698bdaa08b52e3fac2a290736cdf70bbe2da9c6e4cba7b86');
+      return {sha256:a.sha256,byteLength:a.byteLength,components:r.project.components.filter(c=>c.costumes?.some(co=>co.assetId===a.id)).map(c=>({name:c.name,w:c.w,h:c.h}))};
+    },text);
+    assert.equal(restored.sha256,expected);assert.equal(restored.byteLength,1294239);assert.deepEqual(restored.components,[{name:first.name,w:180,h:180},{name:second.name,w:180,h:180}]);
+    await click(p,'#newBtn');await p.locator('#fileInput').setInputFiles(saved);
+    await p.waitForFunction(id=>Akari.app.project.components.some(c=>c.id===id),second.id);await select(p,second.id);
+    assert.deepEqual(await imageInfo(p),image,'save and reload preserve decoded pixels');
+    const generated=path.join(artifacts,'dango.html');pending=p.waitForEvent('download');await click(p,'#exportBtn');await (await pending).saveAs(generated);
+    const html=fs.readFileSync(generated,'utf8');assert.ok(html.includes(expected));
+    const raw=Array.from(html.matchAll(/"dataBase64"\s*:\s*"([A-Za-z0-9+/=]+)"/g),match=>Buffer.from(match[1],'base64'));
+    assert.ok(raw.some(bytes=>bytes.length===1294239&&createHash('sha256').update(bytes).digest('hex')===expected),'standalone HTML carries the exact original PNG');
+    await p.goto(pathToFileURL(path.resolve(generated)).href);await p.locator('#playerStart').click();
+    await p.waitForFunction(()=>Array.from(document.querySelectorAll('#formSurface .costume-img')).some(i=>i.complete&&i.naturalWidth===1254&&i.naturalHeight===1254));
+    const shown=await p.evaluate(()=>{
+      const i=Array.from(document.querySelectorAll('#formSurface .costume-img')).find(i=>i.naturalWidth===1254),c=i.closest('.component'),canvas=document.createElement('canvas');
+      canvas.width=1254;canvas.height=1254;canvas.getContext('2d').drawImage(i,0,0);
+      return {width:c.style.width,height:c.style.height,fit:getComputedStyle(i).objectFit,alpha:canvas.getContext('2d').getImageData(0,0,1,1).data[3]};
+    });
+    assert.deepEqual(shown,{width:'180px',height:'180px',fit:'fill',alpha:0},'standalone displays the square original at the requested size without cropping');
   },
 };
 assert.deepEqual(Object.keys(cases).sort(),[...editorAssetIds].sort());
@@ -232,7 +296,7 @@ await withBrowser(browserPath,async browser=>{
         await p.setViewportSize({width:1440,height:1100});p.acceptDialogs=true;p.dialogLog=[];
         p.on('dialog',d=>{p.dialogLog.push(d.message());return p.acceptDialogs?d.accept():d.dismiss();});
         p.on('pageerror',e=>pageErrors.push(id+': '+e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))networkRequests.push(r.url());});
-        try { await run(p); } catch(e) { await p.screenshot({path:path.join(artifacts,id+'-failure.png'),fullPage:true}).catch(()=>{}); throw e; }
+        try { await installRegressionProject(p); await run(p); } catch(e) { await p.screenshot({path:path.join(artifacts,id+'-failure.png'),fullPage:true}).catch(()=>{}); throw e; }
       });
       results.push({id,pass:true,detail:'PASS'});console.log('PASS '+id);
     } catch(error) { results.push({id,pass:false,detail:error.stack});console.error('FAIL '+id+': '+error.message); }

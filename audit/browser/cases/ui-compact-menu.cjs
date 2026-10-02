@@ -1,3 +1,4 @@
+const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Bounded real pointer QA for compact block menus. No forced or hidden clicks.
 // node audit-evidence/browser/ui-compact-menu.cjs [html] [output-prefix]
@@ -33,7 +34,7 @@ const hash=()=>crypto.createHash('sha256').update(fs.readFileSync(html)).digest(
   return{...geometry,reachable};
  }
  try{
-  await page.goto(pathToFileURL(html).href);await fixture(Array.from({length:12},(_,i)=>(i+1)+'と言う。').join('\n'));
+  await page.goto(pathToFileURL(html).href);await setupRegressionPage(page);await fixture(Array.from({length:12},(_,i)=>(i+1)+'を言う。').join('\n'));
   const before=await state();
   await run('UI-MENU-left-first-number',async()=>{
    const node=nodes('NumberLiteral').first(),evidence=await menuEvidence(node);await (await reveal(node.locator(':scope > .blockui-node-head [data-blockui-action="move"]'))).click();

@@ -1,0 +1,115 @@
+{
+  "schema": "akari-editor-v2-input-migration-v1",
+  "baselineCommit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+  "originalPath": "audit/suites/runEditorCoreTests.js",
+  "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/suites/runEditorCoreTests.js",
+  "originalSha256": "1ba4c1a823222c98354eaf1dced477880e147776f04a8e67017c37db31419454",
+  "candidateSha256": "f74dd6f43beb4cf59e1e6d0057d775b917293dc6c4cbabb670ebb358fabd42eb",
+  "testCount": 21,
+  "stableIdsPreserved": true,
+  "policy": "Syntax-only input and exact-source spelling migration. Numeric, timing, state, transaction and failure assertions remain unchanged. No tests skipped or deleted.",
+  "changes": [
+    {
+      "testId": "TEST-EDITOR creation refresh and syntax error preserve source",
+      "oldText": "もし 真なら、次のことをする",
+      "newText": "もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする",
+      "preservedMeaning": "The constant true predicate and its branch are unchanged; use the explicit predicate noun form."
+    },
+    {
+      "testId": "TEST-EDITOR creation refresh and syntax error preserve source",
+      "oldText": "もし 真なら、次のことをする",
+      "newText": "もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする",
+      "preservedMeaning": "The constant true predicate and its branch are unchanged; use the explicit predicate noun form."
+    },
+    {
+      "testId": "TEST-EDITOR else and multiline comments are atomic",
+      "oldText": "もし 真なら、次のことをする",
+      "newText": "もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする",
+      "preservedMeaning": "The constant true predicate and its branch are unchanged; use the explicit predicate noun form."
+    },
+    {
+      "testId": "TEST-EDITOR context refresh preserves edited IDs selection and rebuilt node maps",
+      "oldText": "1と言う",
+      "newText": "1を言う",
+      "preservedMeaning": "Read and say numeric value 1, preserving its output and source order."
+    },
+    {
+      "testId": "TEST-EDITOR context refresh preserves edited IDs selection and rebuilt node maps",
+      "oldText": "1と言う",
+      "newText": "1を言う",
+      "preservedMeaning": "Read and say numeric value 1, preserving its output and source order."
+    },
+    {
+      "testId": "TEST-EDITOR context refresh preserves edited IDs selection and rebuilt node maps",
+      "oldText": "1と言う",
+      "newText": "1を言う",
+      "preservedMeaning": "Read and say numeric value 1, preserving its output and source order."
+    },
+    {
+      "testId": "TEST-EDITOR availability preview preserves pending transaction and commit gate",
+      "oldText": "1と言う",
+      "newText": "1を言う",
+      "preservedMeaning": "Read and say numeric value 1, preserving its output and source order."
+    },
+    {
+      "testId": "TEST-EDITOR context refresh preserves edited IDs selection and rebuilt node maps",
+      "oldText": "2と言う",
+      "newText": "2を言う",
+      "preservedMeaning": "Read and say numeric value 2, preserving its output and source order."
+    },
+    {
+      "testId": "TEST-EDITOR availability preview preserves pending transaction and commit gate",
+      "oldText": "2と言う",
+      "newText": "2を言う",
+      "preservedMeaning": "Read and say numeric value 2, preserving its output and source order."
+    },
+    {
+      "testId": "TEST-EDITOR context refresh preserves edited IDs selection and rebuilt node maps",
+      "oldText": "9と言う",
+      "newText": "9を言う",
+      "preservedMeaning": "Read and say numeric value 9, preserving its output and source order."
+    },
+    {
+      "testId": "TEST-EDITOR variadic insertion removal and move preserve arity errors",
+      "oldText": "最小（1、2、3）と言う",
+      "newText": "最小（1、2、3）を言う",
+      "preservedMeaning": "Evaluate the same minimum builtin with the same three ordered numeric operands."
+    },
+    {
+      "testId": "TEST-EDITOR statement moves reorder and nest with comments",
+      "oldText": "次のことを2回くり返す",
+      "newText": "2回くり返す",
+      "preservedMeaning": "Execute exactly the same loop body twice."
+    },
+    {
+      "testId": "TEST-EDITOR required body removal and invalid field leave everything",
+      "oldText": "次のことを2回くり返す",
+      "newText": "2回くり返す",
+      "preservedMeaning": "Execute exactly the same loop body twice."
+    },
+    {
+      "testId": "TEST-EDITOR comment closing boundary reassociation keeps IDs and content",
+      "oldText": "次のことを2回くり返す",
+      "newText": "2回くり返す",
+      "preservedMeaning": "Execute exactly the same loop body twice."
+    },
+    {
+      "testId": "TEST-EDITOR availability generated names stay valid through collision boundary",
+      "oldText": "名前一覧の各要素を${name}として、次のことをくり返す\\n  何もしない",
+      "newText": "名前一覧の中身を先頭から一つずつ見て、次のことを行う\\n  この中では、今見ているものを【${name}】と呼ぶ\\n  何もしない",
+      "preservedMeaning": "Preserve the snapshot foreach list, ordered traversal, chosen binder, and no-op body."
+    },
+    {
+      "testId": "TEST-EDITOR availability shares definite context restrictions and preserves dynamic types",
+      "oldText": "名前一覧の各要素を項目として、次のことをくり返す\\n  何もしない",
+      "newText": "名前一覧の中身を先頭から一つずつ見て、次のことを行う\\n  この中では、今見ているものを【項目】と呼ぶ\\n  何もしない",
+      "preservedMeaning": "Preserve the snapshot foreach list, ordered traversal, readonly binder 項目, and no-op body."
+    },
+    {
+      "testId": "TEST-EDITOR availability generated names stay valid through collision boundary",
+      "oldText": "${name}という変数を作り、初期値を0にする",
+      "newText": "この中だけで使う変数【${name}】を作り、最初は0にする",
+      "preservedMeaning": "Declare the same named local scalar with numeric initial value zero; preserve all 31 collision-boundary names."
+    }
+  ]
+}

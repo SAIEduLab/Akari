@@ -91,9 +91,16 @@ if(browserPath!=='--static'){
       const tool=page.locator('.tool[data-type="sprite"]').first();
       await (await reveal(tool)).click();
       const target=await page.locator('#objectSelect').inputValue();assert.notEqual(target,'stage');
+      const targetName=(await page.locator('#objectSelect option:checked').textContent()).trim();
+      assert.ok(targetName,'the selected character has a visible name');
       await (await reveal(page.locator('#eventSelect'))).selectOption('click');
-      await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(first);})();
-      await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,first);
+      // The v2 starter opens in blocks mode. Switch through the visible mode control
+      // before entering the manual's executable example in the source editor.
+      await (await reveal(page.locator('#editorModecode'))).click();
+      await page.locator('#codeEditor').waitFor({state:'visible'});
+      const executableFirst=first.replace(/^ねこ(?=は)/,targetName);
+      await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(executableFirst);})();
+      await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,executableFirst);
       const node=page.locator('.component[data-id="'+target+'"]');
       const start=await node.evaluate(e=>parseFloat(e.style.left));
       await (await reveal(page.locator('#runBtn'))).click();
@@ -103,7 +110,7 @@ if(browserPath!=='--static'){
       await (await reveal(page.locator('#stopBtn'))).click();
       assert.deepEqual(await page.evaluate(()=>Akari.app.compile().errors),[]);
       await page.screenshot({path:path.join(output,'first-work-editor.png'),fullPage:true});
-      report.firstWork={status:'PASS',target,expectedMovement:10};
+      report.firstWork={status:'PASS',target,targetName,source:executableFirst,expectedMovement:10,editorMode:'code selected through UI'};
     }finally{await ctx.close();}
     assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
   });

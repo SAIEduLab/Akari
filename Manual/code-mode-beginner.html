@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>あかり 1.0.1 コードモード 初級</title>
+<title>あかり 1.0.2 コードモード 初級</title>
 <style>
 :root{
   color-scheme:light;
@@ -292,13 +292,13 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <a class="skip-link" href="#main-content">本文へ進む</a>
 <header>
   <div class="header-inner">
-    <div class="kicker">AKARI 1.0.1 CODE MODE · BEGINNER</div>
-    <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../Akari1_0_1.html">あかりを使う</a><a href="../MANUAL.html#save">保存・開く</a></div>
+    <div class="kicker">AKARI 1.0.2 CODE MODE · BEGINNER</div>
+    <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../Akari1_0_2.html">あかりを使う</a><a href="../MANUAL.html#save">保存・開く</a></div>
 <h1>コードモード 初級</h1><section class="section" id="code-ownership" style="padding:20px;margin:20px 0;border:1px solid #c6d8e6;border-radius:12px;background:#f3f8fc">
   <h2>画面のものから、プログラムを読む</h2>
   <p>作品画面で部品を選ぶと、表示された本文をすぐに編集できます。今のできごとが空で、別のできごとに本文があれば、その本文を開きます。</p>
-  <p>「せってい」「動きのようす」はコード表示では折り畳みボタンではなく通常の見出しです。「元に戻す」「やり直す」は「かんたん」「くわしく」のどちらでも表示します。「コード」「ブロック」で表示を切り替えます。別の本文を編集したり追加したりするときは「できごと」を選びます。「すべてのコード」で開始・クリック・知らせを受け取ったときなどの全文を一覧にでき、一覧の「この本文を編集」で編集へ進めます。一覧を閉じるときは、一覧表示中だけ現れる「本文の編集に戻る」を押します。</p>
-  <p>共通の「動作」「計算」は画面のコードです。呼び出す側の一覧にも本文が表示されます。部品を選んでいるときに現れる「画面のコード」から、使っていない定義も開けます。画面を選んでいるときは「すべてのコード」を使います。書き方エラーがある本文は、入力したコードのまま表示されます。</p>
+  <p>「せってい」「動きのようす」はコード表示では折り畳みボタンではなく通常の見出しです。「元に戻す」「やり直す」は「かんたん」「くわしく」のどちらでも表示します。「コード」「ブロック」で表示を切り替えます。別の本文を編集・追加するときは「できごと」で見出しを選び、その見出し自体も文として直接編集できます。「すべてのコード」で開始・クリック・知らせを受け取ったときなどの全文を一覧にでき、一覧の「この本文を編集」で編集へ進めます。一覧を閉じるときは、一覧表示中だけ現れる「本文の編集に戻る」を押します。</p>
+  <p>共通の「手順」「答えを求める」定義は画面のコードです。呼び出す側の一覧にも本文が表示されます。部品を選んでいるときに現れる「画面のコード」から、使っていない定義も開けます。画面を選んでいるときは「すべてのコード」を使います。書き方エラーがある本文は、入力したコードのまま表示されます。</p>
 </section>
 
     <p class="lead">日本語の文を1行ずつ書いて、キャラクターを動かし、条件やくり返しを使い、作品を保存するところまでを学びます。プログラミングが初めてでも、上から順に試せる構成です。</p>
@@ -326,25 +326,25 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <main id="main-content">
 <section id="start">
   <h2>1. 最初の1行を書いてみよう</h2>
-  <p>まず、キャラクターをクリックしたら10歩動く作品を作ります。</p>
+  <p>まず、クリックをきっかけに、ねこが右へ10歩動く作文例を見ます。</p>
   <ol class="steps">
     <li><strong>キャラクターを置く。</strong><br>道具箱から、マスコットなどの標準キャラクターを作品の画面へ追加します。</li>
     <li><strong>動かすものを選ぶ。</strong><br>コード欄の上にある「動かすもの」で、追加したキャラクターを選びます。</li>
-    <li><strong>できごとを選ぶ。</strong><br>「できごと」で「クリックしたとき」を選びます。</li>
+    <li><strong>できごとを選ぶ。</strong><br>見出しを「ねこがクリックされたとき、」にします。見出しはコード本文とは別に、文として編集できます。</li>
     <li><strong>コードを書く。</strong><br>本文へ次の1行を入力します。</li>
   </ol>
 
   <div class="code">
-    <div class="bar">クリックしたとき</div>
-    <pre>10歩動く。</pre>
+    <div class="bar">ねこがクリックされたとき、</div>
+    <pre>ねこは右へ10歩動く。</pre>
   </div>
 
   <ol class="steps" start="5">
     <li><strong>「▶ 動かす」を押す。</strong><br>作品の画面でキャラクターをクリックします。</li>
-    <li><strong>動いたら成功。</strong><br>「■ 止める」で編集へ戻ります。</li>
+    <li><strong>文の意味を見る。</strong><br>画面の変化が文の対象・方向・量と合うか比べます。「■ 止める」で編集へ戻ります。</li>
   </ol>
 
-  <div class="callout good"><strong>あかりでは、できごとの名前をコード本文には書きません。</strong> 「動かすもの」と「できごと」は画面上で選び、その組合せに対する本文だけを書きます。</div>
+  <div class="callout good"><strong>できごとは見出しで文として表します。</strong> 対象ときっかけが見える見出しをコード・ブロックで編集し、その下に本文を書きます。</div>
 </section>
 
 <section id="screen">
@@ -353,7 +353,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <div class="editor-mock" aria-label="コードモードの模式図">
     <div class="editor-head">
       <span>動かすもの：キャラクター1</span>
-      <span>できごと：クリックしたとき</span>
+      <span>見出し：ねこがクリックされたとき、</span>
     </div>
     <div class="editor-toolbar">
       <span>コードを整える</span>
@@ -361,8 +361,8 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
       <span>ブロック</span>
       <span>入力を取り消す</span>
     </div>
-    <div class="editor-code">10歩動く。
-「こんにちは」と言う。</div>
+    <div class="editor-code">ねこは右へ10歩動く。
+ねこは「こんにちは」と言う。</div>
     <div class="hints">✓ 書き方をチェック中　／　入力候補</div>
   </div>
 
@@ -389,8 +389,8 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 
   <h3>「。」はあってもなくてもよい</h3>
   <p>次の2行は入力としてどちらも使えます。</p>
-  <div class="code"><pre>10歩動く
-10歩動く。</pre></div>
+  <div class="code"><pre>ねこは右へ10歩動く
+ねこは右へ10歩動く。</pre></div>
   <p>「コードを整える」を使うと、標準的な書き方へ整えられます。</p>
 
   <h3>文字を書くとき</h3>
@@ -404,24 +404,23 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p>1行動いたら、次は複数の命令を上から順に実行させます。</p>
 
   <div class="code">
-    <div class="bar">キャラクター ／ クリックしたとき</div>
-    <pre>10歩動く。
-右に15度回る。
-「動いたよ」と言う。
-1秒待つ。
-10歩動く。</pre>
+    <div class="bar">ねこがクリックされたとき、</div>
+    <pre>ねこは右へ10歩動く。
+ねこは右に15度回る。
+ねこは「動いたよ」と言う。
+1秒待って、ねこは前へ10歩進む。</pre>
   </div>
 
-  <p>この本文では、クリックすると「動く → 回る → 話す → 待つ → 動く」の順に進みます。</p>
+  <p>見出しが「いつ始めるか」を、各文が「だれが何をするか」を示します。命令は上から順に進み、て形でつないだ節も順序を保ちます。</p>
 
   <h3>初級で使いやすい命令</h3>
   <table>
     <thead><tr><th>やりたいこと</th><th>例</th></tr></thead>
     <tbody>
-      <tr><td>前へ動く</td><td><code class="inline">10歩動く。</code></td></tr>
+      <tr><td>前へ動く</td><td><code class="inline">ねこは前へ10歩進む。</code></td></tr>
       <tr><td>右へ回る</td><td><code class="inline">右に15度回る。</code></td></tr>
       <tr><td>位置を決める</td><td><code class="inline">横100、縦50の位置へ行く。</code></td></tr>
-      <tr><td>言葉を表示する</td><td><code class="inline">「こんにちは」と言う。</code></td></tr>
+      <tr><td>言葉を表示する</td><td><code class="inline">ねこは「こんにちは」と言う。</code></td></tr>
       <tr><td>少し待つ</td><td><code class="inline">1秒待つ。</code></td></tr>
       <tr><td>隠す・見せる</td><td><code class="inline">隠れる。</code> ／ <code class="inline">現れる。</code></td></tr>
     </tbody>
@@ -450,43 +449,43 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 
   <div class="code">
     <div class="bar">10回くり返す</div>
-    <pre>次のことを10回くり返す。
-  10歩動く。
-  右に15度回る。</pre>
+    <pre>10回くり返す。
+  ねこは前へ10歩進む。
+  ねこは右に15度回る。</pre>
   </div>
 
   <p>1行目が「くり返しの始まり」です。その下の2行を<strong>半角スペースで深く字下げ</strong>すると、その2行がくり返されます。</p>
 
   <div class="callout warn">
-    <strong>字下げが範囲を決めます。</strong> あかり 1.0.1 では「ここまで」とは書きません。字下げを元へ戻すと、くり返しが終わります。
+    <strong>字下げが範囲を決めます。</strong> 仕様書では字下げで範囲を表します。囲いの中の文と外の文を、同じ語尾だけでなく字下げで見分けます。
   </div>
 
   <h3>くり返しの後に続ける</h3>
-  <div class="code"><pre>次のことを3回くり返す。
-  10歩動く。
-「終わりました」と言う。</pre></div>
+  <div class="code"><pre>3回くり返す。
+  ねこは前へ10歩進む。
+ねこは「終わりました」と言う。</pre></div>
   <p>最後の「言う」は字下げしていないため、3回のくり返しが全部終わったあとに1回だけ実行されます。</p>
 </section>
 
 <section id="if">
   <h2>7. 条件によって動きを変える</h2>
-  <div class="reading-note"><strong>この例の準備：</strong>上部の「データ」で、作品全体の変数「点数」を先に作ります。数の初期値を10にし、キャラクターの「クリックしたとき」に下の例を入れます。動かしてクリックすると「10点以上です」と表示されます。止めて初期値を9に変えると、下の分岐例では別の言葉が出ます。変数の説明は次の章です。</div>
+  <div class="reading-note"><strong>例の準備：</strong>「データ」で点数を作り、作品の文の見出しを「ねこがクリックされたとき、」にします。下の例は仕様上の作文候補です。実際の動作結果は実装後に確認します。</div>
   <p>「もし」を使うと、条件が成り立つときだけ命令を実行できます。</p>
 
   <div class="code">
     <div class="bar">もし</div>
-    <pre>もし 点数が10以上なら、次のことをする。
-  「10点以上です」と言う。</pre>
+    <pre>もし点数が10点以上なら、
+  ねこは「10点以上です」と言う。</pre>
   </div>
 
-  <p>条件が偽のときにも別の処理をしたい場合は、「そうでなければ」を続けます。</p>
+  <p>条件があてはまらないときにも別の処理をしたい場合は、「そうでなければ」を続けます。</p>
 
   <div class="code">
     <div class="bar">もし／そうでなければ</div>
-    <pre>もし 点数が10以上なら、次のことをする。
-  「10点以上です」と言う。
-そうでなければ、次のことをする。
-  「まだ10点未満です」と言う。</pre>
+    <pre>もし点数が10点以上なら、
+  ねこは「10点以上です」と言う。
+そうでなければ、
+  ねこは「まだ10点未満です」と言う。</pre>
   </div>
 
   <div class="callout">「そうでなければ」は、直前にある同じ字下げ位置の「もし」と組になります。</div>
@@ -497,29 +496,29 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p>点数や回数など、変わる値を覚えておくには変数を使います。まず上部の<strong>「データ」</strong>で変数を作ります。</p>
 
   <h3>例：クリックするたびに点数を増やす</h3>
-  <p>「データ」で作品の変数「点数」を作ったら、画面の「開始したとき」に初期値を入れます。</p>
+  <p>「データ」で作品の変数「点数」を作ったら、画面の「作品を動かしたとき、」の見出しに初期値を入れます。</p>
 
   <div class="code">
-    <div class="bar">画面 ／ 開始したとき</div>
-    <pre>点数を0にする。</pre>
+    <div class="bar">作品を動かしたとき、ねこは、</div>
+    <pre>点数を0点にする。</pre>
   </div>
 
-  <p>次に、キャラクターの「クリックしたとき」で増やします。</p>
+  <p>次に、キャラクターの「ねこがクリックされたとき、」の見出しで増やします。</p>
 
   <div class="code">
-    <div class="bar">キャラクター ／ クリックしたとき</div>
-    <pre>点数に1を足す。
-点数と言う。</pre>
+    <div class="bar">ねこがクリックされたとき、</div>
+    <pre>点数を1点増やす。
+点数の値を言う。</pre>
   </div>
 
-  <p>これで、作品を始めると点数が0になり、キャラクターをクリックするたびに1ずつ増えます。</p>
+  <p>この仕様例では、作品開始時に点数を0点にし、ねこをクリックするたび1点増やします。画面上の結果は実装後に確認します。</p>
 
   <h3>変数の基本4つ</h3>
   <div class="cards">
-    <div class="card"><strong>値を入れる</strong><code class="inline">点数を0にする。</code></div>
-    <div class="card"><strong>増やす</strong><code class="inline">点数に1を足す。</code></div>
-    <div class="card"><strong>値として使う</strong><code class="inline">点数と言う。</code> のように、名前を値として使えます。</div>
-    <div class="card"><strong>条件に使う</strong><code class="inline">点数が10以上</code> のように比較できます。</div>
+    <div class="card"><strong>値を入れる</strong><code class="inline">点数を0点にする。</code></div>
+    <div class="card"><strong>増やす</strong><code class="inline">点数を1点増やす。</code></div>
+    <div class="card"><strong>値として使う</strong><code class="inline">点数の値を言う。</code> のように、名前を値として使えます。</div>
+    <div class="card"><strong>条件に使う</strong><code class="inline">点数が10点以上なら</code> のように述語として書きます。</div>
   </div>
 </section>
 
@@ -528,9 +527,9 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p><strong>※</strong> から行末まではコメントです。実行されず、自分やほかの人への説明として残せます。</p>
 
   <div class="code"><pre><span class="comment">※ クリックすると右へ進む</span>
-10歩動く。
+ねこは右へ10歩動く。
 
-10歩動く。 <span class="comment">※ ここで2回目</span></pre></div>
+ねこは右へ10歩動く。 <span class="comment">※ ここで2回目</span></pre></div>
 
   <p>空行とコメント行は、「もし」や「くり返し」の範囲そのものを変えません。</p>
 </section>
@@ -597,25 +596,18 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 </section>
 
 <section id="short-forms">
-  <h2>13. 慣れたら、短い書き方も</h2>
-  <p>あかりは、決まったいくつかの書き方を同じ意味で受け取ります。何でも自由な日本語で書けるわけではありません。まずはこの冊子の書き方と「入力候補」を使いましょう。</p>
-  <h3>一つの命令なら、条件と同じ行へ</h3>
-  <p>作品の変数「点数」を作り、キャラクターの「クリックしたとき」で試します。上の例と下の例は同じ動きです。一度に両方入れず、一つずつ試してください。</p>
-  <div class="code"><pre>もし 点数が10以上なら、次のことをする。
-  「やったね」と言う。
-そうでなければ、次のことをする。
-  「あと少し」と言う。</pre></div>
-  <div class="code"><pre>もし 点数が10以上なら、「やったね」と言う。
-でなければ、「あと少し」と言う。</pre></div>
-  <p>「でなければ」は次の行へ書きます。同じ行に命令をいくつも続けたり、その中へさらに「もし」を入れたりはできません。二つ以上の命令を入れるときは、字下げの形を使います。</p>
-  <h3>「何を」「どこへ」が分かる書き方</h3>
-  <div class="table-scroll"><table><thead><tr><th>この冊子の書き方</th><th>同じ意味の別の書き方</th></tr></thead><tbody>
-    <tr><td><code>点数に1を足す。</code></td><td><code>1を点数に足す。</code></td></tr>
-    <tr><td><code>横100、縦50の位置へ行く。</code></td><td><code>縦50、横100の位置へ行く。</code></td></tr>
-    <tr><td><code>右に15度回る。</code></td><td><code>15度右に回る。</code></td></tr>
+  <h2>13. 文の役割を組み立てる</h2>
+  <p>あかり1.0.2では、だれが・いつ・何をするかを日本語の文にします。下の例は言語仕様の標準例です。すべての自然な日本語を実行できるという意味ではありません。</p>
+  <div class="table-scroll"><table><thead><tr><th>役割</th><th>仕様の標準例</th><th>意味</th></tr></thead><tbody>
+    <tr><td>対象・画面方向・距離</td><td><code>ねこは右へ10歩動く。</code></td><td>画面の右へ進み、向きは変えない</td></tr>
+    <tr><td>対象の明示</td><td><code>ねこを右へ10歩動かす。</code></td><td>目的語で動かす対象を示す</td></tr>
+    <tr><td>向き・順序</td><td><code>ねこは右を向いて、10歩進む。</code></td><td>右を向いてから進む</td></tr>
+    <tr><td>数量単位</td><td><code>点数を1点増やす。</code></td><td>点の単位を保って加算する</td></tr>
+    <tr><td>値の発言</td><td><code>点数の値を言う。</code></td><td>データ値を読み上げ表示する</td></tr>
+    <tr><td>条件</td><td><code>もし点数が10点以上なら、</code></td><td>条件の述語に合わせて活用する</td></tr>
   </tbody></table></div>
-  <p>「横」「縦」「度」「を」「に」など、役割を表す言葉を落とさないことが大切です。<code>点数を10にする</code>は10へ変えること、<code>点数を10増やす</code>は今の数に10を足すことです。</p>
-  <div class="callout">一行の「もし」へブロックで命令を追加すると、その「もし」は字下げの形へ広がります。「元に戻す」で編集前へ戻せます。</div>
+  <p>語順を変えられるのは仕様に登録された役割配置です。台詞は「『こんにちは』と言う」、値は「点数の値を言う」と区別します。否定・接続・反復の全対応は <a href="../LANGUAGE.md">LANGUAGE.md</a> と仕様書の付録A/Bに示します。</p>
+  <div class="callout">検索は「右に行きたい」「小さくしたい」「2番目に入れたい」などから候補を探す手掛かりです。候補が見つかること・使いやすさは実装・児童評価で未確認です。</div>
 </section>
 <section id="drawing">
   <h2>部品の複製とお絵かき</h2>
@@ -627,7 +619,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 
 <footer>
 <div class="chapter-links"><a href="../MANUAL.html#faq">困ったとき</a><a href="./block-mode.html">ブロック →</a><a href="./code-mode-intermediate.html">コード中級 →</a><a href="./code-mode-advanced.html">コード上級 →</a></div>
-  <p>対象：あかり 1.0.1。内容はリポジトリの <a href="../LANGUAGE.md">LANGUAGE.md</a> と <a href="../Akari1_0_1.html">Akari1_0_1.html</a> の現行仕様・実装に基づきます。詳細な文法・意味論・制限は LANGUAGE.md を参照してください。</p>
+  <p>対象：あかり1.0.2の再設計仕様。文法・意味論は <a href="../LANGUAGE.md">LANGUAGE.md</a> を参照してください。これらの作例は実装PASSや児童の利用評価を示すものではありません。</p>
 </footer>
 </body>
 </html>

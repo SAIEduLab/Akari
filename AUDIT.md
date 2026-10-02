@@ -368,3 +368,24 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | limit:expressionDepth | expressionDepth = 128 | 該当source/AST/project/asset/runtime値 | parseExpression / checkExpressionTree / validateSyntaxAst | prepareBlockEdit / expression-move | LANGUAGE.md「資源の上限」のexpressionDepth | parseExpression / checkExpressionTree / validateSyntaxAst | AUDIT LIMIT expression nesting and function nontermination are bounded; TEST-BLOCK-LIMITS | BROWSER-LIMIT; browser-runtime-limits:limit:expressionDepth | 上限深さの式AST往復・超過拒否と深すぎる括弧の拒否。全表現経路のブラウザー境界は別検査 |
 | limit:repeatCount | repeatCount = 1000000 | 該当source/AST/project/asset/runtime値 | EventScheduler.executeNode / execFunctionNodes | RepeatCount.count slot | LANGUAGE.md「資源の上限」のrepeatCount | EventScheduler.executeNode / execFunctionNodes | TEST-LIMIT repeatCount | BROWSER-LIMIT; browser-runtime-limits:limit:repeatCount | 上限直前/到達の反復stack設定と超過R413・stack不変。全反復の完走性能を保証しない |
 | limit:activeTasks | activeTasks = 2000 | 該当source/AST/project/asset/runtime値 | EventScheduler.createTask | event / Broadcast / cloneStart | LANGUAGE.md「資源の上限」のactiveTasks | EventScheduler.createTask | TEST-LIMIT activeTasks | BROWSER-LIMIT; browser-runtime-limits:limit:activeTasks | 2000 task生成と2001個目R413、拒否後個数不変。実入力/並行操作は別検査 |
+
+
+## 日本語改訂契約と独立実行の追加監査
+
+従来の local gate 25 step、言語の42 form / 256有限入力 / 605安定ID、製品884件、GUI9件、full-browser 27 task / 416 caseを維持し、local gateへ次の5 stepを追加する。既存の保証を新しい試験で置き換えず、原本入力の移行は取得SHAを固定した旧ファイルと個別の意味保持台帳で検証する。
+
+| gate | 区分 | 必須結果と証拠 |
+|---|---|---|
+| `japanese-contract-static` | GA-STATIC | 六つの承認済文書のSHA、独立した旧能力集合、20作文・曖昧さoracle、traceability対応、移行台帳を検査する。静的成功から製品実行PASSを主張しない |
+| `language-migration-static` | GA-STATIC | 605安定ID、256入力、42 form、95 corpus、旧153schemaの意味・実行期待値と取得原本を照合する |
+| `japanese-intent-browser` | GA-EXEC / HYBRID | 固定Chrome / Playwrightの実 `file://` browserで89独立check、20意図の原文保持、構造化sourceとblock経由の実scheduler結果、曖昧な選択・非実行・取消、素材保存/復元/生成playerを検証する |
+| `runtime-v2` | GA-EXEC / HYBRID | Nodeと実 `file://` browserの6 runner / 20安定IDで量・名前付き引数・対象・イベントfilter・継続rule・質問/音声の取消・生成playerを検査する |
+| `japanese-gate-negative` | GA-STATIC | 新結果validatorが欠落・重複・改変SHA・未検証・絞込み・異なるsource/block trace・子runner timeout・偽の実行主張を拒否する |
+
+実行結果は当該branch push / PRのcheckoutにある製品SHAと監査入力SHAへ束縛する。selftestの結果集合は独立validatorで再検証し、aggregateでもsealと全ファイルhash、当該checkoutのsnapshot、GitHub run / attemptを照合する。既存のfull-browser matrixとLinux / Windows音声gateを維持する。過去snapshotのPASSは最新HEADのPASSへ転記しない。
+
+六つの `docs/1.0.2/` 承認文書と旧能力fixtureはoracleであり、開発中製品に合わせて書き換えない。`language-v2-test-migration.json` の `pending` / `NOT_RUN` は設計時点の移行状態を表し、今回の実行結果の代用にしない。静的reportの `productDynamic: NOT_RUN` とSEMANTIC未実施は維持する。20作文は成人が作成した仮説であり、実児童による理解・操作観察はこの機械監査のPASS範囲に含まれない。
+
+実行の入口は `audit/lib/gate-contract.mjs`、新結果のvalidatorは `audit/lib/japanese-gate-contract.mjs`。期待集合はrunnerの観測出力から縮小せず、意図89 ID・実行境界20 IDを明示し、FAIL / PENDING / INCOMPLETE / NOT_RUN / timeout / 例外をPASSへ変換しない。
+
+ネイティブタブ可視性の補助行 `NATIVE-TAB-VISIBILITY-OBSERVATION` は `pass: null` / `UNVERIFIED` を保持し、20必須試験の成功数に含めない。aggregateはこの既知の観測行だけを別区分で許容し、PASSへの昇格や必須試験の未検証は拒否する。

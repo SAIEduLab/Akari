@@ -1,0 +1,3350 @@
+{
+  "baseline_commit": "d961dd346e5b104e09e7f0dd342beb5c16174a36",
+  "status": "DESIGN_CANDIDATE_NOT_IMPLEMENTED",
+  "required_capabilities": [
+    {
+      "baseline_capability": "command:Assignment",
+      "capability": "点数を0にする",
+      "contract": "付録A Assignment",
+      "test_id": "CAP-command:Assignment",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:NumericUpdate:ADD",
+      "capability": "点数に1を足す",
+      "contract": "付録A NumericUpdate:ADD",
+      "test_id": "CAP-command:NumericUpdate:ADD",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:NumericUpdate:SUB",
+      "capability": "点数から1を引く",
+      "contract": "付録A NumericUpdate:SUB",
+      "test_id": "CAP-command:NumericUpdate:SUB",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:ListAppend",
+      "capability": "名前一覧に「あかり」を追加する",
+      "contract": "付録A ListAppend",
+      "test_id": "CAP-command:ListAppend",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:ListReplace",
+      "capability": "名前一覧の1番目を「ひかり」にする",
+      "contract": "付録A ListReplace",
+      "test_id": "CAP-command:ListReplace",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:ListInsert",
+      "capability": "名前一覧の1番目に「ほたる」を挿入する",
+      "contract": "付録A ListInsert",
+      "test_id": "CAP-command:ListInsert",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:ListDelete",
+      "capability": "名前一覧の1番目を削除する",
+      "contract": "付録A ListDelete",
+      "test_id": "CAP-command:ListDelete",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:ListClear",
+      "capability": "名前一覧を空にする",
+      "contract": "付録A ListClear",
+      "test_id": "CAP-command:ListClear",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:IfStatement",
+      "capability": "条件分岐とthen本文",
+      "contract": "付録A IfStatement",
+      "test_id": "CAP-command:IfStatement",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:Say",
+      "capability": "「10点以上です」と言う",
+      "contract": "付録A Say",
+      "test_id": "CAP-command:Say",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:RepeatCount",
+      "capability": "開始時に一度評価する回数反復",
+      "contract": "付録A RepeatCount",
+      "test_id": "CAP-command:RepeatCount",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:RepeatWhile",
+      "capability": "条件成立中の反復",
+      "contract": "付録A RepeatWhile",
+      "test_id": "CAP-command:RepeatWhile",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:RepeatUntil",
+      "capability": "条件成立までの反復",
+      "contract": "付録A RepeatUntil",
+      "test_id": "CAP-command:RepeatUntil",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:WaitTime",
+      "capability": "0.1秒待つ",
+      "contract": "付録A WaitTime",
+      "test_id": "CAP-command:WaitTime",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:WaitUntil",
+      "capability": "点数が100以上になるまで待つ",
+      "contract": "付録A WaitUntil",
+      "test_id": "CAP-command:WaitUntil",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:ForEach",
+      "capability": "リストの各要素の反復",
+      "contract": "付録A ForEach",
+      "test_id": "CAP-command:ForEach",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:MotionCommand:MOVE",
+      "capability": "10歩動く",
+      "contract": "付録A MotionCommand:MOVE",
+      "test_id": "CAP-command:MotionCommand:MOVE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:MotionCommand:GOTO",
+      "capability": "横100、縦50の位置へ行く",
+      "contract": "付録A MotionCommand:GOTO",
+      "test_id": "CAP-command:MotionCommand:GOTO",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:MotionCommand:GLIDE",
+      "capability": "1秒で横200、縦100の位置へ滑る",
+      "contract": "付録A MotionCommand:GLIDE",
+      "test_id": "CAP-command:MotionCommand:GLIDE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:MotionCommand:TURN_RIGHT",
+      "capability": "右に15度回る",
+      "contract": "付録A MotionCommand:TURN_RIGHT",
+      "test_id": "CAP-command:MotionCommand:TURN_RIGHT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:MotionCommand:TURN_LEFT",
+      "capability": "左に15度回る",
+      "contract": "付録A MotionCommand:TURN_LEFT",
+      "test_id": "CAP-command:MotionCommand:TURN_LEFT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:MotionCommand:SET_DIRECTION",
+      "capability": "方向を90度にする",
+      "contract": "付録A MotionCommand:SET_DIRECTION",
+      "test_id": "CAP-command:MotionCommand:SET_DIRECTION",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:MotionCommand:SET_X",
+      "capability": "横位置を100にする",
+      "contract": "付録A MotionCommand:SET_X",
+      "test_id": "CAP-command:MotionCommand:SET_X",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:MotionCommand:SET_Y",
+      "capability": "縦位置を50にする",
+      "contract": "付録A MotionCommand:SET_Y",
+      "test_id": "CAP-command:MotionCommand:SET_Y",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:MotionCommand:POINT_TO",
+      "capability": "「マウス」の方向を向く",
+      "contract": "付録A MotionCommand:POINT_TO",
+      "test_id": "CAP-command:MotionCommand:POINT_TO",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:MotionCommand:BOUNCE",
+      "capability": "端に触れていれば跳ね返る",
+      "contract": "付録A MotionCommand:BOUNCE",
+      "test_id": "CAP-command:MotionCommand:BOUNCE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:SET_SCALE",
+      "capability": "大きさを120％にする",
+      "contract": "付録A LooksCommand:SET_SCALE",
+      "test_id": "CAP-command:LooksCommand:SET_SCALE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:SET_COLOR",
+      "capability": "表示色を「赤」にする",
+      "contract": "付録A LooksCommand:SET_COLOR",
+      "test_id": "CAP-command:LooksCommand:SET_COLOR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:HIDE",
+      "capability": "隠れる",
+      "contract": "付録A LooksCommand:HIDE",
+      "test_id": "CAP-command:LooksCommand:HIDE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:SHOW",
+      "capability": "現れる",
+      "contract": "付録A LooksCommand:SHOW",
+      "test_id": "CAP-command:LooksCommand:SHOW",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:FRONT",
+      "capability": "前面へ出す",
+      "contract": "付録A LooksCommand:FRONT",
+      "test_id": "CAP-command:LooksCommand:FRONT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:BACK",
+      "capability": "背面へ下げる",
+      "contract": "付録A LooksCommand:BACK",
+      "test_id": "CAP-command:LooksCommand:BACK",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:FORWARD_LAYERS",
+      "capability": "1層前へ出す",
+      "contract": "付録A LooksCommand:FORWARD_LAYERS",
+      "test_id": "CAP-command:LooksCommand:FORWARD_LAYERS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:BACKWARD_LAYERS",
+      "capability": "1層後ろへ下げる",
+      "contract": "付録A LooksCommand:BACKWARD_LAYERS",
+      "test_id": "CAP-command:LooksCommand:BACKWARD_LAYERS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:PenCommand:DOWN",
+      "capability": "ペンを下ろす",
+      "contract": "付録A PenCommand:DOWN",
+      "test_id": "CAP-command:PenCommand:DOWN",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:PenCommand:SET_COLOR",
+      "capability": "ペンの色を「青」にする",
+      "contract": "付録A PenCommand:SET_COLOR",
+      "test_id": "CAP-command:PenCommand:SET_COLOR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:PenCommand:SET_SIZE",
+      "capability": "ペンの太さを3にする",
+      "contract": "付録A PenCommand:SET_SIZE",
+      "test_id": "CAP-command:PenCommand:SET_SIZE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:PenCommand:UP",
+      "capability": "ペンを上げる",
+      "contract": "付録A PenCommand:UP",
+      "test_id": "CAP-command:PenCommand:UP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:PenCommand:STAMP",
+      "capability": "スタンプを押す",
+      "contract": "付録A PenCommand:STAMP",
+      "test_id": "CAP-command:PenCommand:STAMP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:PenCommand:CLEAR",
+      "capability": "描いた線とスタンプを消す",
+      "contract": "付録A PenCommand:CLEAR",
+      "test_id": "CAP-command:PenCommand:CLEAR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:SET_BACKDROP",
+      "capability": "背景を「空色」にする",
+      "contract": "付録A LooksCommand:SET_BACKDROP",
+      "test_id": "CAP-command:LooksCommand:SET_BACKDROP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:NEXT_BACKDROP",
+      "capability": "次の背景にする",
+      "contract": "付録A LooksCommand:NEXT_BACKDROP",
+      "test_id": "CAP-command:LooksCommand:NEXT_BACKDROP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:PREV_BACKDROP",
+      "capability": "前の背景にする",
+      "contract": "付録A LooksCommand:PREV_BACKDROP",
+      "test_id": "CAP-command:LooksCommand:PREV_BACKDROP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:SET_COSTUME",
+      "capability": "衣装を「星」にする",
+      "contract": "付録A LooksCommand:SET_COSTUME",
+      "test_id": "CAP-command:LooksCommand:SET_COSTUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:NEXT_COSTUME",
+      "capability": "次の衣装にする",
+      "contract": "付録A LooksCommand:NEXT_COSTUME",
+      "test_id": "CAP-command:LooksCommand:NEXT_COSTUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:PREV_COSTUME",
+      "capability": "前の衣装にする",
+      "contract": "付録A LooksCommand:PREV_COSTUME",
+      "test_id": "CAP-command:LooksCommand:PREV_COSTUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:SET_TARGET_TEXT",
+      "capability": "「ボタン1」の文字を「始める」にする",
+      "contract": "付録A LooksCommand:SET_TARGET_TEXT",
+      "test_id": "CAP-command:LooksCommand:SET_TARGET_TEXT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:SoundCommand:TONE",
+      "capability": "440Hzの音を0.2秒鳴らす",
+      "contract": "付録A SoundCommand:TONE",
+      "test_id": "CAP-command:SoundCommand:TONE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:SoundCommand:TONE_WAIT",
+      "capability": "440Hzの音を0.2秒鳴らし、終わるまで待つ",
+      "contract": "付録A SoundCommand:TONE_WAIT",
+      "test_id": "CAP-command:SoundCommand:TONE_WAIT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:SoundCommand:SET_VOLUME",
+      "capability": "音量を50％にする",
+      "contract": "付録A SoundCommand:SET_VOLUME",
+      "test_id": "CAP-command:SoundCommand:SET_VOLUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:SoundCommand:PITCH_UP",
+      "capability": "音程を1段階上げる",
+      "contract": "付録A SoundCommand:PITCH_UP",
+      "test_id": "CAP-command:SoundCommand:PITCH_UP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:SoundCommand:PITCH_DOWN",
+      "capability": "音程を1段階下げる",
+      "contract": "付録A SoundCommand:PITCH_DOWN",
+      "test_id": "CAP-command:SoundCommand:PITCH_DOWN",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:SoundCommand:STOP_ALL",
+      "capability": "すべての音を止める",
+      "contract": "付録A SoundCommand:STOP_ALL",
+      "test_id": "CAP-command:SoundCommand:STOP_ALL",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:Broadcast",
+      "capability": "「開始」と知らせる",
+      "contract": "付録A Broadcast",
+      "test_id": "CAP-command:Broadcast",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:BroadcastAndWait",
+      "capability": "「開始」と知らせ、受け手の処理が終わるまで待つ",
+      "contract": "付録A BroadcastAndWait",
+      "test_id": "CAP-command:BroadcastAndWait",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:Ask",
+      "capability": "「名前は？」とたずねる",
+      "contract": "付録A Ask",
+      "test_id": "CAP-command:Ask",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LocalVariableDeclaration",
+      "capability": "合計という変数を作り、初期値を0にする",
+      "contract": "付録A LocalVariableDeclaration",
+      "test_id": "CAP-command:LocalVariableDeclaration",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:ReturnStatement",
+      "capability": "合計を返す",
+      "contract": "付録A ReturnStatement",
+      "test_id": "CAP-command:ReturnStatement",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:CloneCommand:CREATE_SELF",
+      "capability": "自分のクローンを作る",
+      "contract": "付録A CloneCommand:CREATE_SELF",
+      "test_id": "CAP-command:CloneCommand:CREATE_SELF",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:CloneCommand:CREATE_TARGET",
+      "capability": "「星」のクローンを作る",
+      "contract": "付録A CloneCommand:CREATE_TARGET",
+      "test_id": "CAP-command:CloneCommand:CREATE_TARGET",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:CloneCommand:DELETE_SELF",
+      "capability": "このクローンを削除する",
+      "contract": "付録A CloneCommand:DELETE_SELF",
+      "test_id": "CAP-command:CloneCommand:DELETE_SELF",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:StopCommand:THIS",
+      "capability": "このスクリプトを止める",
+      "contract": "付録A StopCommand:THIS",
+      "test_id": "CAP-command:StopCommand:THIS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:StopCommand:OTHERS",
+      "capability": "ほかのスクリプトを止める",
+      "contract": "付録A StopCommand:OTHERS",
+      "test_id": "CAP-command:StopCommand:OTHERS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:StopCommand:ALL",
+      "capability": "すべてを止める",
+      "contract": "付録A StopCommand:ALL",
+      "test_id": "CAP-command:StopCommand:ALL",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:SET_SELF_TEXT",
+      "capability": "文字を「文字」にする",
+      "contract": "付録A LooksCommand:SET_SELF_TEXT",
+      "test_id": "CAP-command:LooksCommand:SET_SELF_TEXT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LooksCommand:SET_INPUT",
+      "capability": "「入力欄1」に「答え」を入れる",
+      "contract": "付録A LooksCommand:SET_INPUT",
+      "test_id": "CAP-command:LooksCommand:SET_INPUT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:SoundCommand:SAMPLE",
+      "capability": "「ベル」を鳴らす",
+      "contract": "付録A SoundCommand:SAMPLE",
+      "test_id": "CAP-command:SoundCommand:SAMPLE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:SoundCommand:SAMPLE_WAIT",
+      "capability": "「ベル」を鳴らし、終わるまで待つ",
+      "contract": "付録A SoundCommand:SAMPLE_WAIT",
+      "test_id": "CAP-command:SoundCommand:SAMPLE_WAIT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:Break",
+      "capability": "このくり返しを終える",
+      "contract": "付録A Break",
+      "test_id": "CAP-command:Break",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:Continue",
+      "capability": "次のくり返しへ進む",
+      "contract": "付録A Continue",
+      "test_id": "CAP-command:Continue",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:LocalListDeclaration",
+      "capability": "結果というリストを作る",
+      "contract": "付録A LocalListDeclaration",
+      "test_id": "CAP-command:LocalListDeclaration",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:Forever",
+      "capability": "無限反復",
+      "contract": "付録A Forever",
+      "test_id": "CAP-command:Forever",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:UserActionCall",
+      "capability": "増やす（3）を実行する",
+      "contract": "付録A UserActionCall",
+      "test_id": "CAP-command:UserActionCall",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "command:NoOperation",
+      "capability": "何もしない",
+      "contract": "付録A NoOperation",
+      "test_id": "CAP-command:NoOperation",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "ast:Script",
+      "capability": "最上位本文（空配列可）",
+      "contract": "1・3・10・11 本文/空本文/節と範囲",
+      "test_id": "CAP-ast:Script",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "comment:line",
+      "capability": "独立コメントの本文・位置・空白",
+      "contract": "9・11 文字保護と注釈の所属",
+      "test_id": "CAP-comment:line",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "branch:else",
+      "capability": "elseの有無・枝・注釈",
+      "contract": "4.3 分岐と対応する条件",
+      "test_id": "CAP-branch:else",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "slot:TargetReference",
+      "capability": "代入先の名前と所属修飾を独立に編集",
+      "contract": "6.3 データの変更先と所属",
+      "test_id": "CAP-slot:TargetReference",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "expression:NumberLiteral",
+      "capability": "有限の非負数literal（負数はNEG node）",
+      "contract": "6 値、7 関数、9 保護",
+      "test_id": "CAP-expression:NumberLiteral",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "expression:StringLiteral",
+      "capability": "Unicode・空白・句読点を保持する文字literal",
+      "contract": "6 値、7 関数、9 保護",
+      "test_id": "CAP-expression:StringLiteral",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "expression:BooleanLiteral",
+      "capability": "真/偽literal",
+      "contract": "6 値、7 関数、9 保護",
+      "test_id": "CAP-expression:BooleanLiteral",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "expression:ListLiteral",
+      "capability": "順序付きリストliteralと動的要素",
+      "contract": "6 値、7 関数、9 保護",
+      "test_id": "CAP-expression:ListLiteral",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "expression:VariableRead",
+      "capability": "名前と所属修飾による値参照",
+      "contract": "6 値、7 関数、9 保護",
+      "test_id": "CAP-expression:VariableRead",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "expression:ListRead",
+      "capability": "1から始まるリスト要素番号参照",
+      "contract": "6 値、7 関数、9 保護",
+      "test_id": "CAP-expression:ListRead",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "expression:UserFunctionCall",
+      "capability": "求値を名前と全実引数で呼ぶ",
+      "contract": "6 値、7 関数、9 保護",
+      "test_id": "CAP-expression:UserFunctionCall",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:POS",
+      "capability": "単項正号",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:POS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:NEG",
+      "capability": "単項負号",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:NEG",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:NOT",
+      "capability": "真偽否定",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:NOT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:ADD",
+      "capability": "加算",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:ADD",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:SUB",
+      "capability": "減算",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:SUB",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:MUL",
+      "capability": "乗算",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:MUL",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:DIV",
+      "capability": "除算",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:DIV",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:POW",
+      "capability": "累乗",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:POW",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:GTE",
+      "capability": "以上",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:GTE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:LTE",
+      "capability": "以下",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:LTE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:GT",
+      "capability": "より大きい",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:GT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:LT",
+      "capability": "より小さい",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:LT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:EQ",
+      "capability": "同じ",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:EQ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:NEQ",
+      "capability": "違う",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:NEQ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:AND",
+      "capability": "かつ",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:AND",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "operator:OR",
+      "capability": "または",
+      "contract": "4 論理・6 数式と型",
+      "test_id": "CAP-operator:OR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:乱数",
+      "capability": "乱数（引数 2..2）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:乱数",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:余り",
+      "capability": "余り（引数 2..2）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:余り",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:四捨五入",
+      "capability": "四捨五入（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:四捨五入",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:切り上げ",
+      "capability": "切り上げ（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:切り上げ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:切り捨て",
+      "capability": "切り捨て（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:切り捨て",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:絶対値",
+      "capability": "絶対値（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:絶対値",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:平方根",
+      "capability": "平方根（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:平方根",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:正弦",
+      "capability": "正弦（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:正弦",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:余弦",
+      "capability": "余弦（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:余弦",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:正接",
+      "capability": "正接（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:正接",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:逆正弦",
+      "capability": "逆正弦（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:逆正弦",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:逆余弦",
+      "capability": "逆余弦（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:逆余弦",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:逆正接",
+      "capability": "逆正接（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:逆正接",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:自然対数",
+      "capability": "自然対数（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:自然対数",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:常用対数",
+      "capability": "常用対数（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:常用対数",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:指数",
+      "capability": "指数（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:指数",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:数",
+      "capability": "数（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:数",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:文字",
+      "capability": "文字（引数 1..1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:文字",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:最小",
+      "capability": "最小（引数 1..∞）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:最小",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:最大",
+      "capability": "最大（引数 1..∞）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:最大",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:つなぐ",
+      "capability": "つなぐ（引数 2..∞）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:つなぐ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:CONTAINS",
+      "capability": "含まれている（引数 2）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:CONTAINS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:INDEX_OF",
+      "capability": "最初にある番号（引数 2）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:INDEX_OF",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:LENGTH",
+      "capability": "長さ（引数 1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:LENGTH",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:STRING_LENGTH",
+      "capability": "文字数（引数 1）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:STRING_LENGTH",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "builtin:STRING_CHAR",
+      "capability": "文字目（引数 2）",
+      "contract": "6 全組込み・付録Bの該当式",
+      "test_id": "CAP-builtin:STRING_CHAR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:マウスが押されている",
+      "capability": "マウスが押されている",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:マウスが押されている",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:マウスの横位置",
+      "capability": "マウスの横位置",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:マウスの横位置",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:マウスの縦位置",
+      "capability": "マウスの縦位置",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:マウスの縦位置",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:以前の背景名",
+      "capability": "以前の背景名",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:以前の背景名",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:新しい背景名",
+      "capability": "新しい背景名",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:新しい背景名",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:受け取った知らせ",
+      "capability": "受け取った知らせ",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:受け取った知らせ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:押されたキー",
+      "capability": "押されたキー",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:押されたキー",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:クローンである",
+      "capability": "クローンである",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:クローンである",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:背景番号",
+      "capability": "背景番号",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:背景番号",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:背景名",
+      "capability": "背景名",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:背景名",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:衣装番号",
+      "capability": "衣装番号",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:衣装番号",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:衣装名",
+      "capability": "衣装名",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:衣装名",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:横位置",
+      "capability": "横位置",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:横位置",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:縦位置",
+      "capability": "縦位置",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:縦位置",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:方向",
+      "capability": "方向",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:方向",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:大きさ",
+      "capability": "大きさ",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:大きさ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:タイマー",
+      "capability": "タイマー",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:タイマー",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:答え",
+      "capability": "答え",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:答え",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:音量",
+      "capability": "音量",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:音量",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:音程",
+      "capability": "音程",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:音程",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:以前の値",
+      "capability": "以前の値",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:以前の値",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "state:新しい値",
+      "capability": "新しい値",
+      "contract": "2 イベント固有値・6 状態読取り",
+      "test_id": "CAP-state:新しい値",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "sensor:INPUT_VALUE",
+      "capability": "名前で指定した入力欄の値",
+      "contract": "1 対象・4 条件・6 状態読取り",
+      "test_id": "CAP-sensor:INPUT_VALUE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "sensor:DISTANCE_TO",
+      "capability": "対象/マウスまでの中心距離",
+      "contract": "1 対象・4 条件・6 状態読取り",
+      "test_id": "CAP-sensor:DISTANCE_TO",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "sensor:KEY_DOWN",
+      "capability": "指定キーの現在押下状態",
+      "contract": "1 対象・4 条件・6 状態読取り",
+      "test_id": "CAP-sensor:KEY_DOWN",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "sensor:TOUCHING_COLOR",
+      "capability": "設定色と外接長方形による接触",
+      "contract": "1 対象・4 条件・6 状態読取り",
+      "test_id": "CAP-sensor:TOUCHING_COLOR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "sensor:TOUCHING",
+      "capability": "対象/マウス/端との接触",
+      "contract": "1 対象・4 条件・6 状態読取り",
+      "test_id": "CAP-sensor:TOUCHING",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:stage:start",
+      "capability": "stageのstart",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:stage:start",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:stage:click",
+      "capability": "stageのclick",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:stage:click",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:stage:keyDown",
+      "capability": "stageのkeyDown",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:stage:keyDown",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:stage:message",
+      "capability": "stageのmessage",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:stage:message",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:stage:backdropChanged",
+      "capability": "stageのbackdropChanged",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:stage:backdropChanged",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:label:start",
+      "capability": "labelのstart",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:label:start",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:label:click",
+      "capability": "labelのclick",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:label:click",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:label:keyDown",
+      "capability": "labelのkeyDown",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:label:keyDown",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:label:message",
+      "capability": "labelのmessage",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:label:message",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:label:backdropChanged",
+      "capability": "labelのbackdropChanged",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:label:backdropChanged",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:button:start",
+      "capability": "buttonのstart",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:button:start",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:button:click",
+      "capability": "buttonのclick",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:button:click",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:button:keyDown",
+      "capability": "buttonのkeyDown",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:button:keyDown",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:button:message",
+      "capability": "buttonのmessage",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:button:message",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:button:backdropChanged",
+      "capability": "buttonのbackdropChanged",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:button:backdropChanged",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:box:start",
+      "capability": "boxのstart",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:box:start",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:box:click",
+      "capability": "boxのclick",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:box:click",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:box:keyDown",
+      "capability": "boxのkeyDown",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:box:keyDown",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:box:message",
+      "capability": "boxのmessage",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:box:message",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:box:backdropChanged",
+      "capability": "boxのbackdropChanged",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:box:backdropChanged",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:input:start",
+      "capability": "inputのstart",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:input:start",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:input:click",
+      "capability": "inputのclick",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:input:click",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:input:keyDown",
+      "capability": "inputのkeyDown",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:input:keyDown",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:input:message",
+      "capability": "inputのmessage",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:input:message",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:input:backdropChanged",
+      "capability": "inputのbackdropChanged",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:input:backdropChanged",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:input:valueChanged",
+      "capability": "inputのvalueChanged",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:input:valueChanged",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:sprite:start",
+      "capability": "spriteのstart",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:sprite:start",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:sprite:click",
+      "capability": "spriteのclick",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:sprite:click",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:sprite:keyDown",
+      "capability": "spriteのkeyDown",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:sprite:keyDown",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:sprite:message",
+      "capability": "spriteのmessage",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:sprite:message",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:sprite:backdropChanged",
+      "capability": "spriteのbackdropChanged",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:sprite:backdropChanged",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "event:sprite:cloneStart",
+      "capability": "spriteのcloneStart",
+      "contract": "2 全対象種別/イベントとpayload",
+      "test_id": "CAP-event:sprite:cloneStart",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "scope:precedence",
+      "capability": "反復項目→局所→引数→個体→作品の解決順位",
+      "contract": "1.3 主体・6.3 名前・7 呼出し局所",
+      "test_id": "CAP-scope:precedence",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "scope:readonly",
+      "capability": "反復項目は読み取り専用",
+      "contract": "1.3 主体・6.3 名前・7 呼出し局所",
+      "test_id": "CAP-scope:readonly",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "scope:arguments",
+      "capability": "動作・求値の引数を値渡しする",
+      "contract": "1.3 主体・6.3 名前・7 呼出し局所",
+      "test_id": "CAP-scope:arguments",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "scope:local",
+      "capability": "局所変数・局所リストの先頭宣言と使用前検査",
+      "contract": "1.3 主体・6.3 名前・7 呼出し局所",
+      "test_id": "CAP-scope:local",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "scope:purity",
+      "capability": "求値の外部副作用禁止",
+      "contract": "1.3 主体・6.3 名前・7 呼出し局所",
+      "test_id": "CAP-scope:purity",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "runtime:fairness",
+      "capability": "複数処理を命令単位で公平に進める",
+      "contract": "3〜8 評価順/待機/実行/安全",
+      "test_id": "CAP-runtime:fairness",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "runtime:time",
+      "capability": "論理時計による待機",
+      "contract": "3〜8 評価順/待機/実行/安全",
+      "test_id": "CAP-runtime:time",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "runtime:condition",
+      "capability": "条件待機の再評価・失敗時停止",
+      "contract": "3〜8 評価順/待機/実行/安全",
+      "test_id": "CAP-runtime:condition",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "runtime:notify",
+      "capability": "直接起動した受け手だけの完了待ち",
+      "contract": "3〜8 評価順/待機/実行/安全",
+      "test_id": "CAP-runtime:notify",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "runtime:question",
+      "capability": "質問の直列化とtask別の答え",
+      "contract": "3〜8 評価順/待機/実行/安全",
+      "test_id": "CAP-runtime:question",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "runtime:glide",
+      "capability": "滑走と他taskの並行実行",
+      "contract": "3〜8 評価順/待機/実行/安全",
+      "test_id": "CAP-runtime:glide",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "runtime:audio-wait",
+      "capability": "開始した音のhandleだけを待つ",
+      "contract": "3〜8 評価順/待機/実行/安全",
+      "test_id": "CAP-runtime:audio-wait",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "runtime:stop",
+      "capability": "停止後のtask/待機/質問/物理入力解放",
+      "contract": "3〜8 評価順/待機/実行/安全",
+      "test_id": "CAP-runtime:stop",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "runtime:pause-step",
+      "capability": "pause/resume/1命令実行で時計を早送りしない",
+      "contract": "3〜8 評価順/待機/実行/安全",
+      "test_id": "CAP-runtime:pause-step",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "runtime:clone",
+      "capability": "clone生成・個体データ分離・開始・削除",
+      "contract": "3〜8 評価順/待機/実行/安全",
+      "test_id": "CAP-runtime:clone",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "runtime:error",
+      "capability": "エラーの場所・call frame・値を固定して記録",
+      "contract": "3〜8 評価順/待機/実行/安全",
+      "test_id": "CAP-runtime:error",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "save:project",
+      "capability": "source正本の保存・復元・作りかけ保持",
+      "contract": "11 保存/復元/生成HTML",
+      "test_id": "CAP-save:project",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "save:autosave",
+      "capability": "作品と定義下書きの自動復元",
+      "contract": "11 保存/復元/生成HTML",
+      "test_id": "CAP-save:autosave",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "save:format-contract",
+      "capability": "保存・実行の構造と言語・runtime契約の整合",
+      "contract": "11 保存/復元/生成HTML",
+      "test_id": "CAP-save:format-contract",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "save:producer-metadata",
+      "capability": "作成元ラベルと作品内容の独立",
+      "contract": "11 保存/復元/生成HTML",
+      "test_id": "CAP-save:producer-metadata",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "maint:identifier-policy",
+      "capability": "機能由来の自作名と製品版参照の用途制限",
+      "contract": "14 最終証拠と独立ゲート",
+      "test_id": "CAP-maint:identifier-policy",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "save:standalone",
+      "capability": "共通runtimeの単体HTML書き出し",
+      "contract": "11 保存/復元/生成HTML",
+      "test_id": "CAP-save:standalone",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "product:ui-buttons",
+      "capability": "コード／ブロックのボタン表示・到達性・操作一致",
+      "contract": "8・11 全素材/オフライン/製品能力",
+      "test_id": "CAP-product:ui-buttons",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "product:designer",
+      "capability": "部品追加・選択・移動・サイズ変更・色・削除・properties・標準キャラクター",
+      "contract": "8・11 全素材/オフライン/製品能力",
+      "test_id": "CAP-product:designer",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "product:data",
+      "capability": "作品/個体データの編集・保存",
+      "contract": "8・11 全素材/オフライン/製品能力",
+      "test_id": "CAP-product:data",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "product:assets",
+      "capability": "画像オブジェクト・背景・衣装・音素材の登録・保持",
+      "contract": "8・11 全素材/オフライン/製品能力",
+      "test_id": "CAP-product:assets",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "product:callable-draft",
+      "capability": "定義下書きと明示保存の境界",
+      "contract": "8・11 全素材/オフライン/製品能力",
+      "test_id": "CAP-product:callable-draft",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "product:diagnostics",
+      "capability": "場所・行・理由つき作品診断",
+      "contract": "8・11 全素材/オフライン/製品能力",
+      "test_id": "CAP-product:diagnostics",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "product:hints",
+      "capability": "対象/event/スコープ別の候補・理由",
+      "contract": "8・11 全素材/オフライン/製品能力",
+      "test_id": "CAP-product:hints",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "product:monitor",
+      "capability": "実行モニターと現在位置",
+      "contract": "8・11 全素材/オフライン/製品能力",
+      "test_id": "CAP-product:monitor",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "editor:switch",
+      "capability": "無編集Switchで原文/dirty/履歴/redo不変",
+      "contract": "10〜12 共通編集/回復/表示",
+      "test_id": "CAP-editor:switch",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "editor:transaction",
+      "capability": "GUI操作の原子的なsource反映・取消",
+      "contract": "10〜12 共通編集/回復/表示",
+      "test_id": "CAP-editor:transaction",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "editor:history",
+      "capability": "コード/GUI/下書き/作品共通Undo/Redo",
+      "contract": "10〜12 共通編集/回復/表示",
+      "test_id": "CAP-editor:history",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "product:block-workbench",
+      "capability": "形で構造を示し、直接つかんで接続できる連続作業台",
+      "contract": "8・11 全素材/オフライン/製品能力",
+      "test_id": "CAP-product:block-workbench",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "product:responsive",
+      "capability": "responsive/縮尺/スクロール到達性/キーボード/IME/pointer",
+      "contract": "8・11 全素材/オフライン/製品能力",
+      "test_id": "CAP-product:responsive",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "product:offline-license",
+      "capability": "単一HTML/オフライン/CSP/Apache-2.0保持",
+      "contract": "8・11 全素材/オフライン/製品能力",
+      "test_id": "CAP-product:offline-license",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:fileBytes",
+      "capability": "fileBytes = 25165824",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:fileBytes",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:importFileBytes",
+      "capability": "importFileBytes = 12582912",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:importFileBytes",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:assetRawTotal",
+      "capability": "assetRawTotal = 16777216",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:assetRawTotal",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:assets",
+      "capability": "assets = 128",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:assets",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:imageAssets",
+      "capability": "imageAssets = 64",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:imageAssets",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:audioAssets",
+      "capability": "audioAssets = 64",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:audioAssets",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:imageBytes",
+      "capability": "imageBytes = 4194304",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:imageBytes",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:audioBytes",
+      "capability": "audioBytes = 6291456",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:audioBytes",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:imageWidth",
+      "capability": "imageWidth = 4096",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:imageWidth",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:imageHeight",
+      "capability": "imageHeight = 4096",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:imageHeight",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:imagePixels",
+      "capability": "imagePixels = 4194304",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:imagePixels",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:imagePixelsTotal",
+      "capability": "imagePixelsTotal = 16777216",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:imagePixelsTotal",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:audioDuration",
+      "capability": "audioDuration = 60",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:audioDuration",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:audioDurationTotal",
+      "capability": "audioDurationTotal = 120",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:audioDurationTotal",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:audioChannels",
+      "capability": "audioChannels = 2",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:audioChannels",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:audioSampleRateMin",
+      "capability": "audioSampleRateMin = 8000",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:audioSampleRateMin",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:audioSampleRateMax",
+      "capability": "audioSampleRateMax = 48000",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:audioSampleRateMax",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:activeAudioVoices",
+      "capability": "activeAudioVoices = 32",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:activeAudioVoices",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:backdrops",
+      "capability": "backdrops = 256",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:backdrops",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:costumesPerSprite",
+      "capability": "costumesPerSprite = 256",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:costumesPerSprite",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:sounds",
+      "capability": "sounds = 256",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:sounds",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:components",
+      "capability": "components = 500",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:components",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:clones",
+      "capability": "clones = 500",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:clones",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:scripts",
+      "capability": "scripts = 1000",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:scripts",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:sourceEach",
+      "capability": "sourceEach = 100000",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:sourceEach",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:sourceTotal",
+      "capability": "sourceTotal = 1000000",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:sourceTotal",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:projectVars",
+      "capability": "projectVars = 1000",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:projectVars",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:projectLists",
+      "capability": "projectLists = 500",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:projectLists",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:listItems",
+      "capability": "listItems = 100000",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:listItems",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:stringChars",
+      "capability": "stringChars = 100000",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:stringChars",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:callables",
+      "capability": "callables = 500",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:callables",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:args",
+      "capability": "args = 32",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:args",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:callDepth",
+      "capability": "callDepth = 64",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:callDepth",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:functionOps",
+      "capability": "functionOps = 100000",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:functionOps",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:blockDepth",
+      "capability": "blockDepth = 128",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:blockDepth",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:expressionDepth",
+      "capability": "expressionDepth = 128",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:expressionDepth",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:repeatCount",
+      "capability": "repeatCount = 1000000",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:repeatCount",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_capability": "limit:activeTasks",
+      "capability": "activeTasks = 2000",
+      "contract": "付録D 全上限を維持",
+      "test_id": "CAP-limit:activeTasks",
+      "status": "NOT_RUN"
+    }
+  ],
+  "baseline_schema_mapping": [
+    {
+      "baseline_schema": "Script",
+      "new_surface_contract": "できごとの本文/手順の本文/答えの本文と範囲",
+      "test_id": "MAP-SCHEMA-Script",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "TargetReference",
+      "new_surface_contract": "データ名と所属を、文の「を」「に」等の役割として編集",
+      "test_id": "MAP-SCHEMA-TargetReference",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "CommentLine",
+      "new_surface_contract": "※から始まるメモ。本文とは別、内容と位置を保持",
+      "test_id": "MAP-SCHEMA-CommentLine",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "Assignment",
+      "new_surface_contract": "点数を0にする。",
+      "test_id": "MAP-SCHEMA-Assignment",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "NumericUpdate:ADD",
+      "new_surface_contract": "点数を1増やす。",
+      "test_id": "MAP-SCHEMA-NumericUpdate:ADD",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "NumericUpdate:SUB",
+      "new_surface_contract": "点数を1減らす。",
+      "test_id": "MAP-SCHEMA-NumericUpdate:SUB",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "ListAppend",
+      "new_surface_contract": "持ち物の最後に「かさ」を入れる。",
+      "test_id": "MAP-SCHEMA-ListAppend",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "ListInsert",
+      "new_surface_contract": "持ち物の2番目に「かさ」を入れる。",
+      "test_id": "MAP-SCHEMA-ListInsert",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "ListReplace",
+      "new_surface_contract": "持ち物の2番目を「かさ」に変える。",
+      "test_id": "MAP-SCHEMA-ListReplace",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "ListDelete",
+      "new_surface_contract": "持ち物の2番目を消す。",
+      "test_id": "MAP-SCHEMA-ListDelete",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "ListClear",
+      "new_surface_contract": "持ち物の中身を全部消す。",
+      "test_id": "MAP-SCHEMA-ListClear",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "NoOperation",
+      "new_surface_contract": "何もしない。",
+      "test_id": "MAP-SCHEMA-NoOperation",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "Break",
+      "new_surface_contract": "いまのくり返しを終える。",
+      "test_id": "MAP-SCHEMA-Break",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "Continue",
+      "new_surface_contract": "この回の残りをとばして、次の回へ進む。",
+      "test_id": "MAP-SCHEMA-Continue",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "IfStatement",
+      "new_surface_contract": "もし点数が10点以上なら、<br>  「やった」と言う。",
+      "test_id": "MAP-SCHEMA-IfStatement",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "RepeatCount",
+      "new_surface_contract": "3回くり返す。<br>  10歩進む。",
+      "test_id": "MAP-SCHEMA-RepeatCount",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "RepeatWhile",
+      "new_surface_contract": "点数が100点より小さいあいだ、くり返す。<br>  点数を1点増やす。",
+      "test_id": "MAP-SCHEMA-RepeatWhile",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "RepeatUntil",
+      "new_surface_contract": "「空白」キーが押されるまで、くり返す。<br>  0.1秒待つ。",
+      "test_id": "MAP-SCHEMA-RepeatUntil",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "Forever",
+      "new_surface_contract": "ずっとくり返す。<br>  何もしない。",
+      "test_id": "MAP-SCHEMA-Forever",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "ForEach",
+      "new_surface_contract": "持ち物の中身を先頭から一つずつ見て、次のことを行う。<br>  この中では、今見ているものを【品物】と呼ぶ。<br>  品物の値を言う。",
+      "test_id": "MAP-SCHEMA-ForEach",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "WaitTime",
+      "new_surface_contract": "1秒待つ。",
+      "test_id": "MAP-SCHEMA-WaitTime",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "WaitUntil",
+      "new_surface_contract": "点数が100点以上になるまで待つ。",
+      "test_id": "MAP-SCHEMA-WaitUntil",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "Say",
+      "new_surface_contract": "「こんにちは」と言う。／点数の値を言う。",
+      "test_id": "MAP-SCHEMA-Say",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "ReturnStatement",
+      "new_surface_contract": "合計を答えとして返す。",
+      "test_id": "MAP-SCHEMA-ReturnStatement",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "Ask",
+      "new_surface_contract": "「名前は？」とたずねて、答えを待つ。",
+      "test_id": "MAP-SCHEMA-Ask",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "Broadcast",
+      "new_surface_contract": "みんなに「出発」と知らせる。",
+      "test_id": "MAP-SCHEMA-Broadcast",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BroadcastAndWait",
+      "new_surface_contract": "みんなに「出発」と知らせて、知らせを受けて始めたことが全部終わるまで待つ。",
+      "test_id": "MAP-SCHEMA-BroadcastAndWait",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "UserActionCall",
+      "new_surface_contract": "増やす量を3として、【増やす】という手順を行う。",
+      "test_id": "MAP-SCHEMA-UserActionCall",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LocalVariableDeclaration",
+      "new_surface_contract": "この中だけで使う変数【合計】を作り、最初は0にする。",
+      "test_id": "MAP-SCHEMA-LocalVariableDeclaration",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LocalListDeclaration",
+      "new_surface_contract": "この中だけで使うリスト【結果】を空で作る。",
+      "test_id": "MAP-SCHEMA-LocalListDeclaration",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "StopCommand:THIS",
+      "new_surface_contract": "この実行を止める。",
+      "test_id": "MAP-SCHEMA-StopCommand:THIS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "StopCommand:OTHERS",
+      "new_surface_contract": "ほかの実行をすべて止める。",
+      "test_id": "MAP-SCHEMA-StopCommand:OTHERS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "StopCommand:ALL",
+      "new_surface_contract": "作品全体を止める。",
+      "test_id": "MAP-SCHEMA-StopCommand:ALL",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "MotionCommand:MOVE",
+      "new_surface_contract": "前へ10歩進む。",
+      "test_id": "MAP-SCHEMA-MotionCommand:MOVE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "MotionCommand:GOTO",
+      "new_surface_contract": "横100、縦50の位置へ行く。",
+      "test_id": "MAP-SCHEMA-MotionCommand:GOTO",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "MotionCommand:GLIDE",
+      "new_surface_contract": "横200、縦100の位置へ1秒かけて動く。",
+      "test_id": "MAP-SCHEMA-MotionCommand:GLIDE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "MotionCommand:SET_DIRECTION",
+      "new_surface_contract": "向きを90度にする。",
+      "test_id": "MAP-SCHEMA-MotionCommand:SET_DIRECTION",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "MotionCommand:TURN_RIGHT",
+      "new_surface_contract": "右に15度回る。",
+      "test_id": "MAP-SCHEMA-MotionCommand:TURN_RIGHT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "MotionCommand:TURN_LEFT",
+      "new_surface_contract": "左に15度回る。",
+      "test_id": "MAP-SCHEMA-MotionCommand:TURN_LEFT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "MotionCommand:SET_X",
+      "new_surface_contract": "横位置を100にする。",
+      "test_id": "MAP-SCHEMA-MotionCommand:SET_X",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "MotionCommand:SET_Y",
+      "new_surface_contract": "縦位置を50にする。",
+      "test_id": "MAP-SCHEMA-MotionCommand:SET_Y",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "MotionCommand:POINT_TO",
+      "new_surface_contract": "「マウス」の方を向く。",
+      "test_id": "MAP-SCHEMA-MotionCommand:POINT_TO",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "MotionCommand:BOUNCE",
+      "new_surface_contract": "画面の端にふれていれば、はね返る。",
+      "test_id": "MAP-SCHEMA-MotionCommand:BOUNCE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:FRONT",
+      "new_surface_contract": "いちばん手前へ出る。",
+      "test_id": "MAP-SCHEMA-LooksCommand:FRONT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:BACK",
+      "new_surface_contract": "いちばん奥へ下がる。",
+      "test_id": "MAP-SCHEMA-LooksCommand:BACK",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:HIDE",
+      "new_surface_contract": "姿をかくす。",
+      "test_id": "MAP-SCHEMA-LooksCommand:HIDE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:SHOW",
+      "new_surface_contract": "姿を見せる。",
+      "test_id": "MAP-SCHEMA-LooksCommand:SHOW",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:NEXT_COSTUME",
+      "new_surface_contract": "次の衣装に変える。",
+      "test_id": "MAP-SCHEMA-LooksCommand:NEXT_COSTUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:PREV_COSTUME",
+      "new_surface_contract": "前の衣装に変える。",
+      "test_id": "MAP-SCHEMA-LooksCommand:PREV_COSTUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:NEXT_BACKDROP",
+      "new_surface_contract": "次の背景に変える。",
+      "test_id": "MAP-SCHEMA-LooksCommand:NEXT_BACKDROP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:PREV_BACKDROP",
+      "new_surface_contract": "前の背景に変える。",
+      "test_id": "MAP-SCHEMA-LooksCommand:PREV_BACKDROP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:SET_SCALE",
+      "new_surface_contract": "大きさを120％にする。",
+      "test_id": "MAP-SCHEMA-LooksCommand:SET_SCALE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:FORWARD_LAYERS",
+      "new_surface_contract": "重なりを1つ手前にする。",
+      "test_id": "MAP-SCHEMA-LooksCommand:FORWARD_LAYERS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:BACKWARD_LAYERS",
+      "new_surface_contract": "重なりを1つ奥にする。",
+      "test_id": "MAP-SCHEMA-LooksCommand:BACKWARD_LAYERS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:SET_COLOR",
+      "new_surface_contract": "表示色を「赤」にする。",
+      "test_id": "MAP-SCHEMA-LooksCommand:SET_COLOR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:SET_COSTUME",
+      "new_surface_contract": "衣装を「星」に変える。",
+      "test_id": "MAP-SCHEMA-LooksCommand:SET_COSTUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:SET_BACKDROP",
+      "new_surface_contract": "背景を「空色」に変える。",
+      "test_id": "MAP-SCHEMA-LooksCommand:SET_BACKDROP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:SET_SELF_TEXT",
+      "new_surface_contract": "自分の文字を「文字」に変える。",
+      "test_id": "MAP-SCHEMA-LooksCommand:SET_SELF_TEXT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:SET_TARGET_TEXT",
+      "new_surface_contract": "「ボタン1」の文字を「始める」に変える。",
+      "test_id": "MAP-SCHEMA-LooksCommand:SET_TARGET_TEXT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LooksCommand:SET_INPUT",
+      "new_surface_contract": "「入力欄1」に「答え」を入れる。",
+      "test_id": "MAP-SCHEMA-LooksCommand:SET_INPUT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "PenCommand:DOWN",
+      "new_surface_contract": "ペンを下ろす。",
+      "test_id": "MAP-SCHEMA-PenCommand:DOWN",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "PenCommand:UP",
+      "new_surface_contract": "ペンを上げる。",
+      "test_id": "MAP-SCHEMA-PenCommand:UP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "PenCommand:CLEAR",
+      "new_surface_contract": "作品の線とスタンプを全部消す。",
+      "test_id": "MAP-SCHEMA-PenCommand:CLEAR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "PenCommand:STAMP",
+      "new_surface_contract": "今の姿のスタンプを押す。",
+      "test_id": "MAP-SCHEMA-PenCommand:STAMP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "PenCommand:SET_COLOR",
+      "new_surface_contract": "ペンの色を「青」にする。",
+      "test_id": "MAP-SCHEMA-PenCommand:SET_COLOR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "PenCommand:SET_SIZE",
+      "new_surface_contract": "ペンの太さを3にする。",
+      "test_id": "MAP-SCHEMA-PenCommand:SET_SIZE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SoundCommand:STOP_ALL",
+      "new_surface_contract": "すべての音を止める。",
+      "test_id": "MAP-SCHEMA-SoundCommand:STOP_ALL",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SoundCommand:TONE_WAIT",
+      "new_surface_contract": "440Hzの音を0.2秒鳴らす。",
+      "test_id": "MAP-SCHEMA-SoundCommand:TONE_WAIT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SoundCommand:TONE",
+      "new_surface_contract": "440Hzの音を0.2秒鳴らし始める。",
+      "test_id": "MAP-SCHEMA-SoundCommand:TONE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SoundCommand:SAMPLE_WAIT",
+      "new_surface_contract": "音「ベル」を鳴らす。",
+      "test_id": "MAP-SCHEMA-SoundCommand:SAMPLE_WAIT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SoundCommand:SAMPLE",
+      "new_surface_contract": "音「ベル」を鳴らし始める。",
+      "test_id": "MAP-SCHEMA-SoundCommand:SAMPLE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SoundCommand:SET_VOLUME",
+      "new_surface_contract": "音量を50％にする。",
+      "test_id": "MAP-SCHEMA-SoundCommand:SET_VOLUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SoundCommand:PITCH_UP",
+      "new_surface_contract": "音の高さを1段階上げる。",
+      "test_id": "MAP-SCHEMA-SoundCommand:PITCH_UP",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SoundCommand:PITCH_DOWN",
+      "new_surface_contract": "音の高さを1段階下げる。",
+      "test_id": "MAP-SCHEMA-SoundCommand:PITCH_DOWN",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "CloneCommand:CREATE_SELF",
+      "new_surface_contract": "自分の分身を作る。",
+      "test_id": "MAP-SCHEMA-CloneCommand:CREATE_SELF",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "CloneCommand:DELETE_SELF",
+      "new_surface_contract": "この分身だけを消す。",
+      "test_id": "MAP-SCHEMA-CloneCommand:DELETE_SELF",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "CloneCommand:CREATE_TARGET",
+      "new_surface_contract": "「星」の分身を作る。",
+      "test_id": "MAP-SCHEMA-CloneCommand:CREATE_TARGET",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "NumberLiteral",
+      "new_surface_contract": "数。－10や全角入力も共通数値編集へ",
+      "test_id": "MAP-SCHEMA-NumberLiteral",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "StringLiteral",
+      "new_surface_contract": "「文字」。引用内容を保護",
+      "test_id": "MAP-SCHEMA-StringLiteral",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BooleanLiteral",
+      "new_surface_contract": "条件の答え（あてはまる／あてはまらない）",
+      "test_id": "MAP-SCHEMA-BooleanLiteral",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "ListLiteral",
+      "new_surface_contract": "［値、値…］。順序と全項目を編集",
+      "test_id": "MAP-SCHEMA-ListLiteral",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "VariableRead",
+      "new_surface_contract": "点数の値／自分の点数／作品の点数。任意の式内でも使える",
+      "test_id": "MAP-SCHEMA-VariableRead",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "UnaryExpression:POS",
+      "new_surface_contract": "＋（式）",
+      "test_id": "MAP-SCHEMA-UnaryExpression:POS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "UnaryExpression:NEG",
+      "new_surface_contract": "－（式）",
+      "test_id": "MAP-SCHEMA-UnaryExpression:NEG",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "UnaryExpression:NOT",
+      "new_surface_contract": "述語ごとの否定／条件（式）が成り立たない",
+      "test_id": "MAP-SCHEMA-UnaryExpression:NOT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BinaryExpression:ADD",
+      "new_surface_contract": "（式）＋（式）",
+      "test_id": "MAP-SCHEMA-BinaryExpression:ADD",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BinaryExpression:SUB",
+      "new_surface_contract": "（式）－（式）",
+      "test_id": "MAP-SCHEMA-BinaryExpression:SUB",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BinaryExpression:MUL",
+      "new_surface_contract": "（式）×（式）",
+      "test_id": "MAP-SCHEMA-BinaryExpression:MUL",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BinaryExpression:DIV",
+      "new_surface_contract": "（式）÷（式）",
+      "test_id": "MAP-SCHEMA-BinaryExpression:DIV",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BinaryExpression:POW",
+      "new_surface_contract": "（式）＾（式）",
+      "test_id": "MAP-SCHEMA-BinaryExpression:POW",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "CompareExpression:GTE",
+      "new_surface_contract": "XがY以上／Y以上なら",
+      "test_id": "MAP-SCHEMA-CompareExpression:GTE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "CompareExpression:LTE",
+      "new_surface_contract": "XがY以下／Y以下なら",
+      "test_id": "MAP-SCHEMA-CompareExpression:LTE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "CompareExpression:GT",
+      "new_surface_contract": "XがYより大きい／大きければ",
+      "test_id": "MAP-SCHEMA-CompareExpression:GT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "CompareExpression:LT",
+      "new_surface_contract": "XがYより小さい／小さければ",
+      "test_id": "MAP-SCHEMA-CompareExpression:LT",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "CompareExpression:EQ",
+      "new_surface_contract": "XがYと同じ／同じなら",
+      "test_id": "MAP-SCHEMA-CompareExpression:EQ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "CompareExpression:NEQ",
+      "new_surface_contract": "XがYと違う／違えば",
+      "test_id": "MAP-SCHEMA-CompareExpression:NEQ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LogicalExpression:AND",
+      "new_surface_contract": "活用接続による両方／明示した括弧のかつ",
+      "test_id": "MAP-SCHEMA-LogicalExpression:AND",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "LogicalExpression:OR",
+      "new_surface_contract": "か、による少なくとも一方／明示した括弧のまたは",
+      "test_id": "MAP-SCHEMA-LogicalExpression:OR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "ListRead",
+      "new_surface_contract": "持ち物の2番目",
+      "test_id": "MAP-SCHEMA-ListRead",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "UserFunctionCall",
+      "new_surface_contract": "（引数名を値として、【名前】で求めた答え）",
+      "test_id": "MAP-SCHEMA-UserFunctionCall",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:乱数",
+      "new_surface_contract": "乱数（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:乱数",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:余り",
+      "new_surface_contract": "余り（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:余り",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:四捨五入",
+      "new_surface_contract": "四捨五入（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:四捨五入",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:切り上げ",
+      "new_surface_contract": "切り上げ（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:切り上げ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:切り捨て",
+      "new_surface_contract": "切り捨て（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:切り捨て",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:絶対値",
+      "new_surface_contract": "絶対値（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:絶対値",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:平方根",
+      "new_surface_contract": "平方根（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:平方根",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:正弦",
+      "new_surface_contract": "正弦（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:正弦",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:余弦",
+      "new_surface_contract": "余弦（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:余弦",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:正接",
+      "new_surface_contract": "正接（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:正接",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:逆正弦",
+      "new_surface_contract": "逆正弦（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:逆正弦",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:逆余弦",
+      "new_surface_contract": "逆余弦（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:逆余弦",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:逆正接",
+      "new_surface_contract": "逆正接（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:逆正接",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:自然対数",
+      "new_surface_contract": "自然対数（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:自然対数",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:常用対数",
+      "new_surface_contract": "常用対数（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:常用対数",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:指数",
+      "new_surface_contract": "指数（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:指数",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:数",
+      "new_surface_contract": "数（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:数",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:文字",
+      "new_surface_contract": "文字（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:文字",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:最小",
+      "new_surface_contract": "最小（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:最小",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:最大",
+      "new_surface_contract": "最大（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:最大",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:つなぐ",
+      "new_surface_contract": "つなぐ（式…）。数学名・全引数・読み・値の穴を保持",
+      "test_id": "MAP-SCHEMA-BuiltinCall:つなぐ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:CONTAINS",
+      "new_surface_contract": "LにEが入っている／文字列に含まれている",
+      "test_id": "MAP-SCHEMA-BuiltinCall:CONTAINS",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:INDEX_OF",
+      "new_surface_contract": "LでEが最初にある番号（なければ0）",
+      "test_id": "MAP-SCHEMA-BuiltinCall:INDEX_OF",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:LENGTH",
+      "new_surface_contract": "Lの長さ",
+      "test_id": "MAP-SCHEMA-BuiltinCall:LENGTH",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:STRING_LENGTH",
+      "new_surface_contract": "文字列の文字数",
+      "test_id": "MAP-SCHEMA-BuiltinCall:STRING_LENGTH",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "BuiltinCall:STRING_CHAR",
+      "new_surface_contract": "文字列のN文字目",
+      "test_id": "MAP-SCHEMA-BuiltinCall:STRING_CHAR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:マウスが押されている",
+      "new_surface_contract": "マウスが押されている。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:マウスが押されている",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:マウスの横位置",
+      "new_surface_contract": "マウスの横位置。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:マウスの横位置",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:マウスの縦位置",
+      "new_surface_contract": "マウスの縦位置。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:マウスの縦位置",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:以前の背景名",
+      "new_surface_contract": "変わる前の背景名",
+      "test_id": "MAP-SCHEMA-SensorRead:以前の背景名",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:新しい背景名",
+      "new_surface_contract": "変わった後の背景名",
+      "test_id": "MAP-SCHEMA-SensorRead:新しい背景名",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:受け取った知らせ",
+      "new_surface_contract": "受け取った知らせ。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:受け取った知らせ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:押されたキー",
+      "new_surface_contract": "押されたキー。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:押されたキー",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:クローンである",
+      "new_surface_contract": "分身である",
+      "test_id": "MAP-SCHEMA-SensorRead:クローンである",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:背景番号",
+      "new_surface_contract": "背景番号。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:背景番号",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:背景名",
+      "new_surface_contract": "背景名。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:背景名",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:衣装番号",
+      "new_surface_contract": "衣装番号。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:衣装番号",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:衣装名",
+      "new_surface_contract": "衣装名。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:衣装名",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:横位置",
+      "new_surface_contract": "横位置。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:横位置",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:縦位置",
+      "new_surface_contract": "縦位置。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:縦位置",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:方向",
+      "new_surface_contract": "方向。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:方向",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:大きさ",
+      "new_surface_contract": "大きさ。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:大きさ",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:タイマー",
+      "new_surface_contract": "タイマー。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:タイマー",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:答え",
+      "new_surface_contract": "答え。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:答え",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:音量",
+      "new_surface_contract": "音量。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:音量",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:音程",
+      "new_surface_contract": "音程。状態値として読み、関連イベント/対象を表示",
+      "test_id": "MAP-SCHEMA-SensorRead:音程",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:以前の値",
+      "new_surface_contract": "変わる前の値",
+      "test_id": "MAP-SCHEMA-SensorRead:以前の値",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:新しい値",
+      "new_surface_contract": "変わった後の値",
+      "test_id": "MAP-SCHEMA-SensorRead:新しい値",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:INPUT_VALUE",
+      "new_surface_contract": "入力欄の中身",
+      "test_id": "MAP-SCHEMA-SensorRead:INPUT_VALUE",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:DISTANCE_TO",
+      "new_surface_contract": "相手までの距離",
+      "test_id": "MAP-SCHEMA-SensorRead:DISTANCE_TO",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:KEY_DOWN",
+      "new_surface_contract": "Kキーが押されている",
+      "test_id": "MAP-SCHEMA-SensorRead:KEY_DOWN",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:TOUCHING_COLOR",
+      "new_surface_contract": "色にふれている",
+      "test_id": "MAP-SCHEMA-SensorRead:TOUCHING_COLOR",
+      "status": "NOT_RUN"
+    },
+    {
+      "baseline_schema": "SensorRead:TOUCHING",
+      "new_surface_contract": "相手にふれている",
+      "test_id": "MAP-SCHEMA-SensorRead:TOUCHING",
+      "status": "NOT_RUN"
+    }
+  ],
+  "baseline_commands": [
+    {
+      "id": "Assignment",
+      "before": "点数を0にする。",
+      "new": "点数を0にする。",
+      "test_id": "MAP-CMD-Assignment",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "NumericUpdate:ADD",
+      "before": "点数に1を足す。",
+      "new": "点数を1増やす。",
+      "test_id": "MAP-CMD-NumericUpdate:ADD",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "NumericUpdate:SUB",
+      "before": "点数から1を引く。",
+      "new": "点数を1減らす。",
+      "test_id": "MAP-CMD-NumericUpdate:SUB",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "ListAppend",
+      "before": "名前一覧に「あかり」を追加する。",
+      "new": "持ち物の最後に「かさ」を入れる。",
+      "test_id": "MAP-CMD-ListAppend",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "ListReplace",
+      "before": "名前一覧の1番目を「ひかり」にする。",
+      "new": "持ち物の2番目を「かさ」に変える。",
+      "test_id": "MAP-CMD-ListReplace",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "ListInsert",
+      "before": "名前一覧の1番目に「ほたる」を挿入する。",
+      "new": "持ち物の2番目に「かさ」を入れる。",
+      "test_id": "MAP-CMD-ListInsert",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "ListDelete",
+      "before": "名前一覧の1番目を削除する。",
+      "new": "持ち物の2番目を消す。",
+      "test_id": "MAP-CMD-ListDelete",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "ListClear",
+      "before": "名前一覧を空にする。",
+      "new": "持ち物の中身を全部消す。",
+      "test_id": "MAP-CMD-ListClear",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "IfStatement",
+      "before": "もし 点数が10以上なら、次のことをする。<br>  何もしない。",
+      "new": "もし点数が10点以上なら、<br>  「やった」と言う。",
+      "test_id": "MAP-CMD-IfStatement",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "Say",
+      "before": "「10点以上です」と言う。",
+      "new": "「こんにちは」と言う。／点数の値を言う。",
+      "test_id": "MAP-CMD-Say",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "RepeatCount",
+      "before": "次のことを3回くり返す。<br>  何もしない。",
+      "new": "3回くり返す。<br>  10歩進む。",
+      "test_id": "MAP-CMD-RepeatCount",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "RepeatWhile",
+      "before": "点数が100より小さいあいだ、次のことをくり返す。<br>  何もしない。",
+      "new": "点数が100点より小さいあいだ、くり返す。<br>  点数を1点増やす。",
+      "test_id": "MAP-CMD-RepeatWhile",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "RepeatUntil",
+      "before": "空白キーが押されるまで、次のことをくり返す。<br>  何もしない。",
+      "new": "「空白」キーが押されるまで、くり返す。<br>  0.1秒待つ。",
+      "test_id": "MAP-CMD-RepeatUntil",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "WaitTime",
+      "before": "0.1秒待つ。",
+      "new": "1秒待つ。",
+      "test_id": "MAP-CMD-WaitTime",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "WaitUntil",
+      "before": "点数が100以上になるまで待つ。",
+      "new": "点数が100点以上になるまで待つ。",
+      "test_id": "MAP-CMD-WaitUntil",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "ForEach",
+      "before": "名前一覧の各要素を項目として、次のことをくり返す。<br>  何もしない。",
+      "new": "持ち物の中身を先頭から一つずつ見て、次のことを行う。<br>  この中では、今見ているものを【品物】と呼ぶ。<br>  品物の値を言う。",
+      "test_id": "MAP-CMD-ForEach",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "MotionCommand:MOVE",
+      "before": "10歩動く。",
+      "new": "前へ10歩進む。",
+      "test_id": "MAP-CMD-MotionCommand:MOVE",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "MotionCommand:GOTO",
+      "before": "横100、縦50の位置へ行く。",
+      "new": "横100、縦50の位置へ行く。",
+      "test_id": "MAP-CMD-MotionCommand:GOTO",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "MotionCommand:GLIDE",
+      "before": "1秒で横200、縦100の位置へ滑る。",
+      "new": "横200、縦100の位置へ1秒かけて動く。",
+      "test_id": "MAP-CMD-MotionCommand:GLIDE",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "MotionCommand:TURN_RIGHT",
+      "before": "右に15度回る。",
+      "new": "右に15度回る。",
+      "test_id": "MAP-CMD-MotionCommand:TURN_RIGHT",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "MotionCommand:TURN_LEFT",
+      "before": "左に15度回る。",
+      "new": "左に15度回る。",
+      "test_id": "MAP-CMD-MotionCommand:TURN_LEFT",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "MotionCommand:SET_DIRECTION",
+      "before": "方向を90度にする。",
+      "new": "向きを90度にする。",
+      "test_id": "MAP-CMD-MotionCommand:SET_DIRECTION",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "MotionCommand:SET_X",
+      "before": "横位置を100にする。",
+      "new": "横位置を100にする。",
+      "test_id": "MAP-CMD-MotionCommand:SET_X",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "MotionCommand:SET_Y",
+      "before": "縦位置を50にする。",
+      "new": "縦位置を50にする。",
+      "test_id": "MAP-CMD-MotionCommand:SET_Y",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "MotionCommand:POINT_TO",
+      "before": "「マウス」の方向を向く。",
+      "new": "「マウス」の方を向く。",
+      "test_id": "MAP-CMD-MotionCommand:POINT_TO",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "MotionCommand:BOUNCE",
+      "before": "端に触れていれば跳ね返る。",
+      "new": "画面の端にふれていれば、はね返る。",
+      "test_id": "MAP-CMD-MotionCommand:BOUNCE",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:SET_SCALE",
+      "before": "大きさを120％にする。",
+      "new": "大きさを120％にする。",
+      "test_id": "MAP-CMD-LooksCommand:SET_SCALE",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:SET_COLOR",
+      "before": "表示色を「赤」にする。",
+      "new": "表示色を「赤」にする。",
+      "test_id": "MAP-CMD-LooksCommand:SET_COLOR",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:HIDE",
+      "before": "隠れる。",
+      "new": "姿をかくす。",
+      "test_id": "MAP-CMD-LooksCommand:HIDE",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:SHOW",
+      "before": "現れる。",
+      "new": "姿を見せる。",
+      "test_id": "MAP-CMD-LooksCommand:SHOW",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:FRONT",
+      "before": "前面へ出す。",
+      "new": "いちばん手前へ出る。",
+      "test_id": "MAP-CMD-LooksCommand:FRONT",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:BACK",
+      "before": "背面へ下げる。",
+      "new": "いちばん奥へ下がる。",
+      "test_id": "MAP-CMD-LooksCommand:BACK",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:FORWARD_LAYERS",
+      "before": "1層前へ出す。",
+      "new": "重なりを1つ手前にする。",
+      "test_id": "MAP-CMD-LooksCommand:FORWARD_LAYERS",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:BACKWARD_LAYERS",
+      "before": "1層後ろへ下げる。",
+      "new": "重なりを1つ奥にする。",
+      "test_id": "MAP-CMD-LooksCommand:BACKWARD_LAYERS",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "PenCommand:DOWN",
+      "before": "ペンを下ろす。",
+      "new": "ペンを下ろす。",
+      "test_id": "MAP-CMD-PenCommand:DOWN",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "PenCommand:SET_COLOR",
+      "before": "ペンの色を「青」にする。",
+      "new": "ペンの色を「青」にする。",
+      "test_id": "MAP-CMD-PenCommand:SET_COLOR",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "PenCommand:SET_SIZE",
+      "before": "ペンの太さを3にする。",
+      "new": "ペンの太さを3にする。",
+      "test_id": "MAP-CMD-PenCommand:SET_SIZE",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "PenCommand:UP",
+      "before": "ペンを上げる。",
+      "new": "ペンを上げる。",
+      "test_id": "MAP-CMD-PenCommand:UP",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "PenCommand:STAMP",
+      "before": "スタンプを押す。",
+      "new": "今の姿のスタンプを押す。",
+      "test_id": "MAP-CMD-PenCommand:STAMP",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "PenCommand:CLEAR",
+      "before": "描いた線とスタンプを消す。",
+      "new": "作品の線とスタンプを全部消す。",
+      "test_id": "MAP-CMD-PenCommand:CLEAR",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:SET_BACKDROP",
+      "before": "背景を「空色」にする。",
+      "new": "背景を「空色」に変える。",
+      "test_id": "MAP-CMD-LooksCommand:SET_BACKDROP",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:NEXT_BACKDROP",
+      "before": "次の背景にする。",
+      "new": "次の背景に変える。",
+      "test_id": "MAP-CMD-LooksCommand:NEXT_BACKDROP",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:PREV_BACKDROP",
+      "before": "前の背景にする。",
+      "new": "前の背景に変える。",
+      "test_id": "MAP-CMD-LooksCommand:PREV_BACKDROP",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:SET_COSTUME",
+      "before": "衣装を「星」にする。",
+      "new": "衣装を「星」に変える。",
+      "test_id": "MAP-CMD-LooksCommand:SET_COSTUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:NEXT_COSTUME",
+      "before": "次の衣装にする。",
+      "new": "次の衣装に変える。",
+      "test_id": "MAP-CMD-LooksCommand:NEXT_COSTUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:PREV_COSTUME",
+      "before": "前の衣装にする。",
+      "new": "前の衣装に変える。",
+      "test_id": "MAP-CMD-LooksCommand:PREV_COSTUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:SET_TARGET_TEXT",
+      "before": "「ボタン1」の文字を「始める」にする。",
+      "new": "「ボタン1」の文字を「始める」に変える。",
+      "test_id": "MAP-CMD-LooksCommand:SET_TARGET_TEXT",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SoundCommand:TONE",
+      "before": "440Hzの音を0.2秒鳴らす。",
+      "new": "440Hzの音を0.2秒鳴らし始める。",
+      "test_id": "MAP-CMD-SoundCommand:TONE",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SoundCommand:TONE_WAIT",
+      "before": "440Hzの音を0.2秒鳴らし、終わるまで待つ。",
+      "new": "440Hzの音を0.2秒鳴らす。",
+      "test_id": "MAP-CMD-SoundCommand:TONE_WAIT",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SoundCommand:SET_VOLUME",
+      "before": "音量を50％にする。",
+      "new": "音量を50％にする。",
+      "test_id": "MAP-CMD-SoundCommand:SET_VOLUME",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SoundCommand:PITCH_UP",
+      "before": "音程を1段階上げる。",
+      "new": "音の高さを1段階上げる。",
+      "test_id": "MAP-CMD-SoundCommand:PITCH_UP",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SoundCommand:PITCH_DOWN",
+      "before": "音程を1段階下げる。",
+      "new": "音の高さを1段階下げる。",
+      "test_id": "MAP-CMD-SoundCommand:PITCH_DOWN",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SoundCommand:STOP_ALL",
+      "before": "すべての音を止める。",
+      "new": "すべての音を止める。",
+      "test_id": "MAP-CMD-SoundCommand:STOP_ALL",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "Broadcast",
+      "before": "「開始」と知らせる。",
+      "new": "みんなに「出発」と知らせる。",
+      "test_id": "MAP-CMD-Broadcast",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "BroadcastAndWait",
+      "before": "「開始」と知らせ、受け手の処理が終わるまで待つ。",
+      "new": "みんなに「出発」と知らせて、知らせを受けて始めたことが全部終わるまで待つ。",
+      "test_id": "MAP-CMD-BroadcastAndWait",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "Ask",
+      "before": "「名前は？」とたずねる。",
+      "new": "「名前は？」とたずねて、答えを待つ。",
+      "test_id": "MAP-CMD-Ask",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LocalVariableDeclaration",
+      "before": "合計という変数を作り、初期値を0にする。",
+      "new": "この中だけで使う変数【合計】を作り、最初は0にする。",
+      "test_id": "MAP-CMD-LocalVariableDeclaration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "ReturnStatement",
+      "before": "合計を返す。",
+      "new": "合計を答えとして返す。",
+      "test_id": "MAP-CMD-ReturnStatement",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "CloneCommand:CREATE_SELF",
+      "before": "自分のクローンを作る。",
+      "new": "自分の分身を作る。",
+      "test_id": "MAP-CMD-CloneCommand:CREATE_SELF",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "CloneCommand:CREATE_TARGET",
+      "before": "「マスコット」のクローンを作る。",
+      "new": "「星」の分身を作る。",
+      "test_id": "MAP-CMD-CloneCommand:CREATE_TARGET",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "CloneCommand:DELETE_SELF",
+      "before": "このクローンを削除する。",
+      "new": "この分身だけを消す。",
+      "test_id": "MAP-CMD-CloneCommand:DELETE_SELF",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "StopCommand:THIS",
+      "before": "このスクリプトを止める。",
+      "new": "この実行を止める。",
+      "test_id": "MAP-CMD-StopCommand:THIS",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "StopCommand:OTHERS",
+      "before": "ほかのスクリプトを止める。",
+      "new": "ほかの実行をすべて止める。",
+      "test_id": "MAP-CMD-StopCommand:OTHERS",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "StopCommand:ALL",
+      "before": "すべてを止める。",
+      "new": "作品全体を止める。",
+      "test_id": "MAP-CMD-StopCommand:ALL",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:SET_SELF_TEXT",
+      "before": "文字を「文字」にする。",
+      "new": "自分の文字を「文字」に変える。",
+      "test_id": "MAP-CMD-LooksCommand:SET_SELF_TEXT",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LooksCommand:SET_INPUT",
+      "before": "「入力欄1」に「答え」を入れる。",
+      "new": "「入力欄1」に「答え」を入れる。",
+      "test_id": "MAP-CMD-LooksCommand:SET_INPUT",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SoundCommand:SAMPLE",
+      "before": "「ベル」を鳴らす。",
+      "new": "音「ベル」を鳴らし始める。",
+      "test_id": "MAP-CMD-SoundCommand:SAMPLE",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "SoundCommand:SAMPLE_WAIT",
+      "before": "「ベル」を鳴らし、終わるまで待つ。",
+      "new": "音「ベル」を鳴らす。",
+      "test_id": "MAP-CMD-SoundCommand:SAMPLE_WAIT",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "Break",
+      "before": "このくり返しを終える。",
+      "new": "いまのくり返しを終える。",
+      "test_id": "MAP-CMD-Break",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "Continue",
+      "before": "次のくり返しへ進む。",
+      "new": "この回の残りをとばして、次の回へ進む。",
+      "test_id": "MAP-CMD-Continue",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "LocalListDeclaration",
+      "before": "結果というリストを作る。",
+      "new": "この中だけで使うリスト【結果】を空で作る。",
+      "test_id": "MAP-CMD-LocalListDeclaration",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "Forever",
+      "before": "次のことをずっとくり返す。<br>  何もしない。",
+      "new": "ずっとくり返す。<br>  何もしない。",
+      "test_id": "MAP-CMD-Forever",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "UserActionCall",
+      "before": "増やす（3）を実行する。",
+      "new": "増やす量を3として、【増やす】という手順を行う。",
+      "test_id": "MAP-CMD-UserActionCall",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "NoOperation",
+      "before": "何もしない。",
+      "new": "何もしない。",
+      "test_id": "MAP-CMD-NoOperation",
+      "status": "NOT_RUN"
+    }
+  ],
+  "counts": {
+    "commands": 74,
+    "baseline_schemas": 153,
+    "capabilities": 260,
+    "limits": 38
+  },
+  "hard_constraints": [
+    "No capability reduction",
+    "Full new code/block semantic bidirectionality",
+    "Draft PR only; never update or merge main"
+  ],
+  "new_contracts": [
+    {
+      "contract": "role-based natural sentence forms",
+      "status": "NOT_RUN"
+    },
+    {
+      "contract": "explicit actor and actor-qualified reads",
+      "status": "NOT_RUN"
+    },
+    {
+      "contract": "editable event headings and filters",
+      "status": "NOT_RUN"
+    },
+    {
+      "contract": "clause-level sequence/source mapping",
+      "status": "NOT_RUN"
+    },
+    {
+      "contract": "absolute-direction displacement and timed displacement",
+      "status": "NOT_RUN"
+    },
+    {
+      "contract": "single-instance continuous state motion and additive rules",
+      "status": "NOT_RUN"
+    },
+    {
+      "contract": "predicate morphology and scoped Boolean composition",
+      "status": "NOT_RUN"
+    },
+    {
+      "contract": "named call arguments and protected arbitrary names",
+      "status": "NOT_RUN"
+    },
+    {
+      "contract": "quantity values, declaration constraints and UnitlessRead",
+      "status": "NOT_RUN"
+    },
+    {
+      "contract": "notification-group reference between adjacent sentences",
+      "status": "NOT_RUN"
+    },
+    {
+      "contract": "draft holes and atomic source/block editing",
+      "status": "NOT_RUN"
+    }
+  ],
+  "intent_corpus": {
+    "ids": [
+      "CI-01",
+      "CI-02",
+      "CI-03",
+      "CI-04",
+      "CI-05",
+      "CI-06",
+      "CI-07",
+      "CI-08",
+      "CI-09",
+      "CI-10",
+      "CI-11",
+      "CI-12",
+      "CI-13",
+      "CI-14",
+      "CI-15",
+      "CI-16",
+      "CI-17",
+      "CI-18",
+      "CI-19",
+      "CI-20"
+    ],
+    "source": "../child-intent-corpus.md",
+    "status": "NOT_RUN",
+    "mapping": "仕様書.md 付録E"
+  }
+}
