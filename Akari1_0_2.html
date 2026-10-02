@@ -5270,6 +5270,31 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
   display: flex; flex-wrap: wrap; gap: 6px; max-width: 620px;
 }
 
+
+/* An open output drawer must not consume the monitor's readable area. */
+body[data-editor-mode] .monitor-window:not(.blockui-side-folded):has(.output-disclosure[open]),
+body[data-editor-mode="code"] .monitor-window:has(.output-disclosure[open]) {
+  min-height: 340px;
+  flex: 0 0 340px;
+}
+body[data-editor-mode] .monitor-window .runtime-monitor {
+  min-height: 120px;
+  flex: 1 1 150px;
+}
+body[data-editor-mode] .monitor-window .output-disclosure {
+  flex: 0 0 auto;
+}
+body[data-editor-mode] .side:has(.monitor-window .output-disclosure[open]) {
+  overflow-y: auto;
+}
+body[data-editor-mode="code"] .side:has(.monitor-window .output-disclosure[open]) {
+  grid-template-rows: minmax(130px, 1fr) minmax(180px, 1.2fr) minmax(340px, 0.8fr);
+}
+@media (max-width: 1000px) {
+  body[data-editor-mode="code"] .side:has(.monitor-window .output-disclosure[open]) {
+    grid-template-rows: minmax(340px, auto);
+  }
+}
 </style>
 
 

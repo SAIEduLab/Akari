@@ -24,7 +24,7 @@ counts and a successful composition subset do not establish release readiness.
 | FIX-016 multiline strings | Lexer/codec/source core; three viewport native text edits | Draft save and Undo/Redo variants |
 | FIX-017 current diagnostics | Existing cancel gates | Full revised lifecycle matrix |
 | FIX-018 restored history | Persistent structural deltas, shared history-only assets, 30-frame cursor core checks | Same-head native Undo/Redo and quota-atomicity browser evidence |
-| FIX-019 output/monitor | Existing readable output gates | Exact three viewport coexistence checks |
+| FIX-019 output/monitor | Open output reserves a readable monitor area; native disclosure routes at three widths | Same-head 1366/1024/390 execution and screenshots |
 | FIX-020 numeric display | Separate 12-significant-digit presentation; exact raw value details, semantic text conversion unchanged; 21 boundary/core cases | Same-head native bubble/monitor/save/offline browser proof |
 | FIX-021 unfinished files | Editor-state version 1, file and autosave integration, ten core cases | Same-head pending-number browser fix, autosave parity and all drafts |
 | FIX-022 explanation contrast | Existing manual gates | Required text/heading/hover/selection contrast observations |

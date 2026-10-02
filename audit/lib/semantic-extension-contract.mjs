@@ -50,12 +50,16 @@ export const numericDisplayIds=[...['正弦（30）','余弦（60）','正接（
  ...['zero','negative-zero','safe-max','safe-min','near-zero','negative-near-zero','tiny','large','maximum','lower-round','upper-round','carry','unit','string'].map(s=>'display/boundary/'+s),
  'display/finite-rejection','display/literal-file-and-runtime-unchanged'];
 export const numericBrowserIds=[...['正弦（30）','余弦（60）','正接（45）','逆正弦（0.5）','逆余弦（0.5）'].map(s=>'display/browser/'+s),
- 'display/browser-monitor-save-and-text','display/browser-stage-output','display/browser-export-offline'];
+ 'display/browser-monitor-save-and-text','display/browser-monitor-1024','display/browser-monitor-390','display/browser-stage-output','display/browser-export-offline'];
 export function verifyNumericBrowser(report){
  const count=verifySemanticExtension(report,'akari-numeric-display-browser-v1',numericBrowserIds);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);
  assert.equal(report.environment.browser,'140.0.7339.207');assert.equal(report.environment.playwright,'1.55.0');
  const trig=[['正弦（30）','0.5','0.49999999999999994'],['余弦（60）','0.5','0.5000000000000001'],['正接（45）','1','0.9999999999999999'],['逆正弦（0.5）','30度','30.000000000000004度'],['逆余弦（0.5）','60度','60.00000000000001度']];
- assert.deepEqual(report.results.map(r=>r.observed),[...trig.map(([source,shown,raw])=>({source,shown,raw,detailExact:true})),
-  {monitor:'0.3',text:'0.30000000000000004',raw:'0.30000000000000004',savedExact:true},
+ assert.deepEqual(report.results.slice(0,5).map(r=>r.observed),trig.map(([source,shown,raw])=>({source,shown,raw,detailExact:true})));
+ for(const [i,width]of [1366,1024,390].entries()){
+  const {monitorHeight,...observed}=report.results[5+i].observed;assert.ok(Number.isFinite(monitorHeight)&&monitorHeight>=120);
+  assert.deepEqual(observed,{monitor:'0.3',text:'0.30000000000000004',raw:'0.30000000000000004',savedExact:true,width});
+ }
+ assert.deepEqual(report.results.slice(8).map(r=>r.observed),[
   {shown:'0.5',raw:'0.49999999999999994',detailExact:true},{shown:'0.5',raw:'0.49999999999999994',offline:true}]);return count;
 }

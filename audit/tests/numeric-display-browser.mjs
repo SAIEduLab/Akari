@@ -22,19 +22,27 @@ try{await withBrowser(chrome,async browser=>{
   if(raw!==expected){await bubble.getByRole('button',{name:'表示を丸めています。実値を見る',exact:true}).click();assert.equal(await page.locator('#valueOutput').textContent(),raw);assert.match(await page.locator('#valueNotice').textContent(),/表示を丸めています/);await page.locator('#valueClose').click();}
   await page.locator('#stopBtn').click();return{source,shown:expected,raw,detailExact:raw!==expected};
  });
- await run('display/browser-monitor-save-and-text',async page=>{
+ const revealMonitor=async page=>{
+  const toggle=page.locator('.monitor-window .blockui-side-toggle');
+  if(await toggle.isVisible()&&await toggle.getAttribute('aria-expanded')==='false')await toggle.click();
+  const output=page.locator('.monitor-window .output-disclosure');if(!await output.evaluate(n=>n.open))await output.locator('summary').click();
+ };
+ for(const width of [1366,1024,390])await run(width===1366?'display/browser-monitor-save-and-text':'display/browser-monitor-'+width,async page=>{
+  await page.setViewportSize({width,height:768});
   const source='文字（表示値）を言う。\n10秒待つ。';await install(page,source);await page.locator('#runBtn').click();await page.locator('.sprite-bubble').waitFor();assert.equal(await page.locator('.sprite-bubble').textContent(),'0.30000000000000004');
-  const row=page.locator('#runtimeMonitor .monitor-row').filter({has:page.locator('.monitor-key',{hasText:'表示値'})});await row.waitFor();assert.equal(await row.locator('.monitor-value').evaluate(n=>n.firstChild.textContent),'0.3');await row.getByRole('button',{name:'表示値の実値（表示を丸めています）',exact:true}).click();
+  await revealMonitor(page);
+  const height=await page.locator('#runtimeMonitor').evaluate(n=>n.getBoundingClientRect().height);assert.ok(height>=120,'output must leave a readable monitor region: '+height);
+  const row=page.locator('#runtimeMonitor .monitor-row').filter({has:page.locator('.monitor-key',{hasText:'表示値'})});await row.waitFor();await row.scrollIntoViewIfNeeded();await page.screenshot({path:path.join(dir,'monitor-output-'+width+'.png')});assert.equal(await row.locator('.monitor-value').evaluate(n=>n.firstChild.textContent),'0.3');await row.getByRole('button',{name:'表示値の実値（表示を丸めています）',exact:true}).click();
   assert.equal(await page.locator('#valueOutput').textContent(),'0.30000000000000004');assert.match(await page.locator('#valueNotice').textContent(),/丸める前の実値/);await page.locator('#valueClose').click();await page.locator('#stopBtn').click();
   const pending=page.waitForEvent('download');await page.locator('#saveBtn').click();const download=await pending,file=path.join(dir,'display-exact.akari.md');await download.saveAs(file);
-  const saved=await page.evaluate(t=>Akari.parseProjectFile(t).then(r=>({initial:r.project.projectData.variables[0].initialValue,source:r.project.scripts[0].source})),fs.readFileSync(file,'utf8'));assert.deepEqual(saved,{initial:0.30000000000000004,source});return{monitor:'0.3',text:'0.30000000000000004',raw:'0.30000000000000004',savedExact:true};
+  const saved=await page.evaluate(t=>Akari.parseProjectFile(t).then(r=>({initial:r.project.projectData.variables[0].initialValue,source:r.project.scripts[0].source})),fs.readFileSync(file,'utf8'));assert.deepEqual(saved,{initial:0.30000000000000004,source});return{monitor:'0.3',text:'0.30000000000000004',raw:'0.30000000000000004',savedExact:true,width,monitorHeight:height};
  });
  await run('display/browser-stage-output',async page=>{
-  await install(page,'正弦（30）を言う。\n10秒待つ。','stage');await page.locator('#runBtn').click();const full=page.locator('#console').getByRole('button',{name:'表示を丸めています。出力の実値を見る',exact:true});await full.waitFor();assert.match(await page.locator('#console').textContent(),/0\.5/);await full.click();assert.equal(await page.locator('#valueOutput').textContent(),'0.49999999999999994');await page.locator('#valueClose').click();await page.locator('#stopBtn').click();return{shown:'0.5',raw:'0.49999999999999994',detailExact:true};
+  await install(page,'正弦（30）を言う。\n10秒待つ。','stage');await revealMonitor(page);await page.locator('#runBtn').click();const full=page.locator('#console').getByRole('button',{name:'表示を丸めています。出力の実値を見る',exact:true});await full.waitFor();assert.match(await page.locator('#console').textContent(),/0\.5/);await full.click();assert.equal(await page.locator('#valueOutput').textContent(),'0.49999999999999994');await page.locator('#valueClose').click();await page.locator('#stopBtn').click();return{shown:'0.5',raw:'0.49999999999999994',detailExact:true};
  });
  await run('display/browser-export-offline',async page=>{
   await install(page,'正弦（30）を言う。\n10秒待つ。');const pending=page.waitForEvent('download');await page.locator('#exportBtn').click();const download=await pending,file=path.join(dir,'display-player.html');await download.saveAs(file);
   const context=await browser.newContext({offline:true}),errors=[],network=[];try{await context.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});const player=await context.newPage();player.on('pageerror',e=>errors.push(e.message));await player.goto(pathToFileURL(file).href);await player.locator('#playerStart:not([disabled])').click();const bubble=player.locator('.sprite-bubble');await bubble.waitFor();assert.equal(await bubble.evaluate(n=>n.firstChild.textContent),'0.5');await bubble.getByRole('button',{name:'表示を丸めています。実値を見る',exact:true}).click();assert.match(await player.locator('#playerOutput').textContent(),/実値.*0\.49999999999999994/);await player.locator('#playerStop').click();}finally{await context.close();}assert.deepEqual(errors,[]);assert.deepEqual(network,[]);return{shown:'0.5',raw:'0.49999999999999994',offline:true};
  });
 },120000);}catch(error){report.hostFailure=error.stack;}
-report.status=!report.hostFailure&&!report.pageErrors.length&&!report.networkRequests.length&&report.results.length===8&&report.results.every(r=>r.status==='PASS')?'PASS':'FAIL';save();if(report.status!=='PASS')process.exitCode=1;
+report.status=!report.hostFailure&&!report.pageErrors.length&&!report.networkRequests.length&&report.results.length===10&&report.results.every(r=>r.status==='PASS')?'PASS':'FAIL';save();if(report.status!=='PASS')process.exitCode=1;
