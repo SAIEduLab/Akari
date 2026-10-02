@@ -115,7 +115,34 @@ try{await withBrowser(chrome,async browser=>{
   await page.locator('#editorModeblocks').click();assert.equal(await field.inputValue(),literal+'!');
   const evidence={viewport,literal,afterAppend:literal+'!',afterCancel:await field.inputValue(),codeAfterRoundtrip:actual,expectedCode:expected,nativeControl:'TEXTAREA'};capture(evidence);return evidence;
  });
-},240000);}catch(error){report.hostFailure=error.stack;}
+ const downloadProject=async(page,id,button='#saveBtn')=>{const waiting=page.waitForEvent('download');await page.locator(button).click();const download=await waiting,file=path.join(dir,id+'.akari.md');await download.saveAs(file);return {file,text:fs.readFileSync(file,'utf8')};};
+ await run('SAVE/unfinished-source','DRAFT_PERSISTENCE',async(page)=>{
+  await install(page,prose.drafts[0]);const source='「開いた引用\n  つづきを考える';await page.locator('#codeEditor').fill(source);
+  const saved=await downloadProject(page,'unfinished-source'),read=await page.evaluate(async text=>(await Akari.parseProjectFile(text)).editorState,saved.text);assert.equal(read.pendingEditors[0].source,source);
+  await page.locator('#fileInput').setInputFiles(saved.file);await page.waitForFunction(source=>document.querySelector('#codeEditor').value===source&&!!Akari.app.editorState.main.pendingEdit,source);
+  await page.locator('#runBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN');
+  let exports=0;page.on('download',()=>exports++);await page.locator('#exportBtn').click();await page.waitForTimeout(100);assert.equal(exports,0);
+  return {source,restored:await page.locator('#codeEditor').inputValue(),runBlocked:true,exportBlocked:true};
+ });
+ await run('SAVE/unfinished-return-hole','DRAFT_PERSISTENCE',async(page)=>{
+  await install(page,prose.drafts[0]);await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('function');await page.locator('#callableName').fill('途中の答え');await page.locator('#callableModeblocks').click();
+  const root=page.locator('#callableBlocks');await root.locator('[data-blockui-search]').fill('ReturnStatement');await root.locator('[data-blockui-schema="ReturnStatement"]').click();assert.equal(await root.locator('.blockui-node[data-schema-id="Hole:expression"]').count(),1);
+  const saved=await downloadProject(page,'unfinished-return','#callableSaveProject');await page.locator('#procClose').click();assert.equal(await page.locator('#procModal').isVisible(),false);
+  await page.locator('#fileInput').setInputFiles(saved.file);await page.waitForFunction(()=>document.querySelector('#procModal').classList.contains('show')&&!!Akari.app.editorState.draft.blockDraft);
+  assert.equal(await page.locator('#callableName').inputValue(),'途中の答え');assert.equal(await root.locator('.blockui-node[data-schema-id="Hole:expression"]').count(),1);
+  return {name:'途中の答え',holeRestored:true,closedWithoutDiscard:true};
+ });
+ await run('SAVE/unfinished-number','DRAFT_PERSISTENCE',async(page)=>{
+  await install(page,prose.drafts[0]);await page.locator('#codeEditor').fill('10歩動く。');await page.locator('#editorModeblocks').click();const field=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]');await field.fill('－');
+  const saved=await downloadProject(page,'unfinished-number');await page.locator('#fileInput').setInputFiles(saved.file);await page.waitForFunction(()=>Akari.app.editorState.main.pendingEdit?.value==='－');assert.equal(await field.inputValue(),'－');
+  await page.locator('#runBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN');return {input:'－',restored:await field.inputValue(),runBlocked:true};
+ });
+ await run('SAVE/semantic-error','DRAFT_PERSISTENCE',async(page)=>{
+  await install(page,prose.drafts[0]);const source='1歩＋1秒を言う。';await page.locator('#codeEditor').fill(source);const diagnostics=await page.evaluate(()=>Akari.app.compile().errors);assert.ok(diagnostics.length);
+  const saved=await downloadProject(page,'semantic-error');await page.locator('#fileInput').setInputFiles(saved.file);await page.waitForFunction(source=>Akari.app.project.scripts.some(s=>s.source===source),source);assert.deepEqual(await page.evaluate(()=>Akari.app.compile().errors),diagnostics);
+  await page.locator('#runBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN');return {source,restored:await page.locator('#codeEditor').inputValue(),diagnostics,runBlocked:true};
+ });
+},300000);}catch(error){report.hostFailure=error.stack;}
 assert.deepEqual(snapshot(currentProductFile()),inputs);report.status=!report.hostFailure&&report.results.length===compositionIds.length&&report.results.every(x=>x.status==='PASS')&&report.pageErrors.length===0&&report.networkRequests.length===0?'PASS':'FAIL';
 report.counts={PASS:report.results.filter(x=>x.status==='PASS').length,FAIL:report.results.filter(x=>x.status==='FAIL').length,missing:compositionIds.filter(id=>!report.results.some(x=>x.id===id))};save();
 if(report.status==='PASS')verifyCompositionReport(json(report));else process.exitCode=1;

@@ -36,6 +36,8 @@ jobs:
         run: node audit/tests/natural-roles.mjs audit-evidence/acceptance/natural-roles.json
       - name: Verify document units, source ownership and multiline editing
         run: node audit/tests/document-units.mjs audit-evidence/acceptance/document-units.json
+      - name: Verify unfinished project files and structural rejection
+        run: node audit/tests/draft-persistence.mjs audit-evidence/acceptance/draft-persistence.json
       - name: Require original composition acceptance, meaning and save roundtrip
         if: always()
         run: node audit/tests/composition-acceptance.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/composition.json

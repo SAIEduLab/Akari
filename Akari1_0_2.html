@@ -5790,7 +5790,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         </div>
       </div>
     </div>
-    <div class="dialog-foot"><button id="callableFormat">本文を整える</button> <button id="callableSave">保存</button> <button id="procClose">閉じる</button></div>
+    <div class="dialog-foot"><button id="callableFormat">本文を整える</button> <button id="callableSave">定義を確定</button> <button id="callableSaveProject">書きかけを作品に保存</button> <button id="procClose">閉じる</button></div>
   </div>
 </div>
 
@@ -11812,7 +11812,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const located=node=>{const range=sourceRange(ctx.sourcePositions||[]);if(range)SOURCE_RANGES.set(node,{range});return checkExpressionTree(node,ctx.lineNo||0);};
     if(depth>LIMITS.expressionDepth)throw new AkariError('P208','式が深すぎます',ctx.lineNo||0,1);
     if(compact.startsWith('（')&&compact.endsWith('）')&&/^\u0001+$/.test(mask))
-      return parseExpression(compact.slice(1,-1),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(1,-1)});
+      return located(parseExpression(compact.slice(1,-1),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(1,-1)}));
     const arithmetic=[['をかけた数',/^(.+?)と(.+?)をかけた数$/d,'MUL'],['を足した数',/^(.+?)に(.+?)を足した数$/d,'ADD'],['を引いた数',/^(.+?)から(.+?)を引いた数$/d,'SUB'],['で割った数',/^(.+?)を(.+?)で割った数$/d,'DIV']];
     for(const [ending,pattern,op] of arithmetic){
       if(!mask.endsWith(ending))continue;
@@ -16343,6 +16343,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         'functions',
         'sounds',
         'assets',
+        ...(Object.hasOwn(root || {}, 'editorState') ? ['editorState'] : []),
       ])
     )
       throw new AkariError('F503', '保存Projectのroot項目が仕様と一致しません');
@@ -16363,6 +16364,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       sounds: root.sounds,
     };
     validateDesignProject(design);
+    if(root.editorState!==undefined)validateEditorState(root.editorState,design);
     const ids = designEntityIds(design),
       assetIds = new Set(),
       digestKeys = new Set();
@@ -16406,6 +16408,81 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     return { design, assetIds };
   }
 
+  function validateCallableDraftState(d) {
+    if (d == null) return null;
+    if (
+      !(exactKeys(d, ['ownerId', 'type', 'name', 'argsText', 'source', 'editId', 'loadedKey']) ||
+        exactKeys(d, ['ownerId', 'type', 'name', 'argsText', 'callPhrase', 'source', 'editId', 'loadedKey'])) ||
+      d.ownerId !== 'stage' ||
+      !['action', 'function'].includes(d.type)
+    )
+      throw new AkariError('F503', '手順・答えを求める定義の下書きが正しくありません');
+    for (const [k, limit] of [
+      ['name', 500],
+      ['argsText', 4096],
+      ['source', LIMITS.sourceEach],
+      ['editId', 64],
+      ['loadedKey', 80],
+    ])
+      if (typeof d[k] !== 'string' || cpLen(d[k]) > limit)
+        throw new AkariError(
+          'F504',
+          '\u4e0b\u66f8\u304d\u306e\u6587\u5b57\u6570\u304c\u4e0a\u9650\u3092\u8d85\u3048\u3066\u3044\u307e\u3059',
+        );
+    if (d.callPhrase !== undefined && (d.type !== 'action' || typeof d.callPhrase !== 'string' || cpLen(d.callPhrase) > 80))
+      throw new AkariError('F503', '短い呼び方は80文字以内で書いてください');
+    if (d.editId && !safeId(d.editId))
+      throw new AkariError('F503', '\u4e0b\u66f8\u304d\u306eID\u304c\u4e0d\u6b63\u3067\u3059');
+    return { ...d };
+  }
+  function validateEditorState(state,project) {
+    if(!exactKeys(state,['version','revision','selectedId','currentEvent','selectedScriptId','uiLevel','sourceOverviewOpen','editorModes','callableDraft','pendingEditors','views'])||state.version!==1||!Number.isSafeInteger(state.revision)||state.revision<0)
+      throw new AkariError('F503','編集状態の契約または版が正しくありません');
+    const actor=state.selectedId==='stage'?{type:'stage'}:project.components.find(c=>c.id===state.selectedId);
+    if(!actor||!EVENT_BY_TYPE[actor.type]?.includes(state.currentEvent)||
+      state.selectedScriptId!==null&&!project.scripts.some(s=>s.id===state.selectedScriptId)||
+      !['basic','advanced'].includes(state.uiLevel)||typeof state.sourceOverviewOpen!=='boolean'||
+      !exactKeys(state.editorModes,['script','draft'])||!Object.values(state.editorModes).every(mode=>['code','blocks'].includes(mode)))
+      throw new AkariError('F503','編集画面の選択が正しくありません');
+    validateCallableDraftState(state.callableDraft);
+    const pending=state.pendingEditors;
+    if(!Array.isArray(pending)||pending.length>2||new Set(pending.map(d=>d.kind)).size!==pending.length)
+      throw new AkariError('F503','作文の下書きが正しくありません');
+    for(const saved of pending){
+      if(!exactKeys(saved,['kind','ownerKey','source','mode','pending','draftTree'])||!['script','draft'].includes(saved.kind)||!['code','blocks'].includes(saved.mode)||
+        typeof saved.ownerKey!=='string'||saved.ownerKey.length>150||typeof saved.source!=='string'||cpLen(saved.source)>LIMITS.sourceEach||
+        !saved.pending||typeof saved.pending!=='object'||Array.isArray(saved.pending)||JSON.stringify(saved.pending).length>LIMITS.sourceEach*4)
+        throw new AkariError('F503','作文の下書きが正しくありません');
+      if(saved.kind==='script'&&!sourceRegistry(project).some(row=>row.key===saved.ownerKey)&&saved.ownerKey!==`script:${state.selectedId}:${state.currentEvent}`)
+        throw new AkariError('F503','下書きの本文が見つかりません');
+      if(saved.kind==='script'&&saved.ownerKey!==(state.selectedScriptId?`script:${state.selectedScriptId}`:`script:${state.selectedId}:${state.currentEvent}`))
+        throw new AkariError('F503','下書きの選択先が一致しません');
+      if(saved.kind==='draft'&&!state.callableDraft)throw new AkariError('F503','定義の下書きが見つかりません');
+      if(saved.draftTree!==null){const ast=blockDecode(saved.draftTree,{allowHoles:true});validateSyntaxAst(ast,'script',{allowHoles:true});if(cpLen(formatScript(ast,{allowHoles:true}))>LIMITS.sourceEach)throw new AkariError('F504','ブロックの下書きが長すぎます');}
+      if(saved.pending.field){
+        const path=saved.pending.nodePath;
+        if(typeof saved.pending.field!=='string'||typeof saved.pending.value!=='string'||!Array.isArray(path)||path.length>LIMITS.blockDepth*4||path.some(k=>typeof k!=='string'&&!Number.isInteger(k)))
+          throw new AkariError('F503','書きかけの入力欄が正しくありません');
+        const record=sourceRegistry(project).find(row=>row.key===saved.ownerKey),context=saved.kind==='draft'?{definitionKind:state.callableDraft.type,args:[]}:(record?.context||{}),
+          ast=saved.draftTree?blockDecode(saved.draftTree,{allowHoles:true}):parseSyntax(saved.kind==='draft'?state.callableDraft.source:record?.source||'',{...context,symbols:buildSymbols(project)}).ast;
+        let node=ast;for(const k of path){if(!node||!Object.hasOwn(node,k))throw new AkariError('F503','書きかけの入力先が見つかりません');node=node[k];}
+        const schema=syntaxSchema(node),field=[...schema.fields,...schema.annotations].find(f=>f.key===saved.pending.field);
+        if(!field)throw new AkariError('F503','書きかけの入力項目が見つかりません');
+      }
+    }
+    const records=sourceRegistry(project);let total=records.reduce((n,row)=>n+cpLen(row.source),0);
+    for(const saved of pending.filter(d=>d.kind==='script'))total+=cpLen(saved.source)-cpLen(records.find(row=>row.key===saved.ownerKey)?.source||'');
+    if(state.callableDraft){const d=state.callableDraft;total+=cpLen(pending.find(row=>row.kind==='draft')?.source??d.source)-cpLen(records.find(row=>row.key===`${d.type}:${d.editId}`)?.source||'');}
+    if(total>LIMITS.sourceTotal)throw new AkariError('F504','書きかけを含む作品全体の本文が長すぎます');
+    if(!Array.isArray(state.views)||state.views.length>2)throw new AkariError('F503','編集位置が正しくありません');
+    for(const view of state.views){
+      if(!exactKeys(view,['kind','ownerKey','codeSelection','scrollState'])||!['script','draft'].includes(view.kind)||typeof view.ownerKey!=='string'||view.ownerKey.length>150||
+        !exactKeys(view.codeSelection,['start','end','direction'])||!['none','forward','backward'].includes(view.codeSelection.direction)||
+        ![view.codeSelection.start,view.codeSelection.end].every(n=>Number.isSafeInteger(n)&&n>=0&&n<=LIMITS.sourceEach*2)||
+        !exactKeys(view.scrollState,['codeTop','codeLeft'])||!Object.values(view.scrollState).every(n=>Number.isFinite(n)&&n>=0&&n<=1e9))throw new AkariError('F503','編集位置が正しくありません');
+    }
+    return state;
+  }
   function markdownText(value) {
     return String(value)
       .replace(/&/g, '&amp;')
@@ -16505,6 +16582,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     for (const a of root.assets)
       out.push(`- ${a.id} / ${a.kind} / ${a.mime} / ${a.byteLength} bytes / SHA-256: ${a.sha256}`);
     if (!root.assets.length) out.push('\u306a\u3057');
+    if(root.editorState)out.push('','## 書きかけと編集位置',markdownFence(JSON.stringify(root.editorState,null,2),'json'));
     out.push(
       '',
       '## \u5fa9\u5143\u30c7\u30fc\u30bf',
@@ -16516,9 +16594,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   const MARKDOWN_BEGIN = '<!-- AKARI-PROJECT-F' + PROJECT_FORMAT_ID + '-DATA-BEGIN -->\n```json\n';
   const MARKDOWN_END = '\n```\n<!-- AKARI-PROJECT-F' + PROJECT_FORMAT_ID + '-DATA-END -->\n';
 
-  function serializeProject(project, assetStore = new AssetStore()) {
+  function serializeProject(project, assetStore = new AssetStore(), editorState = null) {
     assetStore = withDefaultMascotAsset(project, assetStore);
     const root = serializedRoot(project, assetStore);
+    if(editorState!==null)root.editorState=validateEditorState(cloneDesignProject(editorState),project);
     validateSerializedProjectStructure(root);
     const payload = JSON.stringify(root, null, 2).replace(
       /[<>&\u2028\u2029]/g,
@@ -16560,8 +16639,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     for (const record of root.assets) store.addImmutable(await validateLoadedAssetRecord(record));
     const project = { ...root };
     delete project.assets;
+    delete project.editorState;
     validateAssetReferences(project, store, { serializedAssetIds: assetIds });
-    return { project, assetStore: store, diagnostics: compileProject(project).errors };
+    return { project, assetStore: store, diagnostics: compileProject(project).errors, ...(root.editorState?{editorState:root.editorState}:{}) };
   }
   async function validateLoadedAssetRecord(a) {
     const bytes = decodeBase64(a.dataBase64);
@@ -17545,7 +17625,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if (!Number.isSafeInteger(contextRevision) || contextRevision < 0)
       editorError('文脈の世代が不正です');
     const ctx = editorContext(ownerKey, context),
-      parsed = parseSyntax(source, ctx),
+      parsed = parseSyntax(source, { ...ctx, ...(project ? {symbols:buildSymbols(project)} : {}) }),
       encoded = parsed.ast ? blockEncode(parsed.ast) : null;
     return {
       ownerKey,
@@ -18226,10 +18306,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         blockDraft: { baseline, ast: candidateAst, tree, source: draftSource, pending },
       };
     }
+    const parseContext={...context,...(project?{symbols:buildSymbols(project)}:{})};
     let source = session.blockDraft ? formatScript(candidateAst) : preserveBlockSource(session, tree, sourceOrigins),
-      parsed = parseSyntax(source, context);
+      parsed = parseSyntax(source, parseContext);
     if(!session.blockDraft&&(!parsed.ast||!astEquivalent(candidateAst,parsed.ast))){
-      source=reprintChangedUnits(session,tree);parsed=parseSyntax(source,context);
+      source=reprintChangedUnits(session,tree);parsed=parseSyntax(source,parseContext);
     }
     if (!parsed.ast) editorError(parsed.syntaxDiagnostics.map((x) => x.message).join('\n'));
     if (!astEquivalent(candidateAst, parsed.ast))
@@ -18381,7 +18462,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if (!schema) return { enabled: false, reason: '対応していないブロックです', diagnostics: [] };
     // Values on simple command previews remain visible choices. Enclosures and
     // persistent rules start with visible holes, never an implicit true/0/no-op.
-    const draft = schema.bodies.some(slot => slot.requiredExecutable) || schema.kind === 'ContinuousRule' || schema.inputs.some(slot => slot.type === 'target');
+    const draft = schema.bodies.some(slot => slot.requiredExecutable) || ['ContinuousRule','ReturnStatement'].includes(schema.kind) || schema.inputs.some(slot => slot.type === 'target');
     let node = createBlock(schemaId, { draft, allowHoles: draft });
     if (schemaId === 'NumberLiteral' && location?.input) {
       const parent = buildBlockIndex(session.blockView).get(location.parentId)?.node;
@@ -18739,6 +18820,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               sourceRevision: pending.sourceRevision,
               contextRevision: pending.contextRevision,
               id: pending.id,
+              nodePath: index.get(pending.id)?.path || [],
               field: pending.key,
               value: pending.input?.value ?? '',
               composing: !!pending.composing,
@@ -19398,6 +19480,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             ast[field.key] = name;
           }
         for (const slot of schema.inputs) {
+          if(slot.required===false)continue;
           if (slot.multiple) {
             const count = slot.variadic ? 1 : slot.minItems;
             ast[slot.key] = Array.from({ length: count }, (_, i) =>
@@ -20472,7 +20555,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       main.append(E('span', 'blockui-phrase-text', schema.label));
       for (const field of schema.fields.filter((f) => f.key !== 'hasElse'))
         main.append(fieldControl(node, field));
-      for (const slot of schema.inputs) main.append(renderInput(node, slot));
+      for (const slot of schema.inputs) if(node.inputs[slot.key]!==undefined)main.append(renderInput(node, slot));
     }
     function renderNode(node) {
       const schema = schemaOf(node);
@@ -20562,6 +20645,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         } else if (schema.kind === 'QuantityLiteral') main.append(slot('value'), field('unit'));
         else if (schema.kind === 'UnitlessRead') main.append(slot('value'), E('span', '', 'の数だけ'));
         else if (schema.kind === 'ActorQualifiedRead') main.append(field('actorRef'), E('span', '', 'の'), slot('value'));
+        else if (schema.kind === 'CloneCommand' && ['CREATE_SELF','CREATE_TARGET'].includes(schema.discriminator?.value)) {
+          const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
+          if(schema.discriminator.value==='CREATE_TARGET')main.append(slot('args'));else main.append(E('span','','自分'));
+          main.append(E('span','','の分身を'));
+          if(node.inputs.count)main.append(slot('count'),E('span','','体'));
+          main.append(E('span','','作る'));
+        }
         else if (schema.kind === 'ContinuousRule') {
           main.style.flexWrap = 'wrap'; main.style.whiteSpace = 'normal';
           main.append(field('actorRef'), E('span', '', 'は、'), slot('condition'), E('span', '', 'にあてはまる間、'),
@@ -21596,7 +21686,21 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     if (doc.fonts) listen(doc.fonts, 'loadingdone', scheduleGeometry);
     render({ force: true });
-    return { render, flush, cancel, destroy, highlight, focus };
+    function restorePending(saved) {
+      if(!saved?.field||!Array.isArray(saved.nodePath))return false;
+      const entry=[...index.values()].find(item=>JSON.stringify(item.path)===JSON.stringify(saved.nodePath));
+      if(!entry)return false;
+      revealNode(entry.node.id);render({force:true});
+      let input=[...root.querySelectorAll('input,textarea,select')].find(el=>el.dataset.blockId===entry.node.id&&(el.dataset.blockuiField===saved.field||el.dataset.blockuiAnnotation===saved.field));
+      if(!input)return false;
+      if(input.tagName==='INPUT'&&/[\r\n]/.test(saved.value)){
+        input.closest('.blockui-field')?.querySelector('[data-blockui-action="edit-text"]')?.click();
+        input=root.querySelector('.blockui-text-dialog textarea');if(!input)return false;
+      }
+      input.value=saved.value;input.dispatchEvent(new doc.defaultView.Event('input',{bubbles:true}));
+      return true;
+    }
+    return { render, flush, cancel, destroy, highlight, focus, restorePending };
   }
   createBlockEditorView.sequence = 0;
 
@@ -23357,10 +23461,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       setStatus('やり直しました');
     }
     function confirmLose() {
-      if (!flushActiveEditor()) return false;
+      flushActiveEditor();
       activeDragCleanup?.();
       return (
-        (!dirty && !hasCallableDraft()) ||
+        (!dirty && !hasCallableDraft() && !hasPendingEditor()) ||
         confirm('作品または手順・答えを求める定義に保存していない編集があります。今の編集を捨てて続けますか？')
       );
     }
@@ -25370,6 +25474,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function startRun() {
       if (modelLocked() || !flushActiveEditor()) return;
+      if(hasPendingEditor()){log('書きかけの入力を完成させてから実行してください','error');return;}
       clearTimeout(historyTimer);
       pushHistoryNow();
       if (hasCallableDraft()) {
@@ -25633,6 +25738,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function exportProject() {
       if (!flushActiveEditor()) return;
+      if(hasPendingEditor()){log('書きかけの入力を完成させてから書き出してください','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
       if (hasCallableDraft()) {
         log('手順・答えを求める定義の編集を保存してから書き出してください', 'error');
@@ -25673,11 +25779,56 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
     }
 
+    function captureEditorState() {
+      for(const binding of [mainEditor,draftEditor])captureEditorView(binding);
+      const pendingEditors=[mainEditor,draftEditor].filter(binding=>binding.session?.pendingEdit||binding.session?.blockDraft)
+        .map(binding=>({kind:binding.kind,ownerKey:bindingOwner(binding),source:binding.textarea.value,mode:binding.session.mode,
+          pending:cloneDesignProject(binding.session.pendingEdit||{kind:'block-draft'}),
+          draftTree:binding.session.blockDraft?cloneDesignProject(binding.session.blockView):null}));
+      let callableDraft=captureCallableDraft();
+      if(headerPending||pendingEditors.some(d=>d.kind==='draft'))callableDraft=validateCallableDraft({...callableDraftCore,
+        name:$('#callableName').value,argsText:$('#callableArgs').value,...(callableDraftCore.type==='action'?{callPhrase:$('#callablePhrase').value}:{})});
+      return validateEditorState({version:1,revision:recoveryEpoch,selectedId,currentEvent,selectedScriptId,
+        uiLevel:$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'},callableDraft,pendingEditors,
+        views:[mainEditor,draftEditor].filter(binding=>binding.session).map(binding=>({kind:binding.kind,ownerKey:bindingOwner(binding),
+          codeSelection:{start:binding.textarea.selectionStart||0,end:binding.textarea.selectionEnd||0,direction:binding.textarea.selectionDirection||'none'},
+          scrollState:{codeTop:binding.textarea.scrollTop,codeLeft:binding.textarea.scrollLeft}}))},project);
+    }
+    function restoreEditorState(state) {
+      validateEditorState(state,project);
+      selectedId=state.selectedId;currentEvent=state.currentEvent;selectedScriptId=state.selectedScriptId;
+      $('#uiLevel').value=state.uiLevel;document.body.dataset.uiLevel=state.uiLevel;
+      for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,mode);
+      editorSessions.clear();invalidateEditors();hideSourceOverview();renderAll();loadEditor();
+      if(state.callableDraft)restoreCallableDraft(state.callableDraft);
+      for(const saved of state.pendingEditors){
+        const binding=saved.kind==='draft'?draftEditor:mainEditor;
+        if(saved.kind==='script'&&bindingOwner(binding)!==saved.ownerKey)throw new AkariError('F503','下書きの選択先が一致しません');
+        const session=getEditorSession(binding,{force:true});session.pendingEdit={...cloneDesignProject(saved.pending),ownerKey:bindingOwner(binding)};
+        if(saved.draftTree!==null){
+          const ast=blockDecode(saved.draftTree,{allowHoles:true}),encoded=blockEncode(ast,{allowHoles:true}),baseline={sourceText:session.sourceText,syntaxAst:session.syntaxAst,
+            blockView:session.blockView,nodeMap:session.nodeMap,nodeIds:session.nodeIds,diagnostics:session.diagnostics,syntaxDiagnostics:session.syntaxDiagnostics,
+            nextBlockId:session.nextBlockId,blockSelection:session.blockSelection,sourceRevision:session.sourceRevision,contextRevision:session.contextRevision};
+          const source=formatScript(ast,{allowHoles:true});Object.assign(session,{syntaxAst:ast,blockView:encoded.tree,nodeMap:encoded.nodeMap,nodeIds:encoded.nodeIds,nextBlockId:encoded.nodeMap.size+1,
+            blockDraft:{baseline,ast,tree:encoded.tree,source,codeSource:saved.mode==='code'?saved.source:undefined,pending:session.pendingEdit}});
+        }
+        editorModes.set(binding.kind,saved.mode);session.mode=saved.mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
+        if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(saved.pending))throw new AkariError('F503','書きかけの入力欄を復元できません');
+        showEditorFailure(binding,saved.pending.reason||'書きかけの作文をもどしました',{preservePending:true});
+      }
+      for(const view of state.views){const binding=view.kind==='draft'?draftEditor:mainEditor;if(view.kind==='script'&&bindingOwner(binding)!==view.ownerKey)continue;
+        Object.assign(binding.session,{codeSelection:{...view.codeSelection},scrollState:{...binding.session?.scrollState,...view.scrollState}});
+        binding.textarea.setSelectionRange(view.codeSelection.start,view.codeSelection.end,view.codeSelection.direction);binding.textarea.scrollTop=view.scrollState.codeTop;binding.textarea.scrollLeft=view.scrollState.codeLeft;}
+      if(state.sourceOverviewOpen&&!state.pendingEditors.length)showSourceOverview();
+      updateDirty();
+    }
     function saveProject() {
-      if (appState === 'IMPORTING' || appState === 'PREPARING' || hasCallableDraft()) return;
-      if (!flushActiveEditor()) return;
+      if (appState === 'IMPORTING' || appState === 'PREPARING') return;
+      if(composingEditors.size){setStatus('日本語入力を確定してから保存してください');return;}
+      flushActiveEditor();
       try {
-        const md = serializeProject(project, assetStore),
+        const editorState=captureEditorState(),unfinished=editorState.pendingEditors.length||editorState.callableDraft||compileProject(project).errors.length;
+        const md = serializeProject(project, assetStore, editorState),
           blob = new Blob([md], { type: 'text/markdown;charset=utf-8' }),
           a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -25690,6 +25841,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         clearTimeout(autosaveTimer);
         writeAutosave();
         log(`${a.download} のダウンロードを開始しました。自動保存も保持します`, 'ok');
+        setStatus(unfinished?'書きかけを含むファイルのダウンロードを開始しました。動かす前に未完成の箇所を確認してください':'作品ファイルのダウンロードを開始しました');
       } catch (err) {
         log(`${err.code || ''} 保存失敗: ${err.message}`, 'error');
       }
@@ -25722,6 +25874,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         renderAll();
         loadEditor();
         resetHistory();
+        if(loaded.editorState){restoreEditorState(loaded.editorState);initialSnapshot=snapshot();history=[initialSnapshot];redo=[];lastObservedFingerprint=stateFingerprintCore();}
         const diagnostics = loaded.diagnostics || [];
         log(
           diagnostics.length
@@ -26348,33 +26501,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (draftEditor.view) renderEditorBinding(draftEditor);
     }
 
-    function validateCallableDraft(d) {
-      if (d == null) return null;
-      if (
-        !(exactKeys(d, ['ownerId', 'type', 'name', 'argsText', 'source', 'editId', 'loadedKey']) ||
-          exactKeys(d, ['ownerId', 'type', 'name', 'argsText', 'callPhrase', 'source', 'editId', 'loadedKey'])) ||
-        d.ownerId !== 'stage' ||
-        !['action', 'function'].includes(d.type)
-      )
-        throw new AkariError('F503', '手順・答えを求める定義の下書きが正しくありません');
-      for (const [k, limit] of [
-        ['name', 500],
-        ['argsText', 4096],
-        ['source', LIMITS.sourceEach],
-        ['editId', 64],
-        ['loadedKey', 80],
-      ])
-        if (typeof d[k] !== 'string' || cpLen(d[k]) > limit)
-          throw new AkariError(
-            'F504',
-            '\u4e0b\u66f8\u304d\u306e\u6587\u5b57\u6570\u304c\u4e0a\u9650\u3092\u8d85\u3048\u3066\u3044\u307e\u3059',
-          );
-      if (d.callPhrase !== undefined && (d.type !== 'action' || typeof d.callPhrase !== 'string' || cpLen(d.callPhrase) > 80))
-        throw new AkariError('F503', '短い呼び方は80文字以内で書いてください');
-      if (d.editId && !safeId(d.editId))
-        throw new AkariError('F503', '\u4e0b\u66f8\u304d\u306eID\u304c\u4e0d\u6b63\u3067\u3059');
-      return { ...d };
-    }
+    function validateCallableDraft(d) { return validateCallableDraftState(d); }
     function captureCallableDraft() {
       return hasCallableDraft() ? validateCallableDraft(callableDraftCore) : null;
     }
@@ -27258,6 +27385,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       setStatus('新しい作品');
     };
     $('#saveBtn').onclick = saveProject;
+    $('#callableSaveProject').onclick = saveProject;
     $('#exportBtn').onclick = exportProject;
     $('#openBtn').onclick = () => {
       if (!modelLocked()) el.fileInput.click();
@@ -27649,7 +27777,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes') ||
-          target.matches('#undoBtn,#redoBtn,[data-blockui-action="cancel"]')
+          target.matches('#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#openBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         if (!flushActiveEditor()) {
@@ -27668,7 +27796,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (
           modelLocked() ||
           event.target.closest('#blockEditor,#callableBlocks,#colorModal,#paintModal') ||
-          event.target.matches('#objectSelect,#eventSelect,#callableType,#callableSelect')
+          event.target.matches('#objectSelect,#eventSelect,#callableType,#callableSelect,#fileInput')
         )
           return;
         if (!flushActiveEditor()) {
@@ -27687,7 +27815,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (
           modelLocked() ||
           flushingEditor ||
-          event.target.closest('.editor-modes,#colorModal,[data-blockui-action="cancel"]')
+          event.target.closest('.editor-modes,#colorModal,#saveBtn,#callableSaveProject,#newBtn,#openBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;
@@ -27721,11 +27849,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     $('#sourceEditBtn').onclick = () => { hideSourceOverview(); loadEditor(); };
     $('#sourceStageBtn').onclick = () => { if (selectObject('stage')) showSourceOverview(); };
     $('#procClose').onclick = () => {
-      if (confirmCallableDiscard()) {
+      flushActiveEditor();
+      try {
+        const saved=captureEditorState();if(saved.callableDraft)callableDraftCore={...saved.callableDraft};
         $('#procModal').classList.remove('show');
         if (sourceOverviewOpen) renderSourceOverview();
         scheduleAutosave();
-      }
+      } catch(error) { showEditorFailure(draftEditor,error); }
     };
     $('#callableType').onchange = () => {
       if (!flushEditor(draftEditor)) {
@@ -27843,6 +27973,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     blockEncode,
     blockDecode,
     createBlock,
+    blockInsertionAvailability,
     createAkariRuntime,
     createAkariStageView,
     packExecutable,
@@ -27901,6 +28032,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     sha256,
     sha256Fallback,
     serializeProject,
+    validateEditorState,
     parseProjectFile,
   };
   if (typeof globalThis !== 'undefined') globalThis.Akari = Akari;

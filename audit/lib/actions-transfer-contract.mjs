@@ -68,7 +68,8 @@ export function verifyValuesReport(r){
 }
 export const compositionIds=[...['I07','I08','I09','I10','I11','I12'].flatMap(id=>[id+'/source-ui',id+'/semantic-roundtrip']),
   'I10/action-original','I10/function-original','EDITOR/idless-heading-selection',
-  ...[1366,1024,390].map(width=>'EDITOR/multiline-native-'+width)];
+  ...[1366,1024,390].map(width=>'EDITOR/multiline-native-'+width),
+  'SAVE/unfinished-source','SAVE/unfinished-return-hole','SAVE/unfinished-number','SAVE/semantic-error'];
 export function verifyCompositionMeaning(d,r){
   assert.equal(r.execution,'actual EventScheduler / RuntimeModel');assert.equal(r.source,d.mainFirstDraft);
   assert.deepEqual(r.errors,[]);assert.ok(r.roundtrip.length);
@@ -147,5 +148,10 @@ export function verifyCompositionReport(r){
     assert.equal(e.afterCancel,e.afterAppend);assert.equal(e.codeAfterRoundtrip,e.expectedCode);
     assert.ok(e.codeAfterRoundtrip.includes('\n  2行目\n\t'),'saved source retains the actual LF and whitespace');
   }
+  for(const id of ['SAVE/unfinished-source','SAVE/semantic-error']){const e=r.results.find(x=>x.id===id).evidence;assert.equal(e.restored,e.source);assert.equal(e.runBlocked,true);}
+  assert.equal(r.results.find(x=>x.id==='SAVE/unfinished-source').evidence.exportBlocked,true);
+  const hole=r.results.find(x=>x.id==='SAVE/unfinished-return-hole').evidence;assert.equal(hole.name,'途中の答え');assert.equal(hole.holeRestored,true);assert.equal(hole.closedWithoutDiscard,true);
+  const number=r.results.find(x=>x.id==='SAVE/unfinished-number').evidence;assert.equal(number.input,'－');assert.equal(number.restored,'－');assert.equal(number.runBlocked,true);
+  assert.ok(r.results.find(x=>x.id==='SAVE/semantic-error').evidence.diagnostics.length);
   return r.results.length;
 }

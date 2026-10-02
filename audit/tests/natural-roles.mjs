@@ -15,7 +15,9 @@ function project(name='こはる',source=''){
 function parsed(source,p){const r=A.parseSyntax(source,{targetId:'sprite-1',event:'start',symbols:A.buildSymbols(p)});assert.ok(r.ast,JSON.stringify(r.syntaxDiagnostics));return r.ast;}
 function roundtrip(source,p){
  const ast=parsed(source,p),block=A.blockDecode(A.blockEncode(ast).tree),formatted=A.formatScript(block),again=parsed(formatted,p);
- assert.ok(A.astEquivalent(ast,block),'block changes meaning');assert.ok(A.astEquivalent(ast,again),'formatted source changes meaning');return {ast,formatted};
+ assert.ok(A.astEquivalent(ast,block),'block changes meaning');assert.ok(A.astEquivalent(ast,again),'formatted source changes meaning');
+ const session=A.createEditorSession('script:roles-main',source,{targetId:'sprite-1',event:'start'},p,0);assert.ok(session.syntaxAst,JSON.stringify(session.syntaxDiagnostics));assert.ok(session.blockView);assert.ok(A.astEquivalent(ast,session.syntaxAst));
+ const refreshed=A.refreshEditorSession(session,source,{targetId:'sprite-1',event:'start'},p,1);assert.ok(refreshed.blockView);assert.ok(A.astEquivalent(ast,refreshed.syntaxAst));return {ast,formatted};
 }
 function run(p){
  const compiled=A.compileProject(p);assert.equal(compiled.errors.length,0,JSON.stringify(compiled.errors));

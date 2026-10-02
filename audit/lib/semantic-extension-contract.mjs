@@ -24,3 +24,5 @@ export function verifySemanticExtension(report,schema,ids){
  for(const row of report.results){assert.equal(row.status,'PASS',row.id);assert.ok(row.observed&&typeof row.observed==='object');}
  return ids.length;
 }
+export const draftPersistenceIds=[...['「開いた引用','点数を','作品を動かしたとき、あかりは、\n  「始める」と言う。\nあかりがクリックされたとき、\n  「未完成'].map(source=>'draft/source/'+source),
+ 'draft/semantic-errors-are-readable','draft/unfinished-callable-and-return-hole','draft/contracts-and-corruption-rejected'];
