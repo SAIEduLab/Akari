@@ -22084,7 +22084,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       if (kind !== 'script') throw new AkariError('F503', '実行中の定義本文は編集できません');
       const old = scriptBySourceKey(next, ownerKey);
-      if (old) updateScriptSource(old, source, next);
+      if (old) {
+        // Keep the edited body's identity when its heading changes event or actor.
+        // Imported and initial bodies may predate explicit script IDs.
+        if (!old.id) old.id = ensureUniqueId('script');
+        updateScriptSource(old, source, next);
+      }
       else if (source) {
         const row = { id: event ? ensureUniqueId('script') : id,
           targetId: event ? id : selectedId, event: event || currentEvent, source: '' };
@@ -22107,7 +22112,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (binding.kind === 'draft') callableDraftCore = { ...callableDraftCore, source };
       else {
         const old = scriptBySourceKey(project, ownerKey),
-          row = scriptBySourceKey(next, ownerKey) || (!old ? next.scripts.at(-1) : null);
+          oldIndex = old ? project.scripts.indexOf(old) : -1,
+          row = scriptBySourceKey(next, ownerKey) ||
+            (oldIndex >= 0 ? next.scripts[oldIndex] : next.scripts.at(-1));
         project = next;
         if (row) {
           const changedOwner = selectedId !== row.targetId;

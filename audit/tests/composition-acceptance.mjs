@@ -86,8 +86,10 @@ try{await withBrowser(chrome,async browser=>{
   await input.fill(source);await page.waitForTimeout(150);
   const read=()=>page.evaluate(()=>({textarea:document.querySelector('#codeEditor').value,event:document.querySelector('#eventSelect').value,owner:Akari.app.editorState.main.ownerKey,scripts:Akari.app.project.scripts}));
   const first=await read();capture({source,first});assert.equal(first.scripts.length,1,'one input must not duplicate a default body');assert.equal(first.scripts[0].source,source);
+  assert.ok(first.scripts[0].id,'an edited body has a stable identity');
   assert.equal(first.scripts[0].event,'click');assert.equal(first.textarea,source,'changed body remains visible');assert.equal(first.event,'click','event selector follows the edited body');
   await input.fill(source);await page.waitForTimeout(150);const second=await read();assert.equal(second.scripts.length,1,'re-entering the same source cannot create a second body');
+  assert.equal(second.scripts[0].id,first.scripts[0].id,'re-entry preserves the edited body identity');
   const evidence={source,first,second};capture(evidence);return evidence;
  });
 },180000);}catch(error){report.hostFailure=error.stack;}

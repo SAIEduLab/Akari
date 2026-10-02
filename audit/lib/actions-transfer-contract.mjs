@@ -133,6 +133,8 @@ export function verifyCompositionReport(r){
     assert.equal(evidence.kind,kind);assert.equal(evidence.original,kind==='action'?extra.actionBody:extra.functionBody);assert.deepEqual(evidence.compileErrors,[]);
   }
   const identity=r.results.find(x=>x.id==='EDITOR/idless-heading-selection').evidence;
+  assert.ok(identity.first.scripts[0].id,'edited body identity is required');
+  assert.equal(identity.second.scripts[0].id,identity.first.scripts[0].id,'body identity must remain stable');
   for(const observation of [identity.first,identity.second]){
     assert.equal(observation.scripts.length,1);assert.equal(observation.scripts[0].source,identity.source);
     assert.equal(observation.scripts[0].event,'click');assert.equal(observation.textarea,identity.source);assert.equal(observation.event,'click');
