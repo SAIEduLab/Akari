@@ -10737,6 +10737,17 @@
         "Readable review explicitly opens the sample through its visible control. Every original viewport, UI level, speech-size threshold, stage/control visibility, pause/resume and long-text assertion remains unchanged.",
         "Additive empty-work native acceptance separately requires idle Run, click-only execution, editable sample removal and Undo."
       ]
+    },
+    {
+      "ids": [
+        "unknown-callee-and-all-arguments-after-definition-change"
+      ],
+      "authorization": "Reviewed PUBLIC_SEMANTIC_UX_SPEC SEM-09: name changes preserve references.",
+      "oldContract": "Renaming a callable deliberately left its caller dangling under the old name.",
+      "newIndependentGuarantees": [
+        "Renaming updates the bound name while preserving every actual argument; adding a formal argument still leaves one actual argument and refreshes the arity diagnostic.",
+        "Undo restores the original call text. An explicitly entered unknown callable retains its exact name, one actual argument with value1, original source and visible diagnostic. The original stable ID remains."
+      ]
     }
   ],
   "schemaUiSetupMigrations": [

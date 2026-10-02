@@ -101,3 +101,5 @@ export function verifyUxSurface(report){
   for(const v of views){assert.ok(Number.isFinite(v.body)&&v.body>=4.5);assert.ok(Number.isFinite(v.heading)&&v.heading>=3);assert.ok(Number.isFinite(v.selection)&&v.selection>=4.5);assert.equal(v.selected,true);assert.equal(v.overflow,false);}
  }return count;
 }
+
+export const basicIntentIds=['T01','T02','T03','T04','T05','T06','T13'];

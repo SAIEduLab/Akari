@@ -58,3 +58,9 @@ Full Actions37047035534 passed all producer jobs and aggregate, including all36 
 ## UX checkpoint 92bf7a8
 
 Fixed Actions37052239782 passed all mandatory reports, including seven search browser cases, ten UX cases and 77 validator rejection controls. Full Actions37052239667 exposed two obsolete implicit-sample assumptions in ownership and readable review. Their current migration retains all prior assertions and stable IDs, verifies empty new work, and explicitly opens the sample. Component/data/callable renames are the next additive change and require new same-head browser evidence.
+
+## Original basic intentions
+
+T01-T06 sources were extracted from the approved public specification and independently hash-compared with the original I01-I06 drafts: all six are byte-identical. The new frozen basic-intents fixture also contains the separate20-step/second T13 source. Seven actual parser/codec/runtime cases pass locally, including fixed logical-time traces, two clicks, held/released keys, visibility delay, actor order and four20-step pen edges. Their added native original-input journey remains pending.
+
+At9c5ad44 the fixed rename extension passed component/data GUI rename, Undo, runtime and save. Callable rename/Undo worked but the test attempted the covered toolbar Redo after Undo restored the callable modal; the test now uses its normal Control+Y route. Full session identified an obsolete dangling-callee expectation after rename; the revised stable-ID test preserves arity/argument and explicit unknown-callee guarantees under SEM-09.

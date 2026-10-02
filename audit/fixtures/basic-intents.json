@@ -1,0 +1,60 @@
+{
+  "schema": "akari-basic-intents-v1",
+  "publicSource": "audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md",
+  "publicSourceSha256": "9ee2fef30736b1ca6a426b8f2be43bf8410717602faac4a4f67dbd531c15b44a",
+  "initial": {
+    "actor": {
+      "id": "sprite-1",
+      "name": "あかり",
+      "x": 100,
+      "y": 100,
+      "direction": 0,
+      "width": 180,
+      "height": 180
+    },
+    "other": {
+      "id": "basic-star",
+      "name": "星",
+      "x": 200,
+      "y": 100,
+      "direction": 0
+    }
+  },
+  "cases": [
+    {
+      "id": "T01",
+      "source": "あかりがクリックされたとき、\n  あかりは画面の右へ30歩動いて、「今日はどこへ行こう」と言う。",
+      "sourceSha256": "cee7c835ce7a237a8d663cf005299d1e19d040b1a24ae90f08f24f81a81d66a8"
+    },
+    {
+      "id": "T02",
+      "source": "「空白」キーを押すたびに、あかりは、\n  上へ24歩動いて、0.5秒待って、下へ24歩動く。",
+      "sourceSha256": "c4674858d237bc1cc5c769701eafcc9f63e0fd44b1b3c3b5bcbdb97442245adc"
+    },
+    {
+      "id": "T03",
+      "source": "「右」キーが押されているあいだは、あかりは画面の右へ1秒に30歩の速さで動き続ける。",
+      "sourceSha256": "153672598f7341402c15c7ec7fcb01c02c0cf64319c4712aa404cf4523cd4742"
+    },
+    {
+      "id": "T04",
+      "source": "作品を動かしたとき、あかりは、\n  あかりは画面の右へ20歩動いて、「先に行くね」と言う。\n  そのあと、星は画面の左へ15歩動いて、「ついていくよ」と言う。",
+      "sourceSha256": "11a5775e167986e9c38ac5940feaf7cdcc82351a1aaa19a84f7bfa7ea5a85030"
+    },
+    {
+      "id": "T05",
+      "source": "作品を動かしたとき、あかりは、\n  姿を隠して、1秒待って、姿を見せて、「ただいま」と言う。",
+      "sourceSha256": "728acf3a6ee7aceb310b01b4ce99bb5f460304a8c949bda985d2230bbaa77c3d"
+    },
+    {
+      "id": "T06",
+      "source": "作品を動かしたとき、あかりは、\n  ペンを下ろす。\n  前へ20歩進んで、右に90度回ることを4回くり返す。\n  ペンを上げる。",
+      "sourceSha256": "b241e31163944368c8bf786ce16aa7664da7b602d408ef5b23374298ad91fb4d"
+    },
+    {
+      "id": "T13",
+      "source": "「右」キーが押されているあいだ、あかりは1秒に20歩の速さで画面の右へ動く。",
+      "sourceSha256": "bcec9865a815079965a2073ba43c06500a4c7770554d3a6aa8c60a4e33c16f64"
+    }
+  ]
+}
