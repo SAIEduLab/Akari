@@ -4,7 +4,7 @@
   "ledgers": [
     {
       "path": "audit/fixtures/editor-surface-v2-input-migration.json",
-      "sha256": "ec1ff32cdf6040674a76fc3f6759bebd6e44faab30dcdaddd429ec40d1c2e08e",
+      "sha256": "e0565a0508bc7d4e373ce1f57d52f43395c0d815b16037661b336f2e97c8de9e",
       "registeredChanges": 46
     },
     {

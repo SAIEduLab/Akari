@@ -250,6 +250,8 @@
     "audit/tests/natural-roles.mjs",
     "audit/tests/node-product.mjs",
     "audit/tests/normal-product.mjs",
+    "audit/tests/numeric-display-browser.mjs",
+    "audit/tests/numeric-display.mjs",
     "audit/tests/release-policy-negative.mjs",
     "audit/tests/review-actor.mjs",
     "audit/tests/review-first-use.mjs",

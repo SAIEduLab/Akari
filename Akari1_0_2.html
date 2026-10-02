@@ -5840,7 +5840,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   </div>
 </div>
 <div class="modal" id="failureModal" role="dialog" aria-modal="true" aria-label="失敗時の記録"><div class="dialog"><div class="win-title">失敗時の記録</div><div class="record-controls"><label for="failureSelect">記録</label><select id="failureSelect"></select></div><div class="dialog-body" id="failureBody"></div><div class="dialog-foot"><button id="failureClose">閉じる</button></div></div></div>
-<div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-label="値の全文"><div class="dialog"><div class="win-title" id="valueTitle">値の全文</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の要素</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の要素</button></div><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">閉じる</button></div></div></div>
+<div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-label="値の全文"><div class="dialog"><div class="win-title" id="valueTitle">値の全文</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の要素</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の要素</button></div><p id="valueNotice" class="dialog-body" role="status"></p><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">閉じる</button></div></div></div>
 
 
 <div class="modal" id="colorModal" role="dialog" aria-modal="true" aria-labelledby="colorTitle" aria-describedby="colorHelp">
@@ -6241,6 +6241,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const ensureFinite = (n) => {
       if (!Number.isFinite(n)) throw new AkariError('R403', '計算結果が有限な数ではありません');
       return Object.is(n, -0) ? 0 : n;
+    };
+    // Presentation only. Expressions, text conversion and files retain the value.
+    const displayValue = (v) => {
+      if (typeof v === 'number') ensureFinite(v);
+      const rawText = valueText(v);
+      if (!isNumberValue(v)) return { text: rawText, rawText, rounded: false };
+      const n = ensureFinite(isQuantity(v) ? v.magnitude : v);
+      const precise = n.toPrecision(12), parsed = Number(precise);
+      const shown = Number.isSafeInteger(n) ? String(n) : Number.isFinite(parsed) ? String(parsed) : precise;
+      const text = shown + (isQuantity(v) ? v.unit || '' : '');
+      return { text, rawText, rounded: text !== rawText };
     };
     const typeName = (v) =>
       Array.isArray(v)
@@ -8615,7 +8626,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           case 'Say': {
             const v = evalExpression(n.value, ctx);
             if (Array.isArray(v)) throw new AkariError('R411', 'リストはそのまま言えません');
-            this.ui.say?.(ctx.runtimeId, valueText(v));
+            this.ui.say?.(ctx.runtimeId, valueText(v), v);
             return;
           }
           case 'Ask': {
@@ -9517,6 +9528,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       listValue,
       assertRuntimeValueLimit,
       valueText,
+      displayValue,
       ensureFinite,
       typeName,
       sameValue,
@@ -9579,6 +9591,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     listValue,
     assertRuntimeValueLimit,
     valueText,
+    displayValue,
     ensureFinite,
     typeName,
     sameValue,
@@ -17135,14 +17148,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       renderComponents();
       fitStage();
     }
-    function showBubble(id, value) {
+    function showBubble(id, value, actualValue = value) {
+      const presentation = core.displayValue(actualValue);
+      value = presentation.text;
+      const details = { ...presentation, value: actualValue };
       if (id === 'stage') {
-        options.onStageMessage?.(value);
+        options.onStageMessage?.(value, details);
         return;
       }
       const node = form.querySelector(`[data-runtime-id="${CSS.escape(id)}"].component`);
       if (!node) {
-        options.onStageMessage?.(value);
+        options.onStageMessage?.(value, details);
         return;
       }
       for (const b of form.querySelectorAll('.sprite-bubble'))
@@ -17152,6 +17168,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       b.dataset.runtimeId = id;
       b.style.zIndex = '2000';
       b.textContent = value;
+      if (presentation.rounded) {
+        const full = document.createElement('button');
+        full.type = 'button';
+        full.textContent = '実値';
+        full.setAttribute('aria-label', '表示を丸めています。実値を見る');
+        full.style.pointerEvents = 'auto';
+        full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue); };
+        b.appendChild(full);
+      }
       form.appendChild(b);
       positionBubbles();
       const timer = setTimeout(() => {
@@ -17333,8 +17358,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const designUrls = new Map();
     const message = (text) => {
       output.hidden = false;
-      const next = output.textContent + (output.textContent ? '\n' : '') + String(text);
-      output.textContent = next.length > 100000 ? next.slice(-90000) : next;
+      const addition = (output.textContent ? '\n' : '') + String(text);
+      if (output.textContent.length + addition.length > 100000)
+        output.textContent = (output.textContent + addition).slice(-90000);
+      else output.appendChild(document.createTextNode(addition));
       output.scrollTop = output.scrollHeight;
     };
     function state() {
@@ -17433,9 +17460,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           penLine: view.penLine,
           penClear: view.clearPen,
           stamp: view.stamp,
-          say: (id, text) => {
+          say: (id, text, value) => {
             flush();
-            view.showBubble(id, text);
+            view.showBubble(id, text, value);
           },
           ask,
           closeQuestion,
@@ -17546,7 +17573,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         getImage: (id) => cache?.getImage(id),
         canInteract: () => !modal.classList.contains('show'),
         onError: fail,
-        onStageMessage: message,
+        onStageMessage: (text, details) => {
+          message(text);
+          if (details?.rounded) {
+            const full = document.createElement('details'), summary = document.createElement('summary'), raw = document.createElement('span');
+            summary.textContent = '表示を丸めています。実値を見る';
+            raw.textContent = details.rawText;
+            full.append(summary, raw); output.appendChild(full);
+          }
+        },
+        onValueDetails: value => message('表示を丸めています。実値（選択してコピーできます）：' + core.valueText(value)),
       });
       flush();
       phase = 'READY';
@@ -23299,7 +23335,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           throw e;
         }),
       onInputChanged: renderMonitor,
-      onStageMessage: (text) => log(text),
+      onStageMessage: (text, details) => {
+        log(text);
+        if (details?.rounded) {
+          const full = document.createElement('button');
+          full.type = 'button'; full.textContent = '実値';
+          full.setAttribute('aria-label', '表示を丸めています。出力の実値を見る');
+          full.onclick = () => showFullValue('出力の実値', details.value);
+          el.console.appendChild(full);
+        }
+      },
+      onValueDetails: value => showFullValue('吹出しの実値', value),
     });
     function setStageZoom(scale) {
       stageZoom = scale === null ? null : Math.max(0.1, Math.min(2, Math.round(scale * 100) / 100));
@@ -23313,9 +23359,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     $('#stageZoomFit').onclick = () => setStageZoom(null);
     const log = (m, type = '') => {
       const prefix = type === 'error' ? '❌ ' : type === 'ok' ? '✓ ' : '';
-      const next = el.console.textContent + (el.console.textContent ? '\n' : '') + prefix + m;
-      el.console.textContent =
-        next.length > 100000 ? '[古いログを省略]\n' + next.slice(-90000) : next;
+      const addition = (el.console.textContent ? '\n' : '') + prefix + m;
+      if (el.console.textContent.length + addition.length > 100000)
+        el.console.textContent = '[古いログを省略]\n' + (el.console.textContent + addition).slice(-90000);
+      else el.console.appendChild(document.createTextNode(addition));
       el.console.scrollTop = el.console.scrollHeight;
     };
     const setStatus = (m) => (el.status.textContent = m);
@@ -25156,10 +25203,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         const b = document.createElement('div');
         b.className = 'monitor-value';
         b.textContent = monitorValue(v);
-        if (Array.isArray(v) || (typeof v === 'string' && cpLen(v) > 160)) {
+        if (Array.isArray(v) || (typeof v === 'string' && cpLen(v) > 160) || displayValue(v).rounded) {
           const full = document.createElement('button');
-          full.textContent = '\u5168\u6587';
-          full.setAttribute('aria-label', k + '\u306e\u5168\u6587');
+          full.textContent = isNumberValue(v) ? '実値' : '\u5168\u6587';
+          full.setAttribute('aria-label', k + (isNumberValue(v) ? 'の実値（表示を丸めています）' : '\u306e\u5168\u6587'));
           const copy = Array.isArray(v) ? v.slice() : v;
           full.onclick = () => showFullValue(k, copy);
           b.appendChild(full);
@@ -25184,6 +25231,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         pages = Math.max(1, Math.ceil(chars.length / 8000));
       v.page = clamp(v.page, 0, pages - 1);
       $('#valueTitle').textContent = v.label;
+      const rounded = item !== undefined && displayValue(item).rounded;
+      $('#valueNotice').textContent = rounded ? '通常の表示を丸めています。以下は丸める前の実値です。選択してコピーできます。' : '以下は値の全文です。選択してコピーできます。';
       $('#valueListControls').hidden = !list;
       $('#valueItem').value = String(v.index + 1);
       $('#valueItem').max = String(Math.max(1, v.value.length || 1));
@@ -25324,7 +25373,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function monitorValue(value) {
       const short = (v) => {
-        const text = valueText(v);
+        const text = displayValue(v).text;
         return cpLen(text) > 160 ? Array.from(text).slice(0, 160).join('') + '\u2026' : text;
       };
       return Array.isArray(value)
@@ -25576,9 +25625,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         penLine: stageView.penLine,
         penClear: stageView.clearPen,
         stamp: stageView.stamp,
-        say: (rid, text) => {
+        say: (rid, text, value) => {
           flushRuntimePaint();
-          showBubble(rid, text);
+          showBubble(rid, text, value);
         },
         beforeStatement: (task, node) => {
           activeTaskId = task.taskId;
@@ -25712,8 +25761,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       $('#stopBtn').disabled = appState === 'DESIGN' || appState === 'IMPORTING';
       updateEditingLock();
     }
-    function showBubble(rid, text) {
-      stageView.showBubble(rid, text);
+    function showBubble(rid, text, value) {
+      stageView.showBubble(rid, text, value);
     }
     function limitInputValue(input) {
       return stageView.limitInputValue(input);

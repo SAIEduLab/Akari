@@ -46884,7 +46884,7 @@
     {
       "path": "audit/tests/editor-browser.mjs",
       "originalSha256": "ccc3158ce84f2c51127329d2b9ab48a99f0582874bfcfd8ad584bf4a31f718fb",
-      "candidateSha256": "2265b4d11e324f09c06f0a5c0cbc0201614bbd2a8a167686dda58fcac6d904ad",
+      "candidateSha256": "d62b14e88fd00ab6d2c512c6e50adfedf9e3705e8a48faa6933349bab66a28ab",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/tests/editor-browser.mjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"

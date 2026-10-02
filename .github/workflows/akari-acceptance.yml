@@ -40,6 +40,8 @@ jobs:
         run: node audit/tests/draft-persistence.mjs audit-evidence/acceptance/draft-persistence.json
       - name: Verify declared units and list form values
         run: node audit/tests/data-form-values.mjs audit-evidence/acceptance/data-form-values.json
+      - name: Verify display precision without changing values
+        run: node audit/tests/numeric-display.mjs audit-evidence/acceptance/numeric-display.json
       - name: Require original composition acceptance, meaning and save roundtrip
         if: always()
         run: node audit/tests/composition-acceptance.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/composition.json
@@ -49,6 +51,9 @@ jobs:
       - name: Verify visible data forms and runtime quantities
         if: always()
         run: node audit/tests/data-form-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/data-form-browser.json
+      - name: Verify numeric displays, actual values and the offline player
+        if: always()
+        run: node audit/tests/numeric-display-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/numeric-display-browser.json
       - name: Independently verify complete results and validator rejection ability
         if: always()
         run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance

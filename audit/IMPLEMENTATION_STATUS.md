@@ -25,7 +25,7 @@ counts and a successful composition subset do not establish release readiness.
 | FIX-017 current diagnostics | Existing cancel gates | Full revised lifecycle matrix |
 | FIX-018 restored history | Persistent structural deltas, shared history-only assets, 30-frame cursor core checks | Same-head native Undo/Redo and quota-atomicity browser evidence |
 | FIX-019 output/monitor | Existing readable output gates | Exact three viewport coexistence checks |
-| FIX-020 numeric display | Existing numeric semantics | Display-only 12 significant digits with raw detail |
+| FIX-020 numeric display | Separate 12-significant-digit presentation; exact raw value details, semantic text conversion unchanged; 21 boundary/core cases | Same-head native bubble/monitor/save/offline browser proof |
 | FIX-021 unfinished files | Editor-state version 1, file and autosave integration, ten core cases | Same-head pending-number browser fix, autosave parity and all drafts |
 | FIX-022 explanation contrast | Existing manual gates | Required text/heading/hover/selection contrast observations |
 | FIX-023 natural continuous roles | Name/quote/order/rate variants through parser, session, codec and runtime | Original 20 and 30 units/sec UI journeys |

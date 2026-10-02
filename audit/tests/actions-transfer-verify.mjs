@@ -5,13 +5,13 @@ import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {transferFixtures,fixturePins,compositionIds,verifyTransferReport,verifyValuesReport,verifyCompositionReport} from '../lib/actions-transfer-contract.mjs';
-import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser} from '../lib/semantic-extension-contract.mjs';
+import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser} from '../lib/semantic-extension-contract.mjs';
 const dir=path.resolve(process.argv[2]),results=[],negative=[];
-for(const [file,verify]of [['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser]]){
+for(const [file,verify]of [['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser]]){
  try{const r=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verify(r)});}
  catch(error){results.push({file,status:'FAIL',error:error.message});}
 }
-for(const [file,schema,ids]of [['natural-roles.json','akari-natural-roles-v1',naturalRoleIds],['document-units.json','akari-document-units-v1',documentUnitIds],['draft-persistence.json','akari-draft-persistence-v1',draftPersistenceIds],['data-form-values.json','akari-data-form-values-v1',dataFormIds]]){
+for(const [file,schema,ids]of [['natural-roles.json','akari-natural-roles-v1',naturalRoleIds],['document-units.json','akari-document-units-v1',documentUnitIds],['draft-persistence.json','akari-draft-persistence-v1',draftPersistenceIds],['data-form-values.json','akari-data-form-values-v1',dataFormIds],['numeric-display.json','akari-numeric-display-v1',numericDisplayIds]]){
  try{
   const report=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verifySemanticExtension(report,schema,ids)});
   for(const [kind,mutate]of [['missing',r=>r.results.pop()],['wrong-snapshot',r=>r.snapshot.productSha256='0'.repeat(64)],['failed',r=>r.results[0].status='FAIL']]){
@@ -66,6 +66,15 @@ try{
  }
 }catch(error){results.push({file:'data-validator-negative',status:'FAIL',error:error.stack});}
 try{
+ const trig=[['正弦（30）','0.5','0.49999999999999994'],['余弦（60）','0.5','0.5000000000000001'],['正接（45）','1','0.9999999999999999'],['逆正弦（0.5）','30度','30.000000000000004度'],['逆余弦（0.5）','60度','60.00000000000001度']];
+ const observed=[...trig.map(([source,shown,raw])=>({source,shown,raw,detailExact:true})),{monitor:'0.3',text:'0.30000000000000004',raw:'0.30000000000000004',savedExact:true},{shown:'0.5',raw:'0.49999999999999994',detailExact:true},{shown:'0.5',raw:'0.49999999999999994',offline:true}];
+ const control={schema:'akari-numeric-display-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:numericBrowserIds.map((id,i)=>({id,status:'PASS',observed:observed[i]}))};
+ verifyNumericBrowser(control);
+ for(const[id,mutate]of Object.entries({'display-missing-detail':r=>r.results[0].observed.detailExact=false,'display-rounded-raw':r=>r.results[0].observed.raw='0.5','display-changed-text':r=>r.results[5].observed.text='0.3','display-online-player':r=>r.results[7].observed.offline=false})){
+  const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyNumericBrowser(bad));negative.push({id,rejected:true});
+ }
+}catch(error){results.push({file:'numeric-validator-negative',status:'FAIL',error:error.stack});}
+try{
  const control=syntheticComposition();verifyCompositionReport(control);
  const mutations={
   'failed-status':r=>r.status='FAIL','missing-case':r=>r.results.pop(),'duplicate-case':r=>r.results[1]=r.results[0],
@@ -92,7 +101,7 @@ try{
   }
  }
 }catch(error){results.push({file:'validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===45?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===52?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;
