@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
-import {audioOutputCases,verifyAudioOutput} from '../lib/audio-output-contract.mjs';
+import {audioOutputCases,verifyAudioOutput,wave,measureWave} from '../lib/audio-output-contract.mjs';
 import {transferFixtures,fixturePins,compositionIds,verifyTransferReport,verifyValuesReport,verifyCompositionReport} from '../lib/actions-transfer-contract.mjs';
 import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser,resourceReferenceIds,resourceBrowserIds,verifyResourceBrowser,searchBindingIds,searchBrowserIds,verifySearchBrowser,uxSurfaceIds,uxManualFiles,verifyUxSurface,basicIntentIds,verifyBasicBrowser,semanticNegativeIds,finiteVariantFixture,verifyFiniteVariants,structuredOrders,structuredEditingIds,verifyStructuredEditing} from '../lib/semantic-extension-contract.mjs';
 const dir=path.resolve(process.argv[2]),results=[],negative=[];
@@ -106,8 +106,9 @@ try{
  const fixture=JSON.parse(fs.readFileSync('audit/fixtures/basic-intents.json'));
  const details=[{beforeClick:100,afterClicks:[130,160],holdIdle:true,speech:'今日はどこへ行こう'},{jumpY:76,returnY:100,repeatedDownIdle:true,secondPress:true},{rate:30,elapsed:1.05,distance:31.5,stopped:true},{actorX:120,starX:185,speeches:['先に行くね','ついていくよ']},{hiddenFirst:true,visibleAfterWait:true,speech:'ただいま'},{closedSquare:true,ink:160},{rate:20,elapsed:1.05,distance:21,stopped:true}];
  const control={schema:'akari-basic-intents-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:fixture.cases.map((d,i)=>({id:d.id,status:'PASS',observed:{source:d.source,inputHash:d.sourceSha256,roundtrips:3,designUnchanged:true,savedAndReadBack:true,detail:details[i]}}))};
- verifyBasicBrowser(control);
- for(const[id,mutate]of Object.entries({'basic-rewritten-original':r=>r.results[0].observed.source='何もしない。','basic-key-repeat':r=>r.results[1].observed.detail.repeatedDownIdle=false,'basic-rate-confusion':r=>r.results[6].observed.detail.rate=30,'basic-no-file':r=>r.results[3].observed.savedAndReadBack=false,'basic-no-drawing':r=>r.results[5].observed.detail.ink=0})){
+  for(const i of [2,6]){const d=details[i];control.results[i].releaseObservation={pressedAt:0,releasedAt:1050,elapsed:d.elapsed,distance:d.distance,domOnRelease:100+d.distance-.3,domAfterPaint:100+d.distance,domAfter300:100+d.distance};}
+  verifyBasicBrowser(control);
+ for(const[id,mutate]of Object.entries({'basic-rewritten-original':r=>r.results[0].observed.source='何もしない。','basic-key-repeat':r=>r.results[1].observed.detail.repeatedDownIdle=false,'basic-rate-confusion':r=>r.results[6].observed.detail.rate=30,'basic-no-file':r=>r.results[3].observed.savedAndReadBack=false,'basic-no-drawing':r=>r.results[5].observed.detail.ink=0,'basic-no-release-observation':r=>delete r.results[2].releaseObservation,'basic-moved-after-release':r=>r.results[6].releaseObservation.domAfter300+=1})){
   const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyBasicBrowser(bad));negative.push({id,rejected:true});
  }
 }catch(error){results.push({file:'basic-browser-validator-negative',status:'FAIL',error:error.stack});}
@@ -143,9 +144,17 @@ try{
  }
 }catch(error){results.push({file:'validator-negative',status:'FAIL',error:error.stack});}
 try{
- const control={schema:'akari-audio-output-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,observation:'WebAudio final output PCM; original destination connection retained',environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},pageErrors:[],networkRequests:[],results:audioOutputCases.map(c=>({id:c.id,status:'PASS',observed:{source:c.source,other:c.other||'',designUnchanged:true,marker:{text:'通過',time:c.wait===false?.02:c.id==='SET_VOLUME'?.5:c.id==='SAMPLE_WAIT'?.45:.35},otherMarker:c.id==='STOP_ALL'?{text:'解放',time:.35}:c.id==='SAMPLE_WAIT'?{text:'別音終了',time:1.1}:null,voices:c.frequencies.map((frequency,i)=>({file:'audio-output-browser.artifacts/'+c.id+'-'+i+'.wav',sha256:'a'.repeat(64),connectedAt:c.id==='SET_VOLUME'&&i===1?.2:0,endTime:c.id==='SET_VOLUME'?.2*(i+1):c.durations[i],measurement:{rate:48000,frames:96000,first:0,last:c.durations[i],duration:c.durations[i],frequency,rms:c.id==='SET_VOLUME'&&i===1?.025:.05,silentTail:.6}}))}}))};
+ const control={schema:'akari-audio-output-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,observation:'WebAudio final output PCM; original destination connection retained',environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},pageErrors:[],networkRequests:[],results:audioOutputCases.map(c=>({id:c.id,status:'PASS',observed:{source:c.source,other:c.other||'',designUnchanged:true,marker:{text:'通過',time:c.wait===false?.02:c.id==='SET_VOLUME'?.5:c.id==='SAMPLE_WAIT'?.45:.35},otherMarker:c.id==='STOP_ALL'?{text:'解放',time:.35}:c.id==='SAMPLE_WAIT'?{text:'別音終了',time:1.1}:null,voices:c.frequencies.map((frequency,i)=>({file:'audio-output-browser.artifacts/'+c.id+'-'+i+'.wav',sha256:'a'.repeat(64),connectedAt:c.id==='SET_VOLUME'&&i===1?.2:0,endTime:c.id==='SET_VOLUME'?.2*(i+1):c.durations[i],measurement:{rate:48000,frames:96000,first:0,last:c.durations[i],duration:c.durations[i],frequency,meanFrequency:frequency,periodIqr:0,rms:c.id==='SET_VOLUME'&&i===1?.025:.05,silentTail:.6}}))}}))};
+ // Independent signal controls: sample rate, frequency and phase changes are
+ // chosen here, never fitted from a product recording. A discontinuity must not
+ // masquerade as a pitch change; silence must not produce a measured tone.
+ for(const rate of [44100,48000])for(const frequency of [440,466.1637615,415.3046976,660])for(const discontinuity of [false,true]){
+  const samples=Array.from({length:Math.round(rate*.6)},(_,i)=>i<rate*.05||i>rate*.45?0:.07*Math.sin(2*Math.PI*frequency*i/rate+(discontinuity&&i>rate*.15?1.7:0)+(discontinuity&&i>rate*.30?2.1:0)));
+  const measured=measureWave(wave(samples,rate));assert.ok(Math.abs(measured.frequency-frequency)<2);assert.ok(measured.periodIqr<2);assert.ok(Math.abs(measured.duration-.4)<.001);
+ }
+ assert.throws(()=>measureWave(wave(Array(48000).fill(0))));
  verifyAudioOutput(control);
- for(const[id,mutate]of Object.entries({'audio-missing':r=>r.results.pop(),'audio-duplicate':r=>r.results[1]=r.results[0],'audio-wrong-head':r=>r.snapshot.productSha256='0'.repeat(64),'audio-no-output':r=>r.results[0].observed.voices=[],'audio-wrong-frequency':r=>r.results[3].observed.voices[0].measurement.frequency=440,'audio-no-volume-change':r=>r.results[2].observed.voices[1].measurement.rms=.05,'audio-wait-early':r=>r.results[1].observed.marker.time=0,'audio-waits-other-sound':r=>r.results[7].observed.marker.time=1.1,'audio-restarts-after-stop':r=>r.results[5].observed.voices[0].measurement.silentTail=0,'audio-short-recording':r=>r.results[0].observed.voices[0].measurement.duration=.01})){
+ for(const[id,mutate]of Object.entries({'audio-missing':r=>r.results.pop(),'audio-duplicate':r=>r.results[1]=r.results[0],'audio-wrong-head':r=>r.snapshot.productSha256='0'.repeat(64),'audio-no-output':r=>r.results[0].observed.voices=[],'audio-wrong-frequency':r=>r.results[3].observed.voices[0].measurement.frequency=440,'audio-no-volume-change':r=>r.results[2].observed.voices[1].measurement.rms=.05,'audio-wait-early':r=>r.results[1].observed.marker.time=0,'audio-waits-other-sound':r=>r.results[7].observed.marker.time=1.1,'audio-restarts-after-stop':r=>r.results[5].observed.voices[0].measurement.silentTail=0,'audio-short-recording':r=>r.results[0].observed.voices[0].measurement.duration=.01,'audio-unstable-periods':r=>r.results[0].observed.voices[0].measurement.periodIqr=10})){
   const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyAudioOutput(bad));negative.push({id,rejected:true});
  }
 }catch(error){results.push({file:'audio-output-validator-negative',status:'FAIL',error:error.stack});}
@@ -154,7 +163,7 @@ try{
  verifyStructuredEditing(control);
  for(const[id,mutate]of Object.entries({'structured-missing':r=>r.results.pop(),'structured-identity-drift':r=>r.results[0].observed.stableId=false,'structured-lost-body':r=>r.results[4].observed.bodyPreserved=false,'structured-wrong-direction':r=>r.results[6].observed.direction='left','structured-rate-confusion':r=>r.results[7].observed.moved=33})){const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyStructuredEditing(bad));negative.push({id,rejected:true});}
 }catch(error){results.push({file:'structured-validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===115?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===118?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;

@@ -25,11 +25,17 @@ try{await withBrowser(chrome,async browser=>{
     await page.locator('#formSurface').focus();await page.keyboard.down('Space');await waitPosition('y',76);await waitPosition('y',100);await page.keyboard.down('Space');await page.waitForTimeout(150);assert.equal((await read()).y,100);await page.keyboard.up('Space');await page.keyboard.down('Space');await waitPosition('y',76);await waitPosition('y',100);await page.keyboard.up('Space');assert.equal((await read()).x,100);detail={jumpY:76,returnY:100,repeatedDownIdle:true,secondPress:true};
    }
    if(draft.id==='T03'||draft.id==='T13'){
-     const rate=draft.id==='T03'?30:20;await page.locator('#formSurface').focus();assert.equal((await read()).x,100);const before=await read();await page.keyboard.down('ArrowRight');await page.waitForTimeout(1050);await page.keyboard.up('ArrowRight');
+     const rate=draft.id==='T03'?30:20;await page.locator('#formSurface').focus();assert.equal((await read()).x,100);
+     await page.evaluate(()=>{globalThis.__basicKeyTimes={};for(const type of ['keydown','keyup'])addEventListener(type,e=>{if(e.key==='ArrowRight'&&!e.repeat)__basicKeyTimes[type]=performance.now();},{capture:true});});
+     const before=await read();await page.keyboard.down('ArrowRight');await page.waitForTimeout(1050);await page.keyboard.up('ArrowRight');const released=await read();
      // The release is native input; let its queued final render reach the DOM
      // before measuring the unchanged position over the subsequent 300 ms.
      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-     const after=await read(),elapsed=(after.time-before.time)/1000,distance=after.x-before.x;assert.ok(Math.abs(distance-rate*elapsed)<=6);assert.equal(after.y,100);await page.waitForTimeout(300);assert.ok(Math.abs((await read()).x-after.x)<.01);detail={rate,elapsed,distance,stopped:true};
+     const after=await read(),times=await page.evaluate(()=>__basicKeyTimes),elapsed=(times.keyup-times.keydown)/1000,distance=after.x-before.x;await page.waitForTimeout(300);const later=await read();
+     // Persist measurements before assertions, including failure cases. Logical
+     // immediate release is covered separately by the scheduler/key-state gates.
+     row.releaseObservation={pressedAt:times.keydown,releasedAt:times.keyup,elapsed,distance,domOnRelease:released.x,domAfterPaint:after.x,domAfter300:later.x};
+     assert.ok(Math.abs(distance-rate*elapsed)<=6);assert.equal(after.y,100);assert.ok(Math.abs(later.x-after.x)<.01);detail={rate,elapsed,distance,stopped:true};
    }
    if(draft.id==='T04'){
     await waitPosition('x',120);assert.equal(await page.locator('#formSurface .component[data-id="basic-star"]').evaluate(e=>parseFloat(e.style.left)),185);assert.equal(await page.locator('.sprite-bubble[data-runtime-id="sprite-1"] .sprite-bubble-text').textContent(),'先に行くね');assert.equal(await page.locator('.sprite-bubble[data-runtime-id="basic-star"] .sprite-bubble-text').textContent(),'ついていくよ');detail={actorX:120,starX:185,speeches:['先に行くね','ついていくよ']};

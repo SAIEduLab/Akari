@@ -27,8 +27,13 @@ export function measureWave(bytes){
  const rate=bytes.readUInt32LE(24),samples=Array.from({length:(bytes.length-44)/2},(_,i)=>bytes.readInt16LE(44+i*2)/32767),active=[];
  samples.forEach((v,i)=>{if(Math.abs(v)>.001)active.push(i);});assert.ok(active.length>100,'recorded output must contain real nonzero PCM');const first=active[0],last=active.at(-1),trim=Math.ceil(rate*.015),start=first+trim,end=last-trim;assert.ok(end>start);
  let energy=0,crossings=[];for(let i=start;i<=end;i++){energy+=samples[i]**2;if(samples[i-1]<=0&&samples[i]>0)crossings.push(i-1+(-samples[i-1])/(samples[i]-samples[i-1]));}
- assert.ok(crossings.length>=15);const frequency=(crossings.length-1)*rate/(crossings.at(-1)-crossings[0]);
- return {rate,frames:samples.length,first:first/rate,last:last/rate,duration:(last-first+1)/rate,frequency,rms:Math.sqrt(energy/(end-start+1)),silentTail:(samples.length-1-last)/rate};
+ assert.ok(crossings.length>=15);
+ // A render-quantum discontinuity contributes an extra crossing and biases a
+ // whole-window crossing count. Measure the typical individual period instead;
+ // retain the old mean and the interquartile span so transients stay visible.
+ const periods=crossings.slice(1).map((v,i)=>rate/(v-crossings[i])).sort((a,b)=>a-b),middle=Math.floor(periods.length/2),frequency=periods.length%2?periods[middle]:(periods[middle-1]+periods[middle])/2;
+ const meanFrequency=(crossings.length-1)*rate/(crossings.at(-1)-crossings[0]),periodIqr=periods[Math.floor(periods.length*.75)]-periods[Math.floor(periods.length*.25)];
+ return {rate,frames:samples.length,first:first/rate,last:last/rate,duration:(last-first+1)/rate,frequency,meanFrequency,periodIqr,rms:Math.sqrt(energy/(end-start+1)),silentTail:(samples.length-1-last)/rate};
 }
 export function verifyAudioOutput(report,baseDir){
  assert.equal(report.schema,'akari-audio-output-browser-v1');assert.equal(report.status,'PASS');assert.equal(report.uxAcceptance,false);assert.equal(report.observation,'WebAudio final output PCM; original destination connection retained');assert.deepEqual(report.snapshot,snapshot(currentProductFile()));assert.deepEqual(report.environment,{browser:browserEnvironment.version,playwright:browserEnvironment.playwright});assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);
@@ -38,7 +43,7 @@ export function verifyAudioOutput(report,baseDir){
   for(const [j,v]of o.voices.entries()){
    assert.match(v.file,/^audio-output-browser\.artifacts\/[A-Z_]+-\d+\.wav$/);assert.match(v.sha256,/^[0-9a-f]{64}$/);assert.ok(Number.isFinite(v.endTime));const m=v.measurement;
    if(baseDir){const bytes=fs.readFileSync(path.join(baseDir,v.file));assert.equal(sha(bytes),v.sha256);assert.deepEqual(measureWave(bytes),m);}
-   for(const value of Object.values(m))assert.ok(Number.isFinite(value));assert.ok(m.rate>=8000&&m.rate<=48000);assert.ok(Math.abs(m.frequency-c.frequencies[j])<2);assert.ok(Math.abs(m.duration-c.durations[j])<.09);assert.ok(m.rms>.015&&m.rms<.2);assert.ok(m.silentTail>=.15);
+   for(const value of Object.values(m))assert.ok(Number.isFinite(value));assert.ok(m.rate>=8000&&m.rate<=48000);assert.ok(Number.isFinite(m.periodIqr)&&m.periodIqr>=0&&m.periodIqr<2);assert.ok(Math.abs(m.frequency-c.frequencies[j])<2);assert.ok(Math.abs(m.duration-c.durations[j])<.09);assert.ok(m.rms>.015&&m.rms<.2);assert.ok(m.silentTail>=.15);
   }
   if(c.wait===true)assert.ok(o.marker.time>=o.voices[0].endTime,'speech cannot precede the awaited end event');
   if(c.wait===false)assert.ok(o.marker.time<o.voices[0].endTime-.05,'nonwaiting speech must precede the sound end');

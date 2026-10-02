@@ -24222,6 +24222,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       renderProperties();
       loadEditor();
       renderComponents();
+      // Navigation changes the view of the current history frame, not its
+      // content. The next atomic field edit must undo to this selected owner.
+      if (!modelLocked()) pushHistoryNow();
       return true;
     }
     function applyStage() {

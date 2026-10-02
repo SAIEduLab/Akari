@@ -121,7 +121,7 @@ export function verifyBasicBrowser(report){
   const {detail,...o}=row.observed,d=fixture.cases[i];assert.deepEqual(o,{source:d.source,inputHash:d.sourceSha256,roundtrips:3,designUnchanged:true,savedAndReadBack:true});
   if(expected[row.id])assert.deepEqual(detail,expected[row.id]);
   else if(row.id==='T06'){assert.deepEqual(Object.keys(detail).sort(),['closedSquare','ink']);assert.equal(detail.closedSquare,true);assert.ok(Number.isFinite(detail.ink)&&detail.ink>=60);}
-  else{assert.deepEqual(Object.keys(detail).sort(),['distance','elapsed','rate','stopped']);assert.equal(detail.rate,row.id==='T03'?30:20);assert.equal(detail.stopped,true);assert.ok(Number.isFinite(detail.elapsed)&&detail.elapsed>=1);assert.ok(Number.isFinite(detail.distance)&&Math.abs(detail.distance-detail.rate*detail.elapsed)<=6);}
+   else{assert.deepEqual(Object.keys(detail).sort(),['distance','elapsed','rate','stopped']);assert.equal(detail.rate,row.id==='T03'?30:20);assert.equal(detail.stopped,true);assert.ok(Number.isFinite(detail.elapsed)&&detail.elapsed>=1);assert.ok(Number.isFinite(detail.distance)&&Math.abs(detail.distance-detail.rate*detail.elapsed)<=6);const r=row.releaseObservation;assert.ok(r);for(const k of ['pressedAt','releasedAt','elapsed','distance','domOnRelease','domAfterPaint','domAfter300'])assert.ok(Number.isFinite(r[k]));assert.equal(r.elapsed,detail.elapsed);assert.equal(r.distance,detail.distance);assert.equal(r.elapsed,(r.releasedAt-r.pressedAt)/1000);assert.ok(Math.abs(r.domAfter300-r.domAfterPaint)<.01);}
  }return count;
 }
 
