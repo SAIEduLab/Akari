@@ -25,4 +25,15 @@ export function verifySemanticExtension(report,schema,ids){
  return ids.length;
 }
 export const draftPersistenceIds=[...['「開いた引用','点数を','作品を動かしたとき、あかりは、\n  「始める」と言う。\nあかりがクリックされたとき、\n  「未完成'].map(source=>'draft/source/'+source),
- 'draft/semantic-errors-are-readable','draft/unfinished-callable-and-return-hole','draft/contracts-and-corruption-rejected'];
+ 'draft/semantic-errors-are-readable','draft/unfinished-callable-and-return-hole','draft/contracts-and-corruption-rejected',
+ 'draft/pending-number-block-path','history/thirty-frames-deltas-and-cursor','history/shared-and-history-only-assets','history/corrupt-delta-asset-contract-rejected'];
+export const workspaceBrowserIds=['history/browser-thirty-undo-redo','history/browser-pending-number','history/browser-closed-return-hole','history/browser-quota-atomic'];
+export function verifyWorkspaceBrowser(report){
+ const count=verifySemanticExtension(report,'akari-workspace-history-browser-v1',workspaceBrowserIds);assert.deepEqual(report.pageErrors,[]);
+ assert.equal(report.environment.browser,'140.0.7339.207');assert.equal(report.environment.playwright,'1.55.0');assert.ok(!report.hostFailure);
+ const values=Object.fromEntries(report.results.map(r=>[r.id,r.observed]));
+ assert.deepEqual(values[workspaceBrowserIds[0]],{frames:30,restoredHistory:27,restoredRedo:3,cursor:26,firstRetained:'「履歴6」と言う。',sharedAssets:1});
+ assert.deepEqual(values[workspaceBrowserIds[1]],{input:'－',restored:'－',undo:'10',redo:'－'});
+ assert.deepEqual(values[workspaceBrowserIds[2]],{name:'書きかけの答え',closed:true,reopened:true,hole:1});
+ assert.deepEqual(values[workspaceBrowserIds[3]],{previousRecordUnchanged:true,pendingSource:'「容量不足でも編集中の文は残る',failureShown:true});return count;
+}

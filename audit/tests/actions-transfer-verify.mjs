@@ -5,9 +5,9 @@ import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {transferFixtures,fixturePins,compositionIds,verifyTransferReport,verifyValuesReport,verifyCompositionReport} from '../lib/actions-transfer-contract.mjs';
-import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension} from '../lib/semantic-extension-contract.mjs';
+import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser} from '../lib/semantic-extension-contract.mjs';
 const dir=path.resolve(process.argv[2]),results=[],negative=[];
-for(const [file,verify]of [['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport]]){
+for(const [file,verify]of [['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser]]){
  try{const r=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verify(r)});}
  catch(error){results.push({file,status:'FAIL',error:error.message});}
 }
@@ -52,6 +52,13 @@ function syntheticComposition(){
  for(const [id,evidence]of [['SAVE/unfinished-source',{source:'「未完',restored:'「未完',runBlocked:true,exportBlocked:true}],['SAVE/unfinished-return-hole',{name:'途中の答え',holeRestored:true,closedWithoutDiscard:true}],['SAVE/unfinished-number',{input:'－',restored:'－',runBlocked:true}],['SAVE/semantic-error',{source:'1歩＋1秒を言う。',restored:'1歩＋1秒を言う。',runBlocked:true,diagnostics:[{code:'S303'}]}]])r.results.push({id,status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence});return r;
 }
 try{
+ const control={schema:'akari-workspace-history-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:workspaceBrowserIds.map((id,i)=>({id,status:'PASS',observed:[{frames:30,restoredHistory:27,restoredRedo:3,cursor:26,firstRetained:'「履歴6」と言う。',sharedAssets:1},{input:'－',restored:'－',undo:'10',redo:'－'},{name:'書きかけの答え',closed:true,reopened:true,hole:1},{previousRecordUnchanged:true,pendingSource:'「容量不足でも編集中の文は残る',failureShown:true}][i]}))};
+ verifyWorkspaceBrowser(control);
+ for(const [id,mutate]of Object.entries({'history-missing':r=>r.results.pop(),'history-lost-redo':r=>r.results[0].observed.restoredRedo=0,'history-coerced-number':r=>r.results[1].observed.redo='0','history-overwrote-record':r=>r.results[3].observed.previousRecordUnchanged=false})){
+  const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyWorkspaceBrowser(bad));negative.push({id,rejected:true});
+ }
+}catch(error){results.push({file:'workspace-validator-negative',status:'FAIL',error:error.stack});}
+try{
  const control=syntheticComposition();verifyCompositionReport(control);
  const mutations={
   'failed-status':r=>r.status='FAIL','missing-case':r=>r.results.pop(),'duplicate-case':r=>r.results[1]=r.results[0],
@@ -78,7 +85,7 @@ try{
   }
  }
 }catch(error){results.push({file:'validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===35?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===39?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;

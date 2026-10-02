@@ -46988,7 +46988,7 @@
     {
       "path": "audit/browser/cases/browser-storage-media.cjs",
       "originalSha256": "9a93019db1d3969f54f5ed1e52099a421184b0ab1419e0ebab871b5b08787d3c",
-      "candidateSha256": "a7506e03532fea9c99e94dcb8695ba41f65882f28fb299d80197811c575f9874",
+      "candidateSha256": "b0a7d74589efe95b50210c729bcfa42d6d5d8aa5ddb1d6aedf4440ecf28f1000",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-storage-media.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"

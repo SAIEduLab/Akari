@@ -933,7 +933,7 @@
       "originalPath": "audit/browser/cases/browser-storage-media.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-storage-media.cjs",
       "originalSha256": "9a93019db1d3969f54f5ed1e52099a421184b0ab1419e0ebab871b5b08787d3c",
-      "candidateSha256": "a7506e03532fea9c99e94dcb8695ba41f65882f28fb299d80197811c575f9874",
+      "candidateSha256": "b0a7d74589efe95b50210c729bcfa42d6d5d8aa5ddb1d6aedf4440ecf28f1000",
       "stableIds": [
         "real-media-import-and-history",
         "media-editor-run-and-save-roundtrip",
@@ -10665,6 +10665,22 @@
         "The existing F2 workspace/fallback and F1 isolation assertions remain."
       ],
       "prohibition": "No project-data writes through preference storage, no new storage wildcard, no removed IDs or weakened semantic assertions."
+    },
+    {
+      "ids": [
+        "invalid-syntax-save-and-format1-storage-isolation"
+      ],
+      "authorization": "Explicit full implementation request for the reviewed PUBLIC_SEMANTIC_UX_SPEC sections 6.2 and 7.1-7.3.",
+      "specification": "audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md",
+      "oldContract": "Unfinished source refuses file download and remains outside all persistent undo history.",
+      "newIndependentGuarantees": [
+        "Actual unfinished file download contains the exact raw text plus the unchanged valid design and exact asset hashes.",
+        "The same saved raw text and 30-frame-capable history survive native IndexedDB recovery.",
+        "Owner switching continues to refuse unfinished text; executable export remains blocked by additive fixed acceptance.",
+        "Cancel removes the draft, keeps the valid design, and the next actual downloaded file has no pending input.",
+        "Existing format-2 database/key isolation and invalid-file atomicity remain."
+      ],
+      "prohibition": "Keep every case ID and all original media execution, malformed input and storage isolation checks; do not derive expectations from candidate output."
     }
   ],
   "schemaUiSetupMigrations": [

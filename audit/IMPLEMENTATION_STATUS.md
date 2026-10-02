@@ -14,7 +14,7 @@ counts and a successful composition subset do not establish release readiness.
 | FIX-006 list iteration | Original I08 source, order and clock trace | Snapshot mutation and binder scope cases |
 | FIX-007 procedures/return | Original I10 source and runtime, arithmetic variants | Nested natural expressions and full parameter matrix |
 | FIX-008 multiple receivers | Original I11, independent event keys and source ranges | Isolated concurrent send groups, receiver failure/stop |
-| FIX-009 counted clones | Original I12 and atomic invalid-count rejection | Existing schema and event-trace browser gates |
+| FIX-009 counted clones | Original I12, atomic invalid-count rejection, existing schema and event-trace gates | Wider full-spec clone/receiver variants |
 | FIX-010 event Block edit | Stable script identity and unit identity core checks | All heading-only and body event-change GUI cases |
 | FIX-011 continuous quantity edit | Existing unit gates and continuous parser variants | Same-session edits, cancel, run across role orders |
 | FIX-012 declared data units | Existing expected-unit validation | Normalize unit-declared initial zero and GUI increment trace |
@@ -23,10 +23,10 @@ counts and a successful composition subset do not establish release readiness.
 | FIX-015 Return hole | Palette insertion now produces a hole | Same-head native save/readback evidence |
 | FIX-016 multiline strings | Lexer/codec/source core; three viewport native text edits | Draft save and Undo/Redo variants |
 | FIX-017 current diagnostics | Existing cancel gates | Full revised lifecycle matrix |
-| FIX-018 restored history | Memory Undo/Redo retained | Persistent history/deltas/shared assets and quota atomicity |
+| FIX-018 restored history | Persistent structural deltas, shared history-only assets, 30-frame cursor core checks | Same-head native Undo/Redo and quota-atomicity browser evidence |
 | FIX-019 output/monitor | Existing readable output gates | Exact three viewport coexistence checks |
 | FIX-020 numeric display | Existing numeric semantics | Display-only 12 significant digits with raw detail |
-| FIX-021 unfinished files | Editor-state format version 1, structural validator and six core cases | Same-head browser download/readback, autosave parity and all drafts |
+| FIX-021 unfinished files | Editor-state version 1, file and autosave integration, ten core cases | Same-head pending-number browser fix, autosave parity and all drafts |
 | FIX-022 explanation contrast | Existing manual gates | Required text/heading/hover/selection contrast observations |
 | FIX-023 natural continuous roles | Name/quote/order/rate variants through parser, session, codec and runtime | Original 20 and 30 units/sec UI journeys |
 | UX-01 new work and speech | Existing stage speech gate | Empty new work, explicit sample, clear events and bubble placement |
@@ -39,6 +39,10 @@ add an optional `editorState` record with its own explicit version 1. This recor
 contains pending source/Block trees, unfinished callable state, selection and
 view. Its validator checks structure and limits; it does not require executable
 source. Run and executable export retain their separate rejection gates. Assets
-remain in the single project asset collection. Autosave history work is pending.
+remain in the single project asset collection. Autosave record version 2 stores
+the same editor state in a versioned history envelope: one base frame, structural
+and text deltas, a cursor, and asset bytes shared by digest. Original per-frame
+asset IDs remain separate so a reused ID cannot change an older frame's content.
+Native browser recovery and quota checks are required before acceptance.
 
 No completed release or human UX acceptance is claimed by this table.

@@ -16465,8 +16465,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           throw new AkariError('F503','書きかけの入力欄が正しくありません');
         const record=sourceRegistry(project).find(row=>row.key===saved.ownerKey),context=saved.kind==='draft'?{definitionKind:state.callableDraft.type,args:[]}:(record?.context||{}),
           ast=saved.draftTree?blockDecode(saved.draftTree,{allowHoles:true}):parseSyntax(saved.kind==='draft'?state.callableDraft.source:record?.source||'',{...context,symbols:buildSymbols(project)}).ast;
-        let node=ast;for(const k of path){if(!node||!Object.hasOwn(node,k))throw new AkariError('F503','書きかけの入力先が見つかりません');node=node[k];}
-        const schema=syntaxSchema(node),field=[...schema.fields,...schema.annotations].find(f=>f.key===saved.pending.field);
+        let node=saved.draftTree||blockEncode(ast,{allowHoles:true}).tree;for(const k of path){if(!node||!Object.hasOwn(node,k))throw new AkariError('F503','書きかけの入力先が見つかりません');node=node[k];}
+        const schema=BLOCK_SCHEMA_BY_ID.get(node?.schemaId),field=schema&&[...schema.fields,...schema.annotations].find(f=>f.key===saved.pending.field);
         if(!field)throw new AkariError('F503','書きかけの入力項目が見つかりません');
       }
     }
@@ -16483,6 +16483,100 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     return state;
   }
+  // Persistent history stores one design/editor frame and structural deltas. Asset
+  // bytes are shared by digest, while each frame retains its original asset IDs.
+  const WORKSPACE_HISTORY_LIMIT = 60;
+  function workspaceDelta(before, after) {
+    if (stableJson(before) === stableJson(after)) return null;
+    if (typeof before === 'string' && typeof after === 'string') {
+      let start=0,end=0;
+      while(start<before.length&&start<after.length&&before[start]===after[start])start++;
+      while(end<before.length-start&&end<after.length-start&&before[before.length-end-1]===after[after.length-end-1])end++;
+      return ['text',start,end,after.slice(start,after.length-end)];
+    }
+    if (Array.isArray(before)&&Array.isArray(after)) {
+      const changed={};for(let i=0;i<after.length;i++){const d=i<before.length?workspaceDelta(before[i],after[i]):['value',after[i]];if(d)changed[i]=d;}
+      return ['array',after.length,changed];
+    }
+    if(before&&after&&typeof before==='object'&&typeof after==='object'&&!Array.isArray(before)&&!Array.isArray(after)){
+      const changed={};for(const key of Object.keys(after)){const d=Object.hasOwn(before,key)?workspaceDelta(before[key],after[key]):['value',after[key]];if(d)Object.defineProperty(changed,key,{value:d,enumerable:true});}
+      return ['object',changed,Object.keys(before).filter(key=>!Object.hasOwn(after,key))];
+    }
+    return ['value',after];
+  }
+  function applyWorkspaceDelta(before,delta,depth=0) {
+    const fail=()=>{throw new AkariError('F503','編集履歴の差分が正しくありません');};
+    if(depth>LIMITS.blockDepth*4||!Array.isArray(delta))return fail();
+    const [kind,a,b,c]=delta;
+    if(kind==='value'&&delta.length===2)return cloneDesignProject(a);
+    if(kind==='text'&&delta.length===4&&typeof before==='string'&&typeof c==='string'&&
+      Number.isSafeInteger(a)&&Number.isSafeInteger(b)&&a>=0&&b>=0&&a+b<=before.length)return before.slice(0,a)+c+before.slice(before.length-b);
+    const record=value=>value&&typeof value==='object'&&!Array.isArray(value);
+    if(kind==='array'&&delta.length===3&&Array.isArray(before)&&Number.isSafeInteger(a)&&a>=0&&a<=LIMITS.sourceTotal&&record(b)){
+      const out=before.slice(0,a);out.length=a;
+      for(const [key,d]of Object.entries(b)){if(!/^(0|[1-9]\d*)$/.test(key)||Number(key)>=a)return fail();out[Number(key)]=applyWorkspaceDelta(before[Number(key)],d,depth+1);}
+      for(let i=0;i<a;i++)if(!Object.hasOwn(out,i))return fail();return out;
+    }
+    if(kind==='object'&&delta.length===3&&record(before)&&record(a)&&Array.isArray(b)&&b.every(key=>typeof key==='string'&&Object.hasOwn(before,key))){
+      const out={...before};for(const key of b)delete out[key];
+      for(const [key,d]of Object.entries(a))Object.defineProperty(out,key,{value:applyWorkspaceDelta(before[key],d,depth+1),enumerable:true,writable:true,configurable:true});
+      return out;
+    }
+    return fail();
+  }
+  function encodeWorkspaceHistory(frames,cursor) {
+    if(!Array.isArray(frames)||!frames.length||frames.length>WORKSPACE_HISTORY_LIMIT||!Number.isInteger(cursor)||cursor<0||cursor>=frames.length)
+      throw new AkariError('F503','編集履歴の位置が正しくありません');
+    const assets=[],assetIndexes=new Map(),packed=[];
+    for(const frame of frames){
+      const store=new AssetStore(frame.assets);validateAssetReferences(frame.project,store);validateEditorState(frame.editorState,frame.project);
+      const assetRefs=[];
+      for(const id of collectReachableAssetIds(frame.project)){
+        const a=store.get(id),key=`${a.kind}:${a.mime}:${a.byteLength}:${a.sha256}`;
+        if(!assetIndexes.has(key)){
+          const builtin=a.id===DEFAULT_MASCOT_ASSET_ID&&a.kind==='image'&&a.mime==='image/png'&&a.byteLength===5476&&a.sha256===DEFAULT_MASCOT_SHA256;
+          assetIndexes.set(key,assets.length);assets.push({kind:a.kind,mime:a.mime,byteLength:a.byteLength,sha256:a.sha256,builtin,
+            blob:builtin?null:new Blob([a.bytes],{type:a.mime})});
+        }
+        assetRefs.push([id,assetIndexes.get(key)]);
+      }
+      packed.push({project:cloneDesignProject(frame.project),editorState:cloneDesignProject(frame.editorState),assetRefs,
+        callableBaseline:frame.callableBaseline||'',callableLoadedKey:frame.callableLoadedKey||'',draftSerial:frame.draftSerial||0,draftOpen:!!frame.draftOpen});
+    }
+    return {version:1,cursor,base:packed[0],deltas:packed.slice(1).map((frame,i)=>workspaceDelta(packed[i],frame)||['object',{},[]]),assets};
+  }
+  async function decodeWorkspaceHistory(saved) {
+    const fail=()=>{throw new AkariError('F503','自動保存の編集履歴が正しくありません');};
+    if(!exactKeys(saved,['version','cursor','base','deltas','assets'])||saved.version!==1||!Array.isArray(saved.deltas)||saved.deltas.length>=WORKSPACE_HISTORY_LIMIT||
+      !Number.isInteger(saved.cursor)||saved.cursor<0||saved.cursor>saved.deltas.length||!Array.isArray(saved.assets)||saved.assets.length>LIMITS.assets*WORKSPACE_HISTORY_LIMIT)return fail();
+    const loaded=[],digests=new Set();let bytesTotal=0;
+    for(const a of saved.assets){
+      if(!exactKeys(a,['kind','mime','byteLength','sha256','builtin','blob'])||!['image','audio'].includes(a.kind)||typeof a.builtin!=='boolean'||
+        !Number.isSafeInteger(a.byteLength)||a.byteLength<1||a.byteLength>(a.kind==='image'?LIMITS.imageBytes:LIMITS.audioBytes))return fail();
+      bytesTotal+=a.byteLength;if(bytesTotal>LIMITS.assetRawTotal*WORKSPACE_HISTORY_LIMIT)return fail();
+      const key=`${a.kind}:${a.mime}:${a.byteLength}:${a.sha256}`;if(digests.has(key))return fail();digests.add(key);
+      if(a.builtin){const record=defaultMascotAssetRecord();if(a.blob!==null||a.kind!==record.kind||a.mime!==record.mime||a.byteLength!==record.byteLength||a.sha256!==record.sha256)return fail();loaded.push(record);}
+      else{
+        if(!(a.blob instanceof Blob)||a.blob.size!==a.byteLength||a.blob.type!==a.mime)return fail();
+        loaded.push(await validateLoadedAssetRecord({id:`history-asset-${loaded.length}`,kind:a.kind,mime:a.mime,byteLength:a.byteLength,sha256:a.sha256,dataBase64:encodeBase64(new Uint8Array(await a.blob.arrayBuffer()))}));
+      }
+    }
+    const frames=[];let frame=saved.base;
+    for(let i=0;i<=saved.deltas.length;i++){
+      if(i)frame=applyWorkspaceDelta(frame,saved.deltas[i-1]);
+      if(!exactKeys(frame,['project','editorState','assetRefs','callableBaseline','callableLoadedKey','draftSerial','draftOpen'])||
+        typeof frame.callableBaseline!=='string'||frame.callableBaseline.length>LIMITS.sourceEach*4+30000||typeof frame.callableLoadedKey!=='string'||frame.callableLoadedKey.length>80||
+        !Number.isSafeInteger(frame.draftSerial)||frame.draftSerial<0||typeof frame.draftOpen!=='boolean'||!Array.isArray(frame.assetRefs)||frame.assetRefs.length>LIMITS.assets)return fail();
+      validateDesignProject(frame.project);validateEditorState(frame.editorState,frame.project);
+      const st=new AssetStore();
+      for(const ref of frame.assetRefs){if(!Array.isArray(ref)||ref.length!==2||!safeId(ref[0])||!Number.isInteger(ref[1])||!loaded[ref[1]])return fail();st.addImmutable({...loaded[ref[1]],id:ref[0]});}
+      validateAssetReferences(frame.project,st,{serializedAssetIds:new Set(st.ids())});
+      frames.push({...cloneDesignProject(frame),assets:st.snapshotRefs(),fingerprint:assetStateFingerprint(frame.project,st)});
+    }
+    const used=new Set(frames.flatMap(f=>f.assetRefs.map(ref=>ref[1])));if(used.size!==saved.assets.length)return fail();
+    return {frames,cursor:saved.cursor};
+  }
+
   function markdownText(value) {
     return String(value)
       .replace(/&/g, '&amp;')
@@ -22859,8 +22953,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (binding === mainEditor) refreshEditor();
       setStatus('入力を取り消しました');
     }
+    function editorContentFingerprint(state) {
+      return stableJson([state.callableDraft,state.pendingEditors.map(d=>({kind:d.kind,ownerKey:d.kind==='draft'?'draft':d.ownerKey,source:d.source,
+        value:d.pending.value??null,field:d.pending.field??null,nodePath:d.pending.nodePath??null,
+        draftSource:d.draftTree?formatScript(blockDecode(d.draftTree,{allowHoles:true}),{allowHoles:true}):null}))]);
+    }
     function stateFingerprintCore() {
-      return JSON.stringify([currentFingerprint(), hasCallableDraft() ? callableDraftCore : null]);
+      const pending=[mainEditor,draftEditor].filter(b=>b.session?.pendingEdit||b.session?.blockDraft).map(b=>({kind:b.kind,ownerKey:bindingOwner(b),source:b.textarea.value,
+        pending:b.session.pendingEdit||{},draftTree:b.session.blockDraft?b.session.blockView:null}));
+      const draft=headerPending?{...callableDraftCore,name:$('#callableName').value,argsText:$('#callableArgs').value,
+        ...(callableDraftCore.type==='action'?{callPhrase:$('#callablePhrase').value}:{})}:hasCallableDraft()?callableDraftCore:null;
+      return JSON.stringify([currentFingerprint(),editorContentFingerprint({callableDraft:draft,pendingEditors:pending})]);
     }
     function renderCallableOptions(prefer = '') {
       const sel = $('#callableSelect');
@@ -23358,6 +23461,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         selectedScriptId,
         fingerprint: currentFingerprint(),
         stateFingerprint: stateFingerprintCore(),
+        editorState: captureEditorState(),
         draft: { ...callableDraftCore },
         callableBaseline,
         callableLoadedKey,
@@ -23396,8 +23500,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function updateDirty() {
       dirty = currentFingerprint() !== lastSavedFingerprint;
-      const draft = hasCallableDraft();
-      el.dirty.textContent = dirty ? '未保存' : draft ? '定義の下書きあり' : '変更なし';
+      const draft = hasCallableDraft() || hasPendingEditor();
+      el.dirty.textContent = dirty ? '未保存' : draft ? '書きかけあり' : '変更なし';
       el.dirty.className = dirty || draft ? 'dirty-state dirty' : 'dirty-state';
       const locked = modelLocked();
       $('#undoBtn').disabled =
@@ -23405,7 +23509,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       $('#redoBtn').disabled = locked || !redo.length;
       document.title = `${dirty || draft ? '● ' : ''}${productLabel()} — ${project.name}`;
     }
+    let restoringSnapshot=false;
     function restoreSnap(e) {
+      restoringSnapshot=true;
+      try {
       recoveryEpoch++;
       validateAssetReferences(e.project, new AssetStore(e.assets));
       disposeRuntime();
@@ -23439,11 +23546,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       renderAll();
       loadEditor();
       if ($('#procModal').classList.contains('show')) renderEditorBinding(draftEditor);
+      if(e.editorState){restoreEditorState(e.editorState);callableBaseline=e.callableBaseline||callableBaseline;callableLoadedKey=e.callableLoadedKey||'';$('#procModal').classList.toggle('show',!!e.draftOpen);}
+      lastObservedFingerprint=stateFingerprintCore();
+      e.stateFingerprint=lastObservedFingerprint;
       updateDirty();
+      } finally { restoringSnapshot=false; }
       scheduleAutosave();
     }
     function undo() {
-      if (modelLocked() || !flushActiveEditor()) return;
+      if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit) return;
+      flushActiveEditor();
       clearTimeout(historyTimer);
       const cur = snapshot();
       if (history.at(-1)?.stateFingerprint !== cur.stateFingerprint) history.push(cur);
@@ -23453,7 +23565,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       setStatus('1つ前の状態へ戻しました');
     }
     function redoDo() {
-      if (modelLocked() || !flushActiveEditor() || !redo.length) return;
+      if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit || !redo.length) return;
+      flushActiveEditor();
+      if(history.at(-1)?.stateFingerprint!==stateFingerprintCore()){pushHistoryNow();return;}
       clearTimeout(historyTimer);
       const e = redo.pop();
       history.push(e);
@@ -25817,6 +25931,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         showEditorFailure(binding,saved.pending.reason||'書きかけの作文をもどしました',{preservePending:true});
       }
       for(const view of state.views){const binding=view.kind==='draft'?draftEditor:mainEditor;if(view.kind==='script'&&bindingOwner(binding)!==view.ownerKey)continue;
+        if(!binding.session)getEditorSession(binding,{force:true});
         Object.assign(binding.session,{codeSelection:{...view.codeSelection},scrollState:{...binding.session?.scrollState,...view.scrollState}});
         binding.textarea.setSelectionRange(view.codeSelection.start,view.codeSelection.end,view.codeSelection.direction);binding.textarea.scrollTop=view.scrollState.codeTop;binding.textarea.scrollLeft=view.scrollState.codeLeft;}
       if(state.sourceOverviewOpen&&!state.pendingEditors.length)showSourceOverview();
@@ -25983,51 +26098,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (!hasPendingEditor()) flushActiveEditor();
       let rec, fingerprint;
       try {
-        fingerprint = currentFingerprint();
-        const ids = [...collectReachableAssetIds(project)].filter((id) => {
-            if (id !== DEFAULT_MASCOT_ASSET_ID) return true;
-            const a = assetStore.get(id);
-            return (
-              !a ||
-              a.kind !== 'image' ||
-              a.mime !== 'image/png' ||
-              a.byteLength !== 5476 ||
-              a.sha256 !== DEFAULT_MASCOT_SHA256
-            );
-          }),
-          assets = ids.map((id) => {
-            const a = assetStore.get(id);
-            if (!a)
-              throw new AkariError(
-                'F503',
-                '\u81ea\u52d5\u4fdd\u5b58\u3059\u308b\u7d20\u6750\u304c\u3042\u308a\u307e\u305b\u3093',
-              );
-            return {
-              id: a.id,
-              kind: a.kind,
-              mime: a.mime,
-              byteLength: a.byteLength,
-              sha256: a.sha256,
-              blob: new Blob([a.bytes], { type: a.mime }),
-            };
-          });
-        autosaveRevisionTime = Math.max(Date.now(), autosaveRevisionTime + 1);
-        rec = {
-          id: 'latest',
-          updatedAt: autosaveRevisionTime,
-          project: cloneDesignProject(project),
-          assets,
-          selectedId,
-          currentEvent,
-          selectedScriptId,
-          lastSavedFingerprint,
-          callableDraft: captureCallableDraft(),
-          pendingEditors: [mainEditor, draftEditor].filter(binding => binding.session?.pendingEdit || binding.session?.blockDraft)
-            .map(binding => ({ kind: binding.kind, ownerKey: bindingOwner(binding),
-              source: binding.textarea.value, mode: binding.session.mode,
-              pending: cloneDesignProject(binding.session.pendingEdit || {kind: 'block-draft'}),
-              draftTree: binding.session.blockDraft ? cloneDesignProject(binding.session.blockView) : null })),
-        };
+        fingerprint = stateFingerprintCore();
+        const current=snapshot(),past=history.slice(-30);
+        if(past.at(-1)?.stateFingerprint===current.stateFingerprint)past[past.length-1]=current;
+        else{past.push(current);if(past.length>30)past.shift();}
+        const future=history.at(-1)?.stateFingerprint===current.stateFingerprint?redo.slice(-30).reverse():[];
+        const workspace=encodeWorkspaceHistory([...past,...future],past.length-1);
+        autosaveRevisionTime=Math.max(Date.now(),autosaveRevisionTime+1);
+        rec={id:'latest',version:2,updatedAt:autosaveRevisionTime,revision:recoveryEpoch,workspace,lastSavedFingerprint};
       } catch (e) {
         el.autosave.textContent = '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5931\u6557';
         log(e.message, 'error');
@@ -26035,13 +26113,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       const status = (text) => {
         if (
-          currentFingerprint() === fingerprint &&
-          JSON.stringify(captureCallableDraft()) === JSON.stringify(rec.callableDraft)
+          recoveryEpoch === rec.revision && stateFingerprintCore() === fingerprint
         )
           el.autosave.textContent = text;
       };
       const fallback = () => {
-        if (rec.assets.length) {
+        if (rec.workspace.assets.some(a=>!a.builtin)) {
           status(
             '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5229\u7528\u3067\u304d\u307e\u305b\u3093\uff08\u7d20\u6750\u3092\u542b\u3080\u4f5c\u54c1\uff09',
           );
@@ -26049,7 +26126,6 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         }
         try {
           const txt = JSON.stringify(rec);
-          if (txt.length > 500000) throw new Error('large');
           localStorage.setItem(STORAGE_KEYS.fallback, txt);
           status('\u81ea\u52d5\u4fdd\u5b58\uff1a\u6e08\u307f');
           return true;
@@ -26084,7 +26160,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         }));
     }
     function scheduleAutosave() {
+      if(restoringSnapshot)return;
       clearTimeout(autosaveTimer);
+      recoveryEpoch++;
+      const fp=stateFingerprintCore();
+      if(!modelLocked()&&fp!==lastObservedFingerprint){lastObservedFingerprint=fp;redo=[];queueHistory();updateDirty();}
       el.autosave.textContent = '自動保存：待機';
       autosaveTimer = setTimeout(writeAutosave, 1200);
     }
@@ -26168,7 +26248,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       try {
         const rec = await readAutosave();
         if (
-          !rec?.project ||
+          !(rec?.project || rec?.workspace) ||
           epoch !== recoveryEpoch ||
           dirty ||
           hasCallableDraft() ||
@@ -26176,6 +26256,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           modelLocked()
         )
           return;
+        if(rec.workspace){
+          if(!exactKeys(rec,['id','version','updatedAt','revision','workspace','lastSavedFingerprint'])||rec.id!=='latest'||rec.version!==2||
+            !Number.isFinite(rec.updatedAt)||!Number.isSafeInteger(rec.revision)||rec.revision<0||typeof rec.lastSavedFingerprint!=='string')throw new AkariError('F503','自動保存の契約が正しくありません');
+          const restored=await decodeWorkspaceHistory(rec.workspace);
+          if(epoch!==recoveryEpoch||dirty||hasCallableDraft()||hasPendingEditor()||modelLocked())return;
+          recoveryData={...rec,restored};
+          $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()} の自動保存があります。編集履歴ももどします。`;
+          $('#recoveryModal').classList.add('show');return;
+        }
         validateDesignProject(rec.project);
         if (!Number.isFinite(rec.updatedAt)) throw new AkariError('F503', '自動保存時刻が不正です');
         const callableDraft = validateCallableDraft(rec.callableDraft);
@@ -27567,6 +27656,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (!recoveryData) return;
       const restoredDraft = recoveryData.callableDraft;
       try {
+        if(recoveryData.restored){
+          const {frames,cursor}=recoveryData.restored;
+          clearTimeout(historyTimer);clearTimeout(autosaveTimer);
+          lastSavedFingerprint=recoveryData.lastSavedFingerprint;
+          history=frames.slice(0,cursor+1);redo=frames.slice(cursor+1).reverse();
+          initialSnapshot=history[0];restoreSnap(history.at(-1));
+          $('#recoveryModal').classList.remove('show');recoveryData=null;
+          log('自動保存から作品と編集履歴をもどしました','ok');return;
+        }
         disposeRuntime();
         revokeDesignUrls();
         project = cloneDesignProject(recoveryData.project);
@@ -27777,7 +27875,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes') ||
-          target.matches('#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#openBtn,#procClose,[data-blockui-action="cancel"]')
+          target.matches('#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         if (!flushActiveEditor()) {
@@ -27815,7 +27913,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (
           modelLocked() ||
           flushingEditor ||
-          event.target.closest('.editor-modes,#colorModal,#saveBtn,#callableSaveProject,#newBtn,#openBtn,#procClose,[data-blockui-action="cancel"]')
+          event.target.closest('.editor-modes,#colorModal,#saveBtn,#callableSaveProject,#newBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;
@@ -27840,7 +27938,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       true,
     );
     $('#procBtn').onclick = () => {
-      if (!flushActiveEditor()) return;
+      if (!flushEditor(mainEditor)) return;
       if (!hasCallableDraft()) renderCallableList(callableLoadedKey);
       $('#procModal').classList.add('show');
       renderEditorBinding(draftEditor);
@@ -28033,6 +28131,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     sha256Fallback,
     serializeProject,
     validateEditorState,
+    encodeWorkspaceHistory,
+    decodeWorkspaceHistory,
     parseProjectFile,
   };
   if (typeof globalThis !== 'undefined') globalThis.Akari = Akari;
