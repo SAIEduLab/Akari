@@ -258,9 +258,11 @@ async function reviewUnits(page, capture) {
   const sourceInput = page.locator('#codeEditor');
   const afterUnits = '単位のあとまで動いたよ';
   const source = initial + `\n  大きさを100％にする。\n  2秒待つ。\n  「${afterUnits}」と言う。`;
+  const inputBaseline=await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),owner:Akari.app.editorState.main.ownerKey,target:document.querySelector('#objectSelect').value,event:document.querySelector('#eventSelect').value}));
   await sourceInput.fill(source);
-  await page.waitForFunction(text=>Akari.app.editorState.main.sourceText===text,source);
+  assert.deepEqual(await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),owner:Akari.app.editorState.main.ownerKey,target:document.querySelector('#objectSelect').value,event:document.querySelector('#eventSelect').value})),inputBaseline);assert.equal(await sourceInput.inputValue(),source);
   await page.locator('#editorModeblocks').click();
+  await page.waitForFunction(text=>Akari.app.editorState.main.sourceText===text,source);
   await page.waitForFunction(()=>document.querySelector('#blockEditor .blockui-node[data-schema-id="LooksCommand:SET_SCALE"]'));
   const readPhrase = async schemaId => page.locator(`#blockEditor .blockui-node[data-schema-id="${schemaId}"]`).last().evaluate(node => ({
     staticPhrase:[...node.querySelectorAll('.blockui-phrase-text')].map(part=>part.textContent).join(''),

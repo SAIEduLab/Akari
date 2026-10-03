@@ -1362,7 +1362,7 @@
       "originalPath": "audit/browser/cases/workbench-matrix.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/workbench-matrix.cjs",
       "originalSha256": "47dbff2d587f7ae2a646da54663c9de3f9123ef8becd2bd8cd14347044c5d33b",
-      "candidateSha256": "b29d565d93ae0875e9fd1ade66cf2341ac1ff2c1af0e1e537eabfe05e2170bed",
+      "candidateSha256": "49c4df1fc00f1c002b010f5f6a3bc614138d38966bf8a0d648adced5c47d0688",
       "stableIds": [
         "1366/0.75",
         "1366/1",
@@ -3981,6 +3981,26 @@
       "oldText": "   await U.nodeAction(nodes('Say'),'replace-noop');assert.equal((await state()).ast.body[0].body[0].kind,'NoOperation');",
       "newText": "   assert.equal(await nodes('Hole:statement').count(),1);assert.ok(await page.evaluate(()=>Akari.app.editorState.main.blockDraft));await page.locator('#runBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN');await page.locator('#undoBtn').click();assert.equal((await state()).source,old.source);assert.equal(await nodes('Say').count(),1);await U.nodeAction(nodes('Say'),'replace-noop');assert.equal((await state()).ast.body[0].body[0].kind,'NoOperation');await page.locator('#undoBtn').click();assert.equal((await state()).source,old.source);",
       "preservedMeaning": "UX repair instructions require an incomplete required statement body to stay in the editor as Hole:statement. Committed source/history remain unchanged; Run must stay in DESIGN; Undo restores the original NumericUpdate/Say. The existing explicit replace-noop action is then executed and its committed NoOperation and Undo are verified. The original atomic committed-source/history guarantees and stable case IDs remain, with added draft, refused Run, and cancellation assertions. No product capability, numerical bound, timeout, or original expected result is removed."
+    },
+    {
+      "id": "workbench-edge-scroll-evidence-0001",
+      "path": "audit/browser/cases/workbench-matrix.cjs",
+      "testIds": [
+        "1366/0.75",
+        "1366/1",
+        "1366/1.25",
+        "768/0.75",
+        "768/1",
+        "768/1.25",
+        "390/0.75",
+        "390/1",
+        "390/1.25"
+      ],
+      "oldLine": 13,
+      "newLine": 13,
+      "oldText": "const first=root.locator('[data-block-id=\"'+firstId+'\"].blockui-node');await tabTo(first);const text=first.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').first();await text.scrollIntoViewIfNeeded();let h=await text.boundingBox(),w=await world.boundingBox();await p.mouse.move(h.x+h.width/2,h.y+h.height/2);await p.mouse.down();await p.mouse.move(h.x+h.width/2+10,h.y+h.height/2,{steps:3});let reached=false;for(let i=0;i<400;i++){w=await world.boundingBox();const d=await end.boundingBox();if(d&&d.y>w.y+10&&d.y+d.height<w.y+w.height-48){await p.mouse.move(Math.max(w.x+32,Math.min(w.x+w.width-32,d.x+25)),d.y+d.height/2);await p.waitForTimeout(50);if(await root.locator('.blockui-drop-preview').count()===1){reached=true;break;}}await p.mouse.move(w.x+Math.min(90,w.width/2),w.y+w.height-7);await p.waitForTimeout(20);}assert(reached,'edge scrolling reaches later loaded page');assert.equal((await state(p)).source,source);assert.equal(await root.locator('.blockui-drop-preview').count(),1);await p.screenshot({path:L.path.join(dir,'workbench-preview-'+viewport.width+'-'+zoom+'.png')});await p.keyboard.press('Escape');await p.mouse.up();assert.equal((await state(p)).source,source);assert.equal((await state(p)).history,before.history);evidence.edgeScrollAndCancel=true;",
+      "newText": "const first=root.locator('[data-block-id=\"'+firstId+'\"].blockui-node');await tabTo(first);const text=first.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').first();await text.scrollIntoViewIfNeeded();let h=await text.boundingBox(),w=await world.boundingBox();await p.mouse.move(h.x+h.width/2,h.y+h.height/2);await p.mouse.down();await p.mouse.move(h.x+h.width/2+10,h.y+h.height/2,{steps:3});let reached=false;const edgeStarted=Date.now(),edgeSamples=[];for(let i=0;i<400;i++){w=await world.boundingBox();const d=await end.boundingBox();if(i%20===0)edgeSamples.push({iteration:i,ms:Date.now()-edgeStarted,workspace:w,end:d,scroll:await world.evaluate(e=>({top:e.scrollTop,left:e.scrollLeft,height:e.scrollHeight,clientHeight:e.clientHeight}))});if(d&&d.y>w.y+10&&d.y+d.height<w.y+w.height-48){await p.mouse.move(Math.max(w.x+32,Math.min(w.x+w.width-32,d.x+25)),d.y+d.height/2);await p.waitForTimeout(50);if(await root.locator('.blockui-drop-preview').count()===1){reached=true;break;}}await p.mouse.move(w.x+Math.min(90,w.width/2),w.y+w.height-7);await p.waitForTimeout(20);}evidence.edgeScrolling={reached,elapsedMs:Date.now()-edgeStarted,samples:edgeSamples,finalScroll:await world.evaluate(e=>({top:e.scrollTop,left:e.scrollLeft,height:e.scrollHeight,clientHeight:e.clientHeight}))};assert(reached,'edge scrolling reaches later loaded page');assert.equal((await state(p)).source,source);assert.equal(await root.locator('.blockui-drop-preview').count(),1);await p.screenshot({path:L.path.join(dir,'workbench-preview-'+viewport.width+'-'+zoom+'.png')});await p.keyboard.press('Escape');await p.mouse.up();assert.equal((await state(p)).source,source);assert.equal((await state(p)).history,before.history);evidence.edgeScrollAndCancel=true;",
+      "preservedMeaning": "All9 original viewport/zoom combinations,121 statements,400 mouse iterations,20ms waits,actual drop preview,unchanged source/history,cancel and Undo/Redo assertions retained. Add real coordinates, elapsed time and scroll progress to PASS/FAIL evidence. Product edge scrolling maintains720px/s across frame rates instead of12px per frame; speed at60fps is unchanged."
     }
   ],
   "explicitSetup": {
@@ -7655,7 +7675,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7666,7 +7687,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7677,7 +7699,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7688,7 +7711,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7699,7 +7723,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7710,7 +7735,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7721,7 +7747,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7732,7 +7759,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7743,7 +7771,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },

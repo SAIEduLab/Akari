@@ -47084,7 +47084,7 @@
     {
       "path": "audit/browser/cases/workbench-matrix.cjs",
       "originalSha256": "47dbff2d587f7ae2a646da54663c9de3f9123ef8becd2bd8cd14347044c5d33b",
-      "candidateSha256": "b29d565d93ae0875e9fd1ade66cf2341ac1ff2c1af0e1e537eabfe05e2170bed",
+      "candidateSha256": "49c4df1fc00f1c002b010f5f6a3bc614138d38966bf8a0d648adced5c47d0688",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/workbench-matrix.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"

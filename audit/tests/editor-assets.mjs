@@ -289,21 +289,20 @@ const cases = {
   },
 };
 assert.deepEqual(Object.keys(cases).sort(),[...editorAssetIds].sort());
-let version;
-await withBrowser(browserPath,async browser=>{
-  version=browser.version();
-  for(const [id,run] of Object.entries(cases)) {
+let version;const suiteStarted=Date.now();
+for(const [id,run] of Object.entries(cases)) {
     try {
-      await pageFor(browser,currentProductFile(),async p=>{
+      await withBrowser(browserPath,async browser=>{
+        const actual=browser.version();if(version)assert.equal(actual,version);version=actual;
+        return pageFor(browser,currentProductFile(),async p=>{
         await p.setViewportSize({width:1440,height:1100});p.acceptDialogs=true;p.dialogLog=[];
         p.on('dialog',d=>{p.dialogLog.push(d.message());return p.acceptDialogs?d.accept():d.dismiss();});
         p.on('pageerror',e=>pageErrors.push(id+': '+e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))networkRequests.push(r.url());});
         try { await installRegressionProject(p); await run(p); } catch(e) { await p.screenshot({path:path.join(artifacts,id+'-failure.png'),fullPage:true}).catch(()=>{}); throw e; }
-      });
+      });},Math.max(1,300000-(Date.now()-suiteStarted)));
       results.push({id,pass:true,detail:'PASS'});console.log('PASS '+id);
     } catch(error) { results.push({id,pass:false,detail:error.stack});console.error('FAIL '+id+': '+error.message); }
-  }
-},300000);
+}
 assert.deepEqual(snapshot(currentProductFile()),inputs);
 const report={status:results.every(r=>r.pass)&&!pageErrors.length&&!networkRequests.length?'PASS':'FAIL',snapshot:inputs,environment:'chromium',browser:version,results,pageErrors,networkRequests};
 fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');

@@ -17,18 +17,22 @@ const report={schema:'akari-composition-acceptance-v1',status:'RUNNING',snapshot
 const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');save();
 const json=x=>JSON.parse(JSON.stringify(x));
 
-try{await withBrowser(chrome,async browser=>{
- report.environment.browser=browser.version();assert.equal(browser.version(),browserEnvironment.version);assert.equal(report.environment.playwright,browserEnvironment.playwright);
+const suiteStarted=Date.now();
+const boundedEvidence=async(fn)=>{let timer;try{return await Promise.race([fn(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Failure evidence timeout')),8000);})]);}finally{clearTimeout(timer);}};
+try{
+ assert.equal(report.environment.playwright,browserEnvironment.playwright);
  const run=async(id,category,fn)=>{
   const row={id,category,expectedOutcome:'SUCCESS_REQUIRED',status:'RUNNING',evidence:null};report.results.push(row);const started=Date.now();
-  try{row.evidence=await pageFor(browser,candidate,async page=>{
+  try{row.evidence=await withBrowser(chrome,async browser=>{
+   report.environment.browser=browser.version();assert.equal(browser.version(),browserEnvironment.version);
+   return pageFor(browser,candidate,async page=>{
    page.setDefaultTimeout(8000);await page.setViewportSize({width:1366,height:768});page.on('dialog',d=>d.accept());
    page.on('pageerror',error=>report.pageErrors.push(error.message));page.on('request',request=>{if(/^https?:/.test(request.url()))report.networkRequests.push(request.url());});
    try{return await fn(page,value=>{row.evidence=value;});}
-   catch(error){row.evidence={...row.evidence,ui:await page.evaluate(()=>({textarea:document.querySelector('#codeEditor').value,event:document.querySelector('#eventSelect').value,
-    issue:document.querySelector('#codeIssue')?.textContent,pending:Akari.app.editorState.main.pendingEdit,project:Akari.app.project})).catch(()=>null)};
-    await page.screenshot({path:path.join(dir,id.replace(/[^a-zA-Z0-9_-]/g,'_')+'.png')}).catch(()=>{});throw error;}
-  });row.status='PASS';}
+   catch(error){row.evidence={...row.evidence,ui:await boundedEvidence(()=>page.evaluate(()=>({textarea:document.querySelector('#codeEditor').value,event:document.querySelector('#eventSelect').value,
+    issue:document.querySelector('#codeIssue')?.textContent,pending:Akari.app.editorState.main.pendingEdit,project:Akari.app.project}))).catch(()=>null)};
+    await page.screenshot({path:path.join(dir,id.replace(/[^a-zA-Z0-9_-]/g,'_')+'.png'),timeout:8000}).catch(()=>{});throw error;}
+  });},Math.max(1,300000-(Date.now()-suiteStarted)));row.status='PASS';}
   catch(error){row.status='FAIL';row.failureClass=error.code==='ACCEPTANCE_REQUIRED'?'PRODUCT_SOURCE_REJECTED':'ASSERTION_OR_EXECUTION';row.error=error.stack;}
   row.ms=Date.now()-started;save();console.log(row.status+' '+id);
  };
@@ -43,6 +47,8 @@ try{await withBrowser(chrome,async browser=>{
  for(const d of prose.drafts){
   await run(d.id+'/source-ui','SOURCE_ACCEPTANCE',async(page,capture)=>{
    await install(page,d);const inputHistoryBefore=await page.evaluate(()=>Akari.app.editorState.history);await page.locator('#codeEditor').fill(d.mainFirstDraft);
+   if(await page.locator('#sourceImportConfirm').isVisible()){if(await page.locator('#sourceImportConfirm').isDisabled())await page.locator('#sourceImportEditCurrent').click();else await page.locator('#sourceImportConfirm').click();}
+   else if(await page.evaluate(()=>Akari.app.editorState.main.pendingEdit?.kind==='heading-source')){await page.locator('#editorModeblocks').click();await page.locator('#editorModecode').click();}
    const evidence=await page.evaluate(source=>({enteredSource:document.querySelector('#codeEditor').value,pending:Akari.app.editorState.main.pendingEdit,
     modelSource:Akari.app.editorState.main.sourceText,compileErrors:Akari.app.compile().errors,sourceShaMatches:document.querySelector('#codeEditor').value===source}),d.mainFirstDraft);capture(evidence);
    if(evidence.pending||evidence.modelSource!==d.mainFirstDraft){const error=new Error('Original prose must be accepted, not merely preserved as pending. '+JSON.stringify(evidence.pending));error.code='ACCEPTANCE_REQUIRED';throw error;}
@@ -87,14 +93,18 @@ try{await withBrowser(chrome,async browser=>{
   await page.locator('#uiLevel').selectOption('advanced');await page.locator('#editorModecode').click();await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');
   const input=page.locator('#codeEditor');await input.fill('');
   const source='あかりがクリックされたとき、\n  あかりは画面の右へ30歩動いて、「今日はどこへ行こう」と言う。';
+  const baseline=await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),owner:Akari.app.editorState.main.ownerKey,event:document.querySelector('#eventSelect').value}));
   await input.fill(source);await page.waitForTimeout(150);
+  const staged=await page.evaluate(()=>({project:JSON.stringify(Akari.app.project),owner:Akari.app.editorState.main.ownerKey,event:document.querySelector('#eventSelect').value,raw:document.querySelector('#codeEditor').value}));
+  assert.equal(staged.project,baseline.project);assert.equal(staged.owner,baseline.owner);assert.equal(staged.event,baseline.event);assert.equal(staged.raw,source);
+  await page.locator('#editorModeblocks').click();await page.locator('#editorModecode').click();
   const read=()=>page.evaluate(()=>({textarea:document.querySelector('#codeEditor').value,event:document.querySelector('#eventSelect').value,owner:Akari.app.editorState.main.ownerKey,scripts:Akari.app.project.scripts}));
   const first=await read();capture({source,first});assert.equal(first.scripts.length,1,'one input must not duplicate a default body');assert.equal(first.scripts[0].source,source);
   assert.ok(first.scripts[0].id,'an edited body has a stable identity');
   assert.equal(first.scripts[0].event,'click');assert.equal(first.textarea,source,'changed body remains visible');assert.equal(first.event,'click','event selector follows the edited body');
-  await input.fill(source);await page.waitForTimeout(150);const second=await read();assert.equal(second.scripts.length,1,'re-entering the same source cannot create a second body');
+  await input.fill(source);await page.waitForTimeout(150);await page.locator('#editorModeblocks').click();await page.locator('#editorModecode').click();const second=await read();assert.equal(second.scripts.length,1,'re-entering the same source cannot create a second body');
   assert.equal(second.scripts[0].id,first.scripts[0].id,'re-entry preserves the edited body identity');
-  const evidence={source,first,second};capture(evidence);return evidence;
+  const evidence={source,baseline,staged,inputKeepsContext:true,explicitCommit:true,first,second};capture(evidence);return evidence;
  });
  for(const viewport of [{width:1366,height:768},{width:1024,height:768},{width:390,height:844}])await run('EDITOR/multiline-native-'+viewport.width,'EDITOR_NATIVE_TEXT',async(page,capture)=>{
   await page.setViewportSize(viewport);await install(page,prose.drafts[0]);
@@ -142,7 +152,7 @@ try{await withBrowser(chrome,async browser=>{
   const saved=await downloadProject(page,'semantic-error');await page.locator('#fileInput').setInputFiles(saved.file);await page.waitForFunction(source=>Akari.app.project.scripts.some(s=>s.source===source),source);assert.deepEqual(await page.evaluate(()=>Akari.app.compile().errors),diagnostics);
   await page.locator('#runBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN');return {source,restored:await page.locator('#codeEditor').inputValue(),diagnostics,runBlocked:true};
  });
-},300000);}catch(error){report.hostFailure=error.stack;}
+}catch(error){report.hostFailure=error.stack;}
 assert.deepEqual(snapshot(currentProductFile()),inputs);report.status=!report.hostFailure&&report.results.length===compositionIds.length&&report.results.every(x=>x.status==='PASS')&&report.pageErrors.length===0&&report.networkRequests.length===0?'PASS':'FAIL';
 report.counts={PASS:report.results.filter(x=>x.status==='PASS').length,FAIL:report.results.filter(x=>x.status==='FAIL').length,missing:compositionIds.filter(id=>!report.results.some(x=>x.id===id))};save();
 if(report.status==='PASS')verifyCompositionReport(json(report));else process.exitCode=1;

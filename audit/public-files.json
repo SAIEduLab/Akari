@@ -81,6 +81,7 @@
     "audit/fixtures/design-doc-migration-map.json",
     "audit/fixtures/editor-surface-v2-input-migration.json",
     "audit/fixtures/editor-v2-input-migration.json",
+    "audit/fixtures/explicit-source-import-migration.json",
     "audit/fixtures/finite-semantic-variants.json",
     "audit/fixtures/fixed-values.mjs",
     "audit/fixtures/format-v2-input-migration.json",

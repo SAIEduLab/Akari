@@ -5735,7 +5735,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         <button id="formatBtn">コードを整える</button>
         <span class="exec-location" id="execLocation">いまの場所：―</span>
       </div>
-      <div class="editor-modes" role="group" aria-label="本文の表示"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を取り消す</button></div><p id="editorPending" class="editor-pending" role="status" hidden></p><div id="blockEditor" hidden></div>
+      <div class="editor-modes" role="group" aria-label="本文の表示"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を取り消す</button></div><p id="editorPending" class="editor-pending" role="status" hidden></p><section id="sourceImport" class="editor-pending" aria-label="文章の取り込み" hidden></section><div id="blockEditor" hidden></div>
       <div class="editor-shell">
         <div class="line-gutter" id="lineGutter" aria-hidden="true"></div>
         <textarea id="codeEditor" spellcheck="false" aria-label="あかりのコード"></textarea>
@@ -15344,7 +15344,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   function scriptHeadingMetadata(source, script, project) {
     const parsed = parseSyntax(source, { targetId: script.targetId, event: script.event,
       symbols: buildSymbols(project) });
-    const heading = parsed.ast?.heading;
+    return scriptMetadataFromHeading(parsed.ast?.heading, script, project);
+  }
+  function scriptMetadataFromHeading(heading, script, project) {
     if (!heading) return { targetId: script.targetId, event: script.event, filter: script.filter };
     const targetId = heading.actorRef?.kind === 'named'
       ? (heading.actorRef.targetId || ((heading.actorRef.name === '画面' || heading.actorRef.name === project.stage.name) ? 'stage' :
@@ -22199,23 +22201,32 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         announce(reason, !valid && !!location);
       }
     }
-    function scrollDrag() {
+    function scrollDrag(timestamp = doc.defaultView.performance.now()) {
       dragFrame = null;
       if (!drag?.started) return;
+      // Keep the same 720px/s speed when rendering drops below sixty frames/s.
+      const elapsed = drag.scrollTime == null ? 1000 / 60 : Math.max(0, Math.min(100, timestamp - drag.scrollTime)),
+        distance = elapsed * .72;
+      drag.scrollTime = timestamp;
       const rect = workspace.getBoundingClientRect(),
         beforeTop = workspace.scrollTop,
         beforeLeft = workspace.scrollLeft;
       if (drag.clientX >= rect.left - 30 && drag.clientX <= rect.right + 30) {
         if (drag.clientY >= rect.top - 30 && drag.clientY < rect.top + 32)
-          workspace.scrollTop -= 12;
-        else if (drag.clientY <= rect.bottom + 30 && drag.clientY > rect.bottom - 32)
-          workspace.scrollTop += 12;
+          workspace.scrollTop -= distance;
+        else if (drag.clientY <= rect.bottom + 30 && drag.clientY > rect.bottom - 32) {
+          const bounds = world.getBoundingClientRect(), padding = parseFloat(doc.defaultView.getComputedStyle(world).paddingBottom) || 0,
+            contentEnd = beforeTop + bounds.bottom - padding * zoom,
+            lastReachableTop = Math.max(0, contentEnd - rect.bottom + 48);
+          // Free panning keeps its blank margin; edge dragging stops at actual content.
+          workspace.scrollTop = Math.min(lastReachableTop, beforeTop + distance);
+        }
       }
       if (drag.clientY >= rect.top - 30 && drag.clientY <= rect.bottom + 30) {
         if (drag.clientX >= rect.left - 30 && drag.clientX < rect.left + 24)
-          workspace.scrollLeft -= 12;
+          workspace.scrollLeft -= distance;
         else if (drag.clientX <= rect.right + 30 && drag.clientX > rect.right - 24)
-          workspace.scrollLeft += 12;
+          workspace.scrollLeft += distance;
       }
       if (beforeTop !== workspace.scrollTop || beforeLeft !== workspace.scrollLeft)
         previewDrag(drag);
@@ -23209,7 +23220,140 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (binding === mainEditor && binding.session?.pendingEdit) refreshEditor();
       return false;
     }
-    function saveCodeBinding(binding) {
+    function sourceImportPlan(binding, source) {
+      const context = bindingContext(binding), symbols = buildSymbols(project),
+        parsed = parseSyntax(source, { ...context, symbols });
+      if (!parsed.ast?.units?.length) return null;
+      sourceCandidate(binding, bindingOwner(binding), source);
+      const sourceKey = bindingOwner(binding), original = scriptBySourceKey(project, sourceKey),
+        units = [parsed.ast, ...parsed.ast.units], originalAst = original && parseSyntax(original.source, { targetId: original.targetId, event: original.event, symbols }).ast;
+      const normalized = (body, targetId) => {
+        const visit = value => {
+          if (Array.isArray(value)) return value.map(visit);
+          if (!value || typeof value !== 'object') return value;
+          const out = {};
+          for (const [key, child] of Object.entries(value)) {
+            if (key === 'actorRef' && child?.kind === 'named') {
+              const id = child.targetId || (child.name === project.stage.name || child.name === '画面'
+                ? 'stage' : project.components.find(c => c.name === child.name)?.id);
+              out[key] = id === targetId ? { kind: 'self' } : visit(child);
+            } else out[key] = visit(child);
+          }
+          return out;
+        };
+        return { kind: 'Script', body: visit(body) };
+      };
+      const signature = metadata => stableJson([metadata.targetId, metadata.event, metadata.filter || null]);
+      const existing = project.scripts.filter(row => row !== original || (row.source.trim() && !originalAst?.units?.length)).flatMap(row => {
+        const ast = parseSyntax(row.source, { targetId: row.targetId, event: row.event, symbols }).ast;
+        if (!row.source.trim()) return [];
+        if (!ast) return [{ row, text: row.source, metadata: { targetId: row.targetId, event: row.event, filter: row.filter }, body: null }];
+        return [ast, ...(ast.units || [])].map(unit => {
+          const range = SOURCE_RANGES.get(unit)?.range,
+            text = range ? row.source.slice(range.start, range.end) : row.source;
+          // Inherited headings already carry their resolved event in the full document AST.
+          const metadata = unit.heading ? scriptMetadataFromHeading(unit.heading, row, project)
+            : { targetId: row.targetId, event: row.event, filter: row.filter };
+          return { row, text, metadata, body: unit.body };
+        });
+      });
+      const entries = units.map(unit => {
+        const range = SOURCE_RANGES.get(unit).range, text = source.slice(range.start, range.end),
+          metadata = unit.heading ? scriptMetadataFromHeading(unit.heading,
+            { targetId: context.targetId, event: context.event }, project)
+            : { targetId: context.targetId, event: context.event, filter: context.filter },
+          candidates = existing.filter(x => signature(x.metadata) === signature(metadata)),
+          isolated = parseSyntax(text, { ...metadata, symbols }).ast;
+        const independent = !!isolated && !isolated.units?.length &&
+          astEquivalent(normalized(unit.body, metadata.targetId), normalized(isolated.body, metadata.targetId));
+        const equal = candidates.length === 1 && astEquivalent(normalized(unit.body, metadata.targetId),
+          normalized(candidates[0].body, metadata.targetId));
+        return { text, metadata, candidates, independent, equal };
+      });
+      for (const entry of entries) if (entries.filter(x => signature(x.metadata) === signature(entry.metadata)).length > 1)
+        entry.equal = false;
+      const hasExisting = entries.some(x => x.candidates.length),
+        safe = entries.every(x => !x.candidates.length || x.equal) && (!hasExisting || entries.every(x => x.independent));
+      const canEditCurrent = !!original?.source.trim() && signature(entries[0].metadata) === signature(original) &&
+        entries.every(entry => entry.candidates.every(candidate => candidate.row === original));
+      return { source, ownerKey: sourceKey, context, entries, hasExisting, safe, canEditCurrent,
+        canSplit: entries.every(x => x.independent), projectFingerprint: currentFingerprint() };
+    }
+    function hideSourceImport() { $('#sourceImport').hidden = true; $('#sourceImport').replaceChildren(); }
+    function confirmSourceImport(binding, source, separate = false, editCurrent = false) {
+      if (modelLocked() || composingEditors.has(binding.textarea) || binding.textarea.value !== source) return false;
+      try {
+        const plan = sourceImportPlan(binding, source);
+        if (!plan || (editCurrent ? !plan.canEditCurrent : (!separate && !plan.safe) || (plan.hasExisting && !plan.canSplit))) return false;
+        if (editCurrent || !plan.hasExisting) {
+          commitSource(binding, source, { atomic: true });
+          hideSourceImport(); renderEditorBinding(binding); refreshEditor(); return true;
+        }
+        const next = cloneDesignProject(project), old = scriptBySourceKey(next, plan.ownerKey),
+          incoming = plan.entries.filter(x => separate || !x.equal), ids = allIds();
+        const fresh = () => { let n = 1; while (ids.has('import-script-' + n)) n++; const id = 'import-script-' + n; ids.add(id); return id; };
+        const selectedEntry = incoming.find(x => x.metadata.targetId === plan.context.targetId &&
+          x.metadata.event === plan.context.event && stableJson(x.metadata.filter || null) === stableJson(plan.context.filter || null));
+        let destination = null;
+        for (const entry of incoming) {
+          const row = entry === selectedEntry && old && !old.source.trim() ? old : { id: fresh(), ...entry.metadata, source: '' };
+          updateScriptSource(row, entry.text, next);
+          if (row !== old) next.scripts.push(row);
+          if (entry === selectedEntry || !destination) destination = row;
+        }
+        // If every incoming unit is explicitly retained, keep the editing destination unchanged.
+        destination ||= old;
+        validateDesignProject(next);
+        if (plan.projectFingerprint !== currentFingerprint() || plan.ownerKey !== bindingOwner(binding))
+          throw new AkariError('F503', '取り込み先が変わりました。もう一度内容を確認してください');
+        clearTimeout(historyTimer);
+        binding.session.pendingEdit = null; binding.textarea.value = readSource(binding);
+        hideSourceImport(); pushHistoryNow();
+        project = next;
+        if (destination) { selectedId = destination.targetId; currentEvent = destination.event; selectedScriptId = destination.id || null; }
+        invalidateEditors(); clearEditorFailure(binding); markDirty(); renderTree(); renderProperties(); loadEditor();
+        clearTimeout(historyTimer); pushHistoryNow();
+        setStatus('既存の動きを残して、選んだ本文へ取り込みました'); return true;
+      } catch (error) { return showEditorFailure(binding, error, { preservePending: true }); }
+    }
+    function showSourceImport(binding, source, plan) {
+      const root = $('#sourceImport'); root.replaceChildren(); root.hidden = false;
+      const heading = document.createElement('strong'); heading.textContent = '動きの取り込み先を確認'; root.append(heading);
+      for (const entry of plan.entries) {
+        const actor = targetById(entry.metadata.targetId)?.name || 'この部品', event = entry.metadata.event,
+          label = event === 'start' ? actor + 'の開始' : event === 'click' ? actor + 'をクリックしたとき' : actor + '・' + EVENT_LABELS[event];
+        const row = document.createElement('p');
+        row.textContent = entry.candidates.length ? label + 'は既にあります' : label + 'の動きを追加'; root.append(row);
+        if (entry.candidates.length) {
+          const details = document.createElement('details'), summary = document.createElement('summary');
+          summary.textContent = entry.equal ? '既存の本文はそのまま残します' : '既存の本文と届いた節を比べる'; details.append(summary);
+          if(plan.canEditCurrent && !plan.safe)details.open = true;
+          for (const text of [...entry.candidates.map(x => '既存：\n' + x.text), '届いた節：\n' + entry.text]) {
+            const pre = document.createElement('pre'); pre.textContent = text; pre.style.whiteSpace = 'pre-wrap'; pre.style.maxHeight = '140px'; pre.style.overflow = 'auto'; details.append(pre);
+          }
+          root.append(details);
+        }
+      }
+      if (!plan.safe) {
+        const notice = document.createElement('p'); notice.textContent = !plan.canSplit
+          ? '前の見出しを使う節があるため、安全に別々の本文へ分けられません。原文を残して取り消せます。'
+          : '同じできごとの内容が違うか、複数あります。追加では既存の本文を残します。違いを確認してください。'; root.append(notice);
+      }
+      const confirm = document.createElement('button'); confirm.type = 'button'; confirm.id = 'sourceImportConfirm';
+      confirm.textContent = plan.hasExisting ? '既存を残して追加' : '文章を取り込む'; confirm.disabled = !plan.safe;
+      confirm.onclick = () => confirmSourceImport(binding, source); root.append(confirm);
+      if (plan.hasExisting && !plan.safe && plan.canSplit) {
+        const separate = document.createElement('button'); separate.type = 'button'; separate.id = 'sourceImportSeparate';
+        separate.textContent = '既存を残して、別の本文として追加'; separate.onclick = () => confirmSourceImport(binding, source, true); root.append(separate);
+      }
+      if(plan.canEditCurrent && !plan.safe){
+        const edit = document.createElement('button'); edit.type = 'button'; edit.id = 'sourceImportEditCurrent';
+        edit.textContent = 'この本文を変更して取り込む'; edit.onclick = () => confirmSourceImport(binding, source, false, true);root.append(edit);
+      }
+      const cancel = document.createElement('button'); cancel.type = 'button'; cancel.id = 'sourceImportCancel'; cancel.textContent = '取り込みを取り消す';
+      cancel.onclick = () => cancelEditorPending(binding); root.append(cancel);
+    }
+    function saveCodeBinding(binding, { fromInput = false } = {}) {
       if (binding.session?.blockDraft) return flushEditor(binding);
       if (modelLocked() || binding.session?.mode === 'blocks') return true;
       const t = binding.textarea;
@@ -23218,11 +23362,23 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const source = t.value.replace(/\r\n?/g, '\n');
       // A textarea normalizes CRLF on display; that alone is not an edit of source.
       if (source === readSource(binding).replace(/\r\n?/g, '\n')) {
+        if (binding === mainEditor) hideSourceImport();
         if (binding.session) binding.session.pendingEdit = null;
         clearEditorFailure(binding);
         return true;
       }
       try {
+        if (binding === mainEditor) {
+          const parsed = parseSyntax(source, { ...bindingContext(binding), symbols: buildSymbols(project) }),
+            plan = sourceImportPlan(binding, source);
+          if (plan || (fromInput && parsed.ast?.heading)) {
+            binding.session.pendingEdit = { ownerKey: bindingOwner(binding), kind: plan ? 'source-import' : 'heading-source',
+              value: source, reason: plan ? '取り込み先を確認して決めてください' : '見出しを含む原文は書きかけです。表示の切替や実行で確定します' };
+            if (plan) showSourceImport(binding, source, plan); else hideSourceImport();
+            scheduleAutosave(); updateDirty(); return false;
+          }
+        }
+        hideSourceImport();
         commitSource(binding, source);
         if (binding.session) binding.session.pendingEdit = null;
         clearEditorFailure(binding);
@@ -23554,6 +23710,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       return true;
     }
     function cancelEditorPending(binding) {
+      if (binding === mainEditor) hideSourceImport();
       const draft = binding.session?.blockDraft;
       if (draft) {
         Object.assign(binding.session, draft.baseline, { blockDraft: null, pendingEdit: null });
@@ -24215,10 +24372,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         confirm('作品または手順・答えを求める定義に保存していない編集があります。今の編集を捨てて続けますか？')
       );
     }
-    function saveEditor() {
+    function saveEditor(options = {}) {
       if (modelLocked()) return true;
       activeDragCleanup?.();
-      return saveCodeBinding(mainEditor);
+      return saveCodeBinding(mainEditor, options);
     }
     function eventsFor(id) {
       return EVENT_BY_TYPE[targetType(id)] || EVENT_BY_TYPE.stage;
@@ -26572,6 +26729,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         editorModes.set(binding.kind,saved.mode);session.mode=saved.mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
         if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(saved.pending))throw new AkariError('F503','書きかけの入力欄を復元できません');
         showEditorFailure(binding,saved.pending.reason||'書きかけの作文をもどしました',{preservePending:true});
+        if(binding===mainEditor&&saved.pending.kind==='source-import'){const plan=sourceImportPlan(binding,saved.source);if(plan)showSourceImport(binding,saved.source,plan);}
       }
       for(const view of state.views){const binding=view.kind==='draft'?draftEditor:mainEditor;if(view.kind==='script'&&bindingOwner(binding)!==view.ownerKey)continue;
         if(!binding.session)getEditorSession(binding,{force:true});
@@ -28077,7 +28235,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       t.addEventListener('compositionend', () => {
         composingEditors.delete(t);
         if (t === el.editor) {
-          saveEditor();
+          saveEditor({ fromInput: true });
           refreshEditor();
         } else updateCallableHeader();
       });
@@ -28123,7 +28281,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     };
     el.editor.addEventListener('input', () => {
       if (composingEditors.has(el.editor)) return;
-      saveEditor();
+      saveEditor({ fromInput: true });
       clearTimeout(el.editor._timer);
       el.editor._timer = setTimeout(refreshEditor, 100);
     });
@@ -28446,6 +28604,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           binding.textarea.value = saved.source;
           renderEditorBinding(binding);
           showEditorFailure(binding, saved.pending.reason || '書きかけの作文をもどしました');
+          if(binding===mainEditor&&saved.pending.kind==='source-import'){const plan=sourceImportPlan(binding,saved.source);if(plan)showSourceImport(binding,saved.source,plan);}
         }
         $('#recoveryModal').classList.remove('show');
         recoveryData = null;
@@ -28610,7 +28769,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         const target = event.target.closest('button,.tree-item,.tool');
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
-          target.closest('#blockEditor,#callableBlocks,.editor-modes') ||
+          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport') ||
           target.matches('#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
@@ -28629,7 +28788,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       (event) => {
         if (
           modelLocked() ||
-          event.target.closest('#blockEditor,#callableBlocks,#colorModal,#paintModal') ||
+          event.target.closest('#blockEditor,#callableBlocks,#sourceImport,#colorModal,#paintModal') ||
+          (event.target.matches('#codeEditor') && ['source-import','heading-source'].includes(mainEditor.session?.pendingEdit?.kind)) ||
           event.target.matches('#objectSelect,#eventSelect,#callableType,#callableSelect,#fileInput')
         )
           return;
@@ -28649,7 +28809,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (
           modelLocked() ||
           flushingEditor ||
-          event.target.closest('.editor-modes,#colorModal,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          event.target.closest('.editor-modes,#sourceImport,#colorModal,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;

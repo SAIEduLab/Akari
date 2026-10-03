@@ -9,8 +9,8 @@
     },
     {
       "path": "audit/fixtures/browser-v2-input-migration.json",
-      "sha256": "a8b4f761ed107bc0637600c087a22b4cdfe2d050cdd20699a81264e3e8b1f68e",
-      "registeredChanges": 1353
+      "sha256": "3b893779498279a287dd5723f227987b44fdefed8ad2ff0b699f50dcdbbe0bd7",
+      "registeredChanges": 1354
     },
     {
       "path": "audit/fixtures/product-manifest-v2-input-migration.json",
@@ -44,7 +44,7 @@
     },
     {
       "path": "audit/fixtures/gate-ui-v2-input-migration.json",
-      "sha256": "5a97208da08144c34b314cd4022d664ffa43896eaae90e20d1a15523e9efaaf9",
+      "sha256": "7287d106efa8fc671b3eab9ce50aef3e5256d7f93e26da0239c3d090acae1b00",
       "registeredChanges": 89
     },
     {
@@ -56,6 +56,11 @@
       "path": "audit/fixtures/harness-timeout-input-migration.json",
       "sha256": "c8549b92ae49e5965877115dd84f61c3a380519bd11115c7df9c52b860900361",
       "registeredChanges": 1
+    },
+    {
+      "path": "audit/fixtures/explicit-source-import-migration.json",
+      "sha256": "1bc80078767131efbb2ac10b3dd0a4b9893e21772731ed45ee41db3e6a5785ba",
+      "registeredChanges": 7
     }
   ],
   "changes": [
@@ -20631,6 +20636,62 @@
       "newText": "   assert.equal(await nodes('Hole:statement').count(),1);assert.ok(await page.evaluate(()=>Akari.app.editorState.main.blockDraft));await page.locator('#runBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN');await page.locator('#undoBtn').click();assert.equal((await state()).source,old.source);assert.equal(await nodes('Say').count(),1);await U.nodeAction(nodes('Say'),'replace-noop');assert.equal((await state()).ast.body[0].body[0].kind,'NoOperation');await page.locator('#undoBtn').click();assert.equal((await state()).source,old.source);",
       "preservedMeaning": "UX repair instructions require an incomplete required statement body to stay in the editor as Hole:statement. Committed source/history remain unchanged; Run must stay in DESIGN; Undo restores the original NumericUpdate/Say. The existing explicit replace-noop action is then executed and its committed NoOperation and Undo are verified. The original atomic committed-source/history guarantees and stable case IDs remain, with added draft, refused Run, and cancellation assertions. No product capability, numerical bound, timeout, or original expected result is removed.",
       "sourceLedger": "audit/fixtures/browser-v2-input-migration.json"
+    },
+    {
+      "testId": "I07/source-ui, I08/source-ui, I09/source-ui, I10/source-ui, I11/source-ui, I12/source-ui, EDITOR/idless-heading-selection",
+      "oldText": "Original drafts accepted exactly; same semantic outcomes, save/reload, code/block roundtrip, one stable body ID after heading entry and re-entry.",
+      "newText": "Original drafts unchanged; normal explicit confirm/view commit before all original acceptance/save/roundtrip expectations. Heading input preserves project/owner/event until explicit commit; committed ID remains stable with one body. All22 original IDs, expectedOutcome, 8000ms page limits and 300000ms total suite limit retained. Failure UI capture bounded at8000ms, genuine failure remains FAIL. Each case starts a fresh browser with remaining total budget.",
+      "preservedMeaning": "Authorized input invariant and explicit import replace automatic heading commit. Also isolate every existing case after CI host closure prevented four SAVE cases from executing.",
+      "sourceLedger": "audit/fixtures/explicit-source-import-migration.json"
+    },
+    {
+      "testId": "all editorAssetIds",
+      "oldText": "All original duplicate, paint, format and exact original Dango image save/reload/standalone assertions.",
+      "newText": "Every original case and assertion retained; each case uses fresh browser and remaining original300000ms total suite budget; exceptions remain FAIL and aggregate requires all cases.",
+      "preservedMeaning": "CI shared browser host closed before three late cases executed; use isolated initial browser state rather than attribute unexecuted cases to product format defects.",
+      "sourceLedger": "audit/fixtures/explicit-source-import-migration.json"
+    },
+    {
+      "testId": "UX13/original-B11, UX13/original-B23, UX13/B23-fixed-initial-state",
+      "oldText": "Original prose acceptance, exact source and code/block roundtrip; fixed B23 existing start1/new click1 requirement.",
+      "newText": "Use normal visible import confirmation, unchanged original prose and all old execution/count expectations. Input/composition preserves selected owner/event/project; existing start byte-identical; owning Dango source reachable; cancellation and Undo/Redo atomic. Four additional conflict/duplicate/dependent cases required, not substitutes.",
+      "preservedMeaning": "Parent authorized explicit editor import retaining existing body and routing each new independent unit to actual ownership, with no runtime deduplication.",
+      "sourceLedger": "audit/fixtures/explicit-source-import-migration.json"
+    },
+    {
+      "testId": "workbench-matrix all9 original combinations",
+      "oldText": "const first=root.locator('[data-block-id=\"'+firstId+'\"].blockui-node');await tabTo(first);const text=first.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').first();await text.scrollIntoViewIfNeeded();let h=await text.boundingBox(),w=await world.boundingBox();await p.mouse.move(h.x+h.width/2,h.y+h.height/2);await p.mouse.down();await p.mouse.move(h.x+h.width/2+10,h.y+h.height/2,{steps:3});let reached=false;for(let i=0;i<400;i++){w=await world.boundingBox();const d=await end.boundingBox();if(d&&d.y>w.y+10&&d.y+d.height<w.y+w.height-48){await p.mouse.move(Math.max(w.x+32,Math.min(w.x+w.width-32,d.x+25)),d.y+d.height/2);await p.waitForTimeout(50);if(await root.locator('.blockui-drop-preview').count()===1){reached=true;break;}}await p.mouse.move(w.x+Math.min(90,w.width/2),w.y+w.height-7);await p.waitForTimeout(20);}assert(reached,'edge scrolling reaches later loaded page');assert.equal((await state(p)).source,source);assert.equal(await root.locator('.blockui-drop-preview').count(),1);await p.screenshot({path:L.path.join(dir,'workbench-preview-'+viewport.width+'-'+zoom+'.png')});await p.keyboard.press('Escape');await p.mouse.up();assert.equal((await state(p)).source,source);assert.equal((await state(p)).history,before.history);evidence.edgeScrollAndCancel=true;",
+      "newText": "const first=root.locator('[data-block-id=\"'+firstId+'\"].blockui-node');await tabTo(first);const text=first.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').first();await text.scrollIntoViewIfNeeded();let h=await text.boundingBox(),w=await world.boundingBox();await p.mouse.move(h.x+h.width/2,h.y+h.height/2);await p.mouse.down();await p.mouse.move(h.x+h.width/2+10,h.y+h.height/2,{steps:3});let reached=false;const edgeStarted=Date.now(),edgeSamples=[];for(let i=0;i<400;i++){w=await world.boundingBox();const d=await end.boundingBox();if(i%20===0)edgeSamples.push({iteration:i,ms:Date.now()-edgeStarted,workspace:w,end:d,scroll:await world.evaluate(e=>({top:e.scrollTop,left:e.scrollLeft,height:e.scrollHeight,clientHeight:e.clientHeight}))});if(d&&d.y>w.y+10&&d.y+d.height<w.y+w.height-48){await p.mouse.move(Math.max(w.x+32,Math.min(w.x+w.width-32,d.x+25)),d.y+d.height/2);await p.waitForTimeout(50);if(await root.locator('.blockui-drop-preview').count()===1){reached=true;break;}}await p.mouse.move(w.x+Math.min(90,w.width/2),w.y+w.height-7);await p.waitForTimeout(20);}evidence.edgeScrolling={reached,elapsedMs:Date.now()-edgeStarted,samples:edgeSamples,finalScroll:await world.evaluate(e=>({top:e.scrollTop,left:e.scrollLeft,height:e.scrollHeight,clientHeight:e.clientHeight}))};assert(reached,'edge scrolling reaches later loaded page');assert.equal((await state(p)).source,source);assert.equal(await root.locator('.blockui-drop-preview').count(),1);await p.screenshot({path:L.path.join(dir,'workbench-preview-'+viewport.width+'-'+zoom+'.png')});await p.keyboard.press('Escape');await p.mouse.up();assert.equal((await state(p)).source,source);assert.equal((await state(p)).history,before.history);evidence.edgeScrollAndCancel=true;",
+      "preservedMeaning": "All9 original viewport/zoom combinations,121 statements,400 mouse iterations,20ms waits,actual drop preview,unchanged source/history,cancel and Undo/Redo assertions retained. Add real coordinates, elapsed time and scroll progress to PASS/FAIL evidence. Product edge scrolling maintains720px/s across frame rates instead of12px per frame; speed at60fps is unchanged.",
+      "sourceLedger": "audit/fixtures/browser-v2-input-migration.json"
+    },
+    {
+      "testId": "runtime-v2 key/message heading stable identity",
+      "oldText": "All3 original heading checks preserve stable edit ID, exact key/message source, owner/event/filter, invalid draft protection and recovery.",
+      "newText": "Before explicit blocks/code switch assert original project/owner/target/event and raw entered source, then retain every original expected target/event/filter/source/stable-ID/pending/error assertion. Original10000ms page and120000ms script limits unchanged.",
+      "preservedMeaning": "Authorized heading input keeps current target/event until an explicit commit; automatic post-fill expectation needs the normal visible mode switch.",
+      "sourceLedger": "audit/fixtures/explicit-source-import-migration.json"
+    },
+    {
+      "testId": "REVIEW-QUANTITY-UNIT-SINGLE",
+      "oldText": "Original heading source plus scale100percent, wait2seconds and marker; model source exact, one unit display, runtime outcomes.",
+      "newText": "All original source/unit/runtime assertions and5000ms wait unchanged; before explicit click verify project/owner/target/event and entered text. No fixture spelling, expected value, cases or denominators changed.",
+      "preservedMeaning": "Heading input now preserves context until explicit view commit. Move ordinary blocks click before the existing model-source wait, adding input context/raw checks.",
+      "sourceLedger": "audit/fixtures/explicit-source-import-migration.json"
+    },
+    {
+      "testId": "basic-intents-browser T01 T02 T04 T05 T06",
+      "oldText": "Original7 source strings, exact source before3 roundtrips, event/motion/continuous rate/output/save expectations.",
+      "newText": "Unchanged7 IDs/original source hashes/3 post-commit roundtrips/numeric/timing/run/save outcomes,8000ms page and180000ms suite limits. Pending heading/import input additionally preserves project/owner/target/event and raw original until ordinary confirmation.",
+      "preservedMeaning": "Five originals have an event heading. Authorized draft invariance requires ordinary explicit view commit before waiting for model source; the other two remain immediate body inputs.",
+      "sourceLedger": "audit/fixtures/explicit-source-import-migration.json"
+    },
+    {
+      "testId": "syntheticComposition positive control; all141 rejection IDs unchanged",
+      "oldText": "Valid explicitly synthetic positive control and every original141 rejection mutation/assertion; positive control is not product evidence.",
+      "newText": "The synthetic positive control includes unchanged baseline/staged project/owner/event, raw original source and explicit commit. All141 original rejection mutations/assertions, exact denominator, independent original expectations, product evidence and timeout limits unchanged.",
+      "preservedMeaning": "Final aggregate rejected the synthetic positive control before26 original negative assertions ran because the strengthened composition validator now requires input-context/explicit-commit evidence.",
+      "sourceLedger": "audit/fixtures/explicit-source-import-migration.json"
     }
   ]
 }

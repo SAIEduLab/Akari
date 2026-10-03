@@ -70,7 +70,9 @@ function syntheticComposition(){
  for(const kind of ['action','function'])r.results.push({id:'I10/'+kind+'-original',status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence:{kind,original:kind==='action'?extra.actionBody:extra.functionBody,compileErrors:[]}});
  const source='あかりがクリックされたとき、\n  あかりは画面の右へ30歩動いて、「今日はどこへ行こう」と言う。';
  const observation={textarea:source,event:'click',scripts:[{id:'synthetic-body-id',targetId:'sprite-1',event:'click',source}]};
- r.results.push({id:'EDITOR/idless-heading-selection',status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence:{source,first:observation,second:structuredClone(observation)}});
+ const baseline={project:'synthetic-original-project',owner:'synthetic-original-owner',event:'start'};
+ const staged={...baseline,raw:source};
+ r.results.push({id:'EDITOR/idless-heading-selection',status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence:{source,baseline,staged,inputKeepsContext:true,explicitCommit:true,first:observation,second:structuredClone(observation)}});
  for(const width of [1366,1024,390]){const literal='1行目\n  2行目\n\t「青空」🐈';r.results.push({id:'EDITOR/multiline-native-'+width,status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence:{viewport:{width},literal,afterAppend:literal+'!',afterCancel:literal+'!',codeAfterRoundtrip:literal+'!',expectedCode:literal+'!',nativeControl:'TEXTAREA'}});}
  for(const [id,evidence]of [['SAVE/unfinished-source',{source:'「未完',restored:'「未完',runBlocked:true,exportBlocked:true}],['SAVE/unfinished-return-hole',{name:'途中の答え',holeRestored:true,closedWithoutDiscard:true}],['SAVE/unfinished-number',{input:'－',restored:'－',runBlocked:true}],['SAVE/semantic-error',{source:'1歩＋1秒を言う。',restored:'1歩＋1秒を言う。',runBlocked:true,diagnostics:[{code:'S303'}]}]])r.results.push({id,status:'PASS',expectedOutcome:'SUCCESS_REQUIRED',evidence});return r;
 }
