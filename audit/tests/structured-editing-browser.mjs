@@ -20,7 +20,10 @@ try{await withBrowser(chrome,async browser=>{
  for(const[kind,source]of sourceCases)for(const event of ['keyDown','message'])await run('heading/'+kind+'/'+event,async p=>{
   await install(p,source,event==='message');const role=suffix=>p.locator('#blockEditor [data-blockui-structured-role="heading.'+suffix+'"]');
   if(await(await reveal(role('enabled'))).inputValue()==='no')await role('enabled').selectOption('yes');
-  const before=await state(p);await(await reveal(role('event'))).selectOption(event);const changed=await state(p);assert.equal(changed.pending,null);assert.equal(changed.history,before.history+1);assert.equal(changed.owner,'script:structured-main');assert.equal(await p.locator('#eventSelect').inputValue(),event);
+  const before=await state(p);await(await reveal(role('event'))).selectOption(event);
+  const staged=await state(p);assert.equal(staged.project,before.project);assert.equal(staged.history,before.history);assert.ok(staged.pending);
+  await p.locator('#blockEditor [data-blockui-action="heading-commit"]').click();
+  const changed=await state(p);assert.equal(changed.pending,null);assert.equal(changed.history,before.history+1);assert.equal(changed.owner,'script:structured-main');assert.equal(await p.locator('#eventSelect').inputValue(),event);
   assert.equal(await p.evaluate(()=>Akari.app.project.scripts.find(s=>s.id==='structured-main').event),event);
   await p.locator('#undoBtn').click();const undo=await state(p);assert.equal(undo.project,before.project);assert.equal(undo.source,before.source);assert.equal(undo.owner,before.owner);await p.locator('#redoBtn').click();assert.equal((await state(p)).project,changed.project);
   const filter=event==='keyDown'?'key':'message',value=event==='keyDown'?'右':'出発';await(await reveal(role('filter.kind'))).selectOption(filter);await(await reveal(role('filter.value'))).fill(value);await role('filter.value').press('Enter');
