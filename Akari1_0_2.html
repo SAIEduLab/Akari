@@ -11932,7 +11932,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if(depth>LIMITS.expressionDepth)throw new AkariError('P208','式が深すぎます',ctx.lineNo||0,1);
     if(compact.startsWith('（')&&compact.endsWith('）')&&/^\u0001+$/.test(mask))
       return located(parseExpression(compact.slice(1,-1),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(1,-1)}));
-    if (mask.startsWith('今の')) return located(parseExpression(compact.slice(2),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(2)}));
+    if (mask.startsWith('今の') && !symbols?.project?.components.some(component=>component.name==='今'))
+      return located(parseExpression(compact.slice(2),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(2)}));
     const arithmetic=[['をかけた',/^(.+?)と(.+?)をかけた(?:数|答え)$/d,'MUL'],['を足した',/^(.+?)に(.+?)を足した(?:数|答え)$/d,'ADD'],['を引いた',/^(.+?)から(.+?)を引いた(?:数|答え)$/d,'SUB'],['で割った',/^(.+?)を(.+?)で割った(?:数|答え)$/d,'DIV']];
     for(const [ending,pattern,op] of arithmetic){
       if(!mask.endsWith(ending+'数')&&!mask.endsWith(ending+'答え'))continue;
@@ -17367,6 +17368,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         b.style.maxHeight = heightBudget+'px';
         const text = b.querySelector('.sprite-bubble-text');
         if (text) text.style.maxHeight = Math.min(100/sy,Math.max(0,heightBudget-60/sy))+'px';
+        const full = b.querySelector('[data-speech-full]');
+        if (full) full.hidden = !(full.dataset.always === 'true' ||
+          text && (text.scrollHeight > text.clientHeight + 1 || text.scrollWidth > text.clientWidth + 1));
         const width=b.offsetWidth,height=b.offsetHeight, center=(actor.left+actor.right-width)/2,
           positions=[[actor.right+gap,actor.top],[actor.left-width-gap,actor.top],
              [center,actor.top-height-gap],[center,actor.bottom+gap]];
@@ -17550,8 +17554,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       text.className = 'sprite-bubble-text'; text.textContent = value;
       text.style.display = 'block'; text.style.overflow = 'hidden';
       b.appendChild(text);
-      if (presentation.rounded || Array.from(value).length > 80 || /[\r\n]/.test(value)) {
+      {
         const full = document.createElement('button');
+        full.dataset.speechFull = 'true';
+        full.dataset.always = String(presentation.rounded || Array.from(value).length > 80 || /[\r\n]/.test(value));
+        full.hidden = full.dataset.always !== 'true';
         full.type = 'button';
         full.textContent = presentation.rounded ? '実値' : '全文';
         full.setAttribute('aria-label', presentation.rounded ? '表示を丸めています。実値を見る' : '吹出しの全文を見る');
@@ -21233,7 +21240,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       box.append(head);
       box.classList.toggle('blockui-selected', selected === node.id);
       listen(box, 'click', (event) => {
-        if (event.target.closest('.blockui-node') === box) selection(node.id);
+        if (event.target.closest('.blockui-node') === box) {
+          const active=doc.activeElement,focused=active?.closest('.blockui-node');
+          // Expanding an inline field on focus can put its ancestor under the
+          // released pointer. Keep the field the user actually entered selected.
+          if(focused&&focused!==box&&box.contains(focused)&&active.matches('input,textarea'))
+            selection(focused.dataset.blockId);
+          else selection(node.id);
+        }
       });
       const line = session()?.nodeMap?.get?.(node.id)?.sourceSpan?.startLine;
       const diagnostics = schema.category === 'statement' ? diagnosticsByLine.get(line) || [] : [];
@@ -21319,9 +21333,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               if(data.value==='literal')replacement.fields.value=current.fields.name||current.fields.value||'';
               operate({type:'expression',parentId:node.id,input:'value',node:replacement});
             });main.append(data);
-            if(node.inputs.seconds){main.append(E('span','','を'));numberSlot('seconds','秒');main.append(E('span','','話す'),button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
-            else main.append(E('span','','と言う'),button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));
-          }else {numberSlot(schema.kind==='RepeatCount'?'count':'seconds',schema.kind==='RepeatCount'?'回':'秒');main.append(E('span','',schema.kind==='RepeatCount'?'くり返す':'待つ'));}
+            if(node.inputs.seconds){main.append(E('span','blockui-phrase-text','を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'),button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
+            else main.append(E('span','blockui-phrase-text','と言う'),button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));
+          }else {numberSlot(schema.kind==='RepeatCount'?'count':'seconds',schema.kind==='RepeatCount'?'回':'秒');main.append(E('span','blockui-phrase-text',schema.kind==='RepeatCount'?'くり返す':'待つ'));}
           const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
         } else if (node.schemaId === 'UnaryExpression:NEG' && node.inputs.value?.schemaId === 'NumberLiteral') {
           const child = node.inputs.value, numberField = BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value'),
@@ -21657,6 +21671,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       updateControls();
       updateGeometry();
       observeMore();
+      selection(selected, s?.blockSelectionLocation || null);
       workspace.scrollTop = scroll.top;
       workspace.scrollLeft = scroll.left;
       rememberViewState();
@@ -25930,7 +25945,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             ...Array.from(f.localLists, ([k, v]) => ['この中だけのリスト ' + k, v]),
           ]);
       }
-      const details=document.createElement('details'),summary=document.createElement('summary'),text=document.createElement('pre');summary.textContent='実行の詳しい記録';text.textContent=`乱数種: ${runtime.runSeed}\n`+tasks.map(t=>`${t.targetId}: ${t.state}`).join('\n');details.append(summary,text);el.monitor.append(details);
+      const details=document.createElement('details'),summary=document.createElement('summary'),text=document.createElement('pre');summary.textContent='実行の詳しい記録';text.textContent=tasks.map(t=>`${t.targetId}: ${t.state}`).join('\n');details.append(summary);renderMonitorSection(details,'再現用の値',[['乱数種',runtime.runSeed]]);details.append(text);el.monitor.append(details);
     }
     function monitorValue(value) {
       const short = (v) => {

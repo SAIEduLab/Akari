@@ -1,6 +1,6 @@
 {
   "schema": "akari-ux-repair-benchmark-v1",
-  "status": "PENDING_HUMAN_REAUDIT",
+  "status": "PENDING_INDEPENDENT_REAUDIT",
   "uxAcceptance": false,
   "order": [
     "B22",
@@ -36,7 +36,7 @@
       "fixedExpected": "こんにちは2秒。文言の編集と復帰も実行",
       "requiredAction": "通常入口から画面内の手掛かりだけで探す",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "ux/browser-empty-sample-click",
         "B22/original-acceptance-meaning-result"
@@ -68,7 +68,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B22",
@@ -77,7 +77,7 @@
       "fixedExpected": "こんにちは2秒。文言の編集と復帰も実行",
       "requiredAction": "通常入口から画面内の手掛かりだけで探す",
       "originalSource": "始めると、あかりは『こんにちは』と2秒話します。",
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "ux/browser-empty-sample-click",
         "B22/original-acceptance-meaning-result"
@@ -109,7 +109,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B01",
@@ -118,7 +118,7 @@
       "fixedExpected": "こんにちは→またね、各2秒",
       "requiredAction": "順序と秒数を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -147,7 +147,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B01",
@@ -156,7 +156,7 @@
       "fixedExpected": "こんにちは→またね、各2秒",
       "requiredAction": "順序と秒数を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -185,7 +185,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B02",
@@ -194,7 +194,7 @@
       "fixedExpected": "おはよう→いってきます、各2秒",
       "requiredAction": "空の開始本文から作る",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX13/original-B02",
         "B02/original-acceptance-meaning-result"
@@ -226,7 +226,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B02",
@@ -235,7 +235,7 @@
       "fixedExpected": "おはよう→いってきます、各2秒",
       "requiredAction": "空の開始本文から作る",
       "originalSource": "始めると、あかりは『おはよう』と2秒話します。そのあと、あかりは『いってきます』と2秒話します。",
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX13/original-B02",
         "B02/original-acceptance-meaning-result"
@@ -267,7 +267,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B03",
@@ -276,7 +276,7 @@
       "fixedExpected": "ただいま→おやつにしよう",
       "requiredAction": "逆順だけを直す",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -305,7 +305,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B03",
@@ -314,7 +314,7 @@
       "fixedExpected": "ただいま→おやつにしよう",
       "requiredAction": "逆順だけを直す",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -343,7 +343,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B04",
@@ -352,7 +352,7 @@
       "fixedExpected": "やあ3回→おしまい1回",
       "requiredAction": "反復の範囲を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -381,7 +381,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B04",
@@ -390,7 +390,7 @@
       "fixedExpected": "やあ3回→おしまい1回",
       "requiredAction": "反復の範囲を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -419,7 +419,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B05",
@@ -428,7 +428,7 @@
       "fixedExpected": "こっちだよ2秒＋無発話1秒を2回→おしまい2秒を1回",
       "requiredAction": "1つの反復の外に終わりを置く",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX06/B05-real-display-timing",
         "B05/original-acceptance-meaning-result"
@@ -460,7 +460,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B05",
@@ -469,7 +469,7 @@
       "fixedExpected": "こっちだよ2秒＋無発話1秒を2回→おしまい2秒を1回",
       "requiredAction": "1つの反復の外に終わりを置く",
       "originalSource": "始めると、あかりは『こっちだよ』と2秒話してから1秒待ちます。これを2回くり返します。くり返しが終わると、あかりは『おしまい』と2秒話します。",
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX06/B05-real-display-timing",
         "B05/original-acceptance-meaning-result"
@@ -501,7 +501,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B06",
@@ -510,7 +510,7 @@
       "fixedExpected": "やあ3回→おしまい1回",
       "requiredAction": "おしまいを反復の外へ移す",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -539,7 +539,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B06",
@@ -548,7 +548,7 @@
       "fixedExpected": "やあ3回→おしまい1回",
       "requiredAction": "おしまいを反復の外へ移す",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -577,7 +577,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B07",
@@ -586,7 +586,7 @@
       "fixedExpected": "開始では無発話、あかりクリックでよんだ？",
       "requiredAction": "イベントの対応を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -615,7 +615,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B07",
@@ -624,7 +624,7 @@
       "fixedExpected": "開始では無発話、あかりクリックでよんだ？",
       "requiredAction": "イベントの対応を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -653,7 +653,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B08",
@@ -662,7 +662,7 @@
       "fixedExpected": "だんごクリックでのみなあに？",
       "requiredAction": "だんごのクリック処理を作る",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "B08/original-acceptance-meaning-result"
       ],
@@ -693,7 +693,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B08",
@@ -702,7 +702,7 @@
       "fixedExpected": "だんごクリックでのみなあに？",
       "requiredAction": "だんごのクリック処理を作る",
       "originalSource": "だんごがクリックされると、だんごは『なあに？』と2秒話します。",
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "B08/original-acceptance-meaning-result"
       ],
@@ -733,7 +733,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B09",
@@ -742,7 +742,7 @@
       "fixedExpected": "開始では無発話、クリック時だけ発話",
       "requiredAction": "きっかけだけを開始からクリックへ直し本文を保持する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX02/code-heading-route",
         "UX02/staged-heading"
@@ -774,7 +774,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B09",
@@ -783,7 +783,7 @@
       "fixedExpected": "開始では無発話、クリック時だけ発話",
       "requiredAction": "きっかけだけを開始からクリックへ直し本文を保持する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX02/code-heading-route",
         "UX02/staged-heading"
@@ -815,7 +815,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B10",
@@ -824,7 +824,7 @@
       "fixedExpected": "あか2秒と、1秒後のあお2秒が重なる",
       "requiredAction": "2体の同じ開始からの時間を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -853,7 +853,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B10",
@@ -862,7 +862,7 @@
       "fixedExpected": "あか2秒と、1秒後のあお2秒が重なる",
       "requiredAction": "2体の同じ開始からの時間を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -891,7 +891,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B11",
@@ -900,7 +900,7 @@
       "fixedExpected": "こんにちは2秒と、1秒後のやあ2秒が重なる",
       "requiredAction": "2体の開始時処理を作る",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX15/concurrent-bubbles",
         "B11/original-acceptance-meaning-result"
@@ -932,7 +932,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B11",
@@ -941,7 +941,7 @@
       "fixedExpected": "こんにちは2秒と、1秒後のやあ2秒が重なる",
       "requiredAction": "2体の開始時処理を作る",
       "originalSource": "始めると、あかりはすぐに『こんにちは』と2秒話します。だんごも同じ合図で動き始め、1秒待ってから『やあ』と2秒話します。",
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX15/concurrent-bubbles",
         "B11/original-acceptance-meaning-result"
@@ -973,7 +973,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B12",
@@ -982,7 +982,7 @@
       "fixedExpected": "だんごの待ち1秒で発話が重なる",
       "requiredAction": "待ち3秒だけを1秒へ直す",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -1011,7 +1011,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B12",
@@ -1020,7 +1020,7 @@
       "fixedExpected": "だんごの待ち1秒で発話が重なる",
       "requiredAction": "待ち3秒だけを1秒へ直す",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -1049,7 +1049,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B13",
@@ -1058,7 +1058,7 @@
       "fixedExpected": "そら→どうぞ、うみ→ちがうよ",
       "requiredAction": "質問後の両分岐を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -1087,7 +1087,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B13",
@@ -1096,7 +1096,7 @@
       "fixedExpected": "そら→どうぞ、うみ→ちがうよ",
       "requiredAction": "質問後の両分岐を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -1125,7 +1125,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B14",
@@ -1134,7 +1134,7 @@
       "fixedExpected": "ほし→どうぞ、つき→もういちど",
       "requiredAction": "準備済みの質問の後に2分岐を作る",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX16/question-ほし",
         "UX16/question-つき"
@@ -1166,7 +1166,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B14",
@@ -1175,7 +1175,7 @@
       "fixedExpected": "ほし→どうぞ、つき→もういちど",
       "requiredAction": "準備済みの質問の後に2分岐を作る",
       "originalSource": "答えが『ほし』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『もういちど』と2秒話します。",
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX16/question-ほし",
         "UX16/question-つき"
@@ -1207,7 +1207,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B15",
@@ -1216,7 +1216,7 @@
       "fixedExpected": "そら→どうぞ、うみ→ちがうよ",
       "requiredAction": "空のそうでなければ側だけを補う",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX01-10/else-hole-and-run-focus"
       ],
@@ -1247,7 +1247,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B15",
@@ -1256,7 +1256,7 @@
       "fixedExpected": "そら→どうぞ、うみ→ちがうよ",
       "requiredAction": "空のそうでなければ側だけを補う",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX01-10/else-hole-and-run-focus"
       ],
@@ -1287,7 +1287,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B16",
@@ -1296,7 +1296,7 @@
       "fixedExpected": "2＋3の計算結果5",
       "requiredAction": "式の結果を予測する。文字23や固定5は不可",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -1325,7 +1325,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B16",
@@ -1334,7 +1334,7 @@
       "fixedExpected": "2＋3の計算結果5",
       "requiredAction": "式の結果を予測する。文字23や固定5は不可",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -1363,7 +1363,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B17",
@@ -1372,7 +1372,7 @@
       "fixedExpected": "4−1の計算結果3",
       "requiredAction": "引き算の式を作る。固定文字3は不可",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "B17/original-acceptance-meaning-result"
       ],
@@ -1403,7 +1403,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B17",
@@ -1412,7 +1412,7 @@
       "fixedExpected": "4−1の計算結果3",
       "requiredAction": "引き算の式を作る。固定文字3は不可",
       "originalSource": "始めると、あかりは4から1を引いた答えを2秒話します。",
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "B17/original-acceptance-meaning-result"
       ],
@@ -1443,7 +1443,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B18",
@@ -1452,7 +1452,7 @@
       "fixedExpected": "2×3の6から2＋3の5",
       "requiredAction": "演算子だけを変え、左右の2と3を保持する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX11/operator-keeps-operands"
       ],
@@ -1483,7 +1483,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B18",
@@ -1492,7 +1492,7 @@
       "fixedExpected": "2×3の6から2＋3の5",
       "requiredAction": "演算子だけを変え、左右の2と3を保持する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX11/operator-keeps-operands"
       ],
@@ -1523,7 +1523,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B19",
@@ -1532,7 +1532,7 @@
       "fixedExpected": "点数0設定→2増加→表示・発話2、再実行も2",
       "requiredAction": "初期化と現在値の変化を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -1561,7 +1561,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B19",
@@ -1570,7 +1570,7 @@
       "fixedExpected": "点数0設定→2増加→表示・発話2、再実行も2",
       "requiredAction": "初期化と現在値の変化を予測する",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -1599,7 +1599,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B20",
@@ -1608,7 +1608,7 @@
       "fixedExpected": "開始0、発話終了後の各クリックで表示・発話1→2→3",
       "requiredAction": "既存の点数を1増やす処理を作る",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX17/basic-live-monitor",
         "B20/original-acceptance-meaning-result"
@@ -1640,7 +1640,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B20",
@@ -1649,7 +1649,7 @@
       "fixedExpected": "開始0、発話終了後の各クリックで表示・発話1→2→3",
       "requiredAction": "既存の点数を1増やす処理を作る",
       "originalSource": "あかりがクリックされるたびに、点数を1増やします。あかりは今の点数を2秒話します。",
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX17/basic-live-monitor",
         "B20/original-acceptance-meaning-result"
@@ -1681,7 +1681,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B21",
@@ -1690,7 +1690,7 @@
       "fixedExpected": "りんご→パン",
       "requiredAction": "買うもの［りんご、パン、牛乳］を保持し、参照1番目だけを2番目へ変える",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -1719,7 +1719,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B21",
@@ -1728,7 +1728,7 @@
       "fixedExpected": "りんご→パン",
       "requiredAction": "買うもの［りんご、パン、牛乳］を保持し、参照1番目だけを2番目へ変える",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [],
       "automaticEvidenceIsNotUXPass": true,
       "observed": {
@@ -1757,7 +1757,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B23",
@@ -1766,7 +1766,7 @@
       "fixedExpected": "開始あかりのみおはよう、クリックだんごのみなあに？",
       "requiredAction": "元の処理を保持し、追加後にあかり開始の編集へ戻る",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "source/edit-second-event-preserves-first",
         "B23/original-acceptance-meaning-result"
@@ -1798,7 +1798,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B23",
@@ -1807,7 +1807,7 @@
       "fixedExpected": "開始あかりのみおはよう、クリックだんごのみなあに？",
       "requiredAction": "元の処理を保持し、追加後にあかり開始の編集へ戻る",
       "originalSource": "始めると、あかりは『おはよう』と2秒話します。だんごがクリックされると、だんごは『なあに？』と2秒話します。",
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "source/edit-second-event-preserves-first",
         "B23/original-acceptance-meaning-result"
@@ -1839,7 +1839,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B24",
@@ -1848,7 +1848,7 @@
       "fixedExpected": "おはよう→いってきます",
       "requiredAction": "実際にいってきますを削除し取消で復元。コード候補の開閉、Redoも確認",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX14/B24-code-delete-undo-false",
         "UX14/B24-code-delete-undo-true"
@@ -1880,7 +1880,7 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     },
     {
       "id": "B24",
@@ -1889,7 +1889,7 @@
       "fixedExpected": "おはよう→いってきます",
       "requiredAction": "実際にいってきますを削除し取消で復元。コード候補の開閉、Redoも確認",
       "originalSource": null,
-      "status": "NOT_PERFORMED_HUMAN_UX",
+      "status": "NOT_PERFORMED_INDEPENDENT_UX",
       "automaticCoverageCandidates": [
         "UX14/B24-code-delete-undo-false",
         "UX14/B24-code-delete-undo-true"
@@ -1921,129 +1921,201 @@
         "eightAxisFindings": null,
         "causeClassification": null
       },
-      "pendingReason": "Native desktop interaction and independent human UX observation unavailable in this execution environment; browser automation is recorded separately."
+      "pendingReason": "Independent final UX audit is assigned to the delegating evaluator. This implementation environment provides automatic regression evidence and reproducible starting projects; it does not declare UX acceptance."
     }
   ],
   "scratch": [
     {
       "id": "B01",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B02",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B03",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B04",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B05",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B06",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B07",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B08",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B09",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B10",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B11",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B12",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B13",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B14",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B15",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B16",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B17",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B18",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B19",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B20",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B21",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B22",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B23",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     },
     {
       "id": "B24",
-      "status": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
-      "inRepairScope": false
+      "status": "OUT_OF_SCOPE_PARENT_REPORTED_EXECUTED",
+      "inRepairScope": false,
+      "priorStatus": "NOT_PERFORMED_ENVIRONMENT_BLOCKED",
+      "executionByThisTask": false,
+      "parentEvidence": "Delegating evaluator reports a complete 24-task pass through in work ledger version 44; this is not a blanket PASS claim."
     }
   ],
   "instructions": [
@@ -2051,5 +2123,6 @@
     "Read tasks need an actual prior prediction; never infer one after execution.",
     "B22 is a reproduction, not a true first encounter, for a tester who has prepared or used this product.",
     "Unmeasured interactions and affect remain null; automated results do not establish child usability."
-  ]
+  ],
+  "finalUXOwner": "Delegating evaluator; separate from implementation and automatic regression checks"
 }

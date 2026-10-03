@@ -7,8 +7,16 @@ import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {verifyCommandMeaning} from '../lib/command-meaning-contract.mjs';
 import {audioOutputCases,verifyAudioOutput,wave,measureWave} from '../lib/audio-output-contract.mjs';
 import {transferFixtures,fixturePins,compositionIds,verifyTransferReport,verifyValuesReport,verifyCompositionReport} from '../lib/actions-transfer-contract.mjs';
+import {uxRepairInputs,verifyUxRepairInputs} from '../lib/ux-repair-contract.mjs';
 import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser,resourceReferenceIds,resourceBrowserIds,verifyResourceBrowser,searchBindingIds,searchBrowserIds,verifySearchBrowser,uxSurfaceIds,uxManualFiles,verifyUxSurface,basicIntentIds,verifyBasicBrowser,semanticNegativeIds,finiteVariantFixture,verifyFiniteVariants,structuredOrders,structuredEditingIds,verifyStructuredEditing} from '../lib/semantic-extension-contract.mjs';
 const dir=path.resolve(process.argv[2]),results=[],negative=[];
+for(const [file,verify]of uxRepairInputs){
+ try{const report=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verify(report)});
+  for(const [kind,mutate]of [['missing-row',r=>r.results.pop()],['wrong-snapshot',r=>r.snapshot.productSha256='0'.repeat(64)],['failed',r=>r.status='FAIL'],['duplicate-row',r=>r.results[1]=r.results[0]]]){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+kind,rejected:true});}
+ }catch(error){results.push({file,status:'FAIL',error:error.message});}
+}
+try{const reports=Object.fromEntries(uxRepairInputs.map(([file])=>[file,JSON.parse(fs.readFileSync(path.join(dir,file)))]));verifyUxRepairInputs(file=>reports[file]);for(const [missing]of uxRepairInputs){assert.throws(()=>verifyUxRepairInputs(file=>file===missing?undefined:reports[file]));negative.push({id:missing+'/missing-report',rejected:true});}}
+catch(error){results.push({file:'ux-repair-inputs-negative',status:'FAIL',error:error.message});}
 try{const r=JSON.parse(fs.readFileSync(path.join(dir,'audio-output-browser.json')));results.push({file:'audio-output-browser.json',status:'PASS',cases:verifyAudioOutput(r,dir)});}catch(error){results.push({file:'audio-output-browser.json',status:'FAIL',error:error.message});}
 for(const [file,verify]of [['command-meaning.json',verifyCommandMeaning],['structured-editing-browser.json',verifyStructuredEditing],['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser],['resource-references-browser.json',verifyResourceBrowser],['search-bindings-browser.json',verifySearchBrowser],['ux-surface-browser.json',verifyUxSurface],['basic-intents-browser.json',verifyBasicBrowser],['finite-semantic-variants.json',verifyFiniteVariants]]){
  try{const r=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verify(r)});}
@@ -176,7 +184,7 @@ try{
  verifyStructuredEditing(control);
  for(const[id,mutate]of Object.entries({'structured-missing':r=>r.results.pop(),'structured-identity-drift':r=>r.results[0].observed.stableId=false,'structured-lost-body':r=>r.results[4].observed.bodyPreserved=false,'structured-wrong-direction':r=>r.results[6].observed.direction='left','structured-rate-confusion':r=>r.results[7].observed.moved=33})){const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyStructuredEditing(bad));negative.push({id,rejected:true});}
 }catch(error){results.push({file:'structured-validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===126?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===141?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;

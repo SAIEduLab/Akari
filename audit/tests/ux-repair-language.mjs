@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {loadApi} from '../browser/cases/audit-lib.cjs';
+import {execFileSync} from 'node:child_process';
+import vm from 'node:vm';
+import {loadApi,script} from '../browser/cases/audit-lib.cjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 const A=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
@@ -67,6 +69,31 @@ for(const source of ['「値」と－1秒話す。','「値」と1歩秒話す�
  try{assert.equal(compiled.errors.length,0);scheduler.start();while(scheduler.ready.length)scheduler.runTurn(true);assert.deepEqual(speech,[]);assert.equal(errors.length,1);return {speech,errors};}finally{scheduler.stop();}
 });
 for(const source of ['これを2回くり返します。','だんごも同じ合図で動き始め、1秒待ちます。','くり返しが終わると、あかりは「終」と1秒話します。'])check('refusal/'+source,()=>{const result=A.parseSyntax(source);assert.equal(result.ast,null);assert.equal(result.syntaxDiagnostics[0].code,'P205');return plain(result.syntaxDiagnostics);});
+function runClock(api,p,steps,clock=null){
+ const compiled=api.compileProject(p);assert.deepEqual(plain(compiled.errors),[]);const runtime=new api.RuntimeModel(p,{}),trace=[],errors=[];let now=0;if(!clock)runtime.now=()=>now;
+ const scheduler=new api.EventScheduler(p,compiled,runtime,{say:(id,text)=>trace.push([now,id,text]),clearSpeech:id=>trace.push([now,id,null]),runtimeError:(_,error)=>errors.push(error.code)});scheduler.schedule=()=>{};
+ const pump=()=>{if(scheduler.paused)return;scheduler.recheckBlocked(false);let turns=0;while(scheduler.ready.length&&turns++<1000)scheduler.runTurn(false);assert.ok(turns<1000);};
+ try{scheduler.start();pump();for(const step of steps){now=step.at;if(clock)clock.now=now;if(step.pause)scheduler.pause();if(step.resume)scheduler.resume();if(step.stop)scheduler.stop();pump();}assert.deepEqual(errors,[]);return trace;}finally{scheduler.stop();}
+}
+check('compatibility/actor-named-今',()=>{
+ const old=loadApi(execFileSync('git',['show','187c74c573f0afad420d0746426c32bf02f453a4:'+currentProductFile()],{encoding:'utf8',maxBuffer:16*1024*1024}));
+ const source='今の点数を言う。',p=project(source);p.components[0].name='今';p.components[0].localData.variables=[{id:'now-score',name:'点数',initialValue:7}];p.projectData.variables[0].initialValue=2;p.scripts[0].targetId='dango';
+ const previous=old.parseSyntax(source,{symbols:old.buildSymbols(p),targetId:'dango',event:'start'}),current=A.parseSyntax(source,{symbols:A.buildSymbols(p),targetId:'dango',event:'start'});
+ assert.equal(previous.ast.body[0].value.kind,'ActorQualifiedRead');assert.equal(current.ast.body[0].value.kind,'ActorQualifiedRead');assert.equal(current.ast.body[0].value.actorRef.name,'今');
+ const expected=[[0,'dango','7']];assert.deepEqual(runClock(old,p,[]),expected);assert.deepEqual(runClock(A,p,[]),expected);return {source,expected,previous:expected,current:expected,actorNamePreserved:true};
+});
+for(const [name,answer]of [['こはる','ほし'],['星','つき']])check('variants/actor-condition/'+name,()=>{
+ const p=project(`答えが『${answer}』なら、${name}は『正解』と1秒話します。そうでなければ、${name}は『違う』と1秒話します。`);p.components[0].name=name;
+ assert.deepEqual(execute(p,[{at:1000,visible:{}}],answer).trace,[[0,'sprite-1','正解']]);assert.deepEqual(execute(p,[{at:1000,visible:{}}],'別').trace,[[0,'sprite-1','違う']]);return {name,answer,bothBranches:true};
+});
+check('timed/mixed-and-stop',()=>{
+ const p=project('「最初」と言う。\n「途中」と2秒話す。\n「最後」と言う。');const expected=[[0,'sprite-1','最初'],[0,'sprite-1','途中'],[2000,'sprite-1',null],[2000,'sprite-1','最後']];assert.deepEqual(runClock(A,p,[{at:1999},{at:2000}]),expected);
+ assert.deepEqual(runClock(A,p,[{at:1000,stop:true},{at:5000}]),[[0,'sprite-1','最初'],[0,'sprite-1','途中']]);return {mixedTrace:expected,stopPreventsLaterSpeech:true};
+});
+check('timed/pause-resume',()=>{
+ const clock={now:0},context={console,TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,Blob,URL,structuredClone,crypto:globalThis.crypto,setTimeout,clearTimeout,performance:{now:()=>clock.now}};vm.runInNewContext(script(fs.readFileSync(currentProductFile(),'utf8')),context,{timeout:30000});
+ const p=project('「途中」と2秒話す。\n「最後」と言う。'),trace=runClock(context.Akari,p,[{at:1000,pause:true},{at:5000},{at:5000,resume:true},{at:5999},{at:6000}],clock);assert.deepEqual(trace,[[0,'sprite-1','途中'],[6000,'sprite-1',null],[6000,'sprite-1','最後']]);return {trace,pausedDurationPreserved:true};
+});
 const report={schema:'akari-ux-repair-language-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),environment:'node / product parser, codec and scheduler with independent clock',uxAcceptance:false,results};
 const output=path.resolve(process.argv[2]||'audit-evidence/ux-repair-language.json');fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 for(const r of results.filter(r=>r.status==='FAIL'))console.error(r.id+': '+r.error.split('\n').slice(0,5).join(' '));

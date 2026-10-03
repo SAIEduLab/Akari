@@ -194,6 +194,7 @@
     "audit/lib/review-regression-contract.mjs",
     "audit/lib/semantic-extension-contract.mjs",
     "audit/lib/ui-buttons-contract.mjs",
+    "audit/lib/ux-repair-contract.mjs",
     "audit/lib/verify-browser-results.mjs",
     "audit/lib/verify-gate-results.mjs",
     "audit/lib/verify-language-results.mjs",
