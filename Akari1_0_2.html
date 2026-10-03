@@ -1198,7 +1198,6 @@ body[data-ui-level="basic"] .side {
 }
 body[data-ui-level="basic"] #resetBtn,
 body[data-ui-level="basic"] #procBtn,
-body[data-ui-level="basic"] #dataBtn,
 body[data-ui-level="basic"] #diagnoseBtn,
 body[data-ui-level="basic"] #pauseBtn,
 body[data-ui-level="basic"] #continueBtn,
@@ -5313,6 +5312,31 @@ body[data-editor-mode="code"] .side:has(.monitor-window .output-disclosure[open]
 
 
 
+<style id="ux-repair-readability">
+/* Controls occupy their own row; scrolling content never sits behind them. */
+.blockui-workspace-shell { display:grid !important; grid-template-rows:minmax(0,1fr) auto; }
+.blockui-workspace-shell > .blockui-workspace { min-height:0; grid-row:1; }
+.blockui-workspace-shell > .blockui-navigation { position:static !important; grid-row:2; justify-self:end; margin:6px; max-width:calc(100% - 12px); flex-wrap:wrap; }
+.blockui-workspace { scroll-padding:24px; }
+.blockui-workspace-tip { pointer-events:none; }
+.blockui-world .blockui-input-slot > .blockui-slot-head { display:none; }
+.blockui-world .blockui-input-slot.blockui-slot-active > .blockui-slot-head { display:flex; }
+.blockui-world .blockui-input-slot.blockui-slot-active { outline:2px solid #185c98; outline-offset:3px; z-index:90; }
+.blockui-search-scope { margin:3px 0; font-size:11px; white-space:normal; }
+.blockui-palette-controls { flex-wrap:wrap; }
+.blockui-local-help { font-size:12px; max-width:100%; }
+.blockui-local-help p { white-space:normal; line-height:1.6; }
+.blockui-operator { min-width:90px; padding:5px; }
+.sprite-bubble::before { content:attr(data-speaker); display:block; font-size:0.8em; margin-bottom:3px; }
+.sprite-bubble [data-speech-full]::before { content:attr(data-label); }
+body[data-editor-mode="code"] .codewin { min-height:430px; }
+body[data-editor-mode="code"] .main { grid-template-rows:minmax(180px,1fr) minmax(430px,1.5fr); overflow:auto; }
+body[data-editor-mode="code"] .main:has(.hints-disclosure[open]) { grid-template-rows:180px minmax(590px,1fr); }
+body[data-editor-mode="code"] .editor-shell { min-height:220px; }
+body[data-editor-mode="code"] .code-assist:has(.hints-disclosure[open]) { flex-direction:column; align-items:stretch; }
+body[data-editor-mode="code"] .hints-disclosure[open] > .hint-panel { position:static; max-height:180px; overflow:auto; margin-top:4px; }
+body[data-editor-mode="code"] .codewin:has(.hints-disclosure[open]) { min-height:590px; }
+</style>
 <style id="runtime-readability">
 /* Keep the basic runtime focused on the scene while retaining advanced monitoring. */
 body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] #app {
@@ -5332,7 +5356,7 @@ body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main {
 }
 body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .toolbox,
 body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .codewin,
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side > :not(.designer) {
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side > :not(.designer):not(.monitor-window) {
   display: none !important;
 }
 body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side {
@@ -5361,6 +5385,12 @@ body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .stage-viewport {
   max-height: 100%;
 }
 body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] #formFrame { margin: 0 auto; }
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side > .monitor-window { display:flex !important; grid-column:2; grid-row:1; min-height:0; height:auto; }
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .monitor-window .blockui-side-toggle { display:none; }
+body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .monitor-window .blockui-side-label { display:block; }
+@media(max-width:650px){body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 160px; }body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side > .monitor-window { grid-column:1; grid-row:2; }}
 body.runtime .sprite-bubble {
   font-size: calc(14px / var(--stage-scale, 1));
   line-height: 1.35;
@@ -5457,7 +5487,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     <button id="soundQuickAdd" title="MP3 / WAV / M4A（AAC-LC）/ FLAC / Ogg Opusの音声を取り込む">🔊 音声を追加</button>
     <button id="assetBtn">画像・音声を管理</button>
     <button id="procBtn">手順・答えを求める</button>
-    <button id="dataBtn">データ</button>
+    <button id="dataBtn">変数・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
     <label class="ui-level-label">表示 <select id="uiLevel"><option value="basic" selected>かんたん</option><option value="advanced">くわしく</option></select></label>
     <input id="projectName" value="はじめてのあかり" aria-label="作品名" style="margin-left:auto;width:210px;height:26px;padding:2px 5px">
@@ -5696,7 +5726,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         <label>できごと・本文 <select id="eventSelect"></select></label>
         <button id="scriptAdd" type="button">同じできごとの本文を追加</button>
       </div>
-      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button></div>
+      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">この本文のきっかけを変更</button></div>
       <div id="sourceOverview" aria-label="選んだもののすべてのコード" hidden></div>
       <div class="debugbar">
         <button id="pauseBtn">⏸ いったん止める</button>
@@ -5705,7 +5735,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         <button id="formatBtn">コードを整える</button>
         <span class="exec-location" id="execLocation">いまの場所：―</span>
       </div>
-      <div class="editor-modes" role="group" aria-label="本文の表示"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を取り消す</button></div><p id="editorPending" class="editor-pending" role="status" hidden></p><div id="blockEditor" hidden></div>
+      <div class="editor-modes" role="group" aria-label="本文の表示"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を取り消す</button></div><p id="editorPending" class="editor-pending" role="status" hidden></p><section id="sourceImport" class="editor-pending" aria-label="文章の取り込み" hidden></section><div id="blockEditor" hidden></div>
       <div class="editor-shell">
         <div class="line-gutter" id="lineGutter" aria-hidden="true"></div>
         <textarea id="codeEditor" spellcheck="false" aria-label="あかりのコード"></textarea>
@@ -5838,6 +5868,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         <button id="dataAdd">作る</button>
       </div>
       <p id="dataFormError" role="alert" hidden></p>
+      <p>変数は一つの値、リストは並んだ値を入れます。「作品」はみんなで、「選んだ部品」はその部品で使います。動かすと最初の値から始まり、実行中の値は「動きのようす」で見られます。最初の値と定義は作品と一緒に保存されます。</p>
       <div id="dataBody"></div>
     </div>
     <div class="dialog-foot"><button id="dataClose">閉じる</button></div>
@@ -8084,6 +8115,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         this.pendingExternalUnblocks = new Set();
         this.seq = 0;
         this.waitSeq = 0;
+        this.speechTokens = new Map();
         this.running = false;
         this.paused = false;
         this.loopScheduled = false;
@@ -8664,8 +8696,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           case 'Say': {
             const v = evalExpression(n.value, ctx);
             if (Array.isArray(v)) throw new AkariError('R411', 'リストはそのまま言えません');
+            const sec = n.seconds === undefined ? null : numberInUnit(evalExpression(n.seconds, ctx), '秒');
+            if (sec !== null && sec < 0) throw new AkariError('R412', '話す時間は0以上にします');
+            const deadline = sec === null ? null : ensureFinite(this.runtime.now() + sec * 1000);
+            const token = {};
+            this.speechTokens.set(ctx.runtimeId, token);
             this.ui.prepareSpeech?.(v);
-            this.ui.say?.(ctx.runtimeId, valueText(v));
+            if (sec === null) this.ui.say?.(ctx.runtimeId, valueText(v));
+            else this.ui.say?.(ctx.runtimeId, valueText(v), true);
+            if (sec !== null) {
+              if (sec === 0) { this.ui.clearSpeech?.(ctx.runtimeId); return; }
+              this.block(task, {kind:'time', deadline, speechToken:token});
+              return {requeue:false};
+            }
             return;
           }
           case 'Ask': {
@@ -8867,7 +8910,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               (b.blockReason?.deadline ?? b.blockReason?.startTime ?? 0) ||
             a.createdSequence - b.createdSequence,
         );
-        for (const t of timed) this.unblock(t);
+        for (const t of timed) {
+          const reason = t.blockReason;
+          if (reason.speechToken && this.speechTokens.get(reason.runtimeId) === reason.speechToken) {
+            this.ui.clearSpeech?.(reason.runtimeId);
+            this.speechTokens.delete(reason.runtimeId);
+          }
+          this.unblock(t);
+        }
       }
       showNextQuestion() {
         if (!this.running || this.activeQuestion) return;
@@ -10270,7 +10320,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       );
       const idTerms = [
         ...((BLOCK_SEARCH_SYNONYMS[schemaKey] || BLOCK_SEARCH_SYNONYMS[id] || BLOCK_SEARCH_SYNONYMS[schemaKey.split(':')[0]]) || []),
-        ...semanticForms.flatMap(form => [form.intent, ...(form.verbForms || []), ...(form.nounForms || []), ...(form.acceptedReadings || [])]),
+        ...semanticForms.flatMap(form => [form.intent, ...(form.kind==='MotionCommand'?[]:form.verbForms || []), ...(form.nounForms || []).filter(word=>word!=='動く対象'), ...(form.acceptedReadings || [])]),
       ];
       out.push({
         id,
@@ -10667,14 +10717,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (comment) { protectedAt[i] = 1; if (ch === '\n') comment = false; continue; }
       if (quote) {
         protectedAt[i] = 1;
-        if (quote === '」' && ch === '\\') {
-          if (!['\\', '「', '」'].includes(text[i + 1]))
+        if (['」','』'].includes(quote) && ch === '\\') {
+          if (!['\\', quote === '』' ? '『' : '「', quote].includes(text[i + 1]))
             throw new AkariError('N103', '文字列では\\「、\\」、\\\\だけを使えます', 0, i + 1);
           protectedAt[++i] = 1;
         } else if (ch === quote) quote = '';
         continue;
       }
-      if (ch === '「' || ch === '【') { quote = ch === '「' ? '」' : '】'; protectedAt[i] = 1; }
+      if (ch === '「' || ch === '『' || ch === '【') { quote = ch === '「' ? '」' : ch === '『' ? '』' : '】'; protectedAt[i] = 1; }
       else if (ch === '※') { comment = true; protectedAt[i] = 1; }
     }
     return protectedAt;
@@ -10704,11 +10754,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     for (let i = 0; i < raw.length; i++) {
       const ch = raw[i];
       if (quote) {
-        if (quote === '」' && ch === '\\') {
-          if (!['\\','「','」'].includes(raw[i+1])) throw new AkariError('N103','未知の文字列エスケープです');
+        if (['」','』'].includes(quote) && ch === '\\') {
+          if (!['\\',quote === '』' ? '『' : '「',quote].includes(raw[i+1])) throw new AkariError('N103','未知の文字列エスケープです');
           i++;
         } else if (ch === quote) quote = '';
-      } else if (ch === '「' || ch === '【') quote = ch === '「' ? '」' : '】';
+      } else if (ch === '「' || ch === '『' || ch === '【') quote = ch === '「' ? '」' : ch === '『' ? '』' : '】';
       else if (ch === '※') return {code:raw.slice(0,i),comment:raw.slice(i)};
     }
     return {code:raw,comment:''};
@@ -10736,9 +10786,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const physical=lines[i];
       for(let j=0;j<physical.raw.length;j++){
         const ch=physical.raw[j];
-        if(quote){if(quote==='」'&&ch==='\\'){j++;continue;}if(ch===quote)quote='';}
+        if(quote){if(['」','』'].includes(quote)&&ch==='\\'){j++;continue;}if(ch===quote)quote='';}
         else if(ch==='※')break;
-        else if(ch==='「'||ch==='【')quote=ch==='「'?'」':'】';
+        else if(ch==='「'||ch==='『'||ch==='【')quote=ch==='「'?'」':ch==='『'?'』':'】';
       }
       if(quote&&i+1<lines.length)continue;
       const line=lines[first],raw=original.slice(line.start,physical.end),p=splitComment(raw),mapped=compactSourceMap(p.code,line.start);
@@ -11717,14 +11767,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           }
         return exprNode('ListLiteral', { items });
       }
-      if (this.take('「')) {
+      if (this.starts('「') || this.starts('『')) {
+        const open=this.text[this.i++],close=open==='『'?'』':'」';
         let value = '', closed = false;
         while (!this.atEnd()) {
           const ch = this.text[this.i++];
-          if (ch === '」') { closed = true; break; }
+          if (ch === close) { closed = true; break; }
           if (ch === '\\') {
             const escaped = this.text[this.i++];
-            if (!['\\','「','」'].includes(escaped)) this.err('N103','未知の文字列エスケープです');
+            if (!['\\',open,close].includes(escaped)) this.err('N103','未知の文字列エスケープです');
             value += escaped;
           } else value += ch;
         }
@@ -11882,9 +11933,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if(depth>LIMITS.expressionDepth)throw new AkariError('P208','式が深すぎます',ctx.lineNo||0,1);
     if(compact.startsWith('（')&&compact.endsWith('）')&&/^\u0001+$/.test(mask))
       return located(parseExpression(compact.slice(1,-1),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(1,-1)}));
-    const arithmetic=[['をかけた数',/^(.+?)と(.+?)をかけた数$/d,'MUL'],['を足した数',/^(.+?)に(.+?)を足した数$/d,'ADD'],['を引いた数',/^(.+?)から(.+?)を引いた数$/d,'SUB'],['で割った数',/^(.+?)を(.+?)で割った数$/d,'DIV']];
+    if (mask.startsWith('今の') && !symbols?.project?.components.some(component=>component.name==='今'))
+      return located(parseExpression(compact.slice(2),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(2)}));
+    const arithmetic=[['をかけた',/^(.+?)と(.+?)をかけた(?:数|答え)$/d,'MUL'],['を足した',/^(.+?)に(.+?)を足した(?:数|答え)$/d,'ADD'],['を引いた',/^(.+?)から(.+?)を引いた(?:数|答え)$/d,'SUB'],['で割った',/^(.+?)を(.+?)で割った(?:数|答え)$/d,'DIV']];
     for(const [ending,pattern,op] of arithmetic){
-      if(!mask.endsWith(ending))continue;
+      if(!mask.endsWith(ending+'数')&&!mask.endsWith(ending+'答え'))continue;
       const roles=surfaceCapture(pattern,compact);
       if(roles){
         const operands=roles.map(part=>parseExpression(part.text,symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(part.start,part.end)}));
@@ -11996,8 +12049,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       } else node=parseExpression(base,symbols,ctx);
       return negative?exprNode('UnaryExpression',{op:'NOT',value:node}):node;
     }
+    if (form === 'if') {
+      const equality = surfaceCapture(/^(.+?)が(.+?)なら(?:ば)?$/d, source);
+      if (equality) {
+        const operands = equality.map(part=>parseExpression(part.text,symbols,{...ctx,sourcePositions:ctx.sourcePositions?.slice(part.start,part.end)}));
+        return exprNode('CompareExpression',{op:'EQ',left:operands[0],right:operands[1]});
+      }
+    }
     if(form==='plain') return parseExpression(source,symbols,ctx);
-    fail('条件の述語と接続を確認してください。複合条件は「条件（…）」で囲めます');
+    fail(form==='if'
+      ? '比べる値と「なら」を確認してください。たとえば「答えが『ほし』なら」と書き、その後に動きを続けます'
+      : form==='while' ? '続ける条件の終わりを「あいだ」にしてください' : '終える条件の終わりを「まで」にしてください');
   }
   function formatCondition(node, form = 'plain') {
     const negative=node.kind==='UnaryExpression'&&node.op==='NOT', value=negative?node.value:node;
@@ -12140,6 +12202,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     };
     const args={MOVE:[['歩数','歩']],MOVE_DIRECTION:[['歩数','歩']],GOTO:[['横位置','歩'],['縦位置','歩']],GLIDE:[['時間','秒'],['横位置','歩'],['縦位置','歩']],GLIDE_DIRECTION:[['時間','秒'],['歩数','歩']],SET_DIRECTION:[['向き','度']],TURN_RIGHT:[['角度','度']],TURN_LEFT:[['角度','度']],SET_X:[['横位置','歩']],SET_Y:[['縦位置','歩']],POINT_TO:[['向く相手',null]],SET_SCALE:[['大きさ','％']],SET_VOLUME:[['音量','％']],TONE:[['周波数','Hz'],['長さ','秒']],TONE_WAIT:[['周波数','Hz'],['長さ','秒']],SET_TARGET_TEXT:[['部品',null],['文字',null]],SET_INPUT:[['入力欄',null],['内容',null]],FORWARD_LAYERS:[['層数',null]],BACKWARD_LAYERS:[['層数',null]],SET_COLOR:[['色',null]],SET_COSTUME:[['衣装',null]],SET_BACKDROP:[['背景',null]],SET_SELF_TEXT:[['文字',null]],SET_SIZE:[['太さ',null]],SAMPLE:[['音',null]],SAMPLE_WAIT:[['音',null]],PITCH_UP:[['音の高さ',null]],PITCH_DOWN:[['音の高さ',null]],CREATE_TARGET:[['分身の元',null]]};
     const slots=[...(values[kind] || (args[op]||[]).map(([label,unit],i)=>expr(`args.${i}`,label,unit)))];
+    if(kind==='Say'&&role==='timedSpeech')slots.push(expr('seconds','話す時間','秒'));
     slots.unshift(Object.freeze({path:'actorRef',label:'動く対象',type:'actor',unit:null,required:true}));
     if(['LocalVariableDeclaration','LocalListDeclaration','UserActionCall'].includes(kind))slots.push(Object.freeze({path:'name',label:'名前',type:'name',unit:null,required:true}));
     if(kind==='WaitBroadcastGroup')slots.push(Object.freeze({path:'broadcastRef',label:'直前の知らせ',type:'reference',unit:null,required:true}));
@@ -12173,7 +12236,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       case 'WaitTime':return `${sentenceQuantitySource(n.seconds,'秒')}待つ`;
       case 'WaitBroadcastGroup':return 'その知らせを受けて始めたことが全部終わるまで待つ';
       case 'WaitUntil':return `${conditionSource(n.condition,'until')}待つ`;
-      case 'Say':if(n.value.kind==='VariableRead')return `${f(n.value)}の値を言う`;return ['CompareExpression','LogicalExpression'].includes(n.value.kind)||(n.value.kind==='UnaryExpression'&&n.value.op==='NOT')?`（${f(n.value)}）の値を言う`:`${f(n.value)}${n.value.kind==='StringLiteral'?'と':'を'}言う`;
+      case 'Say':if(n.seconds!==undefined)return `${f(n.value)}${n.value.kind==='StringLiteral'?'と':'を'}${sentenceQuantitySource(n.seconds,'秒')}話す`;if(n.value.kind==='VariableRead')return `${f(n.value)}の値を言う`;return ['CompareExpression','LogicalExpression'].includes(n.value.kind)||(n.value.kind==='UnaryExpression'&&n.value.op==='NOT')?`（${f(n.value)}）の値を言う`:`${f(n.value)}${n.value.kind==='StringLiteral'?'と':'を'}言う`;
       case 'Ask':return `${f(n.question)}とたずねて、答えを待つ`;
       case 'Broadcast':return `みんなに${f(n.message)}と知らせる`;
       case 'BroadcastAndWait':return `みんなに${f(n.message)}と知らせて、知らせを受けて始めたことが全部終わるまで待つ`;
@@ -12224,6 +12287,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     ['LooksCommand:PREV_COSTUME', /^前の衣装に変える$/d, 'LooksCommand', 'PREV_COSTUME'],
     ['WaitTime', /^(.+?)秒(?:間)?(?:待つ|まつ)$/d, 'WaitTime', null, 'seconds'],
     ['Say:concat', /^(.+?)をつなげて(?:言う|いう|話す|はなす)$/d, 'Say', null, 'concat'],
+    ['Say:timed', /^(.+)(?:と|を)(.+?)秒(?:間)?(?:言う|いう|話す|はなす)$/d, 'Say', null, 'timedSpeech'],
     ['Say:concatReverse', /^(.+?に)つなげて(?:言う|いう|話す|はなす)$/d, 'Say', null, 'concat'],
     ['Say:add', /^(.+?)に(.+?)を足して(?:言う|いう|話す|はなす)$/d, 'Say', null, 'addValue'],
     ['Say:quote', /^(.+?)と(?:言う|いう|話す|はなす)$/d, 'Say', null, 'quote'],
@@ -12281,6 +12345,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   // Check role endings before attempting multi-operand captures. A failed ending
   // must not backtrack through every possible particle split in a long sentence.
   const SENTENCE_ROLE_ENDINGS = Object.freeze({
+    timedSpeech:/秒(?:間)?(?:言う|いう|話す|はなす)$/,
     addValue:/を足して(?:言う|いう|話す|はなす)$/,
     toneReverse:/Hzの音を(?:鳴らし始める|鳴らす)$/,
     appendReverse:/の最後に(?:入れる|いれる)$/,
@@ -12342,6 +12407,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     return formatExpression(expr.kind === 'QuantityLiteral' && expr.unit === unit ? expr.value : expr) + unit;
   }
   function readRoleStatement(code, line, symbols, ctx) {
+    const polite = [['話します','話す'],['はなします','はなす'],['言います','言う'],['いいます','いう'],['待ちます','待つ'],['まちます','まつ'],['増やします','増やす'],['減らします','減らす'],['動きます','動く'],['進みます','進む'],['回ります','回る'],['くり返します','くり返す'],['繰り返します','繰り返す'],['します','する']];
+    const suffix = polite.find(([ending])=>surfaceMask(code).endsWith(ending));
+    const immediate = surfaceMask(code).startsWith('すぐに') ? 3 : 0;
+    if (suffix || immediate) {
+      const replacement = code.slice(immediate, suffix ? -suffix[0].length : undefined) + (suffix ? suffix[1] : '');
+      const part = surfaceLineSlice(line, immediate, code.length, replacement);
+      part.comment = line.comment;
+      return readRoleStatement(replacement,part,symbols,ctx);
+    }
     const e = (part) => parseMappedExpression(part.text, code, line, symbols, ctx, part.start);
     const q = (part,unit) => {if(surfaceMask(part.text).endsWith(unit))throw new AkariError('P205','単位を重ねず一つだけ指定してください');return sentenceQuantity(e(part),unit);};
     const target = part => sentenceTarget(part.text,code,line,symbols,ctx,part.start);
@@ -12381,6 +12455,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const unit=path=>form.roleSlots.find(slot=>slot.path===path)?.unit;
       let props=form.op ? {op:form.op} : {};
       switch(form.role) {
+        case 'timedSpeech': props.value=e(parts[0]);props.seconds=q(parts[1],'秒');break;
         case 'cloneCount': props.count=e(parts[0]);break;
         case 'cloneTargetCount': props.args=[e(parts[0])];props.count=e(parts[1]);break;
         case 'addValue': props.value=exprNode('BinaryExpression',{op:'ADD',left:e(parts[0]),right:e(parts[1])});break;
@@ -12473,10 +12548,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if(/(?:動く|うごく|進む|すすむ|動かす|うごかす|滑る|すべる)/.test(verb))throw new AkariError('P205','移動には歩数、必要なら方向と秒数を一つずつ指定してください');
     return null;
   }
-  function readSentenceHeading(code,symbols) {
+  function readSentenceHeading(code,symbols,previousHeading=null) {
+    const same = surfaceCapture(/^(.+?)も同じ合図で動き始め、(.*)$/d,code);
+    if(same){
+      if(!previousHeading)throw new AkariError('P205','「同じ合図」の前に、始めるときやクリックなどのきっかけを書いてください');
+      return {heading:{...previousHeading,actorRef:sentenceActor(same[0].text,symbols)},body:same[1]};
+    }
     const forms=[
+      [/^始めると、(.+?)は、?(.*)$/d,'start',0,1],
       [/^(?:作品を動かしたとき|始まったとき|開始したとき)、(.+?)は、(.*)$/d,'start',0,1],
-      [/^(.+?)(?:がクリックされたとき|をクリックしたとき|をクリックするたびに)、(.*)$/d,'click',0,1],
+      [/^(.+?)(?:がクリックされたとき|がクリックされると|がクリックされるたびに|をクリックしたとき|をクリックするたびに)、(.*)$/d,'click',0,1],
       [/^キーが押されたとき、(.+?)は、(.*)$/d,'keyDown',0,1],
       [/^(.+?)キー(?:を押すたびに|が押されたとき)、(.+?)は、(.*)$/d,'keyDown',1,2,0],
       [/^知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',0,1],
@@ -12532,8 +12613,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if(firstError.code==='S308')throw firstError;
     const nodes=[];let start=0;
     for(let i=0;i<mask.length;i++) {
-      if(mask[i]!=='、')continue;
-      const end=mask.slice(Math.max(start,i-2),i)==='から'?i-2:i;
+      const connective = mask.startsWith('から',i);
+      if(mask[i]!=='、'&&!connective)continue;
+      const end=connective?i:mask.slice(Math.max(start,i-2),i)==='から'?i-2:i;
       const pair=SENTENCE_TE_FORMS.find(([te])=>end-start>=te.length&&mask.startsWith(te,end-te.length));
       if(!pair)continue;
       const tail=code.slice(start,end);
@@ -12543,7 +12625,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       let node;
       if(head?.inlineBody){const fields={...head};delete fields.inlineBody;delete fields.kind;node=statementNode(head.kind,part,{...fields,body:head.inlineBody,actorRef:{...(head.actorRef||scope.topicActor||{kind:'self'})}});}
       else node=parseSimpleStatement(part,symbols,scope);
-      nodes.push(node);if(STATEMENT_EXPLICIT_ACTORS.has(node))scope.topicActor=node.actorRef;start=i+1;
+      nodes.push(node);if(STATEMENT_EXPLICIT_ACTORS.has(node))scope.topicActor=node.actorRef;start=i+(connective?2:1);if(mask[start]==='、')start++;i=start-1;
     }
     if(!nodes.length)throw firstError;
     if(start>=code.length)throw new AkariError('P202','つなぐ文の続きが必要です',line.lineNo,1);
@@ -12601,19 +12683,29 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   function parseScript(source, symbols, ctx = {}) {
     if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','本文の文字数が上限を超えています',1,1);
-    const physical=normalizeSource(source).lines,headings=physical.filter(line=>!line.continuation&&line.code&&!/^[ \t\u3000]/u.test(line.raw)&&readSentenceHeading(compactOutsideString(line.code),symbols));
-    const firstCode=physical.find(line=>!line.continuation&&line.code),hasPrefix=headings.length&&headings[0]!==firstCode;
+    const physical=normalizeSource(source).lines,headings=[];
+    let previousHeading=null;
+    for(const line of physical){
+      if(line.continuation||!line.code||/^[ \t\u3000]/u.test(line.raw))continue;
+      const code=line.mapped.text,mask=surfaceMask(code);let start=0;
+      for(let i=0;i<=mask.length;i++)if(i===mask.length||mask[i]==='。'){
+        if(i>start){const found=readSentenceHeading(code.slice(start,i),symbols,previousHeading);
+          if(found){headings.push({start:line.mapped.positions[start],lineNo:line.lineNo,columnOffset:line.mapped.positions[start]-line.start,previousHeading});previousHeading=found.heading;}}
+        start=i+1;
+      }
+    }
+    const firstCode=physical.find(line=>!line.continuation&&line.code),hasPrefix=headings.length&&headings[0].start!==firstCode?.start;
     if(headings.length<=1&&!hasPrefix)return parseScriptUnit(source,symbols,ctx);
     if(ctx.definitionKind||ctx.definition)throw new AkariError('P205','手順・計算の本文へ別のできごとの見出しは置けません',headings[0].lineNo,1);
     const starts=[{start:0,lineNo:1},...headings.slice(hasPrefix?0:1)];
     if(starts.length>LIMITS.scripts)throw new AkariError('P208','できごとの数が上限を超えています',1,1);
     const units=starts.map((entry,index)=>{
       const end=starts[index+1]?.start??source.length,text=source.slice(entry.start,end);let unit;
-      try{unit=parseScriptUnit(text,symbols,ctx);}catch(error){if(error instanceof AkariError)error.line=(error.line||1)+entry.lineNo-1;throw error;}
+      try{unit=parseScriptUnit(text,symbols,{...ctx,previousHeading:entry.previousHeading});}catch(error){if(error instanceof AkariError)error.line=(error.line||1)+entry.lineNo-1;throw error;}
       const pending=[unit],shift=entry.lineNo-1;
       while(pending.length){
         const node=pending.pop();
-        if(node.sourceSpan){node.sourceSpan.startLine+=shift;node.sourceSpan.endLine+=shift;}
+        if(node.sourceSpan){if(node.sourceSpan.startLine===1)node.sourceSpan.startColumn+=entry.columnOffset||0;if(node.sourceSpan.endLine===1)node.sourceSpan.endColumn+=entry.columnOffset||0;node.sourceSpan.startLine+=shift;node.sourceSpan.endLine+=shift;}
         if(node.endLine)node.endLine+=shift;
         const location=SOURCE_RANGES.get(node);
         if(location){const move=value=>{if(!value||typeof value!=='object')return;for(const [key,child]of Object.entries(value)){if(['start','end','at'].includes(key)&&typeof child==='number')value[key]=child+entry.start;else if(child&&typeof child==='object')move(child);}};move(location);}
@@ -12635,14 +12727,24 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const parseAt=(line,fn)=>{try{return fn();}catch(error){if(error instanceof AkariError&&!error.line){error.line=line.lineNo;error.column=error.column||1;}throw error;}};
     let first=nextCode(0),heading=null;
     if(first<lines.length&&lines[first].indent!==0)throw new AkariError('P209','最上位の文は字下げせずに書きます',lines[first].lineNo,1);
-    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols));if(found){heading=found.heading;const line=lines[first];if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','見出しの本文を字下げして書いてください',lines[first].lineNo,1);}}
+    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols,ctx.previousHeading));if(found){heading=found.heading;const line=lines[first];if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','見出しの本文を字下げして書いてください',lines[first].lineNo,1);}}
     const rules=[];
     function block(start,indent,scope,depth){
       if(depth>LIMITS.blockDepth)throw new AkariError('P208','ブロックが深すぎます',lines[start]?.lineNo||1,1);
       scope={...scope,topicActor:{...scope.topicActor}};
-      const nodes=[];let i=start;
+      const nodes=[];let i=start,previousSentenceStart=null;
       while(i<lines.length){const line=lines[i];if(!line.code){if(line.comment)nodes.push(statementNode('CommentLine',line,{text:line.comment.slice(1),raw:line.raw,actorRef:{...scope.topicActor}}));i++;continue;}if(line.indent<indent)break;if(line.indent>indent)throw new AkariError('P209','同じまとまりの文の字下げをそろえてください',line.lineNo,1);
         const local={...scope,sourceLine:line,lineNo:line.lineNo};
+        const repeatPrevious=surfaceCapture(/^これを(.+?)回(?:くり返す|くり返します|繰り返す|繰り返します)$/d,line.code);
+        if(repeatPrevious){
+          if(previousSentenceStart===null||previousSentenceStart>=nodes.length)throw sentenceDiagnostic('「これを」の直前に、くり返したい一文を書いてください',line,[],{kind:'RepeatCount',missing:['precedingSentence']});
+          const body=nodes.splice(previousSentenceStart),part=repeatPrevious[0],count=sentenceQuantity(parseMappedExpression(part.text,line.code,line,symbols,local,part.start),'回');
+          const repeat=statementNode('RepeatCount',line,{count,body,actorRef:{...scope.topicActor}});
+          const range=SOURCE_RANGES.get(body[0])?.range,location=SOURCE_RANGES.get(repeat);
+          if(range&&location){location.range={start:range.start,end:location.range.end};location.extent.start=range.start;}
+          nodes.push(repeat);previousSentenceStart=null;i++;continue;
+        }
+        if(surfaceMask(line.code).startsWith('くり返しが終わると、')&&nodes.at(-1)?.kind!=='RepeatCount')throw sentenceDiagnostic('「くり返しが終わると」の直前に、回数のあるくり返しを書いてください',line,[],{kind:'Sequence',missing:['precedingRepeat']});
         parseAt(line,()=>diagnoseSentenceIntent(line,symbols,local,lines[i-1]?.indent===indent?lines[i-1]:null,lines[nextCode(i+1)]?.indent===indent?lines[nextCode(i+1)]:null));
         if(line.code==='その知らせを受けて始めたことが全部終わるまで待つ'){
           const previous=[...nodes].reverse().find(node=>node.kind!=='CommentLine');
@@ -12655,7 +12757,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if(line.code==='ここまで')throw new AkariError('P203','字下げを戻してまとまりを閉じます',line.lineNo,1);
         const rule=parseAt(line,()=>{try{return readContinuousSentence(line.code,line,symbols,local);}catch(error){if(error.draftRole?.kind==='ContinuousRule'){const next=lines[nextCode(i+1)],speed=next?surfaceCapture(/^(.+?秒に.+?歩の速さで)(?:動かす|動く)$/d,next.code):null;if(speed&&next.indent===indent){const motion=/(?:動き続ける|動かし続ける)$/.exec(surfaceMask(line.code));if(motion){const range=sourceRange(line.mapped.positions),last=sourceRange(next.mapped.positions);error.proposals=[{label:'二文を一つの継続ルールにまとめる',source:line.code.slice(0,motion.index)+speed[0].text+motion[0],start:range.start,end:last.end}];}}}throw error;}});if(rule){if(depth!==0)throw new AkariError('P205','継続のルールは作品の本文の最上位に書いてください',line.lineNo,1);rules.push(rule);i++;continue;}
         const head=parseAt(line,()=>readBlockHead(line.code,symbols,local));if(head?.kind==='Else')break;
-        if(!head){const parts=parseAt(line,()=>parseSentenceSequence(line,symbols,local));nodes.push(...parts);for(const part of parts)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor={...part.actorRef};i++;continue;}
+        if(!head){const parts=parseAt(line,()=>parseSentenceSequence(line,symbols,local));previousSentenceStart=nodes.length;nodes.push(...parts);for(const part of parts)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor={...part.actorRef};i++;continue;}
+        previousSentenceStart=null;
         const controlActor=head.actorRef||scope.topicActor;
         let childScope={...scope,topicActor:{...controlActor},binders:[...(scope.binders||[])]},childStart=i+1,firstChild=nextCode(childStart),binderRange=null;
         if(head.kind==='ForEach'){
@@ -12761,7 +12864,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   function readSurfaceStatement(code,line,symbols,ctx) {return readRoleStatement(code,line,symbols,ctx);}
   function parseSimpleStatement(line,symbols,ctx={}) {
     let code=compactOutsideString(line.code),working=line;
-    const lead=/^(?:そのあと|それから|次に|最後に)、/.exec(surfaceMask(code));
+    const lead=/^(?:そのあと|それから|次に|最後に|くり返しが終わると)、/.exec(surfaceMask(code));
     if(lead){working=surfaceLineSlice(line,lead[0].length,code.length);working.comment=line.comment;code=working.code;}
     const parse=(text,at,topicActor)=>{const part=at?surfaceLineSlice(working,at,code.length):working;part.comment=line.comment;const local={...ctx,topicActor};return readSurfaceStatement(text,part,symbols,local);};
     let directError;
@@ -12848,16 +12951,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const ch = text[i];
       if (quote) {
         out[i] = '\u0001';
-        if (quote === '」' && ch === '\\') {
-          if (!['\\','「','」'].includes(text[i+1])) throw new AkariError('N103','未知の文字列エスケープです');
+        if (['」','』'].includes(quote) && ch === '\\') {
+          if (!['\\',quote==='』'?'『':'「',quote].includes(text[i+1])) throw new AkariError('N103','未知の文字列エスケープです');
           out[++i] = '\u0001'; continue;
         }
         if (ch === quote) quote = '';
         continue;
       }
       if (ch === '※') { for(let j=i;j<text.length;j++) out[j]='\u0001'; break; }
-      if (ch === '「' || ch === '【') {
-        quote = ch === '「' ? '」' : '】';
+      if (ch === '「' || ch === '『' || ch === '【') {
+        quote = ch === '「' ? '」' : ch === '『' ? '』' : '】';
         out[i] = '\u0001';
         continue;
       }
@@ -13785,7 +13888,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     ])
       add(kind, 'statement', label,
         kind === 'Broadcast' ? [field('broadcastRef', '知らせの識別', 'reference', undefined, { required: false })] : [],
-        [expression(key, inputLabel, initial)]);
+        [expression(key, inputLabel, initial), ...(kind==='Say'?[input('seconds','話す時間','expression',{required:false})]:[])]);
     add(
       'UserActionCall',
       'statement',
@@ -15241,7 +15344,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   function scriptHeadingMetadata(source, script, project) {
     const parsed = parseSyntax(source, { targetId: script.targetId, event: script.event,
       symbols: buildSymbols(project) });
-    const heading = parsed.ast?.heading;
+    return scriptMetadataFromHeading(parsed.ast?.heading, script, project);
+  }
+  function scriptMetadataFromHeading(heading, script, project) {
     if (!heading) return { targetId: script.targetId, event: script.event, filter: script.filter };
     const targetId = heading.actorRef?.kind === 'named'
       ? (heading.actorRef.targetId || ((heading.actorRef.name === '画面' || heading.actorRef.name === project.stage.name) ? 'stage' :
@@ -15643,7 +15748,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   function syntaxComparison(ast) {
     const consumedUnit = (node, key, i) => {
       if (key === 'count' && node.kind === 'RepeatCount') return '回';
-      if (key === 'seconds' && ['WaitTime', 'ContinuousRule'].includes(node.kind)) return '秒';
+      if (key === 'seconds' && ['WaitTime', 'Say', 'ContinuousRule'].includes(node.kind)) return '秒';
       if (key === 'distance' && node.kind === 'ContinuousRule') return '歩';
       if (key === 'index' && ['ListItemRead', 'ListInsert', 'ListReplace', 'ListDelete'].includes(node.kind)) return '番目';
       if (key !== 'args') return null;
@@ -17111,7 +17216,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   // 08 — Portable stage view and standalone export
   // ────────────────────────────────────────────────────────────────────────
   const AKARI_STAGE_CSS =
-    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}';
+    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:3px}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }";
   const AKARI_PLAYER_CSS =
     '*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#edf2f8;color:#1f2937;font:14px "Yu Gothic UI","Yu Gothic","Meiryo",sans-serif}button,input{font:inherit}button{padding:7px 12px;background:#fff;border:1px solid #a9b8ca;border-radius:7px;cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #2f6fd6;outline-offset:2px}#playerRoot{width:max-content;min-width:min(100%,640px);max-width:100%;margin:0 auto;padding:14px}header{margin-bottom:12px}h1{font-size:20px;margin:0 0 10px;overflow-wrap:anywhere}.player-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px}#playerStatus{font-size:12px;color:#536273;margin-left:6px}.player-stage{max-width:100%;overflow:auto;border:1px solid #bccbe0;border-radius:10px;background:#fff}#formSurface{outline:none}#formSurface:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}#playerOutput{max-height:130px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;background:#fff;border:1px solid #c7d2df;border-radius:8px;margin:12px 0 0}.modal{display:none;position:fixed;inset:0;background:rgba(25,37,55,.4);z-index:10000;align-items:center;justify-content:center;padding:16px}.modal.show{display:flex}.question-box{width:min(500px,100%);max-height:90vh;overflow:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 12px 35px #0003}#questionText{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:14px;font-weight:700}#questionAnswer{width:100%;padding:8px;border:1px solid #a9b8ca;border-radius:7px}.question-controls{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}@media(max-width:600px){#playerRoot{padding:8px}h1{font-size:17px}}\n';
   function createAkariStageView(core, options) {
@@ -17246,6 +17351,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const rect = form.getBoundingClientRect(),
         sx = rect.width / form.clientWidth || 1,
         sy = rect.height / form.clientHeight || 1;
+      const bubbles=[...form.querySelectorAll('.sprite-bubble')],placed=[],overlap=(a,b)=>Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+      const actors=[...form.querySelectorAll('.component')].filter(n=>n.style.display!=='none').map(n=>{const r=n.getBoundingClientRect();return {left:(r.left-rect.left)/sx,right:(r.right-rect.left)/sx,top:(r.top-rect.top)/sy,bottom:(r.bottom-rect.top)/sy};});
       form.querySelectorAll('.sprite-bubble').forEach((b) => {
         const id = b.dataset.runtimeId,
           node = form.querySelector(`[data-runtime-id="${CSS.escape(id)}"].component`);
@@ -17260,19 +17367,24 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           availableWidth = sideWidth >= 80/sx ? sideWidth : form.clientWidth;
         b.style.fontSize = 14/sx+'px'; b.style.padding = 8/sy+'px '+10/sx+'px';
         b.style.maxWidth = Math.min(320/sx,availableWidth)+'px';
-        b.style.maxHeight = Math.min(160/sy,form.clientHeight)+'px';
+        const heightBudget=Math.min(160/sy,Math.max(60/sy,(form.clientHeight-(bubbles.length-1)*8/sy)/Math.max(1,bubbles.length)));
+        b.style.maxHeight = heightBudget+'px';
         const text = b.querySelector('.sprite-bubble-text');
-        if (text) text.style.maxHeight = Math.min(100/sy,Math.max(24/sy,form.clientHeight-60/sy))+'px';
+        if (text) text.style.maxHeight = Math.min(100/sy,Math.max(0,heightBudget-60/sy))+'px';
+        const full = b.querySelector('[data-speech-full]');
+        if (full) full.hidden = !(full.dataset.always === 'true' ||
+          text && (text.scrollHeight > text.clientHeight + 1 || text.scrollWidth > text.clientWidth + 1));
         const width=b.offsetWidth,height=b.offsetHeight, center=(actor.left+actor.right-width)/2,
           positions=[[actor.right+gap,actor.top],[actor.left-width-gap,actor.top],
-            [center,actor.top-height-gap],[center,actor.bottom+gap]];
+             [center,actor.top-height-gap],[center,actor.bottom+gap]];
+        for(const old of placed)positions.push([center,old.bottom+gap],[center,old.top-height-gap],[old.right+gap,actor.top],[old.left-width-gap,actor.top]);
         const candidates=positions.map(([left,top],order)=>{
           left=clamp(left,0,Math.max(0,form.clientWidth-width));top=clamp(top,0,Math.max(0,form.clientHeight-height));
-          const overlap=Math.max(0,Math.min(left+width,actor.right)-Math.max(left,actor.left))*
-            Math.max(0,Math.min(top+height,actor.bottom)-Math.max(top,actor.top));
-          return {left,top,overlap,order};
+          const candidate={left,top,right:left+width,bottom:top+height},cost=actors.reduce((sum,a)=>sum+overlap(candidate,a),0)+placed.reduce((sum,b)=>sum+overlap(candidate,b)*10,0);
+          return {...candidate,overlap:cost,order};
         }).sort((a,b)=>a.overlap-b.overlap||a.order-b.order);
         b.style.left=candidates[0].left+'px'; b.style.top=candidates[0].top+'px';
+        placed.push(candidates[0]);
       });
     }
     function renderComponents() {
@@ -17417,7 +17529,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       renderComponents();
       fitStage();
     }
-    function showBubble(id, value, actualValue = value) {
+    function clearSpeech(id) {
+      for (const bubble of form.querySelectorAll('.sprite-bubble')) if (bubble.dataset.runtimeId === id) bubble.remove();
+    }
+    function showBubble(id, value, actualValue = value, controlled = false) {
       const presentation = core.displayValue(actualValue);
       value = presentation.text;
       const details = { ...presentation, value: actualValue };
@@ -17436,14 +17551,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       b.className = 'sprite-bubble';
       b.dataset.runtimeId = id;
       b.style.zIndex = '2000';
+      b.dataset.speaker=project().components.find(c=>c.id===runtime()?.actor(id)?.baseId)?.name||project().components.find(c=>c.id===id)?.name||'話している人';
+      b.setAttribute('aria-label',b.dataset.speaker+'：'+value);
       const text = document.createElement('span');
       text.className = 'sprite-bubble-text'; text.textContent = value;
       text.style.display = 'block'; text.style.overflow = 'hidden';
       b.appendChild(text);
-      if (presentation.rounded || Array.from(value).length > 80 || /[\r\n]/.test(value)) {
+      {
         const full = document.createElement('button');
+        full.dataset.speechFull = 'true';
+        full.dataset.always = String(presentation.rounded || Array.from(value).length > 80 || /[\r\n]/.test(value));
+        full.hidden = full.dataset.always !== 'true';
         full.type = 'button';
-        full.textContent = presentation.rounded ? '実値' : '全文';
+        full.dataset.label = presentation.rounded ? '実値' : '全文';
         full.setAttribute('aria-label', presentation.rounded ? '表示を丸めています。実値を見る' : '吹出しの全文を見る');
         full.style.pointerEvents = 'auto';
         full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue); };
@@ -17451,6 +17571,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       form.appendChild(b);
       positionBubbles();
+      if (controlled) return;
       const timer = setTimeout(() => {
         b.remove();
         timers.delete(timer);
@@ -17583,6 +17704,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       renderComponents,
       positionBubbles,
       showBubble,
+      clearSpeech,
       limitInputValue,
       penLine,
       clearPen,
@@ -17734,11 +17856,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           penClear: view.clearPen,
           stamp: view.stamp,
           prepareSpeech: value => { speechValue = value; },
-          say: (id, text) => {
+          say: (id, text, controlled) => {
             flush();
             const value = speechValue; speechValue = undefined;
-            view.showBubble(id, text, value);
+            view.showBubble(id, text, value, controlled);
           },
+          clearSpeech: view.clearSpeech,
           ask,
           closeQuestion,
           state,
@@ -18613,7 +18736,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (op.type === 'remove') {
         const entry = lookup(op.id);
         if (!entry.body) editorError('必須の式は置換するか、可変長入力の削除を使います');
-        const array = lookup(entry.parentId).node.bodies[entry.body];
+        const parent=lookup(entry.parentId).node,array=parent.bodies[entry.body],slot=BLOCK_SCHEMA_BY_ID.get(parent.schemaId).bodies.find(s=>s.key===entry.body);
+        if(slot.requiredExecutable&&!array.some((node,i)=>i!==entry.index&&!['CommentLine','Hole:statement'].includes(node.schemaId))){
+          if(!options.draft)editorError(`${slot.label}には命令が一つ必要です。先に新しい命令を入れるか、「何もしない」に置き換えてください`);
+          const hole=fresh(createBlock('Hole:statement',{allowHoles:true}));hole.fields.label=slot.label;array.splice(entry.index,1,hole);selectedId=hole.id;return;
+        }
         array.splice(entry.index, 1);
         selectedId = array[Math.min(entry.index, array.length - 1)]?.id || entry.parentId;
         return;
@@ -18648,6 +18775,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         setInput(location, node);
         selectedId = node.id;
         return;
+      }
+      if(op.type==='operator'){
+        const node=lookup(op.id).node,before=BLOCK_SCHEMA_BY_ID.get(node.schemaId),after=BLOCK_SCHEMA_BY_ID.get(op.schemaId);
+        if(!['BinaryExpression','CompareExpression','LogicalExpression'].includes(before.kind)||after?.kind!==before.kind)editorError('同じ種類の演算子を選んでください。別の種類に変えるときは式全体を選び直します');
+        node.schemaId=after.id;selectedId=node.id;return;
+      }
+      if(op.type==='optional-input-remove'){
+        const location=inputSlot(op.parentId,op.input);
+        if(location.slot.required!==false||location.slot.multiple)editorError('この入力は外せません');
+        delete location.parent.inputs[op.input];selectedId=op.parentId;return;
       }
       if (op.type === 'expression-move') {
         const entry = lookup(op.id),
@@ -19171,7 +19308,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     'LooksCommand:SHOW': ['見せる', '表示', '出す'],
     'LooksCommand:HIDE': ['隠す', 'かくす', '非表示'],
     'LooksCommand:SET_SCALE': ['大きさ', 'おおきさ', 'サイズ'],
-    Say: ['話す', 'はなす', 'しゃべる', '発言', 'こんにちは'],
+    Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒'],
     Ask: ['質問', 'たずねる', '答え'],
     WaitTime: ['待つ', 'まつ', '時間', '秒'],
     IfStatement: ['もし', '条件', 'なら', '分かれ道'],
@@ -19188,7 +19325,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const operation = schema.id.includes(':') ? schema.id.slice(schema.id.indexOf(':') + 1) : null;
     for (const form of SENTENCE_FORMS) {
       if (form.kind !== schema.kind || (form.op && operation && form.op !== operation)) continue;
-      words.push(form.intent, ...(form.verbForms || []), ...(form.nounForms || []),
+      words.push(form.intent, ...(schema.kind==='MotionCommand'?[]:form.verbForms || []), ...(form.nounForms || []).filter(word=>word!=='動く対象'),
         ...(form.acceptedReadings || []));
     }
     return words.filter(Boolean).join(' ').toLocaleLowerCase();
@@ -19373,7 +19510,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const controls = E('div', 'blockui-view-controls'),
       destinationLabel = E('div', 'blockui-destination', '本文の末尾に追加'),
       cancelButton = button('取消', 'cancel', () => cancel()),
-      commitButton = button('入力を確定', 'commit', () => flush()),
+      commitButton = button('入力を確定', 'commit', () => flush({explicit:true})),
       messageBox = E('div', 'blockui-message', '', { 'aria-live': 'polite' });
     controls.append(destinationLabel, commitButton, cancelButton);
     root.append(controls, messageBox);
@@ -19485,6 +19622,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     palettePages.append(previous, pageLabel, next);
     paletteOptions.append(modeSelect);
     paletteControls.append(search, paletteOptions);
+    const searchScope=E('p','blockui-search-scope','',{'aria-live':'polite'});
+    paletteControls.append(searchScope);
+    if(options.onData)paletteControls.append(button('＋ 変数・リストを作る','create-data',()=>options.onData()));
+    const help=E('details','blockui-local-help');help.append(E('summary','','いまの編集のヒント'),E('p','','＋で命令を入れます。白い欄には文字・数・データを選びます。「たずねる」で待った返事は「答え」で使えます。未完成でも保存できます。'));
+    paletteControls.append(help);
     palette.append(paletteControls, categorySelect, paletteList, palettePages);
     layout.append(palette, workspaceShell);
     root.append(layout);
@@ -19657,7 +19799,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (event.key === 'Enter' && input.tagName !== 'TEXTAREA') {
           event.preventDefault();
           event.stopPropagation();
-          flush();
+          flush({explicit:true});
         } else if (event.key === 'Escape') {
           event.preventDefault();
           event.stopPropagation();
@@ -19665,7 +19807,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         }
       });
     }
-    function flush({ focus = true } = {}) {
+    function flush({ focus = true, explicit = false } = {}) {
       if (destroyed) return { ok: true };
       if (drag?.started || replacement)
         return {
@@ -19677,6 +19819,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         };
       if (!pending) return { ok: true };
       const p = pending;
+      if(p.field.type==='heading'&&!explicit){
+        const reason='いつ・だれが動くかを選び終えたら「この見出しに決める」を押してください';
+        announce(reason,true);return {ok:false,pending:true,reason};
+      }
       if (p.composing || p.input.dataset.composing === 'true') {
         p.error = '日本語の変換を確定してから操作してください';
         notifyPending();
@@ -19821,6 +19967,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       for (const n of workspace.querySelectorAll('.blockui-node'))
         n.classList.toggle('blockui-selected', n.dataset.blockId === id);
+      for(const slot of workspace.querySelectorAll('.blockui-slot-active'))slot.classList.remove('blockui-slot-active');
+      const selectedNode=[...workspace.querySelectorAll('.blockui-node')].find(n=>n.dataset.blockId===id),slot=selectedNode?.parentElement.closest('.blockui-input-slot');
+      if(slot){slot.classList.add('blockui-slot-active');doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));}
     }
     function chooseDestination(location) {
       if (isLocked()) return;
@@ -20152,11 +20301,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         categorySelect.append(chip);
       }
       categorySelect.scrollTop = categoryScroll;
+      searchScope.textContent=query&&categoryExplicit&&category?`${groups.find(([g])=>g===category)?.[1]||category}の中を検索中`:'すべての分類から探せます';
       const location = destination || defaultDestination(),
         projectState = project();
       const hints = !query ? [] : location?.body ? editorInsertionHints(session(), location, {project:projectState,context:context()})
         : hintCandidates(projectState, context().targetId, {source:session()?.sourceText || '', ...context()});
       const searched = query ? blockSearchCandidates(projectState, context(), query, hints) : all;
+      const speech=searched.find(s=>s.id==='Say');
+      if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:'内容と秒数を決めて話す'});}
       let candidates = searched.filter(
         (s) =>
           ((query && !categoryExplicit) || !category || (category === 'basic'
@@ -20196,7 +20348,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             paletteAdd(schema);
           },
           {
-            'data-blockui-schema': schema.id,
+            'data-blockui-schema': schema.candidateKey==='timed-speech'?'Say:timed':schema.id,
             'data-schema-id': schema.id,
             title: a.reason || schema.label,
             'aria-label': (schema.searchLabel || schema.label) + '\u3092\u8ffd\u52a0',
@@ -20210,7 +20362,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         b.dataset.blockuiDragSchema = schema.id;
         try {
           b.append(previewNode(schema, a.node));
-          if (schema.binding) b.append(E('small', 'blockui-bound-name', schema.searchLabel));
+          if (schema.binding||schema.candidateKey==='timed-speech') b.append(E('small', 'blockui-bound-name', schema.searchLabel));
         } catch (_) {
           b.textContent = paletteLabel(schema);
         }
@@ -20228,6 +20380,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           ),
         );
       previous.disabled = page === 0;
+      if(query&&categoryExplicit&&category)paletteList.append(button('すべての分類で探す','search-all',()=>{category='';categoryExplicit=false;page=0;renderPalette();search.focus();}));
       next.disabled = page >= pages - 1;
       pageLabel.textContent = page + 1 + ' / ' + pages;
       palettePages.hidden = pages === 1;
@@ -20343,8 +20496,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           restore = () => { mode.value = value === undefined ? 'positional' : 'named'; names.forEach((name, i) => { name.value = value?.[i] || ''; }); sync(); };
         } else {
           const enabled = choice('見出し', 'enabled', [['no', '本文だけ'], ['yes', 'できごとを指定']], value ? 'yes' : 'no');
-          const event = choice('いつ始める', 'event', Object.entries(EVENT_LABELS), value?.event || 'start');
-          const subject = actor(value?.actorRef, 'actorRef.');
+          const currentEvent=value?.event||context().event||'start',currentActor=value?.actorRef||{kind:'self'};
+          const event = choice('いつ始める', 'event', Object.entries(EVENT_LABELS), currentEvent);
+          const subject = actor(currentActor, 'actorRef.');
           const filter = choice('受け取る条件', 'filter.kind', [['all', 'すべて'], ['key', 'このキー'], ['message', 'この知らせ']], value?.filter?.key !== undefined ? 'key' : value?.filter?.message !== undefined ? 'message' : 'all');
           const filterValue = control('キー・知らせの文字', 'input', 'filter.value', value?.filter?.key ?? value?.filter?.message ?? '');
           const sync = () => {
@@ -20363,7 +20517,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             return heading;
           };
           restore = () => {
-            enabled.value = value ? 'yes' : 'no'; event.value = value?.event || 'start'; subject.restore();
+            enabled.value = value ? 'yes' : 'no'; event.value = currentEvent; subject.restore();
             filter.value = value?.filter?.key !== undefined ? 'key' : value?.filter?.message !== undefined ? 'message' : 'all';
             filterValue.value = value?.filter?.key ?? value?.filter?.message ?? ''; sync();
           };
@@ -20376,9 +20530,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         listen(group, 'change', () => { changed = true; group.dispatchEvent(new doc.defaultView.Event('input', { bubbles: true })); });
         if (!options.readOnly) {
           editInput(group, node, field, annotation);
-          listen(group, 'change', event => { if (event.target.tagName === 'SELECT') flush(); });
+          if(field.type==='heading')group.append(button('この見出しに決める','heading-commit',()=>flush({explicit:true})),button('見出しの変更を取り消す','heading-cancel',()=>cancel()));
+          listen(group, 'change', event => { if (field.type!=='heading'&&event.target.tagName === 'SELECT') flush(); });
           listen(group, 'focusout', event => {
-            if (!group.contains(event.relatedTarget) && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action]'))
+            if (field.type!=='heading'&&!group.contains(event.relatedTarget) && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action]'))
               flush({ focus: false });
           });
         }
@@ -20658,6 +20813,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         dx = Math.max(bounds.left + 8 - rect.left, Math.min(0, bounds.right - 8 - rect.right)),
         dy = Math.max(bounds.top + 8 - rect.top, Math.min(0, bounds.bottom - 8 - rect.bottom));
       commands.style.transform = 'translate(' + dx / zoom + 'px,' + dy / zoom + 'px)';
+    }
+    function placeSlotHead(slot){
+      const head=slot?.querySelector(':scope > .blockui-slot-head');if(!head||!slot.isConnected)return;
+      head.style.transform='';const bounds=workspace.getBoundingClientRect(),r=head.getBoundingClientRect();
+      const dx=Math.max(bounds.left+8-r.left,Math.min(0,bounds.right-8-r.right)),dy=Math.max(bounds.top+8-r.top,Math.min(0,bounds.bottom-8-r.bottom));
+      head.style.transform=`translate(${dx/zoom}px,${dy/zoom}px)`;
     }
     function nodeTools(node, info) {
       const schema = schemaOf(node),
@@ -21075,10 +21236,21 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         attachShape(box, blockShapeKind(schema));
       const head = E('div', 'blockui-node-head');
       head.append(E('strong', 'blockui-node-title', schema.label), nodeTools(node, info));
+      if(schema.category==='script'){
+        const heading=node.fields.heading,actor=heading?.actorRef?.kind==='named'?heading.actorRef.name:project()?.components.find(c=>c.id===context().targetId)?.name||project()?.stage?.name;
+        head.querySelector('strong').textContent=`${actor}・${EVENT_LABELS[heading?.event||context().event||'start']}`;
+      }
       box.append(head);
       box.classList.toggle('blockui-selected', selected === node.id);
       listen(box, 'click', (event) => {
-        if (event.target.closest('.blockui-node') === box) selection(node.id);
+        if (event.target.closest('.blockui-node') === box) {
+          const active=doc.activeElement,focused=active?.closest('.blockui-node');
+          // Expanding an inline field on focus can put its ancestor under the
+          // released pointer. Keep the field the user actually entered selected.
+          if(focused&&focused!==box&&box.contains(focused)&&active.matches('input,textarea'))
+            selection(focused.dataset.blockId);
+          else selection(node.id);
+        }
       });
       const line = session()?.nodeMap?.get?.(node.id)?.sourceSpan?.startLine;
       const diagnostics = schema.category === 'statement' ? diagnosticsByLine.get(line) || [] : [];
@@ -21133,7 +21305,42 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         // Render every role explicitly so cached legacy phrases cannot hide one.
         const field = key => fieldControl(node, schema.fields.find(f => f.key === key));
         const slot = key => renderInput(node, schema.inputs.find(s => s.key === key));
-        if (node.schemaId === 'UnaryExpression:NEG' && node.inputs.value?.schemaId === 'NumberLiteral') {
+        if(['BinaryExpression','CompareExpression','LogicalExpression'].includes(schema.kind)){
+          const operator=E('select','blockui-operator',null,{'aria-label':'演算子だけを変える'});
+          for(const candidate of BLOCK_SCHEMAS.filter(s=>s.kind===schema.kind))operator.append(E('option','',candidate.label,{value:candidate.id}));
+          operator.value=schema.id;operator.disabled=isLocked()||options.readOnly;
+          listen(operator,'change',()=>operate({type:'operator',id:node.id,schemaId:operator.value}));
+          main.append(slot('left'),operator,slot('right'));
+        } else if(schema.kind==='RepeatCount'||schema.kind==='Say'||schema.kind==='WaitTime'){
+          const numberSlot=(key,unit)=>{
+            const child=node.inputs[key],literal=child?.schemaId==='QuantityLiteral'&&child.fields.unit===unit?child.inputs.value:child;
+            if(literal?.schemaId==='NumberLiteral'){
+              main.append(fieldControl(literal,BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f=>f.key==='value')));
+              if(child?.schemaId==='QuantityLiteral')main.append(fieldControl(child,BLOCK_SCHEMA_BY_ID.get('QuantityLiteral').fields.find(f=>f.key==='unit')));
+              else main.append(E('span','blockui-phrase-text',unit));
+            }else {main.append(slot(key));if(child?.schemaId!=='QuantityLiteral')main.append(E('span','blockui-phrase-text',unit));}
+            main.append(button('式で指定','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を式で指定'}));
+          };
+          if(schema.kind==='Say'){
+            main.append(slot('value'));
+            const choices=hintCandidates(project(),context().targetId,{source:session()?.sourceText||'',...context()}).filter(h=>h.id.startsWith('read:')&&h.binding?.kind!=='list'&&h.enabled);
+            const data=E('select','blockui-speech-data',null,{'aria-label':'話す文字か、データの値を選ぶ'});
+            data.append(E('option','','文字を話す',{value:'literal'}),E('option','','式の結果を話す',{value:'expression'}));
+            for(const [i,hint]of choices.entries())data.append(E('option','',hint.text+'の今の値',{value:String(i)}));
+            const current=node.inputs.value;
+            data.value=current.schemaId==='StringLiteral'?'literal':String(choices.findIndex(h=>h.binding.name===current.fields.name&&h.binding.qualifier===current.fields.qualifier));
+            if(!data.value)data.value='expression';data.disabled=isLocked()||options.readOnly;
+            listen(data,'change',()=>{
+              if(data.value==='expression'){chooseDestination({parentId:node.id,input:'value'});return;}
+              const replacement=data.value==='literal'?createBlock('StringLiteral'):nodeForSearchHint(choices[Number(data.value)],project(),context());
+              if(data.value==='literal')replacement.fields.value=current.fields.name||current.fields.value||'';
+              operate({type:'expression',parentId:node.id,input:'value',node:replacement});
+            });main.append(data);
+            if(node.inputs.seconds){main.append(E('span','blockui-phrase-text','を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'),button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
+            else main.append(E('span','blockui-phrase-text','と言う'),button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));
+          }else {numberSlot(schema.kind==='RepeatCount'?'count':'seconds',schema.kind==='RepeatCount'?'回':'秒');main.append(E('span','blockui-phrase-text',schema.kind==='RepeatCount'?'くり返す':'待つ'));}
+          const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
+        } else if (node.schemaId === 'UnaryExpression:NEG' && node.inputs.value?.schemaId === 'NumberLiteral') {
           const child = node.inputs.value, numberField = BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value'),
             control = fieldControl(child, numberField), input = control.querySelector('input');
           if (input) { input.value = '－' + decimalSource(child.fields.value); input.dataset.signedParentId = node.id; input.dataset.signedEdit = 'true'; }
@@ -21182,6 +21389,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               operate({ type: 'expression', ...listLocation(info), node: target });
             });
             main.append(picker);
+            if(options.onData)main.append(button('＋ 変数・リストを作る','create-data',()=>options.onData()));
           }
         } else {
           // Existing phrase/alias presentation is retained. Optional new roles
@@ -21198,6 +21406,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           main.dataset.blockuiDrag = 'node';
           main.dataset.blockId = node.id;
         }
+        if(schema.kind==='IfStatement'&&!node.fields.hasElse&&!options.readOnly)main.append(button('＋ そうでなければを追加','else-add',()=>{
+          const result=operate({type:'else',id:node.id,enabled:true});
+          if(result.ok){const parent=index.get(node.id)?.node,hole=parent?.bodies.elseBody.find(n=>n.schemaId==='Hole:statement');if(hole)focus({id:hole.id});}
+        }));
         content.append(main);
       }
       for (const slot of schema.bodies) {
@@ -21462,6 +21674,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       updateControls();
       updateGeometry();
       observeMore();
+      selection(selected, s?.blockSelectionLocation || null);
       workspace.scrollTop = scroll.top;
       workspace.scrollLeft = scroll.left;
       rememberViewState();
@@ -21560,9 +21773,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           : null,
       );
       revealNode(id);
+      if(index.get(id)?.node.schemaId.startsWith('Hole:')&&zoom<0.75)setZoom(1);
       const n = locationElement({ ...point, id });
       n?.focus({ preventScroll: true });
-      n?.scrollIntoView({ block: point.body ? 'start' : 'nearest', inline: 'nearest' });
+      n?.scrollIntoView({ block: 'center', inline: 'center' });
       return !!n;
     }
     function highlight(location) {
@@ -21592,7 +21806,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         p = project(),
         [kind, id, event] = session()?.ownerKey?.split(':') || [],
         who = id === 'stage' ? p?.stage : p?.components.find((c) => c.id === id),
-        name = who?.name || ctx.definition?.name || '\u3053\u306e\u52d5\u304d';
+        name = tree?.fields.heading?.actorRef?.kind==='named'?tree.fields.heading.actorRef.name:who?.name||p?.components.find(c=>c.id===ctx.targetId)?.name||ctx.definition?.name||'この動き';
       const hat = E('div', 'blockui-event-hat', null, {
         'data-palette-tone': kind === 'script' ? 'event' : 'action',
         'data-shape-kind': 'hat',
@@ -21604,7 +21818,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           'strong',
           '',
           kind === 'script'
-            ? EVENT_LABELS[event] || event
+            ? EVENT_LABELS[tree?.fields.heading?.event||ctx.event||event] || event
             : kind === 'function'
               ? '\u8a08\u7b97\u3092\u547c\u3073\u51fa\u3057\u305f\u3068\u304d'
               : '\u52d5\u4f5c\u3092\u547c\u3073\u51fa\u3057\u305f\u3068\u304d',
@@ -21729,8 +21943,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       setZoom(
         Math.min(
           1,
-          (workspace.clientWidth - 80) / (script.offsetWidth + 56),
-          (workspace.clientHeight - 100) / (script.offsetHeight + 100),
+          Math.max(0.75,(workspace.clientWidth - 80) / (script.offsetWidth + 56)),
         ),
       );
       workspace.scrollTo({ top: 0, left: 0 });
@@ -21988,23 +22201,32 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         announce(reason, !valid && !!location);
       }
     }
-    function scrollDrag() {
+    function scrollDrag(timestamp = doc.defaultView.performance.now()) {
       dragFrame = null;
       if (!drag?.started) return;
+      // Keep the same 720px/s speed when rendering drops below sixty frames/s.
+      const elapsed = drag.scrollTime == null ? 1000 / 60 : Math.max(0, Math.min(100, timestamp - drag.scrollTime)),
+        distance = elapsed * .72;
+      drag.scrollTime = timestamp;
       const rect = workspace.getBoundingClientRect(),
         beforeTop = workspace.scrollTop,
         beforeLeft = workspace.scrollLeft;
       if (drag.clientX >= rect.left - 30 && drag.clientX <= rect.right + 30) {
         if (drag.clientY >= rect.top - 30 && drag.clientY < rect.top + 32)
-          workspace.scrollTop -= 12;
-        else if (drag.clientY <= rect.bottom + 30 && drag.clientY > rect.bottom - 32)
-          workspace.scrollTop += 12;
+          workspace.scrollTop -= distance;
+        else if (drag.clientY <= rect.bottom + 30 && drag.clientY > rect.bottom - 32) {
+          const bounds = world.getBoundingClientRect(), padding = parseFloat(doc.defaultView.getComputedStyle(world).paddingBottom) || 0,
+            contentEnd = beforeTop + bounds.bottom - padding * zoom,
+            lastReachableTop = Math.max(0, contentEnd - rect.bottom + 48);
+          // Free panning keeps its blank margin; edge dragging stops at actual content.
+          workspace.scrollTop = Math.min(lastReachableTop, beforeTop + distance);
+        }
       }
       if (drag.clientY >= rect.top - 30 && drag.clientY <= rect.bottom + 30) {
         if (drag.clientX >= rect.left - 30 && drag.clientX < rect.left + 24)
-          workspace.scrollLeft -= 12;
+          workspace.scrollLeft -= distance;
         else if (drag.clientX <= rect.right + 30 && drag.clientX > rect.right - 24)
-          workspace.scrollLeft += 12;
+          workspace.scrollLeft += distance;
       }
       if (beforeTop !== workspace.scrollTop || beforeLeft !== workspace.scrollLeft)
         previewDrag(drag);
@@ -22140,6 +22362,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         n.classList.remove('blockui-slot-active');
       node?.classList.add('blockui-focused');
       slot?.classList.add('blockui-slot-active');
+      if(slot)doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));
     });
     listen(root, 'keydown', (event) => {
       if (event.isComposing) return;
@@ -22997,7 +23220,140 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (binding === mainEditor && binding.session?.pendingEdit) refreshEditor();
       return false;
     }
-    function saveCodeBinding(binding) {
+    function sourceImportPlan(binding, source) {
+      const context = bindingContext(binding), symbols = buildSymbols(project),
+        parsed = parseSyntax(source, { ...context, symbols });
+      if (!parsed.ast?.units?.length) return null;
+      sourceCandidate(binding, bindingOwner(binding), source);
+      const sourceKey = bindingOwner(binding), original = scriptBySourceKey(project, sourceKey),
+        units = [parsed.ast, ...parsed.ast.units], originalAst = original && parseSyntax(original.source, { targetId: original.targetId, event: original.event, symbols }).ast;
+      const normalized = (body, targetId) => {
+        const visit = value => {
+          if (Array.isArray(value)) return value.map(visit);
+          if (!value || typeof value !== 'object') return value;
+          const out = {};
+          for (const [key, child] of Object.entries(value)) {
+            if (key === 'actorRef' && child?.kind === 'named') {
+              const id = child.targetId || (child.name === project.stage.name || child.name === '画面'
+                ? 'stage' : project.components.find(c => c.name === child.name)?.id);
+              out[key] = id === targetId ? { kind: 'self' } : visit(child);
+            } else out[key] = visit(child);
+          }
+          return out;
+        };
+        return { kind: 'Script', body: visit(body) };
+      };
+      const signature = metadata => stableJson([metadata.targetId, metadata.event, metadata.filter || null]);
+      const existing = project.scripts.filter(row => row !== original || (row.source.trim() && !originalAst?.units?.length)).flatMap(row => {
+        const ast = parseSyntax(row.source, { targetId: row.targetId, event: row.event, symbols }).ast;
+        if (!row.source.trim()) return [];
+        if (!ast) return [{ row, text: row.source, metadata: { targetId: row.targetId, event: row.event, filter: row.filter }, body: null }];
+        return [ast, ...(ast.units || [])].map(unit => {
+          const range = SOURCE_RANGES.get(unit)?.range,
+            text = range ? row.source.slice(range.start, range.end) : row.source;
+          // Inherited headings already carry their resolved event in the full document AST.
+          const metadata = unit.heading ? scriptMetadataFromHeading(unit.heading, row, project)
+            : { targetId: row.targetId, event: row.event, filter: row.filter };
+          return { row, text, metadata, body: unit.body };
+        });
+      });
+      const entries = units.map(unit => {
+        const range = SOURCE_RANGES.get(unit).range, text = source.slice(range.start, range.end),
+          metadata = unit.heading ? scriptMetadataFromHeading(unit.heading,
+            { targetId: context.targetId, event: context.event }, project)
+            : { targetId: context.targetId, event: context.event, filter: context.filter },
+          candidates = existing.filter(x => signature(x.metadata) === signature(metadata)),
+          isolated = parseSyntax(text, { ...metadata, symbols }).ast;
+        const independent = !!isolated && !isolated.units?.length &&
+          astEquivalent(normalized(unit.body, metadata.targetId), normalized(isolated.body, metadata.targetId));
+        const equal = candidates.length === 1 && astEquivalent(normalized(unit.body, metadata.targetId),
+          normalized(candidates[0].body, metadata.targetId));
+        return { text, metadata, candidates, independent, equal };
+      });
+      for (const entry of entries) if (entries.filter(x => signature(x.metadata) === signature(entry.metadata)).length > 1)
+        entry.equal = false;
+      const hasExisting = entries.some(x => x.candidates.length),
+        safe = entries.every(x => !x.candidates.length || x.equal) && (!hasExisting || entries.every(x => x.independent));
+      const canEditCurrent = !!original?.source.trim() && signature(entries[0].metadata) === signature(original) &&
+        entries.every(entry => entry.candidates.every(candidate => candidate.row === original));
+      return { source, ownerKey: sourceKey, context, entries, hasExisting, safe, canEditCurrent,
+        canSplit: entries.every(x => x.independent), projectFingerprint: currentFingerprint() };
+    }
+    function hideSourceImport() { $('#sourceImport').hidden = true; $('#sourceImport').replaceChildren(); }
+    function confirmSourceImport(binding, source, separate = false, editCurrent = false) {
+      if (modelLocked() || composingEditors.has(binding.textarea) || binding.textarea.value !== source) return false;
+      try {
+        const plan = sourceImportPlan(binding, source);
+        if (!plan || (editCurrent ? !plan.canEditCurrent : (!separate && !plan.safe) || (plan.hasExisting && !plan.canSplit))) return false;
+        if (editCurrent || !plan.hasExisting) {
+          commitSource(binding, source, { atomic: true });
+          hideSourceImport(); renderEditorBinding(binding); refreshEditor(); return true;
+        }
+        const next = cloneDesignProject(project), old = scriptBySourceKey(next, plan.ownerKey),
+          incoming = plan.entries.filter(x => separate || !x.equal), ids = allIds();
+        const fresh = () => { let n = 1; while (ids.has('import-script-' + n)) n++; const id = 'import-script-' + n; ids.add(id); return id; };
+        const selectedEntry = incoming.find(x => x.metadata.targetId === plan.context.targetId &&
+          x.metadata.event === plan.context.event && stableJson(x.metadata.filter || null) === stableJson(plan.context.filter || null));
+        let destination = null;
+        for (const entry of incoming) {
+          const row = entry === selectedEntry && old && !old.source.trim() ? old : { id: fresh(), ...entry.metadata, source: '' };
+          updateScriptSource(row, entry.text, next);
+          if (row !== old) next.scripts.push(row);
+          if (entry === selectedEntry || !destination) destination = row;
+        }
+        // If every incoming unit is explicitly retained, keep the editing destination unchanged.
+        destination ||= old;
+        validateDesignProject(next);
+        if (plan.projectFingerprint !== currentFingerprint() || plan.ownerKey !== bindingOwner(binding))
+          throw new AkariError('F503', '取り込み先が変わりました。もう一度内容を確認してください');
+        clearTimeout(historyTimer);
+        binding.session.pendingEdit = null; binding.textarea.value = readSource(binding);
+        hideSourceImport(); pushHistoryNow();
+        project = next;
+        if (destination) { selectedId = destination.targetId; currentEvent = destination.event; selectedScriptId = destination.id || null; }
+        invalidateEditors(); clearEditorFailure(binding); markDirty(); renderTree(); renderProperties(); loadEditor();
+        clearTimeout(historyTimer); pushHistoryNow();
+        setStatus('既存の動きを残して、選んだ本文へ取り込みました'); return true;
+      } catch (error) { return showEditorFailure(binding, error, { preservePending: true }); }
+    }
+    function showSourceImport(binding, source, plan) {
+      const root = $('#sourceImport'); root.replaceChildren(); root.hidden = false;
+      const heading = document.createElement('strong'); heading.textContent = '動きの取り込み先を確認'; root.append(heading);
+      for (const entry of plan.entries) {
+        const actor = targetById(entry.metadata.targetId)?.name || 'この部品', event = entry.metadata.event,
+          label = event === 'start' ? actor + 'の開始' : event === 'click' ? actor + 'をクリックしたとき' : actor + '・' + EVENT_LABELS[event];
+        const row = document.createElement('p');
+        row.textContent = entry.candidates.length ? label + 'は既にあります' : label + 'の動きを追加'; root.append(row);
+        if (entry.candidates.length) {
+          const details = document.createElement('details'), summary = document.createElement('summary');
+          summary.textContent = entry.equal ? '既存の本文はそのまま残します' : '既存の本文と届いた節を比べる'; details.append(summary);
+          if(plan.canEditCurrent && !plan.safe)details.open = true;
+          for (const text of [...entry.candidates.map(x => '既存：\n' + x.text), '届いた節：\n' + entry.text]) {
+            const pre = document.createElement('pre'); pre.textContent = text; pre.style.whiteSpace = 'pre-wrap'; pre.style.maxHeight = '140px'; pre.style.overflow = 'auto'; details.append(pre);
+          }
+          root.append(details);
+        }
+      }
+      if (!plan.safe) {
+        const notice = document.createElement('p'); notice.textContent = !plan.canSplit
+          ? '前の見出しを使う節があるため、安全に別々の本文へ分けられません。原文を残して取り消せます。'
+          : '同じできごとの内容が違うか、複数あります。追加では既存の本文を残します。違いを確認してください。'; root.append(notice);
+      }
+      const confirm = document.createElement('button'); confirm.type = 'button'; confirm.id = 'sourceImportConfirm';
+      confirm.textContent = plan.hasExisting ? '既存を残して追加' : '文章を取り込む'; confirm.disabled = !plan.safe;
+      confirm.onclick = () => confirmSourceImport(binding, source); root.append(confirm);
+      if (plan.hasExisting && !plan.safe && plan.canSplit) {
+        const separate = document.createElement('button'); separate.type = 'button'; separate.id = 'sourceImportSeparate';
+        separate.textContent = '既存を残して、別の本文として追加'; separate.onclick = () => confirmSourceImport(binding, source, true); root.append(separate);
+      }
+      if(plan.canEditCurrent && !plan.safe){
+        const edit = document.createElement('button'); edit.type = 'button'; edit.id = 'sourceImportEditCurrent';
+        edit.textContent = 'この本文を変更して取り込む'; edit.onclick = () => confirmSourceImport(binding, source, false, true);root.append(edit);
+      }
+      const cancel = document.createElement('button'); cancel.type = 'button'; cancel.id = 'sourceImportCancel'; cancel.textContent = '取り込みを取り消す';
+      cancel.onclick = () => cancelEditorPending(binding); root.append(cancel);
+    }
+    function saveCodeBinding(binding, { fromInput = false } = {}) {
       if (binding.session?.blockDraft) return flushEditor(binding);
       if (modelLocked() || binding.session?.mode === 'blocks') return true;
       const t = binding.textarea;
@@ -23006,11 +23362,23 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const source = t.value.replace(/\r\n?/g, '\n');
       // A textarea normalizes CRLF on display; that alone is not an edit of source.
       if (source === readSource(binding).replace(/\r\n?/g, '\n')) {
+        if (binding === mainEditor) hideSourceImport();
         if (binding.session) binding.session.pendingEdit = null;
         clearEditorFailure(binding);
         return true;
       }
       try {
+        if (binding === mainEditor) {
+          const parsed = parseSyntax(source, { ...bindingContext(binding), symbols: buildSymbols(project) }),
+            plan = sourceImportPlan(binding, source);
+          if (plan || (fromInput && parsed.ast?.heading)) {
+            binding.session.pendingEdit = { ownerKey: bindingOwner(binding), kind: plan ? 'source-import' : 'heading-source',
+              value: source, reason: plan ? '取り込み先を確認して決めてください' : '見出しを含む原文は書きかけです。表示の切替や実行で確定します' };
+            if (plan) showSourceImport(binding, source, plan); else hideSourceImport();
+            scheduleAutosave(); updateDirty(); return false;
+          }
+        }
+        hideSourceImport();
         commitSource(binding, source);
         if (binding.session) binding.session.pendingEdit = null;
         clearEditorFailure(binding);
@@ -23038,8 +23406,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             result?.reason || '入力を確定するか取り消してください',
             { preservePending: true },
           );
-        if (binding.session?.blockDraft)
-          return showEditorFailure(binding, '未確定の穴を選んで、命令や値を入れてください', { preservePending: true });
+        if (binding.session?.blockDraft){
+          const hole=[...buildBlockIndex(binding.session.blockView).values()].find(entry=>entry.node.schemaId.startsWith('Hole:'));
+          const context=bindingContext(binding),name=targetById(context.targetId)?.name||'この本文',label=hole?.node.fields.label||'命令や値';
+          if(hole)binding.view.focus({id:hole.node.id});
+          return showEditorFailure(binding, `${name}・${EVENT_LABELS[context.event]||'この本文'}：${label}を入れる欄に移動しました`, { preservePending: true });
+        }
         return true;
       }
       if (binding.session?.blockDraft) {
@@ -23338,6 +23710,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       return true;
     }
     function cancelEditorPending(binding) {
+      if (binding === mainEditor) hideSourceImport();
       const draft = binding.session?.blockDraft;
       if (draft) {
         Object.assign(binding.session, draft.baseline, { blockDraft: null, pendingEdit: null });
@@ -23999,10 +24372,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         confirm('作品または手順・答えを求める定義に保存していない編集があります。今の編集を捨てて続けますか？')
       );
     }
-    function saveEditor() {
+    function saveEditor(options = {}) {
       if (modelLocked()) return true;
       activeDragCleanup?.();
-      return saveCodeBinding(mainEditor);
+      return saveCodeBinding(mainEditor, options);
     }
     function eventsFor(id) {
       return EVENT_BY_TYPE[targetType(id)] || EVENT_BY_TYPE.stage;
@@ -24028,6 +24401,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       $('#sourceOverviewBtn').hidden = sourceOverviewOpen;
       $('#sourceEditBtn').hidden = !sourceOverviewOpen;
       $('#sourceStageBtn').hidden = selectedId === 'stage';
+      $('#sourceHeadingBtn').hidden = sourceOverviewOpen;
+      $('#sourceHeadingBtn').disabled = modelLocked();
       el.obj.innerHTML = '';
       const add = (v, t) => {
         const o = document.createElement('option');
@@ -25700,7 +26075,6 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       ]);
       const tasks = scheduler ? [...scheduler.tasks.values()] : [];
       section('\u5b9f\u884c\u6982\u8981', [
-        ['\u4e71\u6570\u7a2e', runtime.runSeed],
         ['\u5b9f\u884c\u5f85\u3061', tasks.filter((t) => t.state === 'READY').length],
         ['\u5f85\u6a5f\u4e2d', tasks.filter((t) => t.state === 'BLOCKED').length],
       ]);
@@ -25719,8 +26093,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const focus = scheduler?.tasks.get(activeTaskId) || tasks[0];
       if (focus) {
         section('\u73fe\u5728\u306e\u51e6\u7406', [
-          ['\u72b6\u614b', focus.state],
-          ['きっかけ', `${focus.targetId} / ${EVENT_LABELS[focus.eventType] || focus.eventType}`],
+          ['状態', focus.state==='BLOCKED'?({time:focus.blockReason?.speechToken?'話している':'時間を待っている',condition:'条件を待っている',question:'答えを待っている',waitGroup:'ほかの動作を待っている',glide:'移動している'}[focus.blockReason?.kind]||'終わるのを待っている'):({READY:'順番を待っている',RUNNING:'動いている',DONE:'終わった',PAUSED:'一時停止',ERROR:'直すところがある',CANCELLED:'止めた'}[focus.state]||'動いている')],
+          ['きっかけ', `${targetById(focus.targetId)?.name||'作品'} / ${EVENT_LABELS[focus.eventType] || focus.eventType}`],
         ]);
         for (const f of focus.callFrames)
           section('\u52d5\u4f5c ' + f.name, [
@@ -25729,6 +26103,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             ...Array.from(f.localLists, ([k, v]) => ['この中だけのリスト ' + k, v]),
           ]);
       }
+      const details=document.createElement('details'),summary=document.createElement('summary'),text=document.createElement('pre');summary.textContent='実行の詳しい記録';text.textContent=tasks.map(t=>`${t.targetId}: ${t.state}`).join('\n');details.append(summary);renderMonitorSection(details,'再現用の値',[['乱数種',runtime.runSeed]]);details.append(text);el.monitor.append(details);
     }
     function monitorValue(value) {
       const short = (v) => {
@@ -25980,11 +26355,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         penClear: stageView.clearPen,
         stamp: stageView.stamp,
         prepareSpeech: value => { speechValue = value; },
-        say: (rid, text) => {
+        say: (rid, text, controlled) => {
           flushRuntimePaint();
           const value = speechValue; speechValue = undefined;
-          showBubble(rid, text, value);
+          stageView.showBubble(rid, text, value, controlled);
         },
+        clearSpeech: stageView.clearSpeech,
         beforeStatement: (task, node) => {
           activeTaskId = task.taskId;
           activeLoc = sourceLocation(task, node);
@@ -26353,6 +26729,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         editorModes.set(binding.kind,saved.mode);session.mode=saved.mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
         if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(saved.pending))throw new AkariError('F503','書きかけの入力欄を復元できません');
         showEditorFailure(binding,saved.pending.reason||'書きかけの作文をもどしました',{preservePending:true});
+        if(binding===mainEditor&&saved.pending.kind==='source-import'){const plan=sourceImportPlan(binding,saved.source);if(plan)showSourceImport(binding,saved.source,plan);}
       }
       for(const view of state.views){const binding=view.kind==='draft'?draftEditor:mainEditor;if(view.kind==='script'&&bindingOwner(binding)!==view.ownerKey)continue;
         if(!binding.session)getEditorSession(binding,{force:true});
@@ -27858,7 +28235,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       t.addEventListener('compositionend', () => {
         composingEditors.delete(t);
         if (t === el.editor) {
-          saveEditor();
+          saveEditor({ fromInput: true });
           refreshEditor();
         } else updateCallableHeader();
       });
@@ -27904,7 +28281,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     };
     el.editor.addEventListener('input', () => {
       if (composingEditors.has(el.editor)) return;
-      saveEditor();
+      saveEditor({ fromInput: true });
       clearTimeout(el.editor._timer);
       el.editor._timer = setTimeout(refreshEditor, 100);
     });
@@ -27983,7 +28360,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       loadEditor();
       resetHistory();
       clearAutosave();
-      setStatus(sample ? 'お手本：作品を動かしたときに、右へ10歩進んで話します' : '新しい作品');
+      setStatus(sample ? 'お手本：作品を動かしたときに、右へ10歩進んで話します' : '空の作品です。動かすもの・できごとを選び、命令を入れましょう');
     }
     $('#newBtn').onclick = () => startProject(false);
     $('#sampleBtn').onclick = () => startProject(true);
@@ -28227,6 +28604,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           binding.textarea.value = saved.source;
           renderEditorBinding(binding);
           showEditorFailure(binding, saved.pending.reason || '書きかけの作文をもどしました');
+          if(binding===mainEditor&&saved.pending.kind==='source-import'){const plan=sourceImportPlan(binding,saved.source);if(plan)showSourceImport(binding,saved.source,plan);}
         }
         $('#recoveryModal').classList.remove('show');
         recoveryData = null;
@@ -28291,6 +28669,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         getSession: () => getEditorSession(binding),
         getProject: () => project,
         getContext: () => bindingContext(binding),
+        onData: () => $('#dataBtn').click(),
         isLocked: modelLocked,
         onOperation: (operation) => operateBlock(binding, operation),
         onPending: (pending) => {
@@ -28390,7 +28769,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         const target = event.target.closest('button,.tree-item,.tool');
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
-          target.closest('#blockEditor,#callableBlocks,.editor-modes') ||
+          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport') ||
           target.matches('#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
@@ -28409,7 +28788,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       (event) => {
         if (
           modelLocked() ||
-          event.target.closest('#blockEditor,#callableBlocks,#colorModal,#paintModal') ||
+          event.target.closest('#blockEditor,#callableBlocks,#sourceImport,#colorModal,#paintModal') ||
+          (event.target.matches('#codeEditor') && ['source-import','heading-source'].includes(mainEditor.session?.pendingEdit?.kind)) ||
           event.target.matches('#objectSelect,#eventSelect,#callableType,#callableSelect,#fileInput')
         )
           return;
@@ -28429,7 +28809,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (
           modelLocked() ||
           flushingEditor ||
-          event.target.closest('.editor-modes,#colorModal,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          event.target.closest('.editor-modes,#sourceImport,#colorModal,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;
@@ -28461,6 +28841,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     };
     $('#sourceOverviewBtn').onclick = () => { if (flushActiveEditor()) showSourceOverview(); };
     $('#sourceEditBtn').onclick = () => { hideSourceOverview(); loadEditor(); };
+    $('#sourceHeadingBtn').onclick = () => {
+      if (modelLocked() || !switchEditorMode(mainEditor, 'blocks')) return;
+      const field=$('#blockEditor [data-blockui-structured-role="heading.enabled"]');
+      if (!field) return;
+      for (let parent=field.parentElement;parent;parent=parent.parentElement)
+        if (parent.tagName==='DETAILS') parent.open=true;
+      field.scrollIntoView({block:'center'}); field.focus({preventScroll:true});
+      setStatus('この本文を保って見出しを変更します。「できごとを指定」で選び、「この見出しに決める」で確定します。コード表示にも戻れます');
+    };
     $('#sourceStageBtn').onclick = () => { if (selectObject('stage')) showSourceOverview(); };
     $('#procClose').onclick = () => {
       flushActiveEditor();
@@ -28491,7 +28880,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     loadEditor();
     setupModalAccessibility();
     checkRecovery();
-    setStatus(`準備完了 — ${productLabel(true)}`);
+    setStatus(`空の作品です。命令を入れるか「お手本を開く」で試せます — ${productLabel(true)}`);
     app = {
       get editorState() {
         return {

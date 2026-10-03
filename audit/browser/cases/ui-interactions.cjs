@@ -58,7 +58,7 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
   });
   await test('UI-required-body-noop-replacement',async()=>{
    await fixture('2回くり返す。\n  1を言う。');let old=await state();await U.nodeAction(nodes('Say'),'remove');assert.equal((await state()).source,old.source);assert.equal((await state()).history,old.history);
-   await U.nodeAction(nodes('Say'),'replace-noop');assert.equal((await state()).ast.body[0].body[0].kind,'NoOperation');
+   assert.equal(await nodes('Hole:statement').count(),1);assert.ok(await page.evaluate(()=>Akari.app.editorState.main.blockDraft));await page.locator('#runBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN');await page.locator('#undoBtn').click();assert.equal((await state()).source,old.source);assert.equal(await nodes('Say').count(),1);await U.nodeAction(nodes('Say'),'replace-noop');assert.equal((await state()).ast.body[0].body[0].kind,'NoOperation');await page.locator('#undoBtn').click();assert.equal((await state()).source,old.source);
   });
   await test('UI-pointer-preview-single-drop-cancel',async()=>{
    await fixture('1を言う。\n2を言う。\n3を言う。');for(let i=0;i<3;i++){await U.nodeAction(nodes('Say').nth(i),'collapse');await U.nodeAction(nodes('Say').nth(i),'collapse');}

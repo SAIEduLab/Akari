@@ -15,6 +15,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -83,6 +85,15 @@ jobs:
       - name: Verify empty work, sample, speech placement and manual contrast
         if: always()
         run: node audit/tests/ux-surface-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/ux-surface-browser.json
+      - name: Verify unchanged UX originals and timed speech semantics
+        if: always()
+        run: node audit/tests/ux-repair-language.mjs audit-evidence/acceptance/ux-repair-language.json
+      - name: Verify UX repair controls in the fixed browser
+        if: always()
+        run: node audit/tests/ux-repair-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/ux-repair-browser.json
+      - name: Verify simultaneous speech at 52 and 100 percent with both mascots
+        if: always()
+        run: node audit/tests/ux-bubble-layout.cjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/ux-bubble-layout.json
       - name: Independently verify complete results and validator rejection ability
         if: always()
         run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance

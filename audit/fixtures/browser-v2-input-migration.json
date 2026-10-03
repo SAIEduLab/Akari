@@ -698,7 +698,7 @@
       "originalPath": "audit/browser/cases/browser-boundaries.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-boundaries.cjs",
       "originalSha256": "0fae3abb2408f97b95f20a42c60c8e4354fde1b9affa5c42e94d5f26d309c9c8",
-      "candidateSha256": "8a1c84f59fabeb41a4158d831c056facf6585cf34e5b89ad74f540666e636889",
+      "candidateSha256": "253c00fa7c0a9af4252d9f9b253c7b0e864835034bf0f17f65dca39458f97e45",
       "stableIds": [
         "variadic-35-inputs-edit-move-remove",
         "body-pagination-and-comment-multiline",
@@ -1284,7 +1284,7 @@
       "originalPath": "audit/browser/cases/ui-interactions.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/ui-interactions.cjs",
       "originalSha256": "51c684d58f724f67ee8ac1457e6224c896b0d4457714261e78ac72901c873fcc",
-      "candidateSha256": "05a2f199cec84327c91c546b9c46402bda9519710b7290724b3482a3386765e3",
+      "candidateSha256": "b876ffe6144e16017276cabb91a992e52e0bd444dcc34a7c2c958d06f2c696a8",
       "stableIds": [
         "UI-empty-body-switch",
         "UI-pending-number-commit-cancel",
@@ -1362,7 +1362,7 @@
       "originalPath": "audit/browser/cases/workbench-matrix.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/workbench-matrix.cjs",
       "originalSha256": "47dbff2d587f7ae2a646da54663c9de3f9123ef8becd2bd8cd14347044c5d33b",
-      "candidateSha256": "b29d565d93ae0875e9fd1ade66cf2341ac1ff2c1af0e1e537eabfe05e2170bed",
+      "candidateSha256": "49c4df1fc00f1c002b010f5f6a3bc614138d38966bf8a0d648adced5c47d0688",
       "stableIds": [
         "1366/0.75",
         "1366/1",
@@ -3957,6 +3957,50 @@
       "oldText": " await run('DESIGN-STANDARD-SPRITES',async()=>{const source=L.read(L.path.join(dir,manifest.candidate)),vm=require('vm'),sandbox={Object,STANDARD_AKARI_MASCOT:{kind:'image'}};const match=source.match(/const STANDARD_SPRITES\\s*=\\s*Object.freeze\\(\\s*(\\{[\\s\\S]*?\\})\\s*\\);/);assert(match);const registry=vm.runInNewContext('('+match[1]+')',sandbox);const buttons=p.locator('[data-sprite-preset]'),ids=await buttons.evaluateAll(ns=>ns.map(n=>n.dataset.spritePreset));assert.equal(new Set(ids).size,ids.length);assert.deepEqual(ids.slice().sort(),Object.keys(registry).sort());const images=p.locator('[data-sprite-preset] img');assert.equal(await images.count(),Object.values(registry).filter(v=>v.kind==='image').length);await p.waitForFunction(()=>[...document.querySelectorAll('[data-sprite-preset] img')].every(e=>e.complete&&e.naturalWidth>0&&e.naturalHeight>0));return{count:ids.length,unique:true,allRegistered:true,imagePresetsDecoded:await images.count()};});",
       "newText": " await run('DESIGN-STANDARD-SPRITES',async()=>{\n  const source=L.read(L.path.join(dir,manifest.candidate)),vm=require('vm'),\n   sandbox={Object,STANDARD_AKARI_MASCOT:{kind:'image'}};\n  const dangoId=source.match(/const DANGO_MASCOT_ASSET_ID\\s*=\\s*('[^']*'|\"[^\"]*\")/);\n  assert(dangoId,'the Dango registry dependency is defined by the product');\n  sandbox.DANGO_MASCOT_ASSET_ID=vm.runInNewContext(dangoId[1]);\n  const match=source.match(/const STANDARD_SPRITES\\s*=\\s*Object.freeze\\(\\s*(\\{[\\s\\S]*?\\})\\s*\\);/);\n  assert(match);const registry=vm.runInNewContext('('+match[1]+')',sandbox);\n  const buttons=p.locator('[data-sprite-preset]'),ids=await buttons.evaluateAll(ns=>ns.map(n=>n.dataset.spritePreset));\n  assert.equal(new Set(ids).size,ids.length);\n  assert.deepEqual(ids.slice().sort(),Object.keys(registry).sort());\n  const images=p.locator('[data-sprite-preset] img');\n  assert.equal(await images.count(),Object.values(registry).filter(v=>v.kind==='image').length);\n  await p.waitForFunction(()=>[...document.querySelectorAll('[data-sprite-preset] img')].every(e=>e.complete&&e.naturalWidth>0&&e.naturalHeight>0));\n  return{count:ids.length,unique:true,allRegistered:true,imagePresetsDecoded:await images.count()};\n });",
       "preservedMeaning": "Explicit user request adds Dango as a second image mascot. CI run 36938045944 fails all six DESIGN-STANDARD-SPRITES tuples because the isolated registry sandbox lacks DANGO_MASCOT_ASSET_ID. Bind that dependency from the product declaration, and retain every original registry/button uniqueness, complete registration, image count equality, and actual decoded image assertion. Product now supplies both original-PNG palette thumbnails. No skipped case, replaced ID, reduced viewport/mode matrix, lowered expectation, or asset-byte transformation."
+    },
+    {
+      "id": "browser-ux-required-draft-001",
+      "path": "audit/browser/cases/browser-boundaries.cjs",
+      "testIds": [
+        "empty-required-body-refusal-and-noop-replacement"
+      ],
+      "oldLine": 10,
+      "newLine": 10,
+      "oldText": "await run('empty-required-body-refusal-and-noop-replacement',async p=>{await fill(p,'2回くり返す。\\n  点数に1を足す。');await block(p);let child=p.locator('#blockEditor .blockui-node[data-schema-id=\"NumericUpdate:ADD\"]');const before=await state(p);await openNodeMenu(child);await child.locator('[data-blockui-action=\"remove\"]').first().click();assert.deepEqual(await state(p),before);await openNodeMenu(child);await (await reveal(child.locator('[data-blockui-action=\"replace-noop\"]'))).click();assert.match((await state(p)).source,/何もしない/);assert.equal((await state(p)).history,before.history+1);await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await state(p)).source,before.source);return{emptyBodyRejectedAtomically:true,explicitNoOpReplacementUndo:true};});",
+      "newText": "await run('empty-required-body-refusal-and-noop-replacement',async p=>{await fill(p,'2回くり返す。\\n  点数に1を足す。');await block(p);let child=p.locator('#blockEditor .blockui-node[data-schema-id=\"NumericUpdate:ADD\"]');const before=await state(p);await openNodeMenu(child);await child.locator('[data-blockui-action=\"remove\"]').first().click();assert.deepEqual(await state(p),before);assert.equal(await p.locator('#blockEditor [data-schema-id=\"Hole:statement\"]').count(),1);assert.ok(await p.evaluate(()=>Akari.app.editorState.main.blockDraft));await p.locator('#runBtn').click();assert.equal(await p.evaluate(()=>Akari.app.editorState.state),'DESIGN');await p.locator('#undoBtn').click();assert.equal(await child.count(),1);assert.equal((await state(p)).source,before.source);await openNodeMenu(child);await (await reveal(child.locator('[data-blockui-action=\"replace-noop\"]'))).click();assert.match((await state(p)).source,/何もしない/);assert.equal((await state(p)).history,before.history+1);await (await reveal(p.locator('#undoBtn'))).click();assert.equal((await state(p)).source,before.source);return{emptyBodyRejectedAtomically:true,explicitNoOpReplacementUndo:true};});",
+      "preservedMeaning": "UX repair instructions require an incomplete required statement body to stay in the editor as Hole:statement. Committed source/history remain unchanged; Run must stay in DESIGN; Undo restores the original NumericUpdate/Say. The existing explicit replace-noop action is then executed and its committed NoOperation and Undo are verified. The original atomic committed-source/history guarantees and stable case IDs remain, with added draft, refused Run, and cancellation assertions. No product capability, numerical bound, timeout, or original expected result is removed."
+    },
+    {
+      "id": "browser-ux-required-draft-002",
+      "path": "audit/browser/cases/ui-interactions.cjs",
+      "testIds": [
+        "UI-required-body-noop-replacement"
+      ],
+      "oldLine": 61,
+      "newLine": 61,
+      "oldText": "   await U.nodeAction(nodes('Say'),'replace-noop');assert.equal((await state()).ast.body[0].body[0].kind,'NoOperation');",
+      "newText": "   assert.equal(await nodes('Hole:statement').count(),1);assert.ok(await page.evaluate(()=>Akari.app.editorState.main.blockDraft));await page.locator('#runBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.state),'DESIGN');await page.locator('#undoBtn').click();assert.equal((await state()).source,old.source);assert.equal(await nodes('Say').count(),1);await U.nodeAction(nodes('Say'),'replace-noop');assert.equal((await state()).ast.body[0].body[0].kind,'NoOperation');await page.locator('#undoBtn').click();assert.equal((await state()).source,old.source);",
+      "preservedMeaning": "UX repair instructions require an incomplete required statement body to stay in the editor as Hole:statement. Committed source/history remain unchanged; Run must stay in DESIGN; Undo restores the original NumericUpdate/Say. The existing explicit replace-noop action is then executed and its committed NoOperation and Undo are verified. The original atomic committed-source/history guarantees and stable case IDs remain, with added draft, refused Run, and cancellation assertions. No product capability, numerical bound, timeout, or original expected result is removed."
+    },
+    {
+      "id": "workbench-edge-scroll-evidence-0001",
+      "path": "audit/browser/cases/workbench-matrix.cjs",
+      "testIds": [
+        "1366/0.75",
+        "1366/1",
+        "1366/1.25",
+        "768/0.75",
+        "768/1",
+        "768/1.25",
+        "390/0.75",
+        "390/1",
+        "390/1.25"
+      ],
+      "oldLine": 13,
+      "newLine": 13,
+      "oldText": "const first=root.locator('[data-block-id=\"'+firstId+'\"].blockui-node');await tabTo(first);const text=first.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').first();await text.scrollIntoViewIfNeeded();let h=await text.boundingBox(),w=await world.boundingBox();await p.mouse.move(h.x+h.width/2,h.y+h.height/2);await p.mouse.down();await p.mouse.move(h.x+h.width/2+10,h.y+h.height/2,{steps:3});let reached=false;for(let i=0;i<400;i++){w=await world.boundingBox();const d=await end.boundingBox();if(d&&d.y>w.y+10&&d.y+d.height<w.y+w.height-48){await p.mouse.move(Math.max(w.x+32,Math.min(w.x+w.width-32,d.x+25)),d.y+d.height/2);await p.waitForTimeout(50);if(await root.locator('.blockui-drop-preview').count()===1){reached=true;break;}}await p.mouse.move(w.x+Math.min(90,w.width/2),w.y+w.height-7);await p.waitForTimeout(20);}assert(reached,'edge scrolling reaches later loaded page');assert.equal((await state(p)).source,source);assert.equal(await root.locator('.blockui-drop-preview').count(),1);await p.screenshot({path:L.path.join(dir,'workbench-preview-'+viewport.width+'-'+zoom+'.png')});await p.keyboard.press('Escape');await p.mouse.up();assert.equal((await state(p)).source,source);assert.equal((await state(p)).history,before.history);evidence.edgeScrollAndCancel=true;",
+      "newText": "const first=root.locator('[data-block-id=\"'+firstId+'\"].blockui-node');await tabTo(first);const text=first.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').first();await text.scrollIntoViewIfNeeded();let h=await text.boundingBox(),w=await world.boundingBox();await p.mouse.move(h.x+h.width/2,h.y+h.height/2);await p.mouse.down();await p.mouse.move(h.x+h.width/2+10,h.y+h.height/2,{steps:3});let reached=false;const edgeStarted=Date.now(),edgeSamples=[];for(let i=0;i<400;i++){w=await world.boundingBox();const d=await end.boundingBox();if(i%20===0)edgeSamples.push({iteration:i,ms:Date.now()-edgeStarted,workspace:w,end:d,scroll:await world.evaluate(e=>({top:e.scrollTop,left:e.scrollLeft,height:e.scrollHeight,clientHeight:e.clientHeight}))});if(d&&d.y>w.y+10&&d.y+d.height<w.y+w.height-48){await p.mouse.move(Math.max(w.x+32,Math.min(w.x+w.width-32,d.x+25)),d.y+d.height/2);await p.waitForTimeout(50);if(await root.locator('.blockui-drop-preview').count()===1){reached=true;break;}}await p.mouse.move(w.x+Math.min(90,w.width/2),w.y+w.height-7);await p.waitForTimeout(20);}evidence.edgeScrolling={reached,elapsedMs:Date.now()-edgeStarted,samples:edgeSamples,finalScroll:await world.evaluate(e=>({top:e.scrollTop,left:e.scrollLeft,height:e.scrollHeight,clientHeight:e.clientHeight}))};assert(reached,'edge scrolling reaches later loaded page');assert.equal((await state(p)).source,source);assert.equal(await root.locator('.blockui-drop-preview').count(),1);await p.screenshot({path:L.path.join(dir,'workbench-preview-'+viewport.width+'-'+zoom+'.png')});await p.keyboard.press('Escape');await p.mouse.up();assert.equal((await state(p)).source,source);assert.equal((await state(p)).history,before.history);evidence.edgeScrollAndCancel=true;",
+      "preservedMeaning": "All9 original viewport/zoom combinations,121 statements,400 mouse iterations,20ms waits,actual drop preview,unchanged source/history,cancel and Undo/Redo assertions retained. Add real coordinates, elapsed time and scroll progress to PASS/FAIL evidence. Product edge scrolling maintains720px/s across frame rates instead of12px per frame; speed at60fps is unchanged."
     }
   ],
   "explicitSetup": {
@@ -5334,7 +5378,8 @@
         "browser-input-005",
         "browser-input-006",
         "browser-input-007",
-        "browser-input-008"
+        "browser-input-008",
+        "browser-ux-required-draft-001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations.",
       "literalInputRevisions": [
@@ -6789,7 +6834,8 @@
         "browser-input-098",
         "browser-input-099",
         "browser-input-100",
-        "browser-input-101"
+        "browser-input-101",
+        "browser-ux-required-draft-002"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations.",
       "literalInputRevisions": [
@@ -7629,7 +7675,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7640,7 +7687,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7651,7 +7699,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7662,7 +7711,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7673,7 +7723,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7684,7 +7735,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7695,7 +7747,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7706,7 +7759,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -7717,7 +7771,8 @@
       "sourceChanges": [
         "browser-input-108",
         "browser-input-109",
-        "browser-input-110"
+        "browser-input-110",
+        "workbench-edge-scroll-evidence-0001"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations."
     },
@@ -10748,6 +10803,17 @@
         "Renaming updates the bound name while preserving every actual argument; adding a formal argument still leaves one actual argument and refreshes the arity diagnostic.",
         "Undo restores the original call text. An explicitly entered unknown callable retains its exact name, one actual argument with value1, original source and visible diagnostic. The original stable ID remains."
       ]
+    },
+    {
+      "ids": [
+        "empty-required-body-refusal-and-noop-replacement",
+        "UI-required-body-noop-replacement"
+      ],
+      "authorization": "改修指示書01.md: required empty body is an incomplete editor draft with Hole; never execute an incomplete program.",
+      "specification": "audit/UX_REPAIR.md",
+      "oldContract": "Deleting the final required body statement leaves committed source/history unchanged, and explicit NoOperation replacement with Undo remains available.",
+      "newIndependentGuarantees": "Committed source/history unchanged; visible required Hole and blockDraft; Run refused in DESIGN; Undo restores the original node; actual replace-noop still commits NoOperation; Undo restores the original source.",
+      "prohibition": "Do not skip either legacy case, remove replace-noop, execute the draft, weaken limits/timeouts, or mutate preserved legacy source."
     }
   ],
   "schemaUiSetupMigrations": [
