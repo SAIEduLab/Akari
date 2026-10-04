@@ -7621,7 +7621,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         }
         case 'ListRead': {
           const arr = evalExpression(ast.list, ctx, budget);
-          if (!Array.isArray(arr)) throw new AkariError('R411', '「N番目」はリストに使います');
+          if (!Array.isArray(arr)) {
+            const error = new AkariError('R411', '「N番目」はリストに使います');
+            if (ast.list.kind === 'StringLiteral' && ast.list.sourceSpan && ctx.runtime?.actor)
+              error.quotedList = { name: ast.list.value, span: { ...ast.list.sourceSpan },
+                targetId: ctx.runtime.actor(ctx.runtimeId)?.baseId || 'stage' };
+            throw error;
+          }
           const i = integerIndex(evalExpression(ast.index, ctx, budget));
           if (i > arr.length) throw new AkariError('R404', 'リストの範囲外です');
           return deepCopy(arr[i - 1]);
@@ -9028,11 +9034,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           : key.startsWith('action:')
             ? this.project.actions.find((x) => x.id === key.slice(7))
             : null;
+        const sourceKey = this.compiled.items?.find(item => item.key === key)?.documentKey || key;
         const source =
             definition?.source ??
-            this.project.scripts?.find(
-              (x) => task.scriptId ? x.id === task.scriptId : x.targetId === task.targetId && x.event === task.eventType,
-            )?.source ??
+            scriptBySourceKey(this.project, sourceKey)?.source ??
             '',
           actor = this.runtime.actor(task.subject?.runtimeId || task.runtimeId);
         if (!e.line) e.column = task.currentNode?.sourceSpan?.startColumn || 1;
@@ -9052,6 +9057,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           column: e.column || 1,
           statement: source.split(/\r\n?|\n/)[line - 1] || task.currentNode?.kind || '',
           source,
+          ...(e.quotedList ? { quotedList: { ...deepCopy(e.quotedList), ownerKey: sourceKey } } : {}),
           callStack: [...task.errorCallStack],
           frames: [
             ...task.callFrames.map((f) => snapshotFrame(f, 'action')),
@@ -24338,6 +24344,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       } catch (_) {}
     }
     function disposeRuntime() {
+      $('#listRepairPanel')?.remove();
       for (const id of ['failureModal', 'valueModal']) $('#' + id)?.classList.remove('show');
       activeFailureId = null;
       valueView = null;
@@ -26186,6 +26193,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       top.className = 'failure-summary';
       top.textContent = `${r.code}: ${r.message}\n${r.key} / ${r.line}\u884c\n${r.statement}\n${r.callStack.join(' \u2192 ')}`;
       root.appendChild(top);
+      const repair = quotedListRepair(r);
+      if (repair) {
+        const help = document.createElement('p');
+        help.textContent = `ここは文字です。リスト「${r.quotedList.name}」を使いますか？`;
+        const edit = document.createElement('button');
+        edit.id = 'failureEditList';
+        edit.textContent = '止めて、この箇所のリストを選ぶ';
+        edit.onclick = () => openQuotedListRepair(r);
+        root.append(help, edit);
+      }
       renderMonitorSection(root, '失敗したときのようす', [
         ['処理番号', r.taskId],
         ['動いている部品', r.runtimeId],
@@ -26216,6 +26233,96 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           ...r.actor.variables,
           ...r.actor.lists,
         ]);
+    }
+
+    // A failure refers to the source that actually ran. Never search for another
+    // occurrence or format the enclosing sentence when repairing that reference.
+    function quotedListRepair(record) {
+      if (record.code !== 'R411' || !record.quotedList?.ownerKey?.startsWith('script:')) return null;
+      const span = record.quotedList.span,
+        lines = record.source.match(/[^\r\n]*(?:\r\n?|\n|$)/g) || [],
+        offset = (line, column) => lines.slice(0, line - 1).join('').length + column - 1,
+        start = offset(span.startLine, span.startColumn), end = offset(span.endLine, span.endColumn),
+        original = record.source.slice(start, end);
+      if (!(start >= 0 && end > start && end <= record.source.length)) return null;
+      try {
+        const expression = parseExpression(original, buildSymbols(project));
+        if (expression.kind !== 'StringLiteral' || expression.value !== record.quotedList.name) return null;
+      } catch (_) { return null; }
+      return { start, end, original };
+    }
+    function quotedListCandidates(record) {
+      const actor = project.components.find(c => c.id === record.quotedList.targetId), candidates = [];
+      for (const [owner, lists, prefix] of [
+        ['作品', project.projectData.lists, '作品の'],
+        [actor?.name, actor?.localData.lists || [], '自分の'],
+      ]) for (const list of lists) candidates.push({ id:list.id, owner,
+        label:`${owner}のリスト「${list.name}」`,
+        source:prefix + 'リスト' + formatExpression({kind:'StringLiteral',value:list.name}) });
+      return candidates;
+    }
+    function openQuotedListRepair(record) {
+      // Hidden controls from an older run must not discard a current editor draft.
+      if (!scheduler?.paused || !scheduler.errorRecords.includes(record)) return;
+      const range = quotedListRepair(record);
+      if (!range) return;
+      stopRun();
+      const ownerKey = record.quotedList.ownerKey, script = scriptBySourceKey(project, ownerKey);
+      if (!script) { setStatus('この本文はもうありません。現在のコードを確認してください'); return; }
+      selectedId = script.targetId; currentEvent = script.event; selectedScriptId = script.id || null;
+      hideSourceOverview(); renderSelectors(); loadEditor(); switchEditorMode(mainEditor, 'code');
+      const token = generationToken, panel = document.createElement('section');
+      panel.id = 'listRepairPanel'; panel.className = 'editor-pending';
+      panel.setAttribute('aria-label', '失敗した文字をリストに直す');
+      panel.style.cssText = 'flex:none;max-height:210px;overflow:auto;overflow-wrap:anywhere';
+      const explanation = document.createElement('p'), preview = document.createElement('p'),
+        select = document.createElement('select'), apply = document.createElement('button'),
+        cancel = document.createElement('button'), notice = document.createElement('p');
+      explanation.textContent = `ここは文字です。リスト「${record.quotedList.name}」を使いますか？`;
+      preview.textContent = `${targetById(script.targetId)?.name || '画面'}・${EVENT_LABELS[script.event] || script.event}の本文、${record.quotedList.span.startLine}行目の ${range.original} だけを変更します。番目・秒数・ほかの文・リストの中身はそのままです。`;
+      select.id = 'listRepairChoice'; select.setAttribute('aria-label', 'この箇所で使うリスト');
+      select.style.maxWidth = '100%';
+      const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = '使うリストを選ぶ'; select.append(placeholder);
+      const candidates = quotedListCandidates(record);
+      for (const [index, candidate] of candidates.entries()) {
+        const option = document.createElement('option'); option.value = String(index); option.textContent = candidate.label; select.append(option);
+      }
+      apply.id = 'listRepairApply'; apply.textContent = 'この箇所だけ置き換える'; apply.disabled = true;
+      cancel.id = 'listRepairCancel'; cancel.textContent = '取り消す'; cancel.onclick = () => panel.remove();
+      notice.id = 'listRepairNotice'; notice.setAttribute('role', 'status');
+      if (!candidates.length) notice.textContent = 'ここで使えるリストはありません。変数・リストで作ってから、もう一度実行してください。';
+      select.disabled = !candidates.length;
+      const sourceIsCurrent = () => !modelLocked() && generationToken === token &&
+        bindingOwner(mainEditor) === ownerKey && readSource(mainEditor) === record.source &&
+        el.editor.value === record.source.replace(/\r\n?/g, '\n') && !hasPendingEditor();
+      const stale = () => { notice.textContent = '失敗した後に本文や実行が変わっています。現在の本文を確認して、もう一度実行してから選び直してください。'; apply.disabled = true; };
+      select.onchange = () => {
+        if (!sourceIsCurrent()) { stale(); return; }
+        const candidate = candidates[Number(select.value)]; apply.disabled = select.value === '';
+        notice.textContent = select.value === '' ? '' : `${range.original} → ${candidate.source}`;
+      };
+      apply.onclick = () => {
+        if (!sourceIsCurrent()) { stale(); return; }
+        const candidate = select.value === '' ? null : candidates[Number(select.value)],
+          current = candidate && quotedListCandidates(record).find(c => c.id === candidate.id && c.source === candidate.source && c.owner === candidate.owner);
+        if (!current) { notice.textContent = '選んだリストが変わりました。もう一度実行して選び直してください。'; apply.disabled = true; return; }
+        try {
+          const source = record.source.slice(0, range.start) + current.source + record.source.slice(range.end);
+          if (!commitSource(mainEditor, source, {atomic:true})) return;
+          el.editor.value = source; refreshEditor(); panel.remove();
+          el.editor.focus();
+          const start = record.source.slice(0, range.start).replace(/\r\n?/g, '\n').length;
+          el.editor.setSelectionRange(start, start + current.source.length);
+          setStatus('選んだ箇所をリストに直しました。「動かす」で確かめられます');
+        } catch (error) { notice.textContent = error.message; }
+      };
+      panel.append(explanation, preview, select, apply, cancel, notice);
+      el.editor.closest('.editor-shell').before(panel);
+      if (sourceIsCurrent()) {
+        const start = record.source.slice(0,range.start).replace(/\r\n?/g,'\n').length;
+        el.editor.setSelectionRange(start, start + range.original.replace(/\r\n?/g,'\n').length);
+      } else stale();
+      select.focus();
     }
 
     function renderMonitor() {
@@ -26625,6 +26732,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       const req = collectRuntimeAssetRequirements(compiled, project),
         token = ++generationToken;
+      $('#listRepairPanel')?.remove();
       runtimeCache = new AssetRuntimeCache(assetStore);
       try {
         if (req.needsAudio) runtimeCache.ensureAudioContext();
