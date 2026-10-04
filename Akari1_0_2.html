@@ -23372,7 +23372,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const next = sourceCandidate(binding, ownerKey, source);
       if (atomic) {
         clearTimeout(historyTimer);
-        if(!hasPendingEditor())pushHistoryNow();
+        const session = binding.session, pending = session?.pendingEdit;
+        const importing = binding === mainEditor && pending?.kind === 'source-import' &&
+          session.ownerKey === ownerKey && pending.ownerKey === ownerKey &&
+          pending.value === source && !session.blockDraft;
+        if (importing) {
+          // The confirmed input is not the valid body before this atomic change.
+          session.pendingEdit = null;
+          try { if (!hasPendingEditor()) pushHistoryNow(); }
+          finally { session.pendingEdit = pending; }
+        } else if (!hasPendingEditor()) pushHistoryNow();
       }
       if (binding.kind === 'draft') callableDraftCore = { ...callableDraftCore, source };
       else {
