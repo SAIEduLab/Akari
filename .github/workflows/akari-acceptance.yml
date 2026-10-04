@@ -102,7 +102,10 @@ jobs:
       - name: Verify fixed 48 tasks, responsive editing and two-second concurrent speech
         if: always()
         run: node audit/run-ux-repair02-gui.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance
-      - name: Independently verify complete results and validator rejection ability
+      - name: Verify trigger editing, speech identity and local list recovery
+        if: always()
+        run: node audit/run-ux-repair03-gui.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance
+      - name: Independently verify complete results including local recovery and speaker identity
         if: always()
         run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance
       - uses: actions/upload-artifact@v4

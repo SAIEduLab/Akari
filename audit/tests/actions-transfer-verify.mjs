@@ -1,4 +1,5 @@
 import {repairInputs,repairWrongMeaning,repairMatrixWrongMeaning,repairViewportWrongMeaning,repairLanguageWrongMeaning} from '../lib/ux-repair02-contract.mjs';
+import {verifyRepairFollowupBundle} from '../lib/ux-repair03-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -195,7 +196,13 @@ try {for(const [file,id,mutate] of repairViewportWrongMeaning){const report=JSON
 catch(error){results.push({file:'ux-repair02-viewport-negative',status:'FAIL',error:error.message});}
 try {const file='ux-repair02-language.json',report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);for(const [id,mutate] of repairLanguageWrongMeaning){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
 catch(error){results.push({file:'ux-repair02-language-meaning-negative',status:'FAIL',error:error.message});}
+let followupNegative=[];
+try{
+ const followup=verifyRepairFollowupBundle(file=>JSON.parse(fs.readFileSync(path.join(dir,file))));
+ results.push(...followup.results.map(row=>({...row,status:'PASS'})));
+ followupNegative=followup.negative;
+}catch(error){results.push({file:'ux-repair03-required-bundle',status:'FAIL',error:error.stack});}
 const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===183?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
- validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
+ validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative,followupNegative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;
