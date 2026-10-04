@@ -5277,6 +5277,13 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
 .blockui-heading-editor .blockui-structured-field {
   display: flex; flex-wrap: wrap; gap: 6px; max-width: 620px;
 }
+.blockui-trigger-scope { width:100%; margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font-size:13px; }
+.blockui-trigger-choice { display:flex; align-items:center; gap:8px; }
+.blockui-trigger-choice > .blockui-field-label { position:static; width:auto; height:auto; overflow:visible; clip-path:none; }
+.blockui-trigger-details { width:100%; min-width:0; }
+.blockui-trigger-details > summary { cursor:pointer; padding:6px 0; }
+.blockui-trigger-details[open] { display:flex; flex-wrap:wrap; gap:6px; }
+.blockui-trigger-details[open] > summary { width:100%; }
 
 
 /* An open output drawer must not consume the monitor's readable area. */
@@ -5752,10 +5759,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       <div class="win-title">コード</div>
       <div class="code-head">
         <label>動かすもの <select id="objectSelect"></select></label>
-        <label>編集する本文を選ぶ <select id="eventSelect" title="既存の本文を選びます。本文のきっかけは「この本文のきっかけを変更」で変えます"></select></label>
+        <label>編集する本文を選ぶ <select id="eventSelect" title="編集したい本文を選びます。きっかけを変えるときは「いつ動く？」を押します"></select></label>
         <button id="scriptAdd" type="button">同じできごとの本文を追加</button>
       </div>
-      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">この本文のきっかけを変更</button></div>
+      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
       <div id="sourceOverview" aria-label="選んだもののすべてのコード" hidden></div>
       <div class="debugbar">
         <button id="pauseBtn">⏸ いったん止める</button>
@@ -18564,16 +18571,38 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       changes.push({start, end:finish, text});
       return changes;
     };
+    const headingPrefixChange = (before,after) => {
+      const range=surface(before)?.range;
+      if(!range||!before.fields.heading||!after.fields.heading)return null;
+      const first=normalizeSource(source.slice(range.start,range.end)).lines.find(line=>line.code),
+        heading=first&&readSentenceHeading(first.code,buildSymbols(session.project),before.fields.heading);
+      if(!heading)return null;
+      const begin=first.mapped.positions[0],end=first.mapped.positions[Math.max(0,heading.body.start-1)]+1;
+      return Number.isInteger(begin)&&Number.isInteger(end)?[{start:range.start+begin,end:range.start+end,text:sentenceHeadingSource(after.fields.heading)}]:null;
+    };
     const plan = (before, after) => {
       if(before.schemaId==='Script'&&after.schemaId==='Script'&&(before.inputs.units||after.inputs.units)){
         const first=node=>{const inputs={...node.inputs};delete inputs.units;return {...node,inputs};};
         const head=plan(first(before),first(after)),rest=bodyChanges(before.inputs.units||[],after.inputs.units||[],before,'units');
+        if(head&&rest){
+          const old=[first(before),...(before.inputs.units||[])],next=[first(after),...(after.inputs.units||[])];
+          for(let i=1;i<next.length;i++)if(old[i]?.id===next[i].id&&same(old[i],next[i])&&!same(old[i-1].fields.heading,next[i-1].fields.heading)){
+            const range=surface(old[i])?.range,raw=range&&source.slice(range.start,range.end),line=raw&&normalizeSource(raw).lines.find(line=>line.code);
+            // Resolve an inherited cue explicitly when the previous group changes.
+            // The following group keeps its existing trigger and exact body text.
+            if(line&&/^(.+?)も同じ合図で動き始め、/.test(line.code)){const edits=headingPrefixChange(old[i],next[i]);if(!edits)return null;rest.push(...edits);}
+          }
+        }
         return head&&rest?[...head,...rest]:null;
       }
       if (same(before, after)) {
         const schema = BLOCK_SCHEMA_BY_ID.get(after.schemaId);
         if (schema.category !== 'statement' || ['CommentLine','Hole'].includes(schema.kind) || sameActorContext(before,after)) return [];
         return fallback(before,after);
+      }
+      if(before.schemaId==='Script'&&after.schemaId==='Script'&&before.fields.heading&&after.fields.heading&&
+        same(before.bodies,after.bodies)&&same(before.inputs,after.inputs)&&same(before.annotations,after.annotations)){
+        const edits=headingPrefixChange(before,after);if(edits)return edits;
       }
       if (before.schemaId !== after.schemaId || !same(before.fields, after.fields) || !same(before.annotations, after.annotations))
         return fallback(before, after);
@@ -19926,7 +19955,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (!pending) return { ok: true };
       const p = pending;
       if(p.field.type==='heading'&&!explicit){
-        const reason='いつ・だれが動くかを選び終えたら「この見出しに決める」を押してください';
+        const reason='いつ動くかを選び終えたら「この動きのきっかけを変える」を押してください';
         announce(reason,true);return {ok:false,pending:true,reason};
       }
       if (p.composing || p.input.dataset.composing === 'true') {
@@ -19969,6 +19998,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         return { ok: true, changed: false };
       }
       let op = { type: p.annotation ? 'annotation' : 'field', id: p.id, key: p.key, value };
+      if(p.field.type==='heading'&&p.input.dataset.triggerMetadataOnly==='true')op.preserveBody=true;
       if (!p.annotation && p.field.type === 'number' &&
         (p.input.dataset.expressionHole || p.input.dataset.signedParentId || value < 0 || Object.is(value, -0))) {
         const literal = createBlock('NumberLiteral');
@@ -20628,31 +20658,46 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           readValue = () => mode.value === 'named' ? names.map(name => name.value) : undefined;
           restore = () => { mode.value = value === undefined ? 'positional' : 'named'; names.forEach((name, i) => { name.value = value?.[i] || ''; }); sync(); };
         } else {
+          const currentEvent=value?.event||context().event||'start',currentActor=value?.actorRef||{kind:'self'},currentFilter=value?value.filter:context().filter;
+          const actorName = ref => ref?.kind==='named' ? ref.name : project()?.components.find(c=>c.id===context().targetId)?.name||project()?.stage?.name||'この動き';
+          const owners=new Set([actorName(currentActor)]),scan=part=>{
+            if(!part||typeof part!=='object')return;
+            if(part.fields?.actorRef)owners.add(actorName(part.fields.actorRef.kind==='self'?currentActor:part.fields.actorRef));
+            for(const [key,child]of Object.entries(part))if(key!=='units'&&child&&typeof child==='object')Array.isArray(child)?child.forEach(scan):scan(child);
+          };scan(node.bodies);scan(node.inputs.rules);
+          const location=session()?.nodeMap?.get(node.bodies.body?.[0]?.id)?.surface,range=location?.range||location?.extent,
+            preview=range?session().sourceText.slice(range.start,range.end):node.bodies.body?.length?schemaOf(node.bodies.body[0]).label:'まだ命令がありません';
+          group.append(E('p','blockui-trigger-scope',`変える動き：${[...owners].join('・')} ／ ${EVENT_LABELS[currentEvent]}\n${preview}\nこのまとまりのきっかけだけを変えます。他の動きは変えません。`));
+          const event = choice('いつ動く？', 'event', Object.entries(EVENT_LABELS), currentEvent);
+          event.setAttribute('aria-label','いつ動く？');event.parentElement.classList.add('blockui-trigger-choice');
+          const details=E('details','blockui-trigger-details');details.append(E('summary','','詳細（見出し・対象・受け取る条件）'));group.append(details);
+          const detailStart=group.children.length;
           const enabled = choice('見出し', 'enabled', [['no', '本文だけ'], ['yes', 'できごとを指定']], value ? 'yes' : 'no');
-          const currentEvent=value?.event||context().event||'start',currentActor=value?.actorRef||{kind:'self'};
-          const event = choice('いつ始める', 'event', Object.entries(EVENT_LABELS), currentEvent);
           const subject = actor(currentActor, 'actorRef.');
-          const filter = choice('受け取る条件', 'filter.kind', [['all', 'すべて'], ['key', 'このキー'], ['message', 'この知らせ']], value?.filter?.key !== undefined ? 'key' : value?.filter?.message !== undefined ? 'message' : 'all');
-          const filterValue = control('キー・知らせの文字', 'input', 'filter.value', value?.filter?.key ?? value?.filter?.message ?? '');
+          const filter = choice('受け取る条件', 'filter.kind', [['all', 'すべて'], ['key', 'このキー'], ['message', 'この知らせ']], currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all');
+          const filterValue = control('キー・知らせの文字', 'input', 'filter.value', currentFilter?.key ?? currentFilter?.message ?? '');
           const sync = () => {
             for (const option of filter.options) option.disabled = (option.value === 'key' && event.value !== 'keyDown') || (option.value === 'message' && event.value !== 'message');
             if (filter.selectedOptions[0]?.disabled) filter.value = 'all';
             filterValue.parentElement.hidden = filter.value === 'all';
             for (const child of group.querySelectorAll('input,select'))
-              if (child !== enabled) child.disabled = isLocked() || options.readOnly || enabled.value !== 'yes';
+              if (child !== enabled&&child!==event) child.disabled = isLocked() || options.readOnly || enabled.value !== 'yes';
           };
-          sync(); listen(enabled, 'change', sync); listen(event, 'change', sync); listen(filter, 'change', sync);
+          for(const child of [...group.children].slice(detailStart))details.append(child);
+          listen(details,'input',()=>{group.dataset.triggerDetailed='true';group.dataset.triggerMetadataOnly='false';});
+          listen(details,'change',()=>{group.dataset.triggerDetailed='true';group.dataset.triggerMetadataOnly='false';});
+          sync(); listen(enabled, 'change', sync); listen(event, 'change',()=>{enabled.value='yes';group.dataset.triggerMetadataOnly=String(!value&&group.dataset.triggerDetailed!=='true');sync();}); listen(filter, 'change', sync);
           readValue = () => {
             if (enabled.value !== 'yes') return undefined;
             const heading = { event: event.value, actorRef: subject.read() };
             if (filter.value !== 'all') heading.filter = { [filter.value]: filterValue.value };
-            else if (value?.filter === null) heading.filter = null;
+            else if (currentFilter === null) heading.filter = null;
             return heading;
           };
           restore = () => {
             enabled.value = value ? 'yes' : 'no'; event.value = currentEvent; subject.restore();
-            filter.value = value?.filter?.key !== undefined ? 'key' : value?.filter?.message !== undefined ? 'message' : 'all';
-            filterValue.value = value?.filter?.key ?? value?.filter?.message ?? ''; sync();
+            filter.value = currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all';
+            filterValue.value = currentFilter?.key ?? currentFilter?.message ?? ''; sync();
           };
         }
         Object.defineProperty(group, 'value', { get: () => changed ? readValue() : value,
@@ -20663,7 +20708,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         listen(group, 'change', () => { changed = true; group.dispatchEvent(new doc.defaultView.Event('input', { bubbles: true })); });
         if (!options.readOnly) {
           editInput(group, node, field, annotation);
-          if(field.type==='heading')group.append(button('この見出しに決める','heading-commit',()=>flush({explicit:true})),button('見出しの変更を取り消す','heading-cancel',()=>cancel()));
+          if(field.type==='heading')group.append(button('この動きのきっかけを変える','heading-commit',()=>flush({explicit:true})),button('変更をやめる','heading-cancel',()=>cancel()));
           listen(group, 'change', event => { if (field.type!=='heading'&&event.target.tagName === 'SELECT') flush(); });
           listen(group, 'focusout', event => {
             if (field.type!=='heading'&&!group.contains(event.relatedTarget) && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action]'))
@@ -21451,7 +21496,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (schema.category === 'script') {
         for (const field of schema.fields) {
           const edit = E('details', 'blockui-heading-editor');
-          edit.append(E('summary', '', 'いつ・だれが動くかを変える'), fieldControl(node, field));
+          edit.append(E('summary', '', 'いつ動く？'), fieldControl(node, field));
           main.append(edit);
         }
         const ruleSlot = schema.inputs.find(slot => slot.key === 'rules');
@@ -23662,6 +23707,24 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           session.pendingEdit && (operation.id === session.pendingEdit.id || signedReplacement)
             ? session.pendingEdit.id
             : undefined;
+        if(binding===mainEditor&&operation.preserveBody&&operation.type==='field'&&operation.key==='heading'&&
+          operation.id===session.blockView?.id&&!session.syntaxAst.heading&&!session.syntaxAst.units?.length&&
+          operation.value?.actorRef?.kind==='self'&&!session.blockDraft){
+          const next=cloneDesignProject(project),row=scriptBySourceKey(next,ownerKey),heading=operation.value;
+          if(row){
+            const metadata=scriptMetadataFromHeading(heading,row,next);
+            if(JSON.stringify([row.event,row.filter||null])===JSON.stringify([metadata.event,metadata.filter||null]))return {ok:true,changed:false};
+            if(!row.id)row.id=ensureUniqueId('script');
+            Object.assign(row,metadata);if(metadata.filter===undefined)delete row.filter;
+            validateDesignProject(next);clearTimeout(historyTimer);
+            if(!hasPendingEditor())pushHistoryNow();
+            project=next;currentEvent=row.event;selectedScriptId=row.id;
+            invalidateEditors();getEditorSession(binding,{force:true});binding.session.pendingEdit=null;
+            clearEditorFailure(binding);markDirty();clearTimeout(historyTimer);pushHistoryNow();
+            renderSelectors();renderEditorBinding(binding);refreshEditor();
+            return {ok:true,changed:true};
+          }
+        }
         const candidate = prepareBlockEdit(session, operation, {
           project,
           context,
@@ -29149,12 +29212,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     $('#sourceEditBtn').onclick = () => { hideSourceOverview(); loadEditor(); };
     $('#sourceHeadingBtn').onclick = () => {
       if (modelLocked() || !switchEditorMode(mainEditor, 'blocks')) return;
-      const field=$('#blockEditor [data-blockui-structured-role="heading.enabled"]');
+      const selected=$('#blockEditor .blockui-selected'),scope=selected?.closest('.blockui-script');
+      const field=(scope||$('#blockEditor')).querySelector('[data-blockui-structured-role="heading.event"]');
       if (!field) return;
       for (let parent=field.parentElement;parent;parent=parent.parentElement)
         if (parent.tagName==='DETAILS') parent.open=true;
       field.scrollIntoView({block:'center'}); field.focus({preventScroll:true});
-      setStatus('この本文を保って見出しを変更します。「できごとを指定」で選び、「この見出しに決める」で確定します。コード表示にも戻れます');
+      setStatus('変える動きを確かめて「いつ動く？」を選びます。「この動きのきっかけを変える」で決定、「変更をやめる」で戻れます');
     };
     $('#sourceStageBtn').onclick = () => { if (selectObject('stage')) showSourceOverview(); };
     $('#procClose').onclick = () => {
