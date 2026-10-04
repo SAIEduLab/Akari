@@ -7,6 +7,14 @@ import {browserEnvironment} from './browser-environment.mjs';
 export const shopping=['りんご','パン','牛乳'];
 export const sourceFor=n=>`始めると、あかりは「買うもの」の${n}番目を2秒話します。`;
 export const fixedFor=n=>`始めると、あかりは作品のリスト「買うもの」の${n}番目を2秒話します。`;
+export const isolatedListCases=[
+ {variant:'explicit-id',source:sourceFor(2),id:'isolated',key:'script:isolated',ownerKey:'script:isolated'},
+ {variant:'idless',source:sourceFor(2),key:'script:sprite-1:start',ownerKey:'script:sprite-1:start'},
+ ...[false,true].map(persistent=>({variant:persistent?'persistent-unit':'legacy-unit',
+  source:'始めると、あかりは「準備」と言います。画面も同じ合図で動き始め、点数を「買うもの」の2番目にします。',id:'isolated',
+  key:persistent?'script:isolated-second':'script:document:script:isolated:unit:2',ownerKey:'script:isolated',
+  ...(persistent?{document:{revision:5,unitIds:['isolated-first','isolated-second']}}:{})})),
+];
 export const listRepairCases=[
  ...[1,2,3].map(n=>({id:'ordinal/'+n,source:sourceFor(n),fixed:fixedFor(n),speech:shopping[n-1]})),
  {id:'scope/project',source:sourceFor(2),fixed:fixedFor(2),speech:'パン',local:true,choose:0},
@@ -25,7 +33,8 @@ export const listRepairCases=[
 export const listRepairIds=[...['1180x757','1188x848'].map(v=>'gui/'+v),...listRepairCases.map(c=>c.id),
  'cancel/close','cancel/panel','boundary/missing-name','boundary/empty-string','boundary/no-lists','boundary/ordinary-string','boundary/plain-evaluator',
  'stale/source-changed','stale/new-run','stale/new-project','stale/detached-handler','stale/older-record',
- 'compat/explicit-list','compat/legacy-name','compat/block-picker'];
+ 'compat/explicit-list','compat/legacy-name','compat/block-picker',
+ 'boundary/isolated-runtime','boundary/generated-player-r411','boundary/generated-player-r404'];
 const stateSource=o=>o.project.scripts[0].source;
 const sameData=(a,b)=>{assert.deepEqual(b.projectData,a.projectData);assert.deepEqual(b.components,a.components);assert.deepEqual(b.actions,a.actions);assert.deepEqual(b.functions,a.functions);};
 function replacement(o,source,fixed,document){
@@ -76,6 +85,10 @@ export function verifyListRepairReport(report){
  {const o=at('stale/older-record');assert.equal(o.recordCount,2);assert.equal(o.selectedRecord,'1');const next=structuredClone(o.before.project);next.scripts[0].source=fixedFor(1);assert.deepEqual(o.after.project,next);assert.equal(o.after.project.scripts[1].source,'「買うもの」の3番目を2秒話します。');}
  for(const [id,source] of [['compat/explicit-list','始めると、あかりはリスト「買うもの」の2番目を2秒話します。'],['compat/legacy-name','始めると、あかりは【買うもの】の2番目を2秒話します。']]){const o=at(id);assert.equal(o.after.project.scripts[0].source,source);assert.deepEqual(o.runtime.speech,['パン']);assert.equal(o.runtime.error,null);assert.equal(o.repairCount,0);}
  {const o=at('compat/block-picker');assert.equal(o.kind,'VariableRead');assert.equal(o.index,2);assert.deepEqual(o.runtime.speech,['パン']);sameData(o.before.project,o.after.project);}
+ {const o=at('boundary/isolated-runtime');assert.equal(o.classification,'factory reconstructed with Function / no editor lexical scope');assert.deepEqual(o.runs.map(r=>r.variant),isolatedListCases.map(c=>c.variant));
+  for(const [i,r]of o.runs.entries()){const c=isolatedListCases[i];assert.deepEqual(r.compileErrors,[]);assert.equal(r.thrown,null);assert.deepEqual(r.errors,[{code:'R411',message:'「N番目」はリストに使います'}]);assert.equal(r.paused,true);assert.deepEqual(r.records,[{key:c.key,source:c.source,ownerKey:c.ownerKey}]);assert.deepEqual(r.after,r.before);}
+ }
+ for(const [id,code,message,source]of [['boundary/generated-player-r411','R411','「N番目」はリストに使います',sourceFor(2)],['boundary/generated-player-r404','R404','リストの範囲外です',fixedFor(4)]]){const o=at(id);assert.equal(o.classification,'generated HTML API / actual offline file player / pointer controls');assert.equal(o.source,source);assert.match(o.file,/\.html$/);assert.deepEqual(o.before,o.after);assert.deepEqual(o.executions,[0,1].map(()=>({state:'PAUSED',output:code+' '+message,bubbles:[],stopDisabled:false})));assert.deepEqual(o.stopped,['STOPPED','STOPPED']);}
  return n;
 }
 export const listRepairWrongMeaning=[
@@ -92,5 +105,8 @@ export const listRepairWrongMeaning=[
  ['cancel-mutates',r=>r.results.find(x=>x.id==='cancel/panel').observed.after.project.scripts[0].source=fixedFor(2)],
  ['discard-pending',r=>r.results.find(x=>x.id==='stale/detached-handler').observed.inputAfter=sourceFor(2)],
  ['clipped-control',r=>r.results[0].observed.geometry.controls[0].right=2000],
+ ['isolated-exception',r=>r.results.find(x=>x.id==='boundary/isolated-runtime').observed.runs[0].thrown={name:'ReferenceError',message:'external helper missing'}],
+ ['isolated-wrong-owner',r=>r.results.find(x=>x.id==='boundary/isolated-runtime').observed.runs[2].records[0].ownerKey='script:wrong'],
+ ['player-lost-error',r=>r.results.find(x=>x.id==='boundary/generated-player-r411').observed.executions[1].output=''],
  ['missing-result',r=>r.results.pop()],['duplicate-result',r=>r.results.push(structuredClone(r.results[0]))],
 ];

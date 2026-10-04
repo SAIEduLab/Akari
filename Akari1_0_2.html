@@ -9044,7 +9044,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         const sourceKey = this.compiled.items?.find(item => item.key === key)?.documentKey || key;
         const source =
             definition?.source ??
-            scriptBySourceKey(this.project, sourceKey)?.source ??
+            this.project.scripts?.find(script =>
+              (script.id ? `script:${script.id}` : `script:${script.targetId}:${script.event}`) === sourceKey,
+            )?.source ??
             '',
           actor = this.runtime.actor(task.subject?.runtimeId || task.runtimeId);
         if (!e.line) e.column = task.currentNode?.sourceSpan?.startColumn || 1;

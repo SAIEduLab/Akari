@@ -2,10 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
+import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {install,reveal} from '../lib/ux-repair02-ui.mjs';
-import {listRepairCases,shopping,sourceFor,verifyListRepairReport} from '../lib/ux-repair03-list-contract.mjs';
+import {listRepairCases,isolatedListCases,shopping,sourceFor,fixedFor,verifyListRepairReport} from '../lib/ux-repair03-list-contract.mjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),output=path.resolve(out),dir=output+'.artifacts',product=currentProductFile();
 fs.mkdirSync(dir,{recursive:true});
 const report={schema:'akari-ux-repair03-list-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:null,playwright:require('playwright/package.json').version},results:[]};
@@ -59,6 +60,22 @@ try{await withBrowser(chrome,async browser=>{
  await run('stale/older-record',async p=>{const clickSource='「買うもの」の3番目を2秒話します。';await fixture(p,{source:sourceFor(1),extraScripts:[{id:'clicked',targetId:'sprite-1',event:'click',source:clickSource}]});const before=await state(p);await fail(p);await p.locator('#failureClose').click();await reveal(p.locator('#continueBtn'));await p.locator('#continueBtn').click();await p.locator('#formSurface .component[data-runtime-id="sprite-1"]').click();await p.locator('#failureModal.show').waitFor();const recordCount=await p.locator('#failureSelect option').count();await p.locator('#failureSelect').selectOption('1');const selectedRecord=await p.locator('#failureSelect').inputValue();await p.locator('#failureEditList').click();await p.locator('#listRepairChoice').selectOption('0');await p.locator('#listRepairApply').click();return {before,recordCount,selectedRecord,after:await state(p)};});
  for(const [id,source]of [['compat/explicit-list','始めると、あかりはリスト「買うもの」の2番目を2秒話します。'],['compat/legacy-name','始めると、あかりは【買うもの】の2番目を2秒話します。']])await run(id,async p=>{await fixture(p,{source});return {runtime:await runtime(p,{speech:'パン'}),after:await state(p),repairCount:await p.locator('#listRepairPanel,#failureEditList').count()};});
  await run('compat/block-picker',async p=>{await fixture(p,{mode:'blocks'});const before=await state(p);await p.getByLabel('文字の代わりに使うリストを選ぶ').selectOption({index:1});const expr=await p.evaluate(()=>Akari.app.editorState.main.syntaxAst.body[0].value);return {before,after:await state(p),kind:expr.list.kind,index:expr.index.value,runtime:await runtime(p,{speech:'パン'})};});
+ await run('boundary/isolated-runtime',async p=>p.evaluate(cases=>{
+  const core=Function('return ('+Akari.createAkariRuntime.toString()+')()')();
+  return {classification:'factory reconstructed with Function / no editor lexical scope',runs:cases.map(c=>{
+   const project=Akari.makeEmptyProject();project.projectData.variables=[{id:'score',name:'点数',initialValue:0}];project.projectData.lists=[{id:'shopping',name:'買うもの',initialValue:['りんご','パン','牛乳']}];project.scripts=[{targetId:'sprite-1',event:'start',source:c.source,...(c.id?{id:c.id}:{}),...(c.document?{document:c.document}:{})}];
+   const before=structuredClone(project),compiled=Akari.compileProject(project),runtime=new core.RuntimeModel(project,{}),errors=[];
+   const scheduler=new core.EventScheduler(project,compiled,runtime,{runtimeError:(_,e)=>errors.push({code:e.code,message:e.message})});scheduler.schedule=()=>{};
+   let thrown=null,turns=0;try{scheduler.start();while(scheduler.ready.length&&turns++<20)scheduler.runTurn(true);if(turns>=20)throw Error('Isolated runtime did not terminate');}catch(e){thrown={name:e.name,message:e.message};}
+   const result={variant:c.variant,before,after:structuredClone(project),compileErrors:compiled.errors,errors,thrown,paused:scheduler.paused,records:scheduler.errorRecords.map(r=>({key:r.key,source:r.source,ownerKey:r.quotedList?.ownerKey}))};scheduler.stop();return result;
+  })};
+ },isolatedListCases));
+ for(const [id,source]of [['boundary/generated-player-r411',sourceFor(2)],['boundary/generated-player-r404',fixedFor(4)]])await run(id,async p=>{
+  await fixture(p,{source});const before=(await state(p)).project,html=await p.evaluate(()=>Akari.generateStandaloneHtml(Akari.app.project,Akari.app.assetStore)),after=(await state(p)).project,file=path.join(dir,id.replaceAll('/','-')+'.html');fs.writeFileSync(file,html);
+  await p.goto(pathToFileURL(file).href);const executions=[],stopped=[];
+  for(let i=0;i<2;i++){await p.locator('#playerStart:not([disabled])').click();await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='PAUSED');executions.push(await p.evaluate(()=>({state:document.querySelector('#playerRoot').dataset.state,output:document.querySelector('#playerOutput').textContent,bubbles:[...document.querySelectorAll('.sprite-bubble-text')].map(e=>e.textContent),stopDisabled:document.querySelector('#playerStop').disabled})));await p.screenshot({path:path.join(dir,id.replaceAll('/','-')+'-'+i+'.png')});await p.locator('#playerStop').click();stopped.push(await p.locator('#playerRoot').getAttribute('data-state'));}
+  return {classification:'generated HTML API / actual offline file player / pointer controls',source,before,after,file,executions,stopped};
+ });
 },600000);}catch(e){report.hostFailure=e.stack;}
 report.status=!report.hostFailure&&report.results.every(r=>r.status==='PASS')?'PASS':'FAIL';
 if(report.status==='PASS')try{verifyListRepairReport(report);}catch(e){report.status='FAIL';report.contractFailure=e.stack;}
