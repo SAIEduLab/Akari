@@ -94,6 +94,14 @@ jobs:
       - name: Verify simultaneous speech at 52 and 100 percent with both mascots
         if: always()
         run: node audit/tests/ux-bubble-layout.cjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/ux-bubble-layout.json
+      - name: Verify local editing recovery and additional natural forms
+        if: always()
+        run: |
+          node audit/tests/ux-repair02-language.mjs audit-evidence/acceptance/ux-repair02-language.json
+          node audit/tests/ux-repair02-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/ux-repair02-browser.json
+      - name: Verify fixed 48 tasks, responsive editing and two-second concurrent speech
+        if: always()
+        run: node audit/run-ux-repair02-gui.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance
       - name: Independently verify complete results and validator rejection ability
         if: always()
         run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance

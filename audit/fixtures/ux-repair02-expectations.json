@@ -1,0 +1,37 @@
+{
+  "schema": "akari-ux-repair02-expectations-v1",
+  "cases": [
+    {"id":"B13-sora","source":"始めると、あかりは『合言葉は？』とたずねます。答えが『そら』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『ちがうよ』と2秒話します。","answer":"そら","question":"合言葉は？","speech":"どうぞ"},
+    {"id":"B13-umi","source":"始めると、あかりは『合言葉は？』とたずねます。答えが『そら』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『ちがうよ』と2秒話します。","answer":"うみ","question":"合言葉は？","speech":"ちがうよ"},
+    {"id":"B16","source":"始めると、あかりは2と3を足した答えを2秒話します。","speech":"5"},
+    {"id":"B17","source":"始めると、あかりは4から1を引いた答えを2秒話します。","speech":"3"},
+    {"id":"B19","source":"始めると、点数を0にします。そのあと、点数を2増やします。あかりは今の点数を2秒話します。","speech":"2","score":2},
+    {"id":"addition-9-2","source":"9と2を足した答えを2秒話す。","speech":"11"},
+    {"id":"addition-1-7","source":"1と7を足した答えを2秒話す。","speech":"8"},
+    {"id":"addition-named","source":"点数を4にする。（点数＋1）と（2×3）を足した答えを2秒話す。","speech":"11","score":4},
+    {"id":"ask-plain","source":"『何と書く？』とたずねる。答えを2秒話す。","question":"何と書く？","answer":"引用と？","speech":"引用と？"},
+    {"id":"ask-quoted-particles","source":"あかりは『「と」と？』とたずねます。答えを2秒話す。","question":"「と」と？","answer":"はい","speech":"はい"},
+    {"id":"explicit-list","source":"始めると、あかりはリスト「買うもの」の2番目を2秒話します。","speech":"パン"},
+    {"id":"exact-list","source":"【買うもの】の2番目を2秒話す。","speech":"パン"},
+    {"id":"project-list","source":"作品のリスト『買うもの』の2番目を2秒話す。","speech":"パン"},
+    {"id":"local-list","source":"自分のリスト「買うもの」の2番目を2秒話す。","speech":"ノート","localList":true},
+    {"id":"quoted-name-is-text","source":"『買うもの』を2秒話す。","speech":"買うもの"},
+    {"id":"addition-same-unit","source":"1点と2点を足した答えを2秒話す。","speech":"3点"},
+    {"id":"ask-other-speaker","actorName":"こはる","source":"こはるは『合言葉は？』とたずねます。こはるは答えを2秒話します。","question":"合言葉は？","answer":"ほし","speech":"ほし"}
+  ],
+  "refusals": [
+    {"id":"quoted-list-stays-string","source":"始めると、あかりは『買うもの』の2番目を2秒話します。","code":"R411"},
+    {"id":"missing-list","source":"リスト「存在しない」の2番目を2秒話す。","code":"S301"},
+    {"id":"ordinal-zero","source":"リスト「買うもの」の0番目を2秒話す。","code":"R404"},
+    {"id":"ordinal-too-large","source":"リスト「買うもの」の4番目を2秒話す。","code":"R404"},
+    {"id":"ordinal-negative","source":"リスト「買うもの」の－1番目を2秒話す。","code":"R404"},
+    {"id":"addition-wrong-types","source":"『2』と3を足した答えを2秒話す。","code":"R411"},
+    {"id":"addition-unit-mismatch","source":"1秒と2点を足した答えを2秒話す。","code":"R417","phase":"compile"},
+    {"id":"addition-unclosed-left-quote","source":"『2と3を足した答えを2秒話す。","code":"P207","phase":"syntax"},
+    {"id":"addition-unclosed-right-quote","source":"2と『3を足した答えを2秒話す。","code":"P207","phase":"syntax"}
+  ],
+  "taskCases": [
+    {"id":"ask-task-answer-ownership","scripts":[{"id":"main","targetId":"sprite-1","event":"start","source":"あかりは『あかりの合言葉は？』とたずねます。1秒待つ。あかりは答えを2秒話します。"},{"id":"other","targetId":"dango","event":"start","source":"だんごは『だんごの合言葉は？』とたずねる。1秒待つ。だんごは答えを2秒話します。"}],"questions":["あかりの合言葉は？","だんごの合言葉は？"],"answers":["そら","うみ"],"questionOwners":["sprite-1","dango"],"trace":[[1000,"sprite-1","そら"],[1000,"dango","うみ"],[3000,"sprite-1",null],[3000,"dango",null]]},
+    {"id":"ask-task-answer-ownership-cross-speakers","scripts":[{"id":"main","targetId":"sprite-1","event":"start","source":"だんごは『だんごへの質問は？』とたずねる。1秒待つ。あかりは答えを2秒話します。"},{"id":"other","targetId":"dango","event":"start","source":"あかりは『あかりへの質問は？』とたずねます。1秒待つ。だんごは答えを2秒話します。"}],"questions":["だんごへの質問は？","あかりへの質問は？"],"answers":["つき","ほし"],"questionOwners":["dango","sprite-1"],"trace":[[1000,"sprite-1","つき"],[1000,"dango","ほし"],[3000,"sprite-1",null],[3000,"dango",null]]}
+  ]
+}

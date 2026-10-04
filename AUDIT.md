@@ -411,3 +411,14 @@ GA-STATICはPNG実寸・metadata・byte数・固定SHAを検査する。GA-EXEC�
 ## 編集と自然文の追加UX監査
 
 追加契約は [audit/UX_REPAIR.md](audit/UX_REPAIR.md)。固定9原文の受理・意味・結果と編集回復を既存の必須検査へ追加する。48枠の独立実操作再監査、施工対象外のScratch24枠（依頼元の実施状況は別記）、資料移管の未完了を自動検査から分けて記録する。既存監査を削除・緩和せず、新しい最終SHAで全必須CIを確認する。
+
+
+## 通常編集の追加回帰と独立集約
+
+`ux-repair02-language`（28件）、`ux-repair02-browser`（12件）、`ux-repair02-matrix`（48件）、`ux-repair02-layout`（100件）、`ux-repair02-speech`（100件）を既存の追加受入へ必須接続する。原文・実行結果・回答・対象・時刻・取消・幅を `ux-repair02-contract.mjs` で別に検証する。自己申告のPASSだけでは受け入れない。欠落、重複、FAIL、異なるsnapshot、意味を壊した結果、結果ファイルの欠落を拒否する。独立集約の拒否試験は既存141件を保持し42件を追加した183件である。
+
+GUI三群は独立したbrowser processで並列実行する。既存ジョブの15分上限、個別入力の12,000ms境界、旧試験・期待集合・Actions起動条件は変更しない。ホスト・子実行の例外やtimeoutはFAILであり、機械PASSから実児童UXや実IMEの完了を主張しない。Windowsローカルの成功はLinuxのCI実行に読み替えない。
+
+恒久契約は LANGUAGE.md「自然文の質問・計算・名前付きリスト」「編集表示と確定の境界」「発話の表示」、audit/LANGUAGE_FORMS.md の追加形、audit/UX_REPAIR.md の通常編集に記録する。design-doc-migration-map の具体対応はこれらに関係する要件だけである。元の六文書を保持し、全体のmigrationComplete/deletionAllowedはfalseのままとする。
+
+GUI制作後の実作品も独立時計で検査する。B02/B11の再実行、B10〜12の1秒後の並行発話、B12の初期3秒から1秒への変更範囲、B20の初期0とクリック1→2→3を別の期待にする。表示試験は吹出し全体の舞台・viewport内包含も要求する。新たな拒否対照12件は、既存171件へ時刻・可視状態・初期値・局所変更・再実行・画面外・回答所属の改変を加えたもので、製品実行件数へ数えない。

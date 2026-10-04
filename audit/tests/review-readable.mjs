@@ -216,6 +216,7 @@ async function fullTextEditorReview(browser) {
       assert.equal(await input.inputValue(),long);
       await page.locator('#undoBtn').click();await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);
       await page.locator('#redoBtn').click();await page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,committed);
+      await input.click();
       await string.locator('[data-blockui-action="edit-text"]').click();await editor.fill(short+'\n'+long);await editor.press('Escape');
       assert.equal(await page.evaluate(()=>Akari.app.editorState.main.sourceText),committed,'Escape cancels a multiline draft exactly');
       await page.locator('#editorModecode').click();assert.equal(await page.locator('#codeEditor').inputValue(),committed);
