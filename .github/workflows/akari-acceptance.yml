@@ -105,6 +105,12 @@ jobs:
       - name: Verify trigger editing, speech identity and local list recovery
         if: always()
         run: node audit/run-ux-repair03-gui.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance
+      - name: Verify autosave ownership, completion ordering and failure recovery
+        if: always()
+        run: node audit/tests/autosave-state-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/autosave-state-browser.json
+      - name: Verify visible search controls, keyboard insertion and actual browser zoom
+        if: always()
+        run: node audit/tests/search-layout-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/search-layout-browser.json
       - name: Independently verify complete results including local recovery and speaker identity
         if: always()
         run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance

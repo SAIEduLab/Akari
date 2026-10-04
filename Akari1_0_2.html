@@ -4704,6 +4704,7 @@ body[data-editor-mode="code"] #componentActions,
   flex-direction: column;
 }
 #procModal #callableBlocks:not([hidden]) > .blockui-layout {
+  grid-template-rows: minmax(0, 1fr);
   flex: 1;
   min-height: 0;
   height: auto;
@@ -4721,6 +4722,7 @@ body[data-editor-mode="code"] #componentActions,
   }
 }
 @media (max-width: 600px) {
+  #procModal #callableBlocks:not([hidden]) { min-height: 430px; }
   #procModal:has(#callableBlocks:not([hidden])) .proc-grid {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
@@ -5362,8 +5364,14 @@ body[data-editor-mode="code"] .side:has(.monitor-window .output-disclosure[open]
 .blockui-world .blockui-input-slot.blockui-slot-active > .blockui-slot-head { display:flex; position:static; min-width:0; max-width:100%; transform:none !important; }
 .blockui-world .blockui-input-slot.blockui-slot-active { flex-wrap:wrap; }
 .blockui-world .blockui-input-slot.blockui-slot-active { outline:2px solid #185c98; outline-offset:3px; z-index:90; }
-.blockui-search-scope { margin:3px 0; font-size:11px; white-space:normal; }
+.blockui-search-scope { flex:1 1 100%; margin:3px 0; font-size:11px; white-space:normal; }
 .blockui-palette-controls { flex-wrap:wrap; }
+.blockui-palette-controls > .blockui-search-label { display:flex; flex:1 1 100%; flex-direction:column; gap:4px; min-width:0; font-size:12px; }
+.blockui-search-label > input { box-sizing:border-box; width:100%; min-width:0; height:33px; font-size:13px; }
+.blockui-palette-options > summary { font-size:11px; white-space:normal; }
+.blockui-palette-options > summary::after { content:none; }
+.blockui-palette-options[open] { position:static; flex:1 1 100%; box-sizing:border-box; min-width:0; max-width:100%; }
+.blockui-palette-options[open] select { width:100%; max-width:100%; }
 .blockui-local-help { font-size:12px; max-width:100%; }
 .blockui-local-help p { white-space:normal; line-height:1.6; }
 .blockui-operator { min-width:90px; padding:5px; }
@@ -19752,7 +19760,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     paletteOptions.append(E('summary', '', '候補の表示'), outsideLabel);
     palettePages.append(previous, pageLabel, next);
     paletteOptions.append(modeSelect);
-    paletteControls.append(search, paletteOptions);
+    const searchLabel=E('label','blockui-search-label','ブロックを探す');
+    searchLabel.append(search);
+    paletteControls.append(searchLabel, paletteOptions);
     const searchScope=E('p','blockui-search-scope','',{'aria-live':'polite'});
     paletteControls.append(searchScope);
     const restoreSearch = button('', 'restore-search', () => {
@@ -23362,7 +23372,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const next = sourceCandidate(binding, ownerKey, source);
       if (atomic) {
         clearTimeout(historyTimer);
-        if(!hasPendingEditor())pushHistoryNow();
+        const session = binding.session, pending = session?.pendingEdit;
+        const importing = binding === mainEditor && pending?.kind === 'source-import' &&
+          session.ownerKey === ownerKey && pending.ownerKey === ownerKey &&
+          pending.value === source && !session.blockDraft;
+        if (importing) {
+          // The confirmed input is not the valid body before this atomic change.
+          session.pendingEdit = null;
+          try { if (!hasPendingEditor()) pushHistoryNow(); }
+          finally { session.pendingEdit = pending; }
+        } else if (!hasPendingEditor()) pushHistoryNow();
       }
       if (binding.kind === 'draft') callableDraftCore = { ...callableDraftCore, source };
       else {
@@ -26537,6 +26556,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (!activeLoc) return;
       const loc = activeLoc,
         parts = loc.key.split(':'),
+        scriptKey = parts[0] === 'script' ? loc.key
+          : loc.scriptId ? `script:${loc.scriptId}` : `script:${loc.targetId}:${loc.event}`,
+        sourceKey = compiled?.items?.find((item) => item.key === scriptKey)?.documentKey || scriptKey,
+        script = scriptBySourceKey(project, sourceKey),
         def =
           parts[0] === 'action'
             ? project.actions.find((x) => x.id === parts[1])
@@ -26549,12 +26572,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       $('#execLocation').textContent = `いまの場所：${label} / ${loc.line}行`;
       if (scheduler?.paused) {
         hideSourceOverview();
-        selectedId = def?.ownerId || loc.targetId;
-        currentEvent = loc.event;
-        selectedScriptId = loc.scriptId || scriptBySourceKey(project, loc.key)?.id || null;
+        // Runtime document units have their own IDs; editor selection belongs
+        // to the complete source body that can be saved and restored.
+        selectedId = script?.targetId || loc.targetId;
+        currentEvent = script?.event || loc.event;
+        selectedScriptId = script?.id || null;
         const src =
           def?.source ??
-          scriptBySourceKey(project, loc.key)?.source ??
+          script?.source ??
           '';
         debugSourceKey = loc.key;
         if (el.editor.value !== src) el.editor.value = src;
@@ -27275,7 +27300,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         autosaveRevisionTime=Math.max(Date.now(),autosaveRevisionTime+1);
         rec={id:'latest',version:2,updatedAt:autosaveRevisionTime,revision:recoveryEpoch,workspace,lastSavedFingerprint};
       } catch (e) {
-        el.autosave.textContent = '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5931\u6557';
+        el.autosave.textContent = '自動保存：失敗（「保存」で作品をファイルに保存してください）';
         log(e.message, 'error');
         return Promise.resolve(false);
       }
@@ -27288,7 +27313,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const fallback = () => {
         if (rec.workspace.assets.some(a=>!a.builtin)) {
           status(
-            '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5229\u7528\u3067\u304d\u307e\u305b\u3093\uff08\u7d20\u6750\u3092\u542b\u3080\u4f5c\u54c1\uff09',
+            '自動保存：利用できません（素材を含む作品。「保存」でファイルに保存してください）',
           );
           return false;
         }
@@ -27298,7 +27323,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           status('\u81ea\u52d5\u4fdd\u5b58\uff1a\u6e08\u307f');
           return true;
         } catch (_) {
-          status('\u81ea\u52d5\u4fdd\u5b58\uff1a\u5931\u6557');
+          status('自動保存：失敗（「保存」で作品をファイルに保存してください）');
           return false;
         }
       };

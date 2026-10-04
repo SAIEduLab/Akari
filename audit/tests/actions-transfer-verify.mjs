@@ -1,5 +1,7 @@
 import {repairInputs,repairWrongMeaning,repairMatrixWrongMeaning,repairViewportWrongMeaning,repairLanguageWrongMeaning} from '../lib/ux-repair02-contract.mjs';
 import {verifyRepairFollowupBundle} from '../lib/ux-repair03-contract.mjs';
+import {verifyAutosaveStateReport,autosaveStateWrongMeaning} from '../lib/autosave-state-contract.mjs';
+import {verifySearchLayoutReport,searchLayoutWrongMeaning} from '../lib/search-layout-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -202,7 +204,39 @@ try{
  results.push(...followup.results.map(row=>({...row,status:'PASS'})));
  followupNegative=followup.negative;
 }catch(error){results.push({file:'ux-repair03-required-bundle',status:'FAIL',error:error.stack});}
+const autosaveNegative=[];
+try{
+ const file='autosave-state-browser.json',actual=JSON.parse(fs.readFileSync(path.join(dir,file)));
+ results.push({file,status:'PASS',cases:verifyAutosaveStateReport(actual)});
+ assert.deepEqual(autosaveStateWrongMeaning.map(([id])=>id),[
+  'runtime-unit-as-owner','pause-failure-hidden','unsaved-record','cancel-changes-source',
+  'repair-drops-sibling','repair-history-lost','saved-before-complete','stale-success',
+  'stale-storage','quota-erases-previous','quota-no-next-action','draft-lost',
+  'callable-selection-invalid','callable-export-lost',
+  'missing-result','duplicate-result','wrong-snapshot','wrong-environment',
+ ],'Complete autosave rejection controls');
+ for(const [id,mutate]of autosaveStateWrongMeaning){const bad=structuredClone(actual);mutate(bad);assert.throws(()=>verifyAutosaveStateReport(bad),id);autosaveNegative.push({id,rejected:true});}
+ assert.throws(()=>verifyAutosaveStateReport(undefined),'missing autosave report');
+ autosaveNegative.push({id:'missing-report',rejected:true});
+ assert.equal(autosaveNegative.length,19);
+}catch(error){results.push({file:'autosave-state-required-bundle',status:'FAIL',error:error.stack});}
+const searchLayoutNegative=[];
+try{
+ const file='search-layout-browser.json',actual=JSON.parse(fs.readFileSync(path.join(dir,file)));
+ results.push({file,status:'PASS',cases:verifySearchLayoutReport(actual)});
+ assert.deepEqual(searchLayoutWrongMeaning.map(([id])=>id),[
+  'missing-visible-label','tiny-input-font','word-clipped','candidate-hidden',
+  'hint-clipped','controls-overlap','options-overflow','keyboard-lost',
+  'query-mutates-source','wrong-candidate','undo-lost','main-control-unreachable',
+  'fake-browser-zoom','zoom-without-reflow',
+  'missing-result','duplicate-result','wrong-snapshot','wrong-environment',
+ ],'Complete search layout rejection controls');
+ for(const [id,mutate]of searchLayoutWrongMeaning){const bad=structuredClone(actual);mutate(bad);assert.throws(()=>verifySearchLayoutReport(bad),id);searchLayoutNegative.push({id,rejected:true});}
+ assert.throws(()=>verifySearchLayoutReport(undefined),'missing search layout report');
+ searchLayoutNegative.push({id:'missing-report',rejected:true});
+ assert.equal(searchLayoutNegative.length,19);
+}catch(error){results.push({file:'search-layout-required-bundle',status:'FAIL',error:error.stack});}
 const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===183?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
- validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative,followupNegative};
+ validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative,followupNegative,autosaveNegative,searchLayoutNegative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;
