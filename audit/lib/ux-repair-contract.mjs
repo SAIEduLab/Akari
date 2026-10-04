@@ -1,3 +1,4 @@
+import {repairInputs} from './ux-repair02-contract.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {verifySemanticExtension} from './semantic-extension-contract.mjs';
@@ -40,5 +41,5 @@ export function verifyUxBubbles(report){
  for(const r of report.results){assert.equal(r.noOverlap,true);assert.equal(r.fullTextExact,true);assert.equal(r.overlaps.bubbles,0);assert.ok(r.overlaps.actors.flat().every(x=>x===0));assert.ok(Math.abs(r.geometry.scale-Number(r.mode)/100)<.006);assert.equal(r.geometry.bubbles.length,2);assert.ok(r.geometry.bubbles.every(b=>b.speechTextOnly&&b.fullEntryPaint.includes('全文')));assert.ok(r.geometry.bubbles.every(b=>b.font>=13.5));if(r.length){assert.ok(r.geometry.bubbles.some(b=>b.clipped));assert.ok(r.geometry.bubbles.filter(b=>b.clipped).every(b=>b.fullEntryVisible));}}
  return report.results.length;
 }
-export const uxRepairInputs=[['ux-repair-language.json',verifyUxLanguage],['ux-repair-browser.json',verifyUxBrowser],['ux-bubble-layout.json',verifyUxBubbles]];
+export const uxRepairInputs=[['ux-repair-language.json',verifyUxLanguage],['ux-repair-browser.json',verifyUxBrowser],['ux-bubble-layout.json',verifyUxBubbles],...repairInputs];
 export function verifyUxRepairInputs(read){return uxRepairInputs.map(([file,verify])=>({file,cases:verify(read(file))}));}

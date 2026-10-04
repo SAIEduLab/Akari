@@ -1092,7 +1092,8 @@ button:focus-visible {
   padding: 12px 14px;
   line-height: 22px;
   overflow: auto;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   tab-size: 2;
 }
 .code-assist {
@@ -5315,19 +5316,43 @@ body[data-editor-mode="code"] .side:has(.monitor-window .output-disclosure[open]
 <style id="ux-repair-readability">
 /* Controls occupy their own row; scrolling content never sits behind them. */
 .blockui-workspace-shell { display:grid !important; grid-template-rows:minmax(0,1fr) auto; }
-.blockui-workspace-shell > .blockui-workspace { min-height:0; grid-row:1; }
+.blockui-workspace-shell > .blockui-workspace { position:relative; inset:auto; min-height:0; grid-row:1; }
 .blockui-workspace-shell > .blockui-navigation { position:static !important; grid-row:2; justify-self:end; margin:6px; max-width:calc(100% - 12px); flex-wrap:wrap; }
 .blockui-workspace { scroll-padding:24px; }
-.blockui-workspace-tip { pointer-events:none; }
+.blockui-workspace-tip { display:none; }
+.blockui-world { width:var(--blockui-content-width, 560px); min-width:0; padding:28px 20px 80px; }
+.blockui-world .blockui-script { width:100%; min-width:0; }
+.blockui-world .blockui-body { min-width:0; max-width:100%; }
+.blockui-world .blockui-body > .blockui-node { min-width:0; max-width:100%; }
+.blockui-world .blockui-script > .blockui-node-content > .blockui-body { min-width:0; }
+.blockui-world .blockui-node-content { min-width:0; max-width:100%; }
+.blockui-world .blockui-node-main { flex-wrap:wrap; white-space:normal; max-width:100%; }
+.blockui-world .blockui-script > .blockui-node-head { display:flex; padding:10px 4px 2px; }
+.blockui-world .blockui-script > .blockui-node-head > .blockui-node-title {
+  position:static; width:auto; height:auto; clip-path:none; overflow:visible; white-space:normal;
+}
+.blockui-extra, .blockui-subject { max-width:100%; font-size:13px; }
+.blockui-extra > summary, .blockui-subject > summary { cursor:pointer; padding:3px 5px; }
+.blockui-extra[open] { flex-basis:100%; }
+.blockui-extra-controls { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:6px 0; }
+.blockui-subject .blockui-structured-field { display:flex; flex-wrap:wrap; max-width:100%; }
+.blockui-world .blockui-edit-text { display:none; }
+.blockui-world .blockui-expression:is(.blockui-selected,:focus-within) > .blockui-node-content > .blockui-node-main > .blockui-field > .blockui-edit-text { display:inline-flex; }
+.blockui-world .blockui-phrase-text { white-space:pre-wrap; }
+.blockui-world .blockui-input-slot { min-width:0; max-width:100%; }
+.blockui-world .blockui-slot-head { flex-wrap:wrap; }
+.blockui-list-repair { display:flex; flex-wrap:wrap; gap:5px; padding:6px; white-space:normal; }
+.blockui-palette-list .blockui-preview-main { white-space:normal; flex-wrap:wrap; }
 .blockui-world .blockui-input-slot > .blockui-slot-head { display:none; }
-.blockui-world .blockui-input-slot.blockui-slot-active > .blockui-slot-head { display:flex; }
+.blockui-world .blockui-input-slot.blockui-slot-active > .blockui-slot-head { display:flex; position:static; min-width:0; max-width:100%; transform:none !important; }
+.blockui-world .blockui-input-slot.blockui-slot-active { flex-wrap:wrap; }
 .blockui-world .blockui-input-slot.blockui-slot-active { outline:2px solid #185c98; outline-offset:3px; z-index:90; }
 .blockui-search-scope { margin:3px 0; font-size:11px; white-space:normal; }
 .blockui-palette-controls { flex-wrap:wrap; }
 .blockui-local-help { font-size:12px; max-width:100%; }
 .blockui-local-help p { white-space:normal; line-height:1.6; }
 .blockui-operator { min-width:90px; padding:5px; }
-.sprite-bubble::before { content:attr(data-speaker); display:block; font-size:0.8em; margin-bottom:3px; }
+.sprite-bubble::before { content:attr(data-speaker); display:block; font-size:0.8em; margin-bottom:3px; margin-right:var(--speech-full-space,0px); min-height:var(--speech-heading-height,0px); }
 .sprite-bubble [data-speech-full]::before { content:attr(data-label); }
 body[data-editor-mode="code"] .codewin { min-height:430px; }
 body[data-editor-mode="code"] .main { grid-template-rows:minmax(180px,1fr) minmax(430px,1.5fr); overflow:auto; }
@@ -5406,10 +5431,6 @@ body.runtime .sprite-bubble {
 body[data-editor-mode="blocks"] #blockEditor .blockui-workspace:has(.blockui-world .blockui-field.blockui-editing-field) {
   position: relative;
   z-index: 4;
-}
-body[data-editor-mode="blocks"] #blockEditor:has(.blockui-world .blockui-field.blockui-editing-field) .blockui-navigation {
-  visibility: hidden;
-  pointer-events: none;
 }
 @media (max-width: 760px) {
   body[data-editor-mode="blocks"] #blockEditor .blockui-layout:has(.blockui-world .blockui-field.blockui-editing-field) {
@@ -5723,7 +5744,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       <div class="win-title">コード</div>
       <div class="code-head">
         <label>動かすもの <select id="objectSelect"></select></label>
-        <label>できごと・本文 <select id="eventSelect"></select></label>
+        <label>編集する本文を選ぶ <select id="eventSelect" title="既存の本文を選びます。本文のきっかけは「この本文のきっかけを変更」で変えます"></select></label>
         <button id="scriptAdd" type="button">同じできごとの本文を追加</button>
       </div>
       <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">この本文のきっかけを変更</button></div>
@@ -5738,7 +5759,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       <div class="editor-modes" role="group" aria-label="本文の表示"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を取り消す</button></div><p id="editorPending" class="editor-pending" role="status" hidden></p><section id="sourceImport" class="editor-pending" aria-label="文章の取り込み" hidden></section><div id="blockEditor" hidden></div>
       <div class="editor-shell">
         <div class="line-gutter" id="lineGutter" aria-hidden="true"></div>
-        <textarea id="codeEditor" spellcheck="false" aria-label="あかりのコード"></textarea>
+        <textarea id="codeEditor" wrap="soft" spellcheck="false" aria-label="あかりのコード"></textarea>
       </div>
       <div class="code-assist"><span id="codeIssue">✓ 書き方をチェック中</span><div class="hint-panel"><div class="hint-controls"><input id="hintSearch" type="search" aria-label="候補を検索" placeholder="命令・値・名前を検索"><label><input id="hintUnavailable" type="checkbox">使えないものも表示</label><button id="hintPrev">前</button><span id="hintCount"></span><button id="hintNext">次</button></div><div class="code-hints" id="codeHints"></div></div></div>
       <div class="console" id="console"></div>
@@ -11767,6 +11788,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           }
         return exprNode('ListLiteral', { items });
       }
+      if (this.starts('リスト「') || this.starts('リスト『')) return this.readNamed('exact');
       if (this.starts('「') || this.starts('『')) {
         const open=this.text[this.i++],close=open==='『'?'』':'」';
         let value = '', closed = false;
@@ -11894,6 +11916,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       return exprNode('UserFunctionCall',{name,args,...(marker>=0?{argumentNames}:{})});
     }
     readNamed(qualifier) {
+      // Only an explicit noun turns a quoted label into a data reference.
+      // Ordinary quoted values remain strings, including before an ordinal.
+      if (this.starts('リスト「') || this.starts('リスト『')) {
+        this.i += 'リスト'.length;
+        const literal = this.basic();
+        validateName(literal.value);
+        return exprNode('VariableRead', { name: literal.value, qualifier });
+      }
       // An explicit owner reads its named data; it does not change loop scope.
       const phrase = '今見ているもの';
       const t = this.starts(phrase) && nameBoundary(this.text, this.i + phrase.length)
@@ -11935,7 +11965,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       return located(parseExpression(compact.slice(1,-1),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(1,-1)}));
     if (mask.startsWith('今の') && !symbols?.project?.components.some(component=>component.name==='今'))
       return located(parseExpression(compact.slice(2),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(2)}));
-    const arithmetic=[['をかけた',/^(.+?)と(.+?)をかけた(?:数|答え)$/d,'MUL'],['を足した',/^(.+?)に(.+?)を足した(?:数|答え)$/d,'ADD'],['を引いた',/^(.+?)から(.+?)を引いた(?:数|答え)$/d,'SUB'],['で割った',/^(.+?)を(.+?)で割った(?:数|答え)$/d,'DIV']];
+    const arithmetic=[['をかけた',/^(.+?)と(.+?)をかけた(?:数|答え)$/d,'MUL'],['を足した',/^(.+?)(?:に|と)(.+?)を足した(?:数|答え)$/d,'ADD'],['を引いた',/^(.+?)から(.+?)を引いた(?:数|答え)$/d,'SUB'],['で割った',/^(.+?)を(.+?)で割った(?:数|答え)$/d,'DIV']];
     for(const [ending,pattern,op] of arithmetic){
       if(!mask.endsWith(ending+'数')&&!mask.endsWith(ending+'答え'))continue;
       const roles=surfaceCapture(pattern,compact);
@@ -12292,7 +12322,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     ['Say:add', /^(.+?)に(.+?)を足して(?:言う|いう|話す|はなす)$/d, 'Say', null, 'addValue'],
     ['Say:quote', /^(.+?)と(?:言う|いう|話す|はなす)$/d, 'Say', null, 'quote'],
     ['Say:value', /^(.+?)を(?:言う|いう|話す|はなす)$/d, 'Say', null, 'value'],
-    ['Ask', /^(.+?)と(?:たずねて|尋ねて|聞いて)、(?:答え|返事)を待つ$/d, 'Ask', null, 'question'],
+    ['Ask', /^(.+?)と(?:(?:たずねて|尋ねて|聞いて)、(?:答え|返事)を待つ|たずねる|尋ねる)$/d, 'Ask', null, 'question'],
     ['BroadcastAndWait', /^みんなに(.+?)と知らせて、知らせを受けて始めたことが全部終わるまで待つ$/d, 'BroadcastAndWait', null, 'message'],
     ['Broadcast', /^みんなに(.+?)と知らせる$/d, 'Broadcast', null, 'message'],
     ['ReturnStatement', /^(.+?)を、?答えとして返す$/d, 'ReturnStatement', null, 'value'],
@@ -12366,8 +12396,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     ['足して','足す'], ['たして','たす'], ['引いて','引く'], ['ひいて','ひく'], ['消して','消す'], ['けして','けす'],
     ['知らせて','知らせる'], ['鳴らして','鳴らす'], ['くり返して','くり返す'], ['繰り返して','繰り返す'], ['くりかえして','くりかえす'], ['して','する'],
   ].map(Object.freeze));
-  function surfaceCapture(pattern, code) {
-    const match = pattern.exec(surfaceMask(code));
+  function surfaceCapture(pattern, code, protectedCode = surfaceMask(code)) {
+    const match = pattern.exec(protectedCode);
     if (!match) return null;
     return match.indices.slice(1).map(range => range ? {text:code.slice(...range), start:range[0], end:range[1]} : null);
   }
@@ -12407,9 +12437,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     return formatExpression(expr.kind === 'QuantityLiteral' && expr.unit === unit ? expr.value : expr) + unit;
   }
   function readRoleStatement(code, line, symbols, ctx) {
-    const polite = [['話します','話す'],['はなします','はなす'],['言います','言う'],['いいます','いう'],['待ちます','待つ'],['まちます','まつ'],['増やします','増やす'],['減らします','減らす'],['動きます','動く'],['進みます','進む'],['回ります','回る'],['くり返します','くり返す'],['繰り返します','繰り返す'],['します','する']];
-    const suffix = polite.find(([ending])=>surfaceMask(code).endsWith(ending));
-    const immediate = surfaceMask(code).startsWith('すぐに') ? 3 : 0;
+    const protectedCode = surfaceMask(code);
+    const polite = [['話します','話す'],['はなします','はなす'],['言います','言う'],['いいます','いう'],['たずねます','たずねる'],['尋ねます','尋ねる'],['待ちます','待つ'],['まちます','まつ'],['増やします','増やす'],['減らします','減らす'],['動きます','動く'],['進みます','進む'],['回ります','回る'],['くり返します','くり返す'],['繰り返します','繰り返す'],['します','する']];
+    const suffix = polite.find(([ending])=>protectedCode.endsWith(ending));
+    const immediate = protectedCode.startsWith('すぐに') ? 3 : 0;
     if (suffix || immediate) {
       const replacement = code.slice(immediate, suffix ? -suffix[0].length : undefined) + (suffix ? suffix[1] : '');
       const part = surfaceLineSlice(line, immediate, code.length, replacement);
@@ -12420,8 +12451,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const q = (part,unit) => {if(surfaceMask(part.text).endsWith(unit))throw new AkariError('P205','単位を重ねず一つだけ指定してください');return sentenceQuantity(e(part),unit);};
     const target = part => sentenceTarget(part.text,code,line,symbols,ctx,part.start);
     const node = (kind,props={}) => statementNode(kind,line,{...props,actorRef:{...(ctx.topicActor || {kind:'self'})}});
-    const callSplit=surfaceMask(code).lastIndexOf('、'),shortCall=symbols?.actionCallPhrases?.get(code.slice(callSplit+1));
-    const action = surfaceCapture(/^(.*?)という手順を(?:(.+?)回)?(?:行う|おこなう)$/d,code)|| (shortCall?[{text:code.slice(0,callSplit+1)+`【${shortCall.name}】`}]:null);
+    const callSplit=protectedCode.lastIndexOf('、'),shortCall=symbols?.actionCallPhrases?.get(code.slice(callSplit+1));
+    const action = surfaceCapture(/^(.*?)という手順を(?:(.+?)回)?(?:行う|おこなう)$/d,code,protectedCode)|| (shortCall?[{text:code.slice(0,callSplit+1)+`【${shortCall.name}】`}]:null);
     if (action) {
       const text = action[0].text, mask = surfaceMask(text), split = mask.lastIndexOf('、');
       let rawName=text, args=[], argumentNames=null;
@@ -12445,12 +12476,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const call=node('UserActionCall',{name,args,...(argumentNames ? {argumentNames} : {})});
       return action[1]?node('RepeatCount',{count:q(action[1],'回'),body:[call]}):call;
     }
-    const protectedCode=surfaceMask(code);
     for (const form of SENTENCE_FORMS) {
       if(!form.pattern)continue;
       const ending=SENTENCE_ROLE_ENDINGS[form.role];
       if(ending&&!ending.test(protectedCode))continue;
-      const parts=surfaceCapture(form.pattern,code);
+      const parts=surfaceCapture(form.pattern,code,protectedCode);
       if (!parts) continue;
       const unit=path=>form.roleSlots.find(slot=>slot.path===path)?.unit;
       let props=form.op ? {op:form.op} : {};
@@ -12500,7 +12530,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     const movement = readSentenceMotion(code,line,symbols,ctx);
     if(movement)return movement;
-    if (/まで(?:待つ|まつ)$/.test(surfaceMask(code))) {
+    if (/まで(?:待つ|まつ)$/.test(protectedCode)) {
       const suffix=code.endsWith('待つ')?'待つ':'まつ';
       const clause=readConditionClause(code.slice(0,-suffix.length),symbols,{...ctx,sourceLine:line});
       if(clause)return node('WaitUntil',{condition:clause.condition});
@@ -12549,7 +12579,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     return null;
   }
   function readSentenceHeading(code,symbols,previousHeading=null) {
-    const same = surfaceCapture(/^(.+?)も同じ合図で動き始め、(.*)$/d,code);
+    const protectedCode = surfaceMask(code);
+    const same = surfaceCapture(/^(.+?)も同じ合図で動き始め、(.*)$/d,code,protectedCode);
     if(same){
       if(!previousHeading)throw new AkariError('P205','「同じ合図」の前に、始めるときやクリックなどのきっかけを書いてください');
       return {heading:{...previousHeading,actorRef:sentenceActor(same[0].text,symbols)},body:same[1]};
@@ -12566,7 +12597,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       [/^(.+?)の中身が変わったとき、(.*)$/d,'valueChanged',0,1],
       [/^(.+?)の分身が作られたとき、(.*)$/d,'cloneStart',0,1],
     ];
-    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','見出しの絞り込みは「文字」で指定してください');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','見出しの絞り込みは文字列一つで指定してください');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex]};}
+    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code,protectedCode);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','見出しの絞り込みは「文字」で指定してください');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','見出しの絞り込みは文字列一つで指定してください');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex]};}
+    const implicit = surfaceCapture(/^始めると、(.*)$/d, code, protectedCode);
+    if (implicit) return { heading: { event: 'start', actorRef: { kind: 'self' } }, body: implicit[0] };
     return null;
   }
   function sentenceHeadingSource(heading) {
@@ -17216,7 +17249,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   // 08 — Portable stage view and standalone export
   // ────────────────────────────────────────────────────────────────────────
   const AKARI_STAGE_CSS =
-    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:3px}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }";
+    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:3px;margin-right:var(--speech-full-space,0px)}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }";
   const AKARI_PLAYER_CSS =
     '*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#edf2f8;color:#1f2937;font:14px "Yu Gothic UI","Yu Gothic","Meiryo",sans-serif}button,input{font:inherit}button{padding:7px 12px;background:#fff;border:1px solid #a9b8ca;border-radius:7px;cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #2f6fd6;outline-offset:2px}#playerRoot{width:max-content;min-width:min(100%,640px);max-width:100%;margin:0 auto;padding:14px}header{margin-bottom:12px}h1{font-size:20px;margin:0 0 10px;overflow-wrap:anywhere}.player-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px}#playerStatus{font-size:12px;color:#536273;margin-left:6px}.player-stage{max-width:100%;overflow:auto;border:1px solid #bccbe0;border-radius:10px;background:#fff}#formSurface{outline:none}#formSurface:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}#playerOutput{max-height:130px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;background:#fff;border:1px solid #c7d2df;border-radius:8px;margin:12px 0 0}.modal{display:none;position:fixed;inset:0;background:rgba(25,37,55,.4);z-index:10000;align-items:center;justify-content:center;padding:16px}.modal.show{display:flex}.question-box{width:min(500px,100%);max-height:90vh;overflow:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 12px 35px #0003}#questionText{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:14px;font-weight:700}#questionAnswer{width:100%;padding:8px;border:1px solid #a9b8ca;border-radius:7px}.question-controls{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}@media(max-width:600px){#playerRoot{padding:8px}h1{font-size:17px}}\n';
   function createAkariStageView(core, options) {
@@ -17353,7 +17386,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         sy = rect.height / form.clientHeight || 1;
       const bubbles=[...form.querySelectorAll('.sprite-bubble')],placed=[],overlap=(a,b)=>Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
       const actors=[...form.querySelectorAll('.component')].filter(n=>n.style.display!=='none').map(n=>{const r=n.getBoundingClientRect();return {left:(r.left-rect.left)/sx,right:(r.right-rect.left)/sx,top:(r.top-rect.top)/sy,bottom:(r.bottom-rect.top)/sy};});
-      form.querySelectorAll('.sprite-bubble').forEach((b) => {
+      const bands = actors.length ? [{ top:0, height:Math.min(...actors.map(a=>a.top)) },
+          { top:Math.max(...actors.map(a=>a.bottom)), height:form.clientHeight-Math.max(...actors.map(a=>a.bottom)) }] : [];
+      const band = bubbles.length > 1 && rect.width >= bubbles.length*80+(bubbles.length-1)*8
+        ? bands.filter(b=>b.height*sy>=42).sort((a,b)=>b.height-a.height)[0] : null;
+      form.querySelectorAll('.sprite-bubble').forEach((b, bubbleIndex) => {
         const id = b.dataset.runtimeId,
           node = form.querySelector(`[data-runtime-id="${CSS.escape(id)}"].component`);
         if (!runtime()?.actor(id) || !node || node.style.display === 'none') {
@@ -17365,15 +17402,28 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             top:(box.top-rect.top)/sy, bottom:(box.bottom-rect.top)/sy},
           sideWidth = Math.max(actor.left-gap, form.clientWidth-actor.right-gap),
           availableWidth = sideWidth >= 80/sx ? sideWidth : form.clientWidth;
-        b.style.fontSize = 14/sx+'px'; b.style.padding = 8/sy+'px '+10/sx+'px';
-        b.style.maxWidth = Math.min(320/sx,availableWidth)+'px';
-        const heightBudget=Math.min(160/sy,Math.max(60/sy,(form.clientHeight-(bubbles.length-1)*8/sy)/Math.max(1,bubbles.length)));
-        b.style.maxHeight = heightBudget+'px';
+        b.style.fontSize = 14/sx+'px'; b.style.padding = (band?1.5:8)/sy+'px '+(band?6:10)/sx+'px';
+        b.style.setProperty('--speech-heading-height', band ? 17/sy+'px' : '0px');
+        const bandWidth = (form.clientWidth-(bubbles.length-1)*8/sx)/Math.max(1,bubbles.length);
+        b.style.maxWidth = Math.min(320/sx,band?bandWidth:availableWidth)+'px';
+        const heightBudget=band ? Math.min(160/sy,band.height-1/sy) : Math.min(160/sy,Math.max(54/sy,(form.clientHeight-(bubbles.length-1)*8/sy)/Math.max(1,bubbles.length)));
+        b.style.maxHeight = 'none';
         const text = b.querySelector('.sprite-bubble-text');
-        if (text) text.style.maxHeight = Math.min(100/sy,Math.max(0,heightBudget-60/sy))+'px';
         const full = b.querySelector('[data-speech-full]');
+        if (full) {
+          // The full-text entry shares the speaker row rather than consuming the
+          // one readable line available in a small preview.
+          Object.assign(full.style, { position:'absolute', top:(band?2:4)/sy+'px', right:4/sx+'px',
+            fontSize:11/sx+'px', lineHeight:'1.2', padding:2/sy+'px '+4/sx+'px', minHeight:'0' });
+        }
+        if (text) {
+          text.style.maxHeight = '0px';
+          const chromeHeight = b.getBoundingClientRect().height/sy;
+          text.style.maxHeight = Math.min(100/sy,Math.max(19/sy,heightBudget-chromeHeight))+'px';
+        }
         if (full) full.hidden = !(full.dataset.always === 'true' ||
           text && (text.scrollHeight > text.clientHeight + 1 || text.scrollWidth > text.clientWidth + 1));
+        b.style.setProperty('--speech-full-space', full && !full.hidden ? (band?32:45)/sx+'px' : '0px');
         const width=b.offsetWidth,height=b.offsetHeight, center=(actor.left+actor.right-width)/2,
           positions=[[actor.right+gap,actor.top],[actor.left-width-gap,actor.top],
              [center,actor.top-height-gap],[center,actor.bottom+gap]];
@@ -17383,8 +17433,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           const candidate={left,top,right:left+width,bottom:top+height},cost=actors.reduce((sum,a)=>sum+overlap(candidate,a),0)+placed.reduce((sum,b)=>sum+overlap(candidate,b)*10,0);
           return {...candidate,overlap:cost,order};
         }).sort((a,b)=>a.overlap-b.overlap||a.order-b.order);
-        b.style.left=candidates[0].left+'px'; b.style.top=candidates[0].top+'px';
-        placed.push(candidates[0]);
+        const chosen = band ? { left:bubbleIndex*(bandWidth+8/sx)+(bandWidth-width)/2, top:band.top,
+          right:bubbleIndex*(bandWidth+8/sx)+(bandWidth+width)/2, bottom:band.top+height } : candidates[0];
+        b.style.left=chosen.left+'px'; b.style.top=chosen.top+'px'; placed.push(chosen);
       });
     }
     function renderComponents() {
@@ -19385,6 +19436,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       displaySession = null,
       dragFrame = null;
     let searchText = '',
+      previousSearch = '',
       category = document.body.dataset.uiLevel === 'basic' ? 'basic' : '',
       showOutside = false,
       page = 0,
@@ -19398,6 +19450,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       branchLines = new Map(),
       branchSourceLines = new Map();
     const phraseCache = new Map();
+    const openEditors = new Set();
     const openAnnotations = new Set(),
       collapsed = new Set(),
       bodyPages = new Map(),
@@ -19436,10 +19489,40 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       });
       return b;
     };
+    const editDisclosure = (node, key, label, className) => {
+      const details = E('details', className), id = node.id + ':' + key;
+      details.dataset.blockuiDisclosure = id; details.open = openEditors.has(id);
+      details.append(E('summary', '', label));
+      listen(details, 'toggle', () => {
+        if (details.isConnected) details.open ? openEditors.add(id) : openEditors.delete(id);
+        scheduleGeometry();
+      });
+      return details;
+    };
     const schemaOf = (n) => BLOCK_SCHEMA_BY_ID.get(n?.schemaId);
     const session = () => getSession?.() || null;
     const project = () => getProject?.() || session()?.project;
     const context = () => ({ ...session()?.context, ...getContext() });
+    const subjectName = node => {
+      const lineage = [node, ...(index.get(node.id)?.ancestors || []).slice().reverse().map(id => index.get(id)?.node)];
+      // A qualified expression inherits its enclosing value context. Each
+      // statement starts again from the event's self, not an outer statement.
+      for (const part of lineage) {
+        const category = schemaOf(part)?.category;
+        if (category === 'script') break;
+        if (part?.fields.actorRef?.kind === 'named') return part.fields.actorRef.name;
+        if (category === 'statement') break;
+      }
+      const heading = lineage.find(n => schemaOf(n)?.category === 'script')?.fields.heading;
+      return heading?.actorRef?.kind === 'named' ? heading.actorRef.name
+        : project()?.components.find(c => c.id === context().targetId)?.name || project()?.stage?.name || '自分';
+    };
+    const subjectContext = node => {
+      const subject = subjectName(node),
+        targetId = subject === '画面' || subject === project()?.stage?.name ? 'stage'
+          : project()?.components.find(c => c.name === subject)?.id;
+      return { ...context(), targetId };
+    };
     const getTree = (s) => s?.blockView?.tree || s?.blockView || null;
     const errorText = (e) => e?.message || e?.reason || String(e || '操作を確定できません');
     const copy = (v) =>
@@ -19624,6 +19707,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     paletteControls.append(search, paletteOptions);
     const searchScope=E('p','blockui-search-scope','',{'aria-live':'polite'});
     paletteControls.append(searchScope);
+    const restoreSearch = button('', 'restore-search', () => {
+      searchText = search.value = previousSearch;
+      page = 0;
+      renderPalette();
+    });
+    paletteControls.append(restoreSearch);
     if(options.onData)paletteControls.append(button('＋ 変数・リストを作る','create-data',()=>options.onData()));
     const help=E('details','blockui-local-help');help.append(E('summary','','いまの編集のヒント'),E('p','','＋で命令を入れます。白い欄には文字・数・データを選びます。「たずねる」で待った返事は「答え」で使えます。未完成でも保存できます。'));
     paletteControls.append(help);
@@ -19791,7 +19880,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       });
       listen(input, 'blur', (event) => {
         if (rendering || committing || !input.isConnected) return;
-        if (pending?.input === input && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action]'))
+        if (pending?.input === input && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action],[data-blockui-value-type]'))
           flush({ focus: false });
       });
       listen(input, 'keydown', (event) => {
@@ -19803,7 +19892,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         } else if (event.key === 'Escape') {
           event.preventDefault();
           event.stopPropagation();
-          cancel();
+          cancelField();
         }
       });
     }
@@ -19864,7 +19953,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       let op = { type: p.annotation ? 'annotation' : 'field', id: p.id, key: p.key, value };
       if (!p.annotation && p.field.type === 'number' &&
-        (p.input.dataset.signedParentId || value < 0 || Object.is(value, -0))) {
+        (p.input.dataset.expressionHole || p.input.dataset.signedParentId || value < 0 || Object.is(value, -0))) {
         const literal = createBlock('NumberLiteral');
         literal.fields.value = Math.abs(value);
         let replacement = literal;
@@ -19897,6 +19986,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if(control?.setSelectionRange)control.setSelectionRange(p.input.selectionStart,p.input.selectionEnd,p.input.selectionDirection);
       }
       return { ok: true, changed: result.changed !== false };
+    }
+    function cancelField() {
+      const field = pending;
+      pending = null;
+      if (field?.input?.isConnected) {
+        field.input.value = field.field.type === 'qualifier' ? field.original ?? 'none'
+          : field.field.type === 'number' ? field.original === undefined ? '' : decimalSource(field.original) : field.original ?? '';
+        field.input.setAttribute('aria-invalid', 'false');
+      }
+      notifyPending();
+      updateControls();
+      announce('この欄の入力を取り消しました。組み立て中のブロックは残っています');
+      return { ok: true };
     }
     function cancel() {
       const field = pending;
@@ -20064,9 +20166,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         : { type: 'expression', ...location, node };
       const result = operate(op);
       if (result.ok) {
+        const containsHole = (part) => part && (
+          BLOCK_SCHEMA_BY_ID.get(part.schemaId)?.kind === 'Hole' ||
+          [...Object.values(part.inputs || {}), ...Object.values(part.bodies || {})]
+            .flat().some(containsHole)
+        );
+        if (searchText && containsHole(node)) {
+          previousSearch = searchText;
+          searchText = search.value = '';
+        }
         destination = null;
-        searchText = '';
-        search.value = '';
         page = 0;
         renderPalette();
         updateControls();
@@ -20208,6 +20317,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         main.append(pill(scalar(node) || schema.fields[0]?.label));
       else if (schema.kind === 'CommentLine')
         main.append(doc.createTextNode('\u203b \u30e1\u30e2'));
+      else if (schema.kind === 'Say') {
+        main.append(pill(scalar(node.inputs.value) ?? '内容'));
+        if (node.inputs.seconds) main.append(doc.createTextNode('を '), pill(scalar(node.inputs.seconds) ?? '秒数'), doc.createTextNode(' 秒話す'));
+        else main.append(doc.createTextNode(' と言う'));
+      }
       else if (schema.kind === 'VariableRead')
         main.append(pill(node.fields.name || '\u5909\u6570'));
       else {
@@ -20302,6 +20416,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       categorySelect.scrollTop = categoryScroll;
       searchScope.textContent=query&&categoryExplicit&&category?`${groups.find(([g])=>g===category)?.[1]||category}の中を検索中`:'すべての分類から探せます';
+      restoreSearch.hidden = !previousSearch || !!query;
+      restoreSearch.textContent = `前の「${previousSearch}」をもう一度探す`;
       const location = destination || defaultDestination(),
         projectState = project();
       const hints = !query ? [] : location?.body ? editorInsertionHints(session(), location, {project:projectState,context:context()})
@@ -20537,7 +20653,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               flush({ focus: false });
           });
         }
-        wrap.append(group); return wrap;
+        if (field.type === 'actor-ref') {
+          const subject = subjectName(node);
+          const details = editDisclosure(node, 'actorRef', subject + 'は', 'blockui-subject');
+          details.querySelector('summary').setAttribute('aria-label', '動く対象を変える: ' + subject);
+          details.append(group);
+          wrap.append(details);
+        } else wrap.append(group);
+        return wrap;
       }
       if (field.type === 'unit' || field.type === 'direction') {
         input = E('select', '', null, attrs);
@@ -20587,7 +20710,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           autocomplete: 'off',
           ...(field.type === 'number' ? { inputmode: 'decimal' } : {}),
         });
-        input.value = field.type === 'number' ? decimalSource(value) : value ?? '';
+        input.value = field.type === 'number' && value !== undefined ? decimalSource(value) : value ?? '';
+        if (node.schemaId === 'Hole:expression' && field.type === 'number') input.dataset.expressionHole = 'true';
       }
       if (annotation) {
         input.placeholder = '※ コメント';
@@ -20616,7 +20740,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           const close = committed => {
             if (committed && !flush({ focus: false }).ok) { editor.focus(); return; }
             dialog.close(); dialog.remove();
-            if (!committed) cancel();
+            if (!committed) { cancelField(); render({ force:true }); }
           };
           editInput(editor, node, field, false);
           listen(apply, 'click', () => close(true));
@@ -21052,12 +21176,31 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (slot.type === 'expression') markDrop(box, location);
       const head = E('div', 'blockui-slot-head');
       head.append(E('span', 'blockui-slot-label', label));
-      if (slot.type === 'expression') {
+      if (slot.type === 'expression' && !options.readOnly) {
+        const types = E('select', 'blockui-value-type', null, { 'aria-label': label + 'の値の種類', 'data-blockui-value-type': 'true' });
+        for (const [value, text] of [['','種類を変える'],['NumberLiteral','数'],['StringLiteral','文字'],['SensorRead:答え','答え'],['VariableRead','名前'],['expression','式']])
+          types.append(E('option', '', text, { value }));
+        types.disabled = isLocked();
+        listen(types, 'change', () => {
+          const kind = types.value; if (!kind) return;
+          const local = pending && (pending.id === child.id || index.get(pending.id)?.ancestors.includes(child.id));
+          if (pending?.composing) { announce('日本語の変換を確定してから種類を選んでください', true); types.value=''; return; }
+          const text = local ? pending.input.value : child.schemaId === 'StringLiteral' ? child.fields.value : '';
+          if (local) cancelField();
+          if (kind === 'expression') { chooseDestination(location); return; }
+          const next = createBlock(kind);
+          if (kind === 'StringLiteral') next.fields.value = text;
+          const result = operate({ type:'expression', ...location, node:next });
+          if (result.ok) {
+            const current = index.get(parent.id)?.node.inputs[slot.key], value = i === undefined ? current : current?.[i];
+            if (value) focus({ id:value.id });
+          }
+        });
         const b = button('式を選ぶ', 'slot-select', () => chooseDestination(location), {
           'aria-label': label + 'の式を選ぶ',
         });
         b.disabled = isLocked();
-        head.append(b);
+        head.append(types, b);
       }
       if (slot.multiple && slot.variadic) {
         const n = parent.inputs[slot.key].length;
@@ -21100,6 +21243,18 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         head.append(up, down, remove);
       }
       box.append(renderNode(child), head);
+      if (!options.readOnly && parent.schemaId === 'ListRead' && slot.key === 'list' && child.schemaId === 'StringLiteral') {
+        const recovery = E('div', 'blockui-list-repair'), select = E('select', '', null, { 'aria-label':'文字の代わりに使うリストを選ぶ' });
+        select.append(E('option', '', 'リストを選ぶ', { value:'' }));
+        const localContext = subjectContext(parent),
+          candidates = hintCandidates(project(), localContext.targetId, { source:session()?.sourceText || '', ...localContext })
+          .filter(h => h.id.startsWith('read:') && h.binding?.kind === 'list' && h.enabled);
+        for (const [i,h] of candidates.entries()) select.append(E('option', '', h.text, { value:String(i) }));
+        select.disabled = isLocked() || !candidates.length;
+        listen(select, 'change', () => { if (select.value !== '') operate({ type:'expression', ...location, node:nodeForSearchHint(candidates[Number(select.value)], project(), localContext) }); });
+        recovery.append(E('span', '', '引用した名前は文字です。' + (candidates.length ? '使うリストを選び直せます。' : '使えるリストがありません。')), select);
+        box.append(recovery);
+      }
       return box;
     }
     function renderInput(node, slot, i) {
@@ -21312,18 +21467,22 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           listen(operator,'change',()=>operate({type:'operator',id:node.id,schemaId:operator.value}));
           main.append(slot('left'),operator,slot('right'));
         } else if(schema.kind==='RepeatCount'||schema.kind==='Say'||schema.kind==='WaitTime'){
+          const extra=editDisclosure(node,'extra','編集','blockui-extra'),extraControls=E('div','blockui-extra-controls');
+          extra.querySelector('summary').setAttribute('aria-label',schema.label+'の値・式・時間を編集');
+          extra.append(extraControls);
+          const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
           const numberSlot=(key,unit)=>{
-            const child=node.inputs[key],literal=child?.schemaId==='QuantityLiteral'&&child.fields.unit===unit?child.inputs.value:child;
-            if(literal?.schemaId==='NumberLiteral'){
+            const child=node.inputs[key],literal=(child?.schemaId==='QuantityLiteral'&&child.fields.unit===unit)||child?.schemaId==='UnitlessRead'?child.inputs.value:child;
+            if(literal?.schemaId==='NumberLiteral'||literal?.schemaId==='Hole:expression'){
               main.append(fieldControl(literal,BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f=>f.key==='value')));
-              if(child?.schemaId==='QuantityLiteral')main.append(fieldControl(child,BLOCK_SCHEMA_BY_ID.get('QuantityLiteral').fields.find(f=>f.key==='unit')));
-              else main.append(E('span','blockui-phrase-text',unit));
+              main.append(E('span','blockui-phrase-text',unit));
+              if(child?.schemaId==='QuantityLiteral')extraControls.append(fieldControl(child,BLOCK_SCHEMA_BY_ID.get('QuantityLiteral').fields.find(f=>f.key==='unit')));
             }else {main.append(slot(key));if(child?.schemaId!=='QuantityLiteral')main.append(E('span','blockui-phrase-text',unit));}
-            main.append(button('式で指定','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を式で指定'}));
+            extraControls.append(button('式で指定','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を式で指定'}));
           };
           if(schema.kind==='Say'){
             main.append(slot('value'));
-            const choices=hintCandidates(project(),context().targetId,{source:session()?.sourceText||'',...context()}).filter(h=>h.id.startsWith('read:')&&h.binding?.kind!=='list'&&h.enabled);
+            const localContext=subjectContext(node),choices=hintCandidates(project(),localContext.targetId,{source:session()?.sourceText||'',...localContext}).filter(h=>h.id.startsWith('read:')&&h.binding?.kind!=='list'&&h.enabled);
             const data=E('select','blockui-speech-data',null,{'aria-label':'話す文字か、データの値を選ぶ'});
             data.append(E('option','','文字を話す',{value:'literal'}),E('option','','式の結果を話す',{value:'expression'}));
             for(const [i,hint]of choices.entries())data.append(E('option','',hint.text+'の今の値',{value:String(i)}));
@@ -21332,14 +21491,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             if(!data.value)data.value='expression';data.disabled=isLocked()||options.readOnly;
             listen(data,'change',()=>{
               if(data.value==='expression'){chooseDestination({parentId:node.id,input:'value'});return;}
-              const replacement=data.value==='literal'?createBlock('StringLiteral'):nodeForSearchHint(choices[Number(data.value)],project(),context());
+              const replacement=data.value==='literal'?createBlock('StringLiteral'):nodeForSearchHint(choices[Number(data.value)],project(),localContext);
               if(data.value==='literal')replacement.fields.value=current.fields.name||current.fields.value||'';
               operate({type:'expression',parentId:node.id,input:'value',node:replacement});
-            });main.append(data);
-            if(node.inputs.seconds){main.append(E('span','blockui-phrase-text','を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'),button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
-            else main.append(E('span','blockui-phrase-text','と言う'),button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));
+            });extraControls.append(data);
+            if(node.inputs.seconds){main.append(E('span','blockui-phrase-text','を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'));extraControls.append(button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
+            else {main.append(E('span','blockui-phrase-text','と言う'));extraControls.append(button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));}
           }else {numberSlot(schema.kind==='RepeatCount'?'count':'seconds',schema.kind==='RepeatCount'?'回':'秒');main.append(E('span','blockui-phrase-text',schema.kind==='RepeatCount'?'くり返す':'待つ'));}
-          const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
+          main.append(extra);
         } else if (node.schemaId === 'UnaryExpression:NEG' && node.inputs.value?.schemaId === 'NumberLiteral') {
           const child = node.inputs.value, numberField = BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value'),
             control = fieldControl(child, numberField), input = control.querySelector('input');
@@ -21608,6 +21767,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         diagnosticsOpen = false;
       }
       if (s !== displaySession || nextSignature !== signature) selected = s?.blockSelection || '';
+      if (ownerChanged) openEditors.clear();
       displaySession = s;
       signature = nextSignature;
       if (cacheSignature !== nextSignature) {
@@ -21881,6 +22041,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function updateGeometry() {
       if (destroyed) return;
+      world.style.setProperty('--blockui-content-width', Math.max(220, workspace.clientWidth / zoom) + 'px');
       updateFieldWidths();
       world.style.transform = `scale(${zoom})`;
       world.style.setProperty('--blockui-scale', zoom);
@@ -22348,7 +22509,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         node = event.target.closest('.blockui-node'),
         field = event.target.closest('.blockui-field');
       for (const n of root.querySelectorAll('.blockui-editing-field')) n.classList.remove('blockui-editing-field');
-      if (field && event.target.matches('input,textarea')) {
+      if (field && field.dataset.fieldType !== 'number' && event.target.matches('input,textarea')) {
         const bounds = workspace.getBoundingClientRect(), position = event.target.getBoundingClientRect(),
           editText = field.querySelector(':scope > .blockui-edit-text'),
           buttonSpace = editText ? editText.getBoundingClientRect().width +
@@ -22366,21 +22527,29 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     });
     listen(root, 'keydown', (event) => {
       if (event.isComposing) return;
-      if (event.key === 'Escape' && (pending || moving || drag || replacement || destination)) {
-        event.preventDefault();
-        event.stopPropagation();
-        cancel();
-        return;
+      if (event.key === 'Tab') {
+        if (pending?.input === event.target) flush({ focus:false });
+        for (const field of root.querySelectorAll('.blockui-editing-field'))
+          field.classList.remove('blockui-editing-field');
       }
       if (event.key === 'Escape') {
-        const menu = event.target.closest('.blockui-actions[open]');
+        event.preventDefault();
+        event.stopPropagation();
+        const menu = event.target.closest('.blockui-extra[open],.blockui-subject[open],.blockui-actions[open],.blockui-local-help[open]') || root.querySelector('.blockui-local-help[open],.blockui-actions[open]');
         if (menu) {
           menu.open = false;
           menu.querySelector('summary')?.focus();
-          event.preventDefault();
-          event.stopPropagation();
           return;
         }
+        if (pending) cancelField();
+        else {
+          destination = null; replacement = null; moving = null; cancelDrag();
+          notifyPending(); renderReplacement(); renderPalette(); updateControls();
+          for (const selected of workspace.querySelectorAll('.blockui-chosen-destination')) selected.classList.remove('blockui-chosen-destination');
+          for (const slot of workspace.querySelectorAll('.blockui-slot-active')) slot.classList.remove('blockui-slot-active');
+          announce('選択を閉じました。ブロック全体を戻すには「取り消す」を押してください');
+        }
+        return;
       }
       if ((event.ctrlKey || event.metaKey) && ['z', 'y'].includes(event.key.toLowerCase())) {
         if (!flush().ok) {
@@ -25219,7 +25388,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (!document.querySelector('.modal.show,.modal.open') && selectedId === edit.id)
           el.props
             .querySelector(`[data-color-field="${edit.field}"] .color-more`)
-            ?.focus({ preventScroll: true });
+            ?.focus();
       });
       if (dirty || hasCallableDraft()) scheduleAutosave();
     }
@@ -26118,24 +26287,49 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         : short(value);
     }
 
+    let codeLineLayout = null, codeLineMeasure = null;
+    function wrappedCodeLines() {
+      const editor = el.editor, style = getComputedStyle(editor),
+        width = Math.max(1, editor.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)),
+        key = [width, style.font, style.letterSpacing, style.tabSize].join('|');
+      if (codeLineLayout?.source === editor.value && codeLineLayout.key === key) return codeLineLayout;
+      if (!codeLineMeasure) {
+        codeLineMeasure = document.createElement('div');
+        codeLineMeasure.setAttribute('aria-hidden', 'true');
+        document.body.append(codeLineMeasure);
+      }
+      Object.assign(codeLineMeasure.style, { position:'fixed', left:'-100000px', top:'0', visibility:'hidden',
+        pointerEvents:'none', width:width+'px', font:style.font, letterSpacing:style.letterSpacing,
+        lineHeight:style.lineHeight, tabSize:style.tabSize, whiteSpace:'pre-wrap', overflowWrap:'anywhere' });
+      const fragment = document.createDocumentFragment(), rows = [];
+      for (const text of editor.value.split('\n')) {
+        const row = document.createElement('div'); row.textContent = text || '\u200b'; rows.push(row); fragment.append(row);
+      }
+      codeLineMeasure.replaceChildren(fragment);
+      let height = 0;
+      const lines = rows.map(row => { const top = height; height += Math.max(22, row.getBoundingClientRect().height); return { top, height:height-top }; });
+      codeLineMeasure.replaceChildren();
+      return codeLineLayout = { source:editor.value, key, lines, height };
+    }
     function updateGutter(errors = []) {
-      const count = Math.max(1, el.editor.value.split('\n').length),
+      const layout = wrappedCodeLines(), count = layout.lines.length,
         key = bindingOwner(mainEditor),
         active = activeLoc?.key === key ? activeLoc.line : 0,
         errs = new Set(errors.map((x) => x.line));
       if (activeLoc?.key === key && activeLoc.error) errs.add(activeLoc.line);
-      const first = Math.max(1, Math.floor(el.editor.scrollTop / 22) - 10),
-        last = Math.min(count, first + Math.ceil((el.editor.clientHeight || 500) / 22) + 25);
+      let first = 1;
+      while (first < count && layout.lines[first].top < el.editor.scrollTop - 220) first++;
+      const last = Math.min(count, first + Math.ceil((el.editor.clientHeight || 500) / 22) + 25);
       el.gutter.textContent = '';
       const space = document.createElement('div');
-      space.style.height = `${count * 22}px`;
+      space.style.height = `${layout.height}px`;
       space.style.position = 'relative';
       for (let i = first; i <= last; i++) {
         const d = document.createElement('div');
         d.className =
           'gutter-line' + (i === active ? ' active' : '') + (errs.has(i) ? ' error' : '');
         d.textContent = i;
-        d.style.cssText = `position:absolute;top:${(i - 1) * 22}px;width:100%`;
+        d.style.cssText = `position:absolute;top:${layout.lines[i-1].top}px;height:${layout.lines[i-1].height}px;width:100%`;
         space.appendChild(d);
       }
       el.gutter.appendChild(space);
@@ -26195,7 +26389,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         mainEditor.view.highlight(loc);
       updateGutter();
       if (scheduler?.paused) {
-        const top = Math.max(0, (loc.line - 1) * 22);
+        const top = wrappedCodeLines().lines[loc.line - 1]?.top || 0;
         if (top < el.editor.scrollTop || top > el.editor.scrollTop + el.editor.clientHeight - 22)
           el.editor.scrollTop = Math.max(0, top - Math.floor(el.editor.clientHeight / 3));
         el.gutter.scrollTop = el.editor.scrollTop;
@@ -26226,26 +26420,28 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     function refreshEditor() {
       if (!mainEditor.view) return;
       const session = getEditorSession(mainEditor), pending = session.pendingEdit;
-      let errs = session.diagnostics || [];
+      let errs = session.diagnostics || [], notice = '';
       // The visible pending source can differ from the valid project baseline.
       // Never show a baseline success message over a rejected code edit.
-      if (pending?.kind === 'code' && !session.blockDraft) {
+      if (composingEditors.has(el.editor)) {
+        errs = []; notice = '日本語を変換中です。確定してから書き方を確認します';
+      } else if (['code','heading-source','source-import'].includes(pending?.kind) && !session.blockDraft) {
         const parsed = parseSyntax(pending.value, { ...bindingContext(mainEditor),
           key: session.ownerKey, symbols: buildSymbols(project) });
         errs = parsed.syntaxDiagnostics.length ? parsed.syntaxDiagnostics
           : staticScaleDiagnostics(parsed.ast, session.ownerKey);
-        if (!errs.length) errs = [{ message: pending.reason || '入力を確定してください', line: 1 }];
+        if (!errs.length) notice = pending.reason || '入力を確定してください';
       } else if (session.blockDraft) {
-        errs = [{ message: pending?.reason || '未入力の場所を完成してください', line: 1 }];
+        errs = []; notice = pending?.reason || '未入力の場所を完成してください';
       } else if (pending) {
-        errs = pending.diagnostics?.length ? pending.diagnostics
-          : [{ message: pending.reason || '入力を確定してください', line: 1 }];
+        errs = pending.diagnostics?.length ? pending.diagnostics : [];
+        if (!errs.length) notice = pending.reason || '入力を確定してください';
       }
       if (errs.length) {
         el.issue.textContent = `${errs[0].code || ''} ${errs[0].line || 1}行目: ${errs[0].message}`;
         el.issue.className = 'issue-error';
       } else {
-        el.issue.textContent = '✓ このコードの書き方は大丈夫です';
+        el.issue.textContent = notice || '✓ このコードの書き方は大丈夫です';
         el.issue.className = '';
       }
       updateGutter(errs);
@@ -26386,6 +26582,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function startRun() {
       if (modelLocked() || !flushActiveEditor()) return;
+      refreshEditor();
       if(hasPendingEditor()){log('書きかけの入力を完成させてから実行してください','error');return;}
       clearTimeout(historyTimer);
       pushHistoryNow();
@@ -26450,7 +26647,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             renderAll();
             loadEditor();
             log(`${err.code || ''} 実行準備失敗: ${err.message}`, 'error');
-            setStatus('実行準備に失敗しました');
+            setStatus(`実行準備に失敗: ${err.code || '素材・初期化'} ${err.message}。作品は残っています。「動かす」で再試行できます`);
           }
         })();
       } catch (err) {
@@ -26458,6 +26655,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         appState = 'DESIGN';
         updateRunState();
         log(`${err.code || ''} 実行準備失敗: ${err.message}`, 'error');
+        setStatus(`実行準備に失敗: ${err.code || '素材・初期化'} ${err.message}。作品は残っています。「動かす」で再試行できます`);
       }
     }
     function stopRun() {
@@ -26577,22 +26775,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           }
           if (e.key === 'Escape') {
             const blockRoot = e.target?.closest?.('#callableBlocks,#blockEditor');
-            if (blockRoot) {
-              const cancel = blockRoot.querySelector('[data-blockui-action="cancel"]:not([disabled])');
-              if (cancel) {
-                e.preventDefault();
-                e.stopPropagation();
-                cancel.click();
-                return;
-              }
-              const menu = blockRoot.querySelector('.blockui-actions[open]');
-              if (menu) {
-                e.preventDefault();
-                e.stopPropagation();
-                menu.open = false;
-                return;
-              }
-            }
+            if (blockRoot) return; // The block editor closes only its local interaction.
             const close = {
               assetModal: 'assetClose',
               procModal: 'procClose',
@@ -28220,17 +28403,21 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             code,
           );
         e.preventDefault();
+        const followingIndent = t.value.slice(t.selectionEnd).match(/^ */)[0].length;
         t.setRangeText(
-          '\n' + indent + (opens ? '  ' : ''),
+          '\n' + ' '.repeat(Math.max(0, indent.length + (opens ? 2 : 0) - followingIndent)),
           t.selectionStart,
           t.selectionEnd,
           'end',
         );
+        const caret = t.selectionEnd + followingIndent;
+        t.setSelectionRange(caret, caret);
         t.dispatchEvent(new Event('input', { bubbles: true }));
       });
       t.addEventListener('compositionstart', () => {
         recoveryEpoch++;
         composingEditors.add(t);
+        if (t === el.editor) refreshEditor();
       });
       t.addEventListener('compositionend', () => {
         composingEditors.delete(t);

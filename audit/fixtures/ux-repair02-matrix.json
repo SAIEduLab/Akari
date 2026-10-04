@@ -1,0 +1,3840 @@
+{
+  "schema": "akari-ux-repair02-matrix-v1",
+  "cases": [
+    {
+      "id": "B01",
+      "source": "始めると、あかりは『こんにちは』と2秒話します。そのあと、あかりは『またね』と2秒話します。",
+      "speech": [
+        "こんにちは",
+        "またね"
+      ],
+      "initial": {
+        "preparedSource": "始めると、あかりは『こんにちは』と2秒話します。そのあと、あかりは『またね』と2秒話します。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "始めると、あかりは『こんにちは』と2秒話します。そのあと、あかりは『またね』と2秒話します。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": true,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 3999
+            },
+            {
+              "at": 4000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "こんにちは"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 2000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "またね"
+              },
+              {
+                "at": 4000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "こんにちは"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "こんにちは"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {
+                  "sprite-1": "またね"
+                },
+                "score": 0
+              },
+              {
+                "at": 3999,
+                "visible": {
+                  "sprite-1": "またね"
+                },
+                "score": 0
+              },
+              {
+                "at": 4000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B02",
+      "source": "始めると、あかりは『おはよう』と2秒話します。そのあと、あかりは『いってきます』と2秒話します。",
+      "speech": [
+        "おはよう",
+        "いってきます"
+      ],
+      "rerun": true,
+      "initial": {
+        "preparedSource": "",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": ""
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 3999
+            },
+            {
+              "at": 4000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "おはよう"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 2000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "いってきます"
+              },
+              {
+                "at": 4000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "おはよう"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "おはよう"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {
+                  "sprite-1": "いってきます"
+                },
+                "score": 0
+              },
+              {
+                "at": 3999,
+                "visible": {
+                  "sprite-1": "いってきます"
+                },
+                "score": 0
+              },
+              {
+                "at": 4000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        },
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 3999
+            },
+            {
+              "at": 4000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "おはよう"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 2000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "いってきます"
+              },
+              {
+                "at": 4000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "おはよう"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "おはよう"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {
+                  "sprite-1": "いってきます"
+                },
+                "score": 0
+              },
+              {
+                "at": 3999,
+                "visible": {
+                  "sprite-1": "いってきます"
+                },
+                "score": 0
+              },
+              {
+                "at": 4000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B03",
+      "source": "始めると、あかりは『ただいま』と2秒話します。そのあと、あかりは『おやつにしよう』と2秒話します。",
+      "speech": [
+        "ただいま",
+        "おやつにしよう"
+      ],
+      "initial": {
+        "preparedSource": "「おやつにしよう」と2秒話す。\n「ただいま」と2秒話す。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "「おやつにしよう」と2秒話す。\n「ただいま」と2秒話す。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 3999
+            },
+            {
+              "at": 4000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "ただいま"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 2000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "おやつにしよう"
+              },
+              {
+                "at": 4000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "ただいま"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "ただいま"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {
+                  "sprite-1": "おやつにしよう"
+                },
+                "score": 0
+              },
+              {
+                "at": 3999,
+                "visible": {
+                  "sprite-1": "おやつにしよう"
+                },
+                "score": 0
+              },
+              {
+                "at": 4000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B04",
+      "source": "始めると、あかりは『やあ』と2秒話してから1秒待ちます。これを3回くり返します。くり返しが終わると、あかりは『おしまい』と2秒話します。",
+      "speech": [
+        "やあ",
+        "やあ",
+        "やあ",
+        "おしまい"
+      ],
+      "initial": {
+        "preparedSource": "始めると、あかりは『やあ』と2秒話してから1秒待ちます。これを3回くり返します。くり返しが終わると、あかりは『おしまい』と2秒話します。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "始めると、あかりは『やあ』と2秒話してから1秒待ちます。これを3回くり返します。くり返しが終わると、あかりは『おしまい』と2秒話します。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": true,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            },
+            {
+              "at": 4999
+            },
+            {
+              "at": 5000
+            },
+            {
+              "at": 5999
+            },
+            {
+              "at": 6000
+            },
+            {
+              "at": 7999
+            },
+            {
+              "at": 8000
+            },
+            {
+              "at": 8999
+            },
+            {
+              "at": 9000
+            },
+            {
+              "at": 10999
+            },
+            {
+              "at": 11000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "やあ"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 3000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "やあ"
+              },
+              {
+                "at": 5000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 6000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "やあ"
+              },
+              {
+                "at": 8000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 9000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "おしまい"
+              },
+              {
+                "at": 11000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 4999,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 5000,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 5999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 6000,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 7999,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 8000,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 8999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 9000,
+                "visible": {
+                  "sprite-1": "おしまい"
+                },
+                "score": 0
+              },
+              {
+                "at": 10999,
+                "visible": {
+                  "sprite-1": "おしまい"
+                },
+                "score": 0
+              },
+              {
+                "at": 11000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B05",
+      "source": "始めると、あかりは『こっちだよ』と2秒話してから1秒待ちます。これを2回くり返します。くり返しが終わると、あかりは『おしまい』と2秒話します。",
+      "speech": [
+        "こっちだよ",
+        "こっちだよ",
+        "おしまい"
+      ],
+      "initial": {
+        "preparedSource": "",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": ""
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            },
+            {
+              "at": 4999
+            },
+            {
+              "at": 5000
+            },
+            {
+              "at": 5999
+            },
+            {
+              "at": 6000
+            },
+            {
+              "at": 7999
+            },
+            {
+              "at": 8000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "こっちだよ"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 3000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "こっちだよ"
+              },
+              {
+                "at": 5000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 6000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "おしまい"
+              },
+              {
+                "at": 8000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "こっちだよ"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "こっちだよ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {
+                  "sprite-1": "こっちだよ"
+                },
+                "score": 0
+              },
+              {
+                "at": 4999,
+                "visible": {
+                  "sprite-1": "こっちだよ"
+                },
+                "score": 0
+              },
+              {
+                "at": 5000,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 5999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 6000,
+                "visible": {
+                  "sprite-1": "おしまい"
+                },
+                "score": 0
+              },
+              {
+                "at": 7999,
+                "visible": {
+                  "sprite-1": "おしまい"
+                },
+                "score": 0
+              },
+              {
+                "at": 8000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B06",
+      "source": "始めると、あかりは『やあ』と2秒話してから1秒待ちます。これを3回くり返します。くり返しが終わると、あかりは『おしまい』と2秒話します。",
+      "speech": [
+        "やあ",
+        "やあ",
+        "やあ",
+        "おしまい"
+      ],
+      "initial": {
+        "preparedSource": "3回くり返す。\n  「やあ」と2秒話す。\n  1秒待つ。\n  「おしまい」と2秒話す。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "3回くり返す。\n  「やあ」と2秒話す。\n  1秒待つ。\n  「おしまい」と2秒話す。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            },
+            {
+              "at": 4999
+            },
+            {
+              "at": 5000
+            },
+            {
+              "at": 5999
+            },
+            {
+              "at": 6000
+            },
+            {
+              "at": 7999
+            },
+            {
+              "at": 8000
+            },
+            {
+              "at": 8999
+            },
+            {
+              "at": 9000
+            },
+            {
+              "at": 10999
+            },
+            {
+              "at": 11000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "やあ"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 3000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "やあ"
+              },
+              {
+                "at": 5000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 6000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "やあ"
+              },
+              {
+                "at": 8000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 9000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "おしまい"
+              },
+              {
+                "at": 11000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 4999,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 5000,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 5999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 6000,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 7999,
+                "visible": {
+                  "sprite-1": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 8000,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 8999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 9000,
+                "visible": {
+                  "sprite-1": "おしまい"
+                },
+                "score": 0
+              },
+              {
+                "at": 10999,
+                "visible": {
+                  "sprite-1": "おしまい"
+                },
+                "score": 0
+              },
+              {
+                "at": 11000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B07",
+      "source": "あかりがクリックされると、あかりは『よんだ？』と2秒話します。",
+      "speech": [
+        "よんだ？"
+      ],
+      "click": "sprite-1",
+      "initial": {
+        "preparedSource": "あかりがクリックされると、あかりは『よんだ？』と2秒話します。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "あかりがクリックされると、あかりは『よんだ？』と2秒話します。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": true,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 49
+            },
+            {
+              "at": 50,
+              "click": "dango"
+            },
+            {
+              "at": 99
+            },
+            {
+              "at": 100,
+              "click": "sprite-1"
+            },
+            {
+              "at": 2099
+            },
+            {
+              "at": 2100
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 100,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "よんだ？"
+              },
+              {
+                "at": 2100,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 49,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 50,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 99,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 100,
+                "visible": {
+                  "sprite-1": "よんだ？"
+                },
+                "score": 0
+              },
+              {
+                "at": 2099,
+                "visible": {
+                  "sprite-1": "よんだ？"
+                },
+                "score": 0
+              },
+              {
+                "at": 2100,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B08",
+      "source": "だんごがクリックされると、だんごは『なあに？』と2秒話します。",
+      "speech": [
+        "なあに？"
+      ],
+      "click": "dango",
+      "initial": {
+        "preparedSource": "",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": ""
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 49
+            },
+            {
+              "at": 50,
+              "click": "sprite-1"
+            },
+            {
+              "at": 99
+            },
+            {
+              "at": 100,
+              "click": "dango"
+            },
+            {
+              "at": 2099
+            },
+            {
+              "at": 2100
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 100,
+                "kind": "say",
+                "actor": "dango",
+                "text": "なあに？"
+              },
+              {
+                "at": 2100,
+                "kind": "clear",
+                "actor": "dango"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 49,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 50,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 99,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 100,
+                "visible": {
+                  "dango": "なあに？"
+                },
+                "score": 0
+              },
+              {
+                "at": 2099,
+                "visible": {
+                  "dango": "なあに？"
+                },
+                "score": 0
+              },
+              {
+                "at": 2100,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B09",
+      "source": "あかりがクリックされると、あかりは『よんだ？』と2秒話します。",
+      "speech": [
+        "よんだ？"
+      ],
+      "click": "sprite-1",
+      "initial": {
+        "preparedSource": "「よんだ？」と2秒話す。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "「よんだ？」と2秒話す。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 49
+            },
+            {
+              "at": 50,
+              "click": "dango"
+            },
+            {
+              "at": 99
+            },
+            {
+              "at": 100,
+              "click": "sprite-1"
+            },
+            {
+              "at": 2099
+            },
+            {
+              "at": 2100
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 100,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "よんだ？"
+              },
+              {
+                "at": 2100,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 49,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 50,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 99,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 100,
+                "visible": {
+                  "sprite-1": "よんだ？"
+                },
+                "score": 0
+              },
+              {
+                "at": 2099,
+                "visible": {
+                  "sprite-1": "よんだ？"
+                },
+                "score": 0
+              },
+              {
+                "at": 2100,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B10",
+      "source": "始めると、あかりはすぐに『あか』と2秒話します。だんごも同じ合図で動き始め、1秒待ってから『あお』と2秒話します。",
+      "speech": [
+        "あか",
+        "あお"
+      ],
+      "initial": {
+        "preparedSource": "始めると、あかりはすぐに『あか』と2秒話します。だんごも同じ合図で動き始め、1秒待ってから『あお』と2秒話します。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "始めると、あかりはすぐに『あか』と2秒話します。だんごも同じ合図で動き始め、1秒待ってから『あお』と2秒話します。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": true,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 999
+            },
+            {
+              "at": 1000
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "あか"
+              },
+              {
+                "at": 1000,
+                "kind": "say",
+                "actor": "dango",
+                "text": "あお"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 3000,
+                "kind": "clear",
+                "actor": "dango"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "あか"
+                },
+                "score": 0
+              },
+              {
+                "at": 999,
+                "visible": {
+                  "sprite-1": "あか"
+                },
+                "score": 0
+              },
+              {
+                "at": 1000,
+                "visible": {
+                  "sprite-1": "あか",
+                  "dango": "あお"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "あか",
+                  "dango": "あお"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {
+                  "dango": "あお"
+                },
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {
+                  "dango": "あお"
+                },
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B11",
+      "source": "始めると、あかりはすぐに『こんにちは』と2秒話します。だんごも同じ合図で動き始め、1秒待ってから『やあ』と2秒話します。",
+      "speech": [
+        "こんにちは",
+        "やあ"
+      ],
+      "rerun": true,
+      "initial": {
+        "preparedSource": "",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": ""
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 999
+            },
+            {
+              "at": 1000
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "こんにちは"
+              },
+              {
+                "at": 1000,
+                "kind": "say",
+                "actor": "dango",
+                "text": "やあ"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 3000,
+                "kind": "clear",
+                "actor": "dango"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "こんにちは"
+                },
+                "score": 0
+              },
+              {
+                "at": 999,
+                "visible": {
+                  "sprite-1": "こんにちは"
+                },
+                "score": 0
+              },
+              {
+                "at": 1000,
+                "visible": {
+                  "sprite-1": "こんにちは",
+                  "dango": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "こんにちは",
+                  "dango": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {
+                  "dango": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {
+                  "dango": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        },
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 999
+            },
+            {
+              "at": 1000
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "こんにちは"
+              },
+              {
+                "at": 1000,
+                "kind": "say",
+                "actor": "dango",
+                "text": "やあ"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 3000,
+                "kind": "clear",
+                "actor": "dango"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "こんにちは"
+                },
+                "score": 0
+              },
+              {
+                "at": 999,
+                "visible": {
+                  "sprite-1": "こんにちは"
+                },
+                "score": 0
+              },
+              {
+                "at": 1000,
+                "visible": {
+                  "sprite-1": "こんにちは",
+                  "dango": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "こんにちは",
+                  "dango": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {
+                  "dango": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {
+                  "dango": "やあ"
+                },
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B12",
+      "source": "始めると、あかりはすぐに『あか』と2秒話します。だんごも同じ合図で動き始め、1秒待ってから『あお』と2秒話します。",
+      "speech": [
+        "あか",
+        "あお"
+      ],
+      "initial": {
+        "preparedSource": "始めると、あかりはすぐに『あか』と2秒話します。だんごも同じ合図で動き始め、3秒待ってから『あお』と2秒話します。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "始めると、あかりはすぐに『あか』と2秒話します。だんごも同じ合図で動き始め、3秒待ってから『あお』と2秒話します。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 999
+            },
+            {
+              "at": 1000
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "あか"
+              },
+              {
+                "at": 1000,
+                "kind": "say",
+                "actor": "dango",
+                "text": "あお"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 3000,
+                "kind": "clear",
+                "actor": "dango"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "あか"
+                },
+                "score": 0
+              },
+              {
+                "at": 999,
+                "visible": {
+                  "sprite-1": "あか"
+                },
+                "score": 0
+              },
+              {
+                "at": 1000,
+                "visible": {
+                  "sprite-1": "あか",
+                  "dango": "あお"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "あか",
+                  "dango": "あお"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {
+                  "dango": "あお"
+                },
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {
+                  "dango": "あお"
+                },
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ],
+      "initialVirtual": {
+        "answer": null,
+        "steps": [
+          {
+            "at": 0
+          },
+          {
+            "at": 1999
+          },
+          {
+            "at": 2000
+          },
+          {
+            "at": 2999
+          },
+          {
+            "at": 3000
+          },
+          {
+            "at": 4999
+          },
+          {
+            "at": 5000
+          }
+        ],
+        "expected": {
+          "errors": [],
+          "initialScore": 0,
+          "trace": [
+            {
+              "at": 0,
+              "kind": "say",
+              "actor": "sprite-1",
+              "text": "あか"
+            },
+            {
+              "at": 2000,
+              "kind": "clear",
+              "actor": "sprite-1"
+            },
+            {
+              "at": 3000,
+              "kind": "say",
+              "actor": "dango",
+              "text": "あお"
+            },
+            {
+              "at": 5000,
+              "kind": "clear",
+              "actor": "dango"
+            }
+          ],
+          "samples": [
+            {
+              "at": 0,
+              "visible": {
+                "sprite-1": "あか"
+              },
+              "score": 0
+            },
+            {
+              "at": 1999,
+              "visible": {
+                "sprite-1": "あか"
+              },
+              "score": 0
+            },
+            {
+              "at": 2000,
+              "visible": {},
+              "score": 0
+            },
+            {
+              "at": 2999,
+              "visible": {},
+              "score": 0
+            },
+            {
+              "at": 3000,
+              "visible": {
+                "dango": "あお"
+              },
+              "score": 0
+            },
+            {
+              "at": 4999,
+              "visible": {
+                "dango": "あお"
+              },
+              "score": 0
+            },
+            {
+              "at": 5000,
+              "visible": {},
+              "score": 0
+            }
+          ],
+          "questions": [],
+          "activeTasks": 0,
+          "pendingQuestion": false
+        }
+      }
+    },
+    {
+      "id": "B13",
+      "source": "始めると、あかりは『合言葉は？』とたずねます。答えが『そら』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『ちがうよ』と2秒話します。",
+      "answers": [
+        [
+          "そら",
+          "どうぞ"
+        ],
+        [
+          "うみ",
+          "ちがうよ"
+        ]
+      ],
+      "initial": {
+        "preparedSource": "始めると、あかりは『合言葉は？』とたずねます。答えが『そら』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『ちがうよ』と2秒話します。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "始めると、あかりは『合言葉は？』とたずねます。答えが『そら』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『ちがうよ』と2秒話します。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": true,
+      "virtualRuns": [
+        {
+          "answer": "そら",
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 999
+            },
+            {
+              "at": 1000,
+              "answer": "そら"
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "ask",
+                "text": "合言葉は？"
+              },
+              {
+                "at": 1000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "どうぞ"
+              },
+              {
+                "at": 3000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 1000,
+                "visible": {
+                  "sprite-1": "どうぞ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {
+                  "sprite-1": "どうぞ"
+                },
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [
+              "合言葉は？"
+            ],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        },
+        {
+          "answer": "うみ",
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 999
+            },
+            {
+              "at": 1000,
+              "answer": "うみ"
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "ask",
+                "text": "合言葉は？"
+              },
+              {
+                "at": 1000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "ちがうよ"
+              },
+              {
+                "at": 3000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 1000,
+                "visible": {
+                  "sprite-1": "ちがうよ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {
+                  "sprite-1": "ちがうよ"
+                },
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [
+              "合言葉は？"
+            ],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B14",
+      "source": "始めると、あかりは『合言葉は？』とたずねます。答えが『ほし』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『もういちど』と2秒話します。",
+      "answers": [
+        [
+          "ほし",
+          "どうぞ"
+        ],
+        [
+          "つき",
+          "もういちど"
+        ]
+      ],
+      "fixedOriginal": "答えが『ほし』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『もういちど』と2秒話します。",
+      "initial": {
+        "preparedSource": "「合言葉は？」とたずねる。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "「合言葉は？」とたずねる。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": "ほし",
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 999
+            },
+            {
+              "at": 1000,
+              "answer": "ほし"
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "ask",
+                "text": "合言葉は？"
+              },
+              {
+                "at": 1000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "どうぞ"
+              },
+              {
+                "at": 3000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 1000,
+                "visible": {
+                  "sprite-1": "どうぞ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {
+                  "sprite-1": "どうぞ"
+                },
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [
+              "合言葉は？"
+            ],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        },
+        {
+          "answer": "つき",
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 999
+            },
+            {
+              "at": 1000,
+              "answer": "つき"
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "ask",
+                "text": "合言葉は？"
+              },
+              {
+                "at": 1000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "もういちど"
+              },
+              {
+                "at": 3000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 1000,
+                "visible": {
+                  "sprite-1": "もういちど"
+                },
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {
+                  "sprite-1": "もういちど"
+                },
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [
+              "合言葉は？"
+            ],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B15",
+      "source": "始めると、あかりは『合言葉は？』とたずねます。答えが『そら』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『ちがうよ』と2秒話します。",
+      "answers": [
+        [
+          "そら",
+          "どうぞ"
+        ],
+        [
+          "うみ",
+          "ちがうよ"
+        ]
+      ],
+      "fixedOriginal": "答えが『そら』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『ちがうよ』と2秒話します。",
+      "initial": {
+        "preparedSource": "「合言葉は？」とたずねる。\nもし答えが「そら」と同じなら、\n  「どうぞ」と2秒話す。\nそうでなければ、\n  何もしない。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "「合言葉は？」とたずねる。\nもし答えが「そら」と同じなら、\n  「どうぞ」と2秒話す。\nそうでなければ、\n  何もしない。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": "そら",
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 999
+            },
+            {
+              "at": 1000,
+              "answer": "そら"
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "ask",
+                "text": "合言葉は？"
+              },
+              {
+                "at": 1000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "どうぞ"
+              },
+              {
+                "at": 3000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 1000,
+                "visible": {
+                  "sprite-1": "どうぞ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {
+                  "sprite-1": "どうぞ"
+                },
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [
+              "合言葉は？"
+            ],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        },
+        {
+          "answer": "うみ",
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 999
+            },
+            {
+              "at": 1000,
+              "answer": "うみ"
+            },
+            {
+              "at": 2999
+            },
+            {
+              "at": 3000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "ask",
+                "text": "合言葉は？"
+              },
+              {
+                "at": 1000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "ちがうよ"
+              },
+              {
+                "at": 3000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 999,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 1000,
+                "visible": {
+                  "sprite-1": "ちがうよ"
+                },
+                "score": 0
+              },
+              {
+                "at": 2999,
+                "visible": {
+                  "sprite-1": "ちがうよ"
+                },
+                "score": 0
+              },
+              {
+                "at": 3000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [
+              "合言葉は？"
+            ],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B16",
+      "source": "始めると、あかりは2と3を足した答えを2秒話します。",
+      "speech": [
+        "5"
+      ],
+      "initial": {
+        "preparedSource": "始めると、あかりは2と3を足した答えを2秒話します。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "始めると、あかりは2と3を足した答えを2秒話します。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": true,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "5"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "5"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "5"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B17",
+      "source": "始めると、あかりは4から1を引いた答えを2秒話します。",
+      "speech": [
+        "3"
+      ],
+      "initial": {
+        "preparedSource": "",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": ""
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "3"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "3"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "3"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B18",
+      "source": "始めると、あかりは2と3を足した答えを2秒話します。",
+      "speech": [
+        "5"
+      ],
+      "initial": {
+        "preparedSource": "2×3を2秒話す。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "2×3を2秒話す。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "5"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "5"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "5"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ],
+      "initialVirtual": {
+        "answer": null,
+        "steps": [
+          {
+            "at": 0
+          },
+          {
+            "at": 1999
+          },
+          {
+            "at": 2000
+          }
+        ],
+        "expected": {
+          "errors": [],
+          "initialScore": 0,
+          "trace": [
+            {
+              "at": 0,
+              "kind": "say",
+              "actor": "sprite-1",
+              "text": "6"
+            },
+            {
+              "at": 2000,
+              "kind": "clear",
+              "actor": "sprite-1"
+            }
+          ],
+          "samples": [
+            {
+              "at": 0,
+              "visible": {
+                "sprite-1": "6"
+              },
+              "score": 0
+            },
+            {
+              "at": 1999,
+              "visible": {
+                "sprite-1": "6"
+              },
+              "score": 0
+            },
+            {
+              "at": 2000,
+              "visible": {},
+              "score": 0
+            }
+          ],
+          "questions": [],
+          "activeTasks": 0,
+          "pendingQuestion": false
+        }
+      }
+    },
+    {
+      "id": "B19",
+      "source": "始めると、点数を0にします。そのあと、点数を2増やします。あかりは今の点数を2秒話します。",
+      "speech": [
+        "2"
+      ],
+      "rerun": true,
+      "initial": {
+        "preparedSource": "始めると、点数を0にします。そのあと、点数を2増やします。あかりは今の点数を2秒話します。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "始めると、点数を0にします。そのあと、点数を2増やします。あかりは今の点数を2秒話します。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": true,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "2"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "2"
+                },
+                "score": 2
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "2"
+                },
+                "score": 2
+              },
+              {
+                "at": 2000,
+                "visible": {},
+                "score": 2
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        },
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "2"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "2"
+                },
+                "score": 2
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "2"
+                },
+                "score": 2
+              },
+              {
+                "at": 2000,
+                "visible": {},
+                "score": 2
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B20",
+      "source": "あかりがクリックされるたびに、点数を1増やします。あかりは今の点数を2秒話します。",
+      "speech": [
+        "1",
+        "2",
+        "3"
+      ],
+      "click": "sprite-1",
+      "rerun": true,
+      "initial": {
+        "preparedSource": "",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "click",
+            "source": ""
+          },
+          {
+            "id": "reset",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "点数を0にする。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 99
+            },
+            {
+              "at": 100,
+              "click": "sprite-1"
+            },
+            {
+              "at": 2099
+            },
+            {
+              "at": 2100
+            },
+            {
+              "at": 2299
+            },
+            {
+              "at": 2300,
+              "click": "sprite-1"
+            },
+            {
+              "at": 4299
+            },
+            {
+              "at": 4300
+            },
+            {
+              "at": 4499
+            },
+            {
+              "at": 4500,
+              "click": "sprite-1"
+            },
+            {
+              "at": 6499
+            },
+            {
+              "at": 6500
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 100,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "1"
+              },
+              {
+                "at": 2100,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 2300,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "2"
+              },
+              {
+                "at": 4300,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 4500,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "3"
+              },
+              {
+                "at": 6500,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 99,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 100,
+                "visible": {
+                  "sprite-1": "1"
+                },
+                "score": 1
+              },
+              {
+                "at": 2099,
+                "visible": {
+                  "sprite-1": "1"
+                },
+                "score": 1
+              },
+              {
+                "at": 2100,
+                "visible": {},
+                "score": 1
+              },
+              {
+                "at": 2299,
+                "visible": {},
+                "score": 1
+              },
+              {
+                "at": 2300,
+                "visible": {
+                  "sprite-1": "2"
+                },
+                "score": 2
+              },
+              {
+                "at": 4299,
+                "visible": {
+                  "sprite-1": "2"
+                },
+                "score": 2
+              },
+              {
+                "at": 4300,
+                "visible": {},
+                "score": 2
+              },
+              {
+                "at": 4499,
+                "visible": {},
+                "score": 2
+              },
+              {
+                "at": 4500,
+                "visible": {
+                  "sprite-1": "3"
+                },
+                "score": 3
+              },
+              {
+                "at": 6499,
+                "visible": {
+                  "sprite-1": "3"
+                },
+                "score": 3
+              },
+              {
+                "at": 6500,
+                "visible": {},
+                "score": 3
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        },
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 99
+            },
+            {
+              "at": 100,
+              "click": "sprite-1"
+            },
+            {
+              "at": 2099
+            },
+            {
+              "at": 2100
+            },
+            {
+              "at": 2299
+            },
+            {
+              "at": 2300,
+              "click": "sprite-1"
+            },
+            {
+              "at": 4299
+            },
+            {
+              "at": 4300
+            },
+            {
+              "at": 4499
+            },
+            {
+              "at": 4500,
+              "click": "sprite-1"
+            },
+            {
+              "at": 6499
+            },
+            {
+              "at": 6500
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 100,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "1"
+              },
+              {
+                "at": 2100,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 2300,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "2"
+              },
+              {
+                "at": 4300,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 4500,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "3"
+              },
+              {
+                "at": 6500,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 99,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 100,
+                "visible": {
+                  "sprite-1": "1"
+                },
+                "score": 1
+              },
+              {
+                "at": 2099,
+                "visible": {
+                  "sprite-1": "1"
+                },
+                "score": 1
+              },
+              {
+                "at": 2100,
+                "visible": {},
+                "score": 1
+              },
+              {
+                "at": 2299,
+                "visible": {},
+                "score": 1
+              },
+              {
+                "at": 2300,
+                "visible": {
+                  "sprite-1": "2"
+                },
+                "score": 2
+              },
+              {
+                "at": 4299,
+                "visible": {
+                  "sprite-1": "2"
+                },
+                "score": 2
+              },
+              {
+                "at": 4300,
+                "visible": {},
+                "score": 2
+              },
+              {
+                "at": 4499,
+                "visible": {},
+                "score": 2
+              },
+              {
+                "at": 4500,
+                "visible": {
+                  "sprite-1": "3"
+                },
+                "score": 3
+              },
+              {
+                "at": 6499,
+                "visible": {
+                  "sprite-1": "3"
+                },
+                "score": 3
+              },
+              {
+                "at": 6500,
+                "visible": {},
+                "score": 3
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B21",
+      "source": "始めると、あかりは『買うもの』の2番目を2秒話します。",
+      "speech": [
+        "パン"
+      ],
+      "explicitRecovery": true,
+      "initial": {
+        "preparedSource": "始めると、あかりは『買うもの』の1番目を2秒話します。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "始めると、あかりは『買うもの』の1番目を2秒話します。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "パン"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "パン"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "パン"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B22",
+      "source": "始めると、あかりは『こんにちは』と2秒話します。",
+      "speech": [
+        "こんにちは"
+      ],
+      "initial": {
+        "preparedSource": "",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": ""
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "こんにちは"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "こんにちは"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "こんにちは"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B23",
+      "source": "始めると、あかりは『おはよう』と2秒話します。だんごがクリックされると、だんごは『なあに？』と2秒話します。",
+      "speech": [
+        "おはよう",
+        "なあに？"
+      ],
+      "initial": {
+        "preparedSource": "「おはよう」と2秒話す。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "「おはよう」と2秒話す。"
+          },
+          {
+            "id": "dango-click",
+            "targetId": "dango",
+            "event": "click",
+            "source": ""
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 2499
+            },
+            {
+              "at": 2500,
+              "click": "dango"
+            },
+            {
+              "at": 4499
+            },
+            {
+              "at": 4500
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "おはよう"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 2500,
+                "kind": "say",
+                "actor": "dango",
+                "text": "なあに？"
+              },
+              {
+                "at": 4500,
+                "kind": "clear",
+                "actor": "dango"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "おはよう"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "おはよう"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 2499,
+                "visible": {},
+                "score": 0
+              },
+              {
+                "at": 2500,
+                "visible": {
+                  "dango": "なあに？"
+                },
+                "score": 0
+              },
+              {
+                "at": 4499,
+                "visible": {
+                  "dango": "なあに？"
+                },
+                "score": 0
+              },
+              {
+                "at": 4500,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "B24",
+      "source": "始めると、あかりは『おはよう』と2秒話します。そのあと、あかりは『いってきます』と2秒話します。",
+      "speech": [
+        "おはよう",
+        "いってきます"
+      ],
+      "initial": {
+        "preparedSource": "始めると、あかりは『おはよう』と2秒話します。そのあと、あかりは『いってきます』と2秒話します。",
+        "scripts": [
+          {
+            "id": "main",
+            "targetId": "sprite-1",
+            "event": "start",
+            "source": "始めると、あかりは『おはよう』と2秒話します。そのあと、あかりは『いってきます』と2秒話します。"
+          }
+        ],
+        "score": 0,
+        "shopping": [
+          "りんご",
+          "パン",
+          "牛乳"
+        ]
+      },
+      "noEdit": false,
+      "virtualRuns": [
+        {
+          "answer": null,
+          "steps": [
+            {
+              "at": 0
+            },
+            {
+              "at": 1999
+            },
+            {
+              "at": 2000
+            },
+            {
+              "at": 3999
+            },
+            {
+              "at": 4000
+            }
+          ],
+          "expected": {
+            "errors": [],
+            "initialScore": 0,
+            "trace": [
+              {
+                "at": 0,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "おはよう"
+              },
+              {
+                "at": 2000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              },
+              {
+                "at": 2000,
+                "kind": "say",
+                "actor": "sprite-1",
+                "text": "いってきます"
+              },
+              {
+                "at": 4000,
+                "kind": "clear",
+                "actor": "sprite-1"
+              }
+            ],
+            "samples": [
+              {
+                "at": 0,
+                "visible": {
+                  "sprite-1": "おはよう"
+                },
+                "score": 0
+              },
+              {
+                "at": 1999,
+                "visible": {
+                  "sprite-1": "おはよう"
+                },
+                "score": 0
+              },
+              {
+                "at": 2000,
+                "visible": {
+                  "sprite-1": "いってきます"
+                },
+                "score": 0
+              },
+              {
+                "at": 3999,
+                "visible": {
+                  "sprite-1": "いってきます"
+                },
+                "score": 0
+              },
+              {
+                "at": 4000,
+                "visible": {},
+                "score": 0
+              }
+            ],
+            "questions": [],
+            "activeTasks": 0,
+            "pendingQuestion": false
+          }
+        }
+      ]
+    }
+  ]
+}

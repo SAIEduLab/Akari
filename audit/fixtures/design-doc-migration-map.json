@@ -10543,5 +10543,279 @@
     "Per-requirement semantic equivalence, duplication and contradictions require review; no blanket completion claim.",
     "Keep original design documents until their destinations alone preserve all requirements and evidence."
   ],
-  "auditRelaxations": []
+  "auditRelaxations": [],
+  "implementedContracts": [
+    {
+      "id": "02-01",
+      "source": "docs/1.0.2/仕様書.md",
+      "line": 517,
+      "originalRequirement": "7. 検索はかな・漢字・一般的な制作意図・保存した手順名・答えの名前を含む。検索結果から直接、正しい本文へ挿入できる",
+      "meaning": "発話の時間と内容、連続追加の検索を区別して表示する",
+      "permanentSections": [
+        "LANGUAGE.md#編集表示と確定の境界",
+        "audit/UX_REPAIR.md#通常編集・可読性の追加契約"
+      ],
+      "testIds": [
+        "controls/palette-and-search"
+      ],
+      "inspectionClass": "GA-EXEC",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-02",
+      "source": "docs/1.0.2/仕様書.md",
+      "line": 1079,
+      "originalRequirement": "| `product:diagnostics` | 場所・行・理由つき作品診断 | 8・11 全素材/オフライン/製品能力 | `CAP-product:diagnostics` 未実施 |",
+      "meaning": "現在の入力と診断を同期し、古い赤表示を残さない",
+      "permanentSections": [
+        "LANGUAGE.md#編集表示と確定の境界",
+        "audit/UX_REPAIR.md#通常編集・可読性の追加契約"
+      ],
+      "testIds": [
+        "diagnostics/current-source"
+      ],
+      "inspectionClass": "HYBRID",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-03",
+      "source": "docs/1.0.2/仕様書.md",
+      "line": 540,
+      "originalRequirement": "1366×768、1280×720、1024×768、狭幅、200％表示を実操作で調べる。手順/答えの編集でも本文を主要な領域として確保し、道具箱・定義一覧・ボタンに埋もれて切替ボタン自体の高さが約240pxとなって本文を押し出す不具合をなくす。大きな切替ボタンを固定的な小さな高さに戻し、本文が残るレイアウトにする。最低限、見出しと6行相当の本文、確定/取消、動かす作品への復帰が同時に到達できること。単にページ全体がスクロールできるだけで合格にしない。",
+      "meaning": "本文幅と挿入位置を操作群が覆わない",
+      "permanentSections": [
+        "LANGUAGE.md#編集表示と確定の境界",
+        "audit/UX_REPAIR.md#通常編集・可読性の追加契約"
+      ],
+      "testIds": [
+        "B01/1188x848/light/100"
+      ],
+      "inspectionClass": "GA-EXEC",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-04",
+      "source": "docs/1.0.2/仕様書.md",
+      "line": 235,
+      "originalRequirement": "字下げされた本文は直前の見出しに属する。標準生成は半角空白2個で1段。入力は各範囲でそろった半角空白の段階を受け入れる。タブ・全角空白の字下げは、範囲を示して置換候補を出し、確認前に勝手に整えない。空行・コメントは範囲を変えない。",
+      "meaning": "Enterで既存インデントを重ねない",
+      "permanentSections": [
+        "LANGUAGE.md#編集表示と確定の境界",
+        "audit/UX_REPAIR.md#通常編集・可読性の追加契約"
+      ],
+      "testIds": [
+        "editor/enter-indent"
+      ],
+      "inspectionClass": "GA-EXEC",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-05",
+      "source": "docs/1.0.2/仕様書.md",
+      "line": 162,
+      "originalRequirement": "句点「。」は入力時に省略できる。生成では通常付ける。句点で終わる複数の文を同じ行に書ける。改行は文末または認めた見出しの後に置く。長い文の途中での表示上の折返しは、ソースの改行にしない。",
+      "meaning": "論理sourceを変えず表示だけ折り返す",
+      "permanentSections": [
+        "LANGUAGE.md#編集表示と確定の境界",
+        "audit/UX_REPAIR.md#通常編集・可読性の追加契約"
+      ],
+      "testIds": [
+        "editor/wrap-and-source"
+      ],
+      "inspectionClass": "HYBRID",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-06",
+      "source": "docs/1.0.2/仕様書.md",
+      "line": 530,
+      "originalRequirement": "空欄、－だけの数、日本語変換中、未完の引用、未完の接続は未確定状態。保存・実行・対象変更・定義変更・モード変更の前に、確定できるか調べ、残るときはその欄と取消を示す。入力を取り消しても下書き全体を捨てない。一つの意味上の編集は一度で戻せる。拒否・取消・表示だけの変更で履歴を増やさない。",
+      "meaning": "反復回数を直接入力しEscapeと明示取消を区別する",
+      "permanentSections": [
+        "LANGUAGE.md#編集表示と確定の境界",
+        "audit/UX_REPAIR.md#通常編集・可読性の追加契約"
+      ],
+      "testIds": [
+        "controls/repeat-escape"
+      ],
+      "inspectionClass": "GA-EXEC",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-07",
+      "source": "docs/1.0.2/仕様書.md",
+      "line": 168,
+      "originalRequirement": "できごとの見出しは、コードでもブロックでも直接編集できる。本文から離れたドロップダウンだけに閉じ込めない。見出しを変えたときは、実行対象・きっかけ・絞り込みをひとまとまりで変更する。本文・履歴・未確定入力を失わない。",
+      "meaning": "本文選択と見出し変更を区別する",
+      "permanentSections": [
+        "LANGUAGE.md#編集表示と確定の境界",
+        "audit/UX_REPAIR.md#通常編集・可読性の追加契約"
+      ],
+      "testIds": [
+        "headings/owner-and-opening"
+      ],
+      "inspectionClass": "HYBRID",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-08",
+      "source": "docs/1.0.2/child-intent-corpus.md",
+      "line": 51,
+      "originalRequirement": "**意味の契約**：見出しによる対象が本文中ずっと見える場合に、ねこのまとまり内で省かれた主体をねこと読める。別のまとまりや対象変更を越えて省略を黙って継承しない。本文版は犬を明記した文から対象が切り替わる。",
+      "meaning": "ScriptUnitごとの対象とできごとを表示する",
+      "permanentSections": [
+        "LANGUAGE.md#編集表示と確定の境界",
+        "audit/UX_REPAIR.md#通常編集・可読性の追加契約"
+      ],
+      "testIds": [
+        "headings/owner-and-opening"
+      ],
+      "inspectionClass": "GA-EXEC",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-09",
+      "source": "docs/1.0.2/child-intent-corpus.md",
+      "line": 107,
+      "originalRequirement": "**意味の契約**：Aの発話開始は移動完了後。Bは移動開始と発話開始を同じ開始合図で起こす。「同時」は原子的な機械時刻の完全一致を約束するという意味ではなく、片方の完了を待たない並行した開始。",
+      "meaning": "同時発話の短文を表示し長文の全文へ到達する",
+      "permanentSections": [
+        "LANGUAGE.md#発話の表示",
+        "audit/UX_REPAIR.md#通常編集・可読性の追加契約"
+      ],
+      "testIds": [
+        "center/29/5"
+      ],
+      "inspectionClass": "GA-EXEC",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-10",
+      "source": "docs/1.0.2/仕様書.md",
+      "line": 483,
+      "originalRequirement": "最初の文は質問を表示し、回答が確定するまでこの実行を待たせるAskの完全な文型。『聞いて、答えを待つ』『たずねる』も同じ待機を持つ。『返事』はこの文型内の『答え』の別形。質問が重なった場合は順に表示し、他の実行は進める。",
+      "meaning": "短い質問形も回答を待つAskとして実行する",
+      "permanentSections": [
+        "LANGUAGE.md#自然文の質問・計算・名前付きリスト",
+        "audit/LANGUAGE_FORMS.md#質問・加算・省略主語・明示リストの追加形"
+      ],
+      "testIds": [
+        "B13-sora"
+      ],
+      "inspectionClass": "HYBRID",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-11",
+      "source": "docs/1.0.2/仕様書.md",
+      "line": 329,
+      "originalRequirement": "数・文字・条件の答え・それらを並べたリストを保持する。型を推測して黙って変換しない。リストの入れ子は基準と同じく扱わない。文字の数はUnicodeコードポイントで数え、絵文字・結合文字の見た目との違いは詳しい説明で示す。",
+      "meaning": "値の型を明示選択し隣の値を保持する",
+      "permanentSections": [
+        "LANGUAGE.md#編集表示と確定の境界",
+        "audit/UX_REPAIR.md#通常編集・可読性の追加契約"
+      ],
+      "testIds": [
+        "controls/operand-types"
+      ],
+      "inspectionClass": "HYBRID",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-12",
+      "source": "docs/1.0.2/仕様書.md",
+      "line": 103,
+      "originalRequirement": "| 足す/引く・大小/数の等値比較 | 単位が同じ数はその大きさで演算/比較。加減の結果は同じ単位 | 点と秒など明示単位の不一致は診断。片方が単位なしなら、この役割で他方と同じ単位として使うことを表示し、数値は換算しない |",
+      "meaning": "と足した答えを同じ加算へ写す",
+      "permanentSections": [
+        "LANGUAGE.md#自然文の質問・計算・名前付きリスト",
+        "audit/LANGUAGE_FORMS.md#質問・加算・省略主語・明示リストの追加形"
+      ],
+      "testIds": [
+        "addition-9-2"
+      ],
+      "inspectionClass": "HYBRID",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-13",
+      "source": "docs/1.0.2/child-intent-corpus.md",
+      "line": 177,
+      "originalRequirement": "**意味の契約**：更新前の点+1を新しい点とする。代入1ではない。表示に使うのは更新後の点。文字「点」をそのまま変数値だと取り違えない。",
+      "meaning": "省略主語の開始見出しと代入先を分ける",
+      "permanentSections": [
+        "LANGUAGE.md#自然文の質問・計算・名前付きリスト",
+        "audit/LANGUAGE_FORMS.md#質問・加算・省略主語・明示リストの追加形"
+      ],
+      "testIds": [
+        "B19"
+      ],
+      "inspectionClass": "HYBRID",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    },
+    {
+      "id": "02-14",
+      "source": "docs/1.0.2/child-intent-corpus.md",
+      "line": 23,
+      "originalRequirement": "数値の例では、画面の右・左は画面固定の方向、「歩」は環境で一貫して説明される移動量の単位とする。役名、リスト名、変数名、手順名はあらかじめ画面に見えている。名前に引用符を使う箇所は参照先を読者に明らかにするためであり、引用符に名前と文字列という二つの意味を黙って負わせる提案ではない。",
+      "meaning": "引用文字列を暗黙変換せずリスト参照を局所選択する",
+      "permanentSections": [
+        "LANGUAGE.md#自然文の質問・計算・名前付きリスト",
+        "audit/LANGUAGE_FORMS.md#質問・加算・省略主語・明示リストの追加形"
+      ],
+      "testIds": [
+        "controls/quoted-list-recovery"
+      ],
+      "inspectionClass": "HYBRID",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
+      "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
+      "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
+    }
+  ],
+  "unknownObservationBoundaries": {
+    "U01": "Injected preparation failures and stale-generation isolation do not identify the cause of the intermittent observed preparation failure.",
+    "U02": "Record parser/compiler, asset preparation, DOM event and external action timing separately; do not infer an operating-system cause.",
+    "U03": "Keep the 12000ms event timeout and the N-1/N/N+1, cancellation and history denominators; correlate before/after evidence with the exact product hash.",
+    "U04": "Synthetic composition is not actual IME; report physical conversion coverage separately from full-text clicks."
+  }
 }

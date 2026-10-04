@@ -267,17 +267,22 @@ async function reviewUnits(page, capture) {
   const readPhrase = async schemaId => page.locator(`#blockEditor .blockui-node[data-schema-id="${schemaId}"]`).last().evaluate(node => ({
     staticPhrase:[...node.querySelectorAll('.blockui-phrase-text')].map(part=>part.textContent).join(''),
     selectedUnits:[...node.querySelectorAll('select[data-blockui-field="unit"]')].map(select=>select.value),
+    visibleUnits:[...node.querySelectorAll('select[data-blockui-field="unit"]')].filter(select=>select.checkVisibility()).map(select=>select.value),
   }));
   const scalePhrase = await readPhrase('LooksCommand:SET_SCALE');
   const waitPhrase = await readPhrase('WaitTime');
+  const unitSelector=page.locator('#blockEditor .blockui-node[data-schema-id="WaitTime"] select[data-blockui-field="unit"]').last();
+  for(const details of await unitSelector.locator('xpath=ancestor::details[not(@open)]').all())await details.locator(':scope > summary').click();
+  assert.equal(await unitSelector.isVisible(),true,'the unit editor is reachable from the visible disclosure');
+  await unitSelector.selectOption('秒');
   const scaleSource = await sourceFromModel(page);
   const unitRoundtrip = await roundTrip(page, scaleSource);
   const state = await runUntilVisible(page, afterUnits);
   const evidence = {scalePhrase,waitPhrase,source:scaleSource,roundtrip:unitRoundtrip,runtime:state};
   capture(evidence);
-  assert.equal([...scalePhrase.staticPhrase].filter(char => char === '％').length + scalePhrase.selectedUnits.filter(unit=>unit==='％').length, 1,
+  assert.equal([...scalePhrase.staticPhrase].filter(char => char === '％').length + scalePhrase.visibleUnits.filter(unit=>unit==='％').length, 1,
     'a scale command presents its percent unit exactly once');
-  assert.equal([...waitPhrase.staticPhrase].filter(char => char === '秒').length + waitPhrase.selectedUnits.filter(unit=>unit==='秒').length, 1,
+  assert.equal([...waitPhrase.staticPhrase].filter(char => char === '秒').length + waitPhrase.visibleUnits.filter(unit=>unit==='秒').length, 1,
     'a wait command presents its seconds unit exactly once');
   assert.deepEqual(scalePhrase.selectedUnits,['％'],'the scale unit selector remains editable and keeps its unit');
   assert.deepEqual(waitPhrase.selectedUnits,['秒'],'the wait unit selector remains editable and keeps its unit');

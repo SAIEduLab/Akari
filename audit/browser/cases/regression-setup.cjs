@@ -77,7 +77,15 @@ async function completeRegressionHoles(page, rootSelector = '#blockEditor', topI
       if (!value) throw Error('No declared target for the historical regression fixture');
       await picker.selectOption(value);
     } else {
-      await (await revealRegressionControl(node.locator('[data-blockui-action="hole-select-' + (hole.body ? 'statement' : 'expression') + '"]'))).click();
+      const direct = root.locator('[data-expression-hole="true"][data-block-id="' + hole.node.id + '"]');
+      if (hole.node.schemaId === 'Hole:expression' && await direct.count() === 1) {
+        // Compact numeric holes expose the same expression destination through
+        // their owning command's visible Edit disclosure.
+        const owner = direct.locator('xpath=ancestor::article[1]');
+        await (await revealRegressionControl(owner.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-extra [data-blockui-action="quantity-expression"]'))).click();
+      } else {
+        await (await revealRegressionControl(node.locator('[data-blockui-action="hole-select-' + (hole.body ? 'statement' : 'expression') + '"]'))).click();
+      }
       await (await revealRegressionControl(root.locator('[data-blockui-search]'))).fill(expected.schemaId);
       await (await revealRegressionControl(root.locator('[data-blockui-schema="' + expected.schemaId + '"]'))).click();
     }

@@ -1,3 +1,4 @@
+import {repairInputs,repairWrongMeaning,repairMatrixWrongMeaning,repairViewportWrongMeaning,repairLanguageWrongMeaning} from '../lib/ux-repair02-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -186,7 +187,15 @@ try{
  verifyStructuredEditing(control);
  for(const[id,mutate]of Object.entries({'structured-missing':r=>r.results.pop(),'structured-identity-drift':r=>r.results[0].observed.stableId=false,'structured-lost-body':r=>r.results[4].observed.bodyPreserved=false,'structured-wrong-direction':r=>r.results[6].observed.direction='left','structured-rate-confusion':r=>r.results[7].observed.moved=33})){const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyStructuredEditing(bad));negative.push({id,rejected:true});}
 }catch(error){results.push({file:'structured-validator-negative',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===141?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+try { for(const [file,mutate] of repairWrongMeaning){const report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/wrong-meaning',rejected:true});} }
+catch(error){results.push({file:'ux-repair02-meaning-negative',status:'FAIL',error:error.message});}
+try {const file='ux-repair02-matrix.json',report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);for(const [id,mutate] of repairMatrixWrongMeaning){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
+catch(error){results.push({file:'ux-repair02-matrix-meaning-negative',status:'FAIL',error:error.message});}
+try {for(const [file,id,mutate] of repairViewportWrongMeaning){const report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
+catch(error){results.push({file:'ux-repair02-viewport-negative',status:'FAIL',error:error.message});}
+try {const file='ux-repair02-language.json',report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);for(const [id,mutate] of repairLanguageWrongMeaning){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
+catch(error){results.push({file:'ux-repair02-language-meaning-negative',status:'FAIL',error:error.message});}
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===183?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
  validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;
