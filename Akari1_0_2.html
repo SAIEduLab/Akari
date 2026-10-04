@@ -2245,6 +2245,14 @@ button:focus-visible {
   word-break: break-word;
   min-height: 150px;
 }
+#valueTitle {
+  height: auto;
+  flex-basis: auto;
+  min-height: 32px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  overflow-wrap: anywhere;
+}
 .monitor-key {
   white-space: normal;
   overflow-wrap: anywhere;
@@ -5921,7 +5929,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   </div>
 </div>
 <div class="modal" id="failureModal" role="dialog" aria-modal="true" aria-label="失敗時の記録"><div class="dialog"><div class="win-title">失敗時の記録</div><div class="record-controls"><label for="failureSelect">記録</label><select id="failureSelect"></select></div><div class="dialog-body" id="failureBody"></div><div class="dialog-foot"><button id="failureClose">閉じる</button></div></div></div>
-<div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-label="値の全文"><div class="dialog"><div class="win-title" id="valueTitle">値の全文</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の要素</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の要素</button></div><p id="valueNotice" class="dialog-body" role="status"></p><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">閉じる</button></div></div></div>
+<div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-labelledby="valueTitle"><div class="dialog"><div class="win-title" id="valueTitle">値の全文</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の要素</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の要素</button></div><p id="valueNotice" class="dialog-body" role="status"></p><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">閉じる</button></div></div></div>
 
 
 <div class="modal" id="colorModal" role="dialog" aria-modal="true" aria-labelledby="colorTitle" aria-describedby="colorHelp">
@@ -17603,6 +17611,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       b.dataset.runtimeId = id;
       b.style.zIndex = '2000';
       b.dataset.speaker=project().components.find(c=>c.id===runtime()?.actor(id)?.baseId)?.name||project().components.find(c=>c.id===id)?.name||'話している人';
+      // Keep the speaker and value from this utterance together, even after it changes or clears.
+      const speaker = b.dataset.speaker,
+        speakerLabel = runtime()?.actor(id)?.isClone ? `${speaker}（クローン: ${id}）` : speaker;
       b.setAttribute('aria-label',b.dataset.speaker+'：'+value);
       const text = document.createElement('span');
       text.className = 'sprite-bubble-text'; text.textContent = value;
@@ -17617,7 +17628,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         full.dataset.label = presentation.rounded ? '実値' : '全文';
         full.setAttribute('aria-label', presentation.rounded ? '表示を丸めています。実値を見る' : '吹出しの全文を見る');
         full.style.pointerEvents = 'auto';
-        full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue); };
+        full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue, speakerLabel); };
         b.appendChild(full);
       }
       form.appendChild(b);
@@ -24239,7 +24250,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           el.console.appendChild(full);
         }
       },
-      onValueDetails: value => showFullValue(typeof value === 'string' ? '吹出しの全文' : '吹出しの実値', value),
+      onValueDetails: (value, speaker) => showFullValue(`${speaker}の発話（${typeof value === 'string' ? '全文' : '実値'}）`, value),
     });
     function setStageZoom(scale) {
       stageZoom = scale === null ? null : Math.max(0.1, Math.min(2, Math.round(scale * 100) / 100));
