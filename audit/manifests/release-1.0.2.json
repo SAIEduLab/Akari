@@ -317,7 +317,7 @@
     "audit/tests/ux-repair02-matrix.mjs": "4e37d9ac9acf74793ac900681dc6db13e1d1b3394df6991c6a79f93c4e126988",
     "audit/tests/ux-repair02-speech.mjs": "819c0c4461d0305a23c61c11506b2d1ee02e51f3e167dc9c64158413aba4b946",
     "audit/tests/ux-repair03-list.mjs": "89a097e4c65d29707e95c0861f46c0d06ed86565c194c807b36c97d87382d621",
-    "audit/tests/ux-repair03-speech.mjs": "72f92d68f9ef36086ca1fac42fbf4734e84e88dfe0a8798d2246986cb9a1fcc4",
+    "audit/tests/ux-repair03-speech.mjs": "ff303559c84b98c44fb80c84bc9e0d4440ad4546087c6997e3c7e0b135bf3341",
     "audit/tests/ux-repair03-trigger.mjs": "c9e5f9509a029c3fa6a84df6f8eab822bc2ccb7dc81cca2799d0d5251ae2908c",
     "audit/tests/ux-repair03-verify.mjs": "5218f90769c4e877cdcadf283c6ef9fa186c68ced8378cce7c28d8015575bdce",
     "audit/tests/ux-surface-browser.mjs": "eb972a88a81d6d75e153d79c9f31e3853edfb60e1d8e66931af78c7dcc649118",
