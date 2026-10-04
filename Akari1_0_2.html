@@ -2245,6 +2245,14 @@ button:focus-visible {
   word-break: break-word;
   min-height: 150px;
 }
+#valueTitle {
+  height: auto;
+  flex-basis: auto;
+  min-height: 32px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  overflow-wrap: anywhere;
+}
 .monitor-key {
   white-space: normal;
   overflow-wrap: anywhere;
@@ -5269,6 +5277,13 @@ body[data-editor-mode] .codewin[data-source-overview="true"] { display:flex; fle
 .blockui-heading-editor .blockui-structured-field {
   display: flex; flex-wrap: wrap; gap: 6px; max-width: 620px;
 }
+.blockui-trigger-scope { width:100%; margin:0; white-space:pre-wrap; overflow-wrap:anywhere; font-size:13px; }
+.blockui-trigger-choice { display:flex; align-items:center; gap:8px; }
+.blockui-trigger-choice > .blockui-field-label { position:static; width:auto; height:auto; overflow:visible; clip-path:none; }
+.blockui-trigger-details { width:100%; min-width:0; }
+.blockui-trigger-details > summary { cursor:pointer; padding:6px 0; }
+.blockui-trigger-details[open] { display:flex; flex-wrap:wrap; gap:6px; }
+.blockui-trigger-details[open] > summary { width:100%; }
 
 
 /* An open output drawer must not consume the monitor's readable area. */
@@ -5744,10 +5759,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       <div class="win-title">コード</div>
       <div class="code-head">
         <label>動かすもの <select id="objectSelect"></select></label>
-        <label>編集する本文を選ぶ <select id="eventSelect" title="既存の本文を選びます。本文のきっかけは「この本文のきっかけを変更」で変えます"></select></label>
+        <label>編集する本文を選ぶ <select id="eventSelect" title="編集したい本文を選びます。きっかけを変えるときは「いつ動く？」を押します"></select></label>
         <button id="scriptAdd" type="button">同じできごとの本文を追加</button>
       </div>
-      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">この本文のきっかけを変更</button></div>
+      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
       <div id="sourceOverview" aria-label="選んだもののすべてのコード" hidden></div>
       <div class="debugbar">
         <button id="pauseBtn">⏸ いったん止める</button>
@@ -5921,7 +5936,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   </div>
 </div>
 <div class="modal" id="failureModal" role="dialog" aria-modal="true" aria-label="失敗時の記録"><div class="dialog"><div class="win-title">失敗時の記録</div><div class="record-controls"><label for="failureSelect">記録</label><select id="failureSelect"></select></div><div class="dialog-body" id="failureBody"></div><div class="dialog-foot"><button id="failureClose">閉じる</button></div></div></div>
-<div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-label="値の全文"><div class="dialog"><div class="win-title" id="valueTitle">値の全文</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の要素</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の要素</button></div><p id="valueNotice" class="dialog-body" role="status"></p><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">閉じる</button></div></div></div>
+<div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-labelledby="valueTitle"><div class="dialog"><div class="win-title" id="valueTitle">値の全文</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の要素</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の要素</button></div><p id="valueNotice" class="dialog-body" role="status"></p><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">閉じる</button></div></div></div>
 
 
 <div class="modal" id="colorModal" role="dialog" aria-modal="true" aria-labelledby="colorTitle" aria-describedby="colorHelp">
@@ -7613,7 +7628,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         }
         case 'ListRead': {
           const arr = evalExpression(ast.list, ctx, budget);
-          if (!Array.isArray(arr)) throw new AkariError('R411', '「N番目」はリストに使います');
+          if (!Array.isArray(arr)) {
+            const error = new AkariError('R411', '「N番目」はリストに使います');
+            if (ast.list.kind === 'StringLiteral' && ast.list.sourceSpan && ctx.runtime?.actor)
+              error.quotedList = { name: ast.list.value, span: { ...ast.list.sourceSpan },
+                targetId: ctx.runtime.actor(ctx.runtimeId)?.baseId || 'stage' };
+            throw error;
+          }
           const i = integerIndex(evalExpression(ast.index, ctx, budget));
           if (i > arr.length) throw new AkariError('R404', 'リストの範囲外です');
           return deepCopy(arr[i - 1]);
@@ -9020,10 +9041,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           : key.startsWith('action:')
             ? this.project.actions.find((x) => x.id === key.slice(7))
             : null;
+        const sourceKey = this.compiled.items?.find(item => item.key === key)?.documentKey || key;
         const source =
             definition?.source ??
-            this.project.scripts?.find(
-              (x) => task.scriptId ? x.id === task.scriptId : x.targetId === task.targetId && x.event === task.eventType,
+            this.project.scripts?.find(script =>
+              (script.id ? `script:${script.id}` : `script:${script.targetId}:${script.event}`) === sourceKey,
             )?.source ??
             '',
           actor = this.runtime.actor(task.subject?.runtimeId || task.runtimeId);
@@ -9044,6 +9066,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           column: e.column || 1,
           statement: source.split(/\r\n?|\n/)[line - 1] || task.currentNode?.kind || '',
           source,
+          ...(e.quotedList ? { quotedList: { ...deepCopy(e.quotedList), ownerKey: sourceKey } } : {}),
           callStack: [...task.errorCallStack],
           frames: [
             ...task.callFrames.map((f) => snapshotFrame(f, 'action')),
@@ -17603,6 +17626,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       b.dataset.runtimeId = id;
       b.style.zIndex = '2000';
       b.dataset.speaker=project().components.find(c=>c.id===runtime()?.actor(id)?.baseId)?.name||project().components.find(c=>c.id===id)?.name||'話している人';
+      // Keep the speaker and value from this utterance together, even after it changes or clears.
+      const speaker = b.dataset.speaker,
+        speakerLabel = runtime()?.actor(id)?.isClone ? `${speaker}（クローン: ${id}）` : speaker;
       b.setAttribute('aria-label',b.dataset.speaker+'：'+value);
       const text = document.createElement('span');
       text.className = 'sprite-bubble-text'; text.textContent = value;
@@ -17617,7 +17643,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         full.dataset.label = presentation.rounded ? '実値' : '全文';
         full.setAttribute('aria-label', presentation.rounded ? '表示を丸めています。実値を見る' : '吹出しの全文を見る');
         full.style.pointerEvents = 'auto';
-        full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue); };
+        full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue, speakerLabel); };
         b.appendChild(full);
       }
       form.appendChild(b);
@@ -18547,16 +18573,38 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       changes.push({start, end:finish, text});
       return changes;
     };
+    const headingPrefixChange = (before,after) => {
+      const range=surface(before)?.range;
+      if(!range||!before.fields.heading||!after.fields.heading)return null;
+      const first=normalizeSource(source.slice(range.start,range.end)).lines.find(line=>line.code),
+        heading=first&&readSentenceHeading(first.code,buildSymbols(session.project),before.fields.heading);
+      if(!heading)return null;
+      const begin=first.mapped.positions[0],end=first.mapped.positions[Math.max(0,heading.body.start-1)]+1;
+      return Number.isInteger(begin)&&Number.isInteger(end)?[{start:range.start+begin,end:range.start+end,text:sentenceHeadingSource(after.fields.heading)}]:null;
+    };
     const plan = (before, after) => {
       if(before.schemaId==='Script'&&after.schemaId==='Script'&&(before.inputs.units||after.inputs.units)){
         const first=node=>{const inputs={...node.inputs};delete inputs.units;return {...node,inputs};};
         const head=plan(first(before),first(after)),rest=bodyChanges(before.inputs.units||[],after.inputs.units||[],before,'units');
+        if(head&&rest){
+          const old=[first(before),...(before.inputs.units||[])],next=[first(after),...(after.inputs.units||[])];
+          for(let i=1;i<next.length;i++)if(old[i]?.id===next[i].id&&same(old[i],next[i])&&!same(old[i-1].fields.heading,next[i-1].fields.heading)){
+            const range=surface(old[i])?.range,raw=range&&source.slice(range.start,range.end),line=raw&&normalizeSource(raw).lines.find(line=>line.code);
+            // Resolve an inherited cue explicitly when the previous group changes.
+            // The following group keeps its existing trigger and exact body text.
+            if(line&&/^(.+?)も同じ合図で動き始め、/.test(line.code)){const edits=headingPrefixChange(old[i],next[i]);if(!edits)return null;rest.push(...edits);}
+          }
+        }
         return head&&rest?[...head,...rest]:null;
       }
       if (same(before, after)) {
         const schema = BLOCK_SCHEMA_BY_ID.get(after.schemaId);
         if (schema.category !== 'statement' || ['CommentLine','Hole'].includes(schema.kind) || sameActorContext(before,after)) return [];
         return fallback(before,after);
+      }
+      if(before.schemaId==='Script'&&after.schemaId==='Script'&&before.fields.heading&&after.fields.heading&&
+        same(before.bodies,after.bodies)&&same(before.inputs,after.inputs)&&same(before.annotations,after.annotations)){
+        const edits=headingPrefixChange(before,after);if(edits)return edits;
       }
       if (before.schemaId !== after.schemaId || !same(before.fields, after.fields) || !same(before.annotations, after.annotations))
         return fallback(before, after);
@@ -19909,7 +19957,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (!pending) return { ok: true };
       const p = pending;
       if(p.field.type==='heading'&&!explicit){
-        const reason='いつ・だれが動くかを選び終えたら「この見出しに決める」を押してください';
+        const reason='いつ動くかを選び終えたら「この動きのきっかけを変える」を押してください';
         announce(reason,true);return {ok:false,pending:true,reason};
       }
       if (p.composing || p.input.dataset.composing === 'true') {
@@ -19952,6 +20000,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         return { ok: true, changed: false };
       }
       let op = { type: p.annotation ? 'annotation' : 'field', id: p.id, key: p.key, value };
+      if(p.field.type==='heading'&&p.input.dataset.triggerMetadataOnly==='true')op.preserveBody=true;
       if (!p.annotation && p.field.type === 'number' &&
         (p.input.dataset.expressionHole || p.input.dataset.signedParentId || value < 0 || Object.is(value, -0))) {
         const literal = createBlock('NumberLiteral');
@@ -20611,31 +20660,46 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           readValue = () => mode.value === 'named' ? names.map(name => name.value) : undefined;
           restore = () => { mode.value = value === undefined ? 'positional' : 'named'; names.forEach((name, i) => { name.value = value?.[i] || ''; }); sync(); };
         } else {
+          const currentEvent=value?.event||context().event||'start',currentActor=value?.actorRef||{kind:'self'},currentFilter=value?value.filter:context().filter;
+          const actorName = ref => ref?.kind==='named' ? ref.name : project()?.components.find(c=>c.id===context().targetId)?.name||project()?.stage?.name||'この動き';
+          const owners=new Set([actorName(currentActor)]),scan=part=>{
+            if(!part||typeof part!=='object')return;
+            if(part.fields?.actorRef)owners.add(actorName(part.fields.actorRef.kind==='self'?currentActor:part.fields.actorRef));
+            for(const [key,child]of Object.entries(part))if(key!=='units'&&child&&typeof child==='object')Array.isArray(child)?child.forEach(scan):scan(child);
+          };scan(node.bodies);scan(node.inputs.rules);
+          const location=session()?.nodeMap?.get(node.bodies.body?.[0]?.id)?.surface,range=location?.range||location?.extent,
+            preview=range?session().sourceText.slice(range.start,range.end):node.bodies.body?.length?schemaOf(node.bodies.body[0]).label:'まだ命令がありません';
+          group.append(E('p','blockui-trigger-scope',`変える動き：${[...owners].join('・')} ／ ${EVENT_LABELS[currentEvent]}\n${preview}\nこのまとまりのきっかけだけを変えます。他の動きは変えません。`));
+          const event = choice('いつ動く？', 'event', Object.entries(EVENT_LABELS), currentEvent);
+          event.setAttribute('aria-label','いつ動く？');event.parentElement.classList.add('blockui-trigger-choice');
+          const details=E('details','blockui-trigger-details');details.append(E('summary','','詳細（見出し・対象・受け取る条件）'));group.append(details);
+          const detailStart=group.children.length;
           const enabled = choice('見出し', 'enabled', [['no', '本文だけ'], ['yes', 'できごとを指定']], value ? 'yes' : 'no');
-          const currentEvent=value?.event||context().event||'start',currentActor=value?.actorRef||{kind:'self'};
-          const event = choice('いつ始める', 'event', Object.entries(EVENT_LABELS), currentEvent);
           const subject = actor(currentActor, 'actorRef.');
-          const filter = choice('受け取る条件', 'filter.kind', [['all', 'すべて'], ['key', 'このキー'], ['message', 'この知らせ']], value?.filter?.key !== undefined ? 'key' : value?.filter?.message !== undefined ? 'message' : 'all');
-          const filterValue = control('キー・知らせの文字', 'input', 'filter.value', value?.filter?.key ?? value?.filter?.message ?? '');
+          const filter = choice('受け取る条件', 'filter.kind', [['all', 'すべて'], ['key', 'このキー'], ['message', 'この知らせ']], currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all');
+          const filterValue = control('キー・知らせの文字', 'input', 'filter.value', currentFilter?.key ?? currentFilter?.message ?? '');
           const sync = () => {
             for (const option of filter.options) option.disabled = (option.value === 'key' && event.value !== 'keyDown') || (option.value === 'message' && event.value !== 'message');
             if (filter.selectedOptions[0]?.disabled) filter.value = 'all';
             filterValue.parentElement.hidden = filter.value === 'all';
             for (const child of group.querySelectorAll('input,select'))
-              if (child !== enabled) child.disabled = isLocked() || options.readOnly || enabled.value !== 'yes';
+              if (child !== enabled&&child!==event) child.disabled = isLocked() || options.readOnly || enabled.value !== 'yes';
           };
-          sync(); listen(enabled, 'change', sync); listen(event, 'change', sync); listen(filter, 'change', sync);
+          for(const child of [...group.children].slice(detailStart))details.append(child);
+          listen(details,'input',()=>{group.dataset.triggerDetailed='true';group.dataset.triggerMetadataOnly='false';});
+          listen(details,'change',()=>{group.dataset.triggerDetailed='true';group.dataset.triggerMetadataOnly='false';});
+          sync(); listen(enabled, 'change', sync); listen(event, 'change',()=>{enabled.value='yes';group.dataset.triggerMetadataOnly=String(!value&&group.dataset.triggerDetailed!=='true');sync();}); listen(filter, 'change', sync);
           readValue = () => {
             if (enabled.value !== 'yes') return undefined;
             const heading = { event: event.value, actorRef: subject.read() };
             if (filter.value !== 'all') heading.filter = { [filter.value]: filterValue.value };
-            else if (value?.filter === null) heading.filter = null;
+            else if (currentFilter === null) heading.filter = null;
             return heading;
           };
           restore = () => {
             enabled.value = value ? 'yes' : 'no'; event.value = currentEvent; subject.restore();
-            filter.value = value?.filter?.key !== undefined ? 'key' : value?.filter?.message !== undefined ? 'message' : 'all';
-            filterValue.value = value?.filter?.key ?? value?.filter?.message ?? ''; sync();
+            filter.value = currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all';
+            filterValue.value = currentFilter?.key ?? currentFilter?.message ?? ''; sync();
           };
         }
         Object.defineProperty(group, 'value', { get: () => changed ? readValue() : value,
@@ -20646,7 +20710,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         listen(group, 'change', () => { changed = true; group.dispatchEvent(new doc.defaultView.Event('input', { bubbles: true })); });
         if (!options.readOnly) {
           editInput(group, node, field, annotation);
-          if(field.type==='heading')group.append(button('この見出しに決める','heading-commit',()=>flush({explicit:true})),button('見出しの変更を取り消す','heading-cancel',()=>cancel()));
+          if(field.type==='heading')group.append(button('この動きのきっかけを変える','heading-commit',()=>flush({explicit:true})),button('変更をやめる','heading-cancel',()=>cancel()));
           listen(group, 'change', event => { if (field.type!=='heading'&&event.target.tagName === 'SELECT') flush(); });
           listen(group, 'focusout', event => {
             if (field.type!=='heading'&&!group.contains(event.relatedTarget) && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action]'))
@@ -21434,7 +21498,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (schema.category === 'script') {
         for (const field of schema.fields) {
           const edit = E('details', 'blockui-heading-editor');
-          edit.append(E('summary', '', 'いつ・だれが動くかを変える'), fieldControl(node, field));
+          edit.append(E('summary', '', 'いつ動く？'), fieldControl(node, field));
           main.append(edit);
         }
         const ruleSlot = schema.inputs.find(slot => slot.key === 'rules');
@@ -23645,6 +23709,24 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           session.pendingEdit && (operation.id === session.pendingEdit.id || signedReplacement)
             ? session.pendingEdit.id
             : undefined;
+        if(binding===mainEditor&&operation.preserveBody&&operation.type==='field'&&operation.key==='heading'&&
+          operation.id===session.blockView?.id&&!session.syntaxAst.heading&&!session.syntaxAst.units?.length&&
+          operation.value?.actorRef?.kind==='self'&&!session.blockDraft){
+          const next=cloneDesignProject(project),row=scriptBySourceKey(next,ownerKey),heading=operation.value;
+          if(row){
+            const metadata=scriptMetadataFromHeading(heading,row,next);
+            if(JSON.stringify([row.event,row.filter||null])===JSON.stringify([metadata.event,metadata.filter||null]))return {ok:true,changed:false};
+            if(!row.id)row.id=ensureUniqueId('script');
+            Object.assign(row,metadata);if(metadata.filter===undefined)delete row.filter;
+            validateDesignProject(next);clearTimeout(historyTimer);
+            if(!hasPendingEditor())pushHistoryNow();
+            project=next;currentEvent=row.event;selectedScriptId=row.id;
+            invalidateEditors();getEditorSession(binding,{force:true});binding.session.pendingEdit=null;
+            clearEditorFailure(binding);markDirty();clearTimeout(historyTimer);pushHistoryNow();
+            renderSelectors();renderEditorBinding(binding);refreshEditor();
+            return {ok:true,changed:true};
+          }
+        }
         const candidate = prepareBlockEdit(session, operation, {
           project,
           context,
@@ -24239,7 +24321,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           el.console.appendChild(full);
         }
       },
-      onValueDetails: value => showFullValue(typeof value === 'string' ? '吹出しの全文' : '吹出しの実値', value),
+      onValueDetails: (value, speaker) => showFullValue(`${speaker}の発話（${typeof value === 'string' ? '全文' : '実値'}）`, value),
     });
     function setStageZoom(scale) {
       stageZoom = scale === null ? null : Math.max(0.1, Math.min(2, Math.round(scale * 100) / 100));
@@ -24327,6 +24409,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       } catch (_) {}
     }
     function disposeRuntime() {
+      $('#listRepairPanel')?.remove();
       for (const id of ['failureModal', 'valueModal']) $('#' + id)?.classList.remove('show');
       activeFailureId = null;
       valueView = null;
@@ -26175,6 +26258,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       top.className = 'failure-summary';
       top.textContent = `${r.code}: ${r.message}\n${r.key} / ${r.line}\u884c\n${r.statement}\n${r.callStack.join(' \u2192 ')}`;
       root.appendChild(top);
+      const repair = quotedListRepair(r);
+      if (repair) {
+        const help = document.createElement('p');
+        help.textContent = `ここは文字です。リスト「${r.quotedList.name}」を使いますか？`;
+        const edit = document.createElement('button');
+        edit.id = 'failureEditList';
+        edit.textContent = '止めて、この箇所のリストを選ぶ';
+        edit.onclick = () => openQuotedListRepair(r);
+        root.append(help, edit);
+      }
       renderMonitorSection(root, '失敗したときのようす', [
         ['処理番号', r.taskId],
         ['動いている部品', r.runtimeId],
@@ -26205,6 +26298,96 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           ...r.actor.variables,
           ...r.actor.lists,
         ]);
+    }
+
+    // A failure refers to the source that actually ran. Never search for another
+    // occurrence or format the enclosing sentence when repairing that reference.
+    function quotedListRepair(record) {
+      if (record.code !== 'R411' || !record.quotedList?.ownerKey?.startsWith('script:')) return null;
+      const span = record.quotedList.span,
+        lines = record.source.match(/[^\r\n]*(?:\r\n?|\n|$)/g) || [],
+        offset = (line, column) => lines.slice(0, line - 1).join('').length + column - 1,
+        start = offset(span.startLine, span.startColumn), end = offset(span.endLine, span.endColumn),
+        original = record.source.slice(start, end);
+      if (!(start >= 0 && end > start && end <= record.source.length)) return null;
+      try {
+        const expression = parseExpression(original, buildSymbols(project));
+        if (expression.kind !== 'StringLiteral' || expression.value !== record.quotedList.name) return null;
+      } catch (_) { return null; }
+      return { start, end, original };
+    }
+    function quotedListCandidates(record) {
+      const actor = project.components.find(c => c.id === record.quotedList.targetId), candidates = [];
+      for (const [owner, lists, prefix] of [
+        ['作品', project.projectData.lists, '作品の'],
+        [actor?.name, actor?.localData.lists || [], '自分の'],
+      ]) for (const list of lists) candidates.push({ id:list.id, owner,
+        label:`${owner}のリスト「${list.name}」`,
+        source:prefix + 'リスト' + formatExpression({kind:'StringLiteral',value:list.name}) });
+      return candidates;
+    }
+    function openQuotedListRepair(record) {
+      // Hidden controls from an older run must not discard a current editor draft.
+      if (!scheduler?.paused || !scheduler.errorRecords.includes(record)) return;
+      const range = quotedListRepair(record);
+      if (!range) return;
+      stopRun();
+      const ownerKey = record.quotedList.ownerKey, script = scriptBySourceKey(project, ownerKey);
+      if (!script) { setStatus('この本文はもうありません。現在のコードを確認してください'); return; }
+      selectedId = script.targetId; currentEvent = script.event; selectedScriptId = script.id || null;
+      hideSourceOverview(); renderSelectors(); loadEditor(); switchEditorMode(mainEditor, 'code');
+      const token = generationToken, panel = document.createElement('section');
+      panel.id = 'listRepairPanel'; panel.className = 'editor-pending';
+      panel.setAttribute('aria-label', '失敗した文字をリストに直す');
+      panel.style.cssText = 'flex:none;max-height:210px;overflow:auto;overflow-wrap:anywhere';
+      const explanation = document.createElement('p'), preview = document.createElement('p'),
+        select = document.createElement('select'), apply = document.createElement('button'),
+        cancel = document.createElement('button'), notice = document.createElement('p');
+      explanation.textContent = `ここは文字です。リスト「${record.quotedList.name}」を使いますか？`;
+      preview.textContent = `${targetById(script.targetId)?.name || '画面'}・${EVENT_LABELS[script.event] || script.event}の本文、${record.quotedList.span.startLine}行目の ${range.original} だけを変更します。番目・秒数・ほかの文・リストの中身はそのままです。`;
+      select.id = 'listRepairChoice'; select.setAttribute('aria-label', 'この箇所で使うリスト');
+      select.style.maxWidth = '100%';
+      const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = '使うリストを選ぶ'; select.append(placeholder);
+      const candidates = quotedListCandidates(record);
+      for (const [index, candidate] of candidates.entries()) {
+        const option = document.createElement('option'); option.value = String(index); option.textContent = candidate.label; select.append(option);
+      }
+      apply.id = 'listRepairApply'; apply.textContent = 'この箇所だけ置き換える'; apply.disabled = true;
+      cancel.id = 'listRepairCancel'; cancel.textContent = '取り消す'; cancel.onclick = () => panel.remove();
+      notice.id = 'listRepairNotice'; notice.setAttribute('role', 'status');
+      if (!candidates.length) notice.textContent = 'ここで使えるリストはありません。変数・リストで作ってから、もう一度実行してください。';
+      select.disabled = !candidates.length;
+      const sourceIsCurrent = () => !modelLocked() && generationToken === token &&
+        bindingOwner(mainEditor) === ownerKey && readSource(mainEditor) === record.source &&
+        el.editor.value === record.source.replace(/\r\n?/g, '\n') && !hasPendingEditor();
+      const stale = () => { notice.textContent = '失敗した後に本文や実行が変わっています。現在の本文を確認して、もう一度実行してから選び直してください。'; apply.disabled = true; };
+      select.onchange = () => {
+        if (!sourceIsCurrent()) { stale(); return; }
+        const candidate = candidates[Number(select.value)]; apply.disabled = select.value === '';
+        notice.textContent = select.value === '' ? '' : `${range.original} → ${candidate.source}`;
+      };
+      apply.onclick = () => {
+        if (!sourceIsCurrent()) { stale(); return; }
+        const candidate = select.value === '' ? null : candidates[Number(select.value)],
+          current = candidate && quotedListCandidates(record).find(c => c.id === candidate.id && c.source === candidate.source && c.owner === candidate.owner);
+        if (!current) { notice.textContent = '選んだリストが変わりました。もう一度実行して選び直してください。'; apply.disabled = true; return; }
+        try {
+          const source = record.source.slice(0, range.start) + current.source + record.source.slice(range.end);
+          if (!commitSource(mainEditor, source, {atomic:true})) return;
+          el.editor.value = source; refreshEditor(); panel.remove();
+          el.editor.focus();
+          const start = record.source.slice(0, range.start).replace(/\r\n?/g, '\n').length;
+          el.editor.setSelectionRange(start, start + current.source.length);
+          setStatus('選んだ箇所をリストに直しました。「動かす」で確かめられます');
+        } catch (error) { notice.textContent = error.message; }
+      };
+      panel.append(explanation, preview, select, apply, cancel, notice);
+      el.editor.closest('.editor-shell').before(panel);
+      if (sourceIsCurrent()) {
+        const start = record.source.slice(0,range.start).replace(/\r\n?/g,'\n').length;
+        el.editor.setSelectionRange(start, start + range.original.replace(/\r\n?/g,'\n').length);
+      } else stale();
+      select.focus();
     }
 
     function renderMonitor() {
@@ -26614,6 +26797,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       const req = collectRuntimeAssetRequirements(compiled, project),
         token = ++generationToken;
+      $('#listRepairPanel')?.remove();
       runtimeCache = new AssetRuntimeCache(assetStore);
       try {
         if (req.needsAudio) runtimeCache.ensureAudioContext();
@@ -29030,12 +29214,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     $('#sourceEditBtn').onclick = () => { hideSourceOverview(); loadEditor(); };
     $('#sourceHeadingBtn').onclick = () => {
       if (modelLocked() || !switchEditorMode(mainEditor, 'blocks')) return;
-      const field=$('#blockEditor [data-blockui-structured-role="heading.enabled"]');
+      const selected=$('#blockEditor .blockui-selected'),scope=selected?.closest('.blockui-script');
+      const field=(scope||$('#blockEditor')).querySelector('[data-blockui-structured-role="heading.event"]');
       if (!field) return;
       for (let parent=field.parentElement;parent;parent=parent.parentElement)
         if (parent.tagName==='DETAILS') parent.open=true;
       field.scrollIntoView({block:'center'}); field.focus({preventScroll:true});
-      setStatus('この本文を保って見出しを変更します。「できごとを指定」で選び、「この見出しに決める」で確定します。コード表示にも戻れます');
+      setStatus('変える動きを確かめて「いつ動く？」を選びます。「この動きのきっかけを変える」で決定、「変更をやめる」で戻れます');
     };
     $('#sourceStageBtn').onclick = () => { if (selectObject('stage')) showSourceOverview(); };
     $('#procClose').onclick = () => {
