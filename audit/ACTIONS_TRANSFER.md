@@ -12,7 +12,7 @@
 - **拒否安全性**：不正・曖昧な入力で既存作品・原文・履歴を壊さず、勝手に実行しない。安全に拒否した結果だけで日本語制作成功とは判定しない。
 - **UX判断**：説明の理解、候補の探しやすさ、見失い、操作負荷、作品完成までの自然さ。自動クリックや機械PASSは児童視点の判定を代替しない。
 
-`docs/1.0.2/` の六つの固定文書、旧原本、全既存ID・期待値を維持する。C/Q/E/L/schemaの個数は対象集合の照合に使い、個数一致を動作成功の証拠にしない。取消/UndoはU11/U12等の固有条件に、全幅・倍率は該当レイアウト観点に適用する。全Qへ全条件を掛ける直積は作らない。
+旧六文書の固定出典・移管対応は `fixtures/design-doc-migration-map.json` と `manifests/capability-traceability.json` に保持する。独立20意図は `fixtures/japanese-intent/` の原本を読む。旧原本、全既存ID・期待値を維持する。C/Q/E/L/schemaの個数は対象集合の照合に使い、個数一致を動作成功の証拠にしない。取消/UndoはU11/U12等の固有条件に、全幅・倍率は該当レイアウト観点に適用する。全Qへ全条件を掛ける直積は作らない。
 
 ## 既存で実行される検査と追加範囲
 
@@ -70,7 +70,7 @@ main push run [36948082810](https://github.com/SAIEduLab/Akari/actions/runs/3694
 
 追加結果は `SOURCE_ACCEPTANCE`（日本語受入）、`EDITOR_IDENTITY`（本文選択）、`SEMANTIC_ROUNDTRIP`（意味互換）、`REJECTION_SAFETY`（拒否安全）、`PERSISTENCE`（保存）、`LAYOUT`（寸法）を分ける。製品既知不具合によるFAILは新テストの不具合とは区別し、製品一括修正まで不合格として残す。
 
-親から原本を受領・読取確認した。固定表 `Akari-zero-base-visible-audit-plan.md` のSHA256は `27673006b29ec3732fcab19b17c200db7b80146c8b794930a6151f82e7e4c405`、作文原本 `composition-first-drafts.json` は `0c2fe4d8b5f5921325eea053a6f685f3e40cb246e29323940b6cec59e2fd2479`。I07〜I12は無改変抽出して `composition-acceptance.json` に固定し、I10 extraも必須とする。`docs/1.0.2/` の成人作成23作文候補を代わりに使用しない。元可視計画のOS手操作を自動操作PASSへ読み替えず、この対応表と親のUX中心再計画で機械/UXの担当を分ける。
+親から原本を受領・読取確認した。固定表 `Akari-zero-base-visible-audit-plan.md` のSHA256は `27673006b29ec3732fcab19b17c200db7b80146c8b794930a6151f82e7e4c405`、作文原本 `composition-first-drafts.json` は `0c2fe4d8b5f5921325eea053a6f685f3e40cb246e29323940b6cec59e2fd2479`。I07〜I12は無改変抽出して `composition-acceptance.json` に固定し、I10 extraも必須とする。`fixtures/japanese-intent/` の成人作成23作文候補を代わりに使用しない。元可視計画のOS手操作を自動操作PASSへ読み替えず、この対応表と親のUX中心再計画で機械/UXの担当を分ける。
 
 ## 最終の有限な実行対応
 

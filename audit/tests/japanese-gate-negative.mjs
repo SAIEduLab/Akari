@@ -9,12 +9,13 @@ import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {scenarios,ambiguities,corpusSha256} from '../lib/japanese-intent-oracles.mjs';
 import {verifyJapaneseContract} from './japanese-contract-static.mjs';
-import {intentCaseIds,runtimeRuns,contractInputPaths,migrationInputPaths,intentInputPaths,runtimeInputPaths,inputHashes,verifyContractReport,verifyMigrationReport,verifyIntentReport,verifyRuntimeReport,negativeCaseIds,verifyNegativeReport} from '../lib/japanese-gate-contract.mjs';
+import {corpusPath,checkConsolidationNegatives} from '../lib/docs-consolidation-contract.mjs';
+import {intentCaseIds,runtimeRuns,contractInputPaths,migrationInputPaths,intentInputPaths,runtimeInputPaths,negativeInputPaths,inputHashes,verifyContractReport,verifyMigrationReport,verifyIntentReport,verifyRuntimeReport,negativeCaseIds,verifyNegativeReport} from '../lib/japanese-gate-contract.mjs';
 const [destination]=process.argv.slice(2);assert.ok(destination);const inputs=snapshot(currentProductFile()),dir=fs.mkdtempSync(path.join(os.tmpdir(),'akari-gate-validator-'));
 const clone=x=>JSON.parse(JSON.stringify(x)),results=[];
 try{
  const candidate=path.join(dir,'candidate.html');fs.copyFileSync(currentProductFile(),candidate);
- const corpus=JSON.parse(fs.readFileSync('docs/1.0.2/child-intent-corpus.json'));
+ const corpus=JSON.parse(fs.readFileSync(corpusPath));
  const execution={execution:'real EventScheduler / RuntimeModel',errors:[],roundtrips:[{fixture:true}],trace:[],final:{actors:[{fixture:true}]}};
  const intent={status:'PASS',filter:null,boot:{status:'PASS'},candidate:{sha256:inputs.productSha256,testedFile:candidate,url:pathToFileURL(candidate).href},environment:{protocol:'file:',browser:browserEnvironment.version,playwright:browserEnvironment.playwright},auditInputs:inputHashes(intentInputPaths),oracle:{corpusSha256,cases:corpus.cases,structuredSources:scenarios},total:89,counts:{PASS:89,FAIL:0,PENDING:0},results:intentCaseIds.map(id=>({id,status:'PASS',evidence:{fixture:true}})),coverage:scenarios.map(s=>({id:s.id,originalProse:'PASS',semantic:'PASS',blocks:'PASS'}))};
  for(const scenario of scenarios){
@@ -87,7 +88,8 @@ try{
  const soundRow=r=>r.results.find(x=>x.id==='AMB-SOUND/choices-nonexecution-cancel').evidence;
  check('INTENT/speech-ui-label',intent,vi,r=>{const row=soundRow(r);row.choices[0]='台詞として画面に言う';row.soundChoices[0].label=row.choices[0];});
  check('INTENT/speech-source-mixed-with-sound',intent,vi,r=>{soundRow(r).soundChoices[0].source='音「こんにちは」を鳴らす';});
+ results.push(...checkConsolidationNegatives());
  assert.deepEqual(results.map(r=>r.id),negativeCaseIds);
- const report={schema:'akari-japanese-gate-negative-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(['audit/tests/japanese-gate-negative.mjs','audit/lib/japanese-gate-contract.mjs']),results};verifyNegativeReport(report,inputs);
+ const report={schema:'akari-japanese-gate-negative-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(negativeInputPaths),results};verifyNegativeReport(report,inputs);
  fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,JSON.stringify(report,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({status:'PASS',rejections:results.length,destination}));
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

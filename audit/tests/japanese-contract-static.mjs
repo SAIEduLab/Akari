@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import {verifyConsolidatedDocumentation,corpusPath,corpusMarkdownPath} from '../lib/docs-consolidation-contract.mjs';
 
 // This audit deliberately imports no candidate parser, renderer or runtime.
 // Its oracle was acquired from d961dd3 and the six documents at 84bbb8c.
@@ -19,13 +20,7 @@ const sameSet = (actual, expected, label) => {
   assert.deepEqual([...actual].sort(), [...expected].sort(), label);
 };
 const requiredText = (value, label) => assert.ok(typeof value === 'string' && value.trim(), label);
-const rows = (text, letter) => {
-  const section = text.split(new RegExp('^## 付録' + letter + ' ', 'm'))[1];
-  assert.ok(section, 'missing appendix ' + letter);
-  return section.split(/^## /m)[0].split(/\r?\n/)
-    .filter(line => /^\| (?:`|CI-\d\d \|)/.test(line))
-    .map(line => line.split('|').slice(1, -1).map(cell => cell.trim()));
-};
+const rows = (ledger, letter) => ledger.appendices[letter];
 const unquote = value => value.replace(/^`|`$/g, '');
 
 export function verifyJapaneseContract(repositoryRoot = root) {
@@ -37,6 +32,9 @@ export function verifyJapaneseContract(repositoryRoot = root) {
   const results = [];
   const check = (id, fn) => { fn(); results.push({ id, status: 'PASS', scope: 'GA-STATIC' }); };
 
+  let consolidation;
+  // Preserve this stable identity: its old hash/existence obligation now checks
+  // pinned provenance, all transferred meanings and the byte-identical corpus.
   check('JAPANESE-CONTRACT/SIX-DOCUMENT-HASHES', () => {
     assert.equal(baseline.baselineCommit, baselineCommit);
     assert.equal(baseline.documentCommit, documentCommit);
@@ -47,10 +45,8 @@ export function verifyJapaneseContract(repositoryRoot = root) {
     for (const source of baseline.documentHashManifest) {
       assert.equal(source.sourceCommit, documentCommit);
       assert.match(source.gitBlob, /^[a-f0-9]{40}$/);
-      const document = read(source.path);
-      assert.equal(document.length, source.bytes, source.path + ': bytes');
-      assert.equal(sha(document), source.sha256, source.path + ': protected SHA256');
     }
+    consolidation=verifyConsolidatedDocumentation(repositoryRoot);
   });
 
   check('JAPANESE-CONTRACT/INDEPENDENT-BASELINE-COMPLETE', () => {
@@ -90,8 +86,8 @@ export function verifyJapaneseContract(repositoryRoot = root) {
       assert.ok(baseline.schemaIds.includes('SensorRead:' + id.slice('sensor:'.length)), id);
   });
 
-  const trace = json('docs/1.0.2/traceability.json');
-  const specification = read('docs/1.0.2/仕様書.md').toString();
+  const specification = json('audit/manifests/capability-traceability.json');
+  const trace = specification.history;
   check('JAPANESE-CONTRACT/TRACEABILITY-APPENDICES-A-D', () => {
     assert.equal(trace.baseline_commit, baselineCommit);
     assert.equal(trace.status, 'DESIGN_CANDIDATE_NOT_IMPLEMENTED');
@@ -137,8 +133,8 @@ export function verifyJapaneseContract(repositoryRoot = root) {
     }
   });
 
-  const corpus = json('docs/1.0.2/child-intent-corpus.json');
-  const markdown = read('docs/1.0.2/child-intent-corpus.md').toString();
+  const corpus = json(corpusPath);
+  const markdown = read(corpusMarkdownPath).toString();
   const protectedIntent = baseline.protectedChildIntent;
   const intentIds = Array.from({ length: 20 }, (_, i) => 'CI-' + String(i + 1).padStart(2, '0'));
   check('JAPANESE-CONTRACT/CHILD-INTENT-INDEPENDENCE-AND-MAPPING', () => {
@@ -241,10 +237,10 @@ export function verifyJapaneseContract(repositoryRoot = root) {
   return {
     schema: 'akari-japanese-contract-static-report-v1', scope: 'GA-STATIC', status: 'PASS',
     baselineCommit, documentCommit, fixtureSha256: frozenFixtureSha256,
-    documentHashes: baseline.documentHashManifest, results, total: results.length,
+    documentHashes: baseline.documentHashManifest, consolidation, results, total: results.length,
     protectedIntentDefinitions: 20, protectedAmbiguityOracles: 20,
     migrationEntries: migration.entries.length, legacyCoverage: migration.counts,
-    productDynamic: { status: 'NOT_RUN', reason: 'The new product parser is not implemented; no candidate product was imported or executed by this static audit.' },
+    productDynamic: { status: 'NOT_RUN', reason: 'No candidate product was imported or executed by this static audit; product execution is reported by the independent runtime/browser gates.' },
     semanticReview: { status: 'NOT_RUN', reason: 'Presence and immutable provenance do not prove implementation, UI behavior, bidirectionality or child validation.' },
   };
 }
