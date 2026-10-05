@@ -5382,7 +5382,7 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction
 .blockui-local-help { font-size:12px; max-width:100%; }
 .blockui-local-help p { white-space:normal; line-height:1.6; }
 .blockui-operator { min-width:90px; padding:5px; }
-.sprite-bubble::before { content:attr(data-speaker); display:block; font-size:0.8em; margin-bottom:3px; margin-right:var(--speech-full-space,0px); min-height:var(--speech-heading-height,0px); }
+.sprite-bubble::before { content:attr(data-speaker); display:block; font-size:0.8em; margin-bottom:var(--speech-heading-gap,3px); margin-right:var(--speech-full-space,0px); min-height:var(--speech-heading-height,0px); }
 .sprite-bubble [data-speech-full]::before { content:attr(data-label); }
 body[data-editor-mode="code"] .codewin { min-height:430px; }
 body[data-editor-mode="code"] .main { grid-template-rows:minmax(180px,1fr) minmax(430px,1.5fr); overflow:auto; }
@@ -17322,7 +17322,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   // 08 — Portable stage view and standalone export
   // ────────────────────────────────────────────────────────────────────────
   const AKARI_STAGE_CSS =
-    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:3px;margin-right:var(--speech-full-space,0px)}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }";
+    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:var(--speech-heading-gap,3px);margin-right:var(--speech-full-space,0px)}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }";
   const AKARI_PLAYER_CSS =
     '*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#edf2f8;color:#1f2937;font:14px "Yu Gothic UI","Yu Gothic","Meiryo",sans-serif}button,input{font:inherit}button{padding:7px 12px;background:#fff;border:1px solid #a9b8ca;border-radius:7px;cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #2f6fd6;outline-offset:2px}#playerRoot{width:max-content;min-width:min(100%,640px);max-width:100%;margin:0 auto;padding:14px}header{margin-bottom:12px}h1{font-size:20px;margin:0 0 10px;overflow-wrap:anywhere}.player-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px}#playerStatus{font-size:12px;color:#536273;margin-left:6px}.player-stage{max-width:100%;overflow:auto;border:1px solid #bccbe0;border-radius:10px;background:#fff}#formSurface{outline:none}#formSurface:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}#playerOutput{max-height:130px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;background:#fff;border:1px solid #c7d2df;border-radius:8px;margin:12px 0 0}.modal{display:none;position:fixed;inset:0;background:rgba(25,37,55,.4);z-index:10000;align-items:center;justify-content:center;padding:16px}.modal.show{display:flex}.question-box{width:min(500px,100%);max-height:90vh;overflow:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 12px 35px #0003}#questionText{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:14px;font-weight:700}#questionAnswer{width:100%;padding:8px;border:1px solid #a9b8ca;border-radius:7px}.question-controls{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}@media(max-width:600px){#playerRoot{padding:8px}h1{font-size:17px}}\n';
   function createAkariStageView(core, options) {
@@ -17461,20 +17461,25 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const actors=[...form.querySelectorAll('.component')].filter(n=>n.style.display!=='none').map(n=>{const r=n.getBoundingClientRect();return {left:(r.left-rect.left)/sx,right:(r.right-rect.left)/sx,top:(r.top-rect.top)/sy,bottom:(r.bottom-rect.top)/sy};});
       const bands = actors.length ? [{ top:0, height:Math.min(...actors.map(a=>a.top)) },
           { top:Math.max(...actors.map(a=>a.bottom)), height:form.clientHeight-Math.max(...actors.map(a=>a.bottom)) }] : [];
-      let compact = false;
-      if (rect.height < 54 && bubbles.length) {
-        const measure = document.createElement('canvas').getContext('2d');
-        const widths = bubbles.map(b => {
-          b.style.fontSize = 14/sx+'px';
-          const heading = getComputedStyle(b, '::before');
-          measure.font = heading.font;
-          const nameWidth = measure.measureText(b.dataset.speaker || '').width;
-          measure.font = getComputedStyle(b).font;
-          return Math.max(nameWidth, measure.measureText(b.querySelector('.sprite-bubble-text')?.textContent || '').width)*sx+4;
-        });
-        compact = bubbles.every(b=>!/[\r\n]/.test(b.querySelector('.sprite-bubble-text')?.textContent || '')) &&
-          rect.width >= bubbles.length*Math.max(...widths)+(bubbles.length-1);
-      }
+      // Use the same DOM font layout as the visible heading, including fractional glyph widths.
+      const textWidth = (value, style) => {
+        const measure = document.createElement('span');
+        Object.assign(measure.style, {position:'fixed',visibility:'hidden',whiteSpace:'pre',font:style.font,letterSpacing:style.letterSpacing});
+        measure.textContent=value; document.body.append(measure);
+        const width=measure.getBoundingClientRect().width; measure.remove(); return width;
+      };
+      const widths = bubbles.map(b => {
+        b.style.fontSize=14/sx+'px';
+        const heading=getComputedStyle(b,'::before'),body=getComputedStyle(b);
+        return {name:textWidth(b.dataset.speaker||'',heading),body:textWidth(b.querySelector('.sprite-bubble-text')?.textContent||'',body),
+          lineHeight:Math.max(parseFloat(heading.lineHeight),parseFloat(body.lineHeight))*sy};
+      });
+      const short=bubbles.length&&bubbles.every(b=>!/[\r\n]/.test(b.querySelector('.sprite-bubble-text')?.textContent||'')&&b.querySelector('[data-speech-full]')?.dataset.always!=='true');
+      const compactColumns=rect.height<54&&short&&rect.width>=bubbles.length*Math.max(...widths.map(w=>Math.max(w.name,w.body)*sx+4))+(bubbles.length-1);
+      const compactRows=rect.height<54&&short&&!compactColumns&&
+        rect.width>=Math.max(...widths.map(w=>(Math.ceil(w.name)+w.body)*sx+0.75))&&
+        rect.height>=bubbles.length*(Math.max(...widths.map(w=>w.lineHeight))+0.5)+(bubbles.length-1);
+      const compact=compactColumns||compactRows;
       const band = compact ? {top:0,height:form.clientHeight}
         : bubbles.length > 1 && rect.width >= bubbles.length*80+(bubbles.length-1)*8
           ? bands.filter(b=>b.height*sy>=42).sort((a,b)=>b.height-a.height)[0] : null;
@@ -17490,10 +17495,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             top:(box.top-rect.top)/sy, bottom:(box.bottom-rect.top)/sy},
           sideWidth = Math.max(actor.left-gap, form.clientWidth-actor.right-gap),
           availableWidth = sideWidth >= 80/sx ? sideWidth : form.clientWidth;
-        b.style.fontSize = 14/sx+'px'; b.style.padding = (band?1.5:8)/sy+'px '+(compact?1:band?6:10)/sx+'px';
-        b.style.borderWidth = compact ? 0.5/sx+'px' : '';
+        b.style.fontSize = 14/sx+'px'; b.style.padding = (compactRows?0:band?1.5:8)/sy+'px '+(compactRows?0:compact?1:band?6:10)/sx+'px';
+        b.style.borderWidth = compact ? (compactRows?0.25:0.5)/sx+'px' : '';
+        b.style.display=compactRows?'grid':'';
+        b.style.alignItems=compactRows?'start':'';
+        b.style.width=compactRows?form.clientWidth+'px':'';
+        b.style.gridTemplateColumns=compactRows?Math.ceil(widths[bubbleIndex].name)+'px minmax(0,1fr)':'';
+        b.style.columnGap=compactRows?0.25/sx+'px':'';
+        b.style.setProperty('--speech-heading-gap',compactRows?'0px':'3px');
         b.style.setProperty('--speech-heading-height', band && !compact ? 17/sy+'px' : '0px');
-        const bandWidth = (form.clientWidth-(bubbles.length-1)*(compact?1:8)/sx)/Math.max(1,bubbles.length);
+        const bandWidth = compactRows?form.clientWidth:(form.clientWidth-(bubbles.length-1)*(compact?1:8)/sx)/Math.max(1,bubbles.length);
         b.style.maxWidth = Math.min(320/sx,band?bandWidth:availableWidth)+'px';
         const heightBudget=band ? Math.min(160/sy,band.height-1/sy) : Math.min(160/sy,Math.max(54/sy,(form.clientHeight-(bubbles.length-1)*8/sy)/Math.max(1,bubbles.length)));
         b.style.maxHeight = 'none';
@@ -17509,24 +17520,25 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           // At enlarged stage scales, the small logical font can have rounded
           // glyph metrics taller than its original line box. Keep the glyphs whole.
           text.style.lineHeight = sy > 1 ? '1.5' : '';
-          text.style.maxHeight = '0px';
-          const chromeHeight = b.getBoundingClientRect().height/sy;
-          text.style.maxHeight = Math.min(100/sy,Math.max(19/sy,heightBudget-chromeHeight))+'px';
         }
-        if (full) full.hidden = !(full.dataset.always === 'true' ||
-          text && (text.scrollHeight > text.clientHeight + 1 || text.scrollWidth > text.clientWidth + 1));
-        b.style.setProperty('--speech-full-space', full && !full.hidden ? (band?32:45)/sx+'px' : '0px');
-        // Reserve the speaker's actual font width, including subpixel rounding.
-        // A short utterance must not squeeze a short name onto two lines.
-        const headingStyle = getComputedStyle(b, '::before'), bubbleStyle = getComputedStyle(b),
-          measure = document.createElement('canvas').getContext('2d');
-        measure.font = headingStyle.font;
-        const headingWidth = measure.measureText(b.dataset.speaker || '').width,
-          edges = bubbleStyle.boxSizing === 'border-box'
-            ? ['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth'].reduce((n,k)=>n+(parseFloat(bubbleStyle[k])||0),0) : 0;
-        b.style.minWidth = Math.min(parseFloat(b.style.maxWidth),
-          Math.max(compact?0:40/sx, Math.ceil(headingWidth+(parseFloat(headingStyle.marginRight)||0)+edges+1/sx)))+'px';
-        const width=b.offsetWidth,height=b.offsetHeight, center=(actor.left+actor.right-width)/2,
+        const bubbleStyle = getComputedStyle(b), edges = bubbleStyle.boxSizing === 'border-box'
+          ? ['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth'].reduce((n,k)=>n+(parseFloat(bubbleStyle[k])||0),0) : 0;
+        const fitText = () => {
+          const reserve=full&&!full.hidden?Math.max(0,full.getBoundingClientRect().width/sx+parseFloat(full.style.right)-(parseFloat(bubbleStyle.paddingRight)||0)-(parseFloat(bubbleStyle.borderRightWidth)||0)+4/sx):0;
+          b.style.setProperty('--speech-full-space',reserve+'px');
+          b.style.minWidth=compactRows?'0px':Math.min(parseFloat(b.style.maxWidth),
+            Math.max(compact?0:40/sx,Math.ceil(widths[bubbleIndex].name+reserve+edges+1/sx)))+'px';
+          if (text) {
+            text.style.maxHeight='0px';
+            const chromeHeight=b.getBoundingClientRect().height/sy;
+            text.style.maxHeight=Math.min(100/sy,Math.max(19/sy,heightBudget-chromeHeight))+'px';
+          }
+        };
+        // Check clipping with the current heading, then reserve the actual full-text button.
+        if (full) full.hidden=full.dataset.always!=='true';
+        fitText();
+        if (full&&full.hidden&&text&&(text.scrollHeight>text.clientHeight+1||text.scrollWidth>text.clientWidth+1)) {full.hidden=false;fitText();}
+        const measured=b.getBoundingClientRect(),width=measured.width/sx,height=measured.height/sy, center=(actor.left+actor.right-width)/2,
           positions=[[actor.right+gap,actor.top],[actor.left-width-gap,actor.top],
              [center,actor.top-height-gap],[center,actor.bottom+gap]];
         for(const old of placed)positions.push([center,old.bottom+gap],[center,old.top-height-gap],[old.right+gap,actor.top],[old.left-width-gap,actor.top]);
@@ -17535,7 +17547,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           const candidate={left,top,right:left+width,bottom:top+height},cost=actors.reduce((sum,a)=>sum+overlap(candidate,a),0)+placed.reduce((sum,b)=>sum+overlap(candidate,b)*10,0);
           return {...candidate,overlap:cost,order};
         }).sort((a,b)=>a.overlap-b.overlap||a.order-b.order);
-        const chosen = band ? { left:bubbleIndex*(bandWidth+(compact?1:8)/sx)+(bandWidth-width)/2, top:band.top,
+        const chosen = compactRows ? {left:0,top:placed.length?placed.at(-1).bottom+1/sy:0,right:width,bottom:(placed.length?placed.at(-1).bottom+1/sy:0)+height}
+          : band ? { left:bubbleIndex*(bandWidth+(compact?1:8)/sx)+(bandWidth-width)/2, top:band.top,
           right:bubbleIndex*(bandWidth+(compact?1:8)/sx)+(bandWidth+width)/2, bottom:band.top+height } : candidates[0];
         b.style.left=chosen.left+'px'; b.style.top=chosen.top+'px'; placed.push(chosen);
       });

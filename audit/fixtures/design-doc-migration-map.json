@@ -10708,10 +10708,13 @@
         "audit/UX_REPAIR.md#通常編集・可読性の追加契約"
       ],
       "testIds": [
-        "center/29/5"
+        "center/29/5",
+        "speech-name/scale-minimum-10",
+        "speech-name/full-78/1180",
+        "speech-name/full-78/390"
       ],
       "inspectionClass": "GA-EXEC",
-      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited",
+      "evidence": "akari-acceptance artifacts: ux-repair02-*.json, bound to the current public snapshot; no prior PASS is inherited; speech-name-layout.json retains the 13-case speaker/body/font/time/zoom checks and its 9 independent rejection controls; actual DOM heading and full-button widths determine compact rows without shrinking text",
       "status": "IMPLEMENTED_REQUIRES_CURRENT_EXECUTION_AND_INDEPENDENT_REVIEW",
       "unresolvedReason": "Real child first-use UX is separate; the complete source-document migration remains pending.",
       "relationship": "この原要件に関係する操作・文型の具体化。原段落全体や全原資料の移管完了ではない。"
