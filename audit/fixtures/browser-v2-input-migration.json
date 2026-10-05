@@ -1030,7 +1030,7 @@
       "originalPath": "audit/browser/cases/parent-qa.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/parent-qa.cjs",
       "originalSha256": "8a3cc3397fc7cee5a4a6dbe88dbb0be946794c682181511c5456371c795e0eb0",
-      "candidateSha256": "5b8bf631cff2fa0da6b6e20ac5d8737c9e6be5d73aca180f5c9bd3c3fb62a136",
+      "candidateSha256": "8ab5c41cdf9b9078756427db592f30da00c8a701c4dbf9bcec63cdd5ef5c8630",
       "stableIds": [
         "parent-switch-edit-history",
         "parent-pending-keeps-owner",
@@ -1067,7 +1067,7 @@
       "originalPath": "audit/browser/cases/run-editor-regression.cjs",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/run-editor-regression.cjs",
       "originalSha256": "a4a3e68f32574287dcdfff686dc727d5edc6f18542533b1a241e078b26f1258e",
-      "candidateSha256": "62c4dd4b06ae6955f8ed8d4c73dc53120b1fba20ddf2bd3feb88897ed31bf3d6",
+      "candidateSha256": "87000ba3065b9f80a7e67b431dc0062fcf36346d64dede1062f4e8b0439ffc23",
       "stableIds": [
         "editor-input-format-comments-undo-redo",
         "diagnose-run-stop",
@@ -4001,6 +4001,42 @@
       "oldText": "const first=root.locator('[data-block-id=\"'+firstId+'\"].blockui-node');await tabTo(first);const text=first.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').first();await text.scrollIntoViewIfNeeded();let h=await text.boundingBox(),w=await world.boundingBox();await p.mouse.move(h.x+h.width/2,h.y+h.height/2);await p.mouse.down();await p.mouse.move(h.x+h.width/2+10,h.y+h.height/2,{steps:3});let reached=false;for(let i=0;i<400;i++){w=await world.boundingBox();const d=await end.boundingBox();if(d&&d.y>w.y+10&&d.y+d.height<w.y+w.height-48){await p.mouse.move(Math.max(w.x+32,Math.min(w.x+w.width-32,d.x+25)),d.y+d.height/2);await p.waitForTimeout(50);if(await root.locator('.blockui-drop-preview').count()===1){reached=true;break;}}await p.mouse.move(w.x+Math.min(90,w.width/2),w.y+w.height-7);await p.waitForTimeout(20);}assert(reached,'edge scrolling reaches later loaded page');assert.equal((await state(p)).source,source);assert.equal(await root.locator('.blockui-drop-preview').count(),1);await p.screenshot({path:L.path.join(dir,'workbench-preview-'+viewport.width+'-'+zoom+'.png')});await p.keyboard.press('Escape');await p.mouse.up();assert.equal((await state(p)).source,source);assert.equal((await state(p)).history,before.history);evidence.edgeScrollAndCancel=true;",
       "newText": "const first=root.locator('[data-block-id=\"'+firstId+'\"].blockui-node');await tabTo(first);const text=first.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').first();await text.scrollIntoViewIfNeeded();let h=await text.boundingBox(),w=await world.boundingBox();await p.mouse.move(h.x+h.width/2,h.y+h.height/2);await p.mouse.down();await p.mouse.move(h.x+h.width/2+10,h.y+h.height/2,{steps:3});let reached=false;const edgeStarted=Date.now(),edgeSamples=[];for(let i=0;i<400;i++){w=await world.boundingBox();const d=await end.boundingBox();if(i%20===0)edgeSamples.push({iteration:i,ms:Date.now()-edgeStarted,workspace:w,end:d,scroll:await world.evaluate(e=>({top:e.scrollTop,left:e.scrollLeft,height:e.scrollHeight,clientHeight:e.clientHeight}))});if(d&&d.y>w.y+10&&d.y+d.height<w.y+w.height-48){await p.mouse.move(Math.max(w.x+32,Math.min(w.x+w.width-32,d.x+25)),d.y+d.height/2);await p.waitForTimeout(50);if(await root.locator('.blockui-drop-preview').count()===1){reached=true;break;}}await p.mouse.move(w.x+Math.min(90,w.width/2),w.y+w.height-7);await p.waitForTimeout(20);}evidence.edgeScrolling={reached,elapsedMs:Date.now()-edgeStarted,samples:edgeSamples,finalScroll:await world.evaluate(e=>({top:e.scrollTop,left:e.scrollLeft,height:e.scrollHeight,clientHeight:e.clientHeight}))};assert(reached,'edge scrolling reaches later loaded page');assert.equal((await state(p)).source,source);assert.equal(await root.locator('.blockui-drop-preview').count(),1);await p.screenshot({path:L.path.join(dir,'workbench-preview-'+viewport.width+'-'+zoom+'.png')});await p.keyboard.press('Escape');await p.mouse.up();assert.equal((await state(p)).source,source);assert.equal((await state(p)).history,before.history);evidence.edgeScrollAndCancel=true;",
       "preservedMeaning": "All9 original viewport/zoom combinations,121 statements,400 mouse iterations,20ms waits,actual drop preview,unchanged source/history,cancel and Undo/Redo assertions retained. Add real coordinates, elapsed time and scroll progress to PASS/FAIL evidence. Product edge scrolling maintains720px/s across frame rates instead of12px per frame; speed at60fps is unchanged."
+    },
+    {
+      "id": "browser-stop-display-05-001",
+      "path": "audit/browser/cases/run-editor-regression.cjs",
+      "testIds": [
+        "diagnose-run-stop"
+      ],
+      "oldLine": 51,
+      "newLine": 51,
+      "oldText": "      await (await reveal(page.locator('#stopBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='停止中');assert.equal(await page.locator('#codeEditor').inputValue(),formatted);",
+      "newText": "      await (await reveal(page.locator('#stopBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっています');assert.equal(await page.locator('#codeEditor').inputValue(),formatted);",
+      "preservedMeaning": "通常の停止ボタンを押し、実行が止まった表示を待つ判定を保持。表示語だけを「停止中」から「止まっています」へ移行する。作品チェック、実行中待機、点数3、編集中readonly、停止後の完全な本文formatted一致、元のwaitForFunctionと時間上限を変更しない。"
+    },
+    {
+      "id": "browser-stop-display-05-002",
+      "path": "audit/browser/cases/run-editor-regression.cjs",
+      "testIds": [
+        "diagnose-run-stop"
+      ],
+      "oldLine": 52,
+      "newLine": 52,
+      "oldText": "      return {diagnosis,runtimeScore:3,stopState:'停止中',sourcePreserved:true};",
+      "newText": "      return {diagnosis,runtimeScore:3,stopState:'止まっています',sourcePreserved:true};",
+      "preservedMeaning": "同じdiagnose-run-stop結果のstopState表示語だけを変更。diagnosis、runtimeScore:3、sourcePreserved:true、安定したケースID、実停止待機と完全本文一致を維持し、失敗/未実施をPASSへ変更しない。"
+    },
+    {
+      "id": "browser-parent-diagnostic-display-05-001",
+      "path": "audit/browser/cases/parent-qa.cjs",
+      "testIds": [
+        "parent-syntax-semantic-switch"
+      ],
+      "oldLine": 27,
+      "newLine": 27,
+      "oldText": " assert.match(await p.locator('#blockEditor').innerText(),/診断/);",
+      "newText": " assert.match(await p.locator('#blockEditor').innerText(),/たしかめる/);",
+      "preservedMeaning": "文法として読める意味上の問題を含む「【未定義の値】の値を言う」がブロック表示のまま編集でき、問題案内が見える判定を保持する。表示語だけを「診断」から可視summary「たしかめる」へ対応させる。他の全9ケースID、valid/raw入力、source/project/history/redo/dirty/owner/mode/pendingの比較、原文保持、原子性、未完成入力の拒否、取り消し、元の待機時間・上限・負例を変更しない。"
     }
   ],
   "explicitSetup": {
@@ -7535,7 +7571,9 @@
         "browser-input-080",
         "browser-input-081",
         "browser-input-082",
-        "browser-input-083"
+        "browser-input-083",
+        "browser-stop-display-05-001",
+        "browser-stop-display-05-002"
       ],
       "preservedMeaning": "The complete original case and its assertions remain; failure is not converted into success. Canonical input and independent historical fixture setup preserve its capability and all original numeric/time/limit/effect expectations.",
       "literalInputRevisions": []
@@ -9704,7 +9742,8 @@
         "browser-input-074",
         "browser-input-075",
         "browser-input-076",
-        "browser-input-077"
+        "browser-input-077",
+        "browser-parent-diagnostic-display-05-001"
       ],
       "preservedMeaning": "Stable ID retained; explicit v2 unfinished-input contract supersedes confirmed invalid-source saving/history. Raw draft/recovery retention, valid project/history atomicity, refusal and cancel are independently asserted; see approvedContractMigrations.",
       "literalInputRevisions": [

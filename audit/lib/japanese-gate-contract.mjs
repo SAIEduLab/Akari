@@ -133,7 +133,16 @@ export function verifyIntentReport(report,inputs,candidateFile){
   for(const ambiguity of ambiguities){
     const evidence=report.results.find(r=>r.id===ambiguity.id+'/choices-nonexecution-cancel').evidence;
     assert.equal(evidence.original,ambiguity.source);assert.ok(new Set(evidence.choices).size>=2);
-    for(const word of ambiguity.choices)assert.ok(evidence.choices.join('\n').includes(word));
+    for(const word of ambiguity.choices){
+      const visibleWord=ambiguity.id==='AMB-SOUND'&&word==='台詞'?'そのままの文字を話す':word;
+      assert.ok(evidence.choices.join('\n').includes(visibleWord));
+    }
+    if(ambiguity.id==='AMB-SOUND'){
+      assert.ok(Array.isArray(evidence.soundChoices));
+      assert.deepEqual(evidence.soundChoices.map(choice=>choice.label),evidence.choices);
+      assert.ok(evidence.soundChoices.some(choice=>choice.label==='そのままの文字を話す'&&choice.source==='「こんにちは」と言う'));
+      assert.ok(evidence.soundChoices.some(choice=>choice.label==='同じ名前の音を鳴らす'&&choice.source==='音「こんにちは」を鳴らす'));
+    }
     assert.equal(evidence.after.state,'DESIGN');
     for(const key of ['source','project','history','redo','dirty'])assert.deepEqual(evidence.after[key],evidence.before[key]);
     assert.equal(evidence.before.project,evidence.valid.project);
@@ -185,6 +194,7 @@ export const negativeCaseIds = [
     'run-project','run-history','run-pending','run-speech','run-start','run-motion',
     'cancel-project','cancel-history','cancel-owner','cancel-pending','cancel-execution']
     .map(key=>'INTENT/prose-'+key),
+  'INTENT/speech-ui-label','INTENT/speech-source-mixed-with-sound',
 ];
 export function verifyNegativeReport(report,inputs){
   bind(report,inputs,['audit/tests/japanese-gate-negative.mjs','audit/lib/japanese-gate-contract.mjs']);

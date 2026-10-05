@@ -24,7 +24,7 @@ await test('parent-syntax-semantic-switch',async p=>{
  await (await reveal(p.locator('#codeEditor'))).fill(valid);
  await (await reveal(p.locator('#editorModeblocks'))).click();
  assert.equal((await state(p)).mode,'blocks');
- assert.match(await p.locator('#blockEditor').innerText(),/診断/);
+ assert.match(await p.locator('#blockEditor').innerText(),/たしかめる/);
  await (await reveal(p.locator('#editorModecode'))).click();
  const before=await state(p),raw='点数を';
  await (await reveal(p.locator('#codeEditor'))).fill(raw);await p.waitForTimeout(200);

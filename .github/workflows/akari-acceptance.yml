@@ -122,3 +122,61 @@ jobs:
           if-no-files-found: error
           retention-days: 3
           include-hidden-files: true
+  ux-repair05:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the approved fixed browser for repair 05
+        run: |
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0
+          echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+          python audit/install-codec-browser.py "$RUNNER_TEMP/repair05-browser"
+          mkdir -p audit-evidence/repair05
+      - name: Verify native insertion and preserved palette context
+        if: always()
+        run: node audit/tests/ux-insertion-context-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/insertion-context.json
+      - name: Independently verify insertion evidence and negative controls
+        if: always()
+        run: node audit/tests/ux-insertion-context-verify.mjs audit-evidence/repair05/insertion-context.json
+      - name: Verify short speaker names, bounds and actual browser zoom
+        if: always()
+        run: node audit/tests/speech-name-layout-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/speech-name-layout.json
+      - name: Independently verify speaker evidence and negative controls
+        if: always()
+        run: node audit/tests/speech-name-layout-verify.mjs audit-evidence/repair05/speech-name-layout.json
+      - name: Verify visible reading support and concrete operation examples
+        if: always()
+        run: node audit/tests/child-language-ui-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/child-language-ui.json
+      - name: Independently verify language UI evidence and negative controls
+        if: always()
+        run: node audit/tests/child-language-ui-verify.mjs audit-evidence/repair05/child-language-ui.json
+      - name: Verify child-facing diagnostics and reachable technical details
+        if: always()
+        run: node audit/tests/child-diagnostics-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/child-diagnostics.json
+      - name: Independently verify diagnostic evidence and negative controls
+        if: always()
+        run: node audit/tests/child-diagnostics-verify.mjs audit-evidence/repair05/child-diagnostics.json audit-evidence/repair05/child-diagnostics-verification.json
+      - name: Reject incomplete or inconsistent diagnostic evidence
+        if: always()
+        run: node audit/tests/child-diagnostics-negative.mjs audit-evidence/repair05/child-diagnostics.json audit-evidence/repair05/child-diagnostics-negative.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-ux-repair05-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/repair05/
+          if-no-files-found: error
+          retention-days: 3
+          include-hidden-files: true

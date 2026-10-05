@@ -20,11 +20,23 @@ function check(html){
  view.destroy();dom.window.close();return observed;
 }
 const html=fs.readFileSync(currentProductFile(),'utf8'),good=check(html);
-assert.deepEqual(good.errors,[]);assert.equal(good.calls,1);assert.equal(good.blurChanges,1);
-assert.equal(good.focused,true);assert.equal(good.pending,false);assert.equal(good.ok,true);
-assert.equal(good.source,'4 が 8 より小さい間、次のことを繰り返す ※ 頭  \n  3 を 点数 に 加える ※ 本文  \n「😀」 という\n');
+function verifyNormalObservation(observed){
+ assert.deepEqual(observed.errors,[]);assert.equal(observed.calls,1);assert.equal(observed.blurChanges,1);
+ assert.equal(observed.focused,true);assert.equal(observed.pending,false);assert.equal(observed.ok,true);
+ assert.equal(observed.source,'4 が 8 より小さい間、次のことを繰り返す ※ 頭  \n  3 を 点数 に 加える ※ 本文  \n「😀」 という\n');
+}
+verifyNormalObservation(good);
 const guard='        if (rendering || committing || !input.isConnected) return;';
 assert.equal(html.split(guard).length,3);
-const bad=check(html.replaceAll(guard,'').replace('destroyed || committing || rendering','destroyed || committing'));
+const withoutRenderGuards=html.replaceAll(guard,'').replace('destroyed || committing || rendering','destroyed || committing');
+// Live model reads are an independent defense against the stale removal event.
+// Preserve the old guard-only mutation and assert every normal observation.
+const treeProtected=check(withoutRenderGuards);
+assert.deepEqual(treeProtected,good);verifyNormalObservation(treeProtected);
+const liveRead='const current = index.get(node.id)?.node || node;';
+assert.equal(html.split(liveRead).length,2);
+// Remove both defenses to retain the original double-commit/reentrant fault.
+const bad=check(withoutRenderGuards.replace(liveRead,'const current = node;'));
 assert.equal(bad.calls,2);assert.ok(bad.errors.some(e=>e.includes('reentrant replaceChildren')));
-console.log('DOM render regression: one commit, focus/source preserved; reentrant blur/change mutant rejected (simulated DOM, not real browser)');
+assert.throws(()=>verifyNormalObservation(bad),{name:'AssertionError'},'unprotected reentrant evidence must fail the normal observation validator');
+console.log('DOM render regression: one commit, focus/source preserved; latest-tree defense preserved and reentrant blur/change mutant rejected (simulated DOM, not real browser)');
