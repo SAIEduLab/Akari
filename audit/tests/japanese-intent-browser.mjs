@@ -8,11 +8,12 @@ import {sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {scenarios,ambiguities,numericOracles,corpusSha256,actors} from '../lib/japanese-intent-oracles.mjs';
 import {browserScenario} from '../lib/japanese-intent-browser-harness.mjs';
+import {corpusPath} from '../lib/docs-consolidation-contract.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..'),require=createRequire(import.meta.url);
 const [chrome,output,filter='']=process.argv.slice(2);
 if(!chrome||!output||fs.existsSync(output))throw Error('Usage: node audit/tests/japanese-intent-browser.mjs CHROME NEW_REPORT.json [ID_SUBSTRING]. A filtered run is always INCOMPLETE.');
-const corpusBytes=fs.readFileSync(path.join(root,'docs/1.0.2/child-intent-corpus.json'));
+const corpusBytes=fs.readFileSync(path.join(root,corpusPath));
 assert.equal(sha(corpusBytes),corpusSha256,'fixed independent intent oracle changed');
 const corpus=JSON.parse(corpusBytes);assert.equal(corpus.cases.length,20);assert.equal(scenarios.length,20);
 assert.deepEqual(scenarios.map(c=>c.id),corpus.cases.map(c=>c.id));
@@ -21,7 +22,7 @@ const evidenceDir=output.replace(/\.json$/,'')+'.artifacts';assert.ok(!fs.exists
 // be editing the working copy. Only this copy is navigated, always over file://.
 const product=path.resolve(root,currentProductFile()),candidate=path.join(evidenceDir,'candidate.html');fs.copyFileSync(product,candidate);
 const report={schemaVersion:1,status:'RUNNING',scope:'GA-EXEC / real Chrome / independent 1.0.2 intent contract',candidate:{source:product,testedFile:candidate,sha256:sha(fs.readFileSync(candidate)),url:pathToFileURL(candidate).href},
- oracle:{corpusSha256,provenance:corpus.provenance,cases:corpus.cases,structuredSources:scenarios},auditInputs:Object.fromEntries(['audit/tests/japanese-intent-browser.mjs','audit/lib/japanese-intent-oracles.mjs','audit/lib/japanese-intent-browser-harness.mjs'].map(f=>[f,sha(fs.readFileSync(path.join(root,f)))])),environment:{protocol:'file:',chromePath:chrome},results:[],filter:filter||null};
+ oracle:{corpusSha256,provenance:corpus.provenance,cases:corpus.cases,structuredSources:scenarios},auditInputs:Object.fromEntries(['audit/tests/japanese-intent-browser.mjs','audit/lib/japanese-intent-oracles.mjs','audit/lib/japanese-intent-browser-harness.mjs',corpusPath,'audit/lib/docs-consolidation-contract.mjs'].map(f=>[f,sha(fs.readFileSync(path.join(root,f)))])),environment:{protocol:'file:',chromePath:chrome},results:[],filter:filter||null};
 const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');save();
 const close=(a,b,tolerance=1e-8)=>assert.ok(Math.abs(a-b)<=tolerance,`${a} differs from ${b} by more than ${tolerance}`);
 const actor=(state,id=actors.cat)=>{const a=state.actors.find(x=>x.id===id);assert.ok(a,'missing actor '+id);return a;};

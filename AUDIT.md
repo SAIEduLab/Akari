@@ -384,11 +384,29 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 
 実行結果は当該branch push / PRのcheckoutにある製品SHAと監査入力SHAへ束縛する。selftestの結果集合は独立validatorで再検証し、aggregateでもsealと全ファイルhash、当該checkoutのsnapshot、GitHub run / attemptを照合する。既存のfull-browser matrixとLinux / Windows音声gateを維持する。過去snapshotのPASSは最新HEADのPASSへ転記しない。
 
-六つの `docs/1.0.2/` 承認文書と旧能力fixtureはoracleであり、開発中製品に合わせて書き換えない。`language-v2-test-migration.json` の `pending` / `NOT_RUN` は設計時点の移行状態を表し、今回の実行結果の代用にしない。静的reportの `productDynamic: NOT_RUN` とSEMANTIC未実施は維持する。20作文は成人が作成した仮説であり、実児童による理解・操作観察はこの機械監査のPASS範囲に含まれない。
+旧六文書の出典hashと意味対応は移管完了記録・恒久台帳に保持し、独立20意図は `audit/fixtures/japanese-intent/` の原本を読む。固定旧能力fixtureと独立期待は製品に合わせて書き換えない。`language-v2-test-migration.json` の `pending` / `NOT_RUN` は設計時点の移行状態を表し、今回の実行結果の代用にしない。静的reportの `productDynamic: NOT_RUN` とSEMANTIC未実施は維持する。20作文は成人が作成した仮説であり、実児童による理解・操作観察はこの機械監査のPASS範囲に含まれない。
 
 実行の入口は `audit/lib/gate-contract.mjs`、新結果のvalidatorは `audit/lib/japanese-gate-contract.mjs`。期待集合はrunnerの観測出力から縮小せず、意図89 ID・実行境界20 IDを明示し、FAIL / PENDING / INCOMPLETE / NOT_RUN / timeout / 例外をPASSへ変換しない。
 
 ネイティブタブ可視性の補助行 `NATIVE-TAB-VISIBILITY-OBSERVATION` は `pass: null` / `UNVERIFIED` を保持し、20必須試験の成功数に含めない。aggregateはこの既知の観測行だけを別区分で許容し、PASSへの昇格や必須試験の未検証は拒否する。
+
+### 文書移管と保証の継承
+
+旧設計の74命令・153スキーマ・260能力・38上限は独立した追跡基準であり、現在の追加能力・文型・スキーマ数の上限ではありません。名前や内部構造の維持だけで能力維持を認定せず、コードとブロックで作成・変更・相互変換・保存再読込・実行へ到達する意味を保持します。高度な式、全26組込み、22状態値、5引数付きsensor、16演算、5スコープ、素材・調査・保存も含みます。コード専用の機能や不透明な原文ブロックで双方向互換を代替しません。
+
+恒久台帳は audit/manifests/capability-traceability.json、移管完了記録は audit/fixtures/design-doc-migration-map.json、独立20意図の現行読取先は audit/fixtures/japanese-intent/child-intent-corpus.md/json です。原本は成人作成の仮説であり、basic-intents・composition-acceptanceの別由来入力へ代替しません。原本内の歴史的pathは出典です。旧6文書のcommit・blob・byte数・hash、設計時のNOT_RUN/pending、旧test IDと期待は固定baselineと台帳に保ちます。履歴原文へ戻れることと現在のファイルが存在することを区別します。
+
+639項目の処置に加え、本文段落・表・コード・箇条書きの全範囲を索引し、移管先の節・機能ID・既存試験・保持する保証へ対応させます。文書名や見出し一致は意味保持の証明にしません。移管validatorは固定旧集合、独立原本、恒久仕様本文、現行台帳、移管の欠落・重複・古い入力・意味改訂の記録を検査します。配置変更と採用意味の変更を分け、独立期待を製品実測から再生成しません。
+
+旧設計の内部構造案（CST/役割木/意味AST/IR、SentenceForm、ExecutionSubject、EditorTransaction等の案名）、工程順、当時のクラウド／端末分担・Draft停止は履歴です。特定の案名の実装済みを宣言しません。今後守る原文・役割・対象・順序・単位・原子的編集・保存安全性はLANGUAGEと公開意味UX仕様の各対応節に定めます。当時のDraft手順を現行製品要件へ持ち込まず、作業の権限と停止点はその依頼に従います。
+
+旧資料との意味差異は移管台帳のsemanticRevisionsに旧原文・採用規則・理由・根拠commit・固定試験IDを残します。「自分は」の呼出し開始対象と式中の「自分のデータ」の文対象を区別します。途中作品の安全な保存と実行／実行HTMLゲートを区別し、IME変換中・ドラッグ途中は確定後に保存します。現行追加形の能力を旧閉包へ戻しません。
+
+合否は固定の対象・数値・順序・短絡・時間・範囲・全上限とその負例で判定します。能力・全schema・generated closure・全往復、役割順列、全型／単位／名前解決、同期／質問／音／通知／継続ルール、未確定の非実行と回復を分けて検査します。既存語形の移行は意味期待の移行と別に記録します。無実行の静的PASSと製品動的PASS、独立意味審査、児童評価を混同しません。NOT_RUN・失敗・環境停止・欠落をPASSへ変えません。
+
+既知の再発防止は、引数なし手順の作成・保存・検索挿入・実行後のMap監視例外、サイズ0/1/100/1000/1001と動的式、新規100％、全半角・符号・－0・IME・貼付・取消、名前変更／削除／取消後の検索、手順本文と6行・確定取消・作品画面へ到達できる1366×768／1280×720／1024×768／狭幅／200％、実文字幅と単位・助詞を保持します。試験名・再現経路は恒久台帳から追跡します。動作後の例外やページ全体のスクロールだけを合格にしません。
+
+実児童の作文・操作、教員の国語レビュー、Scratch同条件比較は機械監査と別です。将来試行は場面だけ提示した初見成功と候補提示後成功、対象・順序・反復範囲の説明、支援・修正・取消回復を区別します。個人情報と録画は別途許可を得ます。比較は同じ課題・説明・機器条件で順序効果・経験差を記録し、片側だけの例文支援や環境不能を使いにくさの得点へ変えません。少人数の率を効果へ一般化せず、現時点の優位を断定しません。
 
 ## 固定制作意図の成功必須ゲート
 

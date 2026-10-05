@@ -6,11 +6,13 @@ import {pathToFileURL} from 'node:url';
 import {browserEnvironment} from './browser-environment.mjs';
 import {scenarios,ambiguities,corpusSha256} from './japanese-intent-oracles.mjs';
 import {verifyJapaneseContract} from '../tests/japanese-contract-static.mjs';
+import {corpusPath,consolidationInputPaths,consolidationNegativeIds} from './docs-consolidation-contract.mjs';
 
 export const contractInputPaths = [
   'audit/tests/japanese-contract-static.mjs','audit/fixtures/1.0.2-baseline-capabilities.json',
   'audit/fixtures/language-v2-test-migration.json','audit/tests/contract-gate.mjs',
   'audit/lib/japanese-gate-contract.mjs',
+  ...consolidationInputPaths,
 ];
 export const migrationInputPaths = [
   'audit/tests/language-migration-static.mjs','audit/fixtures/language-surface-v2-migration.json',
@@ -22,6 +24,8 @@ export const migrationInputPaths = [
 export const intentInputPaths = [
   'audit/tests/japanese-intent-browser.mjs','audit/lib/japanese-intent-oracles.mjs',
   'audit/lib/japanese-intent-browser-harness.mjs',
+  corpusPath,
+  'audit/lib/docs-consolidation-contract.mjs',
 ];
 export const runtimeInputPaths = [
   'audit/tests/runtime-v2.mjs','audit/tests/runtime-boundary-gate.mjs',
@@ -93,8 +97,8 @@ export function verifyIntentReport(report,inputs,candidateFile){
   verifyIntentCandidate(report,inputs,candidateFile);
   assert.equal(report.environment.browser,browserEnvironment.version);assert.equal(report.environment.playwright,browserEnvironment.playwright);
   assert.deepEqual(report.auditInputs,inputHashes(intentInputPaths));assert.equal(report.oracle.corpusSha256,corpusSha256);
-  const corpus=JSON.parse(fs.readFileSync('docs/1.0.2/child-intent-corpus.json'));
-  assert.equal(sha(fs.readFileSync('docs/1.0.2/child-intent-corpus.json')),corpusSha256);
+  const corpus=JSON.parse(fs.readFileSync(corpusPath));
+  assert.equal(sha(fs.readFileSync(corpusPath)),corpusSha256);
   assert.deepEqual(report.oracle.cases,corpus.cases);assert.deepEqual(report.oracle.structuredSources,scenarios);
   ids(report.results,intentCaseIds);assert.equal(report.total,89);assert.deepEqual(report.counts,{PASS:89,FAIL:0,PENDING:0});
   for(const r of report.results){assert.equal(r.status,'PASS',r.id);assert.ok(r.evidence!==undefined,r.id+': evidence missing');}
@@ -195,9 +199,11 @@ export const negativeCaseIds = [
     'cancel-project','cancel-history','cancel-owner','cancel-pending','cancel-execution']
     .map(key=>'INTENT/prose-'+key),
   'INTENT/speech-ui-label','INTENT/speech-source-mixed-with-sound',
+  ...consolidationNegativeIds,
 ];
+export const negativeInputPaths=['audit/tests/japanese-gate-negative.mjs','audit/lib/japanese-gate-contract.mjs',...consolidationInputPaths];
 export function verifyNegativeReport(report,inputs){
-  bind(report,inputs,['audit/tests/japanese-gate-negative.mjs','audit/lib/japanese-gate-contract.mjs']);
+  bind(report,inputs,negativeInputPaths);
   assert.equal(report.schema,'akari-japanese-gate-negative-v1');ids(report.results,negativeCaseIds);
   for(const row of report.results)assert.equal(row.rejected,true,row.id);
   return {status:'PASS',rejections:negativeCaseIds.length};
