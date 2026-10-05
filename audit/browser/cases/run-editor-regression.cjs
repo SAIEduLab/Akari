@@ -48,8 +48,8 @@ async function main() {
       await (await reveal(page.locator('#diagnoseBtn'))).click();await page.locator('#diagnosisModal.show').waitFor();const diagnosis=await page.locator('#diagnosisBody').innerText();assert.match(diagnosis,/作品は実行できます/);await (await reveal(page.locator('#diagnosisClose'))).click();
       await (await reveal(page.locator('#runBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='実行中');
       await score().filter({hasText:/^3$/}).waitFor();assert.equal(await page.locator('#codeEditor').getAttribute('readonly'),'');
-      await (await reveal(page.locator('#stopBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='停止中');assert.equal(await page.locator('#codeEditor').inputValue(),formatted);
-      return {diagnosis,runtimeScore:3,stopState:'停止中',sourcePreserved:true};
+      await (await reveal(page.locator('#stopBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっています');assert.equal(await page.locator('#codeEditor').inputValue(),formatted);
+      return {diagnosis,runtimeScore:3,stopState:'止まっています',sourcePreserved:true};
     });
     await test('callable-draft-save-action-function-run',async()=>{
       await (await reveal(page.locator('#procBtn'))).click();await (await reveal(page.locator('#callableNewAction'))).click();await (await reveal(page.locator('#callableName'))).fill('増加');await (await reveal(page.locator('#callableArgs'))).fill('値');await (await reveal(page.locator('#callableCode'))).fill('点数に値を足す。');

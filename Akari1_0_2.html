@@ -5315,6 +5315,13 @@ body[data-editor-mode="code"] .side:has(.monitor-window .output-disclosure[open]
 
 .reference-issue { padding: 10px; margin: 8px 0; border: 2px solid #9c3434; border-radius: 8px; background: #fff5f5; color: #602020; overflow-wrap: anywhere; }
 .reference-issue ul { margin: 6px 0; padding-left: 24px; }
+.diagnostic-details { max-width:100%; margin:4px 0; color:inherit; font-weight:400; white-space:normal; overflow-wrap:anywhere; }
+.diagnostic-details > summary { cursor:pointer; min-height:28px; padding:4px 0; font-size:13px; }
+.diagnostic-details > pre { margin:4px 0; font:inherit; white-space:pre-wrap; overflow-wrap:anywhere; }
+.diagnostic-help { white-space:pre-wrap; overflow-wrap:anywhere; }
+body[data-editor-mode] #codeIssue.issue-error { font-size:13px; min-width:0; max-width:100%; overflow:visible; }
+body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction:column; align-items:stretch; max-height:min(260px,35vh); overflow:auto; }
+
 </style>
 
 
@@ -5375,7 +5382,7 @@ body[data-editor-mode="code"] .side:has(.monitor-window .output-disclosure[open]
 .blockui-local-help { font-size:12px; max-width:100%; }
 .blockui-local-help p { white-space:normal; line-height:1.6; }
 .blockui-operator { min-width:90px; padding:5px; }
-.sprite-bubble::before { content:attr(data-speaker); display:block; font-size:0.8em; margin-bottom:3px; margin-right:var(--speech-full-space,0px); min-height:var(--speech-heading-height,0px); }
+.sprite-bubble::before { content:attr(data-speaker); display:block; font-size:0.8em; margin-bottom:var(--speech-heading-gap,3px); margin-right:var(--speech-full-space,0px); min-height:var(--speech-heading-height,0px); }
 .sprite-bubble [data-speech-full]::before { content:attr(data-label); }
 body[data-editor-mode="code"] .codewin { min-height:430px; }
 body[data-editor-mode="code"] .main { grid-template-rows:minmax(180px,1fr) minmax(430px,1.5fr); overflow:auto; }
@@ -5501,6 +5508,23 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.child-word { white-space: nowrap; }
+.child-word rt, .child-help rt { font-size: 0.65em; }
+.child-help { min-width: 0; color: var(--dark, #283e50); }
+.child-help > summary { cursor: pointer; min-height: 28px; padding: 5px 8px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fffaf3; line-height: 1.4; }
+.child-help p { margin: 6px 0; line-height: 1.65; white-space: normal; word-break: normal; overflow-wrap: break-word; }
+.child-help-panel { box-sizing: border-box; max-height: min(40dvh, 360px); overflow: auto; padding: 8px 12px; border: 1px solid var(--line, #d8e3ec); border-radius: 8px; background: #fff; font-size: 14px; }
+.child-help-panel { overscroll-behavior: contain; touch-action: pan-y; }
+.child-help-panel:focus-visible { outline: 3px solid var(--accent, #307cac); outline-offset: -3px; }
+.child-help .child-scroll-help { padding-bottom: 8px; border-bottom: 1px solid var(--line, #d8e3ec); }
+.menutool > .child-help { flex: 0 0 auto; }
+.menutool > .child-help[open] { flex: 1 0 100%; }
+.menutool > .child-help > summary { width: max-content; }
+.child-copy-help { display: block; padding: 4px 10px; font-size: 12px; line-height: 1.5; white-space: normal; }
+.child-material-name { display: block; line-height: 1.6; }
+.child-material-note { display: block; font-size: inherit; line-height: 1.5; white-space: normal; }
+.sprite-preset-grid .tool:has(.child-material-name) { min-height: 72px; }
+@media (max-width: 600px) { .child-help-panel { font-size: 14px; max-height: 38dvh; } }
 .blockui-field > .blockui-edit-text { order: 2; align-self: center; font-size: 11px; padding: 2px 5px; }
 .blockui-text-dialog { width: min(42rem, 90vw); max-width: 90vw; max-height: 85dvh; box-sizing: border-box; padding: 16px; border: 2px solid #145b8c; border-radius: 12px; background: #fff; color: #172a3b; }
 .blockui-text-dialog::backdrop { background: #18364b55; }
@@ -5517,8 +5541,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     <button id="newBtn">新しく作る</button>
     <button id="sampleBtn">お手本を開く</button>
     <button id="openBtn">開く</button>
-    <button id="saveBtn">保存</button>
-    <button id="exportBtn">書き出し</button>
+    <button id="saveBtn" aria-label="保存" aria-describedby="saveActionHelp"><ruby class="child-word">保存<rt>ほぞん</rt></ruby></button>
+    <button id="exportBtn" aria-label="書き出し" aria-describedby="exportActionHelp"><ruby class="child-word">書き出し<rt>かきだし</rt></ruby></button>
     <button id="undoBtn">↶ 元に戻す</button>
     <button id="redoBtn">↷ やり直す</button>
     <span class="sep"></span>
@@ -5529,11 +5553,20 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     <button id="imageObjectAdd" title="画像ファイルをキャラクターとして画面に置く">🖼 画像を置く</button>
     <button id="paintAdd" title="絵を描いてキャラクターとして画面に置く">🎨 お絵かき</button>
     <button id="soundQuickAdd" title="MP3 / WAV / M4A（AAC-LC）/ FLAC / Ogg Opusの音声を取り込む">🔊 音声を追加</button>
-    <button id="assetBtn">画像・音声を管理</button>
-    <button id="procBtn">手順・答えを求める</button>
-    <button id="dataBtn">変数・リスト</button>
+    <button id="assetBtn" aria-label="画像・音声をまとめる" aria-describedby="assetActionHelp"><ruby class="child-word">画像<rt>がぞう</rt></ruby>・<ruby class="child-word">音声<rt>おんせい</rt></ruby>をまとめる</button>
+    <button id="procBtn" aria-label="手順・答えを求める"><ruby class="child-word">手順<rt>てじゅん</rt></ruby>・答えを求める</button>
+    <button id="dataBtn" aria-label="変数・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
     <label class="ui-level-label">表示 <select id="uiLevel"><option value="basic" selected>かんたん</option><option value="advanced">くわしく</option></select></label>
+    <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い欄の中で指を上へ動かすと読めます。キーボードはTabで白い欄を選び、↓キーを押します。</p>
+      <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品をファイルにします。あとで続きを作るときは「開く」でそのファイルを選びます。</p>
+      <p id="exportActionHelp"><strong><ruby class="child-word">書き出し<rt>かきだし</rt></ruby></strong>：ブラウザーで動かして見るための作品ファイルを作ります。続きを作るためのファイルは「保存」で作ります。</p>
+      <p id="assetActionHelp"><strong><ruby class="child-word">画像<rt>がぞう</rt></ruby>・<ruby class="child-word">音声<rt>おんせい</rt></ruby>をまとめる</strong>：使う絵や音を追加したり、名前をたしかめたりします。</p>
+      <p id="dataActionHelp"><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</strong>：点数や名前を1つ覚えるデータと、持ち物のように順番に並べるデータを作ります。</p>
+      <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：選んだものを動かす命令のまとまりです。「編集（へんしゅう）する動き」で選びます。編集は、命令や言葉を作ったり直したりすることです。「いつ動く？」で動くきっかけを変えます。</p>
+      <p><strong>見た目のコピー</strong>：見た目と設定をもう1つ作ります。コードはコピーしません。</p>
+      <p><strong>元に戻す・やり直す</strong>：決めた変更を1つ戻す・戻した変更をもう一度行うボタンです。「入力を取り消す」は、いま変えかけている入力をやめます。</p>
+    </div></details>
     <input id="projectName" value="はじめてのあかり" aria-label="作品名" style="margin-left:auto;width:210px;height:26px;padding:2px 5px">
     <input id="fileInput" type="file" accept=".akari.md,.md,text/markdown,text/plain">
   </div>
@@ -5603,7 +5636,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="umbrella" draggable="true" title="傘 (U+2602)" aria-label="傘 (U+2602) を置く"><span class="ico">☂</span><span>傘</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="rainUmbrella" draggable="true" title="雨傘 (U+2614)" aria-label="雨傘 (U+2614) を置く"><span class="ico">☔</span><span>雨傘</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="snowman" draggable="true" title="雪だるま (U+2603)" aria-label="雪だるま (U+2603) を置く"><span class="ico">☃</span><span>雪だるま</span></button>
-              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="comet" draggable="true" title="彗星 (U+2604)" aria-label="彗星 (U+2604) を置く"><span class="ico">☄</span><span>彗星</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="comet" draggable="true" title="彗星 (U+2604)" aria-label="彗星 (U+2604) を置く"><span class="ico">☄</span><span class="child-material-name"><ruby class="child-word">彗星<rt>すいせい</rt></ruby><small class="child-material-note">尾のある星</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="lightning" draggable="true" title="雷 (U+26A1)" aria-label="雷 (U+26A1) を置く"><span class="ico">⚡</span><span>雷</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="snowflake" draggable="true" title="雪 (U+2744)" aria-label="雪 (U+2744) を置く"><span class="ico">❄</span><span>雪</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="snowflake2" draggable="true" title="雪2 (U+2745)" aria-label="雪2 (U+2745) を置く"><span class="ico">❅</span><span>雪2</span></button>
@@ -5621,7 +5654,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="sadFace" draggable="true" title="悲しい顔 (U+2639)" aria-label="悲しい顔 (U+2639) を置く"><span class="ico">☹</span><span>悲しい顔</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackFace" draggable="true" title="黒い顔 (U+263B)" aria-label="黒い顔 (U+263B) を置く"><span class="ico">☻</span><span>黒い顔</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="peace" draggable="true" title="ピース (U+262E)" aria-label="ピース (U+262E) を置く"><span class="ico">☮</span><span>ピース</span></button>
-              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="yinYang" draggable="true" title="陰陽 (U+262F)" aria-label="陰陽 (U+262F) を置く"><span class="ico">☯</span><span>陰陽</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="yinYang" draggable="true" title="陰陽 (U+262F)" aria-label="陰陽 (U+262F) を置く"><span class="ico">☯</span><span class="child-material-name"><ruby class="child-word">陰陽<rt>いんよう</rt></ruby><small class="child-material-note">白黒の丸</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="check" draggable="true" title="チェック (U+2713)" aria-label="チェック (U+2713) を置く"><span class="ico">✓</span><span>チェック</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="heavyCheck" draggable="true" title="太いチェック (U+2714)" aria-label="太いチェック (U+2714) を置く"><span class="ico">✔</span><span>太いチェック</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="cross" draggable="true" title="ばつ (U+2717)" aria-label="ばつ (U+2717) を置く"><span class="ico">✗</span><span>ばつ</span></button>
@@ -5630,10 +5663,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteFlag" draggable="true" title="白い旗 (U+2690)" aria-label="白い旗 (U+2690) を置く"><span class="ico">⚐</span><span>白い旗</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="warning" draggable="true" title="注意 (U+26A0)" aria-label="注意 (U+26A0) を置く"><span class="ico">⚠</span><span>注意</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="skull" draggable="true" title="どくろ (U+2620)" aria-label="どくろ (U+2620) を置く"><span class="ico">☠</span><span>どくろ</span></button>
-              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="medical" draggable="true" title="医療 (U+2695)" aria-label="医療 (U+2695) を置く"><span class="ico">⚕</span><span>医療</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="medical" draggable="true" title="医療 (U+2695)" aria-label="医療 (U+2695) を置く"><span class="ico">⚕</span><span class="child-material-name"><ruby class="child-word">医療<rt>いりょう</rt></ruby><small class="child-material-note">へびとつえ</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="recycle" draggable="true" title="リサイクル (U+267B)" aria-label="リサイクル (U+267B) を置く"><span class="ico">♻</span><span>リサイクル</span></button>
-              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="radioactive" draggable="true" title="放射線 (U+2622)" aria-label="放射線 (U+2622) を置く"><span class="ico">☢</span><span>放射線</span></button>
-              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="biohazard" draggable="true" title="バイオハザード (U+2623)" aria-label="バイオハザード (U+2623) を置く"><span class="ico">☣</span><span>バイオハザード</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="radioactive" draggable="true" title="放射線 (U+2622)" aria-label="放射線 (U+2622) を置く"><span class="ico">☢</span><span class="child-material-name"><ruby class="child-word">放射線<rt>ほうしゃせん</rt></ruby><small class="child-material-note">三つの羽の印</small></span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="biohazard" draggable="true" title="バイオハザード (U+2623)" aria-label="バイオハザード (U+2623) を置く"><span class="ico">☣</span><span class="child-material-name">バイオ<wbr>ハザード<small class="child-material-note">三つの輪の印</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="question" draggable="true" title="はてな (U+2753)" aria-label="はてな (U+2753) を置く"><span class="ico">❓</span><span>はてな</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="exclamation" draggable="true" title="びっくり (U+2757)" aria-label="びっくり (U+2757) を置く"><span class="ico">❗</span><span>びっくり</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="infinity" draggable="true" title="無限 (U+221E)" aria-label="無限 (U+221E) を置く"><span class="ico">∞</span><span>無限</span></button>
@@ -5759,7 +5792,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       </section>
       <section class="window active monitor-window">
         <div class="win-title">動きのようす</div>
-        <div class="runtime-monitor" id="runtimeMonitor"><div class="monitor-empty">停止中</div></div>
+        <div class="runtime-monitor" id="runtimeMonitor"><div class="monitor-empty">止まっています</div></div>
       </section>
     </div>
 
@@ -5767,7 +5800,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       <div class="win-title">コード</div>
       <div class="code-head">
         <label>動かすもの <select id="objectSelect"></select></label>
-        <label>編集する本文を選ぶ <select id="eventSelect" title="編集したい本文を選びます。きっかけを変えるときは「いつ動く？」を押します"></select></label>
+        <label><ruby class="child-word">編集<rt>へんしゅう</rt></ruby>する動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="編集する動きを選びます。きっかけは「いつ動く？」で変えます"></select></label>
         <button id="scriptAdd" type="button">同じできごとの本文を追加</button>
       </div>
       <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
@@ -5779,17 +5812,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         <button id="formatBtn">コードを整える</button>
         <span class="exec-location" id="execLocation">いまの場所：―</span>
       </div>
-      <div class="editor-modes" role="group" aria-label="本文の表示"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を取り消す</button></div><p id="editorPending" class="editor-pending" role="status" hidden></p><section id="sourceImport" class="editor-pending" aria-label="文章の取り込み" hidden></section><div id="blockEditor" hidden></div>
+      <div class="editor-modes" role="group" aria-label="本文の表示"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を取り消す</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の取り込み" hidden></section><div id="blockEditor" hidden></div>
       <div class="editor-shell">
         <div class="line-gutter" id="lineGutter" aria-hidden="true"></div>
         <textarea id="codeEditor" wrap="soft" spellcheck="false" aria-label="あかりのコード"></textarea>
       </div>
-      <div class="code-assist"><span id="codeIssue">✓ 書き方をチェック中</span><div class="hint-panel"><div class="hint-controls"><input id="hintSearch" type="search" aria-label="候補を検索" placeholder="命令・値・名前を検索"><label><input id="hintUnavailable" type="checkbox">使えないものも表示</label><button id="hintPrev">前</button><span id="hintCount"></span><button id="hintNext">次</button></div><div class="code-hints" id="codeHints"></div></div></div>
+      <div class="code-assist"><div id="codeIssue">✓ 書き方をチェック中</div><div class="hint-panel"><div class="hint-controls"><input id="hintSearch" type="search" aria-label="候補を検索" placeholder="命令・値・名前を検索"><label><input id="hintUnavailable" type="checkbox">使えないものも表示</label><button id="hintPrev">前</button><span id="hintCount"></span><button id="hintNext">次</button></div><div class="code-hints" id="codeHints"></div></div></div>
       <div class="console" id="console"></div>
     </section>
   </div>
 
-  <div class="status"><span id="statusText">準備完了</span><span class="save-state" id="autosaveState">自動保存：待機</span><span class="dirty-state" id="dirtyState">変更なし</span><span class="runstate run-off" id="runState">停止中</span></div>
+  <div class="status"><span id="statusText">準備完了</span><span class="save-state" id="autosaveState">自動保存：待機</span><span class="dirty-state" id="dirtyState">変更なし</span><span class="runstate run-off" id="runState">止まっています</span></div>
 </div>
 
 <div class="modal" id="paintModal" role="dialog" aria-modal="true" aria-labelledby="paintTitle">
@@ -5802,20 +5835,20 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         <button type="button" data-paint-tool="fill" aria-pressed="false">塗りつぶし</button>
         <button type="button" data-paint-tool="line" aria-pressed="false">直線</button>
         <button type="button" data-paint-tool="rectangle" aria-pressed="false">四角</button>
-        <button type="button" data-paint-tool="ellipse" aria-pressed="false">楕円</button>
+        <button type="button" data-paint-tool="ellipse" aria-pressed="false">だ円（長い丸）</button>
       </div>
       <div class="paint-options">
         <label>色 <input id="paintColor" type="color" value="#111111"></label>
-        <label>線幅 <input id="paintWidth" type="range" min="1" max="40" value="4"><output id="paintWidthValue">4</output></label>
-        <label>図形 <select id="paintShape"><option value="outline">輪郭のみ</option><option value="filled">塗りつぶし</option></select></label>
+        <label>線の太さ <input id="paintWidth" type="range" min="1" max="40" value="4"><output id="paintWidthValue">4</output></label>
+        <label>図形 <select id="paintShape"><option value="outline">ふちだけ</option><option value="filled">塗りつぶし</option></select></label>
         <button type="button" id="paintUndo">↶ 元に戻す</button>
-        <button type="button" id="paintRedo">↷ やり直し</button>
+        <button type="button" id="paintRedo">↷ やり直す</button>
       </div>
       <div class="paint-colors" id="paintColors" role="group" aria-label="色見本"></div>
       <div class="paint-canvas-wrap"><canvas id="paintCanvas" width="500" height="500" aria-label="お絵かき用の500×500ピクセルのキャンバス"></canvas></div>
-      <p id="paintStatus" role="status" aria-live="polite">市松模様は透明な部分です。</p>
+      <p id="paintStatus" role="status" aria-live="polite">ます目は、色がついていない透明なところの目印です。絵として保存されません。</p>
     </div>
-    <div class="dialog-foot"><button type="button" id="paintCancel">キャンセル</button><button type="button" id="paintCommit" disabled>決定して置く</button></div>
+    <div class="dialog-foot"><button type="button" id="paintCancel">お絵かきを取り消す</button><button type="button" id="paintCommit" disabled>決定して置く</button></div>
   </div>
 </div>
 
@@ -5827,7 +5860,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         <div class="asset-import-card primary">
           <strong>画像をそのまま使う</strong>
           <small>画像をキャラクターとして画面中央に追加します。追加後すぐに動かしたり、クリックの動きを作れます。</small>
-          <button id="imageObjectAddModal">🖼 画像をオブジェクトとして追加</button>
+          <button id="imageObjectAddModal">🖼 画像をキャラクターとして置く</button>
         </div>
         <div class="asset-import-card">
           <strong>背景にする</strong>
@@ -5876,24 +5909,29 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           <select id="callableSelect" size="12"></select>
           <button id="callableNewAction">新しい動作</button>
           <button id="callableNewFunction">新しい計算</button>
-          <button id="callableDelete">削除</button>
+          <button id="callableDelete">この手順・計算を消す</button>
         </div>
         <div class="proc-edit">
+          <details id="callableConceptHelp" class="child-help"><summary>手順・計算のヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い欄の中で指を上へ動かすと読めます。キーボードはTabで白い欄を選び、↓キーを押します。</p>
+            <p><ruby class="child-word">手順<rt>てじゅん</rt></ruby>は、いくつかの動きをまとめて名前で使うものです。例：「あいさつ」という名前で、名前を話しておじぎする動きをまとめます。</p>
+            <p>計算は、中で使った数や文字から答えを出します。例：点数を2倍にして、その答えを返します。</p>
+            <p>名前と中で使う値を決め、下に動きを書きます。「手順・計算を決める」を押すと、ほかの動きからその名前で使えます。</p>
+          </div></details>
           <input id="callableEditingId" type="hidden">
           <label>種類 <select id="callableType"><option value="action">手順</option><option value="function">答えを求める</option></select></label>
           <label>名前 <input id="callableName"></label>
           <label id="callablePhraseRow">短い呼び方（自由） <input id="callablePhrase" maxlength="80" placeholder="例：ジャンプする" aria-describedby="callablePhraseHelp"></label>
           <small id="callablePhraseHelp">この文を書くだけで、この手順を使えます。空欄でも名前で呼べます。</small>
-          <label>受け取る値 <input id="callableArgs" placeholder="例：歩数、あいさつ（いらないときは空欄）" aria-describedby="callableArgsHelp"></label>
-          <small id="callableArgsHelp">呼び出すときに渡す値の名前です。複数は「、」で区切ります。</small>
+          <label><ruby class="child-word">受け取る値<rt>うけとる あたい</rt></ruby> <input id="callableArgs" placeholder="例：歩数、あいさつ（いらないときは空欄）" aria-describedby="callableArgsHelp"></label>
+          <small id="callableArgsHelp">この手順を使うときに決める中身です。例：点数として10、名前として「あかり」を入れ、手順の中で使います。この欄には「点数、名前」のように名前を書きます。名前が2つ以上あるときは「、」で分けます。</small>
           <div id="callableHeader" class="asset-target">新しい手順</div>
-          <div class="editor-modes" role="group" aria-label="本文の表示"><button id="callableModecode" type="button" aria-pressed="true">コード</button><button id="callableModeblocks" type="button" aria-pressed="false">ブロック</button><button id="callableCancel" type="button">入力を取り消す</button></div><p id="callablePending" class="editor-pending" role="status" hidden></p><div id="callableBlocks" hidden></div>
+          <div class="editor-modes" role="group" aria-label="本文の表示"><button id="callableModecode" type="button" aria-pressed="true">コード</button><button id="callableModeblocks" type="button" aria-pressed="false">ブロック</button><button id="callableCancel" type="button">入力を取り消す</button></div><div id="callablePending" class="editor-pending" role="status" hidden></div><div id="callableBlocks" hidden></div>
           <textarea id="callableCode" spellcheck="false"></textarea>
           <div class="hint-panel"><div class="hint-controls"><input id="callableHintSearch" type="search" aria-label="手順・答えを求める定義の候補を検索" placeholder="命令・値・名前を検索"><button id="callableHintPrev">前</button><span id="callableHintCount"></span><button id="callableHintNext">次</button></div><div class="code-hints" id="callableHints" aria-label="手順・答えを求める定義のコード候補"></div></div>
         </div>
       </div>
     </div>
-    <div class="dialog-foot"><button id="callableFormat">本文を整える</button> <button id="callableSave">定義を確定</button> <button id="callableSaveProject">書きかけを作品に保存</button> <button id="procClose">閉じる</button></div>
+    <div class="dialog-foot"><button id="callableFormat">本文を整える</button> <button id="callableSave">手順・計算を決める</button> <button id="callableSaveProject">書きかけを作品に保存</button> <button id="procClose">閉じる</button></div>
   </div>
 </div>
 
@@ -5903,16 +5941,20 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     <div class="dialog-body">
       <div class="asset-toolbar">
         <label>どこで使う <select id="dataScope"><option value="project">作品</option><option value="self">選んだ部品</option></select></label>
-        <label>種類 <select id="dataKind"><option value="variable">変数</option><option value="list">リスト</option></select></label>
-        <input id="dataName" placeholder="名前" aria-label="データの名前" aria-describedby="dataFormError" style="width:150px;padding:6px">
-        <input id="dataInitial" aria-label="最初の値" aria-describedby="dataFormError" style="width:280px;padding:6px">
+        <label>種類 <select id="dataKind"><option value="variable">変数：1つを覚える</option><option value="list">リスト：順番に並べる</option></select></label>
+        <input id="dataName" placeholder="名前" aria-label="データの名前" aria-describedby="dataConceptHelp dataFormError" style="width:150px;padding:6px">
+        <input id="dataInitial" aria-label="最初の値" aria-describedby="dataConceptHelp dataFormError" style="width:280px;padding:6px">
         <label id="dataListModeLabel" hidden>リストの入れ方 <select id="dataListMode"><option value="lines">一行に一つ、文字で入れる</option><option value="literal">［値、値］で書く</option></select></label>
-        <label id="dataItemsLabel" hidden>最初の項目（文字）<textarea id="dataItems" rows="5" aria-describedby="dataItemsHelp dataFormError" placeholder="本&#10;かさ&#10;ぼうし" style="width:min(100%,420px);padding:6px"></textarea><small id="dataItemsHelp">一行が一つの文字の項目です。空の行は空の文字として残します。数や単位を入れるときは「［値、値］で書く」を選びます。</small></label>
+        <label id="dataItemsLabel" hidden>最初に並べる中身（文字）<textarea id="dataItems" rows="5" aria-describedby="dataItemsHelp dataFormError" placeholder="本&#10;かさ&#10;ぼうし" style="width:min(100%,420px);padding:6px"></textarea><small id="dataItemsHelp">1行に1つ、文字を並べます。空の行は空の文字として残します。数や単位を入れるときは「［値、値］で書く」を選びます。</small></label>
         <label>使う単位 <select id="dataUnit"><option value="">決めない</option><option>歩</option><option>秒</option><option>度</option><option>回</option><option>番目</option><option>点</option><option>個</option><option>％</option><option>Hz</option></select></label>
         <button id="dataAdd">作る</button>
       </div>
       <p id="dataFormError" role="alert" hidden></p>
-      <p>変数は一つの値、リストは並んだ値を入れます。「作品」はみんなで、「選んだ部品」はその部品で使います。動かすと最初の値から始まり、実行中の値は「動きのようす」で見られます。最初の値と定義は作品と一緒に保存されます。</p>
+      <div id="dataConceptHelp" class="child-help">
+        <p><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby></strong>は、中身を1つ覚えるデータです。例：「点数」に10、「名前」に「あかり」を入れます。<strong>リスト</strong>は、中身を順番に並べるデータです。例：「持ち物」に本、かさ、ぼうしを並べます。</p>
+        <p><ruby class="child-word">値<rt>あたい</rt></ruby>は、入れる中身のことです。「種類」で入れものを選び、「最初の値」で動き始める前の中身を決めます。「作品」はみんなで、「選んだ部品」はその部品で使います。</p>
+        <p>動かすと最初の値から始まり、動いている間の中身は「動きのようす」で見られます。最初の値とデータの作り方は作品といっしょに保存されます。</p>
+      </div>
       <div id="dataBody"></div>
     </div>
     <div class="dialog-foot"><button id="dataClose">閉じる</button></div>
@@ -5940,10 +5982,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   <div class="dialog">
     <div class="win-title">あかりからの質問</div>
     <div class="dialog-body"><div id="questionText"></div><input id="questionAnswer" autocomplete="off"></div>
-    <div class="dialog-foot"><button id="questionStop">実行を停止</button> <button id="questionSubmit">答える</button></div>
+    <div class="dialog-foot"><button id="questionStop">動きを止める</button> <button id="questionSubmit">答える</button></div>
   </div>
 </div>
-<div class="modal" id="failureModal" role="dialog" aria-modal="true" aria-label="失敗時の記録"><div class="dialog"><div class="win-title">失敗時の記録</div><div class="record-controls"><label for="failureSelect">記録</label><select id="failureSelect"></select></div><div class="dialog-body" id="failureBody"></div><div class="dialog-foot"><button id="failureClose">閉じる</button></div></div></div>
+<div class="modal" id="failureModal" role="dialog" aria-modal="true" aria-label="動きが止まった記録"><div class="dialog"><div class="win-title">動きが止まった記録（きろく）</div><div class="record-controls"><label for="failureSelect">記録（きろく）</label><select id="failureSelect"></select></div><div class="dialog-body" id="failureBody"></div><div class="dialog-foot"><button id="failureClose">閉じる</button></div></div></div>
 <div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-labelledby="valueTitle"><div class="dialog"><div class="win-title" id="valueTitle">値の全文</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の要素</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の要素</button></div><p id="valueNotice" class="dialog-body" role="status"></p><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">閉じる</button></div></div></div>
 
 
@@ -5967,7 +6009,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     <p id="colorError" role="alert"></p>
    </details>
   </div>
-  <div class="dialog-foot"><button id="colorCancel" type="button">取消</button><button id="colorConfirm" type="button">決定</button></div>
+  <div class="dialog-foot"><button id="colorCancel" type="button">色の変更を取り消す</button><button id="colorConfirm" type="button">決定</button></div>
  </div>
 </div>
 
@@ -6275,7 +6317,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       message: '知らせを受けたとき',
       backdropChanged: '背景が変わったとき',
       valueChanged: '値が変わったとき',
-      cloneStart: 'クローンされたとき',
+      cloneStart: '分身ができたとき',
     };
     const BUILTIN_META = new Map(BUILTIN_DEFINITIONS.map((x) => [x.name, x]));
     class AkariError extends Error {
@@ -10335,7 +10377,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       LooksCommand: '\u898b\u305f\u76ee',
       PenCommand: '\u30da\u30f3',
       SoundCommand: '\u97f3',
-      CloneCommand: '\u30af\u30ed\u30fc\u30f3',
+      CloneCommand: '分身',
       StopCommand: '\u505c\u6b62',
       Say: '\u8868\u793a\u30fb\u5165\u529b',
       Ask: '\u8868\u793a\u30fb\u5165\u529b',
@@ -10499,11 +10541,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (x.kind === 'CloneCommand') {
         if (x.op === 'CREATE_TARGET') {
           const c = project.components.find((c) => c.type === 'sprite');
-          text = `\u300c${c?.name || '\u661f'}\u300d\u306e\u30af\u30ed\u30fc\u30f3\u3092\u4f5c\u308b`;
+          text = `\u300c${c?.name || '\u661f'}\u300dの分身を作る`;
           if (!c) reason = 'キャラクターを先に作ります';
         } else if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'DELETE_SELF' && !kind && event !== 'cloneStart')
-          reason = '\u30af\u30ed\u30fc\u30f3\u306e\u51e6\u7406\u3067\u4f7f\u3044\u307e\u3059';
+          reason = '分身ができたときの動きで使います';
       }
       if (x.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(x.op)) {
         const snd = project.sounds[0];
@@ -13662,7 +13704,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }),
     }),
     CloneCommand: Object.freeze({
-      palette: 'クローン',
+      palette: '分身',
       operations: Object.freeze({
         CREATE_SELF: Object.freeze({
           label: '自分の分身を作る',
@@ -13675,7 +13717,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           format: (a) => 'この分身だけを消す',
         }),
         CREATE_TARGET: Object.freeze({
-          label: '対象のクローンを作る',
+          label: '選んだキャラクターの分身を作る',
           inputs: Object.freeze(['対象']),
           format: (a,n) => `${a(0)}の分身を${n.count===undefined?'':formatExpression(n.count)+'体'}作る`,
         }),
@@ -13734,7 +13776,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const groups = {
         Script: '本文',
         TargetReference: 'データ',
-        CommentLine: 'コメント',
+        CommentLine: 'メモ',
         UserActionCall: '動作',
         UserFunctionCall: '計算',
         BuiltinCall: '用意された計算',
@@ -13764,19 +13806,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const annotations =
         category === 'statement'
           ? [
-              field('inlineComment', '行末コメント', 'annotation', '', {
+              field('inlineComment', '行の終わりのメモ', 'annotation', '', {
                 editable: kind !== 'CommentLine',
               }),
               ...(kind === 'IfStatement'
                 ? [
-                    field('elseComment', 'そうでなければの注釈', 'annotation', '', {
+                    field('elseComment', 'そうでなければのメモ', 'annotation', '', {
                       when: 'hasElse',
                     }),
                   ]
                 : []),
             ]
           : category === 'rule'
-            ? [field('inlineComment', '行末コメント', 'annotation', '', { required: false })]
+            ? [field('inlineComment', '行の終わりのメモ', 'annotation', '', { required: false })]
             : [];
       const schema = {
         id,
@@ -13827,7 +13869,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         required:false,multiple:true,minItems:1,maxItems:LIMITS.scripts,variadic:true,
       })], [body('body', '本文', false)]);
     for (const role of ['expression', 'statement', 'target', 'rule'])
-      add('Hole', role, '未確定の穴', [field('label', '必要な役割', 'string', '値')],
+      add('Hole', role, '空いている欄', [field('label', 'ここに入れるもの', 'string', '値')],
         [], [], op('role', role), { draftOnly: true, capability: 'draft-hole:' + role });
     add('QuantityLiteral', 'expression', '単位を付けた数',
       [field('unit', '数え方', 'unit', '歩')], [expression('value', '数の式')], [], null,
@@ -13854,7 +13896,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       [field('broadcastRef', '待つ知らせ', 'reference', '直前の知らせ')], [], [], null,
       { capability: 'notification-group-wait' });
     add('TargetReference', 'target', '変更先', [name(), qualifier()]);
-    add('CommentLine', 'statement', 'コメント', [field('text', 'コメント本文', 'comment', '')]);
+    add('CommentLine', 'statement', 'メモ', [field('text', 'メモの中身', 'comment', '')]);
     add('Assignment', 'statement', '値を設定', [], [target(), expression('value', '値')]);
     for (const [value, label] of [
       ['ADD', '値を足す'],
@@ -13877,8 +13919,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       [target(), expression('value', '追加する値')],
     );
     for (const [kind, label] of [
-      ['ListInsert', 'リストに挿入'],
-      ['ListReplace', 'リストを置換'],
+      ['ListInsert', 'リストの途中に入れる'],
+      ['ListReplace', 'リストの項目を入れかえる'],
     ])
       add(
         kind,
@@ -13890,11 +13932,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     add(
       'ListDelete',
       'statement',
-      'リストから削除',
+      'リストの項目を消す',
       [],
       [target(), expression('index', '番号', 1)],
     );
-    add('ListClear', 'statement', 'リストを空にする', [], [target()]);
+    add('ListClear', 'statement', 'リストの中身を全部消す', [], [target()]);
     for (const [kind, label] of [
       ['NoOperation', '何もしない'],
       ['Break', 'このくり返しを終える'],
@@ -13936,7 +13978,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     add(
       'ForEach',
       'statement',
-      '各要素についてくり返す',
+      '中身を1つずつ使ってくり返す',
       [name('binder', '項目名', '項目')],
       [input('list', 'リスト', 'expression', { initial: [] })],
       [body('body', 'くり返す本文')],
@@ -14037,7 +14079,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           ['SUB', '引く'],
           ['MUL', '掛ける'],
           ['DIV', '割る'],
-          ['POW', '累乗'],
+          ['POW', '同じ数をかける（累乗）'],
         ],
       ],
       [
@@ -14279,7 +14321,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const schema = syntaxSchema(node, type);
       if(node.units&&(type!=='script'||path!=='root'))
         blockStructureError('できごとのまとまりは文書の最上位に置きます',path);
-      if (schema.draftOnly && !allowHoles) blockStructureError('未確定の穴を確定してから実行してください', path);
+      if (schema.draftOnly && !allowHoles) blockStructureError('空いている欄に必要なものを入れてから動かしてください', path);
       if (active.has(node)) blockStructureError('循環しています', path);
       active.add(node);
       if (++count > LIMITS.sourceEach)
@@ -17280,7 +17322,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   // 08 — Portable stage view and standalone export
   // ────────────────────────────────────────────────────────────────────────
   const AKARI_STAGE_CSS =
-    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:3px;margin-right:var(--speech-full-space,0px)}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }";
+    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:var(--speech-heading-gap,3px);margin-right:var(--speech-full-space,0px)}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }";
   const AKARI_PLAYER_CSS =
     '*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#edf2f8;color:#1f2937;font:14px "Yu Gothic UI","Yu Gothic","Meiryo",sans-serif}button,input{font:inherit}button{padding:7px 12px;background:#fff;border:1px solid #a9b8ca;border-radius:7px;cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #2f6fd6;outline-offset:2px}#playerRoot{width:max-content;min-width:min(100%,640px);max-width:100%;margin:0 auto;padding:14px}header{margin-bottom:12px}h1{font-size:20px;margin:0 0 10px;overflow-wrap:anywhere}.player-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px}#playerStatus{font-size:12px;color:#536273;margin-left:6px}.player-stage{max-width:100%;overflow:auto;border:1px solid #bccbe0;border-radius:10px;background:#fff}#formSurface{outline:none}#formSurface:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}#playerOutput{max-height:130px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;background:#fff;border:1px solid #c7d2df;border-radius:8px;margin:12px 0 0}.modal{display:none;position:fixed;inset:0;background:rgba(25,37,55,.4);z-index:10000;align-items:center;justify-content:center;padding:16px}.modal.show{display:flex}.question-box{width:min(500px,100%);max-height:90vh;overflow:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 12px 35px #0003}#questionText{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:14px;font-weight:700}#questionAnswer{width:100%;padding:8px;border:1px solid #a9b8ca;border-radius:7px}.question-controls{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}@media(max-width:600px){#playerRoot{padding:8px}h1{font-size:17px}}\n';
   function createAkariStageView(core, options) {
@@ -17419,8 +17461,28 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const actors=[...form.querySelectorAll('.component')].filter(n=>n.style.display!=='none').map(n=>{const r=n.getBoundingClientRect();return {left:(r.left-rect.left)/sx,right:(r.right-rect.left)/sx,top:(r.top-rect.top)/sy,bottom:(r.bottom-rect.top)/sy};});
       const bands = actors.length ? [{ top:0, height:Math.min(...actors.map(a=>a.top)) },
           { top:Math.max(...actors.map(a=>a.bottom)), height:form.clientHeight-Math.max(...actors.map(a=>a.bottom)) }] : [];
-      const band = bubbles.length > 1 && rect.width >= bubbles.length*80+(bubbles.length-1)*8
-        ? bands.filter(b=>b.height*sy>=42).sort((a,b)=>b.height-a.height)[0] : null;
+      // Use the same DOM font layout as the visible heading, including fractional glyph widths.
+      const textWidth = (value, style) => {
+        const measure = document.createElement('span');
+        Object.assign(measure.style, {position:'fixed',visibility:'hidden',whiteSpace:'pre',font:style.font,letterSpacing:style.letterSpacing});
+        measure.textContent=value; document.body.append(measure);
+        const width=measure.getBoundingClientRect().width; measure.remove(); return width;
+      };
+      const widths = bubbles.map(b => {
+        b.style.fontSize=14/sx+'px';
+        const heading=getComputedStyle(b,'::before'),body=getComputedStyle(b);
+        return {name:textWidth(b.dataset.speaker||'',heading),body:textWidth(b.querySelector('.sprite-bubble-text')?.textContent||'',body),
+          lineHeight:Math.max(parseFloat(heading.lineHeight),parseFloat(body.lineHeight))*sy};
+      });
+      const short=bubbles.length&&bubbles.every(b=>!/[\r\n]/.test(b.querySelector('.sprite-bubble-text')?.textContent||'')&&b.querySelector('[data-speech-full]')?.dataset.always!=='true');
+      const compactColumns=rect.height<54&&short&&rect.width>=bubbles.length*Math.max(...widths.map(w=>Math.max(w.name,w.body)*sx+4))+(bubbles.length-1);
+      const compactRows=rect.height<54&&short&&!compactColumns&&
+        rect.width>=Math.max(...widths.map(w=>(Math.ceil(w.name)+w.body)*sx+0.75))&&
+        rect.height>=bubbles.length*(Math.max(...widths.map(w=>w.lineHeight))+0.5)+(bubbles.length-1);
+      const compact=compactColumns||compactRows;
+      const band = compact ? {top:0,height:form.clientHeight}
+        : bubbles.length > 1 && rect.width >= bubbles.length*80+(bubbles.length-1)*8
+          ? bands.filter(b=>b.height*sy>=42).sort((a,b)=>b.height-a.height)[0] : null;
       form.querySelectorAll('.sprite-bubble').forEach((b, bubbleIndex) => {
         const id = b.dataset.runtimeId,
           node = form.querySelector(`[data-runtime-id="${CSS.escape(id)}"].component`);
@@ -17433,9 +17495,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             top:(box.top-rect.top)/sy, bottom:(box.bottom-rect.top)/sy},
           sideWidth = Math.max(actor.left-gap, form.clientWidth-actor.right-gap),
           availableWidth = sideWidth >= 80/sx ? sideWidth : form.clientWidth;
-        b.style.fontSize = 14/sx+'px'; b.style.padding = (band?1.5:8)/sy+'px '+(band?6:10)/sx+'px';
-        b.style.setProperty('--speech-heading-height', band ? 17/sy+'px' : '0px');
-        const bandWidth = (form.clientWidth-(bubbles.length-1)*8/sx)/Math.max(1,bubbles.length);
+        b.style.fontSize = 14/sx+'px'; b.style.padding = (compactRows?0:band?1.5:8)/sy+'px '+(compactRows?0:compact?1:band?6:10)/sx+'px';
+        b.style.borderWidth = compact ? (compactRows?0.25:0.5)/sx+'px' : '';
+        b.style.display=compactRows?'grid':'';
+        b.style.alignItems=compactRows?'start':'';
+        b.style.width=compactRows?form.clientWidth+'px':'';
+        b.style.gridTemplateColumns=compactRows?Math.ceil(widths[bubbleIndex].name)+'px minmax(0,1fr)':'';
+        b.style.columnGap=compactRows?0.25/sx+'px':'';
+        b.style.setProperty('--speech-heading-gap',compactRows?'0px':'3px');
+        b.style.setProperty('--speech-heading-height', band && !compact ? 17/sy+'px' : '0px');
+        const bandWidth = compactRows?form.clientWidth:(form.clientWidth-(bubbles.length-1)*(compact?1:8)/sx)/Math.max(1,bubbles.length);
         b.style.maxWidth = Math.min(320/sx,band?bandWidth:availableWidth)+'px';
         const heightBudget=band ? Math.min(160/sy,band.height-1/sy) : Math.min(160/sy,Math.max(54/sy,(form.clientHeight-(bubbles.length-1)*8/sy)/Math.max(1,bubbles.length)));
         b.style.maxHeight = 'none';
@@ -17448,14 +17517,28 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             fontSize:11/sx+'px', lineHeight:'1.2', padding:2/sy+'px '+4/sx+'px', minHeight:'0' });
         }
         if (text) {
-          text.style.maxHeight = '0px';
-          const chromeHeight = b.getBoundingClientRect().height/sy;
-          text.style.maxHeight = Math.min(100/sy,Math.max(19/sy,heightBudget-chromeHeight))+'px';
+          // At enlarged stage scales, the small logical font can have rounded
+          // glyph metrics taller than its original line box. Keep the glyphs whole.
+          text.style.lineHeight = sy > 1 ? '1.5' : '';
         }
-        if (full) full.hidden = !(full.dataset.always === 'true' ||
-          text && (text.scrollHeight > text.clientHeight + 1 || text.scrollWidth > text.clientWidth + 1));
-        b.style.setProperty('--speech-full-space', full && !full.hidden ? (band?32:45)/sx+'px' : '0px');
-        const width=b.offsetWidth,height=b.offsetHeight, center=(actor.left+actor.right-width)/2,
+        const bubbleStyle = getComputedStyle(b), edges = bubbleStyle.boxSizing === 'border-box'
+          ? ['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth'].reduce((n,k)=>n+(parseFloat(bubbleStyle[k])||0),0) : 0;
+        const fitText = () => {
+          const reserve=full&&!full.hidden?Math.max(0,full.getBoundingClientRect().width/sx+parseFloat(full.style.right)-(parseFloat(bubbleStyle.paddingRight)||0)-(parseFloat(bubbleStyle.borderRightWidth)||0)+4/sx):0;
+          b.style.setProperty('--speech-full-space',reserve+'px');
+          b.style.minWidth=compactRows?'0px':Math.min(parseFloat(b.style.maxWidth),
+            Math.max(compact?0:40/sx,Math.ceil(widths[bubbleIndex].name+reserve+edges+1/sx)))+'px';
+          if (text) {
+            text.style.maxHeight='0px';
+            const chromeHeight=b.getBoundingClientRect().height/sy;
+            text.style.maxHeight=Math.min(100/sy,Math.max(19/sy,heightBudget-chromeHeight))+'px';
+          }
+        };
+        // Check clipping with the current heading, then reserve the actual full-text button.
+        if (full) full.hidden=full.dataset.always!=='true';
+        fitText();
+        if (full&&full.hidden&&text&&(text.scrollHeight>text.clientHeight+1||text.scrollWidth>text.clientWidth+1)) {full.hidden=false;fitText();}
+        const measured=b.getBoundingClientRect(),width=measured.width/sx,height=measured.height/sy, center=(actor.left+actor.right-width)/2,
           positions=[[actor.right+gap,actor.top],[actor.left-width-gap,actor.top],
              [center,actor.top-height-gap],[center,actor.bottom+gap]];
         for(const old of placed)positions.push([center,old.bottom+gap],[center,old.top-height-gap],[old.right+gap,actor.top],[old.left-width-gap,actor.top]);
@@ -17464,8 +17547,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           const candidate={left,top,right:left+width,bottom:top+height},cost=actors.reduce((sum,a)=>sum+overlap(candidate,a),0)+placed.reduce((sum,b)=>sum+overlap(candidate,b)*10,0);
           return {...candidate,overlap:cost,order};
         }).sort((a,b)=>a.overlap-b.overlap||a.order-b.order);
-        const chosen = band ? { left:bubbleIndex*(bandWidth+8/sx)+(bandWidth-width)/2, top:band.top,
-          right:bubbleIndex*(bandWidth+8/sx)+(bandWidth+width)/2, bottom:band.top+height } : candidates[0];
+        const chosen = compactRows ? {left:0,top:placed.length?placed.at(-1).bottom+1/sy:0,right:width,bottom:(placed.length?placed.at(-1).bottom+1/sy:0)+height}
+          : band ? { left:bubbleIndex*(bandWidth+(compact?1:8)/sx)+(bandWidth-width)/2, top:band.top,
+          right:bubbleIndex*(bandWidth+(compact?1:8)/sx)+(bandWidth+width)/2, bottom:band.top+height } : candidates[0];
         b.style.left=chosen.left+'px'; b.style.top=chosen.top+'px'; placed.push(chosen);
       });
     }
@@ -17636,7 +17720,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       b.dataset.speaker=project().components.find(c=>c.id===runtime()?.actor(id)?.baseId)?.name||project().components.find(c=>c.id===id)?.name||'話している人';
       // Keep the speaker and value from this utterance together, even after it changes or clears.
       const speaker = b.dataset.speaker,
-        speakerLabel = runtime()?.actor(id)?.isClone ? `${speaker}（クローン: ${id}）` : speaker;
+        speakerLabel = runtime()?.actor(id)?.isClone ? `${speaker}（分身: ${id}）` : speaker;
       b.setAttribute('aria-label',b.dataset.speaker+'：'+value);
       const text = document.createElement('span');
       text.className = 'sprite-bubble-text'; text.textContent = value;
@@ -17851,15 +17935,15 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       pause.disabled = !scheduler?.running;
       stop.disabled = !scheduler?.running && phase !== 'PREPARING';
       pause.textContent =
-        phase === 'PAUSED' ? '\u25b6 \u7d9a\u3051\u308b' : '\u23f8 \u4e00\u6642\u505c\u6b62';
+        phase === 'PAUSED' ? '\u25b6 \u7d9a\u3051\u308b' : '⏸ いったん止める';
       status.textContent =
         {
           LOADING: '\u8aad\u307f\u8fbc\u307f\u4e2d',
           READY: '\u6e96\u5099\u5b8c\u4e86',
           PREPARING: '\u6e96\u5099\u4e2d',
           RUNNING: '\u5b9f\u884c\u4e2d',
-          PAUSED: '\u4e00\u6642\u505c\u6b62',
-          STOPPED: '\u505c\u6b62\u4e2d',
+          PAUSED: 'いったん止まっています',
+          STOPPED: '止まっています',
           ERROR: '\u958b\u3051\u307e\u305b\u3093',
         }[phase] || '';
       root.dataset.state = phase;
@@ -18176,9 +18260,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       '</style>\n</head>\n<body>\n' +
       '<main id="playerRoot"><header><h1 id="playerTitle">' +
       title +
-      '</h1><div class="player-controls"><button id="playerStart" disabled>\u25b6 \u306f\u3058\u3081\u308b</button><button id="playerPause" disabled>\u23f8 \u4e00\u6642\u505c\u6b62</button><button id="playerStop" disabled>\u25a0 \u3068\u3081\u308b</button><span id="playerStatus" role="status">\u8aad\u307f\u8fbc\u307f\u4e2d</span></div></header>' +
+      '</h1><div class="player-controls"><button id="playerStart" disabled>\u25b6 \u306f\u3058\u3081\u308b</button><button id="playerPause" disabled>⏸ いったん止める</button><button id="playerStop" disabled>■ 止める</button><span id="playerStatus" role="status">\u8aad\u307f\u8fbc\u307f\u4e2d</span></div></header>' +
       '<div class="player-stage"><div id="formSurface" tabindex="0"><canvas id="penCanvas"></canvas></div></div><pre id="playerOutput" role="log" hidden></pre></main>' +
-      '<div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionText"><div class="question-box"><div id="questionText"></div><input id="questionAnswer" aria-label="\u7b54\u3048" autocomplete="off"><div class="question-controls"><button id="questionStop">\u3068\u3081\u308b</button><button id="questionSubmit">\u7b54\u3048\u308b</button></div></div></div>' +
+      '<div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionText"><div class="question-box"><div id="questionText"></div><input id="questionAnswer" aria-label="\u7b54\u3048" autocomplete="off"><div class="question-controls"><button id="questionStop">動きを止める</button><button id="questionSubmit">\u7b54\u3048\u308b</button></div></div></div>' +
       '<noscript>\u3053\u306e\u4f5c\u54c1\u3092\u52d5\u304b\u3059\u306b\u306fJavaScript\u3092\u6709\u52b9\u306b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</noscript>\n<script>\n' +
       script +
       '\n<' +
@@ -18958,7 +19042,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       };
       const pending = { kind: 'block-draft', ownerKey: session.ownerKey,
         sourceRevision: session.sourceRevision, contextRevision: session.contextRevision,
-        value: draftSource, reason: '未確定の穴を選んで、命令や値を入れてください' };
+        value: draftSource, reason: '空いている欄を選んで、命令や値を入れてください' };
       return {
         ...unchanged(), changed: true, draftOnly: true, source: draftSource,
         draftSource, syntaxAst: candidateAst, blockView: tree,
@@ -19290,9 +19374,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         '\u5024\u30fb\u30c7\u30fc\u30bf': 'data',
         '\u97f3': 'sound',
         '\u30da\u30f3': 'pen',
-        '\u30af\u30ed\u30fc\u30f3': 'clone',
+        分身: 'clone', '\u30af\u30ed\u30fc\u30f3': 'clone',
         '\u8fd4\u3059': 'action',
-        '\u30b3\u30e1\u30f3\u30c8': 'comment',
+        メモ: 'comment', '\u30b3\u30e1\u30f3\u30c8': 'comment',
       }[schema.palette] || 'operator'
     );
   }
@@ -19458,6 +19542,74 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   // ────────────────────────────────────────────────────────────────────────
   // 10 — Block view, interaction and viewport state
   // ────────────────────────────────────────────────────────────────────────
+  // Presentation only: parser/runtime diagnostics and their original messages stay unchanged.
+  function childDiagnosticText(diagnostic) {
+    const message = String(diagnostic?.message || diagnostic || '書き方を確認してください');
+    if (/二重否定/.test(message))
+      return '「ではない」を2つ続けるときは、先の条件（じょうけん）を（ ）でくくります。例：（1が2と同じではない）ではない';
+    if (/引数名.*重複|受け取る値に同じ名前/.test(message))
+      return '入れて使う数や文字の同じ名前を2回書いています。「受け取る値（あたい）」の名前は1回ずつ書きます。例：点数を10として、';
+    if (/引数名を確認/.test(message))
+      return '入れて使う数や文字の名前を1つ書きます。手順（てじゅん）や計算にある「受け取る値（あたい）」と同じ名前にします。例：点数を10として、';
+    if (/受け取る値の名前と値を/.test(message))
+      return '名前と入れるものを「を」でつなぎます。例：点数を10として、';
+    if (/渡す値を括弧/.test(message))
+      return '入れて使う数や文字を（ ）でひとまとめにします。例：（10、「あかり」）';
+    if (/括弧の対応/.test(message))
+      return '（ ）・［ ］・【 】の開くしるしと閉じるしるしをそろえます。例：［1、2］';
+    if (/文字列・名前・括弧を閉じ|文字列の「」が閉じ/.test(message))
+      return '「 」・【 】・（ ）などの閉じるしるしを足します。例：「こんにちは」';
+    if (/条件の結び方を括弧|条件を括弧で分け/.test(message))
+      return '「かつ」「または」でつなぐ条件（じょうけん）を（ ）で分けます。例：（1が1と同じ）かつ（2が2と同じ）';
+    if (/比較の対象と基準を括弧/.test(message))
+      return 'くらべる2つのものを（ ）や【 】でくくります。例：（点数）が（10）より大きい';
+    if (/台詞は/.test(message))
+      return '話す文字は「 」でくくります。例：「おはよう」と言う。覚えた点数を話す例：点数の値を言う。';
+    if (/台詞の文字か/.test(message))
+      return 'そのまま話す文字・鳴らす音・覚えたデータから選びます。例：「おはよう」と言う／音「ベル」を鳴らす／点数の値を言う。';
+    if (/入れ子の条件・反復|深い反復/.test(message))
+      return '「もし」「くり返す」の中の文は、次の行に書いて先頭を右へずらします。\n例：2回くり返す。\n  2回くり返す。\n    「おはよう」と言う。';
+    if (/字下げは半角スペース/.test(message))
+      return '行の先頭を右へずらすには、小さい空白（半角スペース）を使います。例：くり返す中の行の先頭に空白を2つ。大きい空白やTabキーは使いません。';
+    if (/最上位の文は字下げ/.test(message))
+      return 'いちばん外の文は行の左から書きます。行の先頭の空白を消してください。';
+    if (/見出しの本文を字下げ/.test(message))
+      return '「始めると、」などの次の行は、先頭を右へずらします。\n例：始めると、\n  「おはよう」と言う。';
+    if (/同じまとまりの文の字下げ/.test(message))
+      return '同じ「もし」や「くり返す」の中の行は、先頭の空白の数をそろえます。例：どちらも空白を2つ。';
+    if (/一行の本文と字下げの本文/.test(message))
+      return '中の文を同じ行と次の行の両方に書いています。次の行にまとめ、先頭を右へずらしてください。\n例：2回くり返す。\n  「おはよう」と言う。';
+    if (/字下げを戻してまとまりを閉じ/.test(message))
+      return '「ここまで」を消して、次の文の先頭を左へ戻します。\n例：2回くり返す。\n  「中」と言う。\n「外」と言う。';
+    if (/対応する同じ字下げ位置の「もし」/.test(message))
+      return '「そうでなければ、」は、組になる「もし」と行の先頭をそろえます。上に「もし」があるかたしかめてください。';
+    if (/外部副作用や待機|計算ではこの命令/.test(message))
+      return '「答えを求（もと）める」では、部品を動かす・音を出す・待つなどの命令（めいれい）は使えません。これらの命令は「手順（てじゅん）」へ入れます。答えの例：1＋2を返す。';
+    if (/計算から外部データは変更/.test(message))
+      return '「答えを求（もと）める」では、作品や部品が覚えたデータを変えられません。変える命令（めいれい）は「手順（てじゅん）」へ入れます。';
+    if (/待ってから動く意味なら/.test(message))
+      return '待ってから動くときは、2つの文に分けます。\n例：1秒待つ。\n10歩動く。';
+    if (/「N番目」はリスト/.test(message))
+      return '何番目かを選ぶには、ならんだものを覚えるリストを使います。例：リスト「買うもの」の2番目。話す文字の「買うもの」とは別です。';
+    if (/orphan asset|不足asset/.test(message))
+      return '作品で使う絵や音と、保存（ほぞん）する絵や音の組み合わせが合っていません。「くわしく見る」に理由を残しています。画像（がぞう）・音声（おんせい）の画面で、使う絵や音をたしかめてください。';
+    if (/SHA-256|byteLength|asset|Base64|canonical|metadata/.test(message))
+      return '絵や音のデータをたしかめられませんでした。「くわしく見る」に理由を残しています。画像（がぞう）・音声（おんせい）の画面で、使う絵や音をたしかめてください。';
+    return message;
+  }
+  function diagnosticDetailText(diagnostic, original = null) {
+    return original ?? [diagnostic?.code, diagnostic?.where || diagnostic?.key,
+      diagnostic?.line ? diagnostic.line + '行 / ' + (diagnostic.column || 1) + '文字目' : '',
+      diagnostic?.message || String(diagnostic), diagnostic?.detail].filter(Boolean).join('\n');
+  }
+  function appendDiagnosticDetails(root, diagnostic, original = null) {
+    const details = document.createElement('details'), summary = document.createElement('summary'), text = document.createElement('pre');
+    details.className = 'diagnostic-details';
+    summary.textContent = 'くわしく見る（もとの説明）';
+    text.textContent = diagnosticDetailText(diagnostic, original);
+    details.append(summary, text); root.append(details); return details;
+  }
+
   function createBlockEditorView(options) {
     const {
       root,
@@ -19474,6 +19626,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       abort = new AbortController(),
       signal = abort.signal;
     let pending = null,
+      deferredFocus = null,
+      deferredRender = false,
       committing = false,
       rendering = false,
       destroyed = false,
@@ -19648,7 +19802,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     root.setAttribute('aria-label', 'ブロック編集');
     const controls = E('div', 'blockui-view-controls'),
       destinationLabel = E('div', 'blockui-destination', '本文の末尾に追加'),
-      cancelButton = button('取消', 'cancel', () => cancel()),
+      cancelButton = button('操作を取り消す', 'cancel', () => cancel()),
       commitButton = button('入力を確定', 'commit', () => flush({explicit:true})),
       messageBox = E('div', 'blockui-message', '', { 'aria-live': 'polite' });
     controls.append(destinationLabel, commitButton, cancelButton);
@@ -19772,7 +19926,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     });
     paletteControls.append(restoreSearch);
     if(options.onData)paletteControls.append(button('＋ 変数・リストを作る','create-data',()=>options.onData()));
-    const help=E('details','blockui-local-help');help.append(E('summary','','いまの編集のヒント'),E('p','','＋で命令を入れます。白い欄には文字・数・データを選びます。「たずねる」で待った返事は「答え」で使えます。未完成でも保存できます。'));
+    const help=E('details','blockui-local-help');help.append(E('summary','','いまの編集のヒント'),
+      E('p','','＋で命令を入れます。白い欄には文字・数・データを選びます。「たずねる」で待った返事は「答え」で使えます。未完成でも保存できます。'),
+      E('p','','値（あたい）は、欄に入れる中身です。文字「おはよう」、数の10、条件の「あてはまる・あてはまらない」などがあります。'),
+      E('p','','命令（めいれい）は、「話す」「待つ」など、してほしいことです。本文（ほんぶん）は、命令を順番に並べるところです。'),
+      E('p','','候補（こうほ）は選べるブロックです。分類（ぶんるい）は似た候補のまとまりです。例：「基本」の「話す」「待つ」。検索（けんさく）は言葉で探すことです。「候補の表示」で命令・値の種類（しゅるい）を選べます。「使えない候補も表示」の表示（ひょうじ）は画面に見せることで、使えない理由も読めます。'),
+      E('p','','途中に入れる：本、ぼうしの間にかさを入れると、本、かさ、ぼうしになります。入れかえる：かさをぼうしに変えるように、選んだ中身を変えます。'),
+      E('p','','リストの項目（こうもく）は、並んでいる中身1つ1つです。項目を1つずつ使う命令では、前から順に同じ動きをします。'),
+      E('p','','累乗（るいじょう）は同じ数をかける計算です。2の3乗は2×2×2で8になります。計算やくらべ方のしるしだけを変えても、左右の中身は残ります。'),
+      E('p','','メモは、あとで思い出せるように書くひとことです。動きは変わりません。分身（ぶんしん）は、同じ見た目のキャラクターをもう1体作ることです。'),
+      E('p','','「操作を取り消す」は、いま選んだ追加先や変えかけている入力・組み立てをやめます。「元に戻す」は、すでに決めた変更を1つ戻します。'));
     paletteControls.append(help);
     palette.append(paletteControls, categorySelect, paletteList, palettePages);
     layout.append(palette, workspaceShell);
@@ -19883,12 +20046,32 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       return input.value;
     }
+    function flushToTarget(next) {
+      // Keep the incoming control alive until it receives its native click or
+      // input. A blur commit must not replace that control during focus transfer.
+      deferredFocus = next && root.contains(next) ? next : null;
+      const ready = flush({ focus: false });
+      if (!ready.ok) deferredFocus = null;
+      return ready;
+    }
+    function syncDeferredTree() {
+      const latest = getTree(session());
+      if (latest === tree) return;
+      tree = latest;
+      index = tree ? buildBlockIndex(tree) : new Map();
+      availabilityCache.clear();
+    }
     function editInput(input, node, field, annotation = false) {
-      const original = () => annotation ? node.annotations[field.key]
-        : input.dataset.signedParentId ? -node.fields[field.key] : node.fields[field.key];
+      const original = () => {
+        const current = index.get(node.id)?.node || node;
+        return annotation ? current.annotations[field.key]
+          : input.dataset.signedParentId ? -current.fields[field.key] : current.fields[field.key];
+      };
       const read = () => readInputValue(input, field);
       const refresh = () => {
         if (rendering || committing || !input.isConnected) return;
+        if (deferredFocus === input) deferredFocus = null;
+        if (deferredRender) syncDeferredTree();
         if (!pending || pending.input !== input) {
           const f = flush();
           if (!f.ok && pending?.input !== input) {
@@ -19939,7 +20122,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       listen(input, 'blur', (event) => {
         if (rendering || committing || !input.isConnected) return;
         if (pending?.input === input && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action],[data-blockui-value-type]'))
-          flush({ focus: false });
+          flushToTarget(event.relatedTarget);
       });
       listen(input, 'keydown', (event) => {
         if (event.isComposing || input.dataset.composing === 'true') return;
@@ -20089,7 +20272,21 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       render({ force: true });
       return { ok: true };
     }
+    function destinationDescription() {
+      const parent = index.get(destination?.parentId)?.node, schema = schemaOf(parent);
+      if (destination?.input) {
+        const input = schema?.inputs.find(s => s.key === destination.input);
+        return (input?.label || '白い欄') + 'に入れる値を選んでいます。命令をふやすときは「＋ ここに入れる」を押してください';
+      }
+      if (destination?.body) {
+        const body = schema?.bodies.find(s => s.key === destination.body);
+        const place = parent?.schemaId === 'Script' ? '本文' : (schema?.label || '囲い') + 'の「' + (body?.label || '中') + '」';
+        return place + 'の' + (destination.index + 1) + '番目に命令を入れます';
+      }
+      return '追加する場所を選んでください';
+    }
     function updateControls() {
+      if (deferredFocus?.isConnected && root.contains(deferredFocus)) return;
       commitButton.hidden = !pending;
       commitButton.disabled = isLocked() || !pending;
       const draft = session()?.blockDraft;
@@ -20102,10 +20299,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         : moving
           ? '移動先を選んでください'
           : destination?.input
-            ? '式を選択中'
+            ? destinationDescription()
             : destination?.body
-              ? 'この位置に追加'
-              : draft ? '未確定の穴を選んで、命令や値を入れてください' : '入力を確定してください';
+              ? destinationDescription()
+              : draft ? '空いている欄を選んで、命令や値を入れてください' : '入力を確定してください';
     }
     function listLocation(info) {
       return info?.body
@@ -20141,10 +20338,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         return;
       }
       destination = { ...location };
-      paletteMode = 'all';
-      category = '';
-      categoryExplicit = false;
-      page = 0;
+      const modeChanged = paletteMode !== 'all' && paletteMode !== (location.body ? 'statement' : 'expression');
+      if (modeChanged) paletteMode = 'all';
       renderPalette();
       updateControls();
       for (const n of workspace.querySelectorAll('[data-blockui-drop]'))
@@ -20152,6 +20347,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           'blockui-chosen-destination',
           sameLocation(location, locationFromElement(n)),
         );
+      announce(destinationDescription() + (modeChanged ? ' 候補の種類を「すべてのブロック」に変えました。分類と検索はそのままです。' : ''));
       search.focus({ preventScroll: true });
     }
     function defaultDestination() {
@@ -20189,7 +20385,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (schema.category !== (location.body ? 'statement' : 'expression'))
         return {
           enabled: false,
-          reason: location.body ? '本文には命令を入れます' : '式の差込先を選んでください',
+          reason: location.body ? '本文には命令を入れます。値は白い欄を選んで入れてください' : 'いまは値を選んでいます。命令をふやすときは「＋ ここに入れる」を押してください',
         };
       const key = schemaId + '|' + JSON.stringify(location) + '|' + (candidateNode ? JSON.stringify(candidateNode) : '');
       if (availabilityCache.has(key)) return availabilityCache.get(key);
@@ -20235,6 +20431,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           searchText = search.value = '';
         }
         destination = null;
+        for (const chosen of workspace.querySelectorAll('.blockui-chosen-destination')) chosen.classList.remove('blockui-chosen-destination');
         page = 0;
         renderPalette();
         updateControls();
@@ -20251,7 +20448,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           この中だけのデータ: 'data',
           '値・データ': 'data',
           ペン: 'pen',
-          コメント: 'comment',
+          メモ: 'comment', コメント: 'comment',
           状態: 'event',
           '表示・入力': 'look',
           用意された計算: 'operator',
@@ -20335,7 +20532,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function paletteLabel(schema) {
       if (['NumberLiteral', 'StringLiteral', 'BooleanLiteral', 'CommentLine'].includes(schema.kind))
-        return schema.kind === 'CommentLine' ? '※ コメント' : schema.label;
+        return schema.kind === 'CommentLine' ? '※ メモ' : schema.label;
       const parts = phrase(schema);
       return parts
         ? parts
@@ -20551,11 +20748,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           E(
             'p',
             'blockui-empty',
-            '\u8a72\u5f53\u3059\u308b\u30d6\u30ed\u30c3\u30af\u304c\u3042\u308a\u307e\u305b\u3093',
+            location?.input
+              ? 'この欄に入れられる候補がありません。分類を変えるか、「候補の表示」で使えない理由を見られます。命令をふやすときは「＋ ここに入れる」を押してください'
+              : 'この場所で使える候補がありません。分類を変えるか、「候補の表示」で使えない理由を見られます。',
           ),
         );
       previous.disabled = page === 0;
-      if(query&&categoryExplicit&&category)paletteList.append(button('すべての分類で探す','search-all',()=>{category='';categoryExplicit=false;page=0;renderPalette();search.focus();}));
+      if(category&&((query&&categoryExplicit)||!candidates.length))paletteList.append(button('すべての分類で探す','search-all',()=>{category='';categoryExplicit=false;page=0;renderPalette();search.focus();}));
       next.disabled = page >= pages - 1;
       pageLabel.textContent = page + 1 + ' / ' + pages;
       palettePages.hidden = pages === 1;
@@ -20724,7 +20923,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           listen(group, 'change', event => { if (field.type!=='heading'&&event.target.tagName === 'SELECT') flush(); });
           listen(group, 'focusout', event => {
             if (field.type!=='heading'&&!group.contains(event.relatedTarget) && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action]'))
-              flush({ focus: false });
+              flushToTarget(event.relatedTarget);
           });
         }
         if (field.type === 'actor-ref') {
@@ -20788,7 +20987,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (node.schemaId === 'Hole:expression' && field.type === 'number') input.dataset.expressionHole = 'true';
       }
       if (annotation) {
-        input.placeholder = '※ コメント';
+        input.placeholder = '※ メモ';
         title.textContent = field.label + '（※から）';
       }
       if (options.readOnly) {
@@ -20808,7 +21007,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             editor = E('textarea', '', null, { rows: '8', wrap: 'soft', spellcheck: 'false', 'aria-label': '文字の全文' }),
             controls = E('div', 'blockui-text-dialog-controls'),
             apply = E('button', '', '確定', { type: 'button', 'data-blockui-text-action': 'commit' }),
-            discard = E('button', '', '取り消す', { type: 'button', 'data-blockui-text-action': 'cancel' });
+            discard = E('button', '', 'この文字の入力を取り消す', { type: 'button', 'data-blockui-text-action': 'cancel' });
           editor.value = pending?.input === input ? input.value : String(index.get(node.id)?.node.fields[field.key] ?? value ?? '');
           editor.dataset.focusKey = node.id + ':full-text:' + field.key;
           const close = committed => {
@@ -20877,7 +21076,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         '＋ ここに入れる',
         'body-insert',
         () => chooseDestination({ parentId, body, index: pos }),
-        { 'aria-label': pos + '番目の位置に命令を入れる' },
+        { 'aria-label': (pos + 1) + '番目の位置に命令を入れる' },
       );
       b.classList.add('blockui-insertion');
       b.disabled = isLocked();
@@ -21050,7 +21249,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       });
       const move = button('移動', 'move', () => moveStart(node), { 'data-block-id': node.id }),
         duplicate = button(
-          '複製',
+          '同じものをもう1つ',
           'duplicate',
           () => {
             if (info.body)
@@ -21100,7 +21299,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           up,
           down,
           button(
-            '削除',
+            schema.bodies.length ? 'この囲いと中の命令を消す' : 'この命令を消す',
             'remove',
             () => {
               const result = operate({ type: 'remove', id: node.id });
@@ -21153,7 +21352,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (schema.annotations.some((a) => a.editable !== false))
         commands.append(
           button(
-            '注釈',
+            'メモ',
             'annotations',
             () => {
               openAnnotations.add(node.id);
@@ -21195,7 +21394,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (diagnostics.length) {
           box.classList.add('blockui-diagnostic');
           const ul = E('ul', 'blockui-node-diagnostics');
-          for (const d of diagnostics) ul.append(E('li', '', d.message));
+          for (const d of diagnostics) { const item = E('li', 'diagnostic-help', childDiagnosticText(d)); appendDiagnosticDetails(item, d); ul.append(item); }
           box.append(ul);
         }
       }
@@ -21486,17 +21685,17 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (diagnostics.length) {
         box.classList.add('blockui-diagnostic');
         const ul = E('ul', 'blockui-node-diagnostics');
-        for (const d of diagnostics) ul.append(E('li', '', d.message));
+        for (const d of diagnostics) { const item = E('li', 'diagnostic-help', childDiagnosticText(d)); appendDiagnosticDetails(item, d); ul.append(item); }
         box.append(ul);
         const warning = button(
-          '⚠',
+          '⚠ たしかめる',
           'diagnostics',
           () => {
             selection(node.id);
             ul.classList.toggle('blockui-open');
           },
           {
-            'aria-label': diagnostics.length + '件の診断を表示',
+            'aria-label': diagnostics.length + 'か所の直す手がかりを表示',
             title: diagnostics.map((d) => d.message).join('\n'),
           },
         );
@@ -21535,7 +21734,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         const field = key => fieldControl(node, schema.fields.find(f => f.key === key));
         const slot = key => renderInput(node, schema.inputs.find(s => s.key === key));
         if(['BinaryExpression','CompareExpression','LogicalExpression'].includes(schema.kind)){
-          const operator=E('select','blockui-operator',null,{'aria-label':'演算子だけを変える'});
+          const operator=E('select','blockui-operator',null,{'aria-label':'計算やくらべ方のしるしだけを変える'});
           for(const candidate of BLOCK_SCHEMAS.filter(s=>s.kind===schema.kind))operator.append(E('option','',candidate.label,{value:candidate.id}));
           operator.value=schema.id;operator.disabled=isLocked()||options.readOnly;
           listen(operator,'change',()=>operate({type:'operator',id:node.id,schemaId:operator.value}));
@@ -21671,7 +21870,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
                   .map((a) => node.annotations[a.key])
                   .filter(Boolean)
                   .join(' ／ ')
-              : '注釈',
+              : 'メモ',
           ),
         );
         for (const annotation of annotations) details.append(fieldControl(node, annotation, true));
@@ -21693,12 +21892,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       listen(details, 'toggle', () => {
         if (details.isConnected) diagnosticsOpen = details.open;
       });
-      details.append(E('summary', '', diagnostics.length + '件の診断（内容は保持されています）'));
+      details.append(E('summary', '', diagnostics.length + 'か所を確かめます（書いた内容は残っています）'));
       const pages = Math.ceil(diagnostics.length / 20);
       diagnosticPage = Math.min(diagnosticPage, pages - 1);
       const ul = E('ul');
-      for (const d of diagnostics.slice(diagnosticPage * 20, (diagnosticPage + 1) * 20))
-        ul.append(E('li', '', (d.line ? d.line + '行: ' : '') + d.message));
+      for (const d of diagnostics.slice(diagnosticPage * 20, (diagnosticPage + 1) * 20)) {
+        const item = E('li', 'diagnostic-help', (d.line ? d.line + '行目: ' : '') + childDiagnosticText(d));
+        appendDiagnosticDetails(item, d); ul.append(item);
+      }
       details.append(ul);
       if (pages > 1) {
         const paging = E('div', 'blockui-paging'),
@@ -21770,6 +21971,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
     function render({ force = false } = {}) {
       if (destroyed || committing || rendering) return;
+      if (deferredFocus?.isConnected && root.contains(deferredFocus)) {
+        deferredRender = true;
+        syncDeferredTree();
+        return;
+      }
+      deferredFocus = null;
+      deferredRender = false;
       rendering = true;
       try {
         return renderView(force);
@@ -22471,6 +22679,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       root,
       'click',
       (event) => {
+        if (deferredFocus) {
+          deferredFocus = null;
+          if (deferredRender) doc.defaultView.requestAnimationFrame(() => render({ force: true }));
+        }
         if (Date.now() < suppressClickUntil) {
           event.preventDefault();
           event.stopImmediatePropagation();
@@ -22494,7 +22706,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         event.target.closest('input,textarea,select,summary,a,button:not([data-blockui-drag])')
       )
         return;
-      if (!flush().ok) return;
+      if (pending) deferredFocus = handle;
+      if (!flush().ok) { deferredFocus = null; return; }
       const id = handle.dataset.blockId,
         schemaId = handle.dataset.blockuiDragSchema;
       drag = {
@@ -22576,6 +22789,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     listen(root, 'lostpointercapture', () => {
       if (drag) cancelDrag();
     });
+    listen(root, 'focusout', (event) => {
+      if (deferredFocus !== event.target) return;
+      deferredFocus = event.relatedTarget && root.contains(event.relatedTarget) ? event.relatedTarget : null;
+      if (!deferredFocus && deferredRender) render({ force: true });
+    }, { capture: true });
     // Activating a button or disclosure must not move it between pointerdown and click.
     listen(root, 'focusin', (event) => {
       if (event.target.closest('button,summary,.blockui-slot-head')) return;
@@ -22602,6 +22820,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     listen(root, 'keydown', (event) => {
       if (event.isComposing) return;
       if (event.key === 'Tab') {
+        if (deferredFocus === event.target) {
+          deferredFocus = null;
+          if (deferredRender) render({ force: true });
+        }
         if (pending?.input === event.target) flush({ focus:false });
         for (const field of root.querySelectorAll('.blockui-editing-field'))
           field.classList.remove('blockui-editing-field');
@@ -22621,7 +22843,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           notifyPending(); renderReplacement(); renderPalette(); updateControls();
           for (const selected of workspace.querySelectorAll('.blockui-chosen-destination')) selected.classList.remove('blockui-chosen-destination');
           for (const slot of workspace.querySelectorAll('.blockui-slot-active')) slot.classList.remove('blockui-slot-active');
-          announce('選択を閉じました。ブロック全体を戻すには「取り消す」を押してください');
+          announce('選択を閉じました。組み立て中の変更は「操作を取り消す」、決めた変更は「元に戻す」で戻せます');
         }
         return;
       }
@@ -23070,7 +23292,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         cx.clearRect(0, 0, size, size);
         history = [pixels()]; historyIndex = 0; tool = 'pen';
         color.value = '#111111'; width.value = '4'; shape.value = 'outline';
-        status.textContent = '市松模様は透明な部分です。';
+        status.textContent = 'ます目は、色がついていない透明なところの目印です。絵として保存されません。';
         modal.classList.add('show'); app.inert = true;
         refresh(); modal.querySelector('[data-paint-tool="pen"]').focus();
       },
@@ -23409,6 +23631,28 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (binding.kind === 'draft') paintCallable();
       return true;
     }
+    function diagnosticLocation(diagnostic) {
+      const key = diagnostic?.where || diagnostic?.key || '', item = compiled?.items?.find(x => x.key === key),
+        sourceKey = item?.documentKey || key, script = scriptBySourceKey(project, sourceKey),
+        definition = project.actions.find(x => key === 'action:' + x.id) || project.functions.find(x => key === 'function:' + x.id);
+      const owner = definition ? (key.startsWith('function:') ? '答えを求める「' : '手順「') + definition.name + '」'
+        : script || item ? (targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (EVENT_LABELS[item?.event || script?.event] || '動き')
+        : 'この本文';
+      return owner + (diagnostic?.line ? ' / ' + diagnostic.line + '行目' : '');
+    }
+    function showDiagnosticMessage(root, diagnostic, location = '', original = null) {
+      const helpText = (location ? location + ': ' : '') + childDiagnosticText(diagnostic),
+        detailText = diagnosticDetailText(diagnostic, original),
+        previousHelp = root.querySelector(':scope > .diagnostic-help'),
+        previousDetail = root.querySelector(':scope > .diagnostic-details > pre');
+      // Refreshing the same diagnostic preserves native disclosure/focus. A changed
+      // source location or message always replaces both visible and original text.
+      if (previousHelp?.textContent === helpText && previousDetail?.textContent === detailText) return;
+      root.replaceChildren();
+      const help = document.createElement('div'); help.className = 'diagnostic-help';
+      help.textContent = helpText;
+      root.append(help); appendDiagnosticDetails(root, diagnostic, original);
+    }
     function clearEditorFailure(binding) {
       const indicator = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
       indicator.textContent = ''; indicator.hidden = true;
@@ -23416,7 +23660,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     function showEditorFailure(binding, error, { preservePending = false } = {}) {
       const reason = error?.message || String(error),
         n = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
-      n.textContent = reason;
+      const originalDetails = [error?.code, reason, error?.detail,
+        ...(error?.diagnostics || []).map(d => [d.code, d.where,
+          d.line ? d.line + '行 / ' + (d.column || 1) + '文字目' : '', d.message, d.detail].filter(Boolean).join(' / '))].filter(Boolean).join('\n');
+      showDiagnosticMessage(n, error?.diagnostics?.[0] || error, error?.line ? error.line + '行目' : '', originalDetails);
+      n.querySelector('.intent-choices')?.remove();
       const proposals = error?.proposals || error?.diagnostics?.flatMap(d => d.proposals || d.choices || []) || [];
       if (proposals.length) {
         const original = binding.textarea.value;
@@ -23428,7 +23676,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           if (typeof proposal.source !== 'string') continue;
           const button = document.createElement('button');
           button.type = 'button'; button.dataset.intentChoice = '';
-          button.textContent = proposal.label || proposal.source;
+          button.textContent = (proposal.label || proposal.source)
+            .replace('台詞として画面に言う', 'そのままの文字を話す')
+            .replace('データの値を言う（名前の定義を確認）', '覚えたデータを話す（作った名前をたしかめる）');
           button.title = proposal.description || proposal.source;
           button.onclick = () => {
             if (modelLocked() || binding.textarea.value !== original) return;
@@ -23451,12 +23701,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           choices.append(button);
         }
         const cancel = document.createElement('button');
-        cancel.type = 'button'; cancel.dataset.intentCancel = ''; cancel.textContent = '原文のまま考える';
+        cancel.type = 'button'; cancel.dataset.intentCancel = ''; cancel.textContent = '書いた文のまま考える';
         cancel.onclick = () => { choices.remove(); binding.textarea.focus(); };
         choices.append(cancel); n.append(choices);
       }
       n.hidden = false;
-      setStatus(reason);
+      setStatus(childDiagnosticText(error?.diagnostics?.[0] || error));
       if (binding.session?.pendingEdit && !preservePending) {
         binding.session.pendingEdit.reason = reason;
         // Recovery stores the one visible diagnostic, not an unbounded list
@@ -23565,22 +23815,22 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (destination) { selectedId = destination.targetId; currentEvent = destination.event; selectedScriptId = destination.id || null; }
         invalidateEditors(); clearEditorFailure(binding); markDirty(); renderTree(); renderProperties(); loadEditor();
         clearTimeout(historyTimer); pushHistoryNow();
-        setStatus('既存の動きを残して、選んだ本文へ取り込みました'); return true;
+        setStatus('今の動きを残して、選んだ本文へ動きを入れました'); return true;
       } catch (error) { return showEditorFailure(binding, error, { preservePending: true }); }
     }
     function showSourceImport(binding, source, plan) {
       const root = $('#sourceImport'); root.replaceChildren(); root.hidden = false;
-      const heading = document.createElement('strong'); heading.textContent = '動きの取り込み先を確認'; root.append(heading);
+      const heading = document.createElement('strong'); heading.textContent = 'どこに動きを入れるかたしかめる'; root.append(heading);
       for (const entry of plan.entries) {
         const actor = targetById(entry.metadata.targetId)?.name || 'この部品', event = entry.metadata.event,
           label = event === 'start' ? actor + 'の開始' : event === 'click' ? actor + 'をクリックしたとき' : actor + '・' + EVENT_LABELS[event];
         const row = document.createElement('p');
-        row.textContent = entry.candidates.length ? label + 'は既にあります' : label + 'の動きを追加'; root.append(row);
-        if (entry.candidates.length) {
+        row.textContent = entry.candidates.length ? label + 'には今の動きがあります' : label + 'に新しい動きを入れます'; root.append(row);
+        {
           const details = document.createElement('details'), summary = document.createElement('summary');
-          summary.textContent = entry.equal ? '既存の本文はそのまま残します' : '既存の本文と届いた節を比べる'; details.append(summary);
+          summary.textContent = entry.candidates.length ? (entry.equal ? '今の動きはそのまま残します' : '今の動きと取りこむ動きをくらべる') : '新しく入れる動きを見る'; details.append(summary);
           if(plan.canEditCurrent && !plan.safe)details.open = true;
-          for (const text of [...entry.candidates.map(x => '既存：\n' + x.text), '届いた節：\n' + entry.text]) {
+          for (const text of [...entry.candidates.map(x => '今の動き：\n' + x.text), '取りこむ動き：\n' + entry.text]) {
             const pre = document.createElement('pre'); pre.textContent = text; pre.style.whiteSpace = 'pre-wrap'; pre.style.maxHeight = '140px'; pre.style.overflow = 'auto'; details.append(pre);
           }
           root.append(details);
@@ -23588,19 +23838,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       if (!plan.safe) {
         const notice = document.createElement('p'); notice.textContent = !plan.canSplit
-          ? '前の見出しを使う節があるため、安全に別々の本文へ分けられません。原文を残して取り消せます。'
-          : '同じできごとの内容が違うか、複数あります。追加では既存の本文を残します。違いを確認してください。'; root.append(notice);
+          ? '動きのまとまりを別々に分けられません。前の「始めると、」などを使う文があります。書きかけの文章は残っています。「取り込みを取り消す」で今の動きへ戻れます。'
+          : '同じきっかけの動きが今の動きと違うか、2つ以上あります。追加すると今の動きは残ります。くらべてからボタンを選んでください。'; root.append(notice);
       }
       const confirm = document.createElement('button'); confirm.type = 'button'; confirm.id = 'sourceImportConfirm';
-      confirm.textContent = plan.hasExisting ? '既存を残して追加' : '文章を取り込む'; confirm.disabled = !plan.safe;
+      confirm.textContent = plan.hasExisting ? '今の動きを残して追加' : '書いた文の動きを入れる'; confirm.disabled = !plan.safe;
       confirm.onclick = () => confirmSourceImport(binding, source); root.append(confirm);
       if (plan.hasExisting && !plan.safe && plan.canSplit) {
         const separate = document.createElement('button'); separate.type = 'button'; separate.id = 'sourceImportSeparate';
-        separate.textContent = '既存を残して、別の本文として追加'; separate.onclick = () => confirmSourceImport(binding, source, true); root.append(separate);
+        separate.textContent = '今の動きを残して、別の動きを追加'; separate.onclick = () => confirmSourceImport(binding, source, true); root.append(separate);
       }
       if(plan.canEditCurrent && !plan.safe){
         const edit = document.createElement('button'); edit.type = 'button'; edit.id = 'sourceImportEditCurrent';
-        edit.textContent = 'この本文を変更して取り込む'; edit.onclick = () => confirmSourceImport(binding, source, false, true);root.append(edit);
+        edit.textContent = 'この本文を取りこむ動きに変える'; edit.onclick = () => confirmSourceImport(binding, source, false, true);root.append(edit);
       }
       const cancel = document.createElement('button'); cancel.type = 'button'; cancel.id = 'sourceImportCancel'; cancel.textContent = '取り込みを取り消す';
       cancel.onclick = () => cancelEditorPending(binding); root.append(cancel);
@@ -23768,7 +24018,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           editorSessions.set(`${binding.kind}:${ownerKey}`, binding.session);
           binding.textarea.value = candidate.draftSource;
           const pending = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
-          pending.textContent = '未確定の穴に命令や値を入れてください';
+          pending.textContent = '空いている欄に命令や値を入れてください';
           pending.hidden = false;
           renderEditorBinding(binding);
           scheduleAutosave();
@@ -24285,8 +24535,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       $('.codewin > .win-title').textContent = block ? 'ブロック' : 'コード';
       $('#designerHeading').textContent = block ? '画面' : '画面づくり';
       $('.objects-window > .win-title').textContent = block ? 'キャラクター・部品' : '作品';
-      const actions = $('.prop-actions');
-      if (actions) (block ? $('#componentActions') : el.props).prepend(actions);
+      const actions = $('.prop-actions'),
+        copyHelp = actions?.nextElementSibling;
+      if (actions)
+        (block ? $('#componentActions') : el.props).prepend(
+          actions, ...(copyHelp?.classList.contains('child-copy-help') ? [copyHelp] : []),
+        );
       $('#formatBtn').hidden = block;
     }
 
@@ -24352,12 +24606,23 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     $('#stageZoomIn').onclick = () => setStageZoom(visibleStageScale + 0.1);
     $('#stageZoomReset').onclick = () => setStageZoom(1);
     $('#stageZoomFit').onclick = () => setStageZoom(null);
+    function childErrorLogText(message) {
+      const m = String(message), plain = m.replace(/^\s*[A-Z]\d{3}(?::|\s)\s*/, '');
+      if (/保存失敗/.test(plain)) return '作品ファイルを保存（ほぞん）できませんでした。この画面の作品は残っています。画面を閉じずに、下の「くわしく見る」で理由をたしかめてから、もう一度「保存」を押してください。';
+      if (/読み込み失敗/.test(plain)) return '作品ファイルを開けませんでした。選んだファイルは変えていません。別の保存（ほぞん）ファイルを選ぶか、下の「くわしく見る」で理由をたしかめてください。';
+      return childDiagnosticText({message:plain});
+    }
     const log = (m, type = '') => {
-      const prefix = type === 'error' ? '❌ ' : type === 'ok' ? '✓ ' : '';
-      const addition = (el.console.textContent ? '\n' : '') + prefix + m;
-      if (el.console.textContent.length + addition.length > 100000)
-        el.console.textContent = '[古いログを省略]\n' + (el.console.textContent + addition).slice(-90000);
-      else el.console.appendChild(document.createTextNode(addition));
+      const original = String(m), message = type === 'error' ? childErrorLogText(original) : original,
+        prefix = type === 'error' ? '❌ ' : type === 'ok' ? '✓ ' : '',
+        addition = (el.console.textContent ? '\n' : '') + prefix + message,
+        preserved = message === original ? addition : addition + '\n' + original;
+      if (el.console.textContent.length + preserved.length > 100000)
+        el.console.textContent = '[古いログを省略]\n' + (el.console.textContent + preserved).slice(-90000);
+      else {
+        el.console.appendChild(document.createTextNode(addition));
+        if (message !== original) appendDiagnosticDetails(el.console, {message:original});
+      }
       el.console.scrollTop = el.console.scrollHeight;
     };
     const setStatus = (m) => (el.status.textContent = m);
@@ -25190,18 +25455,22 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const duplicate = document.createElement('button');
       duplicate.type = 'button';
       duplicate.className = 'prop-duplicate';
-      duplicate.textContent = '複製';
+      duplicate.textContent = '見た目のコピー';
       duplicate.title = '見た目・設定を複製します（コードは含みません）';
       duplicate.disabled = modelLocked() || project.components.length >= LIMITS.components;
       duplicate.onclick = duplicateSelectedComponent;
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'prop-delete';
-      del.textContent = '\ud83d\uddd1 \u90e8\u54c1\u3092\u524a\u9664';
+      del.textContent = '🗑 この部品を消す';
       del.disabled = modelLocked();
       del.onclick = deleteSelectedComponent;
+      const copyHelp = document.createElement('small');
+      copyHelp.className = 'child-copy-help';
+      copyHelp.textContent = '見た目と設定をコピーします。コードはコピーしません。';
+      duplicate.setAttribute('aria-description', copyHelp.textContent);
       actions.append(title, duplicate, del);
-      (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions);
+      (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions, copyHelp);
       el.props.append(
         propSection(
           '\u57fa\u672c',
@@ -25782,7 +26051,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         setStatus(
           designResizeMode(c) === 'scale'
             ? `${c.name}: ${next.scalePercent}%`
-            : `${c.name}: \u5e45 ${Math.round(next.w * 100) / 100} / \u9ad8\u3055 ${Math.round(next.h * 100) / 100}\uff08Esc\u3067\u53d6\u6d88\uff09`,
+            : `${c.name}: \u5e45 ${Math.round(next.w * 100) / 100} / \u9ad8\u3055 ${Math.round(next.h * 100) / 100}（Escで取り消す）`,
         );
       };
       const finish = (event) => {
@@ -26261,7 +26530,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       for (const r of [...records].reverse()) {
         const option = document.createElement('option');
         option.value = String(r.id);
-        option.textContent = `#${r.id} ${r.code} / ${r.key} / ${r.line}\u884c`;
+        option.textContent = '#' + r.id + ' ' + diagnosticLocation(r);
         select.appendChild(option);
       }
       select.value = String(activeFailureId);
@@ -26273,10 +26542,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         root = $('#failureBody');
       root.textContent = '';
       if (!r) return;
-      const top = document.createElement('div');
-      top.className = 'failure-summary';
-      top.textContent = `${r.code}: ${r.message}\n${r.key} / ${r.line}\u884c\n${r.statement}\n${r.callStack.join(' \u2192 ')}`;
-      root.appendChild(top);
+      const help = document.createElement('div'); help.className = 'diagnostic-help';
+      help.textContent = '動きをいったん止めました。書いた動きと、できなかったときの記録（きろく）は残っています。\n' + diagnosticLocation(r) + ': ' + childDiagnosticText(r) + '\n「閉じる」で本文（ほんぶん）に戻り、命令（めいれい）をたしかめてください。';
+      root.append(help);
+      const details = appendDiagnosticDetails(root, r, `${r.code}: ${r.message}\n${r.key} / ${r.line}\u884c\n${r.statement}\n${r.callStack.join(' \u2192 ')}`);
+      details.querySelector('pre').className = 'failure-summary';
       const repair = quotedListRepair(r);
       if (repair) {
         const help = document.createElement('p');
@@ -26288,11 +26558,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         root.append(help, edit);
       }
       renderMonitorSection(root, '失敗したときのようす', [
-        ['処理番号', r.taskId],
-        ['動いている部品', r.runtimeId],
+        ['動いていた部品', targetById(r.actor?.baseId || r.targetId)?.name || '画面'],
         ['きっかけ', EVENT_LABELS[r.eventType] || r.eventType],
-        ['実行中のコード', r.source],
+        ['動かしていた本文', r.source],
       ]);
+      const identifiers = appendDiagnosticDetails(root, r, '処理番号: ' + r.taskId + '\n動いている部品: ' + r.runtimeId + '\n本文: ' + r.key);
+      identifiers.querySelector('summary').textContent = 'くわしく見る（動きの番号）';
       for (const f of r.frames)
         renderMonitorSection(
           root,
@@ -26304,13 +26575,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           ],
         );
       if (r.binders.length)
-        renderMonitorSection(root, '\u53cd\u5fa9\u4e2d\u306e\u9805\u76ee', r.binders);
+        renderMonitorSection(root, 'くり返しで今見ているもの', r.binders);
       renderMonitorSection(root, '\u5931\u6557\u6642\u306e\u4f5c\u54c1\u30c7\u30fc\u30bf', [
         ...r.projectVariables,
         ...r.projectLists,
       ]);
       if (r.actor)
-        renderMonitorSection(root, '\u5931\u6557\u6642\u306e\u500b\u4f53\u30c7\u30fc\u30bf', [
+        renderMonitorSection(root, '失敗したときのこの部品のデータ', [
           ['\u6a2a\u4f4d\u7f6e', r.actor.x],
           ['\u7e26\u4f4d\u7f6e', r.actor.y],
           ['\u65b9\u5411', r.actor.direction],
@@ -26414,7 +26685,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (!runtime) {
         const d = document.createElement('div');
         d.className = 'monitor-empty';
-        d.textContent = '\u505c\u6b62\u4e2d';
+        d.textContent = '止まっています';
         el.monitor.appendChild(d);
         return;
       }
@@ -26424,12 +26695,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         const last = records.at(-1),
           button = document.createElement('button');
         button.className = 'failure-open';
-        button.textContent = `\u5931\u6557\u8a18\u9332\u3092\u958b\u304f\uff08${records.length}\u4ef6\uff09`;
+        button.textContent = `動きが止まった記録（きろく）を見る（${records.length}件）`;
         button.onclick = () => showFailureDetails();
         el.monitor.appendChild(button);
         section('\u76f4\u8fd1\u306e\u5931\u6557\u6642\u70b9', [
-          ['\u30a8\u30e9\u30fc', last.code + ' ' + last.message],
-          ['\u5834\u6240', last.key + ' / ' + last.line + '\u884c'],
+          ['直す手がかり', childDiagnosticText(last)],
+          ['場所', diagnosticLocation(last)],
           ['\u5931\u6557\u547d\u4ee4', last.statement],
         ]);
         const frame = last.frames.at(-1);
@@ -26587,7 +26858,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         renderTree();
         renderProperties();
         if (loc.error) {
-          el.issue.textContent = `${loc.error.code} ${loc.line}\u884c\u76ee: ${loc.error.message}`;
+          showDiagnosticMessage(el.issue, loc.error, loc.line + '行目');
           el.issue.className = 'issue-error';
         }
       }
@@ -26646,7 +26917,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (!errs.length) notice = pending.reason || '入力を確定してください';
       }
       if (errs.length) {
-        el.issue.textContent = `${errs[0].code || ''} ${errs[0].line || 1}行目: ${errs[0].message}`;
+        showDiagnosticMessage(el.issue, errs[0], (errs[0].line || 1) + '行目');
         el.issue.className = 'issue-error';
       } else {
         el.issue.textContent = notice || '✓ このコードの書き方は大丈夫です';
@@ -26891,7 +27162,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               ? scheduler.paused
                 ? '一時停止'
                 : '実行中'
-              : '停止中';
+              : '止まっています';
       el.runState.className = 'runstate ' + (running ? 'run-on' : 'run-off');
       $('#pauseBtn').disabled = !running || scheduler.paused;
       $('#continueBtn').disabled = !running || !scheduler.paused;
@@ -27035,7 +27306,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         for (const d of c.errors) {
           const p = document.createElement('div');
           p.className = 'diagnosis-issue';
-          p.textContent = `${d.code} / ${d.where} / ${d.line}行: ${d.message}`;
+          showDiagnosticMessage(p, d, diagnosticLocation(d));
           body.appendChild(p);
         }
       $('#diagnosisModal').classList.add('show');
@@ -27152,6 +27423,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         setStatus(unfinished?'書きかけを含むファイルのダウンロードを開始しました。動かす前に未完成の箇所を確認してください':'作品ファイルのダウンロードを開始しました');
       } catch (err) {
         log(`${err.code || ''} 保存失敗: ${err.message}`, 'error');
+        setStatus(childErrorLogText('保存失敗: ' + err.message));
       }
     }
     async function openProject(file) {
@@ -29205,6 +29477,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (
           modelLocked() ||
           flushingEditor ||
+          event.target.matches('.diagnostic-details > summary') ||
           event.target.closest('.editor-modes,#sourceImport,#colorModal,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;

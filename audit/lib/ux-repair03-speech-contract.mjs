@@ -53,12 +53,12 @@ export function verifySpeechObserved(id,o){
   dialog(o.other,'だんごの発話（全文）',multilineTexts[1]);
  }
  else if(id==='speech/stop-and-rerun'){
-  dialog(o.initial,'あかりの発話（全文）',speechTexts[0]);assert.equal(o.afterStop.open,false);assert.equal(o.afterStop.bubbles,0);assert.equal(o.afterStop.runState,'停止中');
-  dialog(o.rerun,'だんごの発話（全文）',speechTexts[1]);assert.equal(o.afterUiStop.open,false);assert.equal(o.afterUiStop.bubbles,0);assert.equal(o.afterUiStop.runState,'停止中');
+  dialog(o.initial,'あかりの発話（全文）',speechTexts[0]);assert.equal(o.afterStop.open,false);assert.equal(o.afterStop.bubbles,0);assert.equal(o.afterStop.runState,'止まっています');
+  dialog(o.rerun,'だんごの発話（全文）',speechTexts[1]);assert.equal(o.afterUiStop.open,false);assert.equal(o.afterUiStop.bubbles,0);assert.equal(o.afterUiStop.runState,'止まっています');
  }
  else if(id==='speech/clone-identity'){
   assert.deepEqual(o.bubbles.map(b=>[b.id,b.speaker,b.text]),[['sprite-1','あかり',speechTexts[0]],['sprite-1-clone-3','あかり',speechTexts[1]]]);
-  dialog(o.original,'あかりの発話（全文）',speechTexts[0]);dialog(o.clone,'あかり（クローン: sprite-1-clone-3）の発話（全文）',speechTexts[1]);
+  dialog(o.original,'あかりの発話（全文）',speechTexts[0]);dialog(o.clone,'あかり（分身: sprite-1-clone-3）の発話（全文）',speechTexts[1]);
  }
  else if(id==='speech/duplicate-name-refusal'){
   assert.equal(o.error.code,'F503');assert.match(o.error.message,/部品名.*重複/);assert.deepEqual(o.namesBefore,ordinaryNames);assert.deepEqual(o.namesAfter,ordinaryNames);

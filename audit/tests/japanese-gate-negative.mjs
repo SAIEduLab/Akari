@@ -28,7 +28,10 @@ try{
    intent.results.find(r=>r.id===scenario.id+'/blocks-core').evidence={structuredSource:scenario.source,blocks:clone(execution),sourceTraceCompared:true};
   }
  }
- for(const ambiguity of ambiguities)intent.results.find(r=>r.id===ambiguity.id+'/choices-nonexecution-cancel').evidence={original:ambiguity.source,choices:ambiguity.choices,valid:{project:'fixture'},before:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'},after:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'}};
+ for(const ambiguity of ambiguities){
+  const soundChoices=ambiguity.id==='AMB-SOUND'?[{label:'そのままの文字を話す',source:'「こんにちは」と言う'},{label:'同じ名前の音を鳴らす',source:'音「こんにちは」を鳴らす'}]:null;
+  intent.results.find(r=>r.id===ambiguity.id+'/choices-nonexecution-cancel').evidence={original:ambiguity.source,choices:soundChoices?soundChoices.map(choice=>choice.label):ambiguity.choices,soundChoices,valid:{project:'fixture'},before:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'},after:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'}};
+ }
  fs.writeFileSync(path.join(dir,'formal-player.html'),'<!-- validator fixture, not an executable player -->');
  const runs=runtimeRuns.map(([script,evidence,ids])=>{
   const reports=ids.map(id=>({id,pass:true,fixture:true}));
@@ -81,6 +84,9 @@ try{
   'cancel-pending':row=>row.cancelledPending={},'cancel-execution':row=>row.observedAfterCancel.start=1,
  };
  for(const[key,mutate]of Object.entries(proseMutations))check('INTENT/prose-'+key,intent,vi,r=>mutate(proseRow(r)));
+ const soundRow=r=>r.results.find(x=>x.id==='AMB-SOUND/choices-nonexecution-cancel').evidence;
+ check('INTENT/speech-ui-label',intent,vi,r=>{const row=soundRow(r);row.choices[0]='台詞として画面に言う';row.soundChoices[0].label=row.choices[0];});
+ check('INTENT/speech-source-mixed-with-sound',intent,vi,r=>{soundRow(r).soundChoices[0].source='音「こんにちは」を鳴らす';});
  assert.deepEqual(results.map(r=>r.id),negativeCaseIds);
  const report={schema:'akari-japanese-gate-negative-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(['audit/tests/japanese-gate-negative.mjs','audit/lib/japanese-gate-contract.mjs']),results};verifyNegativeReport(report,inputs);
  fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,JSON.stringify(report,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({status:'PASS',rejections:results.length,destination}));

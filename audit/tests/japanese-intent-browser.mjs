@@ -123,9 +123,20 @@ try{await withBrowser(chrome,async browser=>{
   const before=await uiState(p);assert.equal(before.project,valid.project,'ambiguous draft overwrote the last valid project');await click(p,'runBtn');const afterRun=await uiState(p);assert.equal(afterRun.state,'DESIGN');assert.equal(await p.evaluate(()=>__intentObserved.start),0,'ambiguous source started a scheduler');
   assert.equal(await p.locator('#codeEditor').inputValue(),ambiguity.source,'original must remain verbatim');
   const choices=await p.locator('[data-intent-choice]').allTextContents();assert.ok(choices.length>=2,'two distinct meaning candidates are required');assert.ok(new Set(choices).size>=2);
-  const shown=choices.join('\n');for(const word of ambiguity.choices)assert.ok(shown.includes(word),'candidate meaning absent: '+word);
+  const shown=choices.join('\n');for(const word of ambiguity.choices){
+    const visibleWord=ambiguity.id==='AMB-SOUND'&&word==='台詞'?'そのままの文字を話す':word;
+    assert.ok(shown.includes(visibleWord),'candidate meaning absent: '+visibleWord);
+  }
+  // The immutable oracle still distinguishes speech from sound. These two
+  // parser proposals have no description, so the DOM title is their raw source.
+  const soundChoices=ambiguity.id==='AMB-SOUND'?await p.locator('[data-intent-choice]').evaluateAll(buttons=>buttons.map(button=>({label:button.textContent,source:button.getAttribute('title')}))):null;
+  if(soundChoices){
+    assert.deepEqual(soundChoices.map(choice=>choice.label),choices);
+    assert.ok(soundChoices.some(choice=>choice.label==='そのままの文字を話す'&&choice.source==='「こんにちは」と言う'),'speech UI candidate lost its original source');
+    assert.ok(soundChoices.some(choice=>choice.label==='同じ名前の音を鳴らす'&&choice.source==='音「こんにちは」を鳴らす'),'sound UI candidate lost its original source');
+  }
   assert.equal(await p.locator('[data-intent-cancel]').count(),1,'explicit cancel control');await p.locator('[data-intent-cancel]').click();
-  const after=await uiState(p);for(const k of ['source','project','history','redo','dirty'])assert.deepEqual(after[k],before[k],k+' changed after cancellation');assert.equal(await p.locator('#codeEditor').inputValue(),ambiguity.source,'cancel discarded the original draft');assert.equal(after.state,'DESIGN');assert.equal(await p.evaluate(()=>__intentObserved.start),0);return{original:ambiguity.source,choices,valid,before,after};
+  const after=await uiState(p);for(const k of ['source','project','history','redo','dirty'])assert.deepEqual(after[k],before[k],k+' changed after cancellation');assert.equal(await p.locator('#codeEditor').inputValue(),ambiguity.source,'cancel discarded the original draft');assert.equal(after.state,'DESIGN');assert.equal(await p.evaluate(()=>__intentObserved.start),0);return{original:ambiguity.source,choices,soundChoices,valid,before,after};
  });
  await run('VALUE/math-precedence-and-builtins',async p=>{const values=await p.evaluate(expressions=>{const A=Akari,p=A.makeDefaultProject(),compiled=A.compileProject(p),runtime=new A.RuntimeModel(p,{});const ctx={runtime,compiled,runtimeId:'stage',task:{execStack:[],callFrames:[]}};return expressions.map(source=>({source,value:A.evalExpression(A.parseExpression(source,A.buildSymbols(p)),ctx)}));},numericOracles.map(x=>x[0]));
   values.forEach((v,i)=>close(v.value,numericOracles[i][1]));return values;

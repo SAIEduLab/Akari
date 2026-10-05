@@ -117,7 +117,7 @@ try{await withBrowser(chrome,async browser=>{
   await prepare(p,{scripts:[{id:'first',targetId:'sprite-1',event:'start',source:say(speechTexts[0])+'\n1秒待つ。\nすべてを止める。'},{id:'second',targetId:'dango',event:'start',source:say(speechTexts[1])}]});await setView(p,speechViews[0]);await start(p);const initial=await open(p,'sprite-1');
   // STOP_ALL changes scheduler state before its queued UI disposal. Await the
   // completed visible stop within the existing timeout; retain every assertion.
-  await p.waitForFunction(()=>document.querySelector('#runState').textContent==='停止中'&&!document.querySelector('#valueModal').classList.contains('show')&&document.querySelectorAll('.sprite-bubble').length===0);const afterStop=await stopped(p);
+  await p.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっています'&&!document.querySelector('#valueModal').classList.contains('show')&&document.querySelectorAll('.sprite-bubble').length===0);const afterStop=await stopped(p);
   await start(p);const rerun=await open(p,'dango');await p.keyboard.press('Escape');await p.locator('#stopBtn').click();return{initial,afterStop,rerun,afterUiStop:await stopped(p)};
  });
  await run('speech/clone-identity',async p=>{

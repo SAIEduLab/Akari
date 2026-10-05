@@ -9,8 +9,8 @@
     },
     {
       "path": "audit/fixtures/browser-v2-input-migration.json",
-      "sha256": "3b893779498279a287dd5723f227987b44fdefed8ad2ff0b699f50dcdbbe0bd7",
-      "registeredChanges": 1354
+      "sha256": "94b6e9d44968620313722a1c1d4d4ac92b05cbf739349532acf37326a138ccbe",
+      "registeredChanges": 1357
     },
     {
       "path": "audit/fixtures/product-manifest-v2-input-migration.json",
@@ -20692,6 +20692,27 @@
       "newText": "The synthetic positive control includes unchanged baseline/staged project/owner/event, raw original source and explicit commit. All141 original rejection mutations/assertions, exact denominator, independent original expectations, product evidence and timeout limits unchanged.",
       "preservedMeaning": "Final aggregate rejected the synthetic positive control before26 original negative assertions ran because the strengthened composition validator now requires input-context/explicit-commit evidence.",
       "sourceLedger": "audit/fixtures/explicit-source-import-migration.json"
+    },
+    {
+      "testId": "diagnose-run-stop",
+      "oldText": "      await (await reveal(page.locator('#stopBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='停止中');assert.equal(await page.locator('#codeEditor').inputValue(),formatted);",
+      "newText": "      await (await reveal(page.locator('#stopBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっています');assert.equal(await page.locator('#codeEditor').inputValue(),formatted);",
+      "preservedMeaning": "通常の停止ボタンを押し、実行が止まった表示を待つ判定を保持。表示語だけを「停止中」から「止まっています」へ移行する。作品チェック、実行中待機、点数3、編集中readonly、停止後の完全な本文formatted一致、元のwaitForFunctionと時間上限を変更しない。",
+      "sourceLedger": "audit/fixtures/browser-v2-input-migration.json"
+    },
+    {
+      "testId": "diagnose-run-stop",
+      "oldText": "      return {diagnosis,runtimeScore:3,stopState:'停止中',sourcePreserved:true};",
+      "newText": "      return {diagnosis,runtimeScore:3,stopState:'止まっています',sourcePreserved:true};",
+      "preservedMeaning": "同じdiagnose-run-stop結果のstopState表示語だけを変更。diagnosis、runtimeScore:3、sourcePreserved:true、安定したケースID、実停止待機と完全本文一致を維持し、失敗/未実施をPASSへ変更しない。",
+      "sourceLedger": "audit/fixtures/browser-v2-input-migration.json"
+    },
+    {
+      "testId": "parent-syntax-semantic-switch",
+      "oldText": " assert.match(await p.locator('#blockEditor').innerText(),/診断/);",
+      "newText": " assert.match(await p.locator('#blockEditor').innerText(),/たしかめる/);",
+      "preservedMeaning": "文法として読める意味上の問題を含む「【未定義の値】の値を言う」がブロック表示のまま編集でき、問題案内が見える判定を保持する。表示語だけを「診断」から可視summary「たしかめる」へ対応させる。他の全9ケースID、valid/raw入力、source/project/history/redo/dirty/owner/mode/pendingの比較、原文保持、原子性、未完成入力の拒否、取り消し、元の待機時間・上限・負例を変更しない。",
+      "sourceLedger": "audit/fixtures/browser-v2-input-migration.json"
     }
   ]
 }

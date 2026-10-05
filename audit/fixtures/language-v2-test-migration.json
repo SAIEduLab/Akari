@@ -47012,7 +47012,7 @@
     {
       "path": "audit/browser/cases/parent-qa.cjs",
       "originalSha256": "8a3cc3397fc7cee5a4a6dbe88dbb0be946794c682181511c5456371c795e0eb0",
-      "candidateSha256": "5b8bf631cff2fa0da6b6e20ac5d8737c9e6be5d73aca180f5c9bd3c3fb62a136",
+      "candidateSha256": "8ab5c41cdf9b9078756427db592f30da00c8a701c4dbf9bcec63cdd5ef5c8630",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/parent-qa.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
@@ -47028,7 +47028,7 @@
     {
       "path": "audit/browser/cases/run-editor-regression.cjs",
       "originalSha256": "a4a3e68f32574287dcdfff686dc727d5edc6f18542533b1a241e078b26f1258e",
-      "candidateSha256": "62c4dd4b06ae6955f8ed8d4c73dc53120b1fba20ddf2bd3feb88897ed31bf3d6",
+      "candidateSha256": "87000ba3065b9f80a7e67b431dc0062fcf36346d64dede1062f4e8b0439ffc23",
       "preservedSourcePath": "audit/fixtures/legacy-1.0.1/audit/browser/cases/run-editor-regression.cjs",
       "ledgerPath": "audit/fixtures/registered-v2-test-migrations.json",
       "kind": "syntax-and-approved-contract-migration"
