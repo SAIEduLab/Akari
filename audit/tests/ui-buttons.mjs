@@ -140,7 +140,33 @@ const cases = {
   },
 };
 assert.deepEqual(Object.keys(cases),uiButtonIds);
-const version=await withBrowser(browserPath,async b=> { for(const [id,run] of Object.entries(cases)) { try { const evidence=await pageFor(b,currentProductFile(),async p=> { p.on('dialog',d=>d.accept()); await p.setViewportSize({width:1440,height:1000}); await installRegressionProject(p); await select(p,'stage'); return run(p); }); results.push({id,status:'PASS',pass:true,detail:'PASS',evidence}); } catch(error) { results.push({id,status:'FAIL',pass:false,detail:error.stack}); } console.log(results.at(-1).status+' '+id); if(!results.at(-1).pass) console.error(results.at(-1).detail); } return b.version(); },360000);
+// Isolate fixture/browser failures; retain the original 360-second suite budget.
+let version;const suiteStarted=Date.now();
+for(const [id,run] of Object.entries(cases)) {
+  let phase='browser-start',failure;
+  try {
+    const evidence=await withBrowser(browserPath,async b=> {
+      const actual=b.version();if(version)assert.equal(actual,version);version=actual;
+      phase='page-start';
+      return pageFor(b,currentProductFile(),async p=> {
+        try {
+          p.on('dialog',d=>d.accept());await p.setViewportSize({width:1440,height:1000});
+          phase='fixture-import';await installRegressionProject(p);
+          phase='select-stage';await select(p,'stage');
+          phase='button-actions';return await run(p);
+        } catch(error) {
+          // Capture before pageFor's context.close, which may itself stall.
+          failure={phase,detail:error.stack};console.error(id+' '+phase+': '+error.stack);throw error;
+        }
+      });
+    },Math.max(1,360000-(Date.now()-suiteStarted)));
+    results.push({id,status:'PASS',pass:true,detail:'PASS',evidence});
+  } catch(error) {
+    results.push({id,status:'FAIL',pass:false,phase:failure?.phase||phase,detail:failure?.detail||error.stack,
+      ...(failure&&failure.detail!==error.stack?{hostFailure:error.stack}:{})});
+  }
+  console.log(results.at(-1).status+' '+id);if(!results.at(-1).pass)console.error(results.at(-1).detail);
+}
 assert.deepEqual(snapshot(currentProductFile()),inputs,'test must not modify product inputs');
 const report={schema:'akari-ui-buttons-v1',status:results.every(r=>r.pass)?'PASS':'FAIL',environment:'chromium',browser:version,snapshot:inputs,total:results.length,results,pageErrors:[],networkRequests:[]};
 fs.mkdirSync(path.dirname(output),{recursive:true}); fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');

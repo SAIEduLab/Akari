@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {createRequire} from 'node:module';
 import {browserEnvironment as expected,verifyBrowserEnvironment} from '../lib/browser-environment.mjs';
+import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-contract.mjs';
 const {withFreshPage}=createRequire(import.meta.url)('../browser/cases/ui-case.cjs');
 // Reproduce the actual product's 350 ms post-cancel click guard with a controlled clock.
 const source=fs.readFileSync(currentProductFile(),'utf8');
@@ -80,3 +81,37 @@ await assert.rejects(loadAdapter()({_connection:{toImpl(){return {};}}}));
 const denied=new Error('CDP failure');
 await assert.rejects(loadAdapter()({_connection:{toImpl(){return {delegate:{_mainFrameSession:{_client:{send(){throw denied;}}}}};}}}),e=>e===denied);
 console.log('Native focus adapter: old-session failure reproduced; owning-session disable PASS; 4 invalid/error paths rejected');
+
+// Execute the actual button runner with fixture/cleanup failures, without a browser retry.
+const buttonSource=fs.readFileSync('audit/tests/ui-buttons.mjs','utf8');
+const runnerStart=buttonSource.indexOf('// Isolate fixture/browser failures');
+const runnerEnd=buttonSource.indexOf('assert.deepEqual(snapshot',runnerStart);
+assert.ok(runnerStart>0&&runnerEnd>runnerStart);
+const fixtureError=new Error('fixture import timeout'),cleanupError=new Error('Product test host timeout');
+const actionError=new Error('real button assertion');
+let launches=0,cleanup=0,clock=0;const budgets=[],attempted=[],buttonResults=[];
+await vm.runInNewContext('(async()=>{'+buttonSource.slice(runnerStart,runnerEnd)+'})()',{
+  assert,browserPath:'fixture-browser',currentProductFile:()=> 'fixture.html',results:buttonResults,
+  console:{log(){},error(){}},Date:{now:()=>clock++*1000},
+  cases:Object.fromEntries(uiButtonIds.map((id,i)=>[id,async()=>{attempted.push(id);if(i===1)throw actionError;return {checked:true};}])),
+  async withBrowser(browserPath,fn,budget){
+    assert.equal(browserPath,'fixture-browser');budgets.push(budget);launches++;
+    try{return await fn({id:launches,version:()=>expected.version});}finally{cleanup++;}
+  },
+  async pageFor(browser,product,fn){
+    assert.equal(product,'fixture.html');
+    try{return await fn({id:browser.id,on(){},async setViewportSize(){}});}
+    finally{if(browser.id===1)throw cleanupError;}
+  },
+  async installRegressionProject(page){if(page.id===1)throw fixtureError;},async select(){},
+});
+assert.equal(launches,uiButtonIds.length);assert.equal(cleanup,launches);
+assert.deepEqual(attempted,uiButtonIds.slice(1));
+assert.deepEqual(buttonResults.map(r=>r.id),[...uiButtonIds]);
+assert.equal(buttonResults[0].phase,'fixture-import');assert.equal(buttonResults[0].detail,fixtureError.stack);
+assert.equal(buttonResults[0].hostFailure,cleanupError.stack);assert.equal(buttonResults[0].pass,false);
+assert.equal(buttonResults[1].phase,'button-actions');assert.equal(buttonResults[1].detail,actionError.stack);
+assert.equal(buttonResults[1].pass,false);assert.ok(buttonResults.slice(2).every(r=>r.pass));
+assert.ok(budgets.every((n,i)=>n>0&&n<=360000&&(i===0||n<budgets[i-1])));
+checkUiButtonValidatorNegatives();
+console.log('UI buttons: fixture/cleanup and assertion failures retained; all cases isolated without retry; 360s budget and 10 validator negatives PASS');
