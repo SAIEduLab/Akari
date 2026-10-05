@@ -17470,8 +17470,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       };
       const widths = bubbles.map(b => {
         b.style.fontSize=14/sx+'px';
+        const full=b.querySelector('[data-speech-full]');
+        if(full)full.style.fontSize=11/sx+'px';
         const heading=getComputedStyle(b,'::before'),body=getComputedStyle(b);
         return {name:textWidth(b.dataset.speaker||'',heading),body:textWidth(b.querySelector('.sprite-bubble-text')?.textContent||'',body),
+          full:full?textWidth(full.dataset.label||'',getComputedStyle(full)):0,
           lineHeight:Math.max(parseFloat(heading.lineHeight),parseFloat(body.lineHeight))*sy};
       });
       const short=bubbles.length&&bubbles.every(b=>!/[\r\n]/.test(b.querySelector('.sprite-bubble-text')?.textContent||'')&&b.querySelector('[data-speech-full]')?.dataset.always!=='true');
@@ -17479,7 +17482,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       const compactRows=rect.height<54&&short&&!compactColumns&&
         rect.width>=Math.max(...widths.map(w=>(Math.ceil(w.name)+w.body)*sx+0.75))&&
         rect.height>=bubbles.length*(Math.max(...widths.map(w=>w.lineHeight))+0.5)+(bubbles.length-1);
-      const compact=compactColumns||compactRows;
+      // When the utterance itself cannot fit, keep each name and its full-text
+      // entry in a separate row inside the preview instead of stacking tall bubbles.
+      const compactFullRows=rect.height<54&&!compactColumns&&!compactRows&&bubbles.length&&
+        rect.width>=Math.max(...widths.map(w=>(w.name+w.full)*sx+7))&&
+        rect.height>=bubbles.length*17.5+(bubbles.length-1);
+      const compact=compactColumns||compactRows||compactFullRows;
       const band = compact ? {top:0,height:form.clientHeight}
         : bubbles.length > 1 && rect.width >= bubbles.length*80+(bubbles.length-1)*8
           ? bands.filter(b=>b.height*sy>=42).sort((a,b)=>b.height-a.height)[0] : null;
@@ -17495,16 +17503,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             top:(box.top-rect.top)/sy, bottom:(box.bottom-rect.top)/sy},
           sideWidth = Math.max(actor.left-gap, form.clientWidth-actor.right-gap),
           availableWidth = sideWidth >= 80/sx ? sideWidth : form.clientWidth;
-        b.style.fontSize = 14/sx+'px'; b.style.padding = (compactRows?0:band?1.5:8)/sy+'px '+(compactRows?0:compact?1:band?6:10)/sx+'px';
-        b.style.borderWidth = compact ? (compactRows?0.25:0.5)/sx+'px' : '';
+        b.style.fontSize = 14/sx+'px'; b.style.padding = (compactRows||compactFullRows?0:band?1.5:8)/sy+'px '+(compactRows||compactFullRows?0:compact?1:band?6:10)/sx+'px';
+        b.style.borderWidth = compact ? (compactRows||compactFullRows?0.25:0.5)/sx+'px' : '';
         b.style.display=compactRows?'grid':'';
         b.style.alignItems=compactRows?'start':'';
-        b.style.width=compactRows?form.clientWidth+'px':'';
+        b.style.width=compactRows||compactFullRows?form.clientWidth+'px':'';
         b.style.gridTemplateColumns=compactRows?Math.ceil(widths[bubbleIndex].name)+'px minmax(0,1fr)':'';
         b.style.columnGap=compactRows?0.25/sx+'px':'';
         b.style.setProperty('--speech-heading-gap',compactRows?'0px':'3px');
-        b.style.setProperty('--speech-heading-height', band && !compact ? 17/sy+'px' : '0px');
-        const bandWidth = compactRows?form.clientWidth:(form.clientWidth-(bubbles.length-1)*(compact?1:8)/sx)/Math.max(1,bubbles.length);
+        b.style.setProperty('--speech-heading-height', compactFullRows||band&&!compact ? 17/sy+'px' : '0px');
+        const bandWidth = compactRows||compactFullRows?form.clientWidth:(form.clientWidth-(bubbles.length-1)*(compact?1:8)/sx)/Math.max(1,bubbles.length);
         b.style.maxWidth = Math.min(320/sx,band?bandWidth:availableWidth)+'px';
         const heightBudget=band ? Math.min(160/sy,band.height-1/sy) : Math.min(160/sy,Math.max(54/sy,(form.clientHeight-(bubbles.length-1)*8/sy)/Math.max(1,bubbles.length)));
         b.style.maxHeight = 'none';
@@ -17513,20 +17521,21 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (full) {
           // The full-text entry shares the speaker row rather than consuming the
           // one readable line available in a small preview.
-          Object.assign(full.style, { position:'absolute', top:(band?2:4)/sy+'px', right:4/sx+'px',
-            fontSize:11/sx+'px', lineHeight:'1.2', padding:2/sy+'px '+4/sx+'px', minHeight:'0' });
+          Object.assign(full.style, { position:'absolute', top:(compactFullRows?0:band?2:4)/sy+'px', right:(compactFullRows?0.25:4)/sx+'px',
+            fontSize:11/sx+'px', lineHeight:'1.2', padding:(compactFullRows?1:2)/sy+'px '+(compactFullRows?1:4)/sx+'px', minHeight:'0' });
         }
         if (text) {
           // At enlarged stage scales, the small logical font can have rounded
           // glyph metrics taller than its original line box. Keep the glyphs whole.
           text.style.lineHeight = sy > 1 ? '1.5' : '';
+          text.style.display = compactFullRows ? 'none' : 'block';
         }
         const bubbleStyle = getComputedStyle(b), edges = bubbleStyle.boxSizing === 'border-box'
           ? ['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth'].reduce((n,k)=>n+(parseFloat(bubbleStyle[k])||0),0) : 0;
         const fitText = () => {
           const reserve=full&&!full.hidden?Math.max(0,full.getBoundingClientRect().width/sx+parseFloat(full.style.right)-(parseFloat(bubbleStyle.paddingRight)||0)-(parseFloat(bubbleStyle.borderRightWidth)||0)+4/sx):0;
           b.style.setProperty('--speech-full-space',reserve+'px');
-          b.style.minWidth=compactRows?'0px':Math.min(parseFloat(b.style.maxWidth),
+          b.style.minWidth=compactRows||compactFullRows?'0px':Math.min(parseFloat(b.style.maxWidth),
             Math.max(compact?0:40/sx,Math.ceil(widths[bubbleIndex].name+reserve+edges+1/sx)))+'px';
           if (text) {
             text.style.maxHeight='0px';
@@ -17535,9 +17544,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           }
         };
         // Check clipping with the current heading, then reserve the actual full-text button.
-        if (full) full.hidden=full.dataset.always!=='true';
+        if (full) full.hidden=!compactFullRows&&full.dataset.always!=='true';
         fitText();
-        if (full&&full.hidden&&text&&(text.scrollHeight>text.clientHeight+1||text.scrollWidth>text.clientWidth+1)) {full.hidden=false;fitText();}
+        // Compact layouts have already budgeted one complete line and measured
+        // its width. Font em-box overflow can extend scrollHeight beyond that
+        // line without clipping a glyph; reserving a button would wrap the name.
+        if (full&&full.hidden&&text&&((!compact&&text.scrollHeight>text.clientHeight+1)||text.scrollWidth>text.clientWidth+1)) {full.hidden=false;fitText();}
         const measured=b.getBoundingClientRect(),width=measured.width/sx,height=measured.height/sy, center=(actor.left+actor.right-width)/2,
           positions=[[actor.right+gap,actor.top],[actor.left-width-gap,actor.top],
              [center,actor.top-height-gap],[center,actor.bottom+gap]];
@@ -17547,7 +17559,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           const candidate={left,top,right:left+width,bottom:top+height},cost=actors.reduce((sum,a)=>sum+overlap(candidate,a),0)+placed.reduce((sum,b)=>sum+overlap(candidate,b)*10,0);
           return {...candidate,overlap:cost,order};
         }).sort((a,b)=>a.overlap-b.overlap||a.order-b.order);
-        const chosen = compactRows ? {left:0,top:placed.length?placed.at(-1).bottom+1/sy:0,right:width,bottom:(placed.length?placed.at(-1).bottom+1/sy:0)+height}
+        const chosen = compactRows||compactFullRows ? {left:0,top:placed.length?placed.at(-1).bottom+1/sy:0,right:width,bottom:(placed.length?placed.at(-1).bottom+1/sy:0)+height}
           : band ? { left:bubbleIndex*(bandWidth+(compact?1:8)/sx)+(bandWidth-width)/2, top:band.top,
           right:bubbleIndex*(bandWidth+(compact?1:8)/sx)+(bandWidth+width)/2, bottom:band.top+height } : candidates[0];
         b.style.left=chosen.left+'px'; b.style.top=chosen.top+'px'; placed.push(chosen);

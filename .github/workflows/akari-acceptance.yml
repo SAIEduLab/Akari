@@ -157,6 +157,12 @@ jobs:
       - name: Independently verify speaker evidence and negative controls
         if: always()
         run: node audit/tests/speech-name-layout-verify.mjs audit-evidence/repair05/speech-name-layout.json
+      - name: Verify native simultaneous speech, restored previews and full-text entries
+        if: always()
+        run: node audit/tests/speech-preview-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/speech-preview.json
+      - name: Independently verify native preview evidence and negative controls
+        if: always()
+        run: node audit/tests/speech-preview-verify.mjs audit-evidence/repair05/speech-preview.json audit-evidence/repair05/speech-preview-verification.json
       - name: Verify visible reading support and concrete operation examples
         if: always()
         run: node audit/tests/child-language-ui-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/child-language-ui.json
