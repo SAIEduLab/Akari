@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- Akari: shared AST, code/block editors, transactional history and explicit data contracts. -->
-<!-- SPDX-License-Identifier: Apache-2.0; full license text is embedded in AKARI_APACHE_LICENSE below. -->
+<!-- SPDX-License-Identifier: MIT; full license text is embedded in AKARI_LICENSE below. -->
 <html lang="ja">
 <head>
 <!-- Modified 2026-09-20: local structural refactor; shared command presentation, consolidated styles and responsibility-organized source. Original: Akari.html. -->
@@ -6052,217 +6052,573 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.0.2';
+  const PRODUCT_RELEASE = '1.1.0';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
-  const AKARI_APACHE_LICENSE = `                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+  const AKARI_LICENSE = `MIT License
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+Copyright (c) 2026 SAIEduLab
 
-   1. Definitions.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
-
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
-
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
-
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
-
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
-
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
-
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
-
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
-
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
-
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
-
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
-
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
-
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
-
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
-
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
-
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
-
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
-
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
-
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
-
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
-
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
-
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
-
-   END OF TERMS AND CONDITIONS
-
-   APPENDIX: How to apply the Apache License to your work.
-
-      To apply the Apache License to your work, attach the following
-      boilerplate notice, with the fields enclosed by brackets "[]"
-      replaced with your own identifying information. (Don't include
-      the brackets!)  The text should be enclosed in the appropriate
-      comment syntax for the file format. We also recommend that a
-      file or class name and description of purpose be included on the
-      same "printed page" as the copyright notice for easier
-      identification within third-party archives.
-
-   Copyright [yyyy] [name of copyright owner]
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.`;
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+`;
+  // Deprecated diagnostic alias: its value is the current MIT license.
+  const AKARI_APACHE_LICENSE = AKARI_LICENSE;
 
   // ────────────────────────────────────────────────────────────────────────
   // 01 — Portable execution core (also embedded in exported players)
   // ────────────────────────────────────────────────────────────────────────
-  function createAkariRuntime() {
+// AKARI-EXTENSION-PROFILES.JS-BEGIN
+/* SPDX-License-Identifier: MIT */
+// Portable source: embed this factory in a derived editor and its exported player.
+function createAkariProfiles(standardLimits, additionalDefaults) {
+  'use strict';
+  if (additionalDefaults === undefined) additionalDefaults = {};
+  const locked = Object.freeze(['audioChannels', 'audioSampleRateMin', 'audioSampleRateMax', 'blockDepth', 'expressionDepth', 'callDepth']);
+  const fractional = new Set(['audioDuration', 'audioDurationTotal']);
+  const record = x => x !== null && typeof x === 'object' && !Array.isArray(x) &&
+    (Object.getPrototypeOf(x) === null || (Object.prototype.toString.call(x) === '[object Object]' && Object.getPrototypeOf(x)?.constructor?.name === 'Object'));
+  const keys = (x, expected) => record(x) && Reflect.ownKeys(x).length === expected.length && expected.every(k => Object.hasOwn(x, k));
+  const fail = message => { const e = new Error(message); e.code = 'E_PROFILE'; throw e; };
+  const validId = id => typeof id === 'string' && /^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$/.test(id) && id.length <= 128;
+  const validVersion = version => typeof version === 'string' && /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/.test(version) && version.length <= 64;
+  if (!record(standardLimits) || !record(additionalDefaults)) fail('上限の標準定義が不正です');
+  for (const k of Object.keys(additionalDefaults)) if (Object.hasOwn(standardLimits, k)) fail('上限の標準定義が重複しています');
+  const defaults = { ...standardLimits, ...additionalDefaults };
+  for (const [k, v] of Object.entries(defaults)) if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0 || (!fractional.has(k) && !Number.isSafeInteger(v))) fail('上限の標準値が不正です: ' + k);
+  const standard = Object.freeze(defaults);
+  const registry = new Map();
+  let selected = null;
+  function hash(text) {
+    const bytes = new TextEncoder().encode(text), size = Math.ceil((bytes.length + 9) / 64) * 64;
+    const padded = new Uint8Array(size); padded.set(bytes); padded[bytes.length] = 128;
+    const view = new DataView(padded.buffer); view.setUint32(size - 8, Math.floor(bytes.length / 536870912)); view.setUint32(size - 4, (bytes.length * 8) >>> 0);
+    const constants = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    const state = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19], w = new Uint32Array(64), rotate = (x,n) => (x >>> n) | (x << (32-n));
+    for (let offset = 0; offset < size; offset += 64) {
+      for (let i = 0; i < 16; i++) w[i] = view.getUint32(offset + i*4);
+      for (let i = 16; i < 64; i++) { const a = w[i-15], b = w[i-2]; w[i] = (w[i-16] + (rotate(a,7)^rotate(a,18)^(a>>>3)) + w[i-7] + (rotate(b,17)^rotate(b,19)^(b>>>10))) >>> 0; }
+      let [a,b,c,d,e,f,g,h] = state;
+      for (let i = 0; i < 64; i++) { const t1 = (h + (rotate(e,6)^rotate(e,11)^rotate(e,25)) + ((e&f)^((~e)&g)) + constants[i] + w[i]) >>> 0, t2 = ((rotate(a,2)^rotate(a,13)^rotate(a,22)) + ((a&b)^(a&c)^(b&c))) >>> 0; h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0; }
+      [a,b,c,d,e,f,g,h].forEach((x,i) => { state[i] = (state[i]+x)>>>0; });
+    }
+    return state.map(x => x.toString(16).padStart(8,'0')).join('');
+  }
+  const effective = {};
+  for (const key of Object.keys(standard)) Object.defineProperty(effective, key, { enumerable: true, get() { const value = selected && Object.hasOwn(selected.limits, key) ? selected.limits[key] : standard[key]; return value === null ? Infinity : value; } });
+  Object.freeze(effective);
+  function register(definition) {
+    if (!keys(definition, ['id', 'version', 'limits']) || !validId(definition.id) || !validVersion(definition.version) || definition.id === 'akari.standard' || !record(definition.limits)) fail('派生プロファイルの登録情報が不正です');
+    const limits = {};
+    if (Reflect.ownKeys(definition.limits).some(key => typeof key !== 'string' || !Object.prototype.propertyIsEnumerable.call(definition.limits,key))) fail('上限の項目が不正です');
+    for (const key of Object.keys(definition.limits).sort()) {
+      const value = definition.limits[key];
+      if (!Object.hasOwn(standard, key) || locked.includes(key)) fail('変更できない上限です: ' + key);
+      if (value === undefined) continue;
+      if (value !== null && (typeof value !== 'number' || !Number.isFinite(value) || value <= 0 || (!fractional.has(key) && !Number.isSafeInteger(value)))) fail('上限値が不正です: ' + key);
+      limits[key] = value;
+    }
+    const canonical = { id: definition.id, version: definition.version, limits };
+    const profile = Object.freeze({ ...canonical, limits: Object.freeze(limits), contentHash: hash(JSON.stringify(canonical)) });
+    const key = profile.id + '@' + profile.version;
+    if (registry.has(key)) fail('プロファイルのID・版が重複しています: ' + key);
+    registry.set(key, profile); return profile;
+  }
+  function select(id, version) {
+    if (id === 'akari.standard' && version === '1') { selected = null; return null; }
+    if (!validId(id) || !validVersion(version)) fail('プロファイルのID・版が不正です');
+    const profile = registry.get(id + '@' + version);
+    if (!profile) fail('必要な派生プロファイルが登録されていません: ' + id + '@' + version);
+    selected = profile; return requirement();
+  }
+  function requirement() { return selected ? Object.freeze({ id: selected.id, version: selected.version, contentHash: selected.contentHash }) : null; }
+  function validateRequirement(value) {
+    if (value === null) return true;
+    if (!keys(value, ['id', 'version', 'contentHash']) || !validId(value.id) || !validVersion(value.version) || typeof value.contentHash !== 'string' || !/^[a-f0-9]{64}$/.test(value.contentHash)) fail('保存されたプロファイル情報が不正です');
+    const profile = registry.get(value.id + '@' + value.version);
+    if (!profile) fail('必要な派生プロファイルが登録されていません');
+    if (profile.contentHash !== value.contentHash) fail('派生プロファイルの内容が一致しません');
+    if (selected !== profile) fail('派生プロファイルをホスト側で選択してください');
+    return true;
+  }
+  function describe() { return Object.freeze({ standard, locked, selected: requirement(), profiles: Object.freeze([...registry.values()]) }); }
+  return Object.freeze({ register, select, effective, standard, describe, requirement, validateRequirement });
+}
+// AKARI-EXTENSION-PROFILES.JS-END
+
+// AKARI-EXTENSION-FOUNDATION.JS-BEGIN
+/* SPDX-License-Identifier: MIT */
+/* This factory is deliberately self-contained: the product embeds it verbatim. */
+function createAkariExtensionHost(options) {
+  'use strict';
+  options = options || {};
+  const API_CONTRACT = 1;
+  const standard = Object.freeze({ languageContractId: 2, runtimeContractId: 2, ...(options.standard || {}) });
+  const records = new Map(), names = new Set(), connections = new Set();
+  let session = null, sequence = 0, savedState = {}, sealed = false;
+  const fail = (code, message) => { const error = new Error(message); error.code = code; throw error; };
+  const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
+  const plain = value => !!value && typeof value === 'object' && !Array.isArray(value) &&
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
+  function json(value, seen = new Set()) {
+    if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (!value || typeof value !== 'object' || (!Array.isArray(value) && !plain(value)) || seen.has(value))
+      fail('E701', '拡張のデータは有限のJSON値にします');
+    seen.add(value);
+    if (Array.isArray(value) && (Object.keys(value).length !== value.length || value.some((_,index)=>!own(value,index))))
+      fail('E701','拡張の配列は空の項目を含められません');
+    const out = Array.isArray(value) ? value.map(item => json(item, seen)) : {};
+    if (!Array.isArray(value)) for (const key of Object.keys(value).sort()) {
+      if (['__proto__', 'prototype', 'constructor'].includes(key)) fail('E701', '拡張データのキーが不正です');
+      out[key] = json(value[key], seen);
+    }
+    seen.delete(value);
+    return out;
+  }
+  const copy = value => json(value);
+  const canonical = value => JSON.stringify(json(value));
+  function freeze(value) {
+    if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); }
+    return value;
+  }
+  function keys(value, required, optional = []) {
+    return plain(value) && required.every(key => own(value, key)) &&
+      Object.keys(value).every(key => required.includes(key) || optional.includes(key));
+  }
+  const identifier = value => typeof value === 'string' && !['constructor','prototype','__proto__'].includes(value) &&
+    /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/.test(value) && value.length <= 120;
+  const version = value => typeof value === 'string' && /^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$/.test(value);
+  const digest = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+  function sha256(text) {
+    const constants = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+      0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+      0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+      0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+      0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+      0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+      0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+      0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    const bytes = new TextEncoder().encode(text), size = Math.ceil((bytes.length + 9) / 64) * 64;
+    const data = new Uint8Array(size); data.set(bytes); data[bytes.length] = 128;
+    const view = new DataView(data.buffer), bits = bytes.length * 8;
+    view.setUint32(size - 8, Math.floor(bits / 4294967296)); view.setUint32(size - 4, bits >>> 0);
+    const hash = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+    const rotate = (value, count) => (value >>> count) | (value << (32 - count));
+    for (let offset = 0; offset < size; offset += 64) {
+      const words = new Uint32Array(64);
+      for (let i = 0; i < 16; i++) words[i] = view.getUint32(offset + i * 4);
+      for (let i = 16; i < 64; i++) {
+        const x = words[i - 15], y = words[i - 2];
+        words[i] = (words[i - 16] + (rotate(x,7)^rotate(x,18)^(x>>>3)) + words[i - 7] + (rotate(y,17)^rotate(y,19)^(y>>>10))) >>> 0;
+      }
+      let [a,b,c,d,e,f,g,h] = hash;
+      for (let i = 0; i < 64; i++) {
+        const first = (h + (rotate(e,6)^rotate(e,11)^rotate(e,25)) + ((e&f)^((~e)&g)) + constants[i] + words[i]) >>> 0;
+        const second = ((rotate(a,2)^rotate(a,13)^rotate(a,22)) + ((a&b)^(a&c)^(b&c))) >>> 0;
+        h=g; g=f; f=e; e=(d+first)>>>0; d=c; c=b; b=a; a=(first+second)>>>0;
+      }
+      [a,b,c,d,e,f,g,h].forEach((value,i) => { hash[i] = (hash[i] + value) >>> 0; });
+    }
+    return hash.map(value => value.toString(16).padStart(8,'0')).join('');
+  }
+  function spec(value, allowVoid = false) {
+    if (!keys(value, ['type','unit']) || !['number','string','boolean','list','value',...(allowVoid?['void']:[])].includes(value.type) ||
+      !(value.unit === null || (value.type === 'number' && ['歩','秒','度','回','番目','点','個','％','Hz'].includes(value.unit))))
+      fail('E701', '拡張の型・単位が不正です');
+  }
+  function valueCheck(value, shape) {
+    if (shape.type === 'void') { if (value !== undefined && value !== null) fail('E705','戻り値のない命令です'); return null; }
+    if (options.validateValue) { const checked = options.validateValue(value, shape); return copy(checked === undefined ? value : checked); }
+    const quantity = plain(value) && keys(value,['magnitude','unit']) && Number.isFinite(value.magnitude);
+    const number = typeof value === 'number' && Number.isFinite(value);
+    const scalar = item => typeof item === 'string' || typeof item === 'boolean' || (typeof item === 'number' && Number.isFinite(item)) ||
+      (plain(item) && keys(item,['magnitude','unit']) && Number.isFinite(item.magnitude) && ['歩','秒','度','回','番目','点','個','％','Hz'].includes(item.unit));
+    const valid = shape.type === 'number' ? (shape.unit === null ? number : quantity && value.unit === shape.unit) :
+      shape.type === 'string' ? typeof value === 'string' : shape.type === 'boolean' ? typeof value === 'boolean' :
+      shape.type === 'list' ? Array.isArray(value) && value.every(scalar) : scalar(value) || (Array.isArray(value) && value.every(scalar));
+    if (!valid) fail('E705','拡張の値の型・単位が一致しません');
+    return copy(value);
+  }
+  function register(input, factory) {
+    if (session || sealed) fail('E702','起動設定の確定後は拡張を登録できません');
+    const manifest = copy(input);
+    if (!keys(manifest,['id','version','apiContract','standard','description','dependencies','capabilities','offline','selfContained','state','commands','calculations','events']) ||
+      !identifier(manifest.id) || !version(manifest.version) || manifest.apiContract !== API_CONTRACT ||
+      canonical(manifest.standard) !== canonical(standard) || typeof manifest.description !== 'string' ||
+      typeof manifest.offline !== 'boolean' || typeof manifest.selfContained !== 'boolean' ||
+      !Array.isArray(manifest.dependencies) || !Array.isArray(manifest.capabilities) ||
+      manifest.capabilities.some(value => typeof value !== 'string' || !value || value.startsWith('rpc.') || value.startsWith('akari.')) ||
+      new Set(manifest.capabilities).size !== manifest.capabilities.length ||
+      !keys(manifest.state,['formatVersion','initial']) || !Number.isSafeInteger(manifest.state.formatVersion) || manifest.state.formatVersion < 1 ||
+      typeof factory !== 'function') fail('E701','拡張の登録情報が不正です');
+    if (records.has(manifest.id)) fail('E702', `拡張「${manifest.id}」は登録済みです`);
+    const dependencyIds = new Set();
+    for (const dependency of manifest.dependencies) {
+      if (!keys(dependency,['id','version','contentHash']) || !identifier(dependency.id) || !version(dependency.version) ||
+        !digest(dependency.contentHash) || dependencyIds.has(dependency.id)) fail('E701','拡張の依存情報が不正です');
+      dependencyIds.add(dependency.id);
+      const found = records.get(dependency.id);
+      if (!found || found.manifest.version !== dependency.version || found.contentHash !== dependency.contentHash)
+        fail('E703',`必要な拡張「${dependency.id}」の版・内容が一致しません`);
+    }
+    const ids = new Set(), proposedNames = new Set();
+    for (const kind of ['commands','calculations','events']) {
+      if (!Array.isArray(manifest[kind])) fail('E701','拡張の機能一覧が不正です');
+      for (const operation of manifest[kind]) {
+        const required = kind === 'events' ? ['id','name','description','payload'] : ['id','name','description','args','returns','async'];
+        if (!keys(operation,required,kind==='events'?[]:['capability']) || !identifier(operation.id) || ids.has(operation.id) ||
+          typeof operation.name !== 'string' || !operation.name.trim() || /[\r\n「」]/.test(operation.name) ||
+          typeof operation.description !== 'string' || names.has(operation.name) || proposedNames.has(operation.name) ||
+          (options.reservedNames || []).includes(operation.name)) fail('E702','拡張の識別子・名前が不正または重複しています');
+        ids.add(operation.id); proposedNames.add(operation.name);
+        if (kind === 'events') spec(operation.payload);
+        else {
+          if (!Array.isArray(operation.args) || typeof operation.async !== 'boolean' || (kind === 'calculations' && operation.async) ||
+            (own(operation,'capability') && !manifest.capabilities.includes(operation.capability))) fail('E701','拡張の引数・非同期契約が不正です');
+          const argumentNames = new Set();
+          for (const arg of operation.args) {
+            if (!keys(arg,['name','type','unit']) || typeof arg.name !== 'string' || !arg.name || argumentNames.has(arg.name)) fail('E701','拡張の引数名が不正です');
+            argumentNames.add(arg.name); spec({type:arg.type,unit:arg.unit});
+          }
+          spec(operation.returns,kind==='commands');
+        }
+      }
+    }
+    const factorySource = Function.prototype.toString.call(factory);
+    if (!/^(?:function\b|\(|[A-Za-z_$][\w$]*\s*=>)/.test(factorySource) || /^function\s*\*/.test(factorySource) ||
+      /\[native code\]|<\/script/i.test(factorySource)) fail('E701','拡張factoryは書き出せる同期の関数リテラルにします');
+    const contentHash = sha256(canonical(manifest) + '\n' + factorySource);
+    records.set(manifest.id,{manifest:freeze(manifest),factory,factorySource,contentHash});
+    proposedNames.forEach(name => names.add(name));
+    savedState[manifest.id] = copy(manifest.state.initial);
+    return Object.freeze({id:manifest.id,version:manifest.version,contentHash});
+  }
+  const kindKey = kind => ({command:'commands',calculation:'calculations',event:'events',commands:'commands',calculations:'calculations',events:'events'})[kind];
+  function operations(kind) {
+    const key = kindKey(kind); if (!key) fail('E701','拡張の機能区分が不正です');
+    return [...records.values()].flatMap(record => record.manifest[key].map(operation => freeze({
+      ...copy(operation), displayName:operation.name, name:record.manifest.id+'/'+operation.id,
+      qualifiedName:record.manifest.id+'/'+operation.id, extensionId:record.manifest.id, kind:key,
+    })));
+  }
+  function describe(name, kind) {
+    return operations(kind).find(operation => operation.name === name) || null;
+  }
+  function locate(name, kind) {
+    const operation = describe(name,kind); if (!operation) fail('E703',`拡張機能「${name}」がありません`);
+    return {operation,record:records.get(operation.extensionId)};
+  }
+  function active(captured = session) {
+    if (!captured || captured !== session || captured.controller.signal.aborted) fail('E706','拡張の実行sessionは終了しています');
+    return captured;
+  }
+  function checkedArguments(operation,args) {
+    if (!Array.isArray(args) || args.length !== operation.args.length) fail('E705','拡張に渡す値の数が違います');
+    return args.map((value,index) => valueCheck(value,operation.args[index]));
+  }
+  function invoke(name,kind,args,context = {}) {
+    const current = active(), {operation} = locate(name,kind), instance = current.instances.get(operation.extensionId);
+    if (operation.capability && !(current.capabilities.includes(operation.capability))) fail('E707','この実行では拡張の能力が許可されていません');
+    const handler = instance?.[kindKey(kind)]?.[operation.id];
+    if (typeof handler !== 'function') fail('E704','登録した拡張の処理がありません');
+    const values = checkedArguments(operation,args);
+    if(context.signal?.aborted)fail('E706','拡張の処理を取り消しました');
+    const signal=context.signal||current.controller.signal;
+    const result = handler(values,Object.freeze({...context,sessionId:current.id,signal}));
+    const thenable = result != null && typeof result.then === 'function';
+    if (thenable && !operation.async) { Promise.resolve(result).catch(()=>{}); fail('E705','同期の拡張処理はPromiseを返せません'); }
+    if (!thenable) return valueCheck(result,operation.returns);
+    return new Promise((resolve,reject) => {
+      const cancelled = () => { cleanup(); const error=new Error('拡張の処理を取り消しました');error.code='E706';reject(error); };
+      const cleanup = () => { current.controller.signal.removeEventListener('abort',cancelled);signal.removeEventListener('abort',cancelled); };
+      current.controller.signal.addEventListener('abort',cancelled,{once:true});
+      signal.addEventListener('abort',cancelled,{once:true});
+      Promise.resolve(result).then(value=>{cleanup();try{active(current);resolve(valueCheck(value,operation.returns));}catch(error){reject(error);}},error=>{cleanup();reject(error);});
+    });
+  }
+  function restoreState(input) {
+    if (session) fail('E706','実行中の拡張状態は復元できません');
+    if (!Array.isArray(input)) fail('E701','拡張状態の一覧が不正です');
+    const next = {...savedState}, found = new Set();
+    for (const item of input) {
+      if (!keys(item,['id','formatVersion','value']) || found.has(item.id)) fail('E701','拡張状態が不正または重複しています');
+      const record = records.get(item.id);
+      if (!record || item.formatVersion !== record.manifest.state.formatVersion) fail('E703','拡張状態の版が一致しません');
+      found.add(item.id); next[item.id] = copy(item.value);
+    }
+    savedState = next;
+  }
+  function snapshotState() {
+    return [...records.values()].map(record=>({id:record.manifest.id,formatVersion:record.manifest.state.formatVersion,
+      value:copy((session?session.state:savedState)[record.manifest.id])}));
+  }
+  function initialState() {
+    return [...records.values()].map(record=>({id:record.manifest.id,formatVersion:record.manifest.state.formatVersion,
+      value:copy(record.manifest.state.initial)}));
+  }
+  function endSession() {
+    const old=session; if(!old)return;
+    if(old.initialized)savedState=copy(old.state);
+    session=null; connections.forEach(connection=>connection.close('session ended')); old.controller.abort();
+    for(const instance of old.instances.values()) try {
+      const result=instance.dispose?.(); if(result?.then)Promise.resolve(result).catch(error=>options.onError?.(error));
+    } catch(error) { options.onError?.(error); }
+  }
+  function beginSession(settings = {}) {
+    const capabilities=settings.capabilities||options.allowedCapabilities||[];
+    if(!Array.isArray(capabilities)||new Set(capabilities).size!==capabilities.length||
+      capabilities.some(value=>typeof value!=='string'||!value||(options.allowedCapabilities&&!options.allowedCapabilities.includes(value))))
+      fail('E707','実行sessionの能力はホストが明示的に許可します');
+    if(session)endSession();
+    if(settings.state!==undefined)restoreState(settings.state);
+    const current={id:'session-'+(++sequence),controller:new AbortController(),instances:new Map(),state:copy(savedState),
+      capabilities:[...capabilities],onEvent:settings.onEvent};
+    session=current;
+    try {
+      for(const record of records.values()) {
+        const id=record.manifest.id;
+        const api=Object.freeze({
+          get signal(){return current.controller.signal;}, get sessionId(){return current.id;},
+          get connector(){active(current);return [...connections].find(connection=>connection.ready)||null;},
+          getState(){active(current);return copy(current.state[id]);},
+          setState(value){active(current);current.state[id]=copy(value);},
+          emit(eventId,payload){active(current);const event=record.manifest.events.find(item=>item.id===eventId);
+            if(!event)fail('E705','未登録の拡張できごとです');
+            current.onEvent?.({name:id+'/'+eventId,payload:valueCheck(payload,event.payload),sessionId:current.id});},
+        });
+        const instance=record.factory(api);
+        if(!plain(instance)||instance.then)fail('E704','拡張factoryは同期の処理オブジェクトを返します');
+        current.instances.set(id,instance);
+        for(const kind of ['commands','calculations'])for(const operation of record.manifest[kind])
+          if(typeof instance[kind]?.[operation.id]!=='function')fail('E704','登録機能の実装がありません');
+        const initialized=instance.initialize?.();
+        if(initialized?.then){Promise.resolve(initialized).catch(()=>{});fail('E704','拡張の初期化は同期で行います');}
+      }
+      current.initialized=true;
+      return current.id;
+    } catch(error) {endSession();throw error;}
+  }
+  function requirements() {
+    return {apiContract:API_CONTRACT,standard:copy(standard),required:[...records.values()].map(record=>({
+      id:record.manifest.id,version:record.manifest.version,contentHash:record.contentHash})),
+      capabilities:[...new Set([...records.values()].flatMap(record=>record.manifest.capabilities))].sort()};
+  }
+  function validateRequirements(envelope) {
+    if(!keys(envelope,['apiContract','standard','required','capabilities'],['profile','state']) || envelope.apiContract!==API_CONTRACT ||
+      canonical(envelope.standard)!==canonical(standard) || !Array.isArray(envelope.required) || !Array.isArray(envelope.capabilities) ||
+      new Set(envelope.capabilities).size!==envelope.capabilities.length || envelope.capabilities.some(value=>typeof value!=='string'))
+      fail('E703','拡張の実行契約が一致しません');
+    const ids=new Set(),declared=new Set();
+    for(const item of envelope.required) {
+      if(!keys(item,['id','version','contentHash'])||ids.has(item.id))fail('E703','必要拡張の記録が不正です');
+      ids.add(item.id);const found=records.get(item.id);
+      if(!found||found.manifest.version!==item.version||found.contentHash!==item.contentHash)fail('E703',`必要な拡張「${item.id}」の版・内容が一致しません`);
+      found.manifest.capabilities.forEach(value=>declared.add(value));
+      for(const dependency of found.manifest.dependencies)if(!envelope.required.some(value=>value.id===dependency.id&&value.version===dependency.version&&value.contentHash===dependency.contentHash))
+        fail('E703','必要な依存拡張が記録されていません');
+    }
+    if(envelope.capabilities.some(value=>!declared.has(value))||[...declared].some(value=>!envelope.capabilities.includes(value)))fail('E703','必要能力の記録が一致しません');
+    if(own(envelope,'state')) {
+      if(!Array.isArray(envelope.state)||envelope.state.length!==ids.size)fail('E703','必要拡張の状態が不足しています');
+      const stateIds=new Set();
+      for(const item of envelope.state) {
+        if(!keys(item,['id','formatVersion','value'])||!ids.has(item.id)||stateIds.has(item.id)||
+          item.formatVersion!==records.get(item.id).manifest.state.formatVersion)fail('E703','拡張状態の識別子・版が一致しません');
+        copy(item.value);stateIds.add(item.id);
+      }
+    }
+    if(own(envelope,'profile')&&options.validateProfileRequirement)options.validateProfileRequirement(envelope.profile);
+    return true;
+  }
+  function exportDefinitions() {
+    return [...records.values()].map(record=>{
+      if(!record.manifest.selfContained)fail('E708',`拡張「${record.manifest.id}」は自己完結書き出しに対応していません`);
+      return {manifest:copy(record.manifest),factorySource:record.factorySource,contentHash:record.contentHash};
+    });
+  }
+  function rpcError(code,message,id=null,data) {
+    return {jsonrpc:'2.0',id,error:{code,message,...(data===undefined?{}:{data})}};
+  }
+  function connectWindow(targetWindow, settings = {}) {
+    const current=active();
+    if(!targetWindow||typeof targetWindow.postMessage!=='function'||typeof window==='undefined'||typeof MessageChannel==='undefined')
+      fail('E707','接続相手のウィンドウがありません');
+    if(typeof settings.origin!=='string'||!settings.origin||settings.origin==='*')fail('E707','接続相手のoriginを明示してください');
+    const requested=copy(settings.capabilities||[]),allowed=options.allowedCapabilities||current.capabilities;
+    if(!Array.isArray(requested)||new Set(requested).size!==requested.length||requested.some(value=>typeof value!=='string'||!allowed.includes(value)||!current.capabilities.includes(value)))
+      fail('E707','接続能力はホストが明示的に許可します');
+    const timeoutMs=settings.timeoutMs===undefined?10000:settings.timeoutMs;
+    if(!Number.isFinite(timeoutMs)||timeoutMs<=0)fail('E707','接続timeoutは正の有限値にします');
+    const bytes=new Uint8Array(16);globalThis.crypto.getRandomValues(bytes);
+    const nonce=Array.from(bytes,value=>value.toString(16).padStart(2,'0')).join('');
+    const connectionId=current.id+'/connection-'+(++sequence),helloId=connectionId+'/hello',probeId=connectionId+'/probe';
+    const channel=new MessageChannel(),port=channel.port1,pending=new Map();
+    let closed=false,ready=false,helloSent=false,requestSequence=0,eventSequence=0,granted=[],handshakeTimer,probeTimer,rejectHandshake;
+    function error(message,code='E707'){const value=new Error(message);value.code=code;return value;}
+    function send(value){if(closed)throw error('接続は終了しています');port.postMessage(copy(value));}
+    function close(reason='connection closed') {
+      if(closed)return;closed=true;ready=false;clearTimeout(handshakeTimer);clearInterval(probeTimer);window.removeEventListener('message',handshake);
+      current.controller.signal.removeEventListener('abort',aborted);
+      for(const entry of pending.values()){entry.cleanup();entry.reject(error(reason));}pending.clear();
+      port.onmessage=null;port.onmessageerror=null;port.close();channel.port2.close();connections.delete(connector);
+      rejectHandshake?.(error(reason));rejectHandshake=null;
+    }
+    const aborted=()=>close('session ended');
+    function checkMethod(method) {
+      if(typeof method!=='string'||!method||method.startsWith('rpc.')||method.startsWith('akari.')||!granted.includes(method))
+        throw error('未許可のコネクタ機能です');
+    }
+    function checkRequestOptions(requestOptions) {
+      if(!plain(requestOptions))throw error('要求optionsはObjectです');
+      const duration=requestOptions.timeoutMs===undefined?timeoutMs:requestOptions.timeoutMs,signal=requestOptions.signal;
+      if(!Number.isFinite(duration)||duration<=0)throw error('要求timeoutは正の有限値にします');
+      if(signal!==undefined&&(!signal||typeof signal.aborted!=='boolean'||typeof signal.addEventListener!=='function'||typeof signal.removeEventListener!=='function'))
+        throw error('要求signalはAbortSignalです');
+      return {duration,signal};
+    }
+    function newRequest(method,params,requestOptions={}) {
+      active(current);if(!ready||closed)throw error('コネクタは未接続です');checkMethod(method);
+      if(params!==undefined&&!(plain(params)||Array.isArray(params)))throw error('JSON-RPC paramsはObjectまたはArrayです');
+      const checkedParams=params===undefined?undefined:copy(params);
+      const {duration,signal}=checkRequestOptions(requestOptions);
+      const id=connectionId+'/request-'+(++requestSequence);
+      let resolve,reject,timer;
+      const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});
+      const cleanup=()=>{clearTimeout(timer);signal?.removeEventListener('abort',cancel);};
+      const cancel=()=>{if(!pending.has(id))return;pending.delete(id);cleanup();
+        if(!closed)send({jsonrpc:'2.0',method:'akari.cancel',params:{connectionId,sessionId:current.id,id}});
+        reject(error('要求を取り消しました','E706'));};
+      if(signal?.aborted){reject(error('要求を取り消しました','E706'));return {promise,message:null};}
+      pending.set(id,{resolve,reject,cleanup});signal?.addEventListener('abort',cancel,{once:true});
+      timer=setTimeout(()=>{if(!pending.has(id))return;pending.delete(id);cleanup();
+        if(!closed)try{send({jsonrpc:'2.0',method:'akari.cancel',params:{connectionId,sessionId:current.id,id}});}catch(cause){close(cause.message);}
+        reject(error('要求がtimeoutしました'));},duration);
+      return {promise,message:{jsonrpc:'2.0',method,...(checkedParams===undefined?{}:{params:checkedParams}),id}};
+    }
+    const connector={get ready(){return ready&&!closed;},get connectionId(){return connectionId;},get sessionId(){return current.id;},
+      get capabilities(){return [...granted];},
+      request(method,params,requestOptions){const item=newRequest(method,params,requestOptions);if(item.message)try{send(item.message);}catch(cause){close(cause.message);}return item.promise;},
+      notify(method,params){active(current);if(!ready||closed)throw error('コネクタは未接続です');checkMethod(method);
+        if(params!==undefined&&!(plain(params)||Array.isArray(params)))throw error('JSON-RPC paramsはObjectまたはArrayです');
+        send({jsonrpc:'2.0',method,...(params===undefined?{}:{params})});},
+      batch(items){if(!Array.isArray(items)||!items.length)throw error('batchには要求が必要です');
+        const messages=[],promises=[];
+        active(current);if(!ready||closed)throw error('コネクタは未接続です');
+        const checkedItems=items.map(item=>{if(!plain(item)||typeof item.method!=='string')throw error('batch要求が不正です');
+          checkMethod(item.method);if(item.params!==undefined&&!(plain(item.params)||Array.isArray(item.params)))throw error('JSON-RPC paramsが不正です');
+          checkRequestOptions(item);
+          return {...item,...(item.params===undefined?{}:{params:copy(item.params)})};});
+        for(const item of checkedItems){if(item.notification){messages.push({jsonrpc:'2.0',method:item.method,...(item.params===undefined?{}:{params:item.params})});}
+          else{const next=newRequest(item.method,item.params,item);if(next.message)messages.push(next.message);promises.push(next.promise);}}
+        if(messages.length)try{send(messages);}catch(cause){close(cause.message);}return Promise.all(promises);},
+      close(reason){if(ready&&!closed)try{send({jsonrpc:'2.0',method:'akari.close',params:{connectionId,sessionId:current.id}});}catch(_){}close(reason);},
+    };
+    function process(message) {
+      if(!plain(message))return rpcError(-32600,'Invalid Request');
+      const responseCandidate=!own(message,'method')&&(own(message,'result')||own(message,'error'));
+      if(message.jsonrpc!=='2.0')return responseCandidate?null:rpcError(-32600,'Invalid Request');
+      if(own(message,'method')) {
+        const hasId=own(message,'id'),validId=!hasId||message.id===null||typeof message.id==='string'||(typeof message.id==='number'&&Number.isFinite(message.id));
+        if(typeof message.method!=='string'||!validId||(own(message,'params')&&!plain(message.params)&&!Array.isArray(message.params)))return rpcError(-32600,'Invalid Request');
+        let response;
+        if(message.method==='akari.event') {
+          const params=message.params;
+          if(!keys(params,['connectionId','sessionId','sequence','extensionId','eventId','payload'])||params.connectionId!==connectionId||params.sessionId!==current.id||
+            !Number.isSafeInteger(params.sequence)||params.sequence!==eventSequence+1)response=rpcError(-32602,'Invalid params',hasId?message.id:null);
+          else {
+            try {active(current);const record=records.get(params.extensionId),event=record?.manifest.events.find(item=>item.id===params.eventId);
+              if(!event||record.manifest.offline||!record.manifest.capabilities.some(value=>granted.includes(value)))throw error('未許可のできごとです');
+              const payload=valueCheck(params.payload,event.payload);eventSequence=params.sequence;
+              current.onEvent?.({name:params.extensionId+'/'+params.eventId,payload,sessionId:current.id,connectionId,sequence:eventSequence});
+              response={jsonrpc:'2.0',id:message.id,result:null};
+            }catch(cause){response=rpcError(-32602,'Invalid params',hasId?message.id:null,{message:cause.message});}
+          }
+        } else if(message.method==='akari.close') {
+          if(!keys(message.params,['connectionId','sessionId'])||message.params.connectionId!==connectionId||message.params.sessionId!==current.id)
+            response=rpcError(-32602,'Invalid params',hasId?message.id:null);
+          else {response={jsonrpc:'2.0',id:message.id,result:null};setTimeout(()=>close('peer disconnected'),0);}
+        } else response=rpcError(-32601,'Method not found',hasId?message.id:null);
+        return hasId?response:null;
+      }
+      if(!responseCandidate)return rpcError(-32600,'Invalid Request');
+      if(!keys(message,['jsonrpc','id'],['result','error'])||own(message,'result')===own(message,'error')||
+        !(message.id===null||typeof message.id==='string'||(typeof message.id==='number'&&Number.isFinite(message.id))))return null;
+      if(own(message,'error')&&(!keys(message.error,['code','message'],['data'])||!Number.isInteger(message.error.code)||typeof message.error.message!=='string'))return null;
+      const entry=pending.get(message.id);if(!entry)return null;
+      pending.delete(message.id);entry.cleanup();
+      try{active(current);if(own(message,'error')){const cause=error(message.error.message);cause.rpc=copy(message.error);entry.reject(cause);}else entry.resolve(copy(message.result));}
+      catch(cause){entry.reject(cause);}return null;
+    }
+    port.onmessage=event=>{
+      if(!ready||closed||session!==current)return;
+      let input;try{input=typeof event.data==='string'?JSON.parse(event.data):copy(event.data);}catch(_){send(rpcError(typeof event.data==='string'?-32700:-32600,typeof event.data==='string'?'Parse error':'Invalid Request'));return;}
+      if(Array.isArray(input)) {
+        if(!input.length){send(rpcError(-32600,'Invalid Request'));return;}
+        const responses=input.map(process).filter(Boolean);if(responses.length)send(responses);
+      } else {const response=process(input);if(response)send(response);}
+    };
+    port.onmessageerror=()=>close('message deserialization failed');port.start();
+    let resolveHandshake;
+    function handshake(event) {
+      if(event.source!==targetWindow||event.origin!==settings.origin||closed)return;
+      const message=event.data;
+      if(!helloSent&&keys(message,['jsonrpc','id','result'])&&message.jsonrpc==='2.0'&&message.id===probeId&&
+        keys(message.result,['nonce'])&&message.result.nonce===nonce) {
+        helloSent=true;clearInterval(probeTimer);
+        try{targetWindow.postMessage({jsonrpc:'2.0',method:'akari.hello',id:helloId,params:{nonce,connectionId,sessionId:current.id,
+          apiContract:API_CONTRACT,standard:copy(standard),capabilities:requested}},settings.origin==='null'?'*':settings.origin,[channel.port2]);}
+        catch(cause){close(cause.message);}return;
+      }
+      if(!plain(message)||message.jsonrpc!=='2.0'||message.id!==helloId)return;
+      if(!helloSent)return;
+      const result=message.result;
+      try {
+      if(!keys(message,['jsonrpc','id','result'])||!keys(result,['nonce','connectionId','apiContract','standard','capabilities'])||
+        result.nonce!==nonce||result.connectionId!==connectionId||result.apiContract!==API_CONTRACT||canonical(result.standard)!==canonical(standard)||
+        !Array.isArray(result.capabilities)||new Set(result.capabilities).size!==result.capabilities.length||result.capabilities.some(value=>!requested.includes(value))) {
+        close('connector contract mismatch');return;
+      }
+      if(requested.some(value=>!result.capabilities.includes(value))){close('required connector capability missing');return;}
+      granted=[...result.capabilities];ready=true;clearTimeout(handshakeTimer);window.removeEventListener('message',handshake);
+      rejectHandshake=null;resolveHandshake(connector);
+      } catch(cause) {close(cause.message);}
+    }
+    const promise=new Promise((resolve,reject)=>{resolveHandshake=resolve;rejectHandshake=reject;});
+    connections.add(connector);window.addEventListener('message',handshake);current.controller.signal.addEventListener('abort',aborted,{once:true});
+    handshakeTimer=setTimeout(()=>close('connector handshake timeout'),timeoutMs);
+    function probe(){if(closed||helloSent)return;try{targetWindow.postMessage({jsonrpc:'2.0',method:'akari.probe',id:probeId,params:{nonce}},settings.origin==='null'?'*':settings.origin);}catch(cause){close(cause.message);}}
+    probeTimer=setInterval(probe,100);probe();return promise;
+  }
+  if(!keys(standard,['languageContractId','runtimeContractId'])||Object.values(standard).some(value=>!Number.isSafeInteger(value)||value<1))
+    fail('E701','基礎Standardの契約番号が不正です');
+  return Object.freeze({apiContract:API_CONTRACT,standard,register,operations,describe,seal(){sealed=true;},get sealed(){return sealed;},
+    invokeCalculation:(name,args,context)=>invoke(name,'calculations',args,context),
+    invokeCommand:(name,args,context)=>invoke(name,'commands',args,context),
+    beginSession,endSession,requirements,validateRequirements,initialState,snapshotState,restoreState,exportDefinitions,connectWindow,
+    get sessionId(){return session?.id||null;},get active(){return !!session;}});
+}
+// AKARI-EXTENSION-FOUNDATION.JS-END
+
+  function createAkariRuntime(options) {
     'use strict';
+    if (options === undefined) options = {};
     const BUILTIN_DEFINITIONS = Object.freeze([
       Object.freeze({ name: '乱数', minArgs: 2, maxArgs: 2 }),
       Object.freeze({ name: '余り', minArgs: 2, maxArgs: 2 }),
@@ -6288,7 +6644,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       Object.freeze({ name: '最大', minArgs: 1, maxArgs: Infinity }),
       Object.freeze({ name: 'つなぐ', minArgs: 2, maxArgs: Infinity }),
     ]);
-    const LIMITS = {
+    const STANDARD_LIMITS = {
       fileBytes: 24 * 1024 * 1024,
       importFileBytes: 12 * 1024 * 1024,
       assetRawTotal: 16 * 1024 * 1024,
@@ -6328,6 +6684,53 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       repeatCount: 1000000,
       activeTasks: 2000,
     };
+    const profileRegistry = createAkariProfiles(STANDARD_LIMITS, {
+      executableBytes: 64 * 1024 * 1024, logChars: 100000,
+      historyEntries: 60, diagnosticsBytes: 8388608,
+    });
+    for (const definition of options.profiles || []) profileRegistry.register(definition);
+    if (options.profile) profileRegistry.select(options.profile.id, options.profile.version);
+    const LIMITS = {};
+    for (const key of Object.keys(profileRegistry.standard)) Object.defineProperty(LIMITS, key, {
+      enumerable: Object.hasOwn(STANDARD_LIMITS, key), get: () => profileRegistry.effective[key],
+    });
+    Object.freeze(LIMITS);
+    const profiles = Object.freeze({ ...profileRegistry,
+      register() { throw new Error('プロファイルは起動設定で登録してください'); },
+      select() { throw new Error('プロファイルは起動前にホスト側で選択してください'); },
+    });
+    const extensions = createAkariExtensionHost({
+      standard: { languageContractId: 2, runtimeContractId: 2 },
+      reservedNames: BUILTIN_DEFINITIONS.map(x => x.name),
+      allowedCapabilities: options.allowedCapabilities || [],
+      validateValue: validateExtensionValue,
+      validateProfileRequirement: value => profiles.validateRequirement(value),
+    });
+    for (const definition of options.extensions || []) extensions.register(definition.manifest, definition.factory);
+    extensions.seal();
+    function validateExtensionValue(value, shape) {
+      assertRuntimeValueLimit(value);
+      const valid = shape.type === 'number' ? isNumberValue(value) && unitOf(value) === shape.unit :
+        shape.type === 'string' ? typeof value === 'string' :
+        shape.type === 'boolean' ? typeof value === 'boolean' :
+        shape.type === 'list' ? listValue(value) : scalar(value) || listValue(value);
+      if (!valid) throw new AkariError('E705', '拡張の値の型・単位が一致しません');
+      return deepCopy(value);
+    }
+    function validateExtensionEnvelope(value) {
+      extensions.validateRequirements(value);
+      profiles.validateRequirement(value.profile ?? null);
+      if (!Array.isArray(value.state)) throw new AkariError('E701', '拡張状態の一覧が必要です');
+      return value;
+    }
+    function extensionError(error) {
+      return !(error instanceof AkariError) && /^E70[1-8]$/.test(error?.code)
+        ? new AkariError(error.code, error.message) : error;
+    }
+    function invokeExtension(kind, name, args, context) {
+      try { return kind === 'calculation' ? extensions.invokeCalculation(name, args, context) : extensions.invokeCommand(name, args, context); }
+      catch (error) { throw extensionError(error); }
+    }
     const COLOR_NAMES = {
       白: '#ffffff',
       黒: '#000000',
@@ -6966,7 +7369,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           try {
             gain?.disconnect();
           } catch (_) {}
-          throw new AkariError('R416', '同時に鳴らせる音は32個までです');
+          throw new AkariError('R416', `同時に鳴らせる音は${LIMITS.activeAudioVoices}個までです`);
         }
         const id = `audio-${++this.handleSeq}`,
           h = { id, source, gain, onEnded, finished: false };
@@ -7724,6 +8127,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           if (i > arr.length) throw new AkariError('R404', 'リストの範囲外です');
           return deepCopy(arr[i - 1]);
         }
+        case 'ExtensionCalculation':
+          return assertRuntimeValueLimit(invokeExtension('calculation', ast.name, ast.args.map(x => evalExpression(x, ctx, budget)), ctx));
         case 'BuiltinCall':
           return assertRuntimeValueLimit(evalBuiltin(ast, ctx, budget));
         case 'UserFunctionCall':
@@ -7937,6 +8342,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           return r.mouseDown;
         case 'タイマー':
           return quantity((r.now() - r.startTime) / 1000, '秒');
+        case '拡張の値':
+          if (!Object.hasOwn(ctx.eventContext || {}, 'payload')) throw new AkariError('E705', '拡張のできごとの中で使ってください');
+          return assertRuntimeValueLimit(ctx.eventContext.payload);
         case '答え':
           return ctx.task?.lastAnswer ?? '';
         case '音量':
@@ -8096,7 +8504,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               break;
             case 'RepeatCount': {
               const count = numberInUnit(evalExpression(n.count, ctx, budget), '回');
-              if (!Number.isInteger(count) || count < 0 || count > LIMITS.repeatCount)
+              if (!Number.isSafeInteger(count) || count < 0 || count > LIMITS.repeatCount)
                 throw new AkariError('R413', 'くり返し回数は0以上の整数で上限以内にします');
               for (let i = 0; i < count; i++) {
                 if (++budget.count > LIMITS.functionOps)
@@ -8229,6 +8637,266 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       }
       b.set(arr);
     }
+    // Derived operation policies use resumable evaluation on the main event loop.
+    // The standard policy retains the existing synchronous evaluator and accounting.
+    function hasUserFunction(value) {
+      if (!value || typeof value !== 'object') return false;
+      if (value.kind === 'UserFunctionCall') return true;
+      return Object.entries(value).some(([key, child]) => !['body','thenBody','elseBody','sourceSpan','actorRef'].includes(key) &&
+        (Array.isArray(child) ? child.some(hasUserFunction) : hasUserFunction(child)));
+    }
+    function valueExpression(value) {
+      if (isQuantity(value)) return {kind:'QuantityLiteral',unit:value.unit,value:{kind:'NumberLiteral',value:value.magnitude}};
+      if (Array.isArray(value)) return {kind:'ListLiteral',items:value.map(valueExpression)};
+      return {kind:typeof value==='number'?'NumberLiteral':typeof value==='boolean'?'BooleanLiteral':'StringLiteral',value};
+    }
+    function* calculationCheckpoint(budget) {
+      if (++budget.count > LIMITS.functionOps) throw new AkariError('R409','計算の量が上限を超えました');
+      if ((budget.count & 127) === 0) yield;
+    }
+    function* evalExpressionSteps(ast, ctx, budget) {
+      if (ast.kind !== 'QuantityLiteral') yield* calculationCheckpoint(budget);
+      if (ast.kind === 'UserFunctionCall') {
+        const args=[]; for (const argument of ast.args) args.push(yield* evalExpressionSteps(argument,ctx,budget));
+        return yield* runUserFunctionSteps(ast.name,args,ctx,budget,(ctx.callDepth||0)+1,ast.argumentNames||[]);
+      }
+      if (ast.kind === 'ActorQualifiedRead') return yield* evalExpressionSteps(ast.value,
+        {...ctx,runtimeId:ctx.runtime.resolveActorRef(ast.actorRef,ctx.runtimeId)},budget);
+      if (ast.kind === 'LogicalExpression') {
+        const left=bool(yield* evalExpressionSteps(ast.left,ctx,budget));
+        if (ast.op==='AND') return left ? bool(yield* evalExpressionSteps(ast.right,ctx,budget)) : false;
+        return left ? true : bool(yield* evalExpressionSteps(ast.right,ctx,budget));
+      }
+      const prepared={...ast};
+      for (const key of ['value','left','right','list','index','arg']) if (ast[key] && typeof ast[key]==='object' && ast[key].kind)
+        prepared[key]=valueExpression(yield* evalExpressionSteps(ast[key],ctx,budget));
+      for (const key of ['args','items']) if (Array.isArray(ast[key])) {
+        prepared[key]=[];
+        for (const child of ast[key]) prepared[key].push(valueExpression(yield* evalExpressionSteps(child,ctx,budget)));
+      }
+      return evalExpression(prepared,ctx);
+    }
+    function advanceEvaluation(evaluator) {
+      const started=nowMs(); let outcome;
+      do { outcome=evaluator.next(); } while (!outcome.done && nowMs()-started<8);
+      return outcome;
+    }
+    function* runUserFunctionSteps(name, args, ctx, budget = null, depth = 1, argumentNames = []) {
+      if (depth > LIMITS.callDepth) throw new AkariError('R408', '計算の呼び出しが深すぎます');
+      const def = ctx.compiled.symbols.functions.get(name);
+      if (!def) throw new AkariError('S301', `計算「${name}」がありません`);
+      if (def.args.length !== args.length)
+        throw new AkariError('S308', `計算「${name}」が受け取る値は${def.args.length}個です`+namedArgumentDetails(def.args,argumentNames));
+      if (argumentNames.length) {
+        if (argumentNames.length !== args.length || new Set(argumentNames).size !== argumentNames.length ||
+          argumentNames.some(n => !def.args.includes(n)) || def.args.some(n => !argumentNames.includes(n)))
+          throw new AkariError('S308', `計算「${name}」の受け取る値の名前が一致しません`+namedArgumentDetails(def.args,argumentNames));
+        const named = new Map(argumentNames.map((n, i) => [n, args[i]]));
+        args = def.args.map(n => named.get(n));
+      }
+      budget = budget || { count: 0 };
+      const ast = ctx.compiled.astByKey.get(`function:${def.id}`);
+      if (!ast) throw new AkariError('S301', `計算「${name}」を準備できません`);
+      const frame = {
+        args: new Map(def.args.map((n, i) => [n, deepCopy(args[i])])),
+        locals: new Map(),
+        localLists: new Map(),
+        name,
+        id: def.id,
+        selfRuntimeId: ctx.runtimeId,
+      };
+      const fctx = { ...ctx, functionFrame: frame, callDepth: depth, budget };
+      try {
+        (yield* execFunctionNodesSteps(ast.body, fctx, budget, 0));
+      } catch (sig) {
+        if (sig instanceof ScriptSignal && sig.kind === 'return') return deepCopy(sig.value);
+        if (sig instanceof AkariError) {
+          sig.akariCallStack = [`計算 ${name}`, ...(sig.akariCallStack || [])];
+          sig.akariFrames = [snapshotFrame(frame, 'function'), ...(sig.akariFrames || [])];
+        }
+        throw sig;
+      }
+      throw new AkariError('S306', `計算「${name}」が値を返しませんでした`);
+    }
+    function* execFunctionNodesSteps(nodes, inheritedContext, budget, loopDepth) {
+      for (const n of nodes) {
+        if (n.kind === 'CommentLine') continue;
+        // A nested suite changes the effective subject, never the function's self.
+        const ctx = { ...inheritedContext, runtimeId: inheritedContext.runtime.resolveActorRef(
+          n.actorRef, inheritedContext.functionFrame.selfRuntimeId) };
+        ctx.functionFrame.currentLine = n.sourceSpan?.startLine || 1;
+        yield* calculationCheckpoint(budget);
+        try {
+          switch (n.kind) {
+            case 'NoOperation':
+              break;
+            case 'LocalVariableDeclaration':
+              ctx.functionFrame.locals.set(
+                n.name,
+                localScalar((yield* evalExpressionSteps(n.initial, ctx, budget))),
+              );
+              break;
+            case 'LocalListDeclaration':
+              ctx.functionFrame.localLists.set(n.name, []);
+              break;
+            case 'Assignment':
+              ctx.runtime.writeTarget(n.target, (yield* evalExpressionSteps(n.value, ctx, budget)), ctx);
+              break;
+            case 'NumericUpdate': {
+              const b = ctx.runtime.resolveBinding(n.target.name, n.target.qualifier, ctx);
+              if (!b?.set) throw new AkariError('S301', '代入先がありません');
+              const value = addNumericUpdate(b.get(), (yield* evalExpressionSteps(n.value, ctx, budget)), n.op);
+              ctx.runtime.writeTarget(n.target, value, ctx, {resolvedBinding: b});
+              break;
+            }
+            case 'ListAppend':
+            case 'ListInsert':
+            case 'ListReplace':
+            case 'ListDelete':
+            case 'ListClear':
+              (yield* execListMutationSteps(n, ctx, budget));
+              break;
+            case 'IfStatement':
+              (yield* execFunctionNodesSteps(
+                bool((yield* evalExpressionSteps(n.condition, ctx, budget))) ? n.thenBody : n.elseBody,
+                ctx,
+                budget,
+                loopDepth,
+              ));
+              break;
+            case 'RepeatCount': {
+              const count = numberInUnit((yield* evalExpressionSteps(n.count, ctx, budget)), '回');
+              if (!Number.isSafeInteger(count) || count < 0 || count > LIMITS.repeatCount)
+                throw new AkariError('R413', 'くり返し回数は0以上の整数で上限以内にします');
+              for (let i = 0; i < count; i++) {
+                yield* calculationCheckpoint(budget);
+                try {
+                  (yield* execFunctionNodesSteps(n.body, ctx, budget, loopDepth + 1));
+                } catch (s) {
+                  if (s instanceof ScriptSignal && s.kind === 'break') break;
+                  if (s instanceof ScriptSignal && s.kind === 'continue') continue;
+                  throw s;
+                }
+              }
+              break;
+            }
+            case 'RepeatWhile':
+              while (bool((yield* evalExpressionSteps(n.condition, ctx, budget)))) {
+                try {
+                  (yield* execFunctionNodesSteps(n.body, ctx, budget, loopDepth + 1));
+                } catch (s) {
+                  if (s instanceof ScriptSignal && s.kind === 'break') break;
+                  if (s instanceof ScriptSignal && s.kind === 'continue') continue;
+                  throw s;
+                }
+              }
+              break;
+            case 'RepeatUntil':
+              while (!bool((yield* evalExpressionSteps(n.condition, ctx, budget)))) {
+                try {
+                  (yield* execFunctionNodesSteps(n.body, ctx, budget, loopDepth + 1));
+                } catch (s) {
+                  if (s instanceof ScriptSignal && s.kind === 'break') break;
+                  if (s instanceof ScriptSignal && s.kind === 'continue') continue;
+                  throw s;
+                }
+              }
+              break;
+            case 'Forever':
+              for (;;) {
+                yield* calculationCheckpoint(budget);
+                try {
+                  (yield* execFunctionNodesSteps(n.body, ctx, budget, loopDepth + 1));
+                } catch (s) {
+                  if (s instanceof ScriptSignal && s.kind === 'break') break;
+                  if (s instanceof ScriptSignal && s.kind === 'continue') continue;
+                  throw s;
+                }
+              }
+              break;
+            case 'ForEach': {
+              const arr = (yield* evalExpressionSteps(n.list, ctx, budget));
+              if (!Array.isArray(arr))
+                throw new AkariError('R411', '「それぞれ」はリストに使います');
+              for (const v of deepCopy(arr)) {
+                yield* calculationCheckpoint(budget);
+                const old = ctx.functionFrame.locals.has(n.binder)
+                    ? ctx.functionFrame.locals.get(n.binder)
+                    : undefined,
+                  had = ctx.functionFrame.locals.has(n.binder);
+                ctx.functionFrame.locals.set(n.binder, deepCopy(v));
+                try {
+                  (yield* execFunctionNodesSteps(n.body, ctx, budget, loopDepth + 1));
+                } catch (s) {
+                  if (s instanceof ScriptSignal && s.kind === 'break') {
+                    if (had) ctx.functionFrame.locals.set(n.binder, old);
+                    else ctx.functionFrame.locals.delete(n.binder);
+                    break;
+                  }
+                  if (!(s instanceof ScriptSignal && s.kind === 'continue')) throw s;
+                }
+                if (had) ctx.functionFrame.locals.set(n.binder, old);
+                else ctx.functionFrame.locals.delete(n.binder);
+              }
+              break;
+            }
+            case 'Break':
+              throw new ScriptSignal('break');
+            case 'Continue':
+              throw new ScriptSignal('continue');
+            case 'ReturnStatement': {
+              const s = new ScriptSignal('return');
+              s.value = (yield* evalExpressionSteps(n.value, ctx, budget));
+              throw s;
+            }
+            default:
+              throw new AkariError('S305', '計算ではこの命令を使えません');
+          }
+        } catch (err) {
+          if (err instanceof AkariError && !err.akariSource) {
+            if (!err.line) {
+              err.line = n.sourceSpan?.startLine || 1;
+              err.column = n.sourceSpan?.startColumn || 1;
+            }
+            err.akariSource = { key: `function:${ctx.functionFrame.id}` };
+          }
+          throw err;
+        }
+      }
+    }
+    function* execListMutationSteps(n, ctx, budget = null) {
+      const b = ctx.runtime.resolveBinding(n.target.name, n.target.qualifier, ctx);
+      if (!b || !b.set) throw new AkariError('S301', 'リストがありません');
+      const arr = b.get();
+      if (!Array.isArray(arr)) throw new AkariError('R411', 'この操作はリストに使います');
+      if (n.kind === 'ListClear') {
+        b.set([]);
+        return;
+      }
+      const idx = n.index ? integerIndex((yield* evalExpressionSteps(n.index, ctx, budget))) : null;
+      if (n.kind === 'ListAppend') {
+        const v = assertRuntimeValueLimit((yield* evalExpressionSteps(n.value, ctx, budget)));
+        if (!scalar(v)) throw new AkariError('R411', 'リストへ入れられるのは数・文字・条件の答えです');
+        if (arr.length >= LIMITS.listItems) throw new AkariError('R413', 'リストが長すぎます');
+        arr.push(deepCopy(v));
+      } else if (n.kind === 'ListInsert') {
+        if (idx > arr.length + 1) throw new AkariError('R404', '挿入位置がリストの範囲外です');
+        const v = assertRuntimeValueLimit((yield* evalExpressionSteps(n.value, ctx, budget)));
+        if (!scalar(v)) throw new AkariError('R411', 'リストへ入れられるのは数・文字・条件の答えです');
+        if (arr.length >= LIMITS.listItems) throw new AkariError('R413', 'リストが長すぎます');
+        arr.splice(idx - 1, 0, deepCopy(v));
+      } else if (n.kind === 'ListReplace') {
+        if (idx > arr.length) throw new AkariError('R404', '置換位置がリストの範囲外です');
+        const v = assertRuntimeValueLimit((yield* evalExpressionSteps(n.value, ctx, budget)));
+        if (!scalar(v)) throw new AkariError('R411', 'リストへ入れられるのは数・文字・条件の答えです');
+        arr[idx - 1] = deepCopy(v);
+      } else if (n.kind === 'ListDelete') {
+        if (idx > arr.length) throw new AkariError('R404', '削除位置がリストの範囲外です');
+        arr.splice(idx - 1, 1);
+      }
+      b.set(arr);
+    }
+
     class EventScheduler {
       constructor(project, compiled, runtime, ui = {}) {
         this.project = project;
@@ -8282,6 +8950,16 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         for (const [key, control] of this.continuous) {
           if (!this.runtime.actor(control.runtimeId)) { this.continuous.delete(key); continue; }
           try {
+            if (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(control.rule)) {
+              if (!control.evaluator) control.evaluator = this.evaluateContinuous(control);
+              const outcome = advanceEvaluation(control.evaluator);
+              if (outcome.done) {
+                control.evaluator = null;
+                if (outcome.value === null) control.state = 'INACTIVE';
+                else if (control.state === 'INACTIVE') { control.speed = outcome.value; control.state = 'ACTIVE'; }
+              }
+              continue;
+            }
             const ctx = this.context(control.task), enabled = bool(evalExpression(control.rule.condition, ctx));
             if (!enabled) { control.state = 'INACTIVE'; continue; }
             if (control.state !== 'INACTIVE') continue;
@@ -8311,7 +8989,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           default: throw new AkariError('R411', '移動方向が正しくありません');
         }
       }
-      advanceContinuous(at = this.runtime.now()) {
+      advanceContinuous(at = this.runtime.now(), refresh = true) {
         if (!this.running || this.paused || this.continuousTime === null) return;
         if (!Number.isFinite(at) || at < this.continuousTime)
           throw new AkariError('R412', '論理時計を過去へ戻せません');
@@ -8350,7 +9028,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               catch (err) { this.taskError(task, err); break; }
             }
           }
-          if (end === grid) { this.continuousTick++; this.refreshContinuous(); }
+          if (end === grid) { this.continuousTick++; if (refresh) this.refreshContinuous(); }
           if (this.paused || !this.running) break;
         }
         if (this.continuous.size) this.ui.render?.();
@@ -8474,6 +9152,24 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         return out;
       }
       start() {
+        extensions.endSession();
+        this.extensionEpoch = (this.extensionEpoch || 0) + 1;
+        this.extensionCompletions = [];
+        this.extensionEvents = [];
+        if (Object.hasOwn(this.project, 'extensions')) validateExtensionEnvelope(this.project.extensions);
+        const epoch = this.extensionEpoch;
+        if (extensions.requirements().required.length) extensions.beginSession({ state: this.project.extensions?.state || extensions.initialState(),
+          onEvent: event => {
+            if (epoch !== this.extensionEpoch) return;
+            if (this.extensionEvents.length >= LIMITS.activeTasks) {
+              const task = [...this.tasks.values()][0];
+              if (task) this.taskError(task, new AkariError('E708', '拡張の通知が滞留上限を超えました'));
+              else this.stop();
+              return;
+            }
+            this.extensionEvents.push(event); this.schedule();
+          },
+        });
         clearTimeout(this.loopTimer);
         this.loopTimer = null;
         this.loopScheduled = false;
@@ -8496,12 +9192,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         this.schedule();
       }
       stop() {
+        this.advanceContinuous(this.runtime.now(), LIMITS.functionOps === STANDARD_LIMITS.functionOps);
+        if (extensions.active && extensions.requirements().required.length) this.project.extensions = {
+          ...extensions.requirements(), profile: profiles.requirement(), state: extensions.snapshotState(),
+        };
+        this.extensionEpoch = (this.extensionEpoch || 0) + 1;
+        extensions.endSession();
+        this.extensionCompletions = []; this.extensionEvents = [];
+        for (const task of this.tasks.values()) task.extensionAbort?.abort();
         clearTimeout(this.loopTimer);
         clearTimeout(this.questionTimer);
         this.loopTimer = null;
         this.questionTimer = null;
         this.loopScheduled = false;
-        this.advanceContinuous();
         this.continuous.clear();
         this.runtime.pauseClock();
         this.running = false;
@@ -8589,7 +9292,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           if (this.ready.length) this.schedule();
           else if (
             this.continuous.size || [...this.blocked].some((t) =>
-              ['time', 'condition', 'glide'].includes(t.blockReason?.kind),
+              ['time', 'condition', 'glide', 'calculation'].includes(t.blockReason?.kind),
             )
           )
             this.schedule(16);
@@ -8717,7 +9420,51 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           return true;
         }
       }
+      prepareCooperativeNode(task, node, loopFrame = null) {
+        if (!hasUserFunction(node)) return false;
+        this.selectSubject(task,node);
+        const ctx=this.context(task), result={...node}, scheduler=this;
+        function* prepare() {
+          const budget={count:0};
+          for (const key of ['value','condition','count','seconds','question','message','initial','list','index'])
+            if (node[key]?.kind && hasUserFunction(node[key])) result[key]=valueExpression(yield* evalExpressionSteps(node[key],ctx,budget));
+          if (node.args?.some(hasUserFunction)) {
+            result.args=[];
+            for (const argument of node.args) result.args.push(valueExpression(yield* evalExpressionSteps(argument,ctx,budget)));
+          }
+          return result;
+        }
+        this.block(task,{kind:'calculation',evaluator:prepare(),epoch:this.extensionEpoch,loopFrame,originalNode:node});
+        this.schedule(0); return true;
+      }
+      advanceCalculation(task) {
+        const reason=task.blockReason;
+        if (!reason || reason.kind!=='calculation' || !this.running || reason.epoch!==this.extensionEpoch) return;
+        const outcome=advanceEvaluation(reason.evaluator);
+        if (!outcome.done) return;
+        this.blocked.delete(task); task.blockReason=null; task.state='RUNNING';
+        if (reason.loopFrame) {
+          const keep=bool(evalExpression(outcome.value.condition,this.context(task)));
+          if (reason.loopFrame.type==='while'?keep:!keep) this.enterBody(task,reason.loopFrame.node.body);
+          else task.execStack.pop();
+        } else this.executePreparedNode(task,outcome.value,reason.originalNode);
+        if (task.state==='RUNNING') {
+          if (this.normalizeStack(task)) this.enqueue(task); else this.finishTask(task,'DONE');
+        }
+        this.ui.afterStatement?.(task,outcome.value);
+      }
+      *evaluateContinuous(control) {
+        const ctx=this.context(control.task), budget={count:0};
+        if (!bool(yield* evalExpressionSteps(control.rule.condition,ctx,budget))) return null;
+        if (control.state !== 'INACTIVE') return control.speed;
+        const seconds=numberInUnit(yield* evalExpressionSteps(control.rule.seconds,ctx,budget),'秒'),
+          distance=numberInUnit(yield* evalExpressionSteps(control.rule.distance,ctx,budget),'歩');
+        if (seconds<=0) throw new AkariError('R412','速さの時間は0より大きくします');
+        return ensureFinite(distance/seconds);
+      }
+
       executeLoopHeader(task, frame) {
+        if (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && this.prepareCooperativeNode(task, frame.node, frame)) return;
         const v = bool(evalExpression(frame.node.condition, this.context(task)));
         const keep = frame.type === 'while' ? v : !v;
         if (keep) {
@@ -8729,9 +9476,33 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         task.execStack.push({ type: 'seq', nodes, index: 0, ...(binder ? { binder } : {}) });
       }
       executeNode(task, n) {
+        if (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && this.prepareCooperativeNode(task, n)) return;
+        return this.executePreparedNode(task, n);
+      }
+      executePreparedNode(task, n, originalNode = n) {
         this.selectSubject(task, n);
         const ctx = this.context(task);
         switch (n.kind) {
+          case 'ExtensionCommand': {
+            const controller = new AbortController(), epoch = this.extensionEpoch;
+            task.extensionAbort = controller;
+            const result = invokeExtension('command', n.name, n.args.map(x => evalExpression(x, ctx)), { ...ctx, signal: controller.signal });
+            if (result && typeof result.then === 'function') {
+              this.block(task, { kind: 'extension' });
+              const complete = (error, value) => {
+                if (!this.running || this.extensionEpoch !== epoch || !this.tasks.has(task.taskId) || controller.signal.aborted) return;
+                this.extensionCompletions.push(() => {
+                  if (!this.tasks.has(task.taskId) || controller.signal.aborted) return;
+                  if (error) this.taskError(task, extensionError(error));
+                  else { if (value !== null) task.lastAnswer = value; this.unblock(task); }
+                }); this.schedule();
+              };
+              result.then(value => complete(null, value), error => complete(error));
+              return { requeue: false };
+            }
+            if (result !== null) task.lastAnswer = result;
+            return;
+          }
           case 'NoOperation':
             return;
           case 'Assignment':
@@ -8761,7 +9532,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             return;
           case 'RepeatCount': {
             const count = numberInUnit(evalExpression(n.count, ctx), '回');
-            if (!Number.isInteger(count) || count < 0 || count > LIMITS.repeatCount)
+            if (!Number.isSafeInteger(count) || count < 0 || count > LIMITS.repeatCount)
               throw new AkariError('R413', 'くり返し回数は0以上の整数で上限以内にします');
             if (count > 0) {
               task.execStack.push({ type: 'repeatCount', node: n, remaining: count - 1 });
@@ -8772,7 +9543,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           case 'RepeatWhile': {
             const v = bool(evalExpression(n.condition, ctx));
             if (v) {
-              task.execStack.push({ type: 'while', node: n });
+              task.execStack.push({ type: 'while', node: originalNode });
               this.enterBody(task, n.body);
             }
             return;
@@ -8780,7 +9551,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           case 'RepeatUntil': {
             const v = bool(evalExpression(n.condition, ctx));
             if (!v) {
-              task.execStack.push({ type: 'until', node: n });
+              task.execStack.push({ type: 'until', node: originalNode });
               this.enterBody(task, n.body);
             }
             return;
@@ -8817,7 +9588,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           }
           case 'WaitUntil': {
             if (bool(evalExpression(n.condition, ctx))) return;
-            this.block(task, { kind: 'condition', condition: n.condition });
+            this.block(task, { kind: 'condition', condition: originalNode.condition });
             return { requeue: false };
           }
           case 'Say': {
@@ -9008,6 +9779,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
               }
       }
       recheckBlocked(force = false) {
+        if (this.running && (!this.paused || force)) {
+          for (const complete of (this.extensionCompletions || []).splice(0)) complete();
+          for (const event of (this.extensionEvents || []).splice(0))
+            this.spawnDistributed('message', { message: '拡張:' + event.name, payload: event.payload });
+        }
         if (!this.running || (this.paused && !force)) return;
         this.advanceContinuous();
         this.drainExternalUnblocks();
@@ -9018,6 +9794,13 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           const br = t.blockReason;
           if (!br) continue;
           try {
+            if (br.kind === 'calculation') { this.advanceCalculation(t); continue; }
+            if (br.kind === 'condition' && LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(br.condition)) {
+              if (!br.evaluator) br.evaluator = evalExpressionSteps(br.condition, this.context(t, { runtimeId: br.runtimeId }), {count:0});
+              const outcome = advanceEvaluation(br.evaluator);
+              if (outcome.done) { br.evaluator = null; if (bool(outcome.value)) this.unblock(t); }
+              continue;
+            }
             if (br.kind === 'condition' && bool(evalExpression(br.condition, this.context(t, { runtimeId: br.runtimeId }))))
               this.unblock(t);
             else if (br.kind === 'time' && now >= br.deadline) timed.push(t);
@@ -9075,6 +9858,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         this.showNextQuestion();
       }
       finishTask(task, state = 'DONE') {
+        task.extensionAbort?.abort();
         if (['DONE', 'CANCELLED', 'ERROR'].includes(task.state) && task.state !== state) return;
         task.state = state;
         this.blocked.delete(task);
@@ -9182,7 +9966,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         this.errorRecordChars += record.chars;
         while (
           this.errorRecords.length > 20 ||
-          (this.errorRecords.length > 1 && this.errorRecordChars > 8388608)
+          (this.errorRecords.length > 1 && this.errorRecordChars > LIMITS.diagnosticsBytes)
         )
           this.errorRecordChars -= this.errorRecords.shift().chars;
         task.failureRecordId = record.id;
@@ -9539,7 +10323,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       };
       if (
         !exactKeys(data, ['schema', 'appVersion', 'languageContractId', 'runtimeContractId',
-          'programFormatVersion', 'projectFormatVersion', 'project', 'program', 'assets']) ||
+          'programFormatVersion', 'projectFormatVersion', 'project', 'program', 'assets', ...(Object.hasOwn(data || {}, 'extensions') ? ['extensions'] : [])]) ||
         data.schema !== 'akari-executable' ||
         !validProducerLabel(data.appVersion) ||
         Object.entries(EXECUTABLE_CONTRACT).some(([k, v]) => data[k] !== v)
@@ -9547,7 +10331,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         fail(
           '\u3053\u306e\u4f5c\u54c1\u306e\u5b9f\u884c\u5f62\u5f0f\u306b\u306f\u5bfe\u5fdc\u3057\u3066\u3044\u307e\u305b\u3093',
         );
-      const p = data.project;
+      if (Object.hasOwn(data, 'extensions')) validateExtensionEnvelope(data.extensions);
+      const p = Object.hasOwn(data, 'extensions') && data.project && typeof data.project === 'object' ? { ...data.project, extensions: data.extensions } : data.project;
       if (
         !p ||
         typeof p.name !== 'string' ||
@@ -9632,6 +10417,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         while (pending.length) {
           const node = pending.pop();
           if (!node || typeof node !== 'object') continue;
+          if (['ExtensionCommand', 'ExtensionCalculation'].includes(node.kind)) {
+            const operation = extensions.describe(node.name, node.kind === 'ExtensionCommand' ? 'commands' : 'calculations');
+            if (!operation || !Array.isArray(node.args) || node.args.length !== operation.args.length) fail('拡張機能・引数の契約が一致しません');
+          }
           if (node.kind === 'Hole') fail('書きかけの役割を完成させてください');
           if (Object.hasOwn(node, 'actorRef') && !validActorRef(node.actorRef)) fail('実行する対象が正しくありません');
           if (node.kind === 'MotionCommand' && ['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(node.op) &&
@@ -9716,6 +10505,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     }
 
     return {
+      extensions, profiles, validateExtensionEnvelope,
       UNIT_TAGS,
       isQuantity,
       isNumberValue,
@@ -9792,7 +10582,40 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   // ────────────────────────────────────────────────────────────────────────
   // 02 — Language contracts and editor-side utilities
   // ────────────────────────────────────────────────────────────────────────
-  const AKARI_RUNTIME = createAkariRuntime();
+  // Fork authors configure bundled extensions and authorized policies before boot.
+  let expressionDraftFormatDepth = 0;
+  function configureAkariFoundation() { return { extensions: [], profiles: [], profile: null, allowedCapabilities: [] }; }
+  const FOUNDATION_CONFIGURATION = configureAkariFoundation();
+  const AKARI_RUNTIME = createAkariRuntime(FOUNDATION_CONFIGURATION);
+  const EXTENSION_HOST = AKARI_RUNTIME.extensions;
+  function extensionValueIsData(symbols, ctx = {}) {
+    return symbols?.allDataNames?.has('拡張') ||
+      [...(ctx.localNames || []), ...(ctx.binders || []), ...(ctx.args || [])].includes('拡張');
+  }
+  function extensionSurface(name, calculation, args) {
+    const [id, operation] = name.split('/');
+    return `${calculation ? '拡張計算' : '拡張'}「${id}」「${operation}」（${args.map(x => formatExpression(x)).join('、')}）`;
+  }
+  function extensionDefaultExpression(shape) {
+    if (shape.type === 'number' && shape.unit !== null) return {kind:'QuantityLiteral',unit:shape.unit,value:{kind:'NumberLiteral',value:0}};
+    if (shape.type === 'string') return {kind:'StringLiteral',value:''};
+    if (shape.type === 'boolean') return {kind:'BooleanLiteral',value:false};
+    if (shape.type === 'list') return {kind:'ListLiteral',items:[]};
+    return {kind:'NumberLiteral',value:0};
+  }
+  function extensionInitialSource(shape) {
+    if (shape.type === 'number') return '0' + (shape.unit || '');
+    if (shape.type === 'string') return '「」';
+    if (shape.type === 'boolean') return '条件の答え（あてはまらない）';
+    if (shape.type === 'list') return '［］';
+    return '0';
+  }
+  function extensionEnvelope(project) {
+    const requirements = EXTENSION_HOST.requirements(), profile = AKARI_RUNTIME.profiles.requirement();
+    if (!requirements.required.length && !profile) return null;
+    return { ...requirements, profile, state: EXTENSION_HOST.active ? EXTENSION_HOST.snapshotState() : project?.extensions?.state || EXTENSION_HOST.initialState() };
+  }
+
   const {
     LIMITS,
     COLOR_NAMES,
@@ -10320,6 +11143,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         op: '',
         source: '何もしない',
       },
+      ...EXTENSION_HOST.operations('commands').map(operation => { const [id, member] = operation.name.split('/'); return {id:'ExtensionCommand:'+operation.name,kind:'ExtensionCommand',op:'',source:`拡張「${id}」「${member}」（${operation.args.map(extensionInitialSource).join('、')}）`}; }),
     ].map((x) =>
       Object.freeze({
         ...x,
@@ -10729,6 +11553,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       );
     for (const c of project.components)
       if (c.type === 'input') exprs.push(`\u300c${c.name}\u300dの中身`);
+    for (const operation of EXTENSION_HOST.operations('calculations')) exprs.push(extensionSurface(operation.name,true,operation.args.map(extensionDefaultExpression)));
+    if (EXTENSION_HOST.operations('events').length) exprs.push('拡張「できごとの値」');
     for (const text of exprs) add('expr:' + text, '\u5f0f', text, 'expression');
     for (const b of GRAMMAR_REGISTRY.builtins) {
       const args =
@@ -11078,9 +11904,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         'actions',
         'functions',
         'sounds',
+        ...(Object.hasOwn(p || {}, 'extensions') ? ['extensions'] : []),
       ])
     )
       throw new AkariError('F503', '作品データの項目が保存形式の契約と一致しません');
+    if (Object.hasOwn(p, 'extensions')) AKARI_RUNTIME.validateExtensionEnvelope(p.extensions);
     if (
       p.schema !== 'akari-project' ||
       !AKARI_RUNTIME.validProducerLabel(p.appVersion) ||
@@ -11939,6 +12767,20 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           }),
         });
       }
+      if (this.starts('拡張計算「')) {
+        const found = /^拡張計算「([a-z0-9._-]+)」「([a-z0-9._-]+)」/.exec(this.text.slice(this.i));
+        if (!found) this.err('E703', '拡張計算のIDが必要です');
+        const name = found[1] + '/' + found[2];
+        if (!EXTENSION_HOST.describe(name, 'calculations')) this.err('E703', '必要な拡張計算がありません');
+        this.i += found[0].length; this.expect('（'); const args = [];
+        if (!this.take('）')) for (;;) { args.push(this.logicalOr()); if (this.take('）')) break; this.expect('、'); }
+        return exprNode('ExtensionCalculation', { name, args });
+      }
+      if (EXTENSION_HOST.operations('events').length && this.take('拡張「できごとの値」'))
+        return exprNode('SensorRead', { sensor: '拡張の値' });
+      if (EXTENSION_HOST.operations('events').length && this.starts('拡張の値') && !extensionValueIsData(this.symbols, this.ctx)) {
+        this.i += '拡張の値'.length; return exprNode('SensorRead', { sensor: '拡張の値' });
+      }
       const builtin = [...BUILTIN_NAMES].sort((a,b) => b.length-a.length).find(name => this.starts(name+'（'));
       const token = builtin ? {name:builtin,end:this.i+builtin.length,exact:false} : readNameToken(this.text, this.i);
       if (!token) this.err('P205', '\u5f0f\u3092\u8aad\u307f\u53d6\u308c\u307e\u305b\u3093');
@@ -12359,7 +13201,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       allowedContexts:Object.freeze(kind==='ReturnStatement'?['function']:['LocalVariableDeclaration','LocalListDeclaration'].includes(kind)?['action','function']:kind==='ContinuousRule'?['script']:['Assignment','NumericUpdate','ListAppend','ListInsert','ListReplace','ListDelete','ListClear','IfStatement','RepeatCount','RepeatWhile','RepeatUntil','Forever','ForEach','LocalVariableDeclaration','LocalListDeclaration','ReturnStatement','NoOperation','Break','Continue'].includes(kind)?['script','action','function']:['script','action']),
       render:node=>renderSentenceNode(node),preview:node=>renderSentenceNode(node),errors:Object.freeze(['P201','P202','P205'])});
   }
-  function sentenceFormFor(node) {return SENTENCE_FORMS.find(form=>form.kind===node.kind&&(!form.op||form.op===node.op));}
+  function sentenceFormFor(node) {if (node.kind === 'ExtensionCommand') return { kind: node.kind, allowedContexts: ['script', 'action'], roleSlots: [], render: n => extensionSurface(n.name, false, n.args), preview: n => extensionSurface(n.name, false, n.args) };return SENTENCE_FORMS.find(form=>form.kind===node.kind&&(!form.op||form.op===node.op));}
   function renderSentenceNode(n) {
     const f=formatExpression,t=n.target?formatTarget(n.target):'';
     switch(n.kind){
@@ -12612,7 +13454,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           if(args.length<2)throw new AkariError('P205','つなげる値を二つ以上指定してください');props.value=exprNode('BuiltinCall',{name:'つなぐ',args});break;
         }
         case 'quote': props.value=e(parts[0]); if(props.value.kind!=='StringLiteral') throw new AkariError('P205','台詞は「文字」と言う、値は「値を言う」と書きます'); break;
-        case 'value': {const part=parts[0], raw=part.text.endsWith('の値')?{...part,text:part.text.slice(0,-2)}:part;let error;try{props.value=e(raw);}catch(caught){if(!(caught instanceof AkariError))throw caught;error=caught;}
+        case 'value': {const part=parts[0], raw=part.text.endsWith('の値') && !(part.text === '拡張の値' && EXTENSION_HOST.operations('events').length && !extensionValueIsData(symbols, ctx))?{...part,text:part.text.slice(0,-2)}:part;let error;try{props.value=e(raw);}catch(caught){if(!(caught instanceof AkariError))throw caught;error=caught;}
           const resolvedName=props.value?.kind==='VariableRead'?props.value.name:raw.text,
             unknownWord=/^[\p{L}ー][\p{L}\p{N}ー]*$/u.test(raw.text)&&!symbols?.allDataNames?.has(resolvedName)&&![...(ctx.localNames||[]),...(ctx.binders||[]),...(ctx.args||[])].includes(resolvedName);
           if(form.kind==='Say'&&unknownWord&&(error||props.value?.kind==='VariableRead')&&!part.text.endsWith('の値')){
@@ -13005,6 +13847,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   function readSurfaceStatement(code,line,symbols,ctx) {return readRoleStatement(code,line,symbols,ctx);}
   function parseSimpleStatement(line,symbols,ctx={}) {
     let code=compactOutsideString(line.code),working=line;
+    const extension = /^拡張「([a-z0-9._-]+)」「([a-z0-9._-]+)」（([\s\S]*)）$/.exec(code);
+    if (extension) {
+      const name = extension[1] + '/' + extension[2];
+      if (!EXTENSION_HOST.describe(name, 'commands')) throw new AkariError('E703', '必要な拡張命令がありません', line.lineNo, 1);
+      return statementNode('ExtensionCommand', line, { name, args: parseArgumentText(extension[3], symbols, ctx, line.lineNo), actorRef: { ...(ctx.topicActor || { kind: 'self' }) } });
+    }
     const lead=/^(?:そのあと|それから|次に|最後に|くり返しが終わると)、/.exec(surfaceMask(code));
     if(lead){working=surfaceLineSlice(line,lead[0].length,code.length);working.comment=line.comment;code=working.code;}
     const parse=(text,at,topicActor)=>{const part=at?surfaceLineSlice(working,at,code.length):working;part.comment=line.comment;const local={...ctx,topicActor};return readSurfaceStatement(text,part,symbols,local);};
@@ -14231,6 +15079,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         op('sensor', value),
         { palette: '状態' },
       );
+    for (const [kind, category, collection] of [
+      ['ExtensionCommand', 'statement', 'commands'], ['ExtensionCalculation', 'expression', 'calculations'],
+    ]) for (const operation of EXTENSION_HOST.operations(collection)) {
+      const labels = operation.args.map(x => x.name);
+      add(kind, category, operation.displayName, [], [args(labels, { initialValues: operation.args.map(extensionDefaultExpression) })], [], { key: 'name', value: operation.name }, { palette: '拡張' });
+    }
+    if (EXTENSION_HOST.operations('events').length)
+      add('SensorRead', 'expression', '拡張のできごとの値', [], [], [], { key: 'sensor', value: '拡張の値' }, { palette: '拡張' });
     return Object.freeze(schemas);
   })();
   const BLOCK_SCHEMA_BY_ID = new Map(BLOCK_SCHEMAS.map((schema) => [schema.id, schema]));
@@ -14247,7 +15103,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const discriminator =
       kind === 'Hole'
         ? 'role'
-        : kind === 'BuiltinCall'
+        : ['BuiltinCall', 'ExtensionCommand', 'ExtensionCalculation'].includes(kind)
         ? 'name'
         : kind === 'SensorRead'
           ? 'sensor'
@@ -14480,6 +15336,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           schema.id === 'LooksCommand:SET_SCALE' ? 100 :
           ['MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT'].includes(schema.id) ? 15 : 0
         ));
+      if (slot.multiple && slot.initialValues && !draft) { node[slot.key] = slot.initialValues.map(cloneDesignProject); continue; }
       node[slot.key] = slot.multiple
         ? Array.from({ length: slot.initialItems ?? slot.minItems }, (_, index) =>
             !draft && schema.id === 'LooksCommand:SET_INPUT' && index === 0
@@ -14684,7 +15541,6 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   // ────────────────────────────────────────────────────────────────────────
   // Formatting is synchronous. A lexical draft scope permits placeholders only
   // during the explicitly requested editor render, and is restored on errors.
-  let expressionDraftFormatDepth = 0;
   function withExpressionFormatOptions(options, callback) {
     const entered = !!options?.allowHoles;
     if (entered) expressionDraftFormatDepth++;
@@ -14735,6 +15591,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       case 'VariableRead':
         s = nameSource(n.name, n.qualifier);
         break;
+      case 'ExtensionCalculation':
+        s = extensionSurface(n.name, true, n.args); break;
       case 'UserFunctionCall':
         s = n.argumentNames ? `（${n.args.map((x,i) => `${nameSource(n.argumentNames[i])}を${formatExpressionCore(x)}`).join('、')}として、【${n.name}】で求めた答え）` : `（${n.args.length ? `（${n.args.map(x=>formatExpressionCore(x)).join('、')}）を渡して、` : ''}【${n.name}】で求めた答え）`;
         break;
@@ -14758,7 +15616,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         p = PREC.POST;
         break;
       case 'SensorRead': {
-        if (FIXED_SENSORS.includes(n.sensor)) s = n.sensor === 'クローンである' ? '分身である' : n.sensor;
+        if (n.sensor === '拡張の値' && EXTENSION_HOST.operations('events').length) s = '拡張「できごとの値」';
+        else if (FIXED_SENSORS.includes(n.sensor)) s = n.sensor === 'クローンである' ? '分身である' : n.sensor;
         else if (n.sensor === 'INPUT_VALUE') s = `${n.arg.kind==='VariableRead'?'（'+formatExpressionCore(n.arg)+'）':formatExpressionCore(n.arg, PREC.POST)}の中身`;
         else if (n.sensor === 'DISTANCE_TO')
           s = `${formatExpressionCore(n.arg, PREC.POST)}までの距離`;
@@ -14851,7 +15710,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     while (pending.length) {
       const node = pending.pop();
       if (!node || typeof node !== 'object') continue;
-      if (['VariableRead', 'UserFunctionCall', 'BuiltinCall', 'SensorRead'].includes(node.kind))
+      if (['VariableRead', 'UserFunctionCall', 'BuiltinCall', 'SensorRead', 'ExtensionCalculation'].includes(node.kind))
         out.push(node);
       const children = [];
       for (const [key, value] of Object.entries(node)) {
@@ -15037,6 +15896,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             マウスの横位置: '歩', マウスの縦位置: '歩', タイマー: '秒', 音量: '％',
             DISTANCE_TO: '歩', 衣装番号: null, 背景番号: null, 音程: null }[n.sensor];
         }
+        else if (n.kind === 'ExtensionCalculation') unit = EXTENSION_HOST.describe(n.name, 'calculations')?.returns.unit;
         else if (n.kind === 'BuiltinCall') {
           const args = (n.args || []).map(child);
           if (['乱数', '余り', '最小', '最大'].includes(n.name)) unit = common(args);
@@ -15051,6 +15911,19 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         return unit;
       };
       return infer(expr);
+    };
+    const checkExtensionOperation = (n, kind, where) => {
+      const operation = EXTENSION_HOST.describe(n.name, kind);
+      if (!operation) { add('E703', '必要な拡張機能がありません', n, where); return; }
+      if (operation.args.length !== n.args.length) add('S308', '拡張に渡す値の数が違います', n, where);
+      operation.args.forEach((shape, index) => {
+        const argument = n.args[index]; if (!argument) return;
+        const unit = staticUnit(argument, n, where);
+        if (shape.type === 'number' && unit !== undefined && unit !== shape.unit)
+          add('R417', '拡張に渡す値の単位が一致しません', n, where);
+        const known = {NumberLiteral:'number',QuantityLiteral:'number',StringLiteral:'string',BooleanLiteral:'boolean',ListLiteral:'list'}[argument.kind];
+        if (known && shape.type !== 'value' && known !== shape.type) add('E705', '拡張に渡す値の型が一致しません', n, where);
+      });
     };
     const checkStaticRoleUnits = (n, where) => {
       for (const slot of sentenceFormFor(n)?.roleSlots || []) {
@@ -15068,7 +15941,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (n.kind === 'ActorQualifiedRead') {
           collect(n.value, actorContext(n.actorRef, ctx, n, where)); return;
         }
-        if (['VariableRead', 'UserFunctionCall', 'BuiltinCall', 'SensorRead'].includes(n.kind))
+        if (['VariableRead', 'UserFunctionCall', 'BuiltinCall', 'SensorRead', 'ExtensionCalculation'].includes(n.kind))
           scoped.push([n, ctx]);
         for (const [key, value] of Object.entries(n)) {
           if (key === 'sourceSpan' || key === 'actorRef') continue;
@@ -15102,6 +15975,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             );
           }
         }
+        if (n.kind === 'ExtensionCalculation') checkExtensionOperation(n, 'calculations', where);
         if (n.kind === 'UserFunctionCall') {
           const f = symbols.functions.get(n.name);
           if (!f) add('S301', `計算「${n.name}」がありません`, ctx.node, where);
@@ -15119,11 +15993,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           const eventOnly = {
             押されたキー: 'keyDown',
             受け取った知らせ: 'message',
+            拡張の値: 'message',
             以前の値: 'valueChanged',
             新しい値: 'valueChanged',
             以前の背景名: 'backdropChanged',
             新しい背景名: 'backdropChanged',
           };
+          if (n.sensor === '拡張の値' && (!ctx.filter?.message?.startsWith('拡張:') || !EXTENSION_HOST.describe(ctx.filter.message.slice(3), 'events')))
+            add('S311', '拡張の値は登録した拡張のできごとの中で使ってください', ctx.node, where);
           if (eventOnly[n.sensor]) {
             if (ctx.definition)
               add('S311', `「${n.sensor}」は手順・答えを求める定義の本文では直接使えません`, ctx.node, where);
@@ -15210,6 +16087,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         ];
         for (const f of exprFields) if (n[f]) analyzeExpr(n[f], c, where);
         for (const x of n.args || []) analyzeExpr(x, c, where);
+        if (n.kind === 'ExtensionCommand') checkExtensionOperation(n, 'commands', where);
         checkStaticRoleUnits(n, where);
         if (n.index) analyzeExpr(n.index, c, where);
         if (n.target && n.target.kind) analyzeExpr(n.target, c, where);
@@ -15276,6 +16154,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
             'CloneCommand',
             'StopCommand',
             'UserActionCall',
+            'ExtensionCommand',
           ].includes(n.kind)
         )
           add('S305', '計算では外部副作用や待機を行えません', n, where);
@@ -15432,7 +16311,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     for (const item of compiled.items) {
       if (rootKeys && !rootKeys.has(item.key)) continue;
       const base = {
-        event: item.event,
+        event: item.event, filter: item.filter || null,
         targetType: item.targetType,
         targetId: item.targetId || null,
         definition: item.definition || null,
@@ -16541,7 +17420,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   async function canonicalizeImage(fileBytes) {
     const bytes = fileBytes instanceof Uint8Array ? fileBytes : new Uint8Array(fileBytes);
     if (bytes.length > LIMITS.importFileBytes)
-      throw new AkariError('F504', '取込元ファイルが12MiBを超えています');
+      throw new AkariError('F504', `取込元ファイルが${LIMITS.importFileBytes / 1048576}MiBを超えています`);
     const pre = sniffImage(bytes),
       dec = await decodeImageBytes(bytes, pre.mime);
     try {
@@ -16604,7 +17483,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   async function canonicalizeAudio(fileBytes) {
     const bytes = fileBytes instanceof Uint8Array ? fileBytes : new Uint8Array(fileBytes);
     if (bytes.length > LIMITS.importFileBytes)
-      throw new AkariError('F504', '取込元ファイルが12MiBを超えています');
+      throw new AkariError('F504', `取込元ファイルが${LIMITS.importFileBytes / 1048576}MiBを超えています`);
     const sn = sniffAudio(bytes),
       containerMeta = audioContainerMeta(sn);
     checkAudioContainerLimits(containerMeta);
@@ -16803,6 +17682,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       });
     }
     return {
+      ...(extensionEnvelope(project) ? { extensions: extensionEnvelope(project) } : {}),
       schema: project.schema,
       appVersion: PRODUCT_RELEASE,
       languageContractId: project.languageContractId,
@@ -16865,12 +17745,14 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         'sounds',
         'assets',
         ...(Object.hasOwn(root || {}, 'editorState') ? ['editorState'] : []),
+        ...(Object.hasOwn(root || {}, 'extensions') ? ['extensions'] : []),
       ])
     )
       throw new AkariError('F503', '保存Projectのroot項目が仕様と一致しません');
     if (!Array.isArray(root.assets) || root.assets.length > LIMITS.assets)
       throw new AkariError('F504', 'asset数が上限を超えています');
     const design = {
+      ...(Object.hasOwn(root, 'extensions') ? { extensions: AKARI_RUNTIME.validateExtensionEnvelope(root.extensions) } : {}),
       schema: root.schema,
       appVersion: root.appVersion,
       languageContractId: root.languageContractId,
@@ -16919,7 +17801,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         throw new AkariError('F508', 'Base64予想byte数とbyteLengthが一致しません');
       predicted += n;
       if (predicted > LIMITS.assetRawTotal)
-        throw new AkariError('F504', '素材raw bytes合計が16MiBを超えています');
+        throw new AkariError('F504', `素材raw bytes合計が${LIMITS.assetRawTotal / 1048576}MiBを超えています`);
       const dk = `${a.kind}:${a.sha256}:${a.byteLength}`;
       if (digestKeys.has(dk)) throw new AkariError('F503', '保存Projectに重複assetがあります');
       digestKeys.add(dk);
@@ -17006,7 +17888,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
   // Persistent history stores one design/editor frame and structural deltas. Asset
   // bytes are shared by digest, while each frame retains its original asset IDs.
-  const WORKSPACE_HISTORY_LIMIT = 60;
+  const WORKSPACE_HISTORY_LIMIT = LIMITS.historyEntries;
   function workspaceDelta(before, after) {
     if (stableJson(before) === stableJson(after)) return null;
     if (typeof before === 'string' && typeof after === 'string') {
@@ -17222,7 +18104,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if (new TextEncoder().encode(text).length > LIMITS.fileBytes)
       throw new AkariError(
         'F504',
-        '\u4fdd\u5b58\u30d5\u30a1\u30a4\u30eb\u306f24MiB\u307e\u3067\u3067\u3059',
+        `保存ファイルは${LIMITS.fileBytes / 1048576}MiBまでです`,
       );
     return text;
   }
@@ -17230,7 +18112,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     if (typeof text !== 'string' || new TextEncoder().encode(text).length > LIMITS.fileBytes)
       throw new AkariError(
         'F504',
-        '\u4f5c\u54c1\u30d5\u30a1\u30a4\u30eb\u306f24MiB\u307e\u3067\u3067\u3059',
+        `作品ファイルは${LIMITS.fileBytes / 1048576}MiBまでです`,
       );
     text = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
     const begin = text.lastIndexOf(MARKDOWN_BEGIN);
@@ -17657,7 +18539,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           transform: `rotate(${a.direction}deg) scale(${a.scalePercent / 100})`,
         });
         if (c.type === 'input') {
-          node.maxLength = LIMITS.stringChars * 2;
+          if (Number.isSafeInteger(LIMITS.stringChars * 2) && LIMITS.stringChars * 2 <= 2147483647) node.maxLength = LIMITS.stringChars * 2; else node.removeAttribute('maxlength');
           node.readOnly = !r;
           node.setAttribute('aria-label', c.name);
           const v = r ? a.inputValue : c.text;
@@ -17969,8 +18851,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     const message = (text) => {
       output.hidden = false;
       const addition = (output.textContent ? '\n' : '') + String(text);
-      if (output.textContent.length + addition.length > 100000)
-        output.textContent = (output.textContent + addition).slice(-90000);
+      if (output.textContent.length + addition.length > core.LIMITS.logChars)
+        output.textContent = (output.textContent + addition).slice(-Math.floor(core.LIMITS.logChars * 0.9));
       else output.appendChild(document.createTextNode(addition));
       output.scrollTop = output.scrollHeight;
     };
@@ -18138,7 +19020,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     $('questionSubmit').onclick = () => {
       if (questionCb) questionCb(view.limitInputValue(answer));
     };
-    answer.maxLength = core.LIMITS.stringChars * 2;
+    if (Number.isSafeInteger(core.LIMITS.stringChars * 2) && core.LIMITS.stringChars * 2 <= 2147483647) answer.maxLength = core.LIMITS.stringChars * 2; else answer.removeAttribute('maxlength');
     answer.addEventListener('input', (e) => {
       if (!e.isComposing) view?.limitInputValue(answer);
     });
@@ -18264,6 +19146,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       .filter((a) => used.has(a.id))
       .map((a) => ({ ...a, meta: { ...assetStore.get(a.id).meta } }));
     return {
+      ...(Object.hasOwn(root, 'extensions') ? { extensions: root.extensions } : {}),
       schema: 'akari-executable',
       appVersion: PRODUCT_RELEASE,
       ...AKARI_RUNTIME.EXECUTABLE_CONTRACT,
@@ -18287,15 +19170,18 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   function generateStandaloneHtml(project, assetStore = new AssetStore()) {
     const payload = packExecutable(project, assetStore),
       title = escapeHtmlText(payload.project.name);
-    const script = `'use strict';\n${createAkariRuntime.toString()}\n${createAkariStageView.toString()}\n${mountAkariPlayer.toString()}\nmountAkariPlayer(createAkariRuntime(),createAkariStageView,${inlineJson(payload)});`;
+    const definitions = EXTENSION_HOST.exportDefinitions();
+    const selected = AKARI_RUNTIME.profiles.describe();
+    const configuration = `{extensions:[${definitions.map(x => `{manifest:${inlineJson(x.manifest)},factory:(${x.factorySource})}`).join(',')}],profiles:${inlineJson(selected.profiles.map(({id,version,limits})=>({id,version,limits})))},profile:${inlineJson(selected.selected ? {id:selected.selected.id,version:selected.selected.version} : null)},allowedCapabilities:${inlineJson(FOUNDATION_CONFIGURATION.allowedCapabilities || [])}}`;
+    const script = `'use strict';\n${createAkariProfiles.toString()}\n${createAkariExtensionHost.toString()}\n${createAkariRuntime.toString()}\n${createAkariStageView.toString()}\n${mountAkariPlayer.toString()}\nmountAkariPlayer(createAkariRuntime(${configuration}),createAkariStageView,${inlineJson(payload)});`;
     if (/<\/script/i.test(script))
       throw new AkariError(
         'X603',
         '\u66f8\u304d\u51fa\u3057\u7528\u30c7\u30fc\u30bf\u3092\u5b89\u5168\u306b\u4fdd\u5b58\u3067\u304d\u307e\u305b\u3093',
       );
     const html =
-      '<!DOCTYPE html>\n<!-- SPDX-License-Identifier: Apache-2.0 -->\n<!--\n' +
-      AKARI_APACHE_LICENSE +
+      '<!DOCTYPE html>\n<!-- SPDX-License-Identifier: MIT -->\n<!--\n' +
+      AKARI_LICENSE +
       '\n-->\n<html lang="ja">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n' +
       "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src blob:; media-src blob:; connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'\">\n" +
       '<title>' +
@@ -18314,7 +19200,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       script +
       '\n<' +
       '/script>\n</body>\n</html>\n';
-    if (new TextEncoder().encode(html).length > 64 * 1024 * 1024)
+    if (new TextEncoder().encode(html).length > LIMITS.executableBytes)
       throw new AkariError(
         'X604',
         '\u66f8\u304d\u51fa\u3059\u4f5c\u54c1\u304c\u5927\u304d\u3059\u304e\u307e\u3059',
@@ -22139,6 +23025,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (destination && !index.has(destination.parentId)) destination = null;
       if (selected && !index.has(selected)) selected = '';
       bodyObserver?.disconnect();
+      fontStyleObserver?.disconnect();
       world.replaceChildren();
       if (!tree) {
         world.append(
@@ -22916,6 +23803,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       root.replaceChildren();
       root.classList.remove('blockui-editor');
     }
+    listen(doc.defaultView, 'resize', () => { updateFieldWidths(); scheduleGeometry(); });
+    const fontStyleObserver = doc.head && typeof doc.defaultView.MutationObserver === 'function'
+      ? new doc.defaultView.MutationObserver(() => { updateFieldWidths(); scheduleGeometry(); }) : null;
+    fontStyleObserver?.observe(doc.head, {childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['media','disabled','href','rel']});
     if (doc.fonts) listen(doc.fonts, 'loadingdone', scheduleGeometry);
     render({ force: true });
     function restorePending(saved) {
@@ -23140,7 +24031,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (previous && next.data.every((v, i) => v === previous.data[i])) return;
       history.splice(historyIndex + 1);
       history.push(next);
-      if (history.length > 31) history.shift();
+      if (history.length > Math.max(1, Math.floor(LIMITS.historyEntries / 2)) + 1) history.shift();
       historyIndex = history.length - 1;
     };
     const travel = (delta) => {
@@ -24679,8 +25570,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         prefix = type === 'error' ? '❌ ' : type === 'ok' ? '✓ ' : '',
         addition = (el.console.textContent ? '\n' : '') + prefix + message,
         preserved = message === original ? addition : addition + '\n' + original;
-      if (el.console.textContent.length + preserved.length > 100000)
-        el.console.textContent = '[古いログを省略]\n' + (el.console.textContent + preserved).slice(-90000);
+      if (el.console.textContent.length + preserved.length > LIMITS.logChars)
+        el.console.textContent = '[古いログを省略]\n' + (el.console.textContent + preserved).slice(-Math.floor(LIMITS.logChars * 0.9));
       else {
         el.console.appendChild(document.createTextNode(addition));
         if (message !== original) appendDiagnosticDetails(el.console, {message:original});
@@ -24731,7 +25622,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       lastObservedFingerprint = e.stateFingerprint;
       if (!history.length || history.at(-1).stateFingerprint !== e.stateFingerprint) {
         history.push(e);
-        if (history.length > 30) history.shift();
+        if (history.length > Math.max(1, Math.floor(LIMITS.historyEntries / 2))) history.shift();
         redo = [];
       } else history[history.length - 1] = e;
       updateDirty();
@@ -27243,7 +28134,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       stageView.positionBubbles();
     }
     let questionCb = null;
-    $('#questionAnswer').maxLength = LIMITS.stringChars * 2;
+    if (Number.isSafeInteger(LIMITS.stringChars * 2) && LIMITS.stringChars * 2 <= 2147483647) $('#questionAnswer').maxLength = LIMITS.stringChars * 2; else $('#questionAnswer').removeAttribute('maxlength');
     $('#questionAnswer').addEventListener('input', (e) => {
       if (!e.isComposing) limitInputValue(e.target);
     });
@@ -27497,7 +28388,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       updateRunState();
       try {
         if (file.size > LIMITS.fileBytes)
-          throw new AkariError('F504', 'ファイルが24MiBを超えています');
+          throw new AkariError('F504', `ファイルが${LIMITS.fileBytes / 1048576}MiBを超えています`);
         const loaded = await parseProjectFile(await file.text());
         await clearAutosave();
         closeEditingModals();
@@ -27626,10 +28517,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       let rec, fingerprint;
       try {
         fingerprint = stateFingerprintCore();
-        const current=snapshot(),past=history.slice(-30);
+        const current=snapshot(),past=history.slice(-Math.max(1, Math.floor(LIMITS.historyEntries / 2)));
         if(past.at(-1)?.stateFingerprint===current.stateFingerprint)past[past.length-1]=current;
-        else{past.push(current);if(past.length>30)past.shift();}
-        const future=history.at(-1)?.stateFingerprint===current.stateFingerprint?redo.slice(-30).reverse():[];
+        else{past.push(current);if(past.length>Math.max(1, Math.floor(LIMITS.historyEntries / 2)))past.shift();}
+        const future=history.at(-1)?.stateFingerprint===current.stateFingerprint?redo.slice(-Math.max(1, Math.floor(LIMITS.historyEntries / 2))).reverse():[];
         const workspace=encodeWorkspaceHistory([...past,...future],past.length-1);
         autosaveRevisionTime=Math.max(Date.now(),autosaveRevisionTime+1);
         rec={id:'latest',version:2,updatedAt:autosaveRevisionTime,revision:recoveryEpoch,workspace,lastSavedFingerprint};
@@ -28192,7 +29083,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         text = d.argsText.trim(),
         args = text ? text.split(/[、,]/).map((x) => normalizeCharsOutsideString(x.trim())) : [];
       validateName(name, { callable: true });
-      if (args.length > LIMITS.args) throw new AkariError('F504', '受け取る値は32個までです');
+      if (args.length > LIMITS.args) throw new AkariError('F504', `受け取る値は${LIMITS.args}個までです`);
       const seen = new Set();
       for (const a of args) {
         validateName(a);
@@ -28729,7 +29620,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (project.components.length >= LIMITS.components)
           throw new AkariError('F504', '部品数が上限です');
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', '取込元ファイルが12MiBを超えています');
+          throw new AkariError('F504', `取込元ファイルが${LIMITS.importFileBytes / 1048576}MiBを超えています`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.components.map((x) => x.name));
         let name = fileStemCandidate(file, names);
@@ -28795,7 +29686,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (!file) return;
       return runAssetImport('背景画像', async () => {
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', '取込元ファイルが12MiBを超えています');
+          throw new AkariError('F504', `取込元ファイルが${LIMITS.importFileBytes / 1048576}MiBを超えています`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.stage.backdrops.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
@@ -28834,7 +29725,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         if (cur?.type !== 'sprite')
           throw new AkariError('F503', '衣装画像を追加するキャラクターを選んでください');
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', '取込元ファイルが12MiBを超えています');
+          throw new AkariError('F504', `取込元ファイルが${LIMITS.importFileBytes / 1048576}MiBを超えています`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(cur.costumes.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
@@ -28863,7 +29754,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       if (!file) return;
       return runAssetImport('音', async () => {
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', '取込元ファイルが12MiBを超えています');
+          throw new AkariError('F504', `取込元ファイルが${LIMITS.importFileBytes / 1048576}MiBを超えています`);
         const canonical = await canonicalizeAudio(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.sounds.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
@@ -29645,11 +30536,12 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   }
 
   // ────────────────────────────────────────────────────────────────────────
-  // 13 — Public diagnostic API and browser bootstrap
+  // 12 — Public diagnostic API and browser bootstrap
   // ────────────────────────────────────────────────────────────────────────
   const Akari = {
     // Narrow references for diagnostics; no fixtures, test dispatch or mutable app state.
     diagnostics: Object.freeze({
+      AKARI_LICENSE,
       AKARI_APACHE_LICENSE,
       AkariError,
       COLOR_NAMES,
@@ -29712,6 +30604,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     blockDecode,
     createBlock,
     blockInsertionAvailability,
+    createAkariProfiles,
+    createAkariExtensionHost,
+    extensions: EXTENSION_HOST,
+    profiles: AKARI_RUNTIME.profiles,
     createAkariRuntime,
     createAkariStageView,
     packExecutable,

@@ -1,0 +1,46 @@
+{
+  "schema": "akari-license-migration-v1",
+  "from": "Apache-2.0",
+  "to": "MIT",
+  "copyright": "Copyright (c) 2026 SAIEduLab",
+  "authority": "Explicit user instruction in the existing Akari 1.1.0 PR task",
+  "stableTestId": "EXPORT Apache-2.0ライセンス保持",
+  "preservedGuarantees": [
+    "single HTML",
+    "offline",
+    "CSP",
+    "full license text and copyright in redistributed runtime"
+  ],
+  "sources": [
+    {
+      "path": "audit/suites/runAkariSelfTests.js",
+      "originalSha256": "b1e5e6abd044f2b73a998bc7bf9f163c10c974a4be248f6492b6dbbfee59c34e",
+      "replacements": [
+        {
+          "before": "      if (\n        !AKARI_APACHE_LICENSE.includes('Apache License') ||\n        !AKARI_APACHE_LICENSE.includes('Version 2.0, January 2004')\n      )\n        throw Error('embedded license missing');\n      if (\n        !html.includes('SPDX-License-Identifier: Apache-2.0') ||\n        !html.includes(AKARI_APACHE_LICENSE)\n      )\n        throw Error('standalone license missing');",
+          "after": "      const expectedLicense = \"MIT License\\n\\nCopyright (c) 2026 SAIEduLab\\n\\nPermission is hereby granted, free of charge, to any person obtaining a copy\\nof this software and associated documentation files (the \\\"Software\\\"), to deal\\nin the Software without restriction, including without limitation the rights\\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\\ncopies of the Software, and to permit persons to whom the Software is\\nfurnished to do so, subject to the following conditions:\\n\\nThe above copyright notice and this permission notice shall be included in all\\ncopies or substantial portions of the Software.\\n\\nTHE SOFTWARE IS PROVIDED \\\"AS IS\\\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\\nSOFTWARE.\\n\";\n      if (AKARI_APACHE_LICENSE !== expectedLicense) throw Error('canonical MIT license missing');\n      if (!html.includes('SPDX-License-Identifier: MIT') || !html.includes(expectedLicense))\n        throw Error('standalone MIT license or SAIEL copyright missing');"
+        }
+      ]
+    },
+    {
+      "path": "audit/browser/cases/run-editor-regression.cjs",
+      "originalSha256": "87000ba3065b9f80a7e67b431dc0062fcf36346d64dede1062f4e8b0439ffc23",
+      "replacements": [
+        {
+          "before": "assert.ok(text.includes('SPDX-License-Identifier: Apache-2.0'));assert.ok(text.includes('Apache License'));",
+          "after": "assert.ok(text.includes('SPDX-License-Identifier: MIT'));assert.ok(text.includes('Copyright (c) 2026 SAIEduLab'));assert.ok(text.includes(fs.readFileSync(path.resolve(__dirname,'../../../LICENSE'),'utf8')));"
+        }
+      ]
+    },
+    {
+      "path": "audit/browser/cases/browser-storage-media.cjs",
+      "originalSha256": "72e40c8b74cfac501912616b1b50588f6d577122e514948e4eee376acab25121",
+      "replacements": [
+        {
+          "before": "assert.ok(text.includes('Apache License'));",
+          "after": "assert.ok(text.includes('SPDX-License-Identifier: MIT'));assert.ok(text.includes('Copyright (c) 2026 SAIEduLab'));assert.ok(text.includes(L.read(L.path.resolve(__dirname,'../../../LICENSE'))));"
+        }
+      ]
+    }
+  ]
+}

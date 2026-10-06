@@ -12,6 +12,8 @@ import {verifyBrowserEnvironment} from './browser-environment.mjs';
 import {verifyFormatCompatibility} from './format-compatibility-contract.mjs';
 import {verifyUiButtons} from './ui-buttons-contract.mjs';
 import {reviewGroups,verifyReviewReport,verifyReviewNegativeReport} from './review-regression-contract.mjs';
+import {verifyExtensionFoundation,verifyExtensionFoundationNegative} from './extension-foundation-contract.mjs';
+import {COPYRIGHT,verifyLicenseBrowserReport} from './license-contract.cjs';
 export function verifyGateResults(dir,inputs){
   const read=n=>JSON.parse(fs.readFileSync(path.join(dir,n+'.json'))),gate=read('gate');
   assert.equal(gate.status,'PASS');assert.deepEqual(gate.snapshot,inputs);
@@ -37,5 +39,9 @@ export function verifyGateResults(dir,inputs){
   verifyNegativeReport(read('japanese-gate-negative'),inputs);
   for(const group of Object.keys(reviewGroups))verifyReviewReport(read(group==='actor'?'review-actor/review-actor':'review-'+group),group,inputs);
   verifyReviewNegativeReport(read('review-harness-negative'),inputs);
+  verifyExtensionFoundation(read('extension-foundation'),inputs,path.join(dir,'extension-foundation.artifacts'));
+  verifyExtensionFoundationNegative(read('extension-foundation-negative'),inputs);
+  const licensing=read('license-static');assert.equal(licensing.status,'PASS');assert.equal(licensing.copyright,COPYRIGHT);assert.deepEqual(licensing.snapshot,inputs);assert.equal(licensing.results.length,23);assert.equal(new Set(licensing.results.map(row=>row.id)).size,23);for(const row of licensing.results)assert.equal(row.status,'PASS');
+  verifyLicenseBrowserReport(read('license-browser'),path.join(dir,'license-browser.artifacts'),inputs);
   return {status:'PASS',steps:gate.steps.length};
 }

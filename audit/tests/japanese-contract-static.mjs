@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {verifyConsolidatedDocumentation,corpusPath,corpusMarkdownPath} from '../lib/docs-consolidation-contract.mjs';
+import {preservedCandidateBytes} from '../lib/migration-source-contract.mjs';
 
 // This audit deliberately imports no candidate parser, renderer or runtime.
 // Its oracle was acquired from d961dd3 and the six documents at 84bbb8c.
@@ -204,7 +205,7 @@ export function verifyJapaneseContract(repositoryRoot = root) {
     const pins = new Map(migration.sourcePins.map(p => [p.path, p]));
     for (const pin of pins.values()) {
       assert.equal(pin.sourceCommit, baselineCommit);
-      const currentHash = sha(read(pin.path));
+      const currentHash = sha(preservedCandidateBytes(pin.path,read(pin.path)));
       if (currentHash !== pin.sha256) {
         const revision = (migration.revisions || []).find(r => r.path === pin.path);
         assert.ok(revision, 'changed legacy input requires an explicit migration: ' + pin.path);

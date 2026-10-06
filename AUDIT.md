@@ -1,10 +1,10 @@
-# あかり 1.0.1 — 監査契約
+# あかり 1.1.0 — 監査契約
 
 ## 対象と固定
 
-製品版は1.0.1です。保存・実行形式番号、言語契約番号、runtime契約番号はそれぞれ1で、製品版とは独立して管理します。公開用の製品、仕様、マニュアル、試験、fixture、runner、workflowを一つの入力snapshotとして検証します。Git履歴や別リポジトリは実行条件に含めません。
+製品版は1.1.0です。保存・実行形式番号、言語契約番号、runtime契約番号はそれぞれ2で、製品版とは独立して管理します。公開用の製品、仕様、マニュアル、試験、fixture、runner、workflowを一つの入力snapshotとして検証します。Git履歴や別リポジトリは実行条件に含めません。
 
-`audit/manifests/features.json` は命令カタログ・ブロックスキーマ・上限・データ契約と公開ラベルの固定記録です。`audit/manifests/release-1.0.1.json` は公開ファイルのSHA-256集合です。固定記録自体は合格の証拠ではありません。監査は実際の製品を読み、結果をそのsnapshotへ結び付けます。必須結果の欠落、重複、偽のPASS、例外、タイムアウト、環境不足はFAILです。未実施の環境をPASSと呼びません。
+`audit/manifests/features.json` は命令カタログ・ブロックスキーマ・上限・データ契約と公開ラベルの固定記録です。`audit/manifests/release-1.1.0.json` は公開ファイルのSHA-256集合です。固定記録自体は合格の証拠ではありません。監査は実際の製品を読み、結果をそのsnapshotへ結び付けます。必須結果の欠落、重複、偽のPASS、例外、タイムアウト、環境不足はFAILです。未実施の環境をPASSと呼びません。
 
 能力台帳と試験の安定IDは、対象機能・操作・保証を名前で示します。製品の版番号をIDに埋め込まず、新しい監査項目は既存IDと重複しない機能名で追加します。追加時は期待値、実行入口、能力台帳との対応を固定し、既存試験の削除やIDの転用で件数を合わせません。
 
@@ -324,7 +324,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | editor:history | コード/GUI/下書き/作品共通Undo/Redo | project + draft history | snapshot / restoreSnap / undo / redoDo | undo / redoDo / snapshot / restoreSnap; beforeinput・keydownと共通history | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | designのみ編集 | 外部core test対象外（browser suiteで検査） | BROWSER-PRODUCT; browser-session:block-edit-common-history; browser-session:callable-draft-history; browser-storage-media:real-media-import-and-history; browser-boundaries:body-pagination-and-comment-multiline; browser-boundaries:empty-required-body-refusal-and-noop-replacement | 履歴の前後snapshot・下書きbaseline/loadedKey・native Undoは実browser経路で検査する |
 | product:block-workbench | 形で構造を示し、直接つかんで接続できる連続作業台 | EditorSession / block tree / view state | 同じsource正本とAST/codec | palette preview / block body drag / snap preview / C-body / expression socket / pan / zoom / fit / home / workspace expand / edge auto-scroll / continuous long body | EDITOR-GUI-001/002、EDITOR-EDIT-001/002、EDITOR-SWITCH-001 と LANG-WB-001〜006 | runtimeは変更せず確定sourceだけを共通compile/runtimeへ渡す | TEST-EDITOR workbench shape paths and viewport zoom are presentation only | BROWSER-WORKBENCH; WORKBENCH-SHAPE-MEANING; WORKBENCH-DRAG-CONNECT; WORKBENCH-NESTED-MOVE; WORKBENCH-EXPRESSION-DROP; WORKBENCH-CONTAINER-GROUP; WORKBENCH-VIEWPORT; WORKBENCH-EDGE-SCROLL-CANCEL; WORKBENCH-LONG-BODY; WORKBENCH-SHELL; WORKBENCH-COMPACT; WORKBENCH-RESPONSIVE; WORKBENCH-PREVIOUS-FIXES; WORKBENCH-KEYBOARD; WORKBENCH-TOUCH; WORKBENCH-PENDING-IME; WORKBENCH-RUNTIME-LOCKS; WORKBENCH-DEFINITION-DRAFT | 形・直接操作・接続予告・広い作業領域・長い本文・対象/結果把握・代替操作を同じsnapshotの実ブラウザーで検査し、未実施経路を過去結果やpure testで補完しない |
 | product:responsive | responsive/縮尺/スクロール到達性/キーボード/IME/pointer | 表示状態のみ | 既存CSS/editor/coordinate変換 | container CSS / viewport CSS / scroll container / Pointer Events / keyboard代替操作 / composition handlers | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 論理座標とruntime保持 | 外部core test対象外（browser suiteで検査） | BROWSER-PRODUCT; BROWSER-SHELL; BROWSER-DESIGNER; DESIGN-RESPONSIVE-REACHABILITY; browser-session:responsive-mode-state; browser-session:ime-code-and-block; ui-shell:* | 既存6 viewport・resize・200%・composition・touchに加え、部品候補・素材入口・設定・resize handle の可視到達性と正しい scroll container を実ブラウザーで検査する |
-| product:offline-license | 単一HTML/オフライン/CSP/Apache-2.0保持 | 製品本体・実行HTML | generateStandaloneHtml | 単一 Akari1_0_1.html / generateStandaloneHtml; ローカル起動 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 共通runtime | EXPORT Apache-2.0ライセンス保持; AUDIT EXPORT hostile HTML remains escaped data | BROWSER-PRODUCT; browser-storage-media:real-media-standalone-player | licenseとescapeの自動追跡。実オフライン動作は別検証 |
+| product:offline-license | 単一HTML/オフライン/CSP/MIT全文・著作権表示保持 | 製品本体・実行HTML | generateStandaloneHtml | 単一 Akari1_0_1.html / generateStandaloneHtml; ローカル起動 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 共通runtime | EXPORT Apache-2.0ライセンス保持; AUDIT EXPORT hostile HTML remains escaped data | BROWSER-PRODUCT; browser-storage-media:real-media-standalone-player | licenseとescapeの自動追跡。実オフライン動作は別検証 |
 
 ### 資源上限
 
@@ -523,3 +523,40 @@ GA-EXECでは1920×1080、1366×768、1280×720、1024×768、760×600、390×60
 Chrome自身の125／150／200％拡大はテスト専用拡張のtabs APIで行い、実倍率、同じwindow外寸、CSS viewportの縮小とDPR変化を照合する。CSS zoomや表示幅だけの変更へ代替しない。作品・本文・Undo／Redo・dirty状態は、実際の編集とUndoで用意したfixtureの前後を照合する。snapshot、固定browser、画面証拠のhashを検証し、欠落・重複・見切れ・ふりがなのはみ出し・操作不能・履歴変更・偽の拡大を独立負例で拒否する。
 
 GA-STATICは公開入力集合・構文・release freeze、SEMANTICは一覧と操作対象の対応、コピーの範囲と既存モード移動の保持、HYBRIDは可読性と実入力の到達を扱う。結果は実行したOSに限定し、別OS、実児童評価、実IMEや支援機器の未実施を合格へ含めない。
+
+
+## 拡張基盤の必須監査
+
+1.1.0では従来の安定ID、不変snapshot、期待値、必須ブラウザー監査を維持し、拡張基盤を独立した追加試験にする。標準の260能力台帳へ既存IDの転用・削除を行わない。以下は受入要件と機械試験の対応であり、表そのものはPASSの証拠ではない。
+
+| 要件 | 保証 | 主な追加試験ID | 区分 |
+| --- | --- | --- | --- |
+| EXT01 | 標準UI・命令・上限・CSP・オフライン維持 | EXTENSION-STANDARD-POLICIES / STANDARD-NO-NETWORK、既存全gate | HYBRID |
+| EXT02 | 第三者登録、重複・衝突拒否 | EXTENSION-REGISTRATION-COLLISION-TYPES / INDEPENDENT-CALCULATIONS | GA-EXEC |
+| EXT03 | 日本語・ブロック・型・単位・履歴の統合 | EXTENSION-LANGUAGE-BLOCK-ROUNDTRIP / TYPES-UNITS-DEPENDENCIES / GUI-HISTORY-AUTOSAVE | HYBRID |
+| EXT04 | 同期計算、非同期命令、イベント、停止 | EXTENSION-ASYNC-PARALLEL-PAUSE-STOP / EVENT-LANGUAGE / SESSION-CANCELLATION | GA-EXEC |
+| EXT05 | 現行CSPで実popupと実MessageChannel | EXTENSION-REAL-POPUP-MESSAGECHANNEL | GA-EXEC |
+| EXT06 | 旧session、重複、不明、偽window、期限の拒否 | EXTENSION-RPC-NEGATIVE-LIFECYCLE | GA-EXEC |
+| EXT07 | 宣言した上限の適用、保存・出力経路 | EXTENSION-PROFILE-IMPORT-FILE-RUNTIME / COUNT-CAPACITY-ROUNDTRIP | HYBRID |
+| EXT08 | 継承・有限・null、固定整合、停止の維持 | EXTENSION-PROFILE-INHERIT-FINITE-UNLIMITED / COOPERATIVE-FUNCTION-BUDGET | HYBRID |
+| EXT09 | 標準形式維持、依存・hash不一致の原子的拒否 | EXTENSION-DERIVED-SAVE-RESTORE / FAILED-IMPORT-PRESERVES-EDITOR | GA-EXEC |
+| EXT10 | 独立した実行HTMLと未接続診断 | EXTENSION-OFFLINE-STANDALONE / REAL-POPUP-MESSAGECHANNEL | GA-EXEC |
+| EXT11 | 通信遮断で隠さず実際の通信を観測 | EXTENSION-STANDARD-NO-NETWORK / DERIVED-NO-NETWORK / OFFLINE-STANDALONE | GA-EXEC |
+| EXT12 | 必須結果・artifact・snapshot・run照合 | extension-foundation-negative、verify-gate-results | GA-STATIC |
+| EXT13 | 公開型・ガイド・独立実例による再現 | EXTENSION-INDEPENDENT-CALCULATIONS / OFFLINE-STANDALONE、EXTENSIONS.md | HYBRID |
+
+試験入口は `audit/tests/extension-foundation.mjs`。固定Playwright・Chromeで本体、派生editor、書出しplayer、外部popupを動かす。通信観測はoffline設定やroute.abortを入れず、HTTP要求・socket作成・pageerrorを記録する。観測を避けるための事前遮断はこの試験の証拠にしない。
+
+独立validatorは `audit/lib/extension-foundation-contract.mjs`。順序付き必須結果、固定期待観測、同じ公開snapshot、固定browser版、run/attempt、candidate・derived・playerの内容hashを確認する。`extension-foundation-negative.mjs` は欠落、重複、偽PASS、例外、環境・通信・artifact改変、別snapshot/run/attemptを拒否する合成control専用試験であり、製品PASSへ混入しない。
+
+local gateは従来36段と新規2段を要求し、`verify-gate-results` とselftest evidence bundleへ接続する。既存audit workflowのselftest・最終aggregateで欠落を拒否する。fixed acceptanceにも実ブラウザー、negative、独立validatorを必須stepとして追加する。LinuxとWindows、未実施とPASSを区別し、Push後のActions実行完了をローカル結果から推定しない。
+
+版更新では、三つの現行manifestの `productVersion` だけを固定された移行時ラベルへ正規化して、旧source pinのhashと比較する。現行ラベルは公開製品版と一致する必要があり、他の全byte・固定本文・sourceCommit・期待値・安定IDは従来のhashで照合する。正規化で意味・coverageの変更を許容しない。実行証拠のsnapshotは正規化せず、実際の現行ファイル全体を記録する。
+
+## MITライセンスへの変更と監査
+
+ユーザーの明示指示により、現行のあかりコードのライセンスをApache-2.0からMITへ変更した。著作権表示は `Copyright (c) 2026 SAIEduLab` とする。本体・LICENSE・書き出しHTML・派生editor/playerが、MIT SPDXと同じMIT全文・著作権表示を保持することを静的監査と実ブラウザーで確認する。オフライン・CSP・単一HTMLの保証を維持する。
+
+安定ID `EXPORT Apache-2.0ライセンス保持` は履歴との対応のため保持する。現行の合格条件はMIT全文と著作権表示の保持であり、Apacheとの選択判定にはしない。診断APIの旧名 `AKARI_APACHE_LICENSE` は互換用aliasで、値は現行の `AKARI_LICENSE` と同じMIT全文である。
+
+`audit/manifests/license-migration.json` は、旧安定ID・承認された変更・変更前の入力hash・正確なライセンス変更hunkを記録する。`license-contract.cjs` はそのhunkだけを逆投影し、既存の固定hashでその他の全バイトを検証する。旧snapshot・履歴・migration fixture・期待ID集合の変更は行わない。欠落・重複・著作権改変・無関係なコード変更は負例で拒否する。

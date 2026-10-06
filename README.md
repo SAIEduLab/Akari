@@ -1,6 +1,6 @@
 # あかり（Akari）
 
-あかりは、子どもが考えた場面を日本語の文で表し、同じ作品をコードとブロックの両方から編集するプログラミング環境です。1.0.2では「ねこは右へ10歩動く」「ねこを右へ10歩動かす」のように、対象・方向・量を文の役割で表す言語設計を採用します。
+あかりは、子どもが考えた場面を日本語の文で表し、同じ作品をコードとブロックの両方から編集するプログラミング環境です。1.1.0では「ねこは右へ10歩動く」「ねこを右へ10歩動かす」のように、対象・方向・量を文の役割で表す言語設計を採用します。
 
 ## できること
 
@@ -19,24 +19,27 @@
 
 ## 使い方
 
-製品表示版は **あかり1.0.2** です。現行製品は [`Akari1_0_2.html`](./Akari1_0_2.html)。公開入口の案内に沿って開き、「▶ 動かす」を押すと、初期作品の「あかり」が右へ10歩動いて「こんにちは」と言います。画面の変化と初期文を比べて確かめます。1.0.2の日本語文法・画面は再設計仕様に基づくもので、児童による使いやすさの実測や実装の受入試験を完了したという意味ではありません。
+製品表示版は **あかり1.1.0** です。現行製品は [`Akari1_1_0.html`](./Akari1_1_0.html)。公開入口の案内に沿って開き、「▶ 動かす」を押すと、初期作品の「あかり」が右へ10歩動いて「こんにちは」と言います。画面の変化と初期文を比べて確かめます。1.1.0の日本語文法・画面は再設計仕様に基づくもので、児童による使いやすさの実測や実装の受入試験を完了したという意味ではありません。
 
 音声取込み形式は MP3 / WAV（PCM）/ M4A（AAC-LC）/ FLAC / Ogg Opus を仕様対象とします。ファイル単体での動作、保存・復元、ブラウザーごとの対応は、製品監査で確認します。
 
 ## ドキュメント
 
-- [`Akari1_0_2.html`](./Akari1_0_2.html) — あかり本体
+- [`Akari1_1_0.html`](./Akari1_1_0.html) — あかり本体
 - [`LANGUAGE.md`](./LANGUAGE.md) — 操作方法・文法・言語仕様
 - [`index.html`](./index.html) — 紹介・本体・マニュアルへの公開入口
 - [`MANUAL.html`](./MANUAL.html) — はじめかた・保存・開く・書き出し・困ったとき
 - [`Manual/`](./Manual/) — [ブロック](./Manual/block-mode.html)・[コード初級](./Manual/code-mode-beginner.html)・[中級](./Manual/code-mode-intermediate.html)・[上級](./Manual/code-mode-advanced.html)
 - [`AUDIT.md`](./AUDIT.md) — 検査項目と受入基準の正本
+- [`EXTENSIONS.md`](./EXTENSIONS.md) — fork開発者向けの拡張登録・外部接続・実例
 - [`audit/LANGUAGE_FORMS.md`](./audit/LANGUAGE_FORMS.md) — 旧文型コーパスの基準 coverage と、新しい作文文法との対応
 - [`LICENSE`](./LICENSE) — ライセンス
 
-言語仕様の正本は `LANGUAGE.md`、監査契約の正本は `AUDIT.md` です。仕様上の `languageContractId`・`runtimeContractId`・`projectFormatVersion`・`programFormatVersion` はそれぞれ2で、製品表示版とは独立しています。自動保存の領域名は `akari-workspace-f2` と `akari.autosave.f2` です。1.0.2の合否、実ブラウザー試験、児童の作文・操作評価は区別して報告します。READMEや仕様上の例は、それだけで実装PASSを示しません。
+言語仕様の正本は `LANGUAGE.md`、監査契約の正本は `AUDIT.md` です。仕様上の `languageContractId`・`runtimeContractId`・`projectFormatVersion`・`programFormatVersion` はそれぞれ2で、製品表示版とは独立しています。自動保存の領域名は `akari-workspace-f2` と `akari.autosave.f2` です。1.1.0の合否、実ブラウザー試験、児童の作文・操作評価は区別して報告します。READMEや仕様上の例は、それだけで実装PASSを示しません。
 
 単体HTMLでオフライン利用できることは製品仕様の対象です。実際の利用条件を確認するときは、監査済みの製品と配布物を参照してください。マニュアルも保存する場合は `MANUAL.html` と `Manual/` を同じ配置で保存します。
+
+1.1.0では、標準の画面・機能・制限を保ちながら、forkへ命令・計算・できごと、資源上限のプロファイル、別ウィンドウとの接続を組み込む土台を用意します。本家は拡張を登録せず、通信を開始しません。拡張の実装と通信先はforkの開発者が管理します。
 
 ## Issueについて
 
@@ -44,7 +47,7 @@
 
 ## Pull Requestについて
 
-このリポジトリへの外部PRは受け付けていません。Apache License 2.0の範囲で、自由にfork・改変・再配布できます。再配布時はライセンス条件に従ってください。
+このリポジトリへの外部PRは受け付けていません。MIT Licenseの範囲で、自由にfork・改変・再配布できます。再配布時はライセンス条件に従ってください。
 
 ## 開発者
 
@@ -52,4 +55,4 @@
 
 ## License
 
-Licensed under the Apache License, Version 2.0. 詳細は [`LICENSE`](./LICENSE) を参照してください。
+Licensed under the MIT License. 詳細は [`LICENSE`](./LICENSE) を参照してください。

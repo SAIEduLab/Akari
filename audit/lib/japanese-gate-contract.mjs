@@ -9,12 +9,14 @@ import {verifyJapaneseContract} from '../tests/japanese-contract-static.mjs';
 import {corpusPath,consolidationInputPaths,consolidationNegativeIds} from './docs-consolidation-contract.mjs';
 
 export const contractInputPaths = [
+  'audit/lib/migration-source-contract.mjs',
   'audit/tests/japanese-contract-static.mjs','audit/fixtures/1.0.2-baseline-capabilities.json',
   'audit/fixtures/language-v2-test-migration.json','audit/tests/contract-gate.mjs',
   'audit/lib/japanese-gate-contract.mjs',
   ...consolidationInputPaths,
 ];
 export const migrationInputPaths = [
+  'audit/lib/migration-source-contract.mjs',
   'audit/tests/language-migration-static.mjs','audit/fixtures/language-surface-v2-migration.json',
   'audit/fixtures/language/forms.mjs','audit/fixtures/language/inline.mjs',
   'audit/fixtures/language/expected.json','audit/manifests/language-form-coverage.json',

@@ -76,7 +76,7 @@ function runClock(api,p,steps,clock=null){
  try{scheduler.start();pump();for(const step of steps){now=step.at;if(clock)clock.now=now;if(step.pause)scheduler.pause();if(step.resume)scheduler.resume();if(step.stop)scheduler.stop();pump();}assert.deepEqual(errors,[]);return trace;}finally{scheduler.stop();}
 }
 check('compatibility/actor-named-今',()=>{
- const old=loadApi(execFileSync('git',['show','187c74c573f0afad420d0746426c32bf02f453a4:'+currentProductFile()],{encoding:'utf8',maxBuffer:16*1024*1024}));
+ const old=loadApi(execFileSync('git',['show','187c74c573f0afad420d0746426c32bf02f453a4:Akari1_0_2.html'],{encoding:'utf8',maxBuffer:16*1024*1024}));
  const source='今の点数を言う。',p=project(source);p.components[0].name='今';p.components[0].localData.variables=[{id:'now-score',name:'点数',initialValue:7}];p.projectData.variables[0].initialValue=2;p.scripts[0].targetId='dango';
  const previous=old.parseSyntax(source,{symbols:old.buildSymbols(p),targetId:'dango',event:'start'}),current=A.parseSyntax(source,{symbols:A.buildSymbols(p),targetId:'dango',event:'start'});
  assert.equal(previous.ast.body[0].value.kind,'ActorQualifiedRead');assert.equal(current.ast.body[0].value.kind,'ActorQualifiedRead');assert.equal(current.ast.body[0].value.actorRef.name,'今');

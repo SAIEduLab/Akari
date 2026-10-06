@@ -36,6 +36,14 @@ jobs:
           node audit/tests/actions-transfer-static.mjs audit-evidence/acceptance/transfer.json
           node audit/tests/actions-transfer-values.mjs audit-evidence/acceptance/values.json
           node audit/tests/command-meaning.mjs audit-evidence/acceptance/command-meaning.json
+      - name: Verify extension foundation in the fixed browser
+        if: always()
+        run: node audit/tests/extension-foundation.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/extension-foundation.json
+      - name: Reject fabricated extension evidence and verify the actual report
+        if: always()
+        run: |
+          node audit/tests/extension-foundation-negative.mjs audit-evidence/acceptance/extension-foundation-negative.json
+          node audit/tests/extension-foundation-verify.mjs audit-evidence/acceptance/extension-foundation.json audit-evidence/acceptance/extension-foundation-negative.json
       - name: Verify original basic intentions and separate continuous rates
         run: node audit/tests/basic-intents.mjs audit-evidence/acceptance/basic-intents.json
       - name: Verify finite semantic variants and minimum-pair refusals
