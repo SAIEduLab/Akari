@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: Apache-2.0 */
+/* SPDX-License-Identifier: MIT */
 /* Missing entries inherit Standard. null means no software policy ceiling. */
 const AkariFiniteProfileExample = {
   id: 'demo.roomy', version: '1.0.0',

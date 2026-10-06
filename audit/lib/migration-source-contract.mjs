@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {currentProductVersion} from './product-path.cjs';
+import {preservedLicenseSource} from './license-contract.cjs';
 const metadataPaths=new Set([
   'audit/manifests/language-form-coverage.json',
   'audit/manifests/features.json',
@@ -8,6 +9,7 @@ const metadataPaths=new Set([
 // Keep every pinned source byte except the current producer's single label.
 // The historical candidate label remains fixed; no oracle pin is regenerated.
 export function preservedCandidateBytes(file,bytes){
+  bytes=preservedLicenseSource(file,bytes);
   if(!metadataPaths.has(file))return bytes;
   const text=bytes.toString('utf8'),label=/^  "productVersion": "([^"]+)",?$/m;
   assert.equal(JSON.parse(text).productVersion,currentProductVersion());

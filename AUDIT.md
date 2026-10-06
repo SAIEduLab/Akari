@@ -324,7 +324,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | editor:history | コード/GUI/下書き/作品共通Undo/Redo | project + draft history | snapshot / restoreSnap / undo / redoDo | undo / redoDo / snapshot / restoreSnap; beforeinput・keydownと共通history | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | designのみ編集 | 外部core test対象外（browser suiteで検査） | BROWSER-PRODUCT; browser-session:block-edit-common-history; browser-session:callable-draft-history; browser-storage-media:real-media-import-and-history; browser-boundaries:body-pagination-and-comment-multiline; browser-boundaries:empty-required-body-refusal-and-noop-replacement | 履歴の前後snapshot・下書きbaseline/loadedKey・native Undoは実browser経路で検査する |
 | product:block-workbench | 形で構造を示し、直接つかんで接続できる連続作業台 | EditorSession / block tree / view state | 同じsource正本とAST/codec | palette preview / block body drag / snap preview / C-body / expression socket / pan / zoom / fit / home / workspace expand / edge auto-scroll / continuous long body | EDITOR-GUI-001/002、EDITOR-EDIT-001/002、EDITOR-SWITCH-001 と LANG-WB-001〜006 | runtimeは変更せず確定sourceだけを共通compile/runtimeへ渡す | TEST-EDITOR workbench shape paths and viewport zoom are presentation only | BROWSER-WORKBENCH; WORKBENCH-SHAPE-MEANING; WORKBENCH-DRAG-CONNECT; WORKBENCH-NESTED-MOVE; WORKBENCH-EXPRESSION-DROP; WORKBENCH-CONTAINER-GROUP; WORKBENCH-VIEWPORT; WORKBENCH-EDGE-SCROLL-CANCEL; WORKBENCH-LONG-BODY; WORKBENCH-SHELL; WORKBENCH-COMPACT; WORKBENCH-RESPONSIVE; WORKBENCH-PREVIOUS-FIXES; WORKBENCH-KEYBOARD; WORKBENCH-TOUCH; WORKBENCH-PENDING-IME; WORKBENCH-RUNTIME-LOCKS; WORKBENCH-DEFINITION-DRAFT | 形・直接操作・接続予告・広い作業領域・長い本文・対象/結果把握・代替操作を同じsnapshotの実ブラウザーで検査し、未実施経路を過去結果やpure testで補完しない |
 | product:responsive | responsive/縮尺/スクロール到達性/キーボード/IME/pointer | 表示状態のみ | 既存CSS/editor/coordinate変換 | container CSS / viewport CSS / scroll container / Pointer Events / keyboard代替操作 / composition handlers | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 論理座標とruntime保持 | 外部core test対象外（browser suiteで検査） | BROWSER-PRODUCT; BROWSER-SHELL; BROWSER-DESIGNER; DESIGN-RESPONSIVE-REACHABILITY; browser-session:responsive-mode-state; browser-session:ime-code-and-block; ui-shell:* | 既存6 viewport・resize・200%・composition・touchに加え、部品候補・素材入口・設定・resize handle の可視到達性と正しい scroll container を実ブラウザーで検査する |
-| product:offline-license | 単一HTML/オフライン/CSP/Apache-2.0保持 | 製品本体・実行HTML | generateStandaloneHtml | 単一 Akari1_0_1.html / generateStandaloneHtml; ローカル起動 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 共通runtime | EXPORT Apache-2.0ライセンス保持; AUDIT EXPORT hostile HTML remains escaped data | BROWSER-PRODUCT; browser-storage-media:real-media-standalone-player | licenseとescapeの自動追跡。実オフライン動作は別検証 |
+| product:offline-license | 単一HTML/オフライン/CSP/MIT全文・著作権表示保持 | 製品本体・実行HTML | generateStandaloneHtml | 単一 Akari1_0_1.html / generateStandaloneHtml; ローカル起動 | LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」 | 共通runtime | EXPORT Apache-2.0ライセンス保持; AUDIT EXPORT hostile HTML remains escaped data | BROWSER-PRODUCT; browser-storage-media:real-media-standalone-player | licenseとescapeの自動追跡。実オフライン動作は別検証 |
 
 ### 資源上限
 
@@ -552,3 +552,11 @@ GA-STATICは公開入力集合・構文・release freeze、SEMANTICは一覧と�
 local gateは従来36段と新規2段を要求し、`verify-gate-results` とselftest evidence bundleへ接続する。既存audit workflowのselftest・最終aggregateで欠落を拒否する。fixed acceptanceにも実ブラウザー、negative、独立validatorを必須stepとして追加する。LinuxとWindows、未実施とPASSを区別し、Push後のActions実行完了をローカル結果から推定しない。
 
 版更新では、三つの現行manifestの `productVersion` だけを固定された移行時ラベルへ正規化して、旧source pinのhashと比較する。現行ラベルは公開製品版と一致する必要があり、他の全byte・固定本文・sourceCommit・期待値・安定IDは従来のhashで照合する。正規化で意味・coverageの変更を許容しない。実行証拠のsnapshotは正規化せず、実際の現行ファイル全体を記録する。
+
+## MITライセンスへの変更と監査
+
+ユーザーの明示指示により、現行のあかりコードのライセンスをApache-2.0からMITへ変更した。著作権表示は `Copyright (c) 2026 SAIEduLab` とする。本体・LICENSE・書き出しHTML・派生editor/playerが、MIT SPDXと同じMIT全文・著作権表示を保持することを静的監査と実ブラウザーで確認する。オフライン・CSP・単一HTMLの保証を維持する。
+
+安定ID `EXPORT Apache-2.0ライセンス保持` は履歴との対応のため保持する。現行の合格条件はMIT全文と著作権表示の保持であり、Apacheとの選択判定にはしない。診断APIの旧名 `AKARI_APACHE_LICENSE` は互換用aliasで、値は現行の `AKARI_LICENSE` と同じMIT全文である。
+
+`audit/manifests/license-migration.json` は、旧安定ID・承認された変更・変更前の入力hash・正確なライセンス変更hunkを記録する。`license-contract.cjs` はそのhunkだけを逆投影し、既存の固定hashでその他の全バイトを検証する。旧snapshot・履歴・migration fixture・期待ID集合の変更は行わない。欠落・重複・著作権改変・無関係なコード変更は負例で拒否する。

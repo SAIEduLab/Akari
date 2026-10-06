@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: Apache-2.0 */
+/* SPDX-License-Identifier: MIT */
 const AkariOfflineExample = {
   manifest: {
     id: 'demo.offline', version: '1.0.0', apiContract: 1,

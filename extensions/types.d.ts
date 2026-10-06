@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: Apache-2.0 */
+/* SPDX-License-Identifier: MIT */
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 export type Unit = '歩' | '秒' | '度' | '回' | '番目' | '点' | '個' | '％' | 'Hz';
 export interface Quantity { magnitude: number; unit: Unit }

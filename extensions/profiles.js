@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: Apache-2.0 */
+/* SPDX-License-Identifier: MIT */
 // Portable source: embed this factory in a derived editor and its exported player.
 function createAkariProfiles(standardLimits, additionalDefaults) {
   'use strict';

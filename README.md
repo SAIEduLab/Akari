@@ -47,7 +47,7 @@
 
 ## Pull Requestについて
 
-このリポジトリへの外部PRは受け付けていません。Apache License 2.0の範囲で、自由にfork・改変・再配布できます。再配布時はライセンス条件に従ってください。
+このリポジトリへの外部PRは受け付けていません。MIT Licenseの範囲で、自由にfork・改変・再配布できます。再配布時はライセンス条件に従ってください。
 
 ## 開発者
 
@@ -55,4 +55,4 @@
 
 ## License
 
-Licensed under the Apache License, Version 2.0. 詳細は [`LICENSE`](./LICENSE) を参照してください。
+Licensed under the MIT License. 詳細は [`LICENSE`](./LICENSE) を参照してください。

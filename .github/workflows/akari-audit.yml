@@ -57,6 +57,8 @@ jobs:
           python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"
           node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"AKARI_BROWSER="+require("path").join(process.env.RUNNER_TEMP,"functional-browser/chrome-linux64/chrome")+"\n")'
       - run: node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/selftest
+      - run: node audit/tests/license-verify.mjs audit-evidence/selftest/license-browser.json
+        if: always()
       - run: node audit/verify-evidence.mjs seal selftest audit-evidence/selftest
         if: always()
       - uses: actions/upload-artifact@v4

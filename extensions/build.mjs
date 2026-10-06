@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: Apache-2.0 */
+/* SPDX-License-Identifier: MIT */
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import vm from 'node:vm';

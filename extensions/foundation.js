@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: Apache-2.0 */
+/* SPDX-License-Identifier: MIT */
 /* This factory is deliberately self-contained: the product embeds it verbatim. */
 function createAkariExtensionHost(options) {
   'use strict';
