@@ -657,5 +657,79 @@
     "SensorRead:KEY_DOWN",
     "SensorRead:TOUCHING_COLOR",
     "SensorRead:TOUCHING"
-  ]
+  ],
+  "uiContracts": {
+    "componentControls": {
+      "id": "ui:component-controls-scroll",
+      "editorMode": "blocks",
+      "regionLabel": "部品と作品の道具",
+      "separateComponentListScroll": true,
+      "targets": [
+        ".prop-duplicate",
+        ".prop-delete",
+        ".child-copy-help",
+        "#componentPickerCore > summary",
+        "#soundQuickAdd",
+        "#assetBtn",
+        "#dataBtn"
+      ],
+      "preservedState": [
+        "project",
+        "source",
+        "history",
+        "redo",
+        "dirty"
+      ],
+      "levels": [
+        "basic",
+        "advanced"
+      ],
+      "pickerStates": [
+        "closed",
+        "open"
+      ],
+      "viewports": [
+        [
+          1920,
+          1080
+        ],
+        [
+          1366,
+          768
+        ],
+        [
+          1280,
+          720
+        ],
+        [
+          1024,
+          768
+        ],
+        [
+          760,
+          600
+        ],
+        [
+          390,
+          600
+        ],
+        [
+          320,
+          500
+        ]
+      ],
+      "browserZoom": [
+        1.25,
+        1.5,
+        2
+      ],
+      "testIds": [
+        "COMPONENT-CONTROLS-RESPONSIVE",
+        "COMPONENT-CONTROLS-KEYBOARD",
+        "COMPONENT-CONTROLS-LIST",
+        "COMPONENT-CONTROLS-TOUCH",
+        "COMPONENT-CONTROLS-ZOOM"
+      ]
+    }
+  }
 }

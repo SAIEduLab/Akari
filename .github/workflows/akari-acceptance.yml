@@ -170,6 +170,12 @@ jobs:
       - name: Independently verify language UI evidence and negative controls
         if: always()
         run: node audit/tests/child-language-ui-verify.mjs audit-evidence/repair05/child-language-ui.json
+      - name: Verify component actions with native scrolling and browser zoom
+        if: always()
+        run: node audit/tests/component-controls-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/component-controls.json
+      - name: Independently verify component reachability and negative controls
+        if: always()
+        run: node audit/tests/component-controls-verify.mjs audit-evidence/repair05/component-controls.json audit-evidence/repair05/component-controls-verification.json
       - name: Verify child-facing diagnostics and reachable technical details
         if: always()
         run: node audit/tests/child-diagnostics-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/child-diagnostics.json
