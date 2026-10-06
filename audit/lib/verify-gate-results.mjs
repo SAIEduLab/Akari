@@ -1,3 +1,4 @@
+import {verifySamples,verifySamplesNegative} from './samples-contract.mjs';
 import {verifyContractReport,verifyMigrationReport,verifyIntentReport,verifyRuntimeReport,verifyNegativeReport} from './japanese-gate-contract.mjs';
 import {verifyBlockFields} from './block-field-contract.mjs';
 import fs from 'node:fs';
@@ -43,5 +44,7 @@ export function verifyGateResults(dir,inputs){
   verifyExtensionFoundationNegative(read('extension-foundation-negative'),inputs);
   const licensing=read('license-static');assert.equal(licensing.status,'PASS');assert.equal(licensing.copyright,COPYRIGHT);assert.deepEqual(licensing.snapshot,inputs);assert.equal(licensing.results.length,23);assert.equal(new Set(licensing.results.map(row=>row.id)).size,23);for(const row of licensing.results)assert.equal(row.status,'PASS');
   verifyLicenseBrowserReport(read('license-browser'),path.join(dir,'license-browser.artifacts'),inputs);
+  verifySamples(read('samples'),inputs,path.join(dir,'samples.artifacts'));
+  verifySamplesNegative(read('samples-negative'),inputs);
   return {status:'PASS',steps:gate.steps.length};
 }

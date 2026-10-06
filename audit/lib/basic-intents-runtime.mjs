@@ -1,6 +1,6 @@
 // Observations only: parser, codec and scheduler are the actual product.
 export function basicProject(A,source){
- const p=A.makeEmptyProject(),actor=p.components[0];Object.assign(actor,{x:100,y:100,direction:0});
+ const p=A.makeEmptyProject(),actor=p.components[0];Object.assign(actor,{name:'あかり',x:100,y:100,direction:0});
  const star=structuredClone(actor);Object.assign(star,{id:'basic-star',name:'星',x:200});star.localData={variables:[],lists:[]};star.costumes=[{id:'basic-star-costume',name:'星',kind:'text',value:'⭐'}];star.costumeId='basic-star-costume';
  p.components.push(star);p.name='基本原作文';p.scripts=[{id:'basic-body',targetId:'sprite-1',event:'start',source}];return p;
 }

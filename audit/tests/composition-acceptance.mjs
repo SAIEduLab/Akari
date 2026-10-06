@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {nameLegacyFixtureActor} from '../lib/gate-ui-fixture.mjs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -90,6 +91,7 @@ try{
   },{draft:i10,kind,factory:projectExpression});capture(result);assert.deepEqual(result.compileErrors,[],'I10 original '+kind+' definition must be accepted');return result;
  });
  await run('EDITOR/idless-heading-selection','EDITOR_IDENTITY',async(page,capture)=>{
+  await nameLegacyFixtureActor(page);
   await page.locator('#uiLevel').selectOption('advanced');await page.locator('#editorModecode').click();await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');
   const input=page.locator('#codeEditor');await input.fill('');
   const source='あかりがクリックされたとき、\n  あかりは画面の右へ30歩動いて、「今日はどこへ行こう」と言う。';

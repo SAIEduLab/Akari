@@ -560,3 +560,23 @@ local gateは従来36段と新規2段を要求し、`verify-gate-results` とsel
 安定ID `EXPORT Apache-2.0ライセンス保持` は履歴との対応のため保持する。現行の合格条件はMIT全文と著作権表示の保持であり、Apacheとの選択判定にはしない。診断APIの旧名 `AKARI_APACHE_LICENSE` は互換用aliasで、値は現行の `AKARI_LICENSE` と同じMIT全文である。
 
 `audit/manifests/license-migration.json` は、旧安定ID・承認された変更・変更前の入力hash・正確なライセンス変更hunkを記録する。`license-contract.cjs` はそのhunkだけを逆投影し、既存の固定hashでその他の全バイトを検証する。旧snapshot・履歴・migration fixture・期待ID集合の変更は行わない。欠落・重複・著作権改変・無関係なコード変更は負例で拒否する。
+
+## 編集できる3本のお手本
+
+機能固定は audit/manifests/features.json の uiContracts.editableSamples と audit/manifests/samples.json。①ダンス・②花もよう・③星のゲームを外部通信なしで一式として開く。選択だけでは現在作品を変えず、毎回確認し、「はい」で破棄・読込み、「キャンセル」またはEscapeで保つ。読込み前に素材・作品を用意し、新規作成用の空作品とは分離する。作品の改造は原本に影響しない。①②の開始・③のクリック本文を開き、表示設定を尊重する。キャラクターはマスコットと呼ぶ。旧い作品の名前を一括変換しない。
+
+| 安定ID | 区分 | 固定する保証 |
+|---|---|---|
+| SAMPLES-CATALOG | GA-STATIC | 3本の名前・部品・本文・データ、コンパイル、素材hash、複製の独立性、ブロック往復 |
+| SAMPLES-RUNTIME | GA-EXEC | ダンス2回、三角形12個36線、ゲーム5点・受付条件・再実行の初期化 |
+| SAMPLES-CHOICE-CONFIRM | GA-EXEC | 選択のみの保持、毎回の確認、入口本文、コード／ブロック・表示レベルの保持 |
+| SAMPLES-CANCEL-PENDING | GA-EXEC | コード・不正なブロック入力・定義の下書きの保持とEscape |
+| SAMPLES-RESET-ISOLATION | GA-EXEC | 全6方向の切替、原本再読込み、履歴・遅延自動保存の隔離 |
+| SAMPLES-BLOCK-EDIT | GA-EXEC | 3本で数値、交換・並べ替え・追加・削除、Undo/Redoとコード往復 |
+| SAMPLES-SAVE-OFFLINE | GA-EXEC | 3本の実download・再読込み、改造作品保存、実行HTMLのoffline実行、素材保持 |
+| SAMPLES-LOCKS | HYBRID | 実行・一時停止の実UI操作制限と準備・読込みを含むmodelLockedへの接続 |
+| SAMPLES-RESPONSIVE-HINTS | GA-EXEC | 1366/390幅、両表示モードと両レベル、タッチ・キーボード、6種類の改造案内 |
+
+実行は audit/tests/samples.mjs、独立判定は audit/lib/samples-contract.mjs。候補HTML・保存作品・実行HTML・画像をhashで結び、現行snapshotと固定Chrome/Playwrightを照合する。欠落・重複・偽PASS・異なるsnapshot・例外・外部通信・素材証拠の破損を audit/tests/samples-negative.mjs で拒否する。両suiteを gateSteps、verifyGateResults、既存selftest証拠集約へ登録し、未実行をPASSにしない。製品内に監査用期待値は置かない。
+
+意味審査では改造課題と作品の対応、本文・部品・初期データの一致を確認する。既存の挨拶・10歩移動を使う表示／初期値の回帰試験は明示fixtureで維持し、変更された入口の試験は3本のお手本で行う。旧保証を削除・skipしない。保存完了を自動判定する機能は要求しない。ローカルは変更に関係するsuiteを実行し、公開Actionsが既存全gateを実行する。

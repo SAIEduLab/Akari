@@ -14,7 +14,7 @@ const ids=transferFixtures().plan.groups.C.map(r=>r.id).filter(id=>!id.startsWit
 const cases=new Map(),eq=(a,b)=>assert.deepEqual(plain(a),plain(b));
 const add=(id,source,configure,exercise)=>cases.set('C-'+id,{source,configure,exercise});
 function fixture(source){
- const p=A.makeEmptyProject(),a=p.components[0];
+ const p=A.makeEmptyProject(),a=p.components[0];a.name='あかり';
  Object.assign(a,{x:100,y:100,w:100,h:100,direction:0,scalePercent:100,visible:true});
  a.costumes=['原本','星','丸'].map((name,i)=>({id:'command-costume-'+i,name,kind:'text',value:name}));a.costumeId=a.costumes[0].id;
  a.localData={variables:[{id:'own-score',name:'個体点数',initialValue:10}],lists:[]};

@@ -96,7 +96,7 @@ await withBrowser(browserPath,async browser=>{
         assert.equal(await p.locator('#sourceOverview').isVisible(),false,'new project opens the editor');
         assert.equal(await p.locator('#eventSelect').inputValue(),'start');
         assert.equal(await p.evaluate(()=>Akari.app.project.scripts.every(s=>s.source==='')),true,'new work has empty source');
-        await p.locator('#sampleBtn').click();
+        await p.locator('#sampleBtn').click();await p.locator('#sampleConfirmYes').click();
         const editor=mode==='code'?p.locator('#codeEditor'):p.locator('#blockEditor');
         assert.ok(await editor.isVisible());
         if(mode==='code')assert.ok(await editor.isEditable());

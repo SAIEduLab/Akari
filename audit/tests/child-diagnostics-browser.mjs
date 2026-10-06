@@ -46,7 +46,7 @@ const expected=[...cases.map(x=>'syntax/'+x[0]),'semantic/function-effects','run
   'save/digest-fault','save/length-fault','save/orphan-fault','import/current-and-incoming','reach/keyboard-390','reach/touch-390'];
 
 async function install(p,{source='「もとの動き」と言う。',args=[]}={}) {
-  const file=await p.evaluate(({source,args})=>{const q=Akari.makeEmptyProject();q.name='診断のことば';
+  const file=await p.evaluate(({source,args})=>{const q=Akari.makeEmptyProject();q.components[0].name='あかり';q.name='診断のことば';
     q.scripts=[{id:'diagnostic-main',targetId:'sprite-1',event:'start',source}];
     q.functions=[{id:'diagnostic-function',ownerId:'stage',name:'足す',args,source:'1＋2を返す。'}];
     q.projectData.lists=[{id:'shopping',name:'買うもの',initialValue:['りんご','パン']}];

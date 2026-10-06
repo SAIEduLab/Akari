@@ -12,7 +12,7 @@ const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 const state=p=>p.evaluate(()=>{const a=Akari.app,s=a.editorState.main;return {source:s.sourceText,project:JSON.stringify(a.project),history:a.editorState.history,pending:s.pendingEdit,ast:s.syntaxAst,block:s.blockView,draft:s.blockDraft,diagnostics:s.diagnostics};});
 async function install(p,source,{event='start',level='advanced',mode='blocks'}={}){
  const file=await p.evaluate(({source,event})=>{
-  const project=Akari.makeEmptyProject(),akari=project.components[0];project.name='UX改修検証';Object.assign(akari,{x:80,y:180});
+  const project=Akari.makeEmptyProject(),akari=project.components[0];project.name='UX改修検証';Object.assign(akari,{name:'あかり',x:80,y:180});
   const dango=structuredClone(akari);Object.assign(dango,{id:'dango',name:'だんご',x:420});for(const c of dango.costumes)c.id='dango-'+c.id;dango.costumeId='dango-'+dango.costumeId;project.components.push(dango);
   project.projectData.variables=[{id:'score',name:'点数',initialValue:0}];akari.localData.variables=[{id:'local-score',name:'点数',initialValue:100}];project.projectData.lists=[{id:'items',name:'持ち物',initialValue:['本','かさ']}];
   project.scripts=[{id:'ux-main',targetId:'sprite-1',event,source}];return Akari.serializeProject(project,Akari.makeDefaultAssetStore());
