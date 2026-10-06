@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {nameLegacyFixtureActor} from '../lib/gate-ui-fixture.mjs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -13,7 +14,7 @@ const report={schema:'akari-ux-repair03-list-v1',status:'RUNNING',snapshot:snaps
 const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 const state=p=>p.evaluate(()=>({project:structuredClone(Akari.app.project),source:Akari.app.editorState.main.sourceText,state:Akari.app.editorState.state,history:Akari.app.editorState.history,redo:Akari.app.editorState.redo}));
 const panel=p=>p.evaluate(()=>{const root=document.querySelector('#listRepairPanel'),s=root.querySelector('select');return {project:structuredClone(Akari.app.project),state:Akari.app.editorState.state,text:root.innerText,options:[...s.options].map(o=>o.textContent),choice:s.value,selectDisabled:s.disabled,applyDisabled:root.querySelector('#listRepairApply').disabled,selection:[document.querySelector('#codeEditor').selectionStart,document.querySelector('#codeEditor').selectionEnd]};});
-async function gui(p){await p.locator('#dataBtn').click();await p.locator('#dataKind').selectOption('list');await p.locator('#dataName').fill('買うもの');await p.locator('#dataItems').fill(shopping.join('\n'));await p.locator('#dataAdd').click();await p.locator('#dataClose').click();await p.locator('#editorModecode').click();await p.locator('#codeEditor').fill(sourceFor(2));await p.locator('#codeEditor').press('Tab');}
+async function gui(p){await nameLegacyFixtureActor(p);await p.locator('#dataBtn').click();await p.locator('#dataKind').selectOption('list');await p.locator('#dataName').fill('買うもの');await p.locator('#dataItems').fill(shopping.join('\n'));await p.locator('#dataAdd').click();await p.locator('#dataClose').click();await p.locator('#editorModecode').click();await p.locator('#codeEditor').fill(sourceFor(2));await p.locator('#codeEditor').press('Tab');}
 async function fixture(p,c={}){
  await install(p,c.source??sourceFor(2),{mode:c.mode||'code',
   actorLists:c.local||c.dango?[{id:'akari-list',name:c.dango?'あかり専用':'買うもの',initialValue:['鉛筆','ノート','消しゴム']}]:[],

@@ -5567,6 +5567,10 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 .blockui-text-dialog textarea { box-sizing: border-box; width: 100%; min-height: min(300px, 45dvh); font: 18px/1.5 system-ui, sans-serif; padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: hidden; resize: vertical; }
 .blockui-text-dialog-controls { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; margin-top: 12px; }
 .blockui-text-dialog-controls button { min-width: 90px; min-height: 40px; font-size: 16px; }
+@media (min-width: 1001px) and (max-width: 1300px) {
+  body[data-editor-mode] .menutool { gap:4px; }
+  body[data-editor-mode] .menutool > button { padding-inline:5px; }
+}
 .sample-choice { display:inline-flex; align-items:center; gap:4px; min-width:0; }
 .sample-choice select { max-width:min(260px,60vw); min-height:32px; }
 .sample-dialog { box-sizing:border-box; width:min(620px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); overflow:auto; border:2px solid #667; border-radius:12px; padding:20px; color:inherit; background:Canvas; }
@@ -5581,7 +5585,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   <div class="titlebar">あかり</div>
   <div class="menutool">
     <button id="newBtn">新しく作る</button>
-    <label class="sample-choice">お手本 <select id="sampleSelect" aria-label="お手本を選ぶ"><option value="dance">お手本① マスコットとだんごのダンス</option><option value="flower">お手本② くるくる花もよう</option><option value="game">お手本③ 星をつかまえよう</option></select></label>
+    <label class="sample-choice"><select id="sampleSelect" aria-label="お手本を選ぶ"><option value="dance">お手本①</option><option value="flower">お手本②</option><option value="game">お手本③</option></select></label>
     <button id="sampleBtn">お手本を開く</button>
     <button id="sampleHelpBtn">お手本のヒント</button>
     <button id="openBtn">開く</button>

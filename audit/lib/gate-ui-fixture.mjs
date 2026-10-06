@@ -21,3 +21,14 @@ export async function installGreetingFixture(page) {
   await page.locator('#objectSelect').selectOption('sprite-1');
   await page.locator('#eventSelect').selectOption('start');
 }
+
+// Keep the actor named in the fixed historical sources explicit in native UI fixtures.
+export async function nameLegacyFixtureActor(page) {
+  await page.locator('#formSurface .component[data-id="sprite-1"]').click();
+  const name=page.locator('#properties input[aria-label="名前"]');
+  const folded=!(await name.isVisible());
+  if(folded)await page.locator('.properties-window .blockui-side-toggle').click();
+  await name.fill('あかり');await name.press('Tab');
+  await page.waitForFunction(()=>Akari.app.project.components[0].name==='あかり');
+  if(folded)await page.locator('.properties-window .blockui-side-toggle').click();
+}

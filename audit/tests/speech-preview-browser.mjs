@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {nameLegacyFixtureActor} from '../lib/gate-ui-fixture.mjs';
 import path from 'node:path';
 import {createRequire} from 'node:module';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
@@ -13,6 +14,7 @@ const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 const settle=p=>p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
 async function prepare(p,c){
  await p.locator('#newBtn').click();await p.locator('#editorModecode').click();await p.locator('#uiLevel').selectOption('basic');
+ await nameLegacyFixtureActor(p);
  const dango=p.locator('[data-sprite-preset="dango"]');await reveal(dango);await dango.click();
  const texts=c.kind==='short'?previewShortTexts:previewLongTexts,seconds=c.kind==='short'?2:10;
  for(const [i,name] of previewNames.entries()){

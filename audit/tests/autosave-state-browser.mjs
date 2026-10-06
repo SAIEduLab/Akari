@@ -25,7 +25,7 @@ async function record(p){return p.evaluate(async()=>{
   return {revision:rec.revision,updatedAt:rec.updatedAt,cursor:decoded.cursor,frameCount:decoded.frames.length,project:frame.project,editorState:frame.editorState};
 });}
 async function fixture(p,source,document,{actions=[],extraScripts=[]}={}){
-  const file=await p.evaluate(({source,document,actions,extraScripts})=>{const project=Akari.makeEmptyProject();project.name='自動保存状態の検証';
+  const file=await p.evaluate(({source,document,actions,extraScripts})=>{const project=Akari.makeEmptyProject();project.name='自動保存状態の検証';project.components[0].name='あかり';
     project.projectData.variables=[{id:'score',name:'点数',initialValue:0}];project.projectData.lists=[{id:'shopping',name:'買うもの',initialValue:['りんご','パン','牛乳']}];
     project.actions=actions;project.scripts=[{id:'main',targetId:'sprite-1',event:'start',source,...(document?{document}:{})},...extraScripts];return Akari.serializeProject(project,Akari.app.assetStore);
   },{source,document,actions,extraScripts});
