@@ -1,3 +1,4 @@
+import {samplesFeature,sampleTestIds} from '../lib/samples-contract.mjs';
 import { currentProductFile, currentProductVersion, assertProductInventory, validateProductMetadata } from "./../lib/product-path.cjs";
 import {blockFieldIds,checkBlockFieldValidatorNegatives} from '../lib/block-field-contract.mjs';
 import fs from 'node:fs';
@@ -14,8 +15,11 @@ import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-con
 import {componentControlsFeature,componentControlIds} from '../lib/component-controls-contract.mjs';
 const metadata=assertProductInventory();
 for(const bad of [{productFile:"../Akari1_0_1.html"},{productVersion:"invalid"},{productFile:"Akari1_0_0.html"},{files:metadata.files.filter(f=>f!==metadata.productFile)},{files:[...metadata.files,metadata.productFile]},{files:[...metadata.files,"Akari.html"]},{files:[...metadata.files,"Akari1_0_0.html"]}])assert.throws(()=>validateProductMetadata({...metadata,...bad}));
+const sampleManifest=JSON.parse(fs.readFileSync('audit/manifests/samples.json'));
+assert.deepEqual(sampleManifest.feature,samplesFeature);assert.deepEqual(sampleManifest.testIds,sampleTestIds);
 const html=fs.readFileSync(currentProductFile(),'utf8');new vm.Script(html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>')));
 const api=loadApi(html),features=JSON.parse(fs.readFileSync('audit/manifests/features.json'));
+assert.deepEqual(features.uiContracts.editableSamples,samplesFeature);
 assert.deepEqual(features.uiContracts.componentControls,componentControlsFeature,'fixed component action capability and audit matrix');
 const componentTraceability=JSON.parse(fs.readFileSync('audit/manifests/component-controls-traceability.json'));
 assert.equal(componentTraceability.schema,'akari-ui-capability-traceability-v1');

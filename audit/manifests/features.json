@@ -730,6 +730,37 @@
         "COMPONENT-CONTROLS-TOUCH",
         "COMPONENT-CONTROLS-ZOOM"
       ]
+    },
+    "editableSamples": {
+      "id": "editable-samples",
+      "count": 3,
+      "ids": [
+        "dance",
+        "flower",
+        "game"
+      ],
+      "names": [
+        "マスコットとだんごのダンス",
+        "くるくる花もよう",
+        "星をつかまえよう"
+      ],
+      "openRequiresConfirmation": true,
+      "selectionOnlyPreservesWork": true,
+      "confirmationButtons": [
+        "はい",
+        "キャンセル"
+      ],
+      "cancelPreservesPendingEdits": true,
+      "displayPreferencesPreserved": true,
+      "originalDataIsolated": true,
+      "offline": true,
+      "editOperations": [
+        "parameter",
+        "replace",
+        "reorder",
+        "add",
+        "delete"
+      ]
     }
   }
 }

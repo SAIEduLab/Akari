@@ -1,3 +1,4 @@
+import {installGreetingFixture} from '../lib/gate-ui-fixture.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -28,7 +29,7 @@ async function setup(page) {
     if (/^https?:/i.test(request.url())) networkRequests.push(request.url());
   });
   await page.waitForFunction(() => !!globalThis.Akari?.app);
-  await page.locator('#sampleBtn').click();
+  await installGreetingFixture(page);
   await page.locator('#uiLevel').selectOption('advanced');
   await page.locator('#editorModeblocks').click();
   await page.waitForFunction(() => document.querySelector('#editorModeblocks')?.getAttribute('aria-pressed') === 'true');

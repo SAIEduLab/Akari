@@ -13,3 +13,11 @@ export async function showAdvancedCode(page) {
   if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();
   await page.locator('#editorModecode').click();
 }
+
+export async function installGreetingFixture(page) {
+  const text=await page.evaluate(()=>Akari.serializeProject(Akari.makeDefaultProject(),Akari.makeDefaultAssetStore()));
+  await page.locator('#fileInput').setInputFiles({name:'greeting-fixture.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)});
+  await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN'&&Akari.app.project.name==='はじめてのあかり');
+  await page.locator('#objectSelect').selectOption('sprite-1');
+  await page.locator('#eventSelect').selectOption('start');
+}

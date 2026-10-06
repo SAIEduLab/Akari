@@ -64,7 +64,7 @@ try{await withBrowser(chrome,async browser=>{
   // Reconstruct the same runtime factories shipped in a standalone player, without editor closures.
   const core=Function(Akari.createAkariProfiles.toString()+'\n'+Akari.createAkariExtensionHost.toString()+'\nreturn ('+Akari.createAkariRuntime.toString()+')()')();
   return {classification:'factory reconstructed with Function / no editor lexical scope',runs:cases.map(c=>{
-   const project=Akari.makeEmptyProject();project.projectData.variables=[{id:'score',name:'点数',initialValue:0}];project.projectData.lists=[{id:'shopping',name:'買うもの',initialValue:['りんご','パン','牛乳']}];project.scripts=[{targetId:'sprite-1',event:'start',source:c.source,...(c.id?{id:c.id}:{}),...(c.document?{document:c.document}:{})}];
+   const project=Akari.makeEmptyProject();project.components[0].name='あかり';project.projectData.variables=[{id:'score',name:'点数',initialValue:0}];project.projectData.lists=[{id:'shopping',name:'買うもの',initialValue:['りんご','パン','牛乳']}];project.scripts=[{targetId:'sprite-1',event:'start',source:c.source,...(c.id?{id:c.id}:{}),...(c.document?{document:c.document}:{})}];
    const before=structuredClone(project),compiled=Akari.compileProject(project),runtime=new core.RuntimeModel(project,{}),errors=[];
    const scheduler=new core.EventScheduler(project,compiled,runtime,{runtimeError:(_,e)=>errors.push({code:e.code,message:e.message})});scheduler.schedule=()=>{};
    let thrown=null,turns=0;try{scheduler.start();while(scheduler.ready.length&&turns++<20)scheduler.runTurn(true);if(turns>=20)throw Error('Isolated runtime did not terminate');}catch(e){thrown={name:e.name,message:e.message};}

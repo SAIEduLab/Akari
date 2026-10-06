@@ -1,0 +1,66 @@
+{
+  "schema": "akari-samples-contract-v1",
+  "feature": {
+    "id": "editable-samples",
+    "count": 3,
+    "ids": [
+      "dance",
+      "flower",
+      "game"
+    ],
+    "names": [
+      "マスコットとだんごのダンス",
+      "くるくる花もよう",
+      "星をつかまえよう"
+    ],
+    "openRequiresConfirmation": true,
+    "selectionOnlyPreservesWork": true,
+    "confirmationButtons": [
+      "はい",
+      "キャンセル"
+    ],
+    "cancelPreservesPendingEdits": true,
+    "displayPreferencesPreserved": true,
+    "originalDataIsolated": true,
+    "offline": true,
+    "editOperations": [
+      "parameter",
+      "replace",
+      "reorder",
+      "add",
+      "delete"
+    ]
+  },
+  "testIds": [
+    "SAMPLES-CATALOG",
+    "SAMPLES-RUNTIME",
+    "SAMPLES-CHOICE-CONFIRM",
+    "SAMPLES-CANCEL-PENDING",
+    "SAMPLES-RESET-ISOLATION",
+    "SAMPLES-BLOCK-EDIT",
+    "SAMPLES-SAVE-OFFLINE",
+    "SAMPLES-LOCKS",
+    "SAMPLES-RESPONSIVE-HINTS"
+  ],
+  "classes": {
+    "GA-STATIC": [
+      "SAMPLES-CATALOG"
+    ],
+    "GA-EXEC": [
+      "SAMPLES-RUNTIME",
+      "SAMPLES-CHOICE-CONFIRM",
+      "SAMPLES-CANCEL-PENDING",
+      "SAMPLES-RESET-ISOLATION",
+      "SAMPLES-BLOCK-EDIT",
+      "SAMPLES-SAVE-OFFLINE",
+      "SAMPLES-LOCKS",
+      "SAMPLES-RESPONSIVE-HINTS"
+    ],
+    "SEMANTIC": [
+      "学習課題と作品の対応",
+      "既存保証を維持するfixture変更"
+    ]
+  },
+  "verifier": "audit/lib/samples-contract.mjs",
+  "runner": "audit/tests/samples.mjs"
+}
