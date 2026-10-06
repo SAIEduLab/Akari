@@ -4248,8 +4248,40 @@ body[data-editor-mode="blocks"] .objects-window .tree {
   gap: 7px;
   flex-wrap: wrap;
   padding: 10px;
+  flex: 1 1 65px;
   min-height: 65px;
   overflow: auto;
+}
+/* Keep the complete action area reachable independently from the component list. */
+body[data-editor-mode="blocks"] .component-controls {
+  flex: 0 1 auto;
+  min-height: 120px;
+  max-height: 60%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.component-controls:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+body[data-editor-mode="blocks"] .component-controls .prop-actions {
+  position: static;
+  flex-wrap: wrap;
+}
+body[data-editor-mode="blocks"] .component-controls .prop-actions > button,
+body[data-editor-mode="blocks"] .component-controls .project-tools > button {
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  min-height: 32px;
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.6;
+}
+body[data-editor-mode="blocks"] .component-controls .child-copy-help {
+  overflow-wrap: break-word;
 }
 body[data-editor-mode="blocks"] .objects-window .tree-item {
   min-width: 79px;
@@ -4374,6 +4406,9 @@ body[data-editor-mode="code"] .blockui-component-picker {
   display: none;
 }
 body[data-editor-mode="code"] .blockui-side-toggle {
+  display: none;
+}
+body[data-editor-mode="code"] .component-controls {
   display: none;
 }
 body[data-editor-mode="blocks"] .blockui-side-label,
@@ -24421,9 +24456,24 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 
       side.children[0].classList.add('objects-window');
       side.children[1].classList.add('properties-window');
+      const componentControls = document.createElement('div');
+      componentControls.id = 'componentControls';
+      componentControls.className = 'component-controls';
+      componentControls.tabIndex = 0;
+      componentControls.setAttribute('role', 'region');
+      componentControls.setAttribute('aria-label', '部品と作品の道具');
+      componentControls.addEventListener('keydown', (event) => {
+        if (event.target !== componentControls || event.altKey || event.ctrlKey || event.metaKey)
+          return;
+        if (event.key === 'Home' || event.key === 'End') {
+          event.preventDefault();
+          componentControls.scrollTop = event.key === 'Home' ? 0 : componentControls.scrollHeight;
+        }
+      });
+      side.children[0].append(componentControls);
       const componentActions = document.createElement('div');
       componentActions.id = 'componentActions';
-      side.children[0].append(componentActions);
+      componentControls.append(componentActions);
       const componentPicker = document.createElement('details');
       componentPicker.className = 'blockui-component-picker';
       componentPicker.id = 'componentPickerCore';
@@ -24431,7 +24481,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
       componentTitle.textContent =
         '\uff0b \u30ad\u30e3\u30e9\u30af\u30bf\u30fc\u30fb\u90e8\u54c1\u3092\u3075\u3084\u3059';
       componentPicker.append(componentTitle);
-      side.children[0].append(componentPicker);
+      componentControls.append(componentPicker);
       for (const selector of ['.properties-window', '.monitor-window']) {
         const section = $(selector),
           title = section.querySelector('.win-title'),
@@ -24536,7 +24586,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
           side.prepend(designer);
           side.insertBefore(objects, $('.properties-window'));
           $('#componentPickerCore').append($('.tool-list'));
-          objects.append($('.project-tools'));
+          $('#componentControls').append($('.project-tools'));
         } else {
           main.insertBefore(designer, side);
           side.prepend(objects);

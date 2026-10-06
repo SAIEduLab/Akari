@@ -1,0 +1,44 @@
+{
+  "schema": "akari-ui-capability-traceability-v1",
+  "uiContracts": [
+    {
+      "id": "ui:component-controls-scroll",
+      "featureReference": {
+        "path": "audit/manifests/features.json",
+        "pointer": "/uiContracts/componentControls"
+      },
+      "specification": {
+        "path": "LANGUAGE.md",
+        "text": "部品一覧と、その下の道具欄を別々に縦スクロール"
+      },
+      "auditContract": {
+        "path": "AUDIT.md",
+        "section": "部品操作欄の到達性"
+      },
+      "testReferences": [
+        {
+          "path": "audit/tests/component-controls-browser.mjs",
+          "id": "COMPONENT-CONTROLS-RESPONSIVE"
+        },
+        {
+          "path": "audit/tests/component-controls-browser.mjs",
+          "id": "COMPONENT-CONTROLS-KEYBOARD"
+        },
+        {
+          "path": "audit/tests/component-controls-browser.mjs",
+          "id": "COMPONENT-CONTROLS-LIST"
+        },
+        {
+          "path": "audit/tests/component-controls-browser.mjs",
+          "id": "COMPONENT-CONTROLS-TOUCH"
+        },
+        {
+          "path": "audit/tests/component-controls-browser.mjs",
+          "id": "COMPONENT-CONTROLS-ZOOM"
+        }
+      ],
+      "verifier": "audit/tests/component-controls-verify.mjs",
+      "executionStatus": "REQUIRES_CURRENT_SNAPSHOT_EVIDENCE"
+    }
+  ]
+}
