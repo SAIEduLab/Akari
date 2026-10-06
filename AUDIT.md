@@ -1,10 +1,10 @@
-# あかり 1.0.1 — 監査契約
+# あかり 1.1.0 — 監査契約
 
 ## 対象と固定
 
-製品版は1.0.1です。保存・実行形式番号、言語契約番号、runtime契約番号はそれぞれ1で、製品版とは独立して管理します。公開用の製品、仕様、マニュアル、試験、fixture、runner、workflowを一つの入力snapshotとして検証します。Git履歴や別リポジトリは実行条件に含めません。
+製品版は1.1.0です。保存・実行形式番号、言語契約番号、runtime契約番号はそれぞれ2で、製品版とは独立して管理します。公開用の製品、仕様、マニュアル、試験、fixture、runner、workflowを一つの入力snapshotとして検証します。Git履歴や別リポジトリは実行条件に含めません。
 
-`audit/manifests/features.json` は命令カタログ・ブロックスキーマ・上限・データ契約と公開ラベルの固定記録です。`audit/manifests/release-1.0.1.json` は公開ファイルのSHA-256集合です。固定記録自体は合格の証拠ではありません。監査は実際の製品を読み、結果をそのsnapshotへ結び付けます。必須結果の欠落、重複、偽のPASS、例外、タイムアウト、環境不足はFAILです。未実施の環境をPASSと呼びません。
+`audit/manifests/features.json` は命令カタログ・ブロックスキーマ・上限・データ契約と公開ラベルの固定記録です。`audit/manifests/release-1.1.0.json` は公開ファイルのSHA-256集合です。固定記録自体は合格の証拠ではありません。監査は実際の製品を読み、結果をそのsnapshotへ結び付けます。必須結果の欠落、重複、偽のPASS、例外、タイムアウト、環境不足はFAILです。未実施の環境をPASSと呼びません。
 
 能力台帳と試験の安定IDは、対象機能・操作・保証を名前で示します。製品の版番号をIDに埋め込まず、新しい監査項目は既存IDと重複しない機能名で追加します。追加時は期待値、実行入口、能力台帳との対応を固定し、既存試験の削除やIDの転用で件数を合わせません。
 
@@ -523,3 +523,32 @@ GA-EXECでは1920×1080、1366×768、1280×720、1024×768、760×600、390×60
 Chrome自身の125／150／200％拡大はテスト専用拡張のtabs APIで行い、実倍率、同じwindow外寸、CSS viewportの縮小とDPR変化を照合する。CSS zoomや表示幅だけの変更へ代替しない。作品・本文・Undo／Redo・dirty状態は、実際の編集とUndoで用意したfixtureの前後を照合する。snapshot、固定browser、画面証拠のhashを検証し、欠落・重複・見切れ・ふりがなのはみ出し・操作不能・履歴変更・偽の拡大を独立負例で拒否する。
 
 GA-STATICは公開入力集合・構文・release freeze、SEMANTICは一覧と操作対象の対応、コピーの範囲と既存モード移動の保持、HYBRIDは可読性と実入力の到達を扱う。結果は実行したOSに限定し、別OS、実児童評価、実IMEや支援機器の未実施を合格へ含めない。
+
+
+## 拡張基盤の必須監査
+
+1.1.0では従来の安定ID、不変snapshot、期待値、必須ブラウザー監査を維持し、拡張基盤を独立した追加試験にする。標準の260能力台帳へ既存IDの転用・削除を行わない。以下は受入要件と機械試験の対応であり、表そのものはPASSの証拠ではない。
+
+| 要件 | 保証 | 主な追加試験ID | 区分 |
+| --- | --- | --- | --- |
+| EXT01 | 標準UI・命令・上限・CSP・オフライン維持 | EXTENSION-STANDARD-POLICIES / STANDARD-NO-NETWORK、既存全gate | HYBRID |
+| EXT02 | 第三者登録、重複・衝突拒否 | EXTENSION-REGISTRATION-COLLISION-TYPES / INDEPENDENT-CALCULATIONS | GA-EXEC |
+| EXT03 | 日本語・ブロック・型・単位・履歴の統合 | EXTENSION-LANGUAGE-BLOCK-ROUNDTRIP / TYPES-UNITS-DEPENDENCIES / GUI-HISTORY-AUTOSAVE | HYBRID |
+| EXT04 | 同期計算、非同期命令、イベント、停止 | EXTENSION-ASYNC-PARALLEL-PAUSE-STOP / EVENT-LANGUAGE / SESSION-CANCELLATION | GA-EXEC |
+| EXT05 | 現行CSPで実popupと実MessageChannel | EXTENSION-REAL-POPUP-MESSAGECHANNEL | GA-EXEC |
+| EXT06 | 旧session、重複、不明、偽window、期限の拒否 | EXTENSION-RPC-NEGATIVE-LIFECYCLE | GA-EXEC |
+| EXT07 | 宣言した上限の適用、保存・出力経路 | EXTENSION-PROFILE-IMPORT-FILE-RUNTIME / COUNT-CAPACITY-ROUNDTRIP | HYBRID |
+| EXT08 | 継承・有限・null、固定整合、停止の維持 | EXTENSION-PROFILE-INHERIT-FINITE-UNLIMITED / COOPERATIVE-FUNCTION-BUDGET | HYBRID |
+| EXT09 | 標準形式維持、依存・hash不一致の原子的拒否 | EXTENSION-DERIVED-SAVE-RESTORE / FAILED-IMPORT-PRESERVES-EDITOR | GA-EXEC |
+| EXT10 | 独立した実行HTMLと未接続診断 | EXTENSION-OFFLINE-STANDALONE / REAL-POPUP-MESSAGECHANNEL | GA-EXEC |
+| EXT11 | 通信遮断で隠さず実際の通信を観測 | EXTENSION-STANDARD-NO-NETWORK / DERIVED-NO-NETWORK / OFFLINE-STANDALONE | GA-EXEC |
+| EXT12 | 必須結果・artifact・snapshot・run照合 | extension-foundation-negative、verify-gate-results | GA-STATIC |
+| EXT13 | 公開型・ガイド・独立実例による再現 | EXTENSION-INDEPENDENT-CALCULATIONS / OFFLINE-STANDALONE、EXTENSIONS.md | HYBRID |
+
+試験入口は `audit/tests/extension-foundation.mjs`。固定Playwright・Chromeで本体、派生editor、書出しplayer、外部popupを動かす。通信観測はoffline設定やroute.abortを入れず、HTTP要求・socket作成・pageerrorを記録する。観測を避けるための事前遮断はこの試験の証拠にしない。
+
+独立validatorは `audit/lib/extension-foundation-contract.mjs`。順序付き必須結果、固定期待観測、同じ公開snapshot、固定browser版、run/attempt、candidate・derived・playerの内容hashを確認する。`extension-foundation-negative.mjs` は欠落、重複、偽PASS、例外、環境・通信・artifact改変、別snapshot/run/attemptを拒否する合成control専用試験であり、製品PASSへ混入しない。
+
+local gateは従来36段と新規2段を要求し、`verify-gate-results` とselftest evidence bundleへ接続する。既存audit workflowのselftest・最終aggregateで欠落を拒否する。fixed acceptanceにも実ブラウザー、negative、独立validatorを必須stepとして追加する。LinuxとWindows、未実施とPASSを区別し、Push後のActions実行完了をローカル結果から推定しない。
+
+版更新では、三つの現行manifestの `productVersion` だけを固定された移行時ラベルへ正規化して、旧source pinのhashと比較する。現行ラベルは公開製品版と一致する必要があり、他の全byte・固定本文・sourceCommit・期待値・安定IDは従来のhashで照合する。正規化で意味・coverageの変更を許容しない。実行証拠のsnapshotは正規化せず、実際の現行ファイル全体を記録する。

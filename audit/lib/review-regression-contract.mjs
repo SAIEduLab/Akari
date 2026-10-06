@@ -56,6 +56,7 @@ export const reviewMutations = Object.freeze({
 });
 export const reviewNegativeIds = Object.keys(reviewGroups).flatMap(group=>Object.keys(reviewMutations).map(id=>group+'/'+id));
 reviewNegativeIds.push('gate/existing-ordered-prefix','gate/new-review-steps');
+reviewNegativeIds.push('gate/extension-foundation-steps');
 reviewNegativeIds.push('evidence/producer-path-unavailable','evidence/changed-candidate-bytes','evidence/missing-candidate-file','evidence/changed-recorded-url');
 
 export function verifyReviewNegativeReport(report,inputs) {

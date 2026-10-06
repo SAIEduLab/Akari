@@ -1,0 +1,88 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>あかり 接続用ページの最小実例</title>
+<style>body{font-family:system-ui,sans-serif;max-width:48rem;margin:2rem auto;padding:1rem}button{padding:.6rem;margin:.3rem}pre{white-space:pre-wrap}</style></head>
+<body><h1>接続用ページの最小実例</h1>
+<p>派生あかりが明示的に開いたウィンドウからだけ接続を受け付けます。このページ自身は外部サービスへ通信しません。</p>
+<button id="notify" disabled>数のできごとを送る</button><button id="disconnect" disabled>接続を終了する</button>
+<pre id="status" role="status">接続を待っています</pre>
+<script>
+'use strict';
+(() => {
+  const supported = ['demo.add','demo.wait','demo.fail','demo.drop','demo.duplicate','demo.unknown','demo.event'];
+  const connections = new Set();
+  const status = document.getElementById('status');
+  const own = (value,key) => Object.prototype.hasOwnProperty.call(value,key);
+  const error = (id,code,message) => ({jsonrpc:'2.0',id,error:{code,message}});
+  function close(connection) {
+    if (connection.closed) return;
+    connection.closed=true; connection.timers.forEach(entry=>{clearTimeout(entry.timer);entry.resolve(null);}); connection.timers.clear(); connection.port.close(); connections.delete(connection);
+    document.getElementById('notify').disabled = document.getElementById('disconnect').disabled = !connections.size;
+    status.textContent = connections.size ? '接続しています' : '接続は終了しました';
+  }
+  window.addEventListener('message',event => {
+    if (!window.opener || event.source !== window.opener) return;
+    const request=event.data, params=request?.params;
+    if(request?.jsonrpc==='2.0'&&request.method==='akari.probe'&&typeof request.id==='string'&&typeof params?.nonce==='string'&&event.ports.length===0) {
+      event.source.postMessage({jsonrpc:'2.0',id:request.id,result:{nonce:params.nonce}},event.origin==='null'?'*':event.origin);return;
+    }
+    if (request?.jsonrpc!=='2.0'||request.method!=='akari.hello'||typeof request.id!=='string'||event.ports.length!==1||
+      !params||typeof params.nonce!=='string'||typeof params.connectionId!=='string'||typeof params.sessionId!=='string'||
+      params.apiContract!==1||params.standard?.languageContractId!==2||params.standard?.runtimeContractId!==2||
+      !Array.isArray(params.capabilities)||params.capabilities.some(value=>!supported.includes(value))) return;
+    const connection={port:event.ports[0],id:params.connectionId,sessionId:params.sessionId,capabilities:[...params.capabilities],sequence:0,timers:new Map(),closed:false};
+    function send(message) { if(!connection.closed)connection.port.postMessage(message); }
+    function process(message) {
+      if (!message||Array.isArray(message)||message.jsonrpc!=='2.0'||typeof message.method!=='string'||
+        (own(message,'params')&&(!message.params||typeof message.params!=='object'))) return Promise.resolve(error(null,-32600,'Invalid Request'));
+      const hasId=own(message,'id');
+      if (hasId&&!(message.id===null||typeof message.id==='string'||(typeof message.id==='number'&&Number.isFinite(message.id)))) return Promise.resolve(error(null,-32600,'Invalid Request'));
+      const p=message.params;
+      let response;
+      if (message.method==='akari.cancel') {
+        if(p?.connectionId===connection.id&&p?.sessionId===connection.sessionId&&typeof p.id==='string') {
+          clearTimeout(connection.timers.get(p.id)?.timer);connection.timers.get(p.id)?.resolve(error(p.id,-32001,'Cancelled'));connection.timers.delete(p.id);
+        }
+        response={jsonrpc:'2.0',id:message.id,result:null};
+      } else if (message.method==='akari.close') {
+        if(p?.connectionId!==connection.id||p?.sessionId!==connection.sessionId)response=error(message.id,-32602,'Invalid params');
+        else {response={jsonrpc:'2.0',id:message.id,result:null};setTimeout(()=>close(connection),0);}
+      } else if (!connection.capabilities.includes(message.method)) response=error(message.id,-32601,'Method not found');
+      else if(message.method==='demo.drop')return Promise.resolve(null);
+      else if(message.method==='demo.fail')response=error(message.id,-32000,'Example failure');
+      else if(message.method==='demo.event')response={jsonrpc:'2.0',id:message.id,result:null};
+      else if(!Array.isArray(p)||p.length!==2||p.some(value=>typeof value!=='number'||!Number.isFinite(value)))response=error(message.id,-32602,'Invalid params');
+      else {
+        response={jsonrpc:'2.0',id:message.id,result:p[0]+p[1]};
+        if(message.method==='demo.wait'&&hasId)return new Promise(resolve=>{
+          const timer=setTimeout(()=>{connection.timers.delete(message.id);resolve(response);},150);
+          connection.timers.set(message.id,{timer,resolve});
+        });
+        if(message.method==='demo.duplicate'&&hasId)setTimeout(()=>send(response),30);
+        if(message.method==='demo.unknown')send({jsonrpc:'2.0',id:connection.id+'/unknown',result:999});
+      }
+      return Promise.resolve(hasId?response:null);
+    }
+    connection.port.onmessage=async received=>{
+      if(connection.closed)return;
+      let message;try{message=typeof received.data==='string'?JSON.parse(received.data):received.data;}catch(_){send(error(null,-32700,'Parse error'));return;}
+      if(Array.isArray(message)) {
+        if(!message.length){send(error(null,-32600,'Invalid Request'));return;}
+        const responses=(await Promise.all(message.map(process))).filter(Boolean);if(responses.length)send(responses);
+      } else {const response=await process(message);if(response)send(response);}
+    };
+    connection.port.onmessageerror=()=>close(connection);connection.port.start();connections.add(connection);
+    event.source.postMessage({jsonrpc:'2.0',id:request.id,result:{nonce:params.nonce,connectionId:connection.id,apiContract:1,
+      standard:{languageContractId:2,runtimeContractId:2},capabilities:connection.capabilities}},event.origin==='null'?'*':event.origin);
+    status.textContent='接続しています';document.getElementById('notify').disabled=document.getElementById('disconnect').disabled=false;
+  });
+  document.getElementById('notify').onclick=()=>{
+    for(const connection of connections)if(connection.capabilities.includes('demo.event'))connection.port.postMessage({jsonrpc:'2.0',method:'akari.event',params:{
+      connectionId:connection.id,sessionId:connection.sessionId,sequence:++connection.sequence,extensionId:'demo.connector',eventId:'sample',payload:connection.sequence}});
+  };
+  document.getElementById('disconnect').onclick=()=>{
+    for(const connection of connections){connection.port.postMessage({jsonrpc:'2.0',method:'akari.close',params:{connectionId:connection.id,sessionId:connection.sessionId}});setTimeout(()=>close(connection),0);}
+  };
+})();
+</script></body></html>

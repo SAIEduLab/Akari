@@ -37,4 +37,6 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['review-first-use','audit/tests/review-first-use.mjs',browser,currentProductFile(),file('review-first-use')],
   ['review-readable','audit/tests/review-readable.mjs',browser,currentProductFile(),file('review-readable')],
   ['review-harness-negative','audit/tests/review-harness-negative.mjs',file('review-harness-negative')],
+  ['extension-foundation','audit/tests/extension-foundation.mjs',browser,file('extension-foundation')],
+  ['extension-foundation-negative','audit/tests/extension-foundation-negative.mjs',file('extension-foundation-negative')],
 ];}

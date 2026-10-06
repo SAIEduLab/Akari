@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import {currentProductFile} from '../lib/product-path.cjs';
+import {snapshot} from '../lib/product-test-host.mjs';
+import {verifyExtensionFoundation,verifyExtensionFoundationNegative} from '../lib/extension-foundation-contract.mjs';
+const [report,negative]=process.argv.slice(2);
+if(!report||!negative) throw Error('Usage: extension-foundation-verify.mjs <report.json> <negative.json>');
+const inputs=snapshot(currentProductFile());
+verifyExtensionFoundation(JSON.parse(fs.readFileSync(report)),inputs,path.resolve(report).replace(/\.json$/,'.artifacts'));
+verifyExtensionFoundationNegative(JSON.parse(fs.readFileSync(negative)),inputs);
+console.log('Extension foundation evidence and negative controls: PASS');

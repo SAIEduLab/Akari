@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {finiteCases} from '../fixtures/language/forms.mjs';
 import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
+import {preservedCandidateBytes} from '../lib/migration-source-contract.mjs';
 const read=p=>fs.readFileSync(p),json=p=>JSON.parse(read(p));
 const ledger=json('audit/fixtures/language-surface-v2-migration.json');
 const oldManifest=json('audit/fixtures/legacy-1.0.1/audit/manifests/language-form-coverage.json'),manifest=json('audit/manifests/language-form-coverage.json');
@@ -10,8 +11,12 @@ const oldExpected=json('audit/fixtures/legacy-1.0.1/audit/fixtures/language/expe
 assert.equal(ledger.sourceCommit,'d961dd346e5b104e09e7f0dd342beb5c16174a36');
 for(const f of ledger.preservedSources){
  assert.equal(crypto.createHash('sha256').update(read(f.path)).digest('hex'),f.sha256,f.path);
- assert.equal(crypto.createHash('sha256').update(read(f.originalPath)).digest('hex'),f.candidateSha256,f.originalPath);
+ assert.equal(crypto.createHash('sha256').update(preservedCandidateBytes(f.originalPath,read(f.originalPath))).digest('hex'),f.candidateSha256,f.originalPath);
 }
+assert.throws(()=>preservedCandidateBytes('audit/manifests/language-form-coverage.json',Buffer.from(JSON.stringify({...manifest,productVersion:'invalid'}))));
+const pinnedManifest=ledger.preservedSources.find(f=>f.originalPath==='audit/manifests/language-form-coverage.json');
+const changedMeaning=Buffer.from(read(pinnedManifest.originalPath).toString().replace('何もしない','別の意味'));
+assert.notEqual(crypto.createHash('sha256').update(preservedCandidateBytes(pinnedManifest.originalPath,changedMeaning)).digest('hex'),pinnedManifest.candidateSha256);
 assert.equal(finiteCases.length,256);assert.equal(new Set(finiteCases.map(c=>c.id)).size,42);
 assert.deepEqual(finiteCases,manifest.cases.map(({id,key,source,canonical})=>({id,key,source,canonical})));
 assert.deepEqual(manifest.cases.map(c=>[c.id,c.key]),oldManifest.cases.map(c=>[c.id,c.key]));
