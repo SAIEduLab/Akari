@@ -6,13 +6,10 @@ import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 import {basicProject,basicExecution} from '../lib/basic-intents-runtime.mjs';
-import {verifyProjectedSource} from '../lib/docs-consolidation-contract.mjs';
 const A=loadApi(fs.readFileSync(currentProductFile(),'utf8')),fixture=JSON.parse(fs.readFileSync('audit/fixtures/basic-intents.json')),results=[],plain=x=>JSON.parse(JSON.stringify(x)),sha=s=>crypto.createHash('sha256').update(s).digest('hex');
 assert.equal(sha(fs.readFileSync('audit/fixtures/basic-intents.json')),'cf9c3ea0c54801fc77d26f1b66c95bf383ddc89e468ddf9a4ae7121ca63c8d08');
 assert.deepEqual(fixture.cases.map(d=>d.id),['T01','T02','T03','T04','T05','T06','T13']);
-const migration=JSON.parse(fs.readFileSync('audit/fixtures/design-doc-migration-map.json'));
-assert.equal(migration.sourceProjection.path,fixture.publicSource);
-assert.equal(verifyProjectedSource(migration),fixture.publicSourceSha256);
+assert.equal(sha(fs.readFileSync(fixture.publicSource)),fixture.publicSourceSha256);
 for(const d of fixture.cases){try{
  assert.equal(sha(d.source),d.sourceSha256);const source=basicExecution(A,d,basicProject),blocks=basicExecution(A,d,basicProject,'blocks');assert.deepEqual(plain(blocks),plain(source));
  const states=source.states,actor=(i,id='sprite-1')=>states[i].actors.find(a=>a.id===id),first=actor(0),last=actor(states.length-1);assert.deepEqual(source.errors,[]);

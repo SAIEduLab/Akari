@@ -266,7 +266,7 @@
     "audit/tests/audio-output-browser.mjs": "da55695ec39b47a5afb638c63be8363a19cea1c1470b3beef1f4f77e464a2f8a",
     "audit/tests/autosave-state-browser.mjs": "24a5a6f8ef1098da08a6b67f1b06e92d9e5f250d7ff8be9a55527a5a95841998",
     "audit/tests/basic-intents-browser.mjs": "4dd84999466e87d9282e931148a171508f504fb4f820e0e66edcd579b8a7a4da",
-    "audit/tests/basic-intents.mjs": "59f368f540f4279605e2b7c8dc38aadbf11b4a5eb8beeb775459bb3b65972e1c",
+    "audit/tests/basic-intents.mjs": "c000f2d0451beeccaa011f020c6e20a5284245d19e9f025535a04c06d6df580a",
     "audit/tests/block-field-width.mjs": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1",
     "audit/tests/browser-environment.mjs": "898e2b27b04969b76ce45e0cc00236fbb2561edd558d68b1bb983595d1066294",
     "audit/tests/child-diagnostics-browser.mjs": "c898061efc90f90c685e4ecf71c9f56002d478a3347bff9d8b628e6d77c81ea3",
