@@ -31,9 +31,9 @@ const newIds=[...Object.keys(reviewGroups).map(group=>'review-'+group),'review-h
 assert.deepEqual(gateIds.slice(legacyIds.length,legacyIds.length+newIds.length),newIds);
 assert.throws(()=>assert.deepEqual(gateIds.slice(legacyIds.length+1,legacyIds.length+newIds.length+1),newIds));
 results.push({id:'gate/new-review-steps',rejected:true});
-const extensionSteps=['extension-foundation','extension-foundation-negative'];
-assert.deepEqual(gateIds.slice(legacyIds.length+newIds.length),extensionSteps);
-assert.throws(()=>assert.deepEqual(gateIds.slice(legacyIds.length+newIds.length,-1),extensionSteps));
+const addedSteps=['extension-foundation','extension-foundation-negative','license-static','license-browser'];
+assert.deepEqual(gateIds.slice(legacyIds.length+newIds.length),addedSteps);
+assert.throws(()=>assert.deepEqual(gateIds.slice(legacyIds.length+newIds.length,-1),addedSteps));
 results.push({id:'gate/extension-foundation-steps',rejected:true});
 const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'akari-relocated-evidence-'));
 try {

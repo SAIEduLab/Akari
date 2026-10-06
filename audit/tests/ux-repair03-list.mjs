@@ -61,7 +61,8 @@ try{await withBrowser(chrome,async browser=>{
  for(const [id,source]of [['compat/explicit-list','始めると、あかりはリスト「買うもの」の2番目を2秒話します。'],['compat/legacy-name','始めると、あかりは【買うもの】の2番目を2秒話します。']])await run(id,async p=>{await fixture(p,{source});return {runtime:await runtime(p,{speech:'パン'}),after:await state(p),repairCount:await p.locator('#listRepairPanel,#failureEditList').count()};});
  await run('compat/block-picker',async p=>{await fixture(p,{mode:'blocks'});const before=await state(p);await p.getByLabel('文字の代わりに使うリストを選ぶ').selectOption({index:1});const expr=await p.evaluate(()=>Akari.app.editorState.main.syntaxAst.body[0].value);return {before,after:await state(p),kind:expr.list.kind,index:expr.index.value,runtime:await runtime(p,{speech:'パン'})};});
  await run('boundary/isolated-runtime',async p=>p.evaluate(cases=>{
-  const core=Function('return ('+Akari.createAkariRuntime.toString()+')()')();
+  // Reconstruct the same runtime factories shipped in a standalone player, without editor closures.
+  const core=Function(Akari.createAkariProfiles.toString()+'\n'+Akari.createAkariExtensionHost.toString()+'\nreturn ('+Akari.createAkariRuntime.toString()+')()')();
   return {classification:'factory reconstructed with Function / no editor lexical scope',runs:cases.map(c=>{
    const project=Akari.makeEmptyProject();project.projectData.variables=[{id:'score',name:'点数',initialValue:0}];project.projectData.lists=[{id:'shopping',name:'買うもの',initialValue:['りんご','パン','牛乳']}];project.scripts=[{targetId:'sprite-1',event:'start',source:c.source,...(c.id?{id:c.id}:{}),...(c.document?{document:c.document}:{})}];
    const before=structuredClone(project),compiled=Akari.compileProject(project),runtime=new core.RuntimeModel(project,{}),errors=[];
