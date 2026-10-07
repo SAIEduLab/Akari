@@ -2934,10 +2934,38 @@ body[data-editor-mode] .debugbar button {
   font-size: 12px;
   padding: 0 7px;
 }
-body[data-editor-mode] #undoBtn,
-body[data-editor-mode] #redoBtn {
-  min-width: 28px;
-  font-size: 17px;
+body[data-editor-mode] .debugbar :is(#undoBtn, #redoBtn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 5px;
+  color: #ffffff;
+  background: #15537d;
+  border: 2px solid #0b3c5d;
+  opacity: 1;
+  transition: none;
+}
+body[data-editor-mode] .debugbar :is(#undoBtn, #redoBtn) svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+body[data-editor-mode] .debugbar :is(#undoBtn, #redoBtn):hover:not(:disabled) {
+  background: #0b3c5d;
+  border-color: #0b3c5d;
+}
+body[data-editor-mode] .debugbar :is(#undoBtn, #redoBtn):disabled {
+  color: #606b75;
+  background: #edf1f4;
+  border-color: #7c8791;
+  opacity: 1;
+}
+body[data-editor-mode] .debugbar :is(#undoBtn, #redoBtn):focus-visible {
+  outline: 3px solid #0b3c5d;
+  outline-offset: 2px;
 }
 body[data-editor-mode] #execLocation {
   font-size: 11px;
@@ -25895,12 +25923,12 @@ function createAkariExtensionHost(options) {
         cancel = $('#editorCancel');
       $('.code-head').append(cancel);
       toolbar.insertBefore(modes, $('#projectName'));
-      for (const [id, text, title] of [
-        ['redoBtn', '↷', 'やり直す'],
-        ['undoBtn', '↶', '元に戻す'],
+      for (const [id, path, title] of [
+        ['redoBtn', 'M15 4l5 5-5 5M20 9H10a6 6 0 0 0 0 12h2', 'やり直す'],
+        ['undoBtn', 'M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12h-2', '元に戻す'],
       ]) {
         const b = $('#' + id);
-        b.textContent = text;
+        b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="' + path + '"/></svg>';
         b.title = title;
         b.setAttribute('aria-label', title);
         $('.debugbar').prepend(b);
