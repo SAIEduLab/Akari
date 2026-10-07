@@ -8,6 +8,8 @@ permissions:
 concurrency:
   group: akari-acceptance-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+env:
+  AKARI_REQUESTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 jobs:
   composition-acceptance:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
@@ -30,6 +32,8 @@ jobs:
           echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
           "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install-deps chromium
           python audit/install-codec-browser.py "$RUNNER_TEMP/acceptance-browser"
+      - name: Protect the product and fixed oracles and reject invalid child UX evidence
+        run: node audit/tests/child-ux.mjs static audit-evidence/acceptance/child-ux-static.json
       - name: Map the original fixed plan and verify the Q76 values
         run: |
           mkdir -p audit-evidence/acceptance
@@ -111,6 +115,9 @@ jobs:
       - name: Verify fixed 48 tasks, responsive editing and two-second concurrent speech
         if: always()
         run: node audit/run-ux-repair02-gui.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance
+      - name: Verify bidirectional mode roundtrips against the inherited 24 task expectations
+        if: always()
+        run: node audit/tests/child-ux.mjs matrix audit-evidence/acceptance/ux-repair02-matrix.json audit-evidence/acceptance/child-ux-matrix.json
       - name: Verify trigger editing, speech identity and local list recovery
         if: always()
         run: node audit/run-ux-repair03-gui.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance
@@ -123,6 +130,9 @@ jobs:
       - name: Independently verify complete results including local recovery and speaker identity
         if: always()
         run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance
+      - name: Seal complete composition evidence for this SHA run and attempt
+        if: always()
+        run: node audit/tests/child-ux.mjs seal composition audit-evidence/acceptance
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -178,6 +188,9 @@ jobs:
       - name: Independently verify language UI evidence and negative controls
         if: always()
         run: node audit/tests/child-language-ui-verify.mjs audit-evidence/repair05/child-language-ui.json
+      - name: Match visible language support to source candidates without approving unknown vocabulary
+        if: always()
+        run: node audit/tests/child-ux.mjs language audit-evidence/repair05/child-language-ui.json audit-evidence/repair05/child-ux-language.json
       - name: Verify component actions with native scrolling and browser zoom
         if: always()
         run: node audit/tests/component-controls-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/component-controls.json
@@ -193,6 +206,9 @@ jobs:
       - name: Reject incomplete or inconsistent diagnostic evidence
         if: always()
         run: node audit/tests/child-diagnostics-negative.mjs audit-evidence/repair05/child-diagnostics.json audit-evidence/repair05/child-diagnostics-negative.json
+      - name: Seal complete repair 05 evidence for this SHA run and attempt
+        if: always()
+        run: node audit/tests/child-ux.mjs seal repair05 audit-evidence/repair05
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -201,3 +217,39 @@ jobs:
           if-no-files-found: error
           retention-days: 3
           include-hidden-files: true
+  child-ux-aggregate:
+    if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    needs: [composition-acceptance, ux-repair05]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: akari-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/child-ux/downloaded
+      - name: Preserve prior attempts and their original conclusions
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node audit/tests/child-ux.mjs history audit-evidence/child-ux/retry-history.json
+      - name: Require complete current-attempt evidence and successful required jobs
+        if: always()
+        env:
+          AKARI_CHILD_UX_NEEDS: ${{ toJSON(needs) }}
+        run: node audit/tests/child-ux.mjs aggregate audit-evidence/child-ux/downloaded audit-evidence/child-ux/child-ux-aggregate.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-child-ux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/child-ux/*.json
+          if-no-files-found: error
+          retention-days: 3

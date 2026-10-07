@@ -10,12 +10,14 @@ import {installRegressionProject, showAdvancedCode} from '../lib/gate-ui-fixture
 import U from '../browser/cases/ui-routes.cjs';
 import {childLanguageUiIds,childInsertionConceptHints} from '../lib/child-language-ui-contract.mjs';
 import {browserEnvironment as expectedBrowser} from '../lib/browser-environment.mjs';
+import {collectLanguageFrame,childUxProvenance} from '../lib/child-ux-observations.mjs';
 
 const [browserPath, output = 'audit-evidence/child-language-ui.json'] = process.argv.slice(2);
 const require=createRequire(import.meta.url),playwrightVersion=require('playwright/package.json').version;
 assert.equal(playwrightVersion,expectedBrowser.playwright,'approved Playwright is required');
 assert.ok(!fs.existsSync(output), 'fresh child-language evidence required');
 const product = currentProductFile(), inputs = snapshot(product), results = [], artifacts = [];
+const uiInventoryFrames=[],uiInventoryArtifacts=[],provenance=childUxProvenance();
 const directory = path.join(path.dirname(output),path.basename(output,path.extname(output)));
 fs.mkdirSync(directory, {recursive:true});
 
@@ -173,11 +175,13 @@ async function touchPanelTail(p,selector) {
     await p.evaluate(()=>{for(const type of ['touchstart','touchmove','touchend'])document.removeEventListener(type,globalThis.__childHelpTouchListener,true);delete globalThis.__childHelpTouchListener;delete globalThis.__childHelpTouches;});
   }
 }
-async function shot(p, name) {
+async function shot(p, name, inventoryOnly=false) {
   const filename = path.join(directory,name+'.png');
   await p.screenshot({path:filename,fullPage:true});
-  artifacts.push({path:path.relative(path.dirname(output),filename).split(path.sep).join('/'),
-    sha256:crypto.createHash('sha256').update(fs.readFileSync(filename)).digest('hex')});
+  const artifact={path:path.relative(path.dirname(output),filename).split(path.sep).join('/'),
+    sha256:crypto.createHash('sha256').update(fs.readFileSync(filename)).digest('hex')};
+  (inventoryOnly?uiInventoryArtifacts:artifacts).push(artifact);
+  uiInventoryFrames.push(await collectLanguageFrame(p,name,artifact));
 }
 
 const cases = {
@@ -315,6 +319,7 @@ const cases = {
     const truthExample=help.find(r=>r.text.includes('条件の')).text;
     const insertionConceptHints={commandAndBody:help[2]?.text,palette:help[3]?.text};
     assert.deepEqual(insertionConceptHints,childInsertionConceptHints,'normal insertion reading and meaning follow the value hint in the actual DOM');
+    await shot(p,'child-block-words-open',true);
     await summary.press('Enter'); assert.deepEqual(await state(p),before,'local words help preserves source and history');
     const arithmetic=p.locator('#blockEditor .blockui-node[data-schema-id="BinaryExpression:ADD"]');
     const oldValues=await arithmetic.locator('[data-blockui-field="value"]').evaluateAll(es=>es.map(e=>e.value));
@@ -416,7 +421,7 @@ const browserVersion=await withBrowser(browserPath,async browser=>{
     try {
       const evidence=await pageFor(browser,product,async p=>{
         p.on('dialog',dialog=>dialog.accept()); await p.setViewportSize({width:1180,height:757});
-        await installRegressionProject(p); return run(p);
+        await installRegressionProject(p); const evidence=await run(p);await shot(p,'task-'+id,true);return evidence;
       });
       results.push({id,status:'PASS',pass:true,evidence});
     } catch(error){results.push({id,status:'FAIL',pass:false,detail:String(error.stack||error)});}
@@ -427,6 +432,7 @@ const browserVersion=await withBrowser(browserPath,async browser=>{
 assert.deepEqual(snapshot(product),inputs,'test must not modify its product inputs');
 const report={schema:'akari-child-language-ui-v1',status:results.every(r=>r.pass)?'PASS':'FAIL',
   environment:process.platform,browser:browserVersion,snapshot:inputs,total:results.length,results,artifacts,
+  uiInventoryFrames,uiInventoryArtifacts,childUxProvenance:provenance,
   browserEnvironment:{browser:browserVersion,playwright:playwrightVersion,revision:expectedBrowser.revision,
     launchTimeout:expectedBrowser.launchTimeout,executablePath:path.resolve(browserPath),
     executableSha256:crypto.createHash('sha256').update(fs.readFileSync(browserPath)).digest('hex')},
