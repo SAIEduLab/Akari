@@ -287,7 +287,7 @@
     "audit/tests/child-diagnostics-browser.mjs": "13e311a3e9cb1334762d285682604c0036390103ad51ab6e71b3ce3ec7df9c1c",
     "audit/tests/child-diagnostics-negative.mjs": "937948581849e6ac213a6d615e08da7dec7461d4871257c856e4521d1265cee5",
     "audit/tests/child-diagnostics-verify.mjs": "c949095593137123e49766756e255ef4574902028013e253c959b0fd4ef966af",
-    "audit/tests/child-language-ui-browser.mjs": "8afe32f4623a717a42638c4d9ed16f54cb4f7c5205b5347b64d53404e97d7d8a",
+    "audit/tests/child-language-ui-browser.mjs": "8fe57bec1a5f12b1a289b624501424da8d5c1fb934843c4bedf4ecd9171a4f1c",
     "audit/tests/child-language-ui-verify.mjs": "6729093fad6dc28fcd57f0cf0537bbab2711f5d544a4082910a7efd9cbed40fa",
     "audit/tests/child-ux.mjs": "090b9552d1dff9e872f38933c7321477fd7c9ae472b4a5493c6c748453ac9845",
     "audit/tests/ci-regression.mjs": "60d882cf981040d201d3259a759ef952b3dec8b08ae7e300310e7dd2da65e7da",

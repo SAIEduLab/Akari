@@ -319,6 +319,7 @@ const cases = {
     const truthExample=help.find(r=>r.text.includes('条件の')).text;
     const insertionConceptHints={commandAndBody:help[2]?.text,palette:help[3]?.text};
     assert.deepEqual(insertionConceptHints,childInsertionConceptHints,'normal insertion reading and meaning follow the value hint in the actual DOM');
+    await p.locator('#blockEditor .blockui-local-help p').nth(3).scrollIntoViewIfNeeded();
     await shot(p,'child-block-words-open',true);
     await summary.press('Enter'); assert.deepEqual(await state(p),before,'local words help preserves source and history');
     const arithmetic=p.locator('#blockEditor .blockui-node[data-schema-id="BinaryExpression:ADD"]');
