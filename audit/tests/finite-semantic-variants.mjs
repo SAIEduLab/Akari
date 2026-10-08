@@ -1,3 +1,4 @@
+import {readAuditLedger} from '../lib/audit-ledger-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ const fixturePath='audit/fixtures/finite-semantic-variants.json',fixture=JSON.pa
 finiteVariantFixture();
 // The fixture's original independent source and expectation bytes remain fixed.
 // Check the exact old source after removing only the reviewed prose additions.
-assert.equal(verifyProjectedSource(JSON.parse(fs.readFileSync('audit/fixtures/design-doc-migration-map.json'))),fixture.sourceSha256);
+assert.equal(verifyProjectedSource(readAuditLedger('audit/fixtures/design-doc-migration-map.json')),fixture.sourceSha256);
 function project(d){const p=A.makeEmptyProject(),actor=p.components[0];Object.assign(actor,{name:d.name||'あかり',x:100,y:100,direction:0});actor.localData={variables:[],lists:[]};const star=structuredClone(actor);Object.assign(star,{id:'matrix-star',name:'別の星',x:200});star.costumes=[{id:"matrix-costume",name:"star",kind:"text",value:"*"}];star.costumeId="matrix-costume";p.components=[actor,star];p.projectData={variables:Object.entries(d.vars||{}).map(([name,initialValue],i)=>({id:'matrix-v'+i,name,initialValue})),lists:Object.entries(d.lists||{}).map(([name,initialValue],i)=>({id:'matrix-l'+i,name,initialValue}))};p.scripts=[{id:'matrix-main',targetId:'sprite-1',event:'start',source:d.source},...(d.extraScripts||[]).map((s,i)=>({id:'matrix-extra'+i,...s}))];for(const kind of ['actions','functions'])p[kind]=(d[kind]||[]).map((def,i)=>({id:'matrix-'+kind+i,ownerId:'stage',...def}));return p;}
 function subset(actual,expected){for(const[k,v]of Object.entries(expected)){if(typeof v==='number')assert.ok(Math.abs(actual[k]-v)<1e-8,`${k}: ${actual[k]} != ${v}`);else if(v&&typeof v==='object'&&!Array.isArray(v))subset(actual[k],v);else assert.deepEqual(actual[k],v,k);}}
 function execute(d,mode){const p=project(d),original=JSON.stringify(p);for(const item of [...p.scripts,...p.actions,...p.functions]){const kind=p.functions.includes(item)?'function':p.actions.includes(item)?'action':null,context={targetId:item.targetId,event:item.event,definitionKind:kind,args:item.args,symbols:A.buildSymbols(p)};const parsed=A.parseSyntax(item.source,context);assert.ok(parsed.ast,JSON.stringify(parsed.syntaxDiagnostics));let ast=parsed.ast;for(let n=0;n<3;n++){ast=A.blockDecode(A.blockEncode(ast).tree);assert.ok(A.astEquivalent(parsed.ast,ast));const formatted=A.formatScript(ast),again=A.parseSyntax(formatted,context);assert.ok(again.ast&&A.astEquivalent(parsed.ast,again.ast));ast=again.ast;}if(mode==='blocks')item.source=A.formatScript(ast);}

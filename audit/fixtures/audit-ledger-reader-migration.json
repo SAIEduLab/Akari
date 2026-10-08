@@ -1,0 +1,347 @@
+{
+  "schema": "akari-audit-ledger-reader-migration-v1",
+  "sourceCommit": "79e08a61f2d8e865db75a6d0ea90142548f741ec",
+  "authority": "Parent explicitly approved the related validator adaptation while retaining product/spec/oracle byte freezes and every prior scope hash.",
+  "files": [
+    {
+      "path": "audit/README.md",
+      "beforeSha256": "b30659c84874bbce153fc5d2840354dd61877dea69f057f4dfd76746e54f4db0",
+      "beforeBytes": 5034,
+      "afterSha256": "c1189e0d397db0d2b2a81dc3d0183f68652d1e6034eb70b27abb061ef1364194",
+      "afterBytes": 5500,
+      "hunks": [
+        {
+          "id": "H001",
+          "beforeOffset": 5034,
+          "afterOffset": 5034,
+          "before": "",
+          "after": "\n## 監査台帳の保存\n\n追加と容量レビューの規則は [AUDIT.md「監査データの追加と保存」](../AUDIT.md#監査データの追加と保存)、3台帳の形式・旧ハッシュ・凍結・初回同値検証は [移行記録](LEDGER_MIGRATION.md) を参照します。台帳の解析には `lib/audit-ledger-contract.mjs` の専用 reader を使用します。公開 snapshot の実ファイル hash は従来の読取りを維持します。\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        }
+      ]
+    },
+    {
+      "path": "audit/lib/docs-consolidation-contract.mjs",
+      "beforeSha256": "05b402a35cb42951986bb48fd2614c4b603e5d53e8b8693e62163591303f98e5",
+      "beforeBytes": 13096,
+      "afterSha256": "6b79b38491cbc3d5194bb98bb57157e2609553f2d8ae0bea0a947f564228ef45",
+      "afterBytes": 13142,
+      "hunks": [
+        {
+          "id": "H001",
+          "beforeOffset": 41,
+          "afterOffset": 41,
+          "before": "",
+          "after": "import {readAuditLedger,readAuditLedgerBytes,ledgerInputPaths} from './audit-ledger-contract.mjs';\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H002",
+          "beforeOffset": 714,
+          "afterOffset": 813,
+          "before": "  'audit/lib/docs-consolidation-contract.mjs','audit/fixtures/design-doc-migration-map.json',\n",
+          "after": "  ...ledgerInputPaths,\n  'audit/lib/docs-consolidation-contract.mjs',\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H003",
+          "beforeOffset": 10584,
+          "afterOffset": 10659,
+          "before": " const read=p=>fs.readFileSync(path.join(repositoryRoot,p)),map=JSON.parse(read('audit/fixtures/design-doc-migration-map.json')),ledger=JSON.parse(read('audit/manifests/capability-traceability.json'));\n",
+          "after": " const read=p=>readAuditLedgerBytes(p,repositoryRoot),map=JSON.parse(read('audit/fixtures/design-doc-migration-map.json')),ledger=JSON.parse(read('audit/manifests/capability-traceability.json'));\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H004",
+          "beforeOffset": 11838,
+          "afterOffset": 11907,
+          "before": " const map=JSON.parse(fs.readFileSync(path.join(repositoryRoot,'audit/fixtures/design-doc-migration-map.json'))),ledger=JSON.parse(fs.readFileSync(path.join(repositoryRoot,'audit/manifests/capability-traceability.json')));\n",
+          "after": " const map=readAuditLedger('audit/fixtures/design-doc-migration-map.json',repositoryRoot),ledger=JSON.parse(fs.readFileSync(path.join(repositoryRoot,'audit/manifests/capability-traceability.json')));\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        }
+      ]
+    },
+    {
+      "path": "audit/lib/japanese-gate-contract.mjs",
+      "beforeSha256": "45fd10d3405fc2f97b2714ad2d72086db1c7e15ec157fedfa3a35fbd7874702e",
+      "beforeBytes": 15592,
+      "afterSha256": "26627263700fea1eebe634ca60b0bb5bfd80f0c30e0c830994b7f48e1bd25d06",
+      "afterBytes": 15543,
+      "hunks": [
+        {
+          "id": "H001",
+          "beforeOffset": 693,
+          "afterOffset": 693,
+          "before": "  'audit/fixtures/language-v2-test-migration.json','audit/tests/contract-gate.mjs',\n",
+          "after": "  'audit/tests/contract-gate.mjs',\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        }
+      ]
+    },
+    {
+      "path": "audit/tests/basic-intents.mjs",
+      "beforeSha256": "59f368f540f4279605e2b7c8dc38aadbf11b4a5eb8beeb775459bb3b65972e1c",
+      "beforeBytes": 3996,
+      "afterSha256": "66d8be6a6f3db0ff4a7f13112f53c0dd0f31e7a74be79634914283d5ab160cd4",
+      "afterBytes": 4050,
+      "hunks": [
+        {
+          "id": "H001",
+          "beforeOffset": 0,
+          "afterOffset": 0,
+          "before": "",
+          "after": "import {readAuditLedger} from '../lib/audit-ledger-contract.mjs';\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H002",
+          "beforeOffset": 933,
+          "afterOffset": 999,
+          "before": "const migration=JSON.parse(fs.readFileSync('audit/fixtures/design-doc-migration-map.json'));\n",
+          "after": "const migration=readAuditLedger('audit/fixtures/design-doc-migration-map.json');\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        }
+      ]
+    },
+    {
+      "path": "audit/tests/finite-semantic-variants.mjs",
+      "beforeSha256": "b2ea135a00a933d39e9c11eada7b7529c6f077c813527505460f7742fb914e76",
+      "beforeBytes": 5610,
+      "afterSha256": "99d1c758817369c56da374c395cd54b4acbbcd8b6dc29c2eaf7bf933f1917fc7",
+      "afterBytes": 5664,
+      "hunks": [
+        {
+          "id": "H001",
+          "beforeOffset": 0,
+          "afterOffset": 0,
+          "before": "",
+          "after": "import {readAuditLedger} from '../lib/audit-ledger-contract.mjs';\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H002",
+          "beforeOffset": 854,
+          "afterOffset": 920,
+          "before": "assert.equal(verifyProjectedSource(JSON.parse(fs.readFileSync('audit/fixtures/design-doc-migration-map.json'))),fixture.sourceSha256);\n",
+          "after": "assert.equal(verifyProjectedSource(readAuditLedger('audit/fixtures/design-doc-migration-map.json')),fixture.sourceSha256);\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        }
+      ]
+    },
+    {
+      "path": "audit/tests/japanese-contract-static.mjs",
+      "beforeSha256": "76a2b0ffae605e20d4a59b84b0f3327c75516535c18a8055ad2b25af49818591",
+      "beforeBytes": 16255,
+      "afterSha256": "96454a174162a028488063b4a11dcfc4cded6bfa250f6fd1a032ab1728e55f7d",
+      "afterBytes": 16335,
+      "hunks": [
+        {
+          "id": "H001",
+          "beforeOffset": 75,
+          "afterOffset": 75,
+          "before": "",
+          "after": "import {readAuditLedger} from '../lib/audit-ledger-contract.mjs';\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H002",
+          "beforeOffset": 1699,
+          "afterOffset": 1765,
+          "before": "  const json = relative => JSON.parse(read(relative));\n",
+          "after": "  const json = relative => readAuditLedger(relative,repositoryRoot);\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        }
+      ]
+    },
+    {
+      "path": "audit/tests/static-contract.mjs",
+      "beforeSha256": "f422b6b72d33d18bcaf2bae15641e953c0b43786374dfc05f1fdc539fcffedfe",
+      "beforeBytes": 10056,
+      "afterSha256": "474353d41bd22a0afe50a2f8df8028c13f28442322c8002701252282ab7572a4",
+      "afterBytes": 10352,
+      "hunks": [
+        {
+          "id": "H001",
+          "beforeOffset": 307,
+          "afterOffset": 307,
+          "before": "",
+          "after": "import {readAuditLedger,verifyAuditLedgers} from '../lib/audit-ledger-contract.mjs';\nimport {checkLedgerNegatives,checkReaderMigrationNegatives,verifyLedgerMigrationRecord} from './audit-ledgers.mjs';\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H002",
+          "beforeOffset": 1018,
+          "afterOffset": 1219,
+          "before": "",
+          "after": "verifyAuditLedgers();checkLedgerNegatives();checkReaderMigrationNegatives();verifyLedgerMigrationRecord();\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H003",
+          "beforeOffset": 7192,
+          "afterOffset": 7500,
+          "before": "const legacyMigration=JSON.parse(fs.readFileSync('audit/fixtures/language-v2-test-migration.json'));\n",
+          "after": "const legacyMigration=readAuditLedger('audit/fixtures/language-v2-test-migration.json');\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        }
+      ]
+    },
+    {
+      "path": "audit/lib/child-ux-contract.mjs",
+      "beforeSha256": "3126ad49850076560c269c4cf8225269edbb06aed9d27c80c2e930f73d251964",
+      "beforeBytes": 23694,
+      "afterSha256": "22f302ed8093464e30878aa7169c7af06c9d0a1c2f621edad75978ceee4a6d89",
+      "afterBytes": 23944,
+      "hunks": [
+        {
+          "id": "H001",
+          "beforeOffset": 0,
+          "afterOffset": 0,
+          "before": "",
+          "after": "import {preservedAuditReaderBytes,verifyReaderMigrationIntegrity} from './audit-ledger-reader-migration.mjs';\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H002",
+          "beforeOffset": 5255,
+          "afterOffset": 5365,
+          "before": "",
+          "after": "  bytes=preservedAuditReaderBytes(file,bytes);\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H003",
+          "beforeOffset": 6515,
+          "afterOffset": 6672,
+          "before": "",
+          "after": "  verifyReaderMigrationIntegrity();\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H004",
+          "beforeOffset": 8755,
+          "afterOffset": 8948,
+          "before": "  return {protectedFiles:Object.keys(scope.protectedFiles).length,byteExactFiles:Object.keys(scope.protectedFiles).length-2-approvedPreviewChanges.length,inputOnlyAdapters:1,startupOnlyAdapters:1,playbackCorrectionFiles:approvedPreviewChanges.length,tasks:24,requirements:requirementIds.length,productSha256:sha(fs.readFileSync(scope.product))};\n",
+          "after": "  return {protectedFiles:Object.keys(scope.protectedFiles).length,byteExactFiles:Object.keys(scope.protectedFiles).length-2-approvedPreviewChanges.length-12,auditLedgerRestoredFiles:3,auditReaderRestoredFiles:9,inputOnlyAdapters:1,startupOnlyAdapters:1,playbackCorrectionFiles:approvedPreviewChanges.length,tasks:24,requirements:requirementIds.length,productSha256:sha(fs.readFileSync(scope.product))};\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        }
+      ]
+    },
+    {
+      "path": "audit/tests/ui-buttons.mjs",
+      "beforeSha256": "b31ce31993822ccbd4e82690d957e24d3e5238e0499876aaaf9f3f894aeb0e54",
+      "beforeBytes": 20313,
+      "afterSha256": "444641350e0ad1fef3664b8414a0570d7279dd2a7ac54e198b95bb8895cb274e",
+      "afterBytes": 22016,
+      "hunks": [
+        {
+          "id": "H001",
+          "beforeOffset": 3038,
+          "afterOffset": 3038,
+          "before": "",
+          "after": "// Observe the required DOM state within the existing page timeout; no retry or added sleep.\nconst settledHidden = locator => locator.waitFor({state:'hidden'});\nasync function hiddenObservationControls(p) {\n  const frame=await p.context().newPage();\n  const controls=[];\n  try {\n    await frame.setContent('<button id=\"pending\">入力を確定</button>');\n    const button=frame.locator('#pending');assert.equal(await button.isVisible(),true);\n    await frame.evaluate(()=>requestAnimationFrame(()=>{document.querySelector('#pending').hidden=true;}));\n    await settledHidden(button);controls.push({id:'delayed-hidden',hidden:!await button.isVisible()});\n  } finally { await frame.close(); }\n  const wrong=await p.context().newPage();\n  try {\n    wrong.setDefaultTimeout(100); // Short negative-control deadline only; production keeps 30000ms.\n    await wrong.setContent('<button id=\"pending\">入力を確定</button>');\n    const button=wrong.locator('#pending');let timeout;\n    try { await settledHidden(button); } catch(error) { timeout=error; }\n    assert.equal(timeout?.name,'TimeoutError','permanent visibility must fail within its bound');\n    controls.push({id:'permanent-visible',rejected:!!timeout,timeoutMs:100});\n    await wrong.close();let closed;\n    try { await settledHidden(button); } catch(error) { closed=error; }\n    assert.match(closed?.message||'',/Target page, context or browser has been closed/,'closed observation must fail');\n    controls.push({id:'closed-page',rejected:!!closed});\n  } finally { await wrong.close(); }\n  return controls;\n}\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H002",
+          "beforeOffset": 8507,
+          "afterOffset": 10076,
+          "before": "    await number(p).fill('5'); await click(p,'#blockEditor [data-blockui-action=\"commit\"]'); assert.equal((await fingerprint(p)).source,'5を言う。'); assert.equal((await fingerprint(p)).history,mainBefore.history+1); await visible(p,'#blockEditor [data-blockui-action=\"commit\"]',false);\n",
+          "after": "    await number(p).fill('5'); await click(p,'#blockEditor [data-blockui-action=\"commit\"]'); assert.equal((await fingerprint(p)).source,'5を言う。'); assert.equal((await fingerprint(p)).history,mainBefore.history+1); await settledHidden(p.locator('#blockEditor [data-blockui-action=\"commit\"]')); await visible(p,'#blockEditor [data-blockui-action=\"commit\"]',false);\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H003",
+          "beforeOffset": 10214,
+          "afterOffset": 11862,
+          "before": "    return {invalidInputCancelable:true,validDraftCancelHidden:true,registrationSeparate:true};\n",
+          "after": "    return {invalidInputCancelable:true,validDraftCancelHidden:true,registrationSeparate:true,observationControls:await hiddenObservationControls(p)};\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        }
+      ]
+    },
+    {
+      "path": "audit/lib/ui-buttons-contract.mjs",
+      "beforeSha256": "c63e82ebe85a6c32700ca116c083ec9c1e7a00e539ebba06824e5ffff77ff53a",
+      "beforeBytes": 2392,
+      "afterSha256": "e57f610f1735ecdd051db092dc4538729fc0e7e5c57b441093c985c31ac8227b",
+      "afterBytes": 3456,
+      "hunks": [
+        {
+          "id": "H001",
+          "beforeOffset": 1227,
+          "afterOffset": 1227,
+          "before": "",
+          "after": "  assert.deepEqual(report.results.find(row=>row.id==='UI-BUTTON-PENDING').evidence.observationControls,[{id:'delayed-hidden',hidden:true},{id:'permanent-visible',rejected:true,timeoutMs:100},{id:'closed-page',rejected:true}],'bounded UI observation controls');\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H002",
+          "beforeOffset": 1668,
+          "afterOffset": 1929,
+          "before": "    results:uiButtonIds.map(id => ({id, status:'PASS', pass:true, evidence:{checked:true}})),\n",
+          "after": "    results:uiButtonIds.map(id => ({id, status:'PASS', pass:true, evidence:id==='UI-BUTTON-PENDING'?{checked:true,observationControls:[{id:'delayed-hidden',hidden:true},{id:'permanent-visible',rejected:true,timeoutMs:100},{id:'closed-page',rejected:true}]}:{checked:true}})),\n",
+          "applications": 1,
+          "beforeOccurrences": 1,
+          "afterOccurrences": 1
+        },
+        {
+          "id": "H003",
+          "beforeOffset": 2258,
+          "afterOffset": 2701,
+          "before": "",
+          "after": "    r => delete r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls,\n    r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls[0].hidden=false,\n    r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls[1].rejected=false,\n    r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls[2].rejected=false,\n    r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls.push({id:'extra',rejected:true}),\n    r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls[1].timeoutMs=30000,\n",
+          "applications": 1,
+          "beforeOccurrences": 0,
+          "afterOccurrences": 1
+        }
+      ]
+    }
+  ]
+}

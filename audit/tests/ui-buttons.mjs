@@ -26,6 +26,32 @@ const number = (p, root='#blockEditor') => p.locator(root+' .blockui-node[data-s
 async function callable(p,kind='Function') { await click(p,'#procBtn'); await click(p,'#callableNew'+kind); await p.locator('#callableName').fill('ボタン検証'); await p.locator('#callableName').press('Tab'); await p.locator('#callableCode').fill(kind==='Function'?'1を答えとして返す。':'1を言う。'); await p.waitForTimeout(350); }
 async function visible(p,s,value=true) { assert.equal(await p.locator(s).isVisible(),value,s+' visibility'); }
 async function reachable(l) { await l.scrollIntoViewIfNeeded(); const r=await l.boundingBox(); assert.ok(r&&r.width>0&&r.height>0); const v=l.page().viewportSize(); assert.ok(r.x>=-1&&r.y>=-1&&r.x+r.width<=v.width+1&&r.y+r.height<=v.height+1,'control must be reachable by ordinary scrolling'); await l.click(); return {width:r.width,height:r.height}; }
+// Observe the required DOM state within the existing page timeout; no retry or added sleep.
+const settledHidden = locator => locator.waitFor({state:'hidden'});
+async function hiddenObservationControls(p) {
+  const frame=await p.context().newPage();
+  const controls=[];
+  try {
+    await frame.setContent('<button id="pending">入力を確定</button>');
+    const button=frame.locator('#pending');assert.equal(await button.isVisible(),true);
+    await frame.evaluate(()=>requestAnimationFrame(()=>{document.querySelector('#pending').hidden=true;}));
+    await settledHidden(button);controls.push({id:'delayed-hidden',hidden:!await button.isVisible()});
+  } finally { await frame.close(); }
+  const wrong=await p.context().newPage();
+  try {
+    wrong.setDefaultTimeout(100); // Short negative-control deadline only; production keeps 30000ms.
+    await wrong.setContent('<button id="pending">入力を確定</button>');
+    const button=wrong.locator('#pending');let timeout;
+    try { await settledHidden(button); } catch(error) { timeout=error; }
+    assert.equal(timeout?.name,'TimeoutError','permanent visibility must fail within its bound');
+    controls.push({id:'permanent-visible',rejected:!!timeout,timeoutMs:100});
+    await wrong.close();let closed;
+    try { await settledHidden(button); } catch(error) { closed=error; }
+    assert.match(closed?.message||'',/Target page, context or browser has been closed/,'closed observation must fail');
+    controls.push({id:'closed-page',rejected:!!closed});
+  } finally { await wrong.close(); }
+  return controls;
+}
 const cases = {
   async 'UI-BUTTON-SOURCE-NAV'(p) {
     for(const m of ['code','blocks']) {
@@ -75,7 +101,7 @@ const cases = {
     await fill(p,'1を言う。'); await mode(p,'blocks'); const mainBefore=await fingerprint(p);
     await number(p).fill('bad'); await number(p).press('Enter'); assert.equal(await number(p).getAttribute('aria-invalid'),'true'); assert.deepEqual(await fingerprint(p),mainBefore); await click(p,'#blockEditor [data-blockui-action="cancel"]'); assert.deepEqual(await fingerprint(p),mainBefore);
     await number(p).fill('4'); await visible(p,'#blockEditor [data-blockui-action="commit"]'); await click(p,'#blockEditor [data-blockui-action="cancel"]'); assert.deepEqual(await fingerprint(p),mainBefore);
-    await number(p).fill('5'); await click(p,'#blockEditor [data-blockui-action="commit"]'); assert.equal((await fingerprint(p)).source,'5を言う。'); assert.equal((await fingerprint(p)).history,mainBefore.history+1); await visible(p,'#blockEditor [data-blockui-action="commit"]',false);
+    await number(p).fill('5'); await click(p,'#blockEditor [data-blockui-action="commit"]'); assert.equal((await fingerprint(p)).source,'5を言う。'); assert.equal((await fingerprint(p)).history,mainBefore.history+1); await settledHidden(p.locator('#blockEditor [data-blockui-action="commit"]')); await visible(p,'#blockEditor [data-blockui-action="commit"]',false);
     await callable(p); await visible(p,'#callableCancel',false); await visible(p,'#callablePending',false);
     await click(p,'#callableModeblocks'); const before=await fingerprint(p), n=number(p,'#callableBlocks');
     await n.fill('invalid'); await n.press('Enter'); assert.equal(await n.getAttribute('aria-invalid'),'true'); await visible(p,'#callableBlocks [data-blockui-action="cancel"]'); assert.deepEqual(await fingerprint(p),before);
@@ -84,7 +110,7 @@ const cases = {
     await number(p,'#callableBlocks').fill('2'); await number(p,'#callableBlocks').press('Enter'); await visible(p,'#callableCancel',false);
     assert.equal(await p.evaluate(()=>Akari.app.project.functions.length),0); assert.equal((await fingerprint(p)).hasDraft,true);
     await click(p,'#callableSave'); assert.equal(await p.evaluate(()=>Akari.app.project.functions.length),1); assert.equal(await p.evaluate(()=>Akari.app.project.functions[0].source),'2を答えとして返す。');
-    return {invalidInputCancelable:true,validDraftCancelHidden:true,registrationSeparate:true};
+    return {invalidInputCancelable:true,validDraftCancelHidden:true,registrationSeparate:true,observationControls:await hiddenObservationControls(p)};
   },
   async 'UI-BUTTON-BLOCK-DESTINATION'(p) {
     await fill(p,'1を言う。'); await mode(p,'blocks');

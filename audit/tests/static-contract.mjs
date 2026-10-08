@@ -1,6 +1,8 @@
 import {samplesFeature,sampleTestIds} from '../lib/samples-contract.mjs';
 import { currentProductFile, currentProductVersion, assertProductInventory, validateProductMetadata } from "./../lib/product-path.cjs";
 import {blockFieldIds,checkBlockFieldValidatorNegatives} from '../lib/block-field-contract.mjs';
+import {readAuditLedger,verifyAuditLedgers} from '../lib/audit-ledger-contract.mjs';
+import {checkLedgerNegatives,checkReaderMigrationNegatives,verifyLedgerMigrationRecord} from './audit-ledgers.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
@@ -13,6 +15,7 @@ import {assertReleasePolicy} from '../lib/release-policy.mjs';
 import {formatCompatibilityIds} from '../lib/format-compatibility-contract.mjs';
 import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-contract.mjs';
 import {componentControlsFeature,componentControlIds} from '../lib/component-controls-contract.mjs';
+verifyAuditLedgers();checkLedgerNegatives();checkReaderMigrationNegatives();verifyLedgerMigrationRecord();
 const metadata=assertProductInventory();
 for(const bad of [{productFile:"../Akari1_0_1.html"},{productVersion:"invalid"},{productFile:"Akari1_0_0.html"},{files:metadata.files.filter(f=>f!==metadata.productFile)},{files:[...metadata.files,metadata.productFile]},{files:[...metadata.files,"Akari.html"]},{files:[...metadata.files,"Akari1_0_0.html"]}])assert.throws(()=>validateProductMetadata({...metadata,...bad}));
 const sampleManifest=JSON.parse(fs.readFileSync('audit/manifests/samples.json'));
@@ -67,7 +70,7 @@ const archivedSourcePins=new Map(Object.entries({
   "audit/fixtures/legacy-1.0.1/audit/browser/cases/audit-lib.cjs": "38c7146a36a93ad8b85353505b8bfb8d54a2e2d66fd2498253db00955d56b9ba",
   "audit/fixtures/legacy-1.0.1/audit/browser/cases/native-focus.cjs": "40b82437c0edf5471c26dfd3c5d36bbf9797d1706525f860b3bac122e4f62f10"
 }));
-const legacyMigration=JSON.parse(fs.readFileSync('audit/fixtures/language-v2-test-migration.json'));
+const legacyMigration=readAuditLedger('audit/fixtures/language-v2-test-migration.json');
 assert.equal(sha(JSON.stringify(legacyMigration.sourcePins)),JSON.parse(fs.readFileSync(approvedBaselinePath)).migrationAuthority.sourcePinsSha256,'immutable legacy source pin set');
 const addArchivedPin=(file,hash)=>{assert.match(hash,/^[a-f0-9]{64}$/);if(archivedSourcePins.has(file))assert.equal(archivedSourcePins.get(file),hash,'conflicting archive pin: '+file);archivedSourcePins.set(file,hash);};
 for(const pin of legacyMigration.sourcePins)addArchivedPin(archivedSourceRoot+pin.path,pin.sha256);

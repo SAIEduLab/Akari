@@ -28,6 +28,7 @@ export function verifyUiButtons(report, currentSnapshot) {
     assert.equal(row.pass, true, row.id);
     assert.ok(row.evidence && typeof row.evidence === 'object' && Object.keys(row.evidence).length, row.id);
   }
+  assert.deepEqual(report.results.find(row=>row.id==='UI-BUTTON-PENDING').evidence.observationControls,[{id:'delayed-hidden',hidden:true},{id:'permanent-visible',rejected:true,timeoutMs:100},{id:'closed-page',rejected:true}],'bounded UI observation controls');
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.networkRequests, []);
   return true;
@@ -37,7 +38,7 @@ export function checkUiButtonValidatorNegatives() {
   const inputs = {productSha256:'a'.repeat(64), files:{[currentProductFile()]:'a'.repeat(64)}};
   const valid = () => ({schema:'akari-ui-buttons-v1', status:'PASS', snapshot:structuredClone(inputs),
     environment:'chromium', browser:'fixture-browser', total:uiButtonIds.length,
-    results:uiButtonIds.map(id => ({id, status:'PASS', pass:true, evidence:{checked:true}})),
+    results:uiButtonIds.map(id => ({id, status:'PASS', pass:true, evidence:id==='UI-BUTTON-PENDING'?{checked:true,observationControls:[{id:'delayed-hidden',hidden:true},{id:'permanent-visible',rejected:true,timeoutMs:100},{id:'closed-page',rejected:true}]}:{checked:true}})),
     pageErrors:[], networkRequests:[]});
   verifyUiButtons(valid(), inputs);
   for (const mutate of [
@@ -51,6 +52,12 @@ export function checkUiButtonValidatorNegatives() {
     r => r.browser = '',
     r => r.pageErrors.push('page error'),
     r => r.networkRequests.push('https://example.invalid'),
+    r => delete r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls,
+    r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls[0].hidden=false,
+    r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls[1].rejected=false,
+    r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls[2].rejected=false,
+    r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls.push({id:'extra',rejected:true}),
+    r => r.results.find(x=>x.id==='UI-BUTTON-PENDING').evidence.observationControls[1].timeoutMs=30000,
   ]) {
     const report = valid();
     mutate(report);

@@ -46,3 +46,7 @@ GitHub Actionsは同一repositoryのbranch push / PRでstatic・selftest・既�
 既存30 stepの後ろに、主語の保持、日本語・文字列、単位と診断、初回操作、可読性の5群と証跡validatorの拒否検査を追加し、local gateは36 stepです。新しい14件の安定IDは `lib/review-regression-contract.mjs` に固定します。各群は実ブラウザーの版、製品と監査入力のsnapshot、全IDの実測証拠、ページエラーと外部通信の不在を要求します。既存ケースの代替にはしません。
 
 集約時はダウンロードされた証跡内の製品コピーを読み、実行元で記録したSHAと当該checkoutのSHAを照合します。実行元の絶対パスとfile URLは来歴として保持します。元のディレクトリがなくても検証でき、コピーの改変・欠落・記録URLの不一致は拒否検査で確認します。
+
+## 監査台帳の保存
+
+追加と容量レビューの規則は [AUDIT.md「監査データの追加と保存」](../AUDIT.md#監査データの追加と保存)、3台帳の形式・旧ハッシュ・凍結・初回同値検証は [移行記録](LEDGER_MIGRATION.md) を参照します。台帳の解析には `lib/audit-ledger-contract.mjs` の専用 reader を使用します。公開 snapshot の実ファイル hash は従来の読取りを維持します。
