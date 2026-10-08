@@ -309,6 +309,32 @@
         }
       ],
       "afterSha256": "41d4bd8c06ad1c5404f4d2088655d568d04de72a63f59c67e14e221bdab2815c"
+    },
+    {
+      "file": "audit/tests/ux-repair02-layout.mjs",
+      "changes": [
+        {
+          "before": "  await pageFor(browser,product,async p=>{await p.setViewportSize(viewport);await p.emulateMedia({colorScheme:scheme});",
+          "after": "  report.activeCase={task:c.id,viewport,scheme,phase:'preparation'};save();\n  await pageFor({newContext:options=>browser.newContext({...options,viewport,colorScheme:scheme})},product,async p=>{",
+          "count": 1
+        },
+        {
+          "before": "   for(const scale of [100,75])",
+          "after": "   report.activeCase.phase='layout';\n   for(const scale of [100,75])",
+          "count": 1
+        },
+        {
+          "before": "   await p.locator('#editorModecode').click();const code=",
+          "after": "   report.activeCase.phase='return-to-code';\n   await p.locator('#editorModecode').click();const code=",
+          "count": 1
+        },
+        {
+          "before": "  });console.log('layout '",
+          "after": "  });delete report.activeCase;console.log('layout '",
+          "count": 1
+        }
+      ],
+      "afterSha256": "9da006d550a93e40694b9bc5eb196c001b2c6eed70c5494ae24b56ad984467a3"
     }
   ]
 }
