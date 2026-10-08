@@ -11,7 +11,7 @@ import {corpusPath,consolidationInputPaths,consolidationNegativeIds} from './doc
 export const contractInputPaths = [
   'audit/lib/migration-source-contract.mjs',
   'audit/tests/japanese-contract-static.mjs','audit/fixtures/1.0.2-baseline-capabilities.json',
-  'audit/fixtures/language-v2-test-migration.json','audit/tests/contract-gate.mjs',
+  'audit/tests/contract-gate.mjs',
   'audit/lib/japanese-gate-contract.mjs',
   ...consolidationInputPaths,
 ];

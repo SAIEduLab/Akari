@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import {readAuditLedger} from '../lib/audit-ledger-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -26,7 +27,7 @@ const unquote = value => value.replace(/^`|`$/g, '');
 
 export function verifyJapaneseContract(repositoryRoot = root) {
   const read = relative => fs.readFileSync(path.join(repositoryRoot, relative));
-  const json = relative => JSON.parse(read(relative));
+  const json = relative => readAuditLedger(relative,repositoryRoot);
   const bytes = read('audit/fixtures/1.0.2-baseline-capabilities.json');
   assert.equal(sha(bytes), frozenFixtureSha256, 'independent baseline/child oracle was changed');
   const baseline = JSON.parse(bytes);

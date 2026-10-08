@@ -1,3 +1,4 @@
+import {readAuditLedger} from '../lib/audit-ledger-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ import {verifyProjectedSource} from '../lib/docs-consolidation-contract.mjs';
 const A=loadApi(fs.readFileSync(currentProductFile(),'utf8')),fixture=JSON.parse(fs.readFileSync('audit/fixtures/basic-intents.json')),results=[],plain=x=>JSON.parse(JSON.stringify(x)),sha=s=>crypto.createHash('sha256').update(s).digest('hex');
 assert.equal(sha(fs.readFileSync('audit/fixtures/basic-intents.json')),'cf9c3ea0c54801fc77d26f1b66c95bf383ddc89e468ddf9a4ae7121ca63c8d08');
 assert.deepEqual(fixture.cases.map(d=>d.id),['T01','T02','T03','T04','T05','T06','T13']);
-const migration=JSON.parse(fs.readFileSync('audit/fixtures/design-doc-migration-map.json'));
+const migration=readAuditLedger('audit/fixtures/design-doc-migration-map.json');
 assert.equal(migration.sourceProjection.path,fixture.publicSource);
 assert.equal(verifyProjectedSource(migration),fixture.publicSourceSha256);
 for(const d of fixture.cases){try{

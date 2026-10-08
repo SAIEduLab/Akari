@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {readAuditLedger,readAuditLedgerBytes,ledgerInputPaths} from './audit-ledger-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -11,7 +12,8 @@ const sha=x=>crypto.createHash('sha256').update(x).digest('hex');
 export const corpusPath='audit/fixtures/japanese-intent/child-intent-corpus.json';
 export const corpusMarkdownPath='audit/fixtures/japanese-intent/child-intent-corpus.md';
 export const consolidationInputPaths=[
-  'audit/lib/docs-consolidation-contract.mjs','audit/fixtures/design-doc-migration-map.json',
+  ...ledgerInputPaths,
+  'audit/lib/docs-consolidation-contract.mjs',
   'audit/manifests/capability-traceability.json',corpusPath,corpusMarkdownPath,
   'README.md','LANGUAGE.md','AUDIT.md','audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md',
 ];
@@ -106,7 +108,7 @@ export function verifyProjectedSource(map,repositoryRoot=root){
  return sha(projected);
 }
 export function verifyConsolidatedDocumentation(repositoryRoot=root){
- const read=p=>fs.readFileSync(path.join(repositoryRoot,p)),map=JSON.parse(read('audit/fixtures/design-doc-migration-map.json')),ledger=JSON.parse(read('audit/manifests/capability-traceability.json'));
+ const read=p=>readAuditLedgerBytes(p,repositoryRoot),map=JSON.parse(read('audit/fixtures/design-doc-migration-map.json')),ledger=JSON.parse(read('audit/manifests/capability-traceability.json'));
  assert.equal(sha(read('audit/fixtures/design-doc-migration-map.json')),reviewedMigrationSha256,'reviewed migration record changed');
  assert.equal(fs.existsSync(path.join(repositoryRoot,'docs/1.0.2')),false,'retired live folder must be absent');
  const result=validateConsolidationRecord(map,ledger,repositoryRoot);
@@ -122,7 +124,7 @@ export const consolidationNegativeIds=[
  'DOCS/changed-independent-source','DOCS/missing-permanent-body',
 ];
 export function checkConsolidationNegatives(repositoryRoot=root){
- const map=JSON.parse(fs.readFileSync(path.join(repositoryRoot,'audit/fixtures/design-doc-migration-map.json'))),ledger=JSON.parse(fs.readFileSync(path.join(repositoryRoot,'audit/manifests/capability-traceability.json')));
+ const map=readAuditLedger('audit/fixtures/design-doc-migration-map.json',repositoryRoot),ledger=JSON.parse(fs.readFileSync(path.join(repositoryRoot,'audit/manifests/capability-traceability.json')));
  const cases=[
   m=>m.requirements.pop(),m=>m.requirements[1].id=m.requirements[0].id,
   m=>m.requirements.find(r=>r.original).original.status='PASS',m=>m.bodyInventory.pop(),

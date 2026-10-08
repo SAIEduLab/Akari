@@ -1,0 +1,2081 @@
+{
+  "schema": "akari-audit-ledger-migration-v1",
+  "sourceCommit": "79e08a61f2d8e865db75a6d0ea90142548f741ec",
+  "branch": "codex/akari-audit-dedup-01",
+  "startingChanges": [],
+  "branchNameConflict": false,
+  "plannedChanges": [
+    "audit/fixtures/registered-v2-test-migrations.json",
+    "audit/fixtures/language-v2-test-migration.json",
+    "audit/fixtures/design-doc-migration-map.json",
+    "audit/lib/docs-consolidation-contract.mjs",
+    "audit/tests/japanese-contract-static.mjs",
+    "audit/tests/static-contract.mjs",
+    "audit/tests/basic-intents.mjs",
+    "audit/tests/finite-semantic-variants.mjs",
+    "audit/lib/japanese-gate-contract.mjs",
+    "AUDIT.md",
+    "audit/README.md",
+    "audit/public-files.json",
+    "audit/manifests/release-1.1.1.json",
+    "audit/fixtures/audit-ledger-migration.json",
+    "audit/LEDGER_MIGRATION.md",
+    "audit/lib/audit-ledger-contract.mjs",
+    "audit/tests/audit-ledgers.mjs",
+    "audit/tools/compact-audit-ledgers.mjs",
+    "audit/lib/child-ux-contract.mjs",
+    "audit/lib/audit-ledger-reader-migration.mjs",
+    "audit/fixtures/audit-ledger-reader-migration.json",
+    "audit/tests/ui-buttons.mjs",
+    "audit/lib/ui-buttons-contract.mjs"
+  ],
+  "sources": [
+    {
+      "path": "audit/fixtures/registered-v2-test-migrations.json",
+      "commit": "79e08a61f2d8e865db75a6d0ea90142548f741ec",
+      "sha256": "abb8fbaace9a8ef6787eebd6dd391a9a99d207ba6a45ee573f8b498a44c0b969",
+      "bytes": 4442615,
+      "serialization": "pretty-json"
+    },
+    {
+      "path": "audit/fixtures/language-v2-test-migration.json",
+      "commit": "79e08a61f2d8e865db75a6d0ea90142548f741ec",
+      "sha256": "e43b5d3e93d36f6c21f96745584994f3d03f561b49f4cae98fd75bdc9a1769c7",
+      "bytes": 2238664,
+      "serialization": "pretty-json"
+    },
+    {
+      "path": "audit/fixtures/design-doc-migration-map.json",
+      "commit": "79e08a61f2d8e865db75a6d0ea90142548f741ec",
+      "sha256": "2a7b27269e8f0bcc7d972416058a0ddb44d242d0e6b92b72497ce65764479e42",
+      "bytes": 1330122,
+      "serialization": "line-array-json"
+    }
+  ],
+  "frozenFiles": [
+    {
+      "path": ".gitattributes",
+      "bytes": 85,
+      "sha256": "16cc61b04666bb0cfd9c857ca50cbac734dad366b3999ca7043c6b3b1e01f2c9"
+    },
+    {
+      "path": ".github/workflows/akari-acceptance.yml",
+      "bytes": 15517,
+      "sha256": "2409429b9db9bb96e833c3676a2e36b4edd289b104812ea97d52ead7a349e7fe"
+    },
+    {
+      "path": ".github/workflows/akari-audit.yml",
+      "bytes": 8034,
+      "sha256": "dd6983f1ca8a82b3ad07bea6944140a506d93e2bd1b76526f5baa1ff097ceede"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 84,
+      "sha256": "2964fc0110fb05cc44ef651bc13ad6d92af9e35b8a1de9eaabb6e9d852f9ff7f"
+    },
+    {
+      "path": "Akari1_1_1.html",
+      "bytes": 1488300,
+      "sha256": "b929f5720b0b224b00fac5090bd397e2abeea965329f212439dc3f75a5d210bf"
+    },
+    {
+      "path": "EXTENSIONS.md",
+      "bytes": 14110,
+      "sha256": "d281cac12c538984681df7e115e62364203e3017c2eb655a3092186b6196da61"
+    },
+    {
+      "path": "LANGUAGE.md",
+      "bytes": 109342,
+      "sha256": "36e3164b41d3376518c01095476b46e4d9c1d4130c4ea3710431b0a48e78f5da"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1066,
+      "sha256": "f400597abbd1d5aca8d4d823c06c8f5ab1b14bf7ae1b71a08e0dc393f92d37cf"
+    },
+    {
+      "path": "MANUAL.html",
+      "bytes": 34608,
+      "sha256": "75ba26905c944d1ec6458ce89e5903f1ff0976647e629bf0116b8bde98cc459a"
+    },
+    {
+      "path": "Manual/.gitkeep",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "Manual/block-mode.html",
+      "bytes": 38370,
+      "sha256": "3e0ff4dae0b76a43cf137214e3f6ffaaf0f8255749752c7fa34a4a59eea382b8"
+    },
+    {
+      "path": "Manual/code-mode-advanced.html",
+      "bytes": 34017,
+      "sha256": "1f0e3b29ef564e792d6a10bbdc198546fa4277f665fce0d3f6eb69fe4356558e"
+    },
+    {
+      "path": "Manual/code-mode-beginner.html",
+      "bytes": 33091,
+      "sha256": "2e73227fe3dad2750bb55672a5b402bd2dbb58ddf0b075f6ffd1640ea36d488b"
+    },
+    {
+      "path": "Manual/code-mode-intermediate.html",
+      "bytes": 31295,
+      "sha256": "33d1f705ba116f698f38611de553a7952618f3b0727ebd13d9bf8f221adc6884"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5835,
+      "sha256": "1c4bb4569c51496d901fd1b9bc794d1da861c6e434bfc023004474ecc8e602f7"
+    },
+    {
+      "path": "audit/ACTIONS_TRANSFER.md",
+      "bytes": 13134,
+      "sha256": "91930e4505777e0be97ee769a032e8a03b2fcb94a4ac33c2e17f376f908a6391"
+    },
+    {
+      "path": "audit/CHILD_UX.md",
+      "bytes": 27007,
+      "sha256": "75706eb2cd90ee6713e48abfad0b8011e5d50a15988845e0b0a3a03b2b1adf40"
+    },
+    {
+      "path": "audit/IMPLEMENTATION_STATUS.md",
+      "bytes": 16700,
+      "sha256": "2b70ddf392a2c5b86bc0caf04279989f31c4f62f3bd567b8c61242caf826b786"
+    },
+    {
+      "path": "audit/LANGUAGE_FORMS.md",
+      "bytes": 11462,
+      "sha256": "cf165fc0e8524291de5c28a73fc698b85a9c35605e6d5b83347867af7571a6f1"
+    },
+    {
+      "path": "audit/UX_REPAIR.md",
+      "bytes": 20222,
+      "sha256": "5cfa3c6370f530cc851e3bbc35c9770ecb3d7f410ab1fef0ef307b49a6d3bd8d"
+    },
+    {
+      "path": "audit/browser/browser-audit-manifest.json",
+      "bytes": 943,
+      "sha256": "ae69bd5c253f001cb96b8781b8cd8569c89f3c91957262b9a2842e3e20f2e8ff"
+    },
+    {
+      "path": "audit/browser/cases/audit-lib.cjs",
+      "bytes": 2465,
+      "sha256": "38c7146a36a93ad8b85353505b8bfb8d54a2e2d66fd2498253db00955d56b9ba"
+    },
+    {
+      "path": "audit/browser/cases/browser-asset-limits.cjs",
+      "bytes": 11078,
+      "sha256": "abfcfeb8da7daf3374e0bb15a79f7f20ee879a27eabbb0d1a99065348a6be296"
+    },
+    {
+      "path": "audit/browser/cases/browser-boundaries.cjs",
+      "bytes": 15308,
+      "sha256": "253c00fa7c0a9af4252d9f9b253c7b0e864835034bf0f17f65dca39458f97e45"
+    },
+    {
+      "path": "audit/browser/cases/browser-condition.cjs",
+      "bytes": 9634,
+      "sha256": "07993c4a79c5e47b62b6ebc45f2aca24fec1fa4bbf2339845842eb7cb69f833d"
+    },
+    {
+      "path": "audit/browser/cases/browser-design-limits.cjs",
+      "bytes": 7852,
+      "sha256": "f313ad37f9560267dc23954e1185c9ef2b20b7ea64d5660b9f3c145ef54bad29"
+    },
+    {
+      "path": "audit/browser/cases/browser-event-traces.cjs",
+      "bytes": 15169,
+      "sha256": "2a54bf35016b965255519ba187fbe0e0999f97516cd4fc0f0f25405450507794"
+    },
+    {
+      "path": "audit/browser/cases/browser-events.cjs",
+      "bytes": 6775,
+      "sha256": "697b91961426a34aaab34d3401b7ad3bb6c736a7f67c15571aa3fe7264095cbb"
+    },
+    {
+      "path": "audit/browser/cases/browser-media-boundaries.cjs",
+      "bytes": 13811,
+      "sha256": "b3b4ce63c564c0a339e93a2de99c736485151ea1bfa6f281f7d202bfc8130a0c"
+    },
+    {
+      "path": "audit/browser/cases/browser-owner-delete.cjs",
+      "bytes": 6400,
+      "sha256": "6f0e655d413d4bd3a669ea338ba76333c72b534cbb8436fdcaec1607be9ad5a8"
+    },
+    {
+      "path": "audit/browser/cases/browser-product.cjs",
+      "bytes": 14373,
+      "sha256": "f7d2a7395cfea2f3792796699a12f1acd7be96d284148df4dc956f9cb4d99407"
+    },
+    {
+      "path": "audit/browser/cases/browser-runtime-limits.cjs",
+      "bytes": 14318,
+      "sha256": "9278490f1eccb8fe504eca55a40d47672f147b388e6f73c3a45d3c9211448718"
+    },
+    {
+      "path": "audit/browser/cases/browser-runtime.cjs",
+      "bytes": 9949,
+      "sha256": "9196470ba4e06f460e65881a6e64b3dd50a2650cdcb881868ac6e1e5ddeb5b65"
+    },
+    {
+      "path": "audit/browser/cases/browser-schemas.cjs",
+      "bytes": 21409,
+      "sha256": "5c579659e455bfac7ca6357d41b749c5a31ae606190b86b79a4b091d58921bbd"
+    },
+    {
+      "path": "audit/browser/cases/browser-session.cjs",
+      "bytes": 24100,
+      "sha256": "cc86d6faf4a9edef8ff4e3ea909c9b18c1d2bbd26c020dbd48f3f66916b135db"
+    },
+    {
+      "path": "audit/browser/cases/browser-storage-media.cjs",
+      "bytes": 15572,
+      "sha256": "7e835db6d17de2ca3f31f926dcf54131adb6bbdd80065386bc59ef1dc20738fd"
+    },
+    {
+      "path": "audit/browser/cases/long-regression.cjs",
+      "bytes": 7124,
+      "sha256": "2d4238a453a7581941e7ca4d51ad5eebd08a21da3491fa7cf9b5fb96046f0cf8"
+    },
+    {
+      "path": "audit/browser/cases/media-fixtures.cjs",
+      "bytes": 2737,
+      "sha256": "6147cb729d3496b5e08dc54f9cb722578e8da48ad3e6903dcdc930460e7b6752"
+    },
+    {
+      "path": "audit/browser/cases/modern-browser.cjs",
+      "bytes": 13750,
+      "sha256": "44a466e48fd09cc191c8d8d244415ff3740c73678dafe8203ce375121b186667"
+    },
+    {
+      "path": "audit/browser/cases/native-focus.cjs",
+      "bytes": 1065,
+      "sha256": "40b82437c0edf5471c26dfd3c5d36bbf9797d1706525f860b3bac122e4f62f10"
+    },
+    {
+      "path": "audit/browser/cases/parent-qa.cjs",
+      "bytes": 14408,
+      "sha256": "8ab5c41cdf9b9078756427db592f30da00c8a701c4dbf9bcec63cdd5ef5c8630"
+    },
+    {
+      "path": "audit/browser/cases/perf-input.cjs",
+      "bytes": 4382,
+      "sha256": "65eb187b58da29fe5434011a36ad9819c51e70d8da276909e611f47a310652ce"
+    },
+    {
+      "path": "audit/browser/cases/persistence-probe.cjs",
+      "bytes": 3312,
+      "sha256": "842e09b8f3784a100235c6074986079f6ac9cf562fd6ddf0c59e1f3ae2190cab"
+    },
+    {
+      "path": "audit/browser/cases/prepare-media.py",
+      "bytes": 1819,
+      "sha256": "da97939b2f621980dc9df0a4c50f5998cc7729fbc31b7d7ccac61d5e4165d8d2"
+    },
+    {
+      "path": "audit/browser/cases/regression-setup.cjs",
+      "bytes": 7654,
+      "sha256": "08b4942281669b4921b14e405b96eaf970c2247b44c1e25ae8628284aae7ec2f"
+    },
+    {
+      "path": "audit/browser/cases/run-editor-regression.cjs",
+      "bytes": 13465,
+      "sha256": "0cefb78ad94b162dd63bb22002712942bce78da3fe612f395f55f332a150e375"
+    },
+    {
+      "path": "audit/browser/cases/schema-shards.cjs",
+      "bytes": 6238,
+      "sha256": "8581ce5bbf562b5a1f37d6fdd87a6c62bf72b22f8866a4423cb5f9766ecc3f8a"
+    },
+    {
+      "path": "audit/browser/cases/ui-case.cjs",
+      "bytes": 705,
+      "sha256": "6df27709fa7d30766a178b8f762f7f235058465d737b10968eb83d0bd8b996d3"
+    },
+    {
+      "path": "audit/browser/cases/ui-compact-menu.cjs",
+      "bytes": 9365,
+      "sha256": "77530989bd3f92564c495bdcdebe13a0b90b5ad2999a713433d0480d7e798bdd"
+    },
+    {
+      "path": "audit/browser/cases/ui-compact-routes.cjs",
+      "bytes": 2447,
+      "sha256": "001f40208b6a1117cd245b5be6be76ccad506df86a75ea637d9725653e2cc4e1"
+    },
+    {
+      "path": "audit/browser/cases/ui-interactions.cjs",
+      "bytes": 23666,
+      "sha256": "b876ffe6144e16017276cabb91a992e52e0bd444dcc34a7c2c958d06f2c696a8"
+    },
+    {
+      "path": "audit/browser/cases/ui-routes.cjs",
+      "bytes": 4074,
+      "sha256": "1d0d53217d304de9e96fc1e3f58d6981c84ae1f982ef64a3d767534809ce79e3"
+    },
+    {
+      "path": "audit/browser/cases/ui-shell.cjs",
+      "bytes": 6381,
+      "sha256": "9b8c962c4684063f5c64f31739367c409a06ed236564613ad7721ebbf35bdf5c"
+    },
+    {
+      "path": "audit/browser/cases/ui-stage-gesture.cjs",
+      "bytes": 12522,
+      "sha256": "776d50e9d3af8c2ab666dbbeac41ba9951b2117f84467dbba973df6205fe2720"
+    },
+    {
+      "path": "audit/browser/cases/workbench-direct.cjs",
+      "bytes": 9720,
+      "sha256": "c4004ec150efc443f9d867721d913af57271b1c2bbe70e117ba8636e05aba429"
+    },
+    {
+      "path": "audit/browser/cases/workbench-matrix.cjs",
+      "bytes": 8607,
+      "sha256": "49c4df1fc00f1c002b010f5f6a3bc614138d38966bf8a0d648adced5c47d0688"
+    },
+    {
+      "path": "audit/browser/run-full-browser-audit.mjs",
+      "bytes": 6313,
+      "sha256": "b152bf2df64dfdc3fa95784a00549569e53b2f639f1daae31bc1404c03e213a1"
+    },
+    {
+      "path": "audit/fixtures/1.0.2-baseline-capabilities.json",
+      "bytes": 269715,
+      "sha256": "35c7dabee4066a17fdd43fefe3c8f34ac30e4059087b0a46579574f2cda536f5"
+    },
+    {
+      "path": "audit/fixtures/actions-transfer-plan.json",
+      "bytes": 155381,
+      "sha256": "843c92e4c5b5d9a9be87fed7265ccfdc3566c949a491bf092e45a2888249c94c"
+    },
+    {
+      "path": "audit/fixtures/approved-run-preview-fix.json",
+      "bytes": 31865,
+      "sha256": "42c96ad91de247736c6c5108034c137248fea7b146851897483e7bdcf09ab67b"
+    },
+    {
+      "path": "audit/fixtures/audio-codecs-v2-input-migration.json",
+      "bytes": 15183,
+      "sha256": "4f8cdc81f0c5c16a6343d78351c402e98766489a26fbb9eca34e0e619b97c43f"
+    },
+    {
+      "path": "audit/fixtures/audio/manifest.json",
+      "bytes": 6146,
+      "sha256": "0ffb41c130f51a5610bcfc5c52400c6fec7dc2b96f755f83d25110d43d386690"
+    },
+    {
+      "path": "audit/fixtures/audio/mono.flac",
+      "bytes": 9440,
+      "sha256": "d96dfaa7af3b3524a894c268b46627b9a50f6327eb8204bd8b36f6ffad7f45b6"
+    },
+    {
+      "path": "audit/fixtures/audio/mono.m4a",
+      "bytes": 3511,
+      "sha256": "5b95c4067aa46d2162f4899f1de084736d995f4fe5b682111642d4672258259f"
+    },
+    {
+      "path": "audit/fixtures/audio/mono.opus",
+      "bytes": 1060,
+      "sha256": "41f9b19323e653470c03dbdf1d4966c17ad1fac76d851c5a676f17c6929e8c38"
+    },
+    {
+      "path": "audit/fixtures/audio/overrate.flac",
+      "bytes": 22720,
+      "sha256": "ebdf765a93be54a5c20beeda1e26b21521c29ad431fa2112850c57119c419383"
+    },
+    {
+      "path": "audit/fixtures/audio/tone.flac",
+      "bytes": 16584,
+      "sha256": "c4c3fef17cfd6b0d52a9ca745fab1b0604456b1c8576c6deabdfe8f14eea3cc5"
+    },
+    {
+      "path": "audit/fixtures/audio/tone.m4a",
+      "bytes": 4837,
+      "sha256": "5f2288b7bce3addf370f80c6ad861a6909fd15ba19551ccf7f9bc42e16c2b55a"
+    },
+    {
+      "path": "audit/fixtures/audio/tone.mp3",
+      "bytes": 5112,
+      "sha256": "cf03828daf6ce3dd1c83fc537f83a68dc926316153fbcf36d33d2da9a631cd6f"
+    },
+    {
+      "path": "audit/fixtures/audio/tone.ogg",
+      "bytes": 3108,
+      "sha256": "0dbeb7131913a543ac4025a5241501500ce37cbf39d92b19b9df5c48be7ae34b"
+    },
+    {
+      "path": "audit/fixtures/audio/tone.wav",
+      "bytes": 48044,
+      "sha256": "ba93bc6e5422a3f387b38d6ce6fbd3074892a5b974fbcb8f33ddb2514c22bf9f"
+    },
+    {
+      "path": "audit/fixtures/audio/unsupported-adts.aac",
+      "bytes": 3970,
+      "sha256": "13e1351f740963ecf4c509c0e7af9a09dd27fac2f7f1a41e8f5f405730bb047a"
+    },
+    {
+      "path": "audit/fixtures/audio/unsupported-alac.m4a",
+      "bytes": 11195,
+      "sha256": "c40c4e034ea8a64bf30adf64690d18616226eeb212b249b014a36fef4b53e64c"
+    },
+    {
+      "path": "audit/fixtures/audio/unsupported-vorbis.ogg",
+      "bytes": 5450,
+      "sha256": "8406301c575d19dbc637549392bf42b403831bf3d632cbfe362f138b56d53972"
+    },
+    {
+      "path": "audit/fixtures/basic-intents.json",
+      "bytes": 2507,
+      "sha256": "cf9c3ea0c54801fc77d26f1b66c95bf383ddc89e468ddf9a4ae7121ca63c8d08"
+    },
+    {
+      "path": "audit/fixtures/browser-v2-input-migration.json",
+      "bytes": 667476,
+      "sha256": "94b6e9d44968620313722a1c1d4d4ac92b05cbf739349532acf37326a138ccbe"
+    },
+    {
+      "path": "audit/fixtures/child-ux-plan.json",
+      "bytes": 58679,
+      "sha256": "e18f5596669ec18d63cc2879f0d92e0cf98f88c2eb58a22e683e47677112ac10"
+    },
+    {
+      "path": "audit/fixtures/child-ux-scope.json",
+      "bytes": 57264,
+      "sha256": "0ada863f056998e11f79fc4436c65568845c9d951a0b618af40b036206363c6b"
+    },
+    {
+      "path": "audit/fixtures/composition-acceptance.json",
+      "bytes": 9762,
+      "sha256": "8cadca66b29a47f8ae9e3eda9965c25021f0422fa14e2d6edab5c8fdb0dedd19"
+    },
+    {
+      "path": "audit/fixtures/editor-surface-v2-input-migration.json",
+      "bytes": 16617,
+      "sha256": "e0565a0508bc7d4e373ce1f57d52f43395c0d815b16037661b336f2e97c8de9e"
+    },
+    {
+      "path": "audit/fixtures/editor-v2-input-migration.json",
+      "bytes": 6361,
+      "sha256": "9c3913f564e129c04d4666ce53939f94003de105a75a6b86ecf064daf692ddd5"
+    },
+    {
+      "path": "audit/fixtures/explicit-source-import-migration.json",
+      "bytes": 58399,
+      "sha256": "1bc80078767131efbb2ac10b3dd0a4b9893e21772731ed45ee41db3e6a5785ba"
+    },
+    {
+      "path": "audit/fixtures/finite-semantic-variants.json",
+      "bytes": 134591,
+      "sha256": "a0e56dde732081644c69e75fec79e7ac5c4aff30341f585b73a79b182794d0b1"
+    },
+    {
+      "path": "audit/fixtures/fixed-values.mjs",
+      "bytes": 3990,
+      "sha256": "3a1fd2fe67dc8242c7f9a6d349e28e79020ca2608fd93f6c199280328d1e04a0"
+    },
+    {
+      "path": "audit/fixtures/format-v2-input-migration.json",
+      "bytes": 18909,
+      "sha256": "d1eca1cbe9dde57e0ed315b4cf050ffa14f37cd7fc4a96e970381bd41450e7d0"
+    },
+    {
+      "path": "audit/fixtures/gate-ui-v2-input-migration.json",
+      "bytes": 129794,
+      "sha256": "7287d106efa8fc671b3eab9ce50aef3e5256d7f93e26da0239c3d090acae1b00"
+    },
+    {
+      "path": "audit/fixtures/harness-timeout-input-migration.json",
+      "bytes": 2979,
+      "sha256": "c8549b92ae49e5965877115dd84f61c3a380519bd11115c7df9c52b860900361"
+    },
+    {
+      "path": "audit/fixtures/intent-original-prose-pending-migration.json",
+      "bytes": 25149,
+      "sha256": "18cdad1a94391f310c8957b462a19e69b61cbb549c69b6227f32148d47384fd0"
+    },
+    {
+      "path": "audit/fixtures/japanese-intent/child-intent-corpus.json",
+      "bytes": 36170,
+      "sha256": "97bfcdb36a2029edf0ed696ed15635cf5330364e37233168274173cc5bfd928f"
+    },
+    {
+      "path": "audit/fixtures/japanese-intent/child-intent-corpus.md",
+      "bytes": 46090,
+      "sha256": "aa7d381cd847d9f452d1fab9e895c59ea98b72cb47fe4a4fe8f3273a7842c53c"
+    },
+    {
+      "path": "audit/fixtures/language-surface-v2-migration.json",
+      "bytes": 1758283,
+      "sha256": "65da43a314c8c71abf3de065a19f9453accd5241f88cb78050841b170fc83a80"
+    },
+    {
+      "path": "audit/fixtures/language/MIGRATION.md",
+      "bytes": 2148,
+      "sha256": "be4ee470426cb23ee1cb8ceaed9184d1fe172587e98e77c02d8cf6c9d4cfd4da"
+    },
+    {
+      "path": "audit/fixtures/language/expected.json",
+      "bytes": 333126,
+      "sha256": "69dbdaba11f659cc031c291c165e637891e764801b412420232c217f14b74561"
+    },
+    {
+      "path": "audit/fixtures/language/forms.mjs",
+      "bytes": 58112,
+      "sha256": "fd2026ee10dba2e33ded3adb7c0b39bbe01cc7e00a963111e3acc1f06f23b037"
+    },
+    {
+      "path": "audit/fixtures/language/inline.mjs",
+      "bytes": 3278,
+      "sha256": "8ea498614072a867820753917a0d546a87deb4b4c8bbf64378167082575d98f1"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/audit-lib.cjs",
+      "bytes": 2465,
+      "sha256": "38c7146a36a93ad8b85353505b8bfb8d54a2e2d66fd2498253db00955d56b9ba"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-asset-limits.cjs",
+      "bytes": 10911,
+      "sha256": "971e34baeae454f98082c03c1e080b0998a6593873b94d6ac1f9e36d19efa372"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-boundaries.cjs",
+      "bytes": 14037,
+      "sha256": "0fae3abb2408f97b95f20a42c60c8e4354fde1b9affa5c42e94d5f26d309c9c8"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-condition.cjs",
+      "bytes": 9467,
+      "sha256": "3f5022dcfbe1c3724b5e118b0709c5970c1f33407e8b79212bcdf2e356bb314d"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-design-limits.cjs",
+      "bytes": 7588,
+      "sha256": "18b307d10edb81a81c55847952d4908d5882b7a70b069f3fe5003e1a3dfb276e"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-event-traces.cjs",
+      "bytes": 14960,
+      "sha256": "a3fd5093fe65018730c335635654075af6ecd18b0933cf2dccb92f98633b1ccd"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-events.cjs",
+      "bytes": 6562,
+      "sha256": "0bea83bd12b2a3d346e2edd160b8c9fcf7a71a388e8948b212ebbbc1103081b8"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-media-boundaries.cjs",
+      "bytes": 13610,
+      "sha256": "64aabaf92976223e8b4e4fec49dafb703aa4e7fdd3a410ddcaa871d297fa2e04"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-owner-delete.cjs",
+      "bytes": 6183,
+      "sha256": "fd35190d198c3b34718347f45b6df9c9f9182e3ed1c0ddbc35fbf8e80ad0d1e6"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-product.cjs",
+      "bytes": 14028,
+      "sha256": "35ce185d849c4b997f7825639ff23618e91c7441e1795805c4e6260fdc00893c"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-runtime-limits.cjs",
+      "bytes": 14226,
+      "sha256": "83d4013dff69234b17a485f2b91c58173102e92576533bb6b32050045cb21136"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-runtime.cjs",
+      "bytes": 9671,
+      "sha256": "d8bc16e54194d55b162da3d1854849a7510e7009e81b3070403ae7cd845d317e"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-schemas.cjs",
+      "bytes": 18001,
+      "sha256": "9528d18faa59da656402e786b75943504e032e829799d95bb5a4ee15be91e085"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-session.cjs",
+      "bytes": 22582,
+      "sha256": "14b85a4ed08fa4e5924fd4c4dce4668e613a755c0faaaf9bb31b49b143cd03a2"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/browser-storage-media.cjs",
+      "bytes": 12222,
+      "sha256": "9a93019db1d3969f54f5ed1e52099a421184b0ab1419e0ebab871b5b08787d3c"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/long-regression.cjs",
+      "bytes": 6141,
+      "sha256": "910b43ec3fa80d06f8de2b4f1f3070fb1c3370066727e4a9528ebbe72eb25f1a"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/media-fixtures.cjs",
+      "bytes": 2737,
+      "sha256": "6147cb729d3496b5e08dc54f9cb722578e8da48ad3e6903dcdc930460e7b6752"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/modern-browser.cjs",
+      "bytes": 13323,
+      "sha256": "27916fb3b0c96f82785d01d0d550fb1d0cdf39dfa3a8be0dae63c54d8d585a26"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/native-focus.cjs",
+      "bytes": 1065,
+      "sha256": "40b82437c0edf5471c26dfd3c5d36bbf9797d1706525f860b3bac122e4f62f10"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/parent-qa.cjs",
+      "bytes": 11727,
+      "sha256": "8a3cc3397fc7cee5a4a6dbe88dbb0be946794c682181511c5456371c795e0eb0"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/perf-input.cjs",
+      "bytes": 4217,
+      "sha256": "9ed67f9630c83604c40c1bc16721e99fb7480c644bab7caba0639c94155d8da5"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/persistence-probe.cjs",
+      "bytes": 3312,
+      "sha256": "842e09b8f3784a100235c6074986079f6ac9cf562fd6ddf0c59e1f3ae2190cab"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/run-editor-regression.cjs",
+      "bytes": 13176,
+      "sha256": "a4a3e68f32574287dcdfff686dc727d5edc6f18542533b1a241e078b26f1258e"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/schema-shards.cjs",
+      "bytes": 2276,
+      "sha256": "a26181c17955ede86fb66aa20e46b14e5e0147ea072a988b6ba0c8119dc81d14"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/ui-case.cjs",
+      "bytes": 705,
+      "sha256": "6df27709fa7d30766a178b8f762f7f235058465d737b10968eb83d0bd8b996d3"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/ui-compact-menu.cjs",
+      "bytes": 9197,
+      "sha256": "86d7c9ff0c3c157526db9be26bb274955c780c92f9b379630a3fbacc8c737224"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/ui-compact-routes.cjs",
+      "bytes": 2447,
+      "sha256": "001f40208b6a1117cd245b5be6be76ccad506df86a75ea637d9725653e2cc4e1"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/ui-interactions.cjs",
+      "bytes": 22896,
+      "sha256": "51c684d58f724f67ee8ac1457e6224c896b0d4457714261e78ac72901c873fcc"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/ui-routes.cjs",
+      "bytes": 4074,
+      "sha256": "1d0d53217d304de9e96fc1e3f58d6981c84ae1f982ef64a3d767534809ce79e3"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/ui-shell.cjs",
+      "bytes": 6216,
+      "sha256": "893763f1c9b6ff3545f166db785bdce1a1deb595a62ff488f9b2e9f3a115fa24"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/ui-stage-gesture.cjs",
+      "bytes": 12354,
+      "sha256": "187309a89bdc6f730533d1bdc279d72c503a9762e91f06ca9a2d847e5ab9b699"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/workbench-direct.cjs",
+      "bytes": 9510,
+      "sha256": "7dfa12e2f4e2b4cf96bb7efb393f6aa9b1fd5a961d3388832f10614976b77c92"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/browser/cases/workbench-matrix.cjs",
+      "bytes": 7949,
+      "sha256": "47dbff2d587f7ae2a646da54663c9de3f9123ef8becd2bd8cd14347044c5d33b"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/fixtures/language/expected.json",
+      "bytes": 330424,
+      "sha256": "1a68facf8d36cbd19d3babd06b9ce6efdabe8b752a86e83fe280d4681c224c1c"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/fixtures/language/forms.mjs",
+      "bytes": 7253,
+      "sha256": "819e815c02c7e3fa40fa8fc8d56ab49a873d5cc817220933a895df0939bdd50b"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/fixtures/language/inline.mjs",
+      "bytes": 2300,
+      "sha256": "1a5a2ec4e92dad7d111d53ad8af935b14190b538d84de5f50bcb38683e875307"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/manifests/language-form-coverage.json",
+      "bytes": 229933,
+      "sha256": "5cf5a96ea613564c8cc5b2eae0ddf67c2e380ca64d837ea001e17bef149a1953"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/manifests/product-tests.json",
+      "bytes": 39477,
+      "sha256": "bf99a4eaa08bb77dc7019a4e7685208c2a3c73e8dead135d856fa4a5f34fc10e"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/run-language-tests.mjs",
+      "bytes": 3154,
+      "sha256": "bfb2455316fb057930ae4cfd42996098ac29bb7315a82c282154de5fbd6b7c08"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/bindings.js",
+      "bytes": 1654,
+      "sha256": "bf9b11bca22421122e5f353b0d448b30b9a05c738362cf69649198f3d50d9e22"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/editor-surface.js",
+      "bytes": 12206,
+      "sha256": "8971d6a2d524420e092c4c2c1accb5df3811135e2e46f5a2cd7db43a5adcad85"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/language-forms.js",
+      "bytes": 13515,
+      "sha256": "577d8c85f5cd923c16b88cb685e3490ab4d3c5e9f64a3c2f71cefca0a3592094"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/runAkariSelfTests.js",
+      "bytes": 23254,
+      "sha256": "d9e606c26550a78599228135fdb702de594ca03d34ad8621e8b040ef1c41524a"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/runBlockCodecTests.js",
+      "bytes": 15462,
+      "sha256": "fbad8adae818cce2342fa499c8aef08af9141cfa8e137f1e7d4f8082c6e0ffcc"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/runCoreTests.js",
+      "bytes": 16448,
+      "sha256": "d485b9b07a6bf93140cf4dc9d3813ee0a883fefc82d55c7047b14edd8de159cf"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/runEditorCoreTests.js",
+      "bytes": 25707,
+      "sha256": "1ba4c1a823222c98354eaf1dced477880e147776f04a8e67017c37db31419454"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/runExtendedTests.js",
+      "bytes": 33895,
+      "sha256": "1853c182a0e202086164f773439f4f99f2595121e08782309c08caa0e7aa5feb"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/runLimitBoundaryTests.js",
+      "bytes": 17456,
+      "sha256": "e9a550b40831c4fc877a8a68d3551369f013254a0a6a508ea656239527d0bd58"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/runProductContractTests.js",
+      "bytes": 6296,
+      "sha256": "e85a65b2b67cd492c1198f72e1a59fc916888bea162d8272e4a278b0dd712ef8"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/runReleaseTests.js",
+      "bytes": 714,
+      "sha256": "b308787bc41dea7a73907c5c1b1caaaf59f5e84d0710676f077b138ff68df9dc"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/runSemanticContractTests.js",
+      "bytes": 16012,
+      "sha256": "408e48fe53ff20f1ec8f3e3bd26503bda9a5812c41843663f820d3232852e540"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/suites/runSyntaxTests.js",
+      "bytes": 15960,
+      "sha256": "bc4230f6cdb4f652b961a3d0bec4d1494b7e09ff8287aa3f3d318898017a3be3"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/audio-codecs.mjs",
+      "bytes": 14722,
+      "sha256": "a4b8d66f5395ad288e178d8d8e1a06c117cb1601235f3433066e7cd41c87cde0"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/block-field-width.mjs",
+      "bytes": 6669,
+      "sha256": "0b00054e6ef69ec0dc17c59a9d6f1f79d11a5ad9080bb634f32dd43aeeb3fa14"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/ci-regression.mjs",
+      "bytes": 6282,
+      "sha256": "df52941ec0d33b0e893c20c5a57fd766c4e546a75740593ecd92f7507000537f"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/designer-zoom.mjs",
+      "bytes": 16611,
+      "sha256": "108118d4fabc20e61e8ab2f3db5d9470451db956803ad2c4289e7614a777f90c"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/dom-render-regression.cjs",
+      "bytes": 3522,
+      "sha256": "30213264cf6d80f0ae7362c8a9898555b403ff03a458eed879a9eb43359a6f90"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/editor-assets.mjs",
+      "bytes": 20083,
+      "sha256": "0c0f295d46bce8379f361c7685f051ddc9c7061c66d48183c08a245732a1a7b4"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/editor-browser.mjs",
+      "bytes": 16298,
+      "sha256": "ccc3158ce84f2c51127329d2b9ab48a99f0582874bfcfd8ad584bf4a31f718fb"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/execution-continuity.mjs",
+      "bytes": 6071,
+      "sha256": "cb3bc78bc8258374494f6e4b6380170997ec2c3d92817ff6d4827320581a9d35"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/format-compatibility.mjs",
+      "bytes": 17329,
+      "sha256": "cfa3d38864fd887622f4cb296b186feafe7715e65a795fc6d82fdbc0a8298c2b"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/harness-negative.mjs",
+      "bytes": 3127,
+      "sha256": "bc8b1fe364f37f3c1579ffebfef91d1d26316ace2d06de6146a0872a126609a7"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/manual-docs.mjs",
+      "bytes": 8266,
+      "sha256": "6712dd52767293c4d5c0f5fa4b216680ff59cb91e7b8211ae948f4b784974f1b"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/normal-product.mjs",
+      "bytes": 5236,
+      "sha256": "ec46d7e0ae5d2edbadbaee2301214b865503b433ac6884d68b1b9026398b1bb5"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/source-ownership.mjs",
+      "bytes": 16093,
+      "sha256": "acd5afbd357b494c8103dcf2edb998c776a09fd5b7765810db22519f9fedead8"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/audit/tests/ui-buttons.mjs",
+      "bytes": 19326,
+      "sha256": "af0120f8e986d51cd8356a1f42b404366ead6fb1ae21a1858f906cf9acbe3409"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/block-defaults.json",
+      "bytes": 61711,
+      "sha256": "b751b482fe0bcc68e42d8a59249d03b4d26c87a342953701766233812bdd3c62"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/block-schemas.json",
+      "bytes": 95838,
+      "sha256": "4c60fe856130c481e1bb59641b80b299602583125695d54dfc17d48e76b337af"
+    },
+    {
+      "path": "audit/fixtures/legacy-1.0.1/makeDefaultProject.json",
+      "bytes": 2911,
+      "sha256": "371a13d05693dcc8293acfb36ac35d95f304111d86d8d92e13b3905ecc5417cc"
+    },
+    {
+      "path": "audit/fixtures/long-window-v2-input-migration.json",
+      "bytes": 8689,
+      "sha256": "799211ea08466f4c13f0fb6e47b9e6d1acc6127ba815c3f367e3ce93df2b490b"
+    },
+    {
+      "path": "audit/fixtures/other-suites-v2-input-migration.json",
+      "bytes": 23945,
+      "sha256": "d5bb28ef10cff87471375061d6040ac5cc1d74a9a95286fa773d67bcde95e68b"
+    },
+    {
+      "path": "audit/fixtures/product-manifest-v2-input-migration.json",
+      "bytes": 7318,
+      "sha256": "736a45264e5458fd84bef4f52f66f96078b8de557e5990dd6215c27fc6dd69c4"
+    },
+    {
+      "path": "audit/fixtures/regression-project.cjs",
+      "bytes": 3841,
+      "sha256": "bbd07f30f794549d804670b604906321e9c445c1dcffdfeadcc73b6bba58bdc7"
+    },
+    {
+      "path": "audit/fixtures/runtime-v2-input-migration.json",
+      "bytes": 125096,
+      "sha256": "0a54e8a891aab5ad790242cd3823dd18c4f7d22eac1e62cbea291970b99af986"
+    },
+    {
+      "path": "audit/fixtures/speech-name-layout.mjs",
+      "bytes": 1844,
+      "sha256": "c13efbe53c29b64dcddc8c2d870c038bad8c62cd4f211e9044f700756b938575"
+    },
+    {
+      "path": "audit/fixtures/speech-preview.mjs",
+      "bytes": 1111,
+      "sha256": "15c2e5d56cde48502904d99f3ada7b64850ba9ceb8542252e086413ff8606eb3"
+    },
+    {
+      "path": "audit/fixtures/ux-repair-benchmark.json",
+      "bytes": 78156,
+      "sha256": "8443dd5846458bad111b80e32c834c71d3b4a642d62cffe6b5093577d3d0f8cf"
+    },
+    {
+      "path": "audit/fixtures/ux-repair-expectations.json",
+      "bytes": 1713,
+      "sha256": "3c8fe01bd70bbd5727908b05d50fbf5a4aaaad19cdffea9333fbb254cb400ce3"
+    },
+    {
+      "path": "audit/fixtures/ux-repair02-expectations.json",
+      "bytes": 5215,
+      "sha256": "6c923b50eaf3ca5a31d19a35ddb13d4304d1b9202830d3af002e045889f3903b"
+    },
+    {
+      "path": "audit/fixtures/ux-repair02-matrix.json",
+      "bytes": 93146,
+      "sha256": "403d097a05bb4f5b1bdbcaad749d40d2cfd58594967d29e7aebfdbb6c59449f3"
+    },
+    {
+      "path": "audit/fixtures/ux-repair02-speech.json",
+      "bytes": 185,
+      "sha256": "ac3e299b800f6e81ba13961935218b1c48ff01fb9daaeee780f09c37ccd24cb6"
+    },
+    {
+      "path": "audit/freeze-release.mjs",
+      "bytes": 899,
+      "sha256": "eca19cdc2d84a7c9316e000b168132872a559eb1b39ba34b6127c7f124c955fe"
+    },
+    {
+      "path": "audit/generate-audio.py",
+      "bytes": 2546,
+      "sha256": "712467ddf059aa011ffda659aed5cd0a6a3749a11bfed1e2e49abe863757e3a4"
+    },
+    {
+      "path": "audit/install-codec-browser.py",
+      "bytes": 1389,
+      "sha256": "708f3aaf06fcd38eb0fd7742f773b900b5c88892ccc10a86c1730c51c891de97"
+    },
+    {
+      "path": "audit/lib/actions-transfer-contract.mjs",
+      "bytes": 11805,
+      "sha256": "ba3c8e70f7506324c9e6532b0bd3e4c5fff35b6da2c3e0358834453894886594"
+    },
+    {
+      "path": "audit/lib/audio-output-contract.mjs",
+      "bytes": 7106,
+      "sha256": "6adde16e6d843779a5d892f3f4ea2c17d69ae8ffef2a39543a1c9f655831448b"
+    },
+    {
+      "path": "audit/lib/autosave-state-contract.mjs",
+      "bytes": 12243,
+      "sha256": "28d0d1bc310006dac27b3ae2345af14d093948dcfca74b76218b8218fdf32b3e"
+    },
+    {
+      "path": "audit/lib/basic-intents-runtime.mjs",
+      "bytes": 3291,
+      "sha256": "8b968212fc368b39e6b48800fce59b10a8e13ceb33317a2491d69979a61fcb78"
+    },
+    {
+      "path": "audit/lib/block-field-contract.mjs",
+      "bytes": 1506,
+      "sha256": "48095f26181d184eef676fc8992f9009e1367a05ad05d2fb523cc65907294b00"
+    },
+    {
+      "path": "audit/lib/browser-environment.mjs",
+      "bytes": 1019,
+      "sha256": "7f3738f1df502146085376206abfb2c1eddc289ee5c2d62d3ab39e3e07c365a9"
+    },
+    {
+      "path": "audit/lib/child-diagnostics-contract.mjs",
+      "bytes": 7391,
+      "sha256": "03c4c225368b72dd8ff9def0b9ce498f91461e3b3fbe62a020288b8177f63389"
+    },
+    {
+      "path": "audit/lib/child-language-ui-contract.mjs",
+      "bytes": 19643,
+      "sha256": "d2703ba4dabd22e7319a04e28a581db2334e570afdb83f6359802be770b2e9c0"
+    },
+    {
+      "path": "audit/lib/child-ux-blocks.mjs",
+      "bytes": 9223,
+      "sha256": "ce71f649da77f93ffa547fe3e6498ebcc15c5b37fb7a4ca1691626753eb94b51"
+    },
+    {
+      "path": "audit/lib/child-ux-evidence.mjs",
+      "bytes": 11192,
+      "sha256": "b4dd83b5189c1e40690ca5850740b4104f9ec354f028abc4a8e11c018c9891f6"
+    },
+    {
+      "path": "audit/lib/child-ux-observations.mjs",
+      "bytes": 6724,
+      "sha256": "0931d2c435523d6f57641c8d52efb73072c07c2774dfad4a6f139f2bd33f3b0d"
+    },
+    {
+      "path": "audit/lib/command-meaning-contract.mjs",
+      "bytes": 5480,
+      "sha256": "48098da795f6e109bbf4cd2fb2af8562aea0fe6d10babe72d9b5393e954a852e"
+    },
+    {
+      "path": "audit/lib/component-controls-contract.mjs",
+      "bytes": 7234,
+      "sha256": "b69993a8f33ea55f0550f875718f45b47550e5f927e44481171ea73455006c5c"
+    },
+    {
+      "path": "audit/lib/composition-runtime.mjs",
+      "bytes": 4728,
+      "sha256": "ce5b4ab0ebdb6ae47bc1a6d7a109168cf1c2c4a93cbaef2286ecb2778f6b1576"
+    },
+    {
+      "path": "audit/lib/evidence-bundle.mjs",
+      "bytes": 2684,
+      "sha256": "9e4fcac9caeadebfac5805d11200dc702b275302e4390ce68edee4fd4db865e6"
+    },
+    {
+      "path": "audit/lib/extension-foundation-contract.mjs",
+      "bytes": 7194,
+      "sha256": "8b21637747256a6257003e7713b4d04ad7f879f6187f0b0514f543509b070256"
+    },
+    {
+      "path": "audit/lib/feature-contract.mjs",
+      "bytes": 3741,
+      "sha256": "b74189d5b17d2cfb0dc7251019a6e314effa69c866c089d9a42e1ba2b6e8f3a6"
+    },
+    {
+      "path": "audit/lib/format-compatibility-contract.mjs",
+      "bytes": 3337,
+      "sha256": "5ad535ab4667a25e006ab6c298bbe4151230514e2cf5d61ae227c59bcd4c27f4"
+    },
+    {
+      "path": "audit/lib/gate-contract.mjs",
+      "bytes": 4262,
+      "sha256": "a305498312fc24b9703a06630d8bfef3549c70e592e09281f0b29b85afa9c3a9"
+    },
+    {
+      "path": "audit/lib/gate-ui-fixture.mjs",
+      "bytes": 2280,
+      "sha256": "560104de4b643dc724a2da18d7e41fea9d0a7b93e6c81ace8c7db3faa92fc497"
+    },
+    {
+      "path": "audit/lib/insertion-context-contract.mjs",
+      "bytes": 8795,
+      "sha256": "fb092a3556dc2a416d5f9a0f2b6dd1d86e93b07afc45a2ed10defdf7b58abe3d"
+    },
+    {
+      "path": "audit/lib/japanese-intent-browser-harness.mjs",
+      "bytes": 5378,
+      "sha256": "0e785cf05072bfe7f7f596d02aa4665c967c74b3162ed4451c0bb49263b71549"
+    },
+    {
+      "path": "audit/lib/japanese-intent-oracles.mjs",
+      "bytes": 6379,
+      "sha256": "1ed0317fb8c1017ca283b740bf2695b64bf231546f3608d76aaf6f6f22c1ed40"
+    },
+    {
+      "path": "audit/lib/license-contract.cjs",
+      "bytes": 5618,
+      "sha256": "141aebfa3588a0cae93b1ce6239d160b7c45349bc28981124409cce6daf623c5"
+    },
+    {
+      "path": "audit/lib/migration-source-contract.mjs",
+      "bytes": 2100,
+      "sha256": "9ffbefce4a145814067fb914fb035aa7a7d7f389f9767fdee949ca9087da00a5"
+    },
+    {
+      "path": "audit/lib/product-path.cjs",
+      "bytes": 1598,
+      "sha256": "8e936221f297a4266bab2077075bf23f94f083fc1479ef9898113b18041d9609"
+    },
+    {
+      "path": "audit/lib/product-test-host.mjs",
+      "bytes": 3636,
+      "sha256": "3957f09e58d82d6b1f2535757dd27aa440d6857689a6137141ccf253e3bb0a85"
+    },
+    {
+      "path": "audit/lib/release-policy.mjs",
+      "bytes": 9897,
+      "sha256": "c5bbdc843a58b539ff45e0d1da1ccc136a59aed43c061aaf72f1abafc37fdafa"
+    },
+    {
+      "path": "audit/lib/review-regression-contract.mjs",
+      "bytes": 3784,
+      "sha256": "00fc5df7f7cd39525e87e6b71b597bf0cf36afafdc940df0d45e8610e0496d8b"
+    },
+    {
+      "path": "audit/lib/run-preview-contract.mjs",
+      "bytes": 7307,
+      "sha256": "f5f2c987709c2582cc2773772013693532bc332fc1213432a40f9fc0f57cc9a5"
+    },
+    {
+      "path": "audit/lib/samples-contract.mjs",
+      "bytes": 3665,
+      "sha256": "62626ba3a8e37b14eb6ddbd304602aee201c10b931b1301a412455af62d6f7d2"
+    },
+    {
+      "path": "audit/lib/search-layout-contract.mjs",
+      "bytes": 8431,
+      "sha256": "929a9b3ce801fc4201b55353c8801574369bc319b558d1c568cb3b49a07b11f7"
+    },
+    {
+      "path": "audit/lib/semantic-extension-contract.mjs",
+      "bytes": 19457,
+      "sha256": "94a6f5f75132368d34c470269b20f11ef1e3820deaeb155e28792be74d121f3e"
+    },
+    {
+      "path": "audit/lib/speech-display-contract.mjs",
+      "bytes": 6955,
+      "sha256": "80a20c70b9660d13b9c2682256aaff5a8330f9152786d0bf205f357b497ef058"
+    },
+    {
+      "path": "audit/lib/speech-name-layout-contract.mjs",
+      "bytes": 5138,
+      "sha256": "eeb69dcc9db549887393c1255bdffca14a48a076f9a76b6b1a0821a3b9c9ddb8"
+    },
+    {
+      "path": "audit/lib/speech-preview-contract.mjs",
+      "bytes": 4780,
+      "sha256": "605c5896fc0d7cc20ea1923cad31ede92ca8fcc3218506e9aababb3f87c35c1e"
+    },
+    {
+      "path": "audit/lib/ux-repair-contract.mjs",
+      "bytes": 10114,
+      "sha256": "345b8abbd293d023ae20f30b201551424239f9455fa581cb2be8bf4fc07f566b"
+    },
+    {
+      "path": "audit/lib/ux-repair02-contract.mjs",
+      "bytes": 13840,
+      "sha256": "f14018ed21919670db3a1e0b7a87538097e77300feb6b7b1bf2415b77c218565"
+    },
+    {
+      "path": "audit/lib/ux-repair02-ui.mjs",
+      "bytes": 3252,
+      "sha256": "41d4bd8c06ad1c5404f4d2088655d568d04de72a63f59c67e14e221bdab2815c"
+    },
+    {
+      "path": "audit/lib/ux-repair03-contract.mjs",
+      "bytes": 4050,
+      "sha256": "41b5ce23f01ae47c57e3608cc6dc4676d9c20612745d1100041730f235ef8a10"
+    },
+    {
+      "path": "audit/lib/ux-repair03-list-contract.mjs",
+      "bytes": 15115,
+      "sha256": "a25d54a31930c781e10a59545ae855f657aa1a0ed04f00716dc774aecc669df8"
+    },
+    {
+      "path": "audit/lib/ux-repair03-speech-contract.mjs",
+      "bytes": 9478,
+      "sha256": "057c1e3e40fe3fbf16a1c0aa4325c40f7944329b0c7681c4489098faeb3165c7"
+    },
+    {
+      "path": "audit/lib/ux-repair03-trigger-contract.mjs",
+      "bytes": 9999,
+      "sha256": "902eebded2f7b832d27c83f5c8d19969b70ad9e14b16de142b5f49c7b8268db0"
+    },
+    {
+      "path": "audit/lib/verify-browser-results.mjs",
+      "bytes": 6443,
+      "sha256": "26b61daa25e569d4a42c8cbb365268bc5b904c5f682aa855d70518ae95c98714"
+    },
+    {
+      "path": "audit/lib/verify-gate-results.mjs",
+      "bytes": 5490,
+      "sha256": "d634179f103d687e7bc4347adc59a0ec42c6307c345260b699e983ffde55c4ec"
+    },
+    {
+      "path": "audit/lib/verify-language-results.mjs",
+      "bytes": 2362,
+      "sha256": "58073e46a0ac5910543f1e328ecec91ba19f2e3c3d6c2d0584c766cc3deaf14f"
+    },
+    {
+      "path": "audit/lib/verify-surface-results.mjs",
+      "bytes": 2049,
+      "sha256": "6aa3849e4bde05f6082da37af18056366621dd7b4bbbf02456ffd8321f98920b"
+    },
+    {
+      "path": "audit/lib/verify-test-results.mjs",
+      "bytes": 4752,
+      "sha256": "5e58155653e8e4dcb11c4333c8e08c011c8928d8241d1551010e68c5a821a4d9"
+    },
+    {
+      "path": "audit/manifests/browser-results.json",
+      "bytes": 21362,
+      "sha256": "ea9fa18740ba990a89f5504c50799655d443eafc2cf50c70147cadfd24ee4ccc"
+    },
+    {
+      "path": "audit/manifests/capability-traceability.json",
+      "bytes": 791693,
+      "sha256": "6805737eb9a5bfd660de1b61996d3c6995e7928407b7c8d395fbdffe24e1fb2d"
+    },
+    {
+      "path": "audit/manifests/component-controls-traceability.json",
+      "bytes": 1341,
+      "sha256": "155fb010246889f9f09dd3b13be979ad1e4b4feccee6b773b4e1721b6c386ba7"
+    },
+    {
+      "path": "audit/manifests/features.json",
+      "bytes": 19252,
+      "sha256": "e1b29beff0a1c015c69eb516fed323423a3ac1cded64412f9e150829cf9a7662"
+    },
+    {
+      "path": "audit/manifests/language-form-coverage.json",
+      "bytes": 234359,
+      "sha256": "619908c299e455124f2ed6c7a8e922f5339a02d287f10b402e166a4801e46252"
+    },
+    {
+      "path": "audit/manifests/license-migration.json",
+      "bytes": 3573,
+      "sha256": "c065c1298e661d02f7ce072bc7e84a893e79d50994331b8817e1dd3a5b50ba6c"
+    },
+    {
+      "path": "audit/manifests/product-tests.json",
+      "bytes": 40536,
+      "sha256": "8bf0992f7c97340e00e04a9b6c535b7a83aed83583a8798a54a07f163333ccee"
+    },
+    {
+      "path": "audit/manifests/samples.json",
+      "bytes": 1507,
+      "sha256": "6e7f9e7bc29c555289ee26709e93617a5630044f3fadc5c38d4a8c43e395736b"
+    },
+    {
+      "path": "audit/prepare-publication.mjs",
+      "bytes": 1049,
+      "sha256": "deb513ebb809a3b612f8044f459056840ee91c74ace00a8f542ee5363f15e883"
+    },
+    {
+      "path": "audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md",
+      "bytes": 81933,
+      "sha256": "81fc55820b83d5617190ecd6416f115e197a6d394a7b766b79b4944b4911de0b"
+    },
+    {
+      "path": "audit/reviewed/PUBLIC_UX_ACTIONS_ACCEPTANCE_PLAN.md",
+      "bytes": 31234,
+      "sha256": "f00f66d6724d84e74b08fea33bae37819bde25ea577e77b564153f450c83969c"
+    },
+    {
+      "path": "audit/run-editor-surface-tests.mjs",
+      "bytes": 1567,
+      "sha256": "6aa866bc9f65143afce1fa5fb455292a0cf7926e7cb6c95a7d5762d5ef4df462"
+    },
+    {
+      "path": "audit/run-language-tests.mjs",
+      "bytes": 3886,
+      "sha256": "89b056de181f3699562b7efcddd0af9fb8db8f36e9971889e7de6d1a1ec9e1ea"
+    },
+    {
+      "path": "audit/run-local-gate.mjs",
+      "bytes": 1439,
+      "sha256": "79e355712458f9bc14b1980c4114e59ec59648617fc93a737a6539adc0f5c9c3"
+    },
+    {
+      "path": "audit/run-product-tests.mjs",
+      "bytes": 1290,
+      "sha256": "44bbd7768bbe7fba696d2f78638b7f09a25b8cef3fd38d88f2480889d12471f5"
+    },
+    {
+      "path": "audit/run-ux-repair02-gui.mjs",
+      "bytes": 761,
+      "sha256": "cc6b5367234c0f5cb97a45e5efbb4ab39db64ac7c80d817eb9e613653e668c9a"
+    },
+    {
+      "path": "audit/run-ux-repair03-gui.mjs",
+      "bytes": 773,
+      "sha256": "918d07d582d3814b3d36c29afd14c028522f3a7b90ee8fcdc7b05cd963dcb972"
+    },
+    {
+      "path": "audit/suites/bindings.js",
+      "bytes": 1825,
+      "sha256": "ea23ec4a0370ec0dde98cf53fa0bef5e1c6492232c79e3ea75ed0a6448b378fa"
+    },
+    {
+      "path": "audit/suites/editor-surface.js",
+      "bytes": 12969,
+      "sha256": "eb94cb21ee614c9247a4c88a26b398895ba2a322a92e30f9b94a430c7b048aae"
+    },
+    {
+      "path": "audit/suites/language-forms.js",
+      "bytes": 14514,
+      "sha256": "9bc8afa3985adaead10f4af9f4cef3c5a59190a4812abf03a548f60cf19293f9"
+    },
+    {
+      "path": "audit/suites/runAkariAsyncSelfTests.js",
+      "bytes": 2171,
+      "sha256": "a30ddf723df1cfb666209aceec2cfb9e743c9756c73cb695a881c27393b71a0e"
+    },
+    {
+      "path": "audit/suites/runAkariSelfTests.js",
+      "bytes": 25409,
+      "sha256": "f1ae67463aab57a1080c4ff8d2446997c20dde68bdab239de58e7a463d2d712f"
+    },
+    {
+      "path": "audit/suites/runBlockCodecTests.js",
+      "bytes": 18349,
+      "sha256": "50b3246fb1a2b0310c688d61762723c842432ce9a70574ec70b25fb9f9db96ab"
+    },
+    {
+      "path": "audit/suites/runColorPickerTests.js",
+      "bytes": 2828,
+      "sha256": "95a473280951bc2b5c77afa4d289bb68b912e71482ac45af6b38f490d7fb2247"
+    },
+    {
+      "path": "audit/suites/runCoreTests.js",
+      "bytes": 18244,
+      "sha256": "ed6839be6b8aa52a074cf36c5da0349c02f8265cad178c91ed85b0c03321985c"
+    },
+    {
+      "path": "audit/suites/runDesignResizeTests.js",
+      "bytes": 4490,
+      "sha256": "4a4b2ea7ea33953abd661eac6a63ce4031588e7396c0838ba45de041bc78fd00"
+    },
+    {
+      "path": "audit/suites/runEditorCoreTests.js",
+      "bytes": 26006,
+      "sha256": "f74dd6f43beb4cf59e1e6d0057d775b917293dc6c4cbabb670ebb358fabd42eb"
+    },
+    {
+      "path": "audit/suites/runExtendedTests.js",
+      "bytes": 34192,
+      "sha256": "f523269136edf041c5eb3ad574c00f05db684dde21dd00709ba8df9772c6115b"
+    },
+    {
+      "path": "audit/suites/runLimitBoundaryTests.js",
+      "bytes": 17465,
+      "sha256": "389288f186437aa070d4a4ff8e9ee4e4ff0b22f3c1c7898666b68db5119a83f7"
+    },
+    {
+      "path": "audit/suites/runProductContractTests.js",
+      "bytes": 6344,
+      "sha256": "d2e22db20b2a7eb2efb75dc8b27670e73c545839db69ad8fb356746ef8789931"
+    },
+    {
+      "path": "audit/suites/runReleaseTests.js",
+      "bytes": 714,
+      "sha256": "b308787bc41dea7a73907c5c1b1caaaf59f5e84d0710676f077b138ff68df9dc"
+    },
+    {
+      "path": "audit/suites/runSemanticContractTests.js",
+      "bytes": 32632,
+      "sha256": "a3e308fbe65046de4c0179bb625a857d5e9a3808b9647dcebde70522b9d81df8"
+    },
+    {
+      "path": "audit/suites/runSyntaxTests.js",
+      "bytes": 17170,
+      "sha256": "0e713cb16736a13a290c04c2c9a1814dbd34d90852a30dd7a7e977c29cec5c1b"
+    },
+    {
+      "path": "audit/tests/actions-transfer-static.mjs",
+      "bytes": 5661,
+      "sha256": "9cdb679d9379579dfe69b38d1fd276743b60b8a19f154ef00397c90d1cf6e808"
+    },
+    {
+      "path": "audit/tests/actions-transfer-values.mjs",
+      "bytes": 6490,
+      "sha256": "9ef7548a13b4bf80b5d3299967fe60a67aed4b97d517f1712b1e80839ffde308"
+    },
+    {
+      "path": "audit/tests/actions-transfer-verify.mjs",
+      "bytes": 35347,
+      "sha256": "fe896adbe75122ee4275e90facd10e10a0c1ea4c8362826eb34f3be99d3d105c"
+    },
+    {
+      "path": "audit/tests/audio-codecs.mjs",
+      "bytes": 14843,
+      "sha256": "50414edcdbe450c7ea5657c84d3bf5f362797406e9b0d5647e81aab13b806ea0"
+    },
+    {
+      "path": "audit/tests/audio-output-browser.mjs",
+      "bytes": 8240,
+      "sha256": "da55695ec39b47a5afb638c63be8363a19cea1c1470b3beef1f4f77e464a2f8a"
+    },
+    {
+      "path": "audit/tests/autosave-state-browser.mjs",
+      "bytes": 13067,
+      "sha256": "0b89895664c1e5d68fed50bd47bb0e2dd799870720597444b841729202468262"
+    },
+    {
+      "path": "audit/tests/basic-intents-browser.mjs",
+      "bytes": 10448,
+      "sha256": "6361e974fef9480403033ca361e2f803dc2d4c03a7696c96de32a9fc0f8ce1a8"
+    },
+    {
+      "path": "audit/tests/block-field-width.mjs",
+      "bytes": 6892,
+      "sha256": "6f06f00daf71794b5aaa3b0c9bb37b0551517a72548b430bf4a55959fea6a8b1"
+    },
+    {
+      "path": "audit/tests/browser-environment.mjs",
+      "bytes": 2246,
+      "sha256": "898e2b27b04969b76ce45e0cc00236fbb2561edd558d68b1bb983595d1066294"
+    },
+    {
+      "path": "audit/tests/child-diagnostics-browser.mjs",
+      "bytes": 18099,
+      "sha256": "13e311a3e9cb1334762d285682604c0036390103ad51ab6e71b3ce3ec7df9c1c"
+    },
+    {
+      "path": "audit/tests/child-diagnostics-negative.mjs",
+      "bytes": 2310,
+      "sha256": "937948581849e6ac213a6d615e08da7dec7461d4871257c856e4521d1265cee5"
+    },
+    {
+      "path": "audit/tests/child-diagnostics-verify.mjs",
+      "bytes": 920,
+      "sha256": "c949095593137123e49766756e255ef4574902028013e253c959b0fd4ef966af"
+    },
+    {
+      "path": "audit/tests/child-language-ui-browser.mjs",
+      "bytes": 33408,
+      "sha256": "8fe57bec1a5f12b1a289b624501424da8d5c1fb934843c4bedf4ecd9171a4f1c"
+    },
+    {
+      "path": "audit/tests/child-language-ui-verify.mjs",
+      "bytes": 1716,
+      "sha256": "6729093fad6dc28fcd57f0cf0537bbab2711f5d544a4082910a7efd9cbed40fa"
+    },
+    {
+      "path": "audit/tests/child-ux.mjs",
+      "bytes": 18491,
+      "sha256": "53996ae93816404c1dbd49925d0fda2f749d2e0206ae108be1b330dbe22e0259"
+    },
+    {
+      "path": "audit/tests/ci-regression.mjs",
+      "bytes": 8779,
+      "sha256": "60d882cf981040d201d3259a759ef952b3dec8b08ae7e300310e7dd2da65e7da"
+    },
+    {
+      "path": "audit/tests/command-meaning.mjs",
+      "bytes": 19297,
+      "sha256": "8d191d7b2bfe1c737b21606727598f861d6bf47fc07855efad5ed7184b618c20"
+    },
+    {
+      "path": "audit/tests/component-controls-browser.mjs",
+      "bytes": 16876,
+      "sha256": "b554fdcbf4cd99a317f4c1e301054d4b00ed7b521cdd977820ed8cafd86a2c0a"
+    },
+    {
+      "path": "audit/tests/component-controls-verify.mjs",
+      "bytes": 2467,
+      "sha256": "c16ebd8d5b1298fd1ac7b09c4200d8a2ea3d20a30888ff73f8eb946a1f1fe3d1"
+    },
+    {
+      "path": "audit/tests/composition-acceptance.mjs",
+      "bytes": 19118,
+      "sha256": "af79b934017232ddf7b5a90b58fe927af0ac1688a7d450e976053d5e490d25b8"
+    },
+    {
+      "path": "audit/tests/contract-gate.mjs",
+      "bytes": 1629,
+      "sha256": "82f6db6d3b7c48520327674776171859ce8ebfbb20fa58f5068f97dedfd1b563"
+    },
+    {
+      "path": "audit/tests/data-form-browser.mjs",
+      "bytes": 5260,
+      "sha256": "7182354266c4dae001f8862a7e8fcdbfc395ca17e79477c5b2b402f2a1bad254"
+    },
+    {
+      "path": "audit/tests/data-form-values.mjs",
+      "bytes": 2325,
+      "sha256": "03fdf3c073c7fe96fcddb1672b3a9657484e76c823597f26eb1590070785e303"
+    },
+    {
+      "path": "audit/tests/designer-zoom.mjs",
+      "bytes": 16755,
+      "sha256": "daa183ce594b7ac57c7b788b6020efabbef8e8091d70b6fa11aceb8d3e0c05c4"
+    },
+    {
+      "path": "audit/tests/document-units.mjs",
+      "bytes": 11828,
+      "sha256": "d1f0d4ea41ed0882ec766dc236a9a239c01c838991db5f2deea298f6cded9dcd"
+    },
+    {
+      "path": "audit/tests/dom-render-regression.cjs",
+      "bytes": 4490,
+      "sha256": "c9942b0c0e222dc76213939a7a4f7ba1fa88c4d09f5b12a6fe58a679b2f56d4a"
+    },
+    {
+      "path": "audit/tests/draft-persistence.mjs",
+      "bytes": 8212,
+      "sha256": "5213b7450341a6bb189a896674da596bca88080c240970e4f2b2ab6696917f2d"
+    },
+    {
+      "path": "audit/tests/editor-assets.mjs",
+      "bytes": 26670,
+      "sha256": "c7cfe2f5496426aa5a5160eee7cc6ef7746456a609ce6b9653e5350f0937f9d3"
+    },
+    {
+      "path": "audit/tests/editor-browser.mjs",
+      "bytes": 18020,
+      "sha256": "d62b14e88fd00ab6d2c512c6e50adfedf9e3705e8a48faa6933349bab66a28ab"
+    },
+    {
+      "path": "audit/tests/execution-continuity.mjs",
+      "bytes": 6258,
+      "sha256": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788"
+    },
+    {
+      "path": "audit/tests/extension-foundation-negative.mjs",
+      "bytes": 2925,
+      "sha256": "40a90c65533ebde9963d35246cc0ff0b9a4b1e16d09c966a06a98594ab5a65cc"
+    },
+    {
+      "path": "audit/tests/extension-foundation-verify.mjs",
+      "bytes": 768,
+      "sha256": "37cf9ad6e1f144d417a47875ff08d077f2d51ee40ef2ee6cb429036c4e7a16c3"
+    },
+    {
+      "path": "audit/tests/extension-foundation.mjs",
+      "bytes": 46225,
+      "sha256": "2621bb9c7bcc917e66c010abe177e81a80c0b846eadd93571d766e12e791ea25"
+    },
+    {
+      "path": "audit/tests/format-compatibility.mjs",
+      "bytes": 17423,
+      "sha256": "ec9aa8b33e767b1c8705d8f56cd26a13648c57929b5b03054715fab919c419ea"
+    },
+    {
+      "path": "audit/tests/harness-negative.mjs",
+      "bytes": 3373,
+      "sha256": "9db75b7bcae91ab7ec80025971617b576da71cc48ab519fc22d80846e12362cd"
+    },
+    {
+      "path": "audit/tests/japanese-gate-negative.mjs",
+      "bytes": 11641,
+      "sha256": "1bb7a7522666cefc62ccd6b70a103776e7a1045d2106e888c997cdd1eabb1f2f"
+    },
+    {
+      "path": "audit/tests/japanese-intent-browser.README.md",
+      "bytes": 6409,
+      "sha256": "cedce201942797c4cc82b9c2992e6298b7d40bea3f48e5485b37e641e55f1057"
+    },
+    {
+      "path": "audit/tests/japanese-intent-browser.mjs",
+      "bytes": 36162,
+      "sha256": "432b30a43883d976a2d2641c22d79ebee99bf8a2b011d79a82466b05469abd41"
+    },
+    {
+      "path": "audit/tests/language-boundaries.mjs",
+      "bytes": 4643,
+      "sha256": "06b9f6d01bfa98c459e20851b75ee7f72bed8716f4978208ec9e51264739b5b6"
+    },
+    {
+      "path": "audit/tests/language-harness-negative.mjs",
+      "bytes": 984,
+      "sha256": "f29d605ca0d881b2eea492e882f6bcef99fb5ba8992eceb2c8d6bf7f9ea26db5"
+    },
+    {
+      "path": "audit/tests/language-migration-static.mjs",
+      "bytes": 3931,
+      "sha256": "7e5ece583603e4218acd78fc1ff9def3325cb7537f43c8adc76b5a501c6bccc9"
+    },
+    {
+      "path": "audit/tests/license-browser.mjs",
+      "bytes": 3775,
+      "sha256": "d34a0c7507245713a7ddf00e2ced2aaeefd20391dd12c122adf8d7d413ce6106"
+    },
+    {
+      "path": "audit/tests/license-static.mjs",
+      "bytes": 2913,
+      "sha256": "55bdbd7362e99917cd0b91e9966b789337a1da368d6faaab79292ade94fc1fba"
+    },
+    {
+      "path": "audit/tests/license-verify.mjs",
+      "bytes": 873,
+      "sha256": "5217c77ca9a7bd252c76538a6a8a9f4d2b66d3182ac2f80b6882172696057c21"
+    },
+    {
+      "path": "audit/tests/manual-docs.mjs",
+      "bytes": 8903,
+      "sha256": "4b2aff118ff12faeb0224064edbcb3824873ff34130303084f2ac95ea2ac3967"
+    },
+    {
+      "path": "audit/tests/natural-roles.mjs",
+      "bytes": 9520,
+      "sha256": "6829286a557c05c0d42aefe25cd17ae1da84c532af2f689e5ecaa392b4993111"
+    },
+    {
+      "path": "audit/tests/node-product.mjs",
+      "bytes": 1806,
+      "sha256": "462874876dfe729b4c3cc4479232f5355085d90419bdf7038286b18633acda75"
+    },
+    {
+      "path": "audit/tests/normal-product.mjs",
+      "bytes": 5531,
+      "sha256": "cf40662804016f21d0f8c33b0b47dccd89b5515c2374b9da400d67997fcc5694"
+    },
+    {
+      "path": "audit/tests/numeric-display-browser.mjs",
+      "bytes": 8316,
+      "sha256": "c4c8a755a590e0d48137c13ae8acd3be96cc7db87b9b6642e420c03fb7acd287"
+    },
+    {
+      "path": "audit/tests/numeric-display.mjs",
+      "bytes": 5022,
+      "sha256": "81b3e9f1d765f4a24907635f4e659fdd973c2f9b38695eeeb4551a13a8ad012c"
+    },
+    {
+      "path": "audit/tests/release-policy-negative.mjs",
+      "bytes": 5145,
+      "sha256": "4a0ed31fb0987a4c250f9c9cde186e30308fcf2a662088497ed9ec57987d98ea"
+    },
+    {
+      "path": "audit/tests/resource-references-browser.mjs",
+      "bytes": 12317,
+      "sha256": "4f754bb5d9788aa541bc02cb0e869696e7e70b0dd90eb6fea0279cb6929e2267"
+    },
+    {
+      "path": "audit/tests/resource-references.mjs",
+      "bytes": 12358,
+      "sha256": "f5360747d0099b834c2eec160e6b964b84ed0dc5514472fefa0f97fefbe811a2"
+    },
+    {
+      "path": "audit/tests/review-actor.mjs",
+      "bytes": 17677,
+      "sha256": "1a5b3e3efa2c0c192a2cb7a28029b78a947682078538951b55a48f9b62055890"
+    },
+    {
+      "path": "audit/tests/review-first-use.mjs",
+      "bytes": 23173,
+      "sha256": "ffe0f94f218393c8a4666965cd8d6d461e42ea96d26583ab6ed687b20a969f3d"
+    },
+    {
+      "path": "audit/tests/review-harness-negative.mjs",
+      "bytes": 4896,
+      "sha256": "9d561e0c35150fade56e92850a4af0efdfc61f5421b55970606c809624f6db27"
+    },
+    {
+      "path": "audit/tests/review-language.mjs",
+      "bytes": 10669,
+      "sha256": "f4cea6565213d01248d49536116d050a5f531766d0a400be8e42654bc592c5f1"
+    },
+    {
+      "path": "audit/tests/review-readable.mjs",
+      "bytes": 26689,
+      "sha256": "084e8831410df82036f771fe339d3d8704c5a01398c8c01d033a23c9920d9f63"
+    },
+    {
+      "path": "audit/tests/review-units.mjs",
+      "bytes": 16709,
+      "sha256": "049e1d2f130cb0f3217c2ba78bc95f19556bc4f17a6a61aa696170ddf1e2f195"
+    },
+    {
+      "path": "audit/tests/runtime-boundary-gate.mjs",
+      "bytes": 1620,
+      "sha256": "89b521859fc9c2ade3b73e7488774e0d5334d478dda22ba02e76a8e215a14b72"
+    },
+    {
+      "path": "audit/tests/runtime-v2.mjs",
+      "bytes": 2804,
+      "sha256": "c4fbb3f6eca800e68cb14d04cb701fd9df622ff4ec9cc8ef891f9f5d52c90260"
+    },
+    {
+      "path": "audit/tests/runtime-v2/browser.cjs",
+      "bytes": 8967,
+      "sha256": "b5307d444b44e5f1e1ecd220238b5a0766266fd7f8fbff3b920970fe2a3e3a19"
+    },
+    {
+      "path": "audit/tests/runtime-v2/config.cjs",
+      "bytes": 553,
+      "sha256": "5f574d69575590ef03832cd783e68ef85deb3109043eea68f94082bf186082d1"
+    },
+    {
+      "path": "audit/tests/runtime-v2/entry-browser.cjs",
+      "bytes": 3382,
+      "sha256": "f256cc27bc70b0354df86c2e386aeb7f5a300dceec2c23382eedaf2195b8407a"
+    },
+    {
+      "path": "audit/tests/runtime-v2/formal-player-browser.cjs",
+      "bytes": 3020,
+      "sha256": "ff6835673b1885376ae1c491b397541c7c267ec8b41da19ec91d42ba6ecf9626"
+    },
+    {
+      "path": "audit/tests/runtime-v2/heading-browser.cjs",
+      "bytes": 6092,
+      "sha256": "8a9d8b39bf0fe22d2bf8f22a5b0194e46d245c9d5e19fdae48866bf68993215d"
+    },
+    {
+      "path": "audit/tests/runtime-v2/node.cjs",
+      "bytes": 11421,
+      "sha256": "d314d8d4c724b63048773a532984a49ebbc51675fc5fe688fc127f87f21aeb0f"
+    },
+    {
+      "path": "audit/tests/runtime-v2/parser-tests.cjs",
+      "bytes": 3971,
+      "sha256": "bad10a2549eb0314540b2b8f11fe94adee0b3b55dc089a0fa84e66c69dd02b9a"
+    },
+    {
+      "path": "audit/tests/samples-negative.mjs",
+      "bytes": 2493,
+      "sha256": "3e7ca8eb052ec92f41f2643b78908f42f389e74a11ddcd14bc8f0c634783a766"
+    },
+    {
+      "path": "audit/tests/samples.mjs",
+      "bytes": 20063,
+      "sha256": "ab741aae106c5170b3bd74297ecb0658cc0a54cd3675a75d20f0ebfda9aad343"
+    },
+    {
+      "path": "audit/tests/search-bindings-browser.mjs",
+      "bytes": 8808,
+      "sha256": "39570a7d57b9bc867d4edd10197960d90f9d775adbb84590e93b996e2211ad21"
+    },
+    {
+      "path": "audit/tests/search-bindings.mjs",
+      "bytes": 5462,
+      "sha256": "e537870546e712267c89a9f54e03236702972e7a60d2a0689b793b12e9b8aa0d"
+    },
+    {
+      "path": "audit/tests/search-layout-browser.mjs",
+      "bytes": 13541,
+      "sha256": "9b7a201d8153e30a4925d96d10b5b1b8a779c34eca380a0580e4956737f281e5"
+    },
+    {
+      "path": "audit/tests/semantic-negative-pairs.mjs",
+      "bytes": 12543,
+      "sha256": "a31f0a5c5e3e82c1c2ba9ba3202041a2153423496295af9bfe0b7a5f75d35232"
+    },
+    {
+      "path": "audit/tests/source-ownership.mjs",
+      "bytes": 19294,
+      "sha256": "c57e56fe365e2c860b137f53742220f3e0e381bc66c1aa9d12288cf70791b481"
+    },
+    {
+      "path": "audit/tests/speech-display-browser.mjs",
+      "bytes": 16682,
+      "sha256": "11c398f952741930c1469b00919c7383fecd372e4dd21a8f1051d47179914905"
+    },
+    {
+      "path": "audit/tests/speech-display-verify.mjs",
+      "bytes": 1945,
+      "sha256": "efb6aca7fcd6d737922113ab6e414d50292ae1e7cffb7d1d56de80d943b8d3d4"
+    },
+    {
+      "path": "audit/tests/speech-name-layout-browser.mjs",
+      "bytes": 11994,
+      "sha256": "dd81e59420d69e109f3dffe799b00b0928e3a5f7ea600f38d52453fb4c59abec"
+    },
+    {
+      "path": "audit/tests/speech-name-layout-verify.mjs",
+      "bytes": 1710,
+      "sha256": "65f15195efb59df73115fbee68d0e641c17c0138596b8ed68615004e13304b24"
+    },
+    {
+      "path": "audit/tests/speech-preview-browser.mjs",
+      "bytes": 11325,
+      "sha256": "308abc4893ac59448b998d6967675c2f4caa6ad02d97f07b25d102cdad32d004"
+    },
+    {
+      "path": "audit/tests/speech-preview-verify.mjs",
+      "bytes": 1970,
+      "sha256": "f777a812ac72e58db6709fc1bfeed38d4562cf0fec42b435efa899f688422e10"
+    },
+    {
+      "path": "audit/tests/structured-editing-browser.mjs",
+      "bytes": 9908,
+      "sha256": "e0c004050e02f1539b140ff1dba3fb1858a0fceb592b2c2f7008b5a450b2e0c2"
+    },
+    {
+      "path": "audit/tests/surface-negative.mjs",
+      "bytes": 855,
+      "sha256": "a4a10419c96608701b1d3f7a90cbe261dfc7934375290abc193a0697829ef05d"
+    },
+    {
+      "path": "audit/tests/ux-bubble-layout.cjs",
+      "bytes": 7013,
+      "sha256": "0b3439acf991cc2944a676d5ad667a68403e64eec434cc2c8b3fbd1a99c66d0e"
+    },
+    {
+      "path": "audit/tests/ux-insertion-context-browser.mjs",
+      "bytes": 15362,
+      "sha256": "8f60be72daabb00868f73ffbf6df6f7e6e8ef19bce6aa01a5732bf99bdecd1c6"
+    },
+    {
+      "path": "audit/tests/ux-insertion-context-verify.mjs",
+      "bytes": 1147,
+      "sha256": "ea7c6fb3346a4c29646cccb0941eb89890fe59870e5f58c0bc907809833f9eda"
+    },
+    {
+      "path": "audit/tests/ux-repair-browser.mjs",
+      "bytes": 45700,
+      "sha256": "276e0889922c65f2cddc6bff3c2c670c7f1bbfc87f638c8a9ef20acc61de34ee"
+    },
+    {
+      "path": "audit/tests/ux-repair-language.mjs",
+      "bytes": 12949,
+      "sha256": "4a58d5cbd62b3f22e4bef8bded44f38a15dd04437301039eb2cf5753f7b2e302"
+    },
+    {
+      "path": "audit/tests/ux-repair02-browser.mjs",
+      "bytes": 25433,
+      "sha256": "3a512a67ad2251b33be327490b9b87783e932db89359097cff75e9ad625ffc44"
+    },
+    {
+      "path": "audit/tests/ux-repair02-language.mjs",
+      "bytes": 7855,
+      "sha256": "5e3e3d2a53ea9c082ab68a72d9284bdaadaa94df765f7f833a2d3d38bcf84355"
+    },
+    {
+      "path": "audit/tests/ux-repair02-layout.mjs",
+      "bytes": 3857,
+      "sha256": "9da006d550a93e40694b9bc5eb196c001b2c6eed70c5494ae24b56ad984467a3"
+    },
+    {
+      "path": "audit/tests/ux-repair02-matrix.mjs",
+      "bytes": 18195,
+      "sha256": "58a365b58ae2c07db1c74fc8ac2ea0877efd768bad7eede807e2d6e281a299e3"
+    },
+    {
+      "path": "audit/tests/ux-repair02-speech.mjs",
+      "bytes": 6344,
+      "sha256": "819c0c4461d0305a23c61c11506b2d1ee02e51f3e167dc9c64158413aba4b946"
+    },
+    {
+      "path": "audit/tests/ux-repair03-list.mjs",
+      "bytes": 16511,
+      "sha256": "949e1d83ee085e3c001f045250a7629be8775101d88222f508cb7d8045591f48"
+    },
+    {
+      "path": "audit/tests/ux-repair03-speech.mjs",
+      "bytes": 15266,
+      "sha256": "d5951f0c9cea8936e031297c5f089e12a0c31768926e4e58336e3f4af8b1ff9c"
+    },
+    {
+      "path": "audit/tests/ux-repair03-trigger.mjs",
+      "bytes": 14809,
+      "sha256": "2fa6e10cee555d52f07c4ca14c970c8ef4c72af42c507365eddb2c4742bba233"
+    },
+    {
+      "path": "audit/tests/ux-repair03-verify.mjs",
+      "bytes": 1088,
+      "sha256": "5218f90769c4e877cdcadf283c6ef9fa186c68ced8378cce7c28d8015575bdce"
+    },
+    {
+      "path": "audit/tests/ux-surface-browser.mjs",
+      "bytes": 9801,
+      "sha256": "ef28e26f23a90a41418b07d3cae451f9d4e70ed6ccaebe6da6a9cd5462575034"
+    },
+    {
+      "path": "audit/tests/verify-japanese-gate.mjs",
+      "bytes": 770,
+      "sha256": "5a5e018c97ad437ebc1f73fd24ebf31d79c9a146c5895a276a47d150ebf03391"
+    },
+    {
+      "path": "audit/tests/workspace-history-browser.mjs",
+      "bytes": 6867,
+      "sha256": "c5de3767efb2c0e8006f5d6b88ec12fb3eeec2866a6c26f43536047097ffc461"
+    },
+    {
+      "path": "audit/verify-evidence.mjs",
+      "bytes": 1730,
+      "sha256": "8dd6cdd57949b70135401aa4e80aefa38e3ebbe1221f465f32977d889f85d2bf"
+    },
+    {
+      "path": "extensions/build.mjs",
+      "bytes": 3077,
+      "sha256": "f1cc644cff4a47967dd6c4ae62b834d81675afb0fffec8815e45c6f09ee7c3f1"
+    },
+    {
+      "path": "extensions/examples/connector.html",
+      "bytes": 7023,
+      "sha256": "4f1ec892d63df8d093bf0aaccdf5d7f42d127f6eafda42a7805510033104c326"
+    },
+    {
+      "path": "extensions/examples/offline.js",
+      "bytes": 3139,
+      "sha256": "aadd4c7408b066a925f66aed9fb9d04dd4f5bb49c69e548129f4da304763b865"
+    },
+    {
+      "path": "extensions/examples/profile.js",
+      "bytes": 713,
+      "sha256": "9ab175fe8e83d0fd2497148d03d63649bba3464830c15b41fa50ac3a94c7d4a1"
+    },
+    {
+      "path": "extensions/foundation.js",
+      "bytes": 35008,
+      "sha256": "487088c2f24360948cc3eae4194974dfead34c29ad83f66e6900255fe9f37ec7"
+    },
+    {
+      "path": "extensions/limits.md",
+      "bytes": 11638,
+      "sha256": "7f51de6c8b50549e1cbe837a935c4f60673964e1a8a758393d7cac0a60848fd9"
+    },
+    {
+      "path": "extensions/profiles.js",
+      "bytes": 7294,
+      "sha256": "3f6fae012780518785ac7cedb0326a7975283536ab37afd7249bbf46a042b3e5"
+    },
+    {
+      "path": "extensions/types.d.ts",
+      "bytes": 4831,
+      "sha256": "ddd40d4c0fb4aac6344bb311a629fb5c0fa56850e245581829914c46bf352335"
+    },
+    {
+      "path": "index.html",
+      "bytes": 13170,
+      "sha256": "013516fd4f5837b271b10f25feabddb285c9ff66deee4d0f09139f9c5f0a1d37"
+    }
+  ],
+  "initialRecord": {
+    "sha256": "412aea24f8a565059985efa587300141685a7374b771311af3a8b55ea0c13491",
+    "plannedChanges": [
+      "audit/fixtures/registered-v2-test-migrations.json",
+      "audit/fixtures/language-v2-test-migration.json",
+      "audit/fixtures/design-doc-migration-map.json",
+      "audit/lib/docs-consolidation-contract.mjs",
+      "audit/tests/japanese-contract-static.mjs",
+      "audit/tests/static-contract.mjs",
+      "audit/tests/basic-intents.mjs",
+      "audit/tests/finite-semantic-variants.mjs",
+      "audit/lib/japanese-gate-contract.mjs",
+      "AUDIT.md",
+      "audit/README.md",
+      "audit/public-files.json",
+      "audit/manifests/release-1.1.1.json",
+      "audit/fixtures/audit-ledger-migration.json",
+      "audit/LEDGER_MIGRATION.md",
+      "audit/lib/audit-ledger-contract.mjs",
+      "audit/tests/audit-ledgers.mjs",
+      "audit/tools/compact-audit-ledgers.mjs"
+    ],
+    "removedFrozenFiles": [
+      {
+        "index": 188,
+        "file": {
+          "path": "audit/lib/child-ux-contract.mjs",
+          "bytes": 23694,
+          "sha256": "3126ad49850076560c269c4cf8225269edbb06aed9d27c80c2e930f73d251964"
+        }
+      },
+      {
+        "index": 216,
+        "file": {
+          "path": "audit/lib/ui-buttons-contract.mjs",
+          "bytes": 2392,
+          "sha256": "c63e82ebe85a6c32700ca116c083ec9c1e7a00e539ebba06824e5ffff77ff53a"
+        }
+      },
+      {
+        "index": 345,
+        "file": {
+          "path": "audit/tests/ui-buttons.mjs",
+          "bytes": 20313,
+          "sha256": "b31ce31993822ccbd4e82690d957e24d3e5238e0499876aaaf9f3f894aeb0e54"
+        }
+      }
+    ],
+    "verification": {
+      "status": "PASS",
+      "files": 373,
+      "stage": "Initial implementation before the parent-authorized child-ux validator adjustment"
+    }
+  },
+  "authorizedAuditImplementationChanges": [
+    {
+      "path": "audit/lib/child-ux-contract.mjs",
+      "bytes": 23694,
+      "sha256": "3126ad49850076560c269c4cf8225269edbb06aed9d27c80c2e930f73d251964",
+      "reason": "Parent authorized the related child-ux validator to read reconstructed ledger bytes and reverse only exact pinned reader changes; product/spec/oracle freeze remains unchanged."
+    },
+    {
+      "path": "audit/tests/ui-buttons.mjs",
+      "bytes": 20313,
+      "sha256": "b31ce31993822ccbd4e82690d957e24d3e5238e0499876aaaf9f3f894aeb0e54",
+      "reason": "User explicitly authorized an audit-only observation timing repair and required bounded persistent-error negatives; product/spec/oracle bytes and UI expectations remain unchanged."
+    },
+    {
+      "path": "audit/lib/ui-buttons-contract.mjs",
+      "bytes": 2392,
+      "sha256": "c63e82ebe85a6c32700ca116c083ec9c1e7a00e539ebba06824e5ffff77ff53a",
+      "reason": "User explicitly authorized an audit-only observation timing repair and required bounded persistent-error negatives; product/spec/oracle bytes and UI expectations remain unchanged."
+    }
+  ],
+  "uiObservationAuditRepair": {
+    "sourceCommit": "79e08a61f2d8e865db75a6d0ea90142548f741ec",
+    "scope": [
+      "audit/tests/ui-buttons.mjs",
+      "audit/lib/ui-buttons-contract.mjs"
+    ],
+    "priorMigrationRecord": {
+      "sha256": "e23455fa2abcdcdd668dcb72f25801faa07af6d4f8a09be795bb2e640f26a400",
+      "removedFrozenFiles": [
+        {
+          "index": 215,
+          "file": {
+            "path": "audit/lib/ui-buttons-contract.mjs",
+            "bytes": 2392,
+            "sha256": "c63e82ebe85a6c32700ca116c083ec9c1e7a00e539ebba06824e5ffff77ff53a"
+          }
+        },
+        {
+          "index": 344,
+          "file": {
+            "path": "audit/tests/ui-buttons.mjs",
+            "bytes": 20313,
+            "sha256": "b31ce31993822ccbd4e82690d957e24d3e5238e0499876aaaf9f3f894aeb0e54"
+          }
+        }
+      ]
+    },
+    "priorReaderRecord": {
+      "sha256": "9eb62d87bf742dfe959b3c8e845a01f6e991fd7387340d8c44a380399bc3597c",
+      "childRow": {
+        "path": "audit/lib/child-ux-contract.mjs",
+        "beforeSha256": "3126ad49850076560c269c4cf8225269edbb06aed9d27c80c2e930f73d251964",
+        "beforeBytes": 23694,
+        "afterSha256": "c0453fef32f1bd7494ea07881fcce1985b4ebaac3798de2204ce4fbed086f36e",
+        "afterBytes": 23944,
+        "hunks": [
+          {
+            "id": "H001",
+            "beforeOffset": 0,
+            "afterOffset": 0,
+            "before": "",
+            "after": "import {preservedAuditReaderBytes,verifyReaderMigrationIntegrity} from './audit-ledger-reader-migration.mjs';\n",
+            "applications": 1,
+            "beforeOccurrences": 0,
+            "afterOccurrences": 1
+          },
+          {
+            "id": "H002",
+            "beforeOffset": 5255,
+            "afterOffset": 5365,
+            "before": "",
+            "after": "  bytes=preservedAuditReaderBytes(file,bytes);\n",
+            "applications": 1,
+            "beforeOccurrences": 0,
+            "afterOccurrences": 1
+          },
+          {
+            "id": "H003",
+            "beforeOffset": 6515,
+            "afterOffset": 6672,
+            "before": "",
+            "after": "  verifyReaderMigrationIntegrity();\n",
+            "applications": 1,
+            "beforeOccurrences": 0,
+            "afterOccurrences": 1
+          },
+          {
+            "id": "H004",
+            "beforeOffset": 8755,
+            "afterOffset": 8948,
+            "before": "  return {protectedFiles:Object.keys(scope.protectedFiles).length,byteExactFiles:Object.keys(scope.protectedFiles).length-2-approvedPreviewChanges.length,inputOnlyAdapters:1,startupOnlyAdapters:1,playbackCorrectionFiles:approvedPreviewChanges.length,tasks:24,requirements:requirementIds.length,productSha256:sha(fs.readFileSync(scope.product))};\n",
+            "after": "  return {protectedFiles:Object.keys(scope.protectedFiles).length,byteExactFiles:Object.keys(scope.protectedFiles).length-2-approvedPreviewChanges.length-10,auditLedgerRestoredFiles:3,auditReaderRestoredFiles:7,inputOnlyAdapters:1,startupOnlyAdapters:1,playbackCorrectionFiles:approvedPreviewChanges.length,tasks:24,requirements:requirementIds.length,productSha256:sha(fs.readFileSync(scope.product))};\n",
+            "applications": 1,
+            "beforeOccurrences": 1,
+            "afterOccurrences": 1
+          }
+        ]
+      }
+    },
+    "priorAdapter": {
+      "sha256": "575a00c7706c65de4e40aaaac6d16cd1ef6f631ce0961692b6b9e9b536992abc",
+      "before": "  'audit/lib/child-ux-contract.mjs',\n",
+      "after": "  'audit/lib/child-ux-contract.mjs',\n  'audit/tests/ui-buttons.mjs','audit/lib/ui-buttons-contract.mjs',\n"
+    },
+    "priorValidator": {
+      "sha256": "c0453fef32f1bd7494ea07881fcce1985b4ebaac3798de2204ce4fbed086f36e",
+      "before": "approvedPreviewChanges.length-10,auditLedgerRestoredFiles:3,auditReaderRestoredFiles:7",
+      "after": "approvedPreviewChanges.length-12,auditLedgerRestoredFiles:3,auditReaderRestoredFiles:9"
+    },
+    "observation": {
+      "expectedVisible": false,
+      "pageTimeoutMs": 30000,
+      "suiteBudgetMs": 360000,
+      "addedSleep": false,
+      "retry": false,
+      "productChanges": false,
+      "originalFailure": "UI-BUTTON-PENDING immediate post-commit visibility assertion failed; original evidence remains FAIL.",
+      "authority": "The user classified this as an audit error and explicitly authorized minimal observation repair without changing expected UI meaning, bounds, or product bytes."
+    }
+  }
+}
