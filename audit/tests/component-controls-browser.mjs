@@ -3,6 +3,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
+import {setTimeout as delay} from 'node:timers/promises';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
@@ -196,6 +197,11 @@ await run('COMPONENT-CONTROLS-ZOOM',async()=>{
     ignoreDefaultArgs:['--disable-extensions'],args:['--allow-file-access-from-files','--disable-background-networking','--window-size=1366,768','--disable-extensions-except='+extension,'--load-extension='+extension]});
   try{await context.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});
     const worker=context.serviceWorkers()[0]||await context.waitForEvent('serviceworker',{timeout:10000}),p=context.pages()[0];
+    const apiDeadline=Date.now()+8000;
+    while(!await worker.evaluate(()=>!!globalThis.chrome?.tabs?.query)){
+      if(Date.now()>apiDeadline)throw Error('native zoom API unavailable');
+      await delay(50);
+    }
     await p.goto(pathToFileURL(path.resolve(product)).href);await fixture(p);await picker(p,true);
     const windowState=()=>p.evaluate(()=>({outerWidth,outerHeight,innerWidth,innerHeight,dpr:devicePixelRatio,cssZoom:getComputedStyle(document.documentElement).zoom}));
     const windowBefore=await windowState(),observations=[];

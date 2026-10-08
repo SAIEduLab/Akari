@@ -94,7 +94,8 @@ export function verifyUxSurface(report){
  assert.equal(report.environment.browser,'140.0.7339.207');assert.equal(report.environment.playwright,'1.55.0');
  assert.deepEqual(report.results[0].observed,{emptyStartup:true,emptyRunIdle:true,clickDistances:[30,60],explicitSample:true,removeUndo:true,emptyNew:true});
  for(const [i,[width,mode]]of [[1366,'fit'],[1366,'100'],[390,'fit']].entries()){
-  const {scale,font,overlap,...o}=report.results[i+1].observed;assert.deepEqual(o,{width,height:width===390?844:768,mode,inside:true,fullTextExact:true});
+  const {scale,font,overlap,fitted,...o}=report.results[i+1].observed;
+  if(width===1366&&mode==='fit'){assert.ok(fitted&&Math.abs(fitted.scale-1)<.02);assert.equal(fitted.inside,true);assert.ok(fitted.font>=13.5&&fitted.overlap>=0&&fitted.overlap<1);assert.equal(fitted.fullTextExact,true);}else assert.equal(fitted,undefined);assert.deepEqual(o,{width,height:width===390?844:768,mode,inside:true,fullTextExact:true});
   assert.ok(Number.isFinite(scale)&&scale>0);assert.ok(Number.isFinite(font)&&font>=13.5);assert.ok(Number.isFinite(overlap)&&overlap>=0&&overlap<1);
   if(mode==='100')assert.ok(Math.abs(scale-1)<.02);else if(width===1366)assert.ok(scale>=.39&&scale<=.43);
  }

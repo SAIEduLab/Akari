@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>あかり 1.1.0 マニュアル</title>
+<title>あかり 1.1.1 マニュアル</title>
 <style>
 :root{
   color-scheme:light;
@@ -298,8 +298,8 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <a class="skip-link" href="#main-content">本文へ進む</a>
 <header class="hero">
   <div class="wrap">
-    <div class="eyebrow">あかり 1.1.0 · 使い方ガイド</div>
-    <div class="book-links"><a href="./index.html">← あかりの入口</a><a href="./Akari1_1_0.html">あかりを使う →</a></div>
+    <div class="eyebrow">あかり 1.1.1 · 使い方ガイド</div>
+    <div class="book-links"><a href="./index.html">← あかりの入口</a><a href="./Akari1_1_1.html">あかりを使う →</a></div>
     <h1>あかり マニュアル</h1><section class="section" id="code-ownership" style="padding:20px;margin:20px 0;border:1px solid #c6d8e6;border-radius:12px;background:#f3f8fc">
   <h2>画面のものから、プログラムを読む</h2>
   <p>作品画面で部品を選ぶと、表示された本文をすぐに編集できます。今のできごとが空で、別のできごとに本文があれば、その本文を開きます。</p>
@@ -307,7 +307,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p>共通の「手順」「答えを求める」定義は画面のコードです。呼び出す側の一覧にも本文が表示されます。部品を選んでいるときに現れる「画面のコード」から、使っていない定義も開けます。画面を選んでいるときは「すべてのコード」を使います。書き方エラーがある本文は、入力したコードのまま表示されます。</p>
 </section>
 
-    <p>この総合ガイドは、1.1.0で目指す作文・編集の仕様を紹介します。作例は設計例であり、製品の実装試験や児童による評価を示すものではありません。保存・続きの開き方や詳しい編集は、ブロック・コード初級・中級・上級の各章を参照してください。</p>
+    <p>この総合ガイドは、1.1.1で目指す作文・編集の仕様を紹介します。作例は設計例であり、製品の実装試験や児童による評価を示すものではありません。保存・続きの開き方や詳しい編集は、ブロック・コード初級・中級・上級の各章を参照してください。</p>
     <div class="hero-links">
       <a href="#manuals">マニュアルを選ぶ</a>
       <a href="#first">はじめての作品</a><a href="#save">保存・開く</a><a href="#faq">困ったとき</a>
@@ -332,7 +332,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <h2>クリックしたら、ねこが右へ動く</h2>
   <p>初めて開くとブロック表示になります。コード／ブロックを自分で選ぶと次回にも使います。「かんたん／くわしく」とは別の設定です。初めて開いた作品と「新しく作る」は、開始本文が空です。対象とできごとを選び、命令を追加します。お手本の選択欄には①ダンス、②花もよう、③星のゲームがあります。「お手本を開く」で確認が出ます。「はい」で今の作品をリセットして読み込み、「キャンセル」で作りかけの作品を保ちます。「お手本のヒント」で、数値変更やブロックの交換・並べ替え・追加・削除を試しましょう。以下では自分でクリックに反応する作品を作ります。今の作品を残したい場合は、先に「保存」を押しましょう。</p>
   <ol class="task-list">
-    <li><strong>あかりを開く</strong><br><a href="./Akari1_1_0.html">あかり本体を開きます</a>。続きから作るときは<a href="#open">「開く」で保存済みの作品ファイルを読み込みます</a>。実行中なら「■ 止める」で編集へ戻ります。</li>
+    <li><strong>あかりを開く</strong><br><a href="./Akari1_1_1.html">あかり本体を開きます</a>。続きから作るときは<a href="#open">「開く」で保存済みの作品ファイルを読み込みます</a>。実行中なら「■ 止める」で編集へ戻ります。</li>
     <li><strong>キャラクターを置く</strong><br>ブロック表示では右側の「＋ キャラクター・部品をふやす」、コード表示では左側の道具箱からマスコット、だんご、星などを選びます。作品の画面に置かれたキャラクターを選びます。だんごは透過した原画を180×180で表示し、作品の保存や単体HTMLへの書き出しでも同じ画像を使います。</li>
     <li><strong>「何を」「いつ」動かすか選ぶ</strong><br>できごとの見出しは「ねこがクリックされたとき、」のように、いつ・だれがを文として示します。本文は対象や動きを書きます。</li>
     <li><strong>文を一つ入れる</strong><br>「コード」を選び、本文へ下の1行を入れます。できごとの見出しは本文の命令とは別に見える形で編集します。
@@ -341,7 +341,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
     <li><strong>動きを確かめる</strong><br>「▶ 動かす」を押し、作品の画面でキャラクターをクリックし、文に書いた動きと画面の変化を比べます。仕様例は実装確認前の設計を示します。「■ 止める」で編集へ戻ります。</li>
     <li><strong>作品を保存する</strong><br>「保存」を押します。ダウンロードされた <code>.akari.md</code> が、続きを作るための作品ファイルです。</li>
   </ol>
-  <div class="note"><strong>少し変えてみよう。</strong> 文の「10歩」を「30歩」に変え、対象・方向・量のどこを編集したかを確認します。動作結果は1.1.0実装後の試験で確かめます。</div>
+  <div class="note"><strong>少し変えてみよう。</strong> 文の「10歩」を「30歩」に変え、対象・方向・量のどこを編集したかを確認します。動作結果は1.1.1実装後の試験で確かめます。</div>
 </section>
 
 <section id="screen">
@@ -440,7 +440,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <section id="open">
   <h2>保存した作品の続きを作る</h2>
   <ol class="task-list">
-    <li><strong>あかり本体を開く</strong><br>作品ファイルを読むアプリではなく、<code>Akari1_1_0.html</code> をブラウザーで開きます。</li>
+    <li><strong>あかり本体を開く</strong><br>作品ファイルを読むアプリではなく、<code>Akari1_1_1.html</code> をブラウザーで開きます。</li>
     <li><strong>今の作品を残す</strong><br>作業中の作品を残したければ、先に「保存」を押します。未保存の編集を捨てる確認には、内容を確かめて答えます。</li>
     <li><strong>「開く」で選ぶ</strong><br>保存した <code>.akari.md</code> を選びます。本文や素材が戻ったら、「動かすもの」「できごと」を選んで続きを作れます。</li>
   </ol>
@@ -468,7 +468,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <section id="offline">
   <h2>ネットにつながずに使う準備</h2>
   <ul>
-    <li><strong>作る：</strong><a href="./Akari1_1_0.html" download="Akari1_1_0.html">あかり本体を保存</a>します。<code>Akari1_1_0.html</code> 単体をブラウザーで開けば編集・実行できます。</li>
+    <li><strong>作る：</strong><a href="./Akari1_1_1.html" download="Akari1_1_1.html">あかり本体を保存</a>します。<code>Akari1_1_1.html</code> 単体をブラウザーで開けば編集・実行できます。</li>
     <li><strong>続きを作る：</strong>本体に加えて、自分の <code>.akari.md</code> を持っていきます。</li>
     <li><strong>完成作品を動かす：</strong>書き出した <code>.html</code> を持っていきます。</li>
     <li><strong>説明も読む：</strong>この <code>MANUAL.html</code> と <code>Manual</code> フォルダーを同じ配置で保存します。入口や仕様のリンクも使うなら、<code>index.html</code>、<code>README.md</code>、<code>LANGUAGE.md</code>、<code>AUDIT.md</code>、<code>LICENSE</code> も一緒に残します。</li>
@@ -514,7 +514,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 
   <div class="refs">
     <div class="ref">
-      <strong><a href="./Akari1_1_0.html">Akari1_1_0.html</a></strong>
+      <strong><a href="./Akari1_1_1.html">Akari1_1_1.html</a></strong>
       あかり本体。ブラウザーで編集・実行します。
     </div>
     <div class="ref">
@@ -536,7 +536,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <section>
   <h2>迷ったときの最短ルート</h2>
   <ol>
-    <li>まず <a href="./Akari1_1_0.html">Akari1_1_0.html</a> を開いて実際に触る。</li>
+    <li>まず <a href="./Akari1_1_1.html">Akari1_1_1.html</a> を開いて実際に触る。</li>
     <li>操作が分からなければ、使っているモードのマニュアルを見る。</li>
     <li>書き方が分からなければ「あかり」の「入力候補」またはブロックの道具箱で探す。</li>
     <li>動かない場合は「作品チェック」で場所・行・理由を確認する。</li>
@@ -549,10 +549,15 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p>「画像を置く」の下の「🎨 お絵かき」で、透明な500×500ピクセルの画面を開きます。ペン・消しゴム・塗りつぶし・直線・四角・だ円（長い丸）、色と「線の太さ」、元に戻す・やり直すが使えます。四角・だ円は「ふちだけ」／「塗りつぶし」を選べます。ます目は透明な部分の目印で、保存する絵には入りません。</p>
   <p>「決定して置く」で透明な外側の余白を切り、画像キャラクターとして配置します。小さな絵は拡大せず、必要な透明余白で幅・高さを8ピクセル以上にします。作品画面に収まる限り原寸です。描いた画像も作品の保存に含まれます。配置後の描き直しと下書き保存はありません。キャンセル時は描いた絵を捨てるか確認します。</p>
 </section>
+<section id="speech-names">
+  <h2>吹き出しの名前を表示する・隠す</h2>
+  <p>対象で「画面」を選び、設定欄の「吹き出し」にある「名前を表示」を切り替えます。ブロック表示で設定欄が閉じているときは、見出しのボタンで開いてください。この設定は作品全体に適用されます。</p>
+  <p>新しい作品では名前を表示します。チェックを外すと、吹き出しには台詞だけが出ます。台詞や表示時間は変わりません。設定は作品の保存、自動保存からの復元、書き出したHTMLにも反映されます。</p>
+</section>
 </main>
 
 <footer>
-  <p>対象：あかり1.1.0の再設計仕様。このページと各マニュアルの作例は実装PASSや児童の利用評価を示しません。文法・意味論の正本は LANGUAGE.md です。</p>
+  <p>対象：あかり1.1.1の再設計仕様。このページと各マニュアルの作例は実装PASSや児童の利用評価を示しません。文法・意味論の正本は LANGUAGE.md です。</p>
 </footer>
 </body>
 </html>

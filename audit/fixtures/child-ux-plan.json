@@ -1,0 +1,1691 @@
+{
+  "schema": "akari-child-ux-plan-v1",
+  "startMain": "2da327685b313ba781f696a4e4a7f8726a15c661",
+  "taskIds": [
+    "B01",
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "B07",
+    "B08",
+    "B09",
+    "B10",
+    "B11",
+    "B12",
+    "B13",
+    "B14",
+    "B15",
+    "B16",
+    "B17",
+    "B18",
+    "B19",
+    "B20",
+    "B21",
+    "B22",
+    "B23",
+    "B24"
+  ],
+  "order": [
+    "B22",
+    "B01",
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "B07",
+    "B08",
+    "B09",
+    "B10",
+    "B11",
+    "B12",
+    "B13",
+    "B14",
+    "B15",
+    "B16",
+    "B17",
+    "B18",
+    "B19",
+    "B20",
+    "B21",
+    "B23",
+    "B24"
+  ],
+  "persona": {
+    "entryGrade": 3,
+    "upperGrades": "表現の幅を維持",
+    "priorExperience": {
+      "akari": false,
+      "scratch": false,
+      "programming": false,
+      "coordinates": false,
+      "variables": false,
+      "pcOperations": false
+    },
+    "dimensions": [
+      "reading",
+      "meaning-and-concepts",
+      "text-input",
+      "device-operation"
+    ],
+    "target": "画面内の短い案内と例から制作する",
+    "kanjiAssignmentIsNotComprehension": true
+  },
+  "claims": {
+    "automation": "操作経路と固定意味の成立のみ",
+    "aiProxy": "代理評価。内部情報と事前学習を記録",
+    "realChild": "実測なし。UNVERIFIED",
+    "independentFinalUX": "未実施。自動検査や技術レビューでは代替しない"
+  },
+  "tasks": [
+    {
+      "id": "B01",
+      "concept": "順次",
+      "purpose": "読む",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/0/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/0/initial/preparedSource"
+      },
+      "makeContent": null,
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/0/virtualRuns",
+        "meaning": "こんにちは→またね、各2秒",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "実行前に予測を追記して確定する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "こんにちは→またね、各2秒",
+      "recoveryCondition": "順序と秒数を予測する",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B01/code",
+        "ux-repair02-matrix.json:B01/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B02",
+      "concept": "順次",
+      "purpose": "作る",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "おはよう→いってきます、各2秒",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/1/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": "おはよう→いってきます、各2秒",
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/1/virtualRuns",
+        "meaning": "おはよう→いってきます、各2秒",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "正解ソースを渡さず制作意図から画面を操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "おはよう→いってきます、各2秒",
+      "recoveryCondition": "空の開始本文から作る",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B02/code",
+        "ux-repair02-matrix.json:B02/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B03",
+      "concept": "順次",
+      "purpose": "直す",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "ただいま→おやつにしよう",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/2/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": null,
+      "intentionalError": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/2/initial/preparedSource"
+      },
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/2/virtualRuns",
+        "meaning": "ただいま→おやつにしよう",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "画面の情報から原因と修正箇所を記録して操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "ただいま→おやつにしよう",
+      "recoveryCondition": "逆順だけを直す",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B03/code",
+        "ux-repair02-matrix.json:B03/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B04",
+      "concept": "反復",
+      "purpose": "読む",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/3/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/3/initial/preparedSource"
+      },
+      "makeContent": null,
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/3/virtualRuns",
+        "meaning": "やあ3回→おしまい1回",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "実行前に予測を追記して確定する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "やあ3回→おしまい1回",
+      "recoveryCondition": "反復の範囲を予測する",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B04/code",
+        "ux-repair02-matrix.json:B04/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B05",
+      "concept": "反復",
+      "purpose": "作る",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "こっちだよ2秒＋無発話1秒を2回→おしまい2秒を1回",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/4/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": "こっちだよ2秒＋無発話1秒を2回→おしまい2秒を1回",
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/4/virtualRuns",
+        "meaning": "こっちだよ2秒＋無発話1秒を2回→おしまい2秒を1回",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "正解ソースを渡さず制作意図から画面を操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "こっちだよ2秒＋無発話1秒を2回→おしまい2秒を1回",
+      "recoveryCondition": "1つの反復の外に終わりを置く",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B05/code",
+        "ux-repair02-matrix.json:B05/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B06",
+      "concept": "反復",
+      "purpose": "直す",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "やあ3回→おしまい1回",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/5/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": null,
+      "intentionalError": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/5/initial/preparedSource"
+      },
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/5/virtualRuns",
+        "meaning": "やあ3回→おしまい1回",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "画面の情報から原因と修正箇所を記録して操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "やあ3回→おしまい1回",
+      "recoveryCondition": "おしまいを反復の外へ移す",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B06/code",
+        "ux-repair02-matrix.json:B06/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B07",
+      "concept": "イベント",
+      "purpose": "読む",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/6/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/6/initial/preparedSource"
+      },
+      "makeContent": null,
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/6/virtualRuns",
+        "meaning": "開始では無発話、あかりクリックでよんだ？",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "実行前に予測を追記して確定する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "開始では無発話、あかりクリックでよんだ？",
+      "recoveryCondition": "イベントの対応を予測する",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B07/code",
+        "ux-repair02-matrix.json:B07/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B08",
+      "concept": "イベント",
+      "purpose": "作る",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "だんごクリックでのみなあに？",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/7/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": "だんごクリックでのみなあに？",
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/7/virtualRuns",
+        "meaning": "だんごクリックでのみなあに？",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "正解ソースを渡さず制作意図から画面を操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "だんごクリックでのみなあに？",
+      "recoveryCondition": "だんごのクリック処理を作る",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B08/code",
+        "ux-repair02-matrix.json:B08/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B09",
+      "concept": "イベント",
+      "purpose": "直す",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "開始では無発話、クリック時だけ発話",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/8/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": null,
+      "intentionalError": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/8/initial/preparedSource"
+      },
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/8/virtualRuns",
+        "meaning": "開始では無発話、クリック時だけ発話",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "画面の情報から原因と修正箇所を記録して操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "開始では無発話、クリック時だけ発話",
+      "recoveryCondition": "きっかけだけを開始からクリックへ直し本文を保持する",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B09/code",
+        "ux-repair02-matrix.json:B09/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B10",
+      "concept": "並行処理",
+      "purpose": "読む",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/9/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/9/initial/preparedSource"
+      },
+      "makeContent": null,
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/9/virtualRuns",
+        "meaning": "あか2秒と、1秒後のあお2秒が重なる",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "実行前に予測を追記して確定する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "あか2秒と、1秒後のあお2秒が重なる",
+      "recoveryCondition": "2体の同じ開始からの時間を予測する",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B10/code",
+        "ux-repair02-matrix.json:B10/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B11",
+      "concept": "並行処理",
+      "purpose": "作る",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "こんにちは2秒と、1秒後のやあ2秒が重なる",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/10/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": "こんにちは2秒と、1秒後のやあ2秒が重なる",
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/10/virtualRuns",
+        "meaning": "こんにちは2秒と、1秒後のやあ2秒が重なる",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "正解ソースを渡さず制作意図から画面を操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "こんにちは2秒と、1秒後のやあ2秒が重なる",
+      "recoveryCondition": "2体の開始時処理を作る",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B11/code",
+        "ux-repair02-matrix.json:B11/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B12",
+      "concept": "並行処理",
+      "purpose": "直す",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "だんごの待ち1秒で発話が重なる",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/11/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": null,
+      "intentionalError": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/11/initial/preparedSource"
+      },
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/11/virtualRuns",
+        "meaning": "だんごの待ち1秒で発話が重なる",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "画面の情報から原因と修正箇所を記録して操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "だんごの待ち1秒で発話が重なる",
+      "recoveryCondition": "待ち3秒だけを1秒へ直す",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B12/code",
+        "ux-repair02-matrix.json:B12/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B13",
+      "concept": "条件分岐",
+      "purpose": "読む",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/12/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/12/initial/preparedSource"
+      },
+      "makeContent": null,
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/12/virtualRuns",
+        "meaning": "そら→どうぞ、うみ→ちがうよ",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "実行前に予測を追記して確定する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "そら→どうぞ、うみ→ちがうよ",
+      "recoveryCondition": "質問後の両分岐を予測する",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B13/code",
+        "ux-repair02-matrix.json:B13/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B14",
+      "concept": "条件分岐",
+      "purpose": "作る",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "ほし→どうぞ、つき→もういちど",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/13/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": "ほし→どうぞ、つき→もういちど",
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/13/virtualRuns",
+        "meaning": "ほし→どうぞ、つき→もういちど",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "正解ソースを渡さず制作意図から画面を操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "ほし→どうぞ、つき→もういちど",
+      "recoveryCondition": "準備済みの質問の後に2分岐を作る",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B14/code",
+        "ux-repair02-matrix.json:B14/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B15",
+      "concept": "条件分岐",
+      "purpose": "直す",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "そら→どうぞ、うみ→ちがうよ",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/14/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": null,
+      "intentionalError": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/14/initial/preparedSource"
+      },
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/14/virtualRuns",
+        "meaning": "そら→どうぞ、うみ→ちがうよ",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "画面の情報から原因と修正箇所を記録して操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "そら→どうぞ、うみ→ちがうよ",
+      "recoveryCondition": "空のそうでなければ側だけを補う",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B15/code",
+        "ux-repair02-matrix.json:B15/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B16",
+      "concept": "演算",
+      "purpose": "読む",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/15/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/15/initial/preparedSource"
+      },
+      "makeContent": null,
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/15/virtualRuns",
+        "meaning": "2＋3の計算結果5",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "実行前に予測を追記して確定する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "2＋3の計算結果5",
+      "recoveryCondition": "式の結果を予測する。文字23や固定5は不可",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B16/code",
+        "ux-repair02-matrix.json:B16/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B17",
+      "concept": "演算",
+      "purpose": "作る",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "4−1の計算結果3",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/16/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": "4−1の計算結果3",
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/16/virtualRuns",
+        "meaning": "4−1の計算結果3",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "正解ソースを渡さず制作意図から画面を操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "4−1の計算結果3",
+      "recoveryCondition": "引き算の式を作る。固定文字3は不可",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B17/code",
+        "ux-repair02-matrix.json:B17/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B18",
+      "concept": "演算",
+      "purpose": "直す",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "2×3の6から2＋3の5",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/17/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": null,
+      "intentionalError": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/17/initial/preparedSource"
+      },
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/17/virtualRuns",
+        "meaning": "2×3の6から2＋3の5",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "画面の情報から原因と修正箇所を記録して操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "2×3の6から2＋3の5",
+      "recoveryCondition": "演算子だけを変え、左右の2と3を保持する",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B18/code",
+        "ux-repair02-matrix.json:B18/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B19",
+      "concept": "データ",
+      "purpose": "読む",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/18/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/18/initial/preparedSource"
+      },
+      "makeContent": null,
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/18/virtualRuns",
+        "meaning": "点数0設定→2増加→表示・発話2、再実行も2",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "実行前に予測を追記して確定する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "点数0設定→2増加→表示・発話2、再実行も2",
+      "recoveryCondition": "初期化と現在値の変化を予測する",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B19/code",
+        "ux-repair02-matrix.json:B19/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B20",
+      "concept": "データ",
+      "purpose": "作る",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "開始0、発話終了後の各クリックで表示・発話1→2→3",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/19/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": "開始0、発話終了後の各クリックで表示・発話1→2→3",
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/19/virtualRuns",
+        "meaning": "開始0、発話終了後の各クリックで表示・発話1→2→3",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "正解ソースを渡さず制作意図から画面を操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "開始0、発話終了後の各クリックで表示・発話1→2→3",
+      "recoveryCondition": "既存の点数を1増やす処理を作る",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B20/code",
+        "ux-repair02-matrix.json:B20/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B21",
+      "concept": "データ",
+      "purpose": "直す",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "りんご→パン",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/20/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": null,
+      "intentionalError": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/20/initial/preparedSource"
+      },
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/20/virtualRuns",
+        "meaning": "りんご→パン",
+        "independent": true
+      },
+      "operationSteps": [
+        "作品と本文の初期状態を証拠へ記録する",
+        "画面の情報から原因と修正箇所を記録して操作する",
+        "実行して対象・順序・時刻・回数・値と固定期待を比べる",
+        "編集へ戻り、取消・履歴と他の本文の保持を確認する"
+      ],
+      "successCondition": "りんご→パン",
+      "recoveryCondition": "買うもの［りんご、パン、牛乳］を保持し、参照1番目だけを2番目へ変える",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B21/code",
+        "ux-repair02-matrix.json:B21/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B22",
+      "concept": "初回から実行",
+      "purpose": "入口",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "こんにちは2秒。文言の編集と復帰も実行",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/21/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": null,
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/21/virtualRuns",
+        "meaning": "こんにちは2秒。文言の編集と復帰も実行",
+        "independent": true
+      },
+      "operationSteps": [
+        "通常の入口から新しい作品を開き初期画面を記録する",
+        "画面内の案内から対象・きっかけ・命令を探し「こんにちは」を2秒話す作品を作る",
+        "実行ボタンを探して実行し発話の対象・本文・時間を観察する",
+        "本文を編集して再実行し、元へ戻して編集を続ける"
+      ],
+      "successCondition": "こんにちは2秒。文言の編集と復帰も実行",
+      "recoveryCondition": "通常入口から画面内の手掛かりだけで探す",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B22/code",
+        "ux-repair02-matrix.json:B22/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B23",
+      "concept": "対象・きっかけの切替",
+      "purpose": "文脈",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "開始あかりのみおはよう、クリックだんごのみなあに？",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/22/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": null,
+      "intentionalError": null,
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/22/virtualRuns",
+        "meaning": "開始あかりのみおはよう、クリックだんごのみなあに？",
+        "independent": true
+      },
+      "operationSteps": [
+        "あかりの開始時の「おはよう」の本文と対象を記録する",
+        "だんごを対象に選びクリックのきっかけへ切り替える",
+        "「なあに？」を2秒話す処理を追加し、実行前に作用する対象を記録する",
+        "開始とだんごのクリックを別々に行い、意図した対象だけが話すことを確認する",
+        "あかりの開始の編集へ戻り元の本文が保たれていることを確認する"
+      ],
+      "successCondition": "開始あかりのみおはよう、クリックだんごのみなあに？",
+      "recoveryCondition": "元の処理を保持し、追加後にあかり開始の編集へ戻る",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B23/code",
+        "ux-repair02-matrix.json:B23/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    },
+    {
+      "id": "B24",
+      "concept": "誤編集からの復帰",
+      "purpose": "取消",
+      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "intent": "おはよう→いってきます",
+      "preconditions": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/23/initial",
+        "preparationIsNotTaskSuccess": true
+      },
+      "readText": null,
+      "makeContent": null,
+      "intentionalError": {
+        "action": "いってきますの発話を実際に削除する",
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/23/initial/preparedSource"
+      },
+      "screenClues": [
+        "対象ときっかけの表示",
+        "文・ブロックの日本語",
+        "画面内の説明・具体例",
+        "現在のエラー案内"
+      ],
+      "expected": {
+        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "pointer": "/cases/23/virtualRuns",
+        "meaning": "おはよう→いってきます",
+        "independent": true
+      },
+      "operationSteps": [
+        "おはよう、いってきますの2つの発話がある編集状態を記録する",
+        "いってきますを実際に削除し、画面から取消を見つけて戻す",
+        "Redoで削除状態、Undoで元の状態へ戻し本文と履歴を記録する",
+        "候補のダイアログを開閉し再入場しても本文が変わらないことを確認する",
+        "実行しておはよう、いってきますの順と対象・時間を確認し編集へ戻る"
+      ],
+      "successCondition": "おはよう→いってきます",
+      "recoveryCondition": "実際にいってきますを削除し取消で復元。コード候補の開閉、Redoも確認",
+      "modes": [
+        "blocks",
+        "code"
+      ],
+      "environmentReference": "conditions",
+      "evidence": [
+        "ux-repair02-matrix.json:B24/code",
+        "ux-repair02-matrix.json:B24/blocks",
+        "child-ux-matrix.json",
+        "manual-events.jsonl (independent observation only)"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "A1",
+      "classification": "EXISTING",
+      "guarantee": "24課題の独立した対象・順序・時刻・条件・回数・値",
+      "job": "composition-acceptance",
+      "evidence": "ux-repair02-matrix.json",
+      "testIds": [
+        "B01/code",
+        "B01/blocks",
+        "B02/code",
+        "B02/blocks",
+        "B03/code",
+        "B03/blocks",
+        "B04/code",
+        "B04/blocks",
+        "B05/code",
+        "B05/blocks",
+        "B06/code",
+        "B06/blocks",
+        "B07/code",
+        "B07/blocks",
+        "B08/code",
+        "B08/blocks",
+        "B09/code",
+        "B09/blocks",
+        "B10/code",
+        "B10/blocks",
+        "B11/code",
+        "B11/blocks",
+        "B12/code",
+        "B12/blocks",
+        "B13/code",
+        "B13/blocks",
+        "B14/code",
+        "B14/blocks",
+        "B15/code",
+        "B15/blocks",
+        "B16/code",
+        "B16/blocks",
+        "B17/code",
+        "B17/blocks",
+        "B18/code",
+        "B18/blocks",
+        "B19/code",
+        "B19/blocks",
+        "B20/code",
+        "B20/blocks",
+        "B21/code",
+        "B21/blocks",
+        "B22/code",
+        "B22/blocks",
+        "B23/code",
+        "B23/blocks",
+        "B24/code",
+        "B24/blocks"
+      ],
+      "verifier": "verifyRepairMatrix",
+      "addition": ""
+    },
+    {
+      "id": "A2",
+      "classification": "GAP_FILLED",
+      "guarantee": "両モードを起点に実UIを往復し同じ独立期待と照合",
+      "job": "composition-acceptance",
+      "evidence": "child-ux-matrix.json",
+      "testIds": [
+        "CHILD-UX-ROUNDTRIP"
+      ],
+      "verifier": "verifyChildMatrix",
+      "addition": "既存48枠に観測を追加"
+    },
+    {
+      "id": "A3",
+      "classification": "EXISTING",
+      "guarantee": "未完成・不正入力を勝手に別意味へ変えない",
+      "job": "composition-acceptance",
+      "evidence": "ux-repair02-browser.json",
+      "testIds": [
+        "diagnostics/current-source",
+        "editor/synthetic-composition"
+      ],
+      "verifier": "verifyRepairBrowser",
+      "addition": ""
+    },
+    {
+      "id": "B1",
+      "classification": "EXISTING",
+      "guarantee": "分類・検索・候補の到達と挿入、状態保持",
+      "job": "composition-acceptance",
+      "evidence": "ux-repair02-browser.json",
+      "testIds": [
+        "controls/palette-and-search"
+      ],
+      "verifier": "verifyRepairBrowser",
+      "addition": ""
+    },
+    {
+      "id": "B2",
+      "classification": "EXISTING",
+      "guarantee": "対象・きっかけ・元の本文を保持",
+      "job": "composition-acceptance",
+      "evidence": "ux-repair02-matrix.json",
+      "testIds": [
+        "B08/code",
+        "B08/blocks",
+        "B09/code",
+        "B09/blocks",
+        "B23/code",
+        "B23/blocks"
+      ],
+      "verifier": "verifyRepairMatrix",
+      "addition": ""
+    },
+    {
+      "id": "B3",
+      "classification": "EXISTING",
+      "guarantee": "取消・Undo/Redoと編集への復帰",
+      "job": "composition-acceptance",
+      "evidence": "ux-repair02-matrix.json",
+      "testIds": [
+        "B24/code",
+        "B24/blocks"
+      ],
+      "verifier": "verifyRepairMatrix",
+      "addition": ""
+    },
+    {
+      "id": "B4",
+      "classification": "EXISTING",
+      "guarantee": "エラー箇所への到達と修正復帰",
+      "job": "ux-repair05",
+      "evidence": "child-diagnostics.json",
+      "testIds": [
+        "syntax/closing",
+        "syntax/quote"
+      ],
+      "verifier": "verifyChildDiagnosticsReport",
+      "addition": ""
+    },
+    {
+      "id": "C1",
+      "classification": "EXISTING",
+      "guarantee": "固定画面幅・実ブラウザー拡大・必須部品の到達",
+      "job": "ux-repair05",
+      "evidence": "component-controls.json",
+      "testIds": [
+        "COMPONENT-CONTROLS-RESPONSIVE",
+        "COMPONENT-CONTROLS-ZOOM"
+      ],
+      "verifier": "verifyComponentControls",
+      "addition": ""
+    },
+    {
+      "id": "C2",
+      "classification": "EXISTING",
+      "guarantee": "10/28/100%・短文長文・複数話者・全文一致と閉じる",
+      "job": "ux-repair05",
+      "evidence": "speech-preview.json",
+      "testIds": [
+        "speech-preview/fresh/10",
+        "speech-preview/fresh/28",
+        "speech-preview/fresh/100",
+        "speech-preview/full-78/10",
+        "speech-preview/full-78/485"
+      ],
+      "verifier": "verifyPreviewReport",
+      "addition": ""
+    },
+    {
+      "id": "C3",
+      "classification": "EXISTING",
+      "guarantee": "寸法・文字の描画・実操作・画像を併用",
+      "job": "ux-repair05",
+      "evidence": "speech-name-layout.json",
+      "testIds": [
+        "speech-name/position-edges",
+        "speech-name/native-browser-125/full-78"
+      ],
+      "verifier": "verifySpeechNameLayoutReport",
+      "addition": ""
+    },
+    {
+      "id": "D1",
+      "classification": "GAP_FILLED",
+      "guarantee": "製品ソースと実画面の候補語を対応・欠落を検出",
+      "job": "ux-repair05",
+      "evidence": "child-ux-language.json",
+      "testIds": [
+        "CHILD-UX-LANGUAGE-INVENTORY"
+      ],
+      "verifier": "verifyChildLanguage",
+      "addition": "既存8枠の画面観測を再利用"
+    },
+    {
+      "id": "D2",
+      "classification": "EXISTING",
+      "guarantee": "読み・平易な意味・例・操作への支援を実画面で確認",
+      "job": "ux-repair05",
+      "evidence": "child-language-ui.json",
+      "testIds": [
+        "CHILD-UI-ACTION-HELP",
+        "CHILD-UI-DATA-EXAMPLES",
+        "CHILD-UI-BLOCK-WORDS"
+      ],
+      "verifier": "verifyChildLanguageUi",
+      "addition": ""
+    },
+    {
+      "id": "D3",
+      "classification": "HUMAN_REQUIRED",
+      "guarantee": "語や概念を児童が理解できるか、未知語の意味審査",
+      "job": "manual",
+      "evidence": "manual-events.jsonl",
+      "testIds": [
+        "CHILD-UX-VOCABULARY-REVIEW"
+      ],
+      "verifier": "verifyManualSession",
+      "addition": ""
+    },
+    {
+      "id": "E1",
+      "classification": "EXISTING",
+      "guarantee": "入力・貼付・focus・合成composition中と確定後",
+      "job": "composition-acceptance",
+      "evidence": "ux-repair02-browser.json",
+      "testIds": [
+        "editor/synthetic-composition",
+        "editor/enter-indent"
+      ],
+      "verifier": "verifyRepairBrowser",
+      "addition": ""
+    },
+    {
+      "id": "E2",
+      "classification": "GAP_FILLED",
+      "guarantee": "OS・フォント・ブラウザー・snapshot・実行由来を区別",
+      "job": "child-ux-aggregate",
+      "evidence": "child-ux-aggregate.json",
+      "testIds": [
+        "CHILD-UX-PROVENANCE"
+      ],
+      "verifier": "verifyChildBundle",
+      "addition": "Windowsのローカル証拠をLinux CIへ流用しない"
+    },
+    {
+      "id": "E3",
+      "classification": "HUMAN_REQUIRED",
+      "guarantee": "実OS日本語IMEと機器操作の理解",
+      "job": "manual",
+      "evidence": "manual-events.jsonl",
+      "testIds": [
+        "CHILD-UX-REAL-IME"
+      ],
+      "verifier": "verifyManualSession",
+      "addition": ""
+    },
+    {
+      "id": "F1",
+      "classification": "HUMAN_REQUIRED",
+      "guarantee": "事前予測・解答なしの制作・画面だけの修正・援助記録",
+      "job": "manual",
+      "evidence": "manual-events.jsonl",
+      "testIds": [
+        "CHILD-UX-INDEPENDENT-OBSERVATION"
+      ],
+      "verifier": "verifyManualSession",
+      "addition": ""
+    },
+    {
+      "id": "F2",
+      "classification": "HUMAN_REQUIRED",
+      "guarantee": "同24課題のScratch日本語比較",
+      "job": "manual",
+      "evidence": "manual-events.jsonl",
+      "testIds": [
+        "CHILD-UX-SCRATCH-COMPARISON"
+      ],
+      "verifier": "verifyManualSession",
+      "addition": ""
+    },
+    {
+      "id": "G1",
+      "classification": "GAP_FILLED",
+      "guarantee": "意味・話者・支援・隠れ・結果欠落を独立に拒否",
+      "job": "child-ux-aggregate",
+      "evidence": "child-ux-aggregate.json",
+      "testIds": [
+        "CHILD-UX-REJECTION-CONTROLS"
+      ],
+      "verifier": "verifyChildBundle",
+      "addition": ""
+    },
+    {
+      "id": "H1",
+      "classification": "GAP_FILLED",
+      "guarantee": "欠落・失敗・skip・取消・timeout・別SHA/実行を拒否",
+      "job": "child-ux-aggregate",
+      "evidence": "child-ux-aggregate.json",
+      "testIds": [
+        "CHILD-UX-STRICT-AGGREGATE"
+      ],
+      "verifier": "verifyChildBundle",
+      "addition": ""
+    },
+    {
+      "id": "H2",
+      "classification": "GAP_FILLED",
+      "guarantee": "再試行前の失敗を履歴として保持",
+      "job": "child-ux-aggregate",
+      "evidence": "retry-history.json",
+      "testIds": [
+        "CHILD-UX-RETRY-HISTORY"
+      ],
+      "verifier": "verifyRetryHistory",
+      "addition": ""
+    }
+  ],
+  "conditions": {
+    "matrix": {
+      "viewport": {
+        "width": 1188,
+        "height": 848
+      },
+      "modes": [
+        "code",
+        "blocks"
+      ],
+      "stageScales": [
+        10,
+        28,
+        100
+      ],
+      "scaleEvidence": "speech-preview.json (separate existing cases)"
+    },
+    "componentBounds": [
+      [
+        1920,
+        1080
+      ],
+      [
+        1366,
+        768
+      ],
+      [
+        1280,
+        720
+      ],
+      [
+        1024,
+        768
+      ],
+      [
+        760,
+        600
+      ],
+      [
+        390,
+        600
+      ],
+      [
+        320,
+        500
+      ]
+    ],
+    "nativeBrowserZoom": [
+      1.25,
+      1.5,
+      2
+    ],
+    "ime": {
+      "synthetic": "existing browser tests",
+      "real": "UNVERIFIED; fixed manual protocol"
+    },
+    "platforms": {
+      "ci": "linux",
+      "local": "win32",
+      "eachReportOwnEnvironment": true
+    }
+  },
+  "vocabulary": {
+    "candidateRule": "Han sequences and Katakana in source and actually visible UI; candidates are not approved vocabulary",
+    "defaultHumanStatus": "UNVERIFIED",
+    "supportReference": "child-language-ui.json; fixed G3 validators",
+    "knownSupportTerms": [
+      "命令",
+      "本文",
+      "候補",
+      "分類",
+      "検索",
+      "表示",
+      "種類",
+      "値",
+      "文字",
+      "条件",
+      "累乗",
+      "分身",
+      "変数",
+      "リスト",
+      "手順"
+    ]
+  },
+  "comparison": {
+    "modes": [
+      "akari-blocks",
+      "akari-code",
+      "scratch-ja"
+    ],
+    "taskIds": [
+      "B01",
+      "B02",
+      "B03",
+      "B04",
+      "B05",
+      "B06",
+      "B07",
+      "B08",
+      "B09",
+      "B10",
+      "B11",
+      "B12",
+      "B13",
+      "B14",
+      "B15",
+      "B16",
+      "B17",
+      "B18",
+      "B19",
+      "B20",
+      "B21",
+      "B22",
+      "B23",
+      "B24"
+    ],
+    "language": "ja",
+    "viewport": {
+      "width": 1188,
+      "height": 848
+    },
+    "scratchVersion": null,
+    "versionStatus": "UNVERIFIED; must be fixed before comparison starts",
+    "externalFailure": "UNVERIFIED, not an Akari product failure",
+    "requiredCI": false,
+    "measures": [
+      "clicks",
+      "drags",
+      "inputConfirmations",
+      "navigations",
+      "misSelections",
+      "searches",
+      "assistance",
+      "recovery"
+    ],
+    "noMeasuredSuperiority": true
+  }
+}

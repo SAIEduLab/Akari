@@ -1,4 +1,5 @@
 import {verifySamples,verifySamplesNegative} from './samples-contract.mjs';
+import {verifyDisplay,rejectionIds} from './speech-display-contract.mjs';
 import {verifyContractReport,verifyMigrationReport,verifyIntentReport,verifyRuntimeReport,verifyNegativeReport} from './japanese-gate-contract.mjs';
 import {verifyBlockFields} from './block-field-contract.mjs';
 import fs from 'node:fs';
@@ -46,5 +47,10 @@ export function verifyGateResults(dir,inputs){
   verifyLicenseBrowserReport(read('license-browser'),path.join(dir,'license-browser.artifacts'),inputs);
   verifySamples(read('samples'),inputs,path.join(dir,'samples.artifacts'));
   verifySamplesNegative(read('samples-negative'),inputs);
+  const display=verifyDisplay(read('speech-display'),inputs,path.join(dir,'speech-display.json.artifacts'));
+  const displayProof=read('speech-display-verify');
+  for(const [key,value]of Object.entries(display))assert.equal(displayProof[key],value);
+  assert.deepEqual(displayProof.snapshot,inputs);
+  assert.deepEqual(displayProof.negativeControls,rejectionIds.map(id=>({id,status:'PASS'})));
   return {status:'PASS',steps:gate.steps.length};
 }

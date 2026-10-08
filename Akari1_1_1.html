@@ -4915,9 +4915,10 @@ body.runtime #formSurface .design-resize-outline {
 }
 
 #properties {
-  scroll-padding-top: 58px;
+  scroll-padding-top: calc(var(--prop-actions-height, 50px) + 8px);
 }
 .prop-actions {
+  flex-wrap: wrap;
   position: sticky;
   top: 0;
   z-index: 4;
@@ -4931,12 +4932,18 @@ body.runtime #formSurface .design-resize-outline {
   box-shadow: 0 2px 5px #20374b0d;
 }
 .prop-actions strong {
-  flex: 1;
+  flex: 0 0 100%;
   min-width: 0;
   font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.prop-actions > button {
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .prop-delete {
   flex: none;
@@ -5442,9 +5449,26 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction
 .blockui-palette-options > summary::after { content:none; }
 .blockui-palette-options[open] { position:static; flex:1 1 100%; box-sizing:border-box; min-width:0; max-width:100%; }
 .blockui-palette-options[open] select { width:100%; max-width:100%; }
+.blockui-palette-tools { grid-column:1/-1; grid-row:1; min-width:0; width:100%; }
+.blockui-palette-controls[hidden] { display:none !important; }
+[data-blockui-action="palette-tools-toggle"] { width:100%; flex:none; }
+#runtimeInspector { width:min(1180px,96vw); height:92dvh; max-height:96dvh; box-sizing:border-box; padding:10px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+#runtimeInspector[open] { display:flex; flex-direction:column; gap:8px; }
+#runtimeInspector::backdrop { background:#24344966; }
+.runtime-inspector-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex:none; }
+#runtimeInspectorModes { margin-left:auto; }
+#runtimeInspectorBody { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:8px; flex:1; min-height:0; overflow:auto; }
+#runtimeInspectorBody > .codewin { display:flex !important; min-height:0 !important; min-width:0; overflow:auto; }
+#runtimeInspectorBody .debugbar { padding:6px; flex:none; }
+#runtimeInspectorBody .editor-shell { flex:1; min-height:160px; }
+#runtimeInspectorBody #blockEditor { flex:1; min-height:260px; }
+#runtimeInspectorBody .blockui-layout { flex:1; min-height:0 !important; }
+#runtimeInspectorBody .monitor-window { display:flex !important; min-height:160px; overflow:auto; }
+@media(max-width:700px) { #runtimeInspectorBody { grid-template-columns:minmax(0,1fr); } #runtimeInspectorModes { margin-left:0; } }
 .blockui-local-help { font-size:12px; max-width:100%; }
 .blockui-local-help p { white-space:normal; line-height:1.6; }
 .blockui-operator { min-width:90px; padding:5px; }
+.sprite-bubble[data-show-speaker="false"]::before{content:none;display:none}
 .sprite-bubble::before { content:attr(data-speaker); display:block; font-size:0.8em; margin-bottom:var(--speech-heading-gap,3px); margin-right:var(--speech-full-space,0px); min-height:var(--speech-heading-height,0px); }
 .sprite-bubble [data-speech-full]::before { content:attr(data-label); }
 body[data-editor-mode="code"] .codewin { min-height:430px; }
@@ -5456,59 +5480,73 @@ body[data-editor-mode="code"] .hints-disclosure[open] > .hint-panel { position:s
 body[data-editor-mode="code"] .codewin:has(.hints-disclosure[open]) { min-height:590px; }
 </style>
 <style id="runtime-readability">
-/* Keep the basic runtime focused on the scene while retaining advanced monitoring. */
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] #app {
+/* Keep playback focused on the scene in either editor mode and preserve debugging controls. */
+body.runtime[data-editor-mode] #app {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   height: 100dvh;
   min-height: 100dvh;
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main {
+body.runtime[data-editor-mode] .main {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 0;
   padding: clamp(8px, 1.2vw, 16px);
   overflow: hidden;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .toolbox,
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .codewin,
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side > :not(.designer):not(.monitor-window) {
+body.runtime[data-editor-mode] .main > .toolbox,
+body.runtime[data-editor-mode] .main > .codewin,
+body.runtime[data-editor-mode] .main > .side > :not(.designer):not(.monitor-window) {
   display: none !important;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side {
+body.runtime[data-editor-mode] .main > .side {
   display: contents !important;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] #designerWindow,
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .side > #designerWindow {
+body.runtime[data-editor-mode] #designerWindow,
+body.runtime[data-editor-mode] .side > #designerWindow {
   grid-column: 1;
   grid-row: 1;
   height: auto !important;
   min-height: 0;
   flex: none !important;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .designer-wrap {
+body.runtime[data-editor-mode] .designer-wrap {
   display: grid;
   place-items: center;
   min-width: 0;
   min-height: 0;
   padding: clamp(8px, 2vw, 24px);
-  overflow: hidden;
+  overflow: auto;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .stage-viewport {
+body.runtime[data-editor-mode] .stage-viewport {
   flex: none;
   margin: auto;
-  max-width: 100%;
-  max-height: 100%;
+  max-width: none;
+  max-height: none;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] #formFrame { margin: 0 auto; }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side > .monitor-window { display:flex !important; grid-column:2; grid-row:1; min-height:0; height:auto; }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .monitor-window .blockui-side-toggle { display:none; }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .monitor-window .blockui-side-label { display:block; }
-@media(max-width:650px){body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 160px; }body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side > .monitor-window { grid-column:1; grid-row:2; }}
+body.runtime[data-editor-mode] #formFrame { margin: 0 auto; }
+body.runtime[data-editor-mode] .main > .codewin { display: contents !important; }
+body.runtime[data-editor-mode] .main > .codewin > :not(.debugbar) { display: none !important; }
+body.runtime[data-editor-mode] .main > .codewin > .debugbar {
+  display: flex; grid-column: 1 / -1; grid-row: 2;
+  min-width: 0; padding: 6px; margin: 0; flex-wrap: wrap;
+}
+body.runtime[data-editor-mode] .debugbar #execLocation { display:inline-block; max-width:100%; }
+body.runtime[data-editor-mode] .debugbar :is(#pauseBtn,#continueBtn,#stepBtn) { display: inline-flex; }
+body.runtime[data-editor-mode] .menutool > :is(#newBtn,#sampleSelect,#sampleBtn,#sampleHelpBtn,#openBtn) { display:none; }
+body.runtime[data-editor-mode] .debugbar > :is(#undoBtn,#redoBtn,#formatBtn,#resetBtn) { display:none; }
+#runtimeInspector #runtimeInspectBtn { display:none; }
+body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }
+body.runtime[data-editor-mode] .main > .side > .monitor-window { display:flex !important; grid-column:2; grid-row:1; min-height:0; height:auto; }
+body.runtime[data-editor-mode] .monitor-window { overflow:auto; }
+body.runtime[data-editor-mode] .monitor-window .output-disclosure { display:block; }
+body.runtime[data-editor-mode] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }
+body.runtime[data-editor-mode] .monitor-window .blockui-side-toggle { display:none; }
+body.runtime[data-editor-mode] .monitor-window .blockui-side-label { display:block; }
+@media(max-width:650px){body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 160px auto; }body.runtime[data-editor-mode] .main > .side > .monitor-window { grid-column:1; grid-row:2; }body.runtime[data-editor-mode] .main > .codewin > .debugbar { grid-row:3; }}
+@media(max-width:360px) { body.runtime[data-editor-mode] .main { grid-template-rows:minmax(0,1fr) 110px auto; } }
 body.runtime .sprite-bubble {
   font-size: calc(14px / var(--stage-scale, 1));
   line-height: 1.35;
@@ -5885,6 +5923,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         <button id="pauseBtn">⏸ いったん止める</button>
         <button id="continueBtn">▶ 続ける</button>
         <button id="stepBtn">1命令ずつ</button>
+        <button id="runtimeInspectBtn" type="button" hidden aria-controls="runtimeInspector">本文を見て確かめる</button>
         <button id="formatBtn">コードを整える</button>
         <span class="exec-location" id="execLocation">いまの場所：―</span>
       </div>
@@ -6045,6 +6084,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
   </div>
 </div>
 
+<dialog id="runtimeInspector" aria-labelledby="runtimeInspectorTitle">
+  <div class="runtime-inspector-head"><strong id="runtimeInspectorTitle">本文と動きのようす</strong><div id="runtimeInspectorModes"></div><button id="runtimeInspectorStop" type="button">止める</button><button id="runtimeInspectorClose" type="button">実行画面に戻る</button></div>
+  <div id="runtimeInspectorBody"></div>
+</dialog>
+
 <div class="modal" id="recoveryModal" role="dialog" aria-modal="true" aria-label="自動保存からもどす">
   <div class="dialog" style="width:min(560px,92vw);height:auto;max-height:80vh">
     <div class="win-title">自動保存された作品</div>
@@ -6105,7 +6149,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.1.0';
+  const PRODUCT_RELEASE = '1.1.1';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -10409,6 +10453,8 @@ function createAkariExtensionHost(options) {
         p.stage.height > 800
       )
         fail('\u753b\u9762\u306e\u5927\u304d\u3055\u304c\u4e0d\u6b63\u3067\u3059');
+      if(Object.hasOwn(p.stage,'showSpeechNames')&&typeof p.stage.showSpeechNames!=='boolean')
+        fail('吹き出しの名前表示設定が不正です');
       validateRuntimeData(p, fail);
       const ownerIds = new Set(['stage', ...p.components.map(c => c.id)]);
       const callPhrases=new Set();
@@ -11891,6 +11937,7 @@ function createAkariExtensionHost(options) {
         height: 400,
         backdrops: [{ id: 'backdrop-1', name: '空色', kind: 'color', value: '#b3e5fc' }],
         backdropId: 'backdrop-1',
+        showSpeechNames: true,
       },
       projectData: { variables: [], lists: [] },
       components: [
@@ -12532,7 +12579,9 @@ function createAkariExtensionHost(options) {
     if (typeof p.name !== 'string' || cpLen(p.name) < 1 || cpLen(p.name) > 80)
       throw new AkariError('F503', '作品名が不正です');
     if (
-      !exactKeys(p.stage, ['id', 'name', 'width', 'height', 'backdrops', 'backdropId']) ||
+      !exactKeys(p.stage, ['id', 'name', 'width', 'height', 'backdrops', 'backdropId',
+        ...(Object.hasOwn(p.stage || {}, 'showSpeechNames') ? ['showSpeechNames'] : [])]) ||
+      (Object.hasOwn(p.stage, 'showSpeechNames') && typeof p.stage.showSpeechNames !== 'boolean') ||
       p.stage.id !== 'stage'
     )
       throw new AkariError('F503', '画面データが不正です');
@@ -18308,6 +18357,7 @@ function createAkariExtensionHost(options) {
         height: project.stage.height,
         backdrops: project.stage.backdrops.map(orderedBackdropRecord),
         backdropId: project.stage.backdropId,
+        ...(Object.hasOwn(project.stage, 'showSpeechNames') ? {showSpeechNames: project.stage.showSpeechNames} : {}),
       },
       projectData: {
         variables: project.projectData.variables.map(orderedDataRecord),
@@ -18852,7 +18902,7 @@ function createAkariExtensionHost(options) {
   // 08 — Portable stage view and standalone export
   // ────────────────────────────────────────────────────────────────────────
   const AKARI_STAGE_CSS =
-    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:var(--speech-heading-gap,3px);margin-right:var(--speech-full-space,0px)}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }";
+    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:var(--speech-heading-gap,3px);margin-right:var(--speech-full-space,0px)}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }\n.sprite-bubble[data-show-speaker=\"false\"]::before{content:none;display:none}";
   const AKARI_PLAYER_CSS =
     '*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#edf2f8;color:#1f2937;font:14px "Yu Gothic UI","Yu Gothic","Meiryo",sans-serif}button,input{font:inherit}button{padding:7px 12px;background:#fff;border:1px solid #a9b8ca;border-radius:7px;cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #2f6fd6;outline-offset:2px}#playerRoot{width:max-content;min-width:min(100%,640px);max-width:100%;margin:0 auto;padding:14px}header{margin-bottom:12px}h1{font-size:20px;margin:0 0 10px;overflow-wrap:anywhere}.player-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px}#playerStatus{font-size:12px;color:#536273;margin-left:6px}.player-stage{max-width:100%;overflow:auto;border:1px solid #bccbe0;border-radius:10px;background:#fff}#formSurface{outline:none}#formSurface:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}#playerOutput{max-height:130px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;background:#fff;border:1px solid #c7d2df;border-radius:8px;margin:12px 0 0}.modal{display:none;position:fixed;inset:0;background:rgba(25,37,55,.4);z-index:10000;align-items:center;justify-content:center;padding:16px}.modal.show{display:flex}.question-box{width:min(500px,100%);max-height:90vh;overflow:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 12px 35px #0003}#questionText{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:14px;font-weight:700}#questionAnswer{width:100%;padding:8px;border:1px solid #a9b8ca;border-radius:7px}.question-controls{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}@media(max-width:600px){#playerRoot{padding:8px}h1{font-size:17px}}\n';
   function createAkariStageView(core, options) {
@@ -19003,7 +19053,7 @@ function createAkariExtensionHost(options) {
         const full=b.querySelector('[data-speech-full]');
         if(full)full.style.fontSize=11/sx+'px';
         const heading=getComputedStyle(b,'::before'),body=getComputedStyle(b);
-        return {name:textWidth(b.dataset.speaker||'',heading),body:textWidth(b.querySelector('.sprite-bubble-text')?.textContent||'',body),
+        return {name:b.dataset.showSpeaker==='false'?0:textWidth(b.dataset.speaker||'',heading),body:textWidth(b.querySelector('.sprite-bubble-text')?.textContent||'',body),
           full:full?textWidth(full.dataset.label||'',getComputedStyle(full)):0,
           lineHeight:Math.max(parseFloat(heading.lineHeight),parseFloat(body.lineHeight))*sy};
       });
@@ -19035,13 +19085,15 @@ function createAkariExtensionHost(options) {
           availableWidth = sideWidth >= 80/sx ? sideWidth : form.clientWidth;
         b.style.fontSize = 14/sx+'px'; b.style.padding = (compactRows||compactFullRows?0:band?1.5:8)/sy+'px '+(compactRows||compactFullRows?0:compact?1:band?6:10)/sx+'px';
         b.style.borderWidth = compact ? (compactRows||compactFullRows?0.25:0.5)/sx+'px' : '';
-        b.style.display=compactRows?'grid':'';
+        const showName=b.dataset.showSpeaker!=='false';
+        b.style.display=compactRows&&showName?'grid':'';
+        b.style.minHeight=compactFullRows&&!showName?17.5/sy+'px':'';
         b.style.alignItems=compactRows?'start':'';
         b.style.width=compactRows||compactFullRows?form.clientWidth+'px':'';
         b.style.gridTemplateColumns=compactRows?Math.ceil(widths[bubbleIndex].name)+'px minmax(0,1fr)':'';
         b.style.columnGap=compactRows?0.25/sx+'px':'';
         b.style.setProperty('--speech-heading-gap',compactRows?'0px':'3px');
-        b.style.setProperty('--speech-heading-height', compactFullRows||band&&!compact ? 17/sy+'px' : '0px');
+        b.style.setProperty('--speech-heading-height', showName&&(compactFullRows||band&&!compact) ? 17/sy+'px' : '0px');
         const bandWidth = compactRows||compactFullRows?form.clientWidth:(form.clientWidth-(bubbles.length-1)*(compact?1:8)/sx)/Math.max(1,bubbles.length);
         b.style.maxWidth = Math.min(320/sx,band?bandWidth:availableWidth)+'px';
         const heightBudget=band ? Math.min(160/sy,band.height-1/sy) : Math.min(160/sy,Math.max(54/sy,(form.clientHeight-(bubbles.length-1)*8/sy)/Math.max(1,bubbles.length)));
@@ -19065,6 +19117,7 @@ function createAkariExtensionHost(options) {
         const fitText = () => {
           const reserve=full&&!full.hidden?Math.max(0,full.getBoundingClientRect().width/sx+parseFloat(full.style.right)-(parseFloat(bubbleStyle.paddingRight)||0)-(parseFloat(bubbleStyle.borderRightWidth)||0)+4/sx):0;
           b.style.setProperty('--speech-full-space',reserve+'px');
+          if(text)text.style.marginRight=showName?'0px':reserve+'px';
           b.style.minWidth=compactRows||compactFullRows?'0px':Math.min(parseFloat(b.style.maxWidth),
             Math.max(compact?0:40/sx,Math.ceil(widths[bubbleIndex].name+reserve+edges+1/sx)))+'px';
           if (text) {
@@ -19258,6 +19311,7 @@ function createAkariExtensionHost(options) {
       const b = document.createElement('div');
       b.className = 'sprite-bubble';
       b.dataset.runtimeId = id;
+      b.dataset.showSpeaker = String(project().stage.showSpeechNames !== false);
       b.style.zIndex = '2000';
       b.dataset.speaker=project().components.find(c=>c.id===runtime()?.actor(id)?.baseId)?.name||project().components.find(c=>c.id===id)?.name||'話している人';
       // Keep the speaker and value from this utterance together, even after it changes or clears.
@@ -21483,7 +21537,17 @@ function createAkariExtensionHost(options) {
       E('p','','メモは、あとで思い出せるように書くひとことです。動きは変わりません。分身（ぶんしん）は、同じ見た目のキャラクターをもう1体作ることです。'),
       E('p','','「操作を取り消す」は、いま選んだ追加先や変えかけている入力・組み立てをやめます。「元に戻す」は、すでに決めた変更を1つ戻します。'));
     paletteControls.append(help);
-    palette.append(paletteControls, categorySelect, paletteList, palettePages);
+    paletteControls.id = viewId + '-palette-tools';
+    const paletteToggle = button('探す・作るをたたむ', 'palette-tools-toggle', () => {
+      paletteControls.hidden = !paletteControls.hidden;
+      paletteToggle.setAttribute('aria-expanded', String(!paletteControls.hidden));
+      paletteToggle.textContent = paletteControls.hidden ? '探す・作るをひらく' : '探す・作るをたたむ';
+    });
+    paletteToggle.setAttribute('aria-expanded', 'true');
+    paletteToggle.setAttribute('aria-controls', paletteControls.id);
+    const paletteTools = E('div', 'blockui-palette-tools');
+    paletteTools.append(paletteToggle, paletteControls);
+    palette.append(paletteTools, categorySelect, paletteList, palettePages);
     layout.append(palette, workspaceShell);
     root.append(layout);
     const promptArea = E('div', 'blockui-replacement');
@@ -24912,6 +24976,12 @@ function createAkariExtensionHost(options) {
       projectName: $('#projectName'),
       fileInput: $('#fileInput'),
     };
+    function syncPropertyScrollPadding() {
+      const actions = el.props.querySelector(':scope > .prop-actions');
+      el.props.style.setProperty('--prop-actions-height', (actions?.offsetHeight || 0) + 'px');
+    }
+    const propertyHeaderObserver = typeof ResizeObserver === 'function'
+      ? new ResizeObserver(syncPropertyScrollPadding) : null;
     let editorContextRevision = 1,
       editorDraftSerial = 1,
       syncingDraft = false,
@@ -26108,6 +26178,7 @@ function createAkariExtensionHost(options) {
           actions, ...(copyHelp?.classList.contains('child-copy-help') ? [copyHelp] : []),
         );
       $('#formatBtn').hidden = block;
+      syncPropertyScrollPadding();
     }
 
     const pen = el.canvas.getContext('2d');
@@ -26258,7 +26329,33 @@ function createAkariExtensionHost(options) {
         closing?.catch?.(() => {});
       } catch (_) {}
     }
+    const inspectorNodes = [];
+    function closeRuntimeInspector() {
+      const dialog = $('#runtimeInspector');
+      if (dialog.open) dialog.close();
+      for (const {node, marker} of inspectorNodes.splice(0)) { marker.replaceWith(node); }
+      if (appState === 'RUNNING' || appState === 'PAUSED') {
+        stageView.fitStage();
+        el.form.focus({ preventScroll: true });
+      }
+    }
+    function openRuntimeInspector() {
+      if (!['RUNNING', 'PAUSED'].includes(appState) || inspectorNodes.length) return;
+      stageView.clearInput();
+      for (const [node, target] of [[$('.codewin'), $('#runtimeInspectorBody')], [$('.monitor-window'), $('#runtimeInspectorBody')], [$('#editorModecode').parentElement, $('#runtimeInspectorModes')], [$('#uiLevel').closest('label'), $('#runtimeInspectorModes')]]) {
+        const marker = document.createComment('runtime inspector return point');
+        node.before(marker); inspectorNodes.push({node, marker}); target.append(node);
+      }
+      $('#runtimeInspector').showModal();
+      renderEditorBinding(mainEditor);
+      $('#runtimeInspectorClose').focus();
+    }
+    $('#runtimeInspectBtn').onclick = openRuntimeInspector;
+    $('#runtimeInspectorClose').onclick = closeRuntimeInspector;
+    $('#runtimeInspectorStop').onclick = stopRun;
+    $('#runtimeInspector').addEventListener('close', () => { if (inspectorNodes.length) closeRuntimeInspector(); });
     function disposeRuntime() {
+      closeRuntimeInspector();
       $('#listRepairPanel')?.remove();
       for (const id of ['failureModal', 'valueModal']) $('#' + id)?.classList.remove('show');
       activeFailureId = null;
@@ -26971,6 +27068,8 @@ function createAkariExtensionHost(options) {
       return section;
     }
     function renderProperties() {
+      propertyHeaderObserver?.disconnect();
+      propertyHeaderObserver?.observe(el.props);
       const scroll = el.props.dataset.owner === selectedId ? el.props.scrollTop : 0;
       el.props.dataset.owner = selectedId;
       el.props.textContent = '';
@@ -27010,7 +27109,11 @@ function createAkariExtensionHost(options) {
               'number',
             ),
           ),
+          propSection('吹き出し',
+            propRow('名前を表示',project.stage.showSpeechNames!==false,
+              v=>(project.stage.showSpeechNames=v),'checkbox')),
         );
+        syncPropertyScrollPadding();
         el.props.scrollTop = scroll;
         return;
       }
@@ -27124,6 +27227,8 @@ function createAkariExtensionHost(options) {
           ),
         ),
       );
+      propertyHeaderObserver?.observe(actions);
+      syncPropertyScrollPadding();
       el.props.scrollTop = scroll;
     }
     function colorChip(node, value) {
@@ -28043,6 +28148,7 @@ function createAkariExtensionHost(options) {
       root.appendChild(d);
     }
     function showFullValue(label, value) {
+      closeRuntimeInspector();
       valueView = { label, value, index: 0, page: 0 };
       renderFullValue();
       $('#valueModal').classList.add('show');
@@ -28073,6 +28179,7 @@ function createAkariExtensionHost(options) {
       $('#valuePageNext').disabled = v.page === pages - 1;
     }
     function showFailureDetails(id = null) {
+      closeRuntimeInspector();
       const records = scheduler?.errorRecords || [];
       if (!records.length) return;
       scheduler.pause();
@@ -28719,6 +28826,7 @@ function createAkariExtensionHost(options) {
       $('#pauseBtn').disabled = !running || scheduler.paused;
       $('#continueBtn').disabled = !running || !scheduler.paused;
       $('#stepBtn').disabled = !running;
+      $('#runtimeInspectBtn').hidden = !running;
       $('#runBtn').disabled = appState !== 'DESIGN';
       $('#stopBtn').disabled = appState === 'DESIGN' || appState === 'IMPORTING';
       updateEditingLock();
@@ -28739,6 +28847,7 @@ function createAkariExtensionHost(options) {
     });
     $('#questionAnswer').addEventListener('compositionend', (e) => limitInputValue(e.target));
     function showQuestion(q, cb) {
+      closeRuntimeInspector();
       stageView.clearInput();
       questionCb = cb;
       $('#questionText').textContent = q;

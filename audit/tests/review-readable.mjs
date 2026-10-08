@@ -106,16 +106,18 @@ async function stageSpeechReview(browser){
   try{
     await page.locator('#runBtn').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
+    await page.locator('#runtimeInspectBtn').click();await page.locator('#runtimeInspector[open]').waitFor();
     await page.locator('#editorModecode').click();
     await page.waitForFunction(()=>document.body.dataset.editorMode==='code'&&getComputedStyle(document.querySelector('.codewin')).display!=='none');
     assert.ok(await page.locator('#codeEditor').isVisible(),'basic runtime can switch to its existing code view');
     await page.locator('#uiLevel').selectOption('advanced');
     assert.equal(await page.locator('#uiLevel').inputValue(),'advanced','basic runtime can switch into advanced mode');
+    assert.ok(await page.locator('#codeEditor').isVisible());
     await page.locator('#pauseBtn').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='PAUSED');
     await page.locator('#continueBtn').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
-    await page.locator('#stopBtn').click();
+    await page.locator('#runtimeInspectorStop').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
     assert.ok(await page.locator('#codeEditor').isVisible(),'stop returns to the existing code editor');
     transition={basicBlocksRun:true,basicCodeViewVisible:true,advancedModeSwitch:true,pauseResume:true,stopReturnsToCodeEditor:true};

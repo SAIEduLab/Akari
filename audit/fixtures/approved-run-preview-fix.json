@@ -1,0 +1,340 @@
+{
+  "schema": "akari-approved-run-preview-fix-v1",
+  "reason": "Playback preview is required in both editor modes and UI levels. Keep existing expectations, baseline and oracle unchanged. Fold the palette tools to increase the visible command area without modifying authored data.",
+  "files": [
+    {
+      "file": "Akari1_1_1.html",
+      "changes": [
+        {
+          "before": "<style id=\"runtime-readability\">\n/* Keep the basic runtime focused on the scene while retaining advanced monitoring. */\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] #app {\n  display: grid;\n  grid-template-columns: minmax(0, 1fr);\n  height: 100dvh;\n  min-height: 100dvh;\n  grid-template-rows: auto minmax(0, 1fr) auto;\n}\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .main {\n  display: grid;\n  grid-template-columns: minmax(0, 1fr);\n  grid-template-rows: minmax(0, 1fr);\n  gap: 0;\n  padding: clamp(8px, 1.2vw, 16px);\n  overflow: hidden;\n}\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .main > .toolbox,\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .main > .codewin,\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .main > .side > :not(.designer):not(.monitor-window) {\n  display: none !important;\n}\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .main > .side {\n  display: contents !important;\n}\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] #designerWindow,\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .side > #designerWindow {\n  grid-column: 1;\n  grid-row: 1;\n  height: auto !important;\n  min-height: 0;\n  flex: none !important;\n}\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .designer-wrap {\n  display: grid;\n  place-items: center;\n  min-width: 0;\n  min-height: 0;\n  padding: clamp(8px, 2vw, 24px);\n  overflow: hidden;\n}\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .stage-viewport {\n  flex: none;\n  margin: auto;\n  max-width: 100%;\n  max-height: 100%;\n}\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] #formFrame { margin: 0 auto; }\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .main > .side > .monitor-window { display:flex !important; grid-column:2; grid-row:1; min-height:0; height:auto; }\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .monitor-window .blockui-side-toggle { display:none; }\nbody.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .monitor-window .blockui-side-label { display:block; }\n@media(max-width:650px){body.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .main { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 160px; }body.runtime[data-ui-level=\"basic\"][data-editor-mode=\"blocks\"] .main > .side > .monitor-window { grid-column:1; grid-row:2; }}\n",
+          "after": "<style id=\"runtime-readability\">\n/* Keep playback focused on the scene in either editor mode and preserve debugging controls. */\nbody.runtime[data-editor-mode] #app {\n  display: grid;\n  grid-template-columns: minmax(0, 1fr);\n  height: 100dvh;\n  min-height: 100dvh;\n  grid-template-rows: auto minmax(0, 1fr) auto;\n}\nbody.runtime[data-editor-mode] .main {\n  display: grid;\n  grid-template-columns: minmax(0, 1fr);\n  grid-template-rows: minmax(0, 1fr) auto;\n  gap: 0;\n  padding: clamp(8px, 1.2vw, 16px);\n  overflow: hidden;\n}\nbody.runtime[data-editor-mode] .main > .toolbox,\nbody.runtime[data-editor-mode] .main > .codewin,\nbody.runtime[data-editor-mode] .main > .side > :not(.designer):not(.monitor-window) {\n  display: none !important;\n}\nbody.runtime[data-editor-mode] .main > .side {\n  display: contents !important;\n}\nbody.runtime[data-editor-mode] #designerWindow,\nbody.runtime[data-editor-mode] .side > #designerWindow {\n  grid-column: 1;\n  grid-row: 1;\n  height: auto !important;\n  min-height: 0;\n  flex: none !important;\n}\nbody.runtime[data-editor-mode] .designer-wrap {\n  display: grid;\n  place-items: center;\n  min-width: 0;\n  min-height: 0;\n  padding: clamp(8px, 2vw, 24px);\n  overflow: hidden;\n}\nbody.runtime[data-editor-mode] .stage-viewport {\n  flex: none;\n  margin: auto;\n  max-width: 100%;\n  max-height: 100%;\n}\nbody.runtime[data-editor-mode] #formFrame { margin: 0 auto; }\nbody.runtime[data-editor-mode] .main > .codewin { display: contents !important; }\nbody.runtime[data-editor-mode] .main > .codewin > :not(.debugbar) { display: none !important; }\nbody.runtime[data-editor-mode] .main > .codewin > .debugbar {\n  display: flex; grid-column: 1 / -1; grid-row: 2;\n  min-width: 0; padding: 6px; margin: 0; flex-wrap: wrap;\n}\nbody.runtime[data-editor-mode] .debugbar #execLocation { max-width: 100%; }\nbody.runtime[data-editor-mode] .debugbar :is(#pauseBtn,#continueBtn,#stepBtn) { display: inline-flex; }\nbody.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }\nbody.runtime[data-editor-mode] .main > .side > .monitor-window { display:flex !important; grid-column:2; grid-row:1; min-height:0; height:auto; }\nbody.runtime[data-editor-mode] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }\nbody.runtime[data-editor-mode] .monitor-window .blockui-side-toggle { display:none; }\nbody.runtime[data-editor-mode] .monitor-window .blockui-side-label { display:block; }\n@media(max-width:650px){body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 160px auto; }body.runtime[data-editor-mode] .main > .side > .monitor-window { grid-column:1; grid-row:2; }body.runtime[data-editor-mode] .main > .codewin > .debugbar { grid-row:3; }}\n",
+          "count": 1
+        },
+        {
+          "before": "    paletteControls.append(help);\n    palette.append(paletteControls, categorySelect, paletteList, palettePages);",
+          "after": "    paletteControls.append(help);\n    paletteControls.id = viewId + '-palette-tools';\n    const paletteToggle = button('探す・作るをたたむ', 'palette-tools-toggle', () => {\n      paletteControls.hidden = !paletteControls.hidden;\n      paletteToggle.setAttribute('aria-expanded', String(!paletteControls.hidden));\n      paletteToggle.textContent = paletteControls.hidden ? '探す・作るをひらく' : '探す・作るをたたむ';\n    });\n    paletteToggle.setAttribute('aria-expanded', 'true');\n    paletteToggle.setAttribute('aria-controls', paletteControls.id);\n    const paletteTools = E('div', 'blockui-palette-tools');\n    paletteTools.append(paletteToggle, paletteControls);\n    palette.append(paletteTools, categorySelect, paletteList, palettePages);",
+          "count": 1
+        },
+        {
+          "before": ".blockui-local-help { font-size:12px; max-width:100%; }",
+          "after": ".blockui-palette-tools { grid-column:1/-1; grid-row:1; min-width:0; width:100%; }\n.blockui-palette-controls[hidden] { display:none !important; }\n[data-blockui-action=\"palette-tools-toggle\"] { width:100%; flex:none; }\n.blockui-local-help { font-size:12px; max-width:100%; }",
+          "count": 1
+        },
+        {
+          "before": "        <button id=\"stepBtn\">1命令ずつ</button>",
+          "after": "        <button id=\"stepBtn\">1命令ずつ</button>\n        <button id=\"runtimeInspectBtn\" type=\"button\" hidden aria-controls=\"runtimeInspector\">本文を見て確かめる</button>",
+          "count": 1
+        },
+        {
+          "before": "<div class=\"modal\" id=\"recoveryModal\"",
+          "after": "<dialog id=\"runtimeInspector\" aria-labelledby=\"runtimeInspectorTitle\">\n  <div class=\"runtime-inspector-head\"><strong id=\"runtimeInspectorTitle\">本文と動きのようす</strong><div id=\"runtimeInspectorModes\"></div><button id=\"runtimeInspectorStop\" type=\"button\">止める</button><button id=\"runtimeInspectorClose\" type=\"button\">実行画面に戻る</button></div>\n  <div id=\"runtimeInspectorBody\"></div>\n</dialog>\n\n<div class=\"modal\" id=\"recoveryModal\"",
+          "count": 1
+        },
+        {
+          "before": ".blockui-local-help { font-size:12px; max-width:100%; }",
+          "after": "#runtimeInspector { width:min(1180px,96vw); height:92dvh; max-height:96dvh; box-sizing:border-box; padding:10px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }\n#runtimeInspector[open] { display:flex; flex-direction:column; gap:8px; }\n#runtimeInspector::backdrop { background:#24344966; }\n.runtime-inspector-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex:none; }\n#runtimeInspectorModes { margin-left:auto; }\n#runtimeInspectorBody { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:8px; flex:1; min-height:0; overflow:auto; }\n#runtimeInspectorBody > .codewin { display:flex !important; min-height:0 !important; min-width:0; overflow:auto; }\n#runtimeInspectorBody .debugbar { padding:6px; flex:none; }\n#runtimeInspectorBody .editor-shell { flex:1; min-height:160px; }\n#runtimeInspectorBody #blockEditor { flex:1; min-height:260px; }\n#runtimeInspectorBody .blockui-layout { flex:1; min-height:0 !important; }\n#runtimeInspectorBody .monitor-window { display:flex !important; min-height:160px; overflow:auto; }\n@media(max-width:700px) { #runtimeInspectorBody { grid-template-columns:minmax(0,1fr); } #runtimeInspectorModes { margin-left:0; } }\n.blockui-local-help { font-size:12px; max-width:100%; }",
+          "count": 1
+        },
+        {
+          "before": "    function disposeRuntime() {",
+          "after": "    const inspectorNodes = [];\n    function closeRuntimeInspector() {\n      const dialog = $('#runtimeInspector');\n      if (dialog.open) dialog.close();\n      for (const {node, marker} of inspectorNodes.splice(0)) { marker.replaceWith(node); }\n      if (appState === 'RUNNING' || appState === 'PAUSED') {\n        stageView.fitStage();\n        el.form.focus({ preventScroll: true });\n      }\n    }\n    function openRuntimeInspector() {\n      if (!['RUNNING', 'PAUSED'].includes(appState) || inspectorNodes.length) return;\n      stageView.clearInput();\n      for (const [node, target] of [[$('.codewin'), $('#runtimeInspectorBody')], [$('.monitor-window'), $('#runtimeInspectorBody')], [$('#editorModecode').parentElement, $('#runtimeInspectorModes')]]) {\n        const marker = document.createComment('runtime inspector return point');\n        node.before(marker); inspectorNodes.push({node, marker}); target.append(node);\n      }\n      $('#runtimeInspector').showModal();\n      renderEditorBinding(mainEditor);\n      $('#runtimeInspectorClose').focus();\n    }\n    $('#runtimeInspectBtn').onclick = openRuntimeInspector;\n    $('#runtimeInspectorClose').onclick = closeRuntimeInspector;\n    $('#runtimeInspectorStop').onclick = stopRun;\n    $('#runtimeInspector').addEventListener('close', () => { if (inspectorNodes.length) closeRuntimeInspector(); });\n    function disposeRuntime() {\n      closeRuntimeInspector();",
+          "count": 1
+        },
+        {
+          "before": "      $('#stepBtn').disabled = !running;",
+          "after": "      $('#stepBtn').disabled = !running;\n      $('#runtimeInspectBtn').hidden = !running;",
+          "count": 1
+        },
+        {
+          "before": "    function showQuestion(q, cb) {",
+          "after": "    function showQuestion(q, cb) {\n      closeRuntimeInspector();",
+          "count": 1
+        },
+        {
+          "before": "    function showFailureDetails(id = null) {",
+          "after": "    function showFailureDetails(id = null) {\n      closeRuntimeInspector();",
+          "count": 1
+        },
+        {
+          "before": "body.runtime[data-editor-mode] .debugbar #execLocation { max-width: 100%; }",
+          "after": "body.runtime[data-editor-mode] .debugbar #execLocation { display:inline-block; max-width:100%; }",
+          "count": 1
+        },
+        {
+          "before": "body.runtime[data-editor-mode] .debugbar :is(#pauseBtn,#continueBtn,#stepBtn) { display: inline-flex; }",
+          "after": "body.runtime[data-editor-mode] .debugbar :is(#pauseBtn,#continueBtn,#stepBtn) { display: inline-flex; }\nbody.runtime[data-editor-mode] .menutool > :is(#newBtn,#sampleSelect,#sampleBtn,#sampleHelpBtn,#openBtn) { display:none; }\nbody.runtime[data-editor-mode] .debugbar > :is(#undoBtn,#redoBtn,#formatBtn,#resetBtn) { display:none; }\n#runtimeInspector #runtimeInspectBtn { display:none; }",
+          "count": 1
+        },
+        {
+          "before": "body.runtime .sprite-bubble {",
+          "after": "@media(max-width:360px) { body.runtime[data-editor-mode] .main { grid-template-rows:minmax(0,1fr) 110px auto; } }\nbody.runtime .sprite-bubble {",
+          "count": 1
+        },
+        {
+          "before": "  padding: clamp(8px, 2vw, 24px);\n  overflow: hidden;\n}\nbody.runtime[data-editor-mode] .stage-viewport {",
+          "after": "  padding: clamp(8px, 2vw, 24px);\n  overflow: auto;\n}\nbody.runtime[data-editor-mode] .stage-viewport {",
+          "count": 1
+        },
+        {
+          "before": "body.runtime[data-editor-mode] .stage-viewport {\n  flex: none;\n  margin: auto;\n  max-width: 100%;\n  max-height: 100%;",
+          "after": "body.runtime[data-editor-mode] .stage-viewport {\n  flex: none;\n  margin: auto;\n  max-width: none;\n  max-height: none;",
+          "count": 1
+        },
+        {
+          "before": "body.runtime[data-editor-mode] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }",
+          "after": "body.runtime[data-editor-mode] .monitor-window { overflow:auto; }\nbody.runtime[data-editor-mode] .monitor-window .output-disclosure { display:block; }\nbody.runtime[data-editor-mode] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }",
+          "count": 1
+        },
+        {
+          "before": "    function showFullValue(label, value) {\n      valueView =",
+          "after": "    function showFullValue(label, value) {\n      closeRuntimeInspector();\n      valueView =",
+          "count": 1
+        },
+        {
+          "before": "[$('#editorModecode').parentElement, $('#runtimeInspectorModes')]])",
+          "after": "[$('#editorModecode').parentElement, $('#runtimeInspectorModes')], [$('#uiLevel').closest('label'), $('#runtimeInspectorModes')]])",
+          "count": 1
+        }
+      ],
+      "afterSha256": "b929f5720b0b224b00fac5090bd397e2abeea965329f212439dc3f75a5d210bf"
+    },
+    {
+      "file": "audit/lib/speech-display-contract.mjs",
+      "changes": [
+        {
+          "before": "import {browserEnvironment} from './browser-environment.mjs';",
+          "after": "import {browserEnvironment} from './browser-environment.mjs';\nimport {verifyRunPreviewReport} from './run-preview-contract.mjs';",
+          "count": 1
+        },
+        {
+          "before": "'fake-zoom','artifact'];",
+          "after": "'fake-zoom','artifact','run-preview'];",
+          "count": 1
+        },
+        {
+          "before": "const names=['candidate.html',",
+          "after": "verifyRunPreviewReport(report);\n  const names=['preview-code-basic.png','preview-code-advanced.png','preview-blocks-basic.png','preview-blocks-advanced.png','candidate.html',",
+          "count": 1
+        },
+        {
+          "before": "const names=['preview-code-basic.png'",
+          "after": "const names=['inspector-code-basic.png','inspector-code-advanced.png','inspector-blocks-basic.png','inspector-blocks-advanced.png','folded-basic.png','folded-advanced.png','preview-code-basic.png'",
+          "count": 1
+        },
+        {
+          "before": "'artifact','run-preview'];",
+          "after": "'artifact','run-preview','inspector-missing','fold-no-space'];",
+          "count": 1
+        }
+      ],
+      "afterSha256": "80a20c70b9660d13b9c2682256aaff5a8330f9152786d0bf205f357b497ef058"
+    },
+    {
+      "file": "audit/tests/speech-display-verify.mjs",
+      "changes": [
+        {
+          "before": "r=>r.artifacts[0].sha256='0'.repeat(64),",
+          "after": "r=>r.artifacts[0].sha256='0'.repeat(64),\n r=>group(r,'DISPLAY-SETTINGS').rows[0].preview.editorVisible=true,",
+          "count": 1
+        },
+        {
+          "before": "r=>group(r,'DISPLAY-SETTINGS').rows[0].preview.editorVisible=true,",
+          "after": "r=>group(r,'DISPLAY-SETTINGS').rows[0].preview.editorVisible=true,\n r=>group(r,'DISPLAY-SETTINGS').rows[0].preview.inspector.opened=false,\n r=>{const o=group(r,'DISPLAY-SETTINGS').rows[2].paletteFold;o.folded.listHeight=o.opened.listHeight;},",
+          "count": 1
+        }
+      ],
+      "afterSha256": "efb6aca7fcd6d737922113ab6e414d50292ae1e7cffb7d1d56de80d943b8d3d4"
+    },
+    {
+      "file": "LANGUAGE.md",
+      "changes": [
+        {
+          "before": "部品設定の操作欄は、名前を上段、見た目のコピーと削除を下段に配置する。長い名前とボタンの文字は折り返し、狭い画面やブラウザー拡大時にも名前と操作を重ねない。設定欄のスクロールは操作欄の実高さを避け、入力欄や色設定を覆わない。名前の値とコピー・削除の機能は変更しない。\n",
+          "after": "部品設定の操作欄は、名前を上段、見た目のコピーと削除を下段に配置する。長い名前とボタンの文字は折り返し、狭い画面やブラウザー拡大時にも名前と操作を重ねない。設定欄のスクロールは操作欄の実高さを避け、入力欄や色設定を覆わない。名前の値とコピー・削除の機能は変更しない。\n\n\n## 再生時のプレビュー画面\n\n「動かす」で実行を始めると、コード／ブロックと、かんたん／くわしくのどちらでも、編集欄から大きな実行画面へ切り替わる。動きのようすと、停止・一時停止・再開・1命令ずつの操作を残す。停止すると同じ本文の編集へ戻る。実行画面への切替は作品データ、言語の意味、保存形式、書き出したHTMLの動作を変更しない。\n\n\n## 命令一覧の上部を折り畳む\n\nブロック表示の命令一覧では「探す・作るをたたむ」で、検索・候補の表示・変数やリストの作成・編集のヒントを折り畳み、下の命令一覧を広く見られる。「探す・作るをひらく」で同じ操作を開き直せる。初めは開いた状態とし、折り畳んでも分類、検索語、命令、本文、作品、Undo／Redoは変更しない。作品設定として保存しない。\n\n実行画面の「本文を見て確かめる」で、同じ本文と動きのようすを検証用の画面に開ける。コード／ブロックの切替、実行位置、一時停止・再開・1命令ずつを保持し、実行中は編集をロックする。「実行画面に戻る」またはEscapeで大きな実行画面へ戻る。検証用の画面からも停止できる。質問や実行エラーの案内を開くときは検証用の画面を閉じ、その案内を操作できるようにする。\n",
+          "count": 1
+        }
+      ],
+      "afterSha256": "36e3164b41d3376518c01095476b46e4d9c1d4130c4ea3710431b0a48e78f5da"
+    },
+    {
+      "file": "audit/tests/editor-assets.mjs",
+      "changes": [
+        {
+          "before": "    await select(p,'sprite-1');await click(p,'#runBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');\n    assert.equal(await p.locator('#paintAdd').isDisabled(),true);assert.equal(await (await reveal(p.locator('.prop-duplicate'))).isDisabled(),true);\n    await click(p,'#stopBtn');assert.equal(await p.locator('#paintAdd').isEnabled(),true);",
+          "after": "    await select(p,'sprite-1');const duplicate=await reveal(p.locator('.prop-duplicate'));assert.equal(await duplicate.isEnabled(),true);\n    await click(p,'#runBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');\n    assert.equal(await p.locator('#paintAdd').isDisabled(),true);assert.equal(await duplicate.isDisabled(),true);assert.equal(await duplicate.isVisible(),false);\n    await click(p,'#stopBtn');assert.equal(await p.locator('#paintAdd').isEnabled(),true);assert.equal(await duplicate.isEnabled(),true);assert.equal(await duplicate.isVisible(),true);",
+          "count": 1
+        }
+      ],
+      "afterSha256": "c7cfe2f5496426aa5a5160eee7cc6ef7746456a609ce6b9653e5350f0937f9d3"
+    },
+    {
+      "file": "audit/browser/cases/browser-session.cjs",
+      "changes": [
+        {
+          "before": "await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');assert.equal(await root(p).locator('input[data-blockui-field]",
+          "after": "await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await p.locator('#runtimeInspectBtn').click();await p.locator('#runtimeInspector[open]').waitFor();assert.equal(await root(p).locator('input[data-blockui-field]",
+          "count": 1
+        },
+        {
+          "before": "assert.match((await state(p)).main.owner,/^function:/);await mode(p,'blocks');",
+          "after": "assert.match((await state(p)).main.owner,/^function:/);await p.locator('#runtimeInspectBtn').click();await p.locator('#runtimeInspector[open]').waitFor();await mode(p,'blocks');",
+          "count": 1
+        },
+        {
+          "before": "await (await reveal(p.locator('#stopBtn'))).click();assert.equal((await state(p)).state,'DESIGN');return{runPauseStepResumeStop",
+          "after": "await p.locator('#runtimeInspectorStop').click();assert.equal((await state(p)).state,'DESIGN');return{runPauseStepResumeStop",
+          "count": 1
+        },
+        {
+          "before": "await (await reveal(p.locator('#stopBtn'))).click();assert.equal((await state(p)).main.source,'失敗値（）を言う。');",
+          "after": "await p.locator('#runtimeInspectorStop').click();assert.equal((await state(p)).main.source,'失敗値（）を言う。');",
+          "count": 1
+        }
+      ],
+      "afterSha256": "cc86d6faf4a9edef8ff4e3ea909c9b18c1d2bbd26c020dbd48f3f66916b135db"
+    },
+    {
+      "file": "audit/tests/review-readable.mjs",
+      "changes": [
+        {
+          "before": "    await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');\n    await page.locator('#editorModecode').click();",
+          "after": "    await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');\n    await page.locator('#runtimeInspectBtn').click();await page.locator('#runtimeInspector[open]').waitFor();\n    await page.locator('#editorModecode').click();",
+          "count": 1
+        },
+        {
+          "before": "    await page.locator('#uiLevel').selectOption('advanced');\n    assert.equal(await page.locator('#uiLevel').inputValue(),'advanced','basic runtime can switch into advanced mode');",
+          "after": "    await page.locator('#runtimeInspectorClose').click();\n    await page.locator('#uiLevel').selectOption('advanced');\n    assert.equal(await page.locator('#uiLevel').inputValue(),'advanced','basic runtime can switch into advanced mode');\n    await page.locator('#runtimeInspectBtn').click();assert.ok(await page.locator('#codeEditor').isVisible());",
+          "count": 1
+        },
+        {
+          "before": "    await page.locator('#stopBtn').click();\n    await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');\n    assert.ok(await page.locator('#codeEditor').isVisible(),'stop returns to the existing code editor');",
+          "after": "    await page.locator('#runtimeInspectorStop').click();\n    await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');\n    assert.ok(await page.locator('#codeEditor').isVisible(),'stop returns to the existing code editor');",
+          "count": 1
+        },
+        {
+          "before": "    await page.locator('#runtimeInspectorClose').click();\n    await page.locator('#uiLevel').selectOption('advanced');",
+          "after": "    await page.locator('#uiLevel').selectOption('advanced');",
+          "count": 1
+        },
+        {
+          "before": "    await page.locator('#runtimeInspectBtn').click();assert.ok(await page.locator('#codeEditor').isVisible());",
+          "after": "    assert.ok(await page.locator('#codeEditor').isVisible());",
+          "count": 1
+        }
+      ],
+      "afterSha256": "084e8831410df82036f771fe339d3d8704c5a01398c8c01d033a23c9920d9f63"
+    },
+    {
+      "file": "audit/tests/numeric-display-browser.mjs",
+      "changes": [
+        {
+          "before": "  const row=page.locator('#runtimeMonitor .monitor-row').filter",
+          "after": "  await page.locator('#runtimeInspectBtn').click();await page.locator('#runtimeInspector[open]').waitFor();\n  const row=page.locator('#runtimeMonitor .monitor-row').filter",
+          "count": 1
+        },
+        {
+          "before": "  assert.equal(await page.locator('#valueOutput').textContent(),'0.30000000000000004');",
+          "after": "  assert.equal(await page.locator('#runtimeInspector').evaluate(n=>n.open),false);await page.locator('#valueModal.show').waitFor();\n  assert.equal(await page.locator('#valueOutput').textContent(),'0.30000000000000004');",
+          "count": 1
+        }
+      ],
+      "afterSha256": "c4c8a755a590e0d48137c13ae8acd3be96cc7db87b9b6642e420c03fb7acd287"
+    },
+    {
+      "file": "audit/tests/ux-surface-browser.mjs",
+      "changes": [
+        {
+          "before": "  const metrics=await bubble.evaluate(b=>{",
+          "after": "  const measure=()=>bubble.evaluate(b=>{",
+          "count": 1
+        },
+        {
+          "before": "  assert.ok(metrics.inside);assert.ok(metrics.overlap<1);",
+          "after": "  let fitted;\n  if(mode==='fit'&&width===1366){fitted=await measure();assert.equal(await page.locator('#stageZoomFit').getAttribute('aria-pressed'),'true');assert.ok(Math.abs(fitted.scale-1)<.02,'640 by 400 stage fits the large playback viewport');assert.ok(fitted.inside&&fitted.overlap<1&&fitted.font>=13.5);await bubble.getByRole('button',{name:'吹出しの全文を見る',exact:true}).click();assert.equal(await page.locator('#valueOutput').textContent(),long);await page.locator('#valueClose').click();fitted.fullTextExact=true;await page.locator('#stageZoomReset').click();for(let i=0;i<6;i++)await page.locator('#stageZoomOut').click();}\n  const metrics=await measure();\n  assert.ok(metrics.inside);assert.ok(metrics.overlap<1);",
+          "count": 1
+        },
+        {
+          "before": "return{width,height,mode,...metrics,fullTextExact:true};",
+          "after": "return{width,height,mode,...metrics,fullTextExact:true,...(fitted?{fitted}:{})};",
+          "count": 1
+        }
+      ],
+      "afterSha256": "ef28e26f23a90a41418b07d3cae451f9d4e70ed6ccaebe6da6a9cd5462575034"
+    },
+    {
+      "file": "audit/lib/semantic-extension-contract.mjs",
+      "changes": [
+        {
+          "before": "  const {scale,font,overlap,...o}=report.results[i+1].observed;",
+          "after": "  const {scale,font,overlap,fitted,...o}=report.results[i+1].observed;\n  if(width===1366&&mode==='fit'){assert.ok(fitted&&Math.abs(fitted.scale-1)<.02);assert.equal(fitted.inside,true);assert.ok(fitted.font>=13.5&&fitted.overlap>=0&&fitted.overlap<1);assert.equal(fitted.fullTextExact,true);}else assert.equal(fitted,undefined);",
+          "count": 1
+        }
+      ],
+      "afterSha256": "94a6f5f75132368d34c470269b20f11ef1e3820deaeb155e28792be74d121f3e"
+    },
+    {
+      "file": "audit/tests/actions-transfer-verify.mjs",
+      "changes": [
+        {
+          "before": "mode,scale:mode==='100'?1:.41,font:14,overlap:0,inside:true,fullTextExact:true}",
+          "after": "mode,scale:mode==='100'?1:.41,font:14,overlap:0,inside:true,fullTextExact:true,...(width===1366&&mode==='fit'?{fitted:{scale:1,font:14,overlap:0,inside:true,fullTextExact:true}}:{})}",
+          "count": 1
+        }
+      ],
+      "afterSha256": "fe896adbe75122ee4275e90facd10e10a0c1ea4c8362826eb34f3be99d3d105c"
+    },
+    {
+      "file": "audit/lib/migration-source-contract.mjs",
+      "changes": [
+        {
+          "before": "import {preservedLicenseSource} from './license-contract.cjs';",
+          "after": "import fs from 'node:fs';\nimport {preservedLicenseSource,sha} from './license-contract.cjs';",
+          "count": 1
+        },
+        {
+          "before": "  bytes=preservedLicenseSource(file,bytes);\n",
+          "after": "  bytes=preservedLicenseSource(file,bytes);\n  // Undo only the four approved playback UI-route changes for historical comparison.\n  // The fixed ledger and semantic oracle are not refreshed from the candidate.\n  if(file==='audit/browser/cases/browser-session.cjs'){\n    const rows=JSON.parse(fs.readFileSync(new URL('../fixtures/approved-run-preview-fix.json',import.meta.url))).files.filter(r=>r.file===file);\n    assert.equal(rows.length,1,'one approved playback source record');\n    const [row]=rows;\n    assert.equal(sha(Buffer.from(JSON.stringify(row))),'103392751c14b9a17feddc3fa3250ef8070c31aed075874f1cda6de1f2aa7b41','exact approved playback source record');\n    assert.equal(sha(bytes),row.afterSha256,'exact approved playback test source');\n    let text=bytes.toString('utf8');\n    for(const c of [...row.changes].reverse()){\n      assert.equal(text.split(c.after).length,c.count+1,'exact playback hunk: '+file);\n      text=text.replaceAll(c.after,c.before);\n    }\n    bytes=Buffer.from(text);\n    assert.equal(sha(bytes),'e0079530882bc7381b86b1583e431f9adfc9320c4a14217be6bf9ce48cbc234c','all historical test bytes preserved');\n  }\n",
+          "count": 1
+        }
+      ],
+      "afterSha256": "9ffbefce4a145814067fb914fb035aa7a7d7f389f9767fdee949ca9087da00a5"
+    },
+    {
+      "file": "audit/lib/ux-repair02-ui.mjs",
+      "changes": [
+        {
+          "before": "await p.waitForFunction(()=>Akari.app.project.name==='操作契約02');",
+          "after": "await p.waitForFunction(source=>!document.querySelector('#fileInput').value&&Akari.app.project.name==='操作契約02'&&Akari.app.project.scripts.find(s=>s.id==='main')?.source===source,source);",
+          "count": 1
+        }
+      ],
+      "afterSha256": "41d4bd8c06ad1c5404f4d2088655d568d04de72a63f59c67e14e221bdab2815c"
+    },
+    {
+      "file": "audit/tests/ux-repair02-layout.mjs",
+      "changes": [
+        {
+          "before": "  await pageFor(browser,product,async p=>{await p.setViewportSize(viewport);await p.emulateMedia({colorScheme:scheme});",
+          "after": "  report.activeCase={task:c.id,viewport,scheme,phase:'preparation'};save();\n  await pageFor({newContext:options=>browser.newContext({...options,viewport,colorScheme:scheme})},product,async p=>{",
+          "count": 1
+        },
+        {
+          "before": "   for(const scale of [100,75])",
+          "after": "   report.activeCase.phase='layout';\n   for(const scale of [100,75])",
+          "count": 1
+        },
+        {
+          "before": "   await p.locator('#editorModecode').click();const code=",
+          "after": "   report.activeCase.phase='return-to-code';\n   await p.locator('#editorModecode').click();const code=",
+          "count": 1
+        },
+        {
+          "before": "  });console.log('layout '",
+          "after": "  });delete report.activeCase;console.log('layout '",
+          "count": 1
+        }
+      ],
+      "afterSha256": "9da006d550a93e40694b9bc5eb196c001b2c6eed70c5494ae24b56ad984467a3"
+    }
+  ]
+}
