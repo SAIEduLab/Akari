@@ -298,6 +298,17 @@
         }
       ],
       "afterSha256": "9ffbefce4a145814067fb914fb035aa7a7d7f389f9767fdee949ca9087da00a5"
+    },
+    {
+      "file": "audit/lib/ux-repair02-ui.mjs",
+      "changes": [
+        {
+          "before": "await p.waitForFunction(()=>Akari.app.project.name==='操作契約02');",
+          "after": "await p.waitForFunction(source=>!document.querySelector('#fileInput').value&&Akari.app.project.name==='操作契約02'&&Akari.app.project.scripts.find(s=>s.id==='main')?.source===source,source);",
+          "count": 1
+        }
+      ],
+      "afterSha256": "41d4bd8c06ad1c5404f4d2088655d568d04de72a63f59c67e14e221bdab2815c"
     }
   ]
 }
