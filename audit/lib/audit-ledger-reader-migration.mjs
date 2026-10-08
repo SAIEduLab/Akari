@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import {ledgerRoot,ledgerSources,ledgerSourceCommit,expandAuditLedger,readerMigrationPins} from './audit-ledger-contract.mjs';
+import {ledgerRoot,ledgerSources,ledgerSourceCommit,expandAuditLedger,readerMigrationPins,actionsRepairSources} from './audit-ledger-contract.mjs';
 
 const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
 export const migratedReaderPaths=Object.freeze([
@@ -62,10 +62,13 @@ export function restoreReaderSource(file,bytes,row){
 export function verifyReaderMigrationIntegrity(repositoryRoot=ledgerRoot){
   const read=p=>fs.readFileSync(path.join(repositoryRoot,p));
   const record=validateReaderMigrationIntegrity(read(readerMigrationPins.recordPath),read(readerMigrationPins.adapterPath),read(readerMigrationPins.validatorPath));
+  for(const row of actionsRepairSources)restoreReaderSource(row.path,read(row.path),row);
   for(const row of record.files)restoreReaderSource(row.path,read(row.path),row);
   return record;
 }
 export function preservedAuditReaderBytes(file,bytes,repositoryRoot=ledgerRoot){
+  const repaired=actionsRepairSources.find(row=>row.path===file);
+  if(repaired)bytes=restoreReaderSource(file,bytes,repaired);
   const ledger=ledgerSources.find(s=>s.path===file);
   if(ledger)return expandAuditLedger(JSON.parse(bytes),file).bytes;
   if(!migratedReaderPaths.includes(file))return bytes;

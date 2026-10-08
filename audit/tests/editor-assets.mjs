@@ -53,6 +53,39 @@ const imageInfo = p => p.evaluate(async()=>{
   for(let y=0;y<cv.height;y++)for(let x=0;x<cv.width;x++)if(data[(y*cv.width+x)*4+3]){count++;left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
   return {width:cv.width,height:cv.height,count,left,top,right,bottom,first:Array.from(data.slice(0,4)),mime:asset.mime};
 });
+// Read runtime readiness and image presentation atomically within the existing page bound.
+async function observeStandaloneDango(p,id) {
+  const handle=await p.waitForFunction(id=>{
+    if(document.querySelector('#playerRoot')?.dataset.state!=='RUNNING')return false;
+    const c=Array.from(document.querySelectorAll('#formSurface .component')).find(c=>c.dataset.id===id),i=c?.querySelector('.costume-img');
+    if(!i?.complete||i.naturalWidth!==180||i.naturalHeight!==180)return false;
+    const canvas=document.createElement('canvas');canvas.width=180;canvas.height=180;canvas.getContext('2d').drawImage(i,0,0);
+    return {width:c.style.width,height:c.style.height,fit:getComputedStyle(i).objectFit,alpha:canvas.getContext('2d').getImageData(0,0,1,1).data[3]};
+  },id);
+  try {return await handle.jsonValue();} finally {await handle.dispose();}
+}
+async function standaloneObservationControls(p) {
+  const controls=[],frame=await p.context().newPage();
+  try {
+    const image=await frame.evaluate(()=>{const c=document.createElement('canvas');c.width=c.height=180;return c.toDataURL();});
+    await frame.setContent('<div id="playerRoot" data-state="PREPARING"><div id="formSurface"><div class="component" data-id="dango-control" style="width:180px;height:180px"><img class="costume-img" style="object-fit:fill" src="'+image+'"></div></div></div>');
+    await frame.locator('img').evaluate(i=>i.decode());
+    assert.equal(await frame.evaluate(()=>Array.from(document.querySelectorAll('#formSurface .costume-img')).some(i=>i.complete&&i.naturalWidth===180&&i.naturalHeight===180)),true,'old image-only condition accepts PREPARING');
+    frame.setDefaultTimeout(100); // Synthetic refusal bound only; product page retains 30000ms.
+    async function refused(id) {let error;try{await observeStandaloneDango(frame,id);}catch(e){error=e;}assert.equal(error?.name,'TimeoutError',id+' must not be accepted');}
+    await refused('dango-control');controls.push({id:'permanent-preparing',rejected:true,timeoutMs:100});
+    frame.setDefaultTimeout(30000); // The positive control uses the unchanged product observation bound.
+    await frame.evaluate(()=>requestAnimationFrame(()=>{document.querySelector('#playerRoot').dataset.state='RUNNING';}));
+    assert.deepEqual(await observeStandaloneDango(frame,'dango-control'),{width:'180px',height:'180px',fit:'fill',alpha:0});controls.push({id:'delayed-running',accepted:true});
+    frame.setDefaultTimeout(100);
+    await refused('missing');controls.push({id:'missing-target',rejected:true,timeoutMs:100});
+    await frame.locator('img').evaluate(i=>{const c=document.createElement('canvas');c.width=c.height=179;i.src=c.toDataURL();return i.decode();});
+    await refused('dango-control');controls.push({id:'wrong-image-size',rejected:true,timeoutMs:100});
+    await frame.close();let closed;try{await observeStandaloneDango(frame,'dango-control');}catch(e){closed=e;}assert.match(closed?.message||'',/Target page, context or browser has been closed/);controls.push({id:'closed-page',rejected:true});
+  } finally {await frame.close();}
+  return controls;
+}
+const standaloneControls=[];
 const cases = {
   async 'duplicate-types-settings-identities'(p) {
     for (const type of ['label','button','input','box','sprite']) {
@@ -280,13 +313,9 @@ const cases = {
     const raw=Array.from(html.matchAll(/"dataBase64"\s*:\s*"([A-Za-z0-9+/=]+)"/g),match=>Buffer.from(match[1],'base64'));
     assert.ok(raw.some(bytes=>bytes.length===35664&&createHash('sha256').update(bytes).digest('hex')===expected),'standalone HTML carries the exact original PNG');
     await p.goto(pathToFileURL(path.resolve(generated)).href);await p.locator('#playerStart').click();
-    await p.waitForFunction(()=>Array.from(document.querySelectorAll('#formSurface .costume-img')).some(i=>i.complete&&i.naturalWidth===180&&i.naturalHeight===180));
-    const shown=await p.evaluate(()=>{
-      const i=Array.from(document.querySelectorAll('#formSurface .costume-img')).find(i=>i.naturalWidth===180),c=i.closest('.component'),canvas=document.createElement('canvas');
-      canvas.width=180;canvas.height=180;canvas.getContext('2d').drawImage(i,0,0);
-      return {width:c.style.width,height:c.style.height,fit:getComputedStyle(i).objectFit,alpha:canvas.getContext('2d').getImageData(0,0,1,1).data[3]};
-    });
+    const shown=await observeStandaloneDango(p,second.id);
     assert.deepEqual(shown,{width:'180px',height:'180px',fit:'fill',alpha:0},'standalone displays the square original at the requested size without cropping');
+    standaloneControls.push(...await standaloneObservationControls(p));
   },
 };
 assert.deepEqual(Object.keys(cases).sort(),[...editorAssetIds].sort());
@@ -305,7 +334,7 @@ for(const [id,run] of Object.entries(cases)) {
     } catch(error) { results.push({id,pass:false,detail:error.stack});console.error('FAIL '+id+': '+error.message); }
 }
 assert.deepEqual(snapshot(currentProductFile()),inputs);
-const report={status:results.every(r=>r.pass)&&!pageErrors.length&&!networkRequests.length?'PASS':'FAIL',snapshot:inputs,environment:'chromium',browser:version,results,pageErrors,networkRequests};
+const report={status:results.every(r=>r.pass)&&!pageErrors.length&&!networkRequests.length?'PASS':'FAIL',snapshot:inputs,environment:'chromium',browser:version,results,pageErrors,networkRequests,standaloneObservationControls:standaloneControls};
 fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 verifyEditorAssets(report,inputs);
 console.log('Editor assets: '+results.length+'/'+editorAssetIds.length+' PASS');

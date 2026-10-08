@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
-import {ledgerSources,ledgerSourceCommit,ledgerRoot,commonDefinitionId,expandAuditLedger,readAuditLedger,verifyAuditLedgers,readerMigrationPins} from '../lib/audit-ledger-contract.mjs';
+import {ledgerSources,ledgerSourceCommit,ledgerRoot,commonDefinitionId,expandAuditLedger,readAuditLedger,verifyAuditLedgers,readerMigrationPins,actionsRepairSources,actionsRepairSourceCommit} from '../lib/audit-ledger-contract.mjs';
 
 export function checkLedgerNegatives(repositoryRoot=ledgerRoot){
   const results=[];
@@ -64,7 +64,8 @@ export function verifyLedgerMigrationRecord(repositoryRoot=ledgerRoot){
   assert.equal(repair.priorReaderRecord.sha256,'9eb62d87bf742dfe959b3c8e845a01f6e991fd7387340d8c44a380399bc3597c');
   assert.equal(hash(JSON.stringify(reader,null,2)+'\n'),repair.priorReaderRecord.sha256,'previous reader record retained exactly');
   for(const [prior,p]of [[repair.priorAdapter,readerMigrationPins.adapterPath],[repair.priorValidator,readerMigrationPins.validatorPath]]){
-    const text=fs.readFileSync(path.join(repositoryRoot,p),'utf8');assert.equal(text.split(prior.after).length,2,'one bounded preceding change');
+    const bytes=fs.readFileSync(path.join(repositoryRoot,p)),row=actionsRepairSources.find(r=>r.path===p);
+    const text=(row?restoreReaderSource(p,bytes,row):bytes).toString('utf8');assert.equal(text.split(prior.after).length,2,'one bounded preceding change');
     assert.equal(hash(text.replace(prior.after,prior.before)),prior.sha256,'preceding reviewed source retained exactly');
   }
   return record;
@@ -97,7 +98,9 @@ export function compareStartingLedgers(repositoryRoot=ledgerRoot){
 
 export function checkReaderMigrationNegatives(repositoryRoot=ledgerRoot){
   const record=verifyReaderMigrationIntegrity(repositoryRoot),results=[],read=p=>fs.readFileSync(path.join(repositoryRoot,p));
-  for(const row of record.files){
+  assert.equal(actionsRepairSourceCommit,'8ca421c23b3325fddff9edb87c640b861fa3ffa0');
+  assert.deepEqual(actionsRepairSources.map(r=>r.path),['audit/tests/editor-assets.mjs','audit/lib/feature-contract.mjs','audit/lib/audit-ledger-reader-migration.mjs']);
+  for(const row of [...record.files,...actionsRepairSources]){
     const good=read(row.path);
     const cases=[
       ['extra-byte',(_,b)=>Buffer.concat([b,Buffer.from('\n')])],
@@ -135,6 +138,6 @@ if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.m
   verifyLedgerMigrationRecord();
   const report={status:'PASS',ledgers:verifyAuditLedgers(),negativeCases:checkLedgerNegatives().length,readerMigrationNegativeCases:checkReaderMigrationNegatives().length,migrationRecord:'PASS'};
   if(process.argv.includes('--check-freeze'))report.freeze=verifyLedgerFreeze();
-  if(process.argv.includes('--compare-start')){report.fullComparison=compareStartingLedgers();report.readerComparison=compareStartingReaders();}
+  if(process.argv.includes('--compare-start')){report.fullComparison=compareStartingLedgers();report.readerComparison=compareStartingReaders();report.actionsRepairComparison=actionsRepairSources.map(row=>{const original=execFileSync('git',['show',actionsRepairSourceCommit+':'+row.path],{cwd:ledgerRoot,maxBuffer:16*1024*1024});assert.ok(restoreReaderSource(row.path,fs.readFileSync(path.join(ledgerRoot,row.path)),row).equals(original),'independent merged-start bytes: '+row.path);return {path:row.path,status:'PASS',sourceCommit:actionsRepairSourceCommit,hunks:row.hunks.length};});}
   console.log(JSON.stringify(report,null,2));
 }
