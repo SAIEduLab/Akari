@@ -3,6 +3,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {sha} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
+import {preservedCandidateBytes} from '../lib/migration-source-contract.mjs';
 import {childUxProvenance} from '../lib/child-ux-observations.mjs';
 import {plan,scope,approvedInputAdapter,approvedStartupAdapter,approvedPreviewChanges,verifyProtectedInput,currentInputs,verifyFrozenInputs,verifyProvenance,verifyNeeds,verifyRetryHistory,verifyManualSession,verifyManualSessions,verifyChildMatrix,verifyChildLanguage,vocabularyCandidates} from '../lib/child-ux-contract.mjs';
 import {matrixControlIds,languageControlIds,staticControlIds,verifyReportPlatform,sealChildBundle,verifyChildAggregate} from '../lib/child-ux-evidence.mjs';
@@ -53,9 +54,10 @@ function staticControls(){
   for(const [i,bad]of [Buffer.from(relaxed),Buffer.concat([startup,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(approvedStartupAdapter.file,bad,startupExpected));rows.push({id:staticControlIds[28+i],rejected:true});}
   for(const [i,correction]of approvedPreviewChanges.entries()){
     const bytes=fs.readFileSync(correction.file),expected=scope.protectedFiles[correction.file];verifyProtectedInput(correction.file,bytes,expected);
+    if(correction.file==='audit/browser/cases/browser-session.cjs')assert.equal(sha(preservedCandidateBytes(correction.file,bytes)),'e0079530882bc7381b86b1583e431f9adfc9320c4a14217be6bf9ce48cbc234c');
     const last=correction.changes.at(-1);assert.equal(bytes.toString('utf8').split(last.after).length,last.count+1);
     const reverted=bytes.toString('utf8').replace(last.after,last.before);assert.notEqual(reverted,bytes.toString('utf8'));
-    for(const [j,bad]of [Buffer.from(reverted),Buffer.concat([bytes,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(correction.file,bad,expected));rows.push({id:staticControlIds[30+i*2+j],rejected:true});}
+    for(const [j,bad]of [Buffer.from(reverted),Buffer.concat([bytes,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(correction.file,bad,expected));if(correction.file==='audit/browser/cases/browser-session.cjs')assert.throws(()=>preservedCandidateBytes(correction.file,bad));rows.push({id:staticControlIds[30+i*2+j],rejected:true});}
   }
   assert.deepEqual(rows.map(r=>r.id),staticControlIds);return rows;
 }

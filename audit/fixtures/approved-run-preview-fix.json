@@ -282,6 +282,22 @@
         }
       ],
       "afterSha256": "fe896adbe75122ee4275e90facd10e10a0c1ea4c8362826eb34f3be99d3d105c"
+    },
+    {
+      "file": "audit/lib/migration-source-contract.mjs",
+      "changes": [
+        {
+          "before": "import {preservedLicenseSource} from './license-contract.cjs';",
+          "after": "import fs from 'node:fs';\nimport {preservedLicenseSource,sha} from './license-contract.cjs';",
+          "count": 1
+        },
+        {
+          "before": "  bytes=preservedLicenseSource(file,bytes);\n",
+          "after": "  bytes=preservedLicenseSource(file,bytes);\n  // Undo only the four approved playback UI-route changes for historical comparison.\n  // The fixed ledger and semantic oracle are not refreshed from the candidate.\n  if(file==='audit/browser/cases/browser-session.cjs'){\n    const rows=JSON.parse(fs.readFileSync(new URL('../fixtures/approved-run-preview-fix.json',import.meta.url))).files.filter(r=>r.file===file);\n    assert.equal(rows.length,1,'one approved playback source record');\n    const [row]=rows;\n    assert.equal(sha(Buffer.from(JSON.stringify(row))),'103392751c14b9a17feddc3fa3250ef8070c31aed075874f1cda6de1f2aa7b41','exact approved playback source record');\n    assert.equal(sha(bytes),row.afterSha256,'exact approved playback test source');\n    let text=bytes.toString('utf8');\n    for(const c of [...row.changes].reverse()){\n      assert.equal(text.split(c.after).length,c.count+1,'exact playback hunk: '+file);\n      text=text.replaceAll(c.after,c.before);\n    }\n    bytes=Buffer.from(text);\n    assert.equal(sha(bytes),'e0079530882bc7381b86b1583e431f9adfc9320c4a14217be6bf9ce48cbc234c','all historical test bytes preserved');\n  }\n",
+          "count": 1
+        }
+      ],
+      "afterSha256": "9ffbefce4a145814067fb914fb035aa7a7d7f389f9767fdee949ca9087da00a5"
     }
   ]
 }
