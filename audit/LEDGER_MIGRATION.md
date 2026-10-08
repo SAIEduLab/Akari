@@ -42,8 +42,10 @@
 
 ## UI監査の観測修正（追加の明示承認）
 
-前段の44段階local gateは43 PASS、ui-buttons 1 FAIL。UI-BUTTON-PENDINGで本文「5を言う。」とhistory+1のassertion通過後、commitボタン非表示の即時観測がFAILとなった。元の結果・入力snapshotはローカル証拠に保持し、後のPASSで書き換えない。開始SHAと候補の単独UI9件は双方PASS。製品・当該試験・host・fixture等7入力は開始Git blobと全バイト一致した。追加の読み取り観測は既存のblur確定・focus保持・次フレーム描画を支持するが、元のassertion失敗は再現しておらず製品不具合の証拠に採用しない。ユーザーは監査側の問題として明示的に修正を指示した。
+修正前の監査実行記録は44段階中43 PASS、ui-buttons 1 FAIL。この UI-BUTTON-PENDING の製品判定は、監査の観測不備による無効な製品判定であり、修正後の検証で置換済み。現在の製品不良・未解消不具合には算入しない。UI-BUTTON-PENDINGで本文「5を言う。」とhistory+1のassertion通過後、commitボタン非表示の即時観測がFAILとなった。元の結果・入力snapshotはローカル証拠に保持し、後のPASSで書き換えない。開始SHAと候補の単独UI9件は双方PASS。製品・当該試験・host・fixture等7入力は開始Git blobと全バイト一致した。追加の読み取り観測は既存のblur確定・focus保持・次フレーム描画を支持するが、元のassertion失敗は再現しておらず製品不具合の証拠に採用しない。ユーザーは監査側の問題として明示的に修正を指示した。
 
 ui-buttons.mjsは確定後、既存の30000ms page上限内でDOMのhidden状態を待ち、元のsource/history/nonvisibility assertionsを維持する。試験9 ID、360000ms suite予算、準備fixture、期待値は変更しない。固定sleep追加、timeout延長、retry、skip、FAIL削除はない。永続表示は100msの専用負例deadlineでTimeoutErrorを要求し、閉じたpageも拒否する。次フレームでhiddenとなる正例を含む3観測controlを実browserで検査し、ui-buttons-contractは証拠の欠落・誤値・余分なcontrol・負例deadline改変を拒否する。
 
 追加は監査試験・関連validatorの2ファイルで、製品凍結を解除しない。旧UI原本hashを維持し、具体差分をファイル別の固定位置hunkとして逆射影する。370 raw凍結＋3承認済み監査sourceの開始bytes保証を検査し、初回373と前段372の凍結記録、および前段reader記録・adapter・validatorも旧hashへ再構成して検証する。新hashは承認された監査差分の完全性専用であり旧原本hashを更新しない。同じ読み取り専用レビュアーで追加差分を確認し、最終snapshotの関連検査と必要な回帰が合格してから通常commit・Push・remote SHA照合で停止する。
+
+修正後のUI9件・観測control3件・UI validator16負例・台帳/reader165負例・最終関連13検査と同じレビュアーの追加レビューはPASS。実装は commit 7a23358b6727df23d97de46547da652e0f332259 で通常Pushし、remote SHA一致を確認済み。この案件の現行判定に未解消のUI観測FAILはない。修正後の全44段階を通した再実行は行っていない。これは検証範囲として別記し、現在のFAILに集計しない。修正前の実行失敗・結果・snapshot・生ログは改変/削除せず保持する。
