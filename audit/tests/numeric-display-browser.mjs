@@ -32,7 +32,9 @@ try{await withBrowser(chrome,async browser=>{
   const source='文字（表示値）を言う。\n10秒待つ。';await install(page,source);await page.locator('#runBtn').click();await page.locator('.sprite-bubble').waitFor();assert.equal(await page.locator('.sprite-bubble').textContent(),'0.30000000000000004');
   await revealMonitor(page);
   const height=await page.locator('#runtimeMonitor').evaluate(n=>n.getBoundingClientRect().height);assert.ok(height>=120,'output must leave a readable monitor region: '+height);
+  await page.locator('#runtimeInspectBtn').click();await page.locator('#runtimeInspector[open]').waitFor();
   const row=page.locator('#runtimeMonitor .monitor-row').filter({has:page.locator('.monitor-key',{hasText:'表示値'})});await row.waitFor();await row.scrollIntoViewIfNeeded();await page.screenshot({path:path.join(dir,'monitor-output-'+width+'.png')});assert.equal(await row.locator('.monitor-value').evaluate(n=>n.firstChild.textContent),'0.3');await row.getByRole('button',{name:'表示値の実値（表示を丸めています）',exact:true}).click();
+  assert.equal(await page.locator('#runtimeInspector').evaluate(n=>n.open),false);await page.locator('#valueModal.show').waitFor();
   assert.equal(await page.locator('#valueOutput').textContent(),'0.30000000000000004');assert.match(await page.locator('#valueNotice').textContent(),/丸める前の実値/);await page.locator('#valueClose').click();await page.locator('#stopBtn').click();
   const pending=page.waitForEvent('download');await page.locator('#saveBtn').click();const download=await pending,file=path.join(dir,'display-exact.akari.md');await download.saveAs(file);
   const saved=await page.evaluate(t=>Akari.parseProjectFile(t).then(r=>({initial:r.project.projectData.variables[0].initialValue,source:r.project.scripts[0].source})),fs.readFileSync(file,'utf8'));assert.deepEqual(saved,{initial:0.30000000000000004,source});return{monitor:'0.3',text:'0.30000000000000004',raw:'0.30000000000000004',savedExact:true,width,monitorHeight:height};

@@ -121,7 +121,7 @@ try{
 }catch(error){results.push({file:'search-validator-negative',status:'FAIL',error:error.stack});}
 try{
  const observed=[{emptyStartup:true,emptyRunIdle:true,clickDistances:[30,60],explicitSample:true,removeUndo:true,emptyNew:true},
-  ...[[1366,'fit'],[1366,'100'],[390,'fit']].map(([width,mode])=>({width,height:width===390?844:768,mode,scale:mode==='100'?1:.41,font:14,overlap:0,inside:true,fullTextExact:true})),
+  ...[[1366,'fit'],[1366,'100'],[390,'fit']].map(([width,mode])=>({width,height:width===390?844:768,mode,scale:mode==='100'?1:.41,font:14,overlap:0,inside:true,fullTextExact:true,...(width===1366&&mode==='fit'?{fitted:{scale:1,font:14,overlap:0,inside:true,fullTextExact:true}}:{})})),
   ...[1366,1024,390].flatMap(width=>['light','dark'].map(theme=>({width,height:width===390?844:768,theme,hoverAndSelection:true,views:uxManualFiles.map(file=>({file,body:10,heading:10,selection:10,selected:true,overflow:false}))})))];
  const control={schema:'akari-ux-surface-browser-v1',status:'PASS',snapshot:snapshot(currentProductFile()),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:browserEnvironment.version,playwright:browserEnvironment.playwright},results:uxSurfaceIds.map((id,i)=>({id,status:'PASS',observed:observed[i]}))};
  verifyUxSurface(control);

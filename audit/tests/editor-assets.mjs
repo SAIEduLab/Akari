@@ -192,9 +192,10 @@ const cases = {
     await p.screenshot({path:path.join(artifacts,'drawing-player.png'),fullPage:true});
   },
   async 'paint-runtime-lock'(p) {
-    await select(p,'sprite-1');await click(p,'#runBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
-    assert.equal(await p.locator('#paintAdd').isDisabled(),true);assert.equal(await (await reveal(p.locator('.prop-duplicate'))).isDisabled(),true);
-    await click(p,'#stopBtn');assert.equal(await p.locator('#paintAdd').isEnabled(),true);
+    await select(p,'sprite-1');const duplicate=await reveal(p.locator('.prop-duplicate'));assert.equal(await duplicate.isEnabled(),true);
+    await click(p,'#runBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
+    assert.equal(await p.locator('#paintAdd').isDisabled(),true);assert.equal(await duplicate.isDisabled(),true);assert.equal(await duplicate.isVisible(),false);
+    await click(p,'#stopBtn');assert.equal(await p.locator('#paintAdd').isEnabled(),true);assert.equal(await duplicate.isEnabled(),true);assert.equal(await duplicate.isVisible(),true);
   },
   async 'paint-small-viewport-touch'(p) {
     await p.setViewportSize({width:390,height:844});await open(p);

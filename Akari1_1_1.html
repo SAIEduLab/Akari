@@ -5518,13 +5518,13 @@ body.runtime[data-editor-mode] .designer-wrap {
   min-width: 0;
   min-height: 0;
   padding: clamp(8px, 2vw, 24px);
-  overflow: hidden;
+  overflow: auto;
 }
 body.runtime[data-editor-mode] .stage-viewport {
   flex: none;
   margin: auto;
-  max-width: 100%;
-  max-height: 100%;
+  max-width: none;
+  max-height: none;
 }
 body.runtime[data-editor-mode] #formFrame { margin: 0 auto; }
 body.runtime[data-editor-mode] .main > .codewin { display: contents !important; }
@@ -5540,6 +5540,8 @@ body.runtime[data-editor-mode] .debugbar > :is(#undoBtn,#redoBtn,#formatBtn,#res
 #runtimeInspector #runtimeInspectBtn { display:none; }
 body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }
 body.runtime[data-editor-mode] .main > .side > .monitor-window { display:flex !important; grid-column:2; grid-row:1; min-height:0; height:auto; }
+body.runtime[data-editor-mode] .monitor-window { overflow:auto; }
+body.runtime[data-editor-mode] .monitor-window .output-disclosure { display:block; }
 body.runtime[data-editor-mode] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }
 body.runtime[data-editor-mode] .monitor-window .blockui-side-toggle { display:none; }
 body.runtime[data-editor-mode] .monitor-window .blockui-side-label { display:block; }
@@ -26340,7 +26342,7 @@ function createAkariExtensionHost(options) {
     function openRuntimeInspector() {
       if (!['RUNNING', 'PAUSED'].includes(appState) || inspectorNodes.length) return;
       stageView.clearInput();
-      for (const [node, target] of [[$('.codewin'), $('#runtimeInspectorBody')], [$('.monitor-window'), $('#runtimeInspectorBody')], [$('#editorModecode').parentElement, $('#runtimeInspectorModes')]]) {
+      for (const [node, target] of [[$('.codewin'), $('#runtimeInspectorBody')], [$('.monitor-window'), $('#runtimeInspectorBody')], [$('#editorModecode').parentElement, $('#runtimeInspectorModes')], [$('#uiLevel').closest('label'), $('#runtimeInspectorModes')]]) {
         const marker = document.createComment('runtime inspector return point');
         node.before(marker); inspectorNodes.push({node, marker}); target.append(node);
       }
@@ -28146,6 +28148,7 @@ function createAkariExtensionHost(options) {
       root.appendChild(d);
     }
     function showFullValue(label, value) {
+      closeRuntimeInspector();
       valueView = { label, value, index: 0, page: 0 };
       renderFullValue();
       $('#valueModal').classList.add('show');

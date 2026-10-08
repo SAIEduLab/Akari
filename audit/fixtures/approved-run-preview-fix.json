@@ -69,9 +69,34 @@
           "before": "body.runtime .sprite-bubble {",
           "after": "@media(max-width:360px) { body.runtime[data-editor-mode] .main { grid-template-rows:minmax(0,1fr) 110px auto; } }\nbody.runtime .sprite-bubble {",
           "count": 1
+        },
+        {
+          "before": "  padding: clamp(8px, 2vw, 24px);\n  overflow: hidden;\n}\nbody.runtime[data-editor-mode] .stage-viewport {",
+          "after": "  padding: clamp(8px, 2vw, 24px);\n  overflow: auto;\n}\nbody.runtime[data-editor-mode] .stage-viewport {",
+          "count": 1
+        },
+        {
+          "before": "body.runtime[data-editor-mode] .stage-viewport {\n  flex: none;\n  margin: auto;\n  max-width: 100%;\n  max-height: 100%;",
+          "after": "body.runtime[data-editor-mode] .stage-viewport {\n  flex: none;\n  margin: auto;\n  max-width: none;\n  max-height: none;",
+          "count": 1
+        },
+        {
+          "before": "body.runtime[data-editor-mode] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }",
+          "after": "body.runtime[data-editor-mode] .monitor-window { overflow:auto; }\nbody.runtime[data-editor-mode] .monitor-window .output-disclosure { display:block; }\nbody.runtime[data-editor-mode] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }",
+          "count": 1
+        },
+        {
+          "before": "    function showFullValue(label, value) {\n      valueView =",
+          "after": "    function showFullValue(label, value) {\n      closeRuntimeInspector();\n      valueView =",
+          "count": 1
+        },
+        {
+          "before": "[$('#editorModecode').parentElement, $('#runtimeInspectorModes')]])",
+          "after": "[$('#editorModecode').parentElement, $('#runtimeInspectorModes')], [$('#uiLevel').closest('label'), $('#runtimeInspectorModes')]])",
+          "count": 1
         }
       ],
-      "afterSha256": "b145c8df0f772d999db9806d4a74d786ac9a2cd109406644c12c0e177b93621c"
+      "afterSha256": "b929f5720b0b224b00fac5090bd397e2abeea965329f212439dc3f75a5d210bf"
     },
     {
       "file": "audit/lib/speech-display-contract.mjs",
@@ -130,6 +155,133 @@
         }
       ],
       "afterSha256": "36e3164b41d3376518c01095476b46e4d9c1d4130c4ea3710431b0a48e78f5da"
+    },
+    {
+      "file": "audit/tests/editor-assets.mjs",
+      "changes": [
+        {
+          "before": "    await select(p,'sprite-1');await click(p,'#runBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');\n    assert.equal(await p.locator('#paintAdd').isDisabled(),true);assert.equal(await (await reveal(p.locator('.prop-duplicate'))).isDisabled(),true);\n    await click(p,'#stopBtn');assert.equal(await p.locator('#paintAdd').isEnabled(),true);",
+          "after": "    await select(p,'sprite-1');const duplicate=await reveal(p.locator('.prop-duplicate'));assert.equal(await duplicate.isEnabled(),true);\n    await click(p,'#runBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');\n    assert.equal(await p.locator('#paintAdd').isDisabled(),true);assert.equal(await duplicate.isDisabled(),true);assert.equal(await duplicate.isVisible(),false);\n    await click(p,'#stopBtn');assert.equal(await p.locator('#paintAdd').isEnabled(),true);assert.equal(await duplicate.isEnabled(),true);assert.equal(await duplicate.isVisible(),true);",
+          "count": 1
+        }
+      ],
+      "afterSha256": "c7cfe2f5496426aa5a5160eee7cc6ef7746456a609ce6b9653e5350f0937f9d3"
+    },
+    {
+      "file": "audit/browser/cases/browser-session.cjs",
+      "changes": [
+        {
+          "before": "await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');assert.equal(await root(p).locator('input[data-blockui-field]",
+          "after": "await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await p.locator('#runtimeInspectBtn').click();await p.locator('#runtimeInspector[open]').waitFor();assert.equal(await root(p).locator('input[data-blockui-field]",
+          "count": 1
+        },
+        {
+          "before": "assert.match((await state(p)).main.owner,/^function:/);await mode(p,'blocks');",
+          "after": "assert.match((await state(p)).main.owner,/^function:/);await p.locator('#runtimeInspectBtn').click();await p.locator('#runtimeInspector[open]').waitFor();await mode(p,'blocks');",
+          "count": 1
+        },
+        {
+          "before": "await (await reveal(p.locator('#stopBtn'))).click();assert.equal((await state(p)).state,'DESIGN');return{runPauseStepResumeStop",
+          "after": "await p.locator('#runtimeInspectorStop').click();assert.equal((await state(p)).state,'DESIGN');return{runPauseStepResumeStop",
+          "count": 1
+        },
+        {
+          "before": "await (await reveal(p.locator('#stopBtn'))).click();assert.equal((await state(p)).main.source,'失敗値（）を言う。');",
+          "after": "await p.locator('#runtimeInspectorStop').click();assert.equal((await state(p)).main.source,'失敗値（）を言う。');",
+          "count": 1
+        }
+      ],
+      "afterSha256": "cc86d6faf4a9edef8ff4e3ea909c9b18c1d2bbd26c020dbd48f3f66916b135db"
+    },
+    {
+      "file": "audit/tests/review-readable.mjs",
+      "changes": [
+        {
+          "before": "    await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');\n    await page.locator('#editorModecode').click();",
+          "after": "    await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');\n    await page.locator('#runtimeInspectBtn').click();await page.locator('#runtimeInspector[open]').waitFor();\n    await page.locator('#editorModecode').click();",
+          "count": 1
+        },
+        {
+          "before": "    await page.locator('#uiLevel').selectOption('advanced');\n    assert.equal(await page.locator('#uiLevel').inputValue(),'advanced','basic runtime can switch into advanced mode');",
+          "after": "    await page.locator('#runtimeInspectorClose').click();\n    await page.locator('#uiLevel').selectOption('advanced');\n    assert.equal(await page.locator('#uiLevel').inputValue(),'advanced','basic runtime can switch into advanced mode');\n    await page.locator('#runtimeInspectBtn').click();assert.ok(await page.locator('#codeEditor').isVisible());",
+          "count": 1
+        },
+        {
+          "before": "    await page.locator('#stopBtn').click();\n    await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');\n    assert.ok(await page.locator('#codeEditor').isVisible(),'stop returns to the existing code editor');",
+          "after": "    await page.locator('#runtimeInspectorStop').click();\n    await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');\n    assert.ok(await page.locator('#codeEditor').isVisible(),'stop returns to the existing code editor');",
+          "count": 1
+        },
+        {
+          "before": "    await page.locator('#runtimeInspectorClose').click();\n    await page.locator('#uiLevel').selectOption('advanced');",
+          "after": "    await page.locator('#uiLevel').selectOption('advanced');",
+          "count": 1
+        },
+        {
+          "before": "    await page.locator('#runtimeInspectBtn').click();assert.ok(await page.locator('#codeEditor').isVisible());",
+          "after": "    assert.ok(await page.locator('#codeEditor').isVisible());",
+          "count": 1
+        }
+      ],
+      "afterSha256": "084e8831410df82036f771fe339d3d8704c5a01398c8c01d033a23c9920d9f63"
+    },
+    {
+      "file": "audit/tests/numeric-display-browser.mjs",
+      "changes": [
+        {
+          "before": "  const row=page.locator('#runtimeMonitor .monitor-row').filter",
+          "after": "  await page.locator('#runtimeInspectBtn').click();await page.locator('#runtimeInspector[open]').waitFor();\n  const row=page.locator('#runtimeMonitor .monitor-row').filter",
+          "count": 1
+        },
+        {
+          "before": "  assert.equal(await page.locator('#valueOutput').textContent(),'0.30000000000000004');",
+          "after": "  assert.equal(await page.locator('#runtimeInspector').evaluate(n=>n.open),false);await page.locator('#valueModal.show').waitFor();\n  assert.equal(await page.locator('#valueOutput').textContent(),'0.30000000000000004');",
+          "count": 1
+        }
+      ],
+      "afterSha256": "c4c8a755a590e0d48137c13ae8acd3be96cc7db87b9b6642e420c03fb7acd287"
+    },
+    {
+      "file": "audit/tests/ux-surface-browser.mjs",
+      "changes": [
+        {
+          "before": "  const metrics=await bubble.evaluate(b=>{",
+          "after": "  const measure=()=>bubble.evaluate(b=>{",
+          "count": 1
+        },
+        {
+          "before": "  assert.ok(metrics.inside);assert.ok(metrics.overlap<1);",
+          "after": "  let fitted;\n  if(mode==='fit'&&width===1366){fitted=await measure();assert.equal(await page.locator('#stageZoomFit').getAttribute('aria-pressed'),'true');assert.ok(Math.abs(fitted.scale-1)<.02,'640 by 400 stage fits the large playback viewport');assert.ok(fitted.inside&&fitted.overlap<1&&fitted.font>=13.5);await bubble.getByRole('button',{name:'吹出しの全文を見る',exact:true}).click();assert.equal(await page.locator('#valueOutput').textContent(),long);await page.locator('#valueClose').click();fitted.fullTextExact=true;await page.locator('#stageZoomReset').click();for(let i=0;i<6;i++)await page.locator('#stageZoomOut').click();}\n  const metrics=await measure();\n  assert.ok(metrics.inside);assert.ok(metrics.overlap<1);",
+          "count": 1
+        },
+        {
+          "before": "return{width,height,mode,...metrics,fullTextExact:true};",
+          "after": "return{width,height,mode,...metrics,fullTextExact:true,...(fitted?{fitted}:{})};",
+          "count": 1
+        }
+      ],
+      "afterSha256": "ef28e26f23a90a41418b07d3cae451f9d4e70ed6ccaebe6da6a9cd5462575034"
+    },
+    {
+      "file": "audit/lib/semantic-extension-contract.mjs",
+      "changes": [
+        {
+          "before": "  const {scale,font,overlap,...o}=report.results[i+1].observed;",
+          "after": "  const {scale,font,overlap,fitted,...o}=report.results[i+1].observed;\n  if(width===1366&&mode==='fit'){assert.ok(fitted&&Math.abs(fitted.scale-1)<.02);assert.equal(fitted.inside,true);assert.ok(fitted.font>=13.5&&fitted.overlap>=0&&fitted.overlap<1);assert.equal(fitted.fullTextExact,true);}else assert.equal(fitted,undefined);",
+          "count": 1
+        }
+      ],
+      "afterSha256": "94a6f5f75132368d34c470269b20f11ef1e3820deaeb155e28792be74d121f3e"
+    },
+    {
+      "file": "audit/tests/actions-transfer-verify.mjs",
+      "changes": [
+        {
+          "before": "mode,scale:mode==='100'?1:.41,font:14,overlap:0,inside:true,fullTextExact:true}",
+          "after": "mode,scale:mode==='100'?1:.41,font:14,overlap:0,inside:true,fullTextExact:true,...(width===1366&&mode==='fit'?{fitted:{scale:1,font:14,overlap:0,inside:true,fullTextExact:true}}:{})}",
+          "count": 1
+        }
+      ],
+      "afterSha256": "fe896adbe75122ee4275e90facd10e10a0c1ea4c8362826eb34f3be99d3d105c"
     }
   ]
 }
