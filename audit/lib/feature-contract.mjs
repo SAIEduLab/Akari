@@ -14,6 +14,7 @@ export function verifyEditorAssets(report, inputs) {
   assert.deepEqual(report.snapshot, inputs);
   assert.deepEqual(report.results.map(r => r.id).sort(), [...editorAssetIds].sort());
   for (const result of report.results) assert.equal(result.pass, true, result.id + ': ' + result.detail);
+  assert.deepEqual(report.standaloneObservationControls,[{id:'permanent-preparing',rejected:true,timeoutMs:100},{id:'delayed-running',accepted:true},{id:'missing-target',rejected:true,timeoutMs:100},{id:'wrong-image-size',rejected:true,timeoutMs:100},{id:'closed-page',rejected:true}],'bounded standalone observation controls');
   assert.deepEqual(report.pageErrors, []);
   assert.deepEqual(report.networkRequests, []);
 }
