@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {sha} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {childUxProvenance} from '../lib/child-ux-observations.mjs';
-import {plan,scope,approvedInputAdapter,verifyProtectedInput,currentInputs,verifyFrozenInputs,verifyProvenance,verifyNeeds,verifyRetryHistory,verifyManualSession,verifyManualSessions,verifyChildMatrix,verifyChildLanguage,vocabularyCandidates} from '../lib/child-ux-contract.mjs';
+import {plan,scope,approvedInputAdapter,approvedStartupAdapter,approvedPreviewChanges,verifyProtectedInput,currentInputs,verifyFrozenInputs,verifyProvenance,verifyNeeds,verifyRetryHistory,verifyManualSession,verifyManualSessions,verifyChildMatrix,verifyChildLanguage,vocabularyCandidates} from '../lib/child-ux-contract.mjs';
 import {matrixControlIds,languageControlIds,staticControlIds,verifyReportPlatform,sealChildBundle,verifyChildAggregate} from '../lib/child-ux-evidence.mjs';
 const [mode,input,output]=process.argv.slice(2),provenance=childUxProvenance(),snapshot=currentInputs();
 const read=f=>JSON.parse(fs.readFileSync(f));
@@ -47,6 +47,16 @@ function staticControls(){
   const adapter=fs.readFileSync(approvedInputAdapter.file),expected=scope.protectedFiles[approvedInputAdapter.file];verifyProtectedInput(approvedInputAdapter.file,adapter,expected);
   const changedExpected=adapter.toString().replace("const expected=[[0,'dango','7']]","const expected=[[0,'dango','8']]");assert.notEqual(changedExpected,adapter.toString());
   for(const [i,bad]of [Buffer.from(changedExpected),Buffer.concat([adapter,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(approvedInputAdapter.file,bad,expected));rows.push({id:staticControlIds[26+i],rejected:true});}
+  const startup=fs.readFileSync(approvedStartupAdapter.file),startupExpected=scope.protectedFiles[approvedStartupAdapter.file];
+  verifyProtectedInput(approvedStartupAdapter.file,startup,startupExpected);
+  const relaxed=startup.toString('utf8').replace('p.setDefaultTimeout(8000)','p.setDefaultTimeout(8001)');assert.notEqual(relaxed,startup.toString('utf8'));
+  for(const [i,bad]of [Buffer.from(relaxed),Buffer.concat([startup,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(approvedStartupAdapter.file,bad,startupExpected));rows.push({id:staticControlIds[28+i],rejected:true});}
+  for(const [i,correction]of approvedPreviewChanges.entries()){
+    const bytes=fs.readFileSync(correction.file),expected=scope.protectedFiles[correction.file];verifyProtectedInput(correction.file,bytes,expected);
+    const last=correction.changes.at(-1);assert.equal(bytes.toString('utf8').split(last.after).length,last.count+1);
+    const reverted=bytes.toString('utf8').replace(last.after,last.before);assert.notEqual(reverted,bytes.toString('utf8'));
+    for(const [j,bad]of [Buffer.from(reverted),Buffer.concat([bytes,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(correction.file,bad,expected));rows.push({id:staticControlIds[30+i*2+j],rejected:true});}
+  }
   assert.deepEqual(rows.map(r=>r.id),staticControlIds);return rows;
 }
 async function retryHistory(){

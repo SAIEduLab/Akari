@@ -7,6 +7,7 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {withBrowser,pageFor,snapshot,sha} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {install} from '../lib/ux-repair02-ui.mjs';
+import {observeRunPreview,verifyRunPreview,observePaletteFold,observeInspector} from '../lib/run-preview-contract.mjs';
 import {displayTexts,actionNames,bubbleCases,actionCases,verifyDisplay} from '../lib/speech-display-contract.mjs';
 
 const require=createRequire(import.meta.url),[chrome,output]=process.argv.slice(2),product=currentProductFile();
@@ -17,6 +18,7 @@ const register=name=>{const bytes=fs.readFileSync(path.join(dir,name));report.ar
 const frame=p=>p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
 async function shot(p,name){const c=await p.context().newCDPSession(p);try{fs.writeFileSync(path.join(dir,name),Buffer.from((await c.send('Page.captureScreenshot',{format:'png'})).data,'base64'));register(name);}finally{await c.detach();}}
 const hookedPages=new WeakSet();
+const pageAtWidth=(browser,width,fn)=>pageFor({newContext:options=>browser.newContext({...options,viewport:{width,height:848}})},product,fn);
 async function waitForZoomApi(worker){const deadline=Date.now()+8000;while(!await worker.evaluate(()=>!!globalThis.chrome?.tabs?.query)){if(Date.now()>deadline)throw Error('native zoom API unavailable');await delay(50);}}
 function hooks(p){if(hookedPages.has(p))return;hookedPages.add(p);p.setDefaultTimeout(8000);p.on('dialog',d=>d.accept());p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});}
 async function showProperty(p,label){const field=p.locator('#properties input[aria-label="'+label+'"]');if(!await field.isVisible())await p.locator('.properties-window .blockui-side-toggle').click();await field.scrollIntoViewIfNeeded();return field;}
@@ -55,10 +57,15 @@ try{
   report.browser=browser.version();
   await run('DISPLAY-SETTINGS',async()=>{
    const initial=await pageFor(browser,product,async p=>{hooks(p);const model=await p.evaluate(()=>Akari.makeEmptyProject().stage.showSpeechNames);await p.locator('#objectSelect').selectOption('stage');return{model,checkbox:await (await showProperty(p,'名前を表示')).isChecked()};});
-   const rows=[];for(const mode of ['code','blocks'])for(const level of ['basic','advanced'])rows.push(await pageFor(browser,product,async p=>{
-    await p.setViewportSize({width:1180,height:848});await fixture(p,{mode,level});await scale(p,100);const source=await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts)),history=[];
+   const rows=[];for(const mode of ['code','blocks'])for(const level of ['basic','advanced'])rows.push(await pageAtWidth(browser,1180,async p=>{
+    await fixture(p,{mode,level});await scale(p,100);const source=await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts)),history=[];
     await setNames(p,false);history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));await p.locator('#undoBtn').click();history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));await p.locator('#redoBtn').click();history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));
-    const off=await speech(p);await p.locator('#stopBtn').click();await setNames(p,true);history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));const on=await speech(p);await p.locator('#stopBtn').click();return{mode,level,history,off,on,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
+    const off=await speech(p),preview=await observeRunPreview(p);await shot(p,'preview-'+mode+'-'+level+'.png');preview.inspector=await observeInspector(p,mode);await shot(p,'inspector-'+mode+'-'+level+'.png');
+    await p.locator('#pauseBtn').click();preview.paused=await p.evaluate(()=>Akari.app.editorState.state);
+    await p.locator('#stepBtn').click();preview.afterStep=await p.evaluate(()=>Akari.app.editorState.state);
+    await p.locator('#continueBtn').click();preview.resumed=await p.evaluate(()=>Akari.app.editorState.state);
+    await p.locator('#runtimeInspectorClose').click();preview.inspector.closed=!await p.locator('#runtimeInspector').evaluate(n=>n.open);preview.inspector.modeControlsReturned=await p.locator('.menutool #editorModecode').isVisible();
+    await p.locator('#stopBtn').click();preview.stopped=await observeRunPreview(p);verifyRunPreview(preview,mode,level);const paletteFold=mode==='blocks'?await observePaletteFold(p,()=>shot(p,'folded-'+level+'.png')):null;await setNames(p,true);history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));const on=await speech(p);await p.locator('#stopBtn').click();return{mode,level,history,off,on,preview,paletteFold,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
    }));return{initial,rows};
   });
   await run('DISPLAY-PERSISTENCE',async()=>{
@@ -70,12 +77,12 @@ try{
     await setNames(p,!show);await setNames(p,show);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='自動保存：済み',null,{timeout:12000});await p.reload();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));const restored=await p.evaluate(()=>Akari.app.project.stage.showSpeechNames),recovered=await speech(p);await p.locator('#stopBtn').click();return{show,loaded,restored,player,recovered,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
    }));return rows;
   });
-  await run('DISPLAY-BUBBLES',async()=>{const rows=[];for(const [i,c]of bubbleCases.entries())rows.push(await pageFor(browser,product,async p=>{await p.setViewportSize({width:c.width,height:848});await fixture(p,c);await scale(p,c.scale);const geometry=await speech(p,c.kind);await shot(p,'bubbles-'+i+'.png');await p.locator('#stopBtn').click();return{id:c.id,geometry};}));return rows;});
+  await run('DISPLAY-BUBBLES',async()=>{const rows=[];for(const [i,c]of bubbleCases.entries())rows.push(await pageAtWidth(browser,c.width,async p=>{await fixture(p,c);await scale(p,c.scale);const geometry=await speech(p,c.kind);await shot(p,'bubbles-'+i+'.png');await p.locator('#stopBtn').click();return{id:c.id,geometry};}));return rows;});
   await run('DISPLAY-DURATION',async()=>{const rows=[];for(const show of [false,true])rows.push(await pageFor(browser,product,async p=>{
    await fixture(p,{show});await p.evaluate(()=>{globalThis.displayEvents=[];globalThis.displayObserver=new MutationObserver(rs=>{for(const r of rs)for(const[kind,nodes]of[['add',r.addedNodes],['remove',r.removedNodes]])for(const n of nodes)if(n.matches?.('.sprite-bubble'))displayEvents.push({kind,id:n.dataset.runtimeId,at:performance.now()});});displayObserver.observe(document.querySelector('#formSurface'),{childList:true});});await p.locator('#runBtn').click();await p.waitForFunction(()=>displayEvents.filter(e=>e.kind==='remove').length===2);const events=await p.evaluate(()=>{displayObserver.disconnect();return displayEvents;});await p.locator('#stopBtn').click();
    await fixture(p,{show,untimed:true});await p.locator('#runBtn').click();await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='一');const untimedFirst=await p.locator('.sprite-bubble-text').textContent();await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='二');const untimedSecond=await p.locator('.sprite-bubble-text').textContent();await p.waitForTimeout(250);const untimedLater=await p.locator('.sprite-bubble-text').textContent();await p.locator('#stopBtn').click();return{show,events,untimedFirst,untimedSecond,untimedLater,afterStop:await p.locator('.sprite-bubble').count()};
   }));return rows;});
-  await run('DISPLAY-OBJECT-NAMES',async()=>{const rows=[];for(const [i,c]of actionCases.entries())rows.push(await pageFor(browser,product,async p=>{await p.setViewportSize({width:c.width,height:848});await fixture(p,c);await rename(p,c.name);const geometry=await actions(p);await shot(p,'objects-'+i+'.png');return{id:c.id,geometry};}));return rows;});
+  await run('DISPLAY-OBJECT-NAMES',async()=>{const rows=[];for(const [i,c]of actionCases.entries())rows.push(await pageAtWidth(browser,c.width,async p=>{await fixture(p,c);await rename(p,c.name);const geometry=await actions(p);await shot(p,'objects-'+i+'.png');return{id:c.id,geometry};}));return rows;});
  },600000);
  await run('DISPLAY-NATIVE-ZOOM',async()=>{
   const rows=[];for(const mode of ['code','blocks'])for(const requested of [1.25,2]){

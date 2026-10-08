@@ -5449,6 +5449,22 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction
 .blockui-palette-options > summary::after { content:none; }
 .blockui-palette-options[open] { position:static; flex:1 1 100%; box-sizing:border-box; min-width:0; max-width:100%; }
 .blockui-palette-options[open] select { width:100%; max-width:100%; }
+.blockui-palette-tools { grid-column:1/-1; grid-row:1; min-width:0; width:100%; }
+.blockui-palette-controls[hidden] { display:none !important; }
+[data-blockui-action="palette-tools-toggle"] { width:100%; flex:none; }
+#runtimeInspector { width:min(1180px,96vw); height:92dvh; max-height:96dvh; box-sizing:border-box; padding:10px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+#runtimeInspector[open] { display:flex; flex-direction:column; gap:8px; }
+#runtimeInspector::backdrop { background:#24344966; }
+.runtime-inspector-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex:none; }
+#runtimeInspectorModes { margin-left:auto; }
+#runtimeInspectorBody { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:8px; flex:1; min-height:0; overflow:auto; }
+#runtimeInspectorBody > .codewin { display:flex !important; min-height:0 !important; min-width:0; overflow:auto; }
+#runtimeInspectorBody .debugbar { padding:6px; flex:none; }
+#runtimeInspectorBody .editor-shell { flex:1; min-height:160px; }
+#runtimeInspectorBody #blockEditor { flex:1; min-height:260px; }
+#runtimeInspectorBody .blockui-layout { flex:1; min-height:0 !important; }
+#runtimeInspectorBody .monitor-window { display:flex !important; min-height:160px; overflow:auto; }
+@media(max-width:700px) { #runtimeInspectorBody { grid-template-columns:minmax(0,1fr); } #runtimeInspectorModes { margin-left:0; } }
 .blockui-local-help { font-size:12px; max-width:100%; }
 .blockui-local-help p { white-space:normal; line-height:1.6; }
 .blockui-operator { min-width:90px; padding:5px; }
@@ -5464,39 +5480,39 @@ body[data-editor-mode="code"] .hints-disclosure[open] > .hint-panel { position:s
 body[data-editor-mode="code"] .codewin:has(.hints-disclosure[open]) { min-height:590px; }
 </style>
 <style id="runtime-readability">
-/* Keep the basic runtime focused on the scene while retaining advanced monitoring. */
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] #app {
+/* Keep playback focused on the scene in either editor mode and preserve debugging controls. */
+body.runtime[data-editor-mode] #app {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   height: 100dvh;
   min-height: 100dvh;
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main {
+body.runtime[data-editor-mode] .main {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 0;
   padding: clamp(8px, 1.2vw, 16px);
   overflow: hidden;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .toolbox,
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .codewin,
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side > :not(.designer):not(.monitor-window) {
+body.runtime[data-editor-mode] .main > .toolbox,
+body.runtime[data-editor-mode] .main > .codewin,
+body.runtime[data-editor-mode] .main > .side > :not(.designer):not(.monitor-window) {
   display: none !important;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side {
+body.runtime[data-editor-mode] .main > .side {
   display: contents !important;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] #designerWindow,
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .side > #designerWindow {
+body.runtime[data-editor-mode] #designerWindow,
+body.runtime[data-editor-mode] .side > #designerWindow {
   grid-column: 1;
   grid-row: 1;
   height: auto !important;
   min-height: 0;
   flex: none !important;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .designer-wrap {
+body.runtime[data-editor-mode] .designer-wrap {
   display: grid;
   place-items: center;
   min-width: 0;
@@ -5504,19 +5520,31 @@ body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .designer-wrap {
   padding: clamp(8px, 2vw, 24px);
   overflow: hidden;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .stage-viewport {
+body.runtime[data-editor-mode] .stage-viewport {
   flex: none;
   margin: auto;
   max-width: 100%;
   max-height: 100%;
 }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] #formFrame { margin: 0 auto; }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side > .monitor-window { display:flex !important; grid-column:2; grid-row:1; min-height:0; height:auto; }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .monitor-window .blockui-side-toggle { display:none; }
-body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .monitor-window .blockui-side-label { display:block; }
-@media(max-width:650px){body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 160px; }body.runtime[data-ui-level="basic"][data-editor-mode="blocks"] .main > .side > .monitor-window { grid-column:1; grid-row:2; }}
+body.runtime[data-editor-mode] #formFrame { margin: 0 auto; }
+body.runtime[data-editor-mode] .main > .codewin { display: contents !important; }
+body.runtime[data-editor-mode] .main > .codewin > :not(.debugbar) { display: none !important; }
+body.runtime[data-editor-mode] .main > .codewin > .debugbar {
+  display: flex; grid-column: 1 / -1; grid-row: 2;
+  min-width: 0; padding: 6px; margin: 0; flex-wrap: wrap;
+}
+body.runtime[data-editor-mode] .debugbar #execLocation { display:inline-block; max-width:100%; }
+body.runtime[data-editor-mode] .debugbar :is(#pauseBtn,#continueBtn,#stepBtn) { display: inline-flex; }
+body.runtime[data-editor-mode] .menutool > :is(#newBtn,#sampleSelect,#sampleBtn,#sampleHelpBtn,#openBtn) { display:none; }
+body.runtime[data-editor-mode] .debugbar > :is(#undoBtn,#redoBtn,#formatBtn,#resetBtn) { display:none; }
+#runtimeInspector #runtimeInspectBtn { display:none; }
+body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }
+body.runtime[data-editor-mode] .main > .side > .monitor-window { display:flex !important; grid-column:2; grid-row:1; min-height:0; height:auto; }
+body.runtime[data-editor-mode] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }
+body.runtime[data-editor-mode] .monitor-window .blockui-side-toggle { display:none; }
+body.runtime[data-editor-mode] .monitor-window .blockui-side-label { display:block; }
+@media(max-width:650px){body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 160px auto; }body.runtime[data-editor-mode] .main > .side > .monitor-window { grid-column:1; grid-row:2; }body.runtime[data-editor-mode] .main > .codewin > .debugbar { grid-row:3; }}
+@media(max-width:360px) { body.runtime[data-editor-mode] .main { grid-template-rows:minmax(0,1fr) 110px auto; } }
 body.runtime .sprite-bubble {
   font-size: calc(14px / var(--stage-scale, 1));
   line-height: 1.35;
@@ -5893,6 +5921,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         <button id="pauseBtn">⏸ いったん止める</button>
         <button id="continueBtn">▶ 続ける</button>
         <button id="stepBtn">1命令ずつ</button>
+        <button id="runtimeInspectBtn" type="button" hidden aria-controls="runtimeInspector">本文を見て確かめる</button>
         <button id="formatBtn">コードを整える</button>
         <span class="exec-location" id="execLocation">いまの場所：―</span>
       </div>
@@ -6052,6 +6081,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     <div class="dialog-foot"><button id="diagnosisClose">閉じる</button></div>
   </div>
 </div>
+
+<dialog id="runtimeInspector" aria-labelledby="runtimeInspectorTitle">
+  <div class="runtime-inspector-head"><strong id="runtimeInspectorTitle">本文と動きのようす</strong><div id="runtimeInspectorModes"></div><button id="runtimeInspectorStop" type="button">止める</button><button id="runtimeInspectorClose" type="button">実行画面に戻る</button></div>
+  <div id="runtimeInspectorBody"></div>
+</dialog>
 
 <div class="modal" id="recoveryModal" role="dialog" aria-modal="true" aria-label="自動保存からもどす">
   <div class="dialog" style="width:min(560px,92vw);height:auto;max-height:80vh">
@@ -21501,7 +21535,17 @@ function createAkariExtensionHost(options) {
       E('p','','メモは、あとで思い出せるように書くひとことです。動きは変わりません。分身（ぶんしん）は、同じ見た目のキャラクターをもう1体作ることです。'),
       E('p','','「操作を取り消す」は、いま選んだ追加先や変えかけている入力・組み立てをやめます。「元に戻す」は、すでに決めた変更を1つ戻します。'));
     paletteControls.append(help);
-    palette.append(paletteControls, categorySelect, paletteList, palettePages);
+    paletteControls.id = viewId + '-palette-tools';
+    const paletteToggle = button('探す・作るをたたむ', 'palette-tools-toggle', () => {
+      paletteControls.hidden = !paletteControls.hidden;
+      paletteToggle.setAttribute('aria-expanded', String(!paletteControls.hidden));
+      paletteToggle.textContent = paletteControls.hidden ? '探す・作るをひらく' : '探す・作るをたたむ';
+    });
+    paletteToggle.setAttribute('aria-expanded', 'true');
+    paletteToggle.setAttribute('aria-controls', paletteControls.id);
+    const paletteTools = E('div', 'blockui-palette-tools');
+    paletteTools.append(paletteToggle, paletteControls);
+    palette.append(paletteTools, categorySelect, paletteList, palettePages);
     layout.append(palette, workspaceShell);
     root.append(layout);
     const promptArea = E('div', 'blockui-replacement');
@@ -26283,7 +26327,33 @@ function createAkariExtensionHost(options) {
         closing?.catch?.(() => {});
       } catch (_) {}
     }
+    const inspectorNodes = [];
+    function closeRuntimeInspector() {
+      const dialog = $('#runtimeInspector');
+      if (dialog.open) dialog.close();
+      for (const {node, marker} of inspectorNodes.splice(0)) { marker.replaceWith(node); }
+      if (appState === 'RUNNING' || appState === 'PAUSED') {
+        stageView.fitStage();
+        el.form.focus({ preventScroll: true });
+      }
+    }
+    function openRuntimeInspector() {
+      if (!['RUNNING', 'PAUSED'].includes(appState) || inspectorNodes.length) return;
+      stageView.clearInput();
+      for (const [node, target] of [[$('.codewin'), $('#runtimeInspectorBody')], [$('.monitor-window'), $('#runtimeInspectorBody')], [$('#editorModecode').parentElement, $('#runtimeInspectorModes')]]) {
+        const marker = document.createComment('runtime inspector return point');
+        node.before(marker); inspectorNodes.push({node, marker}); target.append(node);
+      }
+      $('#runtimeInspector').showModal();
+      renderEditorBinding(mainEditor);
+      $('#runtimeInspectorClose').focus();
+    }
+    $('#runtimeInspectBtn').onclick = openRuntimeInspector;
+    $('#runtimeInspectorClose').onclick = closeRuntimeInspector;
+    $('#runtimeInspectorStop').onclick = stopRun;
+    $('#runtimeInspector').addEventListener('close', () => { if (inspectorNodes.length) closeRuntimeInspector(); });
     function disposeRuntime() {
+      closeRuntimeInspector();
       $('#listRepairPanel')?.remove();
       for (const id of ['failureModal', 'valueModal']) $('#' + id)?.classList.remove('show');
       activeFailureId = null;
@@ -28106,6 +28176,7 @@ function createAkariExtensionHost(options) {
       $('#valuePageNext').disabled = v.page === pages - 1;
     }
     function showFailureDetails(id = null) {
+      closeRuntimeInspector();
       const records = scheduler?.errorRecords || [];
       if (!records.length) return;
       scheduler.pause();
@@ -28752,6 +28823,7 @@ function createAkariExtensionHost(options) {
       $('#pauseBtn').disabled = !running || scheduler.paused;
       $('#continueBtn').disabled = !running || !scheduler.paused;
       $('#stepBtn').disabled = !running;
+      $('#runtimeInspectBtn').hidden = !running;
       $('#runBtn').disabled = appState !== 'DESIGN';
       $('#stopBtn').disabled = appState === 'DESIGN' || appState === 'IMPORTING';
       updateEditingLock();
@@ -28772,6 +28844,7 @@ function createAkariExtensionHost(options) {
     });
     $('#questionAnswer').addEventListener('compositionend', (e) => limitInputValue(e.target));
     function showQuestion(q, cb) {
+      closeRuntimeInspector();
       stageView.clearInput();
       questionCb = cb;
       $('#questionText').textContent = q;

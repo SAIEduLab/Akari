@@ -3,9 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {sha} from './product-test-host.mjs';
 import {browserEnvironment} from './browser-environment.mjs';
+import {verifyRunPreviewReport} from './run-preview-contract.mjs';
 
 export const displayIds=['DISPLAY-SETTINGS','DISPLAY-PERSISTENCE','DISPLAY-BUBBLES','DISPLAY-DURATION','DISPLAY-OBJECT-NAMES','DISPLAY-NATIVE-ZOOM','DISPLAY-INVALID'];
-export const rejectionIds=['missing','duplicate','failed','snapshot','browser','network','page-error','heading','clipping','saved-setting','object-name','fake-zoom','artifact'];
+export const rejectionIds=['missing','duplicate','failed','snapshot','browser','network','page-error','heading','clipping','saved-setting','object-name','fake-zoom','artifact','run-preview','inspector-missing','fold-no-space'];
 export const displayTexts={short:['あか','あお'],long:['赤い花が咲いた。'.repeat(9)+'見えますか。','青い鳥が飛んだ。'.repeat(9)+'聞こえます。']};
 export const displayNames=['あかり','だんご'];
 export const actionNames=['マスコット','とても長い名前のマスコット'.repeat(4)];
@@ -39,7 +40,8 @@ export function verifyDisplay(report,inputs,dir){
   const objects=get('DISPLAY-OBJECT-NAMES');assert.deepEqual(objects.map(r=>r.id),actionCases.map(c=>c.id));for(const [i,r]of objects.entries())verifyActions(r.geometry,actionCases[i].name);
   const zoom=get('DISPLAY-NATIVE-ZOOM');assert.deepEqual(zoom.map(r=>r.mode+'/'+r.requested),['code/1.25','code/2','blocks/1.25','blocks/2']);for(const r of zoom){assert.equal(r.actual,r.requested);assert.equal(r.before.outerWidth,r.after.outerWidth);assert.ok(r.after.innerWidth<r.before.innerWidth);assert.ok(r.after.dpr>r.before.dpr);verifyActions(r.geometry,actionNames[1]);}
   assert.deepEqual(get('DISPLAY-INVALID'),{settings:Array(6).fill('F503/X602'),malformedStages:Array(2).fill('F503/X602')});
-  const names=['candidate.html',...bubbleCases.map((_,i)=>`bubbles-${i}.png`),...actionCases.map((_,i)=>`objects-${i}.png`),...Array.from({length:4},(_,i)=>`zoom-${i}.png`),'saved-off.md','saved-on.md','player-off.html','player-on.html','player-off.png','player-on.png'];
+  verifyRunPreviewReport(report);
+  const names=['inspector-code-basic.png','inspector-code-advanced.png','inspector-blocks-basic.png','inspector-blocks-advanced.png','folded-basic.png','folded-advanced.png','preview-code-basic.png','preview-code-advanced.png','preview-blocks-basic.png','preview-blocks-advanced.png','candidate.html',...bubbleCases.map((_,i)=>`bubbles-${i}.png`),...actionCases.map((_,i)=>`objects-${i}.png`),...Array.from({length:4},(_,i)=>`zoom-${i}.png`),'saved-off.md','saved-on.md','player-off.html','player-on.html','player-off.png','player-on.png'];
   assert.deepEqual(report.artifacts.map(a=>a.name).sort(),names.sort());for(const a of report.artifacts){assert.match(a.sha256,/^[a-f0-9]{64}$/);assert.equal(sha(fs.readFileSync(path.join(dir,a.name))),a.sha256);}assert.equal(report.artifacts.find(a=>a.name==='candidate.html').sha256,inputs.productSha256);
   return{status:'PASS',groups:displayIds.length,bubbleCases:bubbles.length,objectCases:objects.length,zoomCases:zoom.length};
 }
