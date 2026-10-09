@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "User explicitly requested the complete 1.2.0 release on 2026-10-09: product label and filename, entry/manual links and current audit metadata updated together; preserve feature values, all fixed oracles, external format contracts and existing test requirements. Editor syntax reuse and added regressions are included. Byte integrity only, not execution PASS.",
+  "updateReason": "User explicitly requested removal of the README 1.1.2 and 1.2.0 update sections directly on main; only document byte integrity is refreshed, with no change to product or audit expectations.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -47,8 +47,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "d03fc142cf381f94772b388cfa80334acfb19cdf9d21f0b042c7e90803f99ae5",
-      "bytes": 6881
+      "sha256": "e15391834ea0dc1d1985c5319256d244fccdd1aee895103df619384b2ae42f67",
+      "bytes": 5836
     },
     {
       "path": "audit/README.md",
