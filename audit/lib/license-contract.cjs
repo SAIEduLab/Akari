@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const {verifyCurrentAuditFile}=require('./current-audit-basis.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -38,7 +39,9 @@ function verifyLicensedArtifact(html) {
 }
 const migratedPaths = new Set(['audit/suites/runAkariSelfTests.js', 'audit/browser/cases/run-editor-regression.cjs', 'audit/browser/cases/browser-storage-media.cjs']);
 function licenseMigration() {
-  const record = JSON.parse(fs.readFileSync(path.join(__dirname, '../manifests/license-migration.json')));
+  const bytes=fs.readFileSync(path.join(__dirname, '../manifests/license-migration.json'));
+  verifyCurrentAuditFile('audit/manifests/license-migration.json',bytes);
+  const record = JSON.parse(bytes);
   assert.equal(record.schema, 'akari-license-migration-v1');
   assert.equal(record.from, 'Apache-2.0'); assert.equal(record.to, LICENSE_ID);
   assert.equal(record.copyright, COPYRIGHT);
@@ -46,21 +49,10 @@ function licenseMigration() {
   assert.deepEqual(record.sources.map(x => x.path).sort(), [...migratedPaths].sort());
   return record;
 }
-// Reverse only explicitly approved, exact license hunks. Existing historical
-// pins then validate every remaining byte; their hashes and old sources stay fixed.
+// Historical license hunks remain in license-migration.json. The current source
+// is verified directly; it is never rewritten to resemble the pre-MIT source.
 function preservedLicenseSource(file, bytes) {
-  if (!migratedPaths.has(file)) return bytes;
-  const row = licenseMigration().sources.find(x => x.path === file);
-  let text = bytes.toString('utf8');
-  assert.ok(row.replacements.length > 0);
-  for (const {before, after} of row.replacements) {
-    assert.notEqual(before, after); assert.ok(before && after);
-    assert.equal(text.split(after).length, 2, 'missing or duplicated MIT migration hunk: '+file);
-    text = text.replace(after, before);
-  }
-  const restored = Buffer.from(text);
-  assert.equal(sha(restored), row.originalSha256, 'non-license source change: '+file);
-  return restored;
+  verifyCurrentAuditFile(file,bytes);return bytes;
 }
 function licensingSnapshot() {
   const root = path.resolve(__dirname, '../..'), meta = JSON.parse(fs.readFileSync(path.join(root, 'audit/public-files.json')));

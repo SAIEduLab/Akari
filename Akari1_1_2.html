@@ -5644,6 +5644,20 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 .sample-dialog button { min-height:40px; min-width:90px; margin:4px; }
 .sample-dialog table { border-collapse:collapse; width:100%; }
 .sample-dialog td,.sample-dialog th { border:1px solid #888; padding:8px; overflow-wrap:anywhere; }
+.project-choice-dialog{width:min(760px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:12px;padding:20px;color:#17263b}
+.project-choice-dialog h2{font-size:1.35rem;margin:0 0 12px;overflow-wrap:anywhere}
+.project-choice-dialog p{line-height:1.7}.export-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.export-choice{display:flex;flex-direction:column;gap:12px;align-items:stretch;text-align:left;white-space:normal;padding:16px;background:#fff;border:2px solid #a9b8ca;border-radius:10px;line-height:1.7;font-size:14px;color:#17263b}
+.export-choice:hover{background:#f2f7ff;border-color:#2f6fd6}.export-choice-title{font-size:1.1rem;font-weight:700}
+.export-example{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:auto;pointer-events:none;max-width:100%}
+.export-example-label{font-size:12px;font-weight:700}.export-example-player{display:block;padding:8px;border:1px solid #9caec3;border-radius:6px;background:#edf2f8;max-width:100%}
+.export-example-title{display:block;font-weight:700;font-size:12px}.export-example-controls{display:flex;gap:4px;flex-wrap:wrap;margin:5px 0;font-size:9px}
+.export-example-controls span{padding:2px 4px;border:1px solid #9caec3;background:#fff;border-radius:3px}
+.export-example-scene{display:block;position:relative;width:210px;max-width:100%;height:118px;background:#def2ff;color:#17263b;overflow:hidden}
+.export-example-star{position:absolute;top:20px;left:30px;font-size:40px;color:#c27b00}.export-example-work-button{position:absolute;right:10px;bottom:15px;background:#fff;border:1px solid #3d6580;padding:3px 7px;font-size:11px}
+.project-choice-footer{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:12px;margin-top:16px}
+@media(max-width:650px){.export-choices{grid-template-columns:1fr}.project-choice-dialog{padding:16px}.export-choice{padding:12px}}
+
 </style>
 </head>
 <body>
@@ -6133,6 +6147,32 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
  </div>
 </div>
 
+<div class="modal" id="exportChoiceModal" role="dialog" aria-modal="true" aria-labelledby="exportChoiceTitle" aria-describedby="exportChoiceDescription">
+ <div class="project-choice-dialog export-choice-dialog">
+  <h2 id="exportChoiceTitle">作品のはじめ方をえらぼう</h2>
+  <p id="exportChoiceDescription">書き出した作品を開いたときの、はじめ方をえらびます。</p>
+  <div class="export-choices">
+   <button id="exportControls" class="export-choice" type="button" aria-labelledby="exportControlsTitle" aria-describedby="exportControlsDescription">
+    <span class="export-choice-title" id="exportControlsTitle">▶ はじめるボタンをつける</span>
+    <span id="exportControlsDescription">ボタンをおすと、作品がはじまります。動きをいったん止めたり、終わらせたりできます。</span>
+    <span class="export-example" aria-hidden="true"><span class="export-example-label">見本</span><span class="export-example-player"><span class="export-example-title">星の作品</span><span class="export-example-controls"><span>▶ はじめる</span><span>いったん止める</span><span>止める</span></span><span class="export-example-scene"><span class="export-example-star">★</span><span class="export-example-work-button">作品のボタン</span></span></span></span>
+   </button>
+   <button id="exportArtwork" class="export-choice" type="button" aria-labelledby="exportArtworkTitle" aria-describedby="exportArtworkDescription exportArtworkNote">
+    <span class="export-choice-title" id="exportArtworkTitle">作品をすぐにはじめる</span>
+    <span id="exportArtworkDescription">開くと、作品がはじまります。作品のまわりにボタンやわくはつきません。</span>
+    <span id="exportArtworkNote">音が出る作品は、ボタンをおすとはじまることがあります。</span>
+    <span class="export-example" aria-hidden="true"><span class="export-example-label">見本</span><span class="export-example-scene"><span class="export-example-star">★</span><span class="export-example-work-button">作品のボタン</span></span></span>
+   </button>
+  </div>
+  <div class="project-choice-footer"><button id="exportChoiceCancel" type="button">キャンセル</button></div>
+ </div>
+</div>
+<div class="modal" id="openConfirmModal" role="dialog" aria-modal="true" aria-labelledby="openConfirmMessage">
+ <div class="project-choice-dialog">
+  <p id="openConfirmMessage">まだほぞんしていない作品があります。ほぞんせずに、ほかの作品を開きますか？</p>
+  <div class="project-choice-footer"><button id="openConfirmCancel" type="button">キャンセル</button><button id="openConfirmProceed" type="button">ほぞんせずに開く</button></div>
+ </div>
+</div>
 <dialog id="sampleConfirm" class="sample-dialog" aria-labelledby="sampleConfirmTitle" aria-describedby="sampleConfirmMessage">
   <h2 id="sampleConfirmTitle">お手本を開く？</h2>
   <p id="sampleConfirmMessage">お手本を開くと、いま作っている作品はリセットされるよ。<br>先にほぞんしておかなくてもいいかな？</p>
@@ -6149,7 +6189,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.1.1';
+  const PRODUCT_RELEASE = '1.1.2';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -7360,7 +7400,7 @@ function createAkariExtensionHost(options) {
             }
           });
       }
-      async prepare(project, requirements, generationToken) {
+      async prepare(project, requirements, generationToken, { deferAudioStart = false } = {}) {
         for (const cancel of [...this.pendingOperations]) cancel();
         this.generationToken = generationToken;
         for (const id of requirements.imageIds) {
@@ -7412,7 +7452,7 @@ function createAkariExtensionHost(options) {
           }
         }
         if (requirements.needsAudio) {
-          const ac = await this.ensureAudioReady();
+          const ac = deferAudioStart ? this.ensureAudioContext() : await this.ensureAudioReady();
           for (const id of requirements.audioIds) {
             if (generationToken !== this.generationToken)
               throw new AkariError(
@@ -19491,8 +19531,9 @@ function createAkariExtensionHost(options) {
     };
   }
 
-  function mountAkariPlayer(core, makeView, data) {
+  function mountAkariPlayer(core, makeView, data, options) {
     'use strict';
+    const artwork = options?.artwork === true;
     const $ = (id) => document.getElementById(id),
       root = $('playerRoot'),
       form = $('formSurface'),
@@ -19503,7 +19544,9 @@ function createAkariExtensionHost(options) {
       status = $('playerStatus'),
       output = $('playerOutput'),
       modal = $('questionModal'),
-      answer = $('questionAnswer');
+      answer = $('questionAnswer'),
+      activation = $('playerActivation'),
+      activationButton = $('playerActivate');
     let session,
       view,
       runtime = null,
@@ -19513,7 +19556,10 @@ function createAkariExtensionHost(options) {
       epoch = 0,
       paintFrame = null,
       questionCb = null,
-      previousFocus = null;
+      previousFocus = null,
+      automaticAttempted = false,
+      backgroundPaused = false,
+      runtimeFailed = false;
     const designUrls = new Map();
     const message = (text) => {
       output.hidden = false;
@@ -19527,12 +19573,12 @@ function createAkariExtensionHost(options) {
       if (phase === 'RUNNING' || phase === 'PAUSED') {
         phase = scheduler?.running ? (scheduler.paused ? 'PAUSED' : 'RUNNING') : 'STOPPED';
       }
-      start.disabled = phase === 'LOADING' || phase === 'PREPARING' || phase === 'ERROR';
-      pause.disabled = !scheduler?.running;
-      stop.disabled = !scheduler?.running && phase !== 'PREPARING';
-      pause.textContent =
+      if (start) start.disabled = phase === 'LOADING' || phase === 'PREPARING' || phase === 'ERROR';
+      if (pause) pause.disabled = !scheduler?.running;
+      if (stop) stop.disabled = !scheduler?.running && phase !== 'PREPARING';
+      if (pause) pause.textContent =
         phase === 'PAUSED' ? '\u25b6 \u7d9a\u3051\u308b' : '⏸ いったん止める';
-      status.textContent =
+      if (status) status.textContent =
         {
           LOADING: '\u8aad\u307f\u8fbc\u307f\u4e2d',
           READY: '\u6e96\u5099\u5b8c\u4e86',
@@ -19571,6 +19617,8 @@ function createAkariExtensionHost(options) {
       answer.focus();
     }
     function fail(error) {
+      backgroundPaused = false;
+      runtimeFailed = true;
       scheduler?.pause();
       view?.clearInput();
       message(`${error.code || 'R411'} ${error.message || error}`);
@@ -19579,6 +19627,8 @@ function createAkariExtensionHost(options) {
     }
     function dispose() {
       epoch++;
+      backgroundPaused = false;
+      if (activation) activation.hidden = true;
       view?.clearInput();
       const oldScheduler = scheduler;
       scheduler = null;
@@ -19597,10 +19647,41 @@ function createAkariExtensionHost(options) {
       phase = 'STOPPED';
       flush();
       state();
-      start.focus({ preventScroll: true });
+      (start || form).focus({ preventScroll: true });
+    }
+    async function audioActivation(localCache, attempt, gesture) {
+      const ac = localCache.audioContext;
+      let timer, failure;
+      try {
+        await Promise.race([
+          Promise.resolve(attempt).catch(error => { failure = error; }),
+          new Promise(resolve => { timer = setTimeout(resolve, gesture ? 1500 : 150); }),
+        ]);
+      } finally { clearTimeout(timer); }
+      if (ac.state === 'running') return true;
+      // A pending resume on a suspended context is the browser's activation gate.
+      // Decode errors and closed/interrupted contexts never become an activation button.
+      if (!gesture && ac.state === 'suspended' && (!failure || failure.name === 'NotAllowedError')) return false;
+      throw new core.AkariError('R415', '音をはじめられませんでした', 0, 0,
+        failure?.message || 'AudioContext state: ' + ac.state);
+    }
+    function startupFailure(error, gesture = false) {
+      dispose();
+      phase = artwork ? 'ERROR' : 'STOPPED';
+      if (artwork) {
+        message(gesture ? '音をはじめられませんでした。この作品を別の画面で開いてみてください。'
+          : '作品をはじめられませんでした。くわしい内容を見てください。');
+        const details = document.createElement('details'), summary = document.createElement('summary'), raw = document.createElement('pre');
+        summary.textContent = 'くわしい内容';
+        raw.textContent = `${error.code || 'R415'} ${error.message || error}${error.detail ? '\n' + error.detail : ''}`;
+        details.append(summary, raw); output.appendChild(details);
+      } else message(`${error.code || 'R415'} ${error.message || error}`);
+      flush(); state();
     }
     async function startRun() {
-      if (!session || phase === 'LOADING' || phase === 'PREPARING' || phase === 'ERROR') return;
+      if (!session || phase === 'LOADING' || phase === 'PREPARING' || phase === 'ERROR' || phase === 'WAITING') return;
+      if (artwork && automaticAttempted) return;
+      if (artwork) automaticAttempted = true;
       dispose();
       const token = ++epoch,
         localCache = new core.AssetRuntimeCache(session.assetStore);
@@ -19610,9 +19691,33 @@ function createAkariExtensionHost(options) {
       output.textContent = '';
       output.hidden = true;
       try {
-        if (session.requirements.needsAudio) localCache.ensureAudioContext();
-        await localCache.prepare(session.project, session.requirements, token);
+        if (session.requirements.needsAudio) {
+          const audioContext = localCache.ensureAudioContext();
+          if (artwork) audioContext.addEventListener('error', event => {
+            if (token !== epoch || cache !== localCache) return;
+            startupFailure(new core.AkariError('R415', '音をはじめられませんでした', 0, 0,
+              event.message || 'AudioContext error event; state: ' + audioContext.state));
+          }, { once: true });
+        }
+        await localCache.prepare(session.project, session.requirements, token, { deferAudioStart: artwork });
         if (token !== epoch) return;
+        if (artwork && session.requirements.needsAudio) {
+          const ready = await audioActivation(localCache, localCache.audioResumePromise, false);
+          if (token !== epoch) return;
+          if (!ready) {
+            phase = 'WAITING'; state();
+            activation.hidden = false; activationButton.disabled = false;
+            activationButton.focus({ preventScroll: true });
+            return;
+          }
+        }
+        beginRuntime(localCache);
+      } catch (error) {
+        if (token === epoch) startupFailure(error);
+      }
+    }
+    function beginRuntime(localCache) {
+        runtimeFailed = false;
         runtime = new core.RuntimeModel(session.project, {}, localCache);
         let speechValue;
         const br = {
@@ -19651,17 +19756,28 @@ function createAkariExtensionHost(options) {
         view.seedHeldInput();
         phase = 'RUNNING';
         scheduler.start();
-        start.textContent = '\u21bb \u3082\u3046\u4e00\u5ea6';
+        if (start) start.textContent = '\u21bb \u3082\u3046\u4e00\u5ea6';
         flush();
         state();
         form.focus({ preventScroll: true });
-      } catch (e) {
+    }
+    async function activateRun(event) {
+      event.preventDefault(); event.stopImmediatePropagation();
+      if (phase !== 'WAITING' || !cache) return;
+      const token = epoch, localCache = cache;
+      activationButton.disabled = true;
+      phase = 'PREPARING'; state();
+      try {
+        // Resume is requested synchronously in the native activation handler.
+        const attempt = localCache.audioContext.resume();
+        localCache.audioResumePromise = Promise.resolve(attempt);
+        localCache.audioResumePromise.catch(() => {});
+        await audioActivation(localCache, attempt, true);
         if (token !== epoch) return;
-        dispose();
-        phase = 'STOPPED';
-        message(`${e.code || 'R415'} ${e.message || e}`);
-        flush();
-        state();
+        activation.hidden = true;
+        beginRuntime(localCache);
+      } catch (error) {
+        if (token === epoch) startupFailure(error, true);
       }
     }
     function imageUrl(id) {
@@ -19673,9 +19789,9 @@ function createAkariExtensionHost(options) {
       designUrls.set(id, url);
       return url;
     }
-    start.onclick = startRun;
-    stop.onclick = stopRun;
-    pause.onclick = () => {
+    if (start) start.onclick = startRun;
+    if (stop) stop.onclick = stopRun;
+    if (pause) pause.onclick = () => {
       view?.clearInput();
       if (!scheduler?.running) return;
       scheduler.paused ? scheduler.resume() : scheduler.pause();
@@ -19683,6 +19799,23 @@ function createAkariExtensionHost(options) {
       state();
       form.focus({ preventScroll: true });
     };
+    if (activationButton) {
+      activationButton.onclick = activateRun;
+      for (const type of ['pointerdown', 'pointerup', 'keydown', 'keyup'])
+        activationButton.addEventListener(type, event => event.stopPropagation());
+    }
+    // The shared stage pauses when the page loses focus. Resume that same run on
+    // return, while preserving explicit stops and runtime failures.
+    const rememberPause = () => { if (scheduler?.running && !runtimeFailed && phase !== 'ERROR') backgroundPaused = true; };
+    const resumeBackground = () => {
+      if (!backgroundPaused || document.hidden || !scheduler?.running || runtimeFailed) return;
+      backgroundPaused = false; scheduler.resume(); flush(); state();
+    };
+    if (artwork) {
+      window.addEventListener('blur', rememberPause);
+      window.addEventListener('focus', resumeBackground);
+      document.addEventListener('visibilitychange', () => document.hidden ? rememberPause() : resumeBackground());
+    }
     $('questionStop').onclick = stopRun;
     $('questionSubmit').onclick = () => {
       if (questionCb) questionCb(view.limitInputValue(answer));
@@ -19709,7 +19842,12 @@ function createAkariExtensionHost(options) {
         }
       }
     });
-    window.addEventListener('pagehide', () => {
+    window.addEventListener('pagehide', (e) => {
+      if (artwork && e.persisted) {
+        rememberPause();
+        if (backgroundPaused) scheduler.pause();
+        return;
+      }
       dispose();
       for (const u of designUrls.values()) URL.revokeObjectURL(u);
       designUrls.clear();
@@ -19717,6 +19855,7 @@ function createAkariExtensionHost(options) {
     });
     window.addEventListener('pageshow', (e) => {
       if (e.persisted && session) {
+        if (artwork) resumeBackground();
         flush();
         state();
       }
@@ -19724,11 +19863,12 @@ function createAkariExtensionHost(options) {
     try {
       session = core.restoreExecutable(data);
       document.title = session.project.name;
-      $('playerTitle').textContent = session.project.name;
+      if ($('playerTitle')) $('playerTitle').textContent = session.project.name;
       form.setAttribute('aria-label', session.project.name);
       view = makeView(core, {
         form,
         canvas,
+        ...(artwork ? { getScale: () => 1 } : {}),
         getProject: () => session.project,
         getRuntime: () => runtime,
         getScheduler: () => scheduler,
@@ -19750,10 +19890,14 @@ function createAkariExtensionHost(options) {
       flush();
       phase = 'READY';
       state();
+      if (artwork) startRun();
     } catch (e) {
-      phase = 'ERROR';
-      message(`${e.code || 'X602'} ${e.message || e}`);
-      state();
+      if (artwork) startupFailure(e);
+      else {
+        phase = 'ERROR';
+        message(`${e.code || 'X602'} ${e.message || e}`);
+        state();
+      }
     }
   }
 
@@ -19834,13 +19978,15 @@ function createAkariExtensionHost(options) {
       (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
     );
   }
-  function generateStandaloneHtml(project, assetStore = new AssetStore()) {
+  function generateStandaloneHtml(project, assetStore = new AssetStore(), { presentation = 'controls' } = {}) {
+    if (!['controls', 'artwork'].includes(presentation)) throw new AkariError('X605', '作品のはじめ方が正しくありません');
+    const artwork = presentation === 'artwork';
     const payload = packExecutable(project, assetStore),
       title = escapeHtmlText(payload.project.name);
     const definitions = EXTENSION_HOST.exportDefinitions();
     const selected = AKARI_RUNTIME.profiles.describe();
     const configuration = `{extensions:[${definitions.map(x => `{manifest:${inlineJson(x.manifest)},factory:(${x.factorySource})}`).join(',')}],profiles:${inlineJson(selected.profiles.map(({id,version,limits})=>({id,version,limits})))},profile:${inlineJson(selected.selected ? {id:selected.selected.id,version:selected.selected.version} : null)},allowedCapabilities:${inlineJson(FOUNDATION_CONFIGURATION.allowedCapabilities || [])}}`;
-    const script = `'use strict';\n${createAkariProfiles.toString()}\n${createAkariExtensionHost.toString()}\n${createAkariRuntime.toString()}\n${createAkariStageView.toString()}\n${mountAkariPlayer.toString()}\nmountAkariPlayer(createAkariRuntime(${configuration}),createAkariStageView,${inlineJson(payload)});`;
+    const script = `'use strict';\n${createAkariProfiles.toString()}\n${createAkariExtensionHost.toString()}\n${createAkariRuntime.toString()}\n${createAkariStageView.toString()}\n${mountAkariPlayer.toString()}\nmountAkariPlayer(createAkariRuntime(${configuration}),createAkariStageView,${inlineJson(payload)},${inlineJson({artwork})});`;
     if (/<\/script/i.test(script))
       throw new AkariError(
         'X603',
@@ -19857,11 +20003,12 @@ function createAkariExtensionHost(options) {
       AKARI_STAGE_CSS +
       '\n' +
       AKARI_PLAYER_CSS +
+      (artwork ? '\nhtml,body{background:transparent}#playerRoot{min-width:0;max-width:none;margin:0;padding:0}.player-stage{position:relative;max-width:none;overflow:visible;border:0;border-radius:0;background:transparent}.stage-viewport{margin:0!important}#playerActivation{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1000;background:transparent}#playerActivation[hidden]{display:none}#playerActivate{border:2px solid #000;border-radius:12px;background:#fff;color:#000;opacity:1;max-width:100%;padding:12px 18px;font-weight:700}#playerOutput{max-width:100vw}' : '') +
       '</style>\n</head>\n<body>\n' +
-      '<main id="playerRoot"><header><h1 id="playerTitle">' +
+      '<main id="playerRoot">' + (artwork ? '' : '<header><h1 id="playerTitle">' +
       title +
-      '</h1><div class="player-controls"><button id="playerStart" disabled>\u25b6 \u306f\u3058\u3081\u308b</button><button id="playerPause" disabled>⏸ いったん止める</button><button id="playerStop" disabled>■ 止める</button><span id="playerStatus" role="status">\u8aad\u307f\u8fbc\u307f\u4e2d</span></div></header>' +
-      '<div class="player-stage"><div id="formSurface" tabindex="0"><canvas id="penCanvas"></canvas></div></div><pre id="playerOutput" role="log" hidden></pre></main>' +
+      '</h1><div class="player-controls"><button id="playerStart" disabled>\u25b6 \u306f\u3058\u3081\u308b</button><button id="playerPause" disabled>⏸ いったん止める</button><button id="playerStop" disabled>■ 止める</button><span id="playerStatus" role="status">\u8aad\u307f\u8fbc\u307f\u4e2d</span></div></header>') +
+      '<div class="player-stage"' + (artwork ? ' style="width:' + payload.project.stage.width + 'px;height:' + payload.project.stage.height + 'px"' : '') + '><div id="formSurface" tabindex="0"><canvas id="penCanvas"></canvas></div>' + (artwork ? '<div id="playerActivation" hidden><button id="playerActivate" type="button">ここをおしてはじめる</button></div>' : '') + '</div><pre id="playerOutput" role="log" hidden></pre></main>' +
       '<div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionText"><div class="question-box"><div id="questionText"></div><input id="questionAnswer" aria-label="\u7b54\u3048" autocomplete="off"><div class="question-controls"><button id="questionStop">動きを止める</button><button id="questionSubmit">\u7b54\u3048\u308b</button></div></div></div>' +
       '<noscript>\u3053\u306e\u4f5c\u54c1\u3092\u52d5\u304b\u3059\u306b\u306fJavaScript\u3092\u6709\u52b9\u306b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</noscript>\n<script>\n' +
       script +
@@ -24945,6 +25092,7 @@ function createAkariExtensionHost(options) {
       activeTaskId = null,
       dirty = false,
       lastSavedFingerprint = '',
+      lastSavedEditorFingerprint = '',
       history = [],
       redo = [],
       historyTimer = null,
@@ -26465,6 +26613,7 @@ function createAkariExtensionHost(options) {
       history = [initialSnapshot];
       redo = [];
       lastSavedFingerprint = currentFingerprint();
+      lastSavedEditorFingerprint = openEditorFingerprint();
       lastObservedFingerprint = stateFingerprintCore();
       dirty = false;
       updateDirty();
@@ -26565,11 +26714,78 @@ function createAkariExtensionHost(options) {
       restoreSnap(e);
       setStatus('やり直しました');
     }
+    // Pair the existing saved project fingerprint with the unfinished content
+    // already included in saved editorState. Selection/caret/view do not count.
+    function openEditorFingerprint() {
+      try { return editorContentFingerprint(captureEditorState()); }
+      catch (_) {
+        // Invalid drafts must still be protected, including values that cannot
+        // yet be serialized. No validation failure clears the active work.
+        return stableJson([callableDraftCore, headerPending ? [$('#callableName').value,
+          $('#callableArgs').value, $('#callablePhrase').value] : null,
+          [mainEditor, draftEditor].map(binding => binding.session?.pendingEdit || binding.session?.blockDraft
+            ? [binding.kind, bindingOwner(binding), binding.textarea.value, binding.session.pendingEdit,
+              binding.session.blockDraft ? binding.session.blockView : null] : null)]);
+      }
+    }
+    function validateSavedEditorFingerprint(value) {
+      const fail = () => { throw new AkariError('F503', '自動保存の保存時の編集状態が正しくありません'); };
+      if (typeof value !== 'string' || value.length > LIMITS.fileBytes) return fail();
+      let saved;
+      try { saved = JSON.parse(value); } catch (_) { return fail(); }
+      if (!Array.isArray(saved) || saved.length !== 2 ||
+          !Array.isArray(saved[1]) || saved[1].length > 2) return fail();
+      validateCallableDraftState(saved[0]);
+      if (new Set(saved[1].map(d => d?.kind)).size !== saved[1].length) return fail();
+      for (const d of saved[1]) {
+        if (!exactKeys(d, ['kind', 'ownerKey', 'source', 'value', 'field', 'nodePath', 'draftSource']) ||
+            !['script', 'draft'].includes(d.kind) || typeof d.ownerKey !== 'string' || d.ownerKey.length > 150 ||
+            d.kind === 'draft' && (d.ownerKey !== 'draft' || !saved[0]) ||
+            typeof d.source !== 'string' || cpLen(d.source) > LIMITS.sourceEach ||
+            d.draftSource !== null && (typeof d.draftSource !== 'string' || cpLen(d.draftSource) > LIMITS.sourceEach) ||
+            d.value !== null && typeof d.value !== 'string' || d.field !== null && typeof d.field !== 'string' ||
+            d.nodePath !== null && (!Array.isArray(d.nodePath) || d.nodePath.length > LIMITS.blockDepth * 4 ||
+              d.nodePath.some(k => typeof k !== 'string' && !Number.isInteger(k))) ||
+            d.field !== null && (typeof d.value !== 'string' || !Array.isArray(d.nodePath)) ||
+            JSON.stringify({value:d.value,field:d.field,nodePath:d.nodePath}).length > LIMITS.sourceEach * 4) return fail();
+      }
+      if (stableJson(saved) !== value) return fail();
+      return value;
+    }
+    function currentOpenState() {
+      flushActiveEditor();
+      activeDragCleanup?.();
+      const content = currentFingerprint(), editor = openEditorFingerprint();
+      return { fingerprint: stableJson([content, editor]),
+        unsaved: content !== lastSavedFingerprint || editor !== lastSavedEditorFingerprint ||
+          composingEditors.size > 0 || !!colorEdit };
+    }
+    let openRequest = null;
+    function finishOpenSelection() {
+      openRequest = null;
+      el.fileInput.value = '';
+      if (!document.querySelector('.modal.show,.modal.open,dialog[open]')) $('#openBtn').focus({preventScroll:true});
+    }
+    function selectProjectForOpen() {
+      if (!openRequest || modelLocked()) return;
+      openRequest.phase = 'selection';
+      $('#openConfirmModal').classList.remove('show');
+      el.fileInput.value = '';
+      try { el.fileInput.click(); }
+      catch (error) { finishOpenSelection(); log(error.message, 'error'); }
+    }
+    function requestOpenProject() {
+      if (modelLocked() || openRequest || document.querySelector('.modal.show:not(#procModal),.modal.open,dialog[open]')) return;
+      const observed = currentOpenState();
+      openRequest = { fingerprint: observed.fingerprint, phase: 'confirmation' };
+      if (observed.unsaved) $('#openConfirmModal').classList.add('show');
+      else selectProjectForOpen();
+    }
     function confirmLose() {
       flushActiveEditor();
       activeDragCleanup?.();
       return (
-        (!dirty && !hasCallableDraft() && !hasPendingEditor()) ||
+        (currentFingerprint() === lastSavedFingerprint && !hasCallableDraft() && !hasPendingEditor()) ||
         confirm('作品または手順・答えを求める定義に保存していない編集があります。今の編集を捨てて続けますか？')
       );
     }
@@ -28918,6 +29134,8 @@ function createAkariExtensionHost(options) {
             const blockRoot = e.target?.closest?.('#callableBlocks,#blockEditor');
             if (blockRoot) return; // The block editor closes only its local interaction.
             const close = {
+              exportChoiceModal: 'exportChoiceCancel',
+              openConfirmModal: 'openConfirmCancel',
               assetModal: 'assetClose',
               procModal: 'procClose',
               dataModal: 'dataClose',
@@ -28972,6 +29190,7 @@ function createAkariExtensionHost(options) {
         }
       $('#diagnosisModal').classList.add('show');
     }
+    let exportBusy = false;
     function exportProject() {
       if (!flushActiveEditor()) return;
       if(hasPendingEditor()){log('書きかけの入力を完成させてから書き出してください','error');return;}
@@ -28986,12 +29205,22 @@ function createAkariExtensionHost(options) {
         log('作品の問題を直してから書き出してください', 'error');
         return;
       }
+      if (exportBusy) return;
+      $('#exportChoiceModal').classList.add('show');
+    }
+    function downloadProject(presentation) {
+      if (exportBusy || !$('#exportChoiceModal').classList.contains('show') || modelLocked()) return;
+      if (!flushActiveEditor() || hasPendingEditor() || hasCallableDraft() || compileProject(project).errors.length) {
+        $('#exportChoiceModal').classList.remove('show'); return;
+      }
+      exportBusy = true;
       const button = $('#exportBtn');
       button.disabled = true;
+      $('#exportControls').disabled = $('#exportArtwork').disabled = true;
       setStatus('作品を書き出しています');
       let url = null;
       try {
-        const html = generateStandaloneHtml(project, assetStore),
+        const html = generateStandaloneHtml(project, assetStore, { presentation }),
           blob = new Blob([html], { type: 'text/html;charset=utf-8' }),
           a = document.createElement('a');
         url = URL.createObjectURL(blob);
@@ -29011,7 +29240,10 @@ function createAkariExtensionHost(options) {
         setStatus('書き出しに失敗しました');
       } finally {
         if (url) setTimeout(() => URL.revokeObjectURL(url), 60000);
+        $('#exportChoiceModal').classList.remove('show');
+        $('#exportControls').disabled = $('#exportArtwork').disabled = false;
         button.disabled = modelLocked();
+        exportBusy = false;
       }
     }
 
@@ -29076,6 +29308,7 @@ function createAkariExtensionHost(options) {
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
         lastSavedFingerprint = currentFingerprint();
+        lastSavedEditorFingerprint = openEditorFingerprint();
         dirty = false;
         updateDirty();
         clearTimeout(autosaveTimer);
@@ -29087,8 +29320,10 @@ function createAkariExtensionHost(options) {
         setStatus(childErrorLogText('保存失敗: ' + err.message));
       }
     }
-    async function openProject(file) {
-      if (modelLocked() || !confirmLose()) return;
+    async function openProject(file, approval = null) {
+      if (modelLocked()) return;
+      const observed = currentOpenState();
+      if (approval?.fingerprint !== observed.fingerprint && !confirmLose()) return;
       clearTimeout(historyTimer);
       clearTimeout(autosaveTimer);
       recoveryEpoch++;
@@ -29116,6 +29351,7 @@ function createAkariExtensionHost(options) {
         loadEditor();
         resetHistory();
         if(loaded.editorState){restoreEditorState(loaded.editorState);initialSnapshot=snapshot();history=[initialSnapshot];redo=[];lastObservedFingerprint=stateFingerprintCore();}
+        lastSavedEditorFingerprint = openEditorFingerprint();
         const diagnostics = loaded.diagnostics || [];
         log(
           diagnostics.length
@@ -29231,7 +29467,8 @@ function createAkariExtensionHost(options) {
         const future=history.at(-1)?.stateFingerprint===current.stateFingerprint?redo.slice(-Math.max(1, Math.floor(LIMITS.historyEntries / 2))).reverse():[];
         const workspace=encodeWorkspaceHistory([...past,...future],past.length-1);
         autosaveRevisionTime=Math.max(Date.now(),autosaveRevisionTime+1);
-        rec={id:'latest',version:2,updatedAt:autosaveRevisionTime,revision:recoveryEpoch,workspace,lastSavedFingerprint};
+        rec={id:'latest',version:2,updatedAt:autosaveRevisionTime,revision:recoveryEpoch,workspace,lastSavedFingerprint,
+          lastSavedEditorFingerprint:validateSavedEditorFingerprint(lastSavedEditorFingerprint)};
       } catch (e) {
         el.autosave.textContent = '自動保存：失敗（「保存」で作品をファイルに保存してください）';
         log(e.message, 'error');
@@ -29373,7 +29610,7 @@ function createAkariExtensionHost(options) {
       try {
         const rec = await readAutosave();
         if (
-          !(rec?.project || rec?.workspace) ||
+          !rec ||
           epoch !== recoveryEpoch ||
           dirty ||
           hasCallableDraft() ||
@@ -29381,125 +29618,15 @@ function createAkariExtensionHost(options) {
           modelLocked()
         )
           return;
-        if(rec.workspace){
-          if(!exactKeys(rec,['id','version','updatedAt','revision','workspace','lastSavedFingerprint'])||rec.id!=='latest'||rec.version!==2||
-            !Number.isFinite(rec.updatedAt)||!Number.isSafeInteger(rec.revision)||rec.revision<0||typeof rec.lastSavedFingerprint!=='string')throw new AkariError('F503','自動保存の契約が正しくありません');
-          const restored=await decodeWorkspaceHistory(rec.workspace);
-          if(epoch!==recoveryEpoch||dirty||hasCallableDraft()||hasPendingEditor()||modelLocked())return;
-          recoveryData={...rec,restored};
-          $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()} の自動保存があります。編集履歴ももどします。`;
-          $('#recoveryModal').classList.add('show');return;
-        }
-        validateDesignProject(rec.project);
-        if (!Number.isFinite(rec.updatedAt)) throw new AkariError('F503', '自動保存時刻が不正です');
-        const callableDraft = validateCallableDraft(rec.callableDraft);
-        const pendingEditors = rec.pendingEditors || [];
-        if (!Array.isArray(pendingEditors) || pendingEditors.length > 2 ||
-          pendingEditors.some(d => !(exactKeys(d, ['kind', 'ownerKey', 'source', 'mode', 'pending']) ||
-              exactKeys(d, ['kind', 'ownerKey', 'source', 'mode', 'pending', 'draftTree'])) ||
-            !['script', 'draft'].includes(d.kind) || !['code', 'blocks'].includes(d.mode) ||
-            typeof d.ownerKey !== 'string' || d.ownerKey.length > 150 ||
-            typeof d.source !== 'string' || cpLen(d.source) > LIMITS.sourceEach ||
-            !d.pending || typeof d.pending !== 'object' || Array.isArray(d.pending) ||
-            JSON.stringify(d.pending).length > LIMITS.sourceEach * 4))
-          throw new AkariError('F503', '作文の下書きが正しくありません');
-        for (const saved of pendingEditors) if (saved.draftTree != null) {
-          const ast = blockDecode(saved.draftTree, {allowHoles: true});
-          validateSyntaxAst(ast, 'script', {allowHoles: true});
-          if (cpLen(formatScript(ast, {allowHoles: true})) > LIMITS.sourceEach)
-            throw new AkariError('F504', 'ブロックの下書きが長すぎます');
-        }
-        if (!Array.isArray(rec.assets || []) || (rec.assets || []).length > LIMITS.assets)
-          throw new AkariError(
-            'F504',
-            '\u81ea\u52d5\u4fdd\u5b58\u306e\u7d20\u6750\u6570\u304c\u4e0d\u6b63\u3067\u3059',
-          );
-        let total = 0;
-        const records = [];
-        for (const ar of rec.assets || []) {
-          if (!ar || !(ar.blob instanceof Blob) || !['image', 'audio'].includes(ar.kind))
-            throw new AkariError(
-              'F503',
-              '\u81ea\u52d5\u4fdd\u5b58\u306e\u7d20\u6750\u304c\u4e0d\u6b63\u3067\u3059',
-            );
-          const cap = ar.kind === 'image' ? LIMITS.imageBytes : LIMITS.audioBytes;
-          total += ar.blob.size;
-          if (
-            ar.blob.size < 1 ||
-            ar.blob.size > cap ||
-            ar.blob.size !== ar.byteLength ||
-            total > LIMITS.assetRawTotal
-          )
-            throw new AkariError(
-              'F504',
-              '\u81ea\u52d5\u4fdd\u5b58\u306e\u7d20\u6750\u30b5\u30a4\u30ba\u304c\u4e0d\u6b63\u3067\u3059',
-            );
-        }
-        for (const ar of rec.assets || []) {
-          const bytes = new Uint8Array(await ar.blob.arrayBuffer());
-          records.push({
-            id: ar.id,
-            kind: ar.kind,
-            mime: ar.mime,
-            byteLength: ar.byteLength,
-            sha256: ar.sha256,
-            dataBase64: encodeBase64(bytes),
-          });
-        }
-        const serializedAssets = records.slice();
-        if (
-          collectReachableAssetIds(rec.project).has(DEFAULT_MASCOT_ASSET_ID) &&
-          !serializedAssets.some((a) => a.id === DEFAULT_MASCOT_ASSET_ID)
-        ) {
-          const a = defaultMascotAssetRecord();
-          serializedAssets.push({
-            id: a.id,
-            kind: a.kind,
-            mime: a.mime,
-            byteLength: a.byteLength,
-            sha256: a.sha256,
-            dataBase64: encodeBase64(a.bytes),
-          });
-        }
-        const { assetIds } = validateSerializedProjectStructure({
-            ...rec.project,
-            assets: serializedAssets,
-          }),
-          st = new AssetStore();
-        for (const record of serializedAssets)
-          st.addImmutable(await validateLoadedAssetRecord(record));
-        validateAssetReferences(rec.project, st, { serializedAssetIds: assetIds });
-        if (
-          epoch !== recoveryEpoch ||
-          dirty ||
-          hasCallableDraft() ||
-          hasPendingEditor() ||
-          modelLocked()
-        )
-          return;
-        const validId =
-            rec.selectedId === 'stage' ||
-            rec.project.components.some((c) => c.id === rec.selectedId)
-              ? rec.selectedId
-              : 'stage',
-          type =
-            validId === 'stage'
-              ? 'stage'
-              : rec.project.components.find((c) => c.id === validId).type,
-          validEvent = EVENT_BY_TYPE[type].includes(rec.currentEvent) ? rec.currentEvent : 'start';
-        recoveryData = {
-          ...rec,
-          project: { ...rec.project },
-          callableDraft,
-          pendingEditors,
-          assetStore: st,
-          selectedId: validId,
-          currentEvent: validEvent,
-          lastSavedFingerprint:
-            typeof rec.lastSavedFingerprint === 'string' ? rec.lastSavedFingerprint : '',
-        };
-        $('#recoveryText').textContent =
-          `${new Date(rec.updatedAt).toLocaleString()} \u306e\u81ea\u52d5\u4fdd\u5b58\u304c\u3042\u308a\u307e\u3059\u3002`;
+        if(!exactKeys(rec,['id','version','updatedAt','revision','workspace','lastSavedFingerprint','lastSavedEditorFingerprint'])||
+          rec.id!=='latest'||rec.version!==2||!Number.isFinite(rec.updatedAt)||
+          !Number.isSafeInteger(rec.revision)||rec.revision<0||typeof rec.lastSavedFingerprint!=='string')
+          throw new AkariError('F503','自動保存の契約が正しくありません');
+        validateSavedEditorFingerprint(rec.lastSavedEditorFingerprint);
+        const restored=await decodeWorkspaceHistory(rec.workspace);
+        if(epoch!==recoveryEpoch||dirty||hasCallableDraft()||hasPendingEditor()||modelLocked())return;
+        recoveryData={...rec,restored};
+        $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()} の自動保存があります。編集履歴ももどします。`;
         $('#recoveryModal').classList.add('show');
       } catch (err) {
         if (
@@ -30737,13 +30864,23 @@ function createAkariExtensionHost(options) {
     $('#saveBtn').onclick = saveProject;
     $('#callableSaveProject').onclick = saveProject;
     $('#exportBtn').onclick = exportProject;
-    $('#openBtn').onclick = () => {
-      if (!modelLocked()) el.fileInput.click();
+    $('#exportControls').onclick = () => downloadProject('controls');
+    $('#exportArtwork').onclick = () => downloadProject('artwork');
+    $('#exportChoiceCancel').onclick = () => $('#exportChoiceModal').classList.remove('show');
+    $('#openBtn').onclick = requestOpenProject;
+    $('#openConfirmProceed').onclick = selectProjectForOpen;
+    $('#openConfirmCancel').onclick = () => {
+      openRequest = null;
+      $('#openConfirmModal').classList.remove('show');
     };
+    el.fileInput.addEventListener('cancel', finishOpenSelection);
     el.fileInput.addEventListener('change', async () => {
-      const f = el.fileInput.files?.[0];
-      if (f) await openProject(f);
-      el.fileInput.value = '';
+      const file = el.fileInput.files?.[0], approval = openRequest?.phase === 'selection' ? openRequest : null;
+      // Consume the approval before async loading. Failure/cancel/completion can
+      // never lend it to the next operation or an alternate import route.
+      openRequest = null;
+      try { if (file) await openProject(file, approval); }
+      finally { finishOpenSelection(); }
     });
     $('#undoBtn').onclick = undo;
     $('#redoBtn').onclick = redoDo;
@@ -30917,69 +31054,15 @@ function createAkariExtensionHost(options) {
     });
     $('#recoveryRestore').onclick = () => {
       if (!recoveryData) return;
-      const restoredDraft = recoveryData.callableDraft;
       try {
-        if(recoveryData.restored){
-          const {frames,cursor}=recoveryData.restored;
-          clearTimeout(historyTimer);clearTimeout(autosaveTimer);
-          lastSavedFingerprint=recoveryData.lastSavedFingerprint;
-          history=frames.slice(0,cursor+1);redo=frames.slice(cursor+1).reverse();
-          initialSnapshot=history[0];restoreSnap(history.at(-1),{restoreView:true});
-          $('#recoveryModal').classList.remove('show');recoveryData=null;
-          log('自動保存から作品と編集履歴をもどしました','ok');return;
-        }
-        disposeRuntime();
-        revokeDesignUrls();
-        project = cloneDesignProject(recoveryData.project);
-        assetStore = recoveryData.assetStore || new AssetStore();
-        selectedId = recoveryData.selectedId || 'stage';
-        currentEvent = recoveryData.currentEvent || 'start';
-        selectedScriptId = recoveryData.selectedScriptId || null;
-        lastSavedFingerprint = recoveryData.lastSavedFingerprint || '';
-        appState = 'DESIGN';
-        renderAll();
-        loadEditor();
-        clearCallable();
-        if (restoredDraft) restoreCallableDraft(restoredDraft);
-        editorSessions.clear();
-        invalidateEditors();
-        initialSnapshot = snapshot();
-        lastObservedFingerprint = initialSnapshot.stateFingerprint;
-        history = [initialSnapshot];
-        redo = [];
-        updateDirty();
-        for (const saved of recoveryData.pendingEditors || []) {
-          const binding = saved.kind === 'draft' ? draftEditor : mainEditor;
-          if (bindingOwner(binding) !== saved.ownerKey) continue;
-          const session = getEditorSession(binding, { force: true });
-          session.pendingEdit = cloneDesignProject(saved.pending);
-          if (saved.draftTree != null) {
-            const ast = blockDecode(saved.draftTree, {allowHoles: true});
-            const encoded = blockEncode(ast, {allowHoles: true, idPrefix: 'recovered'});
-            const baseline = { sourceText: session.sourceText, syntaxAst: session.syntaxAst,
-              blockView: session.blockView, nodeMap: session.nodeMap, nodeIds: session.nodeIds,
-              diagnostics: session.diagnostics, syntaxDiagnostics: session.syntaxDiagnostics,
-              nextBlockId: session.nextBlockId, blockSelection: session.blockSelection,
-              sourceRevision: session.sourceRevision, contextRevision: session.contextRevision };
-            const draftSource = formatScript(ast, {allowHoles: true});
-            Object.assign(session, {syntaxAst: ast, blockView: encoded.tree,
-              nodeMap: encoded.nodeMap, nodeIds: encoded.nodeIds, blockSelection: null,
-              nextBlockId: encoded.nodeMap.size + 1,
-              blockDraft: {baseline, ast, tree: encoded.tree, source: draftSource,
-                codeSource: saved.mode === 'code' ? saved.source : undefined,
-                pending: session.pendingEdit} });
-          }
-          editorModes.set(binding.kind, saved.mode);
-          session.mode = saved.mode;
-          binding.textarea.value = saved.source;
-          renderEditorBinding(binding);
-          showEditorFailure(binding, saved.pending.reason || '書きかけの作文をもどしました');
-          if(binding===mainEditor&&saved.pending.kind==='source-import'){const plan=sourceImportPlan(binding,saved.source);if(plan)showSourceImport(binding,saved.source,plan);}
-        }
-        $('#recoveryModal').classList.remove('show');
-        recoveryData = null;
-        recoveryEpoch++;
-        log('自動保存からもどしました', 'ok');
+        const {frames,cursor}=recoveryData.restored;
+        clearTimeout(historyTimer);clearTimeout(autosaveTimer);
+        lastSavedFingerprint=recoveryData.lastSavedFingerprint;
+        lastSavedEditorFingerprint=recoveryData.lastSavedEditorFingerprint;
+        history=frames.slice(0,cursor+1);redo=frames.slice(cursor+1).reverse();
+        initialSnapshot=history[0];restoreSnap(history.at(-1),{restoreView:true});
+        $('#recoveryModal').classList.remove('show');recoveryData=null;
+        log('自動保存から作品と編集履歴をもどしました','ok');
       } catch (err) {
         log('自動保存からもどせませんでした', 'error');
       }
@@ -31139,7 +31222,7 @@ function createAkariExtensionHost(options) {
         const target = event.target.closest('button,.tree-item,.tool');
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
-          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport') ||
+          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#openConfirmModal') ||
           target.matches('#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#sampleHelpBtn,#sampleConfirmYes,#sampleConfirmCancel,#sampleHelpClose,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
@@ -31180,7 +31263,7 @@ function createAkariExtensionHost(options) {
           modelLocked() ||
           flushingEditor ||
           event.target.matches('.diagnostic-details > summary') ||
-          event.target.closest('.editor-modes,#sourceImport,#colorModal,#sampleSelect,#sampleConfirm,#sampleHelp,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#sampleHelpBtn,#sampleConfirmYes,#sampleConfirmCancel,#sampleHelpClose,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          event.target.closest('.editor-modes,#sourceImport,#colorModal,#sampleSelect,#sampleConfirm,#sampleHelp,#openConfirmModal,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#sampleHelpBtn,#sampleConfirmYes,#sampleConfirmCancel,#sampleHelpClose,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;

@@ -10,7 +10,7 @@ export const ledgerSources = Object.freeze([
   {path:'audit/fixtures/language-v2-test-migration.json',sha256:'e43b5d3e93d36f6c21f96745584994f3d03f561b49f4cae98fd75bdc9a1769c7',bytes:2238664,serialization:'pretty-json'},
   {path:'audit/fixtures/design-doc-migration-map.json',sha256:'2a7b27269e8f0bcc7d972416058a0ddb44d242d0e6b92b72497ce65764479e42',bytes:1330122,serialization:'line-array-json'},
 ].map(Object.freeze));
-export const ledgerInputPaths = ['audit/tests/ui-buttons.mjs','audit/lib/ui-buttons-contract.mjs','audit/lib/audit-ledger-reader-migration.mjs','audit/fixtures/audit-ledger-reader-migration.json','audit/lib/child-ux-contract.mjs','audit/lib/audit-ledger-contract.mjs','audit/fixtures/audit-ledger-migration.json',...ledgerSources.map(s=>s.path)];
+export const ledgerInputPaths = ['audit/lib/current-audit-basis.cjs','audit/manifests/current-audit-basis.json','audit/tests/ui-buttons.mjs','audit/lib/ui-buttons-contract.mjs','audit/lib/audit-ledger-reader-migration.mjs','audit/fixtures/audit-ledger-reader-migration.json','audit/lib/child-ux-contract.mjs','audit/lib/audit-ledger-contract.mjs','audit/fixtures/audit-ledger-migration.json',...ledgerSources.map(s=>s.path)];
 export const ledgerRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const digest = value => crypto.createHash('sha256').update(value).digest('hex');
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);

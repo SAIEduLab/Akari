@@ -204,7 +204,7 @@ const cases = {
     // The two labels describe different real downloads, not just different text.
     const saved=p.waitForEvent('download'); await click(p,'#saveBtn'); const save=await saved;
     assert.match(save.suggestedFilename(),/\.akari\.md$/);
-    const exported=p.waitForEvent('download'); await click(p,'#exportBtn'); const exportedFile=await exported;
+    const exported=p.waitForEvent('download'); await click(p,'#exportBtn');await p.locator('#exportControls').click(); const exportedFile=await exported;
     assert.match(exportedFile.suggestedFilename(),/\.html$/);
     const html=fs.readFileSync(await exportedFile.path(),'utf8');
     assert.ok(html.includes('⏸ いったん止める') && html.includes('■ 止める'),'generated player uses the same words');

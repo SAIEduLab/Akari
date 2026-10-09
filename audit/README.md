@@ -50,3 +50,14 @@ GitHub Actionsは同一repositoryのbranch push / PRでstatic・selftest・既�
 ## 監査台帳の保存
 
 追加と容量レビューの規則は [AUDIT.md「監査データの追加と保存」](../AUDIT.md#監査データの追加と保存)、3台帳の形式・旧ハッシュ・凍結・初回同値検証は [移行記録](LEDGER_MIGRATION.md) を参照します。台帳の解析には `lib/audit-ledger-contract.mjs` の専用 reader を使用します。公開 snapshot の実ファイル hash は従来の読取りを維持します。
+
+
+## 現行候補の監査基準と歴史的移行証拠
+
+1.1.2では、過去の移行直後のバイト列を現行ファイルへ要求しない。`audit/manifests/current-audit-basis.json` は、レビューした現行対象一覧・全バイトSHA-256・サイズ・更新理由を固定する。`audit/lib/current-audit-basis.cjs` はその固定manifestと既存release freezeから現物を直接検査し、検査中に期待値を生成・更新しない。release freezeは基準validator自身を含む全公開ファイルを保護する。
+
+基準更新は明示承認と差分レビュー後にだけ `node audit/record-current-basis.mjs --record --reason "承認された更新理由"` で行い、続いて `node audit/freeze-release.mjs --record` を実行する。通常gateと更新コマンドを分離する。記録成功はbyte整合の準備であり、製品実行・全件性・negative・児童理解のPASSではない。
+
+旧commit/source pins/原本/移行hunk/過去のpending・NOT_RUN・合否は書き換えない。旧scope・MIT移行・reader移行の記録は歴史的証拠として検証する。通常gateは現行SHAを直接検査し、現行差分を逆変換する処理を使わない。2,277 IDの追跡・意味・独立oracle・assertion・素材上限・外部形式2・MIT本文/著作権・実動作・証拠snapshot・全件性は従来の検査を維持する。
+
+`audit/tests/audit-ledgers.mjs --check-freeze` は現行基準の検査である。`--compare-start` は固定Git履歴2997cacから旧移行時点の入力を取り出す歴史検証で、現行ファイルへ旧hunkを適用しない。履歴Gitオブジェクトがなければその歴史検証は実施できない。移行名を持つ既存検査IDは追跡用に維持し、現行byte保護と保存原本/意味の確認に役割を分ける。児童向けの旧rollback負例も現行承認bytesへの無承認変更を拒否する。旧記録の合否を今回のPASSへ昇格させない。

@@ -93,7 +93,7 @@ async function main() {
       return {downloadName:download.suggestedFilename(),savedBytes:fs.statSync(saved).size,reopenedProjectExactlyEqual:true};
     });
     await test('standalone-download-offline-player-run',async()=>{
-      const downloadEvent=page.waitForEvent('download');await (await reveal(page.locator('#exportBtn'))).click();const download=await downloadEvent;
+      const downloadEvent=page.waitForEvent('download');await (await reveal(page.locator('#exportBtn'))).click();await page.locator('#exportControls').click();const download=await downloadEvent;
       const exported=path.join(outputDir,'editor-standalone.html');await download.saveAs(exported);
       const text=fs.readFileSync(exported,'utf8');assert.ok(text.includes('SPDX-License-Identifier: MIT'));assert.ok(text.includes('Copyright (c) 2026 SAIEduLab'));assert.ok(text.includes(fs.readFileSync(path.resolve(__dirname,'../../../LICENSE'),'utf8')));
       const player=await context.newPage();await player.goto(pathToFileURL(exported).href);await player.waitForFunction(()=>!document.querySelector('#playerStart').disabled);await (await reveal(player.locator('#playerStart'))).click();

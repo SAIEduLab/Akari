@@ -29,7 +29,7 @@ await withBrowser(browserPath,async browser=>{
       await page.locator('#codeEditor').fill('「MIT監査」と言う。');
       await page.waitForFunction(()=>Akari.app.project.scripts.some(s=>s.source.includes('MIT監査')));
       assert.equal(await page.evaluate(()=>Akari.diagnostics.AKARI_LICENSE),LICENSE_TEXT);
-      const pending=page.waitForEvent('download');await (await revealRegressionControl(page.locator('#exportBtn'))).click();
+      const pending=page.waitForEvent('download');await (await revealRegressionControl(page.locator('#exportBtn'))).click();await page.locator('#exportControls').click();
       const download=await pending,playerFile=path.join(directory,playerName);await download.saveAs(playerFile);
       verifyLicensedArtifact(fs.readFileSync(playerFile,'utf8'));
       const player=await page.context().newPage();player.on('pageerror',e=>report.pageErrors.push(e.message));

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {verifyCurrentAuditBasis,verifyCurrentAuditFile} from './current-audit-basis.cjs';
 import {ledgerRoot,ledgerSources,ledgerSourceCommit,expandAuditLedger,readerMigrationPins,actionsRepairSources} from './audit-ledger-contract.mjs';
 
 const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
@@ -59,19 +61,26 @@ export function restoreReaderSource(file,bytes,row){
   for(const h of row.hunks){const before=Buffer.from(h.before);assert.ok(restored.subarray(h.beforeOffset,h.beforeOffset+before.length).equals(before),'exact starting hunk location');assert.equal(occurrences(restored,before),h.beforeOccurrences,'exact starting occurrence count');}
   return restored;
 }
-export function verifyReaderMigrationIntegrity(repositoryRoot=ledgerRoot){
-  const read=p=>fs.readFileSync(path.join(repositoryRoot,p));
-  const record=validateReaderMigrationIntegrity(read(readerMigrationPins.recordPath),read(readerMigrationPins.adapterPath),read(readerMigrationPins.validatorPath));
-  for(const row of actionsRepairSources)restoreReaderSource(row.path,read(row.path),row);
-  for(const row of record.files)restoreReaderSource(row.path,read(row.path),row);
+// Historical reconstruction accepts only immutable Git blobs, never current files.
+export const historicalReaderCommit='2997cac6e74895e12cfd6ede51311ce09ddbdfd8';
+export function historicalReaderBytes(file,repositoryRoot=ledgerRoot){
+  return execFileSync('git',['show',historicalReaderCommit+':'+file],{cwd:repositoryRoot,maxBuffer:32*1024*1024});
+}
+export function validateHistoricalReaderRecord(bytes){
+  assert.equal(digest(bytes),readerMigrationPins.recordSha256,'immutable historical reader record');
+  const record=JSON.parse(bytes);assert.equal(record.schema,'akari-audit-ledger-reader-migration-v1');
+  assert.equal(record.sourceCommit,ledgerSourceCommit);
+  assert.deepEqual(record.files.map(f=>f.path),migratedReaderPaths,'historical reader targets/order');
   return record;
 }
+export function verifyHistoricalReaderMigrationIntegrity(repositoryRoot=ledgerRoot){
+  return validateReaderMigrationIntegrity(...[readerMigrationPins.recordPath,readerMigrationPins.adapterPath,readerMigrationPins.validatorPath].map(p=>historicalReaderBytes(p,repositoryRoot)));
+}
+export function verifyReaderMigrationIntegrity(repositoryRoot=ledgerRoot){
+  verifyCurrentAuditBasis(repositoryRoot);
+  return validateHistoricalReaderRecord(fs.readFileSync(path.join(repositoryRoot,readerMigrationPins.recordPath)));
+}
 export function preservedAuditReaderBytes(file,bytes,repositoryRoot=ledgerRoot){
-  const repaired=actionsRepairSources.find(row=>row.path===file);
-  if(repaired)bytes=restoreReaderSource(file,bytes,repaired);
-  const ledger=ledgerSources.find(s=>s.path===file);
-  if(ledger)return expandAuditLedger(JSON.parse(bytes),file).bytes;
-  if(!migratedReaderPaths.includes(file))return bytes;
-  const record=verifyReaderMigrationIntegrity(repositoryRoot);
-  return restoreReaderSource(file,bytes,record.files.find(row=>row.path===file));
+  verifyCurrentAuditFile(file,bytes,repositoryRoot);
+  return ledgerSources.some(s=>s.path===file)?expandAuditLedger(JSON.parse(bytes),file).bytes:bytes;
 }

@@ -22,7 +22,7 @@ check('CURRENT-DOCUMENTS-MIT',()=>{
 });
 for(const row of licenseMigration().sources){
   const bytes=fs.readFileSync(row.path);
-  check('PINNED-SOURCE/'+row.path,()=>assert.equal(sha(preservedLicenseSource(row.path,bytes)),row.originalSha256));
+  check('PINNED-SOURCE/'+row.path,()=>assert.deepEqual(preservedLicenseSource(row.path,bytes),bytes)); // Current bytes, historical ID retained.
   const hunk=row.replacements[0],text=bytes.toString('utf8');
   for(const [kind,bad] of [['missing',text.replace(hunk.after,'')],['duplicate',text+hunk.after],['wrong-owner',text.replace('2026 SAIEduLab','2026 WRONG')],['unrelated',text+'\n// unrelated change\n']])
     check('REJECT-'+kind+'/'+row.path,()=>assert.throws(()=>preservedLicenseSource(row.path,Buffer.from(bad))));

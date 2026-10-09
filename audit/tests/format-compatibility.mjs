@@ -203,7 +203,19 @@ await withBrowser(browserPath,async browser=>{
   });
   await run('FORMAT-BROWSER-AUTOSAVE-RECOVERY',async()=>{
     const fingerprint=priorApi.diagnostics.assetStateFingerprint(priorProject,priorApi.makeDefaultAssetStore());
-    const makeRecord=(lastSavedFingerprint,project=plain(priorProject))=>({id:'latest',updatedAt:Date.now(),project,assets:[],selectedId:'stage',currentEvent:'start',lastSavedFingerprint,callableDraft:null});
+    // Use a real current autosave envelope; producer independence remains
+    // about the project label, not retired internal storage compatibility.
+    const validRecord=await browserPage('FORMAT-BROWSER-AUTOSAVE-RECOVERY/current-fixture',async p=>{
+      await p.locator('#fileInput').setInputFiles({name:'prior.akari.md',mimeType:'text/markdown',buffer:Buffer.from(savedPrior)});
+      await p.waitForFunction(name=>Akari.app.project.name===name,priorProject.name);
+      const download=p.waitForEvent('download');await p.locator('#saveBtn').click();
+      await (await download).saveAs(path.join(path.dirname(output),'format-current-autosave.akari.md'));
+      await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));
+      return p.evaluate(()=>new Promise((resolve,reject)=>{const q=indexedDB.open('akari-workspace-f2',1);q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>resolve(get.result);get.onerror=()=>reject(get.error);tx.oncomplete=()=>db.close();};}));
+    });
+    assert.equal(validRecord.workspace.base.project.appVersion,priorRelease);
+    assert.equal(validRecord.lastSavedFingerprint,fingerprint,'current clean baseline must retain producer-independent fingerprint');
+    const makeRecord=(lastSavedFingerprint,mutate=()=>{})=>{const record=plain(validRecord);record.lastSavedFingerprint=lastSavedFingerprint;mutate(record.workspace.base.project);return record;};
     for(const [label,savedFingerprint,expectedDirty] of [['clean',fingerprint,false],['dirty','',true]]){
       await browserPage('FORMAT-BROWSER-AUTOSAVE-RECOVERY/'+label,async p=>{
         await seedAutosave(p,makeRecord(savedFingerprint));await p.reload();
@@ -217,7 +229,7 @@ await withBrowser(browserPath,async browser=>{
     }
     for(const [label,changed] of [['format',p=>{p.formatVersion=1;}],['language',p=>{p.languageContractId='2';}],['malformed',p=>{p.components.push(plain(p.components[0]));}]]){
       await browserPage('FORMAT-BROWSER-AUTOSAVE-RECOVERY/'+label,async p=>{
-        const bad=plain(priorProject);changed(bad);await seedAutosave(p,makeRecord('',bad));await p.reload();
+        await seedAutosave(p,makeRecord('',changed));await p.reload();
         await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('復元検証に失敗'));
         assert.equal(await p.locator('#recoveryModal.show').count(),0);
         assert.notEqual(await p.evaluate(()=>Akari.app.project.name),priorProject.name,'invalid recovery changed current project');

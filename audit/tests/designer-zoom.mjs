@@ -73,7 +73,7 @@ async function stable(p, count = 60) {
   for (let j = 0; j < 4; j++) assert.ok(Math.max(...frames.map(r => r[j])) - Math.min(...frames.map(r => r[j])) < 0.1, 'idle preview must not oscillate');
 }
 async function download(p, button, name) {
-  const pending = p.waitForEvent('download'); await p.locator(button).click();
+  const pending = p.waitForEvent('download'); await p.locator(button).click();if(button==='#exportBtn')await p.locator('#exportControls').click();
   const dest = path.resolve(artifacts, name); await (await pending).saveAs(dest); return dest;
 }
 async function openFile(p, file) {
