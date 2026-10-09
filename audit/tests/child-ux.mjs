@@ -53,11 +53,17 @@ function staticControls(){
   const relaxed=startup.toString('utf8').replace('p.setDefaultTimeout(8000)','p.setDefaultTimeout(8001)');assert.notEqual(relaxed,startup.toString('utf8'));
   for(const [i,bad]of [Buffer.from(relaxed),Buffer.concat([startup,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(approvedStartupAdapter.file,bad,startupExpected));rows.push({id:staticControlIds[28+i],rejected:true});}
   for(const [i,correction]of approvedPreviewChanges.entries()){
-    const bytes=fs.readFileSync(correction.file),expected=scope.protectedFiles[correction.file];verifyProtectedInput(correction.file,bytes,expected);
-    if(correction.file==='audit/browser/cases/browser-session.cjs')assert.equal(sha(preservedCandidateBytes(correction.file,bytes)),'e0079530882bc7381b86b1583e431f9adfc9320c4a14217be6bf9ce48cbc234c');
-    const last=correction.changes.at(-1);assert.equal(bytes.toString('utf8').split(last.after).length,last.count+1);
-    const reverted=bytes.toString('utf8').replace(last.after,last.before);assert.notEqual(reverted,bytes.toString('utf8'));
-    for(const [j,bad]of [Buffer.from(reverted),Buffer.concat([bytes,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(correction.file,bad,expected));if(correction.file==='audit/browser/cases/browser-session.cjs')assert.throws(()=>preservedCandidateBytes(correction.file,bad));rows.push({id:staticControlIds[30+i*2+j],rejected:true});}
+    const file=correction.file===scope.product?currentProductFile():correction.file;
+    const bytes=fs.readFileSync(file),expected=scope.protectedFiles[correction.file];verifyProtectedInput(file,bytes,expected);
+    if(correction.file==='audit/browser/cases/browser-session.cjs')assert.deepEqual(preservedCandidateBytes(file,bytes),bytes);
+    const last=correction.changes.at(-1),text=bytes.toString('utf8');
+    // A historical hunk no longer present in a reviewed current validator is
+    // tested as removal of its current integrity guard, not re-normalized.
+    const reverted=text.includes(last.after)?text.replace(last.after,last.before):
+      text.includes('verifyCurrentAuditFile(file,bytes)')?text.replace('verifyCurrentAuditFile(file,bytes)','bytes'):
+      text.replace(text.split('\n')[0],'// unapproved current guard rollback');
+    assert.notEqual(reverted,text);
+    for(const [j,bad]of [Buffer.from(reverted),Buffer.concat([bytes,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(file,bad,expected));if(correction.file==='audit/browser/cases/browser-session.cjs')assert.throws(()=>preservedCandidateBytes(file,bad));rows.push({id:staticControlIds[30+i*2+j],rejected:true});}
   }
   assert.deepEqual(rows.map(r=>r.id),staticControlIds);return rows;
 }

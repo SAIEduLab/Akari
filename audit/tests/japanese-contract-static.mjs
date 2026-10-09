@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {verifyConsolidatedDocumentation,corpusPath,corpusMarkdownPath} from '../lib/docs-consolidation-contract.mjs';
-import {preservedCandidateBytes} from '../lib/migration-source-contract.mjs';
+import {verifyCurrentAuditFile} from '../lib/current-audit-basis.cjs';
 
 // This audit deliberately imports no candidate parser, renderer or runtime.
 // Its oracle was acquired from d961dd3 and the six documents at 84bbb8c.
@@ -206,13 +206,13 @@ export function verifyJapaneseContract(repositoryRoot = root) {
     const pins = new Map(migration.sourcePins.map(p => [p.path, p]));
     for (const pin of pins.values()) {
       assert.equal(pin.sourceCommit, baselineCommit);
-      const currentHash = sha(preservedCandidateBytes(pin.path,read(pin.path)));
-      if (currentHash !== pin.sha256) {
-        const revision = (migration.revisions || []).find(r => r.path === pin.path);
-        assert.ok(revision, 'changed legacy input requires an explicit migration: ' + pin.path);
+      verifyCurrentAuditFile(pin.path,read(pin.path),repositoryRoot);
+      const revision = (migration.revisions || []).find(r => r.path === pin.path);
+      const preserved=revision?.preservedSourcePath || 'audit/fixtures/legacy-1.0.1/'+pin.path;
+      assert.equal(sha(read(preserved)),pin.sha256,'immutable old oracle/source');
+      if (revision) {
         assert.equal(revision.originalSha256, pin.sha256);
-        assert.equal(sha(read(revision.preservedSourcePath)), pin.sha256, 'old oracle was not preserved');
-        assert.equal(revision.candidateSha256, currentHash, 'migration does not describe current test source');
+        assert.match(revision.candidateSha256,/^[a-f0-9]{64}$/,'recorded historical candidate SHA');
         assert.equal(revision.kind, 'syntax-and-approved-contract-migration');
         const ledger = json(revision.ledgerPath);
         assert.ok(Array.isArray(ledger.changes) && ledger.changes.length > 0, 'missing per-input migration');

@@ -32,7 +32,7 @@ const evidence=await withBrowser(browserPath,async browser=>{
   await p.waitForFunction(source=>Akari.app.editorState.main.sourceText===source,source);
   assert.equal(await p.locator('#codeEditor').inputValue(),source);
   const generated=path.join(dir,'normal-player.html');
-  pending=p.waitForEvent('download');await (await reveal(p.locator('#exportBtn'))).click();await (await pending).saveAs(generated);
+  pending=p.waitForEvent('download');await (await reveal(p.locator('#exportBtn'))).click();await p.locator('#exportControls').click();await (await pending).saveAs(generated);
   assert.equal(await p.evaluate(()=>globalThis.__injected),undefined);
   assert.equal(await p.evaluate(()=>document.documentElement.hasAttribute('data-selftest-failed')),false);
   await p.screenshot({path:path.join(dir,'normal-editor.png'),fullPage:true});

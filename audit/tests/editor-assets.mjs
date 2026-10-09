@@ -216,7 +216,7 @@ const cases = {
     await click(p,'.prop-duplicate');const copy=await current(p);assert.equal(copy.costumes[0].assetId,c.costumes[0].assetId);
     const saved=path.join(artifacts,'drawing.akari.md');let pending=p.waitForEvent('download');await click(p,'#saveBtn');await (await pending).saveAs(saved);
     await click(p,'#newBtn');await p.locator('#fileInput').setInputFiles(saved);await p.waitForFunction(id=>Akari.app.project.components.some(c=>c.id===id),copy.id);await select(p,copy.id);assert.deepEqual(await imageInfo(p),image);
-    const generated=path.join(artifacts,'drawing.html');pending=p.waitForEvent('download');await click(p,'#exportBtn');await (await pending).saveAs(generated);
+    const generated=path.join(artifacts,'drawing.html');pending=p.waitForEvent('download');await click(p,'#exportBtn');await p.locator('#exportControls').click();await (await pending).saveAs(generated);
     await p.goto(pathToFileURL(path.resolve(generated)).href);await p.locator('#playerStart').click();
     await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='RUNNING');
     await p.locator('.component[data-id="'+copy.id+'"] img').waitFor();
@@ -308,7 +308,7 @@ const cases = {
     await click(p,'#newBtn');await p.locator('#fileInput').setInputFiles(saved);
     await p.waitForFunction(id=>Akari.app.project.components.some(c=>c.id===id),second.id);await select(p,second.id);
     assert.deepEqual(await imageInfo(p),image,'save and reload preserve decoded pixels');
-    const generated=path.join(artifacts,'dango.html');pending=p.waitForEvent('download');await click(p,'#exportBtn');await (await pending).saveAs(generated);
+    const generated=path.join(artifacts,'dango.html');pending=p.waitForEvent('download');await click(p,'#exportBtn');await p.locator('#exportControls').click();await (await pending).saveAs(generated);
     const html=fs.readFileSync(generated,'utf8');assert.ok(html.includes(expected));
     const raw=Array.from(html.matchAll(/"dataBase64"\s*:\s*"([A-Za-z0-9+/=]+)"/g),match=>Buffer.from(match[1],'base64'));
     assert.ok(raw.some(bytes=>bytes.length===35664&&createHash('sha256').update(bytes).digest('hex')===expected),'standalone HTML carries the exact original PNG');

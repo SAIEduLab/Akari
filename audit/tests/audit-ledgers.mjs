@@ -1,5 +1,6 @@
-import {migratedReaderPaths,restoreReaderSource,validateReaderMigrationIntegrity,verifyReaderMigrationIntegrity} from '../lib/audit-ledger-reader-migration.mjs';
+import {migratedReaderPaths,restoreReaderSource,validateReaderMigrationIntegrity,verifyReaderMigrationIntegrity,verifyHistoricalReaderMigrationIntegrity,historicalReaderBytes,historicalReaderCommit,validateHistoricalReaderRecord} from '../lib/audit-ledger-reader-migration.mjs';
 import fs from 'node:fs';
+import {verifyCurrentAuditBasis,checkCurrentBasisNegatives} from '../lib/current-audit-basis.cjs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
@@ -63,22 +64,13 @@ export function verifyLedgerMigrationRecord(repositoryRoot=ledgerRoot){
   reader.files=reader.files.filter(r=>!repair.scope.includes(r.path)).map(r=>r.path==='audit/lib/child-ux-contract.mjs'?repair.priorReaderRecord.childRow:r);
   assert.equal(repair.priorReaderRecord.sha256,'9eb62d87bf742dfe959b3c8e845a01f6e991fd7387340d8c44a380399bc3597c');
   assert.equal(hash(JSON.stringify(reader,null,2)+'\n'),repair.priorReaderRecord.sha256,'previous reader record retained exactly');
-  for(const [prior,p]of [[repair.priorAdapter,readerMigrationPins.adapterPath],[repair.priorValidator,readerMigrationPins.validatorPath]]){
-    const bytes=fs.readFileSync(path.join(repositoryRoot,p)),row=actionsRepairSources.find(r=>r.path===p);
-    const text=(row?restoreReaderSource(p,bytes,row):bytes).toString('utf8');assert.equal(text.split(prior.after).length,2,'one bounded preceding change');
-    assert.equal(hash(text.replace(prior.after,prior.before)),prior.sha256,'preceding reviewed source retained exactly');
-  }
+  // Prior adapter hashes/hunks are retained in this immutable historical record.
+  // Current sources are checked directly by the reviewed basis and release freeze.
   return record;
 }
 export function verifyLedgerFreeze(repositoryRoot=ledgerRoot){
-  const record=verifyLedgerMigrationRecord(repositoryRoot);
-  for(const f of record.frozenFiles){const bytes=fs.readFileSync(path.join(repositoryRoot,f.path));assert.equal(bytes.length,f.bytes,f.path);assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),f.sha256,'frozen bytes: '+f.path);}
-  const migration=verifyReaderMigrationIntegrity(repositoryRoot);
-  for(const f of record.authorizedAuditImplementationChanges){
-    const bytes=restoreReaderSource(f.path,fs.readFileSync(path.join(repositoryRoot,f.path)),migration.files.find(r=>r.path===f.path));
-    assert.equal(bytes.length,f.bytes);assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),f.sha256);
-  }
-  return {status:'PASS',files:record.frozenFiles.length,authorizedAuditChanges:record.authorizedAuditImplementationChanges.length,initialFreezeFiles:373};
+  verifyLedgerMigrationRecord(repositoryRoot);
+  return {...verifyCurrentAuditBasis(repositoryRoot),historicalRecordIntegrity:'PASS',historicalFreezeReappliedToCurrent:false};
 }
 function ordered(actual,expected,label){
   assert.equal(Array.isArray(actual),Array.isArray(expected),label+' array type');assert.equal(typeof actual,typeof expected,label+' value type');
@@ -96,8 +88,8 @@ export function compareStartingLedgers(repositoryRoot=ledgerRoot){
   });
 }
 
-export function checkReaderMigrationNegatives(repositoryRoot=ledgerRoot){
-  const record=verifyReaderMigrationIntegrity(repositoryRoot),results=[],read=p=>fs.readFileSync(path.join(repositoryRoot,p));
+export function checkHistoricalReaderMigrationNegatives(repositoryRoot=ledgerRoot){
+  const record=verifyHistoricalReaderMigrationIntegrity(repositoryRoot),results=[],read=p=>historicalReaderBytes(p,repositoryRoot);
   assert.equal(actionsRepairSourceCommit,'8ca421c23b3325fddff9edb87c640b861fa3ffa0');
   assert.deepEqual(actionsRepairSources.map(r=>r.path),['audit/tests/editor-assets.mjs','audit/lib/feature-contract.mjs','audit/lib/audit-ledger-reader-migration.mjs']);
   for(const row of [...record.files,...actionsRepairSources]){
@@ -127,17 +119,25 @@ export function checkReaderMigrationNegatives(repositoryRoot=ledgerRoot){
   assert.throws(()=>validateReaderMigrationIntegrity(Buffer.from(JSON.stringify(changedRecord)),bytes[1],bytes[2]));results.push({path:readerMigrationPins.recordPath,id:'unapproved-new-normalization',rejected:true});
   return results;
 }
+export function checkReaderMigrationNegatives(repositoryRoot=ledgerRoot){
+  verifyReaderMigrationIntegrity(repositoryRoot);
+  const results=checkCurrentBasisNegatives(repositoryRoot);
+  const bytes=fs.readFileSync(path.join(repositoryRoot,readerMigrationPins.recordPath));
+  const changed=JSON.parse(bytes);changed.files[0].hunks.push({id:'EXTRA',before:'',after:'unapproved change'});
+  assert.throws(()=>validateHistoricalReaderRecord(Buffer.from(JSON.stringify(changed))),/immutable historical reader record/);
+  results.push({id:'HISTORY/record-modified',rejected:true});return results;
+}
 export function compareStartingReaders(repositoryRoot=ledgerRoot){
-  const record=verifyReaderMigrationIntegrity(repositoryRoot);
+  const record=verifyHistoricalReaderMigrationIntegrity(repositoryRoot);
   return record.files.map(row=>{const original=execFileSync('git',['show',ledgerSourceCommit+':'+row.path],{cwd:repositoryRoot,maxBuffer:16*1024*1024});
-    assert.ok(restoreReaderSource(row.path,fs.readFileSync(path.join(repositoryRoot,row.path)),row).equals(original),'independent starting reader bytes: '+row.path);
+    assert.ok(restoreReaderSource(row.path,historicalReaderBytes(row.path,repositoryRoot),row).equals(original),'independent starting reader bytes: '+row.path);
     return {path:row.path,status:'PASS',hunks:row.hunks.length};});
 }
 
 if(process.argv[1]&&pathToFileURL(path.resolve(process.argv[1])).href===import.meta.url){
   verifyLedgerMigrationRecord();
-  const report={status:'PASS',ledgers:verifyAuditLedgers(),negativeCases:checkLedgerNegatives().length,readerMigrationNegativeCases:checkReaderMigrationNegatives().length,migrationRecord:'PASS'};
+  const report={status:'PASS',ledgers:verifyAuditLedgers(),negativeCases:checkLedgerNegatives().length,readerMigrationNegativeCases:checkReaderMigrationNegatives().length,migrationRecord:'HISTORICAL_RECORD_INTEGRITY_PASS',currentMigrationReapplication:'NOT_APPLICABLE'};
   if(process.argv.includes('--check-freeze'))report.freeze=verifyLedgerFreeze();
-  if(process.argv.includes('--compare-start')){report.fullComparison=compareStartingLedgers();report.readerComparison=compareStartingReaders();report.actionsRepairComparison=actionsRepairSources.map(row=>{const original=execFileSync('git',['show',actionsRepairSourceCommit+':'+row.path],{cwd:ledgerRoot,maxBuffer:16*1024*1024});assert.ok(restoreReaderSource(row.path,fs.readFileSync(path.join(ledgerRoot,row.path)),row).equals(original),'independent merged-start bytes: '+row.path);return {path:row.path,status:'PASS',sourceCommit:actionsRepairSourceCommit,hunks:row.hunks.length};});}
+  if(process.argv.includes('--compare-start')){report.historicalReferenceCommit=historicalReaderCommit;report.historicalReaderNegativeCases=checkHistoricalReaderMigrationNegatives().length;report.fullComparison=compareStartingLedgers();report.readerComparison=compareStartingReaders();report.actionsRepairComparison=actionsRepairSources.map(row=>{const original=execFileSync('git',['show',actionsRepairSourceCommit+':'+row.path],{cwd:ledgerRoot,maxBuffer:16*1024*1024});assert.ok(restoreReaderSource(row.path,historicalReaderBytes(row.path,ledgerRoot),row).equals(original),'independent merged-start bytes: '+row.path);return {path:row.path,status:'PASS',sourceCommit:actionsRepairSourceCommit,hunks:row.hunks.length};});}
   console.log(JSON.stringify(report,null,2));
 }

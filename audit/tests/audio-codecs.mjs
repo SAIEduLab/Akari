@@ -90,7 +90,7 @@ for(const [name,file,mime,channels,rate] of audioFixtures)cases['audio-import-'+
   await p.waitForFunction(()=>Akari.app.project.sounds.length===1&&Akari.app.editorState.state==='DESIGN');
   assert.equal(await p.evaluate(()=>Akari.app.assetStore.get(Akari.app.project.sounds[0].assetId).sha256),info.hash);
   const generated=path.join(dir,name+'-player.html');pending=p.waitForEvent('download');
-  await click(p,'#exportBtn');await(await pending).saveAs(generated);
+  await click(p,'#exportBtn');await p.locator('#exportControls').click();await(await pending).saveAs(generated);
   await player(browser,generated,marker);
 };
 cases['audio-file-picker']=async p=>{

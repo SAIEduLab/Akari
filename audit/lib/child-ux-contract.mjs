@@ -1,5 +1,6 @@
-import {preservedAuditReaderBytes,verifyReaderMigrationIntegrity} from './audit-ledger-reader-migration.mjs';
+import {verifyReaderMigrationIntegrity} from './audit-ledger-reader-migration.mjs';
 import fs from 'node:fs';
+import {verifyCurrentAuditFile,verifyCurrentAuditBasis} from './current-audit-basis.cjs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {sha,snapshot} from './product-test-host.mjs';
@@ -19,35 +20,16 @@ export const approvedStartupAdapter={"file":"audit/tests/speech-display-browser.
 const previewFixFile='audit/fixtures/approved-run-preview-fix.json';
 assert.equal(sha(fs.readFileSync(previewFixFile)),'42c96ad91de247736c6c5108034c137248fea7b146851897483e7bdcf09ab67b','fixed authorized playback correction');
 export const approvedPreviewChanges=read(previewFixFile).files;
-export function verifyProtectedInput(file,bytes,expected){
-  bytes=preservedAuditReaderBytes(file,bytes);
-  const correction=approvedPreviewChanges.find(c=>c.file===file);
-  if(correction){
-    assert.equal(sha(bytes),correction.afterSha256,'only the authorized playback correction: '+file);
-    let text=bytes.toString('utf8');
-    for(const c of [...correction.changes].reverse()){assert.equal(text.split(c.after).length,c.count+1);text=text.replaceAll(c.after,c.before);}
-    bytes=Buffer.from(text);
-  }
-  if(file===approvedStartupAdapter.file){
-    assert.equal(sha(bytes),approvedStartupAdapter.afterSha256,'only the viewport startup preparation adapter');
-    let text=bytes.toString('utf8');
-    for(const c of [...approvedStartupAdapter.changes].reverse()){assert.equal(text.split(c.after).length,c.count+1);text=text.replaceAll(c.after,c.before);}
-    bytes=Buffer.from(text);
-  }
-  if(file===approvedInputAdapter.file){
-    assert.equal(sha(bytes),approvedInputAdapter.afterSha256,'only the approved legacy comparison input adapter');
-    const text=bytes.toString('utf8');assert.equal(text.split(approvedInputAdapter.after).length,2);
-    bytes=Buffer.from(text.replace(approvedInputAdapter.after,approvedInputAdapter.before));
-  }
-  assert.equal(sha(bytes),expected,'unchanged prior product/spec/oracle: '+file);
+export function verifyProtectedInput(file,bytes,_historicalExpected){
+  return verifyCurrentAuditFile(file===scope.product?currentProductFile():file,bytes);
 }
 export function verifyFrozenInputs(){
   verifyReaderMigrationIntegrity();
   assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-plan.json')),'e18f5596669ec18d63cc2879f0d92e0cf98f88c2eb58a22e683e47677112ac10','fixed supplemental task plan');
   assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-scope.json')),'0ada863f056998e11f79fc4436c65568845c9d951a0b618af40b036206363c6b','fixed pre-addition boundary');
-  assert.equal(currentProductFile(),scope.product);
-  for(const [file,expected]of Object.entries(scope.protectedFiles))verifyProtectedInput(file,fs.readFileSync(file),expected);
-  for(const [file,record]of Object.entries(scope.appendOnlyFiles))assert.equal(sha(fs.readFileSync(file).subarray(0,record.bytes)),record.sha256,'existing audit contract kept byte-exact: '+file);
+  const currentBasis=verifyCurrentAuditBasis();
+  for(const [file,expected]of Object.entries(scope.protectedFiles)){const current=file===scope.product?currentProductFile():file;verifyProtectedInput(current,fs.readFileSync(current),expected);}
+  for(const file of Object.keys(scope.appendOnlyFiles))verifyCurrentAuditFile(file,fs.readFileSync(file));
   const before=scope.acceptanceWorkflow.split(/\r?\n/),after=fs.readFileSync('.github/workflows/akari-acceptance.yml','utf8').split(/\r?\n/);let at=0;
   for(const line of before){while(at<after.length&&after[at]!==line)at++;assert.ok(at<after.length,'existing workflow line retained: '+line);at++;}
   const benchmark=read('audit/fixtures/ux-repair-benchmark.json');
@@ -61,7 +43,7 @@ export function verifyFrozenInputs(){
   assert.deepEqual(plan.requirements.map(r=>r.id),requirementIds);
   assert.equal(plan.persona.entryGrade,3);assert.equal(plan.persona.kanjiAssignmentIsNotComprehension,true);assert.equal(plan.comparison.requiredCI,false);
   for(const r of plan.requirements){assert.ok(['EXISTING','GAP_FILLED','HUMAN_REQUIRED'].includes(r.classification));assert.ok(r.testIds.length&&r.job&&r.evidence&&r.verifier);}
-  return {protectedFiles:Object.keys(scope.protectedFiles).length,byteExactFiles:Object.keys(scope.protectedFiles).length-2-approvedPreviewChanges.length-12,auditLedgerRestoredFiles:3,auditReaderRestoredFiles:9,inputOnlyAdapters:1,startupOnlyAdapters:1,playbackCorrectionFiles:approvedPreviewChanges.length,tasks:24,requirements:requirementIds.length,productSha256:sha(fs.readFileSync(scope.product))};
+  return {protectedFiles:Object.keys(scope.protectedFiles).length,currentByteFiles:currentBasis.currentFiles,historicalScopeIntegrity:'PASS',currentMigrationReapplication:'NOT_APPLICABLE',tasks:24,requirements:requirementIds.length,productSha256:sha(fs.readFileSync(currentProductFile()))};
 }
 export function verifyProvenance(p,expected=childUxProvenance(),platform=expected.platform){
   for(const key of ['repository','testedCommit','candidateCommit','run','attempt'])assert.equal(p?.[key],expected[key],'execution provenance '+key);

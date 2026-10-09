@@ -1,0 +1,189 @@
+{
+  "schema": "akari-current-audit-basis-v1",
+  "productVersion": "1.1.2",
+  "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
+  "updateReason": "承認済み現行7項目のみの内部保存方針へ正例を適応。旧project型seedを実UI保存recordの独立コピーへ変更し、editor45/format52assertions・各9ID・clean/dirty・producer独立性・破損拒否・offer非置換を保持。formatを現行直接basis対象に追加。旧記録・2277ID・oracle・上限・MIT・製品489b2bdは不変。 全体試験の既存browser-product revealにあるPREPARING/RUNNING可視性競合を、実表示waitFor一箇所で修正し直接basisへ追加。既存15秒・4ID・点数3・shadowing・停止後保持assertionを維持。製品489b2bdと共有helper・歴史原本は不変。技術レビュー確認済み。",
+  "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
+  "files": [
+    {
+      "path": "AUDIT.md",
+      "sha256": "adcee1ce4b58857f62a7a723e924e8bf7d7c209ae8361357d98b116b5a83ae62",
+      "bytes": 219224
+    },
+    {
+      "path": "Akari1_1_2.html",
+      "sha256": "489b2bd1c03656266b7c4030a152867548753554a3dc955f143b828bd1e88104",
+      "bytes": 1497720
+    },
+    {
+      "path": "LANGUAGE.md",
+      "sha256": "f6006515eb4e21be5580fea7fba02aa077b682aa26c922c71bcebef1315fc9f2",
+      "bytes": 111427
+    },
+    {
+      "path": "MANUAL.html",
+      "sha256": "ea41e648c17c690254c227e2078f6c098687de4aa872d3c16766769ac19f3332",
+      "bytes": 35627
+    },
+    {
+      "path": "Manual/block-mode.html",
+      "sha256": "700934df0992e9d5789de5b1c989fb9fbdc8e792b54abcf697942c2d7f7f1888",
+      "bytes": 38370
+    },
+    {
+      "path": "Manual/code-mode-advanced.html",
+      "sha256": "37b6c4823459e153a28aad5ed2e7c690e583c0325a19701ac06c4f305d0f6bc0",
+      "bytes": 34017
+    },
+    {
+      "path": "Manual/code-mode-beginner.html",
+      "sha256": "ed674537b1ac5e3c4252becee668b727a7a9ee60ab901bb11b4c5bc58a3708c0",
+      "bytes": 33091
+    },
+    {
+      "path": "Manual/code-mode-intermediate.html",
+      "sha256": "026b47ca7cf0b0681fbb9fbb49f7f2e89af948b6122fb51bb5c9a8108957e892",
+      "bytes": 31295
+    },
+    {
+      "path": "README.md",
+      "sha256": "43074957722b9324650839344cb80dc66e4b19b4447fefa152b3705e3e371ac9",
+      "bytes": 6320
+    },
+    {
+      "path": "audit/README.md",
+      "sha256": "8935a8667718c707e393b5ad5c3b7bc8c8ea70cc6671aa3b6bafe63585283105",
+      "bytes": 7522
+    },
+    {
+      "path": "audit/browser/cases/browser-product.cjs",
+      "sha256": "5addf09598624925da30a5c5d1adb5befab5f4a3cfc6f16bbcd7aba2f6cb17b2",
+      "bytes": 14392
+    },
+    {
+      "path": "audit/browser/cases/browser-storage-media.cjs",
+      "sha256": "453375027ebe23593fe6162cfb9d8bcdad066b80561889a77b6075789c72243c",
+      "bytes": 15615
+    },
+    {
+      "path": "audit/browser/cases/run-editor-regression.cjs",
+      "sha256": "22d9dade926692e6c48046fc94df29f54e073e92247408551918f3645a1b599a",
+      "bytes": 13511
+    },
+    {
+      "path": "audit/fixtures/approved-run-preview-fix.json",
+      "sha256": "42c96ad91de247736c6c5108034c137248fea7b146851897483e7bdcf09ab67b",
+      "bytes": 31865
+    },
+    {
+      "path": "audit/fixtures/audit-ledger-migration.json",
+      "sha256": "2a21d2854014fe757fe78fffa881dcb9ed240d0f082fe3b237e1228cb71b7375",
+      "bytes": 74563
+    },
+    {
+      "path": "audit/fixtures/audit-ledger-reader-migration.json",
+      "sha256": "464a9088828ea532cd587a7170f9e67b49c7bb24aa33a7401ba751398fb10418",
+      "bytes": 17394
+    },
+    {
+      "path": "audit/fixtures/child-ux-scope.json",
+      "sha256": "0ada863f056998e11f79fc4436c65568845c9d951a0b618af40b036206363c6b",
+      "bytes": 57264
+    },
+    {
+      "path": "audit/lib/audit-ledger-contract.mjs",
+      "sha256": "ac0946e6d4c1433b519b63d5b61871c08270120da84b435453160d4b737beed0",
+      "bytes": 14415
+    },
+    {
+      "path": "audit/lib/audit-ledger-reader-migration.mjs",
+      "sha256": "9ba17420b3c2375aaf8a6cff1c529f289b8055f0a901f098d4ebce4370237613",
+      "bytes": 6178
+    },
+    {
+      "path": "audit/lib/child-ux-contract.mjs",
+      "sha256": "f98da00a2485bc0e15dea89b513bb7821da809ce107acdea66457b19a78dce12",
+      "bytes": 22703
+    },
+    {
+      "path": "audit/lib/license-contract.cjs",
+      "sha256": "25fbd3a869a123c9290972b660220e9aec1922642bd963b1cfb5361dcbfcafac",
+      "bytes": 5234
+    },
+    {
+      "path": "audit/lib/migration-source-contract.mjs",
+      "sha256": "41b273a5071422af39f2bceb06edf2540b28da2393547066af7508032156407b",
+      "bytes": 332
+    },
+    {
+      "path": "audit/manifests/features.json",
+      "sha256": "5a55e391999235b772984ccd7bff31de23c88d941f6907edf750abf4f9e60ad0",
+      "bytes": 19252
+    },
+    {
+      "path": "audit/manifests/license-migration.json",
+      "sha256": "c065c1298e661d02f7ce072bc7e84a893e79d50994331b8817e1dd3a5b50ba6c",
+      "bytes": 3573
+    },
+    {
+      "path": "audit/public-files.json",
+      "sha256": "335888107d722d89c41fe35bee39571c5501fba70d68b868f5728b61e239e3a5",
+      "bytes": 19629
+    },
+    {
+      "path": "audit/record-current-basis.mjs",
+      "sha256": "49f38425dce8514cd4e8a183e798ffc2fbda844a07776fa3147b0083f3f2e731",
+      "bytes": 1600
+    },
+    {
+      "path": "audit/tests/audit-ledgers.mjs",
+      "sha256": "06ef11fca49f862ae60f9ea8a5eb6a93b3ec4ba86f401ae6fcbb6deef5bee54c",
+      "bytes": 13274
+    },
+    {
+      "path": "audit/tests/block-field-width.mjs",
+      "sha256": "1eb5a973160b05244673c0facc9c7f7868f5197cfa7728f8975869ce9577f7c9",
+      "bytes": 8483
+    },
+    {
+      "path": "audit/tests/child-ux.mjs",
+      "sha256": "8c11d4e06413e58050be8e02b1600dd916971457690984f9f8c61e7952080e62",
+      "bytes": 18759
+    },
+    {
+      "path": "audit/tests/editor-assets.mjs",
+      "sha256": "e5b201da548622d86c5e9c0f6e47df2cd1db6a0f7023f0150e15b7f9c206ffc0",
+      "bytes": 29439
+    },
+    {
+      "path": "audit/tests/editor-browser.mjs",
+      "sha256": "44c003a8ccb182534c303bddebd2966d5eeeb9752b57d039e3d084fc10df32b9",
+      "bytes": 18089
+    },
+    {
+      "path": "audit/tests/format-compatibility.mjs",
+      "sha256": "d16d02716f348ac06e3378f4b882dd60c6301efad0995659b9856bb206d31a2b",
+      "bytes": 18727
+    },
+    {
+      "path": "audit/tests/japanese-contract-static.mjs",
+      "sha256": "9f6eb82339ecf2ca9f0b6c8e25a0b74c1360a860f1a86597ae7fea23841a3201",
+      "bytes": 16261
+    },
+    {
+      "path": "audit/tests/language-migration-static.mjs",
+      "sha256": "5e7c265d1fed745a82291efadcde19e5b430fe38579e93222803252d1067a34d",
+      "bytes": 3945
+    },
+    {
+      "path": "audit/tests/license-static.mjs",
+      "sha256": "d7a3481d3f490a761bc6aeb732c5aa4afe259d68d222c5f84bb22a59aea67e06",
+      "bytes": 2941
+    },
+    {
+      "path": "audit/tests/static-contract.mjs",
+      "sha256": "474353d41bd22a0afe50a2f8df8028c13f28442322c8002701252282ab7572a4",
+      "bytes": 10352
+    }
+  ]
+}

@@ -13,7 +13,8 @@ const fixture = makeRegressionProject(api); fixture.name = '入力欄の全文�
 fixture.scripts = [{targetId:'stage',event:'message',source:sample}];
 fixture.actions = [{id:'field-action',ownerId:'stage',name:'文字幅',args:[],source:'「表示更新」と言う。'}];
 const dir = path.dirname(output);fs.mkdirSync(dir,{recursive:true});
-const results = [], pageErrors = [], networkRequests = [];
+const results = [], pageErrors = [], networkRequests = [], fieldObservations=[];
+let currentFieldCase=null;
 async function checkFields(locator) {
   const rows = await locator.evaluateAll(inputs => inputs.map(input => {
     const s=getComputedStyle(input), span=document.createElement('span');
@@ -21,8 +22,12 @@ async function checkFields(locator) {
     span.textContent=input.value;document.body.append(span);const text=span.getBoundingClientRect().width;span.remove();
     const edges=['paddingLeft','paddingRight','borderLeftWidth','borderRightWidth'].reduce((n,k)=>n+(parseFloat(s[k])||0),0);
     const picker=input.hasAttribute('list')?parseFloat(s.getPropertyValue('--blockui-picker-space'))||20:0;
-    return {value:input.value,width:parseFloat(s.width),required:text+edges+picker,title:input.title};
+    return {value:input.value,width:parseFloat(s.width),required:text+edges+picker,title:input.title,
+      textWidth:text,edges,picker,font:s.font,fontFamily:s.fontFamily,fontSize:s.fontSize,letterSpacing:s.letterSpacing,
+      inlineWidth:input.style.getPropertyValue('--blockui-field-width'),fontStatus:document.fonts.status,
+      at:performance.now(),notifications:window.__fieldWidthAudit?.events.slice(-30)||[]};
   }));
+  fieldObservations.push({sequence:fieldObservations.length+1,id:currentFieldCase,rows});
   assert.ok(rows.length,'rendered fields required');
   for(const row of rows) assert.ok(row.width+0.5>=row.required,'clipped '+JSON.stringify(row));
   return rows;
@@ -38,7 +43,14 @@ const browserVersion = await withBrowser(browserPath,async browser => {
     await p.locator('#editorModeblocks').click();
     const fields=p.locator('#blockEditor .blockui-world .blockui-field input');
     const literal=p.locator('#blockEditor [data-schema-id="StringLiteral"] input').first();
+    // Passive diagnostics only: retain measurement/notification order without
+    // changing the 50ms font check, layout logic or its width tolerance.
+    await p.evaluate(()=>{const audit=window.__fieldWidthAudit={events:[],serial:0},note=(kind,detail)=>{audit.events.push({sequence:++audit.serial,at:performance.now(),kind,...detail});if(audit.events.length>300)audit.events.shift();};
+      new MutationObserver(records=>{for(const r of records)if(r.target.matches?.('.blockui-field input'))note('field-style',{value:r.target.value,width:r.target.style.getPropertyValue('--blockui-field-width')});}).observe(document.querySelector('#blockEditor'),{subtree:true,attributes:true,attributeFilter:['style']});
+      const observer=new ResizeObserver(entries=>note('resize-notification',{sizes:entries.map(e=>({width:e.contentRect.width,height:e.contentRect.height}))}));observer.observe(document.querySelector('#blockEditor'));
+      for(const kind of ['loading','loadingdone','loadingerror'])document.fonts.addEventListener(kind,()=>note('font-'+kind,{status:document.fonts.status}));});
     for(const id of blockFieldIds){
+      currentFieldCase=id;
       try {
         if(id==='FIELD-SHORT-JAPANESE') {
           await p.waitForFunction(()=>[...document.querySelectorAll('#blockEditor .blockui-field input')].some(i=>i.value==='表示更新'&&i.style.getPropertyValue('--blockui-field-width')));
@@ -70,6 +82,6 @@ const browserVersion = await withBrowser(browserPath,async browser => {
   });return browser.version();
 });
 assert.deepEqual(snapshot(product),inputs);
-const report={status:results.every(r=>r.pass)?'PASS':'FAIL',snapshot:inputs,browser:browserVersion,results,pageErrors,networkRequests};
+const report={status:results.every(r=>r.pass)?'PASS':'FAIL',snapshot:inputs,browser:browserVersion,results,pageErrors,networkRequests,fieldObservations};
 fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');verifyBlockFields(report,inputs);
 console.log('Block field visibility: '+results.length+' PASS');
