@@ -2,18 +2,18 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.1.2",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "承認済み現行7項目のみの内部保存方針へ正例を適応。旧project型seedを実UI保存recordの独立コピーへ変更し、editor45/format52assertions・各9ID・clean/dirty・producer独立性・破損拒否・offer非置換を保持。formatを現行直接basis対象に追加。旧記録・2277ID・oracle・上限・MIT・製品489b2bdは不変。 全体試験の既存browser-product revealにあるPREPARING/RUNNING可視性競合を、実表示waitFor一箇所で修正し直接basisへ追加。既存15秒・4ID・点数3・shadowing・停止後保持assertionを維持。製品489b2bdと共有helper・歴史原本は不変。技術レビュー確認済み。 2026-10-09: audit/README.mdの見出しを現行1.1.2へ修正し、存在しない1.0.1のrelease manifest参照を現行1.1.2へ修正。変更は文書の2箇所のみで、製品・監査契約・検証条件は不変。",
+  "updateReason": "User-authorized selection performance repair: bounded editor syntax reuse, documented invalidation and additional uncached parity/count tests; external contracts and fixed oracles unchanged; byte record only.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
       "path": "AUDIT.md",
-      "sha256": "adcee1ce4b58857f62a7a723e924e8bf7d7c209ae8361357d98b116b5a83ae62",
-      "bytes": 219224
+      "sha256": "0713f4dac7aec199ac79e7c431660958596cbfb64e06fe6e54ad724f0eddbc37",
+      "bytes": 220067
     },
     {
       "path": "Akari1_1_2.html",
-      "sha256": "489b2bd1c03656266b7c4030a152867548753554a3dc955f143b828bd1e88104",
-      "bytes": 1497720
+      "sha256": "3205fab938fda657ad1a97577879be479f14992fba7eb083bd79668021f15577",
+      "bytes": 1500667
     },
     {
       "path": "LANGUAGE.md",
@@ -52,8 +52,8 @@
     },
     {
       "path": "audit/README.md",
-      "sha256": "f92c71a090d8c33ff7c7dfead329a27502b118b775282726defd97ce4517a9ba",
-      "bytes": 7522
+      "sha256": "176273218dfdb1c646dbdff7f9f5d7dcc26302f8c5086e45058bd3bfa55a1ac6",
+      "bytes": 8482
     },
     {
       "path": "audit/browser/cases/browser-product.cjs",
@@ -127,8 +127,8 @@
     },
     {
       "path": "audit/public-files.json",
-      "sha256": "335888107d722d89c41fe35bee39571c5501fba70d68b868f5728b61e239e3a5",
-      "bytes": 19629
+      "sha256": "d5b522eec8b4eaaf7ed51dba4316ee83c99974705c932e61d24ec97e6d1f8814",
+      "bytes": 19672
     },
     {
       "path": "audit/record-current-basis.mjs",

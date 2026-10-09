@@ -17360,12 +17360,59 @@ function createAkariExtensionHost(options) {
     return next;
   }
 
-  function parseProjectSyntax(project) {
+  // Editor candidate checks revisit unchanged documents for every palette item.
+  // Keep syntax only: ownership resolution and semantic analysis always run against
+  // the current candidate. No cache enters the saved project or runtime contract.
+  const EDITOR_PROJECT_SYNTAX_CACHE = { environment: null, records: new Map(), size: 0 };
+  function editorSyntaxEnvironment(project) {
+    const declaration = ({ source, ...metadata }) => metadata;
+    return JSON.stringify({
+      stage: project.stage, components: project.components, projectData: project.projectData,
+      actions: project.actions.map(declaration), functions: project.functions.map(declaration),
+      extensions: ['commands', 'calculations', 'events'].map(kind => EXTENSION_HOST.operations(kind)),
+    });
+  }
+  function freezeEditorSyntax(value) {
+    if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+    for (const child of Object.values(value)) freezeEditorSyntax(child);
+    return Object.freeze(value);
+  }
+  function editorProjectSyntax(key, source, context, symbols) {
+    const cache = EDITOR_PROJECT_SYNTAX_CACHE;
+    const { definition, ...rest } = context;
+    const signature = JSON.stringify({ ...rest, definition: definition
+      ? Object.fromEntries(Object.entries(definition).filter(([name]) => name !== 'source')) : definition });
+    let record = cache.records.get(key);
+    if (!record || record.source !== source || record.signature !== signature) {
+      if (record) { cache.size -= record.source.length; cache.records.delete(key); }
+      record = { source, signature, parsed: freezeEditorSyntax(parseSyntax(source, { ...context, key, symbols })) };
+      // Bound both document count and retained text (including invalid drafts).
+      while (cache.records.size && (cache.records.size >= 256 || cache.size + source.length > 1000000)) {
+        const oldest = cache.records.keys().next().value;
+        cache.size -= cache.records.get(oldest).source.length; cache.records.delete(oldest);
+      }
+      if (source.length <= 1000000) { cache.records.set(key, record); cache.size += source.length; }
+    } else {
+      cache.records.delete(key); cache.records.set(key, record);
+    }
+    // Used only by analyzeAst's private compilation, never returned as an editor
+    // session/runtime AST. Semantic analysis reads immutable syntax; diagnostics
+    // get their own objects so its returned errors cannot alter retained results.
+    return { ast: record.parsed.ast, syntaxDiagnostics: structuredClone(record.parsed.syntaxDiagnostics) };
+  }
+  function parseProjectSyntax(project, reuseEditorSyntax = false) {
     const symbols = buildSymbols(project),
       items = [],
       errors = [];
+    if (reuseEditorSyntax) {
+      const environment = editorSyntaxEnvironment(project), cache = EDITOR_PROJECT_SYNTAX_CACHE;
+      if (cache.environment !== environment) {
+        cache.environment = environment; cache.records.clear(); cache.size = 0;
+      }
+    }
     const parseOne = (key, source, context) => {
-      const parsed = parseSyntax(source, { ...context, key, symbols });
+      const parsed = reuseEditorSyntax ? editorProjectSyntax(key, source, context, symbols)
+        : parseSyntax(source, { ...context, key, symbols });
       errors.push(...parsed.syntaxDiagnostics);
       if (parsed.ast) items.push(...documentSyntaxItems(parsed.ast,key,context,project,errors));
     };
@@ -17428,7 +17475,7 @@ function createAkariExtensionHost(options) {
       context.ownerKey ||
       (kind ? `${kind}:${definition?.id || 'draft'}` : context.id || context.scriptId
         ? `script:${context.id || context.scriptId}` : `script:${targetId}:${event}`);
-    const compiled = parseProjectSyntax(candidate),
+    const compiled = parseProjectSyntax(candidate, true),
       targetType = kind
         ? null
         : targetId === 'stage'

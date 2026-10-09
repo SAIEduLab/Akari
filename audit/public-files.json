@@ -319,6 +319,7 @@
     "audit/tests/draft-persistence.mjs",
     "audit/tests/editor-assets.mjs",
     "audit/tests/editor-browser.mjs",
+    "audit/tests/editor-syntax-reuse.mjs",
     "audit/tests/execution-continuity.mjs",
     "audit/tests/export-open-browser.cjs",
     "audit/tests/extension-foundation-negative.mjs",
