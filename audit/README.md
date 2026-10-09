@@ -1,6 +1,6 @@
-# あかり1.0.1の監査
+# あかり1.1.2の監査
 
-契約は [AUDIT.md](../AUDIT.md)、機能固定は `manifests/features.json`、公開ファイル固定は `manifests/release-1.0.1.json` です。
+契約は [AUDIT.md](../AUDIT.md)、機能固定は `manifests/features.json`、公開ファイル固定は `manifests/release-1.1.2.json` です。
 
 ## 実行
 

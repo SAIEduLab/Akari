@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.1.2",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "承認済み現行7項目のみの内部保存方針へ正例を適応。旧project型seedを実UI保存recordの独立コピーへ変更し、editor45/format52assertions・各9ID・clean/dirty・producer独立性・破損拒否・offer非置換を保持。formatを現行直接basis対象に追加。旧記録・2277ID・oracle・上限・MIT・製品489b2bdは不変。 全体試験の既存browser-product revealにあるPREPARING/RUNNING可視性競合を、実表示waitFor一箇所で修正し直接basisへ追加。既存15秒・4ID・点数3・shadowing・停止後保持assertionを維持。製品489b2bdと共有helper・歴史原本は不変。技術レビュー確認済み。",
+  "updateReason": "承認済み現行7項目のみの内部保存方針へ正例を適応。旧project型seedを実UI保存recordの独立コピーへ変更し、editor45/format52assertions・各9ID・clean/dirty・producer独立性・破損拒否・offer非置換を保持。formatを現行直接basis対象に追加。旧記録・2277ID・oracle・上限・MIT・製品489b2bdは不変。 全体試験の既存browser-product revealにあるPREPARING/RUNNING可視性競合を、実表示waitFor一箇所で修正し直接basisへ追加。既存15秒・4ID・点数3・shadowing・停止後保持assertionを維持。製品489b2bdと共有helper・歴史原本は不変。技術レビュー確認済み。 2026-10-09: audit/README.mdの見出しを現行1.1.2へ修正し、存在しない1.0.1のrelease manifest参照を現行1.1.2へ修正。変更は文書の2箇所のみで、製品・監査契約・検証条件は不変。",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -52,7 +52,7 @@
     },
     {
       "path": "audit/README.md",
-      "sha256": "8935a8667718c707e393b5ad5c3b7bc8c8ea70cc6671aa3b6bafe63585283105",
+      "sha256": "f92c71a090d8c33ff7c7dfead329a27502b118b775282726defd97ce4517a9ba",
       "bytes": 7522
     },
     {
