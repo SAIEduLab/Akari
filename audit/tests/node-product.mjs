@@ -1,3 +1,4 @@
+import {runEditorSyntaxReuseTests} from './editor-syntax-reuse.mjs';
 import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -10,6 +11,7 @@ new vm.Script(script);
 const manifest=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
 const deadline=setTimeout(()=>{console.error('Node product test timeout');process.exit(124);},120000);
 const reports=[];
+const syntaxReuse=runEditorSyntaxReuseTests(html);
 try {
  const pureSuites=['runEditorCoreTests','runSemanticContractTests','runAkariSelfTests','runCoreTests','runSyntaxTests','runBlockCodecTests','runDesignResizeTests','runColorPickerTests'];
  for(const spec of manifest.suites.filter(s=>pureSuites.includes(s.name))){
@@ -20,6 +22,6 @@ try {
   if(report.failed) console.error(report.results.filter(r=>!r.pass));
   assert.equal(report.failed,0);reports.push({name:spec.name,total:report.total});
  }
- fs.writeFileSync(process.argv[2] || 'audit-evidence/node-product.json',JSON.stringify({environment:'node',requiredBrowserComplete:false,reports},null,2)+'\n');
+ fs.writeFileSync(process.argv[2] || 'audit-evidence/node-product.json',JSON.stringify({environment:'node',requiredBrowserComplete:false,reports,syntaxReuse},null,2)+'\n');
  console.log('Node actual product: '+reports.reduce((n,r)=>n+r.total,0)+' PASS (browser obligation separate)');
 } finally {clearTimeout(deadline);}

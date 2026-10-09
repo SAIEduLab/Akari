@@ -1,6 +1,6 @@
 {
   "schema": "akari-language-coverage-v1",
-  "productVersion": "1.1.2",
+  "productVersion": "1.2.0",
   "cases": [
     {
       "id": "JPF-001",

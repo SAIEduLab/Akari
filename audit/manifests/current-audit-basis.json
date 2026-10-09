@@ -1,59 +1,59 @@
 {
   "schema": "akari-current-audit-basis-v1",
-  "productVersion": "1.1.2",
+  "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "承認済み現行7項目のみの内部保存方針へ正例を適応。旧project型seedを実UI保存recordの独立コピーへ変更し、editor45/format52assertions・各9ID・clean/dirty・producer独立性・破損拒否・offer非置換を保持。formatを現行直接basis対象に追加。旧記録・2277ID・oracle・上限・MIT・製品489b2bdは不変。 全体試験の既存browser-product revealにあるPREPARING/RUNNING可視性競合を、実表示waitFor一箇所で修正し直接basisへ追加。既存15秒・4ID・点数3・shadowing・停止後保持assertionを維持。製品489b2bdと共有helper・歴史原本は不変。技術レビュー確認済み。 2026-10-09: audit/README.mdの見出しを現行1.1.2へ修正し、存在しない1.0.1のrelease manifest参照を現行1.1.2へ修正。変更は文書の2箇所のみで、製品・監査契約・検証条件は不変。",
+  "updateReason": "User explicitly requested the complete 1.2.0 release on 2026-10-09: product label and filename, entry/manual links and current audit metadata updated together; preserve feature values, all fixed oracles, external format contracts and existing test requirements. Editor syntax reuse and added regressions are included. Byte integrity only, not execution PASS.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
       "path": "AUDIT.md",
-      "sha256": "adcee1ce4b58857f62a7a723e924e8bf7d7c209ae8361357d98b116b5a83ae62",
-      "bytes": 219224
+      "sha256": "a7653b31d804909551573ddee655525eb07d55fdffa9729359ab67caa1bbe651",
+      "bytes": 220067
     },
     {
-      "path": "Akari1_1_2.html",
-      "sha256": "489b2bd1c03656266b7c4030a152867548753554a3dc955f143b828bd1e88104",
-      "bytes": 1497720
+      "path": "Akari1_2_0.html",
+      "sha256": "13ce7ad15eaefb35f6cc3908b632887f4d4523fad5f35e29e0ff988a63697638",
+      "bytes": 1500667
     },
     {
       "path": "LANGUAGE.md",
-      "sha256": "f6006515eb4e21be5580fea7fba02aa077b682aa26c922c71bcebef1315fc9f2",
+      "sha256": "d2017124928c8155957218b79e7a3487cf683eb7857e423a7e27ee05878a652d",
       "bytes": 111427
     },
     {
       "path": "MANUAL.html",
-      "sha256": "ea41e648c17c690254c227e2078f6c098687de4aa872d3c16766769ac19f3332",
+      "sha256": "4eb5ef1af16de60fa74fbadd839378b28d8933dda379fe2292f57988ab7471cb",
       "bytes": 35627
     },
     {
       "path": "Manual/block-mode.html",
-      "sha256": "700934df0992e9d5789de5b1c989fb9fbdc8e792b54abcf697942c2d7f7f1888",
+      "sha256": "80e615e567d4f567c69d909ad65dd188663bff8e4493f2cc1d713eaa27ada31d",
       "bytes": 38370
     },
     {
       "path": "Manual/code-mode-advanced.html",
-      "sha256": "37b6c4823459e153a28aad5ed2e7c690e583c0325a19701ac06c4f305d0f6bc0",
+      "sha256": "d1b952b944c85753be4f5336ad0864aa3e74ad0ef3296ac6310f9f404f94b529",
       "bytes": 34017
     },
     {
       "path": "Manual/code-mode-beginner.html",
-      "sha256": "ed674537b1ac5e3c4252becee668b727a7a9ee60ab901bb11b4c5bc58a3708c0",
+      "sha256": "1df6a6cc36ab2682829dfc4570c1a91ec37f0412fc09ee31f510077ebc8a16f7",
       "bytes": 33091
     },
     {
       "path": "Manual/code-mode-intermediate.html",
-      "sha256": "026b47ca7cf0b0681fbb9fbb49f7f2e89af948b6122fb51bb5c9a8108957e892",
+      "sha256": "b4bf729a991b6168745394aa0cac525f77638ef3254514c3949c20c9b66e18bb",
       "bytes": 31295
     },
     {
       "path": "README.md",
-      "sha256": "43074957722b9324650839344cb80dc66e4b19b4447fefa152b3705e3e371ac9",
-      "bytes": 6320
+      "sha256": "d03fc142cf381f94772b388cfa80334acfb19cdf9d21f0b042c7e90803f99ae5",
+      "bytes": 6881
     },
     {
       "path": "audit/README.md",
-      "sha256": "f92c71a090d8c33ff7c7dfead329a27502b118b775282726defd97ce4517a9ba",
-      "bytes": 7522
+      "sha256": "f6a395dbb949aa3939eea8dd65a6658e5c28c3d581e3e860c648dc62efdc3bb6",
+      "bytes": 8482
     },
     {
       "path": "audit/browser/cases/browser-product.cjs",
@@ -117,7 +117,7 @@
     },
     {
       "path": "audit/manifests/features.json",
-      "sha256": "5a55e391999235b772984ccd7bff31de23c88d941f6907edf750abf4f9e60ad0",
+      "sha256": "3358d0925a90c5fb4914b1c181453ead38e49ea2be49e0a49bfb4131e5bb00ca",
       "bytes": 19252
     },
     {
@@ -127,12 +127,12 @@
     },
     {
       "path": "audit/public-files.json",
-      "sha256": "335888107d722d89c41fe35bee39571c5501fba70d68b868f5728b61e239e3a5",
-      "bytes": 19629
+      "sha256": "34fa338225573dfc2f6ef2caa7acfe16f8c152b6c69ab267d4c8b0139301a031",
+      "bytes": 19672
     },
     {
       "path": "audit/record-current-basis.mjs",
-      "sha256": "49f38425dce8514cd4e8a183e798ffc2fbda844a07776fa3147b0083f3f2e731",
+      "sha256": "573558ba30f76fcac11c40144f57c90cc3494426539df9ab8cdf7a5158412a62",
       "bytes": 1600
     },
     {

@@ -1,6 +1,6 @@
-# あかり1.1.2の監査
+# あかり1.2.0の監査
 
-契約は [AUDIT.md](../AUDIT.md)、機能固定は `manifests/features.json`、公開ファイル固定は `manifests/release-1.1.2.json` です。
+契約は [AUDIT.md](../AUDIT.md)、機能固定は `manifests/features.json`、公開ファイル固定は `manifests/release-1.2.0.json` です。
 
 ## 実行
 
@@ -61,3 +61,9 @@ GitHub Actionsは同一repositoryのbranch push / PRでstatic・selftest・既�
 旧commit/source pins/原本/移行hunk/過去のpending・NOT_RUN・合否は書き換えない。旧scope・MIT移行・reader移行の記録は歴史的証拠として検証する。通常gateは現行SHAを直接検査し、現行差分を逆変換する処理を使わない。2,277 IDの追跡・意味・独立oracle・assertion・素材上限・外部形式2・MIT本文/著作権・実動作・証拠snapshot・全件性は従来の検査を維持する。
 
 `audit/tests/audit-ledgers.mjs --check-freeze` は現行基準の検査である。`--compare-start` は固定Git履歴2997cacから旧移行時点の入力を取り出す歴史検証で、現行ファイルへ旧hunkを適用しない。履歴Gitオブジェクトがなければその歴史検証は実施できない。移行名を持つ既存検査IDは追跡用に維持し、現行byte保護と保存原本/意味の確認に役割を分ける。児童向けの旧rollback負例も現行承認bytesへの無承認変更を拒否する。旧記録の合否を今回のPASSへ昇格させない。
+
+## 編集時の構文再利用
+
+`node audit/tests/editor-syntax-reuse.mjs <新規の証拠JSON>` は、編集診断専用の構文キャッシュと非キャッシュ経路を比較する。共有本文・引数・登録呼出し文・部品名・データ・文書ID・Undo相当の復元・別作品への切替で、診断と候補の一致、作品の非変更、解析回数削減、保持上限を検査する。`node-product` にも含まれる。比較用の解析回数計装はテスト内のコピーだけに加え、配布製品のAPIへは追加しない。
+
+このNode試験はブラウザーの操作時間・描画・IME・実ゲームの改善確認を代替しない。性能の実測は未計装の製品と同一原本を使い、初回／反復、コード／ブロック、実画面と内部APIの時間を分けて記録する。既存ブラウザーゲート・言語／保存形式・固定原本の合格条件は変更しない。
