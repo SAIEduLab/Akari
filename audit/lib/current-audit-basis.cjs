@@ -1,11 +1,11 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const root=path.resolve(__dirname,'../..');
 const basisPath='audit/manifests/current-audit-basis.json';
-const releasePath='audit/manifests/release-1.1.2.json';
+const releasePath='audit/manifests/release-1.2.0.json';
 // Changed only by the explicit reviewed-basis recording command, never by a gate.
-const REVIEWED_BASIS_SHA256='e949c401de61b260ecd5333c450e038d95a98db9dfda33505402fc12ee968366';
+const REVIEWED_BASIS_SHA256='587c08869c6e44bbfd54fb83cef5d20a5fbd0572858950a13ac0cc505a42bad8';
 const basisTargets=Object.freeze([
-  'Akari1_1_2.html','AUDIT.md','LANGUAGE.md','MANUAL.html','README.md',
+  'Akari1_2_0.html','AUDIT.md','LANGUAGE.md','MANUAL.html','README.md',
   'Manual/block-mode.html','Manual/code-mode-advanced.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html',
   'audit/README.md','audit/public-files.json',
   'audit/tests/editor-assets.mjs','audit/tests/editor-browser.mjs','audit/tests/format-compatibility.mjs',
@@ -23,7 +23,7 @@ const sha=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const exact=(value,keys,label)=>{assert.ok(value&&typeof value==='object'&&!Array.isArray(value),label+' object');assert.deepEqual(Object.keys(value).sort(),[...keys].sort(),label+' fields');};
 function validateBasisDocument(record){
   exact(record,['schema','productVersion','startingCommit','updateReason','executionStatus','files'],'current basis');
-  assert.equal(record.schema,'akari-current-audit-basis-v1');assert.equal(record.productVersion,'1.1.2');
+  assert.equal(record.schema,'akari-current-audit-basis-v1');assert.equal(record.productVersion,'1.2.0');
   assert.equal(record.startingCommit,'2997cac6e74895e12cfd6ede51311ce09ddbdfd8');
   assert.ok(typeof record.updateReason==='string'&&record.updateReason.trim().length>=20,'reviewed update reason required');
   assert.equal(record.executionStatus,'NOT_ASSERTED_BY_BYTE_INTEGRITY','basis is not execution evidence');
@@ -35,11 +35,11 @@ function validateBasisDocument(record){
 }
 function validateBasisBytes(bytes){assert.equal(sha(bytes),REVIEWED_BASIS_SHA256,'exact reviewed current basis bytes');return validateBasisDocument(JSON.parse(bytes));}
 function validateReleaseDocument(release,meta){
-  assert.equal(meta.schema,'akari-public-files-v1');assert.equal(meta.productVersion,'1.1.2');
+  assert.equal(meta.schema,'akari-public-files-v1');assert.equal(meta.productVersion,'1.2.0');
   assert.equal(new Set(meta.files).size,meta.files.length,'unique public target');
   for(const file of meta.files)assert.ok(typeof file==='string'&&!path.isAbsolute(file)&&!file.split(/[\\/]/).includes('..'),'contained public target');
   exact(release,['schema','productVersion','languageContractId','runtimeContractId','projectFormat','programFormat','files','inventorySha256'],'current release');
-  assert.equal(release.schema,'akari-release-freeze-v1');assert.equal(release.productVersion,'1.1.2');
+  assert.equal(release.schema,'akari-release-freeze-v1');assert.equal(release.productVersion,'1.2.0');
   for(const key of ['languageContractId','runtimeContractId','projectFormat','programFormat'])assert.equal(release[key],2,'current external contract '+key);
   assert.deepEqual(Object.keys(release.files),meta.files.filter(file=>file!==releasePath),'exact current release target list/order');
   assert.equal(release.inventorySha256,sha(JSON.stringify(Object.keys(release.files))),'current release inventory integrity');
@@ -68,7 +68,7 @@ function verifyCurrentAuditBasis(repositoryRoot=root){
   const {read,basis,release}=currentState(repositoryRoot);
   for(const row of basis.files){const bytes=read(row.path);assert.equal(bytes.length,row.bytes,'reviewed current byte size: '+row.path);assert.equal(sha(bytes),row.sha256,'reviewed current byte integrity: '+row.path);}
   verifyReleaseFiles(release,read);
-  return {status:'PASS',scope:'CURRENT_BYTE_INTEGRITY_ONLY',reviewedTargets:basis.files.length,currentFiles:Object.keys(release.files).length,productSha256:release.files['Akari1_1_2.html'],executionStatus:basis.executionStatus};
+  return {status:'PASS',scope:'CURRENT_BYTE_INTEGRITY_ONLY',reviewedTargets:basis.files.length,currentFiles:Object.keys(release.files).length,productSha256:release.files['Akari1_2_0.html'],executionStatus:basis.executionStatus};
 }
 function checkCurrentBasisNegatives(repositoryRoot=root){
   const {read,basis,release}=currentState(repositoryRoot),results=[];
@@ -84,15 +84,15 @@ function checkCurrentBasisNegatives(repositoryRoot=root){
     ['invalid-size',r=>r.files[0].bytes=-1,/current byte size/],
   ]){const bad=structuredClone(basis);mutate(bad);refused('CURRENT/'+id,()=>validateBasisDocument(bad),pattern);}
   const meta=JSON.parse(read('audit/public-files.json'));
-  const missing=structuredClone(release);delete missing.files['Akari1_1_2.html'];
+  const missing=structuredClone(release);delete missing.files['Akari1_2_0.html'];
   refused('CURRENT/release-target-missing',()=>validateReleaseDocument(missing,meta),/exact current release target list/);
-  const altered=structuredClone(release);altered.files['Akari1_1_2.html']='0'.repeat(64);
+  const altered=structuredClone(release);altered.files['Akari1_2_0.html']='0'.repeat(64);
   refused('CURRENT/release-hash-modified',()=>verifyReleaseFiles(altered,read),/current release byte integrity/);
   for(const [id,file,mutate]of [
     ['file-extra-byte','audit/tests/editor-assets.mjs',b=>Buffer.concat([b,Buffer.from('\n')])],
     ['assertion-change','audit/tests/editor-browser.mjs',b=>Buffer.from(b.toString().replace('assert.equal','assert.notEqual'))],
     ['validator-modified','audit/lib/current-audit-basis.cjs',b=>Buffer.concat([b,Buffer.from('\n')])],
-    ['MIT-display-missing','Akari1_1_2.html',b=>Buffer.from(b.toString().replace('SPDX-License-Identifier: MIT','SPDX-License-Identifier: REMOVED'))],
+    ['MIT-display-missing','Akari1_2_0.html',b=>Buffer.from(b.toString().replace('SPDX-License-Identifier: MIT','SPDX-License-Identifier: REMOVED'))],
     ['oracle-changed','audit/fixtures/1.0.2-baseline-capabilities.json',b=>Buffer.concat([b,Buffer.from(' ')])],
     ['limit-relaxed','audit/manifests/features.json',b=>{const o=JSON.parse(b);o.LIMITS.fileBytes++;return Buffer.from(JSON.stringify(o));}],
     ['ID-missing','audit/manifests/product-tests.json',b=>{const o=JSON.parse(b);o.suites[0].ids.pop();return Buffer.from(JSON.stringify(o));}],
