@@ -10,7 +10,7 @@ import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {scenarios,ambiguities,corpusSha256} from '../lib/japanese-intent-oracles.mjs';
 import {verifyJapaneseContract} from './japanese-contract-static.mjs';
 import {corpusPath,checkConsolidationNegatives} from '../lib/docs-consolidation-contract.mjs';
-import {intentCaseIds,runtimeRuns,contractInputPaths,migrationInputPaths,intentInputPaths,runtimeInputPaths,negativeInputPaths,inputHashes,verifyContractReport,verifyMigrationReport,verifyIntentReport,verifyRuntimeReport,negativeCaseIds,verifyNegativeReport} from '../lib/japanese-gate-contract.mjs';
+import {intentCaseIds,runtimeRuns,contractInputPaths,migrationInputPaths,intentInputPaths,runtimeInputPaths,negativeInputPaths,inputHashes,verifyContractReport,verifyMigrationReport,verifyIntentCandidate,verifyIntentReport,verifyRuntimeReport,negativeCaseIds,verifyNegativeReport} from '../lib/japanese-gate-contract.mjs';
 const [destination]=process.argv.slice(2);assert.ok(destination);const inputs=snapshot(currentProductFile()),dir=fs.mkdtempSync(path.join(os.tmpdir(),'akari-gate-validator-'));
 const clone=x=>JSON.parse(JSON.stringify(x)),results=[];
 try{
@@ -46,6 +46,23 @@ try{
  const migration={schema:'akari-language-migration-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(migrationInputPaths),migration:{status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153}};
  const check=(id,base,verify,mutate)=>{const bad=clone(base);mutate(bad);assert.throws(()=>verify(bad));results.push({id,rejected:true});};
  const vi=r=>verifyIntentReport(r,inputs),vr=r=>verifyRuntimeReport(r,inputs,dir),vs=r=>verifyContractReport(r,inputs),vm=r=>verifyMigrationReport(r,inputs);
+ // Producer paths belong to the recorded OS; the sealed bytes are local.
+ // These controls are validator fixtures, never product execution evidence.
+ const portablePaths=[
+  ['/home/runner/candidate.html','file:///home/runner/candidate.html'],
+  ['/home/a b/候補#1%.html','file:///home/a%20b/%E5%80%99%E8%A3%9C%231%25.html'],
+  ['C:\\audit evidence\\candidate.html','file:///C:/audit%20evidence/candidate.html'],
+  ['\\\\server\\share\\candidate.html','file://server/share/candidate.html'],
+ ];
+ for(const[testedFile,url]of portablePaths){const good=clone(intent);good.candidate.testedFile=testedFile;good.candidate.url=url;verifyIntentCandidate(good,inputs,candidate);}
+ for(const testedFile of ['candidate.html','C:candidate.html','\\candidate.html','']){
+  const bad=clone(intent);bad.candidate.testedFile=testedFile;bad.candidate.url='file:///candidate.html';assert.throws(()=>verifyIntentCandidate(bad,inputs,candidate));
+ }
+ for(const url of ['file:///home/runner/other.html','file:///C:/home/runner/candidate.html','file://elsewhere/home/runner/candidate.html','https://example.invalid/candidate.html','file:///home/runner/candidate.html#false','file:///home/runner/candidate.html?false']){
+  const bad=clone(intent);bad.candidate.testedFile=portablePaths[0][0];bad.candidate.url=url;assert.throws(()=>verifyIntentCandidate(bad,inputs,candidate));
+ }
+ const corruptCandidate=path.join(dir,'corrupt-candidate.html');fs.writeFileSync(corruptCandidate,'invalid sealed candidate');
+ assert.throws(()=>verifyIntentCandidate(intent,inputs,corruptCandidate));
  vi(intent);vr(runtime);vs(fixed);vm(migration);
  const observationControl=clone(runtime),entryFile=path.join(dir,'entry-browser-evidence.json');
  const entryBytes=fs.readFileSync(entryFile),entry=JSON.parse(entryBytes);

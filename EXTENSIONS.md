@@ -1,6 +1,6 @@
 # あかりの拡張を組み込む
 
-あかり 1.1.1 の拡張API契約は `1` です。拡張は派生作者が管理するJavaScriptを、派生HTMLの起動設定に組み込みます。本家の標準HTMLは追加処理を登録せず、通常操作・標準の意味・標準上限・通信禁止を維持します。
+あかり 1.2.0 の拡張API契約は `1` です。拡張は派生作者が管理するJavaScriptを、派生HTMLの起動設定に組み込みます。本家の標準HTMLは追加処理を登録せず、通常操作・標準の意味・標準上限・通信禁止を維持します。
 
 製品の意味・保存契約の正本は [LANGUAGE.md](LANGUAGE.md)、受入試験と証跡の契約は [AUDIT.md](AUDIT.md) です。このガイドは開発手順とAPIの使い方を説明します。第三者が同じJavaScript空間へ組み込んだコードを完全隔離する仕組みではありません。
 
@@ -15,7 +15,7 @@ import { buildDerivedProduct } from './extensions/build.mjs';
 import examples from './extensions/examples/offline.js';
 
 await buildDerivedProduct({
-  product: './Akari1_1_1.html',
+  product: './Akari1_2_0.html',
   output: './derived-offline.html',
   extensions: [examples.offline, examples.text],
   profiles: [],

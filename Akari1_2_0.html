@@ -13611,7 +13611,7 @@ function createAkariExtensionHost(options) {
   }
   function parseExpression(text, symbols, ctx = {}) {
     const compact=compactOutsideString(text),mask=surfaceMask(compact),depth=(ctx._parserDepth||0)+1;
-    const located=node=>{const range=sourceRange(ctx.sourcePositions||[]);if(range)SOURCE_RANGES.set(node,{range});return checkExpressionTree(node,ctx.lineNo||0);};
+    const located=node=>{const range=sourceRange(ctx.sourcePositions||[]);if(range)SOURCE_RANGES.set(node,{...SOURCE_RANGES.get(node),range});return checkExpressionTree(node,ctx.lineNo||0);};
     if(depth>LIMITS.expressionDepth)throw new AkariError('P208','式が深すぎます',ctx.lineNo||0,1);
     if(compact.startsWith('（')&&compact.endsWith('）')&&/^\u0001+$/.test(mask))
       return located(parseExpression(compact.slice(1,-1),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(1,-1)}));
@@ -13679,7 +13679,7 @@ function createAkariExtensionHost(options) {
     let positions=ctx.sourcePositions;
     if(!positions&&line?.mapped){const offset=compactOutsideString(line.code).indexOf(compact);if(offset>=0)positions=line.mapped.positions.slice(offset,offset+compact.length);}
     const root=parseConditionCore(text,symbols,{...ctx,sourcePositions:positions},form),range=positions&&sourceRange(positions,compact.startsWith('もし、')?3:compact.startsWith('もし')?2:0,compact.length-(compact.endsWith('、')?1:0));
-    if(range)SOURCE_RANGES.set(root,{range,conditionForm:form});
+    if(range)SOURCE_RANGES.set(root,{...SOURCE_RANGES.get(root),range,conditionForm:form});
     return attachExpressionSourceSpans(root,line);
   }
   function parseConditionCore(text, symbols, ctx = {}, form = 'plain') {
@@ -13728,6 +13728,7 @@ function createAkariExtensionHost(options) {
         const color=body.slice(0,split).endsWith('の色'), target=body.slice(0,split-(color?2:0)), t=readNameToken(target);
         const operand=t && t.end===target.length ? exprNode('StringLiteral',{value:t.name}) : parseExpression(target,symbols,ctx);
         node=exprNode('ActorQualifiedRead',{actorRef:{kind:'named',name:subject.name},value:exprNode('SensorRead',{sensor:color?'TOUCHING_COLOR':'TOUCHING',arg:operand})});
+        const actorRange=sourceRange(ctx.sourcePositions||[],0,subject.end);if(actorRange)SOURCE_RANGES.set(node,{actorRange});
       } else node=parseExpression(base,symbols,ctx);
       return negative?exprNode('UnaryExpression',{op:'NOT',value:node}):node;
     }
@@ -13774,7 +13775,11 @@ function createAkariExtensionHost(options) {
       const start = this.i, node = parse.apply(this, args);
       if (node && this.ctx.sourcePositions) {
         const range = sourceRange(this.ctx.sourcePositions, start, this.i);
-        if (range) SOURCE_RANGES.set(node, { range });
+        if (range) {
+          const previous = SOURCE_RANGES.get(node), token = key === 'basic' && node.kind === 'ActorQualifiedRead' && node.actorRef.kind === 'named' ? readNameToken(this.text, start) : null;
+          const actorRange = token && token.name === node.actorRef?.name ? sourceRange(this.ctx.sourcePositions, start, token.end) : previous?.actorRange;
+          SOURCE_RANGES.set(node, { ...previous, range, ...(actorRange ? { actorRange } : {}) });
+        }
       }
       return node;
     };
@@ -14235,7 +14240,7 @@ function createAkariExtensionHost(options) {
     const same = surfaceCapture(/^(.+?)も同じ合図で動き始め、(.*)$/d,code,protectedCode);
     if(same){
       if(!previousHeading)throw new AkariError('P205','「同じ合図」の前に、始めるときやクリックなどのきっかけを書いてください');
-      return {heading:{...previousHeading,actorRef:sentenceActor(same[0].text,symbols)},body:same[1]};
+      return {heading:{...previousHeading,actorRef:sentenceActor(same[0].text,symbols)},body:same[1],actor:same[0]};
     }
     const forms=[
       [/^始めると、(.+?)は、?(.*)$/d,'start',0,1],
@@ -14249,7 +14254,7 @@ function createAkariExtensionHost(options) {
       [/^(.+?)の中身が変わったとき、(.*)$/d,'valueChanged',0,1],
       [/^(.+?)の分身が作られたとき、(.*)$/d,'cloneStart',0,1],
     ];
-    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code,protectedCode);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','見出しの絞り込みは「文字」で指定してください');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','見出しの絞り込みは文字列一つで指定してください');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex]};}
+    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code,protectedCode);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','見出しの絞り込みは「文字」で指定してください');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','見出しの絞り込みは文字列一つで指定してください');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex],actor:parts[actorIndex]};}
     const implicit = surfaceCapture(/^始めると、(.*)$/d, code, protectedCode);
     if (implicit) return { heading: { event: 'start', actorRef: { kind: 'self' } }, body: implicit[0] };
     return null;
@@ -14283,12 +14288,13 @@ function createAkariExtensionHost(options) {
     for(const match of surfaceMask(body).matchAll(/[はを]/g)){
       if(match.index>66)break; // 32 code points, plus the two name delimiters.
       const roles=readRoles(body.slice(match.index+1).replace(/^、/,''));
-      if(roles)candidates.push({...roles,actorRef:sentenceActor(body.slice(0,match.index),symbols)});
+      if(roles)candidates.push({...roles,actorRef:sentenceActor(body.slice(0,match.index),symbols),actorRange:sourceRange(line.mapped?.positions||[],parts[1].start,parts[1].start+match.index)});
     }
     if(candidates.length!==1)throw sentenceDiagnostic(candidates.length?'主語と速さの区切りを確認してください':'継続移動には方向と「秒に歩の速さで」を指定してください',line,[],{kind:'ContinuousRule',actorRef:ctx.topicActor||{kind:'self'},missing:['speed']});
-    const {direction,seconds,distance,actorRef}=candidates[0];
+    const {direction,seconds,distance,actorRef,actorRange}=candidates[0];
     const e=t=>parseExpression(t,symbols,{...ctx,lineNo:line.lineNo});
-    return statementNode('ContinuousRule',line,{actorRef:{...actorRef},condition:parseCondition(continuousCondition(parts[0].text)+'あいだ',symbols,{...ctx,lineNo:line.lineNo},'while'),direction:{前:'forward',後ろ:'backward',右:'right',左:'left',上:'up',下:'down'}[direction],seconds:sentenceQuantity(e(seconds),'秒'),distance:sentenceQuantity(e(distance),'歩')});
+    const node=statementNode('ContinuousRule',line,{actorRef:{...actorRef},condition:parseCondition(continuousCondition(parts[0].text)+'あいだ',symbols,{...ctx,lineNo:line.lineNo},'while'),direction:{前:'forward',後ろ:'backward',右:'right',左:'left',上:'up',下:'down'}[direction],seconds:sentenceQuantity(e(seconds),'秒'),distance:sentenceQuantity(e(distance),'歩')});
+    if(actorRange)SOURCE_RANGES.get(node).actorRange=actorRange;return node;
   }
   function parseSentenceSequence(line,symbols,ctx) {
     const code=compactOutsideString(line.code),mask=surfaceMask(code),scope={...ctx};
@@ -14396,7 +14402,7 @@ function createAkariExtensionHost(options) {
         if(location){const move=value=>{if(!value||typeof value!=='object')return;for(const [key,child]of Object.entries(value)){if(['start','end','at'].includes(key)&&typeof child==='number')value[key]=child+entry.start;else if(child&&typeof child==='object')move(child);}};move(location);}
         for(const child of Object.values(node))if(Array.isArray(child))pending.push(...child.filter(value=>value?.kind));else if(child?.kind)pending.push(child);
       }
-      SOURCE_RANGES.set(unit,{range:{start:entry.start,end},extent:{start:entry.start,end},indent:0,inline:false});
+      SOURCE_RANGES.set(unit,{...SOURCE_RANGES.get(unit),range:{start:entry.start,end},extent:{start:entry.start,end},indent:0,inline:false});
       return unit;
     });
     const document={...units[0],units:units.slice(1),source,sourceSpan:{startLine:1,startColumn:1,endLine:physical.length,endColumn:1}};
@@ -14410,9 +14416,9 @@ function createAkariExtensionHost(options) {
     if(ctx.definition){const names=localDeclarationNames(source);baseCtx.localNames.push(...names.vars,...names.lists);for(const line of lines){const p=surfaceCapture(/^この中だけで使う(?:変数|リスト)(.+?)を(?:作り、最初は.+にする|空で作る)$/d,line.code);if(p)baseCtx.localNames.push(parsedDeclarationName(p[0].text));}}
     const nextCode=i=>{while(i<lines.length&&!lines[i].code)i++;return i;};
     const parseAt=(line,fn)=>{try{return fn();}catch(error){if(error instanceof AkariError&&!error.line){error.line=line.lineNo;error.column=error.column||1;}throw error;}};
-    let first=nextCode(0),heading=null;
+    let first=nextCode(0),heading=null,headingActorRange=null;
     if(first<lines.length&&lines[first].indent!==0)throw new AkariError('P209','最上位の文は字下げせずに書きます',lines[first].lineNo,1);
-    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols,ctx.previousHeading));if(found){heading=found.heading;const line=lines[first];if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','見出しの本文を字下げして書いてください',lines[first].lineNo,1);}}
+    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols,ctx.previousHeading));if(found){heading=found.heading;const line=lines[first];if(found.actor)headingActorRange=sourceRange(line.mapped?.positions||[],found.actor.start,found.actor.end);if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','見出しの本文を字下げして書いてください',lines[first].lineNo,1);}}
     const rules=[];
     function block(start,indent,scope,depth){
       if(depth>LIMITS.blockDepth)throw new AkariError('P208','ブロックが深すぎます',lines[start]?.lineNo||1,1);
@@ -14465,7 +14471,7 @@ function createAkariExtensionHost(options) {
             i=branchIndex;const otherwise=lines[i],begin=nextCode(i+1);if(!sibling.inlineBody&&(begin>=lines.length||lines[begin].indent<=indent))throw new AkariError('P202','「そうでなければ」の本文が必要です',otherwise.lineNo,1);const other=sibling.inlineBody?{nodes:sibling.inlineBody,index:i+1}:block(i+1,lines[begin].indent,childScope,depth+1);fields.hasElse=true;fields.elseComment=sibling.inlineBody?'':otherwise.comment;fields.elseBody=other.nodes;i=other.index;}}
         else fields.body=child.nodes;
         fields.endLine=lines[Math.max(start,i-1)]?.lineNo||line.lineNo;
-        const node=statementNode(head.kind,line,fields),location=SOURCE_RANGES.get(node);if(head.inlineBody)node.inlineComment='';if(location){location.extent.end=lines[Math.max(start,i-1)]?.end??line.end;location.inlineContainer=!!head.inlineBody;if(head.kind==='ForEach'){location.binderRange=binderRange;location.binderInsert={at:line.end,indent:lines[firstChild]?.indent??indent+2};}}
+        const node=statementNode(head.kind,line,fields),location=SOURCE_RANGES.get(node);if(head.inlineBody)node.inlineComment='';if(location){const actorRange=SOURCE_RANGES.get(head)?.actorRange;if(actorRange)location.actorRange=actorRange;location.extent.end=lines[Math.max(start,i-1)]?.end??line.end;location.inlineContainer=!!head.inlineBody;if(head.kind==='ForEach'){location.binderRange=binderRange;location.binderInsert={at:line.end,indent:lines[firstChild]?.indent??indent+2};}}
         nodes.push(node);
       }
       return {nodes,index:i};
@@ -14484,7 +14490,7 @@ function createAkariExtensionHost(options) {
       }
     }
     const ast={kind:'Script',body:result.nodes,...(heading?{heading}:{}),...(rules.length?{rules}:{}),source,sourceSpan:{startLine:1,startColumn:1,endLine:rawLines.length,endColumn:1}};
-    SOURCE_RANGES.set(ast,{range:{start:0,end:source.length},extent:{start:0,end:source.length},indent:0,inline:false});return ast;
+    SOURCE_RANGES.set(ast,{range:{start:0,end:source.length},extent:{start:0,end:source.length},indent:0,inline:false,...(headingActorRange?{actorRange:headingActorRange}:{})});return ast;
   }
   function readBlockHead(text,symbols,ctx={}) {
     const code=compactOutsideString(text),mask=surfaceMask(code),line=ctx.sourceLine||{raw:text,code:text,lineNo:ctx.lineNo||0};
@@ -14498,7 +14504,10 @@ function createAkariExtensionHost(options) {
         const actorRef=sentenceActor(actor[0].text),fragment=surfaceLineSlice(line,actor[1].start,actor[1].end);
         fragment.comment=line.comment;
         const head=readBlockHead(actor[1].text,symbols,{...ctx,sourceLine:fragment,topicActor:actorRef,explicitControlActor:true});
-        if(head&&head.kind!=='Else')return {...head,actorRef};
+        if(head&&head.kind!=='Else'){
+          const result={...head,actorRef},actorRange=sourceRange(line.mapped?.positions||[],actor[0].start,actor[0].end);
+          if(actorRange)SOURCE_RANGES.set(result,{actorRange});return result;
+        }
       }
     }
     let parts;
@@ -14565,7 +14574,7 @@ function createAkariExtensionHost(options) {
       const [direction,actor,movement]=directionFirst,actorRef=sentenceActor(actor.text,symbols),text=direction.text+movement.text;
       const positions=working.mapped?.positions,part={...working,code:text,mapped:{text,positions:positions?[...positions.slice(direction.start,direction.end),...positions.slice(movement.start,movement.end)]:[]}};
       const result=readSentenceMotion(text,part,symbols,{...ctx,topicActor:actorRef});
-      if(result){STATEMENT_EXPLICIT_ACTORS.add(result);return result;}
+      if(result){STATEMENT_EXPLICIT_ACTORS.add(result);const location=SOURCE_RANGES.get(result);if(location)location.actorRange=sourceRange(working.mapped?.positions||[],actor.start,actor.end);return result;}
     }
     // Actor extraction is permitted only when a complete action/data frame accepts its suffix.
     const actorPatterns=[/^(.+?)は、?(.+)$/d,/^(.+?)を(.+(?:動かす|うごかす))$/d,/^(.+?)に(.+(?:言わせる))$/d];
@@ -14579,7 +14588,7 @@ function createAkariExtensionHost(options) {
       if(k===2)body=body.slice(0,-'言わせる'.length)+'言う';
       const part=surfaceLineSlice(working,parts[1].start,parts[1].end,k===2?body:null);part.comment=line.comment;
       const node=readSurfaceStatement(body,part,symbols,{...ctx,topicActor:actorRef});
-      if(node){node.actorRef=actorRef;STATEMENT_EXPLICIT_ACTORS.add(node);const location=SOURCE_RANGES.get(node);if(location){location.extent={start:working.start,end:working.end};location.range=sourceRange(working.mapped?.positions||[]);location.inline=!!working.inline;}return node;}
+      if(node){node.actorRef=actorRef;STATEMENT_EXPLICIT_ACTORS.add(node);const location=SOURCE_RANGES.get(node);if(location){location.extent={start:working.start,end:working.end};location.range=sourceRange(working.mapped?.positions||[]);location.inline=!!working.inline;location.actorRange=sourceRange(working.mapped?.positions||[],parts[0].start,parts[0].end);}return node;}
     }
     const unclear=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる)$/d,code);
     if(unclear&&!unclear[0].text.startsWith('「'))throw sentenceDiagnostic('最後への追加か、項目の置き換えかを指定してください',working,[{label:'最後に追加する',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'項目を置き換える（位置を選ぶ）',source:`${unclear[0].text}の〔位置を選ぶ〕番目を${unclear[1].text}に変える`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
@@ -17287,15 +17296,20 @@ function createAkariExtensionHost(options) {
           actor.name = newName;
         } else if (ref.binding === 'literal') node.fields.value = newName;
         else node.fields.name = newName;
-        const range = loc.surface?.range;
+        // Inherited subjects update the semantic field, but have no source token.
+        const range = ref.binding === 'actor' ? loc.surface?.actorRange : loc.surface?.range;
+        if (ref.binding === 'actor' && !range) continue;
         if (!range) throw new AkariError('F503', '名前の原文位置を確認できません');
+        if (ref.binding === 'actor') {
+          const token=compactOutsideString(record.source.slice(range.start,range.end));
+          if(![resource.name,`【${resource.name}】`,`「${resource.name}」`].includes(token))throw new AkariError('F503','主語の名前の原文位置を確認できません');
+          const text=token.startsWith('【')?`【${newName}】`:token.startsWith('「')?formatExpression({kind:'StringLiteral',value:newName}):nameSource(newName);
+          edits.push({...range,text});continue;
+        }
         if (ref.binding === 'literal') { edits.push({...range,text:formatExpression({kind:'StringLiteral',value:newName})}); continue; }
         const phrase=original.kind==='UserActionCall'&&project.actions.find(a=>a.id===resource.id)?.callPhrase;
         if(phrase&&compactOutsideString(record.source.slice(range.start,range.end)).replace(/[。．.]$/,'').endsWith(actionCallPhraseKey(phrase)))continue;
         let end = range.end;
-        if (original.kind === 'Script' && ref.binding === 'actor') {
-          const firstLine = /[\r\n]/.exec(record.source.slice(range.start,end)); if (firstLine) end = range.start + firstLine.index;
-        }
         // Values, quoted speech and nested bodies are separate semantic nodes.
         // A containing command's name must never rename text inside those nodes.
         const protectedRanges = [...session.nodeMap.values()].filter(child => child.path.length > loc.path.length && loc.path.every((k,i) => child.path[i] === k)).map(child => child.surface?.range).filter(Boolean);
