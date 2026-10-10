@@ -1,4 +1,4 @@
-const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory, completeRegressionHoles} = require('./regression-setup.cjs');
+const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory, completeRegressionHoles, openPaletteTools} = require('./regression-setup.cjs');
 const U=require('./ui-routes.cjs');
 const L=require('./audit-lib.cjs'),assert=require('assert/strict'),{pathToFileURL}=require('url');
 const{chromium}=require('playwright');
@@ -57,7 +57,13 @@ L.result(L.path.join(dir,filter?'browser-schemas-selected.json':'browser-schemas
 
 
 async function reveal(locator){
- if(await locator.count()===1){if(!await locator.isVisible())for(const panel of await locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all())await panel.locator('.blockui-side-toggle').click();const ancestors=locator.locator(await locator.evaluate(e=>e.tagName==='SUMMARY')?'xpath=parent::details/ancestor::details[not(@open)]':'xpath=ancestor::details[not(@open)]');for(const detail of await ancestors.all())await detail.locator(':scope > summary').click();}
+ if(await locator.count()===1){
+  if(!await locator.isVisible())for(const panel of await locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all())await panel.locator('.blockui-side-toggle').click();
+  const controls=locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-palette-controls ")]');
+  if(await controls.count())await openPaletteTools(controls.locator('..'));
+  const ancestors=locator.locator(await locator.evaluate(e=>e.tagName==='SUMMARY')?'xpath=parent::details/ancestor::details[not(@open)]':'xpath=ancestor::details[not(@open)]');
+  for(const detail of await ancestors.all())await detail.locator(':scope > summary').click();
+ }
  return locator;
 }
 
