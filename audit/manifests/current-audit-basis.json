@@ -2,13 +2,13 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Explicitly approved ROOT-P01 actor token range correction and SPEC-F02/F03 current product documentation repair; contracts and fixed audit inputs preserved.",
+  "updateReason": "Explicitly approved main CI repair: preserve original asset failures, await completed fixture imports, fix initial viewport timing and validate latest same-run evidence on partial reruns. Product, stable IDs, expectations and test deadlines preserved.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
       "path": "AUDIT.md",
-      "sha256": "a7653b31d804909551573ddee655525eb07d55fdffa9729359ab67caa1bbe651",
-      "bytes": 220067
+      "sha256": "7e87340b1861326f5e8ccdbba14a561965b2246000254994bcc7744e2200472d",
+      "bytes": 221039
     },
     {
       "path": "Akari1_2_0.html",
@@ -152,8 +152,8 @@
     },
     {
       "path": "audit/tests/editor-assets.mjs",
-      "sha256": "e5b201da548622d86c5e9c0f6e47df2cd1db6a0f7023f0150e15b7f9c206ffc0",
-      "bytes": 29439
+      "sha256": "78d217ed893298e134c0c88671d2760174548c8eee0081fe4d029f4abf82ac51",
+      "bytes": 30515
     },
     {
       "path": "audit/tests/editor-browser.mjs",

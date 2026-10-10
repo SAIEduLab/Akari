@@ -5,7 +5,7 @@ export async function installRegressionProject(page) {
   await page.evaluate('// Baseline fixture factory\n'+makeRegressionProject.toString());
   const fixture=await page.evaluate(()=>{const p=makeAkariRegressionProject(Akari);p.name='監査の基準作品';return {name:p.name,text:Akari.serializeProject(p,Akari.makeDefaultAssetStore())};});
   await page.locator('#fileInput').setInputFiles({name:'baseline-ui.akari.md',mimeType:'text/plain',buffer:Buffer.from(fixture.text)});
-  await page.waitForFunction(name=>Akari.app.project.name===name,fixture.name);
+  await page.waitForFunction(name=>!document.querySelector('#fileInput').value&&Akari.app.project.name===name&&Akari.app.editorState.state==='DESIGN',fixture.name,{polling:100});
   await showAdvancedCode(page);
 }
 export async function showAdvancedCode(page) {

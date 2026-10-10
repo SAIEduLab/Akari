@@ -2,7 +2,12 @@ import { currentProductFile } from "./../lib/product-path.cjs";
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import path from 'node:path';
 import {createRequire} from 'node:module';
+import {selectBundleDirectory,verifyBundle} from '../lib/evidence-bundle.mjs';
+import {sha,pageFor} from '../lib/product-test-host.mjs';
+import {installRegressionProject} from '../lib/gate-ui-fixture.mjs';
+import {editorAssetIds} from '../lib/feature-contract.mjs';
 import {browserEnvironment as expected,verifyBrowserEnvironment} from '../lib/browser-environment.mjs';
 import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-contract.mjs';
 const {withFreshPage}=createRequire(import.meta.url)('../browser/cases/ui-case.cjs');
@@ -115,3 +120,76 @@ assert.equal(buttonResults[1].pass,false);assert.ok(buttonResults.slice(2).every
 assert.ok(budgets.every((n,i)=>n>0&&n<=360000&&(i===0||n<budgets[i-1])));
 checkUiButtonValidatorNegatives();
 console.log('UI buttons: fixture/cleanup and assertion failures retained; all cases isolated without retry; 360s budget and 10 validator negatives PASS');
+
+// A partial rerun may use an unchanged earlier job, but never hide a newer failure.
+const evidenceRoot=path.resolve('audit-evidence');fs.mkdirSync(evidenceRoot,{recursive:true});
+const selectionDir=fs.mkdtempSync(path.join(evidenceRoot,'ci-regression-'));
+try {
+  const provenance={run:'123',attempt:'3'},snapshotInputs={productSha256:'a'.repeat(64),files:{}};
+  function staticBundle(attempt){
+    const dir=path.join(selectionDir,'akari-static-123-'+attempt);fs.mkdirSync(dir);
+    const report={status:'PASS',snapshot:snapshotInputs,capabilities:260};
+    fs.writeFileSync(path.join(dir,'static.json'),JSON.stringify(report));
+    const bundle={schema:'akari-evidence-v1',kind:'static',status:'PASS',snapshot:snapshotInputs,
+      provenance:{run:'123',attempt:String(attempt)},result:{status:'PASS',capabilities:260},
+      files:{'static.json':sha(fs.readFileSync(path.join(dir,'static.json')))}};
+    fs.writeFileSync(path.join(dir,'bundle.json'),JSON.stringify(bundle));return {dir,bundle};
+  }
+  const old=staticBundle(1);let selected=selectBundleDirectory('static',selectionDir,provenance);
+  assert.equal(selected.attempt,1);verifyBundle('static',selected.directory,snapshotInputs,selected.provenance);
+  const latest=staticBundle(2);selected=selectBundleDirectory('static',selectionDir,provenance);
+  assert.equal(selected.attempt,2);verifyBundle('static',selected.directory,snapshotInputs,selected.provenance);
+  assert.throws(()=>verifyBundle('static',latest.dir,snapshotInputs,provenance),'actual attempt must match');
+  assert.throws(()=>verifyBundle('static',latest.dir,{...snapshotInputs,productSha256:'b'.repeat(64)},selected.provenance),'same snapshot required');
+  fs.writeFileSync(path.join(latest.dir,'bundle.json'),JSON.stringify({...latest.bundle,status:'FAIL'}));
+  assert.throws(()=>verifyBundle('static',selectBundleDirectory('static',selectionDir,provenance).directory,snapshotInputs,selected.provenance),'new failure cannot use old PASS');
+  fs.unlinkSync(path.join(latest.dir,'bundle.json'));
+  assert.throws(()=>verifyBundle('static',selectBundleDirectory('static',selectionDir,provenance).directory,snapshotInputs,selected.provenance),'unsealed latest cannot use old PASS');
+  assert.throws(()=>selectBundleDirectory('static',selectionDir,{run:'999',attempt:'3'}),'different run');
+  assert.throws(()=>selectBundleDirectory('selftest',selectionDir,provenance),'missing kind');
+  fs.mkdirSync(path.join(selectionDir,'akari-static-123-4'));
+  assert.throws(()=>selectBundleDirectory('static',selectionDir,provenance),'future attempt');
+  fs.rmdirSync(path.join(selectionDir,'akari-static-123-4'));
+  fs.mkdirSync(path.join(selectionDir,'akari-static-123-02'));
+  assert.throws(()=>selectBundleDirectory('static',selectionDir,provenance),'noncanonical attempt');
+} finally {
+  const relative=path.relative(evidenceRoot,selectionDir);assert.ok(relative&&!relative.startsWith('..')&&!path.isAbsolute(relative));
+  fs.rmSync(selectionDir,{recursive:true});
+}
+console.log('Partial reruns: latest evidence selected; actual provenance, snapshot, newer failures and 8 rejection paths PASS');
+
+// Execute the actual asset runner with a screenshot that never resolves.
+const assetSource=fs.readFileSync('audit/tests/editor-assets.mjs','utf8');
+const assetStart=assetSource.indexOf('async function failureScreenshot('),assetEnd=assetSource.indexOf('assert.deepEqual(snapshot',assetStart);
+assert.ok(assetStart>0&&assetEnd>assetStart);
+const assetResults=[],assetBudgets=[],assetAttempts=[],diagnostics=[];let assetClock=0,assetLaunches=0,screenshotCalls=0;
+await vm.runInNewContext('(async()=>{'+assetSource.slice(assetStart,assetEnd)+'})()',{
+  assert,fs:{writeFileSync(file,data){diagnostics.push({file,report:JSON.parse(data)});}},path,artifacts:'fixture-artifacts',
+  browserPath:'fixture-browser',currentProductFile:()=> 'fixture.html',results:assetResults,pageErrors:[],networkRequests:[],
+  console:{log(){},error(){}},Date:{now:()=>assetClock++*1000},
+  setTimeout(fn,ms){assert.equal(ms,1000);Promise.resolve().then(fn);return 1;},clearTimeout(){},
+  cases:Object.fromEntries(editorAssetIds.map((id,i)=>[id,async()=>{assetAttempts.push(id);if(i===1)throw actionError;}])),
+  async withBrowser(browser,fn,budget){assetBudgets.push(budget);assetLaunches++;return fn({id:assetLaunches,version:()=>expected.version});},
+  async pageFor(browser,product,fn,options){
+    assert.equal(product,'fixture.html');assert.deepEqual(JSON.parse(JSON.stringify(options)),{viewport:{width:1440,height:1100}});
+    try {return await fn({id:browser.id,on(){},screenshot(options){assert.equal(options.timeout,1000);assert.equal(diagnostics.length,++screenshotCalls);return new Promise(()=>{});}});}
+    finally {if(browser.id===1)throw cleanupError;}
+  },async installRegressionProject(p){if(p.id===1)throw fixtureError;},
+});
+assert.deepEqual(assetResults.map(r=>r.id),[...editorAssetIds]);assert.deepEqual(assetAttempts,editorAssetIds.slice(1));
+assert.equal(assetResults[0].detail,fixtureError.stack);assert.equal(assetResults[0].phase,'fixture-import');assert.equal(assetResults[0].hostFailure,cleanupError.stack);
+assert.equal(assetResults[1].detail,actionError.stack);assert.equal(assetResults[1].phase,'asset-actions');
+assert.ok(assetResults.slice(0,2).every(r=>!r.pass&&/Failure screenshot timeout/.test(r.screenshotFailure)));
+assert.ok(assetResults.slice(2).every(r=>r.pass));assert.equal(assetLaunches,editorAssetIds.length);
+assert.ok(assetBudgets.every((n,i)=>n>0&&n<=300000&&(i===0||n<assetBudgets[i-1])));
+console.log('Asset diagnostics: original errors persisted before stalled screenshots; later cases run once; 300s budget PASS');
+
+let contextClosed=0,viewportOptions;
+await pageFor({async newContext(options){viewportOptions=options;return {async route(){},async newPage(){return {on(){},setDefaultTimeout(ms){assert.equal(ms,30000);},async goto(){},async waitForFunction(){}};},async close(){contextClosed++;}};}},'fixture.html',async()=>{}, {viewport:{width:1440,height:1100},offline:false});
+assert.deepEqual(viewportOptions,{viewport:{width:1440,height:1100},offline:true});assert.equal(contextClosed,1);
+await installRegressionProject({async evaluate(){return {name:'監査の基準作品',text:'fixture'};},locator(){return {async setInputFiles(){},async selectOption(){},async isVisible(){return false;},async click(){}};},async waitForFunction(predicate,name,options){
+  assert.equal(options.polling,100);
+  const ready=(state,input)=>vm.runInNewContext('('+predicate.toString()+')('+JSON.stringify(name)+')',{document:{querySelector:()=>({value:input})},Akari:{app:{project:{name},editorState:{state}}}});
+  assert.equal(ready('DESIGN','pending-file'),false);assert.equal(ready('PREPARING',''),false);assert.equal(ready('DESIGN',''),true);
+}});
+console.log('Fixture readiness: unfinished import/state rejected; initial viewport and offline context preserved PASS');

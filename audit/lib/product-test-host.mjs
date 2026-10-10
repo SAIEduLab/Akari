@@ -36,8 +36,8 @@ export async function withBrowser(browserPath, fn, timeoutMs = 240000) {
     if(browser) await browser.close();
   }
 }
-export async function pageFor(browser, product, fn) {
-  const context = await browser.newContext({offline:true});
+export async function pageFor(browser, product, fn, contextOptions={}) {
+  const context = await browser.newContext({...contextOptions,offline:true});
   const errors = [], network=[];
   try {
     await context.route(/^https?:/, route=>{network.push(route.request().url());return route.abort();});

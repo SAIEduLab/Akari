@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {snapshot} from './lib/product-test-host.mjs';
-import {sealBundle,verifyBundle} from './lib/evidence-bundle.mjs';
+import {sealBundle,verifyBundle,selectBundleDirectory} from './lib/evidence-bundle.mjs';
 const [mode,kindOrDirectory,directoryOrOutput]=process.argv.slice(2);
 const provenance={run:process.env.GITHUB_RUN_ID||'local',attempt:process.env.GITHUB_RUN_ATTEMPT||'1'};
 if(mode==='seal')sealBundle(kindOrDirectory,directoryOrOutput,provenance);
@@ -12,7 +12,7 @@ else {
   const kinds=['static','selftest','audio-codecs-linux','audio-codecs-win32',...['session','ui','limits','schemas','extra'].map(g=>'full-browser-'+g)];
   const results=[];
   for(const kind of kinds){
-    try{const result=verifyBundle(kind,path.join(kindOrDirectory,'akari-'+kind+'-'+provenance.run+'-'+provenance.attempt),inputs,provenance);results.push({kind,status:'PASS',result:result.result});}
+    try{const selected=selectBundleDirectory(kind,kindOrDirectory,provenance);const result=verifyBundle(kind,selected.directory,inputs,selected.provenance);results.push({kind,status:'PASS',provenance:selected.provenance,result:result.result});}
     catch(e){results.push({kind,status:'FAIL',reason:e.message});}
   }
   let jobsPassed=false;

@@ -384,6 +384,10 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 
 実行結果は当該branch push / PRのcheckoutにある製品SHAと監査入力SHAへ束縛する。selftestの結果集合は独立validatorで再検証し、aggregateでもsealと全ファイルhash、当該checkoutのsnapshot、GitHub run / attemptを照合する。既存のfull-browser matrixとLinux / Windows音声gateを維持する。過去snapshotのPASSは最新HEADのPASSへ転記しない。
 
+Akari auditの部分再実行では、同じrunの各必須kindについて存在する最新attemptを選び、その実際のrun / attemptと現在のcheckout snapshotを検証する。新しいattemptの失敗・未封印・破損を古いPASSへ戻して補わない。未来のattemptや別runを拒否し、集約結果に採用したprovenanceを記録する。全依存jobのsuccessも引き続き必須とする。固定受入と児童UXの同attempt契約は変更しない。
+
+editor-assetsの16件は、1440×1100のcontextを作ってから製品を開き、基準作品の名前・DESIGN状態・ファイル入力の後処理完了を待って操作する。30秒の操作制限と300秒のsuite制限を保持する。最初の失敗をphaseとともに画像取得より先に保存し、失敗画像の診断待ちだけを1秒に制限する。画像取得やcleanupの失敗は元の失敗に付記し、再試行やPASSへの置換を行わない。
+
 旧六文書の出典hashと意味対応は移管完了記録・恒久台帳に保持し、独立20意図は `audit/fixtures/japanese-intent/` の原本を読む。固定旧能力fixtureと独立期待は製品に合わせて書き換えない。`language-v2-test-migration.json` の `pending` / `NOT_RUN` は設計時点の移行状態を表し、今回の実行結果の代用にしない。静的reportの `productDynamic: NOT_RUN` とSEMANTIC未実施は維持する。20作文は成人が作成した仮説であり、実児童による理解・操作観察はこの機械監査のPASS範囲に含まれない。
 
 実行の入口は `audit/lib/gate-contract.mjs`、新結果のvalidatorは `audit/lib/japanese-gate-contract.mjs`。期待集合はrunnerの観測出力から縮小せず、意図89 ID・実行境界20 IDを明示し、FAIL / PENDING / INCOMPLETE / NOT_RUN / timeout / 例外をPASSへ変換しない。

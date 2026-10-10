@@ -7,6 +7,24 @@ import {snapshot,sha} from './product-test-host.mjs';
 import {verifyGateResults} from './verify-gate-results.mjs';
 import {verifyBrowserGroup} from './verify-browser-results.mjs';
 import {verifyAudio} from './feature-contract.mjs';
+export function selectBundleDirectory(kind,directory,provenance){
+  const current=Number(provenance.attempt);
+  assert.ok(Number.isSafeInteger(current)&&current>0,'positive current attempt');
+  assert.match(String(provenance.run),/^(?:local|[1-9][0-9]*)$/,'current workflow run');
+  const prefix='akari-'+kind+'-'+provenance.run+'-';
+  const candidates=fs.readdirSync(directory,{withFileTypes:true}).filter(e=>e.name.startsWith(prefix)).map(e=>{
+    assert.ok(e.isDirectory()&&!e.isSymbolicLink(),'evidence directory');
+    const suffix=e.name.slice(prefix.length);
+    assert.match(suffix,/^[1-9][0-9]*$/,'positive evidence attempt');
+    const attempt=Number(suffix);
+    assert.ok(Number.isSafeInteger(attempt)&&attempt<=current,'evidence cannot come from a future attempt');
+    return {directory:path.join(directory,e.name),attempt};
+  }).sort((a,b)=>b.attempt-a.attempt);
+  assert.ok(candidates.length,'missing evidence for '+kind);
+  // Select before validation: a newer failure must never fall back to an old PASS.
+  const selected=candidates[0];
+  return {...selected,provenance:{...provenance,attempt:String(selected.attempt)}};
+}
 export function evidenceFiles(dir,prefix=''){
   return fs.readdirSync(path.join(dir,prefix),{withFileTypes:true}).flatMap(e=>{
     assert.ok(!e.isSymbolicLink());const rel=prefix+e.name;

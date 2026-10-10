@@ -319,19 +319,45 @@ const cases = {
   },
 };
 assert.deepEqual(Object.keys(cases).sort(),[...editorAssetIds].sort());
+async function failureScreenshot(p,id) {
+  let deadline;
+  try {
+    await Promise.race([
+      p.screenshot({path:path.join(artifacts,id+'-failure.png'),fullPage:true,timeout:1000}),
+      new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('Failure screenshot timeout')),1000);}),
+    ]);
+  } finally {clearTimeout(deadline);}
+}
+// Preserve the first error before diagnostics/cleanup; keep the 300-second suite bound.
 let version;const suiteStarted=Date.now();
 for(const [id,run] of Object.entries(cases)) {
+    let phase='browser-start',failure;
     try {
       await withBrowser(browserPath,async browser=>{
         const actual=browser.version();if(version)assert.equal(actual,version);version=actual;
+        phase='page-start';
         return pageFor(browser,currentProductFile(),async p=>{
-        await p.setViewportSize({width:1440,height:1100});p.acceptDialogs=true;p.dialogLog=[];
+        p.acceptDialogs=true;p.dialogLog=[];
         p.on('dialog',d=>{p.dialogLog.push(d.message());return p.acceptDialogs?d.accept():d.dismiss();});
         p.on('pageerror',e=>pageErrors.push(id+': '+e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))networkRequests.push(r.url());});
-        try { await installRegressionProject(p); await run(p); } catch(e) { await p.screenshot({path:path.join(artifacts,id+'-failure.png'),fullPage:true}).catch(()=>{}); throw e; }
-      });},Math.max(1,300000-(Date.now()-suiteStarted)));
+        try {
+          phase='fixture-import';await installRegressionProject(p);
+          phase='asset-actions';await run(p);
+        } catch(error) {
+          failure={phase,detail:error.stack||String(error)};
+          console.error(id+' '+phase+': '+failure.detail);
+          fs.writeFileSync(path.join(artifacts,id+'-failure.json'),JSON.stringify({id,pass:false,...failure},null,2)+'\n');
+          try {await failureScreenshot(p,id);} catch(e) {failure.screenshotFailure=e.stack||String(e);}
+          throw error;
+        }
+      },{viewport:{width:1440,height:1100}});},Math.max(1,300000-(Date.now()-suiteStarted)));
       results.push({id,pass:true,detail:'PASS'});console.log('PASS '+id);
-    } catch(error) { results.push({id,pass:false,detail:error.stack});console.error('FAIL '+id+': '+error.message); }
+    } catch(error) {
+      results.push({id,pass:false,phase:failure?.phase||phase,detail:failure?.detail||error.stack,
+        ...(failure?.screenshotFailure?{screenshotFailure:failure.screenshotFailure}:{}),
+        ...(failure&&failure.detail!==error.stack?{hostFailure:error.stack}:{})});
+      console.error('FAIL '+id+': '+results.at(-1).detail);
+    }
 }
 assert.deepEqual(snapshot(currentProductFile()),inputs);
 const report={status:results.every(r=>r.pass)&&!pageErrors.length&&!networkRequests.length?'PASS':'FAIL',snapshot:inputs,environment:'chromium',browser:version,results,pageErrors,networkRequests,standaloneObservationControls:standaloneControls};
