@@ -348,7 +348,7 @@
     "audit/tests/numeric-display-browser.mjs": "2b8b8c25f5c94037478ad3dfd25e2af0424cd8270020462cd1712bda2ed095e5",
     "audit/tests/numeric-display.mjs": "81b3e9f1d765f4a24907635f4e659fdd973c2f9b38695eeeb4551a13a8ad012c",
     "audit/tests/release-policy-negative.mjs": "4a0ed31fb0987a4c250f9c9cde186e30308fcf2a662088497ed9ec57987d98ea",
-    "audit/tests/resource-references-browser.mjs": "b38dcc962d4c20aec4567b0086a9548edf56137335290ede03deb40d5db6e36e",
+    "audit/tests/resource-references-browser.mjs": "d9c0e26157ae52899588010a5631bc41dd3a411970919868e8dd6f6e1affb111",
     "audit/tests/resource-references.mjs": "ad7edb0942395fbed57030a4c60e3898483bdfc9bb50de6eca43fccab4afba25",
     "audit/tests/review-actor.mjs": "1a5b3e3efa2c0c192a2cb7a28029b78a947682078538951b55a48f9b62055890",
     "audit/tests/review-first-use.mjs": "ffe0f94f218393c8a4666965cd8d6d461e42ea96d26583ab6ed687b20a969f3d",
