@@ -1,3 +1,4 @@
+import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import {installGreetingFixture} from '../lib/gate-ui-fixture.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -36,6 +37,7 @@ async function setup(page) {
 }
 
 async function addBlock(page, searchText, schemaId) {
+  await openPaletteTools(page.locator('#blockEditor'));
   const search = page.locator('#blockEditor [data-blockui-search]:visible').first();
   await search.fill(searchText);
   const add = page.locator(`#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="${schemaId}"]:visible`).first();
@@ -45,12 +47,14 @@ async function addBlock(page, searchText, schemaId) {
 }
 
 async function openPaletteOptions(page) {
+  await openPaletteTools(page.locator('#blockEditor'));
   const details = page.locator('#blockEditor .blockui-palette-options').first();
   if (await details.count() && await details.getAttribute('open') === null)
     await details.locator(':scope > summary').click();
 }
 
 async function closePaletteOptions(page) {
+  await openPaletteTools(page.locator('#blockEditor'));
   const details = page.locator('#blockEditor .blockui-palette-options').first();
   if (await details.count() && await details.getAttribute('open') !== null)
     await details.locator(':scope > summary').click();
@@ -159,6 +163,12 @@ async function reviewModePreference(page) {
   assert.equal(await page.locator('#uiLevel').inputValue(),'basic','detail level is a separate preference');
   const initial=await read(),observations=[];
   assert.equal(initial.source,'','first startup has an empty beginning; the sample is explicit');
+  const root=page.locator('#blockEditor'),toggle=root.locator('[data-blockui-action="palette-tools-toggle"]'),controls=root.locator('.blockui-palette-controls');
+  assert.equal(await toggle.getAttribute('aria-expanded'),'false','first startup collapses search/create');
+  assert.equal(await toggle.innerText(),'探す・作るをひらく');assert.equal(await controls.isVisible(),false);
+  await toggle.click();assert.equal(await controls.isVisible(),true);assert.equal(await toggle.getAttribute('aria-expanded'),'true');assert.equal(await toggle.innerText(),'探す・作るをたたむ');
+  await toggle.press('Enter');assert.equal(await controls.isVisible(),false);assert.equal(await toggle.getAttribute('aria-expanded'),'false');assert.equal(await toggle.innerText(),'探す・作るをひらく');
+  assert.deepEqual(await read(),initial,'opening and folding preserves project and history');
   for(const mode of ['code','blocks']) {
     await page.locator('#editorMode'+mode).click();assert.deepEqual(await read(),initial,'mode selection preserves full design and history');
     assert.equal(await page.evaluate(()=>localStorage.getItem('akari.editorMode.v1')),mode,'successful explicit selection persists');
@@ -188,6 +198,7 @@ async function reviewDefaults(page, capture) {
   await setup(page);
   const levelAccess = await reviewLevelAccess(page);
   const initial = await sourceFromModel(page);
+  await openPaletteTools(page.locator('#blockEditor'));
   const sizeSearch = page.locator('#blockEditor [data-blockui-search]:visible').first();
   await sizeSearch.fill('おおきさ');
   const kanaIds=await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="LooksCommand:SET_SCALE"]:visible').evaluateAll(nodes=>nodes.map(n=>n.dataset.blockuiSchema));

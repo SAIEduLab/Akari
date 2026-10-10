@@ -1,3 +1,4 @@
+import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import assert from 'node:assert/strict';
 
 // Expectations describe the requested playback workspace, independently of CSS.
@@ -35,6 +36,7 @@ export async function observeInspector(page,mode){
 }
 export async function observePaletteFold(page,captureFold){
   const toggle=page.locator('#blockEditor [data-blockui-action="palette-tools-toggle"]'),search=page.locator('#blockEditor [data-blockui-search]');
+  await openPaletteTools(page.locator('#blockEditor'));
   const originalSearch=await search.inputValue();await search.fill('話す');
   const state=()=>page.evaluate(()=>{const a=Akari.app,s=a.editorState;return{project:JSON.stringify(a.project),history:s.history,redo:s.redo,dirty:s.dirty,search:document.querySelector('#blockEditor [data-blockui-search]').value,category:document.querySelector('#blockEditor .blockui-categories [aria-pressed="true"]')?.textContent};});
   const geometry=()=>page.evaluate(()=>{const root=document.querySelector('#blockEditor'),toggle=root.querySelector('[data-blockui-action="palette-tools-toggle"]'),r=toggle.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return{expanded:toggle.getAttribute('aria-expanded'),controlsHidden:root.querySelector('.blockui-palette-controls').hidden,listHeight:root.querySelector('.blockui-palette-list').getBoundingClientRect().height,toggleHit:hit===toggle||toggle.contains(hit)};});

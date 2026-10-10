@@ -1,3 +1,4 @@
+import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -15,7 +16,7 @@ try{await withBrowser(chrome,async browser=>{
   const file=await page.evaluate(source=>{const p=Akari.makeDefaultProject();p.name='検索の対象';p.scripts=[{id:'search-body',targetId:'sprite-1',event:'start',source}];
    p.projectData={variables:[{id:'score',name:'点数',initialValue:0}],lists:[{id:'items',name:'持ち物',initialValue:['本','ぼうし']}]};p.components[0].localData.variables=[{id:'local-score',name:'点数',initialValue:100}];
    p.actions=[{id:'bow',ownerId:'stage',name:'おじぎ',args:[],source:'右へ15度回る。'}];p.functions=[{id:'price',ownerId:'stage',name:'代金',args:['個数','ねだん'],source:'個数とねだんをかけた数を答えとして返す。'}];return Akari.serializeProject(p,Akari.makeDefaultAssetStore());},source);
-  await page.locator('#fileInput').setInputFiles({name:'search.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await page.waitForFunction(()=>Akari.app.project.name==='検索の対象');await page.locator('#uiLevel').selectOption('advanced');await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await page.locator('#editorModeblocks').click();
+  await page.locator('#fileInput').setInputFiles({name:'search.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await page.waitForFunction(()=>Akari.app.project.name==='検索の対象');await page.locator('#uiLevel').selectOption('advanced');await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await page.locator('#editorModeblocks').click();await openPaletteTools(page.locator('#blockEditor'));
  };
  const search=page=>page.locator('#blockEditor [data-blockui-search]');
  const source=page=>page.evaluate(()=>Akari.app.project.scripts.find(s=>s.id==='search-body').source);
@@ -43,7 +44,7 @@ try{await withBrowser(chrome,async browser=>{
   await search(page).fill('2番目に入れたい');await page.locator('#blockEditor [data-blockui-schema="ListInsert"]').click();assert.match(await source(page),/持ち物の2番目/);return{direction:'left',scale:50,index:2};
  });
  await run('search/browser-unavailable-reason',async page=>{
-  await page.setViewportSize({width:1366,height:768});await install(page);await page.locator('#objectSelect').selectOption('stage');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await page.locator('#editorModeblocks').click();await search(page).fill('右に行きたい');
+  await page.setViewportSize({width:1366,height:768});await install(page);await page.locator('#objectSelect').selectOption('stage');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await page.locator('#editorModeblocks').click();await openPaletteTools(page.locator('#blockEditor'));await search(page).fill('右に行きたい');
   await page.locator('#blockEditor .blockui-palette-options summary').click();await page.locator('#blockEditor input[aria-label="使えない候補も表示"]').check();const b=page.locator('#blockEditor [data-blockui-schema="MotionCommand:MOVE_DIRECTION"]');assert.equal(await b.getAttribute('aria-disabled'),'true');const before=await page.evaluate(()=>JSON.stringify(Akari.app.project));assert.match(await page.locator('#blockEditor .blockui-unavailable:visible').textContent(),/部品/);assert.equal(await page.evaluate(()=>JSON.stringify(Akari.app.project)),before);return{reasonShown:true,projectUnchanged:true};
  });
 },180000);}catch(error){report.hostFailure=error.stack;}

@@ -1,3 +1,4 @@
+import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -60,7 +61,7 @@ try{await withBrowser(chrome,async browser=>{
    await command(page,statement(),'replace-noop');assert.ok(await page.locator('#blockEditor [data-schema-id="NoOperation"]').count());await checkHistory(page,original);
    await command(page,statement(),'move-down');await checkHistory(page,original);
    await command(page,statement(),'remove');await checkHistory(page,original);
-   const insert=page.locator('#blockEditor .blockui-script > .blockui-node-content > .blockui-body > [data-blockui-action="body-insert"]').last();await insert.click();const search=page.locator('#blockEditor [data-blockui-search]:visible').first();await search.fill('言う');await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="Say"]:visible').first().click();const added=await checkHistory(page,original);assert.match(added,/こんにちは/);
+   const insert=page.locator('#blockEditor .blockui-script > .blockui-node-content > .blockui-body > [data-blockui-action="body-insert"]').last();await insert.click();await openPaletteTools(page.locator('#blockEditor'));const search=page.locator('#blockEditor [data-blockui-search]:visible').first();await search.fill('言う');await page.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="Say"]:visible').first().click();const added=await checkHistory(page,original);assert.match(added,/こんにちは/);
    assert.deepEqual(await page.evaluate(()=>Akari.app.compile().errors.map(e=>e.message)),[]);await page.locator('#editorModecode').click();assert.equal(await page.locator('#codeEditor').inputValue(),original);await page.locator('#editorModeblocks').click();assert.equal(await source(page),original);
   }
  });

@@ -6,11 +6,21 @@ async function installRegressionFactory(page) {
   await page.addInitScript({content: factorySource});
   await page.addScriptTag({content: factorySource});
 }
+async function openPaletteTools(root) {
+  const toggle = root.locator('[data-blockui-action="palette-tools-toggle"]');
+  if (await toggle.getAttribute('aria-expanded') === 'false') await toggle.click();
+  const assert = require('node:assert/strict');
+  assert.equal(await toggle.getAttribute('aria-expanded'), 'true');
+  assert.equal(await root.locator('.blockui-palette-controls').isVisible(), true);
+}
 async function revealRegressionControl(locator) {
+
   for (const panel of await locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all()) {
     const toggle = panel.locator('.blockui-side-toggle');
     if (await toggle.count()) await toggle.click();
   }
+  const controls = locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-palette-controls ")]');
+  if (await controls.count()) await openPaletteTools(controls.locator('..'));
   for (const detail of await locator.locator('xpath=ancestor::details[not(@open)]').all()) await detail.locator(':scope > summary').click();
   return locator;
 }
@@ -30,7 +40,7 @@ async function setupRegressionPage(page, options) {
   await page.waitForFunction(() => Akari.app.project.components.some(c => c.id === 'button-1') && Akari.app.project.projectData.variables.some(v => v.name === '点数'));
   await openRegressionEditor(page, options);
 }
-module.exports = {makeRegressionProject, installRegressionFactory, setupRegressionPage, openRegressionEditor, revealRegressionControl};
+module.exports = {makeRegressionProject, installRegressionFactory, setupRegressionPage, openRegressionEditor, revealRegressionControl, openPaletteTools};
 
 // The old audit assumed palette-created operands and bodies were already filled.
 // Reproduce those same explicit preconditions through v2's hole controls.

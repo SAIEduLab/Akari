@@ -1,6 +1,7 @@
 // Follow the visible disclosure controls. Never force a hidden control or mutate UI state.
 const assert=require('assert/strict');
 async function openDetails(details){
+ if(await details.count()) await require('./regression-setup.cjs').revealRegressionControl(details);
  if(!await details.count())return false; // Compact disclosure may be absent.
  if(await details.getAttribute('open')===null)await details.locator(':scope > summary').click();
  assert.notEqual(await details.getAttribute('open'),null);return true;

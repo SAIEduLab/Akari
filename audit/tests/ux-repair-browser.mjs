@@ -1,3 +1,4 @@
+import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -18,7 +19,7 @@ async function install(p,source,{event='start',level='advanced',mode='blocks'}={
   project.scripts=[{id:'ux-main',targetId:'sprite-1',event,source}];return Akari.serializeProject(project,Akari.makeDefaultAssetStore());
  },{source,event});
  await p.locator('#fileInput').setInputFiles({name:'ux.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await p.waitForFunction(()=>Akari.app.project.name==='UX改修検証');await p.locator('#uiLevel').selectOption(level);
- await p.locator('#objectSelect').selectOption('sprite-1');if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorMode'+mode).click();
+ await p.locator('#objectSelect').selectOption('sprite-1');if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorMode'+mode).click();if(mode==='blocks')await openPaletteTools(p.locator('#blockEditor'));
 }
 async function reveal(locator){const closed=()=>locator.locator('xpath=ancestor::details[not(@open)]');for(let i=0;await closed().count();i++){assert.ok(i<12,'disclosure ancestors open');await closed().first().locator(':scope > summary').click();}return locator;}
 async function b23Initial(p, source='「おはよう」と2秒話す。') {

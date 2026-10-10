@@ -1,3 +1,4 @@
+import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createRequire} from 'node:module';
@@ -79,19 +80,19 @@ try{await withBrowser(chrome,async browser=>{report.environment.browser=browser.
     const chosen=await read(p);await add(p);const after=await read(p);return{before,targetParent,chosen,after,...await travel(p,2)};
   });
   await run(browser,'selection/category-search-cancel',insertionSources.tail,async p=>{
-    const before=await read(p),targetParent=before.rootId;await p.locator('#blockEditor [data-blockui-category="basic"]').click();await p.locator('#blockEditor [data-blockui-search]').fill('話す');
+    await openPaletteTools(p.locator('#blockEditor'));const before=await read(p),targetParent=before.rootId;await p.locator('#blockEditor [data-blockui-category="basic"]').click();await p.locator('#blockEditor [data-blockui-search]').fill('話す');
     const queried=await read(p);await plus(p,targetParent).click();const chosen=await read(p);await p.locator('#blockEditor [data-blockui-action="cancel"]').click();const cancelled=await read(p);
     await plus(p,targetParent).click();await p.keyboard.press('Escape');const escaped=await read(p);return{before,targetParent,queried,chosen,cancelled,escaped};
   });
   await run(browser,'selection/empty-keyboard-mode','',async p=>{
-    const before=await read(p),targetParent=before.rootId;await p.locator('#blockEditor .blockui-palette-options summary').click();await p.locator('#blockEditor [data-blockui-palette-mode]').selectOption('expression');
+    await openPaletteTools(p.locator('#blockEditor'));const before=await read(p),targetParent=before.rootId;await p.locator('#blockEditor .blockui-palette-options summary').click();await p.locator('#blockEditor [data-blockui-palette-mode]').selectOption('expression');
     await p.locator('#blockEditor [data-blockui-search]').fill('待つ');await plus(p,targetParent,'body',0).focus();await p.keyboard.press('Enter');const chosen=await read(p);
     await candidate(p,'WaitTime').focus();await p.keyboard.press('Enter');const after=await read(p);return{before,targetParent,chosen,after,...await travel(p,1)};
   });
   await run(browser,'selection/value-unavailable',insertionSources.tail,async p=>{
     const before=await read(p),say=before.shape[0];const slot=p.locator('#blockEditor [data-parent-id="'+say.id+'"][data-blockui-input="value"]');
     await field(p,say.valueId).click();await slot.locator('[data-blockui-action="slot-select"]').click();const selected=await read(p);
-    await p.locator('#blockEditor .blockui-palette-options summary').click();await p.locator('#blockEditor input[aria-label="使えない候補も表示"]').check();
+    await openPaletteTools(p.locator('#blockEditor'));await p.locator('#blockEditor .blockui-palette-options summary').click();await p.locator('#blockEditor input[aria-label="使えない候補も表示"]').check();
     const disabled=await candidate(p,'Say').evaluate(e=>{const reason=e.parentElement.querySelector('.blockui-unavailable');return{ariaDisabled:e.getAttribute('aria-disabled'),reason:reason?.textContent,reasonVisible:!!reason?.getClientRects().length};});
     await candidate(p,'Say').scrollIntoViewIfNeeded();const bounds=await candidate(p,'Say').boundingBox();await p.mouse.click(bounds.x+bounds.width/2,bounds.y+bounds.height/2);
     const after=await read(p);await plus(p,before.rootId).click();const commandChosen=await read(p);return{before,selected,disabled,after,commandChosen};

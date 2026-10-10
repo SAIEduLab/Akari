@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Explicitly approved initial collapse of search/create controls in product commit 2c2ef1be193669b1e7d578e034968957dc3182a6; align product bytes and release records. Byte integrity does not assert execution PASS.",
+  "updateReason": "Explicitly approved audit repair for collapsed search/create defaults: use real disclosure buttons before search/options, retain all existing cases and add startup folding and history preservation assertions.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {

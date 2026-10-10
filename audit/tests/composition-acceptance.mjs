@@ -1,3 +1,4 @@
+import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
 import {nameLegacyFixtureActor} from '../lib/gate-ui-fixture.mjs';
 import path from 'node:path';
@@ -138,7 +139,7 @@ try{
  });
  await run('SAVE/unfinished-return-hole','DRAFT_PERSISTENCE',async(page)=>{
   await install(page,prose.drafts[0]);await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('function');await page.locator('#callableName').fill('途中の答え');await page.locator('#callableModeblocks').click();
-  const root=page.locator('#callableBlocks');await root.locator('[data-blockui-search]').fill('ReturnStatement');await root.locator('[data-blockui-schema="ReturnStatement"]').click();assert.equal(await root.locator('.blockui-node[data-schema-id="Hole:expression"]').count(),1);
+  const root=page.locator('#callableBlocks');await openPaletteTools(root);await root.locator('[data-blockui-search]').fill('ReturnStatement');await root.locator('[data-blockui-schema="ReturnStatement"]').click();assert.equal(await root.locator('.blockui-node[data-schema-id="Hole:expression"]').count(),1);
   const saved=await downloadProject(page,'unfinished-return','#callableSaveProject');await page.locator('#procClose').click();assert.equal(await page.locator('#procModal').isVisible(),false);
   await page.locator('#fileInput').setInputFiles(saved.file);await page.waitForFunction(()=>document.querySelector('#procModal').classList.contains('show')&&!!Akari.app.editorState.draft.blockDraft);
   assert.equal(await page.locator('#callableName').inputValue(),'途中の答え');assert.equal(await root.locator('.blockui-node[data-schema-id="Hole:expression"]').count(),1);

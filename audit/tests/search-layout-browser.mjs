@@ -1,3 +1,4 @@
+import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createRequire} from 'node:module';
@@ -27,6 +28,7 @@ async function fixture(p,callable=false){
   await p.waitForFunction(()=>Akari.app.project.name==='検索欄の検証');await p.locator('#uiLevel').selectOption('advanced');await p.locator('#objectSelect').selectOption('sprite-1');await p.locator('#eventSelect').selectOption('start');
   if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModeblocks').click();
   if(callable){await p.locator('#procBtn').click();await p.locator('#callableName').fill('検索の手順');await p.locator('#callableModecode').click();await p.locator('#callableCode').fill(searchLayoutSource);await p.locator('#callableCode').press('Tab');await p.locator('#callableModeblocks').click();}
+  await openPaletteTools(p.locator(rootFor(callable)));
   await frame(p);
 }
 async function measure(p,root){

@@ -1,3 +1,4 @@
+import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -38,7 +39,7 @@ try{await withBrowser(chrome,async browser=>{
  });
  await run('history/browser-closed-return-hole',async page=>{
   await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('function');await page.locator('#callableName').fill('書きかけの答え');await page.locator('#callableModeblocks').click();
-  await page.locator('#callableBlocks [data-blockui-search]').fill('ReturnStatement');await page.locator('#callableBlocks [data-blockui-schema="ReturnStatement"]').click();await page.locator('#procClose').click();await settled(page);await restore(page);
+  await openPaletteTools(page.locator('#callableBlocks'));await page.locator('#callableBlocks [data-blockui-search]').fill('ReturnStatement');await page.locator('#callableBlocks [data-blockui-schema="ReturnStatement"]').click();await page.locator('#procClose').click();await settled(page);await restore(page);
   assert.equal(await page.locator('#procModal').isVisible(),false);await page.locator('#procBtn').click();assert.equal(await page.locator('#callableName').inputValue(),'書きかけの答え');
   assert.equal(await page.locator('#callableBlocks .blockui-node[data-schema-id="Hole:expression"]').count(),1);return{name:'書きかけの答え',closed:true,reopened:true,hole:1};
  });
