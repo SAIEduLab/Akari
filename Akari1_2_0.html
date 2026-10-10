@@ -21746,12 +21746,13 @@ function createAkariExtensionHost(options) {
       E('p','','「操作を取り消す」は、いま選んだ追加先や変えかけている入力・組み立てをやめます。「元に戻す」は、すでに決めた変更を1つ戻します。'));
     paletteControls.append(help);
     paletteControls.id = viewId + '-palette-tools';
-    const paletteToggle = button('探す・作るをたたむ', 'palette-tools-toggle', () => {
+    paletteControls.hidden = true;
+    const paletteToggle = button('探す・作るをひらく', 'palette-tools-toggle', () => {
       paletteControls.hidden = !paletteControls.hidden;
       paletteToggle.setAttribute('aria-expanded', String(!paletteControls.hidden));
       paletteToggle.textContent = paletteControls.hidden ? '探す・作るをひらく' : '探す・作るをたたむ';
     });
-    paletteToggle.setAttribute('aria-expanded', 'true');
+    paletteToggle.setAttribute('aria-expanded', 'false');
     paletteToggle.setAttribute('aria-controls', paletteControls.id);
     const paletteTools = E('div', 'blockui-palette-tools');
     paletteTools.append(paletteToggle, paletteControls);
