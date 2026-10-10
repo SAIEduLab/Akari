@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Explicitly approved main CI repair: preserve original asset failures, await completed fixture imports, fix initial viewport timing and validate latest same-run evidence on partial reruns. Product, stable IDs, expectations and test deadlines preserved.",
+  "updateReason": "Explicitly approved initial collapse of search/create controls in product commit 2c2ef1be193669b1e7d578e034968957dc3182a6; align product bytes and release records. Byte integrity does not assert execution PASS.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,8 +12,8 @@
     },
     {
       "path": "Akari1_2_0.html",
-      "sha256": "a1cf801f0ebf747a4b12a501c41d4e39078282cfe6fcc4429c6316da52f084ce",
-      "bytes": 1502729
+      "sha256": "643c9571bfdf09ef6a8d8c905871dbc5c7878b52c33b6793875ad4c2559c614e",
+      "bytes": 1502765
     },
     {
       "path": "LANGUAGE.md",
