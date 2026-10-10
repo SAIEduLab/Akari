@@ -323,7 +323,7 @@
     "audit/tests/editor-assets.mjs": "78d217ed893298e134c0c88671d2760174548c8eee0081fe4d029f4abf82ac51",
     "audit/tests/editor-browser.mjs": "44c003a8ccb182534c303bddebd2966d5eeeb9752b57d039e3d084fc10df32b9",
     "audit/tests/editor-syntax-reuse.mjs": "d7da754d248483e6f4fe6d31a8161ded3041dfba098f90d037cf548981c94183",
-    "audit/tests/execution-continuity.mjs": "68e4c0d93c79ec2575a358e9f89a45fda5b2a87b89f49984a440da043c998788",
+    "audit/tests/execution-continuity.mjs": "c332ddadf2697017548ef925a2f6dd74cfb1c4e761b3611fab808a95ba9d9067",
     "audit/tests/export-open-browser.cjs": "e77ccf9d3462e548524277d10bf87f4d8ca803cf1fc939c28a2561973c89e18d",
     "audit/tests/extension-foundation-negative.mjs": "40a90c65533ebde9963d35246cc0ff0b9a4b1e16d09c966a06a98594ab5a65cc",
     "audit/tests/extension-foundation-verify.mjs": "37cf9ad6e1f144d417a47875ff08d077f2d51ee40ef2ee6cb429036c4e7a16c3",

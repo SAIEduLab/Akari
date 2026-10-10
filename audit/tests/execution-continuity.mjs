@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import {gateSteps} from '../lib/gate-contract.mjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
-import {sealBundle,verifyBundle} from '../lib/evidence-bundle.mjs';
+import {sealBundle,verifyBundle,selectBundleDirectory} from '../lib/evidence-bundle.mjs';
 const inputs=snapshot(currentProductFile()),results=[];
 const check=(id,fn)=>{fn();results.push({id,pass:true});};
 const clone=x=>JSON.parse(JSON.stringify(x));
@@ -30,23 +30,42 @@ for(const [id,failureAt] of [['gate-continuity:-1',-1],['gate-continuity:0',0],[
 const aggregate=fs.readFileSync('audit/verify-evidence.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
 const kinds=['static','selftest','audio-codecs-linux','audio-codecs-win32',...['session','ui','limits','schemas','extra'].map(g=>'full-browser-'+g)];
 const needs=Object.fromEntries(['static','selftest','full-browser-gate','audio-codecs'].map(k=>[k,{result:'success'}]));
+const output=process.argv[2]||'audit-evidence/integrity.json';fs.mkdirSync(path.dirname(output),{recursive:true});
+const base=fs.mkdtempSync(path.join(path.dirname(output),'integrity-'));
+const downloads=path.resolve(base,'downloads');fs.mkdirSync(downloads);
+// Exercise the real selector with a partial rerun: some kinds retain attempt 1.
+const aggregateProvenance={run:'123',attempt:'2'};
+const selectedAttempts=Object.fromEntries(kinds.map((kind,i)=>[kind,String(i%2?2:1)]));
+for(const kind of kinds){
+  fs.mkdirSync(path.join(downloads,'akari-'+kind+'-123-1'));
+  if(selectedAttempts[kind]==='2')fs.mkdirSync(path.join(downloads,'akari-'+kind+'-123-2'));
+}
 for(const scenario of ['pass',...kinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job'])check('aggregate:'+scenario,()=>{
-  const calls=[],written=new Map(),n=clone(needs);
+  const calls=[],selections=[],written=new Map(),n=clone(needs);
   if(scenario==='cancelled-job')n.selftest.result='cancelled';
   if(scenario==='missing-job')delete n.static;
   if(scenario==='unexpected-job')n.extra={result:'success'};
-  const process={argv:['node','verifier','aggregate','/downloads','/aggregate/result.json'],env:{GITHUB_RUN_ID:'fixture',GITHUB_RUN_ATTEMPT:'1',AKARI_NEEDS:JSON.stringify(n)}};
+  const process={argv:['node','verifier','aggregate',downloads,'/aggregate/result.json'],env:{GITHUB_RUN_ID:aggregateProvenance.run,GITHUB_RUN_ATTEMPT:aggregateProvenance.attempt,AKARI_NEEDS:JSON.stringify(n)}};
   if(scenario==='missing-jobs')delete process.env.AKARI_NEEDS;
   if(scenario==='empty-jobs')process.env.AKARI_NEEDS='{}';
   vm.runInNewContext(aggregate,{fs:{mkdirSync(){},writeFileSync(p,s){written.set(p,s);}},path:path.posix,assert:relaxed,process,snapshot:()=>({fixture:true}),currentProductFile,currentProductVersion,currentReleaseFile,
-    verifyBundle(kind){calls.push(kind);if(kind===scenario)throw Error('invalid evidence');return {result:{status:'PASS'}};}});
+    selectBundleDirectory(kind,directory,provenance){selections.push(kind);assert.equal(directory,downloads);assert.deepEqual(clone(provenance),aggregateProvenance);return selectBundleDirectory(kind,directory,provenance);},
+    verifyBundle(kind,directory,inputs,provenance){
+      calls.push(kind);assert.equal(directory,path.join(downloads,'akari-'+kind+'-123-'+selectedAttempts[kind]));
+      assert.deepEqual(clone(inputs),{fixture:true});assert.deepEqual(clone(provenance),{...aggregateProvenance,attempt:selectedAttempts[kind]});
+      if(kind===scenario)throw Error('invalid evidence');return {result:{status:'PASS'}};
+    }});
+  assert.deepEqual(selections,kinds,'every kind selected after a failure');
   assert.deepEqual(calls,kinds,'every bundle inspected after a failure');
   const report=JSON.parse(written.get('/aggregate/result.json'));
+  assert.deepEqual(report.results.map(r=>r.kind),kinds);
+  for(const result of report.results){
+    if(result.kind===scenario){assert.equal(result.status,'FAIL');assert.equal(result.reason,'invalid evidence');}
+    else {assert.equal(result.status,'PASS');assert.deepEqual(result.provenance,{...aggregateProvenance,attempt:selectedAttempts[result.kind]});}
+  }
   assert.equal(report.status,scenario==='pass'?'MACHINE_PASS':'FAIL');assert.equal(report.candidateApproved,false);
   if(scenario!=='pass')assert.equal(process.exitCode,1);
 });
-const output=process.argv[2]||'audit-evidence/integrity.json';fs.mkdirSync(path.dirname(output),{recursive:true});
-const base=fs.mkdtempSync(path.join(path.dirname(output),'integrity-'));
 const provenance={run:'fixture',attempt:'1'};
 function fixture(name){const dir=path.join(base,name);fs.mkdirSync(dir);fs.writeFileSync(path.join(dir,'static.json'),JSON.stringify({status:'PASS',snapshot:inputs,capabilities:260}));sealBundle('static',dir,provenance);return dir;}
 for(const mode of ['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','changed-kind','changed-result','rehashed-failure'])check('bundle:'+mode,()=>{
