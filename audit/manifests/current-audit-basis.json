@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "User explicitly requested removal of the README 1.1.2 and 1.2.0 update sections directly on main; only document byte integrity is refreshed, with no change to product or audit expectations.",
+  "updateReason": "Explicitly approved ROOT-P01 actor token range correction and SPEC-F02/F03 current product documentation repair; contracts and fixed audit inputs preserved.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,12 +12,12 @@
     },
     {
       "path": "Akari1_2_0.html",
-      "sha256": "13ce7ad15eaefb35f6cc3908b632887f4d4523fad5f35e29e0ff988a63697638",
-      "bytes": 1500667
+      "sha256": "a1cf801f0ebf747a4b12a501c41d4e39078282cfe6fcc4429c6316da52f084ce",
+      "bytes": 1502729
     },
     {
       "path": "LANGUAGE.md",
-      "sha256": "d2017124928c8155957218b79e7a3487cf683eb7857e423a7e27ee05878a652d",
+      "sha256": "f138410c743631b6ef54d0bcda10631dc851cfb877d0ad1f14e75599f1805510",
       "bytes": 111427
     },
     {

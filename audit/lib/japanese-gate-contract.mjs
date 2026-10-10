@@ -86,12 +86,18 @@ export function verifyMigrationReport(report,inputs){
   for(const[k,v]of Object.entries({status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153}))assert.equal(report.migration[k],v,k);
   return {status:'PASS',stableIds:605};
 }
+function recordedCandidateUrl(testedFile) {
+  assert.ok(!testedFile.includes('\0'),'recorded candidate path contains NUL');
+  const windows=/^(?:[A-Za-z]:[\\/]|\\\\[^\\/]+[\\/][^\\/]+)/.test(testedFile);
+  assert.ok(windows||path.posix.isAbsolute(testedFile),'recorded candidate path must be absolute');
+  return pathToFileURL(testedFile,{windows}).href;
+}
 export function verifyIntentCandidate(report,inputs,candidateFile=report.candidate.testedFile){
   assert.ok(typeof report.candidate.testedFile==='string'&&report.candidate.testedFile.length>0);
   assert.equal(report.candidate.sha256,inputs.productSha256);
   // Aggregation reads the sealed copy in its downloaded bundle, not a producer's absolute path.
   assert.equal(sha(fs.readFileSync(candidateFile)),inputs.productSha256);
-  assert.equal(report.candidate.url,pathToFileURL(report.candidate.testedFile).href);
+  assert.equal(report.candidate.url,recordedCandidateUrl(report.candidate.testedFile));
   assert.equal(report.environment.protocol,'file:');
 }
 export function verifyIntentReport(report,inputs,candidateFile){
