@@ -1,5 +1,5 @@
 {
-  "productVersion": "1.2.1",
+  "productVersion": "1.2.2",
   "COMMAND_CATALOG": [
     {
       "id": "Assignment",
@@ -733,21 +733,29 @@
     },
     "editableSamples": {
       "id": "editable-samples",
-      "count": 3,
+      "count": 6,
       "ids": [
         "dance",
         "flower",
-        "game"
+        "game",
+        "maze",
+        "music",
+        "story"
       ],
       "names": [
         "マスコットとだんごのダンス",
         "くるくる花もよう",
-        "星をつかまえよう"
+        "星をつかまえよう",
+        "道をつくって 迷路たんけん",
+        "おひさまの 曲づくり",
+        "ふたりの ふしぎな おさんぽ"
       ],
-      "openRequiresConfirmation": true,
+      "openRequiresConfirmation": "unsaved-only",
+      "picker": "native-dialog",
+      "cardLoadsDirectly": true,
       "selectionOnlyPreservesWork": true,
       "confirmationButtons": [
-        "はい",
+        "ほぞんせずに開く",
         "キャンセル"
       ],
       "cancelPreservesPendingEdits": true,

@@ -24,15 +24,23 @@ async function record(p){return p.evaluate(async()=>{
   if(!rec)return null;const decoded=await Akari.decodeWorkspaceHistory(rec.workspace),frame=decoded.frames[decoded.cursor];
   return {revision:rec.revision,updatedAt:rec.updatedAt,cursor:decoded.cursor,frameCount:decoded.frames.length,project:frame.project,editorState:frame.editorState};
 });}
+const setupRecords=new WeakMap();
+const setupPhase=(p,phase)=>setupRecords.get(p)?.push({phase,at:Date.now()});
 async function fixture(p,source,document,{actions=[],extraScripts=[]}={}){
+  // Fixture import is setup, separate from 8-second UI checks and unchanged
+  // 10-second autosave/order assertions. Keep the finite 180-second host budget.
+  p.setDefaultTimeout(30000);setupPhase(p,'fixture-serialize');
+  try{
   const file=await p.evaluate(({source,document,actions,extraScripts})=>{const project=Akari.makeEmptyProject();project.name='自動保存状態の検証';project.components[0].name='あかり';
     project.projectData.variables=[{id:'score',name:'点数',initialValue:0}];project.projectData.lists=[{id:'shopping',name:'買うもの',initialValue:['りんご','パン','牛乳']}];
     project.actions=actions;project.scripts=[{id:'main',targetId:'sprite-1',event:'start',source,...(document?{document}:{})},...extraScripts];return Akari.serializeProject(project,Akari.app.assetStore);
   },{source,document,actions,extraScripts});
-  await p.locator('#fileInput').setInputFiles({name:'autosave-state.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
-  await p.waitForFunction(()=>Akari.app.project.name==='自動保存状態の検証');await p.locator('#uiLevel').selectOption('advanced');
+  setupPhase(p,'fixture-import');await p.locator('#fileInput').setInputFiles({name:'autosave-state.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
+  setupPhase(p,'fixture-wait-project');await p.waitForFunction(()=>Akari.app.project.name==='自動保存状態の検証');setupPhase(p,'fixture-project-loaded');await p.locator('#uiLevel').selectOption('advanced');
   await p.locator('#objectSelect').selectOption('sprite-1');await p.locator('#eventSelect').selectOption('start');
-  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModecode').click();
+  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModecode').click();setupPhase(p,'fixture-complete');
+  }catch(error){setupRecords.get(p)?.push({phase:'fixture-failed',at:Date.now(),state:await Promise.race([p.evaluate(()=>({ready:document.readyState,state:globalThis.Akari?.app?.editorState?.state,name:globalThis.Akari?.app?.project?.name,input:document.querySelector('#fileInput')?.value,console:document.querySelector('#console')?.textContent})).catch(e=>({error:e.message})),new Promise(resolve=>setTimeout(()=>resolve({unavailable:'diagnostic timeout after 2 seconds'}),2000))])});throw error;}
+  finally{p.setDefaultTimeout(8000);}
 }
 // Observe real browser storage events. Holding only the application's completion
 // callback lets a newer keyboard edit race a completed old write without adding
@@ -73,10 +81,10 @@ async function pausedScenario(p,key,{document,restored=false}={}){
 try{await withBrowser(chrome,async browser=>{
   report.environment.browser=browser.version();
   async function run(id,fn){const row={id,status:'RUNNING'};report.results.push(row);try{row.observed=await pageFor(browser,product,async p=>{
-    p.setDefaultTimeout(8000);await p.setViewportSize({width:1188,height:848});p.on('dialog',d=>d.accept());
-    p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});
+    p.setDefaultTimeout(8000);row.setup=[];setupRecords.set(p,row.setup);setupPhase(p,'page-ready');p.on('crash',()=>setupPhase(p,'page-crash'));p.on('dialog',d=>d.accept());
+    p.on('pageerror',e=>{report.pageErrors.push(e.message);row.setup.push({phase:'page-error',at:Date.now(),message:e.message});});p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});
     try{return await fn(p);}finally{await p.screenshot({path:path.join(artifacts,id.replaceAll('/','-')+'.png')}).catch(()=>{});}
-  });row.status='PASS';}catch(error){row.status='FAIL';row.error=error.stack;}save();console.log(row.status+' '+id);}
+  },{viewport:{width:1188,height:848}});row.status='PASS';}catch(error){row.status='FAIL';row.error=error.stack;}save();console.log(row.status+' '+id);}
   await run('paused/persistent-first',p=>pausedScenario(p,'first',{document:{revision:7,unitIds:['first-event']}}));
   await run('paused/legacy-second-cancel',async p=>{
     const o=await pausedScenario(p,'second');await p.locator('#failureEditList').click();o.opened=await state(p);
