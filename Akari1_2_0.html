@@ -26775,6 +26775,9 @@ function createAkariExtensionHost(options) {
         if (n) n.disabled = locked;
       }
       $('#saveBtn').disabled = appState === 'IMPORTING' || appState === 'PREPARING';
+      // Do not change history ownership while an asynchronous import is still settling.
+      // Runtime inspection keeps its existing target/event navigation.
+      el.obj.disabled = el.event.disabled = appState === 'IMPORTING' || appState === 'PREPARING';
       el.editor.readOnly = locked;
       el.projectName.disabled = locked;
       $$('.tool').forEach((b) => {

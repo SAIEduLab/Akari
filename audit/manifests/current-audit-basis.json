@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Approved CI repair: retain else branch source selection on focus and update obsolete test routes and labels without weakening semantic assertions.",
+  "updateReason": "Approved CI race repair: prevent target and event navigation during asynchronous import/preparation so Undo keeps the selected document owner; retain runtime inspection navigation and all assertions.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,8 +12,8 @@
     },
     {
       "path": "Akari1_2_0.html",
-      "sha256": "59c321bde487400e6114b63a152ebbf7684583398955e66b4dfd31b576ab24fb",
-      "bytes": 1511265
+      "sha256": "3ecd1da5422b9095f35c709d62ec1bf3ca39db2d24dcaf7fd7c1a4fa341a5c40",
+      "bytes": 1511524
     },
     {
       "path": "LANGUAGE.md",
