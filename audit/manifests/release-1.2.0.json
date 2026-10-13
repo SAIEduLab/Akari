@@ -368,7 +368,7 @@
     "audit/tests/runtime-v2/node.cjs": "d314d8d4c724b63048773a532984a49ebbc51675fc5fe688fc127f87f21aeb0f",
     "audit/tests/runtime-v2/parser-tests.cjs": "bad10a2549eb0314540b2b8f11fe94adee0b3b55dc089a0fa84e66c69dd02b9a",
     "audit/tests/samples-negative.mjs": "3e7ca8eb052ec92f41f2643b78908f42f389e74a11ddcd14bc8f0c634783a766",
-    "audit/tests/samples.mjs": "41834fd6bef823f227619ce69c2598a66213676e3dc1de50cd137c97e96c34a3",
+    "audit/tests/samples.mjs": "37947e73d3352fb66c5275650c099f88ae38db4d3c52d6edb0512962ea11d814",
     "audit/tests/search-bindings-browser.mjs": "680011bd86a792ca642d1780302d1b33badcd1a97dcd254efa15f9c400e9c178",
     "audit/tests/search-bindings.mjs": "e537870546e712267c89a9f54e03236702972e7a60d2a0689b793b12e9b8aa0d",
     "audit/tests/search-layout-browser.mjs": "a22a03c0516088e1a4a221ad6a2d771b6aafaf84abab760ae1172c298227af04",
