@@ -17,7 +17,10 @@ try{await withBrowser(chrome,async browser=>{
    for(let i=0;i<3;i++){await page.locator('#editorModeblocks').click();assert.equal(await page.locator('#editorModeblocks').getAttribute('aria-pressed'),'true');await page.locator('#editorModecode').click();assert.equal(await page.locator('#codeEditor').inputValue(),draft.source);}
    assert.deepEqual(await page.evaluate(()=>Akari.app.compile().errors),[]);const actor=page.locator('#formSurface .component[data-id="sprite-1"]'),read=()=>actor.evaluate(e=>({x:parseFloat(e.style.left),y:parseFloat(e.style.top),visible:e.style.display!=='none',time:performance.now()}));
    const waitPosition=(axis,value)=>page.waitForFunction(({axis,value})=>Math.abs(parseFloat(document.querySelector('#formSurface .component[data-id="sprite-1"]').style[axis==='x'?'left':'top'])-value)<.01,{axis,value});
-   await page.locator('#runBtn').click();let detail={};
+   await page.locator('#runBtn').click();
+   // Runtime asset preparation is asynchronous. Inputs before RUNNING are
+   // deliberately ignored; wait for the real state without relaxing 8000ms.
+   await page.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');let detail={};
    if(draft.id==='T01'){
     assert.equal((await read()).x,100);const box=await actor.boundingBox();await page.mouse.move(box.x+box.width/4,box.y+box.height/2);await page.mouse.down();await page.waitForTimeout(200);assert.equal((await read()).x,100);await page.mouse.up();await waitPosition('x',130);assert.equal(await page.locator('.sprite-bubble-text').textContent(),'今日はどこへ行こう');const moved=await actor.boundingBox(),point={x:moved.x+moved.width/4,y:moved.y+moved.height/2};assert.equal(await page.evaluate(p=>document.elementFromPoint(p.x,p.y)?.closest('.component')?.dataset.id,point),'sprite-1');await page.mouse.click(point.x,point.y);await waitPosition('x',160);assert.equal((await read()).y,100);detail={beforeClick:100,afterClicks:[130,160],holdIdle:true,speech:'今日はどこへ行こう'};
    }
@@ -44,6 +47,9 @@ try{await withBrowser(chrome,async browser=>{
     await page.waitForFunction(()=>document.querySelector('#formSurface .component[data-id="sprite-1"]').style.display==='none');assert.equal(await page.locator('.sprite-bubble').count(),0);await page.waitForFunction(()=>document.querySelector('#formSurface .component[data-id="sprite-1"]').style.display!=='none');assert.equal(await page.locator('.sprite-bubble-text').textContent(),'ただいま');detail={hiddenFirst:true,visibleAfterWait:true,speech:'ただいま'};
    }
    if(draft.id==='T06'){
+    // The empty initial canvas and the closed square share the same position.
+    // Observe drawing before checking the unchanged closed-square expectation.
+    await page.waitForFunction(()=>{const e=document.querySelector('#penCanvas'),d=e.getContext('2d').getImageData(0,0,e.width,e.height).data;for(let i=3;i<d.length;i+=4)if(d[i])return true;return false;});
     const pos=await read();assert.ok(Math.abs(pos.x-100)<.01&&Math.abs(pos.y-100)<.01);const ink=await page.locator('#penCanvas').evaluate(e=>{const d=e.getContext('2d').getImageData(0,0,e.width,e.height).data;let n=0;for(let i=3;i<d.length;i+=4)if(d[i])n++;return n;});assert.ok(ink>=60);detail={closedSquare:true,ink};
    }
    await page.screenshot({path:path.join(dir,draft.id+'.png')});await page.locator('#stopBtn').click();assert.equal(await page.evaluate(()=>Akari.app.project.components[0].x),100);assert.equal(await page.evaluate(()=>Akari.app.project.components[0].direction),0);

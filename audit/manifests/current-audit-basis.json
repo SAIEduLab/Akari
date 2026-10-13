@@ -2,13 +2,13 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Explicitly approved R01-R08 child creation recovery and local block UX repairs; reviewed product, existing test extensions, public investigation and retained fixed oracles and stable ID sets before recording the current basis.",
+  "updateReason": "Explicitly approved R01-R08 child recovery and local UX repairs, with independently observed asynchronous runtime preparation corrected in two existing acceptance suites without changing fixtures, assertions, IDs, thresholds or timeouts.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
       "path": "AUDIT.md",
-      "sha256": "325882a197ae004b608ab0f1c6d2e651344020dfc2733831011403ff59b9b4f2",
-      "bytes": 223728
+      "sha256": "b01e22f395c6fce02eeeb85a79354035d4ad59ec8b8978698dc8a7f7cf1ddd73",
+      "bytes": 224187
     },
     {
       "path": "Akari1_2_0.html",

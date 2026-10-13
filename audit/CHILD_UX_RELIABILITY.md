@@ -42,3 +42,5 @@
 施工中は工程ごとの公開ファイルcopyとhashを固定して、独立監査者が境界・取消・誤操作・回帰と試験の非弱体化を点検する。最終版は文書・テスト・公開一覧・現行基準・release freezeまで確定してから入力を固定する。試験中の入力変化はFAILとし、HTMLだけ一致した別文書版の結果を混ぜない。
 
 必要集合は44段local gate、full browserの5群、書出し／読込み31 IDと負例、固定受入workflowのcomposition／repair05の該当集合とvalidator。WindowsとLinux、実OS IME、合成composition、機械GUI、児童の独立評価を別に報告する。未実行・環境阻害・欠落・timeoutをPASSにせず、最初の失敗と再試行を保存する。対象版の技術的な検証と、依頼元による独立最終受入は別の責任である。
+
+全体回帰で、`basic-intents-browser` のクリック／キー入力と初期canvas読取、`structured-editing-browser` のキー入力が非同期の実行準備を待っていない問題を切り分けた。基準版でもT06が描画前の空canvasで失敗し、独立観測では「動かす」直後のPREPARINGと、その後の描画を確認した。両試験に実際のRUNNING待ち、T06に最初の描画待ちを加えた。7件／9件の既存ID、原文、座標・描画量・発話・速度の期待、8秒制限と各assertionを保持する。観測待ちは製品の準備中入力禁止を解除せず、キー失敗の全根因が実証されたとの主張もしない。
