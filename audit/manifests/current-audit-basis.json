@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.2",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "User-approved Akari 1.2.2 visual audit repair: shorten two music button labels to fit their existing controls and require single-line in-bounds text in the browser.",
+  "updateReason": "User-approved Akari 1.2.2: preserve editor diagnostics and geometry during cancellable Open, and isolate browser fixture setup from unchanged behavioral timing assertions.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,8 +12,8 @@
     },
     {
       "path": "Akari_1_2_2.html",
-      "sha256": "78581bf29246a399961ee09f72b28754e92beacda48d631feb9f7c5e9c76bc38",
-      "bytes": 1703032
+      "sha256": "0c0619bcbf307943b9dad5b71e05fcd38b259f4a2b1c47e9228845d834eb8f45",
+      "bytes": 1703308
     },
     {
       "path": "LANGUAGE.md",

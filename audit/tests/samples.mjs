@@ -56,7 +56,30 @@ try{await withBrowser(chrome,async browser=>{
  });
  await test('SAMPLES-CANCEL-PENDING',async page=>{
   await open(page,'flower');await page.locator('#uiLevel').selectOption('advanced');await page.locator('#editorModecode').click();await page.locator('#codeEditor').fill('マスコットは書きかけの');await page.waitForTimeout(400);const code=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),true);await page.locator('#openConfirmCancel').click();assert.deepEqual(await fingerprint(page),code);await page.locator('#sampleBtn').click();await page.keyboard.press('Escape');assert.deepEqual(await fingerprint(page),code);
-  await open(page,'flower');await page.locator('#editorModeblocks').click();const number=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] input[data-blockui-field="value"]').first();await number.fill('bad');await number.press('Enter');const block=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),true);await page.locator('#openConfirmCancel').click();assert.deepEqual(await fingerprint(page),block);assert.equal(await number.inputValue(),'bad');await picker(page);assert.deepEqual(await fingerprint(page),block);await page.locator('#samplePickerClose').click();assert.deepEqual(await fingerprint(page),block);await picker(page);await page.keyboard.press('Escape');assert.deepEqual(await fingerprint(page),block);
+  await open(page,'flower');await page.locator('#editorModeblocks').click();
+  const number=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] input[data-blockui-field="value"]').first();
+  const twoFrames=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const trace=async phase=>{
+   const observation=await page.evaluate(()=>{
+    const workspace=document.querySelector('#blockEditor .blockui-workspace'),outside=document.querySelector('#editorPending'),inside=document.querySelector('#blockEditor .blockui-message'),pending=Akari.app.editorState.main.pendingEdit;
+    return{scroll:{top:workspace.scrollTop,left:workspace.scrollLeft},cachedScroll:Akari.app.editorState.main.scrollState,
+     workspace:workspace.getBoundingClientRect().toJSON(),outsideDiagnostic:{hidden:outside.hidden,text:outside.textContent,rect:outside.getBoundingClientRect().toJSON()},
+     inlineDiagnostic:{text:inside.textContent,role:inside.getAttribute('role'),rect:inside.getBoundingClientRect().toJSON()},
+     pending:JSON.parse(JSON.stringify(pending)),focus:{id:document.activeElement?.id,field:document.activeElement?.dataset?.blockuiField},confirmation:document.querySelector('#openConfirmModal').classList.contains('show'),picker:document.querySelector('#samplePicker').open};
+   });
+   report.diagnostics??={};report.diagnostics.cancelPendingBlock??=[];report.diagnostics.cancelPendingBlock.push({phase,...observation});save();return observation;
+  };
+  await number.fill('bad');await number.press('Enter');await trace('after-invalid-enter');
+  await twoFrames();const settled=await trace('after-input-two-frames');
+  await twoFrames();const baseline=await trace('after-input-four-frames');
+  assert.deepEqual(baseline.scroll,settled.scroll,'input-induced scrolling settled before opening');assert.deepEqual(baseline.workspace,settled.workspace,'input-induced layout settled before opening');
+  const block=await fingerprint(page);
+  await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),true);await trace('after-open');await twoFrames();await trace('after-open-two-frames');
+  await page.locator('#openConfirmCancel').click();await trace('after-confirm-cancel');await twoFrames();await trace('after-confirm-cancel-two-frames');
+  assert.deepEqual(await fingerprint(page),block);assert.equal(await number.inputValue(),'bad');
+  await picker(page);await twoFrames();await trace('after-picker-proceed');assert.deepEqual(await fingerprint(page),block);
+  await page.locator('#samplePickerClose').click();await twoFrames();await trace('after-picker-close');assert.deepEqual(await fingerprint(page),block);
+  await picker(page);await page.keyboard.press('Escape');await twoFrames();await trace('after-picker-escape');assert.deepEqual(await fingerprint(page),block);
   await open(page,'dance');await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('action');await page.locator('#callableName').fill('書きかけ');await page.locator('#callableName').press('Tab');await page.waitForTimeout(400);const draft=await fingerprint(page);await page.locator('#procClose').click();const closed=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),true);await page.locator('#openConfirmCancel').click();assert.deepEqual(await fingerprint(page),closed);assert.deepEqual((await fingerprint(page)).editor.callableDraft,draft.editor.callableDraft);
  });
  await test('SAMPLES-RESET-ISOLATION',async page=>{

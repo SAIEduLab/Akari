@@ -28054,17 +28054,18 @@ function createAkariExtensionHost(options) {
         return showEditorFailure(binding, error);
       }
     }
-    function flushEditor(binding) {
+    function flushEditor(binding, { preserveView = false } = {}) {
       if (modelLocked()) return true;
       if (binding.session?.mode === 'blocks') {
         const result = binding.view.flush();
         if (!result?.ok)
-          return showEditorFailure(
+          return preserveView ? false : showEditorFailure(
             binding,
             result?.reason || '入力を確定するか取り消してください',
             { preservePending: true },
           );
         if (binding.session?.blockDraft){
+          if (preserveView) return false;
           const hole=[...buildBlockIndex(binding.session.blockView).values()].find(entry=>entry.node.schemaId.startsWith('Hole:'));
           const context=bindingContext(binding),name=targetById(context.targetId)?.name||'この本文',label=hole?.node.fields.label||'命令や値';
           if(hole)binding.view.focus({id:hole.node.id});
@@ -28098,17 +28099,17 @@ function createAkariExtensionHost(options) {
       }
       return saveCodeBinding(binding);
     }
-    function flushActiveEditor() {
+    function flushActiveEditor({ preserveView = false } = {}) {
       if (colorEdit) return false;
       if (flushingEditor) return true;
       flushingEditor = true;
       try {
         activeDragCleanup?.();
         if ($('#procModal').classList.contains('show')) {
-          if (!flushEditor(draftEditor)) return false;
+          if (!flushEditor(draftEditor, { preserveView })) return false;
           return syncCallableDraft();
         }
-        return flushEditor(mainEditor);
+        return flushEditor(mainEditor, { preserveView });
       } finally {
         flushingEditor = false;
       }
@@ -29157,7 +29158,8 @@ function createAkariExtensionHost(options) {
       return value;
     }
     function currentOpenState() {
-      flushActiveEditor();
+      // Opening may be cancelled: retain the existing inline diagnosis and editor geometry.
+      flushActiveEditor({ preserveView: true });
       activeDragCleanup?.();
       const content = currentFingerprint(), editor = openEditorFingerprint();
       return { fingerprint: stableJson([content, editor]),
