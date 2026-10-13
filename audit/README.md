@@ -1,6 +1,6 @@
-# あかり1.2.0の監査
+# あかり1.2.1の監査
 
-契約は [AUDIT.md](../AUDIT.md)、機能固定は `manifests/features.json`、公開ファイル固定は `manifests/release-1.2.0.json` です。
+契約は [AUDIT.md](../AUDIT.md)、機能固定は `manifests/features.json`、公開ファイル固定は `manifests/release-1.2.1.json` です。
 
 ## 実行
 
@@ -20,7 +20,7 @@ node audit/freeze-release.mjs --record
 node audit/freeze-release.mjs
 ```
 
-現行製品pathと製品版は `public-files.json` の `productFile` / `productVersion` から `lib/product-path.cjs` を通じて取得します。版更新は製品HTMLとrelease freezeを入れ替え、公開対象・リンクも同時に更新します。ブロック入力欄の全文表示は `tests/block-field-width.mjs` で実ブラウザー検査し、selftestとLinux / Windowsの必須証拠へ含めます。
+現行製品pathと製品版は `public-files.json` の `productFile` / `productVersion` から `lib/product-path.cjs` を通じて取得します。mainへmergeする一つの作業につき、別の明示指示がなければpatchを1だけ上げます。同じ作業内の追加commitでは上げ直しません。版更新は `Akari_<major>_<minor>_<patch>.html` とrelease freezeを入れ替え、公開対象・リンクも同時に更新します。旧命名・旧版の製品HTMLが現行ツリーや公開対象へ混在していればstatic gateで拒否します。ブロック入力欄の全文表示は `tests/block-field-width.mjs` で実ブラウザー検査し、selftestとLinux / Windowsの必須証拠へ含めます。
 
 
 ## 日本語改訂の追加gate

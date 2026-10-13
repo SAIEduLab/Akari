@@ -1,59 +1,59 @@
 {
   "schema": "akari-current-audit-basis-v1",
-  "productVersion": "1.2.0",
+  "productVersion": "1.2.1",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Approved CI race repair: prevent target and event navigation during asynchronous import/preparation so Undo keeps the selected document owner; retain runtime inspection navigation and all assertions.",
+  "updateReason": "User-approved patch release 1.2.1 and Akari_ filename convention; preserve immutable historical pins and external contracts, update current release labels, links and filename guards after reviewing the local diff.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
       "path": "AUDIT.md",
-      "sha256": "4d8a9233537a37937c3f93f99e267cae708b1d18246278c1208beacbe5d1f1e1",
-      "bytes": 225451
+      "sha256": "46c2424890b99244293736fe356398e3cacc197416ddd4295923640badb0f036",
+      "bytes": 225813
     },
     {
-      "path": "Akari1_2_0.html",
-      "sha256": "3ecd1da5422b9095f35c709d62ec1bf3ca39db2d24dcaf7fd7c1a4fa341a5c40",
+      "path": "Akari_1_2_1.html",
+      "sha256": "c7d146449dc29b2eda00fa4434a70364ed07196ea3f07fd5a7625e45cbaacbf1",
       "bytes": 1511524
     },
     {
       "path": "LANGUAGE.md",
-      "sha256": "0a34add0118a4f159313b23650608a448f187b0c6283ed2c628f2b6742bbbc10",
-      "bytes": 113827
+      "sha256": "12a897b2ea646118c6ea41779717192630e48942cd59373ab9a6bb25e9053c3c",
+      "bytes": 113830
     },
     {
       "path": "MANUAL.html",
-      "sha256": "d04c7378e2fbe339223a45d1309c688299220088643a16ea0b75c74c2f9f9be3",
-      "bytes": 35670
+      "sha256": "cb91e1388504ff1e8503665a6e1b1627780b397de485b759da3ee33c30594852",
+      "bytes": 35680
     },
     {
       "path": "Manual/block-mode.html",
-      "sha256": "f764327d35335692bfa1122dcd5f2ec508be21b62c1814684d7212f3797e966d",
-      "bytes": 38682
+      "sha256": "f29f89b7d3a57e8301d2aac8a811a9343e10c909c1e112649931a49419a11904",
+      "bytes": 38683
     },
     {
       "path": "Manual/code-mode-advanced.html",
-      "sha256": "ce9ad4d933e2d024405434e7d8faacc56c16a6413277236848213ef72169e7a1",
-      "bytes": 34010
+      "sha256": "918c87a80a820c13af10153d4e78e6345cbd2081f3cb4f630bd33aa69d6dfb05",
+      "bytes": 34011
     },
     {
       "path": "Manual/code-mode-beginner.html",
-      "sha256": "38e6533735f6556939248a8363b1e908553881d89cb12891c0c9a1771132de54",
-      "bytes": 33064
+      "sha256": "d2eaf694746722f67426629192882ba65fa27c7e2587010557ffe17e8c8b95e0",
+      "bytes": 33065
     },
     {
       "path": "Manual/code-mode-intermediate.html",
-      "sha256": "0835db50d9f4df43135a3119fbec15b9f31fe91aa70377700dad8b603704b2f9",
-      "bytes": 31288
+      "sha256": "7d87779a16069797bdbedf3109c8e74668e157769b5fee54d67fe19af92689e8",
+      "bytes": 31289
     },
     {
       "path": "README.md",
-      "sha256": "e15391834ea0dc1d1985c5319256d244fccdd1aee895103df619384b2ae42f67",
-      "bytes": 5836
+      "sha256": "00f779b3cab6909ad19084b8d4aa31985ddff15458e755de182e20d90b4e6920",
+      "bytes": 5840
     },
     {
       "path": "audit/README.md",
-      "sha256": "17d443d7f84ca615b865d9f78bd3231175dfc3dd80122d630fb20d7179c8d1a3",
-      "bytes": 8472
+      "sha256": "b2f90a016ec044bf4b26d883bad0662eff8901189e35f721d25d5ff98533e636",
+      "bytes": 8788
     },
     {
       "path": "audit/browser/cases/browser-product.cjs",
@@ -117,7 +117,7 @@
     },
     {
       "path": "audit/manifests/features.json",
-      "sha256": "3358d0925a90c5fb4914b1c181453ead38e49ea2be49e0a49bfb4131e5bb00ca",
+      "sha256": "77e8b8c69dc6a60ae115d0fd57d873fef720727e8312dcc5597ae56e71286880",
       "bytes": 19252
     },
     {
@@ -127,13 +127,13 @@
     },
     {
       "path": "audit/public-files.json",
-      "sha256": "d064edcf215ca9c350a366b7f862343b6560f6e584f2d495d5d3493204222a8e",
-      "bytes": 19763
+      "sha256": "afab0cd70d95b370f264161bb47913fefa5b7e946ce47406387517d49d446b54",
+      "bytes": 19765
     },
     {
       "path": "audit/record-current-basis.mjs",
-      "sha256": "573558ba30f76fcac11c40144f57c90cc3494426539df9ab8cdf7a5158412a62",
-      "bytes": 1600
+      "sha256": "8916a1c81cecc6ec8b04392abfee87c0d73e0b1631ded07e80ba9ea60f11c52d",
+      "bytes": 1678
     },
     {
       "path": "audit/tests/audit-ledgers.mjs",
@@ -182,8 +182,8 @@
     },
     {
       "path": "audit/tests/static-contract.mjs",
-      "sha256": "474353d41bd22a0afe50a2f8df8028c13f28442322c8002701252282ab7572a4",
-      "bytes": 10352
+      "sha256": "f899b6fa035b484a2f7855e7a4402dbaee78fc54b4ea2e7bfe863d61add57fc9",
+      "bytes": 10896
     }
   ]
 }
