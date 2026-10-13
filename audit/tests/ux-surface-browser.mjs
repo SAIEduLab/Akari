@@ -1,3 +1,4 @@
+import U from '../browser/cases/ui-routes.cjs';
 import {installGreetingFixture} from '../lib/gate-ui-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,7 +22,7 @@ try{await withBrowser(chrome,async browser=>{
   await page.locator('#sampleBtn').click();await page.locator('#sampleConfirmYes').click();assert.equal(await page.evaluate(()=>Akari.app.project.name),'マスコットとだんごのダンス');
   // Preserve the original empty/click/remove/undo guarantees with their explicit greeting fixture.
   await installGreetingFixture(page);const sample=await page.evaluate(()=>Akari.app.project.scripts[0].source);await page.getByRole('button',{name:'すべてのコード',exact:true}).click();assert.match(await page.locator('#sourceOverview').textContent(),/こんにちは/);await page.locator('#sourceEditBtn').click();await page.locator('#editorModeblocks').click();
-  for(const schema of ['Say','MotionCommand:MOVE_DIRECTION']){const node=page.locator('#blockEditor .blockui-node[data-schema-id="'+schema+'"]').first();await node.locator(':scope > .blockui-node-head .blockui-actions > summary').click();await node.locator('[data-blockui-action="remove"]').first().click();}
+  for(const schema of ['Say','MotionCommand:MOVE_DIRECTION']){const node=page.locator('#blockEditor .blockui-node[data-schema-id="'+schema+'"]').first();await U.openNodeMenu(node);await node.locator('[data-blockui-action="remove"]').first().click();}
   assert.equal(await page.locator('#blockEditor .blockui-node[data-schema-id="Say"],#blockEditor .blockui-node[data-schema-id="MotionCommand:MOVE_DIRECTION"]').count(),0);await page.locator('#undoBtn').click();await page.locator('#undoBtn').click();assert.equal(await page.evaluate(()=>Akari.app.project.scripts[0].source),sample);
   await page.locator('#newBtn').click();assert.equal(await page.evaluate(()=>Akari.app.project.scripts.every(s=>!s.source.trim())),true);return{emptyStartup:true,emptyRunIdle:true,clickDistances:[30,60],explicitSample:true,removeUndo:true,emptyNew:true};
  });

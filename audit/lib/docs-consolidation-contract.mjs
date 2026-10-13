@@ -7,6 +7,8 @@ import {fileURLToPath} from 'node:url';
 
 // Reviewed migration record; changing meaning/routing requires an explicit new record.
 const reviewedMigrationSha256="2a7b27269e8f0bcc7d972416058a0ddb44d242d0e6b92b72497ce65764479e42";
+const reviewedDocumentUpdatePath='audit/reviewed/CHILD_UX_DOCUMENT_REVISION.json';
+const reviewedDocumentUpdateSha256='08fbf25d046c4c73dd4b4abf47090365af71fbe015a32a83e38d9c15eb933234';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const sha=x=>crypto.createHash('sha256').update(x).digest('hex');
 export const corpusPath='audit/fixtures/japanese-intent/child-intent-corpus.json';
@@ -16,6 +18,7 @@ export const consolidationInputPaths=[
   'audit/lib/docs-consolidation-contract.mjs',
   'audit/manifests/capability-traceability.json',corpusPath,corpusMarkdownPath,
   'README.md','LANGUAGE.md','AUDIT.md','audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md',
+  reviewedDocumentUpdatePath,
 ];
 const text=(x,label)=>assert.ok(typeof x==='string'&&x.trim(),label);
 const unique=(x,label)=>assert.equal(new Set(x).size,x.length,label);
@@ -26,6 +29,30 @@ function sectionBody(content,title){
  assert.ok(start>=0,'missing permanent section: '+title);
  let end=start+1;while(end<lines.length&&!/^#{1,4} /.test(lines[end]))end++;
  return lines.slice(start+1,end).join('\n').trim();
+}
+function reviewedDocumentUpdate(bytes){
+ assert.equal(sha(bytes),reviewedDocumentUpdateSha256,'reviewed current document update bytes');
+ const record=JSON.parse(bytes);
+ assert.deepEqual(Object.keys(record).sort(),['schema','originalMigrationSha256','baselineCommit','updates'].sort(),'closed document update record');
+ assert.equal(record.schema,'akari-reviewed-document-update-v1');
+ assert.equal(record.originalMigrationSha256,reviewedMigrationSha256);
+ assert.equal(record.baselineCommit,'dfe384533e6100273b7b6535382be5d3c9f445a7');
+ assert.equal(record.updates.length,1,'one reviewed UI wording update');
+ const update=record.updates[0];
+ assert.equal(update.id,'R06-LANGUAGE-STATEMENT-MENU');
+ assert.equal(update.path,'LANGUAGE.md');assert.equal(update.section,'コードとブロックで同じ本文を編集する');
+ assert.equal(update.originalSectionBodySha256,'054c8b0b7cd35d45244afb09043a1992d43c518e6ac481cde299367410e6e364');
+ assert.equal(update.currentSectionBodySha256,'cac0aa6526067d85d98820f607af07610b290d031d6a3ded95291e4d94b7d297');
+ assert.equal(update.changesMeaning,false);return update;
+}
+function verifyPermanentBodies(map,read){
+ const update=reviewedDocumentUpdate(read(reviewedDocumentUpdatePath));let matched=0;
+ for(const s of map.contractSections){
+  const revised=s.path===update.path&&s.section===update.section;
+  if(revised){assert.equal(s.sectionBodySha256,update.originalSectionBodySha256,'original semantic body hash retained');matched++;}
+  assert.equal(sha(sectionBody(read(s.path).toString(),s.section)),revised?update.currentSectionBodySha256:s.sectionBodySha256,'permanent semantic body changed: '+s.path+' '+s.section);
+ }
+ assert.equal(matched,1,'reviewed update must match exactly one original section');
 }
 export function validateConsolidationRecord(map,ledger,repositoryRoot=root){
  const bytesCache=new Map(),jsonCache=new Map();
@@ -95,7 +122,7 @@ export function validateConsolidationRecord(map,ledger,repositoryRoot=root){
  assert.match(map.semanticRevisions[1].adoptedText,/IME.*ドラッグ.*確定/);
  assert.ok(ledger.clarifications.some(x=>x.source.endsWith('設計書.md')&&x.line===86&&x.meaning.includes('does not introduce')),'numeric value versus literal syntax');
  assert.equal(map.contractSections.length,33);unique(map.contractSections.map(s=>s.path+'#'+s.section),'permanent body identities');
- for(const s of map.contractSections){assert.equal(sha(sectionBody(read(s.path).toString(),s.section)),s.sectionBodySha256,'permanent semantic body changed: '+s.path+' '+s.section);}
+ verifyPermanentBodies(map,read);
  verifyProjectedSource(map,repositoryRoot);
  return {status:'PASS',requirements:639,bodyBlocks:257,commands:74,schemas:153,capabilities:260,limits:38,intents:20,semanticRevisions:4};
 }
@@ -122,6 +149,8 @@ export const consolidationNegativeIds=[
  'DOCS/historical-PASS','DOCS/changed-appendix','DOCS/current-capability-reduction',
  'DOCS/missing-semantic-revision','DOCS/IME-drag-save-expanded',
  'DOCS/changed-independent-source','DOCS/missing-permanent-body',
+ 'DOCS/document-update-missing','DOCS/document-update-extra','DOCS/document-update-hash-changed',
+ 'DOCS/document-update-unrelated-target','DOCS/statement-label-rollback','DOCS/unrelated-permanent-body-changed',
 ];
 export function checkConsolidationNegatives(repositoryRoot=root){
  const map=readAuditLedger('audit/fixtures/design-doc-migration-map.json',repositoryRoot),ledger=JSON.parse(fs.readFileSync(path.join(repositoryRoot,'audit/manifests/capability-traceability.json')));
@@ -137,5 +166,20 @@ export function checkConsolidationNegatives(repositoryRoot=root){
   m=>m.semanticRevisions.pop(),m=>m.semanticRevisions[1].adoptedText='Allow in-progress IME and drag saves',
   m=>m.sourceProjection.originalSha256='0'.repeat(64),m=>m.contractSections.pop(),
  ];
- return cases.map((mutate,i)=>{const m=structuredClone(map),l=structuredClone(ledger);mutate(m,l);assert.throws(()=>validateConsolidationRecord(m,l,repositoryRoot),consolidationNegativeIds[i]);return {id:consolidationNegativeIds[i],rejected:true};});
+ const results=cases.map((mutate,i)=>{const m=structuredClone(map),l=structuredClone(ledger);mutate(m,l);assert.throws(()=>validateConsolidationRecord(m,l,repositoryRoot),consolidationNegativeIds[i]);return {id:consolidationNegativeIds[i],rejected:true};});
+ const read=p=>fs.readFileSync(path.join(repositoryRoot,p)),recordBytes=read(reviewedDocumentUpdatePath),record=JSON.parse(recordBytes);
+ const changed=mutate=>{const bad=structuredClone(record);mutate(bad);return Buffer.from(JSON.stringify(bad));};
+ const language=read('LANGUAGE.md').toString(),unrelated=map.contractSections.find(s=>s.path==='LANGUAGE.md'&&s.section!==record.updates[0].section),body=sectionBody(language,unrelated.section);
+ const mutations=[
+  p=>p===reviewedDocumentUpdatePath?Buffer.alloc(0):read(p),
+  p=>p===reviewedDocumentUpdatePath?changed(r=>r.updates.push(structuredClone(r.updates[0]))):read(p),
+  p=>p===reviewedDocumentUpdatePath?changed(r=>r.updates[0].currentSectionBodySha256='0'.repeat(64)):read(p),
+  p=>p===reviewedDocumentUpdatePath?changed(r=>r.updates[0].section=unrelated.section):read(p),
+  p=>p==='LANGUAGE.md'?Buffer.from(language.replace('命令の「ほかのそうさ」','命令の「…」')):read(p),
+  p=>p==='LANGUAGE.md'?Buffer.from(language.replace(body,body+'\n未承認の変更。')):read(p),
+ ];
+ for(const[i,mutatedRead]of mutations.entries()){
+  const id=consolidationNegativeIds[cases.length+i];assert.throws(()=>verifyPermanentBodies(map,mutatedRead),id);results.push({id,rejected:true});
+ }
+ return results;
 }

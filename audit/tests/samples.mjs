@@ -1,3 +1,4 @@
+import U from '../browser/cases/ui-routes.cjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -36,7 +37,7 @@ await row('SAMPLES-RUNTIME',async()=>{
 const fingerprint=page=>page.evaluate(()=>({project:JSON.stringify(Akari.app.project),editor:JSON.stringify(Akari.app.editorState),source:document.querySelector('#codeEditor').value}));
 async function open(page,id){await page.locator('#sampleSelect').selectOption(id);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#sampleConfirm').evaluate(e=>e.open),true);await page.locator('#sampleConfirmYes').click();await page.waitForFunction(name=>Akari.app.project.name===name,samplesFeature.names[samplesFeature.ids.indexOf(id)]);}
 async function source(page){return page.evaluate(()=>Akari.app.editorState.main.sourceText);}
-async function command(page,node,action){const menu=node.locator(':scope > .blockui-node-head .blockui-actions');await menu.locator('summary').click();await menu.locator('[data-blockui-action="'+action+'"]').click();}
+async function command(page,node,action){await U.nodeAction(node,action);}
 async function checkHistory(page,before){const after=await source(page);assert.notEqual(after,before);await page.locator('#undoBtn').click();assert.equal(await source(page),before);await page.locator('#redoBtn').click();assert.equal(await source(page),after);await page.locator('#undoBtn').click();return after;}
 try{await withBrowser(chrome,async browser=>{
  report.environment.browser=browser.version();assert.equal(browser.version(),browserEnvironment.version);assert.equal(report.environment.playwright,browserEnvironment.playwright);

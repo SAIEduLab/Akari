@@ -57,6 +57,16 @@ export function verifyChildDiagnosticsReport(report,inputs) {
   assert.match(digest.visible,/選んだファイルは変えていません/);assert.doesNotMatch(digest.visible,/SHA-256|F508/);
   assert.match(digest.detail,/F508.*読み込み失敗: asset SHA-256が一致しません/);assert.deepEqual(digest.after,digest.before);
   assert.equal(digest.source,'genuinely malformed serialized asset digest');
+  for(const d of [digest,...['digest','length','orphan'].map(name=>rows.get('save/'+name+'-fault'))]){
+    assert.deepEqual(d.outputReachability.map(r=>[r.mode,r.width,r.height]),['code','blocks'].flatMap(mode=>[[1180,757],[1366,768],[1188,848]].map(([width,height])=>[mode,width,height])),'output mode and height boundaries');
+    for(const r of d.outputReachability){assert.equal(r.nativeWheel,true);assert.equal(r.opened,true);assert.equal(r.reopenedAfterClose,true);
+      for(const observation of [{after:r.after,wheelCount:r.wheelCount},r.openRecovery,r.closeRecovery]){
+        assert.ok(Number.isInteger(observation.wheelCount)&&observation.wheelCount>=1&&observation.wheelCount<=3);
+        assert.equal(observation.after.hit,true);assert.equal(observation.after.inside,true);assert.equal(observation.after.inViewport,true);assert.equal(observation.after.overflow,'auto');
+      }
+      if(!r.before.hit||!r.before.inside||!r.before.inViewport)assert.ok(r.after.scrollTop>r.before.scrollTop||r.after.sideScrollTop>r.before.sideScrollTop,'actual native inner or enclosing wheel scroll required');
+    }
+  }
   for(const [name,code,message]of [['digest','F508','同じSHA-256でbyteLengthが異なります'],
     ['length','F508','asset byteLengthが一致しません'],['orphan','F503','保存Projectにorphan assetまたは不足assetがあります']]){
     const d=rows.get('save/'+name+'-fault');assert.equal(d.code,code);assert.equal(d.message,message);

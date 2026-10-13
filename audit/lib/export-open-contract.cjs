@@ -67,10 +67,10 @@ const extraKeys={
   'EXPORT-ARTWORK-IMAGE-PEN-STOP':['images'],
   'EXPORT-ARTWORK-CACHED-RETURN':['nativeCacheRestored'],
   'EXPORT-ARTWORK-IFRAME':['box'],
-  'OPEN-RECOVERY-SAVED-DRAFT-CLEAN':['variants'],
+  'OPEN-RECOVERY-SAVED-DRAFT-CLEAN':['variants','savedCallable'],
   'OPEN-DIRTY-CANCEL-STATE-KEYBOARD':['before','after'],
   'OPEN-APPROVAL-PICKER-CANCEL-REUSE':['before','after'],
-  'OPEN-APPROVED-CORRUPT-RETAINED':['before','after'],
+  'OPEN-APPROVED-CORRUPT-RETAINED':['before','after','variants','validSecond'],
   'OPEN-ALTERNATE-ROUTE-PROTECTED':['before','after','dialogs'],
   'OPEN-CHANGED-AFTER-APPROVAL':['before','after','dialogs'],
 };
@@ -96,11 +96,26 @@ function evidenceFor(id,e){
     assert.equal(typeof e.before.source,'string');assert.equal(typeof e.before.dirty,'boolean');
     assert.ok(Number.isInteger(e.before.history)&&e.before.history>=1);assert.ok(Number.isInteger(e.before.redo)&&e.before.redo>=0);
   }
+  if(id==='OPEN-APPROVED-CORRUPT-RETAINED'){
+    assert.deepEqual(e.variants.map(v=>v.kind),['invalid-file','wrong-target','wrong-event','restore-failure']);
+    for(const v of e.variants){
+      assert.deepEqual(v.after,v.before,v.kind+' retains current work');
+      assert.ok(v.before.dirty&&v.before.history>=2&&v.before.redo>=1);
+      assert.ok(v.autosaveBefore&&v.autosaveBefore.frames.length>=2);
+      assert.deepEqual(v.autosaveAfter,v.autosaveBefore,v.kind+' retains recovery data');
+      assert.equal(v.faultTriggered,v.kind==='restore-failure');assert.equal(v.confirmationAgain,true);assert.equal(v.dialogs,0);
+    }
+    assert.deepEqual(e.validSecond,{selectedScriptId:'incoming-second',input:'「読込み途中'});
+  }
   if(['OPEN-ALTERNATE-ROUTE-PROTECTED','OPEN-CHANGED-AFTER-APPROVAL'].includes(id)){assert.equal(e.dialogs.length,1);assert.match(e.dialogs[0],/保存していない編集/);}
   if(id==='OPEN-RECOVERY-SAVED-DRAFT-CLEAN'){
     assert.deepEqual(e.variants.map(x=>x.kind),['code','blocks']);
     for(const variant of e.variants){assert.equal(variant.savedUnchangedConfirmation,false);assert.equal(variant.pickers,1);}
     assert.equal(e.variants[1].cancelledSavedPendingConfirmation,true);
+    for(const observed of [...e.variants.map(v=>v.newProject),e.savedCallable]){
+      assert.equal(observed.cleanDialogs,0);assert.equal(observed.openedNew,true);assert.equal(observed.editedDialogs,1);
+      assert.deepEqual(observed.afterNewCancel,observed.before);assert.deepEqual(observed.afterOpenCancel,observed.before);
+    }
   }
   if(id.startsWith('EXPORT-AUDIO-WAIT-')){
     stage(e.stage);oneTone(e.starts);assert.equal(e.startsBefore,0);assert.equal(e.phaseBefore,'WAITING');assert.equal(e.outputBefore,'');assert.equal(e.duplicateInput,false);
@@ -126,6 +141,9 @@ function checkEvidenceNegatives(report,inputs){
   change('EXPORT-ARTWORK-SIZE-RELOAD-INPUT',e=>e.box.width=-1);
   change('EXPORT-ARTWORK-AUDIO-PERMITTED',e=>e.starts.push({...e.starts[0]}));
   change('OPEN-DIRTY-CANCEL-STATE-KEYBOARD',e=>e.after.project='{}');
+  change('OPEN-RECOVERY-SAVED-DRAFT-CLEAN',e=>e.savedCallable.editedDialogs=0);
+  change('OPEN-APPROVED-CORRUPT-RETAINED',e=>e.variants[1].autosaveAfter=null);
+  change('OPEN-APPROVED-CORRUPT-RETAINED',e=>e.variants[3].after.history=1);
   change('EXPORT-ARTWORK-INVALID-AUDIO',e=>e.errorCode='WAITING');
   change('EXPORT-ARTWORK-AUDIO-DEVICE-ERROR',e=>e.errorCode='WAITING');
   change('EXPORT-AUDIO-WAIT-MOUSE',e=>e.startsBefore=1);

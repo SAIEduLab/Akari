@@ -24,7 +24,9 @@ for(const [id,mutate]of [
   ['timeout-relaxed',r=>r.limits.perCaseMs=10000],
   ['browser-changed',r=>r.environment.browser='140.0.0.0'],
   ['unknown-case',r=>r.results[0].id='syntax/unknown'],
+  ['output-wheel-proof-missing',r=>delete r.results.find(x=>x.id==='file/digest-refusal').observed.outputReachability],
+  ['output-still-clipped',r=>r.results.find(x=>x.id==='save/orphan-fault').observed.outputReachability[0].after.hit=false],
 ]){const altered=structuredClone(positive);mutate(altered);assert.throws(()=>verifyChildDiagnosticsReport(altered,inputs),id);results.push({id,status:'PASS',result:'REJECTED'});}
 fs.mkdirSync(path.dirname(output),{recursive:true});
-fs.writeFileSync(output,JSON.stringify({schema:'akari-child-diagnostics-validator-negative-v1',status:'PASS',snapshot:inputs,required:17,results},null,2)+'\n');
-console.log('Child diagnostics validator negative: 17 refused PASS');
+fs.writeFileSync(output,JSON.stringify({schema:'akari-child-diagnostics-validator-negative-v1',status:'PASS',snapshot:inputs,required:19,results},null,2)+'\n');
+console.log('Child diagnostics validator negative: 19 refused PASS');

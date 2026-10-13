@@ -11,6 +11,7 @@ import U from '../browser/cases/ui-routes.cjs';
 import {childLanguageUiIds,childInsertionConceptHints} from '../lib/child-language-ui-contract.mjs';
 import {browserEnvironment as expectedBrowser} from '../lib/browser-environment.mjs';
 import {collectLanguageFrame,childUxProvenance} from '../lib/child-ux-observations.mjs';
+import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 
 const [browserPath, output = 'audit-evidence/child-language-ui.json'] = process.argv.slice(2);
 const require=createRequire(import.meta.url),playwrightVersion=require('playwright/package.json').version;
@@ -312,6 +313,7 @@ const cases = {
   },
   async 'CHILD-UI-BLOCK-WORDS'(p) {
     await source(p,'2 + 3を言う。\n2回くり返す。\n  1を言う。'); await click(p,'#editorModeblocks');
+    await openPaletteTools(p.locator('#blockEditor'));
     const before=await state(p), summary=await keyboardDetails(p,'#blockEditor .blockui-local-help');
     for(const text of ['値（あたい）','文字「おはよう」','条件の「あてはまる・あてはまらない」','累乗（るいじょう）','2×2×2で8','分身（ぶんしん）','元に戻す'])
       assert.ok((await p.locator('#blockEditor .blockui-local-help').innerText()).includes(text),text);
@@ -334,8 +336,8 @@ const cases = {
     assert.deepEqual(newValues,oldValues);
     assert.equal(historyAfter,before.history+1,'only operator change is committed');
     const repeat=p.locator('#blockEditor .blockui-node[data-schema-id="RepeatCount"]'); await U.openNodeMenu(repeat);
-    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="remove"]').innerText(),'この囲いと中の命令を消す');
-    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="duplicate"]').innerText(),'同じものをもう1つ');
+    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="remove"]').innerText(),'このまとまりと中のブロックをけす');
+    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="duplicate"]').innerText(),'同じものをもう1つ作る');
     await p.keyboard.press('Escape');
     await p.locator('#blockEditor [data-blockui-action="body-insert"]').first().click();
     assert.equal(await p.locator('#blockEditor [data-blockui-action="cancel"]').innerText(),'操作を取り消す');

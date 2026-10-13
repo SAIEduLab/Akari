@@ -28,6 +28,24 @@ await check('draft/contracts-and-corruption-rejected',async()=>{
  const p=project(),base=state();for(const mutate of [s=>s.version=99,s=>s.selectedId='missing',s=>s.views=[{kind:'script'}],s=>s.callableDraft={type:'function'},s=>s.pendingEditors=[{kind:'script'}]]){const bad=plain(base);mutate(bad);assert.throws(()=>A.serializeProject(p,new A.AssetStore(),bad));}
  const text=A.serializeProject(p,new A.AssetStore(),base);await assert.rejects(()=>A.parseProjectFile(text.replace('"revision": 4','"revision": 5')));return {rejected:6};
 });
+await check('draft/selection-belongs-to-target-and-event',async()=>{
+ const p=project(),s=state();p.scripts.push({id:'second-start',targetId:'sprite-1',event:'start',source:'「二つ目」と言う。'},
+   {id:'click-script',targetId:'sprite-1',event:'click',source:'「クリック」と言う。'});
+ for(const id of ['draft-main','second-start','click-script']){
+   const row=p.scripts.find(row=>row.id===id),valid={...s,selectedScriptId:id,currentEvent:row.event};
+   const restored=await A.parseProjectFile(A.serializeProject(p,new A.AssetStore(),valid));
+   assert.equal(restored.editorState.selectedScriptId,id);assert.equal(restored.editorState.currentEvent,row.event);
+ }
+ const good=A.serializeProject(p,new A.AssetStore(),s);
+ for(const [key,value]of [['selectedId','stage'],['currentEvent','click']]){
+   const invalid={...s,[key]:value};assert.throws(()=>A.serializeProject(p,new A.AssetStore(),invalid),error=>error.code==='F503');
+   // Change the readable editor state and its data payload together, so this
+   // exercises selection validation rather than only the Markdown mismatch guard.
+   const corrupt=good.replaceAll(JSON.stringify(key)+': '+JSON.stringify(s[key]),JSON.stringify(key)+': '+JSON.stringify(value));
+   await assert.rejects(()=>A.parseProjectFile(corrupt),error=>error.code==='F503');
+ }
+ return {validSelections:['draft-main','second-start','click-script'],invalidTargetAndEventRejected:true};
+});
 await check('draft/pending-number-block-path',async()=>{
  const p=project(),s=state();p.scripts[0].source='10歩動く。';s.editorModes.script='blocks';
  const nodePath=['bodies','body',0,'inputs','args',0,'inputs','value'];

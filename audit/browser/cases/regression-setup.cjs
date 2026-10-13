@@ -17,7 +17,7 @@ async function revealRegressionControl(locator) {
 
   for (const panel of await locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all()) {
     const toggle = panel.locator('.blockui-side-toggle');
-    if (await toggle.count()) await toggle.click();
+    if (await toggle.count() && await toggle.isVisible()) await toggle.click();
   }
   const controls = locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-palette-controls ")]');
   if (await controls.count()) await openPaletteTools(controls.locator('..'));

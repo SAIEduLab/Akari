@@ -1,3 +1,4 @@
+import U from '../browser/cases/ui-routes.cjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -53,7 +54,7 @@ async function importHistoryBoundary(p,delayMs) {
 }
 async function observeSpeech(p) {await p.evaluate(()=>{window.importSpeech=[];window.importObserver=new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)if(n.nodeType===1&&n.classList.contains('sprite-bubble'))importSpeech.push({actor:n.dataset.runtimeId,text:n.querySelector('.sprite-bubble-text').textContent});});importObserver.observe(document.querySelector('#formSurface'),{childList:true});});}
 const node=(p,schema)=>p.locator('#blockEditor .blockui-node[data-schema-id="'+schema+'"]').first();
-async function action(n,name){await n.locator(':scope > .blockui-node-head .blockui-actions > summary').click();await n.locator('[data-blockui-action="'+name+'"]').first().click();}
+async function action(n,name){await U.openNodeMenu(n);await n.locator('[data-blockui-action="'+name+'"]').first().click();}
 const rect=locator=>locator.evaluate(e=>e.getBoundingClientRect().toJSON());
 const meaning=value=>JSON.parse(JSON.stringify(value,(key,item)=>key==='sourceSpan'?undefined:item));
 try{await withBrowser(chrome,async browser=>{

@@ -7,6 +7,7 @@ import {createRequire} from 'node:module';
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
 import P from '../browser/cases/persistence-probe.cjs';
+import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import {verifySurfaceResults} from '../lib/verify-surface-results.mjs';
 const [browser,output]=process.argv.slice(2), product=currentProductFile(), before=snapshot(product);
 if(!output||fs.existsSync(output))throw Error('Supply a new output path');
@@ -53,7 +54,65 @@ await withBrowser(browser,async b=>{
     const at='横'.length;await p.locator('#codeEditor').evaluate((t,n)=>t.setSelectionRange(n,n+1),at);await mode(p,'blocks');
     const selected=await p.evaluate(()=>{const s=Akari.app.editorState.main;return s.nodeMap.get(s.blockSelection).path;});
     assert.deepEqual(selected,['body',0,'args',1,'value']);
-    return{roundtrips:3,exactSource:true,selection,sharedHistory:true,focus:true};
+    const nativeHistory=[];
+    for(const editorMode of ['code','blocks']){
+      await mode(p,editorMode);
+      if(editorMode==='blocks')await openPaletteTools(p.locator('#blockEditor'));
+      const search=await reveal(p.locator(editorMode==='code'?'#hintSearch':'#blockEditor [data-blockui-search]'));
+      await search.fill('');
+      const unchanged=await state(p);
+      await search.focus();await p.keyboard.insertText('test');
+      await search.press('Control+z');assert.equal(await search.inputValue(),'');
+      assert.deepEqual(await state(p),unchanged,'search undo must preserve project, source and history');
+      await search.press('Control+y');assert.equal(await search.inputValue(),'test');
+      assert.deepEqual(await state(p),unchanged,'search redo must preserve project, source and history');
+      nativeHistory.push(editorMode+'-search');
+    }
+    await fill(p,'「最初」と言う。');await mode(p,'blocks');
+    const literal=p.locator('#blockEditor .blockui-node[data-schema-id="StringLiteral"]').first();
+    await literal.locator('[data-blockui-field="value"]').click();
+    await literal.locator('[data-blockui-action="edit-text"]').click();
+    const text=p.locator('.blockui-text-dialog textarea'),beforeText=await state(p);
+    await text.press('Control+End');await p.keyboard.insertText('new');
+    await text.press('Control+z');assert.equal(await text.inputValue(),'最初');
+    assert.deepEqual(await state(p),beforeText,'full-text undo must stay in the open dialog');
+    await text.press('Control+y');assert.equal(await text.inputValue(),'最初new');
+    assert.deepEqual(await state(p),beforeText,'full-text redo must not commit the pending field');
+    await p.locator('[data-blockui-text-action="cancel"]').click();
+    assert.deepEqual(await state(p),beforeText);
+    nativeHistory.push('full-text-dialog');
+    await mode(p,'code');await fill(p,'「変更」と言う。');
+    await p.locator('#codeEditor').press('Control+z');assert.equal((await state(p)).source,'「最初」と言う。');
+    await p.locator('#codeEditor').press('Control+y');assert.equal((await state(p)).source,'「変更」と言う。');
+    const eventHistory=[];
+    for(const editorMode of ['code','blocks'])for(const route of ['selector','overview']){
+      await mode(p,'code');await p.locator('#eventSelect').selectOption('click');
+      const label=editorMode+' '+route,original='「クリック '+label+'」と言う。',changed='「編集 '+label+'」と言う。';
+      await fill(p,original);
+      const owner=await p.evaluate(()=>Akari.app.editorState.main.ownerKey);
+      const chooseClick=async()=>{
+        if(route==='selector')await p.locator('#eventSelect').selectOption('click');
+        else{await click(p,'sourceOverviewBtn');await p.locator('[data-source-edit="'+owner+'"]').click();}
+      };
+      await p.locator('#eventSelect').selectOption('start');
+      await fill(p,'「開始 '+label+'」と言う。');await mode(p,editorMode);
+      const navigation=await state(p);await chooseClick();
+      const beforeEdit=await state(p);
+      assert.equal(beforeEdit.source,original);assert.equal(beforeEdit.history,navigation.history);assert.equal(beforeEdit.redo,navigation.redo);
+      if(editorMode==='code')await fill(p,changed);
+      else{
+        const field=p.locator('#blockEditor .blockui-node[data-schema-id="StringLiteral"] [data-blockui-field="value"]').first();
+        await field.fill('編集 '+label);await field.press('Enter');
+      }
+      await click(p,'undoBtn');assert.equal((await state(p)).source,original);assert.equal(await p.locator('#eventSelect').inputValue(),'click');
+      assert.equal((await state(p)).project,beforeEdit.project);
+      const undone=await state(p);
+      await p.locator('#eventSelect').selectOption('start');await chooseClick();
+      assert.equal((await state(p)).history,undone.history);assert.equal((await state(p)).redo,undone.redo);
+      await click(p,'redoBtn');assert.equal((await state(p)).source,changed);assert.equal(await p.locator('#eventSelect').inputValue(),'click');
+      eventHistory.push({mode:editorMode,route});
+    }
+    return{roundtrips:3,exactSource:true,selection,sharedHistory:true,focus:true,nativeHistory,codeKeyboardUndoRedo:true,eventHistory};
   });
   await run('RELEASE-GUI/condition-connective-local-edit',async p=>{
     const source='3が8より小さいあいだ、くり返す。 ※ 頭  \n  点数に3を足す。 ※ 本文  \n「😀」 と言う。\n';
@@ -144,7 +203,38 @@ await withBrowser(browser,async b=>{
     await p.locator('#procModal.show').waitFor();await click(p,'callableSave');assert.equal(JSON.parse((await state(p)).project).functions[0].source,initial.draft.source);
     await p.keyboard.press('Control+z');assert.equal(JSON.parse((await state(p)).project).functions.length,0);assert.equal((await state(p)).hasDraft,true);
     await p.keyboard.press('Control+y');assert.equal(JSON.parse((await state(p)).project).functions.length,1);
-    return{draftSeparate:true,unknownNamePreserved:true,autosaveRecovery:true,registrationUndoRedo:true};
+    const definitions=[];
+    for(const type of ['action','function']){
+      await click(p,type==='action'?'callableNewAction':'callableNewFunction');await click(p,'callableModecode');
+      await set('callableName',type==='action'?'戻る手順':'戻る計算');
+      await set('callableCode',type==='action'?'「元」と言う。':'1を答えとして返す。');
+      await click(p,'callableSave');definitions.push({type,key:await p.locator('#callableSelect').inputValue()});
+    }
+    const callableHistory=[];
+    for(const editorMode of ['code','blocks'])for(const definition of definitions){
+      const other=definitions.find(d=>d!==definition);
+      await p.locator('#callableSelect').selectOption(other.key);await p.locator('#callableSelect').selectOption(definition.key);
+      await click(p,'callableMode'+editorMode);
+      const beforeEdit=await state(p),original=beforeEdit.draft.source;
+      const changed=definition.type==='action'?'「新 '+editorMode+'」と言う。':(editorMode==='code'?'2':'3')+'を答えとして返す。';
+      if(editorMode==='code')await set('callableCode',changed);
+      else{
+        const field=p.locator('#callableBlocks .blockui-node[data-schema-id="'+(definition.type==='action'?'StringLiteral':'NumberLiteral')+'"] [data-blockui-field="value"]').first();
+        await (await reveal(field)).fill(definition.type==='action'?'新 '+editorMode:'3');await field.press('Enter');
+      }
+      await p.keyboard.press('Control+z');
+      assert.equal(await p.locator('#procModal.show').count(),1,'undo must leave the edited definition open');
+      assert.equal(await p.locator('#callableSelect').inputValue(),definition.key);assert.equal((await state(p)).draft.source,original);
+      assert.equal((await state(p)).project,beforeEdit.project);
+      const undone=await state(p);
+      await p.locator('#callableSelect').selectOption(other.key);await p.locator('#callableSelect').selectOption(definition.key);
+      assert.equal((await state(p)).history,undone.history);assert.equal((await state(p)).redo,undone.redo);
+      await p.keyboard.press('Control+y');assert.equal((await state(p)).draft.source,changed);
+      assert.equal(await p.locator('#callableSelect').inputValue(),definition.key);
+      await p.keyboard.press('Control+z');
+      callableHistory.push({mode:editorMode,type:definition.type});
+    }
+    return{draftSeparate:true,unknownNamePreserved:true,autosaveRecovery:true,registrationUndoRedo:true,callableHistory};
   });
   await run('RELEASE-GUI/corrupt-autosave-preserves-current',async p=>{
     const initial=await state(p);await fill(p,source);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));
