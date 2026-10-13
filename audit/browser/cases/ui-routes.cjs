@@ -20,7 +20,11 @@ async function openNodeMenu(node){
  if(!await menu.locator(':scope > summary').isVisible())await clickNode(node);
  return openDetails(menu);
 }
-async function nodeAction(node,action){await openNodeMenu(node);await node.locator(':scope > .blockui-node-head [data-blockui-action="'+action+'"]').click();}
+async function nodeAction(node,action){
+ if(['move-up','move-down'].includes(action))await clickNode(node);
+ else await openNodeMenu(node);
+ await node.locator(':scope > .blockui-node-head [data-blockui-action="'+action+'"]').click();
+}
 async function openAnnotations(node){
  const details=node.locator(':scope > .blockui-node-content > .blockui-annotations');if(!await details.count())return false;
  if(await details.getAttribute('open')!==null)return true;

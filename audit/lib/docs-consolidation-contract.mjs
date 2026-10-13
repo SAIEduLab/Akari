@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 // Reviewed migration record; changing meaning/routing requires an explicit new record.
 const reviewedMigrationSha256="2a7b27269e8f0bcc7d972416058a0ddb44d242d0e6b92b72497ce65764479e42";
 const reviewedDocumentUpdatePath='audit/reviewed/CHILD_UX_DOCUMENT_REVISION.json';
-const reviewedDocumentUpdateSha256='28e2d44aa36bbe1c132f3f0363202fd2ed5727193e67d27daf0b940d34ffc188';
+const reviewedDocumentUpdateSha256='08fbf25d046c4c73dd4b4abf47090365af71fbe015a32a83e38d9c15eb933234';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const sha=x=>crypto.createHash('sha256').update(x).digest('hex');
 export const corpusPath='audit/fixtures/japanese-intent/child-intent-corpus.json';
@@ -42,7 +42,7 @@ function reviewedDocumentUpdate(bytes){
  assert.equal(update.id,'R06-LANGUAGE-STATEMENT-MENU');
  assert.equal(update.path,'LANGUAGE.md');assert.equal(update.section,'コードとブロックで同じ本文を編集する');
  assert.equal(update.originalSectionBodySha256,'054c8b0b7cd35d45244afb09043a1992d43c518e6ac481cde299367410e6e364');
- assert.equal(update.currentSectionBodySha256,'95c888dc8de32cfa4de3e066d2a96a7e6f20dcb5ee7cfb04c9def2bf75cae691');
+ assert.equal(update.currentSectionBodySha256,'cac0aa6526067d85d98820f607af07610b290d031d6a3ded95291e4d94b7d297');
  assert.equal(update.changesMeaning,false);return update;
 }
 function verifyPermanentBodies(map,read){
@@ -175,7 +175,7 @@ export function checkConsolidationNegatives(repositoryRoot=root){
   p=>p===reviewedDocumentUpdatePath?changed(r=>r.updates.push(structuredClone(r.updates[0]))):read(p),
   p=>p===reviewedDocumentUpdatePath?changed(r=>r.updates[0].currentSectionBodySha256='0'.repeat(64)):read(p),
   p=>p===reviewedDocumentUpdatePath?changed(r=>r.updates[0].section=unrelated.section):read(p),
-  p=>p==='LANGUAGE.md'?Buffer.from(language.replace('命令の「ならべかえ」','命令の「…」')):read(p),
+  p=>p==='LANGUAGE.md'?Buffer.from(language.replace('命令の「ほかのそうさ」','命令の「…」')):read(p),
   p=>p==='LANGUAGE.md'?Buffer.from(language.replace(body,body+'\n未承認の変更。')):read(p),
  ];
  for(const[i,mutatedRead]of mutations.entries()){

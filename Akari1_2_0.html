@@ -2967,6 +2967,21 @@ body[data-editor-mode] .debugbar :is(#undoBtn, #redoBtn):focus-visible {
   outline: 3px solid #0b3c5d;
   outline-offset: 2px;
 }
+#undoBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 5px 9px;
+}
+#undoBtn svg { width: 22px; height: 22px; flex-shrink: 0; }
+#procModal > .dialog > .win-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 body[data-editor-mode] #execLocation {
   font-size: 11px;
   color: var(--muted);
@@ -3750,12 +3765,30 @@ body[data-editor-mode="blocks"] .prop-name {
 }
 .blockui-world .blockui-node-tools {
   align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: 100%;
 }
-.blockui-world .blockui-actions > summary.blockui-statement-actions {
+.blockui-world .blockui-node:not(.blockui-selected) > .blockui-node-head > .blockui-node-tools {
+  display: none;
+}
+.blockui-world .blockui-node:is(.blockui-statement,.blockui-expression).blockui-selected > .blockui-node-head {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  padding: 2px 8px 8px;
+  min-width: 0;
+}
+.blockui-world .blockui-node:is(.blockui-statement,.blockui-expression):not(.blockui-selected) > .blockui-node-head:not(:has(> [data-blockui-action="diagnostics"])) {
+  min-width: 0;
+  padding: 0;
+}
+.blockui-world .blockui-node-tools > .blockui-button:not(.blockui-drag-handle),
+.blockui-world .blockui-actions > summary {
   opacity: 1;
   font-size: 12px;
   line-height: 1.5;
-  padding: 4px 6px;
+  min-height: 30px;
+  padding: 5px 7px;
   border: 1px solid #0003;
   background: #ffffffb3;
   white-space: nowrap;
@@ -3765,7 +3798,15 @@ body[data-editor-mode="blocks"] .prop-name {
   font-size: 12px;
   z-index: 200;
   max-width: calc(100vw - 40px);
+  position: static;
+  flex-basis: 100%;
+  width: 100%;
+  min-width: 0;
+  margin-top: 4px;
+  box-shadow: none;
 }
+.blockui-world .blockui-actions { display: contents; }
+.blockui-world .blockui-action-items > .blockui-button { white-space: normal; }
 .blockui-world .blockui-node[data-collapsed="true"] > .blockui-node-head {
   padding: 10px 12px;
   min-height: 48px;
@@ -3785,11 +3826,11 @@ body[data-editor-mode="blocks"] .prop-name {
   padding-right: 15px;
 }
 .blockui-world .blockui-expression > .blockui-node-head {
-  position: absolute;
-  right: 0;
-  top: -24px;
-  min-width: 26px;
-  padding: 0;
+  position: relative;
+  right: auto;
+  top: auto;
+  min-width: 230px;
+  padding: 2px 8px 8px;
   background: #fffd;
   border: 1px solid #c9d7e0;
   border-radius: 5px;
@@ -5556,7 +5597,7 @@ body.runtime[data-editor-mode] .main > .codewin > .debugbar {
 body.runtime[data-editor-mode] .debugbar #execLocation { display:inline-block; max-width:100%; }
 body.runtime[data-editor-mode] .debugbar :is(#pauseBtn,#continueBtn,#stepBtn) { display: inline-flex; }
 body.runtime[data-editor-mode] .menutool > :is(#newBtn,#sampleSelect,#sampleBtn,#sampleHelpBtn,#openBtn) { display:none; }
-body.runtime[data-editor-mode] .debugbar > :is(#undoBtn,#redoBtn,#formatBtn,#resetBtn) { display:none; }
+body.runtime[data-editor-mode] .debugbar > :is(#redoBtn,#formatBtn,#resetBtn) { display:none; }
 #runtimeInspector #runtimeInspectBtn { display:none; }
 body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }
 body.runtime[data-editor-mode] .main > .side > .monitor-window { display:flex !important; grid-column:2; grid-row:1; min-height:0; height:auto; }
@@ -5691,7 +5732,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     <button id="openBtn">開く</button>
     <button id="saveBtn" aria-label="保存" aria-describedby="saveActionHelp"><ruby class="child-word">保存<rt>ほぞん</rt></ruby></button>
     <button id="exportBtn" aria-label="書き出し" aria-describedby="exportActionHelp"><ruby class="child-word">書き出し<rt>かきだし</rt></ruby></button>
-    <button id="undoBtn">↶ 元に戻す</button>
+    <button id="undoBtn">↶ もとにもどす</button>
     <button id="redoBtn">↷ やり直す</button>
     <span class="sep"></span>
     <button id="runBtn">▶ 動かす</button>
@@ -21497,6 +21538,7 @@ function createAkariExtensionHost(options) {
       replacement = null,
       currentLocation = null,
       suppressClickUntil = 0,
+      pointerFocusTarget = null,
       highlightedId = null,
       lineNodes = new Map(),
       displaySession = null,
@@ -22201,6 +22243,8 @@ function createAkariExtensionHost(options) {
       }
       for (const n of workspace.querySelectorAll('.blockui-node'))
         n.classList.toggle('blockui-selected', n.dataset.blockId === id);
+      for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
+        if (menu.closest('.blockui-node')?.dataset.blockId !== id) menu.open = false;
       for(const slot of workspace.querySelectorAll('.blockui-slot-active'))slot.classList.remove('blockui-slot-active');
       const selectedNode=[...workspace.querySelectorAll('.blockui-node')].find(n=>n.dataset.blockId===id),slot=selectedNode?.parentElement.closest('.blockui-input-slot');
       if(slot){slot.classList.add('blockui-slot-active');doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));}
@@ -23067,7 +23111,7 @@ function createAkariExtensionHost(options) {
       );
       select.focus();
     }
-    function placeActions(menu, commands) {
+    function placeActions(menu, commands, { reveal = false } = {}) {
       if (!menu.open || !menu.isConnected) return;
       const rectView = workspace.getBoundingClientRect(),
         bounds = {
@@ -23082,6 +23126,10 @@ function createAkariExtensionHost(options) {
       commands.style.transform = '';
       commands.style.maxWidth = Math.max(120, bounds.width - 16) + 'px';
       commands.style.maxHeight = Math.max(80, Math.min(330, bounds.height - 16)) + 'px';
+      if (doc.defaultView.getComputedStyle(commands).position === 'static') {
+        if (reveal) commands.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        return;
+      }
       const rect = commands.getBoundingClientRect(),
         dx = Math.max(bounds.left + 8 - rect.left, Math.min(0, bounds.right - 8 - rect.right)),
         dy = Math.max(bounds.top + 8 - rect.top, Math.min(0, bounds.bottom - 8 - rect.bottom));
@@ -23106,8 +23154,8 @@ function createAkariExtensionHost(options) {
       dragHandle.disabled = isLocked();
       tools.append(dragHandle);
       const menu = E('details', 'blockui-actions'),
-        summary = E('summary', info.body ? 'blockui-statement-actions' : '', info.body ? 'ならべかえ' : '…', {
-          'aria-label': schema.label + 'の操作',
+        summary = E('summary', 'blockui-selection-actions', 'ほかのそうさ', {
+          'aria-label': schema.label + 'のほかのそうさ',
           'data-blockui-action': 'more',
         }),
         commands = E('div', 'blockui-action-items');
@@ -23121,11 +23169,11 @@ function createAkariExtensionHost(options) {
         if (!menu.open) return;
         for (const other of root.querySelectorAll('.blockui-actions[open]'))
           if (other !== menu) other.open = false;
-        placeActions(menu, commands);
+        placeActions(menu, commands, { reveal: true });
       });
       const move = button('移動', 'move', () => moveStart(node), { 'data-block-id': node.id }),
         duplicate = button(
-          '同じものをもう1つ',
+          '同じものをもう1つ作る',
           'duplicate',
           () => {
             if (info.body)
@@ -23144,7 +23192,7 @@ function createAkariExtensionHost(options) {
       if (info.body) {
         const siblings = index.get(info.parentId)?.node.bodies[info.body] || [];
         const up = button(
-            '↑ 上へ',
+            'うえへ',
             'move-up',
             () =>
               operate({
@@ -23154,10 +23202,10 @@ function createAkariExtensionHost(options) {
                 body: info.body,
                 index: info.index - 1,
               }),
-            { 'aria-label': schema.label + 'を上へ', 'data-block-id': node.id },
+            { 'aria-label': schema.label + 'をうえへ', 'data-block-id': node.id },
           ),
           down = button(
-            '↓ 下へ',
+            'したへ',
             'move-down',
             () =>
               operate({
@@ -23167,15 +23215,15 @@ function createAkariExtensionHost(options) {
                 body: info.body,
                 index: info.index + 2,
               }),
-            { 'aria-label': schema.label + 'を下へ', 'data-block-id': node.id },
+            { 'aria-label': schema.label + 'をしたへ', 'data-block-id': node.id },
           );
         up.disabled = info.index === 0;
         down.disabled = info.index === siblings.length - 1;
+        tools.insertBefore(up, menu);
+        tools.insertBefore(down, menu);
         commands.append(
-          up,
-          down,
           button(
-            schema.bodies.length ? 'この囲いと中の命令を消す' : 'この命令を消す',
+            schema.bodies.length ? 'このまとまりと中のブロックをけす' : 'このブロックをけす',
             'remove',
             () => {
               const result = operate({ type: 'remove', id: node.id });
@@ -24556,6 +24604,10 @@ function createAkariExtensionHost(options) {
       root,
       'click',
       (event) => {
+        if (pointerFocusTarget) {
+          pointerFocusTarget = null;
+          if (root.contains(doc.activeElement)) focusBlockField(doc.activeElement);
+        }
         if (deferredFocus) {
           deferredFocus = null;
           if (deferredRender) doc.defaultView.requestAnimationFrame(() => render({ force: true }));
@@ -24568,6 +24620,7 @@ function createAkariExtensionHost(options) {
       { capture: true },
     );
     listen(root, 'pointerdown', (event) => {
+      pointerFocusTarget = event.target;
       const handle = event.target.closest('[data-blockui-drag]');
       if (
         !handle ||
@@ -24660,6 +24713,7 @@ function createAkariExtensionHost(options) {
       } else completeMove(state.location, { id: state.id, type: 'move' });
     });
     listen(root, 'pointercancel', () => {
+      pointerFocusTarget = null;
       cancelDrag();
       announce('ドラッグを取り消しました');
     });
@@ -24671,15 +24725,16 @@ function createAkariExtensionHost(options) {
       deferredFocus = event.relatedTarget && root.contains(event.relatedTarget) ? event.relatedTarget : null;
       if (!deferredFocus && deferredRender) render({ force: true });
     }, { capture: true });
-    // Activating a button or disclosure must not move it between pointerdown and click.
-    listen(root, 'focusin', (event) => {
-      if (event.target.closest('button,summary,.blockui-slot-head')) return;
-      const slot = event.target.closest('.blockui-input-slot'),
-        node = event.target.closest('.blockui-node'),
-        field = event.target.closest('.blockui-field');
+    // Finish pointer activation before folding the old selection or growing the new one.
+    // Keyboard focus selects immediately so Tab can discover the selected block's tools.
+    function focusBlockField(target) {
+      if (target.closest('button,summary,.blockui-slot-head')) return;
+      const slot = target.closest('.blockui-input-slot'),
+        node = target.closest('.blockui-node'),
+        field = target.closest('.blockui-field');
       for (const n of root.querySelectorAll('.blockui-editing-field')) n.classList.remove('blockui-editing-field');
-      if (field && field.dataset.fieldType !== 'number' && event.target.matches('input,textarea')) {
-        const bounds = workspace.getBoundingClientRect(), position = event.target.getBoundingClientRect(),
+      if (field && field.dataset.fieldType !== 'number' && target.matches('input,textarea')) {
+        const bounds = workspace.getBoundingClientRect(), position = target.getBoundingClientRect(),
           editText = field.querySelector(':scope > .blockui-edit-text'),
           buttonSpace = editText ? editText.getBoundingClientRect().width +
             (parseFloat(doc.defaultView.getComputedStyle(field).columnGap) || 0) * zoom : 0,
@@ -24691,10 +24746,16 @@ function createAkariExtensionHost(options) {
       for (const n of root.querySelectorAll('.blockui-slot-active'))
         n.classList.remove('blockui-slot-active');
       node?.classList.add('blockui-focused');
+      if (node) selection(node.dataset.blockId);
       slot?.classList.add('blockui-slot-active');
       if(slot)doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));
+    }
+    listen(root, 'focusin', (event) => {
+      if (pointerFocusTarget && event.target.contains(pointerFocusTarget)) return;
+      focusBlockField(event.target);
     });
     listen(root, 'keydown', (event) => {
+      pointerFocusTarget = null;
       if (event.isComposing) return;
       if (event.key === 'Tab') {
         if (deferredFocus === event.target) {
@@ -26265,15 +26326,31 @@ function createAkariExtensionHost(options) {
       toolbar.insertBefore(modes, $('#projectName'));
       for (const [id, path, title] of [
         ['redoBtn', 'M15 4l5 5-5 5M20 9H10a6 6 0 0 0 0 12h2', 'やり直す'],
-        ['undoBtn', 'M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12h-2', '元に戻す'],
+        ['undoBtn', 'M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12h-2', 'もとにもどす'],
       ]) {
         const b = $('#' + id);
         b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="' + path + '"/></svg>';
         b.title = title;
         b.setAttribute('aria-label', title);
+        if (id === 'undoBtn') {
+          const label = document.createElement('span');
+          label.textContent = title;
+          b.append(label);
+          b.style.gap = '5px';
+          b.style.padding = '5px 9px';
+        }
         $('.debugbar').prepend(b);
       }
       $('.debugbar').append($('#resetBtn'));
+      const undoButton = $('#undoBtn'), undoHome = document.createElement('span'),
+        callableTitle = $('#procModal > .dialog > .win-title');
+      undoButton.before(undoHome);
+      const placeUndo = () => {
+        if ($('#procModal').classList.contains('show')) callableTitle.append(undoButton);
+        else undoHome.after(undoButton);
+      };
+      new MutationObserver(placeUndo).observe($('#procModal'), { attributes: true, attributeFilter: ['class'] });
+      placeUndo();
       const tools = document.createElement('div');
       tools.className = 'project-tools';
       const title = document.createElement('div');

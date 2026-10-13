@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "User-authorized R01-R08 child recovery and local UX work; exact R06 menu wording recorded separately while retaining original migration records and all other section hashes; visible palette preparation and native monitor output reachability in both editor modes added without relaxing expectations or timeouts.",
+  "updateReason": "Approved block action UI repair: selected controls, in-flow expression menus, safe pointer activation and no scroll snapback; integrity records do not assert execution PASS.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,13 +12,13 @@
     },
     {
       "path": "Akari1_2_0.html",
-      "sha256": "5e651d8e820d83020c37ce03a2a6db0e40fcaa922978f59bf896b74a9c304941",
-      "bytes": 1507850
+      "sha256": "bc04c6d464381b6395edc4293e194dc6e7f65ce530e67efb61e4d1360cec63e4",
+      "bytes": 1510796
     },
     {
       "path": "LANGUAGE.md",
-      "sha256": "5a49c607f02d5d80ec789781870e9a585242e1eef6052c12ee9d966f993a8c6a",
-      "bytes": 113364
+      "sha256": "0a34add0118a4f159313b23650608a448f187b0c6283ed2c628f2b6742bbbc10",
+      "bytes": 113827
     },
     {
       "path": "MANUAL.html",
