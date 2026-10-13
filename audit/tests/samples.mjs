@@ -84,6 +84,13 @@ try{await withBrowser(chrome,async browser=>{
      const goal=await page.evaluate(()=>{const actor=document.querySelector('#formSurface .component[data-id="sprite-1"]'),values=Object.fromEntries([...document.querySelectorAll('#runtimeMonitor .monitor-row')].map(row=>[row.querySelector('.monitor-key').textContent,row.querySelector('.monitor-value').textContent]));return{column:values['列'],row:values['行'],failed:values['失敗'],x:parseFloat(actor.style.left),y:parseFloat(actor.style.top)};});
      assert.equal(goal.column,'6');assert.equal(goal.row,'4');assert.equal(goal.failed,'0');assert.ok(Math.abs(goal.x-280)<1e-7&&Math.abs(goal.y-274)<1e-7,'runtime mascot reaches the goal before the screenshot');
     }}
+   if(id==='music'){
+    const labels=await page.locator('#formSurface .ak-button').evaluateAll(buttons=>buttons.map(button=>{
+     const range=document.createRange();range.selectNodeContents(button);const ink=range.getBoundingClientRect(),box=button.getBoundingClientRect(),style=getComputedStyle(button),scale=box.width/button.offsetWidth;
+     return{id:button.dataset.id,text:button.textContent,oneLine:ink.height<=parseFloat(style.fontSize)*1.5*scale,inside:ink.left>=box.left-1&&ink.right<=box.right+1&&ink.top>=box.top-1&&ink.bottom<=box.bottom+1};
+    }));
+    assert.ok(labels.length>=23);for(const label of labels)assert.ok(label.oneLine&&label.inside,'music button text must fit: '+JSON.stringify(label));
+   }
    await page.screenshot({path:path.join(dir,id+'.png')});await page.locator('#stopBtn').click();assert.equal(await page.evaluate(()=>JSON.stringify(Akari.app.project)),initial);
    await page.locator('#editorModecode').click();await page.locator('#codeEditor').fill((await source(page))+'\nマスコットは「お手本の改造保存」と言う。');await page.locator('#editorModeblocks').click();const changed=await page.evaluate(()=>JSON.stringify(Akari.app.project));
    const download=page.waitForEvent('download');await page.locator('#saveBtn').click();const saved=await download;assert.ok(saved.suggestedFilename().endsWith('.akari.md'));await saved.saveAs(path.join(dir,id+'.akari.md'));assert.equal(await saved.failure(),null);
