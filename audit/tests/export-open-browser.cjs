@@ -123,28 +123,104 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
   }));
   await run('OPEN-RECOVERY-SAVED-DRAFT-CLEAN',async()=>{
     const variants=[];
+    const newDraftProtection=(text,kind)=>withPage(b,async p=>{
+      const restore=async()=>{
+        await p.locator('#fileInput').setInputFiles({name:'saved-draft.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)});
+        await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN'&&(Akari.app.editorState.hasDraft||Akari.app.editorState.main.pendingEdit));
+        if(kind==='callable')await p.locator('#procClose').click();
+      };
+      const content=async()=>({...await state(p),...await p.evaluate(()=>({input:document.querySelector('#codeEditor').value,
+        pending:Akari.app.editorState.main.pendingEdit?.value??null,callable:Akari.app.editorState.callableDraft}))});
+      await restore();const dialogs=[];p.on('dialog',d=>{dialogs.push(d.message());return d.dismiss();});
+      await p.locator('#newBtn').click();const cleanDialogs=dialogs.length;
+      assert.equal(cleanDialogs,0);assert.equal(await p.evaluate(()=>Akari.app.project.name),'新しい作品');
+      assert.deepEqual(await p.evaluate(()=>Akari.app.project.scripts.map(s=>s.source)),['']);
+      await restore();
+      if(kind==='code')await p.locator('#codeEditor').fill('「保存した後の書きかけ');
+      else if(kind==='blocks'){
+        await p.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first().fill('changed');await p.keyboard.press('Tab');
+      }else{await p.locator('#procBtn').click();await p.locator('#callableName').fill('保存後の手順');await p.locator('#procClose').click();}
+      const before=await content();await p.locator('#newBtn').click();const afterNewCancel=await content();
+      assert.equal(dialogs.length,1);assert.match(dialogs[0],/保存していない編集/);assert.deepEqual(afterNewCancel,before);
+      await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();await p.locator('#openConfirmCancel').click();
+      const afterOpenCancel=await content();assert.deepEqual(afterOpenCancel,before);
+      return {cleanDialogs,openedNew:true,editedDialogs:dialogs.length,before,afterNewCancel,afterOpenCancel};
+    });
     for(const kind of ['code','blocks'])await withPage(b,async p=>{
       await install(p,kind==='blocks'?'点数を3にする。':marker);
       if(kind==='code')await p.locator('#codeEditor').fill('「保存した書きかけ');
       else{await p.locator('#editorModeblocks').click();await p.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first().fill('bad');await p.keyboard.press('Tab');}
       await save(p);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='自動保存：済み');
+      const savedText=fs.readFileSync(path.join(out,'saved-'+report.results.length+'.akari.md'),'utf8');
       await p.reload();await p.locator('#recoveryRestore').click();let pickers=0;p.on('filechooser',()=>pickers++);await p.locator('#openBtn').click();
       const observed={kind,savedUnchangedConfirmation:await p.locator('#openConfirmModal').isVisible(),pickers};
       if(observed.savedUnchangedConfirmation)await p.locator('#openConfirmCancel').click();else await p.locator('#fileInput').dispatchEvent('cancel');
       if(kind==='blocks'){
         await p.locator('#editorCancel').click();await p.locator('#openBtn').click();observed.cancelledSavedPendingConfirmation=await p.locator('#openConfirmModal').isVisible();
       }
+      observed.newProject=await newDraftProtection(savedText,kind);
       variants.push(observed);
     });
     try{for(const observed of variants){assert.equal(observed.savedUnchangedConfirmation,false,'saved unchanged '+observed.kind+' must not require confirmation');assert.equal(observed.pickers,1);if(observed.kind==='blocks')assert.equal(observed.cancelledSavedPendingConfirmation,true,'discarding saved pending input changes the saved content');}}
-    catch(error){error.evidence={variants};throw error;}return{variants};
+    catch(error){error.evidence={variants};throw error;}
+    const callableState={version:1,revision:0,selectedId:'stage',currentEvent:'start',selectedScriptId:null,uiLevel:'advanced',sourceOverviewOpen:false,
+      editorModes:{script:'code',draft:'code'},callableDraft:{ownerId:'stage',type:'action',name:'保存した手順',argsText:'',source:'「途中」と言う。',editId:'',loadedKey:''},pendingEditors:[],views:[]};
+    const savedCallable=await newDraftProtection(api.serializeProject(make(marker),api.makeDefaultAssetStore(),callableState),'callable');
+    return{variants,savedCallable};
   });
 
   await run('OPEN-CLEAN-AUTOSAVE-DIRECT',()=>withPage(b,async p=>{await install(p);await save(p);assert.equal(await p.locator('#autosaveState').innerText(),'自動保存：済み');await chooser(p);assert.equal(await p.locator('#openConfirmModal').isVisible(),false);await p.locator('#fileInput').dispatchEvent('cancel');return{direct:true,autosavePresent:true};}));
   await run('OPEN-DIRTY-CANCEL-STATE-KEYBOARD',()=>withPage(b,async p=>{await install(p);await edit(p);const before=await state(p);let pickers=0;p.on('filechooser',()=>pickers++);await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();assert.equal(pickers,0);assert.doesNotMatch(await p.locator('#openConfirmModal').innerText(),/ファイル|はい/);await p.screenshot({path:path.join(out,'open-unsaved.png')});await p.keyboard.press('Escape');await p.locator('#openConfirmModal').waitFor({state:'hidden'});assert.deepEqual(await state(p),before);assert.equal(await p.locator('#openBtn').evaluate(n=>document.activeElement===n),true);return{before,after:await state(p),pickers};}));
   await run('OPEN-APPROVAL-PICKER-CANCEL-REUSE',()=>withPage(b,async p=>{await install(p);await edit(p);const before=await state(p);let dialogs=0;p.on('dialog',d=>{dialogs++;return d.dismiss();});await acceptedChooser(p);await p.locator('#fileInput').dispatchEvent('cancel');assert.deepEqual(await state(p),before);await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();await p.locator('#openConfirmCancel').click();assert.equal(dialogs,0);return{currentRetained:true,confirmationAgain:true,before,after:await state(p)};}));
   await run('OPEN-SAVE-EDIT-UNDO-REDO',()=>withPage(b,async p=>{await install(p);await edit(p,'「保存した作品」と言う。');await save(p);await chooser(p);await p.locator('#fileInput').dispatchEvent('cancel');await edit(p,'「保存後の編集」と言う。');await p.locator('#undoBtn').click();await chooser(p);assert.equal(await p.locator('#openConfirmModal').isVisible(),false);await p.locator('#fileInput').dispatchEvent('cancel');await p.locator('#redoBtn').click();await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();await p.locator('#openConfirmCancel').click();return{saveClean:true,undoClean:true,redoDirty:true};}));
-  await run('OPEN-APPROVED-CORRUPT-RETAINED',()=>withPage(b,async p=>{await install(p);await edit(p);const before=await state(p);let dialogs=0;p.on('dialog',d=>{dialogs++;return d.dismiss();});const f=await acceptedChooser(p);await f.setFiles({name:'broken.akari.md',mimeType:'text/plain',buffer:Buffer.from('破損した作品')});await p.waitForFunction(()=>document.querySelector('#console').textContent.includes('読み込み失敗'));assert.deepEqual(await state(p),before);assert.equal(dialogs,0);await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();return{retained:true,dialogs,before,after:await state(p)};}));
+  await run('OPEN-APPROVED-CORRUPT-RETAINED',async()=>{
+    const incoming=make('「一つ目」と言う。');incoming.name='入れ替える作品';incoming.scripts[0].id='incoming-first';
+    incoming.scripts.push({id:'incoming-second',targetId:'stage',event:'start',source:'「二つ目」と言う。'});
+    const editor={version:1,revision:0,selectedId:'stage',currentEvent:'start',selectedScriptId:'incoming-second',uiLevel:'advanced',sourceOverviewOpen:false,
+      editorModes:{script:'code',draft:'code'},callableDraft:null,
+      pendingEditors:[{kind:'script',ownerKey:'script:incoming-second',source:'「読込み途中',mode:'code',pending:{kind:'code',value:'「読込み途中'},draftTree:null}],
+      views:[{kind:'script',ownerKey:'script:incoming-second',codeSelection:{start:1,end:3,direction:'forward'},scrollState:{codeTop:0,codeLeft:0}}]};
+    const valid=api.serializeProject(incoming,api.makeDefaultAssetStore(),editor),variants=[];
+    const stored=async p=>p.evaluate(async()=>{
+      const req=indexedDB.open('akari-workspace-f2',1),db=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+      try{const get=db.transaction('workspace','readonly').objectStore('workspace').get('latest'),rec=await new Promise((resolve,reject)=>{get.onsuccess=()=>resolve(get.result);get.onerror=()=>reject(get.error);});
+        if(!rec)return null;const decoded=await Akari.decodeWorkspaceHistory(rec.workspace);
+        return {cursor:decoded.cursor,frames:decoded.frames.map(f=>({project:JSON.stringify(f.project),pending:f.editorState.pendingEditors,callableDraft:f.editorState.callableDraft}))};
+      }finally{db.close();}
+    });
+    for(const kind of ['invalid-file','wrong-target','wrong-event','restore-failure'])await withPage(b,async p=>{
+      await install(p);await edit(p,'「残したい作品」と言う。');await edit(p,'「やり直せる作品」と言う。');await p.locator('#undoBtn').click();
+      await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='自動保存：済み');
+      const before=await state(p),autosaveBefore=await stored(p);assert.ok(before.history>=2&&before.redo>=1&&before.dirty&&autosaveBefore);
+      let dialogs=0;p.on('dialog',d=>{dialogs++;return d.dismiss();});const f=await acceptedChooser(p);
+      if(kind==='restore-failure')await p.evaluate(()=>{
+        const original=HTMLTextAreaElement.prototype.setSelectionRange;window.openRestoreFault=false;
+        HTMLTextAreaElement.prototype.setSelectionRange=function(...args){
+          if(!window.openRestoreFault&&Akari.app.project.name==='入れ替える作品'){
+            window.openRestoreFault=true;throw new Error('injected editor restoration failure');
+          }
+          return original.apply(this,args);
+        };
+      });
+      const text=kind==='invalid-file'?'破損した作品':kind==='wrong-target'?valid.replaceAll('"selectedId": "stage"','"selectedId": "sprite-1"'):
+        kind==='wrong-event'?valid.replaceAll('"currentEvent": "start"','"currentEvent": "keyDown"'):valid;
+      await f.setFiles({name:kind+'.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)});
+      await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN'&&document.querySelector('#console').textContent.includes('読み込み失敗'));
+      const after=await state(p),autosaveAfter=await stored(p),faultTriggered=await p.evaluate(()=>!!window.openRestoreFault);
+      assert.deepEqual(after,before);assert.deepEqual(autosaveAfter,autosaveBefore);assert.equal(dialogs,0);assert.equal(faultTriggered,kind==='restore-failure');
+      await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();
+      variants.push({kind,before,after,autosaveBefore,autosaveAfter,faultTriggered,confirmationAgain:true,dialogs});
+    });
+    // A valid selected second body must still load, including its unfinished text.
+    const validSecond=await withPage(b,async p=>{
+      await install(p);await p.locator('#fileInput').setInputFiles({name:'second-body.akari.md',mimeType:'text/plain',buffer:Buffer.from(valid)});
+      await p.waitForFunction(()=>Akari.app.project.name==='入れ替える作品'&&Akari.app.editorState.state==='DESIGN');
+      assert.equal(await p.evaluate(()=>Akari.app.editorState.selectedScriptId),'incoming-second');
+      assert.equal(await p.locator('#codeEditor').inputValue(),'「読込み途中');
+      return {selectedScriptId:await p.evaluate(()=>Akari.app.editorState.selectedScriptId),input:await p.locator('#codeEditor').inputValue()};
+    });
+    return{retained:true,dialogs:0,before:variants[0].before,after:variants[0].after,variants,validSecond};
+  });
   await run('OPEN-APPROVED-SUCCESS-SAME-SELECTION',()=>withPage(b,async p=>{await install(p);await edit(p);let dialogs=0;p.on('dialog',d=>{dialogs++;return d.dismiss();});const text=api.serializeProject(make('「読込み後」と言う。'),api.makeDefaultAssetStore()),file={name:'same.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)};let f=await acceptedChooser(p);await f.setFiles(file);await p.waitForFunction(()=>Akari.app.project.scripts[0].source==='「読込み後」と言う。');assert.equal(dialogs,0);f=await chooser(p);await f.setFiles(file);await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');return{oneConfirmation:true,sameSelection:true,dialogs};}));
   await run('OPEN-ALTERNATE-ROUTE-PROTECTED',()=>withPage(b,async p=>{await install(p);await edit(p);const before=await state(p),dialogs=[];p.on('dialog',d=>{dialogs.push(d.message());return d.dismiss();});await p.locator('#fileInput').setInputFiles({name:'other.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(make(marker),api.makeDefaultAssetStore()))});assert.deepEqual(await state(p),before);assert.equal(dialogs.length,1);return{dialogs,retained:true,before,after:await state(p)};}));
   await run('OPEN-CHANGED-AFTER-APPROVAL',()=>withPage(b,async p=>{await install(p);await edit(p);const f=await acceptedChooser(p);await p.locator('#codeEditor').evaluate(n=>{n.value='「承諾後の変更」と言う。';n.dispatchEvent(new Event('input',{bubbles:true}));});await p.waitForTimeout(350);const before=await state(p),dialogs=[];p.on('dialog',d=>{dialogs.push(d.message());return d.dismiss();});await f.setFiles({name:'other.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(make(marker),api.makeDefaultAssetStore()))});assert.deepEqual(await state(p),before);assert.equal(dialogs.length,1);return{changedStateProtected:true,before,after:await state(p),dialogs};}));

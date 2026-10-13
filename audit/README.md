@@ -25,7 +25,7 @@ node audit/freeze-release.mjs
 
 ## 日本語改訂の追加gate
 
-`run-local-gate.mjs` は既存25 stepに、六文書と独立baselineの静的契約、言語移行の意味保持、実browserの意図89 check、Nodeと実browserの実行境界20 check、新validator拒否検査を加えた30 stepを実行します。固定環境と当該製品snapshotの全結果が必要です。静的fixtureの `pending` / `NOT_RUN` は実行結果へ書き換えません。
+`run-local-gate.mjs` の現行集合は `lib/gate-contract.mjs` の44 stepです。六文書と独立baselineの静的契約、言語移行の意味保持、実browserの意図89 check、Nodeと実browserの実行境界20 check、新validator拒否検査を含みます。固定環境と当該製品snapshotの全結果が必要です。静的fixtureの `pending` / `NOT_RUN` は実行結果へ書き換えません。
 
 ```sh
 node audit/tests/contract-gate.mjs static audit-evidence/new-contract.json
@@ -43,7 +43,7 @@ GitHub Actionsは同一repositoryのbranch push / PRでstatic・selftest・既�
 
 ## 独立レビュー指摘の回帰
 
-既存30 stepの後ろに、主語の保持、日本語・文字列、単位と診断、初回操作、可読性の5群と証跡validatorの拒否検査を追加し、local gateは36 stepです。新しい14件の安定IDは `lib/review-regression-contract.mjs` に固定します。各群は実ブラウザーの版、製品と監査入力のsnapshot、全IDの実測証拠、ページエラーと外部通信の不在を要求します。既存ケースの代替にはしません。
+主語の保持、日本語・文字列、単位と診断、初回操作、可読性の5群と証跡validatorの拒否検査も、現行44 stepのlocal gateに含まれます。14件の安定IDは `lib/review-regression-contract.mjs` に固定します。各群は実ブラウザーの版、製品と監査入力のsnapshot、全IDの実測証拠、ページエラーと外部通信の不在を要求します。既存ケースの代替にはしません。
 
 集約時はダウンロードされた証跡内の製品コピーを読み、実行元で記録したSHAと当該checkoutのSHAを照合します。実行元の絶対パスとfile URLは来歴として保持します。元のディレクトリがなくても検証でき、コピーの改変・欠落・記録URLの不一致は拒否検査で確認します。
 

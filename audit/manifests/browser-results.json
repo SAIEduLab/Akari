@@ -346,6 +346,7 @@
       "report": "candidate/browser-runtime-limits.json",
       "key": "id",
       "keys": [
+        "limit:continuous-number-overflow",
         "limit:clones",
         "limit:listItems",
         "limit:stringChars",

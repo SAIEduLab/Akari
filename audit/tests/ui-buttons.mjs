@@ -162,7 +162,30 @@ const cases = {
       await U.openNodeMenu(p.locator('#blockEditor .blockui-node[data-schema-id="Say"]').first()); const command=p.locator('#blockEditor .blockui-node[data-schema-id="Say"]').first().locator(':scope > .blockui-node-head [data-blockui-action="duplicate"]'); await reachable(command); assert.equal(await p.locator('#blockEditor .blockui-node[data-schema-id="Say"]').count(),2);
       const toggle=p.locator('.properties-window .blockui-side-toggle'); await reachable(toggle); const expanded=await toggle.getAttribute('aria-expanded'); await reachable(toggle); assert.notEqual(await toggle.getAttribute('aria-expanded'),expanded); evidence.push(viewport);
     }
-    return {viewports:evidence,ordinaryScrolling:true,navigationUndoRedoCommandsAndFold:true};
+    const paletteRecovery=[];
+    for(const width of [760,390,320]) {
+      await p.setViewportSize({width,height:844}); await fill(p,'「こんにちは」と2秒話す。'); await mode(p,'blocks');
+      const text=()=>p.locator('#blockEditor .blockui-world input[aria-label="文字 文字"]'),
+        palette=p.locator('#blockEditor .blockui-palette'),
+        library=p.locator('#blockEditor [data-blockui-action="library-toggle"]');
+      await text().fill('おはよう'); await text().press('Enter'); const committed=await fingerprint(p);
+      assert.equal(await palette.isVisible(),false,'narrow text editing temporarily hides the palette');
+      await library.click(); assert.equal(await palette.isVisible(),true,'one click recovers the hidden palette');
+      assert.equal(await library.getAttribute('aria-expanded'),'true'); assert.deepEqual(await fingerprint(p),committed);
+      await library.click(); assert.equal(await palette.isVisible(),false); await library.click(); assert.equal(await palette.isVisible(),true);
+      await text().fill('いってきます'); await library.click();
+      assert.equal(await palette.isVisible(),true); assert.equal((await fingerprint(p)).source,'「いってきます」と2秒話す。');
+      assert.equal((await fingerprint(p)).history,committed.history+1,'pending text commits once when returning to the palette');
+      const beforeComposition=await fingerprint(p);
+      await text().focus(); await text().dispatchEvent('compositionstart'); await text().fill('まだ変換中');
+      await library.click(); assert.equal(await palette.isVisible(),false,'composition must be completed before leaving text editing');
+      assert.equal(await text().inputValue(),'まだ変換中'); assert.equal((await fingerprint(p)).source,beforeComposition.source);
+      assert.equal((await fingerprint(p)).history,beforeComposition.history);
+      await text().dispatchEvent('compositionend'); await text().press('Enter'); await library.click();
+      assert.equal(await palette.isVisible(),true); assert.equal((await fingerprint(p)).source,'「まだ変換中」と2秒話す。');
+      paletteRecovery.push({width,oneClickRecovery:true,committedStatePreserved:true,pendingTextCommittedOnce:true,syntheticCompositionPreserved:true});
+    }
+    return {viewports:evidence,ordinaryScrolling:true,navigationUndoRedoCommandsAndFold:true,paletteRecovery};
   },
 };
 assert.deepEqual(Object.keys(cases),uiButtonIds);

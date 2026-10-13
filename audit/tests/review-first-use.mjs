@@ -193,6 +193,52 @@ async function reviewModePreference(page) {
   return {initial,observations,committed,undoRedoBothModes:true};
 }
 
+async function reviewBlockDiscoverability(page) {
+  await page.locator('#stopBtn').click();
+  await page.locator('#editorModecode').click();
+  const original = '「おやつにしよう」と言う。\n「ただいま」と言う。';
+  await page.locator('#codeEditor').fill(original);
+  await page.waitForFunction(text => Akari.app.editorState.main.sourceText === text, original);
+  await page.locator('#editorModeblocks').click();
+  await page.locator('#blockEditor [data-blockui-action="body-insert"]').last().click();
+  await openPaletteTools(page.locator('#blockEditor'));
+  await page.locator('#blockEditor [data-blockui-search]').fill('言う');
+  const observations = [];
+  for (const [width, height] of [[1188,848],[390,600],[320,500]]) {
+    await page.setViewportSize({width,height});
+    const root = page.locator('#blockEditor');
+    const candidate = root.locator('[data-blockui-action="palette-add"][data-blockui-schema="Say:timed"]');
+    await candidate.scrollIntoViewIfNeeded();
+    const hint = await candidate.evaluate(button => {
+      const preview=button.querySelector('.blockui-preview').getBoundingClientRect();
+      const label=button.querySelector('.blockui-bound-name'),box=label.getBoundingClientRect();
+      return {text:label.textContent,previewBottom:preview.bottom,top:box.top,width:box.width,
+        overflow:label.scrollWidth>label.clientWidth,display:getComputedStyle(label).display};
+    });
+    assert.equal(hint.text,'内容と秒数を決めて話す');
+    assert.equal(hint.display,'block');
+    assert.ok(hint.top>=hint.previewBottom,'the complete explanation begins below its block');
+    assert.equal(hint.overflow,false,'the explanation wraps within the candidate');
+    const second=root.locator('.blockui-node[data-schema-id="Say"]').nth(1);
+    const more=second.locator(':scope > .blockui-node-head [data-blockui-action="more"]');
+    assert.equal(await more.innerText(),'ならべかえ','reordering is named without requiring ellipsis knowledge');
+    const before=await page.evaluate(()=>({source:Akari.app.editorState.main.sourceText,history:Akari.app.editorState.history}));
+    await more.click();
+    const up=second.locator('[data-blockui-action="move-up"]').first();
+    assert.equal(await up.isEnabled(),true);
+    await up.click();
+    const moved=await sourceFromModel(page);
+    assert.ok(moved.indexOf('ただいま')<moved.indexOf('おやつにしよう'),'one click moves only the selected command up');
+    assert.equal(await page.evaluate(()=>Akari.app.editorState.history),before.history+1);
+    await page.locator('#undoBtn').click();assert.equal(await sourceFromModel(page),original);
+    await page.locator('#redoBtn').click();assert.equal(await sourceFromModel(page),moved);
+    await page.locator('#undoBtn').click();assert.equal(await sourceFromModel(page),original);
+    observations.push({width,height,hint,label:'ならべかえ',activationClicks:2,dragGestures:0,
+      before:original,after:moved,undoRedo:true});
+  }
+  return {humanChildTesting:'NOT_RUN',observations};
+}
+
 async function reviewDefaults(page, capture) {
   const modePreference=await reviewModePreference(page);
   await setup(page);
@@ -260,6 +306,8 @@ async function reviewDefaults(page, capture) {
   assert.equal(runtime.failure, '', 'the new default scale executes without a runtime failure');
   assert.ok(runtime.bubbles.some(text => text.includes('こんにちは')), 'the program visibly speaks its greeting');
   assert.match(runtime.finalSpriteTransform, /rotate\(15deg\)/, 'the new rotation value is reflected on the stage');
+  evidence.blockDiscoverability = await reviewBlockDiscoverability(page);
+  capture(evidence);
   return evidence;
 }
 

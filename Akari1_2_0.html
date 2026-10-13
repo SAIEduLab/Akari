@@ -3577,6 +3577,12 @@ body[data-editor-mode="blocks"] .prop-name {
   opacity: 0.55;
   cursor: not-allowed;
 }
+.blockui-bound-name {
+  display: block;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
 .blockui-preview {
   position: relative;
   display: inline-flex;
@@ -3744,6 +3750,15 @@ body[data-editor-mode="blocks"] .prop-name {
 }
 .blockui-world .blockui-node-tools {
   align-items: center;
+}
+.blockui-world .blockui-actions > summary.blockui-statement-actions {
+  opacity: 1;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 4px 6px;
+  border: 1px solid #0003;
+  background: #ffffffb3;
+  white-space: nowrap;
 }
 .blockui-world .blockui-action-items {
   color: #294356;
@@ -9075,7 +9090,9 @@ function createAkariExtensionHost(options) {
           const runtimeId = this.runtime.resolveActorRef(rule.actorRef, rule.targetId || 'stage');
           const key = `${rule.id}:${runtimeId}`;
           if (this.continuous.has(key)) continue;
+          const sourceKey = rule.id.replace(/:rule:\d+$/, '');
           const task = { taskId: `rule:${key}`, runtimeId, targetId: runtimeId, eventType: 'continuous',
+            sourceKey: /^(script|action|function):/.test(sourceKey) ? sourceKey : null,
             eventContext: {}, subject: { runtimeId }, callFrames: [], execStack: [],
             broadcastGroups: new Map(), state: 'RUNNING', currentNode: rule };
           this.continuous.set(key, { rule, runtimeId, task, state: 'INACTIVE', speed: 0 });
@@ -9134,25 +9151,49 @@ function createAkariExtensionHost(options) {
           const grid = this.continuousOrigin + this.continuousTick * (1000 / 60),
             end = Math.min(at, grid), seconds = (end - this.continuousTime) / 1000,
             sums = new Map();
-          for (const [key, control] of this.continuous) {
-            const actor = this.runtime.actor(control.runtimeId);
-            if (!actor) { this.continuous.delete(key); continue; }
-            if (control.state !== 'ACTIVE') continue;
-            const v = this.directionVector(control.rule.direction, actor),
-              delta = sums.get(control.runtimeId) || { x: 0, y: 0 };
-            delta.x += v.x * control.speed * seconds;
-            delta.y += v.y * control.speed * seconds;
-            sums.set(control.runtimeId, delta);
-            const entry = { ruleId: control.rule.id, runtimeId: control.runtimeId,
-              from: this.continuousTime, to: end, dx: v.x * control.speed * seconds,
-              dy: v.y * control.speed * seconds };
+          const entries = [], moves = [];
+          let failedControl = null;
+          try {
+            for (const [key, control] of this.continuous) {
+              const actor = this.runtime.actor(control.runtimeId);
+              if (!actor) { this.continuous.delete(key); continue; }
+              if (control.state !== 'ACTIVE') continue;
+              failedControl = control;
+              const v = this.directionVector(control.rule.direction, actor),
+                dx = v.x * control.speed * seconds, dy = v.y * control.speed * seconds,
+                delta = sums.get(control.runtimeId) || { x: 0, y: 0 };
+              delta.x = ensureFinite(delta.x + dx);
+              delta.y = ensureFinite(delta.y + dy);
+              if (dx) delta.xControl = control;
+              if (dy) delta.yControl = control;
+              sums.set(control.runtimeId, delta);
+              entries.push({ ruleId: control.rule.id, runtimeId: control.runtimeId,
+                from: this.continuousTime, to: end, dx, dy });
+            }
+            // Validate the whole interval before changing any actor or drawing.
+            for (const [runtimeId, delta] of sums) {
+              const actor = this.runtime.actor(runtimeId), x = actor.x, y = actor.y;
+              failedControl = delta.xControl || delta.yControl;
+              const nextX = ensureFinite(x + delta.x);
+              failedControl = delta.yControl || delta.xControl;
+              const nextY = ensureFinite(y + delta.y);
+              moves.push({ actor, x, y, nextX, nextY, delta });
+            }
+          } catch (err) {
+            for (const [key, control] of this.continuous)
+              if (control === failedControl) this.continuous.delete(key);
+            // Do not retry the failing interval from taskError's pause boundary.
+            this.paused = true;
+            this.taskError(failedControl.task, err);
+            return;
+          }
+          for (const entry of entries) {
             this.continuousTrace.push(entry);
             if (this.continuousTrace.length > 1000) this.continuousTrace.shift();
             this.ui.continuousStep?.(entry);
           }
-          for (const [runtimeId, delta] of sums) {
-            const actor = this.runtime.actor(runtimeId), x = actor.x, y = actor.y;
-            actor.x = ensureFinite(x + delta.x); actor.y = ensureFinite(y + delta.y);
+          for (const { actor, x, y, nextX, nextY, delta } of moves) {
+            actor.x = nextX; actor.y = nextY;
             if (actor.penDown && (delta.x || delta.y))
               this.ui.penLine?.(x + actor.w / 2, y + actor.h / 2,
                 actor.x + actor.w / 2, actor.y + actor.h / 2, actor.penColor, actor.penSize);
@@ -10039,7 +10080,7 @@ function createAkariExtensionHost(options) {
         ];
         const frame = task.callFrames.at(-1),
           key =
-            e.akariSource?.key ||
+            e.akariSource?.key || task.sourceKey ||
             (frame ? `action:${frame.id}` : task.scriptId ? `script:${task.scriptId}` : `script:${task.targetId}:${task.eventType}`),
           line = e.line || task.currentNode?.sourceSpan?.startLine || 1;
         const definition = key.startsWith('function:')
@@ -18607,7 +18648,7 @@ function createAkariExtensionHost(options) {
       throw new AkariError('F503','編集状態の契約または版が正しくありません');
     const actor=state.selectedId==='stage'?{type:'stage'}:project.components.find(c=>c.id===state.selectedId);
     if(!actor||!EVENT_BY_TYPE[actor.type]?.includes(state.currentEvent)||
-      state.selectedScriptId!==null&&!project.scripts.some(s=>s.id===state.selectedScriptId)||
+      state.selectedScriptId!==null&&!project.scripts.some(s=>s.id===state.selectedScriptId&&s.targetId===state.selectedId&&s.event===state.currentEvent)||
       !['basic','advanced'].includes(state.uiLevel)||typeof state.sourceOverviewOpen!=='boolean'||
       !exactKeys(state.editorModes,['script','draft'])||!Object.values(state.editorModes).every(mode=>['code','blocks'].includes(mode)))
       throw new AkariError('F503','編集画面の選択が正しくありません');
@@ -21353,6 +21394,8 @@ function createAkariExtensionHost(options) {
   // Presentation only: parser/runtime diagnostics and their original messages stay unchanged.
   function childDiagnosticText(diagnostic) {
     const message = String(diagnostic?.message || diagnostic || '書き方を確認してください');
+    if (diagnostic?.code === 'R403' || /計算結果が有限な数ではありません/.test(message))
+      return '計算の答えが大きすぎるなどの理由で、あかりで使える数になりませんでした。使う数や計算のしかたをたしかめてください。';
     if (/二重否定/.test(message))
       return '「ではない」を2つ続けるときは、先の条件（じょうけん）を（ ）でくくります。例：（1が2と同じではない）ではない';
     if (/引数名.*重複|受け取る値に同じ名前/.test(message))
@@ -21648,7 +21691,16 @@ function createAkariExtensionHost(options) {
       '\u9053\u5177\u7bb1',
       'library-toggle',
       () => {
-        root.classList.toggle('blockui-library-hidden');
+        const editingHidden = root.querySelector('.blockui-editing-field') &&
+          doc.defaultView.getComputedStyle(palette).display === 'none';
+        if (editingHidden) {
+          // A narrow text editor temporarily hides the palette independently of
+          // this toggle. Finish valid input before explicitly bringing it back.
+          if (!flush().ok) return;
+          for (const field of root.querySelectorAll('.blockui-editing-field'))
+            field.classList.remove('blockui-editing-field');
+          root.classList.remove('blockui-library-hidden');
+        } else root.classList.toggle('blockui-library-hidden');
         libraryToggle.setAttribute(
           'aria-expanded',
           String(!root.classList.contains('blockui-library-hidden')),
@@ -23049,7 +23101,7 @@ function createAkariExtensionHost(options) {
       dragHandle.disabled = isLocked();
       tools.append(dragHandle);
       const menu = E('details', 'blockui-actions'),
-        summary = E('summary', '', '…', {
+        summary = E('summary', info.body ? 'blockui-statement-actions' : '', info.body ? 'ならべかえ' : '…', {
           'aria-label': schema.label + 'の操作',
           'data-blockui-action': 'more',
         }),
@@ -25462,6 +25514,9 @@ function createAkariExtensionHost(options) {
       if (binding.kind === 'draft') paintCallable();
       return true;
     }
+    function runtimeEventText(eventType) {
+      return eventType === 'continuous' ? '条件（じょうけん）が続いているあいだ' : EVENT_LABELS[eventType] || eventType;
+    }
     function diagnosticLocation(diagnostic) {
       const key = diagnostic?.where || diagnostic?.key || '', item = compiled?.items?.find(x => x.key === key),
         sourceKey = item?.documentKey || key, script = scriptBySourceKey(project, sourceKey),
@@ -26567,9 +26622,6 @@ function createAkariExtensionHost(options) {
     function disposeRuntime() {
       closeRuntimeInspector();
       $('#listRepairPanel')?.remove();
-      for (const id of ['failureModal', 'valueModal']) $('#' + id)?.classList.remove('show');
-      activeFailureId = null;
-      valueView = null;
       generationToken++;
       stageView.clear();
       physicalKeys.clear();
@@ -26588,6 +26640,9 @@ function createAkariExtensionHost(options) {
         runtimeCache.dispose();
         runtimeCache = null;
       }
+      for (const id of ['failureModal', 'valueModal']) $('#' + id)?.classList.remove('show');
+      activeFailureId = null;
+      valueView = null;
     }
     function closeEditingModals() {
       stopPreview();
@@ -26843,11 +26898,9 @@ function createAkariExtensionHost(options) {
       if (observed.unsaved) $('#openConfirmModal').classList.add('show');
       else selectProjectForOpen();
     }
-    function confirmLose() {
-      flushActiveEditor();
-      activeDragCleanup?.();
+    function confirmLose(observed = currentOpenState()) {
       return (
-        (currentFingerprint() === lastSavedFingerprint && !hasCallableDraft() && !hasPendingEditor()) ||
+        !observed.unsaved ||
         confirm('作品または手順・答えを求める定義に保存していない編集があります。今の編集を捨てて続けますか？')
       );
     }
@@ -26993,10 +27046,12 @@ function createAkariExtensionHost(options) {
           if (record.kind === 'script') {
             if (!selectObject(record.ownerId)) return;
             currentEvent = record.event; selectedScriptId = record.id || null; hideSourceOverview(); loadEditor();
+            if (!modelLocked()) pushHistoryNow();
           } else {
             if (modelLocked() || !confirmCallableDiscard()) return;
             loadCallable(record.key); renderCallableOptions(record.key);
             $('#procModal').classList.add('show'); renderEditorBinding(draftEditor);
+            pushHistoryNow();
           }
         });
         edit.dataset.sourceEdit = record.key;
@@ -28480,7 +28535,7 @@ function createAkariExtensionHost(options) {
       root.textContent = '';
       if (!r) return;
       const help = document.createElement('div'); help.className = 'diagnostic-help';
-      help.textContent = '動きをいったん止めました。書いた動きと、できなかったときの記録（きろく）は残っています。\n' + diagnosticLocation(r) + ': ' + childDiagnosticText(r) + '\n「閉じる」で本文（ほんぶん）に戻り、命令（めいれい）をたしかめてください。';
+      help.textContent = '動きをいったん止めました。書いた動きと、できなかったときの記録（きろく）は残っています。\n' + diagnosticLocation(r) + ': ' + childDiagnosticText(r) + '\n「閉じる」のあと、「本文を見て確かめる」で命令（めいれい）をたしかめられます。書き直すときは「止める」を押して、編集（へんしゅう）に戻ってください。';
       root.append(help);
       const details = appendDiagnosticDetails(root, r, `${r.code}: ${r.message}\n${r.key} / ${r.line}\u884c\n${r.statement}\n${r.callStack.join(' \u2192 ')}`);
       details.querySelector('pre').className = 'failure-summary';
@@ -28496,7 +28551,7 @@ function createAkariExtensionHost(options) {
       }
       renderMonitorSection(root, '失敗したときのようす', [
         ['動いていた部品', targetById(r.actor?.baseId || r.targetId)?.name || '画面'],
-        ['きっかけ', EVENT_LABELS[r.eventType] || r.eventType],
+        ['きっかけ', runtimeEventText(r.eventType)],
         ['動かしていた本文', r.source],
       ]);
       const identifiers = appendDiagnosticDetails(root, r, '処理番号: ' + r.taskId + '\n動いている部品: ' + r.runtimeId + '\n本文: ' + r.key);
@@ -28673,7 +28728,7 @@ function createAkariExtensionHost(options) {
       if (focus) {
         section('\u73fe\u5728\u306e\u51e6\u7406', [
           ['状態', focus.state==='BLOCKED'?({time:focus.blockReason?.speechToken?'話している':'時間を待っている',condition:'条件を待っている',question:'答えを待っている',waitGroup:'ほかの動作を待っている',glide:'移動している'}[focus.blockReason?.kind]||'終わるのを待っている'):({READY:'順番を待っている',RUNNING:'動いている',DONE:'終わった',PAUSED:'一時停止',ERROR:'直すところがある',CANCELLED:'止めた'}[focus.state]||'動いている')],
-          ['きっかけ', `${targetById(focus.targetId)?.name||'作品'} / ${EVENT_LABELS[focus.eventType] || focus.eventType}`],
+          ['きっかけ', `${targetById(focus.targetId)?.name||'作品'} / ${runtimeEventText(focus.eventType)}`],
         ]);
         for (const f of focus.callFrames)
           section('\u52d5\u4f5c ' + f.name, [
@@ -28776,7 +28831,7 @@ function createAkariExtensionHost(options) {
               : null;
       const label = def
         ? `${parts[0] === 'action' ? '手順' : '答えを求める'} ${def.name}`
-        : `${targetById(loc.targetId)?.name || loc.targetId} / ${EVENT_LABELS[loc.event] || loc.event}`;
+        : `${targetById(loc.targetId)?.name || loc.targetId} / ${runtimeEventText(loc.event)}`;
       $('#execLocation').textContent = `いまの場所：${label} / ${loc.line}行`;
       if (scheduler?.paused) {
         hideSourceOverview();
@@ -29085,7 +29140,13 @@ function createAkariExtensionHost(options) {
       loadEditor();
       $('#execLocation').textContent = 'いまの場所：―';
       setStatus('停止しました');
-      el.editor.focus({ preventScroll: true });
+      if (sourceOverviewOpen) $('#sourceEditBtn').focus({ preventScroll: true });
+      else if (mainEditor.session?.mode === 'blocks') {
+        mainEditor.view.focus({ id: mainEditor.session.blockSelection });
+        if (!$('#blockEditor').contains(document.activeElement))
+          $('#blockEditor .blockui-workspace').focus({ preventScroll: true });
+      }
+      else el.editor.focus({ preventScroll: true });
     }
     function updateRunState() {
       const running = !!scheduler?.running;
@@ -29385,7 +29446,8 @@ function createAkariExtensionHost(options) {
     async function openProject(file, approval = null) {
       if (modelLocked()) return;
       const observed = currentOpenState();
-      if (approval?.fingerprint !== observed.fingerprint && !confirmLose()) return;
+      if (approval?.fingerprint !== observed.fingerprint && !confirmLose(observed)) return;
+      let previous = null;
       clearTimeout(historyTimer);
       clearTimeout(autosaveTimer);
       recoveryEpoch++;
@@ -29395,7 +29457,10 @@ function createAkariExtensionHost(options) {
         if (file.size > LIMITS.fileBytes)
           throw new AkariError('F504', `ファイルが${LIMITS.fileBytes / 1048576}MiBを超えています`);
         const loaded = await parseProjectFile(await file.text());
-        await clearAutosave();
+        // Keep the current workspace until the loaded editor can also be restored.
+        // Structural validation alone cannot guarantee that every UI restoration succeeds.
+        previous = { current: snapshot(), history: history.slice(), redo: redo.slice(), initialSnapshot,
+          lastSavedFingerprint, lastSavedEditorFingerprint };
         closeEditingModals();
         clearCallable();
         disposeRuntime();
@@ -29414,6 +29479,10 @@ function createAkariExtensionHost(options) {
         resetHistory();
         if(loaded.editorState){restoreEditorState(loaded.editorState);initialSnapshot=snapshot();history=[initialSnapshot];redo=[];lastObservedFingerprint=stateFingerprintCore();}
         lastSavedEditorFingerprint = openEditorFingerprint();
+        appState = 'IMPORTING';
+        updateRunState();
+        await clearAutosave();
+        previous = null;
         const diagnostics = loaded.diagnostics || [];
         log(
           diagnostics.length
@@ -29422,11 +29491,19 @@ function createAkariExtensionHost(options) {
           diagnostics.length ? 'error' : 'ok',
         );
       } catch (err) {
+        if (previous) {
+          history = previous.history;
+          redo = previous.redo;
+          initialSnapshot = previous.initialSnapshot;
+          lastSavedFingerprint = previous.lastSavedFingerprint;
+          lastSavedEditorFingerprint = previous.lastSavedEditorFingerprint;
+          restoreSnap(previous.current, { restoreView: true });
+        }
         log(`${err.code || ''} 読み込み失敗: ${err.message}`, 'error');
       } finally {
         appState = 'DESIGN';
         renderAll();
-        if (dirty || hasCallableDraft()) scheduleAutosave();
+        if (dirty || hasCallableDraft() || hasPendingEditor()) scheduleAutosave();
       }
     }
 
@@ -30782,6 +30859,8 @@ function createAkariExtensionHost(options) {
       currentEvent = row?.event || next;
       selectedScriptId = row?.id || null;
       loadEditor();
+      // Keep the selected body in the current frame without creating an edit.
+      if (!modelLocked()) pushHistoryNow();
     });
     $('#scriptAdd').onclick = () => {
       if (modelLocked() || !flushActiveEditor()) return;
@@ -30994,14 +31073,14 @@ function createAkariExtensionHost(options) {
     $('#dataAdd').onclick = addData;
     $('#callableSelect').onchange = () => {
       const next = $('#callableSelect').value;
-      if (confirmCallableDiscard()) loadCallable(next);
+      if (confirmCallableDiscard()) { loadCallable(next); pushHistoryNow(); }
       else $('#callableSelect').value = callableLoadedKey;
     };
     $('#callableNewAction').onclick = () => {
-      if (confirmCallableDiscard()) clearCallable('action');
+      if (confirmCallableDiscard()) { clearCallable('action'); pushHistoryNow(); }
     };
     $('#callableNewFunction').onclick = () => {
-      if (confirmCallableDiscard()) clearCallable('function');
+      if (confirmCallableDiscard()) { clearCallable('function'); pushHistoryNow(); }
     };
     $('#callableSave').onclick = saveCallable;
     $('#callableFormat').onclick = formatCallable;
@@ -31267,6 +31346,15 @@ function createAkariExtensionHost(options) {
           ['z', 'y'].includes(event.key.toLowerCase())
         ) {
           if (document.querySelector('.modal.show:not(#procModal),#sampleConfirm[open],#sampleHelp[open]')) return;
+          const input = event.target.closest('input,textarea,[contenteditable]');
+          if (input && (input.closest('dialog[open]') || !input.matches(
+            '#codeEditor,#callableCode,#callableName,#callableArgs,#callablePhrase,[data-blockui-field],[data-blockui-annotation],[data-blockui-structured-role]',
+          ))) {
+            // Searches and standalone text dialogs keep native text history.
+            // Do not let the block editor flush their input on the bubbling shortcut.
+            event.stopPropagation();
+            return;
+          }
           event.preventDefault();
           event.stopImmediatePropagation();
           event.key.toLowerCase() === 'y' || event.shiftKey ? redoDo() : undo();
@@ -31354,6 +31442,7 @@ function createAkariExtensionHost(options) {
       if (!hasCallableDraft()) renderCallableList(callableLoadedKey);
       $('#procModal').classList.add('show');
       renderEditorBinding(draftEditor);
+      if (!modelLocked()) pushHistoryNow();
     };
     $('#sourceOverviewBtn').onclick = () => { if (flushActiveEditor()) showSourceOverview(); };
     $('#sourceEditBtn').onclick = () => { hideSourceOverview(); loadEditor(); };

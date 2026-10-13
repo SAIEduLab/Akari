@@ -20,6 +20,7 @@
     "README.md",
     "audit/ACTIONS_TRANSFER.md",
     "audit/CHILD_UX.md",
+    "audit/CHILD_UX_RELIABILITY.md",
     "audit/IMPLEMENTATION_STATUS.md",
     "audit/LANGUAGE_FORMS.md",
     "audit/LEDGER_MIGRATION.md",
