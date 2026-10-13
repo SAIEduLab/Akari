@@ -17,7 +17,10 @@ import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-con
 import {componentControlsFeature,componentControlIds} from '../lib/component-controls-contract.mjs';
 verifyAuditLedgers();checkLedgerNegatives();checkReaderMigrationNegatives();verifyLedgerMigrationRecord();
 const metadata=assertProductInventory();
-for(const bad of [{productFile:"../Akari1_0_1.html"},{productVersion:"invalid"},{productFile:"Akari1_0_0.html"},{files:metadata.files.filter(f=>f!==metadata.productFile)},{files:[...metadata.files,metadata.productFile]},{files:[...metadata.files,"Akari.html"]},{files:[...metadata.files,"Akari1_0_0.html"]}])assert.throws(()=>validateProductMetadata({...metadata,...bad}));
+for(const bad of [{productFile:"../Akari_1_0_1.html"},{productVersion:"invalid"},{productFile:"Akari_1_0_0.html"},{productFile:metadata.productFile.replace('Akari_','Akari')},{files:metadata.files.filter(f=>f!==metadata.productFile)},{files:[...metadata.files,metadata.productFile]},{files:[...metadata.files,"Akari.html"]},{files:[...metadata.files,"Akari1_0_0.html"]},{files:[...metadata.files,"Akari_1_0_0.html"]},{files:[...metadata.files,metadata.productFile.replace('Akari_','Akari')]}])assert.throws(()=>validateProductMetadata({...metadata,...bad}));
+const nextProductVersion=metadata.productVersion.replace(/\d+$/,patch=>String(Number(patch)+1));
+const nextProductFile='Akari_'+nextProductVersion.replaceAll('.','_')+'.html';
+validateProductMetadata({...metadata,productVersion:nextProductVersion,productFile:nextProductFile,files:metadata.files.map(file=>file===metadata.productFile?nextProductFile:file)});
 const sampleManifest=JSON.parse(fs.readFileSync('audit/manifests/samples.json'));
 assert.deepEqual(sampleManifest.feature,samplesFeature);assert.deepEqual(sampleManifest.testIds,sampleTestIds);
 const html=fs.readFileSync(currentProductFile(),'utf8');new vm.Script(html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>')));
