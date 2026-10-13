@@ -33260,6 +33260,21 @@ function createAkariExtensionHost(options) {
       replaceCurrentProject(makeEmptyProject(),makeDefaultAssetStore(),'sprite-1','start','空の作品です。動かすもの・できごとを選び、命令を入れましょう');
     }
     $('#newBtn').onclick=startProject;
+    // Two fixed built-in preview images, shared across cards and picker openings.
+    // Keep the existing blob-only image CSP; never load a data URL into the DOM.
+    const samplePreviewUrls = new Map();
+    function fillSamplePicture(picture, id) {
+      picture.innerHTML = (SAMPLE_ART[id] || '').replaceAll('href="data:image/png;base64,', 'data-sample-image="');
+      for (const image of picture.querySelectorAll('image[data-sample-image]')) {
+        const encoded = image.getAttribute('data-sample-image');
+        if (!samplePreviewUrls.has(encoded)) {
+          const bytes = Uint8Array.from(atob(encoded), char => char.charCodeAt(0));
+          samplePreviewUrls.set(encoded, URL.createObjectURL(new Blob([bytes], {type:'image/png'})));
+        }
+        image.removeAttribute('data-sample-image');
+        image.setAttribute('href', samplePreviewUrls.get(encoded));
+      }
+    }
     function showSamplePicker() {
       if (!openRequest || openRequest.kind !== 'sample' || modelLocked()) return;
       const grid = $('#sampleGrid');
@@ -33267,7 +33282,7 @@ function createAkariExtensionHost(options) {
         const button = document.createElement('button');
         button.type = 'button'; button.className = 'sample-card'; button.dataset.sampleId = sample.id;
         const picture = document.createElement('span'); picture.className = 'sample-picture'; picture.setAttribute('aria-hidden','true');
-        picture.innerHTML = SAMPLE_ART[sample.id] || '';
+        fillSamplePicture(picture, sample.id);
         const copy = document.createElement('span'); copy.className = 'sample-card-copy';
         const title = document.createElement('span'); title.className = 'sample-card-title'; title.textContent = sample.title;
         const description = document.createElement('span'); description.className = 'sample-card-description'; description.textContent = sample.description;
@@ -33302,6 +33317,17 @@ function createAkariExtensionHost(options) {
     }
     $('#sampleBtn').onclick=requestSampleProject;
     $('#samplePickerClose').onclick=()=>$('#samplePicker').close();
+    $('#samplePicker').addEventListener('keydown', event => {
+      if (event.key !== 'Tab') return;
+      const controls = [...$('#samplePicker').querySelectorAll('button:not(:disabled)')];
+      const first = controls[0], last = controls.at(-1);
+      if (!first) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); first.focus();
+      }
+    });
     $('#samplePicker').addEventListener('close',()=>{
       // close events are queued: don't clear a newer confirmation opened meanwhile.
       if(openRequest?.kind==='sample' && openRequest.phase==='selection')openRequest=null;

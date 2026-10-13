@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.2",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "User-approved Akari 1.2.2: six-card picker, complete removal of sample hint internals, six editable works, updated child-facing documentation and corresponding audit expectations.",
+  "updateReason": "User-approved Akari 1.2.2 CI repair: native picker focus, CSP-safe built-in thumbnails, exact cancellation and save evidence, actual maze goal assertions.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,8 +12,8 @@
     },
     {
       "path": "Akari_1_2_2.html",
-      "sha256": "06e72a35ab20ae8f802b0f66bf2c7ecea276c16746393543e6d6bca81a1e8f88",
-      "bytes": 1701641
+      "sha256": "8bc1e0d0b08839edf01bf9189655862410c4c7ad86d18374c01811595f284a88",
+      "bytes": 1703041
     },
     {
       "path": "LANGUAGE.md",
