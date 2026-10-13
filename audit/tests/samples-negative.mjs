@@ -5,10 +5,10 @@ import assert from 'node:assert/strict';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
-import {sampleTestIds,sampleExpected,sampleNegativeIds,verifySamples,verifySamplesNegative} from '../lib/samples-contract.mjs';
+import {samplesFeature,sampleTestIds,sampleExpected,sampleNegativeIds,verifySamples,verifySamplesNegative} from '../lib/samples-contract.mjs';
 const inputs=snapshot(currentProductFile()),dir=fs.mkdtempSync(path.join(os.tmpdir(),'akari-samples-negative-'));
 fs.writeFileSync(path.join(dir,'candidate.html'),fs.readFileSync(currentProductFile()));
-const names=['dance.png','flower.png','game.png',...['dance','flower','game'].flatMap(id=>[id+'.akari.md',id+'-player.html'])];
+const names=samplesFeature.ids.flatMap(id=>[id+'.png',id+'.akari.md',id+'-player.html']);
 for(const name of names)fs.writeFileSync(path.join(dir,name),'<html>validator negative control</html>');
 // Synthetic success is only a control for rejection tests, never execution evidence.
 const control={schema:'akari-samples-evidence-v1',status:'PASS',snapshot:inputs,environment:{...{browser:browserEnvironment.version,playwright:browserEnvironment.playwright}},pageErrors:[],networkRequests:[],results:sampleTestIds.map(id=>({id,status:'PASS',observed:sampleExpected[id]})),artifacts:names.map(name=>({path:name,sha256:sha(fs.readFileSync(path.join(dir,name)))}))};

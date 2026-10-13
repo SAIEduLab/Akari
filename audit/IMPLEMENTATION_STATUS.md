@@ -4,6 +4,12 @@ The reviewed public specification and acceptance plan remain the completion cont
 
 Product checkpoint: commit68b3f1660624a3a480f439d2bb5b76522213e548, HTML SHA2561ce42744228bf5f54845284b0cbfd26c8a85aee4d0e465c4a83a8216b09deac5. [Fixed acceptance37066551472](https://github.com/SAIEduLab/Akari/actions/runs/37066551472) and [full audit37066551404](https://github.com/SAIEduLab/Akari/actions/runs/37066551404) passed every producer and aggregate. The command-evidence addition changes tests/documentation only and must receive new same-head full/fixed results before merge.
 
+## 1.2.2 sample-picker candidate
+
+The 1.2.2 candidate replaces the sample dropdown and dedicated hint controls with one sample button and a separate six-card picker. The existing unsaved-work confirmation is used before opening the picker only when work is dirty. Choosing a card loads that project directly; closing the picker preserves the current work, pending edits and history. The six editable projects cover dance, flower drawing, the star game, a programmable maze, melody creation and a branching story, using built-in materials only. The `.akari.md` project/program format and language/runtime contract IDs remain 2.
+
+This section describes the candidate's intended acceptance boundary, not a test result. Earlier commit hashes and Actions links on this page remain historical evidence and do not establish 1.2.2 acceptance. The final candidate requires new same-input sample tests, relevant regression tests, browser evidence and full audit results. Child comprehension and first-use discoverability remain separate human-evaluation questions.
+
 ## Requirement evidence
 
 All browser references below are mandatory in fixed acceptance or the existing full audit. Model evidence is identified separately. The historical checkpoints further below describe earlier states, not current open failures.

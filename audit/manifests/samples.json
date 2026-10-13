@@ -2,21 +2,29 @@
   "schema": "akari-samples-contract-v1",
   "feature": {
     "id": "editable-samples",
-    "count": 3,
+    "count": 6,
     "ids": [
       "dance",
       "flower",
-      "game"
+      "game",
+      "maze",
+      "music",
+      "story"
     ],
     "names": [
       "マスコットとだんごのダンス",
       "くるくる花もよう",
-      "星をつかまえよう"
+      "星をつかまえよう",
+      "道をつくって 迷路たんけん",
+      "おひさまの 曲づくり",
+      "ふたりの ふしぎな おさんぽ"
     ],
-    "openRequiresConfirmation": true,
+    "openRequiresConfirmation": "unsaved-only",
+    "picker": "native-dialog",
+    "cardLoadsDirectly": true,
     "selectionOnlyPreservesWork": true,
     "confirmationButtons": [
-      "はい",
+      "ほぞんせずに開く",
       "キャンセル"
     ],
     "cancelPreservesPendingEdits": true,
@@ -40,7 +48,7 @@
     "SAMPLES-BLOCK-EDIT",
     "SAMPLES-SAVE-OFFLINE",
     "SAMPLES-LOCKS",
-    "SAMPLES-RESPONSIVE-HINTS"
+    "SAMPLES-RESPONSIVE-PICKER"
   ],
   "classes": {
     "GA-STATIC": [
@@ -54,7 +62,7 @@
       "SAMPLES-BLOCK-EDIT",
       "SAMPLES-SAVE-OFFLINE",
       "SAMPLES-LOCKS",
-      "SAMPLES-RESPONSIVE-HINTS"
+      "SAMPLES-RESPONSIVE-PICKER"
     ],
     "SEMANTIC": [
       "学習課題と作品の対応",

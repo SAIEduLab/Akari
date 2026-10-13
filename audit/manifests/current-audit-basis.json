@@ -1,8 +1,8 @@
 {
   "schema": "akari-current-audit-basis-v1",
-  "productVersion": "1.2.1",
+  "productVersion": "1.2.2",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "User-approved patch release 1.2.1 and Akari_ filename convention; preserve immutable historical pins and external contracts, update current release labels, links and filename guards after reviewing the local diff.",
+  "updateReason": "User-approved Akari 1.2.2: six-card picker, complete removal of sample hint internals, six editable works, updated child-facing documentation and corresponding audit expectations.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -11,48 +11,48 @@
       "bytes": 225813
     },
     {
-      "path": "Akari_1_2_1.html",
-      "sha256": "c7d146449dc29b2eda00fa4434a70364ed07196ea3f07fd5a7625e45cbaacbf1",
-      "bytes": 1511524
+      "path": "Akari_1_2_2.html",
+      "sha256": "06e72a35ab20ae8f802b0f66bf2c7ecea276c16746393543e6d6bca81a1e8f88",
+      "bytes": 1701641
     },
     {
       "path": "LANGUAGE.md",
-      "sha256": "12a897b2ea646118c6ea41779717192630e48942cd59373ab9a6bb25e9053c3c",
-      "bytes": 113830
+      "sha256": "7f309afc12cf30c916f28138c48b632b0add09c192016e0b6ecb751d64ceb13c",
+      "bytes": 114922
     },
     {
       "path": "MANUAL.html",
-      "sha256": "cb91e1388504ff1e8503665a6e1b1627780b397de485b759da3ee33c30594852",
-      "bytes": 35680
+      "sha256": "a3554f1c2671488bfe9d4e533e767a64761ecc8e9264ab980a98b76ad3a9db4a",
+      "bytes": 37591
     },
     {
       "path": "Manual/block-mode.html",
-      "sha256": "f29f89b7d3a57e8301d2aac8a811a9343e10c909c1e112649931a49419a11904",
-      "bytes": 38683
+      "sha256": "4716980eb58979e8dfa3c66106ae04e4143a52ee3c5e5d3e0f76f54efc5bf3cd",
+      "bytes": 38861
     },
     {
       "path": "Manual/code-mode-advanced.html",
-      "sha256": "918c87a80a820c13af10153d4e78e6345cbd2081f3cb4f630bd33aa69d6dfb05",
+      "sha256": "52711083dc3e97fe9500cbdefc7ff11af35b537ac3ef5cbb15fe7d0e8ec36121",
       "bytes": 34011
     },
     {
       "path": "Manual/code-mode-beginner.html",
-      "sha256": "d2eaf694746722f67426629192882ba65fa27c7e2587010557ffe17e8c8b95e0",
+      "sha256": "7b8cd18f852d0d00d9726fcb06e9e1909c041975fff7742b83692fd52c4c78ec",
       "bytes": 33065
     },
     {
       "path": "Manual/code-mode-intermediate.html",
-      "sha256": "7d87779a16069797bdbedf3109c8e74668e157769b5fee54d67fe19af92689e8",
+      "sha256": "f60bc7eb8b3b4a07ff4a8054ff8c70ee81d10f9d646e4dded24a01f0c50d0dda",
       "bytes": 31289
     },
     {
       "path": "README.md",
-      "sha256": "00f779b3cab6909ad19084b8d4aa31985ddff15458e755de182e20d90b4e6920",
-      "bytes": 5840
+      "sha256": "8e449e02b7e214951772ad2c0b2fc081d24cddf8580f21b383bf384220a8b581",
+      "bytes": 6165
     },
     {
       "path": "audit/README.md",
-      "sha256": "b2f90a016ec044bf4b26d883bad0662eff8901189e35f721d25d5ff98533e636",
+      "sha256": "d3512fa87f86a3742349219401164b8457933e1c21580eb13fa74e899bf0602e",
       "bytes": 8788
     },
     {
@@ -117,8 +117,8 @@
     },
     {
       "path": "audit/manifests/features.json",
-      "sha256": "77e8b8c69dc6a60ae115d0fd57d873fef720727e8312dcc5597ae56e71286880",
-      "bytes": 19252
+      "sha256": "8786dacbcc37255325a20fade6b77385b3033d3c3880a0aa61dfc1f539c5a197",
+      "bytes": 19535
     },
     {
       "path": "audit/manifests/license-migration.json",
@@ -127,8 +127,8 @@
     },
     {
       "path": "audit/public-files.json",
-      "sha256": "afab0cd70d95b370f264161bb47913fefa5b7e946ce47406387517d49d446b54",
-      "bytes": 19765
+      "sha256": "0efafce94f43ca23cca8098ddfacd9cad4d95c05efe3b374610e3b07c5c3e00d",
+      "bytes": 19842
     },
     {
       "path": "audit/record-current-basis.mjs",
