@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.2",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "User-approved Akari 1.2.2 CI repair: native picker focus, CSP-safe built-in thumbnails, exact cancellation and save evidence, actual maze goal assertions.",
+  "updateReason": "User-approved Akari 1.2.2 audit repair: observe live block workspace scroll identically before and after cancellation while retaining strict content and history equality.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {

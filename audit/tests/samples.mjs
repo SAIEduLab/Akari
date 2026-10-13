@@ -24,11 +24,18 @@ const fingerprint=page=>page.evaluate(()=>{
  // captureEditorState() refreshes the cached caret/scroll view when the open
  // request checks unsaved work. Observe those same live DOM values before and
  // after the request, without flushing, committing, or changing editor state.
- for(const [key,selector]of [['main','#codeEditor'],['draft','#callableCode']]){
+ for(const [key,selector,blockRoot]of [['main','#codeEditor','#blockEditor'],['draft','#callableCode','#callableBlocks']]){
   const session=editor[key],textarea=document.querySelector(selector);
   if(session?.mode==='code'&&textarea){
    session.codeSelection={start:textarea.selectionStart,end:textarea.selectionEnd,direction:textarea.selectionDirection};
    session.scrollState={...session.scrollState,codeTop:textarea.scrollTop,codeLeft:textarea.scrollLeft};
+  }
+  // Block view caches these fields in its asynchronous workspace scroll event.
+  // Read the same live scroll position at both boundaries; retain zoom, page,
+  // collapse state and every other editor field, and still reject actual scroll.
+  const workspace=document.querySelector(blockRoot+' .blockui-workspace');
+  if(session?.mode==='blocks'&&workspace){
+   session.scrollState={...session.scrollState,blockTop:workspace.scrollTop,blockLeft:workspace.scrollLeft};
   }
  }
  return{project:JSON.stringify(Akari.app.project),editor,source:document.querySelector('#codeEditor').value};
