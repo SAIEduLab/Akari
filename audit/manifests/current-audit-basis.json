@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Approved block action UI repair: selected controls, in-flow expression menus, safe pointer activation and no scroll snapback; integrity records do not assert execution PASS.",
+  "updateReason": "Approved CI repair: retain else branch source selection on focus and update obsolete test routes and labels without weakening semantic assertions.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,8 +12,8 @@
     },
     {
       "path": "Akari1_2_0.html",
-      "sha256": "bc04c6d464381b6395edc4293e194dc6e7f65ce530e67efb61e4d1360cec63e4",
-      "bytes": 1510796
+      "sha256": "59c321bde487400e6114b63a152ebbf7684583398955e66b4dfd31b576ab24fb",
+      "bytes": 1511265
     },
     {
       "path": "LANGUAGE.md",

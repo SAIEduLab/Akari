@@ -1,3 +1,4 @@
+const U = require('./ui-routes.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 const {chromium}=require('playwright'),assert=require('assert/strict'),{pathToFileURL}=require('url'),path=require('path'),fs=require('fs');
 (async()=>{
@@ -25,7 +26,7 @@ const {chromium}=require('playwright'),assert=require('assert/strict'),{pathToFi
  }
  assert(gapActions.includes('body-gap-next')&&gapActions.includes('body-gap-previous'),'both gap directions are exercised');
  assert.equal(rendered.length,300);assert.equal(await root.locator('.blockui-body-gap').count(),0);
- const say=root.locator('.blockui-node[data-schema-id="Say"]').first();async function move(){await say.locator(':scope > .blockui-node-head .blockui-actions > summary').click();await say.locator(':scope > .blockui-node-head [data-blockui-action="move"]').click();}
+ const say=root.locator('.blockui-node[data-schema-id="Say"]').first();async function move(){await U.openNodeMenu(say);await say.locator(':scope > .blockui-node-head [data-blockui-action="move"]').click();}
  await move();await p.keyboard.press('Escape');assert.deepEqual({...await state(p),mode:'code'},before);
  await move();await root.locator('.blockui-script > .blockui-node-content > .blockui-body > [data-insert-index="300"]').click();
  assert.deepEqual(await p.evaluate(()=>Akari.app.editorState.main.syntaxAst.body.slice(-2).map(n=>n.value.value)),[2,1]);assert.equal((await state(p)).history,before.history+1);

@@ -336,8 +336,8 @@ const cases = {
     assert.deepEqual(newValues,oldValues);
     assert.equal(historyAfter,before.history+1,'only operator change is committed');
     const repeat=p.locator('#blockEditor .blockui-node[data-schema-id="RepeatCount"]'); await U.openNodeMenu(repeat);
-    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="remove"]').innerText(),'この囲いと中の命令を消す');
-    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="duplicate"]').innerText(),'同じものをもう1つ');
+    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="remove"]').innerText(),'このまとまりと中のブロックをけす');
+    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="duplicate"]').innerText(),'同じものをもう1つ作る');
     await p.keyboard.press('Escape');
     await p.locator('#blockEditor [data-blockui-action="body-insert"]').first().click();
     assert.equal(await p.locator('#blockEditor [data-blockui-action="cancel"]').innerText(),'操作を取り消す');

@@ -24746,7 +24746,15 @@ function createAkariExtensionHost(options) {
       for (const n of root.querySelectorAll('.blockui-slot-active'))
         n.classList.remove('blockui-slot-active');
       node?.classList.add('blockui-focused');
-      if (node) selection(node.dataset.blockId);
+      if (node) {
+        const id = node.dataset.blockId,
+          wrapper = target.closest('[data-blockui-body-wrapper]'),
+          body = wrapper?.dataset.blockOwner === id
+            ? wrapper.dataset.blockuiBodyWrapper
+            : target.matches('[data-blockui-annotation="elseComment"]') ? 'elseBody' : null;
+        // Focusing a branch wrapper must retain its source position, not select only its owner.
+        selection(id, body ? { body, line: branchSourceLines.get(id + ':' + body) } : null);
+      }
       slot?.classList.add('blockui-slot-active');
       if(slot)doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));
     }
