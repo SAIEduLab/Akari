@@ -1,0 +1,18 @@
+{
+  "schema": "akari-reviewed-document-update-v1",
+  "originalMigrationSha256": "2a7b27269e8f0bcc7d972416058a0ddb44d242d0e6b92b72497ce65764479e42",
+  "baselineCommit": "dfe384533e6100273b7b6535382be5d3c9f445a7",
+  "updates": [
+    {
+      "id": "R06-LANGUAGE-STATEMENT-MENU",
+      "path": "LANGUAGE.md",
+      "section": "コードとブロックで同じ本文を編集する",
+      "originalSectionBodySha256": "054c8b0b7cd35d45244afb09043a1992d43c518e6ac481cde299367410e6e364",
+      "currentSectionBodySha256": "95c888dc8de32cfa4de3e066d2a96a7e6f20dcb5ee7cfb04c9def2bf75cae691",
+      "changesMeaning": false,
+      "reason": "R06 makes the existing statement operations visible as ならべかえ. Update the menu label, statement/expression distinction and memo-entry wording while retaining every operation and editing guarantee. Keep the original migration record and all other section hashes unchanged.",
+      "retainedGuarantees": ["move", "duplicate", "move-up-down", "delete", "memo", "expression-editing", "native-keyboard", "escape-cancel", "source-preservation"],
+      "testReferences": ["REVIEW-DEFAULTS-FIRST-RUN", "UI-BUTTON-BLOCK-COMMANDS", "JAPANESE-CONTRACT/SIX-DOCUMENT-HASHES"]
+    }
+  ]
+}

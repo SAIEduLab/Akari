@@ -265,6 +265,7 @@
     "audit/prepare-publication.mjs",
     "audit/public-files.json",
     "audit/record-current-basis.mjs",
+    "audit/reviewed/CHILD_UX_DOCUMENT_REVISION.json",
     "audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md",
     "audit/reviewed/PUBLIC_UX_ACTIONS_ACCEPTANCE_PLAN.md",
     "audit/run-editor-surface-tests.mjs",

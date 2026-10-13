@@ -3,7 +3,7 @@ const root=path.resolve(__dirname,'../..');
 const basisPath='audit/manifests/current-audit-basis.json';
 const releasePath='audit/manifests/release-1.2.0.json';
 // Changed only by the explicit reviewed-basis recording command, never by a gate.
-const REVIEWED_BASIS_SHA256='3e2a05beec25643043eb95c11b7fded2cd8ac6fe71d00052b4b0f3bdf4445ae3';
+const REVIEWED_BASIS_SHA256='362209bd2f880c074c68dfc8b175cc982dd54213faeeabca38d8b2a3c86e6209';
 const basisTargets=Object.freeze([
   'Akari1_2_0.html','AUDIT.md','LANGUAGE.md','MANUAL.html','README.md',
   'Manual/block-mode.html','Manual/code-mode-advanced.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html',

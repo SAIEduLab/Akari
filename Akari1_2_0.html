@@ -5386,6 +5386,11 @@ body[data-editor-mode] .monitor-window .runtime-monitor {
 body[data-editor-mode] .monitor-window .output-disclosure {
   flex: 0 0 auto;
 }
+/* Keep an expanded output drawer reachable when its monitor row is short. */
+body[data-editor-mode="code"] .monitor-window,
+body[data-editor-mode="blocks"] .monitor-window:not(.blockui-side-folded) {
+  overflow: auto;
+}
 body[data-editor-mode] .side:has(.monitor-window .output-disclosure[open]) {
   overflow-y: auto;
 }

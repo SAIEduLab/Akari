@@ -57,6 +57,42 @@ async function install(p,{source='「もとの動き」と言う。',args=[]}={}
   if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();
   await p.locator('#editorModecode').click();
 }
+async function openOutputWithWheel(p) {
+  const observations=[],panel=p.locator('.monitor-window'),output=panel.locator('.output-disclosure'),summary=output.locator('> summary');
+  const geometry=()=>summary.evaluate(e=>{const r=e.getBoundingClientRect(),panel=e.closest('.monitor-window'),box=panel.getBoundingClientRect(),side=panel.closest('.side'),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return{hit:!!hit&&(e===hit||e.contains(hit)),inside:r.top>=box.top&&r.bottom<=box.bottom,inViewport:r.top>=0&&r.bottom<=innerHeight,scrollTop:panel.scrollTop,sideScrollTop:side?.scrollTop||0,overflow:getComputedStyle(panel).overflowY,center:{x:r.x+r.width/2,y:r.y+r.height/2}};});
+  async function wheelToSummary(){
+    let wheelCount=0,after;
+    // An inner monitor and its enclosing side can each consume a wheel step.
+    // Use only the visible part of the panel and preserve the existing timeout.
+    do{const box=await panel.boundingBox(),viewport=p.viewportSize();assert.ok(box&&box.width>0&&box.height>0);
+      const top=Math.max(60,box.y),bottom=Math.min(viewport.height-42,box.y+box.height);
+      await p.mouse.move(box.x+box.width/2,bottom>top?(top+bottom)/2:viewport.height/2);
+      await p.mouse.wheel(0,600);await p.waitForTimeout(100);wheelCount++;after=await geometry();
+    }while(wheelCount<3&&!(after.hit&&after.inside&&after.inViewport));
+    assert.equal(after.hit,true);assert.equal(after.inside,true);assert.equal(after.inViewport,true);
+    return{wheelCount,after};
+  }
+  for(const mode of ['code','blocks']){
+  await p.locator('#editorMode'+mode).click();
+  const toggle=panel.locator('.blockui-side-toggle');if(await toggle.isVisible()&&await toggle.getAttribute('aria-expanded')==='false')await toggle.click();
+  for(const [width,height]of [[1180,757],[1366,768],[1188,848]]){
+    await p.setViewportSize({width,height});
+    if(await output.getAttribute('open')!==null)await summary.click();
+    const before=await geometry();
+    // Native wheel must expose the drawer; keyboard focus or DOM scrolling is
+    // not a substitute for its ordinary pointer route at short heights.
+    const {after,wheelCount}=await wheelToSummary();
+    if(!before.hit||!before.inside||!before.inViewport)assert.ok(after.scrollTop>before.scrollTop||after.sideScrollTop>before.sideScrollTop,'native wheel scrolls clipped output into view');
+    await p.mouse.click(after.center.x,after.center.y);assert.notEqual(await output.getAttribute('open'),null);
+    const openRecovery=await wheelToSummary();await p.mouse.click(openRecovery.after.center.x,openRecovery.after.center.y);
+    assert.equal(await output.getAttribute('open'),null);const closeRecovery=await wheelToSummary();
+    await p.mouse.click(closeRecovery.after.center.x,closeRecovery.after.center.y);
+    assert.notEqual(await output.getAttribute('open'),null);assert.equal(await p.locator('#console').isVisible(),true);
+    observations.push({mode,width,height,before,after,wheelCount,openRecovery,closeRecovery,nativeWheel:true,opened:true,reopenedAfterClose:true});
+  }
+  }
+  return observations;
+}
 async function syntaxCase(p,c) {
   const [id,source,fixed,code,original,help]=c;
   const args=id==='argument-name'?['点数']:id.startsWith('argument-')?['点数','名前']:[];
@@ -130,9 +166,9 @@ try {await withBrowser(chrome,async browser=>{
     const file=await p.evaluate(()=>Akari.serializeProject(Akari.app.project,Akari.app.assetStore).replaceAll(Akari.diagnostics.DEFAULT_MASCOT_SHA256,'0'.repeat(64)));
     const previous=await p.locator('#console').textContent();await p.locator('#fileInput').setInputFiles({name:'broken-digest.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
     await p.waitForFunction(previous=>document.querySelector('#console').textContent!==previous,previous);
-    await reveal(p.locator('#console'));const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを開けませんでした/);assert.match(visible,/選んだファイルは変えていません/);assert.doesNotMatch(visible,/SHA-256|F508/);
+    const outputReachability=await openOutputWithWheel(p);const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを開けませんでした/);assert.match(visible,/選んだファイルは変えていません/);assert.doesNotMatch(visible,/SHA-256|F508/);
     const disclosure=p.locator('#console > details').last();await disclosure.locator('> summary').click();const detail=await disclosure.locator('> pre').innerText();assert.match(detail,/F508.*読み込み失敗: asset SHA-256が一致しません/);
-    assert.deepEqual(await state(p),before);return {visible,detail,before,after:await state(p),source:'genuinely malformed serialized asset digest'};
+    assert.deepEqual(await state(p),before);return {visible,detail,before,after:await state(p),source:'genuinely malformed serialized asset digest',outputReachability};
   });
   for(const [id,code,message]of [['digest','F508','同じSHA-256でbyteLengthが異なります'],['length','F508','asset byteLengthが一致しません'],['orphan','F503','保存Projectにorphan assetまたは不足assetがあります']])
     await run('save/'+id+'-fault',async p=>{
@@ -140,9 +176,9 @@ try {await withBrowser(chrome,async browser=>{
       await p.evaluate(({code,message})=>{const store=Akari.app.assetStore;window.restoreDiagnosticGet={store,get:store.get};
         store.get=()=>{throw new Akari.diagnostics.AkariError(code,message);};},{code,message});
       try{await p.locator('#saveBtn').click();}finally{await p.evaluate(()=>{const {store,get}=window.restoreDiagnosticGet;store.get=get;delete window.restoreDiagnosticGet;});}
-      await reveal(p.locator('#console'));const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを保存（ほぞん）できませんでした/);assert.match(visible,/この画面の作品は残っています/);assert.doesNotMatch(visible,/SHA-256|byteLength|orphan asset/);
+      const outputReachability=await openOutputWithWheel(p);const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを保存（ほぞん）できませんでした/);assert.match(visible,/この画面の作品は残っています/);assert.doesNotMatch(visible,/SHA-256|byteLength|orphan asset/);
       const disclosure=p.locator('#console > details').last();await disclosure.locator('> summary').click();const detail=await disclosure.locator('> pre').innerText();assert.ok(detail.includes(code));assert.ok(detail.includes(message));
-      assert.deepEqual(downloads,[]);assert.deepEqual(await state(p),before);return {source:'explicit synthetic asset lookup failure for UI/atomic-save coverage',code,message,visible,detail,before,after:await state(p),downloads};
+      assert.deepEqual(downloads,[]);assert.deepEqual(await state(p),before);return {source:'explicit synthetic asset lookup failure for UI/atomic-save coverage',code,message,visible,detail,before,after:await state(p),downloads,outputReachability};
     });
   await run('import/current-and-incoming',async p=>{
     await install(p);const before=await state(p),source='始めると、あかりは「新しい動き」と言う。あかりがクリックされると、「もうひとつ」と言う。';

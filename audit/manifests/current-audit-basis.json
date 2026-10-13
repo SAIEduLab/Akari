@@ -2,23 +2,23 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Explicitly approved child recovery repairs and preserved acceptance checks; add the independently reviewed new selection ownership test to the strict required ID set, retaining all old ten cases and rejection controls.",
+  "updateReason": "User-authorized R01-R08 child recovery and local UX work; exact R06 menu wording recorded separately while retaining original migration records and all other section hashes; visible palette preparation and native monitor output reachability in both editor modes added without relaxing expectations or timeouts.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
       "path": "AUDIT.md",
-      "sha256": "b01e22f395c6fce02eeeb85a79354035d4ad59ec8b8978698dc8a7f7cf1ddd73",
-      "bytes": 224187
+      "sha256": "4d8a9233537a37937c3f93f99e267cae708b1d18246278c1208beacbe5d1f1e1",
+      "bytes": 225451
     },
     {
       "path": "Akari1_2_0.html",
-      "sha256": "ba01fabdbe9dc7215e2f4a60194e61637348c8843033eeebc79130ca0a48c9ff",
-      "bytes": 1507629
+      "sha256": "5e651d8e820d83020c37ce03a2a6db0e40fcaa922978f59bf896b74a9c304941",
+      "bytes": 1507850
     },
     {
       "path": "LANGUAGE.md",
-      "sha256": "e96699fa57fa477f41eb42f8d514bdafaeee6532acc8d2573eff01e865189ddb",
-      "bytes": 112978
+      "sha256": "5a49c607f02d5d80ec789781870e9a585242e1eef6052c12ee9d966f993a8c6a",
+      "bytes": 113364
     },
     {
       "path": "MANUAL.html",
@@ -127,8 +127,8 @@
     },
     {
       "path": "audit/public-files.json",
-      "sha256": "d3ff4b8aa0a0dd239bf74c062b567e05ac65efa75f29c70541f0ec71f17e57ad",
-      "bytes": 19709
+      "sha256": "d064edcf215ca9c350a366b7f862343b6560f6e584f2d495d5d3493204222a8e",
+      "bytes": 19763
     },
     {
       "path": "audit/record-current-basis.mjs",
