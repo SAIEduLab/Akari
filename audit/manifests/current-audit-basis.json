@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.0",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Explicitly approved R01-R08 child recovery and local UX repairs, with independently observed asynchronous runtime preparation corrected in two existing acceptance suites without changing fixtures, assertions, IDs, thresholds or timeouts.",
+  "updateReason": "Explicitly approved child recovery repairs and preserved acceptance checks; add the independently reviewed new selection ownership test to the strict required ID set, retaining all old ten cases and rejection controls.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
