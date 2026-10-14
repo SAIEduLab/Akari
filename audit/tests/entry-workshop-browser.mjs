@@ -1,3 +1,4 @@
+import {auditRoute,auditOperation,routeLeaves} from '../lib/entry-lesson-routes.mjs';
 import fs from 'node:fs';import path from 'node:path';import cp from 'node:child_process';import crypto from 'node:crypto';import assert from 'node:assert/strict';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';import {currentProductFile} from '../lib/product-path.cjs';
 import {tutorialSteps,browserIds,deniedRoutes,verifyEntryReport,entryProvenance} from '../lib/entry-workshop-contract.mjs';
@@ -23,60 +24,50 @@ async function row(browser,id,fn,contextOptions={}){const result={id,status:'RUN
  try{return await fn(p);}catch(error){await picture(p,id+'-failure').catch(()=>{});throw error;}},{initialUiLevel:null,...contextOptions});result.status='PASS';}
  catch(error){result.status='FAIL';result.observations.error=error.stack;}
  console.log(result.status+' '+id+(result.status==='FAIL'?' '+result.observations.error:''));save();}
-async function roles(p){return p.evaluate(()=>{const b=Akari.app.editorState.main.blockView.bodies.body,s=b.find(n=>n.schemaId==='Say'),m=b.filter(n=>n.schemaId==='MotionCommand:GLIDE_DIRECTION');
- const literal=n=>n?.schemaId==='QuantityLiteral'?literal(n.inputs.value):n;
- return{text:s?.inputs.value.id,speechTime:literal(s?.inputs.seconds)?.id,outTime:literal(m[0]?.inputs.args[0])?.id,outDistance:literal(m[0]?.inputs.args[1])?.id,
- backId:m[1]?.id,backTime:literal(m[1]?.inputs.args[0])?.id,backDistance:literal(m[1]?.inputs.args[1])?.id,speechId:s?.id,root:Akari.app.editorState.main.blockView.id};});}
+async function roles(p){return p.evaluate(()=>{const root=Akari.app.editorState.main.blockView.bodies.body,speech=root.find(n=>n.schemaId==='Say'),literal=n=>n?.schemaId==='QuantityLiteral'?literal(n.inputs.value):n;
+ return {text:speech?.inputs.value.id,speechTime:literal(speech?.inputs.seconds)?.id,speechId:speech?.id,root:Akari.app.editorState.main.blockView.id};});}
 const field=(p,id,key='value')=>p.locator('#blockEditor [data-block-id="'+id+'"][data-blockui-field="'+key+'"]');
 const activate=(p,control)=>p.entryTouch?control.tap():control.click();
 async function edit(p,id,value){const control=field(p,id);await activate(p,control);await control.press('ControlOrMeta+A');await p.keyboard.insertText(String(value));await control.press('Enter');}
-async function positive(p,id){const r=await roles(p);let downloaded=null;
- switch(id){
- case 'choose-click':await activate(p,p.locator('#entryClickEvent'));break;
- case 'add-speech':await activate(p,p.locator('#blockEditor [data-blockui-schema="Say:timed"]'));break;
- case 'speech-text':await edit(p,r.text,'こんにちは！');break;
- case 'speech-time':await edit(p,r.speechTime,2);break;
- case 'add-outward':case 'add-return':await activate(p,p.locator('#blockEditor [data-blockui-schema="MotionCommand:GLIDE_DIRECTION"]'));break;
- case 'outward-time':await edit(p,r.outTime,1);break;
- case 'outward-distance':await edit(p,r.outDistance,100);break;
- case 'return-direction':await field(p,r.backId,'direction').selectOption('left');break;
- case 'return-time':await edit(p,r.backTime,1);break;
- case 'return-distance':await edit(p,r.backDistance,100);break;
- case 'run-original':case 'run-longer':case 'run-reordered':await activate(p,p.locator('#runBtn'));break;
- case 'try-original':case 'try-longer':case 'try-reordered':{
-  const start=await p.locator('#formSurface .component[data-id="sprite-1"]').evaluate(n=>parseFloat(n.style.left));
-  await p.evaluate(()=>{window.entryMeasuredFrames=[];window.entryMeasuring=true;
-    const tick=time=>{const n=document.querySelector('#formSurface .component[data-id="sprite-1"]');
-      window.entryMeasuredFrames.push({time,x:parseFloat(n.style.left),speech:document.querySelector('.sprite-bubble-text')?.textContent||'',step:document.body.dataset.tutorialStep});
-      if(window.entryMeasuring)requestAnimationFrame(tick);};requestAnimationFrame(tick);});
-  const actor=p.locator('#formSurface .component[data-id="sprite-1"]');
-  if(p.entryTouch&&id==='try-longer'){await actor.focus();await actor.press('Enter');}else await activate(p,actor);
-  await waitStep(p,'stop-'+id.slice(4));
-  await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-  const samples=await p.evaluate(()=>{window.entryMeasuring=false;return window.entryMeasuredFrames;});
-  const expected=id==='try-original'?100:150,peak=Math.max(...samples.map(s=>s.x)),
-    frameGap=Math.max(...samples.slice(1).map((s,i)=>s.time-samples[i].time)),renderTolerance=1+expected*Math.min(100,frameGap)/1000;
-  assert.ok(peak-start>=expected-renderTolerance,id+' measured distance '+JSON.stringify({start,peak,expected,frameGap,renderTolerance}));assert.ok(Math.abs(samples.at(-1).x-start)<1,id+' actual return');
-  const talking=samples.findIndex(s=>s.speech==='こんにちは！'),moving=samples.findIndex(s=>s.x>start+1);assert.ok(talking>=0&&moving>=0,'speech and movement actually rendered');
-  assert.ok(id==='try-reordered'?moving<talking:talking<moving,id+' actual order');
-  (p.entryRuntimeObservations||=[]).push({id,start,peak,expected,frameGap,renderTolerance,samples});break;}
- case 'stop-original':case 'stop-longer':case 'stop-reordered':await activate(p,p.locator('#stopBtn'));break;
- case 'longer-outward':await edit(p,r.outDistance,150);break;
- case 'longer-return':await edit(p,r.backDistance,150);break;
- case 'reorder-speech':await activate(p,p.locator('#blockEditor .blockui-node[data-block-id="'+r.speechId+'"] .blockui-node-tools [data-blockui-action="more"]').first());
-  await activate(p,p.locator('#blockEditor [data-blockui-action="move"][data-block-id="'+r.speechId+'"]'));
-  await activate(p,p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+r.root+'"][data-blockui-body="body"][data-insert-index="3"]'));break;
- case 'undo-reorder':await activate(p,p.locator('#undoBtn'));break;
- case 'save-work':{
-  const download=await Promise.all([p.waitForEvent('download'),activate(p,p.locator('#saveBtn'))]).then(x=>x[0]);
-  downloaded=path.join(artifacts,'practice-'+Date.now()+'.akari.md');await download.saveAs(downloaded);assert.equal(await download.failure(),null);break;}
- case 'verify-save':throw Error('file verification requires an observed download');
- default:throw Error('No independent positive operation for '+id);
+const fieldAt=(p,ref)=>p.evaluate(ref=>{let n=Akari.app.editorState.main.blockView;for(const k of ref)n=n[k];if(n.schemaId==='QuantityLiteral')n=n.inputs.value;return {id:n.id,value:n.fields.value};},ref);
+async function positive(p,id){
+ const course=p.entryCourse||'score',leaf=p.entryLeaf||'goal',op=auditOperation(id,course,leaf);
+ if(op.kind==='choice'){await activate(p,p.locator(op.key==='finish'?'#tutorialFinish':'#tutorialChoices [data-tutorial-choice="'+op.key+'"]'));return null;}
+ if(op.kind==='insert'){
+  const parent=await p.evaluate(ref=>{let n=Akari.app.editorState.main.blockView;for(const k of ref)n=n[k];return n.id;},op.parent);
+  await activate(p,p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+parent+'"][data-blockui-body="'+op.body+'"][data-insert-index="'+op.at+'"]').first());
+  await activate(p,p.locator('#blockEditor [data-lesson-block="'+op.key+'"]'));return null;
  }
- return downloaded;
+ if(op.kind==='field'){const ref=await fieldAt(p,op.ref);if(id.endsWith('-change'))p.entryOldValue=ref.value;await edit(p,ref.id,op.value);if(id.endsWith('-change'))assert.equal((await fieldAt(p,op.ref)).value,op.value);return null;}
+ if(id.startsWith('run-')){await activate(p,p.locator('#runBtn'));return null;}
+ if(id.startsWith('stop-')){await activate(p,p.locator('#stopBtn'));return null;}
+ if(id.endsWith('-undo')){await activate(p,p.locator('#undoBtn'));const change=auditOperation(course+'-'+leaf+'-change',course,leaf);assert.equal((await fieldAt(p,change.ref)).value,p.entryOldValue,'ordinary Undo restores the freely chosen numeric edit');return null;}
+ if(id.startsWith('try-')){
+  const count=id==='try-original'?3:id==='try-'+course?2:course==='score'?6:2,actor=p.locator('#formSurface .component[data-id="sprite-1"]');
+  await p.evaluate(()=>{window.entryMeasuredFrames=[];window.entryMeasuring=true;const tick=time=>{const n=document.querySelector('#formSurface .component[data-id="sprite-1"]'),score=document.querySelector('#formSurface .component[data-id="practice-board"]');
+    window.entryMeasuredFrames.push({time,x:parseFloat(n.style.left),y:parseFloat(n.style.top),transform:n.style.transform,speech:document.querySelector('.sprite-bubble-text')?.textContent||'',score:score?.textContent||''});if(window.entryMeasuring)requestAnimationFrame(tick);};requestAnimationFrame(tick);});
+  for(let i=0;i<count;i++){
+   if(p.entryTouch&&i===0){await actor.focus();await actor.press('Enter');}else await activate(p,actor);
+   if(i<count-1){await p.waitForFunction(()=>document.querySelector('#formSurface .component[data-id="sprite-1"]').dataset.tutorialBlocked==='true');
+    await p.waitForFunction(()=>document.querySelector('#formSurface .component[data-id="sprite-1"]').dataset.tutorialBlocked==='false');}
+  }
+  await waitStep(p,'stop-'+id.slice(4));await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  const samples=await p.evaluate(()=>{window.entryMeasuring=false;return window.entryMeasuredFrames;});
+  assert.ok(samples.some(s=>s.speech==='つかまった！'),'actual catch response');assert.ok(new Set(samples.map(s=>s.x+','+s.y)).size>1,'actual escape');
+  if(id.includes(course+'-'+leaf)){
+   if(leaf==='goal'||leaf==='bonus')assert.ok(samples.some(s=>s.speech==='クリア！'),'visible conditional celebration');
+   if(leaf==='remaining')assert.ok(samples.some(s=>s.score.startsWith('あと：')),'visible subtraction result');
+   if(leaf==='zigzag'||leaf==='dance')assert.ok(new Set(samples.map(s=>s.transform+':'+s.x)).size>=3,'visible repeated movement');
+  }
+  (p.entryRuntimeObservations||=[]).push({id,clicks:count,samples});return null;
+ }
+ switch(id){case 'choose-click':await activate(p,p.locator('#entryClickEvent'));break;
+ case 'save-work':{const download=await Promise.all([p.waitForEvent('download'),activate(p,p.locator('#saveBtn'))]).then(x=>x[0]);const file=path.join(artifacts,'practice-'+Date.now()+'.akari.md');await download.saveAs(file);assert.equal(await download.failure(),null);return file;}
+ case 'verify-save':throw Error('file verification requires an observed download');default:throw Error('No independent operation for '+id);}
+ return null;
 }
 async function reach(p,goal){await p.locator('#tutorialStart').click();let download=null;
- for(const id of tutorialSteps){await waitStep(p,id);if(id===goal)return download;const saved=await positive(p,id);if(saved)download=saved;}
+ for(const id of auditRoute(p.entryCourse||'score',p.entryLeaf||'goal')){await waitStep(p,id);if(id===goal)return download;const saved=await positive(p,id);if(saved)download=saved;}
  throw Error('goal not reached '+goal);}
 async function exitAndResume(p,id){
  const old=await read(p),before=content(old);delete before.state;
@@ -86,7 +77,7 @@ async function exitAndResume(p,id){
  await p.locator('#uiLevel').selectOption('basic');await p.locator('#uiLevel').selectOption('entry');
  await activate(p,p.locator('#tutorialStart'));let downloaded=null;
  const observations=p.entryRuntimeObservations?.slice();
- for(let i=0;i<4;i++){const current=(await read(p)).step;if(current===id)break;assert.ok(current,'resume is live');const file=await positive(p,current);if(file)downloaded=file;await waitStep(p,tutorialSteps[tutorialSteps.indexOf(current)+1]);}
+ for(let i=0;i<4;i++){const current=(await read(p)).step;if(current===id)break;assert.ok(current,'resume is live');const file=await positive(p,current);if(file)downloaded=file;const route=auditRoute(p.entryCourse||'score',p.entryLeaf||'goal');await waitStep(p,route[route.indexOf(current)+1]);}
  p.entryRuntimeObservations=observations;await waitStep(p,id);
  return {record:{id,before,retained,after,remainingGuards},downloaded};
 }
@@ -205,14 +196,15 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
  await row(browser,browserIds[9],async p=>{
   await reach(p,'speech-text');const r=await roles(p),input=field(p,r.text),before=await read(p);
   await input.fill('違う言葉');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
-  await input.fill('こんにちは！');await input.dispatchEvent('compositionstart');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
-  await input.dispatchEvent('compositionend');await input.press('Enter');await waitStep(p,'speech-time');
-  const time=field(p,(await roles(p)).speechTime),wrong=await read(p);await time.fill('999');await time.press('Enter');assert.equal((await read(p)).step,'speech-time');assert.equal((await read(p)).source,wrong.source);
-  await time.press('Escape');await edit(p,(await roles(p)).speechTime,2);await waitStep(p,'add-outward');
-  await p.locator('#blockEditor [data-blockui-schema="MotionCommand:GLIDE_DIRECTION"]').dblclick();await waitStep(p,'outward-time');assert.equal(await p.evaluate(()=>Akari.app.editorState.main.blockView.bodies.body.length),2);
+  await input.fill('つかまった！');await input.dispatchEvent('compositionstart');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
+  await input.dispatchEvent('compositionend');await input.press('Enter');await waitStep(p,'add-escape');
+  const wrong=await read(p),destination=await roles(p);
+  await p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+destination.root+'"][data-blockui-body="body"][data-insert-index="2"]').first().click();
+  await p.locator('#blockEditor [data-lesson-block="escape"]').dblclick();await waitStep(p,'run-original');
+  assert.equal(await p.evaluate(()=>Akari.app.editorState.main.blockView.bodies.body.filter(n=>n.schemaId==='MotionCommand:GOTO').length),1);
   await p.locator('#tutorialExit').focus();await p.keyboard.press('Tab');assert.equal(await p.evaluate(()=>document.activeElement.dataset.tutorialBlocked!=='true'&&document.activeElement.getClientRects().length>0),true);
   const pending=await read(p);await p.locator('#tutorialExit').click();assert.equal((await read(p)).step,null);
-  return{before,wrong,pending,afterExit:await read(p),wrongTextDidNotAdvance:true,unconfirmedIMEDidNotAdvance:true,outOfRangeDidNotCommit:true,doubleClickInsertedOnce:true};
+  return{before,wrong,pending,afterExit:await read(p),wrongTextDidNotAdvance:true,unconfirmedIMEDidNotAdvance:true,doubleClickInsertedOnce:true};
  });
  await row(browser,browserIds[10],async p=>{
   await reach(p,'save-work');const before=await read(p);await p.evaluate(()=>{window.originalCreateURL=URL.createObjectURL;URL.createObjectURL=()=>{throw Error('Injected download preparation failure');};});
@@ -228,7 +220,7 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   await p.locator('#tutorialSavedFile').setInputFiles(downloaded);await p.waitForFunction(()=>!!window.delayedFileResolve);
   await p.locator('#tutorialExit').click();const exited=await read(p);await p.evaluate(()=>{File.prototype.text=window.originalFileText;window.delayedFileResolve();});
   await p.evaluate(()=>new Promise(r=>setTimeout(r,120)));assert.equal((await read(p)).step,null);assert.deepEqual(content(await read(p)),content(exited));assert.equal(await p.locator('[data-tutorial-blocked],.tutorial-target').count(),0);
-  await p.reload();await p.locator('#recoveryModal.show').waitFor();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>Akari.app.project.name==='あいさつして もどる');assert.equal((await read(p)).step,null);assert.equal(await p.locator('#tutorialGuide').isVisible(),false);
+  await p.reload();await p.locator('#recoveryModal.show').waitFor();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>Akari.app.project.name==='さかなキャッチ');assert.equal((await read(p)).step,null);assert.equal(await p.locator('#tutorialGuide').isVisible(),false);
   return{exited,restored:await read(p),staleCallbackIgnored:true,progressNotPersisted:true};
  });
  await row(browser,browserIds[12],async p=>{p.entryTouch=true;await p.locator('#tutorialStart').tap();const steps=[];let downloaded=null;
@@ -248,6 +240,22 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='キーボードで起動');const observed=await read(p);assert.equal(observed.project,before.project);assert.equal(observed.source,before.source);
   await p.locator('#stopBtn').click();return{before,observed,afterStop:await read(p),emptyFirstBodyDidNotHideExecutableSecondBody:true,normalKeyboardActivation:true,screenshot:await picture(p,'normal-keyboard')};
  });
+ await row(browser,browserIds[14],async p=>{const routes=[];
+  for(const [course,leaves]of Object.entries(routeLeaves))for(const leaf of leaves){
+   if(routes.length){await p.reload();const recovery=p.locator('#recoveryModal.show');if(await recovery.isVisible())await p.locator('#recoveryDiscard').click();}
+   p.entryCourse=course;p.entryLeaf=leaf;p.entryRuntimeObservations=[];
+   p.once('dialog',d=>d.accept());await p.locator('#tutorialStart').click();let downloaded=null;const exits=[];
+   for(const id of auditRoute(course,leaf)){
+    await waitStep(p,id);
+    if(id.startsWith(course+'-')&&!id.endsWith('-next')){const result=await exitAndResume(p,id);exits.push(result.record);}
+    if(id==='verify-save'){await p.locator('#tutorialSavedFile').setInputFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);}
+    else {const file=await positive(p,id);if(file)downloaded=file;}
+   }
+   const result=await read(p);assert.equal(result.step,null);assert.equal(await p.locator('[data-tutorial-blocked],.tutorial-target').count(),0);
+   routes.push({key:course+'/'+leaf,completed:true,chosenValueVerified:true,undoVerified:true,exits,runtimeRuns:p.entryRuntimeObservations,screenshot:await picture(p,'branch-'+course+'-'+leaf),project:result.project});
+  }return {routes};
+ });
+
 },600000);
 report.status=report.results.every(r=>r.status==='PASS')&&report.pageErrors.length===0?'PASS':'FAIL';save();
 if(report.status==='PASS')verifyEntryReport(report,'browser',snapshot(product),{allowWorkingCopy:true,file:output});else process.exitCode=1;

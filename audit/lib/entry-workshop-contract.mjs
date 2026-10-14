@@ -1,3 +1,4 @@
+import {auditRoute} from './entry-lesson-routes.mjs';
 import assert from 'node:assert/strict';
 import cp from 'node:child_process';
 import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';
@@ -13,14 +14,12 @@ export const entryProvenance=productFile=>{
 export const entrySchemas=Object.freeze(['MotionCommand:MOVE_DIRECTION','MotionCommand:TURN_RIGHT','MotionCommand:TURN_LEFT',
  'MotionCommand:GOTO','MotionCommand:GLIDE','MotionCommand:GLIDE_DIRECTION','Say','WaitTime','RepeatCount',
  'LooksCommand:SET_COSTUME','LooksCommand:SET_BACKDROP','SoundCommand:TONE_WAIT','SoundCommand:SAMPLE_WAIT']);
-export const tutorialSteps=Object.freeze(['choose-click','add-speech','speech-text','speech-time','add-outward','outward-time','outward-distance',
- 'add-return','return-direction','return-time','return-distance','run-original','try-original','stop-original',
- 'longer-outward','longer-return','run-longer','try-longer','stop-longer','reorder-speech','run-reordered',
- 'try-reordered','stop-reordered','undo-reorder','save-work','verify-save']);
+export const tutorialSteps=Object.freeze(auditRoute());
+
 export const unitIds=Object.freeze(['ENTRY-SETTINGS','ENTRY-CATALOG','TUTORIAL-DEFINITIONS','TUTORIAL-TRANSITIONS','EDITOR-DESIGN-POSITION','EDITOR-POSITION-DEFAULTS','ENTRY-COMMITTED-PRODUCT']);
 export const browserIds=Object.freeze(['ENTRY-FIRST-VIEW','ENTRY-MODE-PRESERVATION','EDITOR-APPEND-POSITION','TUTORIAL-PROTECTED-START',
  'TUTORIAL-ALL-STEPS','TUTORIAL-PENDING-EXIT','TUTORIAL-RESUME-IDENTITY','TUTORIAL-SAVE-REFUSALS',
- 'EDITOR-POSITION-DOM','TUTORIAL-INPUT-RECOVERY','TUTORIAL-SAVE-FAILURE','TUTORIAL-STALE-CALLBACK','TUTORIAL-TOUCH-AND-KEYBOARD','RUNTIME-CLICK-KEYBOARD']);
+ 'EDITOR-POSITION-DOM','TUTORIAL-INPUT-RECOVERY','TUTORIAL-SAVE-FAILURE','TUTORIAL-STALE-CALLBACK','TUTORIAL-TOUCH-AND-KEYBOARD','RUNTIME-CLICK-KEYBOARD','TUTORIAL-BRANCHES']);
 export const deniedRoutes=Object.freeze(['new','sample','open','export','mode','target','event','redo','shortcut-save','shortcut-undo','delete-key',
  'menu','drag','file-drop','touch','dialog','mouse-menu','keyboard-enter','keyboard-space']);
 export function verifyEntryReport(report,kind,currentSnapshot,{allowWorkingCopy=false,file=null}={}){
@@ -42,10 +41,14 @@ export function verifyEntryReport(report,kind,currentSnapshot,{allowWorkingCopy=
   assert.deepEqual(flow.exits.map(r=>r.id),tutorialSteps);for(const exit of flow.exits){assert.equal(exit.after.step,null);assert.deepEqual(exit.retained,exit.before);assert.equal(exit.remainingGuards,0);}
   assert.deepEqual(flow.steps.map(s=>s.id),tutorialSteps);
   for(const step of flow.steps){assert.equal(step.idle.step,step.id,'operation-free observation');assert.deepEqual(step.idle,step.before,'idle state preserved');assert.deepEqual(step.browserKeys.map(k=>k.key),['F5','r','w','l','f','p','Tab','ArrowLeft']);for(const key of step.browserKeys)assert.equal(key.prevented,false);assert.deepEqual(step.denials.map(x=>x.route),deniedRoutes);for(const row of step.denials){assert.equal(row.unchanged,true,step.id+'/'+row.route);assert.deepEqual(row.after,row.before,'independent unchanged content check');}assert.ok(step.after);}
-  assert.deepEqual(flow.runtimeRuns.map(r=>r.id),['try-original','try-longer','try-reordered']);
+  assert.deepEqual(flow.runtimeRuns.map(r=>r.id),['try-original','try-score','try-score-goal','try-score-goal-remix']);
   const touch=report.results.find(r=>r.id==='TUTORIAL-TOUCH-AND-KEYBOARD').observations;
-  assert.deepEqual(touch.steps.map(s=>s.id),tutorialSteps);assert.equal(touch.touchEmulation,true);assert.equal(touch.realTouch,false);assert.equal(touch.keyboardActorActivation,'Enter');assert.deepEqual(touch.runtimeRuns.map(r=>r.id),['try-original','try-longer','try-reordered']);
-  for(const run of flow.runtimeRuns){assert.equal(run.renderTolerance,1+run.expected*Math.min(100,run.frameGap)/1000);assert.ok(run.peak-run.start>=run.expected-run.renderTolerance);assert.ok(Math.abs(run.samples.at(-1).x-run.start)<1);}
+  assert.deepEqual(touch.steps.map(s=>s.id),tutorialSteps);assert.equal(touch.touchEmulation,true);assert.equal(touch.realTouch,false);assert.equal(touch.keyboardActorActivation,'Enter');assert.deepEqual(touch.runtimeRuns.map(r=>r.id),['try-original','try-score','try-score-goal','try-score-goal-remix']);
+  for(const run of flow.runtimeRuns){assert.ok(run.samples.some(f=>f.speech==='つかまった！'));assert.ok(new Set(run.samples.map(f=>f.x+','+f.y)).size>1);}
+  const branches=report.results.find(r=>r.id==='TUTORIAL-BRANCHES').observations.routes;
+  assert.deepEqual(branches.map(r=>r.key).sort(),['motion/swim','motion/zigzag','motion/small','score/goal','score/bonus','score/remaining','show/melody','show/costume','show/dance'].sort());
+  for(const route of branches){assert.equal(route.completed,true);assert.ok(route.chosenValueVerified);assert.ok(route.undoVerified);}
+
   assert.deepEqual(report.results.find(r=>r.id==='ENTRY-FIRST-VIEW').observations.viewports.map(v=>v.size),
    [{width:1280,height:720},{width:1366,height:768},{width:1920,height:1080}]);
   assert.ok(file,'artifact base is required');const base=path.resolve(file+'.artifacts');

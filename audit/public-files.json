@@ -216,6 +216,7 @@
     "audit/lib/composition-runtime.mjs",
     "audit/lib/current-audit-basis.cjs",
     "audit/lib/docs-consolidation-contract.mjs",
+    "audit/lib/entry-lesson-routes.mjs",
     "audit/lib/entry-workshop-contract.mjs",
     "audit/lib/evidence-bundle.mjs",
     "audit/lib/export-open-contract.cjs",

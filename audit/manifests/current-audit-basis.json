@@ -2,28 +2,28 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.3",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "User-approved shared display toolbar: preserve code/entry exclusivity in empty source overview, align the independent toolbar geometry probe, and record exact reviewed bytes. No historical language/runtime oracle changes; this record is not execution PASS.",
+  "updateReason": "Approved 3-by-3 fish-catching workshop, child-selected edits, branch guards, independent routes, preserved contracts and shared-toolbar fix. Reviewed bytes only; runtime and browser PASS require separate evidence.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
       "path": "AUDIT.md",
-      "sha256": "9f6a7225d3e8027cd9136d2dda84070b125173dbed166f1d7a639a51ab18b1ba",
-      "bytes": 226801
+      "sha256": "c758ab3e3d299aef370f850f505a74a01ab83b007d379d5fbaf8cade0df0b479",
+      "bytes": 226812
     },
     {
       "path": "Akari_1_2_3.html",
-      "sha256": "e51bef5f1bdf07d884671663970153717711aa2bc18ef5ec7b119d1f4d8395bd",
-      "bytes": 1748018
+      "sha256": "735a515f91b637a6b9f694e497b7f1e165abd17dd1ecbadd3a5deaadcc5e89f6",
+      "bytes": 1780851
     },
     {
       "path": "LANGUAGE.md",
-      "sha256": "b2db3d2480d457228749df8188d681527be4bf914b90bb79a1de89701f3bc845",
-      "bytes": 117059
+      "sha256": "4c177c2d6b70f5f42af8c2691885d458bf849a32ad7709b849203a761a7811f0",
+      "bytes": 117754
     },
     {
       "path": "MANUAL.html",
-      "sha256": "38845959aa338780700819f8e089d52eafbcb048a089570e72fddab34cc58a86",
-      "bytes": 39381
+      "sha256": "fa35e5e7331d83a85a0fdf3a60aad315ec3405d414a07e23306540b1a3e4fbe7",
+      "bytes": 39728
     },
     {
       "path": "Manual/block-mode.html",
@@ -127,8 +127,8 @@
     },
     {
       "path": "audit/public-files.json",
-      "sha256": "8ec32ecfe3f69925dbeaedc7cb5bbb33d46528707d48d29cf60598924242cf65",
-      "bytes": 20052
+      "sha256": "59fbb2d66284244ec071267f649cedf80addbc8afe46313d12bb91adef3a1a3c",
+      "bytes": 20093
     },
     {
       "path": "audit/record-current-basis.mjs",

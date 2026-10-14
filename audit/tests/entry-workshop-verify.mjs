@@ -7,6 +7,9 @@ const allowWorkingCopy=process.argv.includes('--working-copy'),options={allowWor
 verifyEntryReport(unit,'unit',current,{allowWorkingCopy});verifyEntryReport(browser,'browser',current,options);
 const negatives=[];
 for(const [id,change]of [
+ ['missing-branch',r=>r.results.find(x=>x.id==='TUTORIAL-BRANCHES').observations.routes.pop()],
+ ['uncompleted-branch',r=>r.results.find(x=>x.id==='TUTORIAL-BRANCHES').observations.routes[0].completed=false],
+ ['missing-branch-undo',r=>r.results.find(x=>x.id==='TUTORIAL-BRANCHES').observations.routes[0].undoVerified=false],
  ['missing-result',r=>r.results.pop()],['duplicate-result',r=>r.results.push(r.results[0])],
  ['skip-result',r=>r.results[0].status='SKIP'],['failed-result',r=>r.results[0].status='FAIL'],
  ['wrong-snapshot',r=>r.snapshot.productSha256='a'.repeat(64)],['wrong-sha',r=>r.commitSha='b'.repeat(40)],

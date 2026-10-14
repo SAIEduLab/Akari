@@ -2,7 +2,7 @@
 
 ## 入門とチュートリアルの追加契約
 
-[入門契約と要件対応表](audit/ENTRY_WORKSHOP.md)に、入門集合・通常基本・26小手順の許可操作と判定、退出・保存確認、通常編集の追加と座標初期値を定義します。`entry-workshop-core`、`entry-workshop-browser`、`entry-workshop-verify`は既存のselftest集約から起動します。`akari-acceptance.yml`でも専用のentry-workshopジョブから実行します。全手順で操作前の待機、許可操作、禁止操作、退出を検査し、未実施・SKIP・証拠欠落・別SHAを合格にしません。
+[入門契約と要件対応表](audit/ENTRY_WORKSHOP.md)に、入門集合・通常基本・共通手順と9分岐の許可操作と判定、退出・保存確認、通常編集の追加と座標初期値を定義します。`entry-workshop-core`、`entry-workshop-browser`、`entry-workshop-verify`は既存のselftest集約から起動します。`akari-acceptance.yml`でも専用のentry-workshopジョブから実行します。全手順で操作前の待機、許可操作、禁止操作、退出を検査し、未実施・SKIP・証拠欠落・別SHAを合格にしません。
 
 作業コピーの限定試験はそのように記録します。最終集約ではコミット済みHTMLのSHA-256と試験対象の一致、全画面証拠の存在とハッシュを確認します。自動ブラウザー試験は実児童・実Chromebook・実IME・独立実監査の代替ではありません。
 
