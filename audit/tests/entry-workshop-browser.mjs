@@ -249,9 +249,13 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='キーボードで起動');const observed=await read(p);assert.equal(observed.project,before.project);assert.equal(observed.source,before.source);
   await p.locator('#stopBtn').click();return{before,observed,afterStop:await read(p),emptyFirstBodyDidNotHideExecutableSecondBody:true,normalKeyboardActivation:true,screenshot:await picture(p,'normal-keyboard')};
  });
- await row(browser,browserIds[14],async p=>{const routes=[];
+ await row(browser,browserIds[14],async()=>{const routes=[];
   for(const [course,leaves]of Object.entries(routeLeaves))for(const leaf of leaves){
-   if(routes.length){await p.reload();const recovery=p.locator('#recoveryModal.show');if(await recovery.isVisible())await p.locator('#recoveryDiscard').click();}
+   // Each independent route starts in fresh storage. Reloading the previous route
+   // races asynchronous recovery and can put its modal over the next start click.
+   await pageFor(browser,product,async p=>{
+   p.setDefaultTimeout(8000);await p.setViewportSize({width:1280,height:720});
+   p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});
    p.entryCourse=course;p.entryLeaf=leaf;p.entryRuntimeObservations=[];
    await p.locator('#tutorialStart').click();let downloaded=null;const exits=[];
    for(const id of auditRoute(course,leaf)){
@@ -271,6 +275,7 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
    }
    const result=await read(p);assert.equal(result.step,null);assert.equal(await p.locator('[data-tutorial-blocked],.tutorial-target').count(),0);
    routes.push({key:course+'/'+leaf,completed:true,chosenValueVerified:true,undoVerified:true,exits,runtimeRuns:p.entryRuntimeObservations,screenshot:await picture(p,'branch-'+course+'-'+leaf),project:result.project});
+   },{initialUiLevel:null});
   }return {routes};
  });
 

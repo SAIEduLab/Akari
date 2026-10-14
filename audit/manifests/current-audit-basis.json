@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.3",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Synchronize entry verification aggregation with the three added branch rejection cases; preserve all rejection assertions.",
+  "updateReason": "Isolate nine independent lesson routes in fresh browser contexts instead of racing asynchronous autosave recovery on reload; retain all assertions and separate recovery tests.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
