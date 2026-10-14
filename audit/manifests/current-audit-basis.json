@@ -1,58 +1,58 @@
 {
   "schema": "akari-current-audit-basis-v1",
-  "productVersion": "1.2.3",
+  "productVersion": "1.2.4",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Approved service-neutral workflow branch triggers and portable audit setup documentation; preserve product version, all test assertions, same-repository gates, resource limits and historical fixtures.",
+  "updateReason": "Approved tutorial guidance repair: preserve candidate rendering on resume and exercise blocked activation with explicit negative-test input.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
       "path": "AUDIT.md",
-      "sha256": "c758ab3e3d299aef370f850f505a74a01ab83b007d379d5fbaf8cade0df0b479",
+      "sha256": "f22694f4aaed528322fa1acadc6a4a30c9e6b8586d9db805bbb6bcc5c6f838d2",
       "bytes": 226812
     },
     {
-      "path": "Akari_1_2_3.html",
-      "sha256": "1ece898c9f3a1d0be7d080894e59d1335f9c8cde662c27a1f5204434c95ea9a0",
-      "bytes": 1782521
+      "path": "Akari_1_2_4.html",
+      "sha256": "898c62972e4d63bf0e58ea9db1e7a5c6c0aef5b8f1926c55badb6190012b5dc3",
+      "bytes": 1784984
     },
     {
       "path": "LANGUAGE.md",
-      "sha256": "4c177c2d6b70f5f42af8c2691885d458bf849a32ad7709b849203a761a7811f0",
-      "bytes": 117754
+      "sha256": "3343177649905993ddeafe3aa7cb286dec9576cbfac2278cc936df39ad811632",
+      "bytes": 118375
     },
     {
       "path": "MANUAL.html",
-      "sha256": "fa35e5e7331d83a85a0fdf3a60aad315ec3405d414a07e23306540b1a3e4fbe7",
+      "sha256": "13179765870d7b3cfa58a856d8f83fbada1a246b45115f88ee43c4df410a02a7",
       "bytes": 39728
     },
     {
       "path": "Manual/block-mode.html",
-      "sha256": "7df8cd788cc09e9ebe55debc32f3084ca567a24e98a6403ce12171fc04308530",
+      "sha256": "5142f342a14715af9280c7979547db1a3b7218870882caed74e8fcb3d1f8bea4",
       "bytes": 39939
     },
     {
       "path": "Manual/code-mode-advanced.html",
-      "sha256": "500ada6733302f21aaad494f6250b033faa32a654f7f0e0fdb17dd7ff358cf76",
+      "sha256": "cb670678578dd7f6b8202f85637403f2f72fd9e81ee4ebe73473407edff98689",
       "bytes": 34011
     },
     {
       "path": "Manual/code-mode-beginner.html",
-      "sha256": "a7fdadace508b12dea3bb1d0aa6dbdbbe97ae99a0c21587035f199b533f8a23e",
+      "sha256": "249050a9b45c0800106a25767a3a98cb723980f503bb3f82ea5d14c26dca8569",
       "bytes": 33065
     },
     {
       "path": "Manual/code-mode-intermediate.html",
-      "sha256": "86ddbf2aff5ffb72677e0d1634200b226a6d0961194ddafd96dfddc82f5b5e98",
+      "sha256": "869e95db61204acd14302a70e0e8a6309d772961137c92cdfe1fe46a9e9a0b7f",
       "bytes": 31289
     },
     {
       "path": "README.md",
-      "sha256": "035ac206b0651107c94176ed365aa88e42a86dd55c8457d4ea24f77600d06050",
-      "bytes": 7123
+      "sha256": "f957693923ee80fa96f39a3abc7bbdf29339c2c8162dc2d3e7d0b0237c720ed1",
+      "bytes": 7159
     },
     {
       "path": "audit/README.md",
-      "sha256": "1582e4e74b8ff8fe1a80206b5d16ba00c42632f980651cda97a2b8c4091d09ab",
+      "sha256": "091e4351f94c5e16e7616f79c811cf33fdb432e1f1f4cffe831f65e969e07358",
       "bytes": 8788
     },
     {
@@ -117,7 +117,7 @@
     },
     {
       "path": "audit/manifests/features.json",
-      "sha256": "4af492a03cce64d064d717c6a2394c6f0a9eae2ecd9424f70008ba84074758d7",
+      "sha256": "3bbc726c77e15105f14a3c637c3477abffa5b0166241480057f469e756c5c487",
       "bytes": 19535
     },
     {
@@ -127,7 +127,7 @@
     },
     {
       "path": "audit/public-files.json",
-      "sha256": "59fbb2d66284244ec071267f649cedf80addbc8afe46313d12bb91adef3a1a3c",
+      "sha256": "27adb0180a7732c6eed1d4c594265729472284bbf025788ffd2e167fc33351c9",
       "bytes": 20093
     },
     {
