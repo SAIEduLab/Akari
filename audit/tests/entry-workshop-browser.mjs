@@ -17,10 +17,10 @@ const read=p=>p.evaluate(()=>{const a=Akari.app,e=a.editorState,s=e.main;return{
 const content=s=>({project:s.project,history:s.history,redo:s.redo,dirty:s.dirty,owner:s.owner,source:s.source,mode:s.mode,state:s.state,selectedScript:s.selectedScript,pending:s.pending,menuOpen:s.menuOpen,dialogs:s.dialogs});
 const waitStep=async(p,id)=>{try{await p.waitForFunction(id=>document.body.dataset.tutorialStep===id,id,{timeout:12000});}catch(error){throw Error('Expected '+id+'; observed '+JSON.stringify(await read(p))+'\n'+error.message);}};
 const picture=async(p,name)=>{const file=name+'.png';await p.screenshot({path:path.join(artifacts,file)});return file;};
-async function row(browser,id,fn){const result={id,status:'RUNNING',observations:{}};report.results.push(result);
+async function row(browser,id,fn,contextOptions={}){const result={id,status:'RUNNING',observations:{}};report.results.push(result);
  try{result.observations=await pageFor(browser,product,async p=>{p.setDefaultTimeout(8000);await p.setViewportSize({width:1280,height:720});
  p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});
- try{return await fn(p);}catch(error){await picture(p,id+'-failure').catch(()=>{});throw error;}},{initialUiLevel:null});result.status='PASS';}
+ try{return await fn(p);}catch(error){await picture(p,id+'-failure').catch(()=>{});throw error;}},{initialUiLevel:null,...contextOptions});result.status='PASS';}
  catch(error){result.status='FAIL';result.observations.error=error.stack;}
  console.log(result.status+' '+id+(result.status==='FAIL'?' '+result.observations.error:''));save();}
 async function roles(p){return p.evaluate(()=>{const b=Akari.app.editorState.main.blockView.bodies.body,s=b.find(n=>n.schemaId==='Say'),m=b.filter(n=>n.schemaId==='MotionCommand:GLIDE_DIRECTION');
@@ -28,27 +28,29 @@ async function roles(p){return p.evaluate(()=>{const b=Akari.app.editorState.mai
  return{text:s?.inputs.value.id,speechTime:literal(s?.inputs.seconds)?.id,outTime:literal(m[0]?.inputs.args[0])?.id,outDistance:literal(m[0]?.inputs.args[1])?.id,
  backId:m[1]?.id,backTime:literal(m[1]?.inputs.args[0])?.id,backDistance:literal(m[1]?.inputs.args[1])?.id,speechId:s?.id,root:Akari.app.editorState.main.blockView.id};});}
 const field=(p,id,key='value')=>p.locator('#blockEditor [data-block-id="'+id+'"][data-blockui-field="'+key+'"]');
-async function edit(p,id,value){const control=field(p,id);await control.click();await control.press('ControlOrMeta+A');await p.keyboard.insertText(String(value));await control.press('Enter');}
+const activate=(p,control)=>p.entryTouch?control.tap():control.click();
+async function edit(p,id,value){const control=field(p,id);await activate(p,control);await control.press('ControlOrMeta+A');await p.keyboard.insertText(String(value));await control.press('Enter');}
 async function positive(p,id){const r=await roles(p);let downloaded=null;
  switch(id){
- case 'choose-click':await p.locator('#entryClickEvent').click();break;
- case 'add-speech':await p.locator('#blockEditor [data-blockui-schema="Say:timed"]').click();break;
+ case 'choose-click':await activate(p,p.locator('#entryClickEvent'));break;
+ case 'add-speech':await activate(p,p.locator('#blockEditor [data-blockui-schema="Say:timed"]'));break;
  case 'speech-text':await edit(p,r.text,'こんにちは！');break;
  case 'speech-time':await edit(p,r.speechTime,2);break;
- case 'add-outward':case 'add-return':await p.locator('#blockEditor [data-blockui-schema="MotionCommand:GLIDE_DIRECTION"]').click();break;
+ case 'add-outward':case 'add-return':await activate(p,p.locator('#blockEditor [data-blockui-schema="MotionCommand:GLIDE_DIRECTION"]'));break;
  case 'outward-time':await edit(p,r.outTime,1);break;
  case 'outward-distance':await edit(p,r.outDistance,100);break;
  case 'return-direction':await field(p,r.backId,'direction').selectOption('left');break;
  case 'return-time':await edit(p,r.backTime,1);break;
  case 'return-distance':await edit(p,r.backDistance,100);break;
- case 'run-original':case 'run-longer':case 'run-reordered':await p.locator('#runBtn').click();break;
+ case 'run-original':case 'run-longer':case 'run-reordered':await activate(p,p.locator('#runBtn'));break;
  case 'try-original':case 'try-longer':case 'try-reordered':{
   const start=await p.locator('#formSurface .component[data-id="sprite-1"]').evaluate(n=>parseFloat(n.style.left));
   await p.evaluate(()=>{window.entryMeasuredFrames=[];window.entryMeasuring=true;
     const tick=time=>{const n=document.querySelector('#formSurface .component[data-id="sprite-1"]');
       window.entryMeasuredFrames.push({time,x:parseFloat(n.style.left),speech:document.querySelector('.sprite-bubble-text')?.textContent||'',step:document.body.dataset.tutorialStep});
       if(window.entryMeasuring)requestAnimationFrame(tick);};requestAnimationFrame(tick);});
-  await p.locator('#formSurface .component[data-id="sprite-1"]').click();
+  const actor=p.locator('#formSurface .component[data-id="sprite-1"]');
+  if(p.entryTouch&&id==='try-longer'){await actor.focus();await actor.press('Enter');}else await activate(p,actor);
   await waitStep(p,'stop-'+id.slice(4));
   await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const samples=await p.evaluate(()=>{window.entryMeasuring=false;return window.entryMeasuredFrames;});
@@ -58,15 +60,15 @@ async function positive(p,id){const r=await roles(p);let downloaded=null;
   const talking=samples.findIndex(s=>s.speech==='こんにちは！'),moving=samples.findIndex(s=>s.x>start+1);assert.ok(talking>=0&&moving>=0,'speech and movement actually rendered');
   assert.ok(id==='try-reordered'?moving<talking:talking<moving,id+' actual order');
   (p.entryRuntimeObservations||=[]).push({id,start,peak,expected,frameGap,renderTolerance,samples});break;}
- case 'stop-original':case 'stop-longer':case 'stop-reordered':await p.locator('#stopBtn').click();break;
+ case 'stop-original':case 'stop-longer':case 'stop-reordered':await activate(p,p.locator('#stopBtn'));break;
  case 'longer-outward':await edit(p,r.outDistance,150);break;
  case 'longer-return':await edit(p,r.backDistance,150);break;
- case 'reorder-speech':await p.locator('#blockEditor .blockui-node[data-block-id="'+r.speechId+'"] .blockui-node-tools [data-blockui-action="more"]').first().click();
-  await p.locator('#blockEditor [data-blockui-action="move"][data-block-id="'+r.speechId+'"]').click();
-  await p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+r.root+'"][data-blockui-body="body"][data-insert-index="3"]').click();break;
- case 'undo-reorder':await p.locator('#undoBtn').click();break;
+ case 'reorder-speech':await activate(p,p.locator('#blockEditor .blockui-node[data-block-id="'+r.speechId+'"] .blockui-node-tools [data-blockui-action="more"]').first());
+  await activate(p,p.locator('#blockEditor [data-blockui-action="move"][data-block-id="'+r.speechId+'"]'));
+  await activate(p,p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+r.root+'"][data-blockui-body="body"][data-insert-index="3"]'));break;
+ case 'undo-reorder':await activate(p,p.locator('#undoBtn'));break;
  case 'save-work':{
-  const download=await Promise.all([p.waitForEvent('download'),p.locator('#saveBtn').click()]).then(x=>x[0]);
+  const download=await Promise.all([p.waitForEvent('download'),activate(p,p.locator('#saveBtn'))]).then(x=>x[0]);
   downloaded=path.join(artifacts,'practice-'+Date.now()+'.akari.md');await download.saveAs(downloaded);assert.equal(await download.failure(),null);break;}
  case 'verify-save':throw Error('file verification requires an observed download');
  default:throw Error('No independent positive operation for '+id);
@@ -78,11 +80,11 @@ async function reach(p,goal){await p.locator('#tutorialStart').click();let downl
  throw Error('goal not reached '+goal);}
 async function exitAndResume(p,id){
  const old=await read(p),before=content(old);delete before.state;
- await p.locator('#tutorialExit').click();const after=await read(p),retained=content(after);delete retained.state;
+ await activate(p,p.locator('#tutorialExit'));const after=await read(p),retained=content(after);delete retained.state;
  assert.deepEqual(retained,before,id+' exit retains confirmed work and history');assert.equal(after.step,null);assert.equal(after.state,'DESIGN');
  const remainingGuards=await p.locator('[data-tutorial-blocked],.tutorial-target').count();assert.equal(remainingGuards,0);
  await p.locator('#uiLevel').selectOption('basic');await p.locator('#uiLevel').selectOption('entry');
- await p.locator('#tutorialStart').click();let downloaded=null;
+ await activate(p,p.locator('#tutorialStart'));let downloaded=null;
  const observations=p.entryRuntimeObservations?.slice();
  for(let i=0;i<4;i++){const current=(await read(p)).step;if(current===id)break;assert.ok(current,'resume is live');const file=await positive(p,current);if(file)downloaded=file;await waitStep(p,tutorialSteps[tutorialSteps.indexOf(current)+1]);}
  p.entryRuntimeObservations=observations;await waitStep(p,id);
@@ -144,10 +146,12 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
    await waitStep(p,id);const resumed=await exitAndResume(p,id);exits.push(resumed.record);if(resumed.downloaded)downloaded=resumed.downloaded;
    const before=await read(p),denials=[];
    await p.waitForTimeout(180);const idle=await read(p);assert.equal(idle.step,id,'no operation cannot advance '+id);assert.deepEqual(content(idle),content(before));
+   const browserKeys=await p.evaluate(()=>{const keys=[['F5',{}],['r',{ctrlKey:true}],['w',{ctrlKey:true}],['l',{ctrlKey:true}],['f',{ctrlKey:true}],['p',{ctrlKey:true}],['Tab',{ctrlKey:true}],['ArrowLeft',{altKey:true}]];
+    return keys.map(([key,options])=>{const event=new KeyboardEvent('keydown',{key,...options,bubbles:true,cancelable:true}),target=document.querySelector('#tutorialExit');target.dispatchEvent(event);target.dispatchEvent(new KeyboardEvent('keyup',{key,...options,bubbles:true,cancelable:true}));return{key,options,prevented:event.defaultPrevented};});});assert.ok(browserKeys.every(k=>!k.prevented),'browser-owned shortcuts remain outside tutorial '+id);
    for(const route of deniedRoutes){const old=await read(p);await deny(p,route);const after=await read(p);assert.deepEqual(content(after),content(old),id+'/'+route);assert.equal(after.step,id,id+'/'+route+' cannot advance');denials.push({route,unchanged:true,before:content(old),after:content(after)});}
    if(id==='verify-save'){assert.ok(downloaded);const beforeVerify=await read(p);await p.locator('#tutorialSavedFile').setInputFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);const after=await read(p);assert.equal(after.project,beforeVerify.project);assert.equal(after.history,beforeVerify.history);}
    else {const file=await positive(p,id);if(file)downloaded=file;if(index+1<tutorialSteps.length)await waitStep(p,tutorialSteps[index+1]);}
-   steps.push({id,before,idle,denials,after:await read(p),screenshot:await picture(p,'tutorial-'+id)});
+   steps.push({id,before,idle,browserKeys,denials,after:await read(p),screenshot:await picture(p,'tutorial-'+id)});
   }
   assert.equal(await p.locator('#tutorialGuide').isVisible(),false);await p.locator('#uiLevel').selectOption('basic');assert.equal(await p.locator('#uiLevel').inputValue(),'basic');
   return{steps,exits,downloaded,runtimeRuns:p.entryRuntimeObservations,completed:await read(p)};});
@@ -216,6 +220,23 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   await p.evaluate(()=>new Promise(r=>setTimeout(r,120)));assert.equal((await read(p)).step,null);assert.deepEqual(content(await read(p)),content(exited));assert.equal(await p.locator('[data-tutorial-blocked],.tutorial-target').count(),0);
   await p.reload();await p.locator('#recoveryModal.show').waitFor();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>Akari.app.project.name==='あいさつして もどる');assert.equal((await read(p)).step,null);assert.equal(await p.locator('#tutorialGuide').isVisible(),false);
   return{exited,restored:await read(p),staleCallbackIgnored:true,progressNotPersisted:true};
+ });
+ await row(browser,browserIds[12],async p=>{p.entryTouch=true;await p.locator('#tutorialStart').tap();const steps=[];let downloaded=null;
+  for(const id of tutorialSteps){await waitStep(p,id);const resumed=await exitAndResume(p,id);if(resumed.downloaded)downloaded=resumed.downloaded;const before=await read(p);await p.locator('#entryProjectMenu > summary').tap();assert.deepEqual(content(await read(p)),content(before),'touch cannot open unrelated menu '+id);
+   if(id==='verify-save'){const choosing=p.waitForEvent('filechooser');await p.locator('#tutorialVerifySave').tap();await (await choosing).setFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);}
+   else {const file=await positive(p,id);if(file)downloaded=file;await waitStep(p,tutorialSteps[tutorialSteps.indexOf(id)+1]);}
+   steps.push({id,before,after:await read(p)});
+  }return{steps,runtimeRuns:p.entryRuntimeObservations,touchEmulation:true,keyboardActorActivation:'Enter',realTouch:false,completed:await read(p),screenshot:await picture(p,'touch-keyboard-complete')};
+ },{hasTouch:true});
+ await row(browser,browserIds[13],async p=>{
+  const text=await p.evaluate(()=>{const project=Akari.makeEmptyProject();project.name='複数のクリック本文とキーボード';project.scripts=[
+   {id:'click-empty',targetId:'sprite-1',event:'click',source:'※ 最初の本文はコメントだけ'},
+   {id:'click-live',targetId:'sprite-1',event:'click',source:'「キーボードで起動」と2秒話す。'}];return Akari.serializeProject(project,Akari.makeDefaultAssetStore());});
+  await p.locator('#fileInput').setInputFiles({name:'keyboard.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)});await p.waitForFunction(()=>Akari.app.project.name==='複数のクリック本文とキーボード');
+  const before=await read(p);await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');
+  const actor=p.locator('#formSurface .component[data-id="sprite-1"]');assert.equal(await actor.getAttribute('role'),'button');assert.equal(await actor.getAttribute('tabindex'),'0');await actor.focus();await actor.press('Enter');
+  await p.waitForFunction(()=>document.querySelector('.sprite-bubble-text')?.textContent==='キーボードで起動');const observed=await read(p);assert.equal(observed.project,before.project);assert.equal(observed.source,before.source);
+  await p.locator('#stopBtn').click();return{before,observed,afterStop:await read(p),emptyFirstBodyDidNotHideExecutableSecondBody:true,normalKeyboardActivation:true,screenshot:await picture(p,'normal-keyboard')};
  });
 },600000);
 report.status=report.results.every(r=>r.status==='PASS')&&report.pageErrors.length===0?'PASS':'FAIL';save();

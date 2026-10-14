@@ -21373,6 +21373,7 @@ function createAkariExtensionHost(options) {
       timers = new Set(),
       physicalKeys = new Map(),
       heldPhysicalKeys = new Map();
+    let clickTargetScheduler=null,runtimeClickTargets=new Set();
     const project = () => options.getProject(),
       runtime = () => options.getRuntime(),
       scheduler = () => options.getScheduler();
@@ -21610,9 +21611,18 @@ function createAkariExtensionHost(options) {
     function renderComponents() {
       const p = project(),
         r = runtime(),
+        q = scheduler(),
         nodes = new Map(
           [...form.querySelectorAll('.component')].map((n) => [n.dataset.runtimeId, n]),
         );
+      // Compiled click bodies stay fixed during one run. Reuse the set across
+      // paints and clones rather than rescan all scripts for every actor/frame.
+      if(clickTargetScheduler!==q){
+        clickTargetScheduler=q;runtimeClickTargets=new Set();
+        if(q)for(const component of p.components){
+          if((q.matchingScripts(component.id,'click',{})||[]).some(script=>q.hasExecutable(q.scriptAst(component.id,'click',script.id))))runtimeClickTargets.add(component.id);
+        }
+      }
       const actors = r
         ? [...r.actors.values()].sort((a, b) => a.z - b.z)
         : p.components.map((c, i) => ({
@@ -21637,9 +21647,7 @@ function createAkariExtensionHost(options) {
         node.dataset.id = c.id;
         node.dataset.runtimeId = a.runtimeId;
         if (c.type !== 'input') {
-          const q = scheduler(),
-            interactive =
-              !!r && (c.type === 'button' || q?.hasExecutable(q.scriptAst(c.id, 'click')));
+          const interactive = !!r && (c.type === 'button' || runtimeClickTargets.has(c.id));
           node.tabIndex = interactive ? 0 : -1;
           if (interactive) {
             node.setAttribute('role', 'button');
@@ -27682,9 +27690,9 @@ function createAkariExtensionHost(options) {
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
       for(const node of [$('#undoBtn'),$('#redoBtn'),$('#uiLevel').closest('label')]){
-        if(!entryControlHomes.has(node)){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
+        if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
         if(entry){if(node.parentElement!==$('.menutool'))$('.menutool').insertBefore(node,$('#tutorialStart'));}
-        else {const marker=entryControlHomes.get(node);if(node.parentElement!==marker.parentElement)marker.after(node);}
+        else if(entryLayoutPlaced){const marker=entryControlHomes.get(node);if(marker?.isConnected){marker.after(node);marker.remove();}entryControlHomes.delete(node);}
       }
       const main=$('.main'),side=$('.side'),designer=$('#designerWindow'),objects=$('.objects-window');
       if(entry){if(designer.parentElement!==main)main.insertBefore(designer,side);if(objects&&side.firstElementChild!==objects)side.prepend(objects);}
@@ -27922,7 +27930,9 @@ function createAkariExtensionHost(options) {
       const target=event.target,step=tutorialStep(tutorial);
       if(event.type==='keydown'){
         // Browser and OS navigation belong to the browser, never to a lesson.
-        if(event.key==='F5'||((event.ctrlKey||event.metaKey)&&['r','l','w','t','n','+','-','0'].includes(event.key.toLowerCase())))return;
+        if(['F1','F3','F5','F6','F11','F12'].includes(event.key)
+          ||event.altKey&&['ArrowLeft','ArrowRight','Home'].includes(event.key)
+          ||((event.ctrlKey||event.metaKey)&&['r','l','w','t','n','f','p','d','h','j','u','o','tab','+','-','0'].includes(event.key.toLowerCase())))return;
         if(event.key==='Tab'){
           const targets=tutorialFocusTargets(),at=targets.indexOf(document.activeElement);
           event.preventDefault();event.stopImmediatePropagation();targets[(at+(event.shiftKey?-1:1)+targets.length)%targets.length]?.focus();return;

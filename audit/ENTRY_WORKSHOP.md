@@ -15,7 +15,7 @@
 | TUTORIAL-EXIT | 実行を止め、制限と強調を解き、作品と未確定入力を残す | finishTutorial、releaseInteraction | TUTORIAL-ALL-STEPS、TUTORIAL-PENDING-EXIT、TUTORIAL-PROTECTED-START | 全26手順で退出・保持・解除、合成IME中の保持、開始取消、退出後の通常編集 |
 | TUTORIAL-RESUME | 同じページ・未変更の同じ練習だけ再検査。進度を永続保存しない | pausedTutorial、workspaceIdentity、beginTutorial | TUTORIAL-RESUME-IDENTITY | 続行・改造後の開始取消の比較 |
 | TUTORIAL-SAVE | 既存保存後に選んだファイルの内容一致で完了する | saveProject、verifyTutorialSave、tutorialSavedFile | TUTORIAL-SAVE-REFUSALS、TUTORIAL-ALL-STEPS | 実download、取消・解析失敗・不一致・再試行、作品/履歴不変 |
-| ENTRY-GATE | 未実施・欠落・重複・SKIP・別SHAを合格にしない | entry-workshop-contract、entry-workshop-verify、gate-contract、verify-gate-results | entry-verify | 16種の不正証拠拒否、既存selftest集約、acceptanceのentry-workshopジョブ |
+| ENTRY-GATE | 未実施・欠落・重複・SKIP・別SHAを合格にしない | entry-workshop-contract、entry-workshop-verify、gate-contract、verify-gate-results | entry-verify | 17種の不正証拠拒否、既存selftest集約、acceptanceのentry-workshopジョブ |
 
 追加のDOM試験は、EDITOR-POSITION-DOM（小数・負数・表示倍率・回転・ドラッグ完了/取消・Undo/Redo・対象切替）、TUTORIAL-INPUT-RECOVERY（誤値・合成IME・取消・連打・フォーカス）、TUTORIAL-SAVE-FAILURE（保存準備失敗・保存後改造・再保存）、TUTORIAL-STALE-CALLBACK（退出後の遅延完了・更新後の作品復元）です。全26手順で、操作なしの待機中には進度と作品が変わらないことも比較します。判定は値の一致と、その手順の操作確定の両方を必要とします。
 
@@ -47,4 +47,8 @@
 
 ブラウザー自動試験は固定Chrome for Testing 140.0.7339.207、Playwright 1.55.0を使います。マウス・キーボードは実DOMへの操作、touch/drag/drop/IMEの合成イベントはそのように記録します。headlessのdeviceScaleFactor・viewportと、実PCのOS表示倍率は別の情報です。実Chromebook、実IME、実児童、独立実監査の未実施を自動試験PASSで代替しません。
 
-開始mainは2d4022a88dceef1cbe3a9a8d87dc3bd8c3a91497。開始時の文書にはAUDIT.mdの製品版1.2.1と、起動時の選択が画面であるとの記述が残っていました。実装は1.2.2、起動・新規はマスコット選択、作品読込みは画面選択です。これらは実装の観察に基づく文書修正であり、試験だけを根拠に仕様変更していません。
+開始mainは2d4022a88dceef1cbe3a9a8d87dc3bd8c3a91497。開始時のAUDIT.mdには製品版1.2.1が残っていました。LANGUAGE.mdの保護本文には、起動・新規・読込みで画面の本文を編集できる契約があります。実装の初期選択は、起動・新規がマスコット、読込みが画面です。保護された33節と元の意味・期待値を維持し、初期選択の明記は別節に置きます。通常画面で部品を追加する既存の試験は、通常表示を選ぶ準備操作を明示します。
+
+タッチ相当のブラウザー操作（hasTouchとlocator.tap）でも全26手順の退出・再開・禁止メニュー・完成を検査し、150歩の試行はキャラへのEnterで起動します。TUTORIAL-TOUCH-AND-KEYBOARDは物理タッチ・実Chromebookの検証ではありません。
+
+RUNTIME-CLICK-KEYBOARDは、IDを持つ複数のクリック本文の先頭がコメントだけでも、実行本文があるキャラをEnterで起動できることを検査します。renderComponentsは通常のmatchingScriptsとscriptAstを使い、1回の実行中に固定された対象集合を描画と分身で再利用します。ブラウザー所有の更新・閉じる・検索・印刷・タブ切替等はチュートリアルの操作制限から除外し、全手順でキーイベントの非取消を確認します。既存の通常画面の検査は元の順序を保ち、新しい3工程をselftestの末尾へ登録します。

@@ -15,6 +15,8 @@ export async function showAdvancedCode(page) {
 }
 
 export async function installGreetingFixture(page) {
+  // The fixed greeting fixture uses the normal event selector.
+  if(await page.locator('#uiLevel').inputValue()==='entry')await page.locator('#uiLevel').selectOption('basic');
   const text=await page.evaluate(()=>Akari.serializeProject(Akari.makeDefaultProject(),Akari.makeDefaultAssetStore()));
   await page.locator('#fileInput').setInputFiles({name:'greeting-fixture.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)});
   await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN'&&Akari.app.project.name==='はじめてのあかり');

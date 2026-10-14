@@ -17,6 +17,7 @@ for(const [id,change]of [
  ['page-error',r=>r.pageErrors.push('uncaught product error')],['missing-viewport',r=>r.results.find(x=>x.id==='ENTRY-FIRST-VIEW').observations.viewports.pop()],
  ['missing-exit',r=>r.results.find(x=>x.id==='TUTORIAL-ALL-STEPS').observations.exits.pop()],['missing-artifact',r=>r.artifacts.pop()],
  ['wrong-committed-bytes',r=>r.executionBasis.committedProductSha256='c'.repeat(64)],['wrong-public-dirty-state',r=>r.executionBasis.publicInputsDirty=!r.executionBasis.publicInputsDirty],
+ ['missing-touch-step',r=>r.results.find(x=>x.id==='TUTORIAL-TOUCH-AND-KEYBOARD').observations.steps.pop()],
  ]){const bad=structuredClone(browser);change(bad);assert.throws(()=>verifyEntryReport(bad,'browser',current,options),id);negatives.push({id,rejected:true});}
 const report={schema:'akari-entry-workshop-verification-v1',status:'PASS',finalCommittedEvidence:!allowWorkingCopy,snapshot:current,commitSha:unit.commitSha,unitIds:unit.results.map(r=>r.id),browserIds:browser.results.map(r=>r.id),negatives};
 fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');console.log('Entry workshop verified; '+negatives.length+' invalid evidence sets rejected');

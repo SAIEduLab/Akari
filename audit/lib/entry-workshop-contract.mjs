@@ -20,7 +20,7 @@ export const tutorialSteps=Object.freeze(['choose-click','add-speech','speech-te
 export const unitIds=Object.freeze(['ENTRY-SETTINGS','ENTRY-CATALOG','TUTORIAL-DEFINITIONS','TUTORIAL-TRANSITIONS','EDITOR-DESIGN-POSITION','EDITOR-POSITION-DEFAULTS','ENTRY-COMMITTED-PRODUCT']);
 export const browserIds=Object.freeze(['ENTRY-FIRST-VIEW','ENTRY-MODE-PRESERVATION','EDITOR-APPEND-POSITION','TUTORIAL-PROTECTED-START',
  'TUTORIAL-ALL-STEPS','TUTORIAL-PENDING-EXIT','TUTORIAL-RESUME-IDENTITY','TUTORIAL-SAVE-REFUSALS',
- 'EDITOR-POSITION-DOM','TUTORIAL-INPUT-RECOVERY','TUTORIAL-SAVE-FAILURE','TUTORIAL-STALE-CALLBACK']);
+ 'EDITOR-POSITION-DOM','TUTORIAL-INPUT-RECOVERY','TUTORIAL-SAVE-FAILURE','TUTORIAL-STALE-CALLBACK','TUTORIAL-TOUCH-AND-KEYBOARD','RUNTIME-CLICK-KEYBOARD']);
 export const deniedRoutes=Object.freeze(['new','sample','open','export','mode','target','event','redo','shortcut-save','shortcut-undo','delete-key',
  'menu','drag','file-drop','touch','dialog','mouse-menu','keyboard-enter','keyboard-space']);
 export function verifyEntryReport(report,kind,currentSnapshot,{allowWorkingCopy=false,file=null}={}){
@@ -41,8 +41,10 @@ export function verifyEntryReport(report,kind,currentSnapshot,{allowWorkingCopy=
   const flow=report.results.find(r=>r.id==='TUTORIAL-ALL-STEPS').observations;
   assert.deepEqual(flow.exits.map(r=>r.id),tutorialSteps);for(const exit of flow.exits){assert.equal(exit.after.step,null);assert.deepEqual(exit.retained,exit.before);assert.equal(exit.remainingGuards,0);}
   assert.deepEqual(flow.steps.map(s=>s.id),tutorialSteps);
-  for(const step of flow.steps){assert.equal(step.idle.step,step.id,'operation-free observation');assert.deepEqual(step.idle,step.before,'idle state preserved');assert.deepEqual(step.denials.map(x=>x.route),deniedRoutes);for(const row of step.denials){assert.equal(row.unchanged,true,step.id+'/'+row.route);assert.deepEqual(row.after,row.before,'independent unchanged content check');}assert.ok(step.after);}
+  for(const step of flow.steps){assert.equal(step.idle.step,step.id,'operation-free observation');assert.deepEqual(step.idle,step.before,'idle state preserved');assert.deepEqual(step.browserKeys.map(k=>k.key),['F5','r','w','l','f','p','Tab','ArrowLeft']);for(const key of step.browserKeys)assert.equal(key.prevented,false);assert.deepEqual(step.denials.map(x=>x.route),deniedRoutes);for(const row of step.denials){assert.equal(row.unchanged,true,step.id+'/'+row.route);assert.deepEqual(row.after,row.before,'independent unchanged content check');}assert.ok(step.after);}
   assert.deepEqual(flow.runtimeRuns.map(r=>r.id),['try-original','try-longer','try-reordered']);
+  const touch=report.results.find(r=>r.id==='TUTORIAL-TOUCH-AND-KEYBOARD').observations;
+  assert.deepEqual(touch.steps.map(s=>s.id),tutorialSteps);assert.equal(touch.touchEmulation,true);assert.equal(touch.realTouch,false);assert.equal(touch.keyboardActorActivation,'Enter');assert.deepEqual(touch.runtimeRuns.map(r=>r.id),['try-original','try-longer','try-reordered']);
   for(const run of flow.runtimeRuns){assert.equal(run.renderTolerance,1+run.expected*Math.min(100,run.frameGap)/1000);assert.ok(run.peak-run.start>=run.expected-run.renderTolerance);assert.ok(Math.abs(run.samples.at(-1).x-run.start)<1);}
   assert.deepEqual(report.results.find(r=>r.id==='ENTRY-FIRST-VIEW').observations.viewports.map(v=>v.size),
    [{width:1280,height:720},{width:1366,height:768},{width:1920,height:1080}]);

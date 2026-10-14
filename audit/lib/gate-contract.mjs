@@ -1,9 +1,6 @@
 import { currentProductFile } from "./product-path.cjs";
 import path from 'node:path';
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
-  ['entry-unit','audit/tests/entry-workshop-core.mjs',file('entry-unit')],
-  ['entry-browser','audit/tests/entry-workshop-browser.mjs',browser,file('entry-browser')],
-  ['entry-verify','audit/tests/entry-workshop-verify.mjs',file('entry-unit'),file('entry-browser'),file('entry-verify')],
   ['static','audit/tests/static-contract.mjs',file('static')],
   ['release-policy-negative','audit/tests/release-policy-negative.mjs'],
   ['integrity','audit/tests/execution-continuity.mjs',file('integrity')],
@@ -48,4 +45,7 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['license-browser','audit/tests/license-browser.mjs',browser,file('license-browser')],
   ['speech-display','audit/tests/speech-display-browser.mjs',browser,file('speech-display')],
   ['speech-display-verify','audit/tests/speech-display-verify.mjs',file('speech-display'),file('speech-display-verify')],
+  ['entry-unit','audit/tests/entry-workshop-core.mjs',file('entry-unit')],
+  ['entry-browser','audit/tests/entry-workshop-browser.mjs',browser,file('entry-browser')],
+  ['entry-verify','audit/tests/entry-workshop-verify.mjs',file('entry-unit'),file('entry-browser'),file('entry-verify')],
 ];}

@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.3",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Approved entry tutorial and unchanged external contracts; repair actual committed HTML provenance buffer and enforce complete final evidence without weakening old oracles",
+  "updateReason": "Approved entry presentation, guarded tutorial and editing improvements; preserve old language bodies and gate expectations, correct ID-based keyboard activation and limit layout restoration to leaving entry",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,13 +12,13 @@
     },
     {
       "path": "Akari_1_2_3.html",
-      "sha256": "98b75013137642032c7d2efcf723f7175afd7d58e0dbf86e7eb6c5e2445500e9",
-      "bytes": 1746026
+      "sha256": "b09fd33123c88d634beeb13abe45ec60c5f8905a2fbbfefc6d228487bad9c6c3",
+      "bytes": 1746768
     },
     {
       "path": "LANGUAGE.md",
-      "sha256": "60ab2dc3d8e879c27f14617644d2c41a4788e07139d044c1da2c47522dee345d",
-      "bytes": 116029
+      "sha256": "e8cc48d662054b0a9e4dc3d2ebc22ef1c8a18a37c3c5e6ecd7668134d1daa9a5",
+      "bytes": 116474
     },
     {
       "path": "MANUAL.html",
