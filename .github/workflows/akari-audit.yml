@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, "codex/**", "feat/akari-entry-tutorial"]
+    branches: [main, "codex/**", "feat/**", "fix/**", "chore/**"]
   workflow_dispatch:
 permissions:
   contents: read

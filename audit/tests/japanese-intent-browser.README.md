@@ -1,22 +1,33 @@
 # Independent Japanese intent browser audit
 
-Run from the repository root with the pinned audit environment:
+Run from the repository root with Node.js 24 and Python 3. Required versions are Chrome for Testing 140.0.7339.207 and Playwright 1.55.0. Choose a writable environment directory; no service-specific workspace layout is required. This POSIX-shell setup example targets Linux:
 
 ```bash
-NODE_PATH=/workspace/akari-environment/deps/node_modules \
+export AKARI_AUDIT_ENV="${AKARI_AUDIT_ENV:-$HOME/.cache/akari-audit}"
+npm install --prefix "$AKARI_AUDIT_ENV/deps" --no-package-lock --no-audit --no-fund \
+  playwright@1.55.0 @babel/parser@7.28.4
+export NODE_PATH="$AKARI_AUDIT_ENV/deps/node_modules"
+
+# Install Linux browser system dependencies if they are not already available.
+"$AKARI_AUDIT_ENV/deps/node_modules/.bin/playwright" install-deps chromium
+export AKARI_BROWSER="$(python3 audit/install-codec-browser.py "$AKARI_AUDIT_ENV/browser-140.0.7339.207")"
+"$AKARI_BROWSER" --version
+node -p "require('playwright/package.json').version"
+
+export AKARI_REPORT_DIR="$(mktemp -d "${TMPDIR:-/tmp}/akari-intent.XXXXXX")"
 node audit/tests/japanese-intent-browser.mjs \
-  /workspace/akari-environment/browser/chrome-linux64/chrome \
-  /tmp/akari-intent-new-report.json
+  "$AKARI_BROWSER" "$AKARI_REPORT_DIR/report.json"
 ```
 
-The output path and its `.artifacts` directory must be new. Required versions are Chrome for Testing 140.0.7339.207 and Playwright 1.55.0. All editor and generated-player pages use `file://`, in offline browser contexts. The runner copies the current product to an immutable candidate before launch and records its SHA256. A changing integration working copy does not change the tested snapshot.
+Dependency installation needs network access, and Linux system dependencies may require administrator approval. The repository installer downloads the pinned official Chrome for Testing; Playwright's bundled Chromium is not a substitute. If reusing an environment, confirm the displayed versions match the required versions before running. On Windows, install the same package versions, use the installer's Windows executable path, and set `NODE_PATH`, `AKARI_BROWSER`, and a new `AKARI_REPORT_DIR` using the shell's environment-variable syntax.
+
+The output path and its `.artifacts` directory must be new for every run. All editor and generated-player pages use `file://`, in offline browser contexts. The runner copies the current product to an immutable candidate before launch and records its SHA256. A changing integration working copy does not change the tested snapshot.
 
 An optional final argument selects IDs containing a substring for diagnosis. A filtered report is always `INCOMPLETE`, even if all selected checks pass:
 
 ```bash
-NODE_PATH=/workspace/akari-environment/deps/node_modules \
 node audit/tests/japanese-intent-browser.mjs "$AKARI_BROWSER" \
-  /tmp/akari-intent-ci14-new.json CI-14
+  "$AKARI_REPORT_DIR/ci14-new.json" CI-14
 ```
 
 ## Oracle and coverage
