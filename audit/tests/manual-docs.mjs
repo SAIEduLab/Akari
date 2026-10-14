@@ -81,6 +81,9 @@ if(browserPath!=='--static'){
       const first=await page.locator('[data-example="first-move"]').textContent();
       await page.goto(pathToFileURL(path.resolve(currentProductFile())).href);
       await page.waitForFunction(()=>!!globalThis.Akari?.app);
+      // This manual task adds a new component through the normal toolbox.
+      // Entry discovery and its tutorial have their own independent obligations.
+      await page.locator('#uiLevel').selectOption('basic');
       page.on('dialog',d=>d.accept());
       async function reveal(l){
         if(!await l.isVisible())for(const p of await l.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all())await p.locator('.blockui-side-toggle').click();

@@ -91,7 +91,7 @@ const cases = {
     return {plainCodeLabels:true,blockFolding:true,actionsOutsideFold:true,duplicateDelete:true};
   },
   async 'UI-BUTTON-LEVELS'(p) {
-    assert.deepEqual(await p.locator('#uiLevel option').evaluateAll(es=>es.map(e=>e.value)),['basic','advanced']);
+    assert.deepEqual(await p.locator('#uiLevel option').evaluateAll(es=>es.map(e=>e.value)),['entry','basic','advanced']);
     for(const level of ['basic','advanced']) { await p.locator('#uiLevel').selectOption(level); assert.equal(await p.evaluate(()=>document.body.dataset.uiLevel),level); await p.reload(); assert.equal(await p.locator('#uiLevel').inputValue(),level); }
     // Existing user preference is an external compatibility fixture, not an app state mutation.
     await p.evaluate(()=>localStorage.setItem('akari.uiLevel.v1','all')); await p.reload(); assert.equal(await p.locator('#uiLevel').inputValue(),'advanced');

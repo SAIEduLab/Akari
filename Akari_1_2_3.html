@@ -5731,6 +5731,72 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 .project-choice-footer{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:12px;margin-top:16px}
 @media(max-width:650px){.export-choices{grid-template-columns:1fr}.project-choice-dialog{padding:16px}.export-choice{padding:12px}}
 
+/* The entry layout keeps the same editor and stage; each area scrolls inside. */
+#entryProjectMenu,#tutorialStart,#entryEvents { display:none; }
+#tutorialGuide[hidden],#tutorialChoices[hidden],#tutorialFinish[hidden],#entryOutside[hidden] { display:none; }
+#entryProjectMenu { position:relative; }
+.entry-project-actions { position:absolute; z-index:30; background:white; border:1px solid #9aaec8; padding:8px; min-width:150px; display:grid; gap:6px; }
+body[data-ui-level="entry"] #app { height:100dvh; min-height:0; }
+body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) 340px; grid-template-rows:minmax(200px,1fr) 170px; min-height:0; overflow:hidden; }
+body[data-ui-level="entry"] .codewin { grid-column:1; grid-row:1/3; min-height:0; }
+body[data-ui-level="entry"] .designer { grid-column:2; grid-row:1; }
+body[data-ui-level="entry"] .side { grid-column:2; grid-row:2; min-height:0; display:flex; }
+body[data-ui-level="entry"] .side>section:first-child { flex:1; min-height:0; }
+body[data-ui-level="entry"] #componentControls { display:none; }
+body[data-editor-mode] .menutool>.ui-level-label { display:flex; order:0; flex:0 0 auto; margin:0; padding:0; }
+body[data-ui-level="entry"] .menutool :is(#undoBtn,#redoBtn) svg { width:18px; height:18px; flex:none; }
+body[data-ui-level="entry"] .menutool #redoBtn::after { content:'やり直す'; }
+body[data-ui-level="entry"] :is(.toolbox,.side>section:not(:first-child),.debugbar,.source-nav,.code-assist,.console,#scriptAdd,.code-head label:nth-child(2),#basicActionGuide) { display:none; }
+body[data-ui-level="entry"] .menutool>:is(#newBtn,#openBtn,#exportBtn,#resetBtn,#imageObjectAdd,#paintAdd,#soundQuickAdd,#assetBtn,#procBtn,#dataBtn,#diagnoseBtn,.sep) { display:none; }
+body[data-ui-level="entry"] :is(#entryProjectMenu,#tutorialStart) { display:block; }
+body[data-ui-level="entry"] #entryEvents { display:flex; flex-wrap:wrap; gap:6px; padding:6px 10px; }
+body[data-ui-level="entry"] #entryEvents button[aria-pressed="true"]::before { content:'✓ '; }
+body[data-ui-level="entry"] .code-head { display:flex; padding:6px 10px; }
+body[data-ui-level="entry"] #blockEditor { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+body[data-ui-level="entry"] #blockEditor[hidden] { display:none; }
+body[data-ui-level="entry"] .blockui-layout { flex:1; height:auto; min-height:0; grid-template-columns:240px minmax(0,1fr); }
+body[data-ui-level="entry"] .blockui-palette { display:flex; flex-direction:column; min-height:0; }
+body[data-ui-level="entry"] .blockui-palette::before { content:'使うブロック'; padding:8px; font-weight:bold; }
+body[data-ui-level="entry"] .blockui-palette-list { flex:1; min-height:0; overflow:auto; }
+body[data-ui-level="entry"] :is(.blockui-palette-controls,.blockui-categories,.blockui-palette-options,.blockui-palette-tools,.blockui-search-scope,.blockui-search-restore) { display:none; }
+body[data-ui-level="entry"] .blockui-palette-item { margin:4px; }
+#entryOutside { margin:0; padding:6px 10px; font-size:13px; }
+#tutorialGuide { flex-shrink:0; padding:8px 10px; border:2px solid #315a96; background:#fff4d4; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+#tutorialChoices { display:flex; gap:8px; flex-wrap:wrap; width:100%; }
+#tutorialChoices button { flex:1 1 160px; padding:10px 12px; min-height:60px; text-align:left; border:1px solid #315a96; border-radius:6px; background:#fff; color:#173047; }
+#tutorialChoices strong,#tutorialChoices span { display:block; }
+#tutorialChoices span { font-size:13px; margin-top:4px; }
+#tutorialGuide p { margin:2px 0; flex:1 1 250px; }
+
+#tutorialText { margin:0; flex:1; min-width:220px; }
+.tutorial-target { outline:3px solid #2357a0 !important; outline-offset:2px; }
+body[data-tutorial-step] :is(button,input,select,textarea,summary)[data-tutorial-blocked="true"] { opacity:.55; }
+body[data-tutorial-step] #tutorialExit,body[data-tutorial-step] #stopBtn { opacity:1; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .codewin { display:flex; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 340px; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin { display:flex !important; grid-column:1; grid-row:1/3; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>:not(.debugbar) { display:block !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>:is(.source-nav,.code-assist,.console,[hidden]) { display:none !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#blockEditor { display:flex !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#blockEditor[hidden] { display:none !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>.debugbar { display:none !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side { display:flex !important; grid-column:2; grid-row:2; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side>.objects-window { display:flex !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side>:not(.objects-window) { display:none !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>#designerWindow { grid-column:2; grid-row:1; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { display:inline-flex; }
+@media(max-width:950px) {
+ body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) 280px; }
+ body[data-ui-level="entry"] .blockui-layout { grid-template-columns:190px minmax(0,1fr); }
+}
+@media(max-width:700px) {
+ body[data-ui-level="entry"] #app { height:auto; min-height:100dvh; }
+ body[data-ui-level="entry"] .main { display:flex; flex-direction:column; overflow:visible; }
+ body[data-ui-level="entry"] .codewin { min-height:550px; }
+ body[data-ui-level="entry"] .designer { height:300px; }
+ body[data-ui-level="entry"] .side { height:170px; }
+ body[data-ui-level="entry"] .blockui-layout { min-height:340px; }
+}
 </style>
 </head>
 <body>
@@ -5756,7 +5822,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     <button id="procBtn" aria-label="手順・答えを求める"><ruby class="child-word">手順<rt>てじゅん</rt></ruby>・答えを求める</button>
     <button id="dataBtn" aria-label="変数・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
-    <label class="ui-level-label">表示 <select id="uiLevel"><option value="basic" selected>かんたん</option><option value="advanced">くわしく</option></select></label>
+    <details id="entryProjectMenu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">書き出し</button></div></details>
+    <button id="tutorialStart" type="button">いっしょに作る</button>
+    <label class="ui-level-label">表示 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
     <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い欄の中で指を上へ動かすと読めます。キーボードはTabで白い欄を選び、↓キーを押します。</p>
       <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品をファイルにします。あとで続きを作るときは「開く」でそのファイルを選びます。</p>
       <p id="exportActionHelp"><strong><ruby class="child-word">書き出し<rt>かきだし</rt></ruby></strong>：ブラウザーで動かして見るための作品ファイルを作ります。続きを作るためのファイルは「保存」で作ります。</p>
@@ -6002,6 +6070,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         <label><ruby class="child-word">編集<rt>へんしゅう</rt></ruby>する動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="編集する動きを選びます。きっかけは「いつ動く？」で変えます"></select></label>
         <button id="scriptAdd" type="button">同じできごとの本文を追加</button>
       </div>
+      <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">動かすを押したとき</button><button id="entryClickEvent" type="button">キャラを押したとき</button></div>
+      <p id="entryOutside" role="status" hidden>この作品には、ほかのブロックもあるよ。そのまま残っています。変えるときは表示を「かんたん」か「くわしく」にしよう。</p>
+      <section id="tutorialGuide" aria-label="いっしょに作る" hidden><p id="tutorialText" aria-live="polite"></p><div id="tutorialChoices" hidden></div><button id="tutorialFinish" type="button" hidden>ほぞんしておわる</button><button id="tutorialExit" type="button">いっしょに作るのをやめる</button><button id="tutorialVerifySave" type="button" hidden>ほぞんした作品をたしかめる</button><input id="tutorialSavedFile" type="file" accept=".akari.md,.md" hidden></section>
       <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
       <div id="sourceOverview" aria-label="選んだもののすべてのコード" hidden></div>
       <div class="debugbar">
@@ -6252,7 +6323,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.2.2';
+  const PRODUCT_RELEASE = '1.2.3';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -18344,6 +18415,16 @@ function createAkariExtensionHost(options) {
           ? [draft ? { ...hole('statement', slot.label), inlineComment: '' } : { kind: 'NoOperation', inlineComment: '' }]
           : [];
     for (const annotation of schema.annotations) node[annotation.key] = '';
+    // Only the editor supplies a confirmed design position. API-only creation
+    // keeps its established defaults, and existing nodes are never rewritten.
+    const position = context.designPosition;
+    if (!draft && position && Number.isFinite(position.x) && Number.isFinite(position.y)) {
+      const coordinate = value => value < 0 || Object.is(value, -0)
+        ? { kind: 'UnaryExpression', op: 'NEG', value: valueNode(Math.abs(value)) } : valueNode(value);
+      const positions = { 'MotionCommand:GOTO': [[0,'x'],[1,'y']], 'MotionCommand:GLIDE': [[1,'x'],[2,'y']],
+        'MotionCommand:SET_X': [[0,'x']], 'MotionCommand:SET_Y': [[0,'y']] }[schema.id] || [];
+      for (const [index, key] of positions) node.args[index] = coordinate(position[key]);
+    }
     validateSyntaxAst(node, schema.category, { allowHoles: draft || context.allowHoles === true });
     return node;
   }
@@ -21298,6 +21379,7 @@ function createAkariExtensionHost(options) {
       timers = new Set(),
       physicalKeys = new Map(),
       heldPhysicalKeys = new Map();
+    let clickTargetScheduler=null,runtimeClickTargets=new Set();
     const project = () => options.getProject(),
       runtime = () => options.getRuntime(),
       scheduler = () => options.getScheduler();
@@ -21535,9 +21617,18 @@ function createAkariExtensionHost(options) {
     function renderComponents() {
       const p = project(),
         r = runtime(),
+        q = scheduler(),
         nodes = new Map(
           [...form.querySelectorAll('.component')].map((n) => [n.dataset.runtimeId, n]),
         );
+      // Compiled click bodies stay fixed during one run. Reuse the set across
+      // paints and clones rather than rescan all scripts for every actor/frame.
+      if(clickTargetScheduler!==q){
+        clickTargetScheduler=q;runtimeClickTargets=new Set();
+        if(q)for(const component of p.components){
+          if((q.matchingScripts(component.id,'click',{})||[]).some(script=>q.hasExecutable(q.scriptAst(component.id,'click',script.id))))runtimeClickTargets.add(component.id);
+        }
+      }
       const actors = r
         ? [...r.actors.values()].sort((a, b) => a.z - b.z)
         : p.components.map((c, i) => ({
@@ -21562,9 +21653,7 @@ function createAkariExtensionHost(options) {
         node.dataset.id = c.id;
         node.dataset.runtimeId = a.runtimeId;
         if (c.type !== 'input') {
-          const q = scheduler(),
-            interactive =
-              !!r && (c.type === 'button' || q?.hasExecutable(q.scriptAst(c.id, 'click')));
+          const interactive = !!r && (c.type === 'button' || runtimeClickTargets.has(c.id));
           node.tabIndex = interactive ? 0 : -1;
           if (interactive) {
             node.setAttribute('role', 'button');
@@ -21647,7 +21736,7 @@ function createAkariExtensionHost(options) {
           node.addEventListener('click', (e) => {
             e.stopPropagation();
             if (allowed())
-              dispatch(() => scheduler().spawnForRuntime(node.dataset.runtimeId, 'click', {}));
+              if(options.onRuntimeClick?.(node.dataset.runtimeId)!==false)dispatch(() => scheduler().spawnForRuntime(node.dataset.runtimeId, 'click', {}));
           });
           node.addEventListener('keydown', (e) => {
             if (
@@ -21661,7 +21750,7 @@ function createAkariExtensionHost(options) {
             e.preventDefault();
             e.stopPropagation();
             if (!e.repeat)
-              dispatch(() => scheduler().spawnForRuntime(node.dataset.runtimeId, 'click', {}));
+              if(options.onRuntimeClick?.(node.dataset.runtimeId)!==false)dispatch(() => scheduler().spawnForRuntime(node.dataset.runtimeId, 'click', {}));
           });
           form.appendChild(node);
         }
@@ -23299,7 +23388,12 @@ function createAkariExtensionHost(options) {
     // Values on simple command previews remain visible choices. Enclosures and
     // persistent rules start with visible holes, never an implicit true/0/no-op.
     const draft = schema.bodies.some(slot => slot.requiredExecutable) || ['ContinuousRule','ReturnStatement'].includes(schema.kind) || schema.inputs.some(slot => slot.type === 'target');
-    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft });
+    const creationContext = options.context || session.context || {},
+      creationProject = options.project || session.project,
+      component = creationProject?.components?.find(c => c.id === creationContext.targetId),
+      designPosition = component && Number.isFinite(component.x) && Number.isFinite(component.y)
+        ? { x: component.x, y: component.y } : null;
+    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft, designPosition });
     if (schemaId === 'NumberLiteral' && location?.input) {
       const parent = buildBlockIndex(session.blockView).get(location.parentId)?.node;
       if (parent?.schemaId === 'ContinuousRule' && ['seconds', 'distance'].includes(location.input))
@@ -23471,20 +23565,180 @@ function createAkariExtensionHost(options) {
       }[schema.palette] || 'operator'
     );
   }
-  const BASIC_BLOCK_SCHEMA_IDS = new Set([
-    'MotionCommand:MOVE_DIRECTION',
-    'Say',
-    'WaitTime',
-    'RepeatCount',
-    'IfStatement',
-    'MotionCommand:MOVE',
-    'MotionCommand:TURN_RIGHT',
-    'MotionCommand:TURN_LEFT',
-    'LooksCommand:SHOW',
-    'LooksCommand:HIDE',
-    'UserActionCall',
-  
+  // Entry workshop: presentation and learning state, independent of file/runtime contracts.
+  function normalizeEntryUiLevel(value) {
+    if (value === null || value === 'entry') return 'entry';
+    if (value === 'advanced' || value === 'all') return 'advanced';
+    return 'basic';
+  }
+  const ENTRY_BLOCK_SCHEMA_IDS = new Set([
+    'MotionCommand:MOVE_DIRECTION', 'MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT',
+    'MotionCommand:GOTO', 'MotionCommand:GLIDE', 'MotionCommand:GLIDE_DIRECTION',
+    'Say', 'WaitTime', 'RepeatCount', 'LooksCommand:SET_COSTUME',
+    'LooksCommand:SET_BACKDROP', 'SoundCommand:TONE_WAIT', 'SoundCommand:SAMPLE_WAIT',
   ]);
+  const BASIC_BLOCK_SCHEMA_IDS = new Set([
+    'Say', 'MotionCommand:GLIDE', 'MotionCommand:GOTO', 'RepeatCount', 'WaitTime',
+    'MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT', 'IfStatement',
+    'LooksCommand:SET_TARGET_TEXT', 'UserActionCall', 'SoundCommand:TONE_WAIT',
+    'MotionCommand:MOVE', 'MotionCommand:SET_DIRECTION',
+    ...ENTRY_BLOCK_SCHEMA_IDS, 'Forever', 'LooksCommand:SHOW', 'LooksCommand:HIDE',
+    'Assignment', 'NumericUpdate:ADD', 'ListReplace',
+    'PenCommand:DOWN', 'PenCommand:UP', 'PenCommand:SET_COLOR', 'PenCommand:SET_SIZE',
+  ]);
+  const TUTORIAL_FISH_ASSETS=[{"name": "blue", "sha256": "616a39d40c93c47912be5c1559d78ed5555ccc10b270699ade11a45e193d92a3", "base64": "iVBORw0KGgoAAAANSUhEUgAAALQAAAB4CAYAAABb59j9AAAjcElEQVR4nO2deZwc1XXvv+dWVVd3z6ZBjBYQi3gGEykOi7BxHIOQbRGzxIS8jB5YSLYfieQsOA8CXthabYNtlqAXnBcMebaDGWEyYzs2ZkmwQRIvXgHjYCRjTDQsEkKjZUbS9FJdVfe8P6pnNBICzYxmaeH+fj7SR+rp6r5T9atT55x77rlQp06dOnXq1KlTp06dOnXq1KlR2tsdQCZ7GHXqHBy5nGFvIddFXecQZX7OHfinv+TGFf7F+dsAaO90Jm1Mhwj1u77WmJ9zWZuPMotzs6xJ3yyp9MVaKZYCWzmBVflNkBPI28keZq1iJnsAdQYRcjnD2nzkfzi/IDapx/Hci7W0q4zjZnxrbgWU9rl1I/Qm1E9OLZDLGfKJ1fUuuWGpcdy70RiiKELEBY1JZZyoUlgQr8qvob3ToWtRPNnDrkXqgp5sBsR5/rKs33LUHaT8pYTlGIsgg09Qi+MKUfx8YPrmEbxcpqvTguikjr0Gqbsck0fiYnQtilOLc3P81qOfIOUvJShbVJ0hYgYwxGFMOvN2P25aSldXzPwV9QBxP9Qt9GSwr4thnDtAs8RhDPJGQrUYB5TNgdHTmR1uJg/1AHFv6hZ6omnvdMjnLecvy/qLP3e38VJ3Y6MsUWjfRMwABhtZfP/IVBRfQz5vmV+/fvtSt9ATSTUll1qcmyPG68JNzSEoW0QFZBjXQhVjLJiy2nheZdV1z8OKehpvCPU7fCLI5QztnQ5r85G3+LOXiOM/iZg5VEpx4isPR8wAIlgLrttgVL8MUk/j7UP9ZIwXqoIA81c4rM1HAP7iz92GYy5HFWz8Zv7ygT48xvUdG5YvCu9d8S9c9pDPGf0R7e2JpZbf3uxHXdAHjQoKrFizR5xztyqL9uSJ/Uuuma3S8BXxvAUEJZuIfbhWeb8kaTwbbwpe+cFs1q6N9h6Syl7jYY1lxQr9bRB6XdAjRVXo6jKsa0vOXX5BtL+3teT+dUrLOxdIz723n2M99yYx7iyCUoiIN0YjiXFcx3ipW1reccoTcalsXS9eW5x6VLTzY6f07feIzk5ncNwrzorfigIfhaBVqoe95U7G/lEht0LgLLOv5QXgzie9mdAS9217L66T1TA8j5SXkVjPKL68wQ37tk1BDERhjIzWxXijoVmVdIM0/+48xEuhpd07Ma5io//E9XsIwx8b398YRuVf6m776o78ubv2Pr5qyddvVTrb7VtB4CMT9NAp1yG51LceKnRWrfA+Frj1i99vcRx7knH908CeTiX4PRz3CPH8ZkQwrkdcLlJ4/lnCXb2IoKjoPhMlY4MIGlZif/qRmj3meFEbO4ggXgqMAygiBlvcHarSh+v9kDjsFsPjpnXaD1+79NSte33egAU/hK33MAWtAqLZxTfMjLDXVFZd/9fAW0/UAxd0qIgve8ifelzzsY6G5yr2DMLwvcbz2iSVRlUhqqBRBDaOxfO0sq2H0ivd2DBwxPUSKzjeqKXh+Ll4TVNU4xAwFtE9ghTjYhzE85OEirVoGOzEyC9Ezc/jKPpurPKL3k8v3Pn6c3FWfChNsY9I0LR/qsVPNezATf0H5dJHgn/JvziQWx3fYY4jAz5x+5BH7mUP+TOOTb9b4QLFnoPqcSadTWkiBIhCRYhBQNVgjCAiwZZXKW98MTmrxgGdAB2IoFGE1zyFhuPngu7XviiqJGMGVATHOOL5iOOiQRkbhdtE5DEr9ltpIz/Y+Lcf3DF4dG61C2vsoWC8Riboj+Sm+KF5XjJNbbZS2iBa/EDQcWP3ISnqXM4wd64M9Yln/N1j8wdELMacKJ6PVgI0CgEboSKgZk+GQhHHw4YVSq9soLK9B3HHKuYbAYnrQfaYt+FPPxINK8NIbauCWFBFcXBdES8DKLZc3CHoD8T1vmUaCg9sXv6hYvUQYVGXqeVKv1EI2ulGaMJNOWrjbmzl/Mqq/PpDRtTtnQ7t7bBIYoAjvvT9qWEp/rC4qT8V4cxBEYfBgBUeWAq1n3MlRLt6Kb70AnGpmPiuqkx8vCygFuP7NP3OKYjrjvzpoKqABQHHcSSVRozBVsrPCzwQuel/2v6JP3gOGGIM2muu4m90gnbMFOIoxvUcxJRsFC4LV13fQXsuRVe+Mr5DHiXtnc7QSP7wmx453qTcy7D2YvFSh6OKlotDRTysIC7s256IZ6JcjDdCAGtxGpsxKf/gxjIobhAv5YjnYyvlisDjKnpTzxULfzD43txq941Sl5PB6AVtY0VRHGMwHjYsLw3vXXFPNRNiqZW0Xi5n4CwzcNKn3fb9D6Dy5xrH5zvZxqwtFyGOk0eoMOK0mjhuchZVmdy0fvL9auOxvrFs4piLK3428byQtRJF34bNX9ly1dLCYByyb0pzEjg4QSdJKYsxYMSo5YpKxzUrIVe1bpMaRAidnYMnefot//4+jHM1jvN+cTxsuQBqIxTnoGbtJtMq74+DmoB8UxTFghpJZ0WMi62UfyNqv7TlyoVfAiCnBlYwmcHjwQs6+bkiYkk3OpSL9wQd1y4FJi+t19npDAh5wLUQay/DS6GlQvL0GFFRUJ29UGLQxB1JZbBB8TEc8/me//W+R4FJdUPGSNCDVEhnUwSljiDYsYyulaUJFrWQW+2QXxDNzN2ZjZpm3yDiLDepdNYWdyV+4VjP1v12Y0Gt+FkXVYijRyth+De9nz5n3WRZ67EWNECE57vE8XrKhfODrhu7mXenx1PLwzEd+b4MscrTb/q3Beo6/2D87Bxb6k9cC8Q90Ef8NrPvhRyRI5VYbJFMg9EwLGLttT1XLVwJTLi1Ho96aJewHOE4czSdfdS/5JrZPLU8HNo8Zcypinlm7s5s262P3IaXekyMO8cWdkWo1bqY948AjhFcI1iF0CqhVSKrOJK8bobjlQkOIkZLhRgbZU0me9u0Wx997LBbHppDfkFELmcmZMaUcSvwF5dKORLHma2SfdT/cH4Ba/PRuIg6p4ZFi+LpNz2wIG4+7gkn3XC5RhWrlbJNWgDU/eT94RohVqW3FLK1UCHlCIdlPA7LeExJe/SVQ7YVK5TCGNfI8M6iiINatYVdkXjeAtf4T0y75fuXk88n6dKcjvuCkvFwOYYcphbXNYiDjSpLwlXXd4zZBExODXMRFknc9nffX2oc727UopWg2suizv4wIqgqO0ohM5p8Pvi2abx/dhvzjmihrcFHgDC2/GRjLz/d2MtDv+nhmZ5dNKZcMq4hssN0RlRjRBzTdBhxf1+H/2rfso0rF5XG2wUZX0FDImrHKMZ1bBR9NFx13d1JrvogZplyasiLBZh2yyN3i59ZqkExxlpBpL6s7A1wRCiGMSKwbN4xLD/tGI5rbXjTY4phTMczG/n7n2zghR0FDs+mRiJqBY0l0+hqFK2XePf5W666oHs8RT3+gobkFzNi8dIOYeXuoOPaj9Le7jBnjo44Cq76y4flvjXLndJ6i/HSF9nCzhhw6t7FG+OYRMzTG3y+uPB3uPDEmQDEqlC9kiKSlHYoWBRBcExyTl/eWeIvH3yGNd3baE57xMMVNYDaSDJNroZBt0TlS7d86vzV4yXqiRF08hmARKQbXIJiR9Bx3RJgZLnq6kmY/rnvztaGxkcllZ6thZ0RYuouxptgRChFMdOyKR79yHs4qiVDWA38zJArGFuLkT2rw+I4xhiHWBW3+saPfedpVj2zibaGEVhqANVY3JSD66LFwpKez5zbwZ1Peiw/bUyzXxP4eBYAl3J/SCp9ib/089/IXPjJWeTzdlhtYnNq9hKz487Wwq6wLuYDoyRWeOUHfzcRc2zxzN5ittbimKSQsLd3J1EU4zjJIoGBANKqcvPZc5k7rYliGO91/AERcZJgPYgl03DPtJsfuoTlp4VJaerYMQn+pngExQjXuyhuanncb79mNl2LYubd+cZ1l9Uk/bQvPHCcZqtiLheiMVyf95bFNcKOYoWPv/NYzjthOlGseM7el91aizGGHz3xNH/8scs4deF/5z1/9GHu6ugatNZO4o3Qlk1xx/m/RyW2jLh2RcRgI6NhEEuq4Z5pX3jokiStN3ainqQASlzKxVCMM/uAuWpVIY8CBjf1sHheVcx1y3wgBKjElhmNaf7qXcdiVTH7mNUBMX/rwUc4+6I/45G1P6K/XOY33S+x/Mrr+avPfI4wirA2OTa2yumzWjnv+OnsKoc4I41bxMigqLON9xx+4/fOGEtRT15GQMQjDGIxZrY6jY97F+cuYm0+YtlQS11dxNnZZaY1veer4mdO0FJ/XczDxBihP4g474TpHNWcSapc93EzRISXN23mLz71WdLpNK0tzTgipH2fWUcewT9+9V46vvk9jDFJKxGSG+UjpxyVzCaOJg4XI9hYNA6tk87+87QvPHAc+bPischTT3KKSxzCihW1s0wq8w1v8Wcv4a7lYdWnFu58yiW/IGrb0HCLaWxdoqX+us88QmJVFsyeut+pbFVFRPi/q75J387d+KkUURShJGKPoogprS3ccfd9hGGIMWYwDfDuWYfR1pCiEtvRFc2KGMKK4qWOw/Ee5mtrfFhz0DOKk5+zFTFEkSUOrXHce1KX3Hg5XYticqsdlp8WHn7j984w6cZP2N29IcK4illJ8jbDmu6tcZIJEqWtwee0I1qTJTf7/F4iQhhF/PyZ9aRSHtbunWxSVTzP45VXN/PSxs2DaT2rSovvcsrMFsphPPrqWxFHS/2hZJtOaNtS/Dz5BdHeDXJGzuQLGhJRqxVsFEs6c5u/+IYO8guitptXz3DS2X9WGxnUOuM9je2IUIks5TDGMXLId+GxqjSmXGY0+sDeZ09VMcZQLJb41QsbSKf96kKVvd/jOg47enfxy+eeH3xNNQk2ZzamCa0e3FURcbW0OzLpxk+03fxwO/kFEZ06alHXhqCB6mIBh1J/RbKNi732q28XqVwt2cbjCIOBZVHj881AZJUG3+X6s+dy3OEN9BZDrDLyoKfGsKoHzBcfeI3C/t8QWR2Lm16w1qhaRzC38bXVadaho3U9as8fFUnZ3Ttsqm3mZYjB7u61E+E3CxBbZd5Rrbzz6Fa++rNuHlr/GruDiEbfRaudAA41rCphvP95K1Ul5XnMmDaVHX19eK77OittraUhm2HGtMOBxE1R9twoY3K7ixgqpUiyzbPatuz+/Na8XAGrXWDEM4k1ZKGHIGL8qdNt0nVo/Cu0Br8W6A+SVNQn3ns8f3/hybzr6MMoViLCyA7Olh0KKOC7hs27A57a3AeAHWKpRQRrLZlMmpPnnki5HLwudhARoiii7fCpnDznxIEXcYxQjiw/29RLxnP3+tzRI44GRSuu9/GWL/zrsawYXdajtgQ92DSlFa+l1WgUDbNucewwIligtxRyTGsDt3zoJK5ZOIfWbIodxQpGhlkjXCPEVvnJxr79/mwgmPsfF5wz8MJeAV4q5dHbt5MPnb0AP+0PriVW4Fdbd/PqrjIpV8ZmNbSIYCMr6UzGl9Qnk9X5aw5xQQMI+NOPmNQF1AOF75UoZncQcvbbp3P7hafQftIsKpGldIgEjapKxnO4/7nXBqvshorPGIO1lvm//06WLVnEq5tfw6riui6O47B5y1beMeft/O3HP5o0gzKm2oAJvrl+c3X6ewzPgoqj5YLF9T8y/ZZ/n51MuIzMSteWoOMYJ9OA29iMxvGk1+aLCI4IO0shrdkUVy44kS+e/w6OPSxLX6n2g0arkE05PLNlJ99c/ypG5HVVcgOux+03XM21l/8FruOwbdsO+gtFznnfGdx/9/9J/GdVtFp9t7k/4O5fvEJz2hsjd2PoYCIrmWxW1V6YvDgyKz2B1XYHGomgUUh6xiwyRx2XtN+aILEMZDma0x53/OmpNKe91wU8qskkRVPapRBEPLh+M19/8iX6B4NGXhdQ1QIiUImVGQ0+Dy95N0c1p1FlsCx0gIFJlu5XNvHU07/kiCNm8J7TTh78GSJEscUYYdn9/8k3frmJKZkRlpEOByWWdMbRcvGHPcWfnMn6uTKS1mO1Y6GrsxpuS2vt9bogEYZrhEIQ4RjholOO5svt81j49un0ByGVKH6dSGoBVci4hg29Bf7qwWcw1aBuf5Y6ji2zjzqSP/3QB3nPaSdXc86JZbY2KWr6p6de4mtPv0zreIg5GbGjQUlxvNPaGk5PCtdG4HbUjqBt1d1oaEq6/9Too9xIsqB0VzlkRlOaaxfO4dqFc5jRlGZXOUx8zRobe2SVqdkUa7q38T+/8ws295dxjGBVie2edKTjGKxVojgmii1WIa7WfzhG+McnXuTaR59jWoM/slrokSACaCzpjA9mxG5HbQhaJFl+2NCYtNaqQQs9lKFBY38QsvDt0/ly+zwuOuVogthSCKLhLyydIAZcqo5nNnJex09Z++L2QWs9ECzGVpMHpTG4jhlcEb6ht8il3/0Ff/3gM7jOBP1S1iLo/JFOsNTUxIrb2DLZQxgRIkmmY3dVwJe9922cfvRhrPr5y/z0pe00pFxSrhmnR/PIia3S1pCiu6/I+at+ytlva+MjJx/F71cLjYa6TLuCiHU9u/nOc5vpeGYjveWQmU3p8bPMQ1EcrZRB5fSW//2dlp35C/uqGy0d8MtrStCHKk7VDekrhZw6q5V3HNHCg+tf41+efpmNfUWa0rWzDiGyStp1wIV/e6GHh1/oYVrW56QZzXtWfVvLTzf28lp/QDGMafaT1gYTIuahqHopLxzRbGFtCFoVcT2cbAOqtmb95zdjwA0pVCIEaD9pFu8+5jDufuJF/mPDtmQxao1gq2Np8ZMbrT+MeHTDNiI7sM2hkPEcfNeQ9RxiqxP7lElyiTHpTFZL8anA43R1GeCA2Y7aEbTjDGkYfugyEBBuLQQc3Zrlw6cezdOb+ugtVnDNGM2qjREDN5krQrPv7pXEtdWqumjSrodVcVMpLcssgMHt6A5AbQh6gENczMBg4c60Bp/vPfsqKx9/frDcslZ/O2VPO4OaQi0GGVED/drIcrxFGJhYafY9vvvsJm5e/RwoeE7tirnmGWEOtLYs9CGMVcU1Bs8xfPGx53hw/as0ppLWevYt8OSZLHSEJTO1ZaEP0Qsfq5Jyk1N502O/4v5nN9FcDbhqcTr8kEFVjeqIGtHUhqCNwVYCosJuZLI33xkhkVWafJctuwM+/s2neOS5LbRmUsSqdTdjtKgqxnW1XNxZNNH/A5K9yYdB3eU4CAaKlbq3F7ju4Wd5pa9Ec9qd+HztW4W9DJmCVcfx4hHloWvDQleJi/2TPYRhMZAVaM2keOS5LXz8m0+xZXdAk18X86gRgVQako1Lrbg+Kjy7sy8s0t7pDHfv8doRtAhRYXd1B7HJHswbMzSTcf+zm7jpsV8BJFPch5CrVDPYGPwMPPl9eOw+6O8DI4rrguHH5BdVmDO8HDTUisuhihiHuNBPXCphMhmwtbetdD2TMcbYGNJZ2PYqrPsJBCXoXgd//BdCusFSCb4NwNytwz65tSFoGCzwD3f1ks42oFpbJaSxKr5rsDbJZDy4fjOtmVR1Rq0u5hGhmjyJM43Q2wP//vXkdePAUSdY2mY5Wtj1X1sbvSdRFYwZdoF/7QgaErdjZy86yWsK9yUpvXR5pa/EdQ8/y4vbC4OZjDrDZOge6K4Hng8v/xoe/zbs7k1ebz4M/uCPrKTSxpb67+dvzg3YsdpFddiBYe0Iuup2RIXd2BpyO+qZjBGi+14zAWPAcZM/AuzYAs/+CNb/LPmZKjS1wvl/BplmoVwAw7eAEbkbUEuChkG3I9j2Gtmj/9ukuh0DNRmtmRQPrt/MbWt/jbXUMxlvioCf3fslVSj3Q2EXbNsEm/4rscylQhIMBkWYOhP+cCk0tcZiHEeD8pqtxZ/9mPY9e08Ol9oStCriuFS29+C3zbQmnQZrJzwTo6qIQlM1k3Hrml/jOaaeyXhDNOnUFgbww+9CWEn+LySBX89GqJShXKyu5/ISyxxV4OT5MO8D4LpQCSDdoLHRPPm8pVMdukY2ktoSNCRWuhLYYHuPyR5zPFouvL5L9zhiVXGMwXOoZzJGQrUzKd3roNQPxiUROjCwG7Ux1bSsgVlvg5Pmw9FvT8QehrFkmxwtFdZs/9Q5a5LNoWRE1hlqUdDWhqahxQtee+WXmRlH7pJM4x9ouRgjjPse3VYV302+5ouPPcdD9UzG8FBN/OO+rST+b7I3C5A0B0mnEvdi6kyYfgwcfQK0Tk9uglIBRBTXQ6NKKUY/Dgjr2kd1wmtM0BqRznpE8YuV3h3vF9ebjfIjjAwoatwstWrSC+61XWVuXfNrnt/aX89kDBcxEIUwpQ0WLq62pKj+zFqYOgMaWpKcs3GS94YVQAesdizpBtf29355+6fP+3Wy25mMasu32mk0U930XuN4tZQLlwZdN3YDTLvpoculYcptWtgZjucmQVaVrOcmot5dptF3a2Zx6yGDGPBSr389jhJf2loG1T4oHY3Ez7oaBI/3HNv3Pta1Cfmz4tFuyloDFnrv/QsrA/sXtnc6zGmTntlbb5/2knOhNLScoYW+cdtfxYhQDCMKFWhI1cU8KtQmWYvXIQM7e7KXDVVVHNfRKAqtCf+cRQNNZUa5wzCTXcuR9J+KSaVdgtLdQcd1S2hvd8jlTNL+6SzLonZLFH6UoLQBzzfJKtrxwYjgOvXg76AQs58/+3uQq2JMJI5nNShduu3K856ns9MZ2PJ6tEyehR66B3gl2P8e4HmxdHY6PYsWbTj8898+x/jN63DdZE+WcdrTu67lCSM0Ta0pu3PbFVuvPv8elj3psejgd5WdHAutanFdg/EcG4VLwlXX3c38nJtY5X0eN4sWxeRWu9uu/pPnqVQ+Jk7KYBxF6z7BIYtqaBqmpGx/7z09s/tv584nPe6aNyb7fk+CoDXGSxkVs9FWSheHq67vYN4yj7X5N/6Fqhsz9nzm3A6tFJaI5zsY146n+1FnvNCKaZzixcXdHT1X/uFS1rUry+ZFB+M3D2ViBa0a4vmOWtstcf+Z4Tfy9zE/5/LUXQd+1OQXRNz5pNfzyXM7tFRYIinfETdl0Boo+KhzYJK0a2yapqZsqf+erVedvYT2TocV6HCL94fDBAo6yTGrjbulXHx/0HFjN/PufHPLvC/LTwtZdqfX85lzOygVLlbH3SipjEHtmDyu6owTqhbHUXE9Jy70rey5cuFScjlDZ7sdSzHDRAlaNcTPukThfc7unWcGXTd2097p8NTykQcBdy0Pya12t3z63Psk7DtT1XZLQ4vLCFcH15kg1Ebipoy4vtEoWLL1yrOvSLIZ+TG1zAOMs6BVEWKyTR6Vckfw9asvLv3rzRv3pOVGSdWn3nLVBd3Rzr4zNQzuM02tHhDX/epaQRXVUBqmuIp2E+x+X88nz+1g9Wq3WkE3LkH9+KXtVBXjKEYcSoWVwarrriCXS26gfP7gRVfdUGZHXjYCF7fd+shm46YuT4qbyhEiNTBp9FuKaowxjsk2erZSXi22cOmWT13QTW61y4IF4+oejs/U92CO2XNsWF4a3rviniTHvGhg7nPsyOUMrIC82Ok3/dsCdZ1/MH52ji3utsmWTeO3A22dfVFN9khpcDUKi1h7bc9VC1cCJPUZ4ytmGA+XY68cc2VJIuZcqupijP1jJp+35MWSW+1u+dQHVzu7NrwzLhdWipsykkoPBIx1N2R8UdAIMWIaml0Nw9WRDd7Zc9XCleTUkMuZiRAzjLWFVg1J+Z7GcbfE0aXBvbnVzM+5I8pkHAyde1Y47LHWDXO0UkLDSozwRvOwdUbLgHuRbsRWykXEXttzxcRa5aGMoYWupuXiuFu0+P4JFzNQFbMMWGt5dfO7tFz4hCq/MdkmBzECGtWLmw8aRZMAXDINDsYp2Cj4ko3ik3uuWLgSVZlIqzyUsQqcIry0q2G4WsrFpPRz3p0ea0eRljt4lPyCiM5OZ8uiRQXgSzNz938laopvEOMuN6l01gZFiOOYpLPlwd3UYqipxso6+Nd4fLiiWEQcSWcc1EJYeTQMw7/p/fQ564DkKSkyblmMAzEWgq6QzqYISntKP3M5Q35SxLyHPdba2ZxfUASuOPymR+7ABJchcrFksocTRWgYxEl5I4ZRLCCwQRlxxn0xzTBJ1vaJGfPQyIJaxLgm0+DYSrlCFD6uojf1/O3CHwCJe8EaO9JFrWPN6H3oOLYYUdKNDuXiPUHHtUuTGuZ1OiZpubFF6Ow0Ayd75q33Hx7Z1MXieJeZVPp4jSO0UgI0qprcYSpCCLZsItiyqVrvO8nWWoTG438X46f3005ghCRumQWMeCmRVBoblArAV2PP+cftn1jwHMCYpmLHgNEJ2kgLKoojRi1XVDquWQk5Ayt0rIpMxoVczjB3rgwK+877s7bQcL6Noz8XMfONn/E0rKBhkEwIDUPc4noEWzdTeumFJEs40GdiIqm2f/CnH0H2mONHv620VifCVATHcYyfQaMKau1zGPefbFx4YNuV5z1ffa+wqOvgJsjGgVEI2ryA403FCDYMxjfHPF6oCivWOEODlqm3rz7RDXWZYs8RY04Uz0crwVBxC+jrsySqiOsSl4oUXvgVcbmIuKmDt5AjRaDpxJOptn4Y7lHVdkZqB0QsfgZUseXCdnHcR3HMXT2Z5sdZXq1V7ux0WFeTT2FgpIJenGv2Ma/hpcUGpT8Lv7FiVZJjzo9oY5faQYXOLkP7kCKZyx7yZxybfrfCBXuJO47QMIDYxogqKoJUBV7tJ2LDCqVXNlDZ3jNxO3pVrXPmqONIz5h1AOus1SeoWhRBjCOul6wDVMWWizsEfmDFfisVlh599eo/2T546ICPXKNCHmBEgs6252bEKfOI1XBxeO8Nv5zwtNx4kssZOGvvVFNV3NaRU7HxBVg9WTy/BWPAxonAbTy4iVQ1GHPKG18k2LpZBttgjaew1WL8NE0nnjzkala/UMUig/8WHOOI44KbSrYCLBcriHRrHD2E1f/wGty1r162cI+IOzuTaHfRofP0HZmj9Ze5xoZdZAsd+Z6qm1FT/tPYULXa69pk3zzqjK/8vM1u3/peRc8Q152H1XeI0Cp+NomhVNFKGeN5lF/bGJdefEGre2cLjENfERFsJYizxxyv6RlHolFlIDh1EUE8v9ojA7AWDYNdqN2sap8UP/twbKMnt2dbNgy6E1B1KdqEFWfF41ENN96MbtYslzO1/ugZG4aIez8XuOVrT0/xel57h8lmjtJS6VwwDah9ryAp09jcHJdLiV9d2AVxGO9pITRGWIvb2kbjiScNXkkRgy3uqmCcIjb+T1yvhyj6CaobzOHTfvhaZPv2EjAk7sTcrbqX63WIMppQWGo6kzGeqApdA9Z7/70jDss91Ow3ZVJRUDjTNLa40e5tpxdf3PAuG8XvJSxrtWDq4KffRVTjSDLHnvBdv21mRcMgFHjA+JkoDErPRNNmbNn5sVP69ntsbnV1/mGNJV/jmakRUq9rOBiGChyS1q9vMLHgL/7cbTjmclQhjg9y1brGeGlHomBNueP6BW/yPiG3Zs9TYcVZcXLF3zoC3pe6oMca1eScrhgQ0hpYP1fpWhR7iz97iXHcu0AzRNHoa7aFGOPZOCp/IArn/pAZm10O+70hN9Iay4oV47IipNapC3qiqGaEUotzczCpB8RLzaZcHE17swg/42q5eEfl3txfvqUyTWNAvfh9olibj5ifcyur8usdWzmTKLyPTKOXzMwNN6+nihEhDAqV2N4MKqyt13oPpW6hJ5r2doeurhhG41drRLrB1VKhbp3fgLqgJ4NczrB+rozQr7YYB5TNgdHTmR1uJg/w25A+HT51l2MyyOctXYti5ufccNX1HRoHp6nSTTr7Ju0Y1OKmDHF4I1+/dhNrMHUxv566hZ5sqm5DZnFulnX8W/D8iwgKMVbNkHy1xXGFKNoUmJ0nErxcpqvTvpXTb6OlbqEnm7X5iPZ2p7QqvzH4+tUXUy6uxDgOjiNDeowoYsRir6Tj7wrQTl3M+6duoWuFN/arA1JpXyrlNeV7cwveujU0Y0PdQtcK+/WrdYP4WR+1cSgmn5Qd1KlzqDE/5wJkLszN8pd+8YHUh/M/BpKUX506hyQD4p23zMssveHI5MW6ha5zKDOwALVOnbcQUhd2nTp16tSpU6dOnTp1xov/Dwc2+UujltUKAAAAAElFTkSuQmCC", "bytes": 9129}, {"name": "orange", "sha256": "22adce1b1d1bb17451a8b1b536912400f25ac30c47659506a9255f66af958354", "base64": "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", "bytes": 9318}];
+  // Guided projects remain ordinary editable programs. Artwork and named data are
+  // provided; every reaction and extension below is inserted by the learner.
+  function tutorialAssetRecords() {
+    return TUTORIAL_FISH_ASSETS.map(a=>makeImmutableAssetRecord({id:'asset-practice-fish-'+a.name,kind:'image',mime:'image/png',
+      sha256:a.sha256,bytes:decodeBase64(a.base64),meta:{width:180,height:120}}));
+  }
+  function makeTutorialProject() {
+    const p=makeEmptyProject();p.name='さかなキャッチ';
+    Object.assign(p.components[0],{name:'さかな',x:270,y:170,w:100,h:67,
+      costumes:[{id:'costume-blue',name:'青いさかな',kind:'image',assetId:'asset-practice-fish-blue'},
+        {id:'costume-orange',name:'オレンジのさかな',kind:'image',assetId:'asset-practice-fish-orange'}],costumeId:'costume-blue'});
+    p.stage.backdrops[0]={id:'backdrop-1',name:'海',kind:'color',value:'#e4f4fc'};
+    p.projectData.variables=[{id:'practice-score',name:'点数',initialValue:0}];
+    p.components.push({id:'practice-board',type:'label',name:'点数表示',x:20,y:20,w:600,h:45,fg:'#173047',bg:null,fontSize:24,
+      visible:true,direction:0,scalePercent:100,text:'さかなを キャッチ！',localData:{variables:[],lists:[]}});
+    p.scripts=[{id:'practice-click',targetId:'sprite-1',event:'click',source:'ほかの実行をすべて止める。'}];
+    return p;
+  }
+  const TUTORIAL_BLOCKS=Object.freeze({
+    speech:{label:'お話しする',source:'「こんにちは」と0.3秒話す。'},
+    escape:{label:'ちがう場所へにげる',source:'横乱数（70、490）、縦乱数（130、270）の位置へ行く。'},
+    swim:{label:'ゆっくり泳ぐ',source:'横430、縦180の位置へ1秒かけて動く。'},
+    randomSwim:{label:'あちこちへ泳ぐ',source:'横乱数（70、490）、縦乱数（130、270）の位置へ0.5秒かけて動く。'},
+    repeat:{label:'くりかえす',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
+    right:{label:'右へ泳ぐ',source:'0.3秒かけて右へ60歩動く。'},
+    left:{label:'左へ泳ぐ',source:'0.3秒かけて左へ60歩動く。'},
+    small:{label:'小さくする',source:'大きさを70％にする。'},
+    point:{label:'点数を1ふやす',source:'点数に1を足す。'},
+    score:{label:'点数を見せる',source:'「点数表示」の文字をつなぐ（「つかまえた：」、点数）に変える。'},
+    finish:{label:'5ひきなら',source:'もし点数が5以上なら、\n  0秒待つ。',hole:'thenBody'},
+    bonus:{label:'3ひきなら',source:'もし点数が3なら、\n  0秒待つ。',hole:'thenBody'},
+    bonusPoint:{label:'おまけの点を足す',source:'点数に2を足す。'},
+    cheer:{label:'おいわいのことば',source:'「クリア！」と0.5秒話す。'},
+    remaining:{label:'のこりを見せる',source:'「点数表示」の文字をつなぐ（「あと：」、最大（0、10 - 点数））に変える。'},
+    tone:{label:'音をならす',source:'880Hzの音を0.1秒鳴らす。'},
+    lowTone:{label:'ひくい音',source:'523Hzの音を0.1秒鳴らす。'},
+    midTone:{label:'まん中の音',source:'659Hzの音を0.1秒鳴らす。'},
+    highTone:{label:'たかい音',source:'784Hzの音を0.1秒鳴らす。'},
+    costume:{label:'すがたをかえる',source:'次の衣装に変える。'},
+    turn:{label:'くるっと回る',source:'右に90度回る。'},
+    wait:{label:'少しまつ',source:'0.1秒待つ。'},
+  });
+  function tutorialCandidate(key,project,identity=key) {
+    const spec=TUTORIAL_BLOCKS[key],parsed=parseScript(spec.source,buildSymbols(project),{targetId:'sprite-1',event:'click'});
+    const node=blockEncode(parsed.body[0]).tree;
+    if(spec.hole)node.bodies[spec.hole]=[createBlock('Hole:statement',{allowHoles:true})];
+    let serial=0;const rename=n=>{n.id='lesson-'+identity+'-'+(++serial);for(const v of [...Object.values(n.inputs||{}),...Object.values(n.bodies||{})].flat())if(v&&typeof v==='object'&&v.schemaId)rename(v);};rename(node);return node;
+  }
+  function tutorialNodeShape(node) {
+    if(Array.isArray(node))return node.map(tutorialNodeShape);if(!node||typeof node!=='object')return node;
+    return Object.fromEntries(Object.entries(node).filter(([k])=>!['id','annotations','sourceSpan','surface','sourceRange'].includes(k)).map(([k,v])=>[k,tutorialNodeShape(v)]));
+  }
+  function tutorialNodeAt(tree,path=[]) {let n=tree;for(const part of path)n=n?.[part];return n;}
+  function tutorialField(tree,step) {
+    let node=tutorialNodeAt(tree,step.ref||[]);if(node?.schemaId==='QuantityLiteral')node=node.inputs.value;
+    return {node,key:step.field||'value'};
+  }
+  function tutorialDestination(tree,step) {
+    const parent=tutorialNodeAt(tree,step.parent||[]);if(!parent)return null;
+    const body=step.body||'body',items=parent.bodies?.[body];if(!items)return null;
+    return {parentId:parent.id,body,index:items.length===1&&items[0].schemaId==='Hole:statement'?0:step.at??items.length};
+  }
+  function tutorialDefine(s) {return Object.freeze({...s,goal:s.message,target:s.id,
+    start:'same-practice-work-and-previous-verified-state',allowed:Object.freeze([s.action||(s.block?'insert:'+s.block:'field:'+s.id),'exit','stop']),
+    input:s.ref?{type:typeof s.value==='string'?'text':'number',min:s.min??0,max:s.max??1000}:null,
+    ime:'composition is retained; only confirmed input can succeed; Escape cancels this field',success:'expected',
+    recovery:s.action==='runtime:click'?'retry-current-run':'stay-and-correct',next:'committed content and observed runtime only',
+    exit:'stop-runtime-and-release-all-guards; retain work and pending input'});}
+  const tutorialInsert=(id,key,at,parent=[],body='body',message)=>tutorialDefine({id,block:key,at,parent,body,
+    message:message||'光る「＋」を押して、「'+TUTORIAL_BLOCKS[key].label+'」を入れよう。'});
+  const tutorialTry=(tag,clicks=2)=>[
+    tutorialDefine({id:'run-'+tag,action:'run',message:'「動かす」を押そう。何が変わったかな？'}),
+    tutorialDefine({id:'try-'+tag,action:'runtime:click',clicks,message:'さかなを'+clicks+'回キャッチして、動きを見てみよう。'}),
+    tutorialDefine({id:'stop-'+tag,action:'stop',message:'「止める」で、作る場所にもどろう。'})];
+  const TUTORIAL_STEPS=Object.freeze([
+    tutorialDefine({id:'choose-click',action:'event:click',message:'「キャラを押したとき」をえらぼう。さかなを押すと動く作品を作るよ。'}),
+    tutorialInsert('add-speech','speech',1),
+    tutorialDefine({id:'speech-text',ref:['bodies','body',1,'inputs','value'],value:'つかまった！',message:'話すことばを「つかまった！」にして、Enter キーを押そう。'}),
+    tutorialInsert('add-escape','escape',2),...tutorialTry('original',3),
+    tutorialDefine({id:'choose-course',action:'choice',choice:'course',message:'できた！ どんな遊びを足そう？ ここでほぞんして終わってもいいよ。'})]);
+  const TUTORIAL_COURSES=Object.freeze([
+    {id:'motion',label:'うごきをつけよう',description:'泳ぎ方をかえて遊ぼう。',children:[
+      {id:'swim',label:'あちこちへ泳ぐ',description:'行く場所と速さをかえよう。'},
+      {id:'zigzag',label:'いったりきたり',description:'くりかえしで泳がせよう。'},
+      {id:'small',label:'小さなさかな',description:'大きさをかえて、つかまえよう。'}]},
+    {id:'score',label:'ゲームにしよう',description:'つかまえた数を見せよう。',children:[
+      {id:'goal',label:'めざせ、5ひき！',description:'きめた数で、おいわいしよう。'},
+      {id:'bonus',label:'おまけの点',description:'ある数になったら、点をふやそう。'},
+      {id:'remaining',label:'あと何びき？',description:'ひき算で、のこりを見せよう。'}]},
+    {id:'show',label:'音やすがたで遊ぼう',description:'キャッチしたときの合図を作ろう。',children:[
+      {id:'melody',label:'音をならべよう',description:'短いメロディーを作ろう。'},
+      {id:'costume',label:'さかながへんしん',description:'ちがうすがたで遊ぼう。'},
+      {id:'dance',label:'くるくるショー',description:'回る動きと、まつ時間を組もう。'}]},
+  ]);
+  function tutorialCourseSteps(course,offset,tag) {
+    const steps=course==='motion'?[tutorialInsert(tag+'-swim','swim',offset)]:course==='score'?
+      [tutorialInsert(tag+'-point','point',offset),tutorialInsert(tag+'-score','score',offset+1)]:[tutorialInsert(tag+'-tone','tone',offset)];
+    return [...steps,...tutorialTry(tag),tutorialDefine({id:tag+'-choose',action:'choice',choice:'extension',course,offset,
+      message:'ここまでできたね！ つぎは、どれを作ろう？'})];
+  }
+  function tutorialExtensionSteps(course,leaf,offset,tag) {
+    const root=i=>['bodies','body',i],steps=[];let ref,value,min=1,max=10;
+    if(leaf==='swim'){steps.push(tutorialInsert(tag+'-random','randomSwim',offset));ref=[...root(offset),'inputs','args',0];value=.5;min=.5;max=2;}
+    if(leaf==='zigzag'){
+      steps.push(tutorialInsert(tag+'-repeat','repeat',offset),tutorialInsert(tag+'-right','right',0,root(offset)),tutorialInsert(tag+'-left','left',1,root(offset)));
+      ref=[...root(offset),'inputs','count'];value=3;min=1;max=5;
+    }
+    if(leaf==='small'){steps.push(tutorialInsert(tag+'-small','small',offset));ref=[...root(offset),'inputs','args',0];value=70;min=45;max=100;}
+    if(leaf==='goal'||leaf==='bonus'){
+      steps.push(tutorialInsert(tag+'-if',leaf==='goal'?'finish':'bonus',offset));
+      if(leaf==='bonus')steps.push(tutorialInsert(tag+'-bonus','bonusPoint',0,root(offset),'thenBody'),tutorialInsert(tag+'-score','score',1,root(offset),'thenBody'));
+      steps.push(tutorialInsert(tag+'-cheer','cheer',leaf==='bonus'?2:0,root(offset),'thenBody'));
+      ref=[...root(offset),'inputs','condition','inputs','right'];value=leaf==='goal'?5:3;min=2;max=6;
+    }
+    if(leaf==='remaining'){steps.push(tutorialInsert(tag+'-remaining','remaining',offset));
+      // This path is resolved from the parsed arithmetic expression, not guessed DOM IDs.
+      ref=[...root(offset),'inputs','args',1,'inputs','args',1,'inputs','args',1,'inputs','left'];value=10;min=5;max=15;
+    }
+    if(leaf==='melody'){
+      steps.push(tutorialInsert(tag+'-low','lowTone',offset),tutorialInsert(tag+'-wait','wait',offset+1),tutorialInsert(tag+'-mid','midTone',offset+2),tutorialInsert(tag+'-high','highTone',offset+3));
+      ref=[...root(offset+2),'inputs','args',0];value=659;min=250;max=1200;
+    }
+    if(leaf==='costume'){steps.push(tutorialInsert(tag+'-costume','costume',offset),tutorialInsert(tag+'-size','small',offset+1));ref=[...root(offset+1),'inputs','args',0];value=70;min=45;max=100;}
+    if(leaf==='dance'){
+      steps.push(tutorialInsert(tag+'-repeat','repeat',offset),tutorialInsert(tag+'-turn','turn',0,root(offset)),tutorialInsert(tag+'-wait','wait',1,root(offset)));
+      ref=[...root(offset),'inputs','count'];value=3;min=1;max=5;
+    }
+    const clicks=course==='score'?6:2;
+    const question={swim:'泳ぐ時間をかえよう。数を大きくすると、ゆっくり泳ぐよ。',zigzag:'何回いったりきたりする？ くりかえす回数をかえよう。',small:'どのくらい小さくする？ 100なら、もとの大きさだよ。',goal:'何びきでおいわいする？ ゴールの数をかえよう。',bonus:'何びき目でおまけがもらえる？ その数をかえよう。',remaining:'全部で何びきつかまえる？ はじめの数をかえよう。',melody:'まん中の音をかえよう。数を大きくすると、高い音になるよ。',costume:'へんしんしたら、どの大きさにする？ 100がもとの大きさだよ。',dance:'何回くるくる回る？ くりかえす回数をかえよう。'}[leaf];
+    steps.push(...tutorialTry(tag,clicks),tutorialDefine({id:tag+'-change',ref,value,free:true,min,max,
+      integer:leaf!=='swim',message:question+' 光る数を'+min+'から'+max+'の中で、今とちがう数にして、Enter キーを押そう。'}),
+      ...tutorialTry(tag+'-remix',clicks),tutorialDefine({id:tag+'-undo',action:'undo',ref,value,
+        message:'「もとにもどす」を1回押そう。自分でかえた数が、もとにもどるよ。'}),
+      tutorialDefine({id:tag+'-next',action:'choice',choice:'course',message:'できた！ 別の遊びを足す？ ほぞんして、自分で遊んでもいいよ。'}));
+    return steps;
+  }
+  function tutorialSequence(state) {return state?.steps||TUTORIAL_STEPS;}
+  function tutorialStep(state) {return state&&!['exited','complete'].includes(state.phase)?tutorialSequence(state)[state.index]:null;}
+  function tutorialAllows(state,action){const step=tutorialStep(state);return !step||step.allowed.includes(action);}
+  function tutorialAdvance(state,facts,epoch){const step=tutorialStep(state);if(!step||step.action==='choice'||epoch!==state.epoch||facts.confirmedStep!==step.id||!facts.sameWork||facts.pending||facts.failed||!facts.expected)return state;
+    const index=state.index+1;return {...state,index,confirmedStep:null,phase:index===tutorialSequence(state).length?'complete':'waiting'};}
+  function tutorialExpectedTrees(project,steps=TUTORIAL_STEPS,values={}) {
+    let tree=blockEncode(parseScript(project.scripts.find(s=>s.event==='click').source,buildSymbols(project),{targetId:'sprite-1',event:'click'})).tree;
+    const states=[structuredClone(tree)];
+    for(const step of steps){
+      if(step.block){const loc=tutorialDestination(tree,step),parent=tutorialNodeAt(tree,step.parent||[]),items=parent.bodies[loc.body],node=tutorialCandidate(step.block,project,step.id);
+        if(items.length===1&&items[0].schemaId==='Hole:statement')items.splice(0,1,node);else items.splice(loc.index,0,node);}
+      if(step.ref){const role=tutorialField(tree,step);if(!role.node)throw new Error('案内の入力先が見つかりません: '+step.id);role.node.fields[role.key]=step.free?(values[step.id]??step.value):step.value;}
+      states.push(structuredClone(tree));
+    }return states;
+  }
+  // End entry workshop pure definitions.
   const SEARCH_READINGS = Object.freeze({
     '点数':'てんすう','代金':'だいきん','持ち物':'もちもの','大きさ':'おおきさ',
     '右':'みぎ','左':'ひだり','上':'うえ','下':'した','小さく':'ちいさく',
@@ -23741,7 +23995,7 @@ function createAkariExtensionHost(options) {
       dragFrame = null;
     let searchText = '',
       previousSearch = '',
-      category = document.body.dataset.uiLevel === 'basic' ? 'basic' : '',
+      category = document.body.dataset.uiLevel !== 'advanced' ? 'basic' : '',
       showOutside = false,
       page = 0,
       paletteMode = 'all',
@@ -24235,7 +24489,7 @@ function createAkariExtensionHost(options) {
       });
       listen(input, 'blur', (event) => {
         if (rendering || committing || !input.isConnected) return;
-        if (pending?.input === input && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action],[data-blockui-value-type]'))
+        if (pending?.input === input && !event.relatedTarget?.closest('#uiLevel,#tutorialExit,#tutorialStart,[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action],[data-blockui-value-type]'))
           flushToTarget(event.relatedTarget);
       });
       listen(input, 'keydown', (event) => {
@@ -24551,6 +24805,7 @@ function createAkariExtensionHost(options) {
         page = 0;
         renderPalette();
         updateControls();
+        focus({ id: session()?.blockSelection });
       }
     }
     function paletteTone(group) {
@@ -24744,9 +24999,11 @@ function createAkariExtensionHost(options) {
       if (options.readOnly) return;
       if (destroyed) return;
       modeSelect.value = paletteMode;
-      const query = searchText.trim().toLocaleLowerCase();
-      const registry = BLOCK_SCHEMAS.filter((s) => !s.draftOnly && ['statement', 'expression'].includes(s.category));
-      const all = registry.filter((s) => paletteMode === 'all' || s.category === paletteMode);
+      const entry = document.body.dataset.uiLevel === 'entry';
+      const query = entry ? '' : searchText.trim().toLocaleLowerCase();
+      const registry = BLOCK_SCHEMAS.filter((s) => !s.draftOnly && ['statement', 'expression'].includes(s.category)
+        && (!entry || ENTRY_BLOCK_SCHEMA_IDS.has(s.id)));
+      const all = registry.filter((s) => entry || paletteMode === 'all' || s.category === paletteMode);
       const groups = [
         ['basic', '基本'],
         ['', '\u3059\u3079\u3066'],
@@ -24796,20 +25053,24 @@ function createAkariExtensionHost(options) {
         : hintCandidates(projectState, context().targetId, {source:session()?.sourceText || '', ...context()});
       const searched = query ? blockSearchCandidates(projectState, context(), query, hints) : all;
       const speech=searched.find(s=>s.id==='Say');
-      if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:'内容と秒数を決めて話す'});}
+      if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:entry?'お話しする':'内容と秒数を決めて話す'});}
       let candidates = searched.filter(
         (s) =>
-          ((query && !categoryExplicit) || !category || (category === 'basic'
+          (entry || (query && !categoryExplicit) || !category || (category === 'basic'
             ? BASIC_BLOCK_SCHEMA_IDS.has(s.id)
             : blockPaletteGroup(s) === category)) &&
-          (paletteMode === 'all' || s.category === paletteMode),
+          (entry || paletteMode === 'all' || s.category === paletteMode) &&
+          (!entry || s.id !== 'Say' || s.candidateKey === 'timed-speech'),
       );
-      if (!showOutside)
+      if (!showOutside && !entry)
         candidates = candidates.filter((s) => paletteAvailability(s, location).enabled);
-      if (category === 'basic' && !query) {
-        const order = [...BASIC_BLOCK_SCHEMA_IDS];
+      if ((entry || category === 'basic') && !query) {
+        const order = [...(entry ? ENTRY_BLOCK_SCHEMA_IDS : BASIC_BLOCK_SCHEMA_IDS)];
         candidates.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
       }
+      const lesson=options.lessonCandidate?.();
+      if(lesson)candidates=[{...BLOCK_SCHEMA_BY_ID.get(lesson.node.schemaId),candidateNode:lesson.node,candidateKey:'lesson-'+lesson.key,lessonKey:lesson.key,searchLabel:lesson.label}];
+      else if(options.tutorialActive?.())candidates=[];
       const pages = Math.max(1, Math.ceil(candidates.length / PAGE));
       page = Math.min(page, pages - 1);
       const scroll = paletteList.scrollTop;
@@ -24838,6 +25099,7 @@ function createAkariExtensionHost(options) {
           {
             'data-blockui-schema': schema.candidateKey==='timed-speech'?'Say:timed':schema.id,
             'data-schema-id': schema.id,
+            'data-lesson-block': schema.lessonKey || '',
             title: a.reason || schema.label,
             'aria-label': (schema.searchLabel || schema.label) + '\u3092\u8ffd\u52a0',
             'data-search-binding': schema.candidateKey || '',
@@ -24850,7 +25112,7 @@ function createAkariExtensionHost(options) {
         b.dataset.blockuiDragSchema = schema.id;
         try {
           b.append(previewNode(schema, a.node));
-          if (schema.binding||schema.candidateKey==='timed-speech') b.append(E('small', 'blockui-bound-name', schema.searchLabel));
+          if (schema.binding||schema.lessonKey||schema.candidateKey==='timed-speech') b.append(E('small', 'blockui-bound-name', schema.searchLabel));
         } catch (_) {
           b.textContent = paletteLabel(schema);
         }
@@ -24859,7 +25121,7 @@ function createAkariExtensionHost(options) {
         if (!a.enabled) item.append(reason);
         paletteList.append(item);
       }
-      if (!candidates.length)
+      if (!candidates.length && !options.tutorialActive?.())
         paletteList.append(
           E(
             'p',
@@ -24870,7 +25132,7 @@ function createAkariExtensionHost(options) {
           ),
         );
       previous.disabled = page === 0;
-      if(category&&((query&&categoryExplicit)||!candidates.length))paletteList.append(button('すべての分類で探す','search-all',()=>{category='';categoryExplicit=false;page=0;renderPalette();search.focus();}));
+      if(!options.tutorialActive?.()&&category&&((query&&categoryExplicit)||!candidates.length))paletteList.append(button('すべての分類で探す','search-all',()=>{category='';categoryExplicit=false;page=0;renderPalette();search.focus();}));
       next.disabled = page >= pages - 1;
       pageLabel.textContent = page + 1 + ' / ' + pages;
       palettePages.hidden = pages === 1;
@@ -25367,7 +25629,7 @@ function createAkariExtensionHost(options) {
           if (other !== menu) other.open = false;
         placeActions(menu, commands, { reveal: true });
       });
-      const move = button('移動', 'move', () => moveStart(node), { 'data-block-id': node.id }),
+      const move = button(document.body.dataset.uiLevel==='entry'?'うごかす':'移動', 'move', () => moveStart(node), { 'data-block-id': node.id }),
         duplicate = button(
           '同じものをもう1つ作る',
           'duplicate',
@@ -27031,7 +27293,11 @@ function createAkariExtensionHost(options) {
       input.value=saved.value;input.dispatchEvent(new doc.defaultView.Event('input',{bubbles:true}));
       return true;
     }
-    return { render, flush, cancel, destroy, highlight, focus, restorePending };
+    function releaseInteraction() {
+      cancelDrag(); endPan(); moving=null; destination=null; replacement=null;
+      updateControls(); if (!pending) render({force:true});
+    }
+    return { render, flush, cancel, destroy, highlight, focus, restorePending, releaseInteraction };
   }
   createBlockEditorView.sequence = 0;
 
@@ -27537,6 +27803,275 @@ function createAkariExtensionHost(options) {
       view: null,
     };
     let sourceOverviewOpen = false, sourceOverviewViews = [], sourceOverviewObserver = null, sourceOverviewSignature = '';
+    let entryLayoutPlaced=false;
+    const entryControlHomes=new Map();
+    let tutorial=null, pausedTutorial=null, tutorialEpoch=0, workspaceIdentity=0,
+      tutorialTimer=null, tutorialTrace=null, tutorialSave=null, tutorialExpected=null;
+    function renderEntrySurface() {
+      const entry=document.body.dataset.uiLevel==='entry';
+      $('#uiLevel option[value="entry"]').disabled=(document.body.dataset.editorMode||editorModes.get('script'))==='code';
+      for(const node of [$('#undoBtn'),$('#redoBtn')]){
+        if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
+        if(entry){if(node.parentElement!==$('.menutool'))$('.menutool').insertBefore(node,$('#tutorialStart'));}
+        else if(entryLayoutPlaced){const marker=entryControlHomes.get(node);if(marker?.isConnected){marker.after(node);marker.remove();}entryControlHomes.delete(node);}
+      }
+      const main=$('.main'),side=$('.side'),designer=$('#designerWindow'),objects=$('.objects-window');
+      if(entry){if(designer.parentElement!==main)main.insertBefore(designer,side);if(objects&&side.firstElementChild!==objects)side.prepend(objects);}
+      else if(entryLayoutPlaced&&document.body.dataset.editorMode==='blocks'){side.prepend(designer);side.insertBefore(objects,$('.properties-window'));}
+      entryLayoutPlaced=entry;
+      $('.codewin > .win-title').textContent=entry?'組み立てる場所':'コード';
+      for(const [id,event] of [['entryStartEvent','start'],['entryClickEvent','click']]) {
+        $('#'+id).disabled=modelLocked()||!eventsFor(selectedId).includes(event);
+        $('#'+id).setAttribute('aria-pressed',String(currentEvent===event));
+      }
+      for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).disabled=$('#'+origin).disabled;
+      const tree=mainEditor.session?.blockView;
+      const outside=tree&&[...buildBlockIndex(tree).values()].some(({node})=>
+        BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category==='statement'&&!ENTRY_BLOCK_SCHEMA_IDS.has(node.schemaId));
+      $('#entryOutside').hidden=!entry||!outside||!!tutorial;
+    }
+    function selectEntryEvent(event) {
+      if (!tutorialAllows(tutorial,'event:'+event)||modelLocked()||!eventsFor(selectedId).includes(event)||!flushActiveEditor()) return;
+      captureEditorView(mainEditor);hideSourceOverview();currentEvent=event;
+      selectedScriptId=project.scripts.find(s=>s.targetId===selectedId&&s.event===event)?.id||null;
+      loadEditor();if(!modelLocked())pushHistoryNow();confirmTutorialOperation('event:'+event);tutorialRefresh();
+    }
+    function confirmTutorialOperation(action=null) {
+      const step=tutorialStep(tutorial);if(!step||action&&step.allowed[0]!==action)return;
+      if(step.free){const role=tutorialField(mainEditor.session?.blockView,step),v=role.node?.fields[role.key];
+        if(typeof v!=='number'||!Number.isFinite(v)||v<step.min||v>step.max||v===step.value||step.integer&&!Number.isInteger(v))return;
+        tutorial.values[step.id]=v;tutorialExpected=tutorialExpectedTrees(makeTutorialProject(),tutorial.steps,tutorial.values);
+      }
+      tutorial.confirmedStep=step.id;
+    }
+    function tutorialBody() { return mainEditor.session?.blockView?.bodies?.body||[]; }
+    function tutorialLiteral(node) { return node?.schemaId==='QuantityLiteral'?tutorialLiteral(node.inputs.value):node; }
+    function tutorialOperationAllowed(binding,operation) {
+      if(!tutorial)return true;if(binding!==mainEditor||selectedId!==tutorial.target||currentEvent!=='click')return false;
+      const step=tutorialStep(tutorial);if(!step)return false;
+      if(step.block){const loc=tutorialDestination(mainEditor.session.blockView,step);
+        return operation.type==='insert'&&operation.parentId===loc?.parentId&&operation.body===loc.body&&operation.index===loc.index
+          &&JSON.stringify(tutorialNodeShape(operation.node))===JSON.stringify(tutorialNodeShape(tutorialCandidate(step.block,project)));}
+      if(step.ref&&step.action!=='undo'){const role=tutorialField(mainEditor.session.blockView,step);
+        if(operation.type!=='field'||operation.id!==role?.node?.id||operation.key!==role.key)return false;
+        return step.input.type==='number'?typeof operation.value==='number'&&Number.isFinite(operation.value)&&operation.value>=step.input.min&&operation.value<=step.input.max&&(!step.integer||Number.isInteger(operation.value))
+          :typeof operation.value==='string'&&cpLen(operation.value)<=100;}
+      return false;
+    }
+    function tutorialRoleControl() {
+      const step=tutorialStep(tutorial),ref=step&&tutorialField(mainEditor.session?.blockView,step);
+      return ref?.node&&[...$('#blockEditor').querySelectorAll('[data-blockui-field]')].find(n=>n.dataset.blockId===ref.node.id&&n.dataset.blockuiField===ref.key);
+    }
+    function tutorialElementAllowed(element) {
+      if(!tutorial)return true;if(!(element instanceof Element))return false;
+      const step=tutorialStep(tutorial),action=step?.allowed[0];
+      if(element.closest('#tutorialExit,#stopBtn'))return true;
+      if(action==='choice')return !!element.closest('#tutorialChoices button,#tutorialFinish');
+      if(action==='verify-save'&&element.closest('#tutorialVerifySave,#tutorialSavedFile'))return true;
+      const direct={'event:click':'entryClickEvent',run:'runBtn',undo:'undoBtn',save:'saveBtn'}[action];if(direct&&element.closest('#'+direct))return true;
+      if(step?.block){if(element.closest('#blockEditor [data-lesson-block="'+step.block+'"]'))return true;
+        const command=element.closest('#blockEditor [data-blockui-action="body-insert"]'),loc=tutorialDestination(mainEditor.session?.blockView,step);
+        return !!command&&!!loc&&command.dataset.parentId===loc.parentId&&command.dataset.blockuiBody===loc.body&&Number(command.dataset.insertIndex)===loc.index;}
+      if(step?.ref&&step.action!=='undo'){const control=tutorialRoleControl();return element===control||control?.contains(element)
+        ||!!element.closest('#blockEditor [data-blockui-action="commit"],#blockEditor [data-blockui-action="cancel"],#editorCancel');}
+      if(action==='runtime:click')return !tutorialTrace?.busy&&tutorialTrace?.clicks<step.clicks&&!!element.closest('.component[data-id="'+tutorial.target+'"]');return false;
+    }
+    function tutorialFocusTargets() {
+      return $$('button,input,select,textarea,summary,[tabindex="0"]').filter(n=>!n.disabled&&!n.hidden&&n.getClientRects().length&&tutorialElementAllowed(n)).sort((a,b)=>Number(a.id==='tutorialExit'||a.id==='stopBtn')-Number(b.id==='tutorialExit'||b.id==='stopBtn'));
+    }
+    function focusTutorialTarget() {
+      const target=tutorialFocusTargets()[0];if(!target)return;
+      target.focus({preventScroll:true});target.scrollIntoView({block:'nearest',inline:'nearest'});
+    }
+    function clearTutorialPresentation() {
+      delete document.body.dataset.tutorialStep;
+      $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
+      $$('[data-tutorial-blocked]').forEach(n=>{
+        if(n.dataset.tutorialAria!==undefined){n.dataset.tutorialAria==='none'?n.removeAttribute('aria-disabled'):n.setAttribute('aria-disabled',n.dataset.tutorialAria);delete n.dataset.tutorialAria;}
+        delete n.dataset.tutorialBlocked;
+      });
+    }
+    function tutorialRecordStatement(task,node,epoch,generation) {
+      if(!tutorial||!tutorialTrace||epoch!==tutorial.epoch||generation!==generationToken||tutorialTrace.epoch!==tutorial.epoch||!runtime)return;
+      const actor=runtime.actor(tutorial.target);if(!actor)return;
+      tutorialTrace.sawTask=true;
+      tutorialTrace.statements.push({kind:node.kind,op:node.op||null,x:actor.x,y:actor.y,click:tutorialTrace.clicks});
+    }
+    function tutorialCollectRuntime() {
+      if(!tutorial||!tutorialTrace||tutorialTrace.epoch!==tutorial.epoch||!runtime||!scheduler)return;
+      const trace=tutorialTrace,actor=runtime.actor(tutorial.target);if(!actor)return;
+      const active=[...scheduler.tasks.values()].some(t=>t.runtimeId===tutorial.target&&!['DONE','CANCELLED','ERROR'].includes(t.state));
+      if(trace.busy&&trace.sawTask&&!active&&!trace.failed){trace.busy=false;trace.sawTask=false;
+        trace.observations.push({x:actor.x,y:actor.y,score:runtime.projectVars.get('点数'),direction:actor.direction,scale:actor.scalePercent,costume:actor.costumeId});}
+      if(trace.busy||trace.failed||trace.observations.length!==trace.requiredClicks)return;
+      const moving=trace.statements.some(s=>s.kind==='MotionCommand'&&s.op==='GOTO');
+      if(moving&&(trace.speech||[]).includes('つかまった！')){trace.complete=true;confirmTutorialOperation('runtime:click');}
+    }
+    $('#tutorialFinish').onclick=()=>tutorialChoose('finish');
+    function tutorialChoose(key) {
+      const step=tutorialStep(tutorial);if(!step||step.action!=='choice'||modelLocked()||!flushActiveEditor())return;
+      let extra;
+      if(key==='finish')extra=[tutorialDefine({id:'save-work',action:'save',message:'「ほぞん」を押して、作った作品をしまおう。'}),
+        tutorialDefine({id:'verify-save',action:'verify-save',message:'「ほぞんした作品をたしかめる」で、いましまった作品をえらぼう。'})];
+      else if(step.choice==='course'){
+        const course=TUTORIAL_COURSES.find(c=>c.id===key);if(!course||tutorial.courses.includes(key))return;
+        tutorial.courses.push(key);extra=tutorialCourseSteps(key,tutorialBody().length,key);
+      }else{
+        const course=TUTORIAL_COURSES.find(c=>c.id===step.course),leaf=course?.children.find(c=>c.id===key);if(!leaf)return;
+        tutorial.leaves.push(key);extra=tutorialExtensionSteps(step.course,key,tutorialBody().length,step.course+'-'+key);
+      }
+      tutorial.steps=[...tutorial.steps.slice(0,tutorial.index+1),...extra];tutorial.index++;tutorial.confirmedStep=null;tutorialTrace=null;
+      tutorialExpected=tutorialExpectedTrees(makeTutorialProject(),tutorial.steps,tutorial.values);
+      mainEditor.view.render({force:true});tutorialRefresh();focusTutorialTarget();
+    }
+    function renderTutorialChoices(step) {
+      const box=$('#tutorialChoices'),visible=step.action==='choice';box.hidden=!visible;$('#tutorialFinish').hidden=!visible;
+      const signature=visible?step.id+':'+tutorial.courses.join(','):'';
+      if(box.dataset.choiceSignature===signature)return;box.dataset.choiceSignature=signature;box.replaceChildren();if(!visible)return;
+      const choices=step.choice==='course'?TUTORIAL_COURSES.filter(c=>!tutorial.courses.includes(c.id)):
+        TUTORIAL_COURSES.find(c=>c.id===step.course).children;
+      for(const choice of choices){const button=document.createElement('button');button.type='button';button.dataset.tutorialChoice=choice.id;
+        const title=document.createElement('strong'),description=document.createElement('span');title.textContent=choice.label;description.textContent=choice.description;
+        button.append(title,description);button.onclick=()=>tutorialChoose(choice.id);box.append(button);}
+    }
+    function tutorialFacts() {
+      const step=tutorialStep(tutorial),tree=mainEditor.session?.blockView,expectedTree=tutorialExpected?.[tutorial.index+1];
+      const matches=tree&&expectedTree&&JSON.stringify(tutorialNodeShape(tree.bodies.body))===JSON.stringify(tutorialNodeShape(expectedTree.bodies.body));
+      let expected=!!matches;
+      if(step?.action==='run')expected=expected&&appState==='RUNNING';
+      if(step?.action==='runtime:click')expected=expected&&tutorialTrace?.trial===step.id.slice(4)&&!!tutorialTrace.complete;
+      if(step?.action==='stop')expected=expected&&appState==='DESIGN'&&!!tutorialTrace?.complete;
+      if(step?.action==='save')expected=expected&&!!tutorialSave&&tutorialSave.fingerprint===currentFingerprint();
+      if(step?.action==='verify-save')expected=expected&&!!tutorialSave?.verified;
+      return {confirmedStep:tutorial.confirmedStep,sameWork:workspaceIdentity===tutorial.identity&&selectedId===tutorial.target&&currentEvent==='click',
+        pending:!!mainEditor.session?.pendingEdit&&mainEditor.session.pendingEdit.kind!=='block-draft'||composingEditors.size>0,
+        failed:!!tutorialTrace?.failed,expected};
+    }
+    function tutorialRefresh() {
+      if (!tutorial) return;
+      try {
+        tutorialCollectRuntime();
+        if (tutorialStep(tutorial)?.id==='verify-save'&&tutorialSave&&tutorialSave.fingerprint!==currentFingerprint()) {
+          tutorialSave=null;tutorial={...tutorial,index:tutorialSequence(tutorial).findIndex(s=>s.id==='save-work')};
+        }
+        const stepBefore=tutorialStep(tutorial),facts=tutorialFacts();
+        // Selecting the click event is itself the first predicate; before that,
+        // same-work does not require the event to have already been selected.
+        if(stepBefore?.id==='choose-click')facts.sameWork=workspaceIdentity===tutorial.identity&&selectedId===tutorial.target;
+        const next=tutorialAdvance(tutorial,facts,tutorial.epoch),changed=next!==tutorial;tutorial=next;
+        if (tutorial.phase==='complete') { finishTutorial(true);setStatus('できたね！ つぎは、じゆうに変えて遊ぼう。');return; }
+        const step=tutorialStep(tutorial);document.body.dataset.tutorialStep=step.id;
+        if(changed)mainEditor.view.render({force:true});
+        $('#tutorialGuide').hidden=false;$('#tutorialVerifySave').hidden=step.id!=='verify-save';
+        renderTutorialChoices(step);
+        $('#tutorialText').textContent=tutorialTrace?.failed?'動かなかったね。「止める」で戻って、もう一度試そう。':step.choice==='course'&&tutorial.courses.length===TUTORIAL_COURSES.length?'3つの遊びを組み合わせたね！ ほぞんして、自分で遊んでみよう。':step.message;
+        $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
+        for(const n of $$('button,input,select,textarea,summary,[tabindex]')) {
+          const allowed=tutorialElementAllowed(n);n.dataset.tutorialBlocked=String(!allowed);
+          if(n.matches('button,input,select,textarea,summary')){
+            if(n.dataset.tutorialAria===undefined)n.dataset.tutorialAria=n.getAttribute('aria-disabled')??'none';
+            if(!allowed)n.setAttribute('aria-disabled','true');else n.dataset.tutorialAria==='none'?n.removeAttribute('aria-disabled'):n.setAttribute('aria-disabled',n.dataset.tutorialAria);
+          }
+          if(allowed&&n.id!=='tutorialExit'&&n.id!=='stopBtn')n.classList.add('tutorial-target');
+        }
+        if(changed)focusTutorialTarget();
+      } catch(error) { finishTutorial(false);setStatus('案内を続けられませんでした。作品は残っています：'+error.message); }
+    }
+    function beginTutorial() {
+      if (tutorial||document.body.dataset.uiLevel!=='entry'||modelLocked()||document.querySelector('.modal.show,.modal.open,dialog[open]')) return;
+      if (pausedTutorial&&pausedTutorial.identity===workspaceIdentity&&pausedTutorial.fingerprint===currentFingerprint()
+        &&pausedTutorial.editorFingerprint===openEditorFingerprint()&&selectedId===pausedTutorial.target&&currentEvent==='click') {
+        tutorial={...pausedTutorial,confirmedStep:null,epoch:++tutorialEpoch,phase:'waiting'};pausedTutorial=null;
+        tutorialTrace=tutorial.trace?{...tutorial.trace,epoch:tutorial.epoch}:null;
+        tutorialSave=null;
+        if(tutorialStep(tutorial)?.id==='verify-save')tutorial.index=tutorialSequence(tutorial).findIndex(s=>s.id==='save-work');
+      } else {
+        if(!confirmLose())return;
+        const practice=makeTutorialProject(),store=makeDefaultAssetStore();for(const asset of tutorialAssetRecords())store.addImmutable(asset);
+        tutorialExpected=tutorialExpectedTrees(practice);
+        replaceCurrentProject(practice,store,'sprite-1','start','さかなキャッチを、いっしょに作ろう');
+        tutorial={epoch:++tutorialEpoch,index:0,phase:'waiting',identity:workspaceIdentity,target:'sprite-1',steps:[...TUTORIAL_STEPS],courses:[],leaves:[],values:{}};
+        pausedTutorial=null;tutorialSave=null;tutorialTrace=null;
+        if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
+      }
+      if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
+      tutorialRefresh();focusTutorialTarget();clearInterval(tutorialTimer);tutorialTimer=setInterval(tutorialRefresh,80);
+    }
+    function finishTutorial(completed=false) {
+      if (!tutorial) return;
+      const saved=tutorial;
+      tutorialCollectRuntime();tutorial=null;++tutorialEpoch;
+      clearInterval(tutorialTimer);tutorialTimer=null;
+      if(runtime||scheduler||appState==='PREPARING')stopRun();
+      activeDragCleanup?.();mainEditor.view.releaseInteraction();
+      if(!completed){
+        let index=saved.index;
+        const step=tutorialSequence(saved)[index];
+        if(step?.id.startsWith('try-')||step?.id.startsWith('stop-'))index=tutorialSequence(saved).findIndex(s=>s.id==='run-'+step.id.split('-').slice(1).join('-'));
+        pausedTutorial={...saved,index,trace:tutorialTrace?cloneDesignProject(tutorialTrace):null,fingerprint:currentFingerprint(),editorFingerprint:openEditorFingerprint()};
+      }else pausedTutorial=null;
+      tutorialTrace=null;tutorialSave=null;clearTutorialPresentation();$('#tutorialGuide').hidden=true;
+      if(mainEditor.session?.pendingEdit){const field=mainEditor.session.pendingEdit;const control=$$('[data-blockui-field]').find(n=>n.dataset.blockId===field.id&&n.dataset.blockuiField===field.field);control?.focus({preventScroll:true});}
+      else $('#tutorialStart').focus({preventScroll:true});
+    }
+    async function verifyTutorialSave(file) {
+      if (!tutorial||!tutorialAllows(tutorial,'verify-save')||!tutorialSave||!file) return;
+      const epoch=tutorial.epoch,save=tutorialSave,identity=workspaceIdentity;
+      try {
+        if(file.size>LIMITS.fileBytes)throw new Error('ファイルが大きすぎます');
+        const loaded=await parseProjectFile(await file.text());
+        if(!tutorial||tutorial.epoch!==epoch||workspaceIdentity!==identity||tutorialSave!==save)return;
+        if(currentFingerprint()!==save.fingerprint){tutorialSave=null;tutorial.index=tutorialSequence(tutorial).findIndex(s=>s.id==='save-work');tutorialRefresh();return;}
+        if(assetStateFingerprint(loaded.project,loaded.assetStore)!==save.fingerprint||loaded.editorState?.pendingEditors.length||loaded.editorState?.callableDraft)
+          throw new Error('いま保存した作品と内容が違います');
+        save.verified=true;confirmTutorialOperation('verify-save');tutorialRefresh();
+      } catch(error) { if(tutorial?.epoch===epoch) { $('#tutorialText').textContent='確かめられなかったよ。いま保存したファイルを、もう一度選ぼう。';setStatus('保存の確認：'+error.message); } }
+    }
+    function tutorialCapture(event) {
+      if(!tutorial)return;
+      if(event.type==='keyup')return;
+      const target=event.target,step=tutorialStep(tutorial);
+      if(event.type==='keydown'){
+        // Browser and OS navigation belong to the browser, never to a lesson.
+        if(['F1','F3','F5','F6','F11','F12'].includes(event.key)
+          ||event.altKey&&['ArrowLeft','ArrowRight','Home'].includes(event.key)
+          ||((event.ctrlKey||event.metaKey)&&['r','l','w','t','n','f','p','d','h','j','u','o','tab','+','-','0'].includes(event.key.toLowerCase())))return;
+        if(event.key==='Tab'){
+          const targets=tutorialFocusTargets(),at=targets.indexOf(document.activeElement);
+          event.preventDefault();event.stopImmediatePropagation();targets[(at+(event.shiftKey?-1:1)+targets.length)%targets.length]?.focus();return;
+        }
+        if((event.ctrlKey||event.metaKey)&&!['a','c','v','x','arrowleft','arrowright','home','end'].includes(event.key.toLowerCase())){
+          const action=event.key.toLowerCase()==='s'?'save':event.key.toLowerCase()==='z'?'undo':'shortcut';
+          if(!tutorialAllows(tutorial,action)||event.shiftKey){event.preventDefault();event.stopImmediatePropagation();return;}
+        }
+        if(event.repeat&&target instanceof Element&&target.matches('button,summary')){event.preventDefault();event.stopImmediatePropagation();return;}
+        if(!(event.ctrlKey||event.metaKey)&&target instanceof Element&&!target.matches('input,textarea,select')
+          &&!['Enter',' ','Escape'].includes(event.key)){event.preventDefault();event.stopImmediatePropagation();return;}
+      }
+      if(event.type==='focusin') { if(!tutorialElementAllowed(target))focusTutorialTarget();return; }
+      let allowed=tutorialElementAllowed(target);
+      if(['dragstart','dragover','drop','contextmenu'].includes(event.type))allowed=false;
+      if(['pointerdown','touchstart'].includes(event.type)&&target instanceof Element&&target.matches('.blockui-workspace,.blockui-palette-list'))allowed=true;
+      if(allowed&&event.type==='click'&&step?.allowed[0]==='runtime:click'&&target.closest('.component')&&tutorialTrace?.busy)allowed=false;
+      if(allowed&&event.type==='pointerdown'&&target.closest('#tutorialExit'))event.preventDefault();
+      if(allowed&&step?.allowed[0].startsWith('field:')&&(
+        event.type==='keydown'&&event.key==='Enter'&&!event.isComposing&&!composingEditors.size
+        ||event.type==='change'&&target instanceof HTMLSelectElement
+        ||event.type==='click'&&target.closest('[data-blockui-action="commit"]'))){
+        // A confirmed unchanged value is still an explicit learning operation.
+        // Observe after the normal field handler; invalid/pending input cannot count.
+        const epoch=tutorial.epoch,id=step.id;
+        setTimeout(()=>{if(tutorial?.epoch===epoch&&tutorialStep(tutorial)?.id===id
+          &&(!mainEditor.session?.pendingEdit||mainEditor.session.pendingEdit.kind==='block-draft')&&!composingEditors.size){confirmTutorialOperation(step.allowed[0]);tutorialRefresh();}},0);
+      }
+      if(!allowed){
+        event.preventDefault();event.stopImmediatePropagation();
+        if(target===el.obj||target===el.event)renderSelectors();
+        else if(target===$('#uiLevel'))target.value=document.body.dataset.uiLevel;
+        else if(target===el.projectName)target.value=project.name;
+      }
+    }
+    for(const event of ['pointerdown','touchstart','click','keydown','keyup','focusin','input','change','compositionstart','compositionend','dragstart','dragover','drop','contextmenu'])window.addEventListener(event,tutorialCapture,{capture:true,passive:false});
     let flushingEditor = false;
     let shellPointer = null;
     function draftOwner() {
@@ -28116,6 +28651,12 @@ function createAkariExtensionHost(options) {
     }
     function operateBlock(binding, operation) {
       try {
+        if (!tutorialOperationAllowed(binding, operation)) {
+          const step=tutorialStep(tutorial),role=step?.ref?tutorialField(mainEditor.session?.blockView,step):null;
+          if(binding===mainEditor&&step?.free&&operation.type==='field'&&operation.id===role?.node?.id&&operation.key===role.key)
+            throw new Error('光る数は'+step.min+'から'+step.max+'の中でえらぼう。'+(step.integer?step.min+'、'+(step.min+1)+'のように、1ずつふえる数にしよう。':''));
+          throw new Error('今は、案内のブロックだけを操作しよう。');
+        }
         if (modelLocked()) throw new Error('実行・取込中は編集できません');
         if (
           binding.kind === 'draft' &&
@@ -28169,7 +28710,7 @@ function createAkariExtensionHost(options) {
               typeof source === 'string' ? source : source.source,
             ),
         });
-        if (!candidate.changed) return { ok: true, changed: false };
+        if (!candidate.changed) {confirmTutorialOperation();return { ok: true, changed: false };}
         if (candidate.draftOnly) {
           binding.session = { ...session, ...candidate, mode: session.mode };
           editorSessions.set(`${binding.kind}:${ownerKey}`, binding.session);
@@ -28179,6 +28720,7 @@ function createAkariExtensionHost(options) {
           pending.hidden = false;
           renderEditorBinding(binding);
           scheduleAutosave();
+          confirmTutorialOperation();
           return { ok: true, changed: true, draftOnly: true };
         }
         const source = candidate.source ?? candidate.sourceText;
@@ -28196,6 +28738,7 @@ function createAkariExtensionHost(options) {
         editorSessions.set(`${binding.kind}:${committedOwner}`, binding.session);
         renderEditorBinding(binding);
         refreshEditor();
+        confirmTutorialOperation();
         return { ok: true, changed: true,
           ...(committedOwner!==ownerKey?{ownerTransition:{from:ownerKey,to:committedOwner}}:{}) };
       } catch (error) {
@@ -28221,6 +28764,7 @@ function createAkariExtensionHost(options) {
         b.setAttribute('aria-pressed', String(session.mode === mode));
         b.disabled =
           ['PREPARING', 'IMPORTING'].includes(appState) ||
+          (!draft&&mode==='code'&&document.body.dataset.uiLevel==='entry') ||
           (mode === 'blocks' && (!session.syntaxAst || invalidCodePending));
         b.title =
           mode === 'blocks' && (!session.syntaxAst || invalidCodePending)
@@ -28250,6 +28794,10 @@ function createAkariExtensionHost(options) {
       }
     }
     function switchEditorMode(binding, mode) {
+      if(binding===mainEditor&&mode==='code'&&document.body.dataset.uiLevel==='entry'){
+        setStatus('コードを見るときは、表示を「かんたん」か「くわしく」にしてね。');
+        return false;
+      }
       const draftSession = binding.session;
       if (draftSession?.blockDraft) {
         if (['PREPARING', 'IMPORTING'].includes(appState)) return false;
@@ -28552,6 +29100,7 @@ function createAkariExtensionHost(options) {
       undoButton.before(undoHome);
       const placeUndo = () => {
         if ($('#procModal').classList.contains('show')) callableTitle.append(undoButton);
+        else if(document.body.dataset.uiLevel==='entry'&&entryControlHomes.has(undoButton))toolbar.insertBefore(undoButton,$('#tutorialStart'));
         else undoHome.after(undoButton);
       };
       new MutationObserver(placeUndo).observe($('#procModal'), { attributes: true, attributeFilter: ['class'] });
@@ -28572,7 +29121,7 @@ function createAkariExtensionHost(options) {
         'diagnoseBtn',
       ])
         tools.append($('#' + id));
-      tools.append($('.ui-level-label'));
+      toolbar.insertBefore($('.ui-level-label'), $('#tutorialStart'));
       toolbox.append(tools);
       // Native reverse Tab may leave a partly visible button clipped in this ribbon.
       tools.addEventListener('focusin', (event) => {
@@ -28731,6 +29280,7 @@ function createAkariExtensionHost(options) {
         );
       $('#formatBtn').hidden = block;
       syncPropertyScrollPadding();
+      renderEntrySurface();
     }
 
     const pen = el.canvas.getContext('2d');
@@ -28758,7 +29308,13 @@ function createAkariExtensionHost(options) {
         $('#stageZoomFit').setAttribute('aria-pressed', String(stageZoom === null));
         positionResizeHandles();
       },
-      canInteract: () => !document.querySelector('.modal.show,.modal.open'),
+      canInteract: () => !document.querySelector('.modal.show,.modal.open')&&(!tutorial
+        ||(tutorialAllows(tutorial,'runtime:click')&&!tutorialTrace?.busy&&tutorialTrace?.clicks<tutorialStep(tutorial).clicks)),
+      onRuntimeClick: id => {
+        if(!tutorial)return true;
+        if(!tutorialAllows(tutorial,'runtime:click')||id!==tutorial.target||!tutorialTrace||tutorialTrace.busy||tutorialTrace.clicks>=tutorialStep(tutorial).clicks)return false;
+        tutorialTrace.clicks++;tutorialTrace.busy=true;tutorialTrace.sawTask=false;return true;
+      },
       onDesignPointer: (e, id) => {
         if (!modelLocked() && selectObject(id)) {
           startDrag(e, id);
@@ -29099,6 +29655,7 @@ function createAkariExtensionHost(options) {
       scheduleAutosave();
     }
     function undo() {
+      if (!tutorialAllows(tutorial,'undo')) return;
       if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit) return;
       flushActiveEditor();
       clearTimeout(historyTimer);
@@ -29107,9 +29664,11 @@ function createAkariExtensionHost(options) {
       if (history.length <= 1) return;
       redo.push(history.pop());
       restoreSnap(history.at(-1));
+      confirmTutorialOperation('undo');
       setStatus('1つ前の状態へ戻しました');
     }
     function redoDo() {
+      if (tutorial) return;
       if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit || !redo.length) return;
       flushActiveEditor();
       if(history.at(-1)?.stateFingerprint!==stateFingerprintCore()){pushHistoryNow();return;}
@@ -29182,6 +29741,7 @@ function createAkariExtensionHost(options) {
       catch (error) { finishOpenSelection(); log(error.message, 'error'); }
     }
     function requestOpenProject() {
+      if(tutorial)return;
       if (modelLocked() || openRequest || document.querySelector('.modal.show:not(#procModal),.modal.open,dialog[open]')) return;
       const observed = currentOpenState();
       openRequest = { kind: 'file', fingerprint: observed.fingerprint, phase: 'confirmation' };
@@ -29258,6 +29818,7 @@ function createAkariExtensionHost(options) {
         first = project.scripts.find((x) => x.targetId === selectedId && x.event === currentEvent);
       el.event.value = sourceOverviewOpen ? 'all' : row && row !== first ? scriptSourceKey(row) : currentEvent;
       $('#scriptAdd').disabled = modelLocked() || project.scripts.length >= LIMITS.scripts;
+      renderEntrySurface();
     }
     function hideSourceOverview() {
       sourceOverviewOpen = false;
@@ -29283,7 +29844,7 @@ function createAkariExtensionHost(options) {
       if (!sourceOverviewOpen) return;
       for (const mode of ['code', 'blocks']) {
         $('#editorMode' + mode).setAttribute('aria-pressed', String((editorModes.get('script') || 'code') === mode));
-        $('#editorMode' + mode).disabled = ['PREPARING', 'IMPORTING'].includes(appState);
+        $('#editorMode' + mode).disabled = ['PREPARING', 'IMPORTING'].includes(appState)||(mode==='code'&&document.body.dataset.uiLevel==='entry');
       }
       const signature = JSON.stringify([selectedId, editorContextRevision, editorModes.get('script'), modelLocked(), hasCallableDraft() ? callableDraftCore : null]);
       if (sourceOverviewSignature === signature) return;
@@ -29397,6 +29958,7 @@ function createAkariExtensionHost(options) {
       root.scrollTop = scroll;
     }
     function selectObject(id) {
+      if (tutorial) return false;
       if (!targetById(id) || !flushActiveEditor()) {
         renderSelectors();
         return false;
@@ -31299,6 +31861,7 @@ function createAkariExtensionHost(options) {
     }
     function bridge() {
       let speechValue;
+      const tutorialRunEpoch=tutorial?.epoch,bridgeGeneration=generationToken;
       return {
         render: () => requestRuntimePaint(3),
         allStopped: () => {
@@ -31316,15 +31879,18 @@ function createAkariExtensionHost(options) {
           flushRuntimePaint();
           const value = speechValue; speechValue = undefined;
           stageView.showBubble(rid, text, value, controlled);
+          if(tutorialTrace&&tutorialRunEpoch===tutorial?.epoch&&bridgeGeneration===generationToken&&rid===tutorial.target)tutorialTrace.speech.push(String(text));
         },
         clearSpeech: stageView.clearSpeech,
         beforeStatement: (task, node) => {
+          tutorialRecordStatement(task,node,tutorialRunEpoch,bridgeGeneration);
           activeTaskId = task.taskId;
           activeLoc = sourceLocation(task, node);
           requestRuntimePaint(6);
         },
         afterStatement: () => requestRuntimePaint(6),
         runtimeError: (task, err) => {
+          if(tutorialTrace&&tutorialRunEpoch===tutorial?.epoch&&bridgeGeneration===generationToken)tutorialTrace.failed=true;
           activeTaskId = task.taskId;
           activeLoc = sourceLocation(task, null, err);
           requestRuntimePaint(7);
@@ -31342,7 +31908,13 @@ function createAkariExtensionHost(options) {
       };
     }
     function startRun() {
+      if (!tutorialAllows(tutorial,'run')) return;
       if (modelLocked() || !flushActiveEditor()) return;
+      if(tutorial){
+        const trial=tutorialStep(tutorial).id.slice(4),actor=componentById(tutorial.target);
+        tutorialTrace={epoch:tutorial.epoch,trial,x:actor.x,y:actor.y,requiredClicks:tutorialSequence(tutorial)[tutorial.index+1].clicks,
+          statements:[],speech:[],observations:[],clicks:0,busy:false,sawTask:false,complete:false,failed:false};
+      }
       refreshEditor();
       if(hasPendingEditor()){log('書きかけの入力を完成させてから実行してください','error');return;}
       clearTimeout(historyTimer);
@@ -31397,6 +31969,7 @@ function createAkariExtensionHost(options) {
             scheduler = new EventScheduler(project, compiled, runtime, br);
             stageView.seedHeldInput();
             appState = 'RUNNING';
+            confirmTutorialOperation('run');
             scheduler.start();
             renderAll();
             log(`実行開始（seed=${seed}）`, 'ok');
@@ -31422,14 +31995,23 @@ function createAkariExtensionHost(options) {
     }
     function stopRun() {
       if (appState === 'IMPORTING') return;
+      tutorialCollectRuntime();
+      if(tutorial&&!tutorialTrace?.complete){
+        const step=tutorialStep(tutorial);
+        if(step?.id.startsWith('try-')||step?.id.startsWith('stop-')) {
+          tutorial.index=tutorialSequence(tutorial).findIndex(s=>s.id==='run-'+step.id.split('-').slice(1).join('-'));tutorialTrace=null;
+        }
+      }
       disposeRuntime();
       el.form.querySelectorAll('.sprite-bubble').forEach((n) => n.remove());
       appState = 'DESIGN';
       pen.clearRect(0, 0, el.canvas.width, el.canvas.height);
+      confirmTutorialOperation('stop');
       renderAll();
       loadEditor();
       $('#execLocation').textContent = 'いまの場所：―';
       setStatus('停止しました');
+      if(tutorial){tutorialRefresh();focusTutorialTarget();return;}
       if (sourceOverviewOpen) $('#sourceEditBtn').focus({ preventScroll: true });
       else if (mainEditor.session?.mode === 'blocks') {
         mainEditor.view.focus({ id: mainEditor.session.blockSelection });
@@ -31605,6 +32187,7 @@ function createAkariExtensionHost(options) {
     }
     let exportBusy = false;
     function exportProject() {
+      if(tutorial)return;
       if (!flushActiveEditor()) return;
       if(hasPendingEditor()){log('書きかけの入力を完成させてから書き出してください','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
@@ -31670,13 +32253,15 @@ function createAkariExtensionHost(options) {
       if(headerPending||pendingEditors.some(d=>d.kind==='draft'))callableDraft=validateCallableDraft({...callableDraftCore,
         name:$('#callableName').value,argsText:$('#callableArgs').value,...(callableDraftCore.type==='action'?{callPhrase:$('#callablePhrase').value}:{})});
       return validateEditorState({version:1,revision:recoveryEpoch,selectedId,currentEvent,selectedScriptId,
-        uiLevel:$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'},callableDraft,pendingEditors,
+        uiLevel:$('#uiLevel').value==='entry'?'basic':$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'},callableDraft,pendingEditors,
         views:[mainEditor,draftEditor].filter(binding=>binding.session).map(binding=>({kind:binding.kind,ownerKey:bindingOwner(binding),
           codeSelection:{start:binding.textarea.selectionStart||0,end:binding.textarea.selectionEnd||0,direction:binding.textarea.selectionDirection||'none'},
           scrollState:{codeTop:binding.textarea.scrollTop,codeLeft:binding.textarea.scrollLeft}}))},project);
     }
     function restoreEditorState(state) {
-      validateEditorState(state,project);
+      // Entry is a local presentation choice. The established file enum stays
+      // basic/advanced; a transient history view can still retain entry.
+      validateEditorState(state.uiLevel==='entry'?{...state,uiLevel:'basic'}:state,project);
       for(const binding of [mainEditor,draftEditor]){binding.view?.cancel();if(binding.session){binding.session.pendingEdit=null;binding.session.blockDraft=null;}}
       headerPending=null;
       selectedId=state.selectedId;currentEvent=state.currentEvent;selectedScriptId=state.selectedScriptId;
@@ -31708,6 +32293,7 @@ function createAkariExtensionHost(options) {
       updateDirty();
     }
     function saveProject() {
+      if (!tutorialAllows(tutorial,'save')) return;
       if (appState === 'IMPORTING' || appState === 'PREPARING') return;
       if(composingEditors.size){setStatus('日本語入力を確定してから保存してください');return;}
       flushActiveEditor();
@@ -31720,6 +32306,7 @@ function createAkariExtensionHost(options) {
         a.download = safeDownloadName(project.name) + '.akari.md';
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        if(tutorial){tutorialSave={epoch:tutorial.epoch,identity:workspaceIdentity,fingerprint:currentFingerprint(),verified:false};confirmTutorialOperation('save');}
         lastSavedFingerprint = currentFingerprint();
         lastSavedEditorFingerprint = openEditorFingerprint();
         dirty = false;
@@ -31734,6 +32321,7 @@ function createAkariExtensionHost(options) {
       }
     }
     async function openProject(file, approval = null) {
+      if (tutorial) return;
       if (modelLocked()) return;
       const observed = currentOpenState();
       if (approval?.fingerprint !== observed.fingerprint && !confirmLose(observed)) return;
@@ -31756,6 +32344,7 @@ function createAkariExtensionHost(options) {
         disposeRuntime();
         revokeDesignUrls();
         project = loaded.project;
+        workspaceIdentity++;
         assetStore = loaded.assetStore;
         editorSessions.clear();
         invalidateEditors();
@@ -33229,6 +33818,7 @@ function createAkariExtensionHost(options) {
     $('#diagnoseBtn').onclick = showDiagnosis;
     $('#diagnosisClose').onclick = () => $('#diagnosisModal').classList.remove('show');
     function replaceCurrentProject(nextProject,nextAssets,targetId,event,status) {
+      if(tutorial)return;
       // Discard view-local transactions only after the user confirms replacement.
       mainEditor.view.cancel();
       draftEditor.view.cancel();
@@ -33243,6 +33833,7 @@ function createAkariExtensionHost(options) {
       disposeRuntime();
       revokeDesignUrls();
       project=nextProject;
+      workspaceIdentity++;
       assetStore=nextAssets;
       editorSessions.clear();
       invalidateEditors();
@@ -33258,6 +33849,7 @@ function createAkariExtensionHost(options) {
       setStatus(status);
     }
     function startProject() {
+      if(tutorial)return;
       if(modelLocked() || !confirmLose())return;
       replaceCurrentProject(makeEmptyProject(),makeDefaultAssetStore(),'sprite-1','start','空の作品です。動かすもの・できごとを選び、命令を入れましょう');
     }
@@ -33295,6 +33887,7 @@ function createAkariExtensionHost(options) {
       $('#samplePicker').showModal();
     }
     function requestSampleProject() {
+      if(tutorial)return;
       if (modelLocked() || openRequest || document.querySelector('.modal.show:not(#procModal),.modal.open,dialog[open]')) return;
       const observed = currentOpenState();
       openRequest = { kind:'sample', fingerprint:observed.fingerprint, phase:'confirmation' };
@@ -33336,6 +33929,16 @@ function createAkariExtensionHost(options) {
       if(!document.querySelector('.modal.show:not(#procModal),dialog[open]'))$('#sampleBtn').focus({preventScroll:true});
     });
     $('#saveBtn').onclick = saveProject;
+    for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).onclick=()=>{
+      if(tutorial)return;$('#entryProjectMenu').open=false;$('#'+origin).click();
+    };
+    $('#entryStartEvent').onclick=()=>selectEntryEvent('start');
+    $('#entryClickEvent').onclick=()=>selectEntryEvent('click');
+    $('#tutorialStart').onclick=beginTutorial;
+    $('#tutorialExit').onclick=()=>{finishTutorial(false);setStatus('途中の作品は残っています。自由に続けられるよ。');};
+    $('#tutorialVerifySave').onclick=()=>{if(tutorialAllows(tutorial,'verify-save')){$('#tutorialSavedFile').value='';$('#tutorialSavedFile').click();}};
+    $('#tutorialSavedFile').onchange=event=>{const file=event.target.files?.[0];event.target.value='';verifyTutorialSave(file);};
+    $('#tutorialSavedFile').addEventListener('cancel',()=>{if(tutorial)$('#tutorialText').textContent='ファイル選びをやめたよ。もう一度選ぶか、チュートリアルをやめられます。';});
     $('#callableSaveProject').onclick = saveProject;
     $('#exportBtn').onclick = exportProject;
     $('#exportControls').onclick = () => downloadProject('controls');
@@ -33459,23 +34062,38 @@ function createAkariExtensionHost(options) {
       if (f) await importSoundFile(f);
     };
     $('#uiLevel').onchange = () => {
+      if($('#uiLevel').value==='entry'&&(document.body.dataset.editorMode||editorModes.get('script'))==='code'){
+        $('#uiLevel').value=document.body.dataset.uiLevel;
+        setStatus('「はじめて」はブロックで使うよ。先に「ブロック」をえらんでね。');
+        return;
+      }
+      if (tutorial || composingEditors.size || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
+        $('#uiLevel').value=document.body.dataset.uiLevel;
+        setStatus('入力を決めるか取り消してから、表示を変えてね。');
+        return;
+      }
       document.body.dataset.uiLevel = $('#uiLevel').value;
       try {
         localStorage.setItem(STORAGE_KEYS.uiLevel, $('#uiLevel').value);
       } catch (_) {}
       renderHints();
+      renderEntrySurface();
+      renderEditorBinding(mainEditor);
+      mainEditor.view.render({force:true});
+      if ($('#procModal').classList.contains('show')) renderEditorBinding(draftEditor);
     };
     let storedUiLevel = null;
     try {
       storedUiLevel = localStorage.getItem(STORAGE_KEYS.uiLevel);
     } catch (_) {}
-    document.body.dataset.uiLevel = ['basic', 'advanced'].includes(storedUiLevel)
-      ? storedUiLevel
-      : storedUiLevel === 'all' ? 'advanced' : 'basic';
+    document.body.dataset.uiLevel = normalizeEntryUiLevel(storedUiLevel);
     $('#uiLevel').value = document.body.dataset.uiLevel;
     let storedEditorMode = null;
     try { storedEditorMode = localStorage.getItem(STORAGE_KEYS.editorMode); } catch (_) {}
     editorModes.set('script', ['code', 'blocks'].includes(storedEditorMode) ? storedEditorMode : 'blocks');
+    if(document.body.dataset.uiLevel==='entry'&&editorModes.get('script')==='code'){
+      document.body.dataset.uiLevel='basic';$('#uiLevel').value='basic';
+    }
     el.projectName.addEventListener('change', () => {
       if (modelLocked()) {
         el.projectName.value = project.name;
@@ -33532,6 +34150,7 @@ function createAkariExtensionHost(options) {
       if (!recoveryData) return;
       try {
         const {frames,cursor}=recoveryData.restored;
+        workspaceIdentity++;
         clearTimeout(historyTimer);clearTimeout(autosaveTimer);
         lastSavedFingerprint=recoveryData.lastSavedFingerprint;
         lastSavedEditorFingerprint=recoveryData.lastSavedEditorFingerprint;
@@ -33598,18 +34217,20 @@ function createAkariExtensionHost(options) {
         getSession: () => getEditorSession(binding),
         getProject: () => project,
         getContext: () => bindingContext(binding),
+        tutorialActive: () => !!tutorial,
+        lessonCandidate: () => { const step=tutorialStep(tutorial),key=step?.block;return key?{key,node:tutorialCandidate(key,project,step.id),label:TUTORIAL_BLOCKS[key].label}:null; },
         onData: () => $('#dataBtn').click(),
         isLocked: modelLocked,
         onOperation: (operation) => operateBlock(binding, operation),
         onPending: (pending) => {
           if (binding.session) binding.session.pendingEdit = pending || (binding.session.blockDraft
-            ? { kind: 'block-draft', ownerKey: bindingOwner(binding) } : null);
+            ? binding.session.blockDraft.pending : null);
           scheduleAutosave();
         },
         onCancel: () => {
           clearEditorFailure(binding);
           if (binding.session) binding.session.pendingEdit = binding.session.blockDraft
-            ? { kind: 'block-draft', ownerKey: bindingOwner(binding) } : null;
+            ? binding.session.blockDraft.pending : null;
         },
       });
       for (const mode of ['code', 'blocks'])
@@ -33708,7 +34329,7 @@ function createAkariExtensionHost(options) {
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#openConfirmModal,#samplePicker') ||
-          target.matches('#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         if (!flushActiveEditor()) {
@@ -33728,7 +34349,7 @@ function createAkariExtensionHost(options) {
           modelLocked() ||
           event.target.closest('#blockEditor,#callableBlocks,#sourceImport,#colorModal,#paintModal') ||
           (event.target.matches('#codeEditor') && ['source-import','heading-source'].includes(mainEditor.session?.pendingEdit?.kind)) ||
-          event.target.matches('#objectSelect,#eventSelect,#callableType,#callableSelect,#fileInput')
+          event.target.matches('#uiLevel,#objectSelect,#eventSelect,#callableType,#callableSelect,#fileInput')
         )
           return;
         if (!flushActiveEditor()) {
@@ -33748,7 +34369,7 @@ function createAkariExtensionHost(options) {
           modelLocked() ||
           flushingEditor ||
           event.target.matches('.diagnostic-details > summary') ||
-          event.target.closest('.editor-modes,#sourceImport,#colorModal,#samplePicker,#openConfirmModal,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          event.target.closest('.editor-modes,#sourceImport,#colorModal,#samplePicker,#openConfirmModal,#uiLevel,#tutorialStart,#tutorialExit,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;
@@ -33808,12 +34429,6 @@ function createAkariExtensionHost(options) {
       }
       updateCallableHeader();
     };
-    $('#uiLevel').addEventListener('change', () => {
-      invalidateEditors();
-      renderEditorBinding(mainEditor);
-      if ($('#procModal').classList.contains('show')) renderEditorBinding(draftEditor);
-    });
-
     $('#console').textContent = `${productLabel(true)}を起動しました。`;
     installColorPicker();
     resetHistory();

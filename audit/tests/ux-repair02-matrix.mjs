@@ -34,7 +34,16 @@ async function prepare(p,c,mode){let source=c.source,event='start',extraScripts=
  if(c.id==='B20'){event='click';extraScripts=[{id:'reset',targetId:'sprite-1',event:'start',source:'点数を0にする。'}];}
  if(c.id==='B21')source=c.source.replace('2番目','1番目');
  if(c.id==='B23'){source='「おはよう」と2秒話す。';extraScripts=[{id:'dango-click',targetId:'dango',event:'click',source:''}];}
- await install(p,source,{mode,level:'basic',event,extraScripts});
+ const initialDisplay=await p.evaluate(()=>({level:document.body.dataset.uiLevel,value:document.querySelector('#uiLevel').value}));
+ await p.evaluate(()=>{window.fixtureDisplayChanges=[];window.fixtureDisplayListener=e=>{if(e.target.id==='uiLevel')window.fixtureDisplayChanges.push({value:e.target.value,level:document.body.dataset.uiLevel});};document.addEventListener('change',window.fixtureDisplayListener,true);});
+ let preparationError;
+ try{await install(p,source,{mode,level:'basic',event,extraScripts});}catch(e){preparationError=e;}
+ const displayPreparation=await p.evaluate(()=>{document.removeEventListener('change',window.fixtureDisplayListener,true);const button=document.querySelector('#editorModecode'),ancestors=[];for(let n=button;n&&ancestors.length<8;n=n.parentElement){const s=getComputedStyle(n),r=n.getBoundingClientRect();ancestors.push({tag:n.tagName,id:n.id,hidden:n.hidden,display:s.display,visibility:s.visibility,rect:r.toJSON()});}return{changes:window.fixtureDisplayChanges,level:document.body.dataset.uiLevel,value:document.querySelector('#uiLevel').value,state:Akari.app.editorState.state,mode:Akari.app.editorState.main.mode,visibility:document.visibilityState,activeElement:document.activeElement?.id,button:{connected:button.isConnected,disabled:button.disabled,ancestors}};}).catch(e=>{preparationError??=e;return{diagnosticError:e.stack};});
+ report.results.at(-1).preparation={initialDisplay,...displayPreparation};
+ if(preparationError){await p.screenshot({path:path.join(dir,c.id+'-'+mode+'-preparation-failure.png')}).catch(()=>{});throw preparationError;}
+ assert.deepEqual(initialDisplay,{level:'basic',value:'basic'},'the inherited normal fixture starts in its saved basic display');
+ assert.equal(displayPreparation.changes.length,0,'preparation must preserve the selected normal display without redundant change events');
+ assert.equal(displayPreparation.level,'basic');assert.equal(displayPreparation.value,'basic');
  if(c.id==='B08')await selectOwner(p,'dango','click');
  if(c.id==='B23')await selectOwner(p,'dango','click');
  if(c.id==='B15'&&mode==='blocks'){const branch=p.locator('#blockEditor [data-blockui-body-wrapper="elseBody"]');await action(branch.locator('[data-schema-id="NoOperation"]'),'remove');}

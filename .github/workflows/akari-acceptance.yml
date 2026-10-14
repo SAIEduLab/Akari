@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
+    branches: [main, "feat/akari-entry-tutorial"]
   workflow_dispatch:
 permissions:
   contents: read
@@ -219,6 +219,41 @@ jobs:
           if-no-files-found: error
           retention-days: 3
           include-hidden-files: true
+  entry-workshop:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the approved browser for entry controls
+        run: |
+          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0
+          echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
+          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install-deps chromium
+          python audit/install-codec-browser.py "$RUNNER_TEMP/entry-browser"
+          mkdir -p audit-evidence/entry-workshop
+      - name: Verify entry definitions and editor defaults
+        if: always()
+        run: node audit/tests/entry-workshop-core.mjs audit-evidence/entry-workshop/unit.json
+      - name: Exercise all tutorial steps, denials, exits, saving and editor positions
+        if: always()
+        run: node audit/tests/entry-workshop-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/entry-workshop/browser.json
+      - name: Reject missing, skipped, stale or incomplete entry evidence
+        if: always()
+        run: node audit/tests/entry-workshop-verify.mjs audit-evidence/entry-workshop/unit.json audit-evidence/entry-workshop/browser.json audit-evidence/entry-workshop/verification.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-entry-workshop-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/entry-workshop/
+          if-no-files-found: error
+          retention-days: 3
   child-ux-aggregate:
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     needs: [composition-acceptance, ux-repair05]
