@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.3",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Approved 3-by-3 fish-catching workshop, child-selected edits, branch guards, independent routes, preserved contracts and shared-toolbar fix. Reviewed bytes only; runtime and browser PASS require separate evidence.",
+  "updateReason": "Independent browser inspection: focus first allowed lesson control and suppress inactive palette noise; retain invalid numeric cancellation checks. Byte record only, not a PASS claim.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,8 +12,8 @@
     },
     {
       "path": "Akari_1_2_3.html",
-      "sha256": "735a515f91b637a6b9f694e497b7f1e165abd17dd1ecbadd3a5deaadcc5e89f6",
-      "bytes": 1780851
+      "sha256": "35fd22e3fa28a2afd5a1ba039d4d9a23bb220eeea6ae467754c713d093683d8f",
+      "bytes": 1781022
     },
     {
       "path": "LANGUAGE.md",

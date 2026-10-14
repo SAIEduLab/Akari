@@ -244,10 +244,18 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   for(const [course,leaves]of Object.entries(routeLeaves))for(const leaf of leaves){
    if(routes.length){await p.reload();const recovery=p.locator('#recoveryModal.show');if(await recovery.isVisible())await p.locator('#recoveryDiscard').click();}
    p.entryCourse=course;p.entryLeaf=leaf;p.entryRuntimeObservations=[];
-   p.once('dialog',d=>d.accept());await p.locator('#tutorialStart').click();let downloaded=null;const exits=[];
+   await p.locator('#tutorialStart').click();let downloaded=null;const exits=[];
    for(const id of auditRoute(course,leaf)){
     await waitStep(p,id);
     if(id.startsWith(course+'-')&&!id.endsWith('-next')){const result=await exitAndResume(p,id);exits.push(result.record);}
+    if(id.endsWith('-change')){
+     const op=auditOperation(id,course,leaf),ref=await fieldAt(p,op.ref),control=field(p,ref.id),before=await read(p);
+     for(const bad of ['', '-', '999999']){
+      await control.fill(bad);await control.press('Enter');assert.equal((await read(p)).step,id,'invalid numeric input cannot advance');
+      await control.press('Escape');assert.equal((await fieldAt(p,op.ref)).value,ref.value,'cancel restores only the edited value');
+      const after=await read(p);assert.equal(after.project,before.project);assert.equal(after.history,before.history);
+     }
+    }
     if(id==='verify-save'){await p.locator('#tutorialSavedFile').setInputFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);}
     else {const file=await positive(p,id);if(file)downloaded=file;}
    }

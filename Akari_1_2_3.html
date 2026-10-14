@@ -25069,6 +25069,7 @@ function createAkariExtensionHost(options) {
       }
       const lesson=options.lessonCandidate?.();
       if(lesson)candidates=[{...BLOCK_SCHEMA_BY_ID.get(lesson.node.schemaId),candidateNode:lesson.node,candidateKey:'lesson-'+lesson.key,lessonKey:lesson.key,searchLabel:lesson.label}];
+      else if(options.tutorialActive?.())candidates=[];
       const pages = Math.max(1, Math.ceil(candidates.length / PAGE));
       page = Math.min(page, pages - 1);
       const scroll = paletteList.scrollTop;
@@ -25119,7 +25120,7 @@ function createAkariExtensionHost(options) {
         if (!a.enabled) item.append(reason);
         paletteList.append(item);
       }
-      if (!candidates.length)
+      if (!candidates.length && !options.tutorialActive?.())
         paletteList.append(
           E(
             'p',
@@ -25130,7 +25131,7 @@ function createAkariExtensionHost(options) {
           ),
         );
       previous.disabled = page === 0;
-      if(category&&((query&&categoryExplicit)||!candidates.length))paletteList.append(button('すべての分類で探す','search-all',()=>{category='';categoryExplicit=false;page=0;renderPalette();search.focus();}));
+      if(!options.tutorialActive?.()&&category&&((query&&categoryExplicit)||!candidates.length))paletteList.append(button('すべての分類で探す','search-all',()=>{category='';categoryExplicit=false;page=0;renderPalette();search.focus();}));
       next.disabled = page >= pages - 1;
       pageLabel.textContent = page + 1 + ' / ' + pages;
       palettePages.hidden = pages === 1;
@@ -27989,7 +27990,7 @@ function createAkariExtensionHost(options) {
         if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
       }
       if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
-      tutorialRefresh();clearInterval(tutorialTimer);tutorialTimer=setInterval(tutorialRefresh,80);
+      tutorialRefresh();tutorialFocusTargets()[0]?.focus({preventScroll:true});clearInterval(tutorialTimer);tutorialTimer=setInterval(tutorialRefresh,80);
     }
     function finishTutorial(completed=false) {
       if (!tutorial) return;
