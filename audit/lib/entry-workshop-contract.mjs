@@ -3,7 +3,7 @@ import cp from 'node:child_process';
 import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';
 export const entryProvenance=productFile=>{
  const commitSha=cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();let committedProductSha256=null;
- try{committedProductSha256=crypto.createHash('sha256').update(cp.execFileSync('git',['show',commitSha+':'+productFile],{stdio:['ignore','pipe','ignore']})).digest('hex');}catch{}
+ try{committedProductSha256=crypto.createHash('sha256').update(cp.execFileSync('git',['show',commitSha+':'+productFile],{stdio:['ignore','pipe','ignore'],maxBuffer:64*1024*1024})).digest('hex');}catch{}
  const inventory=JSON.parse(fs.readFileSync('audit/public-files.json')).files,
    records=cp.execFileSync('git',['status','--porcelain','-z','--untracked-files=normal'],{encoding:'utf8'}).split('\0').filter(Boolean),
    publicInputsDirty=records.some(row=>inventory.some(file=>file===row.slice(3)||row.slice(3).endsWith('/')&&file.startsWith(row.slice(3))));
@@ -17,7 +17,7 @@ export const tutorialSteps=Object.freeze(['choose-click','add-speech','speech-te
  'add-return','return-direction','return-time','return-distance','run-original','try-original','stop-original',
  'longer-outward','longer-return','run-longer','try-longer','stop-longer','reorder-speech','run-reordered',
  'try-reordered','stop-reordered','undo-reorder','save-work','verify-save']);
-export const unitIds=Object.freeze(['ENTRY-SETTINGS','ENTRY-CATALOG','TUTORIAL-DEFINITIONS','TUTORIAL-TRANSITIONS','EDITOR-DESIGN-POSITION','EDITOR-POSITION-DEFAULTS']);
+export const unitIds=Object.freeze(['ENTRY-SETTINGS','ENTRY-CATALOG','TUTORIAL-DEFINITIONS','TUTORIAL-TRANSITIONS','EDITOR-DESIGN-POSITION','EDITOR-POSITION-DEFAULTS','ENTRY-COMMITTED-PRODUCT']);
 export const browserIds=Object.freeze(['ENTRY-FIRST-VIEW','ENTRY-MODE-PRESERVATION','EDITOR-APPEND-POSITION','TUTORIAL-PROTECTED-START',
  'TUTORIAL-ALL-STEPS','TUTORIAL-PENDING-EXIT','TUTORIAL-RESUME-IDENTITY','TUTORIAL-SAVE-REFUSALS',
  'EDITOR-POSITION-DOM','TUTORIAL-INPUT-RECOVERY','TUTORIAL-SAVE-FAILURE','TUTORIAL-STALE-CALLBACK']);

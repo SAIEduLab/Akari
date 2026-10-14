@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.3",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Approved Akari 1.2.3 entry presentation, guarded operation tutorial, editor append and design coordinates; preserve historical oracles and external contract 2",
+  "updateReason": "Approved entry tutorial and unchanged external contracts; repair actual committed HTML provenance buffer and enforce complete final evidence without weakening old oracles",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {

@@ -15,7 +15,7 @@
 | TUTORIAL-EXIT | 実行を止め、制限と強調を解き、作品と未確定入力を残す | finishTutorial、releaseInteraction | TUTORIAL-ALL-STEPS、TUTORIAL-PENDING-EXIT、TUTORIAL-PROTECTED-START | 全26手順で退出・保持・解除、合成IME中の保持、開始取消、退出後の通常編集 |
 | TUTORIAL-RESUME | 同じページ・未変更の同じ練習だけ再検査。進度を永続保存しない | pausedTutorial、workspaceIdentity、beginTutorial | TUTORIAL-RESUME-IDENTITY | 続行・改造後の開始取消の比較 |
 | TUTORIAL-SAVE | 既存保存後に選んだファイルの内容一致で完了する | saveProject、verifyTutorialSave、tutorialSavedFile | TUTORIAL-SAVE-REFUSALS、TUTORIAL-ALL-STEPS | 実download、取消・解析失敗・不一致・再試行、作品/履歴不変 |
-| ENTRY-GATE | 未実施・欠落・重複・SKIP・別SHAを合格にしない | entry-workshop-contract、entry-workshop-verify、gate-contract、verify-gate-results | entry-verify | 14種の不正証拠拒否、既存selftest集約、acceptanceのentry-workshopジョブ |
+| ENTRY-GATE | 未実施・欠落・重複・SKIP・別SHAを合格にしない | entry-workshop-contract、entry-workshop-verify、gate-contract、verify-gate-results | entry-verify | 16種の不正証拠拒否、既存selftest集約、acceptanceのentry-workshopジョブ |
 
 追加のDOM試験は、EDITOR-POSITION-DOM（小数・負数・表示倍率・回転・ドラッグ完了/取消・Undo/Redo・対象切替）、TUTORIAL-INPUT-RECOVERY（誤値・合成IME・取消・連打・フォーカス）、TUTORIAL-SAVE-FAILURE（保存準備失敗・保存後改造・再保存）、TUTORIAL-STALE-CALLBACK（退出後の遅延完了・更新後の作品復元）です。全26手順で、操作なしの待機中には進度と作品が変わらないことも比較します。判定は値の一致と、その手順の操作確定の両方を必要とします。
 
