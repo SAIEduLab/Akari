@@ -35,8 +35,22 @@ async function positive(p,id){
  if(op.kind==='choice'){await activate(p,p.locator(op.key==='finish'?'#tutorialFinish':'#tutorialChoices [data-tutorial-choice="'+op.key+'"]'));return null;}
  if(op.kind==='insert'){
   const parent=await p.evaluate(ref=>{let n=Akari.app.editorState.main.blockView;for(const k of ref)n=n[k];return n.id;},op.parent);
-  await activate(p,p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+parent+'"][data-blockui-body="'+op.body+'"][data-insert-index="'+op.at+'"]').first());
-  await activate(p,p.locator('#blockEditor [data-lesson-block="'+op.key+'"]'));return null;
+  const insertion=p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+parent+'"][data-blockui-body="'+op.body+'"][data-insert-index="'+op.at+'"]').first();
+  const candidate=p.locator('#blockEditor [data-lesson-block="'+op.key+'"]');
+  assert.ok(await p.locator('#blockEditor [data-blockui-action="palette-add"]').count()>1,'lesson preserves a visible choice of blocks');
+  assert.equal(await candidate.getAttribute('data-tutorial-blocked'),'true','insertion must be chosen before the block');
+  assert.ok((await insertion.getAttribute('class')).includes('tutorial-target'),'correct insertion is visibly highlighted');
+  const before=content(await read(p));
+  await activate(p,candidate);assert.deepEqual(content(await read(p)),before,'early block click cannot insert or advance');
+  await activate(p,insertion);
+  await p.waitForFunction(key=>document.querySelector('[data-lesson-block="'+key+'"]')?.classList.contains('tutorial-target'),op.key);
+  assert.equal(await candidate.getAttribute('data-tutorial-blocked'),'false');
+  assert.equal(await p.locator('#blockEditor .blockui-palette-list .tutorial-target').count(),1,'only the required candidate is outlined');
+  const visual=await candidate.evaluate(n=>{const c=getComputedStyle(n),r=n.getBoundingClientRect(),clip=n.closest('.blockui-palette-list').getBoundingClientRect();return{outline:c.outlineStyle,width:parseFloat(c.outlineWidth),opacity:parseFloat(c.opacity),visible:r.width>0&&r.height>0&&r.top>=clip.top&&r.bottom<=clip.bottom};});
+  assert.equal(visual.outline,'solid');assert.ok(visual.width>=3&&visual.opacity===1&&visual.visible,'highlight is readable inside its scroll viewport');
+  const other=p.locator('#blockEditor [data-blockui-action="palette-add"][data-tutorial-blocked="true"]').first();
+  await activate(p,other);assert.deepEqual(content(await read(p)),before,'wrong visible candidate cannot modify the work');
+  await activate(p,candidate);return null;
  }
  if(op.kind==='field'){const ref=await fieldAt(p,op.ref);
   await p.waitForFunction(id=>{const n=document.querySelector('#blockEditor input[data-block-id="'+id+'"]'),w=document.querySelector('#blockEditor .blockui-workspace');if(!n||!w)return false;const r=n.getBoundingClientRect(),b=w.getBoundingClientRect();return r.top>=b.top&&r.bottom<=b.bottom&&r.left>=b.left&&r.right<=b.right;},ref.id);

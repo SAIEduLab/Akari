@@ -5770,6 +5770,13 @@ body[data-ui-level="entry"] .blockui-palette-item { margin:4px; }
 
 #tutorialText { margin:0; flex:1; min-width:220px; }
 .tutorial-target { outline:3px solid #2357a0 !important; outline-offset:2px; }
+body[data-tutorial-step] .blockui-world .blockui-insertion.tutorial-target {
+  background:#e0efff !important; border:2px solid #2357a0;
+  color:#123b72 !important; box-shadow:0 0 0 3px #c7dfff;
+}
+body[data-tutorial-step] .blockui-palette-item:has(> .tutorial-target) { background:#e0efff; border-radius:6px; }
+body[data-tutorial-step] .blockui-palette-list { padding:6px; scroll-padding:8px; }
+body[data-tutorial-step] .blockui-world { padding:6px; }
 body[data-tutorial-step] :is(button,input,select,textarea,summary)[data-tutorial-blocked="true"] { opacity:.55; }
 body[data-tutorial-step] #tutorialExit,body[data-tutorial-step] #stopBtn { opacity:1; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .codewin { display:flex; }
@@ -6323,7 +6330,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.2.3';
+  const PRODUCT_RELEASE = '1.2.4';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -24718,7 +24725,8 @@ function createAkariExtensionHost(options) {
           sameLocation(location, locationFromElement(n)),
         );
       announce(destinationDescription() + (modeChanged ? ' 候補の種類を「すべてのブロック」に変えました。分類と検索はそのままです。' : ''));
-      search.focus({ preventScroll: true });
+      if(options.tutorialActive?.())options.onDestinationSelected?.({...location});
+      else search.focus({ preventScroll: true });
     }
     function defaultDestination() {
       return tree ? { parentId: tree.id, body: 'body', index: tree.bodies.body.length } : null;
@@ -25069,13 +25077,18 @@ function createAkariExtensionHost(options) {
         candidates.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
       }
       const lesson=options.lessonCandidate?.();
-      if(lesson)candidates=[{...BLOCK_SCHEMA_BY_ID.get(lesson.node.schemaId),candidateNode:lesson.node,candidateKey:'lesson-'+lesson.key,lessonKey:lesson.key,searchLabel:lesson.label}];
-      else if(options.tutorialActive?.())candidates=[];
+      if(lesson){
+        const candidate={...BLOCK_SCHEMA_BY_ID.get(lesson.node.schemaId),candidateNode:lesson.node,candidateKey:'lesson-'+lesson.key,lessonKey:lesson.key,searchLabel:lesson.label};
+        const at=candidates.findIndex(item=>item.id===candidate.id);
+        if(at<0)candidates.push(candidate);else candidates.splice(at,1,candidate);
+      }
+      // Keep the normal palette visible: a lesson guides a choice, never makes it.
+      const guided=!!options.tutorialActive?.();
       const pages = Math.max(1, Math.ceil(candidates.length / PAGE));
       page = Math.min(page, pages - 1);
       const scroll = paletteList.scrollTop;
       paletteList.replaceChildren();
-      for (const schema of candidates.slice(page * PAGE, (page + 1) * PAGE)) {
+      for (const schema of (guided ? candidates : candidates.slice(page * PAGE, (page + 1) * PAGE))) {
         const a = paletteAvailability(schema, location),
           item = E('div', 'blockui-palette-item', null, {
             'data-palette-tone': blockPaletteGroup(schema),
@@ -25135,9 +25148,10 @@ function createAkariExtensionHost(options) {
       if(!options.tutorialActive?.()&&category&&((query&&categoryExplicit)||!candidates.length))paletteList.append(button('すべての分類で探す','search-all',()=>{category='';categoryExplicit=false;page=0;renderPalette();search.focus();}));
       next.disabled = page >= pages - 1;
       pageLabel.textContent = page + 1 + ' / ' + pages;
-      palettePages.hidden = pages === 1;
+      palettePages.hidden = guided || pages === 1;
       paletteList.scrollTop = scroll;
       scheduleGeometry();
+      options.onPresentation?.();
     }
     function namesFor(node, field) {
       const p = project(),
@@ -26504,6 +26518,7 @@ function createAkariExtensionHost(options) {
       workspace.scrollLeft = scroll.left;
       rememberViewState();
       applyHighlight();
+      options.onPresentation?.();
       if (focusKey) {
         const field = [...workspace.querySelectorAll('[data-focus-key]')].find(
           (n) => n.dataset.focusKey === focusKey,
@@ -27806,7 +27821,7 @@ function createAkariExtensionHost(options) {
     let entryLayoutPlaced=false;
     const entryControlHomes=new Map();
     let tutorial=null, pausedTutorial=null, tutorialEpoch=0, workspaceIdentity=0,
-      tutorialTimer=null, tutorialTrace=null, tutorialSave=null, tutorialExpected=null;
+      tutorialTimer=null, tutorialTrace=null, tutorialSave=null, tutorialExpected=null, tutorialInsertion=null;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
       $('#uiLevel option[value="entry"]').disabled=(document.body.dataset.editorMode||editorModes.get('script'))==='code';
@@ -27850,6 +27865,7 @@ function createAkariExtensionHost(options) {
       if(!tutorial)return true;if(binding!==mainEditor||selectedId!==tutorial.target||currentEvent!=='click')return false;
       const step=tutorialStep(tutorial);if(!step)return false;
       if(step.block){const loc=tutorialDestination(mainEditor.session.blockView,step);
+        if(!tutorialInsertionReady(step))return false;
         return operation.type==='insert'&&operation.parentId===loc?.parentId&&operation.body===loc.body&&operation.index===loc.index
           &&JSON.stringify(tutorialNodeShape(operation.node))===JSON.stringify(tutorialNodeShape(tutorialCandidate(step.block,project)));}
       if(step.ref&&step.action!=='undo'){const role=tutorialField(mainEditor.session.blockView,step);
@@ -27857,6 +27873,17 @@ function createAkariExtensionHost(options) {
         return step.input.type==='number'?typeof operation.value==='number'&&Number.isFinite(operation.value)&&operation.value>=step.input.min&&operation.value<=step.input.max&&(!step.integer||Number.isInteger(operation.value))
           :typeof operation.value==='string'&&cpLen(operation.value)<=100;}
       return false;
+    }
+    function tutorialInsertionReady(step=tutorialStep(tutorial)) {
+      const loc=step?.block&&tutorialDestination(mainEditor.session?.blockView,step);
+      return !!loc&&tutorialInsertion?.step===step.id&&tutorialInsertion.epoch===tutorial.epoch
+        &&tutorialInsertion.parentId===loc.parentId&&tutorialInsertion.body===loc.body&&tutorialInsertion.index===loc.index;
+    }
+    function selectTutorialInsertion(location) {
+      const step=tutorialStep(tutorial),expected=step?.block&&tutorialDestination(mainEditor.session?.blockView,step);
+      if(!expected||location.parentId!==expected.parentId||location.body!==expected.body||location.index!==expected.index)return;
+      tutorialInsertion={...location,step:step.id,epoch:tutorial.epoch};
+      refreshTutorialPresentation();focusTutorialTarget();
     }
     function tutorialRoleControl() {
       const step=tutorialStep(tutorial),ref=step&&tutorialField(mainEditor.session?.blockView,step);
@@ -27869,9 +27896,9 @@ function createAkariExtensionHost(options) {
       if(action==='choice')return !!element.closest('#tutorialChoices button,#tutorialFinish');
       if(action==='verify-save'&&element.closest('#tutorialVerifySave,#tutorialSavedFile'))return true;
       const direct={'event:click':'entryClickEvent',run:'runBtn',undo:'undoBtn',save:'saveBtn'}[action];if(direct&&element.closest('#'+direct))return true;
-      if(step?.block){if(element.closest('#blockEditor [data-lesson-block="'+step.block+'"]'))return true;
+      if(step?.block){if(element.closest('#blockEditor [data-lesson-block="'+step.block+'"]'))return tutorialInsertionReady(step);
         const command=element.closest('#blockEditor [data-blockui-action="body-insert"]'),loc=tutorialDestination(mainEditor.session?.blockView,step);
-        return !!command&&!!loc&&command.dataset.parentId===loc.parentId&&command.dataset.blockuiBody===loc.body&&Number(command.dataset.insertIndex)===loc.index;}
+        return !tutorialInsertionReady(step)&&!!command&&!!loc&&command.dataset.parentId===loc.parentId&&command.dataset.blockuiBody===loc.body&&Number(command.dataset.insertIndex)===loc.index;}
       if(step?.ref&&step.action!=='undo'){const control=tutorialRoleControl();return element===control||control?.contains(element)
         ||!!element.closest('#blockEditor [data-blockui-action="commit"],#blockEditor [data-blockui-action="cancel"],#editorCancel');}
       if(action==='runtime:click')return !tutorialTrace?.busy&&tutorialTrace?.clicks<step.clicks&&!!element.closest('.component[data-id="'+tutorial.target+'"]');return false;
@@ -27947,6 +27974,22 @@ function createAkariExtensionHost(options) {
         pending:!!mainEditor.session?.pendingEdit&&mainEditor.session.pendingEdit.kind!=='block-draft'||composingEditors.size>0,
         failed:!!tutorialTrace?.failed,expected};
     }
+    function refreshTutorialPresentation() {
+      if(!tutorial)return;
+      const step=tutorialStep(tutorial);
+      if(step?.block)$('#tutorialText').textContent=tutorialInsertionReady(step)
+        ?'左の青いわくの「'+TUTORIAL_BLOCKS[step.block].label+'」をえらぼう。'
+        :'青いわくの「＋ ここに入れる」を押そう。';
+        $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
+        for(const n of $$('button,input,select,textarea,summary,[tabindex]')) {
+          const allowed=tutorialElementAllowed(n);n.dataset.tutorialBlocked=String(!allowed);
+          if(n.matches('button,input,select,textarea,summary')){
+            if(n.dataset.tutorialAria===undefined)n.dataset.tutorialAria=n.getAttribute('aria-disabled')??'none';
+            if(!allowed)n.setAttribute('aria-disabled','true');else n.dataset.tutorialAria==='none'?n.removeAttribute('aria-disabled'):n.setAttribute('aria-disabled',n.dataset.tutorialAria);
+          }
+          if(allowed&&n.id!=='tutorialExit'&&n.id!=='stopBtn')n.classList.add('tutorial-target');
+        }
+    }
     function tutorialRefresh() {
       if (!tutorial) return;
       try {
@@ -27961,19 +28004,11 @@ function createAkariExtensionHost(options) {
         const next=tutorialAdvance(tutorial,facts,tutorial.epoch),changed=next!==tutorial;tutorial=next;
         if (tutorial.phase==='complete') { finishTutorial(true);setStatus('できたね！ つぎは、じゆうに変えて遊ぼう。');return; }
         const step=tutorialStep(tutorial);document.body.dataset.tutorialStep=step.id;
-        if(changed)mainEditor.view.render({force:true});
+        if(changed){tutorialInsertion=null;mainEditor.view.render({force:true});}
         $('#tutorialGuide').hidden=false;$('#tutorialVerifySave').hidden=step.id!=='verify-save';
         renderTutorialChoices(step);
         $('#tutorialText').textContent=tutorialTrace?.failed?'動かなかったね。「止める」で戻って、もう一度試そう。':step.choice==='course'&&tutorial.courses.length===TUTORIAL_COURSES.length?'3つの遊びを組み合わせたね！ ほぞんして、自分で遊んでみよう。':step.message;
-        $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
-        for(const n of $$('button,input,select,textarea,summary,[tabindex]')) {
-          const allowed=tutorialElementAllowed(n);n.dataset.tutorialBlocked=String(!allowed);
-          if(n.matches('button,input,select,textarea,summary')){
-            if(n.dataset.tutorialAria===undefined)n.dataset.tutorialAria=n.getAttribute('aria-disabled')??'none';
-            if(!allowed)n.setAttribute('aria-disabled','true');else n.dataset.tutorialAria==='none'?n.removeAttribute('aria-disabled'):n.setAttribute('aria-disabled',n.dataset.tutorialAria);
-          }
-          if(allowed&&n.id!=='tutorialExit'&&n.id!=='stopBtn')n.classList.add('tutorial-target');
-        }
+        refreshTutorialPresentation();
         if(changed)focusTutorialTarget();
       } catch(error) { finishTutorial(false);setStatus('案内を続けられませんでした。作品は残っています：'+error.message); }
     }
@@ -27995,12 +28030,12 @@ function createAkariExtensionHost(options) {
         if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
       }
       if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
-      tutorialRefresh();focusTutorialTarget();clearInterval(tutorialTimer);tutorialTimer=setInterval(tutorialRefresh,80);
+      tutorialInsertion=null;tutorialRefresh();focusTutorialTarget();clearInterval(tutorialTimer);tutorialTimer=setInterval(tutorialRefresh,80);
     }
     function finishTutorial(completed=false) {
       if (!tutorial) return;
       const saved=tutorial;
-      tutorialCollectRuntime();tutorial=null;++tutorialEpoch;
+      tutorialCollectRuntime();tutorial=null;tutorialInsertion=null;++tutorialEpoch;
       clearInterval(tutorialTimer);tutorialTimer=null;
       if(runtime||scheduler||appState==='PREPARING')stopRun();
       activeDragCleanup?.();mainEditor.view.releaseInteraction();
@@ -34218,6 +34253,8 @@ function createAkariExtensionHost(options) {
         getProject: () => project,
         getContext: () => bindingContext(binding),
         tutorialActive: () => !!tutorial,
+        onDestinationSelected: selectTutorialInsertion,
+        onPresentation: refreshTutorialPresentation,
         lessonCandidate: () => { const step=tutorialStep(tutorial),key=step?.block;return key?{key,node:tutorialCandidate(key,project,step.id),label:TUTORIAL_BLOCKS[key].label}:null; },
         onData: () => $('#dataBtn').click(),
         isLocked: modelLocked,
