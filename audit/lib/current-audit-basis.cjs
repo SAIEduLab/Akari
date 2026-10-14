@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'../..');
 const basisPath='audit/manifests/current-audit-basis.json';
 const releasePath=currentReleaseFile();
 // Changed only by the explicit reviewed-basis recording command, never by a gate.
-const REVIEWED_BASIS_SHA256='be5a5f48daf7deb3d455e7e9ca8efb130b56430f1d45cc4621115b4ee013421e';
+const REVIEWED_BASIS_SHA256='505909ccec9968f10787e63e9ec25e0761a23571cc49eb95adcdd4346d7c9783';
 const basisTargets=Object.freeze([
   currentProductFile(),'AUDIT.md','LANGUAGE.md','MANUAL.html','README.md',
   'Manual/block-mode.html','Manual/code-mode-advanced.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html',

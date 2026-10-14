@@ -1,58 +1,58 @@
 {
   "schema": "akari-current-audit-basis-v1",
-  "productVersion": "1.2.2",
+  "productVersion": "1.2.3",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "User-approved Akari 1.2.2: preserve editor diagnostics and geometry during cancellable Open, and isolate browser fixture setup from unchanged behavioral timing assertions.",
+  "updateReason": "Approved Akari 1.2.3 entry presentation, guarded operation tutorial, editor append and design coordinates; preserve historical oracles and external contract 2",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
       "path": "AUDIT.md",
-      "sha256": "46c2424890b99244293736fe356398e3cacc197416ddd4295923640badb0f036",
-      "bytes": 225813
+      "sha256": "9f6a7225d3e8027cd9136d2dda84070b125173dbed166f1d7a639a51ab18b1ba",
+      "bytes": 226801
     },
     {
-      "path": "Akari_1_2_2.html",
-      "sha256": "0c0619bcbf307943b9dad5b71e05fcd38b259f4a2b1c47e9228845d834eb8f45",
-      "bytes": 1703308
+      "path": "Akari_1_2_3.html",
+      "sha256": "98b75013137642032c7d2efcf723f7175afd7d58e0dbf86e7eb6c5e2445500e9",
+      "bytes": 1746026
     },
     {
       "path": "LANGUAGE.md",
-      "sha256": "7f309afc12cf30c916f28138c48b632b0add09c192016e0b6ecb751d64ceb13c",
-      "bytes": 114922
+      "sha256": "60ab2dc3d8e879c27f14617644d2c41a4788e07139d044c1da2c47522dee345d",
+      "bytes": 116029
     },
     {
       "path": "MANUAL.html",
-      "sha256": "a3554f1c2671488bfe9d4e533e767a64761ecc8e9264ab980a98b76ad3a9db4a",
-      "bytes": 37591
+      "sha256": "38845959aa338780700819f8e089d52eafbcb048a089570e72fddab34cc58a86",
+      "bytes": 39381
     },
     {
       "path": "Manual/block-mode.html",
-      "sha256": "4716980eb58979e8dfa3c66106ae04e4143a52ee3c5e5d3e0f76f54efc5bf3cd",
-      "bytes": 38861
+      "sha256": "7df8cd788cc09e9ebe55debc32f3084ca567a24e98a6403ce12171fc04308530",
+      "bytes": 39939
     },
     {
       "path": "Manual/code-mode-advanced.html",
-      "sha256": "52711083dc3e97fe9500cbdefc7ff11af35b537ac3ef5cbb15fe7d0e8ec36121",
+      "sha256": "500ada6733302f21aaad494f6250b033faa32a654f7f0e0fdb17dd7ff358cf76",
       "bytes": 34011
     },
     {
       "path": "Manual/code-mode-beginner.html",
-      "sha256": "7b8cd18f852d0d00d9726fcb06e9e1909c041975fff7742b83692fd52c4c78ec",
+      "sha256": "a7fdadace508b12dea3bb1d0aa6dbdbbe97ae99a0c21587035f199b533f8a23e",
       "bytes": 33065
     },
     {
       "path": "Manual/code-mode-intermediate.html",
-      "sha256": "f60bc7eb8b3b4a07ff4a8054ff8c70ee81d10f9d646e4dded24a01f0c50d0dda",
+      "sha256": "86ddbf2aff5ffb72677e0d1634200b226a6d0961194ddafd96dfddc82f5b5e98",
       "bytes": 31289
     },
     {
       "path": "README.md",
-      "sha256": "8e449e02b7e214951772ad2c0b2fc081d24cddf8580f21b383bf384220a8b581",
-      "bytes": 6165
+      "sha256": "035ac206b0651107c94176ed365aa88e42a86dd55c8457d4ea24f77600d06050",
+      "bytes": 7123
     },
     {
       "path": "audit/README.md",
-      "sha256": "d3512fa87f86a3742349219401164b8457933e1c21580eb13fa74e899bf0602e",
+      "sha256": "1582e4e74b8ff8fe1a80206b5d16ba00c42632f980651cda97a2b8c4091d09ab",
       "bytes": 8788
     },
     {
@@ -117,7 +117,7 @@
     },
     {
       "path": "audit/manifests/features.json",
-      "sha256": "8786dacbcc37255325a20fade6b77385b3033d3c3880a0aa61dfc1f539c5a197",
+      "sha256": "4af492a03cce64d064d717c6a2394c6f0a9eae2ecd9424f70008ba84074758d7",
       "bytes": 19535
     },
     {
@@ -127,8 +127,8 @@
     },
     {
       "path": "audit/public-files.json",
-      "sha256": "0efafce94f43ca23cca8098ddfacd9cad4d95c05efe3b374610e3b07c5c3e00d",
-      "bytes": 19842
+      "sha256": "8ec32ecfe3f69925dbeaedc7cb5bbb33d46528707d48d29cf60598924242cf65",
+      "bytes": 20052
     },
     {
       "path": "audit/record-current-basis.mjs",

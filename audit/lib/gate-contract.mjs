@@ -1,6 +1,9 @@
 import { currentProductFile } from "./product-path.cjs";
 import path from 'node:path';
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
+  ['entry-unit','audit/tests/entry-workshop-core.mjs',file('entry-unit')],
+  ['entry-browser','audit/tests/entry-workshop-browser.mjs',browser,file('entry-browser')],
+  ['entry-verify','audit/tests/entry-workshop-verify.mjs',file('entry-unit'),file('entry-browser'),file('entry-verify')],
   ['static','audit/tests/static-contract.mjs',file('static')],
   ['release-policy-negative','audit/tests/release-policy-negative.mjs'],
   ['integrity','audit/tests/execution-continuity.mjs',file('integrity')],

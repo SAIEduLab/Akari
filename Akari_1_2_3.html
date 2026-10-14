@@ -5731,6 +5731,66 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 .project-choice-footer{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:12px;margin-top:16px}
 @media(max-width:650px){.export-choices{grid-template-columns:1fr}.project-choice-dialog{padding:16px}.export-choice{padding:12px}}
 
+/* The entry layout keeps the same editor and stage; each area scrolls inside. */
+#entryProjectMenu,#tutorialStart,#entryEvents { display:none; }
+#tutorialGuide[hidden],#entryOutside[hidden] { display:none; }
+#entryProjectMenu { position:relative; }
+.entry-project-actions { position:absolute; z-index:30; background:white; border:1px solid #9aaec8; padding:8px; min-width:150px; display:grid; gap:6px; }
+body[data-ui-level="entry"] #app { height:100dvh; min-height:0; }
+body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) 340px; grid-template-rows:minmax(200px,1fr) 170px; min-height:0; overflow:hidden; }
+body[data-ui-level="entry"] .codewin { grid-column:1; grid-row:1/3; min-height:0; }
+body[data-ui-level="entry"] .designer { grid-column:2; grid-row:1; }
+body[data-ui-level="entry"] .side { grid-column:2; grid-row:2; min-height:0; display:flex; }
+body[data-ui-level="entry"] .side>section:first-child { flex:1; min-height:0; }
+body[data-ui-level="entry"] #componentControls { display:none; }
+body[data-ui-level="entry"][data-editor-mode] .menutool>.ui-level-label { display:flex; order:0; flex:0 0 auto; margin:0; padding:0; }
+body[data-ui-level="entry"] .menutool :is(#undoBtn,#redoBtn) svg { width:18px; height:18px; flex:none; }
+body[data-ui-level="entry"] .menutool #redoBtn::after { content:'やり直す'; }
+body[data-ui-level="entry"] :is(.toolbox,.side>section:not(:first-child),.debugbar,.source-nav,.code-assist,.console,#scriptAdd,.code-head label:nth-child(2),#basicActionGuide) { display:none; }
+body[data-ui-level="entry"] .menutool>:is(#newBtn,#openBtn,#exportBtn,#resetBtn,#imageObjectAdd,#paintAdd,#soundQuickAdd,#assetBtn,#procBtn,#dataBtn,#diagnoseBtn,.sep) { display:none; }
+body[data-ui-level="entry"] :is(#entryProjectMenu,#tutorialStart) { display:block; }
+body[data-ui-level="entry"] #entryEvents { display:flex; flex-wrap:wrap; gap:6px; padding:6px 10px; }
+body[data-ui-level="entry"] #entryEvents button[aria-pressed="true"]::before { content:'✓ '; }
+body[data-ui-level="entry"] .code-head { display:flex; padding:6px 10px; }
+body[data-ui-level="entry"] #blockEditor { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
+body[data-ui-level="entry"] #blockEditor[hidden] { display:none; }
+body[data-ui-level="entry"] .blockui-layout { flex:1; height:auto; min-height:0; grid-template-columns:240px minmax(0,1fr); }
+body[data-ui-level="entry"] .blockui-palette { display:flex; flex-direction:column; min-height:0; }
+body[data-ui-level="entry"] .blockui-palette::before { content:'使うブロック'; padding:8px; font-weight:bold; }
+body[data-ui-level="entry"] .blockui-palette-list { flex:1; min-height:0; overflow:auto; }
+body[data-ui-level="entry"] :is(.blockui-palette-controls,.blockui-categories,.blockui-palette-options,.blockui-palette-tools,.blockui-search-scope,.blockui-search-restore) { display:none; }
+body[data-ui-level="entry"] .blockui-palette-item { margin:4px; }
+#entryOutside { margin:0; padding:6px 10px; font-size:13px; }
+#tutorialGuide { flex-shrink:0; padding:8px 10px; border:2px solid #315a96; background:#fff4d4; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+#tutorialText { margin:0; flex:1; min-width:220px; }
+.tutorial-target { outline:3px solid #2357a0 !important; outline-offset:2px; }
+body[data-tutorial-step] :is(button,input,select,textarea,summary)[data-tutorial-blocked="true"] { opacity:.55; }
+body[data-tutorial-step] #tutorialExit,body[data-tutorial-step] #stopBtn { opacity:1; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .codewin { display:flex; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 340px; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin { display:flex !important; grid-column:1; grid-row:1/3; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>:not(.debugbar) { display:block !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>:is(.source-nav,.code-assist,.console,[hidden]) { display:none !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#blockEditor { display:flex !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#blockEditor[hidden] { display:none !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>.debugbar { display:none !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side { display:flex !important; grid-column:2; grid-row:2; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side>.objects-window { display:flex !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side>:not(.objects-window) { display:none !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>#designerWindow { grid-column:2; grid-row:1; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { display:inline-flex; }
+@media(max-width:950px) {
+ body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) 280px; }
+ body[data-ui-level="entry"] .blockui-layout { grid-template-columns:190px minmax(0,1fr); }
+}
+@media(max-width:700px) {
+ body[data-ui-level="entry"] #app { height:auto; min-height:100dvh; }
+ body[data-ui-level="entry"] .main { display:flex; flex-direction:column; overflow:visible; }
+ body[data-ui-level="entry"] .codewin { min-height:550px; }
+ body[data-ui-level="entry"] .designer { height:300px; }
+ body[data-ui-level="entry"] .side { height:170px; }
+ body[data-ui-level="entry"] .blockui-layout { min-height:340px; }
+}
 </style>
 </head>
 <body>
@@ -5756,7 +5816,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
     <button id="procBtn" aria-label="手順・答えを求める"><ruby class="child-word">手順<rt>てじゅん</rt></ruby>・答えを求める</button>
     <button id="dataBtn" aria-label="変数・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
-    <label class="ui-level-label">表示 <select id="uiLevel"><option value="basic" selected>かんたん</option><option value="advanced">くわしく</option></select></label>
+    <details id="entryProjectMenu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">書き出し</button></div></details>
+    <button id="tutorialStart" type="button">いっしょに作る</button>
+    <label class="ui-level-label">表示 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
     <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い欄の中で指を上へ動かすと読めます。キーボードはTabで白い欄を選び、↓キーを押します。</p>
       <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品をファイルにします。あとで続きを作るときは「開く」でそのファイルを選びます。</p>
       <p id="exportActionHelp"><strong><ruby class="child-word">書き出し<rt>かきだし</rt></ruby></strong>：ブラウザーで動かして見るための作品ファイルを作ります。続きを作るためのファイルは「保存」で作ります。</p>
@@ -6002,6 +6064,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
         <label><ruby class="child-word">編集<rt>へんしゅう</rt></ruby>する動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="編集する動きを選びます。きっかけは「いつ動く？」で変えます"></select></label>
         <button id="scriptAdd" type="button">同じできごとの本文を追加</button>
       </div>
+      <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">動かすを押したとき</button><button id="entryClickEvent" type="button">キャラを押したとき</button></div>
+      <p id="entryOutside" role="status" hidden>この作品には、ほかのブロックもあるよ。そのまま残っています。変えるときは表示を「かんたん」か「くわしく」にしよう。</p>
+      <section id="tutorialGuide" aria-label="いっしょに作る" hidden><p id="tutorialText" aria-live="polite"></p><button id="tutorialExit" type="button">チュートリアルをやめる</button><button id="tutorialVerifySave" type="button" hidden>保存したファイルを確かめる</button><input id="tutorialSavedFile" type="file" accept=".akari.md,.md" hidden></section>
       <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
       <div id="sourceOverview" aria-label="選んだもののすべてのコード" hidden></div>
       <div class="debugbar">
@@ -6252,7 +6317,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.2.2';
+  const PRODUCT_RELEASE = '1.2.3';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -18344,6 +18409,16 @@ function createAkariExtensionHost(options) {
           ? [draft ? { ...hole('statement', slot.label), inlineComment: '' } : { kind: 'NoOperation', inlineComment: '' }]
           : [];
     for (const annotation of schema.annotations) node[annotation.key] = '';
+    // Only the editor supplies a confirmed design position. API-only creation
+    // keeps its established defaults, and existing nodes are never rewritten.
+    const position = context.designPosition;
+    if (!draft && position && Number.isFinite(position.x) && Number.isFinite(position.y)) {
+      const coordinate = value => value < 0 || Object.is(value, -0)
+        ? { kind: 'UnaryExpression', op: 'NEG', value: valueNode(Math.abs(value)) } : valueNode(value);
+      const positions = { 'MotionCommand:GOTO': [[0,'x'],[1,'y']], 'MotionCommand:GLIDE': [[1,'x'],[2,'y']],
+        'MotionCommand:SET_X': [[0,'x']], 'MotionCommand:SET_Y': [[0,'y']] }[schema.id] || [];
+      for (const [index, key] of positions) node.args[index] = coordinate(position[key]);
+    }
     validateSyntaxAst(node, schema.category, { allowHoles: draft || context.allowHoles === true });
     return node;
   }
@@ -21647,7 +21722,7 @@ function createAkariExtensionHost(options) {
           node.addEventListener('click', (e) => {
             e.stopPropagation();
             if (allowed())
-              dispatch(() => scheduler().spawnForRuntime(node.dataset.runtimeId, 'click', {}));
+              if(options.onRuntimeClick?.(node.dataset.runtimeId)!==false)dispatch(() => scheduler().spawnForRuntime(node.dataset.runtimeId, 'click', {}));
           });
           node.addEventListener('keydown', (e) => {
             if (
@@ -21661,7 +21736,7 @@ function createAkariExtensionHost(options) {
             e.preventDefault();
             e.stopPropagation();
             if (!e.repeat)
-              dispatch(() => scheduler().spawnForRuntime(node.dataset.runtimeId, 'click', {}));
+              if(options.onRuntimeClick?.(node.dataset.runtimeId)!==false)dispatch(() => scheduler().spawnForRuntime(node.dataset.runtimeId, 'click', {}));
           });
           form.appendChild(node);
         }
@@ -23299,7 +23374,12 @@ function createAkariExtensionHost(options) {
     // Values on simple command previews remain visible choices. Enclosures and
     // persistent rules start with visible holes, never an implicit true/0/no-op.
     const draft = schema.bodies.some(slot => slot.requiredExecutable) || ['ContinuousRule','ReturnStatement'].includes(schema.kind) || schema.inputs.some(slot => slot.type === 'target');
-    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft });
+    const creationContext = options.context || session.context || {},
+      creationProject = options.project || session.project,
+      component = creationProject?.components?.find(c => c.id === creationContext.targetId),
+      designPosition = component && Number.isFinite(component.x) && Number.isFinite(component.y)
+        ? { x: component.x, y: component.y } : null;
+    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft, designPosition });
     if (schemaId === 'NumberLiteral' && location?.input) {
       const parent = buildBlockIndex(session.blockView).get(location.parentId)?.node;
       if (parent?.schemaId === 'ContinuousRule' && ['seconds', 'distance'].includes(location.input))
@@ -23471,20 +23551,70 @@ function createAkariExtensionHost(options) {
       }[schema.palette] || 'operator'
     );
   }
-  const BASIC_BLOCK_SCHEMA_IDS = new Set([
-    'MotionCommand:MOVE_DIRECTION',
-    'Say',
-    'WaitTime',
-    'RepeatCount',
-    'IfStatement',
-    'MotionCommand:MOVE',
-    'MotionCommand:TURN_RIGHT',
-    'MotionCommand:TURN_LEFT',
-    'LooksCommand:SHOW',
-    'LooksCommand:HIDE',
-    'UserActionCall',
-  
+  // Entry workshop: presentation and learning state, independent of file/runtime contracts.
+  function normalizeEntryUiLevel(value) {
+    if (value === null || value === 'entry') return 'entry';
+    if (value === 'advanced' || value === 'all') return 'advanced';
+    return 'basic';
+  }
+  const ENTRY_BLOCK_SCHEMA_IDS = new Set([
+    'MotionCommand:MOVE_DIRECTION', 'MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT',
+    'MotionCommand:GOTO', 'MotionCommand:GLIDE', 'MotionCommand:GLIDE_DIRECTION',
+    'Say', 'WaitTime', 'RepeatCount', 'LooksCommand:SET_COSTUME',
+    'LooksCommand:SET_BACKDROP', 'SoundCommand:TONE_WAIT', 'SoundCommand:SAMPLE_WAIT',
   ]);
+  const BASIC_BLOCK_SCHEMA_IDS = new Set([
+    'Say', 'MotionCommand:GLIDE', 'MotionCommand:GOTO', 'RepeatCount', 'WaitTime',
+    'MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT', 'IfStatement',
+    'LooksCommand:SET_TARGET_TEXT', 'UserActionCall', 'SoundCommand:TONE_WAIT',
+    'MotionCommand:MOVE', 'MotionCommand:SET_DIRECTION',
+    ...ENTRY_BLOCK_SCHEMA_IDS, 'Forever', 'LooksCommand:SHOW', 'LooksCommand:HIDE',
+    'Assignment', 'NumericUpdate:ADD', 'ListReplace',
+    'PenCommand:DOWN', 'PenCommand:UP', 'PenCommand:SET_COLOR', 'PenCommand:SET_SIZE',
+  ]);
+  // The table describes intent, input boundaries, recovery and exits. Predicates
+  // consume committed editor/runtime observations; no step counter can build a work.
+  const TUTORIAL_STEPS = Object.freeze([
+    ['choose-click','「キャラを押したとき」を選ぼう。','event:click','clickSelected','entryClickEvent','クリックのきっかけを選ぶ'],
+    ['add-speech','「内容と秒数を決めて話す」を1つ入れよう。','insert:Say','speechAdded','Say:timed','話す命令を入れる'],
+    ['speech-text','話す言葉を「こんにちは！」に変えて、Enterで決めよう。','field:speech-text','greeting','speech-text','言葉と結果を結び付ける',{type:'text',expected:'こんにちは！',max:100}],
+    ['speech-time','話す秒数を2に変えて、Enterで決めよう。','field:speech-time','speechTimed','speech-time','話す時間を決める',{type:'number',expected:2,min:0,max:10}],
+    ['add-outward','「時間をかけて進む」を1つ入れよう。','insert:MotionCommand:GLIDE_DIRECTION','outwardAdded','MotionCommand:GLIDE_DIRECTION','右への移動を入れる'],
+    ['outward-time','右へ動く命令の秒数を1にして、Enterで決めよう。','field:outward-time','outwardTimed','outward-time','動く時間を決める',{type:'number',expected:1,min:0,max:10}],
+    ['outward-distance','右へ動く歩数を100にして、Enterで決めよう。','field:outward-distance','outwardReady','outward-distance','距離を決める',{type:'number',expected:100,min:0,max:200}],
+    ['add-return','「時間をかけて進む」をもう1つ入れよう。','insert:MotionCommand:GLIDE_DIRECTION','returnAdded','MotionCommand:GLIDE_DIRECTION','戻る命令を入れる'],
+    ['return-direction','下の移動ブロックの方向を「左」にしよう。','field:return-direction','returnLeft','return-direction','往復の方向を決める',{type:'direction',expected:'left'}],
+    ['return-time','左へ動く命令の秒数を1にして、Enterで決めよう。','field:return-time','returnTimed','return-time','戻る時間を決める',{type:'number',expected:1,min:0,max:10}],
+    ['return-distance','左へ動く歩数を100にして、Enterで決めよう。','field:return-distance','originalReady','return-distance','往復の距離を合わせる',{type:'number',expected:100,min:0,max:200}],
+    ['run-original','「動かす」を押そう。','run','originalRunning','runBtn','通常の実行を始める'],
+    ['try-original','作品のマスコットを1回押して、話して戻るまで見よう。','runtime:click','originalObserved','character','100歩の往復を見る'],
+    ['stop-original','「止める」を押して、編集に戻ろう。','stop','originalStopped','stopBtn','実行と編集を分ける'],
+    ['longer-outward','右へ動く歩数を150にして、Enterで決めよう。','field:outward-distance','outwardLonger','outward-distance','距離を変える',{type:'number',expected:150,min:0,max:200}],
+    ['longer-return','左へ動く歩数も150にして、Enterで決めよう。','field:return-distance','longerReady','return-distance','戻る距離を合わせる',{type:'number',expected:150,min:0,max:200}],
+    ['run-longer','「動かす」を押そう。','run','longerRunning','runBtn','変更した作品を試す'],
+    ['try-longer','マスコットを1回押そう。前より遠くへ動くね。','runtime:click','longerObserved','character','150歩の往復と比較する'],
+    ['stop-longer','「止める」を押そう。','stop','longerStopped','stopBtn','編集に戻る'],
+    ['reorder-speech','話すブロックの「ほかのそうさ」から「移動」を選び、一番下の「＋ ここに入れる」を押そう。','move:speech','speechLast','speech-move','命令の順番を変える'],
+    ['run-reordered','「動かす」を押そう。','run','reorderedRunning','runBtn','並べ替えた作品を試す'],
+    ['try-reordered','マスコットを1回押そう。動いて戻ってから話すね。','runtime:click','reorderedObserved','character','順番と結果を結び付ける'],
+    ['stop-reordered','「止める」を押そう。','stop','reorderedStopped','stopBtn','実行を止める'],
+    ['undo-reorder','「もとにもどす」を1回押そう。歩数は150のままだよ。','undo','reorderUndone','undoBtn','1操作だけ戻す'],
+    ['save-work','できたね！ 「保存」を押して、作品ファイルを保存しよう。','save','downloadStarted','saveBtn','通常の作品として保存する'],
+    ['verify-save','「保存したファイルを確かめる」で、いま保存した作品ファイルを選ぼう。','verify-save','savedFileVerified','tutorialVerifySave','保存した内容を確かめる'],
+  ].map(([id,message,action,success,target,goal,input]) => Object.freeze({id,goal,message,target,
+    start:'same-practice-work-and-previous-verified-state',allowed:Object.freeze([action,'exit','stop']),
+    input:input||null,ime:'composition is retained; only confirmed input can succeed; Escape cancels this field',
+    success,recovery:action==='runtime:click'?'retry-current-run':'stay-and-correct',
+    next:'committed predicate only; one transition per observation',exit:'stop-runtime-and-release-all-guards; retain work and pending input'})));
+  function tutorialStep(state) { return state && !['exited','complete'].includes(state.phase) ? TUTORIAL_STEPS[state.index] : null; }
+  function tutorialAllows(state, action) { const step=tutorialStep(state); return !step || step.allowed.includes(action); }
+  function tutorialAdvance(state, facts, epoch) {
+    const step=tutorialStep(state);
+    if (!step || epoch!==state.epoch || facts.confirmedStep!==step.id || !facts.sameWork || facts.pending || facts.failed || !facts[step.success]) return state;
+    const index=state.index+1;
+    return {...state,index,confirmedStep:null,phase:index===TUTORIAL_STEPS.length?'complete':'waiting'};
+  }
+  // End entry workshop pure definitions.
   const SEARCH_READINGS = Object.freeze({
     '点数':'てんすう','代金':'だいきん','持ち物':'もちもの','大きさ':'おおきさ',
     '右':'みぎ','左':'ひだり','上':'うえ','下':'した','小さく':'ちいさく',
@@ -23741,7 +23871,7 @@ function createAkariExtensionHost(options) {
       dragFrame = null;
     let searchText = '',
       previousSearch = '',
-      category = document.body.dataset.uiLevel === 'basic' ? 'basic' : '',
+      category = document.body.dataset.uiLevel !== 'advanced' ? 'basic' : '',
       showOutside = false,
       page = 0,
       paletteMode = 'all',
@@ -24235,7 +24365,7 @@ function createAkariExtensionHost(options) {
       });
       listen(input, 'blur', (event) => {
         if (rendering || committing || !input.isConnected) return;
-        if (pending?.input === input && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action],[data-blockui-value-type]'))
+        if (pending?.input === input && !event.relatedTarget?.closest('#uiLevel,#tutorialExit,#tutorialStart,[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action],[data-blockui-value-type]'))
           flushToTarget(event.relatedTarget);
       });
       listen(input, 'keydown', (event) => {
@@ -24551,6 +24681,7 @@ function createAkariExtensionHost(options) {
         page = 0;
         renderPalette();
         updateControls();
+        focus({ id: session()?.blockSelection });
       }
     }
     function paletteTone(group) {
@@ -24744,9 +24875,11 @@ function createAkariExtensionHost(options) {
       if (options.readOnly) return;
       if (destroyed) return;
       modeSelect.value = paletteMode;
-      const query = searchText.trim().toLocaleLowerCase();
-      const registry = BLOCK_SCHEMAS.filter((s) => !s.draftOnly && ['statement', 'expression'].includes(s.category));
-      const all = registry.filter((s) => paletteMode === 'all' || s.category === paletteMode);
+      const entry = document.body.dataset.uiLevel === 'entry';
+      const query = entry ? '' : searchText.trim().toLocaleLowerCase();
+      const registry = BLOCK_SCHEMAS.filter((s) => !s.draftOnly && ['statement', 'expression'].includes(s.category)
+        && (!entry || ENTRY_BLOCK_SCHEMA_IDS.has(s.id)));
+      const all = registry.filter((s) => entry || paletteMode === 'all' || s.category === paletteMode);
       const groups = [
         ['basic', '基本'],
         ['', '\u3059\u3079\u3066'],
@@ -24796,18 +24929,19 @@ function createAkariExtensionHost(options) {
         : hintCandidates(projectState, context().targetId, {source:session()?.sourceText || '', ...context()});
       const searched = query ? blockSearchCandidates(projectState, context(), query, hints) : all;
       const speech=searched.find(s=>s.id==='Say');
-      if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:'内容と秒数を決めて話す'});}
+      if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:'内容と秒数を決めて話す'});}
       let candidates = searched.filter(
         (s) =>
-          ((query && !categoryExplicit) || !category || (category === 'basic'
+          (entry || (query && !categoryExplicit) || !category || (category === 'basic'
             ? BASIC_BLOCK_SCHEMA_IDS.has(s.id)
             : blockPaletteGroup(s) === category)) &&
-          (paletteMode === 'all' || s.category === paletteMode),
+          (entry || paletteMode === 'all' || s.category === paletteMode) &&
+          (!entry || s.id !== 'Say' || s.candidateKey === 'timed-speech'),
       );
-      if (!showOutside)
+      if (!showOutside && !entry)
         candidates = candidates.filter((s) => paletteAvailability(s, location).enabled);
-      if (category === 'basic' && !query) {
-        const order = [...BASIC_BLOCK_SCHEMA_IDS];
+      if ((entry || category === 'basic') && !query) {
+        const order = [...(entry ? ENTRY_BLOCK_SCHEMA_IDS : BASIC_BLOCK_SCHEMA_IDS)];
         candidates.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
       }
       const pages = Math.max(1, Math.ceil(candidates.length / PAGE));
@@ -27031,7 +27165,11 @@ function createAkariExtensionHost(options) {
       input.value=saved.value;input.dispatchEvent(new doc.defaultView.Event('input',{bubbles:true}));
       return true;
     }
-    return { render, flush, cancel, destroy, highlight, focus, restorePending };
+    function releaseInteraction() {
+      cancelDrag(); endPan(); moving=null; destination=null; replacement=null;
+      updateControls(); if (!pending) render({force:true});
+    }
+    return { render, flush, cancel, destroy, highlight, focus, restorePending, releaseInteraction };
   }
   createBlockEditorView.sequence = 0;
 
@@ -27537,6 +27675,292 @@ function createAkariExtensionHost(options) {
       view: null,
     };
     let sourceOverviewOpen = false, sourceOverviewViews = [], sourceOverviewObserver = null, sourceOverviewSignature = '';
+    let entryLayoutPlaced=false;
+    const entryControlHomes=new Map();
+    let tutorial=null, pausedTutorial=null, tutorialEpoch=0, workspaceIdentity=0,
+      tutorialTimer=null, tutorialTrace=null, tutorialSave=null;
+    function renderEntrySurface() {
+      const entry=document.body.dataset.uiLevel==='entry';
+      for(const node of [$('#undoBtn'),$('#redoBtn'),$('#uiLevel').closest('label')]){
+        if(!entryControlHomes.has(node)){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
+        if(entry){if(node.parentElement!==$('.menutool'))$('.menutool').insertBefore(node,$('#tutorialStart'));}
+        else {const marker=entryControlHomes.get(node);if(node.parentElement!==marker.parentElement)marker.after(node);}
+      }
+      const main=$('.main'),side=$('.side'),designer=$('#designerWindow'),objects=$('.objects-window');
+      if(entry){if(designer.parentElement!==main)main.insertBefore(designer,side);if(objects&&side.firstElementChild!==objects)side.prepend(objects);}
+      else if(entryLayoutPlaced&&document.body.dataset.editorMode==='blocks'){side.prepend(designer);side.insertBefore(objects,$('.properties-window'));}
+      entryLayoutPlaced=entry;
+      $('.codewin > .win-title').textContent=entry?'組み立てる場所':'コード';
+      for(const [id,event] of [['entryStartEvent','start'],['entryClickEvent','click']]) {
+        $('#'+id).disabled=modelLocked()||!eventsFor(selectedId).includes(event);
+        $('#'+id).setAttribute('aria-pressed',String(currentEvent===event));
+      }
+      for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).disabled=$('#'+origin).disabled;
+      const tree=mainEditor.session?.blockView;
+      const outside=tree&&[...buildBlockIndex(tree).values()].some(({node})=>
+        BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category==='statement'&&!ENTRY_BLOCK_SCHEMA_IDS.has(node.schemaId));
+      $('#entryOutside').hidden=!entry||!outside;
+    }
+    function selectEntryEvent(event) {
+      if (!tutorialAllows(tutorial,'event:'+event)||modelLocked()||!eventsFor(selectedId).includes(event)||!flushActiveEditor()) return;
+      captureEditorView(mainEditor);hideSourceOverview();currentEvent=event;
+      selectedScriptId=project.scripts.find(s=>s.targetId===selectedId&&s.event===event)?.id||null;
+      loadEditor();if(!modelLocked())pushHistoryNow();confirmTutorialOperation('event:'+event);tutorialRefresh();
+    }
+    function confirmTutorialOperation(action=null) {
+      const step=tutorialStep(tutorial);
+      if(step&&(!action||step.allowed[0]===action))tutorial.confirmedStep=step.id;
+    }
+    function tutorialBody() { return mainEditor.session?.blockView?.bodies?.body||[]; }
+    function tutorialLiteral(node) { return node?.schemaId==='QuantityLiteral'?tutorialLiteral(node.inputs.value):node; }
+    function tutorialRoles() {
+      const body=tutorialBody(),speech=body.find(n=>n.schemaId==='Say'),moves=body.filter(n=>n.schemaId==='MotionCommand:GLIDE_DIRECTION');
+      return {'speech-text':{node:speech?.inputs.value,key:'value'},'speech-time':{node:tutorialLiteral(speech?.inputs.seconds),key:'value'},
+        'outward-time':{node:tutorialLiteral(moves[0]?.inputs.args[0]),key:'value'},'outward-distance':{node:tutorialLiteral(moves[0]?.inputs.args[1]),key:'value'},
+        'return-direction':{node:moves[1],key:'direction'},'return-time':{node:tutorialLiteral(moves[1]?.inputs.args[0]),key:'value'},
+        'return-distance':{node:tutorialLiteral(moves[1]?.inputs.args[1]),key:'value'}};
+    }
+    function tutorialOperationAllowed(binding, operation) {
+      if (!tutorial) return true;
+      if (binding!==mainEditor||selectedId!==tutorial.target||currentEvent!=='click') return false;
+      const step=tutorialStep(tutorial),body=tutorialBody(),action=step?.allowed[0];
+      if (!step) return false;
+      if (action.startsWith('insert:')) {
+        const count=step.id==='add-speech'?0:step.id==='add-outward'?1:2;
+        return operation.type==='insert'&&operation.node?.schemaId===action.slice(7)
+          && operation.parentId===mainEditor.session.blockView.id&&operation.body==='body'
+          && operation.index===count&&body.length===count
+          && (step.id!=='add-speech'||!!operation.node.inputs.seconds);
+      }
+      if (action.startsWith('field:')) {
+        const role=tutorialRoles()[action.slice(6)];
+        if (operation.type!=='field'||operation.id!==role?.node?.id||operation.key!==role.key) return false;
+        const rule=step.input;
+        return rule.type==='number'?typeof operation.value==='number'&&operation.value>=rule.min&&operation.value<=rule.max
+          :rule.type==='text'?typeof operation.value==='string'&&cpLen(operation.value)<=rule.max
+          :['right','left','up','down','forward','backward'].includes(operation.value);
+      }
+      if (action==='move:speech') return operation.type==='move'&&operation.id===body[0]?.id&&body[0]?.schemaId==='Say'
+        &&operation.parentId===mainEditor.session.blockView.id&&operation.body==='body'&&operation.index===3&&body.length===3;
+      return false;
+    }
+    function tutorialRoleControl(role) {
+      const ref=tutorialRoles()[role];
+      return ref?.node&&[...$('#blockEditor').querySelectorAll('[data-blockui-field]')]
+        .find(n=>n.dataset.blockId===ref.node.id&&n.dataset.blockuiField===ref.key);
+    }
+    function tutorialElementAllowed(element) {
+      if (!tutorial) return true;
+      if (!(element instanceof Element)) return false;
+      const step=tutorialStep(tutorial),action=step?.allowed[0];
+      if (element.closest('#tutorialExit,#stopBtn')) return true;
+      if (action==='verify-save'&&element.closest('#tutorialVerifySave,#tutorialSavedFile')) return true;
+      const direct={'event:click':'entryClickEvent',run:'runBtn',undo:'undoBtn',save:'saveBtn'}[action];
+      if (direct&&element.closest('#'+direct)) return true;
+      if (action?.startsWith('insert:')) {
+        const button=element.closest('[data-blockui-schema]');
+        return !!button&&!!button.closest('#blockEditor')&&button.dataset.blockuiSchema===(action==='insert:Say'?'Say:timed':action.slice(7));
+      }
+      if (action?.startsWith('field:')) {
+        const control=tutorialRoleControl(action.slice(6));
+        return element===control||control?.contains(element)
+          ||!!element.closest('#blockEditor [data-blockui-action="commit"],#blockEditor [data-blockui-action="cancel"],#editorCancel');
+      }
+      if (action==='move:speech') {
+        if(element.closest('#blockEditor [data-blockui-action="cancel"]'))return true;
+        const body=tutorialBody(),root=mainEditor.session?.blockView;
+        const command=element.closest('[data-blockui-action]');
+        if (command&&['move','more'].includes(command.dataset.blockuiAction)
+          &&command.closest('.blockui-node')?.dataset.blockId===body[0]?.id) return true;
+        return command?.dataset.blockuiAction==='body-insert'&&command.dataset.parentId===root?.id
+          &&command.dataset.blockuiBody==='body'&&Number(command.dataset.insertIndex)===3;
+      }
+      if (action==='runtime:click') return !tutorialTrace?.clicked&&(!!element.closest('.component[data-id="'+tutorial.target+'"]')||element===$('#formSurface'));
+      return false;
+    }
+    function tutorialFocusTargets() {
+      return $$('button,input,select,textarea,summary,[tabindex="0"]').filter(n=>!n.disabled&&!n.hidden&&n.getClientRects().length&&tutorialElementAllowed(n)).sort((a,b)=>Number(a.id==='tutorialExit'||a.id==='stopBtn')-Number(b.id==='tutorialExit'||b.id==='stopBtn'));
+    }
+    function clearTutorialPresentation() {
+      delete document.body.dataset.tutorialStep;
+      $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
+      $$('[data-tutorial-blocked]').forEach(n=>{
+        if(n.dataset.tutorialAria!==undefined){n.dataset.tutorialAria==='none'?n.removeAttribute('aria-disabled'):n.setAttribute('aria-disabled',n.dataset.tutorialAria);delete n.dataset.tutorialAria;}
+        delete n.dataset.tutorialBlocked;
+      });
+    }
+    function tutorialRecordStatement(task,node,epoch,generation) {
+      if (!tutorial||!tutorialTrace||epoch!==tutorial.epoch||generation!==generationToken||tutorialTrace.epoch!==tutorial.epoch||!runtime) return;
+      const actor=runtime.actor(tutorial.target);
+      if (!actor) return;
+      tutorialTrace.statements.push({kind:node.kind==='Say'?'say':node.kind==='MotionCommand'&&node.op==='GLIDE_DIRECTION'?node.direction:'other',x:actor.x,y:actor.y});
+      tutorialTrace.peak=Math.max(tutorialTrace.peak,actor.x-tutorialTrace.x);
+    }
+    function tutorialCollectRuntime() {
+      if (!tutorial||!tutorialTrace||tutorialTrace.epoch!==tutorial.epoch||!runtime) return;
+      const actor=runtime.actor(tutorial.target);
+      if (!actor) return;
+      tutorialTrace.peak=Math.max(tutorialTrace.peak,actor.x-tutorialTrace.x);
+      const expected=tutorialTrace.order==='speech-last'?['right','left','say']:['say','right','left'];
+      if (!tutorialTrace.failed&&JSON.stringify(tutorialTrace.statements.map(s=>s.kind))===JSON.stringify(expected)
+        &&Math.abs(tutorialTrace.peak-tutorialTrace.distance)<.000001&&Math.abs(actor.x-tutorialTrace.x)<.000001
+        &&Math.abs(actor.y-tutorialTrace.y)<.000001&&!scheduler?.blocked.size&&appState==='RUNNING') tutorialTrace.complete=true;
+    }
+    function tutorialFacts() {
+      const body=tutorialBody(),roles=tutorialRoles(),scalar=n=>{const value=tutorialLiteral(n);return value?.schemaId==='NumberLiteral'||value?.schemaId==='StringLiteral'?value.fields.value:undefined;};
+      const greeting=body[0]?.schemaId==='Say'&&scalar(roles['speech-text'].node)==='こんにちは！',
+        speechTimed=greeting&&scalar(roles['speech-time'].node)===2,
+        out=magnitude=>body[1]?.schemaId==='MotionCommand:GLIDE_DIRECTION'&&body[1].fields.direction==='right'&&scalar(body[1].inputs.args[0])===1&&scalar(body[1].inputs.args[1])===magnitude,
+        back=magnitude=>body[2]?.schemaId==='MotionCommand:GLIDE_DIRECTION'&&body[2].fields.direction==='left'&&scalar(body[2].inputs.args[0])===1&&scalar(body[2].inputs.args[1])===magnitude,
+        originalReady=body.length===3&&speechTimed&&out(100)&&back(100),
+        longerReady=body.length===3&&speechTimed&&out(150)&&back(150),
+        speechLast=body.length===3&&body[2]?.schemaId==='Say'&&scalar(roles['speech-text'].node)==='こんにちは！'&&scalar(roles['speech-time'].node)===2
+          &&body[0]?.fields.direction==='right'&&body[1]?.fields.direction==='left'
+          &&[body[0],body[1]].every(n=>n.schemaId==='MotionCommand:GLIDE_DIRECTION'&&scalar(n.inputs.args[0])===1&&scalar(n.inputs.args[1])===150);
+      const observed=trial=>tutorialTrace?.trial===trial&&!!tutorialTrace.complete;
+      return {confirmedStep:tutorial.confirmedStep,sameWork:workspaceIdentity===tutorial.identity&&selectedId===tutorial.target&&currentEvent==='click',
+        pending:!!mainEditor.session?.pendingEdit||composingEditors.size>0,failed:!!tutorialTrace?.failed,
+        clickSelected:currentEvent==='click'&&selectedId===tutorial.target,
+        speechAdded:body.length===1&&body[0].schemaId==='Say'&&!!body[0].inputs.seconds,greeting,speechTimed,
+        outwardAdded:body.length===2&&speechTimed&&body[1].schemaId==='MotionCommand:GLIDE_DIRECTION',
+        outwardTimed:body.length===2&&speechTimed&&body[1]?.fields.direction==='right'&&scalar(roles['outward-time'].node)===1,
+        outwardReady:body.length===2&&speechTimed&&out(100),
+        returnAdded:body.length===3&&speechTimed&&out(100)&&body[2].schemaId==='MotionCommand:GLIDE_DIRECTION',
+        returnLeft:body.length===3&&speechTimed&&out(100)&&body[2]?.fields.direction==='left',
+        returnTimed:body.length===3&&speechTimed&&out(100)&&body[2]?.fields.direction==='left'&&scalar(roles['return-time'].node)===1,
+        originalReady,originalRunning:originalReady&&appState==='RUNNING',originalObserved:originalReady&&observed('original'),
+        originalStopped:originalReady&&observed('original')&&appState==='DESIGN',
+        outwardLonger:body.length===3&&speechTimed&&out(150)&&back(100),longerReady,
+        longerRunning:longerReady&&appState==='RUNNING',longerObserved:longerReady&&observed('longer'),
+        longerStopped:longerReady&&observed('longer')&&appState==='DESIGN',speechLast,
+        reorderedRunning:speechLast&&appState==='RUNNING',reorderedObserved:speechLast&&observed('reordered'),
+        reorderedStopped:speechLast&&observed('reordered')&&appState==='DESIGN',
+        reorderUndone:longerReady&&observed('reordered')&&appState==='DESIGN',
+        downloadStarted:!!tutorialSave&&tutorialSave.fingerprint===currentFingerprint(),savedFileVerified:!!tutorialSave?.verified};
+    }
+    function tutorialRefresh() {
+      if (!tutorial) return;
+      try {
+        tutorialCollectRuntime();
+        if (tutorialStep(tutorial)?.id==='verify-save'&&tutorialSave&&tutorialSave.fingerprint!==currentFingerprint()) {
+          tutorialSave=null;tutorial={...tutorial,index:TUTORIAL_STEPS.findIndex(s=>s.id==='save-work')};
+        }
+        const stepBefore=tutorialStep(tutorial),facts=tutorialFacts();
+        // Selecting the click event is itself the first predicate; before that,
+        // same-work does not require the event to have already been selected.
+        if(stepBefore?.id==='choose-click')facts.sameWork=workspaceIdentity===tutorial.identity&&selectedId===tutorial.target;
+        const next=tutorialAdvance(tutorial,facts,tutorial.epoch),changed=next!==tutorial;tutorial=next;
+        if (tutorial.phase==='complete') { finishTutorial(true);setStatus('できたね！ 保存した作品を、自由に変えてみよう。');return; }
+        const step=tutorialStep(tutorial);document.body.dataset.tutorialStep=step.id;
+        if(changed&&step.id==='reorder-speech')mainEditor.view.focus({id:tutorialBody().find(n=>n.schemaId==='Say')?.id});
+        $('#tutorialGuide').hidden=false;$('#tutorialVerifySave').hidden=step.id!=='verify-save';
+        $('#tutorialText').textContent=tutorialTrace?.failed?'動かなかったね。「止める」で戻って、もう一度試そう。':step.message;
+        $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
+        for(const n of $$('button,input,select,textarea,summary,[tabindex]')) {
+          const allowed=tutorialElementAllowed(n);n.dataset.tutorialBlocked=String(!allowed);
+          if(n.matches('button,input,select,textarea,summary')){
+            if(n.dataset.tutorialAria===undefined)n.dataset.tutorialAria=n.getAttribute('aria-disabled')??'none';
+            if(!allowed)n.setAttribute('aria-disabled','true');else n.dataset.tutorialAria==='none'?n.removeAttribute('aria-disabled'):n.setAttribute('aria-disabled',n.dataset.tutorialAria);
+          }
+          if(allowed&&n.id!=='tutorialExit'&&n.id!=='stopBtn')n.classList.add('tutorial-target');
+        }
+        if(changed&&!tutorialElementAllowed(document.activeElement))tutorialFocusTargets()[0]?.focus({preventScroll:true});
+      } catch(error) { finishTutorial(false);setStatus('案内を続けられませんでした。作品は残っています：'+error.message); }
+    }
+    function beginTutorial() {
+      if (tutorial||document.body.dataset.uiLevel!=='entry'||modelLocked()||document.querySelector('.modal.show,.modal.open,dialog[open]')) return;
+      if (pausedTutorial&&pausedTutorial.identity===workspaceIdentity&&pausedTutorial.fingerprint===currentFingerprint()
+        &&pausedTutorial.editorFingerprint===openEditorFingerprint()&&selectedId===pausedTutorial.target&&currentEvent==='click') {
+        tutorial={...pausedTutorial,confirmedStep:null,epoch:++tutorialEpoch,phase:'waiting'};pausedTutorial=null;
+        tutorialTrace=tutorial.trace?{...tutorial.trace,epoch:tutorial.epoch}:null;
+        tutorialSave=null;
+        if(tutorialStep(tutorial)?.id==='verify-save')tutorial.index=TUTORIAL_STEPS.findIndex(s=>s.id==='save-work');
+      } else {
+        if(!confirmLose())return;
+        const practice=makeEmptyProject();practice.name='あいさつして もどる';practice.components[0].x=160;practice.components[0].y=120;
+        replaceCurrentProject(practice,makeDefaultAssetStore(),'sprite-1','start','キャラを押す作品を、いっしょに作ろう');
+        tutorial={epoch:++tutorialEpoch,index:0,phase:'waiting',identity:workspaceIdentity,target:'sprite-1'};
+        pausedTutorial=null;tutorialSave=null;tutorialTrace=null;
+        if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
+      }
+      if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
+      tutorialRefresh();clearInterval(tutorialTimer);tutorialTimer=setInterval(tutorialRefresh,80);
+    }
+    function finishTutorial(completed=false) {
+      if (!tutorial) return;
+      const saved=tutorial;
+      tutorialCollectRuntime();tutorial=null;++tutorialEpoch;
+      clearInterval(tutorialTimer);tutorialTimer=null;
+      if(runtime||scheduler||appState==='PREPARING')stopRun();
+      activeDragCleanup?.();mainEditor.view.releaseInteraction();
+      if(!completed){
+        let index=saved.index;
+        const step=TUTORIAL_STEPS[index];
+        if(step?.id.startsWith('try-')||step?.id.startsWith('stop-'))index=TUTORIAL_STEPS.findIndex(s=>s.id==='run-'+step.id.split('-').slice(1).join('-'));
+        pausedTutorial={...saved,index,trace:tutorialTrace?cloneDesignProject(tutorialTrace):null,fingerprint:currentFingerprint(),editorFingerprint:openEditorFingerprint()};
+      }else pausedTutorial=null;
+      tutorialTrace=null;tutorialSave=null;clearTutorialPresentation();$('#tutorialGuide').hidden=true;
+      if(mainEditor.session?.pendingEdit){const field=mainEditor.session.pendingEdit;const control=$$('[data-blockui-field]').find(n=>n.dataset.blockId===field.id&&n.dataset.blockuiField===field.field);control?.focus({preventScroll:true});}
+      else $('#tutorialStart').focus({preventScroll:true});
+    }
+    async function verifyTutorialSave(file) {
+      if (!tutorial||!tutorialAllows(tutorial,'verify-save')||!tutorialSave||!file) return;
+      const epoch=tutorial.epoch,save=tutorialSave,identity=workspaceIdentity;
+      try {
+        if(file.size>LIMITS.fileBytes)throw new Error('ファイルが大きすぎます');
+        const loaded=await parseProjectFile(await file.text());
+        if(!tutorial||tutorial.epoch!==epoch||workspaceIdentity!==identity||tutorialSave!==save)return;
+        if(currentFingerprint()!==save.fingerprint){tutorialSave=null;tutorial.index=TUTORIAL_STEPS.findIndex(s=>s.id==='save-work');tutorialRefresh();return;}
+        if(assetStateFingerprint(loaded.project,loaded.assetStore)!==save.fingerprint||loaded.editorState?.pendingEditors.length||loaded.editorState?.callableDraft)
+          throw new Error('いま保存した作品と内容が違います');
+        save.verified=true;confirmTutorialOperation('verify-save');tutorialRefresh();
+      } catch(error) { if(tutorial?.epoch===epoch) { $('#tutorialText').textContent='確かめられなかったよ。いま保存したファイルを、もう一度選ぼう。';setStatus('保存の確認：'+error.message); } }
+    }
+    function tutorialCapture(event) {
+      if(!tutorial)return;
+      if(event.type==='keyup')return;
+      const target=event.target,step=tutorialStep(tutorial);
+      if(event.type==='keydown'){
+        // Browser and OS navigation belong to the browser, never to a lesson.
+        if(event.key==='F5'||((event.ctrlKey||event.metaKey)&&['r','l','w','t','n','+','-','0'].includes(event.key.toLowerCase())))return;
+        if(event.key==='Tab'){
+          const targets=tutorialFocusTargets(),at=targets.indexOf(document.activeElement);
+          event.preventDefault();event.stopImmediatePropagation();targets[(at+(event.shiftKey?-1:1)+targets.length)%targets.length]?.focus();return;
+        }
+        if((event.ctrlKey||event.metaKey)&&!['a','c','v','x','arrowleft','arrowright','home','end'].includes(event.key.toLowerCase())){
+          const action=event.key.toLowerCase()==='s'?'save':event.key.toLowerCase()==='z'?'undo':'shortcut';
+          if(!tutorialAllows(tutorial,action)||event.shiftKey){event.preventDefault();event.stopImmediatePropagation();return;}
+        }
+        if(event.repeat&&target instanceof Element&&target.matches('button,summary')){event.preventDefault();event.stopImmediatePropagation();return;}
+        if(!(event.ctrlKey||event.metaKey)&&target instanceof Element&&!target.matches('input,textarea,select')
+          &&!['Enter',' ','Escape'].includes(event.key)){event.preventDefault();event.stopImmediatePropagation();return;}
+      }
+      if(event.type==='focusin') { if(!tutorialElementAllowed(target))tutorialFocusTargets()[0]?.focus({preventScroll:true});return; }
+      let allowed=tutorialElementAllowed(target);
+      if(['dragstart','dragover','drop','contextmenu'].includes(event.type))allowed=false;
+      if(['pointerdown','touchstart'].includes(event.type)&&target instanceof Element&&target.matches('.blockui-workspace,.blockui-palette-list'))allowed=true;
+      if(allowed&&event.type==='click'&&step?.allowed[0]==='runtime:click'&&target.closest('.component')){
+        if(tutorialTrace?.clicked)allowed=false;
+      }
+      if(allowed&&event.type==='pointerdown'&&target.closest('#tutorialExit'))event.preventDefault();
+      if(allowed&&step?.allowed[0].startsWith('field:')&&(
+        event.type==='keydown'&&event.key==='Enter'&&!event.isComposing&&!composingEditors.size
+        ||event.type==='change'&&target instanceof HTMLSelectElement
+        ||event.type==='click'&&target.closest('[data-blockui-action="commit"]'))){
+        // A confirmed unchanged value is still an explicit learning operation.
+        // Observe after the normal field handler; invalid/pending input cannot count.
+        const epoch=tutorial.epoch,id=step.id;
+        setTimeout(()=>{if(tutorial?.epoch===epoch&&tutorialStep(tutorial)?.id===id
+          &&!mainEditor.session?.pendingEdit&&!composingEditors.size){confirmTutorialOperation(step.allowed[0]);tutorialRefresh();}},0);
+      }
+      if(!allowed){
+        event.preventDefault();event.stopImmediatePropagation();
+        if(target===el.obj||target===el.event)renderSelectors();
+        else if(target===$('#uiLevel'))target.value=document.body.dataset.uiLevel;
+        else if(target===el.projectName)target.value=project.name;
+      }
+    }
+    for(const event of ['pointerdown','touchstart','click','keydown','keyup','focusin','input','change','compositionstart','compositionend','dragstart','dragover','drop','contextmenu'])window.addEventListener(event,tutorialCapture,{capture:true,passive:false});
     let flushingEditor = false;
     let shellPointer = null;
     function draftOwner() {
@@ -28116,6 +28540,7 @@ function createAkariExtensionHost(options) {
     }
     function operateBlock(binding, operation) {
       try {
+        if (!tutorialOperationAllowed(binding, operation)) throw new Error('今は、案内のブロックだけを操作しよう。');
         if (modelLocked()) throw new Error('実行・取込中は編集できません');
         if (
           binding.kind === 'draft' &&
@@ -28169,7 +28594,7 @@ function createAkariExtensionHost(options) {
               typeof source === 'string' ? source : source.source,
             ),
         });
-        if (!candidate.changed) return { ok: true, changed: false };
+        if (!candidate.changed) {confirmTutorialOperation();return { ok: true, changed: false };}
         if (candidate.draftOnly) {
           binding.session = { ...session, ...candidate, mode: session.mode };
           editorSessions.set(`${binding.kind}:${ownerKey}`, binding.session);
@@ -28196,6 +28621,7 @@ function createAkariExtensionHost(options) {
         editorSessions.set(`${binding.kind}:${committedOwner}`, binding.session);
         renderEditorBinding(binding);
         refreshEditor();
+        confirmTutorialOperation();
         return { ok: true, changed: true,
           ...(committedOwner!==ownerKey?{ownerTransition:{from:ownerKey,to:committedOwner}}:{}) };
       } catch (error) {
@@ -28552,6 +28978,7 @@ function createAkariExtensionHost(options) {
       undoButton.before(undoHome);
       const placeUndo = () => {
         if ($('#procModal').classList.contains('show')) callableTitle.append(undoButton);
+        else if(document.body.dataset.uiLevel==='entry'&&entryControlHomes.has(undoButton))toolbar.insertBefore(undoButton,$('#tutorialStart'));
         else undoHome.after(undoButton);
       };
       new MutationObserver(placeUndo).observe($('#procModal'), { attributes: true, attributeFilter: ['class'] });
@@ -28731,6 +29158,7 @@ function createAkariExtensionHost(options) {
         );
       $('#formatBtn').hidden = block;
       syncPropertyScrollPadding();
+      renderEntrySurface();
     }
 
     const pen = el.canvas.getContext('2d');
@@ -28758,7 +29186,13 @@ function createAkariExtensionHost(options) {
         $('#stageZoomFit').setAttribute('aria-pressed', String(stageZoom === null));
         positionResizeHandles();
       },
-      canInteract: () => !document.querySelector('.modal.show,.modal.open'),
+      canInteract: () => !document.querySelector('.modal.show,.modal.open')&&(!tutorial
+        ||(tutorialAllows(tutorial,'runtime:click')&&!tutorialTrace?.clicked)),
+      onRuntimeClick: id => {
+        if(!tutorial)return true;
+        if(!tutorialAllows(tutorial,'runtime:click')||id!==tutorial.target||!tutorialTrace||tutorialTrace.clicked)return false;
+        tutorialTrace.clicked=true;confirmTutorialOperation('runtime:click');return true;
+      },
       onDesignPointer: (e, id) => {
         if (!modelLocked() && selectObject(id)) {
           startDrag(e, id);
@@ -29099,6 +29533,7 @@ function createAkariExtensionHost(options) {
       scheduleAutosave();
     }
     function undo() {
+      if (!tutorialAllows(tutorial,'undo')) return;
       if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit) return;
       flushActiveEditor();
       clearTimeout(historyTimer);
@@ -29107,9 +29542,11 @@ function createAkariExtensionHost(options) {
       if (history.length <= 1) return;
       redo.push(history.pop());
       restoreSnap(history.at(-1));
+      confirmTutorialOperation('undo');
       setStatus('1つ前の状態へ戻しました');
     }
     function redoDo() {
+      if (tutorial) return;
       if (modelLocked() || composingEditors.size || activeDragCleanup || colorEdit || !redo.length) return;
       flushActiveEditor();
       if(history.at(-1)?.stateFingerprint!==stateFingerprintCore()){pushHistoryNow();return;}
@@ -29182,6 +29619,7 @@ function createAkariExtensionHost(options) {
       catch (error) { finishOpenSelection(); log(error.message, 'error'); }
     }
     function requestOpenProject() {
+      if(tutorial)return;
       if (modelLocked() || openRequest || document.querySelector('.modal.show:not(#procModal),.modal.open,dialog[open]')) return;
       const observed = currentOpenState();
       openRequest = { kind: 'file', fingerprint: observed.fingerprint, phase: 'confirmation' };
@@ -29258,6 +29696,7 @@ function createAkariExtensionHost(options) {
         first = project.scripts.find((x) => x.targetId === selectedId && x.event === currentEvent);
       el.event.value = sourceOverviewOpen ? 'all' : row && row !== first ? scriptSourceKey(row) : currentEvent;
       $('#scriptAdd').disabled = modelLocked() || project.scripts.length >= LIMITS.scripts;
+      renderEntrySurface();
     }
     function hideSourceOverview() {
       sourceOverviewOpen = false;
@@ -29397,6 +29836,7 @@ function createAkariExtensionHost(options) {
       root.scrollTop = scroll;
     }
     function selectObject(id) {
+      if (tutorial) return false;
       if (!targetById(id) || !flushActiveEditor()) {
         renderSelectors();
         return false;
@@ -31299,6 +31739,7 @@ function createAkariExtensionHost(options) {
     }
     function bridge() {
       let speechValue;
+      const tutorialRunEpoch=tutorial?.epoch,bridgeGeneration=generationToken;
       return {
         render: () => requestRuntimePaint(3),
         allStopped: () => {
@@ -31319,12 +31760,14 @@ function createAkariExtensionHost(options) {
         },
         clearSpeech: stageView.clearSpeech,
         beforeStatement: (task, node) => {
+          tutorialRecordStatement(task,node,tutorialRunEpoch,bridgeGeneration);
           activeTaskId = task.taskId;
           activeLoc = sourceLocation(task, node);
           requestRuntimePaint(6);
         },
         afterStatement: () => requestRuntimePaint(6),
         runtimeError: (task, err) => {
+          if(tutorialTrace&&tutorialRunEpoch===tutorial?.epoch&&bridgeGeneration===generationToken)tutorialTrace.failed=true;
           activeTaskId = task.taskId;
           activeLoc = sourceLocation(task, null, err);
           requestRuntimePaint(7);
@@ -31342,7 +31785,13 @@ function createAkariExtensionHost(options) {
       };
     }
     function startRun() {
+      if (!tutorialAllows(tutorial,'run')) return;
       if (modelLocked() || !flushActiveEditor()) return;
+      if(tutorial){
+        const trial=tutorialStep(tutorial).id.slice(4),actor=componentById(tutorial.target);
+        tutorialTrace={epoch:tutorial.epoch,trial,x:actor.x,y:actor.y,distance:trial==='original'?100:150,
+          order:trial==='reordered'?'speech-last':'speech-first',statements:[],peak:0,complete:false,clicked:false,failed:false};
+      }
       refreshEditor();
       if(hasPendingEditor()){log('書きかけの入力を完成させてから実行してください','error');return;}
       clearTimeout(historyTimer);
@@ -31397,6 +31846,7 @@ function createAkariExtensionHost(options) {
             scheduler = new EventScheduler(project, compiled, runtime, br);
             stageView.seedHeldInput();
             appState = 'RUNNING';
+            confirmTutorialOperation('run');
             scheduler.start();
             renderAll();
             log(`実行開始（seed=${seed}）`, 'ok');
@@ -31422,10 +31872,18 @@ function createAkariExtensionHost(options) {
     }
     function stopRun() {
       if (appState === 'IMPORTING') return;
+      tutorialCollectRuntime();
+      if(tutorial&&!tutorialTrace?.complete){
+        const step=tutorialStep(tutorial);
+        if(step?.id.startsWith('try-')||step?.id.startsWith('stop-')) {
+          tutorial.index=TUTORIAL_STEPS.findIndex(s=>s.id==='run-'+step.id.split('-').slice(1).join('-'));tutorialTrace=null;
+        }
+      }
       disposeRuntime();
       el.form.querySelectorAll('.sprite-bubble').forEach((n) => n.remove());
       appState = 'DESIGN';
       pen.clearRect(0, 0, el.canvas.width, el.canvas.height);
+      confirmTutorialOperation('stop');
       renderAll();
       loadEditor();
       $('#execLocation').textContent = 'いまの場所：―';
@@ -31605,6 +32063,7 @@ function createAkariExtensionHost(options) {
     }
     let exportBusy = false;
     function exportProject() {
+      if(tutorial)return;
       if (!flushActiveEditor()) return;
       if(hasPendingEditor()){log('書きかけの入力を完成させてから書き出してください','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
@@ -31670,13 +32129,15 @@ function createAkariExtensionHost(options) {
       if(headerPending||pendingEditors.some(d=>d.kind==='draft'))callableDraft=validateCallableDraft({...callableDraftCore,
         name:$('#callableName').value,argsText:$('#callableArgs').value,...(callableDraftCore.type==='action'?{callPhrase:$('#callablePhrase').value}:{})});
       return validateEditorState({version:1,revision:recoveryEpoch,selectedId,currentEvent,selectedScriptId,
-        uiLevel:$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'},callableDraft,pendingEditors,
+        uiLevel:$('#uiLevel').value==='entry'?'basic':$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'},callableDraft,pendingEditors,
         views:[mainEditor,draftEditor].filter(binding=>binding.session).map(binding=>({kind:binding.kind,ownerKey:bindingOwner(binding),
           codeSelection:{start:binding.textarea.selectionStart||0,end:binding.textarea.selectionEnd||0,direction:binding.textarea.selectionDirection||'none'},
           scrollState:{codeTop:binding.textarea.scrollTop,codeLeft:binding.textarea.scrollLeft}}))},project);
     }
     function restoreEditorState(state) {
-      validateEditorState(state,project);
+      // Entry is a local presentation choice. The established file enum stays
+      // basic/advanced; a transient history view can still retain entry.
+      validateEditorState(state.uiLevel==='entry'?{...state,uiLevel:'basic'}:state,project);
       for(const binding of [mainEditor,draftEditor]){binding.view?.cancel();if(binding.session){binding.session.pendingEdit=null;binding.session.blockDraft=null;}}
       headerPending=null;
       selectedId=state.selectedId;currentEvent=state.currentEvent;selectedScriptId=state.selectedScriptId;
@@ -31708,6 +32169,7 @@ function createAkariExtensionHost(options) {
       updateDirty();
     }
     function saveProject() {
+      if (!tutorialAllows(tutorial,'save')) return;
       if (appState === 'IMPORTING' || appState === 'PREPARING') return;
       if(composingEditors.size){setStatus('日本語入力を確定してから保存してください');return;}
       flushActiveEditor();
@@ -31720,6 +32182,7 @@ function createAkariExtensionHost(options) {
         a.download = safeDownloadName(project.name) + '.akari.md';
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        if(tutorial){tutorialSave={epoch:tutorial.epoch,identity:workspaceIdentity,fingerprint:currentFingerprint(),verified:false};confirmTutorialOperation('save');}
         lastSavedFingerprint = currentFingerprint();
         lastSavedEditorFingerprint = openEditorFingerprint();
         dirty = false;
@@ -31734,6 +32197,7 @@ function createAkariExtensionHost(options) {
       }
     }
     async function openProject(file, approval = null) {
+      if (tutorial) return;
       if (modelLocked()) return;
       const observed = currentOpenState();
       if (approval?.fingerprint !== observed.fingerprint && !confirmLose(observed)) return;
@@ -31756,6 +32220,7 @@ function createAkariExtensionHost(options) {
         disposeRuntime();
         revokeDesignUrls();
         project = loaded.project;
+        workspaceIdentity++;
         assetStore = loaded.assetStore;
         editorSessions.clear();
         invalidateEditors();
@@ -33229,6 +33694,7 @@ function createAkariExtensionHost(options) {
     $('#diagnoseBtn').onclick = showDiagnosis;
     $('#diagnosisClose').onclick = () => $('#diagnosisModal').classList.remove('show');
     function replaceCurrentProject(nextProject,nextAssets,targetId,event,status) {
+      if(tutorial)return;
       // Discard view-local transactions only after the user confirms replacement.
       mainEditor.view.cancel();
       draftEditor.view.cancel();
@@ -33243,6 +33709,7 @@ function createAkariExtensionHost(options) {
       disposeRuntime();
       revokeDesignUrls();
       project=nextProject;
+      workspaceIdentity++;
       assetStore=nextAssets;
       editorSessions.clear();
       invalidateEditors();
@@ -33258,6 +33725,7 @@ function createAkariExtensionHost(options) {
       setStatus(status);
     }
     function startProject() {
+      if(tutorial)return;
       if(modelLocked() || !confirmLose())return;
       replaceCurrentProject(makeEmptyProject(),makeDefaultAssetStore(),'sprite-1','start','空の作品です。動かすもの・できごとを選び、命令を入れましょう');
     }
@@ -33295,6 +33763,7 @@ function createAkariExtensionHost(options) {
       $('#samplePicker').showModal();
     }
     function requestSampleProject() {
+      if(tutorial)return;
       if (modelLocked() || openRequest || document.querySelector('.modal.show:not(#procModal),.modal.open,dialog[open]')) return;
       const observed = currentOpenState();
       openRequest = { kind:'sample', fingerprint:observed.fingerprint, phase:'confirmation' };
@@ -33336,6 +33805,16 @@ function createAkariExtensionHost(options) {
       if(!document.querySelector('.modal.show:not(#procModal),dialog[open]'))$('#sampleBtn').focus({preventScroll:true});
     });
     $('#saveBtn').onclick = saveProject;
+    for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).onclick=()=>{
+      if(tutorial)return;$('#entryProjectMenu').open=false;$('#'+origin).click();
+    };
+    $('#entryStartEvent').onclick=()=>selectEntryEvent('start');
+    $('#entryClickEvent').onclick=()=>selectEntryEvent('click');
+    $('#tutorialStart').onclick=beginTutorial;
+    $('#tutorialExit').onclick=()=>{finishTutorial(false);setStatus('途中の作品は残っています。自由に続けられるよ。');};
+    $('#tutorialVerifySave').onclick=()=>{if(tutorialAllows(tutorial,'verify-save')){$('#tutorialSavedFile').value='';$('#tutorialSavedFile').click();}};
+    $('#tutorialSavedFile').onchange=event=>{const file=event.target.files?.[0];event.target.value='';verifyTutorialSave(file);};
+    $('#tutorialSavedFile').addEventListener('cancel',()=>{if(tutorial)$('#tutorialText').textContent='ファイル選びをやめたよ。もう一度選ぶか、チュートリアルをやめられます。';});
     $('#callableSaveProject').onclick = saveProject;
     $('#exportBtn').onclick = exportProject;
     $('#exportControls').onclick = () => downloadProject('controls');
@@ -33459,19 +33938,26 @@ function createAkariExtensionHost(options) {
       if (f) await importSoundFile(f);
     };
     $('#uiLevel').onchange = () => {
+      if (tutorial || composingEditors.size || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
+        $('#uiLevel').value=document.body.dataset.uiLevel;
+        setStatus('入力を決めるか取り消してから、表示を変えてね。');
+        return;
+      }
       document.body.dataset.uiLevel = $('#uiLevel').value;
       try {
         localStorage.setItem(STORAGE_KEYS.uiLevel, $('#uiLevel').value);
       } catch (_) {}
       renderHints();
+      renderEntrySurface();
+      renderEditorBinding(mainEditor);
+      mainEditor.view.render({force:true});
+      if ($('#procModal').classList.contains('show')) renderEditorBinding(draftEditor);
     };
     let storedUiLevel = null;
     try {
       storedUiLevel = localStorage.getItem(STORAGE_KEYS.uiLevel);
     } catch (_) {}
-    document.body.dataset.uiLevel = ['basic', 'advanced'].includes(storedUiLevel)
-      ? storedUiLevel
-      : storedUiLevel === 'all' ? 'advanced' : 'basic';
+    document.body.dataset.uiLevel = normalizeEntryUiLevel(storedUiLevel);
     $('#uiLevel').value = document.body.dataset.uiLevel;
     let storedEditorMode = null;
     try { storedEditorMode = localStorage.getItem(STORAGE_KEYS.editorMode); } catch (_) {}
@@ -33532,6 +34018,7 @@ function createAkariExtensionHost(options) {
       if (!recoveryData) return;
       try {
         const {frames,cursor}=recoveryData.restored;
+        workspaceIdentity++;
         clearTimeout(historyTimer);clearTimeout(autosaveTimer);
         lastSavedFingerprint=recoveryData.lastSavedFingerprint;
         lastSavedEditorFingerprint=recoveryData.lastSavedEditorFingerprint;
@@ -33598,6 +34085,7 @@ function createAkariExtensionHost(options) {
         getSession: () => getEditorSession(binding),
         getProject: () => project,
         getContext: () => bindingContext(binding),
+        tutorialActive: () => !!tutorial,
         onData: () => $('#dataBtn').click(),
         isLocked: modelLocked,
         onOperation: (operation) => operateBlock(binding, operation),
@@ -33708,7 +34196,7 @@ function createAkariExtensionHost(options) {
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#openConfirmModal,#samplePicker') ||
-          target.matches('#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         if (!flushActiveEditor()) {
@@ -33728,7 +34216,7 @@ function createAkariExtensionHost(options) {
           modelLocked() ||
           event.target.closest('#blockEditor,#callableBlocks,#sourceImport,#colorModal,#paintModal') ||
           (event.target.matches('#codeEditor') && ['source-import','heading-source'].includes(mainEditor.session?.pendingEdit?.kind)) ||
-          event.target.matches('#objectSelect,#eventSelect,#callableType,#callableSelect,#fileInput')
+          event.target.matches('#uiLevel,#objectSelect,#eventSelect,#callableType,#callableSelect,#fileInput')
         )
           return;
         if (!flushActiveEditor()) {
@@ -33748,7 +34236,7 @@ function createAkariExtensionHost(options) {
           modelLocked() ||
           flushingEditor ||
           event.target.matches('.diagnostic-details > summary') ||
-          event.target.closest('.editor-modes,#sourceImport,#colorModal,#samplePicker,#openConfirmModal,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          event.target.closest('.editor-modes,#sourceImport,#colorModal,#samplePicker,#openConfirmModal,#uiLevel,#tutorialStart,#tutorialExit,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;
@@ -33808,12 +34296,6 @@ function createAkariExtensionHost(options) {
       }
       updateCallableHeader();
     };
-    $('#uiLevel').addEventListener('change', () => {
-      invalidateEditors();
-      renderEditorBinding(mainEditor);
-      if ($('#procModal').classList.contains('show')) renderEditorBinding(draftEditor);
-    });
-
     $('#console').textContent = `${productLabel(true)}を起動しました。`;
     installColorPicker();
     resetHistory();

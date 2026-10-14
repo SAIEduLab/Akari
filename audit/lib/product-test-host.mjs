@@ -37,11 +37,17 @@ export async function withBrowser(browserPath, fn, timeoutMs = 240000) {
   }
 }
 export async function pageFor(browser, product, fn, contextOptions={}) {
-  const context = await browser.newContext({...contextOptions,offline:true});
+  // Existing editor obligations use their original normal/basic presentation.
+  // Entry first-start checks explicitly opt out; saved preferences still win.
+  const {initialUiLevel='basic',...browserOptions}=contextOptions;
+  const context = await browser.newContext({...browserOptions,offline:true});
   const errors = [], network=[];
   try {
     await context.route(/^https?:/, route=>{network.push(route.request().url());return route.abort();});
     const page = await context.newPage();
+    if(initialUiLevel!==null&&typeof page.addInitScript==='function')await page.addInitScript(level=>{
+      if(localStorage.getItem('akari.uiLevel.v1')===null)localStorage.setItem('akari.uiLevel.v1',level);
+    },initialUiLevel);
     page.on('pageerror', e=>errors.push(e.message));
     page.setDefaultTimeout(30000);
     await page.goto(pathToFileURL(path.resolve(product)).href);

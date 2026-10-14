@@ -1,13 +1,13 @@
 {
   "schema": "akari-public-files-v1",
-  "productVersion": "1.2.2",
+  "productVersion": "1.2.3",
   "files": [
     ".gitattributes",
     ".github/workflows/akari-acceptance.yml",
     ".github/workflows/akari-audit.yml",
     ".gitignore",
     "AUDIT.md",
-    "Akari_1_2_2.html",
+    "Akari_1_2_3.html",
     "EXTENSIONS.md",
     "LANGUAGE.md",
     "LICENSE",
@@ -21,6 +21,7 @@
     "audit/ACTIONS_TRANSFER.md",
     "audit/CHILD_UX.md",
     "audit/CHILD_UX_RELIABILITY.md",
+    "audit/ENTRY_WORKSHOP.md",
     "audit/IMPLEMENTATION_STATUS.md",
     "audit/LANGUAGE_FORMS.md",
     "audit/LEDGER_MIGRATION.md",
@@ -215,6 +216,7 @@
     "audit/lib/composition-runtime.mjs",
     "audit/lib/current-audit-basis.cjs",
     "audit/lib/docs-consolidation-contract.mjs",
+    "audit/lib/entry-workshop-contract.mjs",
     "audit/lib/evidence-bundle.mjs",
     "audit/lib/export-open-contract.cjs",
     "audit/lib/extension-foundation-contract.mjs",
@@ -261,7 +263,7 @@
     "audit/manifests/language-form-coverage.json",
     "audit/manifests/license-migration.json",
     "audit/manifests/product-tests.json",
-    "audit/manifests/release-1.2.2.json",
+    "audit/manifests/release-1.2.3.json",
     "audit/manifests/samples.json",
     "audit/prepare-publication.mjs",
     "audit/public-files.json",
@@ -323,6 +325,9 @@
     "audit/tests/editor-assets.mjs",
     "audit/tests/editor-browser.mjs",
     "audit/tests/editor-syntax-reuse.mjs",
+    "audit/tests/entry-workshop-browser.mjs",
+    "audit/tests/entry-workshop-core.mjs",
+    "audit/tests/entry-workshop-verify.mjs",
     "audit/tests/execution-continuity.mjs",
     "audit/tests/export-open-browser.cjs",
     "audit/tests/extension-foundation-negative.mjs",
@@ -412,5 +417,5 @@
     "extensions/types.d.ts",
     "index.html"
   ],
-  "productFile": "Akari_1_2_2.html"
+  "productFile": "Akari_1_2_3.html"
 }
