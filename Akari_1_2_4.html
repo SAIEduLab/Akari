@@ -28030,7 +28030,7 @@ function createAkariExtensionHost(options) {
         if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
       }
       if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
-      tutorialInsertion=null;tutorialRefresh();focusTutorialTarget();clearInterval(tutorialTimer);tutorialTimer=setInterval(tutorialRefresh,80);
+      tutorialInsertion=null;mainEditor.view.render({force:true});tutorialRefresh();focusTutorialTarget();clearInterval(tutorialTimer);tutorialTimer=setInterval(tutorialRefresh,80);
     }
     function finishTutorial(completed=false) {
       if (!tutorial) return;

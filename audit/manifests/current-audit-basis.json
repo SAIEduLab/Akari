@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.4",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Owner explicitly requested 1.2.4 to repair visible tutorial insertion guidance and preserve candidate choice; retain all language and runtime contracts.",
+  "updateReason": "Approved tutorial guidance repair: preserve candidate rendering on resume and exercise blocked activation with explicit negative-test input.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,8 +12,8 @@
     },
     {
       "path": "Akari_1_2_4.html",
-      "sha256": "5bf2e74a746af4224cfaf344dc1d1ac51b1a6381e0920a2fa6a121892b3601d0",
-      "bytes": 1784947
+      "sha256": "898c62972e4d63bf0e58ea9db1e7a5c6c0aef5b8f1926c55badb6190012b5dc3",
+      "bytes": 1784984
     },
     {
       "path": "LANGUAGE.md",

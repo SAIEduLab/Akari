@@ -28,6 +28,8 @@ async function roles(p){return p.evaluate(()=>{const root=Akari.app.editorState.
  return {text:speech?.inputs.value.id,speechTime:literal(speech?.inputs.seconds)?.id,speechId:speech?.id,root:Akari.app.editorState.main.blockView.id};});}
 const field=(p,id,key='value')=>p.locator('#blockEditor [data-block-id="'+id+'"][data-blockui-field="'+key+'"]');
 const activate=(p,control)=>p.entryTouch?control.tap():control.click();
+// Negative activation deliberately targets aria-disabled controls to verify the capture guard.
+const attemptBlocked=(p,control)=>p.entryTouch?control.tap({force:true}):control.click({force:true});
 async function edit(p,id,value){const control=field(p,id);await activate(p,control);await control.press('ControlOrMeta+A');await p.keyboard.insertText(String(value));await control.press('Enter');}
 const fieldAt=(p,ref)=>p.evaluate(ref=>{let n=Akari.app.editorState.main.blockView;for(const k of ref)n=n[k];if(n.schemaId==='QuantityLiteral')n=n.inputs.value;return {id:n.id,value:n.fields.value};},ref);
 async function positive(p,id){
@@ -41,7 +43,7 @@ async function positive(p,id){
   assert.equal(await candidate.getAttribute('data-tutorial-blocked'),'true','insertion must be chosen before the block');
   assert.ok((await insertion.getAttribute('class')).includes('tutorial-target'),'correct insertion is visibly highlighted');
   const before=content(await read(p));
-  await activate(p,candidate);assert.deepEqual(content(await read(p)),before,'early block click cannot insert or advance');
+  await attemptBlocked(p,candidate);assert.deepEqual(content(await read(p)),before,'early block click cannot insert or advance');
   await activate(p,insertion);
   await p.waitForFunction(key=>document.querySelector('[data-lesson-block="'+key+'"]')?.classList.contains('tutorial-target'),op.key);
   assert.equal(await candidate.getAttribute('data-tutorial-blocked'),'false');
@@ -49,7 +51,7 @@ async function positive(p,id){
   const visual=await candidate.evaluate(n=>{const c=getComputedStyle(n),r=n.getBoundingClientRect(),clip=n.closest('.blockui-palette-list').getBoundingClientRect();return{outline:c.outlineStyle,width:parseFloat(c.outlineWidth),opacity:parseFloat(c.opacity),visible:r.width>0&&r.height>0&&r.top>=clip.top&&r.bottom<=clip.bottom};});
   assert.equal(visual.outline,'solid');assert.ok(visual.width>=3&&visual.opacity===1&&visual.visible,'highlight is readable inside its scroll viewport');
   const other=p.locator('#blockEditor [data-blockui-action="palette-add"][data-tutorial-blocked="true"]').first();
-  await activate(p,other);assert.deepEqual(content(await read(p)),before,'wrong visible candidate cannot modify the work');
+  await attemptBlocked(p,other);assert.deepEqual(content(await read(p)),before,'wrong visible candidate cannot modify the work');
   await activate(p,candidate);return null;
  }
  if(op.kind==='field'){const ref=await fieldAt(p,op.ref);
