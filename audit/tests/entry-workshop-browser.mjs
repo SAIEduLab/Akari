@@ -119,7 +119,17 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
    viewports.push({size,bounds,screenshot:await picture(p,'entry-'+size.width+'x'+size.height)});
   }await p.setViewportSize({width:390,height:844});const narrow={size:{width:390,height:844},screenshot:await picture(p,'entry-narrow')};return{viewports,narrow,autoStarted:false};});
  await row(browser,browserIds[1],async p=>{const before=await read(p),states=[];
-  for(const mode of ['advanced','basic','entry']){await p.locator('#uiLevel').selectOption(mode);const after=await read(p);assert.equal(after.project,before.project);assert.equal(after.history,before.history);assert.equal(after.dirty,before.dirty);states.push(after);}
+  assert.equal(await p.locator('.menutool > .ui-level-label #uiLevel').count(),1,'display level stays in the top toolbar');
+  assert.equal(await p.locator('#editorModecode').isDisabled(),true,'entry is block-only');
+  await p.locator('#uiLevel').selectOption('basic');await p.locator('#editorModecode').click();
+  assert.equal(await p.locator('#uiLevel option[value="entry"]').isDisabled(),true,'entry cannot be selected in code mode');
+  await p.locator('#uiLevel').evaluate(el=>{el.value='entry';el.dispatchEvent(new Event('change',{bubbles:true}));});
+  assert.equal(await p.locator('#uiLevel').inputValue(),'basic','synthetic selection cannot create an entry/code mismatch');
+  await p.locator('#editorModeblocks').click();
+  assert.equal(await p.locator('#uiLevel option[value="entry"]').isDisabled(),false);
+  await p.locator('#uiLevel').selectOption('entry');
+
+  for(const mode of ['advanced','basic','entry']){await p.locator('#uiLevel').selectOption(mode);assert.equal(await p.locator('.menutool > .ui-level-label #uiLevel').count(),1);const after=await read(p);assert.equal(after.project,before.project);assert.equal(after.history,before.history);assert.equal(after.dirty,before.dirty);states.push(after);}
   const text=await p.evaluate(()=>{const project=Akari.makeEmptyProject();project.name='入門対象外の保持';project.scripts[0].source='※ 注釈を保持\n\nペンを下ろす。';return Akari.serializeProject(project,Akari.makeDefaultAssetStore());});
   await p.locator('#fileInput').setInputFiles({name:'outside.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)});await p.waitForFunction(()=>Akari.app.project.name==='入門対象外の保持');await p.locator('#objectSelect').selectOption('sprite-1');
   assert.equal(await p.locator('#entryOutside').isVisible(),true);const outside=await read(p);

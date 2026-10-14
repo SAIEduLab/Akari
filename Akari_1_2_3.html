@@ -5743,7 +5743,7 @@ body[data-ui-level="entry"] .designer { grid-column:2; grid-row:1; }
 body[data-ui-level="entry"] .side { grid-column:2; grid-row:2; min-height:0; display:flex; }
 body[data-ui-level="entry"] .side>section:first-child { flex:1; min-height:0; }
 body[data-ui-level="entry"] #componentControls { display:none; }
-body[data-ui-level="entry"][data-editor-mode] .menutool>.ui-level-label { display:flex; order:0; flex:0 0 auto; margin:0; padding:0; }
+body[data-editor-mode] .menutool>.ui-level-label { display:flex; order:0; flex:0 0 auto; margin:0; padding:0; }
 body[data-ui-level="entry"] .menutool :is(#undoBtn,#redoBtn) svg { width:18px; height:18px; flex:none; }
 body[data-ui-level="entry"] .menutool #redoBtn::after { content:'やり直す'; }
 body[data-ui-level="entry"] :is(.toolbox,.side>section:not(:first-child),.debugbar,.source-nav,.code-assist,.console,#scriptAdd,.code-head label:nth-child(2),#basicActionGuide) { display:none; }
@@ -6066,7 +6066,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
       </div>
       <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">動かすを押したとき</button><button id="entryClickEvent" type="button">キャラを押したとき</button></div>
       <p id="entryOutside" role="status" hidden>この作品には、ほかのブロックもあるよ。そのまま残っています。変えるときは表示を「かんたん」か「くわしく」にしよう。</p>
-      <section id="tutorialGuide" aria-label="いっしょに作る" hidden><p id="tutorialText" aria-live="polite"></p><button id="tutorialExit" type="button">チュートリアルをやめる</button><button id="tutorialVerifySave" type="button" hidden>保存したファイルを確かめる</button><input id="tutorialSavedFile" type="file" accept=".akari.md,.md" hidden></section>
+      <section id="tutorialGuide" aria-label="いっしょに作る" hidden><p id="tutorialText" aria-live="polite"></p><button id="tutorialExit" type="button">いっしょに作るのをやめる</button><button id="tutorialVerifySave" type="button" hidden>ほぞんした作品をたしかめる</button><input id="tutorialSavedFile" type="file" accept=".akari.md,.md" hidden></section>
       <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
       <div id="sourceOverview" aria-label="選んだもののすべてのコード" hidden></div>
       <div class="debugbar">
@@ -23583,32 +23583,32 @@ function createAkariExtensionHost(options) {
   // The table describes intent, input boundaries, recovery and exits. Predicates
   // consume committed editor/runtime observations; no step counter can build a work.
   const TUTORIAL_STEPS = Object.freeze([
-    ['choose-click','「キャラを押したとき」を選ぼう。','event:click','clickSelected','entryClickEvent','クリックのきっかけを選ぶ'],
-    ['add-speech','「内容と秒数を決めて話す」を1つ入れよう。','insert:Say','speechAdded','Say:timed','話す命令を入れる'],
-    ['speech-text','話す言葉を「こんにちは！」に変えて、Enterで決めよう。','field:speech-text','greeting','speech-text','言葉と結果を結び付ける',{type:'text',expected:'こんにちは！',max:100}],
-    ['speech-time','話す秒数を2に変えて、Enterで決めよう。','field:speech-time','speechTimed','speech-time','話す時間を決める',{type:'number',expected:2,min:0,max:10}],
+    ['choose-click','「キャラを押したとき」をえらぼう。','event:click','clickSelected','entryClickEvent','クリックのきっかけを選ぶ'],
+    ['add-speech','「お話しする」のブロックを1つ入れよう。','insert:Say','speechAdded','Say:timed','話す命令を入れる'],
+    ['speech-text','話すことばを「こんにちは！」にしよう。できたら Enter キーを押してね。','field:speech-text','greeting','speech-text','言葉と結果を結び付ける',{type:'text',expected:'こんにちは！',max:100}],
+    ['speech-time','話す時間を2秒にしよう。数を2にして、Enter キーを押してね。','field:speech-time','speechTimed','speech-time','話す時間を決める',{type:'number',expected:2,min:0,max:10}],
     ['add-outward','「時間をかけて進む」を1つ入れよう。','insert:MotionCommand:GLIDE_DIRECTION','outwardAdded','MotionCommand:GLIDE_DIRECTION','右への移動を入れる'],
-    ['outward-time','右へ動く命令の秒数を1にして、Enterで決めよう。','field:outward-time','outwardTimed','outward-time','動く時間を決める',{type:'number',expected:1,min:0,max:10}],
-    ['outward-distance','右へ動く歩数を100にして、Enterで決めよう。','field:outward-distance','outwardReady','outward-distance','距離を決める',{type:'number',expected:100,min:0,max:200}],
+    ['outward-time','右へ動くブロックの「秒」の前を1にして、Enter キーを押そう。','field:outward-time','outwardTimed','outward-time','動く時間を決める',{type:'number',expected:1,min:0,max:10}],
+    ['outward-distance','右へ動くブロックの「歩」の前を100にして、Enter キーを押そう。','field:outward-distance','outwardReady','outward-distance','距離を決める',{type:'number',expected:100,min:0,max:200}],
     ['add-return','「時間をかけて進む」をもう1つ入れよう。','insert:MotionCommand:GLIDE_DIRECTION','returnAdded','MotionCommand:GLIDE_DIRECTION','戻る命令を入れる'],
-    ['return-direction','下の移動ブロックの方向を「左」にしよう。','field:return-direction','returnLeft','return-direction','往復の方向を決める',{type:'direction',expected:'left'}],
-    ['return-time','左へ動く命令の秒数を1にして、Enterで決めよう。','field:return-time','returnTimed','return-time','戻る時間を決める',{type:'number',expected:1,min:0,max:10}],
-    ['return-distance','左へ動く歩数を100にして、Enterで決めよう。','field:return-distance','originalReady','return-distance','往復の距離を合わせる',{type:'number',expected:100,min:0,max:200}],
+    ['return-direction','下の青いブロックで「画面の左」をえらぼう。','field:return-direction','returnLeft','return-direction','往復の方向を決める',{type:'direction',expected:'left'}],
+    ['return-time','左へ動くブロックの「秒」の前を1にして、Enter キーを押そう。','field:return-time','returnTimed','return-time','戻る時間を決める',{type:'number',expected:1,min:0,max:10}],
+    ['return-distance','左へ動くブロックの「歩」の前を100にして、Enter キーを押そう。','field:return-distance','originalReady','return-distance','往復の距離を合わせる',{type:'number',expected:100,min:0,max:200}],
     ['run-original','「動かす」を押そう。','run','originalRunning','runBtn','通常の実行を始める'],
-    ['try-original','作品のマスコットを1回押して、話して戻るまで見よう。','runtime:click','originalObserved','character','100歩の往復を見る'],
-    ['stop-original','「止める」を押して、編集に戻ろう。','stop','originalStopped','stopBtn','実行と編集を分ける'],
-    ['longer-outward','右へ動く歩数を150にして、Enterで決めよう。','field:outward-distance','outwardLonger','outward-distance','距離を変える',{type:'number',expected:150,min:0,max:200}],
-    ['longer-return','左へ動く歩数も150にして、Enterで決めよう。','field:return-distance','longerReady','return-distance','戻る距離を合わせる',{type:'number',expected:150,min:0,max:200}],
+    ['try-original','画面のキャラを1回押そう。お話しして、行ってもどるよ。','runtime:click','originalObserved','character','100歩の往復を見る'],
+    ['stop-original','「止める」を押して、つづきを作ろう。','stop','originalStopped','stopBtn','実行と編集を分ける'],
+    ['longer-outward','右へ動くブロックの「歩」の前を150にして、Enter キーを押そう。','field:outward-distance','outwardLonger','outward-distance','距離を変える',{type:'number',expected:150,min:0,max:200}],
+    ['longer-return','左へ動くブロックも150歩にしよう。できたら Enter キーを押してね。','field:return-distance','longerReady','return-distance','戻る距離を合わせる',{type:'number',expected:150,min:0,max:200}],
     ['run-longer','「動かす」を押そう。','run','longerRunning','runBtn','変更した作品を試す'],
-    ['try-longer','マスコットを1回押そう。前より遠くへ動くね。','runtime:click','longerObserved','character','150歩の往復と比較する'],
+    ['try-longer','キャラを1回押そう。前より遠くへ動くね。','runtime:click','longerObserved','character','150歩の往復と比較する'],
     ['stop-longer','「止める」を押そう。','stop','longerStopped','stopBtn','編集に戻る'],
-    ['reorder-speech','話すブロックの「ほかのそうさ」から「移動」を選び、一番下の「＋ ここに入れる」を押そう。','move:speech','speechLast','speech-move','命令の順番を変える'],
+    ['reorder-speech','話すブロックの「ほかのそうさ」→「うごかす」を押そう。つぎに、一番下の「＋ ここに入れる」を押してね。','move:speech','speechLast','speech-move','命令の順番を変える'],
     ['run-reordered','「動かす」を押そう。','run','reorderedRunning','runBtn','並べ替えた作品を試す'],
-    ['try-reordered','マスコットを1回押そう。動いて戻ってから話すね。','runtime:click','reorderedObserved','character','順番と結果を結び付ける'],
+    ['try-reordered','キャラを1回押そう。動いてもどってから話すね。','runtime:click','reorderedObserved','character','順番と結果を結び付ける'],
     ['stop-reordered','「止める」を押そう。','stop','reorderedStopped','stopBtn','実行を止める'],
-    ['undo-reorder','「もとにもどす」を1回押そう。歩数は150のままだよ。','undo','reorderUndone','undoBtn','1操作だけ戻す'],
-    ['save-work','できたね！ 「保存」を押して、作品ファイルを保存しよう。','save','downloadStarted','saveBtn','通常の作品として保存する'],
-    ['verify-save','「保存したファイルを確かめる」で、いま保存した作品ファイルを選ぼう。','verify-save','savedFileVerified','tutorialVerifySave','保存した内容を確かめる'],
+    ['undo-reorder','「もとにもどす」を1回押そう。動く長さは150歩のままだよ。','undo','reorderUndone','undoBtn','1操作だけ戻す'],
+    ['save-work','できたね！ 「ほぞん」を押して、作った作品をしまおう。','save','downloadStarted','saveBtn','通常の作品として保存する'],
+    ['verify-save','「ほぞんした作品をたしかめる」を押して、いましまった作品をえらぼう。','verify-save','savedFileVerified','tutorialVerifySave','保存した内容を確かめる'],
   ].map(([id,message,action,success,target,goal,input]) => Object.freeze({id,goal,message,target,
     start:'same-practice-work-and-previous-verified-state',allowed:Object.freeze([action,'exit','stop']),
     input:input||null,ime:'composition is retained; only confirmed input can succeed; Escape cancels this field',
@@ -24937,7 +24937,7 @@ function createAkariExtensionHost(options) {
         : hintCandidates(projectState, context().targetId, {source:session()?.sourceText || '', ...context()});
       const searched = query ? blockSearchCandidates(projectState, context(), query, hints) : all;
       const speech=searched.find(s=>s.id==='Say');
-      if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:'内容と秒数を決めて話す'});}
+      if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:entry?'お話しする':'内容と秒数を決めて話す'});}
       let candidates = searched.filter(
         (s) =>
           (entry || (query && !categoryExplicit) || !category || (category === 'basic'
@@ -25509,7 +25509,7 @@ function createAkariExtensionHost(options) {
           if (other !== menu) other.open = false;
         placeActions(menu, commands, { reveal: true });
       });
-      const move = button('移動', 'move', () => moveStart(node), { 'data-block-id': node.id }),
+      const move = button(document.body.dataset.uiLevel==='entry'?'うごかす':'移動', 'move', () => moveStart(node), { 'data-block-id': node.id }),
         duplicate = button(
           '同じものをもう1つ作る',
           'duplicate',
@@ -27689,7 +27689,8 @@ function createAkariExtensionHost(options) {
       tutorialTimer=null, tutorialTrace=null, tutorialSave=null;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      for(const node of [$('#undoBtn'),$('#redoBtn'),$('#uiLevel').closest('label')]){
+      $('#uiLevel option[value="entry"]').disabled=(mainEditor.session?.mode||editorModes.get('script'))==='code';
+      for(const node of [$('#undoBtn'),$('#redoBtn')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
         if(entry){if(node.parentElement!==$('.menutool'))$('.menutool').insertBefore(node,$('#tutorialStart'));}
         else if(entryLayoutPlaced){const marker=entryControlHomes.get(node);if(marker?.isConnected){marker.after(node);marker.remove();}entryControlHomes.delete(node);}
@@ -27858,7 +27859,7 @@ function createAkariExtensionHost(options) {
         // same-work does not require the event to have already been selected.
         if(stepBefore?.id==='choose-click')facts.sameWork=workspaceIdentity===tutorial.identity&&selectedId===tutorial.target;
         const next=tutorialAdvance(tutorial,facts,tutorial.epoch),changed=next!==tutorial;tutorial=next;
-        if (tutorial.phase==='complete') { finishTutorial(true);setStatus('できたね！ 保存した作品を、自由に変えてみよう。');return; }
+        if (tutorial.phase==='complete') { finishTutorial(true);setStatus('できたね！ つぎは、じゆうに変えて遊ぼう。');return; }
         const step=tutorialStep(tutorial);document.body.dataset.tutorialStep=step.id;
         if(changed&&step.id==='reorder-speech')mainEditor.view.focus({id:tutorialBody().find(n=>n.schemaId==='Say')?.id});
         $('#tutorialGuide').hidden=false;$('#tutorialVerifySave').hidden=step.id!=='verify-save';
@@ -28657,6 +28658,7 @@ function createAkariExtensionHost(options) {
         b.setAttribute('aria-pressed', String(session.mode === mode));
         b.disabled =
           ['PREPARING', 'IMPORTING'].includes(appState) ||
+          (!draft&&mode==='code'&&document.body.dataset.uiLevel==='entry') ||
           (mode === 'blocks' && (!session.syntaxAst || invalidCodePending));
         b.title =
           mode === 'blocks' && (!session.syntaxAst || invalidCodePending)
@@ -28686,6 +28688,10 @@ function createAkariExtensionHost(options) {
       }
     }
     function switchEditorMode(binding, mode) {
+      if(binding===mainEditor&&mode==='code'&&document.body.dataset.uiLevel==='entry'){
+        setStatus('コードを見るときは、表示を「かんたん」か「くわしく」にしてね。');
+        return false;
+      }
       const draftSession = binding.session;
       if (draftSession?.blockDraft) {
         if (['PREPARING', 'IMPORTING'].includes(appState)) return false;
@@ -29009,7 +29015,7 @@ function createAkariExtensionHost(options) {
         'diagnoseBtn',
       ])
         tools.append($('#' + id));
-      tools.append($('.ui-level-label'));
+      toolbar.insertBefore($('.ui-level-label'), $('#tutorialStart'));
       toolbox.append(tools);
       // Native reverse Tab may leave a partly visible button clipped in this ribbon.
       tools.addEventListener('focusin', (event) => {
@@ -29732,7 +29738,7 @@ function createAkariExtensionHost(options) {
       if (!sourceOverviewOpen) return;
       for (const mode of ['code', 'blocks']) {
         $('#editorMode' + mode).setAttribute('aria-pressed', String((editorModes.get('script') || 'code') === mode));
-        $('#editorMode' + mode).disabled = ['PREPARING', 'IMPORTING'].includes(appState);
+        $('#editorMode' + mode).disabled = ['PREPARING', 'IMPORTING'].includes(appState)||(mode==='code'&&document.body.dataset.uiLevel==='entry');
       }
       const signature = JSON.stringify([selectedId, editorContextRevision, editorModes.get('script'), modelLocked(), hasCallableDraft() ? callableDraftCore : null]);
       if (sourceOverviewSignature === signature) return;
@@ -33948,6 +33954,11 @@ function createAkariExtensionHost(options) {
       if (f) await importSoundFile(f);
     };
     $('#uiLevel').onchange = () => {
+      if($('#uiLevel').value==='entry'&&(mainEditor.session?.mode||editorModes.get('script'))==='code'){
+        $('#uiLevel').value=document.body.dataset.uiLevel;
+        setStatus('「はじめて」はブロックで使うよ。先に「ブロック」をえらんでね。');
+        return;
+      }
       if (tutorial || composingEditors.size || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
         $('#uiLevel').value=document.body.dataset.uiLevel;
         setStatus('入力を決めるか取り消してから、表示を変えてね。');
@@ -33972,6 +33983,9 @@ function createAkariExtensionHost(options) {
     let storedEditorMode = null;
     try { storedEditorMode = localStorage.getItem(STORAGE_KEYS.editorMode); } catch (_) {}
     editorModes.set('script', ['code', 'blocks'].includes(storedEditorMode) ? storedEditorMode : 'blocks');
+    if(document.body.dataset.uiLevel==='entry'&&editorModes.get('script')==='code'){
+      document.body.dataset.uiLevel='basic';$('#uiLevel').value='basic';
+    }
     el.projectName.addEventListener('change', () => {
       if (modelLocked()) {
         el.projectName.value = project.name;
