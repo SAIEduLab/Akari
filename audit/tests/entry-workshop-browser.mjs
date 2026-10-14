@@ -261,6 +261,7 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
      const op=auditOperation(id,course,leaf),ref=await fieldAt(p,op.ref),control=field(p,ref.id),before=await read(p);
      for(const bad of ['', '-', '999999']){
       await control.fill(bad);await control.press('Enter');assert.equal((await read(p)).step,id,'invalid numeric input cannot advance');
+      if(bad==='999999')assert.match(await p.locator('#statusText').textContent(),/光る数は.+から.+の中でえらぼう/,'range error explains the permitted numbers');
       await control.press('Escape');assert.equal((await fieldAt(p,op.ref)).value,ref.value,'cancel restores only the edited value');
       const after=await read(p);assert.equal(after.project,before.project);assert.equal(after.history,before.history);
      }

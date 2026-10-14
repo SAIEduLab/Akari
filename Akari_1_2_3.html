@@ -28651,7 +28651,12 @@ function createAkariExtensionHost(options) {
     }
     function operateBlock(binding, operation) {
       try {
-        if (!tutorialOperationAllowed(binding, operation)) throw new Error('今は、案内のブロックだけを操作しよう。');
+        if (!tutorialOperationAllowed(binding, operation)) {
+          const step=tutorialStep(tutorial),role=step?.ref?tutorialField(mainEditor.session?.blockView,step):null;
+          if(binding===mainEditor&&step?.free&&operation.type==='field'&&operation.id===role?.node?.id&&operation.key===role.key)
+            throw new Error('光る数は'+step.min+'から'+step.max+'の中でえらぼう。'+(step.integer?step.min+'、'+(step.min+1)+'のように、1ずつふえる数にしよう。':''));
+          throw new Error('今は、案内のブロックだけを操作しよう。');
+        }
         if (modelLocked()) throw new Error('実行・取込中は編集できません');
         if (
           binding.kind === 'draft' &&

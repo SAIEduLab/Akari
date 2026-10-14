@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.3",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Direct UX findings and CI failures: preserve structural draft metadata on exit, native option.disabled validation, bonus label on triggering click, meaningful guidance and visible numeric field. No historical fixture changes.",
+  "updateReason": "Explain rejected lesson numeric range at the actual field; preserve committed source and one-edit undo.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,8 +12,8 @@
     },
     {
       "path": "Akari_1_2_3.html",
-      "sha256": "37ed0036a7d3c386db9e3658ff9b845c51648bd750e5f287d4cb2ba384328206",
-      "bytes": 1782057
+      "sha256": "1ece898c9f3a1d0be7d080894e59d1335f9c8cde662c27a1f5204434c95ea9a0",
+      "bytes": 1782521
     },
     {
       "path": "LANGUAGE.md",
