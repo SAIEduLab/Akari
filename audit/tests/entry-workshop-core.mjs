@@ -44,6 +44,7 @@ test(unitIds[2],()=>{
   for(let i=1;i<=6;i++){scheduler.spawnForRuntime('sprite-1','click');drain();const actor=runtime.actor('sprite-1'),score=runtime.projectVars.get('点数');
    assert.ok(actor.x>=0&&actor.x<=540&&actor.y>=80&&actor.y<=300,'fish stays reachable');
    assert.equal(score,course==='score'?(leaf==='bonus'&&i>=3?i+2:i):0,'independent scoring expectation');
+   if(course==='score'&&leaf!=='remaining')assert.equal(runtime.actor('practice-board').text,'つかまえた：'+score,'display includes the bonus immediately');
    catches.push({click:i,score,x:actor.x,y:actor.y,scale:actor.scalePercent,costume:actor.costumeId});
   }
   assert.equal(says.filter(x=>x==='つかまった！').length,6);
@@ -62,7 +63,20 @@ test(unitIds[2],()=>{
   assert.equal(role.node.fields[role.key],chosen);assert.equal(d.tutorialField(altered.at(-1),change).node.fields[role.key],change.value,'one Undo restores the changed numeric field');
   routes.push({key:course+'/'+leaf,steps:steps.map(s=>s.id),finalSource,catches,chosen,undoRestored:true,rapidBurst:20,audioTiming:'simulated callbacks; not acoustic verification'});
  }
- return {routes,steps:lessonRoute().map(s=>s.id),exitPerStep:tutorialSteps.length};
+ const combinations=[];
+ const orders=[['motion','score','show'],['motion','show','score'],['score','motion','show'],['score','show','motion'],['show','motion','score'],['show','score','motion']];
+ for(const order of orders)for(const motion of routeLeaves.motion)for(const score of routeLeaves.score)for(const show of routeLeaves.show){
+  const selected={motion,score,show},practice=d.makeTutorialProject(),steps=[...d.TUTORIAL_STEPS];
+  for(const course of order){
+   let tree=d.tutorialExpectedTrees(practice,steps).at(-1);steps.push(...d.tutorialCourseSteps(course,tree.bodies.body.length,course));
+   tree=d.tutorialExpectedTrees(practice,steps).at(-1);steps.push(...d.tutorialExtensionSteps(course,selected[course],tree.bodies.body.length,course+'-'+selected[course]));
+  }
+  const tree=d.tutorialExpectedTrees(practice,steps).at(-1);practice.scripts[0].source=a.formatScript(a.blockDecode(tree));
+  assert.equal(a.compileProject(practice).errors.length,0,'combined routes keep unique node identities and compile');
+  combinations.push({order,selected,statements:tree.bodies.body.length});
+ }
+ assert.equal(combinations.length,162);
+ return {routes,combinations,steps:lessonRoute().map(s=>s.id),exitPerStep:tutorialSteps.length};
 });
 test(unitIds[3],()=>{const cases=[];
  for(const [index,step]of lessonRoute().entries()){

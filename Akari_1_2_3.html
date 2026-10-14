@@ -23629,11 +23629,11 @@ function createAkariExtensionHost(options) {
     turn:{label:'くるっと回る',source:'右に90度回る。'},
     wait:{label:'少しまつ',source:'0.1秒待つ。'},
   });
-  function tutorialCandidate(key,project) {
+  function tutorialCandidate(key,project,identity=key) {
     const spec=TUTORIAL_BLOCKS[key],parsed=parseScript(spec.source,buildSymbols(project),{targetId:'sprite-1',event:'click'});
     const node=blockEncode(parsed.body[0]).tree;
     if(spec.hole)node.bodies[spec.hole]=[createBlock('Hole:statement',{allowHoles:true})];
-    let serial=0;const rename=n=>{n.id='lesson-'+key+'-'+(++serial);for(const v of [...Object.values(n.inputs||{}),...Object.values(n.bodies||{})].flat())if(v&&typeof v==='object'&&v.schemaId)rename(v);};rename(node);return node;
+    let serial=0;const rename=n=>{n.id='lesson-'+identity+'-'+(++serial);for(const v of [...Object.values(n.inputs||{}),...Object.values(n.bodies||{})].flat())if(v&&typeof v==='object'&&v.schemaId)rename(v);};rename(node);return node;
   }
   function tutorialNodeShape(node) {
     if(Array.isArray(node))return node.map(tutorialNodeShape);if(!node||typeof node!=='object')return node;
@@ -23689,7 +23689,7 @@ function createAkariExtensionHost(options) {
   }
   function tutorialExtensionSteps(course,leaf,offset,tag) {
     const root=i=>['bodies','body',i],steps=[];let ref,value,min=1,max=10;
-    if(leaf==='swim'){steps.push(tutorialInsert(tag+'-random','randomSwim',offset));ref=[...root(offset),'inputs','args',0];value=.5;min=.15;max=2;}
+    if(leaf==='swim'){steps.push(tutorialInsert(tag+'-random','randomSwim',offset));ref=[...root(offset),'inputs','args',0];value=.5;min=.5;max=2;}
     if(leaf==='zigzag'){
       steps.push(tutorialInsert(tag+'-repeat','repeat',offset),tutorialInsert(tag+'-right','right',0,root(offset)),tutorialInsert(tag+'-left','left',1,root(offset)));
       ref=[...root(offset),'inputs','count'];value=3;min=1;max=5;
@@ -23697,8 +23697,8 @@ function createAkariExtensionHost(options) {
     if(leaf==='small'){steps.push(tutorialInsert(tag+'-small','small',offset));ref=[...root(offset),'inputs','args',0];value=70;min=45;max=100;}
     if(leaf==='goal'||leaf==='bonus'){
       steps.push(tutorialInsert(tag+'-if',leaf==='goal'?'finish':'bonus',offset));
-      if(leaf==='bonus')steps.push(tutorialInsert(tag+'-bonus','bonusPoint',0,root(offset),'thenBody'));
-      steps.push(tutorialInsert(tag+'-cheer','cheer',leaf==='bonus'?1:0,root(offset),'thenBody'));
+      if(leaf==='bonus')steps.push(tutorialInsert(tag+'-bonus','bonusPoint',0,root(offset),'thenBody'),tutorialInsert(tag+'-score','score',1,root(offset),'thenBody'));
+      steps.push(tutorialInsert(tag+'-cheer','cheer',leaf==='bonus'?2:0,root(offset),'thenBody'));
       ref=[...root(offset),'inputs','condition','inputs','right'];value=leaf==='goal'?5:3;min=2;max=6;
     }
     if(leaf==='remaining'){steps.push(tutorialInsert(tag+'-remaining','remaining',offset));
@@ -23715,8 +23715,9 @@ function createAkariExtensionHost(options) {
       ref=[...root(offset),'inputs','count'];value=3;min=1;max=5;
     }
     const clicks=course==='score'?6:2;
+    const question={swim:'泳ぐ時間をかえよう。数を大きくすると、ゆっくり泳ぐよ。',zigzag:'何回いったりきたりする？ くりかえす回数をかえよう。',small:'どのくらい小さくする？ 100なら、もとの大きさだよ。',goal:'何びきでおいわいする？ ゴールの数をかえよう。',bonus:'何びき目でおまけがもらえる？ その数をかえよう。',remaining:'全部で何びきつかまえる？ はじめの数をかえよう。',melody:'まん中の音をかえよう。数を大きくすると、高い音になるよ。',costume:'へんしんしたら、どの大きさにする？ 100がもとの大きさだよ。',dance:'何回くるくる回る？ くりかえす回数をかえよう。'}[leaf];
     steps.push(...tutorialTry(tag,clicks),tutorialDefine({id:tag+'-change',ref,value,free:true,min,max,
-      integer:leaf!=='swim',message:'光る数を、'+min+'から'+max+'の好きな数にかえてみよう。今とちがう数にして、Enter キーを押してね。'}),
+      integer:leaf!=='swim',message:question+' 光る数を'+min+'から'+max+'の中で、今とちがう数にして、Enter キーを押そう。'}),
       ...tutorialTry(tag+'-remix',clicks),tutorialDefine({id:tag+'-undo',action:'undo',ref,value,
         message:'「もとにもどす」を1回押そう。自分でかえた数が、もとにもどるよ。'}),
       tutorialDefine({id:tag+'-next',action:'choice',choice:'course',message:'できた！ 別の遊びを足す？ ほぞんして、自分で遊んでもいいよ。'}));
@@ -23731,7 +23732,7 @@ function createAkariExtensionHost(options) {
     let tree=blockEncode(parseScript(project.scripts.find(s=>s.event==='click').source,buildSymbols(project),{targetId:'sprite-1',event:'click'})).tree;
     const states=[structuredClone(tree)];
     for(const step of steps){
-      if(step.block){const loc=tutorialDestination(tree,step),parent=tutorialNodeAt(tree,step.parent||[]),items=parent.bodies[loc.body],node=tutorialCandidate(step.block,project);
+      if(step.block){const loc=tutorialDestination(tree,step),parent=tutorialNodeAt(tree,step.parent||[]),items=parent.bodies[loc.body],node=tutorialCandidate(step.block,project,step.id);
         if(items.length===1&&items[0].schemaId==='Hole:statement')items.splice(0,1,node);else items.splice(loc.index,0,node);}
       if(step.ref){const role=tutorialField(tree,step);if(!role.node)throw new Error('案内の入力先が見つかりません: '+step.id);role.node.fields[role.key]=step.free?(values[step.id]??step.value):step.value;}
       states.push(structuredClone(tree));
@@ -27878,6 +27879,10 @@ function createAkariExtensionHost(options) {
     function tutorialFocusTargets() {
       return $$('button,input,select,textarea,summary,[tabindex="0"]').filter(n=>!n.disabled&&!n.hidden&&n.getClientRects().length&&tutorialElementAllowed(n)).sort((a,b)=>Number(a.id==='tutorialExit'||a.id==='stopBtn')-Number(b.id==='tutorialExit'||b.id==='stopBtn'));
     }
+    function focusTutorialTarget() {
+      const target=tutorialFocusTargets()[0];if(!target)return;
+      target.focus({preventScroll:true});target.scrollIntoView({block:'nearest',inline:'nearest'});
+    }
     function clearTutorialPresentation() {
       delete document.body.dataset.tutorialStep;
       $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
@@ -27917,7 +27922,7 @@ function createAkariExtensionHost(options) {
       }
       tutorial.steps=[...tutorial.steps.slice(0,tutorial.index+1),...extra];tutorial.index++;tutorial.confirmedStep=null;tutorialTrace=null;
       tutorialExpected=tutorialExpectedTrees(makeTutorialProject(),tutorial.steps,tutorial.values);
-      mainEditor.view.render({force:true});tutorialRefresh();tutorialFocusTargets()[0]?.focus({preventScroll:true});
+      mainEditor.view.render({force:true});tutorialRefresh();focusTutorialTarget();
     }
     function renderTutorialChoices(step) {
       const box=$('#tutorialChoices'),visible=step.action==='choice';box.hidden=!visible;$('#tutorialFinish').hidden=!visible;
@@ -27959,7 +27964,7 @@ function createAkariExtensionHost(options) {
         if(changed)mainEditor.view.render({force:true});
         $('#tutorialGuide').hidden=false;$('#tutorialVerifySave').hidden=step.id!=='verify-save';
         renderTutorialChoices(step);
-        $('#tutorialText').textContent=tutorialTrace?.failed?'動かなかったね。「止める」で戻って、もう一度試そう。':step.message;
+        $('#tutorialText').textContent=tutorialTrace?.failed?'動かなかったね。「止める」で戻って、もう一度試そう。':step.choice==='course'&&tutorial.courses.length===TUTORIAL_COURSES.length?'3つの遊びを組み合わせたね！ ほぞんして、自分で遊んでみよう。':step.message;
         $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
         for(const n of $$('button,input,select,textarea,summary,[tabindex]')) {
           const allowed=tutorialElementAllowed(n);n.dataset.tutorialBlocked=String(!allowed);
@@ -27969,7 +27974,7 @@ function createAkariExtensionHost(options) {
           }
           if(allowed&&n.id!=='tutorialExit'&&n.id!=='stopBtn')n.classList.add('tutorial-target');
         }
-        if(changed)tutorialFocusTargets()[0]?.focus({preventScroll:true});
+        if(changed)focusTutorialTarget();
       } catch(error) { finishTutorial(false);setStatus('案内を続けられませんでした。作品は残っています：'+error.message); }
     }
     function beginTutorial() {
@@ -27990,7 +27995,7 @@ function createAkariExtensionHost(options) {
         if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
       }
       if(mainEditor.session?.mode!=='blocks')switchEditorMode(mainEditor,'blocks');
-      tutorialRefresh();tutorialFocusTargets()[0]?.focus({preventScroll:true});clearInterval(tutorialTimer);tutorialTimer=setInterval(tutorialRefresh,80);
+      tutorialRefresh();focusTutorialTarget();clearInterval(tutorialTimer);tutorialTimer=setInterval(tutorialRefresh,80);
     }
     function finishTutorial(completed=false) {
       if (!tutorial) return;
@@ -28043,7 +28048,7 @@ function createAkariExtensionHost(options) {
         if(!(event.ctrlKey||event.metaKey)&&target instanceof Element&&!target.matches('input,textarea,select')
           &&!['Enter',' ','Escape'].includes(event.key)){event.preventDefault();event.stopImmediatePropagation();return;}
       }
-      if(event.type==='focusin') { if(!tutorialElementAllowed(target))tutorialFocusTargets()[0]?.focus({preventScroll:true});return; }
+      if(event.type==='focusin') { if(!tutorialElementAllowed(target))focusTutorialTarget();return; }
       let allowed=tutorialElementAllowed(target);
       if(['dragstart','dragover','drop','contextmenu'].includes(event.type))allowed=false;
       if(['pointerdown','touchstart'].includes(event.type)&&target instanceof Element&&target.matches('.blockui-workspace,.blockui-palette-list'))allowed=true;
@@ -32001,7 +32006,7 @@ function createAkariExtensionHost(options) {
       loadEditor();
       $('#execLocation').textContent = 'いまの場所：―';
       setStatus('停止しました');
-      if(tutorial){tutorialRefresh();tutorialFocusTargets()[0]?.focus({preventScroll:true});return;}
+      if(tutorial){tutorialRefresh();focusTutorialTarget();return;}
       if (sourceOverviewOpen) $('#sourceEditBtn').focus({ preventScroll: true });
       else if (mainEditor.session?.mode === 'blocks') {
         mainEditor.view.focus({ id: mainEditor.session.blockSelection });
@@ -34208,19 +34213,19 @@ function createAkariExtensionHost(options) {
         getProject: () => project,
         getContext: () => bindingContext(binding),
         tutorialActive: () => !!tutorial,
-        lessonCandidate: () => { const key=tutorialStep(tutorial)?.block;return key?{key,node:tutorialCandidate(key,project),label:TUTORIAL_BLOCKS[key].label}:null; },
+        lessonCandidate: () => { const step=tutorialStep(tutorial),key=step?.block;return key?{key,node:tutorialCandidate(key,project,step.id),label:TUTORIAL_BLOCKS[key].label}:null; },
         onData: () => $('#dataBtn').click(),
         isLocked: modelLocked,
         onOperation: (operation) => operateBlock(binding, operation),
         onPending: (pending) => {
           if (binding.session) binding.session.pendingEdit = pending || (binding.session.blockDraft
-            ? { kind: 'block-draft', ownerKey: bindingOwner(binding) } : null);
+            ? binding.session.blockDraft.pending : null);
           scheduleAutosave();
         },
         onCancel: () => {
           clearEditorFailure(binding);
           if (binding.session) binding.session.pendingEdit = binding.session.blockDraft
-            ? { kind: 'block-draft', ownerKey: bindingOwner(binding) } : null;
+            ? binding.session.blockDraft.pending : null;
         },
       });
       for (const mode of ['code', 'blocks'])

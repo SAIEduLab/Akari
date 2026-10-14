@@ -38,7 +38,9 @@ async function positive(p,id){
   await activate(p,p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+parent+'"][data-blockui-body="'+op.body+'"][data-insert-index="'+op.at+'"]').first());
   await activate(p,p.locator('#blockEditor [data-lesson-block="'+op.key+'"]'));return null;
  }
- if(op.kind==='field'){const ref=await fieldAt(p,op.ref);if(id.endsWith('-change'))p.entryOldValue=ref.value;await edit(p,ref.id,op.value);if(id.endsWith('-change'))assert.equal((await fieldAt(p,op.ref)).value,op.value);return null;}
+ if(op.kind==='field'){const ref=await fieldAt(p,op.ref);
+  await p.waitForFunction(id=>{const n=document.querySelector('#blockEditor input[data-block-id="'+id+'"]'),w=document.querySelector('#blockEditor .blockui-workspace');if(!n||!w)return false;const r=n.getBoundingClientRect(),b=w.getBoundingClientRect();return r.top>=b.top&&r.bottom<=b.bottom&&r.left>=b.left&&r.right<=b.right;},ref.id);
+  if(id.endsWith('-change'))p.entryOldValue=ref.value;await edit(p,ref.id,op.value);if(id.endsWith('-change'))assert.equal((await fieldAt(p,op.ref)).value,op.value);return null;}
  if(id.startsWith('run-')){await activate(p,p.locator('#runBtn'));return null;}
  if(id.startsWith('stop-')){await activate(p,p.locator('#stopBtn'));return null;}
  if(id.endsWith('-undo')){await activate(p,p.locator('#undoBtn'));const change=auditOperation(course+'-'+leaf+'-change',course,leaf);assert.equal((await fieldAt(p,change.ref)).value,p.entryOldValue,'ordinary Undo restores the freely chosen numeric edit');return null;}
@@ -49,9 +51,15 @@ async function positive(p,id){
   for(let i=0;i<count;i++){
    if(p.entryTouch&&i===0){await actor.focus();await actor.press('Enter');}else await activate(p,actor);
    if(i<count-1){await p.waitForFunction(()=>document.querySelector('#formSurface .component[data-id="sprite-1"]').dataset.tutorialBlocked==='true');
-    await p.waitForFunction(()=>document.querySelector('#formSurface .component[data-id="sprite-1"]').dataset.tutorialBlocked==='false');}
+    await p.waitForFunction(()=>document.querySelector('#formSurface .component[data-id="sprite-1"]').dataset.tutorialBlocked==='false');
+    if(leaf==='bonus'&&id.includes(course+'-'+leaf)){
+     const threshold=id.endsWith('-remix')?auditOperation(course+'-'+leaf+'-change',course,leaf).value:3;
+     assert.equal(await p.locator('#formSurface .component[data-id="practice-board"]').textContent(),'つかまえた：'+(i+1+(i+1>=threshold?2:0)),'bonus visible on the triggering click');
+    }
+   }
   }
   await waitStep(p,'stop-'+id.slice(4));await p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  if(leaf==='bonus'&&id.includes(course+'-'+leaf))assert.equal(await p.locator('#formSurface .component[data-id="practice-board"]').textContent(),'つかまえた：8');
   const samples=await p.evaluate(()=>{window.entryMeasuring=false;return window.entryMeasuredFrames;});
   assert.ok(samples.some(s=>s.speech==='つかまった！'),'actual catch response');assert.ok(new Set(samples.map(s=>s.x+','+s.y)).size>1,'actual escape');
   if(id.includes(course+'-'+leaf)){
@@ -113,11 +121,12 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   assert.equal(await p.locator('.menutool > .ui-level-label #uiLevel').count(),1,'display level stays in the top toolbar');
   assert.equal(await p.locator('#editorModecode').isDisabled(),true,'entry is block-only');
   await p.locator('#uiLevel').selectOption('basic');await p.locator('#editorModecode').click();
-  assert.equal(await p.locator('#uiLevel option[value="entry"]').isDisabled(),true,'entry cannot be selected in code mode');
+  // option disabled is a native HTML property; Playwright's generic enabled predicate does not model it.
+  assert.equal(await p.locator('#uiLevel option[value="entry"]').evaluate(el=>el.disabled),true,'entry cannot be selected in code mode');
   await p.locator('#uiLevel').evaluate(el=>{el.value='entry';el.dispatchEvent(new Event('change',{bubbles:true}));});
   assert.equal(await p.locator('#uiLevel').inputValue(),'basic','synthetic selection cannot create an entry/code mismatch');
   await p.locator('#editorModeblocks').click();
-  assert.equal(await p.locator('#uiLevel option[value="entry"]').isDisabled(),false);
+  assert.equal(await p.locator('#uiLevel option[value="entry"]').evaluate(el=>el.disabled),false);
   await p.locator('#uiLevel').selectOption('entry');
 
   for(const mode of ['advanced','basic','entry']){await p.locator('#uiLevel').selectOption(mode);assert.equal(await p.locator('.menutool > .ui-level-label #uiLevel').count(),1);const after=await read(p);assert.equal(after.project,before.project);assert.equal(after.history,before.history);assert.equal(after.dirty,before.dirty);states.push(after);}

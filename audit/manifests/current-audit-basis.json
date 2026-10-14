@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.3",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Independent browser inspection: focus first allowed lesson control and suppress inactive palette noise; retain invalid numeric cancellation checks. Byte record only, not a PASS claim.",
+  "updateReason": "Direct UX findings and CI failures: preserve structural draft metadata on exit, native option.disabled validation, bonus label on triggering click, meaningful guidance and visible numeric field. No historical fixture changes.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,8 +12,8 @@
     },
     {
       "path": "Akari_1_2_3.html",
-      "sha256": "35fd22e3fa28a2afd5a1ba039d4d9a23bb220eeea6ae467754c713d093683d8f",
-      "bytes": 1781022
+      "sha256": "37ed0036a7d3c386db9e3658ff9b845c51648bd750e5f287d4cb2ba384328206",
+      "bytes": 1782057
     },
     {
       "path": "LANGUAGE.md",
