@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.3",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Approved entry presentation, guarded tutorial and editing improvements; preserve old language bodies and gate expectations, correct ID-based keyboard activation and limit layout restoration to leaving entry",
+  "updateReason": "User-approved shared display toolbar: preserve code/entry exclusivity in empty source overview, align the independent toolbar geometry probe, and record exact reviewed bytes. No historical language/runtime oracle changes; this record is not execution PASS.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,13 +12,13 @@
     },
     {
       "path": "Akari_1_2_3.html",
-      "sha256": "b09fd33123c88d634beeb13abe45ec60c5f8905a2fbbfefc6d228487bad9c6c3",
-      "bytes": 1746768
+      "sha256": "e51bef5f1bdf07d884671663970153717711aa2bc18ef5ec7b119d1f4d8395bd",
+      "bytes": 1748018
     },
     {
       "path": "LANGUAGE.md",
-      "sha256": "e8cc48d662054b0a9e4dc3d2ebc22ef1c8a18a37c3c5e6ecd7668134d1daa9a5",
-      "bytes": 116474
+      "sha256": "b2db3d2480d457228749df8188d681527be4bf914b90bb79a1de89701f3bc845",
+      "bytes": 117059
     },
     {
       "path": "MANUAL.html",

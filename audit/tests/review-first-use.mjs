@@ -116,7 +116,8 @@ async function reviewLevelAccess(page) {
     await page.setViewportSize({width,height:768});
     await page.locator('#uiLevel').selectOption(level);
     const measurement=await page.locator('#uiLevel').evaluate(el=>{
-      const r=el.getBoundingClientRect(),parent=el.closest('.project-tools');
+      const r=el.getBoundingClientRect(),parent=el.closest('.menutool');
+      if(!parent)throw new Error('display selector must stay in the shared toolbar');
       return {x:r.x,right:r.right,width:r.width,height:r.height,viewport:innerWidth,
         parentWidth:parent.clientWidth,parentScrollWidth:parent.scrollWidth,scrollLeft:parent.scrollLeft};
     });

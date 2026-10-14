@@ -27689,7 +27689,7 @@ function createAkariExtensionHost(options) {
       tutorialTimer=null, tutorialTrace=null, tutorialSave=null;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      $('#uiLevel option[value="entry"]').disabled=(mainEditor.session?.mode||editorModes.get('script'))==='code';
+      $('#uiLevel option[value="entry"]').disabled=(document.body.dataset.editorMode||editorModes.get('script'))==='code';
       for(const node of [$('#undoBtn'),$('#redoBtn')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
         if(entry){if(node.parentElement!==$('.menutool'))$('.menutool').insertBefore(node,$('#tutorialStart'));}
@@ -33954,7 +33954,7 @@ function createAkariExtensionHost(options) {
       if (f) await importSoundFile(f);
     };
     $('#uiLevel').onchange = () => {
-      if($('#uiLevel').value==='entry'&&(mainEditor.session?.mode||editorModes.get('script'))==='code'){
+      if($('#uiLevel').value==='entry'&&(document.body.dataset.editorMode||editorModes.get('script'))==='code'){
         $('#uiLevel').value=document.body.dataset.uiLevel;
         setStatus('「はじめて」はブロックで使うよ。先に「ブロック」をえらんでね。');
         return;
