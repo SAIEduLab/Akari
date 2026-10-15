@@ -2,7 +2,7 @@
   "schema": "akari-current-audit-basis-v1",
   "productVersion": "1.2.4",
   "startingCommit": "2997cac6e74895e12cfd6ede51311ce09ddbdfd8",
-  "updateReason": "Approved tutorial guidance repair: preserve candidate rendering on resume and exercise blocked activation with explicit negative-test input.",
+  "updateReason": "Reviewed CSS-only tutorial candidate visibility fix in 6b6d109; update byte integrity for the approved product without changing verification conditions.",
   "executionStatus": "NOT_ASSERTED_BY_BYTE_INTEGRITY",
   "files": [
     {
@@ -12,8 +12,8 @@
     },
     {
       "path": "Akari_1_2_4.html",
-      "sha256": "898c62972e4d63bf0e58ea9db1e7a5c6c0aef5b8f1926c55badb6190012b5dc3",
-      "bytes": 1784984
+      "sha256": "a5e1e139987a2aa9d8ebd1b7931203e812588a076fa1003306209c72bbe9146c",
+      "bytes": 1785587
     },
     {
       "path": "LANGUAGE.md",
