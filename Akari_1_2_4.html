@@ -5774,8 +5774,21 @@ body[data-tutorial-step] .blockui-world .blockui-insertion.tutorial-target {
   background:#e0efff !important; border:2px solid #2357a0;
   color:#123b72 !important; box-shadow:0 0 0 3px #c7dfff;
 }
-body[data-tutorial-step] .blockui-palette-item:has(> .tutorial-target) { background:#e0efff; border-radius:6px; }
+body[data-tutorial-step] .blockui-palette-item:has(> .tutorial-target) {
+  position:sticky; top:6px; bottom:6px; z-index:1;
+  background:#e0efff; border-radius:6px;
+}
 body[data-tutorial-step] .blockui-palette-list { padding:6px; scroll-padding:8px; }
+/* The guide already shows the insertion feedback; retain its live announcement. */
+body[data-tutorial-step] #entryOutside,
+body[data-tutorial-step] #blockEditor.blockui-interacting > .blockui-message:not(.blockui-error) {
+  position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%);
+  margin:0; padding:0; border:0; box-shadow:none;
+}
+body[data-tutorial-step] #blockEditor > .blockui-message.blockui-error {
+  position:static; width:auto; height:auto; clip-path:none;
+  flex:none; margin:0; border-radius:0; box-shadow:none;
+}
 body[data-tutorial-step] .blockui-world { padding:6px; }
 body[data-tutorial-step] :is(button,input,select,textarea,summary)[data-tutorial-blocked="true"] { opacity:.55; }
 body[data-tutorial-step] #tutorialExit,body[data-tutorial-step] #stopBtn { opacity:1; }
