@@ -491,43 +491,6 @@ projectEnvelope
 
 CIでは新規の空状態、明示選択時だけのテンプレート、クリックのtrace、吹出し配置/overflow/操作到達性を検査する。人は空状態の発見、サンプルの区別、被覆と読みやすさを評価する。
 
-## 10. 静的確認した変更候補箇所
-
-行番号は基準commitのHTMLに対する目安。実装対象版では関数/IDを再確認する。候補箇所は根本原因を断定するものではなく、変更前後の再現テストで検証する。
-
-| 基準source | 確認したこと | 変更の要点 |
-|---|---|---|
-| `Akari1_0_2.html:10600–10680` `protectedLexemes/normalizeSource/compactSourceMap` | 引用保護、行単位分割、引用escape、位置mapping | multiline文字とCST対応、助詞解析が引用内へ漏れない |
-| `:11992` `parseSyntax` | 構文失敗はAST=null、単一診断配列 | 実行ASTと編集下書きを分ける。下書き保存経路を設置 |
-| `:12014–12160` `sentenceRoleSlots/SENTENCE_FORMS/renderSentenceNode` | 役割定義はあるが文型正規表現・renderer・schemaが分散 | 役割を共通仕様化し、自然語順/助詞を構造的に束縛 |
-| `:12199–12327` `readRoleStatement/readSentenceMotion` | 手順名を【】に限定、concatは「と」分割、移動句を限られた順で認識 | 文脈に応じた名前引用、Concatの対象役割、時間/方向/距離の分離 |
-| `:12327–12360` `readSentenceHeading/readContinuousSentence` | heading文型と継続文型。継続は動き続ける/動かし続けるを入口にする | 複数イベントroot、状態+速度なら動くも継続 |
-| `:12436–12508` `parseScript` | 最初のheadingだけを取り除き、末尾未消費をP204にする | document parserとbody parserを分離し、第2見出しを正しく解析 |
-| `:12510–12588` `readBlockHead/parseSimpleStatement` | ForEachは「の中身を」固定、接続語に最後にがない | grammar familyとして同意味表現を拡張 |
-| `:7335–7420` 数量/更新処理 | `addNumericUpdate`がcurrentの単位を用いる。declared unit検証は裸数を許容 | binding生成時の単位一貫化、両経路で同型 |
-| `:8520–8688` `executeNode` | ForEach snapshot、通知待機群、数値更新の実行 | runtime能力維持。新IRから同じ契約へ結合 |
-| `:13323–14206` `BLOCK_SCHEMAS/blockFieldValue/blockEncode/blockDecode/createBlock` | Return初期0、文字fieldの全改行拒否、category検査 | Hole、multiline、rule/statement接続型の統一 |
-| `:14210–144xx` `formatExpression/formatScript` | canonical生成の経路 | 原文無編集保持と編集部分の自然文印字を分離 |
-| `:145xx–15199` `analyzeProject/sourceRegistry/parseProjectSyntax/compileProject` | source単位にheadingを解決、定義/本文ごと解析 | document単位/ID参照/単位/副作用を共通検査 |
-| `:17592–17776` `preserveBlockSource/prepareBlockEdit` | 局所差分plan失敗で「Codeで編集」エラー | 最小単位再印字fallback＋意味再照合、原子commit |
-| `:18380–18442` `BLOCK_SEARCH_SYNONYMS/blockPaletteSearchText` | 同義語・登録名の文字索引、読み生成は確認できない | 役割/目的/読み/具体binding索引 |
-| `:21980–223xx` editor session/sourceCandidate/commit/flush | sourceCandidateはparse成功要求、選択とsession更新が分散 | 編集下書きと実行準備を分離、イベントID/診断revision |
-| `:22931–23075` history/snapshot | メモリ内history/redo。snapshotにdraft等 | 永続化形式と素材参照共有、原子的復元 |
-| `:25470–25491` `saveProject` | hasCallableDraftまたはflush失敗で保存前return | 未完成も保存する独立serializeEditorProject |
-| `:25619–25856` `writeAutosave/checkRecovery` | pendingEditors/draftTreeはあるがhistory/redoが保存recordにない | 保存ファイルと自動保存の共通envelope、履歴復元 |
-| `:264xx` 衣装削除ハンドラ | `c.costumes.splice`による削除箇所 | 共通参照グラフと削除前検査 |
-| `:6231` `valueText`、`:247xx–248xx` monitor | 値表示と文字変換に共用される経路 | 表示専用formatterを分け、意味変換を壊さない |
-| `MANUAL.html` `code-ownership`、本体monitor CSS | 説明パネルと実行モニターの表示 | token/継承/min-sizeの実computedと画面を確認して修正 |
-
-製品以外の既存テスト参照:
-
-- `audit/suites/runSyntaxTests.js`, `runSemanticContractTests.js`, `runBlockCodecTests.js`, `runEditorCoreTests.js`, `runCoreTests.js`, `runLimitBoundaryTests.js`
-- `audit/lib/japanese-intent-oracles.mjs`, `japanese-gate-contract.mjs`, `review-regression-contract.mjs`, `feature-contract.mjs`
-- `audit/browser/cases/browser-event-traces.cjs`, `browser-owner-delete.cjs`, `persistence-probe.cjs`, `native-focus.cjs`, `ui-routes.cjs`
-- `audit/run-local-gate.mjs`, `audit/browser/run-full-browser-audit.mjs`, `.github/workflows/akari-audit.yml`
-
-`audit/README.md`の見出しには1.0.1が残っている。実装時は表示名だけで実行対象を決めず、`audit/public-files.json`と製品hashで結ぶ。テスト対象版と結果の結合にはcommitと製品hashを使う。
-
 ## 11. 受入テストの設計
 
 ### 11.1 日本語による制作例テスト
@@ -927,10 +890,10 @@ T385は`長い物語の言葉`を55回連結した385 Unicode code pointsの文�
 
 以下はいずれも製品repository内の相対pathである。
 
-- `Akari1_0_2.html`: 言語、意味表現、runtime、Block、保存、UI
-- `MANUAL.html`: 操作案内
+- `audit/public-files.json` の productFile: 言語、意味表現、runtime、Block、保存、UI
+- publicの `MANUAL.html`: 操作案内（privateコピーには含めない）
 - `audit/fixtures/capability-oracle.json`: 260能力の独立baseline
 - `audit/manifests/features.json`: 命令/上限/現行schema
 - `audit/public-files.json`: 製品pathと公開物
-- `.github/workflows/akari-audit.yml`: CI入口
+- publicの `.github/workflows/akari-audit.yml`: CI入口（privateコピーでは実行しない）
 
