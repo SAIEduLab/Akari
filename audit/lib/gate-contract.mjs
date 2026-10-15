@@ -46,6 +46,7 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['samples-negative','audit/tests/samples-negative.mjs',file('samples-negative')],
   ['license-static','audit/tests/license-static.mjs',file('license-static')],
   ['license-browser','audit/tests/license-browser.mjs',browser,file('license-browser')],
+  ['export-open','audit/tests/export-open-browser.cjs',browser,path.join(dir,'export-open')],
   ['speech-display','audit/tests/speech-display-browser.mjs',browser,file('speech-display')],
   ['speech-display-verify','audit/tests/speech-display-verify.mjs',file('speech-display'),file('speech-display-verify')],
   ['entry-unit','audit/tests/entry-workshop-core.mjs',file('entry-unit')],

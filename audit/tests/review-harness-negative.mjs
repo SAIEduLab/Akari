@@ -23,7 +23,7 @@ for(const [group,ids] of Object.entries(reviewGroups)) {
   }
 }
 const gateIds=gateSteps('',path.dirname(output)).map(step=>step[0]);
-const required=['static','release-policy-negative','japanese-contract-static','language-expectations-static','japanese-gate-negative','extension-foundation','extension-foundation-negative','entry-unit','entry-browser','entry-verify'];
+const required=['static','release-policy-negative','japanese-contract-static','language-expectations-static','japanese-gate-negative','extension-foundation','extension-foundation-negative','export-open','entry-unit','entry-browser','entry-verify'];
 const verifyIds=ids=>{assert.equal(new Set(ids).size,ids.length);for(const id of required)assert.ok(ids.includes(id),id);};verifyIds(gateIds);
 for(const [id,bad]of [['gate/required-producer-missing',gateIds.filter(id=>id!=='static')],['gate/producer-duplicate',[...gateIds,gateIds[0]]]]){assert.throws(()=>verifyIds(bad));results.push({id,rejected:true});}
 const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'akari-relocated-evidence-'));

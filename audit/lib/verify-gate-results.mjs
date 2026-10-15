@@ -17,6 +17,7 @@ import {verifyUiButtons} from './ui-buttons-contract.mjs';
 import {reviewGroups,verifyReviewReport,verifyReviewNegativeReport} from './review-regression-contract.mjs';
 import {verifyExtensionFoundation,verifyExtensionFoundationNegative} from './extension-foundation-contract.mjs';
 import {COPYRIGHT,verifyLicenseBrowserReport} from './license-contract.cjs';
+import {verifyExportOpen,checkEvidenceNegatives as checkExportOpenNegatives} from './export-open-contract.cjs';
 export function verifyGateResults(dir,inputs){
   const read=n=>JSON.parse(fs.readFileSync(path.join(dir,n+'.json'))),gate=read('gate');
   assert.equal(gate.status,'PASS');assert.deepEqual(gate.snapshot,inputs);
@@ -48,6 +49,7 @@ export function verifyGateResults(dir,inputs){
   verifyExtensionFoundationNegative(read('extension-foundation-negative'),inputs);
   const licensing=read('license-static');assert.equal(licensing.status,'PASS');assert.equal(licensing.copyright,COPYRIGHT);assert.deepEqual(licensing.snapshot,inputs);assert.equal(licensing.results.length,9);assert.equal(new Set(licensing.results.map(row=>row.id)).size,9);for(const row of licensing.results)assert.equal(row.status,'PASS');
   verifyLicenseBrowserReport(read('license-browser'),path.join(dir,'license-browser.artifacts'),inputs);
+  const exported=read('export-open/report');verifyExportOpen(exported,inputs);assert.equal(exported.validatorNegatives,'PASS');checkExportOpenNegatives(exported,inputs);
   verifySamples(read('samples'),inputs,path.join(dir,'samples.artifacts'));
   verifySamplesNegative(read('samples-negative'),inputs);
   const display=verifyDisplay(read('speech-display'),inputs,path.join(dir,'speech-display.json.artifacts'));
