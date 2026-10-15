@@ -35,7 +35,7 @@ const output=process.argv[2]||'audit-evidence/integrity.json';fs.mkdirSync(path.
 const base=fs.mkdtempSync(path.join(path.dirname(output),'integrity-'));
 const downloads=path.resolve(base,'downloads');fs.mkdirSync(downloads);
 // Exercise the real selector with a partial rerun: some kinds retain attempt 1.
-const aggregateProvenance={run:'123',attempt:'2'};
+const aggregateProvenance={repository:'SAIEduLab/Akari',testedCommit:'a'.repeat(40),candidateCommit:'b'.repeat(40),run:'123',attempt:'2',platform:'linux'};
 const selectedAttempts=Object.fromEntries(kinds.map((kind,i)=>[kind,String(i%2?2:1)]));
 for(const kind of kinds){
   fs.mkdirSync(path.join(downloads,'akari-'+kind+'-123-1'));
@@ -50,10 +50,10 @@ for(const scenario of ['pass',...kinds,'missing-jobs','empty-jobs','cancelled-jo
   if(scenario==='missing-jobs')delete process.env.AKARI_NEEDS;
   if(scenario==='empty-jobs')process.env.AKARI_NEEDS='{}';
   vm.runInNewContext(aggregate,{fs:{mkdirSync(){},writeFileSync(p,s){written.set(p,s);}},path:path.posix,assert:relaxed,process,snapshot:()=>({fixture:true}),currentProductFile,currentProductVersion,currentReleaseFile,
-    auditBundleKinds,auditJobIds,writeSummary(){},selectBundleDirectory(kind,directory,provenance){selections.push(kind);assert.equal(directory,downloads);assert.deepEqual(clone(provenance),aggregateProvenance);return selectBundleDirectory(kind,directory,provenance);},
+    auditBundleKinds,auditJobIds,executionProvenance:()=>aggregateProvenance,writeSummary(){},selectBundleDirectory(kind,directory,provenance){selections.push(kind);assert.equal(directory,downloads);assert.deepEqual(clone(provenance),{...aggregateProvenance,platform:kind==='audio-codecs-win32'?'win32':'linux'});return selectBundleDirectory(kind,directory,provenance);},
     verifyBundle(kind,directory,inputs,provenance){
       calls.push(kind);assert.equal(directory,path.join(downloads,'akari-'+kind+'-123-'+selectedAttempts[kind]));
-      assert.deepEqual(clone(inputs),{fixture:true});assert.deepEqual(clone(provenance),{...aggregateProvenance,attempt:selectedAttempts[kind]});
+      assert.deepEqual(clone(inputs),{fixture:true});assert.deepEqual(clone(provenance),{...aggregateProvenance,attempt:selectedAttempts[kind],platform:kind==='audio-codecs-win32'?'win32':'linux'});
       if(kind===scenario)throw Error('invalid evidence');return {result:{status:'PASS'}};
     }});
   assert.deepEqual(selections,kinds,'every kind selected after a failure');
@@ -62,7 +62,7 @@ for(const scenario of ['pass',...kinds,'missing-jobs','empty-jobs','cancelled-jo
   assert.deepEqual(report.results.map(r=>r.kind),kinds);
   for(const result of report.results){
     if(result.kind===scenario){assert.equal(result.status,'FAIL');assert.equal(result.reason,'invalid evidence');}
-    else {assert.equal(result.status,'PASS');assert.deepEqual(result.provenance,{...aggregateProvenance,attempt:selectedAttempts[result.kind]});}
+    else {assert.equal(result.status,'PASS');assert.deepEqual(result.provenance,{...aggregateProvenance,attempt:selectedAttempts[result.kind],platform:result.kind==='audio-codecs-win32'?'win32':'linux'});}
   }
   assert.equal(report.status,scenario==='pass'?'MACHINE_PASS':'FAIL');assert.equal(report.candidateApproved,false);
   if(scenario!=='pass')assert.equal(process.exitCode,1);
