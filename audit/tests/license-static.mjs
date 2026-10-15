@@ -18,7 +18,7 @@ check('EXTENSION-MIT-SPDX',()=>{
 check('CURRENT-DOCUMENTS-MIT',()=>{
   const language=fs.readFileSync('LANGUAGE.md','utf8'),readme=fs.readFileSync('README.md','utf8');
   assert.ok(language.includes('MIT License'));assert.ok(!language.includes('Apache License 2.0'));
-  assert.ok(readme.includes('(LICENSE)'),'README routes to the canonical license');assert.ok(!readme.includes('Apache License 2.0'));
+  assert.match(readme,/\]\((?:\.\/)?LICENSE\)/,'README routes to the canonical license');assert.ok(!readme.includes('Apache License 2.0'));
   const publicSurface=JSON.parse(fs.readFileSync('audit/public-files.json')).files.includes('index.html');if(publicSurface)assert.ok(readme.includes('MIT License'));
   assert.ok(fs.readFileSync('LANGUAGE.md','utf8').includes(COPYRIGHT));
 });
