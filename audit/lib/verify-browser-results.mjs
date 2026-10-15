@@ -1,3 +1,4 @@
+import {inputInventory} from './input-snapshot.cjs';
 import { currentProductFile } from "./product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
@@ -57,7 +58,7 @@ export function verifyBrowserGroup(dir,group,expectedSnapshot) {
   for(const r of summary.records){assert.equal(r.status,0);assert.equal(r.signal,null);assert.ok(fs.existsSync(path.join(dir,r.log)));}
   const manifest=read(path.join(dir,'candidate/manifest.json'));assert.equal(manifest.candidate,currentProductFile());
   assert.equal(manifest.head,expectedSnapshot.productSha256);  assert.deepEqual(Object.fromEntries(manifest.files.filter(f=>!f.gitRef).map(f=>[f.path,f.sha256]).sort(([a],[b])=>a.localeCompare(b))),
-    Object.fromEntries(Object.entries(expectedSnapshot.files).sort(([a],[b])=>a.localeCompare(b))),'browser snapshot input coverage');
+    Object.fromEntries(Object.entries(inputInventory()).sort(([a],[b])=>a.localeCompare(b))),'browser snapshot input coverage');
   for(const f of manifest.files)assert.equal(sha(fs.readFileSync(path.join(dir,'candidate',f.path))),f.sha256,'changed browser input '+f.path);
   assert.deepEqual(manifest.runnerFiles.map(f=>f.snapshotPath).sort(),['fixture-manifest.json','picture.jpg','picture.png','picture.webp','silence.mp3','tone.wav'].map(n=>'media/'+n));
   for(const f of manifest.runnerFiles)assert.equal(sha(fs.readFileSync(path.join(dir,'candidate',f.snapshotPath))),f.sha256,'changed generated fixture '+f.path);

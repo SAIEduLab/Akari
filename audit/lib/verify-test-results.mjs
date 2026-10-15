@@ -41,8 +41,11 @@ export function verifyAuthority(manifest) {
   const audit=fs.readFileSync(path.join(root,'AUDIT.md'),'utf8');
   const known=new Set([...ids,...formatCompatibilityIds]);
   const formatReferences=new Map(formatCompatibilityIds.map(id=>[id,0]));
-  for(const line of audit.split(/\r?\n/).filter(l=>/^\| [a-z]+:/.test(l))) {
-    const cells=line.split('|'),cell=cells[8].trim(),browserCell=cells[9].trim();
+  const oracle=JSON.parse(fs.readFileSync(path.join(root,'audit/fixtures/capability-oracle.json')));
+  const documented=audit.split(/\r?\n/).filter(l=>/^\| [a-z]+:/.test(l)).map(line=>line.split('|')[1].trim());
+  assert.deepEqual([...documented].sort(),oracle.capabilities.map(c=>c.id).sort(),'documented current capability set');
+  for(const capability of oracle.capabilities) {
+    const cell=capability.selftest,browserCell=capability.browser;
     for(const id of formatCompatibilityIds){
       const inSelftest=cell.split(';').some(ref=>ref.trim()===id);
       const inBrowser=browserCell.split(';').some(ref=>ref.trim()===id);
@@ -55,9 +58,9 @@ export function verifyAuthority(manifest) {
     assert.ok(!browserCell.includes('release-policy-negative'),'static test claimed as browser coverage');
     if(cell.includes('対象外（browser suiteで検査）'))continue;
     if(cell==='対象外（static gateで検査）'){
-      assert.equal(cells[1].trim(),'maint:identifier-policy','unregistered static-only capability');
+      assert.equal(capability.id,'maint:identifier-policy','unregistered static-only capability');
       assert.equal(browserCell,'対象外（static gateで検査）','static capability claimed as browser coverage');
-      assert.ok(cells[10].includes('release-policy-negative'),'missing static policy evidence');
+      assert.ok(capability.guarantee.includes('release-policy-negative'),'missing static policy evidence');
       continue;
     }
     for(let ref of cell.split(';')) {

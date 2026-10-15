@@ -1,5 +1,8 @@
 import { currentProductFile } from "./product-path.cjs";
 import path from 'node:path';
+import assert from 'node:assert/strict';
+export const auditBundleKinds=['selftest','audio-codecs-linux','audio-codecs-win32',...['session','ui','limits','schemas','extra'].map(g=>'full-browser-'+g)];
+export const auditJobIds=['audio-codecs','full-browser-gate','selftest'];
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
   ['static','audit/tests/static-contract.mjs',file('static')],
   ['release-policy-negative','audit/tests/release-policy-negative.mjs'],
@@ -27,7 +30,7 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['language-negative','audit/tests/language-harness-negative.mjs',file('language-browser')],
   ['surface-negative','audit/tests/surface-negative.mjs',file('editor-browser-core'),file('editor-gui')],
   ['japanese-contract-static','audit/tests/contract-gate.mjs','static',file('japanese-contract-static')],
-  ['language-migration-static','audit/tests/contract-gate.mjs','migration',file('language-migration-static')],
+  ['language-expectations-static','audit/tests/contract-gate.mjs','expectations',file('language-expectations-static')],
   ['japanese-intent-browser','audit/tests/japanese-intent-browser.mjs',browser,file('japanese-intent-browser')],
   ['runtime-v2','audit/tests/runtime-boundary-gate.mjs',currentProductFile(),browser,path.join(dir,'runtime-v2'),file('runtime-v2')],
   ['japanese-gate-negative','audit/tests/japanese-gate-negative.mjs',file('japanese-gate-negative')],
@@ -49,3 +52,69 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['entry-browser','audit/tests/entry-workshop-browser.mjs',browser,file('entry-browser')],
   ['entry-verify','audit/tests/entry-workshop-verify.mjs',file('entry-unit'),file('entry-browser'),file('entry-verify')],
 ];}
+
+export function acceptanceIds(kind){return acceptanceCommands[kind].map(command=>{const args=command.slice(5).match(/"[^"]*"|\S+/g);return args[0]+(args[0].includes('child-ux')?'/'+args[1]:'');});}
+export function verifyAcceptanceExecution(report,kind,inputs){
+  assert.equal(report.schema,'akari-acceptance-execution-v1');assert.equal(report.status,'PASS');assert.deepEqual(report.snapshot,inputs);
+  assert.deepEqual(report.steps.map(r=>r.id),acceptanceIds(kind));assert.equal(new Set(report.steps.map(r=>r.id)).size,report.steps.length);
+  for(const row of report.steps){assert.equal(row.status,'PASS',row.id);assert.equal(row.exit,0);assert.equal(row.signal,null);assert.ok(row.log&&row.ms>=0);}
+  return true;
+}
+
+export const acceptanceCommands={
+  "composition": [
+    "node audit/tests/child-ux.mjs static audit-evidence/acceptance/child-ux-static.json",
+    "node audit/tests/actions-transfer-static.mjs audit-evidence/acceptance/transfer.json",
+    "node audit/tests/actions-transfer-values.mjs audit-evidence/acceptance/values.json",
+    "node audit/tests/command-meaning.mjs audit-evidence/acceptance/command-meaning.json",
+    "node audit/tests/basic-intents.mjs audit-evidence/acceptance/basic-intents.json",
+    "node audit/tests/finite-semantic-variants.mjs audit-evidence/acceptance/finite-semantic-variants.json",
+    "node audit/tests/semantic-negative-pairs.mjs audit-evidence/acceptance/semantic-negative-pairs.json",
+    "node audit/tests/natural-roles.mjs audit-evidence/acceptance/natural-roles.json",
+    "node audit/tests/document-units.mjs audit-evidence/acceptance/document-units.json",
+    "node audit/tests/draft-persistence.mjs audit-evidence/acceptance/draft-persistence.json",
+    "node audit/tests/data-form-values.mjs audit-evidence/acceptance/data-form-values.json",
+    "node audit/tests/numeric-display.mjs audit-evidence/acceptance/numeric-display.json",
+    "node audit/tests/resource-references.mjs audit-evidence/acceptance/resource-references.json",
+    "node audit/tests/search-bindings.mjs audit-evidence/acceptance/search-bindings.json",
+    "node audit/tests/basic-intents-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/basic-intents-browser.json",
+    "node audit/tests/audio-output-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/audio-output-browser.json",
+    "node audit/tests/structured-editing-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/structured-editing-browser.json",
+    "node audit/tests/composition-acceptance.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/composition.json",
+    "node audit/tests/workspace-history-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/workspace-history-browser.json",
+    "node audit/tests/data-form-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/data-form-browser.json",
+    "node audit/tests/numeric-display-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/numeric-display-browser.json",
+    "node audit/tests/resource-references-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/resource-references-browser.json",
+    "node audit/tests/search-bindings-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/search-bindings-browser.json",
+    "node audit/tests/ux-surface-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/ux-surface-browser.json",
+    "node audit/tests/ux-repair-language.mjs audit-evidence/acceptance/ux-repair-language.json",
+    "node audit/tests/ux-repair-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/ux-repair-browser.json",
+    "node audit/tests/ux-bubble-layout.cjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/ux-bubble-layout.json",
+    "node audit/tests/ux-repair02-language.mjs audit-evidence/acceptance/ux-repair02-language.json",
+    "node audit/tests/ux-repair02-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/ux-repair02-browser.json",
+    "node audit/run-ux-repair02-gui.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance",
+    "node audit/tests/child-ux.mjs matrix audit-evidence/acceptance/ux-repair02-matrix.json audit-evidence/acceptance/child-ux-matrix.json",
+    "node audit/run-ux-repair03-gui.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance",
+    "node audit/tests/autosave-state-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/autosave-state-browser.json",
+    "node audit/tests/search-layout-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/acceptance/search-layout-browser.json",
+    "node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance"
+  ],
+  "repair05": [
+    "node audit/tests/ux-insertion-context-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/repair05/insertion-context.json",
+    "node audit/tests/ux-insertion-context-verify.mjs audit-evidence/repair05/insertion-context.json",
+    "node audit/tests/speech-name-layout-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/repair05/speech-name-layout.json",
+    "node audit/tests/speech-name-layout-verify.mjs audit-evidence/repair05/speech-name-layout.json",
+    "node audit/tests/speech-preview-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/repair05/speech-preview.json",
+    "node audit/tests/speech-preview-verify.mjs audit-evidence/repair05/speech-preview.json audit-evidence/repair05/speech-preview-verification.json",
+    "node audit/tests/child-language-ui-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/repair05/child-language-ui.json",
+    "node audit/tests/child-language-ui-verify.mjs audit-evidence/repair05/child-language-ui.json",
+    "node audit/tests/child-ux.mjs language audit-evidence/repair05/child-language-ui.json audit-evidence/repair05/child-ux-language.json",
+    "node audit/tests/component-controls-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/repair05/component-controls.json",
+    "node audit/tests/component-controls-verify.mjs audit-evidence/repair05/component-controls.json audit-evidence/repair05/component-controls-verification.json",
+    "node audit/tests/child-diagnostics-browser.mjs \"$AKARI_CODEC_BROWSER\" audit-evidence/repair05/child-diagnostics.json",
+    "node audit/tests/child-diagnostics-verify.mjs audit-evidence/repair05/child-diagnostics.json audit-evidence/repair05/child-diagnostics-verification.json",
+    "node audit/tests/child-diagnostics-negative.mjs audit-evidence/repair05/child-diagnostics.json audit-evidence/repair05/child-diagnostics-negative.json"
+  ]
+};
+
+export const integrityControlIds=[...[-1,0,12,24].map(n=>'gate-continuity:'+n),...['pass',...auditBundleKinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job'].map(n=>'aggregate:'+n),...['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','changed-kind','changed-result','rehashed-failure'].map(n=>'bundle:'+n),'freeze-record-and-verify','freeze-changed-file-refused',...['composition','repair05'].flatMap(k=>['missing','duplicate','failed','timeout','snapshot','fake-pass'].map(n=>'execution:'+k+'/'+n))];

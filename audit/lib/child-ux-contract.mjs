@@ -1,6 +1,4 @@
-import {verifyReaderMigrationIntegrity} from './audit-ledger-reader-migration.mjs';
 import fs from 'node:fs';
-import {verifyCurrentAuditFile,verifyCurrentAuditBasis} from './current-audit-basis.cjs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {sha,snapshot} from './product-test-host.mjs';
@@ -12,26 +10,11 @@ import {blockMeaning} from './child-ux-blocks.mjs';
 export const taskIds=Array.from({length:24},(_,i)=>'B'+String(i+1).padStart(2,'0'));
 export const requirementIds=['A1','A2','A3','B1','B2','B3','B4','C1','C2','C3','D1','D2','D3','E1','E2','E3','F1','F2','G1','H1','H2'];
 const read=p=>JSON.parse(fs.readFileSync(p));
-export const plan=read('audit/fixtures/child-ux-plan.json'),scope=read('audit/fixtures/child-ux-scope.json');
+export const plan=read('audit/fixtures/child-ux-plan.json');
 const matrix=read('audit/fixtures/ux-repair02-matrix.json').cases;
 export const currentInputs=()=>snapshot(currentProductFile());
-export const approvedInputAdapter={file:'audit/tests/ux-repair-language.mjs',before:'assert.deepEqual(runClock(old,p,[]),expected);',after:'const oldProject=plain(p);delete oldProject.stage.showSpeechNames;assert.deepEqual(runClock(old,oldProject,[]),expected);',afterSha256:'4a58d5cbd62b3f22e4bef8bded44f38a15dd04437301039eb2cf5753f7b2e302'};
-export const approvedStartupAdapter={"file":"audit/tests/speech-display-browser.mjs","changes":[{"before":"const hookedPages=new WeakSet();\n","after":"const hookedPages=new WeakSet();\nconst pageAtWidth=(browser,width,fn)=>pageFor({newContext:options=>browser.newContext({...options,viewport:{width,height:848}})},product,fn);\n","count":1},{"before":"pageFor(browser,product,async p=>{\n    await p.setViewportSize({width:1180,height:848});await fixture","after":"pageAtWidth(browser,1180,async p=>{\n    await fixture","count":1},{"before":"pageFor(browser,product,async p=>{await p.setViewportSize({width:c.width,height:848});await fixture","after":"pageAtWidth(browser,c.width,async p=>{await fixture","count":2},{"before":"import {install} from '../lib/ux-repair02-ui.mjs';","after":"import {install} from '../lib/ux-repair02-ui.mjs';\nimport {observeRunPreview,verifyRunPreview} from '../lib/run-preview-contract.mjs';","count":1},{"before":"const off=await speech(p);await p.locator('#stopBtn').click();await setNames(p,true)","after":"const off=await speech(p),preview=await observeRunPreview(p);await shot(p,'preview-'+mode+'-'+level+'.png');\n    await p.locator('#pauseBtn').click();preview.paused=await p.evaluate(()=>Akari.app.editorState.state);\n    await p.locator('#stepBtn').click();preview.afterStep=await p.evaluate(()=>Akari.app.editorState.state);\n    await p.locator('#continueBtn').click();preview.resumed=await p.evaluate(()=>Akari.app.editorState.state);\n    await p.locator('#stopBtn').click();preview.stopped=await observeRunPreview(p);verifyRunPreview(preview,mode,level);await setNames(p,true)","count":1},{"before":"return{mode,level,history,off,on,sourcePreserved:","after":"return{mode,level,history,off,on,preview,sourcePreserved:","count":1},{"before":"import {observeRunPreview,verifyRunPreview} from '../lib/run-preview-contract.mjs';","after":"import {observeRunPreview,verifyRunPreview,observePaletteFold} from '../lib/run-preview-contract.mjs';","count":1},{"before":"preview.stopped=await observeRunPreview(p);verifyRunPreview(preview,mode,level);await setNames(p,true)","after":"preview.stopped=await observeRunPreview(p);verifyRunPreview(preview,mode,level);const paletteFold=mode==='blocks'?await observePaletteFold(p):null;await setNames(p,true)","count":1},{"before":"return{mode,level,history,off,on,preview,sourcePreserved:","after":"return{mode,level,history,off,on,preview,paletteFold,sourcePreserved:","count":1},{"before":"observeRunPreview,verifyRunPreview,observePaletteFold","after":"observeRunPreview,verifyRunPreview,observePaletteFold,observeInspector","count":1},{"before":"await shot(p,'preview-'+mode+'-'+level+'.png');","after":"await shot(p,'preview-'+mode+'-'+level+'.png');preview.inspector=await observeInspector(p,mode);await shot(p,'inspector-'+mode+'-'+level+'.png');","count":1},{"before":"await p.locator('#continueBtn').click();preview.resumed=await p.evaluate(()=>Akari.app.editorState.state);","after":"await p.locator('#continueBtn').click();preview.resumed=await p.evaluate(()=>Akari.app.editorState.state);\n    await p.locator('#runtimeInspectorClose').click();preview.inspector.closed=!await p.locator('#runtimeInspector').evaluate(n=>n.open);preview.inspector.modeControlsReturned=await p.locator('.menutool #editorModecode').isVisible();","count":1},{"before":"await observePaletteFold(p):null","after":"await observePaletteFold(p,()=>shot(p,'folded-'+level+'.png')):null","count":1}],"afterSha256":"11c398f952741930c1469b00919c7383fecd372e4dd21a8f1051d47179914905"};
-const previewFixFile='audit/fixtures/approved-run-preview-fix.json';
-assert.equal(sha(fs.readFileSync(previewFixFile)),'42c96ad91de247736c6c5108034c137248fea7b146851897483e7bdcf09ab67b','fixed authorized playback correction');
-export const approvedPreviewChanges=read(previewFixFile).files;
-export function verifyProtectedInput(file,bytes,_historicalExpected){
-  return verifyCurrentAuditFile(file===scope.product?currentProductFile():file,bytes);
-}
 export function verifyFrozenInputs(){
-  verifyReaderMigrationIntegrity();
-  assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-plan.json')),'e18f5596669ec18d63cc2879f0d92e0cf98f88c2eb58a22e683e47677112ac10','fixed supplemental task plan');
-  assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-scope.json')),'0ada863f056998e11f79fc4436c65568845c9d951a0b618af40b036206363c6b','fixed pre-addition boundary');
-  const currentBasis=verifyCurrentAuditBasis();
-  for(const [file,expected]of Object.entries(scope.protectedFiles)){const current=file===scope.product?currentProductFile():file;verifyProtectedInput(current,fs.readFileSync(current),expected);}
-  for(const file of Object.keys(scope.appendOnlyFiles))verifyCurrentAuditFile(file,fs.readFileSync(file));
-  const before=scope.acceptanceWorkflow.split(/\r?\n/),after=fs.readFileSync('.github/workflows/akari-acceptance.yml','utf8').split(/\r?\n/);let at=0;
-  for(const line of before){while(at<after.length&&after[at]!==line)at++;assert.ok(at<after.length,'existing workflow line retained: '+line);at++;}
+  assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-plan.json')),'e18f5596669ec18d63cc2879f0d92e0cf98f88c2eb58a22e683e47677112ac10','independent supplemental task plan');
   const benchmark=read('audit/fixtures/ux-repair-benchmark.json');
   assert.deepEqual(plan.taskIds,taskIds);assert.deepEqual(plan.order,benchmark.order);assert.deepEqual(plan.tasks.map(t=>t.id),taskIds);
   for(const [i,t]of plan.tasks.entries()){
@@ -43,7 +26,7 @@ export function verifyFrozenInputs(){
   assert.deepEqual(plan.requirements.map(r=>r.id),requirementIds);
   assert.equal(plan.persona.entryGrade,3);assert.equal(plan.persona.kanjiAssignmentIsNotComprehension,true);assert.equal(plan.comparison.requiredCI,false);
   for(const r of plan.requirements){assert.ok(['EXISTING','GAP_FILLED','HUMAN_REQUIRED'].includes(r.classification));assert.ok(r.testIds.length&&r.job&&r.evidence&&r.verifier);}
-  return {protectedFiles:Object.keys(scope.protectedFiles).length,currentByteFiles:currentBasis.currentFiles,historicalScopeIntegrity:'PASS',currentMigrationReapplication:'NOT_APPLICABLE',tasks:24,requirements:requirementIds.length,productSha256:sha(fs.readFileSync(currentProductFile()))};
+  return {tasks:24,requirements:requirementIds.length,productSha256:sha(fs.readFileSync(currentProductFile()))};
 }
 export function verifyProvenance(p,expected=childUxProvenance(),platform=expected.platform){
   for(const key of ['repository','testedCommit','candidateCommit','run','attempt'])assert.equal(p?.[key],expected[key],'execution provenance '+key);

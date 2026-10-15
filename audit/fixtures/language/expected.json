@@ -19071,5 +19071,6 @@
     "SensorRead:KEY_DOWN",
     "SensorRead:TOUCHING_COLOR",
     "SensorRead:TOUCHING"
-  ]
+  ],
+  "contractPolicy": "Independent current AST and runtime expectations; candidate output is never an expectation source."
 }

@@ -1,4 +1,4 @@
-# あかり1.0.2 公開用実装修正仕様
+# あかり 公開用実装修正仕様
 
 仕様ID: AKARI-PUBLIC-SEMANTICS / 版1.0
 
@@ -14,13 +14,9 @@
 4. 機械で検証できる処理はCIへ配置し、人の評価は発見・言葉・読み・案内・操作感に集中させる
 5. 能力削除、上限引下げ、未対応nodeの除外、失敗に合わせた期待値変更は禁止。旧版のファイル/構文互換を切る変更は許容するが、新版のCode/Block完全意味互換、新版内の保存/復元を必須とする
 
-## 1. 基準版と適用範囲
+## 1. 現行製品と適用範囲
 
-- 公開repository: `SAIEduLab/Akari`
-- 基準commit: `9d8ef194af2a65e92f6419a5d51700aaec4fdf0e`
-- 製品: `Akari1_0_2.html`
-- 基準製品SHA-256: `d5da5c93a7486a35fe84b42a1013092c594da989e02da76ad9b978c4453fa302`
-- [基準source](https://github.com/SAIEduLab/Akari/blob/9d8ef194af2a65e92f6419a5d51700aaec4fdf0e/Akari1_0_2.html)
+製品path/版は audit/public-files.json、意味と保存はLANGUAGE、保証と受入はAUDITを正本とする。
 
 製品の全能力を首尾一貫した日本語で表す、有限の構文と意味役割を定義する。任意の自由作文の完全理解は保証しない。ただし、正しく自然で意味が一つに定まる基本的な文を、実装都合だけで不自然な成功文へ直させてはならない。
 
@@ -348,13 +344,11 @@ type ParseResult =
 - 検索欄をクリックして入力した文字は検索欄へ入る。IME/Tab/Escape/検索クリアで本文へ誤入力しない
 - 検索は候補の探索。検索語を本文へ勝手に挿入しない
 
-<!-- DOCS-CONSOLIDATION-BEGIN -->
 ### 5.4 旧設計から継承する編集保証
 
 ブロックの対象・数量・期間・囲いの範囲・条件の枝は実行前に本文で確認する。予告のために実際の状態や乱数を実行しない。コードと同じ式を必要な穴へ入れ、リテラルへ畳み込まない。各節の選択・移動・1命令実行・注釈を保持し、型不明の式だけを理由に接続を拒否しない。未使用候補は使える対象・理由・移動先を示し、書きかけを保持する。検索は意図・かな・漢字・保存した手順／答え名から候補を探す補助で、検索語をそのまま実行する約束ではない。クリック・ドラッグ・キーボード、領域外・Escape・中断取消を維持する。
 
 初回の案内量と能力集合を分ける。手順／答え編集でも、見出し、6行相当の本文、確定／取消、作品への復帰に到達する。1366×768・1280×720・1024×768・狭幅・200％で確認し、切替ボタン約240pxが本文を押し出す状態を再発させない。作品倍率と作業台倍率を区別し、全体表示・100％・元位置への復帰を保つ。長い名前・実フォント・絵文字・結合文字で、意味を示す助詞と単位を入力枠の外にも読めるようにする。
-<!-- DOCS-CONSOLIDATION-END -->
 
 ## 6. 編集を原子的にする
 
@@ -384,13 +378,11 @@ begin(revision, selectedNodeId)
 - 有効なUndo/Redo履歴を自動保存から復元する。既存の30履歴上限を少なくとも維持する
 - 履歴の素材は、現作品から削除されていても履歴が参照している間は保持する
 
-<!-- DOCS-CONSOLIDATION-BEGIN -->
 ### 6.3 原文と未確定状態の継承
 
 無編集の表示往復は原文・未保存状態・履歴・選択・スクロールを保つ。編集時は変更した最小範囲の語順・空白・コメント・名詞の区切りを保ち、広い再生成が必要な場合も最小の意味単位に限って再解析し意味の一致を検査する。－0の値は0と同じでも、原文は明示的な整形まで残す。拒否・取消・表示だけで履歴とRedoを変えない。
 
 未完成原文・穴・未登録定義・未確定数値は、安全な編集状態として保存・復元できる。Runと実行HTML書出しは未確定解消と意味検査を必要とする。日本語IMEの変換中・ドラッグ途中は確定してから保存する。原文の解析失敗を偽のブロックや以前の正常本文の実行へ置き換えず、取消では直前の有効状態と所有者を戻す。現行LANGUAGEの保存・実行データ契約を採用し、旧設計の一律保存保留とは別の改訂として台帳に記録する。
-<!-- DOCS-CONSOLIDATION-END -->
 
 ## 7. 保存・途中作品・持出し
 
@@ -654,9 +646,9 @@ cloneCreated / cloneDeleted / visibleSpeech / questionState
 
 ## 13. 能力非縮小の確認
 
-能力非縮小の正本は`audit/fixtures/1.0.2-baseline-capabilities.json`の260能力ID全行である。C74（命令）＋Q76（式等）＋E32（対象/イベント）＋L38（制限）は計220件の機械葉caseであり、260能力全体ではない。残る40能力にも移管先・受入証拠を必ず対応させる。新版の164schemaは別軸であり、能力数/葉case数と足して独立試験数にしない。
+能力非縮小の正本は`audit/fixtures/capability-oracle.json`の260能力ID全行である。C74（命令）＋Q76（式等）＋E32（対象/イベント）＋L38（制限）は計220件の機械葉caseであり、260能力全体ではない。残る40能力にも移管先・受入証拠を必ず対応させる。新版の164schemaは別軸であり、能力数/葉case数と足して独立試験数にしない。
 
-260能力の内訳は、command74、limit38、event32、builtin26、state22、operator16、expression7、sensor5（計220）と、runtime11、product11、scope5、save5、editor3、ast1、comment1、branch1、slot1、maint1（計40）。旧baseline fixtureのschema153と、基準1.0.2のfeatures manifestのschema164を混同しない。能力の独立baselineと現行schemaの両方へ対応を付ける。
+260能力の内訳は、command74、limit38、event32、builtin26、state22、operator16、expression7、sensor5（計220）と、runtime11、product11、scope5、save5、editor3、ast1、comment1、branch1、slot1、maint1（計40）。独立GUI試験のschema153と、現行features manifestのschema164を混同しない。能力の独立baselineと現行schemaの両方へ対応を付ける。
 
 - 現行`audit/manifests/features.json`でCOMMAND_CATALOG=74、LIMITS=38、schemaIds=164を静的確認した
 - 新版のmanifestは旧能力ID→新版操作/役割/schema/実行test/表示routeの対応表を持つ
@@ -714,20 +706,9 @@ cloneCreated / cloneDeleted / visibleSpeech / questionState
 | `editor:history` | コード/GUI/下書き/作品共通Undo/Redo |
 | `product:block-workbench` | 形で構造を示し、直接つかんで接続できる連続作業台 |
 | `product:responsive` | responsive/縮尺/スクロール到達性/キーボード/IME/pointer |
-| `product:offline-license` | 単一HTML/オフライン/CSP/Apache-2.0保持 |
+| `product:offline-license` | 単一HTML/オフライン/CSP/MIT保持 |
 
 ## 14. 実装手順と完了条件
-
-### 14.1 実装単位
-
-1. テスト: 制作例13件、FIX-001〜023、UX-01、変形/負例をmanifest化し、基準版の結果を記録する
-2. 文書/IR: 複数イベント、安定ID、型/単位、CST、診断revision、codecを共通化し、全能力の対応先を作る
-3. 言語/Block: 文節役割、接続、語順、リスト、結合、呼出し、通知、分身、見出し/継続量の編集を実装する
-4. 途中作品: draft/Hole、作品ファイル、自動保存とUndo/Redo、素材参照、原子的読込/拒否を実装する
-5. UI: 検索/読み/focus、未入力穴、全文改行、モニター、参照削除、Manual、数値表示、空作品/お手本を整える
-6. branch上で実装し、同じcommit/product hashの必須Actionsを全実行する。エラー、skip、環境不足を区別して修正し、全必須PASSを確認してmergeする。配信版のhashを確認後、必要な代表UXを評価し、問題を次の修正と回帰テストへ戻す
-
-独立作業は並列化してよいが、IR/codec/保存形式の契約は先に揃える。
 
 ### 14.2 受入チェックリスト
 
@@ -948,7 +929,7 @@ T385は`長い物語の言葉`を55回連結した385 Unicode code pointsの文�
 
 - `Akari1_0_2.html`: 言語、意味表現、runtime、Block、保存、UI
 - `MANUAL.html`: 操作案内
-- `audit/fixtures/1.0.2-baseline-capabilities.json`: 260能力の独立baseline
+- `audit/fixtures/capability-oracle.json`: 260能力の独立baseline
 - `audit/manifests/features.json`: 命令/上限/現行schema
 - `audit/public-files.json`: 製品pathと公開物
 - `.github/workflows/akari-audit.yml`: CI入口

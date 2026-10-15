@@ -1,3 +1,4 @@
+import {writeSummary} from './lib/audit-summary.mjs';
 import { currentProductFile } from "./lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,4 +18,5 @@ for(const [id,...args]of gateSteps(browser,dir)){
 }
 const report={schema:'akari-gate-v1',status:steps.every(s=>s.status==='PASS')?'PASS':'FAIL',snapshot:inputs,steps};
 fs.writeFileSync(path.join(dir,'gate.json'),JSON.stringify(report,null,2)+'\n');
-if(report.status==='PASS')verifyGateResults(dir,snapshot(currentProductFile()));else process.exitCode=1;
+if(report.status==='PASS'){try{verifyGateResults(dir,snapshot(currentProductFile()));}catch(error){report.status='FAIL';report.validationFailure=error.stack;process.exitCode=1;console.error(error.stack);fs.writeFileSync(path.join(dir,'gate.json'),JSON.stringify(report,null,2)+'\n');}}else process.exitCode=1;
+writeSummary(report,report.validationFailure?[...steps,{id:'result-validation',status:'FAIL',reason:report.validationFailure}]:steps);

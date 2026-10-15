@@ -9,8 +9,8 @@ import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {scenarios,ambiguities,corpusSha256} from '../lib/japanese-intent-oracles.mjs';
 import {verifyJapaneseContract} from './japanese-contract-static.mjs';
-import {corpusPath,checkConsolidationNegatives} from '../lib/docs-consolidation-contract.mjs';
-import {intentCaseIds,runtimeRuns,contractInputPaths,migrationInputPaths,intentInputPaths,runtimeInputPaths,negativeInputPaths,inputHashes,verifyContractReport,verifyMigrationReport,verifyIntentCandidate,verifyIntentReport,verifyRuntimeReport,negativeCaseIds,verifyNegativeReport} from '../lib/japanese-gate-contract.mjs';
+import {corpusPath,checkCapabilityNegatives} from '../lib/capability-contract.mjs';
+import {intentCaseIds,runtimeRuns,contractInputPaths,expectationInputPaths,intentInputPaths,runtimeInputPaths,negativeInputPaths,inputHashes,verifyContractReport,verifyExpectationReport,verifyIntentCandidate,verifyIntentReport,verifyRuntimeReport,negativeCaseIds,verifyNegativeReport} from '../lib/japanese-gate-contract.mjs';
 const [destination]=process.argv.slice(2);assert.ok(destination);const inputs=snapshot(currentProductFile()),dir=fs.mkdtempSync(path.join(os.tmpdir(),'akari-gate-validator-'));
 const clone=x=>JSON.parse(JSON.stringify(x)),results=[];
 try{
@@ -43,9 +43,9 @@ try{
  });
  const runtime={schema:'akari-runtime-boundary-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(runtimeInputPaths),runtime:{schema:'akari-runtime-v2-boundary-evidence-v1',status:'PASS',productSha256:inputs.productSha256,transport:'file://',expectedPassCount:20,passed:20,failed:0,unverified:0,runs}};
  const fixed={schema:'akari-japanese-static-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(contractInputPaths),contract:verifyJapaneseContract()};
- const migration={schema:'akari-language-migration-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(migrationInputPaths),migration:{status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153}};
+ const migration={schema:'akari-language-expectations-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(expectationInputPaths),expectations:{status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153,expectationsSha256:sha(fs.readFileSync('audit/fixtures/language/expected.json')),manifestSha256:sha(fs.readFileSync('audit/manifests/language-form-coverage.json'))}};
  const check=(id,base,verify,mutate)=>{const bad=clone(base);mutate(bad);assert.throws(()=>verify(bad));results.push({id,rejected:true});};
- const vi=r=>verifyIntentReport(r,inputs),vr=r=>verifyRuntimeReport(r,inputs,dir),vs=r=>verifyContractReport(r,inputs),vm=r=>verifyMigrationReport(r,inputs);
+ const vi=r=>verifyIntentReport(r,inputs),vr=r=>verifyRuntimeReport(r,inputs,dir),vs=r=>verifyContractReport(r,inputs),vm=r=>verifyExpectationReport(r,inputs);
  // Producer paths belong to the recorded OS; the sealed bytes are local.
  // These controls are validator fixtures, never product execution evidence.
  const portablePaths=[
@@ -82,9 +82,9 @@ try{
  check('RUNTIME/changed-child-report',runtime,vr,r=>r.runtime.runs[0].reports[0].fixture=false);
  check('RUNTIME/observation-promoted',runtime,vr,r=>{r.runtime.runs[2].reports.push({id:'NATIVE-TAB-VISIBILITY-OBSERVATION',pass:true,status:'PASS',observed:{},note:'fixture'});});
  check('RUNTIME/required-case-unverified',runtime,vr,r=>{r.runtime.runs[0].reports[0].pass=null;r.runtime.runs[0].reports[0].status='UNVERIFIED';});
- check('STATIC/missing-check',fixed,vs,r=>r.contract.results.pop());check('STATIC/changed-doc-hash',fixed,vs,r=>r.contract.documentHashes[0].sha256='0'.repeat(64));
+ check('STATIC/missing-check',fixed,vs,r=>r.contract.results.pop());check('STATIC/changed-doc-hash',fixed,vs,r=>r.contract.fixtureSha256='0'.repeat(64));
  check('STATIC/execution-claim',fixed,vs,r=>r.contract.productDynamic.status='PASS');
- check('MIGRATION/missing-stable-id',migration,vm,r=>r.migration.stableIds=604);check('MIGRATION/stale-snapshot',migration,vm,r=>r.snapshot.productSha256='0'.repeat(64));
+ check('EXPECTATIONS/missing-stable-id',migration,vm,r=>r.expectations.stableIds=604);check('EXPECTATIONS/stale-snapshot',migration,vm,r=>r.snapshot.productSha256='0'.repeat(64));
  const proseRow=r=>r.results.find(x=>x.id==='CI-01/original-prose-ui').evidence.checks[0];
  for(const flag of ['unchanged','blocksDisabled','executionRejected','cancelRestoredSource','automaticExecution']){
   check('INTENT/prose-missing-'+flag,intent,vi,r=>delete proseRow(r)[flag]);
@@ -105,7 +105,7 @@ try{
  const soundRow=r=>r.results.find(x=>x.id==='AMB-SOUND/choices-nonexecution-cancel').evidence;
  check('INTENT/speech-ui-label',intent,vi,r=>{const row=soundRow(r);row.choices[0]='台詞として画面に言う';row.soundChoices[0].label=row.choices[0];});
  check('INTENT/speech-source-mixed-with-sound',intent,vi,r=>{soundRow(r).soundChoices[0].source='音「こんにちは」を鳴らす';});
- results.push(...checkConsolidationNegatives());
+ results.push(...checkCapabilityNegatives());
  assert.deepEqual(results.map(r=>r.id),negativeCaseIds);
  const report={schema:'akari-japanese-gate-negative-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(negativeInputPaths),results};verifyNegativeReport(report,inputs);
  fs.mkdirSync(path.dirname(destination),{recursive:true});fs.writeFileSync(destination,JSON.stringify(report,null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({status:'PASS',rejections:results.length,destination}));

@@ -117,7 +117,7 @@ export function verifyStructuredEditing(report){
 export function verifyBasicBrowser(report){
  const count=verifySemanticExtension(report,'akari-basic-intents-browser-v1',basicIntentIds);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);
  assert.equal(report.environment.browser,'140.0.7339.207');assert.equal(report.environment.playwright,'1.55.0');
- const bytes=fs.readFileSync('audit/fixtures/basic-intents.json');assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),'cf9c3ea0c54801fc77d26f1b66c95bf383ddc89e468ddf9a4ae7121ca63c8d08');const fixture=JSON.parse(bytes);
+ const bytes=fs.readFileSync('audit/fixtures/basic-intents.json');assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),'019a00044214a9c2bd7fcc32f4fc565d4132101d7a1653f35b82615e2647a134');const fixture=JSON.parse(bytes);
  const expected={T01:{beforeClick:100,afterClicks:[130,160],holdIdle:true,speech:'今日はどこへ行こう'},T02:{jumpY:76,returnY:100,repeatedDownIdle:true,secondPress:true},T04:{actorX:120,starX:185,speeches:['先に行くね','ついていくよ']},T05:{hiddenFirst:true,visibleAfterWait:true,speech:'ただいま'}};
  for(const [i,row]of report.results.entries()){
   const {detail,...o}=row.observed,d=fixture.cases[i];assert.deepEqual(o,{source:d.source,inputHash:d.sourceSha256,roundtrips:3,designUnchanged:true,savedAndReadBack:true});
@@ -129,7 +129,7 @@ export function verifyBasicBrowser(report){
 
 export const semanticNegativeIds=["N01/relative-and-screen","N02/direction-and-rotation","N03/wait-and-duration","N04/edge-and-level","N05/inclusive-and-strict","N06/insert-and-replace","N07/data-and-literal","N08/unit-refusal","N09/repeat-scope-required","N10/duplicate-rate","N11/duplicate-direction","N12/missing-rate","N13/no-foreign-data-fallback","N14/else-and-event-boundary","N15/invalid-counts-and-ordinals","N16/callable-context","N17/named-arguments","N18/broadcast-reference-required","N19/original-is-not-clone","N20/quoted-connectors","N21/draft-never-becomes-zero","N22/nested-binder-scope","N25/semantic-drafts-save-and-refuse-execution"];
 export function finiteVariantFixture(){
- const file='audit/fixtures/finite-semantic-variants.json',bytes=fs.readFileSync(file),hash=crypto.createHash('sha256').update(bytes).digest('hex');assert.equal(hash,'a0e56dde732081644c69e75fec79e7ac5c4aff30341f585b73a79b182794d0b1');return{fixture:JSON.parse(bytes),hash};
+ const file='audit/fixtures/finite-semantic-variants.json',bytes=fs.readFileSync(file),hash=crypto.createHash('sha256').update(bytes).digest('hex');assert.equal(hash,'02c1f8fbeb7099ab98de4f595d277840fd455611effa11c295eb339e47b8138a');return{fixture:JSON.parse(bytes),hash};
 }
 export function verifyFiniteVariants(report){
  const {fixture,hash}=finiteVariantFixture();assert.equal(report.schema,'akari-finite-semantic-variants-report-v1');assert.equal(report.status,'PASS');assert.equal(report.uxAcceptance,false);assert.deepEqual(report.snapshot,snapshot(currentProductFile()));assert.equal(report.fixtureHash,hash);assert.deepEqual(report.results.map(r=>r.id),fixture.cases.map(c=>c.id));

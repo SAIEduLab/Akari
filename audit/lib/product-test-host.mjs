@@ -7,22 +7,7 @@ import { pathToFileURL } from 'node:url';
 const require = createRequire(import.meta.url);
 export const root = path.resolve(import.meta.dirname, '../..');
 export const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
-export function snapshot(product) {
-  const published = path.join(root, 'audit/public-files.json');
-  if (fs.existsSync(published)) {
-    const inputs = JSON.parse(fs.readFileSync(published)).files;
-    return {productSha256:sha(fs.readFileSync(product)),
-      files:Object.fromEntries(inputs.map(p=>[p,sha(fs.readFileSync(path.join(root,p)))]))};
-  }
-  const walk = dir => fs.readdirSync(path.join(root, dir), {withFileTypes:true}).flatMap(e => {
-    const p = (dir ? dir+'/' : '')+e.name;
-    if (['.git','.audit-deps','audit-evidence','__pycache__'].includes(e.name) || p==='audit/browser/cases/media') return [];
-    return e.isDirectory() ? walk(p) : [p];
-  });
-  const inputs = walk('').sort();
-  return {productSha256:sha(fs.readFileSync(product)),
-    files:Object.fromEntries(inputs.map(p=>[p,sha(fs.readFileSync(path.join(root,p)))]))};
-}
+export {snapshot} from './input-snapshot.cjs';
 export async function withBrowser(browserPath, fn, timeoutMs = 240000) {
   if (!browserPath || !fs.existsSync(browserPath)) throw Error('Required browser environment missing');
   const {chromium} = require('playwright');

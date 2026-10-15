@@ -9,12 +9,12 @@ import {uiButtonIds} from '../lib/ui-buttons-contract.mjs';
 const {plan}=transferFixtures(),features=JSON.parse(fs.readFileSync('audit/manifests/features.json'));
 const product=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
 const browsers=JSON.parse(fs.readFileSync('audit/manifests/browser-results.json'));
-const baseline=JSON.parse(fs.readFileSync('audit/fixtures/1.0.2-baseline-capabilities.json'));
-const legacy=JSON.parse(fs.readFileSync('audit/fixtures/legacy-1.0.1/block-schemas.json'));
+const baseline=JSON.parse(fs.readFileSync('audit/fixtures/capability-oracle.json'));
+const guiSchemas=browsers.entries.find(r=>r.task==='schema-shards').keys,schemas=JSON.parse(fs.readFileSync('audit/fixtures/block-schemas.json'));
 const core=product.suites.find(s=>s.name==='runCoreTests');
 const same=(a,b)=>assert.deepEqual([...a].sort(),[...b].sort());
 same(plan.groups.C.map(r=>r.id.slice(2)),features.COMMAND_CATALOG.map(x=>x.id));
-same(plan.groups.Q.map(r=>schemaForExpression(r.id)),legacy.filter(s=>s.category==='expression').map(s=>s.id));
+same(plan.groups.Q.map(r=>schemaForExpression(r.id)),schemas.filter(s=>s.category==='expression').map(s=>s.id));
 same(plan.groups.E.map(r=>r.id.slice(2)),baseline.capabilities.filter(c=>c.id.startsWith('event:')).map(c=>c.id));
 same(plan.groups.L.map(r=>r.id.slice('L-limit:'.length)),Object.keys(features.LIMITS));
 same(plan.groups.S.map(r=>r.id.slice(2)),features.schemaIds);
@@ -38,7 +38,7 @@ const rows=Object.entries(plan.groups).flatMap(([group,items])=>items.map(row=>{
     references=[{job:'full-browser-gate (limits)',suite:'browser-design-limits / browser-runtime-limits / browser-asset-limits / browser-media-boundaries',id:row.id.slice(2),guarantee:'boundary families; exact N-1/N/N+1 evidence must be checked per limit'},
       {job:'selftest',suite:'runLimitBoundaryTests / language-boundaries',id:row.id.slice(2),guarantee:'actual design/parser/runtime limit checks'}];
   } else if(group==='S'){
-    const id=row.id.slice(2),old=legacy.some(s=>s.id===id);
+    const id=row.id.slice(2),old=guiSchemas.includes(id);
     references=[{job:old?'full-browser-gate (schemas)':'selftest',suite:old?'schema-shards':'runBlockCodecTests / japanese-intent-browser / runtime-v2',id,
       guarantee:old?'full old-schema GUI row':'additional schema codec/meaning or draft safety; full GUI operations not claimed'}];
   } else {

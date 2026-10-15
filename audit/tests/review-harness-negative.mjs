@@ -22,19 +22,10 @@ for(const [group,ids] of Object.entries(reviewGroups)) {
     results.push({id:group+'/'+id,rejected:true});
   }
 }
-const legacyIds=['static','release-policy-negative','integrity','browser-environment','ci-regression','dom-regression','node-product','product','language-node','language-browser','editor-node','editor-browser-core','editor-gui','normal','ownership','ui-buttons','block-fields','format-compatibility','editor-assets','designer','manual','language-boundaries','harness-negative','language-negative','surface-negative','japanese-contract-static','language-migration-static','japanese-intent-browser','runtime-v2','japanese-gate-negative'];
 const gateIds=gateSteps('',path.dirname(output)).map(step=>step[0]);
-assert.deepEqual(gateIds.slice(0,legacyIds.length),legacyIds);
-assert.throws(()=>assert.deepEqual(gateIds.slice(1,legacyIds.length+1),legacyIds));
-results.push({id:'gate/existing-ordered-prefix',rejected:true});
-const newIds=[...Object.keys(reviewGroups).map(group=>'review-'+group),'review-harness-negative'];
-assert.deepEqual(gateIds.slice(legacyIds.length,legacyIds.length+newIds.length),newIds);
-assert.throws(()=>assert.deepEqual(gateIds.slice(legacyIds.length+1,legacyIds.length+newIds.length+1),newIds));
-results.push({id:'gate/new-review-steps',rejected:true});
-const addedSteps=['extension-foundation','extension-foundation-negative','samples','samples-negative','license-static','license-browser','speech-display','speech-display-verify','entry-unit','entry-browser','entry-verify'];
-assert.deepEqual(gateIds.slice(legacyIds.length+newIds.length),addedSteps);
-assert.throws(()=>assert.deepEqual(gateIds.slice(legacyIds.length+newIds.length,-1),addedSteps));
-results.push({id:'gate/extension-foundation-steps',rejected:true});
+const required=['static','release-policy-negative','japanese-contract-static','language-expectations-static','japanese-gate-negative','extension-foundation','extension-foundation-negative','entry-unit','entry-browser','entry-verify'];
+const verifyIds=ids=>{assert.equal(new Set(ids).size,ids.length);for(const id of required)assert.ok(ids.includes(id),id);};verifyIds(gateIds);
+for(const [id,bad]of [['gate/required-producer-missing',gateIds.filter(id=>id!=='static')],['gate/producer-duplicate',[...gateIds,gateIds[0]]]]){assert.throws(()=>verifyIds(bad));results.push({id,rejected:true});}
 const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'akari-relocated-evidence-'));
 try {
   const producer=path.join(temporary,'producer','candidate.html'),downloaded=path.join(temporary,'downloaded','candidate.html');

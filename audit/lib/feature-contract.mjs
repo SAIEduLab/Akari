@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import {sha} from './product-test-host.mjs';
 import assert from 'node:assert/strict';
 export const editorAssetIds = [
   'duplicate-types-settings-identities', 'duplicate-images-data-history', 'duplicate-limit',
@@ -45,7 +47,7 @@ export function verifyAudio(report, inputs, platform) {
   assert.deepEqual(report.results.map(r => r.id).sort(), [...audioIds].sort());
   for (const result of report.results) { assert.equal(result.pass, true, result.id); assert.equal(result.detail, 'PASS'); if(result.status!==undefined)assert.equal(result.status,'PASS'); }
   assert.deepEqual(report.pageErrors, []); assert.deepEqual(report.networkRequests, []);
-  assert.equal(report.fixtureManifestSha256, inputs.files['audit/fixtures/audio/manifest.json']);
+  assert.equal(report.fixtureManifestSha256, sha(fs.readFileSync('audit/fixtures/audio/manifest.json')));
 }
 export const designerZoomIds = [
   'DESIGN-ZOOM-FIT-CODE', 'DESIGN-ZOOM-FIT-BLOCKS', 'DESIGN-ZOOM-ZOOM-SCROLL',

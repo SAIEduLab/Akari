@@ -44,7 +44,7 @@ module.exports = {makeRegressionProject, installRegressionFactory, setupRegressi
 
 // The old audit assumed palette-created operands and bodies were already filled.
 // Reproduce those same explicit preconditions through v2's hole controls.
-const legacyBlockDefaults = require('../../fixtures/legacy-1.0.1/block-defaults.json');
+const regressionBlockDefaults = require('../../fixtures/block-defaults.json');
 async function completeRegressionHoles(page, rootSelector = '#blockEditor', topId = null) {
   const root = page.locator(rootSelector);
   const tree = () => page.evaluate(selector => (selector === '#callableBlocks' ? Akari.app.editorState.draft : Akari.app.editorState.main).blockView, rootSelector);
@@ -55,19 +55,19 @@ async function completeRegressionHoles(page, rootSelector = '#blockEditor', topI
     }
     return null;
   };
-  const nextHole = (node, expected = legacyBlockDefaults[node.schemaId], parent = null, key = null, index = null, body = false) => {
+  const nextHole = (node, expected = regressionBlockDefaults[node.schemaId], parent = null, key = null, index = null, body = false) => {
     if (node.schemaId.startsWith('Hole:')) return {node, expected, parent, key, index, body};
     for (const [k, children] of Object.entries(node.inputs || {})) {
       const list = Array.isArray(children) ? children : [children];
       for (let i = 0; i < list.length; i++) {
         const role = node.schemaId === 'QuantityLiteral' && k === 'value' && expected?.schemaId !== 'QuantityLiteral'
           ? expected : Array.isArray(expected?.inputs?.[k]) ? expected.inputs[k][i] : expected?.inputs?.[k];
-        const result = nextHole(list[i], role || legacyBlockDefaults[list[i].schemaId], node, k, Array.isArray(children) ? i : null, false);
+        const result = nextHole(list[i], role || regressionBlockDefaults[list[i].schemaId], node, k, Array.isArray(children) ? i : null, false);
         if (result) return result;
       }
     }
     for (const [k, children] of Object.entries(node.bodies || {})) for (let i = 0; i < children.length; i++) {
-      const result = nextHole(children[i], expected?.bodies?.[k]?.[i] || legacyBlockDefaults[children[i].schemaId] || legacyBlockDefaults.NoOperation, node, k, i, true);
+      const result = nextHole(children[i], expected?.bodies?.[k]?.[i] || regressionBlockDefaults[children[i].schemaId] || regressionBlockDefaults.NoOperation, node, k, i, true);
       if (result) return result;
     }
     return null;
@@ -78,13 +78,13 @@ async function completeRegressionHoles(page, rootSelector = '#blockEditor', topI
     const hole = nextHole(top);
     if (!hole) return;
     const expected = hole.expected;
-    if (!expected) throw Error('No independent d961dd3 default for hole ' + hole.node.id + ' in ' + hole.parent?.schemaId + '.' + hole.key);
+    if (!expected) throw Error('No independent regression default for hole ' + hole.node.id + ' in ' + hole.parent?.schemaId + '.' + hole.key);
     const node = root.locator('.blockui-node[data-block-id="' + hole.node.id + '"]');
     if (hole.node.schemaId === 'Hole:target') {
       const picker = node.locator('[data-blockui-hole-target]');
       const options = await picker.locator('option').evaluateAll(xs => xs.map(x => x.value).filter(Boolean));
       const value = options.includes(expected.fields.name) ? expected.fields.name : options[0];
-      if (!value) throw Error('No declared target for the historical regression fixture');
+      if (!value) throw Error('No declared target for the regression fixture');
       await picker.selectOption(value);
     } else {
       const direct = root.locator('[data-expression-hole="true"][data-block-id="' + hole.node.id + '"]');

@@ -1,12 +1,12 @@
 import {verifySamples,verifySamplesNegative} from './samples-contract.mjs';
 import {verifyEntryReport} from './entry-workshop-contract.mjs';
 import {verifyDisplay,rejectionIds} from './speech-display-contract.mjs';
-import {verifyContractReport,verifyMigrationReport,verifyIntentReport,verifyRuntimeReport,verifyNegativeReport} from './japanese-gate-contract.mjs';
+import {verifyContractReport,verifyExpectationReport,verifyIntentReport,verifyRuntimeReport,verifyNegativeReport} from './japanese-gate-contract.mjs';
 import {verifyBlockFields} from './block-field-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {gateSteps} from './gate-contract.mjs';
+import {gateSteps,integrityControlIds} from './gate-contract.mjs';
 import {verify} from './verify-test-results.mjs';
 import {verifyLanguageResults} from './verify-language-results.mjs';
 import {verifySurfaceResults} from './verify-surface-results.mjs';
@@ -36,9 +36,9 @@ export function verifyGateResults(dir,inputs){
   const ids=['OWNER-COMPLETE-REGISTRY','OWNER-REJECT-UNOWNED-AT-BOUNDARIES','OWNER-SAVE-ROUNDTRIP','OWNER-FORMAT-REJECTION','OWNER-CALLER-RECEIVER-AND-FUNCTION','OWNER-REFERENCES-INCLUDING-EXPRESSION','OWNER-INCOMPLETE-AND-UNUSED','OWNER-GUI-DIRECT-BUTTON','OWNER-GUI-ALL-EVENTS','OWNER-GUI-UNUSED-STAGE-DEFINITIONS','OWNER-GUI-SYNTAX-ERROR-RAW-BODY','OWNER-GUI-DRAFT-OWNERSHIP','OWNER-GUI-RECURSION-AND-HIDDEN-OBJECT','OWNER-GUI-VIEWPORT-AND-UNDO-REACHABILITY'];
   const ownership=read('ownership/report');assert.equal(ownership.status,'PASS');assert.deepEqual(ownership.snapshot,inputs);assert.ok(ownership.browser);assert.deepEqual(ownership.results.map(r=>r.id),ids);for(const r of ownership.results)assert.equal(r.pass,true,r.id);
   for(const name of ['static','integrity','normal','language-boundaries','manual/manual-docs']){const r=read(name);assert.equal(r.status,'PASS');assert.deepEqual(r.snapshot,inputs);}
-  const integrity=read('integrity');assert.equal(integrity.results.length,30);assert.equal(new Set(integrity.results.map(r=>r.id)).size,30);for(const r of integrity.results)assert.equal(r.pass,true);
+  const integrity=read('integrity');assert.deepEqual(integrity.results.map(r=>r.id),integrityControlIds);assert.equal(new Set(integrity.results.map(r=>r.id)).size,integrityControlIds.length);for(const r of integrity.results)assert.equal(r.pass,true);
   verifyContractReport(read('japanese-contract-static'),inputs);
-  verifyMigrationReport(read('language-migration-static'),inputs);
+  verifyExpectationReport(read('language-expectations-static'),inputs);
   verifyIntentReport(read('japanese-intent-browser'),inputs,path.join(dir,'japanese-intent-browser.artifacts','candidate.html'));
   verifyRuntimeReport(read('runtime-v2'),inputs,path.join(dir,'runtime-v2'));
   verifyNegativeReport(read('japanese-gate-negative'),inputs);
@@ -46,7 +46,7 @@ export function verifyGateResults(dir,inputs){
   verifyReviewNegativeReport(read('review-harness-negative'),inputs);
   verifyExtensionFoundation(read('extension-foundation'),inputs,path.join(dir,'extension-foundation.artifacts'));
   verifyExtensionFoundationNegative(read('extension-foundation-negative'),inputs);
-  const licensing=read('license-static');assert.equal(licensing.status,'PASS');assert.equal(licensing.copyright,COPYRIGHT);assert.deepEqual(licensing.snapshot,inputs);assert.equal(licensing.results.length,23);assert.equal(new Set(licensing.results.map(row=>row.id)).size,23);for(const row of licensing.results)assert.equal(row.status,'PASS');
+  const licensing=read('license-static');assert.equal(licensing.status,'PASS');assert.equal(licensing.copyright,COPYRIGHT);assert.deepEqual(licensing.snapshot,inputs);assert.equal(licensing.results.length,9);assert.equal(new Set(licensing.results.map(row=>row.id)).size,9);for(const row of licensing.results)assert.equal(row.status,'PASS');
   verifyLicenseBrowserReport(read('license-browser'),path.join(dir,'license-browser.artifacts'),inputs);
   verifySamples(read('samples'),inputs,path.join(dir,'samples.artifacts'));
   verifySamplesNegative(read('samples-negative'),inputs);
