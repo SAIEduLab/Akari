@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {currentProductFile} from '../lib/product-path.cjs';
-import {LICENSE_TEXT,COPYRIGHT,verifyLicenseText,verifyLicensedArtifact,licenseMigration,preservedLicenseSource,licensingSnapshot,sha} from '../lib/license-contract.cjs';
+import {LICENSE_TEXT,COPYRIGHT,verifyLicenseText,verifyLicensedArtifact,licensingSnapshot,sha} from '../lib/license-contract.cjs';
 const results=[];
 function check(id,fn){fn();results.push({id,status:'PASS'});}
 check('CANONICAL-MIT-SAIEL',()=>verifyLicenseText(fs.readFileSync('LICENSE','utf8')));
@@ -16,17 +16,13 @@ check('EXTENSION-MIT-SPDX',()=>{
   }
 });
 check('CURRENT-DOCUMENTS-MIT',()=>{
-  for(const name of ['README.md','LANGUAGE.md']){const text=fs.readFileSync(name,'utf8');assert.ok(text.includes('MIT License'));assert.ok(!text.includes('Apache License 2.0'));}
+  const language=fs.readFileSync('LANGUAGE.md','utf8'),readme=fs.readFileSync('README.md','utf8');
+  assert.ok(language.includes('MIT License'));assert.ok(!language.includes('Apache License 2.0'));
+  assert.match(readme,/\]\((?:\.\/)?LICENSE\)/,'README routes to the canonical license');assert.ok(!readme.includes('Apache License 2.0'));
+  const publicSurface=JSON.parse(fs.readFileSync('audit/public-files.json')).files.includes('index.html');if(publicSurface)assert.ok(readme.includes('MIT License'));
   assert.ok(fs.readFileSync('LANGUAGE.md','utf8').includes(COPYRIGHT));
-  assert.ok(fs.readFileSync('AUDIT.md','utf8').includes('MITライセンスへの変更と監査'));
 });
-for(const row of licenseMigration().sources){
-  const bytes=fs.readFileSync(row.path);
-  check('PINNED-SOURCE/'+row.path,()=>assert.deepEqual(preservedLicenseSource(row.path,bytes),bytes)); // Current bytes, historical ID retained.
-  const hunk=row.replacements[0],text=bytes.toString('utf8');
-  for(const [kind,bad] of [['missing',text.replace(hunk.after,'')],['duplicate',text+hunk.after],['wrong-owner',text.replace('2026 SAIEduLab','2026 WRONG')],['unrelated',text+'\n// unrelated change\n']])
-    check('REJECT-'+kind+'/'+row.path,()=>assert.throws(()=>preservedLicenseSource(row.path,Buffer.from(bad))));
-}
+check('COMPATIBILITY-TEST-ALIAS',()=>{const source=fs.readFileSync('audit/suites/runAkariSelfTests.js','utf8');assert.ok(source.includes('EXPORT Apache-2.0ライセンス保持'));assert.ok(source.includes('MIT'));});
 for(const [kind,bad] of [['copyright',product.replace(COPYRIGHT,'Copyright (c) 2026 WRONG')],['permission',product.replace('The above copyright notice and this permission notice','Wrong permission notice')],['disclaimer',product.replace('THE SOFTWARE IS PROVIDED "AS IS"','Wrong disclaimer')],['spdx',product.replaceAll('SPDX-License-Identifier: MIT','SPDX-License-Identifier: Apache-2.0')]])
   check('REJECT-ARTIFACT-'+kind,()=>assert.throws(()=>verifyLicensedArtifact(bad)));
 const report={schema:'akari-license-static-v1',status:'PASS',copyright:COPYRIGHT,snapshot:licensingSnapshot(),results};

@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import {gateSteps} from '../lib/gate-contract.mjs';
+import {audioIds,codecBrowser} from '../lib/feature-contract.mjs';
+import {gateSteps,auditBundleKinds,auditJobIds,integrityControlIds,acceptanceIds,acceptanceCommands,verifyAcceptanceExecution} from '../lib/gate-contract.mjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {sealBundle,verifyBundle,selectBundleDirectory} from '../lib/evidence-bundle.mjs';
 const inputs=snapshot(currentProductFile()),results=[];
@@ -19,7 +20,7 @@ for(const [id,failureAt] of [['gate-continuity:-1',-1],['gate-continuity:0',0],[
   const cp={spawnSync(){const i=launched++;return {status:i===failureAt?1:0,signal:null,stdout:'',stderr:''};}};
   const memoryFs={existsSync:()=>false,mkdirSync(){},writeFileSync(p,s){written.set(p,s);}};
   vm.runInNewContext(source,{fs:memoryFs,path:path.posix,cp,assert:relaxed,process,gateSteps,snapshot:()=>({fixture:true}),currentProductFile,currentProductVersion,currentReleaseFile,
-    verifyGateResults(){verified++;},console:{log(){},error(){}}});
+    writeSummary(){},verifyGateResults(){verified++;},console:{log(){},error(){}}});
   assert.equal(launched,expected.length);
   const receipt=JSON.parse(written.get('/evidence/gate.json'));
   assert.deepEqual(receipt.steps.map(s=>s.id),expected);
@@ -28,13 +29,13 @@ for(const [id,failureAt] of [['gate-continuity:-1',-1],['gate-continuity:0',0],[
   if(failureAt>=0)assert.equal(process.exitCode,1);
 });
 const aggregate=fs.readFileSync('audit/verify-evidence.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
-const kinds=['static','selftest','audio-codecs-linux','audio-codecs-win32',...['session','ui','limits','schemas','extra'].map(g=>'full-browser-'+g)];
-const needs=Object.fromEntries(['static','selftest','full-browser-gate','audio-codecs'].map(k=>[k,{result:'success'}]));
+const kinds=auditBundleKinds;
+const needs=Object.fromEntries(auditJobIds.map(k=>[k,{result:'success'}]));
 const output=process.argv[2]||'audit-evidence/integrity.json';fs.mkdirSync(path.dirname(output),{recursive:true});
 const base=fs.mkdtempSync(path.join(path.dirname(output),'integrity-'));
 const downloads=path.resolve(base,'downloads');fs.mkdirSync(downloads);
 // Exercise the real selector with a partial rerun: some kinds retain attempt 1.
-const aggregateProvenance={run:'123',attempt:'2'};
+const aggregateProvenance={repository:'SAIEduLab/Akari',testedCommit:'a'.repeat(40),candidateCommit:'b'.repeat(40),run:'123',attempt:'2',platform:'linux'};
 const selectedAttempts=Object.fromEntries(kinds.map((kind,i)=>[kind,String(i%2?2:1)]));
 for(const kind of kinds){
   fs.mkdirSync(path.join(downloads,'akari-'+kind+'-123-1'));
@@ -43,16 +44,16 @@ for(const kind of kinds){
 for(const scenario of ['pass',...kinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job'])check('aggregate:'+scenario,()=>{
   const calls=[],selections=[],written=new Map(),n=clone(needs);
   if(scenario==='cancelled-job')n.selftest.result='cancelled';
-  if(scenario==='missing-job')delete n.static;
+  if(scenario==='missing-job')delete n.selftest;
   if(scenario==='unexpected-job')n.extra={result:'success'};
   const process={argv:['node','verifier','aggregate',downloads,'/aggregate/result.json'],env:{GITHUB_RUN_ID:aggregateProvenance.run,GITHUB_RUN_ATTEMPT:aggregateProvenance.attempt,AKARI_NEEDS:JSON.stringify(n)}};
   if(scenario==='missing-jobs')delete process.env.AKARI_NEEDS;
   if(scenario==='empty-jobs')process.env.AKARI_NEEDS='{}';
   vm.runInNewContext(aggregate,{fs:{mkdirSync(){},writeFileSync(p,s){written.set(p,s);}},path:path.posix,assert:relaxed,process,snapshot:()=>({fixture:true}),currentProductFile,currentProductVersion,currentReleaseFile,
-    selectBundleDirectory(kind,directory,provenance){selections.push(kind);assert.equal(directory,downloads);assert.deepEqual(clone(provenance),aggregateProvenance);return selectBundleDirectory(kind,directory,provenance);},
+    auditBundleKinds,auditJobIds,executionProvenance:()=>aggregateProvenance,writeSummary(){},selectBundleDirectory(kind,directory,provenance){selections.push(kind);assert.equal(directory,downloads);assert.deepEqual(clone(provenance),{...aggregateProvenance,platform:kind==='audio-codecs-win32'?'win32':'linux'});return selectBundleDirectory(kind,directory,provenance);},
     verifyBundle(kind,directory,inputs,provenance){
       calls.push(kind);assert.equal(directory,path.join(downloads,'akari-'+kind+'-123-'+selectedAttempts[kind]));
-      assert.deepEqual(clone(inputs),{fixture:true});assert.deepEqual(clone(provenance),{...aggregateProvenance,attempt:selectedAttempts[kind]});
+      assert.deepEqual(clone(inputs),{fixture:true});assert.deepEqual(clone(provenance),{...aggregateProvenance,attempt:selectedAttempts[kind],platform:kind==='audio-codecs-win32'?'win32':'linux'});
       if(kind===scenario)throw Error('invalid evidence');return {result:{status:'PASS'}};
     }});
   assert.deepEqual(selections,kinds,'every kind selected after a failure');
@@ -61,32 +62,44 @@ for(const scenario of ['pass',...kinds,'missing-jobs','empty-jobs','cancelled-jo
   assert.deepEqual(report.results.map(r=>r.kind),kinds);
   for(const result of report.results){
     if(result.kind===scenario){assert.equal(result.status,'FAIL');assert.equal(result.reason,'invalid evidence');}
-    else {assert.equal(result.status,'PASS');assert.deepEqual(result.provenance,{...aggregateProvenance,attempt:selectedAttempts[result.kind]});}
+    else {assert.equal(result.status,'PASS');assert.deepEqual(result.provenance,{...aggregateProvenance,attempt:selectedAttempts[result.kind],platform:result.kind==='audio-codecs-win32'?'win32':'linux'});}
   }
   assert.equal(report.status,scenario==='pass'?'MACHINE_PASS':'FAIL');assert.equal(report.candidateApproved,false);
   if(scenario!=='pass')assert.equal(process.exitCode,1);
 });
 const provenance={run:'fixture',attempt:'1'};
-function fixture(name){const dir=path.join(base,name);fs.mkdirSync(dir);fs.writeFileSync(path.join(dir,'static.json'),JSON.stringify({status:'PASS',snapshot:inputs,capabilities:260}));sealBundle('static',dir,provenance);return dir;}
+function fixture(name){const dir=path.join(base,name);fs.mkdirSync(dir);const report={schema:'akari-audio-v1',status:'PASS',snapshot:inputs,browser:codecBrowser,playwright:'1.55.0',platform:'linux',executableSha256:'a'.repeat(64),pageErrors:[],networkRequests:[],fixtureManifestSha256:sha(fs.readFileSync('audit/fixtures/audio/manifest.json')),results:audioIds.map(id=>({id,pass:true,detail:'PASS'}))};fs.writeFileSync(path.join(dir,'report.json'),JSON.stringify(report));sealBundle('audio-codecs-linux',dir,provenance);return dir;}
 for(const mode of ['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','changed-kind','changed-result','rehashed-failure'])check('bundle:'+mode,()=>{
   const dir=fixture(mode),file=path.join(dir,'bundle.json'),b=JSON.parse(fs.readFileSync(file));
-  if(mode==='missing-file')fs.renameSync(path.join(dir,'static.json'),path.join(dir,'moved.json'));
+  if(mode==='missing-file')fs.renameSync(path.join(dir,'report.json'),path.join(dir,'moved.json'));
   if(mode==='extra-file')fs.writeFileSync(path.join(dir,'extra.txt'),'unlisted');
-  if(mode==='changed-bytes')fs.appendFileSync(path.join(dir,'static.json'),' ');
+  if(mode==='changed-bytes')fs.appendFileSync(path.join(dir,'report.json'),' ');
   if(mode==='changed-snapshot')b.snapshot.productSha256='wrong';
   if(mode==='changed-provenance')b.provenance.attempt='2';
   if(mode==='changed-kind')b.kind='selftest';
-  if(mode==='changed-result')b.result.capabilities=1;
-  if(mode==='rehashed-failure'){const p=path.join(dir,'static.json'),r=JSON.parse(fs.readFileSync(p));r.status='FAIL';fs.writeFileSync(p,JSON.stringify(r));b.files['static.json']=sha(fs.readFileSync(p));}
+  if(mode==='changed-result')b.result.cases=1;
+  if(mode==='rehashed-failure'){const p=path.join(dir,'report.json'),r=JSON.parse(fs.readFileSync(p));r.status='FAIL';fs.writeFileSync(p,JSON.stringify(r));b.files['report.json']=sha(fs.readFileSync(p));}
   fs.writeFileSync(file,JSON.stringify(b));
-  if(mode==='valid')verifyBundle('static',dir,inputs,provenance);else assert.throws(()=>verifyBundle('static',dir,inputs,provenance));
+  if(mode==='valid')verifyBundle('audio-codecs-linux',dir,inputs,provenance);else assert.throws(()=>verifyBundle('audio-codecs-linux',dir,inputs,provenance));
 });
 const freeze=fs.readFileSync('audit/freeze-release.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
 let frozen;
-function freezeRun(record,changed){const fake={productSha256:'abc',files:{[currentProductFile()]:changed?'def':'abc',[currentReleaseFile()]:'self'}};
- vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readFileSync(){return frozen;}},assert:relaxed,snapshot:()=>fake,sha,currentProductFile,currentProductVersion,currentReleaseFile,process:{argv:record?['--record']:[]},console:{log(){}}});}
+function freezeRun(record,changed){
+ vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readFileSync(p){if(p==='audit/public-files.json')return JSON.stringify({files:[currentProductFile(),'LANGUAGE.md']});if(p===currentReleaseFile())return frozen;return Buffer.from(p+(changed?'changed':''));}},assert:relaxed,sha,currentProductFile,currentProductVersion,currentReleaseFile,process:{argv:record?['--record']:[]},console:{log(){}}});}
 check('freeze-record-and-verify',()=>{freezeRun(true,false);freezeRun(false,false);});
 check('freeze-changed-file-refused',()=>assert.throws(()=>freezeRun(false,true)));
+for(const kind of ['composition','repair05']){const good={schema:'akari-acceptance-execution-v1',status:'PASS',snapshot:inputs,steps:acceptanceIds(kind).map((id,i)=>({id,status:'PASS',exit:0,signal:null,log:'step-'+i+'.log',ms:1}))};verifyAcceptanceExecution(good,kind,inputs);
+ for(const [name,mutate]of [['missing',r=>r.steps.pop()],['duplicate',r=>r.steps[1]=r.steps[0]],['failed',r=>r.steps[0].status='FAIL'],['timeout',r=>r.steps[0].signal='SIGTERM'],['snapshot',r=>r.snapshot.inputSha256='wrong'],['fake-pass',r=>r.steps[0].exit=1]])check('execution:'+kind+'/'+name,()=>{const bad=clone(good);mutate(bad);assert.throws(()=>verifyAcceptanceExecution(bad,kind,inputs));});}
+const acceptanceRunner=fs.readFileSync('audit/run-acceptance.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
+for(const kind of ['composition','repair05'])check('execution:'+kind+'/persisted-seal-failure',()=>{
+ const written=new Map(),process={argv:['node','runner',kind],execPath:'/node',env:{AKARI_CODEC_BROWSER:'/browser'}};
+ const memoryFs={mkdirSync(){},writeFileSync(p,s){written.set(p,s);}};
+ const cp={spawnSync(_node,args){return args[0]==='audit/tests/child-ux.mjs'&&args[1]==='seal'?{status:1,signal:null,stderr:'synthetic validation rejection'}:{status:0,signal:null,stdout:''};}};
+ vm.runInNewContext(acceptanceRunner,{fs:memoryFs,path:path.posix,cp,assert:relaxed,process,acceptanceCommands,snapshot:()=>inputs,currentProductFile,writeSummary(){},console:{log(){},error(){}}});
+ assert.equal(process.exitCode,1);const report=JSON.parse(written.get((kind==='composition'?'audit-evidence/acceptance':'audit-evidence/repair05')+'/execution.json'));
+ assert.equal(report.status,'FAIL');assert.equal(report.validationFailure,'synthetic validation rejection');assert.equal(report.steps.length,acceptanceCommands[kind].length);assert.ok(report.steps.every(r=>r.status==='PASS'));
+});
+assert.deepEqual(results.map(r=>r.id),integrityControlIds);
 assert.deepEqual(snapshot(currentProductFile()),inputs);
 fs.writeFileSync(output,JSON.stringify({status:'PASS',snapshot:inputs,results},null,2)+'\n');
 console.log('Audit integrity: '+results.length+' PASS');

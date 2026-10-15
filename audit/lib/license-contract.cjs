@@ -1,5 +1,4 @@
 const assert = require('node:assert/strict');
-const {verifyCurrentAuditFile}=require('./current-audit-basis.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -37,29 +36,10 @@ function verifyLicensedArtifact(html) {
   assert.ok(!html.includes('Version 2.0, January 2004'), 'obsolete Apache license body');
   return true;
 }
-const migratedPaths = new Set(['audit/suites/runAkariSelfTests.js', 'audit/browser/cases/run-editor-regression.cjs', 'audit/browser/cases/browser-storage-media.cjs']);
-function licenseMigration() {
-  const bytes=fs.readFileSync(path.join(__dirname, '../manifests/license-migration.json'));
-  verifyCurrentAuditFile('audit/manifests/license-migration.json',bytes);
-  const record = JSON.parse(bytes);
-  assert.equal(record.schema, 'akari-license-migration-v1');
-  assert.equal(record.from, 'Apache-2.0'); assert.equal(record.to, LICENSE_ID);
-  assert.equal(record.copyright, COPYRIGHT);
-  assert.equal(record.stableTestId, 'EXPORT Apache-2.0ライセンス保持');
-  assert.deepEqual(record.sources.map(x => x.path).sort(), [...migratedPaths].sort());
-  return record;
-}
-// Historical license hunks remain in license-migration.json. The current source
-// is verified directly; it is never rewritten to resemble the pre-MIT source.
-function preservedLicenseSource(file, bytes) {
-  verifyCurrentAuditFile(file,bytes);return bytes;
-}
 function licensingSnapshot() {
-  const root = path.resolve(__dirname, '../..'), meta = JSON.parse(fs.readFileSync(path.join(root, 'audit/public-files.json')));
-  const {currentProductFile} = require('./product-path.cjs');
-  return {productSha256:sha(fs.readFileSync(path.join(root,currentProductFile()))),
-    files:Object.fromEntries(meta.files.filter(file=>fs.existsSync(path.join(root,file))).map(file=>[file,sha(fs.readFileSync(path.join(root,file)))]))};
+  const {snapshot}=require('./input-snapshot.cjs');const {currentProductFile}=require('./product-path.cjs');return snapshot(currentProductFile());
 }
+
 function verifyLicenseBrowserReport(report, artifactDirectory, expected = licensingSnapshot()) {
   assert.equal(report.schema,'akari-license-browser-v1'); assert.equal(report.status,'PASS');
   assert.deepEqual(report.snapshot,expected); assert.ok(/^140\./.test(report.browser));
@@ -82,4 +62,4 @@ function verifyLicenseBrowserReport(report, artifactDirectory, expected = licens
   }
   return true;
 }
-module.exports = {LICENSE_ID, COPYRIGHT, LICENSE_TEXT, sha, verifyLicenseText, verifyLicensedArtifact, licenseMigration, preservedLicenseSource, licensingSnapshot, verifyLicenseBrowserReport};
+module.exports = {LICENSE_ID, COPYRIGHT, LICENSE_TEXT, sha, verifyLicenseText, verifyLicensedArtifact, licensingSnapshot, verifyLicenseBrowserReport};

@@ -4,10 +4,10 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
 import {createRequire} from 'node:module';
-import {selectBundleDirectory,verifyBundle} from '../lib/evidence-bundle.mjs';
-import {sha,pageFor} from '../lib/product-test-host.mjs';
+import {selectBundleDirectory,verifyBundle,sealBundle} from '../lib/evidence-bundle.mjs';
+import {sha,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {installRegressionProject} from '../lib/gate-ui-fixture.mjs';
-import {editorAssetIds} from '../lib/feature-contract.mjs';
+import {editorAssetIds,audioIds,codecBrowser} from '../lib/feature-contract.mjs';
 import {browserEnvironment as expected,verifyBrowserEnvironment} from '../lib/browser-environment.mjs';
 import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-contract.mjs';
 const {withFreshPage}=createRequire(import.meta.url)('../browser/cases/ui-case.cjs');
@@ -125,33 +125,30 @@ console.log('UI buttons: fixture/cleanup and assertion failures retained; all ca
 const evidenceRoot=path.resolve('audit-evidence');fs.mkdirSync(evidenceRoot,{recursive:true});
 const selectionDir=fs.mkdtempSync(path.join(evidenceRoot,'ci-regression-'));
 try {
-  const provenance={run:'123',attempt:'3'},snapshotInputs={productSha256:'a'.repeat(64),files:{}};
-  function staticBundle(attempt){
-    const dir=path.join(selectionDir,'akari-static-123-'+attempt);fs.mkdirSync(dir);
-    const report={status:'PASS',snapshot:snapshotInputs,capabilities:260};
-    fs.writeFileSync(path.join(dir,'static.json'),JSON.stringify(report));
-    const bundle={schema:'akari-evidence-v1',kind:'static',status:'PASS',snapshot:snapshotInputs,
-      provenance:{run:'123',attempt:String(attempt)},result:{status:'PASS',capabilities:260},
-      files:{'static.json':sha(fs.readFileSync(path.join(dir,'static.json')))}};
-    fs.writeFileSync(path.join(dir,'bundle.json'),JSON.stringify(bundle));return {dir,bundle};
+  const provenance={run:'123',attempt:'3'},snapshotInputs=snapshot(currentProductFile());
+  function codecBundle(attempt){
+    const dir=path.join(selectionDir,'akari-audio-codecs-linux-123-'+attempt);fs.mkdirSync(dir);
+    const report={schema:'akari-audio-v1',status:'PASS',snapshot:snapshotInputs,browser:codecBrowser,playwright:'1.55.0',platform:'linux',executableSha256:'a'.repeat(64),pageErrors:[],networkRequests:[],fixtureManifestSha256:sha(fs.readFileSync('audit/fixtures/audio/manifest.json')),results:audioIds.map(id=>({id,pass:true,detail:'PASS'}))};
+    fs.writeFileSync(path.join(dir,'report.json'),JSON.stringify(report));
+    const bundle=sealBundle('audio-codecs-linux',dir,{run:'123',attempt:String(attempt)});return {dir,bundle};
   }
-  const old=staticBundle(1);let selected=selectBundleDirectory('static',selectionDir,provenance);
-  assert.equal(selected.attempt,1);verifyBundle('static',selected.directory,snapshotInputs,selected.provenance);
-  const latest=staticBundle(2);selected=selectBundleDirectory('static',selectionDir,provenance);
-  assert.equal(selected.attempt,2);verifyBundle('static',selected.directory,snapshotInputs,selected.provenance);
-  assert.throws(()=>verifyBundle('static',latest.dir,snapshotInputs,provenance),'actual attempt must match');
-  assert.throws(()=>verifyBundle('static',latest.dir,{...snapshotInputs,productSha256:'b'.repeat(64)},selected.provenance),'same snapshot required');
+  const old=codecBundle(1);let selected=selectBundleDirectory('audio-codecs-linux',selectionDir,provenance);
+  assert.equal(selected.attempt,1);verifyBundle('audio-codecs-linux',selected.directory,snapshotInputs,selected.provenance);
+  const latest=codecBundle(2);selected=selectBundleDirectory('audio-codecs-linux',selectionDir,provenance);
+  assert.equal(selected.attempt,2);verifyBundle('audio-codecs-linux',selected.directory,snapshotInputs,selected.provenance);
+  assert.throws(()=>verifyBundle('audio-codecs-linux',latest.dir,snapshotInputs,provenance),'actual attempt must match');
+  assert.throws(()=>verifyBundle('audio-codecs-linux',latest.dir,{...snapshotInputs,productSha256:'b'.repeat(64)},selected.provenance),'same snapshot required');
   fs.writeFileSync(path.join(latest.dir,'bundle.json'),JSON.stringify({...latest.bundle,status:'FAIL'}));
-  assert.throws(()=>verifyBundle('static',selectBundleDirectory('static',selectionDir,provenance).directory,snapshotInputs,selected.provenance),'new failure cannot use old PASS');
+  assert.throws(()=>verifyBundle('audio-codecs-linux',selectBundleDirectory('audio-codecs-linux',selectionDir,provenance).directory,snapshotInputs,selected.provenance),'new failure cannot use old PASS');
   fs.unlinkSync(path.join(latest.dir,'bundle.json'));
-  assert.throws(()=>verifyBundle('static',selectBundleDirectory('static',selectionDir,provenance).directory,snapshotInputs,selected.provenance),'unsealed latest cannot use old PASS');
-  assert.throws(()=>selectBundleDirectory('static',selectionDir,{run:'999',attempt:'3'}),'different run');
+  assert.throws(()=>verifyBundle('audio-codecs-linux',selectBundleDirectory('audio-codecs-linux',selectionDir,provenance).directory,snapshotInputs,selected.provenance),'unsealed latest cannot use old PASS');
+  assert.throws(()=>selectBundleDirectory('audio-codecs-linux',selectionDir,{run:'999',attempt:'3'}),'different run');
   assert.throws(()=>selectBundleDirectory('selftest',selectionDir,provenance),'missing kind');
-  fs.mkdirSync(path.join(selectionDir,'akari-static-123-4'));
-  assert.throws(()=>selectBundleDirectory('static',selectionDir,provenance),'future attempt');
-  fs.rmdirSync(path.join(selectionDir,'akari-static-123-4'));
-  fs.mkdirSync(path.join(selectionDir,'akari-static-123-02'));
-  assert.throws(()=>selectBundleDirectory('static',selectionDir,provenance),'noncanonical attempt');
+  fs.mkdirSync(path.join(selectionDir,'akari-audio-codecs-linux-123-4'));
+  assert.throws(()=>selectBundleDirectory('audio-codecs-linux',selectionDir,provenance),'future attempt');
+  fs.rmdirSync(path.join(selectionDir,'akari-audio-codecs-linux-123-4'));
+  fs.mkdirSync(path.join(selectionDir,'akari-audio-codecs-linux-123-02'));
+  assert.throws(()=>selectBundleDirectory('audio-codecs-linux',selectionDir,provenance),'noncanonical attempt');
 } finally {
   const relative=path.relative(evidenceRoot,selectionDir);assert.ok(relative&&!relative.startsWith('..')&&!path.isAbsolute(relative));
   fs.rmSync(selectionDir,{recursive:true});

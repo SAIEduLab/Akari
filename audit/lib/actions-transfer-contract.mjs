@@ -7,7 +7,7 @@ import {fixedValues} from '../fixtures/fixed-values.mjs';
 
 export const fixturePins=Object.freeze({
   'audit/fixtures/composition-acceptance.json':'8cadca66b29a47f8ae9e3eda9965c25021f0422fa14e2d6edab5c8fdb0dedd19',
-  'audit/fixtures/actions-transfer-plan.json':'843c92e4c5b5d9a9be87fed7265ccfdc3566c949a491bf092e45a2888249c94c',
+  'audit/fixtures/actions-transfer-plan.json':'601cffa8a02052d873b316691fbc2fb78bc185b016e57539e52365d119ad7c78',
   'audit/fixtures/fixed-values.mjs':'3a1fd2fe67dc8242c7f9a6d349e28e79020ca2608fd93f6c199280328d1e04a0',
 });
 export function transferFixtures(){

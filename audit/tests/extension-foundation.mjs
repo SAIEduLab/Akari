@@ -20,7 +20,7 @@ const A=loadApi(fs.readFileSync(candidate,'utf8')), results=new Map(), pageError
 const plain=x=>JSON.parse(JSON.stringify(x));
 async function check(id,fn){try{const observed=await fn();assert.deepEqual(observed,extensionExpectedObservations[id]);results.set(id,{id,status:'PASS',observed});}catch(error){results.set(id,{id,status:'FAIL',error:error.stack});console.error(id+': '+error.message);}}
 const extras={executableBytes:64*1024*1024,logChars:100000,historyEntries:60,diagnosticsBytes:8388608};
-const defaults=JSON.parse(fs.readFileSync('audit/fixtures/1.0.2-baseline-capabilities.json')).limits;
+const defaults=JSON.parse(fs.readFileSync('audit/fixtures/capability-oracle.json')).limits;
 const guards=['audioChannels','audioSampleRateMin','audioSampleRateMax','blockDepth','expressionDepth','callDepth'];
 let P;
 await check('EXTENSION-STANDARD-POLICIES',()=>{P=A.createAkariProfiles(A.profiles.standard);assert.deepEqual(plain(A.LIMITS),defaults);assert.deepEqual(plain(P.standard),{...defaults,...extras});return{standardUnchanged:true,standardFrozen:Object.isFrozen(P.standard),keys:Object.keys(P.standard).length};});

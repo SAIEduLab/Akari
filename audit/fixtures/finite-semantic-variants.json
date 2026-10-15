@@ -1,7 +1,6 @@
 {
   "schema": "akari-finite-semantic-variants-v1",
   "source": "audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md",
-  "sourceSha256": "9ee2fef30736b1ca6a426b8f2be43bf8410717602faac4a4f67dbd531c15b44a",
   "policy": "Finite independent inputs and expected traces; generated without loading or querying product code. No row is a UX claim. Quantity axes apply where meaningful; illegal counts are separate negatives.",
   "cases": [
     {

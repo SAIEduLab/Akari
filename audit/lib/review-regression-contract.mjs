@@ -46,7 +46,7 @@ export const reviewMutations = Object.freeze({
   'wrong-group': r=>r.group='other',
   'missing-snapshot': r=>delete r.snapshot,
   'changed-product': r=>r.snapshot.productSha256='0'.repeat(64),
-  'changed-audit-input': r=>r.snapshot.files['audit/lib/review-regression-contract.mjs']='0'.repeat(64),
+  'changed-audit-input': r=>r.snapshot.inputSha256='0'.repeat(64),
   'missing-browser': r=>delete r.browser,
   'wrong-browser': r=>r.browser='0',
   'page-error': r=>r.pageErrors.push('uncaught'),
@@ -55,8 +55,7 @@ export const reviewMutations = Object.freeze({
   'missing-network-requests': r=>delete r.networkRequests,
 });
 export const reviewNegativeIds = Object.keys(reviewGroups).flatMap(group=>Object.keys(reviewMutations).map(id=>group+'/'+id));
-reviewNegativeIds.push('gate/existing-ordered-prefix','gate/new-review-steps');
-reviewNegativeIds.push('gate/extension-foundation-steps');
+reviewNegativeIds.push('gate/required-producer-missing','gate/producer-duplicate');
 reviewNegativeIds.push('evidence/producer-path-unavailable','evidence/changed-candidate-bytes','evidence/missing-candidate-file','evidence/changed-recorded-url');
 
 export function verifyReviewNegativeReport(report,inputs) {

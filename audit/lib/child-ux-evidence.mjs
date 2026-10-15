@@ -1,15 +1,17 @@
+import {inputInventory} from './input-snapshot.cjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import cp from 'node:child_process';
 import assert from 'node:assert/strict';
 import {sha} from './product-test-host.mjs';
+import {verifyAcceptanceExecution} from './gate-contract.mjs';
 import {verifyChildMatrix,verifyChildLanguage,verifyProvenance,verifyNeeds,verifyRetryHistory} from './child-ux-contract.mjs';
 import {verifyInsertionContextReport} from './insertion-context-contract.mjs';
 import {verifySpeechNameLayoutReport} from './speech-name-layout-contract.mjs';
 import {verifyPreviewReport} from './speech-preview-contract.mjs';
 import {verifyComponentControls} from './component-controls-contract.mjs';
 import {verifyChildDiagnosticsReport} from './child-diagnostics-contract.mjs';
-export const requiredBundleFiles={composition:['child-ux-static.json','child-ux-matrix.json','ux-repair02-matrix.json','aggregate.json'],repair05:['child-ux-language.json','child-language-ui.json','insertion-context.json','speech-name-layout.json','speech-preview.json','component-controls.json','child-diagnostics.json']};
+export const requiredBundleFiles={composition:['execution.json','child-ux-static.json','child-ux-matrix.json','ux-repair02-matrix.json','aggregate.json'],repair05:['execution.json','child-ux-language.json','child-language-ui.json','insertion-context.json','speech-name-layout.json','speech-preview.json','component-controls.json','child-diagnostics.json']};
 export function verifyReportPlatform(file,report,platform){
   const actual={
     'insertion-context.json':()=>report.execution?.platform,
@@ -32,9 +34,11 @@ export function verifyBundleHeader(b,kind,inputs,provenance){
 function controlRows(proof,expected){assert.deepEqual(proof.controls.map(c=>c.id),expected);for(const c of proof.controls)assert.equal(c.rejected,true);assert.equal(proof.controlClassification,'SYNTHETIC_VALIDATION_ONLY');}
 export const matrixControlIds=['missing','duplicate','failed','skipped','cancelled','timeout','snapshot','provenance','platform','route-missing','route-direction','source-drift','project-drift','history-drift','value','actor','order','branch','repeat-count','displayed-block-value','displayed-block-operator','displayed-block-heading','displayed-block-missing','displayed-block-hidden','fixed-string-B16','fixed-number-B17','fixed-string-B18','same-result-wrong-expression-B16','same-result-wrong-expression-B17','same-result-wrong-expression-B18','wrong-command-label','wrong-expression-label','missing-screenshot'];
 export const languageControlIds=['missing','duplicate','failed','snapshot','platform','provenance','required-hint-missing','hidden-support','missing-frame','missing-artifact','artifact-hash','vocabulary-omitted','vocabulary-auto-approved','frame-and-inventory-omitted'];
-export const staticControlIds=['needs-missing','needs-failed','needs-skipped','needs-cancelled','needs-timeout','provenance-sha','provenance-run','provenance-attempt','manual-prediction-missing','manual-prediction-after','manual-source-assisted-first','manual-solution-provided','manual-no-return','manual-child-guarantee','history-missing-attempt','history-wrong-sha','mixed-os/insertion','mixed-os/names','mixed-os/preview','mixed-os/components','mixed-os/diagnostics','manual-no-hash','manual-no-counts','manual-no-vocabulary-review','manual-no-real-ime-detail','manual-duplicate-kind','adapter-wrong-expectation','adapter-extra-change','startup-timeout-change','startup-extra-change','preview-product-reverted','preview-product-extra','preview-contract-reverted','preview-contract-extra','preview-verifier-reverted','preview-verifier-extra','preview-spec-reverted','preview-spec-extra',"ci-audit/tests/editor-assets.mjs-reverted","ci-audit/tests/editor-assets.mjs-extra","ci-audit/browser/cases/browser-session.cjs-reverted","ci-audit/browser/cases/browser-session.cjs-extra","ci-audit/tests/review-readable.mjs-reverted","ci-audit/tests/review-readable.mjs-extra","ci-audit/tests/numeric-display-browser.mjs-reverted","ci-audit/tests/numeric-display-browser.mjs-extra","ci-audit/tests/ux-surface-browser.mjs-reverted","ci-audit/tests/ux-surface-browser.mjs-extra","ci-audit/lib/semantic-extension-contract.mjs-reverted","ci-audit/lib/semantic-extension-contract.mjs-extra","ci-audit/tests/actions-transfer-verify.mjs-reverted","ci-audit/tests/actions-transfer-verify.mjs-extra","ci-audit/lib/migration-source-contract.mjs-reverted","ci-audit/lib/migration-source-contract.mjs-extra","ci-audit/lib/ux-repair02-ui.mjs-reverted","ci-audit/lib/ux-repair02-ui.mjs-extra","ci-audit/tests/ux-repair02-layout.mjs-reverted","ci-audit/tests/ux-repair02-layout.mjs-extra"];
+export const staticControlIds=['needs-missing','needs-failed','needs-skipped','needs-cancelled','needs-timeout','provenance-sha','provenance-run','provenance-attempt','manual-prediction-missing','manual-prediction-after','manual-source-assisted-first','manual-solution-provided','manual-no-return','manual-child-guarantee','history-missing-attempt','history-wrong-sha','mixed-os/insertion','mixed-os/names','mixed-os/preview','mixed-os/components','mixed-os/diagnostics','manual-no-hash','manual-no-counts','manual-no-vocabulary-review','manual-no-real-ime-detail','manual-duplicate-kind'];
 function verifyProof(p,schema,inputs,provenance){assert.equal(p.schema,schema);assert.equal(p.status,'PASS');assert.deepEqual(p.snapshot,inputs);verifyProvenance(p.provenance,provenance);}
 export function verifyBundleResults(kind,dir,inputs,provenance){
+  const execution=read(dir,'execution.json');verifyAcceptanceExecution(execution,kind,inputs);
+  for(const row of execution.steps){assert.equal(path.basename(row.log),row.log);assert.ok(fs.statSync(path.join(dir,row.log)).isFile());}
   if(kind==='composition'){
     const fixed=read(dir,'aggregate.json');assert.equal(fixed.status,'MACHINE_PASS');assert.equal(fixed.uxAcceptance,false);
     // Execute only the unchanged independent validators, never the browser tasks again.
@@ -57,13 +61,14 @@ export function verifyBundleResults(kind,dir,inputs,provenance){
 }
 export function sealChildBundle(kind,dir,inputs,provenance){
   assert.ok(!fs.existsSync(path.join(dir,'child-ux-bundle.json')),'fresh bundle required');verifyBundleResults(kind,dir,inputs,provenance);
+  fs.writeFileSync(path.join(dir,'input-inventory.json'),JSON.stringify(inputInventory(),null,2)+'\n');
   const files=Object.fromEntries(evidenceFiles(dir).map(f=>[f,sha(fs.readFileSync(path.join(dir,f)))]));
   const b={schema:'akari-child-ux-bundle-v1',kind,status:'PASS',snapshot:inputs,provenance,required:requiredBundleFiles[kind],files,humanAcceptance:'UNVERIFIED',realIME:'UNVERIFIED'};
   verifyBundleHeader(b,kind,inputs,provenance);fs.writeFileSync(path.join(dir,'child-ux-bundle.json'),JSON.stringify(b,null,2)+'\n');return b;
 }
 export function verifyChildBundle(kind,dir,inputs,provenance){
   const b=read(dir,'child-ux-bundle.json');verifyBundleHeader(b,kind,inputs,provenance);assert.deepEqual(Object.keys(b.files),evidenceFiles(dir));
-  verifyBundleFileHashes(b,dir);
+  verifyBundleFileHashes(b,dir);assert.deepEqual(read(dir,'input-inventory.json'),inputInventory());
   verifyBundleResults(kind,dir,inputs,provenance);return b;
 }
 export function verifyBundleFileHashes(b,dir){for(const [f,h]of Object.entries(b.files))assert.equal(sha(fs.readFileSync(path.join(dir,f))),h,'actual artifact '+f);}

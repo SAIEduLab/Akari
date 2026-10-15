@@ -1,7 +1,6 @@
 {
   "schema": "akari-basic-intents-v1",
   "publicSource": "audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md",
-  "publicSourceSha256": "9ee2fef30736b1ca6a426b8f2be43bf8410717602faac4a4f67dbd531c15b44a",
   "initial": {
     "actor": {
       "id": "sprite-1",

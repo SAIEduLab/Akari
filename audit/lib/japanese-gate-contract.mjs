@@ -6,18 +6,16 @@ import {pathToFileURL} from 'node:url';
 import {browserEnvironment} from './browser-environment.mjs';
 import {scenarios,ambiguities,corpusSha256} from './japanese-intent-oracles.mjs';
 import {verifyJapaneseContract} from '../tests/japanese-contract-static.mjs';
-import {corpusPath,consolidationInputPaths,consolidationNegativeIds} from './docs-consolidation-contract.mjs';
+import {corpusPath,capabilityInputPaths,capabilityNegativeIds} from './capability-contract.mjs';
 
 export const contractInputPaths = [
-  'audit/lib/migration-source-contract.mjs',
-  'audit/tests/japanese-contract-static.mjs','audit/fixtures/1.0.2-baseline-capabilities.json',
+  'audit/tests/japanese-contract-static.mjs','audit/fixtures/capability-oracle.json',
   'audit/tests/contract-gate.mjs',
   'audit/lib/japanese-gate-contract.mjs',
-  ...consolidationInputPaths,
+  ...capabilityInputPaths,
 ];
-export const migrationInputPaths = [
-  'audit/lib/migration-source-contract.mjs',
-  'audit/tests/language-migration-static.mjs','audit/fixtures/language-surface-v2-migration.json',
+export const expectationInputPaths = [
+  'audit/tests/language-expectations-static.mjs',
   'audit/fixtures/language/forms.mjs','audit/fixtures/language/inline.mjs',
   'audit/fixtures/language/expected.json','audit/manifests/language-form-coverage.json',
   'audit/suites/language-forms.js','audit/run-language-tests.mjs',
@@ -27,7 +25,7 @@ export const intentInputPaths = [
   'audit/tests/japanese-intent-browser.mjs','audit/lib/japanese-intent-oracles.mjs',
   'audit/lib/japanese-intent-browser-harness.mjs',
   corpusPath,
-  'audit/lib/docs-consolidation-contract.mjs',
+  'audit/lib/capability-contract.mjs',
 ];
 export const runtimeInputPaths = [
   'audit/tests/runtime-v2.mjs','audit/tests/runtime-boundary-gate.mjs',
@@ -81,9 +79,10 @@ export function verifyContractReport(report,inputs){
   assert.equal(report.contract.productDynamic.status,'NOT_RUN');
   return {status:'PASS',staticChecks:report.contract.total};
 }
-export function verifyMigrationReport(report,inputs){
-  bind(report,inputs,migrationInputPaths);assert.equal(report.schema,'akari-language-migration-gate-v1');
-  for(const[k,v]of Object.entries({status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153}))assert.equal(report.migration[k],v,k);
+export function verifyExpectationReport(report,inputs){
+  bind(report,inputs,expectationInputPaths);assert.equal(report.schema,'akari-language-expectations-gate-v1');
+  for(const[k,v]of Object.entries({status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153}))assert.equal(report.expectations[k],v,k);
+  for(const [field,file]of [['expectationsSha256','audit/fixtures/language/expected.json'],['manifestSha256','audit/manifests/language-form-coverage.json']])assert.equal(report.expectations[field],sha(fs.readFileSync(file)));
   return {status:'PASS',stableIds:605};
 }
 function recordedCandidateUrl(testedFile) {
@@ -198,7 +197,7 @@ export const negativeCaseIds = [
   'RUNTIME/missing-runner','RUNTIME/duplicate-case','RUNTIME/stale-product','RUNTIME/unverified',
   'RUNTIME/child-timeout','RUNTIME/child-snapshot','RUNTIME/changed-child-report','RUNTIME/observation-promoted','RUNTIME/required-case-unverified',
   'STATIC/missing-check','STATIC/changed-doc-hash','STATIC/execution-claim',
-  'MIGRATION/missing-stable-id','MIGRATION/stale-snapshot',
+  'EXPECTATIONS/missing-stable-id','EXPECTATIONS/stale-snapshot',
   ...['unchanged','blocksDisabled','executionRejected','cancelRestoredSource','automaticExecution']
     .flatMap(flag=>['INTENT/prose-missing-'+flag,'INTENT/prose-invalid-'+flag]),
   ...['owner','pending-owner','pending-kind','pending-value','valid-pending','valid-state','initial-pending',
@@ -207,9 +206,9 @@ export const negativeCaseIds = [
     'cancel-project','cancel-history','cancel-owner','cancel-pending','cancel-execution']
     .map(key=>'INTENT/prose-'+key),
   'INTENT/speech-ui-label','INTENT/speech-source-mixed-with-sound',
-  ...consolidationNegativeIds,
+  ...capabilityNegativeIds,
 ];
-export const negativeInputPaths=['audit/tests/japanese-gate-negative.mjs','audit/lib/japanese-gate-contract.mjs',...consolidationInputPaths];
+export const negativeInputPaths=['audit/tests/japanese-gate-negative.mjs','audit/lib/japanese-gate-contract.mjs',...capabilityInputPaths];
 export function verifyNegativeReport(report,inputs){
   bind(report,inputs,negativeInputPaths);
   assert.equal(report.schema,'akari-japanese-gate-negative-v1');ids(report.results,negativeCaseIds);

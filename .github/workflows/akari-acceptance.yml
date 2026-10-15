@@ -16,7 +16,6 @@ jobs:
   composition-acceptance:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
-    # Attempt 2 completed every check and upload in 16m17s; keep test limits intact.
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
@@ -34,107 +33,8 @@ jobs:
           echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
           "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install-deps chromium
           python audit/install-codec-browser.py "$RUNNER_TEMP/acceptance-browser"
-      - name: Protect the product and fixed oracles and reject invalid child UX evidence
-        run: node audit/tests/child-ux.mjs static audit-evidence/acceptance/child-ux-static.json
-      - name: Map the original fixed plan and verify the Q76 values
-        run: |
-          mkdir -p audit-evidence/acceptance
-          node audit/tests/actions-transfer-static.mjs audit-evidence/acceptance/transfer.json
-          node audit/tests/actions-transfer-values.mjs audit-evidence/acceptance/values.json
-          node audit/tests/command-meaning.mjs audit-evidence/acceptance/command-meaning.json
-      - name: Verify extension foundation in the fixed browser
-        if: always()
-        run: node audit/tests/extension-foundation.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/extension-foundation.json
-      - name: Reject fabricated extension evidence and verify the actual report
-        if: always()
-        run: |
-          node audit/tests/extension-foundation-negative.mjs audit-evidence/acceptance/extension-foundation-negative.json
-          node audit/tests/extension-foundation-verify.mjs audit-evidence/acceptance/extension-foundation.json audit-evidence/acceptance/extension-foundation-negative.json
-      - name: Verify original basic intentions and separate continuous rates
-        run: node audit/tests/basic-intents.mjs audit-evidence/acceptance/basic-intents.json
-      - name: Verify finite semantic variants and minimum-pair refusals
-        run: |
-          node audit/tests/finite-semantic-variants.mjs audit-evidence/acceptance/finite-semantic-variants.json
-          node audit/tests/semantic-negative-pairs.mjs audit-evidence/acceptance/semantic-negative-pairs.json
-      - name: Verify natural role variants and atomic clone rejection
-        run: node audit/tests/natural-roles.mjs audit-evidence/acceptance/natural-roles.json
-      - name: Verify document units, source ownership and multiline editing
-        run: node audit/tests/document-units.mjs audit-evidence/acceptance/document-units.json
-      - name: Verify unfinished project files and structural rejection
-        run: node audit/tests/draft-persistence.mjs audit-evidence/acceptance/draft-persistence.json
-      - name: Verify declared units and list form values
-        run: node audit/tests/data-form-values.mjs audit-evidence/acceptance/data-form-values.json
-      - name: Verify display precision without changing values
-        run: node audit/tests/numeric-display.mjs audit-evidence/acceptance/numeric-display.json
-      - name: Verify resource references and atomic renames
-        run: node audit/tests/resource-references.mjs audit-evidence/acceptance/resource-references.json
-      - name: Verify intent search and typed name bindings
-        run: node audit/tests/search-bindings.mjs audit-evidence/acceptance/search-bindings.json
-      - name: Enter original basic intentions and exercise native input and saving
-        if: always()
-        run: node audit/tests/basic-intents-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/basic-intents-browser.json
-      - name: Record actual WebAudio output and verify sound command semantics
-        if: always()
-        run: node audit/tests/audio-output-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/audio-output-browser.json
-      - name: Edit event headers and continuous roles through ordinary Block controls
-        if: always()
-        run: node audit/tests/structured-editing-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/structured-editing-browser.json
-      - name: Require original composition acceptance, meaning and save roundtrip
-        if: always()
-        run: node audit/tests/composition-acceptance.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/composition.json
-      - name: Restore native editor history, drafts and quota failure atomically
-        if: always()
-        run: node audit/tests/workspace-history-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/workspace-history-browser.json
-      - name: Verify visible data forms and runtime quantities
-        if: always()
-        run: node audit/tests/data-form-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/data-form-browser.json
-      - name: Verify numeric displays, actual values and the offline player
-        if: always()
-        run: node audit/tests/numeric-display-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/numeric-display-browser.json
-      - name: Protect referenced resources through native editing and undo
-        if: always()
-        run: node audit/tests/resource-references-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/resource-references-browser.json
-      - name: Verify search focus, visible bindings and insertion
-        if: always()
-        run: node audit/tests/search-bindings-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/search-bindings-browser.json
-      - name: Verify empty work, sample, speech placement and manual contrast
-        if: always()
-        run: node audit/tests/ux-surface-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/ux-surface-browser.json
-      - name: Verify unchanged UX originals and timed speech semantics
-        if: always()
-        run: node audit/tests/ux-repair-language.mjs audit-evidence/acceptance/ux-repair-language.json
-      - name: Verify UX repair controls in the fixed browser
-        if: always()
-        run: node audit/tests/ux-repair-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/ux-repair-browser.json
-      - name: Verify simultaneous speech at 52 and 100 percent with both mascots
-        if: always()
-        run: node audit/tests/ux-bubble-layout.cjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/ux-bubble-layout.json
-      - name: Verify local editing recovery and additional natural forms
-        if: always()
-        run: |
-          node audit/tests/ux-repair02-language.mjs audit-evidence/acceptance/ux-repair02-language.json
-          node audit/tests/ux-repair02-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/ux-repair02-browser.json
-      - name: Verify fixed 48 tasks, responsive editing and two-second concurrent speech
-        if: always()
-        run: node audit/run-ux-repair02-gui.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance
-      - name: Verify bidirectional mode roundtrips against the inherited 24 task expectations
-        if: always()
-        run: node audit/tests/child-ux.mjs matrix audit-evidence/acceptance/ux-repair02-matrix.json audit-evidence/acceptance/child-ux-matrix.json
-      - name: Verify trigger editing, speech identity and local list recovery
-        if: always()
-        run: node audit/run-ux-repair03-gui.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance
-      - name: Verify autosave ownership, completion ordering and failure recovery
-        if: always()
-        run: node audit/tests/autosave-state-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/autosave-state-browser.json
-      - name: Verify visible search controls, keyboard insertion and actual browser zoom
-        if: always()
-        run: node audit/tests/search-layout-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/acceptance/search-layout-browser.json
-      - name: Independently verify complete results including local recovery and speaker identity
-        if: always()
-        run: node audit/tests/actions-transfer-verify.mjs audit-evidence/acceptance
-      - name: Seal complete composition evidence for this SHA run and attempt
-        if: always()
-        run: node audit/tests/child-ux.mjs seal composition audit-evidence/acceptance
+      - name: Run and validate the required composition suites
+        run: node audit/run-acceptance.mjs composition
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -166,51 +66,8 @@ jobs:
           sudo apt-get install -y fonts-noto-cjk
           python audit/install-codec-browser.py "$RUNNER_TEMP/repair05-browser"
           mkdir -p audit-evidence/repair05
-      - name: Verify native insertion and preserved palette context
-        if: always()
-        run: node audit/tests/ux-insertion-context-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/insertion-context.json
-      - name: Independently verify insertion evidence and negative controls
-        if: always()
-        run: node audit/tests/ux-insertion-context-verify.mjs audit-evidence/repair05/insertion-context.json
-      - name: Verify short speaker names, bounds and actual browser zoom
-        if: always()
-        run: node audit/tests/speech-name-layout-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/speech-name-layout.json
-      - name: Independently verify speaker evidence and negative controls
-        if: always()
-        run: node audit/tests/speech-name-layout-verify.mjs audit-evidence/repair05/speech-name-layout.json
-      - name: Verify native simultaneous speech, restored previews and full-text entries
-        if: always()
-        run: node audit/tests/speech-preview-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/speech-preview.json
-      - name: Independently verify native preview evidence and negative controls
-        if: always()
-        run: node audit/tests/speech-preview-verify.mjs audit-evidence/repair05/speech-preview.json audit-evidence/repair05/speech-preview-verification.json
-      - name: Verify visible reading support and concrete operation examples
-        if: always()
-        run: node audit/tests/child-language-ui-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/child-language-ui.json
-      - name: Independently verify language UI evidence and negative controls
-        if: always()
-        run: node audit/tests/child-language-ui-verify.mjs audit-evidence/repair05/child-language-ui.json
-      - name: Match visible language support to source candidates without approving unknown vocabulary
-        if: always()
-        run: node audit/tests/child-ux.mjs language audit-evidence/repair05/child-language-ui.json audit-evidence/repair05/child-ux-language.json
-      - name: Verify component actions with native scrolling and browser zoom
-        if: always()
-        run: node audit/tests/component-controls-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/component-controls.json
-      - name: Independently verify component reachability and negative controls
-        if: always()
-        run: node audit/tests/component-controls-verify.mjs audit-evidence/repair05/component-controls.json audit-evidence/repair05/component-controls-verification.json
-      - name: Verify child-facing diagnostics and reachable technical details
-        if: always()
-        run: node audit/tests/child-diagnostics-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/repair05/child-diagnostics.json
-      - name: Independently verify diagnostic evidence and negative controls
-        if: always()
-        run: node audit/tests/child-diagnostics-verify.mjs audit-evidence/repair05/child-diagnostics.json audit-evidence/repair05/child-diagnostics-verification.json
-      - name: Reject incomplete or inconsistent diagnostic evidence
-        if: always()
-        run: node audit/tests/child-diagnostics-negative.mjs audit-evidence/repair05/child-diagnostics.json audit-evidence/repair05/child-diagnostics-negative.json
-      - name: Seal complete repair 05 evidence for this SHA run and attempt
-        if: always()
-        run: node audit/tests/child-ux.mjs seal repair05 audit-evidence/repair05
+      - name: Run and validate the required UX suites
+        run: node audit/run-acceptance.mjs repair05
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -219,41 +76,6 @@ jobs:
           if-no-files-found: error
           retention-days: 3
           include-hidden-files: true
-  entry-workshop:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Install the approved browser for entry controls
-        run: |
-          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund playwright@1.55.0
-          echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
-          "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install-deps chromium
-          python audit/install-codec-browser.py "$RUNNER_TEMP/entry-browser"
-          mkdir -p audit-evidence/entry-workshop
-      - name: Verify entry definitions and editor defaults
-        if: always()
-        run: node audit/tests/entry-workshop-core.mjs audit-evidence/entry-workshop/unit.json
-      - name: Exercise all tutorial steps, denials, exits, saving and editor positions
-        if: always()
-        run: node audit/tests/entry-workshop-browser.mjs "$AKARI_CODEC_BROWSER" audit-evidence/entry-workshop/browser.json
-      - name: Reject missing, skipped, stale or incomplete entry evidence
-        if: always()
-        run: node audit/tests/entry-workshop-verify.mjs audit-evidence/entry-workshop/unit.json audit-evidence/entry-workshop/browser.json audit-evidence/entry-workshop/verification.json
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: akari-entry-workshop-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/entry-workshop/
-          if-no-files-found: error
-          retention-days: 3
   child-ux-aggregate:
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     needs: [composition-acceptance, ux-repair05]

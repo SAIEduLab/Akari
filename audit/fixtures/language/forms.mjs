@@ -1,5 +1,4 @@
-// Reviewed 1.0.2 inputs; original byte-exact generator is in legacy-1.0.1.
-// IDs retain their original semantic capability; see language-surface-v2-migration.json.
+// Independent current source/canonical inputs, grouped by semantic capability.
 export const finiteCases = [
   {
     "id": "JPF-001",

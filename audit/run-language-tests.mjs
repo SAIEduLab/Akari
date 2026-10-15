@@ -20,7 +20,7 @@ const api=loadApi(fs.readFileSync(product,'utf8'));
 const suite='// Explicit baseline regression fixture.\n'+regressionFixture.makeRegressionProject.toString()+'\n'+fs.readFileSync('audit/suites/language-forms.js','utf8');
 const f=vm.runInNewContext(suite+'\n({runLanguageForms,languageExecution})',{structuredClone});
 const {golden,corpus:referenceCorpus,schemaIds}=JSON.parse(fs.readFileSync('audit/fixtures/language/expected.json'));
-const auditPaths=['audit/fixtures/regression-project.cjs','audit/fixtures/language/forms.mjs','audit/fixtures/language/inline.mjs','audit/fixtures/language/expected.json','audit/fixtures/language-surface-v2-migration.json','audit/manifests/language-form-coverage.json','audit/suites/language-forms.js','audit/run-language-tests.mjs'];
+const auditPaths=['audit/fixtures/regression-project.cjs','audit/fixtures/language/forms.mjs','audit/fixtures/language/inline.mjs','audit/fixtures/language/expected.json','audit/manifests/language-form-coverage.json','audit/suites/language-forms.js','audit/run-language-tests.mjs'];
 const inputHashes=()=>Object.fromEntries(auditPaths.map(file=>[file,sha(fs.readFileSync(file))]));
 const auditInputs=inputHashes();
 const before=snapshot(product), args={manifest,golden,referenceCorpus,schemaIds,inlineCases,inlineNegative};

@@ -1,3 +1,4 @@
+import {inputInventory} from '../lib/input-snapshot.cjs';
 import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
@@ -40,7 +41,7 @@ if(prep.status!==0){
 
 const candidate=path.join(evidence,'candidate');
 fs.mkdirSync(candidate,{recursive:true});
-const tracked=Object.keys(before.files);
+const tracked=Object.keys(inputInventory());
 const files=[];
 for(const rel of tracked){
   const src=path.join(root,rel),dst=path.join(candidate,rel);

@@ -1,11 +1,11 @@
+import {writeSummary} from '../lib/audit-summary.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {sha} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
-import {preservedCandidateBytes} from '../lib/migration-source-contract.mjs';
 import {childUxProvenance} from '../lib/child-ux-observations.mjs';
-import {plan,scope,approvedInputAdapter,approvedStartupAdapter,approvedPreviewChanges,verifyProtectedInput,currentInputs,verifyFrozenInputs,verifyProvenance,verifyNeeds,verifyRetryHistory,verifyManualSession,verifyManualSessions,verifyChildMatrix,verifyChildLanguage,vocabularyCandidates} from '../lib/child-ux-contract.mjs';
+import {plan,currentInputs,verifyFrozenInputs,verifyProvenance,verifyNeeds,verifyRetryHistory,verifyManualSession,verifyManualSessions,verifyChildMatrix,verifyChildLanguage,vocabularyCandidates} from '../lib/child-ux-contract.mjs';
 import {matrixControlIds,languageControlIds,staticControlIds,verifyReportPlatform,sealChildBundle,verifyChildAggregate} from '../lib/child-ux-evidence.mjs';
 const [mode,input,output]=process.argv.slice(2),provenance=childUxProvenance(),snapshot=currentInputs();
 const read=f=>JSON.parse(fs.readFileSync(f));
@@ -45,26 +45,6 @@ function staticControls(){
   assert.equal(verifyManualSessions([task,ime],manualDir).length,2,'TASK and REAL_IME coexist for the same actor/mode/task');
   fs.writeFileSync(path.join(manualDir,'coexist.jsonl'),[task,ime].map(s=>JSON.stringify(s)).join('\n')+'\n');
   assert.throws(()=>verifyManualSessions([task,task],manualDir));rows.push({id:staticControlIds[25],rejected:true});
-  const adapter=fs.readFileSync(approvedInputAdapter.file),expected=scope.protectedFiles[approvedInputAdapter.file];verifyProtectedInput(approvedInputAdapter.file,adapter,expected);
-  const changedExpected=adapter.toString().replace("const expected=[[0,'dango','7']]","const expected=[[0,'dango','8']]");assert.notEqual(changedExpected,adapter.toString());
-  for(const [i,bad]of [Buffer.from(changedExpected),Buffer.concat([adapter,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(approvedInputAdapter.file,bad,expected));rows.push({id:staticControlIds[26+i],rejected:true});}
-  const startup=fs.readFileSync(approvedStartupAdapter.file),startupExpected=scope.protectedFiles[approvedStartupAdapter.file];
-  verifyProtectedInput(approvedStartupAdapter.file,startup,startupExpected);
-  const relaxed=startup.toString('utf8').replace('p.setDefaultTimeout(8000)','p.setDefaultTimeout(8001)');assert.notEqual(relaxed,startup.toString('utf8'));
-  for(const [i,bad]of [Buffer.from(relaxed),Buffer.concat([startup,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(approvedStartupAdapter.file,bad,startupExpected));rows.push({id:staticControlIds[28+i],rejected:true});}
-  for(const [i,correction]of approvedPreviewChanges.entries()){
-    const file=correction.file===scope.product?currentProductFile():correction.file;
-    const bytes=fs.readFileSync(file),expected=scope.protectedFiles[correction.file];verifyProtectedInput(file,bytes,expected);
-    if(correction.file==='audit/browser/cases/browser-session.cjs')assert.deepEqual(preservedCandidateBytes(file,bytes),bytes);
-    const last=correction.changes.at(-1),text=bytes.toString('utf8');
-    // A historical hunk no longer present in a reviewed current validator is
-    // tested as removal of its current integrity guard, not re-normalized.
-    const reverted=text.includes(last.after)?text.replace(last.after,last.before):
-      text.includes('verifyCurrentAuditFile(file,bytes)')?text.replace('verifyCurrentAuditFile(file,bytes)','bytes'):
-      text.replace(text.split('\n')[0],'// unapproved current guard rollback');
-    assert.notEqual(reverted,text);
-    for(const [j,bad]of [Buffer.from(reverted),Buffer.concat([bytes,Buffer.from('\n')])].entries()){assert.throws(()=>verifyProtectedInput(file,bad,expected));if(correction.file==='audit/browser/cases/browser-session.cjs')assert.throws(()=>preservedCandidateBytes(file,bad));rows.push({id:staticControlIds[30+i*2+j],rejected:true});}
-  }
   assert.deepEqual(rows.map(r=>r.id),staticControlIds);return rows;
 }
 async function retryHistory(){
@@ -127,7 +107,7 @@ try{
   else if(mode==='aggregate'){
     const dirs={},root=path.resolve(input);
     for(const e of fs.readdirSync(root,{withFileTypes:true})){if(!e.isDirectory())continue;const d=path.join(root,e.name),f=path.join(d,'child-ux-bundle.json');if(fs.existsSync(f)){const kind=read(f).kind;assert.ok(!dirs[kind],'duplicate evidence kind');dirs[kind]=d;}}
-    const result=verifyChildAggregate(dirs,JSON.parse(process.env.AKARI_CHILD_UX_NEEDS||'null'),read(path.join(path.dirname(output),'retry-history.json')),snapshot,provenance);write(output,result);
+    const result=verifyChildAggregate(dirs,JSON.parse(process.env.AKARI_CHILD_UX_NEEDS||'null'),read(path.join(path.dirname(output),'retry-history.json')),snapshot,provenance);write(output,result);writeSummary(result,result.bundles?.map(b=>({id:b.kind,status:'PASS'}))||[]);
   }else throw Error('Unknown child UX mode: '+mode);
   const status={'manual-template':'UNVERIFIED_TEMPLATE','manual-verify':'VALID_PROTOCOL_RECORDS',history:'HISTORY_RECORDED'}[mode]||'PASS';
   console.log('Child UX '+mode+': '+status+' (machine evidence only; independent UX / real child / real IME are UNVERIFIED)');

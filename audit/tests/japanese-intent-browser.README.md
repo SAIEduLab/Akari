@@ -48,7 +48,7 @@ The 20 `CI-xx/original-prose-ui` IDs cover all 23 unchanged original作文候補
 
 Each check records the actual valid, pending, after-Run and cancelled snapshots, their owner keys, and execution observations. The aggregate validator can independently compare source/project/history/redo/dirty/state and owner preservation instead of relying only on success flags.
 
-The earlier preservation harness unconditionally clicked the blocks button, although it explicitly did not claim that narrative prose was executable. That interaction conflicted with the syntax-error disabled-button guarantee and the pending-edit contract in the historical specification section11 and design section9, now consolidated in LANGUAGE and PUBLIC_SEMANTIC_UX_SPEC. The historical acceptance policy also states that the corpus is not a declaration that every original prose variant parses. The correction preserves all 20 IDs, all original corpus bytes, and all semantic oracles while replacing the inconsistent interaction with stricter pending/non-execution/cancellation observations. `audit/fixtures/intent-original-prose-pending-migration.json` records both routes, hashes, originals, and their guarantees. Product behavior is not relaxed for this audit correction.
+Original prose remains a pending-input preservation route. Verify non-execution, unchanged source/project/history, disabled Block conversion, and cancellation. Structured sources use separate execution and semantic oracles.
 
 ## Evidence and limitations
 
@@ -58,4 +58,4 @@ The manual runner intentionally does not alter existing tests, manifests, baseli
 
 ## Permanent source routing
 
-The six historical document hashes remain pinned in the unchanged baseline fixture. Their current meaning, historical NOT_RUN mappings, section destinations and approved semantic revisions are checked through `audit/manifests/capability-traceability.json` and `audit/fixtures/design-doc-migration-map.json`. The corpus JSON/Markdown moved byte-identically to `audit/fixtures/japanese-intent/`; historical paths inside those originals are provenance. Basic-intents and composition-acceptance remain separate independent sources. Documentation completion is not product execution or child-outcome PASS.
+Current capability meanings and independent expectations are checked through capability-contract and capability-traceability. Corpus JSON/Markdown remain independent inputs. Documentation validation does not assert product execution or child outcomes.

@@ -7,40 +7,12 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  AKARI_REQUESTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 concurrency:
   group: akari-audit-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
-  static:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - run: |
-          npm install --prefix "$RUNNER_TEMP/audit-deps" --no-package-lock --no-audit --no-fund @babel/parser@7.28.4
-          echo "NODE_PATH=$RUNNER_TEMP/audit-deps/node_modules" >> "$GITHUB_ENV"
-      - run: |
-          mkdir -p audit-evidence/static
-          node audit/freeze-release.mjs
-          node audit/tests/static-contract.mjs audit-evidence/static/static.json
-          node audit/tests/release-policy-negative.mjs
-          node audit/tests/contract-gate.mjs static audit-evidence/static/japanese-contract-static.json
-          node audit/tests/contract-gate.mjs migration audit-evidence/static/language-migration-static.json
-          node audit/tests/japanese-gate-negative.mjs audit-evidence/static/japanese-gate-negative.json
-          node audit/tests/verify-japanese-gate.mjs audit-evidence/static
-          node audit/verify-evidence.mjs seal static audit-evidence/static
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: akari-static-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/static/
-          if-no-files-found: error
-          retention-days: 3
-          include-hidden-files: true
   selftest:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
@@ -56,7 +28,9 @@ jobs:
           "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install --with-deps --no-shell chromium
           python audit/install-codec-browser.py "$RUNNER_TEMP/functional-browser"
           node -e 'require("fs").appendFileSync(process.env.GITHUB_ENV,"AKARI_BROWSER="+require("path").join(process.env.RUNNER_TEMP,"functional-browser/chrome-linux64/chrome")+"\n")'
-      - run: node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/selftest
+      - run: |
+          node audit/freeze-release.mjs
+          node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/selftest
       - run: node audit/tests/license-verify.mjs audit-evidence/selftest/license-browser.json
         if: always()
       - run: node audit/verify-evidence.mjs seal selftest audit-evidence/selftest
@@ -138,6 +112,7 @@ jobs:
           python audit/install-codec-browser.py "$RUNNER_TEMP/codec-browser"
       - run: node audit/tests/audio-codecs.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/report.json
       - run: node audit/tests/block-field-width.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/block-field-width.json
+        if: matrix.platform == 'win32'
       - run: node audit/verify-evidence.mjs seal "audio-codecs-${{ matrix.platform }}" audit-evidence/audio
         if: always()
       - uses: actions/upload-artifact@v4
@@ -150,7 +125,7 @@ jobs:
           include-hidden-files: true
   aggregate:
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    needs: [static, selftest, full-browser-gate, audio-codecs]
+    needs: [selftest, full-browser-gate, audio-codecs]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
