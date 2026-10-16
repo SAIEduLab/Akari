@@ -4,7 +4,7 @@ import path from 'node:path';
 import {createRequire} from 'node:module';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
-import {reveal} from '../lib/ux-repair02-ui.mjs';
+import {reveal} from '../lib/ux-normal-ui.mjs';
 import {previewCases,previewNames,previewShortTexts,previewLongTexts} from '../fixtures/speech-preview.mjs';
 import {verifyPreviewObserved,verifyPreviewReport} from '../lib/speech-preview-contract.mjs';
 const require=createRequire(import.meta.url),[chrome,out='audit-evidence/speech-preview.json']=process.argv.slice(2),product=currentProductFile(),output=path.resolve(out),dir=output+'.artifacts';

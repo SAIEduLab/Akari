@@ -54,7 +54,7 @@ export function verifyTriggerObserved(id,o){
   assert.deepEqual(o.hits,{event:true,commit:true,cancel:true});assert.equal(o.after.source,triggerSources.plain);assert.equal(o.after.project.scripts[0].event,'click');assert.equal(o.after.history,o.before.history+1);
  }else assert.fail('Unknown trigger case '+id);
 }
-export function verifyTriggerReport(r){const count=verifySemanticExtension(r,'akari-ux-repair03-trigger-v1',triggerIds);assert.ok(!r.hostFailure);assert.deepEqual(r.pageErrors,[]);assert.deepEqual(r.networkRequests,[]);assert.deepEqual(r.environment,{browser:browserEnvironment.version,playwright:browserEnvironment.playwright});for(const row of r.results)verifyTriggerObserved(row.id,row.observed);return count;}
+export function verifyTriggerReport(r){const count=verifySemanticExtension(r,'akari-ux-phrase-trigger-v1',triggerIds);assert.ok(!r.hostFailure);assert.deepEqual(r.pageErrors,[]);assert.deepEqual(r.networkRequests,[]);assert.deepEqual(r.environment,{browser:browserEnvironment.version,playwright:browserEnvironment.playwright});for(const row of r.results)verifyTriggerObserved(row.id,row.observed);return count;}
 const at=(r,id)=>r.results.find(x=>x.id===id).observed;
 export const triggerWrongMeaning=[
  ['open-mutates',r=>at(r,'trigger/open-cancel').opened.project.scripts[0].event='click'],

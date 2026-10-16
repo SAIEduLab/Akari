@@ -88,15 +88,15 @@ function freezeRun(record,changed){
  vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readFileSync(p){if(p==='audit/public-files.json')return JSON.stringify({files:[currentProductFile(),'LANGUAGE.md']});if(p===currentReleaseFile())return frozen;return Buffer.from(p+(changed?'changed':''));}},assert:relaxed,sha,currentProductFile,currentProductVersion,currentReleaseFile,process:{argv:record?['--record']:[]},console:{log(){}}});}
 check('freeze-record-and-verify',()=>{freezeRun(true,false);freezeRun(false,false);});
 check('freeze-changed-file-refused',()=>assert.throws(()=>freezeRun(false,true)));
-for(const kind of ['composition','repair05']){const good={schema:'akari-acceptance-execution-v1',status:'PASS',snapshot:inputs,steps:acceptanceIds(kind).map((id,i)=>({id,status:'PASS',exit:0,signal:null,log:'step-'+i+'.log',ms:1}))};verifyAcceptanceExecution(good,kind,inputs);
+for(const kind of ['composition','editing']){const good={schema:'akari-acceptance-execution-v1',status:'PASS',snapshot:inputs,steps:acceptanceIds(kind).map((id,i)=>({id,status:'PASS',exit:0,signal:null,log:'step-'+i+'.log',ms:1}))};verifyAcceptanceExecution(good,kind,inputs);
  for(const [name,mutate]of [['missing',r=>r.steps.pop()],['duplicate',r=>r.steps[1]=r.steps[0]],['failed',r=>r.steps[0].status='FAIL'],['timeout',r=>r.steps[0].signal='SIGTERM'],['snapshot',r=>r.snapshot.inputSha256='wrong'],['fake-pass',r=>r.steps[0].exit=1]])check('execution:'+kind+'/'+name,()=>{const bad=clone(good);mutate(bad);assert.throws(()=>verifyAcceptanceExecution(bad,kind,inputs));});}
 const acceptanceRunner=fs.readFileSync('audit/run-acceptance.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
-for(const kind of ['composition','repair05'])check('execution:'+kind+'/persisted-seal-failure',()=>{
+for(const kind of ['composition','editing'])check('execution:'+kind+'/persisted-seal-failure',()=>{
  const written=new Map(),process={argv:['node','runner',kind],execPath:'/node',env:{AKARI_CODEC_BROWSER:'/browser'}};
  const memoryFs={mkdirSync(){},writeFileSync(p,s){written.set(p,s);}};
  const cp={spawnSync(_node,args){return args[0]==='audit/tests/child-ux.mjs'&&args[1]==='seal'?{status:1,signal:null,stderr:'synthetic validation rejection'}:{status:0,signal:null,stdout:''};}};
  vm.runInNewContext(acceptanceRunner,{fs:memoryFs,path:path.posix,cp,assert:relaxed,process,acceptanceCommands,snapshot:()=>inputs,currentProductFile,writeSummary(){},console:{log(){},error(){}}});
- assert.equal(process.exitCode,1);const report=JSON.parse(written.get((kind==='composition'?'audit-evidence/acceptance':'audit-evidence/repair05')+'/execution.json'));
+ assert.equal(process.exitCode,1);const report=JSON.parse(written.get((kind==='composition'?'audit-evidence/acceptance':'audit-evidence/editing')+'/execution.json'));
  assert.equal(report.status,'FAIL');assert.equal(report.validationFailure,'synthetic validation rejection');assert.equal(report.steps.length,acceptanceCommands[kind].length);assert.ok(report.steps.every(r=>r.status==='PASS'));
 });
 assert.deepEqual(results.map(r=>r.id),integrityControlIds);

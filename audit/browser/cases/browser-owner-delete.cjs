@@ -1,4 +1,5 @@
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {openBodyForTest} = require('./regression-setup.cjs');
 // Actual keyboard/pointer regressions for owner deletion and expression movement.
 const L=require('./audit-lib.cjs'),U=require('./ui-routes.cjs'),assert=require('assert/strict');
 const {pathToFileURL}=require('url'),{chromium}=require('playwright');
@@ -65,5 +66,3 @@ async function reveal(locator){
  return locator;
 }
 
-// Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

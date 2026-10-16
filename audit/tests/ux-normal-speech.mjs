@@ -3,10 +3,10 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
-import {install} from '../lib/ux-repair02-ui.mjs';
+import {install} from '../lib/ux-normal-ui.mjs';
 const [chrome,out]=process.argv.slice(2),product=currentProductFile(),dir=path.resolve(out+'.artifacts');fs.mkdirSync(dir,{recursive:true});
-const fixture=JSON.parse(fs.readFileSync(new URL('../fixtures/ux-repair02-speech.json',import.meta.url)));
-const report={schema:'akari-ux-repair02-speech-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,results:[]};const save=()=>fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');
+const fixture=JSON.parse(fs.readFileSync(new URL('../fixtures/ux-normal-speech.json',import.meta.url)));
+const report={schema:'akari-ux-normal-speech-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,results:[]};const save=()=>fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');
 async function scaleStage(p,scale){if(scale===100){await p.locator('#stageZoomReset').click();return;}const target=scale===52?52:49;let lo=800,hi=1700;for(let i=0;i<12;i++){const height=Math.round((lo+hi)/2);await p.setViewportSize({width:1366,height});await p.locator('#stageZoomFit').click();await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));const n=parseInt(await p.locator('#stageZoomReset').textContent());if(n===target)break;if(n<target)lo=height+1;else hi=height-1;}assert.equal(parseInt(await p.locator('#stageZoomReset').textContent()),target);for(let i=target;i>scale;i-=10)await p.locator('#stageZoomOut').click();await p.locator('#stageZoomIn').click();await p.locator('#stageZoomOut').click();}
 try{await withBrowser(chrome,async browser=>{for(const position of fixture.positions)for(const scale of fixture.scales)for(const [ti,text]of fixture.texts.entries()){
  const id=`${position}/${scale}/${ti}`,row={id,status:'RUNNING'};report.results.push(row);try{row.observed=await pageFor(browser,product,async p=>{p.on('dialog',d=>d.accept());row.setup=[];const mark=phase=>row.setup.push({phase,at:Date.now()});p.on('crash',()=>mark('page-crash'));p.on('pageerror',error=>row.setup.push({phase:'page-error',at:Date.now(),message:error.message}));

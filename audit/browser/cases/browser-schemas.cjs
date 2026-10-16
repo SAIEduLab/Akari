@@ -1,4 +1,5 @@
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory, completeRegressionHoles, openPaletteTools} = require('./regression-setup.cjs');
+const {openBodyForTest} = require('./regression-setup.cjs');
 const U=require('./ui-routes.cjs');
 const L=require('./audit-lib.cjs'),assert=require('assert/strict'),{pathToFileURL}=require('url');
 const{chromium}=require('playwright');
@@ -70,8 +71,6 @@ async function reveal(locator){
 async function keyboardActivate(l){const p=l.page();for(let i=0;i<500&&!await l.evaluate(e=>e===document.activeElement);i++){const backwards=await l.evaluate(e=>!!(e.compareDocumentPosition(document.activeElement)&Node.DOCUMENT_POSITION_FOLLOWING));await p.keyboard.press(backwards?'Shift+Tab':'Tab');}assert(await l.evaluate(e=>e===document.activeElement),'exact insertion receives keyboard focus');await l.press('Enter');}
 async function selectSlot(slot){await U.clickNode(slot.locator(':scope > .blockui-node'));await U.openSlot(slot);return keyboardActivate(slot.locator(':scope > .blockui-slot-head [data-blockui-action="slot-select"]'));}
 
-// Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }
 
 // Specification-owned role units; never inferred from the observed block.
 function legacyRoleUnit(schema,key,index){

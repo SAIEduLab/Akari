@@ -84,15 +84,15 @@
       "id": "B01",
       "concept": "順次",
       "purpose": "読む",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/0/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/0/initial/preparedSource"
       },
       "makeContent": null,
@@ -104,7 +104,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/0/virtualRuns",
         "meaning": "こんにちは→またね、各2秒",
         "independent": true
@@ -123,8 +123,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B01/code",
-        "ux-repair02-matrix.json:B01/blocks",
+        "ux-normal-matrix.json:B01/code",
+        "ux-normal-matrix.json:B01/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -133,10 +133,10 @@
       "id": "B02",
       "concept": "順次",
       "purpose": "作る",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "おはよう→いってきます、各2秒",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/1/initial",
         "preparationIsNotTaskSuccess": true
       },
@@ -150,7 +150,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/1/virtualRuns",
         "meaning": "おはよう→いってきます、各2秒",
         "independent": true
@@ -169,8 +169,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B02/code",
-        "ux-repair02-matrix.json:B02/blocks",
+        "ux-normal-matrix.json:B02/code",
+        "ux-normal-matrix.json:B02/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -179,17 +179,17 @@
       "id": "B03",
       "concept": "順次",
       "purpose": "直す",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "ただいま→おやつにしよう",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/2/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": null,
       "makeContent": null,
       "intentionalError": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/2/initial/preparedSource"
       },
       "screenClues": [
@@ -199,7 +199,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/2/virtualRuns",
         "meaning": "ただいま→おやつにしよう",
         "independent": true
@@ -218,8 +218,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B03/code",
-        "ux-repair02-matrix.json:B03/blocks",
+        "ux-normal-matrix.json:B03/code",
+        "ux-normal-matrix.json:B03/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -228,15 +228,15 @@
       "id": "B04",
       "concept": "反復",
       "purpose": "読む",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/3/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/3/initial/preparedSource"
       },
       "makeContent": null,
@@ -248,7 +248,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/3/virtualRuns",
         "meaning": "やあ3回→おしまい1回",
         "independent": true
@@ -267,8 +267,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B04/code",
-        "ux-repair02-matrix.json:B04/blocks",
+        "ux-normal-matrix.json:B04/code",
+        "ux-normal-matrix.json:B04/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -277,10 +277,10 @@
       "id": "B05",
       "concept": "反復",
       "purpose": "作る",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "こっちだよ2秒＋無発話1秒を2回→おしまい2秒を1回",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/4/initial",
         "preparationIsNotTaskSuccess": true
       },
@@ -294,7 +294,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/4/virtualRuns",
         "meaning": "こっちだよ2秒＋無発話1秒を2回→おしまい2秒を1回",
         "independent": true
@@ -313,8 +313,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B05/code",
-        "ux-repair02-matrix.json:B05/blocks",
+        "ux-normal-matrix.json:B05/code",
+        "ux-normal-matrix.json:B05/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -323,17 +323,17 @@
       "id": "B06",
       "concept": "反復",
       "purpose": "直す",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "やあ3回→おしまい1回",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/5/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": null,
       "makeContent": null,
       "intentionalError": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/5/initial/preparedSource"
       },
       "screenClues": [
@@ -343,7 +343,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/5/virtualRuns",
         "meaning": "やあ3回→おしまい1回",
         "independent": true
@@ -362,8 +362,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B06/code",
-        "ux-repair02-matrix.json:B06/blocks",
+        "ux-normal-matrix.json:B06/code",
+        "ux-normal-matrix.json:B06/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -372,15 +372,15 @@
       "id": "B07",
       "concept": "イベント",
       "purpose": "読む",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/6/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/6/initial/preparedSource"
       },
       "makeContent": null,
@@ -392,7 +392,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/6/virtualRuns",
         "meaning": "開始では無発話、あかりクリックでよんだ？",
         "independent": true
@@ -411,8 +411,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B07/code",
-        "ux-repair02-matrix.json:B07/blocks",
+        "ux-normal-matrix.json:B07/code",
+        "ux-normal-matrix.json:B07/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -421,10 +421,10 @@
       "id": "B08",
       "concept": "イベント",
       "purpose": "作る",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "だんごクリックでのみなあに？",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/7/initial",
         "preparationIsNotTaskSuccess": true
       },
@@ -438,7 +438,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/7/virtualRuns",
         "meaning": "だんごクリックでのみなあに？",
         "independent": true
@@ -457,8 +457,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B08/code",
-        "ux-repair02-matrix.json:B08/blocks",
+        "ux-normal-matrix.json:B08/code",
+        "ux-normal-matrix.json:B08/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -467,17 +467,17 @@
       "id": "B09",
       "concept": "イベント",
       "purpose": "直す",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "開始では無発話、クリック時だけ発話",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/8/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": null,
       "makeContent": null,
       "intentionalError": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/8/initial/preparedSource"
       },
       "screenClues": [
@@ -487,7 +487,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/8/virtualRuns",
         "meaning": "開始では無発話、クリック時だけ発話",
         "independent": true
@@ -506,8 +506,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B09/code",
-        "ux-repair02-matrix.json:B09/blocks",
+        "ux-normal-matrix.json:B09/code",
+        "ux-normal-matrix.json:B09/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -516,15 +516,15 @@
       "id": "B10",
       "concept": "並行処理",
       "purpose": "読む",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/9/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/9/initial/preparedSource"
       },
       "makeContent": null,
@@ -536,7 +536,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/9/virtualRuns",
         "meaning": "あか2秒と、1秒後のあお2秒が重なる",
         "independent": true
@@ -555,8 +555,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B10/code",
-        "ux-repair02-matrix.json:B10/blocks",
+        "ux-normal-matrix.json:B10/code",
+        "ux-normal-matrix.json:B10/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -565,10 +565,10 @@
       "id": "B11",
       "concept": "並行処理",
       "purpose": "作る",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "こんにちは2秒と、1秒後のやあ2秒が重なる",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/10/initial",
         "preparationIsNotTaskSuccess": true
       },
@@ -582,7 +582,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/10/virtualRuns",
         "meaning": "こんにちは2秒と、1秒後のやあ2秒が重なる",
         "independent": true
@@ -601,8 +601,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B11/code",
-        "ux-repair02-matrix.json:B11/blocks",
+        "ux-normal-matrix.json:B11/code",
+        "ux-normal-matrix.json:B11/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -611,17 +611,17 @@
       "id": "B12",
       "concept": "並行処理",
       "purpose": "直す",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "だんごの待ち1秒で発話が重なる",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/11/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": null,
       "makeContent": null,
       "intentionalError": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/11/initial/preparedSource"
       },
       "screenClues": [
@@ -631,7 +631,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/11/virtualRuns",
         "meaning": "だんごの待ち1秒で発話が重なる",
         "independent": true
@@ -650,8 +650,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B12/code",
-        "ux-repair02-matrix.json:B12/blocks",
+        "ux-normal-matrix.json:B12/code",
+        "ux-normal-matrix.json:B12/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -660,15 +660,15 @@
       "id": "B13",
       "concept": "条件分岐",
       "purpose": "読む",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/12/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/12/initial/preparedSource"
       },
       "makeContent": null,
@@ -680,7 +680,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/12/virtualRuns",
         "meaning": "そら→どうぞ、うみ→ちがうよ",
         "independent": true
@@ -699,8 +699,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B13/code",
-        "ux-repair02-matrix.json:B13/blocks",
+        "ux-normal-matrix.json:B13/code",
+        "ux-normal-matrix.json:B13/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -709,10 +709,10 @@
       "id": "B14",
       "concept": "条件分岐",
       "purpose": "作る",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "ほし→どうぞ、つき→もういちど",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/13/initial",
         "preparationIsNotTaskSuccess": true
       },
@@ -726,7 +726,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/13/virtualRuns",
         "meaning": "ほし→どうぞ、つき→もういちど",
         "independent": true
@@ -745,8 +745,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B14/code",
-        "ux-repair02-matrix.json:B14/blocks",
+        "ux-normal-matrix.json:B14/code",
+        "ux-normal-matrix.json:B14/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -755,17 +755,17 @@
       "id": "B15",
       "concept": "条件分岐",
       "purpose": "直す",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "そら→どうぞ、うみ→ちがうよ",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/14/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": null,
       "makeContent": null,
       "intentionalError": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/14/initial/preparedSource"
       },
       "screenClues": [
@@ -775,7 +775,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/14/virtualRuns",
         "meaning": "そら→どうぞ、うみ→ちがうよ",
         "independent": true
@@ -794,8 +794,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B15/code",
-        "ux-repair02-matrix.json:B15/blocks",
+        "ux-normal-matrix.json:B15/code",
+        "ux-normal-matrix.json:B15/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -804,15 +804,15 @@
       "id": "B16",
       "concept": "演算",
       "purpose": "読む",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/15/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/15/initial/preparedSource"
       },
       "makeContent": null,
@@ -824,7 +824,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/15/virtualRuns",
         "meaning": "2＋3の計算結果5",
         "independent": true
@@ -843,8 +843,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B16/code",
-        "ux-repair02-matrix.json:B16/blocks",
+        "ux-normal-matrix.json:B16/code",
+        "ux-normal-matrix.json:B16/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -853,10 +853,10 @@
       "id": "B17",
       "concept": "演算",
       "purpose": "作る",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "4−1の計算結果3",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/16/initial",
         "preparationIsNotTaskSuccess": true
       },
@@ -870,7 +870,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/16/virtualRuns",
         "meaning": "4−1の計算結果3",
         "independent": true
@@ -889,8 +889,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B17/code",
-        "ux-repair02-matrix.json:B17/blocks",
+        "ux-normal-matrix.json:B17/code",
+        "ux-normal-matrix.json:B17/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -899,17 +899,17 @@
       "id": "B18",
       "concept": "演算",
       "purpose": "直す",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "2×3の6から2＋3の5",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/17/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": null,
       "makeContent": null,
       "intentionalError": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/17/initial/preparedSource"
       },
       "screenClues": [
@@ -919,7 +919,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/17/virtualRuns",
         "meaning": "2×3の6から2＋3の5",
         "independent": true
@@ -938,8 +938,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B18/code",
-        "ux-repair02-matrix.json:B18/blocks",
+        "ux-normal-matrix.json:B18/code",
+        "ux-normal-matrix.json:B18/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -948,15 +948,15 @@
       "id": "B19",
       "concept": "データ",
       "purpose": "読む",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "画面の文から、いつ・だれが・どの順に・何が起きるか予測する。",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/18/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/18/initial/preparedSource"
       },
       "makeContent": null,
@@ -968,7 +968,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/18/virtualRuns",
         "meaning": "点数0設定→2増加→表示・発話2、再実行も2",
         "independent": true
@@ -987,8 +987,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B19/code",
-        "ux-repair02-matrix.json:B19/blocks",
+        "ux-normal-matrix.json:B19/code",
+        "ux-normal-matrix.json:B19/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -997,10 +997,10 @@
       "id": "B20",
       "concept": "データ",
       "purpose": "作る",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "開始0、発話終了後の各クリックで表示・発話1→2→3",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/19/initial",
         "preparationIsNotTaskSuccess": true
       },
@@ -1014,7 +1014,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/19/virtualRuns",
         "meaning": "開始0、発話終了後の各クリックで表示・発話1→2→3",
         "independent": true
@@ -1033,8 +1033,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B20/code",
-        "ux-repair02-matrix.json:B20/blocks",
+        "ux-normal-matrix.json:B20/code",
+        "ux-normal-matrix.json:B20/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -1043,17 +1043,17 @@
       "id": "B21",
       "concept": "データ",
       "purpose": "直す",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "りんご→パン",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/20/initial",
         "preparationIsNotTaskSuccess": true
       },
       "readText": null,
       "makeContent": null,
       "intentionalError": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/20/initial/preparedSource"
       },
       "screenClues": [
@@ -1063,7 +1063,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/20/virtualRuns",
         "meaning": "りんご→パン",
         "independent": true
@@ -1082,8 +1082,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B21/code",
-        "ux-repair02-matrix.json:B21/blocks",
+        "ux-normal-matrix.json:B21/code",
+        "ux-normal-matrix.json:B21/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -1092,10 +1092,10 @@
       "id": "B22",
       "concept": "初回から実行",
       "purpose": "入口",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "こんにちは2秒。文言の編集と復帰も実行",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/21/initial",
         "preparationIsNotTaskSuccess": true
       },
@@ -1109,7 +1109,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/21/virtualRuns",
         "meaning": "こんにちは2秒。文言の編集と復帰も実行",
         "independent": true
@@ -1128,8 +1128,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B22/code",
-        "ux-repair02-matrix.json:B22/blocks",
+        "ux-normal-matrix.json:B22/code",
+        "ux-normal-matrix.json:B22/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -1138,10 +1138,10 @@
       "id": "B23",
       "concept": "対象・きっかけの切替",
       "purpose": "文脈",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "開始あかりのみおはよう、クリックだんごのみなあに？",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/22/initial",
         "preparationIsNotTaskSuccess": true
       },
@@ -1155,7 +1155,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/22/virtualRuns",
         "meaning": "開始あかりのみおはよう、クリックだんごのみなあに？",
         "independent": true
@@ -1175,8 +1175,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B23/code",
-        "ux-repair02-matrix.json:B23/blocks",
+        "ux-normal-matrix.json:B23/code",
+        "ux-normal-matrix.json:B23/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -1185,10 +1185,10 @@
       "id": "B24",
       "concept": "誤編集からの復帰",
       "purpose": "取消",
-      "origin": "Inherited ID and intention from ux-repair-benchmark.json; operational metadata supplemented by this audit request.",
+      "origin": "Inherited ID and intention from ux-edit-benchmark.json; operational metadata supplemented by this audit request.",
       "intent": "おはよう→いってきます",
       "preconditions": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/23/initial",
         "preparationIsNotTaskSuccess": true
       },
@@ -1196,7 +1196,7 @@
       "makeContent": null,
       "intentionalError": {
         "action": "いってきますの発話を実際に削除する",
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/23/initial/preparedSource"
       },
       "screenClues": [
@@ -1206,7 +1206,7 @@
         "現在のエラー案内"
       ],
       "expected": {
-        "fixture": "audit/fixtures/ux-repair02-matrix.json",
+        "fixture": "audit/fixtures/ux-normal-matrix.json",
         "pointer": "/cases/23/virtualRuns",
         "meaning": "おはよう→いってきます",
         "independent": true
@@ -1226,8 +1226,8 @@
       ],
       "environmentReference": "conditions",
       "evidence": [
-        "ux-repair02-matrix.json:B24/code",
-        "ux-repair02-matrix.json:B24/blocks",
+        "ux-normal-matrix.json:B24/code",
+        "ux-normal-matrix.json:B24/blocks",
         "child-ux-matrix.json",
         "manual-events.jsonl (independent observation only)"
       ]
@@ -1239,7 +1239,7 @@
       "classification": "EXISTING",
       "guarantee": "24課題の独立した対象・順序・時刻・条件・回数・値",
       "job": "composition-acceptance",
-      "evidence": "ux-repair02-matrix.json",
+      "evidence": "ux-normal-matrix.json",
       "testIds": [
         "B01/code",
         "B01/blocks",
@@ -1310,7 +1310,7 @@
       "classification": "EXISTING",
       "guarantee": "未完成・不正入力を勝手に別意味へ変えない",
       "job": "composition-acceptance",
-      "evidence": "ux-repair02-browser.json",
+      "evidence": "ux-normal-browser.json",
       "testIds": [
         "diagnostics/current-source",
         "editor/synthetic-composition"
@@ -1323,7 +1323,7 @@
       "classification": "EXISTING",
       "guarantee": "分類・検索・候補の到達と挿入、状態保持",
       "job": "composition-acceptance",
-      "evidence": "ux-repair02-browser.json",
+      "evidence": "ux-normal-browser.json",
       "testIds": [
         "controls/palette-and-search"
       ],
@@ -1335,7 +1335,7 @@
       "classification": "EXISTING",
       "guarantee": "対象・きっかけ・元の本文を保持",
       "job": "composition-acceptance",
-      "evidence": "ux-repair02-matrix.json",
+      "evidence": "ux-normal-matrix.json",
       "testIds": [
         "B08/code",
         "B08/blocks",
@@ -1352,7 +1352,7 @@
       "classification": "EXISTING",
       "guarantee": "取消・Undo/Redoと編集への復帰",
       "job": "composition-acceptance",
-      "evidence": "ux-repair02-matrix.json",
+      "evidence": "ux-normal-matrix.json",
       "testIds": [
         "B24/code",
         "B24/blocks"
@@ -1364,7 +1364,7 @@
       "id": "B4",
       "classification": "EXISTING",
       "guarantee": "エラー箇所への到達と修正復帰",
-      "job": "ux-repair05",
+      "job": "ux-editing",
       "evidence": "child-diagnostics.json",
       "testIds": [
         "syntax/closing",
@@ -1377,7 +1377,7 @@
       "id": "C1",
       "classification": "EXISTING",
       "guarantee": "固定画面幅・実ブラウザー拡大・必須部品の到達",
-      "job": "ux-repair05",
+      "job": "ux-editing",
       "evidence": "component-controls.json",
       "testIds": [
         "COMPONENT-CONTROLS-RESPONSIVE",
@@ -1390,7 +1390,7 @@
       "id": "C2",
       "classification": "EXISTING",
       "guarantee": "10/28/100%・短文長文・複数話者・全文一致と閉じる",
-      "job": "ux-repair05",
+      "job": "ux-editing",
       "evidence": "speech-preview.json",
       "testIds": [
         "speech-preview/fresh/10",
@@ -1406,7 +1406,7 @@
       "id": "C3",
       "classification": "EXISTING",
       "guarantee": "寸法・文字の描画・実操作・画像を併用",
-      "job": "ux-repair05",
+      "job": "ux-editing",
       "evidence": "speech-name-layout.json",
       "testIds": [
         "speech-name/position-edges",
@@ -1419,7 +1419,7 @@
       "id": "D1",
       "classification": "GAP_FILLED",
       "guarantee": "製品ソースと実画面の候補語を対応・欠落を検出",
-      "job": "ux-repair05",
+      "job": "ux-editing",
       "evidence": "child-ux-language.json",
       "testIds": [
         "CHILD-UX-LANGUAGE-INVENTORY"
@@ -1431,7 +1431,7 @@
       "id": "D2",
       "classification": "EXISTING",
       "guarantee": "読み・平易な意味・例・操作への支援を実画面で確認",
-      "job": "ux-repair05",
+      "job": "ux-editing",
       "evidence": "child-language-ui.json",
       "testIds": [
         "CHILD-UI-ACTION-HELP",
@@ -1458,7 +1458,7 @@
       "classification": "EXISTING",
       "guarantee": "入力・貼付・focus・合成composition中と確定後",
       "job": "composition-acceptance",
-      "evidence": "ux-repair02-browser.json",
+      "evidence": "ux-normal-browser.json",
       "testIds": [
         "editor/synthetic-composition",
         "editor/enter-indent"

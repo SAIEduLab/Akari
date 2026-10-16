@@ -77,7 +77,7 @@ export function verifySpeechObserved(id,o){
  else assert.fail('Unregistered speech observation '+id);
 }
 export function verifySpeechReport(r){
- const n=verifySemanticExtension(r,'akari-ux-repair03-speech-v1',speechIds);
+ const n=verifySemanticExtension(r,'akari-ux-phrase-speech-v1',speechIds);
  assert.ok(!r.hostFailure);assert.equal(r.environment.browser,browserEnvironment.version);assert.equal(r.environment.playwright,browserEnvironment.playwright);
  assert.deepEqual(r.pageErrors,[]);assert.deepEqual(r.networkRequests,[]);
  for(const row of r.results)verifySpeechObserved(row.id,row.observed);

@@ -4,22 +4,22 @@ import assert from 'node:assert/strict';
 import {sha,snapshot} from './product-test-host.mjs';
 import {currentProductFile} from './product-path.cjs';
 import {childUxProvenance} from './child-ux-observations.mjs';
-import {verifyRepairMatrix} from './ux-repair02-contract.mjs';
+import {verifyRepairMatrix} from './ux-normal-contract.mjs';
 import {childLanguageUiIds,childInsertionConceptHints,verifyChildLanguageUi} from './child-language-ui-contract.mjs';
 import {blockMeaning} from './child-ux-blocks.mjs';
 export const taskIds=Array.from({length:24},(_,i)=>'B'+String(i+1).padStart(2,'0'));
 export const requirementIds=['A1','A2','A3','B1','B2','B3','B4','C1','C2','C3','D1','D2','D3','E1','E2','E3','F1','F2','G1','H1','H2'];
 const read=p=>JSON.parse(fs.readFileSync(p));
 export const plan=read('audit/fixtures/child-ux-plan.json');
-const matrix=read('audit/fixtures/ux-repair02-matrix.json').cases;
+const matrix=read('audit/fixtures/ux-normal-matrix.json').cases;
 export const currentInputs=()=>snapshot(currentProductFile());
 export function verifyFrozenInputs(){
-  assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-plan.json')),'e18f5596669ec18d63cc2879f0d92e0cf98f88c2eb58a22e683e47677112ac10','independent supplemental task plan');
-  const benchmark=read('audit/fixtures/ux-repair-benchmark.json');
+  assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-plan.json')),'5511c8ea1b445f5daa7e6cfe5778e87c51a173e664987892ad5897e71aa14108','independent supplemental task plan');
+  const benchmark=read('audit/fixtures/ux-edit-benchmark.json');
   assert.deepEqual(plan.taskIds,taskIds);assert.deepEqual(plan.order,benchmark.order);assert.deepEqual(plan.tasks.map(t=>t.id),taskIds);
   for(const [i,t]of plan.tasks.entries()){
     const b=benchmark.cases.find(x=>x.id===t.id&&x.mode==='code');assert.equal(t.expected.meaning,b.fixedExpected);assert.equal(t.recoveryCondition,b.requiredAction);
-    assert.equal(t.expected.fixture,'audit/fixtures/ux-repair02-matrix.json');assert.equal(t.expected.pointer,'/cases/'+i+'/virtualRuns');assert.equal(t.expected.independent,true);
+    assert.equal(t.expected.fixture,'audit/fixtures/ux-normal-matrix.json');assert.equal(t.expected.pointer,'/cases/'+i+'/virtualRuns');assert.equal(t.expected.independent,true);
     assert.deepEqual(t.modes,['blocks','code']);assert.ok(t.operationSteps.length>=4);assert.equal(t.preconditions.preparationIsNotTaskSuccess,true);
     if(i<21)assert.equal(t.purpose,['読む','作る','直す'][i%3]);
   }
@@ -154,7 +154,7 @@ export function verifyManualSessions(sessions,base){
   const keys=sessions.map(s=>s.auditKind+'/'+s.actor+'/'+s.mode+'/'+s.task);assert.equal(new Set(keys).size,keys.length,'one session per audit kind/actor/mode/task; retain retries separately');
   return sessions.map(s=>{const result=verifyManualSession(s);verifyManualEvidence(s,base);return result;});
 }
-export function verifyNeeds(needs){assert.deepEqual(Object.keys(needs).sort(),['composition-acceptance','ux-repair05']);for(const n of Object.values(needs))assert.equal(n.result,'success','missing/cancelled/skipped/timed-out job is not success');}
+export function verifyNeeds(needs){assert.deepEqual(Object.keys(needs).sort(),['composition-acceptance','ux-editing']);for(const n of Object.values(needs))assert.equal(n.result,'success','missing/cancelled/skipped/timed-out job is not success');}
 export function verifyRetryHistory(h,p){
   assert.equal(h.schema,'akari-child-ux-retry-history-v1');assert.equal(h.run,p.run);assert.equal(h.testedCommit,p.testedCommit);assert.equal(h.attempt,p.attempt);assert.equal(h.repository,p.repository);
   assert.ok([p.candidateCommit,p.testedCommit].includes(h.workflowHeadCommit));assert.equal(h.priorAttempts.length,Number(p.attempt)-1);

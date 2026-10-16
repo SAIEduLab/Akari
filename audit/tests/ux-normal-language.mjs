@@ -5,7 +5,7 @@ import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 const A=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
-const fixture=JSON.parse(fs.readFileSync(new URL('../fixtures/ux-repair02-expectations.json',import.meta.url)));
+const fixture=JSON.parse(fs.readFileSync(new URL('../fixtures/ux-normal-expectations.json',import.meta.url)));
 const plain=v=>JSON.parse(JSON.stringify(v)),results=[];
 function project(c){const p=A.makeEmptyProject();p.components[0].name=c.actorName||'あかり';p.projectData.variables=[{id:'score',name:'点数',initialValue:0}];p.projectData.lists=[{id:'shopping',name:'買うもの',initialValue:['りんご','パン','牛乳']}];if(c.localList)p.components[0].localData.lists=[{id:'local-shopping',name:'買うもの',initialValue:['えんぴつ','ノート']}];p.scripts=[{id:'main',targetId:'sprite-1',event:'start',source:c.source}];return p;}
 function execute(p,c){const compiled=A.compileProject(p),errors=Array.from(compiled.errors,e=>e.code),trace=[],questions=[];if(errors.length)return {errors,trace,questions};let now=0,reply;const runtime=new A.RuntimeModel(p,{});runtime.now=()=>now;const scheduler=new A.EventScheduler(p,compiled,runtime,{say:(id,text)=>trace.push([now,id,text]),clearSpeech:id=>trace.push([now,id,null]),ask:(question,cb)=>{questions.push(question);reply=cb;},runtimeError:(_,e)=>errors.push(e.code)});scheduler.schedule=()=>{};const pump=()=>{scheduler.recheckBlocked(true);let turns=0;while(scheduler.ready.length&&turns++<1000)scheduler.runTurn(true);assert.ok(turns<1000);};try{scheduler.start();pump();if(c.question){assert.deepEqual(trace,[],'Ask must block before the answer');assert.deepEqual(questions,[c.question]);reply(c.answer);pump();}now=1999;pump();now=2000;pump();return {trace,questions,errors,score:runtime.projectVars.get('点数')};}finally{scheduler.stop();}}
@@ -32,5 +32,5 @@ for(const c of fixture.taskCases)run(c.id,()=>{
  for(const script of p.scripts){const parsed=A.parseSyntax(script.source,{symbols:A.buildSymbols(p),targetId:script.targetId,event:script.event});script.source=A.formatScript(A.blockDecode(A.blockEncode(parsed.ast).tree));}
  assert.deepEqual(executeTaskQuestions(p,c),first,'Block/code formatting retains each task answer');return {sources:c.scripts.map(s=>s.source),sourceExact:true,blockRoundtrip:true,rerun:true,answerOwnership:true,...first};
 });
-const report={schema:'akari-ux-repair02-language-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),uxAcceptance:false,results};
+const report={schema:'akari-ux-normal-language-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),uxAcceptance:false,results};
 const output=path.resolve(process.argv[2]);fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');console.log(`UX repair 02 language: ${results.filter(r=>r.status==='PASS').length}/${results.length}`);if(report.status!=='PASS')process.exitCode=1;

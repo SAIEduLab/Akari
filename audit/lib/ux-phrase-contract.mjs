@@ -1,31 +1,31 @@
 import assert from 'node:assert/strict';
-import {verifyTriggerReport,triggerWrongMeaning} from './ux-repair03-trigger-contract.mjs';
-import {verifySpeechReport,speechWrongMeaning} from './ux-repair03-speech-contract.mjs';
-import {verifyListRepairReport,listRepairWrongMeaning} from './ux-repair03-list-contract.mjs';
+import {verifyTriggerReport,triggerWrongMeaning} from './ux-phrase-trigger-contract.mjs';
+import {verifySpeechReport,speechWrongMeaning} from './ux-phrase-speech-contract.mjs';
+import {verifyListRepairReport,listRepairWrongMeaning} from './ux-phrase-list-contract.mjs';
 
 export const repairFollowupInputs=[
-  ['ux-repair03-trigger.json',verifyTriggerReport,triggerWrongMeaning],
-  ['ux-repair03-speech.json',verifySpeechReport,speechWrongMeaning],
-  ['ux-repair03-list.json',verifyListRepairReport,listRepairWrongMeaning],
+  ['ux-phrase-trigger.json',verifyTriggerReport,triggerWrongMeaning],
+  ['ux-phrase-speech.json',verifySpeechReport,speechWrongMeaning],
+  ['ux-phrase-list.json',verifyListRepairReport,listRepairWrongMeaning],
 ];
 
 // Keep the required control registry independent of the exported implementations.
 // Removing a suite or a meaning mutation must fail, rather than reduce coverage.
 const requiredMeaning={
-  'ux-repair03-trigger.json':[
+  'ux-phrase-trigger.json':[
     'open-mutates','cancel-mutates-history','literal-body-lost','event-not-run',
     'selection-edits-event','empty-selection-rewrites-start','empty-body-replaces-start',
     'other-owner-changed','sibling-body-changed','header-reformats-body','linked-trigger-cascades',
     'linked-other-prefix-body-lost','multiple-target-hidden','key-filter-lost','message-filter-lost',
     'layout-clipped','layout-wrong-zoom','layout-pointer-blocked',
   ],
-  'ux-repair03-speech.json':[
+  'ux-phrase-speech.json':[
     'speaker-missing','other-speaker-body','copy-adds-name','speaker-clipped',
     'stale-pair-after-update','stop-retains-dialog','clone-unidentified',
     'generic-value-labelled-speech','B10-time-extended','short-speech-clipped',
     'rerun-missing','page-loses-speaker',
   ],
-  'ux-repair03-list.json':[
+  'ux-phrase-list.json':[
     'wrong-answer','source-reformatted','silent-conversion','runtime-write','data-reordered',
     'selection-commits','undo-lost','scope-leak','stale-overwrite','old-record-other-body',
     'cancel-mutates','discard-pending','clipped-control','isolated-exception',

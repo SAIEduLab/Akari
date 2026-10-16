@@ -1,4 +1,5 @@
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {openBodyForTest} = require('./regression-setup.cjs');
 const L=require('./audit-lib.cjs'),U=require('./ui-routes.cjs'),assert=require('assert/strict'),{chromium}=require('playwright'),{pathToFileURL}=require('url');
 const dir=L.path.resolve(process.argv[2]),manifest=L.verifyManifest(dir),results=[],errors=[],network=[];
 async function tabTo(l){const p=l.page();for(let i=0;i<1000&&!await l.evaluate(e=>e===document.activeElement);i++){const back=await l.evaluate(e=>!!(e.compareDocumentPosition(document.activeElement)&Node.DOCUMENT_POSITION_FOLLOWING));await p.keyboard.press(back?'Shift+Tab':'Tab');}assert(await l.evaluate(e=>e===document.activeElement));}
@@ -16,5 +17,3 @@ const keep=await state(p);await root.locator('[data-blockui-action="workspace-ex
 }catch(e){results.push({pass:false,evidence,error:e.stack});await p.screenshot({path:L.path.join(dir,'workbench-fail-'+viewport.width+'-'+zoom+'.png')});}finally{await c.close();L.result(L.path.join(dir,'workbench-matrix.json'),{manifest,browser:browser.version(),results,errors,network});}}
 }finally{await browser.close();}console.log(JSON.stringify({passed:results.filter(x=>x.pass).length,failed:results.filter(x=>!x.pass).length,errors,network}));if(results.some(x=>!x.pass)||errors.length||network.length)process.exitCode=1;})().catch(e=>{console.error(e);process.exitCode=1;});
 
-// Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

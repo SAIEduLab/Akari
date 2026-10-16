@@ -1,5 +1,5 @@
-import {repairInputs,repairWrongMeaning,repairMatrixWrongMeaning,repairViewportWrongMeaning,repairLanguageWrongMeaning} from '../lib/ux-repair02-contract.mjs';
-import {verifyRepairFollowupBundle} from '../lib/ux-repair03-contract.mjs';
+import {repairInputs,repairWrongMeaning,repairMatrixWrongMeaning,repairViewportWrongMeaning,repairLanguageWrongMeaning} from '../lib/ux-normal-contract.mjs';
+import {verifyRepairFollowupBundle} from '../lib/ux-phrase-contract.mjs';
 import {verifyAutosaveStateReport,autosaveStateWrongMeaning} from '../lib/autosave-state-contract.mjs';
 import {verifySearchLayoutReport,searchLayoutWrongMeaning} from '../lib/search-layout-contract.mjs';
 import fs from 'node:fs';
@@ -11,7 +11,7 @@ import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {verifyCommandMeaning} from '../lib/command-meaning-contract.mjs';
 import {audioOutputCases,verifyAudioOutput,wave,measureWave} from '../lib/audio-output-contract.mjs';
 import {transferFixtures,fixturePins,compositionIds,verifyTransferReport,verifyValuesReport,verifyCompositionReport} from '../lib/actions-transfer-contract.mjs';
-import {uxRepairInputs,verifyUxRepairInputs} from '../lib/ux-repair-contract.mjs';
+import {uxRepairInputs,verifyUxRepairInputs} from '../lib/ux-edit-contract.mjs';
 import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser,resourceReferenceIds,resourceBrowserIds,verifyResourceBrowser,searchBindingIds,searchBrowserIds,verifySearchBrowser,uxSurfaceIds,uxManualFiles,verifyUxSurface,basicIntentIds,verifyBasicBrowser,semanticNegativeIds,finiteVariantFixture,verifyFiniteVariants,structuredOrders,structuredEditingIds,verifyStructuredEditing} from '../lib/semantic-extension-contract.mjs';
 const dir=path.resolve(process.argv[2]),results=[],negative=[];
 for(const [file,verify]of uxRepairInputs){
@@ -20,7 +20,7 @@ for(const [file,verify]of uxRepairInputs){
  }catch(error){results.push({file,status:'FAIL',error:error.message});}
 }
 try{const reports=Object.fromEntries(uxRepairInputs.map(([file])=>[file,JSON.parse(fs.readFileSync(path.join(dir,file)))]));verifyUxRepairInputs(file=>reports[file]);for(const [missing]of uxRepairInputs){assert.throws(()=>verifyUxRepairInputs(file=>file===missing?undefined:reports[file]));negative.push({id:missing+'/missing-report',rejected:true});}}
-catch(error){results.push({file:'ux-repair-inputs-negative',status:'FAIL',error:error.message});}
+catch(error){results.push({file:'ux-edit-inputs-negative',status:'FAIL',error:error.message});}
 try{const r=JSON.parse(fs.readFileSync(path.join(dir,'audio-output-browser.json')));results.push({file:'audio-output-browser.json',status:'PASS',cases:verifyAudioOutput(r,dir)});}catch(error){results.push({file:'audio-output-browser.json',status:'FAIL',error:error.message});}
 for(const [file,verify]of [['command-meaning.json',verifyCommandMeaning],['structured-editing-browser.json',verifyStructuredEditing],['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser],['resource-references-browser.json',verifyResourceBrowser],['search-bindings-browser.json',verifySearchBrowser],['ux-surface-browser.json',verifyUxSurface],['basic-intents-browser.json',verifyBasicBrowser],['finite-semantic-variants.json',verifyFiniteVariants]]){
  try{const r=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verify(r)});}
@@ -191,19 +191,19 @@ try{
  for(const[id,mutate]of Object.entries({'structured-missing':r=>r.results.pop(),'structured-identity-drift':r=>r.results[0].observed.stableId=false,'structured-lost-body':r=>r.results[4].observed.bodyPreserved=false,'structured-wrong-direction':r=>r.results[6].observed.direction='left','structured-rate-confusion':r=>r.results[7].observed.moved=33})){const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyStructuredEditing(bad));negative.push({id,rejected:true});}
 }catch(error){results.push({file:'structured-validator-negative',status:'FAIL',error:error.stack});}
 try { for(const [file,mutate] of repairWrongMeaning){const report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/wrong-meaning',rejected:true});} }
-catch(error){results.push({file:'ux-repair02-meaning-negative',status:'FAIL',error:error.message});}
-try {const file='ux-repair02-matrix.json',report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);for(const [id,mutate] of repairMatrixWrongMeaning){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
-catch(error){results.push({file:'ux-repair02-matrix-meaning-negative',status:'FAIL',error:error.message});}
+catch(error){results.push({file:'ux-normal-meaning-negative',status:'FAIL',error:error.message});}
+try {const file='ux-normal-matrix.json',report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);for(const [id,mutate] of repairMatrixWrongMeaning){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
+catch(error){results.push({file:'ux-normal-matrix-meaning-negative',status:'FAIL',error:error.message});}
 try {for(const [file,id,mutate] of repairViewportWrongMeaning){const report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
-catch(error){results.push({file:'ux-repair02-viewport-negative',status:'FAIL',error:error.message});}
-try {const file='ux-repair02-language.json',report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);for(const [id,mutate] of repairLanguageWrongMeaning){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
-catch(error){results.push({file:'ux-repair02-language-meaning-negative',status:'FAIL',error:error.message});}
+catch(error){results.push({file:'ux-normal-viewport-negative',status:'FAIL',error:error.message});}
+try {const file='ux-normal-language.json',report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);for(const [id,mutate] of repairLanguageWrongMeaning){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
+catch(error){results.push({file:'ux-normal-language-meaning-negative',status:'FAIL',error:error.message});}
 let followupNegative=[];
 try{
  const followup=verifyRepairFollowupBundle(file=>JSON.parse(fs.readFileSync(path.join(dir,file))));
  results.push(...followup.results.map(row=>({...row,status:'PASS'})));
  followupNegative=followup.negative;
-}catch(error){results.push({file:'ux-repair03-required-bundle',status:'FAIL',error:error.stack});}
+}catch(error){results.push({file:'ux-phrase-required-bundle',status:'FAIL',error:error.stack});}
 const autosaveNegative=[];
 try{
  const file='autosave-state-browser.json',actual=JSON.parse(fs.readFileSync(path.join(dir,file)));

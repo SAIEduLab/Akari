@@ -1,6 +1,6 @@
 # 創作中の復帰とブロック操作
 
-現行の製品は public-files.json から取得する。固定24課題と独立期待は [児童目線監査](CHILD_UX.md) と [UX契約](UX_REPAIR.md) を参照する。試験結果を製品hash、共通入力digest、commit、環境、run/attemptへ結び付ける。
+現行の製品は public-files.json から取得する。固定24課題と独立期待は [児童目線監査](CHILD_UX.md) と [UX契約](UX_CONTRACT.md) を参照する。試験結果を製品hash、共通入力digest、commit、環境、run/attemptへ結び付ける。
 
 ## 操作と作品保護
 
@@ -30,6 +30,6 @@
 
 ## 検証と受入れ
 
-必要集合はgate-contract、full-browserの5群、書出し／読込み31 IDと負例、composition／repair05の現在の集合とvalidatorを正本とする。入力変化、別snapshot、未実行、環境阻害、欠落、timeout、失敗をPASSにしない。
+必要集合はgate-contract、full-browserの5群、書出し／読込み31 IDと負例、composition／editingの現在の集合とvalidatorを正本とする。入力変化、別snapshot、未実行、環境阻害、欠落、timeout、失敗をPASSにしない。
 
 Windows/Linux、実OS IME/合成composition、機械GUI/人の評価を区別する。自動操作の成功から初見の発見性・児童の理解・Scratchとの優位性を主張しない。独立した最終受入は別に行う。

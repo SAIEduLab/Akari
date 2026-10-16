@@ -5,7 +5,7 @@ import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
-import {reveal} from '../lib/ux-repair02-ui.mjs';
+import {reveal} from '../lib/ux-normal-ui.mjs';
 
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),product=currentProductFile();
 const output=path.resolve(out||'audit-evidence/child-diagnostics.json'),dir=output+'.artifacts';

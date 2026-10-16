@@ -54,7 +54,7 @@ function replacement(o,source,fixed,document){
  sameData(o.before.project,o.after.project);
 }
 export function verifyListRepairReport(report){
- const n=verifySemanticExtension(report,'akari-ux-repair03-list-v1',listRepairIds);
+ const n=verifySemanticExtension(report,'akari-ux-phrase-list-v1',listRepairIds);
  assert.ok(!report.hostFailure);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);
  assert.equal(report.environment.browser,browserEnvironment.version);assert.equal(report.environment.playwright,browserEnvironment.playwright);
  const at=id=>report.results.find(r=>r.id===id).observed;

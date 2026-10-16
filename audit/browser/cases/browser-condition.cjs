@@ -1,4 +1,5 @@
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {openBodyForTest} = require('./regression-setup.cjs');
 const L=require('./audit-lib.cjs'),assert=require('assert/strict'),{pathToFileURL}=require('url');
 const{chromium}=require('playwright');
 (async()=>{const dir=L.path.resolve(process.argv[2]||'audit-evidence/browser/candidate'),manifest=L.verifyManifest(dir),api=L.loadApi(L.read(L.path.join(dir,manifest.candidate))),url=pathToFileURL(L.path.join(dir,manifest.candidate)).href,results=[],errors=[],network=[],evidence={};const browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true,args:['--allow-file-access-from-files']});
@@ -23,5 +24,3 @@ async function reveal(locator){
  return locator;
 }
 
-// Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }
