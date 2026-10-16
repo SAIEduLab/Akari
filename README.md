@@ -29,7 +29,7 @@
 
 ## ドキュメント
 
-- [`Akari_1_2_4.html`](./Akari_1_2_4.html) — あかり本体
+- [`Akari_1_2_4.html`](./Akari_1_2_4.html) — あかり本体（[`src/`](./src/) から `node src/build.mjs` で生成）
 - [`LANGUAGE.md`](./LANGUAGE.md) — 操作方法・文法・言語仕様
 - [`index.html`](./index.html) — 紹介・本体・マニュアルへの公開入口
 - [`MANUAL.html`](./MANUAL.html) — はじめかた・保存・開く・書き出し・困ったとき

@@ -1,0 +1,1191 @@
+  // ────────────────────────────────────────────────────────────────────────
+  // 05 — Shared command presentation and structural block vocabulary
+  // ────────────────────────────────────────────────────────────────────────
+  const COMMAND_PRESENTATION = Object.freeze({
+    MotionCommand: Object.freeze({
+      palette: '動き',
+      operations: Object.freeze({
+        MOVE_DIRECTION: Object.freeze({label:'方向へ動く',inputs:Object.freeze(['歩数']),format:(a,n)=>`${{right:'画面の右',left:'画面の左',up:'画面の上',down:'画面の下',forward:'前',backward:'後ろ'}[n.direction]}へ${a(0,'歩')}動く`}),
+        GLIDE_DIRECTION: Object.freeze({label:'時間をかけて方向へ動く',inputs:Object.freeze(['秒','歩数']),format:(a,n)=>`${a(0,'秒')}かけて${{right:'画面の右',left:'画面の左',up:'画面の上',down:'画面の下',forward:'前',backward:'後ろ'}[n.direction]}へ${a(1,'歩')}動く`}),
+        MOVE: Object.freeze({
+          label: '歩動く',
+          inputs: Object.freeze(['歩数']),
+          format: (a) => `前へ${a(0,'歩')}進む`,
+        }),
+        GOTO: Object.freeze({
+          label: '位置へ行く',
+          inputs: Object.freeze(['横位置', '縦位置']),
+          format: (a) => `横${a(0)}、縦${a(1)}の位置へ行く`,
+        }),
+        GLIDE: Object.freeze({
+          label: '位置へ滑る',
+          inputs: Object.freeze(['秒', '横位置', '縦位置']),
+          format: (a) => `横${a(1)}、縦${a(2)}の位置へ${a(0,'秒')}かけて動く`,
+        }),
+        SET_DIRECTION: Object.freeze({
+          label: '方向を設定',
+          inputs: Object.freeze(['方向']),
+          format: (a) => `向きを${a(0,'度')}にする`,
+        }),
+        TURN_RIGHT: Object.freeze({
+          label: '右に回る',
+          inputs: Object.freeze(['角度']),
+          format: (a) => `右に${a(0,'度')}回る`,
+        }),
+        TURN_LEFT: Object.freeze({
+          label: '左に回る',
+          inputs: Object.freeze(['角度']),
+          format: (a) => `左に${a(0,'度')}回る`,
+        }),
+        SET_X: Object.freeze({
+          label: '横位置を設定',
+          inputs: Object.freeze(['横位置']),
+          format: (a) => `横位置を${a(0)}にする`,
+        }),
+        SET_Y: Object.freeze({
+          label: '縦位置を設定',
+          inputs: Object.freeze(['縦位置']),
+          format: (a) => `縦位置を${a(0)}にする`,
+        }),
+        POINT_TO: Object.freeze({
+          label: '対象の方向を向く',
+          inputs: Object.freeze(['対象']),
+          format: (a) => `${a(0)}の方を向く`,
+        }),
+        BOUNCE: Object.freeze({
+          label: '端で跳ね返る',
+          inputs: Object.freeze([]),
+          format: (a) => '画面の端にふれていれば、はね返る',
+        }),
+      }),
+    }),
+    LooksCommand: Object.freeze({
+      palette: '見た目',
+      operations: Object.freeze({
+        FRONT: Object.freeze({
+          label: 'いちばん手前へ出る',
+          inputs: Object.freeze([]),
+          format: (a) => 'いちばん手前へ出る',
+        }),
+        BACK: Object.freeze({
+          label: 'いちばん奥へ下がる',
+          inputs: Object.freeze([]),
+          format: (a) => 'いちばん奥へ下がる',
+        }),
+        HIDE: Object.freeze({
+          label: '姿をかくす',
+          inputs: Object.freeze([]),
+          format: (a) => '姿をかくす',
+        }),
+        SHOW: Object.freeze({
+          label: '姿を見せる',
+          inputs: Object.freeze([]),
+          format: (a) => '姿を見せる',
+        }),
+        NEXT_COSTUME: Object.freeze({
+          label: '次の衣装',
+          inputs: Object.freeze([]),
+          format: (a) => '次の衣装に変える',
+        }),
+        PREV_COSTUME: Object.freeze({
+          label: '前の衣装',
+          inputs: Object.freeze([]),
+          format: (a) => '前の衣装に変える',
+        }),
+        NEXT_BACKDROP: Object.freeze({
+          label: '次の背景',
+          inputs: Object.freeze([]),
+          format: (a) => '次の背景に変える',
+        }),
+        PREV_BACKDROP: Object.freeze({
+          label: '前の背景',
+          inputs: Object.freeze([]),
+          format: (a) => '前の背景に変える',
+        }),
+        SET_SCALE: Object.freeze({
+          label: '大きさを設定',
+          inputs: Object.freeze(['大きさ']),
+          format: (a) => `大きさを${a(0,'％')}にする`,
+        }),
+        FORWARD_LAYERS: Object.freeze({
+          label: '層前へ出す',
+          inputs: Object.freeze(['層数']),
+          format: (a) => `重なりを${a(0)}つ手前にする`,
+        }),
+        BACKWARD_LAYERS: Object.freeze({
+          label: '層後ろへ下げる',
+          inputs: Object.freeze(['層数']),
+          format: (a) => `重なりを${a(0)}つ奥にする`,
+        }),
+        SET_COLOR: Object.freeze({
+          label: '表示色を設定',
+          inputs: Object.freeze(['色']),
+          format: (a) => `表示色を${a(0)}にする`,
+        }),
+        SET_COSTUME: Object.freeze({
+          label: '衣装を設定',
+          inputs: Object.freeze(['衣装']),
+          format: (a) => `衣装を${a(0)}に変える`,
+        }),
+        SET_BACKDROP: Object.freeze({
+          label: '背景を設定',
+          inputs: Object.freeze(['背景']),
+          format: (a) => `背景を${a(0)}に変える`,
+        }),
+        SET_SELF_TEXT: Object.freeze({
+          label: '自分の文字を設定',
+          inputs: Object.freeze(['文字']),
+          format: (a) => `自分の文字を${a(0)}に変える`,
+        }),
+        SET_TARGET_TEXT: Object.freeze({
+          label: '対象の文字を設定',
+          inputs: Object.freeze(['対象', '文字']),
+          format: (a) => `${a(0)}の文字を${a(1)}に変える`,
+        }),
+        SET_INPUT: Object.freeze({
+          label: '入力欄に入れる',
+          inputs: Object.freeze(['入力欄', '値']),
+          format: (a) => `${a(0)}に${a(1)}を入れる`,
+        }),
+      }),
+    }),
+    PenCommand: Object.freeze({
+      palette: 'ペン',
+      operations: Object.freeze({
+        DOWN: Object.freeze({
+          label: 'ペンを下ろす',
+          inputs: Object.freeze([]),
+          format: (a) => 'ペンを下ろす',
+        }),
+        UP: Object.freeze({
+          label: 'ペンを上げる',
+          inputs: Object.freeze([]),
+          format: (a) => 'ペンを上げる',
+        }),
+        CLEAR: Object.freeze({
+          label: '線とスタンプを消す',
+          inputs: Object.freeze([]),
+          format: (a) => '作品の線とスタンプを全部消す',
+        }),
+        STAMP: Object.freeze({
+          label: '今の姿のスタンプを押す',
+          inputs: Object.freeze([]),
+          format: (a) => '今の姿のスタンプを押す',
+        }),
+        SET_COLOR: Object.freeze({
+          label: 'ペンの色を設定',
+          inputs: Object.freeze(['色']),
+          format: (a) => `ペンの色を${a(0)}にする`,
+        }),
+        SET_SIZE: Object.freeze({
+          label: 'ペンの太さを設定',
+          inputs: Object.freeze(['太さ']),
+          format: (a) => `ペンの太さを${a(0)}にする`,
+        }),
+      }),
+    }),
+    SoundCommand: Object.freeze({
+      palette: '音',
+      operations: Object.freeze({
+        STOP_ALL: Object.freeze({
+          label: 'すべての音を止める',
+          inputs: Object.freeze([]),
+          format: (a) => 'すべての音を止める',
+        }),
+        TONE_WAIT: Object.freeze({
+          label: '音を鳴らして待つ',
+          inputs: Object.freeze(['周波数', '秒']),
+          format: (a) => `${a(0,'Hz')}の音を${a(1,'秒')}鳴らす`,
+        }),
+        TONE: Object.freeze({
+          label: '音を鳴らす',
+          inputs: Object.freeze(['周波数', '秒']),
+          format: (a) => `${a(0,'Hz')}の音を${a(1,'秒')}鳴らし始める`,
+        }),
+        SAMPLE_WAIT: Object.freeze({
+          label: '素材の音を鳴らして待つ',
+          inputs: Object.freeze(['音']),
+          format: (a) => `音${a(0)}を鳴らす`,
+        }),
+        SAMPLE: Object.freeze({
+          label: '素材の音を鳴らす',
+          inputs: Object.freeze(['音']),
+          format: (a) => `音${a(0)}を鳴らし始める`,
+        }),
+        SET_VOLUME: Object.freeze({
+          label: '音量を設定',
+          inputs: Object.freeze(['音量']),
+          format: (a) => `音量を${a(0,'％')}にする`,
+        }),
+        PITCH_UP: Object.freeze({
+          label: '音程を上げる',
+          inputs: Object.freeze(['段階']),
+          format: (a) => `音の高さを${a(0)}段階上げる`,
+        }),
+        PITCH_DOWN: Object.freeze({
+          label: '音程を下げる',
+          inputs: Object.freeze(['段階']),
+          format: (a) => `音の高さを${a(0)}段階下げる`,
+        }),
+      }),
+    }),
+    CloneCommand: Object.freeze({
+      palette: '分身',
+      operations: Object.freeze({
+        CREATE_SELF: Object.freeze({
+          label: '自分の分身を作る',
+          inputs: Object.freeze([]),
+          format: (a,n) => n.count===undefined?'自分の分身を作る':`自分の分身を${formatExpression(n.count)}体作る`,
+        }),
+        DELETE_SELF: Object.freeze({
+          label: 'この分身だけを消す',
+          inputs: Object.freeze([]),
+          format: (a) => 'この分身だけを消す',
+        }),
+        CREATE_TARGET: Object.freeze({
+          label: '選んだキャラクターの分身を作る',
+          inputs: Object.freeze(['対象']),
+          format: (a,n) => `${a(0)}の分身を${n.count===undefined?'':formatExpression(n.count)+'体'}作る`,
+        }),
+      }),
+    }),
+  });
+  function formatCommand(node) {
+    const command = COMMAND_PRESENTATION[node.kind]?.operations[node.op];
+    if (!command) throw new AkariError('P201', `未対応の命令 ${node.kind}:${node.op}`);
+    return command.format((index, unit) => {const slot=sentenceFormFor(node)?.roleSlots.find(role=>role.path===`args.${index}`);if(unit&&slot?.unit!==unit)throw new AkariError('P205','文型の単位の役割が一致しません');return unit ? sentenceQuantitySource(node.args?.[index],slot.unit) : formatExpression(node.args?.[index]);}, node);
+  }
+  const BLOCK_SCHEMAS = (() => {
+    const schemas = [];
+    const field = (key, label, type, initial, extra = {}) => ({
+      key,
+      label,
+      type,
+      initial,
+      required: true,
+      ...extra,
+    });
+    const input = (key, label, type = 'expression', extra = {}) => ({
+      key,
+      label,
+      type,
+      required: true,
+      multiple: false,
+      ...extra,
+    });
+    const body = (key, label, requiredExecutable = true, extra = {}) => ({
+      key,
+      label,
+      required: true,
+      requiredExecutable,
+      ...extra,
+    });
+    const args = (labels = [], extra = {}) =>
+      input('args', '受け取る値', 'expression', {
+        multiple: true,
+        minItems: labels.length,
+        maxItems: labels.length,
+        labels,
+        ...extra,
+      });
+    const add = (
+      kind,
+      category,
+      label,
+      fields = [],
+      inputs = [],
+      bodies = [],
+      discriminator = null,
+      extra = {},
+    ) => {
+      const id = kind + (discriminator ? ':' + discriminator.value : '');
+      const groups = {
+        Script: '本文',
+        TargetReference: 'データ',
+        CommentLine: 'メモ',
+        UserActionCall: '動作',
+        UserFunctionCall: '計算',
+        BuiltinCall: '用意された計算',
+        SensorRead: '状態',
+        LocalVariableDeclaration: 'この中だけのデータ',
+        LocalListDeclaration: 'この中だけのデータ',
+        ReturnStatement: '返す',
+        Say: '表示・入力',
+        Ask: '表示・入力',
+        Broadcast: '知らせ',
+        BroadcastAndWait: '知らせ',
+        WaitTime: '待機',
+        WaitUntil: '待機',
+        StopCommand: '停止',
+      };
+      const palette =
+        groups[kind] ||
+        (kind.startsWith('List')
+          ? 'リスト'
+          : category === 'expression'
+            ? '値・データ'
+            : ['Assignment', 'NumericUpdate'].includes(kind)
+              ? 'データ'
+              : '条件・反復');
+      if (category === 'statement')
+        fields = [...fields, field('actorRef', '動く対象', 'actor-ref', undefined, { required: false })];
+      const annotations =
+        category === 'statement'
+          ? [
+              field('inlineComment', '行の終わりのメモ', 'annotation', '', {
+                editable: kind !== 'CommentLine',
+              }),
+              ...(kind === 'IfStatement'
+                ? [
+                    field('elseComment', 'そうでなければのメモ', 'annotation', '', {
+                      when: 'hasElse',
+                    }),
+                  ]
+                : []),
+            ]
+          : category === 'rule'
+            ? [field('inlineComment', '行の終わりのメモ', 'annotation', '', { required: false })]
+            : [];
+      const schema = {
+        id,
+        kind,
+        discriminator,
+        category,
+        palette,
+        label,
+        fields,
+        inputs,
+        bodies,
+        annotations,
+        ...extra,
+      };
+      schema.create = (context = {}) => createSyntaxNode(schema, context);
+      schema.encode = (node, context = {}) => {
+        if (syntaxSchema(node, schema.category).id !== id)
+          blockStructureError('種類が一致しません');
+        return blockEncode(node, { ...context, expected: schema.category });
+      };
+      schema.decode = (tree, context = {}) => {
+        if (tree?.schemaId !== id) blockStructureError('種類が一致しません');
+        return blockDecode(tree, context);
+      };
+      schema.availability = (context = {}) => blockAvailability(context);
+      for (const group of [fields, inputs, bodies, annotations]) {
+        for (const item of group) {
+          if (item.labels) Object.freeze(item.labels);
+          Object.freeze(item);
+        }
+        Object.freeze(group);
+      }
+      if (discriminator) Object.freeze(discriminator);
+      schemas.push(Object.freeze(schema));
+    };
+    const name = (key = 'name', label = '名前', initial = '値', callable = false) =>
+      field(key, label, 'name', initial, { callable });
+    const qualifier = () => field('qualifier', '使う場所', 'qualifier', null);
+    const target = () => input('target', '変更先', 'target');
+    const expression = (key, label, initial) =>
+      input(key, label, 'expression', initial === undefined ? {} : { initial });
+    const op = (key, value) => ({ key, value });
+    add('Script', 'script', '本文',
+      [field('heading', 'できごとの見出し', 'heading', undefined, { required: false })],
+      [input('rules', '続けて動くルール', 'rule', {
+        required: false, multiple: true, minItems: 0, maxItems: LIMITS.activeTasks, variadic: true,
+      }),input('units','できごとのまとまり','script',{
+        required:false,multiple:true,minItems:1,maxItems:LIMITS.scripts,variadic:true,
+      })], [body('body', '本文', false)]);
+    for (const role of ['expression', 'statement', 'target', 'rule'])
+      add('Hole', role, '空いている欄', [field('label', 'ここに入れるもの', 'string', '値')],
+        [], [], op('role', role), { draftOnly: true, capability: 'draft-hole:' + role });
+    add('QuantityLiteral', 'expression', '単位を付けた数',
+      [field('unit', '数え方', 'unit', '歩')], [expression('value', '数の式')], [], null,
+      { capability: 'quantity-value', semanticRoles: ['value', 'unit'] });
+    add('UnitlessRead', 'expression', '数だけ', [], [expression('value', '値')], [], null,
+      { capability: 'unitless-read', semanticRoles: ['value'] });
+    add('ActorQualifiedRead', 'expression', '指定した対象の値',
+      [field('actorRef', '読む対象', 'actor-ref', { kind: 'self' })],
+      [expression('value', '読む値')], [], null,
+      { capability: 'actor-qualified-read', semanticRoles: ['actorRef', 'value'] });
+    add('ContinuousRule', 'rule', '条件にあてはまる間、動き続ける',
+      [field('actorRef', '動く対象', 'actor-ref', { kind: 'self' }),
+        field('direction', '進む方向', 'direction', 'right')],
+      [expression('condition', '続ける条件', true), expression('seconds', '何秒に', 1),
+        expression('distance', '何歩の速さ', 20)], [], null,
+      { capability: 'continuous-state-motion', semanticRoles: ['actorRef', 'condition', 'direction', 'seconds', 'distance'] });
+    for (const [value, label, labels] of [
+      ['MOVE_DIRECTION', '方向を決めて進む', ['何歩']],
+      ['GLIDE_DIRECTION', '時間をかけて進む', ['何秒で', '何歩']],
+    ]) add('MotionCommand', 'statement', label,
+      [field('direction', '進む方向', 'direction', 'right')], [args(labels)], [], op('op', value),
+      { palette: '動き', capability: 'absolute-direction-motion:' + value });
+    add('WaitBroadcastGroup', 'statement', '直前の知らせの受け手が終わるまで待つ',
+      [field('broadcastRef', '待つ知らせ', 'reference', '直前の知らせ')], [], [], null,
+      { capability: 'notification-group-wait' });
+    add('TargetReference', 'target', '変更先', [name(), qualifier()]);
+    add('CommentLine', 'statement', 'メモ', [field('text', 'メモの中身', 'comment', '')]);
+    add('Assignment', 'statement', '値を設定', [], [target(), expression('value', '値')]);
+    for (const [value, label] of [
+      ['ADD', '値を足す'],
+      ['SUB', '値を引く'],
+    ])
+      add(
+        'NumericUpdate',
+        'statement',
+        label,
+        [],
+        [target(), expression('value', '値')],
+        [],
+        op('op', value),
+      );
+    add(
+      'ListAppend',
+      'statement',
+      'リストに追加',
+      [],
+      [target(), expression('value', '追加する値')],
+    );
+    for (const [kind, label] of [
+      ['ListInsert', 'リストの途中に入れる'],
+      ['ListReplace', 'リストの項目を入れかえる'],
+    ])
+      add(
+        kind,
+        'statement',
+        label,
+        [],
+        [target(), expression('index', '番号', 1), expression('value', '値')],
+      );
+    add(
+      'ListDelete',
+      'statement',
+      'リストの項目を消す',
+      [],
+      [target(), expression('index', '番号', 1)],
+    );
+    add('ListClear', 'statement', 'リストの中身を全部消す', [], [target()]);
+    for (const [kind, label] of [
+      ['NoOperation', '何もしない'],
+      ['Break', 'このくり返しを終える'],
+      ['Continue', '次のくり返しへ進む'],
+    ])
+      add(kind, 'statement', label);
+    add(
+      'IfStatement',
+      'statement',
+      'もし',
+      [field('hasElse', 'そうでなければ', 'boolean', false)],
+      [expression('condition', '条件', true)],
+      [
+        body('thenBody', '条件が成り立つとき'),
+        body('elseBody', 'そうでなければ', true, { when: 'hasElse' }),
+      ],
+    );
+    add(
+      'RepeatCount',
+      'statement',
+      '回数を決めてくり返す',
+      [],
+      [expression('count', '回数', 3)],
+      [body('body', 'くり返す本文')],
+    );
+    for (const [kind, label] of [
+      ['RepeatWhile', '条件が成り立つあいだ'],
+      ['RepeatUntil', '条件が成り立つまで'],
+    ])
+      add(
+        kind,
+        'statement',
+        label,
+        [],
+        [expression('condition', '条件', true)],
+        [body('body', 'くり返す本文')],
+      );
+    add('Forever', 'statement', 'ずっとくり返す', [], [], [body('body', 'くり返す本文')]);
+    add(
+      'ForEach',
+      'statement',
+      '中身を1つずつ使ってくり返す',
+      [name('binder', '項目名', '項目')],
+      [input('list', 'リスト', 'expression', { initial: [] })],
+      [body('body', 'くり返す本文')],
+    );
+    for (const [kind, label, key, inputLabel, initial] of [
+      ['WaitTime', '秒待つ', 'seconds', '秒', 1],
+      ['WaitUntil', '条件まで待つ', 'condition', '条件', true],
+      ['Say', '言う', 'value', '内容', 'こんにちは'],
+      ['ReturnStatement', '返す', 'value', '返す値', 0],
+      ['Ask', 'たずねる', 'question', '質問', ''],
+      ['Broadcast', '知らせる', 'message', '知らせ', ''],
+      ['BroadcastAndWait', '知らせて待つ', 'message', '知らせ', ''],
+    ])
+      add(kind, 'statement', label,
+        kind === 'Broadcast' ? [field('broadcastRef', '知らせの識別', 'reference', undefined, { required: false })] : [],
+        [expression(key, inputLabel, initial), ...(kind==='Say'?[input('seconds','話す時間','expression',{required:false})]:[])]);
+    add(
+      'UserActionCall',
+      'statement',
+      '動作を実行',
+      [name('name', '動作名', '動作', true), field('argumentNames', '受け取る値の名前', 'argument-names', undefined, { required: false })],
+      [
+        args([], {
+          minItems: 0,
+          maxItems: LIMITS.sourceEach,
+          variadic: true,
+          semanticArity: 'definition',
+        }),
+      ],
+    );
+    add(
+      'LocalVariableDeclaration',
+      'statement',
+      'この中だけの変数を作る',
+      [name('name', '変数名', '結果')],
+      [expression('initial', '最初の値')],
+    );
+    add('LocalListDeclaration', 'statement', 'この中だけのリストを作る', [
+      name('name', 'リスト名', '結果'),
+    ]);
+    for (const [value, label] of [
+      ['THIS', 'このスクリプトを止める'],
+      ['OTHERS', 'ほかのスクリプトを止める'],
+      ['ALL', 'すべてを止める'],
+    ])
+      add('StopCommand', 'statement', label, [], [], [], op('op', value));
+    for (const [kind, group] of Object.entries(COMMAND_PRESENTATION))
+      for (const [value, command] of Object.entries(group.operations)) {
+        if (schemas.some(schema => schema.id === kind + ':' + value)) continue;
+        add(
+          kind,
+          'statement',
+          command.label,
+          [],
+          [args([...command.inputs]),...(kind==='CloneCommand'&&value!=='DELETE_SELF'?[input('count','作る分身の数','expression',{required:false})]:[])],
+          [],
+          op('op', value),
+          { palette: group.palette },
+        );
+      }
+    add('NumberLiteral', 'expression', '数', [field('value', '数', 'number', 0)]);
+    add('StringLiteral', 'expression', '文字', [field('value', '文字', 'string', '', { multiline:true })]);
+    add('BooleanLiteral', 'expression', '条件の答え', [field('value', '条件の答え', 'boolean', true)]);
+    add(
+      'ListLiteral',
+      'expression',
+      'リスト',
+      [],
+      [
+        input('items', '要素', 'expression', {
+          multiple: true,
+          minItems: 0,
+          maxItems: LIMITS.sourceEach,
+          variadic: true,
+        }),
+      ],
+    );
+    add('VariableRead', 'expression', '名前を読む', [name(), qualifier()]);
+    for (const [value, label] of [
+      ['POS', '正の符号'],
+      ['NEG', '負の符号'],
+      ['NOT', 'ではない'],
+    ])
+      add(
+        'UnaryExpression',
+        'expression',
+        label,
+        [],
+        [expression('value', '値')],
+        [],
+        op('op', value),
+      );
+    for (const [kind, rows] of [
+      [
+        'BinaryExpression',
+        [
+          ['ADD', '足す'],
+          ['SUB', '引く'],
+          ['MUL', '掛ける'],
+          ['DIV', '割る'],
+          ['POW', '同じ数をかける（累乗）'],
+        ],
+      ],
+      [
+        'CompareExpression',
+        [
+          ['GTE', '以上'],
+          ['LTE', '以下'],
+          ['GT', 'より大きい'],
+          ['LT', 'より小さい'],
+          ['EQ', 'と同じ'],
+          ['NEQ', 'と違う'],
+        ],
+      ],
+      [
+        'LogicalExpression',
+        [
+          ['AND', 'かつ'],
+          ['OR', 'または'],
+        ],
+      ],
+    ])
+      for (const [value, label] of rows)
+        add(
+          kind,
+          'expression',
+          label,
+          [],
+          [expression('left', '左の値'), expression('right', '右の値')],
+          [],
+          op('op', value),
+        );
+    add(
+      'ListRead',
+      'expression',
+      'リストの要素',
+      [],
+      [input('list', 'リスト', 'expression', { initial: [] }), expression('index', '番号', 1)],
+    );
+    add(
+      'UserFunctionCall',
+      'expression',
+      '計算する',
+      [name('name', '計算名', '計算', true), field('argumentNames', '受け取る値の名前', 'argument-names', undefined, { required: false })],
+      [
+        args([], {
+          minItems: 0,
+          maxItems: LIMITS.sourceEach,
+          variadic: true,
+          semanticArity: 'definition',
+        }),
+      ],
+    );
+    for (const meta of GRAMMAR_REGISTRY.builtins)
+      add(
+        'BuiltinCall',
+        'expression',
+        meta.name,
+        [],
+        [
+          args([], {
+            minItems: 0,
+            maxItems: LIMITS.sourceEach,
+            variadic: true,
+            initialItems: meta.minArgs,
+            semanticMin: meta.minArgs,
+            semanticMax: meta.maxArgs,
+          }),
+        ],
+        [],
+        op('name', meta.name),
+      );
+    for (const [value, label, labels] of [
+      ['CONTAINS', '含まれている', ['リストまたは文字', '探す値']],
+      ['INDEX_OF', '最初にある番号', ['リストまたは文字', '探す値']],
+      ['LENGTH', '長さ', ['リストまたは文字']],
+      ['STRING_LENGTH', '文字数', ['文字']],
+      ['STRING_CHAR', '文字目', ['文字', '番号']],
+    ])
+      add('BuiltinCall', 'expression', label, [], [args(labels)], [], op('name', value));
+    for (const value of GRAMMAR_REGISTRY.sensors)
+      add('SensorRead', 'expression', value, [], [], [], op('sensor', value), { palette: '状態' });
+    for (const [value, label] of [
+      ['INPUT_VALUE', '入力欄の値'],
+      ['DISTANCE_TO', '対象までの距離'],
+      ['KEY_DOWN', 'キーが押されている'],
+      ['TOUCHING_COLOR', '色に触れている'],
+      ['TOUCHING', '対象に触れている'],
+    ])
+      add(
+        'SensorRead',
+        'expression',
+        label,
+        [],
+        [
+          expression(
+            'arg',
+            value === 'TOUCHING_COLOR'
+              ? '色'
+              : value === 'KEY_DOWN'
+                ? 'キー'
+                : value === 'INPUT_VALUE'
+                  ? '入力欄'
+                  : '対象',
+            value === 'TOUCHING_COLOR'
+              ? '#ff0000'
+              : value === 'KEY_DOWN'
+                ? '空白'
+                : value === 'INPUT_VALUE'
+                  ? '入力欄1'
+                  : 'マウス',
+          ),
+        ],
+        [],
+        op('sensor', value),
+        { palette: '状態' },
+      );
+    for (const [kind, category, collection] of [
+      ['ExtensionCommand', 'statement', 'commands'], ['ExtensionCalculation', 'expression', 'calculations'],
+    ]) for (const operation of EXTENSION_HOST.operations(collection)) {
+      const labels = operation.args.map(x => x.name);
+      add(kind, category, operation.displayName, [], [args(labels, { initialValues: operation.args.map(extensionDefaultExpression) })], [], { key: 'name', value: operation.name }, { palette: '拡張' });
+    }
+    if (EXTENSION_HOST.operations('events').length)
+      add('SensorRead', 'expression', '拡張のできごとの値', [], [], [], { key: 'sensor', value: '拡張の値' }, { palette: '拡張' });
+    return Object.freeze(schemas);
+  })();
+  const BLOCK_SCHEMA_BY_ID = new Map(BLOCK_SCHEMAS.map((schema) => [schema.id, schema]));
+  function blockStructureError(message, path = '') {
+    throw new AkariError(
+      'P210',
+      `ブロック構造が不正です: ${message}${path ? ' (' + path + ')' : ''}`,
+    );
+  }
+  function syntaxSchema(node, expected) {
+    if (!node || typeof node !== 'object' || Array.isArray(node))
+      blockStructureError('node が必要です');
+    const kind = expected === 'target' && node.kind !== 'Hole' ? 'TargetReference' : node.kind;
+    const discriminator =
+      kind === 'Hole'
+        ? 'role'
+        : ['BuiltinCall', 'ExtensionCommand', 'ExtensionCalculation'].includes(kind)
+        ? 'name'
+        : kind === 'SensorRead'
+          ? 'sensor'
+          : [
+                'NumericUpdate',
+                'StopCommand',
+                'MotionCommand',
+                'LooksCommand',
+                'PenCommand',
+                'SoundCommand',
+                'CloneCommand',
+                'UnaryExpression',
+                'BinaryExpression',
+                'CompareExpression',
+                'LogicalExpression',
+              ].includes(kind)
+            ? 'op'
+            : null;
+    const schema = BLOCK_SCHEMA_BY_ID.get(
+      kind + (discriminator ? ':' + node[discriminator] : ''),
+    );
+    if (!schema) blockStructureError('未対応の kind / op / 名前です');
+    if (expected && schema.category !== expected)
+      blockStructureError('接続先の種類が一致しません');
+    return schema;
+  }
+  function blockRecord(record, allowed, path) {
+    if (!record || typeof record !== 'object' || Array.isArray(record))
+      blockStructureError('項目の集合が必要です', path);
+    for (const key of Object.keys(record))
+      if (!allowed.includes(key)) blockStructureError('未対応の項目 ' + key, path);
+  }
+  function blockFieldValue(field, value, path) {
+    const type = field.type;
+    if (value === undefined && field.required === false) return undefined;
+    if (type === 'actor-ref') {
+      blockRecord(value, ['kind', 'name'], path);
+      if (!['self', 'named'].includes(value.kind)) blockStructureError('対象の指定が不正です', path);
+      if (value.kind === 'self') {
+        if (Object.hasOwn(value, 'name')) blockStructureError('自分の指定に別の名前は付けません', path);
+        return { kind: 'self' };
+      }
+      blockFieldValue({ type: 'name' }, value.name, path + '.name');
+      return { kind: 'named', name: value.name };
+    }
+    if (type === 'argument-names') {
+      if (!Array.isArray(value) || value.length > LIMITS.sourceEach)
+        blockStructureError('受け取る値の名前の配列が必要です', path);
+      return value.map((name, index) => blockFieldValue({ type: 'name' }, name, path + '[' + index + ']'));
+    }
+    if (type === 'heading') {
+      blockRecord(value, ['event', 'actorRef', 'filter'], path);
+      if (!Object.hasOwn(EVENT_LABELS, value.event)) blockStructureError('できごとの種類が不正です', path);
+      const heading = { event: value.event, actorRef: blockFieldValue({ type: 'actor-ref' }, value.actorRef, path + '.actorRef') };
+      if (Object.hasOwn(value, 'filter')) {
+        if (value.filter === null) heading.filter = null;
+        else {
+          blockRecord(value.filter, ['key', 'message'], path + '.filter');
+          const keys = Object.keys(value.filter);
+          if (keys.length !== 1 || (keys[0] !== 'key' && keys[0] !== 'message'))
+            blockStructureError('キーか知らせの条件を一つ指定します', path);
+          const key = keys[0];
+          if ((key === 'key' && value.event !== 'keyDown') || (key === 'message' && value.event !== 'message'))
+            blockStructureError('できごとと条件の種類が一致しません', path);
+          heading.filter = { [key]: blockFieldValue({ type: 'string' }, value.filter[key], path + '.filter.' + key) };
+        }
+      }
+      return heading;
+    }
+    if (type === 'unit' || type === 'direction') {
+      const values = type === 'unit' ? ['歩', '度', '秒', '回', '番目', '点', '個', '％', 'Hz']
+        : ['right', 'left', 'up', 'down', 'forward', 'backward'];
+      if (!values.includes(value)) blockStructureError(type === 'unit' ? '登録された数え方を選んでください' : '進む方向を選んでください', path);
+      return value;
+    }
+    if (type === 'reference' && (typeof value !== 'string' || !value.length))
+      blockStructureError('知らせの識別が必要です', path);
+    if (type === 'number') {
+      if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || Object.is(value, -0))
+        blockStructureError('数は符号を持たない有限数にします', path);
+    } else if (type === 'boolean') {
+      if (typeof value !== 'boolean') blockStructureError('条件の答えが必要です', path);
+    } else if (type === 'qualifier') {
+      if (![null, 'exact', 'self', 'project'].includes(value))
+        blockStructureError('使う場所の指定が正しくありません', path);
+    } else {
+      if (typeof value !== 'string') blockStructureError('文字が必要です', path);
+      if (type === 'name')
+        try {
+          validateName(value, { callable: field.callable === true });
+        } catch (error) {
+          blockStructureError(error.message, path);
+        }
+      if (!field.multiline && /[\r\n]/.test(value)) blockStructureError('一行の値にします', path);
+      if (type === 'string' && cpLen(value) > LIMITS.stringChars)
+        blockStructureError('文字列の内容または長さが不正です', path);
+      if (type === 'annotation' && value && value[0] !== '※')
+        blockStructureError('注釈の内容が不正です', path);
+    }
+    return value;
+  }
+  function validateSyntaxAst(root, expected = 'script', { allowHoles = false } = {}) {
+    const active = new WeakSet();
+    let count = 0;
+    const visit = (node, type, path, blockDepth, expressionDepth) => {
+      const schema = syntaxSchema(node, type);
+      if(node.units&&(type!=='script'||path!=='root'))
+        blockStructureError('できごとのまとまりは文書の最上位に置きます',path);
+      if (schema.draftOnly && !allowHoles) blockStructureError('空いている欄に必要なものを入れてから動かしてください', path);
+      if (active.has(node)) blockStructureError('循環しています', path);
+      active.add(node);
+      if (++count > LIMITS.sourceEach)
+        blockStructureError('node 数が本文の文字数上限を超えています', path);
+      if (blockDepth > LIMITS.blockDepth || expressionDepth > LIMITS.expressionDepth)
+        blockStructureError('入れ子が深すぎます', path);
+      const allowed = [
+        ...(type === 'target' && schema.kind !== 'Hole' ? [] : ['kind']),
+        ...schema.fields.map((x) => x.key),
+        ...schema.inputs.map((x) => x.key),
+        ...schema.bodies.map((x) => x.key),
+        'sourceSpan',
+      ];
+      if (schema.discriminator) allowed.push(schema.discriminator.key);
+      allowed.push(...schema.annotations.map((x) => x.key));
+      if (schema.bodies.length && type !== 'script') allowed.push('endLine');
+      if (schema.kind === 'Script') allowed.push('source');
+      if (schema.kind === 'CommentLine') allowed.push('raw');
+      blockRecord(node, allowed, path);
+      for (const field of schema.fields) {
+        if (!Object.hasOwn(node, field.key)) {
+          if (field.required === false) continue;
+          blockStructureError('必須項目 ' + field.key + ' がありません', path);
+        }
+        blockFieldValue(field, node[field.key], path + '.' + field.key);
+      }
+      for (const annotation of schema.annotations) {
+        if (!Object.hasOwn(node, annotation.key)) {
+          if (annotation.required === false) continue;
+          blockStructureError('必須項目 ' + annotation.key + ' がありません', path);
+        }
+        blockFieldValue(annotation, node[annotation.key], path + '.' + annotation.key);
+      }
+      if (
+        (type === 'target' || schema.kind === 'VariableRead') &&
+        node.qualifier === null &&
+        !bareName(node.name)
+      )
+        blockStructureError('名前を【 】で囲むか、使う場所を指定してください', path);
+      if (Object.hasOwn(node, 'argumentNames') && node.argumentNames !== undefined && (!Array.isArray(node.args) || node.argumentNames.length !== node.args.length))
+        blockStructureError('値と名前の個数が一致しません', path + '.argumentNames');
+      for (const slot of schema.inputs) {
+        if (!Object.hasOwn(node, slot.key) && slot.required === false) continue;
+        const value = node[slot.key];
+        if (slot.multiple) {
+          if (!Array.isArray(value) || value.length < slot.minItems || value.length > slot.maxItems)
+            blockStructureError('入力数が不正です', path + '.' + slot.key);
+          for (let i = 0; i < value.length; i++)
+            visit(
+              value[i],
+              slot.type,
+              path + '.' + slot.key + '[' + i + ']',
+              blockDepth,
+              slot.type === 'expression' ? expressionDepth + 1 : 0,
+            );
+        } else
+          visit(
+            value,
+            slot.type,
+            path + '.' + slot.key,
+            blockDepth,
+            slot.type === 'expression' ? expressionDepth + 1 : 0,
+          );
+      }
+      for (const slot of schema.bodies) {
+        const children = node[slot.key],
+          enabled = !slot.when || node[slot.when];
+        if (!Array.isArray(children))
+          blockStructureError('本文の配列が必要です', path + '.' + slot.key);
+        if (!enabled && children.length)
+          blockStructureError('無効な枝に本文があります', path + '.' + slot.key);
+        if (
+          enabled &&
+          slot.requiredExecutable &&
+          !children.some((n) => n && n.kind !== 'CommentLine')
+        )
+          blockStructureError('本文に実行文が必要です', path + '.' + slot.key);
+        for (let i = 0; i < children.length; i++)
+          visit(
+            children[i],
+            'statement',
+            path + '.' + slot.key + '[' + i + ']',
+            type === 'script' ? 0 : blockDepth + 1,
+            0,
+          );
+      }
+      if (schema.kind === 'IfStatement' && !node.hasElse && node.elseComment)
+        blockStructureError('存在しない else に注釈があります', path);
+      if (schema.kind === 'CommentLine' && node.inlineComment)
+        blockStructureError('独立コメントは本文欄で保持します', path);
+      active.delete(node);
+      return node;
+    };
+    return visit(root, expected, 'root', 0, expected === 'expression' ? 1 : 0);
+  }
+  function createSyntaxNode(schema, context = {}) {
+    const draft = context.draft === true;
+    const hole = (role, label) => ({ kind: 'Hole', role, label });
+    if (draft && ['NumberLiteral', 'StringLiteral', 'BooleanLiteral', 'VariableRead', 'TargetReference'].includes(schema.kind))
+      return hole(schema.category, schema.label);
+    const node = schema.category === 'target' && schema.kind !== 'Hole' ? {} : { kind: schema.kind };
+    if (schema.discriminator) node[schema.discriminator.key] = schema.discriminator.value;
+    for (const field of schema.fields)
+      if (field.required !== false) node[field.key] = blockFieldValue(field, field.initial, 'create.' + field.key);
+    const valueNode = (value) =>
+      Array.isArray(value)
+        ? { kind: 'ListLiteral', items: [] }
+        : {
+            kind:
+              typeof value === 'boolean'
+                ? 'BooleanLiteral'
+                : typeof value === 'string'
+                  ? 'StringLiteral'
+                  : 'NumberLiteral',
+            value,
+          };
+    for (const slot of schema.inputs) {
+      if (slot.required === false) continue;
+      const make = () => draft ? hole(slot.type, slot.label)
+        : slot.type === 'target' ? { name: '値', qualifier: null } : valueNode(slot.initial ?? (
+          schema.id === 'LooksCommand:SET_SCALE' ? 100 :
+          ['MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT'].includes(schema.id) ? 15 : 0
+        ));
+      if (slot.multiple && slot.initialValues && !draft) { node[slot.key] = slot.initialValues.map(cloneDesignProject); continue; }
+      node[slot.key] = slot.multiple
+        ? Array.from({ length: slot.initialItems ?? slot.minItems }, (_, index) =>
+            !draft && schema.id === 'LooksCommand:SET_INPUT' && index === 0
+              ? valueNode('入力欄') : !draft && ['MotionCommand:MOVE', 'MotionCommand:MOVE_DIRECTION'].includes(schema.id) && index === 0
+                ? valueNode(10) : make())
+        : make();
+    }
+    for (const slot of schema.bodies)
+      node[slot.key] =
+        slot.requiredExecutable && (!slot.when || node[slot.when])
+          ? [draft ? { ...hole('statement', slot.label), inlineComment: '' } : { kind: 'NoOperation', inlineComment: '' }]
+          : [];
+    for (const annotation of schema.annotations) node[annotation.key] = '';
+    // Only the editor supplies a confirmed design position. API-only creation
+    // keeps its established defaults, and existing nodes are never rewritten.
+    const position = context.designPosition;
+    if (!draft && position && Number.isFinite(position.x) && Number.isFinite(position.y)) {
+      const coordinate = value => value < 0 || Object.is(value, -0)
+        ? { kind: 'UnaryExpression', op: 'NEG', value: valueNode(Math.abs(value)) } : valueNode(value);
+      const positions = { 'MotionCommand:GOTO': [[0,'x'],[1,'y']], 'MotionCommand:GLIDE': [[1,'x'],[2,'y']],
+        'MotionCommand:SET_X': [[0,'x']], 'MotionCommand:SET_Y': [[0,'y']] }[schema.id] || [];
+      for (const [index, key] of positions) node.args[index] = coordinate(position[key]);
+    }
+    validateSyntaxAst(node, schema.category, { allowHoles: draft || context.allowHoles === true });
+    return node;
+  }
+  function blockAvailability(context = {}) {
+    if (!context.ast || !context.project)
+      return { enabled: false, reason: '挿入先を含む本文と作品の確認が必要です', diagnostics: [] };
+    const diagnostics = analyzeAst(context.ast, context.project, context);
+    return {
+      enabled: diagnostics.length === 0,
+      reason: diagnostics.map((x) => x.message).join('\n'),
+      diagnostics,
+    };
+  }
+  function blockEncode(root, context = {}) {
+    const rootType = context.expected || syntaxSchema(root).category;
+    validateSyntaxAst(root, rootType, context);
+    const nodeMap = new Map(),
+      nodeIds = new WeakMap();
+    let nextId = 0;
+    const encode = (node, type, path) => {
+      const schema = syntaxSchema(node, type),
+        id = String(context.idPrefix ?? 'blockui') + '-' + ++nextId,
+        tree = { id, schemaId: schema.id, fields: {}, inputs: {}, bodies: {}, annotations: {} };
+      const location = { path: [...path], kind: schema.kind };
+      const surface = SOURCE_RANGES.get(node);
+      if (surface) location.surface = surface;
+      for (const key of ['sourceSpan', 'endLine', 'raw', 'source'])
+        if (Object.hasOwn(node, key))
+          location[key] = key === 'sourceSpan' ? { ...node[key] } : node[key];
+      nodeMap.set(id, location);
+      nodeIds.set(node, id);
+      for (const field of schema.fields)
+        if (Object.hasOwn(node, field.key) && node[field.key] !== undefined)
+          tree.fields[field.key] = blockFieldValue(field, node[field.key], 'encode.' + field.key);
+      for (const slot of schema.inputs) {
+        if (!Object.hasOwn(node, slot.key) && slot.required === false) continue;
+        tree.inputs[slot.key] = slot.multiple
+          ? node[slot.key].map((child, i) => encode(child, slot.type, [...path, slot.key, i]))
+          : encode(node[slot.key], slot.type, [...path, slot.key]);
+      }
+      for (const slot of schema.bodies)
+        tree.bodies[slot.key] = node[slot.key].map((child, i) =>
+          encode(child, 'statement', [...path, slot.key, i]),
+        );
+      for (const annotation of schema.annotations)
+        if (annotation.required !== false || Object.hasOwn(node, annotation.key))
+          tree.annotations[annotation.key] = node[annotation.key] ?? '';
+      return tree;
+    };
+    return { tree: encode(root, rootType, []), nodeMap, nodeIds };
+  }
+  function blockDecode(tree, context = {}) {
+    const seen = new WeakSet(),
+      ids = new Set();
+    let count = 0;
+    const decode = (block, type, path, blockDepth, expressionDepth) => {
+      blockRecord(block, ['id', 'schemaId', 'fields', 'inputs', 'bodies', 'annotations'], path);
+      if (seen.has(block)) blockStructureError('循環または重複した接続です', path);
+      seen.add(block);
+      if (typeof block.id !== 'string' || !block.id || ids.has(block.id))
+        blockStructureError('ID が空または重複しています', path);
+      ids.add(block.id);
+      const schema = BLOCK_SCHEMA_BY_ID.get(block.schemaId);
+      if (!schema || (type && schema.category !== type))
+        blockStructureError('schema または接続先の種類が不正です', path);
+      if (
+        ++count > LIMITS.sourceEach ||
+        blockDepth > LIMITS.blockDepth ||
+        expressionDepth > LIMITS.expressionDepth
+      )
+        blockStructureError('node 数または入れ子の上限を超えています', path);
+      blockRecord(
+        block.fields,
+        schema.fields.map((x) => x.key),
+        path + '.fields',
+      );
+      blockRecord(
+        block.inputs,
+        schema.inputs.map((x) => x.key),
+        path + '.inputs',
+      );
+      blockRecord(
+        block.bodies,
+        schema.bodies.map((x) => x.key),
+        path + '.bodies',
+      );
+      const annotationKeys = schema.annotations.map((x) => x.key);
+      blockRecord(block.annotations, annotationKeys, path + '.annotations');
+      const node = schema.category === 'target' && schema.kind !== 'Hole' ? {} : { kind: schema.kind };
+      if (schema.discriminator) node[schema.discriminator.key] = schema.discriminator.value;
+      for (const field of schema.fields) {
+        if (!Object.hasOwn(block.fields, field.key)) {
+          if (field.required === false) continue;
+          blockStructureError('必須項目 ' + field.key + ' がありません', path);
+        }
+        node[field.key] = blockFieldValue(
+          field,
+          block.fields[field.key],
+          path + '.fields.' + field.key,
+        );
+      }
+      for (const slot of schema.inputs) {
+        if (!Object.hasOwn(block.inputs, slot.key) && slot.required === false) continue;
+        const value = block.inputs[slot.key];
+        if (slot.multiple) {
+          if (!Array.isArray(value) || value.length < slot.minItems || value.length > slot.maxItems)
+            blockStructureError('入力数が不正です', path + '.inputs.' + slot.key);
+          node[slot.key] = value.map((child, i) =>
+            decode(
+              child,
+              slot.type,
+              path + '.inputs.' + slot.key + '[' + i + ']',
+              blockDepth,
+              slot.type === 'expression' ? expressionDepth + 1 : 0,
+            ),
+          );
+        } else
+          node[slot.key] = decode(
+            value,
+            slot.type,
+            path + '.inputs.' + slot.key,
+            blockDepth,
+            slot.type === 'expression' ? expressionDepth + 1 : 0,
+          );
+      }
+      for (const slot of schema.bodies) {
+        const children = block.bodies[slot.key];
+        if (!Array.isArray(children))
+          blockStructureError('本文の配列が必要です', path + '.bodies.' + slot.key);
+        node[slot.key] = children.map((child, i) =>
+          decode(
+            child,
+            'statement',
+            path + '.bodies.' + slot.key + '[' + i + ']',
+            schema.category === 'script' ? 0 : blockDepth + 1,
+            0,
+          ),
+        );
+      }
+      for (const key of annotationKeys) {
+        if (!Object.hasOwn(block.annotations, key)) {
+          if (schema.annotations.find(annotation => annotation.key === key)?.required === false) continue;
+          blockStructureError('注釈欄 ' + key + ' がありません', path);
+        }
+        node[key] = block.annotations[key];
+      }
+      return node;
+    };
+    const rootType = context.expected || BLOCK_SCHEMA_BY_ID.get(tree?.schemaId)?.category;
+    const ast = decode(tree, rootType, 'root', 0, rootType === 'expression' ? 1 : 0);
+    validateSyntaxAst(ast, rootType, context);
+    return ast;
+  }
+  function createBlock(schemaId, context = {}) {
+    const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
+    if (!schema) blockStructureError('未対応の schema です');
+    return blockEncode(schema.create(context), { ...context, expected: schema.category }).tree;
+  }
+
+  const PREC = {
+    OR: 1,
+    AND: 2,
+    NOT: 3,
+    CMP: 4,
+    ADD: 5,
+    MUL: 6,
+    UNARY: 7,
+    POW: 8,
+    SEARCH: 9,
+    POST: 10,
+    ATOM: 11,
+  };
+  function decimalSource(value) {
+    const text = String(value);
+    if (!/[eE]/.test(text)) return text;
+    const [mantissa, exp] = text.toLowerCase().split('e'),
+      parts = mantissa.split('.'),
+      digits = parts.join(''),
+      point = parts[0].length + Number(exp);
+    return point <= 0
+      ? '0.' + '0'.repeat(-point) + digits
+      : point >= digits.length
+        ? digits + '0'.repeat(point - digits.length)
+        : digits.slice(0, point) + '.' + digits.slice(point);
+  }
+

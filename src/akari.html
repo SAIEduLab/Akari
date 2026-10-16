@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<!-- Akari: shared AST, code/block editors, transactional history and explicit data contracts. -->
+<!-- SPDX-License-Identifier: MIT; full license text is embedded in AKARI_LICENSE below. -->
+<html lang="ja">
+<head>
+<!-- Modified 2026-09-20: local structural refactor; shared command presentation, consolidated styles and responsibility-organized source. Original: Akari.html. -->
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src blob:; media-src blob:; connect-src 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'">
+<title>あかり</title>
+<style id="akari-editor-styles">
+<!-- @include css/editor.css -->
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style id="ux-repair-readability">
+<!-- @include css/ux-repair-readability.css -->
+</style>
+<style id="runtime-readability">
+<!-- @include css/runtime-readability.css -->
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="titlebar">あかり</div>
+  <div class="menutool">
+    <button id="newBtn">新しく作る</button>
+    <button id="sampleBtn">お手本を開く</button>
+    <button id="openBtn">開く</button>
+    <button id="saveBtn" aria-label="保存" aria-describedby="saveActionHelp"><ruby class="child-word">保存<rt>ほぞん</rt></ruby></button>
+    <button id="exportBtn" aria-label="書き出し" aria-describedby="exportActionHelp"><ruby class="child-word">書き出し<rt>かきだし</rt></ruby></button>
+    <button id="undoBtn">↶ もとにもどす</button>
+    <button id="redoBtn">↷ やり直す</button>
+    <span class="sep"></span>
+    <button id="runBtn">▶ 動かす</button>
+    <button id="stopBtn">■ 止める</button>
+    <button id="resetBtn">最初に戻す</button>
+    <span class="sep"></span>
+    <button id="imageObjectAdd" title="画像ファイルをキャラクターとして画面に置く">🖼 画像を置く</button>
+    <button id="paintAdd" title="絵を描いてキャラクターとして画面に置く">🎨 お絵かき</button>
+    <button id="soundQuickAdd" title="MP3 / WAV / M4A（AAC-LC）/ FLAC / Ogg Opusの音声を取り込む">🔊 音声を追加</button>
+    <button id="assetBtn" aria-label="画像・音声をまとめる" aria-describedby="assetActionHelp"><ruby class="child-word">画像<rt>がぞう</rt></ruby>・<ruby class="child-word">音声<rt>おんせい</rt></ruby>をまとめる</button>
+    <button id="procBtn" aria-label="手順・答えを求める"><ruby class="child-word">手順<rt>てじゅん</rt></ruby>・答えを求める</button>
+    <button id="dataBtn" aria-label="変数・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
+    <button id="diagnoseBtn">作品チェック</button>
+    <details id="entryProjectMenu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">書き出し</button></div></details>
+    <button id="tutorialStart" type="button">いっしょに作る</button>
+    <label class="ui-level-label">表示 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
+    <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い欄の中で指を上へ動かすと読めます。キーボードはTabで白い欄を選び、↓キーを押します。</p>
+      <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品をファイルにします。あとで続きを作るときは「開く」でそのファイルを選びます。</p>
+      <p id="exportActionHelp"><strong><ruby class="child-word">書き出し<rt>かきだし</rt></ruby></strong>：ブラウザーで動かして見るための作品ファイルを作ります。続きを作るためのファイルは「保存」で作ります。</p>
+      <p id="assetActionHelp"><strong><ruby class="child-word">画像<rt>がぞう</rt></ruby>・<ruby class="child-word">音声<rt>おんせい</rt></ruby>をまとめる</strong>：使う絵や音を追加したり、名前をたしかめたりします。</p>
+      <p id="dataActionHelp"><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</strong>：点数や名前を1つ覚えるデータと、持ち物のように順番に並べるデータを作ります。</p>
+      <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：選んだものを動かす命令のまとまりです。「編集（へんしゅう）する動き」で選びます。編集は、命令や言葉を作ったり直したりすることです。「いつ動く？」で動くきっかけを変えます。</p>
+      <p><strong>見た目のコピー</strong>：見た目と設定をもう1つ作ります。コードはコピーしません。</p>
+      <p><strong>元に戻す・やり直す</strong>：決めた変更を1つ戻す・戻した変更をもう一度行うボタンです。「入力を取り消す」は、いま変えかけている入力をやめます。</p>
+    </div></details>
+    <input id="projectName" value="はじめてのあかり" aria-label="作品名" style="margin-left:auto;width:210px;height:26px;padding:2px 5px">
+    <input id="fileInput" type="file" accept=".akari.md,.md,text/markdown,text/plain">
+  </div>
+
+  <div class="main">
+    <section class="window active toolbox">
+      <div class="win-title">道具箱</div>
+      <div class="tool-list" id="toolList">
+        <button class="tool" data-type="label" draggable="true"><span class="ico">Ａ</span>文字</button>
+        <button class="tool" data-type="button" draggable="true"><span class="ico">▣</span>ボタン</button>
+        <button class="tool" data-type="input" draggable="true"><span class="ico">▭</span>入力欄</button>
+        <button class="tool" data-type="box" draggable="true"><span class="ico">□</span>四角</button>
+        <div class="tool-section" aria-label="Unicode標準キャラクター">
+          <div class="tool-section-title">標準キャラクター（144種）</div>
+          <details class="sprite-preset-category" open>
+            <summary>マスコット<span>2種</span></summary>
+            <div class="sprite-preset-grid">
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="akariMascot" draggable="true" title="マスコット" aria-label="マスコットを置く"><span class="ico">マ</span><span>マスコット</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="dango" draggable="true" title="だんご" aria-label="だんごを置く"><span class="ico">だ</span><span>だんご</span></button>
+            </div>
+          </details>
+          <details class="sprite-preset-category" open>
+            <summary>図形・模様<span>34種</span></summary>
+            <div class="sprite-preset-grid">
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="star" draggable="true" title="星 (U+2605)" aria-label="星 (U+2605) を置く"><span class="ico">★</span><span>星</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteStar" draggable="true" title="白い星 (U+2606)" aria-label="白い星 (U+2606) を置く"><span class="ico">☆</span><span>白い星</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="fourStar" draggable="true" title="四つ星 (U+2726)" aria-label="四つ星 (U+2726) を置く"><span class="ico">✦</span><span>四つ星</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteFourStar" draggable="true" title="白い四つ星 (U+2727)" aria-label="白い四つ星 (U+2727) を置く"><span class="ico">✧</span><span>白い四つ星</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="circledStar" draggable="true" title="丸星 (U+272A)" aria-label="丸星 (U+272A) を置く"><span class="ico">✪</span><span>丸星</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="asterisk" draggable="true" title="光 (U+2731)" aria-label="光 (U+2731) を置く"><span class="ico">✱</span><span>光</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="florette" draggable="true" title="花 (U+273F)" aria-label="花 (U+273F) を置く"><span class="ico">✿</span><span>花</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="circle" draggable="true" title="丸 (U+25CF)" aria-label="丸 (U+25CF) を置く"><span class="ico">●</span><span>丸</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteCircle" draggable="true" title="白丸 (U+25CB)" aria-label="白丸 (U+25CB) を置く"><span class="ico">○</span><span>白丸</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="fisheye" draggable="true" title="目玉 (U+25C9)" aria-label="目玉 (U+25C9) を置く"><span class="ico">◉</span><span>目玉</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="bullseye" draggable="true" title="的 (U+25CE)" aria-label="的 (U+25CE) を置く"><span class="ico">◎</span><span>的</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="triangle" draggable="true" title="三角 (U+25B2)" aria-label="三角 (U+25B2) を置く"><span class="ico">▲</span><span>三角</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteTriangle" draggable="true" title="白三角 (U+25B3)" aria-label="白三角 (U+25B3) を置く"><span class="ico">△</span><span>白三角</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="downTriangle" draggable="true" title="下三角 (U+25BC)" aria-label="下三角 (U+25BC) を置く"><span class="ico">▼</span><span>下三角</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteDownTriangle" draggable="true" title="白下三角 (U+25BD)" aria-label="白下三角 (U+25BD) を置く"><span class="ico">▽</span><span>白下三角</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="square" draggable="true" title="四角 (U+25A0)" aria-label="四角 (U+25A0) を置く"><span class="ico">■</span><span>四角</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteSquare" draggable="true" title="白四角 (U+25A1)" aria-label="白四角 (U+25A1) を置く"><span class="ico">□</span><span>白四角</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="diamond" draggable="true" title="ひし形 (U+25C6)" aria-label="ひし形 (U+25C6) を置く"><span class="ico">◆</span><span>ひし形</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteDiamond" draggable="true" title="白ひし形 (U+25C7)" aria-label="白ひし形 (U+25C7) を置く"><span class="ico">◇</span><span>白ひし形</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="diamondX" draggable="true" title="きらめき (U+2756)" aria-label="きらめき (U+2756) を置く"><span class="ico">❖</span><span>きらめき</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackPentagon" draggable="true" title="五角形 (U+2B1F)" aria-label="五角形 (U+2B1F) を置く"><span class="ico">⬟</span><span>五角形</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackHexagon" draggable="true" title="六角形 (U+2B22)" aria-label="六角形 (U+2B22) を置く"><span class="ico">⬢</span><span>六角形</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteHexagon" draggable="true" title="白六角形 (U+2B21)" aria-label="白六角形 (U+2B21) を置く"><span class="ico">⬡</span><span>白六角形</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="heart" draggable="true" title="ハート (U+2665)" aria-label="ハート (U+2665) を置く"><span class="ico">♥</span><span>ハート</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteHeart" draggable="true" title="白ハート (U+2661)" aria-label="白ハート (U+2661) を置く"><span class="ico">♡</span><span>白ハート</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="spade" draggable="true" title="スペード (U+2660)" aria-label="スペード (U+2660) を置く"><span class="ico">♠</span><span>スペード</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteSpade" draggable="true" title="白スペード (U+2664)" aria-label="白スペード (U+2664) を置く"><span class="ico">♤</span><span>白スペード</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="club" draggable="true" title="クラブ (U+2663)" aria-label="クラブ (U+2663) を置く"><span class="ico">♣</span><span>クラブ</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteClub" draggable="true" title="白クラブ (U+2667)" aria-label="白クラブ (U+2667) を置く"><span class="ico">♧</span><span>白クラブ</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="suitDiamond" draggable="true" title="ダイヤ (U+2666)" aria-label="ダイヤ (U+2666) を置く"><span class="ico">♦</span><span>ダイヤ</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteSuitDiamond" draggable="true" title="白ダイヤ (U+2662)" aria-label="白ダイヤ (U+2662) を置く"><span class="ico">♢</span><span>白ダイヤ</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="heavyCross" draggable="true" title="十字 (U+271A)" aria-label="十字 (U+271A) を置く"><span class="ico">✚</span><span>十字</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="circledPlus" draggable="true" title="丸プラス (U+2295)" aria-label="丸プラス (U+2295) を置く"><span class="ico">⊕</span><span>丸プラス</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="circledTimes" draggable="true" title="丸ばつ (U+2297)" aria-label="丸ばつ (U+2297) を置く"><span class="ico">⊗</span><span>丸ばつ</span></button>
+            </div>
+          </details>
+          <details class="sprite-preset-category">
+            <summary>自然・天気<span>15種</span></summary>
+            <div class="sprite-preset-grid">
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="sun" draggable="true" title="太陽 (U+2600)" aria-label="太陽 (U+2600) を置く"><span class="ico">☀</span><span>太陽</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteSun" draggable="true" title="白い太陽 (U+263C)" aria-label="白い太陽 (U+263C) を置く"><span class="ico">☼</span><span>白い太陽</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="cloud" draggable="true" title="雲 (U+2601)" aria-label="雲 (U+2601) を置く"><span class="ico">☁</span><span>雲</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="umbrella" draggable="true" title="傘 (U+2602)" aria-label="傘 (U+2602) を置く"><span class="ico">☂</span><span>傘</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="rainUmbrella" draggable="true" title="雨傘 (U+2614)" aria-label="雨傘 (U+2614) を置く"><span class="ico">☔</span><span>雨傘</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="snowman" draggable="true" title="雪だるま (U+2603)" aria-label="雪だるま (U+2603) を置く"><span class="ico">☃</span><span>雪だるま</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="comet" draggable="true" title="彗星 (U+2604)" aria-label="彗星 (U+2604) を置く"><span class="ico">☄</span><span class="child-material-name"><ruby class="child-word">彗星<rt>すいせい</rt></ruby><small class="child-material-note">尾のある星</small></span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="lightning" draggable="true" title="雷 (U+26A1)" aria-label="雷 (U+26A1) を置く"><span class="ico">⚡</span><span>雷</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="snowflake" draggable="true" title="雪 (U+2744)" aria-label="雪 (U+2744) を置く"><span class="ico">❄</span><span>雪</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="snowflake2" draggable="true" title="雪2 (U+2745)" aria-label="雪2 (U+2745) を置く"><span class="ico">❅</span><span>雪2</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="snowflake3" draggable="true" title="雪3 (U+2746)" aria-label="雪3 (U+2746) を置く"><span class="ico">❆</span><span>雪3</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="shamrock" draggable="true" title="クローバー (U+2618)" aria-label="クローバー (U+2618) を置く"><span class="ico">☘</span><span>クローバー</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="hotSpring" draggable="true" title="温泉 (U+2668)" aria-label="温泉 (U+2668) を置く"><span class="ico">♨</span><span>温泉</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="firstMoon" draggable="true" title="月 (U+263D)" aria-label="月 (U+263D) を置く"><span class="ico">☽</span><span>月</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="lastMoon" draggable="true" title="反対の月 (U+263E)" aria-label="反対の月 (U+263E) を置く"><span class="ico">☾</span><span>反対の月</span></button>
+            </div>
+          </details>
+          <details class="sprite-preset-category">
+            <summary>顔・サイン<span>20種</span></summary>
+            <div class="sprite-preset-grid">
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="face" draggable="true" title="笑顔 (U+263A)" aria-label="笑顔 (U+263A) を置く"><span class="ico">☺</span><span>笑顔</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="sadFace" draggable="true" title="悲しい顔 (U+2639)" aria-label="悲しい顔 (U+2639) を置く"><span class="ico">☹</span><span>悲しい顔</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackFace" draggable="true" title="黒い顔 (U+263B)" aria-label="黒い顔 (U+263B) を置く"><span class="ico">☻</span><span>黒い顔</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="peace" draggable="true" title="ピース (U+262E)" aria-label="ピース (U+262E) を置く"><span class="ico">☮</span><span>ピース</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="yinYang" draggable="true" title="陰陽 (U+262F)" aria-label="陰陽 (U+262F) を置く"><span class="ico">☯</span><span class="child-material-name"><ruby class="child-word">陰陽<rt>いんよう</rt></ruby><small class="child-material-note">白黒の丸</small></span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="check" draggable="true" title="チェック (U+2713)" aria-label="チェック (U+2713) を置く"><span class="ico">✓</span><span>チェック</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="heavyCheck" draggable="true" title="太いチェック (U+2714)" aria-label="太いチェック (U+2714) を置く"><span class="ico">✔</span><span>太いチェック</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="cross" draggable="true" title="ばつ (U+2717)" aria-label="ばつ (U+2717) を置く"><span class="ico">✗</span><span>ばつ</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="heavyX" draggable="true" title="太いばつ (U+2718)" aria-label="太いばつ (U+2718) を置く"><span class="ico">✘</span><span>太いばつ</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="flag" draggable="true" title="旗 (U+2691)" aria-label="旗 (U+2691) を置く"><span class="ico">⚑</span><span>旗</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteFlag" draggable="true" title="白い旗 (U+2690)" aria-label="白い旗 (U+2690) を置く"><span class="ico">⚐</span><span>白い旗</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="warning" draggable="true" title="注意 (U+26A0)" aria-label="注意 (U+26A0) を置く"><span class="ico">⚠</span><span>注意</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="skull" draggable="true" title="どくろ (U+2620)" aria-label="どくろ (U+2620) を置く"><span class="ico">☠</span><span>どくろ</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="medical" draggable="true" title="医療 (U+2695)" aria-label="医療 (U+2695) を置く"><span class="ico">⚕</span><span class="child-material-name"><ruby class="child-word">医療<rt>いりょう</rt></ruby><small class="child-material-note">へびとつえ</small></span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="recycle" draggable="true" title="リサイクル (U+267B)" aria-label="リサイクル (U+267B) を置く"><span class="ico">♻</span><span>リサイクル</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="radioactive" draggable="true" title="放射線 (U+2622)" aria-label="放射線 (U+2622) を置く"><span class="ico">☢</span><span class="child-material-name"><ruby class="child-word">放射線<rt>ほうしゃせん</rt></ruby><small class="child-material-note">三つの羽の印</small></span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="biohazard" draggable="true" title="バイオハザード (U+2623)" aria-label="バイオハザード (U+2623) を置く"><span class="ico">☣</span><span class="child-material-name">バイオ<wbr>ハザード<small class="child-material-note">三つの輪の印</small></span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="question" draggable="true" title="はてな (U+2753)" aria-label="はてな (U+2753) を置く"><span class="ico">❓</span><span>はてな</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="exclamation" draggable="true" title="びっくり (U+2757)" aria-label="びっくり (U+2757) を置く"><span class="ico">❗</span><span>びっくり</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="infinity" draggable="true" title="無限 (U+221E)" aria-label="無限 (U+221E) を置く"><span class="ico">∞</span><span>無限</span></button>
+            </div>
+          </details>
+          <details class="sprite-preset-category">
+            <summary>音・ゲーム<span>28種</span></summary>
+            <div class="sprite-preset-grid">
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="quarterNote" draggable="true" title="四分音符 (U+2669)" aria-label="四分音符 (U+2669) を置く"><span class="ico">♩</span><span>四分音符</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="note" draggable="true" title="音符 (U+266A)" aria-label="音符 (U+266A) を置く"><span class="ico">♪</span><span>音符</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="notes" draggable="true" title="連符 (U+266B)" aria-label="連符 (U+266B) を置く"><span class="ico">♫</span><span>連符</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="sixteenthNotes" draggable="true" title="十六分音符 (U+266C)" aria-label="十六分音符 (U+266C) を置く"><span class="ico">♬</span><span>十六分音符</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="flat" draggable="true" title="フラット (U+266D)" aria-label="フラット (U+266D) を置く"><span class="ico">♭</span><span>フラット</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="natural" draggable="true" title="ナチュラル (U+266E)" aria-label="ナチュラル (U+266E) を置く"><span class="ico">♮</span><span>ナチュラル</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="sharp" draggable="true" title="シャープ (U+266F)" aria-label="シャープ (U+266F) を置く"><span class="ico">♯</span><span>シャープ</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteChessKing" draggable="true" title="王 (U+2654)" aria-label="王 (U+2654) を置く"><span class="ico">♔</span><span>王</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteChessQueen" draggable="true" title="女王 (U+2655)" aria-label="女王 (U+2655) を置く"><span class="ico">♕</span><span>女王</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteChessRook" draggable="true" title="城 (U+2656)" aria-label="城 (U+2656) を置く"><span class="ico">♖</span><span>城</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteChessBishop" draggable="true" title="僧 (U+2657)" aria-label="僧 (U+2657) を置く"><span class="ico">♗</span><span>僧</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteChessKnight" draggable="true" title="馬 (U+2658)" aria-label="馬 (U+2658) を置く"><span class="ico">♘</span><span>馬</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteChessPawn" draggable="true" title="兵 (U+2659)" aria-label="兵 (U+2659) を置く"><span class="ico">♙</span><span>兵</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackChessKing" draggable="true" title="黒王 (U+265A)" aria-label="黒王 (U+265A) を置く"><span class="ico">♚</span><span>黒王</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackChessQueen" draggable="true" title="黒女王 (U+265B)" aria-label="黒女王 (U+265B) を置く"><span class="ico">♛</span><span>黒女王</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackChessRook" draggable="true" title="黒城 (U+265C)" aria-label="黒城 (U+265C) を置く"><span class="ico">♜</span><span>黒城</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackChessBishop" draggable="true" title="黒僧 (U+265D)" aria-label="黒僧 (U+265D) を置く"><span class="ico">♝</span><span>黒僧</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackChessKnight" draggable="true" title="黒馬 (U+265E)" aria-label="黒馬 (U+265E) を置く"><span class="ico">♞</span><span>黒馬</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackChessPawn" draggable="true" title="黒兵 (U+265F)" aria-label="黒兵 (U+265F) を置く"><span class="ico">♟</span><span>黒兵</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="die1" draggable="true" title="さいころ1 (U+2680)" aria-label="さいころ1 (U+2680) を置く"><span class="ico">⚀</span><span>さいころ1</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="die2" draggable="true" title="さいころ2 (U+2681)" aria-label="さいころ2 (U+2681) を置く"><span class="ico">⚁</span><span>さいころ2</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="die3" draggable="true" title="さいころ3 (U+2682)" aria-label="さいころ3 (U+2682) を置く"><span class="ico">⚂</span><span>さいころ3</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="die4" draggable="true" title="さいころ4 (U+2683)" aria-label="さいころ4 (U+2683) を置く"><span class="ico">⚃</span><span>さいころ4</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="die5" draggable="true" title="さいころ5 (U+2684)" aria-label="さいころ5 (U+2684) を置く"><span class="ico">⚄</span><span>さいころ5</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="die6" draggable="true" title="さいころ6 (U+2685)" aria-label="さいころ6 (U+2685) を置く"><span class="ico">⚅</span><span>さいころ6</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="soccer" draggable="true" title="サッカー (U+26BD)" aria-label="サッカー (U+26BD) を置く"><span class="ico">⚽</span><span>サッカー</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="baseball" draggable="true" title="野球 (U+26BE)" aria-label="野球 (U+26BE) を置く"><span class="ico">⚾</span><span>野球</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="golf" draggable="true" title="ゴルフ (U+26F3)" aria-label="ゴルフ (U+26F3) を置く"><span class="ico">⛳</span><span>ゴルフ</span></button>
+            </div>
+          </details>
+          <details class="sprite-preset-category">
+            <summary>もの・乗り物<span>24種</span></summary>
+            <div class="sprite-preset-grid">
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="phone" draggable="true" title="電話 (U+260E)" aria-label="電話 (U+260E) を置く"><span class="ico">☎</span><span>電話</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whitePhone" draggable="true" title="白い電話 (U+260F)" aria-label="白い電話 (U+260F) を置く"><span class="ico">☏</span><span>白い電話</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="mail" draggable="true" title="手紙 (U+2709)" aria-label="手紙 (U+2709) を置く"><span class="ico">✉</span><span>手紙</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="scissors" draggable="true" title="はさみ (U+2702)" aria-label="はさみ (U+2702) を置く"><span class="ico">✂</span><span>はさみ</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="pencil" draggable="true" title="鉛筆 (U+270E)" aria-label="鉛筆 (U+270E) を置く"><span class="ico">✎</span><span>鉛筆</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackPencil" draggable="true" title="黒鉛筆 (U+270F)" aria-label="黒鉛筆 (U+270F) を置く"><span class="ico">✏</span><span>黒鉛筆</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="penNib" draggable="true" title="ペン先 (U+2712)" aria-label="ペン先 (U+2712) を置く"><span class="ico">✒</span><span>ペン先</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="plane" draggable="true" title="飛行機 (U+2708)" aria-label="飛行機 (U+2708) を置く"><span class="ico">✈</span><span>飛行機</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="anchor" draggable="true" title="いかり (U+2693)" aria-label="いかり (U+2693) を置く"><span class="ico">⚓</span><span>いかり</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="sailboat" draggable="true" title="ヨット (U+26F5)" aria-label="ヨット (U+26F5) を置く"><span class="ico">⛵</span><span>ヨット</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="ferry" draggable="true" title="船 (U+26F4)" aria-label="船 (U+26F4) を置く"><span class="ico">⛴</span><span>船</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="tent" draggable="true" title="テント (U+26FA)" aria-label="テント (U+26FA) を置く"><span class="ico">⛺</span><span>テント</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="fuel" draggable="true" title="ガソリン (U+26FD)" aria-label="ガソリン (U+26FD) を置く"><span class="ico">⛽</span><span>ガソリン</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="house" draggable="true" title="家 (U+2302)" aria-label="家 (U+2302) を置く"><span class="ico">⌂</span><span>家</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="coffee" draggable="true" title="カップ (U+2615)" aria-label="カップ (U+2615) を置く"><span class="ico">☕</span><span>カップ</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="watch" draggable="true" title="腕時計 (U+231A)" aria-label="腕時計 (U+231A) を置く"><span class="ico">⌚</span><span>腕時計</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="hourglass" draggable="true" title="砂時計 (U+231B)" aria-label="砂時計 (U+231B) を置く"><span class="ico">⌛</span><span>砂時計</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="keyboard" draggable="true" title="キーボード (U+2328)" aria-label="キーボード (U+2328) を置く"><span class="ico">⌨</span><span>キーボード</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="gear" draggable="true" title="歯車 (U+2699)" aria-label="歯車 (U+2699) を置く"><span class="ico">⚙</span><span>歯車</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="hammerPick" draggable="true" title="ハンマー (U+2692)" aria-label="ハンマー (U+2692) を置く"><span class="ico">⚒</span><span>ハンマー</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="swords" draggable="true" title="剣 (U+2694)" aria-label="剣 (U+2694) を置く"><span class="ico">⚔</span><span>剣</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="scales" draggable="true" title="てんびん (U+2696)" aria-label="てんびん (U+2696) を置く"><span class="ico">⚖</span><span>てんびん</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="alembic" draggable="true" title="フラスコ (U+2697)" aria-label="フラスコ (U+2697) を置く"><span class="ico">⚗</span><span>フラスコ</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="atom" draggable="true" title="原子 (U+269B)" aria-label="原子 (U+269B) を置く"><span class="ico">⚛</span><span>原子</span></button>
+            </div>
+          </details>
+          <details class="sprite-preset-category">
+            <summary>方向・操作<span>21種</span></summary>
+            <div class="sprite-preset-grid">
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="left" draggable="true" title="左矢印 (U+2190)" aria-label="左矢印 (U+2190) を置く"><span class="ico">←</span><span>左矢印</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="up" draggable="true" title="上矢印 (U+2191)" aria-label="上矢印 (U+2191) を置く"><span class="ico">↑</span><span>上矢印</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="right" draggable="true" title="右矢印 (U+2192)" aria-label="右矢印 (U+2192) を置く"><span class="ico">→</span><span>右矢印</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="down" draggable="true" title="下矢印 (U+2193)" aria-label="下矢印 (U+2193) を置く"><span class="ico">↓</span><span>下矢印</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="leftRight" draggable="true" title="左右矢印 (U+2194)" aria-label="左右矢印 (U+2194) を置く"><span class="ico">↔</span><span>左右矢印</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="upDown" draggable="true" title="上下矢印 (U+2195)" aria-label="上下矢印 (U+2195) を置く"><span class="ico">↕</span><span>上下矢印</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="upLeft" draggable="true" title="左上 (U+2196)" aria-label="左上 (U+2196) を置く"><span class="ico">↖</span><span>左上</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="upRight" draggable="true" title="右上 (U+2197)" aria-label="右上 (U+2197) を置く"><span class="ico">↗</span><span>右上</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="downRight" draggable="true" title="右下 (U+2198)" aria-label="右下 (U+2198) を置く"><span class="ico">↘</span><span>右下</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="downLeft" draggable="true" title="左下 (U+2199)" aria-label="左下 (U+2199) を置く"><span class="ico">↙</span><span>左下</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="doubleLeft" draggable="true" title="二重左 (U+21D0)" aria-label="二重左 (U+21D0) を置く"><span class="ico">⇐</span><span>二重左</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="doubleUp" draggable="true" title="二重上 (U+21D1)" aria-label="二重上 (U+21D1) を置く"><span class="ico">⇑</span><span>二重上</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="doubleRight" draggable="true" title="二重右 (U+21D2)" aria-label="二重右 (U+21D2) を置く"><span class="ico">⇒</span><span>二重右</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="doubleDown" draggable="true" title="二重下 (U+21D3)" aria-label="二重下 (U+21D3) を置く"><span class="ico">⇓</span><span>二重下</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="doubleLeftRight" draggable="true" title="二重左右 (U+21D4)" aria-label="二重左右 (U+21D4) を置く"><span class="ico">⇔</span><span>二重左右</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="hookLeft" draggable="true" title="戻る (U+21A9)" aria-label="戻る (U+21A9) を置く"><span class="ico">↩</span><span>戻る</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="hookRight" draggable="true" title="進む (U+21AA)" aria-label="進む (U+21AA) を置く"><span class="ico">↪</span><span>進む</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="turnLeft" draggable="true" title="左回り (U+21BA)" aria-label="左回り (U+21BA) を置く"><span class="ico">↺</span><span>左回り</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="turnRight" draggable="true" title="右回り (U+21BB)" aria-label="右回り (U+21BB) を置く"><span class="ico">↻</span><span>右回り</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="heavyRight" draggable="true" title="太い右 (U+279C)" aria-label="太い右 (U+279C) を置く"><span class="ico">➜</span><span>太い右</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="arrowHead" draggable="true" title="矢じり (U+27A4)" aria-label="矢じり (U+27A4) を置く"><span class="ico">➤</span><span>矢じり</span></button>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="window active designer" id="designerWindow">
+      <div class="win-title"><span id="designerHeading">画面づくり</span><div class="stage-zoom-controls" role="group" aria-label="作品画面の表示倍率">
+        <button id="stageZoomOut" type="button" aria-label="作品画面を縮小">−</button>
+        <button id="stageZoomReset" type="button" aria-label="作品画面を100%で表示" title="100%で見る">100%</button>
+        <button id="stageZoomIn" type="button" aria-label="作品画面を拡大">＋</button>
+        <button id="stageZoomFit" type="button" aria-label="作品画面の全体を表示" aria-pressed="true">全体</button>
+      </div></div>
+      <div class="designer-wrap">
+        <div id="formFrame">
+          <div class="form-title" id="formTitle">はじめてのあかり</div>
+          <div id="formSurface" tabindex="0" aria-label="実行画面">
+            <canvas id="penCanvas" width="640" height="400"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="side">
+      <section class="window active">
+        <div class="win-title">作品</div>
+        <div class="tree" id="projectTree"></div>
+      </section>
+      <section class="window active">
+        <div class="win-title">せってい</div>
+        <div class="props" id="properties"></div>
+      </section>
+      <section class="window active monitor-window">
+        <div class="win-title">動きのようす</div>
+        <div class="runtime-monitor" id="runtimeMonitor"><div class="monitor-empty">止まっています</div></div>
+      </section>
+    </div>
+
+    <section class="window active codewin">
+      <div class="win-title">コード</div>
+      <div class="code-head">
+        <label>動かすもの <select id="objectSelect"></select></label>
+        <label><ruby class="child-word">編集<rt>へんしゅう</rt></ruby>する動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="編集する動きを選びます。きっかけは「いつ動く？」で変えます"></select></label>
+        <button id="scriptAdd" type="button">同じできごとの本文を追加</button>
+      </div>
+      <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">動かすを押したとき</button><button id="entryClickEvent" type="button">キャラを押したとき</button></div>
+      <p id="entryOutside" role="status" hidden>この作品には、ほかのブロックもあるよ。そのまま残っています。変えるときは表示を「かんたん」か「くわしく」にしよう。</p>
+      <section id="tutorialGuide" aria-label="いっしょに作る" hidden><p id="tutorialText" aria-live="polite"></p><div id="tutorialChoices" hidden></div><button id="tutorialFinish" type="button" hidden>ほぞんしておわる</button><button id="tutorialExit" type="button">いっしょに作るのをやめる</button><button id="tutorialVerifySave" type="button" hidden>ほぞんした作品をたしかめる</button><input id="tutorialSavedFile" type="file" accept=".akari.md,.md" hidden></section>
+      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
+      <div id="sourceOverview" aria-label="選んだもののすべてのコード" hidden></div>
+      <div class="debugbar">
+        <button id="pauseBtn">⏸ いったん止める</button>
+        <button id="continueBtn">▶ 続ける</button>
+        <button id="stepBtn">1命令ずつ</button>
+        <button id="runtimeInspectBtn" type="button" hidden aria-controls="runtimeInspector">本文を見て確かめる</button>
+        <button id="formatBtn">コードを整える</button>
+        <span class="exec-location" id="execLocation">いまの場所：―</span>
+      </div>
+      <div class="editor-modes" role="group" aria-label="本文の表示"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を取り消す</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の取り込み" hidden></section><div id="blockEditor" hidden></div>
+      <div class="editor-shell">
+        <div class="line-gutter" id="lineGutter" aria-hidden="true"></div>
+        <textarea id="codeEditor" wrap="soft" spellcheck="false" aria-label="あかりのコード"></textarea>
+      </div>
+      <div class="code-assist"><div id="codeIssue">✓ 書き方をチェック中</div><div class="hint-panel"><div class="hint-controls"><input id="hintSearch" type="search" aria-label="候補を検索" placeholder="命令・値・名前を検索"><label><input id="hintUnavailable" type="checkbox">使えないものも表示</label><button id="hintPrev">前</button><span id="hintCount"></span><button id="hintNext">次</button></div><div class="code-hints" id="codeHints"></div></div></div>
+      <div class="console" id="console"></div>
+    </section>
+  </div>
+
+  <div class="status"><span id="statusText">準備完了</span><span class="save-state" id="autosaveState">自動保存：待機</span><span class="dirty-state" id="dirtyState">変更なし</span><span class="runstate run-off" id="runState">止まっています</span></div>
+</div>
+
+<div class="modal" id="paintModal" role="dialog" aria-modal="true" aria-labelledby="paintTitle">
+  <div class="dialog paint-dialog">
+    <div class="win-title" id="paintTitle">🎨 お絵かき</div>
+    <div class="dialog-body">
+      <div class="paint-tools" role="group" aria-label="描く道具">
+        <button type="button" data-paint-tool="pen" aria-pressed="true">ペン</button>
+        <button type="button" data-paint-tool="eraser" aria-pressed="false">消しゴム</button>
+        <button type="button" data-paint-tool="fill" aria-pressed="false">塗りつぶし</button>
+        <button type="button" data-paint-tool="line" aria-pressed="false">直線</button>
+        <button type="button" data-paint-tool="rectangle" aria-pressed="false">四角</button>
+        <button type="button" data-paint-tool="ellipse" aria-pressed="false">だ円（長い丸）</button>
+      </div>
+      <div class="paint-options">
+        <label>色 <input id="paintColor" type="color" value="#111111"></label>
+        <label>線の太さ <input id="paintWidth" type="range" min="1" max="40" value="4"><output id="paintWidthValue">4</output></label>
+        <label>図形 <select id="paintShape"><option value="outline">ふちだけ</option><option value="filled">塗りつぶし</option></select></label>
+        <button type="button" id="paintUndo">↶ 元に戻す</button>
+        <button type="button" id="paintRedo">↷ やり直す</button>
+      </div>
+      <div class="paint-colors" id="paintColors" role="group" aria-label="色見本"></div>
+      <div class="paint-canvas-wrap"><canvas id="paintCanvas" width="500" height="500" aria-label="お絵かき用の500×500ピクセルのキャンバス"></canvas></div>
+      <p id="paintStatus" role="status" aria-live="polite">ます目は、色がついていない透明なところの目印です。絵として保存されません。</p>
+    </div>
+    <div class="dialog-foot"><button type="button" id="paintCancel">お絵かきを取り消す</button><button type="button" id="paintCommit" disabled>決定して置く</button></div>
+  </div>
+</div>
+
+<div class="modal" id="assetModal" role="dialog" aria-modal="true" aria-label="画像・音声">
+  <div class="dialog">
+    <div class="win-title">画像・音声</div>
+    <div class="dialog-body">
+      <div class="asset-import-guide" aria-label="画像と音声の取り込み">
+        <div class="asset-import-card primary">
+          <strong>画像をそのまま使う</strong>
+          <small>画像をキャラクターとして画面中央に追加します。追加後すぐに動かしたり、クリックの動きを作れます。</small>
+          <button id="imageObjectAddModal">🖼 画像をキャラクターとして置く</button>
+        </div>
+        <div class="asset-import-card">
+          <strong>背景にする</strong>
+          <small>画面全体の背景として画像を取り込みます。</small>
+          <button id="backdropImageAdd">背景画像を追加</button>
+        </div>
+        <div class="asset-import-card">
+          <strong>衣装にする</strong>
+          <small id="costumeImageHint">先にキャラクターを選ぶと、そのキャラクターの衣装として追加できます。</small>
+          <button id="costumeImageAdd">選択中へ衣装画像を追加</button>
+        </div>
+        <div class="asset-import-card">
+          <strong>音声を使う</strong>
+          <small>MP3 / WAV / M4A（AAC-LC） / FLAC / Ogg Opusを取り込みます。取り込んだ名前は「素材の音を鳴らす」で使えます。</small>
+          <button id="soundAdd">🔊 音声ファイルを追加</button>
+        </div>
+      </div>
+      <div id="assetProgress" class="asset-target" style="display:none"></div>
+      <details class="asset-secondary">
+        <summary>色背景・文字衣装を追加</summary>
+        <div class="asset-toolbar" style="margin-top:9px">
+          <input id="backdropName" placeholder="背景名" style="width:130px;padding:6px">
+          <input id="backdropColor" value="#ffffff" placeholder="#RRGGBB" style="width:105px;padding:6px">
+          <button id="backdropAdd">色背景</button>
+          <input id="costumeName" placeholder="衣装名" style="width:120px;padding:6px">
+          <input id="costumeText" value="★" placeholder="文字衣装" style="width:90px;padding:6px">
+          <button id="costumeAdd">文字衣装</button>
+        </div>
+      </details>
+      <input id="imageObjectInput" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden>
+      <input id="imageBackdropInput" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden>
+      <input id="imageCostumeInput" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden>
+      <input id="soundInput" type="file" accept="audio/mpeg,audio/wav,audio/mp4,audio/flac,audio/ogg,.mp3,.wav,.m4a,.flac,.ogg,.opus" hidden>
+      <div id="assetBody"></div>
+    </div>
+    <div class="dialog-foot"><button id="assetClose">閉じる</button></div>
+  </div>
+</div>
+
+<div class="modal" id="procModal" role="dialog" aria-modal="true" aria-label="手順・答えを求める">
+  <div class="dialog">
+    <div class="win-title">画面の共通コード：手順・答えを求める</div>
+    <div class="dialog-body">
+      <div class="proc-grid">
+        <div class="proc-list">
+          <select id="callableSelect" size="12"></select>
+          <button id="callableNewAction">新しい動作</button>
+          <button id="callableNewFunction">新しい計算</button>
+          <button id="callableDelete">この手順・計算を消す</button>
+        </div>
+        <div class="proc-edit">
+          <details id="callableConceptHelp" class="child-help"><summary>手順・計算のヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い欄の中で指を上へ動かすと読めます。キーボードはTabで白い欄を選び、↓キーを押します。</p>
+            <p><ruby class="child-word">手順<rt>てじゅん</rt></ruby>は、いくつかの動きをまとめて名前で使うものです。例：「あいさつ」という名前で、名前を話しておじぎする動きをまとめます。</p>
+            <p>計算は、中で使った数や文字から答えを出します。例：点数を2倍にして、その答えを返します。</p>
+            <p>名前と中で使う値を決め、下に動きを書きます。「手順・計算を決める」を押すと、ほかの動きからその名前で使えます。</p>
+          </div></details>
+          <input id="callableEditingId" type="hidden">
+          <label>種類 <select id="callableType"><option value="action">手順</option><option value="function">答えを求める</option></select></label>
+          <label>名前 <input id="callableName"></label>
+          <label id="callablePhraseRow">短い呼び方（自由） <input id="callablePhrase" maxlength="80" placeholder="例：ジャンプする" aria-describedby="callablePhraseHelp"></label>
+          <small id="callablePhraseHelp">この文を書くだけで、この手順を使えます。空欄でも名前で呼べます。</small>
+          <label><ruby class="child-word">受け取る値<rt>うけとる あたい</rt></ruby> <input id="callableArgs" placeholder="例：歩数、あいさつ（いらないときは空欄）" aria-describedby="callableArgsHelp"></label>
+          <small id="callableArgsHelp">この手順を使うときに決める中身です。例：点数として10、名前として「あかり」を入れ、手順の中で使います。この欄には「点数、名前」のように名前を書きます。名前が2つ以上あるときは「、」で分けます。</small>
+          <div id="callableHeader" class="asset-target">新しい手順</div>
+          <div class="editor-modes" role="group" aria-label="本文の表示"><button id="callableModecode" type="button" aria-pressed="true">コード</button><button id="callableModeblocks" type="button" aria-pressed="false">ブロック</button><button id="callableCancel" type="button">入力を取り消す</button></div><div id="callablePending" class="editor-pending" role="status" hidden></div><div id="callableBlocks" hidden></div>
+          <textarea id="callableCode" spellcheck="false"></textarea>
+          <div class="hint-panel"><div class="hint-controls"><input id="callableHintSearch" type="search" aria-label="手順・答えを求める定義の候補を検索" placeholder="命令・値・名前を検索"><button id="callableHintPrev">前</button><span id="callableHintCount"></span><button id="callableHintNext">次</button></div><div class="code-hints" id="callableHints" aria-label="手順・答えを求める定義のコード候補"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="dialog-foot"><button id="callableFormat">本文を整える</button> <button id="callableSave">手順・計算を決める</button> <button id="callableSaveProject">書きかけを作品に保存</button> <button id="procClose">閉じる</button></div>
+  </div>
+</div>
+
+<div class="modal" id="dataModal" role="dialog" aria-modal="true" aria-label="データ">
+  <div class="dialog" style="height:min(620px,88vh)">
+    <div class="win-title">データ — 作品の変数・部品ごとの変数・リスト</div>
+    <div class="dialog-body">
+      <div class="asset-toolbar">
+        <label>どこで使う <select id="dataScope"><option value="project">作品</option><option value="self">選んだ部品</option></select></label>
+        <label>種類 <select id="dataKind"><option value="variable">変数：1つを覚える</option><option value="list">リスト：順番に並べる</option></select></label>
+        <input id="dataName" placeholder="名前" aria-label="データの名前" aria-describedby="dataConceptHelp dataFormError" style="width:150px;padding:6px">
+        <input id="dataInitial" aria-label="最初の値" aria-describedby="dataConceptHelp dataFormError" style="width:280px;padding:6px">
+        <label id="dataListModeLabel" hidden>リストの入れ方 <select id="dataListMode"><option value="lines">一行に一つ、文字で入れる</option><option value="literal">［値、値］で書く</option></select></label>
+        <label id="dataItemsLabel" hidden>最初に並べる中身（文字）<textarea id="dataItems" rows="5" aria-describedby="dataItemsHelp dataFormError" placeholder="本&#10;かさ&#10;ぼうし" style="width:min(100%,420px);padding:6px"></textarea><small id="dataItemsHelp">1行に1つ、文字を並べます。空の行は空の文字として残します。数や単位を入れるときは「［値、値］で書く」を選びます。</small></label>
+        <label>使う単位 <select id="dataUnit"><option value="">決めない</option><option>歩</option><option>秒</option><option>度</option><option>回</option><option>番目</option><option>点</option><option>個</option><option>％</option><option>Hz</option></select></label>
+        <button id="dataAdd">作る</button>
+      </div>
+      <p id="dataFormError" role="alert" hidden></p>
+      <div id="dataConceptHelp" class="child-help">
+        <p><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby></strong>は、中身を1つ覚えるデータです。例：「点数」に10、「名前」に「あかり」を入れます。<strong>リスト</strong>は、中身を順番に並べるデータです。例：「持ち物」に本、かさ、ぼうしを並べます。</p>
+        <p><ruby class="child-word">値<rt>あたい</rt></ruby>は、入れる中身のことです。「種類」で入れものを選び、「最初の値」で動き始める前の中身を決めます。「作品」はみんなで、「選んだ部品」はその部品で使います。</p>
+        <p>動かすと最初の値から始まり、動いている間の中身は「動きのようす」で見られます。最初の値とデータの作り方は作品といっしょに保存されます。</p>
+      </div>
+      <div id="dataBody"></div>
+    </div>
+    <div class="dialog-foot"><button id="dataClose">閉じる</button></div>
+  </div>
+</div>
+
+<div class="modal" id="diagnosisModal" role="dialog" aria-modal="true" aria-label="作品チェック">
+  <div class="dialog" style="height:min(650px,88vh)">
+    <div class="win-title">作品チェック</div>
+    <div class="dialog-body" id="diagnosisBody"></div>
+    <div class="dialog-foot"><button id="diagnosisClose">閉じる</button></div>
+  </div>
+</div>
+
+<dialog id="runtimeInspector" aria-labelledby="runtimeInspectorTitle">
+  <div class="runtime-inspector-head"><strong id="runtimeInspectorTitle">本文と動きのようす</strong><div id="runtimeInspectorModes"></div><button id="runtimeInspectorStop" type="button">止める</button><button id="runtimeInspectorClose" type="button">実行画面に戻る</button></div>
+  <div id="runtimeInspectorBody"></div>
+</dialog>
+
+<div class="modal" id="recoveryModal" role="dialog" aria-modal="true" aria-label="自動保存からもどす">
+  <div class="dialog" style="width:min(560px,92vw);height:auto;max-height:80vh">
+    <div class="win-title">自動保存された作品</div>
+    <div class="dialog-body"><p id="recoveryText">前回の自動保存があります。</p></div>
+    <div class="dialog-foot"><button id="recoveryDiscard">使わない</button> <button id="recoveryRestore">もどす</button></div>
+  </div>
+</div>
+
+
+<div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-label="あかりの質問">
+  <div class="dialog">
+    <div class="win-title">あかりからの質問</div>
+    <div class="dialog-body"><div id="questionText"></div><input id="questionAnswer" autocomplete="off"></div>
+    <div class="dialog-foot"><button id="questionStop">動きを止める</button> <button id="questionSubmit">答える</button></div>
+  </div>
+</div>
+<div class="modal" id="failureModal" role="dialog" aria-modal="true" aria-label="動きが止まった記録"><div class="dialog"><div class="win-title">動きが止まった記録（きろく）</div><div class="record-controls"><label for="failureSelect">記録（きろく）</label><select id="failureSelect"></select></div><div class="dialog-body" id="failureBody"></div><div class="dialog-foot"><button id="failureClose">閉じる</button></div></div></div>
+<div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-labelledby="valueTitle"><div class="dialog"><div class="win-title" id="valueTitle">値の全文</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の要素</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の要素</button></div><p id="valueNotice" class="dialog-body" role="status"></p><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">閉じる</button></div></div></div>
+
+
+<div class="modal" id="colorModal" role="dialog" aria-modal="true" aria-labelledby="colorTitle" aria-describedby="colorHelp">
+ <div class="dialog">
+  <div class="win-title"><h2 id="colorTitle"></h2></div>
+  <div class="dialog-body">
+   <p class="color-dialog-help" id="colorHelp">円の中をドラッグして、色をえらびます。明るさも変えられます。</p>
+   <div id="colorWheel" class="color-wheel" tabindex="0" role="group" aria-label="色の円盤" aria-describedby="colorWheelHelp colorState">
+    <canvas id="colorCanvas" width="256" height="256" aria-hidden="true"></canvas><span id="colorMarker" class="color-wheel-marker"></span>
+   </div>
+   <span id="colorWheelHelp" class="color-sr">左右キーで色あい、上下キーであざやかさを変えます。Shiftキーで細かく調整できます。</span>
+   <div class="color-preview-pair"><div>もとの色<span id="colorBefore" class="color-chip"></span></div><div>えらんだ色<span id="colorAfter" class="color-chip"></span></div></div>
+   <label class="color-range" for="colorValueCore">明るさ<input id="colorValueCore" type="range" min="0" max="100" step="1"><output id="colorValueText" for="colorValueCore"></output></label>
+   <div id="colorState" class="color-sr" role="status" aria-live="polite"></div>
+   <button id="colorNone" type="button">なし（透明）</button>
+   <details id="colorAdvanced"><summary>詳しい設定</summary>
+    <label class="color-range" for="colorHue">色あい<input id="colorHue" type="range" min="0" max="359" step="1"><output id="colorHueText" for="colorHue"></output></label>
+    <label class="color-range" for="colorSaturation">あざやかさ<input id="colorSaturation" type="range" min="0" max="100" step="1"><output id="colorSaturationText" for="colorSaturation"></output></label>
+    <label class="color-hex" for="colorHex">色コード<input id="colorHex" type="text" spellcheck="false" autocomplete="off" maxlength="32" placeholder="#RRGGBB" aria-describedby="colorError"></label>
+    <p id="colorError" role="alert"></p>
+   </details>
+  </div>
+  <div class="dialog-foot"><button id="colorCancel" type="button">色の変更を取り消す</button><button id="colorConfirm" type="button">決定</button></div>
+ </div>
+</div>
+
+<div class="modal" id="exportChoiceModal" role="dialog" aria-modal="true" aria-labelledby="exportChoiceTitle" aria-describedby="exportChoiceDescription">
+ <div class="project-choice-dialog export-choice-dialog">
+  <h2 id="exportChoiceTitle">作品のはじめ方をえらぼう</h2>
+  <p id="exportChoiceDescription">書き出した作品を開いたときの、はじめ方をえらびます。</p>
+  <div class="export-choices">
+   <button id="exportControls" class="export-choice" type="button" aria-labelledby="exportControlsTitle" aria-describedby="exportControlsDescription">
+    <span class="export-choice-title" id="exportControlsTitle">▶ はじめるボタンをつける</span>
+    <span id="exportControlsDescription">ボタンをおすと、作品がはじまります。動きをいったん止めたり、終わらせたりできます。</span>
+    <span class="export-example" aria-hidden="true"><span class="export-example-label">見本</span><span class="export-example-player"><span class="export-example-title">星の作品</span><span class="export-example-controls"><span>▶ はじめる</span><span>いったん止める</span><span>止める</span></span><span class="export-example-scene"><span class="export-example-star">★</span><span class="export-example-work-button">作品のボタン</span></span></span></span>
+   </button>
+   <button id="exportArtwork" class="export-choice" type="button" aria-labelledby="exportArtworkTitle" aria-describedby="exportArtworkDescription exportArtworkNote">
+    <span class="export-choice-title" id="exportArtworkTitle">作品をすぐにはじめる</span>
+    <span id="exportArtworkDescription">開くと、作品がはじまります。作品のまわりにボタンやわくはつきません。</span>
+    <span id="exportArtworkNote">音が出る作品は、ボタンをおすとはじまることがあります。</span>
+    <span class="export-example" aria-hidden="true"><span class="export-example-label">見本</span><span class="export-example-scene"><span class="export-example-star">★</span><span class="export-example-work-button">作品のボタン</span></span></span>
+   </button>
+  </div>
+  <div class="project-choice-footer"><button id="exportChoiceCancel" type="button">キャンセル</button></div>
+ </div>
+</div>
+<div class="modal" id="openConfirmModal" role="dialog" aria-modal="true" aria-labelledby="openConfirmMessage">
+ <div class="project-choice-dialog">
+  <p id="openConfirmMessage">まだほぞんしていない作品があります。ほぞんせずに、ほかの作品を開きますか？</p>
+  <div class="project-choice-footer"><button id="openConfirmCancel" type="button">キャンセル</button><button id="openConfirmProceed" type="button">ほぞんせずに開く</button></div>
+ </div>
+</div>
+<dialog id="samplePicker" class="sample-picker" aria-labelledby="samplePickerTitle">
+ <header><h2 id="samplePickerTitle">どのお手本を開く？</h2><button id="samplePickerClose" type="button" autofocus>とじる ×</button></header>
+ <div id="sampleGrid" class="sample-grid"></div>
+</dialog>
+<script>
+<!-- @include js/00-prelude.js -->
+<!-- @include js/01-execution-core.js -->
+<!-- @include js/02-language-contracts.js -->
+<!-- @include js/03-default-assets.js -->
+<!-- @include js/04-syntax-parsing.js -->
+<!-- @include js/05-command-presentation.js -->
+<!-- @include js/06-source-formatting.js -->
+<!-- @include js/07-semantic-analysis.js -->
+<!-- @include js/08-stage-and-export.js -->
+<!-- @include js/09-editor-sessions.js -->
+<!-- @include js/10-block-view.js -->
+<!-- @include js/11-application.js -->
+<!-- @include js/12-public-api.js -->
+</script>
+</body>
+</html>

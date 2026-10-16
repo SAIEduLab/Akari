@@ -3,6 +3,7 @@ import {verifyEntryReport} from './entry-workshop-contract.mjs';
 import {verifyDisplay,rejectionIds} from './speech-display-contract.mjs';
 import {verifyContractReport,verifyExpectationReport,verifyIntentReport,verifyRuntimeReport,verifyNegativeReport} from './japanese-gate-contract.mjs';
 import {verifyBlockFields} from './block-field-contract.mjs';
+import {verifyProductSource} from './product-source-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -26,6 +27,7 @@ export function verifyGateResults(dir,inputs){
   verifyEntryReport(read('entry-unit'),'unit',inputs);verifyEntryReport(read('entry-browser'),'browser',inputs,{file:path.join(dir,'entry-browser.json')});
   const entryVerified=read('entry-verify');assert.equal(entryVerified.status,'PASS');assert.equal(entryVerified.finalCommittedEvidence,true);assert.deepEqual(entryVerified.snapshot,inputs);assert.equal(entryVerified.negatives.length,20);for(const row of entryVerified.negatives)assert.equal(row.rejected,true);
   verify(read('product'),JSON.parse(fs.readFileSync('audit/manifests/product-tests.json')),inputs);
+  verifyProductSource(read('product-source'),inputs);
   verifyBrowserEnvironment(read('browser-environment'),inputs);
   const language=JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json'));
   for(const n of ['language-node','language-browser'])verifyLanguageResults(read(n),language,inputs);

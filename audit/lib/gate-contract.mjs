@@ -5,6 +5,7 @@ export const auditBundleKinds=['selftest','audio-codecs-linux','audio-codecs-win
 export const auditJobIds=['audio-codecs','full-browser-gate','selftest'];
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
   ['static','audit/tests/static-contract.mjs',file('static')],
+  ['product-source','audit/tests/product-source.mjs',file('product-source')],
   ['release-policy-negative','audit/tests/release-policy-negative.mjs'],
   ['integrity','audit/tests/execution-continuity.mjs',file('integrity')],
   ['browser-environment','audit/tests/browser-environment.mjs',browser,file('browser-environment')],
