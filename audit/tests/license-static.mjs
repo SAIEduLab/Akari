@@ -22,7 +22,7 @@ check('CURRENT-DOCUMENTS-MIT',()=>{
   const publicSurface=JSON.parse(fs.readFileSync('audit/public-files.json')).files.includes('index.html');if(publicSurface)assert.ok(readme.includes('MIT License'));
   assert.ok(fs.readFileSync('LANGUAGE.md','utf8').includes(COPYRIGHT));
 });
-check('COMPATIBILITY-TEST-ALIAS',()=>{const source=fs.readFileSync('audit/suites/runAkariSelfTests.js','utf8');assert.ok(source.includes('EXPORT Apache-2.0ライセンス保持'));assert.ok(source.includes('MIT'));});
+check('COMPATIBILITY-TEST-ALIAS',()=>{const source=fs.readFileSync('audit/suites/runAkariSelfTests.js','utf8');assert.ok(source.includes('EXPORT Apache-2.0ライセンス保持'));assert.ok(source.includes('AKARI_LICENSE'));assert.ok(!source.includes('AKARI_APACHE_LICENSE'));});
 for(const [kind,bad] of [['copyright',product.replace(COPYRIGHT,'Copyright (c) 2026 WRONG')],['permission',product.replace('The above copyright notice and this permission notice','Wrong permission notice')],['disclaimer',product.replace('THE SOFTWARE IS PROVIDED "AS IS"','Wrong disclaimer')],['spdx',product.replaceAll('SPDX-License-Identifier: MIT','SPDX-License-Identifier: Apache-2.0')]])
   check('REJECT-ARTIFACT-'+kind,()=>assert.throws(()=>verifyLicensedArtifact(bad)));
 const report={schema:'akari-license-static-v1',status:'PASS',copyright:COPYRIGHT,snapshot:licensingSnapshot(),results};

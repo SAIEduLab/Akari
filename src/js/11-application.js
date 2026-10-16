@@ -1638,13 +1638,9 @@
         b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="' + path + '"/></svg>';
         b.title = title;
         b.setAttribute('aria-label', title);
-        if (id === 'undoBtn') {
-          const label = document.createElement('span');
-          label.textContent = title;
-          b.append(label);
-          b.style.gap = '5px';
-          b.style.padding = '5px 9px';
-        }
+        const label = document.createElement('span');
+        label.textContent = title;
+        b.append(label);
         $('.debugbar').prepend(b);
       }
       $('.debugbar').append($('#resetBtn'));

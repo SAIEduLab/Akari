@@ -5,7 +5,6 @@
     // Narrow references for diagnostics; no fixtures, test dispatch or mutable app state.
     diagnostics: Object.freeze({
       AKARI_LICENSE,
-      AKARI_APACHE_LICENSE,
       AkariError,
       COLOR_NAMES,
       DEFAULT_MASCOT_ASSET_ID,

@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.2.4';
+  const PRODUCT_RELEASE = '1.2.5';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -27,6 +27,4 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 `;
-  // Deprecated diagnostic alias: its value is the current MIT license.
-  const AKARI_APACHE_LICENSE = AKARI_LICENSE;
 
