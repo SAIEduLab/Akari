@@ -2,6 +2,9 @@
 :root {
   --font-ui: "Yu Gothic UI", "Yu Gothic", "YuGothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans CJK JP", "Noto Sans JP", "Meiryo", "Segoe UI", system-ui, sans-serif;
   --font-code: "BIZ UDゴシック", "BIZ UDGothic", "Consolas", "MS Gothic", "Noto Sans Mono CJK JP", "Osaka-Mono", "Menlo", monospace;
+  /* The work's own screen keeps one font stack in the editor and in exported players, so a
+     work looks the same in both; speech bubble layout is measured against these metrics. */
+  --font-stage: "Yu Gothic UI", "Yu Gothic", "Meiryo", "Segoe UI", sans-serif;
   --bg: #edf2f8;
   --panel: #f6f8fb;
   --panel2: #ffffff;
@@ -5882,3 +5885,5 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 .blockui-categories > [data-blockui-category="action"]::before { content: "▶"; font-size: 9px; }
 .blockui-categories > [data-blockui-category="clone"]::before { content: "◎"; }
 .blockui-categories > [data-blockui-category="comment"]::before { content: "※"; }
+
+#formSurface { font-family: var(--font-stage); }
