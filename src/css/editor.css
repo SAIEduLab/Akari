@@ -1,5 +1,7 @@
 /* Editor stylesheet: original cascade order preserved; redundant declarations removed. */
 :root {
+  --font-ui: "Yu Gothic UI", "Yu Gothic", "YuGothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans CJK JP", "Noto Sans JP", "Meiryo", "Segoe UI", system-ui, sans-serif;
+  --font-code: "BIZ UDゴシック", "BIZ UDGothic", "Consolas", "MS Gothic", "Noto Sans Mono CJK JP", "Osaka-Mono", "Menlo", monospace;
   --bg: #edf2f8;
   --panel: #f6f8fb;
   --panel2: #ffffff;
@@ -36,7 +38,7 @@ html,
 body {
   margin: 0;
   background: linear-gradient(180deg, #f6f9fd 0%, #e9eff7 100%);
-  font-family: "Yu Gothic UI", "Yu Gothic", "Meiryo", "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
   color: var(--dark);
 }
 button,
@@ -270,7 +272,7 @@ button:focus-visible {
   margin-left: auto;
   font-size: 10px;
   font-weight: 600;
-  color: #7a8998;
+  color: #5a6b7c;
 }
 .sprite-preset-grid {
   display: grid;
@@ -529,7 +531,7 @@ button:focus-visible {
   border: none;
   border-top: 1px solid rgba(255, 255, 255, 0.45);
   background: var(--code);
-  font-family: "BIZ UDゴシック", "Consolas", "MS Gothic", monospace;
+  font-family: var(--font-code);
   font-size: 14px;
   outline: none;
   color: #1d2a3a;
@@ -542,7 +544,7 @@ button:focus-visible {
   border-top: 1px solid #4a5a74;
   padding: 8px 10px;
   overflow: auto;
-  font-family: Consolas, "BIZ UDゴシック", "MS Gothic", monospace;
+  font-family: "Consolas", var(--font-code);
   font-size: 12px;
   white-space: pre-wrap;
 }
@@ -604,7 +606,7 @@ button:focus-visible {
   color: #284468;
 }
 .dialog-body code {
-  font-family: "BIZ UDゴシック", "Consolas", "MS Gothic", monospace;
+  font-family: var(--font-code);
   background: #eef3fb;
   padding: 1px 5px;
   border-radius: 6px;
@@ -929,7 +931,7 @@ button:focus-visible {
   height: 100%;
   min-height: 280px;
   resize: none;
-  font-family: "BIZ UDゴシック", "Consolas", "MS Gothic", monospace;
+  font-family: var(--font-code);
   font-size: 14px;
   line-height: 1.55;
   padding: 10px;
@@ -982,7 +984,7 @@ button:focus-visible {
   font-size: 12px;
 }
 .monitor-empty {
-  color: #718096;
+  color: #5a6b7c;
   padding: 6px;
   line-height: 1.5;
 }
@@ -1010,7 +1012,7 @@ button:focus-visible {
   text-overflow: ellipsis;
 }
 .monitor-value {
-  font-family: "BIZ UDゴシック", "Consolas", monospace;
+  font-family: var(--font-code);
   overflow-wrap: anywhere;
 }
 .debugbar {
@@ -1048,7 +1050,7 @@ button:focus-visible {
   user-select: none;
   color: #8190a3;
   text-align: right;
-  font-family: "BIZ UDゴシック", "Consolas", monospace;
+  font-family: var(--font-code);
   font-size: 12px;
 }
 .gutter-line {
@@ -1123,7 +1125,7 @@ button:focus-visible {
 .save-state,
 .dirty-state {
   margin-left: 14px;
-  color: #67778a;
+  color: #52687a;
   font-size: 12px;
 }
 .dirty-state.dirty {
@@ -1860,7 +1862,7 @@ body {
 }
 .blockui-empty {
   font-size: 13px;
-  color: #728066;
+  color: #5b6a50;
   padding: 7px;
   overflow-wrap: anywhere;
 }
@@ -2182,7 +2184,7 @@ button:focus-visible {
   height: 100%;
   min-height: 250px;
   resize: none;
-  font-family: "BIZ UDゴシック", "Consolas", "MS Gothic", monospace;
+  font-family: var(--font-code);
   font-size: 14px;
   line-height: 1.55;
   padding: 10px;
@@ -2598,7 +2600,7 @@ textarea {
 /* The mock's warm code view and green block view, using the same live controls. */
 body[data-editor-mode] {
   --dark: #332b22;
-  --muted: #7b7064;
+  --muted: #665a4c;
   --line: #e5d7c5;
   --line-strong: #dac6ad;
   --panel: #fffdf9;
@@ -2679,15 +2681,16 @@ body[data-editor-mode] .menutool > button {
   border-color: #bda47a66;
 }
 body[data-editor-mode] #projectName {
-  height: 36px !important;
+  box-sizing: border-box;
+  height: 36px;
   width: 220px;
   max-width: 240px;
   min-width: 130px;
-  margin-left: auto !important;
+  margin-left: 0;
   border-color: #bda47a77;
   background: #fffdf5dd;
   border-radius: 10px;
-  padding: 0 11px !important;
+  padding: 0 11px;
 }
 body[data-editor-mode] .menutool .editor-modes {
   padding: 4px;
@@ -2859,7 +2862,7 @@ body[data-editor-mode] .tree-item {
   border: 1px solid transparent;
 }
 body[data-editor-mode] .tree-item.selected {
-  color: var(--accent);
+  color: #8f4d12;
   background: var(--accent-soft);
   border-color: var(--line-strong);
   box-shadow: none;
@@ -3073,7 +3076,7 @@ body[data-editor-mode] .status {
   background: #ffffffb8;
   border-color: var(--line);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   gap: 8px;
 }
 body[data-editor-mode] .status .runstate {
@@ -4192,7 +4195,7 @@ body[data-editor-mode="blocks"] .prop-name {
 /* The coding area now uses the full height; parts live beside the stage. */
 body[data-editor-mode="blocks"] {
   --dark: #283e50;
-  --muted: #647c8f;
+  --muted: #52687a;
   --line: #d8e3ec;
   --line-strong: #bbcddc;
   --panel: #f9fbfd;
@@ -4447,7 +4450,7 @@ body[data-editor-mode="blocks"] .ui-level-label {
   order: -1;
   flex-basis: 100%;
   padding: 3px;
-  font-size: 11px;
+  font-size: 12px;
   flex: 0 0 auto;
 }
 .blockui-side-toggle {
@@ -5799,3 +5802,83 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
  body[data-ui-level="entry"] .side { height:170px; }
  body[data-ui-level="entry"] .blockui-layout { min-height:340px; }
 }
+
+/* ── Toolbar: 表示, コード/ブロック and the work name are pinned to the top-right corner, so they
+   stay in the same place in every view, width and font. Only the action buttons on the left wrap. ── */
+@media (min-width: 701px) {
+  body[data-editor-mode] .menutool {
+    --tb-pad: 18px;
+    --tb-gap: 7px;
+    --tb-name: 172px;
+    --tb-modes: 176px;
+    --tb-level: 114px;
+    position: relative;
+    padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-modes) + var(--tb-level) + 3 * var(--tb-gap));
+  }
+  body[data-editor-mode] .menutool > :is(.ui-level-label, .editor-modes, #projectName) {
+    position: absolute;
+    margin: 0;
+  }
+  body[data-editor-mode] .menutool > #projectName {
+    top: 11px;
+    right: var(--tb-pad);
+    width: var(--tb-name);
+    min-width: 0;
+    max-width: none;
+  }
+  body[data-editor-mode] .menutool > .editor-modes {
+    top: 7px;
+    right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-gap));
+    box-sizing: border-box;
+    width: var(--tb-modes);
+    height: 44px;
+  }
+  body[data-editor-mode] .menutool > .editor-modes button {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  body[data-editor-mode] .menutool > .ui-level-label {
+    top: 7px;
+    right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-modes) + 2 * var(--tb-gap));
+    box-sizing: border-box;
+    width: var(--tb-level);
+    height: 44px;
+    padding: 0;
+    justify-content: flex-end;
+  }
+}
+@media (min-width: 701px) and (max-width: 1300px) {
+  body[data-editor-mode] .menutool { --tb-pad: 10px; --tb-gap: 4px; --tb-name: 150px; --tb-modes: 140px; }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  body[data-editor-mode] .menutool { --tb-name: 112px; --tb-modes: 136px; }
+  body[data-editor-mode] .menutool > .editor-modes button { padding-inline: 4px; }
+}
+
+/* ── Block categories: each colour dot also carries a symbol, so categories stay distinguishable
+   without relying on colour (colour vision differences, grey-scale displays). ── */
+.blockui-categories > .blockui-button::before {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #1f2937;
+}
+.blockui-categories > [data-blockui-category="basic"]::before { content: "★"; }
+.blockui-categories > [data-blockui-category=""]::before { content: "≡"; }
+.blockui-categories > [data-blockui-category="motion"]::before { content: "→"; }
+.blockui-categories > [data-blockui-category="look"]::before { content: "●"; font-size: 9px; }
+.blockui-categories > [data-blockui-category="control"]::before { content: "◇"; }
+.blockui-categories > [data-blockui-category="event"]::before { content: "！"; }
+.blockui-categories > [data-blockui-category="data"]::before { content: "■"; font-size: 9px; }
+.blockui-categories > [data-blockui-category="operator"]::before { content: "＋"; }
+.blockui-categories > [data-blockui-category="sense"]::before { content: "？"; }
+.blockui-categories > [data-blockui-category="sound"]::before { content: "♪"; }
+.blockui-categories > [data-blockui-category="pen"]::before { content: "／"; }
+.blockui-categories > [data-blockui-category="action"]::before { content: "▶"; font-size: 9px; }
+.blockui-categories > [data-blockui-category="clone"]::before { content: "◎"; }
+.blockui-categories > [data-blockui-category="comment"]::before { content: "※"; }
