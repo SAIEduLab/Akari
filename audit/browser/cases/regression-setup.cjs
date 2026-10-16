@@ -40,7 +40,8 @@ async function setupRegressionPage(page, options) {
   await page.waitForFunction(() => Akari.app.project.components.some(c => c.id === 'button-1') && Akari.app.project.projectData.variables.some(v => v.name === '点数'));
   await openRegressionEditor(page, options);
 }
-module.exports = {makeRegressionProject, installRegressionFactory, setupRegressionPage, openRegressionEditor, revealRegressionControl, openPaletteTools};
+async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }
+module.exports = {makeRegressionProject, installRegressionFactory, setupRegressionPage, openRegressionEditor, revealRegressionControl, openPaletteTools, openBodyForTest};
 
 // The old audit assumed palette-created operands and bodies were already filled.
 // Reproduce those same explicit preconditions through v2's hole controls.

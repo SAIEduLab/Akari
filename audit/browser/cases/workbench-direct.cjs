@@ -1,4 +1,5 @@
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {openBodyForTest} = require('./regression-setup.cjs');
 // Actual local-file pointer and keyboard coverage, bound to the captured release.
 const L=require('./audit-lib.cjs'),U=require('./ui-routes.cjs'),assert=require('assert/strict'),{chromium}=require('playwright'),{pathToFileURL}=require('url');
 const dir=L.path.resolve(process.argv[2]),manifest=L.verifyManifest(dir),results=[],errors=[],network=[];
@@ -33,5 +34,3 @@ const state=p=>p.evaluate(()=>{const a=Akari.app,s=a.editorState;return{source:s
  }catch(e){results.push({id:'WORKBENCH-DIRECT:'+viewport.width,pass:false,viewport,error:e.stack});await p.screenshot({path:L.path.join(dir,'direct-fail-'+viewport.width+'.png')});}finally{await c.close();L.result(L.path.join(dir,'workbench-direct.json'),{manifest,browser:browser.version(),results,errors,network});}
 }}finally{await browser.close();}console.log(JSON.stringify(results));if(results.some(r=>!r.pass)||errors.length||network.length)process.exitCode=1;})().catch(e=>{console.error(e);process.exitCode=1});
 
-// Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

@@ -3,6 +3,7 @@ const { currentProductFile } = require("./../../lib/product-path.cjs");
 const U=require('./ui-routes.cjs');
 const {withFreshPage}=require('./ui-case.cjs');
 const {setupRegressionPage,openPaletteTools}=require('./regression-setup.cjs');
+const {openBodyForTest} = require('./regression-setup.cjs');
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=require('assert/strict'),{pathToFileURL}=require('url');
 const {chromium}=require('playwright');
 const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/ui-interactions'),initialHash=crypto.createHash('sha256').update(fs.readFileSync(html)).digest('hex');
@@ -126,5 +127,3 @@ async function reveal(locator){
  return locator;
 }
 
-// Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

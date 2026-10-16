@@ -1,4 +1,5 @@
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {openBodyForTest} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Bounded real pointer QA for compact block menus. No forced or hidden clicks.
 // node audit-evidence/browser/ui-compact-menu.cjs [html] [output-prefix]
@@ -89,5 +90,3 @@ async function reveal(locator){
  return locator;
 }
 
-// Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

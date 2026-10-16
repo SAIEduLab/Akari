@@ -1,4 +1,5 @@
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {openBodyForTest} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Targeted UI regression check, not a substitute for the complete product audit.
 // Usage: node ui-stage-gesture.cjs <snapshot.html> <output-prefix>
@@ -104,5 +105,3 @@ async function reveal(locator){
  return locator;
 }
 
-// Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

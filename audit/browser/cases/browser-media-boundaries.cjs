@@ -1,4 +1,5 @@
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {openBodyForTest} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Real media decoder + application input paths. No decoder, runtime, or limit is stubbed.
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=require('assert/strict'),F=require('./media-fixtures.cjs'),{pathToFileURL}=require('url');
@@ -54,5 +55,3 @@ async function reveal(locator){
  return locator;
 }
 
-// Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }

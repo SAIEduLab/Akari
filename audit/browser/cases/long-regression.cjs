@@ -1,5 +1,6 @@
 const U = require('./ui-routes.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {openBodyForTest} = require('./regression-setup.cjs');
 const {chromium}=require('playwright'),assert=require('assert/strict'),{pathToFileURL}=require('url'),path=require('path'),fs=require('fs');
 (async()=>{
  const browser=await chromium.launch({executablePath:process.env.AKARI_BROWSER,headless:true});
@@ -35,5 +36,3 @@ const {chromium}=require('playwright'),assert=require('assert/strict'),{pathToFi
  }finally{await browser.close();fs.writeFileSync(path.join(out,'results.json'),JSON.stringify({manifest,browser:browser.version(),results},null,2));console.log('LONG_REGRESSION',JSON.stringify(results));}
 })().catch(e=>{console.error(e);process.exitCode=1});
 
-// Enter the visible body editor before exercising editing operations.
-async function openBodyForTest(page) { if (await page.locator("#sourceOverview").isVisible()) await page.locator("#sourceEditBtn").click(); }
