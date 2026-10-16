@@ -4073,6 +4073,29 @@
       select.focus();
     }
 
+    // Extension data that the extension keeps in the work (state.persist "project") stays between runs.
+    // Show it while stopped, with one button that returns it to the extension's initial value.
+    function renderKeptExtensionData() {
+      const kept = EXTENSION_HOST.stateInfo().filter(item => item.persist === 'project');
+      if (!kept.length) return;
+      const saved = project.extensions?.state || EXTENSION_HOST.initialState(),
+        initial = EXTENSION_HOST.initialState();
+      renderMonitorSection(el.monitor, '作品に保存される拡張のデータ', kept.map(item => [item.name,
+        JSON.stringify((saved.find(value => value.id === item.id) || initial.find(value => value.id === item.id))?.value ?? null)]));
+      const reset = document.createElement('button');
+      reset.type = 'button';
+      reset.className = 'monitor-extension-reset';
+      reset.textContent = '拡張のデータを最初に戻す';
+      reset.onclick = () => {
+        if (runtime || modelLocked()) return;
+        EXTENSION_HOST.resetState();
+        project.extensions = { ...EXTENSION_HOST.requirements(), profile: AKARI_RUNTIME.profiles.requirement(), state: EXTENSION_HOST.snapshotState() };
+        pushHistoryNow();
+        renderMonitor();
+        log('拡張のデータを最初の値に戻しました', 'ok');
+      };
+      el.monitor.appendChild(reset);
+    }
     function renderMonitor() {
       el.monitor.textContent = '';
       if (!runtime) {
@@ -4080,6 +4103,7 @@
         d.className = 'monitor-empty';
         d.textContent = '止まっています';
         el.monitor.appendChild(d);
+        renderKeptExtensionData();
         return;
       }
       const section = (title, rows) => renderMonitorSection(el.monitor, title, rows),
@@ -4883,7 +4907,17 @@
       try {
         if (file.size > LIMITS.fileBytes)
           throw new AkariError('F504', `ファイルが${LIMITS.fileBytes / 1048576}MiBを超えています`);
-        const loaded = await parseProjectFile(await file.text());
+        const text = await file.text();
+        let loaded;
+        try { loaded = await parseProjectFile(text); }
+        catch (error) {
+          // A newer release of the same extension may open the work; the person decides.
+          const upgrades = error?.extensionUpgrades;
+          if (!upgrades || !confirm('この作品は、次の拡張の前の版で作られています。\n' +
+            upgrades.map(item => '・' + item.name + '　' + item.from + ' → ' + item.to).join('\n') +
+            '\nいまの版で開きますか？　保存すると、いまの版で記録されます。')) throw error;
+          loaded = await parseProjectFile(text, { upgradeExtensions: true });
+        }
         // Keep the current workspace until the loaded editor can also be restored.
         // Structural validation alone cannot guarantee that every UI restoration succeeds.
         previous = { current: snapshot(), history: history.slice(), redo: redo.slice(), initialSnapshot,

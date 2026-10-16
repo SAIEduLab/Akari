@@ -2457,7 +2457,9 @@
       );
     return text;
   }
-  async function parseProjectFile(text) {
+  // options.upgradeExtensions opens a work recorded with an older release of a registered extension
+  // (see the extension host's upgradeRequirements); the caller asks the person first.
+  async function parseProjectFile(text, options = {}) {
     if (typeof text !== 'string' || new TextEncoder().encode(text).length > LIMITS.fileBytes)
       throw new AkariError(
         'F504',
@@ -2475,8 +2477,20 @@
         '作品データを読めません。対応する保存形式の .akari.md を選んでください',
       );
     }
-    const { assetIds } = validateSerializedProjectStructure(root);
-    if (text.slice(0, begin) !== markdownBody(root))
+    const recorded = root;
+    if (options.upgradeExtensions && root && typeof root === 'object' && Object.hasOwn(root, 'extensions'))
+      root = { ...root, extensions: EXTENSION_HOST.upgradeRequirements(root.extensions).envelope };
+    let assetIds;
+    try { ({ assetIds } = validateSerializedProjectStructure(root)); }
+    catch (error) {
+      if (!options.upgradeExtensions && error?.code === 'E703' && root && typeof root === 'object' && Object.hasOwn(root, 'extensions')) {
+        let plan = null;
+        try { plan = EXTENSION_HOST.upgradeRequirements(root.extensions); } catch (_) {}
+        if (plan?.upgrades.length) error.extensionUpgrades = plan.upgrades;
+      }
+      throw error;
+    }
+    if (text.slice(0, begin) !== markdownBody(recorded))
       throw new AkariError(
         'F512',
         'Markdown\u672c\u6587\u3068\u5fa9\u5143\u30c7\u30fc\u30bf\u304c\u4e00\u81f4\u3057\u307e\u305b\u3093\u3002\u7de8\u96c6\u4e2d\u306e\u4f5c\u54c1\u306f\u5909\u66f4\u3057\u3066\u3044\u307e\u305b\u3093\u3002',

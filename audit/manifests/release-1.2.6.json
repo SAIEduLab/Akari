@@ -1,0 +1,28 @@
+{
+  "schema": "akari-distribution-v1",
+  "productVersion": "1.2.6",
+  "languageContractId": 2,
+  "runtimeContractId": 2,
+  "projectFormat": 2,
+  "programFormat": 2,
+  "files": {
+    "Akari_1_2_6.html": "54597574648e305ede41725861c3e08a353ede9a8bd3f5aa6cd901980af18743",
+    "EXTENSIONS.md": "fce90649a78062ee2d8e01be4c2a16529b57c429f13555f2e6d978563ac5f51c",
+    "LANGUAGE.md": "4e0bcc6a414e57f359fa7dfc6ec3a44a51334bd39405da62be2490a39592e256",
+    "LICENSE": "f400597abbd1d5aca8d4d823c06c8f5ab1b14bf7ae1b71a08e0dc393f92d37cf",
+    "MANUAL.html": "dec41e2a066b46bac15cc3784415a67c2b442c2561429b64475d95be590fde0c",
+    "Manual/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Manual/block-mode.html": "be88b38d7bf8877c2d356eb1bcc590046659b8e82a80e326c0840ebfc97d8108",
+    "Manual/code-mode-advanced.html": "bc93dd052b38e96322cf3a11d3219b11d43f54bbc59c4eb69fa2a8f007decbea",
+    "Manual/code-mode-beginner.html": "1640b47d5559ddf328670208e32eb7e79a566cf2db603ffeffdc22e495c4d86b",
+    "Manual/code-mode-intermediate.html": "558a3514b00890a73eced9b00eef0230187f95fd2539b2119354001858b894e0",
+    "extensions/build.mjs": "f1cc644cff4a47967dd6c4ae62b834d81675afb0fffec8815e45c6f09ee7c3f1",
+    "extensions/examples/connector.html": "4f1ec892d63df8d093bf0aaccdf5d7f42d127f6eafda42a7805510033104c326",
+    "extensions/examples/offline.js": "2bf3ebdab81672c483c83adfb0c050463ca3c2cf3fca5841b9fa2cdc0cfd4342",
+    "extensions/examples/profile.js": "9ab175fe8e83d0fd2497148d03d63649bba3464830c15b41fa50ac3a94c7d4a1",
+    "extensions/foundation.js": "e9effc8954b38066e22e1cb877091e9928381823522dfb2d9eaf0cedc508fc1c",
+    "extensions/limits.md": "7f51de6c8b50549e1cbe837a935c4f60673964e1a8a758393d7cac0a60848fd9",
+    "extensions/profiles.js": "3f6fae012780518785ac7cedb0326a7975283536ab37afd7249bbf46a042b3e5",
+    "extensions/types.d.ts": "58f920ddde54349a8dab9aeafe7bc24876847ba4186a84b47b48568fddcbc720"
+  }
+}

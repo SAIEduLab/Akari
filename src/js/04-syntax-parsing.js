@@ -367,10 +367,10 @@
         });
       }
       if (this.starts('拡張計算「')) {
-        const found = /^拡張計算「([a-z0-9._-]+)」「([a-z0-9._-]+)」/.exec(this.text.slice(this.i));
-        if (!found) this.err('E703', '拡張計算のIDが必要です');
-        const name = found[1] + '/' + found[2];
-        if (!EXTENSION_HOST.describe(name, 'calculations')) this.err('E703', '必要な拡張計算がありません');
+        const found = /^拡張計算「([^「」\n]+)」「([^「」\n]+)」/.exec(this.text.slice(this.i));
+        if (!found) this.err('E703', '拡張計算の名前が必要です');
+        const name = EXTENSION_HOST.resolve(found[1], found[2], 'calculations');
+        if (!name) this.err('E703', '必要な拡張計算がありません');
         this.i += found[0].length; this.expect('（'); const args = [];
         if (!this.take('）')) for (;;) { args.push(this.logicalOr()); if (this.take('）')) break; this.expect('、'); }
         return exprNode('ExtensionCalculation', { name, args });
@@ -1455,10 +1455,10 @@
   function readSurfaceStatement(code,line,symbols,ctx) {return readRoleStatement(code,line,symbols,ctx);}
   function parseSimpleStatement(line,symbols,ctx={}) {
     let code=compactOutsideString(line.code),working=line;
-    const extension = /^拡張「([a-z0-9._-]+)」「([a-z0-9._-]+)」（([\s\S]*)）$/.exec(code);
+    const extension = /^拡張「([^「」\n]+)」「([^「」\n]+)」（([\s\S]*)）$/.exec(code);
     if (extension) {
-      const name = extension[1] + '/' + extension[2];
-      if (!EXTENSION_HOST.describe(name, 'commands')) throw new AkariError('E703', '必要な拡張命令がありません', line.lineNo, 1);
+      const name = EXTENSION_HOST.resolve(extension[1], extension[2], 'commands');
+      if (!name) throw new AkariError('E703', '必要な拡張命令がありません', line.lineNo, 1);
       return statementNode('ExtensionCommand', line, { name, args: parseArgumentText(extension[3], symbols, ctx, line.lineNo), actorRef: { ...(ctx.topicActor || { kind: 'self' }) } });
     }
     const lead=/^(?:そのあと|それから|次に|最後に|くり返しが終わると)、/.exec(surfaceMask(code));
