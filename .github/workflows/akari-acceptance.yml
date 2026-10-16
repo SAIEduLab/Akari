@@ -43,7 +43,7 @@ jobs:
           if-no-files-found: error
           retention-days: 3
           include-hidden-files: true
-  ux-repair05:
+  ux-editing:
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -64,21 +64,21 @@ jobs:
           "$RUNNER_TEMP/audit-deps/node_modules/.bin/playwright" install-deps chromium
           sudo apt-get update
           sudo apt-get install -y fonts-noto-cjk
-          python audit/install-codec-browser.py "$RUNNER_TEMP/repair05-browser"
-          mkdir -p audit-evidence/repair05
+          python audit/install-codec-browser.py "$RUNNER_TEMP/editing-browser"
+          mkdir -p audit-evidence/editing
       - name: Run and validate the required UX suites
-        run: node audit/run-acceptance.mjs repair05
+        run: node audit/run-acceptance.mjs editing
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: akari-ux-repair05-${{ github.run_id }}-${{ github.run_attempt }}
-          path: audit-evidence/repair05/
+          name: akari-ux-editing-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/editing/
           if-no-files-found: error
           retention-days: 3
           include-hidden-files: true
   child-ux-aggregate:
     if: ${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-    needs: [composition-acceptance, ux-repair05]
+    needs: [composition-acceptance, ux-editing]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

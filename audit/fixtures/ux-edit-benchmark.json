@@ -1,5 +1,5 @@
 {
-  "schema": "akari-ux-repair-benchmark-v1",
+  "schema": "akari-ux-edit-benchmark-v1",
   "status": "PENDING_INDEPENDENT_REAUDIT",
   "uxAcceptance": false,
   "order": [

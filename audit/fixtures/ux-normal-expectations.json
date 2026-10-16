@@ -1,5 +1,5 @@
 {
-  "schema": "akari-ux-repair02-expectations-v1",
+  "schema": "akari-ux-normal-expectations-v1",
   "cases": [
     {"id":"B13-sora","source":"始めると、あかりは『合言葉は？』とたずねます。答えが『そら』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『ちがうよ』と2秒話します。","answer":"そら","question":"合言葉は？","speech":"どうぞ"},
     {"id":"B13-umi","source":"始めると、あかりは『合言葉は？』とたずねます。答えが『そら』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『ちがうよ』と2秒話します。","answer":"うみ","question":"合言葉は？","speech":"ちがうよ"},

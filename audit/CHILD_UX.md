@@ -18,7 +18,7 @@
 
 ## 現行の入力と境界
 
-製品はpublic-files.jsonから取得し、試験結果を現在の製品hash・入力digest・commit・環境・run/attemptへ束縛する。24課題の独立期待値は child-ux-plan / ux-repair02-matrix / ux-repair-benchmark に保持する。実行中の表示、原文、対象、順序、値、履歴と実スクリーンショットを検証する。製品の期待値を観測出力から生成しない。
+製品はpublic-files.jsonから取得し、試験結果を現在の製品hash・入力digest・commit・環境・run/attemptへ束縛する。24課題の独立期待値は child-ux-plan / ux-normal-matrix / ux-edit-benchmark に保持する。実行中の表示、原文、対象、順序、値、履歴と実スクリーンショットを検証する。製品の期待値を観測出力から生成しない。
 
 ## 要求から証拠までの対応
 
@@ -26,20 +26,20 @@
 
 | 要求ID | 分類 | 検査する保証 | 安定試験ID | ジョブ | 証拠／検証関数 |
 |---|---|---|---|---|---|
-| A1 | 既存で保証済み | 24課題の独立した対象・順序・時刻・条件・回数・値 | `B01/code`<br>`B01/blocks`<br>`B02/code`<br>`B02/blocks`<br>`B03/code`<br>`B03/blocks`<br>`B04/code`<br>`B04/blocks`<br>`B05/code`<br>`B05/blocks`<br>`B06/code`<br>`B06/blocks`<br>`B07/code`<br>`B07/blocks`<br>`B08/code`<br>`B08/blocks`<br>`B09/code`<br>`B09/blocks`<br>`B10/code`<br>`B10/blocks`<br>`B11/code`<br>`B11/blocks`<br>`B12/code`<br>`B12/blocks`<br>`B13/code`<br>`B13/blocks`<br>`B14/code`<br>`B14/blocks`<br>`B15/code`<br>`B15/blocks`<br>`B16/code`<br>`B16/blocks`<br>`B17/code`<br>`B17/blocks`<br>`B18/code`<br>`B18/blocks`<br>`B19/code`<br>`B19/blocks`<br>`B20/code`<br>`B20/blocks`<br>`B21/code`<br>`B21/blocks`<br>`B22/code`<br>`B22/blocks`<br>`B23/code`<br>`B23/blocks`<br>`B24/code`<br>`B24/blocks` | `composition-acceptance` | `ux-repair02-matrix.json` / `verifyRepairMatrix` |
+| A1 | 既存で保証済み | 24課題の独立した対象・順序・時刻・条件・回数・値 | `B01/code`<br>`B01/blocks`<br>`B02/code`<br>`B02/blocks`<br>`B03/code`<br>`B03/blocks`<br>`B04/code`<br>`B04/blocks`<br>`B05/code`<br>`B05/blocks`<br>`B06/code`<br>`B06/blocks`<br>`B07/code`<br>`B07/blocks`<br>`B08/code`<br>`B08/blocks`<br>`B09/code`<br>`B09/blocks`<br>`B10/code`<br>`B10/blocks`<br>`B11/code`<br>`B11/blocks`<br>`B12/code`<br>`B12/blocks`<br>`B13/code`<br>`B13/blocks`<br>`B14/code`<br>`B14/blocks`<br>`B15/code`<br>`B15/blocks`<br>`B16/code`<br>`B16/blocks`<br>`B17/code`<br>`B17/blocks`<br>`B18/code`<br>`B18/blocks`<br>`B19/code`<br>`B19/blocks`<br>`B20/code`<br>`B20/blocks`<br>`B21/code`<br>`B21/blocks`<br>`B22/code`<br>`B22/blocks`<br>`B23/code`<br>`B23/blocks`<br>`B24/code`<br>`B24/blocks` | `composition-acceptance` | `ux-normal-matrix.json` / `verifyRepairMatrix` |
 | A2 | 機械検証 | 両モードを起点に実UIを往復し同じ独立期待と照合 | `CHILD-UX-ROUNDTRIP` | `composition-acceptance` | `child-ux-matrix.json` / `verifyChildMatrix` |
-| A3 | 既存で保証済み | 未完成・不正入力を勝手に別意味へ変えない | `diagnostics/current-source`<br>`editor/synthetic-composition` | `composition-acceptance` | `ux-repair02-browser.json` / `verifyRepairBrowser` |
-| B1 | 既存で保証済み | 分類・検索・候補の到達と挿入、状態保持 | `controls/palette-and-search` | `composition-acceptance` | `ux-repair02-browser.json` / `verifyRepairBrowser` |
-| B2 | 既存で保証済み | 対象・きっかけ・元の本文を保持 | `B08/code`<br>`B08/blocks`<br>`B09/code`<br>`B09/blocks`<br>`B23/code`<br>`B23/blocks` | `composition-acceptance` | `ux-repair02-matrix.json` / `verifyRepairMatrix` |
-| B3 | 既存で保証済み | 取消・Undo/Redoと編集への復帰 | `B24/code`<br>`B24/blocks` | `composition-acceptance` | `ux-repair02-matrix.json` / `verifyRepairMatrix` |
-| B4 | 既存で保証済み | エラー箇所への到達と修正復帰 | `syntax/closing`<br>`syntax/quote` | `ux-repair05` | `child-diagnostics.json` / `verifyChildDiagnosticsReport` |
-| C1 | 既存で保証済み | 固定画面幅・実ブラウザー拡大・必須部品の到達 | `COMPONENT-CONTROLS-RESPONSIVE`<br>`COMPONENT-CONTROLS-ZOOM` | `ux-repair05` | `component-controls.json` / `verifyComponentControls` |
-| C2 | 既存で保証済み | 10/28/100%・短文長文・複数話者・全文一致と閉じる | `speech-preview/fresh/10`<br>`speech-preview/fresh/28`<br>`speech-preview/fresh/100`<br>`speech-preview/full-78/10`<br>`speech-preview/full-78/485` | `ux-repair05` | `speech-preview.json` / `verifyPreviewReport` |
-| C3 | 既存で保証済み | 寸法・文字の描画・実操作・画像を併用 | `speech-name/position-edges`<br>`speech-name/native-browser-125/full-78` | `ux-repair05` | `speech-name-layout.json` / `verifySpeechNameLayoutReport` |
-| D1 | 機械検証 | 製品ソースと実画面の候補語を対応・欠落を検出 | `CHILD-UX-LANGUAGE-INVENTORY` | `ux-repair05` | `child-ux-language.json` / `verifyChildLanguage` |
-| D2 | 既存で保証済み | 読み・平易な意味・例・操作への支援を実画面で確認 | `CHILD-UI-ACTION-HELP`<br>`CHILD-UI-DATA-EXAMPLES`<br>`CHILD-UI-BLOCK-WORDS` | `ux-repair05` | `child-language-ui.json` / `verifyChildLanguageUi` |
+| A3 | 既存で保証済み | 未完成・不正入力を勝手に別意味へ変えない | `diagnostics/current-source`<br>`editor/synthetic-composition` | `composition-acceptance` | `ux-normal-browser.json` / `verifyRepairBrowser` |
+| B1 | 既存で保証済み | 分類・検索・候補の到達と挿入、状態保持 | `controls/palette-and-search` | `composition-acceptance` | `ux-normal-browser.json` / `verifyRepairBrowser` |
+| B2 | 既存で保証済み | 対象・きっかけ・元の本文を保持 | `B08/code`<br>`B08/blocks`<br>`B09/code`<br>`B09/blocks`<br>`B23/code`<br>`B23/blocks` | `composition-acceptance` | `ux-normal-matrix.json` / `verifyRepairMatrix` |
+| B3 | 既存で保証済み | 取消・Undo/Redoと編集への復帰 | `B24/code`<br>`B24/blocks` | `composition-acceptance` | `ux-normal-matrix.json` / `verifyRepairMatrix` |
+| B4 | 既存で保証済み | エラー箇所への到達と修正復帰 | `syntax/closing`<br>`syntax/quote` | `ux-editing` | `child-diagnostics.json` / `verifyChildDiagnosticsReport` |
+| C1 | 既存で保証済み | 固定画面幅・実ブラウザー拡大・必須部品の到達 | `COMPONENT-CONTROLS-RESPONSIVE`<br>`COMPONENT-CONTROLS-ZOOM` | `ux-editing` | `component-controls.json` / `verifyComponentControls` |
+| C2 | 既存で保証済み | 10/28/100%・短文長文・複数話者・全文一致と閉じる | `speech-preview/fresh/10`<br>`speech-preview/fresh/28`<br>`speech-preview/fresh/100`<br>`speech-preview/full-78/10`<br>`speech-preview/full-78/485` | `ux-editing` | `speech-preview.json` / `verifyPreviewReport` |
+| C3 | 既存で保証済み | 寸法・文字の描画・実操作・画像を併用 | `speech-name/position-edges`<br>`speech-name/native-browser-125/full-78` | `ux-editing` | `speech-name-layout.json` / `verifySpeechNameLayoutReport` |
+| D1 | 機械検証 | 製品ソースと実画面の候補語を対応・欠落を検出 | `CHILD-UX-LANGUAGE-INVENTORY` | `ux-editing` | `child-ux-language.json` / `verifyChildLanguage` |
+| D2 | 既存で保証済み | 読み・平易な意味・例・操作への支援を実画面で確認 | `CHILD-UI-ACTION-HELP`<br>`CHILD-UI-DATA-EXAMPLES`<br>`CHILD-UI-BLOCK-WORDS` | `ux-editing` | `child-language-ui.json` / `verifyChildLanguageUi` |
 | D3 | 人による確認が必要 | 語や概念を児童が理解できるか、未知語の意味審査 | `CHILD-UX-VOCABULARY-REVIEW` | `manual` | `manual-events.jsonl` / `verifyManualSession` |
-| E1 | 既存で保証済み | 入力・貼付・focus・合成composition中と確定後 | `editor/synthetic-composition`<br>`editor/enter-indent` | `composition-acceptance` | `ux-repair02-browser.json` / `verifyRepairBrowser` |
+| E1 | 既存で保証済み | 入力・貼付・focus・合成composition中と確定後 | `editor/synthetic-composition`<br>`editor/enter-indent` | `composition-acceptance` | `ux-normal-browser.json` / `verifyRepairBrowser` |
 | E2 | 機械検証 | OS・フォント・ブラウザー・snapshot・実行由来を区別 | `CHILD-UX-PROVENANCE` | `child-ux-aggregate` | `child-ux-aggregate.json` / `verifyChildBundle` |
 | E3 | 人による確認が必要 | 実OS日本語IMEと機器操作の理解 | `CHILD-UX-REAL-IME` | `manual` | `manual-events.jsonl` / `verifyManualSession` |
 | F1 | 人による確認が必要 | 事前予測・解答なしの制作・画面だけの修正・援助記録 | `CHILD-UX-INDEPENDENT-OBSERVATION` | `manual` | `manual-events.jsonl` / `verifyManualSession` |
@@ -52,7 +52,7 @@
 
 ## 固定24課題
 
-取得できた `fixtures/ux-repair-benchmark.json` のB01–B24、意図、期待、復帰条件、実施順を引き継ぐ。7概念×読む・作る・直すの21課題に、入口・文脈・取消の3課題を加える。各課題の事前条件、読む文、制作意図、誤り、画面の手掛かり、手順、意味・観測結果・復帰条件、適用モード・環境、証拠は追加planに記録する。コードとブロックの両方を実施する。
+取得できた `fixtures/ux-edit-benchmark.json` のB01–B24、意図、期待、復帰条件、実施順を引き継ぐ。7概念×読む・作る・直すの21課題に、入口・文脈・取消の3課題を加える。各課題の事前条件、読む文、制作意図、誤り、画面の手掛かり、手順、意味・観測結果・復帰条件、適用モード・環境、証拠は追加planに記録する。コードとブロックの両方を実施する。
 
 | ID | 概念／課題 | 事前に固定した意味・観測結果 | 制作・修正・復帰条件 |
 |---|---|---|---|
@@ -81,7 +81,7 @@
 | B23 | 対象・きっかけの切替／文脈 | 開始あかりのみおはよう、クリックだんごのみなあに？ | 元の処理を保持し、追加後にあかり開始の編集へ戻る |
 | B24 | 誤編集からの復帰／取消 | おはよう→いってきます | 実際にいってきますを削除し取消で復元。コード候補の開閉、Redoも確認 |
 
-期待は既存の独立した `ux-repair02-matrix.json:cases[].virtualRuns[].expected` と台帳の `fixedExpected` に基づく。実装出力から生成しない。実ブラウザーで制作した作品の実行traceと、仮想時計での意味を別々に照合する。実UIでコード→ブロック→コード、ブロック→コード→ブロックを行い、各時点で同じ独立期待へ照合する。双方が同じ誤りをしても合格しない。対象・ソース・作品hash・履歴・Redo・dirtyの保持も確認する。ブロック表示では、実UIから全ての本文を開いてDOMの構造・入力値・演算子・対象・きっかけと描画領域を記録する。製品のAST／parser／compiler／blockDecodeを使わない監査側の小さな意味評価で、7概念の表示が同じ既存期待を満たすか照合する。自動制作のfixture準備や正解入力は、解答なしの独立評価として数えない。
+期待は既存の独立した `ux-normal-matrix.json:cases[].virtualRuns[].expected` と台帳の `fixedExpected` に基づく。実装出力から生成しない。実ブラウザーで制作した作品の実行traceと、仮想時計での意味を別々に照合する。実UIでコード→ブロック→コード、ブロック→コード→ブロックを行い、各時点で同じ独立期待へ照合する。双方が同じ誤りをしても合格しない。対象・ソース・作品hash・履歴・Redo・dirtyの保持も確認する。ブロック表示では、実UIから全ての本文を開いてDOMの構造・入力値・演算子・対象・きっかけと描画領域を記録する。製品のAST／parser／compiler／blockDecodeを使わない監査側の小さな意味評価で、7概念の表示が同じ既存期待を満たすか照合する。自動制作のfixture準備や正解入力は、解答なしの独立評価として数えない。
 
 ## 画面・言葉・入力の証拠
 
@@ -113,7 +113,7 @@
 
 機械検査は独立期待・全必須ID・実結果・画像の実在とhash・実操作領域・snapshot・実行由来をすべて満たした場合だけPASS。必須欠落、重複、FAIL、skip、cancel、timeout、別SHA・実行・試行の混在を拒否する。UNVERIFIEDはPASS件数に含めない。負例は製品正本へ変更せず、隔離した結果データで話者・順序・値・分岐・回数・案内・可視性・証拠欠落・集約不整合を変異させて必ず拒否する。負例検証はSYNTHETIC_VALIDATION_ONLYと明示し、製品操作の正例と混同しない。
 
-既存 `akari-audit.yml` と `akari-acceptance.yml` の必須検査を保持する。後者のcomposition-acceptance、ux-repair05に観測と独立validatorを追加し、child-ux-aggregateが両ジョブの成功と当該run／attemptのsealed bundle、実ファイルhash、既存validatorの再検証を必須とする。新しいブラウザー実行ジョブを重複増設しない。PRのheadと実際のcheckout（merge）のSHAは別フィールドに記録し、異なる作品・実行証拠を混ぜない。
+既存 `akari-audit.yml` と `akari-acceptance.yml` の必須検査を保持する。後者のcomposition-acceptance、ux-editingに観測と独立validatorを追加し、child-ux-aggregateが両ジョブの成功と当該run／attemptのsealed bundle、実ファイルhash、既存validatorの再検証を必須とする。新しいブラウザー実行ジョブを重複増設しない。PRのheadと実際のcheckout（merge）のSHAは別フィールドに記録し、異なる作品・実行証拠を混ぜない。
 
 各bundleは同じ公開snapshot、候補SHA、実行SHA、OS、run、attemptを持つ。修正済みSHAの再実行でも以前のFAILを消さない。同runの再試行はGitHubのworkflow-run-attemptとjobsから以前の結論・手順・リンクを取得しretry-history.jsonへ保存する。先行失敗があればRETRIED_AFTER_NON_SUCCESSを明記する。当該attemptに両必須ジョブの証拠が必要なため、失敗ジョブだけの再試行の旧証拠を混ぜて合格にしない。全必須ジョブを実行する。保持は3日、既存concurrencyで重複を抑え、既存画像を再利用しproject hashで証拠容量を抑える。保証・ケース・閾値・既存の実行制限を縮小しない。
 

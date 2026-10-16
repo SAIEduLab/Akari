@@ -7,7 +7,7 @@ import {loadApi,script} from '../browser/cases/audit-lib.cjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
 const A=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
-const fixtures=JSON.parse(fs.readFileSync(new URL('../fixtures/ux-repair-expectations.json',import.meta.url))),results=[];
+const fixtures=JSON.parse(fs.readFileSync(new URL('../fixtures/ux-edit-expectations.json',import.meta.url))),results=[];
 const plain=v=>JSON.parse(JSON.stringify(v));
 function check(id,fn){try{results.push({id,status:'PASS',observed:fn()});}catch(error){results.push({id,status:'FAIL',error:error.stack});}}
 function project(source){
@@ -94,7 +94,7 @@ check('timed/pause-resume',()=>{
  const clock={now:0},context={console,TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,Blob,URL,structuredClone,crypto:globalThis.crypto,setTimeout,clearTimeout,performance:{now:()=>clock.now}};vm.runInNewContext(script(fs.readFileSync(currentProductFile(),'utf8')),context,{timeout:30000});
  const p=project('「途中」と2秒話す。\n「最後」と言う。'),trace=runClock(context.Akari,p,[{at:1000,pause:true},{at:5000},{at:5000,resume:true},{at:5999},{at:6000}],clock);assert.deepEqual(trace,[[0,'sprite-1','途中'],[6000,'sprite-1',null],[6000,'sprite-1','最後']]);return {trace,pausedDurationPreserved:true};
 });
-const report={schema:'akari-ux-repair-language-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),environment:'node / product parser, codec and scheduler with independent clock',uxAcceptance:false,results};
-const output=path.resolve(process.argv[2]||'audit-evidence/ux-repair-language.json');fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
+const report={schema:'akari-ux-edit-language-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),environment:'node / product parser, codec and scheduler with independent clock',uxAcceptance:false,results};
+const output=path.resolve(process.argv[2]||'audit-evidence/ux-edit-language.json');fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 for(const r of results.filter(r=>r.status==='FAIL'))console.error(r.id+': '+r.error.split('\n').slice(0,5).join(' '));
 console.log(`UX repair language: ${results.filter(r=>r.status==='PASS').length}/${results.length} PASS`);if(report.status!=='PASS')process.exitCode=1;

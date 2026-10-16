@@ -1,6 +1,6 @@
 import fs from 'node:fs';import path from 'node:path';import cp from 'node:child_process';import assert from 'node:assert/strict';
 import {acceptanceCommands} from './lib/gate-contract.mjs';import {snapshot} from './lib/product-test-host.mjs';import {currentProductFile} from './lib/product-path.cjs';import {writeSummary} from './lib/audit-summary.mjs';
-const [kind]=process.argv.slice(2);assert.ok(Object.hasOwn(acceptanceCommands,kind));const dir=kind==='composition'?'audit-evidence/acceptance':'audit-evidence/repair05';fs.mkdirSync(dir,{recursive:true});const steps=[];
+const [kind]=process.argv.slice(2);assert.ok(Object.hasOwn(acceptanceCommands,kind));const dir=kind==='composition'?'audit-evidence/acceptance':'audit-evidence/editing';fs.mkdirSync(dir,{recursive:true});const steps=[];
 for(const [i,command]of acceptanceCommands[kind].entries()){
  const args=command.slice(5).match(/"[^"]*"|\S+/g).map(s=>s.replace(/^"|"$/g,'')).map(s=>s==='$AKARI_CODEC_BROWSER'?process.env.AKARI_CODEC_BROWSER:s);
  const started=Date.now(),r=cp.spawnSync(process.execPath,args,{encoding:'utf8',timeout:600000,maxBuffer:64*1024*1024}),log='step-'+String(i+1).padStart(2,'0')+'.log';

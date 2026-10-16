@@ -8,8 +8,8 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),product=currentProductFile(),output=path.resolve(out),dir=output.replace(/\.json$/,'')+'.artifacts';fs.mkdirSync(dir,{recursive:true});
-const originals=JSON.parse(fs.readFileSync(new URL('../fixtures/ux-repair-expectations.json',import.meta.url))).cases;
-const report={schema:'akari-ux-repair-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},results:[]};
+const originals=JSON.parse(fs.readFileSync(new URL('../fixtures/ux-edit-expectations.json',import.meta.url))).cases;
+const report={schema:'akari-ux-edit-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},results:[]};
 const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 const state=p=>p.evaluate(()=>{const a=Akari.app,s=a.editorState.main;return {source:s.sourceText,project:JSON.stringify(a.project),history:a.editorState.history,pending:s.pendingEdit,ast:s.syntaxAst,block:s.blockView,draft:s.blockDraft,diagnostics:s.diagnostics};});
 async function install(p,source,{event='start',level='advanced',mode='blocks'}={}){

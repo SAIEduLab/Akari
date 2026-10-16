@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
 import {withBrowser,pageFor,snapshot,sha} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
-import {install} from '../lib/ux-repair02-ui.mjs';
+import {install} from '../lib/ux-normal-ui.mjs';
 import {observeRunPreview,verifyRunPreview,observePaletteFold,observeInspector} from '../lib/run-preview-contract.mjs';
 import {displayTexts,actionNames,bubbleCases,actionCases,verifyDisplay} from '../lib/speech-display-contract.mjs';
 

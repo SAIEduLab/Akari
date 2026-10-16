@@ -6,9 +6,9 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),output=path.resolve(out),dir=output+'.artifacts',product=currentProductFile();fs.mkdirSync(dir,{recursive:true});
-const report={schema:'akari-ux-repair02-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},results:[]};
+const report={schema:'akari-ux-normal-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},results:[]};
 const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
-import {state,node,reveal,install,add,edit,action,speak} from '../lib/ux-repair02-ui.mjs';
+import {state,node,reveal,install,add,edit,action,speak} from '../lib/ux-normal-ui.mjs';
 const originalQuestion='始めると、あかりは『合言葉は？』とたずねます。答えが『そら』なら、あかりは『どうぞ』と2秒話します。そうでなければ、あかりは『ちがうよ』と2秒話します。';
 try{await withBrowser(chrome,async browser=>{
  report.environment.browser=browser.version();assert.equal(browser.version(),browserEnvironment.version);

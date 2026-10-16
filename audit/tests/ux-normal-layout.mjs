@@ -3,10 +3,10 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
-import {install,state} from '../lib/ux-repair02-ui.mjs';
+import {install,state} from '../lib/ux-normal-ui.mjs';
 const [chrome,out]=process.argv.slice(2),product=currentProductFile(),dir=path.resolve(out+'.artifacts');fs.mkdirSync(dir,{recursive:true});
-const cases=JSON.parse(fs.readFileSync(new URL('../fixtures/ux-repair02-matrix.json',import.meta.url))).cases.filter(c=>['B01','B04','B10','B13','B15'].includes(c.id));
-const report={schema:'akari-ux-repair02-layout-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,results:[]};
+const cases=JSON.parse(fs.readFileSync(new URL('../fixtures/ux-normal-matrix.json',import.meta.url))).cases.filter(c=>['B01','B04','B10','B13','B15'].includes(c.id));
+const report={schema:'akari-ux-normal-layout-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,results:[]};
 const save=()=>fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');
 try{await withBrowser(chrome,async browser=>{
  for(const viewport of [{width:1188,height:848},{width:1188,height:761},{width:1366,height:768},{width:1024,height:768},{width:390,height:844}])for(const scheme of ['light','dark'])for(const c of cases){

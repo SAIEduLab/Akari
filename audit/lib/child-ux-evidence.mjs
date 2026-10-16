@@ -11,7 +11,7 @@ import {verifySpeechNameLayoutReport} from './speech-name-layout-contract.mjs';
 import {verifyPreviewReport} from './speech-preview-contract.mjs';
 import {verifyComponentControls} from './component-controls-contract.mjs';
 import {verifyChildDiagnosticsReport} from './child-diagnostics-contract.mjs';
-export const requiredBundleFiles={composition:['execution.json','child-ux-static.json','child-ux-matrix.json','ux-repair02-matrix.json','aggregate.json'],repair05:['execution.json','child-ux-language.json','child-language-ui.json','insertion-context.json','speech-name-layout.json','speech-preview.json','component-controls.json','child-diagnostics.json']};
+export const requiredBundleFiles={composition:['execution.json','child-ux-static.json','child-ux-matrix.json','ux-normal-matrix.json','aggregate.json'],editing:['execution.json','child-ux-language.json','child-language-ui.json','insertion-context.json','speech-name-layout.json','speech-preview.json','component-controls.json','child-diagnostics.json']};
 export function verifyReportPlatform(file,report,platform){
   const actual={
     'insertion-context.json':()=>report.execution?.platform,
@@ -47,10 +47,10 @@ export function verifyBundleResults(kind,dir,inputs,provenance){
     assert.equal(check.status,0,'existing fixed-acceptance validators: '+check.stderr);assert.equal(sha(fs.readFileSync(path.join(dir,'aggregate.json'))),before,'existing aggregate must already be genuine');
     const stat=read(dir,'child-ux-static.json');verifyProof(stat,'akari-child-ux-static-v1',inputs,provenance);controlRows(stat,staticControlIds);
     const proof=read(dir,'child-ux-matrix.json');verifyProof(proof,'akari-child-ux-matrix-proof-v1',inputs,provenance);controlRows(proof,matrixControlIds);
-    assert.equal(proof.inputSha256,sha(fs.readFileSync(path.join(dir,'ux-repair02-matrix.json'))));
-    assert.deepEqual(proof.result,verifyChildMatrix(read(dir,'ux-repair02-matrix.json'),inputs,provenance,path.join(dir,'ux-repair02-matrix.json')));
+    assert.equal(proof.inputSha256,sha(fs.readFileSync(path.join(dir,'ux-normal-matrix.json'))));
+    assert.deepEqual(proof.result,verifyChildMatrix(read(dir,'ux-normal-matrix.json'),inputs,provenance,path.join(dir,'ux-normal-matrix.json')));
   }else{
-    assert.equal(kind,'repair05');
+    assert.equal(kind,'editing');
     for(const file of ['insertion-context.json','speech-name-layout.json','speech-preview.json','component-controls.json','child-diagnostics.json'])verifyReportPlatform(file,read(dir,file),provenance.platform);
     verifyInsertionContextReport(read(dir,'insertion-context.json'));verifySpeechNameLayoutReport(read(dir,'speech-name-layout.json'),inputs);
     verifyPreviewReport(read(dir,'speech-preview.json'),inputs);verifyComponentControls(read(dir,'component-controls.json'),inputs);verifyChildDiagnosticsReport(read(dir,'child-diagnostics.json'),inputs);
@@ -74,7 +74,7 @@ export function verifyChildBundle(kind,dir,inputs,provenance){
 export function verifyBundleFileHashes(b,dir){for(const [f,h]of Object.entries(b.files))assert.equal(sha(fs.readFileSync(path.join(dir,f))),h,'actual artifact '+f);}
 export const aggregateControlIds=['bundle-missing','bundle-failed','bundle-snapshot','bundle-sha','bundle-run','bundle-attempt','bundle-platform','bundle-required-result','bundle-required-set','bundle-artifact-hash','bundle-unsafe-path','bundle-fake-human-pass','bundle-valid-format-wrong-hash'];
 export function verifyChildAggregate(dirs,needs,history,inputs,provenance){
-  verifyNeeds(needs);assert.deepEqual(Object.keys(dirs).sort(),['composition','repair05']);
+  verifyNeeds(needs);assert.deepEqual(Object.keys(dirs).sort(),['composition','editing']);
   const bundles=Object.entries(dirs).map(([kind,dir])=>verifyChildBundle(kind,dir,inputs,provenance));
   const retry=verifyRetryHistory(history,provenance),base=bundles.find(b=>b.kind==='composition');verifyBundleHeader(base,'composition',inputs,provenance);
   const mutations=[

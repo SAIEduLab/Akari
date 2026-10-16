@@ -20,7 +20,7 @@ function fixedAnswer(document,schema,value){
   Object.assign(document.nodes[positions.get(index)],{schema,title:schema==='StringLiteral'?'文字':'数',operator:null,fields:{value}});
 }
 function staticControls(){
-  const needs={'composition-acceptance':{result:'success'},'ux-repair05':{result:'success'}},p=structuredClone(provenance);
+  const needs={'composition-acceptance':{result:'success'},'ux-editing':{result:'success'}},p=structuredClone(provenance);
   const manual={schema:'akari-child-ux-manual-session-v1',actor:'AI_PROXY',task:'B01',mode:'code',observationStatus:'PASS',technicalOnly:false,priorProductExperience:false,screenOnly:true,firstEncounter:true,solutionProvided:false,assistance:[],claimsChildComprehension:false,claimsProductFinalAcceptance:false,
     auditKind:'TASK',interactionCounts:Object.fromEntries(plan.comparison.measures.map(k=>[k,0])),environment:{os:'unit-control only',browser:'unit-control only',fonts:'unit-control only',inputMethod:'synthetic control'},
     dimensions:Object.fromEntries(['reading','meaningAndConcepts','textInput','deviceOperation'].map(k=>[k,{status:'UNVERIFIED'}])),events:[
@@ -30,7 +30,7 @@ function staticControls(){
   const history={schema:'akari-child-ux-retry-history-v1',repository:p.repository,run:p.run,attempt:'2',testedCommit:p.testedCommit,workflowHeadCommit:p.candidateCommit,priorAttempts:[{id:p.run,run_attempt:1,head_sha:p.candidateCommit,status:'completed',conclusion:'failure',html_url:'https://github.com/SAIEduLab/Akari/actions/runs/control',jobs:[{name:'control',conclusion:'failure',html_url:'control',steps:[]}]}]};
   verifyNeeds(needs);verifyProvenance(p,provenance);verifyManualSession(manual);verifyRetryHistory(history,{...p,attempt:'2'});
   const rows=[];
-  for(const [i,result]of ['missing','failure','skipped','cancelled','timed_out'].entries()){const bad=structuredClone(needs);if(!i)delete bad['ux-repair05'];else bad['ux-repair05'].result=result;assert.throws(()=>verifyNeeds(bad));rows.push({id:staticControlIds[i],rejected:true});}
+  for(const [i,result]of ['missing','failure','skipped','cancelled','timed_out'].entries()){const bad=structuredClone(needs);if(!i)delete bad['ux-editing'];else bad['ux-editing'].result=result;assert.throws(()=>verifyNeeds(bad));rows.push({id:staticControlIds[i],rejected:true});}
   for(const [i,key]of ['testedCommit','run','attempt'].entries()){const bad=structuredClone(p);bad[key]='wrong';assert.throws(()=>verifyProvenance(bad,provenance));rows.push({id:staticControlIds[i+5],rejected:true});}
   const manualMutations=[s=>{s.events[0].kind='other';},s=>{s.events[0].at=s.events[1].at;},s=>s.assistance.push({kind:'source'}),s=>{s.task='B02';s.solutionProvided=true;s.events[0].kind='intent-only-brief';},s=>s.events.pop(),s=>{s.claimsChildComprehension=true;}];
   rows.push(...controls(staticControlIds.slice(8,14),manualMutations,manual,verifyManualSession));

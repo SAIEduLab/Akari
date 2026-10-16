@@ -5,7 +5,7 @@ import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
-import {install} from '../lib/ux-repair02-ui.mjs';
+import {install} from '../lib/ux-normal-ui.mjs';
 import {speechNameLayoutCases,speechNameLongTexts,speechNameSource,speechNamePositions} from '../fixtures/speech-name-layout.mjs';
 import {verifySpeechNameLayoutObserved,verifySpeechNameLayoutReport} from '../lib/speech-name-layout-contract.mjs';
 const require=createRequire(import.meta.url),[chrome,out='audit-evidence/speech-name-layout.json']=process.argv.slice(2),product=currentProductFile(),output=path.resolve(out),dir=output+'.artifacts';
