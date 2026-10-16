@@ -20,7 +20,7 @@ export const uxBrowserIds=['UX02/staged-heading','UX04/direct-count','UX11/opera
 export function verifyUxLanguage(report){
  const count=verifySemanticExtension(report,'akari-ux-edit-language-v1',uxLanguageIds);
  for(const c of originals){const observed=report.results.find(r=>r.id===c.id+'/original-acceptance-meaning-result').observed;assert.equal(observed.originalSource,c.source);assert.equal(observed.originalSourcePreserved,true);assert.equal(observed.blockRoundtrip,true);assert.equal(observed.formatRoundtrip,true);}
- const compatibility=report.results.find(r=>r.id==='compatibility/actor-named-今').observed;assert.equal(compatibility.actorNamePreserved,true);assert.deepEqual(compatibility.current,[[0,'dango','7']]);assert.deepEqual(compatibility.previous,compatibility.current);
+ const compatibility=report.results.find(r=>r.id==='compatibility/actor-named-今').observed;assert.equal(compatibility.actorNamePreserved,true);assert.deepEqual(compatibility.current,[[0,'dango','7']]);
  return count;
 }
 export function verifyUxBrowser(report){

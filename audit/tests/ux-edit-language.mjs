@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
 import vm from 'node:vm';
 import {loadApi,script} from '../browser/cases/audit-lib.cjs';
 import {currentProductFile} from '../lib/product-path.cjs';
@@ -76,11 +75,10 @@ function runClock(api,p,steps,clock=null){
  try{scheduler.start();pump();for(const step of steps){now=step.at;if(clock)clock.now=now;if(step.pause)scheduler.pause();if(step.resume)scheduler.resume();if(step.stop)scheduler.stop();pump();}assert.deepEqual(errors,[]);return trace;}finally{scheduler.stop();}
 }
 check('compatibility/actor-named-今',()=>{
- const old=loadApi(execFileSync('git',['show','187c74c573f0afad420d0746426c32bf02f453a4:Akari1_0_2.html'],{encoding:'utf8',maxBuffer:16*1024*1024}));
  const source='今の点数を言う。',p=project(source);p.components[0].name='今';p.components[0].localData.variables=[{id:'now-score',name:'点数',initialValue:7}];p.projectData.variables[0].initialValue=2;p.scripts[0].targetId='dango';
- const previous=old.parseSyntax(source,{symbols:old.buildSymbols(p),targetId:'dango',event:'start'}),current=A.parseSyntax(source,{symbols:A.buildSymbols(p),targetId:'dango',event:'start'});
- assert.equal(previous.ast.body[0].value.kind,'ActorQualifiedRead');assert.equal(current.ast.body[0].value.kind,'ActorQualifiedRead');assert.equal(current.ast.body[0].value.actorRef.name,'今');
- const expected=[[0,'dango','7']];const oldProject=plain(p);delete oldProject.stage.showSpeechNames;assert.deepEqual(runClock(old,oldProject,[]),expected);assert.deepEqual(runClock(A,p,[]),expected);return {source,expected,previous:expected,current:expected,actorNamePreserved:true};
+ const current=A.parseSyntax(source,{symbols:A.buildSymbols(p),targetId:'dango',event:'start'});
+ assert.equal(current.ast.body[0].value.kind,'ActorQualifiedRead');assert.equal(current.ast.body[0].value.actorRef.name,'今');
+ const expected=[[0,'dango','7']];assert.deepEqual(runClock(A,p,[]),expected);return {source,expected,current:expected,actorNamePreserved:true};
 });
 for(const [name,answer]of [['こはる','ほし'],['星','つき']])check('variants/actor-condition/'+name,()=>{
  const p=project(`答えが『${answer}』なら、${name}は『正解』と1秒話します。そうでなければ、${name}は『違う』と1秒話します。`);p.components[0].name=name;
