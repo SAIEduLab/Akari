@@ -57,10 +57,10 @@ await check('EXTENSION-PROFILE-RUNTIME-ISOLATION',()=>{
 // Exercise the public examples as an independent derived author would.
 const {offline,text}=require('../../extensions/examples/offline.js');
 const definitions=[offline,text];
-const asyncManifest=structuredClone(offline.manifest);asyncManifest.id='audit.async';asyncManifest.commands[0].name='監査非同期記憶';asyncManifest.commands[0].async=true;asyncManifest.calculations=[];asyncManifest.events=[];
+const asyncManifest=structuredClone(offline.manifest);asyncManifest.id='audit.async';delete asyncManifest.name;asyncManifest.commands[0].name='監査非同期記憶';asyncManifest.commands[0].async=true;asyncManifest.calculations=[];asyncManifest.events=[];
 function asyncFactory(){return{commands:{remember:args=>new Promise(resolve=>setTimeout(()=>resolve(args[0]),300))}};}
 const profile={id:'audit.derivative',version:'1.0.0',limits:{components:501,stringChars:null,sourceEach:null,sourceTotal:null,listItems:null,functionOps:null,fileBytes:null}};
-const externalManifest=structuredClone(offline.manifest);externalManifest.id='audit.external';externalManifest.offline=false;externalManifest.capabilities=['demo.add'];externalManifest.commands[0].name='外部接続で数を記憶する';externalManifest.commands[0].async=true;externalManifest.commands[0].capability='demo.add';externalManifest.calculations=[];externalManifest.events=[];
+const externalManifest=structuredClone(offline.manifest);externalManifest.id='audit.external';delete externalManifest.name;externalManifest.offline=false;externalManifest.capabilities=['demo.add'];externalManifest.commands[0].name='外部接続で数を記憶する';externalManifest.commands[0].async=true;externalManifest.commands[0].capability='demo.add';externalManifest.calculations=[];externalManifest.events=[];
 function externalFactory(api){return{commands:{remember(args){if(!api.connector){const error=new Error('外部拡張のコネクタは未接続です');error.code='E707';throw error;}return api.connector.request('demo.add',args);}}};}
 let derived,player,externalDerived;
 try{const {buildDerivedProduct}=await import('../../extensions/build.mjs');derived=path.join(directory,'derived.html');await buildDerivedProduct({product:candidate,output:derived,extensions:[...definitions,{manifest:asyncManifest,factory:asyncFactory}],profiles:[profile],profile:{id:profile.id,version:profile.version},allowedCapabilities:[]});}catch(error){console.error('Derived product build: '+error.stack);}
@@ -84,13 +84,13 @@ await withOrdinaryFileBrowser(async browser=>{
   await evaluate('EXTENSION-REGISTRATION-COLLISION-TYPES',()=>{
     const R=Akari.createAkariRuntime({extensions:auditDefinitions}),host=R.extensions;let duplicateRejected=false,invalidNumberRejected=false,promiseCalculationRejected=false;
     try{host.register(auditDefinitions[0].manifest,auditDefinitions[0].factory);}catch(_){duplicateRejected=true;}host.beginSession();try{host.invokeCalculation('demo.offline/double',['wrong']);}catch(_){invalidNumberRejected=true;}host.endSession();
-    const manifest=structuredClone(auditDefinitions[0].manifest);manifest.id='audit.promise';manifest.commands=[];manifest.events=[];manifest.calculations=[manifest.calculations[0]];
+    const manifest=structuredClone(auditDefinitions[0].manifest);manifest.id='audit.promise';delete manifest.name;manifest.commands=[];manifest.events=[];manifest.calculations=[manifest.calculations[0]];
     const other=Akari.createAkariRuntime({extensions:[{manifest,factory:()=>({calculations:{double:()=>Promise.resolve(1)}})}]}).extensions;other.beginSession();try{other.invokeCalculation('audit.promise/double',[1]);}catch(_){promiseCalculationRejected=true;}other.endSession();return{duplicateRejected,invalidNumberRejected,promiseCalculationRejected};
   });
   await evaluate('EXTENSION-INDEPENDENT-CALCULATIONS',()=>{const host=Akari.createAkariRuntime({extensions:auditDefinitions}).extensions;host.beginSession();const doubled=host.invokeCalculation('demo.offline/double',[7]),shouted=host.invokeCalculation('demo.text/shout',['hello']);host.endSession();return{doubled,shouted,independent:host.requirements().required.length===2};});
   await evaluate('EXTENSION-COMMAND-EVENT-STATE',async()=>{const host=Akari.createAkariRuntime({extensions:auditDefinitions}).extensions,events=[];host.beginSession({onEvent:e=>events.push(e)});const remembered=await host.invokeCommand('demo.offline/remember',[9]),value=host.invokeCalculation('demo.offline/remembered',[]),state=host.snapshotState();host.endSession();host.restoreState(state);host.beginSession();const restored=host.invokeCalculation('demo.offline/remembered',[]);host.endSession();return{remembered,value,event:events[0].payload,restored};});
   await evaluate('EXTENSION-SESSION-CANCELLATION',async()=>{
-    let captured,resolve;const manifest=structuredClone(auditDefinitions[0].manifest);manifest.id='audit.cancel';manifest.calculations=[];manifest.events=[];manifest.commands[0].async=true;
+    let captured,resolve;const manifest=structuredClone(auditDefinitions[0].manifest);manifest.id='audit.cancel';delete manifest.name;manifest.calculations=[];manifest.events=[];manifest.commands[0].async=true;
     const host=Akari.createAkariRuntime({extensions:[{manifest,factory:api=>{captured=api;return{commands:{remember:()=>new Promise(r=>{resolve=r;})}};}}]}).extensions;
     host.beginSession();const pending=host.invokeCommand('audit.cancel/remember',[1]).then(()=>false,()=>true);host.endSession();resolve(1);let staleRejected=false;try{captured.setState({value:99});}catch(_){staleRejected=true;}return{staleRejected,signalAborted:captured.signal.aborted,ended:await pending};
   });
@@ -109,14 +109,45 @@ await withOrdinaryFileBrowser(async browser=>{
     return{components:loaded.project.components.length,chars:loaded.project.projectData.variables[0].initialValue.length,finiteRejected,restored:loaded.project.components.length===501,integrityRejected};
   });
   await evaluate('EXTENSION-TYPES-UNITS-DEPENDENCIES',()=>{
-    const manifest=structuredClone(auditDefinitions[0].manifest);manifest.id='audit.units';manifest.commands=[];manifest.events=[];manifest.calculations=[manifest.calculations[0]];manifest.calculations[0].id='identity';manifest.calculations[0].args[0].unit='秒';manifest.calculations[0].returns.unit='秒';
+    const manifest=structuredClone(auditDefinitions[0].manifest);manifest.id='audit.units';delete manifest.name;manifest.commands=[];manifest.events=[];manifest.calculations=[manifest.calculations[0]];manifest.calculations[0].id='identity';manifest.calculations[0].args[0].unit='秒';manifest.calculations[0].returns.unit='秒';
     const R=Akari.createAkariRuntime({extensions:[{manifest,factory:()=>({calculations:{identity:args=>args[0]}})}]}),host=R.extensions;host.beginSession();const result=host.invokeCalculation('audit.units/identity',[{magnitude:3,unit:'秒'}]);let unitRejected=false;try{host.invokeCalculation('audit.units/identity',[{magnitude:3,unit:'歩'}]);}catch(_){unitRejected=true;}host.endSession();
-    const dependency=structuredClone(auditDefinitions[1].manifest);dependency.id='audit.dependency';dependency.dependencies=[{id:'missing.extension',version:'1.0.0',contentHash:'0'.repeat(64)}];let dependencyRejected=false;try{Akari.createAkariRuntime({extensions:[{manifest:dependency,factory:auditDefinitions[1].factory}]});}catch(_){dependencyRejected=true;}
+    const dependency=structuredClone(auditDefinitions[1].manifest);dependency.id='audit.dependency';delete dependency.name;dependency.dependencies=[{id:'missing.extension',version:'1.0.0',contentHash:'0'.repeat(64)}];let dependencyRejected=false;try{Akari.createAkariRuntime({extensions:[{manifest:dependency,factory:auditDefinitions[1].factory}]});}catch(_){dependencyRejected=true;}
     const required=host.requirements();required.required[0].version='2.0.0';let versionRejected=false;try{host.validateRequirements(required);}catch(_){versionRejected=true;}
     let stateMismatchRejected=false;try{host.restoreState([{id:'audit.units',formatVersion:99,value:{value:0}}]);}catch(_){stateMismatchRejected=true;}
     for(const source of ['拡張計算「demo.offline」「double」（「文字」）を言う。','拡張計算「demo.offline」「double」（1、2）を言う。','拡張の値を言う。']){const p=Akari.makeEmptyProject();p.scripts[0].source=source;if(!Akari.compileProject(p).errors.length)throw Error('Invalid extension source accepted: '+source);}
     const invalidFunction=Akari.makeEmptyProject();invalidFunction.functions=[{id:'bad-extension-function',ownerId:'stage',name:'不正な計算',args:[],source:'拡張「demo.offline」「remember」（9）。\n1を答えとして返す。'}];if(!Akari.compileProject(invalidFunction).errors.length)throw Error('Extension command accepted inside synchronous function');
     return{unitPreserved:result.magnitude===3&&result.unit==='秒',unitRejected,dependencyRejected,versionRejected,stateMismatchRejected};
+  });
+  await evaluate('EXTENSION-STATE-LIFETIME',()=>{
+    const project=structuredClone(auditDefinitions[0].manifest),run=structuredClone(project);run.id='audit.run-state';delete run.name;delete run.state.persist;run.commands[0].name='一回だけ記憶する';run.calculations=run.calculations.map(c=>({...c,name:'一回だけ'+c.name}));run.events=run.events.map(e=>({...e,name:'一回だけ'+e.name}));
+    const definitions=[{manifest:project,factory:auditDefinitions[0].factory},{manifest:run,factory:auditDefinitions[0].factory}];
+    const host=Akari.createAkariRuntime({extensions:definitions}).extensions,read=()=>[host.invokeCalculation('audit.run-state/remembered',[]),host.invokeCalculation('demo.offline/remembered',[])];
+    host.beginSession();host.invokeCommand('audit.run-state/remember',[7]);host.invokeCommand('demo.offline/remember',[7]);const during=host.snapshotState();host.endSession();
+    host.beginSession();const [runRestart,projectRestart]=read();host.endSession();
+    host.restoreState([{id:'demo.offline',formatVersion:1,value:{value:5}},{id:'audit.run-state',formatVersion:1,value:{value:5}}]);host.beginSession();const [runRestored,projectRestored]=read();
+    let resetDuringRunRejected=false;try{host.resetState();}catch(error){resetDuringRunRejected=error.code==='E706';}host.endSession();
+    host.resetState();host.beginSession();const projectReset=read()[1];host.endSession();
+    const defaultLifetime=host.stateInfo().find(x=>x.id==='audit.run-state').persist;
+    const invalid=structuredClone(run);invalid.id='audit.invalid-state';delete invalid.name;invalid.state.persist='forever';invalid.commands=[];invalid.calculations=[];let invalidLifetimeRejected=false;try{Akari.createAkariRuntime({extensions:[{manifest:invalid,factory:()=>({})}]});}catch(_){invalidLifetimeRejected=true;}
+    return{runRestart,projectRestart,runSnapshot:during.find(x=>x.id==='audit.run-state').value.value,projectSnapshot:during.find(x=>x.id==='demo.offline').value.value,runRestored,projectRestored,projectReset,resetDuringRunRejected,defaultLifetime,invalidLifetimeRejected};
+  });
+  await evaluate('EXTENSION-JAPANESE-NAMES',()=>{
+    const A=Akari,p=A.makeDefaultProject(),symbols=A.buildSymbols(p),opts={targetId:p.components[0].id,event:'start'};
+    const named=A.parseScript('拡張「数の記憶」「数を記憶する」（9）。',symbols,opts),byId=A.parseScript('拡張「demo.offline」「remember」（9）。',symbols,opts),mixed=A.parseScript('拡張「demo.offline」「数を記憶する」（9）。',symbols,opts);
+    const calculation=A.parseExpression('拡張計算「demo.offline」「double」（7）',symbols);
+    let unknownRejected=false;try{A.parseScript('拡張「数の記憶」「ない命令」（9）。',symbols,opts);}catch(error){unknownRejected=error.code==='E703';}
+    const base=auditDefinitions[1].manifest,rejected=change=>{const m=structuredClone(base);m.id='audit.names';delete m.name;m.calculations[0].name='名前の検査用';change(m);try{A.createAkariRuntime({extensions:[auditDefinitions[1],{manifest:m,factory:auditDefinitions[1].factory}]});return false;}catch(_){return true;}};
+    return{sameAst:A.astEquivalent(named,byId),mixedAst:A.astEquivalent(mixed,byId),printedCommand:A.formatScript(byId).replace(/。\s*$/,''),printedCalculation:A.formatExpression(calculation),
+      idsStillRead:byId.units?.length>0||!!byId,unknownRejected,duplicateNameRejected:rejected(m=>{m.name=base.name;}),nameClashesWithIdRejected:rejected(m=>{m.name='demo.text';}),invalidNameRejected:rejected(m=>{m.name='名前「かっこ」';})};
+  });
+  await evaluate('EXTENSION-VERSION-UPGRADE',()=>{
+    const current=structuredClone(auditDefinitions[0].manifest);current.id='audit.upgrade';delete current.name;current.version='1.2.0';delete current.name;current.commands[0].name='更新用に記憶する';current.calculations=current.calculations.map(c=>({...c,name:'更新用の'+c.name}));current.events=[];
+    const host=Akari.createAkariRuntime({extensions:[{manifest:current,factory:auditDefinitions[0].factory}]}).extensions,now=host.requirements();
+    const envelope=(version,hash='1'.repeat(64),formatVersion=1)=>({...structuredClone(now),required:[{id:'audit.upgrade',version,contentHash:hash}],state:[{id:'audit.upgrade',formatVersion,value:{value:4}}]});
+    const rejects=value=>{try{host.upgradeRequirements(value);return false;}catch(error){return error.code==='E703';}};
+    const plan=host.upgradeRequirements(envelope('1.0.0'));let validates=false;try{validates=host.validateRequirements(plan.envelope);}catch(_){}
+    return{upgraded:plan.upgrades.map(x=>x.from+'→'+x.to).join(),validates,stateKept:plan.envelope.state[0].value,sameVersionChangedRejected:rejects(envelope('1.2.0')),
+      newerRecordedRejected:rejects(envelope('1.3.0')),otherMajorRejected:rejects(envelope('0.9.0')),prereleaseRejected:rejects(envelope('1.0.0-beta')),stateFormatRejected:rejects(envelope('1.0.0','1'.repeat(64),2))};
   });
   await evaluate('EXTENSION-PROFILE-IMPORT-FILE-RUNTIME',async()=>{
     const A=Akari,p=A.makeEmptyProject();p.scripts[0].source='※'+'a'.repeat(100000);const file=A.serializeProject(p,A.makeDefaultAssetStore()),loaded=await A.parseProjectFile(file),R=A.createAkariRuntime();let listRejected=false;try{R.assertRuntimeValueLimit(Array(100001).fill(1));}catch(_){listRejected=true;}A.diagnostics.assertRuntimeValueLimit(Array(100001).fill(1));
@@ -131,6 +162,20 @@ await withOrdinaryFileBrowser(async browser=>{
     assert.ok(fork);await fork.page.locator('#editorModecode').click();const source=await fork.page.locator('#codeEditor').inputValue()+'\n「未保存」と言う。';await fork.page.locator('#codeEditor').fill(source);await fork.page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);await fork.page.waitForTimeout(300);
     const before=await fork.page.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,history:s.history,dirty:s.dirty};});assert.equal(before.dirty,true);
     const serialized=await fork.page.evaluate(()=>({file:Akari.serializeProject(Akari.app.project,Akari.makeDefaultAssetStore()),hash:Akari.extensions.requirements().required[0].contentHash}));const malformed=path.join(directory,'unavailable-extension.akari.md');fs.writeFileSync(malformed,serialized.file.replace(serialized.hash,'0'.repeat(64)));await fork.page.locator('#fileInput').setInputFiles(malformed);await fork.page.waitForTimeout(300);const after=await fork.page.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,history:s.history,dirty:s.dirty};});return{source:before.source===after.source,history:before.history===after.history,dirty:before.dirty===after.dirty};
+  });
+  await check('EXTENSION-UPGRADE-OPEN-CONFIRM',async()=>{
+    assert.ok(fork);const page=fork.page;
+    const prepared=await page.evaluate(()=>{const file=Akari.serializeProject(Akari.app.project,Akari.makeDefaultAssetStore()),open='```json\n',start=file.lastIndexOf(open)+open.length,end=file.lastIndexOf('\n```'),text=file.slice(start,end),root=JSON.parse(text),indent=JSON.stringify(root,null,2)===text?2:undefined;
+      const item=root.extensions.required.find(x=>x.id==='demo.offline');item.version='1.0.0';item.contentHash='1'.repeat(64);return{file:file.slice(0,start)+JSON.stringify(root,null,indent)+file.slice(end),source:Akari.app.editorState.main.sourceText};});
+    const older=path.join(directory,'older-extension-release.akari.md');fs.writeFileSync(older,prepared.file);
+    const messages=[];let acceptUpgrade=false;const onDialog=dialog=>{messages.push(dialog.message());return dialog.message().includes('前の版')?(acceptUpgrade?dialog.accept():dialog.dismiss()):dialog.accept();};page.on('dialog',onDialog);
+    try{
+      await page.locator('#fileInput').setInputFiles(older);await page.waitForTimeout(500);
+      const kept=await page.evaluate(()=>Akari.app.editorState.main.sourceText);const asked=messages.some(m=>m.includes('前の版'));
+      acceptUpgrade=true;await page.locator('#fileInput').setInputFiles(older);await page.waitForFunction(()=>Akari.app.project.extensions?.required?.some(x=>x.id==='demo.offline'&&x.version==='1.1.0'));
+      const recordedVersion=await page.evaluate(()=>Akari.app.project.extensions.required.find(x=>x.id==='demo.offline').version);
+      return{asked,namesVersions:messages.some(m=>m.includes('数の記憶')&&m.includes('1.0.0 → 1.1.0')),dismissedKeepsWork:kept===prepared.source,acceptedOpens:true,recordedVersion};
+    }finally{page.off('dialog',onDialog);}
   });
   await evaluate('EXTENSION-ASYNC-PARALLEL-PAUSE-STOP',async()=>{
     const A=Akari,p=A.makeEmptyProject();p.scripts=[{id:'async-start',targetId:'sprite-1',event:'start',source:'拡張「audit.async」「remember」（9）。\n答えを言う。'},{id:'async-click',targetId:'sprite-1',event:'click',source:'「並行」と言う。'}];const compiled=A.compileProject(p);if(compiled.errors.length)throw Error(JSON.stringify(compiled.errors));

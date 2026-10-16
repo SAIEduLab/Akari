@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 const AkariOfflineExample = {
   manifest: {
-    id: 'demo.offline', version: '1.0.0', apiContract: 1,
+    id: 'demo.offline', name: '数の記憶', version: '1.1.0', apiContract: 1,
     standard: { languageContractId: 2, runtimeContractId: 2 },
     description: '数を2倍にする計算と、値を記憶してできごとを出す命令。',
     dependencies: [], capabilities: [], offline: true, selfContained: true,
-    state: { formatVersion: 1, initial: { value: 0 } },
+    state: { formatVersion: 1, initial: { value: 0 }, persist: 'project' },
     commands: [{ id: 'remember', name: '数を記憶する', description: '記憶した値を返し、変化のできごとを出す。',
       args: [{ name: '値', type: 'number', unit: null }], returns: { type: 'number', unit: null }, async: false }],
     calculations: [
@@ -30,7 +30,7 @@ const AkariOfflineExample = {
 };
 const AkariTextExample = {
   manifest: {
-    id: 'demo.text', version: '1.0.0', apiContract: 1,
+    id: 'demo.text', name: '文字の加工', version: '1.1.0', apiContract: 1,
     standard: { languageContractId: 2, runtimeContractId: 2 },
     description: '数の実例とは独立した、文字を加工する拡張。',
     dependencies: [], capabilities: [], offline: true, selfContained: true,

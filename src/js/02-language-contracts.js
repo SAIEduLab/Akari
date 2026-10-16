@@ -11,9 +11,14 @@
     return symbols?.allDataNames?.has('拡張') ||
       [...(ctx.localNames || []), ...(ctx.binders || []), ...(ctx.args || [])].includes('拡張');
   }
+  // Code shows the registered Japanese names; the IDs remain accepted when reading code.
+  function extensionLabels(name, calculation) {
+    const [id, operation] = name.split('/'), found = EXTENSION_HOST.describe(name, calculation ? 'calculations' : 'commands');
+    return found ? [found.extensionName, found.displayName] : [id, operation];
+  }
   function extensionSurface(name, calculation, args) {
-    const [id, operation] = name.split('/');
-    return `${calculation ? '拡張計算' : '拡張'}「${id}」「${operation}」（${args.map(x => formatExpression(x)).join('、')}）`;
+    const [extension, operation] = extensionLabels(name, calculation);
+    return `${calculation ? '拡張計算' : '拡張'}「${extension}」「${operation}」（${args.map(x => formatExpression(x)).join('、')}）`;
   }
   function extensionDefaultExpression(shape) {
     if (shape.type === 'number' && shape.unit !== null) return {kind:'QuantityLiteral',unit:shape.unit,value:{kind:'NumberLiteral',value:0}};
@@ -562,7 +567,7 @@
         op: '',
         source: '何もしない',
       },
-      ...EXTENSION_HOST.operations('commands').map(operation => { const [id, member] = operation.name.split('/'); return {id:'ExtensionCommand:'+operation.name,kind:'ExtensionCommand',op:'',source:`拡張「${id}」「${member}」（${operation.args.map(extensionInitialSource).join('、')}）`}; }),
+      ...EXTENSION_HOST.operations('commands').map(operation => ({id:'ExtensionCommand:'+operation.name,kind:'ExtensionCommand',op:'',source:`拡張「${operation.extensionName}」「${operation.displayName}」（${operation.args.map(extensionInitialSource).join('、')}）`})),
     ].map((x) =>
       Object.freeze({
         ...x,

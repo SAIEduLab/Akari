@@ -5,7 +5,7 @@ function createAkariExtensionHost(options) {
   options = options || {};
   const API_CONTRACT = 1;
   const standard = Object.freeze({ languageContractId: 2, runtimeContractId: 2, ...(options.standard || {}) });
-  const records = new Map(), names = new Set(), connections = new Set();
+  const records = new Map(), names = new Set(), labels = new Set(), connections = new Set();
   let session = null, sequence = 0, savedState = {}, sealed = false;
   const fail = (code, message) => { const error = new Error(message); error.code = code; throw error; };
   const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
@@ -94,16 +94,21 @@ function createAkariExtensionHost(options) {
   function register(input, factory) {
     if (session || sealed) fail('E702','起動設定の確定後は拡張を登録できません');
     const manifest = copy(input);
-    if (!keys(manifest,['id','version','apiContract','standard','description','dependencies','capabilities','offline','selfContained','state','commands','calculations','events']) ||
+    if (!keys(manifest,['id','version','apiContract','standard','description','dependencies','capabilities','offline','selfContained','state','commands','calculations','events'],['name']) ||
       !identifier(manifest.id) || !version(manifest.version) || manifest.apiContract !== API_CONTRACT ||
       canonical(manifest.standard) !== canonical(standard) || typeof manifest.description !== 'string' ||
       typeof manifest.offline !== 'boolean' || typeof manifest.selfContained !== 'boolean' ||
       !Array.isArray(manifest.dependencies) || !Array.isArray(manifest.capabilities) ||
       manifest.capabilities.some(value => typeof value !== 'string' || !value || value.startsWith('rpc.') || value.startsWith('akari.')) ||
       new Set(manifest.capabilities).size !== manifest.capabilities.length ||
-      !keys(manifest.state,['formatVersion','initial']) || !Number.isSafeInteger(manifest.state.formatVersion) || manifest.state.formatVersion < 1 ||
+      !keys(manifest.state,['formatVersion','initial'],['persist']) || !Number.isSafeInteger(manifest.state.formatVersion) || manifest.state.formatVersion < 1 ||
+      (own(manifest.state,'persist') && !['run','project'].includes(manifest.state.persist)) ||
       typeof factory !== 'function') fail('E701','拡張の登録情報が不正です');
     if (records.has(manifest.id)) fail('E702', `拡張「${manifest.id}」は登録済みです`);
+    if (own(manifest,'name') && (typeof manifest.name !== 'string' || !manifest.name.trim() || manifest.name !== manifest.name.trim() ||
+      manifest.name.length > 60 || /[\r\n「」]/.test(manifest.name) || manifest.name === manifest.id || (options.reservedNames || []).includes(manifest.name)))
+      fail('E702','拡張の日本語名が不正です');
+    if (labels.has(manifest.id) || (own(manifest,'name') && labels.has(manifest.name))) fail('E702','拡張のIDまたは日本語名が重複しています');
     const dependencyIds = new Set();
     for (const dependency of manifest.dependencies) {
       if (!keys(dependency,['id','version','contentHash']) || !identifier(dependency.id) || !version(dependency.version) ||
@@ -142,6 +147,7 @@ function createAkariExtensionHost(options) {
     const contentHash = sha256(canonical(manifest) + '\n' + factorySource);
     records.set(manifest.id,{manifest:freeze(manifest),factory,factorySource,contentHash});
     proposedNames.forEach(name => names.add(name));
+    labels.add(manifest.id); if (own(manifest,'name')) labels.add(manifest.name);
     savedState[manifest.id] = copy(manifest.state.initial);
     return Object.freeze({id:manifest.id,version:manifest.version,contentHash});
   }
@@ -151,10 +157,18 @@ function createAkariExtensionHost(options) {
     return [...records.values()].flatMap(record => record.manifest[key].map(operation => freeze({
       ...copy(operation), displayName:operation.name, name:record.manifest.id+'/'+operation.id,
       qualifiedName:record.manifest.id+'/'+operation.id, extensionId:record.manifest.id, kind:key,
+      extensionName:record.manifest.name || record.manifest.id,
     })));
   }
   function describe(name, kind) {
     return operations(kind).find(operation => operation.name === name) || null;
+  }
+  // Code may name an extension and an operation by ID or by the registered Japanese name.
+  function resolve(extension, operation, kind) {
+    const key = kindKey(kind); if (!key) fail('E701','拡張の機能区分が不正です');
+    const record = records.get(extension) || [...records.values()].find(item => item.manifest.name === extension);
+    const found = record && (record.manifest[key].find(item => item.id === operation) || record.manifest[key].find(item => item.name === operation));
+    return found ? record.manifest.id + '/' + found.id : null;
   }
   function locate(name, kind) {
     const operation = describe(name,kind); if (!operation) fail('E703',`拡張機能「${name}」がありません`);
@@ -188,6 +202,8 @@ function createAkariExtensionHost(options) {
       Promise.resolve(result).then(value=>{cleanup();try{active(current);resolve(valueCheck(value,operation.returns));}catch(error){reject(error);}},error=>{cleanup();reject(error);});
     });
   }
+  const persists = record => record.manifest.state.persist === 'project';
+  const initialOf = record => copy(record.manifest.state.initial);
   function restoreState(input) {
     if (session) fail('E706','実行中の拡張状態は復元できません');
     if (!Array.isArray(input)) fail('E701','拡張状態の一覧が不正です');
@@ -196,13 +212,22 @@ function createAkariExtensionHost(options) {
       if (!keys(item,['id','formatVersion','value']) || found.has(item.id)) fail('E701','拡張状態が不正または重複しています');
       const record = records.get(item.id);
       if (!record || item.formatVersion !== record.manifest.state.formatVersion) fail('E703','拡張状態の版が一致しません');
-      found.add(item.id); next[item.id] = copy(item.value);
+      found.add(item.id); const value = copy(item.value); next[item.id] = persists(record) ? value : initialOf(record);
     }
     savedState = next;
   }
   function snapshotState() {
     return [...records.values()].map(record=>({id:record.manifest.id,formatVersion:record.manifest.state.formatVersion,
-      value:copy((session?session.state:savedState)[record.manifest.id])}));
+      value:persists(record)?copy((session?session.state:savedState)[record.manifest.id]):initialOf(record)}));
+  }
+  function stateInfo() {
+    return [...records.values()].map(record=>({id:record.manifest.id,name:record.manifest.name||record.manifest.id,
+      formatVersion:record.manifest.state.formatVersion,persist:persists(record)?'project':'run'}));
+  }
+  function resetState(id) {
+    if (session) fail('E706','実行中の拡張状態は戻せません');
+    if (id !== undefined && !records.has(id)) fail('E703',`拡張「${id}」がありません`);
+    for (const record of records.values()) if (id === undefined || record.manifest.id === id) savedState[record.manifest.id] = initialOf(record);
   }
   function initialState() {
     return [...records.values()].map(record=>({id:record.manifest.id,formatVersion:record.manifest.state.formatVersion,
@@ -210,7 +235,7 @@ function createAkariExtensionHost(options) {
   }
   function endSession() {
     const old=session; if(!old)return;
-    if(old.initialized)savedState=copy(old.state);
+    if(old.initialized)for(const record of records.values())savedState[record.manifest.id]=persists(record)?copy(old.state[record.manifest.id]):initialOf(record);
     session=null; connections.forEach(connection=>connection.close('session ended')); old.controller.abort();
     for(const instance of old.instances.values()) try {
       const result=instance.dispose?.(); if(result?.then)Promise.resolve(result).catch(error=>options.onError?.(error));
@@ -223,7 +248,8 @@ function createAkariExtensionHost(options) {
       fail('E707','実行sessionの能力はホストが明示的に許可します');
     if(session)endSession();
     if(settings.state!==undefined)restoreState(settings.state);
-    const current={id:'session-'+(++sequence),controller:new AbortController(),instances:new Map(),state:copy(savedState),
+    const current={id:'session-'+(++sequence),controller:new AbortController(),instances:new Map(),
+      state:Object.fromEntries([...records.values()].map(record=>[record.manifest.id,persists(record)?copy(savedState[record.manifest.id]):initialOf(record)])),
       capabilities:[...capabilities],onEvent:settings.onEvent};
     session=current;
     try {
@@ -281,6 +307,38 @@ function createAkariExtensionHost(options) {
     }
     if(own(envelope,'profile')&&options.validateProfileRequirement)options.validateProfileRequirement(envelope.profile);
     return true;
+  }
+  // A work recorded with an older release of a registered extension can be opened with the newer
+  // release when the major version, Japanese names and state format are kept: same ID, same major
+  // version, a strictly newer major.minor.patch (no pre-release), and the same state formatVersion
+  // for state kept in the work. Anything else is rejected exactly as validateRequirements does.
+  function upgradeRequirements(envelope) {
+    const parts = value => /^[0-9]+\.[0-9]+\.[0-9]+$/.test(value) ? value.split('.').map(Number) : null;
+    const newer = (current, recorded) => { const a = parts(current), b = parts(recorded);
+      if (!a || !b || a[0] !== b[0]) return false;
+      for (let i = 1; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i];
+      return false; };
+    if (!plain(envelope) || !Array.isArray(envelope.required)) return validateRequirements(envelope);
+    const upgrades = [], required = envelope.required.map(item => {
+      const found = plain(item) && records.get(item.id);
+      if (!found || (found.manifest.version === item.version && found.contentHash === item.contentHash)) return item;
+      if (!newer(found.manifest.version, item.version)) return item;
+      const recordedState = Array.isArray(envelope.state) ? envelope.state.find(value => plain(value) && value.id === item.id) : null;
+      if (persists(found) && recordedState && recordedState.formatVersion !== found.manifest.state.formatVersion) return item;
+      upgrades.push({id:found.manifest.id,name:found.manifest.name||found.manifest.id,from:item.version,to:found.manifest.version});
+      return {id:found.manifest.id,version:found.manifest.version,contentHash:found.contentHash};
+    });
+    const upgraded = {...envelope, required};
+    if (upgrades.length) {
+      const declared = new Set(required.flatMap(item => records.get(item.id)?.manifest.capabilities || []));
+      upgraded.capabilities = [...declared].sort();
+      if (Array.isArray(envelope.state)) upgraded.state = envelope.state.map(item => {
+        const record = plain(item) && upgrades.some(value => value.id === item.id) && records.get(item.id);
+        return record ? {id:item.id,formatVersion:record.manifest.state.formatVersion,value:persists(record)?item.value:initialOf(record)} : item;
+      });
+    }
+    validateRequirements(upgraded);
+    return {envelope:copy(upgraded),upgrades};
   }
   function exportDefinitions() {
     return [...records.values()].map(record=>{
@@ -446,7 +504,7 @@ function createAkariExtensionHost(options) {
   return Object.freeze({apiContract:API_CONTRACT,standard,register,operations,describe,seal(){sealed=true;},get sealed(){return sealed;},
     invokeCalculation:(name,args,context)=>invoke(name,'calculations',args,context),
     invokeCommand:(name,args,context)=>invoke(name,'commands',args,context),
-    beginSession,endSession,requirements,validateRequirements,initialState,snapshotState,restoreState,exportDefinitions,connectWindow,
+    resolve,beginSession,endSession,requirements,validateRequirements,upgradeRequirements,initialState,snapshotState,restoreState,resetState,stateInfo,exportDefinitions,connectWindow,
     get sessionId(){return session?.id||null;},get active(){return !!session;}});
 }
 if (typeof globalThis !== 'undefined') globalThis.createAkariExtensionHost = createAkariExtensionHost;

@@ -14,9 +14,11 @@ export interface ExtensionEvent { id: string; name: string; description: string;
 export interface Standard { languageContractId: number; runtimeContractId: number }
 export interface Identity { id: string; version: string; contentHash: string }
 export interface Manifest {
-  id: string; version: string; apiContract: 1; standard: Standard; description: string;
+  /** Japanese extension name shown in code and blocks; IDs remain accepted when reading code. */
+  id: string; name?: string; version: string; apiContract: 1; standard: Standard; description: string;
   dependencies: Identity[]; capabilities: string[]; offline: boolean; selfContained: boolean;
-  state: { formatVersion: number; initial: Json };
+  /** persist: "run" (default) starts every run from initial; "project" keeps the state in the work. */
+  state: { formatVersion: number; initial: Json; persist?: 'run' | 'project' };
   commands: Operation[]; calculations: Operation[]; events: ExtensionEvent[];
 }
 export interface StateRecord { id: string; formatVersion: number; value: Json }
@@ -47,19 +49,27 @@ export interface Instance {
 }
 export type Factory = (api: FactoryApi) => Instance;
 export type OperationKind = 'command' | 'calculation' | 'event' | 'commands' | 'calculations' | 'events';
-export type Description = (Operation | ExtensionEvent) & { extensionId: string; name: string; qualifiedName: string; displayName: string; kind: string };
+export type Description = (Operation | ExtensionEvent) & { extensionId: string; extensionName: string; name: string; qualifiedName: string; displayName: string; kind: string };
+export interface Upgrade { id: string; name: string; from: string; to: string }
+export interface StateInfo { id: string; name: string; formatVersion: number; persist: 'run' | 'project' }
 export interface ExtensionHost {
   readonly apiContract: 1; readonly standard: Standard; readonly active: boolean; readonly sessionId: string | null; readonly sealed: boolean;
   register(manifest: Manifest, factory: Factory): Identity;
   seal(): void;
   operations(kind: OperationKind): Description[];
   describe(qualifiedName: string, kind: OperationKind): Description | null;
+  /** Map an extension ID or Japanese name and an operation ID or Japanese name to the qualified name. */
+  resolve(extension: string, operation: string, kind: OperationKind): string | null;
   invokeCalculation(qualifiedName: string, args: Value[], context?: Partial<InvokeContext>): Value;
   invokeCommand(qualifiedName: string, args: Value[], context?: Partial<InvokeContext>): Value | null | Promise<Value | null>;
   beginSession(settings?: { state?: StateRecord[]; onEvent?: (event: EventDelivery) => void; capabilities?: string[] }): string;
   endSession(): void;
   requirements(): Requirements; validateRequirements(envelope: Requirements): true;
+  /** Rewrite a work's requirements recorded with an older release of the same major version. */
+  upgradeRequirements(envelope: Requirements): { envelope: Requirements; upgrades: Upgrade[] };
   initialState(): StateRecord[]; snapshotState(): StateRecord[]; restoreState(state: StateRecord[]): void;
+  /** Return kept ("project") state to the initial value while no session runs. */
+  resetState(id?: string): void; stateInfo(): StateInfo[];
   exportDefinitions(): { manifest: Manifest; factorySource: string; contentHash: string }[];
   connectWindow(targetWindow: Window, settings: { origin: string; capabilities?: string[]; timeoutMs?: number }): Promise<Connector>;
 }

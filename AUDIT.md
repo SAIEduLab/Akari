@@ -540,6 +540,9 @@ GA-STATICは公開入力集合・構文・release freeze、SEMANTICは一覧と�
 | EXT11 | 通信遮断で隠さず実際の通信を観測 | EXTENSION-STANDARD-NO-NETWORK / DERIVED-NO-NETWORK / OFFLINE-STANDALONE | GA-EXEC |
 | EXT12 | 必須結果・artifact・snapshot・run照合 | extension-foundation-negative、verify-gate-results | GA-STATIC |
 | EXT13 | 公開型・ガイド・独立実例による再現 | EXTENSION-INDEPENDENT-CALCULATIONS / OFFLINE-STANDALONE、EXTENSIONS.md | HYBRID |
+| EXT14 | 状態の寿命。既定は実行ごとに初期状態、`"project"` だけ作品に保持し、止まっている間だけ初期状態へ戻せる | EXTENSION-STATE-LIFETIME / COMMAND-EVENT-STATE | GA-EXEC |
+| EXT15 | 日本語の拡張名・機能名とIDの表記が同じASTになり、整形は日本語名を出す。名前の重複・不正を拒否 | EXTENSION-JAPANESE-NAMES / LANGUAGE-BLOCK-ROUNDTRIP | GA-EXEC |
+| EXT16 | 同じメジャー版の新しい版だけ確認のうえで開き、同じ版の内容違い・新しすぎる版・別メジャー・pre-release・状態形式違いを拒否 | EXTENSION-VERSION-UPGRADE / UPGRADE-OPEN-CONFIRM / FAILED-IMPORT-PRESERVES-EDITOR | GA-EXEC |
 
 試験入口は `audit/tests/extension-foundation.mjs`。固定Playwright・Chromeで本体、派生editor、書出しplayer、外部popupを動かす。通信観測はoffline設定やroute.abortを入れず、HTTP要求・socket作成・pageerrorを記録する。観測を避けるための事前遮断はこの試験の証拠にしない。
 

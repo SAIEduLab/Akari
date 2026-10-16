@@ -25,13 +25,15 @@ await buildDerivedProduct({
 
 生成した派生HTMLだけで編集・実行できます。標準の利用にNode.jsやビルド補助を要求しません。製品を直接フォークして変更する場合も、`configureAkariFoundation()` の起動設定へ同じ登録情報とfactoryを含めます。登録はエディタの文型・ブロック表を作る前に完了し、起動後の `Akari.extensions` は登録を確定したホストです。後から任意のJavaScriptをインストールする管理画面は提供しません。
 
-追加命令と計算の日本語表記は、拡張IDと機能IDを明示します。
+追加命令と計算は、登録した日本語の拡張名と機能名で書きます。ブロックと同じ名前なので、ブロックからコードへ切り替えても表記が変わりません。
 
 ```text
-拡張「demo.offline」「remember」（9）
-拡張計算「demo.offline」「double」（7）を言う
-拡張計算「demo.text」「shout」（「hello」）を言う
+拡張「数の記憶」「数を記憶する」（9）
+拡張計算「数の記憶」「数を2倍にする」（7）を言う
+拡張計算「文字の加工」「文字にびっくりを付ける」（「hello」）を言う
 ```
+
+`拡張「demo.offline」「remember」（9）` のように拡張ID・機能IDで書いた本文も同じ命令として読みます。整形とブロックからのコード生成は日本語名で出力します。日本語の拡張名（manifestの `name`）を登録していない拡張は、拡張名の位置に拡張IDを出力します。
 
 登録された命令・計算のブロックも同じ定義を使います。入力欄の名前・個数・型・単位はmanifestから決まります。できごとは `extension-id/event-id` で識別され、製品の知らせの入口へ接続されます。できごとの値の読み方ときっかけの表記はLANGUAGEを参照してください。
 
@@ -42,6 +44,7 @@ await buildDerivedProduct({
 | 項目 | 契約 |
 | --- | --- |
 | `id`、機能の `id` | 小文字英字で始まるASCII識別子。英小文字・数字と `. _ -` の区切り、120文字以内 |
+| `name` | 任意。コードとブロックに出す日本語の拡張名。60文字以内で「」・改行を含めず、ほかの拡張のID・日本語名、標準の予約名と重ならない |
 | `version` | `major.minor.patch`、任意のpre-release/build記録 |
 | `apiContract` | `1` |
 | `standard` | 基礎Standardの `languageContractId` と `runtimeContractId`。製品版とは独立 |
@@ -49,7 +52,7 @@ await buildDerivedProduct({
 | `capabilities` | 明示許可が必要なコネクタ機能名。`rpc.`、`akari.` を使わない |
 | `offline` | 本体に含めた処理とローカルデータだけで動く場合 `true` |
 | `selfContained` | 処理factoryを実行HTMLに含められる場合 `true` |
-| `state` | 状態形式の正整数 `formatVersion` とJSONの `initial` |
+| `state` | 状態形式の正整数 `formatVersion`、JSONの `initial`、任意の `persist`（`"run"` 既定、または `"project"`） |
 | `commands`、`calculations` | `id/name/description/args/returns/async`。任意の `capability` |
 | `events` | `id/name/description/payload` |
 
@@ -58,6 +61,13 @@ await buildDerivedProduct({
 同じ拡張IDの再登録、機能ID・日本語名の重複、標準の予約名との衝突、契約不一致、依存先不足を診断します。登録失敗では登録表を変更しません。登録名を固定された標準の文型に差し込むことはできません。
 
 登録時に、キーを整列したmanifestとfactoryの `Function.prototype.toString()` の間へ改行を一つ入れたUTF-8列のSHA-256を求めます。これが `contentHash` です。ID・版が同じでも内容hashが違えば復元を拒否します。factoryの空白やコメント変更も同一性に影響します。
+
+### 版の運用
+
+- 公開した拡張のmanifestとfactoryの文字列は固定します。圧縮・整形・コメント除去などの加工は `contentHash` を求める前に済ませ、公開後に加工し直しません。
+- 空白一つでも変えたら版を上げます。同じ版で内容が違う拡張は、作品を開くときに拒否されます。
+- 同じメジャー版の中では、拡張ID、機能ID、日本語の拡張名・機能名、引数の個数・型・単位、作品に保存する状態の `formatVersion` を変えません。変える場合はメジャー版を上げます。
+- 製品は、作品に記録した版より新しい同じメジャー版の拡張が登録されていれば、確認したうえで新しい版で作品を開けます（後述）。
 
 ## factoryと実行の寿命
 
@@ -74,15 +84,17 @@ factoryは `{commands, calculations, initialize?, dispose?}` を返します。�
 
 計算は `async:false` とし、即座に既存型の値を返します。命令は `async:true` ならPromiseを返せます。待機は呼出元の処理だけを止め、ほかのできごとや停止操作を処理します。長時間処理は `context.signal` を確認し、timer・外部要求を取り消してください。同期の無限ループを契約外のJavaScriptから強制停止する保証はありません。
 
-停止はsessionのsignalをabortし、保留要求・接続・遅延結果を破棄します。古いfactory APIは状態変更やできごと送信を拒否します。停止前に確定した拡張状態は次のsnapshotへ保持します。初期化失敗の部分的な状態変更は保持しません。別作品へ状態を漏出させないため、製品は作品に保存した状態、または `initialState()` の初期状態を明示してsessionを開始します。製品の一時停止中は結果とできごとを順番に滞留させ、再開後に処理します。滞留の上限・流量とエラー扱いはLANGUAGEに従います。
+停止はsessionのsignalをabortし、保留要求・接続・遅延結果を破棄します。古いfactory APIは状態変更やできごと送信を拒否します。拡張の状態の寿命は `state.persist` で決めます。既定の `"run"` では、作品の変数と同じく、実行ごとに `initial` から始まり、`snapshotState()` も `initial` を返します。子どもが「動かす」「最初に戻す」で予想するとおりに戻る値です。`"project"` は、ハイスコアや機器の設定のように作品に残す値に使います。停止前に確定した状態を次のsnapshotと作品へ保持し、製品は止まっている間「動きのようす」に表示して、`resetState()` で初期状態に戻すボタンを出します。初期化失敗の部分的な状態変更は保持しません。別作品へ状態を漏出させないため、製品は作品に保存した状態、または `initialState()` の初期状態を明示してsessionを開始します。製品の一時停止中は結果とできごとを順番に滞留させ、再開後に処理します。滞留の上限・流量とエラー扱いはLANGUAGEに従います。
 
-`beginSession({state,onEvent,capabilities})` はsession IDを返し、`onEvent` は `{name,payload,sessionId,connectionId?,sequence?}` を受け取ります。製品はこの通知をschedulerへ渡します。`endSession()` は取消・破棄を行います。`operations(kind)` と `describe('id/member',kind)` は処理を実行せず説明情報を返します。機能区分は単数・複数の `command/calculation/event` を使えます。
+`resolve(拡張, 機能, kind)` は拡張ID・日本語の拡張名と機能ID・日本語の機能名から `'id/member'` を返し、見つからなければ `null` を返します。`stateInfo()` は各拡張の状態の寿命を返します。`beginSession({state,onEvent,capabilities})` はsession IDを返し、`onEvent` は `{name,payload,sessionId,connectionId?,sequence?}` を受け取ります。製品はこの通知をschedulerへ渡します。`endSession()` は取消・破棄を行います。`operations(kind)` と `describe('id/member',kind)` は処理を実行せず説明情報を返します。機能区分は単数・複数の `command/calculation/event` を使えます。
 
 ## 保存と実行HTML
 
 `requirements()` はAPI契約・Standard契約・必要拡張Identity・必要能力を返し、`validateRequirements(envelope)` は既知の版・内容・依存関係を照合します。保存のenvelopeはこの情報に `state` と選択した `profile` を含めます。stateには必要拡張ごとの `{id,formatVersion,value}` を一つずつ記録し、不足・重複・余分な状態・版不一致・JSON以外の値を拒否します。プロファイルの照合はホスト側のprofile registryが担当します。`snapshotState()` と `restoreState(records)` は同じ状態一覧を扱います。
 
 標準作品には拡張の記録を追加しません。拡張作品には必要情報とJSON状態を記録し、作品ファイルから処理コード・profile・通信許可を自動導入しません。不足・不一致は現在作品を置き換える前に診断します。
+
+`upgradeRequirements(envelope)` は、作品に記録した拡張が登録中の同じIDより古い版で、メジャー版が同じ、pre-release記号がなく、`"project"` の状態の `formatVersion` が一致する場合だけ、現在の版・内容hashに書き換えたenvelopeと変化の一覧 `{id,name,from,to}` を返します。`"run"` の状態は初期状態に置き換えます。それ以外は `validateRequirements` と同じく拒否します。製品はこの一覧を示して確認し、了承したときだけ作品を開きます。
 
 `exportDefinitions()` は `{manifest,factorySource,contentHash}` を返します。ビルド・書き出しはfactoryを **関数のリテラル** としてinline scriptへ含め、保存ファイル由来の文字列を `eval` や `new Function` で実行しません。factoryは外側の変数へ依存せず、終了scriptタグを含めません。生成HTMLを別ブラウザーcontextで実行して、独立性を確認してください。外部依存型は処理コードを含められても、別の接続用ページやサービスへの明示接続が必要です。
 
