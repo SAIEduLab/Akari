@@ -571,7 +571,7 @@ button:focus-visible {
   font-weight: 700;
 }
 .run-off {
-  color: var(--danger);
+  color: var(--muted);
   font-weight: 700;
 }
 #fileInput {
@@ -1347,8 +1347,8 @@ body {
   display: none;
 }
 .blockui-error {
-  color: #9f281e !important;
-  background: #fff0eb !important;
+  color: #9f281e;
+  background: #fff0eb;
 }
 .blockui-layout {
   display: grid;
@@ -1953,18 +1953,18 @@ body {
 }
 .blockui-current {
   outline: 4px solid #efb425 !important;
-  box-shadow: 0 0 0 6px #fff3b1 !important;
+  box-shadow: 0 0 0 6px #fff3b1;
 }
 .blockui-chosen-destination {
   outline: 2px dashed #557e3c;
   outline-offset: 2px;
 }
 .blockui-drop-preview {
-  outline: 3px solid #238557 !important;
+  outline: 3px solid #238557;
   background: #cdefd8 !important;
 }
 .blockui-drop-invalid {
-  outline: 3px dashed #ad4634 !important;
+  outline: 3px dashed #ad4634;
   background: #ffe4dc !important;
 }
 .blockui-dragging {
@@ -2692,7 +2692,7 @@ body[data-editor-mode] .menutool > button {
 }
 body[data-editor-mode] #projectName {
   height: 36px !important;
-  width: 220px !important;
+  width: 220px;
   max-width: 240px;
   min-width: 130px;
   margin-left: auto !important;
@@ -2967,14 +2967,14 @@ body[data-editor-mode] .debugbar :is(#undoBtn, #redoBtn):focus-visible {
   outline: 3px solid #0b3c5d;
   outline-offset: 2px;
 }
-#undoBtn {
+#undoBtn, #redoBtn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   min-height: 36px;
   padding: 5px 9px;
 }
-#undoBtn svg { width: 22px; height: 22px; flex-shrink: 0; }
+:is(#undoBtn, #redoBtn) svg { width: 22px; height: 22px; flex-shrink: 0; }
 #procModal > .dialog > .win-title {
   display: flex;
   align-items: center;
@@ -3450,7 +3450,7 @@ body[data-editor-mode="blocks"] .prop-name {
 .blockui-palette {
   display: grid;
   grid-template-columns: 82px minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   padding: 0;
   overflow: hidden;
   border-right: 1px solid #d6e0e9;
@@ -3545,6 +3545,16 @@ body[data-editor-mode="blocks"] .prop-name {
   border-color: #bbcdda;
   box-shadow: 0 2px 4px #21384a11;
   color: var(--blockui-ink);
+}
+.blockui-palette > .blockui-paging {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-top: 1px solid #e5ebf0;
+  background: #fff;
 }
 .blockui-palette-list {
   grid-column: 2;
@@ -3945,8 +3955,8 @@ body[data-editor-mode="blocks"] .prop-name {
 .blockui-world .blockui-insertion {
   position: relative;
   z-index: 3;
-  height: 28px !important;
-  min-height: 28px !important;
+  height: 28px;
+  min-height: 28px;
   margin: 0;
   padding: 0;
   line-height: 26px;
@@ -4142,7 +4152,7 @@ body[data-editor-mode="blocks"] .prop-name {
   pointer-events: none !important;
   transform-origin: 0 0;
   overflow: visible !important;
-  background: transparent !important;
+  background: transparent;
   border: 0 !important;
   opacity: 0.88;
   filter: drop-shadow(3px 9px 6px #102b4545);
@@ -4152,7 +4162,7 @@ body[data-editor-mode="blocks"] .prop-name {
   min-height: 0;
 }
 .blockui-drag-ghost * {
-  pointer-events: none !important;
+  pointer-events: none;
 }
 .blockui-drag-ghost > .blockui-node {
   display: inline-grid;
@@ -4186,7 +4196,7 @@ body[data-editor-mode="blocks"] .prop-name {
   font-weight: 700;
 }
 .blockui-library-hidden .blockui-layout {
-  grid-template-columns: 0 minmax(0, 1fr) !important;
+  grid-template-columns: 0 minmax(0, 1fr);
 }
 .blockui-library-hidden .blockui-palette {
   visibility: hidden;
@@ -4332,8 +4342,8 @@ body[data-editor-mode="blocks"] .objects-window .tree {
   gap: 7px;
   flex-wrap: wrap;
   padding: 10px;
-  flex: 1 1 65px;
-  min-height: 65px;
+  flex: 1 1 140px;
+  min-height: 140px;
   overflow: auto;
 }
 /* Keep the complete action area reachable independently from the component list. */
@@ -4746,7 +4756,7 @@ body[data-editor-mode="code"] #componentActions,
   .blockui-editor * {
     scroll-behavior: auto !important;
     transition: none !important;
-    animation: none !important;
+    animation: none;
   }
 }
 .blockui-drag-ghost .blockui-ghost-world {
@@ -4907,7 +4917,7 @@ body[data-editor-mode] .designer-wrap {
 /* Design-only resize controls; the shared stage renderer never exports them. */
 .component.design-selected::before,
 .component.design-selected::after {
-  display: none !important;
+  display: none;
 }
 #formSurface .design-resize-outline {
   position: absolute;
@@ -5453,22 +5463,7 @@ body[data-editor-mode="code"] .side:has(.monitor-window .output-disclosure[open]
 body[data-editor-mode] #codeIssue.issue-error { font-size:13px; min-width:0; max-width:100%; overflow:visible; }
 body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction:column; align-items:stretch; max-height:min(260px,35vh); overflow:auto; }
 
-</style>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<style id="ux-repair-readability">
+/* ── Workspace readability: block workspace controls, palette and bubble layout ── */
 /* Controls occupy their own row; scrolling content never sits behind them. */
 .blockui-workspace-shell { display:grid !important; grid-template-rows:minmax(0,1fr) auto; }
 .blockui-workspace-shell > .blockui-workspace { position:relative; inset:auto; min-height:0; grid-row:1; }
@@ -5511,7 +5506,7 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction
 .blockui-palette-options[open] { position:static; flex:1 1 100%; box-sizing:border-box; min-width:0; max-width:100%; }
 .blockui-palette-options[open] select { width:100%; max-width:100%; }
 .blockui-palette-tools { grid-column:1/-1; grid-row:1; min-width:0; width:100%; }
-.blockui-palette-controls[hidden] { display:none !important; }
+.blockui-palette-controls[hidden] { display:none; }
 [data-blockui-action="palette-tools-toggle"] { width:100%; flex:none; }
 #runtimeInspector { width:min(1180px,96vw); height:92dvh; max-height:96dvh; box-sizing:border-box; padding:10px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
 #runtimeInspector[open] { display:flex; flex-direction:column; gap:8px; }
@@ -5519,12 +5514,12 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction
 .runtime-inspector-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex:none; }
 #runtimeInspectorModes { margin-left:auto; }
 #runtimeInspectorBody { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:8px; flex:1; min-height:0; overflow:auto; }
-#runtimeInspectorBody > .codewin { display:flex !important; min-height:0 !important; min-width:0; overflow:auto; }
+#runtimeInspectorBody > .codewin { display:flex; min-height:0; min-width:0; overflow:auto; }
 #runtimeInspectorBody .debugbar { padding:6px; flex:none; }
 #runtimeInspectorBody .editor-shell { flex:1; min-height:160px; }
 #runtimeInspectorBody #blockEditor { flex:1; min-height:260px; }
-#runtimeInspectorBody .blockui-layout { flex:1; min-height:0 !important; }
-#runtimeInspectorBody .monitor-window { display:flex !important; min-height:160px; overflow:auto; }
+#runtimeInspectorBody .blockui-layout { flex:1; min-height:0; }
+#runtimeInspectorBody .monitor-window { display:flex; min-height:160px; overflow:auto; }
 @media(max-width:700px) { #runtimeInspectorBody { grid-template-columns:minmax(0,1fr); } #runtimeInspectorModes { margin-left:0; } }
 .blockui-local-help { font-size:12px; max-width:100%; }
 .blockui-local-help p { white-space:normal; line-height:1.6; }
@@ -5539,8 +5534,8 @@ body[data-editor-mode="code"] .editor-shell { min-height:220px; }
 body[data-editor-mode="code"] .code-assist:has(.hints-disclosure[open]) { flex-direction:column; align-items:stretch; }
 body[data-editor-mode="code"] .hints-disclosure[open] > .hint-panel { position:static; max-height:180px; overflow:auto; margin-top:4px; }
 body[data-editor-mode="code"] .codewin:has(.hints-disclosure[open]) { min-height:590px; }
-</style>
-<style id="runtime-readability">
+
+/* ── Runtime readability: playback layout and tutorial targets ── */
 /* Keep playback focused on the scene in either editor mode and preserve debugging controls. */
 body.runtime[data-editor-mode] #app {
   display: grid;
@@ -5560,10 +5555,10 @@ body.runtime[data-editor-mode] .main {
 body.runtime[data-editor-mode] .main > .toolbox,
 body.runtime[data-editor-mode] .main > .codewin,
 body.runtime[data-editor-mode] .main > .side > :not(.designer):not(.monitor-window) {
-  display: none !important;
+  display: none;
 }
 body.runtime[data-editor-mode] .main > .side {
-  display: contents !important;
+  display: contents;
 }
 body.runtime[data-editor-mode] #designerWindow,
 body.runtime[data-editor-mode] .side > #designerWindow {
@@ -5603,7 +5598,7 @@ body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 250px
 body.runtime[data-editor-mode] .main > .side > .monitor-window { display:flex !important; grid-column:2; grid-row:1; min-height:0; height:auto; }
 body.runtime[data-editor-mode] .monitor-window { overflow:auto; }
 body.runtime[data-editor-mode] .monitor-window .output-disclosure { display:block; }
-body.runtime[data-editor-mode] .monitor-window .runtime-monitor { display:block !important; overflow:auto; }
+body.runtime[data-editor-mode] .monitor-window .runtime-monitor { display:block; overflow:auto; }
 body.runtime[data-editor-mode] .monitor-window .blockui-side-toggle { display:none; }
 body.runtime[data-editor-mode] .monitor-window .blockui-side-label { display:block; }
 @media(max-width:650px){body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) 160px auto; }body.runtime[data-editor-mode] .main > .side > .monitor-window { grid-column:1; grid-row:2; }body.runtime[data-editor-mode] .main > .codewin > .debugbar { grid-row:3; }}
@@ -5629,7 +5624,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-workspace:has(.blockui-wor
     grid-template-columns: minmax(0, 1fr) !important;
   }
   body[data-editor-mode="blocks"] #blockEditor .blockui-layout:has(.blockui-world .blockui-field.blockui-editing-field) .blockui-palette {
-    display: none !important;
+    display: none;
   }
   body[data-editor-mode="blocks"] #blockEditor .blockui-workspace { grid-column: 1; }
   body[data-editor-mode="blocks"] .codewin:has(.blockui-world .blockui-field.blockui-editing-field) {
@@ -5644,7 +5639,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 }
 body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.blockui-editing-field > input {
   width: var(--blockui-edit-width, calc(min(56vw, 42rem) * var(--blockui-inverse-scale, 1))) !important;
-  max-width: var(--blockui-edit-width, calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1))) !important;
+  max-width: var(--blockui-edit-width, calc(min(80vw, 42rem) * var(--blockui-inverse-scale, 1)));
   min-width: 0;
   height: calc(46px * var(--blockui-inverse-scale, 1));
   padding: calc(6px * var(--blockui-inverse-scale, 1)) calc(12px * var(--blockui-inverse-scale, 1));
@@ -5745,7 +5740,6 @@ body[data-ui-level="entry"] .side>section:first-child { flex:1; min-height:0; }
 body[data-ui-level="entry"] #componentControls { display:none; }
 body[data-editor-mode] .menutool>.ui-level-label { display:flex; order:0; flex:0 0 auto; margin:0; padding:0; }
 body[data-ui-level="entry"] .menutool :is(#undoBtn,#redoBtn) svg { width:18px; height:18px; flex:none; }
-body[data-ui-level="entry"] .menutool #redoBtn::after { content:'やり直す'; }
 body[data-ui-level="entry"] :is(.toolbox,.side>section:not(:first-child),.debugbar,.source-nav,.code-assist,.console,#scriptAdd,.code-head label:nth-child(2),#basicActionGuide) { display:none; }
 body[data-ui-level="entry"] .menutool>:is(#newBtn,#openBtn,#exportBtn,#resetBtn,#imageObjectAdd,#paintAdd,#soundQuickAdd,#assetBtn,#procBtn,#dataBtn,#diagnoseBtn,.sep) { display:none; }
 body[data-ui-level="entry"] :is(#entryProjectMenu,#tutorialStart) { display:block; }
@@ -5769,10 +5763,10 @@ body[data-ui-level="entry"] .blockui-palette-item { margin:4px; }
 #tutorialGuide p { margin:2px 0; flex:1 1 250px; }
 
 #tutorialText { margin:0; flex:1; min-width:220px; }
-.tutorial-target { outline:3px solid #2357a0 !important; outline-offset:2px; }
+.tutorial-target { outline:3px solid #2357a0; outline-offset:2px; }
 body[data-tutorial-step] .blockui-world .blockui-insertion.tutorial-target {
   background:#e0efff !important; border:2px solid #2357a0;
-  color:#123b72 !important; box-shadow:0 0 0 3px #c7dfff;
+  color:#123b72; box-shadow:0 0 0 3px #c7dfff;
 }
 body[data-tutorial-step] .blockui-palette-item:has(> .tutorial-target) {
   position:sticky; top:6px; bottom:6px; z-index:1;
@@ -5798,8 +5792,8 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin { display:f
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>:not(.debugbar) { display:block !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>:is(.source-nav,.code-assist,.console,[hidden]) { display:none !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#blockEditor { display:flex !important; }
-body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#blockEditor[hidden] { display:none !important; }
-body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>.debugbar { display:none !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#blockEditor[hidden] { display:none; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>.debugbar { display:none; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side { display:flex !important; grid-column:2; grid-row:2; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side>.objects-window { display:flex !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side>:not(.objects-window) { display:none !important; }
@@ -6343,7 +6337,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.2.4';
+  const PRODUCT_RELEASE = '1.2.5';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -6369,8 +6363,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 `;
-  // Deprecated diagnostic alias: its value is the current MIT license.
-  const AKARI_APACHE_LICENSE = AKARI_LICENSE;
 
   // ────────────────────────────────────────────────────────────────────────
   // 01 — Portable execution core (also embedded in exported players)
@@ -29133,13 +29125,9 @@ function createAkariExtensionHost(options) {
         b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="' + path + '"/></svg>';
         b.title = title;
         b.setAttribute('aria-label', title);
-        if (id === 'undoBtn') {
-          const label = document.createElement('span');
-          label.textContent = title;
-          b.append(label);
-          b.style.gap = '5px';
-          b.style.padding = '5px 9px';
-        }
+        const label = document.createElement('span');
+        label.textContent = title;
+        b.append(label);
         $('.debugbar').prepend(b);
       }
       $('.debugbar').append($('#resetBtn'));
@@ -34525,7 +34513,6 @@ function createAkariExtensionHost(options) {
     // Narrow references for diagnostics; no fixtures, test dispatch or mutable app state.
     diagnostics: Object.freeze({
       AKARI_LICENSE,
-      AKARI_APACHE_LICENSE,
       AkariError,
       COLOR_NAMES,
       DEFAULT_MASCOT_ASSET_ID,
