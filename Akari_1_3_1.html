@@ -6441,7 +6441,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.3.0';
+  const PRODUCT_RELEASE = '1.3.1';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -11578,13 +11578,13 @@ function createAkariExtensionHost(options) {
         id: 'SoundCommand:SAMPLE',
         kind: 'SoundCommand',
         op: 'SAMPLE',
-        source: '音「ベル」を鳴らし始める',
+        source: '「ベル」を鳴らし始める',
       },
       {
         id: 'SoundCommand:SAMPLE_WAIT',
         kind: 'SoundCommand',
         op: 'SAMPLE_WAIT',
-        source: '音「ベル」を鳴らす',
+        source: '「ベル」を鳴らす',
       },
       {
         id: 'Break',
@@ -11887,7 +11887,7 @@ function createAkariExtensionHost(options) {
       }
       if (x.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(x.op)) {
         const snd = project.sounds[0];
-        text = `音「${snd?.name || 'ベル'}」を${x.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}`;
+        text = `「${snd?.name || 'ベル'}」を${x.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}`;
         if (!snd) reason = '音を 先に 入れます';
       }
       add(x.id, labels[x.kind] || 'もし・くり返し', text, 'statement', reason);
@@ -12071,6 +12071,15 @@ function createAkariExtensionHost(options) {
       '縦位置',
       'よこのばしょ',
       'たてのばしょ',
+      'すがたの名前',
+      'すがたの番号',
+      'はいけいの名前',
+      'はいけいの番号',
+      '受けた合図',
+      'おされたキー',
+      '前の中身',
+      '新しい中身',
+      'あまり',
       '方向',
       '大きさ',
       '答え',
@@ -12141,7 +12150,23 @@ function createAkariExtensionHost(options) {
   const BUILTIN_NAMES = new Set(BUILTIN_META.keys());
   const FIXED_SENSORS = [...GRAMMAR_REGISTRY.sensors];
   // Written words of sensors whose internal name differs (the standard spelling the formatter writes).
-  const SENSOR_SURFACES = Object.freeze({ 'クローンである': 'コピーである', '横位置': 'よこのばしょ', '縦位置': 'たてのばしょ' });
+  const SENSOR_SURFACES = Object.freeze({
+    'クローンである': 'コピーである', '横位置': 'よこのばしょ', '縦位置': 'たてのばしょ',
+    'マウスの横位置': 'マウスのよこのばしょ', 'マウスの縦位置': 'マウスのたてのばしょ', 'マウスが押されている': 'マウスがおされている',
+    '衣装名': 'すがたの名前', '衣装番号': 'すがたの番号', '背景名': 'はいけいの名前', '背景番号': 'はいけいの番号',
+    '以前の背景名': '前のはいけいの名前', '新しい背景名': '新しいはいけいの名前', '受け取った知らせ': '受けた合図',
+    '押されたキー': 'おされたキー', '以前の値': '前の中身', '新しい値': '新しい中身', '音程': '音の高さ', '音量': '音の大きさ',
+  });
+  // Internal names that are no longer read in code (the owner cut them); the others stay readable.
+  const SENSOR_CUT_WORDS = Object.freeze(['クローンである']);
+  // Block names: the written word, with spaces where a child reads them in pieces.
+  const SENSOR_LABELS = Object.freeze({
+    'マウスの横位置': 'マウスの よこのばしょ', 'マウスの縦位置': 'マウスの たてのばしょ', 'マウスが押されている': 'マウスが おされている',
+    '以前の背景名': '前の はいけいの名前', '新しい背景名': '新しい はいけいの名前',
+  });
+  // Builtin calculations whose written word differs from the internal name.
+  const BUILTIN_SURFACES = Object.freeze({ '余り': 'あまり' });
+  const BUILTIN_LABELS = Object.freeze({ '数': '数に直す', '文字': '文字に直す', '乱数': 'AからBのどれか', '余り': 'あまり' });
   const GRAMMAR_HINTS = GRAMMAR_REGISTRY.hints;
 
   // Ephemeral UTF-16 source coordinates. Never serialized or part of the semantic AST.
@@ -12256,7 +12281,7 @@ function createAkariExtensionHost(options) {
         'F503',
         `\u540d\u524d\u300c${name}」には 使えない 文字が あります。空白や 「」【】（）［］、※ を けしてね`,
       );
-    if (callable && BUILTIN_NAMES.has(name))
+    if (callable && (BUILTIN_NAMES.has(name) || Object.values(BUILTIN_SURFACES).includes(name)))
       throw new AkariError('F503', `「${name}」はあかりが用意している計算の名前です`);
     return name;
   }
@@ -16005,14 +16030,14 @@ function createAkariExtensionHost(options) {
         return exprNode('NumberLiteral', { value });
       }
       // Sensors are read by their written words; a few internal names are written differently.
-      for (const [surface, sensor] of [...FIXED_SENSORS.filter((s) => !SENSOR_SURFACES[s]).map((s) => [s, s]), ...Object.entries(SENSOR_SURFACES).map(([s, w]) => [w, s]), ['横位置', '横位置'], ['縦位置', '縦位置']].sort((a, b) => b[0].length - a[0].length)) {
+      for (const [surface, sensor] of [...FIXED_SENSORS.filter((s) => !SENSOR_CUT_WORDS.includes(s)).map((s) => [s, s]), ...Object.entries(SENSOR_SURFACES).map(([s, w]) => [w, s])].sort((a, b) => b[0].length - a[0].length)) {
         if (this.starts(surface) && nameBoundary(this.text, this.i + surface.length)) {
           this.i += surface.length;
           return exprNode('SensorRead', { sensor });
         }
       }
-      const mouseNot = '\u30de\u30a6\u30b9\u304c\u62bc\u3055\u308c\u3066\u3044\u306a\u3044';
-      if (this.starts(mouseNot) && nameBoundary(this.text, this.i + mouseNot.length)) {
+      const mouseNot = ['マウスがおされていない', '\u30de\u30a6\u30b9\u304c\u62bc\u3055\u308c\u3066\u3044\u306a\u3044'].find((w) => this.starts(w) && nameBoundary(this.text, this.i + w.length));
+      if (mouseNot) {
         this.i += mouseNot.length;
         return exprNode('UnaryExpression', {
           op: 'NOT',
@@ -16035,8 +16060,10 @@ function createAkariExtensionHost(options) {
       if (EXTENSION_HOST.operations('events').length && this.starts('拡張の値') && !extensionValueIsData(this.symbols, this.ctx)) {
         this.i += '拡張の値'.length; return exprNode('SensorRead', { sensor: '拡張の値' });
       }
-      const builtin = [...BUILTIN_NAMES].sort((a,b) => b.length-a.length).find(name => this.starts(name+'（'));
-      const token = builtin ? {name:builtin,end:this.i+builtin.length,exact:false} : readNameToken(this.text, this.i);
+      const builtinWords = [...BUILTIN_NAMES, ...Object.values(BUILTIN_SURFACES)];
+      const builtin = builtinWords.sort((a,b) => b.length-a.length).find(name => this.starts(name+'（'));
+      const builtinName = builtin && (Object.keys(BUILTIN_SURFACES).find((n) => BUILTIN_SURFACES[n] === builtin) || builtin);
+      const token = builtin ? {name:builtinName,end:this.i+builtin.length,exact:false} : readNameToken(this.text, this.i);
       if (!token) this.err('P205', '読みとれないところがあります。書き方をたしかめてください');
       this.i = token.end;
       if (this.starts('の') && !['の数だけ','の値','の答え','の中身','の長さ','の文字数','の色'].some(t => this.starts(t))) {
@@ -16206,6 +16233,7 @@ function createAkariExtensionHost(options) {
     ['と同じ','と同じなら','と同じでなければ','と同じであるあいだ','と同じになるまで','と同じで','と同じではなくて','と同じではない'],
     ['と違う','と違えば','と違わなければ','と違うあいだ','と違う状態になるまで','と違っていて','と違わなくて','と違わない'],
     ['押されている','押されていれば','押されていなければ','押されているあいだ','押されるまで','押されていて','押されていなくて','押されていない'],
+    ['おされている','おされていれば','おされていなければ','おされているあいだ','おされるまで','おされていて','おされていなくて','おされていない'],
     ['ふれている','ふれていれば','ふれていなければ','ふれているあいだ','ふれるまで','ふれていて','ふれていなくて','ふれていない'],
     ['触れている','触れていれば','触れていなければ','触れているあいだ','触れるまで','触れていて','触れていなくて','触れていない'],
     ['入っている','入っていれば','入っていなければ','入っているあいだ','入るまで','入っていて','入っていなくて','入っていない'],
@@ -16221,7 +16249,7 @@ function createAkariExtensionHost(options) {
       [record.plainNo+'なら',true]];
     if (form === 'while') return [[record.whileYes,false],[record.whileYes.replace(/あいだ$/,'間'),false],[record.plainNo+'あいだ',true],[record.plainNo+'間',true]];
     if (form === 'until') {
-      const negative = ({'押されている':'押されなくなるまで','ふれている':'ふれなくなるまで','触れている':'触れなくなるまで','入っている':'入らなくなるまで','含まれている':'含まれなくなるまで'})[record.plain];
+      const negative = ({'押されている':'押されなくなるまで','おされている':'おされなくなるまで','ふれている':'ふれなくなるまで','触れている':'触れなくなるまで','入っている':'入らなくなるまで','含まれている':'含まれなくなるまで'})[record.plain];
       return [[record.untilYes,false],...(negative ? [[negative,true]] : [])];
     }
     throw new AkariError('P205','条件の文脈を確認してください');
@@ -16560,8 +16588,8 @@ function createAkariExtensionHost(options) {
     ['SoundCommand:TONE_WAIT', /^(.+?)Hzの音を(.+?)秒鳴らす$/d, 'SoundCommand', 'TONE_WAIT', 'tone'],
     ['SoundCommand:TONE:timeFirst', /^(.+?)秒(?:間)?、(.+?)Hzの音を鳴らし始める$/d, 'SoundCommand', 'TONE', 'toneReverse'],
     ['SoundCommand:TONE_WAIT:timeFirst', /^(.+?)秒(?:間)?、(.+?)Hzの音を鳴らす$/d, 'SoundCommand', 'TONE_WAIT', 'toneReverse'],
-    ['SoundCommand:SAMPLE', /^音(.+?)を鳴らし始める$/d, 'SoundCommand', 'SAMPLE', 'arg'],
-    ['SoundCommand:SAMPLE_WAIT', /^音(.+?)を鳴らす$/d, 'SoundCommand', 'SAMPLE_WAIT', 'arg'],
+    ['SoundCommand:SAMPLE', /^(.+?)を鳴らし始める$/d, 'SoundCommand', 'SAMPLE', 'arg'],
+    ['SoundCommand:SAMPLE_WAIT', /^(.+?)を鳴らす$/d, 'SoundCommand', 'SAMPLE_WAIT', 'arg'],
     ['CloneCommand:CREATE_TARGET', /^(.+?)のコピーを作る$/d, 'CloneCommand', 'CREATE_TARGET', 'arg'],
     ['CloneCommand:CREATE_TARGET:count', /^(.+?)のコピーを(.+?)体作る$/d, 'CloneCommand', 'CREATE_TARGET', 'cloneTargetCount'],
     ['ListClear', /^(.+?)の(?:中身を全部(?:消す|けす)|すべての要素を削除する)$/d, 'ListClear', null, 'target'],
@@ -16717,7 +16745,7 @@ function createAkariExtensionHost(options) {
           const resolvedName=props.value?.kind==='VariableRead'?props.value.name:raw.text,
             unknownWord=/^[\p{L}ー][\p{L}\p{N}ー]*$/u.test(raw.text)&&!symbols?.allDataNames?.has(resolvedName)&&![...(ctx.localNames||[]),...(ctx.binders||[]),...(ctx.args||[])].includes(resolvedName);
           if(form.kind==='Say'&&unknownWord&&(error||props.value?.kind==='VariableRead')&&!part.text.endsWith('の値')){
-            const name=raw.text;throw sentenceDiagnostic('台詞の文字か、素材の音かを選んでください',line,[{label:'そのままの文字を話す',source:`「${name}」と言う`},{label:'同じ名前の音を鳴らす',source:`音「${name}」を鳴らす`},{label:'データの中身を話す（作った名前をたしかめる）',source:`【${name}】の値を言う`}],{kind:'Say',missing:['literalOrSoundOrData']});
+            const name=raw.text;throw sentenceDiagnostic('台詞の文字か、素材の音かを選んでください',line,[{label:'そのままの文字を話す',source:`「${name}」と言う`},{label:'同じ名前の音を鳴らす',source:`「${name}」を鳴らす`},{label:'データの中身を話す（作った名前をたしかめる）',source:`【${name}】の値を言う`}],{kind:'Say',missing:['literalOrSoundOrData']});
           }
           if(error)throw error;break;}
         case 'question': props.question=e(parts[0]);break;
@@ -17441,11 +17469,6 @@ function createAkariExtensionHost(options) {
         op: 'SAMPLE_WAIT',
         args: [e(code.slice(0, -'を鳴らし、終わるまで待つ'.length))],
       });
-    if (code.endsWith('を鳴らす'))
-      return statementNode('SoundCommand', line, {
-        op: 'SAMPLE',
-        args: [e(code.slice(0, -'を鳴らす'.length))],
-      });
     if ((m = code.match(/^音量を(.+)％にする$/)))
       return statementNode('SoundCommand', line, { op: 'SET_VOLUME', args: [e(m[1])] });
     if (code.startsWith('音程を') && code.endsWith('段階上げる'))
@@ -17814,19 +17837,19 @@ function createAkariExtensionHost(options) {
           format: (a) => `${a(0,'Hz')}の音を${a(1,'秒')}鳴らす`,
         }),
         TONE: Object.freeze({
-          label: '音を鳴らす',
+          label: '音を鳴らして、すぐ次へ',
           inputs: Object.freeze(['音の高さ', '秒']),
           format: (a) => `${a(0,'Hz')}の音を${a(1,'秒')}鳴らし始める`,
         }),
         SAMPLE_WAIT: Object.freeze({
           label: 'えらんだ音を鳴らして待つ',
           inputs: Object.freeze(['音']),
-          format: (a) => `音${a(0)}を鳴らす`,
+          format: (a) => `${a(0)}を鳴らす`,
         }),
         SAMPLE: Object.freeze({
-          label: 'えらんだ音を鳴らす',
+          label: 'えらんだ音を鳴らして、すぐ次へ',
           inputs: Object.freeze(['音']),
-          format: (a) => `音${a(0)}を鳴らし始める`,
+          format: (a) => `${a(0)}を鳴らし始める`,
         }),
         SET_VOLUME: Object.freeze({
           label: '音の大きさを決める',
@@ -18016,7 +18039,7 @@ function createAkariExtensionHost(options) {
     add('QuantityLiteral', 'expression', '数え方をつけた数',
       [field('unit', '数え方', 'unit', '歩')], [expression('value', '数や計算')], [], null,
       { capability: 'quantity-value', semanticRoles: ['value', 'unit'] });
-    add('UnitlessRead', 'expression', '数だけ', [], [expression('value', '中身')], [], null,
+    add('UnitlessRead', 'expression', 'たんいを とった数', [], [expression('value', '中身')], [], null,
       { capability: 'unitless-read', semanticRoles: ['value'] });
     add('ActorQualifiedRead', 'expression', 'えらんだキャラの中身',
       [field('actorRef', 'だれの', 'actor-ref', { kind: 'self' })],
@@ -18183,7 +18206,7 @@ function createAkariExtensionHost(options) {
       }
     add('NumberLiteral', 'expression', '数', [field('value', '数', 'number', 0)]);
     add('StringLiteral', 'expression', '文字', [field('value', '文字', 'string', '', { multiline:true })]);
-    add('BooleanLiteral', 'expression', 'きまりの答え', [field('value', 'きまりの答え', 'boolean', true)]);
+    add('BooleanLiteral', 'expression', 'あてはまる・あてはまらない', [field('value', 'あてはまる・あてはまらない', 'boolean', true)]);
     add(
       'ListLiteral',
       'expression',
@@ -18202,7 +18225,7 @@ function createAkariExtensionHost(options) {
     for (const [value, label] of [
       ['POS', 'プラスのしるし'],
       ['NEG', 'マイナスのしるし'],
-      ['NOT', 'ではない'],
+      ['NOT', 'あてはまらない（反対にする）'],
     ])
       add(
         'UnaryExpression',
@@ -18278,7 +18301,7 @@ function createAkariExtensionHost(options) {
       add(
         'BuiltinCall',
         'expression',
-        meta.name,
+        BUILTIN_LABELS[meta.name] || meta.name,
         [],
         [
           args([], {
@@ -18298,11 +18321,11 @@ function createAkariExtensionHost(options) {
       ['INDEX_OF', 'さいしょにある番号', ['リストまたは文字', 'さがすもの']],
       ['LENGTH', '長さ', ['リストまたは文字']],
       ['STRING_LENGTH', '文字数', ['文字']],
-      ['STRING_CHAR', '文字目', ['文字', '番号']],
+      ['STRING_CHAR', '文字の 何文字目か', ['文字', '番号']],
     ])
       add('BuiltinCall', 'expression', label, [], [args(labels)], [], op('name', value));
     for (const value of GRAMMAR_REGISTRY.sensors)
-      add('SensorRead', 'expression', value, [], [], [], op('sensor', value), { palette: 'しらべる' });
+      add('SensorRead', 'expression', SENSOR_LABELS[value] || SENSOR_SURFACES[value] || value, [], [], [], op('sensor', value), { palette: 'しらべる' });
     for (const [value, label] of [
       ['INPUT_VALUE', '入力らんの中身'],
       ['DISTANCE_TO', 'だれかまでの きょり'],
@@ -18942,7 +18965,7 @@ function createAkariExtensionHost(options) {
     return p < parent ? `（${s}）` : s;
   }
   function builtinSurfaceName(n) {
-    return n;
+    return BUILTIN_SURFACES[n] || n;
   }
   function formatScript(ast, options = {}) {
     return withExpressionFormatOptions(options,()=>{
@@ -24152,7 +24175,7 @@ function createAkariExtensionHost(options) {
     if (/台詞は/.test(message))
       return '話す文字は「 」でくくります。たとえば：「おはよう」と言う。おぼえた点数を話すときは：点数の値を言う。';
     if (/台詞の文字か/.test(message))
-      return 'そのまま話す文字・鳴らす音・おぼえたデータから えらびます。たとえば：「おはよう」と言う／音「ベル」を鳴らす／点数の値を言う。';
+      return 'そのまま話す文字・鳴らす音・おぼえたデータから えらびます。たとえば：「おはよう」と言う／「ベル」を鳴らす／点数の値を言う。';
     if (/入れ子の条件・反復|深い反復/.test(message))
       return '「もし」「くり返す」の中の文は、次の行に書いて先頭を右へずらします。\nたとえば：2回くり返す。\n  2回くり返す。\n    「おはよう」と言う。';
     if (/字下げは半角スペース/.test(message))

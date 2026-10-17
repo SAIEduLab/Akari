@@ -15,7 +15,7 @@ import { buildDerivedProduct } from './extensions/build.mjs';
 import examples from './extensions/examples/offline.js';
 
 await buildDerivedProduct({
-  product: './Akari_1_3_0.html',
+  product: './Akari_1_3_1.html',
   output: './derived-offline.html',
   extensions: [examples.offline, examples.text],
   profiles: [],

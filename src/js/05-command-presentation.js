@@ -198,19 +198,19 @@
           format: (a) => `${a(0,'Hz')}の音を${a(1,'秒')}鳴らす`,
         }),
         TONE: Object.freeze({
-          label: '音を鳴らす',
+          label: '音を鳴らして、すぐ次へ',
           inputs: Object.freeze(['音の高さ', '秒']),
           format: (a) => `${a(0,'Hz')}の音を${a(1,'秒')}鳴らし始める`,
         }),
         SAMPLE_WAIT: Object.freeze({
           label: 'えらんだ音を鳴らして待つ',
           inputs: Object.freeze(['音']),
-          format: (a) => `音${a(0)}を鳴らす`,
+          format: (a) => `${a(0)}を鳴らす`,
         }),
         SAMPLE: Object.freeze({
-          label: 'えらんだ音を鳴らす',
+          label: 'えらんだ音を鳴らして、すぐ次へ',
           inputs: Object.freeze(['音']),
-          format: (a) => `音${a(0)}を鳴らし始める`,
+          format: (a) => `${a(0)}を鳴らし始める`,
         }),
         SET_VOLUME: Object.freeze({
           label: '音の大きさを決める',
@@ -400,7 +400,7 @@
     add('QuantityLiteral', 'expression', '数え方をつけた数',
       [field('unit', '数え方', 'unit', '歩')], [expression('value', '数や計算')], [], null,
       { capability: 'quantity-value', semanticRoles: ['value', 'unit'] });
-    add('UnitlessRead', 'expression', '数だけ', [], [expression('value', '中身')], [], null,
+    add('UnitlessRead', 'expression', 'たんいを とった数', [], [expression('value', '中身')], [], null,
       { capability: 'unitless-read', semanticRoles: ['value'] });
     add('ActorQualifiedRead', 'expression', 'えらんだキャラの中身',
       [field('actorRef', 'だれの', 'actor-ref', { kind: 'self' })],
@@ -567,7 +567,7 @@
       }
     add('NumberLiteral', 'expression', '数', [field('value', '数', 'number', 0)]);
     add('StringLiteral', 'expression', '文字', [field('value', '文字', 'string', '', { multiline:true })]);
-    add('BooleanLiteral', 'expression', 'きまりの答え', [field('value', 'きまりの答え', 'boolean', true)]);
+    add('BooleanLiteral', 'expression', 'あてはまる・あてはまらない', [field('value', 'あてはまる・あてはまらない', 'boolean', true)]);
     add(
       'ListLiteral',
       'expression',
@@ -586,7 +586,7 @@
     for (const [value, label] of [
       ['POS', 'プラスのしるし'],
       ['NEG', 'マイナスのしるし'],
-      ['NOT', 'ではない'],
+      ['NOT', 'あてはまらない（反対にする）'],
     ])
       add(
         'UnaryExpression',
@@ -662,7 +662,7 @@
       add(
         'BuiltinCall',
         'expression',
-        meta.name,
+        BUILTIN_LABELS[meta.name] || meta.name,
         [],
         [
           args([], {
@@ -682,11 +682,11 @@
       ['INDEX_OF', 'さいしょにある番号', ['リストまたは文字', 'さがすもの']],
       ['LENGTH', '長さ', ['リストまたは文字']],
       ['STRING_LENGTH', '文字数', ['文字']],
-      ['STRING_CHAR', '文字目', ['文字', '番号']],
+      ['STRING_CHAR', '文字の 何文字目か', ['文字', '番号']],
     ])
       add('BuiltinCall', 'expression', label, [], [args(labels)], [], op('name', value));
     for (const value of GRAMMAR_REGISTRY.sensors)
-      add('SensorRead', 'expression', value, [], [], [], op('sensor', value), { palette: 'しらべる' });
+      add('SensorRead', 'expression', SENSOR_LABELS[value] || SENSOR_SURFACES[value] || value, [], [], [], op('sensor', value), { palette: 'しらべる' });
     for (const [value, label] of [
       ['INPUT_VALUE', '入力らんの中身'],
       ['DISTANCE_TO', 'だれかまでの きょり'],

@@ -1192,7 +1192,7 @@
     },
     {
       "id": "command:SoundCommand:SAMPLE",
-      "meaning": "音「ベル」を鳴らし始める。",
+      "meaning": "「ベル」を鳴らし始める。",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -1210,7 +1210,7 @@
     },
     {
       "id": "command:SoundCommand:SAMPLE_WAIT",
-      "meaning": "音「ベル」を鳴らす。",
+      "meaning": "「ベル」を鳴らす。",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -2182,7 +2182,7 @@
     },
     {
       "id": "SoundCommand:SAMPLE_WAIT",
-      "meaning": "音「ベル」を鳴らす。",
+      "meaning": "「ベル」を鳴らす。",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -2192,7 +2192,7 @@
     },
     {
       "id": "SoundCommand:SAMPLE",
-      "meaning": "音「ベル」を鳴らし始める。",
+      "meaning": "「ベル」を鳴らし始める。",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",

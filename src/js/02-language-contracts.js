@@ -523,13 +523,13 @@
         id: 'SoundCommand:SAMPLE',
         kind: 'SoundCommand',
         op: 'SAMPLE',
-        source: '音「ベル」を鳴らし始める',
+        source: '「ベル」を鳴らし始める',
       },
       {
         id: 'SoundCommand:SAMPLE_WAIT',
         kind: 'SoundCommand',
         op: 'SAMPLE_WAIT',
-        source: '音「ベル」を鳴らす',
+        source: '「ベル」を鳴らす',
       },
       {
         id: 'Break',
@@ -832,7 +832,7 @@
       }
       if (x.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(x.op)) {
         const snd = project.sounds[0];
-        text = `音「${snd?.name || 'ベル'}」を${x.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}`;
+        text = `「${snd?.name || 'ベル'}」を${x.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}`;
         if (!snd) reason = '音を 先に 入れます';
       }
       add(x.id, labels[x.kind] || 'もし・くり返し', text, 'statement', reason);
@@ -1016,6 +1016,15 @@
       '縦位置',
       'よこのばしょ',
       'たてのばしょ',
+      'すがたの名前',
+      'すがたの番号',
+      'はいけいの名前',
+      'はいけいの番号',
+      '受けた合図',
+      'おされたキー',
+      '前の中身',
+      '新しい中身',
+      'あまり',
       '方向',
       '大きさ',
       '答え',
@@ -1086,7 +1095,23 @@
   const BUILTIN_NAMES = new Set(BUILTIN_META.keys());
   const FIXED_SENSORS = [...GRAMMAR_REGISTRY.sensors];
   // Written words of sensors whose internal name differs (the standard spelling the formatter writes).
-  const SENSOR_SURFACES = Object.freeze({ 'クローンである': 'コピーである', '横位置': 'よこのばしょ', '縦位置': 'たてのばしょ' });
+  const SENSOR_SURFACES = Object.freeze({
+    'クローンである': 'コピーである', '横位置': 'よこのばしょ', '縦位置': 'たてのばしょ',
+    'マウスの横位置': 'マウスのよこのばしょ', 'マウスの縦位置': 'マウスのたてのばしょ', 'マウスが押されている': 'マウスがおされている',
+    '衣装名': 'すがたの名前', '衣装番号': 'すがたの番号', '背景名': 'はいけいの名前', '背景番号': 'はいけいの番号',
+    '以前の背景名': '前のはいけいの名前', '新しい背景名': '新しいはいけいの名前', '受け取った知らせ': '受けた合図',
+    '押されたキー': 'おされたキー', '以前の値': '前の中身', '新しい値': '新しい中身', '音程': '音の高さ', '音量': '音の大きさ',
+  });
+  // Internal names that are no longer read in code (the owner cut them); the others stay readable.
+  const SENSOR_CUT_WORDS = Object.freeze(['クローンである']);
+  // Block names: the written word, with spaces where a child reads them in pieces.
+  const SENSOR_LABELS = Object.freeze({
+    'マウスの横位置': 'マウスの よこのばしょ', 'マウスの縦位置': 'マウスの たてのばしょ', 'マウスが押されている': 'マウスが おされている',
+    '以前の背景名': '前の はいけいの名前', '新しい背景名': '新しい はいけいの名前',
+  });
+  // Builtin calculations whose written word differs from the internal name.
+  const BUILTIN_SURFACES = Object.freeze({ '余り': 'あまり' });
+  const BUILTIN_LABELS = Object.freeze({ '数': '数に直す', '文字': '文字に直す', '乱数': 'AからBのどれか', '余り': 'あまり' });
   const GRAMMAR_HINTS = GRAMMAR_REGISTRY.hints;
 
   // Ephemeral UTF-16 source coordinates. Never serialized or part of the semantic AST.
@@ -1201,7 +1226,7 @@
         'F503',
         `\u540d\u524d\u300c${name}」には 使えない 文字が あります。空白や 「」【】（）［］、※ を けしてね`,
       );
-    if (callable && BUILTIN_NAMES.has(name))
+    if (callable && (BUILTIN_NAMES.has(name) || Object.values(BUILTIN_SURFACES).includes(name)))
       throw new AkariError('F503', `「${name}」はあかりが用意している計算の名前です`);
     return name;
   }

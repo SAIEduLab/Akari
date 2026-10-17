@@ -288,12 +288,12 @@ export const sentenceFormCases=[
   // 「鳴らし始める」は待たず、「鳴らす」は終わるまで待つ (音と待機).
   {
     id:'SF-tone-sentences',
-    source:'440Hzの音を0.2秒鳴らし始める\n440Hzの音を1秒鳴らす\n0.2秒、440Hzの音を鳴らし始める\n1秒、880Hzの音を鳴らす\n音「ベル」を鳴らし始める\n音「ベル」を鳴らす',
+    source:'440Hzの音を0.2秒鳴らし始める\n440Hzの音を1秒鳴らす\n0.2秒、440Hzの音を鳴らし始める\n1秒、880Hzの音を鳴らす\n「ベル」を鳴らし始める\n「ベル」を鳴らす',
     expected:script([command('SoundCommand','TONE',[quantity(440,'Hz'),quantity(0.2,'秒')]),command('SoundCommand','TONE_WAIT',[quantity(440,'Hz'),quantity(1,'秒')]),
       command('SoundCommand','TONE',[quantity(440,'Hz'),quantity(0.2,'秒')]),command('SoundCommand','TONE_WAIT',[quantity(880,'Hz'),quantity(1,'秒')]),
       command('SoundCommand','SAMPLE',[str('ベル')]),command('SoundCommand','SAMPLE_WAIT',[str('ベル')])]),
     claims:{'sentence:SoundCommand:TONE':'440Hzの音を0.2秒鳴らし始める','sentence:SoundCommand:TONE_WAIT':'440Hzの音を1秒鳴らす','sentence:SoundCommand:TONE:timeFirst':'0.2秒、440Hzの音を鳴らし始める',
-      'sentence:SoundCommand:TONE_WAIT:timeFirst':'1秒、880Hzの音を鳴らす','sentence:SoundCommand:SAMPLE':'音「ベル」を鳴らし始める','sentence:SoundCommand:SAMPLE_WAIT':'音「ベル」を鳴らす'},
+      'sentence:SoundCommand:TONE_WAIT:timeFirst':'1秒、880Hzの音を鳴らす','sentence:SoundCommand:SAMPLE':'「ベル」を鳴らし始める','sentence:SoundCommand:SAMPLE_WAIT':'「ベル」を鳴らす'},
   },
   {
     id:'SF-clone-sentences',
@@ -421,10 +421,10 @@ export const sentenceFormCases=[
   },
   {
     id:'SF-te-clear-notify-sound',
-    source:'名前一覧の中身を全部消して、名前一覧の中身を全部けして、みんなに「出発」と知らせて、音「ベル」を鳴らして、440Hzの音を1秒鳴らし始めて、何もしない',
+    source:'名前一覧の中身を全部消して、名前一覧の中身を全部けして、みんなに「出発」と知らせて、「ベル」を鳴らして、440Hzの音を1秒鳴らし始めて、何もしない',
     expected:script([statement('ListClear',{target:target('名前一覧')}),statement('ListClear',{target:target('名前一覧')}),statement('Broadcast',{message:str('出発')}),
       command('SoundCommand','SAMPLE_WAIT',[str('ベル')]),command('SoundCommand','TONE',[quantity(440,'Hz'),quantity(1,'秒')]),nothing()]),
-    claims:{'te:消して':'名前一覧の中身を全部消して','te:けして':'名前一覧の中身を全部けして','te:知らせて':'みんなに「出発」と知らせて','te:鳴らして':'音「ベル」を鳴らして','te:鳴らし始めて':'440Hzの音を1秒鳴らし始めて'},
+    claims:{'te:消して':'名前一覧の中身を全部消して','te:けして':'名前一覧の中身を全部けして','te:知らせて':'みんなに「出発」と知らせて','te:鳴らして':'「ベル」を鳴らして','te:鳴らし始めて':'440Hzの音を1秒鳴らし始めて'},
   },
   {
     id:'SF-te-make-say',

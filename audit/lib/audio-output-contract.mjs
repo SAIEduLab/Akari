@@ -15,8 +15,8 @@ export const audioOutputCases=[
  {id:'PITCH_UP',source:'音の高さを1段階上げる。\n440Hzの音を0.2秒鳴らす。\n「通過」と言う。',seconds:.8,frequencies:[466.1637615],durations:[.2],wait:true},
  {id:'PITCH_DOWN',source:'音の高さを1段階下げる。\n440Hzの音を0.2秒鳴らす。\n「通過」と言う。',seconds:.8,frequencies:[415.3046976],durations:[.2],wait:true},
  {id:'STOP_ALL',source:'440Hzの音を5秒鳴らし始める。\n0.3秒待つ。\nすべての音を止める。\n「通過」と言う。',other:'660Hzの音を5秒鳴らす。\n「解放」と言う。',seconds:1.2,frequencies:[440,660],durations:[.3,.3]},
- {id:'SAMPLE',source:'音「ベル」を鳴らし始める。\n「通過」と言う。',seconds:1,frequencies:[440],durations:[.4],wait:false},
- {id:'SAMPLE_WAIT',source:'音「ベル」を鳴らす。\n「通過」と言う。',other:'音「長い音」を鳴らす。\n「別音終了」と言う。',seconds:1.6,frequencies:[440,660],durations:[.4,1],wait:true},
+ {id:'SAMPLE',source:'「ベル」を鳴らし始める。\n「通過」と言う。',seconds:1,frequencies:[440],durations:[.4],wait:false},
+ {id:'SAMPLE_WAIT',source:'「ベル」を鳴らす。\n「通過」と言う。',other:'「長い音」を鳴らす。\n「別音終了」と言う。',seconds:1.6,frequencies:[440,660],durations:[.4,1],wait:true},
 ];
 export function wave(samples,rate=48000){
  const out=Buffer.alloc(44+samples.length*2);out.write('RIFF');out.writeUInt32LE(out.length-8,4);out.write('WAVEfmt ',8);out.writeUInt32LE(16,16);out.writeUInt16LE(1,20);out.writeUInt16LE(1,22);out.writeUInt32LE(rate,24);out.writeUInt32LE(rate*2,28);out.writeUInt16LE(2,32);out.writeUInt16LE(16,34);out.write('data',36);out.writeUInt32LE(samples.length*2,40);samples.forEach((v,i)=>out.writeInt16LE(Math.round(Math.max(-1,Math.min(1,v))*32767),44+i*2));return out;

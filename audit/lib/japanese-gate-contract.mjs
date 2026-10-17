@@ -157,7 +157,7 @@ export function verifyIntentReport(report,inputs,candidateFile){
       assert.ok(Array.isArray(evidence.soundChoices));
       assert.deepEqual(evidence.soundChoices.map(choice=>choice.label),evidence.choices);
       assert.ok(evidence.soundChoices.some(choice=>choice.label==='そのままの文字を話す'&&choice.source==='「こんにちは」と言う'));
-      assert.ok(evidence.soundChoices.some(choice=>choice.label==='同じ名前の音を鳴らす'&&choice.source==='音「こんにちは」を鳴らす'));
+      assert.ok(evidence.soundChoices.some(choice=>choice.label==='同じ名前の音を鳴らす'&&choice.source==='「こんにちは」を鳴らす'));
     }
     assert.equal(evidence.after.state,'DESIGN');
     for(const key of ['source','project','history','redo','dirty'])assert.deepEqual(evidence.after[key],evidence.before[key]);

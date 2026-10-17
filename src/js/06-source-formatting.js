@@ -135,7 +135,7 @@
     return p < parent ? `（${s}）` : s;
   }
   function builtinSurfaceName(n) {
-    return n;
+    return BUILTIN_SURFACES[n] || n;
   }
   function formatScript(ast, options = {}) {
     return withExpressionFormatOptions(options,()=>{

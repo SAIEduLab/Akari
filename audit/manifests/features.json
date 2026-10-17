@@ -1,5 +1,5 @@
 {
-  "productVersion": "1.3.0",
+  "productVersion": "1.3.1",
   "COMMAND_CATALOG": [
     {
       "id": "Assignment",
@@ -401,13 +401,13 @@
       "id": "SoundCommand:SAMPLE",
       "kind": "SoundCommand",
       "op": "SAMPLE",
-      "source": "音「ベル」を鳴らし始める。"
+      "source": "「ベル」を鳴らし始める。"
     },
     {
       "id": "SoundCommand:SAMPLE_WAIT",
       "kind": "SoundCommand",
       "op": "SAMPLE_WAIT",
-      "source": "音「ベル」を鳴らす。"
+      "source": "「ベル」を鳴らす。"
     },
     {
       "id": "Break",
