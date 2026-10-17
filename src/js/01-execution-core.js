@@ -1287,7 +1287,7 @@
       deleteClone(runtimeId) {
         const a = this.requireActor({ runtimeId });
         if (!a.isClone)
-          throw new AkariError('R406', '「このクローンを削除する」は コピーの 動きの 中でだけ 使えます');
+          throw new AkariError('R406', '「このコピーだけを消す」は コピーの 動きの 中でだけ 使えます');
         this.actors.delete(runtimeId);
         this.ui.render?.();
       }
@@ -1746,7 +1746,7 @@
         case '音程':
           return a?.pitch ?? r.stage.pitch;
         case 'クローンである':
-          if (!a) throw new AkariError('R407', '「クローンである」は キャラクターの 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「コピーである」は キャラクターの 動きの 中で 使います');
           return !!a.isClone;
         case '押されたキー':
           return ctx.eventContext?.key ?? '';

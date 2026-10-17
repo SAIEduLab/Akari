@@ -230,22 +230,22 @@
       }),
     }),
     CloneCommand: Object.freeze({
-      palette: '分身',
+      palette: 'コピー',
       operations: Object.freeze({
         CREATE_SELF: Object.freeze({
           label: '自分のコピーを作る',
           inputs: Object.freeze([]),
-          format: (a,n) => n.count===undefined?'自分の分身を作る':`自分の分身を${formatExpression(n.count)}体作る`,
+          format: (a,n) => n.count===undefined?'自分のコピーを作る':`自分のコピーを${formatExpression(n.count)}体作る`,
         }),
         DELETE_SELF: Object.freeze({
           label: 'このコピーだけを消す',
           inputs: Object.freeze([]),
-          format: (a) => 'この分身だけを消す',
+          format: (a) => 'このコピーだけを消す',
         }),
         CREATE_TARGET: Object.freeze({
           label: 'えらんだキャラクターのコピーを作る',
           inputs: Object.freeze(['だれ']),
-          format: (a,n) => `${a(0)}の分身を${n.count===undefined?'':formatExpression(n.count)+'体'}作る`,
+          format: (a,n) => `${a(0)}のコピーを${n.count===undefined?'':formatExpression(n.count)+'体'}作る`,
         }),
       }),
     }),

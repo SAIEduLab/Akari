@@ -83,7 +83,7 @@
         break;
       case 'SensorRead': {
         if (n.sensor === '拡張の値' && EXTENSION_HOST.operations('events').length) s = '拡張「できごとの値」';
-        else if (FIXED_SENSORS.includes(n.sensor)) s = n.sensor === 'クローンである' ? '分身である' : n.sensor;
+        else if (FIXED_SENSORS.includes(n.sensor)) s = SENSOR_SURFACES[n.sensor] || n.sensor;
         else if (n.sensor === 'INPUT_VALUE') s = `${n.arg.kind==='VariableRead'?'（'+formatExpressionCore(n.arg)+'）':formatExpressionCore(n.arg, PREC.POST)}の中身`;
         else if (n.sensor === 'DISTANCE_TO')
           s = `${formatExpressionCore(n.arg, PREC.POST)}までの距離`;

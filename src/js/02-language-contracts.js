@@ -475,19 +475,19 @@
         id: 'CloneCommand:CREATE_SELF',
         kind: 'CloneCommand',
         op: 'CREATE_SELF',
-        source: '自分の分身を作る',
+        source: '自分のコピーを作る',
       },
       {
         id: 'CloneCommand:CREATE_TARGET',
         kind: 'CloneCommand',
         op: 'CREATE_TARGET',
-        source: '「マスコット」の分身を作る',
+        source: '「マスコット」のコピーを作る',
       },
       {
         id: 'CloneCommand:DELETE_SELF',
         kind: 'CloneCommand',
         op: 'DELETE_SELF',
-        source: 'この分身だけを消す',
+        source: 'このコピーだけを消す',
       },
       {
         id: 'StopCommand:THIS',
@@ -824,7 +824,7 @@
       if (x.kind === 'CloneCommand') {
         if (x.op === 'CREATE_TARGET') {
           const c = project.components.find((c) => c.type === 'sprite');
-          text = `\u300c${c?.name || '\u661f'}\u300dの分身を作る`;
+          text = `\u300c${c?.name || '\u661f'}\u300dのコピーを作る`;
           if (!c) reason = 'キャラクターを先に作ります';
         } else if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'DELETE_SELF' && !kind && event !== 'cloneStart')
@@ -1013,6 +1013,8 @@
       '作品',
       '横位置',
       '縦位置',
+      'よこのばしょ',
+      'たてのばしょ',
       '方向',
       '大きさ',
       '答え',
@@ -1082,6 +1084,8 @@
 
   const BUILTIN_NAMES = new Set(BUILTIN_META.keys());
   const FIXED_SENSORS = [...GRAMMAR_REGISTRY.sensors];
+  // Written words of sensors whose internal name differs (the standard spelling the formatter writes).
+  const SENSOR_SURFACES = Object.freeze({ 'クローンである': 'コピーである', '横位置': 'よこのばしょ', '縦位置': 'たてのばしょ' });
   const GRAMMAR_HINTS = GRAMMAR_REGISTRY.hints;
 
   // Ephemeral UTF-16 source coordinates. Never serialized or part of the semantic AST.

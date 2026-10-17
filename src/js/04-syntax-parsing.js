@@ -314,8 +314,8 @@
         if(this.take('が成り立たない')) return exprNode('UnaryExpression',{op:'NOT',value});
         this.expect('が成り立つ'); return value;
       }
-      if (this.take('分身ではない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('SensorRead',{sensor:'クローンである'})});
-      if (this.take('分身である')) return exprNode('SensorRead',{sensor:'クローンである'});
+      if (this.take('コピーではない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('SensorRead',{sensor:'クローンである'})});
+      if (this.take('コピーである')) return exprNode('SensorRead',{sensor:'クローンである'});
       if (this.starts('（')) {
         const call = this.namedFunction();
         if (call) return call;
@@ -362,9 +362,10 @@
           this.err('N102', '数が大きすぎます。もっと小さい数にしてください');
         return exprNode('NumberLiteral', { value });
       }
-      for (const sensor of [...FIXED_SENSORS].sort((a, b) => b.length - a.length)) {
-        if (this.starts(sensor) && nameBoundary(this.text, this.i + sensor.length)) {
-          this.i += sensor.length;
+      // Sensors are read by their written words; a few internal names are written differently.
+      for (const [surface, sensor] of [...FIXED_SENSORS.filter((s) => !SENSOR_SURFACES[s]).map((s) => [s, s]), ...Object.entries(SENSOR_SURFACES).map(([s, w]) => [w, s]), ['横位置', '横位置'], ['縦位置', '縦位置']].sort((a, b) => b[0].length - a[0].length)) {
+        if (this.starts(surface) && nameBoundary(this.text, this.i + surface.length)) {
+          this.i += surface.length;
           return exprNode('SensorRead', { sensor });
         }
       }
@@ -567,7 +568,7 @@
     ['触れている','触れていれば','触れていなければ','触れているあいだ','触れるまで','触れていて','触れていなくて','触れていない'],
     ['入っている','入っていれば','入っていなければ','入っているあいだ','入るまで','入っていて','入っていなくて','入っていない'],
     ['含まれている','含まれていれば','含まれていなければ','含まれているあいだ','含まれるまで','含まれていて','含まれていなくて','含まれていない'],
-    ['分身である','分身なら','分身でなければ','分身であるあいだ','分身になるまで','分身で','分身ではなくて','分身ではない'],
+    ['コピーである','コピーなら','コピーでなければ','コピーであるあいだ','コピーになるまで','コピーで','コピーではなくて','コピーではない'],
   ].map(([plain,ifYes,ifNo,whileYes,untilYes,andYes,andNo,plainNo]) => Object.freeze({plain,ifYes,ifNo,whileYes,untilYes,andYes,andNo,plainNo})));
   function conditionFormCandidates(record, form) {
     if (form === 'plain') return [[record.plain,false],[record.plainNo,true]];
@@ -796,7 +797,7 @@
       IfStatement:[expr('condition','条件')],RepeatCount:[expr('count','回数','回')],RepeatWhile:[expr('condition','条件')],RepeatUntil:[expr('condition','条件')],ForEach:[expr('list','調べるリスト')],WaitTime:[expr('seconds','待つ時間','秒')],WaitUntil:[expr('condition','待つ条件')],
       Say:[expr('value','言う内容')],Ask:[expr('question','たずねる内容')],Broadcast:[expr('message','知らせ')],BroadcastAndWait:[expr('message','知らせ')],ReturnStatement:[expr('value','答え')],LocalVariableDeclaration:[expr('initial','最初の値')],UserActionCall:[expr('args','受け取る値')],ContinuousRule:[expr('condition','続ける条件'),expr('seconds','速さの時間','秒'),expr('distance','速さの歩数','歩')],
     };
-    const args={MOVE:[['歩数','歩']],MOVE_DIRECTION:[['歩数','歩']],GOTO:[['横位置','歩'],['縦位置','歩']],GLIDE:[['時間','秒'],['横位置','歩'],['縦位置','歩']],GLIDE_DIRECTION:[['時間','秒'],['歩数','歩']],SET_DIRECTION:[['向き','度']],TURN_RIGHT:[['角度','度']],TURN_LEFT:[['角度','度']],SET_X:[['横位置','歩']],SET_Y:[['縦位置','歩']],POINT_TO:[['向く相手',null]],SET_SCALE:[['大きさ','％']],SET_VOLUME:[['音量','％']],TONE:[['周波数','Hz'],['長さ','秒']],TONE_WAIT:[['周波数','Hz'],['長さ','秒']],SET_TARGET_TEXT:[['部品',null],['文字',null]],SET_INPUT:[['入力欄',null],['内容',null]],FORWARD_LAYERS:[['層数',null]],BACKWARD_LAYERS:[['層数',null]],SET_COLOR:[['色',null]],SET_COSTUME:[['衣装',null]],SET_BACKDROP:[['背景',null]],SET_SELF_TEXT:[['文字',null]],SET_SIZE:[['太さ',null]],SAMPLE:[['音',null]],SAMPLE_WAIT:[['音',null]],PITCH_UP:[['音の高さ',null]],PITCH_DOWN:[['音の高さ',null]],CREATE_TARGET:[['分身の元',null]]};
+    const args={MOVE:[['歩数','歩']],MOVE_DIRECTION:[['歩数','歩']],GOTO:[['横位置','歩'],['縦位置','歩']],GLIDE:[['時間','秒'],['横位置','歩'],['縦位置','歩']],GLIDE_DIRECTION:[['時間','秒'],['歩数','歩']],SET_DIRECTION:[['向き','度']],TURN_RIGHT:[['角度','度']],TURN_LEFT:[['角度','度']],SET_X:[['横位置','歩']],SET_Y:[['縦位置','歩']],POINT_TO:[['向く相手',null]],SET_SCALE:[['大きさ','％']],SET_VOLUME:[['音量','％']],TONE:[['周波数','Hz'],['長さ','秒']],TONE_WAIT:[['周波数','Hz'],['長さ','秒']],SET_TARGET_TEXT:[['部品',null],['文字',null]],SET_INPUT:[['入力欄',null],['内容',null]],FORWARD_LAYERS:[['層数',null]],BACKWARD_LAYERS:[['層数',null]],SET_COLOR:[['色',null]],SET_COSTUME:[['衣装',null]],SET_BACKDROP:[['背景',null]],SET_SELF_TEXT:[['文字',null]],SET_SIZE:[['太さ',null]],SAMPLE:[['音',null]],SAMPLE_WAIT:[['音',null]],PITCH_UP:[['音の高さ',null]],PITCH_DOWN:[['音の高さ',null]],CREATE_TARGET:[['コピーの元',null]]};
     const slots=[...(values[kind] || (args[op]||[]).map(([label,unit],i)=>expr(`args.${i}`,label,unit)))];
     if(kind==='Say'&&role==='timedSpeech')slots.push(expr('seconds','話す時間','秒'));
     slots.unshift(Object.freeze({path:'actorRef',label:'動く対象',type:'actor',unit:null,required:true}));
@@ -808,7 +809,7 @@
   }
   function sentenceFormRecord(id,pattern,kind,op,role) {
     const roleSlots=sentenceRoleSlots(kind,op,role),semanticOperation=op?`${kind}:${op}`:kind;
-    const labels={Assignment:'値を置き換える',NumericUpdate:'値を増やす・減らす',ListAppend:'最後に入れる',ListInsert:'途中に入れる',ListReplace:'項目を変える',ListDelete:'項目を消す',ListClear:'中身を全部消す',IfStatement:'条件で分ける',RepeatCount:'回数を決めてくり返す',RepeatWhile:'あいだくり返す',RepeatUntil:'までくり返す',Forever:'ずっとくり返す',ForEach:'中身を一つずつ見る',WaitTime:'時間を待つ',WaitBroadcastGroup:'直前の知らせの受け手を待つ',WaitUntil:'条件を待つ',Say:'内容を言う',Ask:'たずねて答えを待つ',Broadcast:'知らせる',BroadcastAndWait:'知らせて全部終わるまで待つ',LocalVariableDeclaration:'この中だけの変数を作る',LocalListDeclaration:'この中だけのリストを作る',ReturnStatement:'答えを返す',UserActionCall:'手順を行う',NoOperation:'何もしない',Break:'いまのくり返しを終える',Continue:'次の回へ進む',MotionCommand:'位置や向きを変える',LooksCommand:'見た目を変える',PenCommand:'線やスタンプを描く',SoundCommand:'音を鳴らす・変える',CloneCommand:'分身を作る・消す',StopCommand:'実行を止める',ContinuousRule:'条件のあいだ動き続ける'};
+    const labels={Assignment:'値を置き換える',NumericUpdate:'値を増やす・減らす',ListAppend:'最後に入れる',ListInsert:'途中に入れる',ListReplace:'項目を変える',ListDelete:'項目を消す',ListClear:'中身を全部消す',IfStatement:'条件で分ける',RepeatCount:'回数を決めてくり返す',RepeatWhile:'あいだくり返す',RepeatUntil:'までくり返す',Forever:'ずっとくり返す',ForEach:'中身を一つずつ見る',WaitTime:'時間を待つ',WaitBroadcastGroup:'直前の知らせの受け手を待つ',WaitUntil:'条件を待つ',Say:'内容を言う',Ask:'たずねて答えを待つ',Broadcast:'知らせる',BroadcastAndWait:'知らせて全部終わるまで待つ',LocalVariableDeclaration:'この中だけの変数を作る',LocalListDeclaration:'この中だけのリストを作る',ReturnStatement:'答えを返す',UserActionCall:'手順を行う',NoOperation:'何もしない',Break:'いまのくり返しを終える',Continue:'次の回へ進む',MotionCommand:'位置や向きを変える',LooksCommand:'見た目を変える',PenCommand:'線やスタンプを描く',SoundCommand:'音を鳴らす・変える',CloneCommand:'コピーを作る・消す',StopCommand:'実行を止める',ContinuousRule:'条件のあいだ動き続ける'};
     const verbs={MotionCommand:['動く','動いて','動かす','動かして','進む','進んで','回る','回って','向く','向いて','行く','行って','すべる','すべって'],Say:['言う','言って','話す','話して','言わせる','言わせて'],WaitTime:['待つ','待って'],UserActionCall:['行う','行って'],SoundCommand:['鳴らし始める','鳴らし始めて','鳴らす','鳴らして'],NumericUpdate:['足す','足して','引く','引いて','増やす','減らす']};
     return Object.freeze({id,pattern,kind,op,role,intent:labels[kind]||kind,semanticOperation,roleSlots,
       clauses:Object.freeze(roleSlots.map(slot=>Object.freeze({role:slot.path,label:slot.label,unit:slot.unit}))),
@@ -874,9 +875,9 @@
     ['PenCommand:STAMP', /^(?:今の姿の)?スタンプを押す$/d, 'PenCommand', 'STAMP'],
     ['PenCommand:CLEAR', /^作品の線とスタンプを全部(?:消す|けす)$/d, 'PenCommand', 'CLEAR'],
     ['SoundCommand:STOP_ALL', /^すべての音を止める$/d, 'SoundCommand', 'STOP_ALL'],
-    ['CloneCommand:CREATE_SELF', /^自分の分身を作る$/d, 'CloneCommand', 'CREATE_SELF'],
-    ['CloneCommand:CREATE_SELF:count', /^自分の分身を(.+?)体作る$/d, 'CloneCommand', 'CREATE_SELF', 'cloneCount'],
-    ['CloneCommand:DELETE_SELF', /^この分身だけを(?:消す|けす)$/d, 'CloneCommand', 'DELETE_SELF'],
+    ['CloneCommand:CREATE_SELF', /^自分のコピーを作る$/d, 'CloneCommand', 'CREATE_SELF'],
+    ['CloneCommand:CREATE_SELF:count', /^自分のコピーを(.+?)体作る$/d, 'CloneCommand', 'CREATE_SELF', 'cloneCount'],
+    ['CloneCommand:DELETE_SELF', /^このコピーだけを(?:消す|けす)$/d, 'CloneCommand', 'DELETE_SELF'],
     ['LooksCommand:NEXT_BACKDROP', /^次の(?:背景|はいけい)に(?:変える|かえる)$/d, 'LooksCommand', 'NEXT_BACKDROP'],
     ['LooksCommand:PREV_BACKDROP', /^前の(?:背景|はいけい)に(?:変える|かえる)$/d, 'LooksCommand', 'PREV_BACKDROP'],
     ['LooksCommand:NEXT_COSTUME', /^次の(?:衣装|すがた)に(?:変える|かえる)$/d, 'LooksCommand', 'NEXT_COSTUME'],
@@ -919,8 +920,8 @@
     ['SoundCommand:TONE_WAIT:timeFirst', /^(.+?)秒(?:間)?、(.+?)Hzの音を鳴らす$/d, 'SoundCommand', 'TONE_WAIT', 'toneReverse'],
     ['SoundCommand:SAMPLE', /^音(.+?)を鳴らし始める$/d, 'SoundCommand', 'SAMPLE', 'arg'],
     ['SoundCommand:SAMPLE_WAIT', /^音(.+?)を鳴らす$/d, 'SoundCommand', 'SAMPLE_WAIT', 'arg'],
-    ['CloneCommand:CREATE_TARGET', /^(.+?)の分身を作る$/d, 'CloneCommand', 'CREATE_TARGET', 'arg'],
-    ['CloneCommand:CREATE_TARGET:count', /^(.+?)の分身を(.+?)体作る$/d, 'CloneCommand', 'CREATE_TARGET', 'cloneTargetCount'],
+    ['CloneCommand:CREATE_TARGET', /^(.+?)のコピーを作る$/d, 'CloneCommand', 'CREATE_TARGET', 'arg'],
+    ['CloneCommand:CREATE_TARGET:count', /^(.+?)のコピーを(.+?)体作る$/d, 'CloneCommand', 'CREATE_TARGET', 'cloneTargetCount'],
     ['ListClear', /^(.+?)の(?:中身を全部(?:消す|けす)|すべての要素を削除する)$/d, 'ListClear', null, 'target'],
     ['ListClear:empty', /^(.+?)を空にする$/d, 'ListClear', null, 'target'],
     ['ListAppend', /^(.+?)の最後に(.+?)を(?:入れる|いれる)$/d, 'ListAppend', null, 'append'],
@@ -1162,7 +1163,7 @@
       [/^(.+?)という知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',1,2,0],
       [/^(?:背景|はいけい)が(?:変わった|かわった)とき、(.+?)は、(.*)$/d,'backdropChanged',0,1],
       [/^(.+?)の中身が(?:変わった|かわった)とき、(.*)$/d,'valueChanged',0,1],
-      [/^(.+?)の分身が作られたとき、(.*)$/d,'cloneStart',0,1],
+      [/^(.+?)のコピーが作られたとき、(.*)$/d,'cloneStart',0,1],
     ];
     for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code,protectedCode);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','キーや合図の名前は「 」でかこんで書きます。れい：「空白」キーを押すたびに、自分は、');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','キーや合図の名前は、「 」でかこんだ文字を1つだけ書きます。れい：「空白」キーを押すたびに、自分は、');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex],actor:parts[actorIndex]};}
     const implicit = surfaceCapture(/^始めると、(.*)$/d, code, protectedCode);
@@ -1171,7 +1172,7 @@
   }
   function sentenceHeadingSource(heading) {
     const actor=sentenceActorSource(heading.actorRef), filter=heading.filter == null ? null : formatExpression(exprNode('StringLiteral',{value:heading.filter.key??heading.filter.message}));
-    switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がクリックされたとき、`;case 'keyDown':return `${filter?filter+'キーを押すたびに':'キーが押されたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}知らせを受け取ったとき、${actor}は、`;case 'backdropChanged':return `背景が変わったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身が変わったとき、`;case 'cloneStart':return `${actor}の分身が作られたとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
+    switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がクリックされたとき、`;case 'keyDown':return `${filter?filter+'キーを押すたびに':'キーが押されたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}知らせを受け取ったとき、${actor}は、`;case 'backdropChanged':return `背景が変わったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身が変わったとき、`;case 'cloneStart':return `${actor}のコピーが作られたとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
   }
   function continuousCondition(text) {
     const mask=surfaceMask(text),suffix=/キー(?:を|が)押(?:して|されて)いる$/.exec(mask);
@@ -1715,10 +1716,6 @@
     if (code === 'スタンプを押す') return statementNode('PenCommand', line, { op: 'STAMP' });
     if (code === 'すべての音を止める')
       return statementNode('SoundCommand', line, { op: 'STOP_ALL' });
-    if (code === '自分のクローンを作る')
-      return statementNode('CloneCommand', line, { op: 'CREATE_SELF' });
-    if (code === 'このクローンを削除する')
-      return statementNode('CloneCommand', line, { op: 'DELETE_SELF' });
     if (code === '端に触れていれば跳ね返る')
       return statementNode('MotionCommand', line, { op: 'BOUNCE' });
     if (code.endsWith('と知らせ、受け手の処理が終わるまで待つ'))
@@ -1834,11 +1831,6 @@
       (m = splitCommandArgs(code.slice(0, -'を入れる'.length), ['に']))
     )
       return statementNode('LooksCommand', line, { op: 'SET_INPUT', args: m.map(e) });
-    if (code.endsWith('のクローンを作る'))
-      return statementNode('CloneCommand', line, {
-        op: 'CREATE_TARGET',
-        args: [e(code.slice(0, -'のクローンを作る'.length))],
-      });
     if (code.endsWith('\uff09\u3092\u5b9f\u884c\u3059\u308b')) {
       const p = code.indexOf('\uff08');
       if (p > 0) {

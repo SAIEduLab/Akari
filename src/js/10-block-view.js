@@ -407,7 +407,7 @@
       E('p','','とちゅうに入れる：本、ぼうしの間にかさを入れると、本、かさ、ぼうしになります。入れかえる：かさを ぼうしに かえるように、えらんだ中身を かえます。'),
       E('p','','リストには、中身が1つずつ ならんでいます。1つずつ使うブロックでは、前から じゅんに同じ動きをします。'),
       E('p','','「同じ数をかける」（るいじょう）は、同じ数を何回もかける計算です。2の3乗は2×2×2で8になります。計算や くらべ方のしるしだけを かえても、左右の中身は のこります。'),
-      E('p','','メモは、あとで思い出せるように書くひとことです。動きは かわりません。コピー（分身）は、同じ見た目のキャラクターを もう1体作ることです。'),
+      E('p','','メモは、あとで思い出せるように書くひとことです。動きは かわりません。コピーは、同じ見た目のキャラクターを もう1体作ることです。'),
       E('p','','「とちゅうで やめる」は、いま えらんだ入れる場所や、かえかけている文字・組み立てを やめます。「もとにもどす」は、もう決めたことを1つ もどします。'));
     paletteControls.append(help);
     paletteControls.id = viewId + '-palette-tools';
@@ -2296,7 +2296,7 @@
         else if (schema.kind === 'CloneCommand' && ['CREATE_SELF','CREATE_TARGET'].includes(schema.discriminator?.value)) {
           const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
           if(schema.discriminator.value==='CREATE_TARGET')main.append(slot('args'));else main.append(E('span','','自分'));
-          main.append(E('span','','の分身を'));
+          main.append(E('span','','のコピーを'));
           if(node.inputs.count)main.append(slot('count'),E('span','','体'));
           main.append(E('span','','作る'));
         }

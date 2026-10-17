@@ -1106,7 +1106,7 @@
         '\u5024\u30fb\u30c7\u30fc\u30bf': 'data',
         '\u97f3': 'sound',
         '\u30da\u30f3': 'pen',
-        分身: 'clone', '\u30af\u30ed\u30fc\u30f3': 'clone',
+        分身: 'clone', 'コピー': 'clone', '\u30af\u30ed\u30fc\u30f3': 'clone',
         '\u8fd4\u3059': 'action',
         メモ: 'comment', '\u30b3\u30e1\u30f3\u30c8': 'comment',
       }[schema.palette] || 'operator'
