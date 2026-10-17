@@ -8,11 +8,7 @@ import {withBrowser,pageFor,snapshot,sha} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import productDialogs from '../lib/product-dialogs.cjs';
 const {answerProductConfirms}=productDialogs;
-// Installing the fixture replaces the added preset (unsaved work), and the helper only waits on page state,
-// so the product's own question is answered by pressing its button while the helper runs.
-async function install(p,...args){let done=false;const answering=(async()=>{while(!done){await p.evaluate(()=>{if(document.querySelector('#loseConfirmModal.show'))document.querySelector('#loseConfirmProceed').click();}).catch(()=>{});await delay(40);}})();
- try{return await installFixture(p,...args);}finally{done=true;await answering;}}
-import {install as installFixture} from '../lib/ux-normal-ui.mjs';
+import {install} from '../lib/ux-normal-ui.mjs';
 import {observeRunPreview,verifyRunPreview,observePaletteFold,observeInspector} from '../lib/run-preview-contract.mjs';
 import {displayTexts,actionNames,bubbleCases,actionCases,verifyDisplay} from '../lib/speech-display-contract.mjs';
 
