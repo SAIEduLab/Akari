@@ -6983,7 +6983,7 @@
         const target = event.target.closest('button,.tree-item,.tool');
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
-          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#openConfirmModal,#samplePicker') ||
+          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#openConfirmModal,#loseConfirmModal,#samplePicker') ||
           target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
@@ -7024,7 +7024,7 @@
           modelLocked() ||
           flushingEditor ||
           event.target.matches('.diagnostic-details > summary') ||
-          event.target.closest('.editor-modes,#sourceImport,#colorModal,#samplePicker,#openConfirmModal,#uiLevel,#tutorialStart,#tutorialExit,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          event.target.closest('.editor-modes,#sourceImport,#colorModal,#samplePicker,#openConfirmModal,#loseConfirmModal,#uiLevel,#tutorialStart,#tutorialExit,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;

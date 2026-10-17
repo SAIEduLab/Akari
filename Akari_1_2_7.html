@@ -23784,6 +23784,13 @@ function createAkariExtensionHost(options) {
         '\u8868\u793a\u30fb\u5165\u529b': 'look',
         '\u6761\u4ef6\u30fb\u53cd\u5fa9': 'control',
         '\u5f85\u6a5f': 'control',
+        // The names the screen shows now (the old names above stay readable in old data).
+        '言う・たずねる': 'look',
+        'もし・くり返し': 'control',
+        '待つ': 'control',
+        '止める': 'control',
+        '合図': 'event',
+        'かず・データ': 'data',
         '\u505c\u6b62': 'control',
         '\u77e5\u3089\u305b': 'event',
         '\u30c7\u30fc\u30bf': 'data',
@@ -34701,7 +34708,7 @@ function createAkariExtensionHost(options) {
         const target = event.target.closest('button,.tree-item,.tool');
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
-          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#openConfirmModal,#samplePicker') ||
+          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#openConfirmModal,#loseConfirmModal,#samplePicker') ||
           target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
@@ -34742,7 +34749,7 @@ function createAkariExtensionHost(options) {
           modelLocked() ||
           flushingEditor ||
           event.target.matches('.diagnostic-details > summary') ||
-          event.target.closest('.editor-modes,#sourceImport,#colorModal,#samplePicker,#openConfirmModal,#uiLevel,#tutorialStart,#tutorialExit,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          event.target.closest('.editor-modes,#sourceImport,#colorModal,#samplePicker,#openConfirmModal,#loseConfirmModal,#uiLevel,#tutorialStart,#tutorialExit,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
         )
           return;
         const binding = $('#procModal').classList.contains('show') ? draftEditor : mainEditor;

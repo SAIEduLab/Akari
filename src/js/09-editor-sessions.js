@@ -1091,6 +1091,13 @@
         '\u8868\u793a\u30fb\u5165\u529b': 'look',
         '\u6761\u4ef6\u30fb\u53cd\u5fa9': 'control',
         '\u5f85\u6a5f': 'control',
+        // The names the screen shows now (the old names above stay readable in old data).
+        '言う・たずねる': 'look',
+        'もし・くり返し': 'control',
+        '待つ': 'control',
+        '止める': 'control',
+        '合図': 'event',
+        'かず・データ': 'data',
         '\u505c\u6b62': 'control',
         '\u77e5\u3089\u305b': 'event',
         '\u30c7\u30fc\u30bf': 'data',
