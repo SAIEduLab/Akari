@@ -5745,7 +5745,8 @@
             'width:64px;height:48px;object-fit:contain;background:#fff;border:1px solid #ccd7e4;border-radius:7px';
           return img;
         },
-        rename = (obj, arr, label) => {
+        // The resource kind is passed in, never derived from the on-screen label.
+        rename = (obj, arr, label, kind) => {
           if (modelLocked()) return;
           const v = prompt(`${label}の名前`, obj.name);
           if (v === null) return;
@@ -5753,7 +5754,6 @@
             validateResourceName(v, label + 'の名前');
             if (arr.some((x) => x !== obj && x.name === v))
               throw new AkariError('F503', `${label}の名前が ほかと 同じです。ちがう名前に してください`);
-            const kind = label === '衣装' ? 'costume' : label === '背景' ? 'backdrop' : 'sound';
             const options = { drafts: resourceDraftRecords() }, impact = resourceChangeImpact(project, `${kind}:${obj.id}`, options);
             if (impact.uncertain.length) { showResourceImpact(impact, body, '名前を かえる'); return; }
             const next = prepareResourceRename(project, `${kind}:${obj.id}`, v, options);
@@ -5805,7 +5805,7 @@
         if (advanced) {
           const rn = document.createElement('button');
           rn.textContent = '名前';
-          rn.onclick = () => rename(b, project.stage.backdrops, 'はいけい');
+          rn.onclick = () => rename(b, project.stage.backdrops, 'はいけい', 'backdrop');
           row.appendChild(rn);
           if (b.kind === 'image') {
             const fit = document.createElement('select');
@@ -5902,7 +5902,7 @@
           if (advanced) {
             const rn = document.createElement('button');
             rn.textContent = '名前';
-            rn.onclick = () => rename(co, c.costumes, 'すがた');
+            rn.onclick = () => rename(co, c.costumes, 'すがた', 'costume');
             const del = document.createElement('button');
             del.textContent = 'けす';
             del.disabled = c.costumes.length <= 1 || modelLocked();
@@ -5957,7 +5957,7 @@
           stop.onclick = stopPreview;
           const rn = document.createElement('button');
           rn.textContent = '名前';
-          rn.onclick = () => rename(snd, project.sounds, '音');
+          rn.onclick = () => rename(snd, project.sounds, '音', 'sound');
           const del = document.createElement('button');
           del.textContent = 'けす';
           del.disabled = modelLocked();
