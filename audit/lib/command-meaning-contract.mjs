@@ -34,7 +34,7 @@ export function verifyCommandMeaning(report){
    if(id.startsWith('PenCommand:')){assert.equal(f.ink.length,['SET_COLOR','SET_SIZE'].includes(op)?2:op==='CLEAR'?0:1);if(op==='STAMP'){assert.equal(f.ink[0].actor.x,100);assert.equal(a.x,120);}else if(op!=='CLEAR'){assert.deepEqual(f.ink[0],{kind:'line',line:[150,150,170,150,'#147efb',3]});if(f.ink.length===2)assert.deepEqual(f.ink[1],{kind:'line',line:[170,150,190,150,op==='SET_COLOR'?'#ff3b30':'#147efb',op==='SET_SIZE'?6:3]});}}
    if(id==='ReturnStatement')assert.deepEqual(f.trace.find(t=>t.kind==='unreachable-tail-refusal'),{kind:'unreachable-tail-refusal',codes:['S306'],unchanged:true});
    if(id==='LocalListDeclaration'){assert.deepEqual(f.lists.結果,['元']);assert.deepEqual(f.lists.受取,['あかり']);}
-   if(id.startsWith('CloneCommand:')){const clones=f.actors.filter(a=>a.isClone);assert.equal(clones.length,1);assert.equal(clones[0].baseId,op==='CREATE_SELF'?'sprite-1':'command-star');assert.equal(f.variables.分身開始数,op==='DELETE_SELF'?2:1);}
+   if(id.startsWith('CloneCommand:')){const clones=f.actors.filter(a=>a.isClone);assert.equal(clones.length,1);assert.equal(clones[0].baseId,op==='CREATE_SELF'?'sprite-1':'command-star');assert.equal(f.variables.コピー開始数,op==='DELETE_SELF'?2:1);}
    if(id==='UserActionCall'){assert.equal(a.vars.個体点数,13);assert.equal(f.actors.find(a=>a.runtimeId==='command-star').vars.個体点数,20);assert.equal(f.variables.点数,10);}
    if(id==='Forever')assert.ok(a.direction>=30);
    if(id==='WaitTime'){assert.equal(f.trace[0].time,100);assert.deepEqual(s.states[1].trace,[]);}

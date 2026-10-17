@@ -65,9 +65,9 @@ const predicateRows=[
     forms:{plain:'入っている',ifYes:'入っていれば',ifNo:'入っていなければ',whileYes:'入っているあいだ',untilYes:'入るまで',andYes:'入っていて',andNo:'入っていなくて',plainNo:'入っていない'}},
   {plain:'含まれている',operand:'名前一覧に「あかり」が',yes:contains(names,str('あかり')),
     forms:{plain:'含まれている',ifYes:'含まれていれば',ifNo:'含まれていなければ',whileYes:'含まれているあいだ',untilYes:'含まれるまで',andYes:'含まれていて',andNo:'含まれていなくて',plainNo:'含まれていない'}},
-  // 分身である has no operand: the condition reads the running clone itself.
-  {plain:'分身である',operand:'',yes:sensor('クローンである'),
-    forms:{plain:'分身である',ifYes:'分身なら',ifNo:'分身でなければ',whileYes:'分身であるあいだ',untilYes:'分身になるまで',andYes:'分身で',andNo:'分身ではなくて',plainNo:'分身ではない'}},
+  // コピーである has no operand: the condition reads the running clone itself.
+  {plain:'コピーである',operand:'',yes:sensor('クローンである'),
+    forms:{plain:'コピーである',ifYes:'コピーなら',ifNo:'コピーでなければ',whileYes:'コピーであるあいだ',untilYes:'コピーになるまで',andYes:'コピーで',andNo:'コピーではなくて',plainNo:'コピーではない'}},
 ];
 // One script per predicate: もし (yes/no), あいだ, まで, で (AND yes/no) and か (OR yes/no).
 // The second operand of AND/OR is the fixed condition 「点数が3と同じなら」.
@@ -297,11 +297,11 @@ export const sentenceFormCases=[
   },
   {
     id:'SF-clone-sentences',
-    source:'自分の分身を作る\n自分の分身を3体作る\nこの分身だけを消す\n「ねこ」の分身を作る\n「ねこ」の分身を2体作る',
+    source:'自分のコピーを作る\n自分のコピーを3体作る\nこのコピーだけを消す\n「ねこ」のコピーを作る\n「ねこ」のコピーを2体作る',
     expected:script([command('CloneCommand','CREATE_SELF'),command('CloneCommand','CREATE_SELF',[],{count:num(3)}),command('CloneCommand','DELETE_SELF'),
       command('CloneCommand','CREATE_TARGET',[str('ねこ')]),command('CloneCommand','CREATE_TARGET',[str('ねこ')],{count:num(2)})]),
-    claims:{'sentence:CloneCommand:CREATE_SELF':'自分の分身を作る','sentence:CloneCommand:CREATE_SELF:count':'自分の分身を3体作る','sentence:CloneCommand:DELETE_SELF':'この分身だけを消す',
-      'sentence:CloneCommand:CREATE_TARGET':'「ねこ」の分身を作る','sentence:CloneCommand:CREATE_TARGET:count':'「ねこ」の分身を2体作る'},
+    claims:{'sentence:CloneCommand:CREATE_SELF':'自分のコピーを作る','sentence:CloneCommand:CREATE_SELF:count':'自分のコピーを3体作る','sentence:CloneCommand:DELETE_SELF':'このコピーだけを消す',
+      'sentence:CloneCommand:CREATE_TARGET':'「ねこ」のコピーを作る','sentence:CloneCommand:CREATE_TARGET:count':'「ねこ」のコピーを2体作る'},
   },
   // 引用した台詞は「…」と言う、データの値は「…の値を言う」 (数・単位・発言).
   {
@@ -512,9 +512,9 @@ export const sentenceFormCases=[
   },
   {
     id:'SF-heading-clone',
-    source:'ねこの分身が作られたとき、姿をかくす',
+    source:'ねこのコピーが作られたとき、姿をかくす',
     expected:script([hide()],{heading:{event:'cloneStart',actorRef:named('ねこ')}}),
-    claims:{'heading:cloneStart/^(.+?)の分身が作られたとき、(.*)$':'ねこの分身が作られたとき、姿をかくす'},
+    claims:{'heading:cloneStart/^(.+?)のコピーが作られたとき、(.*)$':'ねこのコピーが作られたとき、姿をかくす'},
   },
 
   // ── 「〜なくなるまで」 ──

@@ -101,9 +101,11 @@ const runnerEnd=buttonSource.indexOf('assert.deepEqual(snapshot',runnerStart);
 assert.ok(runnerStart>0&&runnerEnd>runnerStart);
 const fixtureError=new Error('fixture import timeout'),cleanupError=new Error('Product test host timeout');
 const actionError=new Error('real button assertion');
-let launches=0,cleanup=0,clock=0;const budgets=[],attempted=[],buttonResults=[];
+let launches=0,cleanup=0,clock=0;const budgets=[],attempted=[],buttonResults=[],answered=[];
 await vm.runInNewContext('(async()=>{'+buttonSource.slice(runnerStart,runnerEnd)+'})()',{
   assert,browserPath:'fixture-browser',currentProductFile:()=> 'fixture.html',results:buttonResults,
+  // Each page answers the product's own unsaved-work question.
+  async answerProductConfirms(page,accept){assert.equal(accept,true);answered.push(page.id);},
   console:{log(){},error(){}},Date:{now:()=>clock++*1000},
   cases:Object.fromEntries(uiButtonIds.map((id,i)=>[id,async()=>{attempted.push(id);if(i===1)throw actionError;return {checked:true};}])),
   async withBrowser(browserPath,fn,budget){
@@ -117,7 +119,7 @@ await vm.runInNewContext('(async()=>{'+buttonSource.slice(runnerStart,runnerEnd)
   },
   async installRegressionProject(page){if(page.id===1)throw fixtureError;},async select(){},
 });
-assert.equal(launches,uiButtonIds.length);assert.equal(cleanup,launches);
+assert.equal(launches,uiButtonIds.length);assert.equal(cleanup,launches);assert.deepEqual(answered,Array.from({length:launches},(_,i)=>i+1));
 assert.deepEqual(attempted,uiButtonIds.slice(1));
 assert.deepEqual(buttonResults.map(r=>r.id),[...uiButtonIds]);
 assert.equal(buttonResults[0].phase,'fixture-import');assert.equal(buttonResults[0].detail,fixtureError.stack);
@@ -169,10 +171,11 @@ console.log('Partial reruns: latest evidence selected; actual provenance, snapsh
 const assetSource=fs.readFileSync('audit/tests/editor-assets.mjs','utf8');
 const assetStart=assetSource.indexOf('async function failureScreenshot('),assetEnd=assetSource.indexOf('assert.deepEqual(snapshot',assetStart);
 assert.ok(assetStart>0&&assetEnd>assetStart);
-const assetResults=[],assetBudgets=[],assetAttempts=[],diagnostics=[];let assetClock=0,assetLaunches=0,screenshotCalls=0;
+const assetResults=[],assetBudgets=[],assetAttempts=[],diagnostics=[],assetAnswered=[];let assetClock=0,assetLaunches=0,screenshotCalls=0;
 await vm.runInNewContext('(async()=>{'+assetSource.slice(assetStart,assetEnd)+'})()',{
   assert,fs:{writeFileSync(file,data){diagnostics.push({file,report:JSON.parse(data)});}},path,artifacts:'fixture-artifacts',
   browserPath:'fixture-browser',currentProductFile:()=> 'fixture.html',results:assetResults,pageErrors:[],networkRequests:[],
+  async answerProductConfirms(page,accept){assert.equal(accept,true);assetAnswered.push(page.id);},
   console:{log(){},error(){}},Date:{now:()=>assetClock++*1000},
   setTimeout(fn,ms){assert.equal(ms,1000);Promise.resolve().then(fn);return 1;},clearTimeout(){},
   cases:Object.fromEntries(editorAssetIds.map((id,i)=>[id,async()=>{assetAttempts.push(id);if(i===1)throw actionError;}])),
@@ -183,7 +186,7 @@ await vm.runInNewContext('(async()=>{'+assetSource.slice(assetStart,assetEnd)+'}
     finally {if(browser.id===1)throw cleanupError;}
   },async installRegressionProject(p){if(p.id===1)throw fixtureError;},
 });
-assert.deepEqual(assetResults.map(r=>r.id),[...editorAssetIds]);assert.deepEqual(assetAttempts,editorAssetIds.slice(1));
+assert.deepEqual(assetAnswered,Array.from({length:assetLaunches},(_,i)=>i+1));assert.deepEqual(assetResults.map(r=>r.id),[...editorAssetIds]);assert.deepEqual(assetAttempts,editorAssetIds.slice(1));
 assert.equal(assetResults[0].detail,fixtureError.stack);assert.equal(assetResults[0].phase,'fixture-import');assert.equal(assetResults[0].hostFailure,cleanupError.stack);
 assert.equal(assetResults[1].detail,actionError.stack);assert.equal(assetResults[1].phase,'asset-actions');
 assert.ok(assetResults.slice(0,2).every(r=>!r.pass&&/Failure screenshot timeout/.test(r.screenshotFailure)));

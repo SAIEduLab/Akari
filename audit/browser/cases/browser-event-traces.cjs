@@ -15,10 +15,10 @@ const{chromium}=require('playwright');
   for(const e of expected){const tag=e.type+':'+e.event;let source='名前一覧に「'+(mode==='blocks'?'編集中':tag)+'」を追加する\n名前一覧に乱数（1、100000）を追加する\n0.1秒待つ\n名前一覧に乱数（1、100000）を追加する';
    if(e.type==='sprite'&&e.event==='start')source+='\n横0、縦0の位置へ行く\n0.1秒で横100、縦200の位置へ滑る';
    if(e.type==='stage'&&e.event==='start')source+='\n0.05秒待つ\n「滑走中」と言う\n0.05秒待つ';
-   if(e.type==='button'&&e.event==='click')source+='\nみんなに「観測知らせ」と知らせて、知らせを受けて始めたことが全部終わるまで待つ\n次の背景にする\n「'+defaultSpriteName+'」のクローンを作る';
+   if(e.type==='button'&&e.event==='click')source+='\nみんなに「観測知らせ」と知らせて、知らせを受けて始めたことが全部終わるまで待つ\n次の背景にする\n「'+defaultSpriteName+'」のコピーを作る';
    const sensor={message:'受け取った知らせ',keyDown:'押されたキー',valueChanged:'新しい値',backdropChanged:'新しい背景名'}[e.event];if(sensor)source+='\n名前一覧に'+sensor+'を追加する';
    source+='\nもし 点数が1と同じなら、次のことをする\n  1÷0を言う\n名前一覧に「完了:'+tag+'」を追加する';
-   if(e.event==='cloneStart')source+='\nこのクローンを削除する';else source+='\nこのスクリプトを止める';
+   if(e.event==='cloneStart')source+='\nこのコピーだけを消す';else source+='\nこのスクリプトを止める';
    const ast=api.parseSyntax(source).ast;assert.ok(ast);p.scripts.push({targetId:e.id,event:e.event,source:api.formatScript(ast)});
   }assert.deepEqual(JSON.parse(JSON.stringify(api.compileProject(p).errors)),[]);return p;
  }

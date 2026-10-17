@@ -58,7 +58,7 @@ export function verifySpeechObserved(id,o){
  }
  else if(id==='speech/clone-identity'){
   assert.deepEqual(o.bubbles.map(b=>[b.id,b.speaker,b.text]),[['sprite-1','あかり',speechTexts[0]],['sprite-1-clone-3','あかり',speechTexts[1]]]);
-  dialog(o.original,'あかりの発話（全文）',speechTexts[0]);dialog(o.clone,'あかり（分身: sprite-1-clone-3）の発話（全文）',speechTexts[1]);
+  dialog(o.original,'あかりの発話（全文）',speechTexts[0]);dialog(o.clone,'あかり（コピー: sprite-1-clone-3）の発話（全文）',speechTexts[1]);
  }
  else if(id==='speech/duplicate-name-refusal'){
   assert.equal(o.error.code,'F503');assert.match(o.error.message,/部品名.*重複/);assert.deepEqual(o.namesBefore,ordinaryNames);assert.deepEqual(o.namesAfter,ordinaryNames);

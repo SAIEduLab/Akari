@@ -613,7 +613,7 @@ function runSemanticContractTests() {
         {id:'core-inner',ownerId:'stage',name:'内側',args:[],source:'個体値を答えとして返す。'},
         {id:'core-outer',ownerId:'stage',name:'外側',args:[],source:'この中だけで使う変数【結果】を作り、最初は0にする。\nいぬは何もしない。\nもし点数が0と同じなら、\n  自分は【結果】を（【内側】で求めた答え）にする。\n【結果】を答えとして返す。'}];
       eq(actorUnitRun(p,true).speech,[['cat','20']]);
-      const clone=actorUnitFixture('自分の分身を作る。');clone.functions=structuredClone(p.functions);
+      const clone=actorUnitFixture('自分のコピーを作る。');clone.functions=structuredClone(p.functions);
       clone.scripts.push({id:'core-clone',targetId:'cat',event:'cloneStart',source:'個体値を30にする。\n（【外側】で求めた答え）を言う。'});
       for(const packed of [false,true])eq(actorUnitRun(clone,packed).speech.map(row=>row[1]),['30']);
     });

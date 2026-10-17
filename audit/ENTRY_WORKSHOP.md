@@ -55,7 +55,7 @@ LANGUAGE.mdの保護本文には、起動・新規・読込みで画面の本文
 
 タッチ相当のブラウザー操作（hasTouchとlocator.tap）では代表経路の全手順と完成を検査し、各実行試行の最初のキャラ操作をEnterでも起動します。9分岐の固有手順の退出・再開は別のマウス・キーボード実DOM検査です。TUTORIAL-TOUCH-AND-KEYBOARDは物理タッチ・実Chromebookの検証ではありません。
 
-RUNTIME-CLICK-KEYBOARDは、IDを持つ複数のクリック本文の先頭がコメントだけでも、実行本文があるキャラをEnterで起動できることを検査します。renderComponentsは通常のmatchingScriptsとscriptAstを使い、1回の実行中に固定された対象集合を描画と分身で再利用します。ブラウザー所有の更新・閉じる・検索・印刷・タブ切替等はチュートリアルの操作制限から除外し、全手順でキーイベントの非取消を確認します。既存の通常画面の検査は元の順序を保ち、入門の3工程（entry-unit、entry-browser、entry-verify）をselftestの末尾へ登録します。
+RUNTIME-CLICK-KEYBOARDは、IDを持つ複数のクリック本文の先頭がコメントだけでも、実行本文があるキャラをEnterで起動できることを検査します。renderComponentsは通常のmatchingScriptsとscriptAstを使い、1回の実行中に固定された対象集合を描画とコピーで再利用します。ブラウザー所有の更新・閉じる・検索・印刷・タブ切替等はチュートリアルの操作制限から除外し、全手順でキーイベントの非取消を確認します。既存の通常画面の検査は元の順序を保ち、入門の3工程（entry-unit、entry-browser、entry-verify）をselftestの末尾へ登録します。
 
 
 ## さかなキャッチ：共通作品と3×3の続き

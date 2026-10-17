@@ -1364,7 +1364,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_SELF",
-      "capability": "自分のクローンを作る",
+      "capability": "自分のコピーを作る",
       "ast": "CloneCommand op=CREATE_SELF",
       "cui": "CODE-STMT",
       "gui": "GUI-EDIT-STMT schema `CloneCommand:CREATE_SELF`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
@@ -1376,7 +1376,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_TARGET",
-      "capability": "「星」のクローンを作る",
+      "capability": "「星」のコピーを作る",
       "ast": "CloneCommand op=CREATE_TARGET",
       "cui": "CODE-STMT",
       "gui": "GUI-EDIT-STMT schema `CloneCommand:CREATE_TARGET`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
@@ -1388,7 +1388,7 @@
     },
     {
       "id": "command:CloneCommand:DELETE_SELF",
-      "capability": "このクローンを削除する",
+      "capability": "このコピーだけを消す",
       "ast": "CloneCommand op=DELETE_SELF",
       "cui": "CODE-STMT",
       "gui": "GUI-EDIT-STMT schema `CloneCommand:DELETE_SELF`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
@@ -2282,7 +2282,7 @@
       "gui": "GUI-EDIT-EXPR schema `SensorRead:クローンである`; fields=なし; inputs=なし; bodies=なし; annotations=なし",
       "semantic": "部品のみ",
       "runtime": "evalSensor",
-      "selftest": "CORE sensor クローンである; TEST-BLOCK-SCHEMA SensorRead:クローンである",
+      "selftest": "CORE sensor コピーである; TEST-BLOCK-SCHEMA SensorRead:クローンである",
       "browser": "BROWSER-LANG; browser-schemas:SensorRead:クローンである",
       "guarantee": "sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA"
     },
@@ -4512,9 +4512,9 @@
       },
       {
         "id": "CI-19",
-        "intent": "分身5個が進んで消え、元は残る",
-        "route": "構造化支援：作成の5回と分身の見出し。8.4",
-        "acceptance": "元1＋分身5、各自、保存に残さない。全部5個との違いを確認"
+        "intent": "コピー5個が進んで消え、元は残る",
+        "route": "構造化支援：作成の5回とコピーの見出し。8.4",
+        "acceptance": "元1＋コピー5、各自、保存に残さない。全部5個との違いを確認"
       },
       {
         "id": "CI-20",

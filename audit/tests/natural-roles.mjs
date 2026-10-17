@@ -41,8 +41,8 @@ for(const name of ['あいさつ','ジャンプ','手順3'])for(const count of [
  const source=`「${name}」という手順を${count}回行う。`,p=project(undefined,source);p.actions=[{id:'roles-action',ownerId:'stage',name,args:[],source:'「呼ばれた」と言う。'}];
  const {formatted}=roundtrip(source,p),r=run(p);assert.deepEqual(r.errors,[]);assert.deepEqual(r.speech,Array(count).fill('呼ばれた'));p.scripts[0].source=formatted;assert.deepEqual(run(p),r);return {source,count};
 });
-for(const count of [0,1,3])check(`clone/${count}`,()=>{const source=`自分の分身を${count}体作る。`,p=project(undefined,source),{formatted}=roundtrip(source,p),r=run(p);assert.deepEqual(r.errors,[]);assert.equal(r.actors.filter(a=>a.isClone).length,count);p.scripts[0].source=formatted;assert.deepEqual(run(p),r);return {count};});
-for(const value of ['－1','1.5','「三」','501'])check(`clone/reject/${value}`,()=>{const p=project(undefined,`自分の分身を${value}体作る。`),r=run(p);assert.equal(r.errors.length,1);assert.equal(r.actors.length,1,'rejection must not create a partial group');return r;});
+for(const count of [0,1,3])check(`clone/${count}`,()=>{const source=`自分のコピーを${count}体作る。`,p=project(undefined,source),{formatted}=roundtrip(source,p),r=run(p);assert.deepEqual(r.errors,[]);assert.equal(r.actors.filter(a=>a.isClone).length,count);p.scripts[0].source=formatted;assert.deepEqual(run(p),r);return {count};});
+for(const value of ['－1','1.5','「三」','501'])check(`clone/reject/${value}`,()=>{const p=project(undefined,`自分のコピーを${value}体作る。`),r=run(p);assert.equal(r.errors.length,1);assert.equal(r.actors.length,1,'rejection must not create a partial group');return r;});
 for(const direction of ['右','左'])for(const speed of [1,20,30])for(const ending of ['動く','動き続ける'])check(`continuous/${direction}/${speed}/${ending}`,()=>{
  const source=`「a」キーを押しているあいだ、画面の${direction}へ1秒に${speed}歩の速さで${ending}。`,p=project(undefined,source),{ast}=roundtrip(source,p);
  assert.equal(ast.rules.length,1);assert.equal(ast.rules[0].direction,direction==='右'?'right':'left');assert.equal(ast.rules[0].distance.value.value,speed);assert.equal(A.compileProject(p).errors.length,0);return {source};

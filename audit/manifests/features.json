@@ -353,19 +353,19 @@
       "id": "CloneCommand:CREATE_SELF",
       "kind": "CloneCommand",
       "op": "CREATE_SELF",
-      "source": "自分の分身を作る。"
+      "source": "自分のコピーを作る。"
     },
     {
       "id": "CloneCommand:CREATE_TARGET",
       "kind": "CloneCommand",
       "op": "CREATE_TARGET",
-      "source": "「マスコット」の分身を作る。"
+      "source": "「マスコット」のコピーを作る。"
     },
     {
       "id": "CloneCommand:DELETE_SELF",
       "kind": "CloneCommand",
       "op": "DELETE_SELF",
-      "source": "この分身だけを消す。"
+      "source": "このコピーだけを消す。"
     },
     {
       "id": "StopCommand:THIS",

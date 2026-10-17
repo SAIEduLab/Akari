@@ -13,7 +13,7 @@ export const autosaveSources={
 };
 export const autosaveSuffix='\n※ 編集した原文を保持';
 export const autosaveCallable={
-  source:'自分のクローンを作る。',
+  source:'自分のコピーを作る。',
   document:{revision:7,unitIds:['first-event']},
   extraScripts:[{id:'clone-handler',targetId:'sprite-1',event:'cloneStart',source:'「読み上げ」という手順を1回行う。',document:{revision:1,unitIds:['clone-event']}}],
   actions:[{id:'say-action',ownerId:'stage',name:'読み上げ',args:[],source:'「買うもの」の2番目を2秒話します。'}],

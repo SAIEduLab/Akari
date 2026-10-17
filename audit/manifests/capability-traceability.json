@@ -1048,7 +1048,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_SELF",
-      "meaning": "自分の分身を作る。",
+      "meaning": "自分のコピーを作る。",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -1066,7 +1066,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_TARGET",
-      "meaning": "「星」の分身を作る。",
+      "meaning": "「星」のコピーを作る。",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -1084,7 +1084,7 @@
     },
     {
       "id": "command:CloneCommand:DELETE_SELF",
-      "meaning": "この分身だけを消す。",
+      "meaning": "このコピーだけを消す。",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -2232,7 +2232,7 @@
     },
     {
       "id": "CloneCommand:CREATE_SELF",
-      "meaning": "自分の分身を作る。",
+      "meaning": "自分のコピーを作る。",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -2242,7 +2242,7 @@
     },
     {
       "id": "CloneCommand:DELETE_SELF",
-      "meaning": "この分身だけを消す。",
+      "meaning": "このコピーだけを消す。",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -2252,7 +2252,7 @@
     },
     {
       "id": "CloneCommand:CREATE_TARGET",
-      "meaning": "「星」の分身を作る。",
+      "meaning": "「星」のコピーを作る。",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -2822,7 +2822,7 @@
     },
     {
       "id": "SensorRead:クローンである",
-      "meaning": "分身である",
+      "meaning": "コピーである",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -4068,7 +4068,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_SELF",
-      "meaning": "自分のクローンを作る",
+      "meaning": "自分のコピーを作る",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -4086,7 +4086,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_TARGET",
-      "meaning": "「星」のクローンを作る",
+      "meaning": "「星」のコピーを作る",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -4104,7 +4104,7 @@
     },
     {
       "id": "command:CloneCommand:DELETE_SELF",
-      "meaning": "このクローンを削除する",
+      "meaning": "このコピーだけを消す",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -5360,7 +5360,7 @@
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
-          "id": "CORE sensor クローンである"
+          "id": "CORE sensor コピーである"
         },
         {
           "path": "audit/manifests/product-tests.json",
@@ -8052,9 +8052,9 @@
     },
     {
       "id": "CI-19",
-      "intent": "分身5個が進んで消え、元は残る",
-      "route": "構造化支援：作成の5回と分身の見出し。8.4",
-      "acceptance": "元1＋分身5、各自、保存に残さない。全部5個との違いを確認",
+      "intent": "コピー5個が進んで消え、元は残る",
+      "route": "構造化支援：作成の5回とコピーの見出し。8.4",
+      "acceptance": "元1＋コピー5、各自、保存に残さない。全部5個との違いを確認",
       "testReferences": [
         {
           "path": "audit/tests/japanese-intent-browser.mjs",
@@ -8194,7 +8194,7 @@
       ]
     },
     {
-      "meaning": "- ACTOR-SCOPE：省略対象、明示対象、自他の文型、複数対象の連文、枝/反復/定義の境界、分身、自分のデータ、名前指定の元個体を固定トレースで確認",
+      "meaning": "- ACTOR-SCOPE：省略対象、明示対象、自他の文型、複数対象の連文、枝/反復/定義の境界、コピー、自分のデータ、名前指定の元個体を固定トレースで確認",
       "testReferences": [
         {
           "path": "audit/tests/semantic-negative-pairs.mjs",
