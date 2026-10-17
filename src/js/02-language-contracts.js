@@ -151,7 +151,7 @@
         id: 'ListReplace',
         kind: 'ListReplace',
         op: '',
-        source: '名前一覧の1番目を「ひかり」に変える',
+        source: '名前一覧の1番目を「ひかり」にかえる',
       },
       {
         id: 'ListInsert',
@@ -493,25 +493,25 @@
         id: 'StopCommand:THIS',
         kind: 'StopCommand',
         op: 'THIS',
-        source: 'この実行を止める',
+        source: 'この動きを止める',
       },
       {
         id: 'StopCommand:OTHERS',
         kind: 'StopCommand',
         op: 'OTHERS',
-        source: 'ほかの実行をすべて止める',
+        source: 'ほかの動きをぜんぶ止める',
       },
       {
         id: 'StopCommand:ALL',
         kind: 'StopCommand',
         op: 'ALL',
-        source: '作品全体を止める',
+        source: '作品ぜんぶを止める',
       },
       {
         id: 'LooksCommand:SET_SELF_TEXT',
         kind: 'LooksCommand',
         op: 'SET_SELF_TEXT',
-        source: '自分の文字を「文字」に変える',
+        source: '自分の文字を「文字」にかえる',
       },
       {
         id: 'LooksCommand:SET_INPUT',

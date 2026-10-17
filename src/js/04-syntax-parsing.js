@@ -1501,7 +1501,7 @@
       if(node){node.actorRef=actorRef;STATEMENT_EXPLICIT_ACTORS.add(node);const location=SOURCE_RANGES.get(node);if(location){location.extent={start:working.start,end:working.end};location.range=sourceRange(working.mapped?.positions||[]);location.inline=!!working.inline;location.actorRange=sourceRange(working.mapped?.positions||[],parts[0].start,parts[0].end);}return node;}
     }
     const unclear=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる)$/d,code);
-    if(unclear&&!unclear[0].text.startsWith('「'))throw sentenceDiagnostic('「〜に〜を入れる」では、さいごに入れるのか、何番目かと取りかえるのか分かりません。えらんでください',working,[{label:'さいごに入れる',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'どれかと取りかえる（何番目かをえらぶ）',source:`${unclear[0].text}の〔位置を選ぶ〕番目を${unclear[1].text}に変える`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
+    if(unclear&&!unclear[0].text.startsWith('「'))throw sentenceDiagnostic('「〜に〜を入れる」では、さいごに入れるのか、何番目かと取りかえるのか分かりません。えらんでください',working,[{label:'さいごに入れる',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'どれかと取りかえる（何番目かをえらぶ）',source:`${unclear[0].text}の〔位置を選ぶ〕番目を${unclear[1].text}にかえる`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
     const delayed=surfaceCapture(/^(.+)秒後に(.+)$/d,code);
     if(delayed)throw sentenceDiagnostic('待ってから動く意味なら、待機と移動を分けます',working,[{label:'待ってから次の動きをする',source:`${delayed[0].text}秒待つ。\n${' '.repeat(working.indent||0)}${delayed[1].text}`}],{kind:'Sequence',missing:['motionDestinationIfAbsent']});
     if(directError)throw directError;
