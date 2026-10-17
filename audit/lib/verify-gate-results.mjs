@@ -5,6 +5,8 @@ import {verifyContractReport,verifyExpectationReport,verifyIntentReport,verifyRu
 import {verifyBlockFields} from './block-field-contract.mjs';
 import {verifyProductSource} from './product-source-contract.mjs';
 import {verifyPublicationReport} from './publication-contract.mjs';
+import {verifySentenceFormCoverage} from './sentence-form-coverage.mjs';
+import {verifySpecExamples} from './spec-examples-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -49,6 +51,8 @@ export function verifyGateResults(dir,inputs){
   const integrity=read('integrity');assert.deepEqual(integrity.results.map(r=>r.id),integrityControlIds);assert.equal(new Set(integrity.results.map(r=>r.id)).size,integrityControlIds.length);for(const r of integrity.results)assert.equal(r.pass,true);
   verifyContractReport(read('japanese-contract-static'),inputs);
   verifyExpectationReport(read('language-expectations-static'),inputs);
+  verifySentenceFormCoverage(read('sentence-form-coverage'),inputs);
+  verifySpecExamples(read('spec-examples'),inputs,{artifacts:path.join(dir,'spec-examples.artifacts')});
   verifyIntentReport(read('japanese-intent-browser'),inputs,path.join(dir,'japanese-intent-browser.artifacts','candidate.html'));
   verifyRuntimeReport(read('runtime-v2'),inputs,path.join(dir,'runtime-v2'));
   verifyNegativeReport(read('japanese-gate-negative'),inputs);

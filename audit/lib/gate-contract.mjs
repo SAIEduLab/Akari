@@ -37,6 +37,8 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['surface-negative','audit/tests/surface-negative.mjs',file('editor-browser-core'),file('editor-gui'),file('surface-negative')],
   ['japanese-contract-static','audit/tests/contract-gate.mjs','static',file('japanese-contract-static')],
   ['language-expectations-static','audit/tests/contract-gate.mjs','expectations',file('language-expectations-static')],
+  ['sentence-form-coverage','audit/tests/sentence-form-coverage.mjs',file('sentence-form-coverage')],
+  ['spec-examples','audit/tests/spec-examples.mjs',file('spec-examples')],
   ['japanese-intent-browser','audit/tests/japanese-intent-browser.mjs',browser,file('japanese-intent-browser')],
   ['runtime-v2','audit/tests/runtime-boundary-gate.mjs',currentProductFile(),browser,path.join(dir,'runtime-v2'),file('runtime-v2')],
   ['japanese-gate-negative','audit/tests/japanese-gate-negative.mjs',file('japanese-gate-negative')],

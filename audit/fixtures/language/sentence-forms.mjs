@@ -405,6 +405,13 @@ export const sentenceFormCases=[
     claims:{'te:変えて':'表示色を「赤」に変えて','te:言って':'「やあ」と言って','te:いって':'「やあ」といって','te:話して':'「やあ」と話して','te:はなして':'「やあ」とはなして','te:見せて':'姿を見せて'},
   },
   {
+    // The easy spelling かえる (LANGUAGE.md やさしい書き方) changes the same role as 変える.
+    id:'SF-te-change-easy',
+    source:'表示色を「青」にかえて、何もしない',
+    expected:script([command('LooksCommand','SET_COLOR',[str('青')]),nothing()]),
+    claims:{'te:かえて':'表示色を「青」にかえて'},
+  },
+  {
     id:'SF-te-data',
     source:'名前一覧の最後に「ほたる」を入れて、名前一覧の最後に「ひかり」をいれて、点数に1を足して、点数に1をたして、点数から1を引いて、点数から1をひいて、点数を0にして、何もしない',
     expected:script([statement('ListAppend',{target:target('名前一覧'),value:str('ほたる')}),statement('ListAppend',{target:target('名前一覧'),value:str('ひかり')}),
@@ -495,13 +502,13 @@ export const sentenceFormCases=[
     id:'SF-heading-backdrop',
     source:'背景が変わったとき、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'backdropChanged',actorRef:named('ねこ')}}),
-    claims:{'heading:backdropChanged/^背景が変わったとき、(.+?)は、(.*)$':'背景が変わったとき、ねこは、姿をかくす'},
+    claims:{'heading:backdropChanged/^(?:背景|はいけい)が(?:変わった|かわった)とき、(.+?)は、(.*)$':'背景が変わったとき、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-value-changed',
     source:'入力欄1の中身が変わったとき、何もしない',
     expected:script([nothing()],{heading:{event:'valueChanged',actorRef:named('入力欄1')}}),
-    claims:{'heading:valueChanged/^(.+?)の中身が変わったとき、(.*)$':'入力欄1の中身が変わったとき、何もしない'},
+    claims:{'heading:valueChanged/^(.+?)の中身が(?:変わった|かわった)とき、(.*)$':'入力欄1の中身が変わったとき、何もしない'},
   },
   {
     id:'SF-heading-clone',

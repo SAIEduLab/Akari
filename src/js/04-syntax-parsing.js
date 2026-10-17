@@ -901,7 +901,7 @@
     ['MotionCommand:SET_Y', /^(?:縦位置|たてのばしょ)を(.+?)に(?:する|変える|かえる)$/d, 'MotionCommand', 'SET_Y', 'arg'],
     ['MotionCommand:POINT_TO', /^(.+?)の(?:方向|方)を(?:向く|むく)$/d, 'MotionCommand', 'POINT_TO', 'arg'],
     ['LooksCommand:SET_SCALE', /^大きさを(.+?)％にする$/d, 'LooksCommand', 'SET_SCALE', 'percent'],
-    ['LooksCommand:SET_COLOR', /^表示色を(.+?)に(?:する|変える)$/d, 'LooksCommand', 'SET_COLOR', 'arg'],
+    ['LooksCommand:SET_COLOR', /^表示色を(.+?)に(?:する|変える|かえる)$/d, 'LooksCommand', 'SET_COLOR', 'arg'],
     ['LooksCommand:SET_COSTUME', /^(?:衣装|すがた)を(.+?)に(?:する|変える|かえる)$/d, 'LooksCommand', 'SET_COSTUME', 'arg'],
     ['LooksCommand:SET_BACKDROP', /^(?:背景|はいけい)を(.+?)に(?:する|変える|かえる)$/d, 'LooksCommand', 'SET_BACKDROP', 'arg'],
     ['LooksCommand:SET_SELF_TEXT', /^自分の文字を(.+?)に(?:変える|かえる)$/d, 'LooksCommand', 'SET_SELF_TEXT', 'arg'],
@@ -1160,8 +1160,8 @@
       [/^(.+?)キー(?:を押すたびに|が押されたとき)、(.+?)は、(.*)$/d,'keyDown',1,2,0],
       [/^知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',0,1],
       [/^(.+?)という知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',1,2,0],
-      [/^背景が変わったとき、(.+?)は、(.*)$/d,'backdropChanged',0,1],
-      [/^(.+?)の中身が変わったとき、(.*)$/d,'valueChanged',0,1],
+      [/^(?:背景|はいけい)が(?:変わった|かわった)とき、(.+?)は、(.*)$/d,'backdropChanged',0,1],
+      [/^(.+?)の中身が(?:変わった|かわった)とき、(.*)$/d,'valueChanged',0,1],
       [/^(.+?)の分身が作られたとき、(.*)$/d,'cloneStart',0,1],
     ];
     for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code,protectedCode);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','キーや合図の名前は「 」でかこんで書きます。れい：「空白」キーを押すたびに、自分は、');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','キーや合図の名前は、「 」でかこんだ文字を1つだけ書きます。れい：「空白」キーを押すたびに、自分は、');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex],actor:parts[actorIndex]};}
