@@ -10,7 +10,7 @@ import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {scenarios,ambiguities,corpusSha256} from '../lib/japanese-intent-oracles.mjs';
 import {verifyJapaneseContract,verifyOracleCurrentLists} from './japanese-contract-static.mjs';
 import {corpusPath,checkCapabilityNegatives} from '../lib/capability-contract.mjs';
-import {intentCaseIds,runtimeRuns,contractInputPaths,expectationInputPaths,intentInputPaths,runtimeInputPaths,negativeInputPaths,inputHashes,verifyContractReport,verifyExpectationReport,verifyIntentCandidate,verifyIntentReport,verifyRuntimeReport,negativeCaseIds,verifyNegativeReport} from '../lib/japanese-gate-contract.mjs';
+import {intentCaseIds,runtimeRuns,contractInputPaths,expectationInputPaths,intentInputPaths,runtimeInputPaths,negativeInputPaths,inputHashes,verifyContractReport,verifyExpectationReport,verifyIntentCandidate,verifyIntentReport,verifyRuntimeReport,negativeCaseIds,verifyNegativeReport,visibleChoices} from '../lib/japanese-gate-contract.mjs';
 const [destination]=process.argv.slice(2);assert.ok(destination);const inputs=snapshot(currentProductFile()),dir=fs.mkdtempSync(path.join(os.tmpdir(),'akari-gate-validator-'));
 const clone=x=>JSON.parse(JSON.stringify(x)),results=[];
 try{
@@ -31,7 +31,7 @@ try{
  }
  for(const ambiguity of ambiguities){
   const soundChoices=ambiguity.id==='AMB-SOUND'?[{label:'そのままの文字を話す',source:'「こんにちは」と言う'},{label:'同じ名前の音を鳴らす',source:'音「こんにちは」を鳴らす'}]:null;
-  intent.results.find(r=>r.id===ambiguity.id+'/choices-nonexecution-cancel').evidence={original:ambiguity.source,choices:soundChoices?soundChoices.map(choice=>choice.label):ambiguity.choices,soundChoices,valid:{project:'fixture'},before:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'},after:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'}};
+  intent.results.find(r=>r.id===ambiguity.id+'/choices-nonexecution-cancel').evidence={original:ambiguity.source,choices:soundChoices?soundChoices.map(choice=>choice.label):ambiguity.choices.map(word=>visibleChoices[ambiguity.id+'/'+word]??word),soundChoices,valid:{project:'fixture'},before:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'},after:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'}};
  }
  fs.writeFileSync(path.join(dir,'formal-player.html'),'<!-- validator fixture, not an executable player -->');
  const runs=runtimeRuns.map(([script,evidence,ids])=>{

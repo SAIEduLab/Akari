@@ -8,6 +8,9 @@ import {scenarios,ambiguities,corpusSha256} from './japanese-intent-oracles.mjs'
 import {verifyJapaneseContract} from '../tests/japanese-contract-static.mjs';
 import {corpusPath,capabilityInputPaths,capabilityNegativeIds} from './capability-contract.mjs';
 
+// The on-screen label of each oracle meaning word in the ambiguity choices.
+export const visibleChoices=Object.freeze({'AMB-SOUND/台詞':'そのままの文字を話す','AMB-EDGE/状態':'今そうなっていたら する','AMB-EDGE/変化':'そうなるときを待ってから する',
+ 'AMB-LIST/最後':'さいごに入れる','AMB-LIST/置き換え':'どれかと取りかえる（何番目かをえらぶ）'});
 export const contractInputPaths = [
   'audit/tests/japanese-contract-static.mjs','audit/fixtures/capability-oracle.json',
   'audit/tests/contract-gate.mjs',
@@ -147,7 +150,7 @@ export function verifyIntentReport(report,inputs,candidateFile){
     const evidence=report.results.find(r=>r.id===ambiguity.id+'/choices-nonexecution-cancel').evidence;
     assert.equal(evidence.original,ambiguity.source);assert.ok(new Set(evidence.choices).size>=2);
     for(const word of ambiguity.choices){
-      const visibleWord=ambiguity.id==='AMB-SOUND'&&word==='台詞'?'そのままの文字を話す':word;
+      const visibleWord=visibleChoices[ambiguity.id+'/'+word]??word;
       assert.ok(evidence.choices.join('\n').includes(visibleWord));
     }
     if(ambiguity.id==='AMB-SOUND'){
