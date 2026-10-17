@@ -6,7 +6,7 @@ import path from 'node:path';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot} from '../lib/product-test-host.mjs';
-import {sentenceFormProject,sentenceFormCases,unreachableSentenceForms} from '../fixtures/language/sentence-forms.mjs';
+import {sentenceFormProject,sentenceFormCases} from '../fixtures/language/sentence-forms.mjs';
 import {ablateEntry,checkSentenceFormCoverage,productScript,readStaticTables,sentenceFormNegativeIds,sentenceFormTables,
   sentenceFormValidatorNegativeIds,verifySentenceFormCoverage,verifySentenceFormReport} from '../lib/sentence-form-coverage.mjs';
 
@@ -16,8 +16,13 @@ const product=currentProductFile(),html=fs.readFileSync(product,'utf8'),script=p
 const symbolsFor=productApi=>productApi.buildSymbols(sentenceFormProject(productApi.makeEmptyProject()));
 const variantFor=form=>loadApi('<script>'+ablateEntry(script,form)+'</script>');
 const catalog=sentenceFormTables(api,script);
-const run=(cases,{forms=catalog,productApi=api,unreachable=[]}={})=>checkSentenceFormCoverage(productApi,forms,cases,{symbolsFor,variantFor,unreachable}).failures;
-const main=checkSentenceFormCoverage(api,catalog,sentenceFormCases,{symbolsFor,variantFor,unreachable:unreachableSentenceForms});
+const run=(cases,{forms=catalog,productApi=api,variants=variantFor}={})=>checkSentenceFormCoverage(productApi,forms,cases,{symbolsFor,variantFor:variants}).failures;
+// A product copy with a redundant table entry that another reader already reads.
+const redundant=(from,to)=>{if(!script.includes(from))throw Error('redundant entry anchor missing: '+from);const copy=script.replace(from,to),copyApi=loadApi('<script>'+copy+'</script>');
+  return {forms:sentenceFormTables(copyApi,copy),productApi:copyApi,variants:form=>loadApi('<script>'+ablateEntry(copy,form)+'</script>')};};
+const redundantAdd=redundant("['に代入する','Assignment',null], ['に加える','NumericUpdate','ADD']","['に代入する','Assignment',null], ['に足す','NumericUpdate','ADD'], ['に加える','NumericUpdate','ADD']");
+const redundantPolite=redundant("['たずねます','たずねる']","['たずねます','たずねる'],['くり返します','くり返す']");
+const main=checkSentenceFormCoverage(api,catalog,sentenceFormCases,{symbolsFor,variantFor});
 
 // Negative cases: the control must not show the failure, the mutation must.
 const base=id=>{const found=sentenceFormCases.find(c=>c.id===id);if(!found)throw Error('negative base case missing: '+id);return structuredClone(found);};
@@ -27,9 +32,6 @@ const extended=(extra)=>({...catalog,forms:new Map([...catalog.forms,[extra.id,e
 const without=id=>({...catalog,forms:new Map([...catalog.forms].filter(([key])=>key!==id))});
 const thrown=fn=>{try{fn();return [];}catch(error){return ['error:'+error.message];}};
 const firstTe=readStaticTables(script).te[0].literal;
-const glide={form:'te:すべって',case:'SF-glide-te',clause:'右へ1秒で10歩すべって',readBy:'sentence:MotionCommand:GLIDE_DIRECTION'};
-const waitEnding=unreachableSentenceForms.find(row=>row.form==='ending:秒間待つ');
-if(!waitEnding)throw Error('negative base declaration missing: ending:秒間待つ');
 const negatives=[
   ['product-addition-detected','missing:sentence:AuditAddedForm',()=>run([base('SF-variable-input')]),
     ()=>run([base('SF-variable-input')],{forms:extended({id:'sentence:AuditAddedForm',table:'sentence',index:catalog.forms.size,kind:'NoOperation',op:null,pattern:/^監査だけの文$/d})})],
@@ -65,22 +67,10 @@ const negatives=[
     ()=>run([base('SF-contains-while')],{forms:extended({id:'condition:監査/whileYes',table:'condition',slot:'whileYes',surface:'が含まれているあいだ'})})],
   // A dead entry: the finite sentence form reads this clause before the alternative ending.
   ['unused-entry-detected','not-load-bearing:SF-add-value-first:ending:に足す',()=>run([base('SF-add-value-first')]),
-    ()=>run([withClaims('SF-add-value-first',{'ending:に足す':'3を点数に足す'})])],
-  // Another reader: 「これを…回くり返します」 is read without the polite table.
+    ()=>run([withClaims('SF-add-value-first',{'ending:に足す':'3を点数に足す'})],redundantAdd)],
+  // Another reader: 「これを…回くり返します」 is read without a polite table entry.
   ['other-reader-detected','not-load-bearing:SF-repeat-previous:polite:くり返します',()=>run([base('SF-repeat-previous')]),
-    ()=>run([withClaims('SF-repeat-previous',{'polite:くり返します':'これを2回くり返します'})])],
-  // A load-bearing entry cannot be declared unreachable.
-  ['unreachable-reachable-detected','reachable:te:すべって:SF-glide-te',()=>run([withoutClaim('SF-glide-te','te:すべって')]),
-    ()=>run([withoutClaim('SF-glide-te','te:すべって')],{unreachable:[glide]})],
-  ['unreachable-claimed-detected','unreachable-claimed:te:すべって',()=>run([base('SF-glide-te')]),
-    ()=>run([base('SF-glide-te')],{unreachable:[glide]})],
-  ['unreachable-unknown-detected','unknown:ending:監査だけの語尾:unreachable',()=>run([base('SF-ask-ending')]),
-    ()=>run([base('SF-ask-ending')],{unreachable:[{form:'ending:監査だけの語尾',case:'SF-ask-ending',clause:'「名前は」と聞いて待つ',readBy:'sentence:Ask'}]})],
-  // The witness must be claimed by the reader that actually reads the clause.
-  ['unreachable-evidence-detected','unreachable-evidence:ending:秒間待つ',()=>run([base('SF-wait-seconds-ending')],{unreachable:[waitEnding]}),
-    ()=>run([base('SF-wait-seconds-ending')],{unreachable:[{...waitEnding,readBy:'sentence:Ask'}]})],
-  ['unreachable-duplicate-detected','duplicate-unreachable:ending:秒間待つ',()=>run([base('SF-wait-seconds-ending')],{unreachable:[waitEnding]}),
-    ()=>run([base('SF-wait-seconds-ending')],{unreachable:[waitEnding,waitEnding]})],
+    ()=>run([withClaims('SF-repeat-previous',{'polite:くり返します':'これを2回くり返します'})],redundantPolite)],
 ].map(([id,expected,control,mutated])=>{
   const hit=failures=>failures.find(failure=>failure.startsWith(expected));
   const clean=control(),found=hit(mutated());
@@ -90,7 +80,7 @@ if(negatives.map(row=>row.id).join()!==sentenceFormNegativeIds.join())throw Erro
 
 const inputs=snapshot(product);
 const report={schema:'akari-sentence-form-coverage-v1',status:main.failures.length||negatives.some(row=>!row.rejected)?'FAIL':'PASS',
-  snapshot:inputs,tables:catalog.counts,formIds:[...catalog.forms.keys()],results:main.results,unreachable:main.unreachable,negatives,failures:main.failures};
+  snapshot:inputs,tables:catalog.counts,formIds:[...catalog.forms.keys()],results:main.results,negatives,failures:main.failures};
 
 // Validator negatives: the control report is accepted, each mutated report is rejected.
 const rejects=mutate=>{const copy=structuredClone(report);mutate(copy);try{verifySentenceFormReport(copy,inputs);return false;}catch{return true;}};
@@ -101,8 +91,6 @@ report.validatorNegatives=[
   ['report-missing-form',r=>{r.formIds.push('te:監査');r.tables.te++;}],
   ['report-unknown-claim',r=>{r.results[0].claims.push('te:監査');}],
   ['report-failed-case',r=>{r.results[0].status='FAIL';}],
-  ['report-unreachable-covered',r=>{r.unreachable.push({form:r.results[0].claims[0],case:r.results[0].id,readBy:r.results[0].claims[0]});}],
-  ['report-unreachable-unknown',r=>{r.unreachable[0].form='ending:監査';}],
   ['report-negative-missing',r=>{r.negatives.pop();}],
   ['report-negative-accepted',r=>{r.negatives[0].rejected=false;}],
   ['report-snapshot',r=>{r.snapshot={...r.snapshot,productSha256:'0'.repeat(64)};}],
@@ -120,4 +108,3 @@ if(report.status!=='PASS'){
 const verified=verifySentenceFormCoverage(report,inputs);
 console.log(JSON.stringify(verified));
 // Unreachable product entries stay visible in every run for the owner's decision.
-console.log('Unreachable product table entries (proven): '+report.unreachable.map(row=>row.form+' (read by '+row.readBy+')').join(', '));

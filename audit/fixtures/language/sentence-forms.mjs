@@ -541,7 +541,7 @@ export const sentenceFormCases=[
       statement('ListInsert',{target:target('名前一覧'),index:num(1),value:str('あかり')})]),
     claims:{'ending:に追加する':'「ほたる」を名前一覧に追加する','ending:の末尾に追加する':'「ひかり」を名前一覧の末尾に追加する','ending:番目に挿入する':'「あかり」を名前一覧の1番目に挿入する'},
   },
-  // Witnesses for table entries another reader always reads first (see unreachableSentenceForms).
+  // Spellings read by the sentence readers (no table entry of their own).
   {
     id:'SF-wait-seconds-ending',
     source:'1秒間待つ',
@@ -562,18 +562,3 @@ export const sentenceFormCases=[
   },
 ];
 
-// Product table entries that no sentence can reach: another reader always reads the
-// surface first with the same meaning. Each is proven, not assumed: the witness case
-// parses to its expected tree, and still does so in a product copy without the entry.
-// A declaration fails as soon as the entry becomes load-bearing, is claimed, or leaves
-// the product. These entries are product defects for the owner to decide (remove the
-// entry or give it a reader); they are listed in every coverage report.
-export const unreachableSentenceForms=[
-  {form:'ending:秒間待つ',case:'SF-wait-seconds-ending',clause:'1秒間待つ',readBy:'sentence:WaitTime'},
-  {form:'ending:と尋ねる',case:'SF-ask-ending-kanji',clause:'「名前は」と尋ねる',readBy:'sentence:Ask'},
-  {form:'ending:という',case:'SF-say-ending',clause:'「やあ」という',readBy:'sentence:Say:quote'},
-  {form:'ending:に足す',case:'SF-add-value-first',clause:'3を点数に足す',readBy:'sentence:NumericUpdate:ADD:valueFirst'},
-  {form:'ending:から引く',case:'SF-sub-value-first',clause:'1を点数から引く',readBy:'sentence:NumericUpdate:SUB:valueFirst'},
-  {form:'polite:くり返します',case:'SF-repeat-previous',clause:'これを2回くり返します',readBy:'sentence:RepeatCount'},
-  {form:'polite:繰り返します',case:'SF-repeat-previous-kanji',clause:'これを2回繰り返します',readBy:'sentence:RepeatCount'},
-];

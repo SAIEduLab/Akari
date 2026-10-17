@@ -21,13 +21,11 @@ export const sentenceFormNegativeIds=Object.freeze([
   'parse-failure-detected','missing-evidence-detected','unmatched-pattern-detected','shadowed-pattern-detected',
   'absent-node-detected','unmatched-surface-detected','condition-context-detected','condition-longer-surface-detected',
   'unused-entry-detected','other-reader-detected',
-  'unreachable-reachable-detected','unreachable-claimed-detected','unreachable-unknown-detected','unreachable-evidence-detected',
-  'unreachable-duplicate-detected',
 ]);
 // The gate validator rejects these report mutations; the runner proves each one.
 export const sentenceFormValidatorNegativeIds=Object.freeze([
   'report-failed-status','report-failure-listed','report-missing-form','report-unknown-claim','report-failed-case',
-  'report-unreachable-covered','report-unreachable-unknown','report-negative-missing','report-negative-accepted','report-snapshot',
+  'report-negative-missing','report-negative-accepted','report-snapshot',
 ]);
 
 const ignoredKeys=new Set(['sourceSpan','endLine','inlineComment','elseComment']);
@@ -207,10 +205,9 @@ function unchangedIn(productApi,testCase,symbolsFor) {
 
 // Coverage, meaning and reachability of every finite sentence form.
 // variantFor(form) returns the product API loaded from ablateEntry(script, form).
-// `unreachable` declares table entries that no sentence can reach; each declaration is
-// proven by its witness case and is reported, never silently counted as coverage.
-export function checkSentenceFormCoverage(api,catalog,cases,{symbolsFor,variantFor,unreachable=[]}) {
-  const failures=[...catalog.failures],results=[],claimed=new Set(),caseIds=new Set(),variants=new Map(),passed=new Set();
+// Every table entry must be claimed by a case; an entry no sentence can reach fails as missing.
+export function checkSentenceFormCoverage(api,catalog,cases,{symbolsFor,variantFor}) {
+  const failures=[...catalog.failures],results=[],claimed=new Set(),caseIds=new Set(),variants=new Map();
   const variant=form=>{
     if(!variants.has(form.id)){let value;try{value={api:variantFor(form)};}catch(error){value={error:String(error?.message||error)};}variants.set(form.id,value);}
     return variants.get(form.id);
@@ -237,29 +234,10 @@ export function checkSentenceFormCoverage(api,catalog,cases,{symbolsFor,variantF
       if(ablated.error){fail('ablation:'+testCase.id+':'+formId+':'+ablated.error);continue;}
       if(unchangedIn(ablated.api,testCase,symbolsFor))fail('not-load-bearing:'+testCase.id+':'+formId);
     }
-    if(status==='PASS')passed.add(testCase.id);
     results.push({id:testCase.id,status,claims:claims.map(([formId])=>formId)});
   }
-  // A declared entry must be a static table literal, unclaimed, shown by a passing
-  // witness clause that another claimed form reads, and still unchanged without it.
-  const declaredForms=new Set(),proven=[];
-  for(const declaration of unreachable){
-    const id=declaration.form,form=catalog.forms.get(id),testCase=cases.find(c=>c.id===declaration.case);
-    if(declaredForms.has(id)){failures.push('duplicate-unreachable:'+id);continue;}declaredForms.add(id);
-    if(!form){failures.push('unknown:'+id+':unreachable');continue;}
-    if(claimed.has(id)){failures.push('unreachable-claimed:'+id);continue;}
-    if(!ablatedTableNames.includes(form.table)){failures.push('unreachable-table:'+id);continue;}
-    const reader=catalog.forms.get(declaration.readBy);
-    const evidence=testCase&&passed.has(testCase.id)&&reader&&declaration.readBy!==id&&testCase.claims?.[declaration.readBy]===declaration.clause&&
-      proveSurface(declaration.clause,testCase,form,catalog.forms,null)===null;
-    if(!evidence){failures.push('unreachable-evidence:'+id);continue;}
-    const ablated=variant(form);
-    if(ablated.error){failures.push('ablation:'+declaration.case+':'+id+':'+ablated.error);continue;}
-    if(!unchangedIn(ablated.api,testCase,symbolsFor)){failures.push('reachable:'+id+':'+declaration.case);continue;}
-    proven.push({form:id,case:declaration.case,readBy:declaration.readBy});
-  }
-  for(const formId of catalog.forms.keys())if(!claimed.has(formId)&&!declaredForms.has(formId))failures.push('missing:'+formId);
-  return {failures,results,unreachable:proven};
+  for(const formId of catalog.forms.keys())if(!claimed.has(formId))failures.push('missing:'+formId);
+  return {failures,results};
 }
 
 // Core report shape. The gate validator additionally requires the validator negatives.
@@ -277,19 +255,11 @@ export function verifySentenceFormReport(report,inputs) {
   const ids=report.results.map(row=>row.id);assert.equal(new Set(ids).size,ids.length);assert.ok(ids.length>0);
   const known=new Set(report.formIds),covered=new Set();
   for(const row of report.results){assert.equal(row.status,'PASS',row.id);assert.ok(row.claims.length>0,row.id);for(const id of row.claims){assert.ok(known.has(id),row.id+' '+id);covered.add(id);}}
-  // Every form is either covered or a proven unreachable entry, never both.
-  assert.ok(Array.isArray(report.unreachable));
-  const unreachable=report.unreachable.map(row=>row.form);
-  assert.equal(new Set(unreachable).size,unreachable.length);
-  for(const row of report.unreachable){
-    assert.ok(known.has(row.form),row.form);assert.ok(!covered.has(row.form),row.form);
-    assert.ok(ablatedTableNames.includes(tableOf(row.form)),row.form);
-    assert.ok(ids.includes(row.case),row.form);assert.ok(covered.has(row.readBy),row.form);
-  }
-  assert.deepEqual([...covered,...unreachable].sort(),[...report.formIds].sort());
+  // Every form is covered.
+  assert.deepEqual([...covered].sort(),[...report.formIds].sort());
   assert.deepEqual(report.negatives.map(row=>row.id),[...sentenceFormNegativeIds]);
   for(const row of report.negatives){assert.equal(row.rejected,true,row.id);assert.ok(typeof row.failure==='string'&&row.failure.length>0&&row.failure!=='accepted',row.id);}
-  return {status:'PASS',forms:report.formIds.length,cases:ids.length,unreachable:unreachable.length};
+  return {status:'PASS',forms:report.formIds.length,cases:ids.length};
 }
 
 export function verifySentenceFormCoverage(report,inputs) {

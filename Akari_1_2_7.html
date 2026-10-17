@@ -16641,7 +16641,7 @@ function createAkariExtensionHost(options) {
   }
   function readRoleStatement(code, line, symbols, ctx) {
     const protectedCode = surfaceMask(code);
-    const polite = [['話します','話す'],['はなします','はなす'],['言います','言う'],['いいます','いう'],['たずねます','たずねる'],['尋ねます','尋ねる'],['待ちます','待つ'],['まちます','まつ'],['増やします','増やす'],['減らします','減らす'],['動きます','動く'],['進みます','進む'],['回ります','回る'],['くり返します','くり返す'],['繰り返します','繰り返す'],['します','する']];
+    const polite = [['話します','話す'],['はなします','はなす'],['言います','言う'],['いいます','いう'],['たずねます','たずねる'],['尋ねます','尋ねる'],['待ちます','待つ'],['まちます','まつ'],['増やします','増やす'],['減らします','減らす'],['動きます','動く'],['進みます','進む'],['回ります','回る'],['します','する']];
     const suffix = polite.find(([ending])=>protectedCode.endsWith(ending));
     const immediate = protectedCode.startsWith('すぐに') ? 3 : 0;
     if (suffix || immediate) {
@@ -17228,7 +17228,7 @@ function createAkariExtensionHost(options) {
   }
   function readLegacySurfaceStatement(code, line, symbols, ctx) {
     // Restrict dispatch before scanning. Standard statements retain their diagnostics.
-    if (!/(?:代入する|加える|足す|引く|増やす|減らす|追加する|挿入する|削除する|入れる|回る|行く|滑る|すべる|鳴らす|鳴らし、終わるまで待つ|秒間待つ|と尋ねる|と聞いて待つ|という)$/.test(code)) return null;
+    if (!/(?:代入する|加える|足す|引く|増やす|減らす|追加する|挿入する|削除する|入れる|回る|行く|滑る|すべる|鳴らす|鳴らし、終わるまで待つ|と聞いて待つ)$/.test(code)) return null;
     const mask = surfaceMask(code), e = (t, start) => parseMappedExpression(t, code, line, symbols, ctx, start);
     const once = marker => mask.indexOf(marker) >= 0 && mask.indexOf(marker) === mask.lastIndexOf(marker);
     if (/(?:滑る|すべる)$/.test(mask) && (!once('秒で') || (!once('の位置へ') && !once('のばしょへ'))))
@@ -17255,7 +17255,7 @@ function createAkariExtensionHost(options) {
     };
     const node = (kind, fields) => statementNode(kind, line, fields);
     let m;
-    for (const [ending, kind, field] of [['秒間待つ','WaitTime','seconds'], ['と尋ねる','Ask','question'], ['と聞いて待つ','Ask','question'], ['という','Say','value']])
+    for (const [ending, kind, field] of [['と聞いて待つ','Ask','question']])
       if (mask.endsWith(ending)) return node(kind, {[field]:e(code.slice(0,-ending.length), 0)});
     const coordinate = (text, start) => {
       const protectedText = surfaceMask(text);
@@ -17298,7 +17298,7 @@ function createAkariExtensionHost(options) {
         return node('ListDelete', {target:dest, index:e(rest.slice(2,-7),t.len+2)});
       if (['のすべてを削除する','のすべての要素を削除する'].includes(restMask)) return node('ListClear',{target:dest});
     }
-    for (const [ending, kind, op] of [['に代入する','Assignment',null], ['に足す','NumericUpdate','ADD'], ['に加える','NumericUpdate','ADD'], ['から引く','NumericUpdate','SUB'], ['に追加する','ListAppend',null], ['の末尾に追加する','ListAppend',null], ['番目に挿入する','ListInsert',null]]) {
+    for (const [ending, kind, op] of [['に代入する','Assignment',null], ['に加える','NumericUpdate','ADD'], ['に追加する','ListAppend',null], ['の末尾に追加する','ListAppend',null], ['番目に挿入する','ListInsert',null]]) {
       if (!mask.endsWith(ending)) continue;
       const end = code.length-ending.length, split = mask.lastIndexOf('を',end);
       if (split < 1) continue;
