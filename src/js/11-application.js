@@ -428,6 +428,11 @@
     function tutorialFocusTargets() {
       return $$('button,input,select,textarea,summary,[tabindex="0"]').filter(n=>!n.disabled&&!n.hidden&&n.getClientRects().length&&tutorialElementAllowed(n)).sort((a,b)=>Number(a.id==='tutorialExit'||a.id==='stopBtn')-Number(b.id==='tutorialExit'||b.id==='stopBtn'));
     }
+    // A message above the editor changes its height; the guided place stays in view.
+    function keepTutorialTargetInView() {
+      if(!tutorial)return;
+      requestAnimationFrame(()=>tutorialFocusTargets()[0]?.scrollIntoView({block:'nearest',inline:'nearest'}));
+    }
     function focusTutorialTarget() {
       const target=tutorialFocusTargets()[0];if(!target)return;
       target.focus({preventScroll:true});target.scrollIntoView({block:'nearest',inline:'nearest'});
@@ -1305,6 +1310,7 @@
           ...(committedOwner!==ownerKey?{ownerTransition:{from:ownerKey,to:committedOwner}}:{}) };
       } catch (error) {
         showEditorFailure(binding, error);
+        keepTutorialTargetInView();
         return { ok: false, error, reason: error.message };
       }
     }
@@ -6883,6 +6889,8 @@
         onPending: (pending) => {
           if (binding.session) binding.session.pendingEdit = pending || (binding.session.blockDraft
             ? binding.session.blockDraft.pending : null);
+          // A cancelled field edit leaves nothing to fix, so its message goes away with it.
+          if (!pending && !binding.session?.blockDraft) {clearEditorFailure(binding);keepTutorialTargetInView();}
           scheduleAutosave();
         },
         onCancel: () => {

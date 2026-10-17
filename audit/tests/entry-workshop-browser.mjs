@@ -292,9 +292,9 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
       if(bad==='999999')assert.match(await p.locator('#statusText').textContent(),/光る数は.+から.+の中でえらぼう/,'range error explains the permitted numbers');
       await control.press('Escape');assert.equal((await fieldAt(p,op.ref)).value,ref.value,'cancel restores only the edited value');
       const after=await read(p);assert.equal(after.project,before.project);assert.equal(after.history,before.history);
+      assert.equal(await p.locator('#editorPending').isHidden(),true,'a cancelled edit leaves no message to fix');
+      await p.waitForFunction(fieldInView,ref.id);
      }
-     // The range message above the editor shortens its scroll viewport; the child scrolls back to the number before typing a valid one.
-     await control.scrollIntoViewIfNeeded();
     }
     if(id==='verify-save'){await p.locator('#tutorialSavedFile').setInputFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);}
     else {try{const file=await positive(p,id);if(file)downloaded=file;}catch(error){await p.screenshot({path:path.join(artifacts,'branch-failure-'+course+'-'+leaf+'.png')});error.stack='route '+course+'/'+leaf+' step '+id+': '+error.stack;throw error;}}
