@@ -1274,7 +1274,7 @@
           ...p.stage.backdrops.map((x) => x.name),
           ...p.components.flatMap((x) => (x.costumes || []).map((y) => y.name)),
           ...p.sounds.map((x) => x.name),
-          ...Object.keys(COLOR_NAMES),
+          ...Object.keys(COLOR_NAMES).map((name) => COLOR_LABELS[name] || name),
           'マウス',
           '端',
           '空白',

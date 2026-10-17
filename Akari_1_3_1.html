@@ -17979,7 +17979,7 @@ function createAkariExtensionHost(options) {
           : category === 'expression'
             ? 'かず・文字'
             : ['Assignment', 'NumericUpdate'].includes(kind)
-              ? 'へんすう'
+              ? 'へんすう・リスト'
               : 'もし・くり返し');
       if (category === 'statement')
         fields = [...fields, field('actorRef', 'だれが動く', 'actor-ref', undefined, { required: false })];
@@ -23827,7 +23827,6 @@ function createAkariExtensionHost(options) {
         '止める': 'control',
         '合図': 'event',
         'かず・文字': 'data',
-        'へんすう': 'data',
         'へんすう・リスト': 'data',
         'リスト': 'data',
         'この中だけの へんすう・リスト': 'data',
@@ -25434,7 +25433,7 @@ function createAkariExtensionHost(options) {
           ...p.stage.backdrops.map((x) => x.name),
           ...p.components.flatMap((x) => (x.costumes || []).map((y) => y.name)),
           ...p.sounds.map((x) => x.name),
-          ...Object.keys(COLOR_NAMES),
+          ...Object.keys(COLOR_NAMES).map((name) => COLOR_LABELS[name] || name),
           'マウス',
           '端',
           '空白',

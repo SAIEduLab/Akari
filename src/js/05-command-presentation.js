@@ -325,7 +325,7 @@
           : category === 'expression'
             ? 'かず・文字'
             : ['Assignment', 'NumericUpdate'].includes(kind)
-              ? 'へんすう'
+              ? 'へんすう・リスト'
               : 'もし・くり返し');
       if (category === 'statement')
         fields = [...fields, field('actorRef', 'だれが動く', 'actor-ref', undefined, { required: false })];
