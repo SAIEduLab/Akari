@@ -83,11 +83,18 @@ for(const mode of ['valid','missing-file','extra-file','changed-bytes','changed-
   if(mode==='valid')verifyBundle('audio-codecs-linux',dir,inputs,provenance);else assert.throws(()=>verifyBundle('audio-codecs-linux',dir,inputs,provenance));
 });
 const freeze=fs.readFileSync('audit/freeze-release.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
+// Fixture contract numbers differ from the product's, so the record proves where they come from.
+const fixtureContract={languageContractId:5,runtimeContractId:6,programFormatVersion:7,projectFormatVersion:8};
+const currentRelease=path.posix.basename(currentReleaseFile());
 let frozen;
-function freezeRun(record,changed){
- vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readFileSync(p){if(p==='audit/public-files.json')return JSON.stringify({files:[currentProductFile(),'LANGUAGE.md']});if(p===currentReleaseFile())return frozen;return Buffer.from(p+(changed?'changed':''));}},assert:relaxed,sha,currentProductFile,currentProductVersion,currentReleaseFile,process:{argv:record?['--record']:[]},console:{log(){}}});}
-check('freeze-record-and-verify',()=>{freezeRun(true,false);freezeRun(false,false);});
-check('freeze-changed-file-refused',()=>assert.throws(()=>freezeRun(false,true)));
+function freezeRun(record,{changed=false,contract=fixtureContract,releases=[currentRelease]}={}){
+ vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readdirSync(p){assert.equal(p,'audit/manifests');return ['features.json',...releases,'samples.json'];},readFileSync(p){if(p==='audit/public-files.json')return JSON.stringify({files:[currentProductFile(),'LANGUAGE.md']});if(p==='audit/manifests/features.json')return JSON.stringify({EXECUTABLE_CONTRACT:contract});if(p===currentReleaseFile())return frozen;return Buffer.from(p+(changed?'changed':''));}},assert:relaxed,sha,currentProductFile,currentProductVersion,currentReleaseFile,process:{argv:record?['--record']:[]},console:{log(){}}});}
+check('freeze-record-and-verify',()=>{freezeRun(true);freezeRun(false);});
+check('freeze-changed-file-refused',()=>assert.throws(()=>freezeRun(false,{changed:true}),/Current distribution differs/));
+check('freeze-contract-from-features',()=>{frozen=undefined;freezeRun(true);const r=JSON.parse(frozen);assert.deepEqual([r.languageContractId,r.runtimeContractId,r.programFormat,r.projectFormat],[5,6,7,8]);freezeRun(false);});
+check('freeze-changed-contract-refused',()=>{freezeRun(true);for(const key of Object.keys(fixtureContract))assert.throws(()=>freezeRun(false,{contract:{...fixtureContract,[key]:9}}),/Current distribution differs/,key);});
+check('freeze-unknown-contract-refused',()=>{for(const contract of [{...fixtureContract,extraContractId:1},(({projectFormatVersion,...rest})=>rest)(fixtureContract),{...fixtureContract,projectFormatVersion:'8'},{...fixtureContract,runtimeContractId:0}]){frozen=undefined;assert.throws(()=>freezeRun(true,{contract}),/executable contract/);assert.equal(frozen,undefined);}});
+check('freeze-second-release-refused',()=>{freezeRun(true);const recorded=frozen;for(const releases of [['release-0.0.1.json',currentRelease],[currentRelease,'release-'+currentProductVersion()+'-copy.json'],['release-0.0.1.json']])for(const record of [true,false]){assert.throws(()=>freezeRun(record,{releases}),/only the current release manifest may exist/);assert.equal(frozen,recorded);}});
 for(const kind of ['composition','editing']){const good={schema:'akari-acceptance-execution-v1',status:'PASS',snapshot:inputs,steps:acceptanceIds(kind).map((id,i)=>({id,status:'PASS',exit:0,signal:null,log:'step-'+i+'.log',ms:1}))};verifyAcceptanceExecution(good,kind,inputs);
  for(const [name,mutate]of [['missing',r=>r.steps.pop()],['duplicate',r=>r.steps[1]=r.steps[0]],['failed',r=>r.steps[0].status='FAIL'],['timeout',r=>r.steps[0].signal='SIGTERM'],['snapshot',r=>r.snapshot.inputSha256='wrong'],['fake-pass',r=>r.steps[0].exit=1]])check('execution:'+kind+'/'+name,()=>{const bad=clone(good);mutate(bad);assert.throws(()=>verifyAcceptanceExecution(bad,kind,inputs));});}
 const acceptanceRunner=fs.readFileSync('audit/run-acceptance.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
