@@ -20,7 +20,7 @@ export const insertionSources={
 };
 const sameDocument=(a,b)=>{assert.equal(a.source,b.source);assert.equal(a.project,b.project);assert.equal(a.history,b.history);assert.equal(a.owner,b.owner);};
 const clean=s=>{assert.equal(s.pending,null);assert.deepEqual(s.diagnostics,[]);assert.equal(s.owner,'script:insertion-main');};
-const chosen=(o,body='body',index=1,category=['basic'])=>{assert.deepEqual(o.chosen.chosen,[{parentId:o.targetParent,body,index}]);assert.deepEqual(o.chosen.chosenLabels,[(index+1)+'番目の位置に命令を入れる']);assert.deepEqual(o.chosen.category,category);assert.equal(o.chosen.pending,null);assert.equal(o.chosen.destinationShown,true);assert.ok(o.chosen.destination.length>0);};
+const chosen=(o,body='body',index=1,category=['basic'])=>{assert.deepEqual(o.chosen.chosen,[{parentId:o.targetParent,body,index}]);assert.deepEqual(o.chosen.chosenLabels,[(index+1)+'番目の場所に ブロックを入れる']);assert.deepEqual(o.chosen.category,category);assert.equal(o.chosen.pending,null);assert.equal(o.chosen.destinationShown,true);assert.ok(o.chosen.destination.length>0);};
 const additionClick=o=>assert.ok(o.trace.some(e=>e.kind==='click'&&e.action==='body-insert'),'native insertion control receives its click');
 const values=s=>s.shape.map(n=>n.value);
 const travel=(o,steps)=>{assert.equal(o.undo.length,steps);assert.equal(o.redo.length,steps);sameDocument(o.undo.at(-1),o.before);sameDocument(o.redo.at(-1),o.after);};
@@ -56,19 +56,19 @@ export function verifyInsertionContextObservation(id,o){
     assert.equal(o.queried.query,'話す');assert.deepEqual(o.queried.category,['basic']);chosen(o);assert.equal(o.chosen.query,'話す');
     sameDocument(o.queried,o.before);sameDocument(o.chosen,o.before);sameDocument(o.cancelled,o.before);sameDocument(o.escaped,o.before);
     assert.deepEqual(o.cancelled.chosen,[]);assert.deepEqual(o.escaped.chosen,[]);assert.equal(o.cancelled.query,'話す');assert.equal(o.escaped.query,'話す');
-    assert.equal(o.chosen.scope,'基本の中を検索中');assert.ok(o.chosen.candidates.includes('Say'));
+    assert.equal(o.chosen.scope,'よく使うの中を さがしています');assert.ok(o.chosen.candidates.includes('Say'));
   }else if(id==='selection/empty-keyboard-mode'){
     assert.equal(o.before.source,'');chosen(o,'body',0,['']);sameDocument(o.chosen,o.before);assert.equal(o.chosen.mode,'all');assert.equal(o.chosen.query,'待つ');
-    assert.match(o.chosen.message,/候補の種類/);assert.equal(o.after.shape.length,1);assert.equal(o.after.shape[0].kind,'WaitTime');assert.equal(o.after.shape[0].seconds,1);
+    assert.match(o.chosen.message,/見せるブロック/);assert.equal(o.after.shape.length,1);assert.equal(o.after.shape[0].kind,'WaitTime');assert.equal(o.after.shape[0].seconds,1);
     assert.equal(o.after.history,o.before.history+1);clean(o.after);travel(o,1);
   }else if(id==='selection/value-unavailable'){
-    assert.equal(o.selected.chosen.length,1);assert.equal(o.selected.chosen[0].input,'value');assert.match(o.selected.destination,/値/);assert.match(o.selected.destination,/ここに入れる/);
+    assert.equal(o.selected.chosen.length,1);assert.equal(o.selected.chosen[0].input,'value');assert.match(o.selected.destination,/入れるものを えらんでいます/);assert.match(o.selected.destination,/ここに入れる/);
     assert.equal(o.disabled.ariaDisabled,'true');assert.equal(o.disabled.reasonVisible,true);assert.match(o.disabled.reason,/ここに入れる/);
     sameDocument(o.selected,o.before);sameDocument(o.after,o.before);assert.match(o.after.message,/ここに入れる/);
     assert.deepEqual(o.commandChosen.chosen,[{parentId:o.before.rootId,body:'body',index:1}]);assert.deepEqual(o.commandChosen.category,['basic']);
   }else if(id==='input/composition-cancel'){
     assert.equal(o.inputMethod,'synthetic composition events; native text input');assert.equal(o.realIME,false);
-    sameDocument(o.composing,o.before);assert.equal(o.composing.pending.composing,true);assert.equal(o.composing.pending.value,'へんかん');assert.match(o.composing.message,/変換/);
+    sameDocument(o.composing,o.before);assert.equal(o.composing.pending.composing,true);assert.equal(o.composing.pending.value,'へんかん');assert.match(o.composing.message,/へんかん/);
     assert.deepEqual(o.composing.chosen,[]);sameDocument(o.cancelled,o.before);clean(o.cancelled);
     assert.equal(o.after.source,'「変換済み」と言う。');clean(o.after);assert.equal(o.after.history,o.before.history+1);assert.deepEqual(o.after.category,['basic']);
     assert.ok(o.trace.some(e=>e.kind==='compositionstart'));assert.ok(o.trace.some(e=>e.kind==='compositionend'));

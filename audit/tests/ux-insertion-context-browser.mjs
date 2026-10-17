@@ -4,6 +4,7 @@ import path from 'node:path';
 import {createRequire} from 'node:module';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
+import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {insertionSources,verifyInsertionContextObservation,verifyInsertionContextReport} from '../lib/insertion-context-contract.mjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2);
 if(!chrome||!out)throw Error('Usage: ux-insertion-context-browser.mjs <browser> <fresh-report>');
@@ -51,7 +52,7 @@ async function edit(p,input,value,method='native'){
 async function travel(p,steps){const undo=[],redo=[];for(let i=0;i<steps;i++){await p.locator('#undoBtn').click();undo.push(await read(p));}for(let i=0;i<steps;i++){await p.locator('#redoBtn').click();redo.push(await read(p));}return{undo,redo};}
 async function add(p,id='Say'){await candidate(p,id).click();await frame(p);}
 async function run(browser,id,source,fn){const row={id,status:'RUNNING'};report.results.push(row);
-  try{row.observed=await pageFor(browser,product,async p=>{p.setDefaultTimeout(8000);await p.setViewportSize({width:1366,height:900});p.on('dialog',d=>d.accept());p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});
+  try{row.observed=await pageFor(browser,product,async p=>{p.setDefaultTimeout(8000);await p.setViewportSize({width:1366,height:900});p.on('dialog',d=>d.accept());await answerProductConfirms(p,true);p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});
     try{await install(p,source);const observed=await fn(p);observed.trace=await p.evaluate(()=>globalThis.insertionContextTrace);const name=id.replaceAll('/','-')+'.png';await p.screenshot({path:path.join(artifacts,name)});report.screenshots.push(name);return observed;}
     catch(error){const name=id.replaceAll('/','-')+'-failure.png';await p.screenshot({path:path.join(artifacts,name)}).catch(()=>{});throw error;}});
     verifyInsertionContextObservation(id,row.observed);row.status='PASS';}catch(error){row.status='FAIL';row.error=error.stack;}
@@ -92,7 +93,7 @@ try{await withBrowser(chrome,async browser=>{report.environment.browser=browser.
   await run(browser,'selection/value-unavailable',insertionSources.tail,async p=>{
     const before=await read(p),say=before.shape[0];const slot=p.locator('#blockEditor [data-parent-id="'+say.id+'"][data-blockui-input="value"]');
     await field(p,say.valueId).click();await slot.locator('[data-blockui-action="slot-select"]').click();const selected=await read(p);
-    await openPaletteTools(p.locator('#blockEditor'));await p.locator('#blockEditor .blockui-palette-options summary').click();await p.locator('#blockEditor input[aria-label="使えない候補も表示"]').check();
+    await openPaletteTools(p.locator('#blockEditor'));await p.locator('#blockEditor .blockui-palette-options summary').click();await p.locator('#blockEditor input[aria-label="使えないブロックも見せる"]').check();
     const disabled=await candidate(p,'Say').evaluate(e=>{const reason=e.parentElement.querySelector('.blockui-unavailable');return{ariaDisabled:e.getAttribute('aria-disabled'),reason:reason?.textContent,reasonVisible:!!reason?.getClientRects().length};});
     await candidate(p,'Say').scrollIntoViewIfNeeded();const bounds=await candidate(p,'Say').boundingBox();await p.mouse.click(bounds.x+bounds.width/2,bounds.y+bounds.height/2);
     const after=await read(p);await plus(p,before.rootId).click();const commandChosen=await read(p);return{before,selected,disabled,after,commandChosen};

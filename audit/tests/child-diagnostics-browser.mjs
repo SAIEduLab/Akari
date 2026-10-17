@@ -5,6 +5,7 @@ import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
+import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {reveal} from '../lib/ux-normal-ui.mjs';
 
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),product=currentProductFile();
@@ -20,8 +21,8 @@ const state=p=>p.evaluate(()=>({project:JSON.stringify(Akari.app.project),source
 const cases=[
   ['double-negative','もし条件（1が2と同じではないではない）が成り立つなら、\n  「おはよう」と言う。',
     'もし条件（（1が2と同じではない）ではない）が成り立つなら、\n  「おはよう」と言う。','P201','二重否定は括弧で分けてください','（ ）でくくります'],
-  ['parentheses','（1＋2］を言う。','（1＋2）を言う。','P207','括弧の対応を確認してください','開くしるしと閉じるしるし'],
-  ['closing','「こんにちはと言う。','「こんにちは」と言う。','P207','文字列・名前・括弧を閉じてください','閉じるしるしを足します'],
+  ['parentheses','（1＋2］を言う。','（1＋2）を言う。','P207','括弧の対応を確認してください','開くしるしと とじるしるし'],
+  ['closing','「こんにちはと言う。','「こんにちは」と言う。','P207','文字列・名前・括弧を閉じてください','とじるしるしを足します'],
   ['quote','おはようと言う。','「おはよう」と言う。','P205','台詞は「文字」と言う、値は「値を言う」と書きます','話す文字は「 」でくくります'],
   ['nested','もし1が1と同じなら、もし2が2と同じなら、「おはよう」と言う。',
     'もし1が1と同じなら、\n  もし2が2と同じなら、\n    「おはよう」と言う。','P201','入れ子の条件・反復は字下げして書いてください','先頭を右へずらします'],
@@ -38,7 +39,7 @@ const cases=[
   ['argument-name','（1＋2を10として、【足す】で求めた答え）を言う。','（点数を10として、【足す】で求めた答え）を言う。',
     'P205','引数名を確認してください','名前を1つ書きます'],
   ['argument-duplicate','（点数を10、点数を20として、【足す】で求めた答え）を言う。',
-    '（点数を10、名前を「あかり」として、【足す】で求めた答え）を言う。','P205','引数名「点数」が重複しています','同じ名前を2回書いています'],
+    '（点数を10、名前を「あかり」として、【足す】で求めた答え）を言う。','P205','入れるものの名前「点数」を2回書いています。名前は1回ずつ書いてください','同じ名前を2回書いています'],
   ['argument-bundle','（10、20を渡して、【足す】で求めた答え）を言う。','（（10、20）を渡して、【足す】で求めた答え）を言う。',
     'P205','渡す値を括弧で囲んでください','（ ）でひとまとめにします'],
 ];
@@ -130,7 +131,7 @@ try {await withBrowser(chrome,async browser=>{
   async function run(id,fn,{touch=false}={}) {
     const row={id,status:'RUNNING'};report.results.push(row);
     try {row.observed=await (touch?touchPage:((b,f)=>pageFor(b,product,f)))(browser,async p=>{
-      p.setDefaultTimeout(8000);p.on('dialog',d=>d.accept());
+      p.setDefaultTimeout(8000);p.on('dialog',d=>d.accept());await answerProductConfirms(p,true);
       p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});
       if(!touch)await p.setViewportSize({width:1180,height:757});
       try{return await fn(p);}finally{await p.screenshot({path:path.join(dir,id.replaceAll('/','-')+'.png')}).catch(()=>{});}
@@ -145,14 +146,14 @@ try {await withBrowser(chrome,async browser=>{
     await p.waitForFunction(()=>Akari.app.project.name==='計算の動き');const before=await state(p);
     const errors=await p.evaluate(()=>Akari.compileProject(Akari.app.project).errors);assert.ok(errors.some(d=>d.code==='S305'&&d.message==='計算では外部副作用や待機を行えません'));
     await p.locator('#diagnoseBtn').click();const issue=p.locator('#diagnosisBody .diagnosis-issue').filter({hasText:'S305'}).first();
-    const primary=await issue.locator('> .diagnostic-help').innerText();assert.match(primary,/音を出す・待つ/);assert.match(primary,/手順（てじゅん）/);assert.match(primary,/足す/);assert.ok(!primary.includes('function:diagnostic-function'));
+    const primary=await issue.locator('> .diagnostic-help').innerText();assert.match(primary,/音を出す・待つ/);assert.match(primary,/「てじゅん」へ入れます/);assert.match(primary,/足す/);assert.ok(!primary.includes('function:diagnostic-function'));
     await issue.locator('> details > summary').click();const detail=await issue.locator('> details > pre').innerText();assert.match(detail,/S305/);assert.match(detail,/外部副作用や待機/);
     assert.deepEqual(await state(p),before);return {errors,primary,detail,before,after:await state(p)};
   });
   await run('runtime/list-reference',async p=>{
     await install(p,{source:'「買うもの」の2番目を2秒話す。'});const before=await state(p);
     await p.locator('#runBtn').click();await p.locator('#failureModal.show').waitFor();
-    const primary=await p.locator('#failureBody > .diagnostic-help').innerText();assert.match(primary,/ならんだものを覚えるリスト/);assert.match(primary,/あかり/);assert.match(primary,/1行目/);assert.match(primary,/残っています/);
+    const primary=await p.locator('#failureBody > .diagnostic-help').innerText();assert.match(primary,/ならんだものを おぼえるリスト/);assert.match(primary,/あかり/);assert.match(primary,/1行目/);assert.match(primary,/のこっています/);
     assert.doesNotMatch(primary,/script:|sprite-1|R411/);
     const raw=p.locator('#failureBody .failure-summary');assert.equal(await raw.isVisible(),false);
     await p.locator('#failureBody > details').first().locator('> summary').focus();
@@ -166,8 +167,8 @@ try {await withBrowser(chrome,async browser=>{
     const file=await p.evaluate(()=>Akari.serializeProject(Akari.app.project,Akari.app.assetStore).replaceAll(Akari.diagnostics.DEFAULT_MASCOT_SHA256,'0'.repeat(64)));
     const previous=await p.locator('#console').textContent();await p.locator('#fileInput').setInputFiles({name:'broken-digest.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
     await p.waitForFunction(previous=>document.querySelector('#console').textContent!==previous,previous);
-    const outputReachability=await openOutputWithWheel(p);const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを開けませんでした/);assert.match(visible,/選んだファイルは変えていません/);assert.doesNotMatch(visible,/SHA-256|F508/);
-    const disclosure=p.locator('#console > details').last();await disclosure.locator('> summary').click();const detail=await disclosure.locator('> pre').innerText();assert.match(detail,/F508.*読み込み失敗: asset SHA-256が一致しません/);
+    const outputReachability=await openOutputWithWheel(p);const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを 開けませんでした/);assert.match(visible,/えらんだ ファイルは かえていません/);assert.doesNotMatch(visible,/SHA-256|F508/);
+    const disclosure=p.locator('#console > details').last();await disclosure.locator('> summary').click();const detail=await disclosure.locator('> pre').innerText();assert.match(detail,/F508.*読みこめませんでした: asset SHA-256が一致しません/);
     assert.deepEqual(await state(p),before);return {visible,detail,before,after:await state(p),source:'genuinely malformed serialized asset digest',outputReachability};
   });
   for(const [id,code,message]of [['digest','F508','同じSHA-256でbyteLengthが異なります'],['length','F508','asset byteLengthが一致しません'],['orphan','F503','保存Projectにorphan assetまたは不足assetがあります']])
@@ -176,7 +177,7 @@ try {await withBrowser(chrome,async browser=>{
       await p.evaluate(({code,message})=>{const store=Akari.app.assetStore;window.restoreDiagnosticGet={store,get:store.get};
         store.get=()=>{throw new Akari.diagnostics.AkariError(code,message);};},{code,message});
       try{await p.locator('#saveBtn').click();}finally{await p.evaluate(()=>{const {store,get}=window.restoreDiagnosticGet;store.get=get;delete window.restoreDiagnosticGet;});}
-      const outputReachability=await openOutputWithWheel(p);const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを保存（ほぞん）できませんでした/);assert.match(visible,/この画面の作品は残っています/);assert.doesNotMatch(visible,/SHA-256|byteLength|orphan asset/);
+      const outputReachability=await openOutputWithWheel(p);const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを ほぞんできませんでした/);assert.match(visible,/この画面の作品は のこっています/);assert.doesNotMatch(visible,/SHA-256|byteLength|orphan asset/);
       const disclosure=p.locator('#console > details').last();await disclosure.locator('> summary').click();const detail=await disclosure.locator('> pre').innerText();assert.ok(detail.includes(code));assert.ok(detail.includes(message));
       assert.deepEqual(downloads,[]);assert.deepEqual(await state(p),before);return {source:'explicit synthetic asset lookup failure for UI/atomic-save coverage',code,message,visible,detail,before,after:await state(p),downloads,outputReachability};
     });

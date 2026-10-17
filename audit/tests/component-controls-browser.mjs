@@ -5,6 +5,7 @@ import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {setTimeout as delay} from 'node:timers/promises';
 import {currentProductFile} from '../lib/product-path.cjs';
+import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {componentControlSizes,componentControlTargets,verifyComponentControlReach,verifyComponentControls} from '../lib/component-controls-contract.mjs';
@@ -32,7 +33,7 @@ async function shot(p,name) {
     viewport:await p.evaluate(()=>({width:innerWidth,height:innerHeight,dpr:devicePixelRatio}))});
 }
 async function fixture(p) {
-  p.setDefaultTimeout(8000); p.on('dialog',d=>d.accept());
+  p.setDefaultTimeout(8000); p.on('dialog',d=>d.accept()); await answerProductConfirms(p,true);
   p.on('pageerror',e=>report.pageErrors.push(e.message));
   const text=await p.evaluate(()=>{
     const project=Akari.makeEmptyProject(),first=project.components.find(c=>c.id==='sprite-1');

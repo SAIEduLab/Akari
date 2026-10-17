@@ -5,6 +5,7 @@ import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
+import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {install} from '../lib/ux-normal-ui.mjs';
 import {speechNameLayoutCases,speechNameLongTexts,speechNameSource,speechNamePositions} from '../fixtures/speech-name-layout.mjs';
 import {verifySpeechNameLayoutObserved,verifySpeechNameLayoutReport} from '../lib/speech-name-layout-contract.mjs';
@@ -57,7 +58,7 @@ async function dialog(p){return p.evaluate(()=>{
 });}
 function hooks(p){p.setDefaultTimeout(8000);p.on('dialog',d=>d.accept());p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});}
 async function observe(p,c,row,nativeZoom=null){
- hooks(p);if(!c.nativeZoom)await p.setViewportSize({width:c.width,height:c.height});await prepare(p,c);await setView(p,c);
+ hooks(p);await answerProductConfirms(p,true);if(!c.nativeZoom)await p.setViewportSize({width:c.width,height:c.height});await prepare(p,c);await setView(p,c);
  await p.evaluate(()=>{window.speechNameEvents=[];new MutationObserver(rs=>{for(const r of rs)for(const[kind,nodes]of[['add',r.addedNodes],['remove',r.removedNodes]])for(const n of nodes)if(n.nodeType===1&&n.matches('.sprite-bubble'))speechNameEvents.push({kind,id:n.dataset.runtimeId,text:n.querySelector('.sprite-bubble-text').textContent,at:performance.now()});}).observe(document.querySelector('#formSurface'),{childList:true});});
  await p.locator('#runBtn').click();await p.waitForFunction(()=>document.querySelectorAll('.sprite-bubble').length===2);
  const o={fixtureSetup:'internal serialization; UI file import',interaction:'real pointer and keyboard',viewport:await p.evaluate(()=>({width:innerWidth,height:innerHeight})),scale:parseInt(await p.locator('#stageZoomReset').textContent()),positions:await p.evaluate(()=>Akari.app.project.components.map(c=>({x:c.x,y:c.y}))),mascots:await p.evaluate(()=>Akari.app.project.components.map(c=>({id:c.id,width:c.w,height:c.h,scale:c.scalePercent}))),source:await p.evaluate(()=>Akari.app.project.scripts[0].source),bubbles:await bubbles(p)};

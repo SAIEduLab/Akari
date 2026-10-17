@@ -4,8 +4,8 @@ import {browserEnvironment} from './browser-environment.mjs';
 // Fixed independently of the browser runner's list and observed result status.
 const syntaxExpectations=[
   ['double-negative','P201','二重否定は括弧で分けてください','（ ）でくくります'],
-  ['parentheses','P207','括弧の対応を確認してください','開くしるしと閉じるしるし'],
-  ['closing','P207','文字列・名前・括弧を閉じてください','閉じるしるしを足します'],
+  ['parentheses','P207','括弧の対応を確認してください','開くしるしと とじるしるし'],
+  ['closing','P207','文字列・名前・括弧を閉じてください','とじるしるしを足します'],
   ['quote','P205','台詞は「文字」と言う、値は「値を言う」と書きます','話す文字は「 」でくくります'],
   ['nested','P201','入れ子の条件・反復は字下げして書いてください','先頭を右へずらします'],
   ['repeat','P201','深い反復は字下げして書いてください','先頭を右へずらします'],
@@ -15,7 +15,7 @@ const syntaxExpectations=[
   ['alignment','P209','同じまとまりの文の字下げをそろえてください','先頭の空白の数をそろえます'],
   ['delay','P205','待ってから動く意味なら、待機と移動を分けます','2つの文に分けます'],
   ['argument-name','P205','引数名を確認してください','名前を1つ書きます'],
-  ['argument-duplicate','P205','引数名「点数」が重複しています','同じ名前を2回書いています'],
+  ['argument-duplicate','P205','入れるものの名前「点数」を2回書いています。名前は1回ずつ書いてください','同じ名前を2回書いています'],
   ['argument-bundle','P205','渡す値を括弧で囲んでください','（ ）でひとまとめにします'],
 ];
 export const childDiagnosticIds=Object.freeze([...syntaxExpectations.map(x=>'syntax/'+x[0]),
@@ -45,17 +45,17 @@ export function verifyChildDiagnosticsReport(report,inputs) {
   }
   const effects=rows.get('semantic/function-effects');
   assert.ok(effects.errors.some(d=>d.code==='S305'&&d.message==='計算では外部副作用や待機を行えません'));
-  assert.match(effects.primary,/音を出す・待つ/);assert.match(effects.primary,/手順（てじゅん）/);assert.match(effects.primary,/足す/);
+  assert.match(effects.primary,/音を出す・待つ/);assert.match(effects.primary,/「てじゅん」へ入れます/);assert.match(effects.primary,/足す/);
   assert.doesNotMatch(effects.primary,/function:diagnostic-function/);assert.match(effects.detail,/S305/);assert.match(effects.detail,/外部副作用や待機/);
   assert.deepEqual(effects.after,effects.before);
-  const runtime=rows.get('runtime/list-reference');assert.match(runtime.primary,/ならんだものを覚えるリスト/);
-  assert.match(runtime.primary,/あかり/);assert.match(runtime.primary,/1行目/);assert.match(runtime.primary,/残っています/);
+  const runtime=rows.get('runtime/list-reference');assert.match(runtime.primary,/ならんだものを おぼえるリスト/);
+  assert.match(runtime.primary,/あかり/);assert.match(runtime.primary,/1行目/);assert.match(runtime.primary,/のこっています/);
   assert.doesNotMatch(runtime.primary,/script:|sprite-1|R411/);assert.match(runtime.detail,/^R411:/);assert.match(runtime.detail,/script:diagnostic-main/);
   assert.match(runtime.detail,/「買うもの」の2番目/);assert.match(runtime.recordChoice,/あかり/);assert.doesNotMatch(runtime.recordChoice,/R411|script:|sprite-1/);
   assert.equal(runtime.after.project,runtime.before.project);assert.equal(runtime.after.source,runtime.before.source);
-  const digest=rows.get('file/digest-refusal');assert.match(digest.visible,/作品ファイルを開けませんでした/);
-  assert.match(digest.visible,/選んだファイルは変えていません/);assert.doesNotMatch(digest.visible,/SHA-256|F508/);
-  assert.match(digest.detail,/F508.*読み込み失敗: asset SHA-256が一致しません/);assert.deepEqual(digest.after,digest.before);
+  const digest=rows.get('file/digest-refusal');assert.match(digest.visible,/作品ファイルを 開けませんでした/);
+  assert.match(digest.visible,/えらんだ ファイルは かえていません/);assert.doesNotMatch(digest.visible,/SHA-256|F508/);
+  assert.match(digest.detail,/F508.*読みこめませんでした: asset SHA-256が一致しません/);assert.deepEqual(digest.after,digest.before);
   assert.equal(digest.source,'genuinely malformed serialized asset digest');
   for(const d of [digest,...['digest','length','orphan'].map(name=>rows.get('save/'+name+'-fault'))]){
     assert.deepEqual(d.outputReachability.map(r=>[r.mode,r.width,r.height]),['code','blocks'].flatMap(mode=>[[1180,757],[1366,768],[1188,848]].map(([width,height])=>[mode,width,height])),'output mode and height boundaries');
@@ -71,7 +71,7 @@ export function verifyChildDiagnosticsReport(report,inputs) {
     ['length','F508','asset byteLengthが一致しません'],['orphan','F503','保存Projectにorphan assetまたは不足assetがあります']]){
     const d=rows.get('save/'+name+'-fault');assert.equal(d.code,code);assert.equal(d.message,message);
     assert.equal(d.source,'explicit synthetic asset lookup failure for UI/atomic-save coverage');
-    assert.match(d.visible,/作品ファイルを保存（ほぞん）できませんでした/);assert.match(d.visible,/この画面の作品は残っています/);
+    assert.match(d.visible,/作品ファイルを ほぞんできませんでした/);assert.match(d.visible,/この画面の作品は のこっています/);
     assert.doesNotMatch(d.visible,/SHA-256|byteLength|orphan asset/);assert.ok(d.detail.includes(code));assert.ok(d.detail.includes(message));
     assert.deepEqual(d.downloads,[]);assert.deepEqual(d.after,d.before);
   }
