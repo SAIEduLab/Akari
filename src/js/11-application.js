@@ -4911,7 +4911,10 @@
         const binding=saved.kind==='draft'?draftEditor:mainEditor;
         if(saved.kind==='script'&&bindingOwner(binding)!==saved.ownerKey)throw new AkariError('F503','書きかけの ばしょが 合いません');
         const session=getEditorSession(binding,{force:true});// A reopened draft belongs to this session, so it takes this session's revisions.
-        session.pendingEdit={...cloneDesignProject(saved.pending),ownerKey:bindingOwner(binding),sourceRevision:session.sourceRevision,contextRevision:session.contextRevision};
+        session.pendingEdit={...cloneDesignProject(saved.pending),ownerKey:bindingOwner(binding)};
+        // Revisions only exist on pending edits that were saved with them; those now belong to this session.
+        if(saved.pending.sourceRevision!==undefined)session.pendingEdit.sourceRevision=session.sourceRevision;
+        if(saved.pending.contextRevision!==undefined)session.pendingEdit.contextRevision=session.contextRevision;
         if(saved.draftTree!==null){
           const ast=blockDecode(saved.draftTree,{allowHoles:true}),encoded=blockEncode(ast,{allowHoles:true}),baseline={sourceText:session.sourceText,syntaxAst:session.syntaxAst,
             blockView:session.blockView,nodeMap:session.nodeMap,nodeIds:session.nodeIds,diagnostics:session.diagnostics,syntaxDiagnostics:session.syntaxDiagnostics,

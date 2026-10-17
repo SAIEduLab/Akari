@@ -168,9 +168,7 @@ try{await withBrowser(chrome,async browser=>{report.browser=browser.version();
     assert.equal(recoveredRedo.pending.diagnostics[0].code,'R412');
     assert.equal(recoveredRedo.history,recovered.history);assert.equal(recoveredRedo.redo,recovered.redo);
     await observe(page);await page.locator('#runBtn').click();
-    // A refused run keeps every piece of the unfinished edit; only the editor's own revision counters may be re-stamped.
-    const withoutCounters=s=>({...s,pending:s.pending&&Object.fromEntries(Object.entries(s.pending).filter(([key])=>key!=='sourceRevision'&&key!=='contextRevision'))});
-    assert.deepEqual(withoutCounters(await state(page)),withoutCounters(recoveredRedo),'recovered invalid source cannot execute or alter history');
+    assert.deepEqual(await state(page),recoveredRedo,'recovered invalid source cannot execute or alter history');
     assert.deepEqual(await page.evaluate(()=>__unitsObserved),{starts:0,motions:[],says:[]});
     await page.locator('#editorCancel').click();const recoveredCancelled=await state(page);
     assert.equal(recoveredCancelled.pending,null);assert.equal(recoveredCancelled.project,largeBefore.project);
