@@ -6,6 +6,8 @@
     const message = String(diagnostic?.message || diagnostic || '書き方を確認してください');
     if (diagnostic?.code === 'R403' || /計算結果が有限な数ではありません/.test(message))
       return '計算の答えが大きすぎるなどの理由で、あかりで使える数になりませんでした。使う数や計算のしかたをたしかめてください。';
+    if (/移動には歩数/.test(message))
+      return '動く 文の 書き方が ちがうよ。「右へ10歩動く。」のように、どちらへ 何歩 動くかを 書いてね。';
     if (/二重否定/.test(message))
       return '「ではない」を2つ続けるときは、先の条件（じょうけん）を（ ）でくくります。例：（1が2と同じではない）ではない';
     if (/引数名.*重複|受け取る値に同じ名前/.test(message))
@@ -66,7 +68,7 @@
   function appendDiagnosticDetails(root, diagnostic, original = null) {
     const details = document.createElement('details'), summary = document.createElement('summary'), text = document.createElement('pre');
     details.className = 'diagnostic-details';
-    summary.textContent = 'くわしく見る（もとの説明）';
+    summary.textContent = '先生むけの くわしい せつめい';
     text.textContent = diagnosticDetailText(diagnostic, original);
     details.append(summary, text); root.append(details); return details;
   }
@@ -1041,8 +1043,11 @@
         box = E('span', 'blockui-preview', null, { 'data-shape-kind': blockShapeKind(schema) }),
         main = E('span', 'blockui-preview-main');
       attachShape(box, blockShapeKind(schema));
+      // A quantity such as 1秒 previews its number, not the slot name.
       const scalar = (n) =>
-        n?.schemaId === 'NumberLiteral'
+        n?.schemaId === 'QuantityLiteral'
+          ? scalar(n.inputs.value)
+          : n?.schemaId === 'NumberLiteral'
           ? decimalSource(n.fields.value)
           : n?.schemaId === 'StringLiteral'
             ? n.fields.value
@@ -1304,6 +1309,10 @@
         );
       return [...new Set(names)];
     }
+    // A field named like its block is read once, not as "文字 文字".
+    function joinAccessibleName(owner, part) {
+      return owner === part ? owner : owner + ' ' + part;
+    }
     function fieldControl(node, field, annotation = false) {
       const value = annotation ? node.annotations[field.key] : node.fields[field.key],
         wrap = E(['actor-ref', 'heading', 'argument-names'].includes(field.type) ? 'div' : 'label', 'blockui-field', null, { 'data-field-type': field.type }),
@@ -1311,7 +1320,7 @@
         attrs = {
           'data-block-id': node.id,
           [annotation ? 'data-blockui-annotation' : 'data-blockui-field']: field.key,
-          'aria-label': schemaOf(node).label + ' ' + field.label,
+          'aria-label': joinAccessibleName(schemaOf(node).label, field.label),
         };
       let input;
       if (['actor-ref', 'heading', 'argument-names'].includes(field.type)) {
@@ -1333,7 +1342,7 @@
         const control = (label, type, suffix, initial = '') => {
           const row = E('label', 'blockui-structured-role'), child = E(type, '', null, {
             'data-block-id': node.id, 'data-blockui-structured-role': field.key + '.' + suffix,
-            'aria-label': field.label + ' ' + label,
+            'aria-label': joinAccessibleName(field.label, label),
             ...(type === 'input' ? { type: 'text', spellcheck: 'false', autocomplete: 'off' } : {}),
           });
           row.append(E('span', 'blockui-field-label', label), child); group.append(row);

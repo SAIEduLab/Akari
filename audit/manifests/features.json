@@ -1,5 +1,5 @@
 {
-  "productVersion": "1.2.6",
+  "productVersion": "1.2.7",
   "COMMAND_CATALOG": [
     {
       "id": "Assignment",
@@ -490,7 +490,7 @@
     "languageContractId": 2,
     "runtimeContractId": 2,
     "programFormatVersion": 2,
-    "projectFormatVersion": 2
+    "projectFormatVersion": 3
   },
   "schemaIds": [
     "Script",

@@ -345,7 +345,11 @@
       $('#uiLevel option[value="entry"]').disabled=(document.body.dataset.editorMode||editorModes.get('script'))==='code';
       for(const node of [$('#undoBtn'),$('#redoBtn')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
-        if(entry){if(node.parentElement!==$('.menutool'))$('.menutool').insertBefore(node,$('#tutorialStart'));}
+        if(entry){
+          // Keep もとにもどす before やり直す whichever control was moved last.
+          const tool=$('.menutool'),anchor=node===$('#undoBtn')&&$('#redoBtn').parentElement===tool?$('#redoBtn'):$('#tutorialStart');
+          if(node.parentElement!==tool||node.nextElementSibling!==anchor)tool.insertBefore(node,anchor);
+        }
         else if(entryLayoutPlaced){const marker=entryControlHomes.get(node);if(marker?.isConnected){marker.after(node);marker.remove();}entryControlHomes.delete(node);}
       }
       const main=$('.main'),side=$('.side'),designer=$('#designerWindow'),objects=$('.objects-window');
@@ -530,8 +534,9 @@
         if(changed)focusTutorialTarget();
       } catch(error) { finishTutorial(false);setStatus('案内を続けられませんでした。作品は残っています：'+error.message); }
     }
-    function beginTutorial() {
-      if (tutorial||document.body.dataset.uiLevel!=='entry'||modelLocked()||document.querySelector('.modal.show,.modal.open,dialog[open]')) return;
+    async function beginTutorial() {
+      const blocked=()=>tutorial||document.body.dataset.uiLevel!=='entry'||modelLocked()||document.querySelector('.modal.show,.modal.open,dialog[open]');
+      if (blocked()) return;
       if (pausedTutorial&&pausedTutorial.identity===workspaceIdentity&&pausedTutorial.fingerprint===currentFingerprint()
         &&pausedTutorial.editorFingerprint===openEditorFingerprint()&&selectedId===pausedTutorial.target&&currentEvent==='click') {
         tutorial={...pausedTutorial,confirmedStep:null,epoch:++tutorialEpoch,phase:'waiting'};pausedTutorial=null;
@@ -539,7 +544,7 @@
         tutorialSave=null;
         if(tutorialStep(tutorial)?.id==='verify-save')tutorial.index=tutorialSequence(tutorial).findIndex(s=>s.id==='save-work');
       } else {
-        if(!confirmLose())return;
+        if(!(await askLose())||blocked())return;
         const practice=makeTutorialProject(),store=makeDefaultAssetStore();for(const asset of tutorialAssetRecords())store.addImmutable(asset);
         tutorialExpected=tutorialExpectedTrees(practice);
         replaceCurrentProject(practice,store,'sprite-1','start','さかなキャッチを、いっしょに作ろう');
@@ -950,7 +955,8 @@
         choices.append(cancel); n.append(choices);
       }
       n.hidden = false;
-      setStatus(childDiagnosticText(error?.diagnostics?.[0] || error));
+      editorFailureStatus = childDiagnosticText(error?.diagnostics?.[0] || error);
+      setStatus(editorFailureStatus);
       if (binding.session?.pendingEdit && !preservePending) {
         binding.session.pendingEdit.reason = reason;
         // Recovery stores the one visible diagnostic, not an unbounded list
@@ -1323,6 +1329,18 @@
           mode === 'blocks' && (!session.syntaxAst || invalidCodePending)
             ? '書き方エラーをコード表示で直すと、ブロックを表示できます'
             : '';
+        if (mode === 'blocks') {
+          // Touch screens never show a title, so the reason is also visible text.
+          let note = b.parentElement.querySelector(':scope > .mode-blocked-note');
+          if (b.title) {
+            if (!note) {
+              note = document.createElement('span');
+              note.className = 'mode-blocked-note';
+              b.parentElement.append(note);
+            }
+            note.textContent = 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
+          } else note?.remove();
+        }
       }
       if (blocks && (draft || !sourceOverviewOpen)) {
         binding.view.render();
@@ -1649,7 +1667,8 @@
       undoButton.before(undoHome);
       const placeUndo = () => {
         if ($('#procModal').classList.contains('show')) callableTitle.append(undoButton);
-        else if(document.body.dataset.uiLevel==='entry'&&entryControlHomes.has(undoButton))toolbar.insertBefore(undoButton,$('#tutorialStart'));
+        else if(document.body.dataset.uiLevel==='entry'&&entryControlHomes.has(undoButton))
+          toolbar.insertBefore(undoButton,$('#redoBtn').parentElement===toolbar?$('#redoBtn'):$('#tutorialStart'));
         else undoHome.after(undoButton);
       };
       new MutationObserver(placeUndo).observe($('#procModal'), { attributes: true, attributeFilter: ['class'] });
@@ -1920,6 +1939,8 @@
       el.console.scrollTop = el.console.scrollHeight;
     };
     const setStatus = (m) => (el.status.textContent = m);
+    // The status line repeats an editor failure until the source is fixed.
+    let editorFailureStatus = null;
     const allIds = () => {
       const z = new Set(['stage']);
       for (const b of project.stage.backdrops) z.add(b.id);
@@ -2297,11 +2318,23 @@
       if (observed.unsaved) $('#openConfirmModal').classList.add('show');
       else selectProjectForOpen();
     }
-    function confirmLose(observed = currentOpenState()) {
-      return (
-        !observed.unsaved ||
-        confirm('作品または手順・答えを求める定義に保存していない編集があります。今の編集を捨てて続けますか？')
-      );
+    // Asks in the product's own dialog before unsaved work is replaced. The
+    // answer is void when the work changed while the question was open.
+    let loseConfirm = null;
+    function askLose(observed = currentOpenState()) {
+      if (!observed.unsaved) return Promise.resolve(true);
+      if (loseConfirm) return Promise.resolve(false);
+      const origin = document.activeElement;
+      $('#loseConfirmModal').classList.add('show');
+      $('#loseConfirmCancel').focus({preventScroll:true});
+      return new Promise((resolve) => {
+        loseConfirm = (answer) => {
+          loseConfirm = null;
+          $('#loseConfirmModal').classList.remove('show');
+          if (!answer) origin?.focus?.({preventScroll:true});
+          resolve(answer && currentOpenState().fingerprint === observed.fingerprint);
+        };
+      });
     }
     function saveEditor(options = {}) {
       if (modelLocked()) return true;
@@ -2557,10 +2590,15 @@
         handle.style.minWidth = handle.style.minHeight = '0';
         handle.style.setProperty('--resize-dot', 12 / stageScale + 'px');
         handle.style.setProperty('--resize-stroke', 1.5 / stageScale + 'px');
+        handle.hidden = false;
         if (designResizeMode(c) === 'box') {
-          const rad = ((c.direction % 360) * Math.PI) / 180,
-            px = hx * Math.max(0, 18 / stageScale - (c.w * s) / 2),
-            py = hy * Math.max(0, 18 / stageScale - (c.h * s) / 2);
+          // On a small on-screen part, edge handles would cover the picture: keep
+          // only the corners and move them just outside the part.
+          const small = Math.min(c.w * s, c.h * s) * stageScale < 64,
+            rad = ((c.direction % 360) * Math.PI) / 180,
+            px = small ? hx * 12 / stageScale : hx * Math.max(0, 18 / stageScale - (c.w * s) / 2),
+            py = small ? hy * 12 / stageScale : hy * Math.max(0, 18 / stageScale - (c.h * s) / 2);
+          handle.hidden = small && (hx === 0 || hy === 0);
           handle.style.left = p.x + px * Math.cos(rad) - py * Math.sin(rad) + 'px';
           handle.style.top = p.y + px * Math.sin(rad) + py * Math.cos(rad) + 'px';
         }
@@ -4339,6 +4377,10 @@
       } else {
         el.issue.textContent = notice || '✓ このコードの書き方は大丈夫です';
         el.issue.className = '';
+        if (!notice && editorFailureStatus !== null) {
+          if (el.status.textContent === editorFailureStatus) setStatus('✓ 書き方を直せたよ。');
+          editorFailureStatus = null;
+        }
       }
       updateGutter(errs);
       renderEditorBinding(mainEditor);
@@ -4482,25 +4524,36 @@
     }
     function startRun() {
       if (!tutorialAllows(tutorial,'run')) return;
-      if (modelLocked() || !flushActiveEditor()) return;
+      if (modelLocked()) return;
+      // A refused run always tells the child why nothing moved.
+      const refuse = (reason) => setStatus('まだ 動かせないよ。' + reason);
+      if (!flushActiveEditor()) {
+        refuse(editorFailureStatus || '書きかけの ところを 直してから「動かす」を おしてね。');
+        return;
+      }
       if(tutorial){
         const trial=tutorialStep(tutorial).id.slice(4),actor=componentById(tutorial.target);
         tutorialTrace={epoch:tutorial.epoch,trial,x:actor.x,y:actor.y,requiredClicks:tutorialSequence(tutorial)[tutorial.index+1].clicks,
           statements:[],speech:[],observations:[],clicks:0,busy:false,sawTask:false,complete:false,failed:false};
       }
       refreshEditor();
-      if(hasPendingEditor()){log('書きかけの入力を完成させてから実行してください','error');return;}
+      if(hasPendingEditor()){log('書きかけの入力を完成させてから実行してください','error');refuse('書きかけの ところを 直してから「動かす」を おしてね。');return;}
       clearTimeout(historyTimer);
       pushHistoryNow();
       if (hasCallableDraft()) {
         log('手順・答えを求める定義の編集を保存してから実行します', 'error');
+        refuse('自分で作ったブロックの 画面を とじてから「動かす」を おしてね。');
         return;
       }
-      if (!flushActiveEditor()) return;
+      if (!flushActiveEditor()) {
+        refuse(editorFailureStatus || '書きかけの ところを 直してから「動かす」を おしてね。');
+        return;
+      }
       compiled = compileProject(project);
       if (compiled.errors.length) {
         showDiagnosis();
         log('作品にエラーがあるため実行しません', 'error');
+        refuse('作品に 直す ところが あるよ。赤い ところを 見てね。');
         return;
       }
       try {
@@ -4704,6 +4757,7 @@
             const close = {
               exportChoiceModal: 'exportChoiceCancel',
               openConfirmModal: 'openConfirmCancel',
+              loseConfirmModal: 'loseConfirmCancel',
               assetModal: 'assetClose',
               procModal: 'procClose',
               dataModal: 'dataClose',
@@ -4838,7 +4892,14 @@
       for(const binding of [mainEditor,draftEditor]){binding.view?.cancel();if(binding.session){binding.session.pendingEdit=null;binding.session.blockDraft=null;}}
       headerPending=null;
       selectedId=state.selectedId;currentEvent=state.currentEvent;selectedScriptId=state.selectedScriptId;
-      $('#uiLevel').value=state.uiLevel;document.body.dataset.uiLevel=state.uiLevel;
+      // A restored basic view keeps this browser's entry preference while the script editor shows blocks.
+      let uiLevel=state.uiLevel;
+      if(uiLevel==='basic'&&state.editorModes.script==='blocks'){
+        let stored=null;
+        try{stored=localStorage.getItem(STORAGE_KEYS.uiLevel);}catch(_){}
+        if(normalizeEntryUiLevel(stored)==='entry')uiLevel='entry';
+      }
+      $('#uiLevel').value=uiLevel;document.body.dataset.uiLevel=uiLevel;
       for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,mode);
       editorSessions.clear();invalidateEditors();hideSourceOverview();renderAll();loadEditor();
       if(state.callableDraft)restoreCallableDraft(state.callableDraft);
@@ -4897,7 +4958,8 @@
       if (tutorial) return;
       if (modelLocked()) return;
       const observed = currentOpenState();
-      if (approval?.fingerprint !== observed.fingerprint && !confirmLose(observed)) return;
+      if (approval?.fingerprint !== observed.fingerprint && !(await askLose(observed))) return;
+      if (tutorial || modelLocked()) return;
       let previous = null;
       clearTimeout(historyTimer);
       clearTimeout(autosaveTimer);
@@ -6431,9 +6493,9 @@
       clearAutosave();
       setStatus(status);
     }
-    function startProject() {
-      if(tutorial)return;
-      if(modelLocked() || !confirmLose())return;
+    async function startProject() {
+      if(tutorial||modelLocked())return;
+      if(!(await askLose())||tutorial||modelLocked())return;
       replaceCurrentProject(makeEmptyProject(),makeDefaultAssetStore(),'sprite-1','start','空の作品です。動かすもの・できごとを選び、命令を入れましょう');
     }
     $('#newBtn').onclick=startProject;
@@ -6529,6 +6591,8 @@
     $('#exportChoiceCancel').onclick = () => $('#exportChoiceModal').classList.remove('show');
     $('#openBtn').onclick = requestOpenProject;
     $('#openConfirmProceed').onclick = selectProjectForOpen;
+    $('#loseConfirmProceed').onclick = () => loseConfirm?.(true);
+    $('#loseConfirmCancel').onclick = () => loseConfirm?.(false);
     $('#openConfirmCancel').onclick = () => {
       const origin = openRequest?.kind === 'sample' ? '#sampleBtn' : '#openBtn';
       openRequest = null;
@@ -6741,6 +6805,7 @@
         initialSnapshot=history[0];restoreSnap(history.at(-1),{restoreView:true});
         $('#recoveryModal').classList.remove('show');recoveryData=null;
         log('自動保存から作品と編集履歴をもどしました','ok');
+        setStatus(`「${project.name}」のつづきを もどしたよ。`);
       } catch (err) {
         log('自動保存からもどせませんでした', 'error');
       }

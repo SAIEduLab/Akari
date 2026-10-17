@@ -284,7 +284,7 @@
         <label><ruby class="child-word">編集<rt>へんしゅう</rt></ruby>する動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="編集する動きを選びます。きっかけは「いつ動く？」で変えます"></select></label>
         <button id="scriptAdd" type="button">同じできごとの本文を追加</button>
       </div>
-      <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">動かすを押したとき</button><button id="entryClickEvent" type="button">キャラを押したとき</button></div>
+      <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">「動かす」を おしたとき</button><button id="entryClickEvent" type="button">キャラが おされたとき</button></div>
       <p id="entryOutside" role="status" hidden>この作品には、ほかのブロックもあるよ。そのまま残っています。変えるときは表示を「かんたん」か「くわしく」にしよう。</p>
       <section id="tutorialGuide" aria-label="いっしょに作る" hidden><p id="tutorialText" aria-live="polite"></p><div id="tutorialChoices" hidden></div><button id="tutorialFinish" type="button" hidden>ほぞんしておわる</button><button id="tutorialExit" type="button">いっしょに作るのをやめる</button><button id="tutorialVerifySave" type="button" hidden>ほぞんした作品をたしかめる</button><input id="tutorialSavedFile" type="file" accept=".akari.md,.md" hidden></section>
       <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
@@ -527,6 +527,12 @@
  <div class="project-choice-dialog">
   <p id="openConfirmMessage">まだほぞんしていない作品があります。ほぞんせずに、ほかの作品を開きますか？</p>
   <div class="project-choice-footer"><button id="openConfirmCancel" type="button">キャンセル</button><button id="openConfirmProceed" type="button">ほぞんせずに開く</button></div>
+ </div>
+</div>
+<div class="modal" id="loseConfirmModal" role="dialog" aria-modal="true" aria-labelledby="loseConfirmMessage">
+ <div class="project-choice-dialog">
+  <p id="loseConfirmMessage">まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。</p>
+  <div class="project-choice-footer"><button id="loseConfirmCancel" type="button">やめる</button><button id="loseConfirmProceed" type="button">すてて つづける</button></div>
  </div>
 </div>
 <dialog id="samplePicker" class="sample-picker" aria-labelledby="samplePickerTitle">

@@ -141,14 +141,15 @@
       茶: '#8b5a2b',
       透明: null,
     };
+    // Event names on screen; the entry buttons use the same words.
     const EVENT_LABELS = {
-      start: '開始したとき',
-      click: 'クリックしたとき',
-      keyDown: 'キーを押したとき',
-      message: '知らせを受けたとき',
-      backdropChanged: '背景が変わったとき',
-      valueChanged: '値が変わったとき',
-      cloneStart: '分身ができたとき',
+      start: '「動かす」を おしたとき',
+      click: 'おされたとき',
+      keyDown: 'キーを おしたとき',
+      message: '合図を 受けたとき',
+      backdropChanged: 'はいけいが かわったとき',
+      valueChanged: '中身が かわったとき',
+      cloneStart: 'コピーが できたとき',
     };
     const BUILTIN_META = new Map(BUILTIN_DEFINITIONS.map((x) => [x.name, x]));
     class AkariError extends Error {
@@ -3731,7 +3732,7 @@
       languageContractId: 2,
       runtimeContractId: 2,
       programFormatVersion: 2,
-      projectFormatVersion: 2,
+      projectFormatVersion: 3,
     });
     function validProducerLabel(value) {
       return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9.+_-]{0,79}$/.test(value);

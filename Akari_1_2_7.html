@@ -1241,6 +1241,12 @@ body {
   background: #204f87;
   color: white;
 }
+.editor-modes .mode-blocked-note {
+  align-self: center;
+  color: #8a2c0d;
+  font-size: 13px;
+  line-height: 1.3;
+}
 .editor-pending {
   padding: 6px;
   margin: 0;
@@ -4982,7 +4988,8 @@ body[data-editor-mode] .designer-wrap {
   box-shadow: none;
 }
 body.runtime #formSurface .design-resize-handle,
-body.runtime #formSurface .design-resize-outline {
+body.runtime #formSurface .design-resize-outline,
+#formSurface .design-resize-handle[hidden] {
   display: none !important;
 }
 
@@ -5738,7 +5745,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 #entryProjectMenu { position:relative; }
 .entry-project-actions { position:absolute; z-index:30; background:white; border:1px solid #9aaec8; padding:8px; min-width:150px; display:grid; gap:6px; }
 body[data-ui-level="entry"] #app { height:100dvh; min-height:0; }
-body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) 340px; grid-template-rows:minmax(200px,1fr) 170px; min-height:0; overflow:hidden; }
+/* The stage column grows with wide screens so a child can see and tap small characters. */
+body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) clamp(340px,34vw,520px); grid-template-rows:minmax(200px,1fr) 170px; min-height:0; overflow:hidden; }
 body[data-ui-level="entry"] .codewin { grid-column:1; grid-row:1/3; min-height:0; }
 body[data-ui-level="entry"] .designer { grid-column:2; grid-row:1; }
 body[data-ui-level="entry"] .side { grid-column:2; grid-row:2; min-height:0; display:flex; }
@@ -5791,13 +5799,15 @@ body[data-tutorial-step] #blockEditor > .blockui-message.blockui-error {
 }
 body[data-tutorial-step] .blockui-world { padding:6px; }
 body[data-tutorial-step] :is(button,input,select,textarea,summary)[data-tutorial-blocked="true"] { opacity:.55; }
-body[data-tutorial-step] #tutorialExit,body[data-tutorial-step] #stopBtn { opacity:1; }
+body[data-tutorial-step] #tutorialExit,body[data-tutorial-step] #stopBtn:not(:disabled) { opacity:1; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .codewin { display:flex; }
-body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 340px; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) clamp(340px,34vw,520px); }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin { display:flex !important; grid-column:1; grid-row:1/3; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>:not(.debugbar) { display:block !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>:is(.source-nav,.code-assist,.console,[hidden]) { display:none !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#blockEditor { display:flex !important; }
+/* The guide keeps its one-row layout while the work runs, so nothing below it moves. */
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#tutorialGuide:not([hidden]) { display:flex !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#blockEditor[hidden] { display:none; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>.debugbar { display:none; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side { display:flex !important; grid-column:2; grid-row:2; }
@@ -6172,7 +6182,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
         <label><ruby class="child-word">編集<rt>へんしゅう</rt></ruby>する動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="編集する動きを選びます。きっかけは「いつ動く？」で変えます"></select></label>
         <button id="scriptAdd" type="button">同じできごとの本文を追加</button>
       </div>
-      <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">動かすを押したとき</button><button id="entryClickEvent" type="button">キャラを押したとき</button></div>
+      <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">「動かす」を おしたとき</button><button id="entryClickEvent" type="button">キャラが おされたとき</button></div>
       <p id="entryOutside" role="status" hidden>この作品には、ほかのブロックもあるよ。そのまま残っています。変えるときは表示を「かんたん」か「くわしく」にしよう。</p>
       <section id="tutorialGuide" aria-label="いっしょに作る" hidden><p id="tutorialText" aria-live="polite"></p><div id="tutorialChoices" hidden></div><button id="tutorialFinish" type="button" hidden>ほぞんしておわる</button><button id="tutorialExit" type="button">いっしょに作るのをやめる</button><button id="tutorialVerifySave" type="button" hidden>ほぞんした作品をたしかめる</button><input id="tutorialSavedFile" type="file" accept=".akari.md,.md" hidden></section>
       <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文の編集に戻る</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
@@ -6417,6 +6427,12 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
   <div class="project-choice-footer"><button id="openConfirmCancel" type="button">キャンセル</button><button id="openConfirmProceed" type="button">ほぞんせずに開く</button></div>
  </div>
 </div>
+<div class="modal" id="loseConfirmModal" role="dialog" aria-modal="true" aria-labelledby="loseConfirmMessage">
+ <div class="project-choice-dialog">
+  <p id="loseConfirmMessage">まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。</p>
+  <div class="project-choice-footer"><button id="loseConfirmCancel" type="button">やめる</button><button id="loseConfirmProceed" type="button">すてて つづける</button></div>
+ </div>
+</div>
 <dialog id="samplePicker" class="sample-picker" aria-labelledby="samplePickerTitle">
  <header><h2 id="samplePickerTitle">どのお手本を開く？</h2><button id="samplePickerClose" type="button" autofocus>とじる ×</button></header>
  <div id="sampleGrid" class="sample-grid"></div>
@@ -6425,7 +6441,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.2.6';
+  const PRODUCT_RELEASE = '1.2.7';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -7177,14 +7193,15 @@ function createAkariExtensionHost(options) {
       茶: '#8b5a2b',
       透明: null,
     };
+    // Event names on screen; the entry buttons use the same words.
     const EVENT_LABELS = {
-      start: '開始したとき',
-      click: 'クリックしたとき',
-      keyDown: 'キーを押したとき',
-      message: '知らせを受けたとき',
-      backdropChanged: '背景が変わったとき',
-      valueChanged: '値が変わったとき',
-      cloneStart: '分身ができたとき',
+      start: '「動かす」を おしたとき',
+      click: 'おされたとき',
+      keyDown: 'キーを おしたとき',
+      message: '合図を 受けたとき',
+      backdropChanged: 'はいけいが かわったとき',
+      valueChanged: '中身が かわったとき',
+      cloneStart: 'コピーが できたとき',
     };
     const BUILTIN_META = new Map(BUILTIN_DEFINITIONS.map((x) => [x.name, x]));
     class AkariError extends Error {
@@ -10767,7 +10784,7 @@ function createAkariExtensionHost(options) {
       languageContractId: 2,
       runtimeContractId: 2,
       programFormatVersion: 2,
-      projectFormatVersion: 2,
+      projectFormatVersion: 3,
     });
     function validProducerLabel(value) {
       return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9.+_-]{0,79}$/.test(value);
@@ -21414,6 +21431,14 @@ function createAkariExtensionHost(options) {
       if (begin < 0 || !text.endsWith(MARKDOWN_END)) throw Error();
       root = JSON.parse(text.slice(begin + MARKDOWN_BEGIN.length, -MARKDOWN_END.length));
     } catch (_) {
+      // A file written in another project format names its format in the data marker.
+      const other = text.match(/<!-- AKARI-PROJECT-F(\d+)-DATA-BEGIN -->/);
+      if (other && Number(other[1]) !== PROJECT_FORMAT_ID)
+        throw new AkariError(
+          'F502',
+          (Number(other[1]) < PROJECT_FORMAT_ID ? '前の' : 'あたらしい') +
+            ' あかりで ほぞんした 作品なので、この あかりでは 開けないよ。',
+        );
       throw new AkariError(
         'F502',
         '作品データを読めません。対応する保存形式の .akari.md を選んでください',
@@ -23783,7 +23808,7 @@ function createAkariExtensionHost(options) {
     return p;
   }
   const TUTORIAL_BLOCKS=Object.freeze({
-    speech:{label:'お話しする',source:'「こんにちは」と0.3秒話す。'},
+    speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
     escape:{label:'ちがう場所へにげる',source:'横乱数（70、490）、縦乱数（130、270）の位置へ行く。'},
     swim:{label:'ゆっくり泳ぐ',source:'横430、縦180の位置へ1秒かけて動く。'},
     randomSwim:{label:'あちこちへ泳ぐ',source:'横乱数（70、490）、縦乱数（130、270）の位置へ0.5秒かけて動く。'},
@@ -23839,7 +23864,7 @@ function createAkariExtensionHost(options) {
     tutorialDefine({id:'try-'+tag,action:'runtime:click',clicks,message:'さかなを'+clicks+'回キャッチして、動きを見てみよう。'}),
     tutorialDefine({id:'stop-'+tag,action:'stop',message:'「止める」で、作る場所にもどろう。'})];
   const TUTORIAL_STEPS=Object.freeze([
-    tutorialDefine({id:'choose-click',action:'event:click',message:'「キャラを押したとき」をえらぼう。さかなを押すと動く作品を作るよ。'}),
+    tutorialDefine({id:'choose-click',action:'event:click',message:'「キャラが おされたとき」を えらぼう。さかなを おすと 動く作品を 作るよ。'}),
     tutorialInsert('add-speech','speech',1),
     tutorialDefine({id:'speech-text',ref:['bodies','body',1,'inputs','value'],value:'つかまった！',message:'話すことばを「つかまった！」にして、Enter キーを押そう。'}),
     tutorialInsert('add-escape','escape',2),...tutorialTry('original',3),
@@ -24069,6 +24094,8 @@ function createAkariExtensionHost(options) {
     const message = String(diagnostic?.message || diagnostic || '書き方を確認してください');
     if (diagnostic?.code === 'R403' || /計算結果が有限な数ではありません/.test(message))
       return '計算の答えが大きすぎるなどの理由で、あかりで使える数になりませんでした。使う数や計算のしかたをたしかめてください。';
+    if (/移動には歩数/.test(message))
+      return '動く 文の 書き方が ちがうよ。「右へ10歩動く。」のように、どちらへ 何歩 動くかを 書いてね。';
     if (/二重否定/.test(message))
       return '「ではない」を2つ続けるときは、先の条件（じょうけん）を（ ）でくくります。例：（1が2と同じではない）ではない';
     if (/引数名.*重複|受け取る値に同じ名前/.test(message))
@@ -24129,7 +24156,7 @@ function createAkariExtensionHost(options) {
   function appendDiagnosticDetails(root, diagnostic, original = null) {
     const details = document.createElement('details'), summary = document.createElement('summary'), text = document.createElement('pre');
     details.className = 'diagnostic-details';
-    summary.textContent = 'くわしく見る（もとの説明）';
+    summary.textContent = '先生むけの くわしい せつめい';
     text.textContent = diagnosticDetailText(diagnostic, original);
     details.append(summary, text); root.append(details); return details;
   }
@@ -25104,8 +25131,11 @@ function createAkariExtensionHost(options) {
         box = E('span', 'blockui-preview', null, { 'data-shape-kind': blockShapeKind(schema) }),
         main = E('span', 'blockui-preview-main');
       attachShape(box, blockShapeKind(schema));
+      // A quantity such as 1秒 previews its number, not the slot name.
       const scalar = (n) =>
-        n?.schemaId === 'NumberLiteral'
+        n?.schemaId === 'QuantityLiteral'
+          ? scalar(n.inputs.value)
+          : n?.schemaId === 'NumberLiteral'
           ? decimalSource(n.fields.value)
           : n?.schemaId === 'StringLiteral'
             ? n.fields.value
@@ -25367,6 +25397,10 @@ function createAkariExtensionHost(options) {
         );
       return [...new Set(names)];
     }
+    // A field named like its block is read once, not as "文字 文字".
+    function joinAccessibleName(owner, part) {
+      return owner === part ? owner : owner + ' ' + part;
+    }
     function fieldControl(node, field, annotation = false) {
       const value = annotation ? node.annotations[field.key] : node.fields[field.key],
         wrap = E(['actor-ref', 'heading', 'argument-names'].includes(field.type) ? 'div' : 'label', 'blockui-field', null, { 'data-field-type': field.type }),
@@ -25374,7 +25408,7 @@ function createAkariExtensionHost(options) {
         attrs = {
           'data-block-id': node.id,
           [annotation ? 'data-blockui-annotation' : 'data-blockui-field']: field.key,
-          'aria-label': schemaOf(node).label + ' ' + field.label,
+          'aria-label': joinAccessibleName(schemaOf(node).label, field.label),
         };
       let input;
       if (['actor-ref', 'heading', 'argument-names'].includes(field.type)) {
@@ -25396,7 +25430,7 @@ function createAkariExtensionHost(options) {
         const control = (label, type, suffix, initial = '') => {
           const row = E('label', 'blockui-structured-role'), child = E(type, '', null, {
             'data-block-id': node.id, 'data-blockui-structured-role': field.key + '.' + suffix,
-            'aria-label': field.label + ' ' + label,
+            'aria-label': joinAccessibleName(field.label, label),
             ...(type === 'input' ? { type: 'text', spellcheck: 'false', autocomplete: 'off' } : {}),
           });
           row.append(E('span', 'blockui-field-label', label), child); group.append(row);
@@ -27997,7 +28031,11 @@ function createAkariExtensionHost(options) {
       $('#uiLevel option[value="entry"]').disabled=(document.body.dataset.editorMode||editorModes.get('script'))==='code';
       for(const node of [$('#undoBtn'),$('#redoBtn')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
-        if(entry){if(node.parentElement!==$('.menutool'))$('.menutool').insertBefore(node,$('#tutorialStart'));}
+        if(entry){
+          // Keep もとにもどす before やり直す whichever control was moved last.
+          const tool=$('.menutool'),anchor=node===$('#undoBtn')&&$('#redoBtn').parentElement===tool?$('#redoBtn'):$('#tutorialStart');
+          if(node.parentElement!==tool||node.nextElementSibling!==anchor)tool.insertBefore(node,anchor);
+        }
         else if(entryLayoutPlaced){const marker=entryControlHomes.get(node);if(marker?.isConnected){marker.after(node);marker.remove();}entryControlHomes.delete(node);}
       }
       const main=$('.main'),side=$('.side'),designer=$('#designerWindow'),objects=$('.objects-window');
@@ -28182,8 +28220,9 @@ function createAkariExtensionHost(options) {
         if(changed)focusTutorialTarget();
       } catch(error) { finishTutorial(false);setStatus('案内を続けられませんでした。作品は残っています：'+error.message); }
     }
-    function beginTutorial() {
-      if (tutorial||document.body.dataset.uiLevel!=='entry'||modelLocked()||document.querySelector('.modal.show,.modal.open,dialog[open]')) return;
+    async function beginTutorial() {
+      const blocked=()=>tutorial||document.body.dataset.uiLevel!=='entry'||modelLocked()||document.querySelector('.modal.show,.modal.open,dialog[open]');
+      if (blocked()) return;
       if (pausedTutorial&&pausedTutorial.identity===workspaceIdentity&&pausedTutorial.fingerprint===currentFingerprint()
         &&pausedTutorial.editorFingerprint===openEditorFingerprint()&&selectedId===pausedTutorial.target&&currentEvent==='click') {
         tutorial={...pausedTutorial,confirmedStep:null,epoch:++tutorialEpoch,phase:'waiting'};pausedTutorial=null;
@@ -28191,7 +28230,7 @@ function createAkariExtensionHost(options) {
         tutorialSave=null;
         if(tutorialStep(tutorial)?.id==='verify-save')tutorial.index=tutorialSequence(tutorial).findIndex(s=>s.id==='save-work');
       } else {
-        if(!confirmLose())return;
+        if(!(await askLose())||blocked())return;
         const practice=makeTutorialProject(),store=makeDefaultAssetStore();for(const asset of tutorialAssetRecords())store.addImmutable(asset);
         tutorialExpected=tutorialExpectedTrees(practice);
         replaceCurrentProject(practice,store,'sprite-1','start','さかなキャッチを、いっしょに作ろう');
@@ -28602,7 +28641,8 @@ function createAkariExtensionHost(options) {
         choices.append(cancel); n.append(choices);
       }
       n.hidden = false;
-      setStatus(childDiagnosticText(error?.diagnostics?.[0] || error));
+      editorFailureStatus = childDiagnosticText(error?.diagnostics?.[0] || error);
+      setStatus(editorFailureStatus);
       if (binding.session?.pendingEdit && !preservePending) {
         binding.session.pendingEdit.reason = reason;
         // Recovery stores the one visible diagnostic, not an unbounded list
@@ -28975,6 +29015,18 @@ function createAkariExtensionHost(options) {
           mode === 'blocks' && (!session.syntaxAst || invalidCodePending)
             ? '書き方エラーをコード表示で直すと、ブロックを表示できます'
             : '';
+        if (mode === 'blocks') {
+          // Touch screens never show a title, so the reason is also visible text.
+          let note = b.parentElement.querySelector(':scope > .mode-blocked-note');
+          if (b.title) {
+            if (!note) {
+              note = document.createElement('span');
+              note.className = 'mode-blocked-note';
+              b.parentElement.append(note);
+            }
+            note.textContent = 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
+          } else note?.remove();
+        }
       }
       if (blocks && (draft || !sourceOverviewOpen)) {
         binding.view.render();
@@ -29301,7 +29353,8 @@ function createAkariExtensionHost(options) {
       undoButton.before(undoHome);
       const placeUndo = () => {
         if ($('#procModal').classList.contains('show')) callableTitle.append(undoButton);
-        else if(document.body.dataset.uiLevel==='entry'&&entryControlHomes.has(undoButton))toolbar.insertBefore(undoButton,$('#tutorialStart'));
+        else if(document.body.dataset.uiLevel==='entry'&&entryControlHomes.has(undoButton))
+          toolbar.insertBefore(undoButton,$('#redoBtn').parentElement===toolbar?$('#redoBtn'):$('#tutorialStart'));
         else undoHome.after(undoButton);
       };
       new MutationObserver(placeUndo).observe($('#procModal'), { attributes: true, attributeFilter: ['class'] });
@@ -29572,6 +29625,8 @@ function createAkariExtensionHost(options) {
       el.console.scrollTop = el.console.scrollHeight;
     };
     const setStatus = (m) => (el.status.textContent = m);
+    // The status line repeats an editor failure until the source is fixed.
+    let editorFailureStatus = null;
     const allIds = () => {
       const z = new Set(['stage']);
       for (const b of project.stage.backdrops) z.add(b.id);
@@ -29949,11 +30004,23 @@ function createAkariExtensionHost(options) {
       if (observed.unsaved) $('#openConfirmModal').classList.add('show');
       else selectProjectForOpen();
     }
-    function confirmLose(observed = currentOpenState()) {
-      return (
-        !observed.unsaved ||
-        confirm('作品または手順・答えを求める定義に保存していない編集があります。今の編集を捨てて続けますか？')
-      );
+    // Asks in the product's own dialog before unsaved work is replaced. The
+    // answer is void when the work changed while the question was open.
+    let loseConfirm = null;
+    function askLose(observed = currentOpenState()) {
+      if (!observed.unsaved) return Promise.resolve(true);
+      if (loseConfirm) return Promise.resolve(false);
+      const origin = document.activeElement;
+      $('#loseConfirmModal').classList.add('show');
+      $('#loseConfirmCancel').focus({preventScroll:true});
+      return new Promise((resolve) => {
+        loseConfirm = (answer) => {
+          loseConfirm = null;
+          $('#loseConfirmModal').classList.remove('show');
+          if (!answer) origin?.focus?.({preventScroll:true});
+          resolve(answer && currentOpenState().fingerprint === observed.fingerprint);
+        };
+      });
     }
     function saveEditor(options = {}) {
       if (modelLocked()) return true;
@@ -30209,10 +30276,15 @@ function createAkariExtensionHost(options) {
         handle.style.minWidth = handle.style.minHeight = '0';
         handle.style.setProperty('--resize-dot', 12 / stageScale + 'px');
         handle.style.setProperty('--resize-stroke', 1.5 / stageScale + 'px');
+        handle.hidden = false;
         if (designResizeMode(c) === 'box') {
-          const rad = ((c.direction % 360) * Math.PI) / 180,
-            px = hx * Math.max(0, 18 / stageScale - (c.w * s) / 2),
-            py = hy * Math.max(0, 18 / stageScale - (c.h * s) / 2);
+          // On a small on-screen part, edge handles would cover the picture: keep
+          // only the corners and move them just outside the part.
+          const small = Math.min(c.w * s, c.h * s) * stageScale < 64,
+            rad = ((c.direction % 360) * Math.PI) / 180,
+            px = small ? hx * 12 / stageScale : hx * Math.max(0, 18 / stageScale - (c.w * s) / 2),
+            py = small ? hy * 12 / stageScale : hy * Math.max(0, 18 / stageScale - (c.h * s) / 2);
+          handle.hidden = small && (hx === 0 || hy === 0);
           handle.style.left = p.x + px * Math.cos(rad) - py * Math.sin(rad) + 'px';
           handle.style.top = p.y + px * Math.sin(rad) + py * Math.cos(rad) + 'px';
         }
@@ -31991,6 +32063,10 @@ function createAkariExtensionHost(options) {
       } else {
         el.issue.textContent = notice || '✓ このコードの書き方は大丈夫です';
         el.issue.className = '';
+        if (!notice && editorFailureStatus !== null) {
+          if (el.status.textContent === editorFailureStatus) setStatus('✓ 書き方を直せたよ。');
+          editorFailureStatus = null;
+        }
       }
       updateGutter(errs);
       renderEditorBinding(mainEditor);
@@ -32134,25 +32210,36 @@ function createAkariExtensionHost(options) {
     }
     function startRun() {
       if (!tutorialAllows(tutorial,'run')) return;
-      if (modelLocked() || !flushActiveEditor()) return;
+      if (modelLocked()) return;
+      // A refused run always tells the child why nothing moved.
+      const refuse = (reason) => setStatus('まだ 動かせないよ。' + reason);
+      if (!flushActiveEditor()) {
+        refuse(editorFailureStatus || '書きかけの ところを 直してから「動かす」を おしてね。');
+        return;
+      }
       if(tutorial){
         const trial=tutorialStep(tutorial).id.slice(4),actor=componentById(tutorial.target);
         tutorialTrace={epoch:tutorial.epoch,trial,x:actor.x,y:actor.y,requiredClicks:tutorialSequence(tutorial)[tutorial.index+1].clicks,
           statements:[],speech:[],observations:[],clicks:0,busy:false,sawTask:false,complete:false,failed:false};
       }
       refreshEditor();
-      if(hasPendingEditor()){log('書きかけの入力を完成させてから実行してください','error');return;}
+      if(hasPendingEditor()){log('書きかけの入力を完成させてから実行してください','error');refuse('書きかけの ところを 直してから「動かす」を おしてね。');return;}
       clearTimeout(historyTimer);
       pushHistoryNow();
       if (hasCallableDraft()) {
         log('手順・答えを求める定義の編集を保存してから実行します', 'error');
+        refuse('自分で作ったブロックの 画面を とじてから「動かす」を おしてね。');
         return;
       }
-      if (!flushActiveEditor()) return;
+      if (!flushActiveEditor()) {
+        refuse(editorFailureStatus || '書きかけの ところを 直してから「動かす」を おしてね。');
+        return;
+      }
       compiled = compileProject(project);
       if (compiled.errors.length) {
         showDiagnosis();
         log('作品にエラーがあるため実行しません', 'error');
+        refuse('作品に 直す ところが あるよ。赤い ところを 見てね。');
         return;
       }
       try {
@@ -32356,6 +32443,7 @@ function createAkariExtensionHost(options) {
             const close = {
               exportChoiceModal: 'exportChoiceCancel',
               openConfirmModal: 'openConfirmCancel',
+              loseConfirmModal: 'loseConfirmCancel',
               assetModal: 'assetClose',
               procModal: 'procClose',
               dataModal: 'dataClose',
@@ -32490,7 +32578,14 @@ function createAkariExtensionHost(options) {
       for(const binding of [mainEditor,draftEditor]){binding.view?.cancel();if(binding.session){binding.session.pendingEdit=null;binding.session.blockDraft=null;}}
       headerPending=null;
       selectedId=state.selectedId;currentEvent=state.currentEvent;selectedScriptId=state.selectedScriptId;
-      $('#uiLevel').value=state.uiLevel;document.body.dataset.uiLevel=state.uiLevel;
+      // A restored basic view keeps this browser's entry preference while the script editor shows blocks.
+      let uiLevel=state.uiLevel;
+      if(uiLevel==='basic'&&state.editorModes.script==='blocks'){
+        let stored=null;
+        try{stored=localStorage.getItem(STORAGE_KEYS.uiLevel);}catch(_){}
+        if(normalizeEntryUiLevel(stored)==='entry')uiLevel='entry';
+      }
+      $('#uiLevel').value=uiLevel;document.body.dataset.uiLevel=uiLevel;
       for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,mode);
       editorSessions.clear();invalidateEditors();hideSourceOverview();renderAll();loadEditor();
       if(state.callableDraft)restoreCallableDraft(state.callableDraft);
@@ -32549,7 +32644,8 @@ function createAkariExtensionHost(options) {
       if (tutorial) return;
       if (modelLocked()) return;
       const observed = currentOpenState();
-      if (approval?.fingerprint !== observed.fingerprint && !confirmLose(observed)) return;
+      if (approval?.fingerprint !== observed.fingerprint && !(await askLose(observed))) return;
+      if (tutorial || modelLocked()) return;
       let previous = null;
       clearTimeout(historyTimer);
       clearTimeout(autosaveTimer);
@@ -34083,9 +34179,9 @@ function createAkariExtensionHost(options) {
       clearAutosave();
       setStatus(status);
     }
-    function startProject() {
-      if(tutorial)return;
-      if(modelLocked() || !confirmLose())return;
+    async function startProject() {
+      if(tutorial||modelLocked())return;
+      if(!(await askLose())||tutorial||modelLocked())return;
       replaceCurrentProject(makeEmptyProject(),makeDefaultAssetStore(),'sprite-1','start','空の作品です。動かすもの・できごとを選び、命令を入れましょう');
     }
     $('#newBtn').onclick=startProject;
@@ -34181,6 +34277,8 @@ function createAkariExtensionHost(options) {
     $('#exportChoiceCancel').onclick = () => $('#exportChoiceModal').classList.remove('show');
     $('#openBtn').onclick = requestOpenProject;
     $('#openConfirmProceed').onclick = selectProjectForOpen;
+    $('#loseConfirmProceed').onclick = () => loseConfirm?.(true);
+    $('#loseConfirmCancel').onclick = () => loseConfirm?.(false);
     $('#openConfirmCancel').onclick = () => {
       const origin = openRequest?.kind === 'sample' ? '#sampleBtn' : '#openBtn';
       openRequest = null;
@@ -34393,6 +34491,7 @@ function createAkariExtensionHost(options) {
         initialSnapshot=history[0];restoreSnap(history.at(-1),{restoreView:true});
         $('#recoveryModal').classList.remove('show');recoveryData=null;
         log('自動保存から作品と編集履歴をもどしました','ok');
+        setStatus(`「${project.name}」のつづきを もどしたよ。`);
       } catch (err) {
         log('自動保存からもどせませんでした', 'error');
       }

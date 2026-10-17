@@ -1141,7 +1141,7 @@
     return p;
   }
   const TUTORIAL_BLOCKS=Object.freeze({
-    speech:{label:'お話しする',source:'「こんにちは」と0.3秒話す。'},
+    speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
     escape:{label:'ちがう場所へにげる',source:'横乱数（70、490）、縦乱数（130、270）の位置へ行く。'},
     swim:{label:'ゆっくり泳ぐ',source:'横430、縦180の位置へ1秒かけて動く。'},
     randomSwim:{label:'あちこちへ泳ぐ',source:'横乱数（70、490）、縦乱数（130、270）の位置へ0.5秒かけて動く。'},
@@ -1197,7 +1197,7 @@
     tutorialDefine({id:'try-'+tag,action:'runtime:click',clicks,message:'さかなを'+clicks+'回キャッチして、動きを見てみよう。'}),
     tutorialDefine({id:'stop-'+tag,action:'stop',message:'「止める」で、作る場所にもどろう。'})];
   const TUTORIAL_STEPS=Object.freeze([
-    tutorialDefine({id:'choose-click',action:'event:click',message:'「キャラを押したとき」をえらぼう。さかなを押すと動く作品を作るよ。'}),
+    tutorialDefine({id:'choose-click',action:'event:click',message:'「キャラが おされたとき」を えらぼう。さかなを おすと 動く作品を 作るよ。'}),
     tutorialInsert('add-speech','speech',1),
     tutorialDefine({id:'speech-text',ref:['bodies','body',1,'inputs','value'],value:'つかまった！',message:'話すことばを「つかまった！」にして、Enter キーを押そう。'}),
     tutorialInsert('add-escape','escape',2),...tutorialTry('original',3),

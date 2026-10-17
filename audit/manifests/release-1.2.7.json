@@ -1,12 +1,12 @@
 {
   "schema": "akari-distribution-v1",
-  "productVersion": "1.2.6",
+  "productVersion": "1.2.7",
   "languageContractId": 2,
   "runtimeContractId": 2,
-  "projectFormat": 2,
+  "projectFormat": 3,
   "programFormat": 2,
   "files": {
-    "Akari_1_2_6.html": "54597574648e305ede41725861c3e08a353ede9a8bd3f5aa6cd901980af18743",
+    "Akari_1_2_7.html": "60f4f7528d2975174f46c4442cd39112754e4b05f999a30068487c988046ae25",
     "EXTENSIONS.md": "fce90649a78062ee2d8e01be4c2a16529b57c429f13555f2e6d978563ac5f51c",
     "LANGUAGE.md": "4e0bcc6a414e57f359fa7dfc6ec3a44a51334bd39405da62be2490a39592e256",
     "LICENSE": "f400597abbd1d5aca8d4d823c06c8f5ab1b14bf7ae1b71a08e0dc393f92d37cf",

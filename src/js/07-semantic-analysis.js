@@ -2472,6 +2472,14 @@
       if (begin < 0 || !text.endsWith(MARKDOWN_END)) throw Error();
       root = JSON.parse(text.slice(begin + MARKDOWN_BEGIN.length, -MARKDOWN_END.length));
     } catch (_) {
+      // A file written in another project format names its format in the data marker.
+      const other = text.match(/<!-- AKARI-PROJECT-F(\d+)-DATA-BEGIN -->/);
+      if (other && Number(other[1]) !== PROJECT_FORMAT_ID)
+        throw new AkariError(
+          'F502',
+          (Number(other[1]) < PROJECT_FORMAT_ID ? '前の' : 'あたらしい') +
+            ' あかりで ほぞんした 作品なので、この あかりでは 開けないよ。',
+        );
       throw new AkariError(
         'F502',
         '作品データを読めません。対応する保存形式の .akari.md を選んでください',
