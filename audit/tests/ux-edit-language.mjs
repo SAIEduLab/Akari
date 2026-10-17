@@ -95,4 +95,4 @@ check('timed/pause-resume',()=>{
 const report={schema:'akari-ux-edit-language-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),environment:'node / product parser, codec and scheduler with independent clock',uxAcceptance:false,results};
 const output=path.resolve(process.argv[2]||'audit-evidence/ux-edit-language.json');fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 for(const r of results.filter(r=>r.status==='FAIL'))console.error(r.id+': '+r.error.split('\n').slice(0,5).join(' '));
-console.log(`UX repair language: ${results.filter(r=>r.status==='PASS').length}/${results.length} PASS`);if(report.status!=='PASS')process.exitCode=1;
+console.log(`UX edit language:${results.filter(r=>r.status==='PASS').length}/${results.length} PASS`);if(report.status!=='PASS')process.exitCode=1;

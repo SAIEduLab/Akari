@@ -1,4 +1,4 @@
-// Explicit historical preconditions, entered through the real file-open and editor UI.
+// Explicit regression preconditions, entered through the real file-open and editor UI.
 // The production factory and every product API remain untouched.
 const {makeRegressionProject} = require('../../fixtures/regression-project.cjs');
 const factorySource = `globalThis.makeAkariRegressionProject = (${makeRegressionProject.toString()});`;
@@ -114,6 +114,6 @@ async function completeRegressionHoles(page, rootSelector = '#blockEditor', topI
       else { await (await revealRegressionControl(control)).fill(wanted); await control.press('Enter'); }
     }
   }
-  throw Error('Historical regression hole setup did not finish within 80 explicit inputs');
+  throw Error('Regression hole setup did not finish within 80 explicit inputs');
 }
 module.exports.completeRegressionHoles = completeRegressionHoles;

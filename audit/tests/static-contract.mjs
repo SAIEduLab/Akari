@@ -9,7 +9,9 @@ import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {verifyAuthority} from '../lib/verify-test-results.mjs';
 import {expectedLanguageIds} from '../lib/verify-language-results.mjs';
-import {assertReleasePolicy} from '../lib/release-policy.mjs';
+import {assertReleasePolicy,functionalNameIssue,functionalNameIssues,fileNameSegments,auditRegistry,manifestFieldIssues} from '../lib/release-policy.mjs';
+import {gateSteps,acceptanceCommands,acceptanceIds} from '../lib/gate-contract.mjs';
+import {assertSingleBrowserOwner} from '../lib/verify-browser-results.mjs';
 import {formatCompatibilityIds} from '../lib/format-compatibility-contract.mjs';
 import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-contract.mjs';
 import {componentControlsFeature,componentControlIds} from '../lib/component-controls-contract.mjs';
@@ -36,12 +38,25 @@ for(const file of ["audit/manifests/language-form-coverage.json","audit/browser/
 assert.deepEqual([...api.BLOCK_SCHEMAS.map(s=>s.id)],features.schemaIds);
 const productTests=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
 verifyAuthority(productTests);
-const numberedStage=/^(?:[A-Z]{1,12}\d{2,3}-|\d{2,3} [A-Za-z]|run[A-Za-z]+\d{2,3}Tests$)|(?:^|[-_:])(?:v|version|release)[-_]?\d{1,4}(?:$|[-_:])/i;
-const functionalId=(id,kind)=>{assert.ok(typeof id==='string'&&id.length>0,kind+' missing');assert.doesNotMatch(id,numberedStage,kind+' uses a version-derived name: '+id);};
-for(const sample of ['FEATURE42-CASE','42 sample','runFuture42Tests','RELEASE-V103','FORMAT-V001'])assert.throws(()=>functionalId(sample,'negative example'));
+// Names of tests, steps, files and manifest fields describe a responsibility; every violation is listed together.
+const nameIssues=[],functionalId=(id,kind)=>nameIssues.push(...functionalNameIssues(kind,[id]));
+// Rejection controls for the name policy and its new name sets.
+for(const sample of ['FEATURE42-CASE','42 sample','runFuture42Tests','RELEASE-V103','FORMAT-V001'])assert.match(functionalNameIssue(sample),/version-derived/,sample);
+for(const sample of ['ux-repair-05','repair02','phase3-language','PHASE_3','dev-session2','ux-followup','follow-up-bundle','newContracts','new-contract','format1-storage','runtimeV2','runtime2-boundary','d961dd3-schemas'])assert.match(functionalNameIssue(sample)||'',/past-process/,sample);
+for(const sample of ['FORMAT 2＋3×4','FORMAT-PROJECT-001','format-compatibility','runtime-boundary','list-repair-panel','release-1.2','.github','facade'])assert.equal(functionalNameIssue(sample),null,sample);
+assert.deepEqual(functionalNameIssues('gate step',['static','runtime-v2','phase3-checks']),['gate step uses a version-derived name: runtime-v2','gate step uses a past-process name: phase3-checks']);
+assert.deepEqual(['audit/tests/runtime-v2/node.cjs','audit/tests/phase3.akari.md','audit/tests/ok.mjs'].flatMap(file=>functionalNameIssues('audit file name',fileNameSegments(file))),['audit file name uses a version-derived name: runtime-v2','audit file name uses a past-process name: phase3.akari']);
+assert.deepEqual(manifestFieldIssues('audit/manifests/example.json',{authority:'Reviewed for Akari 0.0.1.',newContracts:[{id:'A'}]},currentProductVersion()),['audit/manifests/example.json: release label in value Reviewed for Akari 0.0.1.','audit/manifests/example.json: past-process field newContracts']);
+assert.deepEqual(manifestFieldIssues('audit/manifests/example.json',{productFile:currentProductFile(),label:'Akari '+currentProductVersion(),languageContracts:[]},currentProductVersion()),[]);
+assert.ok(auditRegistry('audit/manifests/browser-results.json')&&auditRegistry('audit/public-files.json')&&!auditRegistry('audit/fixtures/capability-oracle.json'));
+assert.throws(()=>assertSingleBrowserOwner([{task:'ui-interactions',keys:['UI-a','UI-b']},{task:'ui-routes',keys:['UI-b']}]),/UI-b is registered by ui-interactions and ui-routes/);
+for(const [id] of gateSteps('',''))functionalId(id,'gate step');
+for(const kind of Object.keys(acceptanceCommands))for(const id of acceptanceIds(kind))functionalId(id,'acceptance command');
 for(const suite of productTests.suites){functionalId(suite.name,'suite');for(const id of suite.ids)functionalId(id,'product test');}
 const browserTests=JSON.parse(fs.readFileSync('audit/manifests/browser-results.json'));
 for(const entry of browserTests.entries){functionalId(entry.task,'browser task');for(const id of entry.keys)functionalId(id,'browser test');}
+// A browser case runs once: two tasks never register the same case key.
+assertSingleBrowserOwner(browserTests.entries);
 const languageTests=JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json'));
 for(const id of expectedLanguageIds(languageTests))functionalId(id,'language test');
 for(const id of formatCompatibilityIds)functionalId(id,'format compatibility test');
@@ -50,13 +65,18 @@ functionalId(componentControlsFeature.id,'component action capability');
 for(const id of componentControlIds)functionalId(id,'component action test');
 checkUiButtonValidatorNegatives();
 for(const id of blockFieldIds)functionalId(id,"block field test");checkBlockFieldValidatorNegatives();
+// verifyAuthority above requires the documented rows to equal the independent capability set.
 const audit=fs.readFileSync('AUDIT.md','utf8'),capabilities=audit.split(/\r?\n/).filter(l=>/^\| [a-z]+:/.test(l));
-assert.equal(capabilities.length,260);
 for(const row of capabilities)functionalId(row.split('|')[1].trim(),'capability');
 const files=JSON.parse(fs.readFileSync('audit/public-files.json')).files;
 assert.equal(new Set(files).size,files.length);assert.ok(files.includes(currentProductFile())&&files.includes('LANGUAGE.md')&&files.includes('AUDIT.md'));
 const publicationPathAllowed=file=>!/(AGENTS|PROJECT_INSTRUCTIONS|PUBLIC_SYNC|historical|checkpoint|records\/)/.test(file);
-for(const file of files){assert.ok(!path.isAbsolute(file)&&!file.split('/').includes('..'));assert.ok(fs.existsSync(file),file);assert.ok(publicationPathAllowed(file),file);if(file.startsWith('audit/suites/run'))functionalId(path.basename(file,'.js'),'suite file');}
+for(const file of files){assert.ok(!path.isAbsolute(file)&&!file.split('/').includes('..'));assert.ok(fs.existsSync(file),file);assert.ok(publicationPathAllowed(file),file);}
+for(const file of files.filter(file=>/^(?:audit|\.github)\//.test(file))){
+  nameIssues.push(...functionalNameIssues('audit file name',fileNameSegments(file)));
+  if(auditRegistry(file))nameIssues.push(...manifestFieldIssues(file,JSON.parse(fs.readFileSync(file,'utf8')),currentProductVersion()));
+}
+if(nameIssues.length)throw Error('Name policy:\n'+nameIssues.join('\n'));
 const executableAuditFiles=files.filter(p=>/\.(mjs|cjs|js)$/.test(p));
 for(const file of executableAuditFiles){
   const source=fs.readFileSync(file,'utf8');
@@ -67,5 +87,5 @@ for(const file of executableAuditFiles){
 }
 assertReleasePolicy(html,executableAuditFiles.filter(p=>p.startsWith('audit/')).map(file=>({file,source:fs.readFileSync(file,'utf8')})));
 assert.ok(!/run[A-Za-z0-9]*Tests/.test(html),'tests embedded in product');
-const report={status:'PASS',snapshot:snapshot(currentProductFile()),capabilities:260,files:files.length};
+const report={status:'PASS',snapshot:snapshot(currentProductFile()),capabilities:capabilities.length,files:files.length};
 fs.writeFileSync(process.argv[2]||'audit-evidence/static.json',JSON.stringify(report,null,2)+'\n');console.log('Static publication contract: PASS');

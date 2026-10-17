@@ -24,7 +24,7 @@ export async function installGreetingFixture(page) {
   await page.locator('#eventSelect').selectOption('start');
 }
 
-// Keep the actor named in the fixed historical sources explicit in native UI fixtures.
+// Keep the actor named in the fixed regression sources explicit in native UI fixtures.
 export async function nameLegacyFixtureActor(page) {
   await page.locator('#formSurface .component[data-id="sprite-1"]').click();
   const name=page.locator('#properties input[aria-label="名前"]');

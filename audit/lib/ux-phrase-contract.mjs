@@ -3,14 +3,15 @@ import {verifyTriggerReport,triggerWrongMeaning} from './ux-phrase-trigger-contr
 import {verifySpeechReport,speechWrongMeaning} from './ux-phrase-speech-contract.mjs';
 import {verifyListRepairReport,listRepairWrongMeaning} from './ux-phrase-list-contract.mjs';
 
-export const repairFollowupInputs=[
+export const uxPhraseInputs=[
   ['ux-phrase-trigger.json',verifyTriggerReport,triggerWrongMeaning],
   ['ux-phrase-speech.json',verifySpeechReport,speechWrongMeaning],
   ['ux-phrase-list.json',verifyListRepairReport,listRepairWrongMeaning],
 ];
 
 // Keep the required control registry independent of the exported implementations.
-// Removing a suite or a meaning mutation must fail, rather than reduce coverage.
+// Removing a suite, a generic control or a meaning mutation must fail, rather than reduce coverage.
+const requiredGeneric=['missing-row','duplicate-row','failed-report','failed-row','wrong-snapshot','wrong-browser','page-error','external-request'];
 const requiredMeaning={
   'ux-phrase-trigger.json':[
     'open-mutates','cancel-mutates-history','literal-body-lost','event-not-run',
@@ -33,16 +34,16 @@ const requiredMeaning={
   ],
 };
 
-export function verifyRepairFollowupInputs(read){
-  assert.deepEqual(repairFollowupInputs.map(([file])=>file),Object.keys(requiredMeaning),'Required followup suites');
-  return repairFollowupInputs.map(([file,verify])=>({file,cases:verify(read(file))}));
+export function verifyUxPhraseInputs(read){
+  assert.deepEqual(uxPhraseInputs.map(([file])=>file),Object.keys(requiredMeaning),'Required phrase suites');
+  return uxPhraseInputs.map(([file,verify])=>({file,cases:verify(read(file))}));
 }
 
 // Alter copies of actual evidence. These are validator controls, never additional
 // product execution cases. Every registered report and meaning control is required.
-export function verifyRepairFollowupBundle(read){
-  const reports=Object.fromEntries(repairFollowupInputs.map(([file])=>[file,read(file)]));
-  const results=verifyRepairFollowupInputs(file=>reports[file]);
+export function verifyUxPhraseBundle(read){
+  const reports=Object.fromEntries(uxPhraseInputs.map(([file])=>[file,read(file)]));
+  const results=verifyUxPhraseInputs(file=>reports[file]);
   const negative=[];
   const generic=[
     ['missing-row',r=>r.results.pop()],
@@ -54,22 +55,22 @@ export function verifyRepairFollowupBundle(read){
     ['page-error',r=>r.pageErrors.push('exception')],
     ['external-request',r=>r.networkRequests.push('https://example.invalid')],
   ];
-  const expectedIds=[];
-  for(const [file,verify,meaning]of repairFollowupInputs){
+  assert.deepEqual(generic.map(([id])=>id),requiredGeneric,'Required generic rejection controls');
+  const expectedIds=Object.entries(requiredMeaning).flatMap(([file,meaning])=>[...requiredGeneric,...meaning,'missing-report'].map(id=>file+'/'+id));
+  for(const [file,verify,meaning]of uxPhraseInputs){
     assert.deepEqual(meaning.map(([id])=>id),requiredMeaning[file],'Required meaning rejection controls: '+file);
     const mutations=[...generic,...meaning];
     assert.equal(new Set(mutations.map(([id])=>id)).size,mutations.length,'Unique rejection IDs: '+file);
     for(const [id,mutate]of mutations){
-      const key=file+'/'+id;expectedIds.push(key);
+      const key=file+'/'+id;
       const bad=structuredClone(reports[file]);mutate(bad);
       assert.throws(()=>verify(bad),key);
       negative.push({id:key,rejected:true});
     }
-    const missing=file+'/missing-report';expectedIds.push(missing);
-    assert.throws(()=>verifyRepairFollowupInputs(name=>name===file?undefined:reports[name]),missing);
+    const missing=file+'/missing-report';
+    assert.throws(()=>verifyUxPhraseInputs(name=>name===file?undefined:reports[name]),missing);
     negative.push({id:missing,rejected:true});
   }
-  assert.deepEqual(negative.map(row=>row.id),expectedIds);
-  assert.equal(negative.length,75,'Complete additional rejection controls');
+  assert.deepEqual(negative.map(row=>row.id),expectedIds,'Complete phrase rejection controls');
   return {results,negative};
 }

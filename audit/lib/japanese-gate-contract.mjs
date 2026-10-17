@@ -28,10 +28,10 @@ export const intentInputPaths = [
   'audit/lib/capability-contract.mjs',
 ];
 export const runtimeInputPaths = [
-  'audit/tests/runtime-v2.mjs','audit/tests/runtime-boundary-gate.mjs',
+  'audit/tests/runtime-boundary.mjs','audit/tests/runtime-boundary-gate.mjs',
   'audit/lib/japanese-gate-contract.mjs',
   ...['config','node','browser','entry-browser','parser-tests','heading-browser','formal-player-browser']
-    .map(n=>'audit/tests/runtime-v2/'+n+'.cjs'),
+    .map(n=>'audit/tests/runtime-boundary/'+n+'.cjs'),
 ];
 export const intentCaseIds = [
   ...scenarios.filter(s=>s.id!=='CI-20').flatMap(s=>[s.id+'/parser-core',s.id+'/blocks-core']),
@@ -69,7 +69,7 @@ export const runtimeRuns = [
   ['formal-player-browser.cjs','formal-player-browser-evidence.json',[
     'FORMAL-EXPORTED-PLAYER-OFFLINE-FILTER-QUANTITY-CONTINUOUS']],
 ];
-assert.equal(intentCaseIds.length,89);assert.equal(runtimeRuns.flatMap(r=>r[2]).length,20);
+const runtimeCaseCount=runtimeRuns.flatMap(r=>r[2]).length;
 export function inputHashes(files){return Object.fromEntries(files.map(f=>[f,sha(fs.readFileSync(f))]));}
 function bind(report,inputs,files){assert.equal(report.status,'PASS');assert.deepEqual(report.snapshot,inputs);assert.deepEqual(report.auditInputs,inputHashes(files));}
 function ids(results,expected){assert.ok(Array.isArray(results));assert.deepEqual(results.map(r=>r.id),expected);assert.equal(new Set(results.map(r=>r.id)).size,expected.length);}
@@ -107,7 +107,7 @@ export function verifyIntentReport(report,inputs,candidateFile){
   const corpus=JSON.parse(fs.readFileSync(corpusPath));
   assert.equal(sha(fs.readFileSync(corpusPath)),corpusSha256);
   assert.deepEqual(report.oracle.cases,corpus.cases);assert.deepEqual(report.oracle.structuredSources,scenarios);
-  ids(report.results,intentCaseIds);assert.equal(report.total,89);assert.deepEqual(report.counts,{PASS:89,FAIL:0,PENDING:0});
+  ids(report.results,intentCaseIds);assert.equal(report.total,intentCaseIds.length);assert.deepEqual(report.counts,{PASS:intentCaseIds.length,FAIL:0,PENDING:0});
   for(const r of report.results){assert.equal(r.status,'PASS',r.id);assert.ok(r.evidence!==undefined,r.id+': evidence missing');}
   for(const scenario of scenarios){
     const original=report.results.find(r=>r.id===scenario.id+'/original-prose-ui').evidence;
@@ -159,15 +159,15 @@ export function verifyIntentReport(report,inputs,candidateFile){
     assert.equal(evidence.before.project,evidence.valid.project);
   }
   ids(report.coverage,scenarios.map(s=>s.id));for(const r of report.coverage)for(const k of ['originalProse','semantic','blocks'])assert.equal(r[k],'PASS',r.id+'/'+k);
-  return {status:'PASS',checks:89,intents:20};
+  return {status:'PASS',checks:intentCaseIds.length,intents:scenarios.length};
 }
 export function verifyRuntimeReport(report,inputs,directory){
   bind(report,inputs,runtimeInputPaths);assert.equal(report.schema,'akari-runtime-boundary-gate-v1');
-  const r=report.runtime;assert.equal(r.schema,'akari-runtime-v2-boundary-evidence-v1');assert.equal(r.status,'PASS');
+  const r=report.runtime;assert.equal(r.schema,'akari-runtime-boundary-evidence-v1');assert.equal(r.status,'PASS');
   assert.equal(r.productSha256,inputs.productSha256);assert.equal(r.transport,'file://');
   assert.equal(sha(fs.readFileSync(path.join(directory,'candidate.html'))),inputs.productSha256);
-  assert.equal(r.expectedPassCount,20);assert.equal(r.passed,20);assert.equal(r.failed,0);assert.ok(r.unverified===0||r.unverified===1);
-  assert.equal(r.runs.length,6);
+  assert.equal(r.expectedPassCount,runtimeCaseCount);assert.equal(r.passed,runtimeCaseCount);assert.equal(r.failed,0);assert.ok(r.unverified===0||r.unverified===1);
+  assert.equal(r.runs.length,runtimeRuns.length);
   for(let i=0;i<runtimeRuns.length;i++){
     const [script,file,expected]=runtimeRuns[i],run=r.runs[i];
     assert.equal(run.script,script);assert.equal(run.evidence,file);assert.equal(run.exitCode,0);assert.equal(run.signal,null);
@@ -186,7 +186,7 @@ export function verifyRuntimeReport(report,inputs,directory){
   assert.equal(r.unverified,r.runs.flatMap(run=>run.reports).filter(row=>row.id==='NATIVE-TAB-VISIBILITY-OBSERVATION').length);
   const formal=JSON.parse(fs.readFileSync(path.join(directory,'formal-player-browser-evidence.json')));
   assert.equal(formal.playerSha256,sha(fs.readFileSync(path.join(directory,'formal-player.html'))));
-  return {status:'PASS',checks:20,runners:6};
+  return {status:'PASS',checks:runtimeCaseCount,runners:runtimeRuns.length};
 }
 
 export const negativeCaseIds = [

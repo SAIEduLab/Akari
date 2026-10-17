@@ -1,4 +1,4 @@
-// Independent oracle: fixed 1.0.2 specification + adult-authored CI corpus.
+// Independent oracle: fixed language specification + adult-authored CI corpus.
 // These sources explicitly structure the intent; acceptance of the original prose
 // is measured separately. Do not rewrite expectations from observed candidate ASTs.
 export const corpusSha256='97bfcdb36a2029edf0ed696ed15635cf5330364e37233168274173cc5bfd928f';

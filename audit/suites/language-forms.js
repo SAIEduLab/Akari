@@ -213,7 +213,5 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
       ['横位置を100にする\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:100,y:110,direction:180}],
     ]) eq(exec(source).actor,actor);
   });
-  return {results,total:results.length,failed:results.filter(r=>r.status==='FAIL').length,
-    blocked:results.filter(r=>r.status==='BLOCKED_TRANSITION').length,
-    deferred:results.filter(r=>r.status==='DEFERRED_PHASE_3').length};
+  return {results,total:results.length,failed:results.filter(r=>r.status==='FAIL').length};
 }

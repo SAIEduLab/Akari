@@ -3319,7 +3319,7 @@
       "semantic": "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」",
       "runtime": "保存はcompile成功に依存しない",
       "selftest": "SAVE Markdown往復; SAVE 作りかけのコード保持; AUDIT MARKDOWN canonical-body mismatch rejected F512; FORMAT-EXECUTABLE-CONTRACT; RELEASE-PROJECT-MARKER-BOUNDARIES",
-      "browser": "BROWSER-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:invalid-syntax-save-and-format1-storage-isolation",
+      "browser": "BROWSER-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:invalid-syntax-save-and-draft-storage-isolation",
       "guarantee": "構文不正 source の保存と現行保存形式・F512拒否。素材付き実往復はbrowser suite"
     },
     {
@@ -3331,7 +3331,7 @@
       "semantic": "LANGUAGE.mdの現行意味 + 本書の自動保存契約",
       "runtime": "editor session",
       "selftest": "外部core test対象外（browser suiteで検査）",
-      "browser": "BROWSER-PRODUCT; browser-session:autosave-draft-recovery; browser-storage-media:invalid-syntax-save-and-format1-storage-isolation",
+      "browser": "BROWSER-PRODUCT; browser-session:autosave-draft-recovery; browser-storage-media:invalid-syntax-save-and-draft-storage-isolation",
       "guarantee": "GA-STATICで専用コード・UIと保存領域を固定し、GA-EXECで作品・素材・下書きの復元、破損拒否、現在作品保護を検査する"
     },
     {

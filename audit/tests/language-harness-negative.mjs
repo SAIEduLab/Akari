@@ -10,7 +10,7 @@ verifyLanguageResults(report,manifest,report.snapshot);pass('valid-report-accept
 const mutations=[
   ['missing-result',r=>r.results.pop()],['duplicate-result',r=>r.results.push(r.results[0])],['unknown-id',r=>r.results[0].id='extra'],
   ['failed-status',r=>r.results[0].status='FAIL'],['skipped-status',r=>r.results[0].status='SKIP'],['total-changed',r=>r.total--],
-  ['failed-count',r=>r.failed++],['blocked-count',r=>r.blocked++],['deferred-count',r=>r.deferred++],['completion-flag-flipped',r=>r.phase3LanguageComplete=!r.phase3LanguageComplete],
+  ['failed-count',r=>r.failed++],['report-status-failed',r=>r.status='FAIL'],['completion-flag-flipped',r=>r.browserLanguageComplete=!r.browserLanguageComplete],
   ['missing-environment',r=>r.environment=''],['snapshot-field-added',r=>r.snapshot.head='other'],['changed-product-hash',r=>r.snapshot.productSha256='other'],
 ];
 for(const [id,mutate] of mutations){const r=structuredClone(report);mutate(r);assert.throws(()=>verifyLanguageResults(r,manifest,report.snapshot),id);pass(id);}

@@ -5,6 +5,7 @@ export const auditBundleKinds=['selftest','audio-codecs-linux','audio-codecs-win
 export const auditJobIds=['audio-codecs','full-browser-gate','selftest'];
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
   ['static','audit/tests/static-contract.mjs',file('static')],
+  ['audit-inventory','audit/tests/audit-inventory.mjs',file('audit-inventory')],
   ['product-source','audit/tests/product-source.mjs',file('product-source')],
   ['publication-inventory','audit/tests/publication.mjs','inventory',file('publication-inventory')],
   ['publication-documents','audit/tests/publication.mjs','documents',file('publication-documents')],
@@ -40,7 +41,7 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['sentence-form-coverage','audit/tests/sentence-form-coverage.mjs',file('sentence-form-coverage')],
   ['spec-examples','audit/tests/spec-examples.mjs',file('spec-examples')],
   ['japanese-intent-browser','audit/tests/japanese-intent-browser.mjs',browser,file('japanese-intent-browser')],
-  ['runtime-v2','audit/tests/runtime-boundary-gate.mjs',currentProductFile(),browser,path.join(dir,'runtime-v2'),file('runtime-v2')],
+  ['runtime-boundary','audit/tests/runtime-boundary-gate.mjs',currentProductFile(),browser,path.join(dir,'runtime-boundary'),file('runtime-boundary')],
   ['japanese-gate-negative','audit/tests/japanese-gate-negative.mjs',file('japanese-gate-negative')],
   ['review-actor','audit/tests/review-actor.mjs',currentProductFile(),browser,path.join(dir,'review-actor')],
   ['review-language','audit/tests/review-language.mjs',browser,currentProductFile(),file('review-language')],

@@ -1,5 +1,5 @@
-import {repairInputs,repairWrongMeaning,repairMatrixWrongMeaning,repairViewportWrongMeaning,repairLanguageWrongMeaning} from '../lib/ux-normal-contract.mjs';
-import {verifyRepairFollowupBundle} from '../lib/ux-phrase-contract.mjs';
+import {uxNormalInputs,uxNormalWrongMeaning,uxNormalMatrixWrongMeaning,uxNormalViewportWrongMeaning,uxNormalLanguageWrongMeaning} from '../lib/ux-normal-contract.mjs';
+import {verifyUxPhraseBundle} from '../lib/ux-phrase-contract.mjs';
 import {verifyAutosaveStateReport,autosaveStateWrongMeaning} from '../lib/autosave-state-contract.mjs';
 import {verifySearchLayoutReport,searchLayoutWrongMeaning} from '../lib/search-layout-contract.mjs';
 import fs from 'node:fs';
@@ -11,15 +11,15 @@ import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {verifyCommandMeaning} from '../lib/command-meaning-contract.mjs';
 import {audioOutputCases,verifyAudioOutput,wave,measureWave} from '../lib/audio-output-contract.mjs';
 import {transferFixtures,fixturePins,compositionIds,verifyTransferReport,verifyValuesReport,verifyCompositionReport} from '../lib/actions-transfer-contract.mjs';
-import {uxRepairInputs,verifyUxRepairInputs} from '../lib/ux-edit-contract.mjs';
+import {uxEditInputs,verifyUxEditInputs} from '../lib/ux-edit-contract.mjs';
 import {naturalRoleIds,documentUnitIds,draftPersistenceIds,verifySemanticExtension,workspaceBrowserIds,verifyWorkspaceBrowser,dataFormIds,dataFormBrowserIds,verifyDataFormBrowser,numericDisplayIds,numericBrowserIds,verifyNumericBrowser,resourceReferenceIds,resourceBrowserIds,verifyResourceBrowser,searchBindingIds,searchBrowserIds,verifySearchBrowser,uxSurfaceIds,uxManualFiles,verifyUxSurface,basicIntentIds,verifyBasicBrowser,semanticNegativeIds,finiteVariantFixture,verifyFiniteVariants,structuredOrders,structuredEditingIds,verifyStructuredEditing} from '../lib/semantic-extension-contract.mjs';
 const dir=path.resolve(process.argv[2]),results=[],negative=[];
-for(const [file,verify]of uxRepairInputs){
+for(const [file,verify]of uxEditInputs){
  try{const report=JSON.parse(fs.readFileSync(path.join(dir,file)));results.push({file,status:'PASS',cases:verify(report)});
   for(const [kind,mutate]of [['missing-row',r=>r.results.pop()],['wrong-snapshot',r=>r.snapshot.productSha256='0'.repeat(64)],['failed',r=>r.status='FAIL'],['duplicate-row',r=>r.results[1]=r.results[0]]]){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+kind,rejected:true});}
  }catch(error){results.push({file,status:'FAIL',error:error.message});}
 }
-try{const reports=Object.fromEntries(uxRepairInputs.map(([file])=>[file,JSON.parse(fs.readFileSync(path.join(dir,file)))]));verifyUxRepairInputs(file=>reports[file]);for(const [missing]of uxRepairInputs){assert.throws(()=>verifyUxRepairInputs(file=>file===missing?undefined:reports[file]));negative.push({id:missing+'/missing-report',rejected:true});}}
+try{const reports=Object.fromEntries(uxEditInputs.map(([file])=>[file,JSON.parse(fs.readFileSync(path.join(dir,file)))]));verifyUxEditInputs(file=>reports[file]);for(const [missing]of uxEditInputs){assert.throws(()=>verifyUxEditInputs(file=>file===missing?undefined:reports[file]));negative.push({id:missing+'/missing-report',rejected:true});}}
 catch(error){results.push({file:'ux-edit-inputs-negative',status:'FAIL',error:error.message});}
 try{const r=JSON.parse(fs.readFileSync(path.join(dir,'audio-output-browser.json')));results.push({file:'audio-output-browser.json',status:'PASS',cases:verifyAudioOutput(r,dir)});}catch(error){results.push({file:'audio-output-browser.json',status:'FAIL',error:error.message});}
 for(const [file,verify]of [['command-meaning.json',verifyCommandMeaning],['structured-editing-browser.json',verifyStructuredEditing],['transfer.json',verifyTransferReport],['values.json',verifyValuesReport],['composition.json',verifyCompositionReport],['workspace-history-browser.json',verifyWorkspaceBrowser],['data-form-browser.json',verifyDataFormBrowser],['numeric-display-browser.json',verifyNumericBrowser],['resource-references-browser.json',verifyResourceBrowser],['search-bindings-browser.json',verifySearchBrowser],['ux-surface-browser.json',verifyUxSurface],['basic-intents-browser.json',verifyBasicBrowser],['finite-semantic-variants.json',verifyFiniteVariants]]){
@@ -190,19 +190,19 @@ try{
  verifyStructuredEditing(control);
  for(const[id,mutate]of Object.entries({'structured-missing':r=>r.results.pop(),'structured-identity-drift':r=>r.results[0].observed.stableId=false,'structured-lost-body':r=>r.results[4].observed.bodyPreserved=false,'structured-wrong-direction':r=>r.results[6].observed.direction='left','structured-rate-confusion':r=>r.results[7].observed.moved=33})){const bad=structuredClone(control);mutate(bad);assert.throws(()=>verifyStructuredEditing(bad));negative.push({id,rejected:true});}
 }catch(error){results.push({file:'structured-validator-negative',status:'FAIL',error:error.stack});}
-try { for(const [file,mutate] of repairWrongMeaning){const report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/wrong-meaning',rejected:true});} }
+try { for(const [file,mutate] of uxNormalWrongMeaning){const report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=uxNormalInputs.find(([f])=>f===file)[1];verify(report);const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/wrong-meaning',rejected:true});} }
 catch(error){results.push({file:'ux-normal-meaning-negative',status:'FAIL',error:error.message});}
-try {const file='ux-normal-matrix.json',report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);for(const [id,mutate] of repairMatrixWrongMeaning){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
+try {const file='ux-normal-matrix.json',report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=uxNormalInputs.find(([f])=>f===file)[1];verify(report);for(const [id,mutate] of uxNormalMatrixWrongMeaning){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
 catch(error){results.push({file:'ux-normal-matrix-meaning-negative',status:'FAIL',error:error.message});}
-try {for(const [file,id,mutate] of repairViewportWrongMeaning){const report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
+try {for(const [file,id,mutate] of uxNormalViewportWrongMeaning){const report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=uxNormalInputs.find(([f])=>f===file)[1];verify(report);const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
 catch(error){results.push({file:'ux-normal-viewport-negative',status:'FAIL',error:error.message});}
-try {const file='ux-normal-language.json',report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=repairInputs.find(([f])=>f===file)[1];verify(report);for(const [id,mutate] of repairLanguageWrongMeaning){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
+try {const file='ux-normal-language.json',report=JSON.parse(fs.readFileSync(path.join(dir,file))),verify=uxNormalInputs.find(([f])=>f===file)[1];verify(report);for(const [id,mutate] of uxNormalLanguageWrongMeaning){const bad=structuredClone(report);mutate(bad);assert.throws(()=>verify(bad));negative.push({id:file+'/'+id,rejected:true});}}
 catch(error){results.push({file:'ux-normal-language-meaning-negative',status:'FAIL',error:error.message});}
-let followupNegative=[];
+let phraseNegative=[];
 try{
- const followup=verifyRepairFollowupBundle(file=>JSON.parse(fs.readFileSync(path.join(dir,file))));
- results.push(...followup.results.map(row=>({...row,status:'PASS'})));
- followupNegative=followup.negative;
+ const phrase=verifyUxPhraseBundle(file=>JSON.parse(fs.readFileSync(path.join(dir,file))));
+ results.push(...phrase.results.map(row=>({...row,status:'PASS'})));
+ phraseNegative=phrase.negative;
 }catch(error){results.push({file:'ux-phrase-required-bundle',status:'FAIL',error:error.stack});}
 const autosaveNegative=[];
 try{
@@ -218,7 +218,6 @@ try{
  for(const [id,mutate]of autosaveStateWrongMeaning){const bad=structuredClone(actual);mutate(bad);assert.throws(()=>verifyAutosaveStateReport(bad),id);autosaveNegative.push({id,rejected:true});}
  assert.throws(()=>verifyAutosaveStateReport(undefined),'missing autosave report');
  autosaveNegative.push({id:'missing-report',rejected:true});
- assert.equal(autosaveNegative.length,19);
 }catch(error){results.push({file:'autosave-state-required-bundle',status:'FAIL',error:error.stack});}
 const searchLayoutNegative=[];
 try{
@@ -234,9 +233,37 @@ try{
  for(const [id,mutate]of searchLayoutWrongMeaning){const bad=structuredClone(actual);mutate(bad);assert.throws(()=>verifySearchLayoutReport(bad),id);searchLayoutNegative.push({id,rejected:true});}
  assert.throws(()=>verifySearchLayoutReport(undefined),'missing search layout report');
  searchLayoutNegative.push({id:'missing-report',rejected:true});
- assert.equal(searchLayoutNegative.length,19);
 }catch(error){results.push({file:'search-layout-required-bundle',status:'FAIL',error:error.stack});}
-const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negative.length===183?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
- validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative,followupNegative,autosaveNegative,searchLayoutNegative};
+// Fixed identities of the rejection controls above, written independently of their mutation tables:
+// a dropped, renamed or extra control fails instead of silently changing coverage.
+const evidenceControls=(files,kinds)=>files.flatMap(file=>kinds.map(kind=>file+'/'+kind));
+const requiredNegativeIds=[
+ ...evidenceControls(['ux-edit-language.json','ux-edit-browser.json','ux-bubble-layout.json','ux-normal-language.json','ux-normal-browser.json','ux-normal-matrix.json','ux-normal-layout.json','ux-normal-speech.json'],['missing-row','wrong-snapshot','failed','duplicate-row','missing-report']),
+ ...evidenceControls(['natural-roles.json','document-units.json','draft-persistence.json','data-form-values.json','numeric-display.json','resource-references.json','search-bindings.json','basic-intents.json','semantic-negative-pairs.json'],['missing','wrong-snapshot','failed']),
+ 'command-missing','command-duplicate','command-wrong-head','command-failed','command-no-trace','command-wrong-motion','command-wrong-list','command-block-drift',
+ 'history-missing','history-lost-redo','history-coerced-number','history-overwrote-record',
+ 'data-default-literal','data-lost-unit','data-wrong-order','data-silent-failure',
+ 'display-missing-detail','display-rounded-raw','display-changed-text','display-online-player','display-collapsed-monitor',
+ 'resource-deleted-reference','resource-uncertainty-hidden','resource-blocked-unused','resource-changed-history','rename-actor-drift','rename-data-not-saved','rename-lost-calls','rename-runtime-mutated-design',
+ 'search-changed-source','search-wrong-owner','search-lost-arguments','search-replacement-instead-insertion','search-hidden-reason',
+ 'ux-not-empty','ux-click-extra','ux-overlap','ux-small-font','ux-lost-fulltext','ux-low-contrast','ux-no-selection','ux-missing-manual',
+ 'basic-rewritten-original','basic-key-repeat','basic-rate-confusion','basic-no-file','basic-no-drawing','basic-no-release-observation','basic-moved-after-release',
+ 'variant-missing','variant-duplicate','variant-wrong-fixture','variant-wrong-snapshot','variant-changed-source','variant-wrong-position','variant-roundtrip-drift','variant-failure',
+ 'failed-status','missing-case','duplicate-case','skipped-case','pending-as-pass','changed-original','rewritten-ui-source','wrong-product','wrong-browser','missing-extra-definition','wrong-meaning','source-block-mismatch','changed-time','duplicate-body','changed-identity','multiline-lost-lf','multiline-cancel-committed','draft-dropped-source','draft-coerced-number','page-error','network',
+ 'missing-value','wrong-expected','wrong-observed','missing-route','missing-variant',
+ 'audio-missing','audio-duplicate','audio-wrong-head','audio-no-output','audio-wrong-frequency','audio-no-volume-change','audio-wait-early','audio-waits-other-sound','audio-restarts-after-stop','audio-short-recording','audio-unstable-periods',
+ 'structured-missing','structured-identity-drift','structured-lost-body','structured-wrong-direction','structured-rate-confusion',
+ ...evidenceControls(['ux-normal-language.json','ux-normal-browser.json','ux-normal-matrix.json','ux-normal-layout.json','ux-normal-speech.json'],['wrong-meaning']),
+ ...evidenceControls(['ux-normal-matrix.json'],['B12-wait-three-seconds','B10-serialized','wrong-initial-source','wrong-result-source','B12-other-body-changed','missing-required-rerun','B20-initial-zero-lost','virtual-input-not-final-source']),
+ 'ux-normal-speech.json/outside-visible-stage','ux-normal-layout.json/left-edge-clipped',
+ ...evidenceControls(['ux-normal-language.json'],['wrong-task-answer-owner','wrong-refusal-phase']),
+];
+const observedNegativeIds=negative.map(row=>row.id),negativeCoverage={
+ missing:requiredNegativeIds.filter(id=>!observedNegativeIds.includes(id)),
+ unexpected:observedNegativeIds.filter(id=>!requiredNegativeIds.includes(id)),
+ duplicate:observedNegativeIds.filter((id,i)=>observedNegativeIds.indexOf(id)!==i)};
+const negativeComplete=Object.values(negativeCoverage).every(ids=>ids.length===0);
+const report={schema:'akari-fixed-acceptance-aggregate-v1',status:results.every(x=>x.status==='PASS')&&negativeComplete?'MACHINE_PASS':'FAIL',uxAcceptance:false,results,
+ validatorControl:'SYNTHETIC / validation only, never product execution evidence',negative,negativeCoverage,phraseNegative,autosaveNegative,searchLayoutNegative};
 fs.mkdirSync(dir,{recursive:true});fs.writeFileSync(path.join(dir,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify(report));if(report.status!=='MACHINE_PASS')process.exitCode=1;

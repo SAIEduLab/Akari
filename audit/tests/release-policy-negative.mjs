@@ -32,6 +32,14 @@ for(const [kind,name] of [['v-number','restoreV103'],['version-number','runVersi
   reject('release-name/audit/'+kind,base,[{file:'audit/example.js',source:`function ${name}(){}`}],/release-derived identifier/);
 }
 reject('release-name/audit/property-key',base,[{file:'audit/example.js',source:"const audit={'restoreV103':()=>{}};"}],/release-derived identifier/);
+// Audit callables also name a responsibility, not a past work process.
+for(const name of ['verifyRepair02Matrix','runPhase3Checks','loadDevSessionEvidence','verifyFollowupBundle','readNewContracts','checkFormat1Storage','runRuntime2Boundary']){
+  reject('past-process/function/'+name,base,[{file:'audit/example.js',source:`function ${name}(){}`}],/past-process identifier/);
+  reject('past-process/property/'+name,base,[{file:'audit/example.js',source:`const checks={${name}:()=>{}};`}],/past-process identifier/);
+}
+accept('accepted/responsibility-audit-names',base,[{file:'audit/example.js',source:'function verifyListRepairReport(){} function verifyRuntimeBoundary(){} function verifyFormatCompatibility(){} function verifyUxPhraseBundle(){}'}]);
+// Product identifiers keep their own vocabulary; the past-process rule applies to audit sources.
+accept('accepted/product-animation-phase-name',base.replace('</script>','function startPhase2Animation(){}\n</script>'));
 reject('release-name/audit/arrow-binding',base,[{file:'audit/example.js',source:'const runVersion09Tests=()=>{};'}],/release-derived identifier/);
 reject('release-read/format-check-uses-release',base.replace('project.formatVersion!==EXECUTABLE_CONTRACT.projectFormatVersion','project.appVersion!==PRODUCT_RELEASE'),[],/appVersion read|PRODUCT_RELEASE read/);
 reject('release-read/producer-compared-to-release',base.replace('</script>',`function compatibility(project){const label=project.appVersion;return label===PRODUCT_RELEASE;}\n</script>`),[],/appVersion read|PRODUCT_RELEASE read/);

@@ -6,7 +6,6 @@ import {pathToFileURL} from 'node:url';
 import {createRequire} from 'node:module';
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
-import P from '../browser/cases/persistence-probe.cjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import {verifySurfaceResults} from '../lib/verify-surface-results.mjs';
 const [browser,output]=process.argv.slice(2), product=currentProductFile(), before=snapshot(product);
@@ -183,10 +182,10 @@ await withBrowser(browser,async b=>{
   await run('RELEASE-GUI/save-reload-generated-offline',async p=>{
     await fill(p,source);await mode(p,'blocks');await number(p).fill('3');await number(p).press('Enter');
     const save=async(id,name)=>{const pending=p.waitForEvent('download');await click(p,id);if(id==='exportBtn')await p.locator('#exportControls').click();const f=path.join(dir,name);await (await pending).saveAs(f);return f;};
-    const file=await save('saveBtn','phase3.akari.md'),saved=fs.readFileSync(file,'utf8');
+    const file=await save('saveBtn','editor-gui-saved.akari.md'),saved=fs.readFileSync(file,'utf8');
     assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F2-DATA-BEGIN'));
     const initial=await state(p);await click(p,'newBtn');await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);assert.equal((await state(p)).project,initial.project);
-    const generated=await save('exportBtn','phase3-player.html');
+    const generated=await save('exportBtn','editor-gui-player.html');
     const c=await b.newContext({offline:true}),errors=[],network=[];
     try{await c.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});const player=await c.newPage();player.on('pageerror',e=>errors.push(e.message));await player.goto(pathToFileURL(path.resolve(generated)).href);await player.locator('#playerStart:not([disabled])').click();await player.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('5'));await player.locator('#playerStop').click();assert.equal(await player.locator('#playerStop').isDisabled(),true);}finally{await c.close();}
     assert.deepEqual(errors,[]);assert.deepEqual(network,[]);

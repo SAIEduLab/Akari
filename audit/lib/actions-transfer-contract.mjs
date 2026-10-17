@@ -17,9 +17,9 @@ export function transferFixtures(){
   assert.deepEqual(prose.drafts.map(d=>d.id),['I07','I08','I09','I10','I11','I12']);
   for(const d of prose.drafts){assert.equal(sha(d.mainFirstDraft),d.draftSha256);assert.equal(d.writtenBeforeVisibleLaunch,true);assert.ok(d.expected&&d.intent);}
   assert.deepEqual(prose.drafts.find(d=>d.id==='I10').extra.argumentNames,['個数','ねだん']);
-  for(const [key,count]of Object.entries({C:74,Q:76,E:32,L:38,S:164,O:40})){
-    assert.equal(plan.groups[key].length,count);assert.equal(new Set(plan.groups[key].map(r=>r.id)).size,count);
-  }
+  // Each group equals its current independent set in actions-transfer-static; here only the groups and unique IDs are required.
+  assert.deepEqual(Object.keys(plan.groups),['C','Q','E','L','S','O']);
+  for(const [key,rows]of Object.entries(plan.groups))assert.equal(new Set(rows.map(r=>r.id)).size,rows.length,'duplicate plan row in '+key);
   return {prose,plan};
 }
 export function schemaForExpression(id){

@@ -7,6 +7,7 @@ import {verifyProductSource} from './product-source-contract.mjs';
 import {verifyPublicationReport} from './publication-contract.mjs';
 import {verifySentenceFormCoverage} from './sentence-form-coverage.mjs';
 import {verifySpecExamples} from './spec-examples-contract.mjs';
+import {verifyAuditInventoryReport} from './audit-inventory-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -37,6 +38,7 @@ export function verifyGateResults(dir,inputs){
   verifyGateCaseReports(read,inputs,productTests);
   verifyProductSource(read('product-source'),inputs);
   for(const mode of ['inventory','documents'])verifyPublicationReport(read('publication-'+mode),mode,inputs);
+  verifyAuditInventoryReport(read('audit-inventory'),inputs);
   verifyBrowserEnvironment(read('browser-environment'),inputs);
   const language=JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json'));
   for(const n of ['language-node','language-browser'])verifyLanguageResults(read(n),language,inputs);
@@ -54,7 +56,7 @@ export function verifyGateResults(dir,inputs){
   verifySentenceFormCoverage(read('sentence-form-coverage'),inputs);
   verifySpecExamples(read('spec-examples'),inputs,{artifacts:path.join(dir,'spec-examples.artifacts')});
   verifyIntentReport(read('japanese-intent-browser'),inputs,path.join(dir,'japanese-intent-browser.artifacts','candidate.html'));
-  verifyRuntimeReport(read('runtime-v2'),inputs,path.join(dir,'runtime-v2'));
+  verifyRuntimeReport(read('runtime-boundary'),inputs,path.join(dir,'runtime-boundary'));
   verifyNegativeReport(read('japanese-gate-negative'),inputs);
   for(const group of Object.keys(reviewGroups))verifyReviewReport(read(group==='actor'?'review-actor/review-actor':'review-'+group),group,inputs);
   verifyReviewNegativeReport(read('review-harness-negative'),inputs);

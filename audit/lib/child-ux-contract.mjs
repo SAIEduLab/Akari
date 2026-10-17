@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {sha,snapshot} from './product-test-host.mjs';
 import {currentProductFile} from './product-path.cjs';
 import {childUxProvenance} from './child-ux-observations.mjs';
-import {verifyRepairMatrix} from './ux-normal-contract.mjs';
+import {verifyUxNormalMatrix} from './ux-normal-contract.mjs';
 import {childLanguageUiIds,childInsertionConceptHints,verifyChildLanguageUi} from './child-language-ui-contract.mjs';
 import {blockMeaning} from './child-ux-blocks.mjs';
 export const taskIds=Array.from({length:24},(_,i)=>'B'+String(i+1).padStart(2,'0'));
@@ -14,7 +14,7 @@ export const plan=read('audit/fixtures/child-ux-plan.json');
 const matrix=read('audit/fixtures/ux-normal-matrix.json').cases;
 export const currentInputs=()=>snapshot(currentProductFile());
 export function verifyFrozenInputs(){
-  assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-plan.json')),'5511c8ea1b445f5daa7e6cfe5778e87c51a173e664987892ad5897e71aa14108','independent supplemental task plan');
+  assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-plan.json')),'1c9285ce32c4c5487a258c9b421c67775e63f491d12529ecaf32bd55fe053cf6','independent supplemental task plan');
   const benchmark=read('audit/fixtures/ux-edit-benchmark.json');
   assert.deepEqual(plan.taskIds,taskIds);assert.deepEqual(plan.order,benchmark.order);assert.deepEqual(plan.tasks.map(t=>t.id),taskIds);
   for(const [i,t]of plan.tasks.entries()){
@@ -40,7 +40,7 @@ function artifact(base,a){
   const f=path.resolve(base,a.path);assert.ok(f.startsWith(path.resolve(base)+path.sep));assert.ok(!fs.lstatSync(f).isSymbolicLink());assert.equal(sha(fs.readFileSync(f)),a.sha256);
 }
 export function verifyChildMatrix(r,inputs,provenance,file){
-  verifyRepairMatrix(r);assert.deepEqual(r.snapshot,inputs);verifyProvenance(r.childUxProvenance,provenance);assert.equal(typeof file,'string');
+  verifyUxNormalMatrix(r);assert.deepEqual(r.snapshot,inputs);verifyProvenance(r.childUxProvenance,provenance);assert.equal(typeof file,'string');
   for(const row of r.results){
     const [id,mode]=row.id.split('/'),c=matrix.find(c=>c.id===id),trip=row.observed.roundtrip;
     assert.deepEqual(trip?.route,[mode,mode==='code'?'blocks':'code',mode]);assert.equal(trip.observations?.length,3);

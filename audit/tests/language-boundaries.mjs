@@ -1,4 +1,4 @@
-import { currentProductFile, currentProductVersion } from "./../lib/product-path.cjs";
+import { currentProductFile } from "./../lib/product-path.cjs";
 import fs from 'node:fs';
 import path from 'node:path';
 import cp from 'node:child_process';
@@ -23,29 +23,32 @@ const make=(name,n)=>({
   'long-valid':Array(n).fill('何もしない').join('\n'),
 })[name];
 if(process.argv[2]==='--worker') {
-  const [name,count,version]=process.argv.slice(3), source=make(name,Number(count));
+  const [name,count]=process.argv.slice(3), source=make(name,Number(count));
   const html=fs.readFileSync(currentProductFile(),'utf8');
   const api=loadApi(html), start=performance.now(), memory=process.memoryUsage().heapUsed;
   const parsed=api.parseSyntax(source);
-  const result={name,count:Number(count),version,chars:[...source].length,ms:performance.now()-start,heapDelta:process.memoryUsage().heapUsed-memory,accepted:!!parsed.ast,diagnostic:parsed.syntaxDiagnostics[0]?.code};
+  const result={name,count:Number(count),chars:[...source].length,ms:performance.now()-start,heapDelta:process.memoryUsage().heapUsed-memory,accepted:!!parsed.ast,diagnostic:parsed.syntaxDiagnostics[0]?.code};
   console.log(JSON.stringify(result));
 } else {
+  const output=process.argv[2];
+  assert.ok(output,'usage: node audit/tests/language-boundaries.mjs <result.json>');
+  if(fs.existsSync(output))throw Error('Evidence already exists');
   const before=snapshot(currentProductFile()),results=[];
+  const measure=(name,n)=>{
+    const r=cp.spawnSync(process.execPath,[import.meta.filename,'--worker',name,String(n)],{encoding:'utf8',timeout:5000,maxBuffer:1e6});
+    assert.equal(r.status,0,`${name}/${n}: ${r.error||r.stderr}`);
+    return JSON.parse(r.stdout);
+  };
   for(const name of ['unclosed-string','unclosed-name','unclosed-parens','duplicate-particles','duplicate-time','duplicate-coordinates','long-valid',
     'missing-slide-destination','missing-slide-duration','comparison-late-failure','comparison-missing-marker','missing-tone-frequency','duplicate-input-value'])
-    for(const n of [1000,4000,12000]) for(const version of [currentProductVersion()]) {
-      const r=cp.spawnSync(process.execPath,[import.meta.filename,'--worker',name,String(n),version],{encoding:'utf8',timeout:5000,maxBuffer:1e6});
-      assert.equal(r.status,0,`${name}/${n}/${version}: ${r.error||r.stderr}`);
-      const row=JSON.parse(r.stdout);assert.equal(row.accepted,name==='long-valid');results.push(row);
+    for(const n of [1000,4000,12000]) {
+      const row=measure(name,n);assert.equal(row.accepted,name==='long-valid');results.push(row);
     }
   // Exercise malformed late failures just below the product limit as well.
   for(const [name,n] of Object.entries({'missing-slide-destination':32000,'missing-slide-duration':10000,
-    'comparison-late-failure':45000,'comparison-missing-marker':32000,'missing-tone-frequency':32000,'duplicate-input-value':45000}))
-    for(const version of [currentProductVersion()]) {
-      const r=cp.spawnSync(process.execPath,[import.meta.filename,'--worker',name,String(n),version],{encoding:'utf8',timeout:5000,maxBuffer:1e6});
-      assert.equal(r.status,0,`${name}/${n}/${version}: ${r.error||r.stderr}`);
-      const row=JSON.parse(r.stdout);assert.equal(row.accepted,false);assert.ok(row.chars<=100000);results.push(row);
-    }
+    'comparison-late-failure':45000,'comparison-missing-marker':32000,'missing-tone-frequency':32000,'duplicate-input-value':45000})) {
+    const row=measure(name,n);assert.equal(row.accepted,false);assert.ok(row.chars<=100000);results.push(row);
+  }
   const api=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
   assert.ok(api.parseSyntax('※'+'a'.repeat(api.LIMITS.sourceEach-1)).ast);
   assert.equal(api.parseSyntax('※'+'a'.repeat(api.LIMITS.sourceEach)).ast,null);
@@ -55,8 +58,6 @@ if(process.argv[2]==='--worker') {
   for(const key of ['COMMAND_CATALOG','LIMITS','EXECUTABLE_CONTRACT']) assert.deepEqual(JSON.parse(JSON.stringify(api[key])),frozen[key],key);
   assert.deepEqual([...api.BLOCK_SCHEMAS.map(s=>s.id)],frozen.schemaIds);
   assert.deepEqual(snapshot(currentProductFile()),before);
-  const output=process.argv[2]||'audit-evidence/phase3/language-boundaries.json';
-  if(fs.existsSync(output))throw Error('Evidence already exists');
   fs.mkdirSync(path.dirname(output),{recursive:true});
   fs.writeFileSync(output,JSON.stringify({status:'PASS',snapshot:before,timeoutMs:5000,results,featureContract:'audit/manifests/features.json'},null,2)+'\n');
   console.log(JSON.stringify({status:'PASS',measurements:results.length,maxMs:Math.max(...results.map(r=>r.ms))}));

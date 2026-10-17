@@ -1290,7 +1290,7 @@
         "B24/code",
         "B24/blocks"
       ],
-      "verifier": "verifyRepairMatrix",
+      "verifier": "verifyUxNormalMatrix",
       "addition": ""
     },
     {
@@ -1315,7 +1315,7 @@
         "diagnostics/current-source",
         "editor/synthetic-composition"
       ],
-      "verifier": "verifyRepairBrowser",
+      "verifier": "verifyUxNormalBrowser",
       "addition": ""
     },
     {
@@ -1327,7 +1327,7 @@
       "testIds": [
         "controls/palette-and-search"
       ],
-      "verifier": "verifyRepairBrowser",
+      "verifier": "verifyUxNormalBrowser",
       "addition": ""
     },
     {
@@ -1344,7 +1344,7 @@
         "B23/code",
         "B23/blocks"
       ],
-      "verifier": "verifyRepairMatrix",
+      "verifier": "verifyUxNormalMatrix",
       "addition": ""
     },
     {
@@ -1357,7 +1357,7 @@
         "B24/code",
         "B24/blocks"
       ],
-      "verifier": "verifyRepairMatrix",
+      "verifier": "verifyUxNormalMatrix",
       "addition": ""
     },
     {
@@ -1463,7 +1463,7 @@
         "editor/synthetic-composition",
         "editor/enter-indent"
       ],
-      "verifier": "verifyRepairBrowser",
+      "verifier": "verifyUxNormalBrowser",
       "addition": ""
     },
     {

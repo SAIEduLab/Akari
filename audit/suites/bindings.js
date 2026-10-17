@@ -3,5 +3,5 @@ const { AssetStore, BLOCK_SCHEMAS, BLOCK_SCHEMA_BY_ID, COLOR_PRESETS, COMMAND_CA
 const { AKARI_LICENSE, AkariError, COLOR_NAMES, DEFAULT_MASCOT_ASSET_ID, DEFAULT_MASCOT_SHA256, DESIGN_RESIZE_DIRECTIONS, STANDARD_AKARI_MASCOT, assertRuntimeValueLimit, blockBodyRanges, blockInsertionAvailability, blockPaletteGroup, blockShapeKind, blockShapePath, blockZoomCore, blockZoomScroll, buildBlockIndex, checkAudioContainerLimits, checkAudioLimits, checkImageLimits, cloneDesignProject, cpLen, pickerRgb, resolveColor, resolvedEditorMode, runUserFunction, stableJson, validateAssetReferences, validateName, validateSerializedProjectStructure } = Akari.diagnostics;
 const AKARI_RUNTIME = { restoreExecutable: Akari.restoreExecutable, EXECUTABLE_CONTRACT: Akari.EXECUTABLE_CONTRACT };
 
-// Explicit historical regression fixture; the product's default API remains untouched.
+// Explicit regression fixture; the product's default API remains untouched.
 const makeRegressionProject = () => globalThis.makeAkariRegressionProject(Akari);
