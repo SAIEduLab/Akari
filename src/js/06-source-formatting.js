@@ -68,9 +68,13 @@
           s = `${formatExpressionCore(n.args[0], PREC.POST)}の文字数`;
         else if (n.name === 'STRING_CHAR')
           s = `${formatExpressionCore(n.args[0], PREC.POST)}の${formatExpressionCore(n.args[1], PREC.POST + 1)}文字目`;
+        else if (n.name === '乱数' && n.args.length === 2)
+          s = `${formatExpressionCore(n.args[0], PREC.ADD)}から${formatExpressionCore(n.args[1], PREC.ADD)}のどれか`;
         else
           s = `${builtinSurfaceName(n.name)}（${n.args.map((x) => formatExpressionCore(x)).join('、')}）`;
-        p = n.name === 'CONTAINS' ? PREC.CMP : n.name === 'INDEX_OF' ? PREC.SEARCH : PREC.POST;
+        // 「AからBのどれか」 binds looser than ＋ and tighter than a comparison.
+        p = n.name === 'CONTAINS' ? PREC.CMP : n.name === 'INDEX_OF' ? PREC.SEARCH
+          : n.name === '乱数' && n.args.length === 2 ? PREC.CMP + 0.5 : PREC.POST;
         break;
       }
       case 'ListRead':

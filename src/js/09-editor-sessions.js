@@ -1137,14 +1137,14 @@
     p.projectData.variables=[{id:'practice-score',name:'点数',initialValue:0}];
     p.components.push({id:'practice-board',type:'label',name:'点数ボード',x:20,y:20,w:600,h:45,fg:'#173047',bg:null,fontSize:24,
       visible:true,direction:0,scalePercent:100,text:'さかなを キャッチ！',localData:{variables:[],lists:[]}});
-    p.scripts=[{id:'practice-click',targetId:'sprite-1',event:'click',source:'ほかの実行をすべて止める。'}];
+    p.scripts=[{id:'practice-click',targetId:'sprite-1',event:'click',source:'ほかの動きをぜんぶ止める。'}];
     return p;
   }
   const TUTORIAL_BLOCKS=Object.freeze({
     speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
-    escape:{label:'ちがう場所へにげる',source:'横乱数（70、490）、縦乱数（130、270）の位置へ行く。'},
-    swim:{label:'ゆっくり泳ぐ',source:'横430、縦180の位置へ1秒かけて動く。'},
-    randomSwim:{label:'あちこちへ泳ぐ',source:'横乱数（70、490）、縦乱数（130、270）の位置へ0.5秒かけて動く。'},
+    escape:{label:'ちがう場所へにげる',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ行く。'},
+    swim:{label:'ゆっくり泳ぐ',source:'よこ430、たて180のばしょへ1秒かけて動く。'},
+    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ0.5秒かけて動く。'},
     repeat:{label:'くりかえす',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
     right:{label:'右へ泳ぐ',source:'0.3秒かけて右へ60歩動く。'},
     left:{label:'左へ泳ぐ',source:'0.3秒かけて左へ60歩動く。'},

@@ -15,12 +15,12 @@
         GOTO: Object.freeze({
           label: 'ばしょへ行く',
           inputs: Object.freeze(['よこの ばしょ', 'たての ばしょ']),
-          format: (a) => `横${a(0)}、縦${a(1)}の位置へ行く`,
+          format: (a) => `よこ${a(0)}、たて${a(1)}のばしょへ行く`,
         }),
         GLIDE: Object.freeze({
           label: '時間をかけて ばしょへ動く',
           inputs: Object.freeze(['秒', 'よこの ばしょ', 'たての ばしょ']),
-          format: (a) => `横${a(1)}、縦${a(2)}の位置へ${a(0,'秒')}かけて動く`,
+          format: (a) => `よこ${a(1)}、たて${a(2)}のばしょへ${a(0,'秒')}かけて動く`,
         }),
         SET_DIRECTION: Object.freeze({
           label: '向きを決める',
@@ -40,12 +40,12 @@
         SET_X: Object.freeze({
           label: 'よこの ばしょを決める',
           inputs: Object.freeze(['よこの ばしょ']),
-          format: (a) => `横位置を${a(0)}にする`,
+          format: (a) => `よこのばしょを${a(0)}にする`,
         }),
         SET_Y: Object.freeze({
           label: 'たての ばしょを決める',
           inputs: Object.freeze(['たての ばしょ']),
-          format: (a) => `縦位置を${a(0)}にする`,
+          format: (a) => `たてのばしょを${a(0)}にする`,
         }),
         POINT_TO: Object.freeze({
           label: 'だれかの方を向く',
@@ -75,32 +75,32 @@
         HIDE: Object.freeze({
           label: 'すがたを かくす',
           inputs: Object.freeze([]),
-          format: (a) => '姿をかくす',
+          format: (a) => 'すがたをかくす',
         }),
         SHOW: Object.freeze({
           label: 'すがたを見せる',
           inputs: Object.freeze([]),
-          format: (a) => '姿を見せる',
+          format: (a) => 'すがたを見せる',
         }),
         NEXT_COSTUME: Object.freeze({
           label: '次の見た目',
           inputs: Object.freeze([]),
-          format: (a) => '次の衣装に変える',
+          format: (a) => '次のすがたにかえる',
         }),
         PREV_COSTUME: Object.freeze({
           label: '前の見た目',
           inputs: Object.freeze([]),
-          format: (a) => '前の衣装に変える',
+          format: (a) => '前のすがたにかえる',
         }),
         NEXT_BACKDROP: Object.freeze({
           label: '次のはいけい',
           inputs: Object.freeze([]),
-          format: (a) => '次の背景に変える',
+          format: (a) => '次のはいけいにかえる',
         }),
         PREV_BACKDROP: Object.freeze({
           label: '前のはいけい',
           inputs: Object.freeze([]),
-          format: (a) => '前の背景に変える',
+          format: (a) => '前のはいけいにかえる',
         }),
         SET_SCALE: Object.freeze({
           label: '大きさを決める',
@@ -125,22 +125,22 @@
         SET_COSTUME: Object.freeze({
           label: '見た目をかえる',
           inputs: Object.freeze(['見た目']),
-          format: (a) => `衣装を${a(0)}に変える`,
+          format: (a) => `すがたを${a(0)}にかえる`,
         }),
         SET_BACKDROP: Object.freeze({
           label: 'はいけいを かえる',
           inputs: Object.freeze(['はいけい']),
-          format: (a) => `背景を${a(0)}に変える`,
+          format: (a) => `はいけいを${a(0)}にかえる`,
         }),
         SET_SELF_TEXT: Object.freeze({
           label: '自分の文字をかえる',
           inputs: Object.freeze(['文字']),
-          format: (a) => `自分の文字を${a(0)}に変える`,
+          format: (a) => `自分の文字を${a(0)}にかえる`,
         }),
         SET_TARGET_TEXT: Object.freeze({
           label: 'だれかの文字をかえる',
           inputs: Object.freeze(['だれ', '文字']),
-          format: (a) => `${a(0)}の文字を${a(1)}に変える`,
+          format: (a) => `${a(0)}の文字を${a(1)}にかえる`,
         }),
         SET_INPUT: Object.freeze({
           label: '入力らんに入れる',
@@ -512,7 +512,7 @@
     for (const [kind, label, key, inputLabel, initial] of [
       ['WaitTime', '秒待つ', 'seconds', '秒', 1],
       ['WaitUntil', 'きまりに あてはまるまで待つ', 'condition', 'きまり', true],
-      ['Say', '言う', 'value', '言うこと', 'こんにちは'],
+      ['Say', '言う・話す', 'value', '言うこと', 'こんにちは'],
       ['ReturnStatement', '返す', 'value', '返す答え', 0],
       ['Ask', 'たずねる', 'question', 'たずねること', ''],
       ['Broadcast', '合図を送る', 'message', '合図', ''],
@@ -547,8 +547,8 @@
     ]);
     for (const [value, label] of [
       ['THIS', 'この動きを止める'],
-      ['OTHERS', 'ほかの動きを止める'],
-      ['ALL', 'すべてを止める'],
+      ['OTHERS', 'ほかの動きをぜんぶ止める'],
+      ['ALL', '作品ぜんぶを止める'],
     ])
       add('StopCommand', 'statement', label, [], [], [], op('op', value));
     for (const [kind, group] of Object.entries(COMMAND_PRESENTATION))

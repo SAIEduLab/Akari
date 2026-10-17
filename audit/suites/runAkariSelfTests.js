@@ -60,7 +60,7 @@ function runAkariSelfTests() {
     };
     test('FORMAT-PROJECT-METADATA-001 作成元と保存契約', () => {
       if (!/^\d+\.\d+\.\d+$/.test(PRODUCT_RELEASE)) throw Error('作成元ラベルが不正です');
-      eq([Akari.makeDefaultProject().appVersion, LANGUAGE_CONTRACT_ID, PROJECT_FORMAT_ID], [PRODUCT_RELEASE, 2, 2]);
+      eq([Akari.makeDefaultProject().appVersion, LANGUAGE_CONTRACT_ID, PROJECT_FORMAT_ID], [PRODUCT_RELEASE, 2, 3]);
     });
     test('DEFAULT-001 初期作品', () => {
       const starter = Akari.makeDefaultProject();

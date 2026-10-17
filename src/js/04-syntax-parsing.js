@@ -147,7 +147,19 @@
       }
       return left;
     }
+    // 「AからBのどれか」 is the easy spelling of 乱数（A、B）; each side is a whole sum.
     additive() {
+      const n = this.sum();
+      if (this.starts('から') && this.text.indexOf('のどれか', this.i) > this.i) {
+        const saved = this.i;
+        this.take('から');
+        const high = this.sum();
+        if (this.take('のどれか')) return exprNode('BuiltinCall', { name: '乱数', args: [n, high] });
+        this.i = saved;
+      }
+      return n;
+    }
+    sum() {
       let n = this.multiplicative();
       for (;;) {
         if (this.take('＋'))
@@ -813,7 +825,7 @@
       case 'NumericUpdate':return `${t}を${f(n.value)}${n.op==='ADD'?'増やす':'減らす'}`;
       case 'ListAppend':return `${t}の最後に${f(n.value)}を入れる`;
       case 'ListInsert':return `${t}の${sentenceQuantitySource(n.index,'番目')}に${f(n.value)}を入れる`;
-      case 'ListReplace':return `${t}の${sentenceQuantitySource(n.index,'番目')}を${f(n.value)}に変える`;
+      case 'ListReplace':return `${t}の${sentenceQuantitySource(n.index,'番目')}を${f(n.value)}にかえる`;
       case 'ListDelete':return `${t}の${sentenceQuantitySource(n.index,'番目')}を消す`;
       case 'ListClear':return `${t}の中身を全部消す`;
       case 'NoOperation':return '何もしない';case 'Break':return 'いまのくり返しを終える';case 'Continue':return 'この回の残りをとばして、次の回へ進む';
@@ -828,7 +840,7 @@
       case 'LocalListDeclaration':return `この中だけで使うリスト【${n.name}】を空で作る`;
       case 'ReturnStatement':return `${f(n.value)}を答えとして返す`;
       case 'UserActionCall':return (n.argumentNames?n.args.map((value,i)=>`${nameSource(n.argumentNames[i])}を${f(value)}`).join('、')+'として、':n.args.length?'（'+n.args.map(value=>f(value)).join('、')+'）を渡して、':'')+`【${n.name}】という手順を行う`;
-      case 'StopCommand':return {THIS:'この実行を止める',OTHERS:'ほかの実行をすべて止める',ALL:'作品全体を止める'}[n.op];
+      case 'StopCommand':return {THIS:'この動きを止める',OTHERS:'ほかの動きをぜんぶ止める',ALL:'作品ぜんぶを止める'}[n.op];
       case 'MotionCommand':case 'LooksCommand':case 'PenCommand':case 'SoundCommand':case 'CloneCommand':return formatCommand(n);
       case 'IfStatement':return 'もし'+formatCondition(n.condition,'if')+'、';
       case 'RepeatCount':return sentenceQuantitySource(n.count,'回')+'くり返す';
@@ -849,11 +861,11 @@
     ['NoOperation', /^何もしない$/d, 'NoOperation'],
     ['Break', /^(?:いま|この)のくり返しを終える$/d, 'Break'],
     ['Continue', /^この回の残りをとばして、次の回へ進む$/d, 'Continue'],
-    ['StopCommand:THIS', /^この実行を止める$/d, 'StopCommand', 'THIS'],
-    ['StopCommand:OTHERS', /^ほかの実行をすべて止める$/d, 'StopCommand', 'OTHERS'],
-    ['StopCommand:ALL', /^作品全体を止める$/d, 'StopCommand', 'ALL'],
-    ['LooksCommand:HIDE', /^姿を(?:かくす|隠す)$/d, 'LooksCommand', 'HIDE'],
-    ['LooksCommand:SHOW', /^姿を(?:見せる|みせる)$/d, 'LooksCommand', 'SHOW'],
+    ['StopCommand:THIS', /^(?:この実行|この動き)を止める$/d, 'StopCommand', 'THIS'],
+    ['StopCommand:OTHERS', /^ほかの(?:実行をすべて|動きをぜんぶ)止める$/d, 'StopCommand', 'OTHERS'],
+    ['StopCommand:ALL', /^作品(?:全体|ぜんぶ)を止める$/d, 'StopCommand', 'ALL'],
+    ['LooksCommand:HIDE', /^(?:姿|すがた)を(?:かくす|隠す)$/d, 'LooksCommand', 'HIDE'],
+    ['LooksCommand:SHOW', /^(?:姿|すがた)を(?:見せる|みせる)$/d, 'LooksCommand', 'SHOW'],
     ['LooksCommand:FRONT', /^いちばん手前へ出る$/d, 'LooksCommand', 'FRONT'],
     ['LooksCommand:BACK', /^いちばん奥へ下がる$/d, 'LooksCommand', 'BACK'],
     ['MotionCommand:BOUNCE', /^(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/d, 'MotionCommand', 'BOUNCE'],
@@ -865,10 +877,10 @@
     ['CloneCommand:CREATE_SELF', /^自分の分身を作る$/d, 'CloneCommand', 'CREATE_SELF'],
     ['CloneCommand:CREATE_SELF:count', /^自分の分身を(.+?)体作る$/d, 'CloneCommand', 'CREATE_SELF', 'cloneCount'],
     ['CloneCommand:DELETE_SELF', /^この分身だけを(?:消す|けす)$/d, 'CloneCommand', 'DELETE_SELF'],
-    ['LooksCommand:NEXT_BACKDROP', /^次の背景に変える$/d, 'LooksCommand', 'NEXT_BACKDROP'],
-    ['LooksCommand:PREV_BACKDROP', /^前の背景に変える$/d, 'LooksCommand', 'PREV_BACKDROP'],
-    ['LooksCommand:NEXT_COSTUME', /^次の衣装に変える$/d, 'LooksCommand', 'NEXT_COSTUME'],
-    ['LooksCommand:PREV_COSTUME', /^前の衣装に変える$/d, 'LooksCommand', 'PREV_COSTUME'],
+    ['LooksCommand:NEXT_BACKDROP', /^次の(?:背景|はいけい)に(?:変える|かえる)$/d, 'LooksCommand', 'NEXT_BACKDROP'],
+    ['LooksCommand:PREV_BACKDROP', /^前の(?:背景|はいけい)に(?:変える|かえる)$/d, 'LooksCommand', 'PREV_BACKDROP'],
+    ['LooksCommand:NEXT_COSTUME', /^次の(?:衣装|すがた)に(?:変える|かえる)$/d, 'LooksCommand', 'NEXT_COSTUME'],
+    ['LooksCommand:PREV_COSTUME', /^前の(?:衣装|すがた)に(?:変える|かえる)$/d, 'LooksCommand', 'PREV_COSTUME'],
     ['WaitTime', /^(.+?)秒(?:間)?(?:待つ|まつ)$/d, 'WaitTime', null, 'seconds'],
     ['Say:concat', /^(.+?)をつなげて(?:言う|いう|話す|はなす)$/d, 'Say', null, 'concat'],
     ['Say:timed', /^(.+)(?:と|を)(.+?)秒(?:間)?(?:言う|いう|話す|はなす)$/d, 'Say', null, 'timedSpeech'],
@@ -885,15 +897,15 @@
     ['MotionCommand:SET_DIRECTION', /^(?:向き|方向)を(.+?)度にする$/d, 'MotionCommand', 'SET_DIRECTION', 'degree'],
     ['MotionCommand:TURN_RIGHT', /^右(?:に|へ)(.+?)度(?:回る|まわる)$/d, 'MotionCommand', 'TURN_RIGHT', 'degree'],
     ['MotionCommand:TURN_LEFT', /^左(?:に|へ)(.+?)度(?:回る|まわる)$/d, 'MotionCommand', 'TURN_LEFT', 'degree'],
-    ['MotionCommand:SET_X', /^横位置を(.+?)に(?:する|変える)$/d, 'MotionCommand', 'SET_X', 'arg'],
-    ['MotionCommand:SET_Y', /^縦位置を(.+?)に(?:する|変える)$/d, 'MotionCommand', 'SET_Y', 'arg'],
+    ['MotionCommand:SET_X', /^(?:横位置|よこのばしょ)を(.+?)に(?:する|変える|かえる)$/d, 'MotionCommand', 'SET_X', 'arg'],
+    ['MotionCommand:SET_Y', /^(?:縦位置|たてのばしょ)を(.+?)に(?:する|変える|かえる)$/d, 'MotionCommand', 'SET_Y', 'arg'],
     ['MotionCommand:POINT_TO', /^(.+?)の(?:方向|方)を(?:向く|むく)$/d, 'MotionCommand', 'POINT_TO', 'arg'],
     ['LooksCommand:SET_SCALE', /^大きさを(.+?)％にする$/d, 'LooksCommand', 'SET_SCALE', 'percent'],
     ['LooksCommand:SET_COLOR', /^表示色を(.+?)に(?:する|変える)$/d, 'LooksCommand', 'SET_COLOR', 'arg'],
-    ['LooksCommand:SET_COSTUME', /^衣装を(.+?)に(?:する|変える)$/d, 'LooksCommand', 'SET_COSTUME', 'arg'],
-    ['LooksCommand:SET_BACKDROP', /^背景を(.+?)に(?:する|変える)$/d, 'LooksCommand', 'SET_BACKDROP', 'arg'],
-    ['LooksCommand:SET_SELF_TEXT', /^自分の文字を(.+?)に変える$/d, 'LooksCommand', 'SET_SELF_TEXT', 'arg'],
-    ['LooksCommand:SET_TARGET_TEXT', /^(.+?)の文字を(.+?)に変える$/d, 'LooksCommand', 'SET_TARGET_TEXT', 'args'],
+    ['LooksCommand:SET_COSTUME', /^(?:衣装|すがた)を(.+?)に(?:する|変える|かえる)$/d, 'LooksCommand', 'SET_COSTUME', 'arg'],
+    ['LooksCommand:SET_BACKDROP', /^(?:背景|はいけい)を(.+?)に(?:する|変える|かえる)$/d, 'LooksCommand', 'SET_BACKDROP', 'arg'],
+    ['LooksCommand:SET_SELF_TEXT', /^自分の文字を(.+?)に(?:変える|かえる)$/d, 'LooksCommand', 'SET_SELF_TEXT', 'arg'],
+    ['LooksCommand:SET_TARGET_TEXT', /^(.+?)の文字を(.+?)に(?:変える|かえる)$/d, 'LooksCommand', 'SET_TARGET_TEXT', 'args'],
     ['LooksCommand:FORWARD_LAYERS', /^重なりを(.+?)つ手前にする$/d, 'LooksCommand', 'FORWARD_LAYERS', 'arg'],
     ['LooksCommand:BACKWARD_LAYERS', /^重なりを(.+?)つ奥にする$/d, 'LooksCommand', 'BACKWARD_LAYERS', 'arg'],
     ['PenCommand:SET_COLOR', /^ペンの色を(.+?)にする$/d, 'PenCommand', 'SET_COLOR', 'arg'],
@@ -915,7 +927,7 @@
     ['ListAppend:valueFirst', /^(.+?)を(.+?)の最後に(?:入れる|いれる)$/d, 'ListAppend', null, 'appendReverse'],
     ['ListInsert', /^(.+)の(.+?)番目(?:の前)?に(.+?)を(?:入れる|いれる)$/d, 'ListInsert', null, 'insert'],
     ['ListInsert:valueFirst', /^(.+?)を(.+)の(.+?)番目(?:の前)?に(?:入れる|いれる)$/d, 'ListInsert', null, 'insertReverse'],
-    ['ListReplace', /^(.+)の(.+?)番目を(.+?)に(?:変える|する)$/d, 'ListReplace', null, 'replace'],
+    ['ListReplace', /^(.+)の(.+?)番目を(.+?)に(?:変える|かえる|する)$/d, 'ListReplace', null, 'replace'],
     ['ListDelete', /^(.+)の(.+?)番目を(?:消す|けす)$/d, 'ListDelete', null, 'delete'],
     ['NumericUpdate:ADD', /^(.+?)を(.+?)(?:(?<!の数)だけ)?(?:増やす|ふやす)$/d, 'NumericUpdate', 'ADD', 'update'],
     ['NumericUpdate:SUB', /^(.+?)を(.+?)(?:(?<!の数)だけ)?(?:減らす|へらす)$/d, 'NumericUpdate', 'SUB', 'update'],
@@ -924,7 +936,7 @@
     ['NumericUpdate:ADD:valueFirst', /^(.+?)を(.+?)に(?:足す|たす)$/d, 'NumericUpdate', 'ADD', 'updateReverse'],
     ['NumericUpdate:SUB:valueFirst', /^(.+?)を(.+?)から(?:引く|ひく)$/d, 'NumericUpdate', 'SUB', 'updateReverse'],
     ['Assignment:variableInput', /^(.+?)を(.+?)という変数に(?:入れる|いれる)$/d, 'Assignment', null, 'assignReverse'],
-    ['Assignment', /^(.+?)を(.+?)に(?:する|変える)$/d, 'Assignment', null, 'assign'],
+    ['Assignment', /^(.+?)を(.+?)に(?:する|変える|かえる)$/d, 'Assignment', null, 'assign'],
   ].map(([id, pattern, kind, op, role]) => sentenceFormRecord(id,pattern,kind,op,role)));
   // Check role endings before attempting multi-operand captures. A failed ending
   // must not backtrack through every possible particle split in a long sentence.
@@ -937,7 +949,7 @@
     assignReverse:/という変数に(?:入れる|いれる)$/,
     update:/(?:増やす|ふやす|減らす|へらす|を足す|をたす|を引く|をひく)$/,
     updateReverse:/(?:に足す|にたす|から引く|からひく)$/,
-    assign:/に(?:する|変える)$/,
+    assign:/に(?:する|変える|かえる)$/,
   });
   const STATEMENT_EXPLICIT_ACTORS = new WeakSet();
   const SENTENCE_TE_FORMS = Object.freeze([
@@ -945,7 +957,7 @@
     ['うごかして','うごかす'], ['動かして','動かす'], ['うごいて','うごく'], ['動いて','動く'],
     ['すすんで','すすむ'], ['進んで','進む'], ['まわって','まわる'], ['回って','回る'],
     ['むいて','むく'], ['向いて','向く'], ['行って','行う'], ['すべって','すべる'], ['滑って','滑る'],
-    ['変えて','変える'], ['言って','言う'], ['いって','いう'], ['話して','話す'], ['はなして','はなす'],
+    ['変えて','変える'], ['かえて','かえる'], ['言って','言う'], ['いって','いう'], ['話して','話す'], ['はなして','はなす'],
     ['待って','待つ'], ['まって','まつ'], ['見せて','見せる'], ['みせて','みせる'], ['入れて','入れる'], ['いれて','いれる'],
     ['足して','足す'], ['たして','たす'], ['引いて','引く'], ['ひいて','ひく'], ['消して','消す'], ['けして','けす'],
     ['知らせて','知らせる'], ['鳴らして','鳴らす'], ['くり返して','くり返す'], ['繰り返して','繰り返す'], ['くりかえして','くりかえす'], ['して','する'],
@@ -1119,11 +1131,12 @@
     if(p){seconds=q(p[0].text,'秒',p[0].start);remaining=p[1].text;base=p[1].start;}
     else if(/秒(?:で|かけて)$/.test(surfaceMask(remaining))) {
       // A trailing time phrase must follow a completed coordinate/distance role.
-      const split=[...surfaceMask(remaining).matchAll(/(?:の位置(?:へ|に)|歩|(?:前|後ろ|右|左|上|下)(?:へ|に))/g)].at(-1);
+      const split=[...surfaceMask(remaining).matchAll(/(?:の(?:位置|ばしょ)(?:へ|に)|歩|(?:前|後ろ|右|左|上|下)(?:へ|に))/g)].at(-1);
       if(split){const at=split.index+split[0].length,tail=remaining.slice(at),time=surfaceCapture(/^、?(.+)秒(?:で|かけて)$/d,tail);if(time){seconds=q(time[0].text,'秒',at+time[0].start);remaining=remaining.slice(0,at);}}
     }
-    const coords=surfaceCapture(/^(横|縦)(.+)、(横|縦)(.+?)(?:の位置)?(?:へ|に)$/d,remaining);
-    if(coords){if(coords[0].text===coords[2].text)throw new AkariError('P205','「横」と「縦（たて）」を1つずつ書きます。れい：横100、縦50の位置へ行く');const a=q(coords[1].text,'歩',base+coords[1].start,false),b=q(coords[3].text,'歩',base+coords[3].start,false),xy=coords[0].text==='横'?[a,b]:[b,a];return node(seconds?'GLIDE':'GOTO',seconds?[seconds,...xy]:xy);}
+    // よこ／たて／ばしょ are the easy spellings of 横／縦／位置.
+    const coords=surfaceCapture(/^(横|縦|よこ|たて)(.+)、(横|縦|よこ|たて)(.+?)(?:の(?:位置|ばしょ))?(?:へ|に)$/d,remaining),horizontal=w=>w==='横'||w==='よこ';
+    if(coords){if(horizontal(coords[0].text)===horizontal(coords[2].text))throw new AkariError('P205','「よこ」と「たて」を1つずつ書きます。れい：よこ100、たて50のばしょへ行く');const a=q(coords[1].text,'歩',base+coords[1].start,false),b=q(coords[3].text,'歩',base+coords[3].start,false),xy=horizontal(coords[0].text)?[a,b]:[b,a];return node(seconds?'GLIDE':'GOTO',seconds?[seconds,...xy]:xy);}
     let direction=null, distance=null;
     if((p=surfaceCapture(/^(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)(.+)歩$/d,remaining))){direction=directions[p[0].text];distance=q(p[1].text,'歩',base+p[1].start);}
     else if((p=surfaceCapture(/^(.+)歩、?(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)$/d,remaining))){distance=q(p[0].text,'歩',base+p[0].start);direction=directions[p[1].text];}
@@ -1577,8 +1590,8 @@
     if (!/(?:代入する|加える|足す|引く|増やす|減らす|追加する|挿入する|削除する|入れる|回る|行く|滑る|すべる|鳴らす|鳴らし、終わるまで待つ|秒間待つ|と尋ねる|と聞いて待つ|という)$/.test(code)) return null;
     const mask = surfaceMask(code), e = (t, start) => parseMappedExpression(t, code, line, symbols, ctx, start);
     const once = marker => mask.indexOf(marker) >= 0 && mask.indexOf(marker) === mask.lastIndexOf(marker);
-    if (/(?:滑る|すべる)$/.test(mask) && (!once('秒で') || !once('の位置へ')))
-      throw new AkariError('P205','かける時間と行き先を1つずつ書きます。れい：2秒で横100、縦50の位置へすべる');
+    if (/(?:滑る|すべる)$/.test(mask) && (!once('秒で') || (!once('の位置へ') && !once('のばしょへ'))))
+      throw new AkariError('P205','かける時間と行き先を1つずつ書きます。れい：よこ100、たて50のばしょへ2秒かけて動く');
     if (mask.includes('秒、') && /(?:鳴らす|鳴らし、終わるまで待つ)$/.test(mask) && (!once('秒、') || !once('Hzの音を')))
       throw new AkariError('P205','秒と 音の高さ（Hz）は 1つずつ 書いてください。れい: 440Hzの音を0.2秒鳴らす');
     if (mask.endsWith('に入れる') && !once('を'))
@@ -1606,16 +1619,16 @@
     const coordinate = (text, start) => {
       const protectedText = surfaceMask(text);
       if (protectedText.indexOf('、') !== protectedText.lastIndexOf('、'))
-        throw new AkariError('P205','「横」と「縦（たて）」を1つずつ書きます。れい：横100、縦50の位置へ行く');
-      const c = /^(横)(.+)、縦(.+)$/d.exec(protectedText) || /^(縦)(.+)、横(.+)$/d.exec(protectedText);
-      if (!c) throw new AkariError('P205', '「横」と「縦（たて）」を1つずつ書きます。れい：横100、縦50の位置へ行く');
+        throw new AkariError('P205','「よこ」と「たて」を1つずつ書きます。れい：よこ100、たて50のばしょへ行く');
+      const c = /^(横|よこ)(.+)、(?:縦|たて)(.+)$/d.exec(protectedText) || /^(縦|たて)(.+)、(?:横|よこ)(.+)$/d.exec(protectedText);
+      if (!c) throw new AkariError('P205', '「よこ」と「たて」を1つずつ書きます。れい：よこ100、たて50のばしょへ行く');
       const a = text.slice(...c.indices[2]), b = text.slice(...c.indices[3]);
-      return c[1] === '横' ? [e(a,start+c.indices[2][0]), e(b,start+c.indices[3][0])] : [e(b,start+c.indices[3][0]), e(a,start+c.indices[2][0])];
+      return (c[1] === '横' || c[1] === 'よこ') ? [e(a,start+c.indices[2][0]), e(b,start+c.indices[3][0])] : [e(b,start+c.indices[3][0]), e(a,start+c.indices[2][0])];
     };
-    if ((m = match(/^(.+)の位置(?:へ|に)行く$/d))) return node('MotionCommand', {op:'GOTO', args:coordinate(m[0],m.starts[0])});
-    if ((m = match(/^(.+)秒で(.+)の位置へ(?:滑る|すべる)$/d)))
+    if ((m = match(/^(.+)の(?:位置|ばしょ)(?:へ|に)行く$/d))) return node('MotionCommand', {op:'GOTO', args:coordinate(m[0],m.starts[0])});
+    if ((m = match(/^(.+)秒で(.+)の(?:位置|ばしょ)へ(?:滑る|すべる)$/d)))
       return node('MotionCommand', {op:'GLIDE', args:[e(m[0],m.starts[0]), ...coordinate(m[1],m.starts[1])]});
-    if ((m = match(/^(.+)の位置へ、?(.+)秒で(?:滑る|すべる)$/d)))
+    if ((m = match(/^(.+)の(?:位置|ばしょ)へ、?(.+)秒で(?:滑る|すべる)$/d)))
       return node('MotionCommand', {op:'GLIDE', args:[e(m[1],m.starts[1]), ...coordinate(m[0],m.starts[0])]});
     if ((m = match(/^(.+)度(右|左)に回る$/d)))
       return node('MotionCommand', {op:m[1] === '右' ? 'TURN_RIGHT' : 'TURN_LEFT', args:[e(m[0],m.starts[0])]});
@@ -1683,13 +1696,13 @@
     if (code === '背面へ下げる') return statementNode('LooksCommand', line, { op: 'BACK' });
     if (code === '隠れる') return statementNode('LooksCommand', line, { op: 'HIDE' });
     if (code === '現れる') return statementNode('LooksCommand', line, { op: 'SHOW' });
-    if (code === '次の衣装にする')
+    if (code === '次の衣装にする' || code === '次のすがたにする')
       return statementNode('LooksCommand', line, { op: 'NEXT_COSTUME' });
-    if (code === '前の衣装にする')
+    if (code === '前の衣装にする' || code === '前のすがたにする')
       return statementNode('LooksCommand', line, { op: 'PREV_COSTUME' });
-    if (code === '次の背景にする')
+    if (code === '次の背景にする' || code === '次のはいけいにする')
       return statementNode('LooksCommand', line, { op: 'NEXT_BACKDROP' });
-    if (code === '前の背景にする')
+    if (code === '前の背景にする' || code === '前のはいけいにする')
       return statementNode('LooksCommand', line, { op: 'PREV_BACKDROP' });
     if (code === 'ペンを下ろす') return statementNode('PenCommand', line, { op: 'DOWN' });
     if (code === 'ペンを上げる') return statementNode('PenCommand', line, { op: 'UP' });
@@ -1725,9 +1738,9 @@
       return statementNode('MotionCommand', line, { op: 'TURN_RIGHT', args: [e(m[1])] });
     if ((m = code.match(/^左に(.+)度回る$/)))
       return statementNode('MotionCommand', line, { op: 'TURN_LEFT', args: [e(m[1])] });
-    if ((m = code.match(/^横位置を(.+)にする$/)))
+    if ((m = code.match(/^(?:横位置|よこのばしょ)を(.+)にする$/)))
       return statementNode('MotionCommand', line, { op: 'SET_X', args: [e(m[1])] });
-    if ((m = code.match(/^縦位置を(.+)にする$/)))
+    if ((m = code.match(/^(?:縦位置|たてのばしょ)を(.+)にする$/)))
       return statementNode('MotionCommand', line, { op: 'SET_Y', args: [e(m[1])] });
     if (code.endsWith('の方向を向く'))
       return statementNode('MotionCommand', line, {

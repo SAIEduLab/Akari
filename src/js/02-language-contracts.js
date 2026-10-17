@@ -229,13 +229,13 @@
         id: 'MotionCommand:GOTO',
         kind: 'MotionCommand',
         op: 'GOTO',
-        source: '横100、縦50の位置へ行く',
+        source: 'よこ100、たて50のばしょへ行く',
       },
       {
         id: 'MotionCommand:GLIDE',
         kind: 'MotionCommand',
         op: 'GLIDE',
-        source: '横200、縦100の位置へ1秒かけて動く',
+        source: 'よこ200、たて100のばしょへ1秒かけて動く',
       },
       {
         id: 'MotionCommand:TURN_RIGHT',
@@ -259,13 +259,13 @@
         id: 'MotionCommand:SET_X',
         kind: 'MotionCommand',
         op: 'SET_X',
-        source: '横位置を100にする',
+        source: 'よこのばしょを100にする',
       },
       {
         id: 'MotionCommand:SET_Y',
         kind: 'MotionCommand',
         op: 'SET_Y',
-        source: '縦位置を50にする',
+        source: 'たてのばしょを50にする',
       },
       {
         id: 'MotionCommand:POINT_TO',
