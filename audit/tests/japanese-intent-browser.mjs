@@ -27,6 +27,9 @@ const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');save(
 const close=(a,b,tolerance=1e-8)=>assert.ok(Math.abs(a-b)<=tolerance,`${a} differs from ${b} by more than ${tolerance}`);
 const actor=(state,id=actors.cat)=>{const a=state.actors.find(x=>x.id===id);assert.ok(a,'missing actor '+id);return a;};
 const says=o=>o.trace.filter(x=>x.kind==='say'),moves=(o,id=actors.cat)=>o.trace.filter(x=>x.kind==='motion'&&x.id===id);
+// Candidate label that shows each oracle meaning on screen in the child wording.
+const visibleChoices={'AMB-SOUND/台詞':'そのままの文字を話す','AMB-EDGE/状態':'今そうなっていたら する','AMB-EDGE/変化':'そうなるときを待ってから する',
+ 'AMB-LIST/最後':'さいごに入れる','AMB-LIST/置き換え':'どれかと取りかえる（何番目かをえらぶ）'};
 function verifyIntent(id,o){
  assert.deepEqual(o.errors,[]);assert.ok(o.roundtrips.length>0);const end=actor(o.final),speech=says(o),motion=moves(o);
  switch(id){
@@ -125,7 +128,7 @@ try{await withBrowser(chrome,async browser=>{
   assert.equal(await p.locator('#codeEditor').inputValue(),ambiguity.source,'original must remain verbatim');
   const choices=await p.locator('[data-intent-choice]').allTextContents();assert.ok(choices.length>=2,'two distinct meaning candidates are required');assert.ok(new Set(choices).size>=2);
   const shown=choices.join('\n');for(const word of ambiguity.choices){
-    const visibleWord=ambiguity.id==='AMB-SOUND'&&word==='台詞'?'そのままの文字を話す':word;
+    const visibleWord=visibleChoices[ambiguity.id+'/'+word]??word;
     assert.ok(shown.includes(visibleWord),'candidate meaning absent: '+visibleWord);
   }
   // The immutable oracle still distinguishes speech from sound. These two
