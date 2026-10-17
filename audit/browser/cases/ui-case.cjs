@@ -1,3 +1,4 @@
+const {answerProductConfirms}=require('../../lib/product-dialogs.cjs');
 // Each case starts without another case's pointer capture, click suppression,
 // composition, focus, timers, local storage or disclosure state. Never retry a case.
 async function withFreshPage(browser,{url,errors,networkRequests},fn){
@@ -7,7 +8,7 @@ async function withFreshPage(browser,{url,errors,networkRequests},fn){
   const page=await context.newPage();
   page.setDefaultTimeout(10000);
   page.on('pageerror',e=>errors.push(e.stack));
-  page.on('dialog',d=>d.accept());
+  page.on('dialog',d=>d.accept());await answerProductConfirms(page);
   await page.goto(url);
   return await fn(page);
  }finally{await context.close();}

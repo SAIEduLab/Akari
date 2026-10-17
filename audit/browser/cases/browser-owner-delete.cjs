@@ -1,3 +1,4 @@
+const {answerProductConfirms}=require('../../lib/product-dialogs.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
 // Actual keyboard/pointer regressions for owner deletion and expression movement.
@@ -14,7 +15,7 @@ const {pathToFileURL}=require('url'),{chromium}=require('playwright');
   await context.route(/^https?:\/\//,r=>{networkRequests.push(r.request().url());return r.abort();});
   const p=await context.newPage(),dialogs=[];p.setDefaultTimeout(10000);
   p.on('pageerror',e=>pageErrors.push({id,error:e.message}));
-  p.on('dialog',async d=>{dialogs.push(d.message());await d.accept();});
+  p.on('dialog',async d=>{dialogs.push(d.message());await d.accept();});await answerProductConfirms(p);
   try{
    await p.goto(pathToFileURL(L.path.join(dir,manifest.candidate)).href);await setupRegressionPage(p);
    await (await reveal(p.locator('#objectSelect'))).selectOption('sprite-1');await (async()=>{const control=await reveal(p.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();
