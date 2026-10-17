@@ -88,10 +88,10 @@
         else if (n.sensor === 'DISTANCE_TO')
           s = `${formatExpressionCore(n.arg, PREC.POST)}までの距離`;
         else if (n.sensor === 'KEY_DOWN')
-          s = `${formatExpressionCore(n.arg, PREC.POST)}キーが押されている`;
+          s = `${formatExpressionCore(n.arg, PREC.POST)}キーがおされている`;
         else if (n.sensor === 'TOUCHING_COLOR')
           s = `${formatExpressionCore(n.arg, PREC.POST)}の色にふれている`;
-        else if (n.sensor === 'TOUCHING') s = `${formatExpressionCore(n.arg, PREC.POST)}にふれている`;
+        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && n.arg.value === '端' ? '画面の端' : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
         p = PREC.POST;
         break;
       }

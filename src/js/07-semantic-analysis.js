@@ -82,7 +82,7 @@
       if (node.kind === 'LooksCommand' && node.op === 'SET_SCALE') {
         const value = staticNumericMagnitude(node.args?.[0]);
         if (value !== undefined && (value < 1 || value > 1000)) diagnostics.push({
-          code: 'R412', message: '大きさは1〜1000％です。見えなくするときは「姿をかくす」を使います',
+          code: 'R412', message: '大きさは1〜1000％です。見えなくするときは「すがたをかくす」を使います',
           line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where,
         });
       }

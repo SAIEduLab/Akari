@@ -199,7 +199,7 @@
         id: 'RepeatUntil',
         kind: 'RepeatUntil',
         op: '',
-        source: '「空白」キーが押されるまで、くり返す。\n  何もしない',
+        source: '「空白」キーがおされるまで、くり返す。\n  何もしない',
       },
       {
         id: 'WaitTime',
@@ -229,13 +229,13 @@
         id: 'MotionCommand:GOTO',
         kind: 'MotionCommand',
         op: 'GOTO',
-        source: 'よこ100、たて50のばしょへ行く',
+        source: 'よこ100歩、たて50歩のばしょへ行く',
       },
       {
         id: 'MotionCommand:GLIDE',
         kind: 'MotionCommand',
         op: 'GLIDE',
-        source: 'よこ200、たて100のばしょへ1秒かけて動く',
+        source: 'よこ200歩、たて100歩のばしょへ1秒かけて動く',
       },
       {
         id: 'MotionCommand:TURN_RIGHT',
@@ -295,13 +295,13 @@
         id: 'LooksCommand:HIDE',
         kind: 'LooksCommand',
         op: 'HIDE',
-        source: '姿をかくす',
+        source: 'すがたをかくす',
       },
       {
         id: 'LooksCommand:SHOW',
         kind: 'LooksCommand',
         op: 'SHOW',
-        source: '姿を見せる',
+        source: 'すがたを見せる',
       },
       {
         id: 'LooksCommand:FRONT',
@@ -367,43 +367,43 @@
         id: 'LooksCommand:SET_BACKDROP',
         kind: 'LooksCommand',
         op: 'SET_BACKDROP',
-        source: '背景を「空色」に変える',
+        source: 'はいけいを「空色」にかえる',
       },
       {
         id: 'LooksCommand:NEXT_BACKDROP',
         kind: 'LooksCommand',
         op: 'NEXT_BACKDROP',
-        source: '次の背景に変える',
+        source: '次のはいけいにかえる',
       },
       {
         id: 'LooksCommand:PREV_BACKDROP',
         kind: 'LooksCommand',
         op: 'PREV_BACKDROP',
-        source: '前の背景に変える',
+        source: '前のはいけいにかえる',
       },
       {
         id: 'LooksCommand:SET_COSTUME',
         kind: 'LooksCommand',
         op: 'SET_COSTUME',
-        source: '衣装を「星」に変える',
+        source: 'すがたを「星」にかえる',
       },
       {
         id: 'LooksCommand:NEXT_COSTUME',
         kind: 'LooksCommand',
         op: 'NEXT_COSTUME',
-        source: '次の衣装に変える',
+        source: '次のすがたにかえる',
       },
       {
         id: 'LooksCommand:PREV_COSTUME',
         kind: 'LooksCommand',
         op: 'PREV_COSTUME',
-        source: '前の衣装に変える',
+        source: '前のすがたにかえる',
       },
       {
         id: 'LooksCommand:SET_TARGET_TEXT',
         kind: 'LooksCommand',
         op: 'SET_TARGET_TEXT',
-        source: '「ボタン1」の文字を「始める」に変える',
+        source: '「ボタン1」の文字を「始める」にかえる',
       },
       {
         id: 'SoundCommand:TONE',
@@ -775,9 +775,9 @@
       if (x.kind === 'RepeatWhile')
         text = `${v}が10より小さいあいだ、くり返す。\n  何もしない。`;
       if (x.kind === 'RepeatUntil')
-        text = `「空白」キーが押されるまで、くり返す。\n  何もしない。`;
+        text = `「空白」キーがおされるまで、くり返す。\n  何もしない。`;
       if (x.kind === 'WaitUntil')
-        text = '\u300c\u7a7a\u767d\u300d\u30ad\u30fc\u304c\u62bc\u3055\u308c\u308b\u307e\u3067\u5f85\u3064';
+        text = '\u300c\u7a7a\u767d\u300dキーがおされるまで\u5f85\u3064';
       const actorRequired =
         ['MotionCommand', 'PenCommand'].includes(x.kind) ||
         (x.kind === 'LooksCommand' &&
@@ -794,7 +794,7 @@
         if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'SET_COSTUME') {
           const co = component?.costumes?.[0];
-          text = `\u8863\u88c5\u3092\u300c${co?.name || '\u661f'}\u300d\u306b\u3059\u308b`;
+          text = `すがたを「${co?.name || '星'}」にかえる`;
           if (!co)
             reason =
               reason ||
@@ -802,7 +802,7 @@
         }
       }
       if (x.op === 'SET_BACKDROP')
-        text = `\u80cc\u666f\u3092\u300c${project.stage.backdrops[0].name}\u300d\u306b\u3059\u308b`;
+        text = `はいけいを「${project.stage.backdrops[0].name}」にかえる`;
       if (
         x.kind === 'LooksCommand' &&
         x.op === 'SET_SELF_TEXT' &&
@@ -816,7 +816,7 @@
       }
       if (x.op === 'SET_TARGET_TEXT') {
         const c = project.components.find((c) => ['label', 'button', 'box'].includes(c.type));
-        text = `「${c?.name || '文字1'}」の文字を「こんにちは」に変える`;
+        text = `「${c?.name || '文字1'}」の文字を「こんにちは」にかえる`;
         if (!c)
           reason =
             '\u6587\u5b57\u30fb\u30dc\u30bf\u30f3\u30fb\u56db\u89d2\u3092\u5148\u306b\u4f5c\u308a\u307e\u3059';
@@ -961,20 +961,20 @@
       '1\u304c1\u4ee5\u4e0b',
       '1\u304c1\u3068\u540c\u3058',
       '1\u304c2\u3068\u9055\u3046',
-      '条件の答え（あてはまる）ではない',
+      '条件（条件の答え（あてはまる））が成り立たない',
       '条件の答え（あてはまる）かつ条件の答え（あてはまらない）',
       '条件の答え（あてはまる）または条件の答え（あてはまらない）',
       '\u300c\u3042\u304b\u308a\u300d\u306e\u6587\u5b57\u6570',
       '\u300c\u3042\u304b\u308a\u300d\u306e1\u6587\u5b57\u76ee',
       '\u300c\u3042\u304b\u308a\u300d\u3067\u300c\u304b\u300d\u304c\u6700\u521d\u306b\u3042\u308b\u756a\u53f7',
       '\uff3b1\u30012\u30013\uff3d',
-      '「空白」キーが押されている',
+      '「空白」キーがおされている',
     ];
     if (type !== 'stage')
       exprs.push(
-        '\u7aef\u306b\u89e6\u308c\u3066\u3044\u308b',
+        '画面の端にふれている',
         '「マウス」までの距離',
-        '\u300c\u8d64\u300d\u306e\u8272\u306b\u89e6\u308c\u3066\u3044\u308b',
+        '「赤」の色にふれている',
       );
     for (const c of project.components)
       if (c.type === 'input') exprs.push(`\u300c${c.name}\u300dの中身`);

@@ -228,7 +228,7 @@
         else if (this.take('の値')) { /* a value noun phrase preserves its expression */ }
         else if (this.take('までの距離'))
           n = exprNode('SensorRead', { sensor: 'DISTANCE_TO', arg: n });
-        else if (this.take('\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u306a\u3044'))
+        else if (this.take('キーがおされていない') || this.take('\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u306a\u3044'))
           n = exprNode('UnaryExpression', {
             op: 'NOT',
             value: exprNode('SensorRead', { sensor: 'KEY_DOWN', arg: n }),
@@ -246,7 +246,7 @@
             op: 'NOT',
             value: exprNode('SensorRead', { sensor: 'TOUCHING', arg: n }),
           });
-        else if (this.take('\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u308b'))
+        else if (this.take('キーがおされている') || this.take('\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u308b'))
           n = exprNode('SensorRead', { sensor: 'KEY_DOWN', arg: n });
         else if (this.take('の色に触れている') || this.take('色に触れている'))
           n = exprNode('SensorRead', { sensor: 'TOUCHING_COLOR', arg: n });
@@ -392,6 +392,11 @@
         return exprNode('SensorRead', { sensor: '拡張の値' });
       if (EXTENSION_HOST.operations('events').length && this.starts('拡張の値') && !extensionValueIsData(this.symbols, this.ctx)) {
         this.i += '拡張の値'.length; return exprNode('SensorRead', { sensor: '拡張の値' });
+      }
+      // 「画面の端」 names the stage edge, the same target as the bare word 端.
+      if (this.starts('画面の端') && nameBoundary(this.text, this.i + '画面の端'.length)) {
+        this.i += '画面の端'.length;
+        return exprNode('StringLiteral', { value: '端' });
       }
       const builtinWords = [...BUILTIN_NAMES, ...Object.values(BUILTIN_SURFACES)];
       const builtin = builtinWords.sort((a,b) => b.length-a.length).find(name => this.starts(name+'（'));
@@ -1178,8 +1183,8 @@
     switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がクリックされたとき、`;case 'keyDown':return `${filter?filter+'キーを押すたびに':'キーが押されたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}知らせを受け取ったとき、${actor}は、`;case 'backdropChanged':return `背景が変わったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身が変わったとき、`;case 'cloneStart':return `${actor}のコピーが作られたとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
   }
   function continuousCondition(text) {
-    const mask=surfaceMask(text),suffix=/キー(?:を|が)押(?:して|されて)いる$/.exec(mask);
-    return suffix?text.slice(0,suffix.index)+'キーが押されている':text;
+    const mask=surfaceMask(text),suffix=/キー(?:を|が)(?:押|お)(?:して|されて)いる$/.exec(mask);
+    return suffix?text.slice(0,suffix.index)+'キーがおされている':text;
   }
   function readContinuousSentence(code,line,symbols,ctx) {
     const parts=surfaceCapture(/^(.+?)(?:あいだ|間)(?:は)?、(.+?)(?:動き続ける|動かし続ける|動く|動かす)$/d,code);
