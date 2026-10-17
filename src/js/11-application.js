@@ -1930,8 +1930,8 @@
     $('#stageZoomFit').onclick = () => setStageZoom(null);
     function childErrorLogText(message) {
       const m = String(message), plain = m.replace(/^\s*[A-Z]\d{3}(?::|\s)\s*/, '');
-      if (/保存失敗/.test(plain)) return '作品ファイルを ほぞんできませんでした。この画面の作品は のこっています。画面を とじずに、下の「くわしく見る」で 理由を たしかめてから、もう一度「ほぞん」を おしてください。';
-      if (/読み込み失敗/.test(plain)) return '作品ファイルを 開けませんでした。えらんだ ファイルは かえていません。ほかの ほぞんファイルを えらぶか、下の「くわしく見る」で 理由を たしかめてください。';
+      if (/保存失敗|ほぞんできませんでした/.test(plain)) return '作品ファイルを ほぞんできませんでした。この画面の作品は のこっています。画面を とじずに、下の「くわしく見る」で 理由を たしかめてから、もう一度「ほぞん」を おしてください。';
+      if (/読み込み失敗|読みこめませんでした/.test(plain)) return '作品ファイルを 開けませんでした。えらんだ ファイルは かえていません。ほかの ほぞんファイルを えらぶか、下の「くわしく見る」で 理由を たしかめてください。';
       return childDiagnosticText({message:plain});
     }
     const log = (m, type = '') => {

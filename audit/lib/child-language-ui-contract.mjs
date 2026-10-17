@@ -177,7 +177,7 @@ export function verifyChildLanguageUi(report,inputs,environment) {
     for(const rect of Object.values(observation.controls))bounds(rect,observation.viewport);
     readable(observation.help,8);panelReach(observation.tailReach,'native-keyboard',true);assert.ok(observation.reading?.length>=4);
     const text=observation.reading.map(r=>r.text).join(' ');
-    for(const reading of ['ほぞん','かきだし','がぞう','へんすう','ほんぶん'])assert.ok(text.includes(reading));
+    for(const reading of ['ほぞん','がぞう','へんすう','ほんぶん'])assert.ok(text.includes(reading));
     for(const term of observation.reading){assert.equal(term.rects,1);assert.equal(term.whiteSpace,'nowrap');}
   }
   const touch=rows['CHILD-UI-TOUCH-HELP'];

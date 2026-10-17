@@ -5919,7 +5919,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
     <button id="sampleBtn">お手本を開く</button>
     <button id="openBtn">開く</button>
     <button id="saveBtn" aria-label="保存" aria-describedby="saveActionHelp"><ruby class="child-word">保存<rt>ほぞん</rt></ruby></button>
-    <button id="exportBtn" aria-label="うごく作品を ファイルにする" aria-describedby="exportActionHelp"><ruby class="child-word">うごく作品を ファイルにする<rt>かきだし</rt></ruby></button>
+    <button id="exportBtn" aria-label="うごく作品を ファイルにする" aria-describedby="exportActionHelp">うごく作品を ファイルにする</button>
     <button id="undoBtn">↶ もとにもどす</button>
     <button id="redoBtn">↷ やり直す</button>
     <span class="sep"></span>
@@ -5939,7 +5939,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
     <label class="ui-level-label">見せかた <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
     <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
       <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品を ファイルにします。あとで つづきを 作るときは「開く」で その ファイルを えらびます。</p>
-      <p id="exportActionHelp"><strong><ruby class="child-word">うごく作品を ファイルにする<rt>かきだし</rt></ruby></strong>：ブラウザーで 動かして 見るための 作品ファイルを 作ります。つづきを 作るための ファイルは「ほぞん」で 作ります。</p>
+      <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見るための 作品ファイルを 作ります。つづきを 作るための ファイルは「ほぞん」で 作ります。</p>
       <p id="assetActionHelp"><strong><ruby class="child-word">絵<rt>がぞう</rt></ruby>や<ruby class="child-word">音<rt>おんせい</rt></ruby>をまとめる</strong>：使う 絵や音を 入れたり、名前を たしかめたりします。</p>
       <p id="dataActionHelp"><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</strong>：点数や 名前を 1つ おぼえる はこと、持ち物のように じゅんばんに ならべる リストを 作ります。</p>
       <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：えらんだ ものを 動かす、やることの まとまりです。「なおす動き」で えらびます。「いつ動く？」で 動く きっかけを かえます。</p>
@@ -24133,7 +24133,7 @@ function createAkariExtensionHost(options) {
       return '動く 文の 書き方が ちがうよ。「右へ10歩動く。」のように、どちらへ 何歩 動くかを 書いてね。';
     if (/二重否定/.test(message))
       return '「ではない」を2つ つづけるときは、前のほうを（ ）でくくります。たとえば：（1が2と同じではない）ではない';
-    if (/引数名.*重複|受け取る値に同じ名前/.test(message))
+    if (/引数名.*重複|受け取る値に同じ名前|を2回書いています/.test(message))
       return '入れて使う数や文字に、同じ名前を2回書いています。「入れるもの」の名前は1回ずつ書きます。たとえば：点数を10として、';
     if (/引数名を確認/.test(message))
       return '入れて使う数や文字の名前を1つ書きます。てじゅんや計算の「入れるもの」と同じ名前にします。たとえば：点数を10として、';
@@ -29652,8 +29652,8 @@ function createAkariExtensionHost(options) {
     $('#stageZoomFit').onclick = () => setStageZoom(null);
     function childErrorLogText(message) {
       const m = String(message), plain = m.replace(/^\s*[A-Z]\d{3}(?::|\s)\s*/, '');
-      if (/保存失敗/.test(plain)) return '作品ファイルを ほぞんできませんでした。この画面の作品は のこっています。画面を とじずに、下の「くわしく見る」で 理由を たしかめてから、もう一度「ほぞん」を おしてください。';
-      if (/読み込み失敗/.test(plain)) return '作品ファイルを 開けませんでした。えらんだ ファイルは かえていません。ほかの ほぞんファイルを えらぶか、下の「くわしく見る」で 理由を たしかめてください。';
+      if (/保存失敗|ほぞんできませんでした/.test(plain)) return '作品ファイルを ほぞんできませんでした。この画面の作品は のこっています。画面を とじずに、下の「くわしく見る」で 理由を たしかめてから、もう一度「ほぞん」を おしてください。';
+      if (/読み込み失敗|読みこめませんでした/.test(plain)) return '作品ファイルを 開けませんでした。えらんだ ファイルは かえていません。ほかの ほぞんファイルを えらぶか、下の「くわしく見る」で 理由を たしかめてください。';
       return childDiagnosticText({message:plain});
     }
     const log = (m, type = '') => {

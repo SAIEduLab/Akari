@@ -190,8 +190,10 @@ const cases = {
   async 'CHILD-UI-ACTION-HELP'(p) {
     await p.locator('#uiLevel').selectOption('basic');
     const before=await state(p), summary=await keyboardDetails(p,'#basicActionGuide');
-    for (const [id,reading] of [['saveBtn','ほぞん'],['exportBtn','かきだし'],['assetBtn','がぞう'],['dataBtn','へんすう']])
+    for (const [id,reading] of [['saveBtn','ほぞん'],['assetBtn','がぞう'],['dataBtn','へんすう']])
       assert.ok((await p.locator('#'+id+' rt').allTextContents()).includes(reading),id+' visible reading');
+    // The export label is written in words a child reads without a reading.
+    assert.equal(await p.locator('#exportBtn').innerText(),'うごく作品を ファイルにする');assert.equal(await p.locator('#exportBtn rt').count(),0);
     assert.match(await p.locator('#saveActionHelp').innerText(),/あとで つづきを 作るとき/);
     assert.match(await p.locator('#exportActionHelp').innerText(),/動かして 見る/);
     assert.match(await p.locator('#bodyActionHelp').innerText(),/やることの まとまり/);
