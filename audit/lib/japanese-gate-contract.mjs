@@ -19,6 +19,7 @@ export const expectationInputPaths = [
   'audit/fixtures/language/forms.mjs','audit/fixtures/language/inline.mjs',
   'audit/fixtures/language/expected.json','audit/manifests/language-form-coverage.json',
   'audit/suites/language-forms.js','audit/run-language-tests.mjs',
+  'audit/fixtures/capability-oracle.json','audit/manifests/features.json',
   'audit/tests/contract-gate.mjs','audit/lib/japanese-gate-contract.mjs',
 ];
 export const intentInputPaths = [
@@ -81,7 +82,8 @@ export function verifyContractReport(report,inputs){
 }
 export function verifyExpectationReport(report,inputs){
   bind(report,inputs,expectationInputPaths);assert.equal(report.schema,'akari-language-expectations-gate-v1');
-  for(const[k,v]of Object.entries({status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153}))assert.equal(report.expectations[k],v,k);
+  const schemas=JSON.parse(fs.readFileSync('audit/manifests/features.json')).schemaIds.length;
+  for(const[k,v]of Object.entries({status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,schemas}))assert.equal(report.expectations[k],v,k);
   for(const [field,file]of [['expectationsSha256','audit/fixtures/language/expected.json'],['manifestSha256','audit/manifests/language-form-coverage.json']])assert.equal(report.expectations[field],sha(fs.readFileSync(file)));
   return {status:'PASS',stableIds:605};
 }
@@ -197,7 +199,8 @@ export const negativeCaseIds = [
   'RUNTIME/missing-runner','RUNTIME/duplicate-case','RUNTIME/stale-product','RUNTIME/unverified',
   'RUNTIME/child-timeout','RUNTIME/child-snapshot','RUNTIME/changed-child-report','RUNTIME/observation-promoted','RUNTIME/required-case-unverified',
   'STATIC/missing-check','STATIC/changed-doc-hash','STATIC/execution-claim',
-  'EXPECTATIONS/missing-stable-id','EXPECTATIONS/stale-snapshot',
+  'STATIC/oracle-schema-set-differs','STATIC/language-builtin-list-changed','STATIC/language-sensor-list-changed',
+  'EXPECTATIONS/missing-stable-id','EXPECTATIONS/stale-snapshot','EXPECTATIONS/schema-set-changed',
   ...['unchanged','blocksDisabled','executionRejected','cancelRestoredSource','automaticExecution']
     .flatMap(flag=>['INTENT/prose-missing-'+flag,'INTENT/prose-invalid-'+flag]),
   ...['owner','pending-owner','pending-kind','pending-value','valid-pending','valid-state','initial-pending',

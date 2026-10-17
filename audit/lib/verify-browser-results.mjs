@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {sha} from './product-test-host.mjs';
+import schemaContract from './block-schema-contract.cjs';
 const read=p=>JSON.parse(fs.readFileSync(p));
 export const browserContract=()=>read('audit/manifests/browser-results.json');
 export function verifyBrowserReport(report,spec,expectedSnapshot) {
@@ -44,7 +45,11 @@ export function verifyBrowserReport(report,spec,expectedSnapshot) {
     assert.ok(trusted(e.blurred.events),'missing gesture native blur');
   }
   if(spec.task==='schema-shards'){
-    assert.equal(report.complete,true);assert.equal(report.expected,153);assert.equal(report.shards.length,2);
+    // The GUI rows are the current schema list, never a past snapshot of it.
+    const inputs=schemaContract.currentInputs(),schemaIds=inputs.schemaIds;
+    schemaContract.verifySchemaContract({...inputs,guiKeys:spec.keys});
+    assert.equal(report.complete,true);assert.equal(report.expected,schemaIds.length);assert.equal(report.shards.length,2);
+    assert.equal(report.schemaContract.schemas,schemaIds.length);schemaContract.verifySchemaContractNegatives(report.schemaContract.negatives);
     for(const s of report.shards){assert.equal(s.exit,0);assert.equal(s.expected,s.actual);assert.deepEqual(s.pageErrors,[]);assert.deepEqual(s.networkRequests,[]);}
   }
 }
