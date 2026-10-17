@@ -1716,7 +1716,7 @@
         case '衣装番号': {
           if (!a) throw new AkariError('R407', '「衣装番号」は キャラクターの 動きの 中で 使います');
           const c = r.component(ctx.runtimeId);
-          if (c?.type !== 'sprite') throw new AkariError('R406', '見た目を えらべるのは キャラクターだけです');
+          if (c?.type !== 'sprite') throw new AkariError('R406', 'すがたを えらべるのは キャラクターだけです');
           return c.costumes.findIndex((x) => x.id === a.costumeId) + 1;
         }
         case '衣装名': {
@@ -3575,12 +3575,12 @@
           } else if (n.op === 'SET_COLOR')
             a.color = resolveColor(stringv(arg(0)), { allowTransparent: false });
           else if (['SET_COSTUME', 'NEXT_COSTUME', 'PREV_COSTUME'].includes(n.op)) {
-            if (c?.type !== 'sprite') throw new AkariError('R406', '見た目を えらべるのは キャラクターだけです');
+            if (c?.type !== 'sprite') throw new AkariError('R406', 'すがたを えらべるのは キャラクターだけです');
             const arr = c.costumes;
             if (n.op === 'SET_COSTUME') {
               const name = stringv(arg(0)),
                 co = arr.find((x) => x.name === name);
-              if (!co) throw new AkariError('R405', `見た目「${name}」がありません`);
+              if (!co) throw new AkariError('R405', `すがた「${name}」がありません`);
               a.costumeId = co.id;
             } else {
               let i = arr.findIndex((x) => x.id === a.costumeId);

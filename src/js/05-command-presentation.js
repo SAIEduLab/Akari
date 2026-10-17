@@ -83,12 +83,12 @@
           format: (a) => 'すがたを見せる',
         }),
         NEXT_COSTUME: Object.freeze({
-          label: '次の見た目',
+          label: '次のすがた',
           inputs: Object.freeze([]),
           format: (a) => '次のすがたにかえる',
         }),
         PREV_COSTUME: Object.freeze({
-          label: '前の見た目',
+          label: '前のすがた',
           inputs: Object.freeze([]),
           format: (a) => '前のすがたにかえる',
         }),
@@ -123,8 +123,8 @@
           format: (a) => `表示色を${a(0)}にする`,
         }),
         SET_COSTUME: Object.freeze({
-          label: '見た目をかえる',
-          inputs: Object.freeze(['見た目']),
+          label: 'すがたを かえる',
+          inputs: Object.freeze(['すがた']),
           format: (a) => `すがたを${a(0)}にかえる`,
         }),
         SET_BACKDROP: Object.freeze({

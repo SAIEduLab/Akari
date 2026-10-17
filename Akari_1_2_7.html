@@ -6307,7 +6307,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
           <small id="callablePhraseHelp">この文を 書くだけで、この てじゅんを 使えます。書かなくても、名前で よべます。</small>
           <label><ruby class="child-word">入れるもの<rt>いれるもの</rt></ruby> <input id="callableArgs" placeholder="れい：歩数、あいさつ（いらないときは 書かない）" aria-describedby="callableArgsHelp"></label>
           <small id="callableArgsHelp">この てじゅんを 使うときに 決めて 入れる 中身です。たとえば、点数として10、名前として「あかり」を 入れて、てじゅんの中で 使います。ここには「点数、名前」のように 名前を 書きます。名前が いくつか あるときは「、」で 分けます。</small>
-          <div id="callableHeader" class="asset-target">新しい手順</div>
+          <div id="callableHeader" class="asset-target">新しい てじゅん</div>
           <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="callableModecode" type="button" aria-pressed="true">コード</button><button id="callableModeblocks" type="button" aria-pressed="false">ブロック</button><button id="callableCancel" type="button">入力を取り消す</button></div><div id="callablePending" class="editor-pending" role="status" hidden></div><div id="callableBlocks" hidden></div>
           <textarea id="callableCode" spellcheck="false"></textarea>
           <div class="hint-panel"><div class="hint-controls"><input id="callableHintSearch" type="search" aria-label="自分で作ったブロックの中で 書ける ことばを さがす" placeholder="やること・中身・名前を さがす"><button id="callableHintPrev">前</button><span id="callableHintCount"></span><button id="callableHintNext">次</button></div><div class="code-hints" id="callableHints" aria-label="自分で作ったブロックの中で 書ける ことば"></div></div>
@@ -8768,7 +8768,7 @@ function createAkariExtensionHost(options) {
         case '衣装番号': {
           if (!a) throw new AkariError('R407', '「衣装番号」は キャラクターの 動きの 中で 使います');
           const c = r.component(ctx.runtimeId);
-          if (c?.type !== 'sprite') throw new AkariError('R406', '見た目を えらべるのは キャラクターだけです');
+          if (c?.type !== 'sprite') throw new AkariError('R406', 'すがたを えらべるのは キャラクターだけです');
           return c.costumes.findIndex((x) => x.id === a.costumeId) + 1;
         }
         case '衣装名': {
@@ -10627,12 +10627,12 @@ function createAkariExtensionHost(options) {
           } else if (n.op === 'SET_COLOR')
             a.color = resolveColor(stringv(arg(0)), { allowTransparent: false });
           else if (['SET_COSTUME', 'NEXT_COSTUME', 'PREV_COSTUME'].includes(n.op)) {
-            if (c?.type !== 'sprite') throw new AkariError('R406', '見た目を えらべるのは キャラクターだけです');
+            if (c?.type !== 'sprite') throw new AkariError('R406', 'すがたを えらべるのは キャラクターだけです');
             const arr = c.costumes;
             if (n.op === 'SET_COSTUME') {
               const name = stringv(arg(0)),
                 co = arr.find((x) => x.name === name);
-              if (!co) throw new AkariError('R405', `見た目「${name}」がありません`);
+              if (!co) throw new AkariError('R405', `すがた「${name}」がありません`);
               a.costumeId = co.id;
             } else {
               let i = arr.findIndex((x) => x.id === a.costumeId);
@@ -15335,27 +15335,27 @@ function createAkariExtensionHost(options) {
           !c.costumes.length ||
           c.costumes.length > LIMITS.costumesPerSprite
         )
-          throw new AkariError('F504', 'キャラクターの 見た目が 多すぎるか、1つも ありません');
+          throw new AkariError('F504', 'キャラクターの すがたが 多すぎるか、1つも ありません');
         const cn = new Set();
         for (const co of c.costumes) {
           if (!co || typeof co !== 'object' || Array.isArray(co))
-            throw new AkariError('F503', '見た目の 中身が 正しくありません');
+            throw new AkariError('F503', 'すがたの 中身が 正しくありません');
           validateResourceName(co.name, 'すがたの 名前');
-          if (cn.has(co.name)) throw new AkariError('F503', '同じ 名前の 見た目が あります。ちがう 名前に してください');
+          if (cn.has(co.name)) throw new AkariError('F503', '同じ 名前の すがたが あります。ちがう 名前に してください');
           cn.add(co.name);
           addId(co.id);
           if (co.kind === 'text') {
             if (!exactKeys(co, ['id', 'name', 'kind', 'value']) || typeof co.value !== 'string')
-              throw new AkariError('F503', '文字の 見た目の 中身が 正しくありません');
+              throw new AkariError('F503', '文字の すがたの 中身が 正しくありません');
             if (cpLen(co.value) > LIMITS.stringChars)
-              throw new AkariError('F504', '見た目の 文字が 長すぎます');
+              throw new AkariError('F504', 'すがたの 文字が 長すぎます');
           } else if (co.kind === 'image') {
             if (!exactKeys(co, ['id', 'name', 'kind', 'assetId']) || !safeId(co.assetId))
-              throw new AkariError('F503', '絵の 見た目の 中身が 正しくありません');
-          } else throw new AkariError('F509', 'この あかりでは 使えない しゅるいの 見た目です');
+              throw new AkariError('F503', '絵の すがたの 中身が 正しくありません');
+          } else throw new AkariError('F509', 'この あかりでは 使えない しゅるいの すがたです');
         }
         if (!c.costumes.some((x) => x.id === c.costumeId))
-          throw new AkariError('F503', 'いま 使っている 見た目が 見つかりません');
+          throw new AkariError('F503', 'いま 使っている すがたが 見つかりません');
       }
     }
     if (!Array.isArray(p.scripts) || p.scripts.length > LIMITS.scripts)
@@ -17698,12 +17698,12 @@ function createAkariExtensionHost(options) {
           format: (a) => 'すがたを見せる',
         }),
         NEXT_COSTUME: Object.freeze({
-          label: '次の見た目',
+          label: '次のすがた',
           inputs: Object.freeze([]),
           format: (a) => '次のすがたにかえる',
         }),
         PREV_COSTUME: Object.freeze({
-          label: '前の見た目',
+          label: '前のすがた',
           inputs: Object.freeze([]),
           format: (a) => '前のすがたにかえる',
         }),
@@ -17738,8 +17738,8 @@ function createAkariExtensionHost(options) {
           format: (a) => `表示色を${a(0)}にする`,
         }),
         SET_COSTUME: Object.freeze({
-          label: '見た目をかえる',
-          inputs: Object.freeze(['見た目']),
+          label: 'すがたを かえる',
+          inputs: Object.freeze(['すがた']),
           format: (a) => `すがたを${a(0)}にかえる`,
         }),
         SET_BACKDROP: Object.freeze({
@@ -19476,12 +19476,12 @@ function createAkariExtensionHost(options) {
           c.targetType &&
           c.targetType !== 'sprite'
         )
-          add('S304', '見た目をかえられるのは、キャラクターだけです', n, where);
+          add('S304', 'すがたを かえられるのは、キャラクターだけです', n, where);
         if (n.kind === 'LooksCommand' && n.op === 'SET_COSTUME' && c.targetType === 'sprite') {
           const name = literalText(n.args?.[0]),
             comp = project.components.find((x) => x.id === c.targetId);
           if (name !== null && comp && !comp.costumes.some((co) => co.name === name))
-            add('S301', `見た目「${name}」がありません`, n, where);
+            add('S301', `すがた「${name}」がありません`, n, where);
         }
         if (
           n.kind === 'LooksCommand' &&
@@ -19521,7 +19521,7 @@ function createAkariExtensionHost(options) {
           ].includes(n.op) &&
           c.targetType === 'stage'
         )
-          add('S304', 'この見た目のかえ方は、画面では使えません。部品で使ってください', n, where);
+          add('S304', 'このかえ方は、画面では使えません。部品で使ってください', n, where);
         if (
           n.kind === 'ForEach' &&
           [

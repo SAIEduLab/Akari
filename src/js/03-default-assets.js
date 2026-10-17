@@ -3077,27 +3077,27 @@
           !c.costumes.length ||
           c.costumes.length > LIMITS.costumesPerSprite
         )
-          throw new AkariError('F504', 'キャラクターの 見た目が 多すぎるか、1つも ありません');
+          throw new AkariError('F504', 'キャラクターの すがたが 多すぎるか、1つも ありません');
         const cn = new Set();
         for (const co of c.costumes) {
           if (!co || typeof co !== 'object' || Array.isArray(co))
-            throw new AkariError('F503', '見た目の 中身が 正しくありません');
+            throw new AkariError('F503', 'すがたの 中身が 正しくありません');
           validateResourceName(co.name, 'すがたの 名前');
-          if (cn.has(co.name)) throw new AkariError('F503', '同じ 名前の 見た目が あります。ちがう 名前に してください');
+          if (cn.has(co.name)) throw new AkariError('F503', '同じ 名前の すがたが あります。ちがう 名前に してください');
           cn.add(co.name);
           addId(co.id);
           if (co.kind === 'text') {
             if (!exactKeys(co, ['id', 'name', 'kind', 'value']) || typeof co.value !== 'string')
-              throw new AkariError('F503', '文字の 見た目の 中身が 正しくありません');
+              throw new AkariError('F503', '文字の すがたの 中身が 正しくありません');
             if (cpLen(co.value) > LIMITS.stringChars)
-              throw new AkariError('F504', '見た目の 文字が 長すぎます');
+              throw new AkariError('F504', 'すがたの 文字が 長すぎます');
           } else if (co.kind === 'image') {
             if (!exactKeys(co, ['id', 'name', 'kind', 'assetId']) || !safeId(co.assetId))
-              throw new AkariError('F503', '絵の 見た目の 中身が 正しくありません');
-          } else throw new AkariError('F509', 'この あかりでは 使えない しゅるいの 見た目です');
+              throw new AkariError('F503', '絵の すがたの 中身が 正しくありません');
+          } else throw new AkariError('F509', 'この あかりでは 使えない しゅるいの すがたです');
         }
         if (!c.costumes.some((x) => x.id === c.costumeId))
-          throw new AkariError('F503', 'いま 使っている 見た目が 見つかりません');
+          throw new AkariError('F503', 'いま 使っている すがたが 見つかりません');
       }
     }
     if (!Array.isArray(p.scripts) || p.scripts.length > LIMITS.scripts)

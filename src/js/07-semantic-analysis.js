@@ -500,12 +500,12 @@
           c.targetType &&
           c.targetType !== 'sprite'
         )
-          add('S304', '見た目をかえられるのは、キャラクターだけです', n, where);
+          add('S304', 'すがたを かえられるのは、キャラクターだけです', n, where);
         if (n.kind === 'LooksCommand' && n.op === 'SET_COSTUME' && c.targetType === 'sprite') {
           const name = literalText(n.args?.[0]),
             comp = project.components.find((x) => x.id === c.targetId);
           if (name !== null && comp && !comp.costumes.some((co) => co.name === name))
-            add('S301', `見た目「${name}」がありません`, n, where);
+            add('S301', `すがた「${name}」がありません`, n, where);
         }
         if (
           n.kind === 'LooksCommand' &&
@@ -545,7 +545,7 @@
           ].includes(n.op) &&
           c.targetType === 'stage'
         )
-          add('S304', 'この見た目のかえ方は、画面では使えません。部品で使ってください', n, where);
+          add('S304', 'このかえ方は、画面では使えません。部品で使ってください', n, where);
         if (
           n.kind === 'ForEach' &&
           [
