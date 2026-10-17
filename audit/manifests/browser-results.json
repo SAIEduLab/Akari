@@ -36,8 +36,8 @@
         "real-media-import-and-history",
         "media-editor-run-and-save-roundtrip",
         "real-media-standalone-player",
-        "malformed-project-mismatch-and-state-protection",
-        "invalid-syntax-save-and-draft-storage-isolation"
+        "malformed-project-file-rejection-and-state-protection",
+        "unfinished-source-save-and-storage-key-isolation"
       ]
     },
     {
@@ -388,6 +388,17 @@
       "key": "id",
       "keys": [
         "Script",
+        "Hole:expression",
+        "Hole:statement",
+        "Hole:target",
+        "Hole:rule",
+        "QuantityLiteral",
+        "UnitlessRead",
+        "ActorQualifiedRead",
+        "ContinuousRule",
+        "MotionCommand:MOVE_DIRECTION",
+        "MotionCommand:GLIDE_DIRECTION",
+        "WaitBroadcastGroup",
         "TargetReference",
         "CommentLine",
         "Assignment",

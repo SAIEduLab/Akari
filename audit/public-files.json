@@ -106,6 +106,7 @@
     "audit/lib/autosave-state-contract.mjs",
     "audit/lib/basic-intents-runtime.mjs",
     "audit/lib/block-field-contract.mjs",
+    "audit/lib/block-schema-contract.cjs",
     "audit/lib/browser-environment.mjs",
     "audit/lib/capability-contract.mjs",
     "audit/lib/change-guard.mjs",

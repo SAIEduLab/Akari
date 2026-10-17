@@ -55,7 +55,7 @@ R/L はデータの対象、Q/E/X/Y/T/F/A/N は式です。引用文字列、明
 
 文字列、明示名、入れ子、同じ助詞を含む名前を保持します。式の評価順、乱数、最初のエラー、読み取り専用の反復要素、旧基準の関数副作用制約、未知の名前、リスト境界、ゼロ回反復、質問の所有者、短絡評価を検査します。
 
-標準ASTは `manifests/language-form-coverage.json`、実行期待値・95件の標準文・153スキーマは `fixtures/language/expected.json` に固定します。実行結果から期待値を生成し直しません。欠落・重複・未完了・別snapshotの結果をvalidatorが拒否します。
+標準ASTは `manifests/language-form-coverage.json`、実行期待値・95件の標準文・現行スキーマの一覧は `fixtures/language/expected.json` に固定します。実行結果から期待値を生成し直しません。欠落・重複・未完了・別snapshotの結果をvalidatorが拒否します。
 
 38件の編集試験と9件のGUI試験は、256件の無編集往復、空白、Unicode、CRLF、コメント、式の役割、インライン分岐、原子的編集、Undo/Redo、保存・復元・実行HTMLを扱います。構文受理だけで編集と実行の保証を代用しません。
 

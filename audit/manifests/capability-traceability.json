@@ -1347,6 +1347,160 @@
       ]
     },
     {
+      "id": "Hole:expression",
+      "meaning": "値を入れる空欄。選ぶまで下書きとして残し、0や条件の答えで埋めず、埋めるまで実行しない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "Hole:expression"
+        }
+      ]
+    },
+    {
+      "id": "Hole:statement",
+      "meaning": "命令を入れる空欄。必須の本文を「何もしない」で埋めず、埋めるまで実行しない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "Hole:statement"
+        }
+      ]
+    },
+    {
+      "id": "Hole:target",
+      "meaning": "変更先を入れる空欄。登録済みのデータから選ぶまで実行しない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "Hole:target"
+        }
+      ]
+    },
+    {
+      "id": "Hole:rule",
+      "meaning": "続けて動くルールの空欄。保存して開き直しても残り、完成させるか消すまで実行しない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "Hole:rule"
+        }
+      ]
+    },
+    {
+      "id": "QuantityLiteral",
+      "meaning": "数と登録した単位（歩・度・秒・回・番目・点・個・％・Hz）を持つ数量。文字にすると単位を含む",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "QuantityLiteral"
+        }
+      ]
+    },
+    {
+      "id": "UnitlessRead",
+      "meaning": "「（式）の数だけ」。大きさを保ち、単位だけを外した新しい数",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "UnitlessRead"
+        }
+      ]
+    },
+    {
+      "id": "ActorQualifiedRead",
+      "meaning": "「対象の（値）」。指定した対象の状態やデータを読み、後の文の省略された対象は変えない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "ActorQualifiedRead"
+        }
+      ]
+    },
+    {
+      "id": "ContinuousRule",
+      "meaning": "条件が成り立つあいだ、画面の方向または前後へ決めた速さで動き続ける継続ルール",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "ContinuousRule"
+        }
+      ]
+    },
+    {
+      "id": "MotionCommand:MOVE_DIRECTION",
+      "meaning": "画面の右へ10歩動く。画面の向きへ動き、向きは変えない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "MotionCommand:MOVE_DIRECTION"
+        }
+      ]
+    },
+    {
+      "id": "MotionCommand:GLIDE_DIRECTION",
+      "meaning": "2秒かけて画面の右へ40歩動く。開始位置から終点へ一回すべる",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "MotionCommand:GLIDE_DIRECTION"
+        }
+      ]
+    },
+    {
+      "id": "WaitBroadcastGroup",
+      "meaning": "その知らせを受けて始めたことが全部終わるまで待つ。直前の知らせで直接始まった処理を待つ",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "WaitBroadcastGroup"
+        }
+      ]
+    },
+    {
       "id": "TargetReference",
       "meaning": "データ名と所属を、文の「を」「に」等の役割として編集",
       "testReferences": [
@@ -8877,6 +9031,6 @@
       "SensorRead:TOUCHING_COLOR",
       "SensorRead:TOUCHING"
     ],
-    "rule": "Keep the complete current sets; the old 74/153 counts are not ceilings."
+    "rule": "Keep the complete current sets; their sizes are not ceilings."
   }
 }
