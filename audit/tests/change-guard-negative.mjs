@@ -141,9 +141,14 @@ try {
   failed('version/source-changed-without-bump',await guard(derive(sourceChange)),'versionIssues',new RegExp('must be '+nextPatch(version).replaceAll('.','\\.')));
   failed('version/product-changed-without-bump',await guard(derive({[product]:text(product)+'\n'})),'versionIssues',/must be/);
   accepted('version/patch-bump-accepted',await guard(derive(release(nextPatch(version),{changeSource:true,productBytes:text(product)+'\n'}))));
-  failed('version/patch-skipped',await guard(derive(release(nextPatch(nextPatch(version)),{changeSource:true,productBytes:text(product)+'\n'}))),'versionIssues',/must be/);
-  const [major,minor]=version.split('.').map(Number);
-  failed('version/minor-bump',await guard(derive(release(major+'.'+(minor+1)+'.0',{changeSource:true,productBytes:text(product)+'\n'}))),'versionIssues',/must be/);
+  const skipped=derive(release(nextPatch(nextPatch(version)),{changeSource:true,productBytes:text(product)+'\n'}));
+  failed('version/patch-skipped',await guard(skipped),'versionIssues',/needs the/);
+  accepted('version/patch-skipped-with-label',await guard(skipped,{eventPath:approved}));
+  const [major,minor]=version.split('.').map(Number),minorBump=derive(release(major+'.'+(minor+1)+'.0',{changeSource:true,productBytes:text(product)+'\n'}));
+  failed('version/minor-bump',await guard(minorBump),'versionIssues',/needs the/);
+  accepted('version/minor-bump-with-label',await guard(minorBump,{eventPath:approved}));
+  accepted('version/major-bump-with-label',await guard(derive(release((major+1)+'.0.0',{changeSource:true,productBytes:text(product)+'\n'})),{eventPath:approved}));
+  failed('version/lower-with-label',await guard(derive(release(major+'.'+minor+'.0',{changeSource:true,productBytes:text(product)+'\n'})),{eventPath:approved}),'versionIssues',/must be/);
   failed('version/bump-without-product-change',await guard(derive(release(nextPatch(version)))),'versionIssues',/must stay/);
   failed('version/label-does-not-excuse',await guard(derive(sourceChange),{eventPath:approved}),'versionIssues',/must be/);
 

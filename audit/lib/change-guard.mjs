@@ -106,6 +106,7 @@ export function readApproval(eventPath){
   return {approved:names.includes(changeGuardLabel),labels:names,source:'event payload'};
 }
 export function nextPatch(version){const [major,minor,patch]=version.split('.').map(Number);return major+'.'+minor+'.'+(patch+1);}
+export function versionAfter(a,b){const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++)if(x[i]!==y[i])return x[i]>y[i];return false;}
 
 export async function changeGuard({repo,base,head,eventPath,workDir}){
   const report={schema:guardReportSchema,status:'FAIL',base,head,mergeBase:null,approvalLabel:changeGuardLabel,approved:false,labels:[],
@@ -128,9 +129,10 @@ export async function changeGuard({repo,base,head,eventPath,workDir}){
     const productChanged=before.source!==after.source||before.product!==after.product;
     const expected=productChanged?nextPatch(before.version):before.version;
     report.version={base:before.version,head:after.version,expected,productChanged};
-    if(after.version!==expected)report.versionIssues.push(productChanged
-      ?'the product or src/ changed: the head product version must be '+expected+' (one patch after '+before.version+'), found '+after.version
-      :'the product and src/ are unchanged: the product version must stay '+before.version+', found '+after.version);
+    // A product change raises the version: one patch by default; any other raise is the owner's decision (label).
+    if(!productChanged&&after.version!==expected)report.versionIssues.push('the product and src/ are unchanged: the product version must stay '+before.version+', found '+after.version);
+    else if(productChanged&&!versionAfter(after.version,before.version))report.versionIssues.push('the product or src/ changed: the head product version must be '+expected+' (one patch after '+before.version+'), found '+after.version);
+    else if(productChanged&&after.version!==expected&&!report.approved)report.versionIssues.push('the product version '+after.version+' is not one patch after '+before.version+' (expected '+expected+'); another raise needs the `'+changeGuardLabel+'` label set by the owner');
     const release='audit/manifests/release-'+after.version+'.json';
     if(JSON.stringify(after.releases)!==JSON.stringify([release]))report.releaseIssues.push('exactly one release manifest, '+release+', must exist; found '+(after.releases.join(', ')||'none'));
   }catch(error){report.errors.push(error.message);}
