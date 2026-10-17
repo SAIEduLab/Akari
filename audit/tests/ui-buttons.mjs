@@ -6,6 +6,7 @@ import {pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import {snapshot, withBrowser, pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
+import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 
 export const uiButtonIds = ['UI-BUTTON-SOURCE-NAV','UI-BUTTON-BASIC-HISTORY','UI-BUTTON-SIDE-ACTIONS','UI-BUTTON-LEVELS','UI-BUTTON-PENDING','UI-BUTTON-BLOCK-DESTINATION','UI-BUTTON-BLOCK-INSERTION','UI-BUTTON-BLOCK-COMMANDS','UI-BUTTON-RESPONSIVE'];
 const [browserPath, output] = process.argv.slice(2);
@@ -59,7 +60,7 @@ const cases = {
       await visible(p,'#sourceOverviewBtn'); assert.equal(await p.locator('#sourceOverviewBtn').innerText(),'すべてのコード');
       await visible(p,'#sourceEditBtn',false); await visible(p,'#sourceStageBtn',false);
       await click(p,'#sourceOverviewBtn'); await visible(p,'#sourceOverview'); await visible(p,'#sourceOverviewBtn',false); await visible(p,'#sourceEditBtn');
-      assert.equal(await p.locator('#sourceEditBtn').innerText(),'本文の編集に戻る'); await click(p,'#sourceEditBtn'); assert.deepEqual(await fingerprint(p),before);
+      assert.equal(await p.locator('#sourceEditBtn').innerText(),'本文を なおす ところへ もどる'); await click(p,'#sourceEditBtn'); assert.deepEqual(await fingerprint(p),before);
       await select(p,'sprite-1'); await visible(p,'#sourceStageBtn'); assert.equal(await p.locator('#sourceStageBtn').innerText(),'画面のコード');
       await click(p,'#sourceOverviewBtn'); await visible(p,'#sourceStageBtn'); await click(p,'#sourceStageBtn');
       assert.equal(await p.locator('#objectSelect').inputValue(),'stage'); await visible(p,'#sourceStageBtn',false);
@@ -165,7 +166,7 @@ const cases = {
     const paletteRecovery=[];
     for(const width of [760,390,320]) {
       await p.setViewportSize({width,height:844}); await fill(p,'「こんにちは」と2秒話す。'); await mode(p,'blocks');
-      const text=()=>p.locator('#blockEditor .blockui-world input[aria-label="文字 文字"]'),
+      const text=()=>p.locator('#blockEditor .blockui-world input[aria-label="文字"]'),
         palette=p.locator('#blockEditor .blockui-palette'),
         library=p.locator('#blockEditor [data-blockui-action="library-toggle"]');
       await text().fill('おはよう'); await text().press('Enter'); const committed=await fingerprint(p);
@@ -199,7 +200,7 @@ for(const [id,run] of Object.entries(cases)) {
       phase='page-start';
       return pageFor(b,currentProductFile(),async p=> {
         try {
-          p.on('dialog',d=>d.accept());await p.setViewportSize({width:1440,height:1000});
+          p.on('dialog',d=>d.accept());await answerProductConfirms(p,true);await p.setViewportSize({width:1440,height:1000});
           phase='fixture-import';await installRegressionProject(p);
           phase='select-stage';await select(p,'stage');
           phase='button-actions';return await run(p);

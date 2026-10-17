@@ -7,6 +7,7 @@ import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
+import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {editorAssetIds,verifyEditorAssets} from '../lib/feature-contract.mjs';
 
 const [browserPath, output] = process.argv.slice(2);
@@ -205,7 +206,7 @@ const cases = {
   async 'paint-failed-commit-preserves-drawing'(p) {
     await open(p);await draw(p,'pen',[50,50],[100,70]);
     await p.evaluate(()=>{while(Akari.app.project.components.length<500){const c=structuredClone(Akari.app.project.components[0]),n=Akari.app.project.components.length;c.id=c.name='limit-'+n;Akari.app.project.components.push(c);}});
-    const before=await state(p);await p.locator('#paintCommit').click();await p.getByText('配置できませんでした:',{exact:false}).waitFor();
+    const before=await state(p);await p.locator('#paintCommit').click();await p.getByText('絵を おけませんでした:',{exact:false}).waitFor();
     assert.equal(await ink(p),true);assert.equal(await p.locator('#paintCommit').isEnabled(),true);assert.equal((await state(p)).project,before.project);
   },
   async 'paint-save-reload-export'(p) {
@@ -243,7 +244,7 @@ const cases = {
     await p.screenshot({path:path.join(artifacts,'drawing-mobile.png'),fullPage:true});
   },
   async 'format-contract-and-import'(p) {
-    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2});
+    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:3});
     await p.locator('#fileInput').setInputFiles({name:'saved-project.akari.md',mimeType:'text/plain',buffer:Buffer.from(savedFile)});
     await p.waitForFunction(()=>Akari.app.project.name==='作品の保存確認'&&Akari.app.editorState.state==='DESIGN');
     assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),(""+currentProductVersion()+""));
@@ -252,7 +253,7 @@ const cases = {
   },
   async 'format-malformed-state-protection'(p) {
     const before=await state(p);
-    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": 2','"languageContractId": 1'),savedFile.replace('"formatVersion": 2','"formatVersion": "2"')]) {
+    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": 2','"languageContractId": 1'),savedFile.replace('"formatVersion": 3','"formatVersion": "3"')]) {
       const result=await p.evaluate(async text=>{try{await Akari.parseProjectFile(text);return 'accepted';}catch(e){return e.code;}},text);
       assert.notEqual(result,'accepted');assert.deepEqual(await state(p),before);
     }
@@ -264,7 +265,7 @@ const cases = {
     const mascot=p.locator('[data-sprite-preset="akariMascot"]'),dango=p.locator('[data-sprite-preset="dango"]');
     assert.equal(await mascot.count(),1,'the original mascot choice is retained');
     assert.equal(await dango.count(),1);
-    assert.equal((await dango.locator('xpath=ancestor::details[1]').locator('summary').innerText()).replace(/\s+/g,''),'マスコット2種');
+    assert.equal((await dango.locator('xpath=ancestor::details[1]').locator('summary').innerText()).replace(/\s+/g,''),'マスコット2しゅるい');
     await p.waitForFunction(()=>{
       const i=document.querySelector('[data-sprite-preset="dango"] img');
       return i?.complete&&i.naturalWidth===180&&i.naturalHeight===180;
@@ -339,6 +340,7 @@ for(const [id,run] of Object.entries(cases)) {
         return pageFor(browser,currentProductFile(),async p=>{
         p.acceptDialogs=true;p.dialogLog=[];
         p.on('dialog',d=>{p.dialogLog.push(d.message());return p.acceptDialogs?d.accept():d.dismiss();});
+        await answerProductConfirms(p,true);
         p.on('pageerror',e=>pageErrors.push(id+': '+e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))networkRequests.push(r.url());});
         try {
           phase='fixture-import';await installRegressionProject(p);

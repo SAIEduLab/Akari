@@ -14,6 +14,8 @@ const dir=path.dirname(output);fs.mkdirSync(dir,{recursive:true});
 const require=createRequire(import.meta.url);
 const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
 const {loadApi}=require('../browser/cases/audit-lib.cjs');
+const {answerProductConfirms}=require('../lib/product-dialogs.cjs');
+const autosaved='このパソコンに のこしたよ',autosaveDatabase='akari-workspace-f3',autosaveFallback='akari.autosave.f3';
 const regressionProject=makeRegressionProject(loadApi(fs.readFileSync(product,'utf8')));
 regressionProject.scripts=[{targetId:'stage',event:'start',source:'何もしない。'}];
 regressionProject.actions=[];regressionProject.functions=[];
@@ -35,7 +37,7 @@ const results=[];
 await withBrowser(browser,async b=>{
   browserVersion=b.version();
   const run=async(id,fn)=>{
-    try{const evidence=await pageFor(b,product,async p=>{p.on('dialog',d=>d.accept());await (await reveal(p.locator('#uiLevel'))).selectOption('advanced');if(id!=='RELEASE-GUI/corrupt-autosave-preserves-current'){await p.locator('#fileInput').setInputFiles(regressionFixture);await p.waitForFunction(name=>Akari.app.project.name===name,regressionProject.name);}await (await reveal(p.locator('#uiLevel'))).selectOption('advanced');await (await reveal(p.locator('#objectSelect'))).selectOption('stage');await (await reveal(p.locator('#eventSelect'))).selectOption('start');return fn(p);});results.push({id,status:'PASS',evidence});}
+    try{const evidence=await pageFor(b,product,async p=>{p.on('dialog',d=>d.accept());await answerProductConfirms(p,true);await (await reveal(p.locator('#uiLevel'))).selectOption('advanced');if(id!=='RELEASE-GUI/corrupt-autosave-preserves-current'){await p.locator('#fileInput').setInputFiles(regressionFixture);await p.waitForFunction(name=>Akari.app.project.name===name,regressionProject.name);}await (await reveal(p.locator('#uiLevel'))).selectOption('advanced');await (await reveal(p.locator('#objectSelect'))).selectOption('stage');await (await reveal(p.locator('#eventSelect'))).selectOption('start');return fn(p);});results.push({id,status:'PASS',evidence});}
     catch(e){results.push({id,status:'FAIL',detail:e.stack});}
     console.log(id+': '+results.at(-1).status);
   };
@@ -183,7 +185,7 @@ await withBrowser(browser,async b=>{
     await fill(p,source);await mode(p,'blocks');await number(p).fill('3');await number(p).press('Enter');
     const save=async(id,name)=>{const pending=p.waitForEvent('download');await click(p,id);if(id==='exportBtn')await p.locator('#exportControls').click();const f=path.join(dir,name);await (await pending).saveAs(f);return f;};
     const file=await save('saveBtn','editor-gui-saved.akari.md'),saved=fs.readFileSync(file,'utf8');
-    assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F2-DATA-BEGIN'));
+    assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F3-DATA-BEGIN'));
     const initial=await state(p);await click(p,'newBtn');await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);assert.equal((await state(p)).project,initial.project);
     const generated=await save('exportBtn','editor-gui-player.html');
     const c=await b.newContext({offline:true}),errors=[],network=[];
@@ -197,7 +199,7 @@ await withBrowser(browser,async b=>{
     await set('callableName','仮計算');await set('callableArgs','値');await set('callableCode','もし値が0より大きければ、値を答えとして返す。\nそうでなければ、未知名を答えとして返す。 ※ 下書き');
     const initial=await state(p);assert.equal(JSON.parse(initial.project).functions.length,0);assert.equal(initial.hasDraft,true);
     await click(p,'callableModeblocks');await click(p,'callableModecode');assert.deepEqual(await state(p),initial);
-    await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));await p.reload();await p.locator('#recoveryModal.show').waitFor();await click(p,'recoveryRestore');
+    await p.waitForFunction(text=>document.querySelector('#autosaveState').textContent.includes(text),autosaved);await p.reload();await p.locator('#recoveryModal.show').waitFor();await click(p,'recoveryRestore');
     const recovered=await state(p);assert.equal(JSON.parse(recovered.project).functions.length,0);assert.equal(recovered.draft.source,initial.draft.source);
     await p.locator('#procModal.show').waitFor();await click(p,'callableSave');assert.equal(JSON.parse((await state(p)).project).functions[0].source,initial.draft.source);
     await p.keyboard.press('Control+z');assert.equal(JSON.parse((await state(p)).project).functions.length,0);assert.equal((await state(p)).hasDraft,true);
@@ -236,27 +238,27 @@ await withBrowser(browser,async b=>{
     return{draftSeparate:true,unknownNamePreserved:true,autosaveRecovery:true,registrationUndoRedo:true,callableHistory};
   });
   await run('RELEASE-GUI/corrupt-autosave-preserves-current',async p=>{
-    const initial=await state(p);await fill(p,source);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));
-    const validRecord=await p.evaluate(async()=>{let valid;await new Promise((resolve,reject)=>{const q=indexedDB.open('akari-workspace-f2');q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readwrite'),s=tx.objectStore('workspace'),get=s.get('latest');get.onsuccess=()=>{const v=get.result;if(!v){reject(Error('missing latest autosave'));return;}valid=structuredClone(v);v.workspace.base.project.components[0].id='stage';s.put(v);};tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};});return valid;});
+    const initial=await state(p);await fill(p,source);await p.waitForFunction(text=>document.querySelector('#autosaveState').textContent.includes(text),autosaved);
+    const validRecord=await p.evaluate(async database=>{let valid;await new Promise((resolve,reject)=>{const q=indexedDB.open(database);q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readwrite'),s=tx.objectStore('workspace'),get=s.get('latest');get.onsuccess=()=>{const v=get.result;if(!v){reject(Error('missing latest autosave'));return;}valid=structuredClone(v);v.workspace.base.project.components[0].id='stage';s.put(v);};tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);};});return valid;},autosaveDatabase);
     await p.reload();await p.waitForFunction(()=>document.querySelector('#console').textContent.includes('F505'));
     assert.equal(await p.locator('#recoveryModal.show').count(),0);
     const current=await state(p);assert.notEqual(current.source,source);assert.equal(current.project,initial.project);
-    await p.evaluate(async validRecord=>{
-      const db=await new Promise((resolve,reject)=>{const q=indexedDB.open('akari-workspace-f2');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
+    await p.evaluate(async ({validRecord,autosaveDatabase,autosaveFallback})=>{
+      const db=await new Promise((resolve,reject)=>{const q=indexedDB.open(autosaveDatabase);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);});
       await new Promise((resolve,reject)=>{const tx=db.transaction('workspace','readwrite');tx.objectStore('workspace').delete('latest');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
       db.close();
       const restoredRecord=structuredClone(validRecord);restoredRecord.workspace.base.project.name='自動保存の復元';
-      localStorage.setItem('akari.autosave.f2',JSON.stringify(restoredRecord));
-    },validRecord);
+      localStorage.setItem(autosaveFallback,JSON.stringify(restoredRecord));
+    },{validRecord,autosaveDatabase,autosaveFallback});
     await p.reload();await p.locator('#recoveryModal.show').waitFor();
     assert.equal((await state(p)).project,initial.project,'recovery offer must not replace current project');
     await click(p,'recoveryRestore');
     assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),(""+currentProductVersion()+""));
     assert.equal(await p.evaluate(()=>Akari.app.project.name),'自動保存の復元');
-    await p.evaluate(()=>{indexedDB.open=()=>{throw Error('database unavailable');};localStorage.removeItem('akari.autosave.f2');});
+    await p.evaluate(key=>{indexedDB.open=()=>{throw Error('database unavailable');};localStorage.removeItem(key);},autosaveFallback);
     await fill(p,'点数を88にする。');
-    await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));
-    const fallback=await p.evaluate(()=>JSON.parse(localStorage.getItem('akari.autosave.f2')));
+    await p.waitForFunction(text=>document.querySelector('#autosaveState').textContent.includes(text),autosaved);
+    const fallback=await p.evaluate(key=>JSON.parse(localStorage.getItem(key)),autosaveFallback);
     assert.equal(fallback.version,2);assert.equal(fallback.workspace.base.project.appVersion,(""+currentProductVersion()+""));assert.ok(fallback.workspace.assets.every(a=>a.builtin&&a.blob===null));
     return{invalidRecordNotInstalled:true,fallbackValidatedBeforeRestore:true,mediaFreeFallbackWrites:true};
   });
