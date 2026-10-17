@@ -167,9 +167,9 @@ async function reviewModePreference(page) {
   assert.equal(initial.source,'','first startup has an empty beginning; the sample is explicit');
   const root=page.locator('#blockEditor'),toggle=root.locator('[data-blockui-action="palette-tools-toggle"]'),controls=root.locator('.blockui-palette-controls');
   assert.equal(await toggle.getAttribute('aria-expanded'),'false','first startup collapses search/create');
-  assert.equal(await toggle.innerText(),'探す・作るをひらく');assert.equal(await controls.isVisible(),false);
-  await toggle.click();assert.equal(await controls.isVisible(),true);assert.equal(await toggle.getAttribute('aria-expanded'),'true');assert.equal(await toggle.innerText(),'探す・作るをたたむ');
-  await toggle.press('Enter');assert.equal(await controls.isVisible(),false);assert.equal(await toggle.getAttribute('aria-expanded'),'false');assert.equal(await toggle.innerText(),'探す・作るをひらく');
+  assert.equal(await toggle.innerText(),'さがす・作るを ひらく');assert.equal(await controls.isVisible(),false);
+  await toggle.click();assert.equal(await controls.isVisible(),true);assert.equal(await toggle.getAttribute('aria-expanded'),'true');assert.equal(await toggle.innerText(),'さがす・作るを たたむ');
+  await toggle.press('Enter');assert.equal(await controls.isVisible(),false);assert.equal(await toggle.getAttribute('aria-expanded'),'false');assert.equal(await toggle.innerText(),'さがす・作るを ひらく');
   assert.deepEqual(await read(),initial,'opening and folding preserves project and history');
   for(const mode of ['code','blocks']) {
     await page.locator('#editorMode'+mode).click();assert.deepEqual(await read(),initial,'mode selection preserves full design and history');
@@ -217,7 +217,7 @@ async function reviewBlockDiscoverability(page) {
       return {text:label.textContent,previewBottom:preview.bottom,top:box.top,width:box.width,
         overflow:label.scrollWidth>label.clientWidth,display:getComputedStyle(label).display};
     });
-    assert.equal(hint.text,'内容と秒数を決めて話す');
+    assert.equal(hint.text,'ことばと秒数を決めて話す');
     assert.equal(hint.display,'block');
     assert.ok(hint.top>=hint.previewBottom,'the complete explanation begins below its block');
     assert.equal(hint.overflow,false,'the explanation wraps within the candidate');
@@ -361,7 +361,7 @@ async function reviewConditionSearch(page, capture) {
   const cancelledDiagnosis = await reviewCancelledDiagnosis(page);
   const search = await addBlock(page, 'もし', 'IfStatement');
   const searchAfterStatement = await search.inputValue();
-  const conditionPicker = page.locator('#blockEditor [data-blockui-action="hole-select-expression"][aria-label="条件の値を選ぶ"]:visible');
+  const conditionPicker = page.locator('#blockEditor [data-blockui-action="hole-select-expression"][aria-label="きまりの中身を えらぶ"]:visible');
   await conditionPicker.click();
   await openPaletteOptions(page);
   const mode = page.locator('#blockEditor [data-blockui-palette-mode]:visible').first();
@@ -374,7 +374,7 @@ async function reviewConditionSearch(page, capture) {
   const enabled = await list.getAttribute('aria-disabled');
   await list.click();
   const ifNode = page.locator('#blockEditor .blockui-node[data-schema-id="IfStatement"]').last();
-  const bodyPicker = ifNode.locator('[data-blockui-action="hole-select-statement"][aria-label="条件が成り立つときに命令を入れる"]');
+  const bodyPicker = ifNode.locator('[data-blockui-action="hole-select-statement"][aria-label="きまりに あてはまる ときに ブロックを入れる"]');
   await bodyPicker.click();
   await openPaletteOptions(page);
   await page.locator('#blockEditor [data-blockui-palette-mode]:visible').first().selectOption('statement');

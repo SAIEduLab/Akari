@@ -32,7 +32,7 @@ test(unitIds[2],()=>{
   assert.deepEqual(steps.map(s=>s.id),auditRoute(course,leaf));
   for(const s of steps){for(const k of ['id','goal','message','target','start','allowed','input','ime','success','recovery','next','exit'])assert.ok(k in s,s.id+'/'+k);assert.ok(s.allowed.includes('exit')&&s.allowed.includes('stop'));}
   const states=d.tutorialExpectedTrees(practice,steps);assert.equal(states.length,steps.length+1);
-  assert.equal(practice.scripts[0].source,'ほかの実行をすべて止める。','only the visible click guard is provided');
+  assert.equal(practice.scripts[0].source,'ほかの動きをぜんぶ止める。','only the visible click guard is provided');
   const finalSource=a.formatScript(a.blockDecode(states.at(-1)));practice.scripts[0].source=finalSource;
   const compiled=a.compileProject(practice);assert.equal(compiled.errors.length,0,JSON.stringify(compiled.errors));
   const runtime=new a.RuntimeModel(practice,{});let clock=0,serial=0,pending=[];const says=[],tones=[],turns=[];
