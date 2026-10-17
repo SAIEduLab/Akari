@@ -10,7 +10,10 @@ import {installRegressionProject} from '../lib/gate-ui-fixture.mjs';
 import {editorAssetIds,audioIds,codecBrowser} from '../lib/feature-contract.mjs';
 import {browserEnvironment as expected,verifyBrowserEnvironment} from '../lib/browser-environment.mjs';
 import {uiButtonIds,checkUiButtonValidatorNegatives} from '../lib/ui-buttons-contract.mjs';
+import {caseRecorder,writeCaseReport} from '../lib/gate-case-contract.mjs';
 const {withFreshPage}=createRequire(import.meta.url)('../browser/cases/ui-case.cjs');
+const [output]=process.argv.slice(2);assert.ok(output,'usage: ci-regression.mjs <result.json>');
+const {results,pass}=caseRecorder();
 // Reproduce the actual product's 350 ms post-cancel click guard with a controlled clock.
 const source=fs.readFileSync(currentProductFile(),'utf8');
 const start=source.indexOf('    function cancelDrag() {'),end=source.indexOf('    function previewDrag(',start);
@@ -18,11 +21,11 @@ assert.ok(start>0&&end>start);
 const sandbox={Date:{now:()=>1000},drag:{started:true},ghost:null,snapPreview:null,dragFrame:null,
   suppressClickUntil:0,root:{querySelectorAll:()=>[],classList:{remove(){}}},notifyPending(){},updateControls(){}};
 vm.runInNewContext(source.slice(start,end)+';cancelDrag();',sandbox);
-assert.equal(sandbox.suppressClickUntil,1350);assert.equal(sandbox.drag,null);
+assert.equal(sandbox.suppressClickUntil,1350);assert.equal(sandbox.drag,null);pass('click-guard/cancel-sets-suppression');
 const clickStart=source.indexOf("        if (Date.now() < suppressClickUntil) {",end);
 const clickEnd=source.indexOf('\n      },',clickStart);assert.ok(clickStart>end&&clickEnd>clickStart);
 let suppressed=0;sandbox.event={preventDefault(){suppressed++;},stopImmediatePropagation(){}};
-vm.runInNewContext(source.slice(clickStart,clickEnd),sandbox);assert.equal(suppressed,1);
+vm.runInNewContext(source.slice(clickStart,clickEnd),sandbox);assert.equal(suppressed,1);pass('click-guard/next-click-suppressed');
 
 // Exercise the same case lifecycle used by ui-interactions. A previous page cannot
 // leak suppression or storage; failures are propagated once, never retried.
@@ -36,25 +39,26 @@ const browser={async newContext(options){
 const config={url:'file:///fixture.html',errors:[],networkRequests:[]};
 await withFreshPage(browser,config,async p=>{p.suppressed=true;p.storage.draft='prior';});
 await withFreshPage(browser,config,async p=>{assert.equal(p.suppressed,false);assert.deepEqual(p.storage,{});});
+pass('fresh-context/isolated-pages');
 const failure=new Error('real test failure');
 await assert.rejects(withFreshPage(browser,config,async()=>{calls++;throw failure;}),e=>e===failure);
-assert.equal(calls,1);assert.equal(contexts,3);assert.equal(closed,3);
-pages[0].listeners.pageerror({stack:'observed page error'});assert.deepEqual(config.errors,['observed page error']);
+assert.equal(calls,1);assert.equal(contexts,3);assert.equal(closed,3);pass('fresh-context/failure-propagated-once');
+pages[0].listeners.pageerror({stack:'observed page error'});assert.deepEqual(config.errors,['observed page error']);pass('fresh-context/page-error-recorded');
 let aborted=0;await routeCallbacks[0]({request:()=>({url:()=> 'https://example.test'}),abort:()=>{aborted++;}});
-assert.deepEqual(config.networkRequests,['https://example.test']);assert.equal(aborted,1);
+assert.deepEqual(config.networkRequests,['https://example.test']);assert.equal(aborted,1);pass('fresh-context/network-aborted');
 let startupClosed=0;
 await assert.rejects(withFreshPage({async newContext(){return {async route(){},async newPage(){throw failure;},async close(){startupClosed++;}};}},config,()=>assert.fail('must not run')),e=>e===failure);
-assert.equal(startupClosed,1);
+assert.equal(startupClosed,1);pass('fresh-context/startup-failure-closed');
 
 const inputs={head:'fixture',files:{}},good={status:'PASS',snapshot:inputs,playwright:expected.playwright,
   revision:expected.revision,browser:expected.version,executablePath:'/test/chromium',executableSha256:'a'.repeat(64),
   launchTimeout:15000,launches:[1,2,3].map(id=>({id,browser:expected.version,ms:100,scriptResult:42,mp3:true}))};
-verifyBrowserEnvironment(good,inputs);let rejected=0;
-for(const mutate of [r=>r.status='FAIL',r=>r.snapshot.head='other',r=>r.playwright='other',r=>r.revision='other',
-  r=>r.browser='other',r=>r.launchTimeout=30000,r=>r.executableSha256='bad',r=>r.executablePath='',
-  r=>r.launches.pop(),r=>r.launches[0].id=2,r=>r.launches[0].browser='other',
-  r=>r.launches[0].ms=15001,r=>r.launches[0].ms=-1,r=>r.launches[0].scriptResult=0,r=>r.launches[0].mp3=false]){
-  const bad=structuredClone(good);mutate(bad);assert.throws(()=>verifyBrowserEnvironment(bad,inputs));rejected++;
+verifyBrowserEnvironment(good,inputs);pass('browser-environment/accepted');let rejected=0;
+for(const [name,mutate] of [['status',r=>r.status='FAIL'],['snapshot',r=>r.snapshot.head='other'],['playwright',r=>r.playwright='other'],['revision',r=>r.revision='other'],
+  ['browser',r=>r.browser='other'],['launch-timeout',r=>r.launchTimeout=30000],['executable-hash',r=>r.executableSha256='bad'],['executable-path',r=>r.executablePath=''],
+  ['missing-launch',r=>r.launches.pop()],['launch-id',r=>r.launches[0].id=2],['launch-browser',r=>r.launches[0].browser='other'],
+  ['slow-launch',r=>r.launches[0].ms=15001],['negative-launch-time',r=>r.launches[0].ms=-1],['launch-script-result',r=>r.launches[0].scriptResult=0],['launch-mp3',r=>r.launches[0].mp3=false]]){
+  const bad=structuredClone(good);mutate(bad);assert.throws(()=>verifyBrowserEnvironment(bad,inputs));rejected++;pass('browser-environment/reject-'+name);
 }
 console.log(`CI regression: actual click guard reproduced; fresh-context isolation and cleanup PASS; ${rejected} invalid environments rejected`);
 
@@ -78,13 +82,16 @@ const owner={async send(method,params){
 }};
 const unrelated={async send(method,params){if(params.enabled===otherFlag)return;otherFlag=params.enabled;focused=otherFlag;}};
 await unrelated.send('Emulation.setFocusEmulationEnabled',{enabled:false});assert.equal(focused,true,'old call must reproduce retained emulation');
+pass('native-focus/old-session-retains-emulation');
 const page={_connection:{toImpl(value){assert.equal(value,page);return {delegate:{_mainFrameSession:{_client:owner}}};}}};
 const receipt=await loadAdapter()(page);assert.equal(ownerCalls,1);assert.equal(focused,false);assert.equal(receipt.session,'playwright-main-frame');
-await assert.rejects(loadAdapter('other')(page));
-await assert.rejects(loadAdapter()({}));
-await assert.rejects(loadAdapter()({_connection:{toImpl(){return {};}}}));
+pass('native-focus/owner-session-disabled');
+await assert.rejects(loadAdapter('other')(page));pass('native-focus/reject-playwright-version');
+await assert.rejects(loadAdapter()({}));pass('native-focus/reject-missing-connection');
+await assert.rejects(loadAdapter()({_connection:{toImpl(){return {};}}}));pass('native-focus/reject-missing-session');
 const denied=new Error('CDP failure');
 await assert.rejects(loadAdapter()({_connection:{toImpl(){return {delegate:{_mainFrameSession:{_client:{send(){throw denied;}}}}};}}}),e=>e===denied);
+pass('native-focus/reject-cdp-error');
 console.log('Native focus adapter: old-session failure reproduced; owning-session disable PASS; 4 invalid/error paths rejected');
 
 // Execute the actual button runner with fixture/cleanup failures, without a browser retry.
@@ -117,8 +124,9 @@ assert.equal(buttonResults[0].phase,'fixture-import');assert.equal(buttonResults
 assert.equal(buttonResults[0].hostFailure,cleanupError.stack);assert.equal(buttonResults[0].pass,false);
 assert.equal(buttonResults[1].phase,'button-actions');assert.equal(buttonResults[1].detail,actionError.stack);
 assert.equal(buttonResults[1].pass,false);assert.ok(buttonResults.slice(2).every(r=>r.pass));
-assert.ok(budgets.every((n,i)=>n>0&&n<=360000&&(i===0||n<budgets[i-1])));
-checkUiButtonValidatorNegatives();
+pass('ui-buttons/failures-retained-without-retry');
+assert.ok(budgets.every((n,i)=>n>0&&n<=360000&&(i===0||n<budgets[i-1])));pass('ui-buttons/decreasing-budget');
+checkUiButtonValidatorNegatives();pass('ui-buttons/validator-negatives');
 console.log('UI buttons: fixture/cleanup and assertion failures retained; all cases isolated without retry; 360s budget and 10 validator negatives PASS');
 
 // A partial rerun may use an unchanged earlier job, but never hide a newer failure.
@@ -134,21 +142,23 @@ try {
   }
   const old=codecBundle(1);let selected=selectBundleDirectory('audio-codecs-linux',selectionDir,provenance);
   assert.equal(selected.attempt,1);verifyBundle('audio-codecs-linux',selected.directory,snapshotInputs,selected.provenance);
+  pass('partial-rerun/earlier-attempt-selected');
   const latest=codecBundle(2);selected=selectBundleDirectory('audio-codecs-linux',selectionDir,provenance);
   assert.equal(selected.attempt,2);verifyBundle('audio-codecs-linux',selected.directory,snapshotInputs,selected.provenance);
-  assert.throws(()=>verifyBundle('audio-codecs-linux',latest.dir,snapshotInputs,provenance),'actual attempt must match');
-  assert.throws(()=>verifyBundle('audio-codecs-linux',latest.dir,{...snapshotInputs,productSha256:'b'.repeat(64)},selected.provenance),'same snapshot required');
+  pass('partial-rerun/latest-attempt-selected');
+  assert.throws(()=>verifyBundle('audio-codecs-linux',latest.dir,snapshotInputs,provenance),'actual attempt must match');pass('partial-rerun/reject-attempt-mismatch');
+  assert.throws(()=>verifyBundle('audio-codecs-linux',latest.dir,{...snapshotInputs,productSha256:'b'.repeat(64)},selected.provenance),'same snapshot required');pass('partial-rerun/reject-snapshot-mismatch');
   fs.writeFileSync(path.join(latest.dir,'bundle.json'),JSON.stringify({...latest.bundle,status:'FAIL'}));
-  assert.throws(()=>verifyBundle('audio-codecs-linux',selectBundleDirectory('audio-codecs-linux',selectionDir,provenance).directory,snapshotInputs,selected.provenance),'new failure cannot use old PASS');
+  assert.throws(()=>verifyBundle('audio-codecs-linux',selectBundleDirectory('audio-codecs-linux',selectionDir,provenance).directory,snapshotInputs,selected.provenance),'new failure cannot use old PASS');pass('partial-rerun/reject-newer-failure');
   fs.unlinkSync(path.join(latest.dir,'bundle.json'));
-  assert.throws(()=>verifyBundle('audio-codecs-linux',selectBundleDirectory('audio-codecs-linux',selectionDir,provenance).directory,snapshotInputs,selected.provenance),'unsealed latest cannot use old PASS');
-  assert.throws(()=>selectBundleDirectory('audio-codecs-linux',selectionDir,{run:'999',attempt:'3'}),'different run');
-  assert.throws(()=>selectBundleDirectory('selftest',selectionDir,provenance),'missing kind');
+  assert.throws(()=>verifyBundle('audio-codecs-linux',selectBundleDirectory('audio-codecs-linux',selectionDir,provenance).directory,snapshotInputs,selected.provenance),'unsealed latest cannot use old PASS');pass('partial-rerun/reject-unsealed-latest');
+  assert.throws(()=>selectBundleDirectory('audio-codecs-linux',selectionDir,{run:'999',attempt:'3'}),'different run');pass('partial-rerun/reject-different-run');
+  assert.throws(()=>selectBundleDirectory('selftest',selectionDir,provenance),'missing kind');pass('partial-rerun/reject-missing-kind');
   fs.mkdirSync(path.join(selectionDir,'akari-audio-codecs-linux-123-4'));
-  assert.throws(()=>selectBundleDirectory('audio-codecs-linux',selectionDir,provenance),'future attempt');
+  assert.throws(()=>selectBundleDirectory('audio-codecs-linux',selectionDir,provenance),'future attempt');pass('partial-rerun/reject-future-attempt');
   fs.rmdirSync(path.join(selectionDir,'akari-audio-codecs-linux-123-4'));
   fs.mkdirSync(path.join(selectionDir,'akari-audio-codecs-linux-123-02'));
-  assert.throws(()=>selectBundleDirectory('audio-codecs-linux',selectionDir,provenance),'noncanonical attempt');
+  assert.throws(()=>selectBundleDirectory('audio-codecs-linux',selectionDir,provenance),'noncanonical attempt');pass('partial-rerun/reject-noncanonical-attempt');
 } finally {
   const relative=path.relative(evidenceRoot,selectionDir);assert.ok(relative&&!relative.startsWith('..')&&!path.isAbsolute(relative));
   fs.rmSync(selectionDir,{recursive:true});
@@ -177,16 +187,20 @@ assert.deepEqual(assetResults.map(r=>r.id),[...editorAssetIds]);assert.deepEqual
 assert.equal(assetResults[0].detail,fixtureError.stack);assert.equal(assetResults[0].phase,'fixture-import');assert.equal(assetResults[0].hostFailure,cleanupError.stack);
 assert.equal(assetResults[1].detail,actionError.stack);assert.equal(assetResults[1].phase,'asset-actions');
 assert.ok(assetResults.slice(0,2).every(r=>!r.pass&&/Failure screenshot timeout/.test(r.screenshotFailure)));
-assert.ok(assetResults.slice(2).every(r=>r.pass));assert.equal(assetLaunches,editorAssetIds.length);
-assert.ok(assetBudgets.every((n,i)=>n>0&&n<=300000&&(i===0||n<assetBudgets[i-1])));
+pass('asset-diagnostics/errors-persisted-before-stalled-screenshots');
+assert.ok(assetResults.slice(2).every(r=>r.pass));assert.equal(assetLaunches,editorAssetIds.length);pass('asset-diagnostics/later-cases-run-once');
+assert.ok(assetBudgets.every((n,i)=>n>0&&n<=300000&&(i===0||n<assetBudgets[i-1])));pass('asset-diagnostics/decreasing-budget');
 console.log('Asset diagnostics: original errors persisted before stalled screenshots; later cases run once; 300s budget PASS');
 
 let contextClosed=0,viewportOptions;
 await pageFor({async newContext(options){viewportOptions=options;return {async route(){},async newPage(){return {on(){},setDefaultTimeout(ms){assert.equal(ms,30000);},async goto(){},async waitForFunction(){}};},async close(){contextClosed++;}};}},'fixture.html',async()=>{}, {viewport:{width:1440,height:1100},offline:false});
-assert.deepEqual(viewportOptions,{viewport:{width:1440,height:1100},offline:true});assert.equal(contextClosed,1);
+assert.deepEqual(viewportOptions,{viewport:{width:1440,height:1100},offline:true});assert.equal(contextClosed,1);pass('fixture-readiness/offline-viewport-context');
+let readinessChecks=0;
 await installRegressionProject({async evaluate(){return {name:'監査の基準作品',text:'fixture'};},locator(){return {async setInputFiles(){},async selectOption(){},async isVisible(){return false;},async click(){}};},async waitForFunction(predicate,name,options){
   assert.equal(options.polling,100);
   const ready=(state,input)=>vm.runInNewContext('('+predicate.toString()+')('+JSON.stringify(name)+')',{document:{querySelector:()=>({value:input})},Akari:{app:{project:{name},editorState:{state}}}});
-  assert.equal(ready('DESIGN','pending-file'),false);assert.equal(ready('PREPARING',''),false);assert.equal(ready('DESIGN',''),true);
+  assert.equal(ready('DESIGN','pending-file'),false);assert.equal(ready('PREPARING',''),false);assert.equal(ready('DESIGN',''),true);readinessChecks++;
 }});
+assert.equal(readinessChecks,1,'the readiness predicate was evaluated');pass('fixture-readiness/unfinished-import-rejected');
 console.log('Fixture readiness: unfinished import/state rejected; initial viewport and offline context preserved PASS');
+writeCaseReport(output,'ci-regression',results);

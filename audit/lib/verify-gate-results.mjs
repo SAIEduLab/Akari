@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {gateSteps,integrityControlIds} from './gate-contract.mjs';
+import {verifyGateCaseReports} from './gate-case-contract.mjs';
 import {verify} from './verify-test-results.mjs';
 import {verifyLanguageResults} from './verify-language-results.mjs';
 import {verifySurfaceResults} from './verify-surface-results.mjs';
@@ -27,7 +28,11 @@ export function verifyGateResults(dir,inputs){
   for(const s of gate.steps){assert.equal(s.status,'PASS',s.id);assert.equal(s.exit,0);assert.equal(s.signal,null);assert.ok(fs.existsSync(path.join(dir,s.log)));}
   verifyEntryReport(read('entry-unit'),'unit',inputs);verifyEntryReport(read('entry-browser'),'browser',inputs,{file:path.join(dir,'entry-browser.json')});
   const entryVerified=read('entry-verify');assert.equal(entryVerified.status,'PASS');assert.equal(entryVerified.finalCommittedEvidence,true);assert.deepEqual(entryVerified.snapshot,inputs);assert.equal(entryVerified.negatives.length,20);for(const row of entryVerified.negatives)assert.equal(row.rejected,true);
-  verify(read('product'),JSON.parse(fs.readFileSync('audit/manifests/product-tests.json')),inputs);
+  const productTests=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
+  verify(read('product'),productTests,inputs);
+  // Steps whose evidence is a list of named checks: release-distribution, workflow-contract,
+  // change-guard-negative, the validator negatives, ci/dom regressions and node-product.
+  verifyGateCaseReports(read,inputs,productTests);
   verifyProductSource(read('product-source'),inputs);
   for(const mode of ['inventory','documents'])verifyPublicationReport(read('publication-'+mode),mode,inputs);
   verifyBrowserEnvironment(read('browser-environment'),inputs);
