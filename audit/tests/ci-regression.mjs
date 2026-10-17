@@ -29,11 +29,13 @@ vm.runInNewContext(source.slice(clickStart,clickEnd),sandbox);assert.equal(suppr
 
 // Exercise the same case lifecycle used by ui-interactions. A previous page cannot
 // leak suppression or storage; failures are propagated once, never retried.
-let contexts=0,closed=0,calls=0;const routeCallbacks=[],pages=[];
+let contexts=0,closed=0,calls=0;const routeCallbacks=[],pages=[],dialogHandlers=[];
 const browser={async newContext(options){
   contexts++;assert.deepEqual(options,{viewport:{width:1440,height:1800}});
   const page={suppressed:false,storage:{},listeners:{},setDefaultTimeout(ms){assert.equal(ms,10000);},
-    on(name,fn){this.listeners[name]=fn;},async goto(url){assert.equal(url,'file:///fixture.html');}};
+    on(name,fn){this.listeners[name]=fn;},async goto(url){assert.equal(url,'file:///fixture.html');},
+    // The product's own unsaved-work question is answered on every fresh page.
+    locator(selector){return {selector};},async addLocatorHandler(locator){dialogHandlers.push(locator.selector);}};
   pages.push(page);return {async route(pattern,fn){assert.ok(pattern.test('https://example.test'));routeCallbacks.push(fn);},async newPage(){return page;},async close(){closed++;}};
 }};
 const config={url:'file:///fixture.html',errors:[],networkRequests:[]};
@@ -42,7 +44,7 @@ await withFreshPage(browser,config,async p=>{assert.equal(p.suppressed,false);as
 pass('fresh-context/isolated-pages');
 const failure=new Error('real test failure');
 await assert.rejects(withFreshPage(browser,config,async()=>{calls++;throw failure;}),e=>e===failure);
-assert.equal(calls,1);assert.equal(contexts,3);assert.equal(closed,3);pass('fresh-context/failure-propagated-once');
+assert.equal(calls,1);assert.equal(contexts,3);assert.equal(closed,3);assert.deepEqual(dialogHandlers,Array(3).fill('#loseConfirmModal.show'));pass('fresh-context/failure-propagated-once');
 pages[0].listeners.pageerror({stack:'observed page error'});assert.deepEqual(config.errors,['observed page error']);pass('fresh-context/page-error-recorded');
 let aborted=0;await routeCallbacks[0]({request:()=>({url:()=> 'https://example.test'}),abort:()=>{aborted++;}});
 assert.deepEqual(config.networkRequests,['https://example.test']);assert.equal(aborted,1);pass('fresh-context/network-aborted');
