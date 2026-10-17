@@ -14,7 +14,7 @@ export const plan=read('audit/fixtures/child-ux-plan.json');
 const matrix=read('audit/fixtures/ux-normal-matrix.json').cases;
 export const currentInputs=()=>snapshot(currentProductFile());
 export function verifyFrozenInputs(){
-  assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-plan.json')),'1c9285ce32c4c5487a258c9b421c67775e63f491d12529ecaf32bd55fe053cf6','independent supplemental task plan');
+  assert.equal(sha(fs.readFileSync('audit/fixtures/child-ux-plan.json')),'9f4edd6a0ec9de7566e10f87f429c138a2f53a8436f6ef2ab0670df73a7e590c','independent supplemental task plan');
   const benchmark=read('audit/fixtures/ux-edit-benchmark.json');
   assert.deepEqual(plan.taskIds,taskIds);assert.deepEqual(plan.order,benchmark.order);assert.deepEqual(plan.tasks.map(t=>t.id),taskIds);
   for(const [i,t]of plan.tasks.entries()){

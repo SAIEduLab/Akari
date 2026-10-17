@@ -48,7 +48,7 @@ function replacement(o,source,fixed,document){
  assert.equal(o.opened.state,'DESIGN');assert.deepEqual(o.opened.project,o.before.project);
  assert.equal(o.selected.source,source);assert.deepEqual(o.selected.project,o.before.project);
  assert.equal(o.selected.choice,String(o.choose));assert.match(o.opened.text,/ここは文字です/);
- assert.match(o.opened.text,/だけを変更/);assert.equal(o.opened.choice,'');assert.equal(o.opened.applyDisabled,true);
+ assert.match(o.opened.text,/だけを かえます/);assert.equal(o.opened.choice,'');assert.equal(o.opened.applyDisabled,true);
  assert.deepEqual(o.undo.project,o.before.project);assert.deepEqual(o.redo.project,o.after.project);
  assert.equal(o.undo.source,source);assert.equal(o.redo.source,fixed);
  sameData(o.before.project,o.after.project);
@@ -62,24 +62,24 @@ export function verifyListRepairReport(report){
   const o=at(id);replacement(o,sourceFor(2),fixedFor(2));assert.equal(o.setup,'pointer-keyboard-only');
   assert.deepEqual(o.before.project.projectData.lists.map(l=>[l.name,l.initialValue]),[['買うもの',shopping]]);
   assert.deepEqual(o.runtime.speech,['パン']);assert.equal(o.runtime.error,null);
-  assert.deepEqual(o.opened.options,['使うリストを選ぶ','作品のリスト「買うもの」']);
+  assert.deepEqual(o.opened.options,['使う リストを えらぶ','作品のリスト「買うもの」']);
   for(const r of o.geometry.controls){assert.ok(r.width>0&&r.height>0);assert.ok(r.left>=0&&r.right<=o.geometry.width&&r.top>=0&&r.bottom<=o.geometry.height);assert.equal(r.hit,true);}
  }
  for(const c of listRepairCases){const o=at(c.id);replacement(o,c.source,c.fixed,c.documentAfter);assert.equal(o.setup,'serialized-fixture-then-pointer-keyboard');
   assert.deepEqual(o.before.project.scripts[0].document,c.documentBefore);
   assert.equal(o.runtime.error,c.error||null);
   if(c.speech)assert.ok(o.runtime.speech.includes(c.speech));
-  if(c.id==='scope/stage'){assert.deepEqual(o.opened.options,['使うリストを選ぶ','作品のリスト「買うもの」']);assert.equal(o.runtime.score,'パン');}
-  if(c.local&&c.id!=='scope/stage')assert.deepEqual(o.opened.options,['使うリストを選ぶ','作品のリスト「買うもの」','あかりのリスト「買うもの」']);
-  if(c.dango)assert.deepEqual(o.opened.options,['使うリストを選ぶ','作品のリスト「買うもの」','だんごのリスト「買うもの」']);
+  if(c.id==='scope/stage'){assert.deepEqual(o.opened.options,['使う リストを えらぶ','作品のリスト「買うもの」']);assert.equal(o.runtime.score,'パン');}
+  if(c.local&&c.id!=='scope/stage')assert.deepEqual(o.opened.options,['使う リストを えらぶ','作品のリスト「買うもの」','あかりのリスト「買うもの」']);
+  if(c.dango)assert.deepEqual(o.opened.options,['使う リストを えらぶ','作品のリスト「買うもの」','だんごのリスト「買うもの」']);
   if(c.id==='range/escape-html')assert.equal(o.injectedElements,0);
  }
  for(const id of ['cancel/close','cancel/panel']){const o=at(id);assert.deepEqual(o.after.project,o.before.project);assert.equal(o.after.history,o.before.history);assert.equal(o.panelCount,0);assert.equal(o.after.state,id==='cancel/close'?'PAUSED':'DESIGN');}
- for(const id of ['boundary/missing-name','boundary/empty-string']){const o=at(id);assert.equal(o.failure.code,'R411');assert.equal(o.opened.choice,'');assert.deepEqual(o.after.project,o.before.project);assert.deepEqual(o.opened.options,['使うリストを選ぶ','作品のリスト「買うもの」']);}
- {const o=at('boundary/no-lists');assert.equal(o.failure.code,'R411');assert.deepEqual(o.opened.options,['使うリストを選ぶ']);assert.equal(o.opened.selectDisabled,true);assert.equal(o.opened.applyDisabled,true);assert.match(o.opened.text,/使えるリストはありません/);assert.deepEqual(o.after.project,o.before.project);}
+ for(const id of ['boundary/missing-name','boundary/empty-string']){const o=at(id);assert.equal(o.failure.code,'R411');assert.equal(o.opened.choice,'');assert.deepEqual(o.after.project,o.before.project);assert.deepEqual(o.opened.options,['使う リストを えらぶ','作品のリスト「買うもの」']);}
+ {const o=at('boundary/no-lists');assert.equal(o.failure.code,'R411');assert.deepEqual(o.opened.options,['使う リストを えらぶ']);assert.equal(o.opened.selectDisabled,true);assert.equal(o.opened.applyDisabled,true);assert.match(o.opened.text,/使える リストは ありません/);assert.deepEqual(o.after.project,o.before.project);}
  {const o=at('boundary/ordinary-string');assert.deepEqual(o.runtime.speech,['買うもの']);assert.equal(o.runtime.error,null);assert.equal(o.repairCount,0);assert.deepEqual(o.after.project,o.before.project);}
  {const o=at('boundary/plain-evaluator');assert.deepEqual(o.errors,['R411','R411']);}
- {const o=at('stale/source-changed');const next=structuredClone(o.before.project);next.scripts[0].source=sourceFor(3);assert.deepEqual(o.after.project,next);assert.equal(o.applyDisabled,true);assert.match(o.notice,/本文.*変わっています/);}
+ {const o=at('stale/source-changed');const next=structuredClone(o.before.project);next.scripts[0].source=sourceFor(3);assert.deepEqual(o.after.project,next);assert.equal(o.applyDisabled,true);assert.match(o.notice,/本文.*かわりました/);}
  for(const id of ['stale/new-run','stale/new-project']){const o=at(id);assert.equal(o.panelCount,0);assert.equal(o.applyCount,0);assert.deepEqual(o.after.project,o.expectedProject);}
  {const o=at('stale/detached-handler');assert.equal(o.classification,'synthetic stale callback after pointer stop / pending keyboard input');assert.equal(o.inputBefore,'「未確定');assert.equal(o.inputAfter,o.inputBefore);assert.deepEqual(o.after,o.before);assert.equal(o.panelCount,0);}
  {const o=at('stale/older-record');assert.equal(o.recordCount,2);assert.equal(o.selectedRecord,'1');const next=structuredClone(o.before.project);next.scripts[0].source=fixedFor(1);assert.deepEqual(o.after.project,next);assert.equal(o.after.project.scripts[1].source,'「買うもの」の3番目を2秒話します。');}
@@ -88,7 +88,7 @@ export function verifyListRepairReport(report){
  {const o=at('boundary/isolated-runtime');assert.equal(o.classification,'factory reconstructed with Function / no editor lexical scope');assert.deepEqual(o.runs.map(r=>r.variant),isolatedListCases.map(c=>c.variant));
   for(const [i,r]of o.runs.entries()){const c=isolatedListCases[i];assert.deepEqual(r.compileErrors,[]);assert.equal(r.thrown,null);assert.deepEqual(r.errors,[{code:'R411',message:'「N番目」はリストに使います'}]);assert.equal(r.paused,true);assert.deepEqual(r.records,[{key:c.key,source:c.source,ownerKey:c.ownerKey}]);assert.deepEqual(r.after,r.before);}
  }
- for(const [id,code,message,source]of [['boundary/generated-player-r411','R411','「N番目」はリストに使います',sourceFor(2)],['boundary/generated-player-r404','R404','リストの範囲外です',fixedFor(4)]]){const o=at(id);assert.equal(o.classification,'generated HTML API / actual offline file player / pointer controls');assert.equal(o.source,source);assert.match(o.file,/\.html$/);assert.deepEqual(o.before,o.after);assert.deepEqual(o.executions,[0,1].map(()=>({state:'PAUSED',output:code+' '+message,bubbles:[],stopDisabled:false})));assert.deepEqual(o.stopped,['STOPPED','STOPPED']);}
+ for(const [id,code,message,source]of [['boundary/generated-player-r411','R411','「N番目」はリストに使います',sourceFor(2)],['boundary/generated-player-r404','R404','その 番号の ものは リストに ありません。番号を たしかめてください',fixedFor(4)]]){const o=at(id);assert.equal(o.classification,'generated HTML API / actual offline file player / pointer controls');assert.equal(o.source,source);assert.match(o.file,/\.html$/);assert.deepEqual(o.before,o.after);assert.deepEqual(o.executions,[0,1].map(()=>({state:'PAUSED',output:code+' '+message,bubbles:[],stopDisabled:false})));assert.deepEqual(o.stopped,['STOPPED','STOPPED']);}
  return n;
 }
 export const listRepairWrongMeaning=[

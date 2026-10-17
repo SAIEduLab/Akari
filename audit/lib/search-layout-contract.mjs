@@ -4,27 +4,27 @@ import {browserEnvironment} from './browser-environment.mjs';
 
 export const searchLayoutSizes=[[1180,757],[1188,848],[1366,768],[1024,768],[390,844]];
 export const searchLayoutIds=[...searchLayoutSizes.map(([w,h])=>`main/${w}x${h}`),'callable/1188x848','callable/390x844','browser-zoom/125-percent'];
-export const searchLayoutSamples=['ブロックを探す','右に行きたい','てんすう'];
+export const searchLayoutSamples=['ブロックを さがす','右に行きたい','てんすう'];
 export const searchLayoutSource='「本文を守る」と言う。';
 const contains=(outer,inner,label)=>{assert.ok(inner.width>0&&inner.height>0,label+' has a box');assert.ok(inner.left>=outer.left-1&&inner.right<=outer.right+1&&inner.top>=outer.top-1&&inner.bottom<=outer.bottom+1,label+' stays inside');};
 function geometry(g){
-  assert.equal(g.label,'ブロックを探す');assert.equal(g.accessibleName,'ブロックを探す');assert.equal(g.labelCount,1);
+  assert.equal(g.label,'ブロックを さがす');assert.equal(g.accessibleName,'ブロックを さがす');assert.equal(g.labelCount,1);
   assert.ok(g.fontSize>=13&&g.fontSize<=14,'ordinary input text size is preserved');assert.ok(g.labelFontSize>=12);assert.ok(g.input.height>=32);
   assert.deepEqual(g.samples.map(s=>s.text),searchLayoutSamples);for(const s of g.samples)assert.ok(Number.isFinite(s.width)&&s.width>0);
   assert.ok(g.contentWidth>=Math.max(...g.samples.map(s=>s.width))+18,'sample word plus native search clear affordance fits');
   contains(g.controls,g.input,'search');contains(g.controls,g.labelRect,'visible label');contains(g.controls,g.summary,'candidate summary');contains(g.controls,g.scope,'search scope');
   assert.ok(g.labelRect.bottom<=g.input.top+1);assert.ok(g.input.bottom<=g.summary.top+1,'adjacent controls wrap after search');
   assert.ok(g.input.bottom<=g.scope.top+1);assert.ok(g.summary.bottom<=g.scope.top+1||g.scope.right<=g.summary.left||g.summary.right<=g.scope.left,'scope and summary do not overlap');
-  assert.equal(g.summaryText,'候補の表示');assert.ok(g.summaryFontSize>=11);assert.doesNotMatch(g.summaryAfter,/\.\.\./);
+  assert.equal(g.summaryText,'ブロックの見せ方');assert.ok(g.summaryFontSize>=11);assert.doesNotMatch(g.summaryAfter,/\.\.\./);
   assert.ok(g.scopeFontSize>=11);assert.equal(g.scopeClipped,false);assert.equal(g.summaryClipped,false);
   assert.equal(g.inputHit,true);assert.equal(g.labelHit,true);assert.ok(g.input.left>=0&&g.input.right<=g.viewport.width+1);
 }
 function exercise(o,callable=false){
   geometry(o.initial);geometry(o.queried);geometry(o.optionsOpen);
-  assert.equal(o.initial.scopeText,'すべての分類から探せます');assert.equal(o.initial.value,'');assert.equal(o.queried.value,'時間を待つ');
+  assert.equal(o.initial.scopeText,'すべての なかまから さがせます');assert.equal(o.initial.value,'');assert.equal(o.queried.value,'時間を待つ');
   assert.equal(o.optionsOpen.value,'時間を待つ');assert.equal(o.optionsOpen.optionsExpanded,true);assert.ok(o.optionsOpen.mode.width>0);contains(o.optionsOpen.controls,o.optionsOpen.mode,'expanded candidate mode');
   assert.deepEqual(o.keyboard,{inputFocused:true,tabReachedSummary:true,enterOpened:true,enterClosed:true,shiftTabReturned:true,candidateEntered:true});
-  assert.equal(o.category.scope,'もし・くり返しの中を検索中');assert.equal(o.category.pressed,'true');assert.equal(o.category.query,'時間を待つ');assert.equal(o.cleared,'');
+  assert.equal(o.category.scope,'もし・くり返しの中を さがしています');assert.equal(o.category.pressed,'true');assert.equal(o.category.query,'時間を待つ');assert.equal(o.cleared,'');
   assert.ok(o.matches.includes('WaitTime'));assert.equal(o.insertionQuery,'時間を待つ');assert.deepEqual(o.afterSearch,o.before);assert.deepEqual(o.projectAfterSearch,o.before.project);
   assert.equal(o.inserted.waits.length,1);assert.equal(o.inserted.waits[0].seconds,1);assert.equal(o.inserted.history,o.before.history+1);
   assert.equal(o.after.source.includes('本文を守る'),true);assert.notEqual(o.after.source,o.before.source);
