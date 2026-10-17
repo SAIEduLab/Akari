@@ -53,6 +53,9 @@ async function install(p,{source='「もとの動き」と言う。',args=[]}={}
     q.projectData.lists=[{id:'shopping',name:'買うもの',initialValue:['りんご','パン']}];
     return Akari.serializeProject(q,Akari.makeDefaultAssetStore());},{source,args});
   await p.locator('#fileInput').setInputFiles({name:'child-diagnostic.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
+  // Unsaved work makes the product ask first; the fixture replaces it.
+  await p.waitForFunction(()=>document.querySelector('#loseConfirmModal.show')||Akari.app.project.name==='診断のことば');
+  await p.evaluate(()=>document.querySelector('#loseConfirmModal.show #loseConfirmProceed')?.click());
   await p.waitForFunction(()=>Akari.app.project.name==='診断のことば');
   await p.locator('#uiLevel').selectOption('advanced');await p.locator('#objectSelect').selectOption('sprite-1');
   if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();

@@ -4,7 +4,8 @@ import {browserEnvironment} from './browser-environment.mjs';
 
 export const searchLayoutSizes=[[1180,757],[1188,848],[1366,768],[1024,768],[390,844]];
 export const searchLayoutIds=[...searchLayoutSizes.map(([w,h])=>`main/${w}x${h}`),'callable/1188x848','callable/390x844','browser-zoom/125-percent'];
-export const searchLayoutSamples=['ブロックを さがす','右に行きたい','てんすう'];
+// Typical query lengths a child types (input data, not screen wording).
+export const searchLayoutSamples=['ブロックを探す','右に行きたい','てんすう'];
 export const searchLayoutSource='「本文を守る」と言う。';
 const contains=(outer,inner,label)=>{assert.ok(inner.width>0&&inner.height>0,label+' has a box');assert.ok(inner.left>=outer.left-1&&inner.right<=outer.right+1&&inner.top>=outer.top-1&&inner.bottom<=outer.bottom+1,label+' stays inside');};
 function geometry(g){
