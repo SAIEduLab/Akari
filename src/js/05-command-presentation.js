@@ -215,7 +215,7 @@
         SET_VOLUME: Object.freeze({
           label: '音の大きさを決める',
           inputs: Object.freeze(['音の大きさ']),
-          format: (a) => `音量を${a(0,'％')}にする`,
+          format: (a) => `音の大きさを${a(0,'％')}にする`,
         }),
         PITCH_UP: Object.freeze({
           label: '音の高さを上げる',

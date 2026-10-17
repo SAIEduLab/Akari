@@ -8644,7 +8644,7 @@ function createAkariExtensionHost(options) {
       const nums = () => args.map((x) => numberValue(x));
       switch (name) {
         case '乱数': {
-          if (args.length !== 2) throw new AkariError('R411', '「乱数」には 数を 2つ 入れます。れい：乱数（1、10）');
+          if (args.length !== 2) throw new AkariError('R411', '「どれか」の 計算には 数を 2つ 入れます。れい：1から10のどれか');
           const unit = commonUnit(args);
           let [a, b] = nums();
           if (a === b) return quantity(a, unit);
@@ -8662,7 +8662,7 @@ function createAkariExtensionHost(options) {
           return quantity(clamp(ensureFinite(value), lo, hi), unit);
         }
         case '余り': {
-          if (args.length !== 2) throw new AkariError('R411', '「余り」には 数を 2つ 入れます。れい：余り（10、3）');
+          if (args.length !== 2) throw new AkariError('R411', '「あまり」には 数を 2つ 入れます。れい：あまり（10、3）');
           const unit = commonUnit(args);
           const [a, b] = nums();
           if (b === 0) throw new AkariError('R401', '0で わった あまりは 出せません。わる数を 0では ない 数に してください');
@@ -8754,10 +8754,10 @@ function createAkariExtensionHost(options) {
         s = ast.sensor;
       switch (s) {
         case '横位置':
-          if (!a) throw new AkariError('R407', '「横位置」は キャラクターや 部品の 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「よこのばしょ」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.x, '歩');
         case '縦位置':
-          if (!a) throw new AkariError('R407', '「縦位置」は キャラクターや 部品の 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「たてのばしょ」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.y, '歩');
         case '方向':
           if (!a) throw new AkariError('R407', '「方向」は キャラクターや 部品の 動きの 中で 使います');
@@ -8766,13 +8766,13 @@ function createAkariExtensionHost(options) {
           if (!a) throw new AkariError('R407', '「大きさ」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.scalePercent, '％');
         case '衣装番号': {
-          if (!a) throw new AkariError('R407', '「衣装番号」は キャラクターの 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「すがたの番号」は キャラクターの 動きの 中で 使います');
           const c = r.component(ctx.runtimeId);
           if (c?.type !== 'sprite') throw new AkariError('R406', 'すがたを えらべるのは キャラクターだけです');
           return c.costumes.findIndex((x) => x.id === a.costumeId) + 1;
         }
         case '衣装名': {
-          if (!a) throw new AkariError('R407', '「衣装名」は キャラクターの 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「すがたの名前」は キャラクターの 動きの 中で 使います');
           const c = r.component(ctx.runtimeId);
           return c?.costumes?.find((x) => x.id === a.costumeId)?.name || '';
         }
@@ -11476,7 +11476,7 @@ function createAkariExtensionHost(options) {
         id: 'SoundCommand:SET_VOLUME',
         kind: 'SoundCommand',
         op: 'SET_VOLUME',
-        source: '音量を50％にする',
+        source: '音の大きさを50％にする',
       },
       {
         id: 'SoundCommand:PITCH_UP',
@@ -12041,10 +12041,11 @@ function createAkariExtensionHost(options) {
         b.name === '\u6570'
           ? ['\u300c12\u300d']
           : Array.from({ length: b.minArgs }, (_, i) => String(i + 1));
+      // The written form, as the formatter writes it (1から2のどれか, あまり（…）).
       add(
         'builtin:' + b.name,
         '用意された計算',
-        `${b.name}\uff08${args.join('\u3001')}\uff09`,
+        b.name === '乱数' && args.length === 2 ? `${args[0]}から${args[1]}のどれか` : `${BUILTIN_SURFACES[b.name] || b.name}\uff08${args.join('\u3001')}\uff09`,
         'expression',
       );
     }
@@ -12079,7 +12080,6 @@ function createAkariExtensionHost(options) {
       'おされたキー',
       '前の中身',
       '新しい中身',
-      'あまり',
       '方向',
       '大きさ',
       '答え',
@@ -12145,7 +12145,6 @@ function createAkariExtensionHost(options) {
       ),
     }),
   });
-  const RESERVED = new Set([...GRAMMAR_REGISTRY.reserved, ...GRAMMAR_REGISTRY.sensors]);
 
   const BUILTIN_NAMES = new Set(BUILTIN_META.keys());
   const FIXED_SENSORS = [...GRAMMAR_REGISTRY.sensors];
@@ -12167,6 +12166,8 @@ function createAkariExtensionHost(options) {
   // Builtin calculations whose written word differs from the internal name.
   const BUILTIN_SURFACES = Object.freeze({ '余り': 'あまり' });
   const BUILTIN_LABELS = Object.freeze({ '数': '数に直す', '文字': '文字に直す', '乱数': 'AからBのどれか', '余り': 'あまり' });
+  // Every written sensor word is reserved like the internal one, so a same-named datum is written 【name】.
+  const RESERVED = new Set([...GRAMMAR_REGISTRY.reserved, ...GRAMMAR_REGISTRY.sensors, ...Object.values(SENSOR_SURFACES)]);
   const GRAMMAR_HINTS = GRAMMAR_REGISTRY.hints;
 
   // Ephemeral UTF-16 source coordinates. Never serialized or part of the semantic AST.
@@ -16581,7 +16582,7 @@ function createAkariExtensionHost(options) {
     ['LooksCommand:BACKWARD_LAYERS', /^重なりを(.+?)つ奥にする$/d, 'LooksCommand', 'BACKWARD_LAYERS', 'arg'],
     ['PenCommand:SET_COLOR', /^ペンの色を(.+?)にする$/d, 'PenCommand', 'SET_COLOR', 'arg'],
     ['PenCommand:SET_SIZE', /^ペンの太さを(.+?)にする$/d, 'PenCommand', 'SET_SIZE', 'arg'],
-    ['SoundCommand:SET_VOLUME', /^音量を(.+?)％にする$/d, 'SoundCommand', 'SET_VOLUME', 'percent'],
+    ['SoundCommand:SET_VOLUME', /^(?:音量|音の大きさ)を(.+?)％にする$/d, 'SoundCommand', 'SET_VOLUME', 'percent'],
     ['SoundCommand:PITCH_UP', /^(?:音の高さ|音程)を(.+?)段階上げる$/d, 'SoundCommand', 'PITCH_UP', 'arg'],
     ['SoundCommand:PITCH_DOWN', /^(?:音の高さ|音程)を(.+?)段階下げる$/d, 'SoundCommand', 'PITCH_DOWN', 'arg'],
     ['SoundCommand:TONE', /^(.+?)Hzの音を(.+?)秒鳴らし始める$/d, 'SoundCommand', 'TONE', 'tone'],
@@ -17469,7 +17470,7 @@ function createAkariExtensionHost(options) {
         op: 'SAMPLE_WAIT',
         args: [e(code.slice(0, -'を鳴らし、終わるまで待つ'.length))],
       });
-    if ((m = code.match(/^音量を(.+)％にする$/)))
+    if ((m = code.match(/^(?:音量|音の大きさ)を(.+)％にする$/)))
       return statementNode('SoundCommand', line, { op: 'SET_VOLUME', args: [e(m[1])] });
     if (code.startsWith('音程を') && code.endsWith('段階上げる'))
       return statementNode('SoundCommand', line, {
@@ -17854,7 +17855,7 @@ function createAkariExtensionHost(options) {
         SET_VOLUME: Object.freeze({
           label: '音の大きさを決める',
           inputs: Object.freeze(['音の大きさ']),
-          format: (a) => `音量を${a(0,'％')}にする`,
+          format: (a) => `音の大きさを${a(0,'％')}にする`,
         }),
         PITCH_UP: Object.freeze({
           label: '音の高さを上げる',

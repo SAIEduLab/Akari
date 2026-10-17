@@ -421,7 +421,7 @@
         id: 'SoundCommand:SET_VOLUME',
         kind: 'SoundCommand',
         op: 'SET_VOLUME',
-        source: '音量を50％にする',
+        source: '音の大きさを50％にする',
       },
       {
         id: 'SoundCommand:PITCH_UP',
@@ -986,10 +986,11 @@
         b.name === '\u6570'
           ? ['\u300c12\u300d']
           : Array.from({ length: b.minArgs }, (_, i) => String(i + 1));
+      // The written form, as the formatter writes it (1から2のどれか, あまり（…）).
       add(
         'builtin:' + b.name,
         '用意された計算',
-        `${b.name}\uff08${args.join('\u3001')}\uff09`,
+        b.name === '乱数' && args.length === 2 ? `${args[0]}から${args[1]}のどれか` : `${BUILTIN_SURFACES[b.name] || b.name}\uff08${args.join('\u3001')}\uff09`,
         'expression',
       );
     }
@@ -1024,7 +1025,6 @@
       'おされたキー',
       '前の中身',
       '新しい中身',
-      'あまり',
       '方向',
       '大きさ',
       '答え',
@@ -1090,7 +1090,6 @@
       ),
     }),
   });
-  const RESERVED = new Set([...GRAMMAR_REGISTRY.reserved, ...GRAMMAR_REGISTRY.sensors]);
 
   const BUILTIN_NAMES = new Set(BUILTIN_META.keys());
   const FIXED_SENSORS = [...GRAMMAR_REGISTRY.sensors];
@@ -1112,6 +1111,8 @@
   // Builtin calculations whose written word differs from the internal name.
   const BUILTIN_SURFACES = Object.freeze({ '余り': 'あまり' });
   const BUILTIN_LABELS = Object.freeze({ '数': '数に直す', '文字': '文字に直す', '乱数': 'AからBのどれか', '余り': 'あまり' });
+  // Every written sensor word is reserved like the internal one, so a same-named datum is written 【name】.
+  const RESERVED = new Set([...GRAMMAR_REGISTRY.reserved, ...GRAMMAR_REGISTRY.sensors, ...Object.values(SENSOR_SURFACES)]);
   const GRAMMAR_HINTS = GRAMMAR_REGISTRY.hints;
 
   // Ephemeral UTF-16 source coordinates. Never serialized or part of the semantic AST.

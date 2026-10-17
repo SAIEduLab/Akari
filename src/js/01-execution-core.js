@@ -1592,7 +1592,7 @@
       const nums = () => args.map((x) => numberValue(x));
       switch (name) {
         case '乱数': {
-          if (args.length !== 2) throw new AkariError('R411', '「乱数」には 数を 2つ 入れます。れい：乱数（1、10）');
+          if (args.length !== 2) throw new AkariError('R411', '「どれか」の 計算には 数を 2つ 入れます。れい：1から10のどれか');
           const unit = commonUnit(args);
           let [a, b] = nums();
           if (a === b) return quantity(a, unit);
@@ -1610,7 +1610,7 @@
           return quantity(clamp(ensureFinite(value), lo, hi), unit);
         }
         case '余り': {
-          if (args.length !== 2) throw new AkariError('R411', '「余り」には 数を 2つ 入れます。れい：余り（10、3）');
+          if (args.length !== 2) throw new AkariError('R411', '「あまり」には 数を 2つ 入れます。れい：あまり（10、3）');
           const unit = commonUnit(args);
           const [a, b] = nums();
           if (b === 0) throw new AkariError('R401', '0で わった あまりは 出せません。わる数を 0では ない 数に してください');
@@ -1702,10 +1702,10 @@
         s = ast.sensor;
       switch (s) {
         case '横位置':
-          if (!a) throw new AkariError('R407', '「横位置」は キャラクターや 部品の 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「よこのばしょ」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.x, '歩');
         case '縦位置':
-          if (!a) throw new AkariError('R407', '「縦位置」は キャラクターや 部品の 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「たてのばしょ」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.y, '歩');
         case '方向':
           if (!a) throw new AkariError('R407', '「方向」は キャラクターや 部品の 動きの 中で 使います');
@@ -1714,13 +1714,13 @@
           if (!a) throw new AkariError('R407', '「大きさ」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.scalePercent, '％');
         case '衣装番号': {
-          if (!a) throw new AkariError('R407', '「衣装番号」は キャラクターの 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「すがたの番号」は キャラクターの 動きの 中で 使います');
           const c = r.component(ctx.runtimeId);
           if (c?.type !== 'sprite') throw new AkariError('R406', 'すがたを えらべるのは キャラクターだけです');
           return c.costumes.findIndex((x) => x.id === a.costumeId) + 1;
         }
         case '衣装名': {
-          if (!a) throw new AkariError('R407', '「衣装名」は キャラクターの 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「すがたの名前」は キャラクターの 動きの 中で 使います');
           const c = r.component(ctx.runtimeId);
           return c?.costumes?.find((x) => x.id === a.costumeId)?.name || '';
         }

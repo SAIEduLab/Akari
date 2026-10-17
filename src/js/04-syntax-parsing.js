@@ -914,7 +914,7 @@
     ['LooksCommand:BACKWARD_LAYERS', /^重なりを(.+?)つ奥にする$/d, 'LooksCommand', 'BACKWARD_LAYERS', 'arg'],
     ['PenCommand:SET_COLOR', /^ペンの色を(.+?)にする$/d, 'PenCommand', 'SET_COLOR', 'arg'],
     ['PenCommand:SET_SIZE', /^ペンの太さを(.+?)にする$/d, 'PenCommand', 'SET_SIZE', 'arg'],
-    ['SoundCommand:SET_VOLUME', /^音量を(.+?)％にする$/d, 'SoundCommand', 'SET_VOLUME', 'percent'],
+    ['SoundCommand:SET_VOLUME', /^(?:音量|音の大きさ)を(.+?)％にする$/d, 'SoundCommand', 'SET_VOLUME', 'percent'],
     ['SoundCommand:PITCH_UP', /^(?:音の高さ|音程)を(.+?)段階上げる$/d, 'SoundCommand', 'PITCH_UP', 'arg'],
     ['SoundCommand:PITCH_DOWN', /^(?:音の高さ|音程)を(.+?)段階下げる$/d, 'SoundCommand', 'PITCH_DOWN', 'arg'],
     ['SoundCommand:TONE', /^(.+?)Hzの音を(.+?)秒鳴らし始める$/d, 'SoundCommand', 'TONE', 'tone'],
@@ -1802,7 +1802,7 @@
         op: 'SAMPLE_WAIT',
         args: [e(code.slice(0, -'を鳴らし、終わるまで待つ'.length))],
       });
-    if ((m = code.match(/^音量を(.+)％にする$/)))
+    if ((m = code.match(/^(?:音量|音の大きさ)を(.+)％にする$/)))
       return statementNode('SoundCommand', line, { op: 'SET_VOLUME', args: [e(m[1])] });
     if (code.startsWith('音程を') && code.endsWith('段階上げる'))
       return statementNode('SoundCommand', line, {
