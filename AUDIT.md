@@ -1,5 +1,5 @@
 # あかり — 監査契約
-本書は現在必要な機能保証の契約です。所有者が承認した整理では旧工程・固定・二重実行を除去します。機能別説明の試験IDは現在の保証への参照であり、過去の件数・工程を保存する義務ではありません。現行の必要な意味・独立期待値・実操作を保ち、通常監査は過去資料の復元を要求しません。
+本書は現在必要な機能保証の契約です。機能別説明の試験IDは現在の保証への参照です。必要な意味・独立期待値・実操作を保ち、過去の件数・工程・資料の復元は求めません。
 
 ## 入門とチュートリアルの追加契約
 
@@ -17,7 +17,7 @@
 
 ## 製品版から独立した命名と受入判定
 
-配布する製品HTMLは `Akari_<major>_<minor>_<patch>.html` とし、`Akari` 直後の `_` を必須にします。`audit/public-files.json` の `productFile` を現行pathの正本にします。製品を変更する作業では、別の明示指示がない限りmainの現行製品版からpatchを一度だけ上げます。製品不変の指示・監査基盤整理では製品版を変更しません。同じ作業内の複数改修・commit・レビュー対応では版上げを繰り返さず、版上げと関連更新をmergeする作業branch/PRに含めます。製品版、ファイル名、公開リンクを一致させ、現行ツリーには製品HTMLを1つだけ置き、入れ替えた旧製品HTMLを削除します。製品ファイルとrelease freezeの版表示は配布ラベルであり、機能名・安定test ID・保存形式・言語とruntimeの契約番号には流用しません。
+配布する製品HTMLは `Akari_<major>_<minor>_<patch>.html` とし、`Akari` 直後の `_` を必須にします。`audit/public-files.json` の `productFile` を現行pathの正本にします。製品を変更する作業では、mainの現行製品版からpatchを一度だけ上げます。それ以外の上げ方（minor・major・patchの複数）は所有者の判断であり、PRに所有者のラベル（後掲）を付けた場合だけ受け入れます。版を下げることは認めません。製品不変の指示・監査基盤整理では製品版を変更しません。同じ作業内の複数改修・commit・レビュー対応では版上げを繰り返さず、版上げと関連更新をmergeする作業branch/PRに含めます。製品版、ファイル名、公開リンクを一致させ、現行ツリーには製品HTMLを1つだけ置き、入れ替えた旧製品HTMLを削除します。製品ファイルとrelease freezeの版表示は配布ラベルであり、機能名・安定test ID・保存形式・言語とruntimeの契約番号には流用しません。
 
 - 関数・変数・監査IDは機能・責務を示す名前にします。`restoreV103`、`runVersion09Tests`、`parseRelease104`のようにリリース番号を組み込まず、整理番号が必要なら`validateCase001`や`FORMAT-PROJECT-001`のように機能名から区切ります。番号の対応先は製品版ではありません。
 - 製品のリリースラベルは一か所に定義し、UI表示・保存と書出しの作成元記録・公開APIへの露出だけで参照します。`appVersion`は型・長さ・文字種を検証する記録項目で、現在製品版との一致や大小比較を受入条件にしません。
@@ -26,7 +26,7 @@
 - `format-compatibility.mjs`の固定9件は、製品のリリース表示値だけを変更した候補から作品を作り、同じ契約の別製品による読込み・実保存・自動復元・生成HTMLのオフライン実行を検査します。未保存内容とclean/dirtyの保持、作成元だけを除く指紋、未知の契約と不正データの拒否を含めます。結果の欠落・重複・失敗・別snapshotは独立したvalidatorで拒否します。
 - SEMANTICでは、製品版を動作判定へ戻す間接参照や動的プロパティ名、静的検査の許可用途の拡張も差分レビューします。静的検査だけで任意の間接参照の不存在を証明したとは扱いません。HYBRIDではUI経由の読込み・復元と未保存保護を実ブラウザーで確認します。
 
-保存の受入基準は「製品版の完全一致」から「データの構造・意味を識別する契約の一致」へ変更します。この受入基準を`FORMAT-EXECUTABLE-CONTRACT`と`FORMAT-PROJECT-METADATA-001 作成元と保存契約`で固定します。現行の製品保証を維持し、形式互換の9件と命名規則の拒否検査を追加します。従来の破損・契約不一致の拒否試験を残し、作成元が異なるだけで拒否する期待値を、受入れと内容保持の期待値へ置き換えます。
+保存の受入基準は、データの構造・意味を識別する契約の一致です。製品版の完全一致ではありません。この基準を`FORMAT-EXECUTABLE-CONTRACT`と`FORMAT-PROJECT-METADATA-001 作成元と保存契約`で固定します。現行の保存形式（項目形式3）以外のファイル、破損、契約不一致は、理由を示して拒否します。作成元だけが異なる作品は受け入れ、内容を保持します。
 
 ## 製品ソースとビルド
 
@@ -62,7 +62,7 @@ selftestの `product-source` は、`src/` から生成した結果がコミッ�
 
 | 安定ID | 期待値 |
 |---|---|
-| UI-BUTTON-SOURCE-NAV | 「すべてのコード」で一覧を開く。「本文の編集に戻る」は一覧表示中だけ表示。「画面のコード」は部品選択時だけ表示し、画面の一覧へ進む。 |
+| UI-BUTTON-SOURCE-NAV | 「すべてのコード」で一覧を開く。「本文を なおす ところへ もどる」は一覧表示中だけ表示。「画面のコード」は部品選択時だけ表示し、画面の一覧へ進む。 |
 | UI-BUTTON-BASIC-HISTORY | かんたんでもUndo/Redoを表示し、履歴なし・編集lock時は無効。本文と部品編集の履歴を共通に戻し、やり直せる。 |
 | UI-BUTTON-SIDE-ACTIONS | コードのせってい／動きのようすは通常の見出し。ブロックの折り畳みは維持し、部品一覧直下の複製／削除は設定欄を開かず使える。コードでは設定欄に同じ操作を置く。 |
 | UI-BUTTON-LEVELS | 表示設定ははじめて／かんたん／くわしくの3段階。初回のみはじめて。保存済みallはadvanced扱い。変更によって本文と履歴を変えない。 |
@@ -83,7 +83,7 @@ selftestの `product-source` は、`src/` から生成した結果がコミッ�
 | 区分 | 検証 |
 |---|---|
 | GA-STATIC | 現行製品HTMLの単一性・版付きpathと製品版の一致・旧製品混入の拒否、JavaScript構文、版、所有モデル、全公開ファイルhash、能力・ID集合、workflowと実行入口、資料整合、自作識別子と製品版参照のAST検査・拒否能力 |
-| GA-EXEC | 884件の製品試験、605件の言語表面試験、38件の編集試験、9件の編集GUI試験、27タスク416ケースのブラウザー試験、15件の素材編集試験、18件の音声試験、9件の画面ズーム試験、コード所属試験、9件の形式互換試験、9件のUIボタン整合性試験、8件のブロック入力欄表示試験（LinuxとWindows）、保存・生成HTML・マニュアル |
+| GA-EXEC | 製品試験、言語表面試験、編集試験、編集GUI試験、ブラウザー試験（全ブロックschemaのGUI行を含む）、素材編集試験、音声試験、画面ズーム試験、コード所属試験、形式互換試験、UIボタン整合性試験、ブロック入力欄表示試験（LinuxとWindows）、保存・生成HTML・マニュアル。件数は現行のmanifestとcontractが正本で、本書には書かない |
 | SEMANTIC | 仕様と実装の一致、主要処理の可読性、命令・求値の機能保持、監査の非弱体化、教材操作の妥当性 |
 | HYBRID | 所属と全本文への到達性、表示と実行対象の分離、エラー本文と下書きの保持、UIの読みやすさ、UIとボタンの整合性 |
 
@@ -94,6 +94,35 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 能力・安定ID・期待値の変更は仕様変更と対応させます。実測結果から期待値を自動生成して追認しません。固定集合と独立したvalidatorで、欠落・重複・失敗・異なるsnapshotを拒否します。negative testでvalidator自身の拒否能力を検査します。
 
 ローカル監査の入口は `audit/run-local-gate.mjs`、ブラウザー群の入口は `audit/browser/run-full-browser-audit.mjs` です。CIでも同じ入口を使います。証拠は `audit-evidence/` に出し、Gitに含めません。Actions artifactの保持期間は3日です。
+
+## 監査基盤の保証
+
+監査基盤そのものも検査します。次はローカルgate（`audit/lib/gate-contract.mjs`の`gateSteps`）の必須段です。段の一覧と各段の結果の検証は`gate-contract`と`verify-gate-results`が正本で、本書に件数を書きません。
+
+- **公開ファイルの一致**（`publication-inventory`）: `audit/public-files.json`は`git ls-files`と両方向で一致します。gitがない環境ではFAILです。
+- **文書の整合**（`publication-documents`）: 追跡する文書は、現行の製品ファイルと現行のリリース表示だけを挙げます。
+- **配布の固定**（`release-distribution`）: `audit/manifests/release-<版>.json`は1つだけで、製品・文書・契約番号のhashと一致します。契約番号は`features.json`のEXECUTABLE_CONTRACTから読みます。
+- **監査ファイルの到達性**（`audit-inventory`）: `audit/`の追跡ファイルは、gate段・受入コマンド・ブラウザー群・workflow・runnerの読込み・本書とREADMEの案内のいずれかから到達できます。到達できないファイルはFAILで、合成した孤立ファイルで拒否能力を示します。
+- **workflowの契約**（`workflow-contract`）: 必須ジョブと`needs`、トリガー、`continue-on-error`の禁止、全ジョブの`timeout-minutes`、artifact保持3日、mainの実行を途中で取り消さない並行制御を、workflowの文面から検査します。段の実行はgate・runnerの入口に限ります。
+- **結果の形式**: 終了コードだけで判定していた段も、case IDを持つ結果（`akari-gate-cases-v1`）を書き、validatorが全case PASSの集合を確認します。
+- **文の形の網羅**（`sentence-form-coverage`）: 製品の有限な文型表（`SENTENCE_FORMS`、`CONDITION_FORMS`、`SENTENCE_TE_FORMS`等）の全項目に、独立した入力と期待値を持つ事例が必要です。到達できない項目は網羅の不足としてFAILになり、製品の表から消します。項目を外しても結果が変わらないことで、各項目が必要なことを確かめます。
+- **仕様の例文**（`spec-examples`）: LANGUAGE.mdとEXTENSIONS.mdの`text`ブロックは、製品の構文解析器で読めます。読めない例は`<!-- akari-example: rejected -->`で明示し、拒否されることを確かめます。
+- **現行schemaの網羅**: `audit/fixtures/block-schemas.json`は、現行のブロックschemaをLANGUAGE.mdから手で書いた独立の期待値です。ブラウザー群`schemas`は、`features.json`のschema全件にGUI行を持ちます。
+- **命名**: 関数・ID・ファイル名・gate段に、版番号や過去の作業名を使いません。`static-contract`が拒否します。
+
+### 監査の変更ガード
+
+`.github/workflows/akari-change-guard.yml`のジョブ`audit-change-guard`は、PRのbaseとheadを比べます。
+
+- gate段・受入suite・ブラウザー群のタスクとcase・製品試験・言語試験のIDを、1つでも消す、または固定値（sha、pin）を変えると、PRに所有者のラベル`owner-approved-audit-change`が必要です。追加にラベルは要りません。
+- 製品またはsrc/を変えたPRの製品版は、baseのpatchを1つ上げた版です。それ以外の上げ方（minor・major・patchの複数）は、同じラベルがあれば受け入れます。下げることと、製品を変えないPRで版を変えることは、ラベルがあってもFAILです。
+- リリースの記録は、head版の名前の1つだけです。
+- ラベルは所有者だけが付けます。ガードのファイルの変更には、所有者の承認が必要です（`.github/CODEOWNERS`）。
+- `change-guard-negative`は、合成したbase/headで各規則の拒否を確かめます。
+
+### 製品内の保存確認
+
+未保存の作業があるときに「新しく作る」「いっしょに作る」「ファイルを開く」を押すと、製品は自前の確認画面（`#loseConfirmModal`、ボタンは「すてて つづける」「やめる」）で尋ねます。ブラウザー標準の確認は使いません。標準の確認に自動で答えるテストは、`audit/lib/product-dialogs.cjs`で製品の確認画面にも答えます。確認そのものを検査するテストは、ボタンを押して文面と結果を確かめます。
 
 ## 能力台帳
 
@@ -431,7 +460,7 @@ GA-STATICはPNG実寸・metadata・byte数・固定SHAを検査する。GA-EXEC�
 
 `ux-normal-language`（28件）、`ux-normal-browser`（12件）、`ux-normal-matrix`（48件）、`ux-normal-layout`（100件）、`ux-normal-speech`（100件）を既存の追加受入へ必須接続する。原文・実行結果・回答・対象・時刻・取消・幅を `ux-normal-contract.mjs` で別に検証する。自己申告のPASSだけでは受け入れない。欠落、重複、FAIL、異なるsnapshot、意味を壊した結果、結果ファイルの欠落を拒否する。独立集約の拒否試験は既存141件を保持し42件を追加した183件である。
 
-GUI三群は独立したbrowser processで並列実行する。既存ジョブの15分上限、個別入力の12,000ms境界、現行の意味・期待値・観測境界を維持する。ホスト・子実行の例外やtimeoutはFAILであり、機械PASSから実児童UXや実IMEの完了を主張しない。Windowsローカルの成功はLinuxのCI実行に読み替えない。
+GUI三群は独立したbrowser processで並列実行する。ジョブの時間上限（`workflow-contract`が検査）、個別入力の12,000ms境界、現行の意味・期待値・観測境界を維持する。ホスト・子実行の例外やtimeoutはFAILであり、機械PASSから実児童UXや実IMEの完了を主張しない。Windowsローカルの成功はLinuxのCI実行に読み替えない。
 
 現在の意味契約はLANGUAGE.mdの自然文・編集・発話の各節、現在の文型はaudit/LANGUAGE_FORMS.mdを参照する。過去の文書移管mapや旧文書を通常監査の必須入力にしない。
 
@@ -483,7 +512,7 @@ GUI制作後の実作品も独立時計で検査する。B02/B11の再実行、B
 
 ## 読む手掛かり・挿入文脈・話者名の追加監査
 
-既存の local gate 36項目、full-browser の5群27タスク416結果、固定 acceptance の全入口と独立 validator は保持する。現行の manifest を件数の正本とし、product は901固定ID、language は605固定ID・42文型・256有限入力・95作文で検査する。追加監査は既存の集合、負例、timeout、独立 oracle を置き換えない。
+ローカルgate、ブラウザー群、固定acceptanceの全入口と独立validatorを保持します。件数の正本は現行のmanifestとcontractです。追加監査は既存の集合、負例、timeout、独立oracleを置き換えません。
 
 追加の固定集合は次の59件。通常のクリック・キー入力と `fill` を別の入力経路として観測する。反復・条件の親/子ID、連続する値、指定挿入先、本文・履歴、取り消しと Undo/Redo を照合する。日本語の composition event 検査は実IMEの操作証明ではない。
 
@@ -654,7 +683,7 @@ GA-STATICでは公開入力・構文・版とfreezeを照合する。HYBRIDで�
 - GA-EXEC：`browser-session` の既存実行／停止・失敗場所ケースで、現在表示中の編集先へのフォーカスと正しい復帰案内を確認する。
 - GA-EXEC／HYBRID：`browser-runtime-limits` に新ID `limit:continuous-number-overflow` を追加する（既存9 IDを維持して10 ID）。有限の速度でも時間積分で位置が溢れる4方向、停止境界での溢れ、通常速度の正確な停止位置を独立に計算する。コード／ブロックの実画面でR403の一時停止、日本語の対象・理由・復帰案内、停止成功、作品・履歴保持を検査する。受理する数値や既存の資源上限を狭めない。
 
-観察に基づくScratch比較と改善仮説は [創作操作の調査記録](audit/CHILD_UX_RELIABILITY.md) に記録する。実操作、機械検証、児童理解の仮説を区別し、Scratchより使いやすいとの児童実証や独立最終受入を主張しない。
+観察に基づくScratch比較と改善仮説は [創作中の復帰とブロック操作](audit/CHILD_UX_RELIABILITY.md) に記録する。実操作、機械検証、児童理解の仮説を区別し、Scratchより使いやすいとの児童実証や独立最終受入を主張しない。
 
 固定原作文7件と構造編集9件の実ブラウザー試験では、非同期の素材準備がRUNNINGへ遷移した後に入力・観測する。T06は初期位置と閉じた四角の最終位置が同じなので、最初の描画も観測してから従来の座標と `ink>=60` を照合する。既存ID・原文・全assertion・8秒制限・速度と時刻の許容差は変更しない。準備待ちの失敗をPASSやskipへ変えない。
 

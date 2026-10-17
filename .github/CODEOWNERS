@@ -1,0 +1,12 @@
+# Changes to the audit guard need the owner.
+/.github/CODEOWNERS @SAIEduLab
+/.github/workflows/akari-change-guard.yml @SAIEduLab
+/.github/workflows/akari-audit.yml @SAIEduLab
+/.github/workflows/akari-acceptance.yml @SAIEduLab
+/audit/lib/change-guard.mjs @SAIEduLab
+/audit/tests/change-guard.mjs @SAIEduLab
+/audit/tests/change-guard-negative.mjs @SAIEduLab
+/audit/lib/gate-contract.mjs @SAIEduLab
+/audit/lib/workflow-contract.mjs @SAIEduLab
+/audit/tests/workflow-contract.mjs @SAIEduLab
+/audit/lib/verify-gate-results.mjs @SAIEduLab

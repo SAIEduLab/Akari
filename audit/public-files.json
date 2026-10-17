@@ -3,6 +3,7 @@
   "productVersion": "1.2.7",
   "files": [
     ".gitattributes",
+    ".github/CODEOWNERS",
     ".github/workflows/akari-acceptance.yml",
     ".github/workflows/akari-audit.yml",
     ".github/workflows/akari-change-guard.yml",
