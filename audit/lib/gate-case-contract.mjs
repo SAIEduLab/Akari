@@ -42,6 +42,8 @@ export const changeGuardCaseIds=Object.freeze([
   'release/two-manifests','release/wrong-name','release/missing',
   'identity/head-evaluation-failure','identity/no-merge-base']);
 
+// Past work-process names that audit callables must not use (release-policy-negative).
+export const pastProcessNames=Object.freeze(['verifyRepair02Matrix','runPhase3Checks','loadDevSessionEvidence','verifyFollowupBundle','readNewContracts','checkFormat1Storage','runRuntime2Boundary']);
 export const gateCaseIds=Object.freeze({
   'release-distribution':['current-distribution-recorded'],
   'workflow-contract':['current-workflows-accepted',...workflowRejectionIds],
@@ -49,7 +51,10 @@ export const gateCaseIds=Object.freeze({
   'release-policy-negative':[
     'accepted/base-fixture','accepted/unrelated-audit-names','accepted/ipv6-and-base64-names','accepted/release-key-and-codec-object',
     ...releaseNameKinds.flatMap(kind=>['release-name/product/'+kind,'release-name/audit/'+kind]),
-    'release-name/audit/property-key','release-name/audit/arrow-binding',
+    'release-name/audit/property-key',
+    ...pastProcessNames.flatMap(name=>['past-process/function/'+name,'past-process/property/'+name]),
+    'accepted/responsibility-audit-names','accepted/product-animation-phase-name',
+    'release-name/audit/arrow-binding',
     'release-read/format-check-uses-release','release-read/producer-compared-to-release','release-read/release-alias','release-read/producer-literal-compare','release-read/computed-producer-key',
     'release-literal/copied','release-read/producer-destructured','executable-contract/invalid-format-id',
     'candidate/accepted','candidate/release-name-function','candidate/release-compare','candidate/producer-alias','candidate/release-name-object-method','candidate/release-name-class-method',
@@ -65,7 +70,7 @@ export const gateCaseIds=Object.freeze({
     'fixture-readiness/offline-viewport-context','fixture-readiness/unfinished-import-rejected'],
   'dom-regression':['normal-observation','latest-tree-defense-without-render-guards','reentrant-mutant-rejected'],
   'harness-negative':['valid-report-accepted','missing-id','duplicate-id','extra-id','missing-suite','duplicate-suite','empty-suite','missing-environment','wrong-environment','exception-status','timeout-status','false-pass','contradictory-status','forged-summary','forged-aggregate','missing-snapshot','changed-product-hash','incomplete','shrunk-manifest','missing-browser-executable','empty-registration','missing-suite-file','registration-exception','registration-syntax-error','nonsettling-evaluation-timeout'],
-  'language-negative':['valid-report-accepted','missing-result','duplicate-result','unknown-id','failed-status','skipped-status','total-changed','failed-count','blocked-count','deferred-count','completion-flag-flipped','missing-environment','snapshot-field-added','changed-product-hash'],
+  'language-negative':['valid-report-accepted','missing-result','duplicate-result','unknown-id','failed-status','skipped-status','total-changed','failed-count','report-status-failed','completion-flag-flipped','missing-environment','snapshot-field-added','changed-product-hash'],
   'surface-negative':['editor','gui'].flatMap(kind=>[kind+'/valid-report-accepted',...surfaceRejections.map(name=>kind+'/'+name)]),
   'license-verify':['valid-report-accepted','missing-result','wrong-copyright','changed-player-hash','native-download-disabled','network-request','changed-snapshot'],
 });
