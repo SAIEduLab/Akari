@@ -47,7 +47,7 @@
       if (next < 0 || next >= history.length) return;
       historyIndex = next;
       cx.putImageData(history[historyIndex], 0, 0);
-      status.textContent = delta < 0 ? '元に戻しました。' : 'やり直しました。';
+      status.textContent = delta < 0 ? 'もとに もどしました。' : 'やり直しました。';
       refresh();
     };
     function point(event) {
@@ -141,7 +141,7 @@
     }
     function cancel() {
       if (busy) return;
-      if (hasInk() && !confirm('描いた絵を捨てて閉じますか？')) return;
+      if (hasInk() && !confirm('かいた絵を すてて とじますか？')) return;
       close();
     }
     function cropped() {
@@ -193,9 +193,9 @@
     for (const button of modal.querySelectorAll('[data-paint-tool]'))
       button.onclick = () => { if (!gesture) { tool = button.dataset.paintTool; refresh(); } };
     for (const [name, value] of [
-      ['黒', '#111111'], ['白', '#ffffff'], ['灰', '#888888'], ['赤', '#e53935'],
-      ['橙', '#f57c00'], ['黄', '#fdd835'], ['緑', '#43a047'], ['水色', '#29b6f6'],
-      ['青', '#1e5bd7'], ['紫', '#8e24aa'], ['桃', '#ec407a'], ['茶', '#795548'],
+      ['黒', '#111111'], ['白', '#ffffff'], ['はい色', '#888888'], ['赤', '#e53935'],
+      ['だいだい', '#f57c00'], ['黄', '#fdd835'], ['緑', '#43a047'], ['水色', '#29b6f6'],
+      ['青', '#1e5bd7'], ['むらさき', '#8e24aa'], ['もも色', '#ec407a'], ['茶', '#795548'],
     ]) {
       const b = document.createElement('button');
       b.type = 'button'; b.dataset.paintColor = value;
@@ -222,12 +222,12 @@
       if (busy || gesture) return;
       const out = cropped();
       if (!out) return;
-      busy = true; refresh(); status.textContent = '画像を配置しています…';
+      busy = true; refresh(); status.textContent = '絵を おいています…';
       try {
         await onCommit(out);
         close();
       } catch (error) {
-        status.textContent = `配置できませんでした: ${error.message}`;
+        status.textContent = `絵を おけませんでした: ${error.message}`;
       } finally { busy = false; refresh(); }
     };
     return {
@@ -237,7 +237,7 @@
         cx.clearRect(0, 0, size, size);
         history = [pixels()]; historyIndex = 0; tool = 'pen';
         color.value = '#111111'; width.value = '4'; shape.value = 'outline';
-        status.textContent = 'ます目は、色がついていない透明なところの目印です。絵として保存されません。';
+        status.textContent = 'ます目は、色が ついていない とうめいな ところの しるしです。絵としては ほぞんされません。';
         modal.classList.add('show'); app.inert = true;
         refresh(); modal.querySelector('[data-paint-tool="pen"]').focus();
       },
@@ -460,7 +460,7 @@
     function tutorialChoose(key) {
       const step=tutorialStep(tutorial);if(!step||step.action!=='choice'||modelLocked()||!flushActiveEditor())return;
       let extra;
-      if(key==='finish')extra=[tutorialDefine({id:'save-work',action:'save',message:'「ほぞん」を押して、作った作品をしまおう。'}),
+      if(key==='finish')extra=[tutorialDefine({id:'save-work',action:'save',message:'「ほぞん」を おして、作った作品を しまおう。'}),
         tutorialDefine({id:'verify-save',action:'verify-save',message:'「ほぞんした作品をたしかめる」で、いましまった作品をえらぼう。'})];
       else if(step.choice==='course'){
         const course=TUTORIAL_COURSES.find(c=>c.id===key);if(!course||tutorial.courses.includes(key))return;
@@ -501,7 +501,7 @@
       const step=tutorialStep(tutorial);
       if(step?.block)$('#tutorialText').textContent=tutorialInsertionReady(step)
         ?'左の青いわくの「'+TUTORIAL_BLOCKS[step.block].label+'」をえらぼう。'
-        :'青いわくの「＋ ここに入れる」を押そう。';
+        :'青いわくの「＋ ここに入れる」を おそう。';
         $$('.tutorial-target').forEach(n=>n.classList.remove('tutorial-target'));
         for(const n of $$('button,input,select,textarea,summary,[tabindex]')) {
           const allowed=tutorialElementAllowed(n);n.dataset.tutorialBlocked=String(!allowed);
@@ -524,15 +524,15 @@
         // same-work does not require the event to have already been selected.
         if(stepBefore?.id==='choose-click')facts.sameWork=workspaceIdentity===tutorial.identity&&selectedId===tutorial.target;
         const next=tutorialAdvance(tutorial,facts,tutorial.epoch),changed=next!==tutorial;tutorial=next;
-        if (tutorial.phase==='complete') { finishTutorial(true);setStatus('できたね！ つぎは、じゆうに変えて遊ぼう。');return; }
+        if (tutorial.phase==='complete') { finishTutorial(true);setStatus('できたね！ つぎは、じゆうに かえて 遊ぼう。');return; }
         const step=tutorialStep(tutorial);document.body.dataset.tutorialStep=step.id;
         if(changed){tutorialInsertion=null;mainEditor.view.render({force:true});}
         $('#tutorialGuide').hidden=false;$('#tutorialVerifySave').hidden=step.id!=='verify-save';
         renderTutorialChoices(step);
-        $('#tutorialText').textContent=tutorialTrace?.failed?'動かなかったね。「止める」で戻って、もう一度試そう。':step.choice==='course'&&tutorial.courses.length===TUTORIAL_COURSES.length?'3つの遊びを組み合わせたね！ ほぞんして、自分で遊んでみよう。':step.message;
+        $('#tutorialText').textContent=tutorialTrace?.failed?'動かなかったね。「止める」で もどって、もう一度 やってみよう。':step.choice==='course'&&tutorial.courses.length===TUTORIAL_COURSES.length?'3つの遊びを組み合わせたね！ ほぞんして、自分で遊んでみよう。':step.message;
         refreshTutorialPresentation();
         if(changed)focusTutorialTarget();
-      } catch(error) { finishTutorial(false);setStatus('案内を続けられませんでした。作品は残っています：'+error.message); }
+      } catch(error) { finishTutorial(false);setStatus('あんないを つづけられませんでした。作品は のこっています：'+error.message); }
     }
     async function beginTutorial() {
       const blocked=()=>tutorial||document.body.dataset.uiLevel!=='entry'||modelLocked()||document.querySelector('.modal.show,.modal.open,dialog[open]');
@@ -581,9 +581,9 @@
         if(!tutorial||tutorial.epoch!==epoch||workspaceIdentity!==identity||tutorialSave!==save)return;
         if(currentFingerprint()!==save.fingerprint){tutorialSave=null;tutorial.index=tutorialSequence(tutorial).findIndex(s=>s.id==='save-work');tutorialRefresh();return;}
         if(assetStateFingerprint(loaded.project,loaded.assetStore)!==save.fingerprint||loaded.editorState?.pendingEditors.length||loaded.editorState?.callableDraft)
-          throw new Error('いま保存した作品と内容が違います');
+          throw new Error('いま ほぞんした作品と 中身が ちがいます');
         save.verified=true;confirmTutorialOperation('verify-save');tutorialRefresh();
-      } catch(error) { if(tutorial?.epoch===epoch) { $('#tutorialText').textContent='確かめられなかったよ。いま保存したファイルを、もう一度選ぼう。';setStatus('保存の確認：'+error.message); } }
+      } catch(error) { if(tutorial?.epoch===epoch) { $('#tutorialText').textContent='たしかめられなかったよ。いま ほぞんした ファイルを、もう一度 えらぼう。';setStatus('ほぞんを たしかめた けっか：'+error.message); } }
     }
     function tutorialCapture(event) {
       if(!tutorial)return;
@@ -786,11 +786,11 @@
     }
     function sourceCandidate(binding, ownerKey, source) {
       if (cpLen(source) > LIMITS.sourceEach)
-        throw new AkariError('F504', '本文の文字数が上限を超えています');
+        throw new AkariError('F504', '本文の 文字が 多すぎます。文を へらしてください');
       const parsed = parseSyntax(source, { ...bindingContext(binding), key: ownerKey,
         symbols: buildSymbols(project) });
       if (!parsed.ast) {
-        const first = parsed.syntaxDiagnostics[0] || { code: 'P201', message: '文を完成させてください' };
+        const first = parsed.syntaxDiagnostics[0] || { code: 'P201', message: '文を さいごまで 書いてください' };
         const error = new AkariError(first.code, first.message, first.line, first.column);
         error.diagnostics = parsed.syntaxDiagnostics;
         error.proposals = first.proposals || first.choices || [];
@@ -809,11 +809,11 @@
           (x) => x.id !== callableDraftCore.editId,
         );
         if (other.reduce((n, x) => n + cpLen(x.source), 0) + cpLen(source) > LIMITS.sourceTotal)
-          throw new AkariError('F504', '作品全体の本文の文字数が上限を超えています');
+          throw new AkariError('F504', '作品全体の 本文の 文字が 多すぎます。文を へらしてください');
         validateCallableDraft({ ...callableDraftCore, source });
         return null;
       }
-      if (kind !== 'script') throw new AkariError('F503', '実行中の定義本文は編集できません');
+      if (kind !== 'script') throw new AkariError('F503', '動いている あいだは、自分で作ったブロックの 本文を なおせません');
       const old = scriptBySourceKey(next, ownerKey);
       if (old) {
         // Keep the edited body's identity when its heading changes event or actor.
@@ -878,13 +878,13 @@
       return true;
     }
     function runtimeEventText(eventType) {
-      return eventType === 'continuous' ? '条件（じょうけん）が続いているあいだ' : EVENT_LABELS[eventType] || eventType;
+      return eventType === 'continuous' ? 'きまりに 合っている あいだ' : EVENT_LABELS[eventType] || eventType;
     }
     function diagnosticLocation(diagnostic) {
       const key = diagnostic?.where || diagnostic?.key || '', item = compiled?.items?.find(x => x.key === key),
         sourceKey = item?.documentKey || key, script = scriptBySourceKey(project, sourceKey),
         definition = project.actions.find(x => key === 'action:' + x.id) || project.functions.find(x => key === 'function:' + x.id);
-      const owner = definition ? (key.startsWith('function:') ? '答えを求める「' : '手順「') + definition.name + '」'
+      const owner = definition ? (key.startsWith('function:') ? '答えを もとめる「' : 'てじゅん「') + definition.name + '」'
         : script || item ? (targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (EVENT_LABELS[item?.event || script?.event] || '動き')
         : 'この本文';
       return owner + (diagnostic?.line ? ' / ' + diagnostic.line + '行目' : '');
@@ -1057,7 +1057,7 @@
         destination ||= old;
         validateDesignProject(next);
         if (plan.projectFingerprint !== currentFingerprint() || plan.ownerKey !== bindingOwner(binding))
-          throw new AkariError('F503', '取り込み先が変わりました。もう一度内容を確認してください');
+          throw new AkariError('F503', '取りこむ ところが かわりました。もう一度 中身を たしかめてください');
         clearTimeout(historyTimer);
         binding.session.pendingEdit = null; binding.textarea.value = readSource(binding);
         hideSourceImport(); pushHistoryNow();
@@ -1065,7 +1065,7 @@
         if (destination) { selectedId = destination.targetId; currentEvent = destination.event; selectedScriptId = destination.id || null; }
         invalidateEditors(); clearEditorFailure(binding); markDirty(); renderTree(); renderProperties(); loadEditor();
         clearTimeout(historyTimer); pushHistoryNow();
-        setStatus('今の動きを残して、選んだ本文へ動きを入れました'); return true;
+        setStatus('今の動きを のこして、えらんだ本文へ 動きを 入れました'); return true;
       } catch (error) { return showEditorFailure(binding, error, { preservePending: true }); }
     }
     function showSourceImport(binding, source, plan) {
@@ -1078,7 +1078,7 @@
         row.textContent = entry.candidates.length ? label + 'には今の動きがあります' : label + 'に新しい動きを入れます'; root.append(row);
         {
           const details = document.createElement('details'), summary = document.createElement('summary');
-          summary.textContent = entry.candidates.length ? (entry.equal ? '今の動きはそのまま残します' : '今の動きと取りこむ動きをくらべる') : '新しく入れる動きを見る'; details.append(summary);
+          summary.textContent = entry.candidates.length ? (entry.equal ? '今の動きは そのまま のこします' : '今の動きと取りこむ動きをくらべる') : '新しく入れる動きを見る'; details.append(summary);
           if(plan.canEditCurrent && !plan.safe)details.open = true;
           for (const text of [...entry.candidates.map(x => '今の動き：\n' + x.text), '取りこむ動き：\n' + entry.text]) {
             const pre = document.createElement('pre'); pre.textContent = text; pre.style.whiteSpace = 'pre-wrap'; pre.style.maxHeight = '140px'; pre.style.overflow = 'auto'; details.append(pre);
@@ -1088,21 +1088,21 @@
       }
       if (!plan.safe) {
         const notice = document.createElement('p'); notice.textContent = !plan.canSplit
-          ? '動きのまとまりを別々に分けられません。前の「始めると、」などを使う文があります。書きかけの文章は残っています。「取り込みを取り消す」で今の動きへ戻れます。'
-          : '同じきっかけの動きが今の動きと違うか、2つ以上あります。追加すると今の動きは残ります。くらべてからボタンを選んでください。'; root.append(notice);
+          ? '動きのまとまりを べつべつに 分けられません。前の「始めると、」などを使う文があります。書きかけの文章は のこっています。「取りこみを取り消す」で今の動きへ もどれます。'
+          : '同じきっかけの動きが 今の動きと ちがうか、2つ いじょう あります。入れても 今の動きは のこります。くらべてから ボタンを えらんでください。'; root.append(notice);
       }
       const confirm = document.createElement('button'); confirm.type = 'button'; confirm.id = 'sourceImportConfirm';
-      confirm.textContent = plan.hasExisting ? '今の動きを残して追加' : '書いた文の動きを入れる'; confirm.disabled = !plan.safe;
+      confirm.textContent = plan.hasExisting ? '今の動きを のこして 入れる' : '書いた文の動きを入れる'; confirm.disabled = !plan.safe;
       confirm.onclick = () => confirmSourceImport(binding, source); root.append(confirm);
       if (plan.hasExisting && !plan.safe && plan.canSplit) {
         const separate = document.createElement('button'); separate.type = 'button'; separate.id = 'sourceImportSeparate';
-        separate.textContent = '今の動きを残して、別の動きを追加'; separate.onclick = () => confirmSourceImport(binding, source, true); root.append(separate);
+        separate.textContent = '今の動きを のこして、べつの動きとして 入れる'; separate.onclick = () => confirmSourceImport(binding, source, true); root.append(separate);
       }
       if(plan.canEditCurrent && !plan.safe){
         const edit = document.createElement('button'); edit.type = 'button'; edit.id = 'sourceImportEditCurrent';
-        edit.textContent = 'この本文を取りこむ動きに変える'; edit.onclick = () => confirmSourceImport(binding, source, false, true);root.append(edit);
+        edit.textContent = 'この本文を 取りこむ動きに かえる'; edit.onclick = () => confirmSourceImport(binding, source, false, true);root.append(edit);
       }
-      const cancel = document.createElement('button'); cancel.type = 'button'; cancel.id = 'sourceImportCancel'; cancel.textContent = '取り込みを取り消す';
+      const cancel = document.createElement('button'); cancel.type = 'button'; cancel.id = 'sourceImportCancel'; cancel.textContent = '取りこみを取り消す';
       cancel.onclick = () => cancelEditorPending(binding); root.append(cancel);
     }
     function saveCodeBinding(binding, { fromInput = false } = {}) {
@@ -1110,7 +1110,7 @@
       if (modelLocked() || binding.session?.mode === 'blocks') return true;
       const t = binding.textarea;
       if (composingEditors.has(t))
-        return showEditorFailure(binding, '日本語入力を確定してから続けてください');
+        return showEditorFailure(binding, '日本語の 入力を Enterキーで きめてから つづけてください');
       const source = t.value.replace(/\r\n?/g, '\n');
       // A textarea normalizes CRLF on display; that alone is not an edit of source.
       if (source === readSource(binding).replace(/\r\n?/g, '\n')) {
@@ -1125,7 +1125,7 @@
             plan = sourceImportPlan(binding, source);
           if (plan || (fromInput && parsed.ast?.heading)) {
             binding.session.pendingEdit = { ownerKey: bindingOwner(binding), kind: plan ? 'source-import' : 'heading-source',
-              value: source, reason: plan ? '取り込み先を確認して決めてください' : '見出しを含む原文は書きかけです。表示の切替や実行で確定します' };
+              value: source, reason: plan ? '取りこむ ところを たしかめて きめてください' : '見出しの ある 文は まだ 書きかけです。コードと ブロックを 切りかえるか、動かすと きまります' };
             if (plan) showSourceImport(binding, source, plan); else hideSourceImport();
             scheduleAutosave(); updateDirty(); return false;
           }
@@ -1155,21 +1155,21 @@
         if (!result?.ok)
           return preserveView ? false : showEditorFailure(
             binding,
-            result?.reason || '入力を確定するか取り消してください',
+            result?.reason || '入力を きめるか 取り消してください',
             { preservePending: true },
           );
         if (binding.session?.blockDraft){
           if (preserveView) return false;
           const hole=[...buildBlockIndex(binding.session.blockView).values()].find(entry=>entry.node.schemaId.startsWith('Hole:'));
-          const context=bindingContext(binding),name=targetById(context.targetId)?.name||'この本文',label=hole?.node.fields.label||'命令や値';
+          const context=bindingContext(binding),name=targetById(context.targetId)?.name||'この本文',label=hole?.node.fields.label||'ブロックや 数・文字';
           if(hole)binding.view.focus({id:hole.node.id});
-          return showEditorFailure(binding, `${name}・${EVENT_LABELS[context.event]||'この本文'}：${label}を入れる欄に移動しました`, { preservePending: true });
+          return showEditorFailure(binding, `${name}・${EVENT_LABELS[context.event]||'この本文'}：${label}を入れる ところへ 動きました`, { preservePending: true });
         }
         return true;
       }
       if (binding.session?.blockDraft) {
         if (composingEditors.has(binding.textarea))
-          return showEditorFailure(binding, '日本語入力を確定してから続けてください');
+          return showEditorFailure(binding, '日本語の 入力を Enterキーで きめてから つづけてください');
         const source = binding.textarea.value.replace(/\r\n?/g, '\n');
         try {
           const parsed = parseSyntax(source, bindingContext(binding));
@@ -1214,16 +1214,16 @@
           const step=tutorialStep(tutorial),role=step?.ref?tutorialField(mainEditor.session?.blockView,step):null;
           if(binding===mainEditor&&step?.free&&operation.type==='field'&&operation.id===role?.node?.id&&operation.key===role.key)
             throw new Error('光る数は'+step.min+'から'+step.max+'の中でえらぼう。'+(step.integer?step.min+'、'+(step.min+1)+'のように、1ずつふえる数にしよう。':''));
-          throw new Error('今は、案内のブロックだけを操作しよう。');
+          throw new Error('今は、あんないの ブロックだけを 使おう。');
         }
-        if (modelLocked()) throw new Error('実行・取込中は編集できません');
+        if (modelLocked()) throw new Error('動いている あいだと 取りこみ中は なおせません');
         if (
           binding.kind === 'draft' &&
           (headerPending ||
             composingEditors.has($('#callableName')) ||
             (composingEditors.has($('#callableArgs')) || composingEditors.has($('#callablePhrase'))))
         )
-          throw new Error('定義の名前・受け取る値の入力を確定するか取り消してください');
+          throw new Error('自分で作ったブロックの 名前と 入れるものの 入力を、きめるか 取り消してください');
         const session = getEditorSession(binding),
           ownerKey = bindingOwner(binding),
           context = bindingContext(binding);
@@ -1275,7 +1275,7 @@
           editorSessions.set(`${binding.kind}:${ownerKey}`, binding.session);
           binding.textarea.value = candidate.draftSource;
           const pending = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
-          pending.textContent = '空いている欄に命令や値を入れてください';
+          pending.textContent = '空いている ところに ブロックや 数・文字を 入れてください';
           pending.hidden = false;
           renderEditorBinding(binding);
           scheduleAutosave();
@@ -1327,7 +1327,7 @@
           (mode === 'blocks' && (!session.syntaxAst || invalidCodePending));
         b.title =
           mode === 'blocks' && (!session.syntaxAst || invalidCodePending)
-            ? '書き方エラーをコード表示で直すと、ブロックを表示できます'
+            ? '書き方の まちがいを コードで 直すと、ブロックで 見られます'
             : '';
         if (mode === 'blocks') {
           // Touch screens never show a title, so the reason is also visible text.
@@ -1366,7 +1366,7 @@
     }
     function switchEditorMode(binding, mode) {
       if(binding===mainEditor&&mode==='code'&&document.body.dataset.uiLevel==='entry'){
-        setStatus('コードを見るときは、表示を「かんたん」か「くわしく」にしてね。');
+        setStatus('コードを見るときは、「はじめて」を「かんたん」か「くわしく」に かえてね。');
         return false;
       }
       const draftSession = binding.session;
@@ -1402,7 +1402,7 @@
       const session = getEditorSession(binding);
       let focusLine = null;
       if (mode === 'blocks' && !session.syntaxAst)
-        return showEditorFailure(binding, '書き方エラーをコード表示で直してください');
+        return showEditorFailure(binding, '書き方の まちがいを コードで 直してください');
       if (mode === 'blocks' && session.mode === 'code') {
         let offset = session.codeSelection?.start || 0;
         if (/\r/.test(session.sourceText)) {
@@ -1545,7 +1545,7 @@
         for (const d of type === 'action' ? project.actions : project.functions) {
           const o = document.createElement('option');
           o.value = `${type}:${d.id}`;
-          o.textContent = `${type === 'action' ? '手順' : '答えを求める'}：${d.name}`;
+          o.textContent = `${type === 'action' ? 'てじゅん' : '答えを もとめる'}：${d.name}`;
           sel.appendChild(o);
         }
       sel.value = prefer;
@@ -1568,7 +1568,7 @@
         )
           draftEditor.textarea.value = d.source;
         $('#callableHeader').textContent =
-          `${d.type === 'action' ? '手順' : '答えを求める'}「${d.name || '名前'}」／受け取る値（${d.argsText}）／本文${hasCallableDraft() ? ' （未保存）' : ''}`;
+          `${d.type === 'action' ? 'てじゅん' : '答えを もとめる'}「${d.name || '名前'}」／入れるもの（${d.argsText}）／本文${hasCallableDraft() ? ' （まだ ほぞんしていない）' : ''}`;
         $('#callableDelete').disabled = modelLocked() || !d.editId;
       } finally {
         syncingDraft = false;
@@ -1582,7 +1582,7 @@
         )
       ) {
         headerPending = { ownerKey: draftOwner(), composing: true };
-        return showEditorFailure(draftEditor, '日本語入力を確定してから続けてください');
+        return showEditorFailure(draftEditor, '日本語の 入力を Enterキーで きめてから つづけてください');
       }
       const next = {
         ...callableDraftCore,
@@ -1609,7 +1609,7 @@
             $(id).value = callableDraftCore[key] || '';
           return showEditorFailure(
             draftEditor,
-            ready.reason || '本文の入力を確定するか取り消してください',
+            ready.reason || '本文の 入力を きめるか 取り消してください',
           );
         }
         next.source = callableDraftCore.source;
@@ -1770,13 +1770,13 @@
       hints.className = 'hints-disclosure';
       hints.id = 'hintsDisclosure';
       const hintSummary = document.createElement('summary');
-      hintSummary.textContent = '入力候補';
+      hintSummary.textContent = '使える ことば';
       hints.append(hintSummary, $('.code-assist .hint-panel'));
       $('.code-assist').append(hints);
       const output = document.createElement('details');
       output.className = 'output-disclosure';
       const outputSummary = document.createElement('summary');
-      outputSummary.textContent = '出力';
+      outputSummary.textContent = 'でてきた 文字';
       output.append(outputSummary, $('#console'));
       $('.monitor-window').append(output);
       document.addEventListener('keydown', (event) => {
@@ -1901,13 +1901,13 @@
         log(text);
         if (details?.rounded) {
           const full = document.createElement('button');
-          full.type = 'button'; full.textContent = '実値';
-          full.setAttribute('aria-label', '表示を丸めています。出力の実値を見る');
-          full.onclick = () => showFullValue('出力の実値', details.value);
+          full.type = 'button'; full.textContent = 'もとの数';
+          full.setAttribute('aria-label', '数を みじかくして 見せています。もとの数を見る');
+          full.onclick = () => showFullValue('でてきた もとの数', details.value);
           el.console.appendChild(full);
         }
       },
-      onValueDetails: (value, speaker) => showFullValue(`${speaker}の発話（${typeof value === 'string' ? '全文' : '実値'}）`, value),
+      onValueDetails: (value, speaker) => showFullValue(`${speaker}の発話（${typeof value === 'string' ? '全文' : 'もとの数'}）`, value),
     });
     function setStageZoom(scale) {
       stageZoom = scale === null ? null : Math.max(0.1, Math.min(2, Math.round(scale * 100) / 100));
@@ -1921,8 +1921,8 @@
     $('#stageZoomFit').onclick = () => setStageZoom(null);
     function childErrorLogText(message) {
       const m = String(message), plain = m.replace(/^\s*[A-Z]\d{3}(?::|\s)\s*/, '');
-      if (/保存失敗/.test(plain)) return '作品ファイルを保存（ほぞん）できませんでした。この画面の作品は残っています。画面を閉じずに、下の「くわしく見る」で理由をたしかめてから、もう一度「保存」を押してください。';
-      if (/読み込み失敗/.test(plain)) return '作品ファイルを開けませんでした。選んだファイルは変えていません。別の保存（ほぞん）ファイルを選ぶか、下の「くわしく見る」で理由をたしかめてください。';
+      if (/保存失敗/.test(plain)) return '作品ファイルを ほぞんできませんでした。この画面の作品は のこっています。画面を とじずに、下の「くわしく見る」で 理由を たしかめてから、もう一度「ほぞん」を おしてください。';
+      if (/読み込み失敗/.test(plain)) return '作品ファイルを 開けませんでした。えらんだ ファイルは かえていません。ほかの ほぞんファイルを えらぶか、下の「くわしく見る」で 理由を たしかめてください。';
       return childDiagnosticText({message:plain});
     }
     const log = (m, type = '') => {
@@ -1931,7 +1931,7 @@
         addition = (el.console.textContent ? '\n' : '') + prefix + message,
         preserved = message === original ? addition : addition + '\n' + original;
       if (el.console.textContent.length + preserved.length > LIMITS.logChars)
-        el.console.textContent = '[古いログを省略]\n' + (el.console.textContent + preserved).slice(-Math.floor(LIMITS.logChars * 0.9));
+        el.console.textContent = '[古い きろくは はぶきました]\n' + (el.console.textContent + preserved).slice(-Math.floor(LIMITS.logChars * 0.9));
       else {
         el.console.appendChild(document.createTextNode(addition));
         if (message !== original) appendDiagnosticDetails(el.console, {message:original});
@@ -2171,7 +2171,7 @@
     function updateDirty() {
       dirty = currentFingerprint() !== lastSavedFingerprint;
       const draft = hasCallableDraft() || hasPendingEditor();
-      el.dirty.textContent = dirty ? '未保存' : draft ? '書きかけあり' : '変更なし';
+      el.dirty.textContent = dirty ? 'ファイルに まだ ほぞんしていないよ' : draft ? '書きかけあり' : 'ファイルに ほぞんしたよ';
       el.dirty.className = dirty || draft ? 'dirty-state dirty' : 'dirty-state';
       const locked = modelLocked();
       $('#undoBtn').disabled =
@@ -2235,7 +2235,7 @@
       redo.push(history.pop());
       restoreSnap(history.at(-1));
       confirmTutorialOperation('undo');
-      setStatus('1つ前の状態へ戻しました');
+      setStatus('1つ前に もどしました');
     }
     function redoDo() {
       if (tutorial) return;
@@ -2263,7 +2263,7 @@
       }
     }
     function validateSavedEditorFingerprint(value) {
-      const fail = () => { throw new AkariError('F503', '自動保存の保存時の編集状態が正しくありません'); };
+      const fail = () => { throw new AkariError('F503', '自動で のこした 作品の 書きかけの ようすが 正しくありません'); };
       if (typeof value !== 'string' || value.length > LIMITS.fileBytes) return fail();
       let saved;
       try { saved = JSON.parse(value); } catch (_) { return fail(); }
@@ -2380,7 +2380,7 @@
       el.event.innerHTML = '';
       if (sourceOverviewOpen) {
         const all = document.createElement('option');
-        all.value = 'all'; all.textContent = 'すべての本文を表示中';
+        all.value = 'all'; all.textContent = 'すべての本文を 見せています';
         el.event.append(all);
       }
       for (const ev of eventsFor(selectedId)) {
@@ -2448,7 +2448,7 @@
       const records = sourceRegistry(project), byKey = new Map(records.map(r => [r.key, r]));
       const owned = records.filter(r => r.ownerId === selectedId);
       root.setAttribute('aria-label', targetById(selectedId).name + ' のすべてのコード');
-      if (!owned.length) root.append(make('p', 'この部品にはまだコードがありません。できごとを選んで本文を作れます。'));
+      if (!owned.length) root.append(make('p', 'この部品には まだ コードが ありません。できごとを えらんで 本文を 作れます。'));
       const queue = [...owned.filter(r => r.source.trim()), ...owned.filter(r => !r.source.trim())];
       const included = new Set(queue.map(r => r.key));
       for (let i = 0; i < queue.length; i++) {
@@ -2474,7 +2474,7 @@
         card.dataset.ownerId = record.ownerId;
         const shared = record.ownerId !== selectedId;
         const heading = make('h3', `${shared ? project.stage.name + ' ／ ' : ''}${record.title}`);
-        const edit = button('この本文を編集', () => {
+        const edit = button('この本文を なおす', () => {
           if (!flushActiveEditor()) return;
           if (record.kind === 'script') {
             if (!selectObject(record.ownerId)) return;
@@ -2502,10 +2502,10 @@
               readOnly: true,
               root: preview, getSession: () => session, getProject: () => project,
               getContext: () => record.context, isLocked: () => true,
-              onOperation: () => ({ ok: false, reason: '本文の編集ボタンを選んでください' }),
+              onOperation: () => ({ ok: false, reason: '「この本文を なおす」を えらんでください' }),
             }));
           } else {
-            if (!session.syntaxAst) body.append(make('p', '書き方を確認してください。入力した本文を表示しています。', 'source-error'));
+            if (!session.syntaxAst) body.append(make('p', '書き方を たしかめてください。入力した 本文を 見せています。', 'source-error'));
             body.append(make('pre', record.source));
           }
         };
@@ -2515,7 +2515,7 @@
         if (i === 0) render();
         else { waiting.set(body, render); sourceOverviewObserver.observe(body); }
         if (record.references.length) {
-          const refs = make('nav', '使っている共通コード：', 'source-references');
+          const refs = make('nav', '使っている 自分で作ったブロック：', 'source-references');
           for (const key of record.references) {
             const link = make('a', byKey.get(key).title);
             link.href = '#' + anchors.get(key);
@@ -2532,9 +2532,9 @@
         const card = make('section', null, 'source-card source-draft');
         card.dataset.ownerId = callableDraftCore.ownerId;
         card.dataset.sourceKey = draftOwner();
-        card.append(make('h3', `編集中の${callableDraftCore.type === 'action' ? '手順' : '答えを求める'}「${callableDraftCore.name || '名前を入力'}」`),
+        card.append(make('h3', `なおしている ${callableDraftCore.type === 'action' ? 'てじゅん' : '答えを もとめる'}「${callableDraftCore.name || '名前を入力'}」`),
           make('pre', callableDraftCore.source || '本文は空です。'),
-          button('編集を続ける', () => { $('#procModal').classList.add('show'); renderEditorBinding(draftEditor); }));
+          button('つづきを なおす', () => { $('#procModal').classList.add('show'); renderEditorBinding(draftEditor); }));
         root.append(card);
       }
       root.scrollTop = scroll;
@@ -2684,11 +2684,11 @@
         handle.dataset.resizeDirection = direction;
         handle.title =
           mode === 'scale'
-            ? '\u30c9\u30e9\u30c3\u30b0\u3067\u6bd4\u7387\u3092\u4fdd\u3063\u3066\u62e1\u5927\u30fb\u7e2e\u5c0f'
-            : '\u30c9\u30e9\u30c3\u30b0\u3067\u7e26\u6a2a\u3092\u5909\u66f4\uff08Shift\uff0b\u89d2\u3067\u6bd4\u7387\u3092\u4fdd\u6301\uff09';
+            ? 'ドラッグで 形を かえずに 大きく・小さく'
+            : 'ドラッグで たて・よこを かえる（Shift＋角で 形を そのままに）';
         handle.setAttribute(
           'aria-label',
-          `${c.name}: ${labels[direction]}\u306e\u30b5\u30a4\u30ba\u5909\u66f4`,
+          `${c.name}: ${labels[direction]}の 大きさを かえる`,
         );
         handle.addEventListener('pointerdown', (e) => {
           if (e.button !== 0 || e.isPrimary === false) return;
@@ -2815,7 +2815,7 @@
         const before = cloneDesignProject(project);
         try {
           if (type === 'number' && (inp.value.trim() === '' || !finite(Number(inp.value))))
-            throw new Error('有限の数を入力してください');
+            throw new Error('数を 入れてください');
           onchange(type === 'checkbox' ? inp.checked : inp.value);
           validateDesignProject(project);
           markDirty();
@@ -2849,7 +2849,7 @@
       if (selectedId === 'stage') {
         el.props.append(
           propSection(
-            '\u57fa\u672c',
+            'きほん',
             propRow('\u540d\u524d', project.stage.name, (v) => {
               if (!v.trim())
                 throw new Error('\u540d\u524d\u306f\u7a7a\u306b\u3067\u304d\u307e\u305b\u3093');
@@ -2860,11 +2860,11 @@
           propSection(
             '\u5927\u304d\u3055',
             propRow(
-              '\u5e45',
+              'はば',
               project.stage.width,
               (v) => {
                 const n = Number(v);
-                if (!finite(n) || n < 200 || n > 1200) throw new Error('\u5e45\u306f200\u301c1200');
+                if (!finite(n) || n < 200 || n > 1200) throw new Error('はばは200〜1200');
                 project.stage.width = n;
               },
               'number',
@@ -2881,8 +2881,8 @@
               'number',
             ),
           ),
-          propSection('吹き出し',
-            propRow('名前を表示',project.stage.showSpeechNames!==false,
+          propSection('ふきだし',
+            propRow('名前を見せる',project.stage.showSpeechNames!==false,
               v=>(project.stage.showSpeechNames=v),'checkbox')),
         );
         syncPropertyScrollPadding();
@@ -2899,7 +2899,7 @@
       duplicate.type = 'button';
       duplicate.className = 'prop-duplicate';
       duplicate.textContent = '見た目のコピー';
-      duplicate.title = '見た目・設定を複製します（コードは含みません）';
+      duplicate.title = '見た目と せっていを コピーします（コードは コピーしません）';
       duplicate.disabled = modelLocked() || project.components.length >= LIMITS.components;
       duplicate.onclick = duplicateSelectedComponent;
       const del = document.createElement('button');
@@ -2910,29 +2910,29 @@
       del.onclick = deleteSelectedComponent;
       const copyHelp = document.createElement('small');
       copyHelp.className = 'child-copy-help';
-      copyHelp.textContent = '見た目と設定をコピーします。コードはコピーしません。';
+      copyHelp.textContent = '見た目と せっていを コピーします。コードは コピーしません。';
       duplicate.setAttribute('aria-description', copyHelp.textContent);
       actions.append(title, duplicate, del);
       (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions, copyHelp);
       el.props.append(
         propSection(
-          '\u57fa\u672c',
+          'きほん',
           propRow('\u540d\u524d', c.name, (v) => {
             v = v.trim();
             if (!v || project.components.some((x) => x !== c && x.name === v))
               throw new Error(
-                '\u90e8\u54c1\u540d\u306f\u7a7a\u306b\u3067\u304d\u305a\u3001\u91cd\u8907\u3082\u3067\u304d\u307e\u305b\u3093',
+                '部品の名前は 空にできません。ほかの部品と 同じ名前にも できません。',
               );
             project = prepareResourceRename(project,'component:'+c.id,v,{drafts:resourceDraftRecords()});
             invalidateEditors();
           }),
-          propRow('\u8868\u793a', c.visible, (v) => (c.visible = v), 'checkbox'),
+          propRow('見せる', c.visible, (v) => (c.visible = v), 'checkbox'),
           propRow(
-            '\u7a2e\u985e',
+            'しゅるい',
             {
               label: '\u6587\u5b57',
               button: '\u30dc\u30bf\u30f3',
-              input: '\u5165\u529b\u6b04',
+              input: '入力らん',
               box: '\u56db\u89d2',
               sprite: '\u30ad\u30e3\u30e9\u30af\u30bf\u30fc',
             }[c.type] || c.type,
@@ -2941,7 +2941,7 @@
           ),
         ),
         propSection(
-          '\u6587\u5b57\u30fb\u5185\u5bb9',
+          '文字・中身',
           propRow(
             c.type === 'sprite' ? '\u4ee3\u308f\u308a\u306e\u6587\u5b57' : '\u6587\u5b57',
             c.text,
@@ -2955,13 +2955,13 @@
           ),
         ),
         propSection(
-          '\u5927\u304d\u3055\u30fb\u4f4d\u7f6e',
+          '大きさ・ばしょ',
           propRow(
-            '\u5e45',
+            'はば',
             c.w,
             (v) => {
               const n = Number(v);
-              if (n < 8 || n > 1200) throw new Error('\u5e45\u306f8\u301c1200');
+              if (n < 8 || n > 1200) throw new Error('はばは8〜1200');
               c.w = n;
             },
             'number',
@@ -2982,11 +2982,11 @@
         propSection(
           '\u8272',
           colorSetting(c, 'fg', '\u6587\u5b57\u8272'),
-          colorSetting(c, 'bg', '\u80cc\u666f\u8272'),
+          colorSetting(c, 'bg', 'うしろの色'),
         ),
         propSection(
           '\u305d\u306e\u4ed6',
-          propRow('\u65b9\u5411', c.direction, (v) => (c.direction = Number(v)), 'number'),
+          propRow('向き', c.direction, (v) => (c.direction = Number(v)), 'number'),
           propRow(
             '\u5927\u304d\u3055%',
             c.scalePercent,
@@ -3032,7 +3032,7 @@
       const grid = document.createElement('div');
       grid.className = 'color-presets';
       grid.setAttribute('role', 'group');
-      grid.setAttribute('aria-label', label + '\u306e\u57fa\u672c12\u8272');
+      grid.setAttribute('aria-label', label + 'の きほんの12色');
       for (const preset of COLOR_PRESETS) {
         const b = document.createElement('button');
         b.type = 'button';
@@ -3064,7 +3064,7 @@
         const none = document.createElement('button');
         none.type = 'button';
         none.className = 'color-none';
-        none.textContent = '\u306a\u3057\uff08\u900f\u660e\uff09';
+        none.textContent = 'なし（とうめい）';
         none.setAttribute('aria-pressed', String(c.bg === null));
         none.disabled = modelLocked();
         none.onclick = () => choosePreset(c, field, null);
@@ -3078,7 +3078,7 @@
       const next = value === null && field === 'bg' ? null : pickerHex(value);
       if (next === null && !(field === 'bg' && value === null))
         throw new Error(
-          '\u8272\u30b3\u30fc\u30c9\u306f #RRGGBB \u306e\u5f62\u3067\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044',
+          '色は、# と 6けたの 0〜9・A〜F で 入れてください（れい: #147efb）',
         );
       if (c[field] === next) return false;
       const candidate = cloneDesignProject(project);
@@ -3147,13 +3147,13 @@
       }
       $('#colorHex').setAttribute('aria-invalid', String(!!edit.invalid));
       $('#colorError').textContent = edit.invalid
-        ? '# \u3068\u30016\u3051\u305f\u306e0\u301c9\u30fbA\u301cF\u3067\u5165\u529b\u3057\u307e\u3059\uff08\u4f8b: #147efb\uff09'
+        ? '# と、6けたの0〜9・A〜Fで入力します（れい: #147efb）'
         : '';
       $('#colorConfirm').disabled = !!edit.invalid || !!edit.composing;
       $('#colorNone').setAttribute('aria-pressed', String(edit.value === null));
       $('#colorState').textContent =
         edit.value === null
-          ? '\u306a\u3057\uff08\u900f\u660e\uff09'
+          ? 'なし（とうめい）'
           : `\u8272\u3042\u3044 ${Math.round(h)}\u5ea6\u3001\u3042\u3056\u3084\u304b\u3055 ${Math.round(s * 100)}%\u3001\u660e\u308b\u3055 ${Math.round(v * 100)}%`;
       paintColorPreview();
     }
@@ -3436,7 +3436,7 @@
         renderComponents();
         if (changed) refreshEditor();
         releaseShellPointer();
-        if (cancel) setStatus('\u79fb\u52d5\u3092\u53d6\u308a\u6d88\u3057\u307e\u3057\u305f');
+        if (cancel) setStatus('動かすのを 取り消しました');
       };
       const up = (e) => {
           if (e.pointerId === pointerId) finish(e);
@@ -3496,7 +3496,7 @@
         setStatus(
           designResizeMode(c) === 'scale'
             ? `${c.name}: ${next.scalePercent}%`
-            : `${c.name}: \u5e45 ${Math.round(next.w * 100) / 100} / \u9ad8\u3055 ${Math.round(next.h * 100) / 100}（Escで取り消す）`,
+            : `${c.name}: はば ${Math.round(next.w * 100) / 100} / \u9ad8\u3055 ${Math.round(next.h * 100) / 100}（Escで取り消す）`,
         );
       };
       const finish = (event) => {
@@ -3530,13 +3530,13 @@
         releaseShellPointer();
         if (cancel)
           setStatus(
-            '\u30b5\u30a4\u30ba\u5909\u66f4\u3092\u53d6\u308a\u6d88\u3057\u307e\u3057\u305f',
+            '大きさを かえるのを 取り消しました',
           );
         else
           setStatus(
             changed
-              ? '\u30b5\u30a4\u30ba\u3092\u5909\u66f4\u3057\u307e\u3057\u305f'
-              : '\u30b5\u30a4\u30ba\u306e\u5909\u66f4\u306f\u3042\u308a\u307e\u305b\u3093',
+              ? '大きさを かえました'
+              : '大きさは かわっていません',
           );
       };
       const up = (e) => {
@@ -3570,7 +3570,7 @@
       if (!source) return;
       try {
         if (project.components.length >= LIMITS.components)
-          throw new AkariError('F504', '部品数が上限です');
+          throw new AkariError('F504', '部品が いっぱいで、もう ふやせません。いらない部品を けしてください');
         const next = cloneDesignProject(project), copy = cloneDesignProject(source), ids = allIds(),
           names = new Set(project.components.map(c => c.name));
         let n = 2;
@@ -3611,9 +3611,9 @@
         refreshEditor();
         clearTimeout(historyTimer);
         pushHistoryNow();
-        setStatus(`「${source.name}」を「${copy.name}」として複製しました`);
+        setStatus(`「${source.name}」を「${copy.name}」として コピーしました`);
       } catch (error) {
-        log(`${error.code || ''} 複製できませんでした: ${error.message}`, 'error');
+        log(`${error.code || ''} コピーできませんでした: ${error.message}`, 'error');
       }
     }
     function deleteSelectedComponent() {
@@ -3621,7 +3621,7 @@
       const c = componentById(selectedId);
       if (!c) return;
       if (!allowResourceDelete('component:' + c.id, $('#properties'), c.id)) return;
-      if (!confirm('部品「' + c.name + '」を削除しますか？')) return;
+      if (!confirm('部品「' + c.name + '」を けしますか？')) return;
       clearTimeout(historyTimer);
       pushHistoryNow();
       const id = c.id;
@@ -3637,7 +3637,7 @@
       loadEditor();
       refreshEditor();
       pushHistoryNow();
-      setStatus('部品を削除しました', 'ok');
+      setStatus('部品を けしました', 'ok');
     }
     const STANDARD_SPRITES = Object.freeze({
       akariMascot: STANDARD_AKARI_MASCOT,
@@ -3654,7 +3654,7 @@
       circle: Object.freeze({ name: '丸', value: '●', fg: '#2f6fd6' }),
       whiteCircle: Object.freeze({ name: '白丸', value: '○', fg: '#2f6fd6' }),
       fisheye: Object.freeze({ name: '目玉', value: '◉', fg: '#2563eb' }),
-      bullseye: Object.freeze({ name: '的', value: '◎', fg: '#dc2626' }),
+      bullseye: Object.freeze({ name: 'まと', value: '◎', fg: '#dc2626' }),
       triangle: Object.freeze({ name: '三角', value: '▲', fg: '#e05252' }),
       whiteTriangle: Object.freeze({ name: '白三角', value: '△', fg: '#e05252' }),
       downTriangle: Object.freeze({ name: '下三角', value: '▼', fg: '#e05252' }),
@@ -3682,59 +3682,59 @@
       sun: Object.freeze({ name: '太陽', value: '☀', fg: '#e89a00' }),
       whiteSun: Object.freeze({ name: '白い太陽', value: '☼', fg: '#e89a00' }),
       cloud: Object.freeze({ name: '雲', value: '☁', fg: '#6b7280' }),
-      umbrella: Object.freeze({ name: '傘', value: '☂', fg: '#2563eb' }),
-      rainUmbrella: Object.freeze({ name: '雨傘', value: '☔', fg: '#2563eb' }),
+      umbrella: Object.freeze({ name: 'かさ', value: '☂', fg: '#2563eb' }),
+      rainUmbrella: Object.freeze({ name: '雨がさ', value: '☔', fg: '#2563eb' }),
       snowman: Object.freeze({ name: '雪だるま', value: '☃', fg: '#2563eb' }),
-      comet: Object.freeze({ name: '彗星', value: '☄', fg: '#7c3aed' }),
-      lightning: Object.freeze({ name: '雷', value: '⚡', fg: '#d97706' }),
+      comet: Object.freeze({ name: 'すいせい', value: '☄', fg: '#7c3aed' }),
+      lightning: Object.freeze({ name: 'かみなり', value: '⚡', fg: '#d97706' }),
       snowflake: Object.freeze({ name: '雪', value: '❄', fg: '#0ea5e9' }),
       snowflake2: Object.freeze({ name: '雪2', value: '❅', fg: '#0ea5e9' }),
       snowflake3: Object.freeze({ name: '雪3', value: '❆', fg: '#0ea5e9' }),
       shamrock: Object.freeze({ name: 'クローバー', value: '☘', fg: '#16a34a' }),
-      hotSpring: Object.freeze({ name: '温泉', value: '♨', fg: '#dc2626' }),
+      hotSpring: Object.freeze({ name: 'おんせん', value: '♨', fg: '#dc2626' }),
       firstMoon: Object.freeze({ name: '月', value: '☽', fg: '#475569' }),
       lastMoon: Object.freeze({ name: '反対の月', value: '☾', fg: '#475569' }),
       // 顔・サイン
-      face: Object.freeze({ name: '笑顔', value: '☺', fg: '#f59e0b' }),
+      face: Object.freeze({ name: 'えがお', value: '☺', fg: '#f59e0b' }),
       sadFace: Object.freeze({ name: '悲しい顔', value: '☹', fg: '#64748b' }),
       blackFace: Object.freeze({ name: '黒い顔', value: '☻', fg: '#334155' }),
       peace: Object.freeze({ name: 'ピース', value: '☮', fg: '#0f766e' }),
-      yinYang: Object.freeze({ name: '陰陽', value: '☯', fg: '#334155' }),
+      yinYang: Object.freeze({ name: 'いんよう', value: '☯', fg: '#334155' }),
       check: Object.freeze({ name: 'チェック', value: '✓', fg: '#16a34a' }),
       heavyCheck: Object.freeze({ name: '太いチェック', value: '✔', fg: '#16a34a' }),
       cross: Object.freeze({ name: 'ばつ', value: '✗', fg: '#dc2626' }),
       heavyX: Object.freeze({ name: '太いばつ', value: '✘', fg: '#dc2626' }),
-      flag: Object.freeze({ name: '旗', value: '⚑', fg: '#475569' }),
-      whiteFlag: Object.freeze({ name: '白い旗', value: '⚐', fg: '#475569' }),
+      flag: Object.freeze({ name: 'はた', value: '⚑', fg: '#475569' }),
+      whiteFlag: Object.freeze({ name: '白いはた', value: '⚐', fg: '#475569' }),
       warning: Object.freeze({ name: '注意', value: '⚠', fg: '#d97706' }),
       skull: Object.freeze({ name: 'どくろ', value: '☠', fg: '#334155' }),
-      medical: Object.freeze({ name: '医療', value: '⚕', fg: '#0f766e' }),
+      medical: Object.freeze({ name: 'いりょう', value: '⚕', fg: '#0f766e' }),
       recycle: Object.freeze({ name: 'リサイクル', value: '♻', fg: '#16a34a' }),
-      radioactive: Object.freeze({ name: '放射線', value: '☢', fg: '#d97706' }),
+      radioactive: Object.freeze({ name: 'ほうしゃせん', value: '☢', fg: '#d97706' }),
       biohazard: Object.freeze({ name: 'バイオハザード', value: '☣', fg: '#7c3aed' }),
       question: Object.freeze({ name: 'はてな', value: '❓', fg: '#2563eb' }),
       exclamation: Object.freeze({ name: 'びっくり', value: '❗', fg: '#dc2626' }),
-      infinity: Object.freeze({ name: '無限', value: '∞', fg: '#7c3aed' }),
+      infinity: Object.freeze({ name: 'むげん', value: '∞', fg: '#7c3aed' }),
       // 音・ゲーム
-      quarterNote: Object.freeze({ name: '四分音符', value: '♩', fg: '#8b5cf6' }),
-      note: Object.freeze({ name: '音符', value: '♪', fg: '#8b5cf6' }),
-      notes: Object.freeze({ name: '連符', value: '♫', fg: '#8b5cf6' }),
-      sixteenthNotes: Object.freeze({ name: '十六分音符', value: '♬', fg: '#8b5cf6' }),
+      quarterNote: Object.freeze({ name: 'しぶおんぷ', value: '♩', fg: '#8b5cf6' }),
+      note: Object.freeze({ name: 'おんぷ', value: '♪', fg: '#8b5cf6' }),
+      notes: Object.freeze({ name: 'つながったおんぷ', value: '♫', fg: '#8b5cf6' }),
+      sixteenthNotes: Object.freeze({ name: 'じゅうろくぶおんぷ', value: '♬', fg: '#8b5cf6' }),
       flat: Object.freeze({ name: 'フラット', value: '♭', fg: '#475569' }),
       natural: Object.freeze({ name: 'ナチュラル', value: '♮', fg: '#475569' }),
       sharp: Object.freeze({ name: 'シャープ', value: '♯', fg: '#475569' }),
       whiteChessKing: Object.freeze({ name: '王', value: '♔', fg: '#b45309' }),
       whiteChessQueen: Object.freeze({ name: '女王', value: '♕', fg: '#b45309' }),
-      whiteChessRook: Object.freeze({ name: '城', value: '♖', fg: '#b45309' }),
-      whiteChessBishop: Object.freeze({ name: '僧', value: '♗', fg: '#b45309' }),
+      whiteChessRook: Object.freeze({ name: 'おしろ', value: '♖', fg: '#b45309' }),
+      whiteChessBishop: Object.freeze({ name: 'おぼうさん', value: '♗', fg: '#b45309' }),
       whiteChessKnight: Object.freeze({ name: '馬', value: '♘', fg: '#b45309' }),
-      whiteChessPawn: Object.freeze({ name: '兵', value: '♙', fg: '#b45309' }),
+      whiteChessPawn: Object.freeze({ name: 'へいたい', value: '♙', fg: '#b45309' }),
       blackChessKing: Object.freeze({ name: '黒王', value: '♚', fg: '#334155' }),
       blackChessQueen: Object.freeze({ name: '黒女王', value: '♛', fg: '#334155' }),
-      blackChessRook: Object.freeze({ name: '黒城', value: '♜', fg: '#334155' }),
-      blackChessBishop: Object.freeze({ name: '黒僧', value: '♝', fg: '#334155' }),
+      blackChessRook: Object.freeze({ name: '黒おしろ', value: '♜', fg: '#334155' }),
+      blackChessBishop: Object.freeze({ name: '黒おぼうさん', value: '♝', fg: '#334155' }),
       blackChessKnight: Object.freeze({ name: '黒馬', value: '♞', fg: '#334155' }),
-      blackChessPawn: Object.freeze({ name: '黒兵', value: '♟', fg: '#334155' }),
+      blackChessPawn: Object.freeze({ name: '黒ポーン', value: '♟', fg: '#334155' }),
       die1: Object.freeze({ name: 'さいころ1', value: '⚀', fg: '#334155' }),
       die2: Object.freeze({ name: 'さいころ2', value: '⚁', fg: '#334155' }),
       die3: Object.freeze({ name: 'さいころ3', value: '⚂', fg: '#334155' }),
@@ -3749,10 +3749,10 @@
       whitePhone: Object.freeze({ name: '白い電話', value: '☏', fg: '#334155' }),
       mail: Object.freeze({ name: '手紙', value: '✉', fg: '#2563eb' }),
       scissors: Object.freeze({ name: 'はさみ', value: '✂', fg: '#475569' }),
-      pencil: Object.freeze({ name: '鉛筆', value: '✎', fg: '#b45309' }),
-      blackPencil: Object.freeze({ name: '黒鉛筆', value: '✏', fg: '#b45309' }),
+      pencil: Object.freeze({ name: 'えんぴつ', value: '✎', fg: '#b45309' }),
+      blackPencil: Object.freeze({ name: '黒えんぴつ', value: '✏', fg: '#b45309' }),
       penNib: Object.freeze({ name: 'ペン先', value: '✒', fg: '#475569' }),
-      plane: Object.freeze({ name: '飛行機', value: '✈', fg: '#0f766e' }),
+      plane: Object.freeze({ name: 'ひこうき', value: '✈', fg: '#0f766e' }),
       anchor: Object.freeze({ name: 'いかり', value: '⚓', fg: '#0369a1' }),
       sailboat: Object.freeze({ name: 'ヨット', value: '⛵', fg: '#0369a1' }),
       ferry: Object.freeze({ name: '船', value: '⛴', fg: '#0369a1' }),
@@ -3760,22 +3760,22 @@
       fuel: Object.freeze({ name: 'ガソリン', value: '⛽', fg: '#dc2626' }),
       house: Object.freeze({ name: '家', value: '⌂', fg: '#b45309' }),
       coffee: Object.freeze({ name: 'カップ', value: '☕', fg: '#92400e' }),
-      watch: Object.freeze({ name: '腕時計', value: '⌚', fg: '#475569' }),
-      hourglass: Object.freeze({ name: '砂時計', value: '⌛', fg: '#a16207' }),
+      watch: Object.freeze({ name: 'うで時計', value: '⌚', fg: '#475569' }),
+      hourglass: Object.freeze({ name: 'すな時計', value: '⌛', fg: '#a16207' }),
       keyboard: Object.freeze({ name: 'キーボード', value: '⌨', fg: '#475569' }),
       gear: Object.freeze({ name: '歯車', value: '⚙', fg: '#475569' }),
       hammerPick: Object.freeze({ name: 'ハンマー', value: '⚒', fg: '#92400e' }),
-      swords: Object.freeze({ name: '剣', value: '⚔', fg: '#475569' }),
+      swords: Object.freeze({ name: 'けん', value: '⚔', fg: '#475569' }),
       scales: Object.freeze({ name: 'てんびん', value: '⚖', fg: '#b45309' }),
       alembic: Object.freeze({ name: 'フラスコ', value: '⚗', fg: '#0f766e' }),
       atom: Object.freeze({ name: '原子', value: '⚛', fg: '#2563eb' }),
       // 方向・操作
-      left: Object.freeze({ name: '左矢印', value: '←', fg: '#2563eb' }),
-      up: Object.freeze({ name: '上矢印', value: '↑', fg: '#2563eb' }),
-      right: Object.freeze({ name: '右矢印', value: '→', fg: '#2563eb' }),
-      down: Object.freeze({ name: '下矢印', value: '↓', fg: '#2563eb' }),
-      leftRight: Object.freeze({ name: '左右矢印', value: '↔', fg: '#2563eb' }),
-      upDown: Object.freeze({ name: '上下矢印', value: '↕', fg: '#2563eb' }),
+      left: Object.freeze({ name: '左やじるし', value: '←', fg: '#2563eb' }),
+      up: Object.freeze({ name: '上やじるし', value: '↑', fg: '#2563eb' }),
+      right: Object.freeze({ name: '右やじるし', value: '→', fg: '#2563eb' }),
+      down: Object.freeze({ name: '下やじるし', value: '↓', fg: '#2563eb' }),
+      leftRight: Object.freeze({ name: '左右やじるし', value: '↔', fg: '#2563eb' }),
+      upDown: Object.freeze({ name: '上下やじるし', value: '↕', fg: '#2563eb' }),
       upLeft: Object.freeze({ name: '左上', value: '↖', fg: '#2563eb' }),
       upRight: Object.freeze({ name: '右上', value: '↗', fg: '#2563eb' }),
       downRight: Object.freeze({ name: '右下', value: '↘', fg: '#2563eb' }),
@@ -3785,7 +3785,7 @@
       doubleRight: Object.freeze({ name: '二重右', value: '⇒', fg: '#0f766e' }),
       doubleDown: Object.freeze({ name: '二重下', value: '⇓', fg: '#0f766e' }),
       doubleLeftRight: Object.freeze({ name: '二重左右', value: '⇔', fg: '#0f766e' }),
-      hookLeft: Object.freeze({ name: '戻る', value: '↩', fg: '#7c3aed' }),
+      hookLeft: Object.freeze({ name: 'もどる', value: '↩', fg: '#7c3aed' }),
       hookRight: Object.freeze({ name: '進む', value: '↪', fg: '#7c3aed' }),
       turnLeft: Object.freeze({ name: '左回り', value: '↺', fg: '#7c3aed' }),
       turnRight: Object.freeze({ name: '右回り', value: '↻', fg: '#7c3aed' }),
@@ -3798,12 +3798,12 @@
       pushHistoryNow();
       if (modelLocked() || !['label', 'button', 'input', 'box', 'sprite'].includes(type)) return;
       if (project.components.length >= LIMITS.components) {
-        log('部品数が上限です', 'error');
+        log('部品が いっぱいで、もう ふやせません。いらない部品を けしてください', 'error');
         return;
       }
       const preset =
           type === 'sprite' ? STANDARD_SPRITES[spritePreset] || STANDARD_SPRITES.star : null,
-        names = { label: '文字', button: 'ボタン', input: '入力欄', box: '四角' },
+        names = { label: '文字', button: 'ボタン', input: '入力らん', box: '四角' },
         nameBase = preset?.name || names[type];
       let n = 1,
         name = spritePreset === 'dango' ? nameBase : null;
@@ -3875,7 +3875,7 @@
           try {
             validateAssetReferences({ ...project, components: [...project.components, base] }, store);
           } catch (error) {
-            log(`${error.code || ''} キャラクターを置けません: ${error.message}`, 'error');
+            log(`${error.code || ''} キャラクターを おけません: ${error.message}`, 'error');
             setStatus(error.message, 'error');
             return;
           }
@@ -3908,8 +3908,8 @@
         b.textContent = monitorValue(v);
         if (Array.isArray(v) || (typeof v === 'string' && cpLen(v) > 160) || displayValue(v).rounded) {
           const full = document.createElement('button');
-          full.textContent = isNumberValue(v) ? '実値' : '\u5168\u6587';
-          full.setAttribute('aria-label', k + (isNumberValue(v) ? 'の実値（表示を丸めています）' : '\u306e\u5168\u6587'));
+          full.textContent = isNumberValue(v) ? 'もとの数' : '\u5168\u6587';
+          full.setAttribute('aria-label', k + (isNumberValue(v) ? 'の まるめる前の かず（ふだんは まるめて 見せています）' : '\u306e\u5168\u6587'));
           const copy = Array.isArray(v) ? v.slice() : v;
           full.onclick = () => showFullValue(k, copy);
           b.appendChild(full);
@@ -3936,12 +3936,12 @@
       v.page = clamp(v.page, 0, pages - 1);
       $('#valueTitle').textContent = v.label;
       const rounded = item !== undefined && displayValue(item).rounded;
-      $('#valueNotice').textContent = rounded ? '通常の表示を丸めています。以下は丸める前の実値です。選択してコピーできます。' : '以下は値の全文です。選択してコピーできます。';
+      $('#valueNotice').textContent = rounded ? 'ふだんは かずを まるめて 見せています。下は まるめる前の かずです。えらんで コピーできます。' : '下は 中身の 全部です。えらんで コピーできます。';
       $('#valueListControls').hidden = !list;
       $('#valueItem').value = String(v.index + 1);
       $('#valueItem').max = String(Math.max(1, v.value.length || 1));
       $('#valueItem').disabled = !list || !v.value.length;
-      $('#valueCount').textContent = list ? `/ ${v.value.length}\u4ef6` : '';
+      $('#valueCount').textContent = list ? `/ ${v.value.length}こ` : '';
       $('#valueItemPrev').disabled = !list || v.index === 0;
       $('#valueItemNext').disabled = !list || v.index >= v.value.length - 1;
       $('#valueOutput').textContent = chars.slice(v.page * 8000, (v.page + 1) * 8000).join('');
@@ -3974,7 +3974,7 @@
       root.textContent = '';
       if (!r) return;
       const help = document.createElement('div'); help.className = 'diagnostic-help';
-      help.textContent = '動きをいったん止めました。書いた動きと、できなかったときの記録（きろく）は残っています。\n' + diagnosticLocation(r) + ': ' + childDiagnosticText(r) + '\n「閉じる」のあと、「本文を見て確かめる」で命令（めいれい）をたしかめられます。書き直すときは「止める」を押して、編集（へんしゅう）に戻ってください。';
+      help.textContent = '動きを いったん 止めました。書いた動きと、うまく いかなかったときの きろくは のこっています。\n' + diagnosticLocation(r) + ': ' + childDiagnosticText(r) + '\n「とじる」の あと、「本文を見て たしかめる」で やることを たしかめられます。書きなおすときは「止める」を おしてから、なおしてください。';
       root.append(help);
       const details = appendDiagnosticDetails(root, r, `${r.code}: ${r.message}\n${r.key} / ${r.line}\u884c\n${r.statement}\n${r.callStack.join(' \u2192 ')}`);
       details.querySelector('pre').className = 'failure-summary';
@@ -3984,38 +3984,38 @@
         help.textContent = `ここは文字です。リスト「${r.quotedList.name}」を使いますか？`;
         const edit = document.createElement('button');
         edit.id = 'failureEditList';
-        edit.textContent = '止めて、この箇所のリストを選ぶ';
+        edit.textContent = '止めて、ここの リストを えらぶ';
         edit.onclick = () => openQuotedListRepair(r);
         root.append(help, edit);
       }
-      renderMonitorSection(root, '失敗したときのようす', [
+      renderMonitorSection(root, 'うまく いかなかったときの ようす', [
         ['動いていた部品', targetById(r.actor?.baseId || r.targetId)?.name || '画面'],
         ['きっかけ', runtimeEventText(r.eventType)],
         ['動かしていた本文', r.source],
       ]);
-      const identifiers = appendDiagnosticDetails(root, r, '処理番号: ' + r.taskId + '\n動いている部品: ' + r.runtimeId + '\n本文: ' + r.key);
+      const identifiers = appendDiagnosticDetails(root, r, '動きの 番号: ' + r.taskId + '\n動いている部品: ' + r.runtimeId + '\n本文: ' + r.key);
       identifiers.querySelector('summary').textContent = 'くわしく見る（動きの番号）';
       for (const f of r.frames)
         renderMonitorSection(
           root,
           (f.kind === 'function' ? '計算 ' : '動作 ') + f.name + ` / ${f.line}\u884c`,
           [
-            ...f.args.map(([k, v]) => ['受け取った値 ' + k, v]),
-            ...f.locals.map(([k, v]) => ['この中だけの値 ' + k, v]),
+            ...f.args.map(([k, v]) => ['入れたもの ' + k, v]),
+            ...f.locals.map(([k, v]) => ['この中だけの へんすう ' + k, v]),
             ...f.localLists.map(([k, v]) => ['この中だけのリスト ' + k, v]),
           ],
         );
       if (r.binders.length)
         renderMonitorSection(root, 'くり返しで今見ているもの', r.binders);
-      renderMonitorSection(root, '\u5931\u6557\u6642\u306e\u4f5c\u54c1\u30c7\u30fc\u30bf', [
+      renderMonitorSection(root, 'うまく いかなかったときの 作品の データ', [
         ...r.projectVariables,
         ...r.projectLists,
       ]);
       if (r.actor)
-        renderMonitorSection(root, '失敗したときのこの部品のデータ', [
-          ['\u6a2a\u4f4d\u7f6e', r.actor.x],
-          ['\u7e26\u4f4d\u7f6e', r.actor.y],
-          ['\u65b9\u5411', r.actor.direction],
+        renderMonitorSection(root, 'うまく いかなかったときの この部品の データ', [
+          ['よこ', r.actor.x],
+          ['たて', r.actor.y],
+          ['向き', r.actor.direction],
           ...r.actor.variables,
           ...r.actor.lists,
         ]);
@@ -4054,34 +4054,34 @@
       if (!range) return;
       stopRun();
       const ownerKey = record.quotedList.ownerKey, script = scriptBySourceKey(project, ownerKey);
-      if (!script) { setStatus('この本文はもうありません。現在のコードを確認してください'); return; }
+      if (!script) { setStatus('この本文は もう ありません。いまの コードを たしかめてください'); return; }
       selectedId = script.targetId; currentEvent = script.event; selectedScriptId = script.id || null;
       hideSourceOverview(); renderSelectors(); loadEditor(); switchEditorMode(mainEditor, 'code');
       const token = generationToken, panel = document.createElement('section');
       panel.id = 'listRepairPanel'; panel.className = 'editor-pending';
-      panel.setAttribute('aria-label', '失敗した文字をリストに直す');
+      panel.setAttribute('aria-label', 'うまく いかなかった 文字を リストに 直す');
       panel.style.cssText = 'flex:none;max-height:210px;overflow:auto;overflow-wrap:anywhere';
       const explanation = document.createElement('p'), preview = document.createElement('p'),
         select = document.createElement('select'), apply = document.createElement('button'),
         cancel = document.createElement('button'), notice = document.createElement('p');
       explanation.textContent = `ここは文字です。リスト「${record.quotedList.name}」を使いますか？`;
-      preview.textContent = `${targetById(script.targetId)?.name || '画面'}・${EVENT_LABELS[script.event] || script.event}の本文、${record.quotedList.span.startLine}行目の ${range.original} だけを変更します。番目・秒数・ほかの文・リストの中身はそのままです。`;
-      select.id = 'listRepairChoice'; select.setAttribute('aria-label', 'この箇所で使うリスト');
+      preview.textContent = `${targetById(script.targetId)?.name || '画面'}・${EVENT_LABELS[script.event] || script.event}の本文、${record.quotedList.span.startLine}行目の ${range.original} だけを かえます。番目・秒数・ほかの文・リストの中身は そのままです。`;
+      select.id = 'listRepairChoice'; select.setAttribute('aria-label', 'ここで 使う リスト');
       select.style.maxWidth = '100%';
-      const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = '使うリストを選ぶ'; select.append(placeholder);
+      const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = '使う リストを えらぶ'; select.append(placeholder);
       const candidates = quotedListCandidates(record);
       for (const [index, candidate] of candidates.entries()) {
         const option = document.createElement('option'); option.value = String(index); option.textContent = candidate.label; select.append(option);
       }
-      apply.id = 'listRepairApply'; apply.textContent = 'この箇所だけ置き換える'; apply.disabled = true;
+      apply.id = 'listRepairApply'; apply.textContent = 'ここだけ とりかえる'; apply.disabled = true;
       cancel.id = 'listRepairCancel'; cancel.textContent = '取り消す'; cancel.onclick = () => panel.remove();
       notice.id = 'listRepairNotice'; notice.setAttribute('role', 'status');
-      if (!candidates.length) notice.textContent = 'ここで使えるリストはありません。変数・リストで作ってから、もう一度実行してください。';
+      if (!candidates.length) notice.textContent = 'ここで 使える リストは ありません。へんすう・リストの ボタンで 作ってから、もう一度 動かしてください。';
       select.disabled = !candidates.length;
       const sourceIsCurrent = () => !modelLocked() && generationToken === token &&
         bindingOwner(mainEditor) === ownerKey && readSource(mainEditor) === record.source &&
         el.editor.value === record.source.replace(/\r\n?/g, '\n') && !hasPendingEditor();
-      const stale = () => { notice.textContent = '失敗した後に本文や実行が変わっています。現在の本文を確認して、もう一度実行してから選び直してください。'; apply.disabled = true; };
+      const stale = () => { notice.textContent = 'うまく いかなかった あとに、本文や 動きが かわりました。いまの 本文を たしかめて、もう一度 動かしてから えらびなおしてください。'; apply.disabled = true; };
       select.onchange = () => {
         if (!sourceIsCurrent()) { stale(); return; }
         const candidate = candidates[Number(select.value)]; apply.disabled = select.value === '';
@@ -4091,7 +4091,7 @@
         if (!sourceIsCurrent()) { stale(); return; }
         const candidate = select.value === '' ? null : candidates[Number(select.value)],
           current = candidate && quotedListCandidates(record).find(c => c.id === candidate.id && c.source === candidate.source && c.owner === candidate.owner);
-        if (!current) { notice.textContent = '選んだリストが変わりました。もう一度実行して選び直してください。'; apply.disabled = true; return; }
+        if (!current) { notice.textContent = 'えらんだ リストが かわりました。もう一度 動かしてから、えらびなおしてください。'; apply.disabled = true; return; }
         try {
           const source = record.source.slice(0, range.start) + current.source + record.source.slice(range.end);
           if (!commitSource(mainEditor, source, {atomic:true})) return;
@@ -4099,7 +4099,7 @@
           el.editor.focus();
           const start = record.source.slice(0, range.start).replace(/\r\n?/g, '\n').length;
           el.editor.setSelectionRange(start, start + current.source.length);
-          setStatus('選んだ箇所をリストに直しました。「動かす」で確かめられます');
+          setStatus('えらんだ ところを リストに 直しました。「動かす」で たしかめられます');
         } catch (error) { notice.textContent = error.message; }
       };
       panel.append(explanation, preview, select, apply, cancel, notice);
@@ -4118,19 +4118,19 @@
       if (!kept.length) return;
       const saved = project.extensions?.state || EXTENSION_HOST.initialState(),
         initial = EXTENSION_HOST.initialState();
-      renderMonitorSection(el.monitor, '作品に保存される拡張のデータ', kept.map(item => [item.name,
+      renderMonitorSection(el.monitor, '作品に ほぞんされる かくちょうの データ', kept.map(item => [item.name,
         JSON.stringify((saved.find(value => value.id === item.id) || initial.find(value => value.id === item.id))?.value ?? null)]));
       const reset = document.createElement('button');
       reset.type = 'button';
       reset.className = 'monitor-extension-reset';
-      reset.textContent = '拡張のデータを最初に戻す';
+      reset.textContent = 'かくちょうの データを はじめに もどす';
       reset.onclick = () => {
         if (runtime || modelLocked()) return;
         EXTENSION_HOST.resetState();
         project.extensions = { ...EXTENSION_HOST.requirements(), profile: AKARI_RUNTIME.profiles.requirement(), state: EXTENSION_HOST.snapshotState() };
         pushHistoryNow();
         renderMonitor();
-        log('拡張のデータを最初の値に戻しました', 'ok');
+        log('かくちょうの データを はじめの 中身に もどしました', 'ok');
       };
       el.monitor.appendChild(reset);
     }
@@ -4150,38 +4150,38 @@
         const last = records.at(-1),
           button = document.createElement('button');
         button.className = 'failure-open';
-        button.textContent = `動きが止まった記録（きろく）を見る（${records.length}件）`;
+        button.textContent = `動きが止まった きろくを 見る（${records.length}こ）`;
         button.onclick = () => showFailureDetails();
         el.monitor.appendChild(button);
-        section('\u76f4\u8fd1\u306e\u5931\u6557\u6642\u70b9', [
+        section('さいごに うまく いかなかったとき', [
           ['直す手がかり', childDiagnosticText(last)],
           ['場所', diagnosticLocation(last)],
-          ['\u5931\u6557\u547d\u4ee4', last.statement],
+          ['うまく いかなかった やること', last.statement],
         ]);
         const frame = last.frames.at(-1);
         if (frame)
           section((frame.kind === 'function' ? '計算 ' : '動作 ') + frame.name, [
-            ...frame.args.map(([k, v]) => ['受け取った値 ' + k, v]),
-            ...frame.locals.map(([k, v]) => ['この中だけの値 ' + k, v]),
+            ...frame.args.map(([k, v]) => ['入れたもの ' + k, v]),
+            ...frame.locals.map(([k, v]) => ['この中だけの へんすう ' + k, v]),
             ...frame.localLists.map(([k, v]) => ['この中だけのリスト ' + k, v]),
           ]);
       }
-      section('\u73fe\u5728\u306e\u4f5c\u54c1\u30c7\u30fc\u30bf', [
+      section('いまの 作品の データ', [
         ...runtime.projectVars,
         ...runtime.projectLists,
       ]);
       const tasks = scheduler ? [...scheduler.tasks.values()] : [];
-      section('\u5b9f\u884c\u6982\u8981', [
-        ['\u5b9f\u884c\u5f85\u3061', tasks.filter((t) => t.state === 'READY').length],
-        ['\u5f85\u6a5f\u4e2d', tasks.filter((t) => t.state === 'BLOCKED').length],
+      section('動きの まとめ', [
+        ['じゅんばんを 待っている', tasks.filter((t) => t.state === 'READY').length],
+        ['何かを 待っている', tasks.filter((t) => t.state === 'BLOCKED').length],
       ]);
       if (selectedId !== 'stage') {
         const a = runtime.actor(selectedId);
         if (a)
           section(componentById(selectedId)?.name || selectedId, [
-            ['\u6a2a\u4f4d\u7f6e', a.x],
-            ['\u7e26\u4f4d\u7f6e', a.y],
-            ['\u65b9\u5411', a.direction],
+            ['よこ', a.x],
+            ['たて', a.y],
+            ['向き', a.direction],
             ['\u5927\u304d\u3055', a.scalePercent],
             ...a.vars,
             ...a.lists,
@@ -4189,18 +4189,18 @@
       }
       const focus = scheduler?.tasks.get(activeTaskId) || tasks[0];
       if (focus) {
-        section('\u73fe\u5728\u306e\u51e6\u7406', [
-          ['状態', focus.state==='BLOCKED'?({time:focus.blockReason?.speechToken?'話している':'時間を待っている',condition:'条件を待っている',question:'答えを待っている',waitGroup:'ほかの動作を待っている',glide:'移動している'}[focus.blockReason?.kind]||'終わるのを待っている'):({READY:'順番を待っている',RUNNING:'動いている',DONE:'終わった',PAUSED:'一時停止',ERROR:'直すところがある',CANCELLED:'止めた'}[focus.state]||'動いている')],
+        section('いまの 動き', [
+          ['ようす', focus.state==='BLOCKED'?({time:focus.blockReason?.speechToken?'話している':'時間を待っている',condition:'そうなるまで 待っている',question:'答えを待っている',waitGroup:'ほかの動作を待っている',glide:'時間を かけて 動いている'}[focus.blockReason?.kind]||'終わるのを待っている'):({READY:'じゅんばんを 待っている',RUNNING:'動いている',DONE:'終わった',PAUSED:'いったん 止まっているよ',ERROR:'直すところがある',CANCELLED:'止めた'}[focus.state]||'動いている')],
           ['きっかけ', `${targetById(focus.targetId)?.name||'作品'} / ${runtimeEventText(focus.eventType)}`],
         ]);
         for (const f of focus.callFrames)
           section('\u52d5\u4f5c ' + f.name, [
-            ...Array.from(f.args, ([k, v]) => ['受け取った値 ' + k, v]),
-            ...Array.from(f.locals, ([k, v]) => ['この中だけの値 ' + k, v]),
+            ...Array.from(f.args, ([k, v]) => ['入れたもの ' + k, v]),
+            ...Array.from(f.locals, ([k, v]) => ['この中だけの へんすう ' + k, v]),
             ...Array.from(f.localLists, ([k, v]) => ['この中だけのリスト ' + k, v]),
           ]);
       }
-      const details=document.createElement('details'),summary=document.createElement('summary'),text=document.createElement('pre');summary.textContent='実行の詳しい記録';text.textContent=tasks.map(t=>`${t.targetId}: ${t.state}`).join('\n');details.append(summary);renderMonitorSection(details,'再現用の値',[['乱数種',runtime.runSeed]]);details.append(text);el.monitor.append(details);
+      const details=document.createElement('details'),summary=document.createElement('summary'),text=document.createElement('pre');summary.textContent='動きの くわしい きろく';text.textContent=tasks.map(t=>`${t.targetId}: ${t.state}`).join('\n');details.append(summary);renderMonitorSection(details,'同じ 動きに するための かず',[['どれかを えらぶ たね',runtime.runSeed]]);details.append(text);el.monitor.append(details);
     }
     function monitorValue(value) {
       const short = (v) => {
@@ -4210,7 +4210,7 @@
       return Array.isArray(value)
         ? '\uff3b' +
             value.slice(0, 40).map(short).join('\u3001') +
-            (value.length > 40 ? `\u2026\uff08\u5168${value.length}\u4ef6\uff09` : '') +
+            (value.length > 40 ? `\u2026\uff08\u5168${value.length}こ）` : '') +
             '\uff3d'
         : short(value);
     }
@@ -4293,7 +4293,7 @@
               ? project.functions.find((x) => x.id === parts[1])
               : null;
       const label = def
-        ? `${parts[0] === 'action' ? '手順' : '答えを求める'} ${def.name}`
+        ? `${parts[0] === 'action' ? 'てじゅん' : '答えを もとめる'} ${def.name}`
         : `${targetById(loc.targetId)?.name || loc.targetId} / ${runtimeEventText(loc.event)}`;
       $('#execLocation').textContent = `いまの場所：${label} / ${loc.line}行`;
       if (scheduler?.paused) {
@@ -4358,24 +4358,24 @@
       // The visible pending source can differ from the valid project baseline.
       // Never show a baseline success message over a rejected code edit.
       if (composingEditors.has(el.editor)) {
-        errs = []; notice = '日本語を変換中です。確定してから書き方を確認します';
+        errs = []; notice = '日本語を 入れている とちゅうです。文字を 決めてから、書き方を たしかめます';
       } else if (['code','heading-source','source-import'].includes(pending?.kind) && !session.blockDraft) {
         const parsed = parseSyntax(pending.value, { ...bindingContext(mainEditor),
           key: session.ownerKey, symbols: buildSymbols(project) });
         errs = parsed.syntaxDiagnostics.length ? parsed.syntaxDiagnostics
           : staticScaleDiagnostics(parsed.ast, session.ownerKey);
-        if (!errs.length) notice = pending.reason || '入力を確定してください';
+        if (!errs.length) notice = pending.reason || '入力を 決めてください';
       } else if (session.blockDraft) {
-        errs = []; notice = pending?.reason || '未入力の場所を完成してください';
+        errs = []; notice = pending?.reason || 'まだ 入れていない ところを うめてください';
       } else if (pending) {
         errs = pending.diagnostics?.length ? pending.diagnostics : [];
-        if (!errs.length) notice = pending.reason || '入力を確定してください';
+        if (!errs.length) notice = pending.reason || '入力を 決めてください';
       }
       if (errs.length) {
         showDiagnosticMessage(el.issue, errs[0], (errs[0].line || 1) + '行目');
         el.issue.className = 'issue-error';
       } else {
-        el.issue.textContent = notice || '✓ このコードの書き方は大丈夫です';
+        el.issue.textContent = notice || '✓ このコードの 書き方は だいじょうぶです';
         el.issue.className = '';
         if (!notice && editorFailureStatus !== null) {
           if (el.status.textContent === editorFailureStatus) setStatus('✓ 書き方を直せたよ。');
@@ -4400,7 +4400,7 @@
         const b = document.createElement('button');
         b.className = 'hint-button';
         b.textContent =
-          (h.mode === 'expression' ? '\u5f0f \u00b7 ' : '') +
+          (h.mode === 'expression' ? '計算 · ' : '') +
           h.text +
           (h.reason ? '\n' + h.reason : '');
         b.title = h.category + (h.reason ? ' / ' + h.reason : '');
@@ -4471,7 +4471,7 @@
       } catch (err) {
         if (scheduler) scheduler.pause();
         log(`${err.code || 'R411'} ${err.message}`, 'error');
-        setStatus('実行エラーで一時停止');
+        setStatus('動きに エラーが あったので、いったん 止めました');
       }
     }
     function bridge() {
@@ -4510,10 +4510,11 @@
           activeLoc = sourceLocation(task, null, err);
           requestRuntimePaint(7);
           const stack = task.errorCallStack?.length
-            ? `\n呼び出し: ${task.errorCallStack.join(' → ')}`
+            ? `
+よび出し: ${task.errorCallStack.join(' → ')}`
             : '';
-          log(`${err.code} 実行エラー: ${err.message}（${task.taskId}）${stack}`, 'error');
-          setStatus('実行エラーで一時停止');
+          log(`${err.code} 動きの エラー: ${err.message}（${task.taskId}）${stack}`, 'error');
+          setStatus('動きに エラーが あったので、いったん 止めました');
           renderMonitor();
           showFailureDetails(task.failureRecordId);
         },
@@ -4537,11 +4538,11 @@
           statements:[],speech:[],observations:[],clicks:0,busy:false,sawTask:false,complete:false,failed:false};
       }
       refreshEditor();
-      if(hasPendingEditor()){log('書きかけの入力を完成させてから実行してください','error');refuse('書きかけの ところを 直してから「動かす」を おしてね。');return;}
+      if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから 動かしてください','error');refuse('書きかけの ところを 直してから「動かす」を おしてね。');return;}
       clearTimeout(historyTimer);
       pushHistoryNow();
       if (hasCallableDraft()) {
-        log('手順・答えを求める定義の編集を保存してから実行します', 'error');
+        log('自分で作ったブロックを なおしている とちゅうです。ほぞんしてから 動かしてください', 'error');
         refuse('自分で作ったブロックの 画面を とじてから「動かす」を おしてね。');
         return;
       }
@@ -4552,14 +4553,14 @@
       compiled = compileProject(project);
       if (compiled.errors.length) {
         showDiagnosis();
-        log('作品にエラーがあるため実行しません', 'error');
+        log('作品に エラーが あるので 動かしません。作品チェックを 見て 直してください', 'error');
         refuse('作品に 直す ところが あるよ。赤い ところを 見てね。');
         return;
       }
       try {
         validateAssetReferences(project, assetStore);
       } catch (err) {
-        log(`${err.code || ''} 素材検査: ${err.message}`, 'error');
+        log(`${err.code || ''} 絵や音の チェック: ${err.message}`, 'error');
         return;
       }
       pen.clearRect(0, 0, el.canvas.width, el.canvas.height);
@@ -4578,7 +4579,7 @@
       try {
         if (req.needsAudio) runtimeCache.ensureAudioContext();
         appState = 'PREPARING';
-        setStatus('素材を準備中');
+        setStatus('絵や音を じゅんびしています');
         updateRunState();
         (async () => {
           try {
@@ -4589,7 +4590,7 @@
             runtime.ui = br;
             runtimeCache.onAudioStateError = (err) => {
               log(`R415 ${err.message}`, 'error');
-              setStatus('音声の一時停止・再開に失敗しました');
+              setStatus('音を いったん 止めたり、また 鳴らしたり できませんでした');
             };
             runtime.reset(seed);
             scheduler = new EventScheduler(project, compiled, runtime, br);
@@ -4598,8 +4599,8 @@
             confirmTutorialOperation('run');
             scheduler.start();
             renderAll();
-            log(`実行開始（seed=${seed}）`, 'ok');
-            setStatus('実行中');
+            log(`動かしはじめました（たね=${seed}）`, 'ok');
+            setStatus('動いているよ');
             el.form.focus({ preventScroll: true });
           } catch (err) {
             if (token !== generationToken) return;
@@ -4607,16 +4608,16 @@
             appState = 'DESIGN';
             renderAll();
             loadEditor();
-            log(`${err.code || ''} 実行準備失敗: ${err.message}`, 'error');
-            setStatus(`実行準備に失敗: ${err.code || '素材・初期化'} ${err.message}。作品は残っています。「動かす」で再試行できます`);
+            log(`${err.code || ''} 動かす じゅんびが できませんでした: ${err.message}`, 'error');
+            setStatus(`動かす じゅんびが できませんでした: ${err.code || '絵や音・はじめの じゅんび'} ${err.message}。作品は のこっています。「動かす」で もう一度 ためせます`);
           }
         })();
       } catch (err) {
         disposeRuntime();
         appState = 'DESIGN';
         updateRunState();
-        log(`${err.code || ''} 実行準備失敗: ${err.message}`, 'error');
-        setStatus(`実行準備に失敗: ${err.code || '素材・初期化'} ${err.message}。作品は残っています。「動かす」で再試行できます`);
+        log(`${err.code || ''} 動かす じゅんびが できませんでした: ${err.message}`, 'error');
+        setStatus(`動かす じゅんびが できませんでした: ${err.code || '絵や音・はじめの じゅんび'} ${err.message}。作品は のこっています。「動かす」で もう一度 ためせます`);
       }
     }
     function stopRun() {
@@ -4636,7 +4637,7 @@
       renderAll();
       loadEditor();
       $('#execLocation').textContent = 'いまの場所：―';
-      setStatus('停止しました');
+      setStatus('止めました');
       if(tutorial){tutorialRefresh();focusTutorialTarget();return;}
       if (sourceOverviewOpen) $('#sourceEditBtn').focus({ preventScroll: true });
       else if (mainEditor.session?.mode === 'blocks') {
@@ -4651,13 +4652,13 @@
       if (running) appState = scheduler.paused ? 'PAUSED' : 'RUNNING';
       el.runState.textContent =
         appState === 'PREPARING'
-          ? '準備中'
+          ? 'じゅんび中'
           : appState === 'IMPORTING'
-            ? '取込中'
+            ? '読みこみ中'
             : running
               ? scheduler.paused
-                ? '一時停止'
-                : '実行中'
+                ? 'いったん 止まっているよ'
+                : '動いているよ'
               : '止まっています';
       el.runState.className = 'runstate ' + (running ? 'run-on' : 'run-off');
       $('#pauseBtn').disabled = !running || scheduler.paused;
@@ -4795,13 +4796,13 @@
       body.textContent = '';
       const h = document.createElement('h2');
       h.textContent = c.errors.length
-        ? `${c.errors.length}件の問題があります`
-        : '✓ 作品は実行できます';
+        ? `${c.errors.length}か所に 問題が あります`
+        : '✓ 作品は 動かせます';
       body.appendChild(h);
       if (!c.errors.length) {
         const p = document.createElement('div');
         p.className = 'diagnosis-ok';
-        p.textContent = '書き方と内容に問題はありません。';
+        p.textContent = '書き方にも 中身にも 問題は ありません。';
         body.appendChild(p);
       } else
         for (const d of c.errors) {
@@ -4816,16 +4817,16 @@
     function exportProject() {
       if(tutorial)return;
       if (!flushActiveEditor()) return;
-      if(hasPendingEditor()){log('書きかけの入力を完成させてから書き出してください','error');return;}
+      if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから、うごく作品を ファイルにしてください','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
       if (hasCallableDraft()) {
-        log('手順・答えを求める定義の編集を保存してから書き出してください', 'error');
+        log('自分で作ったブロックを なおしている とちゅうです。ほぞんしてから、うごく作品を ファイルにしてください', 'error');
         return;
       }
       const errors = compileProject(project).errors;
       if (errors.length) {
         showDiagnosis();
-        log('作品の問題を直してから書き出してください', 'error');
+        log('作品の 問題を 直してから、うごく作品を ファイルにしてください', 'error');
         return;
       }
       if (exportBusy) return;
@@ -4840,7 +4841,7 @@
       const button = $('#exportBtn');
       button.disabled = true;
       $('#exportControls').disabled = $('#exportArtwork').disabled = true;
-      setStatus('作品を書き出しています');
+      setStatus('うごく作品を ファイルに しています');
       let url = null;
       try {
         const html = generateStandaloneHtml(project, assetStore, { presentation }),
@@ -4856,11 +4857,11 @@
         } finally {
           a.remove();
         }
-        log('作品の書き出しを開始しました', 'ok');
-        setStatus('作品を書き出しました');
+        log('うごく作品の ファイルを 作りはじめました', 'ok');
+        setStatus('うごく作品を ファイルにしました');
       } catch (e) {
         log((e.code || 'X600') + ' ' + e.message, 'error');
-        setStatus('書き出しに失敗しました');
+        setStatus('うごく作品を ファイルに できませんでした');
       } finally {
         if (url) setTimeout(() => URL.revokeObjectURL(url), 60000);
         $('#exportChoiceModal').classList.remove('show');
@@ -4905,7 +4906,7 @@
       if(state.callableDraft)restoreCallableDraft(state.callableDraft);
       for(const saved of state.pendingEditors){
         const binding=saved.kind==='draft'?draftEditor:mainEditor;
-        if(saved.kind==='script'&&bindingOwner(binding)!==saved.ownerKey)throw new AkariError('F503','下書きの選択先が一致しません');
+        if(saved.kind==='script'&&bindingOwner(binding)!==saved.ownerKey)throw new AkariError('F503','書きかけの ばしょが 合いません');
         const session=getEditorSession(binding,{force:true});session.pendingEdit={...cloneDesignProject(saved.pending),ownerKey:bindingOwner(binding)};
         if(saved.draftTree!==null){
           const ast=blockDecode(saved.draftTree,{allowHoles:true}),encoded=blockEncode(ast,{allowHoles:true}),baseline={sourceText:session.sourceText,syntaxAst:session.syntaxAst,
@@ -4915,7 +4916,7 @@
             blockDraft:{baseline,ast,tree:encoded.tree,source,codeSource:saved.mode==='code'?saved.source:undefined,pending:session.pendingEdit}});
         }
         editorModes.set(binding.kind,saved.mode);session.mode=saved.mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
-        if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(saved.pending))throw new AkariError('F503','書きかけの入力欄を復元できません');
+        if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(saved.pending))throw new AkariError('F503','書きかけの 入力らんを もとに もどせません');
         showEditorFailure(binding,saved.pending.reason||'書きかけの作文をもどしました',{preservePending:true});
         if(binding===mainEditor&&saved.pending.kind==='source-import'){const plan=sourceImportPlan(binding,saved.source);if(plan)showSourceImport(binding,saved.source,plan);}
       }
@@ -4929,7 +4930,7 @@
     function saveProject() {
       if (!tutorialAllows(tutorial,'save')) return;
       if (appState === 'IMPORTING' || appState === 'PREPARING') return;
-      if(composingEditors.size){setStatus('日本語入力を確定してから保存してください');return;}
+      if(composingEditors.size){setStatus('日本語の 入力を 決めてから、ほぞんしてください');return;}
       flushActiveEditor();
       try {
         const editorState=captureEditorState(),unfinished=editorState.pendingEditors.length||editorState.callableDraft||compileProject(project).errors.length;
@@ -4947,10 +4948,10 @@
         updateDirty();
         clearTimeout(autosaveTimer);
         writeAutosave();
-        log(`${a.download} のダウンロードを開始しました。自動保存も保持します`, 'ok');
-        setStatus(unfinished?'書きかけを含むファイルのダウンロードを開始しました。動かす前に未完成の箇所を確認してください':'作品ファイルのダウンロードを開始しました');
+        log(`${a.download} を ダウンロードしはじめました。自動で のこした 作品も そのままです`, 'ok');
+        setStatus(unfinished?'書きかけの ある ファイルを ダウンロードしはじめました。動かす前に、まだ できていない ところを たしかめてください':'作品ファイルのダウンロードを開始しました');
       } catch (err) {
-        log(`${err.code || ''} 保存失敗: ${err.message}`, 'error');
+        log(`${err.code || ''} ほぞんできませんでした: ${err.message}`, 'error');
         setStatus(childErrorLogText('保存失敗: ' + err.message));
       }
     }
@@ -4968,16 +4969,16 @@
       updateRunState();
       try {
         if (file.size > LIMITS.fileBytes)
-          throw new AkariError('F504', `ファイルが${LIMITS.fileBytes / 1048576}MiBを超えています`);
+          throw new AkariError('F504', `ファイルが${LIMITS.fileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
         const text = await file.text();
         let loaded;
         try { loaded = await parseProjectFile(text); }
         catch (error) {
           // A newer release of the same extension may open the work; the person decides.
           const upgrades = error?.extensionUpgrades;
-          if (!upgrades || !confirm('この作品は、次の拡張の前の版で作られています。\n' +
+          if (!upgrades || !confirm('この作品は、次の かくちょうの 前の バージョンで 作られています。\n' +
             upgrades.map(item => '・' + item.name + '　' + item.from + ' → ' + item.to).join('\n') +
-            '\nいまの版で開きますか？　保存すると、いまの版で記録されます。')) throw error;
+            '\nいまの バージョンで 開きますか？　ほぞんすると、いまの バージョンで のこります。')) throw error;
           loaded = await parseProjectFile(text, { upgradeExtensions: true });
         }
         // Keep the current workspace until the loaded editor can also be restored.
@@ -5010,7 +5011,7 @@
         const diagnostics = loaded.diagnostics || [];
         log(
           diagnostics.length
-            ? `作品を開きました。コードに${diagnostics.length}件の問題があります。`
+            ? `作品を開きました。コードの${diagnostics.length}か所に 問題が あります。`
             : '作品を開きました',
           diagnostics.length ? 'error' : 'ok',
         );
@@ -5023,7 +5024,7 @@
           lastSavedEditorFingerprint = previous.lastSavedEditorFingerprint;
           restoreSnap(previous.current, { restoreView: true });
         }
-        log(`${err.code || ''} 読み込み失敗: ${err.message}`, 'error');
+        log(`${err.code || ''} 読みこめませんでした: ${err.message}`, 'error');
       } finally {
         appState = 'DESIGN';
         renderAll();
@@ -5133,7 +5134,7 @@
         rec={id:'latest',version:2,updatedAt:autosaveRevisionTime,revision:recoveryEpoch,workspace,lastSavedFingerprint,
           lastSavedEditorFingerprint:validateSavedEditorFingerprint(lastSavedEditorFingerprint)};
       } catch (e) {
-        el.autosave.textContent = '自動保存：失敗（「保存」で作品をファイルに保存してください）';
+        el.autosave.textContent = 'このパソコンに のこせなかったよ（「ほぞん」で ファイルに しよう）';
         log(e.message, 'error');
         return Promise.resolve(false);
       }
@@ -5146,17 +5147,17 @@
       const fallback = () => {
         if (rec.workspace.assets.some(a=>!a.builtin)) {
           status(
-            '自動保存：利用できません（素材を含む作品。「保存」でファイルに保存してください）',
+            '自動で のこす：使えません（絵や音の 入った 作品です。「ほぞん」で ファイルに のこしてください）',
           );
           return false;
         }
         try {
           const txt = JSON.stringify(rec);
           localStorage.setItem(STORAGE_KEYS.fallback, txt);
-          status('\u81ea\u52d5\u4fdd\u5b58\uff1a\u6e08\u307f');
+          status('このパソコンに のこしたよ');
           return true;
         } catch (_) {
-          status('自動保存：失敗（「保存」で作品をファイルに保存してください）');
+          status('このパソコンに のこせなかったよ（「ほぞん」で ファイルに しよう）');
           return false;
         }
       };
@@ -5174,7 +5175,7 @@
             try {
               localStorage.removeItem(STORAGE_KEYS.fallback);
             } catch (_) {}
-            status('\u81ea\u52d5\u4fdd\u5b58\uff1a\u6e08\u307f');
+            status('このパソコンに のこしたよ');
             return true;
           } catch (_) {
             return fallback();
@@ -5190,7 +5191,7 @@
       clearTimeout(autosaveTimer);
       recoveryEpoch++;
       if(!modelLocked())updateDirty();
-      el.autosave.textContent = '自動保存：待機';
+      el.autosave.textContent = 'このパソコンに のこす じゅんび中';
       autosaveTimer = setTimeout(writeAutosave, 1200);
     }
     async function readAutosave() {
@@ -5263,8 +5264,8 @@
           }
           if (epoch === recoveryEpoch)
             el.autosave.textContent = ok
-              ? '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5f85\u6a5f'
-              : '\u81ea\u52d5\u4fdd\u5b58\uff1a\u524a\u9664\u3092\u78ba\u8a8d\u3067\u304d\u307e\u305b\u3093';
+              ? 'このパソコンに のこす じゅんび中'
+              : '自動で のこす：けせたか たしかめられません';
           return ok;
         }));
     }
@@ -5284,12 +5285,12 @@
         if(!exactKeys(rec,['id','version','updatedAt','revision','workspace','lastSavedFingerprint','lastSavedEditorFingerprint'])||
           rec.id!=='latest'||rec.version!==2||!Number.isFinite(rec.updatedAt)||
           !Number.isSafeInteger(rec.revision)||rec.revision<0||typeof rec.lastSavedFingerprint!=='string')
-          throw new AkariError('F503','自動保存の契約が正しくありません');
+          throw new AkariError('F503','自動で のこした 作品の 形が 正しくありません');
         validateSavedEditorFingerprint(rec.lastSavedEditorFingerprint);
         const restored=await decodeWorkspaceHistory(rec.workspace);
         if(epoch!==recoveryEpoch||dirty||hasCallableDraft()||hasPendingEditor()||modelLocked())return;
         recoveryData={...rec,restored};
-        $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()} の自動保存があります。編集履歴ももどします。`;
+        $('#recoveryText').textContent=`${new Date(rec.updatedAt).toLocaleString()} に 自動で のこした 作品が あります。もとにもどせる きろくも もどします。`;
         $('#recoveryModal').classList.add('show');
       } catch (err) {
         if (
@@ -5300,9 +5301,9 @@
           !modelLocked()
         ) {
           el.autosave.textContent =
-            '\u81ea\u52d5\u4fdd\u5b58\uff1a\u5fa9\u5143\u691c\u8a3c\u306b\u5931\u6557\uff08\u4fdd\u5b58\u30c7\u30fc\u30bf\u306f\u4fdd\u6301\uff09';
+            '自動で のこす：もどせるか たしかめられませんでした（のこした データは そのままです）';
           log(
-            `\u81ea\u52d5\u4fdd\u5b58\u3092\u691c\u8a3c\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u5143\u306e\u4fdd\u5b58\u30c7\u30fc\u30bf\u306f\u524a\u9664\u3057\u3066\u3044\u307e\u305b\u3093\u3002 ${err.code || ''} ${err.message}`,
+            `自動で のこした 作品を たしかめられませんでした。のこした データは けしていません。 ${err.code || ''} ${err.message}`,
             'error',
           );
         }
@@ -5321,7 +5322,7 @@
       } else {
         const c = componentById(selectedId);
         if (!c) {
-          body.textContent = 'データを変える部品を先に選んでください。';
+          body.textContent = 'データを かえる 部品を 先に えらんでください。';
           return;
         }
         vars = c.localData.variables;
@@ -5333,7 +5334,7 @@
       h.textContent = `${label} のデータ`;
       body.appendChild(h);
       for (const [kind, arr] of [
-        ['変数', vars],
+        ['へんすう', vars],
         ['リスト', lists],
       ])
         for (const d of arr) {
@@ -5344,7 +5345,7 @@
           const b = document.createElement('b');
           b.textContent = `${kind} ${d.name}`;
           const sm = document.createElement('small');
-          sm.textContent = `最初の値: ${monitorValue(d.initialValue)}${d.expectedUnit ? ` ／使う単位: ${d.expectedUnit}` : ''}`;
+          sm.textContent = `はじめの 中身: ${monitorValue(d.initialValue)}${d.expectedUnit ? ` ／使う たんい: ${d.expectedUnit}` : ''}`;
           const usage = document.createElement('code');
           usage.textContent = nameSource(d.name, scope === 'project' ? 'project' : 'self');
           info.append(b, sm, usage);
@@ -5358,16 +5359,16 @@
           info.appendChild(inspect);
           if (kind === '変数') {
             const unit = document.createElement('select');
-            unit.setAttribute('aria-label', `${d.name}で使う単位`);
+            unit.setAttribute('aria-label', `${d.name}で 使う たんい`);
             for (const value of ['', ...UNIT_TAGS]) {
               const option = document.createElement('option');
-              option.value = value; option.textContent = value || '単位を決めない'; unit.append(option);
+              option.value = value; option.textContent = value || 'たんいを 決めない'; unit.append(option);
             }
             unit.value = d.expectedUnit || '';
             unit.onchange = () => {
               const selected = unit.value || null;
               unit.value = d.expectedUnit || '';
-              if (modelLocked() || !confirm(`「${d.name}」で使う単位を「${selected || '決めない'}」に変えますか？ 単位のない初期値には選んだ単位を付けます。`)) return;
+              if (modelLocked() || !confirm(`「${d.name}」で 使う たんいを「${selected || '決めない'}」に かえますか？ たんいの ない はじめの 中身には、えらんだ たんいを つけます。`)) return;
               try {
                 validateExpectedUnit(d.initialValue, selected);
                 if(selected)d.initialValue=quantity(numberInUnit(d.initialValue,selected),selected);
@@ -5378,7 +5379,7 @@
             info.append(unit);
           }
           const del = document.createElement('button');
-          del.textContent = '削除';
+          del.textContent = 'けす';
           del.onclick = () => {
             if (modelLocked()) return;
             if (!allowResourceDelete('data:' + d.id, body)) return;
@@ -5387,14 +5388,14 @@
             renderDataModal();
             refreshEditor();
           };
-          const rename=document.createElement('button');rename.textContent='名前を変える';
+          const rename=document.createElement('button');rename.textContent='名前を かえる';
           rename.onclick=()=>{
             if(modelLocked())return;
             const name=prompt('データの名前',d.name);if(name===null||name.trim()===d.name)return;
             try{
               const next=prepareResourceRename(project,'data:'+d.id,name.trim(),{drafts:resourceDraftRecords()});
               clearTimeout(historyTimer);pushHistoryNow();project=next;invalidateEditors();markDirty();pushHistoryNow();renderDataModal();refreshEditor();
-            }catch(error){showResourceImpact({resource:d,references:[],uncertain:[{title:'名前の変更',line:1,reason:error.message}]},body,'名前変更');}
+            }catch(error){showResourceImpact({resource:d,references:[],uncertain:[{title:'名前を かえる',line:1,reason:error.message}]},body,'名前を かえる');}
           };
           row.append(info, rename, del);
           body.appendChild(row);
@@ -5412,7 +5413,7 @@
         validateName(name);
         const target =
           scope === 'project' ? before.projectData : before.components.find(c=>c.id===selectedId)?.localData;
-        if (!target) throw new Error('部品ごとのデータを作る部品を選んでください');
+        if (!target) throw new Error('部品ごとの データを 作る 部品を えらんでください');
         if ([...target.variables, ...target.lists].some((x) => x.name === name))
           throw new Error('同じ場所に同じ名前のデータがあります');
         field=kind==='list'&&$('#dataListMode').value==='lines'?$('#dataItems'):$('#dataInitial');
@@ -5446,7 +5447,7 @@
     function updateDataForm(){
       const list=$('#dataKind').value==='list',lines=list&&$('#dataListMode').value==='lines';
       $('#dataListModeLabel').hidden=!list;$('#dataItemsLabel').hidden=!lines;$('#dataInitial').hidden=lines;
-      $('#dataUnit').disabled=list;$('#dataInitial').placeholder=list?'例：［「本」、「かさ」、3］':'例：0、0点、こんにちは';
+      $('#dataUnit').disabled=list;$('#dataInitial').placeholder=list?'れい：［「本」、「かさ」、3］':'れい：0、0点、こんにちは';
     }
     function renderCallableList(prefer = '') {
       renderCallableOptions(prefer);
@@ -5565,7 +5566,7 @@
     function confirmCallableDiscard() {
       if (!flushActiveEditor()) return false;
       if (!hasCallableDraft()) return true;
-      if (!confirm('手順・答えを求める定義に保存していない編集があります。編集を捨てて続けますか？'))
+      if (!confirm('自分で作ったブロックに、ほぞんしていない なおしが あります。なおしを すてて つづけますか？'))
         return false;
       clearTimeout(historyTimer);
       pushHistoryNow();
@@ -5581,7 +5582,7 @@
         text = d.argsText.trim(),
         args = text ? text.split(/[、,]/).map((x) => normalizeCharsOutsideString(x.trim())) : [];
       validateName(name, { callable: true });
-      if (args.length > LIMITS.args) throw new AkariError('F504', `受け取る値は${LIMITS.args}個までです`);
+      if (args.length > LIMITS.args) throw new AkariError('F504', `入れるものは ${LIMITS.args}こまでです`);
       const seen = new Set();
       for (const a of args) {
         validateName(a);
@@ -5623,7 +5624,7 @@
         const previous=[...next.actions,...next.functions].find(x=>x.id===d.editId);
         if(previous&&previous.name!==d.name){
           const kind=next.actions.includes(previous)?'action':'function';
-          if(kind!==d.type)throw new AkariError('F503','名前と種類は一度に変えず、参照を確認してください');
+          if(kind!==d.type)throw new AkariError('F503','名前と しゅるいは べつべつに かえてください。使っている ところを たしかめてください');
           previous.source=d.source;previous.args=d.args;
           if(d.callPhrase)previous.callPhrase=d.callPhrase;else delete previous.callPhrase;
           next=prepareResourceRename(next,kind+':'+previous.id,d.name,{drafts:resourceDraftRecords().filter(r=>r.key!=='draft-reference:callable')});
@@ -5632,7 +5633,7 @@
         if (
           [...next.actions, ...next.functions].some((x) => x.id !== d.editId && x.name === d.name)
         )
-          throw new AkariError('F503', '手順・答えを求める定義に同じ名前があります');
+          throw new AkariError('F503', '自分で作ったブロックに 同じ名前が あります。ちがう名前に してください');
         next.actions = next.actions.filter((x) => x.id !== d.editId);
         next.functions = next.functions.filter((x) => x.id !== d.editId);
         const id = d.editId || ensureUniqueId(d.type);
@@ -5654,7 +5655,7 @@
         markDirty();
         pushHistoryNow();
         refreshEditor();
-        log(`${d.type === 'action' ? '手順' : '答えを求める'}「${d.name}」を保存しました`, 'ok');
+        log(`${d.type === 'action' ? 'てじゅん' : '答えを もとめる'}「${d.name}」を ほぞんしました`, 'ok');
       } catch (error) {
         showEditorFailure(draftEditor, error);
       }
@@ -5666,7 +5667,7 @@
       if (!d) return;
       const kind = project.actions.some(x => x.id === id) ? 'action' : 'function';
       if (!allowResourceDelete(`${kind}:${id}`, $('#procModal .dialog-body'))) return;
-      if (!confirm(`「${d.name}」を削除しますか？`)) return;
+      if (!confirm(`「${d.name}」を けしますか？`)) return;
       clearTimeout(historyTimer);
       pushHistoryNow();
       project.actions = project.actions.filter((x) => x.id !== id);
@@ -5684,20 +5685,20 @@
         const session = binding.session;
         if (!session?.pendingEdit && !session?.blockDraft) continue;
         drafts.push({ key: 'draft-reference:' + binding.kind, ownerId: bindingContext(binding).targetId,
-          kind: binding.kind === 'script' ? 'script' : 'draft', title: '編集中の本文',
+          kind: binding.kind === 'script' ? 'script' : 'draft', title: 'なおしている 本文',
           incomplete: true, source: session.blockDraft?.source || binding.textarea.value,
           context: bindingContext(binding) });
       }
       if (hasCallableDraft() && !drafts.some(d => d.key === 'draft-reference:draft'))
-        drafts.push({ key: 'draft-reference:callable', ownerId: 'stage', kind: 'draft', title: '編集中の定義',
+        drafts.push({ key: 'draft-reference:callable', ownerId: 'stage', kind: 'draft', title: 'なおしている 自分で作ったブロック',
           source: callableDraftCore.source, context: bindingContext(draftEditor) });
       return drafts;
     }
-    function showResourceImpact(impact, root, action = '削除') {
+    function showResourceImpact(impact, root, action = 'けす') {
       root.querySelector('.reference-issue')?.remove();
       const box = document.createElement('div'), title = document.createElement('p'), list = document.createElement('ul');
       box.className = 'reference-issue'; box.setAttribute('role', 'alert'); box.tabIndex = -1;
-      title.textContent = `「${impact.resource.name}」は${action}できません。参照先の本文を確認してください。`;
+      title.textContent = `「${impact.resource.name}」は ${action} ことが できません。この名前を 使っている 本文を たしかめてください。`;
       for (const row of [...impact.references, ...impact.uncertain]) {
         const item = document.createElement('li');
         item.textContent = `${row.title} ${row.line}行目：${row.reason || 'この名前を使っています'}`;
@@ -5736,12 +5737,12 @@
           const v = prompt(`${label}の名前`, obj.name);
           if (v === null) return;
           try {
-            validateResourceName(v, label + '名');
+            validateResourceName(v, label + 'の名前');
             if (arr.some((x) => x !== obj && x.name === v))
-              throw new AkariError('F503', `${label}名が重複しています`);
+              throw new AkariError('F503', `${label}の名前が ほかと 同じです。ちがう名前に してください`);
             const kind = label === '衣装' ? 'costume' : label === '背景' ? 'backdrop' : 'sound';
             const options = { drafts: resourceDraftRecords() }, impact = resourceChangeImpact(project, `${kind}:${obj.id}`, options);
-            if (impact.uncertain.length) { showResourceImpact(impact, body, '名前変更'); return; }
+            if (impact.uncertain.length) { showResourceImpact(impact, body, '名前を かえる'); return; }
             const next = prepareResourceRename(project, `${kind}:${obj.id}`, v, options);
             clearTimeout(historyTimer); pushHistoryNow(); project = next;
             markDirty();
@@ -5750,16 +5751,16 @@
             renderAppearance();
             refreshEditor();
           } catch (e) {
-            showResourceImpact({resource:obj,references:[],uncertain:[{title:'名前の変更',line:1,reason:e.message}]},body,'名前変更');
+            showResourceImpact({resource:obj,references:[],uncertain:[{title:'名前を かえる',line:1,reason:e.message}]},body,'名前を かえる');
           }
         };
       if (hint)
         hint.textContent =
           c?.type === 'sprite'
-            ? `「${c.name}」の衣装として追加します。`
-            : '先にキャラクターを選ぶと、そのキャラクターの衣装として追加できます。';
+            ? `「${c.name}」の すがたとして 入れます。`
+            : '先に キャラクターを えらぶと、その キャラクターの すがたとして 入れられます。';
       let h = document.createElement('h3');
-      h.textContent = '背景';
+      h.textContent = 'はいけい';
       body.appendChild(h);
       for (const b of project.stage.backdrops) {
         const row = document.createElement('div');
@@ -5775,7 +5776,7 @@
         const title = document.createElement('b');
         title.textContent = b.name;
         const sm = document.createElement('small');
-        sm.textContent = b.kind === 'color' ? `色背景 ${b.value}` : `画像背景 / ${b.fit}`;
+        sm.textContent = b.kind === 'color' ? `色の はいけい ${b.value}` : `絵の はいけい / ${b.fit}`;
         info.append(title, sm);
         const use = document.createElement('button');
         use.textContent = b.id === project.stage.backdropId ? '使用中' : '使う';
@@ -5791,7 +5792,7 @@
         if (advanced) {
           const rn = document.createElement('button');
           rn.textContent = '名前';
-          rn.onclick = () => rename(b, project.stage.backdrops, '背景');
+          rn.onclick = () => rename(b, project.stage.backdrops, 'はいけい');
           row.appendChild(rn);
           if (b.kind === 'image') {
             const fit = document.createElement('select');
@@ -5832,7 +5833,7 @@
             row.append(fit, fill);
           }
           const del = document.createElement('button');
-          del.textContent = '削除';
+          del.textContent = 'けす';
           del.disabled = project.stage.backdrops.length <= 1 || modelLocked();
           del.onclick = () => {
             if (modelLocked()) return;
@@ -5853,7 +5854,7 @@
       $('#costumeImageAdd').disabled = modelLocked() || c?.type !== 'sprite';
       if (c?.type === 'sprite') {
         h = document.createElement('h3');
-        h.textContent = `${c.name} の衣装`;
+        h.textContent = `${c.name} の すがた`;
         body.appendChild(h);
         for (const co of c.costumes) {
           const row = document.createElement('div');
@@ -5872,7 +5873,7 @@
           const title = document.createElement('b');
           title.textContent = co.name;
           const sm = document.createElement('small');
-          sm.textContent = co.kind === 'image' ? '画像衣装' : '文字衣装';
+          sm.textContent = co.kind === 'image' ? '絵の すがた' : '文字の すがた';
           info.append(title, sm);
           const use = document.createElement('button');
           use.textContent = co.id === c.costumeId ? '使用中' : '使う';
@@ -5888,9 +5889,9 @@
           if (advanced) {
             const rn = document.createElement('button');
             rn.textContent = '名前';
-            rn.onclick = () => rename(co, c.costumes, '衣装');
+            rn.onclick = () => rename(co, c.costumes, 'すがた');
             const del = document.createElement('button');
-            del.textContent = '削除';
+            del.textContent = 'けす';
             del.disabled = c.costumes.length <= 1 || modelLocked();
             del.onclick = () => {
               if (modelLocked()) return;
@@ -5914,7 +5915,7 @@
       if (!project.sounds.length) {
         const e = document.createElement('div');
         e.className = 'monitor-empty';
-        e.textContent = '音素材はまだありません。';
+        e.textContent = '音は まだ ありません。';
         body.appendChild(e);
       }
       for (const snd of project.sounds) {
@@ -5931,21 +5932,21 @@
         const title = document.createElement('b');
         title.textContent = snd.name;
         const sm = document.createElement('small');
-        sm.textContent = a?.meta?.duration ? `${a.meta.duration.toFixed(2)}秒` : '音素材';
+        sm.textContent = a?.meta?.duration ? `${a.meta.duration.toFixed(2)}秒` : '音';
         info.append(title, sm);
         row.append(ico, info);
         if (advanced) {
           const prev = document.createElement('button');
-          prev.textContent = '再生';
+          prev.textContent = '鳴らす';
           prev.onclick = () => previewSound(snd);
           const stop = document.createElement('button');
-          stop.textContent = '停止';
+          stop.textContent = '止める';
           stop.onclick = stopPreview;
           const rn = document.createElement('button');
           rn.textContent = '名前';
           rn.onclick = () => rename(snd, project.sounds, '音');
           const del = document.createElement('button');
-          del.textContent = '削除';
+          del.textContent = 'けす';
           del.disabled = modelLocked();
           del.onclick = () => {
             if (modelLocked()) return;
@@ -5967,13 +5968,13 @@
       const before = cloneDesignProject(project);
       try {
         if (project.stage.backdrops.length >= LIMITS.backdrops)
-          throw new AkariError('F504', '背景数が上限です');
+          throw new AkariError('F504', 'はいけいの 数が いちばん 大きい かずです。もう ふやせません');
         const name = $('#backdropName').value.trim(),
           val = $('#backdropColor').value.trim();
-        validateResourceName(name, '背景名');
+        validateResourceName(name, 'はいけいの名前');
         if (project.stage.backdrops.some((b) => b.name === name))
-          throw new AkariError('F503', '背景名が重複しています');
-        if (!validateColorHex(val)) throw new AkariError('F507', '背景色は #RRGGBB で指定します');
+          throw new AkariError('F503', 'はいけいの名前が ほかと 同じです。ちがう名前に してください');
+        if (!validateColorHex(val)) throw new AkariError('F507', 'はいけいの 色は #RRGGBB の 形で 書きます。れい：#ffffff');
         project.stage.backdrops.push({
           id: ensureUniqueId('backdrop'),
           name,
@@ -5995,14 +5996,14 @@
       const before = cloneDesignProject(project);
       try {
         const c = componentById(selectedId);
-        if (c?.type !== 'sprite') throw new Error('文字衣装を追加するキャラクターを選んでください');
+        if (c?.type !== 'sprite') throw new Error('文字の すがたを 入れる キャラクターを えらんでください');
         if (c.costumes.length >= LIMITS.costumesPerSprite)
-          throw new AkariError('F504', '衣装数が上限です');
+          throw new AkariError('F504', 'すがたの 数が いちばん 大きい かずです。もう ふやせません');
         const name = $('#costumeName').value.trim(),
           val = $('#costumeText').value;
-        validateResourceName(name, '衣装名');
+        validateResourceName(name, 'すがたの名前');
         if (c.costumes.some((x) => x.name === name))
-          throw new AkariError('F503', '衣装名が重複しています');
+          throw new AkariError('F503', 'すがたの名前が ほかと 同じです。ちがう名前に してください');
         c.costumes.push({ id: ensureUniqueId('costume'), name, kind: 'text', value: val });
         c.costumeId = c.costumes[c.costumes.length - 1].id;
         validateDesignProject(project);
@@ -6016,10 +6017,10 @@
     }
     function fileStemCandidate(file, names) {
       let v =
-        (file.name || '素材')
+        (file.name || 'なまえなし')
           .replace(/\.[^.]*$/, '')
           .replace(/[「」\p{Cc}\p{Zl}\p{Zp}]/gu, '_')
-          .trim() || '素材';
+          .trim() || 'なまえなし';
       v = Array.from(v).slice(0, 80).join('');
       let base = v,
         n = 2;
@@ -6037,7 +6038,7 @@
       if (!a) return;
       const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
       if (!AC) {
-        log('R415 このブラウザでは音声機能を利用できません', 'error');
+        log('R415 このブラウザでは 音を 鳴らせません', 'error');
         return;
       }
       let ac = null;
@@ -6061,7 +6062,7 @@
       } catch (e) {
         if (!ac || previewAudio?.context === ac) {
           stopPreview();
-          log(`R415 音のプレビューに失敗しました: ${e.message || e}`, 'error');
+          log(`R415 音を ためしに 鳴らせませんでした: ${e.message || e}`, 'error');
         }
       } finally {
         if (ac && previewAudio?.context !== ac)
@@ -6093,14 +6094,14 @@
       pushHistoryNow();
       recoveryEpoch++;
       appState = 'IMPORTING';
-      setAssetProgress(`${label}を検査しています…`);
+      setAssetProgress(`${label}を たしかめています…`);
       updateRunState();
       renderAppearance();
       try {
         await work();
         return true;
       } catch (e) {
-        log(`${e.code || ''} ${label}の取り込みに失敗: ${e.message}`, 'error');
+        log(`${e.code || ''} ${label}を 入れられませんでした: ${e.message}`, 'error');
         onError?.(e);
         return false;
       } finally {
@@ -6114,11 +6115,11 @@
     }
     async function importImageObject(file, { nativeSize = false, onError } = {}) {
       if (!file) return;
-      return runAssetImport('画像', async () => {
+      return runAssetImport('絵', async () => {
         if (project.components.length >= LIMITS.components)
-          throw new AkariError('F504', '部品数が上限です');
+          throw new AkariError('F504', '部品が いっぱいで、もう ふやせません。いらない部品を けしてください');
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `取込元ファイルが${LIMITS.importFileBytes / 1048576}MiBを超えています`);
+          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.components.map((x) => x.name));
         let name = fileStemCandidate(file, names);
@@ -6129,7 +6130,7 @@
             name = `${base}_${n++}`;
           } while (names.has(name) || ['マウス', '端'].includes(name));
         }
-        validateResourceName(name, '部品名');
+        validateResourceName(name, '部品の名前');
         const next = cloneDesignProject(project),
           store = new AssetStore(assetStore.snapshotRefs()),
           digest = await sha256(canonical.bytes);
@@ -6177,21 +6178,21 @@
         selectedId = id;
         currentEvent = 'start';
         selectedScriptId = null;
-        finishAssetCommit(next, store, `画像「${name}」をオブジェクトとして追加しました`);
+        finishAssetCommit(next, store, `絵「${name}」を キャラクターとして 入れました`);
       }, onError);
     }
     async function importBackdropImage(file) {
       if (!file) return;
-      return runAssetImport('背景画像', async () => {
+      return runAssetImport('はいけいの 絵', async () => {
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `取込元ファイルが${LIMITS.importFileBytes / 1048576}MiBを超えています`);
+          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.stage.backdrops.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
-          name = prompt('背景名', candidate);
+          name = prompt('はいけいの名前', candidate);
         if (name === null) return;
-        validateResourceName(name, '背景名');
-        if (names.has(name)) throw new AkariError('F503', '同じ背景名があります');
+        validateResourceName(name, 'はいけいの名前');
+        if (names.has(name)) throw new AkariError('F503', '同じ はいけいの名前が あります。ちがう名前に してください');
         const next = cloneDesignProject(project),
           store = new AssetStore(assetStore.snapshotRefs()),
           digest = await sha256(canonical.bytes);
@@ -6212,25 +6213,25 @@
         next.stage.backdropId = b.id;
         validateAssetReferences(next, store);
         serializeProject(next, store);
-        finishAssetCommit(next, store, `背景画像「${name}」を追加しました`);
+        finishAssetCommit(next, store, `はいけいの 絵「${name}」を 入れました`);
       });
     }
     async function importCostumeImage(file) {
       if (!file) return;
       const spriteId = selectedId;
-      return runAssetImport('衣装画像', async () => {
+      return runAssetImport('すがたの 絵', async () => {
         const cur = project.components.find((c) => c.id === spriteId);
         if (cur?.type !== 'sprite')
-          throw new AkariError('F503', '衣装画像を追加するキャラクターを選んでください');
+          throw new AkariError('F503', 'すがたの 絵を 入れる キャラクターを えらんでください');
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `取込元ファイルが${LIMITS.importFileBytes / 1048576}MiBを超えています`);
+          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(cur.costumes.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
-          name = prompt('衣装名', candidate);
+          name = prompt('すがたの名前', candidate);
         if (name === null) return;
-        validateResourceName(name, '衣装名');
-        if (names.has(name)) throw new AkariError('F503', '同じ衣装名があります');
+        validateResourceName(name, 'すがたの名前');
+        if (names.has(name)) throw new AkariError('F503', '同じ すがたの名前が あります。ちがう名前に してください');
         const next = cloneDesignProject(project),
           target = next.components.find((c) => c.id === spriteId),
           store = new AssetStore(assetStore.snapshotRefs()),
@@ -6245,21 +6246,21 @@
         target.costumeId = co.id;
         validateAssetReferences(next, store);
         serializeProject(next, store);
-        finishAssetCommit(next, store, `衣装画像「${name}」を追加しました`);
+        finishAssetCommit(next, store, `すがたの 絵「${name}」を 入れました`);
       });
     }
     async function importSoundFile(file) {
       if (!file) return;
       return runAssetImport('音', async () => {
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `取込元ファイルが${LIMITS.importFileBytes / 1048576}MiBを超えています`);
+          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
         const canonical = await canonicalizeAudio(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.sounds.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
           name = prompt('音の名前', candidate);
         if (name === null) return;
-        validateResourceName(name, '音名');
-        if (names.has(name)) throw new AkariError('F503', '同じ音名があります');
+        validateResourceName(name, '音の名前');
+        if (names.has(name)) throw new AkariError('F503', '同じ 音の名前が あります。ちがう名前に してください');
         const next = cloneDesignProject(project),
           store = new AssetStore(assetStore.snapshotRefs()),
           digest = await sha256(canonical.bytes);
@@ -6271,7 +6272,7 @@
         next.sounds.push({ id: ensureUniqueId('sound'), name, assetId: asset.id });
         validateAssetReferences(next, store);
         serializeProject(next, store);
-        finishAssetCommit(next, store, `音「${name}」を追加しました`);
+        finishAssetCommit(next, store, `音「${name}」を 入れました`);
       });
     }
 
@@ -6389,7 +6390,7 @@
     $('#scriptAdd').onclick = () => {
       if (modelLocked() || !flushActiveEditor()) return;
       try {
-        if (project.scripts.length >= LIMITS.scripts) throw new AkariError('F504', '本文数が上限です');
+        if (project.scripts.length >= LIMITS.scripts) throw new AkariError('F504', '本文の 数が いちばん 大きい かずです。もう ふやせません');
         const next = cloneDesignProject(project), id = ensureUniqueId('script');
         next.scripts.push({ id, targetId: selectedId, event: currentEvent, source: '' });
         validateDesignProject(next);
@@ -6496,7 +6497,7 @@
     async function startProject() {
       if(tutorial||modelLocked())return;
       if(!(await askLose())||tutorial||modelLocked())return;
-      replaceCurrentProject(makeEmptyProject(),makeDefaultAssetStore(),'sprite-1','start','空の作品です。動かすもの・できごとを選び、命令を入れましょう');
+      replaceCurrentProject(makeEmptyProject(),makeDefaultAssetStore(),'sprite-1','start','空の 作品です。動かすものと できごとを えらんで、やることを 入れましょう');
     }
     $('#newBtn').onclick=startProject;
     // Two fixed built-in preview images, shared across cards and picker openings.
@@ -6580,10 +6581,10 @@
     $('#entryStartEvent').onclick=()=>selectEntryEvent('start');
     $('#entryClickEvent').onclick=()=>selectEntryEvent('click');
     $('#tutorialStart').onclick=beginTutorial;
-    $('#tutorialExit').onclick=()=>{finishTutorial(false);setStatus('途中の作品は残っています。自由に続けられるよ。');};
+    $('#tutorialExit').onclick=()=>{finishTutorial(false);setStatus('とちゅうの 作品は のこっています。自由に つづけられるよ。');};
     $('#tutorialVerifySave').onclick=()=>{if(tutorialAllows(tutorial,'verify-save')){$('#tutorialSavedFile').value='';$('#tutorialSavedFile').click();}};
     $('#tutorialSavedFile').onchange=event=>{const file=event.target.files?.[0];event.target.value='';verifyTutorialSave(file);};
-    $('#tutorialSavedFile').addEventListener('cancel',()=>{if(tutorial)$('#tutorialText').textContent='ファイル選びをやめたよ。もう一度選ぶか、チュートリアルをやめられます。';});
+    $('#tutorialSavedFile').addEventListener('cancel',()=>{if(tutorial)$('#tutorialText').textContent='ファイルえらびを やめたよ。もう一度 えらぶか、いっしょに作るのを やめられます。';});
     $('#callableSaveProject').onclick = saveProject;
     $('#exportBtn').onclick = exportProject;
     $('#exportControls').onclick = () => downloadProject('controls');
@@ -6618,15 +6619,15 @@
         restoreSnap(initialSnapshot);
         pushHistoryNow();
       }
-      setStatus('この授業の最初の状態へ戻しました');
+      setStatus('この じゅぎょうの はじめの ようすに もどしました');
     };
     $('#imageObjectAdd').onclick = () => {
       if (!modelLocked()) $('#imageObjectInput').click();
     };
     const paintEditor = createPaintEditor(async (canvas) => {
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      if (!blob) throw new Error('画像を作れませんでした');
-      let errorMessage = '画像を配置できませんでした';
+      if (!blob) throw new Error('絵を 作れませんでした');
+      let errorMessage = '絵を おけませんでした';
       const ok = await importImageObject(new File([blob], 'お絵かき.png', { type: 'image/png' }), {
         nativeSize: true,
         onError: error => { errorMessage = error.message; },
@@ -6716,7 +6717,7 @@
       }
       if (tutorial || composingEditors.size || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
         $('#uiLevel').value=document.body.dataset.uiLevel;
-        setStatus('入力を決めるか取り消してから、表示を変えてね。');
+        setStatus('入力を 決めるか 取り消してから、見せ方を かえてね。');
         return;
       }
       document.body.dataset.uiLevel = $('#uiLevel').value;
@@ -6804,10 +6805,10 @@
         history=frames.slice(0,cursor+1);redo=frames.slice(cursor+1).reverse();
         initialSnapshot=history[0];restoreSnap(history.at(-1),{restoreView:true});
         $('#recoveryModal').classList.remove('show');recoveryData=null;
-        log('自動保存から作品と編集履歴をもどしました','ok');
+        log('自動で のこした作品と、もとにもどせる きろくを もどしました','ok');
         setStatus(`「${project.name}」のつづきを もどしたよ。`);
       } catch (err) {
-        log('自動保存からもどせませんでした', 'error');
+        log('自動で のこした作品を もどせませんでした。ほぞんした 作品ファイルが あれば、「開く」で えらんでください。', 'error');
       }
     };
     $('#recoveryDiscard').onclick = () => {
@@ -7060,7 +7061,7 @@
       for (let parent=field.parentElement;parent;parent=parent.parentElement)
         if (parent.tagName==='DETAILS') parent.open=true;
       field.scrollIntoView({block:'center'}); field.focus({preventScroll:true});
-      setStatus('変える動きを確かめて「いつ動く？」を選びます。「この動きのきっかけを変える」で決定、「変更をやめる」で戻れます');
+      setStatus('かえる動きを たしかめて「いつ動く？」を えらびます。「この動きのきっかけを かえる」で きまり、「かえるのを やめる」で もどれます');
     };
     $('#sourceStageBtn').onclick = () => { if (selectObject('stage')) showSourceOverview(); };
     $('#procClose').onclick = () => {
@@ -7079,14 +7080,14 @@
       }
       updateCallableHeader();
     };
-    $('#console').textContent = `${productLabel(true)}を起動しました。`;
+    $('#console').textContent = `${productLabel(true)}が はじまりました。`;
     installColorPicker();
     resetHistory();
     renderAll();
     loadEditor();
     setupModalAccessibility();
     checkRecovery();
-    setStatus(`空の作品です。命令を入れるか「お手本を開く」で試せます — ${productLabel(true)}`);
+    setStatus(`からっぽの作品です。ブロックを入れるか「お手本を開く」で ためせます — ${productLabel(true)}`);
     app = {
       get editorState() {
         return {

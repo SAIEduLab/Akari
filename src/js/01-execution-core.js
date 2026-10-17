@@ -107,13 +107,13 @@
         shape.type === 'string' ? typeof value === 'string' :
         shape.type === 'boolean' ? typeof value === 'boolean' :
         shape.type === 'list' ? listValue(value) : scalar(value) || listValue(value);
-      if (!valid) throw new AkariError('E705', '拡張の値の型・単位が一致しません');
+      if (!valid) throw new AkariError('E705', 'かくちょうの 中身の しゅるいか たんいが 合いません');
       return deepCopy(value);
     }
     function validateExtensionEnvelope(value) {
       extensions.validateRequirements(value);
       profiles.validateRequirement(value.profile ?? null);
-      if (!Array.isArray(value.state)) throw new AkariError('E701', '拡張状態の一覧が必要です');
+      if (!Array.isArray(value.state)) throw new AkariError('E701', 'かくちょうの きろくの リストが ありません');
       return value;
     }
     function extensionError(error) {
@@ -177,7 +177,7 @@
     const unitOf = (v) => isQuantity(v) ? v.unit : null;
     function quantity(magnitude, unit = null) {
       if (unit !== null && !UNIT_TAGS.includes(unit))
-        throw new AkariError('R417', '登録されていない単位です');
+        throw new AkariError('R417', '使えない たんいです');
       ensureFinite(magnitude);
       return unit === null ? magnitude : Object.freeze({ magnitude, unit });
     }
@@ -196,13 +196,13 @@
     const listValue = (v) => Array.isArray(v) && v.every(scalar);
     function assertRuntimeValueLimit(v) {
       if (typeof v === 'number') ensureFinite(v);
-      if (!scalar(v) && !Array.isArray(v)) throw new AkariError('R411', '値の型が不正です');
+      if (!scalar(v) && !Array.isArray(v)) throw new AkariError('R411', '中身の しゅるいが 正しくありません');
       if (typeof v === 'string' && cpLen(v) > LIMITS.stringChars)
         throw new AkariError('R413', '文字が長すぎます');
       if (Array.isArray(v)) {
         if (v.length > LIMITS.listItems) throw new AkariError('R413', 'リストが長すぎます');
         for (const x of v) {
-          if (!scalar(x)) throw new AkariError('R411', 'リストの要素は数・文字・条件の答えだけです');
+          if (!scalar(x)) throw new AkariError('R411', 'リストに 入れられるのは 数・文字・あてはまる／あてはまらない だけです');
           if (typeof x === 'string' && cpLen(x) > LIMITS.stringChars)
             throw new AkariError('R413', 'リスト内の文字が長すぎます');
         }
@@ -214,7 +214,7 @@
       if (isQuantity(v)) return valueText(v.magnitude) + (v.unit || '');
       if (typeof v === 'number') return Object.is(v, -0) ? '0' : String(v);
       if (typeof v === 'string') return v;
-      throw new AkariError('R411', 'この値は文字として表示できません');
+      throw new AkariError('R411', 'これは 文字として 見せられません');
     };
     const ensureFinite = (n) => {
       if (!Number.isFinite(n)) throw new AkariError('R403', '計算結果が有限な数ではありません');
@@ -261,10 +261,10 @@
       return typeof v === 'string' && /^#[0-9A-Fa-f]{6}$/.test(v);
     }
     function resolveColor(v, { allowTransparent = true } = {}) {
-      if (typeof v !== 'string') throw new AkariError('R411', '色は文字で指定します');
+      if (typeof v !== 'string') throw new AkariError('R411', '色は 文字で きめます。れい：「赤」');
       if (Object.prototype.hasOwnProperty.call(COLOR_NAMES, v)) {
         if (v === '透明' && !allowTransparent)
-          throw new AkariError('R412', 'ここでは透明を指定できません');
+          throw new AkariError('R412', 'ここでは「透明」は 使えません。れい：「赤」');
         return COLOR_NAMES[v];
       }
       if (/^#[0-9A-Fa-f]{6}$/.test(v)) return v.toLowerCase();
@@ -352,7 +352,7 @@
     }
     function decodeBase64(text) {
       const expected = decodedBase64Length(text);
-      if (expected > LIMITS.assetRawTotal) throw new AkariError('F504', '素材データが大きすぎます');
+      if (expected > LIMITS.assetRawTotal) throw new AkariError('F504', '絵や音の データが 大きすぎます');
       let out;
       if (typeof atob === 'function') {
         let bin;
@@ -514,7 +514,7 @@
       }
       addImmutable(asset) {
         if (this.#map.has(asset.id))
-          throw new AkariError('F505', `asset ID「${asset.id}」が重複しています`);
+          throw new AkariError('F505', `asset ID「${asset.id}」が 2つ あります`);
         const frozen = makeImmutableAssetRecord(asset);
         this.#map.set(frozen.id, frozen);
         return frozen;
@@ -592,7 +592,7 @@
               finish(
                 new AkariError(
                   'R415',
-                  '\u7d20\u6750\u51e6\u7406\u304c\u4e2d\u6b62\u3055\u308c\u307e\u3057\u305f',
+                  '絵や音の じゅんびを とちゅうで やめました',
                 ),
               ),
             timer = setTimeout(
@@ -601,7 +601,7 @@
                   new AkariError(
                     'R415',
                     label +
-                      '\u304c10\u79d2\u4ee5\u5185\u306b\u5b8c\u4e86\u3057\u307e\u305b\u3093\u3067\u3057\u305f',
+                      'が10秒たっても おわりませんでした',
                   ),
                 ),
               10000,
@@ -617,7 +617,7 @@
       ensureAudioContext() {
         if (this.audioContext) return this.audioContext;
         const AC = globalThis.AudioContext || globalThis.webkitAudioContext;
-        if (!AC) throw new AkariError('R415', 'このブラウザでは音声機能を利用できません');
+        if (!AC) throw new AkariError('R415', 'このブラウザでは 音を 鳴らせません');
         try {
           this.audioContext = new AC();
           const p = this.audioContext.resume?.();
@@ -628,7 +628,7 @@
         } catch (e) {
           this.audioContext = null;
           this.audioResumePromise = null;
-          throw new AkariError('R415', 'AudioContextを開始できません', 0, 0, e?.message || '');
+          throw new AkariError('R415', '音を はじめられませんでした', 0, 0, e?.message || '');
         }
       }
       async ensureAudioReady() {
@@ -636,10 +636,10 @@
         try {
           await this.awaitOperation(this.audioResumePromise || Promise.resolve(), 'AudioContext');
         } catch (e) {
-          throw new AkariError('R415', 'AudioContextを開始できません', 0, 0, e?.message || '');
+          throw new AkariError('R415', '音を はじめられませんでした', 0, 0, e?.message || '');
         }
         if (ac.state && ac.state !== 'running')
-          throw new AkariError('R415', 'AudioContextを開始できません');
+          throw new AkariError('R415', '音を はじめられませんでした');
         return ac;
       }
       setPaused(paused) {
@@ -664,13 +664,13 @@
           if (generationToken !== this.generationToken)
             throw new AkariError(
               'R415',
-              '\u7d20\u6750\u6e96\u5099\u304c\u4e2d\u6b62\u3055\u308c\u307e\u3057\u305f',
+              '絵や音の じゅんびを とちゅうで やめました',
             );
           const a = this.assetStore.get(id);
           if (!a || a.kind !== 'image')
             throw new AkariError(
               'R415',
-              `\u753b\u50cfasset\u300c${id}\u300d\u3092\u6e96\u5099\u3067\u304d\u307e\u305b\u3093`,
+              `\u753b\u50cfasset\u300c${id}」の じゅんびが できませんでした`,
             );
           if (this.objectUrls.has(id)) URL.revokeObjectURL(this.objectUrls.get(id));
           const blob = new Blob([a.bytes], { type: a.mime }),
@@ -680,11 +680,11 @@
           try {
             img = this.createImage();
             img.src = url;
-            await this.awaitOperation(img.decode(), '\u753b\u50cf\u306e\u6e96\u5099');
+            await this.awaitOperation(img.decode(), '絵の じゅんび');
             if (generationToken !== this.generationToken)
               throw new AkariError(
                 'R415',
-                '\u7d20\u6750\u6e96\u5099\u304c\u4e2d\u6b62\u3055\u308c\u307e\u3057\u305f',
+                '絵や音の じゅんびを とちゅうで やめました',
               );
             const meta = a.meta || {};
             if (
@@ -693,7 +693,7 @@
             )
               throw new AkariError(
                 'R415',
-                '\u6e96\u5099\u753b\u50cf\u306e\u5bf8\u6cd5\u304c\u691c\u8a3c\u5024\u3068\u4e00\u81f4\u3057\u307e\u305b\u3093',
+                '絵の 大きさが、きろくされた 大きさと 合いません',
               );
             this.imageByAssetId.set(id, img);
           } catch (error) {
@@ -704,7 +704,7 @@
               ? error
               : new AkariError(
                   'R415',
-                  `\u753b\u50cfasset\u300c${id}\u300d\u3092\u6e96\u5099\u3067\u304d\u307e\u305b\u3093`,
+                  `\u753b\u50cfasset\u300c${id}」の じゅんびが できませんでした`,
                 );
           }
         }
@@ -714,25 +714,25 @@
             if (generationToken !== this.generationToken)
               throw new AkariError(
                 'R415',
-                '\u7d20\u6750\u6e96\u5099\u304c\u4e2d\u6b62\u3055\u308c\u307e\u3057\u305f',
+                '絵や音の じゅんびを とちゅうで やめました',
               );
             const a = this.assetStore.get(id);
             if (!a || a.kind !== 'audio')
               throw new AkariError(
                 'R415',
-                `\u97f3asset\u300c${id}\u300d\u3092\u6e96\u5099\u3067\u304d\u307e\u305b\u3093`,
+                `\u97f3asset\u300c${id}」の じゅんびが できませんでした`,
               );
             try {
               const bytes = a.bytes,
                 copy = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
                 buf = await this.awaitOperation(
                   ac.decodeAudioData(copy),
-                  '\u97f3\u306e\u6e96\u5099',
+                  '音の じゅんび',
                 );
               if (generationToken !== this.generationToken)
                 throw new AkariError(
                   'R415',
-                  '\u7d20\u6750\u6e96\u5099\u304c\u4e2d\u6b62\u3055\u308c\u307e\u3057\u305f',
+                  '絵や音の じゅんびを とちゅうで やめました',
                 );
               this.audioBufferByAssetId.set(id, buf);
             } catch (error) {
@@ -740,7 +740,7 @@
                 ? error
                 : new AkariError(
                     'R415',
-                    `\u97f3asset\u300c${id}\u300d\u3092\u6e96\u5099\u3067\u304d\u307e\u305b\u3093`,
+                    `\u97f3asset\u300c${id}」の じゅんびが できませんでした`,
                   );
             }
           }
@@ -763,7 +763,7 @@
           try {
             gain?.disconnect();
           } catch (_) {}
-          throw new AkariError('R416', `同時に鳴らせる音は${LIMITS.activeAudioVoices}個までです`);
+          throw new AkariError('R416', `同時に鳴らせる音は${LIMITS.activeAudioVoices}こまでです`);
         }
         const id = `audio-${++this.handleSeq}`,
           h = { id, source, gain, onEnded, finished: false };
@@ -797,7 +797,7 @@
         )
           throw new AkariError(
             'R412',
-            '\u97f3\u7a0b\u307e\u305f\u306f\u9577\u3055\u304c\u518d\u751f\u53ef\u80fd\u306a\u7bc4\u56f2\u5916\u3067\u3059',
+            '音が 高すぎるか、長さが 正しくないので 鳴らせません',
           );
         let o, g, h;
         try {
@@ -837,7 +837,7 @@
         if (rate < 0.25 || rate > 4 || !Number.isFinite(rate))
           throw new AkariError(
             'R412',
-            '\u5916\u90e8\u97f3\u306e\u518d\u751f\u901f\u5ea6\u306f0.25\u301c4\u306e\u7bc4\u56f2\u306b\u3057\u307e\u3059',
+            '音の 高さを かえすぎたので、この音を 鳴らせません。高さの かえかたを 小さく してください',
           );
         const ac = this.ensureAudioContext();
         let src, g, h;
@@ -866,7 +866,7 @@
             ? err
             : new AkariError(
                 'R415',
-                '\u97f3\u7d20\u6750\u3092\u958b\u59cb\u3067\u304d\u307e\u305b\u3093',
+                '音を 鳴らせませんでした',
                 0,
                 0,
                 err.message,
@@ -1000,13 +1000,13 @@
             this.project.components.find((c) => c.name === ref.name)?.id);
         }
         if (id !== 'stage' && !this.actor(id))
-          throw new AkariError('R405', '動作の対象がありません');
+          throw new AkariError('R405', '動かす キャラクターや 部品が 見つかりません');
         return id;
       }
       requireActor(ctx) {
         const a = this.actor(ctx.runtimeId);
         if (!a)
-          throw new AkariError('R407', 'この命令にはキャラクターや部品の実行中の部品が必要です');
+          throw new AkariError('R407', 'この ブロックは、キャラクターや 部品の 動きの 中で 使います');
         return a;
       }
       currentCallFrame(ctx) {
@@ -1095,23 +1095,23 @@
       }
       readName(n, ctx) {
         const b = this.resolveBinding(n.name, n.qualifier === 'exact' ? null : n.qualifier, ctx);
-        if (!b) throw new AkariError('S301', `未定義の名前「${n.name}」です`);
+        if (!b) throw new AkariError('S301', `まだ 作っていない 名前「${n.name}」です`);
         return deepCopy(b.get());
       }
       writeTarget(t, value, ctx, { requireKind = null, resolvedBinding = null } = {}) {
         assertRuntimeValueLimit(value);
         const b = resolvedBinding || this.resolveBinding(t.name, t.qualifier === 'exact' ? null : t.qualifier, ctx);
-        if (!b) throw new AkariError('S301', `代入先「${t.name}」がありません`);
-        if (!b.set) throw new AkariError('S312', `「${t.name}」は読み取り専用です`);
+        if (!b) throw new AkariError('S301', `入れる先「${t.name}」がありません`);
+        if (!b.set) throw new AkariError('S312', `「${t.name}」は 見るだけで、かえられません`);
         if (requireKind && b.kind !== requireKind && b.scope !== 'arg')
           throw new AkariError(
             'R411',
-            `「${t.name}」は${requireKind === 'list' ? 'リスト' : '変数'}ではありません`,
+            `「${t.name}」は${requireKind === 'list' ? 'リスト' : 'へんすう'}ではありません`,
           );
         if (b.kind === 'list' && !Array.isArray(value))
-          throw new AkariError('R411', 'リストにはリストの値だけを入れられます');
+          throw new AkariError('R411', 'リストには リストだけを 入れられます');
         if (b.kind === 'scalar' && !scalar(value))
-          throw new AkariError('R411', '変数には数・文字・条件の答えだけを入れられます');
+          throw new AkariError('R411', 'へんすうには 数・文字・あてはまる／あてはまらない だけを 入れられます');
         if (Array.isArray(value) && value.length > LIMITS.listItems)
           throw new AkariError('R413', 'リストが長すぎます');
         validateExpectedUnit(value, b.expectedUnit);
@@ -1246,11 +1246,11 @@
       }
       createClone(sourceRuntimeId) {
         if ([...this.actors.values()].filter((a) => a.isClone).length >= LIMITS.clones)
-          throw new AkariError('R410', 'クローン数の上限です');
+          throw new AkariError('R410', 'コピーは もう 作れません。いらない コピーを けしてください');
         const src = this.requireActor({ runtimeId: sourceRuntimeId }),
           c = this.component(sourceRuntimeId);
         if (c?.type !== 'sprite')
-          throw new AkariError('R406', 'クローンを作れるのはキャラクターだけです');
+          throw new AkariError('R406', 'コピーを 作れるのは キャラクターだけです');
         let id;
         do {
           id = `${c.id}-clone-${++this.creationSequence}`;
@@ -1287,13 +1287,13 @@
       deleteClone(runtimeId) {
         const a = this.requireActor({ runtimeId });
         if (!a.isClone)
-          throw new AkariError('R406', '「このクローンを削除する」はクローンでだけ使えます');
+          throw new AkariError('R406', '「このクローンを削除する」は コピーの 動きの 中でだけ 使えます');
         this.actors.delete(runtimeId);
         this.ui.render?.();
       }
       setBackdropByName(name) {
         const b = this.project.stage.backdrops.find((x) => x.name === name);
-        if (!b) throw new AkariError('R405', `背景「${name}」がありません`);
+        if (!b) throw new AkariError('R405', `はいけい「${name}」がありません`);
         const old = this.project.stage.backdrops.find((x) => x.id === this.stage.backdropId);
         if (b.id === this.stage.backdropId) return null;
         this.stage.backdropId = b.id;
@@ -1310,7 +1310,7 @@
         return this.setBackdropByName(arr[n].name);
       }
       startTone(freq, duration, ctx, onEnded = null) {
-        if (!this.assetCache) throw new AkariError('R415', '音声キャッシュが準備されていません');
+        if (!this.assetCache) throw new AkariError('R415', '音の じゅんびが できていません');
         const a = ctx.runtimeId && ctx.runtimeId !== 'stage' ? this.actor(ctx.runtimeId) : null,
           volume = a?.volume ?? this.stage.volume,
           pitch = a?.pitch ?? this.stage.pitch;
@@ -1320,7 +1320,7 @@
         const snd = this.project.sounds.find((x) => x.name === name);
         if (!snd) throw new AkariError('R414', `音「${name}」がありません`);
         const buf = this.assetCache?.getAudioBuffer(snd.assetId);
-        if (!buf) throw new AkariError('R415', `音「${name}」を準備できていません`);
+        if (!buf) throw new AkariError('R415', `音「${name}」の じゅんびが できていません`);
         const a = ctx.runtimeId && ctx.runtimeId !== 'stage' ? this.actor(ctx.runtimeId) : null,
           volume = a?.volume ?? this.stage.volume,
           pitch = a?.pitch ?? this.stage.pitch;
@@ -1333,24 +1333,24 @@
     function localScalar(v) {
       assertRuntimeValueLimit(v);
       if (!scalar(v))
-        throw new AkariError('R411', 'この中だけの変数には数・文字・条件の答えだけを入れられます');
+        throw new AkariError('R411', 'この中だけの へんすうには 数・文字・あてはまる／あてはまらない だけを 入れられます');
       return v;
     }
-    function numberValue(v, msg = '数が必要です') {
+    function numberValue(v, msg = 'ここには 数が いります。れい：10') {
       if (!isNumberValue(v)) throw new AkariError('R411', msg);
       return isQuantity(v) ? v.magnitude : v;
     }
-    function numberInUnit(v, expectedUnit, msg = '数が必要です') {
+    function numberInUnit(v, expectedUnit, msg = 'ここには 数が いります。れい：10') {
       const magnitude = numberValue(v, msg), unit = unitOf(v);
       if (expectedUnit !== null && !UNIT_TAGS.includes(expectedUnit))
-        throw new AkariError('R417', '登録されていない単位です');
+        throw new AkariError('R417', '使えない たんいです');
       if (unit !== null && unit !== expectedUnit)
         throw new AkariError('R417', expectedUnit === null
-          ? 'この計算には単位のない数を使います。「の数だけ」で単位を外せます'
-          : `ここでは${expectedUnit}の数を使います。${unit}の値は使えません`);
+          ? 'この 計算には たんいの ない 数を 使います。「の数だけ」で たんいを 外せます'
+          : `ここでは${expectedUnit}の数を使います。${unit}の数は使えません`);
       return magnitude;
     }
-    function numeric(v, msg = '数が必要です') {
+    function numeric(v, msg = 'ここには 数が いります。れい：10') {
       return numberInUnit(v, null, msg);
     }
     function commonUnit(values) {
@@ -1359,7 +1359,7 @@
         numberValue(value);
         const next = unitOf(value);
         if (unit !== null && next !== null && unit !== next)
-          throw new AkariError('R417', `${unit}と${next}は同じ単位ではありません`);
+          throw new AkariError('R417', `${unit}と${next}は同じ たんいでは ありません。たんいを そろえてください`);
         if (next !== null) unit = next;
       }
       return unit;
@@ -1373,21 +1373,21 @@
         result = op === 'ADD' ? a + b : a - b;
       } else if (op === 'MUL') {
         if (au !== null && bu !== null)
-          throw new AkariError('R417', '単位どうしは掛けられません。「の数だけ」で単位を外せます');
+          throw new AkariError('R417', 'たんいの ある 数どうしは かけられません。「の数だけ」で たんいを 外せます');
         unit = au || bu;
         result = a * b;
       } else if (op === 'DIV') {
         if (bu !== null && au !== bu)
-          throw new AkariError('R417', 'この単位どうしは割れません。「の数だけ」で単位を外せます');
-        if (b === 0) throw new AkariError('R401', '0では割れません');
+          throw new AkariError('R417', 'この たんいどうしは われません。「の数だけ」で たんいを 外せます');
+        if (b === 0) throw new AkariError('R401', '0では われません。わる数を 0では ない 数に してください');
         unit = bu === null ? au : null;
         result = a / b;
       } else {
         numeric(left); numeric(right);
-        if (a === 0 && b === 0) throw new AkariError('R402', '0の0乗は定義しません');
+        if (a === 0 && b === 0) throw new AkariError('R402', '0＾0は 計算できません');
         result = Math.pow(a, b);
         if (!Number.isFinite(result))
-          throw new AkariError('R402', 'このべき乗は実数として計算できません');
+          throw new AkariError('R402', 'この＾の 計算は 答えが 出せません。使う 数を たしかめてください');
       }
       return quantity(ensureFinite(result), unit);
     }
@@ -1397,37 +1397,37 @@
     }
     function validateExpectedUnit(value, expectedUnit) {
       if (expectedUnit == null) return;
-      numberInUnit(value, expectedUnit, '単位を定めた変数には数を入れます');
+      numberInUnit(value, expectedUnit, 'たんいを きめた へんすうには 数を 入れます');
     }
     function validateRuntimeData(project, fail = null) {
       const reject = fail || ((message) => { throw new AkariError('R411', message); });
       for (const data of [project.projectData, ...project.components.map(c => c?.localData)]) {
-        if (!data || !Array.isArray(data.variables) || !Array.isArray(data.lists)) reject('データが不正です');
+        if (!data || !Array.isArray(data.variables) || !Array.isArray(data.lists)) reject('データが 正しくありません');
         for (const d of data.variables) {
-          if (!scalar(d?.initialValue)) reject('変数の初期値が不正です');
-          if (d.expectedUnit != null && !UNIT_TAGS.includes(d.expectedUnit)) reject('変数の単位が不正です');
+          if (!scalar(d?.initialValue)) reject('へんすうの はじめの 中身が 正しくありません');
+          if (d.expectedUnit != null && !UNIT_TAGS.includes(d.expectedUnit)) reject('へんすうの たんいが 正しくありません');
           try { assertRuntimeValueLimit(d.initialValue); validateExpectedUnit(d.initialValue, d.expectedUnit); }
           catch (e) { if (fail) fail(e.message); else throw e; }
         }
         for (const d of data.lists) {
-          if (!listValue(d?.initialValue)) reject('リストの初期値が不正です');
+          if (!listValue(d?.initialValue)) reject('リストの はじめの 中身が 正しくありません');
           try { assertRuntimeValueLimit(d.initialValue); } catch (e) { if (fail) fail(e.message); else throw e; }
         }
       }
       return true;
     }
-    function bool(v, msg = '条件の答えが必要です') {
+    function bool(v, msg = 'ここには あてはまるか どうかを 入れます。れい：（点数）が（10）より大きい') {
       if (typeof v !== 'boolean') throw new AkariError('R411', msg);
       return v;
     }
-    function stringv(v, msg = '文字が必要です') {
+    function stringv(v, msg = 'ここには 文字が いります。れい：「こんにちは」') {
       if (typeof v !== 'string') throw new AkariError('R411', msg);
       return v;
     }
     function integerIndex(v) {
-      const n = numberInUnit(v, '番目', '番号には数が必要です');
+      const n = numberInUnit(v, '番目', '番号には 数が いります。れい：2');
       if (!Number.isInteger(n) || n < 1)
-        throw new AkariError('R404', '番号は1以上の整数で指定します');
+        throw new AkariError('R404', '番号は 1、2、3 のような 数に します。0や マイナス、小数は 使えません');
       return n;
     }
     function unicodeIndexOf(text, search) {
@@ -1451,7 +1451,7 @@
       try {
       if (budget && ast.kind !== 'QuantityLiteral') {
         if (++budget.count > LIMITS.functionOps)
-          throw new AkariError('R409', '計算の量が上限を超えました');
+          throw new AkariError('R409', '計算の 回数が 多すぎます。くり返しの 回数を へらしてください');
       }
       switch (ast.kind) {
         case 'QuantityLiteral':
@@ -1470,7 +1470,7 @@
         case 'ListLiteral': {
           const arr = ast.items.map((x) => evalExpression(x, ctx, budget));
           if (!arr.every(scalar))
-            throw new AkariError('R411', 'リストの要素は数・文字・条件の答えだけです');
+            throw new AkariError('R411', 'リストに 入れられるのは 数・文字・あてはまる／あてはまらない だけです');
           if (arr.length > LIMITS.listItems) throw new AkariError('R413', 'リストが長すぎます');
           return arr;
         }
@@ -1498,8 +1498,8 @@
             } else equal = sameValue(left, right);
             return ast.op === 'EQ' ? equal : !equal;
           }
-          const a = numberValue(left, '比較する左側は数にします'),
-            b = numberValue(right, '比較する右側は数にします');
+          const a = numberValue(left, 'くらべる 左がわは 数に します'),
+            b = numberValue(right, 'くらべる 右がわは 数に します');
           commonUnit([left, right]);
           return ast.op === 'GTE' ? a >= b : ast.op === 'LTE' ? a <= b : ast.op === 'GT' ? a > b : a < b;
         }
@@ -1518,7 +1518,7 @@
             throw error;
           }
           const i = integerIndex(evalExpression(ast.index, ctx, budget));
-          if (i > arr.length) throw new AkariError('R404', 'リストの範囲外です');
+          if (i > arr.length) throw new AkariError('R404', 'その 番号の ものは リストに ありません。番号を たしかめてください');
           return deepCopy(arr[i - 1]);
         }
         case 'ExtensionCalculation':
@@ -1537,7 +1537,7 @@
         case 'SensorRead':
           return evalSensor(ast, ctx, budget);
         default:
-          throw new AkariError('R411', `評価できない式 ${ast.kind}`);
+          throw new AkariError('R411', `計算できない ところ ${ast.kind}`);
       }
       } catch (error) {
         if (error instanceof AkariError && !error.line && ast.sourceSpan) {
@@ -1552,12 +1552,12 @@
         args = ast.args.map((x) => evalExpression(x, ctx, budget)),
         meta = BUILTIN_META.get(name);
       if (meta && (args.length < meta.minArgs || args.length > meta.maxArgs))
-        throw new AkariError('R411', `組み込み計算「${name}」で受け取る値の数が違います`);
+        throw new AkariError('R411', `計算「${name}」に 入れるものの 数が ちがいます`);
       if (name === 'CONTAINS') {
         const [a, b] = args;
         if (Array.isArray(a)) {
           if (Array.isArray(b))
-            throw new AkariError('R411', 'リストの中から探す値は1つの値にします');
+            throw new AkariError('R411', 'リストの 中から さがす ものは 1つに します');
           return a.some((x) => sameValue(x, b));
         }
         if (typeof a === 'string' && typeof b === 'string') return a.includes(b);
@@ -1586,13 +1586,13 @@
       if (name === 'STRING_CHAR') {
         const arr = Array.from(stringv(args[0])),
           i = integerIndex(args[1]);
-        if (i > arr.length) throw new AkariError('R404', '文字の範囲外です');
+        if (i > arr.length) throw new AkariError('R404', 'その 番号の 文字は ありません。番号を たしかめてください');
         return arr[i - 1];
       }
       const nums = () => args.map((x) => numberValue(x));
       switch (name) {
         case '乱数': {
-          if (args.length !== 2) throw new AkariError('R411', '乱数は2つの数を使います');
+          if (args.length !== 2) throw new AkariError('R411', '「乱数」には 数を 2つ 入れます。れい：乱数（1、10）');
           const unit = commonUnit(args);
           let [a, b] = nums();
           if (a === b) return quantity(a, unit);
@@ -1610,10 +1610,10 @@
           return quantity(clamp(ensureFinite(value), lo, hi), unit);
         }
         case '余り': {
-          if (args.length !== 2) throw new AkariError('R411', '余りは2つの数を使います');
+          if (args.length !== 2) throw new AkariError('R411', '「余り」には 数を 2つ 入れます。れい：余り（10、3）');
           const unit = commonUnit(args);
           const [a, b] = nums();
-          if (b === 0) throw new AkariError('R401', '0で余りは求められません');
+          if (b === 0) throw new AkariError('R401', '0で わった あまりは 出せません。わる数を 0では ない 数に してください');
           return quantity(ensureFinite(a % b), unit);
         }
         case '四捨五入': {
@@ -1628,7 +1628,7 @@
           return quantity(Math.abs(numberValue(args[0])), unitOf(args[0]));
         case '平方根': {
           const n = numeric(args[0]);
-          if (n < 0) throw new AkariError('R402', '負の数の平方根は扱いません');
+          if (n < 0) throw new AkariError('R402', 'マイナスの 数の「平方根」は 出せません。0か、0より 大きい 数を 入れてください');
           return Math.sqrt(n);
         }
         case '正弦':
@@ -1639,48 +1639,48 @@
           return Math.tan(numberInUnit(args[0], '度') * (Math.PI / 180));
         case '逆正弦': {
           const n = numeric(args[0]);
-          if (n < -1 || n > 1) throw new AkariError('R402', '逆正弦は-1〜1で指定します');
+          if (n < -1 || n > 1) throw new AkariError('R402', '「逆正弦」には -1〜1の 数を 入れます');
           return quantity((Math.asin(n) * 180) / Math.PI, '度');
         }
         case '逆余弦': {
           const n = numeric(args[0]);
-          if (n < -1 || n > 1) throw new AkariError('R402', '逆余弦は-1〜1で指定します');
+          if (n < -1 || n > 1) throw new AkariError('R402', '「逆余弦」には -1〜1の 数を 入れます');
           return quantity((Math.acos(n) * 180) / Math.PI, '度');
         }
         case '逆正接':
           return quantity((Math.atan(numeric(args[0])) * 180) / Math.PI, '度');
         case '自然対数': {
           const n = numeric(args[0]);
-          if (n <= 0) throw new AkariError('R402', '自然対数は0より大きい数で指定します');
+          if (n <= 0) throw new AkariError('R402', '「自然対数」には 0より 大きい 数を 入れます');
           return Math.log(n);
         }
         case '常用対数': {
           const n = numeric(args[0]);
-          if (n <= 0) throw new AkariError('R402', '常用対数は0より大きい数で指定します');
+          if (n <= 0) throw new AkariError('R402', '「常用対数」には 0より 大きい 数を 入れます');
           return Math.log10(n);
         }
         case '指数':
           return ensureFinite(Math.exp(numeric(args[0])));
         case '最小':
-          if (!args.length) throw new AkariError('R411', '最小には1つ以上の数が必要です');
+          if (!args.length) throw new AkariError('R411', '「最小」には 数を 少なくとも 1つ 入れます');
           return quantity(Math.min(...nums()), commonUnit(args));
         case '最大':
-          if (!args.length) throw new AkariError('R411', '最大には1つ以上の数が必要です');
+          if (!args.length) throw new AkariError('R411', '「最大」には 数を 少なくとも 1つ 入れます');
           return quantity(Math.max(...nums()), commonUnit(args));
         case '数': {
           if (args.length !== 1 || typeof args[0] !== 'string')
-            throw new AkariError('R411', '数（...）には文字を1つ渡します');
+            throw new AkariError('R411', '数（...）には 文字を 1つ 入れます。れい：数（「12」）');
           const s = args[0];
           if (!/^[＋+－-]?[0-9]+(?:\.[0-9]+)?$/.test(s))
-            throw new AkariError('R411', 'この文字は数に変換できません');
+            throw new AkariError('R411', 'この 文字は 数に かえられません。数字だけの 文字に します。れい：「12」');
           return ensureFinite(Number(s.replace('＋', '+').replace('－', '-')));
         }
         case '文字':
           if (args.length !== 1 || Array.isArray(args[0]) || args[0] == null)
-            throw new AkariError('R411', 'この値は文字に変換できません');
+            throw new AkariError('R411', 'これは 文字に かえられません');
           return valueText(args[0]);
         case 'つなぐ':
-          if (args.length < 2) throw new AkariError('R411', 'つなぐには2つ以上の値が必要です');
+          if (args.length < 2) throw new AkariError('R411', '「つなぐ」には つなぐ ものを 少なくとも 2つ 入れます。れい：つなぐ（「あ」、「い」）');
           {
             const s = args
               .map((x) => {
@@ -1693,7 +1693,7 @@
             return s;
           }
         default:
-          throw new AkariError('R411', `組み込み計算「${name}」を実行できません`);
+          throw new AkariError('R411', `計算「${name}」を 使えません`);
       }
     }
     function evalSensor(ast, ctx, budget) {
@@ -1702,25 +1702,25 @@
         s = ast.sensor;
       switch (s) {
         case '横位置':
-          if (!a) throw new AkariError('R407', '横位置には部品文脈が必要です');
+          if (!a) throw new AkariError('R407', '「横位置」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.x, '歩');
         case '縦位置':
-          if (!a) throw new AkariError('R407', '縦位置には部品文脈が必要です');
+          if (!a) throw new AkariError('R407', '「縦位置」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.y, '歩');
         case '方向':
-          if (!a) throw new AkariError('R407', '方向には部品文脈が必要です');
+          if (!a) throw new AkariError('R407', '「方向」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.direction, '度');
         case '大きさ':
-          if (!a) throw new AkariError('R407', '大きさには部品文脈が必要です');
+          if (!a) throw new AkariError('R407', '「大きさ」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.scalePercent, '％');
         case '衣装番号': {
-          if (!a) throw new AkariError('R407', '衣装番号には部品文脈が必要です');
+          if (!a) throw new AkariError('R407', '「衣装番号」は キャラクターの 動きの 中で 使います');
           const c = r.component(ctx.runtimeId);
-          if (c?.type !== 'sprite') throw new AkariError('R406', '衣装はキャラクターだけです');
+          if (c?.type !== 'sprite') throw new AkariError('R406', '見た目を えらべるのは キャラクターだけです');
           return c.costumes.findIndex((x) => x.id === a.costumeId) + 1;
         }
         case '衣装名': {
-          if (!a) throw new AkariError('R407', '衣装名には部品文脈が必要です');
+          if (!a) throw new AkariError('R407', '「衣装名」は キャラクターの 動きの 中で 使います');
           const c = r.component(ctx.runtimeId);
           return c?.costumes?.find((x) => x.id === a.costumeId)?.name || '';
         }
@@ -1737,7 +1737,7 @@
         case 'タイマー':
           return quantity((r.now() - r.startTime) / 1000, '秒');
         case '拡張の値':
-          if (!Object.hasOwn(ctx.eventContext || {}, 'payload')) throw new AkariError('E705', '拡張のできごとの中で使ってください');
+          if (!Object.hasOwn(ctx.eventContext || {}, 'payload')) throw new AkariError('E705', '「拡張の値」は かくちょうの できごとの 中で 使ってください');
           return assertRuntimeValueLimit(ctx.eventContext.payload);
         case '答え':
           return ctx.task?.lastAnswer ?? '';
@@ -1746,7 +1746,7 @@
         case '音程':
           return a?.pitch ?? r.stage.pitch;
         case 'クローンである':
-          if (!a) throw new AkariError('R407', 'クローン判定には部品文脈が必要です');
+          if (!a) throw new AkariError('R407', '「クローンである」は キャラクターの 動きの 中で 使います');
           return !!a.isClone;
         case '押されたキー':
           return ctx.eventContext?.key ?? '';
@@ -1764,7 +1764,7 @@
           const name = stringv(evalExpression(ast.arg, ctx, budget));
           const c = r.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」がありません`);
-          if (c.type !== 'input') throw new AkariError('R406', `「${name}」は入力欄ではありません`);
+          if (c.type !== 'input') throw new AkariError('R406', `「${name}」は 入力らんでは ありません`);
           const inst = r.actor(c.id);
           return inst?.inputValue ?? c.text;
         }
@@ -1777,7 +1777,7 @@
         case 'TOUCHING_COLOR':
           return r.touchingColor(ctx.runtimeId, stringv(evalExpression(ast.arg, ctx, budget)));
         default:
-          throw new AkariError('R411', `センサー「${s}」を読み取れません`);
+          throw new AkariError('R411', `「${s}」を読み取れません`);
       }
     }
 
@@ -1808,26 +1808,26 @@
       const parts=[],quoted=names=>names.map(name=>`「${name}」`).join('、');
       const missing=expected.filter(name=>!supplied.includes(name)),unknown=[...new Set(supplied.filter(name=>!expected.includes(name)))],duplicates=[...new Set(supplied.filter((name,i)=>supplied.indexOf(name)!==i))];
       if(missing.length)parts.push('足りない名前: '+quoted(missing));
-      if(unknown.length)parts.push('定義にない名前: '+quoted(unknown));
-      if(duplicates.length)parts.push('重複した名前: '+quoted(duplicates));
+      if(unknown.length)parts.push('入れるものに ない 名前: '+quoted(unknown));
+      if(duplicates.length)parts.push('2回 書いた 名前: '+quoted(duplicates));
       return parts.length?'（'+parts.join('。')+'）':'';
     }
     function runUserFunction(name, args, ctx, budget = null, depth = 1, argumentNames = []) {
-      if (depth > LIMITS.callDepth) throw new AkariError('R408', '計算の呼び出しが深すぎます');
+      if (depth > LIMITS.callDepth) throw new AkariError('R408', '自分で作ったブロックの よびだしが かさなりすぎました');
       const def = ctx.compiled.symbols.functions.get(name);
-      if (!def) throw new AkariError('S301', `計算「${name}」がありません`);
+      if (!def) throw new AkariError('S301', `自分で作ったブロック「${name}」がありません`);
       if (def.args.length !== args.length)
-        throw new AkariError('S308', `計算「${name}」が受け取る値は${def.args.length}個です`+namedArgumentDetails(def.args,argumentNames));
+        throw new AkariError('S308', `自分で作ったブロック「${name}」に 入れるものは${def.args.length}こです`+namedArgumentDetails(def.args,argumentNames));
       if (argumentNames.length) {
         if (argumentNames.length !== args.length || new Set(argumentNames).size !== argumentNames.length ||
           argumentNames.some(n => !def.args.includes(n)) || def.args.some(n => !argumentNames.includes(n)))
-          throw new AkariError('S308', `計算「${name}」の受け取る値の名前が一致しません`+namedArgumentDetails(def.args,argumentNames));
+          throw new AkariError('S308', `自分で作ったブロック「${name}」に 入れるものの 名前が 合いません`+namedArgumentDetails(def.args,argumentNames));
         const named = new Map(argumentNames.map((n, i) => [n, args[i]]));
         args = def.args.map(n => named.get(n));
       }
       budget = budget || { count: 0 };
       const ast = ctx.compiled.astByKey.get(`function:${def.id}`);
-      if (!ast) throw new AkariError('S301', `計算「${name}」を準備できません`);
+      if (!ast) throw new AkariError('S301', `自分で作ったブロック「${name}」の じゅんびが できませんでした`);
       const frame = {
         args: new Map(def.args.map((n, i) => [n, deepCopy(args[i])])),
         locals: new Map(),
@@ -1842,12 +1842,12 @@
       } catch (sig) {
         if (sig instanceof ScriptSignal && sig.kind === 'return') return deepCopy(sig.value);
         if (sig instanceof AkariError) {
-          sig.akariCallStack = [`計算 ${name}`, ...(sig.akariCallStack || [])];
+          sig.akariCallStack = [`自分で作ったブロック ${name}`, ...(sig.akariCallStack || [])];
           sig.akariFrames = [snapshotFrame(frame, 'function'), ...(sig.akariFrames || [])];
         }
         throw sig;
       }
-      throw new AkariError('S306', `計算「${name}」が値を返しませんでした`);
+      throw new AkariError('S306', `自分で作ったブロック「${name}」が 答えを 返しませんでした。答えの れい：1＋2を返す。`);
     }
     function execFunctionNodes(nodes, inheritedContext, budget, loopDepth) {
       for (const n of nodes) {
@@ -1857,7 +1857,7 @@
           n.actorRef, inheritedContext.functionFrame.selfRuntimeId) };
         ctx.functionFrame.currentLine = n.sourceSpan?.startLine || 1;
         if (++budget.count > LIMITS.functionOps)
-          throw new AkariError('R409', '計算の量が上限を超えました');
+          throw new AkariError('R409', '計算の 回数が 多すぎます。くり返しの 回数を へらしてください');
         try {
           switch (n.kind) {
             case 'NoOperation':
@@ -1876,7 +1876,7 @@
               break;
             case 'NumericUpdate': {
               const b = ctx.runtime.resolveBinding(n.target.name, n.target.qualifier, ctx);
-              if (!b?.set) throw new AkariError('S301', '代入先がありません');
+              if (!b?.set) throw new AkariError('S301', '入れる先が ありません');
               const value = addNumericUpdate(b.get(), evalExpression(n.value, ctx, budget), n.op);
               ctx.runtime.writeTarget(n.target, value, ctx, {resolvedBinding: b});
               break;
@@ -1899,10 +1899,10 @@
             case 'RepeatCount': {
               const count = numberInUnit(evalExpression(n.count, ctx, budget), '回');
               if (!Number.isSafeInteger(count) || count < 0 || count > LIMITS.repeatCount)
-                throw new AkariError('R413', 'くり返し回数は0以上の整数で上限以内にします');
+                throw new AkariError('R413', 'くり返す 回数は 0、1、2 のような 数に します。マイナスや 小数、大きすぎる 数は 使えません');
               for (let i = 0; i < count; i++) {
                 if (++budget.count > LIMITS.functionOps)
-                  throw new AkariError('R409', '計算の量が上限を超えました');
+                  throw new AkariError('R409', '計算の 回数が 多すぎます。くり返しの 回数を へらしてください');
                 try {
                   execFunctionNodes(n.body, ctx, budget, loopDepth + 1);
                 } catch (s) {
@@ -1938,7 +1938,7 @@
             case 'Forever':
               for (;;) {
                 if (++budget.count > LIMITS.functionOps)
-                  throw new AkariError('R409', '計算の量が上限を超えました');
+                  throw new AkariError('R409', '計算の 回数が 多すぎます。くり返しの 回数を へらしてください');
                 try {
                   execFunctionNodes(n.body, ctx, budget, loopDepth + 1);
                 } catch (s) {
@@ -1954,7 +1954,7 @@
                 throw new AkariError('R411', '「それぞれ」はリストに使います');
               for (const v of deepCopy(arr)) {
                 if (++budget.count > LIMITS.functionOps)
-                  throw new AkariError('R409', '計算の量が上限を超えました');
+                  throw new AkariError('R409', '計算の 回数が 多すぎます。くり返しの 回数を へらしてください');
                 const old = ctx.functionFrame.locals.has(n.binder)
                     ? ctx.functionFrame.locals.get(n.binder)
                     : undefined,
@@ -2003,7 +2003,7 @@
       const b = ctx.runtime.resolveBinding(n.target.name, n.target.qualifier, ctx);
       if (!b || !b.set) throw new AkariError('S301', 'リストがありません');
       const arr = b.get();
-      if (!Array.isArray(arr)) throw new AkariError('R411', 'この操作はリストに使います');
+      if (!Array.isArray(arr)) throw new AkariError('R411', 'これは リストに 使う ブロックです');
       if (n.kind === 'ListClear') {
         b.set([]);
         return;
@@ -2011,22 +2011,22 @@
       const idx = n.index ? integerIndex(evalExpression(n.index, ctx, budget)) : null;
       if (n.kind === 'ListAppend') {
         const v = assertRuntimeValueLimit(evalExpression(n.value, ctx, budget));
-        if (!scalar(v)) throw new AkariError('R411', 'リストへ入れられるのは数・文字・条件の答えです');
+        if (!scalar(v)) throw new AkariError('R411', 'リストへ 入れられるのは 数・文字・あてはまる／あてはまらない です');
         if (arr.length >= LIMITS.listItems) throw new AkariError('R413', 'リストが長すぎます');
         arr.push(deepCopy(v));
       } else if (n.kind === 'ListInsert') {
-        if (idx > arr.length + 1) throw new AkariError('R404', '挿入位置がリストの範囲外です');
+        if (idx > arr.length + 1) throw new AkariError('R404', 'リストに 入れる 番号が 大きすぎます。番号を たしかめてください');
         const v = assertRuntimeValueLimit(evalExpression(n.value, ctx, budget));
-        if (!scalar(v)) throw new AkariError('R411', 'リストへ入れられるのは数・文字・条件の答えです');
+        if (!scalar(v)) throw new AkariError('R411', 'リストへ 入れられるのは 数・文字・あてはまる／あてはまらない です');
         if (arr.length >= LIMITS.listItems) throw new AkariError('R413', 'リストが長すぎます');
         arr.splice(idx - 1, 0, deepCopy(v));
       } else if (n.kind === 'ListReplace') {
-        if (idx > arr.length) throw new AkariError('R404', '置換位置がリストの範囲外です');
+        if (idx > arr.length) throw new AkariError('R404', 'おきかえる 番号の ものが リストに ありません');
         const v = assertRuntimeValueLimit(evalExpression(n.value, ctx, budget));
-        if (!scalar(v)) throw new AkariError('R411', 'リストへ入れられるのは数・文字・条件の答えです');
+        if (!scalar(v)) throw new AkariError('R411', 'リストへ 入れられるのは 数・文字・あてはまる／あてはまらない です');
         arr[idx - 1] = deepCopy(v);
       } else if (n.kind === 'ListDelete') {
-        if (idx > arr.length) throw new AkariError('R404', '削除位置がリストの範囲外です');
+        if (idx > arr.length) throw new AkariError('R404', 'けす 番号の ものが リストに ありません');
         arr.splice(idx - 1, 1);
       }
       b.set(arr);
@@ -2045,7 +2045,7 @@
       return {kind:typeof value==='number'?'NumberLiteral':typeof value==='boolean'?'BooleanLiteral':'StringLiteral',value};
     }
     function* calculationCheckpoint(budget) {
-      if (++budget.count > LIMITS.functionOps) throw new AkariError('R409','計算の量が上限を超えました');
+      if (++budget.count > LIMITS.functionOps) throw new AkariError('R409','計算の 回数が 多すぎます。くり返しの 回数を へらしてください');
       if ((budget.count & 127) === 0) yield;
     }
     function* evalExpressionSteps(ast, ctx, budget) {
@@ -2076,21 +2076,21 @@
       return outcome;
     }
     function* runUserFunctionSteps(name, args, ctx, budget = null, depth = 1, argumentNames = []) {
-      if (depth > LIMITS.callDepth) throw new AkariError('R408', '計算の呼び出しが深すぎます');
+      if (depth > LIMITS.callDepth) throw new AkariError('R408', '自分で作ったブロックの よびだしが かさなりすぎました');
       const def = ctx.compiled.symbols.functions.get(name);
-      if (!def) throw new AkariError('S301', `計算「${name}」がありません`);
+      if (!def) throw new AkariError('S301', `自分で作ったブロック「${name}」がありません`);
       if (def.args.length !== args.length)
-        throw new AkariError('S308', `計算「${name}」が受け取る値は${def.args.length}個です`+namedArgumentDetails(def.args,argumentNames));
+        throw new AkariError('S308', `計算「${name}」に 入れるものは${def.args.length}こです`+namedArgumentDetails(def.args,argumentNames));
       if (argumentNames.length) {
         if (argumentNames.length !== args.length || new Set(argumentNames).size !== argumentNames.length ||
           argumentNames.some(n => !def.args.includes(n)) || def.args.some(n => !argumentNames.includes(n)))
-          throw new AkariError('S308', `計算「${name}」の受け取る値の名前が一致しません`+namedArgumentDetails(def.args,argumentNames));
+          throw new AkariError('S308', `計算「${name}」に 入れるものの 名前が 合いません`+namedArgumentDetails(def.args,argumentNames));
         const named = new Map(argumentNames.map((n, i) => [n, args[i]]));
         args = def.args.map(n => named.get(n));
       }
       budget = budget || { count: 0 };
       const ast = ctx.compiled.astByKey.get(`function:${def.id}`);
-      if (!ast) throw new AkariError('S301', `計算「${name}」を準備できません`);
+      if (!ast) throw new AkariError('S301', `計算「${name}」の じゅんびが できませんでした`);
       const frame = {
         args: new Map(def.args.map((n, i) => [n, deepCopy(args[i])])),
         locals: new Map(),
@@ -2105,12 +2105,12 @@
       } catch (sig) {
         if (sig instanceof ScriptSignal && sig.kind === 'return') return deepCopy(sig.value);
         if (sig instanceof AkariError) {
-          sig.akariCallStack = [`計算 ${name}`, ...(sig.akariCallStack || [])];
+          sig.akariCallStack = [`自分で作ったブロック ${name}`, ...(sig.akariCallStack || [])];
           sig.akariFrames = [snapshotFrame(frame, 'function'), ...(sig.akariFrames || [])];
         }
         throw sig;
       }
-      throw new AkariError('S306', `計算「${name}」が値を返しませんでした`);
+      throw new AkariError('S306', `計算「${name}」が 答えを 返しませんでした。答えの れい：1＋2を返す。`);
     }
     function* execFunctionNodesSteps(nodes, inheritedContext, budget, loopDepth) {
       for (const n of nodes) {
@@ -2138,7 +2138,7 @@
               break;
             case 'NumericUpdate': {
               const b = ctx.runtime.resolveBinding(n.target.name, n.target.qualifier, ctx);
-              if (!b?.set) throw new AkariError('S301', '代入先がありません');
+              if (!b?.set) throw new AkariError('S301', '入れる先が ありません');
               const value = addNumericUpdate(b.get(), (yield* evalExpressionSteps(n.value, ctx, budget)), n.op);
               ctx.runtime.writeTarget(n.target, value, ctx, {resolvedBinding: b});
               break;
@@ -2161,7 +2161,7 @@
             case 'RepeatCount': {
               const count = numberInUnit((yield* evalExpressionSteps(n.count, ctx, budget)), '回');
               if (!Number.isSafeInteger(count) || count < 0 || count > LIMITS.repeatCount)
-                throw new AkariError('R413', 'くり返し回数は0以上の整数で上限以内にします');
+                throw new AkariError('R413', 'くり返す 回数は 0、1、2 のような 数に します。マイナスや 小数、大きすぎる 数は 使えません');
               for (let i = 0; i < count; i++) {
                 yield* calculationCheckpoint(budget);
                 try {
@@ -2262,7 +2262,7 @@
       const b = ctx.runtime.resolveBinding(n.target.name, n.target.qualifier, ctx);
       if (!b || !b.set) throw new AkariError('S301', 'リストがありません');
       const arr = b.get();
-      if (!Array.isArray(arr)) throw new AkariError('R411', 'この操作はリストに使います');
+      if (!Array.isArray(arr)) throw new AkariError('R411', 'これは リストに 使う ブロックです');
       if (n.kind === 'ListClear') {
         b.set([]);
         return;
@@ -2270,22 +2270,22 @@
       const idx = n.index ? integerIndex((yield* evalExpressionSteps(n.index, ctx, budget))) : null;
       if (n.kind === 'ListAppend') {
         const v = assertRuntimeValueLimit((yield* evalExpressionSteps(n.value, ctx, budget)));
-        if (!scalar(v)) throw new AkariError('R411', 'リストへ入れられるのは数・文字・条件の答えです');
+        if (!scalar(v)) throw new AkariError('R411', 'リストへ 入れられるのは 数・文字・あてはまる／あてはまらない です');
         if (arr.length >= LIMITS.listItems) throw new AkariError('R413', 'リストが長すぎます');
         arr.push(deepCopy(v));
       } else if (n.kind === 'ListInsert') {
-        if (idx > arr.length + 1) throw new AkariError('R404', '挿入位置がリストの範囲外です');
+        if (idx > arr.length + 1) throw new AkariError('R404', 'リストに 入れる 番号が 大きすぎます。番号を たしかめてください');
         const v = assertRuntimeValueLimit((yield* evalExpressionSteps(n.value, ctx, budget)));
-        if (!scalar(v)) throw new AkariError('R411', 'リストへ入れられるのは数・文字・条件の答えです');
+        if (!scalar(v)) throw new AkariError('R411', 'リストへ 入れられるのは 数・文字・あてはまる／あてはまらない です');
         if (arr.length >= LIMITS.listItems) throw new AkariError('R413', 'リストが長すぎます');
         arr.splice(idx - 1, 0, deepCopy(v));
       } else if (n.kind === 'ListReplace') {
-        if (idx > arr.length) throw new AkariError('R404', '置換位置がリストの範囲外です');
+        if (idx > arr.length) throw new AkariError('R404', 'おきかえる 番号の ものが リストに ありません');
         const v = assertRuntimeValueLimit((yield* evalExpressionSteps(n.value, ctx, budget)));
-        if (!scalar(v)) throw new AkariError('R411', 'リストへ入れられるのは数・文字・条件の答えです');
+        if (!scalar(v)) throw new AkariError('R411', 'リストへ 入れられるのは 数・文字・あてはまる／あてはまらない です');
         arr[idx - 1] = deepCopy(v);
       } else if (n.kind === 'ListDelete') {
-        if (idx > arr.length) throw new AkariError('R404', '削除位置がリストの範囲外です');
+        if (idx > arr.length) throw new AkariError('R404', 'けす 番号の ものが リストに ありません');
         arr.splice(idx - 1, 1);
       }
       b.set(arr);
@@ -2382,13 +2382,13 @@
             const sign = direction === 'backward' ? -1 : 1, radians = actor.direction * Math.PI / 180;
             return { x: sign * Math.cos(radians), y: sign * Math.sin(radians) };
           }
-          default: throw new AkariError('R411', '移動方向が正しくありません');
+          default: throw new AkariError('R411', '動く 向きが 正しくありません');
         }
       }
       advanceContinuous(at = this.runtime.now(), refresh = true) {
         if (!this.running || this.paused || this.continuousTime === null) return;
         if (!Number.isFinite(at) || at < this.continuousTime)
-          throw new AkariError('R412', '論理時計を過去へ戻せません');
+          throw new AkariError('R412', '時計を 前へ もどせません');
         while (this.continuousTime < at) {
           const grid = this.continuousOrigin + this.continuousTick * (1000 / 60),
             end = Math.min(at, grid), seconds = (end - this.continuousTime) / 1000,
@@ -2511,7 +2511,7 @@
         const ast = this.scriptAst(targetId, eventType, scriptId);
         if (!this.hasExecutable(ast)) return null;
         if (this.tasks.size >= LIMITS.activeTasks)
-          throw new AkariError('R413', '同時実行コード数が上限を超えました');
+          throw new AkariError('R413', '同時に 動いている 動きが 多すぎます。コピーや 合図を へらしてください');
         const task = {
           taskId: `task-${++this.seq}`,
           scriptId,
@@ -2583,7 +2583,7 @@
             if (epoch !== this.extensionEpoch) return;
             if (this.extensionEvents.length >= LIMITS.activeTasks) {
               const task = [...this.tasks.values()][0];
-              if (task) this.taskError(task, new AkariError('E708', '拡張の通知が滞留上限を超えました'));
+              if (task) this.taskError(task, new AkariError('E708', 'かくちょうからの 合図が 多すぎて、うけとりきれません'));
               else this.stop();
               return;
             }
@@ -2783,7 +2783,7 @@
           if (top.type === 'while' || top.type === 'until') return top;
           break;
         }
-        if (guard >= 1000) throw new AkariError('R413', '内部くり返しの進行量が上限を超えました');
+        if (guard >= 1000) throw new AkariError('R413', 'くり返しが 多すぎて 先に すすめません');
         return task.execStack[task.execStack.length - 1] || null;
       }
       nextStep(task) {
@@ -2931,10 +2931,10 @@
             return;
           case 'NumericUpdate': {
             const b = this.runtime.resolveBinding(n.target.name, n.target.qualifier, ctx);
-            if (!b?.set) throw new AkariError('S301', `代入先「${n.target.name}」がありません`);
+            if (!b?.set) throw new AkariError('S301', `入れる先「${n.target.name}」がありません`);
             const cur = b.get(),
               v = evalExpression(n.value, ctx);
-            if (Array.isArray(cur)) throw new AkariError('R411', '数の変数に使う命令です');
+            if (Array.isArray(cur)) throw new AkariError('R411', 'これは 数の へんすうに 使う ブロックです');
             this.runtime.writeTarget(n.target, addNumericUpdate(cur, v, n.op), ctx, {resolvedBinding: b});
             this.ui.renderMonitor?.();
             return;
@@ -2953,7 +2953,7 @@
           case 'RepeatCount': {
             const count = numberInUnit(evalExpression(n.count, ctx), '回');
             if (!Number.isSafeInteger(count) || count < 0 || count > LIMITS.repeatCount)
-              throw new AkariError('R413', 'くり返し回数は0以上の整数で上限以内にします');
+              throw new AkariError('R413', 'くり返す 回数は 0、1、2 のような 数に します。マイナスや 小数、大きすぎる 数は 使えません');
             if (count > 0) {
               task.execStack.push({ type: 'repeatCount', node: n, remaining: count - 1 });
               this.enterBody(task, n.body);
@@ -2998,7 +2998,7 @@
             return;
           case 'WaitTime': {
             const sec = numberInUnit(evalExpression(n.seconds, ctx), '秒');
-            if (sec < 0) throw new AkariError('R412', '待つ時間は0以上にします');
+            if (sec < 0) throw new AkariError('R412', '待つ 時間は 0より 小さく できません');
             if (sec === 0) return;
             this.block(task, {
               kind: 'time',
@@ -3015,7 +3015,7 @@
             const v = evalExpression(n.value, ctx);
             if (Array.isArray(v)) throw new AkariError('R411', 'リストはそのまま言えません');
             const sec = n.seconds === undefined ? null : numberInUnit(evalExpression(n.seconds, ctx), '秒');
-            if (sec !== null && sec < 0) throw new AkariError('R412', '話す時間は0以上にします');
+            if (sec !== null && sec < 0) throw new AkariError('R412', '話す 時間は 0より 小さく できません');
             const deadline = sec === null ? null : ensureFinite(this.runtime.now() + sec * 1000);
             const token = {};
             this.speechTokens.set(ctx.runtimeId, token);
@@ -3077,18 +3077,18 @@
             return;
           case 'LocalVariableDeclaration': {
             const f = task.callFrames[task.callFrames.length - 1];
-            if (!f) throw new AkariError('S313', 'この中だけの変数は動作の中でだけ作れます');
+            if (!f) throw new AkariError('S313', 'この中だけの へんすうは 自分で作ったブロックの 中でだけ 作れます');
             f.locals.set(n.name, localScalar(evalExpression(n.initial, ctx)));
             return;
           }
           case 'LocalListDeclaration': {
             const f = task.callFrames[task.callFrames.length - 1];
-            if (!f) throw new AkariError('S313', 'この中だけのリストは動作の中でだけ作れます');
+            if (!f) throw new AkariError('S313', 'この中だけの リストは 自分で作ったブロックの 中でだけ 作れます');
             f.localLists.set(n.name, []);
             return;
           }
           case 'ReturnStatement':
-            throw new AkariError('S307', '実行コードや動作から値は返せません');
+            throw new AkariError('S307', '「〜を返す」は 答えを 出す ブロックの 中でだけ 使えます');
           case 'StopCommand':
             return this.execStop(task, n);
           case 'MotionCommand':
@@ -3102,7 +3102,7 @@
           case 'CloneCommand':
             return this.execClone(task, n, ctx);
           default:
-            throw new AkariError('P201', `未実装の文 ${n.kind}`);
+            throw new AkariError('P201', `まだ 動かせない 文 ${n.kind}`);
         }
       }
       breakLoop(task, isContinue) {
@@ -3121,16 +3121,16 @@
       }
       callAction(task, n, ctx) {
         const def = this.compiled.symbols.actions.get(n.name);
-        if (!def) throw new AkariError('S301', `動作「${n.name}」がありません`);
+        if (!def) throw new AkariError('S301', `自分で作ったブロック「${n.name}」がありません`);
         if (task.callFrames.length + 1 > LIMITS.callDepth)
-          throw new AkariError('R408', '動作の呼び出しが深すぎます');
+          throw new AkariError('R408', '自分で作ったブロックの よびだしが かさなりすぎました');
         if (def.args.length !== n.args.length)
-          throw new AkariError('S308', `動作「${n.name}」の受け取る値は${def.args.length}個です`+namedArgumentDetails(def.args,n.argumentNames));
+          throw new AkariError('S308', `自分で作ったブロック「${n.name}」に 入れるものは${def.args.length}こです`+namedArgumentDetails(def.args,n.argumentNames));
         const sourceValues = n.args.map((x) => deepCopy(evalExpression(x, ctx)));
         const names = n.argumentNames || [];
         if (names.length && (names.length !== def.args.length || new Set(names).size !== names.length ||
             names.some((name) => !def.args.includes(name))))
-          throw new AkariError('S308', '受け取る値の名前が一致しません');
+          throw new AkariError('S308', '入れるものの 名前が 合いません');
         const vals = names.length ? def.args.map((name) => sourceValues[names.indexOf(name)]) : sourceValues;
         const frame = {
           id: def.id,
@@ -3176,7 +3176,7 @@
       advanceGlide(t, br, now) {
               const p = clamp((now - br.startTime) / br.duration, 0, 1),
                 a = this.runtime.actor(br.runtimeId);
-              if (!a) throw new AkariError('R405', '動作の対象がありません');
+              if (!a) throw new AkariError('R405', '動かす キャラクターや 部品が 見つかりません');
               if (a) {
                 const nx = ensureFinite(br.startX * (1 - p) + br.targetX * p),
                   ny = ensureFinite(br.startY * (1 - p) + br.targetY * p);
@@ -3317,7 +3317,7 @@
         const e = task.error;
         task.errorCallStack = [
           `きっかけ ${task.targetId} / ${EVENT_LABELS[task.eventType] || task.eventType}`,
-          ...task.callFrames.map((f) => `\u52d5\u4f5c ${f.name}`),
+          ...task.callFrames.map((f) => `自分で作ったブロック ${f.name}`),
           ...(e.akariCallStack || []),
         ];
         const frame = task.callFrames.at(-1),
@@ -3458,7 +3458,7 @@
             const sec = num(0),
               tx = num(1),
               ty = num(2);
-            if (sec < 0) throw new AkariError('R412', '滑る時間は0以上にします');
+            if (sec < 0) throw new AkariError('R412', 'すべる 時間は 0より 小さく できません');
             if (sec === 0) {
               a.x = tx;
               a.y = ty;
@@ -3564,7 +3564,7 @@
           else if (n.op === 'FORWARD_LAYERS' || n.op === 'BACKWARD_LAYERS') {
             const v = numeric(arg(0));
             if (!Number.isInteger(v) || v < 0)
-              throw new AkariError('R412', '層数は0以上の整数にします');
+              throw new AkariError('R412', '重なりを 動かす 数は 0、1、2 のような 数に します');
             this.runtime.reorderActor(ctx.runtimeId, n.op, v);
           } else if (n.op === 'HIDE') a.visible = false;
           else if (n.op === 'SHOW') a.visible = true;
@@ -3575,12 +3575,12 @@
           } else if (n.op === 'SET_COLOR')
             a.color = resolveColor(stringv(arg(0)), { allowTransparent: false });
           else if (['SET_COSTUME', 'NEXT_COSTUME', 'PREV_COSTUME'].includes(n.op)) {
-            if (c?.type !== 'sprite') throw new AkariError('R406', '衣装はキャラクターだけです');
+            if (c?.type !== 'sprite') throw new AkariError('R406', '見た目を えらべるのは キャラクターだけです');
             const arr = c.costumes;
             if (n.op === 'SET_COSTUME') {
               const name = stringv(arg(0)),
                 co = arr.find((x) => x.name === name);
-              if (!co) throw new AkariError('R405', `衣装「${name}」がありません`);
+              if (!co) throw new AkariError('R405', `見た目「${name}」がありません`);
               a.costumeId = co.id;
             } else {
               let i = arr.findIndex((x) => x.id === a.costumeId);
@@ -3614,7 +3614,7 @@
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」がありません`);
           if (!['label', 'button', 'box'].includes(c.type))
-            throw new AkariError('R406', `「${name}」は文字を書き換えられる部品ではありません`);
+            throw new AkariError('R406', `「${name}」は 文字を かえられる 部品では ありません`);
           this.runtime.actor(c.id).text = v;
           this.ui.render?.();
           return;
@@ -3624,7 +3624,7 @@
             v = assertRuntimeValueLimit(stringv(arg(1))),
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」がありません`);
-          if (c.type !== 'input') throw new AkariError('R406', `「${name}」は入力欄ではありません`);
+          if (c.type !== 'input') throw new AkariError('R406', `「${name}」は 入力らんでは ありません`);
           const a = this.runtime.actor(c.id),
             old = a.inputValue;
           if (old !== v) {
@@ -3647,7 +3647,7 @@
         else if (n.op === 'SET_SIZE') {
           const v = numeric(evalExpression(n.args[0], ctx));
           if (v <= 0 || v > 200)
-            throw new AkariError('R412', 'ペンの太さは0より大きく200以下にします');
+            throw new AkariError('R412', 'ペンの 太さは 0より 大きく、200までに します');
           a.penSize = v;
         } else if (n.op === 'STAMP') this.ui.stamp?.(ctx.runtimeId);
       }
@@ -3663,7 +3663,7 @@
         }
         if (n.op === 'SET_VOLUME') {
           const v = num(0);
-          if (v < 0 || v > 100) throw new AkariError('R412', '音量は0〜100％です');
+          if (v < 0 || v > 100) throw new AkariError('R412', '音の 大きさは 0〜100％に します');
           state.volume = v;
           return;
         }
@@ -3699,7 +3699,7 @@
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」がありません`);
           if (c.type !== 'sprite')
-            throw new AkariError('R406', 'クローンを作れるのはキャラクターだけです');
+            throw new AkariError('R406', 'コピーを 作れるのは キャラクターだけです');
           const candidates = this.runtime.instancesByName(name);
           src = candidates[0]?.runtimeId || c.id;
         } else {
@@ -3709,14 +3709,14 @@
           return { requeue: false };
         }
         const count=n.count===undefined?1:numberValue(evalExpression(n.count,ctx));
-        if(!Number.isSafeInteger(count)||count<0)throw new AkariError('R410','分身の数は0以上の整数にしてください');
+        if(!Number.isSafeInteger(count)||count<0)throw new AkariError('R410','コピーの 数は 0、1、2 のような 数に してください');
         if([...this.runtime.actors.values()].filter(actor=>actor.isClone).length+count>LIMITS.clones)
-          throw new AkariError('R410','クローン数の上限です');
+          throw new AkariError('R410','コピーは もう 作れません。いらない コピーを けしてください');
         this.runtime.requireActor({runtimeId:src});
         const component=this.runtime.component(src);
-        if(component?.type!=='sprite')throw new AkariError('R406','クローンを作れるのはキャラクターだけです');
+        if(component?.type!=='sprite')throw new AkariError('R406','コピーを 作れるのは キャラクターだけです');
         const receivers=this.matchingScripts(component.id,'cloneStart',{sourceRuntimeId:src}).filter(script=>this.hasExecutable(this.scriptAst(component.id,'cloneStart',script.id))).length;
-        if(this.tasks.size+count*receivers>LIMITS.activeTasks)throw new AkariError('R413','同時実行コード数が上限を超えました');
+        if(this.tasks.size+count*receivers>LIMITS.activeTasks)throw new AkariError('R413','同時に 動いている 動きが 多すぎます。コピーや 合図を へらしてください');
         for(let i=0;i<count;i++){
           const rid = this.runtime.createClone(src);
           this.spawnForRuntime(rid, 'cloneStart', { sourceRuntimeId: src });
@@ -3749,7 +3749,7 @@
         Object.entries(EXECUTABLE_CONTRACT).some(([k, v]) => data[k] !== v)
       )
         fail(
-          '\u3053\u306e\u4f5c\u54c1\u306e\u5b9f\u884c\u5f62\u5f0f\u306b\u306f\u5bfe\u5fdc\u3057\u3066\u3044\u307e\u305b\u3093',
+          'この 作品の ファイルは、この あかりでは 動かせません',
         );
       if (Object.hasOwn(data, 'extensions')) validateExtensionEnvelope(data.extensions);
       const p = Object.hasOwn(data, 'extensions') && data.project && typeof data.project === 'object' ? { ...data.project, extensions: data.extensions } : data.project;
@@ -3766,7 +3766,7 @@
         !Array.isArray(data.assets) ||
         data.assets.length > LIMITS.assets
       )
-        fail('\u4f5c\u54c1\u30c7\u30fc\u30bf\u304c\u58ca\u308c\u3066\u3044\u307e\u3059');
+        fail('作品の データが こわれています');
       if (
         !Number.isInteger(p.stage.width) ||
         p.stage.width < 200 ||
@@ -3775,17 +3775,17 @@
         p.stage.height < 150 ||
         p.stage.height > 800
       )
-        fail('\u753b\u9762\u306e\u5927\u304d\u3055\u304c\u4e0d\u6b63\u3067\u3059');
+        fail('画面の 大きさが 正しくありません');
       if(Object.hasOwn(p.stage,'showSpeechNames')&&typeof p.stage.showSpeechNames!=='boolean')
-        fail('吹き出しの名前表示設定が不正です');
+        fail('ふきだしの 名前の 見せかたが 正しくありません');
       validateRuntimeData(p, fail);
       const ownerIds = new Set(['stage', ...p.components.map(c => c.id)]);
       const callPhrases=new Set();
       for(const definition of p.actions){
         if(definition.callPhrase===undefined||definition.callPhrase==='')continue;
-        if(typeof definition.callPhrase!=='string'||cpLen(definition.callPhrase)>80||/[\p{Cc}\p{Zl}\p{Zp}。．.、,※]/u.test(definition.callPhrase))fail('短い呼出し文が不正です');
+        if(typeof definition.callPhrase!=='string'||cpLen(definition.callPhrase)>80||/[\p{Cc}\p{Zl}\p{Zp}。．.、,※]/u.test(definition.callPhrase))fail('短い よび方が 正しくありません');
         const phrase=definition.callPhrase.replace(/[\s\u3000]/gu,'');
-        if(!phrase||callPhrases.has(phrase))fail('短い呼出し文が空か重複しています');
+        if(!phrase||callPhrases.has(phrase))fail('短い よび方が 空っぽか、同じ ものが 2つ あります');
         callPhrases.add(phrase);
       }
       const definitionKeys = new Map([
@@ -3793,7 +3793,7 @@
         ...p.functions.map(d => [`function:${d.id}`, d]),
       ]);
       if ([...definitionKeys.values()].some(d => d.ownerId !== 'stage'))
-        fail('手順・答えを求める定義の所属先が不正です');
+        fail('自分で作ったブロックの 持ち主が 正しくありません');
       const items = [],
         astByKey = new Map();
       const validActorRef = ref => !ref ||
@@ -3820,19 +3820,19 @@
           item.ast?.kind !== 'Script' ||
           !Array.isArray(item.ast.body)
         )
-          fail('\u5b9f\u884c\u30b3\u30fc\u30c9\u304c\u58ca\u308c\u3066\u3044\u307e\u3059');
+          fail('動きの データが こわれています');
         if (item.filter != null) {
           const event = item.event || parts[2], field = event === 'keyDown' ? 'key' : event === 'message' ? 'message' : null;
           if (!field || !exactKeys(item.filter, [field]) || typeof item.filter[field] !== 'string' ||
-            cpLen(item.filter[field]) > LIMITS.stringChars) fail('きっかけの条件が正しくありません');
+            cpLen(item.filter[field]) > LIMITS.stringChars) fail('きっかけの きまりが 正しくありません');
         }
         if (item.ast.rules !== undefined && (!Array.isArray(item.ast.rules) || item.ast.rules.length > LIMITS.scripts))
-          fail('動き続ける約束が正しくありません');
+          fail('動きつづける きまりが 正しくありません');
         for (const rule of item.ast.rules || []) {
           if (rule?.kind !== 'ContinuousRule' || !validActorRef(rule.actorRef) ||
             !directions.includes(rule.direction) ||
             ['condition', 'seconds', 'distance'].some(key => !rule[key] || typeof rule[key].kind !== 'string'))
-            fail('動き続ける約束の対象・方向・条件・速さが正しくありません');
+            fail('動きつづける きまりの「だれが」「どの向きへ」「どんな あいだ」「どの速さで」の どれかが 正しくありません');
         }
         // Validate units in every saved expression, including currently unreachable branches.
         const pending = [item.ast];
@@ -3841,23 +3841,23 @@
           if (!node || typeof node !== 'object') continue;
           if (['ExtensionCommand', 'ExtensionCalculation'].includes(node.kind)) {
             const operation = extensions.describe(node.name, node.kind === 'ExtensionCommand' ? 'commands' : 'calculations');
-            if (!operation || !Array.isArray(node.args) || node.args.length !== operation.args.length) fail('拡張機能・引数の契約が一致しません');
+            if (!operation || !Array.isArray(node.args) || node.args.length !== operation.args.length) fail('かくちょうの ブロックと 入れるものが 合いません');
           }
-          if (node.kind === 'Hole') fail('書きかけの役割を完成させてください');
-          if (Object.hasOwn(node, 'actorRef') && !validActorRef(node.actorRef)) fail('実行する対象が正しくありません');
+          if (node.kind === 'Hole') fail('書きかけの ところを さいごまで 書いてください');
+          if (Object.hasOwn(node, 'actorRef') && !validActorRef(node.actorRef)) fail('動かす キャラクターや 部品が 正しくありません');
           if (node.kind === 'MotionCommand' && ['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(node.op) &&
-            !directions.includes(node.direction)) fail('移動の方向が正しくありません');
+            !directions.includes(node.direction)) fail('動く 向きが 正しくありません');
           if (node.argumentNames !== undefined && (!Array.isArray(node.argumentNames) ||
             node.argumentNames.some(name => typeof name !== 'string' || !name || cpLen(name) > 32) ||
             new Set(node.argumentNames).size !== node.argumentNames.length ||
             (node.argumentNames.length && node.argumentNames.length !== node.args?.length)))
-            fail('受け取る値の名前が正しくありません');
+            fail('入れるものの 名前が 正しくありません');
           if (node.kind === 'QuantityLiteral' &&
               (!UNIT_TAGS.includes(node.unit) || !node.value || typeof node.value !== 'object'))
-            fail('数量の単位または数値式が不正です');
+            fail('数の たんいか 計算が 正しくありません');
           if (node.kind === 'UnitlessRead' && (!node.value || typeof node.value !== 'object'))
-            fail('数だけを取り出す式が不正です');
-          if (node.kind === 'NumberLiteral' && !finite(node.value)) fail('数値式が不正です');
+            fail('数だけを 取り出す 計算が 正しくありません');
+          if (node.kind === 'NumberLiteral' && !finite(node.value)) fail('数の 計算が 正しくありません');
           for (const value of Object.values(node)) {
             if (Array.isArray(value)) for (const entry of value) pending.push(entry);
             else if (value && typeof value === 'object') pending.push(value);
@@ -3867,7 +3867,7 @@
         astByKey.set(item.key, item.ast);
       }
       if ([...definitionKeys.keys()].some(key => !astByKey.has(key)))
-        fail('手順・答えを求める定義の本文がありません');
+        fail('自分で作ったブロックの 中身が ありません');
       const compiled = {
         items,
         rules: items.flatMap(item => (item.ast.rules || []).map((rule, index) => ({
@@ -3891,7 +3891,7 @@
           a.byteLength < 1 ||
           a.byteLength > (a.kind === 'image' ? LIMITS.imageBytes : LIMITS.audioBytes)
         )
-          fail('\u7d20\u6750\u30c7\u30fc\u30bf\u304c\u4e0d\u6b63\u3067\u3059');
+          fail('絵や音の データが 正しくありません');
         if (
           !(
             a.kind === 'image'
@@ -3899,13 +3899,13 @@
               : ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/flac', 'audio/ogg']
           ).includes(a.mime)
         )
-          fail('\u7d20\u6750\u306e\u7a2e\u985e\u304c\u4e0d\u6b63\u3067\u3059');
+          fail('絵や音の しゅるいが 正しくありません');
         total += a.byteLength;
         if (total > LIMITS.assetRawTotal || decodedBase64Length(a.dataBase64) !== a.byteLength)
-          fail('\u7d20\u6750\u306e\u5927\u304d\u3055\u304c\u4e0d\u6b63\u3067\u3059');
+          fail('絵や音の 大きさが 正しくありません');
         const bytes = decodeBase64(a.dataBase64);
         if (sha256Fallback(bytes) !== a.sha256)
-          fail('\u7d20\u6750\u30c7\u30fc\u30bf\u304c\u58ca\u308c\u3066\u3044\u307e\u3059');
+          fail('絵や音の データが こわれています');
         store.addImmutable({
           id: a.id,
           kind: a.kind,
@@ -3922,7 +3922,7 @@
       ])
         for (const id of ids)
           if (store.get(id)?.kind !== kind)
-            fail('\u5fc5\u8981\u306a\u7d20\u6750\u304c\u3042\u308a\u307e\u305b\u3093');
+            fail('使う 絵や音が 見つかりません');
       return { project: p, compiled, assetStore: store, requirements };
     }
 

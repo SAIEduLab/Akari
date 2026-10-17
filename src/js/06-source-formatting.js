@@ -11,11 +11,11 @@
   }
   function formatHoleSource(n) {
     if (!expressionDraftFormatDepth)
-      throw new AkariError('P210', '未入力の場所があります。値やすることを選んでください');
+      throw new AkariError('P210', 'あいている ところが あります。中身や することを えらんでください');
     let label = typeof n.label === 'string' ? n.label.trim() : '';
-    if (/[〔〕\r\n]/u.test(label)) throw new AkariError('P210', '未入力欄の名前に区切り文字は使えません');
-    if (!label) label = ({expression:'値を入れる',statement:'することを選ぶ',target:'変更するものを選ぶ',rule:'動かし方を選ぶ'})[n.role] || '値を入れる';
-    else if (!/(?:選ぶ|入れる|指定する|書く)$/.test(label)) label += label === '条件' ? 'を選ぶ' : 'を入れる';
+    if (/[〔〕\r\n]/u.test(label)) throw new AkariError('P210', 'あいている ところの 名前に 〔 〕や 行がえは 使えません');
+    if (!label) label = ({expression:'中身を入れる',statement:'することをえらぶ',target:'かえるものをえらぶ',rule:'動かし方をえらぶ'})[n.role] || '中身を入れる';
+    else if (!/(?:選ぶ|入れる|指定する|書く)$/.test(label)) label += label === '条件' ? 'をえらぶ' : 'を入れる';
     return `〔${label}〕`;
   }
   function formatExpression(n, parent = 0, options = {}) {
@@ -156,7 +156,7 @@
     emit(ast.body,ast.heading?1:0,options.inheritedActor);
     for(const rule of ast.rules||[])line(ast.heading?1:0,rule.kind==='Hole'?formatHoleSource(rule):sentenceFormFor(rule).render(rule),rule.inlineComment||'');
     for(const unit of ast.units||[])out.push(formatScript(unit,options));
-    const source=out.join('\n');if(cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','整形後の本文が文字数の上限を超えます',1,1);return source;
+    const source=out.join('\n');if(cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','この 動きの まとまりが 長すぎます。ブロックや 文字を へらしてください',1,1);return source;
     });
   }
   function formatTarget(t) {
