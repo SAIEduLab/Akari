@@ -3998,7 +3998,7 @@
       for (const f of r.frames)
         renderMonitorSection(
           root,
-          (f.kind === 'function' ? '計算 ' : '動作 ') + f.name + ` / ${f.line}\u884c`,
+          (f.kind === 'function' ? '計算 ' : 'てじゅん ') + f.name + ` / ${f.line}\u884c`,
           [
             ...f.args.map(([k, v]) => ['入れたもの ' + k, v]),
             ...f.locals.map(([k, v]) => ['この中だけの へんすう ' + k, v]),
@@ -4160,7 +4160,7 @@
         ]);
         const frame = last.frames.at(-1);
         if (frame)
-          section((frame.kind === 'function' ? '計算 ' : '動作 ') + frame.name, [
+          section((frame.kind === 'function' ? '計算 ' : 'てじゅん ') + frame.name, [
             ...frame.args.map(([k, v]) => ['入れたもの ' + k, v]),
             ...frame.locals.map(([k, v]) => ['この中だけの へんすう ' + k, v]),
             ...frame.localLists.map(([k, v]) => ['この中だけのリスト ' + k, v]),

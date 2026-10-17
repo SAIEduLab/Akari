@@ -3082,7 +3082,7 @@
         for (const co of c.costumes) {
           if (!co || typeof co !== 'object' || Array.isArray(co))
             throw new AkariError('F503', '見た目の 中身が 正しくありません');
-          validateResourceName(co.name, '見た目の 名前');
+          validateResourceName(co.name, 'すがたの 名前');
           if (cn.has(co.name)) throw new AkariError('F503', '同じ 名前の 見た目が あります。ちがう 名前に してください');
           cn.add(co.name);
           addId(co.id);
@@ -3143,11 +3143,11 @@
       throw new AkariError('F504', '自分で 作った ブロックが 多すぎます');
     const callNames = new Set();
     for (const [arr, kind] of [
-      [p.actions, '動作'],
+      [p.actions, 'てじゅん'],
       [p.functions, '計算'],
     ])
       for (const d of arr) {
-        if (!exactKeys(d, ['id', 'ownerId', 'name', 'args', 'source', ...(kind === '動作' && Object.hasOwn(d || {}, 'callPhrase') ? ['callPhrase'] : [])]))
+        if (!exactKeys(d, ['id', 'ownerId', 'name', 'args', 'source', ...(kind === 'てじゅん' && Object.hasOwn(d || {}, 'callPhrase') ? ['callPhrase'] : [])]))
           throw new AkariError('F503', `${kind}の 自分で 作った ブロックの 中身が 正しくありません`);
         if (d.ownerId !== 'stage')
           throw new AkariError('F503', `${kind}の 自分で 作った ブロックは 画面の ものに してください`);

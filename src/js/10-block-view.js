@@ -938,10 +938,10 @@
           ペン: 'pen',
           メモ: 'comment', コメント: 'comment',
           状態: 'event',
-          '表示・入力': 'look',
+          '言う・たずねる': 'look',
           用意された計算: 'operator',
           計算: 'operator',
-          動作: 'action',
+          てじゅん: 'action',
         }[group] || 'control'
       );
     }

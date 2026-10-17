@@ -5931,7 +5931,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
     <button id="paintAdd" title="絵を かいて キャラクターにして 画面に おく">🎨 お絵かき</button>
     <button id="soundQuickAdd" title="音の ファイルを 入れる">🔊 音を 入れる</button>
     <button id="assetBtn" aria-label="絵や音を まとめる" aria-describedby="assetActionHelp"><ruby class="child-word">絵<rt>がぞう</rt></ruby>や<ruby class="child-word">音<rt>おんせい</rt></ruby>をまとめる</button>
-    <button id="procBtn" aria-label="自分で作ったブロック"><ruby class="child-word">動作<rt>てじゅん</rt></ruby>自分で作ったブロック</button>
+    <button id="procBtn" aria-label="自分で作ったブロック">自分で作ったブロック</button>
     <button id="dataBtn" aria-label="へんすう・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
     <details id="entryProjectMenu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
@@ -6246,9 +6246,9 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
           <button id="imageObjectAddModal">🖼 絵を キャラクターとして おく</button>
         </div>
         <div class="asset-import-card">
-          <strong>うしろの 絵に する</strong>
-          <small>絵の ファイルを 入れて、画面全体の うしろの 絵に します。</small>
-          <button id="backdropImageAdd">うしろの 絵を 入れる</button>
+          <strong>はいけいの 絵に する</strong>
+          <small>絵の ファイルを 入れて、画面全体の はいけいに します。</small>
+          <button id="backdropImageAdd">はいけいの 絵を 入れる</button>
         </div>
         <div class="asset-import-card">
           <strong>すがたに する</strong>
@@ -6263,12 +6263,12 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
       </div>
       <div id="assetProgress" class="asset-target" style="display:none"></div>
       <details class="asset-secondary">
-        <summary>うしろの 色・文字の すがたを 入れる</summary>
+        <summary>はいけいの 色・文字の すがたを 入れる</summary>
         <div class="asset-toolbar" style="margin-top:9px">
           <input id="backdropName" placeholder="はいけいの 名前" style="width:130px;padding:6px">
           <input id="backdropColor" value="#ffffff" placeholder="#RRGGBB" style="width:105px;padding:6px">
-          <button id="backdropAdd">うしろの 色</button>
-          <input id="costumeName" placeholder="見た目の 名前" style="width:120px;padding:6px">
+          <button id="backdropAdd">はいけいの 色</button>
+          <input id="costumeName" placeholder="すがたの 名前" style="width:120px;padding:6px">
           <input id="costumeText" value="★" placeholder="文字の すがた" style="width:90px;padding:6px">
           <button id="costumeAdd">文字の すがた</button>
         </div>
@@ -6290,18 +6290,18 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
       <div class="proc-grid">
         <div class="proc-list">
           <select id="callableSelect" size="12"></select>
-          <button id="callableNewAction">新しい動作</button>
+          <button id="callableNewAction">新しい てじゅん</button>
           <button id="callableNewFunction">新しい計算</button>
-          <button id="callableDelete">この動作・計算を消す</button>
+          <button id="callableDelete">この てじゅん・計算を けす</button>
         </div>
         <div class="proc-edit">
-          <details id="callableConceptHelp" class="child-help"><summary>動作・計算のヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
-            <p><ruby class="child-word">動作<rt>てじゅん</rt></ruby>は、いくつかの 動きを まとめて、名前で 使うものです。たとえば：「あいさつ」という 名前で、名前を 話して おじぎする 動きを まとめます。</p>
+          <details id="callableConceptHelp" class="child-help"><summary>てじゅん・計算の ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
+            <p>てじゅんは、いくつかの 動きを まとめて、名前で 使うものです。たとえば：「あいさつ」という 名前で、名前を 話して おじぎする 動きを まとめます。</p>
             <p>計算は、中で 使った 数や 文字から 答えを 出します。たとえば：点数を 2倍にして、その 答えを 返します。</p>
-            <p>名前と 入れるものを 決めて、下に 動きを 書きます。「動作・計算を決める」を おすと、ほかの 動きから その 名前で 使えます。</p>
+            <p>名前と 入れるものを 決めて、下に 動きを 書きます。「てじゅん・計算を 決める」を おすと、ほかの 動きから その 名前で 使えます。</p>
           </div></details>
           <input id="callableEditingId" type="hidden">
-          <label>しゅるい <select id="callableType"><option value="action">動作</option><option value="function">計算（答えを出す）</option></select></label>
+          <label>しゅるい <select id="callableType"><option value="action">てじゅん</option><option value="function">計算（答えを出す）</option></select></label>
           <label>名前 <input id="callableName"></label>
           <label id="callablePhraseRow">短い よび方（書かなくても いい） <input id="callablePhrase" maxlength="80" placeholder="れい：ジャンプする" aria-describedby="callablePhraseHelp"></label>
           <small id="callablePhraseHelp">この文を 書くだけで、この てじゅんを 使えます。書かなくても、名前で よべます。</small>
@@ -11727,14 +11727,14 @@ function createAkariExtensionHost(options) {
     const intentTerms = {
       '\u52d5\u304d': ['動く', 'うごく', '移動', '進む', 'すすむ'],
       '\u898b\u305f\u76ee': ['見せる', 'かくす', '表示', '話す', 'しゃべる'],
-      '\u8868\u793a\u30fb\u5165\u529b': ['話す', 'はなす', 'しゃべる', '質問', '答え'],
-      '\u6761\u4ef6\u30fb\u53cd\u5fa9': ['もし', 'くり返す', '繰り返す', '条件'],
-      '\u5f85\u6a5f': ['待つ', 'まつ', '時間', '秒'],
+      '言う・たずねる': ['話す', 'はなす', 'しゃべる', '質問', '答え'],
+      'もし・くり返し': ['もし', 'くり返す', '繰り返す', '条件'],
+      '待つ': ['待つ', 'まつ', '時間', '秒'],
       '\u30c7\u30fc\u30bf': ['データ', '記録', '変数', '値'],
       '\u30ea\u30b9\u30c8': ['リスト', '一覧', '並べる', 'これ'],
-      '\u5024\u30fb\u30c7\u30fc\u30bf': ['データ', '記録', '変数', '値'],
+      'データの中身': ['データ', '記録', '変数', '値'],
       '\u8a08\u7b97': ['計算', '答え', '値を求める'],
-      '\u52d5\u4f5c': ['手順', '呼び出す', '実行'],
+      'てじゅん': ['手順', '呼び出す', '実行'],
     };
     let activeBinding = null;
     const add = (id, category, text, mode = 'statement', reason = '', binding = activeBinding) => {
@@ -11853,7 +11853,7 @@ function createAkariExtensionHost(options) {
           if (!co)
             reason =
               reason ||
-              '使う キャラクターの 見た目の 名前に かえます';
+              '使う キャラクターの すがたの 名前に かえます';
         }
       }
       if (x.op === 'SET_BACKDROP')
@@ -11963,7 +11963,7 @@ function createAkariExtensionHost(options) {
       if (!pure)
         add(
           'action:' + d.id,
-          '\u52d5\u4f5c',
+          'てじゅん',
           `${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】という手順を行う`,
           'statement', '', {kind:'action', id:d.id, name:d.name},
         );
@@ -15340,7 +15340,7 @@ function createAkariExtensionHost(options) {
         for (const co of c.costumes) {
           if (!co || typeof co !== 'object' || Array.isArray(co))
             throw new AkariError('F503', '見た目の 中身が 正しくありません');
-          validateResourceName(co.name, '見た目の 名前');
+          validateResourceName(co.name, 'すがたの 名前');
           if (cn.has(co.name)) throw new AkariError('F503', '同じ 名前の 見た目が あります。ちがう 名前に してください');
           cn.add(co.name);
           addId(co.id);
@@ -15401,11 +15401,11 @@ function createAkariExtensionHost(options) {
       throw new AkariError('F504', '自分で 作った ブロックが 多すぎます');
     const callNames = new Set();
     for (const [arr, kind] of [
-      [p.actions, '動作'],
+      [p.actions, 'てじゅん'],
       [p.functions, '計算'],
     ])
       for (const d of arr) {
-        if (!exactKeys(d, ['id', 'ownerId', 'name', 'args', 'source', ...(kind === '動作' && Object.hasOwn(d || {}, 'callPhrase') ? ['callPhrase'] : [])]))
+        if (!exactKeys(d, ['id', 'ownerId', 'name', 'args', 'source', ...(kind === 'てじゅん' && Object.hasOwn(d || {}, 'callPhrase') ? ['callPhrase'] : [])]))
           throw new AkariError('F503', `${kind}の 自分で 作った ブロックの 中身が 正しくありません`);
         if (d.ownerId !== 'stage')
           throw new AkariError('F503', `${kind}の 自分で 作った ブロックは 画面の ものに してください`);
@@ -17918,20 +17918,20 @@ function createAkariExtensionHost(options) {
         Script: '動きのまとまり',
         TargetReference: 'データ',
         CommentLine: 'メモ',
-        UserActionCall: '動作',
+        UserActionCall: 'てじゅん',
         UserFunctionCall: '計算',
         BuiltinCall: '用意された計算',
         SensorRead: 'しらべる',
         LocalVariableDeclaration: 'この中だけのデータ',
         LocalListDeclaration: 'この中だけのデータ',
         ReturnStatement: '返す',
-        Say: '表示・入力',
-        Ask: '表示・入力',
+        Say: '言う・たずねる',
+        Ask: '言う・たずねる',
         Broadcast: '合図',
         BroadcastAndWait: '合図',
-        WaitTime: '待機',
-        WaitUntil: '待機',
-        StopCommand: '停止',
+        WaitTime: '待つ',
+        WaitUntil: '待つ',
+        StopCommand: '止める',
       };
       const palette =
         groups[kind] ||
@@ -17941,7 +17941,7 @@ function createAkariExtensionHost(options) {
             ? 'かず・データ'
             : ['Assignment', 'NumericUpdate'].includes(kind)
               ? 'データ'
-              : '条件・反復');
+              : 'もし・くり返し');
       if (category === 'statement')
         fields = [...fields, field('actorRef', 'だれが動く', 'actor-ref', undefined, { required: false })];
       const annotations =
@@ -25043,10 +25043,10 @@ function createAkariExtensionHost(options) {
           ペン: 'pen',
           メモ: 'comment', コメント: 'comment',
           状態: 'event',
-          '表示・入力': 'look',
+          '言う・たずねる': 'look',
           用意された計算: 'operator',
           計算: 'operator',
-          動作: 'action',
+          てじゅん: 'action',
         }[group] || 'control'
       );
     }
@@ -31702,7 +31702,7 @@ function createAkariExtensionHost(options) {
       for (const f of r.frames)
         renderMonitorSection(
           root,
-          (f.kind === 'function' ? '計算 ' : '動作 ') + f.name + ` / ${f.line}\u884c`,
+          (f.kind === 'function' ? '計算 ' : 'てじゅん ') + f.name + ` / ${f.line}\u884c`,
           [
             ...f.args.map(([k, v]) => ['入れたもの ' + k, v]),
             ...f.locals.map(([k, v]) => ['この中だけの へんすう ' + k, v]),
@@ -31864,7 +31864,7 @@ function createAkariExtensionHost(options) {
         ]);
         const frame = last.frames.at(-1);
         if (frame)
-          section((frame.kind === 'function' ? '計算 ' : '動作 ') + frame.name, [
+          section((frame.kind === 'function' ? '計算 ' : 'てじゅん ') + frame.name, [
             ...frame.args.map(([k, v]) => ['入れたもの ' + k, v]),
             ...frame.locals.map(([k, v]) => ['この中だけの へんすう ' + k, v]),
             ...frame.localLists.map(([k, v]) => ['この中だけのリスト ' + k, v]),

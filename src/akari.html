@@ -33,7 +33,7 @@
     <button id="paintAdd" title="絵を かいて キャラクターにして 画面に おく">🎨 お絵かき</button>
     <button id="soundQuickAdd" title="音の ファイルを 入れる">🔊 音を 入れる</button>
     <button id="assetBtn" aria-label="絵や音を まとめる" aria-describedby="assetActionHelp"><ruby class="child-word">絵<rt>がぞう</rt></ruby>や<ruby class="child-word">音<rt>おんせい</rt></ruby>をまとめる</button>
-    <button id="procBtn" aria-label="自分で作ったブロック"><ruby class="child-word">動作<rt>てじゅん</rt></ruby>自分で作ったブロック</button>
+    <button id="procBtn" aria-label="自分で作ったブロック">自分で作ったブロック</button>
     <button id="dataBtn" aria-label="へんすう・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
     <details id="entryProjectMenu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
@@ -348,9 +348,9 @@
           <button id="imageObjectAddModal">🖼 絵を キャラクターとして おく</button>
         </div>
         <div class="asset-import-card">
-          <strong>うしろの 絵に する</strong>
-          <small>絵の ファイルを 入れて、画面全体の うしろの 絵に します。</small>
-          <button id="backdropImageAdd">うしろの 絵を 入れる</button>
+          <strong>はいけいの 絵に する</strong>
+          <small>絵の ファイルを 入れて、画面全体の はいけいに します。</small>
+          <button id="backdropImageAdd">はいけいの 絵を 入れる</button>
         </div>
         <div class="asset-import-card">
           <strong>すがたに する</strong>
@@ -365,12 +365,12 @@
       </div>
       <div id="assetProgress" class="asset-target" style="display:none"></div>
       <details class="asset-secondary">
-        <summary>うしろの 色・文字の すがたを 入れる</summary>
+        <summary>はいけいの 色・文字の すがたを 入れる</summary>
         <div class="asset-toolbar" style="margin-top:9px">
           <input id="backdropName" placeholder="はいけいの 名前" style="width:130px;padding:6px">
           <input id="backdropColor" value="#ffffff" placeholder="#RRGGBB" style="width:105px;padding:6px">
-          <button id="backdropAdd">うしろの 色</button>
-          <input id="costumeName" placeholder="見た目の 名前" style="width:120px;padding:6px">
+          <button id="backdropAdd">はいけいの 色</button>
+          <input id="costumeName" placeholder="すがたの 名前" style="width:120px;padding:6px">
           <input id="costumeText" value="★" placeholder="文字の すがた" style="width:90px;padding:6px">
           <button id="costumeAdd">文字の すがた</button>
         </div>
@@ -392,18 +392,18 @@
       <div class="proc-grid">
         <div class="proc-list">
           <select id="callableSelect" size="12"></select>
-          <button id="callableNewAction">新しい動作</button>
+          <button id="callableNewAction">新しい てじゅん</button>
           <button id="callableNewFunction">新しい計算</button>
-          <button id="callableDelete">この動作・計算を消す</button>
+          <button id="callableDelete">この てじゅん・計算を けす</button>
         </div>
         <div class="proc-edit">
-          <details id="callableConceptHelp" class="child-help"><summary>動作・計算のヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
-            <p><ruby class="child-word">動作<rt>てじゅん</rt></ruby>は、いくつかの 動きを まとめて、名前で 使うものです。たとえば：「あいさつ」という 名前で、名前を 話して おじぎする 動きを まとめます。</p>
+          <details id="callableConceptHelp" class="child-help"><summary>てじゅん・計算の ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
+            <p>てじゅんは、いくつかの 動きを まとめて、名前で 使うものです。たとえば：「あいさつ」という 名前で、名前を 話して おじぎする 動きを まとめます。</p>
             <p>計算は、中で 使った 数や 文字から 答えを 出します。たとえば：点数を 2倍にして、その 答えを 返します。</p>
-            <p>名前と 入れるものを 決めて、下に 動きを 書きます。「動作・計算を決める」を おすと、ほかの 動きから その 名前で 使えます。</p>
+            <p>名前と 入れるものを 決めて、下に 動きを 書きます。「てじゅん・計算を 決める」を おすと、ほかの 動きから その 名前で 使えます。</p>
           </div></details>
           <input id="callableEditingId" type="hidden">
-          <label>しゅるい <select id="callableType"><option value="action">動作</option><option value="function">計算（答えを出す）</option></select></label>
+          <label>しゅるい <select id="callableType"><option value="action">てじゅん</option><option value="function">計算（答えを出す）</option></select></label>
           <label>名前 <input id="callableName"></label>
           <label id="callablePhraseRow">短い よび方（書かなくても いい） <input id="callablePhrase" maxlength="80" placeholder="れい：ジャンプする" aria-describedby="callablePhraseHelp"></label>
           <small id="callablePhraseHelp">この文を 書くだけで、この てじゅんを 使えます。書かなくても、名前で よべます。</small>

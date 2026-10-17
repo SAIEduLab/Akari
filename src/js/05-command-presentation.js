@@ -303,20 +303,20 @@
         Script: '動きのまとまり',
         TargetReference: 'データ',
         CommentLine: 'メモ',
-        UserActionCall: '動作',
+        UserActionCall: 'てじゅん',
         UserFunctionCall: '計算',
         BuiltinCall: '用意された計算',
         SensorRead: 'しらべる',
         LocalVariableDeclaration: 'この中だけのデータ',
         LocalListDeclaration: 'この中だけのデータ',
         ReturnStatement: '返す',
-        Say: '表示・入力',
-        Ask: '表示・入力',
+        Say: '言う・たずねる',
+        Ask: '言う・たずねる',
         Broadcast: '合図',
         BroadcastAndWait: '合図',
-        WaitTime: '待機',
-        WaitUntil: '待機',
-        StopCommand: '停止',
+        WaitTime: '待つ',
+        WaitUntil: '待つ',
+        StopCommand: '止める',
       };
       const palette =
         groups[kind] ||
@@ -326,7 +326,7 @@
             ? 'かず・データ'
             : ['Assignment', 'NumericUpdate'].includes(kind)
               ? 'データ'
-              : '条件・反復');
+              : 'もし・くり返し');
       if (category === 'statement')
         fields = [...fields, field('actorRef', 'だれが動く', 'actor-ref', undefined, { required: false })];
       const annotations =
