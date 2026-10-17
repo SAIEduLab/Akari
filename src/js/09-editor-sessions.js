@@ -4,9 +4,13 @@
   function editorError(message) {
     throw new AkariError('E901', message);
   }
+  // Inner consistency checks: the child sees a retry message; the check text stays in the details.
+  function editorCheckError(detail) {
+    throw new AkariError('E901', 'うまく いかなかったよ。もう一度 やってみてね。', 0, 0, detail);
+  }
   function editorOwner(ownerKey) {
     if (typeof ownerKey !== 'string' || !/^(script|action|function):.+/.test(ownerKey))
-      editorError('本文の所有者が不正です');
+      editorCheckError('本文の所有者が不正です');
     return ownerKey.split(':')[0];
   }
   function editorContext(ownerKey, context = {}) {
@@ -19,7 +23,7 @@
       header.push({ code, message, line: 0, column: 1, where: context.ownerKey });
     let analysisContext = context;
     if (context.definitionKind) {
-      if (!definition) editorError('定義の下書きがありません');
+      if (!definition) editorCheckError('定義の下書きがありません');
       try {
         validateName(definition.name, { callable: true });
       } catch (error) {
@@ -36,7 +40,7 @@
         } catch (error) {
           report('S302', error.message);
         }
-        if (names.has(name)) report('S302', '受け取る値に同じ名前があります');
+        if (names.has(name)) report('S302', '入れるものに 同じ 名前が 2つ いじょう あります。ちがう 名前に してね');
         names.add(name);
       }
       analysisContext = { ...context, args };
@@ -46,7 +50,7 @@
   function createEditorSession(ownerKey, source, context = {}, project, contextRevision = 0) {
     const ownerKind = editorOwner(ownerKey);
     if (!Number.isSafeInteger(contextRevision) || contextRevision < 0)
-      editorError('文脈の世代が不正です');
+      editorCheckError('文脈の世代が不正です');
     const ctx = editorContext(ownerKey, context),
       parsed = parseSyntax(source, { ...ctx, ...(project ? {symbols:buildSymbols(project)} : {}) }),
       encoded = parsed.ast ? blockEncode(parsed.ast) : null;
@@ -85,7 +89,7 @@
     project = session.project,
     contextRevision = session.contextRevision,
   ) {
-    if (contextRevision < session.contextRevision) editorError('古い文脈の更新は反映できません');
+    if (contextRevision < session.contextRevision) editorCheckError('古い文脈の更新は反映できません');
     const rebuilt = createEditorSession(
         session.ownerKey,
         source,
@@ -97,7 +101,7 @@
       invalidated = changed || contextRevision !== session.contextRevision;
     if (!changed && session.blockView && rebuilt.blockView) {
       if (!astEquivalent(blockDecode(session.blockView), rebuilt.syntaxAst))
-        editorError('ブロックと本文の世代が一致しません');
+        editorCheckError('ブロックと本文の世代が一致しません');
       const encoded = editorReidentify(
         { tree: rebuilt.blockView, nodeMap: rebuilt.nodeMap },
         session.blockView,
@@ -132,11 +136,11 @@
       path = [],
     ) => {
       if (!node || typeof node !== 'object' || seen.has(node) || index.has(node.id))
-        editorError('循環または重複したブロックです');
+        editorCheckError('循環または重複したブロックです');
       seen.add(node);
-      if (typeof node.id !== 'string' || !node.id) editorError('ブロックIDがありません');
+      if (typeof node.id !== 'string' || !node.id) editorCheckError('ブロックIDがありません');
       const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId);
-      if (!schema) editorError('対応していないブロックです');
+      if (!schema) editorCheckError('対応していないブロックです');
       const entry = { node, parentId, body, input, index: position, ancestors, path };
       index.set(node.id, entry);
       const lineage = [...ancestors, node.id];
@@ -144,7 +148,7 @@
         const value = node.inputs?.[slot.key];
         if (value === undefined && slot.required === false) continue;
         if (slot.multiple) {
-          if (!Array.isArray(value)) editorError('式の配列がありません');
+          if (!Array.isArray(value)) editorCheckError('式の配列がありません');
           value.forEach((child, i) =>
             walk(child, node.id, null, slot.key, i, lineage, [...path, 'inputs', slot.key, i]),
           );
@@ -152,7 +156,7 @@
       }
       for (const slot of schema.bodies) {
         const children = node.bodies?.[slot.key];
-        if (!Array.isArray(children)) editorError('本文の配列がありません');
+        if (!Array.isArray(children)) editorCheckError('本文の配列がありません');
         children.forEach((child, i) =>
           walk(child, node.id, slot.key, null, i, lineage, [...path, 'bodies', slot.key, i]),
         );
@@ -167,7 +171,7 @@
     return JSON.parse(JSON.stringify(tree));
   }
   function editorCandidateProject(session, source, project, context) {
-    if (!project) editorError('作品の文脈がありません');
+    if (!project) editorCheckError('作品の文脈がありません');
     const candidate = {
       ...project,
       scripts: project.scripts.map((x) => ({ ...x })),
@@ -188,7 +192,7 @@
     } else {
       const kind = context.definitionKind || session.ownerKind,
         definition = context.definition;
-      if (!definition || kind !== session.ownerKind) editorError('定義の下書き文脈がありません');
+      if (!definition || kind !== session.ownerKind) editorCheckError('定義の下書き文脈がありません');
       candidate.actions = candidate.actions.filter((x) => x.id !== definition.id);
       candidate.functions = candidate.functions.filter((x) => x.id !== definition.id);
       candidate[kind === 'action' ? 'actions' : 'functions'].push({
@@ -216,7 +220,7 @@
     const pairs = new Map(), occupied = new Set(oldIndex.keys());
     let serial = 1;
     const pair = (before, after) => {
-      if (!before || !after) editorError('再解析でブロックの対応が変わりました');
+      if (!before || !after) editorCheckError('再解析でブロックの対応が変わりました');
       // A numeric command role is printed with its unit. Preserve the number's
       // identity when parsing adds that explicit unit wrapper.
       if (after.schemaId === 'QuantityLiteral' && before.schemaId !== 'QuantityLiteral') {
@@ -225,19 +229,19 @@
       if (before.schemaId === 'QuantityLiteral' && after.schemaId !== 'QuantityLiteral') {
         pair(before.inputs.value, after); return;
       }
-      if (before.schemaId !== after.schemaId) editorError('再解析でブロックの対応が変わりました');
+      if (before.schemaId !== after.schemaId) editorCheckError('再解析でブロックの対応が変わりました');
       pairs.set(after.id, before.id);
       const schema = BLOCK_SCHEMA_BY_ID.get(after.schemaId);
       for (const slot of schema.inputs) {
         const x = before.inputs[slot.key], y = after.inputs[slot.key];
         if (slot.multiple) {
-          if ((x || []).length !== (y || []).length) editorError('再解析で値の数が変わりました');
+          if ((x || []).length !== (y || []).length) editorCheckError('再解析で値の数が変わりました');
           (y || []).forEach((child, i) => pair(x[i], child));
         } else if (x || y) pair(x, y);
       }
       for (const slot of schema.bodies) {
         const x = before.bodies[slot.key], y = after.bodies[slot.key];
-        if (x.length !== y.length) editorError('再解析で本文の数が変わりました');
+        if (x.length !== y.length) editorCheckError('再解析で本文の数が変わりました');
         y.forEach((child, i) => pair(x[i], child));
       }
     };
@@ -457,7 +461,7 @@
     let result = source, boundary = source.length;
     for (const change of changes) {
       if (change.start < 0 || change.end > boundary || change.end < change.start)
-        editorError('編集範囲が重複しています');
+        editorCheckError('編集範囲が重複しています');
       result = result.slice(0, change.start) + change.text + result.slice(change.end);
       boundary = change.start;
     }
@@ -479,7 +483,7 @@
   function prepareBlockEdit(session, operation, options = {}) {
     const project = options.project || session.project,
       context = editorContext(session.ownerKey, options.context || session.context || {});
-    if (options.locked) editorError('動いている ときや じゅんびの とちゅうは、なおせません。止まってから もう一度 やってね。');
+    if (options.locked) editorError('動いている ときや じゅんび中は、なおせません。止まってから もう一度 やってね。');
     for (const key of ['ownerKey', 'sourceRevision', 'contextRevision'])
       if (options[key] !== undefined && options[key] !== session[key])
         editorError('とちゅうで 作品が かわりました。もう一度 やってね。');
@@ -491,7 +495,7 @@
         !session.pendingEdit.id ||
         options.pendingEditId !== session.pendingEdit.id)
     )
-      editorError('入れている とちゅうの ものを、Enter キーで きめるか、Esc キーで やめてね。');
+      editorError('入れている とちゅうの ものを、Enter キーで 決めるか、Esc キーで やめてね。');
     const unchanged = () => ({
       changed: false,
       source: session.sourceText,
@@ -516,7 +520,7 @@
     };
     const original = blockDecode(session.blockView, draftCodec);
     if (!astEquivalent(original, session.syntaxAst))
-      editorError('ブロックと本文の世代が一致しません');
+      editorCheckError('ブロックと本文の世代が一致しません');
     const tree = copyDraftBlock(session.blockView),
       allocatedIds = new Set(buildBlockIndex(tree).keys()), sourceOrigins=new Map();
     let nextId = session.nextBlockId || 1,
@@ -560,7 +564,7 @@
       if (!slot) editorError('そこには 計算を 入れられません。ほかの ばしょを えらんでね。');
       if (slot.required === false && slot.multiple && !Object.hasOwn(parent.inputs, key)) parent.inputs[key] = [];
       if (slot.multiple) position(index, parent.inputs[key].length, append);
-      else if (index !== undefined && index !== null) editorError('固定入力に番号は指定しません');
+      else if (index !== undefined && index !== null) editorCheckError('固定入力に番号は指定しません');
       return { parent, slot, array: slot.multiple ? parent.inputs[key] : null, index };
     };
     const setInput = (location, node) => {
@@ -570,7 +574,7 @@
       else location.parent.inputs[location.slot.key] = node;
     };
     const replaceEntry = (entry, node) => {
-      if (!entry.parentId) editorError('本文全体はこの操作では置換できません');
+      if (!entry.parentId) editorCheckError('本文全体はこの操作では置換できません');
       if (entry.body) {
         if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement')
           editorError('ここには ブロックを つなげてね。計算は ここには 入れられません。');
@@ -579,9 +583,9 @@
     };
     const apply = (op) => {
       if (!op || typeof op !== 'object' || ++operationCount > LIMITS.sourceEach)
-        editorError('編集操作が不正です');
+        editorCheckError('編集操作が不正です');
       if (op.type === 'batch') {
-        if (!Array.isArray(op.operations)) editorError('操作の配列がありません');
+        if (!Array.isArray(op.operations)) editorCheckError('操作の配列がありません');
         for (const child of op.operations) apply(child);
         return;
       }
@@ -590,10 +594,10 @@
         const entry = lookup(op.id),
           schema = BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId),
           group = op.type === 'field' ? 'fields' : 'annotations';
-        if (!schema[group].some((x) => x.key === op.key)) editorError('編集する欄がありません');
+        if (!schema[group].some((x) => x.key === op.key)) editorCheckError('編集する欄がありません');
         // The waited-for broadcast is the one just before (LANGUAGE.md 439); a typed name cannot rebind it.
         if (op.type === 'field' && op.key === 'broadcastRef' && op.value !== entry.node.fields.broadcastRef)
-          editorError('待つ合図は、すぐ前の行で送った合図に きまっています。名前を かえて ほかの合図を えらぶことは できません。');
+          editorError('待つ合図は、すぐ前の行で送った合図に 決まっています。名前を かえて ほかの合図を えらぶことは できません。');
         entry.node[group][op.key] = op.value;
         selectedId = op.id;
         return;
@@ -601,7 +605,7 @@
       if (op.type === 'else') {
         const node = lookup(op.id).node;
         if (node.schemaId !== 'IfStatement' || typeof op.enabled !== 'boolean')
-          editorError('そうでなければの操作が不正です');
+          editorCheckError('そうでなければの操作が不正です');
         if (node.fields.hasElse === op.enabled) return;
         node.fields.hasElse = op.enabled;
         node.bodies.elseBody = op.enabled ? [fresh(options.draft === true
@@ -618,7 +622,7 @@
           !Array.isArray(op.lines) ||
           op.lines.some((x) => typeof x !== 'string' || /[\r\n]/.test(x))
         )
-          editorError('コメント行の内容が不正です');
+          editorCheckError('コメント行の内容が不正です');
         const array = lookup(entry.parentId).node.bodies[entry.body],
           nodes = op.lines.map((text) => {
             const node = fresh(createBlock('CommentLine'));
@@ -714,7 +718,7 @@
           (entry.index ?? null) === (op.index ?? null)
         )
           return;
-        if (!op.replacement) editorError('移動元の式を同じ操作で置き換えてください');
+        if (!op.replacement) editorCheckError('移動元の式を同じ操作で置き換えてください');
         const replacement = fresh(op.replacement);
         replaceEntry(entry, replacement);
         setInput(destination, entry.node);
@@ -724,7 +728,7 @@
       if (['variadic-insert', 'variadic-remove', 'variadic-move'].includes(op.type)) {
         const location = inputSlot(op.parentId, op.input, op.index, op.type === 'variadic-insert');
         if (!location.slot.multiple || !location.slot.variadic)
-          editorError('個数を編集できる入力ではありません');
+          editorCheckError('個数を編集できる入力ではありません');
         if (op.type === 'variadic-insert') {
           const node = fresh(op.node);
           if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== location.slot.type)
@@ -744,7 +748,7 @@
         }
         return;
       }
-      editorError('対応していない編集操作です');
+      editorCheckError('対応していない編集操作です');
     };
     apply(operation);
     const candidateAst = blockDecode(tree, draftCodec);
@@ -762,7 +766,7 @@
       };
       const pending = { kind: 'block-draft', ownerKey: session.ownerKey,
         sourceRevision: session.sourceRevision, contextRevision: session.contextRevision,
-        value: draftSource, reason: '空いている ところを えらんで、ブロックを 入れてね' };
+        value: draftSource, reason: 'あいている ところを えらんで、ブロックを 入れてね' };
       return {
         ...unchanged(), changed: true, draftOnly: true, source: draftSource,
         draftSource, syntaxAst: candidateAst, blockView: tree,
@@ -843,7 +847,7 @@
       if (verdict === false || verdict?.ok === false)
         editorError(verdict?.message || '作品の きまりに 合わないので、できませんでした。');
       if (verdict && typeof verdict.then === 'function')
-        editorError('確定前の検証は同期して行います');
+        editorCheckError('確定前の検証は同期して行います');
     }
     return result;
   }
@@ -905,7 +909,6 @@
   }
   function initialBlockName(base, used) {
     let candidate = base;
-    while (used.has(candidate) && cpLen(candidate) < 32) candidate += '値';
     if (!used.has(candidate)) {
       validateName(candidate);
       return candidate;
@@ -924,7 +927,7 @@
   }
   function computeBlockInsertionAvailability(session, schemaId, location, options = {}) {
     const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
-    if (!schema) return { enabled: false, reason: '対応していないブロックです', diagnostics: [] };
+    if (!schema) return { enabled: false, reason: 'この ブロックは 使えません', diagnostics: [] };
     // Values on simple command previews remain visible choices. Enclosures and
     // persistent rules start with visible holes, never an implicit true/0/no-op.
     const draft = schema.bodies.some(slot => slot.requiredExecutable) || ['ContinuousRule','ReturnStatement'].includes(schema.kind) || schema.inputs.some(slot => slot.type === 'target');
@@ -1086,29 +1089,23 @@
     if (schema.kind === 'UserFunctionCall' || schema.kind === 'UserActionCall') return 'action';
     return (
       {
-        '\u52d5\u304d': 'motion',
-        '\u898b\u305f\u76ee': 'look',
-        '\u8868\u793a\u30fb\u5165\u529b': 'look',
-        '\u6761\u4ef6\u30fb\u53cd\u5fa9': 'control',
-        '\u5f85\u6a5f': 'control',
-        // The names the screen shows now (the old names above stay readable in old data).
+        '動き': 'motion',
+        '見た目': 'look',
         '言う・たずねる': 'look',
         'もし・くり返し': 'control',
         '待つ': 'control',
         '止める': 'control',
         '合図': 'event',
-        'かず・データ': 'data',
-        '\u505c\u6b62': 'control',
-        '\u77e5\u3089\u305b': 'event',
-        '\u30c7\u30fc\u30bf': 'data',
-        '\u30ea\u30b9\u30c8': 'data',
-        '\u3053\u306e\u4e2d\u3060\u3051\u306e\u30c7\u30fc\u30bf': 'data',
-        '\u5024\u30fb\u30c7\u30fc\u30bf': 'data',
-        '\u97f3': 'sound',
-        '\u30da\u30f3': 'pen',
-        分身: 'clone', 'コピー': 'clone', '\u30af\u30ed\u30fc\u30f3': 'clone',
-        '\u8fd4\u3059': 'action',
-        メモ: 'comment', '\u30b3\u30e1\u30f3\u30c8': 'comment',
+        'かず・文字': 'data',
+        'へんすう': 'data',
+        'へんすう・リスト': 'data',
+        'リスト': 'data',
+        'この中だけの へんすう・リスト': 'data',
+        '音': 'sound',
+        'ペン': 'pen',
+        'コピー': 'clone',
+        '返す': 'action',
+        メモ: 'comment',
       }[schema.palette] || 'operator'
     );
   }
@@ -1154,10 +1151,10 @@
   }
   const TUTORIAL_BLOCKS=Object.freeze({
     speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
-    escape:{label:'ちがう場所へにげる',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ行く。'},
+    escape:{label:'ちがう ばしょへ にげる',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ行く。'},
     swim:{label:'ゆっくり泳ぐ',source:'よこ430、たて180のばしょへ1秒かけて動く。'},
     randomSwim:{label:'あちこちへ泳ぐ',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ0.5秒かけて動く。'},
-    repeat:{label:'くりかえす',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
+    repeat:{label:'くり返す',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
     right:{label:'右へ泳ぐ',source:'0.3秒かけて右へ60歩動く。'},
     left:{label:'左へ泳ぐ',source:'0.3秒かけて左へ60歩動く。'},
     small:{label:'小さくする',source:'大きさを70％にする。'},
@@ -1168,13 +1165,13 @@
     bonusPoint:{label:'おまけの点を足す',source:'点数に2を足す。'},
     cheer:{label:'おいわいのことば',source:'「クリア！」と0.5秒話す。'},
     remaining:{label:'のこりを見せる',source:'「点数ボード」の文字をつなぐ（「あと：」、最大（0、10 - 点数））にかえる。'},
-    tone:{label:'音をならす',source:'880Hzの音を0.1秒鳴らす。'},
+    tone:{label:'音を鳴らす',source:'880Hzの音を0.1秒鳴らす。'},
     lowTone:{label:'ひくい音',source:'523Hzの音を0.1秒鳴らす。'},
     midTone:{label:'まん中の音',source:'659Hzの音を0.1秒鳴らす。'},
     highTone:{label:'たかい音',source:'784Hzの音を0.1秒鳴らす。'},
     costume:{label:'すがたをかえる',source:'次のすがたにかえる。'},
     turn:{label:'くるっと回る',source:'右に90度回る。'},
-    wait:{label:'少しまつ',source:'0.1秒待つ。'},
+    wait:{label:'少し待つ',source:'0.1秒待つ。'},
   });
   function tutorialCandidate(key,project,identity=key) {
     const spec=TUTORIAL_BLOCKS[key],parsed=parseScript(spec.source,buildSymbols(project),{targetId:'sprite-1',event:'click'});
@@ -1207,26 +1204,26 @@
   const tutorialTry=(tag,clicks=2)=>[
     tutorialDefine({id:'run-'+tag,action:'run',message:'「動かす」を おしてみよう。何が かわったかな？'}),
     tutorialDefine({id:'try-'+tag,action:'runtime:click',clicks,message:'さかなを'+clicks+'回キャッチして、動きを見てみよう。'}),
-    tutorialDefine({id:'stop-'+tag,action:'stop',message:'「止める」で、作る場所にもどろう。'})];
+    tutorialDefine({id:'stop-'+tag,action:'stop',message:'「止める」で、作る ばしょに もどろう。'})];
   const TUTORIAL_STEPS=Object.freeze([
     tutorialDefine({id:'choose-click',action:'event:click',message:'「キャラが おされたとき」を えらぼう。さかなを おすと 動く作品を 作るよ。'}),
     tutorialInsert('add-speech','speech',1),
-    tutorialDefine({id:'speech-text',ref:['bodies','body',1,'inputs','value'],value:'つかまった！',message:'話すことばを「つかまった！」にして、Enter キーを おしてね。'}),
+    tutorialDefine({id:'speech-text',ref:['bodies','body',1,'inputs','value'],value:'つかまった！',message:'言うことを「つかまった！」にして、Enter キーを おしてね。'}),
     tutorialInsert('add-escape','escape',2),...tutorialTry('original',3),
     tutorialDefine({id:'choose-course',action:'choice',choice:'course',message:'できた！ どんな遊びを足そう？ ここでほぞんして終わってもいいよ。'})]);
   const TUTORIAL_COURSES=Object.freeze([
-    {id:'motion',label:'うごきをつけよう',description:'泳ぎ方をかえて遊ぼう。',children:[
-      {id:'swim',label:'あちこちへ泳ぐ',description:'行く場所と速さをかえよう。'},
-      {id:'zigzag',label:'いったりきたり',description:'くりかえしで泳がせよう。'},
+    {id:'motion',label:'動きをつけよう',description:'泳ぎ方をかえて遊ぼう。',children:[
+      {id:'swim',label:'あちこちへ泳ぐ',description:'行く ばしょと 速さを かえよう。'},
+      {id:'zigzag',label:'いったりきたり',description:'くり返しで泳がせよう。'},
       {id:'small',label:'小さなさかな',description:'大きさをかえて、つかまえよう。'}]},
     {id:'score',label:'ゲームにしよう',description:'つかまえた数を見せよう。',children:[
-      {id:'goal',label:'めざせ、5ひき！',description:'きめた数で、おいわいしよう。'},
+      {id:'goal',label:'めざせ、5ひき！',description:'決めた数で、おいわいしよう。'},
       {id:'bonus',label:'おまけの点',description:'ある数になったら、点をふやそう。'},
       {id:'remaining',label:'あと何びき？',description:'ひき算で、のこりを見せよう。'}]},
-    {id:'show',label:'音やすがたで遊ぼう',description:'キャッチしたときの合図を作ろう。',children:[
+    {id:'show',label:'音やすがたで遊ぼう',description:'キャッチしたときの 音や すがたを 作ろう。',children:[
       {id:'melody',label:'音をならべよう',description:'短いメロディーを作ろう。'},
       {id:'costume',label:'さかながへんしん',description:'ちがうすがたで遊ぼう。'},
-      {id:'dance',label:'くるくるショー',description:'回る動きと、まつ時間を組もう。'}]},
+      {id:'dance',label:'くるくるショー',description:'回る動きと、待つ時間を組もう。'}]},
   ]);
   function tutorialCourseSteps(course,offset,tag) {
     const steps=course==='motion'?[tutorialInsert(tag+'-swim','swim',offset)]:course==='score'?
@@ -1262,7 +1259,7 @@
       ref=[...root(offset),'inputs','count'];value=3;min=1;max=5;
     }
     const clicks=course==='score'?6:2;
-    const question={swim:'泳ぐ時間をかえよう。数を大きくすると、ゆっくり泳ぐよ。',zigzag:'何回いったりきたりする？ くりかえす回数をかえよう。',small:'どのくらい小さくする？ 100なら、もとの大きさだよ。',goal:'何びきでおいわいする？ ゴールの数をかえよう。',bonus:'何びき目でおまけがもらえる？ その数をかえよう。',remaining:'全部で何びきつかまえる？ はじめの数をかえよう。',melody:'まん中の音をかえよう。数を大きくすると、高い音になるよ。',costume:'へんしんしたら、どの大きさにする？ 100がもとの大きさだよ。',dance:'何回くるくる回る？ くりかえす回数をかえよう。'}[leaf];
+    const question={swim:'泳ぐ時間をかえよう。数を大きくすると、ゆっくり泳ぐよ。',zigzag:'何回いったりきたりする？ くり返す回数をかえよう。',small:'どのくらい小さくする？ 100なら、もとの大きさだよ。',goal:'何びきでおいわいする？ ゴールの数をかえよう。',bonus:'何びき目でおまけがもらえる？ その数をかえよう。',remaining:'全部で何びきつかまえる？ はじめの数をかえよう。',melody:'まん中の音をかえよう。数を大きくすると、高い音になるよ。',costume:'へんしんしたら、どの大きさにする？ 100がもとの大きさだよ。',dance:'何回くるくる回る？ くり返す回数をかえよう。'}[leaf];
     steps.push(...tutorialTry(tag,clicks),tutorialDefine({id:tag+'-change',ref,value,free:true,min,max,
       integer:leaf!=='swim',message:question+' 光る数を'+min+'から'+max+'の中で、今とちがう数にして、Enter キーを おしてね。'}),
       ...tutorialTry(tag+'-remix',clicks),tutorialDefine({id:tag+'-undo',action:'undo',ref,value,
@@ -1281,7 +1278,7 @@
     for(const step of steps){
       if(step.block){const loc=tutorialDestination(tree,step),parent=tutorialNodeAt(tree,step.parent||[]),items=parent.bodies[loc.body],node=tutorialCandidate(step.block,project,step.id);
         if(items.length===1&&items[0].schemaId==='Hole:statement')items.splice(0,1,node);else items.splice(loc.index,0,node);}
-      if(step.ref){const role=tutorialField(tree,step);if(!role.node)throw new Error('案内の入力先が見つかりません: '+step.id);role.node.fields[role.key]=step.free?(values[step.id]??step.value):step.value;}
+      if(step.ref){const role=tutorialField(tree,step);if(!role.node)editorCheckError('案内の入力先が見つかりません: '+step.id);role.node.fields[role.key]=step.free?(values[step.id]??step.value):step.value;}
       states.push(structuredClone(tree));
     }return states;
   }

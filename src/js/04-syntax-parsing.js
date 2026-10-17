@@ -29,7 +29,7 @@
       if (!this.take(s)) this.err(code, `「${s}」がたりません。書き足してください`);
     }
     parse() {
-      if (!this.text) this.err('P205', '計算が書かれていません。数や文字を書いてください。たとえば：10');
+      if (!this.text) this.err('P205', '計算が書かれていません。数や文字を書いてください。れい：10');
       const n = this.logicalOr();
       if (!this.atEnd()) this.err('P201', `計算の「${this.text.slice(this.i)}」のところが読みとれません。書き方をたしかめてください`);
       return checkExpressionTree(n, this.ctx.lineNo || 0);
@@ -49,7 +49,7 @@
     negation() {
       let n = this.predicate();
       if (this.take('ではない')) n = exprNode('UnaryExpression', { op: 'NOT', value: n });
-      if (this.starts('ではない')) this.err('P201', '二重否定は括弧で分けてください');
+      if (this.starts('ではない')) this.err('P201', '「ではない」が 2つ つづいています。前の ほうを（ ）で かこんでください');
       return n;
     }
     predicate() {
@@ -94,21 +94,21 @@
       const term = (t, offset) => {
         const p = parser(t, offset);
         const n = p.additive();
-        if (!p.atEnd()) this.err('P205','比較の対象と基準を括弧または【名前】で区切ってください');
+        if (!p.atEnd()) this.err('P205','くらべる 2つの ものを（ ）か【 】で かこんで 分けてください。れい：【点数】が10より大きい');
         return n;
       };
       let left, right;
       if (reverse) {
         const split = mask.indexOf('より');
         if (!mask.endsWith('が'+ending) || split < 1 || split !== mask.lastIndexOf('より'))
-          this.err('P205','「より」は1回だけ書いてください。名前に「より」が入るときは【 】でかこみます。たとえば：10より【点数】が大きい');
+          this.err('P205','「より」は1回だけ書いてください。名前に「より」が入るときは【 】でかこみます。れい：【より道】が10より大きい');
         left = term(text.slice(split+2,-ending.length-1), split+2);
         right = term(text.slice(0,split), 0);
       } else {
         // The existing operand parser owns compounds such as キーが押されている.
         const p = parser(text, 0);
         left = p.additive();
-        if (!p.take('が')) this.err('P205','くらべるもののあとに「が」を書いてください。たとえば：点数が10と同じ');
+        if (!p.take('が')) this.err('P205','くらべるもののあとに「が」を書いてください。れい：点数が10と同じ');
         right = term(text.slice(p.i,-ending.length), p.i);
       }
       const op = ({未満:'LT',を超える:'GT',を超えている:'GT',と等しい:'EQ',と等しくない:'NEQ',と異なる:'NEQ',大きい:'GT',小さい:'LT'})[ending];
@@ -132,10 +132,10 @@
         else
           this.err(
             'P205',
-            'くらべることばがありません。おわりに「以上」「以下」「より大きい」「より小さい」「と同じ」「と違う」のどれかを書いてください。たとえば：点数が10と同じ',
+            'くらべることばがありません。おわりに「以上」「以下」「より大きい」「より小さい」「と同じ」「と違う」のどれかを書いてください。れい：点数が10と同じ',
           );
         if (this.starts('が'))
-          this.err('P206', 'くらべることを2つつづけては書けません。「かつ」で分けてください。たとえば：（1が2より小さい）かつ（2が3より小さい）');
+          this.err('P206', 'くらべることを2つつづけては書けません。「かつ」で分けてください。れい：1が2より小さいかつ2が3より小さい');
         return exprNode('CompareExpression', { op, left, right });
       }
       if (this.take('に')) {
@@ -348,7 +348,7 @@
             value += escaped;
           } else value += ch;
         }
-        if (!closed) this.err('N101','文字列の「」が閉じていません');
+        if (!closed) this.err('N101','「の あとの 」が ありません。文字の おわりに 」を 書いてください');
         if (cpLen(value) > LIMITS.stringChars) this.err('R413','文字が長すぎます');
         return exprNode('StringLiteral', { value });
       }
@@ -467,15 +467,15 @@
         let begin = 0;
         for (let j=0;j<=values.length;j++) if (j === values.length || visible[j] === '、') {
           const item = values.slice(begin,j), itemMask = visible.slice(begin,j), split = itemMask.indexOf('を');
-          if (split < 1 || split !== itemMask.lastIndexOf('を')) this.err('P205','受け取る値の名前と値を「を」で区切ってください');
+          if (split < 1 || split !== itemMask.lastIndexOf('を')) this.err('P205','名前と入れるものを「を」でつないで書きます。れい：点数を10として、');
           const t = readNameToken(item.slice(0,split));
-          if (!t || t.end !== split) this.err('P205','引数名を確認してください');
+          if (!t || t.end !== split) this.err('P205','入れるものの 名前を たしかめてください。れい：点数を10として、');
           if (argumentNames.includes(t.name)) this.err('P205',`入れるものの名前「${t.name}」を2回書いています。名前は1回ずつ書いてください`);
           argumentNames.push(t.name); args.push(parse(item.slice(split+1),begin+split+1)); begin=j+1;
         }
       } else if (positional >= 0) {
         const values = tail.slice(0,positional);
-        if (!values.startsWith('（') || !values.endsWith('）')) this.err('P205','渡す値を括弧で囲んでください');
+        if (!values.startsWith('（') || !values.endsWith('）')) this.err('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）を渡して、');
         const inner=values.slice(1,-1), visible=surfaceMask(inner); let begin=0;
         for(let j=0;j<=inner.length;j++) if(j===inner.length || visible[j]==='、') {
           if(inner.length) args.push(parse(inner.slice(begin,j),1+begin)); begin=j+1;
@@ -590,7 +590,7 @@
       const negative = ({'押されている':'押されなくなるまで','おされている':'おされなくなるまで','ふれている':'ふれなくなるまで','触れている':'触れなくなるまで','入っている':'入らなくなるまで','含まれている':'含まれなくなるまで'})[record.plain];
       return [[record.untilYes,false],...(negative ? [[negative,true]] : [])];
     }
-    throw new AkariError('P205','条件の文脈を確認してください');
+    throw new AkariError('P205','きまりの 書き方を たしかめてください');
   }
   function parseCondition(text, symbols, ctx = {}, form = 'plain') {
     const compact=compactOutsideString(text),line=ctx.sourceLine;
@@ -607,12 +607,12 @@
     if (source.endsWith('、')) {source=source.slice(0,-1);ctx={...ctx,sourcePositions:ctx.sourcePositions?.slice(0,-1)};}
     const mask=surfaceMask(source);
     const fail = message => { throw new AkariError('P205',message,ctx.lineNo||0,1); };
-    if (mask.includes('になったら')) fail('「になったら」はここでは使えません。いまのようすをしらべるなら「もし点数が10と同じなら、」、そうなる時をまつなら「点数が10と同じになるまで待つ」のように書きます');
+    if (mask.includes('になったら')) fail('「になったら」はここでは使えません。いまのようすをしらべるなら「もし点数が10と同じなら、」、そうなるまで 待つなら「点数が10と同じになるまで待つ」のように書きます');
     // Explicit Boolean expression: its parentheses determine scope and operator precedence.
     if (source.startsWith('条件（')) {
       const endings = form === 'if' ? ['が成り立つなら','が成り立つならば','が成り立つのであれば','が成り立たないなら','が成り立たないならば','が成り立たないのであれば'] : form === 'while' ? ['が成り立つあいだ','が成り立つ間','が成り立たないあいだ','が成り立たない間'] : form === 'until' ? ['が成り立つまで','が成り立たないまで'] : ['が成り立つ','が成り立たない'];
       const ending=endings.find(e=>mask.endsWith(e));
-      if (!ending || source[source.length-ending.length-1] !== '）') fail('「条件（ ）」の（ ）がとじているか、そのあとに「が成り立つ」があるかをたしかめてください。たとえば：もし条件（1が1と同じ）が成り立つなら、');
+      if (!ending || source[source.length-ending.length-1] !== '）') fail('「条件（ ）」の（ ）がとじているか、そのあとに「が成り立つ」があるかをたしかめてください。れい：もし条件（1が1と同じかつ（2が2と同じまたは3が3と同じ））が成り立つなら、');
       const node=parseExpression(source.slice(3,-ending.length-1),symbols,{...ctx,sourcePositions:ctx.sourcePositions?.slice(3,-ending.length-1),_parserDepth:(ctx._parserDepth||0)+1});
       return ending.includes('成り立たない') ? exprNode('UnaryExpression',{op:'NOT',value:node}) : node;
     }
@@ -620,15 +620,15 @@
     if (commas.length) {
       if (commas.length !== 1) fail('きまりを3つ いじょう つなぐときは、「条件（…）」でひとまとめにしてください');
       const split=commas[0], left=source.slice(0,split), right=source.slice(split+1), leftMask=mask.slice(0,split);
-      if (/かつ|または/.test(mask)) fail('条件の結び方を括弧で示してください');
+      if (/かつ|または/.test(mask)) fail('「かつ」「または」で つなぐ きまりを、1つずつ（ ）で かこんでください');
       const or=leftMask.endsWith('か');
       const l=parseCondition(or?left.slice(0,-1):left,symbols,{...ctx,sourcePositions:ctx.sourcePositions?.slice(0,split-(or?1:0))},or?'plain':'and');
       const r=parseCondition(right,symbols,{...ctx,sourcePositions:ctx.sourcePositions?.slice(split+1)},form);
-      if (l.kind==='LogicalExpression'||r.kind==='LogicalExpression') fail('条件を括弧で分けてください');
+      if (l.kind==='LogicalExpression'||r.kind==='LogicalExpression') fail('きまりを 1つずつ（ ）で かこんで 分けてください');
       return exprNode('LogicalExpression',{op:or?'OR':'AND',left:l,right:r});
     }
     if (/かつ|または/.test(mask) || mask.includes('か')) {
-      if (form !== 'plain' || (mask.includes('かつ') && mask.includes('または'))) fail('いくつかのきまりをつなぐときは、「条件（…）」でひとまとめにしてください。たとえば：もし条件（（1が1と同じ）かつ（2が2と同じ））が成り立つなら、');
+      if (form !== 'plain' || (mask.includes('かつ') && mask.includes('または'))) fail('いくつかのきまりをつなぐときは、「条件（…）」でひとまとめにしてください。れい：もし条件（1が1と同じかつ（2が2と同じまたは3が3と同じ））が成り立つなら、');
     }
     const matches=[];
     for(const record of CONDITION_FORMS) for(const [ending,negative] of conditionFormCandidates(record,form))
@@ -659,8 +659,8 @@
     }
     if(form==='plain') return parseExpression(source,symbols,ctx);
     fail(form==='if'
-      ? 'くらべるものと「なら」をたしかめてください。たとえば「答えが『ほし』なら」と書き、そのあとに動きを書きます'
-      : form==='while' ? 'つづけるきまりのおわりを「あいだ」にしてください。たとえば：点数が10より小さいあいだ、くり返す。' : 'やめるきまりのおわりを「まで」にしてください。たとえば：点数が10と同じになるまで、くり返す。');
+      ? 'くらべるものと「なら」をたしかめてください。「なら、」のあとの行に動きを書きます。れい：もし答えが「ほし」と同じなら、'
+      : form==='while' ? 'つづけるきまりのおわりを「あいだ」にしてください。れい：点数が10より小さいあいだ、くり返す。' : 'やめるきまりのおわりを「まで」にしてください。れい：点数が10と同じになるまで、くり返す。');
   }
   function formatCondition(node, form = 'plain') {
     const negative=node.kind==='UnaryExpression'&&node.op==='NOT', value=negative?node.value:node;
@@ -998,7 +998,7 @@
   function sentenceActorSource(actorRef) { return actorRef?.kind === 'named' ? nameSource(actorRef.name) : '自分'; }
   function sentenceTarget(text, code, line, symbols, ctx, start) {
     const t = parseTargetPrefix(text, symbols, ctx);
-    if (!t || t.len !== text.length) throw new AkariError('P205','かえるデータの名前が分かりません。作ったデータの名前と同じか たしかめてください');
+    if (!t || t.len !== text.length) throw new AkariError('P205','かえる へんすうや リストの 名前が 分かりません。作った へんすうや リストの 名前と 同じか たしかめてください');
     const target = {name:t.name,qualifier:t.qualifier};
     const range = sourceRange(line?.mapped?.positions || [],start,start+text.length);
     if (range) SOURCE_RANGES.set(target,{range});
@@ -1023,7 +1023,7 @@
       return readRoleStatement(replacement,part,symbols,ctx);
     }
     const e = (part) => parseMappedExpression(part.text, code, line, symbols, ctx, part.start);
-    const q = (part,unit) => {if(surfaceMask(part.text).endsWith(unit))throw new AkariError('P205','「歩」や「秒」などは1回だけ書きます。れい：10歩動く');return sentenceQuantity(e(part),unit);};
+    const q = (part,unit) => {if(surfaceMask(part.text).endsWith(unit))throw new AkariError('P205','「歩」や「秒」などは1回だけ書きます。れい：前へ10歩進む');return sentenceQuantity(e(part),unit);};
     const target = part => sentenceTarget(part.text,code,line,symbols,ctx,part.start);
     const node = (kind,props={}) => statementNode(kind,line,{...props,actorRef:{...(ctx.topicActor || {kind:'self'})}});
     const callSplit=protectedCode.lastIndexOf('、'),shortCall=symbols?.actionCallPhrases?.get(code.slice(callSplit+1));
@@ -1036,7 +1036,7 @@
         const input=text.slice(0,split);
         if (input.endsWith('を渡して')) {
           const inner=input.slice(0,-'を渡して'.length);
-          if (!(inner.startsWith('（')&&inner.endsWith('）'))) throw new AkariError('P205','渡す値を括弧で囲んでください');
+          if (!(inner.startsWith('（')&&inner.endsWith('）'))) throw new AkariError('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）を渡して、');
           args=parseArgumentText(inner.slice(1,-1),symbols,ctx,line.lineNo);
         } else {
           if (!input.endsWith('として')) throw new AkariError('P205','自分で作ったブロックに入れるものは、「として」をつけて書きます。れい：点数を10として、');
@@ -1044,7 +1044,7 @@
           let at=0;
           for(let i=0;i<=content.length;i++) if(i===content.length||protectedInput[i]==='、'){chunks.push({text:content.slice(at,i),start:at});at=i+1;}
           argumentNames=[];
-          for(const chunk of chunks){const pair=surfaceCapture(/^(.+?)を(.+)$/d,chunk.text);if(!pair)throw new AkariError('P205','名前と入れるものを「を」でつないで書きます。れい：点数を10として、');const name=parsedDeclarationName(pair[0].text);if(argumentNames.includes(name))throw new AkariError('S308',`受け取る名前「${name}」を2回書いています。名前は1回ずつ書いてください`);argumentNames.push(name);args.push(e({text:pair[1].text,start:chunk.start+pair[1].start}));}
+          for(const chunk of chunks){const pair=surfaceCapture(/^(.+?)を(.+)$/d,chunk.text);if(!pair)throw new AkariError('P205','名前と入れるものを「を」でつないで書きます。れい：点数を10として、');const name=parsedDeclarationName(pair[0].text);if(argumentNames.includes(name))throw new AkariError('S308',`入れるものの名前「${name}」を2回書いています。名前は1回ずつ書いてください`);argumentNames.push(name);args.push(e({text:pair[1].text,start:chunk.start+pair[1].start}));}
         }
       }
       const name=callableSurfaceName(rawName);
@@ -1076,14 +1076,14 @@
           const reverse=surfaceCapture(/^(.+?)を(.+?)に$/d,content),forward=surfaceCapture(/^(.+?)(?:の後ろ)?に(.+)$/d,content);
           if(reverse||forward){const pair=reverse?[reverse[1],reverse[0]]:forward;for(const part of pair)args.push(e({...part,start:parts[0].start+part.start}));}
           else {let at=0;for(let i=0;i<=content.length;i++)if(i===content.length||mask[i]==='と'){args.push(e({text:content.slice(at,i),start:parts[0].start+at}));at=i+1;}}
-          if(args.length<2)throw new AkariError('P205','つなげるものを「と」で2つ以上ならべます。れい：「点数は」と点数をつなげて言う');props.value=exprNode('BuiltinCall',{name:'つなぐ',args});break;
+          if(args.length<2)throw new AkariError('P205','つなげるものを 2つ いじょう ならべます。れい：つなぐ（「点数は」、点数）を言う');props.value=exprNode('BuiltinCall',{name:'つなぐ',args});break;
         }
-        case 'quote': props.value=e(parts[0]); if(props.value.kind!=='StringLiteral') throw new AkariError('P205','台詞は「文字」と言う、値は「値を言う」と書きます'); break;
+        case 'quote': props.value=e(parts[0]); if(props.value.kind!=='StringLiteral') throw new AkariError('P205','言うことは「「文字」と言う」、へんすうの 中身は「点数の値を言う」のように 書きます'); break;
         case 'value': {const part=parts[0], raw=part.text.endsWith('の値') && !(part.text === '拡張の値' && EXTENSION_HOST.operations('events').length && !extensionValueIsData(symbols, ctx))?{...part,text:part.text.slice(0,-2)}:part;let error;try{props.value=e(raw);}catch(caught){if(!(caught instanceof AkariError))throw caught;error=caught;}
           const resolvedName=props.value?.kind==='VariableRead'?props.value.name:raw.text,
             unknownWord=/^[\p{L}ー][\p{L}\p{N}ー]*$/u.test(raw.text)&&!symbols?.allDataNames?.has(resolvedName)&&![...(ctx.localNames||[]),...(ctx.binders||[]),...(ctx.args||[])].includes(resolvedName);
           if(form.kind==='Say'&&unknownWord&&(error||props.value?.kind==='VariableRead')&&!part.text.endsWith('の値')){
-            const name=raw.text;throw sentenceDiagnostic('台詞の文字か、素材の音かを選んでください',line,[{label:'そのままの文字を話す',source:`「${name}」と言う`},{label:'同じ名前の音を鳴らす',source:`「${name}」を鳴らす`},{label:'データの中身を話す（作った名前をたしかめる）',source:`【${name}】の値を言う`}],{kind:'Say',missing:['literalOrSoundOrData']});
+            const name=raw.text;throw sentenceDiagnostic('そのまま 言う 文字か、入れた 音か、へんすう・リストの 中身かを えらんでください',line,[{label:'そのままの文字を話す',source:`「${name}」と言う`},{label:'同じ名前の音を鳴らす',source:`「${name}」を鳴らす`},{label:'へんすう・リストの 中身を 話す（作った 名前を たしかめる）',source:`【${name}】の値を言う`}],{kind:'Say',missing:['literalOrSoundOrData']});
           }
           if(error)throw error;break;}
         case 'question': props.question=e(parts[0]);break;
@@ -1098,7 +1098,7 @@
         case 'delete': props={target:target(parts[0]),index:q(parts[1],unit('index'))};break;
         case 'assignReverse': props={target:target(parts[1]),value:e(parts[0])};break;
         case 'assign': props={target:target(parts[0]),value:e(parts[1])};break;
-        case 'update': if(surfaceMask(parts[1].text).endsWith('に'))throw new AkariError('P205','数のあとに「に」をつけて ふやす・へらす とは書けません。ふやすなら「点数を1ふやす」、その数にするなら「点数を10にする」と書きます');props={...props,target:target(parts[0]),value:e(parts[1])};break;
+        case 'update': if(surfaceMask(parts[1].text).endsWith('に'))throw new AkariError('P205','数のあとに「に」をつけて ふやす・へらす とは書けません。ふやすなら「点数を1増やす」、その数にするなら「点数を10にする」と書きます');props={...props,target:target(parts[0]),value:e(parts[1])};break;
         case 'updateReverse':props={...props,target:target(parts[1]),value:e(parts[0])};break;
       }
       return node(form.kind,props);
@@ -1145,20 +1145,20 @@
     }
     // よこ／たて／ばしょ are the easy spellings of 横／縦／位置.
     const coords=surfaceCapture(/^(横|縦|よこ|たて)(.+)、(横|縦|よこ|たて)(.+?)(?:の(?:位置|ばしょ))?(?:へ|に)$/d,remaining),horizontal=w=>w==='横'||w==='よこ';
-    if(coords){if(horizontal(coords[0].text)===horizontal(coords[2].text))throw new AkariError('P205','「よこ」と「たて」を1つずつ書きます。れい：よこ100、たて50のばしょへ行く');const a=q(coords[1].text,'歩',base+coords[1].start,false),b=q(coords[3].text,'歩',base+coords[3].start,false),xy=horizontal(coords[0].text)?[a,b]:[b,a];return node(seconds?'GLIDE':'GOTO',seconds?[seconds,...xy]:xy);}
+    if(coords){if(horizontal(coords[0].text)===horizontal(coords[2].text))throw new AkariError('P205','「よこ」と「たて」を1つずつ書きます。れい：よこ100歩、たて50歩のばしょへ行く');const a=q(coords[1].text,'歩',base+coords[1].start,false),b=q(coords[3].text,'歩',base+coords[3].start,false),xy=horizontal(coords[0].text)?[a,b]:[b,a];return node(seconds?'GLIDE':'GOTO',seconds?[seconds,...xy]:xy);}
     let direction=null, distance=null;
     if((p=surfaceCapture(/^(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)(.+)歩$/d,remaining))){direction=directions[p[0].text];distance=q(p[1].text,'歩',base+p[1].start);}
     else if((p=surfaceCapture(/^(.+)歩、?(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)$/d,remaining))){distance=q(p[0].text,'歩',base+p[0].start);direction=directions[p[1].text];}
     else if((p=surfaceCapture(/^(.+)歩$/d,remaining))){distance=q(p[0].text,'歩',base+p[0].start);direction='forward';}
-    if(distance){if(['行く','滑る','すべる'].includes(verb)&&!seconds)throw new AkariError('P205','「行く」「すべる」には、行き先のばしょか、かける時間と向きと歩数を書きます。れい：2秒で前へ10歩すべる');return node(seconds?'GLIDE_DIRECTION':direction==='forward'?'MOVE':'MOVE_DIRECTION',seconds?[seconds,distance]:[distance],seconds||direction!=='forward'?direction:null);}
-    if(/(?:動く|うごく|進む|すすむ|動かす|うごかす|滑る|すべる)/.test(verb))throw new AkariError('P205','動くときは歩数を書きます。向きや秒数は1つずつ書きます。れい：右へ10歩動く');
+    if(distance){if(['行く','滑る','すべる'].includes(verb)&&!seconds)throw new AkariError('P205','「行く」「すべる」には、行き先のばしょか、かける時間と向きと歩数を書きます。れい：2秒かけて前へ10歩動く');return node(seconds?'GLIDE_DIRECTION':direction==='forward'?'MOVE':'MOVE_DIRECTION',seconds?[seconds,distance]:[distance],seconds||direction!=='forward'?direction:null);}
+    if(/(?:動く|うごく|進む|すすむ|動かす|うごかす|滑る|すべる)/.test(verb))throw new AkariError('P205','動くときは歩数を書きます。向きや秒数は1つずつ書きます。れい：画面の右へ10歩動く');
     return null;
   }
   function readSentenceHeading(code,symbols,previousHeading=null) {
     const protectedCode = surfaceMask(code);
     const same = surfaceCapture(/^(.+?)も同じ合図で動き始め、(.*)$/d,code,protectedCode);
     if(same){
-      if(!previousHeading)throw new AkariError('P205','「同じ合図」の前に、始めるときやクリックなどのきっかけを書いてください');
+      if(!previousHeading)throw new AkariError('P205','「同じ合図」の前に、「作品を動かしたとき、」や「…がクリックされたとき、」などの きっかけを 書いてください');
       return {heading:{...previousHeading,actorRef:sentenceActor(same[0].text,symbols)},body:same[1],actor:same[0]};
     }
     const forms=[
@@ -1209,7 +1209,7 @@
       const roles=readRoles(body.slice(match.index+1).replace(/^、/,''));
       if(roles)candidates.push({...roles,actorRef:sentenceActor(body.slice(0,match.index),symbols),actorRange:sourceRange(line.mapped?.positions||[],parts[1].start,parts[1].start+match.index)});
     }
-    if(candidates.length!==1)throw sentenceDiagnostic(candidates.length?'だれが動くのか、速さがどこからなのか分かりません。動くキャラの名前のあとに「は、」を書いてください。れい：「空白」キーが押されているあいだ、自分は、前へ1秒に10歩の速さで動き続ける':'ずっと動きつづけるときは、向きと「〜秒に〜歩の速さで」を書きます。れい：「空白」キーが押されているあいだ、前へ1秒に10歩の速さで動き続ける',line,[],{kind:'ContinuousRule',actorRef:ctx.topicActor||{kind:'self'},missing:['speed']});
+    if(candidates.length!==1)throw sentenceDiagnostic(candidates.length?'だれが動くのか、速さがどこからなのか分かりません。動くキャラの名前のあとに「は」を書いてください。れい：「空白」キーがおされているあいだ、自分は前へ1秒に10歩の速さで動き続ける':'ずっと動きつづけるときは、向きと「〜秒に〜歩の速さで」を書きます。れい：「空白」キーがおされているあいだ、自分は前へ1秒に10歩の速さで動き続ける',line,[],{kind:'ContinuousRule',actorRef:ctx.topicActor||{kind:'self'},missing:['speed']});
     const {direction,seconds,distance,actorRef,actorRange}=candidates[0];
     const e=t=>parseExpression(t,symbols,{...ctx,lineNo:line.lineNo});
     const node=statementNode('ContinuousRule',line,{actorRef:{...actorRef},condition:parseCondition(continuousCondition(parts[0].text)+'あいだ',symbols,{...ctx,lineNo:line.lineNo},'while'),direction:{前:'forward',後ろ:'backward',右:'right',左:'left',上:'up',下:'down'}[direction],seconds:sentenceQuantity(e(seconds),'秒'),distance:sentenceQuantity(e(distance),'歩')});
@@ -1249,6 +1249,10 @@
     if(draftRole)error.draftRole=draftRole;
     return error;
   }
+  // Proposals are shown and inserted as written, so they carry the text the formatter writes back.
+  function canonicalStatementSource(source,symbols) {
+    try{const parsed=parseSyntax(source+'。',{symbols});return parsed.ast?formatScript(parsed.ast).trim().replace(/。$/,''):source;}catch{return source;}
+  }
   function sentenceInfinitive(text) {
     const mask=surfaceMask(text),pair=SENTENCE_TE_FORMS.find(([te])=>mask.endsWith(te));
     return pair?text.slice(0,-pair[0].length)+pair[1]:text;
@@ -1259,7 +1263,7 @@
       const key=p[0].text.startsWith('「')?p[0].text:`「${p[0].text}」`,actor=p[1].text,distance=p[2].text;
       throw sentenceDiagnostic('キーをおしている間に動く歩数が、ぜんぶで何歩なのか、1秒に何歩なのか分かりません。えらんでください',line,[
         {label:`おすたびに全部で${distance}歩`,source:`${key}キーを押すたびに、${actor}は、前へ${distance}歩進む`},
-        {label:`おしている間、1秒に${distance}歩`,source:`${key}キーが押されているあいだ、${actor}は前へ1秒に${distance}歩の速さで動き続ける`},
+        {label:`おしている間、1秒に${distance}歩`,source:`${key}キーがおされているあいだ、${actor}は前へ1秒に${distance}歩の速さで動き続ける`},
       ],{kind:'ContinuousRule',missing:['distanceOrSpeed']});
     }
     if((p=surfaceCapture(/^もし(.+で)、(.+)か、(.+なら)、?$/d,code))){
@@ -1276,12 +1280,12 @@
       const condition=parseCondition(raw,symbols,ctx,'plain'),negative=exprNode('UnaryExpression',{op:'NOT',value:condition}),body=p[1].text,indent=' '.repeat(line.indent||0);
       throw sentenceDiagnostic('「〜になったら」は、2つの意味にとれます。今そうなっていたらするのか、そうなるときを待つのか、えらんでください',line,[
         {label:'今そうなっていたら する',source:`もし${formatCondition(condition,'if')}、${body}`},
-        {label:'そうなるときを待ってから する',source:`条件（${formatExpression(negative)}）が成り立つまで待つ。\n${indent}条件（${formatExpression(condition)}）が成り立つまで待つ。\n${indent}${body}`},
+        {label:'そうなるときを待ってから する',source:`${formatCondition(negative,'until')}待つ。\n${indent}${formatCondition(condition,'until')}待つ。\n${indent}${body}`},
       ],{kind:'Condition',missing:['stateOrTransition']});
     }
     if((p=surfaceCapture(/^(それ|これ|あれ|その子)を(.+(?:動かす|うごかす))$/d,code))){
       const names=(symbols?.project?.components||[]).map(component=>component.name);
-      throw sentenceDiagnostic('「それ」などでは、だれを動かすのか分かりません。動かすキャラの名前をえらんでください',line,names.map(name=>({label:`${name}を動かす`,source:`${nameSource(name)}を${p[1].text}`})),{kind:'MotionCommand',missing:['actorRef']});
+      throw sentenceDiagnostic('「それ」などでは、だれを動かすのか分かりません。動かすキャラの名前をえらんでください',line,names.map(name=>({label:`${name}を動かす`,source:canonicalStatementSource(`${nameSource(name)}を${p[1].text}`,symbols)})),{kind:'MotionCommand',missing:['actorRef']});
     }
     if((p=surfaceCapture(/^(右|左)に曲がる$/d,code))&&previousLine&&nextLine){
       const count=surfaceCapture(/^(.+)回(?:くり返す|繰り返す|くりかえす)$/d,nextLine.code);
@@ -1292,7 +1296,7 @@
     }
   }
   function parseScript(source, symbols, ctx = {}) {
-    if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','文字が多すぎて、これ以上は書けません。文を短くするか、べつの動きに分けてください',1,1);
+    if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','文字が多すぎて、これ いじょうは 書けません。文を 短くするか、ほかの 動きに 分けてください',1,1);
     const physical=normalizeSource(source).lines,headings=[];
     let previousHeading=null;
     for(const line of physical){
@@ -1308,7 +1312,7 @@
     if(headings.length<=1&&!hasPrefix)return parseScriptUnit(source,symbols,ctx);
     if(ctx.definitionKind||ctx.definition)throw new AkariError('P205','自分で作ったブロックの中には、「始めると、」などのきっかけは書けません',headings[0].lineNo,1);
     const starts=[{start:0,lineNo:1},...headings.slice(hasPrefix?0:1)];
-    if(starts.length>LIMITS.scripts)throw new AkariError('P208','できごとが多すぎて、これ以上ふやせません。いらないできごとをけしてください',1,1);
+    if(starts.length>LIMITS.scripts)throw new AkariError('P208','できごとが多すぎて、これ いじょう ふやせません。いらないできごとをけしてください',1,1);
     const units=starts.map((entry,index)=>{
       const end=starts[index+1]?.start??source.length,text=source.slice(entry.start,end);let unit;
       try{unit=parseScriptUnit(text,symbols,{...ctx,previousHeading:entry.previousHeading});}catch(error){if(error instanceof AkariError)error.line=(error.line||1)+entry.lineNo-1;throw error;}
@@ -1330,31 +1334,31 @@
   function parseScriptUnit(source, symbols, ctx = {}) {
     if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','文字が多すぎて、これ以上は書けません。文を短くするか、べつの動きに分けてください',1,1);
     const rawLines=normalizeSource(source).lines,lines=[];
-    for(const line of rawLines){if(line.continuation)continue;const prefix=line.raw.match(/^[ \t\u3000]*/u)[0];if(/[^ ]/u.test(prefix))throw new AkariError('P209','字下げは半角スペースで書きます。タブや全角空白の範囲を確認してください',line.lineNo,1);line.indent=prefix.length;const code=compactOutsideString(line.code);if(!code){lines.push(line);continue;}const mask=surfaceMask(code);let start=0;for(let i=0;i<=mask.length;i++)if(i===mask.length||mask[i]==='。'){if(i>start){const part=surfaceLineSlice(line,start,i);part.indent=line.indent;part.inline=start>0;part.comment=i===mask.length?line.comment:'';lines.push(part);}start=i+1;}}
+    for(const line of rawLines){if(line.continuation)continue;const prefix=line.raw.match(/^[ \t\u3000]*/u)[0];if(/[^ ]/u.test(prefix))throw new AkariError('P209','行の はじめを 右へ ずらすときは、小さい 空白で 書きます。Tabキーや 大きい 空白を 使っていないか たしかめてください',line.lineNo,1);line.indent=prefix.length;const code=compactOutsideString(line.code);if(!code){lines.push(line);continue;}const mask=surfaceMask(code);let start=0;for(let i=0;i<=mask.length;i++)if(i===mask.length||mask[i]==='。'){if(i>start){const part=surfaceLineSlice(line,start,i);part.indent=line.indent;part.inline=start>0;part.comment=i===mask.length?line.comment:'';lines.push(part);}start=i+1;}}
     const baseCtx={...ctx,localNames:[...(ctx.localNames||[])],binders:[...(ctx.binders||[])],topicActor:{...(ctx.topicActor||{kind:'self'})}};
     if(ctx.definition){const names=localDeclarationNames(source);baseCtx.localNames.push(...names.vars,...names.lists);for(const line of lines){const p=surfaceCapture(/^この中だけで使う(?:変数|リスト)(.+?)を(?:作り、最初は.+にする|空で作る)$/d,line.code);if(p)baseCtx.localNames.push(parsedDeclarationName(p[0].text));}}
     const nextCode=i=>{while(i<lines.length&&!lines[i].code)i++;return i;};
     const parseAt=(line,fn)=>{try{return fn();}catch(error){if(error instanceof AkariError&&!error.line){error.line=line.lineNo;error.column=error.column||1;}throw error;}};
     let first=nextCode(0),heading=null,headingActorRange=null;
-    if(first<lines.length&&lines[first].indent!==0)throw new AkariError('P209','最上位の文は字下げせずに書きます',lines[first].lineNo,1);
-    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols,ctx.previousHeading));if(found){heading=found.heading;const line=lines[first];if(found.actor)headingActorRange=sourceRange(line.mapped?.positions||[],found.actor.start,found.actor.end);if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','見出しの本文を字下げして書いてください',lines[first].lineNo,1);}}
+    if(first<lines.length&&lines[first].indent!==0)throw new AkariError('P209','いちばん 外の 文は、行の はじめを 右へ ずらさずに 書きます',lines[first].lineNo,1);
+    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols,ctx.previousHeading));if(found){heading=found.heading;const line=lines[first];if(found.actor)headingActorRange=sourceRange(line.mapped?.positions||[],found.actor.start,found.actor.end);if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','「作品を動かしたとき、自分は、」などの 次の 行は、行の はじめを 右へ ずらして 書いてください',lines[first].lineNo,1);}}
     const rules=[];
     function block(start,indent,scope,depth){
-      if(depth>LIMITS.blockDepth)throw new AkariError('P208','ブロックが深すぎます',lines[start]?.lineNo||1,1);
+      if(depth>LIMITS.blockDepth)throw new AkariError('P208','「もし」や「くり返す」の 中に、ブロックが 重なりすぎています。いくつかの 動きに 分けてください',lines[start]?.lineNo||1,1);
       scope={...scope,topicActor:{...scope.topicActor}};
       const nodes=[];let i=start,previousSentenceStart=null;
-      while(i<lines.length){const line=lines[i];if(!line.code){if(line.comment)nodes.push(statementNode('CommentLine',line,{text:line.comment.slice(1),raw:line.raw,actorRef:{...scope.topicActor}}));i++;continue;}if(line.indent<indent)break;if(line.indent>indent)throw new AkariError('P209','同じまとまりの文の字下げをそろえてください',line.lineNo,1);
+      while(i<lines.length){const line=lines[i];if(!line.code){if(line.comment)nodes.push(statementNode('CommentLine',line,{text:line.comment.slice(1),raw:line.raw,actorRef:{...scope.topicActor}}));i++;continue;}if(line.indent<indent)break;if(line.indent>indent)throw new AkariError('P209','同じ まとまりの 文は、行の はじめの 空白の 数を そろえてください',line.lineNo,1);
         const local={...scope,sourceLine:line,lineNo:line.lineNo};
         const repeatPrevious=surfaceCapture(/^これを(.+?)回(?:くり返す|くり返します|繰り返す|繰り返します)$/d,line.code);
         if(repeatPrevious){
-          if(previousSentenceStart===null||previousSentenceStart>=nodes.length)throw sentenceDiagnostic('「これを」の直前に、くり返したい一文を書いてください',line,[],{kind:'RepeatCount',missing:['precedingSentence']});
+          if(previousSentenceStart===null||previousSentenceStart>=nodes.length)throw sentenceDiagnostic('「これを」の すぐ前の 行に、くり返したい 一文を 書いてください',line,[],{kind:'RepeatCount',missing:['precedingSentence']});
           const body=nodes.splice(previousSentenceStart),part=repeatPrevious[0],count=sentenceQuantity(parseMappedExpression(part.text,line.code,line,symbols,local,part.start),'回');
           const repeat=statementNode('RepeatCount',line,{count,body,actorRef:{...scope.topicActor}});
           const range=SOURCE_RANGES.get(body[0])?.range,location=SOURCE_RANGES.get(repeat);
           if(range&&location){location.range={start:range.start,end:location.range.end};location.extent.start=range.start;}
           nodes.push(repeat);previousSentenceStart=null;i++;continue;
         }
-        if(surfaceMask(line.code).startsWith('くり返しが終わると、')&&nodes.at(-1)?.kind!=='RepeatCount')throw sentenceDiagnostic('「くり返しが終わると」の直前に、回数のあるくり返しを書いてください',line,[],{kind:'Sequence',missing:['precedingRepeat']});
+        if(surfaceMask(line.code).startsWith('くり返しが終わると、')&&nodes.at(-1)?.kind!=='RepeatCount')throw sentenceDiagnostic('「くり返しが終わると」の すぐ前に、回数の ある くり返しを 書いてください',line,[],{kind:'Sequence',missing:['precedingRepeat']});
         parseAt(line,()=>diagnoseSentenceIntent(line,symbols,local,lines[i-1]?.indent===indent?lines[i-1]:null,lines[nextCode(i+1)]?.indent===indent?lines[nextCode(i+1)]:null));
         if(line.code==='その知らせを受けて始めたことが全部終わるまで待つ'){
           const previous=[...nodes].reverse().find(node=>node.kind!=='CommentLine');
@@ -1364,7 +1368,7 @@
           nodes.push(statementNode('WaitBroadcastGroup',line,{broadcastRef,actorRef:{...scope.topicActor}}));i++;continue;
         }
 
-        if(line.code==='ここまで')throw new AkariError('P203','字下げを戻してまとまりを閉じます',line.lineNo,1);
+        if(line.code==='ここまで')throw new AkariError('P203','「ここまで」は 書きません。次の 文の 行の はじめを 左へ もどすと、まとまりが おわります',line.lineNo,1);
         const rule=parseAt(line,()=>{try{return readContinuousSentence(line.code,line,symbols,local);}catch(error){if(error.draftRole?.kind==='ContinuousRule'){const next=lines[nextCode(i+1)],speed=next?surfaceCapture(/^(.+?秒に.+?歩の速さで)(?:動かす|動く)$/d,next.code):null;if(speed&&next.indent===indent){const motion=/(?:動き続ける|動かし続ける)$/.exec(surfaceMask(line.code));if(motion){const range=sourceRange(line.mapped.positions),last=sourceRange(next.mapped.positions);error.proposals=[{label:'2つの文を1つの「つづけて動くルール」にまとめる',source:line.code.slice(0,motion.index)+speed[0].text+motion[0],start:range.start,end:last.end}];}}}throw error;}});if(rule){if(depth!==0)throw new AkariError('P205','つづけて動くルールは、「もし」や「くり返す」の中には書けません。いちばん外に書いてください',line.lineNo,1);rules.push(rule);i++;continue;}
         const head=parseAt(line,()=>readBlockHead(line.code,symbols,local));if(head?.kind==='Else')break;
         if(!head){const parts=parseAt(line,()=>parseSentenceSequence(line,symbols,local));previousSentenceStart=nodes.length;nodes.push(...parts);for(const part of parts)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor={...part.actorRef};i++;continue;}
@@ -1378,7 +1382,7 @@
           childScope.binders.push(head.binder);
         }
         if(!head.inlineBody&&(firstChild>=lines.length||lines[firstChild].indent<=indent))throw Object.assign(sentenceDiagnostic('「もし」や「くり返す」の中に、することを書いてください。何もしないときは「何もしない」と書けます。\nれい：2回くり返す。\n  「やあ」と言う。',line,[],{kind:head.kind,missing:['body']}),{code:'P202'});
-        if(head.inlineBody&&firstChild<lines.length&&lines[firstChild].indent>indent)throw new AkariError('P209','一行の本文と字下げの本文を重ねないでください',lines[firstChild].lineNo,1);
+        if(head.inlineBody&&firstChild<lines.length&&lines[firstChild].indent>indent)throw new AkariError('P209','中の 文を、同じ 行と 次の 行の 両方に 書かないでください',lines[firstChild].lineNo,1);
         const child=head.inlineBody?{nodes:head.inlineBody,index:i+1}:block(childStart,lines[firstChild].indent,childScope,depth+1);
         const fields={...head,actorRef:{...controlActor}};delete fields.kind;delete fields.inlineBody;
         if(!child.nodes.some(n=>n.kind!=='CommentLine'))throw new AkariError('P202','中に、することの文がありません。何もしないときは「何もしない」と書けます',line.lineNo,1);
@@ -1396,7 +1400,7 @@
       return {nodes,index:i};
     }
     const indent=heading&&first<lines.length?lines[first].indent:0,result=block(0,indent,baseCtx,0);
-    if(result.index<lines.length)throw new AkariError('P204','対応する同じ字下げ位置の「もし」がありません',lines[result.index].lineNo,1);
+    if(result.index<lines.length)throw new AkariError('P204','「そうでなければ、」と 組になる「もし」が ありません。「もし」と 行の はじめを そろえてください',lines[result.index].lineNo,1);
     const point=offset=>{let lo=0,hi=rawLines.length;while(lo+1<hi){const mid=(lo+hi)>>1;if(rawLines[mid].start<=offset)lo=mid;else hi=mid;}return {line:rawLines[lo].lineNo,column:cpLen(source.slice(rawLines[lo].start,offset))+1};};
     const pending=[...result.nodes,...rules];
     while(pending.length){
@@ -1438,11 +1442,11 @@
     if(/^(?:[^、。]+?は、?)?(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/.test(mask))return null;
     if((parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))、(.*)$/d,code))|| (parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))$/d,code))) {
       const condition=parseCondition(parts[0].text,symbols,ctx,'if'),tail=parts[1];
-      if(tail?.text&&tail.text!=='次のことをする'&&/(?:なら、|ことを.+回)/.test(surfaceMask(tail.text)))throw new AkariError('P201','入れ子の条件・反復は字下げして書いてください');
+      if(tail?.text&&tail.text!=='次のことをする'&&/(?:なら、|ことを.+回)/.test(surfaceMask(tail.text)))throw new AkariError('P201','「もし」や「くり返す」の 中に 重ねるときは、次の 行に 書いて、行の はじめを 右へ ずらしてください');
       return {kind:'IfStatement',condition,...(tail?.text&&tail.text!=='次のことをする'?{inlineBody:inline(tail)}:{})};
     }
     if((parts=surfaceCapture(/^(.+)ことを(.+)回(?:くり返す|繰り返す|くりかえす)$/d,code))) {
-      if(/ことを/.test(surfaceMask(parts[0].text)))throw new AkariError('P201','深い反復は字下げして書いてください');
+      if(/ことを/.test(surfaceMask(parts[0].text)))throw new AkariError('P201','くり返しの 中に くり返しを 重ねるときは、次の 行に 書いて、行の はじめを 右へ ずらしてください');
       return {kind:'RepeatCount',count:sentenceQuantity(e(parts[1]),'回'),inlineBody:inline(parts[0])};
     }
     if(/^(?:次のことを)?ずっと(?:くり返す|繰り返す|くりかえす)$/.test(mask))return {kind:'Forever'};
@@ -1481,7 +1485,7 @@
     const extension = /^拡張「([^「」\n]+)」「([^「」\n]+)」（([\s\S]*)）$/.exec(code);
     if (extension) {
       const name = EXTENSION_HOST.resolve(extension[1], extension[2], 'commands');
-      if (!name) throw new AkariError('E703', 'この「拡張」のブロックが見つかりません。拡張の名前をたしかめてください', line.lineNo, 1);
+      if (!name) throw new AkariError('E703', 'この「拡張」のブロックが見つかりません。かくちょうの 名前を たしかめてください', line.lineNo, 1);
       return statementNode('ExtensionCommand', line, { name, args: parseArgumentText(extension[3], symbols, ctx, line.lineNo), actorRef: { ...(ctx.topicActor || { kind: 'self' }) } });
     }
     const lead=/^(?:そのあと|それから|次に|最後に|くり返しが終わると)、/.exec(surfaceMask(code));
@@ -1514,9 +1518,9 @@
       if(node){node.actorRef=actorRef;STATEMENT_EXPLICIT_ACTORS.add(node);const location=SOURCE_RANGES.get(node);if(location){location.extent={start:working.start,end:working.end};location.range=sourceRange(working.mapped?.positions||[]);location.inline=!!working.inline;location.actorRange=sourceRange(working.mapped?.positions||[],parts[0].start,parts[0].end);}return node;}
     }
     const unclear=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる)$/d,code);
-    if(unclear&&!unclear[0].text.startsWith('「'))throw sentenceDiagnostic('「〜に〜を入れる」では、さいごに入れるのか、何番目かと取りかえるのか分かりません。えらんでください',working,[{label:'さいごに入れる',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'どれかと取りかえる（何番目かをえらぶ）',source:`${unclear[0].text}の〔位置をえらぶ〕番目を${unclear[1].text}にかえる`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
+    if(unclear&&!unclear[0].text.startsWith('「'))throw sentenceDiagnostic('「〜に〜を入れる」では、さいごに入れるのか、何番目かと 入れかえるのか 分かりません。えらんでください',working,[{label:'さいごに入れる',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'どれかと 入れかえる（何番目かを えらぶ）',source:`${unclear[0].text}の〔番号を入れる〕番目を${unclear[1].text}にかえる`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
     const delayed=surfaceCapture(/^(.+)秒後に(.+)$/d,code);
-    if(delayed)throw sentenceDiagnostic('待ってから動く意味なら、待機と移動を分けます',working,[{label:'待ってから次の動きをする',source:`${delayed[0].text}秒待つ。\n${' '.repeat(working.indent||0)}${delayed[1].text}`}],{kind:'Sequence',missing:['motionDestinationIfAbsent']});
+    if(delayed)throw sentenceDiagnostic('待ってから 動くときは、「待つ」と「動く」の 2つの 文に 分けます',working,[{label:'待ってから次の動きをする',source:`${delayed[0].text}秒待つ。\n${' '.repeat(working.indent||0)}${delayed[1].text}`}],{kind:'Sequence',missing:['motionDestinationIfAbsent']});
     if(directError)throw directError;
     // The preserved advanced spellings are parsed structurally by the original finite parser.
     try {const legacy=parseLegacySimpleStatement(working,symbols,ctx);legacy.actorRef={...(ctx.topicActor||{kind:'self'})};return legacy;}
@@ -1524,7 +1528,7 @@
       if(!(error instanceof AkariError))throw error;
       if(/^[\p{L}ー]+(?:する|しよう)$/u.test(code)&&symbols?.actions?.size){
         const proposals=[...symbols.actions.values()].map(def=>({label:`「${def.name}」のブロックを使う`,source:(def.args.length?def.args.map(arg=>`${nameSource(arg)}を〔${arg}を入れる〕`).join('、')+'として、':'')+`【${def.name}】という手順を行う`}));
-        throw sentenceDiagnostic('この「〜する」という短いよび方は、まだきめていません。使うブロックをえらぶか、自分で作ったブロックで よび方をきめてください',working,proposals,{kind:'UserActionCall',missing:['registeredCallPhrase']});
+        throw sentenceDiagnostic('この「〜する」という短いよび方は、まだ決めていません。使うブロックをえらぶか、自分で作ったブロックで よび方を決めてください',working,proposals,{kind:'UserActionCall',missing:['registeredCallPhrase']});
       }
       throw error;
     }
@@ -1591,11 +1595,11 @@
         stack.push(ch === '（' ? '）' : '］');
         out[i] = '\u0001';
       } else if (ch === '）' || ch === '］') {
-        if (stack.pop() !== ch) throw new AkariError('P207', '括弧の対応を確認してください');
+        if (stack.pop() !== ch) throw new AkariError('P207', 'かっこの 開く しるしと とじる しるしが 合っているか たしかめてください');
         out[i] = '\u0001';
       } else if (stack.length) out[i] = '\u0001';
     }
-    if (quote || stack.length) throw new AkariError('P207', '文字列・名前・括弧を閉じてください');
+    if (quote || stack.length) throw new AkariError('P207', '「 」・【 】・（ ）などの とじる しるしを 書いてください');
     return out.join('');
   }
   function readLegacySurfaceStatement(code, line, symbols, ctx) {
@@ -1611,7 +1615,7 @@
       throw new AkariError('P205','入れる 中身と 入力らんを 1つずつ 書いてください');
     const target = (text, start) => {
       const t = parseTargetPrefix(text, symbols, ctx);
-      if (!t || t.len !== text.length) throw new AkariError('P205', 'かえる ものの 名前と 「に」「を」などの 書き方を たしかめてください。れい: 【点数】に1を足す');
+      if (!t || t.len !== text.length) throw new AkariError('P205', 'かえる ものの 名前と 「に」「を」などの 書き方を たしかめてください。れい：点数を1増やす');
       const node = {name:t.name, qualifier:t.qualifier};
       const range = sourceRange(line.mapped?.positions || [], start, start + text.length);
       if (range) SOURCE_RANGES.set(node, {range});
@@ -1843,14 +1847,14 @@
         if (raw !== name && !raw.startsWith('\u3010'))
           throw new AkariError(
             'P201',
-            '自分で作ったブロックの 名前が 読めません。名前を 【】で かこんでください。れい: 【ジャンプ】（）を実行する',
+            '自分で作ったブロックの 名前が 読めません。名前を 【】で かこんでください。れい：【ジャンプ】という手順を行う',
             line.lineNo,
             1,
           );
         if (raw === name && !bareName(name))
           throw new AkariError(
             'P201',
-            'この 名前は 【】で かこんでください。れい: 【ジャンプ】（）を実行する',
+            'この 名前は 【】で かこんでください。れい：【ジャンプ】という手順を行う',
             line.lineNo,
             1,
           );
@@ -1964,7 +1968,7 @@
       }
     }
     if (inStr)
-      throw new AkariError('N101', '文字列の「」が閉じていません', lineNo, inner.length + 1);
+      throw new AkariError('N101', '「 」の とじる しるしを 書いてください', lineNo, inner.length + 1);
     if (stack.length)
       throw new AkariError('P207', '入れるものの かっこが とじていません。（ は ）で、［ は ］で とじてください', lineNo, inner.length + 1);
     parts.push(inner.slice(start));

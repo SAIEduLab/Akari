@@ -15,7 +15,7 @@
     let label = typeof n.label === 'string' ? n.label.trim() : '';
     if (/[〔〕\r\n]/u.test(label)) throw new AkariError('P210', 'あいている ところの 名前に 〔 〕や 行がえは 使えません');
     if (!label) label = ({expression:'中身を入れる',statement:'することをえらぶ',target:'かえるものをえらぶ',rule:'動かし方をえらぶ'})[n.role] || '中身を入れる';
-    else if (!/(?:選ぶ|入れる|指定する|書く)$/.test(label)) label += label === '条件' ? 'をえらぶ' : 'を入れる';
+    else if (!/(?:選ぶ|えらぶ|入れる|指定する|書く)$/.test(label)) label += label === 'きまり' ? 'をえらぶ' : 'を入れる';
     return `〔${label}〕`;
   }
   function formatExpression(n, parent = 0, options = {}) {

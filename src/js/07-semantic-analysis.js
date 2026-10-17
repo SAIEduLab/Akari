@@ -134,7 +134,7 @@
       if (!ref || ref.kind === 'self') return ctx;
       const c = ref.name === project.stage.name || ref.name === '画面'
         ? { id: 'stage', type: 'stage' } : componentByName(ref.name);
-      if (!c) { add('S301', `主語「${ref.name}」がありません`, node, where); return ctx; }
+      if (!c) { add('S301', `「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, node, where); return ctx; }
       return { ...ctx, targetId: c.id, targetType: c.type };
     };
     const checkArguments = (n, def, where) => {
@@ -153,7 +153,7 @@
       const expect = (unit, expected) => {
         if (unit !== undefined && unit !== null && unit !== expected)
           mismatch(expected === null
-            ? 'この計算には、たんい（歩・度・秒など）のない数を使います。「の数だけ」でたんいを外せます。れい：（10歩）の数だけ'
+            ? 'この計算には、たんい（歩・度・秒など）のない数を使います。「の数だけ」でたんいを外せます。れい：10歩の数だけ'
             : `ここでは${expected}の数を使います。${unit}の数は使えません`);
       };
       const common = (values) => {
@@ -265,7 +265,7 @@
               n.qualifier === 'self' && ctx.targetId ? `${targetLabel(ctx)}の自分には` : 'まだ作っていない';
             add(
               'S301',
-              `${prefix}名前「${n.name}」${n.qualifier === 'self' && ctx.targetId ? 'がありません' : 'です。名前をたしかめるか、その名前のデータを作ってください'}`,
+              `${prefix}名前「${n.name}」${n.qualifier === 'self' && ctx.targetId ? 'がありません' : 'です。名前をたしかめるか、その名前のへんすうかリストを作ってください'}`,
               ctx.node,
               where,
             );
@@ -274,16 +274,16 @@
         if (n.kind === 'ExtensionCalculation') checkExtensionOperation(n, 'calculations', where);
         if (n.kind === 'UserFunctionCall') {
           const f = symbols.functions.get(n.name);
-          if (!f) add('S301', `計算「${n.name}」がありません`, ctx.node, where);
+          if (!f) add('S301', `答えをもとめる「${n.name}」がありません`, ctx.node, where);
           else if (f.args.length !== n.args.length)
-            add('S308', `計算「${n.name}」に入れるものは${f.args.length}こです`+namedArgumentDetails(f.args,n.argumentNames), ctx.node, where);
+            add('S308', `答えをもとめる「${n.name}」に入れるものは${f.args.length}こです`+namedArgumentDetails(f.args,n.argumentNames), ctx.node, where);
           else { checkArguments(n, f, where); analyzeCallable(f, 'function', ctx); }
         }
         if (n.kind === 'BuiltinCall' && BUILTIN_META.has(n.name)) {
           const m = BUILTIN_META.get(n.name),
             count = n.args.length;
           if (count < m.minArgs || count > m.maxArgs)
-            add('S308', `はじめからある計算「${n.name}」に入れるものの数がちがいます`, ctx.node, where);
+            add('S308', `はじめからある計算「${n.name === '乱数' ? 'AからBのどれか' : BUILTIN_SURFACES[n.name] || n.name}」に入れるものの数がちがいます`, ctx.node, where);
         }
         if (n.kind === 'SensorRead') {
           const eventOnly = {
@@ -296,12 +296,12 @@
             新しい背景名: 'backdropChanged',
           };
           if (n.sensor === '拡張の値' && (!ctx.filter?.message?.startsWith('拡張:') || !EXTENSION_HOST.describe(ctx.filter.message.slice(3), 'events')))
-            add('S311', '「拡張の値」は、入れてあるかくちょうのできごとの中だけで使えます', ctx.node, where);
+            add('S311', '拡張「できごとの値」は、入れてあるかくちょうのできごとの中だけで使えます', ctx.node, where);
           if (eventOnly[n.sensor]) {
             if (ctx.definition)
-              add('S311', `「${n.sensor}」は、自分で作ったブロックの中ではそのまま使えません。きっかけの中で使い、入れるものとしてわたしてください`, ctx.node, where);
-            else if (ctx.event !== eventOnly[n.sensor])
-              add('S311', `「${n.sensor}」はこのきっかけでは使えません`, ctx.node, where);
+              add('S311', `「${formatExpression(n)}」は、自分で作ったブロックの中ではそのまま使えません。きっかけの中で使い、入れるものとしてわたしてください`, ctx.node, where);
+            else if (ctx.event !== eventOnly[n.sensor] && n.sensor !== '拡張の値')
+              add('S311', `「${formatExpression(n)}」は「${EVENT_LABELS[eventOnly[n.sensor]]}」のきっかけの中で使います`, ctx.node, where);
           }
           if (
             [
@@ -316,13 +316,13 @@
             ].includes(n.sensor) &&
             ctx.targetType === 'stage'
           )
-            add('S304', `「${n.sensor}」は画面では使えません`, ctx.node, where);
+            add('S304', `「${formatExpression(n)}」は画面では使えません。キャラクターの動きの中で使ってください`, ctx.node, where);
           if (
             ['衣装番号', '衣装名'].includes(n.sensor) &&
             ctx.targetType &&
             ctx.targetType !== 'sprite'
           )
-            add('S304', `「${n.sensor}」はキャラクターでだけ使えます`, ctx.node, where);
+            add('S304', `「${formatExpression(n)}」はキャラクターでだけ使えます`, ctx.node, where);
           if (n.sensor === 'INPUT_VALUE')
             checkComponentTarget(n.arg, ['input'], ctx, where, '入力らん');
           if (n.sensor === 'DISTANCE_TO')
@@ -353,7 +353,7 @@
         const c = actorContext(n.actorRef, { ...ctx, ...ctx.selfContext, node: n, availableLocalNames: new Set(available) }, n, where);
         if (n.kind === 'LocalVariableDeclaration' || n.kind === 'LocalListDeclaration') {
           if (!ctx.definition || !top || seenExecutable)
-            add('S313', 'この中だけのデータは、自分で作ったブロックのいちばん上でだけ作れます', n, where);
+            add('S313', 'この中だけの へんすう・リストは、自分で作ったブロックの いちばん上でだけ 作れます', n, where);
           try {
             validateName(n.name);
           } catch (err) {
@@ -400,13 +400,11 @@
         ) {
           const info = targetExists(n.target, symbols, c);
           if (!info) {
-            const p =
-              n.target.qualifier === 'self' && c.targetId
-                ? `${targetLabel(c)}の自分には`
-                : 'データ';
             add(
               'S301',
-              `${p}「${n.target.name}」${n.target.qualifier === 'self' && c.targetId ? 'がありません' : 'がありません'}`,
+              n.target.qualifier === 'self' && c.targetId
+                ? `${targetLabel(c)}の自分には「${n.target.name}」がありません`
+                : `「${n.target.name}」という へんすうや リストが ありません。名前を たしかめるか、その名前の へんすうか リストを 作ってください`,
               n,
               where,
             );
@@ -429,7 +427,7 @@
               ctx.definitionKind === 'function' &&
               !['local', 'arg', 'binder'].includes(info.scope)
             )
-              add('S305', '計算から外部データは変更できません', n, where);
+              add('S305', '「答えをもとめる」の 中からは、作品や 部品の へんすう・リストを かえられません', n, where);
           }
         }
         if (
@@ -453,15 +451,15 @@
             'ExtensionCommand',
           ].includes(n.kind)
         )
-          add('S305', '計算では外部副作用や待機を行えません', n, where);
+          add('S305', '「答えをもとめる」の 中では、動く・音を 出す・待つ などの やることは 使えません', n, where);
         if (n.kind === 'ReturnStatement') {
           if (ctx.definitionKind === 'action') add('S307', 'てじゅんでは答えを返せません。答えを返すときは「答えをもとめる」で作ります', n, where);
           if (ctx.definitionKind !== 'function')
             add('S307', 'きっかけの中では「〜を返す」は使えません。答えを返すのは「答えをもとめる」の中だけです', n, where);
-          if (!top) add('S306', '計算の「返す」は、「もし」や「くり返す」の中には書けません。いちばん下の行に書きます', n, where);
+          if (!top) add('S306', '「答えをもとめる」の「返す」は、「もし」や「くり返す」の 中には 書けません。いちばん下の 行に 書きます', n, where);
         }
         if ((n.kind === 'Break' || n.kind === 'Continue') && loopDepth === 0)
-          add('S309', 'くり返しの外では使えません', n, where);
+          add('S309', `「${n.kind === 'Break' ? 'このくり返しを終える' : '次のくり返しへ進む'}」は、くり返しの中でだけ使えます`, n, where);
         if (n.kind === 'UserActionCall') {
           const a = symbols.actions.get(n.name);
           if (!a) add('S301', `てじゅん「${n.name}」がありません`, n, where);
@@ -596,13 +594,13 @@
       if (!exec.length || exec[exec.length - 1].kind !== 'ReturnStatement')
         add(
           'S306',
-          `計算「${item.definition.name}」のいちばん下の行は「〜を返す」にします。れい：1＋2を返す`,
+          `答えをもとめる「${item.definition.name}」のいちばん下の行は「〜を返す」にします。れい：1＋2を答えとして返す`,
           exec[exec.length - 1] || { sourceSpan: { startLine: 1, startColumn: 1 } },
           item.key,
         );
       for (let j = 0; j < exec.length - 1; j++)
         if (exec[j].kind === 'ReturnStatement')
-          add('S306', '「返す」は、計算のいちばん下に1回だけ書きます', exec[j], item.key);
+          add('S306', '「返す」は、「答えをもとめる」のいちばん下に1回だけ書きます', exec[j], item.key);
     };
     for (const item of compiled.items) {
       if (rootKeys && !rootKeys.has(item.key)) continue;
@@ -668,7 +666,7 @@
       ? (heading.actorRef.targetId || ((heading.actorRef.name === '画面' || heading.actorRef.name === project.stage.name) ? 'stage' :
         project.components.find((c) => c.name === heading.actorRef.name)?.id)) : script.targetId;
     const type = targetId === 'stage' ? 'stage' : project.components.find((c) => c.id === targetId)?.type;
-    if (!type) throw new AkariError('S301', '見出しに書いた部品が見つかりません。部品の名前をたしかめてください');
+    if (!type) throw new AkariError('S301', 'きっかけに 書いた キャラクターや 部品が 見つかりません。名前を たしかめてください');
     if (!EVENT_BY_TYPE[type]?.includes(heading.event))
       throw new AkariError('F506', 'この部品では使えないできごとです');
     return { targetId, event: heading.event, filter: heading.filter };
@@ -873,7 +871,7 @@
       if (!session.syntaxAst || !tree) throw new AkariError('S301', '本文のどこで名前を使っているか、決められません');
       for (const ref of refs) {
         const entry = [...session.nodeMap].find(([,loc]) => stableJson(loc.path) === stableJson(ref.nodePath));
-        if (!entry) throw new AkariError('F503', '名前を使っている場所を、たしかめられません');
+        if (!entry) throw new AkariError('F503', '名前を 使っている ばしょを、たしかめられません');
         const [id,loc] = entry, node = index.get(id).node, original = at(session.syntaxAst,ref.nodePath);
         if (ref.binding === 'actor') {
           const actor = node.fields.heading?.actorRef || node.fields.actorRef;
@@ -887,7 +885,7 @@
         if (!range) throw new AkariError('F503', '書いた文の中で、名前のばしょをたしかめられません');
         if (ref.binding === 'actor') {
           const token=compactOutsideString(record.source.slice(range.start,range.end));
-          if(![resource.name,`【${resource.name}】`,`「${resource.name}」`].includes(token))throw new AkariError('F503','書いた文の中で、主語の名前のばしょをたしかめられません');
+          if(![resource.name,`【${resource.name}】`,`「${resource.name}」`].includes(token))throw new AkariError('F503','書いた文の中で、だれが 動くかの 名前の ばしょを たしかめられません');
           const text=token.startsWith('【')?`【${newName}】`:token.startsWith('「')?formatExpression({kind:'StringLiteral',value:newName}):nameSource(newName);
           edits.push({...range,text});continue;
         }
@@ -1043,7 +1041,8 @@
       if(heading){
         const ref=heading.actorRef,actor=ref?.kind==='named'?(ref.name===project.stage.name||ref.name==='画面'?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
           context.targetId==='stage'?{id:'stage',type:'stage'}:project.components.find(c=>c.id===context.targetId);
-        if(!actor||!EVENT_BY_TYPE[actor.type]?.includes(heading.event))errors.push({code:'S304',message:'この主語ではそのきっかけを使えません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
+        if(!actor)errors.push({code:'S304',message:ref?.kind==='named'?`「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`:'この きっかけを 使う キャラクターや 部品が 見つかりません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
+        else if(!EVENT_BY_TYPE[actor.type]?.includes(heading.event))errors.push({code:'S304',message:`この キャラクターや 部品では、${EVENT_LABELS[heading.event]?'「'+EVENT_LABELS[heading.event]+'」の ':'この '}きっかけは 使えません。ほかの きっかけに してください`,line:unit.sourceSpan?.startLine||1,column:1,where:key});
         else resolved={...resolved,ownerId:actor.id,targetId:actor.id,targetType:actor.type,event:heading.event,filter:heading.filter||null};
       }
       return syntaxItem(unitKey,unit,resolved);
@@ -1321,7 +1320,7 @@
       checkImageLimits(w, h);
       return { mime: 'image/webp', width: w, height: h };
     }
-    throw new AkariError('F509', 'このファイルは絵として使えません。使える絵のファイルは、PNG / JPEG / WebP です');
+    throw new AkariError('F509', 'このファイルは絵として使えません。ほかの絵のファイルをえらんでください', 0, 0, '使える 絵の ファイル：PNG / JPEG / WebP');
   }
   function parseWav(bytes) {
     if (bytes.length < 44 || ascii(bytes, 0, 4) !== 'RIFF' || ascii(bytes, 8, 4) !== 'WAVE')
@@ -1684,7 +1683,7 @@
     if (bytes.length >= 12 && ascii(bytes, 4, 4) === 'ftyp') return parseM4a(bytes);
     const id3 = bytes.length >= 10 && ascii(bytes, 0, 3) === 'ID3',
       frame = bytes.length >= 4 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0;
-    if (!id3 && !frame) throw new AkariError('F509', 'このファイルは音として使えません。使える音のファイルは、MP3 / PCM WAV / M4A（AAC-LC）/ FLAC / Ogg Opus です');
+    if (!id3 && !frame) throw new AkariError('F509', 'このファイルは音として使えません。ほかの音のファイルをえらんでください', 0, 0, '使える 音の ファイル：MP3 / PCM WAV / M4A（AAC-LC）/ FLAC / Ogg Opus');
     const clean = stripMp3Metadata(bytes);
     return { mime: 'audio/mpeg', clean, frameMeta: parseMp3FrameMeta(clean) };
   }
@@ -2102,7 +2101,7 @@
         ...(Object.hasOwn(root || {}, 'extensions') ? ['extensions'] : []),
       ])
     )
-      throw new AkariError('F503', '作品のデータの形が、あかりのきまりと合いません');
+      throw new AkariError('F503', '作品の ファイルの 形が、あかりで 読める 形と 合いません');
     if (!Array.isArray(root.assets) || root.assets.length > LIMITS.assets)
       throw new AkariError('F504', 'asset数が上限を超えています');
     const design = {
@@ -2594,7 +2593,7 @@
         return quantity(n.op === 'NEG' ? -magnitude : magnitude, unitOf(value));
       }
       if (n.kind === 'ListLiteral') return n.items.map(literal);
-      throw new AkariError('R411', 'はじめの中身には、数や文字など、決まったものを書きます。計算やデータの名前は使えません。れい：0、こんにちは');
+      throw new AkariError('R411', 'はじめの中身には、数や文字など、決まったものを書きます。計算や へんすう・リストの 名前は 使えません。れい：0、こんにちは');
     };
     const value = literal(ast);
     if (kind === 'variable' ? !scalar(value) : !listValue(value))

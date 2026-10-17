@@ -8,7 +8,7 @@
         MOVE_DIRECTION: Object.freeze({label:'方向へ動く',inputs:Object.freeze(['歩数']),format:(a,n)=>`${{right:'画面の右',left:'画面の左',up:'画面の上',down:'画面の下',forward:'前',backward:'後ろ'}[n.direction]}へ${a(0,'歩')}動く`}),
         GLIDE_DIRECTION: Object.freeze({label:'時間をかけて方向へ動く',inputs:Object.freeze(['秒','歩数']),format:(a,n)=>`${a(0,'秒')}かけて${{right:'画面の右',left:'画面の左',up:'画面の上',down:'画面の下',forward:'前',backward:'後ろ'}[n.direction]}へ${a(1,'歩')}動く`}),
         MOVE: Object.freeze({
-          label: '歩動く',
+          label: '前へ 進む',
           inputs: Object.freeze(['歩数']),
           format: (a) => `前へ${a(0,'歩')}進む`,
         }),
@@ -301,14 +301,14 @@
       const id = kind + (discriminator ? ':' + discriminator.value : '');
       const groups = {
         Script: '動きのまとまり',
-        TargetReference: 'データ',
+        TargetReference: 'へんすう・リスト',
         CommentLine: 'メモ',
         UserActionCall: 'てじゅん',
-        UserFunctionCall: '計算',
-        BuiltinCall: '用意された計算',
+        UserFunctionCall: '答えを もとめる',
+        BuiltinCall: 'はじめから ある 計算',
         SensorRead: 'しらべる',
-        LocalVariableDeclaration: 'この中だけのデータ',
-        LocalListDeclaration: 'この中だけのデータ',
+        LocalVariableDeclaration: 'この中だけの へんすう・リスト',
+        LocalListDeclaration: 'この中だけの へんすう・リスト',
         ReturnStatement: '返す',
         Say: '言う・たずねる',
         Ask: '言う・たずねる',
@@ -323,9 +323,9 @@
         (kind.startsWith('List')
           ? 'リスト'
           : category === 'expression'
-            ? 'かず・データ'
+            ? 'かず・文字'
             : ['Assignment', 'NumericUpdate'].includes(kind)
-              ? 'データ'
+              ? 'へんすう'
               : 'もし・くり返し');
       if (category === 'statement')
         fields = [...fields, field('actorRef', 'だれが動く', 'actor-ref', undefined, { required: false })];
@@ -382,23 +382,23 @@
     };
     const name = (key = 'name', label = '名前', initial = '中身', callable = false) =>
       field(key, label, 'name', initial, { callable });
-    const qualifier = () => field('qualifier', '使う場所', 'qualifier', null);
+    const qualifier = () => field('qualifier', '使う ばしょ', 'qualifier', null);
     const target = () => input('target', 'かえるもの', 'target');
     const expression = (key, label, initial) =>
       input(key, label, 'expression', initial === undefined ? {} : { initial });
     const op = (key, value) => ({ key, value });
     add('Script', 'script', '動きのまとまり',
-      [field('heading', 'できごとの見出し', 'heading', undefined, { required: false })],
+      [field('heading', 'できごとの きっかけ', 'heading', undefined, { required: false })],
       [input('rules', 'つづけて動くルール', 'rule', {
         required: false, multiple: true, minItems: 0, maxItems: LIMITS.activeTasks, variadic: true,
       }),input('units','できごとのまとまり','script',{
         required:false,multiple:true,minItems:1,maxItems:LIMITS.scripts,variadic:true,
       })], [body('body', '動きのまとまり', false)]);
     for (const role of ['expression', 'statement', 'target', 'rule'])
-      add('Hole', role, '空いているところ', [field('label', 'ここに入れるもの', 'string', '中身')],
+      add('Hole', role, 'あいている ところ', [field('label', 'ここに入れるもの', 'string', '中身')],
         [], [], op('role', role), { draftOnly: true, capability: 'draft-hole:' + role });
-    add('QuantityLiteral', 'expression', '数え方をつけた数',
-      [field('unit', '数え方', 'unit', '歩')], [expression('value', '数や計算')], [], null,
+    add('QuantityLiteral', 'expression', 'たんいを つけた 数',
+      [field('unit', 'たんい', 'unit', '歩')], [expression('value', '数や計算')], [], null,
       { capability: 'quantity-value', semanticRoles: ['value', 'unit'] });
     add('UnitlessRead', 'expression', 'たんいを とった数', [], [expression('value', '中身')], [], null,
       { capability: 'unitless-read', semanticRoles: ['value'] });
@@ -413,8 +413,8 @@
         expression('distance', '何歩の速さ', 20)], [], null,
       { capability: 'continuous-state-motion', semanticRoles: ['actorRef', 'condition', 'direction', 'seconds', 'distance'] });
     for (const [value, label, labels] of [
-      ['MOVE_DIRECTION', '向きを決めて進む', ['何歩']],
-      ['GLIDE_DIRECTION', '時間をかけて進む', ['何秒で', '何歩']],
+      ['MOVE_DIRECTION', '向きを決めて 動く', ['何歩']],
+      ['GLIDE_DIRECTION', '時間をかけて 向きを決めて 動く', ['何秒で', '何歩']],
     ]) add('MotionCommand', 'statement', label,
       [field('direction', '進む向き', 'direction', 'right')], [args(labels)], [], op('op', value),
       { palette: '動き', capability: 'absolute-direction-motion:' + value });
@@ -453,7 +453,7 @@
         'statement',
         label,
         [],
-        [target(), expression('index', '番号', 1), expression('value', '値')],
+        [target(), expression('index', '番号', 1), expression('value', '入れる中身')],
       );
     add(
       'ListDelete',
@@ -505,7 +505,7 @@
       'ForEach',
       'statement',
       '中身を1つずつ使ってくり返す',
-      [name('binder', '使う中身の名前', '項目')],
+      [name('binder', '使う中身の名前', 'これ')],
       [input('list', 'リスト', 'expression', { initial: [] })],
       [body('body', 'くり返すこと')],
     );
@@ -514,18 +514,18 @@
       ['WaitUntil', 'きまりに あてはまるまで待つ', 'condition', 'きまり', true],
       ['Say', '言う・話す', 'value', '言うこと', 'こんにちは'],
       ['ReturnStatement', '返す', 'value', '返す答え', 0],
-      ['Ask', 'たずねる', 'question', 'たずねること', ''],
+      ['Ask', 'たずねる', 'question', 'しつもん', ''],
       ['Broadcast', '合図を送る', 'message', '合図', ''],
       ['BroadcastAndWait', '合図を送って待つ', 'message', '合図', ''],
     ])
       add(kind, 'statement', label,
-        kind === 'Broadcast' ? [field('broadcastRef', '知らせの識別', 'reference', undefined, { required: false })] : [],
+        kind === 'Broadcast' ? [field('broadcastRef', 'あとで 待つときの 合図の 名前', 'reference', undefined, { required: false })] : [],
         [expression(key, inputLabel, initial), ...(kind==='Say'?[input('seconds','話す時間','expression',{required:false})]:[])]);
     add(
       'UserActionCall',
       'statement',
       '自分で作ったブロックを動かす',
-      [name('name', '作ったブロックの名前', '動作', true), field('argumentNames', '入れるものの名前', 'argument-names', undefined, { required: false })],
+      [name('name', '作ったブロックの名前', 'てじゅん', true), field('argumentNames', '入れるものの名前', 'argument-names', undefined, { required: false })],
       [
         args([], {
           minItems: 0,
@@ -539,11 +539,11 @@
       'LocalVariableDeclaration',
       'statement',
       'この中だけの へんすうを作る',
-      [name('name', 'へんすうの名前', '結果')],
+      [name('name', 'へんすうの名前', 'けっか')],
       [expression('initial', 'はじめの中身')],
     );
     add('LocalListDeclaration', 'statement', 'この中だけのリストを作る', [
-      name('name', 'リスト名', '結果'),
+      name('name', 'リストの名前', '結果'),
     ]);
     for (const [value, label] of [
       ['THIS', 'この動きを止める'],
@@ -593,7 +593,7 @@
         'expression',
         label,
         [],
-        [expression('value', '値')],
+        [expression('value', '中身')],
         [],
         op('op', value),
       );
@@ -647,8 +647,8 @@
     add(
       'UserFunctionCall',
       'expression',
-      '計算する',
-      [name('name', '計算名', '計算', true), field('argumentNames', '入れるものの名前', 'argument-names', undefined, { required: false })],
+      '答えを もとめる',
+      [name('name', '名前', '計算', true), field('argumentNames', '入れるものの名前', 'argument-names', undefined, { required: false })],
       [
         args([], {
           minItems: 0,
@@ -679,7 +679,7 @@
       );
     for (const [value, label, labels] of [
       ['CONTAINS', '入っている', ['リストまたは文字', 'さがすもの']],
-      ['INDEX_OF', 'さいしょにある番号', ['リストまたは文字', 'さがすもの']],
+      ['INDEX_OF', 'はじめに ある 番号', ['リストまたは文字', 'さがすもの']],
       ['LENGTH', '長さ', ['リストまたは文字']],
       ['STRING_LENGTH', '文字数', ['文字']],
       ['STRING_CHAR', '文字の 何文字目か', ['文字', '番号']],
@@ -714,7 +714,7 @@
               : value === 'KEY_DOWN'
                 ? '空白'
                 : value === 'INPUT_VALUE'
-                  ? '入力欄1'
+                  ? '入力らん1'
                   : 'マウス',
           ),
         ],
@@ -726,17 +726,20 @@
       ['ExtensionCommand', 'statement', 'commands'], ['ExtensionCalculation', 'expression', 'calculations'],
     ]) for (const operation of EXTENSION_HOST.operations(collection)) {
       const labels = operation.args.map(x => x.name);
-      add(kind, category, operation.displayName, [], [args(labels, { initialValues: operation.args.map(extensionDefaultExpression) })], [], { key: 'name', value: operation.name }, { palette: 'あとから入れたブロック' });
+      add(kind, category, operation.displayName, [], [args(labels, { initialValues: operation.args.map(extensionDefaultExpression) })], [], { key: 'name', value: operation.name }, { palette: 'かくちょう' });
     }
     if (EXTENSION_HOST.operations('events').length)
-      add('SensorRead', 'expression', 'あとから入れたできごとの中身', [], [], [], { key: 'sensor', value: '拡張の値' }, { palette: 'あとから入れたブロック' });
+      add('SensorRead', 'expression', 'かくちょうの できごとの 中身', [], [], [], { key: 'sensor', value: '拡張の値' }, { palette: 'かくちょう' });
     return Object.freeze(schemas);
   })();
   const BLOCK_SCHEMA_BY_ID = new Map(BLOCK_SCHEMAS.map((schema) => [schema.id, schema]));
   function blockStructureError(message, path = '') {
     throw new AkariError(
       'P210',
-      `ブロックの組み方に まちがいが あります: ${message}${path ? ' (' + path + ')' : ''}`,
+      `ブロックの組み方に まちがいが あります: ${message}`,
+      0,
+      0,
+      path,
     );
   }
   function syntaxSchema(node, expected) {
@@ -770,7 +773,7 @@
     );
     if (!schema) blockStructureError('未対応の kind / op / 名前です');
     if (expected && schema.category !== expected)
-      blockStructureError('このブロックは ここには入りません。形の合う場所に入れてください');
+      blockStructureError('このブロックは ここには入りません。形の合う ばしょに 入れてください');
     return schema;
   }
   function blockRecord(record, allowed, path) {
@@ -819,7 +822,7 @@
     if (type === 'unit' || type === 'direction') {
       const values = type === 'unit' ? ['歩', '度', '秒', '回', '番目', '点', '個', '％', 'Hz']
         : ['right', 'left', 'up', 'down', 'forward', 'backward'];
-      if (!values.includes(value)) blockStructureError(type === 'unit' ? '登録された数え方を選んでください' : '進む方向を選んでください', path);
+      if (!values.includes(value)) blockStructureError(type === 'unit' ? 'たんいを えらんでください' : '進む 向きを えらんでください', path);
       return value;
     }
     if (type === 'reference' && (typeof value !== 'string' || !value.length))
@@ -831,7 +834,7 @@
       if (typeof value !== 'boolean') blockStructureError('条件の答えが必要です', path);
     } else if (type === 'qualifier') {
       if (![null, 'exact', 'self', 'project'].includes(value))
-        blockStructureError('使う場所の指定が正しくありません', path);
+        blockStructureError('使う ばしょが 正しくありません', path);
     } else {
       if (typeof value !== 'string') blockStructureError('文字が必要です', path);
       if (type === 'name')
@@ -894,7 +897,7 @@
         node.qualifier === null &&
         !bareName(node.name)
       )
-        blockStructureError('名前を【 】でかこむか、使う場所をえらんでください', path);
+        blockStructureError('名前を【 】でかこむか、使う ばしょを えらんでください', path);
       if (Object.hasOwn(node, 'argumentNames') && node.argumentNames !== undefined && (!Array.isArray(node.args) || node.argumentNames.length !== node.args.length))
         blockStructureError('入れるものと名前の数が合いません。同じ数にしてください', path + '.argumentNames');
       for (const slot of schema.inputs) {

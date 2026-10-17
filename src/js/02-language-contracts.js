@@ -43,6 +43,7 @@
   const {
     LIMITS,
     COLOR_NAMES,
+    COLOR_LABELS,
     EVENT_LABELS,
     BUILTIN_META,
     AkariError,
@@ -635,7 +636,7 @@
     if (!c.statementSlot)
       throw new AkariError(
         'P201',
-        'ここには やることを 入れられません。空いている 行か、1行 全部を えらんでから 入れてね',
+        'ここには やることを 入れられません。あいている 行か、1行 全部を えらんでから 入れてね',
       );
     const indent = c.indentText,
       body = (c.head ? '' : indent) + text.split('\n').join('\n' + indent),
@@ -675,9 +676,9 @@
       '言う・たずねる': ['話す', 'はなす', 'しゃべる', '質問', '答え'],
       'もし・くり返し': ['もし', 'くり返す', '繰り返す', '条件'],
       '待つ': ['待つ', 'まつ', '時間', '秒'],
-      '\u30c7\u30fc\u30bf': ['データ', '記録', '変数', '値'],
+      'へんすう': ['へんすう', 'データ', '記録', '変数', '値'],
       '\u30ea\u30b9\u30c8': ['リスト', '一覧', '並べる', 'これ'],
-      'データの中身': ['データ', '記録', '変数', '値'],
+      'へんすう・リストの 中身': ['へんすう', 'データ', '記録', '変数', '値'],
       '\u8a08\u7b97': ['計算', '答え', '値を求める'],
       'てじゅん': ['手順', '呼び出す', '実行'],
     };
@@ -842,18 +843,18 @@
     for (const b of bindings) {
       activeBinding = {name:b.name, qualifier:b.qualifier, kind:b.kind};
       const name = b.text;
-      add('read:' + name, 'データの中身', name, 'expression');
+      add('read:' + name, 'へんすう・リストの 中身', name, 'expression');
       if (!b.readonly && (!pure || b.local)) {
         if (b.kind !== 'list') {
-          add('set:' + name, '\u30c7\u30fc\u30bf', `${name}\u30920\u306b\u3059\u308b`);
-          add('add:' + name, '\u30c7\u30fc\u30bf', `${name}\u306b1\u3092\u8db3\u3059`);
-          add('subtract:' + name, '\u30c7\u30fc\u30bf', `${name}\u304b\u30891\u3092\u5f15\u304f`);
+          add('set:' + name, 'へんすう', `${name}\u30920\u306b\u3059\u308b`);
+          add('add:' + name, 'へんすう', `${name}を1増やす`);
+          add('subtract:' + name, 'へんすう', `${name}を1減らす`);
         }
         if (b.kind !== 'scalar') {
           for (const [id, suffix] of [
             ['append', '\u306e\u6700\u5f8c\u306b1\u3092\u5165\u308c\u308b'],
-            ['insert', '\u306e1\u756a\u76ee\u306b1\u3092\u633f\u5165\u3059\u308b'],
-            ['replace', '\u306e1\u756a\u76ee\u30921\u306b\u5909\u3048\u308b'],
+            ['insert', 'の1番目に1を入れる'],
+            ['replace', 'の1番目を1にかえる'],
             ['delete', '\u306e1\u756a\u76ee\u3092\u6d88\u3059'],
             ['clear', '\u306e\u4e2d\u8eab\u3092\u5168\u90e8\u6d88\u3059'],
           ])
@@ -874,12 +875,12 @@
         for (const suffix of [
           '\u306e\u9577\u3055',
           '\u306e1\u756a\u76ee',
-          '\u306b1\u304c\u542b\u307e\u308c\u3066\u3044\u308b',
+          'に1が入っている',
           '\u30671\u304c\u6700\u521d\u306b\u3042\u308b\u756a\u53f7',
         ])
           add(
             'listExpr:' + name + suffix,
-            'データの中身',
+            'へんすう・リストの 中身',
             name + suffix,
             'expression',
           );
@@ -890,12 +891,12 @@
       const fresh = initialBlockName('けっか', usedNames);
       add(
         'localScalar',
-        'この中だけのデータ',
+        'この中だけの へんすう・リスト',
         `この中だけで使う変数【${fresh}】を作り、最初は0にする`,
       );
       add(
         'localList',
-        'この中だけのデータ',
+        'この中だけの へんすう・リスト',
         `この中だけで使うリスト【${fresh}】を空で作る`,
       );
     }
@@ -915,7 +916,7 @@
     for (const d of project.functions)
       add(
         'function:' + d.id,
-        '計算',
+        '答えを もとめる',
         `（${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】で求めた答え）`,
         'expression', '', {kind:'function', id:d.id, name:d.name},
       );
@@ -989,7 +990,7 @@
       // The written form, as the formatter writes it (1から2のどれか, あまり（…）).
       add(
         'builtin:' + b.name,
-        '用意された計算',
+        'はじめから ある 計算',
         b.name === '乱数' && args.length === 2 ? `${args[0]}から${args[1]}のどれか` : `${BUILTIN_SURFACES[b.name] || b.name}\uff08${args.join('\u3001')}\uff09`,
         'expression',
       );
@@ -1228,7 +1229,7 @@
         `\u540d\u524d\u300c${name}」には 使えない 文字が あります。空白や 「」【】（）［］、※ を けしてね`,
       );
     if (callable && (BUILTIN_NAMES.has(name) || Object.values(BUILTIN_SURFACES).includes(name)))
-      throw new AkariError('F503', `「${name}」はあかりが用意している計算の名前です`);
+      throw new AkariError('F503', `「${name}」は あかりに はじめから ある 計算の 名前です。ちがう 名前に してね`);
     return name;
   }
 
