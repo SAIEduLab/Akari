@@ -10,6 +10,7 @@ export const extensionFoundationIds = Object.freeze([
   'EXTENSION-PROFILE-STRICT-REGISTRATION',
   'EXTENSION-PROFILE-HOST-REQUIREMENT',
   'EXTENSION-PROFILE-RUNTIME-ISOLATION',
+  'EXTENSION-PROFILE-EXAMPLES',
   'EXTENSION-REGISTRATION-COLLISION-TYPES',
   'EXTENSION-INDEPENDENT-CALCULATIONS',
   'EXTENSION-COMMAND-EVENT-STATE',
@@ -47,6 +48,12 @@ export const extensionExpectedObservations = Object.freeze({
   'EXTENSION-PROFILE-STRICT-REGISTRATION': { invalidRejected: 16, engineGuards: 6, duplicateRejected: true, canonicalHash: true },
   'EXTENSION-PROFILE-HOST-REQUIREMENT': { standardAccepted: true, mismatchRejected: true, unknownRejected: true, wrongSelectionRejected: true, unchangedSelection: true },
   'EXTENSION-PROFILE-RUNTIME-ISOLATION': { standardComponents: 500, derivedComponents: 501, isolated: true },
+  // extensions/examples/profile.js: a finite profile with four larger ceilings and an
+  // unlimited profile (null = no software ceiling); every other limit inherits Standard.
+  'EXTENSION-PROFILE-EXAMPLES': { ids: ['demo.roomy@1.0.0', 'demo.unlimited@1.0.0'],
+    roomy: { components: 600, sourceEach: 150000, listItems: 20000, functionOps: 2000000 }, roomyInherits: true,
+    unlimited: ['components', 'sourceEach', 'listItems', 'functionOps'], unlimitedInherits: true,
+    roomyRuntimeComponents: 600, standardComponents: 500, sameAsScript: true, alteredDetected: true },
   'EXTENSION-REGISTRATION-COLLISION-TYPES': { duplicateRejected: true, invalidNumberRejected: true, promiseCalculationRejected: true },
   'EXTENSION-INDEPENDENT-CALCULATIONS': { doubled: 14, shouted: 'HELLO!', independent: true },
   'EXTENSION-COMMAND-EVENT-STATE': { remembered: 9, value: 9, event: 9, restored: 9 },

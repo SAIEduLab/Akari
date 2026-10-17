@@ -8,11 +8,11 @@ export function expectedLanguageIds(manifest) {
   return [...manifest.cases.map(c=>'LANG-SURFACE-'+c.id+'/'+c.key),
     ...Array.from({length:37},(_,i)=>([31,32].includes(i)?'RELEASE-INLINE-REPLACES-':'')+'LANG-SURFACE-NEG-'+String(i+1).padStart(3,'0')),
     ...inlineCases.map(c=>c.id),...inlineNegative.map(([id])=>'RELEASE-INLINE-NEG/'+id),
-    ...['003','004','005','006','007','009','012','015'].map(n=>'LANG-ORDER-'+n),'LANG-SURFACE-INDEPENDENT-VALUES'];
+    ...['003','004','005','006','007','009','012','015'].map(n=>'LANG-ORDER-'+n),'LANG-SURFACE-INDEPENDENT-VALUES','LANG-BUILTIN-INDEPENDENT-VALUES'];
 }
 export function verifyLanguageResults(report,manifest,currentSnapshot) {
   const expected=expectedLanguageIds(manifest);
-  assert.equal(new Set(expected).size,605,'authority incomplete/duplicate');
+  assert.equal(new Set(expected).size,606,'authority incomplete/duplicate');
   assert.equal(report.total,expected.length);
   assert.deepEqual([...report.results].map(r=>r.id).sort(),expected.sort());
   const byId=new Map(report.results.map(r=>[r.id,r]));

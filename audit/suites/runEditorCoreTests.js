@@ -650,6 +650,26 @@ function runEditorCoreTests() {
         }).enabled,
       );
     });
+    // LANGUAGE.md 数・単位・発言: a new block starts with the movement 10歩. The palette
+    // inserts the node that blockInsertionAvailability prepares for the chosen place.
+    test('palette motion blocks start at ten steps', () => {
+      const context = { targetId: 'sprite-1', event: 'start' },
+        project = makeDefaultProject(),
+        tenSteps = [{ kind: 'QuantityLiteral', value: { kind: 'NumberLiteral', value: 10 }, unit: '歩' }];
+      project.scripts = [{ targetId: 'sprite-1', event: 'start', source: '' }];
+      for (const [schemaId, op] of [['MotionCommand:MOVE', 'MOVE'], ['MotionCommand:MOVE_DIRECTION', 'MOVE_DIRECTION']]) {
+        const session = createEditorSession('script:sprite-1:start', '', context, project, 1),
+          location = { parentId: session.blockView.id, body: 'body', index: 0 },
+          available = blockInsertionAvailability(session, schemaId, location, { project, context });
+        ok(available.enabled && available.node?.schemaId === schemaId, schemaId + ' palette insertion: ' + available.reason);
+        const result = prepare(session, { type: 'insert', ...location, node: available.node }),
+          body = parseScript(result.source, buildSymbols(project), context).body,
+          args = JSON.parse(JSON.stringify(body[0]?.args ?? null, (key, value) => (key === 'sourceSpan' ? undefined : value)));
+        ok(body.length === 1 && body[0].kind === 'MotionCommand' && body[0].op === op, schemaId + ' inserted statement');
+        ok(stableJson(args) === stableJson(tenSteps), schemaId + ' default distance: ' + result.source);
+        ok(result.source.includes('10歩'), schemaId + ' source shows 10歩: ' + result.source);
+      }
+    });
     return {
       total: results.length,
       passed: results.filter((x) => x.pass).length,

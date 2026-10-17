@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "7f4909915db507623e6309a09d1b738f9f5513162717e9e8c566e128fc842304",
+  "fixedIdSha256": "6d05c0e705da82c33fab33d6916f4c881b73c6d46429e3244ad13718a2bd5efd",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -75,7 +75,8 @@
         "TEST-EDITOR long source focus ranges stay bounded and preserve intermediate access",
         "TEST-EDITOR availability preview preserves pending transaction and commit gate",
         "TEST-EDITOR availability generated names stay valid through collision boundary",
-        "TEST-EDITOR availability shares definite context restrictions and preserves dynamic types"
+        "TEST-EDITOR availability shares definite context restrictions and preserves dynamic types",
+        "TEST-EDITOR palette motion blocks start at ten steps"
       ],
       "environments": [
         "chromium"

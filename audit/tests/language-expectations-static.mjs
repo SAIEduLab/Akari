@@ -9,7 +9,7 @@ assert.equal(finiteCases.length,256);assert.equal(new Set(finiteCases.map(c=>c.i
 assert.deepEqual(finiteCases,manifest.cases.map(({id,key,source,canonical})=>({id,key,source,canonical})));
 assert.equal(sha(JSON.stringify(manifest.cases)),'446d85eb150db6afe8bc034bd41286206cf5799d63c557014a17c88e7b7098ef','independent source/canonical AST expectations');
 assert.equal(sha(JSON.stringify({golden:expected.golden,corpus:expected.corpus,schemaIds:expected.schemaIds})),'e598af3dcac3ea34ae32a362500dcd823b2312040ca9b8e8501719b63a1f4a24','independent runtime/corpus expectations');
-const ids=expectedLanguageIds(manifest);assert.equal(ids.length,605);assert.equal(new Set(ids).size,ids.length);
+const ids=expectedLanguageIds(manifest);assert.equal(ids.length,606);assert.equal(new Set(ids).size,ids.length);
 assert.deepEqual(Object.keys(expected.golden).sort(),manifest.cases.map(c=>c.id+'/'+c.key).sort());
 for(const c of manifest.cases){assert.ok(c.source&&c.canonical&&c.canonicalAst);assert.ok(expected.golden[c.id+'/'+c.key]);}
 assert.equal(expected.corpus.length,95);assert.deepEqual(expected.schemaIds,oracle.schemaIds);
