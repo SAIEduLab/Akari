@@ -7,6 +7,8 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {currentProductFile} from '../lib/product-path.cjs';
+import productDialogs from '../lib/product-dialogs.cjs';
+const {answerProductConfirms}=productDialogs;
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {samplesFeature,sampleTestIds,sampleExpected,verifySamples} from '../lib/samples-contract.mjs';
@@ -48,7 +50,7 @@ async function command(page,node,action){await U.nodeAction(node,action);}
 async function checkHistory(page,before){const after=await source(page);assert.notEqual(after,before);await page.locator('#undoBtn').click();assert.equal(await source(page),before);await page.locator('#redoBtn').click();assert.equal(await source(page),after);await page.locator('#undoBtn').click();return after;}
 try{await withBrowser(chrome,async browser=>{
  report.environment.browser=browser.version();assert.equal(browser.version(),browserEnvironment.version);assert.equal(report.environment.playwright,browserEnvironment.playwright);
- const test=(id,fn)=>row(id,()=>pageFor(browser,product,async page=>{page.setDefaultTimeout(10000);page.on('dialog',d=>d.accept());page.on('pageerror',e=>report.pageErrors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});await page.setViewportSize({width:1366,height:900});try{return await fn(page);}catch(e){await page.screenshot({path:path.join(dir,'failure-'+id+'.png')}).catch(()=>{});throw e;}}));
+ const test=(id,fn)=>row(id,()=>pageFor(browser,product,async page=>{page.setDefaultTimeout(10000);page.on('dialog',d=>d.accept());await answerProductConfirms(page,true);page.on('pageerror',e=>report.pageErrors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});await page.setViewportSize({width:1366,height:900});try{return await fn(page);}catch(e){await page.screenshot({path:path.join(dir,'failure-'+id+'.png')}).catch(()=>{});throw e;}}));
  await test('SAMPLES-CHOICE-CONFIRM',async page=>{
   const original=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),false);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);assert.deepEqual(await fingerprint(page),original);await page.locator('#samplePickerClose').click();assert.deepEqual(await fingerprint(page),original);
   await page.locator('#sampleBtn').click();await page.keyboard.press('Escape');assert.deepEqual(await fingerprint(page),original);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),false);
