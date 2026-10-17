@@ -38,7 +38,7 @@ export const changeGuardCaseIds=Object.freeze([
   'removed/product-suite','removed/product-test','removed/language-test','removed/workflow-job','removed/workflow-entry',
   'pin/changed','pin/removed',
   'label/approves-removal','label/other-label-only','label/missing-event','label/payload-without-labels','label/unreadable-payload',
-  'version/source-changed-without-bump','version/product-changed-without-bump','version/patch-bump-accepted','version/patch-skipped','version/minor-bump','version/bump-without-product-change','version/label-does-not-excuse',
+  'version/source-changed-without-bump','version/product-changed-without-bump','version/patch-bump-accepted','version/patch-skipped','version/patch-skipped-with-label','version/minor-bump','version/minor-bump-with-label','version/major-bump-with-label','version/lower-with-label','version/bump-without-product-change','version/label-does-not-excuse',
   'release/two-manifests','release/wrong-name','release/missing',
   'identity/head-evaluation-failure','identity/no-merge-base']);
 
