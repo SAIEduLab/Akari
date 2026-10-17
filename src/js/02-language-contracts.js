@@ -151,7 +151,7 @@
         id: 'ListReplace',
         kind: 'ListReplace',
         op: '',
-        source: '名前一覧の1番目を「ひかり」に変える',
+        source: '名前一覧の1番目を「ひかり」にかえる',
       },
       {
         id: 'ListInsert',
@@ -229,13 +229,13 @@
         id: 'MotionCommand:GOTO',
         kind: 'MotionCommand',
         op: 'GOTO',
-        source: '横100、縦50の位置へ行く',
+        source: 'よこ100、たて50のばしょへ行く',
       },
       {
         id: 'MotionCommand:GLIDE',
         kind: 'MotionCommand',
         op: 'GLIDE',
-        source: '横200、縦100の位置へ1秒かけて動く',
+        source: 'よこ200、たて100のばしょへ1秒かけて動く',
       },
       {
         id: 'MotionCommand:TURN_RIGHT',
@@ -259,13 +259,13 @@
         id: 'MotionCommand:SET_X',
         kind: 'MotionCommand',
         op: 'SET_X',
-        source: '横位置を100にする',
+        source: 'よこのばしょを100にする',
       },
       {
         id: 'MotionCommand:SET_Y',
         kind: 'MotionCommand',
         op: 'SET_Y',
-        source: '縦位置を50にする',
+        source: 'たてのばしょを50にする',
       },
       {
         id: 'MotionCommand:POINT_TO',
@@ -475,43 +475,43 @@
         id: 'CloneCommand:CREATE_SELF',
         kind: 'CloneCommand',
         op: 'CREATE_SELF',
-        source: '自分の分身を作る',
+        source: '自分のコピーを作る',
       },
       {
         id: 'CloneCommand:CREATE_TARGET',
         kind: 'CloneCommand',
         op: 'CREATE_TARGET',
-        source: '「マスコット」の分身を作る',
+        source: '「マスコット」のコピーを作る',
       },
       {
         id: 'CloneCommand:DELETE_SELF',
         kind: 'CloneCommand',
         op: 'DELETE_SELF',
-        source: 'この分身だけを消す',
+        source: 'このコピーだけを消す',
       },
       {
         id: 'StopCommand:THIS',
         kind: 'StopCommand',
         op: 'THIS',
-        source: 'この実行を止める',
+        source: 'この動きを止める',
       },
       {
         id: 'StopCommand:OTHERS',
         kind: 'StopCommand',
         op: 'OTHERS',
-        source: 'ほかの実行をすべて止める',
+        source: 'ほかの動きをぜんぶ止める',
       },
       {
         id: 'StopCommand:ALL',
         kind: 'StopCommand',
         op: 'ALL',
-        source: '作品全体を止める',
+        source: '作品ぜんぶを止める',
       },
       {
         id: 'LooksCommand:SET_SELF_TEXT',
         kind: 'LooksCommand',
         op: 'SET_SELF_TEXT',
-        source: '自分の文字を「文字」に変える',
+        source: '自分の文字を「文字」にかえる',
       },
       {
         id: 'LooksCommand:SET_INPUT',
@@ -635,7 +635,7 @@
     if (!c.statementSlot)
       throw new AkariError(
         'P201',
-        '\u547d\u4ee4\u306f\u7a7a\u306e\u884c\u304b\u3001\u884c\u5168\u4f53\u3092\u9078\u3093\u3067\u633f\u5165\u3057\u307e\u3059',
+        'ここには やることを 入れられません。空いている 行か、1行 全部を えらんでから 入れてね',
       );
     const indent = c.indentText,
       body = (c.head ? '' : indent) + text.split('\n').join('\n' + indent),
@@ -660,26 +660,26 @@
       LooksCommand: '\u898b\u305f\u76ee',
       PenCommand: '\u30da\u30f3',
       SoundCommand: '\u97f3',
-      CloneCommand: '分身',
-      StopCommand: '\u505c\u6b62',
-      Say: '\u8868\u793a\u30fb\u5165\u529b',
-      Ask: '\u8868\u793a\u30fb\u5165\u529b',
-      Broadcast: '\u77e5\u3089\u305b',
-      BroadcastAndWait: '\u77e5\u3089\u305b',
-      WaitTime: '\u5f85\u6a5f',
-      WaitUntil: '\u5f85\u6a5f',
+      CloneCommand: 'コピー',
+      StopCommand: '止める',
+      Say: '言う・たずねる',
+      Ask: '言う・たずねる',
+      Broadcast: '合図',
+      BroadcastAndWait: '合図',
+      WaitTime: '待つ',
+      WaitUntil: '待つ',
     };
     const intentTerms = {
       '\u52d5\u304d': ['動く', 'うごく', '移動', '進む', 'すすむ'],
       '\u898b\u305f\u76ee': ['見せる', 'かくす', '表示', '話す', 'しゃべる'],
-      '\u8868\u793a\u30fb\u5165\u529b': ['話す', 'はなす', 'しゃべる', '質問', '答え'],
-      '\u6761\u4ef6\u30fb\u53cd\u5fa9': ['もし', 'くり返す', '繰り返す', '条件'],
-      '\u5f85\u6a5f': ['待つ', 'まつ', '時間', '秒'],
+      '言う・たずねる': ['話す', 'はなす', 'しゃべる', '質問', '答え'],
+      'もし・くり返し': ['もし', 'くり返す', '繰り返す', '条件'],
+      '待つ': ['待つ', 'まつ', '時間', '秒'],
       '\u30c7\u30fc\u30bf': ['データ', '記録', '変数', '値'],
-      '\u30ea\u30b9\u30c8': ['リスト', '一覧', '並べる', '項目'],
-      '\u5024\u30fb\u30c7\u30fc\u30bf': ['データ', '記録', '変数', '値'],
+      '\u30ea\u30b9\u30c8': ['リスト', '一覧', '並べる', 'これ'],
+      'データの中身': ['データ', '記録', '変数', '値'],
       '\u8a08\u7b97': ['計算', '答え', '値を求める'],
-      '\u52d5\u4f5c': ['手順', '呼び出す', '実行'],
+      'てじゅん': ['手順', '呼び出す', '実行'],
     };
     let activeBinding = null;
     const add = (id, category, text, mode = 'statement', reason = '', binding = activeBinding) => {
@@ -689,7 +689,7 @@
       if (mode === 'statement' && !place.statementSlot)
         reason =
           reason ||
-          '\u884c\u306e\u9014\u4e2d\u3067\u306f\u5f0f\u306e\u5019\u88dc\u3092\u4f7f\u3044\u307e\u3059';
+          '行の とちゅうでは 計算だけ 使えます';
       const schemaKey = hintSchemaId(id);
       const semanticForms = SENTENCE_FORMS.filter(form =>
         schemaKey === form.id ||
@@ -733,7 +733,7 @@
     const n = bindings.find((x) => x.kind !== 'list' && typeof x.value === 'number'),
       v = n?.text || '0',
       usedNames = new Set(bindings.map((x) => x.name)),
-      binder = initialBlockName('\u9805\u76ee', usedNames);
+      binder = initialBlockName('これ', usedNames);
     for (const x of COMMAND_CATALOG) {
       let text = x.source,
         reason = '';
@@ -789,7 +789,7 @@
             'SET_INPUT',
           ].includes(x.op));
       if (actorRequired && type === 'stage')
-        reason = '\u90e8\u54c1\u3092\u5bfe\u8c61\u306b\u3057\u307e\u3059';
+        reason = 'キャラクターや 部品で 使えます';
       if (x.kind === 'LooksCommand' && x.op.includes('COSTUME')) {
         if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'SET_COSTUME') {
@@ -798,7 +798,7 @@
           if (!co)
             reason =
               reason ||
-              '\u547c\u3073\u51fa\u3057\u5143\u306e\u8863\u88c5\u540d\u306b\u5909\u66f4\u3057\u307e\u3059';
+              '使う キャラクターの すがたの 名前に かえます';
         }
       }
       if (x.op === 'SET_BACKDROP')
@@ -808,11 +808,11 @@
         x.op === 'SET_SELF_TEXT' &&
         !['label', 'button', 'box', 'any'].includes(type)
       )
-        reason = '\u6587\u5b57\u30fb\u30dc\u30bf\u30f3\u30fb\u56db\u89d2\u5c02\u7528\u3067\u3059';
+        reason = '文字・ボタン・四角だけで 使えます';
       if (x.op === 'SET_INPUT') {
         const c = project.components.find((c) => c.type === 'input');
-        text = `\u300c${c?.name || '\u5165\u529b\u6b041'}\u300d\u306b\u300c\u3053\u3093\u306b\u3061\u306f\u300d\u3092\u5165\u308c\u308b`;
-        if (!c) reason = '\u5165\u529b\u6b04\u3092\u5148\u306b\u4f5c\u308a\u307e\u3059';
+        text = `\u300c${c?.name || '入力らん1'}\u300d\u306b\u300c\u3053\u3093\u306b\u3061\u306f\u300d\u3092\u5165\u308c\u308b`;
+        if (!c) reason = '入力らんを 先に 作ります';
       }
       if (x.op === 'SET_TARGET_TEXT') {
         const c = project.components.find((c) => ['label', 'button', 'box'].includes(c.type));
@@ -824,25 +824,25 @@
       if (x.kind === 'CloneCommand') {
         if (x.op === 'CREATE_TARGET') {
           const c = project.components.find((c) => c.type === 'sprite');
-          text = `\u300c${c?.name || '\u661f'}\u300dの分身を作る`;
+          text = `\u300c${c?.name || '\u661f'}\u300dのコピーを作る`;
           if (!c) reason = 'キャラクターを先に作ります';
         } else if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'DELETE_SELF' && !kind && event !== 'cloneStart')
-          reason = '分身ができたときの動きで使います';
+          reason = 'コピーが できたときの 動きで 使います';
       }
       if (x.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(x.op)) {
         const snd = project.sounds[0];
         text = `音「${snd?.name || 'ベル'}」を${x.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}`;
-        if (!snd) reason = '\u97f3\u7d20\u6750\u3092\u5148\u306b\u8ffd\u52a0\u3057\u307e\u3059';
+        if (!snd) reason = '音を 先に 入れます';
       }
-      add(x.id, labels[x.kind] || '\u6761\u4ef6\u30fb\u53cd\u5fa9', text, 'statement', reason);
+      add(x.id, labels[x.kind] || 'もし・くり返し', text, 'statement', reason);
     }
     if (!pure) add('MotionCommand:MOVE_DIRECTION', '動き', '画面の右へ10歩動く。', 'statement',
-      type === 'stage' ? '部品を対象にします' : '');
+      type === 'stage' ? 'キャラクターや 部品で 使えます' : '');
     for (const b of bindings) {
       activeBinding = {name:b.name, qualifier:b.qualifier, kind:b.kind};
       const name = b.text;
-      add('read:' + name, '\u5024\u30fb\u30c7\u30fc\u30bf', name, 'expression');
+      add('read:' + name, 'データの中身', name, 'expression');
       if (!b.readonly && (!pure || b.local)) {
         if (b.kind !== 'list') {
           add('set:' + name, '\u30c7\u30fc\u30bf', `${name}\u30920\u306b\u3059\u308b`);
@@ -879,7 +879,7 @@
         ])
           add(
             'listExpr:' + name + suffix,
-            '\u5024\u30fb\u30c7\u30fc\u30bf',
+            'データの中身',
             name + suffix,
             'expression',
           );
@@ -887,15 +887,15 @@
     }
     activeBinding = null;
     if (kind && place.declarationSlot) {
-      const fresh = initialBlockName('\u7d50\u679c', usedNames);
+      const fresh = initialBlockName('けっか', usedNames);
       add(
         'localScalar',
-        '\u5c40\u6240\u30c7\u30fc\u30bf',
+        'この中だけのデータ',
         `この中だけで使う変数【${fresh}】を作り、最初は0にする`,
       );
       add(
         'localList',
-        '\u5c40\u6240\u30c7\u30fc\u30bf',
+        'この中だけのデータ',
         `この中だけで使うリスト【${fresh}】を空で作る`,
       );
     }
@@ -908,7 +908,7 @@
       if (!pure)
         add(
           'action:' + d.id,
-          '\u52d5\u4f5c',
+          'てじゅん',
           `${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】という手順を行う`,
           'statement', '', {kind:'action', id:d.id, name:d.name},
         );
@@ -945,7 +945,8 @@
         ['\u8863\u88c5\u756a\u53f7', '\u8863\u88c5\u540d'].includes(sensor)
       )
         continue;
-      add('sensor:' + sensor, '\u72b6\u614b', sensor, 'expression');
+      // The candidate is the written word (SENSOR_SURFACES), not the internal sensor name.
+      add('sensor:' + sensor, 'しらべる', SENSOR_SURFACES[sensor] || sensor, 'expression');
     }
     const exprs = [
       '2\uff0b3\u00d74',
@@ -979,7 +980,7 @@
       if (c.type === 'input') exprs.push(`\u300c${c.name}\u300dの中身`);
     for (const operation of EXTENSION_HOST.operations('calculations')) exprs.push(extensionSurface(operation.name,true,operation.args.map(extensionDefaultExpression)));
     if (EXTENSION_HOST.operations('events').length) exprs.push('拡張「できごとの値」');
-    for (const text of exprs) add('expr:' + text, '\u5f0f', text, 'expression');
+    for (const text of exprs) add('expr:' + text, '計算', text, 'expression');
     for (const b of GRAMMAR_REGISTRY.builtins) {
       const args =
         b.name === '\u6570'
@@ -1013,6 +1014,8 @@
       '作品',
       '横位置',
       '縦位置',
+      'よこのばしょ',
+      'たてのばしょ',
       '方向',
       '大きさ',
       '答え',
@@ -1082,6 +1085,8 @@
 
   const BUILTIN_NAMES = new Set(BUILTIN_META.keys());
   const FIXED_SENSORS = [...GRAMMAR_REGISTRY.sensors];
+  // Written words of sensors whose internal name differs (the standard spelling the formatter writes).
+  const SENSOR_SURFACES = Object.freeze({ 'クローンである': 'コピーである', '横位置': 'よこのばしょ', '縦位置': 'たてのばしょ' });
   const GRAMMAR_HINTS = GRAMMAR_REGISTRY.hints;
 
   // Ephemeral UTF-16 source coordinates. Never serialized or part of the semantic AST.
@@ -1098,7 +1103,7 @@
         protectedAt[i] = 1;
         if (['」','』'].includes(quote) && ch === '\\') {
           if (!['\\', quote === '』' ? '『' : '「', quote].includes(text[i + 1]))
-            throw new AkariError('N103', '文字列では\\「、\\」、\\\\だけを使えます', 0, i + 1);
+            throw new AkariError('N103', '「」の 中で \\ を 使うときは、\\「、\\」、\\\\ の どれかに してね', 0, i + 1);
           protectedAt[++i] = 1;
         } else if (ch === quote) quote = '';
         continue;
@@ -1134,7 +1139,7 @@
       const ch = raw[i];
       if (quote) {
         if (['」','』'].includes(quote) && ch === '\\') {
-          if (!['\\',quote === '』' ? '『' : '「',quote].includes(raw[i+1])) throw new AkariError('N103','未知の文字列エスケープです');
+          if (!['\\',quote === '』' ? '『' : '「',quote].includes(raw[i+1])) throw new AkariError('N103','「」の 中の \\ の 使い方が ちがいます。\\「、\\」、\\\\ の どれかに してね');
           i++;
         } else if (ch === quote) quote = '';
       } else if (ch === '「' || ch === '『' || ch === '【') quote = ch === '「' ? '」' : ch === '『' ? '』' : '】';
@@ -1185,7 +1190,7 @@
     if (typeof name !== 'string' || cpLen(name) < 1 || cpLen(name) > 32)
       throw new AkariError(
         'F503',
-        '\u540d\u524d\u306f1\u301c32\u6587\u5b57\u3067\u6307\u5b9a\u3057\u307e\u3059',
+        '名前は 1〜32文字で つけてね',
       );
     if (
       /[\p{Cc}\p{Zl}\p{Zp}\s\u300c\u300d\u3010\u3011\uff08\uff09\uff3b\uff3d\u3001\u203b]/u.test(
@@ -1194,7 +1199,7 @@
     )
       throw new AkariError(
         'F503',
-        `\u540d\u524d\u300c${name}\u300d\u306b\u306f\u4f7f\u3048\u306a\u3044\u6587\u5b57\u304c\u3042\u308a\u307e\u3059\u3002\u82f1\u6570\u5b57\u306f\u534a\u89d2\u306b\u3057\u3066\u304f\u3060\u3055\u3044`,
+        `\u540d\u524d\u300c${name}」には 使えない 文字が あります。空白や 「」【】（）［］、※ を けしてね`,
       );
     if (callable && BUILTIN_NAMES.has(name))
       throw new AkariError('F503', `「${name}」はあかりが用意している計算の名前です`);

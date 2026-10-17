@@ -11,11 +11,26 @@ export const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.met
 export const templatePath = 'src/akari.html';
 // Directories whose every file must be included exactly once.
 export const sourceDirectories = ['src/css', 'src/js'];
+// Extension sources that the product embeds; each must be embedded exactly once.
+export const portableExtensions = ['extensions/profiles.js', 'extensions/foundation.js'];
 
 const includeLine = /^<!-- @include ([a-z0-9][a-z0-9/._-]*) -->$/;
 const portableLine = /^\/\/ @portable (extensions\/[a-z0-9._-]+\.js)$/;
 const releaseLine = /^ {2}const PRODUCT_RELEASE = '(\d+\.\d+\.\d+)';$/m;
 const exportLine = /^if \(typeof (?:module|globalThis) !== 'undefined'.*;$/;
+// An include names a file directly inside a source directory; a portable line names an allowed extension.
+const includeDirective = {
+  pattern: includeLine,
+  written: name => 'src/' + name,
+  allowed: target => sourceDirectories.includes(path.posix.dirname(target)) && !target.endsWith('/'),
+  refusal: 'include outside ' + sourceDirectories.join(' or '),
+};
+const portableDirective = {
+  pattern: portableLine,
+  written: name => name,
+  allowed: target => portableExtensions.includes(target),
+  refusal: 'not an allowed portable extension',
+};
 
 const readText = root => file => fs.readFileSync(path.join(root, file), 'utf8');
 const listFiles = root => dir => fs.readdirSync(path.join(root, dir)).sort().map(name => dir + '/' + name);
@@ -32,28 +47,33 @@ function portableSource(text, file) {
   return body.slice(0, cut + 1);
 }
 
-function expand(text, file, read, used, pattern, resolve) {
+function expand(text, file, read, used, directive) {
   requireLines(text, file);
   return text.slice(0, -1).split('\n').map(line => {
-    const match = line.match(pattern);
+    const match = line.match(directive.pattern);
     if (!match) {
       if (line.includes('@include ') || line.includes('@portable ')) throw Error(file + ': malformed directive: ' + line);
       return line + '\n';
     }
-    const target = resolve(match[1]);
+    // The normalized path is the target's identity; any other spelling of it is an alias.
+    const written = directive.written(match[1]), target = path.posix.normalize(written);
+    if (!directive.allowed(target)) throw Error(file + ': ' + directive.refusal + ': ' + match[1]);
     if (used.has(target)) throw Error(file + ': included twice: ' + target);
+    if (written !== target) throw Error(file + ': include alias: ' + match[1] + ' names ' + target);
     used.add(target);
-    return target.endsWith('.js') && target.startsWith('extensions/')
+    return directive === portableDirective
       ? portableSource(read(target), target)
-      : expand(read(target), target, read, used, portableLine, name => name);
+      : expand(read(target), target, read, used, portableDirective);
   }).join('');
 }
 
 export function buildProduct({root = repositoryRoot, read = readText(root), list = listFiles(root)} = {}) {
   const used = new Set();
-  const html = expand(read(templatePath), templatePath, read, used, includeLine, name => 'src/' + name);
+  const html = expand(read(templatePath), templatePath, read, used, includeDirective);
   const unused = sourceDirectories.flatMap(list).filter(file => !used.has(file));
   if (unused.length) throw Error('source files not included: ' + unused.join(', '));
+  const unembedded = portableExtensions.filter(file => !used.has(file));
+  if (unembedded.length) throw Error('portable extensions not embedded: ' + unembedded.join(', '));
   const release = html.match(releaseLine);
   if (!release) throw Error('PRODUCT_RELEASE not found');
   return {file: 'Akari_' + release[1].replaceAll('.', '_') + '.html', html, sources: [templatePath, ...used]};

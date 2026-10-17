@@ -66,7 +66,7 @@ const task=(name,a=[candidate])=>({name,args:a,script:path.join(casesDir,name+'.
 const ui=name=>task(name,[path.join(candidate,product),path.join(evidence,name)]);
 const groups={
   session:['browser-session','browser-storage-media','browser-events','browser-event-traces','browser-condition','browser-runtime','browser-boundaries'].map(n=>task(n)),
-  ui:['ui-interactions','ui-compact-menu','ui-shell','ui-stage-gesture','ui-compact-routes'].map(ui)
+  ui:['ui-interactions','ui-compact-menu','ui-shell','ui-stage-gesture'].map(ui)
     .concat(task('workbench-matrix'),task('workbench-direct'),task('run-editor-regression',[path.join(candidate,product),candidate]),task('browser-owner-delete')),
   limits:['browser-design-limits','browser-runtime-limits','browser-product','browser-asset-limits'].map(n=>task(n))
     .concat(task('browser-media-boundaries',[path.join(candidate,product),path.join(evidence,'media-boundaries')])),

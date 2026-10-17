@@ -1,3 +1,4 @@
+const {answerProductConfirms}=require('../../lib/product-dialogs.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
@@ -21,7 +22,7 @@ async function main() {
   const report={sourceFile,htmlSha256:hash,htmlBytes:bytes.length,node:process.version,browser:browser.version(),results,pageErrors,networkRequests};
   context.on('page', p=>{p.on('pageerror',e=>pageErrors.push(e.message));p.on('dialog',dialog=>dialog.type()==='beforeunload'?dialog.accept():dialog.accept());});
   await context.route(/^https?:\/\//,route=>{networkRequests.push(route.request().url());return route.abort();});
-  const page=await context.newPage();
+  const page=await context.newPage();await answerProductConfirms(page);
   page.setDefaultTimeout(15000);
   const test=async(id,fn)=>{try{const evidence=await fn();results.push({id,pass:true,evidence});console.log('PASS '+id);}catch(e){results.push({id,pass:false,error:e.stack});console.log('FAIL '+id+': '+e.message);throw e;}};
   const currentSource=()=>page.evaluate(()=>{const A=globalThis.Akari;return A.app.project.scripts.find(s=>s.targetId==='stage'&&s.event==='start')?.source||'';});
@@ -46,8 +47,8 @@ async function main() {
       return {input:source,formatted,undoExact:true,redoExact:true};
     });
     await test('diagnose-run-stop',async()=>{
-      await (await reveal(page.locator('#diagnoseBtn'))).click();await page.locator('#diagnosisModal.show').waitFor();const diagnosis=await page.locator('#diagnosisBody').innerText();assert.match(diagnosis,/作品は実行できます/);await (await reveal(page.locator('#diagnosisClose'))).click();
-      await (await reveal(page.locator('#runBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='実行中');
+      await (await reveal(page.locator('#diagnoseBtn'))).click();await page.locator('#diagnosisModal.show').waitFor();const diagnosis=await page.locator('#diagnosisBody').innerText();assert.match(diagnosis,/✓ 作品は 動かせます/);await (await reveal(page.locator('#diagnosisClose'))).click();
+      await (await reveal(page.locator('#runBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='動いているよ');
       await score().filter({hasText:/^3$/}).waitFor();assert.equal(await page.locator('#codeEditor').getAttribute('readonly'),'');
       await (await reveal(page.locator('#stopBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっています');assert.equal(await page.locator('#codeEditor').inputValue(),formatted);
       return {diagnosis,runtimeScore:3,stopState:'止まっています',sourcePreserved:true};
@@ -62,7 +63,7 @@ async function main() {
       await (await reveal(page.locator('#callableSave'))).click();await (await reveal(page.locator('#procClose'))).click();
       source='点数を0にする。\n増加（3）を実行する。\n点数を二倍（点数）にする。\nつなぐ（「検証完了：」、点数）を言う。';
       await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();await waitHistory();assert.deepEqual(await compileErrors(),[]);
-      await (await reveal(page.locator('#runBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='実行中');await score().filter({hasText:/^6$/}).waitFor();
+      await (await reveal(page.locator('#runBtn'))).click();await page.waitForFunction(()=>document.querySelector('#runState').textContent==='動いているよ');await score().filter({hasText:/^6$/}).waitFor();
       await (await reveal(page.locator('#stopBtn'))).click();assert.equal(await currentSource(),source);
       return {draftsUnregisteredUntilSave:true,action:'増加（値）',function:'二倍（元値）',runtimeScore:6};
     });
@@ -77,8 +78,8 @@ async function main() {
         await page.screenshot({path:path.join(outputDir,`editor-${width}.png`),fullPage:true});
       }
       for(const [width,height]of [[1440,900],[390,844],[320,568]]){
-        await page.setViewportSize({width,height});await (await reveal(page.locator('#diagnoseBtn'))).click();await page.locator('#diagnosisModal.show').waitFor();assert.match(await page.locator('#diagnosisBody').innerText(),/作品は実行できます/);await (await reveal(page.locator('#diagnosisClose'))).click();
-        await (await reveal(page.locator('#procBtn'))).click();await page.locator('#procModal.show').waitFor();await (await reveal(page.locator('#callableSelect'))).selectOption({label:'答えを求める：二倍'});assert.equal(await page.locator('#callableCode').inputValue(),'元値×2を返す。');await (await reveal(page.locator('#procClose'))).click();
+        await page.setViewportSize({width,height});await (await reveal(page.locator('#diagnoseBtn'))).click();await page.locator('#diagnosisModal.show').waitFor();assert.match(await page.locator('#diagnosisBody').innerText(),/✓ 作品は 動かせます/);await (await reveal(page.locator('#diagnosisClose'))).click();
+        await (await reveal(page.locator('#procBtn'))).click();await page.locator('#procModal.show').waitFor();await (await reveal(page.locator('#callableSelect'))).selectOption({label:'答えを もとめる：二倍'});assert.equal(await page.locator('#callableCode').inputValue(),'元値×2を返す。');await (await reveal(page.locator('#procClose'))).click();
       }
       await page.setViewportSize({width:1440,height:900});
       return {resizeSequence:[1440,390,320,1440],exactSourceSelectionProjectRetained:true,dimensions,diagnosisAndCallableControlsExercised:[1440,390,320]};

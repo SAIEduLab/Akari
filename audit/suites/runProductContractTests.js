@@ -26,7 +26,7 @@ async function runProductContractTests() {
         languageContractId: 2,
         runtimeContractId: 2,
         programFormatVersion: 2,
-        projectFormatVersion: 2,
+        projectFormatVersion: 3,
       };
       if (JSON.stringify(AKARI_RUNTIME.EXECUTABLE_CONTRACT) !== JSON.stringify(expected))
         throw new Error('実行データの契約が一致しません');
@@ -34,13 +34,17 @@ async function runProductContractTests() {
         text = serializeProject(p, new AssetStore());
       if (
         !text.startsWith('# あかり ' + PRODUCT_RELEASE + ' の作品') ||
-        !text.includes('<!-- AKARI-PROJECT-F2-DATA-BEGIN -->') ||
-        !text.includes('<!-- AKARI-PROJECT-F2-DATA-END -->')
+        !text.includes('<!-- AKARI-PROJECT-F3-DATA-BEGIN -->') ||
+        !text.includes('<!-- AKARI-PROJECT-F3-DATA-END -->')
       )
         throw new Error('作品の版またはマーカーが一致しません');
       const loaded = await parseProjectFile(text);
       if (JSON.stringify(loaded.project) !== JSON.stringify(p))
         throw new Error('作品の往復で変化しました');
+      const olderFormat = text.replaceAll('AKARI-PROJECT-F3-DATA-', 'AKARI-PROJECT-F2-DATA-');
+      const olderError = await parseProjectFile(olderFormat).then(() => null, (error) => error);
+      if (olderError?.code !== 'F502' || olderError.message !== '前の あかりで ほぞんした 作品なので、この あかりでは 開けないよ。')
+        throw new Error('前の形式の作品を F502 で ことわりませんでした');
       const otherProducer = text.replaceAll(PRODUCT_RELEASE, '7.8.9');
       const imported = await parseProjectFile(otherProducer);
       if (imported.project.appVersion !== '7.8.9' || imported.diagnostics.length)
@@ -52,7 +56,7 @@ async function runProductContractTests() {
     });
     await test('RELEASE-PROJECT-MARKER-BOUNDARIES', async () => {
       const p = makeRegressionProject();
-      p.scripts = [{targetId:'stage',event:'start',source:'※ <!-- AKARI-PROJECT-F2-DATA-BEGIN -->\n※ ```json\n※ <!-- AKARI-PROJECT-F2-DATA-END -->\nもし'}];
+      p.scripts = [{targetId:'stage',event:'start',source:'※ <!-- AKARI-PROJECT-F3-DATA-BEGIN -->\n※ ```json\n※ <!-- AKARI-PROJECT-F3-DATA-END -->\nもし'}];
       const text = serializeProject(p, new AssetStore());
       if (JSON.stringify((await parseProjectFile(text)).project)!==JSON.stringify(p)) throw Error('本文境界が変化しました');
       await reject(() => parseProjectFile(text.slice(0,-40)));

@@ -1,4 +1,4 @@
-// Independent inputs for repair 05. The B10 source keeps its exact two-second speech.
+// Independent inputs for the speaker-name layout audit. The B10 source keeps its exact two-second speech.
 export const speechNameNames = ['あかり', 'だんご'];
 export const speechNameShortTexts = ['あか', 'あお'];
 export const speechNameLongTexts = ['赤い花が咲いた。'.repeat(9)+'見えますか。', '青い鳥が飛んだ。'.repeat(9)+'聞こえます。'];

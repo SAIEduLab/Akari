@@ -1,465 +1,391 @@
 {
   "schema": "akari-independent-capability-oracle-v1",
   "policy": "Independent commands, schemas, capabilities, limits and intent expectations. Never derive expectations from candidate output.",
-  "counts": {
-    "commands": 74,
-    "schemas": 153,
-    "capabilities": 260,
-    "limits": 38,
-    "builtins": 26,
-    "fixedSensors": 22,
-    "argumentSensors": 5,
-    "operators": 16,
-    "scopes": 5
-  },
   "commands": [
     {
       "id": "Assignment",
       "kind": "Assignment",
-      "op": "",
-      "source": "点数を0にする。"
+      "op": ""
     },
     {
       "id": "NumericUpdate:ADD",
       "kind": "NumericUpdate",
-      "op": "ADD",
-      "source": "点数に1を足す。"
+      "op": "ADD"
     },
     {
       "id": "NumericUpdate:SUB",
       "kind": "NumericUpdate",
-      "op": "SUB",
-      "source": "点数から1を引く。"
+      "op": "SUB"
     },
     {
       "id": "ListAppend",
       "kind": "ListAppend",
-      "op": "",
-      "source": "名前一覧に「あかり」を追加する。"
+      "op": ""
     },
     {
       "id": "ListReplace",
       "kind": "ListReplace",
-      "op": "",
-      "source": "名前一覧の1番目を「ひかり」にする。"
+      "op": ""
     },
     {
       "id": "ListInsert",
       "kind": "ListInsert",
-      "op": "",
-      "source": "名前一覧の1番目に「ほたる」を挿入する。"
+      "op": ""
     },
     {
       "id": "ListDelete",
       "kind": "ListDelete",
-      "op": "",
-      "source": "名前一覧の1番目を削除する。"
+      "op": ""
     },
     {
       "id": "ListClear",
       "kind": "ListClear",
-      "op": "",
-      "source": "名前一覧を空にする。"
+      "op": ""
     },
     {
       "id": "IfStatement",
       "kind": "IfStatement",
-      "op": "",
-      "source": "もし 点数が10以上なら、次のことをする。\n  何もしない。"
+      "op": ""
     },
     {
       "id": "Say",
       "kind": "Say",
-      "op": "",
-      "source": "「10点以上です」と言う。"
+      "op": ""
     },
     {
       "id": "RepeatCount",
       "kind": "RepeatCount",
-      "op": "",
-      "source": "次のことを3回くり返す。\n  何もしない。"
+      "op": ""
     },
     {
       "id": "RepeatWhile",
       "kind": "RepeatWhile",
-      "op": "",
-      "source": "点数が100より小さいあいだ、次のことをくり返す。\n  何もしない。"
+      "op": ""
     },
     {
       "id": "RepeatUntil",
       "kind": "RepeatUntil",
-      "op": "",
-      "source": "空白キーが押されるまで、次のことをくり返す。\n  何もしない。"
+      "op": ""
     },
     {
       "id": "WaitTime",
       "kind": "WaitTime",
-      "op": "",
-      "source": "0.1秒待つ。"
+      "op": ""
     },
     {
       "id": "WaitUntil",
       "kind": "WaitUntil",
-      "op": "",
-      "source": "点数が100以上になるまで待つ。"
+      "op": ""
     },
     {
       "id": "ForEach",
       "kind": "ForEach",
-      "op": "",
-      "source": "名前一覧の各要素を項目として、次のことをくり返す。\n  何もしない。"
+      "op": ""
     },
     {
       "id": "MotionCommand:MOVE",
       "kind": "MotionCommand",
-      "op": "MOVE",
-      "source": "10歩動く。"
+      "op": "MOVE"
     },
     {
       "id": "MotionCommand:GOTO",
       "kind": "MotionCommand",
-      "op": "GOTO",
-      "source": "横100、縦50の位置へ行く。"
+      "op": "GOTO"
     },
     {
       "id": "MotionCommand:GLIDE",
       "kind": "MotionCommand",
-      "op": "GLIDE",
-      "source": "1秒で横200、縦100の位置へ滑る。"
+      "op": "GLIDE"
     },
     {
       "id": "MotionCommand:TURN_RIGHT",
       "kind": "MotionCommand",
-      "op": "TURN_RIGHT",
-      "source": "右に15度回る。"
+      "op": "TURN_RIGHT"
     },
     {
       "id": "MotionCommand:TURN_LEFT",
       "kind": "MotionCommand",
-      "op": "TURN_LEFT",
-      "source": "左に15度回る。"
+      "op": "TURN_LEFT"
     },
     {
       "id": "MotionCommand:SET_DIRECTION",
       "kind": "MotionCommand",
-      "op": "SET_DIRECTION",
-      "source": "方向を90度にする。"
+      "op": "SET_DIRECTION"
     },
     {
       "id": "MotionCommand:SET_X",
       "kind": "MotionCommand",
-      "op": "SET_X",
-      "source": "横位置を100にする。"
+      "op": "SET_X"
     },
     {
       "id": "MotionCommand:SET_Y",
       "kind": "MotionCommand",
-      "op": "SET_Y",
-      "source": "縦位置を50にする。"
+      "op": "SET_Y"
     },
     {
       "id": "MotionCommand:POINT_TO",
       "kind": "MotionCommand",
-      "op": "POINT_TO",
-      "source": "「マウス」の方向を向く。"
+      "op": "POINT_TO"
     },
     {
       "id": "MotionCommand:BOUNCE",
       "kind": "MotionCommand",
-      "op": "BOUNCE",
-      "source": "端に触れていれば跳ね返る。"
+      "op": "BOUNCE"
     },
     {
       "id": "LooksCommand:SET_SCALE",
       "kind": "LooksCommand",
-      "op": "SET_SCALE",
-      "source": "大きさを120％にする。"
+      "op": "SET_SCALE"
     },
     {
       "id": "LooksCommand:SET_COLOR",
       "kind": "LooksCommand",
-      "op": "SET_COLOR",
-      "source": "表示色を「赤」にする。"
+      "op": "SET_COLOR"
     },
     {
       "id": "LooksCommand:HIDE",
       "kind": "LooksCommand",
-      "op": "HIDE",
-      "source": "隠れる。"
+      "op": "HIDE"
     },
     {
       "id": "LooksCommand:SHOW",
       "kind": "LooksCommand",
-      "op": "SHOW",
-      "source": "現れる。"
+      "op": "SHOW"
     },
     {
       "id": "LooksCommand:FRONT",
       "kind": "LooksCommand",
-      "op": "FRONT",
-      "source": "前面へ出す。"
+      "op": "FRONT"
     },
     {
       "id": "LooksCommand:BACK",
       "kind": "LooksCommand",
-      "op": "BACK",
-      "source": "背面へ下げる。"
+      "op": "BACK"
     },
     {
       "id": "LooksCommand:FORWARD_LAYERS",
       "kind": "LooksCommand",
-      "op": "FORWARD_LAYERS",
-      "source": "1層前へ出す。"
+      "op": "FORWARD_LAYERS"
     },
     {
       "id": "LooksCommand:BACKWARD_LAYERS",
       "kind": "LooksCommand",
-      "op": "BACKWARD_LAYERS",
-      "source": "1層後ろへ下げる。"
+      "op": "BACKWARD_LAYERS"
     },
     {
       "id": "PenCommand:DOWN",
       "kind": "PenCommand",
-      "op": "DOWN",
-      "source": "ペンを下ろす。"
+      "op": "DOWN"
     },
     {
       "id": "PenCommand:SET_COLOR",
       "kind": "PenCommand",
-      "op": "SET_COLOR",
-      "source": "ペンの色を「青」にする。"
+      "op": "SET_COLOR"
     },
     {
       "id": "PenCommand:SET_SIZE",
       "kind": "PenCommand",
-      "op": "SET_SIZE",
-      "source": "ペンの太さを3にする。"
+      "op": "SET_SIZE"
     },
     {
       "id": "PenCommand:UP",
       "kind": "PenCommand",
-      "op": "UP",
-      "source": "ペンを上げる。"
+      "op": "UP"
     },
     {
       "id": "PenCommand:STAMP",
       "kind": "PenCommand",
-      "op": "STAMP",
-      "source": "スタンプを押す。"
+      "op": "STAMP"
     },
     {
       "id": "PenCommand:CLEAR",
       "kind": "PenCommand",
-      "op": "CLEAR",
-      "source": "描いた線とスタンプを消す。"
+      "op": "CLEAR"
     },
     {
       "id": "LooksCommand:SET_BACKDROP",
       "kind": "LooksCommand",
-      "op": "SET_BACKDROP",
-      "source": "背景を「空色」にする。"
+      "op": "SET_BACKDROP"
     },
     {
       "id": "LooksCommand:NEXT_BACKDROP",
       "kind": "LooksCommand",
-      "op": "NEXT_BACKDROP",
-      "source": "次の背景にする。"
+      "op": "NEXT_BACKDROP"
     },
     {
       "id": "LooksCommand:PREV_BACKDROP",
       "kind": "LooksCommand",
-      "op": "PREV_BACKDROP",
-      "source": "前の背景にする。"
+      "op": "PREV_BACKDROP"
     },
     {
       "id": "LooksCommand:SET_COSTUME",
       "kind": "LooksCommand",
-      "op": "SET_COSTUME",
-      "source": "衣装を「星」にする。"
+      "op": "SET_COSTUME"
     },
     {
       "id": "LooksCommand:NEXT_COSTUME",
       "kind": "LooksCommand",
-      "op": "NEXT_COSTUME",
-      "source": "次の衣装にする。"
+      "op": "NEXT_COSTUME"
     },
     {
       "id": "LooksCommand:PREV_COSTUME",
       "kind": "LooksCommand",
-      "op": "PREV_COSTUME",
-      "source": "前の衣装にする。"
+      "op": "PREV_COSTUME"
     },
     {
       "id": "LooksCommand:SET_TARGET_TEXT",
       "kind": "LooksCommand",
-      "op": "SET_TARGET_TEXT",
-      "source": "「ボタン1」の文字を「始める」にする。"
+      "op": "SET_TARGET_TEXT"
     },
     {
       "id": "SoundCommand:TONE",
       "kind": "SoundCommand",
-      "op": "TONE",
-      "source": "440Hzの音を0.2秒鳴らす。"
+      "op": "TONE"
     },
     {
       "id": "SoundCommand:TONE_WAIT",
       "kind": "SoundCommand",
-      "op": "TONE_WAIT",
-      "source": "440Hzの音を0.2秒鳴らし、終わるまで待つ。"
+      "op": "TONE_WAIT"
     },
     {
       "id": "SoundCommand:SET_VOLUME",
       "kind": "SoundCommand",
-      "op": "SET_VOLUME",
-      "source": "音量を50％にする。"
+      "op": "SET_VOLUME"
     },
     {
       "id": "SoundCommand:PITCH_UP",
       "kind": "SoundCommand",
-      "op": "PITCH_UP",
-      "source": "音程を1段階上げる。"
+      "op": "PITCH_UP"
     },
     {
       "id": "SoundCommand:PITCH_DOWN",
       "kind": "SoundCommand",
-      "op": "PITCH_DOWN",
-      "source": "音程を1段階下げる。"
+      "op": "PITCH_DOWN"
     },
     {
       "id": "SoundCommand:STOP_ALL",
       "kind": "SoundCommand",
-      "op": "STOP_ALL",
-      "source": "すべての音を止める。"
+      "op": "STOP_ALL"
     },
     {
       "id": "Broadcast",
       "kind": "Broadcast",
-      "op": "",
-      "source": "「開始」と知らせる。"
+      "op": ""
     },
     {
       "id": "BroadcastAndWait",
       "kind": "BroadcastAndWait",
-      "op": "",
-      "source": "「開始」と知らせ、受け手の処理が終わるまで待つ。"
+      "op": ""
     },
     {
       "id": "Ask",
       "kind": "Ask",
-      "op": "",
-      "source": "「名前は？」とたずねる。"
+      "op": ""
     },
     {
       "id": "LocalVariableDeclaration",
       "kind": "LocalVariableDeclaration",
-      "op": "",
-      "source": "合計という変数を作り、初期値を0にする。"
+      "op": ""
     },
     {
       "id": "ReturnStatement",
       "kind": "ReturnStatement",
-      "op": "",
-      "source": "合計を返す。"
+      "op": ""
     },
     {
       "id": "CloneCommand:CREATE_SELF",
       "kind": "CloneCommand",
-      "op": "CREATE_SELF",
-      "source": "自分のクローンを作る。"
+      "op": "CREATE_SELF"
     },
     {
       "id": "CloneCommand:CREATE_TARGET",
       "kind": "CloneCommand",
-      "op": "CREATE_TARGET",
-      "source": "「マスコット」のクローンを作る。"
+      "op": "CREATE_TARGET"
     },
     {
       "id": "CloneCommand:DELETE_SELF",
       "kind": "CloneCommand",
-      "op": "DELETE_SELF",
-      "source": "このクローンを削除する。"
+      "op": "DELETE_SELF"
     },
     {
       "id": "StopCommand:THIS",
       "kind": "StopCommand",
-      "op": "THIS",
-      "source": "このスクリプトを止める。"
+      "op": "THIS"
     },
     {
       "id": "StopCommand:OTHERS",
       "kind": "StopCommand",
-      "op": "OTHERS",
-      "source": "ほかのスクリプトを止める。"
+      "op": "OTHERS"
     },
     {
       "id": "StopCommand:ALL",
       "kind": "StopCommand",
-      "op": "ALL",
-      "source": "すべてを止める。"
+      "op": "ALL"
     },
     {
       "id": "LooksCommand:SET_SELF_TEXT",
       "kind": "LooksCommand",
-      "op": "SET_SELF_TEXT",
-      "source": "文字を「文字」にする。"
+      "op": "SET_SELF_TEXT"
     },
     {
       "id": "LooksCommand:SET_INPUT",
       "kind": "LooksCommand",
-      "op": "SET_INPUT",
-      "source": "「入力欄1」に「答え」を入れる。"
+      "op": "SET_INPUT"
     },
     {
       "id": "SoundCommand:SAMPLE",
       "kind": "SoundCommand",
-      "op": "SAMPLE",
-      "source": "「ベル」を鳴らす。"
+      "op": "SAMPLE"
     },
     {
       "id": "SoundCommand:SAMPLE_WAIT",
       "kind": "SoundCommand",
-      "op": "SAMPLE_WAIT",
-      "source": "「ベル」を鳴らし、終わるまで待つ。"
+      "op": "SAMPLE_WAIT"
     },
     {
       "id": "Break",
       "kind": "Break",
-      "op": "",
-      "source": "このくり返しを終える。"
+      "op": ""
     },
     {
       "id": "Continue",
       "kind": "Continue",
-      "op": "",
-      "source": "次のくり返しへ進む。"
+      "op": ""
     },
     {
       "id": "LocalListDeclaration",
       "kind": "LocalListDeclaration",
-      "op": "",
-      "source": "結果というリストを作る。"
+      "op": ""
     },
     {
       "id": "Forever",
       "kind": "Forever",
-      "op": "",
-      "source": "次のことをずっとくり返す。\n  何もしない。"
+      "op": ""
     },
     {
       "id": "UserActionCall",
       "kind": "UserActionCall",
-      "op": "",
-      "source": "増やす（3）を実行する。"
+      "op": ""
     },
     {
       "id": "NoOperation",
       "kind": "NoOperation",
-      "op": "",
-      "source": "何もしない。"
+      "op": ""
     }
   ],
   "schemaIds": [
     "Script",
+    "Hole:expression",
+    "Hole:statement",
+    "Hole:target",
+    "Hole:rule",
+    "QuantityLiteral",
+    "UnitlessRead",
+    "ActorQualifiedRead",
+    "ContinuousRule",
+    "MotionCommand:MOVE_DIRECTION",
+    "MotionCommand:GLIDE_DIRECTION",
+    "WaitBroadcastGroup",
     "TargetReference",
     "CommentLine",
     "Assignment",
@@ -653,12 +579,6 @@
     "repeatCount": 1000000,
     "activeTasks": 2000
   },
-  "executableContract": {
-    "languageContractId": 1,
-    "runtimeContractId": 1,
-    "programFormatVersion": 1,
-    "projectFormatVersion": 1
-  },
   "categories": {
     "builtins": [
       "builtin:乱数",
@@ -743,146 +663,6 @@
       "scope:arguments",
       "scope:local",
       "scope:purity"
-    ]
-  },
-  "baselineHtmlCrossCheck": {
-    "namedBuiltinDefinitions": [
-      {
-        "name": "乱数",
-        "minArgs": 2,
-        "maxArgs": 2
-      },
-      {
-        "name": "余り",
-        "minArgs": 2,
-        "maxArgs": 2
-      },
-      {
-        "name": "四捨五入",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "切り上げ",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "切り捨て",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "絶対値",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "平方根",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "正弦",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "余弦",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "正接",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "逆正弦",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "逆余弦",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "逆正接",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "自然対数",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "常用対数",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "指数",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "数",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "文字",
-        "minArgs": 1,
-        "maxArgs": 1
-      },
-      {
-        "name": "最小",
-        "minArgs": 1,
-        "maxArgs": "Infinity"
-      },
-      {
-        "name": "最大",
-        "minArgs": 1,
-        "maxArgs": "Infinity"
-      },
-      {
-        "name": "つなぐ",
-        "minArgs": 2,
-        "maxArgs": "Infinity"
-      }
-    ],
-    "structuralBuiltinSchemaIds": [
-      "BuiltinCall:CONTAINS",
-      "BuiltinCall:INDEX_OF",
-      "BuiltinCall:LENGTH",
-      "BuiltinCall:STRING_LENGTH",
-      "BuiltinCall:STRING_CHAR"
-    ],
-    "fixedSensorNames": [
-      "マウスが押されている",
-      "マウスの横位置",
-      "マウスの縦位置",
-      "以前の背景名",
-      "新しい背景名",
-      "受け取った知らせ",
-      "押されたキー",
-      "クローンである",
-      "背景番号",
-      "背景名",
-      "衣装番号",
-      "衣装名",
-      "横位置",
-      "縦位置",
-      "方向",
-      "大きさ",
-      "タイマー",
-      "答え",
-      "音量",
-      "音程",
-      "以前の値",
-      "新しい値"
     ]
   },
   "capabilities": [
@@ -1584,7 +1364,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_SELF",
-      "capability": "自分のクローンを作る",
+      "capability": "自分のコピーを作る",
       "ast": "CloneCommand op=CREATE_SELF",
       "cui": "CODE-STMT",
       "gui": "GUI-EDIT-STMT schema `CloneCommand:CREATE_SELF`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
@@ -1596,7 +1376,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_TARGET",
-      "capability": "「星」のクローンを作る",
+      "capability": "「星」のコピーを作る",
       "ast": "CloneCommand op=CREATE_TARGET",
       "cui": "CODE-STMT",
       "gui": "GUI-EDIT-STMT schema `CloneCommand:CREATE_TARGET`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
@@ -1608,7 +1388,7 @@
     },
     {
       "id": "command:CloneCommand:DELETE_SELF",
-      "capability": "このクローンを削除する",
+      "capability": "このコピーだけを消す",
       "ast": "CloneCommand op=DELETE_SELF",
       "cui": "CODE-STMT",
       "gui": "GUI-EDIT-STMT schema `CloneCommand:DELETE_SELF`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",
@@ -2502,7 +2282,7 @@
       "gui": "GUI-EDIT-EXPR schema `SensorRead:クローンである`; fields=なし; inputs=なし; bodies=なし; annotations=なし",
       "semantic": "部品のみ",
       "runtime": "evalSensor",
-      "selftest": "CORE sensor クローンである; TEST-BLOCK-SCHEMA SensorRead:クローンである",
+      "selftest": "CORE sensor コピーである; TEST-BLOCK-SCHEMA SensorRead:クローンである",
       "browser": "BROWSER-LANG; browser-schemas:SensorRead:クローンである",
       "guarantee": "sensorの代表値のみ。event/target違反とGUI変更は別検証; GUI-SCHEMA"
     },
@@ -3319,7 +3099,7 @@
       "semantic": "LANGUAGE.mdの現行意味 + 本書「機能と編集の保証」",
       "runtime": "保存はcompile成功に依存しない",
       "selftest": "SAVE Markdown往復; SAVE 作りかけのコード保持; AUDIT MARKDOWN canonical-body mismatch rejected F512; FORMAT-EXECUTABLE-CONTRACT; RELEASE-PROJECT-MARKER-BOUNDARIES",
-      "browser": "BROWSER-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:invalid-syntax-save-and-format1-storage-isolation",
+      "browser": "BROWSER-PRODUCT; browser-storage-media:media-editor-run-and-save-roundtrip; browser-storage-media:unfinished-source-save-and-storage-key-isolation",
       "guarantee": "構文不正 source の保存と現行保存形式・F512拒否。素材付き実往復はbrowser suite"
     },
     {
@@ -3331,7 +3111,7 @@
       "semantic": "LANGUAGE.mdの現行意味 + 本書の自動保存契約",
       "runtime": "editor session",
       "selftest": "外部core test対象外（browser suiteで検査）",
-      "browser": "BROWSER-PRODUCT; browser-session:autosave-draft-recovery; browser-storage-media:invalid-syntax-save-and-format1-storage-isolation",
+      "browser": "BROWSER-PRODUCT; browser-session:autosave-draft-recovery; browser-storage-media:unfinished-source-save-and-storage-key-isolation",
       "guarantee": "GA-STATICで専用コード・UIと保存領域を固定し、GA-EXECで作品・素材・下書きの復元、破損拒否、現在作品保護を検査する"
     },
     {
@@ -4732,9 +4512,9 @@
       },
       {
         "id": "CI-19",
-        "intent": "分身5個が進んで消え、元は残る",
-        "route": "構造化支援：作成の5回と分身の見出し。8.4",
-        "acceptance": "元1＋分身5、各自、保存に残さない。全部5個との違いを確認"
+        "intent": "コピー5個が進んで消え、元は残る",
+        "route": "構造化支援：作成の5回とコピーの見出し。8.4",
+        "acceptance": "元1＋コピー5、各自、保存に残さない。全部5個との違いを確認"
       },
       {
         "id": "CI-20",

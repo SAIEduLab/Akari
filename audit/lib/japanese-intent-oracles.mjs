@@ -1,4 +1,4 @@
-// Independent oracle: fixed 1.0.2 specification + adult-authored CI corpus.
+// Independent oracle: fixed language specification + adult-authored CI corpus.
 // These sources explicitly structure the intent; acceptance of the original prose
 // is measured separately. Do not rewrite expectations from observed candidate ASTs.
 export const corpusSha256='97bfcdb36a2029edf0ed696ed15635cf5330364e37233168274173cc5bfd928f';
@@ -23,7 +23,7 @@ export const scenarios=[
  {id:'CI-16',source:'長さを20として、【四角をかく】という手順を行う。長さを50として、【四角をかく】という手順を行う。',vars:{長さ:99},actions:[{name:'四角をかく',args:['長さ'],source:'4回くり返す。\n  長さ歩進む。右に90度回る。'}]},
  {id:'CI-17',source:'合計を（個数を3、ねだんを80として、【代金をもとめる】で求めた答え）＋10にする。',functions:[{name:'代金をもとめる',args:['個数','ねだん'],source:'個数×ねだんを答えとして返す。'}]},
  {id:'CI-18',source:'みんなに「出発」と知らせる。その知らせを受けて始めたことが全部終わるまで待つ。そのあと、ねこは10歩進む。',extraScripts:[{targetId:dog,event:'message',filter:{message:'出発'},source:'1秒待つ。「犬完了」と言う。'},{targetId:bird,event:'message',filter:{message:'出発'},source:'2秒待つ。「鳥完了」と言う。'}],steps:[{at:1000},{at:1999},{at:2000}]},
- {id:'CI-19',source:'5回くり返す。\n  自分の分身を作る。',extraScripts:[{targetId:cat,event:'cloneStart',source:'10歩進む。1秒待つ。この分身だけを消す。'}],steps:[{at:1000}]},
+ {id:'CI-19',source:'5回くり返す。\n  自分のコピーを作る。',extraScripts:[{targetId:cat,event:'cloneStart',source:'10歩進む。1秒待つ。このコピーだけを消す。'}],steps:[{at:1000}]},
  {id:'CI-20',source:'背景を「森の絵」に変える。音「こんにちは」を鳴らす。ねこは10歩進む。',assetFixture:true,steps:[{at:499},{at:500}]},
 ];
 export const ambiguities=[

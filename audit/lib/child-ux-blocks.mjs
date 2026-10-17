@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 // This small audit interpreter implements only the seven fixed task concepts.
 // Its input is measured DOM controls, not product AST, parser, compiler or blockDecode.
 // Expected traces remain the pre-existing independently authored task fixture.
-const displayedLabels={Say:'言う',WaitTime:'秒待つ',Ask:'たずねる',RepeatCount:'回数を決めてくり返す',IfStatement:'もし',Assignment:'値を設定','NumericUpdate:ADD':'値を足す',NoOperation:'何もしない',StringLiteral:'文字',NumberLiteral:'数','SensorRead:答え':'答え',VariableRead:'名前を読む',TargetReference:'変更先','BinaryExpression:ADD':'足す','BinaryExpression:SUB':'引く','CompareExpression:EQ':'と同じ',ListRead:'リストの要素'};
+const displayedLabels={Say:'言う・話す',WaitTime:'秒待つ',Ask:'たずねる',RepeatCount:'回数を決めてくり返す',IfStatement:'もし',Assignment:'中身を決める','NumericUpdate:ADD':'かずを足す',NoOperation:'何もしない',StringLiteral:'文字',NumberLiteral:'数','SensorRead:答え':'答え',VariableRead:'名前を読む',TargetReference:'かえるもの','BinaryExpression:ADD':'足す','BinaryExpression:SUB':'引く','CompareExpression:EQ':'と同じ',ListRead:'リストの中身を1つ読む'};
 export function blockMeaning(views,project,runs,taskId){
   assert.match(taskId,/^B(?:0[1-9]|1[0-9]|2[0-4])$/,'fixed task intent required');
   assert.ok(Array.isArray(views)&&views.length,'actual block documents required');
@@ -29,7 +29,7 @@ export function blockMeaning(views,project,runs,taskId){
     for(const n of nodes.filter(n=>n.schema==='Script')){
       const actor=ref(n,v.selectedOwner,'heading.actorRef.'),event=field(n,'heading.event');
       assert.ok(['start','click'].includes(event),'fixed task event');
-      assert.ok(n.title.includes(actorName(actor))&&n.title.includes(event==='start'?'開始したとき':'クリックしたとき'),'displayed actor and event');
+      assert.ok(n.title.includes(actorName(actor))&&n.title.includes(event==='start'?'「動かす」を おしたとき':'おされたとき'),'displayed actor and event');
       programs.push({actor,event,n,children,field,ref,nodes});
     }
   }

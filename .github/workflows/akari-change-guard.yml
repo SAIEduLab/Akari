@@ -1,0 +1,33 @@
+name: Akari change guard
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+permissions:
+  contents: read
+concurrency:
+  group: akari-change-guard-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  audit-change-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Require the owner label for removed audit checks and changed pins
+        env:
+          AKARI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          AKARI_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node audit/tests/change-guard.mjs "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: akari-change-guard-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit-evidence/change-guard/
+          if-no-files-found: error
+          retention-days: 3

@@ -17637,7 +17637,7 @@
       }
     },
     {
-      "source": "自分の分身を作る。",
+      "source": "自分のコピーを作る。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17654,7 +17654,7 @@
             "inlineComment": ""
           }
         ],
-        "source": "自分のクローンを作る。",
+        "source": "自分のコピーを作る。",
         "sourceSpan": {
           "startLine": 1,
           "startColumn": 1,
@@ -17664,7 +17664,7 @@
       }
     },
     {
-      "source": "「マスコット」の分身を作る。",
+      "source": "「マスコット」のコピーを作る。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17692,7 +17692,7 @@
             "inlineComment": ""
           }
         ],
-        "source": "「マスコット」のクローンを作る。",
+        "source": "「マスコット」のコピーを作る。",
         "sourceSpan": {
           "startLine": 1,
           "startColumn": 1,
@@ -17702,7 +17702,7 @@
       }
     },
     {
-      "source": "この分身だけを消す。",
+      "source": "このコピーだけを消す。",
       "ast": {
         "kind": "Script",
         "body": [
@@ -17719,7 +17719,7 @@
             "inlineComment": ""
           }
         ],
-        "source": "このクローンを削除する。",
+        "source": "このコピーだけを消す。",
         "sourceSpan": {
           "startLine": 1,
           "startColumn": 1,
@@ -18919,6 +18919,17 @@
   ],
   "schemaIds": [
     "Script",
+    "Hole:expression",
+    "Hole:statement",
+    "Hole:target",
+    "Hole:rule",
+    "QuantityLiteral",
+    "UnitlessRead",
+    "ActorQualifiedRead",
+    "ContinuousRule",
+    "MotionCommand:MOVE_DIRECTION",
+    "MotionCommand:GLIDE_DIRECTION",
+    "WaitBroadcastGroup",
     "TargetReference",
     "CommentLine",
     "Assignment",

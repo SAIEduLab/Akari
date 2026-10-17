@@ -8,8 +8,8 @@ export const childLanguageUiIds = Object.freeze([
 ]);
 
 export const childInsertionConceptHints=Object.freeze({
-  "commandAndBody": "命令（めいれい）は、「話す」「待つ」など、してほしいことです。本文（ほんぶん）は、命令を順番に並べるところです。",
-  "palette": "候補（こうほ）は選べるブロックです。分類（ぶんるい）は似た候補のまとまりです。例：「基本」の「話す」「待つ」。検索（けんさく）は言葉で探すことです。「候補の表示」で命令・値の種類（しゅるい）を選べます。「使えない候補も表示」の表示（ひょうじ）は画面に見せることで、使えない理由も読めます。"
+  "commandAndBody": "つなぐブロックは、「話す」「待つ」など、してほしいことです。本文（ほんぶん）は、ブロックを じゅん番に ならべるところです。",
+  "palette": "ブロックは なかまごとに分かれています。たとえば「よく使う」には「話す」「待つ」があります。「ブロックを さがす」に言葉を入れると、さがせます。「ブロックの見せ方」で、つなぐブロックと はめるブロックの どちらを見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない理由も読めます。"
 });
 
 function readable(rows,min=1) {
@@ -53,7 +53,7 @@ function panelReach(observation,method,basic=false) {
   }
   if(basic) {
     const text=observation.bottom.tail.map(r=>r.text).join(' ');
-    assert.ok(text.includes('コードはコピーしません')&&text.includes('決めた変更を1つ戻す')&&text.includes('入力を取り消す'));
+    assert.ok(text.includes('コードは コピーしません')&&text.includes('決めた ことを 1つ もとにもどす')&&text.includes('入力を取り消す'));
   }
   if(method==='native-keyboard') {
     panelMeasurement(observation.afterArrow);
@@ -114,7 +114,7 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   const action=rows['CHILD-UI-ACTION-HELP'];
   for(const key of ['keyboardHelp','generatedPlayerWords','projectSourcePreserved'])assert.equal(action[key],true);
   readable(action.help,8);panelReach(action.tailReach,'native-keyboard',true);
-  assert.equal(action.editReading,'へんしゅう');assert.match(action.editMeaning,/編集（へんしゅう）.*命令や言葉を作ったり直したり/s);
+  assert.equal(action.editReading,null);assert.match(action.editMeaning,/「なおす動き」で えらびます/);
   assert.deepEqual(action.downloadTypes,['akari.md','html']);
   assert.match(action.saveFile,/\.akari\.md$/); assert.match(action.exportFile,/\.html$/);
   const copy=rows['CHILD-UI-COPY-SEMANTICS'];
@@ -139,8 +139,8 @@ export function verifyChildLanguageUi(report,inputs,environment) {
     const host=step.mode==='blocks'?'componentActions':'properties';
     assert.equal(step.actionsHost,host);assert.equal(step.helpHost,host);
     for(const key of ['adjacent','sameActionsNode','sameHelpNode'])assert.equal(step[key],true);
-    assert.equal(step.helpCount,1);assert.equal(step.text,"見た目と設定をコピーします。コードはコピーしません。");
-    assert.equal(step.ariaDescription,"見た目と設定をコピーします。コードはコピーしません。");
+    assert.equal(step.helpCount,1);assert.equal(step.text,"見た目と せっていを コピーします。コードは コピーしません。");
+    assert.equal(step.ariaDescription,"見た目と せっていを コピーします。コードは コピーしません。");
     assert.deepEqual(step.state,copyModes.before,'moving one explanation node leaves the actual project/history intact');
   }
   assert.deepEqual(copyModes.after,copyModes.before);
@@ -156,7 +156,7 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   assert.equal(block.help[2].text,childInsertionConceptHints.commandAndBody);
   assert.equal(block.help[3].text,childInsertionConceptHints.palette);
   for(const key of ['textNumberBooleanSupport','powerExample','deleteScopeVisible','blockCopyTargetClear','cancelDifferentFromUndo'])assert.equal(block[key],true);
-  assert.ok(block.truthExample.includes('条件の「あてはまる・あてはまらない」'));
+  assert.ok(block.truthExample.includes('「あてはまる・あてはまらない」'));
   assert.ok(!block.truthExample.includes('はい・いいえ'),'condition example matches accepted truth vocabulary');
   assert.deepEqual(block.oldValues,['2','3']); assert.deepEqual(block.newValues,block.oldValues);
   assert.deepEqual(block.leftRightValuesPreserved,block.oldValues); assert.equal(block.historyAfter,block.historyBefore+1);
@@ -164,8 +164,8 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   assert.equal(paint.ellipseAndOutline,true); assert.equal(paint.cancelPreservesProject,true);
   assert.deepEqual(paint.transparentPixels,{center:0,exterior:0},'outline and checkerboard remain transparent in actual pixels');
   assert.deepEqual(paint.optionalMaterials?.map(m=>[m.preset,m.reading,m.note]),[
-    ['comet','すいせい','尾のある星'],['yinYang','いんよう','白黒の丸'],['medical','いりょう','へびとつえ'],
-    ['radioactive','ほうしゃせん','三つの羽の印'],['biohazard',null,'三つの輪の印'],
+    ['comet',null,'しっぽのある星'],['yinYang',null,'白黒の丸'],['medical',null,'へびとつえ'],
+    ['radioactive',null,'三つの羽の しるし'],['biohazard',null,'三つの わっかの しるし'],
   ]);
   const responsive=rows['CHILD-UI-RESPONSIVE-WORDS'];
   for(const key of ['ordinaryScroll','keyboard','helpPreservesEditing'])assert.equal(responsive[key],true);
@@ -175,9 +175,9 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   for(const observation of responsive.observations) {
     assert.deepEqual(Object.keys(observation.controls),['saveBtn','exportBtn','runBtn','stopBtn']);
     for(const rect of Object.values(observation.controls))bounds(rect,observation.viewport);
-    readable(observation.help,8);panelReach(observation.tailReach,'native-keyboard',true);assert.ok(observation.reading?.length>=4);
+    readable(observation.help,8);panelReach(observation.tailReach,'native-keyboard',true);assert.deepEqual(observation.reading?.map(r=>r.text),['保存ほぞん','変数へんすう','本文ほんぶん']);
     const text=observation.reading.map(r=>r.text).join(' ');
-    for(const reading of ['ほぞん','かきだし','がぞう','へんすう','ほんぶん'])assert.ok(text.includes(reading));
+    for(const reading of ['ほぞん','へんすう','ほんぶん'])assert.ok(text.includes(reading));
     for(const term of observation.reading){assert.equal(term.rects,1);assert.equal(term.whiteSpace,'nowrap');}
   }
   const touch=rows['CHILD-UI-TOUCH-HELP'];

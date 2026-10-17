@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {withBrowser, pageFor, snapshot} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
+import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {designerZoomIds, verifyDesignerZoom} from '../lib/feature-contract.mjs';
 
 const [browserPath, output] = process.argv.slice(2);
@@ -193,7 +194,7 @@ const cases = {
     assert.deepEqual(await state(p), before);
     const second = await download(p, '#saveBtn', 'zoom-again.akari.md');
     assert.equal(fs.readFileSync(second, 'utf8'), original); assert.ok(original.startsWith(("# あかり "+currentProductVersion()+" の作品")));
-    await p.waitForFunction(() => document.querySelector('#autosaveState').textContent.includes('済み'));
+    await p.waitForFunction(() => document.querySelector('#autosaveState').textContent.includes('このパソコンに のこしたよ'));
     await p.reload(); await p.locator('#recoveryModal.show').waitFor();
     await p.locator('#recoveryDiscard').click();
     await openFile(p, saved); await p.waitForFunction(() => Akari.app.project.stage.width === 900); await assertFit(p);
@@ -213,7 +214,7 @@ const cases = {
     assert.equal(await p.evaluate(() => Akari.app.project.appVersion), (""+currentProductVersion()+"")); await assertFit(p);
     assert.equal(await p.evaluate(() => Akari.app.project.stage.height), 600);
     const before = await state(p);
-    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replace('"formatVersion": 2', '"formatVersion": 1'))});
+    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replace('"formatVersion": 3', '"formatVersion": 2'))});
     await p.waitForFunction(() => /F\d{3}/.test(document.querySelector('#console').textContent));
     assert.deepEqual(await state(p), before, 'unsupported-format rejection retains current work');
   },
@@ -240,7 +241,7 @@ const browserVersion = await withBrowser(browserPath, async browser => {
   for (const [id, run] of Object.entries(cases)) {
     try {
       const evidence = await pageFor(browser, currentProductFile(), async p => {
-        p.on('dialog', d => d.accept()); await p.setViewportSize({width: 1440, height: 900});
+        p.on('dialog', d => d.accept()); await answerProductConfirms(p, true); await p.setViewportSize({width: 1440, height: 900});
         await installRegressionProject(p);return await run(p);
       });
       results.push({id, pass: true, detail: 'PASS', evidence}); console.log('PASS ' + id);

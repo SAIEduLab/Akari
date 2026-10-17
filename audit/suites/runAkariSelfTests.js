@@ -60,7 +60,7 @@ function runAkariSelfTests() {
     };
     test('FORMAT-PROJECT-METADATA-001 作成元と保存契約', () => {
       if (!/^\d+\.\d+\.\d+$/.test(PRODUCT_RELEASE)) throw Error('作成元ラベルが不正です');
-      eq([Akari.makeDefaultProject().appVersion, LANGUAGE_CONTRACT_ID, PROJECT_FORMAT_ID], [PRODUCT_RELEASE, 2, 2]);
+      eq([Akari.makeDefaultProject().appVersion, LANGUAGE_CONTRACT_ID, PROJECT_FORMAT_ID], [PRODUCT_RELEASE, 2, 3]);
     });
     test('DEFAULT-001 初期作品', () => {
       const starter = Akari.makeDefaultProject();
@@ -213,7 +213,7 @@ function runAkariSelfTests() {
       eq([h.r.actor('sprite-1').costumeId, h.r.actor('sprite-1').scalePercent], ['costume-2', 120]);
     });
     test('CLONE 個体データを複製', () => {
-      const h = run('自分のクローンを作る', 'sprite-1'),
+      const h = run('自分のコピーを作る', 'sprite-1'),
         a = [...h.r.actors.values()].find((x) => x.isClone);
       a.vars.set('HP', 9);
       eq(h.r.actor('sprite-1').vars.get('HP'), 3);
@@ -539,8 +539,8 @@ function runAkariSelfTests() {
         'このスクリプトを止める',
         'ほかのスクリプトを止める',
         'すべてを止める',
-        '「マスコット」のクローンを作る',
-        'このクローンを削除する',
+        '「マスコット」のコピーを作る',
+        'このコピーだけを消す',
         '横100、縦50の位置へ行く',
         '1秒で横200、縦100の位置へ滑る',
         '左に15度回る',

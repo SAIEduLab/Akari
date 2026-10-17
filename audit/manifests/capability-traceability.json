@@ -1048,7 +1048,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_SELF",
-      "meaning": "自分の分身を作る。",
+      "meaning": "自分のコピーを作る。",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -1066,7 +1066,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_TARGET",
-      "meaning": "「星」の分身を作る。",
+      "meaning": "「星」のコピーを作る。",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -1084,7 +1084,7 @@
     },
     {
       "id": "command:CloneCommand:DELETE_SELF",
-      "meaning": "この分身だけを消す。",
+      "meaning": "このコピーだけを消す。",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -1343,6 +1343,160 @@
         {
           "path": "audit/tests/japanese-contract-static.mjs",
           "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
+      "id": "Hole:expression",
+      "meaning": "値を入れる空欄。選ぶまで下書きとして残し、0や条件の答えで埋めず、埋めるまで実行しない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "Hole:expression"
+        }
+      ]
+    },
+    {
+      "id": "Hole:statement",
+      "meaning": "命令を入れる空欄。必須の本文を「何もしない」で埋めず、埋めるまで実行しない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "Hole:statement"
+        }
+      ]
+    },
+    {
+      "id": "Hole:target",
+      "meaning": "変更先を入れる空欄。登録済みのデータから選ぶまで実行しない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "Hole:target"
+        }
+      ]
+    },
+    {
+      "id": "Hole:rule",
+      "meaning": "続けて動くルールの空欄。保存して開き直しても残り、完成させるか消すまで実行しない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "Hole:rule"
+        }
+      ]
+    },
+    {
+      "id": "QuantityLiteral",
+      "meaning": "数と登録した単位（歩・度・秒・回・番目・点・個・％・Hz）を持つ数量。文字にすると単位を含む",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "QuantityLiteral"
+        }
+      ]
+    },
+    {
+      "id": "UnitlessRead",
+      "meaning": "「（式）の数だけ」。大きさを保ち、単位だけを外した新しい数",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "UnitlessRead"
+        }
+      ]
+    },
+    {
+      "id": "ActorQualifiedRead",
+      "meaning": "「対象の（値）」。指定した対象の状態やデータを読み、後の文の省略された対象は変えない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "ActorQualifiedRead"
+        }
+      ]
+    },
+    {
+      "id": "ContinuousRule",
+      "meaning": "条件が成り立つあいだ、画面の方向または前後へ決めた速さで動き続ける継続ルール",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "ContinuousRule"
+        }
+      ]
+    },
+    {
+      "id": "MotionCommand:MOVE_DIRECTION",
+      "meaning": "画面の右へ10歩動く。画面の向きへ動き、向きは変えない",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "MotionCommand:MOVE_DIRECTION"
+        }
+      ]
+    },
+    {
+      "id": "MotionCommand:GLIDE_DIRECTION",
+      "meaning": "2秒かけて画面の右へ40歩動く。開始位置から終点へ一回すべる",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "MotionCommand:GLIDE_DIRECTION"
+        }
+      ]
+    },
+    {
+      "id": "WaitBroadcastGroup",
+      "meaning": "その知らせを受けて始めたことが全部終わるまで待つ。直前の知らせで直接始まった処理を待つ",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "WaitBroadcastGroup"
         }
       ]
     },
@@ -2078,7 +2232,7 @@
     },
     {
       "id": "CloneCommand:CREATE_SELF",
-      "meaning": "自分の分身を作る。",
+      "meaning": "自分のコピーを作る。",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -2088,7 +2242,7 @@
     },
     {
       "id": "CloneCommand:DELETE_SELF",
-      "meaning": "この分身だけを消す。",
+      "meaning": "このコピーだけを消す。",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -2098,7 +2252,7 @@
     },
     {
       "id": "CloneCommand:CREATE_TARGET",
-      "meaning": "「星」の分身を作る。",
+      "meaning": "「星」のコピーを作る。",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -2668,7 +2822,7 @@
     },
     {
       "id": "SensorRead:クローンである",
-      "meaning": "分身である",
+      "meaning": "コピーである",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -3914,7 +4068,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_SELF",
-      "meaning": "自分のクローンを作る",
+      "meaning": "自分のコピーを作る",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -3932,7 +4086,7 @@
     },
     {
       "id": "command:CloneCommand:CREATE_TARGET",
-      "meaning": "「星」のクローンを作る",
+      "meaning": "「星」のコピーを作る",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -3950,7 +4104,7 @@
     },
     {
       "id": "command:CloneCommand:DELETE_SELF",
-      "meaning": "このクローンを削除する",
+      "meaning": "このコピーだけを消す",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -5206,7 +5360,7 @@
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
-          "id": "CORE sensor クローンである"
+          "id": "CORE sensor コピーである"
         },
         {
           "path": "audit/manifests/product-tests.json",
@@ -7379,9 +7533,9 @@
       ]
     }
   ],
-  "newContracts": [
+  "languageContracts": [
     {
-      "id": "NEW-01",
+      "id": "LANGUAGE-CONTRACT-001",
       "meaning": "role-based natural sentence forms",
       "testReferences": [
         {
@@ -7395,7 +7549,7 @@
       ]
     },
     {
-      "id": "NEW-02",
+      "id": "LANGUAGE-CONTRACT-002",
       "meaning": "explicit actor and actor-qualified reads",
       "testReferences": [
         {
@@ -7409,7 +7563,7 @@
       ]
     },
     {
-      "id": "NEW-03",
+      "id": "LANGUAGE-CONTRACT-003",
       "meaning": "editable event headings and filters",
       "testReferences": [
         {
@@ -7423,7 +7577,7 @@
       ]
     },
     {
-      "id": "NEW-04",
+      "id": "LANGUAGE-CONTRACT-004",
       "meaning": "clause-level sequence/source mapping",
       "testReferences": [
         {
@@ -7437,7 +7591,7 @@
       ]
     },
     {
-      "id": "NEW-05",
+      "id": "LANGUAGE-CONTRACT-005",
       "meaning": "absolute-direction displacement and timed displacement",
       "testReferences": [
         {
@@ -7451,7 +7605,7 @@
       ]
     },
     {
-      "id": "NEW-06",
+      "id": "LANGUAGE-CONTRACT-006",
       "meaning": "single-instance continuous state motion and additive rules",
       "testReferences": [
         {
@@ -7465,7 +7619,7 @@
       ]
     },
     {
-      "id": "NEW-07",
+      "id": "LANGUAGE-CONTRACT-007",
       "meaning": "predicate morphology and scoped Boolean composition",
       "testReferences": [
         {
@@ -7479,7 +7633,7 @@
       ]
     },
     {
-      "id": "NEW-08",
+      "id": "LANGUAGE-CONTRACT-008",
       "meaning": "named call arguments and protected arbitrary names",
       "testReferences": [
         {
@@ -7493,7 +7647,7 @@
       ]
     },
     {
-      "id": "NEW-09",
+      "id": "LANGUAGE-CONTRACT-009",
       "meaning": "quantity values, declaration constraints and UnitlessRead",
       "testReferences": [
         {
@@ -7507,7 +7661,7 @@
       ]
     },
     {
-      "id": "NEW-10",
+      "id": "LANGUAGE-CONTRACT-010",
       "meaning": "notification-group reference between adjacent sentences",
       "testReferences": [
         {
@@ -7521,7 +7675,7 @@
       ]
     },
     {
-      "id": "NEW-11",
+      "id": "LANGUAGE-CONTRACT-011",
       "meaning": "draft holes and atomic source/block editing",
       "testReferences": [
         {
@@ -7898,9 +8052,9 @@
     },
     {
       "id": "CI-19",
-      "intent": "分身5個が進んで消え、元は残る",
-      "route": "構造化支援：作成の5回と分身の見出し。8.4",
-      "acceptance": "元1＋分身5、各自、保存に残さない。全部5個との違いを確認",
+      "intent": "コピー5個が進んで消え、元は残る",
+      "route": "構造化支援：作成の5回とコピーの見出し。8.4",
+      "acceptance": "元1＋コピー5、各自、保存に残さない。全部5個との違いを確認",
       "testReferences": [
         {
           "path": "audit/tests/japanese-intent-browser.mjs",
@@ -8040,7 +8194,7 @@
       ]
     },
     {
-      "meaning": "- ACTOR-SCOPE：省略対象、明示対象、自他の文型、複数対象の連文、枝/反復/定義の境界、分身、自分のデータ、名前指定の元個体を固定トレースで確認",
+      "meaning": "- ACTOR-SCOPE：省略対象、明示対象、自他の文型、複数対象の連文、枝/反復/定義の境界、コピー、自分のデータ、名前指定の元個体を固定トレースで確認",
       "testReferences": [
         {
           "path": "audit/tests/semantic-negative-pairs.mjs",
@@ -8877,6 +9031,6 @@
       "SensorRead:TOUCHING_COLOR",
       "SensorRead:TOUCHING"
     ],
-    "rule": "Keep the complete current sets; the old 74/153 counts are not ceilings."
+    "rule": "Keep the complete current sets; their sizes are not ceilings."
   }
 }

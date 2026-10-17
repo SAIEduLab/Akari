@@ -1,4 +1,4 @@
-// Runtime v2 independent boundary audit. Run through ../runtime-v2.mjs.
+// Independent runtime boundary audit. Run through ../runtime-boundary.mjs.
 const {outputDir, productFile, browserPath, makeRegressionProject} = require('./config.cjs');
 const fs=require('fs'),path=require('path'),assert=require('assert/strict'),crypto=require('crypto'),{loadApi}=require('../../browser/cases/audit-lib.cjs'),{chromium}=require('playwright');
 const file=productFile,html=fs.readFileSync(file,'utf8'),A=loadApi(html),fixture=makeRegressionProject(A),sprite=fixture.components.find(x=>x.type==='sprite');fixture.name='Heading commit';fixture.components=[{...structuredClone(sprite),id:'cat',name:'ねこ',localData:{variables:[],lists:[]}},{...structuredClone(sprite),id:'dog',name:'いぬ',localData:{variables:[],lists:[]}}];fixture.components.forEach(x=>{x.costumes=[{id:'face-'+x.id,name:'顔',kind:'text',value:'🐈'}];x.costumeId='face-'+x.id});fixture.scripts=[{id:'edit',targetId:'stage',event:'start',source:'何もしない。'}];fixture.actions=[];fixture.functions=[];fs.writeFileSync(path.join(outputDir,'heading-project.akari.md'),A.serializeProject(fixture));

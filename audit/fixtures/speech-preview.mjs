@@ -1,4 +1,4 @@
-// Additive repair cases. Existing speech-name/B10 inputs and oracles are unchanged.
+// Independent inputs for the speech preview audit. The speech-name/B10 inputs and oracles stay separate.
 export const previewNames=['あかり','だんご'];
 export const previewShortTexts=['あか','あお'];
 export const previewLongTexts=['赤い花が咲いた。'.repeat(9)+'見えますか。','青い鳥が飛んだ。'.repeat(9)+'聞こえます。'];

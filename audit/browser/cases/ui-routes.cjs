@@ -39,7 +39,7 @@ async function openSlot(slot){
 async function slotAction(slot,action='slot-select'){await openSlot(slot);await slot.locator(':scope > .blockui-slot-head [data-blockui-action="'+action+'"]').click();}
 async function showUnavailable(root){
  const options=root.locator('.blockui-palette-options');if(!await options.count())return false;
- await openDetails(options);await options.getByRole('checkbox',{name:'使えない候補も表示',exact:true}).check();await options.locator(':scope > summary').click();return true;
+ await openDetails(options);await options.getByRole('checkbox',{name:'使えないブロックも見せる',exact:true}).check();await options.locator(':scope > summary').click();return true;
 }
 async function inspectUnavailableChoice(choice,snapshot){
  await choice.waitFor({state:'visible'});assert.equal(await choice.getAttribute('aria-disabled'),'true');

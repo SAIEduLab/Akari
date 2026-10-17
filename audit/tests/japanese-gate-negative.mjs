@@ -8,9 +8,9 @@ import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {scenarios,ambiguities,corpusSha256} from '../lib/japanese-intent-oracles.mjs';
-import {verifyJapaneseContract} from './japanese-contract-static.mjs';
+import {verifyJapaneseContract,verifyOracleCurrentLists} from './japanese-contract-static.mjs';
 import {corpusPath,checkCapabilityNegatives} from '../lib/capability-contract.mjs';
-import {intentCaseIds,runtimeRuns,contractInputPaths,expectationInputPaths,intentInputPaths,runtimeInputPaths,negativeInputPaths,inputHashes,verifyContractReport,verifyExpectationReport,verifyIntentCandidate,verifyIntentReport,verifyRuntimeReport,negativeCaseIds,verifyNegativeReport} from '../lib/japanese-gate-contract.mjs';
+import {intentCaseIds,runtimeRuns,contractInputPaths,expectationInputPaths,intentInputPaths,runtimeInputPaths,negativeInputPaths,inputHashes,verifyContractReport,verifyExpectationReport,verifyIntentCandidate,verifyIntentReport,verifyRuntimeReport,negativeCaseIds,verifyNegativeReport,visibleChoices} from '../lib/japanese-gate-contract.mjs';
 const [destination]=process.argv.slice(2);assert.ok(destination);const inputs=snapshot(currentProductFile()),dir=fs.mkdtempSync(path.join(os.tmpdir(),'akari-gate-validator-'));
 const clone=x=>JSON.parse(JSON.stringify(x)),results=[];
 try{
@@ -31,7 +31,7 @@ try{
  }
  for(const ambiguity of ambiguities){
   const soundChoices=ambiguity.id==='AMB-SOUND'?[{label:'そのままの文字を話す',source:'「こんにちは」と言う'},{label:'同じ名前の音を鳴らす',source:'音「こんにちは」を鳴らす'}]:null;
-  intent.results.find(r=>r.id===ambiguity.id+'/choices-nonexecution-cancel').evidence={original:ambiguity.source,choices:soundChoices?soundChoices.map(choice=>choice.label):ambiguity.choices,soundChoices,valid:{project:'fixture'},before:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'},after:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'}};
+  intent.results.find(r=>r.id===ambiguity.id+'/choices-nonexecution-cancel').evidence={original:ambiguity.source,choices:soundChoices?soundChoices.map(choice=>choice.label):ambiguity.choices.map(word=>visibleChoices[ambiguity.id+'/'+word]??word),soundChoices,valid:{project:'fixture'},before:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'},after:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'}};
  }
  fs.writeFileSync(path.join(dir,'formal-player.html'),'<!-- validator fixture, not an executable player -->');
  const runs=runtimeRuns.map(([script,evidence,ids])=>{
@@ -41,9 +41,9 @@ try{
   fs.writeFileSync(path.join(dir,evidence),JSON.stringify(child));
   return{script,evidence,reports,exitCode:0,signal:null,snapshotMatches:true};
  });
- const runtime={schema:'akari-runtime-boundary-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(runtimeInputPaths),runtime:{schema:'akari-runtime-v2-boundary-evidence-v1',status:'PASS',productSha256:inputs.productSha256,transport:'file://',expectedPassCount:20,passed:20,failed:0,unverified:0,runs}};
+ const runtime={schema:'akari-runtime-boundary-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(runtimeInputPaths),runtime:{schema:'akari-runtime-boundary-evidence-v1',status:'PASS',productSha256:inputs.productSha256,transport:'file://',expectedPassCount:20,passed:20,failed:0,unverified:0,runs}};
  const fixed={schema:'akari-japanese-static-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(contractInputPaths),contract:verifyJapaneseContract()};
- const migration={schema:'akari-language-expectations-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(expectationInputPaths),expectations:{status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153,expectationsSha256:sha(fs.readFileSync('audit/fixtures/language/expected.json')),manifestSha256:sha(fs.readFileSync('audit/manifests/language-form-coverage.json'))}};
+ const migration={schema:'akari-language-expectations-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(expectationInputPaths),expectations:{status:'PASS',stableIds:607,finiteInputs:256,groups:42,corpus:95,schemas:JSON.parse(fs.readFileSync('audit/manifests/features.json')).schemaIds.length,expectationsSha256:sha(fs.readFileSync('audit/fixtures/language/expected.json')),manifestSha256:sha(fs.readFileSync('audit/manifests/language-form-coverage.json'))}};
  const check=(id,base,verify,mutate)=>{const bad=clone(base);mutate(bad);assert.throws(()=>verify(bad));results.push({id,rejected:true});};
  const vi=r=>verifyIntentReport(r,inputs),vr=r=>verifyRuntimeReport(r,inputs,dir),vs=r=>verifyContractReport(r,inputs),vm=r=>verifyExpectationReport(r,inputs);
  // Producer paths belong to the recorded OS; the sealed bytes are local.
@@ -84,7 +84,12 @@ try{
  check('RUNTIME/required-case-unverified',runtime,vr,r=>{r.runtime.runs[0].reports[0].pass=null;r.runtime.runs[0].reports[0].status='UNVERIFIED';});
  check('STATIC/missing-check',fixed,vs,r=>r.contract.results.pop());check('STATIC/changed-doc-hash',fixed,vs,r=>r.contract.fixtureSha256='0'.repeat(64));
  check('STATIC/execution-claim',fixed,vs,r=>r.contract.productDynamic.status='PASS');
- check('EXPECTATIONS/missing-stable-id',migration,vm,r=>r.expectations.stableIds=604);check('EXPECTATIONS/stale-snapshot',migration,vm,r=>r.snapshot.productSha256='0'.repeat(64));
+ // The oracle's current lists: the schema set, LANGUAGE.md builtins and fixed sensors.
+ const lists={oracle:JSON.parse(fs.readFileSync('audit/fixtures/capability-oracle.json')),features:JSON.parse(fs.readFileSync('audit/manifests/features.json')),language:fs.readFileSync('LANGUAGE.md','utf8')},vl=r=>verifyOracleCurrentLists(r.oracle,r.features,r.language);vl(lists);
+ check('STATIC/oracle-schema-set-differs',lists,vl,r=>r.features.schemaIds.push('MotionCommand:NOT_A_CURRENT_SCHEMA'));
+ check('STATIC/language-builtin-list-changed',lists,vl,r=>{r.language=r.language.replace('`乱数`','`らんすう`');});
+ check('STATIC/language-sensor-list-changed',lists,vl,r=>{r.language=r.language.replace('`タイマー` ／ ','');});
+ check('EXPECTATIONS/missing-stable-id',migration,vm,r=>r.expectations.stableIds=606);check('EXPECTATIONS/stale-snapshot',migration,vm,r=>r.snapshot.productSha256='0'.repeat(64));check('EXPECTATIONS/schema-set-changed',migration,vm,r=>r.expectations.schemas--);
  const proseRow=r=>r.results.find(x=>x.id==='CI-01/original-prose-ui').evidence.checks[0];
  for(const flag of ['unchanged','blocksDisabled','executionRejected','cancelRestoredSource','automaticExecution']){
   check('INTENT/prose-missing-'+flag,intent,vi,r=>delete proseRow(r)[flag]);

@@ -1,6 +1,6 @@
-// Explicit d961dd3 regression preconditions, independent of the v2 onboarding starter.
+// Explicit regression preconditions, independent of the onboarding starter project.
 // Fresh data on every call. Current producer/format metadata comes from the public factory;
-// all legacy data, geometry, components, assets, events and program effects stay explicit.
+// all fixture data, geometry, components, assets, events and program effects stay explicit.
 // Self-contained: Node can require this function; browser tests can inject its toString().
 function makeAkariRegressionProject(api) {
   const project = api.makeDefaultProject();

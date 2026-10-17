@@ -5,6 +5,9 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {snapshot,withBrowser,pageFor} from '../lib/product-test-host.mjs';
+import {answerProductConfirms} from '../lib/product-dialogs.cjs';
+// Lets the registered product-confirm answer run before state is read directly.
+const productConfirmAnswered=page=>page.locator('#loseConfirmModal').waitFor({state:'hidden'});
 
 const [browserPath,output='audit-evidence/source-ownership.json']=process.argv.slice(2);
 const inputs=snapshot(currentProductFile()), api=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
@@ -84,7 +87,7 @@ let browserVersion;
 await withBrowser(browserPath,async browser=>{
   browserVersion=browser.version();
   await pageFor(browser,currentProductFile(),async p=>{
-    p.on('dialog',d=>d.accept());await p.setViewportSize({width:1440,height:1000});
+    p.on('dialog',d=>d.accept());await answerProductConfirms(p,true);await p.setViewportSize({width:1440,height:1000});
     const startup={overview:await p.locator('#sourceOverview').isVisible(),editable:await p.locator('#codeEditor').isEditable()};
     await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');await p.locator('#uiLevel').selectOption('advanced');
     await test('OWNER-GUI-DIRECT-BUTTON',async()=>{
@@ -92,7 +95,7 @@ await withBrowser(browserPath,async browser=>{
       const original='（（（3）を渡して、【倍】で求めた答え））を渡して、【表示】という手順を行う。',changed='（（（4）を渡して、【倍】で求めた答え））を渡して、【表示】という手順を行う。';
       for(const mode of ['code','blocks']){
         await p.locator('#editorMode'+mode).click();
-        await p.locator('#sourceOverviewBtn').click();await p.locator('#newBtn').click();
+        await p.locator('#sourceOverviewBtn').click();await p.locator('#newBtn').click();await productConfirmAnswered(p);
         assert.equal(await p.locator('#sourceOverview').isVisible(),false,'new project opens the editor');
         assert.equal(await p.locator('#eventSelect').inputValue(),'start');
         assert.equal(await p.evaluate(()=>Akari.app.project.scripts.every(s=>s.source==='')),true,'new work has empty source');
@@ -102,7 +105,7 @@ await withBrowser(browserPath,async browser=>{
         if(mode==='code')assert.ok(await editor.isEditable());
         else assert.equal(await editor.locator('[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first().isEditable(),true);
         await p.locator('#sourceOverviewBtn').click();
-        await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');await p.locator('#uiLevel').selectOption('advanced');
+        await p.locator('#fileInput').setInputFiles(md);await productConfirmAnswered(p);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');await p.locator('#uiLevel').selectOption('advanced');
         assert.equal(await p.locator('#sourceOverview').isVisible(),false,'import closes a previous overview');
         await p.locator('#formSurface .component[data-id="button-1"]').click();
         assert.equal(await p.locator('#objectSelect').inputValue(),'button-1');
@@ -207,7 +210,7 @@ await withBrowser(browserPath,async browser=>{
       data.actions=[{id:'a',ownerId:'stage',name:'甲',args:['値'],source:'（値）を渡して、【乙】という手順を行う'},{id:'b',ownerId:'stage',name:'乙',args:['値'],source:'（値）を渡して、【甲】という手順を行う'}];
       data.functions=[{id:'f',ownerId:'stage',name:'巡る',args:['値'],source:'（（値）を渡して、【巡る】で求めた答え）を答えとして返す'}];
       await p.locator('#fileInput').setInputFiles({name:'references.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(data))});
-      await p.waitForFunction(()=>Akari.app.project.name==='再帰の参照');
+      await productConfirmAnswered(p);await p.waitForFunction(()=>Akari.app.project.name==='再帰の参照');
       await p.locator('#objectSelect').selectOption('button-1');
       await p.locator('#sourceOverviewBtn').click();
       const keys=await p.locator('#sourceOverview [data-source-key]').evaluateAll(ns=>ns.map(n=>n.dataset.sourceKey));

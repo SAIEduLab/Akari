@@ -1,4 +1,4 @@
-// Runtime v2 independent boundary audit. Run through ../runtime-v2.mjs.
+// Independent runtime boundary audit. Run through ../runtime-boundary.mjs.
 const {outputDir, productFile, browserPath, makeRegressionProject} = require('./config.cjs');
 const fs=require('fs'),path=require('path'),assert=require('assert/strict'),crypto=require('crypto');const{chromium}=require('playwright');
 (async()=>{const browser=await chromium.launch({executablePath:browserPath,headless:true,args:['--allow-file-access-from-files','--disable-background-networking']});const reports=[];async function test(id,fn){const ctx=await browser.newContext({offline:true}),p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));p.setDefaultTimeout(10000);try{const details=await fn(p,ctx);assert.deepEqual(errors,[]);reports.push({id,pass:true,details});console.log('PASS',id)}catch(e){reports.push({id,pass:false,error:e.stack,errors});console.error('FAIL',id,e.message);await p.screenshot({path:path.join(outputDir,id+'-failure.png')})}finally{await ctx.close()}}

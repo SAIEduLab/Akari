@@ -8,7 +8,7 @@ import {transferFixtures,fixturePins,verifyValuesReport} from '../lib/actions-tr
 const {plan}=transferFixtures(),A=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
 import {fixedValues as literal} from '../fixtures/fixed-values.mjs';
 
-assert.deepEqual(literal.map(x=>'Q-'+x[0]),plan.groups.Q.map(x=>x.id),'exact original Q76 ordered set');
+assert.deepEqual(literal.map(x=>'Q-'+x[0]),plan.groups.Q.map(x=>x.id),'exact fixed-value ordered set');
 function fixture(){
  const p=A.makeDefaultProject(),cat=p.components.find(c=>c.id==='sprite-1');
  Object.assign(cat,{name:'あかり',x:100,y:100,w:100,h:100,direction:90,scalePercent:120});
@@ -63,4 +63,4 @@ const output=path.resolve(process.argv[2]),report={schema:'akari-fixed-values-v1
 fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 if(report.status==='PASS')verifyValuesReport(report);
 for(const result of results)if(result.status!=='PASS')console.error(result.id+': '+result.error.split('\n').slice(0,2).join(' '));
-console.log(`Fixed Q76 values: ${results.filter(x=>x.status==='PASS').length}/76 PASS`);if(report.status!=='PASS')process.exitCode=1;
+console.log(`Fixed Q76 values: ${results.filter(x=>x.status==='PASS').length}/${results.length} PASS`);if(report.status!=='PASS')process.exitCode=1;

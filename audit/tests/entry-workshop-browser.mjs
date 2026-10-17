@@ -17,6 +17,13 @@ const read=p=>p.evaluate(()=>{const a=Akari.app,e=a.editorState,s=e.main;return{
  step:document.body.dataset.tutorialStep||null,selectedScript:e.selectedScriptId,menuOpen:document.querySelector('#entryProjectMenu').open,dialogs:[...document.querySelectorAll('.modal.show,.modal.open,dialog[open]')].map(n=>n.id)};});
 const content=s=>({project:s.project,history:s.history,redo:s.redo,dirty:s.dirty,owner:s.owner,source:s.source,mode:s.mode,state:s.state,selectedScript:s.selectedScript,pending:s.pending,menuOpen:s.menuOpen,dialogs:s.dialogs});
 const waitStep=async(p,id)=>{try{await p.waitForFunction(id=>document.body.dataset.tutorialStep===id,id,{timeout:12000});}catch(error){throw Error('Expected '+id+'; observed '+JSON.stringify(await read(p))+'\n'+error.message);}};
+// The product asks before replacing unsaved work in its own dialog; the test answers it explicitly.
+async function loseQuestion(p){await p.locator('#loseConfirmModal.show').waitFor();
+ const shown=await p.evaluate(()=>{const m=document.querySelector('#loseConfirmModal');return{role:m.getAttribute('role'),modal:m.getAttribute('aria-modal'),label:m.getAttribute('aria-labelledby'),message:document.querySelector('#loseConfirmMessage').textContent,proceed:document.querySelector('#loseConfirmProceed').textContent,cancel:document.querySelector('#loseConfirmCancel').textContent,focus:document.activeElement?.id};});
+ assert.deepEqual({role:shown.role,modal:shown.modal,label:shown.label,proceed:shown.proceed,cancel:shown.cancel},{role:'dialog',modal:'true',label:'loseConfirmMessage',proceed:'すてて つづける',cancel:'やめる'});
+ assert.match(shown.message,/まだ ほぞんしていない/,'the question names the unsaved work');assert.equal(shown.focus,'loseConfirmCancel','the safe answer has focus');return shown;}
+// The guided number is fully inside the editor's scroll viewport.
+const fieldInView=id=>{const n=document.querySelector('#blockEditor input[data-block-id="'+id+'"]'),w=document.querySelector('#blockEditor .blockui-workspace');if(!n||!w)return false;const r=n.getBoundingClientRect(),b=w.getBoundingClientRect();return r.top>=b.top&&r.bottom<=b.bottom&&r.left>=b.left&&r.right<=b.right;};
 const picture=async(p,name)=>{const file=name+'.png';await p.screenshot({path:path.join(artifacts,file)});return file;};
 async function row(browser,id,fn,contextOptions={}){const result={id,status:'RUNNING',observations:{}};report.results.push(result);
  try{result.observations=await pageFor(browser,product,async p=>{p.setDefaultTimeout(8000);await p.setViewportSize({width:1280,height:720});
@@ -55,7 +62,7 @@ async function positive(p,id){
   await activate(p,candidate);return null;
  }
  if(op.kind==='field'){const ref=await fieldAt(p,op.ref);
-  await p.waitForFunction(id=>{const n=document.querySelector('#blockEditor input[data-block-id="'+id+'"]'),w=document.querySelector('#blockEditor .blockui-workspace');if(!n||!w)return false;const r=n.getBoundingClientRect(),b=w.getBoundingClientRect();return r.top>=b.top&&r.bottom<=b.bottom&&r.left>=b.left&&r.right<=b.right;},ref.id);
+  await p.waitForFunction(fieldInView,ref.id);
   if(id.endsWith('-change'))p.entryOldValue=ref.value;await edit(p,ref.id,op.value);if(id.endsWith('-change'))assert.equal((await fieldAt(p,op.ref)).value,op.value);return null;}
  if(id.startsWith('run-')){await activate(p,p.locator('#runBtn'));return null;}
  if(id.startsWith('stop-')){await activate(p,p.locator('#stopBtn'));return null;}
@@ -164,9 +171,9 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   await p.locator('#blockEditor [data-blockui-schema="WaitTime"]').click();const appended=await read(p);assert.equal(await p.evaluate(()=>Akari.app.editorState.main.blockView.bodies.body.at(-1).schemaId),'WaitTime');
   return{before,inserted,appended,screenshot:await picture(p,'ordinary-append')};});
  await row(browser,browserIds[3],async p=>{await p.locator('#blockEditor [data-blockui-schema="Say:timed"]').click();const before=await read(p);
-  p.once('dialog',d=>d.dismiss());await p.locator('#tutorialStart').click();const cancelled=await read(p);assert.deepEqual(content(cancelled),content(before));assert.equal(cancelled.step,null);
-  p.once('dialog',d=>d.accept());await p.locator('#tutorialStart').click();await waitStep(p,'choose-click');const accepted=await read(p);assert.notEqual(accepted.project,before.project);
-  await p.locator('#tutorialExit').click();return{before,cancelled,accepted,afterExit:await read(p)};});
+  await p.locator('#tutorialStart').click();const asked=await loseQuestion(p);await p.locator('#loseConfirmCancel').click();const cancelled=await read(p);assert.deepEqual(content(cancelled),content(before));assert.equal(cancelled.step,null);
+  await p.locator('#tutorialStart').click();await loseQuestion(p);await p.locator('#loseConfirmProceed').click();await waitStep(p,'choose-click');const accepted=await read(p);assert.notEqual(accepted.project,before.project);
+  await p.locator('#tutorialExit').click();return{before,asked,cancelled,accepted,afterExit:await read(p)};});
  await row(browser,browserIds[4],async p=>{await p.locator('#tutorialStart').click();const steps=[],exits=[];let downloaded=null;
   for(const [index,id]of tutorialSteps.entries()){
    await waitStep(p,id);const resumed=await exitAndResume(p,id);exits.push(resumed.record);if(resumed.downloaded)downloaded=resumed.downloaded;
@@ -187,14 +194,14 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   await control.dispatchEvent('compositionend');await control.press('Enter');assert.ok((await read(p)).source.includes('変換途中'));
   await p.locator('#uiLevel').selectOption('basic');return{pending,afterExit,ordinaryEdit:await read(p),syntheticIME:true,screenshot:await picture(p,'pending-exit')};});
  await row(browser,browserIds[6],async p=>{await reach(p,'speech-text');await p.locator('#tutorialExit').click();const old=await read(p);await p.locator('#tutorialStart').click();await waitStep(p,'speech-text');assert.equal((await read(p)).project,old.project);
-  await p.locator('#tutorialExit').click();const r=await roles(p);await edit(p,r.text,'別の作品に改造');const changed=await read(p);p.once('dialog',d=>d.dismiss());await p.locator('#tutorialStart').click();assert.equal((await read(p)).project,changed.project);assert.equal((await read(p)).step,null);
-  return{unchangedResume:old,changed,cancelledRestart:await read(p)};});
+  await p.locator('#tutorialExit').click();const r=await roles(p);await edit(p,r.text,'別の作品に改造');const changed=await read(p);await p.locator('#tutorialStart').click();const asked=await loseQuestion(p);await p.locator('#loseConfirmCancel').click();assert.deepEqual(content(await read(p)),content(changed));assert.equal((await read(p)).step,null);
+  return{unchangedResume:old,changed,asked,cancelledRestart:await read(p)};});
  await row(browser,browserIds[7],async p=>{const downloaded=await reach(p,'verify-save');const before=await read(p);
   await p.locator('#tutorialSavedFile').dispatchEvent('cancel');assert.equal((await read(p)).step,'verify-save');
-  await p.locator('#tutorialSavedFile').setInputFiles({name:'broken.akari.md',mimeType:'text/plain',buffer:Buffer.from('not a project')});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('保存の確認'));
+  await p.locator('#tutorialSavedFile').setInputFiles({name:'broken.akari.md',mimeType:'text/plain',buffer:Buffer.from('not a project')});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('ほぞんを たしかめた けっか'));
   assert.equal((await read(p)).step,'verify-save');assert.deepEqual(content(await read(p)),content(before));
   const different=await p.evaluate(()=>{const project=Akari.makeEmptyProject();project.name='違う作品';return Akari.serializeProject(project,Akari.makeDefaultAssetStore());});
-  await p.locator('#tutorialSavedFile').setInputFiles({name:'same-name.akari.md',mimeType:'text/plain',buffer:Buffer.from(different)});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('内容が違います'));
+  await p.locator('#tutorialSavedFile').setInputFiles({name:'same-name.akari.md',mimeType:'text/plain',buffer:Buffer.from(different)});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('中身が ちがいます'));
   const refused=await read(p);assert.equal(refused.step,'verify-save');assert.deepEqual(content(refused),content(before));
   await p.locator('#tutorialSavedFile').setInputFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);assert.equal((await read(p)).project,before.project);
   return{before,refused,retried:await read(p),cancelDidNotComplete:true,parseFailureDidNotComplete:true,mismatchDidNotComplete:true};});
@@ -279,15 +286,18 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
     if(id.startsWith(course+'-')&&!id.endsWith('-next')){const result=await exitAndResume(p,id);exits.push(result.record);}
     if(id.endsWith('-change')){
      const op=auditOperation(id,course,leaf),ref=await fieldAt(p,op.ref),control=field(p,ref.id),before=await read(p);
+     await p.waitForFunction(fieldInView,ref.id);
      for(const bad of ['', '-', '999999']){
       await control.fill(bad);await control.press('Enter');assert.equal((await read(p)).step,id,'invalid numeric input cannot advance');
       if(bad==='999999')assert.match(await p.locator('#statusText').textContent(),/光る数は.+から.+の中でえらぼう/,'range error explains the permitted numbers');
       await control.press('Escape');assert.equal((await fieldAt(p,op.ref)).value,ref.value,'cancel restores only the edited value');
       const after=await read(p);assert.equal(after.project,before.project);assert.equal(after.history,before.history);
+      assert.equal(await p.locator('#editorPending').isHidden(),true,'a cancelled edit leaves no message to fix');
+      await p.waitForFunction(fieldInView,ref.id);
      }
     }
     if(id==='verify-save'){await p.locator('#tutorialSavedFile').setInputFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);}
-    else {const file=await positive(p,id);if(file)downloaded=file;}
+    else {try{const file=await positive(p,id);if(file)downloaded=file;}catch(error){await p.screenshot({path:path.join(artifacts,'branch-failure-'+course+'-'+leaf+'.png')});error.stack='route '+course+'/'+leaf+' step '+id+': '+error.stack;throw error;}}
    }
    const result=await read(p);assert.equal(result.step,null);assert.equal(await p.locator('[data-tutorial-blocked],.tutorial-target').count(),0);
    routes.push({key:course+'/'+leaf,completed:true,chosenValueVerified:true,undoVerified:true,exits,runtimeRuns:p.entryRuntimeObservations,screenshot:await picture(p,'branch-'+course+'-'+leaf),project:result.project});

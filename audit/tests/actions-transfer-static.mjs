@@ -6,19 +6,26 @@ import {snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {formatCompatibilityIds} from '../lib/format-compatibility-contract.mjs';
 import {uiButtonIds} from '../lib/ui-buttons-contract.mjs';
+import schemaContract from '../lib/block-schema-contract.cjs';
 const {plan}=transferFixtures(),features=JSON.parse(fs.readFileSync('audit/manifests/features.json'));
 const product=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
 const browsers=JSON.parse(fs.readFileSync('audit/manifests/browser-results.json'));
-const baseline=JSON.parse(fs.readFileSync('audit/fixtures/capability-oracle.json'));
-const guiSchemas=browsers.entries.find(r=>r.task==='schema-shards').keys,schemas=JSON.parse(fs.readFileSync('audit/fixtures/block-schemas.json'));
+const oracle=JSON.parse(fs.readFileSync('audit/fixtures/capability-oracle.json'));
+const contractInputs=schemaContract.currentInputs(),guiSchemas=contractInputs.guiKeys,schemaFixture=contractInputs.fixture,schemas=schemaFixture.schemas;
+const semanticSchemas=Object.keys(schemaFixture.semanticRows);
+const schemaContractReport={...schemaContract.verifySchemaContract(contractInputs),negatives:schemaContract.checkSchemaContractNegatives(contractInputs)};
+schemaContract.verifySchemaContractNegatives(schemaContractReport.negatives);
 const core=product.suites.find(s=>s.name==='runCoreTests');
 const same=(a,b)=>assert.deepEqual([...a].sort(),[...b].sort());
 same(plan.groups.C.map(r=>r.id.slice(2)),features.COMMAND_CATALOG.map(x=>x.id));
-same(plan.groups.Q.map(r=>schemaForExpression(r.id)),schemas.filter(s=>s.category==='expression').map(s=>s.id));
-same(plan.groups.E.map(r=>r.id.slice(2)),baseline.capabilities.filter(c=>c.id.startsWith('event:')).map(c=>c.id));
+// Every current expression schema has an independent value oracle: a fixed-value Q row
+// or a GUI row whose sentence and runtime result are written by hand.
+const expressionSchemas=schemas.filter(s=>s.category==='expression').map(s=>s.id);
+same([...plan.groups.Q.map(r=>schemaForExpression(r.id)),...semanticSchemas.filter(id=>expressionSchemas.includes(id))],expressionSchemas);
+same(plan.groups.E.map(r=>r.id.slice(2)),oracle.capabilities.filter(c=>c.id.startsWith('event:')).map(c=>c.id));
 same(plan.groups.L.map(r=>r.id.slice('L-limit:'.length)),Object.keys(features.LIMITS));
 same(plan.groups.S.map(r=>r.id.slice(2)),features.schemaIds);
-same(plan.groups.O.map(r=>r.id.slice(4)),baseline.capabilities.filter(c=>!/^(command|expression|operator|builtin|state|sensor|event|limit):/.test(c.id)).map(c=>c.id));
+same(plan.groups.O.map(r=>r.id.slice(4)),oracle.capabilities.filter(c=>!/^(command|expression|operator|builtin|state|sensor|event|limit):/.test(c.id)).map(c=>c.id));
 const productRefs=product.suites.flatMap(s=>s.ids.map(id=>({job:'selftest',suite:s.name,id})));
 const auxiliaryRefs=[...formatCompatibilityIds.map(id=>({job:'selftest',suite:'format-compatibility',id})),...uiButtonIds.map(id=>({job:'selftest',suite:'ui-buttons',id}))];
 const rows=Object.entries(plan.groups).flatMap(([group,items])=>items.map(row=>{
@@ -38,11 +45,11 @@ const rows=Object.entries(plan.groups).flatMap(([group,items])=>items.map(row=>{
     references=[{job:'full-browser-gate (limits)',suite:'browser-design-limits / browser-runtime-limits / browser-asset-limits / browser-media-boundaries',id:row.id.slice(2),guarantee:'boundary families; exact N-1/N/N+1 evidence must be checked per limit'},
       {job:'selftest',suite:'runLimitBoundaryTests / language-boundaries',id:row.id.slice(2),guarantee:'actual design/parser/runtime limit checks'}];
   } else if(group==='S'){
-    const id=row.id.slice(2),old=guiSchemas.includes(id);
-    references=[{job:old?'full-browser-gate (schemas)':'selftest',suite:old?'schema-shards':'runBlockCodecTests / japanese-intent-browser / runtime-v2',id,
-      guarantee:old?'full old-schema GUI row':'additional schema codec/meaning or draft safety; full GUI operations not claimed'}];
+    const id=row.id.slice(2);assert.ok(guiSchemas.includes(id),'full GUI schema row '+id);
+    references=[{job:'full-browser-gate (schemas)',suite:'schema-shards',id,
+      guarantee:semanticSchemas.includes(id)?'full GUI row with hand-written sentence and runtime expectations':'full GUI row: fields/inputs, structural editing, source/block AST, save/reopen'}];
   } else {
-    const capability=baseline.capabilities.find(c=>c.id===row.id.slice(4));assert.ok(capability);
+    const capability=oracle.capabilities.find(c=>c.id===row.id.slice(4));assert.ok(capability);
     references=[...productRefs,...auxiliaryRefs].filter(ref=>capability.selftest.includes(ref.id)||capability.browser.includes(ref.id));
     for(const entry of browsers.entries)for(const id of entry.keys){
       const name=(entry.task==='schema-shards'?'browser-schemas':entry.task)+':'+id;
@@ -55,7 +62,7 @@ const rows=Object.entries(plan.groups).flatMap(([group,items])=>items.map(row=>{
   return {...row,group,references,executionClaim:'NOT_ASSERTED'};
 }));
 const report={schema:'akari-actions-transfer-static-v1',status:'PASS',snapshot:snapshot(currentProductFile()),fixturePins,
-  claim:'REGISTRATION_ONLY',productAcceptance:false,uxAcceptance:false,rows};
+  claim:'REGISTRATION_ONLY',productAcceptance:false,uxAcceptance:false,schemaContract:schemaContractReport,rows};
 verifyTransferReport(report);
 const output=path.resolve(process.argv[2]);fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 console.log(`Actions transfer: ${rows.length} fixed rows mapped; registration only, no UX or product acceptance claim`);

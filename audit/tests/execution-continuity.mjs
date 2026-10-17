@@ -7,6 +7,7 @@ import {audioIds,codecBrowser} from '../lib/feature-contract.mjs';
 import {gateSteps,auditBundleKinds,auditJobIds,integrityControlIds,acceptanceIds,acceptanceCommands,verifyAcceptanceExecution} from '../lib/gate-contract.mjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {sealBundle,verifyBundle,selectBundleDirectory} from '../lib/evidence-bundle.mjs';
+import {gateCaseIds,nodeProductCaseIds,caseReport,verifyGateCaseReports,currentReleaseRecord} from '../lib/gate-case-contract.mjs';
 const inputs=snapshot(currentProductFile()),results=[];
 const check=(id,fn)=>{fn();results.push({id,pass:true});};
 const clone=x=>JSON.parse(JSON.stringify(x));
@@ -83,11 +84,18 @@ for(const mode of ['valid','missing-file','extra-file','changed-bytes','changed-
   if(mode==='valid')verifyBundle('audio-codecs-linux',dir,inputs,provenance);else assert.throws(()=>verifyBundle('audio-codecs-linux',dir,inputs,provenance));
 });
 const freeze=fs.readFileSync('audit/freeze-release.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
+// Fixture contract numbers differ from the product's, so the record proves where they come from.
+const fixtureContract={languageContractId:5,runtimeContractId:6,programFormatVersion:7,projectFormatVersion:8};
+const currentRelease=path.posix.basename(currentReleaseFile());
 let frozen;
-function freezeRun(record,changed){
- vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readFileSync(p){if(p==='audit/public-files.json')return JSON.stringify({files:[currentProductFile(),'LANGUAGE.md']});if(p===currentReleaseFile())return frozen;return Buffer.from(p+(changed?'changed':''));}},assert:relaxed,sha,currentProductFile,currentProductVersion,currentReleaseFile,process:{argv:record?['--record']:[]},console:{log(){}}});}
-check('freeze-record-and-verify',()=>{freezeRun(true,false);freezeRun(false,false);});
-check('freeze-changed-file-refused',()=>assert.throws(()=>freezeRun(false,true)));
+function freezeRun(record,{changed=false,contract=fixtureContract,releases=[currentRelease]}={}){
+ vm.runInNewContext(freeze,{fs:{writeFileSync(p,s){frozen=s;},readdirSync(p){assert.equal(p,'audit/manifests');return ['features.json',...releases,'samples.json'];},readFileSync(p){if(p==='audit/public-files.json')return JSON.stringify({files:[currentProductFile(),'LANGUAGE.md']});if(p==='audit/manifests/features.json')return JSON.stringify({EXECUTABLE_CONTRACT:contract});if(p===currentReleaseFile())return frozen;return Buffer.from(p+(changed?'changed':''));}},assert:relaxed,sha,currentProductFile,currentProductVersion,currentReleaseFile,process:{argv:record?['--record']:[]},console:{log(){}}});}
+check('freeze-record-and-verify',()=>{freezeRun(true);freezeRun(false);});
+check('freeze-changed-file-refused',()=>assert.throws(()=>freezeRun(false,{changed:true}),/Current distribution differs/));
+check('freeze-contract-from-features',()=>{frozen=undefined;freezeRun(true);const r=JSON.parse(frozen);assert.deepEqual([r.languageContractId,r.runtimeContractId,r.programFormat,r.projectFormat],[5,6,7,8]);freezeRun(false);});
+check('freeze-changed-contract-refused',()=>{freezeRun(true);for(const key of Object.keys(fixtureContract))assert.throws(()=>freezeRun(false,{contract:{...fixtureContract,[key]:9}}),/Current distribution differs/,key);});
+check('freeze-unknown-contract-refused',()=>{for(const contract of [{...fixtureContract,extraContractId:1},(({projectFormatVersion,...rest})=>rest)(fixtureContract),{...fixtureContract,projectFormatVersion:'8'},{...fixtureContract,runtimeContractId:0}]){frozen=undefined;assert.throws(()=>freezeRun(true,{contract}),/executable contract/);assert.equal(frozen,undefined);}});
+check('freeze-second-release-refused',()=>{freezeRun(true);const recorded=frozen;for(const releases of [['release-0.0.1.json',currentRelease],[currentRelease,'release-'+currentProductVersion()+'-copy.json'],['release-0.0.1.json']])for(const record of [true,false]){assert.throws(()=>freezeRun(record,{releases}),/only the current release manifest may exist/);assert.equal(frozen,recorded);}});
 for(const kind of ['composition','editing']){const good={schema:'akari-acceptance-execution-v1',status:'PASS',snapshot:inputs,steps:acceptanceIds(kind).map((id,i)=>({id,status:'PASS',exit:0,signal:null,log:'step-'+i+'.log',ms:1}))};verifyAcceptanceExecution(good,kind,inputs);
  for(const [name,mutate]of [['missing',r=>r.steps.pop()],['duplicate',r=>r.steps[1]=r.steps[0]],['failed',r=>r.steps[0].status='FAIL'],['timeout',r=>r.steps[0].signal='SIGTERM'],['snapshot',r=>r.snapshot.inputSha256='wrong'],['fake-pass',r=>r.steps[0].exit=1]])check('execution:'+kind+'/'+name,()=>{const bad=clone(good);mutate(bad);assert.throws(()=>verifyAcceptanceExecution(bad,kind,inputs));});}
 const acceptanceRunner=fs.readFileSync('audit/run-acceptance.mjs','utf8').replace(/^import .*;\r?\n/gm,'');
@@ -99,6 +107,30 @@ for(const kind of ['composition','editing'])check('execution:'+kind+'/persisted-
  assert.equal(process.exitCode,1);const report=JSON.parse(written.get((kind==='composition'?'audit-evidence/acceptance':'audit-evidence/editing')+'/execution.json'));
  assert.equal(report.status,'FAIL');assert.equal(report.validationFailure,'synthetic validation rejection');assert.equal(report.steps.length,acceptanceCommands[kind].length);assert.ok(report.steps.every(r=>r.status==='PASS'));
 });
+// Case-listing gate steps: exactly the declared cases, each PASS, bound to the current inputs.
+const productManifest=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json')),releaseRecord=currentReleaseRecord();
+function caseReports(){
+  const reports=Object.fromEntries(Object.entries(gateCaseIds).map(([step,ids])=>[step,caseReport(step,ids.map(id=>({id,status:'PASS'})),{},inputs)]));
+  reports['release-distribution'].record=clone(releaseRecord);
+  reports['node-product']=caseReport('node-product',nodeProductCaseIds(productManifest).map(id=>({id,status:'PASS'})),{},inputs);
+  return reports;
+}
+const verifyCases=(reports,manifest=productManifest)=>verifyGateCaseReports(step=>{assert.ok(reports[step],'missing report '+step);return reports[step];},inputs,manifest,releaseRecord);
+check('gate-cases:valid',()=>verifyCases(caseReports()));
+for(const [name,mutate,message] of [
+  ['wrong-schema',r=>r['ci-regression'].schema='akari-gate-v1',/ci-regression: schema/],
+  ['wrong-step',r=>r['dom-regression'].step='ci-regression',/dom-regression: step/],
+  ['failed-status',r=>r['harness-negative'].status='FAIL',/harness-negative: status/],
+  ['stale-snapshot',r=>r['surface-negative'].snapshot={...inputs,inputSha256:'0'.repeat(64)},/surface-negative: snapshot/],
+  ['missing-results',r=>delete r['license-verify'].results,/license-verify: results/],
+  ['missing-case',r=>r['workflow-contract'].results.pop(),/workflow-contract: case set/],
+  ['extra-case',r=>r['change-guard-negative'].results.push({id:'invented',status:'PASS'}),/change-guard-negative: case set/],
+  ['duplicate-case',r=>{const rows=r['release-policy-negative'].results;rows[1]=rows[0];},/release-policy-negative: duplicate case/],
+  ['failed-case',r=>r['node-product'].results[0].status='FAIL',/node-product\//],
+  ['release-record-changed',r=>r['release-distribution'].record.files[currentProductFile()]='0'.repeat(64),/committed release record/],
+  ['release-record-missing',r=>delete r['release-distribution'].record,/committed release record/],
+])check('gate-cases:'+name,()=>{const reports=caseReports();mutate(reports);assert.throws(()=>verifyCases(reports),message);});
+check('gate-cases:node-product-suite-missing',()=>{const manifest=clone(productManifest);manifest.suites=manifest.suites.filter(s=>s.name!=='runCoreTests');assert.throws(()=>verifyCases(caseReports(),manifest),/node product suite missing from manifest: runCoreTests/);});
 assert.deepEqual(results.map(r=>r.id),integrityControlIds);
 assert.deepEqual(snapshot(currentProductFile()),inputs);
 fs.writeFileSync(output,JSON.stringify({status:'PASS',snapshot:inputs,results},null,2)+'\n');

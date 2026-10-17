@@ -26,12 +26,12 @@
 
 | 要求ID | 分類 | 検査する保証 | 安定試験ID | ジョブ | 証拠／検証関数 |
 |---|---|---|---|---|---|
-| A1 | 既存で保証済み | 24課題の独立した対象・順序・時刻・条件・回数・値 | `B01/code`<br>`B01/blocks`<br>`B02/code`<br>`B02/blocks`<br>`B03/code`<br>`B03/blocks`<br>`B04/code`<br>`B04/blocks`<br>`B05/code`<br>`B05/blocks`<br>`B06/code`<br>`B06/blocks`<br>`B07/code`<br>`B07/blocks`<br>`B08/code`<br>`B08/blocks`<br>`B09/code`<br>`B09/blocks`<br>`B10/code`<br>`B10/blocks`<br>`B11/code`<br>`B11/blocks`<br>`B12/code`<br>`B12/blocks`<br>`B13/code`<br>`B13/blocks`<br>`B14/code`<br>`B14/blocks`<br>`B15/code`<br>`B15/blocks`<br>`B16/code`<br>`B16/blocks`<br>`B17/code`<br>`B17/blocks`<br>`B18/code`<br>`B18/blocks`<br>`B19/code`<br>`B19/blocks`<br>`B20/code`<br>`B20/blocks`<br>`B21/code`<br>`B21/blocks`<br>`B22/code`<br>`B22/blocks`<br>`B23/code`<br>`B23/blocks`<br>`B24/code`<br>`B24/blocks` | `composition-acceptance` | `ux-normal-matrix.json` / `verifyRepairMatrix` |
+| A1 | 既存で保証済み | 24課題の独立した対象・順序・時刻・条件・回数・値 | `B01/code`<br>`B01/blocks`<br>`B02/code`<br>`B02/blocks`<br>`B03/code`<br>`B03/blocks`<br>`B04/code`<br>`B04/blocks`<br>`B05/code`<br>`B05/blocks`<br>`B06/code`<br>`B06/blocks`<br>`B07/code`<br>`B07/blocks`<br>`B08/code`<br>`B08/blocks`<br>`B09/code`<br>`B09/blocks`<br>`B10/code`<br>`B10/blocks`<br>`B11/code`<br>`B11/blocks`<br>`B12/code`<br>`B12/blocks`<br>`B13/code`<br>`B13/blocks`<br>`B14/code`<br>`B14/blocks`<br>`B15/code`<br>`B15/blocks`<br>`B16/code`<br>`B16/blocks`<br>`B17/code`<br>`B17/blocks`<br>`B18/code`<br>`B18/blocks`<br>`B19/code`<br>`B19/blocks`<br>`B20/code`<br>`B20/blocks`<br>`B21/code`<br>`B21/blocks`<br>`B22/code`<br>`B22/blocks`<br>`B23/code`<br>`B23/blocks`<br>`B24/code`<br>`B24/blocks` | `composition-acceptance` | `ux-normal-matrix.json` / `verifyUxNormalMatrix` |
 | A2 | 機械検証 | 両モードを起点に実UIを往復し同じ独立期待と照合 | `CHILD-UX-ROUNDTRIP` | `composition-acceptance` | `child-ux-matrix.json` / `verifyChildMatrix` |
-| A3 | 既存で保証済み | 未完成・不正入力を勝手に別意味へ変えない | `diagnostics/current-source`<br>`editor/synthetic-composition` | `composition-acceptance` | `ux-normal-browser.json` / `verifyRepairBrowser` |
-| B1 | 既存で保証済み | 分類・検索・候補の到達と挿入、状態保持 | `controls/palette-and-search` | `composition-acceptance` | `ux-normal-browser.json` / `verifyRepairBrowser` |
-| B2 | 既存で保証済み | 対象・きっかけ・元の本文を保持 | `B08/code`<br>`B08/blocks`<br>`B09/code`<br>`B09/blocks`<br>`B23/code`<br>`B23/blocks` | `composition-acceptance` | `ux-normal-matrix.json` / `verifyRepairMatrix` |
-| B3 | 既存で保証済み | 取消・Undo/Redoと編集への復帰 | `B24/code`<br>`B24/blocks` | `composition-acceptance` | `ux-normal-matrix.json` / `verifyRepairMatrix` |
+| A3 | 既存で保証済み | 未完成・不正入力を勝手に別意味へ変えない | `diagnostics/current-source`<br>`editor/synthetic-composition` | `composition-acceptance` | `ux-normal-browser.json` / `verifyUxNormalBrowser` |
+| B1 | 既存で保証済み | 分類・検索・候補の到達と挿入、状態保持 | `controls/palette-and-search` | `composition-acceptance` | `ux-normal-browser.json` / `verifyUxNormalBrowser` |
+| B2 | 既存で保証済み | 対象・きっかけ・元の本文を保持 | `B08/code`<br>`B08/blocks`<br>`B09/code`<br>`B09/blocks`<br>`B23/code`<br>`B23/blocks` | `composition-acceptance` | `ux-normal-matrix.json` / `verifyUxNormalMatrix` |
+| B3 | 既存で保証済み | 取消・Undo/Redoと編集への復帰 | `B24/code`<br>`B24/blocks` | `composition-acceptance` | `ux-normal-matrix.json` / `verifyUxNormalMatrix` |
 | B4 | 既存で保証済み | エラー箇所への到達と修正復帰 | `syntax/closing`<br>`syntax/quote` | `ux-editing` | `child-diagnostics.json` / `verifyChildDiagnosticsReport` |
 | C1 | 既存で保証済み | 固定画面幅・実ブラウザー拡大・必須部品の到達 | `COMPONENT-CONTROLS-RESPONSIVE`<br>`COMPONENT-CONTROLS-ZOOM` | `ux-editing` | `component-controls.json` / `verifyComponentControls` |
 | C2 | 既存で保証済み | 10/28/100%・短文長文・複数話者・全文一致と閉じる | `speech-preview/fresh/10`<br>`speech-preview/fresh/28`<br>`speech-preview/fresh/100`<br>`speech-preview/full-78/10`<br>`speech-preview/full-78/485` | `ux-editing` | `speech-preview.json` / `verifyPreviewReport` |
@@ -39,7 +39,7 @@
 | D1 | 機械検証 | 製品ソースと実画面の候補語を対応・欠落を検出 | `CHILD-UX-LANGUAGE-INVENTORY` | `ux-editing` | `child-ux-language.json` / `verifyChildLanguage` |
 | D2 | 既存で保証済み | 読み・平易な意味・例・操作への支援を実画面で確認 | `CHILD-UI-ACTION-HELP`<br>`CHILD-UI-DATA-EXAMPLES`<br>`CHILD-UI-BLOCK-WORDS` | `ux-editing` | `child-language-ui.json` / `verifyChildLanguageUi` |
 | D3 | 人による確認が必要 | 語や概念を児童が理解できるか、未知語の意味審査 | `CHILD-UX-VOCABULARY-REVIEW` | `manual` | `manual-events.jsonl` / `verifyManualSession` |
-| E1 | 既存で保証済み | 入力・貼付・focus・合成composition中と確定後 | `editor/synthetic-composition`<br>`editor/enter-indent` | `composition-acceptance` | `ux-normal-browser.json` / `verifyRepairBrowser` |
+| E1 | 既存で保証済み | 入力・貼付・focus・合成composition中と確定後 | `editor/synthetic-composition`<br>`editor/enter-indent` | `composition-acceptance` | `ux-normal-browser.json` / `verifyUxNormalBrowser` |
 | E2 | 機械検証 | OS・フォント・ブラウザー・snapshot・実行由来を区別 | `CHILD-UX-PROVENANCE` | `child-ux-aggregate` | `child-ux-aggregate.json` / `verifyChildBundle` |
 | E3 | 人による確認が必要 | 実OS日本語IMEと機器操作の理解 | `CHILD-UX-REAL-IME` | `manual` | `manual-events.jsonl` / `verifyManualSession` |
 | F1 | 人による確認が必要 | 事前予測・解答なしの制作・画面だけの修正・援助記録 | `CHILD-UX-INDEPENDENT-OBSERVATION` | `manual` | `manual-events.jsonl` / `verifyManualSession` |

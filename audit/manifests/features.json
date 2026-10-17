@@ -1,5 +1,5 @@
 {
-  "productVersion": "1.2.6",
+  "productVersion": "1.3.0",
   "COMMAND_CATALOG": [
     {
       "id": "Assignment",
@@ -29,7 +29,7 @@
       "id": "ListReplace",
       "kind": "ListReplace",
       "op": "",
-      "source": "名前一覧の1番目を「ひかり」に変える。"
+      "source": "名前一覧の1番目を「ひかり」にかえる。"
     },
     {
       "id": "ListInsert",
@@ -107,13 +107,13 @@
       "id": "MotionCommand:GOTO",
       "kind": "MotionCommand",
       "op": "GOTO",
-      "source": "横100、縦50の位置へ行く。"
+      "source": "よこ100、たて50のばしょへ行く。"
     },
     {
       "id": "MotionCommand:GLIDE",
       "kind": "MotionCommand",
       "op": "GLIDE",
-      "source": "横200、縦100の位置へ1秒かけて動く。"
+      "source": "よこ200、たて100のばしょへ1秒かけて動く。"
     },
     {
       "id": "MotionCommand:TURN_RIGHT",
@@ -137,13 +137,13 @@
       "id": "MotionCommand:SET_X",
       "kind": "MotionCommand",
       "op": "SET_X",
-      "source": "横位置を100にする。"
+      "source": "よこのばしょを100にする。"
     },
     {
       "id": "MotionCommand:SET_Y",
       "kind": "MotionCommand",
       "op": "SET_Y",
-      "source": "縦位置を50にする。"
+      "source": "たてのばしょを50にする。"
     },
     {
       "id": "MotionCommand:POINT_TO",
@@ -353,43 +353,43 @@
       "id": "CloneCommand:CREATE_SELF",
       "kind": "CloneCommand",
       "op": "CREATE_SELF",
-      "source": "自分の分身を作る。"
+      "source": "自分のコピーを作る。"
     },
     {
       "id": "CloneCommand:CREATE_TARGET",
       "kind": "CloneCommand",
       "op": "CREATE_TARGET",
-      "source": "「マスコット」の分身を作る。"
+      "source": "「マスコット」のコピーを作る。"
     },
     {
       "id": "CloneCommand:DELETE_SELF",
       "kind": "CloneCommand",
       "op": "DELETE_SELF",
-      "source": "この分身だけを消す。"
+      "source": "このコピーだけを消す。"
     },
     {
       "id": "StopCommand:THIS",
       "kind": "StopCommand",
       "op": "THIS",
-      "source": "この実行を止める。"
+      "source": "この動きを止める。"
     },
     {
       "id": "StopCommand:OTHERS",
       "kind": "StopCommand",
       "op": "OTHERS",
-      "source": "ほかの実行をすべて止める。"
+      "source": "ほかの動きをぜんぶ止める。"
     },
     {
       "id": "StopCommand:ALL",
       "kind": "StopCommand",
       "op": "ALL",
-      "source": "作品全体を止める。"
+      "source": "作品ぜんぶを止める。"
     },
     {
       "id": "LooksCommand:SET_SELF_TEXT",
       "kind": "LooksCommand",
       "op": "SET_SELF_TEXT",
-      "source": "自分の文字を「文字」に変える。"
+      "source": "自分の文字を「文字」にかえる。"
     },
     {
       "id": "LooksCommand:SET_INPUT",
@@ -490,7 +490,7 @@
     "languageContractId": 2,
     "runtimeContractId": 2,
     "programFormatVersion": 2,
-    "projectFormatVersion": 2
+    "projectFormatVersion": 3
   },
   "schemaIds": [
     "Script",
@@ -746,7 +746,7 @@
         "マスコットとだんごのダンス",
         "くるくる花もよう",
         "星をつかまえよう",
-        "道をつくって 迷路たんけん",
+        "道をつくって めいろたんけん",
         "おひさまの 曲づくり",
         "ふたりの ふしぎな おさんぽ"
       ],

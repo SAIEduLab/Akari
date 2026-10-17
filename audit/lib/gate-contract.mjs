@@ -5,12 +5,18 @@ export const auditBundleKinds=['selftest','audio-codecs-linux','audio-codecs-win
 export const auditJobIds=['audio-codecs','full-browser-gate','selftest'];
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
   ['static','audit/tests/static-contract.mjs',file('static')],
+  ['audit-inventory','audit/tests/audit-inventory.mjs',file('audit-inventory')],
   ['product-source','audit/tests/product-source.mjs',file('product-source')],
-  ['release-policy-negative','audit/tests/release-policy-negative.mjs'],
+  ['publication-inventory','audit/tests/publication.mjs','inventory',file('publication-inventory')],
+  ['publication-documents','audit/tests/publication.mjs','documents',file('publication-documents')],
+  ['release-distribution','audit/freeze-release.mjs',file('release-distribution')],
+  ['workflow-contract','audit/tests/workflow-contract.mjs',file('workflow-contract')],
+  ['change-guard-negative','audit/tests/change-guard-negative.mjs',file('change-guard-negative')],
+  ['release-policy-negative','audit/tests/release-policy-negative.mjs',file('release-policy-negative')],
   ['integrity','audit/tests/execution-continuity.mjs',file('integrity')],
   ['browser-environment','audit/tests/browser-environment.mjs',browser,file('browser-environment')],
-  ['ci-regression','audit/tests/ci-regression.mjs'],
-  ['dom-regression','audit/tests/dom-render-regression.cjs'],
+  ['ci-regression','audit/tests/ci-regression.mjs',file('ci-regression')],
+  ['dom-regression','audit/tests/dom-render-regression.cjs',file('dom-regression')],
   ['node-product','audit/tests/node-product.mjs',file('node-product')],
   ['product','audit/run-product-tests.mjs',browser,currentProductFile(),file('product')],
   ['language-node','audit/run-language-tests.mjs','--node',file('language-node')],
@@ -28,12 +34,14 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['manual','audit/tests/manual-docs.mjs',browser,path.join(dir,'manual')],
   ['language-boundaries','audit/tests/language-boundaries.mjs',file('language-boundaries')],
   ['harness-negative','audit/tests/harness-negative.mjs',browser,file('product'),file('harness-negative')],
-  ['language-negative','audit/tests/language-harness-negative.mjs',file('language-browser')],
-  ['surface-negative','audit/tests/surface-negative.mjs',file('editor-browser-core'),file('editor-gui')],
+  ['language-negative','audit/tests/language-harness-negative.mjs',file('language-browser'),file('language-negative')],
+  ['surface-negative','audit/tests/surface-negative.mjs',file('editor-browser-core'),file('editor-gui'),file('surface-negative')],
   ['japanese-contract-static','audit/tests/contract-gate.mjs','static',file('japanese-contract-static')],
   ['language-expectations-static','audit/tests/contract-gate.mjs','expectations',file('language-expectations-static')],
+  ['sentence-form-coverage','audit/tests/sentence-form-coverage.mjs',file('sentence-form-coverage')],
+  ['spec-examples','audit/tests/spec-examples.mjs',file('spec-examples')],
   ['japanese-intent-browser','audit/tests/japanese-intent-browser.mjs',browser,file('japanese-intent-browser')],
-  ['runtime-v2','audit/tests/runtime-boundary-gate.mjs',currentProductFile(),browser,path.join(dir,'runtime-v2'),file('runtime-v2')],
+  ['runtime-boundary','audit/tests/runtime-boundary-gate.mjs',currentProductFile(),browser,path.join(dir,'runtime-boundary'),file('runtime-boundary')],
   ['japanese-gate-negative','audit/tests/japanese-gate-negative.mjs',file('japanese-gate-negative')],
   ['review-actor','audit/tests/review-actor.mjs',currentProductFile(),browser,path.join(dir,'review-actor')],
   ['review-language','audit/tests/review-language.mjs',browser,currentProductFile(),file('review-language')],
@@ -47,6 +55,7 @@ export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');re
   ['samples-negative','audit/tests/samples-negative.mjs',file('samples-negative')],
   ['license-static','audit/tests/license-static.mjs',file('license-static')],
   ['license-browser','audit/tests/license-browser.mjs',browser,file('license-browser')],
+  ['license-verify','audit/tests/license-verify.mjs',file('license-browser'),file('license-verify')],
   ['export-open','audit/tests/export-open-browser.cjs',browser,path.join(dir,'export-open')],
   ['speech-display','audit/tests/speech-display-browser.mjs',browser,file('speech-display')],
   ['speech-display-verify','audit/tests/speech-display-verify.mjs',file('speech-display'),file('speech-display-verify')],
@@ -119,4 +128,38 @@ export const acceptanceCommands={
   ]
 };
 
-export const integrityControlIds=[...[-1,0,12,24].map(n=>'gate-continuity:'+n),...['pass',...auditBundleKinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job'].map(n=>'aggregate:'+n),...['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','changed-kind','changed-result','rehashed-failure'].map(n=>'bundle:'+n),'freeze-record-and-verify','freeze-changed-file-refused',...['composition','editing'].flatMap(k=>['missing','duplicate','failed','timeout','snapshot','fake-pass'].map(n=>'execution:'+k+'/'+n)),...['composition','editing'].map(k=>'execution:'+k+'/persisted-seal-failure')];
+// Workflow jobs, their dependencies and the audit entry commands each job runs, in order.
+// Every other run line in a workflow is setup (audit/lib/workflow-contract.mjs).
+const sameRepository="${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}";
+const afterNeeds="${{ always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}";
+const requestedSha={AKARI_REQUESTED_SHA:'${{ github.event.pull_request.head.sha || github.sha }}'};
+export const workflowContract=Object.freeze({
+  'akari-audit.yml':{triggers:'audit',env:requestedSha,jobs:{
+    selftest:{if:sameRepository,needs:[],entries:[
+      {run:'node audit/run-local-gate.mjs "$AKARI_BROWSER" audit-evidence/selftest'},
+      {run:'node audit/verify-evidence.mjs seal selftest audit-evidence/selftest',if:'always()'}]},
+    'full-browser-gate':{if:sameRepository,needs:[],entries:[
+      {run:'node audit/browser/run-full-browser-audit.mjs --group "${{ matrix.group }}" --evidence "audit-evidence/full-browser-${{ matrix.group }}"'},
+      {run:'node audit/verify-evidence.mjs seal "full-browser-${{ matrix.group }}" "audit-evidence/full-browser-${{ matrix.group }}"',if:'always()'}]},
+    'audio-codecs':{if:sameRepository,needs:[],entries:[
+      {run:'node audit/tests/audio-codecs.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/report.json'},
+      {run:'node audit/tests/block-field-width.mjs "$AKARI_CODEC_BROWSER" audit-evidence/audio/block-field-width.json',if:"matrix.platform == 'win32'"},
+      {run:'node audit/verify-evidence.mjs seal "audio-codecs-${{ matrix.platform }}" audit-evidence/audio',if:'always()'}]},
+    aggregate:{if:afterNeeds,needs:auditJobIds,entries:[
+      {run:'node audit/verify-evidence.mjs aggregate downloaded-evidence audit-evidence/aggregate.json',env:{AKARI_NEEDS:'${{ toJSON(needs) }}'}}]},
+  }},
+  'akari-acceptance.yml':{triggers:'audit',env:requestedSha,jobs:{
+    'composition-acceptance':{if:sameRepository,needs:[],entries:[{run:'node audit/run-acceptance.mjs composition'}]},
+    'ux-editing':{if:sameRepository,needs:[],entries:[{run:'node audit/run-acceptance.mjs editing'}]},
+    'child-ux-aggregate':{if:afterNeeds,needs:['composition-acceptance','ux-editing'],entries:[
+      {run:'node audit/tests/child-ux.mjs history audit-evidence/child-ux/retry-history.json',if:'always()',env:{GITHUB_TOKEN:'${{ github.token }}'}},
+      {run:'node audit/tests/child-ux.mjs aggregate audit-evidence/child-ux/downloaded audit-evidence/child-ux/child-ux-aggregate.json',if:'always()',env:{AKARI_CHILD_UX_NEEDS:'${{ toJSON(needs) }}'}}]},
+  }},
+  'akari-change-guard.yml':{triggers:'guard',jobs:{
+    'audit-change-guard':{needs:[],fullHistory:true,entries:[
+      {run:'node audit/tests/change-guard.mjs "$AKARI_BASE_SHA" "$AKARI_HEAD_SHA" audit-evidence/change-guard/report.json',env:{AKARI_BASE_SHA:'${{ github.event.pull_request.base.sha }}',AKARI_HEAD_SHA:'${{ github.event.pull_request.head.sha }}'}}]},
+  }},
+});
+export const changeGuardLabel='owner-approved-audit-change';
+
+export const integrityControlIds=[...[-1,0,12,24].map(n=>'gate-continuity:'+n),...['pass',...auditBundleKinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job'].map(n=>'aggregate:'+n),...['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','changed-kind','changed-result','rehashed-failure'].map(n=>'bundle:'+n),'freeze-record-and-verify','freeze-changed-file-refused','freeze-contract-from-features','freeze-changed-contract-refused','freeze-unknown-contract-refused','freeze-second-release-refused',...['composition','editing'].flatMap(k=>['missing','duplicate','failed','timeout','snapshot','fake-pass'].map(n=>'execution:'+k+'/'+n)),...['composition','editing'].map(k=>'execution:'+k+'/persisted-seal-failure'),...['valid','wrong-schema','wrong-step','failed-status','stale-snapshot','missing-results','missing-case','extra-case','duplicate-case','failed-case','release-record-changed','release-record-missing','node-product-suite-missing'].map(n=>'gate-cases:'+n)];

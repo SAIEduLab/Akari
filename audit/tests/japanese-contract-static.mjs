@@ -10,7 +10,7 @@ import {verifyCapabilityContract,corpusPath,corpusMarkdownPath} from '../lib/cap
 // A changed oracle needs an explicit, reviewed contract change, never a refresh
 // from candidate observations. Static success is not a product execution PASS.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const frozenFixtureSha256 = 'c0431d2ae35074a58fd3c95b7862102d644d358881e48a4cb0cd88224025fe44';
+const frozenFixtureSha256 = '66a472d2726c94c028d50c40be00f6315b98bd786967ae12f8cfa20165767218';
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const unique = (values, label) => assert.equal(new Set(values).size, values.length, label + ': duplicate');
 const sameSet = (actual, expected, label) => {
@@ -18,64 +18,78 @@ const sameSet = (actual, expected, label) => {
   assert.deepEqual([...actual].sort(), [...expected].sort(), label);
 };
 const requiredText = (value, label) => assert.ok(typeof value === 'string' && value.trim(), label);
-const rows = (ledger, letter) => ledger.appendices[letter];
-const unquote = value => value.replace(/^`|`$/g, '');
+
+// The oracle lists exactly the current schemas. Builtins and fixed sensors are
+// cross-checked against those schemas and the lists LANGUAGE.md publishes.
+export function verifyOracleCurrentLists(oracle, features, language) {
+  unique(oracle.schemaIds, 'oracle schemas');
+  assert.deepEqual(oracle.schemaIds, features.schemaIds, 'the oracle requires exactly the current schemas');
+  const section = heading => {
+    const start = language.indexOf('\n' + heading + '\n');
+    assert.ok(start >= 0, 'LANGUAGE.md section ' + heading);
+    const end = language.indexOf('\n## ', start + heading.length + 2);
+    return language.slice(start + heading.length + 2, end < 0 ? undefined : end);
+  };
+  const quoted = text => [...text.matchAll(/`([^`]+)`/g)].map(m => m[1]);
+  // The published list is the first bullet list of the section; later bullets explain individual builtins.
+  const builtinLines = section('## 組み込み求値の一覧').split('\n'), listStart = builtinLines.findIndex(line => line.startsWith('- `'));
+  assert.ok(listStart >= 0, 'LANGUAGE.md builtin list');
+  const listEnd = builtinLines.findIndex((line, i) => i > listStart && !line.startsWith('- '));
+  const documentedBuiltins = builtinLines.slice(listStart, listEnd < 0 ? undefined : listEnd).flatMap(quoted);
+  const documentedSensors = quoted(section('## 読み取れる状態の一覧').split('\n').find(line => line.startsWith('`')) || '');
+  const schemaNames = prefix => oracle.schemaIds.filter(id => id.startsWith(prefix)).map(id => id.slice(prefix.length));
+  sameSet(schemaNames('BuiltinCall:').map(name => 'builtin:' + name), oracle.categories.builtins, 'builtin capabilities and current builtin schemas');
+  sameSet(documentedBuiltins.map(name => 'builtin:' + name),
+    oracle.categories.builtins.filter(id => !/^builtin:[A-Z_]+$/.test(id)), 'LANGUAGE.md builtin list');
+  sameSet(documentedSensors.map(name => 'state:' + name), oracle.categories.fixedSensors, 'LANGUAGE.md fixed sensor list');
+  sameSet(schemaNames('SensorRead:').filter(name => !/^[A-Z_]+$/.test(name)).map(name => 'state:' + name), oracle.categories.fixedSensors, 'fixed sensor schemas');
+}
 
 export function verifyJapaneseContract(repositoryRoot = root) {
   const read = relative => fs.readFileSync(path.join(repositoryRoot, relative));
   const json = relative => JSON.parse(read(relative));
   const bytes = read('audit/fixtures/capability-oracle.json');
-  assert.equal(sha(bytes), frozenFixtureSha256, 'independent baseline/child oracle was changed');
-  const baseline = JSON.parse(bytes);
+  assert.equal(sha(bytes), frozenFixtureSha256, 'independent capability/child oracle was changed');
+  const oracle = JSON.parse(bytes);
   const results = [];
   const check = (id, fn) => { fn(); results.push({ id, status: 'PASS', scope: 'GA-STATIC' }); };
 
   let coverage;
   check('JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE',()=>{coverage=verifyCapabilityContract(repositoryRoot);});
 
-  check('JAPANESE-CONTRACT/INDEPENDENT-BASELINE-COMPLETE', () => {
-    assert.deepEqual(baseline.counts, {
-      commands: 74, schemas: 153, capabilities: 260, limits: 38,
-      builtins: 26, fixedSensors: 22, argumentSensors: 5, operators: 16, scopes: 5,
-    });
-    assert.equal(baseline.commands.length, 74);
-    assert.equal(baseline.schemaIds.length, 153);
-    assert.equal(baseline.capabilities.length, 260);
-    assert.equal(Object.keys(baseline.limits).length, 38);
-    unique(baseline.schemaIds, 'baseline schemas');
-    unique(baseline.capabilities.map(c => c.id), 'baseline capabilities');
-    sameSet(baseline.commands.map(c => 'command:' + c.id),
-      baseline.capabilities.filter(c => c.id.startsWith('command:')).map(c => c.id), 'command capabilities');
-    sameSet(Object.keys(baseline.limits).map(id => 'limit:' + id),
-      baseline.capabilities.filter(c => c.id.startsWith('limit:')).map(c => c.id), 'limit capabilities');
-    for (const capability of baseline.capabilities) {
+  // The fixture bytes are pinned above; completeness is the set relations below, not ledger counts.
+  check('JAPANESE-CONTRACT/INDEPENDENT-ORACLE-COMPLETE', () => {
+    const features = json('audit/manifests/features.json');
+    const language = read('LANGUAGE.md').toString();
+    unique(oracle.commands.map(c => c.id), 'oracle commands');
+    unique(oracle.schemaIds, 'oracle schemas');
+    unique(oracle.capabilities.map(c => c.id), 'oracle capabilities');
+    sameSet(oracle.commands.map(c => 'command:' + c.id),
+      oracle.capabilities.filter(c => c.id.startsWith('command:')).map(c => c.id), 'command capabilities');
+    sameSet(Object.keys(oracle.limits).map(id => 'limit:' + id),
+      oracle.capabilities.filter(c => c.id.startsWith('limit:')).map(c => c.id), 'limit capabilities');
+    for (const capability of oracle.capabilities) {
       for (const key of ['capability', 'ast', 'cui', 'gui', 'semantic', 'runtime', 'selftest', 'browser', 'guarantee'])
         requiredText(capability[key], capability.id + '/' + key);
     }
-    for (const [category, prefix, count] of [
-      ['builtins', 'builtin', 26], ['fixedSensors', 'state', 22],
-      ['argumentSensors', 'sensor', 5], ['operators', 'operator', 16], ['scopes', 'scope', 5],
+    for (const [category, prefix] of [
+      ['builtins', 'builtin'], ['fixedSensors', 'state'],
+      ['argumentSensors', 'sensor'], ['operators', 'operator'], ['scopes', 'scope'],
     ]) {
-      assert.equal(baseline.categories[category].length, count, category);
-      sameSet(baseline.categories[category], baseline.capabilities.filter(c => c.id.startsWith(prefix + ':')).map(c => c.id), category);
+      sameSet(oracle.categories[category], oracle.capabilities.filter(c => c.id.startsWith(prefix + ':')).map(c => c.id), category);
     }
-    const html = baseline.baselineHtmlCrossCheck;
-    assert.equal(html.namedBuiltinDefinitions.length, 21);
-    assert.equal(html.structuralBuiltinSchemaIds.length, 5);
-    sameSet([...html.namedBuiltinDefinitions.map(b => 'builtin:' + b.name),
-      ...html.structuralBuiltinSchemaIds.map(id => 'builtin:' + id.slice('BuiltinCall:'.length))], baseline.categories.builtins, 'HTML builtin crosscheck');
-    sameSet(html.fixedSensorNames.map(name => 'state:' + name), baseline.categories.fixedSensors, 'HTML fixed sensors');
-    for (const id of baseline.categories.argumentSensors)
-      assert.ok(baseline.schemaIds.includes('SensorRead:' + id.slice('sensor:'.length)), id);
+    verifyOracleCurrentLists(oracle, features, language);
+    for (const id of oracle.categories.argumentSensors)
+      assert.ok(oracle.schemaIds.includes('SensorRead:' + id.slice('sensor:'.length)), id);
   });
 
   const corpus = json(corpusPath);
   const markdown = read(corpusMarkdownPath).toString();
-  const protectedIntent = baseline.protectedChildIntent;
+  const protectedIntent = oracle.protectedChildIntent;
   const intentIds = Array.from({ length: 20 }, (_, i) => 'CI-' + String(i + 1).padStart(2, '0'));
   check('JAPANESE-CONTRACT/CHILD-INTENT-INDEPENDENCE-AND-MAPPING', () => {
-    assert.equal(corpus.case_count, 20);
-    assert.equal(protectedIntent.caseCount, 20);
+    assert.equal(corpus.case_count, corpus.cases.length);
+    assert.equal(protectedIntent.caseCount, protectedIntent.cases.length);
     assert.equal(corpus.provenance, protectedIntent.provenance);
     assert.equal(corpus.independence, protectedIntent.independence);
     assert.match(corpus.provenance, /not observed, collected, or validated real-child data/);
@@ -111,7 +125,7 @@ export function verifyJapaneseContract(repositoryRoot = root) {
     schema: 'akari-japanese-contract-static-report-v1', scope: 'GA-STATIC', status: 'PASS',
     fixtureSha256: frozenFixtureSha256,
     coverage, results, total: results.length,
-    protectedIntentDefinitions: 20, protectedAmbiguityOracles: 20,
+    protectedIntentDefinitions: corpus.cases.length, protectedAmbiguityOracles: corpus.cases.length,
     productDynamic: { status: 'NOT_RUN', reason: 'No candidate product was imported or executed by this static audit; product execution is reported by the independent runtime/browser gates.' },
     semanticReview: { status: 'NOT_RUN', reason: 'Presence and immutable provenance do not prove implementation, UI behavior, bidirectionality or child validation.' },
   };

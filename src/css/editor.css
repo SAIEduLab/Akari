@@ -1229,6 +1229,12 @@ body {
   background: #204f87;
   color: white;
 }
+.editor-modes .mode-blocked-note {
+  align-self: center;
+  color: #8a2c0d;
+  font-size: 13px;
+  line-height: 1.3;
+}
 .editor-pending {
   padding: 6px;
   margin: 0;
@@ -4970,7 +4976,8 @@ body[data-editor-mode] .designer-wrap {
   box-shadow: none;
 }
 body.runtime #formSurface .design-resize-handle,
-body.runtime #formSurface .design-resize-outline {
+body.runtime #formSurface .design-resize-outline,
+#formSurface .design-resize-handle[hidden] {
   display: none !important;
 }
 
@@ -5726,7 +5733,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 #entryProjectMenu { position:relative; }
 .entry-project-actions { position:absolute; z-index:30; background:white; border:1px solid #9aaec8; padding:8px; min-width:150px; display:grid; gap:6px; }
 body[data-ui-level="entry"] #app { height:100dvh; min-height:0; }
-body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) 340px; grid-template-rows:minmax(200px,1fr) 170px; min-height:0; overflow:hidden; }
+/* The stage column grows with wide screens so a child can see and tap small characters. */
+body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) clamp(340px,34vw,520px); grid-template-rows:minmax(200px,1fr) 170px; min-height:0; overflow:hidden; }
 body[data-ui-level="entry"] .codewin { grid-column:1; grid-row:1/3; min-height:0; }
 body[data-ui-level="entry"] .designer { grid-column:2; grid-row:1; }
 body[data-ui-level="entry"] .side { grid-column:2; grid-row:2; min-height:0; display:flex; }
@@ -5779,13 +5787,15 @@ body[data-tutorial-step] #blockEditor > .blockui-message.blockui-error {
 }
 body[data-tutorial-step] .blockui-world { padding:6px; }
 body[data-tutorial-step] :is(button,input,select,textarea,summary)[data-tutorial-blocked="true"] { opacity:.55; }
-body[data-tutorial-step] #tutorialExit,body[data-tutorial-step] #stopBtn { opacity:1; }
+body[data-tutorial-step] #tutorialExit,body[data-tutorial-step] #stopBtn:not(:disabled) { opacity:1; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .codewin { display:flex; }
-body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 340px; }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) clamp(340px,34vw,520px); }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin { display:flex !important; grid-column:1; grid-row:1/3; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>:not(.debugbar) { display:block !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>:is(.source-nav,.code-assist,.console,[hidden]) { display:none !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#blockEditor { display:flex !important; }
+/* The guide keeps its one-row layout while the work runs, so nothing below it moves. */
+body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#tutorialGuide:not([hidden]) { display:flex !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>#blockEditor[hidden] { display:none; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.codewin>.debugbar { display:none; }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main>.side { display:flex !important; grid-column:2; grid-row:2; }

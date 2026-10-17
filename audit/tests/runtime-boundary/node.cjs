@@ -1,4 +1,4 @@
-// Runtime v2 independent boundary audit. Run through ../runtime-v2.mjs.
+// Independent runtime boundary audit. Run through ../runtime-boundary.mjs.
 const {outputDir, productFile, browserPath, makeRegressionProject} = require('./config.cjs');
 const fs=require('fs'),path=require('path'),assert=require('assert/strict'),crypto=require('crypto');
 const {loadApi}=require('../../browser/cases/audit-lib.cjs');

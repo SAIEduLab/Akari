@@ -4,6 +4,7 @@ import path from 'node:path';
 import {createRequire} from 'node:module';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
+import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {reveal} from '../lib/ux-normal-ui.mjs';
 import {previewCases,previewNames,previewShortTexts,previewLongTexts} from '../fixtures/speech-preview.mjs';
 import {verifyPreviewObserved,verifyPreviewReport} from '../lib/speech-preview-contract.mjs';
@@ -24,7 +25,7 @@ async function prepare(p,c){
   await p.locator('#codeEditor').fill('「'+texts[i]+'」と'+seconds+'秒話す。');await p.locator('#codeEditor').press('Tab');
  }
  if(c.restore){
-  await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='自動保存：済み',null,{timeout:10000});
+  await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='このパソコンに のこしたよ',null,{timeout:10000});
   await p.reload();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));
  }
  if(c.fullWidthFont){
@@ -65,7 +66,7 @@ try{await withBrowser(chrome,async browser=>{
  for(const c of previewCases){
   const row={id:c.id,status:'RUNNING'};report.results.push(row);
   try{await pageFor(browser,product,async p=>{
-   p.setDefaultTimeout(8000);p.on('dialog',d=>d.accept());p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});
+   p.setDefaultTimeout(8000);p.on('dialog',d=>d.accept());await answerProductConfirms(p,true);p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});
    await p.setViewportSize({width:c.width,height:c.height});await prepare(p,c);await setView(p,c);
    await p.evaluate(()=>{window.previewEvents=[];new MutationObserver(rs=>{for(const r of rs)for(const[kind,nodes]of[['add',r.addedNodes],['remove',r.removedNodes]])for(const n of nodes)if(n.nodeType===1&&n.matches('.sprite-bubble'))previewEvents.push({kind,speaker:n.dataset.speaker,text:n.querySelector('.sprite-bubble-text').textContent,at:performance.now()});}).observe(document.querySelector('#formSurface'),{childList:true});});
    await p.locator('#runBtn').click();await p.waitForFunction(()=>document.querySelectorAll('.sprite-bubble').length===2);

@@ -10,6 +10,7 @@ import {formatCompatibilityIds,verifyFormatCompatibility,checkFormatValidatorNeg
 const require=createRequire(import.meta.url);
 const {loadApi}=require('../browser/cases/audit-lib.cjs');
 const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
+const {answerProductConfirms}=require('../lib/product-dialogs.cjs');
 const [browserPath,output]=process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output),'fresh format evidence path required');
 fs.mkdirSync(path.dirname(output),{recursive:true});
@@ -23,7 +24,10 @@ assert.notEqual(currentRelease,priorRelease);
 const priorSource=source.replace(producerPattern,(_all,a,_value,b)=>a+priorRelease+b);
 assert.notEqual(priorSource,source,'prior producer fixture must be a different product build');
 const api=loadApi(source),priorApi=loadApi(priorSource),plain=x=>JSON.parse(JSON.stringify(x));
-const contracts={languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:2};
+const contracts={languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:3};
+// Incompatible contract values: the previous number, the current number as text, and null.
+const incompatible=current=>[current-1,String(current),null];
+const autosaveDatabase='akari-workspace-f'+contracts.projectFormatVersion;
 assert.deepEqual(plain(api.EXECUTABLE_CONTRACT),contracts);
 assert.equal(api.PRODUCT_RELEASE,currentRelease);
 assert.equal(priorApi.PRODUCT_RELEASE,priorRelease);
@@ -49,7 +53,7 @@ async function run(id,fn){
 }
 const reject=fn=>{let error;try{fn();}catch(e){error=e;}assert.ok(error,'incompatible contract accepted');assert.ok(error.code,'rejection must have a product error code');return error.code;};
 const editSaved=(text,key,value)=>{
-  const needle=`"${key}": 2`;
+  const needle=`"${key}": ${priorProject[key]}`;
   assert.equal(text.split(needle).length-1,1,'expected one serialized '+key);
   return text.replace(needle,`"${key}": ${JSON.stringify(value)}`);
 };
@@ -58,7 +62,7 @@ await run('FORMAT-PROJECT-PRODUCER-INDEPENDENT',async()=>{
   const loaded=await api.parseProjectFile(savedPrior);
   assert.equal(loaded.project.appVersion,priorRelease);
   assert.equal(loaded.project.languageContractId,2);
-  assert.equal(loaded.project.formatVersion,2);
+  assert.equal(loaded.project.formatVersion,contracts.projectFormatVersion);
   assert.equal('languageVersion' in loaded.project,false);
   assert.deepEqual(plain(loaded.project.scripts),plain(priorProject.scripts),'exact source and ownership survive load');
   assert.deepEqual(plain(loaded.project.actions),plain(priorProject.actions));
@@ -72,7 +76,7 @@ await run('FORMAT-PROJECT-PRODUCER-INDEPENDENT',async()=>{
 });
 await run('FORMAT-PROJECT-CONTRACT-REJECTION',async()=>{
   const codes=[];
-  for(const key of ['formatVersion','languageContractId'])for(const value of [1,'2',null]){
+  for(const key of ['formatVersion','languageContractId'])for(const value of incompatible(priorProject[key])){
     const p=plain(priorProject);p[key]=value;
     codes.push({key,value,code:reject(()=>api.validateProject(p))});
     codes.push({key,value,fileCode:(await api.parseProjectFile(editSaved(savedPrior,key,value)).then(()=>null,e=>e.code))});
@@ -105,7 +109,7 @@ await run('FORMAT-RUNTIME-PRODUCER-INDEPENDENT',async()=>{
 });
 await run('FORMAT-RUNTIME-CONTRACT-REJECTION',async()=>{
   const payload=plain(priorApi.packExecutable(priorProject)),rejected=[];
-  for(const key of Object.keys(contracts))for(const value of [1,'2',null]){
+  for(const key of Object.keys(contracts))for(const value of incompatible(contracts[key])){
     const copy=plain(payload);copy[key]=value;
     rejected.push({key,value,code:reject(()=>api.restoreExecutable(copy))});
   }
@@ -127,8 +131,8 @@ await run('FORMAT-FINGERPRINT-METADATA-EXCLUSION',async()=>{
   p.appVersion=currentRelease;assert.equal(fingerprint(p,store),base,'producer label must not make project dirty');
   p.name+=' 改';assert.notEqual(fingerprint(p,store),base,'content change must make project dirty');
   p.name=priorProject.name;p.languageContractId=1;assert.notEqual(fingerprint(p,store),base,'language contract must affect fingerprint');
-  p.languageContractId=2;p.formatVersion=1;assert.notEqual(fingerprint(p,store),base,'project format must affect fingerprint');
-  p.formatVersion=2;p.scripts[0].source+='\n';assert.notEqual(fingerprint(p,store),base,'source change must affect fingerprint');
+  p.languageContractId=2;p.formatVersion=contracts.projectFormatVersion-1;assert.notEqual(fingerprint(p,store),base,'project format must affect fingerprint');
+  p.formatVersion=contracts.projectFormatVersion;p.scripts[0].source+='\n';assert.notEqual(fingerprint(p,store),base,'source change must affect fingerprint');
   return {producerIgnored:true,contentAndContractsTracked:true};
 });
 
@@ -151,22 +155,29 @@ async function editSource(p,sourceText){
   await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s&&Akari.app.editorState.dirty===true&&
     Akari.app.project.scripts.some(row=>row.targetId==='stage'&&row.event==='start'&&row.source===s),sourceText);
 }
+// The product asks before replacing unsaved work; the handler registered by answerProductConfirms
+// answers it during the next locator action, so wait for the question and let that action happen.
+async function productQuestionAnswered(p){
+  await p.waitForFunction(()=>document.querySelector('#loseConfirmModal.show')!==null);
+  await p.locator('#loseConfirmModal').waitFor({state:'hidden'});
+}
 async function seedAutosave(p,record){
-  await p.evaluate(async rec=>{
+  await p.evaluate(async ([rec,database])=>{
     await new Promise((resolve,reject)=>{
-      const q=indexedDB.open('akari-workspace-f2',1);
+      const q=indexedDB.open(database,1);
       q.onupgradeneeded=()=>q.result.createObjectStore('workspace',{keyPath:'id'});
       q.onerror=()=>reject(q.error);
       q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readwrite');tx.objectStore('workspace').put(rec);
         tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>{db.close();reject(tx.error);};};
     });
-  },record);
+  },[record,autosaveDatabase]);
 }
 let browserVersion;
 await withBrowser(browserPath,async browser=>{
   browserVersion=browser.version();
   const browserPage=(id,fn)=>pageFor(browser,product,async p=>{
     p.on('dialog',d=>d.accept());
+    await answerProductConfirms(p,true);
     p.on('pageerror',e=>pageErrors.push(id+': '+e.message));
     p.on('request',r=>{if(/^https?:/.test(r.url()))networkRequests.push(r.url());});
     return fn(p);
@@ -187,12 +198,13 @@ await withBrowser(browserPath,async browser=>{
   await browserCase('FORMAT-BROWSER-IMPORT-ATOMICITY',async p=>{
     const unsaved='「未保存のまま」と言う ※ 保持  ';
     await editSource(p,unsaved);const beforeState=await editorState(p);assert.equal(beforeState.dirty,true);
-    const badFiles=[editSaved(savedPrior,'formatVersion',1),editSaved(savedPrior,'languageContractId','2'),savedPrior.slice(0,-25)];
+    const badFiles=[editSaved(savedPrior,'formatVersion',contracts.projectFormatVersion-1),editSaved(savedPrior,'languageContractId','2'),savedPrior.slice(0,-25)];
     for(let i=0;i<badFiles.length;i++){
       const previousLog=await p.locator('#console').textContent();
       await p.locator('#fileInput').setInputFiles({name:`bad-${i}.akari.md`,mimeType:'text/markdown',buffer:Buffer.from(badFiles[i])});
+      await productQuestionAnswered(p);
       await p.waitForFunction(previous=>{const now=document.querySelector('#console').textContent;
-        return now!==previous&&now.length>previous.length&&now.slice(previous.length).includes('読み込み失敗')&&Akari.app.editorState.state==='DESIGN';},previousLog);
+        return now!==previous&&now.length>previous.length&&now.slice(previous.length).includes('読みこめませんでした')&&Akari.app.editorState.state==='DESIGN';},previousLog);
       const afterState=await editorState(p);
       const {history:beforeHistory,...beforeWork}=beforeState;
       const {history:afterHistory,...afterWork}=afterState;
@@ -210,8 +222,8 @@ await withBrowser(browserPath,async browser=>{
       await p.waitForFunction(name=>Akari.app.project.name===name,priorProject.name);
       const download=p.waitForEvent('download');await p.locator('#saveBtn').click();
       await (await download).saveAs(path.join(path.dirname(output),'format-current-autosave.akari.md'));
-      await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'));
-      return p.evaluate(()=>new Promise((resolve,reject)=>{const q=indexedDB.open('akari-workspace-f2',1);q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>resolve(get.result);get.onerror=()=>reject(get.error);tx.oncomplete=()=>db.close();};}));
+      await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('このパソコンに のこしたよ'));
+      return p.evaluate(database=>new Promise((resolve,reject)=>{const q=indexedDB.open(database,1);q.onerror=()=>reject(q.error);q.onsuccess=()=>{const db=q.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>resolve(get.result);get.onerror=()=>reject(get.error);tx.oncomplete=()=>db.close();};}),autosaveDatabase);
     });
     assert.equal(validRecord.workspace.base.project.appVersion,priorRelease);
     assert.equal(validRecord.lastSavedFingerprint,fingerprint,'current clean baseline must retain producer-independent fingerprint');
@@ -227,15 +239,15 @@ await withBrowser(browserPath,async browser=>{
         assert.equal((await editorState(p)).dirty,expectedDirty,label+' recovery dirty state');
       });
     }
-    for(const [label,changed] of [['format',p=>{p.formatVersion=1;}],['language',p=>{p.languageContractId='2';}],['malformed',p=>{p.components.push(plain(p.components[0]));}]]){
+    for(const [label,changed] of [['format',p=>{p.formatVersion=contracts.projectFormatVersion-1;}],['language',p=>{p.languageContractId='2';}],['malformed',p=>{p.components.push(plain(p.components[0]));}]]){
       await browserPage('FORMAT-BROWSER-AUTOSAVE-RECOVERY/'+label,async p=>{
         await seedAutosave(p,makeRecord('',changed));await p.reload();
-        await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('復元検証に失敗'));
+        await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('もどせるか たしかめられませんでした'));
         assert.equal(await p.locator('#recoveryModal.show').count(),0);
         assert.notEqual(await p.evaluate(()=>Akari.app.project.name),priorProject.name,'invalid recovery changed current project');
       });
     }
-    return {crossReleaseClean:true,crossReleaseDirty:true,rejectedMalformedAndContractMismatch:true,storageKey:'akari-workspace-f2'};
+    return {crossReleaseClean:true,crossReleaseDirty:true,rejectedMalformedAndContractMismatch:true,storageKey:autosaveDatabase};
   });
   await run('FORMAT-BROWSER-STANDALONE-OFFLINE',async()=>{
     const loaded=await api.parseProjectFile(savedPrior);

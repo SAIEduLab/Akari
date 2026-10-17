@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "7f4909915db507623e6309a09d1b738f9f5513162717e9e8c566e128fc842304",
+  "fixedIdSha256": "f7aa0130a44f9f3eb0bef282e1dfc962f7b7105a288e42967e82f304c7910809",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -75,7 +75,8 @@
         "TEST-EDITOR long source focus ranges stay bounded and preserve intermediate access",
         "TEST-EDITOR availability preview preserves pending transaction and commit gate",
         "TEST-EDITOR availability generated names stay valid through collision boundary",
-        "TEST-EDITOR availability shares definite context restrictions and preserves dynamic types"
+        "TEST-EDITOR availability shares definite context restrictions and preserves dynamic types",
+        "TEST-EDITOR palette motion blocks start at ten steps"
       ],
       "environments": [
         "chromium"
@@ -647,13 +648,15 @@
         "CORE sensor 新しい背景名",
         "CORE sensor 受け取った知らせ",
         "CORE sensor 押されたキー",
-        "CORE sensor クローンである",
+        "CORE sensor コピーである",
         "CORE sensor 背景番号",
         "CORE sensor 背景名",
         "CORE sensor 衣装番号",
         "CORE sensor 衣装名",
         "CORE sensor 横位置",
         "CORE sensor 縦位置",
+        "CORE sensor よこのばしょ",
+        "CORE sensor たてのばしょ",
         "CORE sensor 方向",
         "CORE sensor 大きさ",
         "CORE sensor タイマー",

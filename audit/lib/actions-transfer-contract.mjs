@@ -6,9 +6,9 @@ import {browserEnvironment} from './browser-environment.mjs';
 import {fixedValues} from '../fixtures/fixed-values.mjs';
 
 export const fixturePins=Object.freeze({
-  'audit/fixtures/composition-acceptance.json':'8cadca66b29a47f8ae9e3eda9965c25021f0422fa14e2d6edab5c8fdb0dedd19',
-  'audit/fixtures/actions-transfer-plan.json':'601cffa8a02052d873b316691fbc2fb78bc185b016e57539e52365d119ad7c78',
-  'audit/fixtures/fixed-values.mjs':'3a1fd2fe67dc8242c7f9a6d349e28e79020ca2608fd93f6c199280328d1e04a0',
+  'audit/fixtures/composition-acceptance.json':'54ee2bd97ad40ad5fa2997c4853c9673c78e7bae5e04429fe3e5d67c72f8c039',
+  'audit/fixtures/actions-transfer-plan.json':'d63d9134e5e21313d19d0b3b888cb616c51f1c709bd396c3e71bc3cb6e2556cc',
+  'audit/fixtures/fixed-values.mjs':'5b7e75de2b0dc4e9f350fb73d92ce55208e2f3f3b5d2bf05ab219845e7c1ec1b',
 });
 export function transferFixtures(){
   for(const [file,hash]of Object.entries(fixturePins))assert.equal(sha(fs.readFileSync(file)),hash,'unchanged independent fixture '+file);
@@ -17,9 +17,9 @@ export function transferFixtures(){
   assert.deepEqual(prose.drafts.map(d=>d.id),['I07','I08','I09','I10','I11','I12']);
   for(const d of prose.drafts){assert.equal(sha(d.mainFirstDraft),d.draftSha256);assert.equal(d.writtenBeforeVisibleLaunch,true);assert.ok(d.expected&&d.intent);}
   assert.deepEqual(prose.drafts.find(d=>d.id==='I10').extra.argumentNames,['個数','ねだん']);
-  for(const [key,count]of Object.entries({C:74,Q:76,E:32,L:38,S:164,O:40})){
-    assert.equal(plan.groups[key].length,count);assert.equal(new Set(plan.groups[key].map(r=>r.id)).size,count);
-  }
+  // Each group equals its current independent set in actions-transfer-static; here only the groups and unique IDs are required.
+  assert.deepEqual(Object.keys(plan.groups),['C','Q','E','L','S','O']);
+  for(const [key,rows]of Object.entries(plan.groups))assert.equal(new Set(rows.map(r=>r.id)).size,rows.length,'duplicate plan row in '+key);
   return {prose,plan};
 }
 export function schemaForExpression(id){

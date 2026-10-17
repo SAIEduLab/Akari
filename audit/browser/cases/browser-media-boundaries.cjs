@@ -1,3 +1,4 @@
+const {answerProductConfirms}=require('../../lib/product-dialogs.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
@@ -7,7 +8,7 @@ const {chromium}=require('playwright');
 const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resolve(process.argv[3]||'audit-evidence/browser/media-boundaries'),selected=new Set((process.argv[4]||'').split(',').filter(Boolean));
 (async()=>{
  const browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true,args:['--allow-file-access-from-files']}),context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true}),page=await context.newPage(),results=[],errors=[],network=[];let sequence=0;
- page.setDefaultTimeout(30000);page.on('pageerror',e=>errors.push(e.stack));page.on('dialog',d=>d.accept(d.type()==='prompt'?d.defaultValue():undefined));await context.route(/^https?:\/\//,route=>{network.push(route.request().url());return route.abort();});
+ page.setDefaultTimeout(30000);page.on('pageerror',e=>errors.push(e.stack));page.on('dialog',d=>d.accept(d.type()==='prompt'?d.defaultValue():undefined));await answerProductConfirms(page);await context.route(/^https?:\/\//,route=>{network.push(route.request().url());return route.abort();});
  await page.addInitScript(()=>{
   window.__mediaEvidence={images:[],audio:[],oscillatorStarted:0,oscillatorCreated:0,oscillatorEnded:0};const image=createImageBitmap;
   window.createImageBitmap=(...args)=>image(...args).then(value=>{__mediaEvidence.images.push({width:value.width,height:value.height});return value;});

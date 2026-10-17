@@ -4,10 +4,15 @@ import {verifyDisplay,rejectionIds} from './speech-display-contract.mjs';
 import {verifyContractReport,verifyExpectationReport,verifyIntentReport,verifyRuntimeReport,verifyNegativeReport} from './japanese-gate-contract.mjs';
 import {verifyBlockFields} from './block-field-contract.mjs';
 import {verifyProductSource} from './product-source-contract.mjs';
+import {verifyPublicationReport} from './publication-contract.mjs';
+import {verifySentenceFormCoverage} from './sentence-form-coverage.mjs';
+import {verifySpecExamples} from './spec-examples-contract.mjs';
+import {verifyAuditInventoryReport} from './audit-inventory-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {gateSteps,integrityControlIds} from './gate-contract.mjs';
+import {verifyGateCaseReports} from './gate-case-contract.mjs';
 import {verify} from './verify-test-results.mjs';
 import {verifyLanguageResults} from './verify-language-results.mjs';
 import {verifySurfaceResults} from './verify-surface-results.mjs';
@@ -26,8 +31,14 @@ export function verifyGateResults(dir,inputs){
   for(const s of gate.steps){assert.equal(s.status,'PASS',s.id);assert.equal(s.exit,0);assert.equal(s.signal,null);assert.ok(fs.existsSync(path.join(dir,s.log)));}
   verifyEntryReport(read('entry-unit'),'unit',inputs);verifyEntryReport(read('entry-browser'),'browser',inputs,{file:path.join(dir,'entry-browser.json')});
   const entryVerified=read('entry-verify');assert.equal(entryVerified.status,'PASS');assert.equal(entryVerified.finalCommittedEvidence,true);assert.deepEqual(entryVerified.snapshot,inputs);assert.equal(entryVerified.negatives.length,20);for(const row of entryVerified.negatives)assert.equal(row.rejected,true);
-  verify(read('product'),JSON.parse(fs.readFileSync('audit/manifests/product-tests.json')),inputs);
+  const productTests=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json'));
+  verify(read('product'),productTests,inputs);
+  // Steps whose evidence is a list of named checks: release-distribution, workflow-contract,
+  // change-guard-negative, the validator negatives, ci/dom regressions and node-product.
+  verifyGateCaseReports(read,inputs,productTests);
   verifyProductSource(read('product-source'),inputs);
+  for(const mode of ['inventory','documents'])verifyPublicationReport(read('publication-'+mode),mode,inputs);
+  verifyAuditInventoryReport(read('audit-inventory'),inputs);
   verifyBrowserEnvironment(read('browser-environment'),inputs);
   const language=JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json'));
   for(const n of ['language-node','language-browser'])verifyLanguageResults(read(n),language,inputs);
@@ -42,8 +53,10 @@ export function verifyGateResults(dir,inputs){
   const integrity=read('integrity');assert.deepEqual(integrity.results.map(r=>r.id),integrityControlIds);assert.equal(new Set(integrity.results.map(r=>r.id)).size,integrityControlIds.length);for(const r of integrity.results)assert.equal(r.pass,true);
   verifyContractReport(read('japanese-contract-static'),inputs);
   verifyExpectationReport(read('language-expectations-static'),inputs);
+  verifySentenceFormCoverage(read('sentence-form-coverage'),inputs);
+  verifySpecExamples(read('spec-examples'),inputs,{artifacts:path.join(dir,'spec-examples.artifacts')});
   verifyIntentReport(read('japanese-intent-browser'),inputs,path.join(dir,'japanese-intent-browser.artifacts','candidate.html'));
-  verifyRuntimeReport(read('runtime-v2'),inputs,path.join(dir,'runtime-v2'));
+  verifyRuntimeReport(read('runtime-boundary'),inputs,path.join(dir,'runtime-boundary'));
   verifyNegativeReport(read('japanese-gate-negative'),inputs);
   for(const group of Object.keys(reviewGroups))verifyReviewReport(read(group==='actor'?'review-actor/review-actor':'review-'+group),group,inputs);
   verifyReviewNegativeReport(read('review-harness-negative'),inputs);

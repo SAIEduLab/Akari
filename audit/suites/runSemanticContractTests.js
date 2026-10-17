@@ -312,10 +312,8 @@ function runSemanticContractTests() {
           'StopCommand',
           'UserActionCall',
         ]),
-        schemas = BLOCK_SCHEMAS.filter((s) => kinds.has(s.kind) && !['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(s.discriminator?.value)),
-        newMotionSchemas = BLOCK_SCHEMAS.filter((s) => s.kind === 'MotionCommand' && ['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(s.discriminator?.value));
-      ok(schemas.length === 54, 'effect inventory changed: ' + schemas.length);
-      // Pin the original identities as well as their count (d961dd3).
+        schemas = BLOCK_SCHEMAS.filter((s) => kinds.has(s.kind));
+      // The current effect statement set; equality detects both additions and removals.
       eq(schemas.map((s) => s.id).sort(), [
         "Ask",
         "Broadcast",
@@ -342,8 +340,10 @@ function runSemanticContractTests() {
         "LooksCommand:SHOW",
         "MotionCommand:BOUNCE",
         "MotionCommand:GLIDE",
+        "MotionCommand:GLIDE_DIRECTION",
         "MotionCommand:GOTO",
         "MotionCommand:MOVE",
+        "MotionCommand:MOVE_DIRECTION",
         "MotionCommand:POINT_TO",
         "MotionCommand:SET_DIRECTION",
         "MotionCommand:SET_X",
@@ -372,8 +372,7 @@ function runSemanticContractTests() {
         "WaitTime",
         "WaitUntil"
       ]);
-      ok(newMotionSchemas.length === 2, 'v2 direction movement inventory');
-      for (const schema of [...schemas, ...newMotionSchemas]) {
+      for (const schema of schemas) {
         const statement = blockDecode(createBlock(schema.id), { expected: 'statement' }),
           source = formatScript({
             kind: 'Script',
@@ -397,13 +396,14 @@ function runSemanticContractTests() {
         );
         ok(astEquivalent(ast, blockDecode(blockEncode(ast).tree)), schema.id + ': block roundtrip');
       }
-      // V2 adds two effect kinds; preserve the complete legacy inventory above.
+      // Effects that a lone block cannot form: the group wait needs its preceding
+      // broadcast and the continuous rule is a script rule, so they are written as sentences.
       for (const [kind, source] of [
         ['WaitBroadcastGroup', 'みんなに「出発」と知らせる\nその知らせを受けて始めたことが全部終わるまで待つ\n0を返す'],
         ['ContinuousRule', '条件（条件の答え（あてはまる））が成り立つあいだ、自分は画面の右へ1秒に20歩の速さで動き続ける\n0を返す'],
       ]) {
         const p = base();
-        p.functions = [{ ownerId: 'stage', id: 'function-v2-effect', name: '計算', args: [], source }];
+        p.functions = [{ ownerId: 'stage', id: 'function-effect', name: '計算', args: [], source }];
         const ast = parseSyntax(source).ast;
         ok(ast, kind + ' must parse before purity checking');
         ok([...(ast.body || []), ...(ast.rules || [])].some((n) => n.kind === kind), kind);
@@ -613,7 +613,7 @@ function runSemanticContractTests() {
         {id:'core-inner',ownerId:'stage',name:'内側',args:[],source:'個体値を答えとして返す。'},
         {id:'core-outer',ownerId:'stage',name:'外側',args:[],source:'この中だけで使う変数【結果】を作り、最初は0にする。\nいぬは何もしない。\nもし点数が0と同じなら、\n  自分は【結果】を（【内側】で求めた答え）にする。\n【結果】を答えとして返す。'}];
       eq(actorUnitRun(p,true).speech,[['cat','20']]);
-      const clone=actorUnitFixture('自分の分身を作る。');clone.functions=structuredClone(p.functions);
+      const clone=actorUnitFixture('自分のコピーを作る。');clone.functions=structuredClone(p.functions);
       clone.scripts.push({id:'core-clone',targetId:'cat',event:'cloneStart',source:'個体値を30にする。\n（【外側】で求めた答え）を言う。'});
       for(const packed of [false,true])eq(actorUnitRun(clone,packed).speech.map(row=>row[1]),['30']);
     });

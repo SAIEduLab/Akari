@@ -47,7 +47,7 @@ function exercise(observation) {
   observation.targets.forEach(verifyComponentControlReach);
   assert.ok(observation.region.height>=100,'usable action area remains');
   assert.ok(observation.treeHeight>=58,'component list retains a usable row');
-  assert.equal(observation.help,'見た目と設定をコピーします。コードはコピーしません。');
+  assert.equal(observation.help,'見た目と せっていを コピーします。コードは コピーしません。');
   assert.ok(observation.clicks.soundFileChooser&&observation.clicks.assetDialog&&observation.clicks.dataDialog,
     'sound file chooser and both visible dialogs must actually open');
   assert.ok(observation.wheelEvents.every(e=>e.trusted&&e.deltaY!==0),'native wheel evidence required');

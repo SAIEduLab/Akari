@@ -13,7 +13,7 @@ export const autosaveSources={
 };
 export const autosaveSuffix='\n※ 編集した原文を保持';
 export const autosaveCallable={
-  source:'自分のクローンを作る。',
+  source:'自分のコピーを作る。',
   document:{revision:7,unitIds:['first-event']},
   extraScripts:[{id:'clone-handler',targetId:'sprite-1',event:'cloneStart',source:'「読み上げ」という手順を1回行う。',document:{revision:1,unitIds:['clone-event']}}],
   actions:[{id:'say-action',ownerId:'stage',name:'読み上げ',args:[],source:'「買うもの」の2番目を2秒話します。'}],
@@ -23,14 +23,14 @@ export const autosaveStateIds=[
   'paused/plain-script','storage/completion-order','storage/stale-completion',
   'storage/quota-retains-current-and-draft','restored/pending-draft','restored/callable-clone-pause',
 ];
-const saved=s=>assert.equal(s,'自動保存：済み');
-const pending=s=>{assert.doesNotMatch(s,/済み|失敗|利用できません/);assert.match(s,/待機|保存中/);};
+const saved=s=>assert.equal(s,'このパソコンに のこしたよ');
+const pending=s=>{assert.doesNotMatch(s,/のこしたよ|のこせなかったよ|使えません/);assert.match(s,/まだ のこしていないよ/);};
 const source=s=>s.project.scripts[0].source;
 function owner(s,key='script:main'){assert.equal(s.selectedScriptId,'main');assert.equal(s.owner,key);}
 function timeline(events){
   assert.ok(events.length>2);assert.deepEqual(events.map(e=>e.seq),events.map((_,i)=>i+1));
   for(const e of events){assert.ok(Number.isFinite(e.at)&&e.at>=0);assert.equal(typeof e.status,'string');}
-  for(const e of events.filter(e=>e.kind==='status'&&e.status==='自動保存：済み')){
+  for(const e of events.filter(e=>e.kind==='status'&&e.status==='このパソコンに のこしたよ')){
     assert.ok(events.some(p=>p.seq<e.seq&&['completion-delivered','fallback-written'].includes(p.kind)),
       'saved status must follow successful storage completion');
   }
@@ -42,7 +42,7 @@ function paused(o,expected,key){
   assert.deepEqual(o.paused.project,o.before.project);saved(o.settled.status);owner(o.settled,key);
   assert.deepEqual(o.settled.project,o.before.project);persisted(o.record,o.before.project);
   assert.ok(o.events.some(e=>e.kind==='put-request'));assert.ok(o.events.some(e=>e.kind==='completion-delivered'));
-  assert.ok(!o.events.some(e=>/失敗|利用できません/.test(e.status)));timeline(o.events);
+  assert.ok(!o.events.some(e=>/のこせなかったよ|使えません/.test(e.status)));timeline(o.events);
 }
 export function verifyAutosaveStateReport(report){
   const count=verifySemanticExtension(report,'akari-autosave-state-v1',autosaveStateIds);
@@ -84,7 +84,7 @@ export function verifyAutosaveStateReport(report){
     assert.equal(source(o.afterNewEdit),autosaveSources.newer);assert.equal(source(o.afterOldCompletion),autosaveSources.newer);
     assert.equal(source(o.done),autosaveSources.newer);persisted(o.record,o.done.project);
     const completions=o.events.filter(e=>e.kind==='completion-delivered');assert.equal(completions.length,2);
-    assert.ok(!o.events.some(e=>e.seq>completions[0].seq&&e.seq<completions[1].seq&&e.status==='自動保存：済み'));
+    assert.ok(!o.events.some(e=>e.seq>completions[0].seq&&e.seq<completions[1].seq&&e.status==='このパソコンに のこしたよ'));
     assert.deepEqual(o.restored.project,o.done.project);
   }
   {
@@ -92,11 +92,11 @@ export function verifyAutosaveStateReport(report){
     for(const [i,attempt]of o.attempts.entries()){
       assert.equal(attempt.source,i===0?autosaveSources.newer:autosaveSources.draft);
       assert.equal(attempt.current.input,attempt.source);assert.equal(source(attempt.current),autosaveSources.newer);
-      assert.deepEqual(attempt.record,o.beforeRecord);assert.match(attempt.current.status,/失敗/);
-      assert.match(attempt.current.status,/「保存」/);assert.match(attempt.current.status,/ファイル/);
+      assert.deepEqual(attempt.record,o.beforeRecord);assert.match(attempt.current.status,/のこせなかったよ/);
+      assert.match(attempt.current.status,/「ほぞん」/);assert.match(attempt.current.status,/ファイル/);
       assert.ok(attempt.events.some(e=>e.kind==='put-error'&&e.error==='QuotaExceededError'));
       assert.ok(attempt.events.some(e=>e.kind==='fallback-error'&&e.error==='QuotaExceededError'));
-      assert.ok(!attempt.events.some(e=>e.kind==='status'&&e.status==='自動保存：済み'));
+      assert.ok(!attempt.events.some(e=>e.kind==='status'&&e.status==='このパソコンに のこしたよ'));
       if(i===1){assert.ok(attempt.current.pending);assert.equal(attempt.current.pending.value,autosaveSources.draft);}
     }
     assert.equal(o.attempts.length,2);assert.equal(o.final.input,autosaveSources.draft);
@@ -119,23 +119,23 @@ export function verifyAutosaveStateReport(report){
     assert.equal(o.record.editorState.selectedScriptId,'clone-handler');assert.equal(o.record.editorState.selectedId,'sprite-1');assert.equal(o.record.editorState.currentEvent,'cloneStart');
     assert.deepEqual(o.exported.project,o.before.project);assert.equal(o.exported.editorState.selectedScriptId,'clone-handler');
     assert.equal(o.exported.editorState.selectedId,'sprite-1');assert.equal(o.exported.editorState.currentEvent,'cloneStart');
-    assert.ok(o.events.some(e=>e.kind==='completion-delivered'));assert.ok(!o.events.some(e=>/失敗|利用できません/.test(e.status)));timeline(o.events);
+    assert.ok(o.events.some(e=>e.kind==='completion-delivered'));assert.ok(!o.events.some(e=>/のこせなかったよ|使えません/.test(e.status)));timeline(o.events);
   }
   return count;
 }
 const observed=(r,id)=>r.results.find(x=>x.id===id).observed;
 export const autosaveStateWrongMeaning=[
   ['runtime-unit-as-owner',r=>observed(r,'paused/persistent-first').paused.selectedScriptId='first-event'],
-  ['pause-failure-hidden',r=>observed(r,'paused/persistent-first').events.find(e=>e.kind==='status').status='自動保存：失敗'],
+  ['pause-failure-hidden',r=>observed(r,'paused/persistent-first').events.find(e=>e.kind==='status').status='このパソコンに のこせなかったよ'],
   ['unsaved-record',r=>observed(r,'paused/plain-script').record.project.scripts[0].source='別の本文'],
   ['cancel-changes-source',r=>observed(r,'paused/legacy-second-cancel').cancelled.project.scripts[0].source='変更'],
   ['repair-drops-sibling',r=>observed(r,'restored/persistent-second-repair').applied.project.scripts[0].source='点数を0にする。'],
   ['repair-history-lost',r=>observed(r,'restored/persistent-second-repair').restoredUndo.project=structuredClone(observed(r,'restored/persistent-second-repair').applied.project)],
-  ['saved-before-complete',r=>observed(r,'storage/completion-order').events.find(e=>e.kind==='request-success').status='自動保存：済み'],
-  ['stale-success',r=>observed(r,'storage/stale-completion').afterOldCompletion.status='自動保存：済み'],
+  ['saved-before-complete',r=>observed(r,'storage/completion-order').events.find(e=>e.kind==='request-success').status='このパソコンに のこしたよ'],
+  ['stale-success',r=>observed(r,'storage/stale-completion').afterOldCompletion.status='このパソコンに のこしたよ'],
   ['stale-storage',r=>observed(r,'storage/stale-completion').record.project.scripts[0].source=autosaveSources.older],
   ['quota-erases-previous',r=>observed(r,'storage/quota-retains-current-and-draft').attempts[0].record=null],
-  ['quota-no-next-action',r=>observed(r,'storage/quota-retains-current-and-draft').attempts[0].current.status='自動保存：失敗'],
+  ['quota-no-next-action',r=>observed(r,'storage/quota-retains-current-and-draft').attempts[0].current.status='このパソコンに のこせなかったよ'],
   ['draft-lost',r=>observed(r,'restored/pending-draft').restored.input=autosaveSources.saved],
   ['callable-selection-invalid',r=>observed(r,'restored/callable-clone-pause').record.editorState.selectedId='stage'],
   ['callable-export-lost',r=>observed(r,'restored/callable-clone-pause').exported.project.actions=[]],

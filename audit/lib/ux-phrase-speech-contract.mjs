@@ -18,7 +18,7 @@ function readable(e){
  assert.ok(inside(e.ink,e.rect),'text ink remains inside its box');
 }
 function dialog(d,title,body){
- assert.equal(d.open,true);assert.equal(d.title.text,title);assert.equal(d.body.text,body);assert.equal(d.close.text,'閉じる');
+ assert.equal(d.open,true);assert.equal(d.title.text,title);assert.equal(d.body.text,body);assert.equal(d.close.text,'とじる');
  assert.equal(d.labelledby,'valueTitle');assert.equal(d.accessibleName,title);assert.equal(d.listControls,false);
  for(const e of [d.title,d.body,d.close]){readable(e);assert.ok(inside(e.rect,d.viewport));assert.ok(inside(e.rect,d.dialog));}
  assert.ok(d.title.rect.bottom<=d.body.rect.top);assert.ok(d.body.rect.bottom<=d.close.rect.top);
@@ -58,10 +58,10 @@ export function verifySpeechObserved(id,o){
  }
  else if(id==='speech/clone-identity'){
   assert.deepEqual(o.bubbles.map(b=>[b.id,b.speaker,b.text]),[['sprite-1','あかり',speechTexts[0]],['sprite-1-clone-3','あかり',speechTexts[1]]]);
-  dialog(o.original,'あかりの発話（全文）',speechTexts[0]);dialog(o.clone,'あかり（分身: sprite-1-clone-3）の発話（全文）',speechTexts[1]);
+  dialog(o.original,'あかりの発話（全文）',speechTexts[0]);dialog(o.clone,'あかり（コピー: sprite-1-clone-3）の発話（全文）',speechTexts[1]);
  }
  else if(id==='speech/duplicate-name-refusal'){
-  assert.equal(o.error.code,'F503');assert.match(o.error.message,/部品名.*重複/);assert.deepEqual(o.namesBefore,ordinaryNames);assert.deepEqual(o.namesAfter,ordinaryNames);
+  assert.equal(o.error.code,'F503');assert.match(o.error.message,/部品の 名前が.*同じです/);assert.deepEqual(o.namesBefore,ordinaryNames);assert.deepEqual(o.namesAfter,ordinaryNames);
  }
  else if(id==='speech/general-value-and-list'){
   assert.equal(o.string.title.text,'文章');assert.equal(o.string.body.text,'値'.repeat(170));assert.equal(o.string.accessibleName,'文章');assert.equal(o.string.listControls,false);

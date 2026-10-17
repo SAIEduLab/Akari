@@ -424,7 +424,7 @@
       b.dataset.speaker=project().components.find(c=>c.id===runtime()?.actor(id)?.baseId)?.name||project().components.find(c=>c.id===id)?.name||'話している人';
       // Keep the speaker and value from this utterance together, even after it changes or clears.
       const speaker = b.dataset.speaker,
-        speakerLabel = runtime()?.actor(id)?.isClone ? `${speaker}（分身: ${id}）` : speaker;
+        speakerLabel = runtime()?.actor(id)?.isClone ? `${speaker}（コピー: ${id}）` : speaker;
       b.setAttribute('aria-label',b.dataset.speaker+'：'+value);
       const text = document.createElement('span');
       text.className = 'sprite-bubble-text'; text.textContent = value;
@@ -436,8 +436,8 @@
         full.dataset.always = String(presentation.rounded || Array.from(value).length > 80 || /[\r\n]/.test(value));
         full.hidden = full.dataset.always !== 'true';
         full.type = 'button';
-        full.dataset.label = presentation.rounded ? '実値' : '全文';
-        full.setAttribute('aria-label', presentation.rounded ? '表示を丸めています。実値を見る' : '吹出しの全文を見る');
+        full.dataset.label = presentation.rounded ? '本当のかず' : '全文';
+        full.setAttribute('aria-label', presentation.rounded ? 'かずを 短くして 見せています。本当の かずを 見る' : 'ふきだしの 文を ぜんぶ 見る');
         full.style.pointerEvents = 'auto';
         full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue, speakerLabel); };
         b.appendChild(full);
@@ -645,13 +645,13 @@
       if (pause) pause.disabled = !scheduler?.running;
       if (stop) stop.disabled = !scheduler?.running && phase !== 'PREPARING';
       if (pause) pause.textContent =
-        phase === 'PAUSED' ? '\u25b6 \u7d9a\u3051\u308b' : '⏸ いったん止める';
+        phase === 'PAUSED' ? '▶ つづける' : '⏸ いったん止める';
       if (status) status.textContent =
         {
-          LOADING: '\u8aad\u307f\u8fbc\u307f\u4e2d',
-          READY: '\u6e96\u5099\u5b8c\u4e86',
-          PREPARING: '\u6e96\u5099\u4e2d',
-          RUNNING: '\u5b9f\u884c\u4e2d',
+          LOADING: '読みこみ中',
+          READY: '用意できました',
+          PREPARING: '用意しています',
+          RUNNING: '動いているよ',
           PAUSED: 'いったん止まっています',
           STOPPED: '止まっています',
           ERROR: '\u958b\u3051\u307e\u305b\u3093',
@@ -737,10 +737,10 @@
       dispose();
       phase = artwork ? 'ERROR' : 'STOPPED';
       if (artwork) {
-        message(gesture ? '音をはじめられませんでした。この作品を別の画面で開いてみてください。'
-          : '作品をはじめられませんでした。くわしい内容を見てください。');
+        message(gesture ? '音をはじめられませんでした。この作品を ちがう 画面で 開いてみてください。'
+          : '作品をはじめられませんでした。「くわしく」を見てください。');
         const details = document.createElement('details'), summary = document.createElement('summary'), raw = document.createElement('pre');
-        summary.textContent = 'くわしい内容';
+        summary.textContent = 'くわしく';
         raw.textContent = `${error.code || 'R415'} ${error.message || error}${error.detail ? '\n' + error.detail : ''}`;
         details.append(summary, raw); output.appendChild(details);
       } else message(`${error.code || 'R415'} ${error.message || error}`);
@@ -948,12 +948,12 @@
           message(text);
           if (details?.rounded) {
             const full = document.createElement('details'), summary = document.createElement('summary'), raw = document.createElement('span');
-            summary.textContent = '表示を丸めています。実値を見る';
+            summary.textContent = 'かずを 短くして 見せています。本当の かずを 見る';
             raw.textContent = details.rawText;
             full.append(summary, raw); output.appendChild(full);
           }
         },
-        onValueDetails: value => message((typeof value === 'string' ? '吹出しの全文（選択してコピーできます）：' : '表示を丸めています。実値（選択してコピーできます）：') + core.valueText(value)),
+        onValueDetails: value => message((typeof value === 'string' ? 'ふきだしの 文ぜんぶ（えらんで コピーできます）：' : 'かずを 短くして 見せています。本当の かず（えらんで コピーできます）：') + core.valueText(value)),
       });
       flush();
       phase = 'READY';
@@ -975,7 +975,7 @@
     if (compiled.errors.length) {
       const error = new AkariError(
         'X601',
-        '\u4f5c\u54c1\u306e\u554f\u984c\u3092\u76f4\u3057\u3066\u304b\u3089\u66f8\u304d\u51fa\u3057\u3066\u304f\u3060\u3055\u3044',
+        '作品の まちがいを 直してから、うごく作品を ファイルにしてください',
       );
       error.diagnostics = compiled.errors;
       throw error;
@@ -1058,7 +1058,7 @@
     if (/<\/script/i.test(script))
       throw new AkariError(
         'X603',
-        '\u66f8\u304d\u51fa\u3057\u7528\u30c7\u30fc\u30bf\u3092\u5b89\u5168\u306b\u4fdd\u5b58\u3067\u304d\u307e\u305b\u3093',
+        'うごく作品を 安全な ファイルに できませんでした',
       );
     const html =
       '<!DOCTYPE html>\n<!-- SPDX-License-Identifier: MIT -->\n<!--\n' +
@@ -1075,17 +1075,17 @@
       '</style>\n</head>\n<body>\n' +
       '<main id="playerRoot">' + (artwork ? '' : '<header><h1 id="playerTitle">' +
       title +
-      '</h1><div class="player-controls"><button id="playerStart" disabled>\u25b6 \u306f\u3058\u3081\u308b</button><button id="playerPause" disabled>⏸ いったん止める</button><button id="playerStop" disabled>■ 止める</button><span id="playerStatus" role="status">\u8aad\u307f\u8fbc\u307f\u4e2d</span></div></header>') +
+      '</h1><div class="player-controls"><button id="playerStart" disabled>▶ はじめる</button><button id="playerPause" disabled>⏸ いったん止める</button><button id="playerStop" disabled>■ 止める</button><span id="playerStatus" role="status">読みこみ中</span></div></header>') +
       '<div class="player-stage"' + (artwork ? ' style="width:' + payload.project.stage.width + 'px;height:' + payload.project.stage.height + 'px"' : '') + '><div id="formSurface" tabindex="0"><canvas id="penCanvas"></canvas></div>' + (artwork ? '<div id="playerActivation" hidden><button id="playerActivate" type="button">ここをおしてはじめる</button></div>' : '') + '</div><pre id="playerOutput" role="log" hidden></pre></main>' +
       '<div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionText"><div class="question-box"><div id="questionText"></div><input id="questionAnswer" aria-label="\u7b54\u3048" autocomplete="off"><div class="question-controls"><button id="questionStop">動きを止める</button><button id="questionSubmit">\u7b54\u3048\u308b</button></div></div></div>' +
-      '<noscript>\u3053\u306e\u4f5c\u54c1\u3092\u52d5\u304b\u3059\u306b\u306fJavaScript\u3092\u6709\u52b9\u306b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</noscript>\n<script>\n' +
+      '<noscript>この作品を動かすには、JavaScriptを使えるようにしてください。</noscript>\n<script>\n' +
       script +
       '\n<' +
       '/script>\n</body>\n</html>\n';
     if (new TextEncoder().encode(html).length > LIMITS.executableBytes)
       throw new AkariError(
         'X604',
-        '\u66f8\u304d\u51fa\u3059\u4f5c\u54c1\u304c\u5927\u304d\u3059\u304e\u307e\u3059',
+        '作品が 大きすぎて、うごく作品の ファイルに できません。絵や 音を へらしてみてください',
       );
     return html;
   }

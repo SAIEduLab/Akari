@@ -2,11 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import vm from 'node:vm';
+import { isDeepStrictEqual } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { currentProductFile } from '../lib/product-path.cjs';
 import { snapshot, sha } from '../lib/product-test-host.mjs';
 import { loadApi } from '../browser/cases/audit-lib.cjs';
+import { answerProductConfirms } from '../lib/product-dialogs.cjs';
 import { browserEnvironment } from '../lib/browser-environment.mjs';
 import { extensionFoundationIds, extensionExpectedObservations, verifyExtensionFoundation } from '../lib/extension-foundation-contract.mjs';
 
@@ -53,6 +56,26 @@ await check('EXTENSION-PROFILE-RUNTIME-ISOLATION',()=>{
   assert.equal(standard.LIMITS.components,500);assert.equal(derived.LIMITS.components,501);assert.equal(A.LIMITS.components,500);
   return{standardComponents:500,derivedComponents:501,isolated:true};
 });
+// The public profile example (EXTENSIONS.md 派生上限と適合確認), loaded as a derived
+// author loads it: as a CommonJS module and as a plain script setting AkariProfileExamples.
+await check('EXTENSION-PROFILE-EXAMPLES',()=>{
+  const file=path.resolve('extensions/examples/profile.js'),examples=require(file),scope={};
+  vm.runInNewContext(fs.readFileSync(file,'utf8'),scope);
+  assert.deepEqual(plain(scope.AkariProfileExamples),plain(examples));
+  const changed=['components','sourceEach','listItems','functionOps'];
+  const observe=definitions=>{
+    const p=A.createAkariProfiles(A.profiles.standard),ref=p.effective;for(const definition of definitions)p.register(definition);
+    const inherits=()=>Object.keys(p.standard).filter(k=>!changed.includes(k)).every(k=>ref[k]===p.standard[k]);
+    p.select('demo.roomy','1.0.0');const roomy=Object.fromEntries(changed.map(k=>[k,ref[k]])),roomyInherits=inherits();
+    p.select('demo.unlimited','1.0.0');const unlimited=changed.filter(k=>ref[k]===Infinity),unlimitedInherits=inherits();
+    const runtime=A.createAkariRuntime({profiles:definitions,profile:{id:'demo.roomy',version:'1.0.0'}});
+    return{ids:definitions.map(d=>d.id+'@'+d.version),roomy,roomyInherits,unlimited,unlimitedInherits,roomyRuntimeComponents:runtime.LIMITS.components,standardComponents:A.LIMITS.components,sameAsScript:true};
+  };
+  // The comparison is sensitive: the same example with another declared ceiling is not accepted.
+  const altered=plain(examples);altered[0].limits.components=601;
+  const alteredDetected=!isDeepStrictEqual({...observe(altered),alteredDetected:true},extensionExpectedObservations['EXTENSION-PROFILE-EXAMPLES']);
+  return{...observe(examples),alteredDetected};
+});
 
 // Exercise the public examples as an independent derived author would.
 const {offline,text}=require('../../extensions/examples/offline.js');
@@ -78,6 +101,10 @@ await withOrdinaryFileBrowser(async browser=>{
   async function pageAt(file){const context=await browser.newContext();const page=await context.newPage();const requests=[],sockets=[],errors=[];page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});page.on('websocket',s=>sockets.push(s.url()));page.on('pageerror',e=>errors.push(e.message));await page.goto(pathToFileURL(file).href);await page.waitForFunction(()=>!!globalThis.Akari?.app);return{context,page,requests,sockets,errors};}
   const standard=await pageAt(candidate),fork=derived?await pageAt(derived):null;
   if(fork)await fork.page.evaluate(install);
+  // The product asks about unsaved work in its own dialog. The handler answers it during the next
+  // locator action, so the opening step waits for that action before reading the result.
+  if(fork)await answerProductConfirms(fork.page,true);
+  const productQuestionAnswered=page=>page.locator('#loseConfirmModal').waitFor({state:'hidden'});
   await check('EXTENSION-STANDARD-NO-NETWORK',async()=>{await standard.page.locator('#runBtn').click();await standard.page.locator('#stopBtn').click();await standard.page.waitForTimeout(300);return{httpRequests:standard.requests.length,socketRequests:standard.sockets.length,errors:standard.errors.length,unblocked:true};});
   await check('EXTENSION-DERIVED-NO-NETWORK',async()=>{assert.ok(fork);await fork.page.locator('#runBtn').click();await fork.page.locator('#stopBtn').click();await fork.page.waitForTimeout(300);return{httpRequests:fork.requests.length,socketRequests:fork.sockets.length,errors:fork.errors.length,unblocked:true};});
   async function evaluate(id,fn){await check(id,async()=>{assert.ok(fork);return fork.page.evaluate(fn);});}
@@ -161,18 +188,19 @@ await withOrdinaryFileBrowser(async browser=>{
   await check('EXTENSION-FAILED-IMPORT-PRESERVES-EDITOR',async()=>{
     assert.ok(fork);await fork.page.locator('#editorModecode').click();const source=await fork.page.locator('#codeEditor').inputValue()+'\n「未保存」と言う。';await fork.page.locator('#codeEditor').fill(source);await fork.page.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);await fork.page.waitForTimeout(300);
     const before=await fork.page.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,history:s.history,dirty:s.dirty};});assert.equal(before.dirty,true);
-    const serialized=await fork.page.evaluate(()=>({file:Akari.serializeProject(Akari.app.project,Akari.makeDefaultAssetStore()),hash:Akari.extensions.requirements().required[0].contentHash}));const malformed=path.join(directory,'unavailable-extension.akari.md');fs.writeFileSync(malformed,serialized.file.replace(serialized.hash,'0'.repeat(64)));await fork.page.locator('#fileInput').setInputFiles(malformed);await fork.page.waitForTimeout(300);const after=await fork.page.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,history:s.history,dirty:s.dirty};});return{source:before.source===after.source,history:before.history===after.history,dirty:before.dirty===after.dirty};
+    const serialized=await fork.page.evaluate(()=>({file:Akari.serializeProject(Akari.app.project,Akari.makeDefaultAssetStore()),hash:Akari.extensions.requirements().required[0].contentHash}));const malformed=path.join(directory,'unavailable-extension.akari.md');fs.writeFileSync(malformed,serialized.file.replace(serialized.hash,'0'.repeat(64)));await fork.page.locator('#fileInput').setInputFiles(malformed);await productQuestionAnswered(fork.page);await fork.page.waitForTimeout(300);const after=await fork.page.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,history:s.history,dirty:s.dirty};});return{source:before.source===after.source,history:before.history===after.history,dirty:before.dirty===after.dirty};
   });
   await check('EXTENSION-UPGRADE-OPEN-CONFIRM',async()=>{
     assert.ok(fork);const page=fork.page;
     const prepared=await page.evaluate(()=>{const file=Akari.serializeProject(Akari.app.project,Akari.makeDefaultAssetStore()),open='```json\n',start=file.lastIndexOf(open)+open.length,end=file.lastIndexOf('\n```'),text=file.slice(start,end),root=JSON.parse(text),indent=JSON.stringify(root,null,2)===text?2:undefined;
       const item=root.extensions.required.find(x=>x.id==='demo.offline');item.version='1.0.0';item.contentHash='1'.repeat(64);return{file:file.slice(0,start)+JSON.stringify(root,null,indent)+file.slice(end),source:Akari.app.editorState.main.sourceText};});
     const older=path.join(directory,'older-extension-release.akari.md');fs.writeFileSync(older,prepared.file);
-    const messages=[];let acceptUpgrade=false;const onDialog=dialog=>{messages.push(dialog.message());return dialog.message().includes('前の版')?(acceptUpgrade?dialog.accept():dialog.dismiss()):dialog.accept();};page.on('dialog',onDialog);
+    const messages=[];let acceptUpgrade=false;const onDialog=dialog=>{messages.push(dialog.message());return dialog.message().includes('前の バージョン')?(acceptUpgrade?dialog.accept():dialog.dismiss()):dialog.accept();};page.on('dialog',onDialog);
+    const questionAnswered=()=>productQuestionAnswered(page);
     try{
-      await page.locator('#fileInput').setInputFiles(older);await page.waitForTimeout(500);
-      const kept=await page.evaluate(()=>Akari.app.editorState.main.sourceText);const asked=messages.some(m=>m.includes('前の版'));
-      acceptUpgrade=true;await page.locator('#fileInput').setInputFiles(older);await page.waitForFunction(()=>Akari.app.project.extensions?.required?.some(x=>x.id==='demo.offline'&&x.version==='1.1.0'));
+      await page.locator('#fileInput').setInputFiles(older);await questionAnswered();await page.waitForTimeout(500);
+      const kept=await page.evaluate(()=>Akari.app.editorState.main.sourceText);const asked=messages.some(m=>m.includes('前の バージョン'));
+      acceptUpgrade=true;await page.locator('#fileInput').setInputFiles(older);await questionAnswered();await page.waitForFunction(()=>Akari.app.project.extensions?.required?.some(x=>x.id==='demo.offline'&&x.version==='1.1.0'));
       const recordedVersion=await page.evaluate(()=>Akari.app.project.extensions.required.find(x=>x.id==='demo.offline').version);
       return{asked,namesVersions:messages.some(m=>m.includes('数の記憶')&&m.includes('1.0.0 → 1.1.0')),dismissedKeepsWork:kept===prepared.source,acceptedOpens:true,recordedVersion};
     }finally{page.off('dialog',onDialog);}
