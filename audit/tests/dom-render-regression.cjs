@@ -1,7 +1,10 @@
 const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
 const { currentProductFile } = require("./../lib/product-path.cjs");
+const {caseRecorder,writeCaseReport}=require('../lib/gate-case-contract.mjs');
 // Simulate synchronous removal events using the actual product view. Real browser tests remain mandatory.
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),{JSDOM,VirtualConsole}=require('jsdom');
+const [output]=process.argv.slice(2);assert.ok(output,'usage: dom-render-regression.cjs <result.json>');
+const {results,pass}=caseRecorder();
 function check(html){
  const errors=[],vc=new VirtualConsole();vc.on("jsdomError",e=>errors.push(e.message));
  const dom=new JSDOM('<div id="root"></div>',{pretendToBeVisual:true,virtualConsole:vc}),w=dom.window;
@@ -25,18 +28,20 @@ function verifyNormalObservation(observed){
  assert.equal(observed.focused,true);assert.equal(observed.pending,false);assert.equal(observed.ok,true);
  assert.equal(observed.source,'4 が 8 より小さい間、次のことを繰り返す ※ 頭  \n  3 を 点数 に 加える ※ 本文  \n「😀」 という\n');
 }
-verifyNormalObservation(good);
+verifyNormalObservation(good);pass('normal-observation');
 const guard='        if (rendering || committing || !input.isConnected) return;';
 assert.equal(html.split(guard).length,3);
 const withoutRenderGuards=html.replaceAll(guard,'').replace('destroyed || committing || rendering','destroyed || committing');
 // Live model reads are an independent defense against the stale removal event.
 // Preserve the old guard-only mutation and assert every normal observation.
 const treeProtected=check(withoutRenderGuards);
-assert.deepEqual(treeProtected,good);verifyNormalObservation(treeProtected);
+assert.deepEqual(treeProtected,good);verifyNormalObservation(treeProtected);pass('latest-tree-defense-without-render-guards');
 const liveRead='const current = index.get(node.id)?.node || node;';
 assert.equal(html.split(liveRead).length,2);
 // Remove both defenses to retain the original double-commit/reentrant fault.
 const bad=check(withoutRenderGuards.replace(liveRead,'const current = node;'));
 assert.equal(bad.calls,2);assert.ok(bad.errors.some(e=>e.includes('reentrant replaceChildren')));
 assert.throws(()=>verifyNormalObservation(bad),{name:'AssertionError'},'unprotected reentrant evidence must fail the normal observation validator');
+pass('reentrant-mutant-rejected');
+writeCaseReport(output,'dom-regression',results);
 console.log('DOM render regression: one commit, focus/source preserved; latest-tree defense preserved and reentrant blur/change mutant rejected (simulated DOM, not real browser)');

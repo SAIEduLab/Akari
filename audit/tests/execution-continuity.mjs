@@ -7,6 +7,7 @@ import {audioIds,codecBrowser} from '../lib/feature-contract.mjs';
 import {gateSteps,auditBundleKinds,auditJobIds,integrityControlIds,acceptanceIds,acceptanceCommands,verifyAcceptanceExecution} from '../lib/gate-contract.mjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {sealBundle,verifyBundle,selectBundleDirectory} from '../lib/evidence-bundle.mjs';
+import {gateCaseIds,nodeProductCaseIds,caseReport,verifyGateCaseReports,currentReleaseRecord} from '../lib/gate-case-contract.mjs';
 const inputs=snapshot(currentProductFile()),results=[];
 const check=(id,fn)=>{fn();results.push({id,pass:true});};
 const clone=x=>JSON.parse(JSON.stringify(x));
@@ -106,6 +107,30 @@ for(const kind of ['composition','editing'])check('execution:'+kind+'/persisted-
  assert.equal(process.exitCode,1);const report=JSON.parse(written.get((kind==='composition'?'audit-evidence/acceptance':'audit-evidence/editing')+'/execution.json'));
  assert.equal(report.status,'FAIL');assert.equal(report.validationFailure,'synthetic validation rejection');assert.equal(report.steps.length,acceptanceCommands[kind].length);assert.ok(report.steps.every(r=>r.status==='PASS'));
 });
+// Case-listing gate steps: exactly the declared cases, each PASS, bound to the current inputs.
+const productManifest=JSON.parse(fs.readFileSync('audit/manifests/product-tests.json')),releaseRecord=currentReleaseRecord();
+function caseReports(){
+  const reports=Object.fromEntries(Object.entries(gateCaseIds).map(([step,ids])=>[step,caseReport(step,ids.map(id=>({id,status:'PASS'})),{},inputs)]));
+  reports['release-distribution'].record=clone(releaseRecord);
+  reports['node-product']=caseReport('node-product',nodeProductCaseIds(productManifest).map(id=>({id,status:'PASS'})),{},inputs);
+  return reports;
+}
+const verifyCases=(reports,manifest=productManifest)=>verifyGateCaseReports(step=>{assert.ok(reports[step],'missing report '+step);return reports[step];},inputs,manifest,releaseRecord);
+check('gate-cases:valid',()=>verifyCases(caseReports()));
+for(const [name,mutate,message] of [
+  ['wrong-schema',r=>r['ci-regression'].schema='akari-gate-v1',/ci-regression: schema/],
+  ['wrong-step',r=>r['dom-regression'].step='ci-regression',/dom-regression: step/],
+  ['failed-status',r=>r['harness-negative'].status='FAIL',/harness-negative: status/],
+  ['stale-snapshot',r=>r['surface-negative'].snapshot={...inputs,inputSha256:'0'.repeat(64)},/surface-negative: snapshot/],
+  ['missing-results',r=>delete r['license-verify'].results,/license-verify: results/],
+  ['missing-case',r=>r['workflow-contract'].results.pop(),/workflow-contract: case set/],
+  ['extra-case',r=>r['change-guard-negative'].results.push({id:'invented',status:'PASS'}),/change-guard-negative: case set/],
+  ['duplicate-case',r=>{const rows=r['release-policy-negative'].results;rows[1]=rows[0];},/release-policy-negative: duplicate case/],
+  ['failed-case',r=>r['node-product'].results[0].status='FAIL',/node-product\//],
+  ['release-record-changed',r=>r['release-distribution'].record.files[currentProductFile()]='0'.repeat(64),/committed release record/],
+  ['release-record-missing',r=>delete r['release-distribution'].record,/committed release record/],
+])check('gate-cases:'+name,()=>{const reports=caseReports();mutate(reports);assert.throws(()=>verifyCases(reports),message);});
+check('gate-cases:node-product-suite-missing',()=>{const manifest=clone(productManifest);manifest.suites=manifest.suites.filter(s=>s.name!=='runCoreTests');assert.throws(()=>verifyCases(caseReports(),manifest),/node product suite missing from manifest: runCoreTests/);});
 assert.deepEqual(results.map(r=>r.id),integrityControlIds);
 assert.deepEqual(snapshot(currentProductFile()),inputs);
 fs.writeFileSync(output,JSON.stringify({status:'PASS',snapshot:inputs,results},null,2)+'\n');
