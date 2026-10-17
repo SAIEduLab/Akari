@@ -945,7 +945,8 @@
         ['\u8863\u88c5\u756a\u53f7', '\u8863\u88c5\u540d'].includes(sensor)
       )
         continue;
-      add('sensor:' + sensor, 'しらべる', sensor, 'expression');
+      // The candidate is the written word (SENSOR_SURFACES), not the internal sensor name.
+      add('sensor:' + sensor, 'しらべる', SENSOR_SURFACES[sensor] || sensor, 'expression');
     }
     const exprs = [
       '2\uff0b3\u00d74',
