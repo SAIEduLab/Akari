@@ -83,9 +83,9 @@ export function verifyContractReport(report,inputs){
 export function verifyExpectationReport(report,inputs){
   bind(report,inputs,expectationInputPaths);assert.equal(report.schema,'akari-language-expectations-gate-v1');
   const schemas=JSON.parse(fs.readFileSync('audit/manifests/features.json')).schemaIds.length;
-  for(const[k,v]of Object.entries({status:'PASS',stableIds:606,finiteInputs:256,groups:42,corpus:95,schemas}))assert.equal(report.expectations[k],v,k);
+  for(const[k,v]of Object.entries({status:'PASS',stableIds:607,finiteInputs:256,groups:42,corpus:95,schemas}))assert.equal(report.expectations[k],v,k);
   for(const [field,file]of [['expectationsSha256','audit/fixtures/language/expected.json'],['manifestSha256','audit/manifests/language-form-coverage.json']])assert.equal(report.expectations[field],sha(fs.readFileSync(file)));
-  return {status:'PASS',stableIds:606};
+  return {status:'PASS',stableIds:607};
 }
 function recordedCandidateUrl(testedFile) {
   assert.ok(!testedFile.includes('\0'),'recorded candidate path contains NUL');

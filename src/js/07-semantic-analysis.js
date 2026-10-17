@@ -1138,8 +1138,13 @@
       const out = {};
       for (const [key, child] of Object.entries(value)) {
         if (['sourceSpan', 'endLine', 'raw', 'source'].includes(key)) continue;
+        // A group wait always means the broadcast just before it (LANGUAGE.md 439); the
+        // reference name is derived from that position, so it is not part of the meaning.
+        if (key === 'broadcastRef') continue;
         if (key === 'actorRef' && child?.kind === 'self') continue;
         if (key === 'argumentNames' && Array.isArray(child) && child.length === 0) continue;
+        // A script without rules has no rule list; an emptied block rule list is the same script.
+        if (key === 'rules' && Array.isArray(child) && child.length === 0) continue;
         out[key] =
           key === 'qualifier' && child === 'exact' && bareName(value.name) ? null
             : key === 'args' && Array.isArray(child) ? child.map((arg, i) => shape(arg, consumedUnit(value, key, i)))

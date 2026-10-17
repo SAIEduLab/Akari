@@ -644,7 +644,9 @@
     }
     function readSource(binding, ownerKey = bindingOwner(binding)) {
       if (binding.kind === 'draft') return callableDraftCore.source;
-      const runningItem = modelLocked() ? compiled?.items?.find((x) => x.key === ownerKey) : null;
+      // Only a running work reads its compiled text; other locked states (opening a file,
+      // preparing) still show the current work, never an earlier run.
+      const runningItem = runtime || scheduler ? compiled?.items?.find((x) => x.key === ownerKey) : null;
       if (runningItem) return runningItem.ast.source || '';
       const [kind, id, event] = ownerKey.split(':');
       return kind === 'script'
@@ -744,7 +746,8 @@
             nextBlockId: session.nextBlockId, blockSelection: session.blockSelection,
             sourceRevision: session.sourceRevision, contextRevision: session.contextRevision };
           Object.assign(session, draftDisplay, {blockDraft: {...draft, baseline}});
-          session.pendingEdit = {...pending, contextRevision: editorContextRevision};
+          // The kept draft belongs to the refreshed baseline, so it carries both of its revisions.
+          session.pendingEdit = {...pending, sourceRevision: session.sourceRevision, contextRevision: editorContextRevision};
         } else session.pendingEdit = draft ? null : pending;
       }
       session.mode = resolvedEditorMode(editorModes, binding.kind, session.syntaxAst);
@@ -4907,7 +4910,8 @@
       for(const saved of state.pendingEditors){
         const binding=saved.kind==='draft'?draftEditor:mainEditor;
         if(saved.kind==='script'&&bindingOwner(binding)!==saved.ownerKey)throw new AkariError('F503','書きかけの ばしょが 合いません');
-        const session=getEditorSession(binding,{force:true});session.pendingEdit={...cloneDesignProject(saved.pending),ownerKey:bindingOwner(binding)};
+        const session=getEditorSession(binding,{force:true});// A reopened draft belongs to this session, so it takes this session's revisions.
+        session.pendingEdit={...cloneDesignProject(saved.pending),ownerKey:bindingOwner(binding),sourceRevision:session.sourceRevision,contextRevision:session.contextRevision};
         if(saved.draftTree!==null){
           const ast=blockDecode(saved.draftTree,{allowHoles:true}),encoded=blockEncode(ast,{allowHoles:true}),baseline={sourceText:session.sourceText,syntaxAst:session.syntaxAst,
             blockView:session.blockView,nodeMap:session.nodeMap,nodeIds:session.nodeIds,diagnostics:session.diagnostics,syntaxDiagnostics:session.syntaxDiagnostics,
@@ -4916,7 +4920,7 @@
             blockDraft:{baseline,ast,tree:encoded.tree,source,codeSource:saved.mode==='code'?saved.source:undefined,pending:session.pendingEdit}});
         }
         editorModes.set(binding.kind,saved.mode);session.mode=saved.mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
-        if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(saved.pending))throw new AkariError('F503','書きかけの 入力らんを もとに もどせません');
+        if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(session.pendingEdit))throw new AkariError('F503','書きかけの 入力らんを もとに もどせません');
         showEditorFailure(binding,saved.pending.reason||'書きかけの作文をもどしました',{preservePending:true});
         if(binding===mainEditor&&saved.pending.kind==='source-import'){const plan=sourceImportPlan(binding,saved.source);if(plan)showSourceImport(binding,saved.source,plan);}
       }

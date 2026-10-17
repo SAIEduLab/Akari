@@ -1425,7 +1425,8 @@
       const tail=parts[0].text;
       return {kind:'Else',...(tail&&tail!=='次のことをする'?{inlineBody:inline(parts[0])}:{})};
     }
-    if(/^(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/.test(mask))return null;
+    // The bounce command reads like a condition; with or without a subject it is one command.
+    if(/^(?:[^、。]+?は、?)?(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/.test(mask))return null;
     if((parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))、(.*)$/d,code))|| (parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))$/d,code))) {
       const condition=parseCondition(parts[0].text,symbols,ctx,'if'),tail=parts[1];
       if(tail?.text&&tail.text!=='次のことをする'&&/(?:なら、|ことを.+回)/.test(surfaceMask(tail.text)))throw new AkariError('P201','入れ子の条件・反復は字下げして書いてください');
@@ -1497,11 +1498,14 @@
       let actorRef;try{actorRef=sentenceActor(parts[0].text,symbols);}catch(error){if(error instanceof AkariError)continue;throw error;}let body=parts[1].text;
       if(k===2)body=body.slice(0,-'言わせる'.length)+'言う';
       const part=surfaceLineSlice(working,parts[1].start,parts[1].end,k===2?body:null);part.comment=line.comment;
-      const node=readSurfaceStatement(body,part,symbols,{...ctx,topicActor:actorRef});
+      let node=readSurfaceStatement(body,part,symbols,{...ctx,topicActor:actorRef});
+      // Spellings kept by the finite statement parser take a subject the same way.
+      const unclearBody=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる)$/d,body);
+      if(!node&&k===0&&!(unclearBody&&!unclearBody[0].text.startsWith('「'))){try{node=parseLegacySimpleStatement(part,symbols,{...ctx,topicActor:actorRef});}catch(error){if(!(error instanceof AkariError))throw error;}}
       if(node){node.actorRef=actorRef;STATEMENT_EXPLICIT_ACTORS.add(node);const location=SOURCE_RANGES.get(node);if(location){location.extent={start:working.start,end:working.end};location.range=sourceRange(working.mapped?.positions||[]);location.inline=!!working.inline;location.actorRange=sourceRange(working.mapped?.positions||[],parts[0].start,parts[0].end);}return node;}
     }
     const unclear=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる)$/d,code);
-    if(unclear&&!unclear[0].text.startsWith('「'))throw sentenceDiagnostic('「〜に〜を入れる」では、さいごに入れるのか、何番目かと取りかえるのか分かりません。えらんでください',working,[{label:'さいごに入れる',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'どれかと取りかえる（何番目かをえらぶ）',source:`${unclear[0].text}の〔位置を選ぶ〕番目を${unclear[1].text}にかえる`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
+    if(unclear&&!unclear[0].text.startsWith('「'))throw sentenceDiagnostic('「〜に〜を入れる」では、さいごに入れるのか、何番目かと取りかえるのか分かりません。えらんでください',working,[{label:'さいごに入れる',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'どれかと取りかえる（何番目かをえらぶ）',source:`${unclear[0].text}の〔位置をえらぶ〕番目を${unclear[1].text}にかえる`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
     const delayed=surfaceCapture(/^(.+)秒後に(.+)$/d,code);
     if(delayed)throw sentenceDiagnostic('待ってから動く意味なら、待機と移動を分けます',working,[{label:'待ってから次の動きをする',source:`${delayed[0].text}秒待つ。\n${' '.repeat(working.indent||0)}${delayed[1].text}`}],{kind:'Sequence',missing:['motionDestinationIfAbsent']});
     if(directError)throw directError;

@@ -213,5 +213,19 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
       ['横位置を100にする\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:100,y:110,direction:180}],
     ]) eq(exec(source).actor,actor);
   });
+  // A subject before a statement names who does it (LANGUAGE.md 202), also for the bounce
+  // command that reads like a condition and for statements of the finite parser; the
+  // list question for 「〜に〜を入れる」 stays the same with or without a subject.
+  test('LANG-SUBJECT-STATEMENTS',()=>{
+    const symbols=api.buildSymbols(makeAkariRegressionProject(api)),read=s=>api.parseSyntax(s,{symbols});
+    for(const [source,kind,op] of [
+      ['マスコットは画面の端にふれていれば、はね返る。','MotionCommand','BOUNCE'],
+      ['マスコットは、画面の端にふれていれば、はね返る。','MotionCommand','BOUNCE'],
+      ['マスコットは「入力欄」に「あ」を入れる。','LooksCommand','SET_INPUT'],
+    ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));const n=r.ast.body[0];
+      eq([n.kind,n.op,n.actorRef],[kind,op,{kind:'named',name:'マスコット'}]);eq(api.formatScript(r.ast).trim(),source.replace('は、','は'));}
+    for(const source of ['名前一覧に「あ」を入れる。','マスコットは名前一覧に「あ」を入れる。']){const r=read(source);ok(!r.ast,source);
+      ok(/さいごに入れるのか、何番目かと取りかえるのか/.test(r.syntaxDiagnostics[0].message),source);}
+  });
   return {results,total:results.length,failed:results.filter(r=>r.status==='FAIL').length};
 }

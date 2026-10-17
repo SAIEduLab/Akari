@@ -17062,7 +17062,8 @@ function createAkariExtensionHost(options) {
       const tail=parts[0].text;
       return {kind:'Else',...(tail&&tail!=='次のことをする'?{inlineBody:inline(parts[0])}:{})};
     }
-    if(/^(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/.test(mask))return null;
+    // The bounce command reads like a condition; with or without a subject it is one command.
+    if(/^(?:[^、。]+?は、?)?(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/.test(mask))return null;
     if((parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))、(.*)$/d,code))|| (parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))$/d,code))) {
       const condition=parseCondition(parts[0].text,symbols,ctx,'if'),tail=parts[1];
       if(tail?.text&&tail.text!=='次のことをする'&&/(?:なら、|ことを.+回)/.test(surfaceMask(tail.text)))throw new AkariError('P201','入れ子の条件・反復は字下げして書いてください');
@@ -17134,11 +17135,14 @@ function createAkariExtensionHost(options) {
       let actorRef;try{actorRef=sentenceActor(parts[0].text,symbols);}catch(error){if(error instanceof AkariError)continue;throw error;}let body=parts[1].text;
       if(k===2)body=body.slice(0,-'言わせる'.length)+'言う';
       const part=surfaceLineSlice(working,parts[1].start,parts[1].end,k===2?body:null);part.comment=line.comment;
-      const node=readSurfaceStatement(body,part,symbols,{...ctx,topicActor:actorRef});
+      let node=readSurfaceStatement(body,part,symbols,{...ctx,topicActor:actorRef});
+      // Spellings kept by the finite statement parser take a subject the same way.
+      const unclearBody=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる)$/d,body);
+      if(!node&&k===0&&!(unclearBody&&!unclearBody[0].text.startsWith('「'))){try{node=parseLegacySimpleStatement(part,symbols,{...ctx,topicActor:actorRef});}catch(error){if(!(error instanceof AkariError))throw error;}}
       if(node){node.actorRef=actorRef;STATEMENT_EXPLICIT_ACTORS.add(node);const location=SOURCE_RANGES.get(node);if(location){location.extent={start:working.start,end:working.end};location.range=sourceRange(working.mapped?.positions||[]);location.inline=!!working.inline;location.actorRange=sourceRange(working.mapped?.positions||[],parts[0].start,parts[0].end);}return node;}
     }
     const unclear=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる)$/d,code);
-    if(unclear&&!unclear[0].text.startsWith('「'))throw sentenceDiagnostic('「〜に〜を入れる」では、さいごに入れるのか、何番目かと取りかえるのか分かりません。えらんでください',working,[{label:'さいごに入れる',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'どれかと取りかえる（何番目かをえらぶ）',source:`${unclear[0].text}の〔位置を選ぶ〕番目を${unclear[1].text}にかえる`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
+    if(unclear&&!unclear[0].text.startsWith('「'))throw sentenceDiagnostic('「〜に〜を入れる」では、さいごに入れるのか、何番目かと取りかえるのか分かりません。えらんでください',working,[{label:'さいごに入れる',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'どれかと取りかえる（何番目かをえらぶ）',source:`${unclear[0].text}の〔位置をえらぶ〕番目を${unclear[1].text}にかえる`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
     const delayed=surfaceCapture(/^(.+)秒後に(.+)$/d,code);
     if(delayed)throw sentenceDiagnostic('待ってから動く意味なら、待機と移動を分けます',working,[{label:'待ってから次の動きをする',source:`${delayed[0].text}秒待つ。\n${' '.repeat(working.indent||0)}${delayed[1].text}`}],{kind:'Sequence',missing:['motionDestinationIfAbsent']});
     if(directError)throw directError;
@@ -20114,8 +20118,13 @@ function createAkariExtensionHost(options) {
       const out = {};
       for (const [key, child] of Object.entries(value)) {
         if (['sourceSpan', 'endLine', 'raw', 'source'].includes(key)) continue;
+        // A group wait always means the broadcast just before it (LANGUAGE.md 439); the
+        // reference name is derived from that position, so it is not part of the meaning.
+        if (key === 'broadcastRef') continue;
         if (key === 'actorRef' && child?.kind === 'self') continue;
         if (key === 'argumentNames' && Array.isArray(child) && child.length === 0) continue;
+        // A script without rules has no rule list; an emptied block rule list is the same script.
+        if (key === 'rules' && Array.isArray(child) && child.length === 0) continue;
         out[key] =
           key === 'qualifier' && child === 'exact' && bareName(value.name) ? null
             : key === 'args' && Array.isArray(child) ? child.map((arg, i) => shape(arg, consumedUnit(value, key, i)))
@@ -23017,11 +23026,13 @@ function createAkariExtensionHost(options) {
         const header = splitComment(standard(after).split(/\r\n?|\n/)[0]).code.trimEnd().replace(/。$/, '');
         return [{...location.range, text:header}];
       }
-      const range = schema.category === 'statement' ? location?.extent : location?.range;
+      // A rule is a whole line like a statement: its range ends before 。 but its text ends with it.
+      const lineSchema = ['statement','rule'].includes(schema.category);
+      const range = lineSchema ? location?.extent : location?.range;
       if (!range) return null;
       if(schema.category==='script')return [{...range,text:standard(after)+(/\s*$/.exec(source.slice(range.start,range.end))?.[0]||'')}];
       if (location.inline && (BLOCK_SCHEMA_BY_ID.get(after.schemaId)?.bodies.length || /[\r\n]/.test(standard(after)))) return null;
-      return [{...range, text:schema.category === 'statement' ? moved(after, location.indent) : location?.conditionForm ? formatCondition(blockDecode(after),location.conditionForm) : standard(after)}];
+      return [{...range, text:lineSchema ? moved(after, location.indent) : location?.conditionForm ? formatCondition(blockDecode(after),location.conditionForm) : standard(after)}];
     };
     const bodyChanges = (before, after, owner, key) => {
       const location = surface(owner);
@@ -23273,6 +23284,9 @@ function createAkariExtensionHost(options) {
           schema = BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId),
           group = op.type === 'field' ? 'fields' : 'annotations';
         if (!schema[group].some((x) => x.key === op.key)) editorError('編集する欄がありません');
+        // The waited-for broadcast is the one just before (LANGUAGE.md 439); a typed name cannot rebind it.
+        if (op.type === 'field' && op.key === 'broadcastRef' && op.value !== entry.node.fields.broadcastRef)
+          editorError('待つ合図は、すぐ前の行で送った合図に きまっています。名前を かえて ほかの合図を えらぶことは できません。');
         entry.node[group][op.key] = op.value;
         selectedId = op.id;
         return;
@@ -28348,7 +28362,9 @@ function createAkariExtensionHost(options) {
     }
     function readSource(binding, ownerKey = bindingOwner(binding)) {
       if (binding.kind === 'draft') return callableDraftCore.source;
-      const runningItem = modelLocked() ? compiled?.items?.find((x) => x.key === ownerKey) : null;
+      // Only a running work reads its compiled text; other locked states (opening a file,
+      // preparing) still show the current work, never an earlier run.
+      const runningItem = runtime || scheduler ? compiled?.items?.find((x) => x.key === ownerKey) : null;
       if (runningItem) return runningItem.ast.source || '';
       const [kind, id, event] = ownerKey.split(':');
       return kind === 'script'
@@ -28448,7 +28464,8 @@ function createAkariExtensionHost(options) {
             nextBlockId: session.nextBlockId, blockSelection: session.blockSelection,
             sourceRevision: session.sourceRevision, contextRevision: session.contextRevision };
           Object.assign(session, draftDisplay, {blockDraft: {...draft, baseline}});
-          session.pendingEdit = {...pending, contextRevision: editorContextRevision};
+          // The kept draft belongs to the refreshed baseline, so it carries both of its revisions.
+          session.pendingEdit = {...pending, sourceRevision: session.sourceRevision, contextRevision: editorContextRevision};
         } else session.pendingEdit = draft ? null : pending;
       }
       session.mode = resolvedEditorMode(editorModes, binding.kind, session.syntaxAst);
@@ -32611,7 +32628,8 @@ function createAkariExtensionHost(options) {
       for(const saved of state.pendingEditors){
         const binding=saved.kind==='draft'?draftEditor:mainEditor;
         if(saved.kind==='script'&&bindingOwner(binding)!==saved.ownerKey)throw new AkariError('F503','書きかけの ばしょが 合いません');
-        const session=getEditorSession(binding,{force:true});session.pendingEdit={...cloneDesignProject(saved.pending),ownerKey:bindingOwner(binding)};
+        const session=getEditorSession(binding,{force:true});// A reopened draft belongs to this session, so it takes this session's revisions.
+        session.pendingEdit={...cloneDesignProject(saved.pending),ownerKey:bindingOwner(binding),sourceRevision:session.sourceRevision,contextRevision:session.contextRevision};
         if(saved.draftTree!==null){
           const ast=blockDecode(saved.draftTree,{allowHoles:true}),encoded=blockEncode(ast,{allowHoles:true}),baseline={sourceText:session.sourceText,syntaxAst:session.syntaxAst,
             blockView:session.blockView,nodeMap:session.nodeMap,nodeIds:session.nodeIds,diagnostics:session.diagnostics,syntaxDiagnostics:session.syntaxDiagnostics,
@@ -32620,7 +32638,7 @@ function createAkariExtensionHost(options) {
             blockDraft:{baseline,ast,tree:encoded.tree,source,codeSource:saved.mode==='code'?saved.source:undefined,pending:session.pendingEdit}});
         }
         editorModes.set(binding.kind,saved.mode);session.mode=saved.mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
-        if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(saved.pending))throw new AkariError('F503','書きかけの 入力らんを もとに もどせません');
+        if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(session.pendingEdit))throw new AkariError('F503','書きかけの 入力らんを もとに もどせません');
         showEditorFailure(binding,saved.pending.reason||'書きかけの作文をもどしました',{preservePending:true});
         if(binding===mainEditor&&saved.pending.kind==='source-import'){const plan=sourceImportPlan(binding,saved.source);if(plan)showSourceImport(binding,saved.source,plan);}
       }

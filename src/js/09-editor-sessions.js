@@ -333,11 +333,13 @@
         const header = splitComment(standard(after).split(/\r\n?|\n/)[0]).code.trimEnd().replace(/。$/, '');
         return [{...location.range, text:header}];
       }
-      const range = schema.category === 'statement' ? location?.extent : location?.range;
+      // A rule is a whole line like a statement: its range ends before 。 but its text ends with it.
+      const lineSchema = ['statement','rule'].includes(schema.category);
+      const range = lineSchema ? location?.extent : location?.range;
       if (!range) return null;
       if(schema.category==='script')return [{...range,text:standard(after)+(/\s*$/.exec(source.slice(range.start,range.end))?.[0]||'')}];
       if (location.inline && (BLOCK_SCHEMA_BY_ID.get(after.schemaId)?.bodies.length || /[\r\n]/.test(standard(after)))) return null;
-      return [{...range, text:schema.category === 'statement' ? moved(after, location.indent) : location?.conditionForm ? formatCondition(blockDecode(after),location.conditionForm) : standard(after)}];
+      return [{...range, text:lineSchema ? moved(after, location.indent) : location?.conditionForm ? formatCondition(blockDecode(after),location.conditionForm) : standard(after)}];
     };
     const bodyChanges = (before, after, owner, key) => {
       const location = surface(owner);
@@ -589,6 +591,9 @@
           schema = BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId),
           group = op.type === 'field' ? 'fields' : 'annotations';
         if (!schema[group].some((x) => x.key === op.key)) editorError('編集する欄がありません');
+        // The waited-for broadcast is the one just before (LANGUAGE.md 439); a typed name cannot rebind it.
+        if (op.type === 'field' && op.key === 'broadcastRef' && op.value !== entry.node.fields.broadcastRef)
+          editorError('待つ合図は、すぐ前の行で送った合図に きまっています。名前を かえて ほかの合図を えらぶことは できません。');
         entry.node[group][op.key] = op.value;
         selectedId = op.id;
         return;
