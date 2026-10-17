@@ -114,7 +114,7 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   const action=rows['CHILD-UI-ACTION-HELP'];
   for(const key of ['keyboardHelp','generatedPlayerWords','projectSourcePreserved'])assert.equal(action[key],true);
   readable(action.help,8);panelReach(action.tailReach,'native-keyboard',true);
-  assert.equal(action.editReading,'へんしゅう');assert.match(action.editMeaning,/「なおす動き」で えらびます/);
+  assert.equal(action.editReading,null);assert.match(action.editMeaning,/「なおす動き」で えらびます/);
   assert.deepEqual(action.downloadTypes,['akari.md','html']);
   assert.match(action.saveFile,/\.akari\.md$/); assert.match(action.exportFile,/\.html$/);
   const copy=rows['CHILD-UI-COPY-SEMANTICS'];
@@ -164,8 +164,8 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   assert.equal(paint.ellipseAndOutline,true); assert.equal(paint.cancelPreservesProject,true);
   assert.deepEqual(paint.transparentPixels,{center:0,exterior:0},'outline and checkerboard remain transparent in actual pixels');
   assert.deepEqual(paint.optionalMaterials?.map(m=>[m.preset,m.reading,m.note]),[
-    ['comet','すいせい','しっぽのある星'],['yinYang','いんよう','白黒の丸'],['medical','いりょう','へびとつえ'],
-    ['radioactive','ほうしゃせん','三つの羽の しるし'],['biohazard',null,'三つの わっかの しるし'],
+    ['comet',null,'しっぽのある星'],['yinYang',null,'白黒の丸'],['medical',null,'へびとつえ'],
+    ['radioactive',null,'三つの羽の しるし'],['biohazard',null,'三つの わっかの しるし'],
   ]);
   const responsive=rows['CHILD-UI-RESPONSIVE-WORDS'];
   for(const key of ['ordinaryScroll','keyboard','helpPreservesEditing'])assert.equal(responsive[key],true);
@@ -175,9 +175,9 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   for(const observation of responsive.observations) {
     assert.deepEqual(Object.keys(observation.controls),['saveBtn','exportBtn','runBtn','stopBtn']);
     for(const rect of Object.values(observation.controls))bounds(rect,observation.viewport);
-    readable(observation.help,8);panelReach(observation.tailReach,'native-keyboard',true);assert.ok(observation.reading?.length>=4);
+    readable(observation.help,8);panelReach(observation.tailReach,'native-keyboard',true);assert.deepEqual(observation.reading?.map(r=>r.text),['保存ほぞん','変数へんすう','本文ほんぶん']);
     const text=observation.reading.map(r=>r.text).join(' ');
-    for(const reading of ['ほぞん','がぞう','へんすう','ほんぶん'])assert.ok(text.includes(reading));
+    for(const reading of ['ほぞん','へんすう','ほんぶん'])assert.ok(text.includes(reading));
     for(const term of observation.reading){assert.equal(term.rects,1);assert.equal(term.whiteSpace,'nowrap');}
   }
   const touch=rows['CHILD-UI-TOUCH-HELP'];

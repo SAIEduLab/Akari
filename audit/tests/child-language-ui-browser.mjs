@@ -190,7 +190,7 @@ const cases = {
   async 'CHILD-UI-ACTION-HELP'(p) {
     await p.locator('#uiLevel').selectOption('basic');
     const before=await state(p), summary=await keyboardDetails(p,'#basicActionGuide');
-    for (const [id,reading] of [['saveBtn','ほぞん'],['assetBtn','がぞう'],['dataBtn','へんすう']])
+    for (const [id,reading] of [['saveBtn','ほぞん'],['dataBtn','へんすう']])
       assert.ok((await p.locator('#'+id+' rt').allTextContents()).includes(reading),id+' visible reading');
     // The export label is written in words a child reads without a reading.
     assert.equal(await p.locator('#exportBtn').innerText(),'うごく作品を ファイルにする');assert.equal(await p.locator('#exportBtn rt').count(),0);
@@ -198,7 +198,7 @@ const cases = {
     assert.match(await p.locator('#exportActionHelp').innerText(),/動かして 見る/);
     assert.match(await p.locator('#bodyActionHelp').innerText(),/やることの まとまり/);
     assert.match(await p.locator('#bodyActionHelp').innerText(),/「なおす動き」で えらびます/);
-    assert.equal(await p.locator('#eventSelect').locator('xpath=..').locator('rt').innerText(),'へんしゅう');
+    assert.equal(await p.locator('#eventSelect').locator('xpath=..').locator('rt').count(),0,'なおす needs no reading');
     assert.match(await p.locator('#basicActionGuide').innerText(),/コードは コピーしません/);
     assert.match(await p.locator('#basicActionGuide').innerText(),/決めた ことを 1つ もとにもどす/);
     const help=await textFits(p.locator('#basicActionGuide p'));
@@ -212,7 +212,7 @@ const cases = {
     assert.match(exportedFile.suggestedFilename(),/\.html$/);
     const html=fs.readFileSync(await exportedFile.path(),'utf8');
     assert.ok(html.includes('⏸ いったん止める') && html.includes('■ 止める'),'generated player uses the same words');
-    return {keyboardHelp:true,help,tailReach,editReading:'へんしゅう',editMeaning:await p.locator('#bodyActionHelp').textContent(),downloadTypes:['akari.md','html'],saveFile:save.suggestedFilename(),
+    return {keyboardHelp:true,help,tailReach,editReading:null,editMeaning:await p.locator('#bodyActionHelp').textContent(),downloadTypes:['akari.md','html'],saveFile:save.suggestedFilename(),
       exportFile:exportedFile.suggestedFilename(),generatedPlayerWords:true,
       projectSourcePreserved:(await state(p)).source===before.source};
   },
@@ -367,10 +367,10 @@ const cases = {
     assert.equal(await p.locator('#paintCancel').innerText(),'お絵かきを取り消す'); await click(p,'#paintCancel');
     assert.deepEqual(await state(p),before,'cancel must not add image or change project history');
     const labels=[];
-    for(const [preset,reading,note] of [['comet','すいせい','しっぽのある星'],['yinYang','いんよう','白黒の丸'],['medical','いりょう','へびとつえ'],['radioactive','ほうしゃせん','三つの羽の しるし'],['biohazard',null,'三つの わっかの しるし']]) {
+    for(const [preset,reading,note] of [['comet',null,'しっぽのある星'],['yinYang',null,'白黒の丸'],['medical',null,'へびとつえ'],['radioactive',null,'三つの羽の しるし'],['biohazard',null,'三つの わっかの しるし']]) {
       const button=await reveal(p.locator('[data-sprite-preset="'+preset+'"]')); await reachable(button);
       assert.equal(await button.locator('.child-material-note').innerText(),note);
-      if(reading)assert.equal(await button.locator('rt').innerText(),reading);
+      if(reading)assert.equal(await button.locator('rt').innerText(),reading);else assert.equal(await button.locator('rt').count(),0,preset+' name needs no reading');
       assert.ok((await button.locator('.ico').innerText()).trim(),'material retains its corresponding picture');
       labels.push({preset,reading,note,size:await reachable(button)});
     }

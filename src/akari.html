@@ -32,7 +32,7 @@
     <button id="imageObjectAdd" title="絵の ファイルを キャラクターにして 画面に おく">🖼 絵を おく</button>
     <button id="paintAdd" title="絵を かいて キャラクターにして 画面に おく">🎨 お絵かき</button>
     <button id="soundQuickAdd" title="音の ファイルを 入れる">🔊 音を 入れる</button>
-    <button id="assetBtn" aria-label="絵や音を まとめる" aria-describedby="assetActionHelp"><ruby class="child-word">絵<rt>がぞう</rt></ruby>や<ruby class="child-word">音<rt>おんせい</rt></ruby>をまとめる</button>
+    <button id="assetBtn" aria-label="絵や音を まとめる" aria-describedby="assetActionHelp">絵や音をまとめる</button>
     <button id="procBtn" aria-label="自分で作ったブロック">自分で作ったブロック</button>
     <button id="dataBtn" aria-label="へんすう・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
@@ -41,8 +41,8 @@
     <label class="ui-level-label">見せかた <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
     <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
       <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品を ファイルにします。あとで つづきを 作るときは「開く」で その ファイルを えらびます。</p>
-      <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見るための 作品ファイルを 作ります。つづきを 作るための ファイルは「ほぞん」で 作ります。</p>
-      <p id="assetActionHelp"><strong><ruby class="child-word">絵<rt>がぞう</rt></ruby>や<ruby class="child-word">音<rt>おんせい</rt></ruby>をまとめる</strong>：使う 絵や音を 入れたり、名前を たしかめたりします。</p>
+      <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見る ファイルを 作ります。</p>
+      <p id="assetActionHelp"><strong>絵や音をまとめる</strong>：使う 絵や音を 入れたり、名前を たしかめたりします。</p>
       <p id="dataActionHelp"><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</strong>：点数や 名前を 1つ おぼえる はこと、持ち物のように じゅんばんに ならべる リストを 作ります。</p>
       <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：えらんだ ものを 動かす、やることの まとまりです。「なおす動き」で えらびます。「いつ動く？」で 動く きっかけを かえます。</p>
       <p><strong>見た目のコピー</strong>：見た目と せっていを もう1つ 作ります。コードは コピーしません。</p>
@@ -117,7 +117,7 @@
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="umbrella" draggable="true" title="かさ" aria-label="かさを おく"><span class="ico">☂</span><span>かさ</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="rainUmbrella" draggable="true" title="雨がさ" aria-label="雨がさを おく"><span class="ico">☔</span><span>雨がさ</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="snowman" draggable="true" title="雪だるま" aria-label="雪だるまを おく"><span class="ico">☃</span><span>雪だるま</span></button>
-              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="comet" draggable="true" title="すいせい" aria-label="すいせいを おく"><span class="ico">☄</span><span class="child-material-name"><ruby class="child-word">ほうき星<rt>すいせい</rt></ruby><small class="child-material-note">しっぽのある星</small></span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="comet" draggable="true" title="すいせい" aria-label="すいせいを おく"><span class="ico">☄</span><span class="child-material-name">ほうき星<small class="child-material-note">しっぽのある星</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="lightning" draggable="true" title="かみなり" aria-label="かみなりを おく"><span class="ico">⚡</span><span>かみなり</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="snowflake" draggable="true" title="雪" aria-label="雪を おく"><span class="ico">❄</span><span>雪</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="snowflake2" draggable="true" title="雪2" aria-label="雪2を おく"><span class="ico">❅</span><span>雪2</span></button>
@@ -135,7 +135,7 @@
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="sadFace" draggable="true" title="悲しい顔" aria-label="悲しい顔を おく"><span class="ico">☹</span><span>悲しい顔</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="blackFace" draggable="true" title="黒い顔" aria-label="黒い顔を おく"><span class="ico">☻</span><span>黒い顔</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="peace" draggable="true" title="ピース" aria-label="ピースを おく"><span class="ico">☮</span><span>ピース</span></button>
-              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="yinYang" draggable="true" title="いんよう" aria-label="いんようを おく"><span class="ico">☯</span><span class="child-material-name"><ruby class="child-word">いんよう<rt>いんよう</rt></ruby><small class="child-material-note">白黒の丸</small></span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="yinYang" draggable="true" title="いんよう" aria-label="いんようを おく"><span class="ico">☯</span><span class="child-material-name">いんよう<small class="child-material-note">白黒の丸</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="check" draggable="true" title="チェック" aria-label="チェックを おく"><span class="ico">✓</span><span>チェック</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="heavyCheck" draggable="true" title="太いチェック" aria-label="太いチェックを おく"><span class="ico">✔</span><span>太いチェック</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="cross" draggable="true" title="ばつ" aria-label="ばつを おく"><span class="ico">✗</span><span>ばつ</span></button>
@@ -144,9 +144,9 @@
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="whiteFlag" draggable="true" title="白い はた" aria-label="白い はたを おく"><span class="ico">⚐</span><span>白い はた</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="warning" draggable="true" title="注意" aria-label="注意を おく"><span class="ico">⚠</span><span>注意</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="skull" draggable="true" title="どくろ" aria-label="どくろを おく"><span class="ico">☠</span><span>どくろ</span></button>
-              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="medical" draggable="true" title="いりょう" aria-label="いりょうを おく"><span class="ico">⚕</span><span class="child-material-name"><ruby class="child-word">お医者さんの しるし<rt>いりょう</rt></ruby><small class="child-material-note">へびとつえ</small></span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="medical" draggable="true" title="いりょう" aria-label="いりょうを おく"><span class="ico">⚕</span><span class="child-material-name">お医者さんの しるし<small class="child-material-note">へびとつえ</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="recycle" draggable="true" title="リサイクル" aria-label="リサイクルを おく"><span class="ico">♻</span><span>リサイクル</span></button>
-              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="radioactive" draggable="true" title="ほうしゃせん" aria-label="ほうしゃせんを おく"><span class="ico">☢</span><span class="child-material-name"><ruby class="child-word">ほうしゃせん<rt>ほうしゃせん</rt></ruby><small class="child-material-note">三つの羽の しるし</small></span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="radioactive" draggable="true" title="ほうしゃせん" aria-label="ほうしゃせんを おく"><span class="ico">☢</span><span class="child-material-name">ほうしゃせん<small class="child-material-note">三つの羽の しるし</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="biohazard" draggable="true" title="バイオハザード" aria-label="バイオハザードを おく"><span class="ico">☣</span><span class="child-material-name">バイオ<wbr>ハザード<small class="child-material-note">三つの わっかの しるし</small></span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="question" draggable="true" title="はてな" aria-label="はてなを おく"><span class="ico">❓</span><span>はてな</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="exclamation" draggable="true" title="びっくり" aria-label="びっくりを おく"><span class="ico">❗</span><span>びっくり</span></button>
@@ -281,7 +281,7 @@
       <div class="win-title">コード</div>
       <div class="code-head">
         <label>動かすもの <select id="objectSelect"></select></label>
-        <label><ruby class="child-word">なおす<rt>へんしゅう</rt></ruby>動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="なおす動きを えらびます。きっかけは「いつ動く？」で かえます"></select></label>
+        <label>なおす動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="なおす動きを えらびます。きっかけは「いつ動く？」で かえます"></select></label>
         <button id="scriptAdd" type="button">同じできごとの本文を ふやす</button>
       </div>
       <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">「動かす」を おしたとき</button><button id="entryClickEvent" type="button">キャラが おされたとき</button></div>
