@@ -6,9 +6,9 @@ import {snapshot} from '../lib/product-test-host.mjs';
 import {runtimeInputPaths,inputHashes,verifyRuntimeReport} from '../lib/japanese-gate-contract.mjs';
 const [product,browser,directory,destination]=process.argv.slice(2);assert.ok(product&&browser&&directory&&destination,'usage: runtime-boundary-gate.mjs PRODUCT BROWSER NEW_DIRECTORY NEW_REPORT.json');
 assert.ok(!fs.existsSync(directory));assert.ok(!fs.existsSync(destination));const inputs=snapshot(product);
-const r=spawnSync(process.execPath,['audit/tests/runtime-v2.mjs',product,browser,directory],{encoding:'utf8',timeout:720000,maxBuffer:16*1024*1024});
+const r=spawnSync(process.execPath,['audit/tests/runtime-boundary.mjs',product,browser,directory],{encoding:'utf8',timeout:720000,maxBuffer:16*1024*1024});
 process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');
-const report={schema:'akari-runtime-boundary-gate-v1',status:r.status===0&&!r.signal?'PASS':'FAIL',snapshot:inputs,auditInputs:inputHashes(runtimeInputPaths),runtime:fs.existsSync(path.join(directory,'runtime-v2.json'))?JSON.parse(fs.readFileSync(path.join(directory,'runtime-v2.json'))):null,error:r.error?.message};
+const report={schema:'akari-runtime-boundary-gate-v1',status:r.status===0&&!r.signal?'PASS':'FAIL',snapshot:inputs,auditInputs:inputHashes(runtimeInputPaths),runtime:fs.existsSync(path.join(directory,'runtime-boundary.json'))?JSON.parse(fs.readFileSync(path.join(directory,'runtime-boundary.json'))):null,error:r.error?.message};
 try{
  assert.equal(r.status,0,r.error?.message||'runtime boundary runner failed');assert.equal(r.signal,null);
  assert.deepEqual(snapshot(product),inputs,'candidate changed during runtime gate');verifyRuntimeReport(report,inputs,directory);

@@ -33,4 +33,4 @@ for(const c of fixture.taskCases)run(c.id,()=>{
  assert.deepEqual(executeTaskQuestions(p,c),first,'Block/code formatting retains each task answer');return {sources:c.scripts.map(s=>s.source),sourceExact:true,blockRoundtrip:true,rerun:true,answerOwnership:true,...first};
 });
 const report={schema:'akari-ux-normal-language-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),uxAcceptance:false,results};
-const output=path.resolve(process.argv[2]);fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');console.log(`UX repair 02 language: ${results.filter(r=>r.status==='PASS').length}/${results.length}`);if(report.status!=='PASS')process.exitCode=1;
+const output=path.resolve(process.argv[2]);fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');console.log(`UX normal language:${results.filter(r=>r.status==='PASS').length}/${results.length}`);if(report.status!=='PASS')process.exitCode=1;

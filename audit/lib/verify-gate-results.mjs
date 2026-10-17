@@ -5,6 +5,7 @@ import {verifyContractReport,verifyExpectationReport,verifyIntentReport,verifyRu
 import {verifyBlockFields} from './block-field-contract.mjs';
 import {verifyProductSource} from './product-source-contract.mjs';
 import {verifyPublicationReport} from './publication-contract.mjs';
+import {verifyAuditInventoryReport} from './audit-inventory-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -30,6 +31,7 @@ export function verifyGateResults(dir,inputs){
   verify(read('product'),JSON.parse(fs.readFileSync('audit/manifests/product-tests.json')),inputs);
   verifyProductSource(read('product-source'),inputs);
   for(const mode of ['inventory','documents'])verifyPublicationReport(read('publication-'+mode),mode,inputs);
+  verifyAuditInventoryReport(read('audit-inventory'),inputs);
   verifyBrowserEnvironment(read('browser-environment'),inputs);
   const language=JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json'));
   for(const n of ['language-node','language-browser'])verifyLanguageResults(read(n),language,inputs);
@@ -45,7 +47,7 @@ export function verifyGateResults(dir,inputs){
   verifyContractReport(read('japanese-contract-static'),inputs);
   verifyExpectationReport(read('language-expectations-static'),inputs);
   verifyIntentReport(read('japanese-intent-browser'),inputs,path.join(dir,'japanese-intent-browser.artifacts','candidate.html'));
-  verifyRuntimeReport(read('runtime-v2'),inputs,path.join(dir,'runtime-v2'));
+  verifyRuntimeReport(read('runtime-boundary'),inputs,path.join(dir,'runtime-boundary'));
   verifyNegativeReport(read('japanese-gate-negative'),inputs);
   for(const group of Object.keys(reviewGroups))verifyReviewReport(read(group==='actor'?'review-actor/review-actor':'review-'+group),group,inputs);
   verifyReviewNegativeReport(read('review-harness-negative'),inputs);

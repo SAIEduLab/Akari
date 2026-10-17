@@ -7379,9 +7379,9 @@
       ]
     }
   ],
-  "newContracts": [
+  "languageContracts": [
     {
-      "id": "NEW-01",
+      "id": "LANGUAGE-CONTRACT-001",
       "meaning": "role-based natural sentence forms",
       "testReferences": [
         {
@@ -7395,7 +7395,7 @@
       ]
     },
     {
-      "id": "NEW-02",
+      "id": "LANGUAGE-CONTRACT-002",
       "meaning": "explicit actor and actor-qualified reads",
       "testReferences": [
         {
@@ -7409,7 +7409,7 @@
       ]
     },
     {
-      "id": "NEW-03",
+      "id": "LANGUAGE-CONTRACT-003",
       "meaning": "editable event headings and filters",
       "testReferences": [
         {
@@ -7423,7 +7423,7 @@
       ]
     },
     {
-      "id": "NEW-04",
+      "id": "LANGUAGE-CONTRACT-004",
       "meaning": "clause-level sequence/source mapping",
       "testReferences": [
         {
@@ -7437,7 +7437,7 @@
       ]
     },
     {
-      "id": "NEW-05",
+      "id": "LANGUAGE-CONTRACT-005",
       "meaning": "absolute-direction displacement and timed displacement",
       "testReferences": [
         {
@@ -7451,7 +7451,7 @@
       ]
     },
     {
-      "id": "NEW-06",
+      "id": "LANGUAGE-CONTRACT-006",
       "meaning": "single-instance continuous state motion and additive rules",
       "testReferences": [
         {
@@ -7465,7 +7465,7 @@
       ]
     },
     {
-      "id": "NEW-07",
+      "id": "LANGUAGE-CONTRACT-007",
       "meaning": "predicate morphology and scoped Boolean composition",
       "testReferences": [
         {
@@ -7479,7 +7479,7 @@
       ]
     },
     {
-      "id": "NEW-08",
+      "id": "LANGUAGE-CONTRACT-008",
       "meaning": "named call arguments and protected arbitrary names",
       "testReferences": [
         {
@@ -7493,7 +7493,7 @@
       ]
     },
     {
-      "id": "NEW-09",
+      "id": "LANGUAGE-CONTRACT-009",
       "meaning": "quantity values, declaration constraints and UnitlessRead",
       "testReferences": [
         {
@@ -7507,7 +7507,7 @@
       ]
     },
     {
-      "id": "NEW-10",
+      "id": "LANGUAGE-CONTRACT-010",
       "meaning": "notification-group reference between adjacent sentences",
       "testReferences": [
         {
@@ -7521,7 +7521,7 @@
       ]
     },
     {
-      "id": "NEW-11",
+      "id": "LANGUAGE-CONTRACT-011",
       "meaning": "draft holes and atomic source/block editing",
       "testReferences": [
         {

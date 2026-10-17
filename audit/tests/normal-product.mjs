@@ -39,7 +39,9 @@ const evidence=await withBrowser(browserPath,async browser=>{
   return {saved,generated};
  });
  const text=fs.readFileSync(files.generated,'utf8');
- for(const token of ['runReleaseTests','selfTestReport','audit/suites','LANG-EXT-'])assert.ok(!text.includes(token));
+ // The generated player carries no audit suite runner, report hook or audit path.
+ assert.doesNotMatch(text,/run[A-Za-z0-9]*Tests/);
+ for(const token of ['selfTestReport','audit/suites','LANG-EXT-'])assert.ok(!text.includes(token));
  const context=await browser.newContext({offline:true});
  const errors=[],network=[];
  try {

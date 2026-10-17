@@ -193,7 +193,5 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
     eq(exec('0.2秒、440Hzの音を鳴らす').blocked.kind,'audio');
     eq(exec('1秒間待つ\n「後」という').out,[['後',1000]]);
   });
-  return {results,total:results.length,failed:results.filter(r=>r.status==='FAIL').length,
-    blocked:results.filter(r=>r.status==='BLOCKED_TRANSITION').length,
-    deferred:results.filter(r=>r.status==='DEFERRED_PHASE_3').length};
+  return {results,total:results.length,failed:results.filter(r=>r.status==='FAIL').length};
 }

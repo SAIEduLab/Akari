@@ -21,19 +21,16 @@ export function verifyLanguageResults(report,manifest,currentSnapshot) {
     assert.equal(byId.get(id).status,'PASS',id);
     if('pass' in byId.get(id))assert.equal(byId.get(id).pass,true,id);
   }
-  const blocked=0;
   assert.equal(report.failed,0);
-  assert.equal(report.blocked,blocked);
-  assert.equal(report.deferred,0);
-  assert.equal(report.status,blocked?'BLOCKED':'PASS');
+  assert.equal(report.status,'PASS');
   assert.ok(['node','chromium'].includes(report.environment),'missing required environment');
   if(report.environment==='chromium')assert.ok(typeof report.browser==='string'&&report.browser.length>0,'missing browser identity');
-  assert.equal(report.phase3LanguageComplete,!blocked&&report.environment==='chromium');
+  assert.equal(report.browserLanguageComplete,report.environment==='chromium');
   assert.deepEqual(report.snapshot,currentSnapshot,'unbound/stale snapshot');
-  return {status:report.status,phase3LanguageComplete:report.phase3LanguageComplete,blocked};
+  return {status:report.status,browserLanguageComplete:report.browserLanguageComplete};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href) {
   const report=JSON.parse(fs.readFileSync(process.argv[2]));
   console.log(verifyLanguageResults(report,JSON.parse(fs.readFileSync('audit/manifests/language-form-coverage.json')),snapshot(currentProductFile())));
-  process.exitCode=report.phase3LanguageComplete?0:2;
+  process.exitCode=report.browserLanguageComplete?0:2;
 }

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {verifySemanticExtension} from './semantic-extension-contract.mjs';
 import {browserEnvironment} from './browser-environment.mjs';
 
-// Written from the repair request: source strings and answers are independent
+// Written from the quoted-list correction contract: source strings and answers are independent
 // expectations, never copied from the product's regenerated source or execution.
 export const shopping=['りんご','パン','牛乳'];
 export const sourceFor=n=>`始めると、あかりは「買うもの」の${n}番目を2秒話します。`;

@@ -39,7 +39,7 @@ const rows=Object.entries(plan.groups).flatMap(([group,items])=>items.map(row=>{
       {job:'selftest',suite:'runLimitBoundaryTests / language-boundaries',id:row.id.slice(2),guarantee:'actual design/parser/runtime limit checks'}];
   } else if(group==='S'){
     const id=row.id.slice(2),old=guiSchemas.includes(id);
-    references=[{job:old?'full-browser-gate (schemas)':'selftest',suite:old?'schema-shards':'runBlockCodecTests / japanese-intent-browser / runtime-v2',id,
+    references=[{job:old?'full-browser-gate (schemas)':'selftest',suite:old?'schema-shards':'runBlockCodecTests / japanese-intent-browser / runtime-boundary',id,
       guarantee:old?'full old-schema GUI row':'additional schema codec/meaning or draft safety; full GUI operations not claimed'}];
   } else {
     const capability=baseline.capabilities.find(c=>c.id===row.id.slice(4));assert.ok(capability);

@@ -6,6 +6,15 @@ import assert from 'node:assert/strict';
 import {sha} from './product-test-host.mjs';
 const read=p=>JSON.parse(fs.readFileSync(p));
 export const browserContract=()=>read('audit/manifests/browser-results.json');
+// A browser case is executed by exactly one task; a second task re-running the same case keys is duplicate execution.
+export function assertSingleBrowserOwner(entries){
+  const owner=new Map();
+  for(const entry of entries)for(const key of entry.keys){
+    assert.ok(!owner.has(key),'browser case '+key+' is registered by '+owner.get(key)+' and '+entry.task);
+    owner.set(key,entry.task);
+  }
+  return owner.size;
+}
 export function verifyBrowserReport(report,spec,expectedSnapshot) {
   for(const key of ['pageErrors','networkRequests','errors','network'])if(key in report)assert.deepEqual(report[key],[],spec.task+'/'+key);
   for(const key of ['failed'])if(key in report)assert.equal(report[key],0);

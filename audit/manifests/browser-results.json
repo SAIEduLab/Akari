@@ -1,6 +1,6 @@
 {
   "schema": "akari-browser-results-v1",
-  "authority": "Reviewed case declarations and explicit viewport, mode, event, limit and schema matrices for Akari 1.0.0. Expectations are independent of observed results.",
+  "authority": "Reviewed case declarations and explicit viewport, mode, event, limit and schema matrices of the current product. Expectations are independent of observed results.",
   "entries": [
     {
       "group": "session",
@@ -36,7 +36,7 @@
         "real-media-import-and-history",
         "media-editor-run-and-save-roundtrip",
         "real-media-standalone-player",
-        "format1-malformed-mismatch-and-state-protection",
+        "malformed-project-mismatch-and-state-protection",
         "invalid-syntax-save-and-format1-storage-isolation"
       ]
     },
@@ -242,21 +242,6 @@
         "mock-block-layout-source-invariant",
         "disclosure-discoverability-source-invariant",
         "six-width-layout"
-      ]
-    },
-    {
-      "group": "ui",
-      "task": "ui-compact-routes",
-      "source": "audit/browser/cases/ui-compact-routes.cjs",
-      "report": "ui-compact-routes.json",
-      "key": "id",
-      "keys": [
-        "UI-statement-duplicate-order-delete",
-        "UI-else-annotation-and-comment-lines",
-        "UI-variadic-order-size-and-nested-replace",
-        "UI-expression-move-atomic-replacement",
-        "UI-deep-expression-move-prompt-reachable",
-        "UI-keyboard-only-create-move-delete-history"
       ]
     },
     {
