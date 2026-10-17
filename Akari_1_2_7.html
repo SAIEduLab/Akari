@@ -6205,7 +6205,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
     </section>
   </div>
 
-  <div class="status"><span id="statusText">じゅんび できました</span><span class="save-state" id="autosaveState">このパソコンに のこす じゅんび中</span><span class="dirty-state" id="dirtyState">ファイルに ほぞんしたよ</span><span class="runstate run-off" id="runState">止まっています</span></div>
+  <div class="status"><span id="statusText">じゅんび できました</span><span class="save-state" id="autosaveState">このパソコンには まだ のこしていないよ</span><span class="dirty-state" id="dirtyState">かえた ところは ないよ</span><span class="runstate run-off" id="runState">止まっています</span></div>
 </div>
 
 <div class="modal" id="paintModal" role="dialog" aria-modal="true" aria-labelledby="paintTitle">
@@ -14054,7 +14054,7 @@ function createAkariExtensionHost(options) {
         {
           "id": "bar-0",
           "type": "label",
-          "name": "小節1",
+          "name": "しょうせつ1",
           "x": 18,
           "y": 80,
           "w": 294,
@@ -23834,17 +23834,17 @@ function createAkariExtensionHost(options) {
     left:{label:'左へ泳ぐ',source:'0.3秒かけて左へ60歩動く。'},
     small:{label:'小さくする',source:'大きさを70％にする。'},
     point:{label:'点数を1ふやす',source:'点数に1を足す。'},
-    score:{label:'点数を見せる',source:'「点数表示」の文字をつなぐ（「つかまえた：」、点数）に変える。'},
+    score:{label:'点数を見せる',source:'「点数ボード」の文字をつなぐ（「つかまえた：」、点数）にかえる。'},
     finish:{label:'5ひきなら',source:'もし点数が5以上なら、\n  0秒待つ。',hole:'thenBody'},
     bonus:{label:'3ひきなら',source:'もし点数が3なら、\n  0秒待つ。',hole:'thenBody'},
     bonusPoint:{label:'おまけの点を足す',source:'点数に2を足す。'},
     cheer:{label:'おいわいのことば',source:'「クリア！」と0.5秒話す。'},
-    remaining:{label:'のこりを見せる',source:'「点数表示」の文字をつなぐ（「あと：」、最大（0、10 - 点数））に変える。'},
+    remaining:{label:'のこりを見せる',source:'「点数ボード」の文字をつなぐ（「あと：」、最大（0、10 - 点数））にかえる。'},
     tone:{label:'音をならす',source:'880Hzの音を0.1秒鳴らす。'},
     lowTone:{label:'ひくい音',source:'523Hzの音を0.1秒鳴らす。'},
     midTone:{label:'まん中の音',source:'659Hzの音を0.1秒鳴らす。'},
     highTone:{label:'たかい音',source:'784Hzの音を0.1秒鳴らす。'},
-    costume:{label:'すがたをかえる',source:'次の衣装に変える。'},
+    costume:{label:'すがたをかえる',source:'次のすがたにかえる。'},
     turn:{label:'くるっと回る',source:'右に90度回る。'},
     wait:{label:'少しまつ',source:'0.1秒待つ。'},
   });
@@ -29875,7 +29875,7 @@ function createAkariExtensionHost(options) {
     function updateDirty() {
       dirty = currentFingerprint() !== lastSavedFingerprint;
       const draft = hasCallableDraft() || hasPendingEditor();
-      el.dirty.textContent = dirty ? 'ファイルに まだ ほぞんしていないよ' : draft ? '書きかけあり' : 'ファイルに ほぞんしたよ';
+      el.dirty.textContent = dirty ? 'ファイルに まだ ほぞんしていないよ' : draft ? '書きかけが あるよ' : 'かえた ところは ないよ';
       el.dirty.className = dirty || draft ? 'dirty-state dirty' : 'dirty-state';
       const locked = modelLocked();
       $('#undoBtn').disabled =
@@ -32895,7 +32895,7 @@ function createAkariExtensionHost(options) {
       clearTimeout(autosaveTimer);
       recoveryEpoch++;
       if(!modelLocked())updateDirty();
-      el.autosave.textContent = 'このパソコンに のこす じゅんび中';
+      el.autosave.textContent = 'このパソコンには まだ のこしていないよ';
       autosaveTimer = setTimeout(writeAutosave, 1200);
     }
     async function readAutosave() {
@@ -32968,7 +32968,7 @@ function createAkariExtensionHost(options) {
           }
           if (epoch === recoveryEpoch)
             el.autosave.textContent = ok
-              ? 'このパソコンに のこす じゅんび中'
+              ? 'このパソコンには まだ のこしていないよ'
               : '自動で のこす：けせたか たしかめられません';
           return ok;
         }));

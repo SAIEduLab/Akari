@@ -2171,7 +2171,7 @@
     function updateDirty() {
       dirty = currentFingerprint() !== lastSavedFingerprint;
       const draft = hasCallableDraft() || hasPendingEditor();
-      el.dirty.textContent = dirty ? 'ファイルに まだ ほぞんしていないよ' : draft ? '書きかけあり' : 'ファイルに ほぞんしたよ';
+      el.dirty.textContent = dirty ? 'ファイルに まだ ほぞんしていないよ' : draft ? '書きかけが あるよ' : 'かえた ところは ないよ';
       el.dirty.className = dirty || draft ? 'dirty-state dirty' : 'dirty-state';
       const locked = modelLocked();
       $('#undoBtn').disabled =
@@ -5191,7 +5191,7 @@
       clearTimeout(autosaveTimer);
       recoveryEpoch++;
       if(!modelLocked())updateDirty();
-      el.autosave.textContent = 'このパソコンに のこす じゅんび中';
+      el.autosave.textContent = 'このパソコンには まだ のこしていないよ';
       autosaveTimer = setTimeout(writeAutosave, 1200);
     }
     async function readAutosave() {
@@ -5264,7 +5264,7 @@
           }
           if (epoch === recoveryEpoch)
             el.autosave.textContent = ok
-              ? 'このパソコンに のこす じゅんび中'
+              ? 'このパソコンには まだ のこしていないよ'
               : '自動で のこす：けせたか たしかめられません';
           return ok;
         }));
