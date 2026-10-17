@@ -4,7 +4,8 @@ import {createRequire} from 'node:module';
 
 const require=createRequire(import.meta.url);
 // CI supplies the pinned parser through NODE_PATH. Local callers may install it normally.
-const {parse}=require('@babel/parser');
+// Loaded on first use, so report validators that never parse do not need the parser installed.
+let babelParser;const parse=(...args)=>(babelParser??=require('@babel/parser')).parse(...args);
 
 // Every finite surface table that decides which sentence forms the product accepts.
 // Exported tables are read from the running product; the others are read from the
