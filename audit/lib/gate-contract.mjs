@@ -6,6 +6,8 @@ export const auditJobIds=['audio-codecs','full-browser-gate','selftest'];
 export function gateSteps(browser,dir){const file=n=>path.join(dir,n+'.json');return [
   ['static','audit/tests/static-contract.mjs',file('static')],
   ['product-source','audit/tests/product-source.mjs',file('product-source')],
+  ['publication-inventory','audit/tests/publication.mjs','inventory',file('publication-inventory')],
+  ['publication-documents','audit/tests/publication.mjs','documents',file('publication-documents')],
   ['release-policy-negative','audit/tests/release-policy-negative.mjs'],
   ['integrity','audit/tests/execution-continuity.mjs',file('integrity')],
   ['browser-environment','audit/tests/browser-environment.mjs',browser,file('browser-environment')],
@@ -119,4 +121,4 @@ export const acceptanceCommands={
   ]
 };
 
-export const integrityControlIds=[...[-1,0,12,24].map(n=>'gate-continuity:'+n),...['pass',...auditBundleKinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job'].map(n=>'aggregate:'+n),...['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','changed-kind','changed-result','rehashed-failure'].map(n=>'bundle:'+n),'freeze-record-and-verify','freeze-changed-file-refused',...['composition','editing'].flatMap(k=>['missing','duplicate','failed','timeout','snapshot','fake-pass'].map(n=>'execution:'+k+'/'+n)),...['composition','editing'].map(k=>'execution:'+k+'/persisted-seal-failure')];
+export const integrityControlIds=[...[-1,0,12,24].map(n=>'gate-continuity:'+n),...['pass',...auditBundleKinds,'missing-jobs','empty-jobs','cancelled-job','missing-job','unexpected-job'].map(n=>'aggregate:'+n),...['valid','missing-file','extra-file','changed-bytes','changed-snapshot','changed-provenance','changed-kind','changed-result','rehashed-failure'].map(n=>'bundle:'+n),'freeze-record-and-verify','freeze-changed-file-refused','freeze-contract-from-features','freeze-changed-contract-refused','freeze-unknown-contract-refused','freeze-second-release-refused',...['composition','editing'].flatMap(k=>['missing','duplicate','failed','timeout','snapshot','fake-pass'].map(n=>'execution:'+k+'/'+n)),...['composition','editing'].map(k=>'execution:'+k+'/persisted-seal-failure')];
