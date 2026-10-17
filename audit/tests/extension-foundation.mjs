@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import vm from 'node:vm';
+import { isDeepStrictEqual } from 'node:util';
 import { pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { currentProductFile } from '../lib/product-path.cjs';
@@ -52,6 +54,26 @@ await check('EXTENSION-PROFILE-RUNTIME-ISOLATION',()=>{
   const standard=A.createAkariRuntime(),derived=A.createAkariRuntime({profiles:[{id:'audit.count',version:'1.0.0',limits:{components:501}}],profile:{id:'audit.count',version:'1.0.0'}});
   assert.equal(standard.LIMITS.components,500);assert.equal(derived.LIMITS.components,501);assert.equal(A.LIMITS.components,500);
   return{standardComponents:500,derivedComponents:501,isolated:true};
+});
+// The public profile example (EXTENSIONS.md 派生上限と適合確認), loaded as a derived
+// author loads it: as a CommonJS module and as a plain script setting AkariProfileExamples.
+await check('EXTENSION-PROFILE-EXAMPLES',()=>{
+  const file=path.resolve('extensions/examples/profile.js'),examples=require(file),scope={};
+  vm.runInNewContext(fs.readFileSync(file,'utf8'),scope);
+  assert.deepEqual(plain(scope.AkariProfileExamples),plain(examples));
+  const changed=['components','sourceEach','listItems','functionOps'];
+  const observe=definitions=>{
+    const p=A.createAkariProfiles(A.profiles.standard),ref=p.effective;for(const definition of definitions)p.register(definition);
+    const inherits=()=>Object.keys(p.standard).filter(k=>!changed.includes(k)).every(k=>ref[k]===p.standard[k]);
+    p.select('demo.roomy','1.0.0');const roomy=Object.fromEntries(changed.map(k=>[k,ref[k]])),roomyInherits=inherits();
+    p.select('demo.unlimited','1.0.0');const unlimited=changed.filter(k=>ref[k]===Infinity),unlimitedInherits=inherits();
+    const runtime=A.createAkariRuntime({profiles:definitions,profile:{id:'demo.roomy',version:'1.0.0'}});
+    return{ids:definitions.map(d=>d.id+'@'+d.version),roomy,roomyInherits,unlimited,unlimitedInherits,roomyRuntimeComponents:runtime.LIMITS.components,standardComponents:A.LIMITS.components,sameAsScript:true};
+  };
+  // The comparison is sensitive: the same example with another declared ceiling is not accepted.
+  const altered=plain(examples);altered[0].limits.components=601;
+  const alteredDetected=!isDeepStrictEqual({...observe(altered),alteredDetected:true},extensionExpectedObservations['EXTENSION-PROFILE-EXAMPLES']);
+  return{...observe(examples),alteredDetected};
 });
 
 // Exercise the public examples as an independent derived author would.

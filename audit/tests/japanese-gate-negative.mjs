@@ -43,7 +43,7 @@ try{
  });
  const runtime={schema:'akari-runtime-boundary-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(runtimeInputPaths),runtime:{schema:'akari-runtime-v2-boundary-evidence-v1',status:'PASS',productSha256:inputs.productSha256,transport:'file://',expectedPassCount:20,passed:20,failed:0,unverified:0,runs}};
  const fixed={schema:'akari-japanese-static-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(contractInputPaths),contract:verifyJapaneseContract()};
- const migration={schema:'akari-language-expectations-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(expectationInputPaths),expectations:{status:'PASS',stableIds:605,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153,expectationsSha256:sha(fs.readFileSync('audit/fixtures/language/expected.json')),manifestSha256:sha(fs.readFileSync('audit/manifests/language-form-coverage.json'))}};
+ const migration={schema:'akari-language-expectations-gate-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(expectationInputPaths),expectations:{status:'PASS',stableIds:606,finiteInputs:256,groups:42,corpus:95,baselineSchemas:153,expectationsSha256:sha(fs.readFileSync('audit/fixtures/language/expected.json')),manifestSha256:sha(fs.readFileSync('audit/manifests/language-form-coverage.json'))}};
  const check=(id,base,verify,mutate)=>{const bad=clone(base);mutate(bad);assert.throws(()=>verify(bad));results.push({id,rejected:true});};
  const vi=r=>verifyIntentReport(r,inputs),vr=r=>verifyRuntimeReport(r,inputs,dir),vs=r=>verifyContractReport(r,inputs),vm=r=>verifyExpectationReport(r,inputs);
  // Producer paths belong to the recorded OS; the sealed bytes are local.
@@ -84,7 +84,7 @@ try{
  check('RUNTIME/required-case-unverified',runtime,vr,r=>{r.runtime.runs[0].reports[0].pass=null;r.runtime.runs[0].reports[0].status='UNVERIFIED';});
  check('STATIC/missing-check',fixed,vs,r=>r.contract.results.pop());check('STATIC/changed-doc-hash',fixed,vs,r=>r.contract.fixtureSha256='0'.repeat(64));
  check('STATIC/execution-claim',fixed,vs,r=>r.contract.productDynamic.status='PASS');
- check('EXPECTATIONS/missing-stable-id',migration,vm,r=>r.expectations.stableIds=604);check('EXPECTATIONS/stale-snapshot',migration,vm,r=>r.snapshot.productSha256='0'.repeat(64));
+ check('EXPECTATIONS/missing-stable-id',migration,vm,r=>r.expectations.stableIds=605);check('EXPECTATIONS/stale-snapshot',migration,vm,r=>r.snapshot.productSha256='0'.repeat(64));
  const proseRow=r=>r.results.find(x=>x.id==='CI-01/original-prose-ui').evidence.checks[0];
  for(const flag of ['unchanged','blocksDisabled','executionRejected','cancelRestoredSource','automaticExecution']){
   check('INTENT/prose-missing-'+flag,intent,vi,r=>delete proseRow(r)[flag]);

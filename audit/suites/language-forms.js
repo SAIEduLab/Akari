@@ -193,6 +193,26 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
     eq(exec('0.2秒、440Hzの音を鳴らす').blocked.kind,'audio');
     eq(exec('1秒間待つ\n「後」という').out,[['後',1000]]);
   });
+  // Independent values from LANGUAGE.md 組み込み求値の一覧: the remainder keeps the
+  // dividend's sign, text length counts code points, text containment is a contiguous
+  // substring, and bouncing at the left edge mirrors the direction and puts the box at 0.
+  test('LANG-BUILTIN-INDEPENDENT-VALUES',()=>{
+    for(const [source,value] of [
+      ['点数を余り（－7、3）にする',-1],['点数を余り（7、－3）にする',1],['点数を余り（－7、－3）にする',-1],['点数を余り（5.5、2）にする',1.5],
+      ['点数を「😀あ」の長さにする',2],['点数を「」の長さにする',0],['点数を「か\u3099」の長さにする',2],
+      ['もし「こんにちは」に「にち」が含まれていれば、点数を1にする',1],['もし「こんにちは」に「ちに」が含まれていれば、点数を1にする',5],
+      ['もし「こんにちは」に「」が含まれていれば、点数を1にする',1],
+    ]) eq(exec(source).vars,[['点数',value]]);
+    for(const [source,code] of [['点数を余り（1、0）にする','R401'],['もし「123」に1が含まれていれば、点数を1にする','R411'],['もし［1、2］に［1］が含まれていれば、点数を1にする','R411']]) {
+      const result=exec(source);eq(result.errors[0]?.[0],code);eq(result.vars,[['点数',5]]);
+    }
+    // The regression actor is 180×180 at 横230・縦110 on a 640×400 stage.
+    for(const [source,actor] of [
+      ['横位置を－20にする\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:0,y:110,direction:0}],
+      ['横位置を0にする\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:0,y:110,direction:0}],
+      ['横位置を100にする\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:100,y:110,direction:180}],
+    ]) eq(exec(source).actor,actor);
+  });
   return {results,total:results.length,failed:results.filter(r=>r.status==='FAIL').length,
     blocked:results.filter(r=>r.status==='BLOCKED_TRANSITION').length,
     deferred:results.filter(r=>r.status==='DEFERRED_PHASE_3').length};
