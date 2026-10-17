@@ -16,11 +16,11 @@ const state=p=>p.evaluate(()=>{const s=Akari.app.editorState;return{project:stru
   status:document.querySelector('#autosaveState').textContent,failure:document.querySelector('#failureModal.show .failure-summary')?.textContent.match(/^R\d+/)?.[0]||null,
   score:[...document.querySelectorAll('#runtimeMonitor .monitor-row')].find(r=>r.querySelector('.monitor-key')?.textContent==='点数')?.querySelector('.monitor-value')?.textContent||null};});
 const events=p=>p.evaluate(()=>window.autosaveAudit.events);
-const settled=p=>p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='自動保存：済み',null,{timeout:10000});
+const settled=p=>p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='このパソコンに のこしたよ',null,{timeout:10000});
 const edit=async(p,source)=>{await p.locator('#codeEditor').fill(source);await p.locator('#codeEditor').press('Tab');};
 const restore=async p=>{await p.reload();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));};
 async function record(p){return p.evaluate(async()=>{
-  const rec=await new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f2',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>{db.close();resolve(get.result||null);};get.onerror=()=>reject(get.error);};});
+  const rec=await new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f3',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>{db.close();resolve(get.result||null);};get.onerror=()=>reject(get.error);};});
   if(!rec)return null;const decoded=await Akari.decodeWorkspaceHistory(rec.workspace),frame=decoded.frames[decoded.cursor];
   return {revision:rec.revision,updatedAt:rec.updatedAt,cursor:decoded.cursor,frameCount:decoded.frames.length,project:frame.project,editorState:frame.editorState};
 });}
@@ -109,7 +109,7 @@ try{await withBrowser(chrome,async browser=>{
     await instrument(p,{quota:true});
     for(const source of [autosaveSources.newer,autosaveSources.draft]){
       await p.evaluate(()=>{window.autosaveAudit.events=[];window.autosaveAudit.note('initial');});await edit(p,source);
-      await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('失敗'),null,{timeout:10000});
+      await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('のこせなかったよ'),null,{timeout:10000});
       o.attempts.push({source,current:await state(p),record:await record(p),events:await events(p)});
     }
     o.final=await state(p);return o;

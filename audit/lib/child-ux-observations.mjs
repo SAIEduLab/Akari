@@ -24,7 +24,7 @@ async function captureBlockDocuments(p,project){
       const nodes=all.map(n=>{
         const own=selector=>[...n.querySelectorAll(selector)].filter(f=>f.closest('.blockui-node')===n),parent=n.parentElement.closest('.blockui-node');
         const input=n.parentElement.closest('.blockui-input-slot'),body=n.parentElement.closest('[data-blockui-body-wrapper]');
-        const slot=input&&input.closest('.blockui-node')===parent?(input.dataset.blockuiInput||input.getAttribute('aria-label')==='変更先'&&'target'):(body?.dataset.blockuiBodyWrapper||null);
+        const slot=input&&input.closest('.blockui-node')===parent?(input.dataset.blockuiInput||input.getAttribute('aria-label')==='かえるもの'&&'target'):(body?.dataset.blockuiBodyWrapper||null);
         const title=n.querySelector(':scope > .blockui-node-head > .blockui-node-title'),r=n.getBoundingClientRect(),style=getComputedStyle(n);
         return {schema:n.dataset.schemaId,parent:parent?all.indexOf(parent):null,slot:slot||null,title:title?.textContent||'',rendered:!!r.width&&!!r.height&&style.visibility!=='hidden',
           fields:Object.fromEntries(own('input[data-blockui-field],select[data-blockui-field],input[data-blockui-structured-role],select[data-blockui-structured-role]').map(f=>[f.dataset.blockuiField||f.dataset.blockuiStructuredRole,f.type==='checkbox'?String(f.checked):f.value])),

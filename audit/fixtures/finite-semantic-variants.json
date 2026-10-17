@@ -4600,7 +4600,7 @@
       "id": "V12/001",
       "group": "V12",
       "source": "作品を動かしたとき、あかりは、\n  自分のコピーを0体作る。\nあかりのコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "281b314afcf6f6e3bc12f4361ff164c91defeabd3d3ee83aca6c42426d41a428",
+      "inputHash": "ff2f3ab066519dcdbc2a9b2279dded49d02a76acee244bd07a486d39e0398ac7",
       "expected": [
         {
           "x": 100,
@@ -4614,7 +4614,7 @@
       "id": "V12/002",
       "group": "V12",
       "source": "あかりのコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、あかりは、\n  自分のコピーを0体作る。",
-      "inputHash": "23e2d108df44cfa4ee1ffc0eae26750eddf6ee9567c50cc0f3e2df6ebf7168d0",
+      "inputHash": "9e7514b791223759d4fc036293985d79303f4a4bc9804de1bf822e47ec53bc54",
       "expected": [
         {
           "x": 100,
@@ -4628,7 +4628,7 @@
       "id": "V12/003",
       "group": "V12",
       "source": "作品を動かしたとき、あかりは、\n  自分のコピーを1体作る。\nあかりのコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "6258ec42c477efa43ebaa9c9e684bec377de26e8379f29378120a641cf38776f",
+      "inputHash": "c59e5fa03ea8a2d83af19df2106635fed7edeec91d152bd870a657601048bdc1",
       "expected": [
         {
           "x": 100,
@@ -4644,7 +4644,7 @@
       "id": "V12/004",
       "group": "V12",
       "source": "あかりのコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、あかりは、\n  自分のコピーを1体作る。",
-      "inputHash": "9dc99df12f215606617a466177c415e74e686bf3963c9c0ece7d8d256015b3df",
+      "inputHash": "fd6beda3963b724d45eab2553a24bff1234b28fd88c6fb60b292e6b680fbce62",
       "expected": [
         {
           "x": 100,
@@ -4660,7 +4660,7 @@
       "id": "V12/005",
       "group": "V12",
       "source": "作品を動かしたとき、あかりは、\n  自分のコピーを3体作る。\nあかりのコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "e90998f9736dbfe59d7127e15e633df1d74a7dfff18b976a9075e384f1a0edc6",
+      "inputHash": "bf5a75080dd7e205e9a3ad0a32b7cab337dfebd2eb0f641004197938293bca74",
       "expected": [
         {
           "x": 100,
@@ -4678,7 +4678,7 @@
       "id": "V12/006",
       "group": "V12",
       "source": "あかりのコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、あかりは、\n  自分のコピーを3体作る。",
-      "inputHash": "380a94d0bdde71548a23a2d8fd946d672ebec5961f5ecc8a4ea24ec98015332d",
+      "inputHash": "24cfd2ee8ca52ba02c3e06f6ca945aa0259339e7102a4abd09a56b2a8311a451",
       "expected": [
         {
           "x": 100,
@@ -4696,7 +4696,7 @@
       "id": "V12/007",
       "group": "V12",
       "source": "作品を動かしたとき、あかりは、\n  自分のコピーを（1＋2）体作る。\nあかりのコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "89a9d6d371f9d39a8f50f23c9d958f58328a48c248e326f41d7244672b99f76e",
+      "inputHash": "f713b68ef3e2d172031e4fb5d7722766564c8b6d9d9104295673f89d93fa8a7e",
       "expected": [
         {
           "x": 100,
@@ -4714,7 +4714,7 @@
       "id": "V12/008",
       "group": "V12",
       "source": "あかりのコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、あかりは、\n  自分のコピーを（1＋2）体作る。",
-      "inputHash": "338bc87161d7d54094440f7a7f076fabe0983a095a0aa914baefecee72952171",
+      "inputHash": "ff83ae3167b7d7aa321ce47344104641fd5f05ee4b5655c8dc64c2751cd0325d",
       "expected": [
         {
           "x": 100,
@@ -4732,7 +4732,7 @@
       "id": "V12/009",
       "group": "V12",
       "source": "作品を動かしたとき、星は、\n  自分のコピーを0体作る。\n星のコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "7d20f08dbff3cb84dd306a820674cb5319e965cd227a065ac0f903aa9c20b7a1",
+      "inputHash": "2d95093df783395832df4700e0e0ce920ef384df243c95db44169f9fea0b2fe1",
       "expected": [
         {
           "x": 100,
@@ -4746,7 +4746,7 @@
       "id": "V12/010",
       "group": "V12",
       "source": "星のコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、星は、\n  自分のコピーを0体作る。",
-      "inputHash": "1c36c57795e1dec8bf190f368f2f893f588acda5af25f16ca32895a29b530819",
+      "inputHash": "f1aacb53d2c6d18610429b88a9d01fa58206ef0757fd76df373ce18e95fe8bf2",
       "expected": [
         {
           "x": 100,
@@ -4760,7 +4760,7 @@
       "id": "V12/011",
       "group": "V12",
       "source": "作品を動かしたとき、星は、\n  自分のコピーを1体作る。\n星のコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "722e74c579e452477857ddc3de6847d78abfadc24ab5c6dbbcb88f86fd2f24db",
+      "inputHash": "e1ba98f08a02eac25a920d64b3b9f2770033f12dd950b60b2a3da4646868d70a",
       "expected": [
         {
           "x": 100,
@@ -4776,7 +4776,7 @@
       "id": "V12/012",
       "group": "V12",
       "source": "星のコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、星は、\n  自分のコピーを1体作る。",
-      "inputHash": "c9c6db964ad1fad73274f86b3905bd81a6d1a99c52021ae7ace4ccbd00249d23",
+      "inputHash": "9da567c106029195697c753330200499fbd2100da688029ff0d4d0ac15b1fb5d",
       "expected": [
         {
           "x": 100,
@@ -4792,7 +4792,7 @@
       "id": "V12/013",
       "group": "V12",
       "source": "作品を動かしたとき、星は、\n  自分のコピーを3体作る。\n星のコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "d9d6f7001725e126ef79a259d60f0d3f457978fd260ce8be89db4807890013bd",
+      "inputHash": "3297c20f4796634eb27454c57e999010ba9f56608d51a8a27115def170715454",
       "expected": [
         {
           "x": 100,
@@ -4810,7 +4810,7 @@
       "id": "V12/014",
       "group": "V12",
       "source": "星のコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、星は、\n  自分のコピーを3体作る。",
-      "inputHash": "3b63ed023b55b462386acdc6969ae6b9177cc2bb8eb0fc1d8f1d94d2c8da5837",
+      "inputHash": "9257cd38984ce83f96d1ad79ccbb50abf13a485509b68b61c8bc0c22465fbbfc",
       "expected": [
         {
           "x": 100,
@@ -4828,7 +4828,7 @@
       "id": "V12/015",
       "group": "V12",
       "source": "作品を動かしたとき、星は、\n  自分のコピーを（1＋2）体作る。\n星のコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "c0dea971f18302265e84addc64161ca76d9a620d1092ea972f7734f28f56b2a4",
+      "inputHash": "75f8769bdeef44e2da51e69ea0550b7cc7da139d98de1a169af2d18b3d712581",
       "expected": [
         {
           "x": 100,
@@ -4846,7 +4846,7 @@
       "id": "V12/016",
       "group": "V12",
       "source": "星のコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、星は、\n  自分のコピーを（1＋2）体作る。",
-      "inputHash": "e7c118c3b1c161c38d7517dc65ac94ab0375236c13112146fca9937a53029d60",
+      "inputHash": "ec1fcb71eaa692c098524bb1b88cbd1f0799cbebf0ba1f69749562f4057748f1",
       "expected": [
         {
           "x": 100,
@@ -4864,7 +4864,7 @@
       "id": "V12/017",
       "group": "V12",
       "source": "作品を動かしたとき、はなをは、\n  自分のコピーを0体作る。\nはなをのコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "828eec5555c064d0f15a24d66ada8cd8a2a9465e836e93fb6b0705cdb6a65848",
+      "inputHash": "550fefe5f78f6d93ad61ee2ec7f8e2fae8a6879c0b262a7dfa279827012e630e",
       "expected": [
         {
           "x": 100,
@@ -4878,7 +4878,7 @@
       "id": "V12/018",
       "group": "V12",
       "source": "はなをのコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、はなをは、\n  自分のコピーを0体作る。",
-      "inputHash": "251801dc131c67e4ff203976d0e7549686deddd9ba6c409bd1f7d51e26d18f70",
+      "inputHash": "c8088f63fc865bdfa9cd0c810b6fa28162aa98245b490bfa289bec5b59654036",
       "expected": [
         {
           "x": 100,
@@ -4892,7 +4892,7 @@
       "id": "V12/019",
       "group": "V12",
       "source": "作品を動かしたとき、はなをは、\n  自分のコピーを1体作る。\nはなをのコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "a7e793e92d2d5ec3fdab47ad42475c58e40a2b072a387df0b265cf6decd285a6",
+      "inputHash": "a35a7249750d870cc0b62d9279654fded96e2827214c98db2b8e1b86502e6a8d",
       "expected": [
         {
           "x": 100,
@@ -4908,7 +4908,7 @@
       "id": "V12/020",
       "group": "V12",
       "source": "はなをのコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、はなをは、\n  自分のコピーを1体作る。",
-      "inputHash": "81d76d07c5d44cb67dc03242150e0e481c2f4eb699cb7828b8ae1484ee6b6954",
+      "inputHash": "83cd6018246e7e9d6e3c7870ab363c263126945eacf11dcee3061cec5d15c1b4",
       "expected": [
         {
           "x": 100,
@@ -4924,7 +4924,7 @@
       "id": "V12/021",
       "group": "V12",
       "source": "作品を動かしたとき、はなをは、\n  自分のコピーを3体作る。\nはなをのコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "6e7fb62dad93657228ab88af0da8105c17e7a1cfeaed0c786f164859a3127fd6",
+      "inputHash": "d25e4a39ff5da2f20e1538dded21de1628ee48889114163a20b13f1634cd7e1b",
       "expected": [
         {
           "x": 100,
@@ -4942,7 +4942,7 @@
       "id": "V12/022",
       "group": "V12",
       "source": "はなをのコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、はなをは、\n  自分のコピーを3体作る。",
-      "inputHash": "52abb4ce54c1fb82a6f7f1f625bfa6b2712cff5af7f2717e29dde0d923f47471",
+      "inputHash": "3a1a07af76a9be3149795b51b186ceaaccd00d3ba2628e595caedaf54aaaa737",
       "expected": [
         {
           "x": 100,
@@ -4960,7 +4960,7 @@
       "id": "V12/023",
       "group": "V12",
       "source": "作品を動かしたとき、はなをは、\n  自分のコピーを（1＋2）体作る。\nはなをのコピーが作られたとき、\n  「コピー」と言う。",
-      "inputHash": "b6b5275203c21b774863a279433bb0692759f5c7caa48eeb2ac1801f9a478f82",
+      "inputHash": "e4aca45db85c6243b9ca135fc18b270d45bc86ed2738dd88f8d6781bb3989b61",
       "expected": [
         {
           "x": 100,
@@ -4978,7 +4978,7 @@
       "id": "V12/024",
       "group": "V12",
       "source": "はなをのコピーが作られたとき、\n  「コピー」と言う。\n作品を動かしたとき、はなをは、\n  自分のコピーを（1＋2）体作る。",
-      "inputHash": "932a3c74e5d3165095e107f1f664cc3eac244073ad9293a5a38d628cf97fd6f4",
+      "inputHash": "8e2caf4e10ebe399705a6f837263c9dae7fde9403aa75d05abbc95af4ecfb5f4",
       "expected": [
         {
           "x": 100,

@@ -10,8 +10,8 @@ const require=createRequire(import.meta.url),[chrome,outputArg]=process.argv.sli
 const report={schema:'akari-workspace-history-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},pageErrors:[],results:[]};
 fs.mkdirSync(path.dirname(output),{recursive:true});
 const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
-const readRecord=page=>page.evaluate(()=>new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f2',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),q=tx.objectStore('workspace').get('latest');q.onsuccess=()=>{db.close();const r=q.result;resolve(r?{updatedAt:r.updatedAt,revision:r.revision,workspace:{...r.workspace,assets:r.workspace.assets.map(a=>({...a,blob:a.blob?{size:a.blob.size,type:a.blob.type}:null}))}}:null);};q.onerror=()=>reject(q.error);};}));
-const settled=page=>page.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('済み'),null,{timeout:12000});
+const readRecord=page=>page.evaluate(()=>new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f3',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),q=tx.objectStore('workspace').get('latest');q.onsuccess=()=>{db.close();const r=q.result;resolve(r?{updatedAt:r.updatedAt,revision:r.revision,workspace:{...r.workspace,assets:r.workspace.assets.map(a=>({...a,blob:a.blob?{size:a.blob.size,type:a.blob.type}:null}))}}:null);};q.onerror=()=>reject(q.error);};}));
+const settled=page=>page.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('このパソコンに のこしたよ'),null,{timeout:12000});
 const restore=async page=>{await page.reload();await page.locator('#recoveryRestore').click();await page.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));};
 try{await withBrowser(chrome,async browser=>{
  report.environment.browser=browser.version();assert.equal(browser.version(),browserEnvironment.version);assert.equal(report.environment.playwright,browserEnvironment.playwright);
@@ -46,7 +46,7 @@ try{await withBrowser(chrome,async browser=>{
  await run('history/browser-quota-atomic',async page=>{
   await page.locator('#codeEditor').fill('「保存済み」と言う。');await settled(page);const before=await readRecord(page);assert.ok(before);
   await page.evaluate(()=>{IDBObjectStore.prototype.put=function(){throw new DOMException('quota','QuotaExceededError');};Storage.prototype.setItem=function(){throw new DOMException('quota','QuotaExceededError');};});
-  const source='「容量不足でも編集中の文は残る';await page.locator('#codeEditor').fill(source);await page.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('失敗'),null,{timeout:12000});
+  const source='「容量不足でも編集中の文は残る';await page.locator('#codeEditor').fill(source);await page.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('このパソコンに のこせなかったよ'),null,{timeout:12000});
   assert.deepEqual(await readRecord(page),before);assert.equal(await page.locator('#codeEditor').inputValue(),source);return{previousRecordUnchanged:true,pendingSource:source,failureShown:true};
  });
 },180000);}catch(error){report.hostFailure=error.stack;}

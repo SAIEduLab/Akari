@@ -96,7 +96,7 @@
       "expected": "最大3体のコピー、各+20歩。1秒後にコピー0、元のあかり1体。コピーだけのできごとが走り、保存作品にコピーを持ち込まない。",
       "mainFirstDraft": "作品を動かしたとき、あかりは、\n  自分のコピーを3体作る。\nあかりのコピーが作られたとき、\n  画面の右へ20歩動いて、1秒待つ。\n  このコピーだけを消す。",
       "extra": null,
-      "draftSha256": "56107a27c39211615b56a7e50c38bc8947981e4381b7b2ddc4a293421a8bc19d",
+      "draftSha256": "41b121c5b7a9f3d5218a58ef36d262edbc1fe3e8e31b5a7ccd2bda2b24c25ef5",
       "writtenBeforeVisibleLaunch": true,
       "reviewBeforeAcceptance": {
         "grammar": "代理評価者（AI）の国語的自己点検。主語/述語、助詞、量/時機/順序/範囲を意図に対応。製品が受理するかは未確認。",
