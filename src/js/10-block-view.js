@@ -1335,7 +1335,7 @@
       let input;
       if (['actor-ref', 'heading', 'argument-names'].includes(field.type)) {
         if (options.readOnly) {
-          const actorText = actor => actor?.kind === 'named' ? actor.name : '自分';
+          const actorText = actor => actor?.kind === 'named' ? actor.name : actor?.kind === 'all' || (!actor && field.everyone) ? 'みんな' : '自分';
           const text = field.type === 'actor-ref' ? actorText(value)
             : field.type === 'argument-names' ? (value || []).join('、')
               : value ? (EVENT_LABELS[value.event] || value.event) + '、' + actorText(value.actorRef) +
@@ -1364,8 +1364,10 @@
           for (const [v, label] of values) child.append(E('option', '', label, { value: v }));
           child.value = initial; return child;
         };
-        const actor = (initial, prefix = '') => {
-          const kind = choice('だれの', prefix + 'kind', [['self', '自分'], ['named', '名前で えらぶ']], initial?.kind || 'self');
+        // A wait also offers みんな: the whole flow waits, not one part.
+        const actor = (initial, prefix = '', everyone = false) => {
+          const first = initial?.kind || (everyone ? 'all' : 'self');
+          const kind = choice('だれの', prefix + 'kind', [...(everyone ? [['all', 'みんな']] : []), ['self', '自分'], ['named', '名前で えらぶ']], first);
           const name = control('だれかの名前', 'input', prefix + 'name', initial?.name || '');
           const names = E('datalist', '', null, { id: viewId + '-actor-' + node.id + '-' + field.key + prefix });
           for (const text of [project()?.stage?.name, ...(project()?.components || []).map(c => c.name)].filter(Boolean))
@@ -1373,11 +1375,11 @@
           name.setAttribute('list', names.id); group.append(names);
           const sync = () => { name.parentElement.hidden = kind.value !== 'named'; };
           sync(); listen(kind, 'change', sync);
-          return { read: () => kind.value === 'self' ? { kind: 'self' } : { kind: 'named', name: name.value },
-            restore: () => { kind.value = initial?.kind || 'self'; name.value = initial?.name || ''; sync(); } };
+          return { read: () => kind.value === 'named' ? { kind: 'named', name: name.value } : { kind: kind.value },
+            restore: () => { kind.value = first; name.value = initial?.name || ''; sync(); } };
         };
         if (field.type === 'actor-ref') {
-          const subject = actor(value);
+          const subject = actor(value, '', !!field.everyone);
           readValue = subject.read; restore = subject.restore;
         } else if (field.type === 'argument-names') {
           const mode = choice('入れるものの わたし方', 'mode', [['positional', '書いた じゅんに わたす'], ['named', '名前を つけて わたす']], value === undefined ? 'positional' : 'named');
@@ -1446,7 +1448,7 @@
           });
         }
         if (field.type === 'actor-ref') {
-          const subject = subjectName(node);
+          const subject = value?.kind === 'all' || (!value && field.everyone) ? 'みんな' : subjectName(node);
           // A part's state (たくどん の よこのばしょ) takes の from the phrase, so its part name has no は.
           const owner = node.schemaId === 'ActorQualifiedRead';
           const details = editDisclosure(node, 'actorRef', owner ? subject : subject + 'は', 'blockui-subject');

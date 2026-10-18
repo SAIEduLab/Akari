@@ -292,6 +292,14 @@
     function nowMs() {
       return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
     }
+    // A wait with a subject (だんごは0.2秒待つ) holds only that part: the flow goes on, and the next statement of
+    // that part waits until the hold ends. A wait without one (みんな, {kind:'all'}) stops the whole flow.
+    function everyoneWaitKind(kind) {
+      return ['WaitTime', 'WaitUntil', 'BroadcastAndWait', 'WaitBroadcastGroup'].includes(kind);
+    }
+    function everyoneStatement(node) {
+      return node?.actorRef ? node.actorRef.kind === 'all' : everyoneWaitKind(node?.kind);
+    }
     function cloneDesignProject(p) {
       return typeof structuredClone === 'function'
         ? structuredClone(p)
@@ -998,7 +1006,8 @@
       }
       resolveActorRef(ref, relativeRuntimeId) {
         let id = relativeRuntimeId;
-        if (ref && ref.kind !== 'self') {
+        // みんな ({kind:'all'}, a wait of the whole flow) reads its time or condition as 自分.
+        if (ref && ref.kind === 'named') {
           id = ref.targetId || (ref.name === '画面' || ref.name === this.project.stage.name ? 'stage' :
             this.project.components.find((c) => c.name === ref.name)?.id);
         }
@@ -2822,8 +2831,12 @@
             this.finishTask(task, 'DONE');
             return true;
           }
-          task.currentNode = step.node;
           this.selectSubject(task, step.node);
+          if (this.awaitHold(task, step)) {
+            this.recheckBlocked(force);
+            return true;
+          }
+          task.currentNode = step.node;
           const frame = task.callFrames.at(-1);
           if (frame) frame.currentLine = step.node.sourceSpan?.startLine || 1;
           if (step.kind !== 'idle') this.ui.beforeStatement?.(task, step.node);
@@ -3003,14 +3016,14 @@
             const sec = numberInUnit(evalExpression(n.seconds, ctx), '秒');
             if (sec < 0) throw new AkariError('R412', '待つ 時間は 0より 小さく できません');
             if (sec === 0) return;
-            this.block(task, {
-              kind: 'time',
-              deadline: ensureFinite(this.runtime.now() + sec * 1000),
-            });
+            const deadline = ensureFinite(this.runtime.now() + sec * 1000);
+            if (!everyoneStatement(n)) { this.hold(task, { kind: 'time', deadline }); return; }
+            this.block(task, { kind: 'time', deadline });
             return { requeue: false };
           }
           case 'WaitUntil': {
             if (bool(evalExpression(n.condition, ctx))) return;
+            if (!everyoneStatement(n)) { this.hold(task, { kind: 'condition', condition: originalNode.condition }); return; }
             this.block(task, { kind: 'condition', condition: originalNode.condition });
             return { requeue: false };
           }
@@ -3069,6 +3082,7 @@
             this.waitGroups.set(wg.id, wg);
             const ts = this.spawnDistributed('message', { message: msg }, wg.id);
             if (ts.length) {
+              if (!everyoneStatement(n)) { this.hold(task, { kind: 'waitGroup', waitGroupId: wg.id }); return; }
               this.block(task, { kind: 'waitGroup', waitGroupId: wg.id });
               return { requeue: false };
             }
@@ -3157,6 +3171,42 @@
         task.blockReason = { runtimeId: task.subject?.runtimeId || task.runtimeId, ...reason };
         this.blocked.add(task);
       }
+      // A part's wait: the flow goes on; the part's next statement in this flow waits (awaitHold).
+      hold(task, reason) {
+        const runtimeId = task.subject?.runtimeId || task.runtimeId;
+        (task.holds ||= new Map()).set(runtimeId, { runtimeId, ...reason });
+      }
+      holdOver(task, hold) {
+        if (hold.kind === 'time') return this.runtime.now() >= hold.deadline;
+        if (hold.kind === 'waitGroup') return !this.waitGroups.get(hold.waitGroupId)?.pending.size;
+        // A condition with the user's own calculations is stepped while blocked, like any wait.
+        if (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(hold.condition)) return false;
+        return bool(evalExpression(hold.condition, this.context(task, { runtimeId: hold.runtimeId })));
+      }
+      // Before a statement of a held part runs, the flow waits for the rest of that part's wait.
+      awaitHold(task, step) {
+        const runtimeId = task.subject?.runtimeId, hold = runtimeId && task.holds?.get(runtimeId);
+        if (!hold || step.kind === 'idle' || everyoneStatement(step.node)) return false;
+        task.holds.delete(runtimeId);
+        if (this.holdOver(task, hold)) return false;
+        if (step.kind === 'node') task.execStack[task.execStack.length - 1].index--;
+        task.currentNode = step.node;
+        const reason = { ...hold };
+        delete reason.runtimeId;
+        this.block(task, reason);
+        return true;
+      }
+      // A condition that comes true ends its hold then, even if it is false again when the part's statement comes.
+      pollHolds() {
+        for (const task of this.tasks.values()) {
+          if (!task.holds?.size || ['CANCELLED', 'DONE', 'ERROR'].includes(task.state)) continue;
+          for (const [runtimeId, hold] of task.holds) {
+            if (hold.kind !== 'condition') continue;
+            try { if (this.holdOver(task, hold)) task.holds.delete(runtimeId); }
+            catch (err) { this.taskError(task, err); break; }
+          }
+        }
+      }
       unblock(task) {
         if (!this.blocked.has(task) || ['CANCELLED', 'DONE', 'ERROR'].includes(task.state)) return;
         this.blocked.delete(task);
@@ -3210,6 +3260,7 @@
         if (!this.running || (this.paused && !force)) return;
         this.advanceContinuous();
         this.drainExternalUnblocks();
+        this.pollHolds();
         const now = this.runtime.now(),
           arr = [...this.blocked].sort((a, b) => a.createdSequence - b.createdSequence);
         const timed = [];
@@ -3799,8 +3850,8 @@
         fail('自分で作ったブロックの 持ち主が 正しくありません');
       const items = [],
         astByKey = new Map();
-      const validActorRef = ref => !ref ||
-        (exactKeys(ref, ['kind']) && ref.kind === 'self') ||
+      const validActorRef = (ref, node) => !ref ||
+        (exactKeys(ref, ['kind']) && (ref.kind === 'self' || (ref.kind === 'all' && everyoneWaitKind(node?.kind)))) ||
         ((exactKeys(ref, ['kind', 'name']) || exactKeys(ref, ['kind', 'name', 'targetId'])) &&
           ref.kind === 'named' && typeof ref.name === 'string' &&
           (ref.name === '画面' || ref.name === p.stage.name || p.components.some(c => c.name === ref.name)) &&
@@ -3847,7 +3898,7 @@
             if (!operation || !Array.isArray(node.args) || node.args.length !== operation.args.length) fail('かくちょうの ブロックと 入れるものが 合いません');
           }
           if (node.kind === 'Hole') fail('書きかけの ところを さいごまで 書いてください');
-          if (Object.hasOwn(node, 'actorRef') && !validActorRef(node.actorRef)) fail('動かす キャラクターや 部品が 正しくありません');
+          if (Object.hasOwn(node, 'actorRef') && !validActorRef(node.actorRef, node)) fail('動かす キャラクターや 部品が 正しくありません');
           if (node.kind === 'MotionCommand' && ['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(node.op) &&
             !directions.includes(node.direction)) fail('動く 向きが 正しくありません');
           if (node.argumentNames !== undefined && (!Array.isArray(node.argumentNames) ||

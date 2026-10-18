@@ -272,7 +272,9 @@
         const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId);
         topics.set(node.id, topic);
         for (const slot of schema.bodies) rememberTopics(node.bodies[slot.key], node.fields.actorRef || {kind:'self'}, topics);
-        if (!schema.bodies.length && !['CommentLine','Hole'].includes(schema.kind))
+        // A wait of the whole flow (みんな) leaves the topic as it is.
+        if (!schema.bodies.length && !['CommentLine','Hole'].includes(schema.kind) &&
+          !(node.fields.actorRef ? node.fields.actorRef.kind === 'all' : EVERYONE_WAITS.has(schema.kind)))
           topic = node.fields.actorRef || {kind:'self'};
       }
     };

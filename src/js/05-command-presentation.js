@@ -333,7 +333,7 @@
               ? 'へんすう・リスト'
               : 'もし・くり返し');
       if (category === 'statement')
-        fields = [...fields, field('actorRef', 'だれが動く', 'actor-ref', undefined, { required: false })];
+        fields = [...fields, field('actorRef', 'だれが動く', 'actor-ref', undefined, { required: false, ...(EVERYONE_WAITS.has(kind) ? { everyone: true } : {}) })];
       const annotations =
         category === 'statement'
           ? [
@@ -797,10 +797,11 @@
     if (value === undefined && field.required === false) return undefined;
     if (type === 'actor-ref') {
       blockRecord(value, ['kind', 'name'], path);
-      if (!['self', 'named'].includes(value.kind)) blockDataError('だれが動くかの書き方が正しくありません', path);
-      if (value.kind === 'self') {
+      // みんな (the whole flow) is a subject only a wait takes.
+      if (!['self', 'named', ...(field.everyone ? ['all'] : [])].includes(value.kind)) blockDataError('だれが動くかの書き方が正しくありません', path);
+      if (value.kind === 'self' || value.kind === 'all') {
         if (Object.hasOwn(value, 'name')) blockDataError('「自分」にはほかの名前を付けられません', path);
-        return { kind: 'self' };
+        return { kind: value.kind };
       }
       blockFieldValue({ type: 'name' }, value.name, path + '.name');
       return { kind: 'named', name: value.name };

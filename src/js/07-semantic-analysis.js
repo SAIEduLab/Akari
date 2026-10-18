@@ -139,7 +139,7 @@
     };
     let analyzeCallable = () => {};
     const actorContext = (ref, ctx, node, where) => {
-      if (!ref || ref.kind === 'self') return ctx;
+      if (!ref || ref.kind !== 'named') return ctx;
       const c = ref.name === project.stage.name || ref.name === '画面'
         ? { id: 'stage', type: 'stage' } : componentByName(ref.name);
       if (!c) { add('S301', `「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください${['ぼく','わたし','おれ','あたし','うち'].includes(ref.name)?'。自分の ことなら「自分は」と 書きます':''}`, node, where); return ctx; }
@@ -1158,7 +1158,8 @@
         // A group wait always means the broadcast just before it (LANGUAGE.md 439); the
         // reference name is derived from that position, so it is not part of the meaning.
         if (key === 'broadcastRef') continue;
-        if (key === 'actorRef' && child?.kind === 'self') continue;
+        // A statement without a subject is 自分's; a wait without one is the whole flow's (みんな).
+        if (key === 'actorRef' && child?.kind === (EVERYONE_WAITS.has(value.kind) ? 'all' : 'self')) continue;
         if (key === 'argumentNames' && Array.isArray(child) && child.length === 0) continue;
         // A script without rules has no rule list; an emptied block rule list is the same script.
         if (key === 'rules' && Array.isArray(child) && child.length === 0) continue;
