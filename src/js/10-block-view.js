@@ -52,9 +52,9 @@
       return '待ってから 動くときは、2つの 文に 分けます。\nれい：1秒待つ。\n前へ10歩進む。';
     if (/「N番目」はリスト/.test(message))
       return '何番目かを えらぶには、ならんだ ものを おぼえる リストを 使います。れい：【買うもの】の2番目。話す 文字の「買うもの」とは ちがいます。';
-    if (/orphan asset|不足asset/.test(message))
+    if (/使われていない絵や音か、足りない絵や音/.test(message))
       return '作品で使う絵や音と、ほぞんする絵や音の組み合わせが合っていません。理由は 下の くわしい せつめいに のこしています。「絵や音」の画面で、使う絵や音を たしかめてください。';
-    if (/SHA-256|byteLength|asset|Base64|canonical|metadata/.test(message))
+    if (/絵や音の中身を表す文字|同じしるし|絵や音の番号|使うはずの絵や音|同じ中身の絵や音|ではないものを使っています|絵や音「[^」]*」がありません|の種類が、正しくありません|記録と合いません|記録とちがいます|絵や音の記録の形|使える大きさの外|あかりで使えない(?:形|種類)の|中身をたしかめるしるし|同じ絵や音が2つ以上|おまけの情報|ほぞんした音|ほぞんしたときと合いません/.test(message))
       return '絵や音の 中身を たしかめられませんでした。理由は 下の くわしい せつめいに のこしています。「絵や音」の 画面で、使う 絵や音を たしかめてください。';
     return message;
   }
@@ -514,6 +514,18 @@
       if (!fromPending) render({ force: true });
       return result;
     }
+    // A touch test names the stage edge as 端 (the word code also reads bare). The block shows and
+    // accepts the words the code writes, 画面のはし; other text slots keep 端 as written.
+    function edgeSlot(node, field) {
+      if (node?.schemaId !== 'StringLiteral' || field?.key !== 'value') return false;
+      return index.get(index.get(node.id)?.parentId)?.node?.schemaId === 'SensorRead:TOUCHING';
+    }
+    function edgeShown(node, field, value) {
+      return edgeSlot(node, field) && value === '端' ? '画面のはし' : value;
+    }
+    function edgeStored(node, field, value) {
+      return edgeSlot(node, field) && ['画面のはし', '画面の端'].includes(String(value).trim()) ? '端' : value;
+    }
     function readInputValue(input, field) {
       if (field.type === 'boolean') return input.value === 'true';
       if (field.type === 'qualifier') return input.value === 'none' ? null : input.value;
@@ -549,7 +561,7 @@
         return annotation ? current.annotations[field.key]
           : input.dataset.signedParentId ? -current.fields[field.key] : current.fields[field.key];
       };
-      const read = () => readInputValue(input, field);
+      const read = () => edgeStored(node, field, readInputValue(input, field));
       const refresh = () => {
         if (rendering || committing || !input.isConnected) return;
         if (deferredFocus === input) deferredFocus = null;
@@ -557,7 +569,7 @@
         if (!pending || pending.input !== input) {
           const f = flush();
           if (!f.ok && pending?.input !== input) {
-            input.value = String(original() ?? '');
+            input.value = String(edgeShown(node, field, original()) ?? '');
             pending?.input?.focus();
             return;
           }
@@ -716,7 +728,7 @@
       pending = null;
       if (field?.input?.isConnected) {
         field.input.value = field.field.type === 'qualifier' ? field.original ?? 'none'
-          : field.field.type === 'number' ? field.original === undefined ? '' : decimalSource(field.original) : field.original ?? '';
+          : field.field.type === 'number' ? field.original === undefined ? '' : decimalSource(field.original) : edgeShown(index.get(field.id)?.node, field.field, field.original) ?? '';
         field.input.setAttribute('aria-invalid', 'false');
       }
       notifyPending();
@@ -958,7 +970,8 @@
             schema.category === 'statement'
               ? formatScript({ kind: 'Script', body: [ast] })
               : formatExpression(ast)
-          ).split('\n')[0],
+          // The for-each block names what it is looking at on its second line, as the code does.
+          ).split('\n').slice(0, schema.kind === 'ForEach' ? 2 : 1).map((line, i) => (i ? line.trim() : line)).join('\n'),
           parts = [];
         let at = 0;
         while (at < text.length) {
@@ -991,11 +1004,19 @@
           const token = value.find((p) => p?.slot?.key === 'condition');
           if (token) value = ['\u3082\u3057 ', token, ' \u306a\u3089'];
         } else if (schema.kind === 'Forever') value = ['ずっと'];
+        else if (schema.kind === 'CompareExpression') {
+          // The same order as the code: 1が2とちがう.
+          const left = value.find((p) => p?.slot?.key === 'left'), right = value.find((p) => p?.slot?.key === 'right');
+          if (left && right) value = [left, ' が ', right, ' ' + schema.label];
+        }
         else if (schema.id === 'BuiltinCall:乱数') {
           const slot = schema.inputs.find((s) => s.key === 'args');
           value = [{ token: '', slot, index: 0 }, ' から ', { token: '', slot, index: 1 }, ' のどれか'];
         }
-        else value = value.map((p) => (typeof p === 'string' ? p.replace(/\u3002$/, '') : p));
+        else if (schema.kind === 'ForEach')
+          value = value.flatMap((p) => (typeof p !== 'string' ? [p]
+            : p.split('\n').flatMap((s, i) => [...(i ? [{ lineBreak: true }] : []), s.replace(/。$/, '')]).filter((s) => s !== '')));
+        else value = value.map((p) => (typeof p === 'string' ? p.replace(/。$/, '') : p));
       }
       phraseCache.set(schema.id, value);
       return value;
@@ -1009,6 +1030,8 @@
             .map((p) =>
               typeof p === 'string'
                 ? p
+                : p.lineBreak
+                ? ' '
                 : '［' +
                   (p.field?.label ||
                     (p.slot?.type === 'target'
@@ -1058,6 +1081,7 @@
         if (parts)
           for (const part of parts) {
             if (typeof part === 'string') main.append(doc.createTextNode(part));
+            else if (part.lineBreak) main.append(E('span', 'blockui-phrase-break'));
             else if (part.field) main.append(pill(node.fields[part.field.key] || part.field.label));
             else {
               const slot = part.slot,
@@ -1280,7 +1304,7 @@
           ...p.sounds.map((x) => x.name),
           ...Object.keys(COLOR_NAMES).map((name) => COLOR_LABELS[name] || name),
           'マウス',
-          '端',
+          ...(edgeSlot(node, field) ? ['画面のはし'] : []),
           '空白',
           '上',
           '下',
@@ -1474,7 +1498,7 @@
           autocomplete: 'off',
           ...(field.type === 'number' ? { inputmode: 'decimal' } : {}),
         });
-        input.value = field.type === 'number' && value !== undefined ? decimalSource(value) : value ?? '';
+        input.value = field.type === 'number' && value !== undefined ? decimalSource(value) : edgeShown(node, field, value) ?? '';
         if (node.schemaId === 'Hole:expression' && field.type === 'number') input.dataset.expressionHole = 'true';
       }
       if (annotation) {
@@ -1499,7 +1523,7 @@
             controls = E('div', 'blockui-text-dialog-controls'),
             apply = E('button', '', '決める', { type: 'button', 'data-blockui-text-action': 'commit' }),
             discard = E('button', '', 'この文字を なおすのを やめる', { type: 'button', 'data-blockui-text-action': 'cancel' });
-          editor.value = pending?.input === input ? input.value : String(index.get(node.id)?.node.fields[field.key] ?? value ?? '');
+          editor.value = pending?.input === input ? input.value : String(edgeShown(node, field, index.get(node.id)?.node.fields[field.key] ?? value) ?? '');
           editor.dataset.focusKey = node.id + ':full-text:' + field.key;
           const close = committed => {
             if (committed && !flush({ focus: false }).ok) { editor.focus(); return; }
@@ -2126,6 +2150,8 @@
           main.append(
             typeof part === 'string'
               ? E('span', 'blockui-phrase-text', part)
+              : part.lineBreak
+                ? E('span', 'blockui-phrase-break')
               : part.field
                 ? fieldControl(node, part.field)
                 : renderInput(node, part.slot, part.index),
@@ -2233,7 +2259,8 @@
           for(const candidate of BLOCK_SCHEMAS.filter(s=>s.kind===schema.kind))operator.append(E('option','',candidate.label,{value:candidate.id}));
           operator.value=schema.id;operator.disabled=isLocked()||options.readOnly;
           listen(operator,'change',()=>operate({type:'operator',id:node.id,schemaId:operator.value}));
-          main.append(slot('left'),operator,slot('right'));
+          if(schema.kind==='CompareExpression')main.append(slot('left'),E('span','blockui-phrase-text','が'),slot('right'),operator);
+          else main.append(slot('left'),operator,slot('right'));
         } else if(schema.kind==='RepeatCount'||schema.kind==='Say'||schema.kind==='WaitTime'){
           const extra=editDisclosure(node,'extra','なおす','blockui-extra'),extraControls=E('div','blockui-extra-controls');
           extra.querySelector('summary').setAttribute('aria-label',schema.label+'の数・計算・時間を なおす');

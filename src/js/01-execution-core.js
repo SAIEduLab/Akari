@@ -333,7 +333,7 @@
     }
     function decodedBase64Length(text) {
       if (typeof text !== 'string' || text.length % 4 !== 0)
-        throw new AkariError('F508', 'Base64\u5f62\u5f0f\u304c\u4e0d\u6b63\u3067\u3059');
+        throw new AkariError('F508', '絵や音の中身を表す文字の書き方が、正しくありません');
       const pad = text.endsWith('==') ? 2 : text.endsWith('=') ? 1 : 0,
         end = text.length - pad;
       for (let i = 0; i < end; i++) {
@@ -347,10 +347,10 @@
             c === 47
           )
         )
-          throw new AkariError('F508', 'Base64\u5f62\u5f0f\u304c\u4e0d\u6b63\u3067\u3059');
+          throw new AkariError('F508', '絵や音の中身を表す文字の書き方が、正しくありません');
       }
       if (pad && end < 2)
-        throw new AkariError('F508', 'Base64\u5f62\u5f0f\u304c\u4e0d\u6b63\u3067\u3059');
+        throw new AkariError('F508', '絵や音の中身を表す文字の書き方が、正しくありません');
       return (text.length / 4) * 3 - pad;
     }
     function decodeBase64(text) {
@@ -362,7 +362,7 @@
         try {
           bin = atob(text);
         } catch (_) {
-          throw new AkariError('F508', 'Base64を読み取れません');
+          throw new AkariError('F508', '絵や音の中身を表す文字を、読みとれません');
         }
         out = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
@@ -380,7 +380,7 @@
           if (at < expected) out[at++] = n & 255;
         }
       }
-      if (encodeBase64(out) !== text) throw new AkariError('F508', 'Base64が標準形ではありません');
+      if (encodeBase64(out) !== text) throw new AkariError('F508', '絵や音の中身を表す文字が、決まった形になっていません');
       return out;
     }
     function rotr(x, n) {
@@ -517,7 +517,7 @@
       }
       addImmutable(asset) {
         if (this.#map.has(asset.id))
-          throw new AkariError('F505', `asset ID「${asset.id}」が 2つ あります`);
+          throw new AkariError('F505', `絵や音の番号「${asset.id}」が 2つ あります`);
         const frozen = makeImmutableAssetRecord(asset);
         this.#map.set(frozen.id, frozen);
         return frozen;
@@ -526,9 +526,9 @@
         for (const a of this.#map.values())
           if (a.kind === kind && a.sha256 === digest) {
             if (a.byteLength !== byteLength)
-              throw new AkariError('F508', '同じSHA-256でbyteLengthが異なります');
+              throw new AkariError('F508', '同じしるしの絵や音なのに、大きさがちがいます');
             if (bytes && !bytesEqual(a.bytes, bytes))
-              throw new AkariError('F508', '同じSHA-256/長さでバイト列が異なります');
+              throw new AkariError('F508', '同じしるしと大きさの絵や音なのに、中身がちがいます');
             return a;
           }
         return null;

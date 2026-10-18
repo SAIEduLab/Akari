@@ -1530,6 +1530,15 @@ body {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+/* A sentence that continues on a second line (the for-each block). */
+.blockui-phrase-break {
+  flex-basis: 100%;
+  height: 0;
+}
+.blockui-node-main:has(> .blockui-phrase-break),
+.blockui-preview-main:has(> .blockui-phrase-break) {
+  flex-wrap: wrap;
+}
 .blockui-node-head {
   grid-column: 2;
   grid-row: 1;
@@ -3752,6 +3761,9 @@ body[data-editor-mode="blocks"] .prop-name {
 .blockui-world .blockui-phrase-text {
   white-space: pre;
   overflow-wrap: normal;
+}
+.blockui-world .blockui-node-main:has(> .blockui-phrase-break) {
+  flex-wrap: wrap;
 }
 .blockui-world .blockui-node-head {
   position: relative;

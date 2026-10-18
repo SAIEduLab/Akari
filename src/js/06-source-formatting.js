@@ -56,7 +56,7 @@
       case 'ExtensionCalculation':
         s = extensionSurface(n.name, true, n.args); break;
       case 'UserFunctionCall':
-        s = n.argumentNames ? `（${n.args.map((x,i) => `${nameSource(n.argumentNames[i])}を${formatExpressionCore(x)}`).join('、')}として、【${n.name}】で求めた答え）` : `（${n.args.length ? `（${n.args.map(x=>formatExpressionCore(x)).join('、')}）を渡して、` : ''}【${n.name}】で求めた答え）`;
+        s = n.argumentNames ? `（${n.args.map((x,i) => `${nameSource(n.argumentNames[i])}を${formatExpressionCore(x)}`).join('、')}として、【${n.name}】で求めた答え）` : `（${n.args.length ? `（${n.args.map(x=>formatExpressionCore(x)).join('、')}）をわたして、` : ''}【${n.name}】で求めた答え）`;
         break;
       case 'BuiltinCall': {
         if (n.name === 'CONTAINS')
@@ -86,12 +86,12 @@
         else if (FIXED_SENSORS.includes(n.sensor)) s = SENSOR_SURFACES[n.sensor] || n.sensor;
         else if (n.sensor === 'INPUT_VALUE') s = `${n.arg.kind==='VariableRead'?'（'+formatExpressionCore(n.arg)+'）':formatExpressionCore(n.arg, PREC.POST)}の中身`;
         else if (n.sensor === 'DISTANCE_TO')
-          s = `${formatExpressionCore(n.arg, PREC.POST)}までの距離`;
+          s = `${formatExpressionCore(n.arg, PREC.POST)}までのきょり`;
         else if (n.sensor === 'KEY_DOWN')
           s = `${formatExpressionCore(n.arg, PREC.POST)}キーがおされている`;
         else if (n.sensor === 'TOUCHING_COLOR')
           s = `${formatExpressionCore(n.arg, PREC.POST)}の色にふれている`;
-        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && n.arg.value === '端' ? '画面の端' : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
+        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && n.arg.value === '端' ? '画面のはし' : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
         p = PREC.POST;
         break;
       }
@@ -119,7 +119,7 @@
           GT: 'より大きい',
           LT: 'より小さい',
           EQ: 'と同じ',
-          NEQ: 'と違う',
+          NEQ: 'とちがう',
         }[n.op];
         s = `${formatExpressionCore(n.left, PREC.CMP + 1)}が${formatExpressionCore(n.right, PREC.CMP + 1)}${suf}`;
         p = PREC.CMP;

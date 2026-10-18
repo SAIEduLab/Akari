@@ -55,7 +55,7 @@
         BOUNCE: Object.freeze({
           label: 'はしで はね返る',
           inputs: Object.freeze([]),
-          format: (a) => '画面の端にふれていれば、はね返る',
+          format: (a) => '画面のはしにふれていれば、はね返る',
         }),
       }),
     }),
@@ -70,7 +70,7 @@
         BACK: Object.freeze({
           label: 'いちばん おくへ下がる',
           inputs: Object.freeze([]),
-          format: (a) => 'いちばん奥へ下がる',
+          format: (a) => 'いちばんおくへ下がる',
         }),
         HIDE: Object.freeze({
           label: 'すがたを かくす',
@@ -113,9 +113,9 @@
           format: (a) => `重なりを${a(0)}つ手前にする`,
         }),
         BACKWARD_LAYERS: Object.freeze({
-          label: '重なりを後ろへ下げる',
+          label: '重なりを おくへ下げる',
           inputs: Object.freeze(['いくつ']),
-          format: (a) => `重なりを${a(0)}つ奥にする`,
+          format: (a) => `重なりを${a(0)}つおくにする`,
         }),
         SET_COLOR: Object.freeze({
           label: '色を決める',
@@ -504,8 +504,8 @@
     add(
       'ForEach',
       'statement',
-      '中身を1つずつ使ってくり返す',
-      [name('binder', '使う中身の名前', 'これ')],
+      '中身を 一つずつ 見る',
+      [name('binder', '今見ているものの名前', 'これ')],
       [input('list', 'リスト', 'expression', { initial: [] })],
       [body('body', 'くり返すこと')],
     );
@@ -601,11 +601,11 @@
       [
         'BinaryExpression',
         [
-          ['ADD', '足す'],
-          ['SUB', '引く'],
-          ['MUL', 'かける'],
-          ['DIV', 'わる'],
-          ['POW', '同じ数を くり返し かける'],
+          ['ADD', '＋（たす）'],
+          ['SUB', '－（ひく）'],
+          ['MUL', '×（かける）'],
+          ['DIV', '÷（わる）'],
+          ['POW', '＾（同じ数を くり返し かける）'],
         ],
       ],
       [

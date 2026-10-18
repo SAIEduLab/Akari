@@ -4982,7 +4982,7 @@
       updateRunState();
       try {
         if (file.size > LIMITS.fileBytes)
-          throw new AkariError('F504', `ファイルが${LIMITS.fileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
+          throw new AkariError('F504', 'ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `開ける作品ファイルは${LIMITS.fileBytes / 1048576}MiBまで`);
         const text = await file.text();
         let loaded;
         try { loaded = await parseProjectFile(text); }
@@ -6133,7 +6133,7 @@
         if (project.components.length >= LIMITS.components)
           throw new AkariError('F504', '部品が いっぱいで、もう ふやせません。いらない部品を けしてください');
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.components.map((x) => x.name));
         let name = fileStemCandidate(file, names);
@@ -6199,7 +6199,7 @@
       if (!file) return;
       return runAssetImport('はいけいの 絵', async () => {
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.stage.backdrops.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
@@ -6238,7 +6238,7 @@
         if (cur?.type !== 'sprite')
           throw new AkariError('F503', 'すがたの 絵を 入れる キャラクターを えらんでください');
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(cur.costumes.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
@@ -6267,7 +6267,7 @@
       if (!file) return;
       return runAssetImport('音', async () => {
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeAudio(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.sounds.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),

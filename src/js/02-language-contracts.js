@@ -218,7 +218,7 @@
         id: 'ForEach',
         kind: 'ForEach',
         op: '',
-        source: '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  何もしない',
+        source: '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【今の名前】と呼ぶ。\n  何もしない',
       },
       {
         id: 'MotionCommand:MOVE',
@@ -278,7 +278,7 @@
         id: 'MotionCommand:BOUNCE',
         kind: 'MotionCommand',
         op: 'BOUNCE',
-        source: '画面の端にふれていれば、はね返る',
+        source: '画面のはしにふれていれば、はね返る',
       },
       {
         id: 'LooksCommand:SET_SCALE',
@@ -314,7 +314,7 @@
         id: 'LooksCommand:BACK',
         kind: 'LooksCommand',
         op: 'BACK',
-        source: 'いちばん奥へ下がる',
+        source: 'いちばんおくへ下がる',
       },
       {
         id: 'LooksCommand:FORWARD_LAYERS',
@@ -326,7 +326,7 @@
         id: 'LooksCommand:BACKWARD_LAYERS',
         kind: 'LooksCommand',
         op: 'BACKWARD_LAYERS',
-        source: '重なりを1つ奥にする',
+        source: '重なりを1つおくにする',
       },
       {
         id: 'PenCommand:DOWN',
@@ -518,7 +518,7 @@
         id: 'LooksCommand:SET_INPUT',
         kind: 'LooksCommand',
         op: 'SET_INPUT',
-        source: '「入力欄1」に「答え」を入れる',
+        source: '「入力らん1」に「答え」を入れる',
       },
       {
         id: 'SoundCommand:SAMPLE',
@@ -560,7 +560,7 @@
         id: 'UserActionCall',
         kind: 'UserActionCall',
         op: '',
-        source: '（3）を渡して、【増やす】という手順を行う',
+        source: '（3）をわたして、【増やす】という手順を行う',
       },
       {
         id: 'NoOperation',
@@ -676,9 +676,9 @@
       '言う・たずねる': ['話す', 'はなす', 'しゃべる', '質問', '答え'],
       'もし・くり返し': ['もし', 'くり返す', '繰り返す', '条件'],
       '待つ': ['待つ', 'まつ', '時間', '秒'],
-      'へんすう': ['へんすう', 'データ', '記録', '変数', '値'],
+      'へんすう': ['へんすう', '中身', '記録', '変数', '値'],
       '\u30ea\u30b9\u30c8': ['リスト', '一覧', '並べる', 'これ'],
-      'へんすう・リストの 中身': ['へんすう', 'データ', '記録', '変数', '値'],
+      'へんすう・リストの 中身': ['へんすう', '中身', '記録', '変数', '値'],
       '\u8a08\u7b97': ['計算', '答え', '値を求める'],
       'てじゅん': ['手順', '呼び出す', '実行'],
     };
@@ -961,7 +961,7 @@
       '1\u304c1\u4ee5\u4e0a',
       '1\u304c1\u4ee5\u4e0b',
       '1\u304c1\u3068\u540c\u3058',
-      '1\u304c2\u3068\u9055\u3046',
+      '1が2とちがう',
       '条件（条件の答え（あてはまる））が成り立たない',
       '条件の答え（あてはまる）かつ条件の答え（あてはまらない）',
       '条件の答え（あてはまる）または条件の答え（あてはまらない）',
@@ -973,8 +973,8 @@
     ];
     if (type !== 'stage')
       exprs.push(
-        '画面の端にふれている',
-        '「マウス」までの距離',
+        '画面のはしにふれている',
+        '「マウス」までのきょり',
         '「赤」の色にふれている',
       );
     for (const c of project.components)

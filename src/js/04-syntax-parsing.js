@@ -124,15 +124,15 @@
         else if (this.take('以下')) op = 'LTE';
         else if (this.take('より大きくない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('CompareExpression',{op:'GT',left,right})});
         else if (this.take('より小さくない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('CompareExpression',{op:'LT',left,right})});
-        else if (this.take('と違わない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('CompareExpression',{op:'NEQ',left,right})});
+        else if (this.take('とちがわない') || this.take('と違わない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('CompareExpression',{op:'NEQ',left,right})});
         else if (this.take('より大きい')) op = 'GT';
         else if (this.take('より小さい')) op = 'LT';
         else if (this.take('と同じ')) op = 'EQ';
-        else if (this.take('と違う')) op = 'NEQ';
+        else if (this.take('とちがう') || this.take('と違う')) op = 'NEQ';
         else
           this.err(
             'P205',
-            'くらべることばがありません。おわりに「以上」「以下」「より大きい」「より小さい」「と同じ」「と違う」のどれかを書いてください。れい：点数が10と同じ',
+            'くらべることばがありません。おわりに「以上」「以下」「より大きい」「より小さい」「と同じ」「とちがう」のどれかを書いてください。れい：点数が10と同じ',
           );
         if (this.starts('が'))
           this.err('P206', 'くらべることを2つつづけては書けません。「かつ」で分けてください。れい：1が2より小さいかつ2が3より小さい');
@@ -226,7 +226,7 @@
         else if (this.take('の文字数'))
           n = exprNode('BuiltinCall', { name: 'STRING_LENGTH', args: [n] });
         else if (this.take('の値')) { /* a value noun phrase preserves its expression */ }
-        else if (this.take('までの距離'))
+        else if (this.take('までのきょり') || this.take('までの距離'))
           n = exprNode('SensorRead', { sensor: 'DISTANCE_TO', arg: n });
         else if (this.take('キーがおされていない') || this.take('\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u306a\u3044'))
           n = exprNode('UnaryExpression', {
@@ -291,6 +291,7 @@
         const ch=this.text[j];
         if(ch==='（'||ch==='［') depth++;
         else if(ch==='）'||ch==='］') { if(!depth) break; depth--; }
+        else if(ch==='、'&&!depth) break;
         if(!depth) for(const suffix of suffixes) if(this.text.startsWith(suffix,j)) return {pos:j,suffix};
       }
       return null;
@@ -350,6 +351,15 @@
         }
         if (!closed) this.err('N101','「の あとの 」が ありません。文字の おわりに 」を 書いてください');
         if (cpLen(value) > LIMITS.stringChars) this.err('R413','文字が長すぎます');
+        // A quoted part name followed by の reads that part's state, as the unquoted name does:
+        // 「たくどん」のよこのばしょ is たくどんのよこのばしょ. Text suffixes (の長さ, の2文字目, ...) stay text.
+        if (open === '「' && this.starts('の') && !['の数だけ','の値','の答え','の中身','の長さ','の文字数','の色','のどれか'].some(t => this.starts(t)) &&
+          !this.findTopSuffix(['番目','文字目'])) {
+          validateName(value); this.i++;
+          if (++this.depth + (this.ctx._parserDepth||0) > LIMITS.expressionDepth) this.err('P208','計算の中に計算が入りすぎています。短い計算に分けてください');
+          try { return exprNode('ActorQualifiedRead',{actorRef:{kind:'named',name:value},value:this.basic()}); }
+          finally { this.depth--; }
+        }
         return exprNode('StringLiteral', { value });
       }
       if (this.take('\u81ea\u5206\u306e')) return this.starts('（') ? exprNode('ActorQualifiedRead',{actorRef:{kind:'self'},value:this.basic()}) : this.readNamed('self');
@@ -393,9 +403,11 @@
       if (EXTENSION_HOST.operations('events').length && this.starts('拡張の値') && !extensionValueIsData(this.symbols, this.ctx)) {
         this.i += '拡張の値'.length; return exprNode('SensorRead', { sensor: '拡張の値' });
       }
-      // 「画面の端」 names the stage edge, the same target as the bare word 端.
-      if (this.starts('画面の端') && nameBoundary(this.text, this.i + '画面の端'.length)) {
-        this.i += '画面の端'.length;
+      // 「画面のはし」 and 「画面の端」 name the stage edge, the same target as the bare word 端.
+      // A bare はし stays a name: a part may be called はし (橋, 箸).
+      const edgeWord = ['画面のはし', '画面の端'].find((w) => this.starts(w) && nameBoundary(this.text, this.i + w.length));
+      if (edgeWord) {
+        this.i += edgeWord.length;
         return exprNode('StringLiteral', { value: '端' });
       }
       const builtinWords = [...BUILTIN_NAMES, ...Object.values(BUILTIN_SURFACES)];
@@ -404,7 +416,7 @@
       const token = builtin ? {name:builtinName,end:this.i+builtin.length,exact:false} : readNameToken(this.text, this.i);
       if (!token) this.err('P205', '読みとれないところがあります。書き方をたしかめてください');
       this.i = token.end;
-      if (this.starts('の') && !['の数だけ','の値','の答え','の中身','の長さ','の文字数','の色'].some(t => this.starts(t))) {
+      if (this.starts('の') && !['の数だけ','の値','の答え','の中身','の長さ','の文字数','の色','のどれか'].some(t => this.starts(t))) {
         const suffix = this.findTopSuffix(['番目','文字目']);
         if (!suffix) {
           validateName(token.name); this.i++;
@@ -456,9 +468,10 @@
       if (!mask.endsWith('で求めた答え')) return null;
       const tail = body.slice(0,-'で求めた答え'.length), tailMask = surfaceMask(tail);
       const marker = tailMask.lastIndexOf('として、');
-      const positional = tailMask.lastIndexOf('を渡して、');
+      const passWord = ['をわたして、', 'を渡して、'].find(w => tailMask.includes(w)) || 'をわたして、';
+      const positional = tailMask.lastIndexOf(passWord);
       const cut = marker >= 0 ? marker : positional;
-      const nameText = cut < 0 ? tail : tail.slice(cut+(marker >= 0 ? 4 : 5));
+      const nameText = cut < 0 ? tail : tail.slice(cut+(marker >= 0 ? 4 : passWord.length));
       const name = callableSurfaceName(nameText);
       const args = [], argumentNames = [];
       const parse = (t,offset) => parseExpression(t,this.symbols,{...this.ctx,sourcePositions:this.ctx.sourcePositions?.slice(start+1+offset,start+1+offset+t.length),_parserDepth:(this.ctx._parserDepth||0)+this.depth+1});
@@ -475,7 +488,7 @@
         }
       } else if (positional >= 0) {
         const values = tail.slice(0,positional);
-        if (!values.startsWith('（') || !values.endsWith('）')) this.err('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）を渡して、');
+        if (!values.startsWith('（') || !values.endsWith('）')) this.err('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、');
         const inner=values.slice(1,-1), visible=surfaceMask(inner); let begin=0;
         for(let j=0;j<=inner.length;j++) if(j===inner.length || visible[j]==='、') {
           if(inner.length) args.push(parse(inner.slice(begin,j),1+begin)); begin=j+1;
@@ -569,6 +582,7 @@
     ['より小さい','より小さければ','より小さくなければ','より小さいあいだ','より小さくなるまで','より小さくて','より小さくなくて','より小さくない'],
     ['より大きい','より大きければ','より大きくなければ','より大きいあいだ','より大きくなるまで','より大きくて','より大きくなくて','より大きくない'],
     ['と同じ','と同じなら','と同じでなければ','と同じであるあいだ','と同じになるまで','と同じで','と同じではなくて','と同じではない'],
+    ['とちがう','とちがえば','とちがわなければ','とちがうあいだ','とちがう状態になるまで','とちがっていて','とちがわなくて','とちがわない'],
     ['と違う','と違えば','と違わなければ','と違うあいだ','と違う状態になるまで','と違っていて','と違わなくて','と違わない'],
     ['押されている','押されていれば','押されていなければ','押されているあいだ','押されるまで','押されていて','押されていなくて','押されていない'],
     ['おされている','おされていれば','おされていなければ','おされているあいだ','おされるまで','おされていて','おされていなくて','おされていない'],
@@ -627,7 +641,10 @@
       if (l.kind==='LogicalExpression'||r.kind==='LogicalExpression') fail('きまりを 1つずつ（ ）で かこんで 分けてください');
       return exprNode('LogicalExpression',{op:or?'OR':'AND',left:l,right:r});
     }
-    if (/かつ|または/.test(mask) || mask.includes('か')) {
+    // か joins two conditions only right after a finished predicate (点数が1と同じか点数が2と同じ). A か inside a
+    // name (かず, あかり) or in 1から6のどれか belongs to that word.
+    const orJoin=/(?:以上|以下|大きい|小さい|大きくない|小さくない|と同じ|ではない|でない|とちがう|ちがわない|と違う|違わない|いる|いない|である)か(?!つ)/.test(mask);
+    if (/かつ|または/.test(mask) || orJoin) {
       if (form !== 'plain' || (mask.includes('かつ') && mask.includes('または'))) fail('いくつかのきまりをつなぐときは、「条件（…）」でひとまとめにしてください。れい：もし条件（1が1と同じかつ（2が2と同じまたは3が3と同じ））が成り立つなら、');
     }
     const matches=[];
@@ -800,24 +817,24 @@
   function sentenceRoleSlots(kind,op,role) {
     const expr=(path,label,unit=null)=>Object.freeze({path,label,type:path==='target'?'target':path==='condition'?'condition':path==='args'?'arguments':'expression',unit,required:true});
     const values={
-      Assignment:[expr('target','変更先'),expr('value','新しい値')],NumericUpdate:[expr('target','変更先'),expr('value','増減量')],
-      ListAppend:[expr('target','リスト'),expr('value','入れる値')],ListInsert:[expr('target','リスト'),expr('index','位置','番目'),expr('value','入れる値')],ListReplace:[expr('target','リスト'),expr('index','位置','番目'),expr('value','新しい値')],ListDelete:[expr('target','リスト'),expr('index','位置','番目')],ListClear:[expr('target','リスト')],
+      Assignment:[expr('target','かえるもの'),expr('value','新しい中身')],NumericUpdate:[expr('target','かえるもの'),expr('value','ふやす・へらす数')],
+      ListAppend:[expr('target','リスト'),expr('value','入れるもの')],ListInsert:[expr('target','リスト'),expr('index','何番目','番目'),expr('value','入れるもの')],ListReplace:[expr('target','リスト'),expr('index','何番目','番目'),expr('value','新しい中身')],ListDelete:[expr('target','リスト'),expr('index','何番目','番目')],ListClear:[expr('target','リスト')],
       IfStatement:[expr('condition','条件')],RepeatCount:[expr('count','回数','回')],RepeatWhile:[expr('condition','条件')],RepeatUntil:[expr('condition','条件')],ForEach:[expr('list','調べるリスト')],WaitTime:[expr('seconds','待つ時間','秒')],WaitUntil:[expr('condition','待つ条件')],
-      Say:[expr('value','言う内容')],Ask:[expr('question','たずねる内容')],Broadcast:[expr('message','知らせ')],BroadcastAndWait:[expr('message','知らせ')],ReturnStatement:[expr('value','答え')],LocalVariableDeclaration:[expr('initial','最初の値')],UserActionCall:[expr('args','受け取る値')],ContinuousRule:[expr('condition','続ける条件'),expr('seconds','速さの時間','秒'),expr('distance','速さの歩数','歩')],
+      Say:[expr('value','言う内容')],Ask:[expr('question','たずねる内容')],Broadcast:[expr('message','合図')],BroadcastAndWait:[expr('message','合図')],ReturnStatement:[expr('value','答え')],LocalVariableDeclaration:[expr('initial','はじめの中身')],UserActionCall:[expr('args','入れるもの')],ContinuousRule:[expr('condition','続ける条件'),expr('seconds','速さの時間','秒'),expr('distance','速さの歩数','歩')],
     };
-    const args={MOVE:[['歩数','歩']],MOVE_DIRECTION:[['歩数','歩']],GOTO:[['横位置','歩'],['縦位置','歩']],GLIDE:[['時間','秒'],['横位置','歩'],['縦位置','歩']],GLIDE_DIRECTION:[['時間','秒'],['歩数','歩']],SET_DIRECTION:[['向き','度']],TURN_RIGHT:[['角度','度']],TURN_LEFT:[['角度','度']],SET_X:[['横位置','歩']],SET_Y:[['縦位置','歩']],POINT_TO:[['向く相手',null]],SET_SCALE:[['大きさ','％']],SET_VOLUME:[['音量','％']],TONE:[['周波数','Hz'],['長さ','秒']],TONE_WAIT:[['周波数','Hz'],['長さ','秒']],SET_TARGET_TEXT:[['部品',null],['文字',null]],SET_INPUT:[['入力欄',null],['内容',null]],FORWARD_LAYERS:[['層数',null]],BACKWARD_LAYERS:[['層数',null]],SET_COLOR:[['色',null]],SET_COSTUME:[['衣装',null]],SET_BACKDROP:[['背景',null]],SET_SELF_TEXT:[['文字',null]],SET_SIZE:[['太さ',null]],SAMPLE:[['音',null]],SAMPLE_WAIT:[['音',null]],PITCH_UP:[['音の高さ',null]],PITCH_DOWN:[['音の高さ',null]],CREATE_TARGET:[['コピーの元',null]]};
+    const args={MOVE:[['歩数','歩']],MOVE_DIRECTION:[['歩数','歩']],GOTO:[['よこのばしょ','歩'],['たてのばしょ','歩']],GLIDE:[['時間','秒'],['よこのばしょ','歩'],['たてのばしょ','歩']],GLIDE_DIRECTION:[['時間','秒'],['歩数','歩']],SET_DIRECTION:[['向き','度']],TURN_RIGHT:[['角度','度']],TURN_LEFT:[['角度','度']],SET_X:[['よこのばしょ','歩']],SET_Y:[['たてのばしょ','歩']],POINT_TO:[['向く相手',null]],SET_SCALE:[['大きさ','％']],SET_VOLUME:[['音の大きさ','％']],TONE:[['周波数','Hz'],['長さ','秒']],TONE_WAIT:[['周波数','Hz'],['長さ','秒']],SET_TARGET_TEXT:[['部品',null],['文字',null]],SET_INPUT:[['入力らん',null],['中身',null]],FORWARD_LAYERS:[['いくつ',null]],BACKWARD_LAYERS:[['いくつ',null]],SET_COLOR:[['色',null]],SET_COSTUME:[['すがた',null]],SET_BACKDROP:[['はいけい',null]],SET_SELF_TEXT:[['文字',null]],SET_SIZE:[['太さ',null]],SAMPLE:[['音',null]],SAMPLE_WAIT:[['音',null]],PITCH_UP:[['音の高さ',null]],PITCH_DOWN:[['音の高さ',null]],CREATE_TARGET:[['コピーの元',null]]};
     const slots=[...(values[kind] || (args[op]||[]).map(([label,unit],i)=>expr(`args.${i}`,label,unit)))];
     if(kind==='Say'&&role==='timedSpeech')slots.push(expr('seconds','話す時間','秒'));
     slots.unshift(Object.freeze({path:'actorRef',label:'動く対象',type:'actor',unit:null,required:true}));
     if(['LocalVariableDeclaration','LocalListDeclaration','UserActionCall'].includes(kind))slots.push(Object.freeze({path:'name',label:'名前',type:'name',unit:null,required:true}));
-    if(kind==='WaitBroadcastGroup')slots.push(Object.freeze({path:'broadcastRef',label:'直前の知らせ',type:'reference',unit:null,required:true}));
-    if(kind==='ForEach')slots.push(Object.freeze({path:'binder',label:'今の項目名',type:'name',unit:null,required:true}));
+    if(kind==='WaitBroadcastGroup')slots.push(Object.freeze({path:'broadcastRef',label:'すぐ前の合図',type:'reference',unit:null,required:true}));
+    if(kind==='ForEach')slots.push(Object.freeze({path:'binder',label:'今見ているものの名前',type:'name',unit:null,required:true}));
     if(['MOVE_DIRECTION','GLIDE_DIRECTION'].includes(op)||kind==='ContinuousRule')slots.push(Object.freeze({path:'direction',label:'方向',type:'direction',unit:null,required:true}));
     return Object.freeze(slots);
   }
   function sentenceFormRecord(id,pattern,kind,op,role) {
     const roleSlots=sentenceRoleSlots(kind,op,role),semanticOperation=op?`${kind}:${op}`:kind;
-    const labels={Assignment:'値を置き換える',NumericUpdate:'値を増やす・減らす',ListAppend:'最後に入れる',ListInsert:'途中に入れる',ListReplace:'項目を変える',ListDelete:'項目を消す',ListClear:'中身を全部消す',IfStatement:'条件で分ける',RepeatCount:'回数を決めてくり返す',RepeatWhile:'あいだくり返す',RepeatUntil:'までくり返す',Forever:'ずっとくり返す',ForEach:'中身を一つずつ見る',WaitTime:'時間を待つ',WaitBroadcastGroup:'直前の知らせの受け手を待つ',WaitUntil:'条件を待つ',Say:'内容を言う',Ask:'たずねて答えを待つ',Broadcast:'知らせる',BroadcastAndWait:'知らせて全部終わるまで待つ',LocalVariableDeclaration:'この中だけの変数を作る',LocalListDeclaration:'この中だけのリストを作る',ReturnStatement:'答えを返す',UserActionCall:'手順を行う',NoOperation:'何もしない',Break:'いまのくり返しを終える',Continue:'次の回へ進む',MotionCommand:'位置や向きを変える',LooksCommand:'見た目を変える',PenCommand:'線やスタンプを描く',SoundCommand:'音を鳴らす・変える',CloneCommand:'コピーを作る・消す',StopCommand:'実行を止める',ContinuousRule:'条件のあいだ動き続ける'};
+    const labels={Assignment:'中身をかえる',NumericUpdate:'中身を増やす・減らす',ListAppend:'最後に入れる',ListInsert:'とちゅうに入れる',ListReplace:'何番目かの中身をかえる',ListDelete:'何番目かを消す',ListClear:'中身を全部消す',IfStatement:'条件で分ける',RepeatCount:'回数を決めてくり返す',RepeatWhile:'あいだくり返す',RepeatUntil:'までくり返す',Forever:'ずっとくり返す',ForEach:'中身を一つずつ見る',WaitTime:'時間を待つ',WaitBroadcastGroup:'その合図で始まったことが全部終わるまで待つ',WaitUntil:'条件を待つ',Say:'内容を言う',Ask:'たずねて答えを待つ',Broadcast:'合図を送る',BroadcastAndWait:'合図を送って、全部終わるまで待つ',LocalVariableDeclaration:'この中だけの へんすうを作る',LocalListDeclaration:'この中だけのリストを作る',ReturnStatement:'答えを返す',UserActionCall:'手順を行う',NoOperation:'何もしない',Break:'このくり返しを終える',Continue:'次の回へ進む',MotionCommand:'ばしょや向きをかえる',LooksCommand:'見た目をかえる',PenCommand:'線をかく・スタンプをおす',SoundCommand:'音を鳴らす・かえる',CloneCommand:'コピーを作る・消す',StopCommand:'動きを止める',ContinuousRule:'条件のあいだ動き続ける'};
     const verbs={MotionCommand:['動く','動いて','動かす','動かして','進む','進んで','回る','回って','向く','向いて','行く','行って','すべる','すべって'],Say:['言う','言って','話す','話して','言わせる','言わせて'],WaitTime:['待つ','待って'],UserActionCall:['行う','行って'],SoundCommand:['鳴らし始める','鳴らし始めて','鳴らす','鳴らして'],NumericUpdate:['足す','足して','引く','引いて','増やす','減らす']};
     return Object.freeze({id,pattern,kind,op,role,intent:labels[kind]||kind,semanticOperation,roleSlots,
       clauses:Object.freeze(roleSlots.map(slot=>Object.freeze({role:slot.path,label:slot.label,unit:slot.unit}))),
@@ -848,7 +865,7 @@
       case 'LocalVariableDeclaration':return `この中だけで使う変数【${n.name}】を作り、最初は${f(n.initial)}にする`;
       case 'LocalListDeclaration':return `この中だけで使うリスト【${n.name}】を空で作る`;
       case 'ReturnStatement':return `${f(n.value)}を答えとして返す`;
-      case 'UserActionCall':return (n.argumentNames?n.args.map((value,i)=>`${nameSource(n.argumentNames[i])}を${f(value)}`).join('、')+'として、':n.args.length?'（'+n.args.map(value=>f(value)).join('、')+'）を渡して、':'')+`【${n.name}】という手順を行う`;
+      case 'UserActionCall':return (n.argumentNames?n.args.map((value,i)=>`${nameSource(n.argumentNames[i])}を${f(value)}`).join('、')+'として、':n.args.length?'（'+n.args.map(value=>f(value)).join('、')+'）をわたして、':'')+`【${n.name}】という手順を行う`;
       case 'StopCommand':return {THIS:'この動きを止める',OTHERS:'ほかの動きをぜんぶ止める',ALL:'作品ぜんぶを止める'}[n.op];
       case 'MotionCommand':case 'LooksCommand':case 'PenCommand':case 'SoundCommand':case 'CloneCommand':return formatCommand(n);
       case 'IfStatement':return 'もし'+formatCondition(n.condition,'if')+'、';
@@ -876,8 +893,8 @@
     ['LooksCommand:HIDE', /^(?:姿|すがた)を(?:かくす|隠す)$/d, 'LooksCommand', 'HIDE'],
     ['LooksCommand:SHOW', /^(?:姿|すがた)を(?:見せる|みせる)$/d, 'LooksCommand', 'SHOW'],
     ['LooksCommand:FRONT', /^いちばん手前へ出る$/d, 'LooksCommand', 'FRONT'],
-    ['LooksCommand:BACK', /^いちばん奥へ下がる$/d, 'LooksCommand', 'BACK'],
-    ['MotionCommand:BOUNCE', /^(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/d, 'MotionCommand', 'BOUNCE'],
+    ['LooksCommand:BACK', /^いちばん(?:おく|奥)へ下がる$/d, 'LooksCommand', 'BACK'],
+    ['MotionCommand:BOUNCE', /^(?:画面の(?:はし|端)|端)に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/d, 'MotionCommand', 'BOUNCE'],
     ['PenCommand:DOWN', /^ペンを下ろす$/d, 'PenCommand', 'DOWN'],
     ['PenCommand:UP', /^ペンを上げる$/d, 'PenCommand', 'UP'],
     ['PenCommand:STAMP', /^(?:今の(?:姿|すがた)の)?スタンプを(?:押|お)す$/d, 'PenCommand', 'STAMP'],
@@ -918,7 +935,7 @@
     ['LooksCommand:SET_SELF_TEXT', /^自分の文字を(.+?)に(?:変える|かえる)$/d, 'LooksCommand', 'SET_SELF_TEXT', 'arg'],
     ['LooksCommand:SET_TARGET_TEXT', /^(.+?)の文字を(.+?)に(?:変える|かえる)$/d, 'LooksCommand', 'SET_TARGET_TEXT', 'args'],
     ['LooksCommand:FORWARD_LAYERS', /^重なりを(.+?)つ手前にする$/d, 'LooksCommand', 'FORWARD_LAYERS', 'arg'],
-    ['LooksCommand:BACKWARD_LAYERS', /^重なりを(.+?)つ奥にする$/d, 'LooksCommand', 'BACKWARD_LAYERS', 'arg'],
+    ['LooksCommand:BACKWARD_LAYERS', /^重なりを(.+?)つ(?:おく|奥)にする$/d, 'LooksCommand', 'BACKWARD_LAYERS', 'arg'],
     ['PenCommand:SET_COLOR', /^ペンの色を(.+?)にする$/d, 'PenCommand', 'SET_COLOR', 'arg'],
     ['PenCommand:SET_SIZE', /^ペンの太さを(.+?)にする$/d, 'PenCommand', 'SET_SIZE', 'arg'],
     ['SoundCommand:SET_VOLUME', /^(?:音量|音の大きさ)を(.+?)％にする$/d, 'SoundCommand', 'SET_VOLUME', 'percent'],
@@ -1036,9 +1053,10 @@
       if (split >= 0) {
         rawName=text.slice(split+1);
         const input=text.slice(0,split);
-        if (input.endsWith('を渡して')) {
-          const inner=input.slice(0,-'を渡して'.length);
-          if (!(inner.startsWith('（')&&inner.endsWith('）'))) throw new AkariError('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）を渡して、');
+        const passWord=['をわたして','を渡して'].find(w=>input.endsWith(w));
+        if (passWord) {
+          const inner=input.slice(0,-passWord.length);
+          if (!(inner.startsWith('（')&&inner.endsWith('）'))) throw new AkariError('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、');
           args=parseArgumentText(inner.slice(1,-1),symbols,ctx,line.lineNo);
         } else {
           if (!input.endsWith('として')) throw new AkariError('P205','自分で作ったブロックに入れるものは、「として」をつけて書きます。れい：点数を10として、');
@@ -1265,6 +1283,16 @@
   function diagnoseSentenceIntent(line,symbols,ctx,previousLine=null,nextLine=null) {
     const code=line.code,mask=surfaceMask(code);let p;
     const skipRest=/^(.*?は、?)?次のくり返しへ進む$/.exec(mask);
+    // A bare はし stays a name, because a part may be called はし (橋, 箸). Bouncing only happens at the stage edge,
+    // and a touch test names a part that must exist, so without such a part the child means 画面のはし.
+    const bounceForm=/^(?:[^、。]+?は、?)?(?:画面の(?:はし|端)|端)に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/;
+    const bareEdgeBounce=!bounceForm.test(mask)&&/^(.*?は、?)?(?:もし、?)?(?:画面の)?(?:はし|端)に(?:ふれ|触れ).*(?:はね返る|跳ね返る)$/.exec(mask);
+    if(bareEdgeBounce)throw sentenceDiagnostic('画面の はしで はね返るときは、「画面のはしにふれていれば、はね返る」と 書きます',line,[{label:'画面の はしで はね返る',source:code.slice(0,bareEdgeBounce[1]?.length||0)+'画面のはしにふれていれば、はね返る'}],{kind:'MotionCommand'});
+    const bareEdgeTouch=/(^|もし|、|が|は)はしに(?:ふれ|触れ)/.exec(mask);
+    if(bareEdgeTouch&&!symbols?.project?.components?.some(c=>c.name==='はし')){
+      const at=bareEdgeTouch.index+bareEdgeTouch[1].length;
+      throw sentenceDiagnostic('画面の はしの ことなら、「画面のはし」と 書きます',line,[{label:'画面の はしに ふれている',source:code.slice(0,at)+'画面の'+code.slice(at)}]);
+    }
     if(skipRest)throw sentenceDiagnostic('この回の のこりを とばして 次の回へ 進むときは、「この回の残りをとばして、次の回へ進む」と 書きます',line,[{label:'この回の のこりを とばして 次の回へ',source:code.slice(0,skipRest[1]?.length||0)+'この回の残りをとばして、次の回へ進む'}],{kind:'Continue'});
     if((p=surfaceCapture(/^(.+?)キーを(?:おして|押して)いる(?:あいだ|間)、(.+?)は(.+?)歩(?:動く|うごく)$/d,code))){
       const key=p[0].text.startsWith('「')?p[0].text:`「${p[0].text}」`,actor=p[1].text,distance=p[2].text;
@@ -1283,7 +1311,7 @@
     }
     if((p=surfaceCapture(/^(.+?)になったら、(.+)$/d,code))){
       let raw=p[0].text;
-      if(!/(?:以上|以下|より大きい|より小さい|と同じ|と違う)$/.test(surfaceMask(raw)))raw+='と同じ';
+      if(!/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(raw)))raw+='と同じ';
       const condition=parseCondition(raw,symbols,ctx,'plain'),negative=exprNode('UnaryExpression',{op:'NOT',value:condition}),body=p[1].text,indent=' '.repeat(line.indent||0);
       throw sentenceDiagnostic('「〜になったら」は、2つの意味にとれます。今そうなっていたらするのか、そうなるときを待つのか、えらんでください',line,[
         {label:'今そうなっていたら する',source:`もし${formatCondition(condition,'if')}、${body}`},
@@ -1446,7 +1474,7 @@
       return {kind:'Else',...(tail&&tail!=='次のことをする'?{inlineBody:inline(parts[0])}:{})};
     }
     // The bounce command reads like a condition; with or without a subject it is one command.
-    if(/^(?:[^、。]+?は、?)?(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/.test(mask))return null;
+    if(/^(?:[^、。]+?は、?)?(?:画面の(?:はし|端)|端)に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/.test(mask))return null;
     if((parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))、(.*)$/d,code))|| (parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))$/d,code))) {
       const condition=parseCondition(parts[0].text,symbols,ctx,'if'),tail=parts[1];
       if(tail?.text&&tail.text!=='次のことをする'&&/(?:なら、|ことを.+回)/.test(surfaceMask(tail.text)))throw new AkariError('P201','「もし」や「くり返す」の 中に 重ねるときは、次の 行に 書いて、行の はじめを 右へ ずらしてください');

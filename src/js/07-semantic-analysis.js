@@ -1886,7 +1886,7 @@
     const digestSeen = new Set();
     for (const id of reachable) {
       const a = store.get(id);
-      if (!a) throw new AkariError('F503', `参照先asset「${id}」がありません`);
+      if (!a) throw new AkariError('F503', `使うはずの絵や音「${id}」がありません`);
       raw += a.byteLength;
       if (a.kind === 'image') {
         imgCount++;
@@ -1897,7 +1897,7 @@
         if (a.meta?.duration) duration += a.meta.duration;
       }
       const dk = `${a.kind}:${a.sha256}:${a.byteLength}`;
-      if (digestSeen.has(dk)) throw new AkariError('F503', '同一バイナリassetが重複しています');
+      if (digestSeen.has(dk)) throw new AkariError('F503', '同じ中身の絵や音が、2つ以上あります');
       digestSeen.add(dk);
     }
     if (
@@ -1911,21 +1911,21 @@
       throw new AkariError('F504', '作品の絵や音が、多すぎるか大きすぎます。使わない絵や音をけしてください');
     for (const b of project.stage.backdrops)
       if (b.kind === 'image' && store.get(b.assetId)?.kind !== 'image')
-        throw new AkariError('F509', '画像背景が画像asset以外を参照しています');
+        throw new AkariError('F509', '絵のはいけいが、絵ではないものを使っています');
     for (const c of project.components)
       if (c.type === 'sprite')
         for (const co of c.costumes)
           if (co.kind === 'image' && store.get(co.assetId)?.kind !== 'image')
-            throw new AkariError('F509', '画像衣装が画像asset以外を参照しています');
+            throw new AkariError('F509', '絵のすがたが、絵ではないものを使っています');
     for (const snd of project.sounds)
       if (store.get(snd.assetId)?.kind !== 'audio')
-        throw new AkariError('F509', '音素材がaudio asset以外を参照しています');
+        throw new AkariError('F509', '音が、音ではないものを使っています');
     if (serializedAssetIds) {
       if (
         serializedAssetIds.size !== reachable.size ||
         [...serializedAssetIds].some((id) => !reachable.has(id))
       )
-        throw new AkariError('F503', '保存Projectにorphan assetまたは不足assetがあります');
+        throw new AkariError('F503', '作品ファイルに、使われていない絵や音か、足りない絵や音があります');
     }
     return true;
   }
@@ -2008,22 +2008,22 @@
       assets = [];
     for (const id of reachable) {
       const a = assetStore.get(id);
-      if (!a) throw new AkariError('F503', `asset「${id}」がありません`);
+      if (!a) throw new AkariError('F503', `絵や音「${id}」がありません`);
       if (
         !(a.bytes instanceof Uint8Array) ||
         a.bytes.length !== a.byteLength ||
         sha256Fallback(a.bytes) !== a.sha256
       )
-        throw new AkariError('F508', `asset「${id}」の保存前整合性が一致しません`);
+        throw new AkariError('F508', `絵や音「${id}」の中身が、ほぞんしたときと合いません`);
       if (a.kind === 'image') {
         const sn = sniffImage(a.bytes);
         if (sn.mime !== a.mime)
-          throw new AkariError('F509', `asset「${id}」の画像MIMEが一致しません`);
+          throw new AkariError('F509', `絵「${id}」のファイルの形が、記録と合いません`);
       } else if (a.kind === 'audio') {
         const sn = sniffAudio(a.bytes);
         if (sn.mime !== a.mime)
-          throw new AkariError('F509', `asset「${id}」の音声MIMEが一致しません`);
-      } else throw new AkariError('F509', `asset「${id}」のkindが不正です`);
+          throw new AkariError('F509', `音「${id}」のファイルの形が、記録と合いません`);
+      } else throw new AkariError('F509', `絵や音「${id}」の種類が、正しくありません`);
       assets.push({
         id: a.id,
         kind: a.kind,
@@ -2103,7 +2103,7 @@
     )
       throw new AkariError('F503', '作品の ファイルの 形が、あかりで 読める 形と 合いません');
     if (!Array.isArray(root.assets) || root.assets.length > LIMITS.assets)
-      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, 'asset数が上限を超えています');
+      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, '絵や音の数が、上限より多いです');
     const design = {
       ...(Object.hasOwn(root, 'extensions') ? { extensions: AKARI_RUNTIME.validateExtensionEnvelope(root.extensions) } : {}),
       schema: root.schema,
@@ -2129,8 +2129,8 @@
       ac = 0;
     for (const a of root.assets) {
       if (!exactKeys(a, ['id', 'kind', 'mime', 'byteLength', 'sha256', 'dataBase64']))
-        throw new AkariError('F503', 'asset recordに未知または不足項目があります');
-      if (!safeId(a.id)) throw new AkariError('F503', 'asset IDが不正です');
+        throw new AkariError('F503', '絵や音の記録の形が、正しくありません');
+      if (!safeId(a.id)) throw new AkariError('F503', '絵や音の番号が、正しくありません');
       if (ids.has(a.id) || assetIds.has(a.id))
         throw new AkariError('F505', `ID「${a.id}」が2つあります`);
       ids.add(a.id);
@@ -2138,29 +2138,29 @@
       if (a.kind === 'image') {
         ic++;
         if (!['image/png', 'image/jpeg', 'image/webp'].includes(a.mime))
-          throw new AkariError('F509', 'image assetのMIMEが未対応です');
+          throw new AkariError('F509', 'あかりで使えない形の絵があります');
         if (!Number.isInteger(a.byteLength) || a.byteLength < 1 || a.byteLength > LIMITS.imageBytes)
-          throw new AkariError('F504', '画像asset byteLengthが上限外です');
+          throw new AkariError('F504', '絵の大きさが、使える大きさの外です');
       } else if (a.kind === 'audio') {
         ac++;
         if (!['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/flac', 'audio/ogg'].includes(a.mime))
-          throw new AkariError('F509', 'audio assetのMIMEが未対応です');
+          throw new AkariError('F509', 'あかりで使えない形の音があります');
         if (!Number.isInteger(a.byteLength) || a.byteLength < 1 || a.byteLength > LIMITS.audioBytes)
-          throw new AkariError('F504', '音asset byteLengthが上限外です');
-      } else throw new AkariError('F509', 'asset kindが未対応です');
-      if (!/^[0-9a-f]{64}$/.test(a.sha256)) throw new AkariError('F508', 'SHA-256表記が不正です');
+          throw new AkariError('F504', '音の大きさが、使える大きさの外です');
+      } else throw new AkariError('F509', 'あかりで使えない種類の絵や音があります');
+      if (!/^[0-9a-f]{64}$/.test(a.sha256)) throw new AkariError('F508', '絵や音の中身をたしかめるしるしの書き方が、正しくありません');
       const n = decodedBase64Length(a.dataBase64);
       if (n !== a.byteLength)
-        throw new AkariError('F508', 'Base64予想byte数とbyteLengthが一致しません');
+        throw new AkariError('F508', '絵や音の大きさが、記録とちがいます');
       predicted += n;
       if (predicted > LIMITS.assetRawTotal)
         throw new AkariError('F504', '絵や音を合わせた大きさが大きすぎて使えません。いらない絵や音をけしてください', 0, 0, `絵や音の合計は${LIMITS.assetRawTotal / 1048576}MiBまで`);
       const dk = `${a.kind}:${a.sha256}:${a.byteLength}`;
-      if (digestKeys.has(dk)) throw new AkariError('F503', '保存Projectに重複assetがあります');
+      if (digestKeys.has(dk)) throw new AkariError('F503', '作品ファイルに、同じ絵や音が2つ以上あります');
       digestKeys.add(dk);
     }
     if (ic > LIMITS.imageAssets || ac > LIMITS.audioAssets)
-      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, '画像または音asset数が上限を超えています');
+      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, '絵や音の数が、上限より多いです');
     return { design, assetIds };
   }
 
@@ -2518,9 +2518,9 @@
   async function validateLoadedAssetRecord(a) {
     const bytes = decodeBase64(a.dataBase64);
     if (bytes.length !== a.byteLength)
-      throw new AkariError('F508', 'asset byteLengthが一致しません');
+      throw new AkariError('F508', '絵や音の大きさが、記録と合いません');
     const digest = await sha256(bytes);
-    if (digest !== a.sha256) throw new AkariError('F508', 'asset SHA-256が一致しません');
+    if (digest !== a.sha256) throw new AkariError('F508', '絵や音の中身が、記録と合いません');
     if (a.kind === 'image') {
       const sn = sniffImage(bytes);
       if (sn.mime !== a.mime) throw new AkariError('F509', '絵のファイルの形が、書いてある形と合いません。作品ファイルがこわれているようです');
@@ -2544,14 +2544,14 @@
     const sn = sniffAudio(bytes);
     if (sn.mime !== a.mime) throw new AkariError('F509', '音のファイルの形が、書いてある形と合いません。作品ファイルがこわれているようです');
     if (a.mime === 'audio/mpeg' && !bytesEqual(sn.clean, bytes))
-      throw new AkariError('F508', '保存MP3に除去対象metadataが残っています');
+      throw new AkariError('F508', 'ほぞんした音（MP3）に、取りのぞくはずのおまけの情報が残っています');
     if (a.mime === 'audio/wav') {
       const rebuilt = rebuildCanonicalWav(sn.parsed);
       if (!bytesEqual(rebuilt, bytes))
-        throw new AkariError('F508', '保存WAVがcanonical形ではありません');
+        throw new AkariError('F508', 'ほぞんした音（WAV）が、決まった形になっていません');
     }
     if (['audio/mp4', 'audio/flac', 'audio/ogg'].includes(a.mime) && !bytesEqual(sn.clean, bytes))
-      throw new AkariError('F508', '保存音声がmetadata除去後のcanonical形ではありません');
+      throw new AkariError('F508', 'ほぞんした音が、おまけの情報を取りのぞいた決まった形になっていません');
     const containerMeta = audioContainerMeta(sn);
     checkAudioContainerLimits(containerMeta);
     if (sn.duration != null) checkAudioLimits({ ...containerMeta, duration: sn.duration });

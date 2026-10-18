@@ -53,6 +53,8 @@ const predicateRows=[
     forms:{plain:'より大きい',ifYes:'より大きければ',ifNo:'より大きくなければ',whileYes:'より大きいあいだ',untilYes:'より大きくなるまで',andYes:'より大きくて',andNo:'より大きくなくて',plainNo:'より大きくない'}},
   {plain:'と同じ',operand:'点数が1',yes:compare('EQ',score,num(1)),
     forms:{plain:'と同じ',ifYes:'と同じなら',ifNo:'と同じでなければ',whileYes:'と同じであるあいだ',untilYes:'と同じになるまで',andYes:'と同じで',andNo:'と同じではなくて',plainNo:'と同じではない'}},
+  {plain:'とちがう',operand:'点数が1',yes:compare('NEQ',score,num(1)),
+    forms:{plain:'とちがう',ifYes:'とちがえば',ifNo:'とちがわなければ',whileYes:'とちがうあいだ',untilYes:'とちがう状態になるまで',andYes:'とちがっていて',andNo:'とちがわなくて',plainNo:'とちがわない'}},
   {plain:'と違う',operand:'点数が1',yes:compare('NEQ',score,num(1)),
     forms:{plain:'と違う',ifYes:'と違えば',ifNo:'と違わなければ',whileYes:'と違うあいだ',untilYes:'と違う状態になるまで',andYes:'と違っていて',andNo:'と違わなくて',plainNo:'と違わない'}},
   {plain:'押されている',operand:'「空白」キーが',yes:sensor('KEY_DOWN',str('空白')),

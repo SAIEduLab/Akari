@@ -1542,6 +1542,15 @@ body {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+/* A sentence that continues on a second line (the for-each block). */
+.blockui-phrase-break {
+  flex-basis: 100%;
+  height: 0;
+}
+.blockui-node-main:has(> .blockui-phrase-break),
+.blockui-preview-main:has(> .blockui-phrase-break) {
+  flex-wrap: wrap;
+}
 .blockui-node-head {
   grid-column: 2;
   grid-row: 1;
@@ -3764,6 +3773,9 @@ body[data-editor-mode="blocks"] .prop-name {
 .blockui-world .blockui-phrase-text {
   white-space: pre;
   overflow-wrap: normal;
+}
+.blockui-world .blockui-node-main:has(> .blockui-phrase-break) {
+  flex-wrap: wrap;
 }
 .blockui-world .blockui-node-head {
   position: relative;
@@ -7385,7 +7397,7 @@ function createAkariExtensionHost(options) {
     }
     function decodedBase64Length(text) {
       if (typeof text !== 'string' || text.length % 4 !== 0)
-        throw new AkariError('F508', 'Base64\u5f62\u5f0f\u304c\u4e0d\u6b63\u3067\u3059');
+        throw new AkariError('F508', '絵や音の中身を表す文字の書き方が、正しくありません');
       const pad = text.endsWith('==') ? 2 : text.endsWith('=') ? 1 : 0,
         end = text.length - pad;
       for (let i = 0; i < end; i++) {
@@ -7399,10 +7411,10 @@ function createAkariExtensionHost(options) {
             c === 47
           )
         )
-          throw new AkariError('F508', 'Base64\u5f62\u5f0f\u304c\u4e0d\u6b63\u3067\u3059');
+          throw new AkariError('F508', '絵や音の中身を表す文字の書き方が、正しくありません');
       }
       if (pad && end < 2)
-        throw new AkariError('F508', 'Base64\u5f62\u5f0f\u304c\u4e0d\u6b63\u3067\u3059');
+        throw new AkariError('F508', '絵や音の中身を表す文字の書き方が、正しくありません');
       return (text.length / 4) * 3 - pad;
     }
     function decodeBase64(text) {
@@ -7414,7 +7426,7 @@ function createAkariExtensionHost(options) {
         try {
           bin = atob(text);
         } catch (_) {
-          throw new AkariError('F508', 'Base64を読み取れません');
+          throw new AkariError('F508', '絵や音の中身を表す文字を、読みとれません');
         }
         out = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
@@ -7432,7 +7444,7 @@ function createAkariExtensionHost(options) {
           if (at < expected) out[at++] = n & 255;
         }
       }
-      if (encodeBase64(out) !== text) throw new AkariError('F508', 'Base64が標準形ではありません');
+      if (encodeBase64(out) !== text) throw new AkariError('F508', '絵や音の中身を表す文字が、決まった形になっていません');
       return out;
     }
     function rotr(x, n) {
@@ -7569,7 +7581,7 @@ function createAkariExtensionHost(options) {
       }
       addImmutable(asset) {
         if (this.#map.has(asset.id))
-          throw new AkariError('F505', `asset ID「${asset.id}」が 2つ あります`);
+          throw new AkariError('F505', `絵や音の番号「${asset.id}」が 2つ あります`);
         const frozen = makeImmutableAssetRecord(asset);
         this.#map.set(frozen.id, frozen);
         return frozen;
@@ -7578,9 +7590,9 @@ function createAkariExtensionHost(options) {
         for (const a of this.#map.values())
           if (a.kind === kind && a.sha256 === digest) {
             if (a.byteLength !== byteLength)
-              throw new AkariError('F508', '同じSHA-256でbyteLengthが異なります');
+              throw new AkariError('F508', '同じしるしの絵や音なのに、大きさがちがいます');
             if (bytes && !bytesEqual(a.bytes, bytes))
-              throw new AkariError('F508', '同じSHA-256/長さでバイト列が異なります');
+              throw new AkariError('F508', '同じしるしと大きさの絵や音なのに、中身がちがいます');
             return a;
           }
         return null;
@@ -11277,7 +11289,7 @@ function createAkariExtensionHost(options) {
         id: 'ForEach',
         kind: 'ForEach',
         op: '',
-        source: '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  何もしない',
+        source: '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【今の名前】と呼ぶ。\n  何もしない',
       },
       {
         id: 'MotionCommand:MOVE',
@@ -11337,7 +11349,7 @@ function createAkariExtensionHost(options) {
         id: 'MotionCommand:BOUNCE',
         kind: 'MotionCommand',
         op: 'BOUNCE',
-        source: '画面の端にふれていれば、はね返る',
+        source: '画面のはしにふれていれば、はね返る',
       },
       {
         id: 'LooksCommand:SET_SCALE',
@@ -11373,7 +11385,7 @@ function createAkariExtensionHost(options) {
         id: 'LooksCommand:BACK',
         kind: 'LooksCommand',
         op: 'BACK',
-        source: 'いちばん奥へ下がる',
+        source: 'いちばんおくへ下がる',
       },
       {
         id: 'LooksCommand:FORWARD_LAYERS',
@@ -11385,7 +11397,7 @@ function createAkariExtensionHost(options) {
         id: 'LooksCommand:BACKWARD_LAYERS',
         kind: 'LooksCommand',
         op: 'BACKWARD_LAYERS',
-        source: '重なりを1つ奥にする',
+        source: '重なりを1つおくにする',
       },
       {
         id: 'PenCommand:DOWN',
@@ -11577,7 +11589,7 @@ function createAkariExtensionHost(options) {
         id: 'LooksCommand:SET_INPUT',
         kind: 'LooksCommand',
         op: 'SET_INPUT',
-        source: '「入力欄1」に「答え」を入れる',
+        source: '「入力らん1」に「答え」を入れる',
       },
       {
         id: 'SoundCommand:SAMPLE',
@@ -11619,7 +11631,7 @@ function createAkariExtensionHost(options) {
         id: 'UserActionCall',
         kind: 'UserActionCall',
         op: '',
-        source: '（3）を渡して、【増やす】という手順を行う',
+        source: '（3）をわたして、【増やす】という手順を行う',
       },
       {
         id: 'NoOperation',
@@ -11735,9 +11747,9 @@ function createAkariExtensionHost(options) {
       '言う・たずねる': ['話す', 'はなす', 'しゃべる', '質問', '答え'],
       'もし・くり返し': ['もし', 'くり返す', '繰り返す', '条件'],
       '待つ': ['待つ', 'まつ', '時間', '秒'],
-      'へんすう': ['へんすう', 'データ', '記録', '変数', '値'],
+      'へんすう': ['へんすう', '中身', '記録', '変数', '値'],
       '\u30ea\u30b9\u30c8': ['リスト', '一覧', '並べる', 'これ'],
-      'へんすう・リストの 中身': ['へんすう', 'データ', '記録', '変数', '値'],
+      'へんすう・リストの 中身': ['へんすう', '中身', '記録', '変数', '値'],
       '\u8a08\u7b97': ['計算', '答え', '値を求める'],
       'てじゅん': ['手順', '呼び出す', '実行'],
     };
@@ -12020,7 +12032,7 @@ function createAkariExtensionHost(options) {
       '1\u304c1\u4ee5\u4e0a',
       '1\u304c1\u4ee5\u4e0b',
       '1\u304c1\u3068\u540c\u3058',
-      '1\u304c2\u3068\u9055\u3046',
+      '1が2とちがう',
       '条件（条件の答え（あてはまる））が成り立たない',
       '条件の答え（あてはまる）かつ条件の答え（あてはまらない）',
       '条件の答え（あてはまる）または条件の答え（あてはまらない）',
@@ -12032,8 +12044,8 @@ function createAkariExtensionHost(options) {
     ];
     if (type !== 'stage')
       exprs.push(
-        '画面の端にふれている',
-        '「マウス」までの距離',
+        '画面のはしにふれている',
+        '「マウス」までのきょり',
         '「赤」の色にふれている',
       );
     for (const c of project.components)
@@ -14858,7 +14870,7 @@ function createAkariExtensionHost(options) {
           "args": [
             "今回"
           ],
-          "source": "この中だけで使う変数【音の番号】を作り、最初は1にする。\nこの中だけで使う変数【鳴らす高さ】を作り、最初は1にする。\n16回くり返す。\n  もし今回が【再生番号】と違えば、\n    このくり返しを終える。\n  【選んだ音】を【音の番号】にする。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字をつなぐ（「いま 」、【音の番号】、「番の音 ♪」）にかえる。\n  【鳴らす高さ】を【音の数】の（【音の高さ】の【音の番号】番目）番目にする。\n  【鳴らす高さ】Hzの音を60÷【テンポ】×【音の長さ】の【音の番号】番目×0.85秒鳴らし始める。\n  60÷【テンポ】×【音の長さ】の【音の番号】番目秒待つ。\n  【音の番号】を1増やす。\nもし今回が【再生番号】と同じなら、\n  【演奏中】を0にする。\n  「お知らせ」の文字を「さいごまで 聞けたね！ つぎは どこを かえる？」にかえる。"
+          "source": "この中だけで使う変数【音の番号】を作り、最初は1にする。\nこの中だけで使う変数【鳴らす高さ】を作り、最初は1にする。\n16回くり返す。\n  もし今回が【再生番号】とちがえば、\n    このくり返しを終える。\n  【選んだ音】を【音の番号】にする。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字をつなぐ（「いま 」、【音の番号】、「番の音 ♪」）にかえる。\n  【鳴らす高さ】を【音の数】の（【音の高さ】の【音の番号】番目）番目にする。\n  【鳴らす高さ】Hzの音を60÷【テンポ】×【音の長さ】の【音の番号】番目×0.85秒鳴らし始める。\n  60÷【テンポ】×【音の長さ】の【音の番号】番目秒待つ。\n  【音の番号】を1増やす。\nもし今回が【再生番号】と同じなら、\n  【演奏中】を0にする。\n  「お知らせ」の文字を「さいごまで 聞けたね！ つぎは どこを かえる？」にかえる。"
         }
       ],
       "functions": [],
@@ -15566,12 +15578,14 @@ function createAkariExtensionHost(options) {
     '\u3088\u308a\u5927\u304d\u3044',
     '\u3088\u308a\u5c0f\u3055\u3044',
     '\u3068\u540c\u3058',
-    '\u3068\u9055\u3046',
+    'とちがう',
+    'と違う',
     '\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u308b',
     '\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u306a\u3044',
     '\u8272\u306b\u89e6\u308c\u3066\u3044\u308b',
     '\u8272\u306b\u89e6\u308c\u3066\u3044\u306a\u3044',
-    '\u307e\u3067\u306e\u8ddd\u96e2',
+    'までのきょり',
+    'までの距離',
     '\u756a\u76ee',
     '\u6587\u5b57\u76ee',
     '\u304c',
@@ -15798,15 +15812,15 @@ function createAkariExtensionHost(options) {
         else if (this.take('以下')) op = 'LTE';
         else if (this.take('より大きくない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('CompareExpression',{op:'GT',left,right})});
         else if (this.take('より小さくない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('CompareExpression',{op:'LT',left,right})});
-        else if (this.take('と違わない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('CompareExpression',{op:'NEQ',left,right})});
+        else if (this.take('とちがわない') || this.take('と違わない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('CompareExpression',{op:'NEQ',left,right})});
         else if (this.take('より大きい')) op = 'GT';
         else if (this.take('より小さい')) op = 'LT';
         else if (this.take('と同じ')) op = 'EQ';
-        else if (this.take('と違う')) op = 'NEQ';
+        else if (this.take('とちがう') || this.take('と違う')) op = 'NEQ';
         else
           this.err(
             'P205',
-            'くらべることばがありません。おわりに「以上」「以下」「より大きい」「より小さい」「と同じ」「と違う」のどれかを書いてください。れい：点数が10と同じ',
+            'くらべることばがありません。おわりに「以上」「以下」「より大きい」「より小さい」「と同じ」「とちがう」のどれかを書いてください。れい：点数が10と同じ',
           );
         if (this.starts('が'))
           this.err('P206', 'くらべることを2つつづけては書けません。「かつ」で分けてください。れい：1が2より小さいかつ2が3より小さい');
@@ -15900,7 +15914,7 @@ function createAkariExtensionHost(options) {
         else if (this.take('の文字数'))
           n = exprNode('BuiltinCall', { name: 'STRING_LENGTH', args: [n] });
         else if (this.take('の値')) { /* a value noun phrase preserves its expression */ }
-        else if (this.take('までの距離'))
+        else if (this.take('までのきょり') || this.take('までの距離'))
           n = exprNode('SensorRead', { sensor: 'DISTANCE_TO', arg: n });
         else if (this.take('キーがおされていない') || this.take('\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u306a\u3044'))
           n = exprNode('UnaryExpression', {
@@ -15965,6 +15979,7 @@ function createAkariExtensionHost(options) {
         const ch=this.text[j];
         if(ch==='（'||ch==='［') depth++;
         else if(ch==='）'||ch==='］') { if(!depth) break; depth--; }
+        else if(ch==='、'&&!depth) break;
         if(!depth) for(const suffix of suffixes) if(this.text.startsWith(suffix,j)) return {pos:j,suffix};
       }
       return null;
@@ -16024,6 +16039,15 @@ function createAkariExtensionHost(options) {
         }
         if (!closed) this.err('N101','「の あとの 」が ありません。文字の おわりに 」を 書いてください');
         if (cpLen(value) > LIMITS.stringChars) this.err('R413','文字が長すぎます');
+        // A quoted part name followed by の reads that part's state, as the unquoted name does:
+        // 「たくどん」のよこのばしょ is たくどんのよこのばしょ. Text suffixes (の長さ, の2文字目, ...) stay text.
+        if (open === '「' && this.starts('の') && !['の数だけ','の値','の答え','の中身','の長さ','の文字数','の色','のどれか'].some(t => this.starts(t)) &&
+          !this.findTopSuffix(['番目','文字目'])) {
+          validateName(value); this.i++;
+          if (++this.depth + (this.ctx._parserDepth||0) > LIMITS.expressionDepth) this.err('P208','計算の中に計算が入りすぎています。短い計算に分けてください');
+          try { return exprNode('ActorQualifiedRead',{actorRef:{kind:'named',name:value},value:this.basic()}); }
+          finally { this.depth--; }
+        }
         return exprNode('StringLiteral', { value });
       }
       if (this.take('\u81ea\u5206\u306e')) return this.starts('（') ? exprNode('ActorQualifiedRead',{actorRef:{kind:'self'},value:this.basic()}) : this.readNamed('self');
@@ -16067,9 +16091,11 @@ function createAkariExtensionHost(options) {
       if (EXTENSION_HOST.operations('events').length && this.starts('拡張の値') && !extensionValueIsData(this.symbols, this.ctx)) {
         this.i += '拡張の値'.length; return exprNode('SensorRead', { sensor: '拡張の値' });
       }
-      // 「画面の端」 names the stage edge, the same target as the bare word 端.
-      if (this.starts('画面の端') && nameBoundary(this.text, this.i + '画面の端'.length)) {
-        this.i += '画面の端'.length;
+      // 「画面のはし」 and 「画面の端」 name the stage edge, the same target as the bare word 端.
+      // A bare はし stays a name: a part may be called はし (橋, 箸).
+      const edgeWord = ['画面のはし', '画面の端'].find((w) => this.starts(w) && nameBoundary(this.text, this.i + w.length));
+      if (edgeWord) {
+        this.i += edgeWord.length;
         return exprNode('StringLiteral', { value: '端' });
       }
       const builtinWords = [...BUILTIN_NAMES, ...Object.values(BUILTIN_SURFACES)];
@@ -16078,7 +16104,7 @@ function createAkariExtensionHost(options) {
       const token = builtin ? {name:builtinName,end:this.i+builtin.length,exact:false} : readNameToken(this.text, this.i);
       if (!token) this.err('P205', '読みとれないところがあります。書き方をたしかめてください');
       this.i = token.end;
-      if (this.starts('の') && !['の数だけ','の値','の答え','の中身','の長さ','の文字数','の色'].some(t => this.starts(t))) {
+      if (this.starts('の') && !['の数だけ','の値','の答え','の中身','の長さ','の文字数','の色','のどれか'].some(t => this.starts(t))) {
         const suffix = this.findTopSuffix(['番目','文字目']);
         if (!suffix) {
           validateName(token.name); this.i++;
@@ -16130,9 +16156,10 @@ function createAkariExtensionHost(options) {
       if (!mask.endsWith('で求めた答え')) return null;
       const tail = body.slice(0,-'で求めた答え'.length), tailMask = surfaceMask(tail);
       const marker = tailMask.lastIndexOf('として、');
-      const positional = tailMask.lastIndexOf('を渡して、');
+      const passWord = ['をわたして、', 'を渡して、'].find(w => tailMask.includes(w)) || 'をわたして、';
+      const positional = tailMask.lastIndexOf(passWord);
       const cut = marker >= 0 ? marker : positional;
-      const nameText = cut < 0 ? tail : tail.slice(cut+(marker >= 0 ? 4 : 5));
+      const nameText = cut < 0 ? tail : tail.slice(cut+(marker >= 0 ? 4 : passWord.length));
       const name = callableSurfaceName(nameText);
       const args = [], argumentNames = [];
       const parse = (t,offset) => parseExpression(t,this.symbols,{...this.ctx,sourcePositions:this.ctx.sourcePositions?.slice(start+1+offset,start+1+offset+t.length),_parserDepth:(this.ctx._parserDepth||0)+this.depth+1});
@@ -16149,7 +16176,7 @@ function createAkariExtensionHost(options) {
         }
       } else if (positional >= 0) {
         const values = tail.slice(0,positional);
-        if (!values.startsWith('（') || !values.endsWith('）')) this.err('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）を渡して、');
+        if (!values.startsWith('（') || !values.endsWith('）')) this.err('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、');
         const inner=values.slice(1,-1), visible=surfaceMask(inner); let begin=0;
         for(let j=0;j<=inner.length;j++) if(j===inner.length || visible[j]==='、') {
           if(inner.length) args.push(parse(inner.slice(begin,j),1+begin)); begin=j+1;
@@ -16243,6 +16270,7 @@ function createAkariExtensionHost(options) {
     ['より小さい','より小さければ','より小さくなければ','より小さいあいだ','より小さくなるまで','より小さくて','より小さくなくて','より小さくない'],
     ['より大きい','より大きければ','より大きくなければ','より大きいあいだ','より大きくなるまで','より大きくて','より大きくなくて','より大きくない'],
     ['と同じ','と同じなら','と同じでなければ','と同じであるあいだ','と同じになるまで','と同じで','と同じではなくて','と同じではない'],
+    ['とちがう','とちがえば','とちがわなければ','とちがうあいだ','とちがう状態になるまで','とちがっていて','とちがわなくて','とちがわない'],
     ['と違う','と違えば','と違わなければ','と違うあいだ','と違う状態になるまで','と違っていて','と違わなくて','と違わない'],
     ['押されている','押されていれば','押されていなければ','押されているあいだ','押されるまで','押されていて','押されていなくて','押されていない'],
     ['おされている','おされていれば','おされていなければ','おされているあいだ','おされるまで','おされていて','おされていなくて','おされていない'],
@@ -16301,7 +16329,10 @@ function createAkariExtensionHost(options) {
       if (l.kind==='LogicalExpression'||r.kind==='LogicalExpression') fail('きまりを 1つずつ（ ）で かこんで 分けてください');
       return exprNode('LogicalExpression',{op:or?'OR':'AND',left:l,right:r});
     }
-    if (/かつ|または/.test(mask) || mask.includes('か')) {
+    // か joins two conditions only right after a finished predicate (点数が1と同じか点数が2と同じ). A か inside a
+    // name (かず, あかり) or in 1から6のどれか belongs to that word.
+    const orJoin=/(?:以上|以下|大きい|小さい|大きくない|小さくない|と同じ|ではない|でない|とちがう|ちがわない|と違う|違わない|いる|いない|である)か(?!つ)/.test(mask);
+    if (/かつ|または/.test(mask) || orJoin) {
       if (form !== 'plain' || (mask.includes('かつ') && mask.includes('または'))) fail('いくつかのきまりをつなぐときは、「条件（…）」でひとまとめにしてください。れい：もし条件（1が1と同じかつ（2が2と同じまたは3が3と同じ））が成り立つなら、');
     }
     const matches=[];
@@ -16474,24 +16505,24 @@ function createAkariExtensionHost(options) {
   function sentenceRoleSlots(kind,op,role) {
     const expr=(path,label,unit=null)=>Object.freeze({path,label,type:path==='target'?'target':path==='condition'?'condition':path==='args'?'arguments':'expression',unit,required:true});
     const values={
-      Assignment:[expr('target','変更先'),expr('value','新しい値')],NumericUpdate:[expr('target','変更先'),expr('value','増減量')],
-      ListAppend:[expr('target','リスト'),expr('value','入れる値')],ListInsert:[expr('target','リスト'),expr('index','位置','番目'),expr('value','入れる値')],ListReplace:[expr('target','リスト'),expr('index','位置','番目'),expr('value','新しい値')],ListDelete:[expr('target','リスト'),expr('index','位置','番目')],ListClear:[expr('target','リスト')],
+      Assignment:[expr('target','かえるもの'),expr('value','新しい中身')],NumericUpdate:[expr('target','かえるもの'),expr('value','ふやす・へらす数')],
+      ListAppend:[expr('target','リスト'),expr('value','入れるもの')],ListInsert:[expr('target','リスト'),expr('index','何番目','番目'),expr('value','入れるもの')],ListReplace:[expr('target','リスト'),expr('index','何番目','番目'),expr('value','新しい中身')],ListDelete:[expr('target','リスト'),expr('index','何番目','番目')],ListClear:[expr('target','リスト')],
       IfStatement:[expr('condition','条件')],RepeatCount:[expr('count','回数','回')],RepeatWhile:[expr('condition','条件')],RepeatUntil:[expr('condition','条件')],ForEach:[expr('list','調べるリスト')],WaitTime:[expr('seconds','待つ時間','秒')],WaitUntil:[expr('condition','待つ条件')],
-      Say:[expr('value','言う内容')],Ask:[expr('question','たずねる内容')],Broadcast:[expr('message','知らせ')],BroadcastAndWait:[expr('message','知らせ')],ReturnStatement:[expr('value','答え')],LocalVariableDeclaration:[expr('initial','最初の値')],UserActionCall:[expr('args','受け取る値')],ContinuousRule:[expr('condition','続ける条件'),expr('seconds','速さの時間','秒'),expr('distance','速さの歩数','歩')],
+      Say:[expr('value','言う内容')],Ask:[expr('question','たずねる内容')],Broadcast:[expr('message','合図')],BroadcastAndWait:[expr('message','合図')],ReturnStatement:[expr('value','答え')],LocalVariableDeclaration:[expr('initial','はじめの中身')],UserActionCall:[expr('args','入れるもの')],ContinuousRule:[expr('condition','続ける条件'),expr('seconds','速さの時間','秒'),expr('distance','速さの歩数','歩')],
     };
-    const args={MOVE:[['歩数','歩']],MOVE_DIRECTION:[['歩数','歩']],GOTO:[['横位置','歩'],['縦位置','歩']],GLIDE:[['時間','秒'],['横位置','歩'],['縦位置','歩']],GLIDE_DIRECTION:[['時間','秒'],['歩数','歩']],SET_DIRECTION:[['向き','度']],TURN_RIGHT:[['角度','度']],TURN_LEFT:[['角度','度']],SET_X:[['横位置','歩']],SET_Y:[['縦位置','歩']],POINT_TO:[['向く相手',null]],SET_SCALE:[['大きさ','％']],SET_VOLUME:[['音量','％']],TONE:[['周波数','Hz'],['長さ','秒']],TONE_WAIT:[['周波数','Hz'],['長さ','秒']],SET_TARGET_TEXT:[['部品',null],['文字',null]],SET_INPUT:[['入力欄',null],['内容',null]],FORWARD_LAYERS:[['層数',null]],BACKWARD_LAYERS:[['層数',null]],SET_COLOR:[['色',null]],SET_COSTUME:[['衣装',null]],SET_BACKDROP:[['背景',null]],SET_SELF_TEXT:[['文字',null]],SET_SIZE:[['太さ',null]],SAMPLE:[['音',null]],SAMPLE_WAIT:[['音',null]],PITCH_UP:[['音の高さ',null]],PITCH_DOWN:[['音の高さ',null]],CREATE_TARGET:[['コピーの元',null]]};
+    const args={MOVE:[['歩数','歩']],MOVE_DIRECTION:[['歩数','歩']],GOTO:[['よこのばしょ','歩'],['たてのばしょ','歩']],GLIDE:[['時間','秒'],['よこのばしょ','歩'],['たてのばしょ','歩']],GLIDE_DIRECTION:[['時間','秒'],['歩数','歩']],SET_DIRECTION:[['向き','度']],TURN_RIGHT:[['角度','度']],TURN_LEFT:[['角度','度']],SET_X:[['よこのばしょ','歩']],SET_Y:[['たてのばしょ','歩']],POINT_TO:[['向く相手',null]],SET_SCALE:[['大きさ','％']],SET_VOLUME:[['音の大きさ','％']],TONE:[['周波数','Hz'],['長さ','秒']],TONE_WAIT:[['周波数','Hz'],['長さ','秒']],SET_TARGET_TEXT:[['部品',null],['文字',null]],SET_INPUT:[['入力らん',null],['中身',null]],FORWARD_LAYERS:[['いくつ',null]],BACKWARD_LAYERS:[['いくつ',null]],SET_COLOR:[['色',null]],SET_COSTUME:[['すがた',null]],SET_BACKDROP:[['はいけい',null]],SET_SELF_TEXT:[['文字',null]],SET_SIZE:[['太さ',null]],SAMPLE:[['音',null]],SAMPLE_WAIT:[['音',null]],PITCH_UP:[['音の高さ',null]],PITCH_DOWN:[['音の高さ',null]],CREATE_TARGET:[['コピーの元',null]]};
     const slots=[...(values[kind] || (args[op]||[]).map(([label,unit],i)=>expr(`args.${i}`,label,unit)))];
     if(kind==='Say'&&role==='timedSpeech')slots.push(expr('seconds','話す時間','秒'));
     slots.unshift(Object.freeze({path:'actorRef',label:'動く対象',type:'actor',unit:null,required:true}));
     if(['LocalVariableDeclaration','LocalListDeclaration','UserActionCall'].includes(kind))slots.push(Object.freeze({path:'name',label:'名前',type:'name',unit:null,required:true}));
-    if(kind==='WaitBroadcastGroup')slots.push(Object.freeze({path:'broadcastRef',label:'直前の知らせ',type:'reference',unit:null,required:true}));
-    if(kind==='ForEach')slots.push(Object.freeze({path:'binder',label:'今の項目名',type:'name',unit:null,required:true}));
+    if(kind==='WaitBroadcastGroup')slots.push(Object.freeze({path:'broadcastRef',label:'すぐ前の合図',type:'reference',unit:null,required:true}));
+    if(kind==='ForEach')slots.push(Object.freeze({path:'binder',label:'今見ているものの名前',type:'name',unit:null,required:true}));
     if(['MOVE_DIRECTION','GLIDE_DIRECTION'].includes(op)||kind==='ContinuousRule')slots.push(Object.freeze({path:'direction',label:'方向',type:'direction',unit:null,required:true}));
     return Object.freeze(slots);
   }
   function sentenceFormRecord(id,pattern,kind,op,role) {
     const roleSlots=sentenceRoleSlots(kind,op,role),semanticOperation=op?`${kind}:${op}`:kind;
-    const labels={Assignment:'値を置き換える',NumericUpdate:'値を増やす・減らす',ListAppend:'最後に入れる',ListInsert:'途中に入れる',ListReplace:'項目を変える',ListDelete:'項目を消す',ListClear:'中身を全部消す',IfStatement:'条件で分ける',RepeatCount:'回数を決めてくり返す',RepeatWhile:'あいだくり返す',RepeatUntil:'までくり返す',Forever:'ずっとくり返す',ForEach:'中身を一つずつ見る',WaitTime:'時間を待つ',WaitBroadcastGroup:'直前の知らせの受け手を待つ',WaitUntil:'条件を待つ',Say:'内容を言う',Ask:'たずねて答えを待つ',Broadcast:'知らせる',BroadcastAndWait:'知らせて全部終わるまで待つ',LocalVariableDeclaration:'この中だけの変数を作る',LocalListDeclaration:'この中だけのリストを作る',ReturnStatement:'答えを返す',UserActionCall:'手順を行う',NoOperation:'何もしない',Break:'いまのくり返しを終える',Continue:'次の回へ進む',MotionCommand:'位置や向きを変える',LooksCommand:'見た目を変える',PenCommand:'線やスタンプを描く',SoundCommand:'音を鳴らす・変える',CloneCommand:'コピーを作る・消す',StopCommand:'実行を止める',ContinuousRule:'条件のあいだ動き続ける'};
+    const labels={Assignment:'中身をかえる',NumericUpdate:'中身を増やす・減らす',ListAppend:'最後に入れる',ListInsert:'とちゅうに入れる',ListReplace:'何番目かの中身をかえる',ListDelete:'何番目かを消す',ListClear:'中身を全部消す',IfStatement:'条件で分ける',RepeatCount:'回数を決めてくり返す',RepeatWhile:'あいだくり返す',RepeatUntil:'までくり返す',Forever:'ずっとくり返す',ForEach:'中身を一つずつ見る',WaitTime:'時間を待つ',WaitBroadcastGroup:'その合図で始まったことが全部終わるまで待つ',WaitUntil:'条件を待つ',Say:'内容を言う',Ask:'たずねて答えを待つ',Broadcast:'合図を送る',BroadcastAndWait:'合図を送って、全部終わるまで待つ',LocalVariableDeclaration:'この中だけの へんすうを作る',LocalListDeclaration:'この中だけのリストを作る',ReturnStatement:'答えを返す',UserActionCall:'手順を行う',NoOperation:'何もしない',Break:'このくり返しを終える',Continue:'次の回へ進む',MotionCommand:'ばしょや向きをかえる',LooksCommand:'見た目をかえる',PenCommand:'線をかく・スタンプをおす',SoundCommand:'音を鳴らす・かえる',CloneCommand:'コピーを作る・消す',StopCommand:'動きを止める',ContinuousRule:'条件のあいだ動き続ける'};
     const verbs={MotionCommand:['動く','動いて','動かす','動かして','進む','進んで','回る','回って','向く','向いて','行く','行って','すべる','すべって'],Say:['言う','言って','話す','話して','言わせる','言わせて'],WaitTime:['待つ','待って'],UserActionCall:['行う','行って'],SoundCommand:['鳴らし始める','鳴らし始めて','鳴らす','鳴らして'],NumericUpdate:['足す','足して','引く','引いて','増やす','減らす']};
     return Object.freeze({id,pattern,kind,op,role,intent:labels[kind]||kind,semanticOperation,roleSlots,
       clauses:Object.freeze(roleSlots.map(slot=>Object.freeze({role:slot.path,label:slot.label,unit:slot.unit}))),
@@ -16522,7 +16553,7 @@ function createAkariExtensionHost(options) {
       case 'LocalVariableDeclaration':return `この中だけで使う変数【${n.name}】を作り、最初は${f(n.initial)}にする`;
       case 'LocalListDeclaration':return `この中だけで使うリスト【${n.name}】を空で作る`;
       case 'ReturnStatement':return `${f(n.value)}を答えとして返す`;
-      case 'UserActionCall':return (n.argumentNames?n.args.map((value,i)=>`${nameSource(n.argumentNames[i])}を${f(value)}`).join('、')+'として、':n.args.length?'（'+n.args.map(value=>f(value)).join('、')+'）を渡して、':'')+`【${n.name}】という手順を行う`;
+      case 'UserActionCall':return (n.argumentNames?n.args.map((value,i)=>`${nameSource(n.argumentNames[i])}を${f(value)}`).join('、')+'として、':n.args.length?'（'+n.args.map(value=>f(value)).join('、')+'）をわたして、':'')+`【${n.name}】という手順を行う`;
       case 'StopCommand':return {THIS:'この動きを止める',OTHERS:'ほかの動きをぜんぶ止める',ALL:'作品ぜんぶを止める'}[n.op];
       case 'MotionCommand':case 'LooksCommand':case 'PenCommand':case 'SoundCommand':case 'CloneCommand':return formatCommand(n);
       case 'IfStatement':return 'もし'+formatCondition(n.condition,'if')+'、';
@@ -16550,8 +16581,8 @@ function createAkariExtensionHost(options) {
     ['LooksCommand:HIDE', /^(?:姿|すがた)を(?:かくす|隠す)$/d, 'LooksCommand', 'HIDE'],
     ['LooksCommand:SHOW', /^(?:姿|すがた)を(?:見せる|みせる)$/d, 'LooksCommand', 'SHOW'],
     ['LooksCommand:FRONT', /^いちばん手前へ出る$/d, 'LooksCommand', 'FRONT'],
-    ['LooksCommand:BACK', /^いちばん奥へ下がる$/d, 'LooksCommand', 'BACK'],
-    ['MotionCommand:BOUNCE', /^(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/d, 'MotionCommand', 'BOUNCE'],
+    ['LooksCommand:BACK', /^いちばん(?:おく|奥)へ下がる$/d, 'LooksCommand', 'BACK'],
+    ['MotionCommand:BOUNCE', /^(?:画面の(?:はし|端)|端)に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/d, 'MotionCommand', 'BOUNCE'],
     ['PenCommand:DOWN', /^ペンを下ろす$/d, 'PenCommand', 'DOWN'],
     ['PenCommand:UP', /^ペンを上げる$/d, 'PenCommand', 'UP'],
     ['PenCommand:STAMP', /^(?:今の(?:姿|すがた)の)?スタンプを(?:押|お)す$/d, 'PenCommand', 'STAMP'],
@@ -16592,7 +16623,7 @@ function createAkariExtensionHost(options) {
     ['LooksCommand:SET_SELF_TEXT', /^自分の文字を(.+?)に(?:変える|かえる)$/d, 'LooksCommand', 'SET_SELF_TEXT', 'arg'],
     ['LooksCommand:SET_TARGET_TEXT', /^(.+?)の文字を(.+?)に(?:変える|かえる)$/d, 'LooksCommand', 'SET_TARGET_TEXT', 'args'],
     ['LooksCommand:FORWARD_LAYERS', /^重なりを(.+?)つ手前にする$/d, 'LooksCommand', 'FORWARD_LAYERS', 'arg'],
-    ['LooksCommand:BACKWARD_LAYERS', /^重なりを(.+?)つ奥にする$/d, 'LooksCommand', 'BACKWARD_LAYERS', 'arg'],
+    ['LooksCommand:BACKWARD_LAYERS', /^重なりを(.+?)つ(?:おく|奥)にする$/d, 'LooksCommand', 'BACKWARD_LAYERS', 'arg'],
     ['PenCommand:SET_COLOR', /^ペンの色を(.+?)にする$/d, 'PenCommand', 'SET_COLOR', 'arg'],
     ['PenCommand:SET_SIZE', /^ペンの太さを(.+?)にする$/d, 'PenCommand', 'SET_SIZE', 'arg'],
     ['SoundCommand:SET_VOLUME', /^(?:音量|音の大きさ)を(.+?)％にする$/d, 'SoundCommand', 'SET_VOLUME', 'percent'],
@@ -16710,9 +16741,10 @@ function createAkariExtensionHost(options) {
       if (split >= 0) {
         rawName=text.slice(split+1);
         const input=text.slice(0,split);
-        if (input.endsWith('を渡して')) {
-          const inner=input.slice(0,-'を渡して'.length);
-          if (!(inner.startsWith('（')&&inner.endsWith('）'))) throw new AkariError('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）を渡して、');
+        const passWord=['をわたして','を渡して'].find(w=>input.endsWith(w));
+        if (passWord) {
+          const inner=input.slice(0,-passWord.length);
+          if (!(inner.startsWith('（')&&inner.endsWith('）'))) throw new AkariError('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、');
           args=parseArgumentText(inner.slice(1,-1),symbols,ctx,line.lineNo);
         } else {
           if (!input.endsWith('として')) throw new AkariError('P205','自分で作ったブロックに入れるものは、「として」をつけて書きます。れい：点数を10として、');
@@ -16939,6 +16971,16 @@ function createAkariExtensionHost(options) {
   function diagnoseSentenceIntent(line,symbols,ctx,previousLine=null,nextLine=null) {
     const code=line.code,mask=surfaceMask(code);let p;
     const skipRest=/^(.*?は、?)?次のくり返しへ進む$/.exec(mask);
+    // A bare はし stays a name, because a part may be called はし (橋, 箸). Bouncing only happens at the stage edge,
+    // and a touch test names a part that must exist, so without such a part the child means 画面のはし.
+    const bounceForm=/^(?:[^、。]+?は、?)?(?:画面の(?:はし|端)|端)に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/;
+    const bareEdgeBounce=!bounceForm.test(mask)&&/^(.*?は、?)?(?:もし、?)?(?:画面の)?(?:はし|端)に(?:ふれ|触れ).*(?:はね返る|跳ね返る)$/.exec(mask);
+    if(bareEdgeBounce)throw sentenceDiagnostic('画面の はしで はね返るときは、「画面のはしにふれていれば、はね返る」と 書きます',line,[{label:'画面の はしで はね返る',source:code.slice(0,bareEdgeBounce[1]?.length||0)+'画面のはしにふれていれば、はね返る'}],{kind:'MotionCommand'});
+    const bareEdgeTouch=/(^|もし|、|が|は)はしに(?:ふれ|触れ)/.exec(mask);
+    if(bareEdgeTouch&&!symbols?.project?.components?.some(c=>c.name==='はし')){
+      const at=bareEdgeTouch.index+bareEdgeTouch[1].length;
+      throw sentenceDiagnostic('画面の はしの ことなら、「画面のはし」と 書きます',line,[{label:'画面の はしに ふれている',source:code.slice(0,at)+'画面の'+code.slice(at)}]);
+    }
     if(skipRest)throw sentenceDiagnostic('この回の のこりを とばして 次の回へ 進むときは、「この回の残りをとばして、次の回へ進む」と 書きます',line,[{label:'この回の のこりを とばして 次の回へ',source:code.slice(0,skipRest[1]?.length||0)+'この回の残りをとばして、次の回へ進む'}],{kind:'Continue'});
     if((p=surfaceCapture(/^(.+?)キーを(?:おして|押して)いる(?:あいだ|間)、(.+?)は(.+?)歩(?:動く|うごく)$/d,code))){
       const key=p[0].text.startsWith('「')?p[0].text:`「${p[0].text}」`,actor=p[1].text,distance=p[2].text;
@@ -16957,7 +16999,7 @@ function createAkariExtensionHost(options) {
     }
     if((p=surfaceCapture(/^(.+?)になったら、(.+)$/d,code))){
       let raw=p[0].text;
-      if(!/(?:以上|以下|より大きい|より小さい|と同じ|と違う)$/.test(surfaceMask(raw)))raw+='と同じ';
+      if(!/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(raw)))raw+='と同じ';
       const condition=parseCondition(raw,symbols,ctx,'plain'),negative=exprNode('UnaryExpression',{op:'NOT',value:condition}),body=p[1].text,indent=' '.repeat(line.indent||0);
       throw sentenceDiagnostic('「〜になったら」は、2つの意味にとれます。今そうなっていたらするのか、そうなるときを待つのか、えらんでください',line,[
         {label:'今そうなっていたら する',source:`もし${formatCondition(condition,'if')}、${body}`},
@@ -17120,7 +17162,7 @@ function createAkariExtensionHost(options) {
       return {kind:'Else',...(tail&&tail!=='次のことをする'?{inlineBody:inline(parts[0])}:{})};
     }
     // The bounce command reads like a condition; with or without a subject it is one command.
-    if(/^(?:[^、。]+?は、?)?(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/.test(mask))return null;
+    if(/^(?:[^、。]+?は、?)?(?:画面の(?:はし|端)|端)に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/.test(mask))return null;
     if((parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))、(.*)$/d,code))|| (parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))$/d,code))) {
       const condition=parseCondition(parts[0].text,symbols,ctx,'if'),tail=parts[1];
       if(tail?.text&&tail.text!=='次のことをする'&&/(?:なら、|ことを.+回)/.test(surfaceMask(tail.text)))throw new AkariError('P201','「もし」や「くり返す」の 中に 重ねるときは、次の 行に 書いて、行の はじめを 右へ ずらしてください');
@@ -17717,7 +17759,7 @@ function createAkariExtensionHost(options) {
         BOUNCE: Object.freeze({
           label: 'はしで はね返る',
           inputs: Object.freeze([]),
-          format: (a) => '画面の端にふれていれば、はね返る',
+          format: (a) => '画面のはしにふれていれば、はね返る',
         }),
       }),
     }),
@@ -17732,7 +17774,7 @@ function createAkariExtensionHost(options) {
         BACK: Object.freeze({
           label: 'いちばん おくへ下がる',
           inputs: Object.freeze([]),
-          format: (a) => 'いちばん奥へ下がる',
+          format: (a) => 'いちばんおくへ下がる',
         }),
         HIDE: Object.freeze({
           label: 'すがたを かくす',
@@ -17775,9 +17817,9 @@ function createAkariExtensionHost(options) {
           format: (a) => `重なりを${a(0)}つ手前にする`,
         }),
         BACKWARD_LAYERS: Object.freeze({
-          label: '重なりを後ろへ下げる',
+          label: '重なりを おくへ下げる',
           inputs: Object.freeze(['いくつ']),
-          format: (a) => `重なりを${a(0)}つ奥にする`,
+          format: (a) => `重なりを${a(0)}つおくにする`,
         }),
         SET_COLOR: Object.freeze({
           label: '色を決める',
@@ -18166,8 +18208,8 @@ function createAkariExtensionHost(options) {
     add(
       'ForEach',
       'statement',
-      '中身を1つずつ使ってくり返す',
-      [name('binder', '使う中身の名前', 'これ')],
+      '中身を 一つずつ 見る',
+      [name('binder', '今見ているものの名前', 'これ')],
       [input('list', 'リスト', 'expression', { initial: [] })],
       [body('body', 'くり返すこと')],
     );
@@ -18263,11 +18305,11 @@ function createAkariExtensionHost(options) {
       [
         'BinaryExpression',
         [
-          ['ADD', '足す'],
-          ['SUB', '引く'],
-          ['MUL', 'かける'],
-          ['DIV', 'わる'],
-          ['POW', '同じ数を くり返し かける'],
+          ['ADD', '＋（たす）'],
+          ['SUB', '－（ひく）'],
+          ['MUL', '×（かける）'],
+          ['DIV', '÷（わる）'],
+          ['POW', '＾（同じ数を くり返し かける）'],
         ],
       ],
       [
@@ -18916,7 +18958,7 @@ function createAkariExtensionHost(options) {
       case 'ExtensionCalculation':
         s = extensionSurface(n.name, true, n.args); break;
       case 'UserFunctionCall':
-        s = n.argumentNames ? `（${n.args.map((x,i) => `${nameSource(n.argumentNames[i])}を${formatExpressionCore(x)}`).join('、')}として、【${n.name}】で求めた答え）` : `（${n.args.length ? `（${n.args.map(x=>formatExpressionCore(x)).join('、')}）を渡して、` : ''}【${n.name}】で求めた答え）`;
+        s = n.argumentNames ? `（${n.args.map((x,i) => `${nameSource(n.argumentNames[i])}を${formatExpressionCore(x)}`).join('、')}として、【${n.name}】で求めた答え）` : `（${n.args.length ? `（${n.args.map(x=>formatExpressionCore(x)).join('、')}）をわたして、` : ''}【${n.name}】で求めた答え）`;
         break;
       case 'BuiltinCall': {
         if (n.name === 'CONTAINS')
@@ -18946,12 +18988,12 @@ function createAkariExtensionHost(options) {
         else if (FIXED_SENSORS.includes(n.sensor)) s = SENSOR_SURFACES[n.sensor] || n.sensor;
         else if (n.sensor === 'INPUT_VALUE') s = `${n.arg.kind==='VariableRead'?'（'+formatExpressionCore(n.arg)+'）':formatExpressionCore(n.arg, PREC.POST)}の中身`;
         else if (n.sensor === 'DISTANCE_TO')
-          s = `${formatExpressionCore(n.arg, PREC.POST)}までの距離`;
+          s = `${formatExpressionCore(n.arg, PREC.POST)}までのきょり`;
         else if (n.sensor === 'KEY_DOWN')
           s = `${formatExpressionCore(n.arg, PREC.POST)}キーがおされている`;
         else if (n.sensor === 'TOUCHING_COLOR')
           s = `${formatExpressionCore(n.arg, PREC.POST)}の色にふれている`;
-        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && n.arg.value === '端' ? '画面の端' : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
+        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && n.arg.value === '端' ? '画面のはし' : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
         p = PREC.POST;
         break;
       }
@@ -18979,7 +19021,7 @@ function createAkariExtensionHost(options) {
           GT: 'より大きい',
           LT: 'より小さい',
           EQ: 'と同じ',
-          NEQ: 'と違う',
+          NEQ: 'とちがう',
         }[n.op];
         s = `${formatExpressionCore(n.left, PREC.CMP + 1)}が${formatExpressionCore(n.right, PREC.CMP + 1)}${suf}`;
         p = PREC.CMP;
@@ -20916,7 +20958,7 @@ function createAkariExtensionHost(options) {
     const digestSeen = new Set();
     for (const id of reachable) {
       const a = store.get(id);
-      if (!a) throw new AkariError('F503', `参照先asset「${id}」がありません`);
+      if (!a) throw new AkariError('F503', `使うはずの絵や音「${id}」がありません`);
       raw += a.byteLength;
       if (a.kind === 'image') {
         imgCount++;
@@ -20927,7 +20969,7 @@ function createAkariExtensionHost(options) {
         if (a.meta?.duration) duration += a.meta.duration;
       }
       const dk = `${a.kind}:${a.sha256}:${a.byteLength}`;
-      if (digestSeen.has(dk)) throw new AkariError('F503', '同一バイナリassetが重複しています');
+      if (digestSeen.has(dk)) throw new AkariError('F503', '同じ中身の絵や音が、2つ以上あります');
       digestSeen.add(dk);
     }
     if (
@@ -20941,21 +20983,21 @@ function createAkariExtensionHost(options) {
       throw new AkariError('F504', '作品の絵や音が、多すぎるか大きすぎます。使わない絵や音をけしてください');
     for (const b of project.stage.backdrops)
       if (b.kind === 'image' && store.get(b.assetId)?.kind !== 'image')
-        throw new AkariError('F509', '画像背景が画像asset以外を参照しています');
+        throw new AkariError('F509', '絵のはいけいが、絵ではないものを使っています');
     for (const c of project.components)
       if (c.type === 'sprite')
         for (const co of c.costumes)
           if (co.kind === 'image' && store.get(co.assetId)?.kind !== 'image')
-            throw new AkariError('F509', '画像衣装が画像asset以外を参照しています');
+            throw new AkariError('F509', '絵のすがたが、絵ではないものを使っています');
     for (const snd of project.sounds)
       if (store.get(snd.assetId)?.kind !== 'audio')
-        throw new AkariError('F509', '音素材がaudio asset以外を参照しています');
+        throw new AkariError('F509', '音が、音ではないものを使っています');
     if (serializedAssetIds) {
       if (
         serializedAssetIds.size !== reachable.size ||
         [...serializedAssetIds].some((id) => !reachable.has(id))
       )
-        throw new AkariError('F503', '保存Projectにorphan assetまたは不足assetがあります');
+        throw new AkariError('F503', '作品ファイルに、使われていない絵や音か、足りない絵や音があります');
     }
     return true;
   }
@@ -21038,22 +21080,22 @@ function createAkariExtensionHost(options) {
       assets = [];
     for (const id of reachable) {
       const a = assetStore.get(id);
-      if (!a) throw new AkariError('F503', `asset「${id}」がありません`);
+      if (!a) throw new AkariError('F503', `絵や音「${id}」がありません`);
       if (
         !(a.bytes instanceof Uint8Array) ||
         a.bytes.length !== a.byteLength ||
         sha256Fallback(a.bytes) !== a.sha256
       )
-        throw new AkariError('F508', `asset「${id}」の保存前整合性が一致しません`);
+        throw new AkariError('F508', `絵や音「${id}」の中身が、ほぞんしたときと合いません`);
       if (a.kind === 'image') {
         const sn = sniffImage(a.bytes);
         if (sn.mime !== a.mime)
-          throw new AkariError('F509', `asset「${id}」の画像MIMEが一致しません`);
+          throw new AkariError('F509', `絵「${id}」のファイルの形が、記録と合いません`);
       } else if (a.kind === 'audio') {
         const sn = sniffAudio(a.bytes);
         if (sn.mime !== a.mime)
-          throw new AkariError('F509', `asset「${id}」の音声MIMEが一致しません`);
-      } else throw new AkariError('F509', `asset「${id}」のkindが不正です`);
+          throw new AkariError('F509', `音「${id}」のファイルの形が、記録と合いません`);
+      } else throw new AkariError('F509', `絵や音「${id}」の種類が、正しくありません`);
       assets.push({
         id: a.id,
         kind: a.kind,
@@ -21133,7 +21175,7 @@ function createAkariExtensionHost(options) {
     )
       throw new AkariError('F503', '作品の ファイルの 形が、あかりで 読める 形と 合いません');
     if (!Array.isArray(root.assets) || root.assets.length > LIMITS.assets)
-      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, 'asset数が上限を超えています');
+      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, '絵や音の数が、上限より多いです');
     const design = {
       ...(Object.hasOwn(root, 'extensions') ? { extensions: AKARI_RUNTIME.validateExtensionEnvelope(root.extensions) } : {}),
       schema: root.schema,
@@ -21159,8 +21201,8 @@ function createAkariExtensionHost(options) {
       ac = 0;
     for (const a of root.assets) {
       if (!exactKeys(a, ['id', 'kind', 'mime', 'byteLength', 'sha256', 'dataBase64']))
-        throw new AkariError('F503', 'asset recordに未知または不足項目があります');
-      if (!safeId(a.id)) throw new AkariError('F503', 'asset IDが不正です');
+        throw new AkariError('F503', '絵や音の記録の形が、正しくありません');
+      if (!safeId(a.id)) throw new AkariError('F503', '絵や音の番号が、正しくありません');
       if (ids.has(a.id) || assetIds.has(a.id))
         throw new AkariError('F505', `ID「${a.id}」が2つあります`);
       ids.add(a.id);
@@ -21168,29 +21210,29 @@ function createAkariExtensionHost(options) {
       if (a.kind === 'image') {
         ic++;
         if (!['image/png', 'image/jpeg', 'image/webp'].includes(a.mime))
-          throw new AkariError('F509', 'image assetのMIMEが未対応です');
+          throw new AkariError('F509', 'あかりで使えない形の絵があります');
         if (!Number.isInteger(a.byteLength) || a.byteLength < 1 || a.byteLength > LIMITS.imageBytes)
-          throw new AkariError('F504', '画像asset byteLengthが上限外です');
+          throw new AkariError('F504', '絵の大きさが、使える大きさの外です');
       } else if (a.kind === 'audio') {
         ac++;
         if (!['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/flac', 'audio/ogg'].includes(a.mime))
-          throw new AkariError('F509', 'audio assetのMIMEが未対応です');
+          throw new AkariError('F509', 'あかりで使えない形の音があります');
         if (!Number.isInteger(a.byteLength) || a.byteLength < 1 || a.byteLength > LIMITS.audioBytes)
-          throw new AkariError('F504', '音asset byteLengthが上限外です');
-      } else throw new AkariError('F509', 'asset kindが未対応です');
-      if (!/^[0-9a-f]{64}$/.test(a.sha256)) throw new AkariError('F508', 'SHA-256表記が不正です');
+          throw new AkariError('F504', '音の大きさが、使える大きさの外です');
+      } else throw new AkariError('F509', 'あかりで使えない種類の絵や音があります');
+      if (!/^[0-9a-f]{64}$/.test(a.sha256)) throw new AkariError('F508', '絵や音の中身をたしかめるしるしの書き方が、正しくありません');
       const n = decodedBase64Length(a.dataBase64);
       if (n !== a.byteLength)
-        throw new AkariError('F508', 'Base64予想byte数とbyteLengthが一致しません');
+        throw new AkariError('F508', '絵や音の大きさが、記録とちがいます');
       predicted += n;
       if (predicted > LIMITS.assetRawTotal)
         throw new AkariError('F504', '絵や音を合わせた大きさが大きすぎて使えません。いらない絵や音をけしてください', 0, 0, `絵や音の合計は${LIMITS.assetRawTotal / 1048576}MiBまで`);
       const dk = `${a.kind}:${a.sha256}:${a.byteLength}`;
-      if (digestKeys.has(dk)) throw new AkariError('F503', '保存Projectに重複assetがあります');
+      if (digestKeys.has(dk)) throw new AkariError('F503', '作品ファイルに、同じ絵や音が2つ以上あります');
       digestKeys.add(dk);
     }
     if (ic > LIMITS.imageAssets || ac > LIMITS.audioAssets)
-      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, '画像または音asset数が上限を超えています');
+      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, '絵や音の数が、上限より多いです');
     return { design, assetIds };
   }
 
@@ -21548,9 +21590,9 @@ function createAkariExtensionHost(options) {
   async function validateLoadedAssetRecord(a) {
     const bytes = decodeBase64(a.dataBase64);
     if (bytes.length !== a.byteLength)
-      throw new AkariError('F508', 'asset byteLengthが一致しません');
+      throw new AkariError('F508', '絵や音の大きさが、記録と合いません');
     const digest = await sha256(bytes);
-    if (digest !== a.sha256) throw new AkariError('F508', 'asset SHA-256が一致しません');
+    if (digest !== a.sha256) throw new AkariError('F508', '絵や音の中身が、記録と合いません');
     if (a.kind === 'image') {
       const sn = sniffImage(bytes);
       if (sn.mime !== a.mime) throw new AkariError('F509', '絵のファイルの形が、書いてある形と合いません。作品ファイルがこわれているようです');
@@ -21574,14 +21616,14 @@ function createAkariExtensionHost(options) {
     const sn = sniffAudio(bytes);
     if (sn.mime !== a.mime) throw new AkariError('F509', '音のファイルの形が、書いてある形と合いません。作品ファイルがこわれているようです');
     if (a.mime === 'audio/mpeg' && !bytesEqual(sn.clean, bytes))
-      throw new AkariError('F508', '保存MP3に除去対象metadataが残っています');
+      throw new AkariError('F508', 'ほぞんした音（MP3）に、取りのぞくはずのおまけの情報が残っています');
     if (a.mime === 'audio/wav') {
       const rebuilt = rebuildCanonicalWav(sn.parsed);
       if (!bytesEqual(rebuilt, bytes))
-        throw new AkariError('F508', '保存WAVがcanonical形ではありません');
+        throw new AkariError('F508', 'ほぞんした音（WAV）が、決まった形になっていません');
     }
     if (['audio/mp4', 'audio/flac', 'audio/ogg'].includes(a.mime) && !bytesEqual(sn.clean, bytes))
-      throw new AkariError('F508', '保存音声がmetadata除去後のcanonical形ではありません');
+      throw new AkariError('F508', 'ほぞんした音が、おまけの情報を取りのぞいた決まった形になっていません');
     const containerMeta = audioContainerMeta(sn);
     checkAudioContainerLimits(containerMeta);
     if (sn.duration != null) checkAudioLimits({ ...containerMeta, duration: sn.duration });
@@ -23163,6 +23205,10 @@ function createAkariExtensionHost(options) {
       }
       if (before.schemaId !== after.schemaId || !same(before.fields, after.fields) || !same(before.annotations, after.annotations))
         return fallback(before, after);
+      // The touch test writes the stage edge as 画面のはし, so a change to or from the edge rewrites the whole test.
+      if (before.schemaId === 'SensorRead:TOUCHING' && !same(before.inputs.arg, after.inputs.arg) &&
+        [before.inputs.arg, after.inputs.arg].some(n => n?.schemaId === 'StringLiteral' && n.fields.value === '端'))
+        return fallback(before, after);
       const schema = BLOCK_SCHEMA_BY_ID.get(before.schemaId), changes = [];
       for (const slot of schema.inputs) {
         if (slot.required === false) {
@@ -24136,9 +24182,9 @@ function createAkariExtensionHost(options) {
     RepeatCount: ['くり返す', '繰り返す', '何度も', '回数'],
     UserActionCall: ['動作', '手順', '呼び出す', '実行'],
     UserFunctionCall: ['計算', '答え', '関数', '値を求める'],
-    Assignment: ['データ', '変数', '記録', '代入', '値を入れる'],
+    Assignment: ['変数', '記録', '代入', '値を入れる'],
     NumericUpdate: ['増やす', '減らす', '足す', '引く', '点数'],
-    VariableRead: ['データ', '変数', '値', '読む'],
+    VariableRead: ['変数', '値', '読む'],
   });
   function blockPaletteSearchText(schema, project) {
     const words = [schema.label, schema.id, schema.kind, schema.palette,
@@ -24223,9 +24269,9 @@ function createAkariExtensionHost(options) {
       return '待ってから 動くときは、2つの 文に 分けます。\nれい：1秒待つ。\n前へ10歩進む。';
     if (/「N番目」はリスト/.test(message))
       return '何番目かを えらぶには、ならんだ ものを おぼえる リストを 使います。れい：【買うもの】の2番目。話す 文字の「買うもの」とは ちがいます。';
-    if (/orphan asset|不足asset/.test(message))
+    if (/使われていない絵や音か、足りない絵や音/.test(message))
       return '作品で使う絵や音と、ほぞんする絵や音の組み合わせが合っていません。理由は 下の くわしい せつめいに のこしています。「絵や音」の画面で、使う絵や音を たしかめてください。';
-    if (/SHA-256|byteLength|asset|Base64|canonical|metadata/.test(message))
+    if (/絵や音の中身を表す文字|同じしるし|絵や音の番号|使うはずの絵や音|同じ中身の絵や音|ではないものを使っています|絵や音「[^」]*」がありません|の種類が、正しくありません|記録と合いません|記録とちがいます|絵や音の記録の形|使える大きさの外|あかりで使えない(?:形|種類)の|中身をたしかめるしるし|同じ絵や音が2つ以上|おまけの情報|ほぞんした音|ほぞんしたときと合いません/.test(message))
       return '絵や音の 中身を たしかめられませんでした。理由は 下の くわしい せつめいに のこしています。「絵や音」の 画面で、使う 絵や音を たしかめてください。';
     return message;
   }
@@ -24685,6 +24731,18 @@ function createAkariExtensionHost(options) {
       if (!fromPending) render({ force: true });
       return result;
     }
+    // A touch test names the stage edge as 端 (the word code also reads bare). The block shows and
+    // accepts the words the code writes, 画面のはし; other text slots keep 端 as written.
+    function edgeSlot(node, field) {
+      if (node?.schemaId !== 'StringLiteral' || field?.key !== 'value') return false;
+      return index.get(index.get(node.id)?.parentId)?.node?.schemaId === 'SensorRead:TOUCHING';
+    }
+    function edgeShown(node, field, value) {
+      return edgeSlot(node, field) && value === '端' ? '画面のはし' : value;
+    }
+    function edgeStored(node, field, value) {
+      return edgeSlot(node, field) && ['画面のはし', '画面の端'].includes(String(value).trim()) ? '端' : value;
+    }
     function readInputValue(input, field) {
       if (field.type === 'boolean') return input.value === 'true';
       if (field.type === 'qualifier') return input.value === 'none' ? null : input.value;
@@ -24720,7 +24778,7 @@ function createAkariExtensionHost(options) {
         return annotation ? current.annotations[field.key]
           : input.dataset.signedParentId ? -current.fields[field.key] : current.fields[field.key];
       };
-      const read = () => readInputValue(input, field);
+      const read = () => edgeStored(node, field, readInputValue(input, field));
       const refresh = () => {
         if (rendering || committing || !input.isConnected) return;
         if (deferredFocus === input) deferredFocus = null;
@@ -24728,7 +24786,7 @@ function createAkariExtensionHost(options) {
         if (!pending || pending.input !== input) {
           const f = flush();
           if (!f.ok && pending?.input !== input) {
-            input.value = String(original() ?? '');
+            input.value = String(edgeShown(node, field, original()) ?? '');
             pending?.input?.focus();
             return;
           }
@@ -24887,7 +24945,7 @@ function createAkariExtensionHost(options) {
       pending = null;
       if (field?.input?.isConnected) {
         field.input.value = field.field.type === 'qualifier' ? field.original ?? 'none'
-          : field.field.type === 'number' ? field.original === undefined ? '' : decimalSource(field.original) : field.original ?? '';
+          : field.field.type === 'number' ? field.original === undefined ? '' : decimalSource(field.original) : edgeShown(index.get(field.id)?.node, field.field, field.original) ?? '';
         field.input.setAttribute('aria-invalid', 'false');
       }
       notifyPending();
@@ -25129,7 +25187,8 @@ function createAkariExtensionHost(options) {
             schema.category === 'statement'
               ? formatScript({ kind: 'Script', body: [ast] })
               : formatExpression(ast)
-          ).split('\n')[0],
+          // The for-each block names what it is looking at on its second line, as the code does.
+          ).split('\n').slice(0, schema.kind === 'ForEach' ? 2 : 1).map((line, i) => (i ? line.trim() : line)).join('\n'),
           parts = [];
         let at = 0;
         while (at < text.length) {
@@ -25162,11 +25221,19 @@ function createAkariExtensionHost(options) {
           const token = value.find((p) => p?.slot?.key === 'condition');
           if (token) value = ['\u3082\u3057 ', token, ' \u306a\u3089'];
         } else if (schema.kind === 'Forever') value = ['ずっと'];
+        else if (schema.kind === 'CompareExpression') {
+          // The same order as the code: 1が2とちがう.
+          const left = value.find((p) => p?.slot?.key === 'left'), right = value.find((p) => p?.slot?.key === 'right');
+          if (left && right) value = [left, ' が ', right, ' ' + schema.label];
+        }
         else if (schema.id === 'BuiltinCall:乱数') {
           const slot = schema.inputs.find((s) => s.key === 'args');
           value = [{ token: '', slot, index: 0 }, ' から ', { token: '', slot, index: 1 }, ' のどれか'];
         }
-        else value = value.map((p) => (typeof p === 'string' ? p.replace(/\u3002$/, '') : p));
+        else if (schema.kind === 'ForEach')
+          value = value.flatMap((p) => (typeof p !== 'string' ? [p]
+            : p.split('\n').flatMap((s, i) => [...(i ? [{ lineBreak: true }] : []), s.replace(/。$/, '')]).filter((s) => s !== '')));
+        else value = value.map((p) => (typeof p === 'string' ? p.replace(/。$/, '') : p));
       }
       phraseCache.set(schema.id, value);
       return value;
@@ -25180,6 +25247,8 @@ function createAkariExtensionHost(options) {
             .map((p) =>
               typeof p === 'string'
                 ? p
+                : p.lineBreak
+                ? ' '
                 : '［' +
                   (p.field?.label ||
                     (p.slot?.type === 'target'
@@ -25229,6 +25298,7 @@ function createAkariExtensionHost(options) {
         if (parts)
           for (const part of parts) {
             if (typeof part === 'string') main.append(doc.createTextNode(part));
+            else if (part.lineBreak) main.append(E('span', 'blockui-phrase-break'));
             else if (part.field) main.append(pill(node.fields[part.field.key] || part.field.label));
             else {
               const slot = part.slot,
@@ -25451,7 +25521,7 @@ function createAkariExtensionHost(options) {
           ...p.sounds.map((x) => x.name),
           ...Object.keys(COLOR_NAMES).map((name) => COLOR_LABELS[name] || name),
           'マウス',
-          '端',
+          ...(edgeSlot(node, field) ? ['画面のはし'] : []),
           '空白',
           '上',
           '下',
@@ -25645,7 +25715,7 @@ function createAkariExtensionHost(options) {
           autocomplete: 'off',
           ...(field.type === 'number' ? { inputmode: 'decimal' } : {}),
         });
-        input.value = field.type === 'number' && value !== undefined ? decimalSource(value) : value ?? '';
+        input.value = field.type === 'number' && value !== undefined ? decimalSource(value) : edgeShown(node, field, value) ?? '';
         if (node.schemaId === 'Hole:expression' && field.type === 'number') input.dataset.expressionHole = 'true';
       }
       if (annotation) {
@@ -25670,7 +25740,7 @@ function createAkariExtensionHost(options) {
             controls = E('div', 'blockui-text-dialog-controls'),
             apply = E('button', '', '決める', { type: 'button', 'data-blockui-text-action': 'commit' }),
             discard = E('button', '', 'この文字を なおすのを やめる', { type: 'button', 'data-blockui-text-action': 'cancel' });
-          editor.value = pending?.input === input ? input.value : String(index.get(node.id)?.node.fields[field.key] ?? value ?? '');
+          editor.value = pending?.input === input ? input.value : String(edgeShown(node, field, index.get(node.id)?.node.fields[field.key] ?? value) ?? '');
           editor.dataset.focusKey = node.id + ':full-text:' + field.key;
           const close = committed => {
             if (committed && !flush({ focus: false }).ok) { editor.focus(); return; }
@@ -26297,6 +26367,8 @@ function createAkariExtensionHost(options) {
           main.append(
             typeof part === 'string'
               ? E('span', 'blockui-phrase-text', part)
+              : part.lineBreak
+                ? E('span', 'blockui-phrase-break')
               : part.field
                 ? fieldControl(node, part.field)
                 : renderInput(node, part.slot, part.index),
@@ -26404,7 +26476,8 @@ function createAkariExtensionHost(options) {
           for(const candidate of BLOCK_SCHEMAS.filter(s=>s.kind===schema.kind))operator.append(E('option','',candidate.label,{value:candidate.id}));
           operator.value=schema.id;operator.disabled=isLocked()||options.readOnly;
           listen(operator,'change',()=>operate({type:'operator',id:node.id,schemaId:operator.value}));
-          main.append(slot('left'),operator,slot('right'));
+          if(schema.kind==='CompareExpression')main.append(slot('left'),E('span','blockui-phrase-text','が'),slot('right'),operator);
+          else main.append(slot('left'),operator,slot('right'));
         } else if(schema.kind==='RepeatCount'||schema.kind==='Say'||schema.kind==='WaitTime'){
           const extra=editDisclosure(node,'extra','なおす','blockui-extra'),extraControls=E('div','blockui-extra-controls');
           extra.querySelector('summary').setAttribute('aria-label',schema.label+'の数・計算・時間を なおす');
@@ -32742,7 +32815,7 @@ function createAkariExtensionHost(options) {
       updateRunState();
       try {
         if (file.size > LIMITS.fileBytes)
-          throw new AkariError('F504', `ファイルが${LIMITS.fileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
+          throw new AkariError('F504', 'ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `開ける作品ファイルは${LIMITS.fileBytes / 1048576}MiBまで`);
         const text = await file.text();
         let loaded;
         try { loaded = await parseProjectFile(text); }
@@ -33893,7 +33966,7 @@ function createAkariExtensionHost(options) {
         if (project.components.length >= LIMITS.components)
           throw new AkariError('F504', '部品が いっぱいで、もう ふやせません。いらない部品を けしてください');
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.components.map((x) => x.name));
         let name = fileStemCandidate(file, names);
@@ -33959,7 +34032,7 @@ function createAkariExtensionHost(options) {
       if (!file) return;
       return runAssetImport('はいけいの 絵', async () => {
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.stage.backdrops.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
@@ -33998,7 +34071,7 @@ function createAkariExtensionHost(options) {
         if (cur?.type !== 'sprite')
           throw new AkariError('F503', 'すがたの 絵を 入れる キャラクターを えらんでください');
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(cur.costumes.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),
@@ -34027,7 +34100,7 @@ function createAkariExtensionHost(options) {
       if (!file) return;
       return runAssetImport('音', async () => {
         if (file.size > LIMITS.importFileBytes)
-          throw new AkariError('F504', `えらんだ ファイルが${LIMITS.importFileBytes / 1048576}MiBより 大きいので 使えません。もっと 小さい ファイルに してください`);
+          throw new AkariError('F504', 'えらんだ ファイルが 大きすぎて 使えません。もっと 小さい ファイルに してください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
         const canonical = await canonicalizeAudio(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.sounds.map((x) => x.name)),
           candidate = fileStemCandidate(file, names),

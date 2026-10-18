@@ -16,7 +16,7 @@ const syntaxExpectations=[
   ['delay','P205','待ってから 動くときは、「待つ」と「動く」の 2つの 文に 分けます','2つの 文に 分けます'],
   ['argument-name','P205','入れるものの 名前を たしかめてください。れい：点数を10として、','名前を 1つ 書きます'],
   ['argument-duplicate','P205','入れるものの名前「点数」を2回書いています。名前は1回ずつ書いてください','同じ 名前が 2つ いじょう あります'],
-  ['argument-bundle','P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）を渡して、','（ ）で ひとまとめに します'],
+  ['argument-bundle','P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、','（ ）で ひとまとめに します'],
 ];
 export const childDiagnosticIds=Object.freeze([...syntaxExpectations.map(x=>'syntax/'+x[0]),
   'semantic/function-effects','runtime/list-reference','file/digest-refusal',
@@ -54,8 +54,8 @@ export function verifyChildDiagnosticsReport(report,inputs) {
   assert.match(runtime.detail,/「買うもの」の2番目/);assert.match(runtime.recordChoice,/あかり/);assert.doesNotMatch(runtime.recordChoice,/R411|script:|sprite-1/);
   assert.equal(runtime.after.project,runtime.before.project);assert.equal(runtime.after.source,runtime.before.source);
   const digest=rows.get('file/digest-refusal');assert.match(digest.visible,/作品ファイルを 開けませんでした/);
-  assert.match(digest.visible,/えらんだ ファイルは かえていません/);assert.doesNotMatch(digest.visible,/SHA-256|F508/);
-  assert.match(digest.detail,/F508.*読みこめませんでした: asset SHA-256が一致しません/);assert.deepEqual(digest.after,digest.before);
+  assert.match(digest.visible,/えらんだ ファイルは かえていません/);assert.doesNotMatch(digest.visible,/記録と合いません|F508/);
+  assert.match(digest.detail,/F508.*読みこめませんでした: 絵や音の中身が、記録と合いません/);assert.deepEqual(digest.after,digest.before);
   assert.equal(digest.source,'genuinely malformed serialized asset digest');
   for(const d of [digest,...['digest','length','orphan'].map(name=>rows.get('save/'+name+'-fault'))]){
     assert.deepEqual(d.outputReachability.map(r=>[r.mode,r.width,r.height]),['code','blocks'].flatMap(mode=>[[1180,757],[1366,768],[1188,848]].map(([width,height])=>[mode,width,height])),'output mode and height boundaries');
@@ -67,12 +67,12 @@ export function verifyChildDiagnosticsReport(report,inputs) {
       if(!r.before.hit||!r.before.inside||!r.before.inViewport)assert.ok(r.after.scrollTop>r.before.scrollTop||r.after.sideScrollTop>r.before.sideScrollTop,'actual native inner or enclosing wheel scroll required');
     }
   }
-  for(const [name,code,message]of [['digest','F508','同じSHA-256でbyteLengthが異なります'],
-    ['length','F508','asset byteLengthが一致しません'],['orphan','F503','保存Projectにorphan assetまたは不足assetがあります']]){
+  for(const [name,code,message]of [['digest','F508','同じしるしの絵や音なのに、大きさがちがいます'],
+    ['length','F508','絵や音の大きさが、記録と合いません'],['orphan','F503','作品ファイルに、使われていない絵や音か、足りない絵や音があります']]){
     const d=rows.get('save/'+name+'-fault');assert.equal(d.code,code);assert.equal(d.message,message);
     assert.equal(d.source,'explicit synthetic asset lookup failure for UI/atomic-save coverage');
     assert.match(d.visible,/作品ファイルを ほぞんできませんでした/);assert.match(d.visible,/この画面の作品は のこっています/);
-    assert.doesNotMatch(d.visible,/SHA-256|byteLength|orphan asset/);assert.ok(d.detail.includes(code));assert.ok(d.detail.includes(message));
+    assert.doesNotMatch(d.visible,/しるしの絵や音|記録と合いません|足りない絵や音/);assert.ok(d.detail.includes(code));assert.ok(d.detail.includes(message));
     assert.deepEqual(d.downloads,[]);assert.deepEqual(d.after,d.before);
   }
   const imported=rows.get('import/current-and-incoming');assert.match(imported.preview,/今の動き：\n「もとの動き」と言う。/);

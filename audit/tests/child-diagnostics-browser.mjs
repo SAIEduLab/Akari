@@ -170,17 +170,17 @@ try {await withBrowser(chrome,async browser=>{
     const file=await p.evaluate(()=>Akari.serializeProject(Akari.app.project,Akari.app.assetStore).replaceAll(Akari.diagnostics.DEFAULT_MASCOT_SHA256,'0'.repeat(64)));
     const previous=await p.locator('#console').textContent();await p.locator('#fileInput').setInputFiles({name:'broken-digest.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
     await p.waitForFunction(previous=>document.querySelector('#console').textContent!==previous,previous);
-    const outputReachability=await openOutputWithWheel(p);const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを 開けませんでした/);assert.match(visible,/えらんだ ファイルは かえていません/);assert.doesNotMatch(visible,/SHA-256|F508/);
-    const disclosure=p.locator('#console > details').last();await disclosure.locator('> summary').click();const detail=await disclosure.locator('> pre').innerText();assert.match(detail,/F508.*読みこめませんでした: asset SHA-256が一致しません/);
+    const outputReachability=await openOutputWithWheel(p);const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを 開けませんでした/);assert.match(visible,/えらんだ ファイルは かえていません/);assert.doesNotMatch(visible,/記録と合いません|F508/);
+    const disclosure=p.locator('#console > details').last();await disclosure.locator('> summary').click();const detail=await disclosure.locator('> pre').innerText();assert.match(detail,/F508.*読みこめませんでした: 絵や音の中身が、記録と合いません/);
     assert.deepEqual(await state(p),before);return {visible,detail,before,after:await state(p),source:'genuinely malformed serialized asset digest',outputReachability};
   });
-  for(const [id,code,message]of [['digest','F508','同じSHA-256でbyteLengthが異なります'],['length','F508','asset byteLengthが一致しません'],['orphan','F503','保存Projectにorphan assetまたは不足assetがあります']])
+  for(const [id,code,message]of [['digest','F508','同じしるしの絵や音なのに、大きさがちがいます'],['length','F508','絵や音の大きさが、記録と合いません'],['orphan','F503','作品ファイルに、使われていない絵や音か、足りない絵や音があります']])
     await run('save/'+id+'-fault',async p=>{
       await install(p);const before=await state(p),downloads=[];p.on('download',d=>downloads.push(d.suggestedFilename()));
       await p.evaluate(({code,message})=>{const store=Akari.app.assetStore;window.restoreDiagnosticGet={store,get:store.get};
         store.get=()=>{throw new Akari.diagnostics.AkariError(code,message);};},{code,message});
       try{await p.locator('#saveBtn').click();}finally{await p.evaluate(()=>{const {store,get}=window.restoreDiagnosticGet;store.get=get;delete window.restoreDiagnosticGet;});}
-      const outputReachability=await openOutputWithWheel(p);const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを ほぞんできませんでした/);assert.match(visible,/この画面の作品は のこっています/);assert.doesNotMatch(visible,/SHA-256|byteLength|orphan asset/);
+      const outputReachability=await openOutputWithWheel(p);const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを ほぞんできませんでした/);assert.match(visible,/この画面の作品は のこっています/);assert.doesNotMatch(visible,/しるしの絵や音|記録と合いません|足りない絵や音/);
       const disclosure=p.locator('#console > details').last();await disclosure.locator('> summary').click();const detail=await disclosure.locator('> pre').innerText();assert.ok(detail.includes(code));assert.ok(detail.includes(message));
       assert.deepEqual(downloads,[]);assert.deepEqual(await state(p),before);return {source:'explicit synthetic asset lookup failure for UI/atomic-save coverage',code,message,visible,detail,before,after:await state(p),downloads,outputReachability};
     });

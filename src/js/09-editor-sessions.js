@@ -421,6 +421,10 @@
       }
       if (before.schemaId !== after.schemaId || !same(before.fields, after.fields) || !same(before.annotations, after.annotations))
         return fallback(before, after);
+      // The touch test writes the stage edge as 画面のはし, so a change to or from the edge rewrites the whole test.
+      if (before.schemaId === 'SensorRead:TOUCHING' && !same(before.inputs.arg, after.inputs.arg) &&
+        [before.inputs.arg, after.inputs.arg].some(n => n?.schemaId === 'StringLiteral' && n.fields.value === '端'))
+        return fallback(before, after);
       const schema = BLOCK_SCHEMA_BY_ID.get(before.schemaId), changes = [];
       for (const slot of schema.inputs) {
         if (slot.required === false) {
@@ -1394,9 +1398,9 @@
     RepeatCount: ['くり返す', '繰り返す', '何度も', '回数'],
     UserActionCall: ['動作', '手順', '呼び出す', '実行'],
     UserFunctionCall: ['計算', '答え', '関数', '値を求める'],
-    Assignment: ['データ', '変数', '記録', '代入', '値を入れる'],
+    Assignment: ['変数', '記録', '代入', '値を入れる'],
     NumericUpdate: ['増やす', '減らす', '足す', '引く', '点数'],
-    VariableRead: ['データ', '変数', '値', '読む'],
+    VariableRead: ['変数', '値', '読む'],
   });
   function blockPaletteSearchText(schema, project) {
     const words = [schema.label, schema.id, schema.kind, schema.palette,

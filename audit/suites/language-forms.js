@@ -219,8 +219,8 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
   test('LANG-SUBJECT-STATEMENTS',()=>{
     const symbols=api.buildSymbols(makeAkariRegressionProject(api)),read=s=>api.parseSyntax(s,{symbols});
     for(const [source,kind,op] of [
-      ['マスコットは画面の端にふれていれば、はね返る。','MotionCommand','BOUNCE'],
-      ['マスコットは、画面の端にふれていれば、はね返る。','MotionCommand','BOUNCE'],
+      ['マスコットは画面のはしにふれていれば、はね返る。','MotionCommand','BOUNCE'],
+      ['マスコットは、画面のはしにふれていれば、はね返る。','MotionCommand','BOUNCE'],
       ['マスコットは「入力欄」に「あ」を入れる。','LooksCommand','SET_INPUT'],
     ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));const n=r.ast.body[0];
       eq([n.kind,n.op,n.actorRef],[kind,op,{kind:'named',name:'マスコット'}]);eq(api.formatScript(r.ast).trim(),source.replace('は、','は'));}

@@ -95,7 +95,7 @@
       "id": "ForEach",
       "kind": "ForEach",
       "op": "",
-      "source": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  何もしない。"
+      "source": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【今の名前】と呼ぶ。\n  何もしない。"
     },
     {
       "id": "MotionCommand:MOVE",
@@ -155,7 +155,7 @@
       "id": "MotionCommand:BOUNCE",
       "kind": "MotionCommand",
       "op": "BOUNCE",
-      "source": "画面の端にふれていれば、はね返る。"
+      "source": "画面のはしにふれていれば、はね返る。"
     },
     {
       "id": "LooksCommand:SET_SCALE",
@@ -191,7 +191,7 @@
       "id": "LooksCommand:BACK",
       "kind": "LooksCommand",
       "op": "BACK",
-      "source": "いちばん奥へ下がる。"
+      "source": "いちばんおくへ下がる。"
     },
     {
       "id": "LooksCommand:FORWARD_LAYERS",
@@ -203,7 +203,7 @@
       "id": "LooksCommand:BACKWARD_LAYERS",
       "kind": "LooksCommand",
       "op": "BACKWARD_LAYERS",
-      "source": "重なりを1つ奥にする。"
+      "source": "重なりを1つおくにする。"
     },
     {
       "id": "PenCommand:DOWN",
@@ -395,7 +395,7 @@
       "id": "LooksCommand:SET_INPUT",
       "kind": "LooksCommand",
       "op": "SET_INPUT",
-      "source": "「入力欄1」に「答え」を入れる。"
+      "source": "「入力らん1」に「答え」を入れる。"
     },
     {
       "id": "SoundCommand:SAMPLE",
@@ -437,7 +437,7 @@
       "id": "UserActionCall",
       "kind": "UserActionCall",
       "op": "",
-      "source": "（3）を渡して、【増やす】という手順を行う。"
+      "source": "（3）をわたして、【増やす】という手順を行う。"
     },
     {
       "id": "NoOperation",
