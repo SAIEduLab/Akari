@@ -20,7 +20,8 @@
   }
   // Keys Akari knows: 上・下・左・右・空白・決定・取消, one letter or digit, and the keyboard's own key names.
   function validKeyName(key) {
-    return ['上','下','左','右','空白','決定','取消'].includes(key) || [...key].length === 1 ||
+    // One letter, digit or sign is the key itself; a kana or kanji (あ, 一) is no key on the keyboard.
+    return ['上','下','左','右','空白','決定','取消'].includes(key) || /^[\x21-\x7e]$/.test(key) ||
       ['Tab','Backspace','Delete','Home','End','PageUp','PageDown','Insert','Shift','Control','Alt','CapsLock'].includes(key) || /^F(?:[1-9]|1[0-2])$/.test(key);
   }
   function keyNameMessage(key) { return `「${key}」という キーは ありません。キーは「空白」「右」「a」のように 書きます`; }

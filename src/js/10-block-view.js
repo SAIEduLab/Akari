@@ -2327,7 +2327,8 @@
             if (head) { head.style.position = 'static'; head.style.minWidth = '0'; }
           }
         }
-        else if (schema.kind === 'WaitBroadcastGroup') main.append(field('actorRef'), field('broadcastRef'), E('span', '', 'の合図を受けた動きが 全部おわるまで待つ'));
+        // The same words as its code; it always waits with the whole flow, so it has no subject to choose.
+        else if (schema.kind === 'WaitBroadcastGroup') main.append(field('broadcastRef'), E('span', '', 'で始まったことが 全部終わるまで待つ'));
         else if (schema.kind === 'BuiltinCall' && schema.discriminator?.value === '乱数' && node.inputs.args?.length === 2) {
           // Read as the code writes it: 1から6のどれか.
           const args = schema.inputs.find(s => s.key === 'args');

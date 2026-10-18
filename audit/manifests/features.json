@@ -377,13 +377,13 @@
       "id": "StopCommand:OTHERS",
       "kind": "StopCommand",
       "op": "OTHERS",
-      "source": "ほかの動きをぜんぶ止める。"
+      "source": "ほかの動きを全部止める。"
     },
     {
       "id": "StopCommand:ALL",
       "kind": "StopCommand",
       "op": "ALL",
-      "source": "作品ぜんぶを止める。"
+      "source": "作品を全部止める。"
     },
     {
       "id": "LooksCommand:SET_SELF_TEXT",

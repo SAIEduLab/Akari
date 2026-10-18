@@ -1151,7 +1151,7 @@
     p.projectData.variables=[{id:'practice-score',name:'点数',initialValue:0}];
     p.components.push({id:'practice-board',type:'label',name:'点数ボード',x:20,y:20,w:600,h:45,fg:'#173047',bg:null,fontSize:24,
       visible:true,direction:0,scalePercent:100,text:'さかなを キャッチ！',localData:{variables:[],lists:[]}});
-    p.scripts=[{id:'practice-click',targetId:'sprite-1',event:'click',source:'ほかの動きをぜんぶ止める。'}];
+    p.scripts=[{id:'practice-click',targetId:'sprite-1',event:'click',source:'ほかの動きを全部止める。'}];
     return p;
   }
   const TUTORIAL_BLOCKS=Object.freeze({
@@ -1324,7 +1324,22 @@
       delete:'ListDelete',clear:'ListClear',each:'ForEach',action:'UserActionCall',function:'UserFunctionCall'})[prefix] || id;
   }
   function matchesSearch(text, query) {
-    return normalizeSearchText(text).includes(normalizeSearchText(query)) || searchReading(text).includes(searchReading(query));
+    return searchQueryVariants(query).some(q => normalizeSearchText(text).includes(normalizeSearchText(q)) || searchReading(text).includes(searchReading(q)));
+  }
+  // A child searches with what they want: 少し待つ, みんなで待つ, ねこだけ待つ, 待ちたい, 止めたい, ぜんぶけす, スペース, ゆっくり.
+  function searchQueryVariants(query) {
+    const q = normalizeSearchText(query), out = new Set([q]);
+    const t = q.replace(/^(?:少し|すこし|ちょっと|しばらく|みんなで|みんなは|みんなが|全体で)/, '').replace(/^.+?だけ(?=.)/, '');
+    out.add(t);
+    const wishes = {ちたい:['つ'],きたい:['く'],したい:['す'],みたい:['む','る'],りたい:['る'],いたい:['う'],びたい:['ぶ'],ぎたい:['ぐ'],
+      めたい:['める'],えたい:['える'],せたい:['せる'],れたい:['れる'],げたい:['げる'],べたい:['べる'],けたい:['ける']};
+    for (const [wish, endings] of Object.entries(wishes)) if (t.endsWith(wish)) for (const ending of endings) out.add(t.slice(0, -wish.length) + ending);
+    let written = t;
+    for (const [word, key] of [['すぺーすきー','空白'],['すぺーす','空白'],['えんたー','決定'],['りたーん','決定'],['えすけーぷ','取消'],['ぜんぶ','全部'],['けす','消す']])
+      written = written.split(word).join(key);
+    out.add(written);
+    if (t.includes('ゆっくり')) out.add('かけて');
+    return [...out].filter(Boolean);
   }
   function configureSearchNode(node, intent) {
     if (!intent || node.schemaId !== intent.schemaId) return node;

@@ -332,8 +332,9 @@
             : ['Assignment', 'NumericUpdate'].includes(kind)
               ? 'へんすう・リスト'
               : 'もし・くり返し');
-      if (category === 'statement')
-        fields = [...fields, field('actorRef', 'だれが動く', 'actor-ref', undefined, { required: false, ...(EVERYONE_WAITS.has(kind) ? { everyone: true } : {}) })];
+      // A wait names who waits (みんな is the whole flow). The one-line group wait always waits with the whole flow.
+      if (category === 'statement' && kind !== 'WaitBroadcastGroup')
+        fields = [...fields, field('actorRef', EVERYONE_WAITS.has(kind) ? 'だれが待つ' : 'だれが動く', 'actor-ref', undefined, { required: false, ...(EVERYONE_WAITS.has(kind) ? { everyone: true } : {}) })];
       const annotations =
         category === 'statement'
           ? [
@@ -423,8 +424,8 @@
     ]) add('MotionCommand', 'statement', label,
       [field('direction', '進む向き', 'direction', 'right')], [args(labels)], [], op('op', value),
       { palette: '動き', capability: 'absolute-direction-motion:' + value });
-    add('WaitBroadcastGroup', 'statement', 'さっきの合図で始まったことが終わるまで待つ',
-      [field('broadcastRef', '待つ合図', 'reference', 'さっきの合図')], [], [], null,
+    add('WaitBroadcastGroup', 'statement', 'その合図で始まったことが全部終わるまで待つ',
+      [field('broadcastRef', '待つ合図', 'reference', 'その合図')], [], [], null,
       { capability: 'notification-group-wait' });
     add('TargetReference', 'target', 'かえるもの', [name(), qualifier()]);
     add('CommentLine', 'statement', 'メモ', [field('text', 'メモの中身', 'comment', '')]);
@@ -552,8 +553,8 @@
     ]);
     for (const [value, label] of [
       ['THIS', 'この動きを止める'],
-      ['OTHERS', 'ほかの動きをぜんぶ止める'],
-      ['ALL', '作品ぜんぶを止める'],
+      ['OTHERS', 'ほかの動きを全部止める'],
+      ['ALL', '作品を全部止める'],
     ])
       add('StopCommand', 'statement', label, [], [], [], op('op', value));
     for (const [kind, group] of Object.entries(COMMAND_PRESENTATION))

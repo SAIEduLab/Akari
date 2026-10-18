@@ -27,7 +27,7 @@ const logical=(op,left,right)=>({kind:'LogicalExpression',op,left,right});
 const builtin=(name,args)=>({kind:'BuiltinCall',name,args});
 const contains=(list,value)=>builtin('CONTAINS',[list,value]);
 // A wait written without a subject is the whole flow's (みんな); with one, only that part waits (LANGUAGE.md 役割と語順).
-const everyone={kind:'all'},waits=['WaitTime','WaitUntil','BroadcastAndWait','WaitBroadcastGroup'];
+const everyone={kind:'all'},waits=['WaitTime','WaitUntil','BroadcastAndWait'];
 const statement=(kind,props={},actorRef=waits.includes(kind)?everyone:self)=>({kind,...props,actorRef});
 const command=(kind,op,args=[],props={},actorRef=self)=>({kind,args,op,...props,actorRef});
 const nothing=(actorRef=self)=>statement('NoOperation',{},actorRef);
@@ -213,13 +213,13 @@ export const sentenceFormCases=[
   {
     id:'SF-broadcast-wait-group',
     source:'みんなに「出発」と知らせる\nその知らせを受けて始めたことが全部終わるまで待つ',
-    expected:script([statement('Broadcast',{message:str('出発'),broadcastRef:'ref#1'}),statement('WaitBroadcastGroup',{broadcastRef:'ref#1'})]),
+    expected:script([statement('Broadcast',{message:str('出発'),broadcastRef:'ref#1'}),{kind:'WaitBroadcastGroup',broadcastRef:'ref#1'}]),
     claims:{'sentence:Broadcast':'みんなに「出発」と知らせる','sentence:WaitBroadcastGroup':'その知らせを受けて始めたことが全部終わるまで待つ'},
   },
   {
     id:'SF-signal-wait-group',
     source:'「出発」の合図を送る\nその合図で始まったことが全部終わるまで待つ',
-    expected:script([statement('Broadcast',{message:str('出発'),broadcastRef:'ref#1'}),statement('WaitBroadcastGroup',{broadcastRef:'ref#1'})]),
+    expected:script([statement('Broadcast',{message:str('出発'),broadcastRef:'ref#1'}),{kind:'WaitBroadcastGroup',broadcastRef:'ref#1'}]),
     claims:{'sentence:Broadcast:signal':'「出発」の合図を送る'},
   },
   {
@@ -375,7 +375,8 @@ export const sentenceFormCases=[
   {
     id:'SF-te-hide-wait-show',
     source:'ねこは姿をかくして、1秒待って、姿を見せる',
-    expected:script([hide(named('ねこ')),wait(1,named('ねこ')),show(named('ねこ'))]),
+    // The 待って has no subject of its own, so the whole flow waits (LANGUAGE.md いつ始まるか、どう続けるか).
+    expected:script([hide(named('ねこ')),wait(1),show(named('ねこ'))]),
     claims:{'te:かくして':'ねこは姿をかくして','te:待って':'1秒待って'},
   },
   // ── 待つ and its subject: with a subject only that part waits; without one (or みんなは／全体が) the whole flow ──
@@ -393,6 +394,34 @@ export const sentenceFormCases=[
     expected:script([command('MotionCommand','MOVE_DIRECTION',[steps(10)],{direction:'right'},named('ねこ')),wait(1),
       command('MotionCommand','MOVE_DIRECTION',[steps(10)],{direction:'right'},named('ねこ'))]),
     claims:{'sentence:WaitTime':'1秒待つ'},
+  },
+  // 自分が／自分も are 自分は; まず・それから・すばやく after the subject only say the order or how.
+  {
+    id:'SF-subject-self-and-lead',
+    source:"自分が1秒待つ\n自分も1秒待つ\nねこは、まず1秒待つ\nそれからねこだけ1秒待つ\nねこはすばやく10歩進む",
+    expected:{"kind":"Script","body":[{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"named","name":"ねこ"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"named","name":"ねこ"}},{"kind":"MotionCommand","args":[{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":10},"unit":"歩"}],"op":"MOVE","actorRef":{"kind":"named","name":"ねこ"}}]},
+    claims:{"sentence:WaitTime":"自分が1秒待つ","sentence:MotionCommand:MOVE":"ねこはすばやく10歩進む"},
+  },
+  // 2こ counts like 2つ.
+  {
+    id:'SF-count-ko',
+    source:"点数を2こ増やす",
+    expected:{"kind":"Script","body":[{"kind":"NumericUpdate","op":"ADD","target":{"name":"点数","qualifier":null},"value":{"kind":"NumberLiteral","value":2},"actorRef":{"kind":"self"}}]},
+    claims:{"sentence:NumericUpdate:ADD":"点数を2こ増やす"},
+  },
+  // 〜ではなく、 is the first check 〜ではなくて、.
+  {
+    id:'SF-and-first-naku',
+    source:"もし点数が5ではなく、点数が1より大きければ、\n  何もしない",
+    expected:{"kind":"Script","body":[{"kind":"IfStatement","condition":{"kind":"LogicalExpression","op":"AND","left":{"kind":"UnaryExpression","op":"NOT","value":{"kind":"CompareExpression","op":"EQ","left":{"kind":"VariableRead","name":"点数","qualifier":null},"right":{"kind":"NumberLiteral","value":5}}},"right":{"kind":"CompareExpression","op":"GT","left":{"kind":"VariableRead","name":"点数","qualifier":null},"right":{"kind":"NumberLiteral","value":1}}},"actorRef":{"kind":"self"},"thenBody":[{"kind":"NoOperation","actorRef":{"kind":"self"}}],"elseBody":[],"hasElse":false}]},
+    claims:{"sentence:IfStatement":"もし点数が5ではなく、点数が1より大きければ、"},
+  },
+  // スペースキー／みぎキー without 「 」 name the keys 空白／右.
+  {
+    id:'SF-key-bare-alias',
+    source:"スペースキーがおされるまで待つ\nもしみぎキーがおされていれば、\n  何もしない",
+    expected:{"kind":"Script","body":[{"kind":"WaitUntil","condition":{"kind":"SensorRead","sensor":"KEY_DOWN","arg":{"kind":"StringLiteral","value":"空白"}},"actorRef":{"kind":"all"}},{"kind":"IfStatement","condition":{"kind":"SensorRead","sensor":"KEY_DOWN","arg":{"kind":"StringLiteral","value":"右"}},"actorRef":{"kind":"self"},"thenBody":[{"kind":"NoOperation","actorRef":{"kind":"self"}}],"elseBody":[],"hasElse":false}]},
+    claims:{"sentence:WaitUntil":"スペースキーがおされるまで待つ"},
   },
   {
     id:'SF-te-repeat-inline',
@@ -538,6 +567,13 @@ export const sentenceFormCases=[
     source:'コピーができたとき、姿をかくす',
     expected:script([hide()],{heading:{event:'cloneStart',actorRef:self}}),
     claims:{'heading:cloneStart/^()コピーが(?:作られた|できた)(?:とき|ら)、?(.*)$':'コピーができたとき、姿をかくす'},
+  },
+  // おされたとき、 (the event's own name, no part) is 自分's click.
+  {
+    id:'SF-heading-click-self',
+    source:'おされたとき、姿をかくす',
+    expected:script([hide()],{heading:{event:'click',actorRef:self}}),
+    claims:{'heading:click/^()(?:(?:押|お)された(?:とき|ら)|(?:押|お)されると|(?:押|お)されるたびに|クリックされた(?:とき|ら)|クリックされると|クリックされるたびに)、?(.*)$':'おされたとき、姿をかくす'},
   },
   {
     id:'SF-heading-start-short',
