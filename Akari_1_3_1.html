@@ -16938,7 +16938,8 @@ function createAkariExtensionHost(options) {
   }
   function diagnoseSentenceIntent(line,symbols,ctx,previousLine=null,nextLine=null) {
     const code=line.code,mask=surfaceMask(code);let p;
-    if(mask==='次のくり返しへ進む')throw sentenceDiagnostic('この回の のこりを とばして 次の回へ 進むときは、「この回の残りをとばして、次の回へ進む」と 書きます',line,[{label:'この回の のこりを とばして 次の回へ',source:'この回の残りをとばして、次の回へ進む'}],{kind:'Continue'});
+    const skipRest=/^(.*?は、?)?次のくり返しへ進む$/.exec(mask);
+    if(skipRest)throw sentenceDiagnostic('この回の のこりを とばして 次の回へ 進むときは、「この回の残りをとばして、次の回へ進む」と 書きます',line,[{label:'この回の のこりを とばして 次の回へ',source:code.slice(0,skipRest[1]?.length||0)+'この回の残りをとばして、次の回へ進む'}],{kind:'Continue'});
     if((p=surfaceCapture(/^(.+?)キーを(?:おして|押して)いる(?:あいだ|間)、(.+?)は(.+?)歩(?:動く|うごく)$/d,code))){
       const key=p[0].text.startsWith('「')?p[0].text:`「${p[0].text}」`,actor=p[1].text,distance=p[2].text;
       throw sentenceDiagnostic('キーをおしている間に動く歩数が、ぜんぶで何歩なのか、1秒に何歩なのか分かりません。えらんでください',line,[
