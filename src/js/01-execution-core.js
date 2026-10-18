@@ -142,7 +142,7 @@
       透明: null,
     };
     // The color picker shows these words for colors whose code word uses a hard kanji; code reads both.
-    const COLOR_LABELS = { 橙: 'だいだい', 紫: 'むらさき', 桃: 'もも色', 灰: 'はい色' };
+    const COLOR_LABELS = { 橙: 'だいだい', 紫: 'むらさき', 桃: 'もも色', 灰: 'ねずみ色' };
     // Event names on screen; the entry buttons use the same words.
     const EVENT_LABELS = {
       start: '「動かす」を おしたとき',
@@ -355,7 +355,7 @@
     }
     function decodeBase64(text) {
       const expected = decodedBase64Length(text);
-      if (expected > LIMITS.assetRawTotal) throw new AkariError('F504', '絵や音の データが 大きすぎます');
+      if (expected > LIMITS.assetRawTotal) throw new AkariError('F504', '絵や音の 中身が 大きすぎます');
       let out;
       if (typeof atob === 'function') {
         let bin;
@@ -3769,7 +3769,7 @@
         !Array.isArray(data.assets) ||
         data.assets.length > LIMITS.assets
       )
-        fail('作品の データが こわれています');
+        fail('作品の 中身が こわれています');
       if (
         !Number.isInteger(p.stage.width) ||
         p.stage.width < 200 ||
@@ -3823,7 +3823,7 @@
           item.ast?.kind !== 'Script' ||
           !Array.isArray(item.ast.body)
         )
-          fail('動きの データが こわれています');
+          fail('動きの 中身が こわれています');
         if (item.filter != null) {
           const event = item.event || parts[2], field = event === 'keyDown' ? 'key' : event === 'message' ? 'message' : null;
           if (!field || !exactKeys(item.filter, [field]) || typeof item.filter[field] !== 'string' ||
@@ -3894,7 +3894,7 @@
           a.byteLength < 1 ||
           a.byteLength > (a.kind === 'image' ? LIMITS.imageBytes : LIMITS.audioBytes)
         )
-          fail('絵や音の データが 正しくありません');
+          fail('絵や音の 中身が 正しくありません');
         if (
           !(
             a.kind === 'image'
@@ -3908,7 +3908,7 @@
           fail('絵や音の 大きさが 正しくありません');
         const bytes = decodeBase64(a.dataBase64);
         if (sha256Fallback(bytes) !== a.sha256)
-          fail('絵や音の データが こわれています');
+          fail('絵や音の 中身が こわれています');
         store.addImmutable({
           id: a.id,
           kind: a.kind,

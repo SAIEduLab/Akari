@@ -2989,7 +2989,7 @@
     }
     for (const d of p.projectData.lists) {
       validateData(d, true);
-      if (pn.has(d.name)) throw new AkariError('F503', '作品の データに 同じ 名前が あります。ちがう 名前に してください');
+      if (pn.has(d.name)) throw new AkariError('F503', '作品の へんすう・リストに 同じ 名前が あります。ちがう 名前に してください');
       pn.add(d.name);
     }
     if (!Array.isArray(p.components) || p.components.length > LIMITS.components)
@@ -3068,7 +3068,7 @@
       }
       for (const d of c.localData.lists) {
         validateData(d, true);
-        if (ln.has(d.name)) throw new AkariError('F503', '部品ごとの データに 同じ 名前が あります。ちがう 名前に してください');
+        if (ln.has(d.name)) throw new AkariError('F503', '部品ごとの へんすう・リストに 同じ 名前が あります。ちがう 名前に してください');
         ln.add(d.name);
       }
       if (c.type === 'sprite') {

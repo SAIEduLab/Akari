@@ -193,7 +193,7 @@
     for (const button of modal.querySelectorAll('[data-paint-tool]'))
       button.onclick = () => { if (!gesture) { tool = button.dataset.paintTool; refresh(); } };
     for (const [name, value] of [
-      ['黒', '#111111'], ['白', '#ffffff'], ['はい色', '#888888'], ['赤', '#e53935'],
+      ['黒', '#111111'], ['白', '#ffffff'], ['ねずみ色', '#888888'], ['赤', '#e53935'],
       ['だいだい', '#f57c00'], ['黄', '#fdd835'], ['緑', '#43a047'], ['水色', '#29b6f6'],
       ['青', '#1e5bd7'], ['むらさき', '#8e24aa'], ['もも色', '#ec407a'], ['茶', '#795548'],
     ]) {
@@ -4127,19 +4127,19 @@
       if (!kept.length) return;
       const saved = project.extensions?.state || EXTENSION_HOST.initialState(),
         initial = EXTENSION_HOST.initialState();
-      renderMonitorSection(el.monitor, '作品に ほぞんされる かくちょうの データ', kept.map(item => [item.name,
+      renderMonitorSection(el.monitor, '作品に ほぞんされる かくちょうの 中身', kept.map(item => [item.name,
         JSON.stringify((saved.find(value => value.id === item.id) || initial.find(value => value.id === item.id))?.value ?? null)]));
       const reset = document.createElement('button');
       reset.type = 'button';
       reset.className = 'monitor-extension-reset';
-      reset.textContent = 'かくちょうの データを はじめに もどす';
+      reset.textContent = 'かくちょうの 中身を はじめに もどす';
       reset.onclick = () => {
         if (runtime || modelLocked()) return;
         EXTENSION_HOST.resetState();
         project.extensions = { ...EXTENSION_HOST.requirements(), profile: AKARI_RUNTIME.profiles.requirement(), state: EXTENSION_HOST.snapshotState() };
         pushHistoryNow();
         renderMonitor();
-        log('かくちょうの データを はじめの 中身に もどしました', 'ok');
+        log('かくちょうの 中身を はじめに もどしました', 'ok');
       };
       el.monitor.appendChild(reset);
     }
@@ -5314,9 +5314,9 @@
           !modelLocked()
         ) {
           el.autosave.textContent =
-            '自動で のこす：もどせるか たしかめられませんでした（のこした データは そのままです）';
+            '自動で のこす：もどせるか たしかめられませんでした（のこした 作品は そのままです）';
           log(
-            `自動で のこした 作品を たしかめられませんでした。のこした データは けしていません。 ${err.code || ''} ${err.message}`,
+            `自動で のこした 作品を たしかめられませんでした。のこした 作品は けしていません。 ${err.code || ''} ${err.message}`,
             'error',
           );
         }
@@ -5453,7 +5453,7 @@
       for(const input of $('#dataModal').querySelectorAll('[aria-invalid]'))input.removeAttribute('aria-invalid');
     }
     function showDataFormError(error,field){
-      $('#dataFormError').hidden=false;$('#dataFormError').textContent=`${field?.getAttribute('aria-label')||'データ'}：${error.message}`;
+      $('#dataFormError').hidden=false;$('#dataFormError').textContent=`${field?.getAttribute('aria-label')||'へんすう・リスト'}：${error.message}`;
       log(`${error.code||''} ${error.message}`,'error');
       field?.setAttribute('aria-invalid','true');field?.focus();
     }

@@ -235,7 +235,7 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
       ['背景が変わったとき、マスコットは、\n  「a」と言う。','はいけいがかわったとき、マスコットは、'],
     ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));eq(api.formatScript(r.ast).split('\n')[0],written);}
     // Color words the picker shows are text like 赤, with or without 「 」.
-    for(const word of ['だいだい','むらさき','もも色','赤']){const r=read('ペンの色を'+word+'にする。');ok(r.ast,word);eq(api.formatScript(r.ast).trim(),'ペンの色を「'+word+'」にする。');}
+    for(const word of ['だいだい','むらさき','もも色','ねずみ色','赤']){const r=read('ペンの色を'+word+'にする。');ok(r.ast,word);eq(api.formatScript(r.ast).trim(),'ペンの色を「'+word+'」にする。');}
     // Calculations with a fixed number of inputs have no ＋ to add one more.
     for(const [id,variadic] of [['BuiltinCall:余り',false],['BuiltinCall:乱数',false],['BuiltinCall:四捨五入',false],['BuiltinCall:つなぐ',true],['BuiltinCall:最大',true]])
       eq(api.BLOCK_SCHEMAS.find(s=>s.id===id).inputs.find(s=>s.key==='args').variadic,variadic);

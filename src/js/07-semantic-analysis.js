@@ -706,7 +706,7 @@
     const keys = new Set();
     const register = (key, ownerId, source) => {
       if (!owners.has(ownerId) || keys.has(key) || typeof source !== 'string')
-        throw new AkariError('F503', '作品のコードのデータがこわれていて、読めません');
+        throw new AkariError('F503', '作品のコードの中身がこわれていて、読めません');
       keys.add(key);
     };
     for (const s of project.scripts) {
@@ -717,7 +717,7 @@
     for (const [kind, definitions] of [['action', project.actions], ['function', project.functions]])
       for (const d of definitions) {
         register(`${kind}:${d.id}`, d.ownerId, d.source);
-        if (d.ownerId !== 'stage') throw new AkariError('F503', '自分で作ったブロックが、画面のものになっていません。作品のデータがこわれています');
+        if (d.ownerId !== 'stage') throw new AkariError('F503', '自分で作ったブロックが、画面のものになっていません。作品の中身がこわれています');
       }
     return [
       ...project.scripts.map(s => ({
@@ -1024,14 +1024,14 @@
   function syntaxItemMap(items,errors) {
     const map=new Map();
     for(const item of items){
-      if(map.has(item.key))errors.push({code:'F503',message:'作品のデータがこわれています。同じできごとが2つあります',line:0,column:1,where:item.documentKey||item.key});
+      if(map.has(item.key))errors.push({code:'F503',message:'作品の中身がこわれています。同じできごとが2つあります',line:0,column:1,where:item.documentKey||item.key});
       else map.set(item.key,item.ast);
     }
     return map;
   }
   function documentSyntaxItems(ast,key,context,project,errors) {
     const first={...ast};delete first.units;
-    if(context.unitIds&&context.unitIds.length!==1+(ast.units?.length||0))errors.push({code:'F503',message:'作品のデータがこわれています。できごとの数が合いません',line:0,column:1,where:key});
+    if(context.unitIds&&context.unitIds.length!==1+(ast.units?.length||0))errors.push({code:'F503',message:'作品の中身がこわれています。できごとの数が合いません',line:0,column:1,where:key});
     return [first,...(ast.units||[])].map((unit,index)=>{
       // Imported documents may not yet have persistent unit IDs. Their runtime
       // keys use a separate namespace, never a guess in the user ID namespace.
@@ -1772,7 +1772,7 @@
   async function canonicalizeImage(fileBytes) {
     const bytes = fileBytes instanceof Uint8Array ? fileBytes : new Uint8Array(fileBytes);
     if (bytes.length > LIMITS.importFileBytes)
-      throw new AkariError('F504', `入れるファイルが${LIMITS.importFileBytes / 1048576}MiBより大きいので使えません`);
+      throw new AkariError('F504', 'このファイルは大きすぎて使えません。もっと小さいファイルをえらんでください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
     const pre = sniffImage(bytes),
       dec = await decodeImageBytes(bytes, pre.mime);
     try {
@@ -1791,7 +1791,7 @@
         throw new AkariError('F510', 'この絵を、あかりで使える形にできませんでした。ほかの絵をえらんでください');
       const out = new Uint8Array(await blob.arrayBuffer());
       if (out.length > LIMITS.imageBytes)
-        throw new AkariError('F504', 'この絵は、あかりで使える形にすると4MiBより大きくなります。もっと小さい絵をえらんでください');
+        throw new AkariError('F504', 'この絵は、あかりで使える形にすると大きすぎます。もっと小さい絵をえらんでください', 0, 0, '使える形にした絵は4MiBまで');
       const post = sniffImage(out),
         check = await decodeImageBytes(out, post.mime);
       try {
@@ -1835,17 +1835,17 @@
   async function canonicalizeAudio(fileBytes) {
     const bytes = fileBytes instanceof Uint8Array ? fileBytes : new Uint8Array(fileBytes);
     if (bytes.length > LIMITS.importFileBytes)
-      throw new AkariError('F504', `入れるファイルが${LIMITS.importFileBytes / 1048576}MiBより大きいので使えません`);
+      throw new AkariError('F504', 'このファイルは大きすぎて使えません。もっと小さいファイルをえらんでください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
     const sn = sniffAudio(bytes),
       containerMeta = audioContainerMeta(sn);
     checkAudioContainerLimits(containerMeta);
     if (sn.duration != null) checkAudioLimits({ ...containerMeta, duration: sn.duration });
     const out = sn.mime === 'audio/wav' ? rebuildCanonicalWav(sn.parsed) : sn.clean;
     if (out.length > LIMITS.audioBytes)
-      throw new AkariError('F504', 'この音は、あかりで使える形にすると6MiBより大きくなります。もっと短い音をえらんでください');
+      throw new AkariError('F504', 'この音は、あかりで使える形にすると大きすぎます。もっと短い音をえらんでください', 0, 0, '使える形にした音は6MiBまで');
     const decoded = await decodeAudioMeta(out);
     if (decoded.channels !== containerMeta.channels)
-      throw new AkariError('F511', 'この音のファイルは、中のデータが合っていません。ほかの音を使ってください');
+      throw new AkariError('F511', 'この音のファイルは、中身が合っていません。ほかの音を使ってください');
     if (sn.duration != null && Math.abs(decoded.duration - sn.duration) > 0.02)
       throw new AkariError('F511', 'この音のファイルは、書いてある長さと本当の長さが合いません。ほかの音を使ってください');
     const meta = {
@@ -2103,7 +2103,7 @@
     )
       throw new AkariError('F503', '作品の ファイルの 形が、あかりで 読める 形と 合いません');
     if (!Array.isArray(root.assets) || root.assets.length > LIMITS.assets)
-      throw new AkariError('F504', 'asset数が上限を超えています');
+      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, 'asset数が上限を超えています');
     const design = {
       ...(Object.hasOwn(root, 'extensions') ? { extensions: AKARI_RUNTIME.validateExtensionEnvelope(root.extensions) } : {}),
       schema: root.schema,
@@ -2154,13 +2154,13 @@
         throw new AkariError('F508', 'Base64予想byte数とbyteLengthが一致しません');
       predicted += n;
       if (predicted > LIMITS.assetRawTotal)
-        throw new AkariError('F504', `絵や音の合計の大きさが${LIMITS.assetRawTotal / 1048576}MiBより大きいので使えません`);
+        throw new AkariError('F504', '絵や音を合わせた大きさが大きすぎて使えません。いらない絵や音をけしてください', 0, 0, `絵や音の合計は${LIMITS.assetRawTotal / 1048576}MiBまで`);
       const dk = `${a.kind}:${a.sha256}:${a.byteLength}`;
       if (digestKeys.has(dk)) throw new AkariError('F503', '保存Projectに重複assetがあります');
       digestKeys.add(dk);
     }
     if (ic > LIMITS.imageAssets || ac > LIMITS.audioAssets)
-      throw new AkariError('F504', '画像または音asset数が上限を超えています');
+      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, '画像または音asset数が上限を超えています');
     return { design, assetIds };
   }
 
@@ -2188,7 +2188,7 @@
     if (d.callPhrase !== undefined && (d.type !== 'action' || typeof d.callPhrase !== 'string' || cpLen(d.callPhrase) > 80))
       throw new AkariError('F503', '短いよび方は、80文字までで書いてください');
     if (d.editId && !safeId(d.editId))
-      throw new AkariError('F503', '下書きのデータがこわれています');
+      throw new AkariError('F503', '下書きの中身がこわれています');
     return { ...d };
   }
   function validateEditorState(state,project) {
@@ -2486,7 +2486,7 @@
         );
       throw new AkariError(
         'F502',
-        '作品のデータを読めません。あかりでほぞんした .akari.md のファイルをえらんでください',
+        '作品の中身を読めません。あかりでほぞんした .akari.md のファイルをえらんでください',
       );
     }
     const recorded = root;
@@ -2505,7 +2505,7 @@
     if (text.slice(0, begin) !== markdownBody(recorded))
       throw new AkariError(
         'F512',
-        'ファイルの本文と、作品をもどすためのデータが合いません。いまなおしている作品はかえていません。',
+        'ファイルの本文と、作品をもどすための中身が合いません。いまなおしている作品はかえていません。',
       );
     const store = new AssetStore();
     for (const record of root.assets) store.addImmutable(await validateLoadedAssetRecord(record));
@@ -2557,7 +2557,7 @@
     if (sn.duration != null) checkAudioLimits({ ...containerMeta, duration: sn.duration });
     const decoded = await decodeAudioMeta(bytes);
     if (decoded.channels !== containerMeta.channels)
-      throw new AkariError('F511', 'この音のファイルは、中のデータが合っていません。ほかの音を使ってください');
+      throw new AkariError('F511', 'この音のファイルは、中身が合っていません。ほかの音を使ってください');
     if (sn.duration != null && Math.abs(decoded.duration - sn.duration) > 0.02)
       throw new AkariError('F511', 'この音のファイルは、書いてある長さと本当の長さが合いません。ほかの音を使ってください');
     const meta = {
@@ -2602,7 +2602,7 @@
     return value;
   }
   function parseDataFormInitial(text,kind,{mode='literal',expectedUnit=null}={}) {
-    if(!['variable','list'].includes(kind)||!['literal','lines'].includes(mode))throw new AkariError('F503','データの入れ方が正しくありません');
+    if(!['variable','list'].includes(kind)||!['literal','lines'].includes(mode))throw new AkariError('F503','へんすう・リストの中身の入れ方が正しくありません');
     let value;
     if(kind==='list'&&mode==='lines')value=String(text)===''?[]:String(text).replace(/\r\n?/g,'\n').split('\n');
     else value=parseLiteralForData(text,kind);
