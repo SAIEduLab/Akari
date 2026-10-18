@@ -18,7 +18,7 @@ export function verifyCommandMeaning(report){
    if(Object.hasOwn(wantedLists,id))assert.deepEqual(f.lists.名前一覧,wantedLists[id]);
    const wantedSpeech={IfStatement:[variant?'不一致':'一致'],Say:['10点以上です'],WaitTime:['完了'],WaitUntil:['完了'],ForEach:['本','ぼうし'],Broadcast:['送信後','0.3','0.6'],BroadcastAndWait:['0.3','0.6','送信後'],Ask:['はる'],LocalVariableDeclaration:['1'],ReturnStatement:['5'],'StopCommand:THIS':['他'],'StopCommand:OTHERS':['現在'],'StopCommand:ALL':[],'LooksCommand:SET_INPUT':['前=前','後=答え'],NoOperation:['終わり']};
    if(Object.hasOwn(wantedSpeech,id))assert.deepEqual(speech,wantedSpeech[id]);
-   const motion={MOVE:[110,100,0],GOTO:[100,50,0],GLIDE:[200,100,0],TURN_RIGHT:[100,100,15],TURN_LEFT:[100,100,-15],SET_DIRECTION:[100,100,90],SET_X:[100,100,0],SET_Y:[100,50,0],POINT_TO:[100,100,90],BOUNCE:variant?[100,100,0]:[540,100,180]};
+   const motion={MOVE:[110,100,0],GOTO:[100,50,0],GLIDE:[200,100,0],TURN_RIGHT:[100,100,15],TURN_LEFT:[100,100,-15],SET_DIRECTION:[100,100,45],SET_X:[100,100,0],SET_Y:[100,50,0],POINT_TO:[100,100,90],BOUNCE:variant?[100,100,0]:[540,100,180]};
    if(id.startsWith('MotionCommand:'))assert.deepEqual([a.x,a.y,a.direction],motion[id.split(':')[1]]);
    const op=id.split(':')[1];
    if(id==='LooksCommand:SET_SCALE')assert.equal(a.scalePercent,120);

@@ -122,7 +122,7 @@
     const literalText = (e) => (e?.kind === 'StringLiteral' ? e.value : null);
     const componentByName = (name) => project.components.find((c) => c.name === name) || null;
     // 向き and 色 are commonly written for the character's direction and color; say how those are written.
-    const wordHint = (name) => ({ 向き: '。キャラクターの 向きは「方向」で 読み、「画面の右を向く」や「向きを90度にする」で かえます', 色: '。キャラクターの 色は「表示色を赤にする」で かえます' })[name] || '';
+    const wordHint = (name) => ({ 向き: '。キャラクターの 向きは「方向」で 読み、「画面の右を向く」や「向きを45度にする」で かえます', 色: '。キャラクターの 色は「表示色を赤にする」で かえます' })[name] || (/^[〇一二三四五六七八九十百千]+つ?$/.test(name) ? '。数は 3や 10のように 数字で 書きます' : '');
     const checkComponentTarget = (expr, allowed, ctx, where, label = '部品', special = []) => {
       const name = literalText(expr);
       if (name === null || special.includes(name)) return;
@@ -136,7 +136,7 @@
       if (!ref || ref.kind === 'self') return ctx;
       const c = ref.name === project.stage.name || ref.name === '画面'
         ? { id: 'stage', type: 'stage' } : componentByName(ref.name);
-      if (!c) { add('S301', `「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, node, where); return ctx; }
+      if (!c) { add('S301', `「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください${['ぼく','わたし','おれ','あたし','うち'].includes(ref.name)?'。自分の ことなら「自分は」と 書きます':''}`, node, where); return ctx; }
       return { ...ctx, targetId: c.id, targetType: c.type };
     };
     const checkArguments = (n, def, where) => {

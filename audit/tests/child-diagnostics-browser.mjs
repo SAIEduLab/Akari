@@ -41,7 +41,7 @@ const cases=[
   ['argument-duplicate','（点数を10、点数を20として、【足す】で求めた答え）を言う。',
     '（点数を10、名前を「あかり」として、【足す】で求めた答え）を言う。','P205','入れるものの名前「点数」を2回書いています。名前は1回ずつ書いてください','同じ 名前が 2つ いじょう あります'],
   ['argument-bundle','（10、20を渡して、【足す】で求めた答え）を言う。','（（10、20）を渡して、【足す】で求めた答え）を言う。',
-    'P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）を渡して、','（ ）で ひとまとめに します'],
+    'P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、','（ ）で ひとまとめに します'],
 ];
 const expected=[...cases.map(x=>'syntax/'+x[0]),'semantic/function-effects','runtime/list-reference','file/digest-refusal',
   'save/digest-fault','save/length-fault','save/orphan-fault','import/current-and-incoming','reach/keyboard-390','reach/touch-390'];

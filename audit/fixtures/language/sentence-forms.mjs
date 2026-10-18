@@ -148,7 +148,7 @@ export const sentenceFormCases=[
     id:'SF-start-heading',
     source:'作品を動かしたとき、ねこは、姿を見せる',
     expected:script([show()],{heading:{event:'start',actorRef:named('ねこ')}}),
-    claims:{'heading:start/^(?:作品を動かした(?:とき|ら)|始まったとき|開始したとき|「動かす」を(?:押|お)した(?:とき|ら))、(.+?)は、?(.*)$':'作品を動かしたとき、ねこは、姿を見せる','sentence:LooksCommand:SHOW':'姿を見せる'},
+    claims:{'heading:start/^(?:作品を動かした(?:とき|ら)|作品を動かすと|始まったとき|開始したとき|「動かす」を(?:押|お)した(?:とき|ら))、(.+?)は、(.*)$':'作品を動かしたとき、ねこは、姿を見せる','sentence:LooksCommand:SHOW':'姿を見せる'},
   },
   {
     id:'SF-ask-ending',
@@ -484,12 +484,27 @@ export const sentenceFormCases=[
     claims:{"polite:向きます":"「マウス」の方を向きます","polite:行きます":"よこ100、たて50のばしょへ行きます","polite:すべります":"1秒で横200、縦100の位置へすべります","polite:下がります":"いちばんおくへ下がります","polite:はね返ります":"画面のはしにふれていれば、はね返ります","polite:かくします":"すがたをかくします","polite:隠します":"姿を隠します","polite:見せます":"すがたを見せます","polite:出ます":"いちばん手前へ出ます","polite:かえます":"次のすがたにかえます","polite:変えます":"次の背景に変えます","polite:鳴らし始めます":"「ベル」を鳴らし始めます","polite:鳴らします":"「ベル」を鳴らします","polite:止めます":"この動きを止めます","polite:送ります":"「開始」の合図を送ります","polite:作ります":"自分のコピーを作ります","polite:消します":"このコピーだけを消します","polite:けします":"このコピーだけをけします","polite:入れます":"名前一覧の最後に「あ」を入れます","polite:足します":"点数に1を足します","polite:引きます":"点数から1を引きます","polite:下ろします":"ペンを下ろします","polite:上げます":"ペンを上げます","polite:おします":"今のすがたのスタンプをおします","polite:押します":"スタンプを押します","polite:返します":"点数を答えとして返します","polite:行います":"【増やす】という手順を行います","polite:しません":"何もしません"},
   },
 
+  // 1.3.1: every action's て形 runs the two actions in order; each て entry is the one that reads its clause.
+  {
+    id:'SF-te-every-verb',
+    source:"点数を1増やして、1秒待つ\n点数を1ふやして、1秒待つ\n点数を1減らして、1秒待つ\n点数を1へらして、1秒待つ\nペンを下ろして、1秒待つ\nペンをおろして、1秒待つ\nスタンプを押して、1秒待つ\n今のすがたのスタンプをおして、1秒待つ\nすべての音を止めて、1秒待つ\n自分のコピーを作って、1秒待つ\n自分のコピーをつくって、1秒待つ\n「開始」の合図を送って、1秒待つ\nペンを上げて、1秒待つ\nペンをあげて、1秒待つ\n音の高さを1段階下げて、1秒待つ\nいちばんおくへ下がって、1秒待つ\nいちばん手前へ出て、1秒待つ\n「名前は？」と聞いて、1秒待つ\n「名前は？」ときいて、1秒待つ\n「名前は？」とたずねて、1秒待つ",
+    expected:{"kind":"Script","body":[{"kind":"NumericUpdate","op":"ADD","target":{"name":"点数","qualifier":null},"value":{"kind":"NumberLiteral","value":1},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"NumericUpdate","op":"ADD","target":{"name":"点数","qualifier":null},"value":{"kind":"NumberLiteral","value":1},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"NumericUpdate","op":"SUB","target":{"name":"点数","qualifier":null},"value":{"kind":"NumberLiteral","value":1},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"NumericUpdate","op":"SUB","target":{"name":"点数","qualifier":null},"value":{"kind":"NumberLiteral","value":1},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"DOWN","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"DOWN","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"STAMP","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"STAMP","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"SoundCommand","args":[],"op":"STOP_ALL","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"CloneCommand","args":[],"op":"CREATE_SELF","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"CloneCommand","args":[],"op":"CREATE_SELF","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"Broadcast","message":{"kind":"StringLiteral","value":"開始"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"UP","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"UP","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"SoundCommand","args":[{"kind":"NumberLiteral","value":1}],"op":"PITCH_DOWN","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"BACK","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"FRONT","actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"Ask","question":{"kind":"StringLiteral","value":"名前は？"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"Ask","question":{"kind":"StringLiteral","value":"名前は？"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}},{"kind":"Ask","question":{"kind":"StringLiteral","value":"名前は？"},"actorRef":{"kind":"self"}},{"kind":"WaitTime","seconds":{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},"actorRef":{"kind":"self"}}]},
+    claims:{"te:増やして":"点数を1増やして","te:ふやして":"点数を1ふやして","te:減らして":"点数を1減らして","te:へらして":"点数を1へらして","te:下ろして":"ペンを下ろして","te:おろして":"ペンをおろして","te:押して":"スタンプを押して","te:おして":"今のすがたのスタンプをおして","te:止めて":"すべての音を止めて","te:作って":"自分のコピーを作って","te:つくって":"自分のコピーをつくって","te:送って":"「開始」の合図を送って","te:上げて":"ペンを上げて","te:あげて":"ペンをあげて","te:下げて":"音の高さを1段階下げて","te:下がって":"いちばんおくへ下がって","te:出て":"いちばん手前へ出て","te:聞いて":"「名前は？」と聞いて","te:きいて":"「名前は？」ときいて","te:たずねて":"「名前は？」とたずねて"},
+  },
+
   // ── できごとの見出し (いつ始まるか、どう続けるか) ──
+  // コピーができたとき (the event's own name) starts 自分's copies.
+  {
+    id:'SF-heading-copy-self',
+    source:'コピーができたとき、姿をかくす',
+    expected:script([hide()],{heading:{event:'cloneStart',actorRef:self}}),
+    claims:{'heading:cloneStart/^()コピーが(?:作られた|できた)(?:とき|ら)、?(.*)$':'コピーができたとき、姿をかくす'},
+  },
   {
     id:'SF-heading-start-short',
     source:'始めると、ねこは、姿を見せる',
     expected:script([show()],{heading:{event:'start',actorRef:named('ねこ')}}),
-    claims:{'heading:start/^始めると、(.+?)は、?(.*)$':'始めると、ねこは、姿を見せる'},
+    claims:{'heading:start/^始め(?:ると|たら)、(.+?)は、(.*)$':'始めると、ねこは、姿を見せる'},
   },
   {
     id:'SF-heading-click',
@@ -501,13 +516,13 @@ export const sentenceFormCases=[
     id:'SF-heading-any-key',
     source:'キーがおされたとき、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'keyDown',actorRef:named('ねこ')}}),
-    claims:{'heading:keyDown/^キー(?:が(?:押|お)された(?:とき|ら)|を(?:押|お)した(?:とき|ら))、(.+?)は、?(.*)$':'キーがおされたとき、ねこは、姿をかくす'},
+    claims:{'heading:keyDown/^キー(?:が(?:押|お)された(?:とき|ら)|が(?:押|お)されると|を(?:押|お)した(?:とき|ら)|を(?:押|お)すと)、(.+?)は、(.*)$':'キーがおされたとき、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-named-key',
     source:'「空白」キーをおすたびに、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'keyDown',actorRef:named('ねこ'),filter:{key:'空白'}}}),
-    claims:{'heading:keyDown/^(.+?)キー(?:を(?:押|お)すたびに|を(?:押|お)した(?:とき|ら)|が(?:押|お)された(?:とき|ら))、(.+?)は、?(.*)$':'「空白」キーをおすたびに、ねこは、姿をかくす'},
+    claims:{'heading:keyDown/^(.+?)キー(?:を(?:押|お)すたびに|を(?:押|お)した(?:とき|ら)|を(?:押|お)すと|が(?:押|お)された(?:とき|ら)|が(?:押|お)されると)、(.+?)は、(.*)$':'「空白」キーをおすたびに、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-any-message',
@@ -525,19 +540,19 @@ export const sentenceFormCases=[
     id:'SF-heading-any-signal',
     source:'合図を受けたとき、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'message',actorRef:named('ねこ')}}),
-    claims:{'heading:message/^合図を受けた(?:とき|ら)、(.+?)は、?(.*)$':'合図を受けたとき、ねこは、姿をかくす'},
+    claims:{'heading:message/^合図を(?:受けた|受け取った|受けとった|うけた|うけとった)(?:とき|ら)、(.+?)は、(.*)$':'合図を受けたとき、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-named-signal',
     source:'「出発」という合図を受けたとき、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'message',actorRef:named('ねこ'),filter:{message:'出発'}}}),
-    claims:{'heading:message/^(.+?)(?:という|の)合図を受けた(?:とき|ら)、(.+?)は、?(.*)$':'「出発」という合図を受けたとき、ねこは、姿をかくす'},
+    claims:{'heading:message/^(.+?)(?:という|の)合図を(?:受けた|受け取った|受けとった|うけた|うけとった)(?:とき|ら)、(.+?)は、(.*)$':'「出発」という合図を受けたとき、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-backdrop',
     source:'背景が変わったとき、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'backdropChanged',actorRef:named('ねこ')}}),
-    claims:{'heading:backdropChanged/^(?:背景|はいけい)が(?:変わった|かわった)(?:とき|ら)、(.+?)は、?(.*)$':'背景が変わったとき、ねこは、姿をかくす'},
+    claims:{'heading:backdropChanged/^(?:背景|はいけい)が(?:変わった|かわった)(?:とき|ら)、(.+?)は、(.*)$':'背景が変わったとき、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-value-changed',

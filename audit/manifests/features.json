@@ -131,7 +131,7 @@
       "id": "MotionCommand:SET_DIRECTION",
       "kind": "MotionCommand",
       "op": "SET_DIRECTION",
-      "source": "向きを90度にする。"
+      "source": "向きを45度にする。"
     },
     {
       "id": "MotionCommand:SET_X",

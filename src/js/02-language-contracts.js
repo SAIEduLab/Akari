@@ -254,7 +254,7 @@
         id: 'MotionCommand:SET_DIRECTION',
         kind: 'MotionCommand',
         op: 'SET_DIRECTION',
-        source: '向きを90度にする',
+        source: '向きを45度にする',
       },
       {
         id: 'MotionCommand:SET_X',
@@ -876,7 +876,7 @@
           '\u306e\u9577\u3055',
           '\u306e1\u756a\u76ee',
           'に1が入っている',
-          '\u30671\u304c\u6700\u521d\u306b\u3042\u308b\u756a\u53f7',
+          'の中で1がはじめて出てくる番号',
         ])
           add(
             'listExpr:' + name + suffix,
@@ -967,7 +967,7 @@
       '条件の答え（あてはまる）または条件の答え（あてはまらない）',
       '\u300c\u3042\u304b\u308a\u300d\u306e\u6587\u5b57\u6570',
       '\u300c\u3042\u304b\u308a\u300d\u306e1\u6587\u5b57\u76ee',
-      '\u300c\u3042\u304b\u308a\u300d\u3067\u300c\u304b\u300d\u304c\u6700\u521d\u306b\u3042\u308b\u756a\u53f7',
+      '「あかり」の中で「か」がはじめて出てくる番号',
       '\uff3b1\u30012\u30013\uff3d',
       '「空白」キーがおされている',
     ];
@@ -986,12 +986,12 @@
       const args =
         b.name === '\u6570'
           ? ['\u300c12\u300d']
-          : Array.from({ length: b.minArgs }, (_, i) => String(i + 1));
-      // The written form, as the formatter writes it (1から2のどれか, あまり（…）).
+          : Array.from({ length: Math.max(b.minArgs, ['最小', '最大'].includes(b.name) ? 2 : 0) }, (_, i) => String(i + 1));
+      // The written form, as the formatter writes it (1から2のどれか, 1÷2のあまり, （1と2をつなげた文字）).
       add(
         'builtin:' + b.name,
         'はじめから ある 計算',
-        b.name === '乱数' && args.length === 2 ? `${args[0]}から${args[1]}のどれか` : `${BUILTIN_SURFACES[b.name] || b.name}\uff08${args.join('\u3001')}\uff09`,
+        b.name === '乱数' && args.length === 2 ? `${args[0]}から${args[1]}のどれか` : b.name === '余り' ? `${args[0]}÷${args[1]}のあまり` : b.name === 'つなぐ' ? `（${args.join('と')}をつなげた文字）` : `${BUILTIN_SURFACES[b.name] || b.name}（${args.join('、')}）`,
         'expression',
       );
     }
