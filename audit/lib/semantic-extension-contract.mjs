@@ -127,7 +127,7 @@ export function verifyBasicBrowser(report){
  }return count;
 }
 
-export const semanticNegativeIds=["N01/relative-and-screen","N02/direction-and-rotation","N03/wait-and-duration","N04/edge-and-level","N05/inclusive-and-strict","N06/insert-and-replace","N07/data-and-literal","N08/unit-refusal","N09/repeat-scope-required","N10/duplicate-rate","N11/duplicate-direction","N12/missing-rate","N13/no-foreign-data-fallback","N14/else-and-event-boundary","N15/invalid-counts-and-ordinals","N16/callable-context","N17/named-arguments","N18/broadcast-reference-required","N19/original-is-not-clone","N20/quoted-connectors","N21/draft-never-becomes-zero","N22/nested-binder-scope","N25/semantic-drafts-save-and-refuse-execution"];
+export const semanticNegativeIds=["N01/relative-and-screen","N02/direction-and-rotation","N03/wait-and-duration","N04/edge-and-level","N05/inclusive-and-strict","N06/insert-and-replace","N07/data-and-literal","N08/unit-refusal","N09/repeat-scope-required","N10/duplicate-rate","N11/duplicate-direction","N12/missing-rate","N13/no-foreign-data-fallback","N14/else-and-event-boundary","N15/invalid-counts-and-ordinals","N16/callable-context","N17/named-arguments","N18/broadcast-reference-required","N19/original-is-not-clone","N20/quoted-connectors","N21/draft-never-becomes-zero","N22/nested-binder-scope","N25/semantic-drafts-save-and-refuse-execution","N26/part-wait-and-flow-wait"];
 export function finiteVariantFixture(){
  const file='audit/fixtures/finite-semantic-variants.json',bytes=fs.readFileSync(file),hash=crypto.createHash('sha256').update(bytes).digest('hex');assert.equal(hash,'4d781e00a0c0a122bfc6612ef9bb733d2a8ffb8037e20349070cbbabc2143ef2');return{fixture:JSON.parse(bytes),hash};
 }

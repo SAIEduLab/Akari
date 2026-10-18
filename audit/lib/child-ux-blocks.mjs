@@ -23,7 +23,8 @@ export function blockMeaning(views,project,runs,taskId){
     const field=(n,key)=>{assert.ok(Object.hasOwn(n.fields,key),'DOM field '+n.schema+'/'+key);return n.fields[key];};
     const ref=(n,actor,prefix='actorRef.')=>{
       const kind=n.fields[prefix+'kind'];if(kind===undefined)return actor;
-      if(kind==='self')return actor;assert.equal(kind,'named');const id=actors.get(field(n,prefix+'name'));assert.ok(id,'known displayed actor');return id;
+      // みんな (a wait of the whole flow) reads its time as 自分, like a statement without a subject.
+      if(kind==='self'||kind==='all')return actor;assert.equal(kind,'named');const id=actors.get(field(n,prefix+'name'));assert.ok(id,'known displayed actor');return id;
     };
     const actorName=id=>id==='stage'?project.stage.name:project.components.find(c=>c.id===id)?.name;
     for(const n of nodes.filter(n=>n.schema==='Script')){
@@ -68,7 +69,8 @@ export function blockMeaning(views,project,runs,taskId){
         const seconds=()=>{assert.equal(p.field(n,'unit'),'秒');const duration=Number(p.field(n,'value'));assert.ok(Number.isFinite(duration)&&duration>=0);return duration*1000;};
         switch(n.schema){
           case 'Say':yield {kind:'say',actor:who,text:String(one('value')),duration:seconds()};yield {kind:'clear',actor:who};break;
-          case 'WaitTime':yield {kind:'wait',duration:seconds()};break;
+          // The fixed tasks wait with the whole flow (みんな); a part's own wait is not one of their concepts.
+          case 'WaitTime':assert.equal(n.fields['actorRef.kind']??'all','all','fixed task waits with the whole flow');yield {kind:'wait',duration:seconds()};break;
           case 'Ask':answer=yield {kind:'ask',text:String(one('question'))};break;
           case 'RepeatCount':{assert.equal(p.field(n,'unit'),'回');const count=Number(p.field(n,'value'));assert.ok(Number.isInteger(count)&&count>=0&&count<=100);for(let i=0;i<count;i++)yield* statements(p,p.children(n,'body'),who);break;}
           case 'IfStatement':assert.ok(['true','false'].includes(p.field(n,'hasElse')));yield* statements(p,p.children(n,one('condition')?'thenBody':'elseBody'),who);break;
