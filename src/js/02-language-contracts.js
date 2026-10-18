@@ -1096,7 +1096,7 @@
   const FIXED_SENSORS = [...GRAMMAR_REGISTRY.sensors];
   // Written words of sensors whose internal name differs (the standard spelling the formatter writes).
   const SENSOR_SURFACES = Object.freeze({
-    'クローンである': 'コピーである', '横位置': 'よこのばしょ', '縦位置': 'たてのばしょ',
+    'クローンである': '自分がコピーである', '横位置': 'よこのばしょ', '縦位置': 'たてのばしょ',
     'マウスの横位置': 'マウスのよこのばしょ', 'マウスの縦位置': 'マウスのたてのばしょ', 'マウスが押されている': 'マウスがおされている',
     '衣装名': 'すがたの名前', '衣装番号': 'すがたの番号', '背景名': 'はいけいの名前', '背景番号': 'はいけいの番号',
     '以前の背景名': '前のはいけいの名前', '新しい背景名': '新しいはいけいの名前', '受け取った知らせ': '受けた合図',

@@ -484,6 +484,13 @@ export const sentenceFormCases=[
     claims:{"polite:向きます":"「マウス」の方を向きます","polite:行きます":"よこ100、たて50のばしょへ行きます","polite:すべります":"1秒で横200、縦100の位置へすべります","polite:下がります":"いちばんおくへ下がります","polite:はね返ります":"画面のはしにふれていれば、はね返ります","polite:かくします":"すがたをかくします","polite:隠します":"姿を隠します","polite:見せます":"すがたを見せます","polite:出ます":"いちばん手前へ出ます","polite:かえます":"次のすがたにかえます","polite:変えます":"次の背景に変えます","polite:鳴らし始めます":"「ベル」を鳴らし始めます","polite:鳴らします":"「ベル」を鳴らします","polite:止めます":"この動きを止めます","polite:送ります":"「開始」の合図を送ります","polite:作ります":"自分のコピーを作ります","polite:消します":"このコピーだけを消します","polite:けします":"このコピーだけをけします","polite:入れます":"名前一覧の最後に「あ」を入れます","polite:足します":"点数に1を足します","polite:引きます":"点数から1を引きます","polite:下ろします":"ペンを下ろします","polite:上げます":"ペンを上げます","polite:おします":"今のすがたのスタンプをおします","polite:押します":"スタンプを押します","polite:返します":"点数を答えとして返します","polite:行います":"【増やす】という手順を行います","polite:しません":"何もしません"},
   },
 
+  // 隠れます／現れます: です・ます of the words read as すがたをかくす／すがたを見せる.
+  {
+    id:'SF-polite-hide-show',
+    source:'隠れます\n現れます',
+    expected:script([hide(),show()]),
+    claims:{'polite:隠れます':'隠れます','polite:現れます':'現れます'},
+  },
   // 1.3.1: every action's て形 runs the two actions in order; each て entry is the one that reads its clause.
   {
     id:'SF-te-every-verb',

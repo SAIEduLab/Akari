@@ -321,7 +321,8 @@
         if(this.take('が成り立たない')) return exprNode('UnaryExpression',{op:'NOT',value});
         this.expect('が成り立つ'); return value;
       }
-      if (this.take('コピーではない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('SensorRead',{sensor:'クローンである'})});
+      if (this.take('自分がコピーではない')||this.take('コピーではない')) return exprNode('UnaryExpression',{op:'NOT',value:exprNode('SensorRead',{sensor:'クローンである'})});
+      if (this.take('自分がコピーである')) return exprNode('SensorRead',{sensor:'クローンである'});
       if (this.take('コピーである')) return exprNode('SensorRead',{sensor:'クローンである'});
       if (this.starts('（')) {
         const call = this.namedFunction();
@@ -528,7 +529,7 @@
         const values = tail.slice(0,positional);
         if (!values.startsWith('（') || !values.endsWith('）')) {
           let one=null;try{one=parse(values,0);}catch(error){if(!(error instanceof AkariError))throw error;}
-          if (!one||!['NumberLiteral','StringLiteral','VariableRead'].includes(one.kind)) this.err('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、');
+          if (!one||!['NumberLiteral','StringLiteral','VariableRead'].includes(one.kind)) this.err('P205',/と/.test(surfaceMask(values))?'入れるものが 2つ いじょう あるときは、（ ）で かこんで「、」で 分けます。れい：（3、4）をわたして、':'入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、');
           args.push(one);
         } else {
         const inner=values.slice(1,-1), visible=surfaceMask(inner); let begin=0;
@@ -879,7 +880,8 @@
       return `条件（${expression}）が${tail}${form==='if'?'なら':form==='while'?'あいだ':form==='until'?'まで':''}`;
     }
     const source=value.kind==='ActorQualifiedRead' && value.value.kind==='SensorRead' && ['TOUCHING','TOUCHING_COLOR'].includes(value.value.sensor) ? `${nameSource(value.actorRef.name)}が${formatExpressionCore(value.value)}` : formatExpressionCore(value), mask=surfaceMask(source);
-    const record=CONDITION_FORMS.find(r=>mask.endsWith(r.plain));
+    const predicate=['SensorRead','CompareExpression','ActorQualifiedRead'].includes(value.kind)||(value.kind==='BuiltinCall'&&value.name==='CONTAINS');
+    const record=predicate?CONDITION_FORMS.find(r=>mask.endsWith(r.plain)):null;
     if(record) {
       const forms=conditionFormCandidates(record,form), match=forms.find(([,no])=>no===negative);
       if(match) return (record.plain==='コピーである'&&!source.slice(0,-record.plain.length)?'自分が':'')+source.slice(0,-record.plain.length)+match[0];
@@ -1251,7 +1253,7 @@
       ['かくします','かくす'],['隠します','隠す'],['見せます','見せる'],['出ます','出る'],
       ['かえます','かえる'],['変えます','変える'],['鳴らし始めます','鳴らし始める'],['鳴らします','鳴らす'],['止めます','止める'],
       ['送ります','送る'],['作ります','作る'],['消します','消す'],['けします','けす'],['入れます','入れる'],['足します','足す'],['引きます','引く'],
-      ['下ろします','下ろす'],['上げます','上げる'],['おします','おす'],['押します','押す'],['返します','返す'],['行います','行う'],
+      ['下ろします','下ろす'],['上げます','上げる'],['おします','おす'],['押します','押す'],['返します','返す'],['行います','行う'],['隠れます','すがたをかくす'],['現れます','すがたを見せる'],
       ['しません','しない'],['します','する']];
     const suffix = polite.find(([ending])=>protectedCode.endsWith(ending));
     const immediate = protectedCode.startsWith('すぐに') ? 3 : 0;
@@ -1278,7 +1280,7 @@
           const inner=input.slice(0,-passWord.length);
           if (!(inner.startsWith('（')&&inner.endsWith('）'))) {
             let one=null;try{one=parseExpression(inner,symbols,ctx);}catch(error){if(!(error instanceof AkariError))throw error;}
-            if (!one||!['NumberLiteral','StringLiteral','VariableRead'].includes(one.kind)) throw new AkariError('P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、');
+            if (!one||!['NumberLiteral','StringLiteral','VariableRead'].includes(one.kind)) throw new AkariError('P205',/と/.test(surfaceMask(inner))?'入れるものが 2つ いじょう あるときは、（ ）で かこんで「、」で 分けます。れい：（3、4）をわたして、':'入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、');
             args=[one];
           } else args=parseArgumentText(inner.slice(1,-1),symbols,ctx,line.lineNo);
         } else {
@@ -1532,7 +1534,7 @@
       text = whole(text, /^(.*)コピーを(.+?)つ作る$/d, ([a, n]) => a + 'コピーを' + n + '体作る');
       text = whole(text, /^((?:[^、。]+?は、?)?)このコピーを(?:消す|けす)$/d, ([s]) => s + 'このコピーだけを消す');
       // 点数を1つ増やす: つ counts.
-      text = whole(text, /^(.+?)を([0-9０-９]+)つ(増やす|ふやす|減らす|へらす)$/d, ([t, n, v]) => t + 'を' + n + v);
+      text = whole(text, /^(.+?)を([0-9０-９]+)(?:つ)?(?:ずつ)?(増やす|ふやす|減らす|へらす)$/d, ([t, n, v]) => t + 'を' + n + v);
 
       text = whole(text, /^(.+)の中身をすべて(?:消す|けす)$/d, ([l]) => l + 'の中身を全部消す');
       for (const [axis, plus, minus] of [['よこ', '画面の右へ', '画面の左へ'], ['たて', '画面の下へ', '画面の上へ']]) {
@@ -1597,13 +1599,23 @@
       const end=connective?i:mask.slice(Math.max(start,i-2),i)==='から'?i-2:i;
       const pair=SENTENCE_TE_FORMS.find(([te])=>end-start>=te.length&&mask.startsWith(te,end-te.length));
       if(!pair)continue;
+      // 「3をわたして、」「点数を10として、」 hand values to a procedure; they are not an action of their own.
+      if(/(?:を(?:わたし|渡し)て|として)$/.test(mask.slice(start,end)))continue;
       const tail=code.slice(start,end);
       let replacement=tail.slice(0,-pair[0].length)+pair[1];
       if(pair[0]==='行って'&&!replacement.endsWith('手順を行う'))replacement=tail.slice(0,-pair[0].length)+'行く';
       const part=surfaceLineSlice(line,start,i,replacement),head=readBlockHead(replacement,symbols,{...scope,sourceLine:part,lineNo:line.lineNo});
       let node;
       if(head?.inlineBody){const fields={...head};delete fields.inlineBody;delete fields.kind;node=statementNode(head.kind,part,{...fields,body:head.inlineBody,actorRef:{...(head.actorRef||scope.topicActor||{kind:'self'})}});}
-      else node=parseSimpleStatement(part,symbols,scope);
+      else {
+        try { node=parseSimpleStatement(part,symbols,scope); }
+        catch(error){
+          if(!(error instanceof AkariError))throw error;
+          // A clause that reads only in its natural spelling reads the same way before 「〜して、」 (点数を1つ増やして、…).
+          for(const variant of naturalSentenceVariants(replacement,symbols)){try{node=parseSimpleStatement(surfaceLineSlice(line,start,i,variant),symbols,scope);break;}catch(attempt){if(!(attempt instanceof AkariError))throw attempt;}}
+          if(!node)throw error;
+        }
+      }
       nodes.push(node);if(STATEMENT_EXPLICIT_ACTORS.has(node))scope.topicActor=node.actorRef;start=i+(connective?2:1);if(mask[start]==='、')start++;i=start-1;
     }
     if(!nodes.length)throw firstError;
@@ -1662,6 +1674,9 @@
       const parts=surfaceCapture(pattern,code);
       if(parts&&(!when||when(parts.map(part=>part?part.text:''))))throw fixed(message,build(parts.map(part=>part?part.text:'')),label,kind);
     }
+    // ゆっくり10歩進む (ゆっくり10 was read as a name): slowly is a time to take.
+    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(?:(前|後ろ|右|左)(?:へ|に))?ゆっくり(?:と)?(?:(前|後ろ|右|左)(?:へ|に))?([0-9０-９.．]+)歩(?:進む|すすむ|動く|うごく)$/d,code)))
+      throw fixed('ゆっくり 動くときは、「1秒かけて前へ10歩動く」のように かける 時間を 書きます',`${p[0].text}1秒かけて${p[1]?.text||p[2]?.text||'前'}へ${p[3].text}歩動く`,'時間を かけて 動く','MotionCommand');
     // 「ベル」を鳴らし、終わるまで待つ (an old form): 鳴らす itself waits until the sound ends.
     if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(.+?)を(.*?)鳴らし(?:て)?、?(?:鳴り)?終わるまで待つ$/d,code)))
       throw fixed('「鳴らす」は、音が 終わるまで 待ちます',`${p[0].text}${p[1].text}を${p[2].text}鳴らす`,'鳴らして 待つ','SoundCommand');
@@ -1927,7 +1942,7 @@
     }
     // そのあと・それから・そして・また… only say the order. Without 、 they are dropped before a number, a quote, a
     // known name or a usual first word (そして10歩進む was read as a name 「そして10」).
-    const LEAD_WORDS='そのあと|それから|次に|最後に|そして|まず|はじめに|最初に|また|次は|こんどは|今度は';
+    const LEAD_WORDS='そのあと|それから|次に|最後に|そして|まず|はじめに|最初に|また|次は|こんどは|今度は|はやく|すばやく|さっと';
     let lead=new RegExp('^(?:(?:'+LEAD_WORDS+'|くり返しが終わると)、|(?:'+LEAD_WORDS+')(?=[0-9０-９「（【－]|前へ|後ろへ|右に|右へ|左に|左へ|画面の|自分|すがた|姿|はいけい|背景|ペン|すべての|この|ほかの|作品|何も|いちばん|よこ|たて|表示色|大きさ|音の|重なり|向き|次の|前の))').exec(surfaceMask(code));
     if(!lead){const word=new RegExp('^(?:'+LEAD_WORDS+')').exec(surfaceMask(code)),rest=word&&code.slice(word[0].length),token=rest&&readNameToken(rest),whole=readNameToken(code);
       if(token&&(dataNameKind(token.name,symbols,ctx)||symbols?.project?.components?.some(c=>c.name===token.name))&&!(whole&&dataNameKind(whole.name,symbols,ctx)))lead=word;}
@@ -2163,7 +2178,7 @@
     if (surface) return surface;
     let m;
     if (code === '何もしない') return statementNode('NoOperation', line);
-    if (code === 'このくり返しを終える') return statementNode('Break', line);
+    if (code === 'このくり返しを終える' || code === 'このくり返しを終えます') return statementNode('Break', line);
     if (code === '次のくり返しへ進む') return statementNode('Continue', line);
     if (code === 'このスクリプトを止める')
       return statementNode('StopCommand', line, { op: 'THIS' });
