@@ -19506,10 +19506,13 @@ function createAkariExtensionHost(options) {
         p = PREC.CMP;
         break;
       }
-      case 'LogicalExpression':
+      case 'LogicalExpression': {
         p = n.op === 'AND' ? PREC.AND : PREC.OR;
-        s = `${formatExpressionCore(n.left, p)}${n.op === 'AND' ? 'かつ' : 'または'}${formatExpressionCore(n.right, p + 1)}`;
+        // 「AからBのどれか」 beside かつ／または keeps its （ ）: 「…のどれかまたは…」 does not read back.
+        const side = (x, min) => x.kind === 'BuiltinCall' && x.name === '乱数' && x.args.length === 2 ? `（${formatExpressionCore(x)}）` : formatExpressionCore(x, min);
+        s = `${side(n.left, p)}${n.op === 'AND' ? 'かつ' : 'または'}${side(n.right, p + 1)}`;
         break;
+      }
       default:
         throw new AkariError('P201', `未対応の式 ${n.kind}`);
     }
