@@ -25,7 +25,12 @@
         SET_DIRECTION: Object.freeze({
           label: '向きを決める',
           inputs: Object.freeze(['向き']),
-          format: (a) => `向きを${a(0,'度')}にする`,
+          // The four screen directions are written as words: 画面の右を向く (0度), 下 (90度), 左 (180度), 上 (270度).
+          format: (a, n) => {
+            const v = n?.args?.[0], degrees = v?.kind === 'QuantityLiteral' && v.value?.kind === 'NumberLiteral' ? v.value.value : null;
+            const side = { 0: '右', 90: '下', 180: '左', 270: '上' }[degrees];
+            return side ? `画面の${side}を向く` : `向きを${a(0,'度')}にする`;
+          },
         }),
         TURN_RIGHT: Object.freeze({
           label: '右に回る',
@@ -669,6 +674,7 @@
             minItems: 0,
             maxItems: LIMITS.sourceEach,
             variadic: meta.maxArgs !== meta.minArgs,
+            ...(meta.name === 'つなぐ' ? { separator: 'と' } : {}),
             initialItems: meta.minArgs,
             semanticMin: meta.minArgs,
             semanticMax: meta.maxArgs,

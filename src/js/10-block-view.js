@@ -1009,6 +1009,10 @@
           const left = value.find((p) => p?.slot?.key === 'left'), right = value.find((p) => p?.slot?.key === 'right');
           if (left && right) value = [left, ' が ', right, ' ' + schema.label];
         }
+        else if (schema.id === 'BuiltinCall:つなぐ') {
+          const slot = schema.inputs.find((s) => s.key === 'args');
+          value = ['（', { token: '', slot }, ' を つなげた文字）'];
+        }
         else if (schema.id === 'BuiltinCall:乱数') {
           const slot = schema.inputs.find((s) => s.key === 'args');
           value = [{ token: '', slot, index: 0 }, ' から ', { token: '', slot, index: 1 }, ' のどれか'];
@@ -1092,7 +1096,7 @@
                     : [value[part.index]]
                   : [value];
               for (const [i, child] of children.entries()) {
-                if (i) main.append(doc.createTextNode('\u3001'));
+                if (i) main.append(doc.createTextNode(slot.separator || '、'));
                 const text =
                   scalar(child) ??
                   (slot.type === 'target'
@@ -1443,8 +1447,10 @@
         }
         if (field.type === 'actor-ref') {
           const subject = subjectName(node);
-          const details = editDisclosure(node, 'actorRef', subject + 'は', 'blockui-subject');
-          details.querySelector('summary').setAttribute('aria-label', 'だれが動くかを かえる: ' + subject);
+          // A part's state (たくどん の よこのばしょ) takes の from the phrase, so its part name has no は.
+          const owner = node.schemaId === 'ActorQualifiedRead';
+          const details = editDisclosure(node, 'actorRef', owner ? subject : subject + 'は', 'blockui-subject');
+          details.querySelector('summary').setAttribute('aria-label', (owner ? 'だれのかを かえる: ' : 'だれが動くかを かえる: ') + subject);
           details.append(group);
           wrap.append(details);
         } else wrap.append(group);
@@ -2059,7 +2065,7 @@
         p = Math.min(inputPages.get(key) || 0, pages - 1);
       inputPages.set(key, p);
       for (let i = p * INPUT_PAGE; i < Math.min(children.length, (p + 1) * INPUT_PAGE); i++) {
-        if (i > p * INPUT_PAGE) wrap.append(E('span', 'blockui-separator', '、'));
+        if (i > p * INPUT_PAGE) wrap.append(E('span', 'blockui-separator', slot.separator || '、'));
         wrap.append(expressionSlot(node, slot, children[i], i));
       }
       if (slot.variadic) {

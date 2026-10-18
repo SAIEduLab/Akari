@@ -25,6 +25,29 @@
       return formatExpressionCore(n, parent);
     });
   }
+  // The value before a unit (秒・歩・回・度・％・番目・文字目): a number as it is, a name in 【 】, another expression in （ ）.
+  function quantityValueSource(value) {
+    if (value.kind === 'NumberLiteral' || (value.kind === 'UnaryExpression' && ['NEG', 'POS'].includes(value.op) && value.value.kind === 'NumberLiteral'))
+      return formatExpressionCore(value);
+    if (value.kind === 'VariableRead')
+      return (value.qualifier === 'project' ? '作品の' : value.qualifier === 'self' ? '自分の' : '') + '【' + value.name + '】';
+    if (value.kind === 'BuiltinCall' && value.name === '乱数' && value.args.length === 2) return formatExpressionCore(value, PREC.CMP + 0.5);
+    const text = formatExpressionCore(value);
+    let level = 0, whole = text.startsWith('（');
+    for (let i = 0, quote = false; whole && i < text.length; i++) {
+      const ch = text[i];
+      if (quote) { if (ch === '」') quote = false; continue; }
+      if (ch === '「') quote = true;
+      else if (ch === '（') level++;
+      else if (ch === '）' && !--level && i < text.length - 1) whole = false;
+    }
+    return whole ? text : '（' + text + '）';
+  }
+  // A part joined by と (〜と〜をつなげる) is wrapped in （ ） when its own text has と・を・が outside quotes and brackets.
+  function joinPartSource(x) {
+    const text = formatExpressionCore(x);
+    return /[とをが]/.test(surfaceMask(text)) ? '（' + text + '）' : text;
+  }
   function formatExpressionCore(n, parent = 0) {
     let s = '',
       p = PREC.ATOM;
@@ -42,11 +65,16 @@
         s = `条件の答え（${n.value ? 'あてはまる' : 'あてはまらない'}）`;
         break;
       case 'QuantityLiteral':
-        s = `${formatExpressionCore(n.value,PREC.POST)}${n.unit}`; p=PREC.POST; break;
+        s = `${quantityValueSource(n.value)}${n.unit}`; p=PREC.POST; break;
       case 'UnitlessRead':
         s = `${formatExpressionCore(n.value,PREC.POST)}の数だけ`; p=PREC.POST; break;
-      case 'ActorQualifiedRead':
-        s = `${n.actorRef.kind==='self'?'自分':nameSource(n.actorRef.name)}の（${formatExpressionCore(n.value)}）`; p=PREC.POST; break;
+      case 'ActorQualifiedRead': {
+        // 「たくどん」のよこのばしょ: a part's state word or data name follows without brackets, as other commands name the part in 「」.
+        const state = n.value.kind === 'SensorRead' && n.value.arg === undefined;
+        const plain = n.actorRef.kind === 'self' ? state : state || n.value.kind === 'VariableRead';
+        const owner = n.actorRef.kind === 'self' ? '自分' : '「' + n.actorRef.name + '」';
+        s = plain ? `${owner}の${formatExpressionCore(n.value)}` : `${owner}の（${formatExpressionCore(n.value)}）`; p=PREC.POST; break;
+      }
       case 'ListLiteral':
         s = `［${n.items.map((x) => formatExpressionCore(x)).join('、')}］`;
         break;
@@ -62,23 +90,27 @@
         if (n.name === 'CONTAINS')
           s = `${formatExpressionCore(n.args[0], PREC.CMP + 1)}に${formatExpressionCore(n.args[1], PREC.CMP + 1)}が入っている`;
         else if (n.name === 'INDEX_OF')
-          s = `${formatExpressionCore(n.args[0], PREC.POST)}で${formatExpressionCore(n.args[1], PREC.POST)}が最初にある番号`;
+          s = `${formatExpressionCore(n.args[0], PREC.POST)}の中で${formatExpressionCore(n.args[1], PREC.POST)}がはじめて出てくる番号`;
         else if (n.name === 'LENGTH') s = `${formatExpressionCore(n.args[0], PREC.POST)}の長さ`;
         else if (n.name === 'STRING_LENGTH')
           s = `${formatExpressionCore(n.args[0], PREC.POST)}の文字数`;
         else if (n.name === 'STRING_CHAR')
-          s = `${formatExpressionCore(n.args[0], PREC.POST)}の${formatExpressionCore(n.args[1], PREC.POST + 1)}文字目`;
+          s = `${formatExpressionCore(n.args[0], PREC.POST)}の${quantityValueSource(n.args[1])}文字目`;
         else if (n.name === '乱数' && n.args.length === 2)
           s = `${formatExpressionCore(n.args[0], PREC.ADD)}から${formatExpressionCore(n.args[1], PREC.ADD)}のどれか`;
+        else if (n.name === '余り' && n.args.length === 2)
+          s = `${formatExpressionCore(n.args[0], PREC.MUL)}÷${formatExpressionCore(n.args[1], PREC.MUL + 1)}のあまり`;
+        else if (n.name === 'つなぐ' && n.args.length >= 2)
+          s = `（${n.args.map(joinPartSource).join('と')}をつなげた文字）`;
         else
           s = `${builtinSurfaceName(n.name)}（${n.args.map((x) => formatExpressionCore(x)).join('、')}）`;
         // 「AからBのどれか」 binds looser than ＋ and tighter than a comparison.
         p = n.name === 'CONTAINS' ? PREC.CMP : n.name === 'INDEX_OF' ? PREC.SEARCH
-          : n.name === '乱数' && n.args.length === 2 ? PREC.CMP + 0.5 : PREC.POST;
+          : n.name === '乱数' && n.args.length === 2 ? PREC.CMP + 0.5 : n.name === '余り' && n.args.length === 2 ? PREC.MUL : PREC.POST;
         break;
       }
       case 'ListRead':
-        s = `${formatExpressionCore(n.list, PREC.POST)}の${formatExpressionCore(n.index, PREC.POST + 1)}番目`;
+        s = `${formatExpressionCore(n.list, PREC.POST)}の${quantityValueSource(n.index)}番目`;
         p = PREC.POST;
         break;
       case 'SensorRead': {

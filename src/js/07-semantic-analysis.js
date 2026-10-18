@@ -121,6 +121,8 @@
     };
     const literalText = (e) => (e?.kind === 'StringLiteral' ? e.value : null);
     const componentByName = (name) => project.components.find((c) => c.name === name) || null;
+    // 向き and 色 are commonly written for the character's direction and color; say how those are written.
+    const wordHint = (name) => ({ 向き: '。キャラクターの 向きは「方向」で 読み、「画面の右を向く」や「向きを90度にする」で かえます', 色: '。キャラクターの 色は「表示色を赤にする」で かえます' })[name] || '';
     const checkComponentTarget = (expr, allowed, ctx, where, label = '部品', special = []) => {
       const name = literalText(expr);
       if (name === null || special.includes(name)) return;
@@ -265,7 +267,7 @@
               n.qualifier === 'self' && ctx.targetId ? `${targetLabel(ctx)}の自分には` : 'まだ作っていない';
             add(
               'S301',
-              `${prefix}名前「${n.name}」${n.qualifier === 'self' && ctx.targetId ? 'がありません' : 'です。名前をたしかめるか、その名前のへんすうかリストを作ってください'}`,
+              `${prefix}名前「${n.name}」${n.qualifier === 'self' && ctx.targetId ? 'がありません' : 'です。名前をたしかめるか、その名前のへんすうかリストを作ってください'}${wordHint(n.name)}`,
               ctx.node,
               where,
             );
@@ -404,7 +406,7 @@
               'S301',
               n.target.qualifier === 'self' && c.targetId
                 ? `${targetLabel(c)}の自分には「${n.target.name}」がありません`
-                : `「${n.target.name}」という へんすうや リストが ありません。名前を たしかめるか、その名前の へんすうか リストを 作ってください`,
+                : `「${n.target.name}」という へんすうや リストが ありません。名前を たしかめるか、その名前の へんすうか リストを 作ってください${wordHint(n.target.name)}`,
               n,
               where,
             );
