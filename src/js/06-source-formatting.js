@@ -26,12 +26,12 @@
     });
   }
   // The value before a unit (秒・歩・回・度・％・番目・文字目): a number as it is, a name in 【 】, another expression in （ ）.
-  function quantityValueSource(value) {
+  function quantityValueSource(value, bareRange = false) {
     if (value.kind === 'NumberLiteral' || (value.kind === 'UnaryExpression' && ['NEG', 'POS'].includes(value.op) && value.value.kind === 'NumberLiteral'))
       return formatExpressionCore(value);
     if (value.kind === 'VariableRead')
       return (value.qualifier === 'project' ? '作品の' : value.qualifier === 'self' ? '自分の' : '') + '【' + value.name + '】';
-    if (value.kind === 'BuiltinCall' && value.name === '乱数' && value.args.length === 2) return formatExpressionCore(value, PREC.CMP + 0.5);
+    if (bareRange && value.kind === 'BuiltinCall' && value.name === '乱数' && value.args.length === 2) return formatExpressionCore(value, PREC.CMP + 0.5);
     const text = formatExpressionCore(value);
     let level = 0, whole = text.startsWith('（');
     for (let i = 0, quote = false; whole && i < text.length; i++) {
@@ -46,7 +46,7 @@
   // A part joined by と (〜と〜をつなげる) is wrapped in （ ） when its own text has と・を・が outside quotes and brackets.
   function joinPartSource(x) {
     const text = formatExpressionCore(x);
-    return /[とをが]/.test(surfaceMask(text)) ? '（' + text + '）' : text;
+    return /[とをがに]/.test(surfaceMask(text)) ? '（' + text + '）' : text;
   }
   function formatExpressionCore(n, parent = 0) {
     let s = '',

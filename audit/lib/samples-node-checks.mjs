@@ -34,6 +34,6 @@ export function verifySampleRuntime(A){ const d=nodeRuntime(A,'dance');try{d.adv
  }finally{music.s.stop();}
 
  for(const elapsed of [0,20,490,500,990]){const concurrent=nodeRuntime(A,'music');try{concurrent.click('play');concurrent.click('play');concurrent.advance(elapsed);concurrent.click('stop');const cut=concurrent.audio.length;concurrent.click('play');concurrent.advance(11000);assert.deepEqual(concurrent.audio.slice(cut).map(a=>a[0]),[262,330,392,330,349,440,392,330,294,349,440,392,330,294,262,262]);assert.equal(concurrent.r.projectVars.get('演奏中'),0);}finally{concurrent.s.stop();}}
- const edge=nodeRuntime(A,'maze',p=>{const script=p.scripts.find(s=>s.targetId==='go');script.source=script.source.replace('向きを「右」','向きを「左」');});try{edge.click('go');edge.advance(1000);assert.equal(edge.r.projectVars.get('失敗'),1);assert.equal(edge.r.projectVars.get('列'),0);}finally{edge.s.stop();}
+ const edge=nodeRuntime(A,'maze',p=>{const script=p.scripts.find(s=>s.targetId==='go');script.source=script.source.replace('進む方向を「右」','進む方向を「左」');});try{edge.click('go');edge.advance(1000);assert.equal(edge.r.projectVars.get('失敗'),1);assert.equal(edge.r.projectVars.get('列'),0);}finally{edge.s.stop();}
  const busy=nodeRuntime(A,'maze');try{busy.click('go');busy.advance(50);busy.click('go');busy.click('retry');busy.advance(10000);assert.equal(busy.r.projectVars.get('順番'),5);assert.equal(busy.r.projectVars.get('列'),6);assert.equal(busy.r.projectVars.get('行'),4);}finally{busy.s.stop();}
 }

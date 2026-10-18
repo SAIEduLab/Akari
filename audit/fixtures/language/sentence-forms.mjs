@@ -54,7 +54,7 @@ const predicateRows=[
   {plain:'と同じ',operand:'点数が1',yes:compare('EQ',score,num(1)),
     forms:{plain:'と同じ',ifYes:'と同じなら',ifNo:'と同じでなければ',whileYes:'と同じであるあいだ',untilYes:'と同じになるまで',andYes:'と同じで',andNo:'と同じではなくて',plainNo:'と同じではない'}},
   {plain:'とちがう',operand:'点数が1',yes:compare('NEQ',score,num(1)),
-    forms:{plain:'とちがう',ifYes:'とちがえば',ifNo:'とちがわなければ',whileYes:'とちがうあいだ',untilYes:'とちがう状態になるまで',andYes:'とちがっていて',andNo:'とちがわなくて',plainNo:'とちがわない'}},
+    forms:{plain:'とちがう',ifYes:'とちがえば',ifNo:'とちがわなければ',whileYes:'とちがうあいだ',untilYes:'と同じでなくなるまで',andYes:'とちがっていて',andNo:'とちがわなくて',plainNo:'とちがわない'}},
   {plain:'と違う',operand:'点数が1',yes:compare('NEQ',score,num(1)),
     forms:{plain:'と違う',ifYes:'と違えば',ifNo:'と違わなければ',whileYes:'と違うあいだ',untilYes:'と違う状態になるまで',andYes:'と違っていて',andNo:'と違わなくて',plainNo:'と違わない'}},
   {plain:'押されている',operand:'「空白」キーが',yes:sensor('KEY_DOWN',str('空白')),
@@ -148,7 +148,7 @@ export const sentenceFormCases=[
     id:'SF-start-heading',
     source:'作品を動かしたとき、ねこは、姿を見せる',
     expected:script([show()],{heading:{event:'start',actorRef:named('ねこ')}}),
-    claims:{'heading:start/^(?:作品を動かしたとき|始まったとき|開始したとき)、(.+?)は、(.*)$':'作品を動かしたとき、ねこは、姿を見せる','sentence:LooksCommand:SHOW':'姿を見せる'},
+    claims:{'heading:start/^(?:作品を動かした(?:とき|ら)|始まったとき|開始したとき|「動かす」を(?:押|お)した(?:とき|ら))、(.+?)は、?(.*)$':'作品を動かしたとき、ねこは、姿を見せる','sentence:LooksCommand:SHOW':'姿を見せる'},
   },
   {
     id:'SF-ask-ending',
@@ -476,6 +476,13 @@ export const sentenceFormCases=[
     claims:{'polite:まちます':'1秒まちます','polite:増やします':'点数を1増やします','polite:減らします':'点数を1減らします','polite:動きます':'右へ10歩動きます',
       'polite:進みます':'前へ10歩進みます','polite:回ります':'右に15度回ります','polite:します':'点数を0にします'},
   },
+  // 1.3.1: every action reads in です・ます; each polite entry is the one that reads its sentence.
+  {
+    id:'SF-polite-every-action',
+    source:"「マウス」の方を向きます\nよこ100、たて50のばしょへ行きます\n1秒で横200、縦100の位置へすべります\nいちばんおくへ下がります\n画面のはしにふれていれば、はね返ります\nすがたをかくします\n姿を隠します\nすがたを見せます\nいちばん手前へ出ます\n次のすがたにかえます\n次の背景に変えます\n「ベル」を鳴らし始めます\n「ベル」を鳴らします\nこの動きを止めます\n「開始」の合図を送ります\n自分のコピーを作ります\nこのコピーだけを消します\nこのコピーだけをけします\n名前一覧の最後に「あ」を入れます\n点数に1を足します\n点数から1を引きます\nペンを下ろします\nペンを上げます\n今のすがたのスタンプをおします\nスタンプを押します\n点数を答えとして返します\n【増やす】という手順を行います\n何もしません",
+    expected:{"kind":"Script","body":[{"kind":"MotionCommand","args":[{"kind":"StringLiteral","value":"マウス"}],"op":"POINT_TO","actorRef":{"kind":"self"}},{"kind":"MotionCommand","args":[{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":100},"unit":"歩"},{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":50},"unit":"歩"}],"op":"GOTO","actorRef":{"kind":"self"}},{"kind":"MotionCommand","args":[{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":1},"unit":"秒"},{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":200},"unit":"歩"},{"kind":"QuantityLiteral","value":{"kind":"NumberLiteral","value":100},"unit":"歩"}],"op":"GLIDE","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"BACK","actorRef":{"kind":"self"}},{"kind":"MotionCommand","args":[],"op":"BOUNCE","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"HIDE","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"HIDE","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"SHOW","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"FRONT","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"NEXT_COSTUME","actorRef":{"kind":"self"}},{"kind":"LooksCommand","args":[],"op":"NEXT_BACKDROP","actorRef":{"kind":"self"}},{"kind":"SoundCommand","args":[{"kind":"StringLiteral","value":"ベル"}],"op":"SAMPLE","actorRef":{"kind":"self"}},{"kind":"SoundCommand","args":[{"kind":"StringLiteral","value":"ベル"}],"op":"SAMPLE_WAIT","actorRef":{"kind":"self"}},{"kind":"StopCommand","op":"THIS","actorRef":{"kind":"self"}},{"kind":"Broadcast","message":{"kind":"StringLiteral","value":"開始"},"actorRef":{"kind":"self"}},{"kind":"CloneCommand","args":[],"op":"CREATE_SELF","actorRef":{"kind":"self"}},{"kind":"CloneCommand","args":[],"op":"DELETE_SELF","actorRef":{"kind":"self"}},{"kind":"CloneCommand","args":[],"op":"DELETE_SELF","actorRef":{"kind":"self"}},{"kind":"ListAppend","target":{"name":"名前一覧","qualifier":null},"value":{"kind":"StringLiteral","value":"あ"},"actorRef":{"kind":"self"}},{"kind":"NumericUpdate","op":"ADD","target":{"name":"点数","qualifier":null},"value":{"kind":"NumberLiteral","value":1},"actorRef":{"kind":"self"}},{"kind":"NumericUpdate","op":"SUB","target":{"name":"点数","qualifier":null},"value":{"kind":"NumberLiteral","value":1},"actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"DOWN","actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"UP","actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"STAMP","actorRef":{"kind":"self"}},{"kind":"PenCommand","args":[],"op":"STAMP","actorRef":{"kind":"self"}},{"kind":"ReturnStatement","value":{"kind":"VariableRead","name":"点数","qualifier":null},"actorRef":{"kind":"self"}},{"kind":"UserActionCall","name":"増やす","args":[],"actorRef":{"kind":"self"}},{"kind":"NoOperation","actorRef":{"kind":"self"}}]},
+    claims:{"polite:向きます":"「マウス」の方を向きます","polite:行きます":"よこ100、たて50のばしょへ行きます","polite:すべります":"1秒で横200、縦100の位置へすべります","polite:下がります":"いちばんおくへ下がります","polite:はね返ります":"画面のはしにふれていれば、はね返ります","polite:かくします":"すがたをかくします","polite:隠します":"姿を隠します","polite:見せます":"すがたを見せます","polite:出ます":"いちばん手前へ出ます","polite:かえます":"次のすがたにかえます","polite:変えます":"次の背景に変えます","polite:鳴らし始めます":"「ベル」を鳴らし始めます","polite:鳴らします":"「ベル」を鳴らします","polite:止めます":"この動きを止めます","polite:送ります":"「開始」の合図を送ります","polite:作ります":"自分のコピーを作ります","polite:消します":"このコピーだけを消します","polite:けします":"このコピーだけをけします","polite:入れます":"名前一覧の最後に「あ」を入れます","polite:足します":"点数に1を足します","polite:引きます":"点数から1を引きます","polite:下ろします":"ペンを下ろします","polite:上げます":"ペンを上げます","polite:おします":"今のすがたのスタンプをおします","polite:押します":"スタンプを押します","polite:返します":"点数を答えとして返します","polite:行います":"【増やす】という手順を行います","polite:しません":"何もしません"},
+  },
 
   // ── できごとの見出し (いつ始まるか、どう続けるか) ──
   {
@@ -488,19 +495,19 @@ export const sentenceFormCases=[
     id:'SF-heading-click',
     source:'ねこがおされたとき、姿をかくす',
     expected:script([hide()],{heading:{event:'click',actorRef:named('ねこ')}}),
-    claims:{'heading:click/^(.+?)(?:がおされたとき|がおされると|がおされるたびに|をおしたとき|をおすたびに|がクリックされたとき|がクリックされると|がクリックされるたびに|をクリックしたとき|をクリックするたびに)、(.*)$':'ねこがおされたとき、姿をかくす'},
+    claims:{'heading:click/^(?!もし)(.+?)(?:がおされた(?:とき|ら)|がおされると|がおされるたびに|をおした(?:とき|ら)|をおすたびに|がクリックされた(?:とき|ら)|がクリックされると|がクリックされるたびに|をクリックした(?:とき|ら)|をクリックするたびに)、?(.*)$':'ねこがおされたとき、姿をかくす'},
   },
   {
     id:'SF-heading-any-key',
     source:'キーがおされたとき、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'keyDown',actorRef:named('ねこ')}}),
-    claims:{'heading:keyDown/^キーが(?:押|お)されたとき、(.+?)は、(.*)$':'キーがおされたとき、ねこは、姿をかくす'},
+    claims:{'heading:keyDown/^キー(?:が(?:押|お)された(?:とき|ら)|を(?:押|お)した(?:とき|ら))、(.+?)は、?(.*)$':'キーがおされたとき、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-named-key',
     source:'「空白」キーをおすたびに、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'keyDown',actorRef:named('ねこ'),filter:{key:'空白'}}}),
-    claims:{'heading:keyDown/^(.+?)キー(?:を(?:押|お)すたびに|が(?:押|お)されたとき)、(.+?)は、(.*)$':'「空白」キーをおすたびに、ねこは、姿をかくす'},
+    claims:{'heading:keyDown/^(.+?)キー(?:を(?:押|お)すたびに|を(?:押|お)した(?:とき|ら)|が(?:押|お)された(?:とき|ら))、(.+?)は、?(.*)$':'「空白」キーをおすたびに、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-any-message',
@@ -518,31 +525,31 @@ export const sentenceFormCases=[
     id:'SF-heading-any-signal',
     source:'合図を受けたとき、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'message',actorRef:named('ねこ')}}),
-    claims:{'heading:message/^合図を受けたとき、(.+?)は、(.*)$':'合図を受けたとき、ねこは、姿をかくす'},
+    claims:{'heading:message/^合図を受けた(?:とき|ら)、(.+?)は、?(.*)$':'合図を受けたとき、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-named-signal',
     source:'「出発」という合図を受けたとき、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'message',actorRef:named('ねこ'),filter:{message:'出発'}}}),
-    claims:{'heading:message/^(.+?)という合図を受けたとき、(.+?)は、(.*)$':'「出発」という合図を受けたとき、ねこは、姿をかくす'},
+    claims:{'heading:message/^(.+?)(?:という|の)合図を受けた(?:とき|ら)、(.+?)は、?(.*)$':'「出発」という合図を受けたとき、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-backdrop',
     source:'背景が変わったとき、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'backdropChanged',actorRef:named('ねこ')}}),
-    claims:{'heading:backdropChanged/^(?:背景|はいけい)が(?:変わった|かわった)とき、(.+?)は、(.*)$':'背景が変わったとき、ねこは、姿をかくす'},
+    claims:{'heading:backdropChanged/^(?:背景|はいけい)が(?:変わった|かわった)(?:とき|ら)、(.+?)は、?(.*)$':'背景が変わったとき、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-value-changed',
     source:'入力欄1の中身が変わったとき、何もしない',
     expected:script([nothing()],{heading:{event:'valueChanged',actorRef:named('入力欄1')}}),
-    claims:{'heading:valueChanged/^(.+?)の中身が(?:変わった|かわった)とき、(.*)$':'入力欄1の中身が変わったとき、何もしない'},
+    claims:{'heading:valueChanged/^(?!もし)(.+?)の中身が(?:変わった|かわった)(?:とき|ら)、?(.*)$':'入力欄1の中身が変わったとき、何もしない'},
   },
   {
     id:'SF-heading-clone',
     source:'ねこのコピーが作られたとき、姿をかくす',
     expected:script([hide()],{heading:{event:'cloneStart',actorRef:named('ねこ')}}),
-    claims:{'heading:cloneStart/^(.+?)のコピーが作られたとき、(.*)$':'ねこのコピーが作られたとき、姿をかくす'},
+    claims:{'heading:cloneStart/^(?!もし)(.+?)のコピーが(?:作られた|できた)(?:とき|ら)、?(.*)$':'ねこのコピーが作られたとき、姿をかくす'},
   },
 
   // ── 「〜なくなるまで」 ──

@@ -262,7 +262,7 @@
         else if (this.take('の色にふれていない') || this.take('色にふれていない')) n = exprNode('UnaryExpression',{op:'NOT',value:exprNode('SensorRead',{sensor:'TOUCHING_COLOR',arg:n})});
         else if (this.take('の色にふれている') || this.take('色にふれている')) n = exprNode('SensorRead',{sensor:'TOUCHING_COLOR',arg:n});
         else if (this.take('にふれている')) n = exprNode('SensorRead',{sensor:'TOUCHING',arg:n});
-        else if (this.starts('の')) {
+        else if (this.starts('の') && !this.starts('の中で') && !this.starts('の中に')) {
           const saved = this.i;
           this.i++;
           const found = this.findTopSuffix(['番目', '文字目']);
@@ -676,8 +676,9 @@
       text = word(text, from, to);
     // 未満／より多い／より少ない
     for (const [from, to] of [['未満ではなくて', 'より小さくなくて'], ['未満ではない', 'より小さくない'], ['未満でなければ', 'より小さくなければ'], ['未満のあいだ', 'より小さいあいだ'],
-      ['未満になるまで', 'より小さくなるまで'], ['未満なら', 'より小さいなら'], ['未満で', 'より小さくて'], ['未満', 'より小さい'], ['より多', 'より大き'], ['より少な', 'より小さ']])
+      ['未満になるまで', 'より小さくなるまで'], ['未満なら', 'より小さいなら'], ['未満で', 'より小さくて'], ['より多', 'より大き'], ['より少な', 'より小さ']])
       text = word(text, from, to);
+    text = ending(text, '未満', 'より小さい');
     // 〜があれば (with に) is 〜が入っていれば
     if (/に.+が(?:あれば|なければ|あるあいだ|ないあいだ|ある|ない|あったら|なかったら)$/.test(surfaceMask(text)))
       for (const [from, to] of [['があったら', 'が入っていれば'], ['がなかったら', 'が入っていなければ'], ['があれば', 'が入っていれば'], ['がなければ', 'が入っていなければ'],
@@ -1173,11 +1174,18 @@
     return exprNode('QuantityLiteral',{value:expr,unit});
   }
   function sentenceQuantitySource(expr, unit) {
-    return quantityValueSource(expr.kind === 'QuantityLiteral' && expr.unit === unit ? expr.value : expr) + unit;
+    return quantityValueSource(expr.kind === 'QuantityLiteral' && expr.unit === unit ? expr.value : expr, true) + unit;
   }
   function readRoleStatement(code, line, symbols, ctx) {
     const protectedCode = surfaceMask(code);
-    const polite = [['話します','話す'],['はなします','はなす'],['言います','言う'],['いいます','いう'],['たずねます','たずねる'],['尋ねます','尋ねる'],['待ちます','待つ'],['まちます','まつ'],['増やします','増やす'],['減らします','減らす'],['動きます','動く'],['進みます','進む'],['回ります','回る'],['します','する']];
+    const polite = [['話します','話す'],['はなします','はなす'],['言います','言う'],['いいます','いう'],['たずねます','たずねる'],['尋ねます','尋ねる'],['待ちます','待つ'],['まちます','まつ'],['増やします','増やす'],['減らします','減らす'],['動きます','動く'],['進みます','進む'],['回ります','回る'],
+      // Every action's verb (1.3.1): a specific ending comes before the general します.
+      ['向きます','向く'],['行きます','行く'],['すべります','すべる'],['下がります','下がる'],['はね返ります','はね返る'],
+      ['かくします','かくす'],['隠します','隠す'],['見せます','見せる'],['出ます','出る'],
+      ['かえます','かえる'],['変えます','変える'],['鳴らし始めます','鳴らし始める'],['鳴らします','鳴らす'],['止めます','止める'],
+      ['送ります','送る'],['作ります','作る'],['消します','消す'],['けします','けす'],['入れます','入れる'],['足します','足す'],['引きます','引く'],
+      ['下ろします','下ろす'],['上げます','上げる'],['おします','おす'],['押します','押す'],['返します','返す'],['行います','行う'],
+      ['しません','しない'],['します','する']];
     const suffix = polite.find(([ending])=>protectedCode.endsWith(ending));
     const immediate = protectedCode.startsWith('すぐに') ? 3 : 0;
     if (suffix || immediate) {
@@ -1440,14 +1448,9 @@
       text = whole(text, /^(.+?)の音を(鳴らす|鳴らし始める)$/d, ([n, v]) => n + 'を' + v);
       return text;
     };
-    // です・ます → the dictionary form (each reading is tried)
-    const mask = surfaceMask(code);
-    const endings = mask.endsWith('しません') ? [['しません', 'しない']] : mask.endsWith('ます')
-      ? [['します', 'す'], ['します', 'する'], ['きます', 'く'], ['ぎます', 'ぐ'], ['ちます', 'つ'], ['にます', 'ぬ'], ['びます', 'ぶ'], ['みます', 'む'], ['ります', 'る'], ['います', 'う'], ['ます', 'る']]
-      : [['', '']];
-    for (const [from, to] of endings) {
-      if (from && !mask.endsWith(from)) continue;
-      const plain = normalize(from ? code.slice(0, -from.length) + to : code);
+    // です・ます are read by the polite table in readRoleStatement.
+    {
+      const plain = normalize(code);
       add(plain);
       // にする and にかえる are the same action in every 〜を…に sentence.
       if (surfaceMask(plain).endsWith('にする')) add(plain.slice(0, -'する'.length) + 'かえる');
@@ -1729,7 +1732,7 @@
       return {kind:'Else',...(tail&&tail!=='次のことをする'?{inlineBody:inline(parts[0])}:{})};
     }
     // The bounce command reads like a condition; with or without a subject it is one command.
-    if(/^(?:[^、。]+?は、?)?(?:もし、?)?(?:画面の(?:はし|端)|端)に(?:ふれ|触れ).*(?:はね返る|跳ね返る)$/.test(mask))return null;
+    if(/^(?:[^、。]+?は、?)?(?:もし、?)?(?:画面の(?:はし|端)|端)に(?:ふれ|触れ).*(?:はね返|跳ね返)(?:る|ります)$/.test(mask))return null;
     // もし…たら reads as もし…なら (only with もし: without it, 〜たら can mean waiting).
     if((parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))、(.*)$/d,code))|| (parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))$/d,code))
       || (parts=surfaceCapture(/^(もし.+?たら)、(.*)$/d,code)) || (parts=surfaceCapture(/^(もし.+?たら)$/d,code))) {
