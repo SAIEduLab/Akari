@@ -16,7 +16,7 @@ const add=(id,source,configure,exercise)=>cases.set('C-'+id,{source,configure,ex
 function fixture(source){
  const p=A.makeEmptyProject(),a=p.components[0];a.name='あかり';
  Object.assign(a,{x:100,y:100,w:100,h:100,direction:0,scalePercent:100,visible:true});
- a.costumes=['原本','星','丸'].map((name,i)=>({id:'command-costume-'+i,name,kind:'text',value:name}));a.costumeId=a.costumes[0].id;
+ a.costumes=['原本','マスコット','丸'].map((name,i)=>({id:'command-costume-'+i,name,kind:'text',value:name}));a.costumeId=a.costumes[0].id;
  a.localData={variables:[{id:'own-score',name:'個体点数',initialValue:10}],lists:[]};
  const star=structuredClone(a);Object.assign(star,{id:'command-star',name:'マスコット',x:300,localData:{variables:[{id:'star-score',name:'個体点数',initialValue:20}],lists:[]}});star.costumes=[{id:'star-costume',name:'原本',kind:'text',value:'*'}];star.costumeId='star-costume';
  const controls=['button','input','label'].map((type,i)=>{const c={...structuredClone(a),id:'command-'+type,name:{button:'ボタン1',input:'入力欄1',label:'文字1'}[type],type,text:type==='input'?'前':'前の文字',x:400,y:100+i*60,w:100,h:40,localData:{variables:[],lists:[]}};delete c.costumes;delete c.costumeId;return c;});
