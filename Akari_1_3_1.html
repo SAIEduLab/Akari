@@ -5963,7 +5963,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
           <details class="sprite-preset-category" open>
             <summary>マスコット<span>2しゅるい</span></summary>
             <div class="sprite-preset-grid">
-              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="akariMascot" draggable="true" title="マスコット" aria-label="マスコットを おく"><span class="ico">マ</span><span>マスコット</span></button>
+              <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="akariMascot" draggable="true" title="たくどん" aria-label="たくどんを おく"><span class="ico">た</span><span>たくどん</span></button>
               <button class="tool sprite-preset" data-type="sprite" data-sprite-preset="dango" draggable="true" title="だんご" aria-label="だんごを おく"><span class="ico">だ</span><span>だんご</span></button>
             </div>
           </details>
@@ -11415,7 +11415,7 @@ function createAkariExtensionHost(options) {
         id: 'PenCommand:STAMP',
         kind: 'PenCommand',
         op: 'STAMP',
-        source: '今の姿のスタンプを押す',
+        source: '今のすがたのスタンプをおす',
       },
       {
         id: 'PenCommand:CLEAR',
@@ -11445,7 +11445,7 @@ function createAkariExtensionHost(options) {
         id: 'LooksCommand:SET_COSTUME',
         kind: 'LooksCommand',
         op: 'SET_COSTUME',
-        source: 'すがたを「マスコット」にかえる',
+        source: 'すがたを「たくどん」にかえる',
       },
       {
         id: 'LooksCommand:NEXT_COSTUME',
@@ -11505,13 +11505,13 @@ function createAkariExtensionHost(options) {
         id: 'Broadcast',
         kind: 'Broadcast',
         op: '',
-        source: 'みんなに「開始」と知らせる',
+        source: '「開始」の合図を送る',
       },
       {
         id: 'BroadcastAndWait',
         kind: 'BroadcastAndWait',
         op: '',
-        source: 'みんなに「開始」と知らせて、知らせを受けて始めたことが全部終わるまで待つ',
+        source: '「開始」の合図を送って、その合図で始まったことが全部終わるまで待つ',
       },
       {
         id: 'Ask',
@@ -11541,7 +11541,7 @@ function createAkariExtensionHost(options) {
         id: 'CloneCommand:CREATE_TARGET',
         kind: 'CloneCommand',
         op: 'CREATE_TARGET',
-        source: '「マスコット」のコピーを作る',
+        source: '「たくどん」のコピーを作る',
       },
       {
         id: 'CloneCommand:DELETE_SELF',
@@ -11595,7 +11595,7 @@ function createAkariExtensionHost(options) {
         id: 'Break',
         kind: 'Break',
         op: '',
-        source: 'いまのくり返しを終える',
+        source: 'このくり返しを終える',
       },
       {
         id: 'Continue',
@@ -11854,7 +11854,7 @@ function createAkariExtensionHost(options) {
         if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'SET_COSTUME') {
           const co = component?.costumes?.[0];
-          text = `すがたを「${co?.name || 'マスコット'}」にかえる`;
+          text = `すがたを「${co?.name || 'たくどん'}」にかえる`;
           if (!co)
             reason =
               reason ||
@@ -11884,7 +11884,7 @@ function createAkariExtensionHost(options) {
       if (x.kind === 'CloneCommand') {
         if (x.op === 'CREATE_TARGET') {
           const c = project.components.find((c) => c.type === 'sprite');
-          text = `「${c?.name || 'マスコット'}」のコピーを作る`;
+          text = `「${c?.name || 'たくどん'}」のコピーを作る`;
           if (!c) reason = 'キャラクターを先に作ります';
         } else if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'DELETE_SELF' && !kind && event !== 'cloneStart')
@@ -12297,7 +12297,7 @@ function createAkariExtensionHost(options) {
   // ────────────────────────────────────────────────────────────────────────
   const DEFAULT_MASCOT_ASSET_ID = 'asset-default-mascot';
   const STANDARD_AKARI_MASCOT = Object.freeze({
-    name: 'マスコット',
+    name: 'たくどん',
     value: '',
     fg: '#f5a000',
     kind: 'image',
@@ -12374,7 +12374,7 @@ function createAkariExtensionHost(options) {
           text: '',
           localData: { variables: [], lists: [] },
           costumes: [
-            { id: 'costume-1', name: 'マスコット', kind: 'image', assetId: DEFAULT_MASCOT_ASSET_ID },
+            { id: 'costume-1', name: 'たくどん', kind: 'image', assetId: DEFAULT_MASCOT_ASSET_ID },
             { id: 'costume-2', name: '丸', kind: 'text', value: '●' },
           ],
           costumeId: 'costume-1',
@@ -12395,7 +12395,7 @@ function createAkariExtensionHost(options) {
   function makeEmptyProject() {
     const project = makeDefaultProject();
     project.name = '新しい作品';
-    project.components[0].name = 'マスコット';
+    project.components[0].name = 'たくどん';
     project.scripts = [{id:'script-start', targetId:'sprite-1', event:'start', source:''}];
     return project;
   }
@@ -12420,11 +12420,11 @@ function createAkariExtensionHost(options) {
   const SAMPLE_PROJECTS = [
   {
     "id": "dance",
-    "label": "マスコットとだんごのダンス",
+    "label": "たくどんとだんごのダンス",
     "targetId": "sprite-1",
     "event": "start",
     "project": {
-      "name": "マスコットとだんごのダンス",
+      "name": "たくどんとだんごのダンス",
       "stage": {
         "id": "stage",
         "name": "画面1",
@@ -12448,7 +12448,7 @@ function createAkariExtensionHost(options) {
         {
           "id": "sprite-1",
           "type": "sprite",
-          "name": "マスコット",
+          "name": "たくどん",
           "x": 120,
           "y": 200,
           "w": 96,
@@ -12467,7 +12467,7 @@ function createAkariExtensionHost(options) {
           "costumes": [
             {
               "id": "costume-1",
-              "name": "マスコット",
+              "name": "たくどん",
               "kind": "image",
               "assetId": "asset-default-mascot"
             }
@@ -12517,7 +12517,7 @@ function createAkariExtensionHost(options) {
           "visible": true,
           "direction": 0,
           "scalePercent": 100,
-          "text": "マスコットとだんごのダンス",
+          "text": "たくどんとだんごのダンス",
           "localData": {
             "variables": [],
             "lists": []
@@ -12549,14 +12549,14 @@ function createAkariExtensionHost(options) {
           "id": "dance-start",
           "targetId": "sprite-1",
           "event": "start",
-          "source": "マスコットはよこ120歩、たて200歩のばしょへ行く。\nだんごはよこ420歩、たて200歩のばしょへ行く。\nマスコットは向きを0度にする。\nだんごは向きを0度にする。\nマスコットは「いっしょに おどろう！」と1秒話す。\n2回くり返す。\n  マスコットはよこ180歩、たて140歩のばしょへ0.3秒かけて動く。\n  マスコットはよこ120歩、たて200歩のばしょへ0.3秒かけて動く。\n  だんごはよこ360歩、たて140歩のばしょへ0.3秒かけて動く。\n  だんごはよこ420歩、たて200歩のばしょへ0.3秒かけて動く。\n  マスコットは右に20度回る。\n  だんごは左に20度回る。\n  だんごは0.2秒待つ。\n  マスコットは左に40度回る。\n  だんごは右に40度回る。\n  だんごは0.2秒待つ。\n  マスコットは右に20度回る。\n  だんごは左に20度回る。\n  だんごは0.2秒待つ。\nマスコットは「きまった！」と1秒話す。\nだんごは「もういちど おどろう！」と1秒話す。"
+          "source": "たくどんはよこ120歩、たて200歩のばしょへ行く。\nだんごはよこ420歩、たて200歩のばしょへ行く。\nたくどんは向きを0度にする。\nだんごは向きを0度にする。\nたくどんは「いっしょに おどろう！」と1秒話す。\n2回くり返す。\n  たくどんはよこ180歩、たて140歩のばしょへ0.3秒かけて動く。\n  たくどんはよこ120歩、たて200歩のばしょへ0.3秒かけて動く。\n  だんごはよこ360歩、たて140歩のばしょへ0.3秒かけて動く。\n  だんごはよこ420歩、たて200歩のばしょへ0.3秒かけて動く。\n  たくどんは右に20度回る。\n  だんごは左に20度回る。\n  だんごは0.2秒待つ。\n  たくどんは左に40度回る。\n  だんごは右に40度回る。\n  だんごは0.2秒待つ。\n  たくどんは右に20度回る。\n  だんごは左に20度回る。\n  だんごは0.2秒待つ。\nたくどんは「きまった！」と1秒話す。\nだんごは「もういちど おどろう！」と1秒話す。"
         }
       ],
       "actions": [],
       "functions": [],
       "sounds": []
     },
-    "title": "マスコットとだんごのダンス",
+    "title": "たくどんとだんごのダンス",
     "description": "ふたりがジャンプ！ 数を かえて、動きを かえよう。"
   },
   {
@@ -12589,7 +12589,7 @@ function createAkariExtensionHost(options) {
         {
           "id": "sprite-1",
           "type": "sprite",
-          "name": "マスコット",
+          "name": "たくどん",
           "x": 296,
           "y": 196,
           "w": 48,
@@ -12608,7 +12608,7 @@ function createAkariExtensionHost(options) {
           "costumes": [
             {
               "id": "costume-1",
-              "name": "マスコット",
+              "name": "たくどん",
               "kind": "image",
               "assetId": "asset-default-mascot"
             }
@@ -12661,7 +12661,7 @@ function createAkariExtensionHost(options) {
           "id": "flower-start",
           "targetId": "sprite-1",
           "event": "start",
-          "source": "作品の線とスタンプを全部消す。\nマスコットはペンを上げる。\nマスコットはよこ296歩、たて196歩のばしょへ行く。\nマスコットは向きを0度にする。\nマスコットはペンの色を「青」にする。\nマスコットはペンの太さを2にする。\nマスコットは「花もようを かくよ！」と1秒話す。\nマスコットはペンを下ろす。\n12回くり返す。\n  3回くり返す。\n    マスコットは前へ90歩進む。\n    マスコットは右に120度回る。\n    マスコットは0.03秒待つ。\n  マスコットは右に30度回る。\n  マスコットは0.08秒待つ。\nマスコットはペンを上げる。\nマスコットはよこ40歩、たて280歩のばしょへ行く。\nマスコットは「できた！ つぎは どんな もよう？」と1秒話す。"
+          "source": "作品の線とスタンプを全部消す。\nたくどんはペンを上げる。\nたくどんはよこ296歩、たて196歩のばしょへ行く。\nたくどんは向きを0度にする。\nたくどんはペンの色を「青」にする。\nたくどんはペンの太さを2にする。\nたくどんは「花もようを かくよ！」と1秒話す。\nたくどんはペンを下ろす。\n12回くり返す。\n  3回くり返す。\n    たくどんは前へ90歩進む。\n    たくどんは右に120度回る。\n    たくどんは0.03秒待つ。\n  たくどんは右に30度回る。\n  たくどんは0.08秒待つ。\nたくどんはペンを上げる。\nたくどんはよこ40歩、たて280歩のばしょへ行く。\nたくどんは「できた！ つぎは どんな もよう？」と1秒話す。"
         }
       ],
       "actions": [],
@@ -12717,7 +12717,7 @@ function createAkariExtensionHost(options) {
         {
           "id": "sprite-1",
           "type": "sprite",
-          "name": "マスコット",
+          "name": "たくどん",
           "x": 20,
           "y": 290,
           "w": 80,
@@ -12736,7 +12736,7 @@ function createAkariExtensionHost(options) {
           "costumes": [
             {
               "id": "costume-1",
-              "name": "マスコット",
+              "name": "たくどん",
               "kind": "image",
               "assetId": "asset-default-mascot"
             }
@@ -12838,13 +12838,13 @@ function createAkariExtensionHost(options) {
           "id": "game-start",
           "targetId": "stage",
           "event": "start",
-          "source": "受付を0にする。\n点数を0にする。\n「点数表示」の文字をつなぐ（「てんすう：」、点数）にかえる。\n「案内」の文字をつなぐ（目標、「こ つかまえよう！」）にかえる。\n星はよこ300歩、たて180歩のばしょへ行く。\n星は向きを0度にする。\nマスコットは向きを0度にする。\nマスコットは受付を1にする。"
+          "source": "受付を0にする。\n点数を0にする。\n「点数表示」の文字をつなぐ（「てんすう：」、点数）にかえる。\n「案内」の文字をつなぐ（目標、「こ つかまえよう！」）にかえる。\n星はよこ300歩、たて180歩のばしょへ行く。\n星は向きを0度にする。\nたくどんは向きを0度にする。\nたくどんは受付を1にする。"
         },
         {
           "id": "game-click",
           "targetId": "star",
           "event": "click",
-          "source": "もし受付が1と同じなら、\n  受付を0にする。\n  点数を1増やす。\n  「点数表示」の文字をつなぐ（「てんすう：」、点数）にかえる。\n  もし点数が目標以上なら、\n    すがたをかくす。\n    マスコットは「やったね！ ぜんぶ つかまえた！」と1.5秒話す。\n    4回くり返す。\n      マスコットは右に90度回る。\n      マスコットは0.1秒待つ。\n  そうでなければ、\n    星はよこ（140から520のどれか）歩、たて（120から280のどれか）歩のばしょへ行く。\n    星は右に30度回る。\n    星は受付を1にする。"
+          "source": "もし受付が1と同じなら、\n  受付を0にする。\n  点数を1増やす。\n  「点数表示」の文字をつなぐ（「てんすう：」、点数）にかえる。\n  もし点数が目標以上なら、\n    すがたをかくす。\n    たくどんは「やったね！ ぜんぶ つかまえた！」と1.5秒話す。\n    4回くり返す。\n      たくどんは右に90度回る。\n      たくどんは0.1秒待つ。\n  そうでなければ、\n    星はよこ140から520のどれか、たて120から280のどれかのばしょへ行く。\n    星は右に30度回る。\n    星は受付を1にする。"
         }
       ],
       "actions": [],
@@ -13730,7 +13730,7 @@ function createAkariExtensionHost(options) {
         {
           "id": "sprite-1",
           "type": "sprite",
-          "name": "マスコット",
+          "name": "たくどん",
           "x": 22,
           "y": 102,
           "w": 32,
@@ -13749,7 +13749,7 @@ function createAkariExtensionHost(options) {
           "costumes": [
             {
               "id": "sprite-1-costume",
-              "name": "マスコット",
+              "name": "たくどん",
               "kind": "image",
               "assetId": "asset-default-mascot"
             }
@@ -13882,19 +13882,19 @@ function createAkariExtensionHost(options) {
           "id": "maze-start",
           "targetId": "stage",
           "event": "start",
-          "source": "【歩いた道】を「」にする。\n「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n【列】を0にする。\n【行】を0にする。\n【失敗】を0にする。\n【順番】を0にする。\nマスコットはよこ22歩、たて102歩のばしょへ行く。\nマスコットは「今の動き」の文字を「まだ 動いていないよ」にかえる。\nマスコットは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\nマスコットは【動いている】を0にする。"
+          "source": "【歩いた道】を「」にする。\n「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n【列】を0にする。\n【行】を0にする。\n【失敗】を0にする。\n【順番】を0にする。\nたくどんはよこ22歩、たて102歩のばしょへ行く。\nたくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\nたくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\nたくどんは【動いている】を0にする。"
         },
         {
           "id": "maze-retry",
           "targetId": "retry",
           "event": "click",
-          "source": "もし【動いている】が0と同じなら、\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  マスコットはよこ22歩、たて102歩のばしょへ行く。\n  マスコットは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  マスコットは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。"
+          "source": "もし【動いている】が0と同じなら、\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  たくどんはよこ22歩、たて102歩のばしょへ行く。\n  たくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  たくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。"
         },
         {
           "id": "maze-go",
           "targetId": "go",
           "event": "click",
-          "source": "もし【動いている】が0と同じなら、\n  【動いている】を1にする。\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  マスコットはよこ22歩、たて102歩のばしょへ行く。\n  マスコットは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  マスコットは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\n  マスコットは向きを「右」、マス数を2として、【道を進む】という手順を行う。\n  マスコットは向きを「下」、マス数を2として、【道を進む】という手順を行う。\n  マスコットは向きを「右」、マス数を3として、【道を進む】という手順を行う。\n  マスコットは向きを「下」、マス数を2として、【道を進む】という手順を行う。\n  マスコットは向きを「右」、マス数を1として、【道を進む】という手順を行う。\n  もし【失敗】が0と同じなら、\n    もし【列】が6と同じで、【行】が4と同じなら、\n      マスコットは「お知らせ」の文字を「やった！ ゴール！\n道を かえて また あそぼう」にかえる。\n    そうでなければ、\n      マスコットは「お知らせ」の文字を「あと すこし！\n道を つけ足してみよう」にかえる。\n  マスコットは【動いている】を0にする。"
+          "source": "もし【動いている】が0と同じなら、\n  【動いている】を1にする。\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  たくどんはよこ22歩、たて102歩のばしょへ行く。\n  たくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  たくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\n  たくどんは向きを「右」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは向きを「下」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは向きを「右」、マス数を3として、【道を進む】という手順を行う。\n  たくどんは向きを「下」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは向きを「右」、マス数を1として、【道を進む】という手順を行う。\n  もし【失敗】が0と同じなら、\n    もし【列】が6と同じで、【行】が4と同じなら、\n      たくどんは「お知らせ」の文字を「やった！ ゴール！\n道を かえて また あそぼう」にかえる。\n    そうでなければ、\n      たくどんは「お知らせ」の文字を「あと すこし！\n道を つけ足してみよう」にかえる。\n  たくどんは【動いている】を0にする。"
         }
       ],
       "actions": [
@@ -13906,7 +13906,7 @@ function createAkariExtensionHost(options) {
             "向き",
             "マス数"
           ],
-          "source": "もし【失敗】が0と同じなら、\n  【順番】を1増やす。\n  【歩いた道】をつなぐ（【歩いた道】、【順番】、「：」、向き、「へ 」、マス数、「マス\n」）にする。\n  「道の表」の文字を【歩いた道】にかえる。\n  「今の動き」の文字をつなぐ（【順番】、「番：」、向き、「へ 」、マス数、「マス」）にかえる。\n  マス数回くり返す。\n    【次の列】を【列】にする。\n    【次の行】を【行】にする。\n    もし向きが「右」と同じなら、\n      【次の列】を1増やす。\n    もし向きが「左」と同じなら、\n      【次の列】を－1増やす。\n    もし向きが「下」と同じなら、\n      【次の行】を1増やす。\n    もし向きが「上」と同じなら、\n      【次の行】を－1増やす。\n    もし【次の列】が0より小さいか、【次の列】が6より大きければ、\n      【失敗】を1にする。\n    もし【次の行】が0より小さいか、【次の行】が4より大きければ、\n      【失敗】を1にする。\n    もし【失敗】が0と同じなら、\n      もし【かべ】の（【次の行】×7＋【次の列】＋1）番目が1と同じなら、\n        【失敗】を1にする。\n    もし【失敗】が1と同じなら、\n      「お知らせ」の文字を「かべに ぶつかった！\n道を なおして もう一回」にかえる。\n      いまのくり返しを終える。\n    【列】を【次の列】にする。\n    【行】を【次の行】にする。\n    マスコットはよこ（22＋【列】×43）歩、たて（102＋【行】×43）歩のばしょへ0.35秒かけて動く。\n    マスコットは0.1秒待つ。"
+          "source": "もし【失敗】が0と同じなら、\n  【順番】を1増やす。\n  【歩いた道】をつなぐ（【歩いた道】、【順番】、「：」、向き、「へ 」、マス数、「マス\n」）にする。\n  「道の表」の文字を【歩いた道】にかえる。\n  「今の動き」の文字をつなぐ（【順番】、「番：」、向き、「へ 」、マス数、「マス」）にかえる。\n  マス数回くり返す。\n    【次の列】を【列】にする。\n    【次の行】を【行】にする。\n    もし向きが「右」と同じなら、\n      【次の列】を1増やす。\n    もし向きが「左」と同じなら、\n      【次の列】を－1増やす。\n    もし向きが「下」と同じなら、\n      【次の行】を1増やす。\n    もし向きが「上」と同じなら、\n      【次の行】を－1増やす。\n    もし【次の列】が0より小さいか、【次の列】が6より大きければ、\n      【失敗】を1にする。\n    もし【次の行】が0より小さいか、【次の行】が4より大きければ、\n      【失敗】を1にする。\n    もし【失敗】が0と同じなら、\n      もし【かべ】の（【次の行】×7＋【次の列】＋1）番目が1と同じなら、\n        【失敗】を1にする。\n    もし【失敗】が1と同じなら、\n      「お知らせ」の文字を「かべに ぶつかった！\n道を なおして もう一回」にかえる。\n      このくり返しを終える。\n    【列】を【次の列】にする。\n    【行】を【次の行】にする。\n    たくどんはよこ（22＋【列】×43）歩、たて（102＋【行】×43）歩のばしょへ0.35秒かけて動く。\n    たくどんは0.1秒待つ。"
         }
       ],
       "functions": [],
@@ -14670,7 +14670,7 @@ function createAkariExtensionHost(options) {
         {
           "id": "sprite-1",
           "type": "sprite",
-          "name": "マスコット",
+          "name": "たくどん",
           "x": 548,
           "y": 319,
           "w": 50,
@@ -14689,7 +14689,7 @@ function createAkariExtensionHost(options) {
           "costumes": [
             {
               "id": "sprite-1-costume",
-              "name": "マスコット",
+              "name": "たくどん",
               "kind": "image",
               "assetId": "asset-default-mascot"
             }
@@ -14858,7 +14858,7 @@ function createAkariExtensionHost(options) {
           "args": [
             "今回"
           ],
-          "source": "この中だけで使う変数【音の番号】を作り、最初は1にする。\nこの中だけで使う変数【鳴らす高さ】を作り、最初は1にする。\n16回くり返す。\n  もし今回が【再生番号】と違えば、\n    いまのくり返しを終える。\n  【選んだ音】を【音の番号】にする。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字をつなぐ（「いま 」、【音の番号】、「番の音 ♪」）にかえる。\n  【鳴らす高さ】を【音の数】の（【音の高さ】の【音の番号】番目）番目にする。\n  【鳴らす高さ】Hzの音を60÷【テンポ】×【音の長さ】の【音の番号】番目×0.85秒鳴らし始める。\n  60÷【テンポ】×【音の長さ】の【音の番号】番目秒待つ。\n  【音の番号】を1増やす。\nもし今回が【再生番号】と同じなら、\n  【演奏中】を0にする。\n  「お知らせ」の文字を「さいごまで 聞けたね！ つぎは どこを かえる？」にかえる。"
+          "source": "この中だけで使う変数【音の番号】を作り、最初は1にする。\nこの中だけで使う変数【鳴らす高さ】を作り、最初は1にする。\n16回くり返す。\n  もし今回が【再生番号】と違えば、\n    このくり返しを終える。\n  【選んだ音】を【音の番号】にする。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字をつなぐ（「いま 」、【音の番号】、「番の音 ♪」）にかえる。\n  【鳴らす高さ】を【音の数】の（【音の高さ】の【音の番号】番目）番目にする。\n  【鳴らす高さ】Hzの音を60÷【テンポ】×【音の長さ】の【音の番号】番目×0.85秒鳴らし始める。\n  60÷【テンポ】×【音の長さ】の【音の番号】番目秒待つ。\n  【音の番号】を1増やす。\nもし今回が【再生番号】と同じなら、\n  【演奏中】を0にする。\n  「お知らせ」の文字を「さいごまで 聞けたね！ つぎは どこを かえる？」にかえる。"
         }
       ],
       "functions": [],
@@ -14949,7 +14949,7 @@ function createAkariExtensionHost(options) {
         {
           "id": "sprite-1",
           "type": "sprite",
-          "name": "マスコット",
+          "name": "たくどん",
           "x": 62,
           "y": 117,
           "w": 100,
@@ -14968,7 +14968,7 @@ function createAkariExtensionHost(options) {
           "costumes": [
             {
               "id": "sprite-1-costume",
-              "name": "マスコット",
+              "name": "たくどん",
               "kind": "image",
               "assetId": "asset-default-mascot"
             }
@@ -15012,7 +15012,7 @@ function createAkariExtensionHost(options) {
           "y": 106,
           "w": 292,
           "h": 132,
-          "text": "マスコットと だんごは\nおべんとうを もって おさんぽ。\n目の前に ふたつの道。\nどちらへ 行こう？",
+          "text": "たくどんと だんごは\nおべんとうを もって おさんぽ。\n目の前に ふたつの道。\nどちらへ 行こう？",
           "bg": "#ffffff",
           "fg": "#234337",
           "fontSize": 19,
@@ -15110,13 +15110,13 @@ function createAkariExtensionHost(options) {
           "id": "story-start",
           "targetId": "stage",
           "event": "start",
-          "source": "【場面】を0にする。\n【選んだ道】を0にする。\n「場面の名前」の文字を「はじまり：ふたつの道」にかえる。\n「お話」の文字を「マスコットと だんごは\nおべんとうを もって おさんぽ。\n目の前に ふたつの道。\nどちらへ 行こう？」にかえる。\n「左のえらび方」の文字を「花の道へ 行く」にかえる。\n「右のえらび方」の文字を「川の道へ 行く」にかえる。\n「お知らせ」の文字を「えらび方で お話が かわるよ。\nどんな おわりに なるかな？」にかえる。"
+          "source": "【場面】を0にする。\n【選んだ道】を0にする。\n「場面の名前」の文字を「はじまり：ふたつの道」にかえる。\n「お話」の文字を「たくどんと だんごは\nおべんとうを もって おさんぽ。\n目の前に ふたつの道。\nどちらへ 行こう？」にかえる。\n「左のえらび方」の文字を「花の道へ 行く」にかえる。\n「右のえらび方」の文字を「川の道へ 行く」にかえる。\n「お知らせ」の文字を「えらび方で お話が かわるよ。\nどんな おわりに なるかな？」にかえる。"
         },
         {
           "id": "story-replay",
           "targetId": "replay",
           "event": "click",
-          "source": "【場面】を0にする。\n【選んだ道】を0にする。\n「場面の名前」の文字を「はじまり：ふたつの道」にかえる。\n「お話」の文字を「マスコットと だんごは\nおべんとうを もって おさんぽ。\n目の前に ふたつの道。\nどちらへ 行こう？」にかえる。\n「左のえらび方」の文字を「花の道へ 行く」にかえる。\n「右のえらび方」の文字を「川の道へ 行く」にかえる。\n「お知らせ」の文字を「えらび方で お話が かわるよ。\nどんな おわりに なるかな？」にかえる。"
+          "source": "【場面】を0にする。\n【選んだ道】を0にする。\n「場面の名前」の文字を「はじまり：ふたつの道」にかえる。\n「お話」の文字を「たくどんと だんごは\nおべんとうを もって おさんぽ。\n目の前に ふたつの道。\nどちらへ 行こう？」にかえる。\n「左のえらび方」の文字を「花の道へ 行く」にかえる。\n「右のえらび方」の文字を「川の道へ 行く」にかえる。\n「お知らせ」の文字を「えらび方で お話が かわるよ。\nどんな おわりに なるかな？」にかえる。"
         },
         {
           "id": "story-left",
@@ -15128,7 +15128,7 @@ function createAkariExtensionHost(options) {
           "id": "story-right",
           "targetId": "right",
           "event": "click",
-          "source": "もし【場面】が0と同じなら、\n  【選んだ道】を2にする。\n  【場面】を1にする。\n  「場面の名前」の文字を「川の道：きらきらの水」にかえる。\n  「お話」の文字を「川に 小さな 石の橋がある。\nマスコットは むこう岸を 見ている。\n足もとには きれいな 石。\nつぎは なにをしよう？」にかえる。\n  「左のえらび方」の文字を「石の橋を わたる」にかえる。\n  「右のえらび方」の文字を「川べりを あるく」にかえる。\nそうでなければ、\n  もし【場面】が1と同じなら、\n    【場面】を2にする。\n    もし【選んだ道】が1と同じなら、\n      「場面の名前」の文字を「おわり：ことりと ピクニック」にかえる。\n      「お話」の文字を「木の下で しずかに 待つと、\nことりが うたってくれた。\nすてきな うただね！\nふたりで 小さく はくしゅ。」にかえる。\n    そうでなければ、\n      「場面の名前」の文字を「おわり：きらきら ピクニック」にかえる。\n      「お話」の文字を「川べりで きれいな 石を 見つけた。\n水に もどして あげよう\n石は 水の中で きらり。\nふたりの ひみつの たからもの。」にかえる。\n    「左のえらび方」の文字を「おしまい」にかえる。\n    「右のえらび方」の文字を「おしまい」にかえる。\n    「お知らせ」の文字を「おしまい！\nはじめからで 別の道も たのしもう」にかえる。"
+          "source": "もし【場面】が0と同じなら、\n  【選んだ道】を2にする。\n  【場面】を1にする。\n  「場面の名前」の文字を「川の道：きらきらの水」にかえる。\n  「お話」の文字を「川に 小さな 石の橋がある。\nたくどんは むこう岸を 見ている。\n足もとには きれいな 石。\nつぎは なにをしよう？」にかえる。\n  「左のえらび方」の文字を「石の橋を わたる」にかえる。\n  「右のえらび方」の文字を「川べりを あるく」にかえる。\nそうでなければ、\n  もし【場面】が1と同じなら、\n    【場面】を2にする。\n    もし【選んだ道】が1と同じなら、\n      「場面の名前」の文字を「おわり：ことりと ピクニック」にかえる。\n      「お話」の文字を「木の下で しずかに 待つと、\nことりが うたってくれた。\nすてきな うただね！\nふたりで 小さく はくしゅ。」にかえる。\n    そうでなければ、\n      「場面の名前」の文字を「おわり：きらきら ピクニック」にかえる。\n      「お話」の文字を「川べりで きれいな 石を 見つけた。\n水に もどして あげよう\n石は 水の中で きらり。\nふたりの ひみつの たからもの。」にかえる。\n    「左のえらび方」の文字を「おしまい」にかえる。\n    「右のえらび方」の文字を「おしまい」にかえる。\n    「お知らせ」の文字を「おしまい！\nはじめからで 別の道も たのしもう」にかえる。"
         }
       ],
       "actions": [],
@@ -16511,14 +16511,14 @@ function createAkariExtensionHost(options) {
       case 'ListReplace':return `${t}の${sentenceQuantitySource(n.index,'番目')}を${f(n.value)}にかえる`;
       case 'ListDelete':return `${t}の${sentenceQuantitySource(n.index,'番目')}を消す`;
       case 'ListClear':return `${t}の中身を全部消す`;
-      case 'NoOperation':return '何もしない';case 'Break':return 'いまのくり返しを終える';case 'Continue':return 'この回の残りをとばして、次の回へ進む';
+      case 'NoOperation':return '何もしない';case 'Break':return 'このくり返しを終える';case 'Continue':return 'この回の残りをとばして、次の回へ進む';
       case 'WaitTime':return `${sentenceQuantitySource(n.seconds,'秒')}待つ`;
-      case 'WaitBroadcastGroup':return 'その知らせを受けて始めたことが全部終わるまで待つ';
+      case 'WaitBroadcastGroup':return 'その合図で始まったことが全部終わるまで待つ';
       case 'WaitUntil':return `${conditionSource(n.condition,'until')}待つ`;
       case 'Say':if(n.seconds!==undefined)return `${f(n.value)}${n.value.kind==='StringLiteral'?'と':'を'}${sentenceQuantitySource(n.seconds,'秒')}話す`;if(n.value.kind==='VariableRead')return `${f(n.value)}の値を言う`;return ['CompareExpression','LogicalExpression'].includes(n.value.kind)||(n.value.kind==='UnaryExpression'&&n.value.op==='NOT')?`（${f(n.value)}）の値を言う`:`${f(n.value)}${n.value.kind==='StringLiteral'?'と':'を'}言う`;
       case 'Ask':return `${f(n.question)}とたずねて、答えを待つ`;
-      case 'Broadcast':return `みんなに${f(n.message)}と知らせる`;
-      case 'BroadcastAndWait':return `みんなに${f(n.message)}と知らせて、知らせを受けて始めたことが全部終わるまで待つ`;
+      case 'Broadcast':return `${f(n.message)}の合図を送る`;
+      case 'BroadcastAndWait':return `${f(n.message)}の合図を送って、その合図で始まったことが全部終わるまで待つ`;
       case 'LocalVariableDeclaration':return `この中だけで使う変数【${n.name}】を作り、最初は${f(n.initial)}にする`;
       case 'LocalListDeclaration':return `この中だけで使うリスト【${n.name}】を空で作る`;
       case 'ReturnStatement':return `${f(n.value)}を答えとして返す`;
@@ -16554,7 +16554,7 @@ function createAkariExtensionHost(options) {
     ['MotionCommand:BOUNCE', /^(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/d, 'MotionCommand', 'BOUNCE'],
     ['PenCommand:DOWN', /^ペンを下ろす$/d, 'PenCommand', 'DOWN'],
     ['PenCommand:UP', /^ペンを上げる$/d, 'PenCommand', 'UP'],
-    ['PenCommand:STAMP', /^(?:今の姿の)?スタンプを押す$/d, 'PenCommand', 'STAMP'],
+    ['PenCommand:STAMP', /^(?:今の(?:姿|すがた)の)?スタンプを(?:押|お)す$/d, 'PenCommand', 'STAMP'],
     ['PenCommand:CLEAR', /^作品の線とスタンプを全部(?:消す|けす)$/d, 'PenCommand', 'CLEAR'],
     ['SoundCommand:STOP_ALL', /^すべての音を止める$/d, 'SoundCommand', 'STOP_ALL'],
     ['CloneCommand:CREATE_SELF', /^自分のコピーを作る$/d, 'CloneCommand', 'CREATE_SELF'],
@@ -16572,6 +16572,8 @@ function createAkariExtensionHost(options) {
     ['Say:quote', /^(.+?)と(?:言う|いう|話す|はなす)$/d, 'Say', null, 'quote'],
     ['Say:value', /^(.+?)を(?:言う|いう|話す|はなす)$/d, 'Say', null, 'value'],
     ['Ask', /^(.+?)と(?:(?:たずねて|尋ねて|聞いて)、(?:答え|返事)を待つ|たずねる|尋ねる)$/d, 'Ask', null, 'question'],
+    ['BroadcastAndWait:signal', /^(.+?)の合図を送って、その合図で始まったことが全部終わるまで待つ$/d, 'BroadcastAndWait', null, 'message'],
+    ['Broadcast:signal', /^(.+?)の合図を送る$/d, 'Broadcast', null, 'message'],
     ['BroadcastAndWait', /^みんなに(.+?)と知らせて、知らせを受けて始めたことが全部終わるまで待つ$/d, 'BroadcastAndWait', null, 'message'],
     ['Broadcast', /^みんなに(.+?)と知らせる$/d, 'Broadcast', null, 'message'],
     ['ReturnStatement', /^(.+?)を、?答えとして返す$/d, 'ReturnStatement', null, 'value'],
@@ -16842,6 +16844,8 @@ function createAkariExtensionHost(options) {
       [/^キーが(?:押|お)されたとき、(.+?)は、(.*)$/d,'keyDown',0,1],
       [/^(.+?)キー(?:を(?:押|お)すたびに|が(?:押|お)されたとき)、(.+?)は、(.*)$/d,'keyDown',1,2,0],
       [/^(.+?)(?:がおされたとき|がおされると|がおされるたびに|をおしたとき|をおすたびに|がクリックされたとき|がクリックされると|がクリックされるたびに|をクリックしたとき|をクリックするたびに)、(.*)$/d,'click',0,1],
+      [/^合図を受けたとき、(.+?)は、(.*)$/d,'message',0,1],
+      [/^(.+?)という合図を受けたとき、(.+?)は、(.*)$/d,'message',1,2,0],
       [/^知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',0,1],
       [/^(.+?)という知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',1,2,0],
       [/^(?:背景|はいけい)が(?:変わった|かわった)とき、(.+?)は、(.*)$/d,'backdropChanged',0,1],
@@ -16855,7 +16859,7 @@ function createAkariExtensionHost(options) {
   }
   function sentenceHeadingSource(heading) {
     const actor=sentenceActorSource(heading.actorRef), filter=heading.filter == null ? null : formatExpression(exprNode('StringLiteral',{value:heading.filter.key??heading.filter.message}));
-    switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がおされたとき、`;case 'keyDown':return `${filter?filter+'キーをおすたびに':'キーがおされたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}知らせを受け取ったとき、${actor}は、`;case 'backdropChanged':return `はいけいがかわったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身がかわったとき、`;case 'cloneStart':return `${actor}のコピーが作られたとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
+    switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がおされたとき、`;case 'keyDown':return `${filter?filter+'キーをおすたびに':'キーがおされたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}合図を受けたとき、${actor}は、`;case 'backdropChanged':return `はいけいがかわったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身がかわったとき、`;case 'cloneStart':return `${actor}のコピーが作られたとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
   }
   function continuousCondition(text) {
     const mask=surfaceMask(text),suffix=/キー(?:を|が)(?:押|お)(?:して|されて)いる$/.exec(mask);
@@ -16934,6 +16938,7 @@ function createAkariExtensionHost(options) {
   }
   function diagnoseSentenceIntent(line,symbols,ctx,previousLine=null,nextLine=null) {
     const code=line.code,mask=surfaceMask(code);let p;
+    if(mask==='次のくり返しへ進む')throw sentenceDiagnostic('この回の のこりを とばして 次の回へ 進むときは、「この回の残りをとばして、次の回へ進む」と 書きます',line,[{label:'この回の のこりを とばして 次の回へ',source:'この回の残りをとばして、次の回へ進む'}],{kind:'Continue'});
     if((p=surfaceCapture(/^(.+?)キーを(?:おして|押して)いる(?:あいだ|間)、(.+?)は(.+?)歩(?:動く|うごく)$/d,code))){
       const key=p[0].text.startsWith('「')?p[0].text:`「${p[0].text}」`,actor=p[1].text,distance=p[2].text;
       throw sentenceDiagnostic('キーをおしている間に動く歩数が、ぜんぶで何歩なのか、1秒に何歩なのか分かりません。えらんでください',line,[
@@ -17035,9 +17040,9 @@ function createAkariExtensionHost(options) {
         }
         if(surfaceMask(line.code).startsWith('くり返しが終わると、')&&nodes.at(-1)?.kind!=='RepeatCount')throw sentenceDiagnostic('「くり返しが終わると」の すぐ前に、回数の ある くり返しを 書いてください',line,[],{kind:'Sequence',missing:['precedingRepeat']});
         parseAt(line,()=>diagnoseSentenceIntent(line,symbols,local,lines[i-1]?.indent===indent?lines[i-1]:null,lines[nextCode(i+1)]?.indent===indent?lines[nextCode(i+1)]:null));
-        if(line.code==='その知らせを受けて始めたことが全部終わるまで待つ'){
+        if(['その合図で始まったことが全部終わるまで待つ','その知らせを受けて始めたことが全部終わるまで待つ'].includes(line.code)){
           const previous=[...nodes].reverse().find(node=>node.kind!=='CommentLine');
-          if(previous?.kind!=='Broadcast')throw sentenceDiagnostic('「その知らせ」は、すぐ前の行で送った合図のことです。すぐ前の行に、合図を送る文を書いてください。れい：みんなに「スタート」と知らせる。',line,[],{kind:'WaitBroadcastGroup',missing:['precedingBroadcast']});
+          if(previous?.kind!=='Broadcast')throw sentenceDiagnostic('「その合図」は、すぐ前の行で送った合図のことです。すぐ前の行に、合図を送る文を書いてください。れい：「スタート」の合図を送る。',line,[],{kind:'WaitBroadcastGroup',missing:['precedingBroadcast']});
           const broadcastRef=previous.broadcastRef||`broadcast-${previous.sourceSpan.startLine}-${previous.sourceSpan.startColumn}`;
           previous.broadcastRef=broadcastRef;
           nodes.push(statementNode('WaitBroadcastGroup',line,{broadcastRef,actorRef:{...scope.topicActor}}));i++;continue;
@@ -17826,7 +17831,7 @@ function createAkariExtensionHost(options) {
         STAMP: Object.freeze({
           label: '今の すがたの スタンプを おす',
           inputs: Object.freeze([]),
-          format: (a) => '今の姿のスタンプを押す',
+          format: (a) => '今のすがたのスタンプをおす',
         }),
         SET_COLOR: Object.freeze({
           label: 'ペンの色を決める',
@@ -17909,7 +17914,7 @@ function createAkariExtensionHost(options) {
   function formatCommand(node) {
     const command = COMMAND_PRESENTATION[node.kind]?.operations[node.op];
     if (!command) throw new AkariError('P201', `未対応の命令 ${node.kind}:${node.op}`);
-    return command.format((index, unit) => {const slot=sentenceFormFor(node)?.roleSlots.find(role=>role.path===`args.${index}`);if(unit&&slot?.unit!==unit)throw new AkariError('P205','文型の単位の役割が一致しません');return unit ? sentenceQuantitySource(node.args?.[index],slot.unit) : formatExpression(node.args?.[index]);}, node);
+    return command.format((index, unit) => {const slot=sentenceFormFor(node)?.roleSlots.find(role=>role.path===`args.${index}`);if(unit&&slot?.unit!==unit)throw new AkariError('P205','文型の単位の役割が一致しません');const arg=node.args?.[index];if(!unit&&node.kind==='MotionCommand'&&['GOTO','GLIDE'].includes(node.op)&&arg?.kind==='QuantityLiteral'&&arg.unit==='歩'&&arg.value?.kind==='BuiltinCall'&&arg.value.name==='乱数')return formatExpression(arg.value);return unit ? sentenceQuantitySource(arg,slot.unit) : formatExpression(arg);}, node);
   }
   const BLOCK_SCHEMAS = (() => {
     const schemas = [];
@@ -18122,7 +18127,7 @@ function createAkariExtensionHost(options) {
     for (const [kind, label] of [
       ['NoOperation', '何もしない'],
       ['Break', 'このくり返しを終える'],
-      ['Continue', '次のくり返しへ進む'],
+      ['Continue', 'この回の のこりを とばして 次の回へ'],
     ])
       add(kind, 'statement', label);
     add(
@@ -19483,7 +19488,7 @@ function createAkariExtensionHost(options) {
           if (!top) add('S306', '「答えをもとめる」の「返す」は、「もし」や「くり返す」の 中には 書けません。いちばん下の 行に 書きます', n, where);
         }
         if ((n.kind === 'Break' || n.kind === 'Continue') && loopDepth === 0)
-          add('S309', `「${n.kind === 'Break' ? 'このくり返しを終える' : '次のくり返しへ進む'}」は、くり返しの中でだけ使えます`, n, where);
+          add('S309', `「${n.kind === 'Break' ? 'このくり返しを終える' : 'この回の残りをとばして、次の回へ進む'}」は、くり返しの中でだけ使えます`, n, where);
         if (n.kind === 'UserActionCall') {
           const a = symbols.actions.get(n.name);
           if (!a) add('S301', `てじゅん「${n.name}」がありません`, n, where);
@@ -23886,9 +23891,9 @@ function createAkariExtensionHost(options) {
   }
   const TUTORIAL_BLOCKS=Object.freeze({
     speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
-    escape:{label:'ちがう ばしょへ にげる',source:'よこ（70から490のどれか）歩、たて（130から270のどれか）歩のばしょへ行く。'},
+    escape:{label:'ちがう ばしょへ にげる',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ行く。'},
     swim:{label:'ゆっくり泳ぐ',source:'よこ430歩、たて180歩のばしょへ1秒かけて動く。'},
-    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ（70から490のどれか）歩、たて（130から270のどれか）歩のばしょへ0.5秒かけて動く。'},
+    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ0.5秒かけて動く。'},
     repeat:{label:'くり返す',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
     right:{label:'右へ泳ぐ',source:'0.3秒かけて画面の右へ60歩動く。'},
     left:{label:'左へ泳ぐ',source:'0.3秒かけて画面の左へ60歩動く。'},

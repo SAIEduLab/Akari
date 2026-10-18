@@ -213,6 +213,18 @@ export const sentenceFormCases=[
     claims:{'sentence:Broadcast':'みんなに「出発」と知らせる','sentence:WaitBroadcastGroup':'その知らせを受けて始めたことが全部終わるまで待つ'},
   },
   {
+    id:'SF-signal-wait-group',
+    source:'「出発」の合図を送る\nその合図で始まったことが全部終わるまで待つ',
+    expected:script([statement('Broadcast',{message:str('出発'),broadcastRef:'ref#1'}),statement('WaitBroadcastGroup',{broadcastRef:'ref#1'})]),
+    claims:{'sentence:Broadcast:signal':'「出発」の合図を送る'},
+  },
+  {
+    id:'SF-signal-and-wait',
+    source:'「出発」の合図を送って、その合図で始まったことが全部終わるまで待つ',
+    expected:script([statement('BroadcastAndWait',{message:str('出発')})]),
+    claims:{'sentence:BroadcastAndWait:signal':'「出発」の合図を送って、その合図で始まったことが全部終わるまで待つ'},
+  },
+  {
     id:'SF-action-call',
     source:'【ジャンプ】という手順を行う',
     expected:script([statement('UserActionCall',{name:'ジャンプ',args:[]})]),
@@ -499,6 +511,18 @@ export const sentenceFormCases=[
     source:'「出発」という知らせを受け取ったとき、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'message',actorRef:named('ねこ'),filter:{message:'出発'}}}),
     claims:{'heading:message/^(.+?)という知らせを受け取ったとき、(.+?)は、(.*)$':'「出発」という知らせを受け取ったとき、ねこは、姿をかくす'},
+  },
+  {
+    id:'SF-heading-any-signal',
+    source:'合図を受けたとき、ねこは、姿をかくす',
+    expected:script([hide()],{heading:{event:'message',actorRef:named('ねこ')}}),
+    claims:{'heading:message/^合図を受けたとき、(.+?)は、(.*)$':'合図を受けたとき、ねこは、姿をかくす'},
+  },
+  {
+    id:'SF-heading-named-signal',
+    source:'「出発」という合図を受けたとき、ねこは、姿をかくす',
+    expected:script([hide()],{heading:{event:'message',actorRef:named('ねこ'),filter:{message:'出発'}}}),
+    claims:{'heading:message/^(.+?)という合図を受けたとき、(.+?)は、(.*)$':'「出発」という合図を受けたとき、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-backdrop',

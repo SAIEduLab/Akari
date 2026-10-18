@@ -170,7 +170,7 @@
         STAMP: Object.freeze({
           label: '今の すがたの スタンプを おす',
           inputs: Object.freeze([]),
-          format: (a) => '今の姿のスタンプを押す',
+          format: (a) => '今のすがたのスタンプをおす',
         }),
         SET_COLOR: Object.freeze({
           label: 'ペンの色を決める',
@@ -253,7 +253,7 @@
   function formatCommand(node) {
     const command = COMMAND_PRESENTATION[node.kind]?.operations[node.op];
     if (!command) throw new AkariError('P201', `未対応の命令 ${node.kind}:${node.op}`);
-    return command.format((index, unit) => {const slot=sentenceFormFor(node)?.roleSlots.find(role=>role.path===`args.${index}`);if(unit&&slot?.unit!==unit)throw new AkariError('P205','文型の単位の役割が一致しません');return unit ? sentenceQuantitySource(node.args?.[index],slot.unit) : formatExpression(node.args?.[index]);}, node);
+    return command.format((index, unit) => {const slot=sentenceFormFor(node)?.roleSlots.find(role=>role.path===`args.${index}`);if(unit&&slot?.unit!==unit)throw new AkariError('P205','文型の単位の役割が一致しません');const arg=node.args?.[index];if(!unit&&node.kind==='MotionCommand'&&['GOTO','GLIDE'].includes(node.op)&&arg?.kind==='QuantityLiteral'&&arg.unit==='歩'&&arg.value?.kind==='BuiltinCall'&&arg.value.name==='乱数')return formatExpression(arg.value);return unit ? sentenceQuantitySource(arg,slot.unit) : formatExpression(arg);}, node);
   }
   const BLOCK_SCHEMAS = (() => {
     const schemas = [];
@@ -466,7 +466,7 @@
     for (const [kind, label] of [
       ['NoOperation', '何もしない'],
       ['Break', 'このくり返しを終える'],
-      ['Continue', '次のくり返しへ進む'],
+      ['Continue', 'この回の のこりを とばして 次の回へ'],
     ])
       add(kind, 'statement', label);
     add(

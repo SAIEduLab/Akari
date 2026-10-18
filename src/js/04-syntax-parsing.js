@@ -837,14 +837,14 @@
       case 'ListReplace':return `${t}の${sentenceQuantitySource(n.index,'番目')}を${f(n.value)}にかえる`;
       case 'ListDelete':return `${t}の${sentenceQuantitySource(n.index,'番目')}を消す`;
       case 'ListClear':return `${t}の中身を全部消す`;
-      case 'NoOperation':return '何もしない';case 'Break':return 'いまのくり返しを終える';case 'Continue':return 'この回の残りをとばして、次の回へ進む';
+      case 'NoOperation':return '何もしない';case 'Break':return 'このくり返しを終える';case 'Continue':return 'この回の残りをとばして、次の回へ進む';
       case 'WaitTime':return `${sentenceQuantitySource(n.seconds,'秒')}待つ`;
-      case 'WaitBroadcastGroup':return 'その知らせを受けて始めたことが全部終わるまで待つ';
+      case 'WaitBroadcastGroup':return 'その合図で始まったことが全部終わるまで待つ';
       case 'WaitUntil':return `${conditionSource(n.condition,'until')}待つ`;
       case 'Say':if(n.seconds!==undefined)return `${f(n.value)}${n.value.kind==='StringLiteral'?'と':'を'}${sentenceQuantitySource(n.seconds,'秒')}話す`;if(n.value.kind==='VariableRead')return `${f(n.value)}の値を言う`;return ['CompareExpression','LogicalExpression'].includes(n.value.kind)||(n.value.kind==='UnaryExpression'&&n.value.op==='NOT')?`（${f(n.value)}）の値を言う`:`${f(n.value)}${n.value.kind==='StringLiteral'?'と':'を'}言う`;
       case 'Ask':return `${f(n.question)}とたずねて、答えを待つ`;
-      case 'Broadcast':return `みんなに${f(n.message)}と知らせる`;
-      case 'BroadcastAndWait':return `みんなに${f(n.message)}と知らせて、知らせを受けて始めたことが全部終わるまで待つ`;
+      case 'Broadcast':return `${f(n.message)}の合図を送る`;
+      case 'BroadcastAndWait':return `${f(n.message)}の合図を送って、その合図で始まったことが全部終わるまで待つ`;
       case 'LocalVariableDeclaration':return `この中だけで使う変数【${n.name}】を作り、最初は${f(n.initial)}にする`;
       case 'LocalListDeclaration':return `この中だけで使うリスト【${n.name}】を空で作る`;
       case 'ReturnStatement':return `${f(n.value)}を答えとして返す`;
@@ -880,7 +880,7 @@
     ['MotionCommand:BOUNCE', /^(?:画面の)?端に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/d, 'MotionCommand', 'BOUNCE'],
     ['PenCommand:DOWN', /^ペンを下ろす$/d, 'PenCommand', 'DOWN'],
     ['PenCommand:UP', /^ペンを上げる$/d, 'PenCommand', 'UP'],
-    ['PenCommand:STAMP', /^(?:今の姿の)?スタンプを押す$/d, 'PenCommand', 'STAMP'],
+    ['PenCommand:STAMP', /^(?:今の(?:姿|すがた)の)?スタンプを(?:押|お)す$/d, 'PenCommand', 'STAMP'],
     ['PenCommand:CLEAR', /^作品の線とスタンプを全部(?:消す|けす)$/d, 'PenCommand', 'CLEAR'],
     ['SoundCommand:STOP_ALL', /^すべての音を止める$/d, 'SoundCommand', 'STOP_ALL'],
     ['CloneCommand:CREATE_SELF', /^自分のコピーを作る$/d, 'CloneCommand', 'CREATE_SELF'],
@@ -898,6 +898,8 @@
     ['Say:quote', /^(.+?)と(?:言う|いう|話す|はなす)$/d, 'Say', null, 'quote'],
     ['Say:value', /^(.+?)を(?:言う|いう|話す|はなす)$/d, 'Say', null, 'value'],
     ['Ask', /^(.+?)と(?:(?:たずねて|尋ねて|聞いて)、(?:答え|返事)を待つ|たずねる|尋ねる)$/d, 'Ask', null, 'question'],
+    ['BroadcastAndWait:signal', /^(.+?)の合図を送って、その合図で始まったことが全部終わるまで待つ$/d, 'BroadcastAndWait', null, 'message'],
+    ['Broadcast:signal', /^(.+?)の合図を送る$/d, 'Broadcast', null, 'message'],
     ['BroadcastAndWait', /^みんなに(.+?)と知らせて、知らせを受けて始めたことが全部終わるまで待つ$/d, 'BroadcastAndWait', null, 'message'],
     ['Broadcast', /^みんなに(.+?)と知らせる$/d, 'Broadcast', null, 'message'],
     ['ReturnStatement', /^(.+?)を、?答えとして返す$/d, 'ReturnStatement', null, 'value'],
@@ -1168,6 +1170,8 @@
       [/^キーが(?:押|お)されたとき、(.+?)は、(.*)$/d,'keyDown',0,1],
       [/^(.+?)キー(?:を(?:押|お)すたびに|が(?:押|お)されたとき)、(.+?)は、(.*)$/d,'keyDown',1,2,0],
       [/^(.+?)(?:がおされたとき|がおされると|がおされるたびに|をおしたとき|をおすたびに|がクリックされたとき|がクリックされると|がクリックされるたびに|をクリックしたとき|をクリックするたびに)、(.*)$/d,'click',0,1],
+      [/^合図を受けたとき、(.+?)は、(.*)$/d,'message',0,1],
+      [/^(.+?)という合図を受けたとき、(.+?)は、(.*)$/d,'message',1,2,0],
       [/^知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',0,1],
       [/^(.+?)という知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',1,2,0],
       [/^(?:背景|はいけい)が(?:変わった|かわった)とき、(.+?)は、(.*)$/d,'backdropChanged',0,1],
@@ -1181,7 +1185,7 @@
   }
   function sentenceHeadingSource(heading) {
     const actor=sentenceActorSource(heading.actorRef), filter=heading.filter == null ? null : formatExpression(exprNode('StringLiteral',{value:heading.filter.key??heading.filter.message}));
-    switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がおされたとき、`;case 'keyDown':return `${filter?filter+'キーをおすたびに':'キーがおされたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}知らせを受け取ったとき、${actor}は、`;case 'backdropChanged':return `はいけいがかわったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身がかわったとき、`;case 'cloneStart':return `${actor}のコピーが作られたとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
+    switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がおされたとき、`;case 'keyDown':return `${filter?filter+'キーをおすたびに':'キーがおされたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}合図を受けたとき、${actor}は、`;case 'backdropChanged':return `はいけいがかわったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身がかわったとき、`;case 'cloneStart':return `${actor}のコピーが作られたとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
   }
   function continuousCondition(text) {
     const mask=surfaceMask(text),suffix=/キー(?:を|が)(?:押|お)(?:して|されて)いる$/.exec(mask);
@@ -1260,6 +1264,7 @@
   }
   function diagnoseSentenceIntent(line,symbols,ctx,previousLine=null,nextLine=null) {
     const code=line.code,mask=surfaceMask(code);let p;
+    if(mask==='次のくり返しへ進む')throw sentenceDiagnostic('この回の のこりを とばして 次の回へ 進むときは、「この回の残りをとばして、次の回へ進む」と 書きます',line,[{label:'この回の のこりを とばして 次の回へ',source:'この回の残りをとばして、次の回へ進む'}],{kind:'Continue'});
     if((p=surfaceCapture(/^(.+?)キーを(?:おして|押して)いる(?:あいだ|間)、(.+?)は(.+?)歩(?:動く|うごく)$/d,code))){
       const key=p[0].text.startsWith('「')?p[0].text:`「${p[0].text}」`,actor=p[1].text,distance=p[2].text;
       throw sentenceDiagnostic('キーをおしている間に動く歩数が、ぜんぶで何歩なのか、1秒に何歩なのか分かりません。えらんでください',line,[
@@ -1361,9 +1366,9 @@
         }
         if(surfaceMask(line.code).startsWith('くり返しが終わると、')&&nodes.at(-1)?.kind!=='RepeatCount')throw sentenceDiagnostic('「くり返しが終わると」の すぐ前に、回数の ある くり返しを 書いてください',line,[],{kind:'Sequence',missing:['precedingRepeat']});
         parseAt(line,()=>diagnoseSentenceIntent(line,symbols,local,lines[i-1]?.indent===indent?lines[i-1]:null,lines[nextCode(i+1)]?.indent===indent?lines[nextCode(i+1)]:null));
-        if(line.code==='その知らせを受けて始めたことが全部終わるまで待つ'){
+        if(['その合図で始まったことが全部終わるまで待つ','その知らせを受けて始めたことが全部終わるまで待つ'].includes(line.code)){
           const previous=[...nodes].reverse().find(node=>node.kind!=='CommentLine');
-          if(previous?.kind!=='Broadcast')throw sentenceDiagnostic('「その知らせ」は、すぐ前の行で送った合図のことです。すぐ前の行に、合図を送る文を書いてください。れい：みんなに「スタート」と知らせる。',line,[],{kind:'WaitBroadcastGroup',missing:['precedingBroadcast']});
+          if(previous?.kind!=='Broadcast')throw sentenceDiagnostic('「その合図」は、すぐ前の行で送った合図のことです。すぐ前の行に、合図を送る文を書いてください。れい：「スタート」の合図を送る。',line,[],{kind:'WaitBroadcastGroup',missing:['precedingBroadcast']});
           const broadcastRef=previous.broadcastRef||`broadcast-${previous.sourceSpan.startLine}-${previous.sourceSpan.startColumn}`;
           previous.broadcastRef=broadcastRef;
           nodes.push(statementNode('WaitBroadcastGroup',line,{broadcastRef,actorRef:{...scope.topicActor}}));i++;continue;

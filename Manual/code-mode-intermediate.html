@@ -353,7 +353,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p>「品物」は、その くり返しの 中だけで 読める 名前だよ。くり返しを はじめた ときの リストを コピーして じゅんに 使うので、とちゅうで もとの リストを かえても、その くり返しの じゅんばんと 中身は かわらないよ。</p>
 
   <h3>とちゅうで ぬける・次へ 進む</h3>
-  <div class="code"><pre>いまのくり返しを終える。
+  <div class="code"><pre>このくり返しを終える。
 この回の残りをとばして、次の回へ進む。</pre></div>
   <p>この 2つは、使い分けを 見せる れいだよ。つづけて おかずに、くり返しの 中に いる ほうを 入れてね。くり返しの 中に くり返しが あるときは、いちばん 中の くり返しに きくよ。</p>
 </section>
@@ -398,7 +398,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
       <tr><td><code class="inline">作品を動かしたとき、ねこは、</code></td><td>「動かす」を おしたとき</td><td>作品を はじめた とき</td></tr>
       <tr><td><code class="inline">ねこがおされたとき、</code></td><td>おされたとき</td><td>キャラクターが おされた とき</td></tr>
       <tr><td><code class="inline">「空白」キーをおすたびに、ねこは、</code></td><td>キーを おしたとき</td><td>キーを 新しく おすたび</td></tr>
-      <tr><td><code class="inline">「出発」という知らせを受け取ったとき、ねこは、</code></td><td>合図を 受けたとき</td><td>えらんだ 合図を 受けた とき</td></tr>
+      <tr><td><code class="inline">「出発」という合図を受けたとき、ねこは、</code></td><td>合図を 受けたとき</td><td>えらんだ 合図を 受けた とき</td></tr>
       <tr><td><code class="inline">はいけいがかわったとき、ねこは、</code></td><td>はいけいが かわったとき</td><td>場面が かわった とき</td></tr>
       <tr><td><code class="inline">入力らん1の中身がかわったとき、</code></td><td>中身が かわったとき</td><td>入力らんの 中身が かわった とき</td></tr>
       <tr><td><code class="inline">ねこのコピーが作られたとき、</code></td><td>コピーが できたとき</td><td>できた コピーが、自分の 動きを はじめる とき</td></tr>
@@ -410,22 +410,22 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 
 <section id="messages">
   <h2>7. 「合図」で 動きどうしを つなぐ</h2>
-  <p>合図を 使うと、ある 本文から、画面と ぜんぶの キャラクターへ 合図を 送って、それぞれの「合図を 受けたとき」の 動きを はじめられるよ。ブロックでは「合図を送る」、コードでは「…と知らせる」と 書くよ。</p>
+  <p>合図を 使うと、ある 本文から、画面と ぜんぶの キャラクターへ 合図を 送って、それぞれの「合図を 受けたとき」の 動きを はじめられるよ。ブロックでは「合図を送る」、コードでも「…の合図を送る」と 書くよ。</p>
 
   <div class="code">
     <div class="bar">合図を 送る がわ</div>
-    <pre>みんなに「開始」と知らせる。</pre>
+    <pre>「開始」の合図を送る。</pre>
   </div>
 
   <div class="code">
-    <div class="bar">知らせを受け取ったとき、ねこは、</div>
+    <div class="bar">合図を受けたとき、ねこは、</div>
     <pre>もし受けた合図が「開始」と同じなら、
   ねこは「受け取りました」と言う。</pre>
   </div>
 
   <h3>受けた 動きが おわるのを 待つ</h3>
-  <div class="code"><pre>みんなに「出発」と知らせる。
-その知らせを受けて始めたことが全部終わるまで待つ。</pre></div>
+  <div class="code"><pre>「出発」の合図を送る。
+その合図で始まったことが全部終わるまで待つ。</pre></div>
   <p>この 書き方では、その 合図で はじまった 動きが ぜんぶ おわるまで 待つよ。ブロックでは「合図を送る」と「さっきの合図で始まったことが終わるまで待つ」だよ。1つの ブロックで できる「合図を送って待つ」も あるよ。</p>
 
   <h3>しつもんする</h3>
@@ -485,7 +485,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   右に90度回る。
 ペンを上げる。</pre></div>
 
-  <p>ほかに、<code class="inline">今の姿のスタンプを押す。</code>（いまの すがたの スタンプを おす）、<code class="inline">作品の線とスタンプを全部消す。</code> も 使えるよ。</p>
+  <p>ほかに、<code class="inline">今のすがたのスタンプをおす。</code>、<code class="inline">作品の線とスタンプを全部消す。</code> も 使えるよ。</p>
 </section>
 
 <section id="calc">

@@ -459,7 +459,7 @@
           if (!top) add('S306', '「答えをもとめる」の「返す」は、「もし」や「くり返す」の 中には 書けません。いちばん下の 行に 書きます', n, where);
         }
         if ((n.kind === 'Break' || n.kind === 'Continue') && loopDepth === 0)
-          add('S309', `「${n.kind === 'Break' ? 'このくり返しを終える' : '次のくり返しへ進む'}」は、くり返しの中でだけ使えます`, n, where);
+          add('S309', `「${n.kind === 'Break' ? 'このくり返しを終える' : 'この回の残りをとばして、次の回へ進む'}」は、くり返しの中でだけ使えます`, n, where);
         if (n.kind === 'UserActionCall') {
           const a = symbols.actions.get(n.name);
           if (!a) add('S301', `てじゅん「${n.name}」がありません`, n, where);

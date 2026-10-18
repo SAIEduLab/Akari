@@ -356,7 +356,7 @@
         id: 'PenCommand:STAMP',
         kind: 'PenCommand',
         op: 'STAMP',
-        source: '今の姿のスタンプを押す',
+        source: '今のすがたのスタンプをおす',
       },
       {
         id: 'PenCommand:CLEAR',
@@ -386,7 +386,7 @@
         id: 'LooksCommand:SET_COSTUME',
         kind: 'LooksCommand',
         op: 'SET_COSTUME',
-        source: 'すがたを「マスコット」にかえる',
+        source: 'すがたを「たくどん」にかえる',
       },
       {
         id: 'LooksCommand:NEXT_COSTUME',
@@ -446,13 +446,13 @@
         id: 'Broadcast',
         kind: 'Broadcast',
         op: '',
-        source: 'みんなに「開始」と知らせる',
+        source: '「開始」の合図を送る',
       },
       {
         id: 'BroadcastAndWait',
         kind: 'BroadcastAndWait',
         op: '',
-        source: 'みんなに「開始」と知らせて、知らせを受けて始めたことが全部終わるまで待つ',
+        source: '「開始」の合図を送って、その合図で始まったことが全部終わるまで待つ',
       },
       {
         id: 'Ask',
@@ -482,7 +482,7 @@
         id: 'CloneCommand:CREATE_TARGET',
         kind: 'CloneCommand',
         op: 'CREATE_TARGET',
-        source: '「マスコット」のコピーを作る',
+        source: '「たくどん」のコピーを作る',
       },
       {
         id: 'CloneCommand:DELETE_SELF',
@@ -536,7 +536,7 @@
         id: 'Break',
         kind: 'Break',
         op: '',
-        source: 'いまのくり返しを終える',
+        source: 'このくり返しを終える',
       },
       {
         id: 'Continue',
@@ -795,7 +795,7 @@
         if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'SET_COSTUME') {
           const co = component?.costumes?.[0];
-          text = `すがたを「${co?.name || 'マスコット'}」にかえる`;
+          text = `すがたを「${co?.name || 'たくどん'}」にかえる`;
           if (!co)
             reason =
               reason ||
@@ -825,7 +825,7 @@
       if (x.kind === 'CloneCommand') {
         if (x.op === 'CREATE_TARGET') {
           const c = project.components.find((c) => c.type === 'sprite');
-          text = `「${c?.name || 'マスコット'}」のコピーを作る`;
+          text = `「${c?.name || 'たくどん'}」のコピーを作る`;
           if (!c) reason = 'キャラクターを先に作ります';
         } else if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'DELETE_SELF' && !kind && event !== 'cloneStart')

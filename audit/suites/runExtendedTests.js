@@ -587,9 +587,9 @@ async function runExtendedTests() {
         clone = [...h.r.actors.values()].find((x) => x.isClone);
       clone.vars.set('HP', 9);
       eq(a.vars.get('HP'), 3);
-      ok(h.r.touching(clone.runtimeId, STANDARD_AKARI_MASCOT.name));
+      ok(h.r.touching(clone.runtimeId, 'マスコット'));
       clone.visible = false;
-      ok(!h.r.touching(clone.runtimeId, STANDARD_AKARI_MASCOT.name));
+      ok(!h.r.touching(clone.runtimeId, 'マスコット'));
       a.direction = 90;
       a.scalePercent = 200;
       const bb = h.r.aabb(a);

@@ -1150,9 +1150,9 @@
   }
   const TUTORIAL_BLOCKS=Object.freeze({
     speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
-    escape:{label:'ちがう ばしょへ にげる',source:'よこ（70から490のどれか）歩、たて（130から270のどれか）歩のばしょへ行く。'},
+    escape:{label:'ちがう ばしょへ にげる',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ行く。'},
     swim:{label:'ゆっくり泳ぐ',source:'よこ430歩、たて180歩のばしょへ1秒かけて動く。'},
-    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ（70から490のどれか）歩、たて（130から270のどれか）歩のばしょへ0.5秒かけて動く。'},
+    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ0.5秒かけて動く。'},
     repeat:{label:'くり返す',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
     right:{label:'右へ泳ぐ',source:'0.3秒かけて画面の右へ60歩動く。'},
     left:{label:'左へ泳ぐ',source:'0.3秒かけて画面の左へ60歩動く。'},
