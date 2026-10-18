@@ -32716,7 +32716,7 @@ function createAkariExtensionHost(options) {
         clearTimeout(autosaveTimer);
         writeAutosave();
         log(`${a.download} を ダウンロードしはじめました。自動で のこした 作品も そのままです`, 'ok');
-        setStatus(unfinished?'書きかけの ある ファイルを ダウンロードしはじめました。動かす前に、まだ できていない ところを たしかめてください':'作品ファイルのダウンロードを開始しました');
+        setStatus(unfinished?'書きかけの ある ファイルを ダウンロードしはじめました。動かす前に、まだ できていない ところを たしかめてください':'作品ファイルを ダウンロードしはじめました');
       } catch (err) {
         log(`${err.code || ''} ほぞんできませんでした: ${err.message}`, 'error');
         setStatus(childErrorLogText('保存失敗: ' + err.message));
