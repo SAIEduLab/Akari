@@ -362,11 +362,11 @@
       schema.create = (context = {}) => createSyntaxNode(schema, context);
       schema.encode = (node, context = {}) => {
         if (syntaxSchema(node, schema.category).id !== id)
-          blockStructureError('種類が一致しません');
+          blockDataError('ブロックの種類が合いません');
         return blockEncode(node, { ...context, expected: schema.category });
       };
       schema.decode = (tree, context = {}) => {
-        if (tree?.schemaId !== id) blockStructureError('種類が一致しません');
+        if (tree?.schemaId !== id) blockDataError('ブロックの種類が合いません');
         return blockDecode(tree, context);
       };
       schema.availability = (context = {}) => blockAvailability(context);
@@ -668,7 +668,7 @@
           args([], {
             minItems: 0,
             maxItems: LIMITS.sourceEach,
-            variadic: true,
+            variadic: meta.maxArgs !== meta.minArgs,
             initialItems: meta.minArgs,
             semanticMin: meta.minArgs,
             semanticMax: meta.maxArgs,
@@ -742,9 +742,13 @@
       path,
     );
   }
+  // Checks that only fail on broken saved data: first what to do, then the reason.
+  function blockDataError(message, path = '') {
+    throw new AkariError('P210', `作品の ファイルが こわれているかもしれません。先生に 見てもらってね。（${message}）`, 0, 0, path);
+  }
   function syntaxSchema(node, expected) {
     if (!node || typeof node !== 'object' || Array.isArray(node))
-      blockStructureError('node が必要です');
+      blockDataError('ブロックがありません');
     const kind = expected === 'target' && node.kind !== 'Hole' ? 'TargetReference' : node.kind;
     const discriminator =
       kind === 'Hole'
@@ -771,25 +775,25 @@
     const schema = BLOCK_SCHEMA_BY_ID.get(
       kind + (discriminator ? ':' + node[discriminator] : ''),
     );
-    if (!schema) blockStructureError('未対応の kind / op / 名前です');
+    if (!schema) blockDataError('あかりにないブロックです');
     if (expected && schema.category !== expected)
       blockStructureError('このブロックは ここには入りません。形の合う ばしょに 入れてください');
     return schema;
   }
   function blockRecord(record, allowed, path) {
     if (!record || typeof record !== 'object' || Array.isArray(record))
-      blockStructureError('項目の集合が必要です', path);
+      blockDataError('ブロックの中身がありません', path);
     for (const key of Object.keys(record))
-      if (!allowed.includes(key)) blockStructureError('未対応の項目 ' + key, path);
+      if (!allowed.includes(key)) blockDataError('このブロックにはない項目があります', path + (path ? ' / ' : '') + key);
   }
   function blockFieldValue(field, value, path) {
     const type = field.type;
     if (value === undefined && field.required === false) return undefined;
     if (type === 'actor-ref') {
       blockRecord(value, ['kind', 'name'], path);
-      if (!['self', 'named'].includes(value.kind)) blockStructureError('対象の指定が不正です', path);
+      if (!['self', 'named'].includes(value.kind)) blockDataError('だれが動くかの書き方が正しくありません', path);
       if (value.kind === 'self') {
-        if (Object.hasOwn(value, 'name')) blockStructureError('自分の指定に別の名前は付けません', path);
+        if (Object.hasOwn(value, 'name')) blockDataError('「自分」にはほかの名前を付けられません', path);
         return { kind: 'self' };
       }
       blockFieldValue({ type: 'name' }, value.name, path + '.name');
@@ -797,12 +801,12 @@
     }
     if (type === 'argument-names') {
       if (!Array.isArray(value) || value.length > LIMITS.sourceEach)
-        blockStructureError('受け取る値の名前の配列が必要です', path);
+        blockDataError('入れるものの名前がありません', path);
       return value.map((name, index) => blockFieldValue({ type: 'name' }, name, path + '[' + index + ']'));
     }
     if (type === 'heading') {
       blockRecord(value, ['event', 'actorRef', 'filter'], path);
-      if (!Object.hasOwn(EVENT_LABELS, value.event)) blockStructureError('できごとの種類が不正です', path);
+      if (!Object.hasOwn(EVENT_LABELS, value.event)) blockDataError('きっかけの種類が正しくありません', path);
       const heading = { event: value.event, actorRef: blockFieldValue({ type: 'actor-ref' }, value.actorRef, path + '.actorRef') };
       if (Object.hasOwn(value, 'filter')) {
         if (value.filter === null) heading.filter = null;
@@ -810,10 +814,10 @@
           blockRecord(value.filter, ['key', 'message'], path + '.filter');
           const keys = Object.keys(value.filter);
           if (keys.length !== 1 || (keys[0] !== 'key' && keys[0] !== 'message'))
-            blockStructureError('キーか知らせの条件を一つ指定します', path);
+            blockDataError('キーか合図を1つ選んでください', path);
           const key = keys[0];
           if ((key === 'key' && value.event !== 'keyDown') || (key === 'message' && value.event !== 'message'))
-            blockStructureError('できごとと条件の種類が一致しません', path);
+            blockDataError('きっかけと、選んだキーや合図が合いません', path);
           heading.filter = { [key]: blockFieldValue({ type: 'string' }, value.filter[key], path + '.filter.' + key) };
         }
       }
@@ -829,21 +833,21 @@
       blockStructureError('待つ合図が空いています。何か書いてください', path);
     if (type === 'number') {
       if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || Object.is(value, -0))
-        blockStructureError('数は符号を持たない有限数にします', path);
+        blockDataError('数は0以上の数にしてください', path);
     } else if (type === 'boolean') {
-      if (typeof value !== 'boolean') blockStructureError('条件の答えが必要です', path);
+      if (typeof value !== 'boolean') blockDataError('「あてはまる」か「あてはまらない」を入れてください', path);
     } else if (type === 'qualifier') {
       if (![null, 'exact', 'self', 'project'].includes(value))
         blockStructureError('使う ばしょが 正しくありません', path);
     } else {
-      if (typeof value !== 'string') blockStructureError('文字が必要です', path);
+      if (typeof value !== 'string') blockDataError('文字を入れてください', path);
       if (type === 'name')
         try {
           validateName(value, { callable: field.callable === true });
         } catch (error) {
           blockStructureError(error.message, path);
         }
-      if (!field.multiline && /[\r\n]/.test(value)) blockStructureError('一行の値にします', path);
+      if (!field.multiline && /[\r\n]/.test(value)) blockDataError('1行で書いてください', path);
       if (type === 'string' && cpLen(value) > LIMITS.stringChars)
         blockStructureError('文字が長すぎます。短くしてください', path);
       if (type === 'annotation' && value && value[0] !== '※')
@@ -857,9 +861,9 @@
     const visit = (node, type, path, blockDepth, expressionDepth) => {
       const schema = syntaxSchema(node, type);
       if(node.units&&(type!=='script'||path!=='root'))
-        blockStructureError('できごとのまとまりは文書の最上位に置きます',path);
+        blockDataError('きっかけのまとまりは、いちばん外に置いてください',path);
       if (schema.draftOnly && !allowHoles) blockStructureError('空いているところが あります。うめてから動かしてください', path);
-      if (active.has(node)) blockStructureError('循環しています', path);
+      if (active.has(node)) blockDataError('ブロックが自分の中に入っています', path);
       active.add(node);
       if (++count > LIMITS.sourceEach)
         blockStructureError('ブロックが多すぎて、使える数をこえています。ブロックをへらしてください', path);
@@ -881,14 +885,14 @@
       for (const field of schema.fields) {
         if (!Object.hasOwn(node, field.key)) {
           if (field.required === false) continue;
-          blockStructureError('必須項目 ' + field.key + ' がありません', path);
+          blockDataError('「' + (field.label || field.key) + '」がありません', path);
         }
         blockFieldValue(field, node[field.key], path + '.' + field.key);
       }
       for (const annotation of schema.annotations) {
         if (!Object.hasOwn(node, annotation.key)) {
           if (annotation.required === false) continue;
-          blockStructureError('必須項目 ' + annotation.key + ' がありません', path);
+          blockDataError('「' + (annotation.label || annotation.key) + '」がありません', path);
         }
         blockFieldValue(annotation, node[annotation.key], path + '.' + annotation.key);
       }
@@ -905,7 +909,7 @@
         const value = node[slot.key];
         if (slot.multiple) {
           if (!Array.isArray(value) || value.length < slot.minItems || value.length > slot.maxItems)
-            blockStructureError('入力数が不正です', path + '.' + slot.key);
+            blockDataError('入れるものの数が合いません', path + '.' + slot.key);
           for (let i = 0; i < value.length; i++)
             visit(
               value[i],
@@ -927,9 +931,9 @@
         const children = node[slot.key],
           enabled = !slot.when || node[slot.when];
         if (!Array.isArray(children))
-          blockStructureError('本文の配列が必要です', path + '.' + slot.key);
+          blockDataError('中のブロックがありません', path + '.' + slot.key);
         if (!enabled && children.length)
-          blockStructureError('無効な枝に本文があります', path + '.' + slot.key);
+          blockDataError('使えないところにブロックがあります', path + '.' + slot.key);
         if (
           enabled &&
           slot.requiredExecutable &&
@@ -946,9 +950,9 @@
           );
       }
       if (schema.kind === 'IfStatement' && !node.hasElse && node.elseComment)
-        blockStructureError('存在しない else に注釈があります', path);
+        blockDataError('「そうでなければ」がないのに、そこにメモがあります', path);
       if (schema.kind === 'CommentLine' && node.inlineComment)
-        blockStructureError('独立コメントは本文欄で保持します', path);
+        blockDataError('1行のメモは本文の中に置いてください', path);
       active.delete(node);
       return node;
     };
@@ -1063,14 +1067,14 @@
     let count = 0;
     const decode = (block, type, path, blockDepth, expressionDepth) => {
       blockRecord(block, ['id', 'schemaId', 'fields', 'inputs', 'bodies', 'annotations'], path);
-      if (seen.has(block)) blockStructureError('循環または重複した接続です', path);
+      if (seen.has(block)) blockDataError('同じブロックが2か所につながっています', path);
       seen.add(block);
       if (typeof block.id !== 'string' || !block.id || ids.has(block.id))
-        blockStructureError('ID が空または重複しています', path);
+        blockDataError('ブロックの番号がないか、同じ番号があります', path);
       ids.add(block.id);
       const schema = BLOCK_SCHEMA_BY_ID.get(block.schemaId);
       if (!schema || (type && schema.category !== type))
-        blockStructureError('schema または接続先の種類が不正です', path);
+        blockDataError('ブロックの種類か、つなぐ先が正しくありません', path);
       if (
         ++count > LIMITS.sourceEach ||
         blockDepth > LIMITS.blockDepth ||
@@ -1099,7 +1103,7 @@
       for (const field of schema.fields) {
         if (!Object.hasOwn(block.fields, field.key)) {
           if (field.required === false) continue;
-          blockStructureError('必須項目 ' + field.key + ' がありません', path);
+          blockDataError('「' + (field.label || field.key) + '」がありません', path);
         }
         node[field.key] = blockFieldValue(
           field,
@@ -1112,7 +1116,7 @@
         const value = block.inputs[slot.key];
         if (slot.multiple) {
           if (!Array.isArray(value) || value.length < slot.minItems || value.length > slot.maxItems)
-            blockStructureError('入力数が不正です', path + '.inputs.' + slot.key);
+            blockDataError('入れるものの数が合いません', path + '.inputs.' + slot.key);
           node[slot.key] = value.map((child, i) =>
             decode(
               child,
@@ -1134,7 +1138,7 @@
       for (const slot of schema.bodies) {
         const children = block.bodies[slot.key];
         if (!Array.isArray(children))
-          blockStructureError('本文の配列が必要です', path + '.bodies.' + slot.key);
+          blockDataError('中のブロックがありません', path + '.bodies.' + slot.key);
         node[slot.key] = children.map((child, i) =>
           decode(
             child,
@@ -1148,7 +1152,7 @@
       for (const key of annotationKeys) {
         if (!Object.hasOwn(block.annotations, key)) {
           if (schema.annotations.find(annotation => annotation.key === key)?.required === false) continue;
-          blockStructureError('注釈欄 ' + key + ' がありません', path);
+          blockDataError('メモを書くところがありません', path + (path ? ' / ' : '') + key);
         }
         node[key] = block.annotations[key];
       }
@@ -1161,7 +1165,7 @@
   }
   function createBlock(schemaId, context = {}) {
     const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
-    if (!schema) blockStructureError('未対応の schema です');
+    if (!schema) blockDataError('あかりにないブロックです');
     return blockEncode(schema.create(context), { ...context, expected: schema.category }).tree;
   }
 

@@ -11445,7 +11445,7 @@ function createAkariExtensionHost(options) {
         id: 'LooksCommand:SET_COSTUME',
         kind: 'LooksCommand',
         op: 'SET_COSTUME',
-        source: 'すがたを「星」にかえる',
+        source: 'すがたを「マスコット」にかえる',
       },
       {
         id: 'LooksCommand:NEXT_COSTUME',
@@ -11854,7 +11854,7 @@ function createAkariExtensionHost(options) {
         if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'SET_COSTUME') {
           const co = component?.costumes?.[0];
-          text = `すがたを「${co?.name || '星'}」にかえる`;
+          text = `すがたを「${co?.name || 'マスコット'}」にかえる`;
           if (!co)
             reason =
               reason ||
@@ -11884,7 +11884,7 @@ function createAkariExtensionHost(options) {
       if (x.kind === 'CloneCommand') {
         if (x.op === 'CREATE_TARGET') {
           const c = project.components.find((c) => c.type === 'sprite');
-          text = `\u300c${c?.name || '\u661f'}\u300dのコピーを作る`;
+          text = `「${c?.name || 'マスコット'}」のコピーを作る`;
           if (!c) reason = 'キャラクターを先に作ります';
         } else if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'DELETE_SELF' && !kind && event !== 'cloneStart')
@@ -12374,7 +12374,7 @@ function createAkariExtensionHost(options) {
           text: '',
           localData: { variables: [], lists: [] },
           costumes: [
-            { id: 'costume-1', name: '星', kind: 'image', assetId: DEFAULT_MASCOT_ASSET_ID },
+            { id: 'costume-1', name: 'マスコット', kind: 'image', assetId: DEFAULT_MASCOT_ASSET_ID },
             { id: 'costume-2', name: '丸', kind: 'text', value: '●' },
           ],
           costumeId: 'costume-1',
@@ -12549,7 +12549,7 @@ function createAkariExtensionHost(options) {
           "id": "dance-start",
           "targetId": "sprite-1",
           "event": "start",
-          "source": "マスコットは横120、縦200の位置へ行く。\nだんごは横420、縦200の位置へ行く。\nマスコットは方向を0度にする。\nだんごは方向を0度にする。\nマスコットは「いっしょに おどろう！」と1秒話す。\n2回くり返す。\n  マスコットは横180、縦140の位置へ0.3秒かけて動く。\n  マスコットは横120、縦200の位置へ0.3秒かけて動く。\n  だんごは横360、縦140の位置へ0.3秒かけて動く。\n  だんごは横420、縦200の位置へ0.3秒かけて動く。\n  マスコットは右に20度回る。\n  だんごは左に20度回る。\n  0.2秒待つ。\n  マスコットは左に40度回る。\n  だんごは右に40度回る。\n  0.2秒待つ。\n  マスコットは右に20度回る。\n  だんごは左に20度回る。\n  0.2秒待つ。\nマスコットは「きまった！」と1秒話す。\nだんごは「もういちど おどろう！」と1秒話す。"
+          "source": "マスコットはよこ120歩、たて200歩のばしょへ行く。\nだんごはよこ420歩、たて200歩のばしょへ行く。\nマスコットは向きを0度にする。\nだんごは向きを0度にする。\nマスコットは「いっしょに おどろう！」と1秒話す。\n2回くり返す。\n  マスコットはよこ180歩、たて140歩のばしょへ0.3秒かけて動く。\n  マスコットはよこ120歩、たて200歩のばしょへ0.3秒かけて動く。\n  だんごはよこ360歩、たて140歩のばしょへ0.3秒かけて動く。\n  だんごはよこ420歩、たて200歩のばしょへ0.3秒かけて動く。\n  マスコットは右に20度回る。\n  だんごは左に20度回る。\n  だんごは0.2秒待つ。\n  マスコットは左に40度回る。\n  だんごは右に40度回る。\n  だんごは0.2秒待つ。\n  マスコットは右に20度回る。\n  だんごは左に20度回る。\n  だんごは0.2秒待つ。\nマスコットは「きまった！」と1秒話す。\nだんごは「もういちど おどろう！」と1秒話す。"
         }
       ],
       "actions": [],
@@ -12661,7 +12661,7 @@ function createAkariExtensionHost(options) {
           "id": "flower-start",
           "targetId": "sprite-1",
           "event": "start",
-          "source": "描いた線とスタンプを消す。\nマスコットはペンを上げる。\nマスコットは横296、縦196の位置へ行く。\nマスコットは方向を0度にする。\nマスコットはペンの色を「青」にする。\nマスコットはペンの太さを2にする。\nマスコットは「花もようを かくよ！」と1秒話す。\nマスコットはペンを下ろす。\n12回くり返す。\n  3回くり返す。\n    マスコットは前へ90歩進む。\n    マスコットは右に120度回る。\n    0.03秒待つ。\n  マスコットは右に30度回る。\n  0.08秒待つ。\nマスコットはペンを上げる。\nマスコットは横40、縦280の位置へ行く。\nマスコットは「できた！ つぎは どんな もよう？」と1秒話す。"
+          "source": "作品の線とスタンプを全部消す。\nマスコットはペンを上げる。\nマスコットはよこ296歩、たて196歩のばしょへ行く。\nマスコットは向きを0度にする。\nマスコットはペンの色を「青」にする。\nマスコットはペンの太さを2にする。\nマスコットは「花もようを かくよ！」と1秒話す。\nマスコットはペンを下ろす。\n12回くり返す。\n  3回くり返す。\n    マスコットは前へ90歩進む。\n    マスコットは右に120度回る。\n    マスコットは0.03秒待つ。\n  マスコットは右に30度回る。\n  マスコットは0.08秒待つ。\nマスコットはペンを上げる。\nマスコットはよこ40歩、たて280歩のばしょへ行く。\nマスコットは「できた！ つぎは どんな もよう？」と1秒話す。"
         }
       ],
       "actions": [],
@@ -12838,13 +12838,13 @@ function createAkariExtensionHost(options) {
           "id": "game-start",
           "targetId": "stage",
           "event": "start",
-          "source": "受付を0にする。\n点数を0にする。\n「点数表示」の文字をつなぐ（「てんすう：」、点数）に変える。\n「案内」の文字をつなぐ（目標、「こ つかまえよう！」）に変える。\n星は横300、縦180の位置へ行く。\n星は方向を0度にする。\nマスコットは方向を0度にする。\n受付を1にする。"
+          "source": "受付を0にする。\n点数を0にする。\n「点数表示」の文字をつなぐ（「てんすう：」、点数）にかえる。\n「案内」の文字をつなぐ（目標、「こ つかまえよう！」）にかえる。\n星はよこ300歩、たて180歩のばしょへ行く。\n星は向きを0度にする。\nマスコットは向きを0度にする。\nマスコットは受付を1にする。"
         },
         {
           "id": "game-click",
           "targetId": "star",
           "event": "click",
-          "source": "もし受付が1と同じなら、\n  受付を0にする。\n  点数に1を足す。\n  「点数表示」の文字をつなぐ（「てんすう：」、点数）に変える。\n  もし点数が目標以上なら、\n    隠れる。\n    マスコットは「やったね！ ぜんぶ つかまえた！」と1.5秒話す。\n    4回くり返す。\n      マスコットは右に90度回る。\n      0.1秒待つ。\n  そうでなければ、\n    星は横乱数（140、520）、縦乱数（120、280）の位置へ行く。\n    星は右に30度回る。\n    受付を1にする。"
+          "source": "もし受付が1と同じなら、\n  受付を0にする。\n  点数を1増やす。\n  「点数表示」の文字をつなぐ（「てんすう：」、点数）にかえる。\n  もし点数が目標以上なら、\n    すがたをかくす。\n    マスコットは「やったね！ ぜんぶ つかまえた！」と1.5秒話す。\n    4回くり返す。\n      マスコットは右に90度回る。\n      マスコットは0.1秒待つ。\n  そうでなければ、\n    星はよこ（140から520のどれか）歩、たて（120から280のどれか）歩のばしょへ行く。\n    星は右に30度回る。\n    星は受付を1にする。"
         }
       ],
       "actions": [],
@@ -13882,19 +13882,19 @@ function createAkariExtensionHost(options) {
           "id": "maze-start",
           "targetId": "stage",
           "event": "start",
-          "source": "【歩いた道】を「」にする。\n「道の表」の文字を「しゅっぱつを おしてね」に変える。\n【列】を0にする。\n【行】を0にする。\n【失敗】を0にする。\n【順番】を0にする。\n【マスコット】は横22、縦102の位置へ行く。\n「今の動き」の文字を「まだ 動いていないよ」に変える。\n「お知らせ」の文字を「ゴールまで 行けるかな？」に変える。\n【動いている】を0にする。"
+          "source": "【歩いた道】を「」にする。\n「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n【列】を0にする。\n【行】を0にする。\n【失敗】を0にする。\n【順番】を0にする。\nマスコットはよこ22歩、たて102歩のばしょへ行く。\nマスコットは「今の動き」の文字を「まだ 動いていないよ」にかえる。\nマスコットは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\nマスコットは【動いている】を0にする。"
         },
         {
           "id": "maze-retry",
           "targetId": "retry",
           "event": "click",
-          "source": "もし【動いている】が0と同じなら、\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」に変える。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  【マスコット】は横22、縦102の位置へ行く。\n  「今の動き」の文字を「まだ 動いていないよ」に変える。\n  「お知らせ」の文字を「ゴールまで 行けるかな？」に変える。"
+          "source": "もし【動いている】が0と同じなら、\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  マスコットはよこ22歩、たて102歩のばしょへ行く。\n  マスコットは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  マスコットは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。"
         },
         {
           "id": "maze-go",
           "targetId": "go",
           "event": "click",
-          "source": "もし【動いている】が0と同じなら、\n  【動いている】を1にする。\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」に変える。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  【マスコット】は横22、縦102の位置へ行く。\n  「今の動き」の文字を「まだ 動いていないよ」に変える。\n  「お知らせ」の文字を「ゴールまで 行けるかな？」に変える。\n  向きを「右」、マス数を2として、【道を進む】という手順を行う。\n  向きを「下」、マス数を2として、【道を進む】という手順を行う。\n  向きを「右」、マス数を3として、【道を進む】という手順を行う。\n  向きを「下」、マス数を2として、【道を進む】という手順を行う。\n  向きを「右」、マス数を1として、【道を進む】という手順を行う。\n  もし【失敗】が0と同じなら、\n    もし条件（（【列】が6と同じ）かつ（【行】が4と同じ））が成り立つなら、\n      「お知らせ」の文字を「やった！ ゴール！\n道を かえて また あそぼう」に変える。\n    そうでなければ、\n      「お知らせ」の文字を「あと すこし！\n道を つけ足してみよう」に変える。\n  【動いている】を0にする。"
+          "source": "もし【動いている】が0と同じなら、\n  【動いている】を1にする。\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  マスコットはよこ22歩、たて102歩のばしょへ行く。\n  マスコットは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  マスコットは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\n  マスコットは向きを「右」、マス数を2として、【道を進む】という手順を行う。\n  マスコットは向きを「下」、マス数を2として、【道を進む】という手順を行う。\n  マスコットは向きを「右」、マス数を3として、【道を進む】という手順を行う。\n  マスコットは向きを「下」、マス数を2として、【道を進む】という手順を行う。\n  マスコットは向きを「右」、マス数を1として、【道を進む】という手順を行う。\n  もし【失敗】が0と同じなら、\n    もし【列】が6と同じで、【行】が4と同じなら、\n      マスコットは「お知らせ」の文字を「やった！ ゴール！\n道を かえて また あそぼう」にかえる。\n    そうでなければ、\n      マスコットは「お知らせ」の文字を「あと すこし！\n道を つけ足してみよう」にかえる。\n  マスコットは【動いている】を0にする。"
         }
       ],
       "actions": [
@@ -13906,7 +13906,7 @@ function createAkariExtensionHost(options) {
             "向き",
             "マス数"
           ],
-          "source": "もし【失敗】が0と同じなら、\n  【順番】に1を足す。\n  【歩いた道】をつなぐ（【歩いた道】、【順番】、「：」、向き、「へ 」、マス数、「マス\n」）にする。\n  「道の表」の文字を【歩いた道】に変える。\n  「今の動き」の文字をつなぐ（【順番】、「番：」、向き、「へ 」、マス数、「マス」）に変える。\n  マス数回くり返す。\n    【次の列】を【列】にする。\n    【次の行】を【行】にする。\n    もし向きが「右」と同じなら、\n      【次の列】に1を足す。\n    もし向きが「左」と同じなら、\n      【次の列】に-1を足す。\n    もし向きが「下」と同じなら、\n      【次の行】に1を足す。\n    もし向きが「上」と同じなら、\n      【次の行】に-1を足す。\n    もし条件（（【次の列】が0より小さい）または（【次の列】が6より大きい））が成り立つなら、\n      【失敗】を1にする。\n    もし条件（（【次の行】が0より小さい）または（【次の行】が4より大きい））が成り立つなら、\n      【失敗】を1にする。\n    もし【失敗】が0と同じなら、\n      もし【かべ】の（【次の行】×7＋【次の列】＋1）番目が1と同じなら、\n        【失敗】を1にする。\n    もし【失敗】が1と同じなら、\n      「お知らせ」の文字を「かべに ぶつかった！\n道を なおして もう一回」に変える。\n      このくり返しを終える。\n    【列】を【次の列】にする。\n    【行】を【次の行】にする。\n    【マスコット】は横（22＋【列】×43）、縦（102＋【行】×43）の位置へ0.35秒かけて動く。\n    0.1秒待つ。"
+          "source": "もし【失敗】が0と同じなら、\n  【順番】を1増やす。\n  【歩いた道】をつなぐ（【歩いた道】、【順番】、「：」、向き、「へ 」、マス数、「マス\n」）にする。\n  「道の表」の文字を【歩いた道】にかえる。\n  「今の動き」の文字をつなぐ（【順番】、「番：」、向き、「へ 」、マス数、「マス」）にかえる。\n  マス数回くり返す。\n    【次の列】を【列】にする。\n    【次の行】を【行】にする。\n    もし向きが「右」と同じなら、\n      【次の列】を1増やす。\n    もし向きが「左」と同じなら、\n      【次の列】を－1増やす。\n    もし向きが「下」と同じなら、\n      【次の行】を1増やす。\n    もし向きが「上」と同じなら、\n      【次の行】を－1増やす。\n    もし【次の列】が0より小さいか、【次の列】が6より大きければ、\n      【失敗】を1にする。\n    もし【次の行】が0より小さいか、【次の行】が4より大きければ、\n      【失敗】を1にする。\n    もし【失敗】が0と同じなら、\n      もし【かべ】の（【次の行】×7＋【次の列】＋1）番目が1と同じなら、\n        【失敗】を1にする。\n    もし【失敗】が1と同じなら、\n      「お知らせ」の文字を「かべに ぶつかった！\n道を なおして もう一回」にかえる。\n      いまのくり返しを終える。\n    【列】を【次の列】にする。\n    【行】を【次の行】にする。\n    マスコットはよこ（22＋【列】×43）歩、たて（102＋【行】×43）歩のばしょへ0.35秒かけて動く。\n    マスコットは0.1秒待つ。"
         }
       ],
       "functions": [],
@@ -14708,13 +14708,13 @@ function createAkariExtensionHost(options) {
           "id": "music-play",
           "targetId": "play",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【演奏中】を1にする。\n  【再生番号】に1を足す。\n  今回を【再生番号】として、【曲を聞く】という手順を行う。"
+          "source": "もし【演奏中】が0と同じなら、\n  【演奏中】を1にする。\n  【再生番号】を1増やす。\n  今回を【再生番号】として、【曲を聞く】という手順を行う。"
         },
         {
           "id": "music-stop",
           "targetId": "stop",
           "event": "click",
-          "source": "【再生番号】に1を足す。\n【演奏中】を0にする。\nすべての音を止める。\n「お知らせ」の文字を「止めたよ。音をかえて また聞こう」に変える。"
+          "source": "【再生番号】を1増やす。\n【演奏中】を0にする。\nすべての音を止める。\n「お知らせ」の文字を「止めたよ。音をかえて また聞こう」にかえる。"
         },
         {
           "id": "music-note-1",
@@ -14816,31 +14816,31 @@ function createAkariExtensionHost(options) {
           "id": "music-pitch",
           "targetId": "pitch",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【音の高さ】の【選んだ音】番目を（余り（【音の高さ】の【選んだ音】番目、8）＋1）にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0と同じなら、\n  【音の高さ】の【選んだ音】番目をあまり（【音の高さ】の【選んだ音】番目、8）＋1にかえる。\n  【音を見せる】という手順を行う。"
         },
         {
           "id": "music-length",
           "targetId": "length",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  もし【音の長さ】の【選んだ音】番目が2と同じなら、\n    【音の長さ】の【選んだ音】番目を0.5にする。\n  そうでなければ、\n    【音の長さ】の【選んだ音】番目を（【音の長さ】の【選んだ音】番目×2）にする。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0と同じなら、\n  もし【音の長さ】の【選んだ音】番目が2と同じなら、\n    【音の長さ】の【選んだ音】番目を0.5にかえる。\n  そうでなければ、\n    【音の長さ】の【選んだ音】番目を【音の長さ】の【選んだ音】番目×2にかえる。\n  【音を見せる】という手順を行う。"
         },
         {
           "id": "music-swap",
           "targetId": "swap",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  もし【選んだ音】が16より小さければ、\n    【音の番号】を【音の高さ】の【選んだ音】番目にする。\n    【音の高さ】の【選んだ音】番目を【音の高さ】の（【選んだ音】＋1）番目にする。\n    【音の高さ】の（【選んだ音】＋1）番目を【音の番号】にする。\n    【音の番号】を【音の長さ】の【選んだ音】番目にする。\n    【音の長さ】の【選んだ音】番目を【音の長さ】の（【選んだ音】＋1）番目にする。\n    【音の長さ】の（【選んだ音】＋1）番目を【音の番号】にする。\n    【音を見せる】という手順を行う。\n  そうでなければ、\n    「お知らせ」の文字を「さいごの音だよ。1〜15番を えらんでね」に変える。"
+          "source": "もし【演奏中】が0と同じなら、\n  もし【選んだ音】が16より小さければ、\n    【音の番号】を【音の高さ】の【選んだ音】番目にする。\n    【音の高さ】の【選んだ音】番目を【音の高さ】の（【選んだ音】＋1）番目にかえる。\n    【音の高さ】の【選んだ音】＋1番目を【音の番号】にかえる。\n    【音の番号】を【音の長さ】の【選んだ音】番目にする。\n    【音の長さ】の【選んだ音】番目を【音の長さ】の（【選んだ音】＋1）番目にかえる。\n    【音の長さ】の【選んだ音】＋1番目を【音の番号】にかえる。\n    【音を見せる】という手順を行う。\n  そうでなければ、\n    「お知らせ」の文字を「さいごの音だよ。1〜15番を えらんでね」にかえる。"
         },
         {
           "id": "music-tempo",
           "targetId": "tempo",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【テンポ】に30を足す。\n  もし【テンポ】が180より大きければ、\n    【テンポ】を60にする。\n  「速さをかえる」の文字をつなぐ（「速さ：」、【テンポ】）に変える。"
+          "source": "もし【演奏中】が0と同じなら、\n  【テンポ】を30増やす。\n  もし【テンポ】が180より大きければ、\n    【テンポ】を60にする。\n  「速さをかえる」の文字をつなぐ（「速さ：」、【テンポ】）にかえる。"
         },
         {
           "id": "music-restore",
           "targetId": "restore",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【音の高さ】を［1、3、5、3、4、6、5、3、2、4、6、5、3、2、1、1］にする。\n  【音の長さ】を［1、1、1、1、1、1、1、1、1、1、1、1、1、1、1、1］にする。\n  【テンポ】を120にする。\n  【選んだ音】を1にする。\n  「速さをかえる」の文字を「速さ：120」に変える。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字を「元の曲に もどしたよ」に変える。"
+          "source": "もし【演奏中】が0と同じなら、\n  【音の高さ】を［1、3、5、3、4、6、5、3、2、4、6、5、3、2、1、1］にする。\n  【音の長さ】を［1、1、1、1、1、1、1、1、1、1、1、1、1、1、1、1］にする。\n  【テンポ】を120にする。\n  【選んだ音】を1にする。\n  「速さをかえる」の文字を「速さ：120」にかえる。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字を「元の曲に もどしたよ」にかえる。"
         }
       ],
       "actions": [
@@ -14849,7 +14849,7 @@ function createAkariExtensionHost(options) {
           "ownerId": "stage",
           "name": "音を見せる",
           "args": [],
-          "source": "「えらんだ音」の文字をつなぐ（【選んだ音】、「番の音：」、【音の名前】の（【音の高さ】の【選んだ音】番目）番目、「 ／ 長さ 」、【音の長さ】の【選んだ音】番目、「はく」）に変える。\n「音1」の文字を【音の名前】の（【音の高さ】の1番目）番目に変える。\n「音2」の文字を【音の名前】の（【音の高さ】の2番目）番目に変える。\n「音3」の文字を【音の名前】の（【音の高さ】の3番目）番目に変える。\n「音4」の文字を【音の名前】の（【音の高さ】の4番目）番目に変える。\n「音5」の文字を【音の名前】の（【音の高さ】の5番目）番目に変える。\n「音6」の文字を【音の名前】の（【音の高さ】の6番目）番目に変える。\n「音7」の文字を【音の名前】の（【音の高さ】の7番目）番目に変える。\n「音8」の文字を【音の名前】の（【音の高さ】の8番目）番目に変える。\n「音9」の文字を【音の名前】の（【音の高さ】の9番目）番目に変える。\n「音10」の文字を【音の名前】の（【音の高さ】の10番目）番目に変える。\n「音11」の文字を【音の名前】の（【音の高さ】の11番目）番目に変える。\n「音12」の文字を【音の名前】の（【音の高さ】の12番目）番目に変える。\n「音13」の文字を【音の名前】の（【音の高さ】の13番目）番目に変える。\n「音14」の文字を【音の名前】の（【音の高さ】の14番目）番目に変える。\n「音15」の文字を【音の名前】の（【音の高さ】の15番目）番目に変える。\n「音16」の文字を【音の名前】の（【音の高さ】の16番目）番目に変える。"
+          "source": "「えらんだ音」の文字をつなぐ（【選んだ音】、「番の音：」、【音の名前】の（【音の高さ】の【選んだ音】番目）番目、「 ／ 長さ 」、【音の長さ】の【選んだ音】番目、「はく」）にかえる。\n「音1」の文字を【音の名前】の（【音の高さ】の1番目）番目にかえる。\n「音2」の文字を【音の名前】の（【音の高さ】の2番目）番目にかえる。\n「音3」の文字を【音の名前】の（【音の高さ】の3番目）番目にかえる。\n「音4」の文字を【音の名前】の（【音の高さ】の4番目）番目にかえる。\n「音5」の文字を【音の名前】の（【音の高さ】の5番目）番目にかえる。\n「音6」の文字を【音の名前】の（【音の高さ】の6番目）番目にかえる。\n「音7」の文字を【音の名前】の（【音の高さ】の7番目）番目にかえる。\n「音8」の文字を【音の名前】の（【音の高さ】の8番目）番目にかえる。\n「音9」の文字を【音の名前】の（【音の高さ】の9番目）番目にかえる。\n「音10」の文字を【音の名前】の（【音の高さ】の10番目）番目にかえる。\n「音11」の文字を【音の名前】の（【音の高さ】の11番目）番目にかえる。\n「音12」の文字を【音の名前】の（【音の高さ】の12番目）番目にかえる。\n「音13」の文字を【音の名前】の（【音の高さ】の13番目）番目にかえる。\n「音14」の文字を【音の名前】の（【音の高さ】の14番目）番目にかえる。\n「音15」の文字を【音の名前】の（【音の高さ】の15番目）番目にかえる。\n「音16」の文字を【音の名前】の（【音の高さ】の16番目）番目にかえる。"
         },
         {
           "id": "music-perform",
@@ -14858,7 +14858,7 @@ function createAkariExtensionHost(options) {
           "args": [
             "今回"
           ],
-          "source": "この中だけで使う変数【音の番号】を作り、最初は1にする。\nこの中だけで使う変数【鳴らす高さ】を作り、最初は1にする。\n16回くり返す。\n  もし今回が【再生番号】と違えば、\n    このくり返しを終える。\n  【選んだ音】を【音の番号】にする。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字をつなぐ（「いま 」、【音の番号】、「番の音 ♪」）に変える。\n  【鳴らす高さ】を【音の数】の（【音の高さ】の【音の番号】番目）番目にする。\n  【鳴らす高さ】Hzの音を（60÷【テンポ】×【音の長さ】の【音の番号】番目×0.85）秒鳴らし始める。\n  （60÷【テンポ】×【音の長さ】の【音の番号】番目）秒待つ。\n  【音の番号】に1を足す。\nもし今回が【再生番号】と同じなら、\n  【演奏中】を0にする。\n  「お知らせ」の文字を「さいごまで 聞けたね！ つぎは どこを かえる？」に変える。"
+          "source": "この中だけで使う変数【音の番号】を作り、最初は1にする。\nこの中だけで使う変数【鳴らす高さ】を作り、最初は1にする。\n16回くり返す。\n  もし今回が【再生番号】と違えば、\n    いまのくり返しを終える。\n  【選んだ音】を【音の番号】にする。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字をつなぐ（「いま 」、【音の番号】、「番の音 ♪」）にかえる。\n  【鳴らす高さ】を【音の数】の（【音の高さ】の【音の番号】番目）番目にする。\n  【鳴らす高さ】Hzの音を60÷【テンポ】×【音の長さ】の【音の番号】番目×0.85秒鳴らし始める。\n  60÷【テンポ】×【音の長さ】の【音の番号】番目秒待つ。\n  【音の番号】を1増やす。\nもし今回が【再生番号】と同じなら、\n  【演奏中】を0にする。\n  「お知らせ」の文字を「さいごまで 聞けたね！ つぎは どこを かえる？」にかえる。"
         }
       ],
       "functions": [],
@@ -15110,25 +15110,25 @@ function createAkariExtensionHost(options) {
           "id": "story-start",
           "targetId": "stage",
           "event": "start",
-          "source": "【場面】を0にする。\n【選んだ道】を0にする。\n「場面の名前」の文字を「はじまり：ふたつの道」に変える。\n「お話」の文字を「マスコットと だんごは\nおべんとうを もって おさんぽ。\n目の前に ふたつの道。\nどちらへ 行こう？」に変える。\n「左のえらび方」の文字を「花の道へ 行く」に変える。\n「右のえらび方」の文字を「川の道へ 行く」に変える。\n\n\n「お知らせ」の文字を「えらび方で お話が かわるよ。\nどんな おわりに なるかな？」に変える。"
+          "source": "【場面】を0にする。\n【選んだ道】を0にする。\n「場面の名前」の文字を「はじまり：ふたつの道」にかえる。\n「お話」の文字を「マスコットと だんごは\nおべんとうを もって おさんぽ。\n目の前に ふたつの道。\nどちらへ 行こう？」にかえる。\n「左のえらび方」の文字を「花の道へ 行く」にかえる。\n「右のえらび方」の文字を「川の道へ 行く」にかえる。\n「お知らせ」の文字を「えらび方で お話が かわるよ。\nどんな おわりに なるかな？」にかえる。"
         },
         {
           "id": "story-replay",
           "targetId": "replay",
           "event": "click",
-          "source": "【場面】を0にする。\n【選んだ道】を0にする。\n「場面の名前」の文字を「はじまり：ふたつの道」に変える。\n「お話」の文字を「マスコットと だんごは\nおべんとうを もって おさんぽ。\n目の前に ふたつの道。\nどちらへ 行こう？」に変える。\n「左のえらび方」の文字を「花の道へ 行く」に変える。\n「右のえらび方」の文字を「川の道へ 行く」に変える。\n\n\n「お知らせ」の文字を「えらび方で お話が かわるよ。\nどんな おわりに なるかな？」に変える。"
+          "source": "【場面】を0にする。\n【選んだ道】を0にする。\n「場面の名前」の文字を「はじまり：ふたつの道」にかえる。\n「お話」の文字を「マスコットと だんごは\nおべんとうを もって おさんぽ。\n目の前に ふたつの道。\nどちらへ 行こう？」にかえる。\n「左のえらび方」の文字を「花の道へ 行く」にかえる。\n「右のえらび方」の文字を「川の道へ 行く」にかえる。\n「お知らせ」の文字を「えらび方で お話が かわるよ。\nどんな おわりに なるかな？」にかえる。"
         },
         {
           "id": "story-left",
           "targetId": "left",
           "event": "click",
-          "source": "もし【場面】が0と同じなら、\n  【選んだ道】を1にする。\n  【場面】を1にする。\n  「場面の名前」の文字を「花の道：小さな出会い」に変える。\n  「お話」の文字を「花が いっぱい！\nだんごが 花を 見つめている。\n木の上から ことりの声も。\nつぎは なにをしよう？」に変える。\n  「左のえらび方」の文字を「花かんむりを 作る」に変える。\n  「右のえらび方」の文字を「ことりの歌を 聞く」に変える。\nそうでなければ、\n  もし【場面】が1と同じなら、\n    【場面】を2にする。\n    もし【選んだ道】が1と同じなら、\n      「場面の名前」の文字を「おわり：花かんむりの ピクニック」に変える。\n      「お話」の文字を「花を すこし わけてもらい、\nふたりで 花かんむりを 作った。\nにあうね！\n花のにおいの おひるごはん。」に変える。\n    そうでなければ、\n      「場面の名前」の文字を「おわり：石の橋の ピクニック」に変える。\n      「お話」の文字を「手をつないで 石を わたり、\nむこう岸の 木かげに とうちゃく。\nいっしょなら できたね！\n川の音を 聞いて おひるごはん。」に変える。\n    「左のえらび方」の文字を「おしまい」に変える。\n    「右のえらび方」の文字を「おしまい」に変える。\n    「お知らせ」の文字を「おしまい！\nはじめからで 別の道も たのしもう」に変える。"
+          "source": "もし【場面】が0と同じなら、\n  【選んだ道】を1にする。\n  【場面】を1にする。\n  「場面の名前」の文字を「花の道：小さな出会い」にかえる。\n  「お話」の文字を「花が いっぱい！\nだんごが 花を 見つめている。\n木の上から ことりの声も。\nつぎは なにをしよう？」にかえる。\n  「左のえらび方」の文字を「花かんむりを 作る」にかえる。\n  「右のえらび方」の文字を「ことりの歌を 聞く」にかえる。\nそうでなければ、\n  もし【場面】が1と同じなら、\n    【場面】を2にする。\n    もし【選んだ道】が1と同じなら、\n      「場面の名前」の文字を「おわり：花かんむりの ピクニック」にかえる。\n      「お話」の文字を「花を すこし わけてもらい、\nふたりで 花かんむりを 作った。\nにあうね！\n花のにおいの おひるごはん。」にかえる。\n    そうでなければ、\n      「場面の名前」の文字を「おわり：石の橋の ピクニック」にかえる。\n      「お話」の文字を「手をつないで 石を わたり、\nむこう岸の 木かげに とうちゃく。\nいっしょなら できたね！\n川の音を 聞いて おひるごはん。」にかえる。\n    「左のえらび方」の文字を「おしまい」にかえる。\n    「右のえらび方」の文字を「おしまい」にかえる。\n    「お知らせ」の文字を「おしまい！\nはじめからで 別の道も たのしもう」にかえる。"
         },
         {
           "id": "story-right",
           "targetId": "right",
           "event": "click",
-          "source": "もし【場面】が0と同じなら、\n  【選んだ道】を2にする。\n  【場面】を1にする。\n  「場面の名前」の文字を「川の道：きらきらの水」に変える。\n  「お話」の文字を「川に 小さな 石の橋がある。\nマスコットは むこう岸を 見ている。\n足もとには きれいな 石。\nつぎは なにをしよう？」に変える。\n  「左のえらび方」の文字を「石の橋を わたる」に変える。\n  「右のえらび方」の文字を「川べりを あるく」に変える。\nそうでなければ、\n  もし【場面】が1と同じなら、\n    【場面】を2にする。\n    もし【選んだ道】が1と同じなら、\n      「場面の名前」の文字を「おわり：ことりと ピクニック」に変える。\n      「お話」の文字を「木の下で しずかに 待つと、\nことりが うたってくれた。\nすてきな うただね！\nふたりで 小さく はくしゅ。」に変える。\n    そうでなければ、\n      「場面の名前」の文字を「おわり：きらきら ピクニック」に変える。\n      「お話」の文字を「川べりで きれいな 石を 見つけた。\n水に もどして あげよう\n石は 水の中で きらり。\nふたりの ひみつの たからもの。」に変える。\n    「左のえらび方」の文字を「おしまい」に変える。\n    「右のえらび方」の文字を「おしまい」に変える。\n    「お知らせ」の文字を「おしまい！\nはじめからで 別の道も たのしもう」に変える。"
+          "source": "もし【場面】が0と同じなら、\n  【選んだ道】を2にする。\n  【場面】を1にする。\n  「場面の名前」の文字を「川の道：きらきらの水」にかえる。\n  「お話」の文字を「川に 小さな 石の橋がある。\nマスコットは むこう岸を 見ている。\n足もとには きれいな 石。\nつぎは なにをしよう？」にかえる。\n  「左のえらび方」の文字を「石の橋を わたる」にかえる。\n  「右のえらび方」の文字を「川べりを あるく」にかえる。\nそうでなければ、\n  もし【場面】が1と同じなら、\n    【場面】を2にする。\n    もし【選んだ道】が1と同じなら、\n      「場面の名前」の文字を「おわり：ことりと ピクニック」にかえる。\n      「お話」の文字を「木の下で しずかに 待つと、\nことりが うたってくれた。\nすてきな うただね！\nふたりで 小さく はくしゅ。」にかえる。\n    そうでなければ、\n      「場面の名前」の文字を「おわり：きらきら ピクニック」にかえる。\n      「お話」の文字を「川べりで きれいな 石を 見つけた。\n水に もどして あげよう\n石は 水の中で きらり。\nふたりの ひみつの たからもの。」にかえる。\n    「左のえらび方」の文字を「おしまい」にかえる。\n    「右のえらび方」の文字を「おしまい」にかえる。\n    「お知らせ」の文字を「おしまい！\nはじめからで 別の道も たのしもう」にかえる。"
         }
       ],
       "actions": [],
@@ -15607,6 +15607,7 @@ function createAkariExtensionHost(options) {
     '\u6c7a\u5b9a',
     '\u53d6\u6d88',
     ...Object.keys(COLOR_NAMES),
+    ...Object.values(COLOR_LABELS),
   ]);
   function nameBoundary(text, pos) {
     return pos >= text.length || NAME_BREAKS.some((x) => text.startsWith(x, pos));
@@ -16831,29 +16832,30 @@ function createAkariExtensionHost(options) {
     const protectedCode = surfaceMask(code);
     const same = surfaceCapture(/^(.+?)も同じ合図で動き始め、(.*)$/d,code,protectedCode);
     if(same){
-      if(!previousHeading)throw new AkariError('P205','「同じ合図」の前に、「作品を動かしたとき、」や「…がクリックされたとき、」などの きっかけを 書いてください');
+      if(!previousHeading)throw new AkariError('P205','「同じ合図」の前に、「作品を動かしたとき、」や「…がおされたとき、」などの きっかけを 書いてください');
       return {heading:{...previousHeading,actorRef:sentenceActor(same[0].text,symbols)},body:same[1],actor:same[0]};
     }
     const forms=[
       [/^始めると、(.+?)は、?(.*)$/d,'start',0,1],
       [/^(?:作品を動かしたとき|始まったとき|開始したとき)、(.+?)は、(.*)$/d,'start',0,1],
-      [/^(.+?)(?:がクリックされたとき|がクリックされると|がクリックされるたびに|をクリックしたとき|をクリックするたびに)、(.*)$/d,'click',0,1],
-      [/^キーが押されたとき、(.+?)は、(.*)$/d,'keyDown',0,1],
-      [/^(.+?)キー(?:を押すたびに|が押されたとき)、(.+?)は、(.*)$/d,'keyDown',1,2,0],
+      // Key headings come first: 「…キーがおされたとき」 must not read as a click on 「…キー」.
+      [/^キーが(?:押|お)されたとき、(.+?)は、(.*)$/d,'keyDown',0,1],
+      [/^(.+?)キー(?:を(?:押|お)すたびに|が(?:押|お)されたとき)、(.+?)は、(.*)$/d,'keyDown',1,2,0],
+      [/^(.+?)(?:がおされたとき|がおされると|がおされるたびに|をおしたとき|をおすたびに|がクリックされたとき|がクリックされると|がクリックされるたびに|をクリックしたとき|をクリックするたびに)、(.*)$/d,'click',0,1],
       [/^知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',0,1],
       [/^(.+?)という知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',1,2,0],
       [/^(?:背景|はいけい)が(?:変わった|かわった)とき、(.+?)は、(.*)$/d,'backdropChanged',0,1],
       [/^(.+?)の中身が(?:変わった|かわった)とき、(.*)$/d,'valueChanged',0,1],
       [/^(.+?)のコピーが作られたとき、(.*)$/d,'cloneStart',0,1],
     ];
-    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code,protectedCode);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','キーや合図の名前は「 」でかこんで書きます。れい：「空白」キーを押すたびに、自分は、');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','キーや合図の名前は、「 」でかこんだ文字を1つだけ書きます。れい：「空白」キーを押すたびに、自分は、');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex],actor:parts[actorIndex]};}
+    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code,protectedCode);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','キーや合図の名前は「 」でかこんで書きます。れい：「空白」キーをおすたびに、自分は、');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','キーや合図の名前は、「 」でかこんだ文字を1つだけ書きます。れい：「空白」キーをおすたびに、自分は、');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex],actor:parts[actorIndex]};}
     const implicit = surfaceCapture(/^始めると、(.*)$/d, code, protectedCode);
     if (implicit) return { heading: { event: 'start', actorRef: { kind: 'self' } }, body: implicit[0] };
     return null;
   }
   function sentenceHeadingSource(heading) {
     const actor=sentenceActorSource(heading.actorRef), filter=heading.filter == null ? null : formatExpression(exprNode('StringLiteral',{value:heading.filter.key??heading.filter.message}));
-    switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がクリックされたとき、`;case 'keyDown':return `${filter?filter+'キーを押すたびに':'キーが押されたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}知らせを受け取ったとき、${actor}は、`;case 'backdropChanged':return `背景が変わったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身が変わったとき、`;case 'cloneStart':return `${actor}のコピーが作られたとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
+    switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がおされたとき、`;case 'keyDown':return `${filter?filter+'キーをおすたびに':'キーがおされたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}知らせを受け取ったとき、${actor}は、`;case 'backdropChanged':return `はいけいがかわったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身がかわったとき、`;case 'cloneStart':return `${actor}のコピーが作られたとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
   }
   function continuousCondition(text) {
     const mask=surfaceMask(text),suffix=/キー(?:を|が)(?:押|お)(?:して|されて)いる$/.exec(mask);
@@ -16935,7 +16937,7 @@ function createAkariExtensionHost(options) {
     if((p=surfaceCapture(/^(.+?)キーを(?:おして|押して)いる(?:あいだ|間)、(.+?)は(.+?)歩(?:動く|うごく)$/d,code))){
       const key=p[0].text.startsWith('「')?p[0].text:`「${p[0].text}」`,actor=p[1].text,distance=p[2].text;
       throw sentenceDiagnostic('キーをおしている間に動く歩数が、ぜんぶで何歩なのか、1秒に何歩なのか分かりません。えらんでください',line,[
-        {label:`おすたびに全部で${distance}歩`,source:`${key}キーを押すたびに、${actor}は、前へ${distance}歩進む`},
+        {label:`おすたびに全部で${distance}歩`,source:`${key}キーをおすたびに、${actor}は、前へ${distance}歩進む`},
         {label:`おしている間、1秒に${distance}歩`,source:`${key}キーがおされているあいだ、${actor}は前へ1秒に${distance}歩の速さで動き続ける`},
       ],{kind:'ContinuousRule',missing:['distanceOrSpeed']});
     }
@@ -18016,11 +18018,11 @@ function createAkariExtensionHost(options) {
       schema.create = (context = {}) => createSyntaxNode(schema, context);
       schema.encode = (node, context = {}) => {
         if (syntaxSchema(node, schema.category).id !== id)
-          blockStructureError('種類が一致しません');
+          blockDataError('ブロックの種類が合いません');
         return blockEncode(node, { ...context, expected: schema.category });
       };
       schema.decode = (tree, context = {}) => {
-        if (tree?.schemaId !== id) blockStructureError('種類が一致しません');
+        if (tree?.schemaId !== id) blockDataError('ブロックの種類が合いません');
         return blockDecode(tree, context);
       };
       schema.availability = (context = {}) => blockAvailability(context);
@@ -18322,7 +18324,7 @@ function createAkariExtensionHost(options) {
           args([], {
             minItems: 0,
             maxItems: LIMITS.sourceEach,
-            variadic: true,
+            variadic: meta.maxArgs !== meta.minArgs,
             initialItems: meta.minArgs,
             semanticMin: meta.minArgs,
             semanticMax: meta.maxArgs,
@@ -18396,9 +18398,13 @@ function createAkariExtensionHost(options) {
       path,
     );
   }
+  // Checks that only fail on broken saved data: first what to do, then the reason.
+  function blockDataError(message, path = '') {
+    throw new AkariError('P210', `作品の ファイルが こわれているかもしれません。先生に 見てもらってね。（${message}）`, 0, 0, path);
+  }
   function syntaxSchema(node, expected) {
     if (!node || typeof node !== 'object' || Array.isArray(node))
-      blockStructureError('node が必要です');
+      blockDataError('ブロックがありません');
     const kind = expected === 'target' && node.kind !== 'Hole' ? 'TargetReference' : node.kind;
     const discriminator =
       kind === 'Hole'
@@ -18425,25 +18431,25 @@ function createAkariExtensionHost(options) {
     const schema = BLOCK_SCHEMA_BY_ID.get(
       kind + (discriminator ? ':' + node[discriminator] : ''),
     );
-    if (!schema) blockStructureError('未対応の kind / op / 名前です');
+    if (!schema) blockDataError('あかりにないブロックです');
     if (expected && schema.category !== expected)
       blockStructureError('このブロックは ここには入りません。形の合う ばしょに 入れてください');
     return schema;
   }
   function blockRecord(record, allowed, path) {
     if (!record || typeof record !== 'object' || Array.isArray(record))
-      blockStructureError('項目の集合が必要です', path);
+      blockDataError('ブロックの中身がありません', path);
     for (const key of Object.keys(record))
-      if (!allowed.includes(key)) blockStructureError('未対応の項目 ' + key, path);
+      if (!allowed.includes(key)) blockDataError('このブロックにはない項目があります', path + (path ? ' / ' : '') + key);
   }
   function blockFieldValue(field, value, path) {
     const type = field.type;
     if (value === undefined && field.required === false) return undefined;
     if (type === 'actor-ref') {
       blockRecord(value, ['kind', 'name'], path);
-      if (!['self', 'named'].includes(value.kind)) blockStructureError('対象の指定が不正です', path);
+      if (!['self', 'named'].includes(value.kind)) blockDataError('だれが動くかの書き方が正しくありません', path);
       if (value.kind === 'self') {
-        if (Object.hasOwn(value, 'name')) blockStructureError('自分の指定に別の名前は付けません', path);
+        if (Object.hasOwn(value, 'name')) blockDataError('「自分」にはほかの名前を付けられません', path);
         return { kind: 'self' };
       }
       blockFieldValue({ type: 'name' }, value.name, path + '.name');
@@ -18451,12 +18457,12 @@ function createAkariExtensionHost(options) {
     }
     if (type === 'argument-names') {
       if (!Array.isArray(value) || value.length > LIMITS.sourceEach)
-        blockStructureError('受け取る値の名前の配列が必要です', path);
+        blockDataError('入れるものの名前がありません', path);
       return value.map((name, index) => blockFieldValue({ type: 'name' }, name, path + '[' + index + ']'));
     }
     if (type === 'heading') {
       blockRecord(value, ['event', 'actorRef', 'filter'], path);
-      if (!Object.hasOwn(EVENT_LABELS, value.event)) blockStructureError('できごとの種類が不正です', path);
+      if (!Object.hasOwn(EVENT_LABELS, value.event)) blockDataError('きっかけの種類が正しくありません', path);
       const heading = { event: value.event, actorRef: blockFieldValue({ type: 'actor-ref' }, value.actorRef, path + '.actorRef') };
       if (Object.hasOwn(value, 'filter')) {
         if (value.filter === null) heading.filter = null;
@@ -18464,10 +18470,10 @@ function createAkariExtensionHost(options) {
           blockRecord(value.filter, ['key', 'message'], path + '.filter');
           const keys = Object.keys(value.filter);
           if (keys.length !== 1 || (keys[0] !== 'key' && keys[0] !== 'message'))
-            blockStructureError('キーか知らせの条件を一つ指定します', path);
+            blockDataError('キーか合図を1つ選んでください', path);
           const key = keys[0];
           if ((key === 'key' && value.event !== 'keyDown') || (key === 'message' && value.event !== 'message'))
-            blockStructureError('できごとと条件の種類が一致しません', path);
+            blockDataError('きっかけと、選んだキーや合図が合いません', path);
           heading.filter = { [key]: blockFieldValue({ type: 'string' }, value.filter[key], path + '.filter.' + key) };
         }
       }
@@ -18483,21 +18489,21 @@ function createAkariExtensionHost(options) {
       blockStructureError('待つ合図が空いています。何か書いてください', path);
     if (type === 'number') {
       if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || Object.is(value, -0))
-        blockStructureError('数は符号を持たない有限数にします', path);
+        blockDataError('数は0以上の数にしてください', path);
     } else if (type === 'boolean') {
-      if (typeof value !== 'boolean') blockStructureError('条件の答えが必要です', path);
+      if (typeof value !== 'boolean') blockDataError('「あてはまる」か「あてはまらない」を入れてください', path);
     } else if (type === 'qualifier') {
       if (![null, 'exact', 'self', 'project'].includes(value))
         blockStructureError('使う ばしょが 正しくありません', path);
     } else {
-      if (typeof value !== 'string') blockStructureError('文字が必要です', path);
+      if (typeof value !== 'string') blockDataError('文字を入れてください', path);
       if (type === 'name')
         try {
           validateName(value, { callable: field.callable === true });
         } catch (error) {
           blockStructureError(error.message, path);
         }
-      if (!field.multiline && /[\r\n]/.test(value)) blockStructureError('一行の値にします', path);
+      if (!field.multiline && /[\r\n]/.test(value)) blockDataError('1行で書いてください', path);
       if (type === 'string' && cpLen(value) > LIMITS.stringChars)
         blockStructureError('文字が長すぎます。短くしてください', path);
       if (type === 'annotation' && value && value[0] !== '※')
@@ -18511,9 +18517,9 @@ function createAkariExtensionHost(options) {
     const visit = (node, type, path, blockDepth, expressionDepth) => {
       const schema = syntaxSchema(node, type);
       if(node.units&&(type!=='script'||path!=='root'))
-        blockStructureError('できごとのまとまりは文書の最上位に置きます',path);
+        blockDataError('きっかけのまとまりは、いちばん外に置いてください',path);
       if (schema.draftOnly && !allowHoles) blockStructureError('空いているところが あります。うめてから動かしてください', path);
-      if (active.has(node)) blockStructureError('循環しています', path);
+      if (active.has(node)) blockDataError('ブロックが自分の中に入っています', path);
       active.add(node);
       if (++count > LIMITS.sourceEach)
         blockStructureError('ブロックが多すぎて、使える数をこえています。ブロックをへらしてください', path);
@@ -18535,14 +18541,14 @@ function createAkariExtensionHost(options) {
       for (const field of schema.fields) {
         if (!Object.hasOwn(node, field.key)) {
           if (field.required === false) continue;
-          blockStructureError('必須項目 ' + field.key + ' がありません', path);
+          blockDataError('「' + (field.label || field.key) + '」がありません', path);
         }
         blockFieldValue(field, node[field.key], path + '.' + field.key);
       }
       for (const annotation of schema.annotations) {
         if (!Object.hasOwn(node, annotation.key)) {
           if (annotation.required === false) continue;
-          blockStructureError('必須項目 ' + annotation.key + ' がありません', path);
+          blockDataError('「' + (annotation.label || annotation.key) + '」がありません', path);
         }
         blockFieldValue(annotation, node[annotation.key], path + '.' + annotation.key);
       }
@@ -18559,7 +18565,7 @@ function createAkariExtensionHost(options) {
         const value = node[slot.key];
         if (slot.multiple) {
           if (!Array.isArray(value) || value.length < slot.minItems || value.length > slot.maxItems)
-            blockStructureError('入力数が不正です', path + '.' + slot.key);
+            blockDataError('入れるものの数が合いません', path + '.' + slot.key);
           for (let i = 0; i < value.length; i++)
             visit(
               value[i],
@@ -18581,9 +18587,9 @@ function createAkariExtensionHost(options) {
         const children = node[slot.key],
           enabled = !slot.when || node[slot.when];
         if (!Array.isArray(children))
-          blockStructureError('本文の配列が必要です', path + '.' + slot.key);
+          blockDataError('中のブロックがありません', path + '.' + slot.key);
         if (!enabled && children.length)
-          blockStructureError('無効な枝に本文があります', path + '.' + slot.key);
+          blockDataError('使えないところにブロックがあります', path + '.' + slot.key);
         if (
           enabled &&
           slot.requiredExecutable &&
@@ -18600,9 +18606,9 @@ function createAkariExtensionHost(options) {
           );
       }
       if (schema.kind === 'IfStatement' && !node.hasElse && node.elseComment)
-        blockStructureError('存在しない else に注釈があります', path);
+        blockDataError('「そうでなければ」がないのに、そこにメモがあります', path);
       if (schema.kind === 'CommentLine' && node.inlineComment)
-        blockStructureError('独立コメントは本文欄で保持します', path);
+        blockDataError('1行のメモは本文の中に置いてください', path);
       active.delete(node);
       return node;
     };
@@ -18717,14 +18723,14 @@ function createAkariExtensionHost(options) {
     let count = 0;
     const decode = (block, type, path, blockDepth, expressionDepth) => {
       blockRecord(block, ['id', 'schemaId', 'fields', 'inputs', 'bodies', 'annotations'], path);
-      if (seen.has(block)) blockStructureError('循環または重複した接続です', path);
+      if (seen.has(block)) blockDataError('同じブロックが2か所につながっています', path);
       seen.add(block);
       if (typeof block.id !== 'string' || !block.id || ids.has(block.id))
-        blockStructureError('ID が空または重複しています', path);
+        blockDataError('ブロックの番号がないか、同じ番号があります', path);
       ids.add(block.id);
       const schema = BLOCK_SCHEMA_BY_ID.get(block.schemaId);
       if (!schema || (type && schema.category !== type))
-        blockStructureError('schema または接続先の種類が不正です', path);
+        blockDataError('ブロックの種類か、つなぐ先が正しくありません', path);
       if (
         ++count > LIMITS.sourceEach ||
         blockDepth > LIMITS.blockDepth ||
@@ -18753,7 +18759,7 @@ function createAkariExtensionHost(options) {
       for (const field of schema.fields) {
         if (!Object.hasOwn(block.fields, field.key)) {
           if (field.required === false) continue;
-          blockStructureError('必須項目 ' + field.key + ' がありません', path);
+          blockDataError('「' + (field.label || field.key) + '」がありません', path);
         }
         node[field.key] = blockFieldValue(
           field,
@@ -18766,7 +18772,7 @@ function createAkariExtensionHost(options) {
         const value = block.inputs[slot.key];
         if (slot.multiple) {
           if (!Array.isArray(value) || value.length < slot.minItems || value.length > slot.maxItems)
-            blockStructureError('入力数が不正です', path + '.inputs.' + slot.key);
+            blockDataError('入れるものの数が合いません', path + '.inputs.' + slot.key);
           node[slot.key] = value.map((child, i) =>
             decode(
               child,
@@ -18788,7 +18794,7 @@ function createAkariExtensionHost(options) {
       for (const slot of schema.bodies) {
         const children = block.bodies[slot.key];
         if (!Array.isArray(children))
-          blockStructureError('本文の配列が必要です', path + '.bodies.' + slot.key);
+          blockDataError('中のブロックがありません', path + '.bodies.' + slot.key);
         node[slot.key] = children.map((child, i) =>
           decode(
             child,
@@ -18802,7 +18808,7 @@ function createAkariExtensionHost(options) {
       for (const key of annotationKeys) {
         if (!Object.hasOwn(block.annotations, key)) {
           if (schema.annotations.find(annotation => annotation.key === key)?.required === false) continue;
-          blockStructureError('注釈欄 ' + key + ' がありません', path);
+          blockDataError('メモを書くところがありません', path + (path ? ' / ' : '') + key);
         }
         node[key] = block.annotations[key];
       }
@@ -18815,7 +18821,7 @@ function createAkariExtensionHost(options) {
   }
   function createBlock(schemaId, context = {}) {
     const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
-    if (!schema) blockStructureError('未対応の schema です');
+    if (!schema) blockDataError('あかりにないブロックです');
     return blockEncode(schema.create(context), { ...context, expected: schema.category }).tree;
   }
 
@@ -23880,20 +23886,20 @@ function createAkariExtensionHost(options) {
   }
   const TUTORIAL_BLOCKS=Object.freeze({
     speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
-    escape:{label:'ちがう ばしょへ にげる',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ行く。'},
-    swim:{label:'ゆっくり泳ぐ',source:'よこ430、たて180のばしょへ1秒かけて動く。'},
-    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ0.5秒かけて動く。'},
+    escape:{label:'ちがう ばしょへ にげる',source:'よこ（70から490のどれか）歩、たて（130から270のどれか）歩のばしょへ行く。'},
+    swim:{label:'ゆっくり泳ぐ',source:'よこ430歩、たて180歩のばしょへ1秒かけて動く。'},
+    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ（70から490のどれか）歩、たて（130から270のどれか）歩のばしょへ0.5秒かけて動く。'},
     repeat:{label:'くり返す',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
-    right:{label:'右へ泳ぐ',source:'0.3秒かけて右へ60歩動く。'},
-    left:{label:'左へ泳ぐ',source:'0.3秒かけて左へ60歩動く。'},
+    right:{label:'右へ泳ぐ',source:'0.3秒かけて画面の右へ60歩動く。'},
+    left:{label:'左へ泳ぐ',source:'0.3秒かけて画面の左へ60歩動く。'},
     small:{label:'小さくする',source:'大きさを70％にする。'},
-    point:{label:'点数を1ふやす',source:'点数に1を足す。'},
+    point:{label:'点数を1ふやす',source:'点数を1増やす。'},
     score:{label:'点数を見せる',source:'「点数ボード」の文字をつなぐ（「つかまえた：」、点数）にかえる。'},
     finish:{label:'5ひきなら',source:'もし点数が5以上なら、\n  0秒待つ。',hole:'thenBody'},
-    bonus:{label:'3ひきなら',source:'もし点数が3なら、\n  0秒待つ。',hole:'thenBody'},
-    bonusPoint:{label:'おまけの点を足す',source:'点数に2を足す。'},
+    bonus:{label:'3ひきなら',source:'もし点数が3と同じなら、\n  0秒待つ。',hole:'thenBody'},
+    bonusPoint:{label:'おまけの点を足す',source:'点数を2増やす。'},
     cheer:{label:'おいわいのことば',source:'「クリア！」と0.5秒話す。'},
-    remaining:{label:'のこりを見せる',source:'「点数ボード」の文字をつなぐ（「あと：」、最大（0、10 - 点数））にかえる。'},
+    remaining:{label:'のこりを見せる',source:'「点数ボード」の文字をつなぐ（「あと：」、最大（0、10－点数））にかえる。'},
     tone:{label:'音を鳴らす',source:'880Hzの音を0.1秒鳴らす。'},
     lowTone:{label:'ひくい音',source:'523Hzの音を0.1秒鳴らす。'},
     midTone:{label:'まん中の音',source:'659Hzの音を0.1秒鳴らす。'},
@@ -25107,7 +25113,7 @@ function createAkariExtensionHost(options) {
         for (const slot of schema.inputs) {
           if(slot.required===false)continue;
           if (slot.multiple) {
-            const count = slot.variadic ? 1 : slot.minItems;
+            const count = slot.variadic ? 1 : (slot.initialItems ?? slot.minItems);
             ast[slot.key] = Array.from({ length: count }, (_, i) =>
               marker({ slot, ...(slot.variadic ? {} : { index: i }) }),
             );

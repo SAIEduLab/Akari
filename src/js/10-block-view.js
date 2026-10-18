@@ -948,7 +948,7 @@
         for (const slot of schema.inputs) {
           if(slot.required===false)continue;
           if (slot.multiple) {
-            const count = slot.variadic ? 1 : slot.minItems;
+            const count = slot.variadic ? 1 : (slot.initialItems ?? slot.minItems);
             ast[slot.key] = Array.from({ length: count }, (_, i) =>
               marker({ slot, ...(slot.variadic ? {} : { index: i }) }),
             );

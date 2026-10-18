@@ -386,7 +386,7 @@
         id: 'LooksCommand:SET_COSTUME',
         kind: 'LooksCommand',
         op: 'SET_COSTUME',
-        source: 'すがたを「星」にかえる',
+        source: 'すがたを「マスコット」にかえる',
       },
       {
         id: 'LooksCommand:NEXT_COSTUME',
@@ -795,7 +795,7 @@
         if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'SET_COSTUME') {
           const co = component?.costumes?.[0];
-          text = `すがたを「${co?.name || '星'}」にかえる`;
+          text = `すがたを「${co?.name || 'マスコット'}」にかえる`;
           if (!co)
             reason =
               reason ||
@@ -825,7 +825,7 @@
       if (x.kind === 'CloneCommand') {
         if (x.op === 'CREATE_TARGET') {
           const c = project.components.find((c) => c.type === 'sprite');
-          text = `\u300c${c?.name || '\u661f'}\u300dのコピーを作る`;
+          text = `「${c?.name || 'マスコット'}」のコピーを作る`;
           if (!c) reason = 'キャラクターを先に作ります';
         } else if (!['sprite', 'any'].includes(type)) reason = 'キャラクターだけで使えます';
         if (x.op === 'DELETE_SELF' && !kind && event !== 'cloneStart')

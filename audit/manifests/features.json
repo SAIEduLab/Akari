@@ -263,7 +263,7 @@
       "id": "LooksCommand:SET_COSTUME",
       "kind": "LooksCommand",
       "op": "SET_COSTUME",
-      "source": "すがたを「星」にかえる。"
+      "source": "すがたを「マスコット」にかえる。"
     },
     {
       "id": "LooksCommand:NEXT_COSTUME",

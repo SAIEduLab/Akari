@@ -472,21 +472,21 @@ export const sentenceFormCases=[
   },
   {
     id:'SF-heading-click',
-    source:'ねこがクリックされたとき、姿をかくす',
+    source:'ねこがおされたとき、姿をかくす',
     expected:script([hide()],{heading:{event:'click',actorRef:named('ねこ')}}),
-    claims:{'heading:click/^(.+?)(?:がクリックされたとき|がクリックされると|がクリックされるたびに|をクリックしたとき|をクリックするたびに)、(.*)$':'ねこがクリックされたとき、姿をかくす'},
+    claims:{'heading:click/^(.+?)(?:がおされたとき|がおされると|がおされるたびに|をおしたとき|をおすたびに|がクリックされたとき|がクリックされると|がクリックされるたびに|をクリックしたとき|をクリックするたびに)、(.*)$':'ねこがおされたとき、姿をかくす'},
   },
   {
     id:'SF-heading-any-key',
-    source:'キーが押されたとき、ねこは、姿をかくす',
+    source:'キーがおされたとき、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'keyDown',actorRef:named('ねこ')}}),
-    claims:{'heading:keyDown/^キーが押されたとき、(.+?)は、(.*)$':'キーが押されたとき、ねこは、姿をかくす'},
+    claims:{'heading:keyDown/^キーが(?:押|お)されたとき、(.+?)は、(.*)$':'キーがおされたとき、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-named-key',
-    source:'「空白」キーを押すたびに、ねこは、姿をかくす',
+    source:'「空白」キーをおすたびに、ねこは、姿をかくす',
     expected:script([hide()],{heading:{event:'keyDown',actorRef:named('ねこ'),filter:{key:'空白'}}}),
-    claims:{'heading:keyDown/^(.+?)キー(?:を押すたびに|が押されたとき)、(.+?)は、(.*)$':'「空白」キーを押すたびに、ねこは、姿をかくす'},
+    claims:{'heading:keyDown/^(.+?)キー(?:を(?:押|お)すたびに|が(?:押|お)されたとき)、(.+?)は、(.*)$':'「空白」キーをおすたびに、ねこは、姿をかくす'},
   },
   {
     id:'SF-heading-any-message',

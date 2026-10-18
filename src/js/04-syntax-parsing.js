@@ -1158,29 +1158,30 @@
     const protectedCode = surfaceMask(code);
     const same = surfaceCapture(/^(.+?)も同じ合図で動き始め、(.*)$/d,code,protectedCode);
     if(same){
-      if(!previousHeading)throw new AkariError('P205','「同じ合図」の前に、「作品を動かしたとき、」や「…がクリックされたとき、」などの きっかけを 書いてください');
+      if(!previousHeading)throw new AkariError('P205','「同じ合図」の前に、「作品を動かしたとき、」や「…がおされたとき、」などの きっかけを 書いてください');
       return {heading:{...previousHeading,actorRef:sentenceActor(same[0].text,symbols)},body:same[1],actor:same[0]};
     }
     const forms=[
       [/^始めると、(.+?)は、?(.*)$/d,'start',0,1],
       [/^(?:作品を動かしたとき|始まったとき|開始したとき)、(.+?)は、(.*)$/d,'start',0,1],
-      [/^(.+?)(?:がクリックされたとき|がクリックされると|がクリックされるたびに|をクリックしたとき|をクリックするたびに)、(.*)$/d,'click',0,1],
-      [/^キーが押されたとき、(.+?)は、(.*)$/d,'keyDown',0,1],
-      [/^(.+?)キー(?:を押すたびに|が押されたとき)、(.+?)は、(.*)$/d,'keyDown',1,2,0],
+      // Key headings come first: 「…キーがおされたとき」 must not read as a click on 「…キー」.
+      [/^キーが(?:押|お)されたとき、(.+?)は、(.*)$/d,'keyDown',0,1],
+      [/^(.+?)キー(?:を(?:押|お)すたびに|が(?:押|お)されたとき)、(.+?)は、(.*)$/d,'keyDown',1,2,0],
+      [/^(.+?)(?:がおされたとき|がおされると|がおされるたびに|をおしたとき|をおすたびに|がクリックされたとき|がクリックされると|がクリックされるたびに|をクリックしたとき|をクリックするたびに)、(.*)$/d,'click',0,1],
       [/^知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',0,1],
       [/^(.+?)という知らせを受け取ったとき、(.+?)は、(.*)$/d,'message',1,2,0],
       [/^(?:背景|はいけい)が(?:変わった|かわった)とき、(.+?)は、(.*)$/d,'backdropChanged',0,1],
       [/^(.+?)の中身が(?:変わった|かわった)とき、(.*)$/d,'valueChanged',0,1],
       [/^(.+?)のコピーが作られたとき、(.*)$/d,'cloneStart',0,1],
     ];
-    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code,protectedCode);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','キーや合図の名前は「 」でかこんで書きます。れい：「空白」キーを押すたびに、自分は、');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','キーや合図の名前は、「 」でかこんだ文字を1つだけ書きます。れい：「空白」キーを押すたびに、自分は、');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex],actor:parts[actorIndex]};}
+    for(const [pattern,event,actorIndex,bodyIndex,filterIndex] of forms){const parts=surfaceCapture(pattern,code,protectedCode);if(!parts)continue;const heading={event,actorRef:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','キーや合図の名前は「 」でかこんで書きます。れい：「空白」キーをおすたびに、自分は、');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','キーや合図の名前は、「 」でかこんだ文字を1つだけ書きます。れい：「空白」キーをおすたびに、自分は、');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex],actor:parts[actorIndex]};}
     const implicit = surfaceCapture(/^始めると、(.*)$/d, code, protectedCode);
     if (implicit) return { heading: { event: 'start', actorRef: { kind: 'self' } }, body: implicit[0] };
     return null;
   }
   function sentenceHeadingSource(heading) {
     const actor=sentenceActorSource(heading.actorRef), filter=heading.filter == null ? null : formatExpression(exprNode('StringLiteral',{value:heading.filter.key??heading.filter.message}));
-    switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がクリックされたとき、`;case 'keyDown':return `${filter?filter+'キーを押すたびに':'キーが押されたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}知らせを受け取ったとき、${actor}は、`;case 'backdropChanged':return `背景が変わったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身が変わったとき、`;case 'cloneStart':return `${actor}のコピーが作られたとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
+    switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がおされたとき、`;case 'keyDown':return `${filter?filter+'キーをおすたびに':'キーがおされたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}知らせを受け取ったとき、${actor}は、`;case 'backdropChanged':return `はいけいがかわったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身がかわったとき、`;case 'cloneStart':return `${actor}のコピーが作られたとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
   }
   function continuousCondition(text) {
     const mask=surfaceMask(text),suffix=/キー(?:を|が)(?:押|お)(?:して|されて)いる$/.exec(mask);
@@ -1262,7 +1263,7 @@
     if((p=surfaceCapture(/^(.+?)キーを(?:おして|押して)いる(?:あいだ|間)、(.+?)は(.+?)歩(?:動く|うごく)$/d,code))){
       const key=p[0].text.startsWith('「')?p[0].text:`「${p[0].text}」`,actor=p[1].text,distance=p[2].text;
       throw sentenceDiagnostic('キーをおしている間に動く歩数が、ぜんぶで何歩なのか、1秒に何歩なのか分かりません。えらんでください',line,[
-        {label:`おすたびに全部で${distance}歩`,source:`${key}キーを押すたびに、${actor}は、前へ${distance}歩進む`},
+        {label:`おすたびに全部で${distance}歩`,source:`${key}キーをおすたびに、${actor}は、前へ${distance}歩進む`},
         {label:`おしている間、1秒に${distance}歩`,source:`${key}キーがおされているあいだ、${actor}は前へ1秒に${distance}歩の速さで動き続ける`},
       ],{kind:'ContinuousRule',missing:['distanceOrSpeed']});
     }
