@@ -237,7 +237,9 @@
       const collect = (n, ctx) => {
         if (!n || typeof n !== 'object') return;
         if (n.kind === 'ActorQualifiedRead') {
-          collect(n.value, actorContext(n.actorRef, ctx, n, where)); return;
+          // 「ねこ」の点数 reads ねこ's own data; the project's 点数 is written without 「ねこ」の.
+          const own = n.actorRef?.kind === 'named' && n.value?.kind === 'VariableRead' && !n.value.qualifier ? { qualifiedName: n.actorRef.name, qualifiedRead: n.value } : {};
+          collect(n.value, { ...actorContext(n.actorRef, ctx, n, where), ...own }); return;
         }
         if (['VariableRead', 'UserFunctionCall', 'BuiltinCall', 'SensorRead', 'ExtensionCalculation'].includes(n.kind))
           scoped.push([n, ctx]);
@@ -262,6 +264,8 @@
           )
             add('S303', `この中だけの名前「${n.name}」は、作る行より前では使えません。作る行を先に書いてください`, ctx.node, where);
           const info = targetExists({ name: n.name, qualifier: n.qualifier }, symbols, ctx);
+          if (info?.scope === 'project' && ctx.qualifiedRead === n)
+            add('S301', `「${ctx.qualifiedName}」には「${n.name}」がありません。作品の へんすうや リストなら、「の」を つけずに ${n.name} と 書きます`, ctx.node, where);
           if (!info) {
             const prefix =
               n.qualifier === 'self' && ctx.targetId ? `${targetLabel(ctx)}の自分には` : 'まだ作っていない';

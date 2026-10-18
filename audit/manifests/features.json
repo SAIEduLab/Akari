@@ -437,7 +437,7 @@
       "id": "UserActionCall",
       "kind": "UserActionCall",
       "op": "",
-      "source": "（3）をわたして、【増やす】という手順を行う。"
+      "source": "3をわたして、【増やす】という手順を行う。"
     },
     {
       "id": "NoOperation",

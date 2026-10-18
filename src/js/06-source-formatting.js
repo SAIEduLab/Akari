@@ -84,7 +84,7 @@
       case 'ExtensionCalculation':
         s = extensionSurface(n.name, true, n.args); break;
       case 'UserFunctionCall':
-        s = n.argumentNames ? `（${n.args.map((x,i) => `${nameSource(n.argumentNames[i])}を${formatExpressionCore(x)}`).join('、')}として、【${n.name}】で求めた答え）` : `（${n.args.length ? `（${n.args.map(x=>formatExpressionCore(x)).join('、')}）をわたして、` : ''}【${n.name}】で求めた答え）`;
+        s = n.argumentNames ? `（${n.args.map((x,i) => `${nameSource(n.argumentNames[i])}を${formatExpressionCore(x)}`).join('、')}として、【${n.name}】で求めた答え）` : `（${n.args.length === 1 && ['NumberLiteral','StringLiteral','VariableRead'].includes(n.args[0].kind) && !(n.args[0].kind === 'NumberLiteral' && n.args[0].value < 0) ? `${formatExpressionCore(n.args[0])}をわたして、` : n.args.length ? `（${n.args.map(x=>formatExpressionCore(x)).join('、')}）をわたして、` : ''}【${n.name}】で求めた答え）`;
         break;
       case 'BuiltinCall': {
         if (n.name === 'CONTAINS')
