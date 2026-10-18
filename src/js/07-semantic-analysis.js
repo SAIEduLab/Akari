@@ -18,6 +18,12 @@
     }
     return out;
   }
+  // Keys Akari knows: 上・下・左・右・空白・決定・取消, one letter or digit, and the keyboard's own key names.
+  function validKeyName(key) {
+    return ['上','下','左','右','空白','決定','取消'].includes(key) || [...key].length === 1 ||
+      ['Tab','Backspace','Delete','Home','End','PageUp','PageDown','Insert','Shift','Control','Alt','CapsLock'].includes(key) || /^F(?:[1-9]|1[0-2])$/.test(key);
+  }
+  function keyNameMessage(key) { return `「${key}」という キーは ありません。キーは「空白」「右」「a」のように 書きます`; }
   function targetExists(target, symbols, ctx) {
     const name = target.name,
       targetId = ctx.targetId || null;
@@ -329,6 +335,10 @@
             ctx.targetType !== 'sprite'
           )
             add('S304', `「${formatExpression(n)}」はキャラクターでだけ使えます`, ctx.node, where);
+          if (n.sensor === 'KEY_DOWN') {
+            const key = literalText(n.arg);
+            if (key !== null && !validKeyName(key)) add('S301', keyNameMessage(key), ctx.node, where);
+          }
           if (n.sensor === 'INPUT_VALUE')
             checkComponentTarget(n.arg, ['input'], ctx, where, '入力らん');
           if (n.sensor === 'DISTANCE_TO')
@@ -341,7 +351,7 @@
               try {
                 resolveColor(v, { allowTransparent: false });
               } catch (_) {
-                add('S304', `色「${v}」は使える色ではありません`, ctx.node, where);
+                add('S304', `色「${v}」は使える色ではありません。使える色は 黒・白・ねずみ色・赤・だいだい・黄・緑・水色・青・むらさき・もも色・茶 です`, ctx.node, where);
               }
           }
         }
@@ -527,7 +537,7 @@
             try {
               resolveColor(name, { allowTransparent: false });
             } catch (_) {
-              add('S304', `色「${name}」は使える色ではありません`, n, where);
+              add('S304', `色「${name}」は使える色ではありません。使える色は 黒・白・ねずみ色・赤・だいだい・黄・緑・水色・青・むらさき・もも色・茶 です`, n, where);
             }
         }
         if (['MotionCommand', 'PenCommand'].includes(n.kind) && c.targetType === 'stage')
@@ -610,6 +620,8 @@
     };
     for (const item of compiled.items) {
       if (rootKeys && !rootKeys.has(item.key)) continue;
+      if (item.event === 'keyDown' && typeof item.filter?.key === 'string' && !validKeyName(item.filter.key))
+        add('S301', keyNameMessage(item.filter.key), item.ast?.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } }, item.key);
       const base = {
         event: item.event, filter: item.filter || null,
         targetType: item.targetType,

@@ -7335,7 +7335,7 @@ function createAkariExtensionHost(options) {
         return COLOR_NAMES[v];
       }
       if (/^#[0-9A-Fa-f]{6}$/.test(v)) return v.toLowerCase();
-      throw new AkariError('R412', `色「${v}」は使える色ではありません`);
+      throw new AkariError('R412', `色「${v}」は使える色ではありません。使える色は 黒・白・ねずみ色・赤・だいだい・黄・緑・水色・青・むらさき・もも色・茶 です`);
     }
     class PRNG {
       constructor(seed) {
@@ -11583,13 +11583,13 @@ function createAkariExtensionHost(options) {
         id: 'LooksCommand:SET_SELF_TEXT',
         kind: 'LooksCommand',
         op: 'SET_SELF_TEXT',
-        source: '自分の文字を「文字」にかえる',
+        source: '自分の文字を「こんにちは」にかえる',
       },
       {
         id: 'LooksCommand:SET_INPUT',
         kind: 'LooksCommand',
         op: 'SET_INPUT',
-        source: '「入力らん1」に「答え」を入れる',
+        source: '「入力らん1」に「こんにちは」を入れる',
       },
       {
         id: 'SoundCommand:SAMPLE',
@@ -11755,6 +11755,8 @@ function createAkariExtensionHost(options) {
     };
     let activeBinding = null;
     const add = (id, category, text, mode = 'statement', reason = '', binding = activeBinding) => {
+      // A one-line action ends with 。 like every other action hint.
+      if (mode === 'statement' && !text.includes('\n') && !/[。、]$/.test(text)) text += '。';
       const key = mode + '|' + text;
       if (seen.has(key)) return;
       seen.add(key);
@@ -11784,20 +11786,23 @@ function createAkariExtensionHost(options) {
     };
     const bindings = [],
       names = new Set();
-    const bind = (name, qualifier, value, bkind, readonly = false) => {
+    const bind = (name, qualifier, value, bkind, readonly = false, local = !qualifier) => {
       const text = nameSource(name, qualifier);
       if (names.has(text)) return;
       names.add(text);
-      bindings.push({ name, text, value, kind: bkind, readonly, qualifier, local: !qualifier });
+      bindings.push({ name, text, value, kind: bkind, readonly, qualifier, local });
     };
     for (const a of options.args || []) bind(a, null, 0, 'dynamic');
     for (const a of place.locals.vars) bind(a, null, 0, 'scalar');
     for (const a of place.locals.lists) bind(a, null, [], 'list');
     for (const a of place.binders) bind(a, null, 0, 'scalar', true);
-    for (const a of project.projectData.variables)
-      bind(a.name, 'project', a.initialValue, 'scalar');
-    for (const a of project.projectData.lists) bind(a.name, 'project', a.initialValue, 'list');
     const localComponents = kind ? project.components : component ? [component] : [];
+    // 作品の is written only when a nearer data has the same name (作品の名前 read like the work's title).
+    const nearer = new Set([...(options.args || []), ...place.locals.vars, ...place.locals.lists, ...place.binders,
+      ...localComponents.flatMap((c) => [...c.localData.variables, ...c.localData.lists].map((x) => x.name))]);
+    for (const a of project.projectData.variables)
+      bind(a.name, nearer.has(a.name) ? 'project' : null, a.initialValue, 'scalar', false, false);
+    for (const a of project.projectData.lists) bind(a.name, nearer.has(a.name) ? 'project' : null, a.initialValue, 'list', false, false);
     for (const c of localComponents) {
       for (const a of c.localData.variables) bind(a.name, 'self', a.initialValue, 'scalar');
       for (const a of c.localData.lists) bind(a.name, 'self', a.initialValue, 'list');
@@ -11917,9 +11922,13 @@ function createAkariExtensionHost(options) {
       add('read:' + name, 'へんすう・リストの 中身', name, 'expression');
       if (!b.readonly && (!pure || b.local)) {
         if (b.kind !== 'list') {
-          add('set:' + name, 'へんすう', `${name}\u30920\u306b\u3059\u308b`);
-          add('add:' + name, 'へんすう', `${name}を1増やす`);
-          add('subtract:' + name, 'へんすう', `${name}を1減らす`);
+          // A variable that starts with text is offered text, not 1増やす.
+          if (typeof b.value === 'string' && !/^－?-?[0-9０-９]+(?:[.．][0-9０-９]+)?$/.test(b.value)) add('set:' + name, 'へんすう', `${name}を「こんにちは」にする`);
+          else {
+            add('set:' + name, 'へんすう', `${name}を0にする`);
+            add('add:' + name, 'へんすう', `${name}を1増やす`);
+            add('subtract:' + name, 'へんすう', `${name}を1減らす`);
+          }
         }
         if (b.kind !== 'scalar') {
           for (const [id, suffix] of [
@@ -13986,7 +13995,7 @@ function createAkariExtensionHost(options) {
         "lists": [
           {
             "id": "list-16",
-            "name": "音の高さ",
+            "name": "メロディー",
             "initialValue": [
               1,
               3,
@@ -14044,7 +14053,7 @@ function createAkariExtensionHost(options) {
           },
           {
             "id": "list-19",
-            "name": "音の数",
+            "name": "音のHz",
             "initialValue": [
               262,
               294,
@@ -14828,7 +14837,7 @@ function createAkariExtensionHost(options) {
           "id": "music-pitch",
           "targetId": "pitch",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【音の高さ】の【選んだ音】番目を【音の高さ】の【選んだ音】番目÷8のあまり＋1にかえる。\n  【音を見せる】という手順を行う。"
+          "source": "もし【演奏中】が0と同じなら、\n  【メロディー】の【選んだ音】番目を【メロディー】の【選んだ音】番目÷8のあまり＋1にかえる。\n  【音を見せる】という手順を行う。"
         },
         {
           "id": "music-length",
@@ -14840,7 +14849,7 @@ function createAkariExtensionHost(options) {
           "id": "music-swap",
           "targetId": "swap",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  もし【選んだ音】が16より小さければ、\n    【音の番号】を【音の高さ】の【選んだ音】番目にする。\n    【音の高さ】の【選んだ音】番目を【音の高さ】の（【選んだ音】＋1）番目にかえる。\n    【音の高さ】の（【選んだ音】＋1）番目を【音の番号】にかえる。\n    【音の番号】を【音の長さ】の【選んだ音】番目にする。\n    【音の長さ】の【選んだ音】番目を【音の長さ】の（【選んだ音】＋1）番目にかえる。\n    【音の長さ】の（【選んだ音】＋1）番目を【音の番号】にかえる。\n    【音を見せる】という手順を行う。\n  そうでなければ、\n    「お知らせ」の文字を「さいごの音だよ。1〜15番を えらんでね」にかえる。"
+          "source": "もし【演奏中】が0と同じなら、\n  もし【選んだ音】が16より小さければ、\n    【音の番号】を【メロディー】の【選んだ音】番目にする。\n    【メロディー】の【選んだ音】番目を【メロディー】の（【選んだ音】＋1）番目にかえる。\n    【メロディー】の（【選んだ音】＋1）番目を【音の番号】にかえる。\n    【音の番号】を【音の長さ】の【選んだ音】番目にする。\n    【音の長さ】の【選んだ音】番目を【音の長さ】の（【選んだ音】＋1）番目にかえる。\n    【音の長さ】の（【選んだ音】＋1）番目を【音の番号】にかえる。\n    【音を見せる】という手順を行う。\n  そうでなければ、\n    「お知らせ」の文字を「さいごの音だよ。1〜15番を えらんでね」にかえる。"
         },
         {
           "id": "music-tempo",
@@ -14852,7 +14861,7 @@ function createAkariExtensionHost(options) {
           "id": "music-restore",
           "targetId": "restore",
           "event": "click",
-          "source": "もし【演奏中】が0と同じなら、\n  【音の高さ】を［1、3、5、3、4、6、5、3、2、4、6、5、3、2、1、1］にする。\n  【音の長さ】を［1、1、1、1、1、1、1、1、1、1、1、1、1、1、1、1］にする。\n  【テンポ】を120にする。\n  【選んだ音】を1にする。\n  「速さをかえる」の文字を「速さ：120」にかえる。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字を「元の曲に もどしたよ」にかえる。"
+          "source": "もし【演奏中】が0と同じなら、\n  【メロディー】を［1、3、5、3、4、6、5、3、2、4、6、5、3、2、1、1］にする。\n  【音の長さ】を［1、1、1、1、1、1、1、1、1、1、1、1、1、1、1、1］にする。\n  【テンポ】を120にする。\n  【選んだ音】を1にする。\n  「速さをかえる」の文字を「速さ：120」にかえる。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字を「元の曲に もどしたよ」にかえる。"
         }
       ],
       "actions": [
@@ -14861,7 +14870,7 @@ function createAkariExtensionHost(options) {
           "ownerId": "stage",
           "name": "音を見せる",
           "args": [],
-          "source": "「えらんだ音」の文字を（【選んだ音】と「番の音：」と【音の名前】の（【音の高さ】の【選んだ音】番目）番目と「 ／ 長さ 」と【音の長さ】の【選んだ音】番目と「はく」をつなげた文字）にかえる。\n「音1」の文字を【音の名前】の（【音の高さ】の1番目）番目にかえる。\n「音2」の文字を【音の名前】の（【音の高さ】の2番目）番目にかえる。\n「音3」の文字を【音の名前】の（【音の高さ】の3番目）番目にかえる。\n「音4」の文字を【音の名前】の（【音の高さ】の4番目）番目にかえる。\n「音5」の文字を【音の名前】の（【音の高さ】の5番目）番目にかえる。\n「音6」の文字を【音の名前】の（【音の高さ】の6番目）番目にかえる。\n「音7」の文字を【音の名前】の（【音の高さ】の7番目）番目にかえる。\n「音8」の文字を【音の名前】の（【音の高さ】の8番目）番目にかえる。\n「音9」の文字を【音の名前】の（【音の高さ】の9番目）番目にかえる。\n「音10」の文字を【音の名前】の（【音の高さ】の10番目）番目にかえる。\n「音11」の文字を【音の名前】の（【音の高さ】の11番目）番目にかえる。\n「音12」の文字を【音の名前】の（【音の高さ】の12番目）番目にかえる。\n「音13」の文字を【音の名前】の（【音の高さ】の13番目）番目にかえる。\n「音14」の文字を【音の名前】の（【音の高さ】の14番目）番目にかえる。\n「音15」の文字を【音の名前】の（【音の高さ】の15番目）番目にかえる。\n「音16」の文字を【音の名前】の（【音の高さ】の16番目）番目にかえる。"
+          "source": "「えらんだ音」の文字を（【選んだ音】と「番の音：」と【音の名前】の（【メロディー】の【選んだ音】番目）番目と「 ／ 長さ 」と【音の長さ】の【選んだ音】番目と「はく」をつなげた文字）にかえる。\n「音1」の文字を【音の名前】の（【メロディー】の1番目）番目にかえる。\n「音2」の文字を【音の名前】の（【メロディー】の2番目）番目にかえる。\n「音3」の文字を【音の名前】の（【メロディー】の3番目）番目にかえる。\n「音4」の文字を【音の名前】の（【メロディー】の4番目）番目にかえる。\n「音5」の文字を【音の名前】の（【メロディー】の5番目）番目にかえる。\n「音6」の文字を【音の名前】の（【メロディー】の6番目）番目にかえる。\n「音7」の文字を【音の名前】の（【メロディー】の7番目）番目にかえる。\n「音8」の文字を【音の名前】の（【メロディー】の8番目）番目にかえる。\n「音9」の文字を【音の名前】の（【メロディー】の9番目）番目にかえる。\n「音10」の文字を【音の名前】の（【メロディー】の10番目）番目にかえる。\n「音11」の文字を【音の名前】の（【メロディー】の11番目）番目にかえる。\n「音12」の文字を【音の名前】の（【メロディー】の12番目）番目にかえる。\n「音13」の文字を【音の名前】の（【メロディー】の13番目）番目にかえる。\n「音14」の文字を【音の名前】の（【メロディー】の14番目）番目にかえる。\n「音15」の文字を【音の名前】の（【メロディー】の15番目）番目にかえる。\n「音16」の文字を【音の名前】の（【メロディー】の16番目）番目にかえる。"
         },
         {
           "id": "music-perform",
@@ -14870,7 +14879,7 @@ function createAkariExtensionHost(options) {
           "args": [
             "今回"
           ],
-          "source": "この中だけで使う変数【音の番号】を作り、最初は1にする。\nこの中だけで使う変数【鳴らす高さ】を作り、最初は1にする。\n16回くり返す。\n  もし今回が【再生番号】とちがえば、\n    このくり返しを終える。\n  【選んだ音】を【音の番号】にする。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字を（「いま 」と【音の番号】と「番の音 ♪」をつなげた文字）にかえる。\n  【鳴らす高さ】を【音の数】の（【音の高さ】の【音の番号】番目）番目にする。\n  【鳴らす高さ】Hzの音を（60÷【テンポ】×【音の長さ】の【音の番号】番目×0.85）秒鳴らし始める。\n  （60÷【テンポ】×【音の長さ】の【音の番号】番目）秒待つ。\n  【音の番号】を1増やす。\nもし今回が【再生番号】と同じなら、\n  【演奏中】を0にする。\n  「お知らせ」の文字を「さいごまで 聞けたね！ つぎは どこを かえる？」にかえる。"
+          "source": "この中だけで使う変数【音の番号】を作り、最初は1にする。\nこの中だけで使う変数【鳴らす高さ】を作り、最初は1にする。\n16回くり返す。\n  もし今回が【再生番号】とちがえば、\n    このくり返しを終える。\n  【選んだ音】を【音の番号】にする。\n  【音を見せる】という手順を行う。\n  「お知らせ」の文字を（「いま 」と【音の番号】と「番の音 ♪」をつなげた文字）にかえる。\n  【鳴らす高さ】を【音のHz】の（【メロディー】の【音の番号】番目）番目にする。\n  【鳴らす高さ】Hzの音を（60÷【テンポ】×【音の長さ】の【音の番号】番目×0.85）秒鳴らし始める。\n  （60÷【テンポ】×【音の長さ】の【音の番号】番目）秒待つ。\n  【音の番号】を1増やす。\nもし今回が【再生番号】と同じなら、\n  【演奏中】を0にする。\n  「お知らせ」の文字を「さいごまで 聞けたね！ つぎは どこを かえる？」にかえる。"
         }
       ],
       "functions": [],
@@ -15925,7 +15934,7 @@ function createAkariExtensionHost(options) {
         else if (this.take('キーがおされていない') || this.take('\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u306a\u3044'))
           n = exprNode('UnaryExpression', {
             op: 'NOT',
-            value: exprNode('SensorRead', { sensor: 'KEY_DOWN', arg: n }),
+            value: exprNode('SensorRead', { sensor: 'KEY_DOWN', arg: keyArg(n) }),
           });
         else if (
           this.take('\u306e\u8272\u306b\u89e6\u308c\u3066\u3044\u306a\u3044') ||
@@ -15940,8 +15949,8 @@ function createAkariExtensionHost(options) {
             op: 'NOT',
             value: exprNode('SensorRead', { sensor: 'TOUCHING', arg: componentTarget(n, this.symbols, this.ctx) }),
           });
-        else if (this.take('キーがおされている') || this.take('\u30ad\u30fc\u304c\u62bc\u3055\u308c\u3066\u3044\u308b'))
-          n = exprNode('SensorRead', { sensor: 'KEY_DOWN', arg: n });
+        else if (this.take('キーがおされている') || this.take('キーが押されている'))
+          n = exprNode('SensorRead', { sensor: 'KEY_DOWN', arg: keyArg(n) });
         else if (this.take('の色に触れている') || this.take('色に触れている'))
           n = exprNode('SensorRead', { sensor: 'TOUCHING_COLOR', arg: colorWord(n, this.symbols, this.ctx) });
         else if (this.take('に触れている'))
@@ -16370,8 +16379,11 @@ function createAkariExtensionHost(options) {
       ['キーをおさなくなるまで', 'キーがおされなくなるまで'], ['キーを押さなくなるまで', 'キーが押されなくなるまで'],
       ['キーをおすまで', 'キーがおされるまで'], ['キーを押すまで', 'キーが押されるまで'], ['キーをおしたら', 'キーがおされたら'], ['キーを押したら', 'キーが押されたら']])
       text = word(text, from, to);
-    // とおなじ (かな), さわる (ふれる), 自分がコピー (コピー)
-    for (const [from, to] of [['とおなじ', 'と同じ'], ['にさわっ', 'にふれ'], ['にさわる', 'にふれる'], ['にさわらな', 'にふれな'], ['にさわれ', 'にふれれ']]) text = word(text, from, to);
+    // とおなじ (かな), さわる・当たる (ふれる)
+    for (const [from, to] of [['とおなじ', 'と同じ'], ['にさわっ', 'にふれ'], ['にさわる', 'にふれる'], ['にさわらな', 'にふれな'], ['にさわれ', 'にふれれ'],
+      ['に当たっ', 'にふれ'], ['にあたっ', 'にふれ'], ['に当たる', 'にふれる'], ['にあたる', 'にふれる'], ['に当たらな', 'にふれな'], ['にあたらな', 'にふれな']]) text = word(text, from, to);
+    // すがたが3番 is すがたの番号が3; すがたが「丸」 is すがたの名前が「丸」
+    text = text.replace(/(すがた|姿|はいけい|背景)が([0-9０-９]+)番目?/, '$1の番号が$2').replace(/(すがた|姿|はいけい|背景)が(?=「)/, '$1の名前が');
     // 未満／より多い／より少ない (again after たら: 10未満だったら)
     const lessThan = () => {
       for (const [from, to] of [['未満ではなくて', 'より小さくなくて'], ['未満ではない', 'より小さくない'], ['未満でなければ', 'より小さくなければ'], ['未満のあいだ', 'より小さいあいだ'], ['未満であるあいだ', 'より小さいあいだ'],
@@ -16418,18 +16430,29 @@ function createAkariExtensionHost(options) {
       for (const [from, to] of [['ふれる', 'ふれている'], ['触れる', '触れている'], ['おされる', 'おされている'], ['押される', '押されている'], ['入る', '入っている']])
         if (surfaceMask(text).endsWith(from)) { text = ending(text, from, to); break; }
     if (text !== source) out.push(text);
-    // 点数が10以上で20以下 (one subject): the second condition takes the same subject
+    // 点数が10以上で20以下 (one subject): the second condition takes the same subject. A part that is only a name
+    // (クリアなら) is not 「点数がクリアと同じ」.
+    const comparable = t => /^[0-9０-９\u0001－]/.test(surfaceMask(t) || '') || /(?:以上|以下|より|と同じ|とちが|と違)/.test(surfaceMask(t) || '');
+    // 点数が10から20（のあいだ）なら, 10以上20以下, 10以上、20以下: the range
+    if (form === 'if') {
+      const range = surfaceCapture(/^((?:もし、?)?)([^、が]+?)が([^、が]+?)から([^、が]+?)(?:まで)?(?:のあいだ|の間)?(なら(?:ば)?|であれば|だったら)$/d, text);
+      if (range && !/どれか/.test(range[3].text)) out.push(range[0].text + range[1].text + 'が' + range[2].text + '以上で、' + range[1].text + 'が' + range[3].text + '以下なら');
+    }
+    text = text.replace(/(以上|以下)、?(?=[0-9０-９])/g, (m, w) => w + (m.endsWith('、') ? 'で、' : 'で'));
+    // 点数が10で、名前が10なら: a value before で is と同じで
+    if (form === 'and' && /(?:[0-9０-９]|\u0001)で$/.test(surfaceMask(text) || '')) text = text.slice(0, -1) + 'と同じで';
+    if (text !== source && !out.includes(text)) out.push(text);
     for (const base of [text, source]) {
       const one = surfaceCapture(/^((?:もし、?)?)(.+?)が(.+?(?:以上|以下|より大きく|より小さく|と同じ))(で|て)(?!、)([^が]+)$/d, base);
-      if (one) out.push(one[0].text + one[1].text + 'が' + one[2].text + one[3].text + '、' + one[1].text + 'が' + one[4].text);
+      if (one && comparable(one[4].text)) out.push(one[0].text + one[1].text + 'が' + one[2].text + one[3].text + '、' + one[1].text + 'が' + one[4].text);
       // 点数が10以上か5以下 (one subject, か): the second condition takes the same subject
       const either = surfaceCapture(/^((?:もし、?)?)(.+?)が(.+?(?:以上|以下|より大きい|より小さい|と同じ|とちがう))か(?![つ、])([^が]+)$/d, base);
-      if (either) out.push(either[0].text + either[1].text + 'が' + either[2].text + 'か、' + either[1].text + 'が' + either[3].text);
+      if (either && comparable(either[3].text)) out.push(either[0].text + either[1].text + 'が' + either[2].text + 'か、' + either[1].text + 'が' + either[3].text);
       // 点数が10以上で、20以下なら: the part after 、 with no subject takes the same subject
       const second = surfaceCapture(/^((?:もし、?)?)([^、が]+?)が([^、]+?(?:で|て|か))、([^、が]+)$/d, base);
-      if (second) out.push(second[0].text + second[1].text + 'が' + second[2].text + '、' + second[1].text + 'が' + second[3].text);
+      if (second && comparable(second[3].text)) out.push(second[0].text + second[1].text + 'が' + second[2].text + '、' + second[1].text + 'が' + second[3].text);
       // 点数が1か2なら (values) is 点数が1と同じか、点数が2と同じなら
-      const pair = form === 'if' && surfaceCapture(/^((?:もし、?)?)(.+?)が([^、か]+?)か([^、か]+?)(なら(?:ば)?)$/d, base);
+      const pair = form === 'if' && surfaceCapture(/^((?:もし、?)?)(.+?)が([^、か]+?)か(?!ら)([^、か]+?)(なら(?:ば)?)$/d, base);
       if (pair) out.push(pair[0].text + pair[1].text + 'が' + pair[2].text + 'と同じか、' + pair[1].text + 'が' + pair[3].text + 'と同じ' + pair[4].text);
       // A かつ B／A または B (two plain conditions) is the explicit 条件（…）
       const joined = form !== 'plain' && form !== 'and' && surfaceCapture(/^((?:もし、?)?)(.+(?:かつ|または).+?)(なら(?:ば)?|あいだ|間|になるまで|まで)$/d, base);
@@ -16444,8 +16467,11 @@ function createAkariExtensionHost(options) {
       if (/^(?:もし、?)?(?:自分が)?コピーか、/.test(mask))
         return parseCondition(written.replace(/^((?:もし、?)?(?:自分が)?)コピーか、/, '$1コピーであるか、'), symbols, { ...ctx, sourcePositions: undefined, sourceLine: undefined }, form);
       // 点数が1から6のどれかなら: 1から6のどれか picks one number each time; it is not 「1から6のあいだ」.
-      if (/が[^が]*から[^が]*のどれか(?:なら(?:ば)?|であれば|だったら|になるまで|のあいだ|であるあいだ)$/.test(mask))
+      if (/が[^が]*から[^が]*のどれか(?:と(?:同じ|おなじ|ちが|違)|なら(?:ば)?|であれば|だったら|でなければ|になるまで|のあいだ|であるあいだ)/.test(mask))
         throw new AkariError('P205', '「1から6のどれか」は、そのたびに 数を 1つ えらびます。あいだに あるかを しらべるときは「点数が1以上で、6以下なら」のように 書きます', ctx.lineNo || 0, 1);
+      // 点数が10以上で20以下ではないなら: the child means outside the range, not 「10以上で、20以下ではない」.
+      if (/^(?:もし、?)?[^、が]+?が[^、が]+?(?:以上|以下|より大きく|より小さく)で、?[^、が]+?(?:以上|以下|大き|小さ)[^、が]*?(?:ない|なければ|なかったら)(?:なら(?:ば)?|あいだ|間|まで)?$/.test(mask))
+        throw new AkariError('P205', '「10以上で20以下」に 当てはまらないときを しらべるときは、「点数が10より小さいか、点数が20より大きければ」のように 書きます', ctx.lineNo || 0, 1);
       // 点数が10ではないなら is 点数が10と同じでなければ (「10ではない」 was read as 「10 is not true」).
       const not = /が([^が]+?)では(ないなら(?:ば)?|なければ|なかったら|ないあいだ|ない間|なくなるまで|なくて|ない)$/.exec(mask);
       if (not && !/(?:と同じ|以上|以下|大き[いく]|小さ[いく]|ちが[うい]|違[うい]|コピー|いる|ある|れる)$/.test(not[1])) {
@@ -16491,13 +16517,13 @@ function createAkariExtensionHost(options) {
     if (source.startsWith('条件（')) {
       const endings = form === 'if' ? ['が成り立つなら','が成り立つならば','が成り立つのであれば','が成り立たないなら','が成り立たないならば','が成り立たないのであれば'] : form === 'while' ? ['が成り立つあいだ','が成り立つ間','が成り立たないあいだ','が成り立たない間'] : form === 'until' ? ['が成り立つまで','が成り立たないまで'] : ['が成り立つ','が成り立たない'];
       const ending=endings.find(e=>mask.endsWith(e));
-      if (!ending || source[source.length-ending.length-1] !== '）') fail('「条件（ ）」の（ ）がとじているか、そのあとに「が成り立つ」があるかをたしかめてください。れい：もし条件（1が1と同じかつ（2が2と同じまたは3が3と同じ））が成り立つなら、');
+      if (!ending || source[source.length-ending.length-1] !== '）') fail('「条件（ ）」の（ ）がとじているか、そのあとに「が成り立つ」があるかをたしかめてください。れい：もし条件（点数が10以上かつ（名前が「あ」と同じまたは名前が「い」と同じ））が成り立つなら、');
       const node=parseExpression(source.slice(3,-ending.length-1),symbols,{...ctx,sourcePositions:ctx.sourcePositions?.slice(3,-ending.length-1),_parserDepth:(ctx._parserDepth||0)+1});
       return ending.includes('成り立たない') ? exprNode('UnaryExpression',{op:'NOT',value:node}) : node;
     }
     // 〜状態になるまで: everything before it is what is waited for (点数が10以上で、「空白」キーがおされている状態になるまで).
     if (form === 'until' && mask.endsWith('状態になるまで') && mask.length > '状態になるまで'.length) {
-      const inner = source.slice(0, -'状態になるまで'.length);
+      const whole = source.slice(0, -'状態になるまで'.length), inner = /(?:以上|以下)の$/.test(surfaceMask(whole)) ? whole.slice(0, -1) : whole;
       return parseConditionCore(inner, symbols, { ...ctx, sourcePositions: ctx.sourcePositions?.slice(0, inner.length) }, 'plain');
     }
     const commas=[]; for(let i=0;i<mask.length;i++) if(mask[i]==='、') commas.push(i);
@@ -16515,7 +16541,7 @@ function createAkariExtensionHost(options) {
     // name (かず, あかり) or in 1から6のどれか belongs to that word.
     const orJoin=/(?:以上|以下|大きい|小さい|大きくない|小さくない|と同じ|ではない|でない|とちがう|ちがわない|と違う|違わない|いる|いない|である)か(?!つ)/.test(mask);
     if (/かつ|または/.test(mask) || orJoin) {
-      if (form !== 'plain' || (mask.includes('かつ') && mask.includes('または'))) fail('いくつかのきまりをつなぐときは、「条件（…）」でひとまとめにしてください。れい：もし条件（1が1と同じかつ（2が2と同じまたは3が3と同じ））が成り立つなら、');
+      if (form !== 'plain' || (mask.includes('かつ') && mask.includes('または'))) fail('いくつかのきまりをつなぐときは、「条件（…）」でひとまとめにしてください。れい：もし条件（点数が10以上かつ（名前が「あ」と同じまたは名前が「い」と同じ））が成り立つなら、');
     }
     const matches=[];
     for(const record of CONDITION_FORMS) for(const [ending,negative] of conditionFormCandidates(record,form))
@@ -16550,16 +16576,21 @@ function createAkariExtensionHost(options) {
       if (firstError) throw firstError;
     }
     if(form==='plain') return parseExpression(source,symbols,ctx);
+    // もしクリアなら: a name alone is not a check; say what to compare.
+    {const only=source.replace(/(?:なら(?:ば)?|あいだ|間|まで)$/,'').replace(/^【(.+)】$/,'$1');if(only&&dataNameKind(only,symbols,ctx))
+      fail(`「${only}」の 中身を しらべるときは、「${nameSource(only)}が1と同じなら」のように くらべる ことばを 書きます`);}
     fail(form==='if'
       ? 'くらべるものと「なら」をたしかめてください。「なら、」のあとの行に動きを書きます。れい：もし答えが「ほし」と同じなら、'
       : form==='while' ? 'つづけるきまりのおわりを「あいだ」にしてください。れい：点数が10より小さいあいだ、くり返す。' : 'やめるきまりのおわりを「まで」にしてください。れい：点数が10と同じになるまで、くり返す。');
   }
+  // 〜状態になるまで: a number word takes の (10以上の状態).
+  function stateUntil(text) { return text + (/(?:以上|以下)$/.test(surfaceMask(text)) ? 'の' : '') + '状態になるまで'; }
   function formatCondition(node, form = 'plain') {
     const negative=node.kind==='UnaryExpression'&&node.op==='NOT', value=negative?node.value:node;
     if (!negative && value.kind==='LogicalExpression' && ['if','while','until'].includes(form)) {
       const atomic=n => n.kind!=='LogicalExpression' && !(n.kind==='UnaryExpression' && n.op==='NOT' && n.value.kind==='LogicalExpression');
       if(atomic(value.left) && atomic(value.right)) {
-        const left=formatCondition(value.left,value.op==='AND'?'and':'plain'), right=value.op==='AND'&&form==='until'?formatCondition(value.right,'plain')+'状態になるまで':formatCondition(value.right,form);
+        const left=formatCondition(value.left,value.op==='AND'?'and':'plain'), right=value.op==='AND'&&form==='until'?stateUntil(formatCondition(value.right,'plain')):formatCondition(value.right,form);
         if(!left.startsWith('条件（') && !right.startsWith('条件（')) return `${left}${value.op==='OR'?'か':''}、${right}`;
       }
     }
@@ -16632,7 +16663,7 @@ function createAkariExtensionHost(options) {
   }
   // 赤い色にふれている is 「赤」の色にふれている.
   function colorWord(node, symbols, ctx = {}) {
-    const color = node?.kind === 'VariableRead' && !node.qualifier && !dataNameKind(node.name, symbols, ctx) && { 赤い: '赤', 青い: '青', 白い: '白', 黒い: '黒', 黄色い: '黄', 茶色い: '茶' }[node.name];
+    const color = node?.kind === 'VariableRead' && !node.qualifier && !dataNameKind(node.name, symbols, ctx) && { 赤い: '赤', 青い: '青', 白い: '白', 黒い: '黒', 黄色い: '黄', 茶色い: '茶', あかい: '赤', あおい: '青', しろい: '白', くろい: '黒', きいろい: '黄', ちゃいろい: '茶' }[node.name];
     if (!color) return node;
     const literal = exprNode('StringLiteral', { value: color }), location = SOURCE_RANGES.get(node);
     if (location) SOURCE_RANGES.set(literal, location);
@@ -16743,14 +16774,23 @@ function createAkariExtensionHost(options) {
       render:node=>renderSentenceNode(node),preview:node=>renderSentenceNode(node),errors:Object.freeze(['P201','P202','P205'])});
   }
   function sentenceFormFor(node) {if (node.kind === 'ExtensionCommand') return { kind: node.kind, allowedContexts: ['script', 'action'], roleSlots: [], render: n => extensionSurface(n.name, false, n.args), preview: n => extensionSurface(n.name, false, n.args) };return SENTENCE_FORMS.find(form=>form.kind===node.kind&&(!form.op||form.op===node.op));}
+  // A condition put into data keeps its （ ）: クリアを（点数が10以上）にする (not 点数が10以上にする).
+  function isConditionValue(v) {
+    if (!v) return false;
+    if (['CompareExpression','LogicalExpression'].includes(v.kind) || (v.kind === 'UnaryExpression' && v.op === 'NOT')) return true;
+    if (v.kind === 'BuiltinCall') return v.name === 'CONTAINS';
+    if (v.kind === 'SensorRead') return ['KEY_DOWN','TOUCHING','TOUCHING_COLOR','マウスが押されている','クローンである'].includes(v.sensor);
+    return v.kind === 'ActorQualifiedRead' && isConditionValue(v.value);
+  }
+  function valueSource(v) { const text = formatExpression(v); return isConditionValue(v) && !/^（.*）$/.test(text) ? `（${text}）` : text; }
   function renderSentenceNode(n) {
     const f=formatExpression,t=n.target?formatTarget(n.target):'';
     switch(n.kind){
-      case 'Assignment':return `${t}を${f(n.value)}にする`;
+      case 'Assignment':return `${t}を${valueSource(n.value)}にする`;
       case 'NumericUpdate':return `${t}を${f(n.value)}${n.op==='ADD'?'増やす':'減らす'}`;
-      case 'ListAppend':return `${t}の最後に${f(n.value)}を入れる`;
-      case 'ListInsert':return `${t}の${sentenceQuantitySource(n.index,'番目')}に${f(n.value)}を入れる`;
-      case 'ListReplace':return `${t}の${sentenceQuantitySource(n.index,'番目')}を${f(n.value)}にかえる`;
+      case 'ListAppend':return `${t}の最後に${valueSource(n.value)}を入れる`;
+      case 'ListInsert':return `${t}の${sentenceQuantitySource(n.index,'番目')}に${valueSource(n.value)}を入れる`;
+      case 'ListReplace':return `${t}の${sentenceQuantitySource(n.index,'番目')}を${valueSource(n.value)}にかえる`;
       case 'ListDelete':return `${t}の${sentenceQuantitySource(n.index,'番目')}を消す`;
       case 'ListClear':return `${t}の中身を全部消す`;
       case 'NoOperation':return '何もしない';case 'Break':return 'このくり返しを終える';case 'Continue':return 'この回の残りをとばして、次の回へ進む';
@@ -16826,7 +16866,7 @@ function createAkariExtensionHost(options) {
     ['MotionCommand:TURN_LEFT', /^左(?:に|へ)(.+?)度(?:回る|まわる)$/d, 'MotionCommand', 'TURN_LEFT', 'degree'],
     ['MotionCommand:SET_X', /^(?:横位置|よこのばしょ)を(.+?)に(?:する|変える|かえる)$/d, 'MotionCommand', 'SET_X', 'arg'],
     ['MotionCommand:SET_Y', /^(?:縦位置|たてのばしょ)を(.+?)に(?:する|変える|かえる)$/d, 'MotionCommand', 'SET_Y', 'arg'],
-    ['MotionCommand:POINT_TO', /^(.+?)の(?:方向|方)を(?:向く|むく)$/d, 'MotionCommand', 'POINT_TO', 'arg'],
+    ['MotionCommand:POINT_TO', /^(.+?)の(?:方向|方|ほう)を(?:向く|むく)$/d, 'MotionCommand', 'POINT_TO', 'arg'],
     ['LooksCommand:SET_SCALE', /^大きさを(.+?)％にする$/d, 'LooksCommand', 'SET_SCALE', 'percent'],
     ['LooksCommand:SET_COLOR', /^表示色を(.+?)に(?:する|変える|かえる)$/d, 'LooksCommand', 'SET_COLOR', 'arg'],
     ['LooksCommand:SET_COSTUME', /^(?:衣装|すがた)を(.+?)に(?:する|変える|かえる)$/d, 'LooksCommand', 'SET_COSTUME', 'arg'],
@@ -16879,6 +16919,13 @@ function createAkariExtensionHost(options) {
     assign:/に(?:する|変える|かえる)$/,
   });
   const STATEMENT_EXPLICIT_ACTORS = new WeakSet();
+  // Words that only say the order (そして、まず …) or how (はやく …); they are dropped before an action.
+  const LEAD_WORDS='そのあと|それから|次に|つぎに|最後に|さいごに|そして|まず|まずは|はじめに|最初に|さいしょに|また|次は|つぎは|最後は|さいごは|こんどは|今度は|はやく|すばやく|さっと';
+  // Key names a child writes for the keys Akari names 空白・決定・右 ….
+  const KEY_ALIASES=Object.freeze({スペース:'空白',スペースキー:'空白',みぎ:'右',ひだり:'左',うえ:'上',した:'下','→':'右','←':'左','↑':'上','↓':'下',エンター:'決定',リターン:'決定',エスケープ:'取消'});
+  const KEY_WORDS=Object.freeze(['上','下','左','右','空白','決定','取消']);
+  function keyWord(text){return KEY_ALIASES[text]||(KEY_WORDS.includes(text)||/^[a-zA-Z0-9ａ-ｚＡ-Ｚ０-９]$/.test(text)?text:null);}
+  function keyArg(node){const word=node?.kind==='StringLiteral'&&KEY_ALIASES[node.value];if(!word)return node;const literal=exprNode('StringLiteral',{value:word}),location=SOURCE_RANGES.get(node);if(location)SOURCE_RANGES.set(literal,location);return literal;}
   const SENTENCE_TE_FORMS = Object.freeze([
     ['鳴らし始めて','鳴らし始める'], ['言わせて','言わせる'], ['かくして','かくす'], ['隠して','隠す'],
     ['うごかして','うごかす'], ['動かして','動かす'], ['うごいて','うごく'], ['動いて','動く'],
@@ -16891,7 +16938,7 @@ function createAkariExtensionHost(options) {
     ['増やして','増やす'], ['ふやして','ふやす'], ['減らして','減らす'], ['へらして','へらす'], ['下ろして','下ろす'], ['おろして','下ろす'],
     ['押して','押す'], ['おして','おす'], ['止めて','止める'], ['作って','作る'], ['つくって','作る'],
     ['送って','送る'], ['上げて','上げる'], ['あげて','上げる'], ['下げて','下げる'], ['下がって','下がる'],
-    ['出て','出る'], ['聞いて','たずねて、答えを待つ'], ['きいて','たずねて、答えを待つ'], ['たずねて','たずねて、答えを待つ'], ['して','する'],
+    ['出て','出る'], ['はね返って','はね返る'], ['聞いて','たずねて、答えを待つ'], ['きいて','たずねて、答えを待つ'], ['たずねて','たずねて、答えを待つ'], ['して','する'],
   ].map(Object.freeze));
   function surfaceCapture(pattern, code, protectedCode = surfaceMask(code)) {
     const match = pattern.exec(protectedCode);
@@ -16941,7 +16988,7 @@ function createAkariExtensionHost(options) {
       ['かくします','かくす'],['隠します','隠す'],['見せます','見せる'],['出ます','出る'],
       ['かえます','かえる'],['変えます','変える'],['鳴らし始めます','鳴らし始める'],['鳴らします','鳴らす'],['止めます','止める'],
       ['送ります','送る'],['作ります','作る'],['消します','消す'],['けします','けす'],['入れます','入れる'],['足します','足す'],['引きます','引く'],
-      ['下ろします','下ろす'],['上げます','上げる'],['おします','おす'],['押します','押す'],['返します','返す'],['行います','行う'],['隠れます','すがたをかくす'],['現れます','すがたを見せる'],
+      ['下ろします','下ろす'],['上げます','上げる'],['おします','おす'],['押します','押す'],['返します','返す'],['行います','行う'],['隠れます','すがたをかくす'],['現れます','すがたを見せる'],['いれます','いれる'],['むきます','むく'],
       ['しません','しない'],['します','する']];
     const suffix = polite.find(([ending])=>protectedCode.endsWith(ending));
     const immediate = protectedCode.startsWith('すぐに') ? 3 : 0;
@@ -17132,8 +17179,14 @@ function createAkariExtensionHost(options) {
       else if(pattern.source.endsWith(STRICT_ACTOR)&&!protectedCode.startsWith('もし')){const head=surfaceCapture(new RegExp(pattern.source.slice(0,-STRICT_ACTOR.length)+'(.*)$','d'),code,protectedCode);
         if(head&&pass==='loose'){const split=looseActor(head.at(-1));if(split)parts=[...head.slice(0,-1),...split];}
         else if(head&&pass==='bare'){parts=[...head.slice(0,-1),null,head.at(-1)];self=true;}
-        if(parts&&filterIndex!==undefined&&!/^「.*」$/.test(parts[filterIndex].text))parts=null;}
-      if(!parts)continue;if(parts[actorIndex]?.text==='')self=true;const heading={event,actorRef:self?{kind:'self'}:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','キーや合図の名前は「 」でかこんで書きます。れい：「空白」キーをおすたびに、自分は、');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','キーや合図の名前は、「 」でかこんだ文字を1つだけ書きます。れい：「空白」キーをおすたびに、自分は、');heading.filter=event==='keyDown'?{key:literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex],actor:self?undefined:parts[actorIndex]};}
+        if(parts&&filterIndex!==undefined&&!/^「.*」$/.test(parts[filterIndex].text)&&!(event==='keyDown'&&keyWord(parts[filterIndex].text)))parts=null;}
+      if(!parts)continue;
+      // 「空白」キーがおされたとき is a key, never a click on a part called 「空白」キー.
+      if(event==='click'&&/キー$/.test(surfaceMask(parts[actorIndex]?.text||'')))continue;
+      if(parts[actorIndex]?.text==='')self=true;const heading={event,actorRef:self?{kind:'self'}:sentenceActor(parts[actorIndex].text,symbols)};if(filterIndex!==undefined){const text=parts[filterIndex].text;
+        // 右キー／スペースキー (without 「 」) name the key; 「スペース」 is the key Akari calls 空白.
+        if(event==='keyDown'&&!text.startsWith('「')&&keyWord(text)){heading.filter={key:keyWord(text)};return {heading,body:parts[bodyIndex],actor:self?undefined:parts[actorIndex]};}
+        if(!text.startsWith('「')||!text.endsWith('」'))throw new AkariError('P205','キーや合図の名前は「 」でかこんで書きます。れい：「空白」キーをおすたびに、自分は、');const literal=parseExpression(text);if(literal.kind!=='StringLiteral')throw new AkariError('P205','キーや合図の名前は、「 」でかこんだ文字を1つだけ書きます。れい：「空白」キーをおすたびに、自分は、');heading.filter=event==='keyDown'?{key:KEY_ALIASES[literal.value]||literal.value}:{message:literal.value};}return {heading,body:parts[bodyIndex],actor:self?undefined:parts[actorIndex]};}
     const implicit = surfaceCapture(/^始めると、(.*)$/d, code, protectedCode);
     if (implicit) return { heading: { event: 'start', actorRef: { kind: 'self' } }, body: implicit[0] };
     return null;
@@ -17189,6 +17242,7 @@ function createAkariExtensionHost(options) {
     };
     const whole = (text, pattern, build) => { const parts = surfaceCapture(pattern, text); return parts ? build(parts.map(p => p ? p.text : '')) : text; };
     const normalize = text => {
+      text = text.replace(new RegExp('^(?:'+LEAD_WORDS+')、'), '');
       // かな書きの動詞 → the written verb
       for (const [from, to] of [['かくれる', '隠れる'], ['あらわれる', '現れる'], ['ペンをおろす', 'ペンを下ろす'], ['ペンをあげる', 'ペンを上げる'],
         ['ならし始める', '鳴らし始める'], ['ならして', '鳴らして'], ['をならす', 'を鳴らす'], ['をつくる', 'を作る'], ['をおくる', 'を送る'], ['をおくって', 'を送って']])
@@ -17197,12 +17251,15 @@ function createAkariExtensionHost(options) {
       for (const [from, to] of [['進み、', '進んで、'], ['動き、', '動いて、'], ['回り、', '回って、'], ['待ち、', '待って、'], ['言い、', '言って、'], ['話し、', '話して、'],
         ['鳴らし、', '鳴らして、'], ['かくし、', 'かくして、'], ['見せ、', '見せて、'], ['消し、', '消して、'], ['けし、', 'けして、'], ['入れ、', '入れて、'],
         ['足し、', '足して、'], ['引き、', '引いて、'], ['すべり、', 'すべって、'], ['増やし、', '増やして、'], ['減らし、', '減らして、'], ['止め、', '止めて、'],
-        ['作り、', '作って、'], ['送り、', '送って、'], ['下ろし、', '下ろして、'], ['上げ、', '上げて、'], ['向き、', '向いて、'], ['行き、', '行って、'], ['にし、', 'にして、'], ['かえ、', 'かえて、']])
+        ['作り、', '作って、'], ['送り、', '送って、'], ['下ろし、', '下ろして、'], ['上げ、', '上げて、'], ['向き、', '向いて、'], ['行き、', '行って、'], ['にし、', 'にして、'], ['かえ、', 'かえて、'],
+        ['すすみ、', '進んで、'], ['まわり、', '回って、'], ['ふやし、', '増やして、'], ['へらし、', '減らして、'], ['まち、', '待って、'], ['おろし、', '下ろして、'],
+        ['ならし、', '鳴らして、'], ['つくり、', '作って、'], ['いい、', '言って、'], ['むき、', '向いて、'], ['いれ、', '入れて、'], ['おくり、', '送って、'],
+        ['とめ、', '止めて、'], ['あげ、', '上げて、'], ['うごき、', '動いて、']])
         text = word(text, from, to);
       // 〜て with no 、 before the next action
       for (const te of ['鳴らし始めて', '鳴らして', '進んで', 'すすんで', '動いて', 'うごいて', '回って', 'まわって', '向いて', '待って', '言って', '話して',
         'かくして', '見せて', '消して', 'けして', '入れて', '足して', '引いて', '変えて', 'かえて', 'すべって', '滑って',
-        '増やして', '減らして', '止めて', '作って', '送って', '上げて', '下ろして', 'にして', '行って', 'たずねて']) {
+        '増やして', '減らして', '止めて', '作って', '送って', '上げて', '下ろして', 'にして', '行って', 'たずねて', 'はね返って', '追加して', '削除して', '挿入して']) {
         const mask = surfaceMask(text);
         let result = '', at = 0, i;
         while ((i = mask.indexOf(te, at)) >= 0) {
@@ -17212,6 +17269,17 @@ function createAkariExtensionHost(options) {
         }
         text = result + text.slice(at);
       }
+      // "こんにちは" (ASCII or curly quotes) is 「こんにちは」; a closing ！．. is 。
+      text = text.replace(/"([^"\n]*)"/g, '「$1」').replace(/“([^”\n]*)”/g, '「$1」');
+      if (/[！!？?．.]+$/.test(surfaceMask(text) || '')) text = text.replace(/[！!？?．.]+$/, '');
+      // 10歩あるく is 10歩進む; すがたをけす is すがたをかくす; 2秒かけて、… is 2秒かけて…
+      for (const [from, to] of [['歩あるく', '歩進む'], ['歩歩く', '歩進む']]) if (surfaceMask(text).endsWith(from)) text = text.slice(0, -from.length) + to;
+      text = whole(text, /^((?:[^、。]+?は、?)?)(?:すがた|姿)を(?:けす|消す)$/d, ([s]) => s + 'すがたをかくす');
+      text = word(text, '秒かけて、', '秒かけて');
+      // ねこに向かって10歩進む is ねこの方を向いて、10歩進む
+      text = whole(text, /^((?:[^、。]+?は、?)?)([^、。]+?)に(?:向かって|むかって)、?(.+(?:進む|すすむ|動く|うごく|歩く|あるく))$/d, ([s, t, rest]) => s + t + 'の方を向いて、' + rest);
+      // 名前一覧の最初に「a」を入れる is the 1番目
+      text = whole(text, /^(.+?)の(?:最初|はじめ|先頭|いちばん前)に(.+)を(?:入れる|いれる)$/d, ([l, v]) => l + 'の1番目に' + v + 'を入れる');
       text = whole(text, /^(.+)と(?:聞く|きく|聞きます|ききます)$/d, ([q]) => q + 'とたずねる');
       text = whole(text, /^(.+)と(?:聞いて|きいて)、?(?:答え|返事)を待つ$/d, ([q]) => q + 'とたずねて、答えを待つ');
       text = word(text, 'という合図を送る', 'の合図を送る');
@@ -17271,6 +17339,9 @@ function createAkariExtensionHost(options) {
         catch (attempt) { if (!(attempt instanceof AkariError)) throw attempt; }
         if (reads) throw new AkariError('P205', `「${who[0].text}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, line.lineNo, 1);
       }
+      const unknown = /(?:^|て、?|で、?)([\p{L}ー]+(?:る|う|く|す|つ|む|ぶ|ぐ))$/u.exec(code);
+      if (error.message === 'この名前は【名前】のように【 】でかこんでください' && unknown && !dataNameKind(unknown[1], symbols, ctx))
+        throw new AkariError('P205', `「${unknown[1]}」という 文は あかりに ありません。「書ける ことば」から 近い 文を えらんでください`, line.lineNo, 1);
       throw error;
     }
   }
@@ -17289,6 +17360,10 @@ function createAkariExtensionHost(options) {
       if(!pair)continue;
       // 「3をわたして、」「点数を10として、」 hand values to a procedure; they are not an action of their own.
       if(/(?:を(?:わたし|渡し)て|として)$/.test(mask.slice(start,end)))continue;
+      // そして、 is a lead word, not an action ending in して.
+      if(new RegExp('^(?:'+LEAD_WORDS+')$').test(mask.slice(start,end)))continue;
+      // 「…」とたずねて、答えを待って、… : the waiting is part of asking.
+      if(/(?:たずねて|聞いて|きいて)$/.test(mask.slice(start,end))){const wait=/^(?:答え|返事)を(?:待って|まって|待ち|まち)、/.exec(mask.slice(i+1));if(wait)i+=wait[0].length;}
       const tail=code.slice(start,end);
       let replacement=tail.slice(0,-pair[0].length)+pair[1];
       if(pair[0]==='行って'&&!replacement.endsWith('手順を行う'))replacement=tail.slice(0,-pair[0].length)+'行く';
@@ -17301,7 +17376,8 @@ function createAkariExtensionHost(options) {
           if(!(error instanceof AkariError))throw error;
           // A clause that reads only in its natural spelling reads the same way before 「〜して、」 (点数を1つ増やして、…).
           for(const variant of naturalSentenceVariants(replacement,symbols)){try{node=parseSimpleStatement(surfaceLineSlice(line,start,i,variant),symbols,scope);break;}catch(attempt){if(!(attempt instanceof AkariError))throw attempt;}}
-          if(!node)throw error;
+          // The message names the child's sentence, not the 〜する made from 〜して.
+          if(!node)throw error.code==='P201'&&error.message.includes(replacement)?firstError:error;
         }
       }
       nodes.push(node);if(STATEMENT_EXPLICIT_ACTORS.has(node))scope.topicActor=node.actorRef;start=i+(connective?2:1);if(mask[start]==='、')start++;i=start-1;
@@ -17342,6 +17418,12 @@ function createAkariExtensionHost(options) {
     // 書20: guidance that names the fix (proposals are written as the code writes them).
     const fixed=(message,source,label,kind)=>sentenceDiagnostic(message,line,[{label,source:canonicalStatementSource(source,symbols)}],{kind});
     const knownName=name=>!!dataNameKind(name,symbols,ctx)||[...(ctx.localNames||[])].includes(name);
+    const reads=source=>{for(const text of [source+'。',source.replace(/、?$/,'、')+'\n  何もしない。']){try{if(parseSyntax(text,{symbols}).ast)return true;}catch(error){if(!(error instanceof AkariError))throw error;}}return false;};
+    // A name with あかりの ことば in it (いのち, ちから, とくてん) is written in 【 】; written bare it is cut into other words.
+    {const names=[...(symbols?.projectVars?.keys?.()||[]),...(symbols?.projectLists?.keys?.()||[]),...[...(symbols?.individualByTargetId?.values?.()||[])].flatMap(d=>[...(d.variables?.keys?.()||[]),...(d.lists?.keys?.()||[])]),...(ctx.localNames||[]),...(ctx.args||[])];
+      for(const name of [...new Set(names)].sort((a,b)=>b.length-a.length)){if(!nameSource(name).startsWith('【'))continue;const at=mask.indexOf(name);if(at<0)continue;
+        const bracketed=code.slice(0,at)+'【'+name+'】'+code.slice(at+name.length);
+        if(reads(bracketed))throw sentenceDiagnostic(`「${name}」のように あかりの ことばが 入った 名前は、【${name}】と【 】で かこんで 書きます`,line,[{label:'【 】で かこむ',source:canonicalStatementSource(bracketed,symbols)}]);}}
     const unquoted=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([^\u0001、。]+?)と(?:([^、。\u0001]+?)秒(?:間)?)?(?:言う|いう|話す|はなす|言います|話します)$/d,code);
     if(unquoted&&!knownName(unquoted[1].text)&&/^[\p{L}ー！？!?]+$/u.test(unquoted[1].text)){
       let state=false;try{state=parseExpression(unquoted[1].text,symbols,ctx).kind==='SensorRead';}catch(error){if(!(error instanceof AkariError))throw error;}
@@ -17362,6 +17444,22 @@ function createAkariExtensionHost(options) {
       const parts=surfaceCapture(pattern,code);
       if(parts&&(!when||when(parts.map(part=>part?part.text:''))))throw fixed(message,build(parts.map(part=>part?part.text:'')),label,kind);
     }
+    // 右に回る: the angle is needed.
+    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(右|左)に(?:回る|まわる)$/d,code)))
+      throw fixed('回るときは、何度 回るかを 書きます',`${p[0].text}${p[1].text}に90度回る`,'90度 回る','MotionCommand');
+    // 1秒まって / 10歩進んだ: an action is written 〜する.
+    {const past=/(?:った|んだ|いた|いだ|した)$/.exec(mask);const te=past?code.slice(0,-past[0].length)+({った:'って',んだ:'んで',いた:'いて',いだ:'いで',した:'して'})[past[0]]:/(?:って|んで|いて|いで|して|えて|めて|げて|せて|れて|ねて|べて|けて)$/.test(mask)?code:null;
+      if(te){const plain=sentenceInfinitive(te);if(plain&&plain!==te&&reads(plain))throw fixed(past?'これから する ことは「進む」のように 書きます':'文の おわりは「待つ」のように 書きます',plain,'〜する に する');}}
+    // 10歩進みません: what is not done is not written.
+    if(/(?:みません|りません|きません|ちません|いません|えません|せません|べません|めません|れません|ぎません|びません)$/.test(mask)||(/しません$/.test(mask)&&!/^何もしません$/.test(mask)))
+      throw sentenceDiagnostic('しないことは 書けません。しないときは その文を 書かないか、「何もしない」と 書きます',line,[]);
+    // 点数を0にする、点数を1増やす: two actions are joined with 〜して、
+    {const join=surfaceCapture(/^(.+?(?:する|す|る|く|う|つ|む|ぶ|ぐ))、(.+)$/d,code);
+      if(join){const pair=SENTENCE_TE_FORMS.find(([te,plain])=>join[0].text.endsWith(plain)&&te!=='して');const joined=pair?join[0].text.slice(0,-pair[1].length)+pair[0]+'、'+join[1].text:join[0].text.endsWith('する')?join[0].text.slice(0,-2)+'して、'+join[1].text:null;
+        if(joined&&reads(joined))throw fixed('2つの ことを つづけて するときは、「〜して、」で つなぎます',joined,'〜して、で つなぐ');}}
+    // 「出発」の合図を送って、終わるまで待つ
+    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(.+?)の合図を送って、?(?:それが|みんなが)?終わるまで待つ$/d,code)))
+      throw fixed('合図で 始まったことが 終わるまで 待つときは、「その合図で始まったことが全部終わるまで待つ」と 書きます',`${p[0].text}${p[1].text}の合図を送って、その合図で始まったことが全部終わるまで待つ`,'終わるまで 待つ','BroadcastAndWait');
     // ゆっくり10歩進む (ゆっくり10 was read as a name): slowly is a time to take.
     if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(?:(前|後ろ|右|左)(?:へ|に))?ゆっくり(?:と)?(?:(前|後ろ|右|左)(?:へ|に))?([0-9０-９.．]+)歩(?:進む|すすむ|動く|うごく)$/d,code)))
       throw fixed('ゆっくり 動くときは、「1秒かけて前へ10歩動く」のように かける 時間を 書きます',`${p[0].text}1秒かけて${p[1]?.text||p[2]?.text||'前'}へ${p[3].text}歩動く`,'時間を かけて 動く','MotionCommand');
@@ -17376,8 +17474,8 @@ function createAkariExtensionHost(options) {
       throw fixed(`${p[1].text}は「${p[1].text}を120％にする」のように、何％に するかを 書きます`,`${p[0].text}${p[1].text}を（${p[1].text}${sign}${p[2].text}）％にする`,'計算して かえる',p[1].text==='大きさ'?'LooksCommand':'SoundCommand');
     }
     // 「点数は」と点数を言う: two things said together are joined.
-    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(\u0001+)と([^\u0001、。]+?)を(?:言う|いう|話す|はなす)$/d,code))&&p[1].text.startsWith('「'))
-      throw fixed('2つを ならべて 言うときは、「つなげて言う」と 書きます',`${p[0].text}${p[1].text}と${p[2].text}をつなげて言う`,'つなげて 言う','Say');
+    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(\u0001+)と([^\u0001、。]+?)を(?:つなげて)?(?:([^、。\u0001]+?)秒(?:間)?)?(?:つなげて)?(?:言う|いう|話す|はなす)$/d,code))&&p[1].text.startsWith('「')&&(p[3]||!mask.includes('つなげて')))
+      throw fixed('2つを ならべて 言うときは、「つなげて言う」と 書きます',p[3]?`（${p[1].text}と${p[2].text}をつなげた文字）を${p[3].text}秒話す`:`${p[0].text}${p[1].text}と${p[2].text}をつなげて言う`,'つなげて 言う','Say');
     // もしねこがおされたら: a click starts with its own heading.
     if((p=surfaceCapture(/^もし、?(.+?)が(?:おされ|押され|クリックされ)(?:たら|ていれば|ているなら|れば|ると)、?$/d,code))){
       const who=p[0].text.replace(/^「(.*)」$/,'$1');
@@ -17542,6 +17640,12 @@ function createAkariExtensionHost(options) {
   }
   function readBlockHead(text,symbols,ctx={}) {
     const code=compactOutsideString(text),mask=surfaceMask(code),line=ctx.sourceLine||{raw:text,code:text,lineNo:ctx.lineNo||0};
+    // まず・次に… before もし or a repeat only say the order.
+    const lead=new RegExp('^(?:'+LEAD_WORDS+')、?(?=もし|[0-9０-９]+回|ずっと|次のことを)').exec(mask||'');
+    if(lead){const rest=code.slice(lead[0].length);return readBlockHead(rest,symbols,{...ctx,sourceLine:line.mapped&&compactOutsideString(line.code)===code?surfaceLineSlice(line,lead[0].length,code.length):undefined});}
+    // もし…のとき、 is もし…なら、
+    const when=surfaceCapture(/^(もし.+?)(?:の)?とき(?:は)?、(.*)$/d,code)||surfaceCapture(/^(もし.+?)(?:の)?とき(?:は)?$/d,code);
+    if(when&&!/(?:なら|れば|えば|てば|たら)$/.test(surfaceMask(when[0].text)))return readBlockHead(when[0].text+'なら、'+(when[1]?.text||''),symbols,{...ctx,sourceLine:undefined});
     const e=part=>parseMappedExpression(part.text,code,line,symbols,ctx,part.start);
     const inline=part=>{const fragment=surfaceLineSlice(line,part.start,part.end);fragment.comment=line.comment;return parseSentenceSequence(fragment,symbols,ctx);};
     // A control's explicit subject is scoped to its header and child suites.
@@ -17564,7 +17668,7 @@ function createAkariExtensionHost(options) {
       return {kind:'Else',...(tail&&tail!=='次のことをする'?{inlineBody:inline(parts[0])}:{})};
     }
     // The bounce command reads like a condition; with or without a subject it is one command.
-    if(/^(?:[^、。]+?は、?)?(?:もし、?)?(?:画面の(?:はし|端)|端)に(?:ふれ|触れ).*(?:はね返|跳ね返)(?:る|ります)$/.test(mask))return null;
+    if(/^(?:[^、。]+?は、?)?(?:もし、?)?(?:画面の(?:はし|端)|端)に(?:ふれ|触れ)[^、]*、?(?:はね返|跳ね返)(?:る|ります|って)/.test(mask))return null;
     // もし…たら reads as もし…なら (only with もし: without it, 〜たら can mean waiting).
     if((parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))、(.*)$/d,code))|| (parts=surfaceCapture(/^((?:もし)?.+?(?:なら(?:ば)?|れば|えば|てば))$/d,code))
       || (parts=surfaceCapture(/^(もし.+?たら)、(.*)$/d,code)) || (parts=surfaceCapture(/^(もし.+?たら)$/d,code))) {
@@ -17572,15 +17676,20 @@ function createAkariExtensionHost(options) {
       if(tail?.text&&tail.text!=='次のことをする'&&/(?:なら、|ことを.+回)/.test(surfaceMask(tail.text)))throw new AkariError('P201','「もし」や「くり返す」の 中に 重ねるときは、次の 行に 書いて、行の はじめを 右へ ずらしてください');
       return {kind:'IfStatement',condition,...(tail?.text&&tail.text!=='次のことをする'?{inlineBody:inline(tail)}:{})};
     }
-    if((parts=surfaceCapture(/^(.+)ことを(.+)回(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します)$/d,code))) {
+    // 次のことを10回くり返す (an old form) names the form to write.
+    if((parts=surfaceCapture(/^次のことを(.+?回)(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します|くりかえします)$/d,code)))
+      throw sentenceDiagnostic('「次のことを」は 書きません。くり返すことは 次の 行に 右へ ずらして 書きます',line,[{label:'次のことを を けす',source:`${parts[0].text}くり返す`}],{kind:'RepeatCount'});
+    if((parts=surfaceCapture(/^(?!次のことを)(.+)ことを(.+)回(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します|くりかえします)$/d,code))) {
       if(/ことを/.test(surfaceMask(parts[0].text)))throw new AkariError('P201','くり返しの 中に くり返しを 重ねるときは、次の 行に 書いて、行の はじめを 右へ ずらしてください');
       return {kind:'RepeatCount',count:sentenceQuantity(e(parts[1]),'回'),inlineBody:inline(parts[0])};
     }
-    if(/^(?:次のことを)?ずっと(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します)$/.test(mask))return {kind:'Forever'};
-    if((parts=surfaceCapture(/^(?:次のことを)?(.+)回(?:だけ)?(?:、次のことを|、)?(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します)$/d,code)))return {kind:'RepeatCount',count:sentenceQuantity(e(parts[0]),'回')};
+    if((parts=surfaceCapture(/^(?!次のことを)(.+)ことをずっと(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します|くりかえします)$/d,code)))return {kind:'Forever',inlineBody:inline(parts[0])};
+    if((parts=surfaceCapture(/^(.+(?:あいだ|間|まで))、(?!次のことを)(.+)ことを(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します|くりかえします)$/d,code))){const clause=readConditionClause(parts[0].text,symbols,ctx);if(clause)return {kind:clause.mode==='while'?'RepeatWhile':'RepeatUntil',condition:clause.condition,inlineBody:inline(parts[1])};}
+    if(/^(?:次のことを)?ずっと(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します|くりかえします)$/.test(mask))return {kind:'Forever'};
+    if((parts=surfaceCapture(/^(?:次のことを)?(.+)回(?:だけ)?(?:、次のことを|、)?(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します|くりかえします)$/d,code)))return {kind:'RepeatCount',count:sentenceQuantity(e(parts[0]),'回')};
     if((parts=surfaceCapture(/^(.+?)(?:の中身)?を(?:先頭から)?(?:一つずつ|1つずつ)見て、次のことを(?:行う|行います)$/d,code)))return {kind:'ForEach',list:e(parts[0]),binder:'今見ているもの'};
     if((parts=surfaceCapture(/^(.+)の各要素を(.+)として、?(?:次のことを)?(?:くり返す|繰り返す|くりかえす)$/d,code)))return {kind:'ForEach',list:e(parts[0]),binder:parsedDeclarationName(parts[1].text)};
-    if((parts=surfaceCapture(/^(.+(?:あいだ|間|まで))、?(?:次のことを)?(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します)$/d,code))){const clause=readConditionClause(parts[0].text,symbols,ctx);return {kind:clause.mode==='while'?'RepeatWhile':'RepeatUntil',condition:clause.condition};}
+    if((parts=surfaceCapture(/^(.+(?:あいだ|間|まで))、?(?:次のことを)?(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します|くりかえします)$/d,code))){const clause=readConditionClause(parts[0].text,symbols,ctx);return {kind:clause.mode==='while'?'RepeatWhile':'RepeatUntil',condition:clause.condition};}
     if((parts=surfaceCapture(/^(.+)回((?:.*)(?:進んで|すすんで|動いて|うごいて))、(.+)$/d,code))){const first=sentenceInfinitive(parts[1].text),last=parts[2].text,indent=' '.repeat(line.indent||0);throw sentenceDiagnostic('どこまでをくり返すのか分かりません。えらんでください',line,[{label:'前の動きだけをくり返す',source:`${parts[0].text}回くり返す。\n${indent}  ${first}。\n${indent}${last}`},{label:'2つの動きをくり返す',source:`${parts[0].text}回くり返す。\n${indent}  ${first}。\n${indent}  ${last}`}],{kind:'RepeatCount',missing:['scope']});}
     // 〜たら without もし: a check needs もし (without it, 〜たら can mean waiting).
     if((parts=surfaceCapture(/^((?!もし).+?たら)、(.*)$/d,code))&&!/(?:になったら|終わったら|小さくなったら)/.test(mask))
@@ -17615,7 +17724,7 @@ function createAkariExtensionHost(options) {
     let code=compactOutsideString(line.code),working=line;
     // 〜に〜を入れる / 〜を〜に入れる with a bare (not 「」) target, as [target, value]; .variable when the target is a variable.
     const putInto=text=>{
-      const first=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる)$/d,text),valueFirst=!first&&surfaceCapture(/^(.+?)を(.+)に(?:入れる|いれる)$/d,text);
+      const first=surfaceCapture(/^(.+)に(.+)を(?:入れる|いれる|入れます|いれます)$/d,text),valueFirst=!first&&surfaceCapture(/^(.+?)を(.+)に(?:入れる|いれる|入れます|いれます)$/d,text);
       const pair=first||(valueFirst?[valueFirst[1],valueFirst[0]]:null);
       if(!pair||pair[0].text.startsWith('「'))return null;
       const name=readNameToken(pair[0].text,0);
@@ -17630,8 +17739,7 @@ function createAkariExtensionHost(options) {
     }
     // そのあと・それから・そして・また… only say the order. Without 、 they are dropped before a number, a quote, a
     // known name or a usual first word (そして10歩進む was read as a name 「そして10」).
-    const LEAD_WORDS='そのあと|それから|次に|最後に|そして|まず|はじめに|最初に|また|次は|こんどは|今度は|はやく|すばやく|さっと';
-    let lead=new RegExp('^(?:(?:'+LEAD_WORDS+'|くり返しが終わると)、|(?:'+LEAD_WORDS+')(?=[0-9０-９「（【－]|前へ|後ろへ|右に|右へ|左に|左へ|画面の|自分|すがた|姿|はいけい|背景|ペン|すべての|この|ほかの|作品|何も|いちばん|よこ|たて|表示色|大きさ|音の|重なり|向き|次の|前の))').exec(surfaceMask(code));
+    let lead=new RegExp('^(?:(?:'+LEAD_WORDS+'|くり返しが終わると)、|(?:'+LEAD_WORDS+')(?=[0-9０-９\u0001－]|前へ|後ろへ|右に|右へ|左に|左へ|画面の|自分|すがた|姿|はいけい|背景|ペン|すべての|この|ほかの|作品|何も|いちばん|よこ|たて|表示色|大きさ|音の|重なり|向き|次の|前の))').exec(surfaceMask(code));
     if(!lead){const word=new RegExp('^(?:'+LEAD_WORDS+')').exec(surfaceMask(code)),rest=word&&code.slice(word[0].length),token=rest&&readNameToken(rest),whole=readNameToken(code);
       if(token&&(dataNameKind(token.name,symbols,ctx)||symbols?.project?.components?.some(c=>c.name===token.name))&&!(whole&&dataNameKind(whole.name,symbols,ctx)))lead=word;}
     if(lead&&/は$/.test(lead[0])&&symbols?.project?.components?.some(c=>c.name===lead[0].slice(0,-1)))lead=null;
@@ -19572,6 +19680,12 @@ function createAkariExtensionHost(options) {
     }
     return out;
   }
+  // Keys Akari knows: 上・下・左・右・空白・決定・取消, one letter or digit, and the keyboard's own key names.
+  function validKeyName(key) {
+    return ['上','下','左','右','空白','決定','取消'].includes(key) || [...key].length === 1 ||
+      ['Tab','Backspace','Delete','Home','End','PageUp','PageDown','Insert','Shift','Control','Alt','CapsLock'].includes(key) || /^F(?:[1-9]|1[0-2])$/.test(key);
+  }
+  function keyNameMessage(key) { return `「${key}」という キーは ありません。キーは「空白」「右」「a」のように 書きます`; }
   function targetExists(target, symbols, ctx) {
     const name = target.name,
       targetId = ctx.targetId || null;
@@ -19883,6 +19997,10 @@ function createAkariExtensionHost(options) {
             ctx.targetType !== 'sprite'
           )
             add('S304', `「${formatExpression(n)}」はキャラクターでだけ使えます`, ctx.node, where);
+          if (n.sensor === 'KEY_DOWN') {
+            const key = literalText(n.arg);
+            if (key !== null && !validKeyName(key)) add('S301', keyNameMessage(key), ctx.node, where);
+          }
           if (n.sensor === 'INPUT_VALUE')
             checkComponentTarget(n.arg, ['input'], ctx, where, '入力らん');
           if (n.sensor === 'DISTANCE_TO')
@@ -19895,7 +20013,7 @@ function createAkariExtensionHost(options) {
               try {
                 resolveColor(v, { allowTransparent: false });
               } catch (_) {
-                add('S304', `色「${v}」は使える色ではありません`, ctx.node, where);
+                add('S304', `色「${v}」は使える色ではありません。使える色は 黒・白・ねずみ色・赤・だいだい・黄・緑・水色・青・むらさき・もも色・茶 です`, ctx.node, where);
               }
           }
         }
@@ -20081,7 +20199,7 @@ function createAkariExtensionHost(options) {
             try {
               resolveColor(name, { allowTransparent: false });
             } catch (_) {
-              add('S304', `色「${name}」は使える色ではありません`, n, where);
+              add('S304', `色「${name}」は使える色ではありません。使える色は 黒・白・ねずみ色・赤・だいだい・黄・緑・水色・青・むらさき・もも色・茶 です`, n, where);
             }
         }
         if (['MotionCommand', 'PenCommand'].includes(n.kind) && c.targetType === 'stage')
@@ -20164,6 +20282,8 @@ function createAkariExtensionHost(options) {
     };
     for (const item of compiled.items) {
       if (rootKeys && !rootKeys.has(item.key)) continue;
+      if (item.event === 'keyDown' && typeof item.filter?.key === 'string' && !validKeyName(item.filter.key))
+        add('S301', keyNameMessage(item.filter.key), item.ast?.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } }, item.key);
       const base = {
         event: item.event, filter: item.filter || null,
         targetType: item.targetType,

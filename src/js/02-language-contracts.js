@@ -512,13 +512,13 @@
         id: 'LooksCommand:SET_SELF_TEXT',
         kind: 'LooksCommand',
         op: 'SET_SELF_TEXT',
-        source: '自分の文字を「文字」にかえる',
+        source: '自分の文字を「こんにちは」にかえる',
       },
       {
         id: 'LooksCommand:SET_INPUT',
         kind: 'LooksCommand',
         op: 'SET_INPUT',
-        source: '「入力らん1」に「答え」を入れる',
+        source: '「入力らん1」に「こんにちは」を入れる',
       },
       {
         id: 'SoundCommand:SAMPLE',
@@ -684,6 +684,8 @@
     };
     let activeBinding = null;
     const add = (id, category, text, mode = 'statement', reason = '', binding = activeBinding) => {
+      // A one-line action ends with 。 like every other action hint.
+      if (mode === 'statement' && !text.includes('\n') && !/[。、]$/.test(text)) text += '。';
       const key = mode + '|' + text;
       if (seen.has(key)) return;
       seen.add(key);
@@ -713,20 +715,23 @@
     };
     const bindings = [],
       names = new Set();
-    const bind = (name, qualifier, value, bkind, readonly = false) => {
+    const bind = (name, qualifier, value, bkind, readonly = false, local = !qualifier) => {
       const text = nameSource(name, qualifier);
       if (names.has(text)) return;
       names.add(text);
-      bindings.push({ name, text, value, kind: bkind, readonly, qualifier, local: !qualifier });
+      bindings.push({ name, text, value, kind: bkind, readonly, qualifier, local });
     };
     for (const a of options.args || []) bind(a, null, 0, 'dynamic');
     for (const a of place.locals.vars) bind(a, null, 0, 'scalar');
     for (const a of place.locals.lists) bind(a, null, [], 'list');
     for (const a of place.binders) bind(a, null, 0, 'scalar', true);
-    for (const a of project.projectData.variables)
-      bind(a.name, 'project', a.initialValue, 'scalar');
-    for (const a of project.projectData.lists) bind(a.name, 'project', a.initialValue, 'list');
     const localComponents = kind ? project.components : component ? [component] : [];
+    // 作品の is written only when a nearer data has the same name (作品の名前 read like the work's title).
+    const nearer = new Set([...(options.args || []), ...place.locals.vars, ...place.locals.lists, ...place.binders,
+      ...localComponents.flatMap((c) => [...c.localData.variables, ...c.localData.lists].map((x) => x.name))]);
+    for (const a of project.projectData.variables)
+      bind(a.name, nearer.has(a.name) ? 'project' : null, a.initialValue, 'scalar', false, false);
+    for (const a of project.projectData.lists) bind(a.name, nearer.has(a.name) ? 'project' : null, a.initialValue, 'list', false, false);
     for (const c of localComponents) {
       for (const a of c.localData.variables) bind(a.name, 'self', a.initialValue, 'scalar');
       for (const a of c.localData.lists) bind(a.name, 'self', a.initialValue, 'list');
@@ -846,9 +851,13 @@
       add('read:' + name, 'へんすう・リストの 中身', name, 'expression');
       if (!b.readonly && (!pure || b.local)) {
         if (b.kind !== 'list') {
-          add('set:' + name, 'へんすう', `${name}\u30920\u306b\u3059\u308b`);
-          add('add:' + name, 'へんすう', `${name}を1増やす`);
-          add('subtract:' + name, 'へんすう', `${name}を1減らす`);
+          // A variable that starts with text is offered text, not 1増やす.
+          if (typeof b.value === 'string' && !/^－?-?[0-9０-９]+(?:[.．][0-9０-９]+)?$/.test(b.value)) add('set:' + name, 'へんすう', `${name}を「こんにちは」にする`);
+          else {
+            add('set:' + name, 'へんすう', `${name}を0にする`);
+            add('add:' + name, 'へんすう', `${name}を1増やす`);
+            add('subtract:' + name, 'へんすう', `${name}を1減らす`);
+          }
         }
         if (b.kind !== 'scalar') {
           for (const [id, suffix] of [

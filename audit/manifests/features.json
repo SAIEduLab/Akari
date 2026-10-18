@@ -389,13 +389,13 @@
       "id": "LooksCommand:SET_SELF_TEXT",
       "kind": "LooksCommand",
       "op": "SET_SELF_TEXT",
-      "source": "自分の文字を「文字」にかえる。"
+      "source": "自分の文字を「こんにちは」にかえる。"
     },
     {
       "id": "LooksCommand:SET_INPUT",
       "kind": "LooksCommand",
       "op": "SET_INPUT",
-      "source": "「入力らん1」に「答え」を入れる。"
+      "source": "「入力らん1」に「こんにちは」を入れる。"
     },
     {
       "id": "SoundCommand:SAMPLE",

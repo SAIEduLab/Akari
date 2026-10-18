@@ -271,7 +271,7 @@
         return COLOR_NAMES[v];
       }
       if (/^#[0-9A-Fa-f]{6}$/.test(v)) return v.toLowerCase();
-      throw new AkariError('R412', `色「${v}」は使える色ではありません`);
+      throw new AkariError('R412', `色「${v}」は使える色ではありません。使える色は 黒・白・ねずみ色・赤・だいだい・黄・緑・水色・青・むらさき・もも色・茶 です`);
     }
     class PRNG {
       constructor(seed) {

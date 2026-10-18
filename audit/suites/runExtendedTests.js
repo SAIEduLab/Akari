@@ -322,11 +322,11 @@ async function runExtendedTests() {
           args: ['数一覧'],
           definitionKind: 'function',
         });
-      ok(list.some((x) => x.text === '数一覧の中身を全部消す' && x.enabled));
+      ok(list.some((x) => x.text === '数一覧の中身を全部消す。' && x.enabled));
       ok(list.some((x) => x.id === 'Break' && x.enabled));
       ok(list.some((x) => x.mode === 'expression' && x.text === '項目'));
       ok(!list.some((x) => x.id === 'localScalar' || x.id.startsWith('return:')));
-      ok(!list.some((x) => x.mode === 'statement' && x.text.startsWith('作品の' + N + 'を')));
+      ok(!list.some((x) => x.mode === 'statement' && [N, '作品の' + N].some((t) => x.text.startsWith(t + 'を'))));
     });
     await test('HINT function declaration and return positions', () => {
       const p = make(),
@@ -355,7 +355,7 @@ async function runExtendedTests() {
       p.projectData.variables.push(
         ...eachNames.map((name, i) => ({ id: `var-hint-boundary-${i}`, name, initialValue: 0 })),
       );
-      const each = A.hintCandidates(p, 'stage').find((x) => x.id === 'each:作品の名前一覧');
+      const each = A.hintCandidates(p, 'stage').find((x) => x.id === 'each:名前一覧');
       ok(each?.enabled, JSON.stringify(each));
       p.scripts[0].source = each.text;
       let c = A.compileProject(p);
