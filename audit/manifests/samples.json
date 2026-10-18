@@ -25,7 +25,7 @@
     "selectionOnlyPreservesWork": true,
     "confirmationButtons": [
       "ほぞんせずに開く",
-      "キャンセル"
+      "やめる"
     ],
     "cancelPreservesPendingEdits": true,
     "displayPreferencesPreserved": true,
