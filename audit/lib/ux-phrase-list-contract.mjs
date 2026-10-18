@@ -6,7 +6,7 @@ import {browserEnvironment} from './browser-environment.mjs';
 // expectations, never copied from the product's regenerated source or execution.
 export const shopping=['りんご','パン','牛乳'];
 export const sourceFor=n=>`始めると、あかりは「買うもの」の${n}番目を2秒話します。`;
-export const fixedFor=n=>`始めると、あかりは作品のリスト「買うもの」の${n}番目を2秒話します。`;
+export const fixedFor=n=>`始めると、あかりは作品の【買うもの】の${n}番目を2秒話します。`;
 export const isolatedListCases=[
  {variant:'explicit-id',source:sourceFor(2),id:'isolated',key:'script:isolated',ownerKey:'script:isolated'},
  {variant:'idless',source:sourceFor(2),key:'script:sprite-1:start',ownerKey:'script:sprite-1:start'},
@@ -18,16 +18,16 @@ export const isolatedListCases=[
 export const listRepairCases=[
  ...[1,2,3].map(n=>({id:'ordinal/'+n,source:sourceFor(n),fixed:fixedFor(n),speech:shopping[n-1]})),
  {id:'scope/project',source:sourceFor(2),fixed:fixedFor(2),speech:'パン',local:true,choose:0},
- {id:'scope/self',source:sourceFor(2),fixed:'始めると、あかりは自分のリスト「買うもの」の2番目を2秒話します。',speech:'ノート',local:true,choose:1},
- {id:'scope/parent-actor',source:'始めると、あかりは「準備」と言います。だんごは「買うもの」の2番目を2秒話します。',fixed:'始めると、あかりは「準備」と言います。だんごは自分のリスト「買うもの」の2番目を2秒話します。',speech:'ノート',dango:true,choose:1},
- {id:'scope/unit',source:'始めると、あかりは「準備」と言います。だんごも同じ合図で動き始め、「買うもの」の2番目を2秒話します。',fixed:'始めると、あかりは「準備」と言います。だんごも同じ合図で動き始め、自分のリスト「買うもの」の2番目を2秒話します。',speech:'ノート',dango:true,choose:1,documentAfter:{revision:1,unitIds:['unit-1','unit-2']}},
- {id:'scope/persistent-unit',source:'始めると、あかりは「準備」と言います。だんごも同じ合図で動き始め、「買うもの」の2番目を2秒話します。',fixed:'始めると、あかりは「準備」と言います。だんごも同じ合図で動き始め、自分のリスト「買うもの」の2番目を2秒話します。',speech:'ノート',dango:true,choose:1,documentBefore:{revision:7,unitIds:['first-event','second-event']},documentAfter:{revision:8,unitIds:['first-event','second-event']}},
- {id:'scope/stage',source:'始めると、あかりは「準備」と言います。画面も同じ合図で動き始め、点数を「買うもの」の2番目にします。',fixed:'始めると、あかりは「準備」と言います。画面も同じ合図で動き始め、点数を作品のリスト「買うもの」の2番目にします。',speech:null,local:true,documentAfter:{revision:1,unitIds:['unit-1','unit-2']}},
- {id:'range/multiple',source:'始めると、あかりは「買うもの」と言います。「買うもの」の2番目を2秒話します。「買うもの」の3番目を2秒話します。',fixed:'始めると、あかりは「買うもの」と言います。作品のリスト「買うもの」の2番目を2秒話します。「買うもの」の3番目を2秒話します。',speech:'パン'},
- {id:'range/wrapped',source:'※ '+'長い注釈🐈'.repeat(36)+'\n始めると、あかりは「買うもの」の2番目を2秒話します。\n※ ほかの文  空白',fixed:'※ '+'長い注釈🐈'.repeat(36)+'\n始めると、あかりは作品のリスト「買うもの」の2番目を2秒話します。\n※ ほかの文  空白',speech:'パン'},
- {id:'range/escape-html',name:'買う<もの>&',source:'始めると、あかりは「買う<もの>&」の2番目を2秒話します。',fixed:'始めると、あかりは作品のリスト「買う<もの>&」の2番目を2秒話します。',speech:'パン'},
- {id:'range/escape-backslash',name:'買う\\もの',source:'始めると、あかりは「買う\\\\もの」の2番目を2秒話します。',fixed:'始めると、あかりは作品のリスト「買う\\\\もの」の2番目を2秒話します。',speech:'パン'},
- {id:'range/alternate-quotes',source:'始めると、あかりは『買うもの』の2番目を2秒話します。',fixed:'始めると、あかりは作品のリスト「買うもの」の2番目を2秒話します。',speech:'パン'},
+ {id:'scope/self',source:sourceFor(2),fixed:'始めると、あかりは自分の【買うもの】の2番目を2秒話します。',speech:'ノート',local:true,choose:1},
+ {id:'scope/parent-actor',source:'始めると、あかりは「準備」と言います。だんごは「買うもの」の2番目を2秒話します。',fixed:'始めると、あかりは「準備」と言います。だんごは自分の【買うもの】の2番目を2秒話します。',speech:'ノート',dango:true,choose:1},
+ {id:'scope/unit',source:'始めると、あかりは「準備」と言います。だんごも同じ合図で動き始め、「買うもの」の2番目を2秒話します。',fixed:'始めると、あかりは「準備」と言います。だんごも同じ合図で動き始め、自分の【買うもの】の2番目を2秒話します。',speech:'ノート',dango:true,choose:1,documentAfter:{revision:1,unitIds:['unit-1','unit-2']}},
+ {id:'scope/persistent-unit',source:'始めると、あかりは「準備」と言います。だんごも同じ合図で動き始め、「買うもの」の2番目を2秒話します。',fixed:'始めると、あかりは「準備」と言います。だんごも同じ合図で動き始め、自分の【買うもの】の2番目を2秒話します。',speech:'ノート',dango:true,choose:1,documentBefore:{revision:7,unitIds:['first-event','second-event']},documentAfter:{revision:8,unitIds:['first-event','second-event']}},
+ {id:'scope/stage',source:'始めると、あかりは「準備」と言います。画面も同じ合図で動き始め、点数を「買うもの」の2番目にします。',fixed:'始めると、あかりは「準備」と言います。画面も同じ合図で動き始め、点数を作品の【買うもの】の2番目にします。',speech:null,local:true,documentAfter:{revision:1,unitIds:['unit-1','unit-2']}},
+ {id:'range/multiple',source:'始めると、あかりは「買うもの」と言います。「買うもの」の2番目を2秒話します。「買うもの」の3番目を2秒話します。',fixed:'始めると、あかりは「買うもの」と言います。作品の【買うもの】の2番目を2秒話します。「買うもの」の3番目を2秒話します。',speech:'パン'},
+ {id:'range/wrapped',source:'※ '+'長い注釈🐈'.repeat(36)+'\n始めると、あかりは「買うもの」の2番目を2秒話します。\n※ ほかの文  空白',fixed:'※ '+'長い注釈🐈'.repeat(36)+'\n始めると、あかりは作品の【買うもの】の2番目を2秒話します。\n※ ほかの文  空白',speech:'パン'},
+ {id:'range/escape-html',name:'買う<もの>&',source:'始めると、あかりは「買う<もの>&」の2番目を2秒話します。',fixed:'始めると、あかりは作品の【買う<もの>&】の2番目を2秒話します。',speech:'パン'},
+ {id:'range/escape-backslash',name:'買う\\もの',source:'始めると、あかりは「買う\\\\もの」の2番目を2秒話します。',fixed:'始めると、あかりは作品の【買う\\もの】の2番目を2秒話します。',speech:'パン'},
+ {id:'range/alternate-quotes',source:'始めると、あかりは『買うもの』の2番目を2秒話します。',fixed:'始めると、あかりは作品の【買うもの】の2番目を2秒話します。',speech:'パン'},
  {id:'range/out-of-bounds',source:sourceFor(4),fixed:fixedFor(4),error:'R404'},
 ];
 export const listRepairIds=[...['1180x757','1188x848'].map(v=>'gui/'+v),...listRepairCases.map(c=>c.id),

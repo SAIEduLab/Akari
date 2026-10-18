@@ -20,7 +20,7 @@ export const insertionSources={
 };
 const sameDocument=(a,b)=>{assert.equal(a.source,b.source);assert.equal(a.project,b.project);assert.equal(a.history,b.history);assert.equal(a.owner,b.owner);};
 const clean=s=>{assert.equal(s.pending,null);assert.deepEqual(s.diagnostics,[]);assert.equal(s.owner,'script:insertion-main');};
-const chosen=(o,body='body',index=1,category=['basic'])=>{assert.deepEqual(o.chosen.chosen,[{parentId:o.targetParent,body,index}]);assert.deepEqual(o.chosen.chosenLabels,[(index+1)+'番目の場所に ブロックを入れる']);assert.deepEqual(o.chosen.category,category);assert.equal(o.chosen.pending,null);assert.equal(o.chosen.destinationShown,true);assert.ok(o.chosen.destination.length>0);};
+const chosen=(o,body='body',index=1,category=['basic'])=>{assert.deepEqual(o.chosen.chosen,[{parentId:o.targetParent,body,index}]);assert.deepEqual(o.chosen.chosenLabels,[(index+1)+'番目の ばしょに ブロックを入れる']);assert.deepEqual(o.chosen.category,category);assert.equal(o.chosen.pending,null);assert.equal(o.chosen.destinationShown,true);assert.ok(o.chosen.destination.length>0);};
 const additionClick=o=>assert.ok(o.trace.some(e=>e.kind==='click'&&e.action==='body-insert'),'native insertion control receives its click');
 const values=s=>s.shape.map(n=>n.value);
 const travel=(o,steps)=>{assert.equal(o.undo.length,steps);assert.equal(o.redo.length,steps);sameDocument(o.undo.at(-1),o.before);sameDocument(o.redo.at(-1),o.after);};
@@ -62,7 +62,7 @@ export function verifyInsertionContextObservation(id,o){
     assert.match(o.chosen.message,/見せるブロック/);assert.equal(o.after.shape.length,1);assert.equal(o.after.shape[0].kind,'WaitTime');assert.equal(o.after.shape[0].seconds,1);
     assert.equal(o.after.history,o.before.history+1);clean(o.after);travel(o,1);
   }else if(id==='selection/value-unavailable'){
-    assert.equal(o.selected.chosen.length,1);assert.equal(o.selected.chosen[0].input,'value');assert.match(o.selected.destination,/入れるものを えらんでいます/);assert.match(o.selected.destination,/ここに入れる/);
+    assert.equal(o.selected.chosen.length,1);assert.equal(o.selected.chosen[0].input,'value');assert.match(o.selected.destination,/に 入れる ブロックを えらんでいます/);assert.match(o.selected.destination,/ここに入れる/);
     assert.equal(o.disabled.ariaDisabled,'true');assert.equal(o.disabled.reasonVisible,true);assert.match(o.disabled.reason,/ここに入れる/);
     sameDocument(o.selected,o.before);sameDocument(o.after,o.before);assert.match(o.after.message,/ここに入れる/);
     assert.deepEqual(o.commandChosen.chosen,[{parentId:o.before.rootId,body:'body',index:1}]);assert.deepEqual(o.commandChosen.category,['basic']);

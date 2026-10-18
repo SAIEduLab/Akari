@@ -225,7 +225,7 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
     ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));const n=r.ast.body[0];
       eq([n.kind,n.op,n.actorRef],[kind,op,{kind:'named',name:'マスコット'}]);eq(api.formatScript(r.ast).trim(),source.replace('は、','は'));}
     for(const source of ['名前一覧に「あ」を入れる。','マスコットは名前一覧に「あ」を入れる。']){const r=read(source);ok(!r.ast,source);
-      ok(/さいごに入れるのか、何番目かと取りかえるのか/.test(r.syntaxDiagnostics[0].message),source);}
+      ok(/さいごに入れるのか、何番目かと 入れかえるのか/.test(r.syntaxDiagnostics[0].message),source);}
   });
   return {results,total:results.length,failed:results.filter(r=>r.status==='FAIL').length};
 }

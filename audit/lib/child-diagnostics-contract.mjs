@@ -3,20 +3,20 @@ import {browserEnvironment} from './browser-environment.mjs';
 
 // Fixed independently of the browser runner's list and observed result status.
 const syntaxExpectations=[
-  ['double-negative','P201','二重否定は括弧で分けてください','（ ）でくくります'],
-  ['parentheses','P207','括弧の対応を確認してください','開くしるしと とじるしるし'],
-  ['closing','P207','文字列・名前・括弧を閉じてください','とじるしるしを足します'],
-  ['quote','P205','台詞は「文字」と言う、値は「値を言う」と書きます','話す文字は「 」でくくります'],
-  ['nested','P201','入れ子の条件・反復は字下げして書いてください','先頭を右へずらします'],
-  ['repeat','P201','深い反復は字下げして書いてください','先頭を右へずらします'],
-  ['tab','P209','字下げは半角スペースで書きます。タブや全角空白の範囲を確認してください','小さい空白（半角スペース）'],
-  ['outer-indent','P209','最上位の文は字下げせずに書きます','いちばん外の文は行の左から'],
-  ['heading-indent','P202','見出しの本文を字下げして書いてください','「始めると、」などの次の行'],
-  ['alignment','P209','同じまとまりの文の字下げをそろえてください','先頭の空白の数をそろえます'],
-  ['delay','P205','待ってから動く意味なら、待機と移動を分けます','2つの文に分けます'],
-  ['argument-name','P205','引数名を確認してください','名前を1つ書きます'],
-  ['argument-duplicate','P205','入れるものの名前「点数」を2回書いています。名前は1回ずつ書いてください','同じ名前を2回書いています'],
-  ['argument-bundle','P205','渡す値を括弧で囲んでください','（ ）でひとまとめにします'],
+  ['double-negative','P201','「ではない」が 2つ つづいています。前の ほうを（ ）で かこんでください','「条件（…）が成り立たない」で 書きます'],
+  ['parentheses','P207','かっこの 開く しるしと とじる しるしが 合っているか たしかめてください','開く しるしと とじる しるしを そろえます'],
+  ['closing','P207','「 」・【 】・（ ）などの とじる しるしを 書いてください','とじる しるしを 足します'],
+  ['quote','P205','言うことは「「文字」と言う」、へんすうの 中身は「点数の値を言う」のように 書きます','話す 文字は「 」で かこみます'],
+  ['nested','P201','「もし」や「くり返す」の 中に 重ねるときは、次の 行に 書いて、行の はじめを 右へ ずらしてください','行の はじめを 右へ ずらします'],
+  ['repeat','P201','くり返しの 中に くり返しを 重ねるときは、次の 行に 書いて、行の はじめを 右へ ずらしてください','行の はじめを 右へ ずらします'],
+  ['tab','P209','行の はじめを 右へ ずらすときは、小さい 空白で 書きます。Tabキーや 大きい 空白を 使っていないか たしかめてください','小さい 空白を 使います'],
+  ['outer-indent','P209','いちばん 外の 文は、行の はじめを 右へ ずらさずに 書きます','いちばん 外の 文は 行の 左から'],
+  ['heading-indent','P202','「作品を動かしたとき、自分は、」などの 次の 行は、行の はじめを 右へ ずらして 書いてください','などの 次の 行は、はじめを 右へ'],
+  ['alignment','P209','同じ まとまりの 文は、行の はじめの 空白の 数を そろえてください','はじめの 空白の 数を そろえます'],
+  ['delay','P205','待ってから 動くときは、「待つ」と「動く」の 2つの 文に 分けます','2つの 文に 分けます'],
+  ['argument-name','P205','入れるものの 名前を たしかめてください。れい：点数を10として、','名前を 1つ 書きます'],
+  ['argument-duplicate','P205','入れるものの名前「点数」を2回書いています。名前は1回ずつ書いてください','同じ 名前が 2つ いじょう あります'],
+  ['argument-bundle','P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）を渡して、','（ ）で ひとまとめに します'],
 ];
 export const childDiagnosticIds=Object.freeze([...syntaxExpectations.map(x=>'syntax/'+x[0]),
   'semantic/function-effects','runtime/list-reference','file/digest-refusal',
@@ -44,11 +44,11 @@ export function verifyChildDiagnosticsReport(report,inputs) {
     assert.deepEqual(d.after,d.before);assert.ok(d.source.length>0);assert.match(d.entry,/native Enter disclosure/);
   }
   const effects=rows.get('semantic/function-effects');
-  assert.ok(effects.errors.some(d=>d.code==='S305'&&d.message==='計算では外部副作用や待機を行えません'));
-  assert.match(effects.primary,/音を出す・待つ/);assert.match(effects.primary,/「てじゅん」へ入れます/);assert.match(effects.primary,/足す/);
-  assert.doesNotMatch(effects.primary,/function:diagnostic-function/);assert.match(effects.detail,/S305/);assert.match(effects.detail,/外部副作用や待機/);
+  assert.ok(effects.errors.some(d=>d.code==='S305'&&d.message==='「答えをもとめる」の 中では、動く・音を 出す・待つ などの やることは 使えません'));
+  assert.match(effects.primary,/音を 出す・待つ/);assert.match(effects.primary,/「てじゅん」へ 入れます/);assert.match(effects.primary,/足す/);
+  assert.doesNotMatch(effects.primary,/function:diagnostic-function/);assert.match(effects.detail,/S305/);assert.match(effects.detail,/やることは 使えません/);
   assert.deepEqual(effects.after,effects.before);
-  const runtime=rows.get('runtime/list-reference');assert.match(runtime.primary,/ならんだものを おぼえるリスト/);
+  const runtime=rows.get('runtime/list-reference');assert.match(runtime.primary,/ならんだ ものを おぼえる リスト/);
   assert.match(runtime.primary,/あかり/);assert.match(runtime.primary,/1行目/);assert.match(runtime.primary,/のこっています/);
   assert.doesNotMatch(runtime.primary,/script:|sprite-1|R411/);assert.match(runtime.detail,/^R411:/);assert.match(runtime.detail,/script:diagnostic-main/);
   assert.match(runtime.detail,/「買うもの」の2番目/);assert.match(runtime.recordChoice,/あかり/);assert.doesNotMatch(runtime.recordChoice,/R411|script:|sprite-1/);

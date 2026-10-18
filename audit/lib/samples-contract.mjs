@@ -3,7 +3,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {browserEnvironment} from './browser-environment.mjs';
 import {sha} from './product-test-host.mjs';
-export const samplesFeature={"id":"editable-samples","count":6,"ids":["dance","flower","game","maze","music","story"],"names":["マスコットとだんごのダンス","くるくる花もよう","星をつかまえよう","道をつくって めいろたんけん","おひさまの 曲づくり","ふたりの ふしぎな おさんぽ"],"openRequiresConfirmation":"unsaved-only","picker":"native-dialog","cardLoadsDirectly":true,"selectionOnlyPreservesWork":true,"confirmationButtons":["ほぞんせずに開く","キャンセル"],"cancelPreservesPendingEdits":true,"displayPreferencesPreserved":true,"originalDataIsolated":true,"offline":true,"editOperations":["parameter","replace","reorder","add","delete"]};
+export const samplesFeature={"id":"editable-samples","count":6,"ids":["dance","flower","game","maze","music","story"],"names":["マスコットとだんごのダンス","くるくる花もよう","星をつかまえよう","道をつくって めいろたんけん","おひさまの 曲づくり","ふたりの ふしぎな おさんぽ"],"openRequiresConfirmation":"unsaved-only","picker":"native-dialog","cardLoadsDirectly":true,"selectionOnlyPreservesWork":true,"confirmationButtons":["ほぞんせずに開く","やめる"],"cancelPreservesPendingEdits":true,"displayPreferencesPreserved":true,"originalDataIsolated":true,"offline":true,"editOperations":["parameter","replace","reorder","add","delete"]};
 export const sampleTestIds=["SAMPLES-CATALOG","SAMPLES-RUNTIME","SAMPLES-CHOICE-CONFIRM","SAMPLES-CANCEL-PENDING","SAMPLES-RESET-ISOLATION","SAMPLES-BLOCK-EDIT","SAMPLES-SAVE-OFFLINE","SAMPLES-LOCKS","SAMPLES-RESPONSIVE-PICKER"];
 export const sampleExpected={
  'SAMPLES-CATALOG':{count:6,valid:true,isolated:true,assets:true,roundtrip:true},

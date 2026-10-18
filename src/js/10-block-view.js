@@ -990,7 +990,11 @@
         } else if (schema.kind === 'IfStatement') {
           const token = value.find((p) => p?.slot?.key === 'condition');
           if (token) value = ['\u3082\u3057 ', token, ' \u306a\u3089'];
-        } else if (schema.kind === 'Forever') value = ['\u305a\u3063\u3068'];
+        } else if (schema.kind === 'Forever') value = ['ずっと'];
+        else if (schema.id === 'BuiltinCall:乱数') {
+          const slot = schema.inputs.find((s) => s.key === 'args');
+          value = [{ token: '', slot, index: 0 }, ' から ', { token: '', slot, index: 1 }, ' のどれか'];
+        }
         else value = value.map((p) => (typeof p === 'string' ? p.replace(/\u3002$/, '') : p));
       }
       phraseCache.set(schema.id, value);
@@ -2289,6 +2293,11 @@
           }
         }
         else if (schema.kind === 'WaitBroadcastGroup') main.append(field('actorRef'), field('broadcastRef'), E('span', '', 'の合図を受けた動きが 全部おわるまで待つ'));
+        else if (schema.kind === 'BuiltinCall' && schema.discriminator?.value === '乱数' && node.inputs.args?.length === 2) {
+          // Read as the code writes it: 1から6のどれか.
+          const args = schema.inputs.find(s => s.key === 'args');
+          main.append(renderInput(node, args, 0), E('span', '', 'から'), renderInput(node, args, 1), E('span', '', 'のどれか'));
+        }
         else if (schema.kind === 'MotionCommand' && ['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(schema.discriminator?.value)) {
           const args = schema.inputs.find(s => s.key === 'args');
           if (schema.discriminator.value === 'GLIDE_DIRECTION') main.append(field('actorRef'), renderInput(node, args, 0), E('span', '', 'かけて'), field('direction'), E('span', '', 'へ'), renderInput(node, args, 1), E('span', '', '動く'));

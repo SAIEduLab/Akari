@@ -404,9 +404,9 @@ async function runExtendedTests() {
     });
     await test('HINT event-specific values and target restrictions', () => {
       for (const [event, sensor] of [
-        ['keyDown', '\u62bc\u3055\u308c\u305f\u30ad\u30fc'],
-        ['message', '\u53d7\u3051\u53d6\u3063\u305f\u77e5\u3089\u305b'],
-        ['backdropChanged', '\u65b0\u3057\u3044\u80cc\u666f\u540d'],
+        ['keyDown', 'おされたキー'],
+        ['message', '受けた合図'],
+        ['backdropChanged', '新しいはいけいの名前'],
       ]) {
         ok(
           A.hintCandidates(make(), 'stage', { event }).some(

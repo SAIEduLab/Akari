@@ -9,7 +9,7 @@ export const childLanguageUiIds = Object.freeze([
 
 export const childInsertionConceptHints=Object.freeze({
   "commandAndBody": "つなぐブロックは、「話す」「待つ」など、してほしいことです。本文（ほんぶん）は、ブロックを じゅん番に ならべるところです。",
-  "palette": "ブロックは なかまごとに分かれています。たとえば「よく使う」には「話す」「待つ」があります。「ブロックを さがす」に言葉を入れると、さがせます。「ブロックの見せ方」で、つなぐブロックと はめるブロックの どちらを見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない理由も読めます。"
+  "palette": "ブロックは なかまごとに分かれています。れい：「よく使う」には「話す」「待つ」があります。「ブロックを さがす」に言葉を入れると、さがせます。「ブロックの見せ方」で、つなぐブロックと はめるブロックの どちらを見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない理由も読めます。"
 });
 
 function readable(rows,min=1) {
@@ -53,7 +53,7 @@ function panelReach(observation,method,basic=false) {
   }
   if(basic) {
     const text=observation.bottom.tail.map(r=>r.text).join(' ');
-    assert.ok(text.includes('コードは コピーしません')&&text.includes('決めた ことを 1つ もとにもどす')&&text.includes('入力を取り消す'));
+    assert.ok(text.includes('コードは コピーしません')&&text.includes('決めた ことを 1つ もとにもどす')&&text.includes('入力を やめる'));
   }
   if(method==='native-keyboard') {
     panelMeasurement(observation.afterArrow);

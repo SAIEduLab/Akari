@@ -64,7 +64,7 @@ export function verifyAutosaveStateReport(report){
   {
     const o=at('restored/persistent-second-repair');
     assert.equal(o.restoredFromStorage,true);assert.deepEqual(o.before.project.scripts[0].document.unitIds,['first-event','second-event']);
-    const expected=structuredClone(o.before.project);expected.scripts[0].source=autosaveSources.second.replace('点数を「買うもの」','点数を作品のリスト「買うもの」')+autosaveSuffix;
+    const expected=structuredClone(o.before.project);expected.scripts[0].source=autosaveSources.second.replace('点数を「買うもの」','点数を作品の【買うもの】')+autosaveSuffix;
     expected.scripts[0].document.revision++;
     assert.deepEqual(o.opened.project,o.before.project);assert.equal(o.opened.state,'DESIGN');
     assert.deepEqual(o.applied.project,expected);assert.equal(o.applied.history,o.opened.history+1);owner(o.applied);

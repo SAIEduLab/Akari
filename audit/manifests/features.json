@@ -77,7 +77,7 @@
       "id": "RepeatUntil",
       "kind": "RepeatUntil",
       "op": "",
-      "source": "「空白」キーが押されるまで、くり返す。\n  何もしない。"
+      "source": "「空白」キーがおされるまで、くり返す。\n  何もしない。"
     },
     {
       "id": "WaitTime",
@@ -107,13 +107,13 @@
       "id": "MotionCommand:GOTO",
       "kind": "MotionCommand",
       "op": "GOTO",
-      "source": "よこ100、たて50のばしょへ行く。"
+      "source": "よこ100歩、たて50歩のばしょへ行く。"
     },
     {
       "id": "MotionCommand:GLIDE",
       "kind": "MotionCommand",
       "op": "GLIDE",
-      "source": "よこ200、たて100のばしょへ1秒かけて動く。"
+      "source": "よこ200歩、たて100歩のばしょへ1秒かけて動く。"
     },
     {
       "id": "MotionCommand:TURN_RIGHT",
@@ -173,13 +173,13 @@
       "id": "LooksCommand:HIDE",
       "kind": "LooksCommand",
       "op": "HIDE",
-      "source": "姿をかくす。"
+      "source": "すがたをかくす。"
     },
     {
       "id": "LooksCommand:SHOW",
       "kind": "LooksCommand",
       "op": "SHOW",
-      "source": "姿を見せる。"
+      "source": "すがたを見せる。"
     },
     {
       "id": "LooksCommand:FRONT",
@@ -245,43 +245,43 @@
       "id": "LooksCommand:SET_BACKDROP",
       "kind": "LooksCommand",
       "op": "SET_BACKDROP",
-      "source": "背景を「空色」に変える。"
+      "source": "はいけいを「空色」にかえる。"
     },
     {
       "id": "LooksCommand:NEXT_BACKDROP",
       "kind": "LooksCommand",
       "op": "NEXT_BACKDROP",
-      "source": "次の背景に変える。"
+      "source": "次のはいけいにかえる。"
     },
     {
       "id": "LooksCommand:PREV_BACKDROP",
       "kind": "LooksCommand",
       "op": "PREV_BACKDROP",
-      "source": "前の背景に変える。"
+      "source": "前のはいけいにかえる。"
     },
     {
       "id": "LooksCommand:SET_COSTUME",
       "kind": "LooksCommand",
       "op": "SET_COSTUME",
-      "source": "衣装を「星」に変える。"
+      "source": "すがたを「星」にかえる。"
     },
     {
       "id": "LooksCommand:NEXT_COSTUME",
       "kind": "LooksCommand",
       "op": "NEXT_COSTUME",
-      "source": "次の衣装に変える。"
+      "source": "次のすがたにかえる。"
     },
     {
       "id": "LooksCommand:PREV_COSTUME",
       "kind": "LooksCommand",
       "op": "PREV_COSTUME",
-      "source": "前の衣装に変える。"
+      "source": "前のすがたにかえる。"
     },
     {
       "id": "LooksCommand:SET_TARGET_TEXT",
       "kind": "LooksCommand",
       "op": "SET_TARGET_TEXT",
-      "source": "「ボタン1」の文字を「始める」に変える。"
+      "source": "「ボタン1」の文字を「始める」にかえる。"
     },
     {
       "id": "SoundCommand:TONE",
@@ -299,7 +299,7 @@
       "id": "SoundCommand:SET_VOLUME",
       "kind": "SoundCommand",
       "op": "SET_VOLUME",
-      "source": "音量を50％にする。"
+      "source": "音の大きさを50％にする。"
     },
     {
       "id": "SoundCommand:PITCH_UP",

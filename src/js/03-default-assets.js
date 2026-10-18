@@ -80,7 +80,7 @@
           text: '',
           localData: { variables: [], lists: [] },
           costumes: [
-            { id: 'costume-1', name: 'マスコット', kind: 'image', assetId: DEFAULT_MASCOT_ASSET_ID },
+            { id: 'costume-1', name: '星', kind: 'image', assetId: DEFAULT_MASCOT_ASSET_ID },
             { id: 'costume-2', name: '丸', kind: 'text', value: '●' },
           ],
           costumeId: 'costume-1',

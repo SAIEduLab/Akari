@@ -129,8 +129,8 @@ try{await withBrowser(chrome,async browser=>{
  await run('speech/general-value-and-list',async p=>{
   await prepare(p);await setView(p,speechViews[0]);await start(p);await open(p,'dango');await p.keyboard.press('Escape');
   const toggle=p.locator('.monitor-window .blockui-side-toggle');if(await toggle.isVisible()&&await toggle.getAttribute('aria-expanded')==='false')await toggle.click();
-  await p.getByRole('button',{name:'文章の全文',exact:true}).click();const string=await dialog(p);await p.keyboard.press('Escape');
-  await p.getByRole('button',{name:'買うものの全文',exact:true}).click();const list=await dialog(p);await p.locator('#valueItemNext').click();const next=await dialog(p);return{string,list,next};
+  await p.getByRole('button',{name:'文章の 全部',exact:true}).click();const string=await dialog(p);await p.keyboard.press('Escape');
+  await p.getByRole('button',{name:'買うものの 全部',exact:true}).click();const list=await dialog(p);await p.locator('#valueItemNext').click();const next=await dialog(p);return{string,list,next};
  });
  await run('speech/pagination-and-copy',async p=>{
   const raw='🐈e\u0301赤'.repeat(2001);await prepare(p,{texts:[raw,speechTexts[1]]});await setView(p,speechViews[0]);await start(p);await open(p,'sprite-1');

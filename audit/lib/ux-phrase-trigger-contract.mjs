@@ -20,7 +20,7 @@ export function verifyTriggerObserved(id,o){
  assert.ok(o.actions.length>=2);assert.ok(o.actions.every(a=>['click','keyboard','fill'].includes(a.kind)));
  if(id==='trigger/open-cancel'){
   for(const step of [o.opened,o.staged,o.cancelled]){unchanged(o.before.project,step.project);assert.equal(step.history,o.before.history);assert.equal(step.redo,o.before.redo);}
-  assert.equal(o.cancelled.pending,null);assert.equal(o.opened.detailsOpen,false);assert.match(o.opened.scope,/あかり/);assert.match(o.opened.scope,/他の動きは かえません/);
+  assert.equal(o.cancelled.pending,null);assert.equal(o.opened.detailsOpen,false);assert.match(o.opened.scope,/あかり/);assert.match(o.opened.scope,/ほかの 動きは かえません/);
  }else if(id==='trigger/start-click-start'){
   assert.equal(o.before.project.scripts[0].source,triggerSources.plain);
   for(const [state,event,delta]of [[o.clicked,'click',1],[o.restored,'start',2]]){const expected=structuredClone(o.before.project);expected.scripts[0].event=event;unchanged(expected,state.project);assert.equal(state.history,o.before.history+delta);assert.equal(state.selector,event);assert.match(state.hat,new RegExp(event==='click'?'おされたとき':'「動かす」を おしたとき'));assert.equal(state.detailsOpen,false);}

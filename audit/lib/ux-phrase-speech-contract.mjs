@@ -27,7 +27,7 @@ function pair(o,names,texts){
  assert.deepEqual(o.bubbles.map(b=>[b.id,b.speaker,b.text]),[['sprite-1',names[0],texts[0]],['dango',names[1],texts[1]]]);
  assert.equal(o.openings.length,2);
  for(let i=0;i<2;i++){
-  const opening=o.openings[i];assert.equal(opening.input,i===0?'pointer':'keyboard');dialog(opening.dialog,`${names[i]}の発話（全文）`,texts[i]);assert.equal(opening.selectedText,texts[i]);assert.equal(opening.closed,true);
+  const opening=o.openings[i];assert.equal(opening.input,i===0?'pointer':'keyboard');dialog(opening.dialog,`${names[i]}の 言うこと（全部）`,texts[i]);assert.equal(opening.selectedText,texts[i]);assert.equal(opening.closed,true);
   assert.ok(['copied','unavailable'].includes(opening.clipboard.status));
   // Preserve raw evidence: native Windows clipboard text uses CRLF; the DOM and selection above must retain the original LF.
   if(opening.clipboard.status==='copied')assert.equal(opening.clipboard.text,process.platform==='win32'?texts[i].replaceAll('\n','\r\n'):texts[i]);else assert.ok(opening.clipboard.reason);
@@ -48,17 +48,17 @@ export function verifySpeechObserved(id,o){
   const [a,b,c,d]=o.events;assert.ok(b.at-a.at>=900&&b.at-a.at<=1200);for(const duration of [c.at-a.at,d.at-b.at])assert.ok(duration>=1850&&duration<=2400);
  }
  else if(id==='speech/snapshot-update-clear'){
-  dialog(o.initial,'あかりの発話（全文）',speechTexts[0]);dialog(o.afterUpdate,'あかりの発話（全文）',speechTexts[0]);dialog(o.afterClear,'あかりの発話（全文）',speechTexts[0]);
+  dialog(o.initial,'あかりの 言うこと（全部）',speechTexts[0]);dialog(o.afterUpdate,'あかりの 言うこと（全部）',speechTexts[0]);dialog(o.afterClear,'あかりの 言うこと（全部）',speechTexts[0]);
   assert.deepEqual(o.updatedBubbles.map(b=>[b.id,b.text]),[['dango',multilineTexts[1]],['sprite-1',speechTexts[1]]]);assert.deepEqual(o.clearedBubbles.map(b=>[b.id,b.text]),[['dango',multilineTexts[1]]]);
-  dialog(o.other,'だんごの発話（全文）',multilineTexts[1]);
+  dialog(o.other,'だんごの 言うこと（全部）',multilineTexts[1]);
  }
  else if(id==='speech/stop-and-rerun'){
-  dialog(o.initial,'あかりの発話（全文）',speechTexts[0]);assert.equal(o.afterStop.open,false);assert.equal(o.afterStop.bubbles,0);assert.equal(o.afterStop.runState,'止まっています');
-  dialog(o.rerun,'だんごの発話（全文）',speechTexts[1]);assert.equal(o.afterUiStop.open,false);assert.equal(o.afterUiStop.bubbles,0);assert.equal(o.afterUiStop.runState,'止まっています');
+  dialog(o.initial,'あかりの 言うこと（全部）',speechTexts[0]);assert.equal(o.afterStop.open,false);assert.equal(o.afterStop.bubbles,0);assert.equal(o.afterStop.runState,'止まっています');
+  dialog(o.rerun,'だんごの 言うこと（全部）',speechTexts[1]);assert.equal(o.afterUiStop.open,false);assert.equal(o.afterUiStop.bubbles,0);assert.equal(o.afterUiStop.runState,'止まっています');
  }
  else if(id==='speech/clone-identity'){
   assert.deepEqual(o.bubbles.map(b=>[b.id,b.speaker,b.text]),[['sprite-1','あかり',speechTexts[0]],['sprite-1-clone-3','あかり',speechTexts[1]]]);
-  dialog(o.original,'あかりの発話（全文）',speechTexts[0]);dialog(o.clone,'あかり（コピー: sprite-1-clone-3）の発話（全文）',speechTexts[1]);
+  dialog(o.original,'あかりの 言うこと（全部）',speechTexts[0]);dialog(o.clone,'あかり（コピー）の 言うこと（全部）',speechTexts[1]);
  }
  else if(id==='speech/duplicate-name-refusal'){
   assert.equal(o.error.code,'F503');assert.match(o.error.message,/部品の 名前が.*同じです/);assert.deepEqual(o.namesBefore,ordinaryNames);assert.deepEqual(o.namesAfter,ordinaryNames);
@@ -71,8 +71,8 @@ export function verifySpeechObserved(id,o){
  }
  else if(id==='speech/pagination-and-copy'){
   const text='🐈e\u0301赤'.repeat(2001),first=Array.from(text).slice(0,8000).join(''),last=Array.from(text).slice(8000).join('');
-  assert.equal(o.first.title,'あかりの発話（全文）');assert.equal(o.first.body,first);assert.equal(o.first.selected,first);assert.equal(o.first.page,'1 / 2');
-  assert.equal(o.second.title,'あかりの発話（全文）');assert.equal(o.second.body,last);assert.equal(o.second.selected,last);assert.equal(o.second.page,'2 / 2');assert.equal(o.raw,text);
+  assert.equal(o.first.title,'あかりの 言うこと（全部）');assert.equal(o.first.body,first);assert.equal(o.first.selected,first);assert.equal(o.first.page,'1 / 2');
+  assert.equal(o.second.title,'あかりの 言うこと（全部）');assert.equal(o.second.body,last);assert.equal(o.second.selected,last);assert.equal(o.second.page,'2 / 2');assert.equal(o.raw,text);
  }
  else assert.fail('Unregistered speech observation '+id);
 }
@@ -90,8 +90,8 @@ export const speechWrongMeaning=[
  ['speaker-clipped',r=>{r.results[1].observed.openings[0].dialog.title.scrollWidth+=1000;}],
  ['stale-pair-after-update',r=>{r.results.find(x=>x.id==='speech/snapshot-update-clear').observed.afterUpdate.body.text=speechTexts[1];}],
  ['stop-retains-dialog',r=>{r.results.find(x=>x.id==='speech/stop-and-rerun').observed.afterStop.open=true;}],
- ['clone-unidentified',r=>{r.results.find(x=>x.id==='speech/clone-identity').observed.clone.title.text='あかりの発話（全文）';}],
- ['generic-value-labelled-speech',r=>{r.results.find(x=>x.id==='speech/general-value-and-list').observed.list.title.text='だんごの発話（全文）';}],
+ ['clone-unidentified',r=>{r.results.find(x=>x.id==='speech/clone-identity').observed.clone.title.text='あかりの 言うこと（全部）';}],
+ ['generic-value-labelled-speech',r=>{r.results.find(x=>x.id==='speech/general-value-and-list').observed.list.title.text='だんごの 言うこと（全部）';}],
  ['B10-time-extended',r=>{r.results.find(x=>x.id.startsWith('speech/B10/')).observed.events[2].at+=1000;}],
  ['short-speech-clipped',r=>{r.results.find(x=>x.id.startsWith('speech/B10/')).observed.bubbles[0].clipped=true;}],
  ['rerun-missing',r=>{r.results.find(x=>x.id==='speech/plain-78/switch-and-rerun').observed.runs.pop();}],

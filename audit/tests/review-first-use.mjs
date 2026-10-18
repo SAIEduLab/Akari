@@ -217,7 +217,7 @@ async function reviewBlockDiscoverability(page) {
       return {text:label.textContent,previewBottom:preview.bottom,top:box.top,width:box.width,
         overflow:label.scrollWidth>label.clientWidth,display:getComputedStyle(label).display};
     });
-    assert.equal(hint.text,'ことばと秒数を決めて話す');
+    assert.equal(hint.text,'言うことと 秒数を 決めて 話す');
     assert.equal(hint.display,'block');
     assert.ok(hint.top>=hint.previewBottom,'the complete explanation begins below its block');
     assert.equal(hint.overflow,false,'the explanation wraps within the candidate');

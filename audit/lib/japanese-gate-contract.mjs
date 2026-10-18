@@ -10,7 +10,7 @@ import {corpusPath,capabilityInputPaths,capabilityNegativeIds} from './capabilit
 
 // The on-screen label of each oracle meaning word in the ambiguity choices.
 export const visibleChoices=Object.freeze({'AMB-SOUND/台詞':'そのままの文字を話す','AMB-EDGE/状態':'今そうなっていたら する','AMB-EDGE/変化':'そうなるときを待ってから する',
- 'AMB-LIST/最後':'さいごに入れる','AMB-LIST/置き換え':'どれかと取りかえる（何番目かをえらぶ）'});
+ 'AMB-LIST/最後':'さいごに入れる','AMB-LIST/置き換え':'どれかと 入れかえる（何番目かを えらぶ）'});
 export const contractInputPaths = [
   'audit/tests/japanese-contract-static.mjs','audit/fixtures/capability-oracle.json',
   'audit/tests/contract-gate.mjs',
