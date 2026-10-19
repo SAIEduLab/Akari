@@ -7,7 +7,7 @@ const read=p=>JSON.parse(fs.readFileSync(p)),manifest=read('audit/manifests/lang
 const oracle=read('audit/fixtures/capability-oracle.json');
 assert.equal(finiteCases.length,256);assert.equal(new Set(finiteCases.map(c=>c.id)).size,42);
 assert.deepEqual(finiteCases,manifest.cases.map(({id,key,source,canonical})=>({id,key,source,canonical})));
-assert.equal(sha(JSON.stringify(manifest.cases)),'0704302891b6e9ae67e68c21d4953ddf8c3d8cb0ff35b95994be4a1eb1eee257','independent source/canonical AST expectations');
+assert.equal(sha(JSON.stringify(manifest.cases)),'a38f60ab8a9070ed6b4d23c20384a6ac2fb501532ef54968aebca24f1f3c8c3e','independent source/canonical AST expectations');
 assert.equal(sha(JSON.stringify({golden:expected.golden,corpus:expected.corpus,schemaIds:expected.schemaIds})),'973d6bbc87ca8545f7b14597c8e15f6a135d97d699b179452b9fd8f08a8426f8','independent runtime/corpus expectations');
 const ids=expectedLanguageIds(manifest);assert.equal(ids.length,607);assert.equal(new Set(ids).size,ids.length);
 assert.deepEqual(Object.keys(expected.golden).sort(),manifest.cases.map(c=>c.id+'/'+c.key).sort());

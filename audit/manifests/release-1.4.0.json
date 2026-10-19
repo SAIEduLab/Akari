@@ -1,0 +1,29 @@
+{
+  "schema": "akari-distribution-v1",
+  "productVersion": "1.4.0",
+  "languageContractId": 3,
+  "runtimeContractId": 3,
+  "projectFormat": 4,
+  "programFormat": 3,
+  "files": {
+    "Akari_1_4_0.html": "16f5220f875b4dd2a13c830c8b8b171c43a187c44d120a0f8d7c46dfe06caab5",
+    "EXTENSIONS.md": "a5fb2bbac594207e138558fc4b4b3fbf70c17c14e2b95989e38da7c7f92623e4",
+    "LANGUAGE.md": "30bedee868319630a3f93acea0e31cacf07355df28e8618a09639d6195a06dc4",
+    "LICENSE": "f400597abbd1d5aca8d4d823c06c8f5ab1b14bf7ae1b71a08e0dc393f92d37cf",
+    "MANUAL.html": "9c43a4d6e2a708e25f4c214c84042cf32583883f3b4564935bebff98403f59eb",
+    "Manual/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "Manual/block-mode.html": "c4817be1a89ed67a1e15c7e320dee033c88be329704b6779a4eefd39269e6727",
+    "Manual/code-mode-advanced.html": "2546d9cdcab3d98a02dccad515648f72e4331cc5d10c8e8431b6940e0f506cb3",
+    "Manual/code-mode-beginner.html": "2ec040986af08bb735e509586cf830016e91d662ee134204749a2b7b32bde1d3",
+    "Manual/code-mode-intermediate.html": "6f12f9c493c38a373ff4cea320df06ab86d174f1b850c9fd7f5fc0160bd6173f",
+    "Manual/meijin-mode.html": "ff5de04af30b27bc33ee76c3de249bb20da9953051a099e917efbe5195d51548",
+    "extensions/build.mjs": "f1cc644cff4a47967dd6c4ae62b834d81675afb0fffec8815e45c6f09ee7c3f1",
+    "extensions/examples/connector.html": "ed99ba2e122d7799f0f035bdb9da2e532e4470ccf46ddb7831b5ed68e2869677",
+    "extensions/examples/offline.js": "1bc85a978d07ce2ff28eaee98e09385bb82c224d9bd3856fb0279c80d5751d98",
+    "extensions/examples/profile.js": "9ab175fe8e83d0fd2497148d03d63649bba3464830c15b41fa50ac3a94c7d4a1",
+    "extensions/foundation.js": "7a0df21405a944f90065edd6867ad0939c58db896140714d8fd882154a845de9",
+    "extensions/limits.md": "7f51de6c8b50549e1cbe837a935c4f60673964e1a8a758393d7cac0a60848fd9",
+    "extensions/profiles.js": "3f6fae012780518785ac7cedb0326a7975283536ab37afd7249bbf46a042b3e5",
+    "extensions/types.d.ts": "58f920ddde54349a8dab9aeafe7bc24876847ba4186a84b47b48568fddcbc720"
+  }
+}

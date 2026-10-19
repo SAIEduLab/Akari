@@ -1011,6 +1011,9 @@
       key: item.key, ownerId: item.ownerId, ast: clean(item.ast),
       ...(item.key.startsWith('script:') ? { id: item.id || item.scriptId || item.key.split(':')[1],
         targetId: item.targetId, event: item.event, filter: item.filter || null } : {}),
+      // A procedure made in a 名人 script's text carries its name and inputs (it is in no list of procedures).
+      ...(item.definition?.meijin ? { definition: { id: item.definition.id, ownerId: 'stage', name: item.definition.name, args: [...item.definition.args],
+        scriptId: item.definition.scriptId, line: item.definition.line } } : {}),
     }));
     const p = {
       name: root.name,

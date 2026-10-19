@@ -1164,6 +1164,31 @@ button:focus-visible {
   margin-top: 5px;
   min-height: 25px;
 }
+/* 名人: a procedure made in a 名人 text is shown, renamed and opened here; its body is written in that text. */
+#procModal .proc-edit.meijin-proc > :not(#meijinProcPanel) {
+  display: none;
+}
+.meijin-proc-panel pre {
+  margin: 6px 0;
+  padding: 8px 10px;
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid #c3dbef;
+  background: #f7fbfe;
+  border-radius: 9px;
+  white-space: pre-wrap;
+}
+.meijin-proc-panel button {
+  margin: 6px 6px 0 0;
+}
+.diagnosis-note {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border: 1px solid #c3dbef;
+  background: #f2f8fd;
+  border-radius: 9px;
+  color: #1f4e74;
+}
 .diagnosis-ok {
   padding: 10px;
   border: 1px solid #bfdec8;

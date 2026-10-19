@@ -244,7 +244,7 @@ const cases = {
     await p.screenshot({path:path.join(artifacts,'drawing-mobile.png'),fullPage:true});
   },
   async 'format-contract-and-import'(p) {
-    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:3});
+    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:3,runtimeContractId:3,programFormatVersion:3,projectFormatVersion:4});
     await p.locator('#fileInput').setInputFiles({name:'saved-project.akari.md',mimeType:'text/plain',buffer:Buffer.from(savedFile)});
     await p.waitForFunction(()=>Akari.app.project.name==='作品の保存確認'&&Akari.app.editorState.state==='DESIGN');
     assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),(""+currentProductVersion()+""));
@@ -253,7 +253,7 @@ const cases = {
   },
   async 'format-malformed-state-protection'(p) {
     const before=await state(p);
-    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": 2','"languageContractId": 1'),savedFile.replace('"formatVersion": 3','"formatVersion": "3"')]) {
+    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": 3','"languageContractId": 1'),savedFile.replace('"formatVersion": 4','"formatVersion": "4"')]) {
       const result=await p.evaluate(async text=>{try{await Akari.parseProjectFile(text);return 'accepted';}catch(e){return e.code;}},text);
       assert.notEqual(result,'accepted');assert.deepEqual(await state(p),before);
     }

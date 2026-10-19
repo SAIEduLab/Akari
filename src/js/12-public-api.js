@@ -53,6 +53,8 @@
     buildProjectReferenceGraph,
     resourceChangeImpact,
     prepareResourceRename,
+    prepareMeijinProcedureRename,
+    meijinProjectDefinitions,
     refreshEditorSession,
     prepareBlockEdit,
     parseSyntax,

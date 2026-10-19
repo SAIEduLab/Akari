@@ -1365,21 +1365,23 @@
           child.value = initial; return child;
         };
         // A wait also offers みんな: the whole flow waits, not one part.
-        const actor = (initial, prefix = '', everyone = false) => {
+        const actor = (initial, prefix = '', everyone = false, particle = false) => {
           const first = initial?.kind || (everyone ? 'all' : 'self');
           const kind = choice('だれの', prefix + 'kind', [...(everyone ? [['all', 'みんな']] : []), ['self', '自分'], ['named', '名前で えらぶ']], first);
           const name = control('だれかの名前', 'input', prefix + 'name', initial?.name || '');
+          // A sentence's named subject is written with は or が (the same meaning).
+          const mark = particle ? choice('「は」か「が」', prefix + 'particle', [['は', 'は'], ['が', 'が']], initial?.particle || 'は') : null;
           const names = E('datalist', '', null, { id: viewId + '-actor-' + node.id + '-' + field.key + prefix });
           for (const text of [project()?.stage?.name, ...(project()?.components || []).map(c => c.name)].filter(Boolean))
             names.append(E('option', '', null, { value: text }));
           name.setAttribute('list', names.id); group.append(names);
-          const sync = () => { name.parentElement.hidden = kind.value !== 'named'; };
+          const sync = () => { name.parentElement.hidden = kind.value !== 'named'; if (mark) mark.parentElement.hidden = kind.value !== 'named'; };
           sync(); listen(kind, 'change', sync);
-          return { read: () => kind.value === 'named' ? { kind: 'named', name: name.value } : { kind: kind.value },
-            restore: () => { kind.value = first; name.value = initial?.name || ''; sync(); } };
+          return { read: () => kind.value === 'named' ? { kind: 'named', name: name.value, ...(mark?.value === 'が' ? { particle: 'が' } : {}) } : { kind: kind.value },
+            restore: () => { kind.value = first; name.value = initial?.name || ''; if (mark) mark.value = initial?.particle || 'は'; sync(); } };
         };
         if (field.type === 'actor-ref') {
-          const subject = actor(value, '', !!field.everyone);
+          const subject = actor(value, '', !!field.everyone, node.schemaId !== 'ActorQualifiedRead' && field.key === 'actorRef');
           readValue = subject.read; restore = subject.restore;
         } else if (field.type === 'argument-names') {
           const mode = choice('入れるものの わたし方', 'mode', [['positional', '書いた じゅんに わたす'], ['named', '名前を つけて わたす']], value === undefined ? 'positional' : 'named');
@@ -1400,7 +1402,7 @@
             preview=range?session().sourceText.slice(range.start,range.end):node.bodies.body?.length?schemaOf(node.bodies.body[0]).label:'まだ ブロックが ありません';
           group.append(E('p','blockui-trigger-scope',`かえる動き：${[...owners].join('・')} ／ ${EVENT_LABELS[currentEvent]}\n${preview}
 このまとまりの きっかけだけを かえます。ほかの 動きは かえません。`));
-          const event = choice('いつ動く？', 'event', Object.entries(EVENT_LABELS), currentEvent);
+          const event = choice('いつ動く？', 'event', Object.entries(EVENT_LABELS).filter(([key]) => !MEIJIN_EVENTS.includes(key)), currentEvent);
           event.setAttribute('aria-label','いつ動く？');event.parentElement.classList.add('blockui-trigger-choice');
           const details=E('details','blockui-trigger-details');details.append(E('summary','','くわしく（きっかけ・だれ・どれで動くか）'));group.append(details);
           const detailStart=group.children.length;
@@ -1451,7 +1453,7 @@
           const subject = value?.kind === 'all' || (!value && field.everyone) ? 'みんな' : subjectName(node);
           // A part's state (たくどん の よこのばしょ) takes の from the phrase, so its part name has no は.
           const owner = node.schemaId === 'ActorQualifiedRead';
-          const details = editDisclosure(node, 'actorRef', owner ? subject : subject + 'は', 'blockui-subject');
+          const details = editDisclosure(node, 'actorRef', owner ? subject : subject + (value?.particle || 'は'), 'blockui-subject');
           details.querySelector('summary').setAttribute('aria-label', (owner ? 'だれのかを かえる: ' : 'だれが動くかを かえる: ') + subject);
           details.append(group);
           wrap.append(details);

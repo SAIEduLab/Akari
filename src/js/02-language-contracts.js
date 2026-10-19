@@ -56,6 +56,7 @@
     safeId,
     scalar,
     listValue,
+    isPart,
     assertRuntimeValueLimit,
     valueText,
     displayValue,
@@ -113,6 +114,9 @@
     editorMode: 'akari.editorMode.v1',
   });
 
+  // 名人: scripts that belong to no part. In memory they carry this pseudo owner so the editor can select them.
+  const MEIJIN_OWNER = 'meijin';
+  const isMeijinScript = script => script?.mode === 'meijin';
   const EVENT_BY_TYPE = {
     stage: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
     label: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
@@ -121,6 +125,10 @@
     input: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'valueChanged'],
     sprite: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'cloneStart'],
   };
+
+  // 名人のできごと: written only as headings of a 名人 script (ふれたとき for a part, the others for the script itself).
+  const MEIJIN_EVENTS = Object.freeze(['touchStart', 'conditionTrue', 'interval']);
+  const meijinEventOwner = (event, type) => event === 'touchStart' ? !!type && type !== 'stage' : MEIJIN_EVENTS.includes(event) && type === 'stage';
 
   const COMMAND_CATALOG = Object.freeze(
     [
@@ -567,6 +575,12 @@
         kind: 'NoOperation',
         op: '',
         source: '何もしない',
+      },
+      {
+        id: 'TimerReset',
+        kind: 'TimerReset',
+        op: '',
+        source: 'タイマーを0にする',
       },
       ...EXTENSION_HOST.operations('commands').map(operation => ({id:'ExtensionCommand:'+operation.name,kind:'ExtensionCommand',op:'',source:`拡張「${operation.extensionName}」「${operation.displayName}」（${operation.args.map(extensionInitialSource).join('、')}）`})),
     ].map((x) =>
@@ -1110,6 +1124,7 @@
     '衣装名': 'すがたの名前', '衣装番号': 'すがたの番号', '背景名': 'はいけいの名前', '背景番号': 'はいけいの番号',
     '以前の背景名': '前のはいけいの名前', '新しい背景名': '新しいはいけいの名前', '受け取った知らせ': '受けた合図',
     '押されたキー': 'おされたキー', '以前の値': '前の中身', '新しい値': '新しい中身', '音程': '音の高さ', '音量': '音の大きさ',
+    '方向': '向き',
   });
   // Internal names that are no longer read in code (the owner cut them); the others stay readable.
   const SENSOR_CUT_WORDS = Object.freeze(['クローンである']);

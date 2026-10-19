@@ -53,7 +53,8 @@
       editorCheckError('文脈の世代が不正です');
     const ctx = editorContext(ownerKey, context),
       parsed = parseSyntax(source, { ...ctx, ...(project ? {symbols:buildSymbols(project)} : {}) }),
-      encoded = parsed.ast ? blockEncode(parsed.ast) : null;
+      // A 名人 script is code only.
+      encoded = parsed.ast && !ctx.meijin ? blockEncode(parsed.ast) : null;
     return {
       ownerKey,
       ownerKind,
@@ -826,7 +827,8 @@
     };
     const candidateProject = editorCandidateProject(session, source, project, context),
       diagnostics = editorDiagnostics(parsed.ast, candidateProject, context),
-      encoded = session.blockDraft ? reidentifyDraft(blockEncode(parsed.ast))
+      encoded = context.meijin ? { tree: null, nodeMap: new Map(), nodeIds: new WeakMap() }
+        : session.blockDraft ? reidentifyDraft(blockEncode(parsed.ast))
         : editorReidentify(blockEncode(parsed.ast), tree, parsed.ast);
     const result = {
       changed: true,
@@ -1091,7 +1093,7 @@
       ].includes(schema.kind)
     )
       return 'operator';
-    if (schema.kind === 'SensorRead') return 'sense';
+    if (schema.kind === 'SensorRead' || schema.kind === 'TimerReset') return 'sense';
     if (schema.kind === 'UserFunctionCall' || schema.kind === 'UserActionCall') return 'action';
     return (
       {

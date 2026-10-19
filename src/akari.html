@@ -297,7 +297,7 @@
         <button id="formatBtn">コードを整える</button>
         <span class="exec-location" id="execLocation">いまの ばしょ：―</span>
       </div>
-      <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を やめる</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の 取りこみ" hidden></section><div id="blockEditor" hidden></div>
+      <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="meijinStart" type="button" hidden>名人モードで 書く</button><button id="editorCancel" type="button">入力を やめる</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の 取りこみ" hidden></section><div id="blockEditor" hidden></div>
       <div class="editor-shell">
         <div class="line-gutter" id="lineGutter" aria-hidden="true"></div>
         <textarea id="codeEditor" wrap="soft" spellcheck="false" aria-label="あかりのコード"></textarea>
@@ -397,6 +397,15 @@
           <button id="callableDelete">この 自分で作ったブロックを けす</button>
         </div>
         <div class="proc-edit">
+          <div id="meijinProcPanel" class="meijin-proc-panel" hidden>
+            <div id="meijinProcTitle" class="asset-target"></div>
+            <p>この てじゅんは、名人の本文の 中で 作りました。中身を なおすときは、名人の本文を なおします。</p>
+            <pre id="meijinProcBody" aria-label="てじゅんの 中身"></pre>
+            <label>名前 <input id="meijinProcName"></label>
+            <button id="meijinProcRename" type="button">名前を かえる</button>
+            <button id="meijinProcOpen" type="button">名人の本文で ひらく</button>
+            <p id="meijinProcError" class="field-error" role="alert" hidden></p>
+          </div>
           <details id="callableConceptHelp" class="child-help"><summary>自分で作ったブロックの ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
             <p>てじゅんは、いくつかの 動きを まとめて、名前で 使うものです。れい：「あいさつ」という 名前で、名前を 話して おじぎする 動きを まとめます。</p>
             <p>「答えを もとめる」は、中で 使った 数や 文字から 答えを 出します。れい：点数を 2倍にして、その 答えを 返します。</p>
@@ -545,6 +554,7 @@
 <!-- @include js/02-language-contracts.js -->
 <!-- @include js/03-default-assets.js -->
 <!-- @include js/04-syntax-parsing.js -->
+<!-- @include js/04-meijin-syntax.js -->
 <!-- @include js/05-command-presentation.js -->
 <!-- @include js/06-source-formatting.js -->
 <!-- @include js/07-semantic-analysis.js -->

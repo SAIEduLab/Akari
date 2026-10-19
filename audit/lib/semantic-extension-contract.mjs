@@ -88,7 +88,7 @@ export function verifySearchBrowser(report){
   {qualifier:'self',typed:true,oneHistoryStep:true,undoRedo:true},{name:'代金',args:2,argumentNames:['個数','ねだん']},
   {direction:'left',scale:50,index:2},{reasonShown:true,projectUnchanged:true}]);return count;
 }
-export const uxManualFiles=['MANUAL.html','Manual/block-mode.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html','Manual/code-mode-advanced.html'];
+export const uxManualFiles=['MANUAL.html','Manual/block-mode.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html','Manual/code-mode-advanced.html','Manual/meijin-mode.html'];
 export const uxSurfaceIds=['ux/browser-empty-sample-click',...[[1366,'fit'],[1366,'100'],[390,'fit']].map(([w,m])=>'ux/browser-bubble-'+w+'-'+m),...[1366,1024,390].flatMap(w=>['light','dark'].map(t=>'ux/browser-manual-'+w+'-'+t))];
 export function verifyUxSurface(report){
  const count=verifySemanticExtension(report,'akari-ux-surface-browser-v1',uxSurfaceIds);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);

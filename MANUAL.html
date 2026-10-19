@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>あかり 1.3.1 マニュアル</title>
+<title>あかり 1.4.0 マニュアル</title>
 <style>
 :root{
   color-scheme:light;
@@ -168,9 +168,10 @@ p{margin:.7rem 0}
 .beginner .icon{background:#eaf2ff;color:#2c64b5}
 .intermediate .icon{background:#fff2d8;color:var(--amber)}
 .advanced .icon{background:#eee9fa;color:var(--purple)}
+.meijin .icon{background:#fdeaea;color:#a03535}
 .path{
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(5,minmax(0,1fr));
   gap:10px;
   margin:20px 0 8px;
 }
@@ -298,8 +299,8 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <a class="skip-link" href="#main-content">本文へ進む</a>
 <header class="hero">
   <div class="wrap">
-    <div class="eyebrow">あかり 1.3.1 · 使い方ガイド</div>
-    <div class="book-links"><a href="./index.html">← あかりの入口</a><a href="./Akari_1_3_1.html">あかりを使う →</a></div>
+    <div class="eyebrow">あかり 1.4.0 · 使い方ガイド</div>
+    <div class="book-links"><a href="./index.html">← あかりの入口</a><a href="./Akari_1_4_0.html">あかりを使う →</a></div>
     <h1>あかり マニュアル</h1><section class="section" id="code-ownership" style="padding:20px;margin:20px 0;border:1px solid #c6d8e6;border-radius:12px;background:#f3f8fc">
   <h2>画面の ものから、プログラムを 読む</h2>
   <p>作品画面で 部品を えらぶと、その 部品の 本文が 出て、すぐに なおせるよ。いまの きっかけの 本文が からっぽで、ほかの きっかけに 本文が あるときは、その 本文が 開くよ。</p>
@@ -307,10 +308,11 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <p>みんなで 使う「自分で作ったブロック」は、画面の コードだよ。それを 使っている 部品の 本文を ならべた ときにも 出るよ。部品を えらんでいるときに 出る「画面のコード」から、まだ 使っていない 自分で作ったブロックも 開けるよ。画面を えらんでいるときは「すべてのコード」を 使おう。書き方に まちがいが ある 本文は、書いた コードの まま 出るよ。</p>
 </section>
 
-    <p>この ガイドでは、あかり 1.3.1 の 使い方と、文の 書き方・なおし方を しょうかいするよ。ほぞん・つづきの 開き方や、くわしい なおし方は、ブロック・コード<ruby>初級<rt>しょきゅう</rt></ruby>・中級・上級の 4つの マニュアルを 見てね。</p>
+    <p>この ガイドでは、あかり 1.4.0 の 使い方と、文の 書き方・なおし方を しょうかいするよ。ほぞん・つづきの 開き方や、くわしい なおし方は、ブロック・コード<ruby>初級<rt>しょきゅう</rt></ruby>・中級・上級の 4つの マニュアルを 見てね。</p>
     <p>先生・<ruby>保護者<rt>ほごしゃ</rt></ruby>の 方へ：ここに のせた 作品の れいには、まだ 動きを たしかめていない ものも あります。作品の れいが のっていることは、あかりの テストに 通ったことや、子どもが 使って たしかめたことを あらわす ものでは ありません。</p>
     <div class="hero-links">
       <a href="#manuals">マニュアルを えらぶ</a>
+      <a href="#meijin">名人モード</a>
       <a href="#first">はじめての 作品</a><a href="#save">ほぞん・開く</a><a href="#faq">こまったとき</a>
       <a href="./LANGUAGE.md">言語の きまりを 見る</a>
     </div>
@@ -340,7 +342,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <h2>おしたら、ねこが 右へ 動く</h2>
   <p>はじめて 開くと、ブロックの 見せ方に なっているよ。「コード」「ブロック」を 自分で えらぶと、次に 開いた ときも その 見せ方だよ。これは「はじめて／かんたん／くわしく」とは ちがう せっていだよ。はじめて 開いた 作品と「新しく作る」の 作品は、本文が からっぽだよ。だれを 動かすかと きっかけを えらんで、やることを 入れよう。「お手本を開く」を おすと、絵・名前・短い せつめいが ついた 6まいの カードから えらべるよ。まだ ほぞんしていない ところが あるときは、先に 作品を 開くときと 同じ たしかめる 画面が 出るよ。つづけて カードを おすと、その お手本が すぐに 開くよ。えらぶ 画面を とじるだけなら、作りかけの 作品は かわらないよ。ダンス、花もよう、星の ゲーム、めいろ、曲づくり、お話を 動かして、数や ブロックの しゅるい・じゅんばんを かえてみよう。下では、自分で、おされたときに 動く 作品を 作るよ。いまの 作品を のこしたいときは、先に「ほぞん」を おしてね。</p>
   <ol class="task-list">
-    <li><strong>あかりを 開く</strong><br><a href="./Akari_1_3_1.html">あかりの 本体を 開こう</a>。つづきから 作るときは、<a href="#open">「開く」で ほぞんした 作品ファイルを 読みこもう</a>。動いているときは「■ 止める」で なおす 画面に もどるよ。</li>
+    <li><strong>あかりを 開く</strong><br><a href="./Akari_1_4_0.html">あかりの 本体を 開こう</a>。つづきから 作るときは、<a href="#open">「開く」で ほぞんした 作品ファイルを 読みこもう</a>。動いているときは「■ 止める」で なおす 画面に もどるよ。</li>
     <li><strong>キャラクターを おく</strong><br>部品を ふやすときは、見せ方を「かんたん」か「くわしく」に しよう。ブロックの 見せ方では 右がわの「＋ キャラクター・部品をふやす」、コードの 見せ方では 左の「道具箱」から、たくどん、だんご、星などを えらぶよ。作品画面に おいた キャラクターを えらぼう。だんごは、まわりが とうめいな 絵を、よこ180・たて180の 大きさで 見せるよ。ほぞんした 作品や、うごく作品の ファイルでも、同じ 絵を 使うよ。</li>
     <li><strong>「だれを」「いつ」動かすか えらぶ</strong><br>コードの きっかけの 文は「ねこがおされたとき、」のように、いつ・だれが を 文で あらわすよ。「なおす動き」では、この きっかけは「おされたとき」と 出るよ。本文には、だれが どう 動くかを 書くよ。「ねこ」は れいの 名前なので、自分の キャラクターの 名前に してね。</li>
     <li><strong>文を 1つ 入れる</strong><br>「コード」を えらんで、本文に 下の 1行を 入れよう。きっかけの 文は、本文の やることとは わけて 見えるよ。
@@ -379,7 +381,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 </section>
 
 <section id="manuals">
-  <h2>4つの マニュアル</h2>
+  <h2>5つの マニュアル</h2>
   <p>はじめから ぜんぶ 読まなくて いいよ。いま 使いたい 作り方と、知りたい ふかさで えらんでね。</p>
 
   <div class="manual-grid">
@@ -426,7 +428,41 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
       <div class="tags"><span>名前の さがし方</span><span>動く じゅんばん</span><span>待ち合わせ</span><span>しらべ方</span><span>いちばん 大きい かず</span></div>
       <span class="open">上級を 開く →</span>
     </a>
+
+    <a class="manual-card meijin" href="./Manual/meijin-mode.html">
+      <div class="card-top">
+        <div class="icon" aria-hidden="true">名</div>
+        <span class="level">コード 名人</span>
+      </div>
+      <h3>名人モード</h3>
+      <p>どの 部品にも 入らない 本文で、作品 ぜんたいを 自然な 日本語で 書くよ。部品を 値として 使い、いくつもの 動きを 同時に 始められるよ。ブロックには もどせないよ。</p>
+      <div class="tags"><span>主語を 書く</span><span>部品の あつまり</span><span>同時に 動かす</span><span>本文の 中の 手順</span><span>できごと</span></div>
+      <span class="open">名人モードを 開く →</span>
+    </a>
   </div>
+</section>
+
+<section id="meijin">
+  <h2>名人モード — 自然な 日本語で 作品 ぜんたいを 書く</h2>
+  <p>名人モードは、コードで 書く 人の ための モードだよ。ふつうの 本文は 一つの 部品の 本文だけど、名人の 本文は どの 部品にも 入らないよ。文ごとに「ねこは」「なかまは」と だれが するかを 書いて、作品 ぜんたいを 一つの 本文で 動かすよ。</p>
+  <h3>できる こと</h3>
+  <ul>
+    <li>部品を へんすうや リストに 入れて 動かす（主役を ねこに する。主役は 右へ 10歩 動く）</li>
+    <li>いくつもの 部品を 同時に 動かす（ねこと だんごは、2秒かけて 動く／〜あいだ／〜ながら／次のことを同時に始める）</li>
+    <li>くらべて えらぶ・あつまりで 動かす（ねこと 犬の うち、右に いる ほう／なかまは、みんな…）</li>
+    <li>時間で 区切る・待つ（〜まで 動き続ける、〜秒の あいだ、〜に なったら）</li>
+    <li>本文の 中で 手順や できごとを 作る（〜という 手順を、次のように 作る／〜に ふれたとき／〜秒ごとに）</li>
+    <li>国語として 自然な 言い方（だんごの ところへ 行く、持ち物が 空なら、点数が 偶数なら）</li>
+  </ul>
+  <h3>きまりと できない こと</h3>
+  <ul>
+    <li>はじめるときに たずねられるよ。名人に した 本文は ブロックに もどせないよ（すぐなら「元に戻す」で もどせるよ）。</li>
+    <li>コードで だけ 書くよ。「整える」は 使わず、書いた とおりに のこすよ。</li>
+    <li>動く・話す・音の 文には、だれが するかを 書くよ。作品 ぜんたいへの 命令は 主語なしで 書けるよ。</li>
+    <li>意味が 一つに 決まらない 文（ので、ゆっくり、その子、漢数字 など）は、作品チェックで 止まるよ。</li>
+    <li>はじめて 使う 人むけの 表示（入門）では、名人モードの ボタンは 出ないよ。</li>
+  </ul>
+  <p><a href="./Manual/meijin-mode.html">名人モードの マニュアルを 開く →</a>　くわしい きまりは <a href="./LANGUAGE.md">LANGUAGE.md</a> の「名人モード」の 章に あるよ。</p>
 </section>
 
 
@@ -462,7 +498,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
   <h2>ほぞんした 作品の つづきを 作る</h2>
 <p>「開く」を おすと、まだ ほぞんしていない ところが あるときだけ、先に「まだほぞんしていない作品があります。ほぞんせずに、ほかの作品を開きますか？」と たしかめるよ。「ほぞんせずに開く」で 作品を えらぶ 画面へ 進み、「やめる」で いまの 作品に もどるよ。作品を えらぶのを やめたり、読みこめなかったり したときも、いまの 作品は のこるよ。</p>
   <ol class="task-list">
-    <li><strong>あかりの 本体を 開く</strong><br>作品ファイルを 読む ほかの アプリではなく、<code>Akari_1_3_1.html</code> を ブラウザーで 開こう。</li>
+    <li><strong>あかりの 本体を 開く</strong><br>作品ファイルを 読む ほかの アプリではなく、<code>Akari_1_4_0.html</code> を ブラウザーで 開こう。</li>
     <li><strong>いまの 作品を のこす</strong><br>なおしている 作品を のこしたいときは、先に「ほぞん」を おしてね。ほぞんしていない 作品を すてるか きかれたら、中身を たしかめて 答えよう。</li>
     <li><strong>「開く」で えらぶ</strong><br>ほぞんした <code>.akari.md</code> を えらぼう。本文や 絵・音が もどったら、「動かすもの」と「なおす動き」を えらんで、つづきを 作れるよ。</li>
   </ol>
@@ -492,7 +528,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <section id="offline">
   <h2>インターネットに つながずに 使う じゅんび</h2>
   <ul>
-    <li><strong>作る：</strong><a href="./Akari_1_3_1.html" download="Akari_1_3_1.html">あかりの 本体を ほぞん</a>しよう。<code>Akari_1_3_1.html</code> を 1つ ブラウザーで 開けば、作ったり 動かしたり できるよ。</li>
+    <li><strong>作る：</strong><a href="./Akari_1_4_0.html" download="Akari_1_4_0.html">あかりの 本体を ほぞん</a>しよう。<code>Akari_1_4_0.html</code> を 1つ ブラウザーで 開けば、作ったり 動かしたり できるよ。</li>
     <li><strong>つづきを 作る：</strong>本体と いっしょに、自分の <code>.akari.md</code> を もっていこう。</li>
     <li><strong>できた 作品を 動かす：</strong>うごく作品の <code>.html</code> を もっていこう。</li>
     <li><strong>せつめいも 読む：</strong>この <code>MANUAL.html</code> と <code>Manual</code> フォルダーを、同じ ならびで ほぞんしよう。入口や きまりの リンクも 使うなら、<code>index.html</code>、<code>README.md</code>、<code>LANGUAGE.md</code>、<code>AUDIT.md</code>、<code>LICENSE</code> も いっしょに のこそう。</li>
@@ -521,6 +557,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
     <div class="step"><strong><ruby>初級<rt>しょきゅう</rt></ruby></strong>日本語の コードを 書く</div>
     <div class="step"><strong>中級</strong>作品を 組み合わせる</div>
     <div class="step"><strong>上級</strong>大きな 作品を 考えて 作る</div>
+    <div class="step"><strong>名人</strong>作品 ぜんたいを 自然な 文で 書く</div>
   </div>
 
   <p>この じゅんばんは おすすめで、かならず この とおりで なくても いいよ。ブロックと コードは 同じ 日本語の 本文を なおすので、とちゅうで 行ったり 来たり できるよ。</p>
@@ -529,6 +566,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
     <div><strong>プログラミングが はじめて</strong>まず「ブロックモード」。なれたら コード<ruby>初級<rt>しょきゅう</rt></ruby>へ。</div>
     <div><strong>文字で 書きたい</strong>コード<ruby>初級<rt>しょきゅう</rt></ruby>から はじめよう。きほんが 分かるなら 中級へ。</div>
     <div><strong>きまりまで 知りたい</strong>上級と LANGUAGE.md を いっしょに 使おう。</div>
+    <div><strong>自然な 日本語で 作品 ぜんたいを 書きたい</strong>上級の あとに 名人モードへ。</div>
   </div>
 </section>
 
@@ -538,7 +576,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 
   <div class="refs">
     <div class="ref">
-      <strong><a href="./Akari_1_3_1.html">Akari_1_3_1.html</a></strong>
+      <strong><a href="./Akari_1_4_0.html">Akari_1_4_0.html</a></strong>
       あかりの 本体。ブラウザーで 作ったり 動かしたり するよ。
     </div>
     <div class="ref">
@@ -560,7 +598,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 <section>
   <h2>まよったときの いちばん 近い 道</h2>
   <ol>
-    <li>まず <a href="./Akari_1_3_1.html">Akari_1_3_1.html</a> を 開いて、さわってみよう。</li>
+    <li>まず <a href="./Akari_1_4_0.html">Akari_1_4_0.html</a> を 開いて、さわってみよう。</li>
     <li>そうさが 分からなければ、使っている 見せ方の マニュアルを 見よう。</li>
     <li>書き方が 分からなければ、コードの 下の「書ける ことば」（「やること・中身・名前を さがす」）か、ブロックの「ブロックを さがす」で さがそう。</li>
     <li>動かないときは「作品チェック」で、ばしょ・行・わけを たしかめよう。</li>
@@ -581,7 +619,7 @@ summary{font-weight:800;cursor:pointer;color:#234f93}
 </main>
 
 <footer>
-  <p>あかり 1.3.1 の マニュアルです。この ページと それぞれの マニュアルの 作品の れいは、テストに 通ったことや、子どもが 使って たしかめた ことを あらわす ものでは ありません。書き方と 意味の もとに なる 文書は LANGUAGE.md です。</p>
+  <p>あかり 1.4.0 の マニュアルです。この ページと それぞれの マニュアルの 作品の れいは、テストに 通ったことや、子どもが 使って たしかめた ことを あらわす ものでは ありません。書き方と 意味の もとに なる 文書は LANGUAGE.md です。</p>
 </footer>
 </body>
 </html>

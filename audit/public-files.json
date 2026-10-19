@@ -1,6 +1,6 @@
 {
   "schema": "akari-public-files-v1",
-  "productVersion": "1.3.1",
+  "productVersion": "1.4.0",
   "files": [
     ".gitattributes",
     ".github/CODEOWNERS",
@@ -9,7 +9,7 @@
     ".github/workflows/akari-change-guard.yml",
     ".gitignore",
     "AUDIT.md",
-    "Akari_1_3_1.html",
+    "Akari_1_4_0.html",
     "EXTENSIONS.md",
     "LANGUAGE.md",
     "LICENSE",
@@ -19,6 +19,7 @@
     "Manual/code-mode-advanced.html",
     "Manual/code-mode-beginner.html",
     "Manual/code-mode-intermediate.html",
+    "Manual/meijin-mode.html",
     "README.md",
     "audit/CHILD_UX.md",
     "audit/CHILD_UX_RELIABILITY.md",
@@ -173,7 +174,7 @@
     "audit/manifests/features.json",
     "audit/manifests/language-form-coverage.json",
     "audit/manifests/product-tests.json",
-    "audit/manifests/release-1.3.1.json",
+    "audit/manifests/release-1.4.0.json",
     "audit/manifests/samples.json",
     "audit/public-files.json",
     "audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md",
@@ -332,6 +333,7 @@
     "src/js/02-language-contracts.js",
     "src/js/03-default-assets.js",
     "src/js/04-syntax-parsing.js",
+    "src/js/04-meijin-syntax.js",
     "src/js/05-command-presentation.js",
     "src/js/06-source-formatting.js",
     "src/js/07-semantic-analysis.js",
@@ -341,5 +343,5 @@
     "src/js/11-application.js",
     "src/js/12-public-api.js"
   ],
-  "productFile": "Akari_1_3_1.html"
+  "productFile": "Akari_1_4_0.html"
 }

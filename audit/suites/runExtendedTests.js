@@ -646,7 +646,7 @@ async function runExtendedTests() {
       const p = make(say('\u300c\u4fdd\u5b58\u8a66\u9a13\u300d')),
         s = A.serializeProject(p);
       ok(s.startsWith('# '));
-      for (const part of [p.scripts[0].source, N, L, 'SHA-256', 'AKARI-PROJECT-F3-DATA-BEGIN'])
+      for (const part of [p.scripts[0].source, N, L, 'SHA-256', 'AKARI-PROJECT-F4-DATA-BEGIN'])
         ok(s.includes(part) || (part === 'SHA-256' && !p.sounds.length));
       const r = await A.parseProjectFile(s);
       eq(r.project, p);

@@ -157,6 +157,10 @@
         p = PREC.CMP;
         break;
       }
+      case 'EventCount':
+        s = eventCountSource(n);
+        p = PREC.CMP;
+        break;
       case 'LogicalExpression': {
         p = n.op === 'AND' ? PREC.AND : PREC.OR;
         // 「AからBのどれか」 beside かつ／または keeps its （ ）: 「…のどれかまたは…」 does not read back.
@@ -172,13 +176,23 @@
   function builtinSurfaceName(n) {
     return BUILTIN_SURFACES[n] || n;
   }
+  function startsWithPart(n) {
+    if (!n) return false;
+    if (n.kind === 'EventCount') return n.actorRef?.kind === 'named';
+    if (n.kind === 'ActorQualifiedRead') return n.actorRef?.kind === 'named';
+    if (n.kind === 'UnaryExpression') return startsWithPart(n.value);
+    if (['CompareExpression', 'LogicalExpression'].includes(n.kind)) return startsWithPart(n.left);
+    return false;
+  }
   function formatScript(ast, options = {}) {
     return withExpressionFormatOptions(options,()=>{
     validateSyntaxAst(ast,'script',{allowHoles:!!options.allowHoles});
     const out=[],line=(depth,text,comment='')=>out.push('  '.repeat(depth)+text+(text.endsWith('、')?'':'。')+(comment?'  '+comment:''));
     // A nested suite inherits its surrounding topic, but its topic changes stay local.
     // A wait of one part always names it (自分は1秒待つ); the wait of the whole flow has no subject.
-    const emit=(body,depth,inheritedActor={kind:'self'})=>{let previousActor={...inheritedActor};for(const n of body){if(n.kind==='CommentLine'){out.push('  '.repeat(depth)+'※'+n.text);continue;}const wait=EVERYONE_WAITS.has(n.kind),actorRef=n.actorRef||(wait?{kind:'all'}:{kind:'self'}),everyone=actorRef.kind==='all',actor=!everyone&&!['Hole','WaitBroadcastGroup'].includes(n.kind)&&(wait||actorRef.kind==='named'||(actorRef.kind==='self'&&previousActor.kind==='named'))?sentenceActorSource(actorRef)+'は':'',f=formatExpression,t=n.target?formatTarget(n.target):'',comment=n.inlineComment||'';let text;
+    // Under a heading that names a part (たくどんは、3回くり返す。) that part's sentences are written without it, until
+    // another subject comes; a wait still names it, because without a subject it is the wait of the whole flow.
+    const emit=(body,depth,inheritedActor={kind:'self'})=>{let previousActor={...inheritedActor};for(const n of body){if(n.kind==='CommentLine'){out.push('  '.repeat(depth)+'※'+n.text);continue;}const wait=EVERYONE_WAITS.has(n.kind),actorRef=n.actorRef||(wait?{kind:'all'}:{kind:'self'}),everyone=actorRef.kind==='all',sameTopic=actorRef.kind==='named'&&!wait&&inheritedActor.kind==='named'&&actorRef.name===inheritedActor.name&&previousActor.kind==='named'&&previousActor.name===inheritedActor.name,actor=!everyone&&!sameTopic&&!['Hole','WaitBroadcastGroup'].includes(n.kind)&&(wait||actorRef.kind==='named'||(actorRef.kind==='self'&&previousActor.kind==='named'))?sentenceActorSource(actorRef)+(actorRef.particle||'は'):'',f=formatExpression,t=n.target?formatTarget(n.target):'',comment=n.inlineComment||'';let text;
       const controlActor=actorRef.kind!==previousActor.kind||(actorRef.kind==='named'&&actorRef.name!==previousActor.name)
         ? sentenceActorSource(actorRef)+'は、' : '';
       switch(n.kind){
@@ -190,7 +204,8 @@
         case 'ForEach':line(depth,controlActor+sentenceFormFor(n).render(n),comment);if(n.binder!=='今見ているもの')line(depth+1,`この中では、今見ているものを【${n.binder}】と呼ぶ`);emit(n.body,depth+1,actorRef);continue;
         default:{const form=sentenceFormFor(n);if(!form)throw new AkariError('P201',`未対応の文 ${n.kind}`);text=form.render(n);break;}
       }
-      line(depth,actor+text,comment);if(n.kind!=='Hole'&&!everyone)previousActor=actorRef;
+      // たくどんは、だんごが…まで待つ: a wait whose condition starts with another part takes 、 after its subject.
+      line(depth,actor+(actor&&n.kind==='WaitUntil'&&startsWithPart(n.condition)?'、':'')+text,comment);if(n.kind!=='Hole'&&!everyone)previousActor=actorRef;
     }};
     if(ast.heading)line(0,sentenceHeadingSource(ast.heading));
     emit(ast.body,ast.heading?1:0,options.inheritedActor);

@@ -236,7 +236,7 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
     ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));eq(api.formatScript(r.ast).split('\n')[0],written);}
     // 1.3.1: what a child naturally writes reads as the written form (tried only after the written form fails).
     for(const [source,written] of [
-      ['「名前は？」と聞く。','「名前は？」とたずねて、答えを待つ。'],['マスコットが10歩進む。','マスコットは前へ10歩進む。'],['マスコットも10歩進む。','マスコットは前へ10歩進む。'],
+      ['「名前は？」と聞く。','「名前は？」とたずねて、答えを待つ。'],['マスコットが10歩進む。','マスコットが前へ10歩進む。'],['マスコットも10歩進む。','マスコットは前へ10歩進む。'],
       ['まず10歩進む。','前へ10歩進む。'],['すがたをかくします。','すがたをかくす。'],['かくれる。','すがたをかくす。'],
       ['10歩進み、右に90度回る。','前へ10歩進む。\n右に90度回る。'],['10歩進んで右に90度回る。','前へ10歩進む。\n右に90度回る。'],
       ['もし1が2より小さかったら、\n  何もしない。','もし1が2より小さければ、\n  何もしない。'],['もし1が2未満なら、\n  何もしない。','もし1が2より小さければ、\n  何もしない。'],

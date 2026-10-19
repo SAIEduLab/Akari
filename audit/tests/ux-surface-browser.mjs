@@ -38,7 +38,7 @@ try{await withBrowser(chrome,async browser=>{
   assert.ok(metrics.inside);assert.ok(metrics.overlap<1);assert.ok(metrics.font>=13.5);if(mode==='100')assert.ok(Math.abs(metrics.scale-1)<0.02);else if(width===1366)assert.ok(metrics.scale>=0.39&&metrics.scale<=0.43);
   await bubble.getByRole('button',{name:'ふきだしの 文を ぜんぶ 見る',exact:true}).click();assert.equal(await page.locator('#valueOutput').textContent(),long);await page.locator('#valueClose').click();return{width,height,mode,...metrics,fullTextExact:true,...(fitted?{fitted}:{})};
  });
- const manuals=['MANUAL.html','Manual/block-mode.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html','Manual/code-mode-advanced.html'];
+ const manuals=['MANUAL.html','Manual/block-mode.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html','Manual/code-mode-advanced.html','Manual/meijin-mode.html'];
  for(const width of [1366,1024,390])for(const theme of ['light','dark'])await run('ux/browser-manual-'+width+'-'+theme,async page=>{
   const height=width===390?844:768;await page.setViewportSize({width,height});await page.emulateMedia({colorScheme:theme});const views=[];
   for(const file of manuals){await page.goto(pathToFileURL(path.resolve(file)).href);const p=page.locator('#code-ownership p').first();await p.hover();await p.click({clickCount:3});

@@ -214,7 +214,7 @@ const cases = {
     assert.equal(await p.evaluate(() => Akari.app.project.appVersion), (""+currentProductVersion()+"")); await assertFit(p);
     assert.equal(await p.evaluate(() => Akari.app.project.stage.height), 600);
     const before = await state(p);
-    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replace('"formatVersion": 3', '"formatVersion": 2'))});
+    await openFile(p, {name: 'invalid.akari.md', mimeType: 'text/plain', buffer: Buffer.from(before.saved.replace('"formatVersion": 4', '"formatVersion": 2'))});
     await p.waitForFunction(() => /F\d{3}/.test(document.querySelector('#console').textContent));
     assert.deepEqual(await state(p), before, 'unsupported-format rejection retains current work');
   },
