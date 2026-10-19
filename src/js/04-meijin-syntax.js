@@ -22,6 +22,8 @@
     const names = text.split(/と|、|や/);
     return names.length > 1 && names.every(name => isMeijinPart(name, symbols, ctx)) ? names : null;
   }
+  // A variable holds one value; a set of parts is kept in a list (as a list holds any row of values).
+  const meijinSetIntoVariable = name => `「${name}」は へんすうなので、部品を 一つだけ 入れられます。いくつかの 部品の あつまりは、リストに 入れます`;
   const meijinPartRef = name => exprNode('PartRef', { name });
   const meijinValueActor = value => ({ kind: 'value', value });
   const meijinBinderRead = () => exprNode('VariableRead', { name: MEIJIN_BINDER, qualifier: null });
@@ -228,6 +230,7 @@
     // 点数を、なかまの数にする / なかまを、ねこと犬と鳥にする: a comma after を; parts written together are a list.
     if ((p = surfaceCapture(/^([^、。\u0001]+?)を、?(.+?)に(する|かえる|変える)$/d, code, mask)) && dataNameKind(p[0].text, symbols, ctx)) {
       const names = meijinPartList(p[1].text, symbols, ctx);
+      if (names && !meijinListName(p[0].text, symbols, ctx)) throw new AkariError('P205', meijinSetIntoVariable(p[0].text));
       if (names) return `${p[0].text}を［${names.join('、')}］に${p[2].text}`;
       if (mask[p[0].end + 1] === '、') return `${p[0].text}を${p[1].text}に${p[2].text}`;
     }
@@ -405,6 +408,15 @@
       for (const verb of meijinDictionary(p[1].text)) {
         const first = attempt(() => read(p[0].text + 'は' + verb));
         if (first) return done([node('Parallel', { lanes: [first, read(p[0].text + 'は' + p[2].text)] })]);
+      }
+    }
+    // なかまを、できたコピーにする / なかまを、ゴールにふれているものにする: the parts of a set at that moment are kept in
+    // a list. A variable holds one part, so a set put into it is stopped.
+    if ((p = surfaceCapture(/^([^、。\u0001]+?)を、?(.+?)に(?:する|かえる|変える)$/d, code, mask)) && dataNameKind(p[0].text, symbols, scope)) {
+      const set = meijinSubject(p[1].text, symbols, scope, previousTopic)?.set;
+      if (set) {
+        if (!meijinListName(p[0].text, symbols, scope)) throw sentenceDiagnostic(meijinSetIntoVariable(p[0].text), line, [], { kind: 'Assignment' });
+        return done([node('Assignment', { target: { name: p[0].text, qualifier: null }, value: set })]);
       }
     }
     // A subject phrase: several parts, a set, or a variable holding a part. Every は／が is tried as its end.

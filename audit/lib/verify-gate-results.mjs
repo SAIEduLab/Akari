@@ -7,6 +7,8 @@ import {verifyProductSource} from './product-source-contract.mjs';
 import {verifyPublicationReport} from './publication-contract.mjs';
 import {verifySentenceFormCoverage} from './sentence-form-coverage.mjs';
 import {verifySpecExamples} from './spec-examples-contract.mjs';
+import {verifyExpectationsStaticReport,verifyExpectationsRunReport,verifyExpectationsUiReport} from './spec-expectations.mjs';
+import {sha} from './product-test-host.mjs';
 import {verifyAuditInventoryReport} from './audit-inventory-contract.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -55,6 +57,9 @@ export function verifyGateResults(dir,inputs){
   verifyExpectationReport(read('language-expectations-static'),inputs);
   verifySentenceFormCoverage(read('sentence-form-coverage'),inputs);
   verifySpecExamples(read('spec-examples'),inputs,{artifacts:path.join(dir,'spec-examples.artifacts')});
+  verifyExpectationsStaticReport(read('spec-expectations-static'),inputs);
+  verifyExpectationsRunReport(read('spec-expectations'),inputs,{sha});
+  verifyExpectationsUiReport(read('spec-expectations-ui'),inputs,{sha});
   verifyIntentReport(read('japanese-intent-browser'),inputs,path.join(dir,'japanese-intent-browser.artifacts','candidate.html'));
   verifyRuntimeReport(read('runtime-boundary'),inputs,path.join(dir,'runtime-boundary'));
   verifyNegativeReport(read('japanese-gate-negative'),inputs);

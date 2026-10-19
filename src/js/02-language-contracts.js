@@ -582,7 +582,7 @@
         op: '',
         source: 'タイマーを0にする',
       },
-      ...EXTENSION_HOST.operations('commands').map(operation => ({id:'ExtensionCommand:'+operation.name,kind:'ExtensionCommand',op:'',source:`拡張「${operation.extensionName}」「${operation.displayName}」（${operation.args.map(extensionInitialSource).join('、')}）`})),
+      ...extensionCommandEntries('all'),
     ].map((x) =>
       Object.freeze({
         ...x,
@@ -591,6 +591,13 @@
     ),
   );
 
+  // The extension commands of the command list; the 名人-only ones (scope "meijin") are listed for 名人 text only.
+  function extensionCommandEntries(scope) {
+    return EXTENSION_HOST.operations('commands').filter(operation => (operation.scope === 'meijin') === (scope === 'meijin')).map(operation => Object.freeze({
+      id: 'ExtensionCommand:' + operation.name, kind: 'ExtensionCommand', op: '',
+      source: `拡張「${operation.extensionName}」「${operation.displayName}」（${operation.args.map(extensionInitialSource).join('、')}）`,
+    }));
+  }
   function insertionContext(source, start = source.length, end = start) {
     start = clamp(Math.trunc(start) || 0, 0, source.length);
     end = clamp(Math.trunc(end) || 0, start, source.length);
@@ -754,7 +761,9 @@
       v = n?.text || '0',
       usedNames = new Set(bindings.map((x) => x.name)),
       binder = initialBlockName('これ', usedNames);
-    for (const x of COMMAND_CATALOG) {
+    // 名人 text also lists the extension commands only 名人 text may use.
+    const catalog = targetId === MEIJIN_OWNER ? [...COMMAND_CATALOG, ...extensionCommandEntries('meijin').map(x => ({ ...x, source: x.source + '。' }))] : COMMAND_CATALOG;
+    for (const x of catalog) {
       let text = x.source,
         reason = '';
       if (
@@ -1002,8 +1011,8 @@
       );
     for (const c of project.components)
       if (c.type === 'input') exprs.push(`\u300c${c.name}\u300dの中身`);
-    for (const operation of EXTENSION_HOST.operations('calculations')) exprs.push(extensionSurface(operation.name,true,operation.args.map(extensionDefaultExpression)));
-    if (EXTENSION_HOST.operations('events').length) exprs.push('拡張「できごとの値」');
+    for (const operation of EXTENSION_HOST.operations('calculations').filter(x => x.scope !== 'meijin' || targetId === MEIJIN_OWNER)) exprs.push(extensionSurface(operation.name,true,operation.args.map(extensionDefaultExpression)));
+    if (EXTENSION_HOST.operations('events').some(x => x.scope !== 'meijin' || targetId === MEIJIN_OWNER)) exprs.push('拡張「できごとの値」');
     for (const text of exprs) add('expr:' + text, '計算', text, 'expression');
     for (const b of GRAMMAR_REGISTRY.builtins) {
       const args =

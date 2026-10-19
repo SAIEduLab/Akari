@@ -176,14 +176,6 @@
   function builtinSurfaceName(n) {
     return BUILTIN_SURFACES[n] || n;
   }
-  function startsWithPart(n) {
-    if (!n) return false;
-    if (n.kind === 'EventCount') return n.actorRef?.kind === 'named';
-    if (n.kind === 'ActorQualifiedRead') return n.actorRef?.kind === 'named';
-    if (n.kind === 'UnaryExpression') return startsWithPart(n.value);
-    if (['CompareExpression', 'LogicalExpression'].includes(n.kind)) return startsWithPart(n.left);
-    return false;
-  }
   function formatScript(ast, options = {}) {
     return withExpressionFormatOptions(options,()=>{
     validateSyntaxAst(ast,'script',{allowHoles:!!options.allowHoles});
@@ -204,8 +196,9 @@
         case 'ForEach':line(depth,controlActor+sentenceFormFor(n).render(n),comment);if(n.binder!=='今見ているもの')line(depth+1,`この中では、今見ているものを【${n.binder}】と呼ぶ`);emit(n.body,depth+1,actorRef);continue;
         default:{const form=sentenceFormFor(n);if(!form)throw new AkariError('P201',`未対応の文 ${n.kind}`);text=form.render(n);break;}
       }
-      // たくどんは、だんごが…まで待つ: a wait whose condition starts with another part takes 、 after its subject.
-      line(depth,actor+(actor&&n.kind==='WaitUntil'&&startsWithPart(n.condition)?'、':'')+text,comment);if(n.kind!=='Hole'&&!everyone)previousActor=actorRef;
+      // ねこは、点数が10になるまで待つ: a wait that names its subject takes 、 after it, so the subject that waits and
+      // the subject inside the condition read apart (as in ねこは、3回くり返す and the other headings with a condition).
+      line(depth,actor+(actor&&n.kind==='WaitUntil'?'、':'')+text,comment);if(n.kind!=='Hole'&&!everyone)previousActor=actorRef;
     }};
     if(ast.heading)line(0,sentenceHeadingSource(ast.heading));
     emit(ast.body,ast.heading?1:0,options.inheritedActor);

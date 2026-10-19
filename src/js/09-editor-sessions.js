@@ -261,6 +261,17 @@
     }
     return { tree: encoded.tree, nodeMap, nodeIds };
   }
+  // The は／が of every written subject, in reading order (は when none is recorded).
+  function subjectParticles(ast) {
+    const out = [], walk = value => {
+      if (Array.isArray(value)) { value.forEach(walk); return; }
+      if (!value || typeof value !== 'object') return;
+      if (value.actorRef?.kind === 'named') out.push(value.actorRef.particle || 'は');
+      for (const [key, child] of Object.entries(value)) if (key !== 'actorRef' && key !== 'sourceSpan') walk(child);
+    };
+    walk(ast);
+    return out;
+  }
   function preserveBlockSource(session, tree, sourceOrigins = new Map()) {
     const source = session.sourceText, oldIndex = buildBlockIndex(session.blockView);
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -759,7 +770,8 @@
     };
     apply(operation);
     const candidateAst = blockDecode(tree, draftCodec);
-    if (astEquivalent(original, candidateAst)) return unchanged();
+    // は／が of a subject is written text, not meaning: astEquivalent leaves it out, so a change of it alone is still an edit.
+    if (astEquivalent(original, candidateAst) && stableJson(subjectParticles(original)) === stableJson(subjectParticles(candidateAst))) return unchanged();
     const hasHole = [...buildBlockIndex(tree).values()].some(entry =>
       BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId)?.kind === 'Hole');
     if (hasHole) {

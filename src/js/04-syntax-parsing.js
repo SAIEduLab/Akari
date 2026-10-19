@@ -1,6 +1,9 @@
   // ────────────────────────────────────────────────────────────────────────
   // 04 — Syntax parsing (no persistent block representation)
   // ────────────────────────────────────────────────────────────────────────
+  // An extension operation registered with scope "meijin" is written only in 名人 text.
+  const extensionMeijinOnly = (extension, operation, calculation = false) =>
+    `${calculation ? '拡張計算' : '拡張'}「${extension}」「${operation}」は、名人モードの 本文で だけ 使えます`;
   class ExpressionParser {
     constructor(text, symbols, ctx = {}) {
       this.text = compactOutsideString(text);
@@ -429,6 +432,7 @@
         if (!found) this.err('E703', '「拡張計算」のあとに、「 」でかこんだ名前を2つ書いてください');
         const name = EXTENSION_HOST.resolve(found[1], found[2], 'calculations');
         if (!name) this.err('E703', '使いたい「拡張計算」が見つかりません。名前をたしかめてください');
+        if (!this.ctx.meijin && EXTENSION_HOST.describe(name, 'calculations')?.scope === 'meijin') this.err('S317', extensionMeijinOnly(found[1], found[2], true));
         this.i += found[0].length; this.expect('（'); const args = [];
         if (!this.take('）')) for (;;) { args.push(this.logicalOr()); if (this.take('）')) break; this.expect('、'); }
         return exprNode('ExtensionCalculation', { name, args });
@@ -1996,12 +2000,15 @@
     let previousHeading=null;
     for(const line of physical){
       if(line.continuation||!line.code||/^[ \t\u3000]/u.test(line.raw))continue;
-      const code=line.mapped.text,mask=surfaceMask(code);let start=0;
+      const code=line.mapped.text,mask=surfaceMask(code);let start=0,inLine=false;
       for(let i=0;i<=mask.length;i++)if(i===mask.length||mask[i]==='。'){
         if(i>start){let found;try{found=readSentenceHeading(code.slice(start,i),symbols,previousHeading,ctx);}catch(error){if(error instanceof AkariError&&!error.line){error.line=line.lineNo;error.column=1;}throw error;}
-          if(found){headings.push({start:line.mapped.positions[start],lineNo:line.lineNo,columnOffset:line.mapped.positions[start]-line.start,previousHeading});previousHeading=found.heading;}}
+          if(found){headings.push({start:line.mapped.positions[start],lineNo:line.lineNo,columnOffset:line.mapped.positions[start]-line.start,previousHeading});previousHeading=found.heading;inLine=true;}}
         start=i+1;
       }
+      // 名人: a sentence at the left margin after a heading's lines is not that heading's; it starts when the work is run.
+      if(ctx.meijin&&!inLine&&headings.length&&!headings[headings.length-1].plain)
+        headings.push({start:line.mapped.positions[0],lineNo:line.lineNo,columnOffset:line.mapped.positions[0]-line.start,previousHeading:null,plain:true});
     }
     const firstCode=physical.find(line=>!line.continuation&&line.code),hasPrefix=headings.length&&headings[0].start!==firstCode?.start;
     if(headings.length<=1&&!hasPrefix)return parseScriptUnit(source,symbols,ctx);
@@ -2231,6 +2238,7 @@
     if (extension) {
       const name = EXTENSION_HOST.resolve(extension[1], extension[2], 'commands');
       if (!name) throw new AkariError('E703', 'この「拡張」のブロックが見つかりません。かくちょうの 名前を たしかめてください', line.lineNo, 1);
+      if (!ctx.meijin && EXTENSION_HOST.describe(name, 'commands')?.scope === 'meijin') throw new AkariError('S317', extensionMeijinOnly(extension[1], extension[2]), line.lineNo, 1);
       return statementNode('ExtensionCommand', line, { name, args: parseArgumentText(extension[3], symbols, ctx, line.lineNo), actorRef: { ...(ctx.topicActor || { kind: 'self' }) } });
     }
     // そのあと・それから・そして・また… only say the order. Without 、 they are dropped before a number, a quote, a
@@ -2250,6 +2258,9 @@
     {const late=surfaceCapture(actorNamePatterns(symbols).late,code);
       if(late){const actor=late[1].text,whole=EVERYONE_WORDS.includes(actor)&&!symbols?.project?.components?.some(c=>c.name===actor);
         const inline=working.inline;working=surfaceLineSlice(working,0,code.length,(whole?'':actor+'は、')+late[0].text+'待つ');working.comment=line.comment;working.inline=inline;code=working.code;}}
+    // 点数が10になるまで、待つ: the same wait without a subject; the 、 only marks the end of the condition.
+    {const plain=surfaceCapture(/^(.+まで)、(?:待つ|まつ|待ちます)$/d,code);
+      if(plain){const inline=working.inline;working=surfaceLineSlice(working,0,code.length,plain[0].text+'待つ');working.comment=line.comment;working.inline=inline;code=working.code;}}
     // ねこも10歩進む: a part name with も is the subject, the same as ねこは (ねこも10 was read as a name).
     const also=actorNamePatterns(symbols).partsWithSelf.find(actor=>code.startsWith(actor.name+'も')&&!surfaceMask(code).startsWith(actor.name+'も同じ'));
     if(also){const inline=working.inline;working=surfaceLineSlice(working,0,code.length,also.name+'は'+code.slice(also.name.length+1));working.comment=line.comment;working.inline=inline;code=working.code;}

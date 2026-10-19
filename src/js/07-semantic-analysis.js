@@ -704,6 +704,10 @@
       // 名人のできごと: 〜になったとき and 〜秒ごとに are read like any value; ふれる相手は部品。
       const heading = item.ast.heading, at = item.ast.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } };
       if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます', only.sourceSpan ? only : at, item.key); }
+      const message = typeof item.filter === 'object' ? item.filter?.message : item.filter;
+      const extensionEvent = !item.meijin && item.event === 'message' && typeof message === 'string' && message.startsWith('拡張:')
+        ? EXTENSION_HOST.describe(message.slice(3), 'events') : null;
+      if (extensionEvent?.scope === 'meijin') add('S317', `拡張の できごと「${extensionEvent.displayName}」は、名人モードの 本文で だけ 使えます`, at, item.key);
       if (heading?.condition) analyzeExpr(heading.condition, { ...base, node: at }, item.key);
       if (heading?.seconds) analyzeExpr(heading.seconds, { ...base, node: at }, item.key);
       if (item.event === 'touchStart' && !componentByName(item.filter?.target))
@@ -1304,8 +1308,35 @@
     }
     const compiled = parseProjectSyntax(project);
     compiled.errors.push(...placeMeijinDefinitionErrors(project, [...analyzeProject(project, compiled), ...eventCountPlacement(compiled), ...laneControlPlacement(compiled)]));
+    compiled.errors = meijinFormsInOrdinary(project, compiled.errors);
     compiled.notes = projectNotes(project, compiled);
     return compiled;
+  }
+  // A 名人 form written in an ordinary body (主役をねこにする, ねこは、いちばん近い星の方を向く, 1秒ごとに、…) reads with
+  // no error as a 名人 script: the check then says so (S317) instead of a reading error that asks for a name or another
+  // sentence. An error that gives its own guidance or choices (「空」は…, 「〜になったら」は…) is kept.
+  const GENERIC_READING_ERRORS = [/^まだ作っていない名前/, /読みとれません|読めません|読みとれないところ/, /がたりません/, /という 文は あかりに ありません/];
+  function meijinFormsInOrdinary(project, errors) {
+    let out = errors;
+    for (const script of project.scripts) {
+      if (isMeijinScript(script) || !script.source?.trim()) continue;
+      const key = scriptSourceKey(script), at = out.findIndex(e => e.where === key), first = out[at];
+      if (!first || !['P201', 'P205', 'S301'].includes(first.code) || first.proposals?.length || !GENERIC_READING_ERRORS.some(re => re.test(first.message))) continue;
+      // As written (its own headings and procedures), or as the part's sentences: in 名人 text they are read under a
+      // heading that names the part.
+      const owner = project.components.find(c => c.id === script.targetId)?.name, sources = [script.source];
+      if (owner && /^[^\s、。「」【】（）()]+$/.test(owner))
+        sources.push(`作品を動かしたとき、${owner}は、\n` + script.source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n'));
+      const reads = sources.some(source => {
+        const trial = cloneDesignProject(project);
+        trial.scripts = [{ id: 'meijin-reading', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source }];
+        try { return compileProject(trial).errors.length === 0; } catch (error) { if (!(error instanceof AkariError)) throw error; return false; }
+      });
+      if (!reads) continue;
+      const { proposals, draftRole, ...location } = first;
+      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます' }, ...out.slice(at).filter(e => e.where !== key)];
+    }
+    return out;
   }
   // A message names an expression as written; the 名人 parts of it (no block has them) are written by their words.
   function messageExpression(n) {
@@ -1380,6 +1411,8 @@
   }
   // Notices never stop a run, a save or an export. ねこは1秒待つ。だんごは言う。: only ねこ waits, so だんご's
   // sentence runs at once; say so where the next sentence of the same flow has another subject.
+  // The notice names what the next sentence does: だんごは すぐ 話します (a sentence that speaks), …すぐ 動きます (any other).
+  const NOTICE_VERBS = { Say: '話します', Ask: 'たずねます', SoundCommand: '音を 鳴らします', WaitTime: '待ちはじめます', WaitUntil: '待ちはじめます', BroadcastAndWait: '待ちはじめます' };
   function projectNotes(project, compiled) {
     const notes = [], seen = new Set();
     const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach'];
@@ -1400,7 +1433,7 @@
             const other = who(m.actorRef);
             if (!other || other === waiter) break;
             const note = { code: 'I101', notice: true, line: m.sourceSpan?.startLine || 0, column: m.sourceSpan?.startColumn || 1, where: item.key,
-              message: `${other}の 文は すぐ 動きます（待つのは ${waiter}だけです）。みんなで 待つときは、「待つ」の 文に 主語を 書きません` };
+              message: `${other}は すぐ ${NOTICE_VERBS[m.kind] || '動きます'}（待つのは ${waiter}だけです）。みんなで 待つときは、「待つ」の 文に 主語を 書きません` };
             const key = note.where + '|' + note.line + '|' + note.column;
             if (!seen.has(key)) { seen.add(key); notes.push(note); }
             break;

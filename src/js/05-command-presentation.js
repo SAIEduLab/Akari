@@ -742,11 +742,11 @@
       );
     for (const [kind, category, collection] of [
       ['ExtensionCommand', 'statement', 'commands'], ['ExtensionCalculation', 'expression', 'calculations'],
-    ]) for (const operation of EXTENSION_HOST.operations(collection)) {
+    ]) for (const operation of EXTENSION_HOST.operations(collection).filter(x => x.scope !== 'meijin')) {
       const labels = operation.args.map(x => x.name);
       add(kind, category, operation.displayName, [], [args(labels, { initialValues: operation.args.map(extensionDefaultExpression) })], [], { key: 'name', value: operation.name }, { palette: 'かくちょう' });
     }
-    if (EXTENSION_HOST.operations('events').length)
+    if (EXTENSION_HOST.operations('events').some(x => x.scope !== 'meijin'))
       add('SensorRead', 'expression', 'かくちょうの できごとの 中身', [], [], [], { key: 'sensor', value: '拡張の値' }, { palette: 'かくちょう' });
     return Object.freeze(schemas);
   })();

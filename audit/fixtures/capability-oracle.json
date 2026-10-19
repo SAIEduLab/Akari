@@ -371,6 +371,11 @@
       "id": "NoOperation",
       "kind": "NoOperation",
       "op": ""
+    },
+    {
+      "id": "TimerReset",
+      "kind": "TimerReset",
+      "op": ""
     }
   ],
   "schemaIds": [
@@ -382,6 +387,8 @@
     "QuantityLiteral",
     "UnitlessRead",
     "ActorQualifiedRead",
+    "EventCount:action",
+    "EventCount:click",
     "ContinuousRule",
     "MotionCommand:MOVE_DIRECTION",
     "MotionCommand:GLIDE_DIRECTION",
@@ -399,6 +406,7 @@
     "NoOperation",
     "Break",
     "Continue",
+    "TimerReset",
     "IfStatement",
     "RepeatCount",
     "RepeatWhile",
@@ -1555,6 +1563,18 @@
       "guarantee": "GUI-CATALOG; GUI-SCHEMA; GUI-STMT"
     },
     {
+      "id": "command:TimerReset",
+      "capability": "タイマーを0にする",
+      "ast": "TimerReset",
+      "cui": "CODE-STMT",
+      "gui": "GUI-EDIT-STMT schema `TimerReset`; fields=なし; inputs=なし; bodies=なし; annotations=inlineComment",
+      "semantic": "タイマーの値を0に戻し、そこからまた数える",
+      "runtime": "EventScheduler.executeNode / 許可された文はexecFunctionNodes",
+      "selftest": "CORE catalog TimerReset; TEST-BLOCK-SCHEMA TimerReset; LANG statement roundtrip TimerReset",
+      "browser": "BROWSER-LANG; browser-schemas:TimerReset",
+      "guarantee": "GUI-CATALOG; GUI-SCHEMA; GUI-STMT"
+    },
+    {
       "id": "ast:Script",
       "capability": "最上位本文（空配列可）",
       "ast": "Script.body",
@@ -1685,6 +1705,18 @@
       "selftest": "FUNCTION 初期化と反復; AUDIT ERROR nested functions preserve inner failure and both frames; TEST-BLOCK-SCHEMA UserFunctionCall; LANG semantic errors retain complete source AST; LANG generated expression and comment roundtrips; TEST-EDITOR variadic insertion removal and move preserve arity errors",
       "browser": "BROWSER-LANG; browser-schemas:UserFunctionCall; browser-boundaries:unknown-callee-and-all-arguments-after-definition-change",
       "guarantee": "既存CUIの値/拒否の代表例; 独立AST fieldはGUI-SCHEMA、GUI操作はBROWSER-LANG"
+    },
+    {
+      "id": "expression:EventCount",
+      "capability": "手順の終わりや「おされる」の回数を、待ち始めてからの数で条件にする",
+      "ast": "EventCount",
+      "cui": "CODE-EXPR",
+      "gui": "GUI-EDIT-EXPR schema `EventCount:action` / `EventCount:click`; fields=event,name,actorRef; inputs=count; bodies=なし; annotations=なし",
+      "semantic": "数え始めは待ち始め（くり返しではくり返しの始め）。回数は始めに一度だけ評価する0以上の整数",
+      "runtime": "RuntimeModel.bindEventCounts / EventScheduler.executeNode",
+      "selftest": "TEST-BLOCK-SCHEMA EventCount:action; TEST-BLOCK-SCHEMA EventCount:click",
+      "browser": "BROWSER-LANG; browser-schemas:EventCount:action; browser-schemas:EventCount:click",
+      "guarantee": "GUI-SCHEMA"
     },
     {
       "id": "operator:POS",

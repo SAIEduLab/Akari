@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
+import {meijinExampleErrors} from './meijin-example-world.mjs';
 
 // Every ```text block of the language and extension specifications is read by the
 // product parser. A block is one script that must be accepted, unless the line right
@@ -9,20 +10,25 @@ import {createHash} from 'node:crypto';
 //   <!-- akari-example: rejected -->    every statement (a line and its indented lines)
 //                                       is an intentionally invalid example and must be
 //                                       rejected on its own;
-//   <!-- akari-example: expression -->  every line is one expression or condition.
+//   <!-- akari-example: expression -->  every line is one expression or condition;
+//   <!-- akari-example: meijin -->      the block is one 名人 script, read in a work with the parts and
+//                                       data its sentences name, and the check finds no error;
+//   <!-- akari-example: meijin-rejected -->  every statement is an intentionally invalid 名人 example
+//                                       and the check must stop it on its own.
 // EXTENSIONS.md examples are read by a derived product that registers the extensions
-// that guide builds (extensions/examples/offline.js).
+// that guide builds (extensions/examples/offline.js and meijin.js).
 export const specExampleDocuments=Object.freeze([
   Object.freeze({file:'LANGUAGE.md',context:'standard'}),
   Object.freeze({file:'EXTENSIONS.md',context:'offline-extensions'}),
 ]);
-export const specExampleModes=Object.freeze(['script','rejected','expression']);
+export const specExampleModes=Object.freeze(['script','rejected','expression','meijin','meijin-rejected']);
 export const readSpecExampleDocuments=(root=path.resolve(import.meta.dirname,'../..'))=>
   specExampleDocuments.map(({file,context})=>({file,context,text:fs.readFileSync(path.join(root,file),'utf8')}));
 export const specExampleNegativeIds=Object.freeze([
   'accepted-example-rejected-detected','rejected-example-accepted-detected','rejected-unit-masking-detected',
   'expression-example-rejected-detected','unknown-marker-detected','dangling-marker-detected','unclosed-block-detected',
   'empty-block-detected','document-without-blocks-detected','extension-context-detected',
+  'meijin-example-rejected-detected','meijin-rejected-example-accepted-detected','meijin-rejected-unit-masking-detected',
 ]);
 export const specExampleValidatorNegativeIds=Object.freeze([
   'report-failed-status','report-failure-listed','report-missing-block','report-extra-block','report-failed-block',
@@ -81,11 +87,16 @@ export function checkExampleBlock(api,block) {
     }
     return null;
   }
+  if(block.mode==='meijin'){
+    const errors=meijinExampleErrors(api,source);
+    return errors.length?'rejected:'+id+':'+errors[0]:null;
+  }
   // Intentionally invalid examples: each statement must be rejected by itself, so an
   // accepted statement cannot hide behind a rejected neighbour.
   const units=statementUnits(block.body);
   if(!units.length)return 'empty:'+id;
-  for(const unit of units)if(api.parseSyntax(unit).ast)return 'accepted:'+id+':'+unit.split('\n')[0];
+  const accepts=block.mode==='meijin-rejected'?unit=>!meijinExampleErrors(api,unit).length:unit=>!!api.parseSyntax(unit).ast;
+  for(const unit of units)if(accepts(unit))return 'accepted:'+id+':'+unit.split('\n')[0];
   return null;
 }
 
@@ -96,7 +107,7 @@ export function checkSpecExamples(documents,apis) {
     const api=apis[context];if(!api){failures.push('context:'+file+':'+context);continue;}
     for(const block of read.blocks){
       const problem=checkExampleBlock(api,block);if(problem)failures.push(problem);
-      rows.push({file,line:block.line,mode:block.mode,context,units:block.mode==='rejected'?statementUnits(block.body).length:null,status:problem?'FAIL':'PASS'});
+      rows.push({file,line:block.line,mode:block.mode,context,units:['rejected','meijin-rejected'].includes(block.mode)?statementUnits(block.body).length:null,status:problem?'FAIL':'PASS'});
     }
   }
   return {failures,rows};

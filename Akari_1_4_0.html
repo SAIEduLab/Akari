@@ -6721,10 +6721,12 @@ function createAkariExtensionHost(options) {
       if (!Array.isArray(manifest[kind])) fail('E701','拡張の機能一覧が不正です');
       for (const operation of manifest[kind]) {
         const required = kind === 'events' ? ['id','name','description','payload'] : ['id','name','description','args','returns','async'];
-        if (!keys(operation,required,kind==='events'?[]:['capability']) || !identifier(operation.id) || ids.has(operation.id) ||
+        if (!keys(operation,required,kind==='events'?['scope']:['capability','scope']) || !identifier(operation.id) || ids.has(operation.id) ||
           typeof operation.name !== 'string' || !operation.name.trim() || /[\r\n「」]/.test(operation.name) ||
           typeof operation.description !== 'string' || names.has(operation.name) || proposedNames.has(operation.name) ||
           (options.reservedNames || []).includes(operation.name)) fail('E702','拡張の識別子・名前が不正または重複しています');
+        // scope "meijin": only 名人 text may use it (no block, no ordinary body); "all" (the default) everywhere.
+        if (own(operation,'scope') && !['all','meijin'].includes(operation.scope)) fail('E701','拡張の使える本文（scope）が不正です');
         ids.add(operation.id); proposedNames.add(operation.name);
         if (kind === 'events') spec(operation.payload);
         else {
@@ -6753,7 +6755,7 @@ function createAkariExtensionHost(options) {
   function operations(kind) {
     const key = kindKey(kind); if (!key) fail('E701','拡張の機能区分が不正です');
     return [...records.values()].flatMap(record => record.manifest[key].map(operation => freeze({
-      ...copy(operation), displayName:operation.name, name:record.manifest.id+'/'+operation.id,
+      ...copy(operation), scope:operation.scope||'all', displayName:operation.name, name:record.manifest.id+'/'+operation.id,
       qualifiedName:record.manifest.id+'/'+operation.id, extensionId:record.manifest.id, kind:key,
       extensionName:record.manifest.name || record.manifest.id,
     })));
@@ -12190,7 +12192,7 @@ function createAkariExtensionHost(options) {
         op: '',
         source: 'タイマーを0にする',
       },
-      ...EXTENSION_HOST.operations('commands').map(operation => ({id:'ExtensionCommand:'+operation.name,kind:'ExtensionCommand',op:'',source:`拡張「${operation.extensionName}」「${operation.displayName}」（${operation.args.map(extensionInitialSource).join('、')}）`})),
+      ...extensionCommandEntries('all'),
     ].map((x) =>
       Object.freeze({
         ...x,
@@ -12199,6 +12201,13 @@ function createAkariExtensionHost(options) {
     ),
   );
 
+  // The extension commands of the command list; the 名人-only ones (scope "meijin") are listed for 名人 text only.
+  function extensionCommandEntries(scope) {
+    return EXTENSION_HOST.operations('commands').filter(operation => (operation.scope === 'meijin') === (scope === 'meijin')).map(operation => Object.freeze({
+      id: 'ExtensionCommand:' + operation.name, kind: 'ExtensionCommand', op: '',
+      source: `拡張「${operation.extensionName}」「${operation.displayName}」（${operation.args.map(extensionInitialSource).join('、')}）`,
+    }));
+  }
   function insertionContext(source, start = source.length, end = start) {
     start = clamp(Math.trunc(start) || 0, 0, source.length);
     end = clamp(Math.trunc(end) || 0, start, source.length);
@@ -12362,7 +12371,9 @@ function createAkariExtensionHost(options) {
       v = n?.text || '0',
       usedNames = new Set(bindings.map((x) => x.name)),
       binder = initialBlockName('これ', usedNames);
-    for (const x of COMMAND_CATALOG) {
+    // 名人 text also lists the extension commands only 名人 text may use.
+    const catalog = targetId === MEIJIN_OWNER ? [...COMMAND_CATALOG, ...extensionCommandEntries('meijin').map(x => ({ ...x, source: x.source + '。' }))] : COMMAND_CATALOG;
+    for (const x of catalog) {
       let text = x.source,
         reason = '';
       if (
@@ -12610,8 +12621,8 @@ function createAkariExtensionHost(options) {
       );
     for (const c of project.components)
       if (c.type === 'input') exprs.push(`\u300c${c.name}\u300dの中身`);
-    for (const operation of EXTENSION_HOST.operations('calculations')) exprs.push(extensionSurface(operation.name,true,operation.args.map(extensionDefaultExpression)));
-    if (EXTENSION_HOST.operations('events').length) exprs.push('拡張「できごとの値」');
+    for (const operation of EXTENSION_HOST.operations('calculations').filter(x => x.scope !== 'meijin' || targetId === MEIJIN_OWNER)) exprs.push(extensionSurface(operation.name,true,operation.args.map(extensionDefaultExpression)));
+    if (EXTENSION_HOST.operations('events').some(x => x.scope !== 'meijin' || targetId === MEIJIN_OWNER)) exprs.push('拡張「できごとの値」');
     for (const text of exprs) add('expr:' + text, '計算', text, 'expression');
     for (const b of GRAMMAR_REGISTRY.builtins) {
       const args =
@@ -16270,6 +16281,9 @@ function createAkariExtensionHost(options) {
   // ────────────────────────────────────────────────────────────────────────
   // 04 — Syntax parsing (no persistent block representation)
   // ────────────────────────────────────────────────────────────────────────
+  // An extension operation registered with scope "meijin" is written only in 名人 text.
+  const extensionMeijinOnly = (extension, operation, calculation = false) =>
+    `${calculation ? '拡張計算' : '拡張'}「${extension}」「${operation}」は、名人モードの 本文で だけ 使えます`;
   class ExpressionParser {
     constructor(text, symbols, ctx = {}) {
       this.text = compactOutsideString(text);
@@ -16698,6 +16712,7 @@ function createAkariExtensionHost(options) {
         if (!found) this.err('E703', '「拡張計算」のあとに、「 」でかこんだ名前を2つ書いてください');
         const name = EXTENSION_HOST.resolve(found[1], found[2], 'calculations');
         if (!name) this.err('E703', '使いたい「拡張計算」が見つかりません。名前をたしかめてください');
+        if (!this.ctx.meijin && EXTENSION_HOST.describe(name, 'calculations')?.scope === 'meijin') this.err('S317', extensionMeijinOnly(found[1], found[2], true));
         this.i += found[0].length; this.expect('（'); const args = [];
         if (!this.take('）')) for (;;) { args.push(this.logicalOr()); if (this.take('）')) break; this.expect('、'); }
         return exprNode('ExtensionCalculation', { name, args });
@@ -18265,12 +18280,15 @@ function createAkariExtensionHost(options) {
     let previousHeading=null;
     for(const line of physical){
       if(line.continuation||!line.code||/^[ \t\u3000]/u.test(line.raw))continue;
-      const code=line.mapped.text,mask=surfaceMask(code);let start=0;
+      const code=line.mapped.text,mask=surfaceMask(code);let start=0,inLine=false;
       for(let i=0;i<=mask.length;i++)if(i===mask.length||mask[i]==='。'){
         if(i>start){let found;try{found=readSentenceHeading(code.slice(start,i),symbols,previousHeading,ctx);}catch(error){if(error instanceof AkariError&&!error.line){error.line=line.lineNo;error.column=1;}throw error;}
-          if(found){headings.push({start:line.mapped.positions[start],lineNo:line.lineNo,columnOffset:line.mapped.positions[start]-line.start,previousHeading});previousHeading=found.heading;}}
+          if(found){headings.push({start:line.mapped.positions[start],lineNo:line.lineNo,columnOffset:line.mapped.positions[start]-line.start,previousHeading});previousHeading=found.heading;inLine=true;}}
         start=i+1;
       }
+      // 名人: a sentence at the left margin after a heading's lines is not that heading's; it starts when the work is run.
+      if(ctx.meijin&&!inLine&&headings.length&&!headings[headings.length-1].plain)
+        headings.push({start:line.mapped.positions[0],lineNo:line.lineNo,columnOffset:line.mapped.positions[0]-line.start,previousHeading:null,plain:true});
     }
     const firstCode=physical.find(line=>!line.continuation&&line.code),hasPrefix=headings.length&&headings[0].start!==firstCode?.start;
     if(headings.length<=1&&!hasPrefix)return parseScriptUnit(source,symbols,ctx);
@@ -18500,6 +18518,7 @@ function createAkariExtensionHost(options) {
     if (extension) {
       const name = EXTENSION_HOST.resolve(extension[1], extension[2], 'commands');
       if (!name) throw new AkariError('E703', 'この「拡張」のブロックが見つかりません。かくちょうの 名前を たしかめてください', line.lineNo, 1);
+      if (!ctx.meijin && EXTENSION_HOST.describe(name, 'commands')?.scope === 'meijin') throw new AkariError('S317', extensionMeijinOnly(extension[1], extension[2]), line.lineNo, 1);
       return statementNode('ExtensionCommand', line, { name, args: parseArgumentText(extension[3], symbols, ctx, line.lineNo), actorRef: { ...(ctx.topicActor || { kind: 'self' }) } });
     }
     // そのあと・それから・そして・また… only say the order. Without 、 they are dropped before a number, a quote, a
@@ -18519,6 +18538,9 @@ function createAkariExtensionHost(options) {
     {const late=surfaceCapture(actorNamePatterns(symbols).late,code);
       if(late){const actor=late[1].text,whole=EVERYONE_WORDS.includes(actor)&&!symbols?.project?.components?.some(c=>c.name===actor);
         const inline=working.inline;working=surfaceLineSlice(working,0,code.length,(whole?'':actor+'は、')+late[0].text+'待つ');working.comment=line.comment;working.inline=inline;code=working.code;}}
+    // 点数が10になるまで、待つ: the same wait without a subject; the 、 only marks the end of the condition.
+    {const plain=surfaceCapture(/^(.+まで)、(?:待つ|まつ|待ちます)$/d,code);
+      if(plain){const inline=working.inline;working=surfaceLineSlice(working,0,code.length,plain[0].text+'待つ');working.comment=line.comment;working.inline=inline;code=working.code;}}
     // ねこも10歩進む: a part name with も is the subject, the same as ねこは (ねこも10 was read as a name).
     const also=actorNamePatterns(symbols).partsWithSelf.find(actor=>code.startsWith(actor.name+'も')&&!surfaceMask(code).startsWith(actor.name+'も同じ'));
     if(also){const inline=working.inline;working=surfaceLineSlice(working,0,code.length,also.name+'は'+code.slice(also.name.length+1));working.comment=line.comment;working.inline=inline;code=working.code;}
@@ -19075,6 +19097,8 @@ function createAkariExtensionHost(options) {
     const names = text.split(/と|、|や/);
     return names.length > 1 && names.every(name => isMeijinPart(name, symbols, ctx)) ? names : null;
   }
+  // A variable holds one value; a set of parts is kept in a list (as a list holds any row of values).
+  const meijinSetIntoVariable = name => `「${name}」は へんすうなので、部品を 一つだけ 入れられます。いくつかの 部品の あつまりは、リストに 入れます`;
   const meijinPartRef = name => exprNode('PartRef', { name });
   const meijinValueActor = value => ({ kind: 'value', value });
   const meijinBinderRead = () => exprNode('VariableRead', { name: MEIJIN_BINDER, qualifier: null });
@@ -19281,6 +19305,7 @@ function createAkariExtensionHost(options) {
     // 点数を、なかまの数にする / なかまを、ねこと犬と鳥にする: a comma after を; parts written together are a list.
     if ((p = surfaceCapture(/^([^、。\u0001]+?)を、?(.+?)に(する|かえる|変える)$/d, code, mask)) && dataNameKind(p[0].text, symbols, ctx)) {
       const names = meijinPartList(p[1].text, symbols, ctx);
+      if (names && !meijinListName(p[0].text, symbols, ctx)) throw new AkariError('P205', meijinSetIntoVariable(p[0].text));
       if (names) return `${p[0].text}を［${names.join('、')}］に${p[2].text}`;
       if (mask[p[0].end + 1] === '、') return `${p[0].text}を${p[1].text}に${p[2].text}`;
     }
@@ -19458,6 +19483,15 @@ function createAkariExtensionHost(options) {
       for (const verb of meijinDictionary(p[1].text)) {
         const first = attempt(() => read(p[0].text + 'は' + verb));
         if (first) return done([node('Parallel', { lanes: [first, read(p[0].text + 'は' + p[2].text)] })]);
+      }
+    }
+    // なかまを、できたコピーにする / なかまを、ゴールにふれているものにする: the parts of a set at that moment are kept in
+    // a list. A variable holds one part, so a set put into it is stopped.
+    if ((p = surfaceCapture(/^([^、。\u0001]+?)を、?(.+?)に(?:する|かえる|変える)$/d, code, mask)) && dataNameKind(p[0].text, symbols, scope)) {
+      const set = meijinSubject(p[1].text, symbols, scope, previousTopic)?.set;
+      if (set) {
+        if (!meijinListName(p[0].text, symbols, scope)) throw sentenceDiagnostic(meijinSetIntoVariable(p[0].text), line, [], { kind: 'Assignment' });
+        return done([node('Assignment', { target: { name: p[0].text, qualifier: null }, value: set })]);
       }
     }
     // A subject phrase: several parts, a set, or a variable holding a part. Every は／が is tried as its end.
@@ -20296,11 +20330,11 @@ function createAkariExtensionHost(options) {
       );
     for (const [kind, category, collection] of [
       ['ExtensionCommand', 'statement', 'commands'], ['ExtensionCalculation', 'expression', 'calculations'],
-    ]) for (const operation of EXTENSION_HOST.operations(collection)) {
+    ]) for (const operation of EXTENSION_HOST.operations(collection).filter(x => x.scope !== 'meijin')) {
       const labels = operation.args.map(x => x.name);
       add(kind, category, operation.displayName, [], [args(labels, { initialValues: operation.args.map(extensionDefaultExpression) })], [], { key: 'name', value: operation.name }, { palette: 'かくちょう' });
     }
-    if (EXTENSION_HOST.operations('events').length)
+    if (EXTENSION_HOST.operations('events').some(x => x.scope !== 'meijin'))
       add('SensorRead', 'expression', 'かくちょうの できごとの 中身', [], [], [], { key: 'sensor', value: '拡張の値' }, { palette: 'かくちょう' });
     return Object.freeze(schemas);
   })();
@@ -20952,14 +20986,6 @@ function createAkariExtensionHost(options) {
   function builtinSurfaceName(n) {
     return BUILTIN_SURFACES[n] || n;
   }
-  function startsWithPart(n) {
-    if (!n) return false;
-    if (n.kind === 'EventCount') return n.actorRef?.kind === 'named';
-    if (n.kind === 'ActorQualifiedRead') return n.actorRef?.kind === 'named';
-    if (n.kind === 'UnaryExpression') return startsWithPart(n.value);
-    if (['CompareExpression', 'LogicalExpression'].includes(n.kind)) return startsWithPart(n.left);
-    return false;
-  }
   function formatScript(ast, options = {}) {
     return withExpressionFormatOptions(options,()=>{
     validateSyntaxAst(ast,'script',{allowHoles:!!options.allowHoles});
@@ -20980,8 +21006,9 @@ function createAkariExtensionHost(options) {
         case 'ForEach':line(depth,controlActor+sentenceFormFor(n).render(n),comment);if(n.binder!=='今見ているもの')line(depth+1,`この中では、今見ているものを【${n.binder}】と呼ぶ`);emit(n.body,depth+1,actorRef);continue;
         default:{const form=sentenceFormFor(n);if(!form)throw new AkariError('P201',`未対応の文 ${n.kind}`);text=form.render(n);break;}
       }
-      // たくどんは、だんごが…まで待つ: a wait whose condition starts with another part takes 、 after its subject.
-      line(depth,actor+(actor&&n.kind==='WaitUntil'&&startsWithPart(n.condition)?'、':'')+text,comment);if(n.kind!=='Hole'&&!everyone)previousActor=actorRef;
+      // ねこは、点数が10になるまで待つ: a wait that names its subject takes 、 after it, so the subject that waits and
+      // the subject inside the condition read apart (as in ねこは、3回くり返す and the other headings with a condition).
+      line(depth,actor+(actor&&n.kind==='WaitUntil'?'、':'')+text,comment);if(n.kind!=='Hole'&&!everyone)previousActor=actorRef;
     }};
     if(ast.heading)line(0,sentenceHeadingSource(ast.heading));
     emit(ast.body,ast.heading?1:0,options.inheritedActor);
@@ -21701,6 +21728,10 @@ function createAkariExtensionHost(options) {
       // 名人のできごと: 〜になったとき and 〜秒ごとに are read like any value; ふれる相手は部品。
       const heading = item.ast.heading, at = item.ast.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } };
       if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます', only.sourceSpan ? only : at, item.key); }
+      const message = typeof item.filter === 'object' ? item.filter?.message : item.filter;
+      const extensionEvent = !item.meijin && item.event === 'message' && typeof message === 'string' && message.startsWith('拡張:')
+        ? EXTENSION_HOST.describe(message.slice(3), 'events') : null;
+      if (extensionEvent?.scope === 'meijin') add('S317', `拡張の できごと「${extensionEvent.displayName}」は、名人モードの 本文で だけ 使えます`, at, item.key);
       if (heading?.condition) analyzeExpr(heading.condition, { ...base, node: at }, item.key);
       if (heading?.seconds) analyzeExpr(heading.seconds, { ...base, node: at }, item.key);
       if (item.event === 'touchStart' && !componentByName(item.filter?.target))
@@ -22301,8 +22332,35 @@ function createAkariExtensionHost(options) {
     }
     const compiled = parseProjectSyntax(project);
     compiled.errors.push(...placeMeijinDefinitionErrors(project, [...analyzeProject(project, compiled), ...eventCountPlacement(compiled), ...laneControlPlacement(compiled)]));
+    compiled.errors = meijinFormsInOrdinary(project, compiled.errors);
     compiled.notes = projectNotes(project, compiled);
     return compiled;
+  }
+  // A 名人 form written in an ordinary body (主役をねこにする, ねこは、いちばん近い星の方を向く, 1秒ごとに、…) reads with
+  // no error as a 名人 script: the check then says so (S317) instead of a reading error that asks for a name or another
+  // sentence. An error that gives its own guidance or choices (「空」は…, 「〜になったら」は…) is kept.
+  const GENERIC_READING_ERRORS = [/^まだ作っていない名前/, /読みとれません|読めません|読みとれないところ/, /がたりません/, /という 文は あかりに ありません/];
+  function meijinFormsInOrdinary(project, errors) {
+    let out = errors;
+    for (const script of project.scripts) {
+      if (isMeijinScript(script) || !script.source?.trim()) continue;
+      const key = scriptSourceKey(script), at = out.findIndex(e => e.where === key), first = out[at];
+      if (!first || !['P201', 'P205', 'S301'].includes(first.code) || first.proposals?.length || !GENERIC_READING_ERRORS.some(re => re.test(first.message))) continue;
+      // As written (its own headings and procedures), or as the part's sentences: in 名人 text they are read under a
+      // heading that names the part.
+      const owner = project.components.find(c => c.id === script.targetId)?.name, sources = [script.source];
+      if (owner && /^[^\s、。「」【】（）()]+$/.test(owner))
+        sources.push(`作品を動かしたとき、${owner}は、\n` + script.source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n'));
+      const reads = sources.some(source => {
+        const trial = cloneDesignProject(project);
+        trial.scripts = [{ id: 'meijin-reading', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source }];
+        try { return compileProject(trial).errors.length === 0; } catch (error) { if (!(error instanceof AkariError)) throw error; return false; }
+      });
+      if (!reads) continue;
+      const { proposals, draftRole, ...location } = first;
+      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます' }, ...out.slice(at).filter(e => e.where !== key)];
+    }
+    return out;
   }
   // A message names an expression as written; the 名人 parts of it (no block has them) are written by their words.
   function messageExpression(n) {
@@ -22377,6 +22435,8 @@ function createAkariExtensionHost(options) {
   }
   // Notices never stop a run, a save or an export. ねこは1秒待つ。だんごは言う。: only ねこ waits, so だんご's
   // sentence runs at once; say so where the next sentence of the same flow has another subject.
+  // The notice names what the next sentence does: だんごは すぐ 話します (a sentence that speaks), …すぐ 動きます (any other).
+  const NOTICE_VERBS = { Say: '話します', Ask: 'たずねます', SoundCommand: '音を 鳴らします', WaitTime: '待ちはじめます', WaitUntil: '待ちはじめます', BroadcastAndWait: '待ちはじめます' };
   function projectNotes(project, compiled) {
     const notes = [], seen = new Set();
     const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach'];
@@ -22397,7 +22457,7 @@ function createAkariExtensionHost(options) {
             const other = who(m.actorRef);
             if (!other || other === waiter) break;
             const note = { code: 'I101', notice: true, line: m.sourceSpan?.startLine || 0, column: m.sourceSpan?.startColumn || 1, where: item.key,
-              message: `${other}の 文は すぐ 動きます（待つのは ${waiter}だけです）。みんなで 待つときは、「待つ」の 文に 主語を 書きません` };
+              message: `${other}は すぐ ${NOTICE_VERBS[m.kind] || '動きます'}（待つのは ${waiter}だけです）。みんなで 待つときは、「待つ」の 文に 主語を 書きません` };
             const key = note.where + '|' + note.line + '|' + note.column;
             if (!seen.has(key)) { seen.add(key); notes.push(note); }
             break;
@@ -25293,6 +25353,17 @@ function createAkariExtensionHost(options) {
     }
     return { tree: encoded.tree, nodeMap, nodeIds };
   }
+  // The は／が of every written subject, in reading order (は when none is recorded).
+  function subjectParticles(ast) {
+    const out = [], walk = value => {
+      if (Array.isArray(value)) { value.forEach(walk); return; }
+      if (!value || typeof value !== 'object') return;
+      if (value.actorRef?.kind === 'named') out.push(value.actorRef.particle || 'は');
+      for (const [key, child] of Object.entries(value)) if (key !== 'actorRef' && key !== 'sourceSpan') walk(child);
+    };
+    walk(ast);
+    return out;
+  }
   function preserveBlockSource(session, tree, sourceOrigins = new Map()) {
     const source = session.sourceText, oldIndex = buildBlockIndex(session.blockView);
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -25791,7 +25862,8 @@ function createAkariExtensionHost(options) {
     };
     apply(operation);
     const candidateAst = blockDecode(tree, draftCodec);
-    if (astEquivalent(original, candidateAst)) return unchanged();
+    // は／が of a subject is written text, not meaning: astEquivalent leaves it out, so a change of it alone is still an edit.
+    if (astEquivalent(original, candidateAst) && stableJson(subjectParticles(original)) === stableJson(subjectParticles(candidateAst))) return unchanged();
     const hasHole = [...buildBlockIndex(tree).values()].some(entry =>
       BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId)?.kind === 'Hole');
     if (hasHole) {

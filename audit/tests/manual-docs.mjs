@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {snapshot,withBrowser,sha} from '../lib/product-test-host.mjs';
+import {meijinExampleErrors} from '../lib/meijin-example-world.mjs';
 
 // Additional documentation checks; does not replace any product acceptance test.
 const [browserPath,output]=process.argv.slice(2);
@@ -19,16 +20,7 @@ const html=fs.readFileSync(currentProductFile(),'utf8');
 const context=vm.createContext({console,TextEncoder,TextDecoder,Blob,URL,structuredClone,setTimeout,clearTimeout});
 vm.runInContext(html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>')),context,{timeout:30000});
 const api=vm.runInContext('Akari',context);
-const meijinWork=source=>{
-  const p=api.makeEmptyProject(),base=p.components.find(c=>c.type==='sprite');
-  p.components=[...p.components.filter(c=>c.type!=='sprite'),...[['m-cat','ねこ'],['m-dog','犬'],['m-bird','鳥'],['m-star','星'],['m-goal','ゴール'],['m-dango','だんご']]
-    .map(([id,name],i)=>({...structuredClone(base),id,name,x:60*i,y:0,costumes:[{id:id+'-face',name:'顔',kind:'text',value:'●'}],costumeId:id+'-face',localData:{variables:[{id:id+'-hp',name:'体力',initialValue:10}],lists:[]}}))];
-  p.projectData.variables.push(...['主役','点数','合計'].map((name,i)=>({id:'m-v'+i,name,initialValue:0})));
-  p.projectData.lists.push({id:'m-team',name:'なかま',initialValue:[]},{id:'m-items',name:'持ち物',initialValue:['本','ぼうし']});
-  p.scripts=[{id:'m-script',mode:'meijin',source:''}].map(s=>({...s,targetId:'meijin',event:'start'}));
-  api.updateScriptSource(p.scripts[0],source,p);
-  return JSON.parse(JSON.stringify(api.compileProject(p).errors.map(e=>e.code+'@'+e.line+' '+e.message)));
-};
+const meijinWork=source=>meijinExampleErrors(api,source);
 const decode=s=>s.replace(/&#(x[0-9a-f]+|\d+);/gi,(_,n)=>String.fromCodePoint(n[0].toLowerCase()==='x'?parseInt(n.slice(1),16):Number(n))).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&amp;/g,'&');
 const sources=Object.fromEntries(pages.map(p=>[p,fs.readFileSync(p,'utf8')]));
 const snippets=[];const links=[];
