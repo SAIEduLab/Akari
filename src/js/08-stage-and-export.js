@@ -424,7 +424,7 @@
       b.dataset.speaker=project().components.find(c=>c.id===runtime()?.actor(id)?.baseId)?.name||project().components.find(c=>c.id===id)?.name||'話している人';
       // Keep the speaker and value from this utterance together, even after it changes or clears.
       const speaker = b.dataset.speaker,
-        speakerLabel = runtime()?.actor(id)?.isClone ? `${speaker}（コピー: ${id}）` : speaker;
+        speakerLabel = runtime()?.actor(id)?.isClone ? `${speaker}（コピー）` : speaker;
       b.setAttribute('aria-label',b.dataset.speaker+'：'+value);
       const text = document.createElement('span');
       text.className = 'sprite-bubble-text'; text.textContent = value;
@@ -436,8 +436,8 @@
         full.dataset.always = String(presentation.rounded || Array.from(value).length > 80 || /[\r\n]/.test(value));
         full.hidden = full.dataset.always !== 'true';
         full.type = 'button';
-        full.dataset.label = presentation.rounded ? '本当のかず' : '全文';
-        full.setAttribute('aria-label', presentation.rounded ? 'かずを 短くして 見せています。本当の かずを 見る' : 'ふきだしの 文を ぜんぶ 見る');
+        full.dataset.label = presentation.rounded ? 'もとの 数' : '全部';
+        full.setAttribute('aria-label', presentation.rounded ? '数を 短くして 見せています。もとの 数を 見る' : 'ふきだしの 文を ぜんぶ 見る');
         full.style.pointerEvents = 'auto';
         full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue, speakerLabel); };
         b.appendChild(full);
@@ -649,10 +649,10 @@
       if (status) status.textContent =
         {
           LOADING: '読みこみ中',
-          READY: '用意できました',
-          PREPARING: '用意しています',
+          READY: 'じゅんび できました',
+          PREPARING: 'じゅんび中',
           RUNNING: '動いているよ',
-          PAUSED: 'いったん止まっています',
+          PAUSED: 'いったん 止まっているよ',
           STOPPED: '止まっています',
           ERROR: '\u958b\u3051\u307e\u305b\u3093',
         }[phase] || '';
@@ -953,7 +953,7 @@
             full.append(summary, raw); output.appendChild(full);
           }
         },
-        onValueDetails: value => message((typeof value === 'string' ? 'ふきだしの 文ぜんぶ（えらんで コピーできます）：' : 'かずを 短くして 見せています。本当の かず（えらんで コピーできます）：') + core.valueText(value)),
+        onValueDetails: value => message((typeof value === 'string' ? 'ふきだしの 文ぜんぶ（えらんで コピーできます）：' : '数を 短くして 見せています。もとの 数（えらんで コピーできます）：') + core.valueText(value)),
       });
       flush();
       phase = 'READY';

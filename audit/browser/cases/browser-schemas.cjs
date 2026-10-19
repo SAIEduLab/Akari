@@ -26,7 +26,7 @@ const walkTree=(n,fn)=>{fn(n);for(const v of Object.values(n.inputs||{}))(Array.
 const locate=async schema=>{const s=await session(),found=[];walkTree(s.blockView,n=>{if(n.schemaId===schema)found.push(n);});return found;};
 const byId=async id=>{let hit=null;walkTree((await session()).blockView,n=>{if(n.id===id)hit=n;});return hit;};
 const at=(tree,path)=>path.reduce((n,k)=>n?.[k],tree);
-const ownerName=async()=>draft?'マスコット':p.evaluate(()=>{const id=document.querySelector('#objectSelect').value;return Akari.app.project.components.find(c=>c.id===id)?.name||Akari.app.project.stage.name;});
+const ownerName=async()=>draft?'たくどん':p.evaluate(()=>{const id=document.querySelector('#objectSelect').value;return Akari.app.project.components.find(c=>c.id===id)?.name||Akari.app.project.stage.name;});
 const settle=async()=>{for(let i=0;i<20&&(await session()).pendingEdit;i++)await p.waitForTimeout(100);};
 const paletteButton=async(schema,category)=>{await (await reveal(root().locator('[data-blockui-palette-mode]'))).selectOption(category==='expression'?'expression':'statement');const options=root().locator('.blockui-palette-options');if(await options.getAttribute('open')!==null)await options.locator(':scope > summary').click();await (await reveal(root().locator('[data-blockui-search]'))).fill(schema);const button=root().locator('[data-blockui-schema="'+schema+'"]');
  if(await button.count()===0){await U.showUnavailable(root());await (await reveal(root().locator('[data-blockui-search]'))).fill(schema);const hidden=root().locator('[data-blockui-schema="'+schema+'"]');const reason=await hidden.count()?await hidden.getAttribute('title'):'not listed';throw Error('Palette refuses '+schema+' here: '+reason);}
@@ -217,7 +217,7 @@ const waitBroadcastGroupRow=async(s,evidence)=>{const row=semanticRows[s.id];
  await reset({id:s.id});await add('Broadcast');const broadcastId=(await session()).blockView.bodies.body[0].inputs.message.id;
  const message=root().locator('[data-blockui-field="value"][data-block-id="'+broadcastId+'"]');await (await reveal(message)).fill(row.message);await message.press('Tab');await settle();
  await bodyPosition((await session()).blockView.id,'body',1).click();await add(s.id);let wait=(await locate(s.id))[0];evidence.creation='Statement palette directly after a Broadcast';
- await bodyPosition((await session()).blockView.id,'body',2).click();await add('Say');const say=(await locate('Say'))[0];await (await reveal(node(say.id).locator('.blockui-speech-data'))).selectOption({label:'作品の点数の いまの中身'});await settle();
+ await bodyPosition((await session()).blockView.id,'body',2).click();await add('Say');const say=(await locate('Say'))[0];await (await reveal(node(say.id).locator('.blockui-speech-data'))).selectOption({label:'点数の いまの中身'});await settle();
  const broadcast=(await session()).blockView.bodies.body[0];wait=(await locate(s.id))[0];assert.ok(wait.fields.broadcastRef,'the wait names its broadcast');assert.equal(wait.fields.broadcastRef,broadcast.fields.broadcastRef,'the wait is bound to the preceding broadcast');
  for(const f of s.fields){evidence.fields.push(await editField(wait.id,f,false));wait=(await locate(s.id))[0];}
  evidence.semantic={sentence:await sentenceIs(row)};const agreement=await blockSourceAgreement();evidence.source=agreement.text;evidence.roundtrip=true;evidence.semantic.runtime=await runObserve(row);

@@ -1,6 +1,6 @@
 {
   "schema": "akari-language-coverage-v1",
-  "productVersion": "1.3.0",
+  "productVersion": "1.3.1",
   "cases": [
     {
       "id": "JPF-001",
@@ -2866,7 +2866,7 @@
       "id": "JPF-016",
       "key": "と異なる",
       "source": "（点数が10と異なる）の値を言う",
-      "canonical": "（点数が10と違う）の値を言う",
+      "canonical": "（点数が10とちがう）の値を言う",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -2889,13 +2889,13 @@
           }
         ]
       },
-      "canonicalFormatted": "（点数が10と違う）の値を言う。"
+      "canonicalFormatted": "（点数が10とちがう）の値を言う。"
     },
     {
       "id": "JPF-016",
       "key": "と異なる/period",
       "source": "（点数が10と異なる）の値を言う。",
-      "canonical": "（点数が10と違う）の値を言う",
+      "canonical": "（点数が10とちがう）の値を言う",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -2918,13 +2918,13 @@
           }
         ]
       },
-      "canonicalFormatted": "（点数が10と違う）の値を言う。"
+      "canonicalFormatted": "（点数が10とちがう）の値を言う。"
     },
     {
       "id": "JPF-016",
       "key": "と等しくない",
       "source": "（点数が10と等しくない）の値を言う",
-      "canonical": "（点数が10と違う）の値を言う",
+      "canonical": "（点数が10とちがう）の値を言う",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -2947,13 +2947,13 @@
           }
         ]
       },
-      "canonicalFormatted": "（点数が10と違う）の値を言う。"
+      "canonicalFormatted": "（点数が10とちがう）の値を言う。"
     },
     {
       "id": "JPF-016",
       "key": "と等しくない/period",
       "source": "（点数が10と等しくない）の値を言う。",
-      "canonical": "（点数が10と違う）の値を言う",
+      "canonical": "（点数が10とちがう）の値を言う",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -2976,7 +2976,7 @@
           }
         ]
       },
-      "canonicalFormatted": "（点数が10と違う）の値を言う。"
+      "canonicalFormatted": "（点数が10とちがう）の値を言う。"
     },
     {
       "id": "JPF-017",
@@ -7172,7 +7172,7 @@
       "id": "JPF-016",
       "key": "点数が10と異なるあいだくり返す",
       "source": "点数が10と違うあいだ、次のことをくり返す\n  何もしない",
-      "canonical": "点数が10と違うあいだ、次のことをくり返す\n  何もしない",
+      "canonical": "点数が10とちがうあいだ、次のことをくり返す\n  何もしない",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -7201,13 +7201,13 @@
           }
         ]
       },
-      "canonicalFormatted": "点数が10と違うあいだ、くり返す。\n  何もしない。"
+      "canonicalFormatted": "点数が10とちがうあいだ、くり返す。\n  何もしない。"
     },
     {
       "id": "JPF-016",
       "key": "点数が10と異なるあいだくり返す/period",
       "source": "点数が10と違うあいだ、次のことをくり返す。\n  何もしない。",
-      "canonical": "点数が10と違うあいだ、次のことをくり返す\n  何もしない",
+      "canonical": "点数が10とちがうあいだ、次のことをくり返す\n  何もしない",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -7236,13 +7236,13 @@
           }
         ]
       },
-      "canonicalFormatted": "点数が10と違うあいだ、くり返す。\n  何もしない。"
+      "canonicalFormatted": "点数が10とちがうあいだ、くり返す。\n  何もしない。"
     },
     {
       "id": "JPF-016",
       "key": "点数が10と異なるあいだ繰り返す",
       "source": "点数が10と違うあいだ、次のことを繰り返す\n  何もしない",
-      "canonical": "点数が10と違うあいだ、次のことをくり返す\n  何もしない",
+      "canonical": "点数が10とちがうあいだ、次のことをくり返す\n  何もしない",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -7271,13 +7271,13 @@
           }
         ]
       },
-      "canonicalFormatted": "点数が10と違うあいだ、くり返す。\n  何もしない。"
+      "canonicalFormatted": "点数が10とちがうあいだ、くり返す。\n  何もしない。"
     },
     {
       "id": "JPF-016",
       "key": "点数が10と異なるあいだ繰り返す/period",
       "source": "点数が10と違うあいだ、次のことを繰り返す。\n  何もしない。",
-      "canonical": "点数が10と違うあいだ、次のことをくり返す\n  何もしない",
+      "canonical": "点数が10とちがうあいだ、次のことをくり返す\n  何もしない",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -7306,13 +7306,13 @@
           }
         ]
       },
-      "canonicalFormatted": "点数が10と違うあいだ、くり返す。\n  何もしない。"
+      "canonicalFormatted": "点数が10とちがうあいだ、くり返す。\n  何もしない。"
     },
     {
       "id": "JPF-016",
       "key": "点数が10と異なる間くり返す",
       "source": "点数が10と違う間、次のことをくり返す\n  何もしない",
-      "canonical": "点数が10と違うあいだ、次のことをくり返す\n  何もしない",
+      "canonical": "点数が10とちがうあいだ、次のことをくり返す\n  何もしない",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -7341,13 +7341,13 @@
           }
         ]
       },
-      "canonicalFormatted": "点数が10と違うあいだ、くり返す。\n  何もしない。"
+      "canonicalFormatted": "点数が10とちがうあいだ、くり返す。\n  何もしない。"
     },
     {
       "id": "JPF-016",
       "key": "点数が10と異なる間くり返す/period",
       "source": "点数が10と違う間、次のことをくり返す。\n  何もしない。",
-      "canonical": "点数が10と違うあいだ、次のことをくり返す\n  何もしない",
+      "canonical": "点数が10とちがうあいだ、次のことをくり返す\n  何もしない",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -7376,13 +7376,13 @@
           }
         ]
       },
-      "canonicalFormatted": "点数が10と違うあいだ、くり返す。\n  何もしない。"
+      "canonicalFormatted": "点数が10とちがうあいだ、くり返す。\n  何もしない。"
     },
     {
       "id": "JPF-016",
       "key": "点数が10と異なる間繰り返す",
       "source": "点数が10と違う間、次のことを繰り返す\n  何もしない",
-      "canonical": "点数が10と違うあいだ、次のことをくり返す\n  何もしない",
+      "canonical": "点数が10とちがうあいだ、次のことをくり返す\n  何もしない",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -7411,13 +7411,13 @@
           }
         ]
       },
-      "canonicalFormatted": "点数が10と違うあいだ、くり返す。\n  何もしない。"
+      "canonicalFormatted": "点数が10とちがうあいだ、くり返す。\n  何もしない。"
     },
     {
       "id": "JPF-016",
       "key": "点数が10と異なる間繰り返す/period",
       "source": "点数が10と違う間、次のことを繰り返す。\n  何もしない。",
-      "canonical": "点数が10と違うあいだ、次のことをくり返す\n  何もしない",
+      "canonical": "点数が10とちがうあいだ、次のことをくり返す\n  何もしない",
       "canonicalAst": {
         "kind": "Script",
         "body": [
@@ -7446,7 +7446,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数が10と違うあいだ、くり返す。\n  何もしない。"
+      "canonicalFormatted": "点数が10とちがうあいだ、くり返す。\n  何もしない。"
     },
     {
       "id": "JPF-013",

@@ -15,7 +15,7 @@
     let label = typeof n.label === 'string' ? n.label.trim() : '';
     if (/[〔〕\r\n]/u.test(label)) throw new AkariError('P210', 'あいている ところの 名前に 〔 〕や 行がえは 使えません');
     if (!label) label = ({expression:'中身を入れる',statement:'することをえらぶ',target:'かえるものをえらぶ',rule:'動かし方をえらぶ'})[n.role] || '中身を入れる';
-    else if (!/(?:選ぶ|入れる|指定する|書く)$/.test(label)) label += label === '条件' ? 'をえらぶ' : 'を入れる';
+    else if (!/(?:選ぶ|えらぶ|入れる|指定する|書く)$/.test(label)) label += label === 'きまり' ? 'をえらぶ' : 'を入れる';
     return `〔${label}〕`;
   }
   function formatExpression(n, parent = 0, options = {}) {
@@ -24,6 +24,29 @@
       validateSyntaxAst(n, 'expression', {allowHoles: expressionDraftFormatDepth > 0});
       return formatExpressionCore(n, parent);
     });
+  }
+  // The value before a unit (秒・歩・回・度・％・番目・文字目): a number as it is, a name in 【 】, another expression in （ ）.
+  function quantityValueSource(value, bareRange = false) {
+    if (value.kind === 'NumberLiteral' || (value.kind === 'UnaryExpression' && ['NEG', 'POS'].includes(value.op) && value.value.kind === 'NumberLiteral'))
+      return formatExpressionCore(value);
+    if (value.kind === 'VariableRead')
+      return (value.qualifier === 'project' ? '作品の' : value.qualifier === 'self' ? '自分の' : '') + '【' + value.name + '】';
+    if (bareRange && value.kind === 'BuiltinCall' && value.name === '乱数' && value.args.length === 2) return formatExpressionCore(value, PREC.CMP + 0.5);
+    const text = formatExpressionCore(value);
+    let level = 0, whole = text.startsWith('（');
+    for (let i = 0, quote = false; whole && i < text.length; i++) {
+      const ch = text[i];
+      if (quote) { if (ch === '」') quote = false; continue; }
+      if (ch === '「') quote = true;
+      else if (ch === '（') level++;
+      else if (ch === '）' && !--level && i < text.length - 1) whole = false;
+    }
+    return whole ? text : '（' + text + '）';
+  }
+  // A part joined by と (〜と〜をつなげる) is wrapped in （ ） when its own text has と・を・が outside quotes and brackets.
+  function joinPartSource(x) {
+    const text = formatExpressionCore(x);
+    return /[とをがに]/.test(surfaceMask(text)) ? '（' + text + '）' : text;
   }
   function formatExpressionCore(n, parent = 0) {
     let s = '',
@@ -42,11 +65,16 @@
         s = `条件の答え（${n.value ? 'あてはまる' : 'あてはまらない'}）`;
         break;
       case 'QuantityLiteral':
-        s = `${formatExpressionCore(n.value,PREC.POST)}${n.unit}`; p=PREC.POST; break;
+        s = `${quantityValueSource(n.value)}${n.unit}`; p=PREC.POST; break;
       case 'UnitlessRead':
         s = `${formatExpressionCore(n.value,PREC.POST)}の数だけ`; p=PREC.POST; break;
-      case 'ActorQualifiedRead':
-        s = `${n.actorRef.kind==='self'?'自分':nameSource(n.actorRef.name)}の（${formatExpressionCore(n.value)}）`; p=PREC.POST; break;
+      case 'ActorQualifiedRead': {
+        // 「たくどん」のよこのばしょ: a part's state word or data name follows without brackets, as other commands name the part in 「」.
+        const state = n.value.kind === 'SensorRead' && n.value.arg === undefined;
+        const plain = n.actorRef.kind === 'self' ? state : state || n.value.kind === 'VariableRead';
+        const owner = n.actorRef.kind === 'self' ? '自分' : '「' + n.actorRef.name + '」';
+        s = plain ? `${owner}の${formatExpressionCore(n.value)}` : `${owner}の（${formatExpressionCore(n.value)}）`; p=PREC.POST; break;
+      }
       case 'ListLiteral':
         s = `［${n.items.map((x) => formatExpressionCore(x)).join('、')}］`;
         break;
@@ -56,29 +84,33 @@
       case 'ExtensionCalculation':
         s = extensionSurface(n.name, true, n.args); break;
       case 'UserFunctionCall':
-        s = n.argumentNames ? `（${n.args.map((x,i) => `${nameSource(n.argumentNames[i])}を${formatExpressionCore(x)}`).join('、')}として、【${n.name}】で求めた答え）` : `（${n.args.length ? `（${n.args.map(x=>formatExpressionCore(x)).join('、')}）を渡して、` : ''}【${n.name}】で求めた答え）`;
+        s = n.argumentNames ? `（${n.args.map((x,i) => `${nameSource(n.argumentNames[i])}を${formatExpressionCore(x)}`).join('、')}として、【${n.name}】で求めた答え）` : `（${n.args.length === 1 && ['NumberLiteral','StringLiteral','VariableRead'].includes(n.args[0].kind) && !(n.args[0].kind === 'NumberLiteral' && n.args[0].value < 0) ? `${formatExpressionCore(n.args[0])}をわたして、` : n.args.length ? `（${n.args.map(x=>formatExpressionCore(x)).join('、')}）をわたして、` : ''}【${n.name}】で求めた答え）`;
         break;
       case 'BuiltinCall': {
         if (n.name === 'CONTAINS')
           s = `${formatExpressionCore(n.args[0], PREC.CMP + 1)}に${formatExpressionCore(n.args[1], PREC.CMP + 1)}が入っている`;
         else if (n.name === 'INDEX_OF')
-          s = `${formatExpressionCore(n.args[0], PREC.POST)}で${formatExpressionCore(n.args[1], PREC.POST)}が最初にある番号`;
+          s = `${formatExpressionCore(n.args[0], PREC.POST)}の中で${formatExpressionCore(n.args[1], PREC.POST)}がはじめて出てくる番号`;
         else if (n.name === 'LENGTH') s = `${formatExpressionCore(n.args[0], PREC.POST)}の長さ`;
         else if (n.name === 'STRING_LENGTH')
           s = `${formatExpressionCore(n.args[0], PREC.POST)}の文字数`;
         else if (n.name === 'STRING_CHAR')
-          s = `${formatExpressionCore(n.args[0], PREC.POST)}の${formatExpressionCore(n.args[1], PREC.POST + 1)}文字目`;
+          s = `${formatExpressionCore(n.args[0], PREC.POST)}の${quantityValueSource(n.args[1])}文字目`;
         else if (n.name === '乱数' && n.args.length === 2)
           s = `${formatExpressionCore(n.args[0], PREC.ADD)}から${formatExpressionCore(n.args[1], PREC.ADD)}のどれか`;
+        else if (n.name === '余り' && n.args.length === 2)
+          s = `${formatExpressionCore(n.args[0], PREC.MUL)}÷${formatExpressionCore(n.args[1], PREC.MUL + 1)}のあまり`;
+        else if (n.name === 'つなぐ' && n.args.length >= 2)
+          s = `（${n.args.map(joinPartSource).join('と')}をつなげた文字）`;
         else
           s = `${builtinSurfaceName(n.name)}（${n.args.map((x) => formatExpressionCore(x)).join('、')}）`;
         // 「AからBのどれか」 binds looser than ＋ and tighter than a comparison.
         p = n.name === 'CONTAINS' ? PREC.CMP : n.name === 'INDEX_OF' ? PREC.SEARCH
-          : n.name === '乱数' && n.args.length === 2 ? PREC.CMP + 0.5 : PREC.POST;
+          : n.name === '乱数' && n.args.length === 2 ? PREC.CMP + 0.5 : n.name === '余り' && n.args.length === 2 ? PREC.MUL : PREC.POST;
         break;
       }
       case 'ListRead':
-        s = `${formatExpressionCore(n.list, PREC.POST)}の${formatExpressionCore(n.index, PREC.POST + 1)}番目`;
+        s = `${formatExpressionCore(n.list, PREC.POST)}の${quantityValueSource(n.index)}番目`;
         p = PREC.POST;
         break;
       case 'SensorRead': {
@@ -86,12 +118,12 @@
         else if (FIXED_SENSORS.includes(n.sensor)) s = SENSOR_SURFACES[n.sensor] || n.sensor;
         else if (n.sensor === 'INPUT_VALUE') s = `${n.arg.kind==='VariableRead'?'（'+formatExpressionCore(n.arg)+'）':formatExpressionCore(n.arg, PREC.POST)}の中身`;
         else if (n.sensor === 'DISTANCE_TO')
-          s = `${formatExpressionCore(n.arg, PREC.POST)}までの距離`;
+          s = `${formatExpressionCore(n.arg, PREC.POST)}までのきょり`;
         else if (n.sensor === 'KEY_DOWN')
-          s = `${formatExpressionCore(n.arg, PREC.POST)}キーが押されている`;
+          s = `${formatExpressionCore(n.arg, PREC.POST)}キーがおされている`;
         else if (n.sensor === 'TOUCHING_COLOR')
           s = `${formatExpressionCore(n.arg, PREC.POST)}の色にふれている`;
-        else if (n.sensor === 'TOUCHING') s = `${formatExpressionCore(n.arg, PREC.POST)}にふれている`;
+        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && n.arg.value === '端' ? '画面のはし' : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
         p = PREC.POST;
         break;
       }
@@ -119,30 +151,34 @@
           GT: 'より大きい',
           LT: 'より小さい',
           EQ: 'と同じ',
-          NEQ: 'と違う',
+          NEQ: 'とちがう',
         }[n.op];
         s = `${formatExpressionCore(n.left, PREC.CMP + 1)}が${formatExpressionCore(n.right, PREC.CMP + 1)}${suf}`;
         p = PREC.CMP;
         break;
       }
-      case 'LogicalExpression':
+      case 'LogicalExpression': {
         p = n.op === 'AND' ? PREC.AND : PREC.OR;
-        s = `${formatExpressionCore(n.left, p)}${n.op === 'AND' ? 'かつ' : 'または'}${formatExpressionCore(n.right, p + 1)}`;
+        // 「AからBのどれか」 beside かつ／または keeps its （ ）: 「…のどれかまたは…」 does not read back.
+        const side = (x, min) => x.kind === 'BuiltinCall' && x.name === '乱数' && x.args.length === 2 ? `（${formatExpressionCore(x)}）` : formatExpressionCore(x, min);
+        s = `${side(n.left, p)}${n.op === 'AND' ? 'かつ' : 'または'}${side(n.right, p + 1)}`;
         break;
+      }
       default:
         throw new AkariError('P201', `未対応の式 ${n.kind}`);
     }
     return p < parent ? `（${s}）` : s;
   }
   function builtinSurfaceName(n) {
-    return n;
+    return BUILTIN_SURFACES[n] || n;
   }
   function formatScript(ast, options = {}) {
     return withExpressionFormatOptions(options,()=>{
     validateSyntaxAst(ast,'script',{allowHoles:!!options.allowHoles});
     const out=[],line=(depth,text,comment='')=>out.push('  '.repeat(depth)+text+(text.endsWith('、')?'':'。')+(comment?'  '+comment:''));
     // A nested suite inherits its surrounding topic, but its topic changes stay local.
-    const emit=(body,depth,inheritedActor={kind:'self'})=>{let previousActor={...inheritedActor};for(const n of body){if(n.kind==='CommentLine'){out.push('  '.repeat(depth)+'※'+n.text);continue;}const actorRef=n.actorRef||{kind:'self'},actor=!['Hole','WaitBroadcastGroup'].includes(n.kind)&&(actorRef.kind==='named'||(actorRef.kind==='self'&&previousActor.kind==='named'))?sentenceActorSource(actorRef)+'は':'',f=formatExpression,t=n.target?formatTarget(n.target):'',comment=n.inlineComment||'';let text;
+    // A wait of one part always names it (自分は1秒待つ); the wait of the whole flow has no subject.
+    const emit=(body,depth,inheritedActor={kind:'self'})=>{let previousActor={...inheritedActor};for(const n of body){if(n.kind==='CommentLine'){out.push('  '.repeat(depth)+'※'+n.text);continue;}const wait=EVERYONE_WAITS.has(n.kind),actorRef=n.actorRef||(wait?{kind:'all'}:{kind:'self'}),everyone=actorRef.kind==='all',actor=!everyone&&!['Hole','WaitBroadcastGroup'].includes(n.kind)&&(wait||actorRef.kind==='named'||(actorRef.kind==='self'&&previousActor.kind==='named'))?sentenceActorSource(actorRef)+'は':'',f=formatExpression,t=n.target?formatTarget(n.target):'',comment=n.inlineComment||'';let text;
       const controlActor=actorRef.kind!==previousActor.kind||(actorRef.kind==='named'&&actorRef.name!==previousActor.name)
         ? sentenceActorSource(actorRef)+'は、' : '';
       switch(n.kind){
@@ -154,7 +190,7 @@
         case 'ForEach':line(depth,controlActor+sentenceFormFor(n).render(n),comment);if(n.binder!=='今見ているもの')line(depth+1,`この中では、今見ているものを【${n.binder}】と呼ぶ`);emit(n.body,depth+1,actorRef);continue;
         default:{const form=sentenceFormFor(n);if(!form)throw new AkariError('P201',`未対応の文 ${n.kind}`);text=form.render(n);break;}
       }
-      line(depth,actor+text,comment);if(n.kind!=='Hole')previousActor=actorRef;
+      line(depth,actor+text,comment);if(n.kind!=='Hole'&&!everyone)previousActor=actorRef;
     }};
     if(ast.heading)line(0,sentenceHeadingSource(ast.heading));
     emit(ast.body,ast.heading?1:0,options.inheritedActor);

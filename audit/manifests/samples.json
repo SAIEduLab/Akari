@@ -12,7 +12,7 @@
       "story"
     ],
     "names": [
-      "マスコットとだんごのダンス",
+      "たくどんとだんごのダンス",
       "くるくる花もよう",
       "星をつかまえよう",
       "道をつくって めいろたんけん",
@@ -25,7 +25,7 @@
     "selectionOnlyPreservesWork": true,
     "confirmationButtons": [
       "ほぞんせずに開く",
-      "キャンセル"
+      "やめる"
     ],
     "cancelPreservesPendingEdits": true,
     "displayPreferencesPreserved": true,

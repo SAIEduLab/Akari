@@ -18,6 +18,13 @@
     }
     return out;
   }
+  // Keys Akari knows: 上・下・左・右・空白・決定・取消, one letter or digit, and the keyboard's own key names.
+  function validKeyName(key) {
+    // One letter, digit or sign is the key itself; a kana or kanji (あ, 一) is no key on the keyboard.
+    return ['上','下','左','右','空白','決定','取消'].includes(key) || /^[\x21-\x7e]$/.test(key) ||
+      ['Tab','Backspace','Delete','Home','End','PageUp','PageDown','Insert','Shift','Control','Alt','CapsLock'].includes(key) || /^F(?:[1-9]|1[0-2])$/.test(key);
+  }
+  function keyNameMessage(key) { return `「${key}」という キーは ありません。キーは「空白」「右」「a」のように 書きます`; }
   function targetExists(target, symbols, ctx) {
     const name = target.name,
       targetId = ctx.targetId || null;
@@ -82,7 +89,7 @@
       if (node.kind === 'LooksCommand' && node.op === 'SET_SCALE') {
         const value = staticNumericMagnitude(node.args?.[0]);
         if (value !== undefined && (value < 1 || value > 1000)) diagnostics.push({
-          code: 'R412', message: '大きさは1〜1000％です。見えなくするときは「姿をかくす」を使います',
+          code: 'R412', message: '大きさは1〜1000％です。見えなくするときは「すがたをかくす」を使います',
           line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where,
         });
       }
@@ -121,6 +128,8 @@
     };
     const literalText = (e) => (e?.kind === 'StringLiteral' ? e.value : null);
     const componentByName = (name) => project.components.find((c) => c.name === name) || null;
+    // 向き and 色 are commonly written for the character's direction and color; say how those are written.
+    const wordHint = (name) => ({ 向き: '。キャラクターの 向きは「方向」で 読み、「画面の右を向く」や「向きを45度にする」で かえます', 色: '。キャラクターの 色は「表示色を赤にする」で かえます' })[name] || (/^[〇一二三四五六七八九十百千]+つ?$/.test(name) ? '。数は 3や 10のように 数字で 書きます' : '');
     const checkComponentTarget = (expr, allowed, ctx, where, label = '部品', special = []) => {
       const name = literalText(expr);
       if (name === null || special.includes(name)) return;
@@ -131,10 +140,10 @@
     };
     let analyzeCallable = () => {};
     const actorContext = (ref, ctx, node, where) => {
-      if (!ref || ref.kind === 'self') return ctx;
+      if (!ref || ref.kind !== 'named') return ctx;
       const c = ref.name === project.stage.name || ref.name === '画面'
         ? { id: 'stage', type: 'stage' } : componentByName(ref.name);
-      if (!c) { add('S301', `主語「${ref.name}」がありません`, node, where); return ctx; }
+      if (!c) { add('S301', `「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください${['ぼく','わたし','おれ','あたし','うち'].includes(ref.name)?'。自分の ことなら「自分は」と 書きます':''}`, node, where); return ctx; }
       return { ...ctx, targetId: c.id, targetType: c.type };
     };
     const checkArguments = (n, def, where) => {
@@ -153,7 +162,7 @@
       const expect = (unit, expected) => {
         if (unit !== undefined && unit !== null && unit !== expected)
           mismatch(expected === null
-            ? 'この計算には、たんい（歩・度・秒など）のない数を使います。「の数だけ」でたんいを外せます。れい：（10歩）の数だけ'
+            ? 'この計算には、たんい（歩・度・秒など）のない数を使います。「の数だけ」でたんいを外せます。れい：10歩の数だけ'
             : `ここでは${expected}の数を使います。${unit}の数は使えません`);
       };
       const common = (values) => {
@@ -235,7 +244,9 @@
       const collect = (n, ctx) => {
         if (!n || typeof n !== 'object') return;
         if (n.kind === 'ActorQualifiedRead') {
-          collect(n.value, actorContext(n.actorRef, ctx, n, where)); return;
+          // 「ねこ」の点数 reads ねこ's own data; the project's 点数 is written without 「ねこ」の.
+          const own = n.actorRef?.kind === 'named' && n.value?.kind === 'VariableRead' && !n.value.qualifier ? { qualifiedName: n.actorRef.name, qualifiedRead: n.value } : {};
+          collect(n.value, { ...actorContext(n.actorRef, ctx, n, where), ...own }); return;
         }
         if (['VariableRead', 'UserFunctionCall', 'BuiltinCall', 'SensorRead', 'ExtensionCalculation'].includes(n.kind))
           scoped.push([n, ctx]);
@@ -260,12 +271,14 @@
           )
             add('S303', `この中だけの名前「${n.name}」は、作る行より前では使えません。作る行を先に書いてください`, ctx.node, where);
           const info = targetExists({ name: n.name, qualifier: n.qualifier }, symbols, ctx);
+          if (info?.scope === 'project' && ctx.qualifiedRead === n)
+            add('S301', `「${ctx.qualifiedName}」には「${n.name}」がありません。作品の へんすうや リストなら、「の」を つけずに ${n.name} と 書きます`, ctx.node, where);
           if (!info) {
             const prefix =
               n.qualifier === 'self' && ctx.targetId ? `${targetLabel(ctx)}の自分には` : 'まだ作っていない';
             add(
               'S301',
-              `${prefix}名前「${n.name}」${n.qualifier === 'self' && ctx.targetId ? 'がありません' : 'です。名前をたしかめるか、その名前のデータを作ってください'}`,
+              `${prefix}名前「${n.name}」${n.qualifier === 'self' && ctx.targetId ? 'がありません' : 'です。名前をたしかめるか、その名前のへんすうかリストを作ってください'}${wordHint(n.name)}`,
               ctx.node,
               where,
             );
@@ -274,16 +287,16 @@
         if (n.kind === 'ExtensionCalculation') checkExtensionOperation(n, 'calculations', where);
         if (n.kind === 'UserFunctionCall') {
           const f = symbols.functions.get(n.name);
-          if (!f) add('S301', `計算「${n.name}」がありません`, ctx.node, where);
+          if (!f) add('S301', `答えをもとめる「${n.name}」がありません`, ctx.node, where);
           else if (f.args.length !== n.args.length)
-            add('S308', `計算「${n.name}」に入れるものは${f.args.length}こです`+namedArgumentDetails(f.args,n.argumentNames), ctx.node, where);
+            add('S308', `答えをもとめる「${n.name}」に入れるものは${f.args.length}こです`+namedArgumentDetails(f.args,n.argumentNames), ctx.node, where);
           else { checkArguments(n, f, where); analyzeCallable(f, 'function', ctx); }
         }
         if (n.kind === 'BuiltinCall' && BUILTIN_META.has(n.name)) {
           const m = BUILTIN_META.get(n.name),
             count = n.args.length;
           if (count < m.minArgs || count > m.maxArgs)
-            add('S308', `はじめからある計算「${n.name}」に入れるものの数がちがいます`, ctx.node, where);
+            add('S308', `はじめからある計算「${n.name === '乱数' ? 'AからBのどれか' : BUILTIN_SURFACES[n.name] || n.name}」に入れるものの数がちがいます`, ctx.node, where);
         }
         if (n.kind === 'SensorRead') {
           const eventOnly = {
@@ -296,12 +309,12 @@
             新しい背景名: 'backdropChanged',
           };
           if (n.sensor === '拡張の値' && (!ctx.filter?.message?.startsWith('拡張:') || !EXTENSION_HOST.describe(ctx.filter.message.slice(3), 'events')))
-            add('S311', '「拡張の値」は、入れてあるかくちょうのできごとの中だけで使えます', ctx.node, where);
+            add('S311', '拡張「できごとの値」は、入れてあるかくちょうのできごとの中だけで使えます', ctx.node, where);
           if (eventOnly[n.sensor]) {
             if (ctx.definition)
-              add('S311', `「${n.sensor}」は、自分で作ったブロックの中ではそのまま使えません。きっかけの中で使い、入れるものとしてわたしてください`, ctx.node, where);
-            else if (ctx.event !== eventOnly[n.sensor])
-              add('S311', `「${n.sensor}」はこのきっかけでは使えません`, ctx.node, where);
+              add('S311', `「${formatExpression(n)}」は、自分で作ったブロックの中ではそのまま使えません。きっかけの中で使い、入れるものとしてわたしてください`, ctx.node, where);
+            else if (ctx.event !== eventOnly[n.sensor] && n.sensor !== '拡張の値')
+              add('S311', `「${formatExpression(n)}」は「${EVENT_LABELS[eventOnly[n.sensor]]}」のきっかけの中で使います`, ctx.node, where);
           }
           if (
             [
@@ -316,13 +329,17 @@
             ].includes(n.sensor) &&
             ctx.targetType === 'stage'
           )
-            add('S304', `「${n.sensor}」は画面では使えません`, ctx.node, where);
+            add('S304', `「${formatExpression(n)}」は画面では使えません。キャラクターの動きの中で使ってください`, ctx.node, where);
           if (
             ['衣装番号', '衣装名'].includes(n.sensor) &&
             ctx.targetType &&
             ctx.targetType !== 'sprite'
           )
-            add('S304', `「${n.sensor}」はキャラクターでだけ使えます`, ctx.node, where);
+            add('S304', `「${formatExpression(n)}」はキャラクターでだけ使えます`, ctx.node, where);
+          if (n.sensor === 'KEY_DOWN') {
+            const key = literalText(n.arg);
+            if (key !== null && !validKeyName(key)) add('S301', keyNameMessage(key), ctx.node, where);
+          }
           if (n.sensor === 'INPUT_VALUE')
             checkComponentTarget(n.arg, ['input'], ctx, where, '入力らん');
           if (n.sensor === 'DISTANCE_TO')
@@ -335,7 +352,7 @@
               try {
                 resolveColor(v, { allowTransparent: false });
               } catch (_) {
-                add('S304', `色「${v}」は使える色ではありません`, ctx.node, where);
+                add('S304', `色「${v}」は使える色ではありません。使える色は 黒・白・ねずみ色・赤・だいだい・黄・緑・水色・青・むらさき・もも色・茶 です`, ctx.node, where);
               }
           }
         }
@@ -353,7 +370,7 @@
         const c = actorContext(n.actorRef, { ...ctx, ...ctx.selfContext, node: n, availableLocalNames: new Set(available) }, n, where);
         if (n.kind === 'LocalVariableDeclaration' || n.kind === 'LocalListDeclaration') {
           if (!ctx.definition || !top || seenExecutable)
-            add('S313', 'この中だけのデータは、自分で作ったブロックのいちばん上でだけ作れます', n, where);
+            add('S313', 'この中だけの へんすう・リストは、自分で作ったブロックの いちばん上でだけ 作れます', n, where);
           try {
             validateName(n.name);
           } catch (err) {
@@ -400,13 +417,11 @@
         ) {
           const info = targetExists(n.target, symbols, c);
           if (!info) {
-            const p =
-              n.target.qualifier === 'self' && c.targetId
-                ? `${targetLabel(c)}の自分には`
-                : 'データ';
             add(
               'S301',
-              `${p}「${n.target.name}」${n.target.qualifier === 'self' && c.targetId ? 'がありません' : 'がありません'}`,
+              n.target.qualifier === 'self' && c.targetId
+                ? `${targetLabel(c)}の自分には「${n.target.name}」がありません`
+                : `「${n.target.name}」という へんすうや リストが ありません。名前を たしかめるか、その名前の へんすうか リストを 作ってください${wordHint(n.target.name)}`,
               n,
               where,
             );
@@ -429,7 +444,7 @@
               ctx.definitionKind === 'function' &&
               !['local', 'arg', 'binder'].includes(info.scope)
             )
-              add('S305', '計算から外部データは変更できません', n, where);
+              add('S305', '「答えをもとめる」の 中からは、作品や 部品の へんすう・リストを かえられません', n, where);
           }
         }
         if (
@@ -453,15 +468,15 @@
             'ExtensionCommand',
           ].includes(n.kind)
         )
-          add('S305', '計算では外部副作用や待機を行えません', n, where);
+          add('S305', '「答えをもとめる」の 中では、動く・音を 出す・待つ などの やることは 使えません', n, where);
         if (n.kind === 'ReturnStatement') {
           if (ctx.definitionKind === 'action') add('S307', 'てじゅんでは答えを返せません。答えを返すときは「答えをもとめる」で作ります', n, where);
           if (ctx.definitionKind !== 'function')
             add('S307', 'きっかけの中では「〜を返す」は使えません。答えを返すのは「答えをもとめる」の中だけです', n, where);
-          if (!top) add('S306', '計算の「返す」は、「もし」や「くり返す」の中には書けません。いちばん下の行に書きます', n, where);
+          if (!top) add('S306', '「答えをもとめる」の「返す」は、「もし」や「くり返す」の 中には 書けません。いちばん下の 行に 書きます', n, where);
         }
         if ((n.kind === 'Break' || n.kind === 'Continue') && loopDepth === 0)
-          add('S309', 'くり返しの外では使えません', n, where);
+          add('S309', `「${n.kind === 'Break' ? 'このくり返しを終える' : 'この回の残りをとばして、次の回へ進む'}」は、くり返しの中でだけ使えます`, n, where);
         if (n.kind === 'UserActionCall') {
           const a = symbols.actions.get(n.name);
           if (!a) add('S301', `てじゅん「${n.name}」がありません`, n, where);
@@ -523,7 +538,7 @@
             try {
               resolveColor(name, { allowTransparent: false });
             } catch (_) {
-              add('S304', `色「${name}」は使える色ではありません`, n, where);
+              add('S304', `色「${name}」は使える色ではありません。使える色は 黒・白・ねずみ色・赤・だいだい・黄・緑・水色・青・むらさき・もも色・茶 です`, n, where);
             }
         }
         if (['MotionCommand', 'PenCommand'].includes(n.kind) && c.targetType === 'stage')
@@ -596,16 +611,18 @@
       if (!exec.length || exec[exec.length - 1].kind !== 'ReturnStatement')
         add(
           'S306',
-          `計算「${item.definition.name}」のいちばん下の行は「〜を返す」にします。れい：1＋2を返す`,
+          `答えをもとめる「${item.definition.name}」のいちばん下の行は「〜を返す」にします。れい：1＋2を答えとして返す`,
           exec[exec.length - 1] || { sourceSpan: { startLine: 1, startColumn: 1 } },
           item.key,
         );
       for (let j = 0; j < exec.length - 1; j++)
         if (exec[j].kind === 'ReturnStatement')
-          add('S306', '「返す」は、計算のいちばん下に1回だけ書きます', exec[j], item.key);
+          add('S306', '「返す」は、「答えをもとめる」のいちばん下に1回だけ書きます', exec[j], item.key);
     };
     for (const item of compiled.items) {
       if (rootKeys && !rootKeys.has(item.key)) continue;
+      if (item.event === 'keyDown' && typeof item.filter?.key === 'string' && !validKeyName(item.filter.key))
+        add('S301', keyNameMessage(item.filter.key), item.ast?.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } }, item.key);
       const base = {
         event: item.event, filter: item.filter || null,
         targetType: item.targetType,
@@ -668,7 +685,7 @@
       ? (heading.actorRef.targetId || ((heading.actorRef.name === '画面' || heading.actorRef.name === project.stage.name) ? 'stage' :
         project.components.find((c) => c.name === heading.actorRef.name)?.id)) : script.targetId;
     const type = targetId === 'stage' ? 'stage' : project.components.find((c) => c.id === targetId)?.type;
-    if (!type) throw new AkariError('S301', '見出しに書いた部品が見つかりません。部品の名前をたしかめてください');
+    if (!type) throw new AkariError('S301', 'きっかけに 書いた キャラクターや 部品が 見つかりません。名前を たしかめてください');
     if (!EVENT_BY_TYPE[type]?.includes(heading.event))
       throw new AkariError('F506', 'この部品では使えないできごとです');
     return { targetId, event: heading.event, filter: heading.filter };
@@ -708,7 +725,7 @@
     const keys = new Set();
     const register = (key, ownerId, source) => {
       if (!owners.has(ownerId) || keys.has(key) || typeof source !== 'string')
-        throw new AkariError('F503', '作品のコードのデータがこわれていて、読めません');
+        throw new AkariError('F503', '作品のコードの中身がこわれていて、読めません');
       keys.add(key);
     };
     for (const s of project.scripts) {
@@ -719,7 +736,7 @@
     for (const [kind, definitions] of [['action', project.actions], ['function', project.functions]])
       for (const d of definitions) {
         register(`${kind}:${d.id}`, d.ownerId, d.source);
-        if (d.ownerId !== 'stage') throw new AkariError('F503', '自分で作ったブロックが、画面のものになっていません。作品のデータがこわれています');
+        if (d.ownerId !== 'stage') throw new AkariError('F503', '自分で作ったブロックが、画面のものになっていません。作品の中身がこわれています');
       }
     return [
       ...project.scripts.map(s => ({
@@ -873,7 +890,7 @@
       if (!session.syntaxAst || !tree) throw new AkariError('S301', '本文のどこで名前を使っているか、決められません');
       for (const ref of refs) {
         const entry = [...session.nodeMap].find(([,loc]) => stableJson(loc.path) === stableJson(ref.nodePath));
-        if (!entry) throw new AkariError('F503', '名前を使っている場所を、たしかめられません');
+        if (!entry) throw new AkariError('F503', '名前を 使っている ばしょを、たしかめられません');
         const [id,loc] = entry, node = index.get(id).node, original = at(session.syntaxAst,ref.nodePath);
         if (ref.binding === 'actor') {
           const actor = node.fields.heading?.actorRef || node.fields.actorRef;
@@ -887,7 +904,7 @@
         if (!range) throw new AkariError('F503', '書いた文の中で、名前のばしょをたしかめられません');
         if (ref.binding === 'actor') {
           const token=compactOutsideString(record.source.slice(range.start,range.end));
-          if(![resource.name,`【${resource.name}】`,`「${resource.name}」`].includes(token))throw new AkariError('F503','書いた文の中で、主語の名前のばしょをたしかめられません');
+          if(![resource.name,`【${resource.name}】`,`「${resource.name}」`].includes(token))throw new AkariError('F503','書いた文の中で、だれが 動くかの 名前の ばしょを たしかめられません');
           const text=token.startsWith('【')?`【${newName}】`:token.startsWith('「')?formatExpression({kind:'StringLiteral',value:newName}):nameSource(newName);
           edits.push({...range,text});continue;
         }
@@ -1026,14 +1043,14 @@
   function syntaxItemMap(items,errors) {
     const map=new Map();
     for(const item of items){
-      if(map.has(item.key))errors.push({code:'F503',message:'作品のデータがこわれています。同じできごとが2つあります',line:0,column:1,where:item.documentKey||item.key});
+      if(map.has(item.key))errors.push({code:'F503',message:'作品の中身がこわれています。同じできごとが2つあります',line:0,column:1,where:item.documentKey||item.key});
       else map.set(item.key,item.ast);
     }
     return map;
   }
   function documentSyntaxItems(ast,key,context,project,errors) {
     const first={...ast};delete first.units;
-    if(context.unitIds&&context.unitIds.length!==1+(ast.units?.length||0))errors.push({code:'F503',message:'作品のデータがこわれています。できごとの数が合いません',line:0,column:1,where:key});
+    if(context.unitIds&&context.unitIds.length!==1+(ast.units?.length||0))errors.push({code:'F503',message:'作品の中身がこわれています。できごとの数が合いません',line:0,column:1,where:key});
     return [first,...(ast.units||[])].map((unit,index)=>{
       // Imported documents may not yet have persistent unit IDs. Their runtime
       // keys use a separate namespace, never a guess in the user ID namespace.
@@ -1043,7 +1060,8 @@
       if(heading){
         const ref=heading.actorRef,actor=ref?.kind==='named'?(ref.name===project.stage.name||ref.name==='画面'?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
           context.targetId==='stage'?{id:'stage',type:'stage'}:project.components.find(c=>c.id===context.targetId);
-        if(!actor||!EVENT_BY_TYPE[actor.type]?.includes(heading.event))errors.push({code:'S304',message:'この主語ではそのきっかけを使えません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
+        if(!actor)errors.push({code:'S304',message:ref?.kind==='named'?`「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`:'この きっかけを 使う キャラクターや 部品が 見つかりません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
+        else if(!EVENT_BY_TYPE[actor.type]?.includes(heading.event))errors.push({code:'S304',message:`この キャラクターや 部品では、${EVENT_LABELS[heading.event]?'「'+EVENT_LABELS[heading.event]+'」の ':'この '}きっかけは 使えません。ほかの きっかけに してください`,line:unit.sourceSpan?.startLine||1,column:1,where:key});
         else resolved={...resolved,ownerId:actor.id,targetId:actor.id,targetType:actor.type,event:heading.event,filter:heading.filter||null};
       }
       return syntaxItem(unitKey,unit,resolved);
@@ -1141,7 +1159,8 @@
         // A group wait always means the broadcast just before it (LANGUAGE.md 439); the
         // reference name is derived from that position, so it is not part of the meaning.
         if (key === 'broadcastRef') continue;
-        if (key === 'actorRef' && child?.kind === 'self') continue;
+        // A statement without a subject is 自分's; a wait without one is the whole flow's (みんな).
+        if (key === 'actorRef' && child?.kind === (EVERYONE_WAITS.has(value.kind) ? 'all' : 'self')) continue;
         if (key === 'argumentNames' && Array.isArray(child) && child.length === 0) continue;
         // A script without rules has no rule list; an emptied block rule list is the same script.
         if (key === 'rules' && Array.isArray(child) && child.length === 0) continue;
@@ -1321,7 +1340,7 @@
       checkImageLimits(w, h);
       return { mime: 'image/webp', width: w, height: h };
     }
-    throw new AkariError('F509', 'このファイルは絵として使えません。使える絵のファイルは、PNG / JPEG / WebP です');
+    throw new AkariError('F509', 'このファイルは絵として使えません。ほかの絵のファイルをえらんでください', 0, 0, '使える 絵の ファイル：PNG / JPEG / WebP');
   }
   function parseWav(bytes) {
     if (bytes.length < 44 || ascii(bytes, 0, 4) !== 'RIFF' || ascii(bytes, 8, 4) !== 'WAVE')
@@ -1684,7 +1703,7 @@
     if (bytes.length >= 12 && ascii(bytes, 4, 4) === 'ftyp') return parseM4a(bytes);
     const id3 = bytes.length >= 10 && ascii(bytes, 0, 3) === 'ID3',
       frame = bytes.length >= 4 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0;
-    if (!id3 && !frame) throw new AkariError('F509', 'このファイルは音として使えません。使える音のファイルは、MP3 / PCM WAV / M4A（AAC-LC）/ FLAC / Ogg Opus です');
+    if (!id3 && !frame) throw new AkariError('F509', 'このファイルは音として使えません。ほかの音のファイルをえらんでください', 0, 0, '使える 音の ファイル：MP3 / PCM WAV / M4A（AAC-LC）/ FLAC / Ogg Opus');
     const clean = stripMp3Metadata(bytes);
     return { mime: 'audio/mpeg', clean, frameMeta: parseMp3FrameMeta(clean) };
   }
@@ -1773,7 +1792,7 @@
   async function canonicalizeImage(fileBytes) {
     const bytes = fileBytes instanceof Uint8Array ? fileBytes : new Uint8Array(fileBytes);
     if (bytes.length > LIMITS.importFileBytes)
-      throw new AkariError('F504', `入れるファイルが${LIMITS.importFileBytes / 1048576}MiBより大きいので使えません`);
+      throw new AkariError('F504', 'このファイルは大きすぎて使えません。もっと小さいファイルをえらんでください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
     const pre = sniffImage(bytes),
       dec = await decodeImageBytes(bytes, pre.mime);
     try {
@@ -1792,7 +1811,7 @@
         throw new AkariError('F510', 'この絵を、あかりで使える形にできませんでした。ほかの絵をえらんでください');
       const out = new Uint8Array(await blob.arrayBuffer());
       if (out.length > LIMITS.imageBytes)
-        throw new AkariError('F504', 'この絵は、あかりで使える形にすると4MiBより大きくなります。もっと小さい絵をえらんでください');
+        throw new AkariError('F504', 'この絵は、あかりで使える形にすると大きすぎます。もっと小さい絵をえらんでください', 0, 0, '使える形にした絵は4MiBまで');
       const post = sniffImage(out),
         check = await decodeImageBytes(out, post.mime);
       try {
@@ -1836,17 +1855,17 @@
   async function canonicalizeAudio(fileBytes) {
     const bytes = fileBytes instanceof Uint8Array ? fileBytes : new Uint8Array(fileBytes);
     if (bytes.length > LIMITS.importFileBytes)
-      throw new AkariError('F504', `入れるファイルが${LIMITS.importFileBytes / 1048576}MiBより大きいので使えません`);
+      throw new AkariError('F504', 'このファイルは大きすぎて使えません。もっと小さいファイルをえらんでください', 0, 0, `入れられるファイルは${LIMITS.importFileBytes / 1048576}MiBまで`);
     const sn = sniffAudio(bytes),
       containerMeta = audioContainerMeta(sn);
     checkAudioContainerLimits(containerMeta);
     if (sn.duration != null) checkAudioLimits({ ...containerMeta, duration: sn.duration });
     const out = sn.mime === 'audio/wav' ? rebuildCanonicalWav(sn.parsed) : sn.clean;
     if (out.length > LIMITS.audioBytes)
-      throw new AkariError('F504', 'この音は、あかりで使える形にすると6MiBより大きくなります。もっと短い音をえらんでください');
+      throw new AkariError('F504', 'この音は、あかりで使える形にすると大きすぎます。もっと短い音をえらんでください', 0, 0, '使える形にした音は6MiBまで');
     const decoded = await decodeAudioMeta(out);
     if (decoded.channels !== containerMeta.channels)
-      throw new AkariError('F511', 'この音のファイルは、中のデータが合っていません。ほかの音を使ってください');
+      throw new AkariError('F511', 'この音のファイルは、中身が合っていません。ほかの音を使ってください');
     if (sn.duration != null && Math.abs(decoded.duration - sn.duration) > 0.02)
       throw new AkariError('F511', 'この音のファイルは、書いてある長さと本当の長さが合いません。ほかの音を使ってください');
     const meta = {
@@ -1887,7 +1906,7 @@
     const digestSeen = new Set();
     for (const id of reachable) {
       const a = store.get(id);
-      if (!a) throw new AkariError('F503', `参照先asset「${id}」がありません`);
+      if (!a) throw new AkariError('F503', `使うはずの絵や音「${id}」がありません`);
       raw += a.byteLength;
       if (a.kind === 'image') {
         imgCount++;
@@ -1898,7 +1917,7 @@
         if (a.meta?.duration) duration += a.meta.duration;
       }
       const dk = `${a.kind}:${a.sha256}:${a.byteLength}`;
-      if (digestSeen.has(dk)) throw new AkariError('F503', '同一バイナリassetが重複しています');
+      if (digestSeen.has(dk)) throw new AkariError('F503', '同じ中身の絵や音が、2つ以上あります');
       digestSeen.add(dk);
     }
     if (
@@ -1912,21 +1931,21 @@
       throw new AkariError('F504', '作品の絵や音が、多すぎるか大きすぎます。使わない絵や音をけしてください');
     for (const b of project.stage.backdrops)
       if (b.kind === 'image' && store.get(b.assetId)?.kind !== 'image')
-        throw new AkariError('F509', '画像背景が画像asset以外を参照しています');
+        throw new AkariError('F509', '絵のはいけいが、絵ではないものを使っています');
     for (const c of project.components)
       if (c.type === 'sprite')
         for (const co of c.costumes)
           if (co.kind === 'image' && store.get(co.assetId)?.kind !== 'image')
-            throw new AkariError('F509', '画像衣装が画像asset以外を参照しています');
+            throw new AkariError('F509', '絵のすがたが、絵ではないものを使っています');
     for (const snd of project.sounds)
       if (store.get(snd.assetId)?.kind !== 'audio')
-        throw new AkariError('F509', '音素材がaudio asset以外を参照しています');
+        throw new AkariError('F509', '音が、音ではないものを使っています');
     if (serializedAssetIds) {
       if (
         serializedAssetIds.size !== reachable.size ||
         [...serializedAssetIds].some((id) => !reachable.has(id))
       )
-        throw new AkariError('F503', '保存Projectにorphan assetまたは不足assetがあります');
+        throw new AkariError('F503', '作品ファイルに、使われていない絵や音か、足りない絵や音があります');
     }
     return true;
   }
@@ -2009,22 +2028,22 @@
       assets = [];
     for (const id of reachable) {
       const a = assetStore.get(id);
-      if (!a) throw new AkariError('F503', `asset「${id}」がありません`);
+      if (!a) throw new AkariError('F503', `絵や音「${id}」がありません`);
       if (
         !(a.bytes instanceof Uint8Array) ||
         a.bytes.length !== a.byteLength ||
         sha256Fallback(a.bytes) !== a.sha256
       )
-        throw new AkariError('F508', `asset「${id}」の保存前整合性が一致しません`);
+        throw new AkariError('F508', `絵や音「${id}」の中身が、ほぞんしたときと合いません`);
       if (a.kind === 'image') {
         const sn = sniffImage(a.bytes);
         if (sn.mime !== a.mime)
-          throw new AkariError('F509', `asset「${id}」の画像MIMEが一致しません`);
+          throw new AkariError('F509', `絵「${id}」のファイルの形が、記録と合いません`);
       } else if (a.kind === 'audio') {
         const sn = sniffAudio(a.bytes);
         if (sn.mime !== a.mime)
-          throw new AkariError('F509', `asset「${id}」の音声MIMEが一致しません`);
-      } else throw new AkariError('F509', `asset「${id}」のkindが不正です`);
+          throw new AkariError('F509', `音「${id}」のファイルの形が、記録と合いません`);
+      } else throw new AkariError('F509', `絵や音「${id}」の種類が、正しくありません`);
       assets.push({
         id: a.id,
         kind: a.kind,
@@ -2102,9 +2121,9 @@
         ...(Object.hasOwn(root || {}, 'extensions') ? ['extensions'] : []),
       ])
     )
-      throw new AkariError('F503', '作品のデータの形が、あかりのきまりと合いません');
+      throw new AkariError('F503', '作品の ファイルの 形が、あかりで 読める 形と 合いません');
     if (!Array.isArray(root.assets) || root.assets.length > LIMITS.assets)
-      throw new AkariError('F504', 'asset数が上限を超えています');
+      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, '絵や音の数が、上限より多いです');
     const design = {
       ...(Object.hasOwn(root, 'extensions') ? { extensions: AKARI_RUNTIME.validateExtensionEnvelope(root.extensions) } : {}),
       schema: root.schema,
@@ -2130,8 +2149,8 @@
       ac = 0;
     for (const a of root.assets) {
       if (!exactKeys(a, ['id', 'kind', 'mime', 'byteLength', 'sha256', 'dataBase64']))
-        throw new AkariError('F503', 'asset recordに未知または不足項目があります');
-      if (!safeId(a.id)) throw new AkariError('F503', 'asset IDが不正です');
+        throw new AkariError('F503', '絵や音の記録の形が、正しくありません');
+      if (!safeId(a.id)) throw new AkariError('F503', '絵や音の番号が、正しくありません');
       if (ids.has(a.id) || assetIds.has(a.id))
         throw new AkariError('F505', `ID「${a.id}」が2つあります`);
       ids.add(a.id);
@@ -2139,29 +2158,29 @@
       if (a.kind === 'image') {
         ic++;
         if (!['image/png', 'image/jpeg', 'image/webp'].includes(a.mime))
-          throw new AkariError('F509', 'image assetのMIMEが未対応です');
+          throw new AkariError('F509', 'あかりで使えない形の絵があります');
         if (!Number.isInteger(a.byteLength) || a.byteLength < 1 || a.byteLength > LIMITS.imageBytes)
-          throw new AkariError('F504', '画像asset byteLengthが上限外です');
+          throw new AkariError('F504', '絵の大きさが、使える大きさの外です');
       } else if (a.kind === 'audio') {
         ac++;
         if (!['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/flac', 'audio/ogg'].includes(a.mime))
-          throw new AkariError('F509', 'audio assetのMIMEが未対応です');
+          throw new AkariError('F509', 'あかりで使えない形の音があります');
         if (!Number.isInteger(a.byteLength) || a.byteLength < 1 || a.byteLength > LIMITS.audioBytes)
-          throw new AkariError('F504', '音asset byteLengthが上限外です');
-      } else throw new AkariError('F509', 'asset kindが未対応です');
-      if (!/^[0-9a-f]{64}$/.test(a.sha256)) throw new AkariError('F508', 'SHA-256表記が不正です');
+          throw new AkariError('F504', '音の大きさが、使える大きさの外です');
+      } else throw new AkariError('F509', 'あかりで使えない種類の絵や音があります');
+      if (!/^[0-9a-f]{64}$/.test(a.sha256)) throw new AkariError('F508', '絵や音の中身をたしかめるしるしの書き方が、正しくありません');
       const n = decodedBase64Length(a.dataBase64);
       if (n !== a.byteLength)
-        throw new AkariError('F508', 'Base64予想byte数とbyteLengthが一致しません');
+        throw new AkariError('F508', '絵や音の大きさが、記録とちがいます');
       predicted += n;
       if (predicted > LIMITS.assetRawTotal)
-        throw new AkariError('F504', `絵や音の合計の大きさが${LIMITS.assetRawTotal / 1048576}MiBより大きいので使えません`);
+        throw new AkariError('F504', '絵や音を合わせた大きさが大きすぎて使えません。いらない絵や音をけしてください', 0, 0, `絵や音の合計は${LIMITS.assetRawTotal / 1048576}MiBまで`);
       const dk = `${a.kind}:${a.sha256}:${a.byteLength}`;
-      if (digestKeys.has(dk)) throw new AkariError('F503', '保存Projectに重複assetがあります');
+      if (digestKeys.has(dk)) throw new AkariError('F503', '作品ファイルに、同じ絵や音が2つ以上あります');
       digestKeys.add(dk);
     }
     if (ic > LIMITS.imageAssets || ac > LIMITS.audioAssets)
-      throw new AkariError('F504', '画像または音asset数が上限を超えています');
+      throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, '絵や音の数が、上限より多いです');
     return { design, assetIds };
   }
 
@@ -2189,7 +2208,7 @@
     if (d.callPhrase !== undefined && (d.type !== 'action' || typeof d.callPhrase !== 'string' || cpLen(d.callPhrase) > 80))
       throw new AkariError('F503', '短いよび方は、80文字までで書いてください');
     if (d.editId && !safeId(d.editId))
-      throw new AkariError('F503', '下書きのデータがこわれています');
+      throw new AkariError('F503', '下書きの中身がこわれています');
     return { ...d };
   }
   function validateEditorState(state,project) {
@@ -2487,7 +2506,7 @@
         );
       throw new AkariError(
         'F502',
-        '作品のデータを読めません。あかりでほぞんした .akari.md のファイルをえらんでください',
+        '作品の中身を読めません。あかりでほぞんした .akari.md のファイルをえらんでください',
       );
     }
     const recorded = root;
@@ -2506,7 +2525,7 @@
     if (text.slice(0, begin) !== markdownBody(recorded))
       throw new AkariError(
         'F512',
-        'ファイルの本文と、作品をもどすためのデータが合いません。いまなおしている作品はかえていません。',
+        'ファイルの本文と、作品をもどすための中身が合いません。いまなおしている作品はかえていません。',
       );
     const store = new AssetStore();
     for (const record of root.assets) store.addImmutable(await validateLoadedAssetRecord(record));
@@ -2519,9 +2538,9 @@
   async function validateLoadedAssetRecord(a) {
     const bytes = decodeBase64(a.dataBase64);
     if (bytes.length !== a.byteLength)
-      throw new AkariError('F508', 'asset byteLengthが一致しません');
+      throw new AkariError('F508', '絵や音の大きさが、記録と合いません');
     const digest = await sha256(bytes);
-    if (digest !== a.sha256) throw new AkariError('F508', 'asset SHA-256が一致しません');
+    if (digest !== a.sha256) throw new AkariError('F508', '絵や音の中身が、記録と合いません');
     if (a.kind === 'image') {
       const sn = sniffImage(bytes);
       if (sn.mime !== a.mime) throw new AkariError('F509', '絵のファイルの形が、書いてある形と合いません。作品ファイルがこわれているようです');
@@ -2545,20 +2564,20 @@
     const sn = sniffAudio(bytes);
     if (sn.mime !== a.mime) throw new AkariError('F509', '音のファイルの形が、書いてある形と合いません。作品ファイルがこわれているようです');
     if (a.mime === 'audio/mpeg' && !bytesEqual(sn.clean, bytes))
-      throw new AkariError('F508', '保存MP3に除去対象metadataが残っています');
+      throw new AkariError('F508', 'ほぞんした音（MP3）に、取りのぞくはずのおまけの情報が残っています');
     if (a.mime === 'audio/wav') {
       const rebuilt = rebuildCanonicalWav(sn.parsed);
       if (!bytesEqual(rebuilt, bytes))
-        throw new AkariError('F508', '保存WAVがcanonical形ではありません');
+        throw new AkariError('F508', 'ほぞんした音（WAV）が、決まった形になっていません');
     }
     if (['audio/mp4', 'audio/flac', 'audio/ogg'].includes(a.mime) && !bytesEqual(sn.clean, bytes))
-      throw new AkariError('F508', '保存音声がmetadata除去後のcanonical形ではありません');
+      throw new AkariError('F508', 'ほぞんした音が、おまけの情報を取りのぞいた決まった形になっていません');
     const containerMeta = audioContainerMeta(sn);
     checkAudioContainerLimits(containerMeta);
     if (sn.duration != null) checkAudioLimits({ ...containerMeta, duration: sn.duration });
     const decoded = await decodeAudioMeta(bytes);
     if (decoded.channels !== containerMeta.channels)
-      throw new AkariError('F511', 'この音のファイルは、中のデータが合っていません。ほかの音を使ってください');
+      throw new AkariError('F511', 'この音のファイルは、中身が合っていません。ほかの音を使ってください');
     if (sn.duration != null && Math.abs(decoded.duration - sn.duration) > 0.02)
       throw new AkariError('F511', 'この音のファイルは、書いてある長さと本当の長さが合いません。ほかの音を使ってください');
     const meta = {
@@ -2594,7 +2613,7 @@
         return quantity(n.op === 'NEG' ? -magnitude : magnitude, unitOf(value));
       }
       if (n.kind === 'ListLiteral') return n.items.map(literal);
-      throw new AkariError('R411', 'はじめの中身には、数や文字など、決まったものを書きます。計算やデータの名前は使えません。れい：0、こんにちは');
+      throw new AkariError('R411', 'はじめの中身には、数や文字など、決まったものを書きます。計算や へんすう・リストの 名前は 使えません。れい：0、こんにちは');
     };
     const value = literal(ast);
     if (kind === 'variable' ? !scalar(value) : !listValue(value))
@@ -2603,7 +2622,7 @@
     return value;
   }
   function parseDataFormInitial(text,kind,{mode='literal',expectedUnit=null}={}) {
-    if(!['variable','list'].includes(kind)||!['literal','lines'].includes(mode))throw new AkariError('F503','データの入れ方が正しくありません');
+    if(!['variable','list'].includes(kind)||!['literal','lines'].includes(mode))throw new AkariError('F503','へんすう・リストの中身の入れ方が正しくありません');
     let value;
     if(kind==='list'&&mode==='lines')value=String(text)===''?[]:String(text).replace(/\r\n?/g,'\n').split('\n');
     else value=parseLiteralForData(text,kind);

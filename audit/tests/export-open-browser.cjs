@@ -81,7 +81,7 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
     await p.waitForFunction(()=>!!Akari.app);p.on('dialog',d=>d.accept(d.type()==='prompt'?'検証音':undefined));
     await p.locator('#soundInput').setInputFiles(path.resolve('audit/fixtures/audio/tone.m4a'));
     await p.waitForFunction(()=>Akari.app.project.sounds.length===1&&Akari.app.editorState.state==='DESIGN');
-    const html=await p.evaluate(()=>{const p=structuredClone(Akari.app.project);p.scripts=[{targetId:'stage',event:'start',source:'音「検証音」を鳴らす。\n「音の後」と言う。'}];return Akari.generateStandaloneHtml(p,Akari.app.assetStore,{presentation:'artwork'});});
+    const html=await p.evaluate(()=>{const p=structuredClone(Akari.app.project);p.scripts=[{targetId:'stage',event:'start',source:'「検証音」を鳴らす。\n「音の後」と言う。'}];return Akari.generateStandaloneHtml(p,Akari.app.assetStore,{presentation:'artwork'});});
     mediaFile=path.join(out,'recorded-audio.html');fs.writeFileSync(mediaFile,html);
     return withPage(b,async q=>{await q.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('音の後'));assert.equal(await q.locator('#playerActivation').isVisible(),false);return{decodeAndPlayback:true};},mediaFile);
   }));

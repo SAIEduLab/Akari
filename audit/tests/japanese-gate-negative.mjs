@@ -30,7 +30,7 @@ try{
   }
  }
  for(const ambiguity of ambiguities){
-  const soundChoices=ambiguity.id==='AMB-SOUND'?[{label:'そのままの文字を話す',source:'「こんにちは」と言う'},{label:'同じ名前の音を鳴らす',source:'音「こんにちは」を鳴らす'}]:null;
+  const soundChoices=ambiguity.id==='AMB-SOUND'?[{label:'そのままの文字を話す',source:'「こんにちは」と言う'},{label:'同じ名前の音を鳴らす',source:'「こんにちは」を鳴らす'}]:null;
   intent.results.find(r=>r.id===ambiguity.id+'/choices-nonexecution-cancel').evidence={original:ambiguity.source,choices:soundChoices?soundChoices.map(choice=>choice.label):ambiguity.choices.map(word=>visibleChoices[ambiguity.id+'/'+word]??word),soundChoices,valid:{project:'fixture'},before:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'},after:{source:ambiguity.source,project:'fixture',history:1,redo:0,dirty:false,state:'DESIGN'}};
  }
  fs.writeFileSync(path.join(dir,'formal-player.html'),'<!-- validator fixture, not an executable player -->');
@@ -109,7 +109,7 @@ try{
  for(const[key,mutate]of Object.entries(proseMutations))check('INTENT/prose-'+key,intent,vi,r=>mutate(proseRow(r)));
  const soundRow=r=>r.results.find(x=>x.id==='AMB-SOUND/choices-nonexecution-cancel').evidence;
  check('INTENT/speech-ui-label',intent,vi,r=>{const row=soundRow(r);row.choices[0]='台詞として画面に言う';row.soundChoices[0].label=row.choices[0];});
- check('INTENT/speech-source-mixed-with-sound',intent,vi,r=>{soundRow(r).soundChoices[0].source='音「こんにちは」を鳴らす';});
+ check('INTENT/speech-source-mixed-with-sound',intent,vi,r=>{soundRow(r).soundChoices[0].source='「こんにちは」を鳴らす';});
  results.push(...checkCapabilityNegatives());
  assert.deepEqual(results.map(r=>r.id),negativeCaseIds);
  const report={schema:'akari-japanese-gate-negative-v1',status:'PASS',snapshot:inputs,auditInputs:inputHashes(negativeInputPaths),results};verifyNegativeReport(report,inputs);

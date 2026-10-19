@@ -15,7 +15,7 @@ import { buildDerivedProduct } from './extensions/build.mjs';
 import examples from './extensions/examples/offline.js';
 
 await buildDerivedProduct({
-  product: './Akari_1_3_0.html',
+  product: './Akari_1_3_1.html',
   output: './derived-offline.html',
   extensions: [examples.offline, examples.text],
   profiles: [],
@@ -35,7 +35,7 @@ await buildDerivedProduct({
 
 `拡張「demo.offline」「remember」（9）` のように拡張ID・機能IDで書いた本文も同じ命令として読みます。整形とブロックからのコード生成は日本語名で出力します。日本語の拡張名（manifestの `name`）を登録していない拡張は、拡張名の位置に拡張IDを出力します。
 
-登録された命令・計算のブロックも同じ定義を使います。入力欄の名前・個数・型・単位はmanifestから決まります。できごとは `extension-id/event-id` で識別され、製品の知らせの入口へ接続されます。できごとの値の読み方ときっかけの表記はLANGUAGEを参照してください。
+登録された命令・計算のブロックも同じ定義を使います。入力欄の名前・個数・型・単位はmanifestから決まります。できごとは `extension-id/event-id` で識別され、製品の合図の入口へ接続されます。できごとの値の読み方ときっかけの表記はLANGUAGEを参照してください。
 
 ## 登録情報
 

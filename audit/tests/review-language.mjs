@@ -59,7 +59,7 @@ const report=await withBrowser(browserPath,async browser=>{
           const source=`「${v.encoded}」という知らせを受け取ったとき、いぬは、\n  受信数を1増やす。`,ast=A.parseSyntax(source).ast;
           check(ast,'message heading did not parse');equal(ast.heading.filter.message,v.value);
           const decoded=A.blockDecode(A.blockEncode(ast).tree),formatted=A.formatScript(decoded);
-          equal(A.parseSyntax(formatted).ast.heading.filter.message,v.value);check(formatted.startsWith(`「${v.encoded}」という知らせ`),'filter was not re-escaped');
+          equal(A.parseSyntax(formatted).ast.heading.filter.message,v.value);check(formatted.startsWith(`「${v.encoded}」という合図`),'filter was not re-escaped');
           decoded.heading.filter.message=v.value;equal(A.parseSyntax(A.formatScript(decoded)).ast.heading.filter.message,v.value);
           const keySource=`「${v.encoded}」キーを押すたびに、いぬは、\n  何もしない。`,keyAst=A.parseSyntax(keySource).ast;
           equal(keyAst.heading.filter.key,v.value);equal(A.parseSyntax(A.formatScript(A.blockDecode(A.blockEncode(keyAst).tree))).ast.heading.filter.key,v.value);

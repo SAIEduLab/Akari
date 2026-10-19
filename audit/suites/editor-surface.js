@@ -111,7 +111,7 @@ function runEditorSurface10(api, forms) {
     const binary=s.blockView.bodies.body[0].inputs.value;
     for(const [schema,expression] of [
       ['BuiltinCall:CONTAINS','0に0が含まれている'],
-      ['BuiltinCall:INDEX_OF','0で0が最初にある番号'],
+      ['BuiltinCall:INDEX_OF','0の中で0がはじめて出てくる番号'],
       ['BuiltinCall:LENGTH','0の長さ'],
     ]) {
       const result=api.prepareBlockEdit(s,{type:'replace',id:binary.inputs.left.id,node:api.createBlock(schema)});

@@ -136,7 +136,7 @@ try{await withBrowser(chrome,async browser=>{
   if(soundChoices){
     assert.deepEqual(soundChoices.map(choice=>choice.label),choices);
     assert.ok(soundChoices.some(choice=>choice.label==='そのままの文字を話す'&&choice.source==='「こんにちは」と言う'),'speech UI candidate lost its original source');
-    assert.ok(soundChoices.some(choice=>choice.label==='同じ名前の音を鳴らす'&&choice.source==='音「こんにちは」を鳴らす'),'sound UI candidate lost its original source');
+    assert.ok(soundChoices.some(choice=>choice.label==='同じ名前の音を鳴らす'&&choice.source==='「こんにちは」を鳴らす'),'sound UI candidate lost its original source');
   }
   assert.equal(await p.locator('[data-intent-cancel]').count(),1,'explicit cancel control');await p.locator('[data-intent-cancel]').click();
   const after=await uiState(p);for(const k of ['source','project','history','redo','dirty'])assert.deepEqual(after[k],before[k],k+' changed after cancellation');assert.equal(await p.locator('#codeEditor').inputValue(),ambiguity.source,'cancel discarded the original draft');assert.equal(after.state,'DESIGN');assert.equal(await p.evaluate(()=>__intentObserved.start),0);return{original:ambiguity.source,choices,soundChoices,valid,before,after};

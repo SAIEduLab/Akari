@@ -25,7 +25,7 @@ const fixture=()=>{
   sprite.costumes=[{id:'costume-test',name:'顔',kind:'text',value:'🙂'}];sprite.costumeId='costume-test';
   p.scripts=[
     {targetId:'stage',event:'message',source:'「画面の知らせ」と言う'},
-    {targetId:'button-1',event:'click',source:'（（（3）を渡して、【倍】で求めた答え））を渡して、【表示】という手順を行う。'},
+    {targetId:'button-1',event:'click',source:'（（3をわたして、【倍】で求めた答え））をわたして、【表示】という手順を行う。'},
     {targetId:'sprite-1',event:'start',source:'「はじめ」と言う'},
     {targetId:'sprite-1',event:'message',source:'「受け取った」と言う'},
   ];
@@ -92,7 +92,7 @@ await withBrowser(browserPath,async browser=>{
     await p.locator('#fileInput').setInputFiles(md);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');await p.locator('#uiLevel').selectOption('advanced');
     await test('OWNER-GUI-DIRECT-BUTTON',async()=>{
       assert.deepEqual(startup,{overview:false,editable:true});
-      const original='（（（3）を渡して、【倍】で求めた答え））を渡して、【表示】という手順を行う。',changed='（（（4）を渡して、【倍】で求めた答え））を渡して、【表示】という手順を行う。';
+      const original='（（3をわたして、【倍】で求めた答え））をわたして、【表示】という手順を行う。',changed='（（4をわたして、【倍】で求めた答え））をわたして、【表示】という手順を行う。';
       for(const mode of ['code','blocks']){
         await p.locator('#editorMode'+mode).click();
         await p.locator('#sourceOverviewBtn').click();await p.locator('#newBtn').click();await productConfirmAnswered(p);

@@ -15,7 +15,7 @@ await run('continuous-number-overflow',async p=>{
  const virtual=await p.evaluate(()=>{
   const A=Akari,large='1'+'0'.repeat(308),out=[];
   const execute=(direction,speed,stopAtBoundary=false)=>{
-   const project=A.makeEmptyProject(),source=`「右」キーが押されているあいだは、マスコットは画面の${direction}へ1秒に${speed}歩の速さで動き続ける。`;
+   const project=A.makeEmptyProject(),source=`「右」キーが押されているあいだは、たくどんは画面の${direction}へ1秒に${speed}歩の速さで動き続ける。`;
    project.scripts[0].source=source;const before=JSON.stringify(project),compiled=A.compileProject(project),runtime=new A.RuntimeModel(project,{}),errors=[],trace=[];let clock=0;
    if(compiled.errors.length)throw Error(JSON.stringify(compiled.errors));runtime.now=()=>clock;
    const scheduler=new A.EventScheduler(project,compiled,runtime,{runtimeError:(task,error)=>errors.push({code:error.code,key:error.akariSource?.key,line:error.line}),continuousStep:entry=>trace.push(entry)});scheduler.schedule=()=>{};scheduler.start();scheduler.setKeyState('右',true);clock=speed===30?250:2000;

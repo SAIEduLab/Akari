@@ -141,6 +141,8 @@
       茶: '#8b5a2b',
       透明: null,
     };
+    // The color picker shows these words for colors whose code word uses a hard kanji; code reads both.
+    const COLOR_LABELS = { 橙: 'だいだい', 紫: 'むらさき', 桃: 'もも色', 灰: 'ねずみ色' };
     // Event names on screen; the entry buttons use the same words.
     const EVENT_LABELS = {
       start: '「動かす」を おしたとき',
@@ -217,7 +219,7 @@
       throw new AkariError('R411', 'これは 文字として 見せられません');
     };
     const ensureFinite = (n) => {
-      if (!Number.isFinite(n)) throw new AkariError('R403', '計算結果が有限な数ではありません');
+      if (!Number.isFinite(n)) throw new AkariError('R403', '計算の 答えが、あかりで 使える 数に なりませんでした。使う 数や 計算の しかたを たしかめてください');
       return Object.is(n, -0) ? 0 : n;
     };
     // Presentation only. Expressions, text conversion and files retain the value.
@@ -262,13 +264,14 @@
     }
     function resolveColor(v, { allowTransparent = true } = {}) {
       if (typeof v !== 'string') throw new AkariError('R411', '色は 文字で きめます。れい：「赤」');
+      v = Object.keys(COLOR_LABELS).find((word) => COLOR_LABELS[word] === v) || v;
       if (Object.prototype.hasOwnProperty.call(COLOR_NAMES, v)) {
         if (v === '透明' && !allowTransparent)
           throw new AkariError('R412', 'ここでは「透明」は 使えません。れい：「赤」');
         return COLOR_NAMES[v];
       }
       if (/^#[0-9A-Fa-f]{6}$/.test(v)) return v.toLowerCase();
-      throw new AkariError('R412', `色「${v}」は使える色ではありません`);
+      throw new AkariError('R412', `色「${v}」は使える色ではありません。使える色は 黒・白・ねずみ色・赤・だいだい・黄・緑・水色・青・むらさき・もも色・茶 です`);
     }
     class PRNG {
       constructor(seed) {
@@ -288,6 +291,14 @@
     }
     function nowMs() {
       return typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+    }
+    // A wait with a subject (だんごは0.2秒待つ) holds only that part: the flow goes on, and the next statement of
+    // that part waits until the hold ends. A wait without one (みんな, {kind:'all'}) stops the whole flow.
+    function everyoneWaitKind(kind) {
+      return ['WaitTime', 'WaitUntil', 'BroadcastAndWait', 'WaitBroadcastGroup'].includes(kind);
+    }
+    function everyoneStatement(node) {
+      return node?.actorRef ? node.actorRef.kind === 'all' : everyoneWaitKind(node?.kind);
     }
     function cloneDesignProject(p) {
       return typeof structuredClone === 'function'
@@ -330,7 +341,7 @@
     }
     function decodedBase64Length(text) {
       if (typeof text !== 'string' || text.length % 4 !== 0)
-        throw new AkariError('F508', 'Base64\u5f62\u5f0f\u304c\u4e0d\u6b63\u3067\u3059');
+        throw new AkariError('F508', '絵や音の中身を表す文字の書き方が、正しくありません');
       const pad = text.endsWith('==') ? 2 : text.endsWith('=') ? 1 : 0,
         end = text.length - pad;
       for (let i = 0; i < end; i++) {
@@ -344,22 +355,22 @@
             c === 47
           )
         )
-          throw new AkariError('F508', 'Base64\u5f62\u5f0f\u304c\u4e0d\u6b63\u3067\u3059');
+          throw new AkariError('F508', '絵や音の中身を表す文字の書き方が、正しくありません');
       }
       if (pad && end < 2)
-        throw new AkariError('F508', 'Base64\u5f62\u5f0f\u304c\u4e0d\u6b63\u3067\u3059');
+        throw new AkariError('F508', '絵や音の中身を表す文字の書き方が、正しくありません');
       return (text.length / 4) * 3 - pad;
     }
     function decodeBase64(text) {
       const expected = decodedBase64Length(text);
-      if (expected > LIMITS.assetRawTotal) throw new AkariError('F504', '絵や音の データが 大きすぎます');
+      if (expected > LIMITS.assetRawTotal) throw new AkariError('F504', '絵や音の 中身が 大きすぎます');
       let out;
       if (typeof atob === 'function') {
         let bin;
         try {
           bin = atob(text);
         } catch (_) {
-          throw new AkariError('F508', 'Base64を読み取れません');
+          throw new AkariError('F508', '絵や音の中身を表す文字を、読みとれません');
         }
         out = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
@@ -377,7 +388,7 @@
           if (at < expected) out[at++] = n & 255;
         }
       }
-      if (encodeBase64(out) !== text) throw new AkariError('F508', 'Base64が標準形ではありません');
+      if (encodeBase64(out) !== text) throw new AkariError('F508', '絵や音の中身を表す文字が、決まった形になっていません');
       return out;
     }
     function rotr(x, n) {
@@ -514,7 +525,7 @@
       }
       addImmutable(asset) {
         if (this.#map.has(asset.id))
-          throw new AkariError('F505', `asset ID「${asset.id}」が 2つ あります`);
+          throw new AkariError('F505', `絵や音の番号「${asset.id}」が 2つ あります`);
         const frozen = makeImmutableAssetRecord(asset);
         this.#map.set(frozen.id, frozen);
         return frozen;
@@ -523,9 +534,9 @@
         for (const a of this.#map.values())
           if (a.kind === kind && a.sha256 === digest) {
             if (a.byteLength !== byteLength)
-              throw new AkariError('F508', '同じSHA-256でbyteLengthが異なります');
+              throw new AkariError('F508', '同じしるしの絵や音なのに、大きさがちがいます');
             if (bytes && !bytesEqual(a.bytes, bytes))
-              throw new AkariError('F508', '同じSHA-256/長さでバイト列が異なります');
+              throw new AkariError('F508', '同じしるしと大きさの絵や音なのに、中身がちがいます');
             return a;
           }
         return null;
@@ -995,7 +1006,8 @@
       }
       resolveActorRef(ref, relativeRuntimeId) {
         let id = relativeRuntimeId;
-        if (ref && ref.kind !== 'self') {
+        // みんな ({kind:'all'}, a wait of the whole flow) reads its time or condition as 自分.
+        if (ref && ref.kind === 'named') {
           id = ref.targetId || (ref.name === '画面' || ref.name === this.project.stage.name ? 'stage' :
             this.project.components.find((c) => c.name === ref.name)?.id);
         }
@@ -1397,12 +1409,12 @@
     }
     function validateExpectedUnit(value, expectedUnit) {
       if (expectedUnit == null) return;
-      numberInUnit(value, expectedUnit, 'たんいを きめた へんすうには 数を 入れます');
+      numberInUnit(value, expectedUnit, 'たんいを 決めた へんすうには 数を 入れます');
     }
     function validateRuntimeData(project, fail = null) {
       const reject = fail || ((message) => { throw new AkariError('R411', message); });
       for (const data of [project.projectData, ...project.components.map(c => c?.localData)]) {
-        if (!data || !Array.isArray(data.variables) || !Array.isArray(data.lists)) reject('データが 正しくありません');
+        if (!data || !Array.isArray(data.variables) || !Array.isArray(data.lists)) reject('へんすう・リストが 正しくありません');
         for (const d of data.variables) {
           if (!scalar(d?.initialValue)) reject('へんすうの はじめの 中身が 正しくありません');
           if (d.expectedUnit != null && !UNIT_TAGS.includes(d.expectedUnit)) reject('へんすうの たんいが 正しくありません');
@@ -1416,7 +1428,7 @@
       }
       return true;
     }
-    function bool(v, msg = 'ここには あてはまるか どうかを 入れます。れい：（点数）が（10）より大きい') {
+    function bool(v, msg = 'ここには あてはまるか どうかを 入れます。れい：点数が10より大きい') {
       if (typeof v !== 'boolean') throw new AkariError('R411', msg);
       return v;
     }
@@ -1552,7 +1564,7 @@
         args = ast.args.map((x) => evalExpression(x, ctx, budget)),
         meta = BUILTIN_META.get(name);
       if (meta && (args.length < meta.minArgs || args.length > meta.maxArgs))
-        throw new AkariError('R411', `計算「${name}」に 入れるものの 数が ちがいます`);
+        throw new AkariError('R411', `はじめから ある 計算「${({余り:'あまり',乱数:'AからBのどれか'})[name] || name}」に 入れるものの 数が ちがいます`);
       if (name === 'CONTAINS') {
         const [a, b] = args;
         if (Array.isArray(a)) {
@@ -1561,7 +1573,7 @@
           return a.some((x) => sameValue(x, b));
         }
         if (typeof a === 'string' && typeof b === 'string') return a.includes(b);
-        throw new AkariError('R411', '「含まれている」はリストまたは文字に使います');
+        throw new AkariError('R411', '「入っている」は リストか 文字に 使います。れい：［1、2］に2が入っている');
       }
       if (name === 'INDEX_OF') {
         const [a, b] = args;
@@ -1592,7 +1604,7 @@
       const nums = () => args.map((x) => numberValue(x));
       switch (name) {
         case '乱数': {
-          if (args.length !== 2) throw new AkariError('R411', '「乱数」には 数を 2つ 入れます。れい：乱数（1、10）');
+          if (args.length !== 2) throw new AkariError('R411', '「どれか」の 計算には 数を 2つ 入れます。れい：1から10のどれか');
           const unit = commonUnit(args);
           let [a, b] = nums();
           if (a === b) return quantity(a, unit);
@@ -1610,7 +1622,7 @@
           return quantity(clamp(ensureFinite(value), lo, hi), unit);
         }
         case '余り': {
-          if (args.length !== 2) throw new AkariError('R411', '「余り」には 数を 2つ 入れます。れい：余り（10、3）');
+          if (args.length !== 2) throw new AkariError('R411', '「あまり」には 数を 2つ 入れます。れい：あまり（10、3）');
           const unit = commonUnit(args);
           const [a, b] = nums();
           if (b === 0) throw new AkariError('R401', '0で わった あまりは 出せません。わる数を 0では ない 数に してください');
@@ -1702,10 +1714,10 @@
         s = ast.sensor;
       switch (s) {
         case '横位置':
-          if (!a) throw new AkariError('R407', '「横位置」は キャラクターや 部品の 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「よこのばしょ」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.x, '歩');
         case '縦位置':
-          if (!a) throw new AkariError('R407', '「縦位置」は キャラクターや 部品の 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「たてのばしょ」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.y, '歩');
         case '方向':
           if (!a) throw new AkariError('R407', '「方向」は キャラクターや 部品の 動きの 中で 使います');
@@ -1714,13 +1726,13 @@
           if (!a) throw new AkariError('R407', '「大きさ」は キャラクターや 部品の 動きの 中で 使います');
           return quantity(a.scalePercent, '％');
         case '衣装番号': {
-          if (!a) throw new AkariError('R407', '「衣装番号」は キャラクターの 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「すがたの番号」は キャラクターの 動きの 中で 使います');
           const c = r.component(ctx.runtimeId);
           if (c?.type !== 'sprite') throw new AkariError('R406', 'すがたを えらべるのは キャラクターだけです');
           return c.costumes.findIndex((x) => x.id === a.costumeId) + 1;
         }
         case '衣装名': {
-          if (!a) throw new AkariError('R407', '「衣装名」は キャラクターの 動きの 中で 使います');
+          if (!a) throw new AkariError('R407', '「すがたの名前」は キャラクターの 動きの 中で 使います');
           const c = r.component(ctx.runtimeId);
           return c?.costumes?.find((x) => x.id === a.costumeId)?.name || '';
         }
@@ -1737,7 +1749,7 @@
         case 'タイマー':
           return quantity((r.now() - r.startTime) / 1000, '秒');
         case '拡張の値':
-          if (!Object.hasOwn(ctx.eventContext || {}, 'payload')) throw new AkariError('E705', '「拡張の値」は かくちょうの できごとの 中で 使ってください');
+          if (!Object.hasOwn(ctx.eventContext || {}, 'payload')) throw new AkariError('E705', '拡張「できごとの値」は かくちょうの できごとの 中で 使ってください');
           return assertRuntimeValueLimit(ctx.eventContext.payload);
         case '答え':
           return ctx.task?.lastAnswer ?? '';
@@ -1813,15 +1825,15 @@
       return parts.length?'（'+parts.join('。')+'）':'';
     }
     function runUserFunction(name, args, ctx, budget = null, depth = 1, argumentNames = []) {
-      if (depth > LIMITS.callDepth) throw new AkariError('R408', '自分で作ったブロックの よびだしが かさなりすぎました');
+      if (depth > LIMITS.callDepth) throw new AkariError('R408', '自分で作ったブロックの 中で ブロックを 使うのが かさなりすぎました');
       const def = ctx.compiled.symbols.functions.get(name);
-      if (!def) throw new AkariError('S301', `自分で作ったブロック「${name}」がありません`);
+      if (!def) throw new AkariError('S301', `答えを もとめる「${name}」が ありません`);
       if (def.args.length !== args.length)
-        throw new AkariError('S308', `自分で作ったブロック「${name}」に 入れるものは${def.args.length}こです`+namedArgumentDetails(def.args,argumentNames));
+        throw new AkariError('S308', `答えを もとめる「${name}」に 入れるものは${def.args.length}こです`+namedArgumentDetails(def.args,argumentNames));
       if (argumentNames.length) {
         if (argumentNames.length !== args.length || new Set(argumentNames).size !== argumentNames.length ||
           argumentNames.some(n => !def.args.includes(n)) || def.args.some(n => !argumentNames.includes(n)))
-          throw new AkariError('S308', `自分で作ったブロック「${name}」に 入れるものの 名前が 合いません`+namedArgumentDetails(def.args,argumentNames));
+          throw new AkariError('S308', `答えを もとめる「${name}」に 入れるものの 名前が 合いません`+namedArgumentDetails(def.args,argumentNames));
         const named = new Map(argumentNames.map((n, i) => [n, args[i]]));
         args = def.args.map(n => named.get(n));
       }
@@ -1847,7 +1859,7 @@
         }
         throw sig;
       }
-      throw new AkariError('S306', `自分で作ったブロック「${name}」が 答えを 返しませんでした。答えの れい：1＋2を返す。`);
+      throw new AkariError('S306', `答えを もとめる「${name}」が 答えを 返しませんでした。答えの れい：1＋2を答えとして返す。`);
     }
     function execFunctionNodes(nodes, inheritedContext, budget, loopDepth) {
       for (const n of nodes) {
@@ -1985,7 +1997,7 @@
               throw s;
             }
             default:
-              throw new AkariError('S305', '計算ではこの命令を使えません');
+              throw new AkariError('S305', '「答えを もとめる」の 中では、この ブロックは 使えません');
           }
         } catch (err) {
           if (err instanceof AkariError && !err.akariSource) {
@@ -2021,7 +2033,7 @@
         if (arr.length >= LIMITS.listItems) throw new AkariError('R413', 'リストが長すぎます');
         arr.splice(idx - 1, 0, deepCopy(v));
       } else if (n.kind === 'ListReplace') {
-        if (idx > arr.length) throw new AkariError('R404', 'おきかえる 番号の ものが リストに ありません');
+        if (idx > arr.length) throw new AkariError('R404', '入れかえる 番号の ものが リストに ありません');
         const v = assertRuntimeValueLimit(evalExpression(n.value, ctx, budget));
         if (!scalar(v)) throw new AkariError('R411', 'リストへ 入れられるのは 数・文字・あてはまる／あてはまらない です');
         arr[idx - 1] = deepCopy(v);
@@ -2819,8 +2831,12 @@
             this.finishTask(task, 'DONE');
             return true;
           }
-          task.currentNode = step.node;
           this.selectSubject(task, step.node);
+          if (this.awaitHold(task, step)) {
+            this.recheckBlocked(force);
+            return true;
+          }
+          task.currentNode = step.node;
           const frame = task.callFrames.at(-1);
           if (frame) frame.currentLine = step.node.sourceSpan?.startLine || 1;
           if (step.kind !== 'idle') this.ui.beforeStatement?.(task, step.node);
@@ -3000,14 +3016,14 @@
             const sec = numberInUnit(evalExpression(n.seconds, ctx), '秒');
             if (sec < 0) throw new AkariError('R412', '待つ 時間は 0より 小さく できません');
             if (sec === 0) return;
-            this.block(task, {
-              kind: 'time',
-              deadline: ensureFinite(this.runtime.now() + sec * 1000),
-            });
+            const deadline = ensureFinite(this.runtime.now() + sec * 1000);
+            if (!everyoneStatement(n)) { this.hold(task, { kind: 'time', deadline }); return; }
+            this.block(task, { kind: 'time', deadline });
             return { requeue: false };
           }
           case 'WaitUntil': {
             if (bool(evalExpression(n.condition, ctx))) return;
+            if (!everyoneStatement(n)) { this.hold(task, { kind: 'condition', condition: originalNode.condition }); return; }
             this.block(task, { kind: 'condition', condition: originalNode.condition });
             return { requeue: false };
           }
@@ -3066,6 +3082,7 @@
             this.waitGroups.set(wg.id, wg);
             const ts = this.spawnDistributed('message', { message: msg }, wg.id);
             if (ts.length) {
+              if (!everyoneStatement(n)) { this.hold(task, { kind: 'waitGroup', waitGroupId: wg.id }); return; }
               this.block(task, { kind: 'waitGroup', waitGroupId: wg.id });
               return { requeue: false };
             }
@@ -3088,7 +3105,7 @@
             return;
           }
           case 'ReturnStatement':
-            throw new AkariError('S307', '「〜を返す」は 答えを 出す ブロックの 中でだけ 使えます');
+            throw new AkariError('S307', '「〜を返す」は「答えを もとめる」の 中でだけ 使えます');
           case 'StopCommand':
             return this.execStop(task, n);
           case 'MotionCommand':
@@ -3121,11 +3138,11 @@
       }
       callAction(task, n, ctx) {
         const def = this.compiled.symbols.actions.get(n.name);
-        if (!def) throw new AkariError('S301', `自分で作ったブロック「${n.name}」がありません`);
+        if (!def) throw new AkariError('S301', `てじゅん「${n.name}」が ありません`);
         if (task.callFrames.length + 1 > LIMITS.callDepth)
           throw new AkariError('R408', '自分で作ったブロックの よびだしが かさなりすぎました');
         if (def.args.length !== n.args.length)
-          throw new AkariError('S308', `自分で作ったブロック「${n.name}」に 入れるものは${def.args.length}こです`+namedArgumentDetails(def.args,n.argumentNames));
+          throw new AkariError('S308', `てじゅん「${n.name}」に 入れるものは${def.args.length}こです`+namedArgumentDetails(def.args,n.argumentNames));
         const sourceValues = n.args.map((x) => deepCopy(evalExpression(x, ctx)));
         const names = n.argumentNames || [];
         if (names.length && (names.length !== def.args.length || new Set(names).size !== names.length ||
@@ -3153,6 +3170,42 @@
         task.state = 'BLOCKED';
         task.blockReason = { runtimeId: task.subject?.runtimeId || task.runtimeId, ...reason };
         this.blocked.add(task);
+      }
+      // A part's wait: the flow goes on; the part's next statement in this flow waits (awaitHold).
+      hold(task, reason) {
+        const runtimeId = task.subject?.runtimeId || task.runtimeId;
+        (task.holds ||= new Map()).set(runtimeId, { runtimeId, ...reason });
+      }
+      holdOver(task, hold) {
+        if (hold.kind === 'time') return this.runtime.now() >= hold.deadline;
+        if (hold.kind === 'waitGroup') return !this.waitGroups.get(hold.waitGroupId)?.pending.size;
+        // A condition with the user's own calculations is stepped while blocked, like any wait.
+        if (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(hold.condition)) return false;
+        return bool(evalExpression(hold.condition, this.context(task, { runtimeId: hold.runtimeId })));
+      }
+      // Before a statement of a held part runs, the flow waits for the rest of that part's wait.
+      awaitHold(task, step) {
+        const runtimeId = task.subject?.runtimeId, hold = runtimeId && task.holds?.get(runtimeId);
+        if (!hold || step.kind === 'idle' || everyoneStatement(step.node)) return false;
+        task.holds.delete(runtimeId);
+        if (this.holdOver(task, hold)) return false;
+        if (step.kind === 'node') task.execStack[task.execStack.length - 1].index--;
+        task.currentNode = step.node;
+        const reason = { ...hold };
+        delete reason.runtimeId;
+        this.block(task, reason);
+        return true;
+      }
+      // A condition that comes true ends its hold then, even if it is false again when the part's statement comes.
+      pollHolds() {
+        for (const task of this.tasks.values()) {
+          if (!task.holds?.size || ['CANCELLED', 'DONE', 'ERROR'].includes(task.state)) continue;
+          for (const [runtimeId, hold] of task.holds) {
+            if (hold.kind !== 'condition') continue;
+            try { if (this.holdOver(task, hold)) task.holds.delete(runtimeId); }
+            catch (err) { this.taskError(task, err); break; }
+          }
+        }
       }
       unblock(task) {
         if (!this.blocked.has(task) || ['CANCELLED', 'DONE', 'ERROR'].includes(task.state)) return;
@@ -3207,6 +3260,7 @@
         if (!this.running || (this.paused && !force)) return;
         this.advanceContinuous();
         this.drainExternalUnblocks();
+        this.pollHolds();
         const now = this.runtime.now(),
           arr = [...this.blocked].sort((a, b) => a.createdSequence - b.createdSequence);
         const timed = [];
@@ -3458,7 +3512,7 @@
             const sec = num(0),
               tx = num(1),
               ty = num(2);
-            if (sec < 0) throw new AkariError('R412', 'すべる 時間は 0より 小さく できません');
+            if (sec < 0) throw new AkariError('R412', '動く 時間（〜秒かけて）は 0より 小さく できません');
             if (sec === 0) {
               a.x = tx;
               a.y = ty;
@@ -3766,7 +3820,7 @@
         !Array.isArray(data.assets) ||
         data.assets.length > LIMITS.assets
       )
-        fail('作品の データが こわれています');
+        fail('作品の 中身が こわれています');
       if (
         !Number.isInteger(p.stage.width) ||
         p.stage.width < 200 ||
@@ -3777,7 +3831,7 @@
       )
         fail('画面の 大きさが 正しくありません');
       if(Object.hasOwn(p.stage,'showSpeechNames')&&typeof p.stage.showSpeechNames!=='boolean')
-        fail('ふきだしの 名前の 見せかたが 正しくありません');
+        fail('ふきだしの 名前の 見せ方が 正しくありません');
       validateRuntimeData(p, fail);
       const ownerIds = new Set(['stage', ...p.components.map(c => c.id)]);
       const callPhrases=new Set();
@@ -3796,8 +3850,8 @@
         fail('自分で作ったブロックの 持ち主が 正しくありません');
       const items = [],
         astByKey = new Map();
-      const validActorRef = ref => !ref ||
-        (exactKeys(ref, ['kind']) && ref.kind === 'self') ||
+      const validActorRef = (ref, node) => !ref ||
+        (exactKeys(ref, ['kind']) && (ref.kind === 'self' || (ref.kind === 'all' && everyoneWaitKind(node?.kind)))) ||
         ((exactKeys(ref, ['kind', 'name']) || exactKeys(ref, ['kind', 'name', 'targetId'])) &&
           ref.kind === 'named' && typeof ref.name === 'string' &&
           (ref.name === '画面' || ref.name === p.stage.name || p.components.some(c => c.name === ref.name)) &&
@@ -3820,19 +3874,19 @@
           item.ast?.kind !== 'Script' ||
           !Array.isArray(item.ast.body)
         )
-          fail('動きの データが こわれています');
+          fail('動きの 中身が こわれています');
         if (item.filter != null) {
           const event = item.event || parts[2], field = event === 'keyDown' ? 'key' : event === 'message' ? 'message' : null;
           if (!field || !exactKeys(item.filter, [field]) || typeof item.filter[field] !== 'string' ||
-            cpLen(item.filter[field]) > LIMITS.stringChars) fail('きっかけの きまりが 正しくありません');
+            cpLen(item.filter[field]) > LIMITS.stringChars) fail('きっかけの キーや 合図の 名前が 正しくありません');
         }
         if (item.ast.rules !== undefined && (!Array.isArray(item.ast.rules) || item.ast.rules.length > LIMITS.scripts))
-          fail('動きつづける きまりが 正しくありません');
+          fail('つづけて 動く ルールが 正しくありません');
         for (const rule of item.ast.rules || []) {
           if (rule?.kind !== 'ContinuousRule' || !validActorRef(rule.actorRef) ||
             !directions.includes(rule.direction) ||
             ['condition', 'seconds', 'distance'].some(key => !rule[key] || typeof rule[key].kind !== 'string'))
-            fail('動きつづける きまりの「だれが」「どの向きへ」「どんな あいだ」「どの速さで」の どれかが 正しくありません');
+            fail('つづけて 動く ルールの「だれが」「どの向きへ」「どんな あいだ」「どの速さで」の どれかが 正しくありません');
         }
         // Validate units in every saved expression, including currently unreachable branches.
         const pending = [item.ast];
@@ -3844,7 +3898,7 @@
             if (!operation || !Array.isArray(node.args) || node.args.length !== operation.args.length) fail('かくちょうの ブロックと 入れるものが 合いません');
           }
           if (node.kind === 'Hole') fail('書きかけの ところを さいごまで 書いてください');
-          if (Object.hasOwn(node, 'actorRef') && !validActorRef(node.actorRef)) fail('動かす キャラクターや 部品が 正しくありません');
+          if (Object.hasOwn(node, 'actorRef') && !validActorRef(node.actorRef, node)) fail('動かす キャラクターや 部品が 正しくありません');
           if (node.kind === 'MotionCommand' && ['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(node.op) &&
             !directions.includes(node.direction)) fail('動く 向きが 正しくありません');
           if (node.argumentNames !== undefined && (!Array.isArray(node.argumentNames) ||
@@ -3891,7 +3945,7 @@
           a.byteLength < 1 ||
           a.byteLength > (a.kind === 'image' ? LIMITS.imageBytes : LIMITS.audioBytes)
         )
-          fail('絵や音の データが 正しくありません');
+          fail('絵や音の 中身が 正しくありません');
         if (
           !(
             a.kind === 'image'
@@ -3905,7 +3959,7 @@
           fail('絵や音の 大きさが 正しくありません');
         const bytes = decodeBase64(a.dataBase64);
         if (sha256Fallback(bytes) !== a.sha256)
-          fail('絵や音の データが こわれています');
+          fail('絵や音の 中身が こわれています');
         store.addImmutable({
           id: a.id,
           kind: a.kind,
@@ -3944,6 +3998,7 @@
       snapshotEntries,
       LIMITS,
       COLOR_NAMES,
+      COLOR_LABELS,
       EVENT_LABELS,
       BUILTIN_META,
       AkariError,

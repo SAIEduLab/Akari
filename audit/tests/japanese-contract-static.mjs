@@ -41,7 +41,10 @@ export function verifyOracleCurrentLists(oracle, features, language) {
   sameSet(schemaNames('BuiltinCall:').map(name => 'builtin:' + name), oracle.categories.builtins, 'builtin capabilities and current builtin schemas');
   sameSet(documentedBuiltins.map(name => 'builtin:' + name),
     oracle.categories.builtins.filter(id => !/^builtin:[A-Z_]+$/.test(id)), 'LANGUAGE.md builtin list');
-  sameSet(documentedSensors.map(name => 'state:' + name), oracle.categories.fixedSensors, 'LANGUAGE.md fixed sensor list');
+  // Every registered state name that the language reads is documented; 「＝」 joins it with the written form.
+  // クローンである is a registered name the language no longer reads, so it must not be documented.
+  const documentedStates = new Set(documentedSensors.map(name => 'state:' + name)), unreadStates = ['state:クローンである'];
+  for (const id of oracle.categories.fixedSensors) assert.equal(documentedStates.has(id), !unreadStates.includes(id), 'LANGUAGE.md fixed sensor list: ' + id);
   sameSet(schemaNames('SensorRead:').filter(name => !/^[A-Z_]+$/.test(name)).map(name => 'state:' + name), oracle.categories.fixedSensors, 'fixed sensor schemas');
 }
 

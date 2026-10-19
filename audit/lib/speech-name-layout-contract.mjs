@@ -34,7 +34,7 @@ export function verifySpeechNameLayoutObserved(id,o){
   assert.deepEqual(o.lengths,[78,78]);assert.equal(o.readingFixtureSeconds,10,'separate existing reading fixture, not a substitute for B10');
   assert.equal(o.openings.length,2);
   for(const [i,d]of o.openings.entries()){
-   assert.equal(d.input,i===0?'pointer':'keyboard');assert.equal(d.title,`${speechNameNames[i]}の発話（全文）`);assert.equal(d.text,texts[i]);assert.equal(d.selected,texts[i]);assert.equal(d.labelledby,'valueTitle');assert.equal(d.closed,true);
+   assert.equal(d.input,i===0?'pointer':'keyboard');assert.equal(d.title,`${speechNameNames[i]}の 言うこと（全部）`);assert.equal(d.text,texts[i]);assert.equal(d.selected,texts[i]);assert.equal(d.labelledby,'valueTitle');assert.equal(d.closed,true);
    for(const e of [d.titleBox,d.bodyBox,d.closeBox]){assert.ok(inside(e.rect,d.dialog));assert.ok(inside(e.rect,d.viewport));assert.ok(inside(e.ink,e.rect));assert.ok(e.font>=13);assert.ok(e.scrollWidth<=e.clientWidth+1);assert.ok(e.scrollHeight<=e.clientHeight+1);}
   }
  }

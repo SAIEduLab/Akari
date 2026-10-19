@@ -10,7 +10,7 @@ import {corpusPath,capabilityInputPaths,capabilityNegativeIds} from './capabilit
 
 // The on-screen label of each oracle meaning word in the ambiguity choices.
 export const visibleChoices=Object.freeze({'AMB-SOUND/台詞':'そのままの文字を話す','AMB-EDGE/状態':'今そうなっていたら する','AMB-EDGE/変化':'そうなるときを待ってから する',
- 'AMB-LIST/最後':'さいごに入れる','AMB-LIST/置き換え':'どれかと取りかえる（何番目かをえらぶ）'});
+ 'AMB-LIST/最後':'さいごに入れる','AMB-LIST/置き換え':'どれかと 入れかえる（何番目かを えらぶ）'});
 export const contractInputPaths = [
   'audit/tests/japanese-contract-static.mjs','audit/fixtures/capability-oracle.json',
   'audit/tests/contract-gate.mjs',
@@ -157,7 +157,7 @@ export function verifyIntentReport(report,inputs,candidateFile){
       assert.ok(Array.isArray(evidence.soundChoices));
       assert.deepEqual(evidence.soundChoices.map(choice=>choice.label),evidence.choices);
       assert.ok(evidence.soundChoices.some(choice=>choice.label==='そのままの文字を話す'&&choice.source==='「こんにちは」と言う'));
-      assert.ok(evidence.soundChoices.some(choice=>choice.label==='同じ名前の音を鳴らす'&&choice.source==='音「こんにちは」を鳴らす'));
+      assert.ok(evidence.soundChoices.some(choice=>choice.label==='同じ名前の音を鳴らす'&&choice.source==='「こんにちは」を鳴らす'));
     }
     assert.equal(evidence.after.state,'DESIGN');
     for(const key of ['source','project','history','redo','dirty'])assert.deepEqual(evidence.after[key],evidence.before[key]);

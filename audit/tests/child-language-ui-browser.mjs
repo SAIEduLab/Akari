@@ -301,13 +301,13 @@ const cases = {
     const concept=await textFits(p.locator('#callableConceptHelp p'));
     const tailReach=await keyboardPanelTail(p,'#callableConceptHelp');await summary.press('Enter');
     await click(p,'#callableNewAction');
-    assert.match(await p.locator('#callableArgsHelp').innerText(),/点数として10、名前として「あかり」/);
+    assert.match(await p.locator('#callableArgsHelp').innerText(),/点数として 10、名前として「あかり」/);
     assert.match(await p.locator('#callableArgs').getAttribute('placeholder'),/歩数、あいさつ/);
     await p.locator('#callableName').fill('あいさつ'); await p.locator('#callableName').press('Tab');
     await p.locator('#callableArgs').fill('点数、名前'); await p.locator('#callableArgs').press('Tab');
     await p.locator('#callableCode').fill('名前を言う。');
     await p.waitForFunction(()=>Akari.app.editorState.callableDraft?.source==='名前を言う。');
-    assert.equal(await p.locator('#callableSave').innerText(),'てじゅん・計算を 決める'); await click(p,'#callableSave');
+    assert.equal(await p.locator('#callableSave').innerText(),'自分で作ったブロックを 決める'); await click(p,'#callableSave');
     const action=await p.evaluate(()=>Akari.app.project.actions.find(a=>a.name==='あいさつ'));
     assert.ok(action); assert.deepEqual(action.args,['点数','名前']); assert.equal(action.source,'名前を言う。');
     await shot(p,'child-procedure-examples');
@@ -318,7 +318,7 @@ const cases = {
     await source(p,'2 + 3を言う。\n2回くり返す。\n  1を言う。'); await click(p,'#editorModeblocks');
     await openPaletteTools(p.locator('#blockEditor'));
     const before=await state(p), summary=await keyboardDetails(p,'#blockEditor .blockui-local-help');
-    for(const text of ['白い あなに入れる中身','文字「おはよう」','「あてはまる・あてはまらない」','「同じ数をかける」（るいじょう）','2×2×2で8','コピー','もとにもどす'])
+    for(const text of ['あいている ところに 入れる 中身','文字「おはよう」','「あてはまる・あてはまらない」','「同じ数を くり返し かける」（＾）','2×2×2 で 8','コピー','もとにもどす'])
       assert.ok((await p.locator('#blockEditor .blockui-local-help').innerText()).includes(text),text);
     const help=await textFits(p.locator('#blockEditor .blockui-local-help p'));
     const truthExample=help.find(r=>r.text.includes('「あてはまる・あてはまらない」')).text;
@@ -364,7 +364,7 @@ const cases = {
       exterior:c.getContext('2d').getImageData(1,1,1,1).data[3]}));
     assert.equal(alpha.center,0,'outline leaves the middle transparent'); assert.equal(alpha.exterior,0,'checkerboard is not drawn into pixels');
     await shot(p,'child-paint-transparent');
-    assert.equal(await p.locator('#paintCancel').innerText(),'お絵かきを取り消す'); await click(p,'#paintCancel');
+    assert.equal(await p.locator('#paintCancel').innerText(),'お絵かきを やめる'); await click(p,'#paintCancel');
     assert.deepEqual(await state(p),before,'cancel must not add image or change project history');
     const labels=[];
     for(const [preset,reading,note] of [['comet',null,'しっぽのある星'],['yinYang',null,'白黒の丸'],['medical',null,'へびとつえ'],['radioactive',null,'三つの羽の しるし'],['biohazard',null,'三つの わっかの しるし']]) {

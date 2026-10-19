@@ -113,7 +113,7 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
     'もし 条件（条件の答え（あてはまる））が成り立つなら','もし 条件（条件の答え（あてはまる））が成り立つなら、\n※本文なし','でなければ\n  何もしない',
     'もし 条件（条件の答え（あてはまる））が成り立つなら\n  何もしない\n何もしない\nでなければ\n  何もしない',
     'もし 条件（条件の答え（あてはまる））が成り立つなら、何もしない','もし 条件（条件の答え（あてはまる））が成り立つなら\n  何もしない\nでなければ、何もしない',
-    '3回だけ','「名前は？」と聞く','少し右へ','点数に1を3回足す',
+    '3回だけ','「名前は？」と聞きたい','少し右へ','点数に1を3回足す',
   ];
   for(const [i,source] of negative.entries()) {
     const id='LANG-SURFACE-NEG-'+String(i+1).padStart(3,'0');
@@ -219,13 +219,39 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
   test('LANG-SUBJECT-STATEMENTS',()=>{
     const symbols=api.buildSymbols(makeAkariRegressionProject(api)),read=s=>api.parseSyntax(s,{symbols});
     for(const [source,kind,op] of [
-      ['マスコットは画面の端にふれていれば、はね返る。','MotionCommand','BOUNCE'],
-      ['マスコットは、画面の端にふれていれば、はね返る。','MotionCommand','BOUNCE'],
+      ['マスコットは画面のはしにふれていれば、はね返る。','MotionCommand','BOUNCE'],
+      ['マスコットは、画面のはしにふれていれば、はね返る。','MotionCommand','BOUNCE'],
       ['マスコットは「入力欄」に「あ」を入れる。','LooksCommand','SET_INPUT'],
     ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));const n=r.ast.body[0];
       eq([n.kind,n.op,n.actorRef],[kind,op,{kind:'named',name:'マスコット'}]);eq(api.formatScript(r.ast).trim(),source.replace('は、','は'));}
     for(const source of ['名前一覧に「あ」を入れる。','マスコットは名前一覧に「あ」を入れる。']){const r=read(source);ok(!r.ast,source);
-      ok(/さいごに入れるのか、何番目かと取りかえるのか/.test(r.syntaxDiagnostics[0].message),source);}
+      ok(/さいごに入れるのか、何番目かと 入れかえるのか/.test(r.syntaxDiagnostics[0].message),source);}
+    // 1.3.1: headings are written in easy words; the older words are still read.
+    for(const [source,written] of [
+      ['マスコットがクリックされたとき、\n  「a」と言う。','マスコットがおされたとき、'],
+      ['マスコットがおされたとき、\n  「a」と言う。','マスコットがおされたとき、'],
+      ['「空白」キーを押すたびに、マスコットは、\n  「a」と言う。','「空白」キーをおすたびに、マスコットは、'],
+      ['キーが押されたとき、マスコットは、\n  「a」と言う。','キーがおされたとき、マスコットは、'],
+      ['背景が変わったとき、マスコットは、\n  「a」と言う。','はいけいがかわったとき、マスコットは、'],
+    ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));eq(api.formatScript(r.ast).split('\n')[0],written);}
+    // 1.3.1: what a child naturally writes reads as the written form (tried only after the written form fails).
+    for(const [source,written] of [
+      ['「名前は？」と聞く。','「名前は？」とたずねて、答えを待つ。'],['マスコットが10歩進む。','マスコットは前へ10歩進む。'],['マスコットも10歩進む。','マスコットは前へ10歩進む。'],
+      ['まず10歩進む。','前へ10歩進む。'],['すがたをかくします。','すがたをかくす。'],['かくれる。','すがたをかくす。'],
+      ['10歩進み、右に90度回る。','前へ10歩進む。\n右に90度回る。'],['10歩進んで右に90度回る。','前へ10歩進む。\n右に90度回る。'],
+      ['もし1が2より小さかったら、\n  何もしない。','もし1が2より小さければ、\n  何もしない。'],['もし1が2未満なら、\n  何もしない。','もし1が2より小さければ、\n  何もしない。'],
+      ['もし1が2でないなら、\n  何もしない。','もし1が2と同じでなければ、\n  何もしない。'],['もし1が1か2なら、\n  何もしない。','もし1が1と同じか、1が2と同じなら、\n  何もしない。'],
+      ['マスコットをクリックしたら、\n  何もしない。','マスコットがおされたとき、\n  何もしない。'],['「空白」キーをおしたとき、マスコットは、\n  何もしない。','「空白」キーをおすたびに、マスコットは、\n  何もしない。'],
+      ['「a」と「b」をつなげて言う。','「a」と「b」をつなげて言う。'],['つなぐ（「a」、「b」）を言う。','「a」と「b」をつなげて言う。'],['あまり（10、3）を言う。','10÷3のあまりを言う。'],
+      ['向きを90度にする。','画面の下を向く。'],['（1＋2）秒待つ。','（1＋2）秒待つ。'],
+    ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));eq(api.formatScript(r.ast).trim(),written);}
+    // A condition with もし missing, and 〜になったら, are not guessed.
+    for(const source of ['1が2より小さかったら、\n  何もしない。','もし1が2になったら、\n  何もしない。']){const r=read(source);ok(!r.ast,source);}
+    // Color words the picker shows are text like 赤, with or without 「 」.
+    for(const word of ['だいだい','むらさき','もも色','ねずみ色','赤']){const r=read('ペンの色を'+word+'にする。');ok(r.ast,word);eq(api.formatScript(r.ast).trim(),'ペンの色を「'+word+'」にする。');}
+    // Calculations with a fixed number of inputs have no ＋ to add one more.
+    for(const [id,variadic] of [['BuiltinCall:余り',false],['BuiltinCall:乱数',false],['BuiltinCall:四捨五入',false],['BuiltinCall:つなぐ',true],['BuiltinCall:最大',true]])
+      eq(api.BLOCK_SCHEMAS.find(s=>s.id===id).inputs.find(s=>s.key==='args').variadic,variadic);
   });
   return {results,total:results.length,failed:results.filter(r=>r.status==='FAIL').length};
 }

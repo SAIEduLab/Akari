@@ -35,7 +35,7 @@ export function verifyPreviewObserved(id,o){
  }else{
   assert.equal(o.readingFixtureSeconds,10);assert.equal(o.openings.length,2);
   for(const [i,d] of o.openings.entries()){
-   assert.equal(d.input,i===0?'pointer':'keyboard');assert.equal(d.title,previewNames[i]+'の発話（全文）');assert.equal(d.text,texts[i]);assert.equal(d.selected,texts[i]);
+   assert.equal(d.input,i===0?'pointer':'keyboard');assert.equal(d.title,previewNames[i]+'の 言うこと（全部）');assert.equal(d.text,texts[i]);assert.equal(d.selected,texts[i]);
    assert.equal(d.labelledby,'valueTitle');assert.equal(d.closed,true);assert.equal(d.closeInput,i===0?'pointer':'keyboard');
    for(const e of[d.titleBox,d.bodyBox,d.closeBox]){assert.ok(e.font>=13);assert.ok(inside(e.rect,d.dialog));assert.ok(inside(e.rect,d.viewport));assert.ok(e.scrollWidth<=e.clientWidth+1);assert.ok(e.scrollHeight<=e.clientHeight+1);}
   }

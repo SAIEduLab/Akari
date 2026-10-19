@@ -322,11 +322,11 @@ async function runExtendedTests() {
           args: ['数一覧'],
           definitionKind: 'function',
         });
-      ok(list.some((x) => x.text === '数一覧の中身を全部消す' && x.enabled));
+      ok(list.some((x) => x.text === '数一覧の中身を全部消す。' && x.enabled));
       ok(list.some((x) => x.id === 'Break' && x.enabled));
       ok(list.some((x) => x.mode === 'expression' && x.text === '項目'));
       ok(!list.some((x) => x.id === 'localScalar' || x.id.startsWith('return:')));
-      ok(!list.some((x) => x.mode === 'statement' && x.text.startsWith('作品の' + N + 'を')));
+      ok(!list.some((x) => x.mode === 'statement' && [N, '作品の' + N].some((t) => x.text.startsWith(t + 'を'))));
     });
     await test('HINT function declaration and return positions', () => {
       const p = make(),
@@ -355,7 +355,7 @@ async function runExtendedTests() {
       p.projectData.variables.push(
         ...eachNames.map((name, i) => ({ id: `var-hint-boundary-${i}`, name, initialValue: 0 })),
       );
-      const each = A.hintCandidates(p, 'stage').find((x) => x.id === 'each:作品の名前一覧');
+      const each = A.hintCandidates(p, 'stage').find((x) => x.id === 'each:名前一覧');
       ok(each?.enabled, JSON.stringify(each));
       p.scripts[0].source = each.text;
       let c = A.compileProject(p);
@@ -404,9 +404,9 @@ async function runExtendedTests() {
     });
     await test('HINT event-specific values and target restrictions', () => {
       for (const [event, sensor] of [
-        ['keyDown', '\u62bc\u3055\u308c\u305f\u30ad\u30fc'],
-        ['message', '\u53d7\u3051\u53d6\u3063\u305f\u77e5\u3089\u305b'],
-        ['backdropChanged', '\u65b0\u3057\u3044\u80cc\u666f\u540d'],
+        ['keyDown', 'おされたキー'],
+        ['message', '受けた合図'],
+        ['backdropChanged', '新しいはいけいの名前'],
       ]) {
         ok(
           A.hintCandidates(make(), 'stage', { event }).some(
@@ -587,9 +587,9 @@ async function runExtendedTests() {
         clone = [...h.r.actors.values()].find((x) => x.isClone);
       clone.vars.set('HP', 9);
       eq(a.vars.get('HP'), 3);
-      ok(h.r.touching(clone.runtimeId, STANDARD_AKARI_MASCOT.name));
+      ok(h.r.touching(clone.runtimeId, 'マスコット'));
       clone.visible = false;
-      ok(!h.r.touching(clone.runtimeId, STANDARD_AKARI_MASCOT.name));
+      ok(!h.r.touching(clone.runtimeId, 'マスコット'));
       a.direction = 90;
       a.scalePercent = 200;
       const bb = h.r.aabb(a);
