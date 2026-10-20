@@ -1593,7 +1593,7 @@
       meijinProcedureId = id;
       $('#procModal .proc-edit').classList.add('meijin-proc');
       $('#meijinProcPanel').hidden = false;
-      $('#meijinProcTitle').textContent = `てじゅん「${d.name}」／入れるもの（${d.args.join('、')}）／名人の本文の ${d.headLine}行目`;
+      $('#meijinProcTitle').textContent = `てじゅん「${d.name}」／` + (d.args.length ? `入れるもの（${d.args.join('、')}）／` : '') + `名人の本文の ${d.headLine}行目`;
       $('#meijinProcBody').textContent = d.source;
       $('#meijinProcName').value = d.name;
       $('#meijinProcError').hidden = true;

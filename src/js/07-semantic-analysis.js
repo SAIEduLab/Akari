@@ -134,8 +134,10 @@
     const wordHint = (name) => ({ 色: '。キャラクターの 色は「表示色を赤にする」で かえます' })[name] || (/^[〇一二三四五六七八九十百千]+つ?$/.test(name) ? '。数は 3や 10のように 数字で 書きます' : '');
     // A word that is not a name was read as one (まっすぐ10, 空, 偶数): say how to write it instead of asking to make it.
     // The example writes the value it was compared with (スコアが偶数 → スコア÷2のあまりが0なら).
-    const misreadName = (name, other) => {
+    const misreadName = (name, other, meijin = false) => {
       const who = (fallback) => other ? messageExpression(other) : fallback;
+      // 名人 reads these words; only the ending was not read (偶数じゃなかったら).
+      if (meijin && ['空', '空っぽ', '偶数', '奇数'].includes(name)) return `「${name}」は、「${who('点数')}が${name}なら」「${who('点数')}が${name}でなければ」の 形で 書きます`;
       if (name === '空' || name === '空っぽ') return `「${name}」は くらべる ことばに ありません。リストが 空かを しらべるときは「${who('持ち物')}の長さが0なら」のように 書きます`;
       // An odd number's あまり is 1 or －1 (the あまり has the sign of the number), as 名人 reads 奇数.
       if (name === '偶数' || name === '奇数') return `「${name}」は くらべる ことばに ありません。「${who('点数')}÷2のあまりが${name === '偶数' ? '0' : '1か－1'}なら」のように 書きます`;
@@ -144,7 +146,12 @@
         return `「${name}」を 名前として 読みました。「${digits[1]}」は あかりの ことばに ありません。「${digits[1]}」を けして 書けるか たしかめてください。れい：前へ${digits[2]}歩進む`;
       return null;
     };
+    // A part and a variable (or list) with the same name: a bare name there reads the data, though a part was meant.
+    const sameNameAsPart = (name) => `「${name}」は、部品の 名前と へんすうの 名前が 同じなので、どちらの ことか 決まりません`;
     const checkComponentTarget = (expr, allowed, ctx, where, label = '部品', special = []) => {
+      if (expr?.kind === 'VariableRead' && !expr.qualifier && componentByName(expr.name)) {
+        add('S316', sameNameAsPart(expr.name) + '。部品の ことなら、名前を「 」で かこんで 書きます', ctx.node, where); return;
+      }
       const name = expr?.kind === 'PartRef' ? expr.name : literalText(expr);
       if (name === null || special.includes(name)) return;
       const c = componentByName(name);
@@ -155,7 +162,11 @@
     let analyzeCallable = () => {};
     const actorContext = (ref, ctx, node, where) => {
       // 名人: the part held in a value acts; which part it is is known when the sentence runs.
-      if (ref?.kind === 'value') { analyzeExpr(ref.value, ctx, where); return { ...ctx, targetId: null, targetType: null, valueActor: true }; }
+      if (ref?.kind === 'value') {
+        if (ref.value?.kind === 'VariableRead' && !ref.value.qualifier && componentByName(ref.value.name))
+          add('S316', sameNameAsPart(ref.value.name) + '。だれが するかが 分からないので、どちらかの 名前を かえてください', node, where);
+        analyzeExpr(ref.value, ctx, where); return { ...ctx, targetId: null, targetType: null, valueActor: true };
+      }
       if (!ref || ref.kind !== 'named') return ctx;
       const c = ref.name === project.stage.name || ref.name === '画面'
         ? { id: 'stage', type: 'stage' } : componentByName(ref.name);
@@ -328,7 +339,7 @@
               n.qualifier === 'self' && ctx.targetId ? `${targetLabel(ctx)}の自分には` : 'まだ作っていない';
             add(
               'S301',
-              (n.qualifier !== 'self' && misreadName(n.name, partner.get(n))) ||
+              (n.qualifier !== 'self' && misreadName(n.name, partner.get(n), ctx.meijin)) ||
               `${prefix}名前「${n.name}」${n.qualifier === 'self' && ctx.targetId ? 'がありません' : 'です。名前をたしかめるか、その名前のへんすうかリストを作ってください'}${wordHint(n.name)}`,
               ctx.node,
               where,
@@ -601,17 +612,17 @@
               add('S304', `色「${name}」は使える色ではありません。使える色は 黒・白・ねずみ色・赤・だいだい・黄・緑・水色・青・むらさき・もも色・茶 です`, n, where);
             }
         }
+        // 名人: a procedure called with no subject is the stage's; who does its sentences is written at the call (決まり7).
+        const needsSubject = message => c.meijinCall ? add('S304', `手順【${c.meijinCall.name}】の 中に、だれが するかを 書いていない 文が あります。手順を 呼び出す 文の はじめに、だれが 行うかを 書きます。れい：ねこは【${c.meijinCall.name}】という手順を行う`, c.meijinCall.node, c.meijinCall.where)
+          : add('S304', c.meijin ? MEIJIN_SUBJECT_MESSAGE : message, n, where);
         // 名人: speech and sounds need who does them, as moves do (the script itself is no part; 画面は… names the stage).
         // Stopping every sound acts on the whole work.
-        if (c.meijin && c.targetType === 'stage' && n.actorRef?.kind !== 'named' &&
+        if ((c.meijin || c.meijinCall) && c.targetType === 'stage' && n.actorRef?.kind !== 'named' &&
           (['Say', 'Ask'].includes(n.kind) || (n.kind === 'SoundCommand' && n.op !== 'STOP_ALL')))
-          add('S304', MEIJIN_SUBJECT_MESSAGE, n, where);
+          needsSubject(MEIJIN_SUBJECT_MESSAGE);
         // Clearing every line and stamp acts on the whole work, so the stage may do it.
-        // 名人: a procedure called with no subject is the stage's; who does it is written at the call (決まり7).
-        if (['MotionCommand', 'PenCommand'].includes(n.kind) && c.targetType === 'stage' && !(n.kind === 'PenCommand' && n.op === 'CLEAR')) {
-          if (c.meijinCall) add('S304', `手順【${c.meijinCall.name}】の 中に、だれが するかを 書いていない 動きが あります。手順を 呼び出す 文の はじめに、だれが 行うかを 書きます。れい：ねこは【${c.meijinCall.name}】という手順を行う`, c.meijinCall.node, c.meijinCall.where);
-          else add('S304', c.meijin ? MEIJIN_SUBJECT_MESSAGE : '動くことやペンでかくことは、画面ではできません。部品で使ってください', n, where);
-        }
+        if (['MotionCommand', 'PenCommand'].includes(n.kind) && c.targetType === 'stage' && !(n.kind === 'PenCommand' && n.op === 'CLEAR'))
+          needsSubject('動くことやペンでかくことは、画面ではできません。部品で使ってください');
         if (
           n.kind === 'LooksCommand' &&
           [
@@ -629,7 +640,7 @@
           ].includes(n.op) &&
           c.targetType === 'stage'
         )
-          add('S304', c.meijin ? MEIJIN_SUBJECT_MESSAGE : 'このかえ方は、画面では使えません。部品で使ってください', n, where);
+          needsSubject('このかえ方は、画面では使えません。部品で使ってください');
         if (
           n.kind === 'ForEach' && n.binder !== MEIJIN_BINDER &&
           [
@@ -709,13 +720,15 @@
         localListNames: item.localListNames || [],
         binders: [],
         availableLocalNames: new Set(),
-        meijin: !!item.meijin,
+        // 名人: under a heading that names the stage (作品を動かしたとき、画面1は、) the sentences are the stage's, as in
+        // the stage's own body; elsewhere a 名人 text belongs to no part.
+        meijin: !!item.meijin && !(item.ast?.heading?.actorRef?.kind === 'named' && [project.stage.name, '画面'].includes(item.ast.heading.actorRef.name)),
       };
       for (const d of staticScaleDiagnostics(item.ast, item.key))
         add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
       // 名人のできごと: 〜になったとき and 〜秒ごとに are read like any value; ふれる相手は部品。
       const heading = item.ast.heading, at = item.ast.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } };
-      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます', only.sourceSpan ? only : at, item.key); }
+      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。この 本文で 使うときは、コードの「名人モードで 書く」を えらびます', only.sourceSpan ? only : at, item.key); }
       const message = typeof item.filter === 'object' ? item.filter?.message : item.filter;
       const extensionEvent = !item.meijin && item.event === 'message' && typeof message === 'string' && message.startsWith('拡張:')
         ? EXTENSION_HOST.describe(message.slice(3), 'events') : null;
@@ -978,41 +991,67 @@
     return { resource, references: graph.references.filter(r => r.resourceKey === resourceKey),
       uncertain: graph.uncertain.filter(r => (!r.kind || r.kind === resource.kind) && (!r.targetOwnerId || r.targetOwnerId === resource.ownerId)) };
   }
-  // 名人: the text has no blocks. The name is changed where it is written as a name (not in speech nor in a ※ note),
-  // and the text must then read the same, with the new name, as before. When the bare new name reads differently
-  // (ねこ → ねこが), it is written in 【 】, as a renamed block writes it; if that does not read the same either, the
-  // rename is refused with the line whose reading changes.
+  // 名人: the text has no blocks. The name is changed where it is written as a name (not in speech, a signal, nor a ※
+  // note), and the text must then read the same, with the new name, as before. A quoted name is changed only where it
+  // names the thing (「ねこ」のよこのばしょ, 「ねこ」にふれていれば), not where it is words (「ねこ」と言う, 「ねこ」の合図).
+  // When the bare new name reads differently (ねこ → ねこが), it is written in 【 】, as a renamed block writes it; if
+  // that does not read the same either, the rename is refused with the line whose reading changes.
   function meijinRenamedSource(record, project, next, resource, newName) {
     const source = record.source, old = resource.name;
     if (!source.includes(old)) return null;
-    const renamed = written => {
+    const quotes = [];
+    for (let i = 0; i < source.length; i++) {
+      const ch = source[i];
+      if (ch === '※') { const end = source.indexOf('\n', i); i = end < 0 ? source.length : end; continue; }
+      if (ch === '「' || ch === '『') {
+        const close = source.indexOf(ch === '「' ? '」' : '』', i + 1), end = close < 0 ? source.length : close + 1;
+        if (source.slice(i + 1, end - 1) === old) quotes.push(i);
+        i = end - 1;
+      }
+    }
+    // Another name that holds this one (子ねこ for ねこ) is kept whole.
+    const names = [...project.components, ...project.actions, ...project.functions, ...project.projectData.variables, ...project.projectData.lists,
+      ...project.components.flatMap(c => [...(c.localData?.variables || []), ...(c.localData?.lists || [])])].map(x => x.name);
+    const longer = [...new Set(names)].filter(name => name !== old && name.includes(old)).sort((a, b) => b.length - a.length);
+    // written: how a bare name is written; changed: the quotes (by their place) that name the thing.
+    const renamed = (written, changed) => {
       let out = '', i = 0;
       while (i < source.length) {
         const ch = source[i];
         if (ch === '※') { const end = source.indexOf('\n', i); out += source.slice(i, end < 0 ? source.length : end); i = end < 0 ? source.length : end; continue; }
         if (ch === '「' || ch === '『') {
           const close = source.indexOf(ch === '「' ? '」' : '』', i + 1), end = close < 0 ? source.length : close + 1;
-          out += source.slice(i + 1, end - 1) === old && source[end] !== 'と' ? ch + newName + source[end - 1] : source.slice(i, end);
+          out += changed.has(i) ? ch + newName + source[end - 1] : source.slice(i, end);
           i = end; continue;
         }
+        const kept = longer.find(name => source.startsWith(name, i));
+        if (kept) { out += kept; i += kept.length; continue; }
         if (source.startsWith(old, i)) { out += written; i += old.length; continue; }
         out += ch; i++;
       }
       return out;
     };
-    // A name in 【 】 is the same name as written bare.
-    const shape = (ast, from = null, to = null) => {
-      const walk = v => Array.isArray(v) ? v.map(walk) : v && typeof v === 'object'
-        ? Object.fromEntries(Object.entries(v).filter(([k]) => !['sourceSpan', 'source', 'raw', 'inlineComment', 'comment', 'endLine', 'text', 'exact'].includes(k)).map(([k, x]) => [k, k === 'qualifier' && x === 'exact' ? null : walk(x)]))
-        : from !== null && v === from ? to : v;
-      return walk(ast);
+    // The places where a quoted word names this thing (the reference graph's literal places).
+    const literal = new Set(buildProjectReferenceGraph(project).references
+      .filter(r => r.sourceKey === record.key && r.resourceKey === resource.key && r.binding === 'literal' && r.nodePath).map(r => r.nodePath.join('.')));
+    // A name in 【 】 is the same name as written bare. Before the rename, a name (and a quoted word in a literal
+    // place) stands for the new name.
+    const shape = (ast, renaming) => {
+      const walk = (v, path, key) => Array.isArray(v) ? v.map((x, i) => walk(x, [...path, i], key)) : v && typeof v === 'object'
+        ? Object.fromEntries(Object.entries(v).filter(([k]) => !['sourceSpan', 'source', 'raw', 'inlineComment', 'comment', 'endLine', 'text', 'exact'].includes(k))
+          .map(([k, x]) => [k, k === 'qualifier' && x === 'exact' ? null
+            : renaming && x === old && (k === 'name' || k === 'target' || (k === 'value' && v.kind === 'StringLiteral' && literal.has(path.join('.')))) ? newName : walk(x, [...path, k], k)]))
+        : v;
+      return walk(ast, [], null);
     };
     const read = (text, p) => parseSyntax(text, { ...record.context, symbols: buildSymbols(p) });
-    const same = (a, b) => !!a.ast && !!b.ast && stableJson(shape(a.ast, old, newName)) === stableJson(shape(b.ast, old, newName));
-    const before = read(source, project);
-    for (const text of [renamed(newName), renamed('【' + newName + '】')]) if (same(before, read(text, next))) return text;
-    const lines = source.split('\n'), after = renamed(newName).split('\n');
-    const line = lines.findIndex((text, i) => text !== after[i] && !same(read(text.trim(), project), read(after[i].trim(), next)));
+    const before = read(source, project), want = before.ast && stableJson(shape(before.ast, true));
+    const reads = text => { const after = read(text, next); return !!want && !!after.ast && stableJson(shape(after.ast, false)) === want; };
+    // Which quotes name the thing is found by trying them (a few quotes at most; more are tried all or none).
+    const choices = quotes.length <= 6 ? [...Array(1 << quotes.length).keys()].map(mask => new Set(quotes.filter((_, i) => mask & (1 << i)))) : [new Set(), new Set(quotes)];
+    for (const written of [newName, '【' + newName + '】']) for (const changed of choices) { const text = renamed(written, changed); if (reads(text)) return text; }
+    const lines = source.split('\n'), after = renamed(newName, new Set(quotes)).split('\n');
+    const line = lines.findIndex((text, i) => text !== after[i] && !(() => { const a = read(text.trim(), project), b = read(after[i].trim(), next); return a.ast && b.ast && stableJson(shape(a.ast, true)) === stableJson(shape(b.ast, false)); })());
     throw new AkariError('S301', line < 0 ? '名人の 本文の 中で、名前を かえても 同じ ものを さすかを たしかめられません。名前を【 】で かこむなど、どれの ことか はっきり 書いてください'
       : `名前を「${newName}」に すると、名人の 本文の ${line + 1}行目「${lines[line].trim()}」が ちがう 意味に 読めます。ちがう 名前に してください`);
   }
@@ -1329,14 +1368,15 @@
     }
     const compiled = parseProjectSyntax(project);
     compiled.errors.push(...placeMeijinDefinitionErrors(project, [...analyzeProject(project, compiled), ...eventCountPlacement(compiled), ...laneControlPlacement(compiled)]));
-    compiled.errors = wordLines(project, meijinFormsInOrdinary(project, compiled.errors));
+    compiled.errors = meijinSelfWord(project, wordLines(project, meijinFormsInOrdinary(project, compiled.errors)));
     compiled.notes = projectNotes(project, compiled);
     return compiled;
   }
   // A 名人 form written in an ordinary body (主役をねこにする, ねこは、いちばん近い星の方を向く, 1秒ごとに、…) reads with
   // no error as a 名人 script: the check then says so (S317) instead of a reading error that asks for a name or another
   // sentence. An error that gives its own guidance or choices (「空」は…, 「〜になったら」は…) is kept.
-  const GENERIC_READING_ERRORS = [/^まだ作っていない名前/, /読みとれません|読めません|読みとれないところ/, /がたりません/, /という 文は あかりに ありません/];
+  // 10秒のあいだ、くり返す in an ordinary body asks for a state before あいだ; it is the 名人 timed repeat.
+  const GENERIC_READING_ERRORS = [/^まだ作っていない名前/, /読みとれません|読めません|読みとれないところ/, /がたりません/, /という 文は あかりに ありません/, /^つづけるきまりのおわりを「あいだ」に/];
   function meijinFormsInOrdinary(project, errors) {
     let out = errors;
     for (const script of project.scripts) {
@@ -1346,8 +1386,16 @@
       // As written (its own headings and procedures), or as the part's sentences: in 名人 text they are read under a
       // heading that names the part.
       const owner = project.components.find(c => c.id === script.targetId)?.name, sources = [script.source];
-      if (owner && /^[^\s、。「」【】（）()]+$/.test(owner))
+      if (owner && /^[^\s、。「」【】（）()]+$/.test(owner)) {
         sources.push(`作品を動かしたとき、${owner}は、\n` + script.source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n'));
+        // A part's body names no subject (or names 自分): in a 名人 text the part is written as the subject.
+        const named = text => project.components.some(c => text.startsWith(c.name) && /^[はがともや、]/.test(text.slice(c.name.length)));
+        sources.push(script.source.split('\n').map(line => {
+          const [, indent, text] = /^(\s*)(.*)$/.exec(line);
+          if (!text || /^(?:もし|そうでなければ|ずっと|次のことを|※)/.test(text) || /(?:とき|たら|ごとに)、$/.test(text) || named(text)) return line;
+          return indent + owner + 'は、' + text.replace(/^自分(?:は|が)、?/, '');
+        }).join('\n'));
+      }
       const reads = sources.some(source => {
         const trial = cloneDesignProject(project);
         trial.scripts = [{ id: 'meijin-reading', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source }];
@@ -1355,14 +1403,14 @@
       });
       if (!reads) continue;
       const { proposals, draftRole, ...location } = first;
-      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます' }, ...out.slice(at).filter(e => e.where !== key)];
+      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。この 本文で 使うときは、コードの「名人モードで 書く」を えらびます' }, ...out.slice(at).filter(e => e.where !== key)];
     }
     return out;
   }
 
   // An ordinary body: a 国語・算数 word written as a sentence form (10の倍数, 12の約数, からっぽ) on the line where the
   // reading stopped. Say how to write it, with the names as written; a 名人 body reads these words.
-  const WORD_LINES = [[/(?:もし、?)?([^、。が「」]+?)が([0-9０-９]+)の倍数(?:なら|でなければ)/, m => `「${m[2]}の倍数」は くらべる ことばに ありません。「${m[1]}÷${m[2]}のあまりが0なら」のように 書きます`], [/(?:もし、?)?([^、。が「」]+?)が([0-9０-９]+)の約数(?:なら|でなければ)/, m => `「${m[2]}の約数」は くらべる ことばに ありません。「${m[1]}が0とちがっていて、${m[2]}÷${m[1]}のあまりが0なら」のように 書きます`], [/(?:もし、?)?([^、。が「」]+?)が(からっぽ|カラッポ)(?:なら|でなければ)/, m => `「${m[2]}」は くらべる ことばに ありません。リストが 空かを しらべるときは「${m[1]}の長さが0なら」のように 書きます`]];
+  const WORD_LINES = [[/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の倍数(?:なら|でなければ)/, m => `「${m[2]}の倍数」は くらべる ことばに ありません。「${m[1]}÷${m[2]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の約数(?:なら|でなければ)/, m => `「${m[2]}の約数」は くらべる ことばに ありません。「${m[1]}が0とちがっていて、${m[2]}÷${m[1]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が(からっぽ|カラッポ)(?:なら|でなければ)/, m => `「${m[2]}」は くらべる ことばに ありません。リストが 空かを しらべるときは「${m[1]}の長さが0なら」のように 書きます`]];
   function wordLines(project, errors) {
     let out = errors;
     for (const script of project.scripts) {
@@ -1372,6 +1420,16 @@
       for (const [re, say] of WORD_LINES) { const m = re.exec(text); if (m) { out = [...out.slice(0, at), { ...first, code: 'S301', message: say(m) }, ...out.slice(at + 1)]; break; } }
     }
     return out;
+  }
+  // 名人: a sentence that starts with 自分 where no part is its 自分 (the text belongs to no part) is told so, not
+  // that the subject is missing (the child wrote one).
+  function meijinSelfWord(project, errors) {
+    return errors.map(e => {
+      if (e.code !== 'S304') return e;
+      const script = project.scripts.find(s => isMeijinScript(s) && scriptSourceKey(s) === e.where);
+      const text = script && String(script.source || '').split('\n')[e.line - 1]?.trim();
+      return text && /^自分(?:は|が|の)/.test(text) ? { ...e, message: '名人の 本文には、「自分」に あたる 部品が ありません。部品の 名前を 書きます。れい：ねこは前へ10歩進む／ねこのコピーを作る' } : e;
+    });
   }
   // A message names an expression as written; the 名人 parts of it (no block has them) are written by their words.
   function messageExpression(n) {

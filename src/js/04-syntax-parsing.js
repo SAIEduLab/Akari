@@ -497,8 +497,8 @@
       }
       if (!token.exact && RESERVED.has(token.name)) this.err('P205','あかりで使うことばと同じ名前は、【名前】のように【 】でかこんで書いてください');
       validateName(token.name);
-      // 名人: a part's name is the part itself.
-      if (this.ctx.meijin && !token.exact && isMeijinPart(token.name, this.symbols, this.ctx)) return exprNode('PartRef', { name: token.name });
+      // 名人: a part's name is the part itself (written bare or in 【 】).
+      if (this.ctx.meijin && isMeijinPart(token.name, this.symbols, this.ctx)) return exprNode('PartRef', { name: token.name });
       return exprNode('VariableRead', {
         name: token.name,
         qualifier: token.exact ? 'exact' : null,
@@ -1870,7 +1870,7 @@
     {const names=[...(symbols?.projectVars?.keys?.()||[]),...(symbols?.projectLists?.keys?.()||[]),...[...(symbols?.individualByTargetId?.values?.()||[])].flatMap(d=>[...(d.variables?.keys?.()||[]),...(d.lists?.keys?.()||[])]),...(ctx.localNames||[]),...(ctx.args||[])];
       for(const name of [...new Set(names)].sort((a,b)=>b.length-a.length)){if(!nameSource(name).startsWith('【'))continue;const at=mask.indexOf(name);if(at<0)continue;
         const bracketed=code.slice(0,at)+'【'+name+'】'+code.slice(at+name.length);
-        if(reads(bracketed))throw sentenceDiagnostic(`「${name}」のように あかりの ことばが 入った 名前は、【${name}】と【 】で かこんで 書きます`,line,[{label:'【 】で かこむ',source:canonicalStatementSource(bracketed,symbols)}]);}}
+        if(reads(bracketed))throw sentenceDiagnostic(`「${name}」のように あかりの ことばが 入った 名前は、【${name}】と【 】で かこんで 書きます`+(RESERVED.has(name)?`。あかりの「${name}」を 読むときは、へんすう「${name}」の 名前を かえます`:''),line,[{label:'【 】で かこむ',source:canonicalStatementSource(bracketed,symbols)}]);}}
     const unquoted=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([^\u0001、。]+?)と(?:([^、。\u0001]+?)秒(?:間)?)?(?:言う|いう|話す|はなす|言います|話します)$/d,code,mask);
     if(unquoted&&!knownName(unquoted[1].text)&&/^[\p{L}ー！？!?]+$/u.test(unquoted[1].text)){
       let state=false;try{state=parseExpression(unquoted[1].text,symbols,ctx).kind==='SensorRead';}catch(error){if(!(error instanceof AkariError))throw error;}
@@ -1924,7 +1924,7 @@
       throw sentenceDiagnostic('「〜になったら」では、そうなるまで 待つのか、今そうなっているかを しらべるのかが 分かりません。「〜になるまで待つ」か「もし〜なら、」と 書きます',line,[],{kind:'IfStatement',missing:['mode']});
     {const after=/^(?!もし)([^、。]+?)(んだら|ったら|いたら|いだら|したら|えたら|けたら|めたら|れたら|せたら|ねたら|てたら)、(.+)$/.exec(mask);
       if(after){const head=code.slice(0,after[1].length),rest=code.slice(after[1].length+after[2].length+1),te=head+after[2].replace(/たら$/,'て').replace(/だら$/,'で')+'、'+rest;
-        if(reads(te))throw fixed('「〜たら」は「もし」の 文で 使います。じゅんに するときは「〜して、」で つなぎます',te,'「〜して、」で つなぐ','Sequence');}}
+        if(reads(te))throw fixed(ctx.meijin?'「〜したら、」は 読みません。じゅんに するときは「〜して、」で つなぎます。そう なるのを 待つときは「〜になったら、」と 書きます':'「〜たら」は「もし」の 文で 使います。じゅんに するときは「〜して、」で つなぎます',te,'「〜して、」で つなぐ','Sequence');}}
     // ゆっくり10歩進む (ゆっくり10 was read as a name): slowly is a time to take.
     if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(?:(前|後ろ|右|左)(?:へ|に))?ゆっくり(?:と)?(?:(前|後ろ|右|左)(?:へ|に))?([0-9０-９.．]+)歩(?:進む|すすむ|動く|うごく)$/d,code,mask)))
       throw fixed('ゆっくり 動くときは、「1秒かけて前へ10歩動く」のように かける 時間を 書きます',`${p[0].text}1秒かけて${p[1]?.text||p[2]?.text||'前'}へ${p[3].text}歩動く`,'時間を かけて 動く','MotionCommand');
@@ -2237,7 +2237,7 @@
     const extension = /^拡張「([^「」\n]+)」「([^「」\n]+)」（([\s\S]*)）$/.exec(code);
     if (extension) {
       const name = EXTENSION_HOST.resolve(extension[1], extension[2], 'commands');
-      if (!name) throw new AkariError('E703', 'この「拡張」のブロックが見つかりません。かくちょうの 名前を たしかめてください', line.lineNo, 1);
+      if (!name) throw new AkariError('E703', ctx.meijin ? 'この「拡張」の 命令が 見つかりません。かくちょうの 名前を たしかめてください' : 'この「拡張」のブロックが見つかりません。かくちょうの 名前を たしかめてください', line.lineNo, 1);
       if (!ctx.meijin && EXTENSION_HOST.describe(name, 'commands')?.scope === 'meijin') throw new AkariError('S317', extensionMeijinOnly(extension[1], extension[2]), line.lineNo, 1);
       return statementNode('ExtensionCommand', line, { name, args: parseArgumentText(extension[3], symbols, ctx, line.lineNo), actorRef: { ...(ctx.topicActor || { kind: 'self' }) } });
     }

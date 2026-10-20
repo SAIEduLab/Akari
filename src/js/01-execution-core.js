@@ -204,7 +204,9 @@
     const partValue = (runtimeId, name) => Object.freeze({ part: runtimeId, name });
     const scalar = (v) => isNumberValue(v) || typeof v === 'string' || typeof v === 'boolean' || isPart(v);
     const partList = (v) => {
-      if (!Array.isArray(v) || !v.every(isPart)) throw new AkariError('R411', '「みんな」「それぞれ」「順番に」は、部品の あつまりに 使います');
+      if (!Array.isArray(v)) throw new AkariError('R411', '「みんな」「それぞれ」「順番に」は、部品の あつまりに 使います');
+      const other = v.find(x => !isPart(x));
+      if (other !== undefined) throw new AkariError('R411', `「みんな」「それぞれ」「順番に」の リストに、部品では ない「${valueText(other)}」が 入っています。部品だけを 入れた リストに 使います`);
       return v;
     };
     // A target is a part's name (every instance of it) or a part value (that one instance).
@@ -1062,9 +1064,10 @@
       }
       // A part value used as a subject must still exist (a deleted copy does not).
       partRuntimeId(v) {
-        if (!isPart(v)) throw new AkariError('R411', '主語には キャラクターや 部品が 入った へんすうを 書きます');
+        if (!isPart(v)) throw new AkariError('R411', `主語の へんすうに 入っているのは「${valueText(v)}」で、部品では ありません。先に「主役をねこにする」のように 部品を 入れます`);
+        // A copy that is gone (このコピーだけを消す, 全部消す) is not there any more; a part is always there.
         if (v.part !== 'stage' && !this.actor(v.part))
-          throw new AkariError('R405', '動かす キャラクターや 部品が 見つかりません');
+          throw new AkariError('R405', `主語の へんすうに 入っている「${v.name}」の コピーは、もう 消えています`);
         return v.part;
       }
       requireActor(ctx) {
@@ -3385,8 +3388,10 @@
           case 'Parallel':
             return this.startLanes(task, n.lanes.map(nodes => ({ nodes, binder: null })));
           case 'ParallelEach': {
+            // The limit is checked before any lane starts (startLanes); then every member must be a part.
             const values = evalExpression(n.list, ctx);
             if (!Array.isArray(values)) throw new AkariError('R411', '「みんな」は 部品の あつまりに 使います');
+            if (this.tasks.size + values.length <= LIMITS.activeTasks) partList(values);
             return this.startLanes(task, values.map(value => ({ nodes: n.body, binder: { name: n.binder, value } })));
           }
           // 名人: 【…】という手順を、次のように作る only registers the procedure.

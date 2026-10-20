@@ -8036,6 +8036,52 @@
           "名前を作"
         ]
       }
+    },
+    {
+      "id": "CC-180",
+      "item": "CI-092",
+      "kind": "check",
+      "title": "ねこの本文の「犬のところへ行く。」は、名人モードの書き方だと案内する",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "部品の本文で主語を書かない文や「自分は」で書いた文も、その部品を主語にすると名人の書き方になるときは同じに案内し、コードの「名人モードで 書く」を選ぶよう伝えます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "ねこ",
+            "source": "犬のところへ行く。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "guidanceContains": [
+          "名人モードの 本文で だけ",
+          "名人モードで 書く"
+        ]
+      }
     }
   ]
 }

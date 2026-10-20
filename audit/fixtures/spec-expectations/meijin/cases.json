@@ -274,7 +274,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "名人モードの本文を通常の本文に戻すことはできません。戻すときは本文を消して書き直します。"
+          "quote": "名人モードの本文を通常の本文に戻すことはできません。"
         },
         {
           "file": "LANGUAGE.md",
@@ -4860,11 +4860,11 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "動き・見た目・発話・音・ペンの文には主語が要ります。"
+          "quote": "動き・見た目・発話・質問・音・ペンの文には主語が要ります。"
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "主語のない文は作品チェックで止めます。"
+          "quote": "本文の最初の文のように、主語を書かず、引き継ぐ主語もない文は、作品チェックで止めます。"
         }
       ],
       "world": {
@@ -4959,11 +4959,11 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "動き・見た目・発話・音・ペンの文には主語が要ります。"
+          "quote": "動き・見た目・発話・質問・音・ペンの文には主語が要ります。"
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "主語のない文は作品チェックで止めます。"
+          "quote": "本文の最初の文のように、主語を書かず、引き継ぐ主語もない文は、作品チェックで止めます。"
         }
       ],
       "world": {
@@ -5058,11 +5058,11 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "動き・見た目・発話・音・ペンの文には主語が要ります。"
+          "quote": "動き・見た目・発話・質問・音・ペンの文には主語が要ります。"
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "主語のない文は作品チェックで止めます。"
+          "quote": "本文の最初の文のように、主語を書かず、引き継ぐ主語もない文は、作品チェックで止めます。"
         }
       ],
       "world": {
@@ -5157,11 +5157,11 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "動き・見た目・発話・音・ペンの文には主語が要ります。"
+          "quote": "動き・見た目・発話・質問・音・ペンの文には主語が要ります。"
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "主語のない文は作品チェックで止めます。"
+          "quote": "本文の最初の文のように、主語を書かず、引き継ぐ主語もない文は、作品チェックで止めます。"
         }
       ],
       "world": {
@@ -5256,11 +5256,11 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "動き・見た目・発話・音・ペンの文には主語が要ります。"
+          "quote": "動き・見た目・発話・質問・音・ペンの文には主語が要ります。"
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "主語のない文は作品チェックで止めます。"
+          "quote": "本文の最初の文のように、主語を書かず、引き継ぐ主語もない文は、作品チェックで止めます。"
         }
       ],
       "world": {
@@ -5355,11 +5355,11 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "動き・見た目・発話・音・ペンの文には主語が要ります。"
+          "quote": "動き・見た目・発話・質問・音・ペンの文には主語が要ります。"
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "主語のない文は作品チェックで止めます。"
+          "quote": "本文の最初の文のように、主語を書かず、引き継ぐ主語もない文は、作品チェックで止めます。"
         }
       ],
       "world": {
@@ -5454,11 +5454,11 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "動き・見た目・発話・音・ペンの文には主語が要ります。"
+          "quote": "動き・見た目・発話・質問・音・ペンの文には主語が要ります。"
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "主語のない文は作品チェックで止めます。"
+          "quote": "本文の最初の文のように、主語を書かず、引き継ぐ主語もない文は、作品チェックで止めます。"
         }
       ],
       "world": {
@@ -33853,7 +33853,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "本文の最初の文のように、引き継ぐ主語がない文に主語がないときに止めます。"
+          "quote": "本文の最初の文のように、主語を書かず、引き継ぐ主語もない文は、作品チェックで止めます。"
         }
       ],
       "world": {
@@ -35040,7 +35040,7 @@
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "「 」の中の文字（`「ねこ」と言う`）は変えません。"
+          "quote": "「 」の中の文字は、話す言葉や合図の名前（`「ねこ」と言う`、`「ねこ」の合図を送る`）としては変えず、部品の名前として書いたところ（`「ねこ」のよこのばしょ`）だけ変えます。"
         }
       ],
       "world": {
@@ -35412,6 +35412,636 @@
             "R413"
           ]
         }
+      }
+    },
+    {
+      "id": "MC-425",
+      "item": "MI-149",
+      "kind": "run",
+      "title": "「持ち物が空になるまで待つ。」は、空の持ち物ですぐ次の文へ進む",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「空」は長さが0、"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "持ち物が空になるまで待つ。\nねこは「から」と言う。"
+          }
+        ],
+        "lists": {
+          "持ち物": []
+        }
+      },
+      "run": {
+        "untilMs": 100
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "ねこ",
+            "text": "から",
+            "atMs": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-426",
+      "item": "MI-149",
+      "kind": "run",
+      "title": "「持ち物が空になったら、ねこは「から」と言う。」は、空の持ち物で話す",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「空」は長さが0、"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "持ち物が空になったら、ねこは「から」と言う。"
+          }
+        ],
+        "lists": {
+          "持ち物": []
+        }
+      },
+      "run": {
+        "untilMs": 100
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "ねこ",
+            "text": "から",
+            "atMs": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-427",
+      "item": "MI-150",
+      "kind": "run",
+      "title": "「ねこの【大きさ】を5にする。」で、ねこの変数「大きさ」が5になる",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "変数のほうは「ねこの【大きさ】を5にする」のように【 】で囲んで書きます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "大きさ": 1
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこの【大きさ】を5にする。\nねこは、ねこの【大きさ】を言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 100
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "ねこ",
+            "text": "5",
+            "atMs": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-428",
+      "item": "MI-151",
+      "kind": "run",
+      "title": "「ねこと【とり】は、右へ10歩動く。」で、とりも動く",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "【 】で囲んだ名前も、名人の書き方で同じに読みます（`【ねこが】は、だんごのところへ行く`）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "とり",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "主役": 0
+        },
+        "lists": {
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこと【とり】は、右へ10歩動く。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 100
+      },
+      "expect": {
+        "at": [
+          {
+            "atMs": 50,
+            "parts": {
+              "とり": {
+                "x": 210
+              },
+              "ねこ": {
+                "x": 10
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-429",
+      "item": "MI-151",
+      "kind": "run",
+      "title": "「主役を【とり】にする。」で、主役がとりになる",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "【 】で囲んだ名前も、名人の書き方で同じに読みます（`【ねこが】は、だんごのところへ行く`）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "とり",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "主役": 0
+        },
+        "lists": {
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "主役を【とり】にする。\n主役は「やあ」と言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 100
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "とり",
+            "text": "やあ",
+            "atMs": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-430",
+      "item": "MI-152",
+      "kind": "check",
+      "title": "話すだけの手順を主語なしで呼ぶと、呼び出しの3行目で止まる（画面が話さない）",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "名人の本文で、主語を書かず前の文の主語もない呼び出し（`【ジャンプ】という手順を行う。`）は、手順の中に主語の要る文があると、作品チェックが呼び出しの行で止め、呼び出す文のはじめにだれが行うかを書くよう案内します。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "【あいさつ】という手順を、次のように作る。\n  「こんにちは」と言う。\n【あいさつ】という手順を行う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 3,
+        "guidanceContains": [
+          "呼び出す"
+        ]
+      }
+    },
+    {
+      "id": "MC-431",
+      "item": "MI-153",
+      "kind": "rename",
+      "title": "ねこ→たま：「ねこ」を言う・「ねこ」の合図は変わらず、「ねこ」のよこのばしょは変わる",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「 」の中の文字は、話す言葉や合図の名前（`「ねこ」と言う`、`「ねこ」の合図を送る`）としては変えず、部品の名前として書いたところ（`「ねこ」のよこのばしょ`）だけ変えます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこは「ねこ」を言う。\nねこは「ねこ」の合図を送る。\n犬は、「ねこ」のよこのばしょを言う。"
+          }
+        ]
+      },
+      "rename": {
+        "what": "part",
+        "from": "ねこ",
+        "to": "たま"
+      },
+      "expect": {
+        "sourceContains": [
+          "たまは「ねこ」を言う",
+          "たまは「ねこ」の合図を送る",
+          "犬は、「たま」のよこのばしょを言う"
+        ]
+      }
+    },
+    {
+      "id": "MC-432",
+      "item": "MI-153",
+      "kind": "rename",
+      "title": "ねこ→たま：「子ねこ」の中の「ねこ」は変わらない",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "別の名前の一部（「子ねこ」の「ねこ」）も変えません。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "子ねこ",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこは右へ10歩動く。\n子ねこは左へ10歩動く。"
+          }
+        ]
+      },
+      "rename": {
+        "what": "part",
+        "from": "ねこ",
+        "to": "たま"
+      },
+      "expect": {
+        "sourceContains": [
+          "たまは右へ10歩動く",
+          "子ねこは左へ10歩動く"
+        ]
+      }
+    },
+    {
+      "id": "MC-433",
+      "item": "MI-154",
+      "kind": "run",
+      "title": "点数が1のとき「もし点数が偶数でないなら」が成り立つ",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜なら」「〜でなければ」のほか、「〜だったら」「〜でないなら」「〜ではないなら」「〜じゃないなら」「〜のあいだ」「〜になるまで」「〜になったとき、」でも同じに読みます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "もし点数が偶数でないなら、ねこは「きすう」と言う。"
+          }
+        ],
+        "variables": {
+          "点数": 1
+        }
+      },
+      "run": {
+        "untilMs": 100
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "ねこ",
+            "text": "きすう",
+            "atMs": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-434",
+      "item": "MI-154",
+      "kind": "run",
+      "title": "「持ち物が空になったとき、」は空の持ち物で始まる",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜なら」「〜でなければ」のほか、「〜だったら」「〜でないなら」「〜ではないなら」「〜じゃないなら」「〜のあいだ」「〜になるまで」「〜になったとき、」でも同じに読みます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "持ち物が空になったとき、ねこは「から」と言う。"
+          }
+        ],
+        "lists": {
+          "持ち物": []
+        }
+      },
+      "run": {
+        "untilMs": 100
+      },
+      "expect": {
+        "speechContains": [
+          {
+            "part": "ねこ",
+            "text": "から",
+            "atMs": 0
+          }
+        ],
+        "tolerance": {
+          "ms": 20
+        }
+      }
+    },
+    {
+      "id": "MC-435",
+      "item": "MI-155",
+      "kind": "check",
+      "title": "「作品を動かしたとき、画面1は、」の中の「「やあ」と言う。」は止まらない",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "部品と同じ名前の変数・リストがあると、その名前がどちらのことか決まらないので、作品チェックで止めます。見出しで画面を主語にした（`作品を動かしたとき、画面1は、`）中身は、画面の本文と同じに、画面が行います。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "作品を動かしたとき、画面1は、\n  「やあ」と言う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": false
+      }
+    },
+    {
+      "id": "MC-436",
+      "item": "MI-155",
+      "kind": "check",
+      "title": "部品「ねこ」と変数「ねこ」があると、「ねこは右へ10歩動く。」は作品チェックで止まる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "部品と同じ名前の変数・リストがあると、その名前がどちらのことか決まらないので、作品チェックで止めます。見出しで画面を主語にした（`作品を動かしたとき、画面1は、`）中身は、画面の本文と同じに、画面が行います。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこは右へ10歩動く。"
+          }
+        ],
+        "variables": {
+          "ねこ": 0
+        }
+      },
+      "expect": {
+        "stops": true,
+        "guidanceContains": [
+          "部品の 名前と へんすうの 名前が 同じ"
+        ]
       }
     }
   ]
