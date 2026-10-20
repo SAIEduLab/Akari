@@ -3551,8 +3551,10 @@
         return bool(evalExpression(hold.condition, this.context(task, { runtimeId: hold.runtimeId })));
       }
       // Before a statement of a held part runs, the flow waits for the rest of that part's wait.
+      // 名人: a sentence of the part carried on (laneRef) that acts on another part waits for the carried part's wait.
       awaitHold(task, step) {
-        const runtimeId = task.subject?.runtimeId, hold = runtimeId && task.holds?.get(runtimeId);
+        const lane = step.node?.laneRef && (step.node.laneRef.kind === 'value' ? this.runtime.partRuntimeId(evalExpression(step.node.laneRef.value, this.context(task))) : this.runtime.resolveActorRef(step.node.laneRef, task.callFrames.at(-1)?.runtimeId || task.runtimeId));
+        const runtimeId = lane && task.holds?.get(lane) ? lane : task.subject?.runtimeId, hold = runtimeId && task.holds?.get(runtimeId);
         if (!hold || step.kind === 'idle' || everyoneStatement(step.node)) return false;
         task.holds.delete(runtimeId);
         if (this.holdOver(task, hold)) return false;

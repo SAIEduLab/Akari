@@ -72,7 +72,7 @@
     [/(?:となり|隣)(?:へ|に|まで)/, '「となり」では、どこへ 行くかが 決まりません。「〜のところへ行く」か、歩の 数を 書きます'],
     [/^(それ|あれ|これ)(?:は|が)/, m => `「${m[1]}」では、どの 部品かが 決まりません。部品の 名前を 書きます`],
     [/話しかける$/, '「話しかける」では、何を するかが 決まりません。「ねこは「やあ」と言う」のように 書きます'],
-    [/言い終わる/, '「言い終わる」では、何が 終わるかが 決まりません。時間を 書いて 話したときは「ねこが話し終わるまで待つ」と 書きます'],
+    [/言い終わ/, '「言い終わる」は、「ねこが言い終わるまで待つ」の 形で 書きます'],
     [/(?:と同じように|(?<!次)のように)/, '「〜のように」では、まねる はんいが 決まりません。する ことを 一つずつ 文に 書きます'],
     [/(?:はし|端)まで(?:進む|動く|行く)$/, '速さが 決まりません。「1秒に20歩の速さで、画面のはしにふれるまで前へ動き続ける」のように 書きます'],
     [/て(?:ください|くれ|ほしい)$/, 'お願いの 形は 読みません。「ねこは右へ10歩動く」のように、する ことを 書きます'],
@@ -204,12 +204,14 @@
   // whose あまり is 1 or －1. 0 divides no number and 12÷0 has no あまり, so a 約数 rules 0 out first (かつ reads its
   // right side only then).
   const MEIJIN_WORD_SUBJECT = '(【[^】]*】|[^、。\u0001が【】]+?)';
-  const MEIJIN_WORD = '(空|からっぽ|空っぽ|偶数|ぐう数|ぐうすう|奇数|き数|きすう|[0-9０-９]+の(?:倍数|ばい数|ばいすう)|[0-9０-９]+の(?:約数|やく数|やくすう))';
+  const MEIJIN_WORD = '(空|からっぽ|空っぽ|偶数|ぐう数|ぐうすう|奇数|き数|きすう|[0-9０-９]+(?:[.．][0-9０-９]+)?の(?:倍数|ばい数|ばいすう)|[0-9０-９]+(?:[.．][0-9０-９]+)?の(?:約数|やく数|やくすう))';
   const meijinWordSpelling = word => word.replace(/ぐう数|ぐうすう/, '偶数').replace(/き数|きすう/, '奇数').replace(/ばい数|ばいすう/, '倍数').replace(/やく数|やくすう/, '約数');
-  const MEIJIN_WORD_ENDING = '(なら|だったら|でなければ|でないなら|ではないなら|じゃないなら|ではなかったら|のあいだ|であるあいだ|になるまで)';
+  const MEIJIN_WORD_ENDING = '(なら|だったら|でなければ|でないなら|ではないなら|じゃないなら|ではなかったら|じゃなかったら|のあいだ|であるあいだ|になるまで)';
   function meijinWordCheck(subject, written) {
     const word = meijinWordSpelling(written);
-    const n = /^([0-9０-９]+)の(倍数|約数)$/.exec(word);
+    const n = /^([0-9０-９]+(?:[.．][0-9０-９]+)?)の(倍数|約数)$/.exec(word);
+    // 算数 (5年): 倍数・約数 are of whole numbers above 0.
+    if (n && !/^[1-9１-９][0-9０-９]*$/.test(n[1])) throw new AkariError('P205', `「${written}」は 読みません。「〜の倍数」「〜の約数」の 〜には、2や 12のような 0より 大きい 整数を 書きます`);
     if (/^(?:空|からっぽ|空っぽ)$/.test(word)) return { same: `${subject}の長さが0と同じ` };
     if (word === '偶数') return { same: `${subject}÷2のあまりが0と同じ` };
     if (word === '奇数') return { same: `絶対値（${subject}÷2のあまり）が1と同じ` };
@@ -219,7 +221,7 @@
   // The check with its ending: なら・だったら / でなければ・でないなら… / のあいだ / になるまで / (none: the bare condition).
   function meijinWordTest(subject, word, ending = '') {
     const { same, holds } = meijinWordCheck(subject, word);
-    const kind = /^(?:なら|だったら)$/.test(ending) ? 'if' : /^(?:でなければ|でないなら|ではないなら|じゃないなら|ではなかったら)$/.test(ending) ? 'not'
+    const kind = /^(?:なら|だったら)$/.test(ending) ? 'if' : /^(?:でなければ|でないなら|ではないなら|じゃないなら|ではなかったら|じゃなかったら)$/.test(ending) ? 'not'
       : /あいだ$/.test(ending) ? 'while' : ending === 'になるまで' ? 'until' : 'bare';
     if (same) return same + { if: 'なら', not: 'でなければ', while: 'であるあいだ', until: 'になるまで', bare: '' }[kind];
     return holds + { if: 'が成り立つなら', not: 'が成り立たないなら', while: 'が成り立つあいだ', until: 'が成り立つまで', bare: 'が成り立つ' }[kind];
@@ -318,6 +320,7 @@
     // ねこから犬までのきょり: one part's distance to another.
     replaceAll(new RegExp('(' + alt + ')から(' + alt + ')までの(?:きょり|距離)'), m => `「${meijinBare(m[1])}」の（「${meijinBare(m[2])}」までのきょり）`);
     // 持ち物が空なら / 点数が偶数でなければ / 点数が10の倍数だったら / 持ち物が空のあいだ: the words of 国語 and 算数.
+    replaceAll(new RegExp('(もし、?)' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:で、|であり、|\\s*かつ\\s*)([^、。]+?)(なら|でなければ)、'), m => `${m[1]}条件（${meijinWordTest(m[2], m[3])} かつ ${m[4].trim()}）${m[5] === 'なら' ? 'が成り立つなら' : 'が成り立たないなら'}、`);
     replaceAll(new RegExp('(もし、?|、|^)' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + MEIJIN_WORD_ENDING), m => `${m[1]}${meijinWordTest(m[2], m[3], m[4])}`);
     if (changed) return out;
     // だんごが星にふれたら、…: wait until it touches, then do it (once), as 〜になったら.
@@ -403,8 +406,9 @@
   // A line that is almost a 名人 form: the guidance gives the form (null when it is none of them, or reads as written).
   function meijinNearMiss(code, mask, symbols, scope, env, line, read, attempt) {
     const part = name => isMeijinPart(name, symbols, scope);
-    // The line reads neither as written nor through a 名人 rewrite.
-    const fails = () => !attempt(() => read(code)) && !attempt(() => meijinRewrite(code, symbols, scope));
+    // The line reads neither as written nor through a 名人 rewrite (found once: each reading reads the whole line).
+    let failed;
+    const fails = () => failed ??= !attempt(() => read(code)) && !attempt(() => meijinRewrite(code, symbols, scope));
     let p;
     // ねこは2秒かけて…動くあいだ、犬は… / だんごは星にふれたとき、…: the subject before あいだ・とき is written with が.
     if ((p = surfaceCapture(/^(.+?)は、?(.+?)(あいだ|間|うちに|とき)、(.+)$/d, code, mask)) && part(p[0].text) && fails()) {
@@ -425,6 +429,9 @@
       }
     }
     // 点数が偶数じゃなかったら、: a word of 国語・算数 with an ending that is not read.
+    // もし点数が偶数で、20より小さく、2より大きいなら: three or more are joined with かつ.
+    if ((p = new RegExp('^(?:もし、?)?' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:で、|であり、)[^。]*、').exec(mask)) && fails())
+      return `「${p[2]}で、」に つなげる きまりは 一つです。三つ以上を つなぐときは「かつ」で つなぎます。れい：もし${p[1]}が${p[2]} かつ ${p[1]}が20より小さい かつ ${p[1]}が2より大きいなら、`;
     if ((p = new RegExp('^(?:もし、?)?' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?!' + MEIJIN_WORD_ENDING + '|になったら|になったとき)').exec(mask)) && fails())
       return `「${p[2]}」は、「${p[1]}が${p[2]}なら」「${p[1]}が${p[2]}でなければ」の 形で 書きます`;
     // ねこは1秒に20歩の速さで前へ動き続ける: when it stops is not written.
@@ -433,9 +440,12 @@
     // 犬が「出発」の合図を受けたとき、: the heading of a signal.
     if ((p = surfaceCapture(/^(.+?)が(\u0001+)の合図を(?:受けた|うけた)とき、/d, code, mask)) && part(p[0].text))
       return `合図を 受けるときは「${p[1].text}という合図を受けたとき、${p[0].text}は、」と 書きます`;
+    // ねこは、持ち物を順に2秒話す: 2秒 for each, or for all? (ずつ says each.)
+    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)を順に(.+?)秒(?:話す|はなす|言う|いう)$/d, code, mask)) && part(p[0].text))
+      return `「順に${p[2].text}秒話す」では、${p[2].text}秒が 一つずつの 時間か、ぜんぶの 時間かが 決まりません。一つずつなら「${p[0].text}は、${p[1].text}を順に${p[2].text}秒ずつ言う」と 書きます`;
     // ねこは、持ち物を一つずつ順に言う: the time for each is not written.
     if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)を(?:一つずつ|ひとつずつ|1つずつ)順に(?:話す|はなす|言う|いう)$/d, code, mask)) && part(p[0].text))
-      return `一つを 話す 時間を 書きます。れい：${p[0].text}は、${p[1].text}を一つずつ順に2秒話す`;
+      return `一つを 話す 時間を 書きます。れい：${p[0].text}は、${p[1].text}を一つずつ順に2秒ずつ言う`;
     // なかまの1番目は「a」と言う: an item of a list is put into a variable first.
     if ((p = surfaceCapture(/^(.+?)の([0-9０-９]+)番目(?:は|が)/d, code, mask)) && meijinListName(p[0].text, symbols, scope) && fails())
       return `「${p[0].text}の${p[1].text}番目」は 主語に 書けません。へんすうに 入れてから、その へんすうを 主語に します。れい：主役を、${p[0].text}の${p[1].text}番目にする。主役は「やあ」と言う。`;
@@ -617,11 +627,12 @@
     if (/^(?:できた|作った)コピーを(?:消す|けす)$/.test(mask))
       return done([node('ParallelEach', { list: exprNode('CreatedCopies', {}), binder: MEIJIN_BINDER, body: read('このコピーだけを消す', meijinValueActor(meijinBinderRead()), each) })]);
     // ねこが話し終わるまで待つ / ねこの音が鳴り終わるまで待つ
-    if ((p = surfaceCapture(/^(.+?)(が話し終わる|の音が鳴り終わる)まで待つ$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope))
-      return done([node('WaitUntil', { condition: exprNode('PartState', { state: p[1].text === 'が話し終わる' ? 'speechDone' : 'soundDone', actorRef: { kind: 'named', name: p[0].text } }), actorRef: { kind: 'all' } })]);
+    if ((p = surfaceCapture(/^(.+?)(が(?:話し|言い)終わる|の音が鳴り終わる)まで待つ$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope))
+      return done([node('WaitUntil', { condition: exprNode('PartState', { state: p[1].text !== 'の音が鳴り終わる' ? 'speechDone' : 'soundDone', actorRef: { kind: 'named', name: p[0].text } }), actorRef: { kind: 'all' } })]);
     // ねこは、持ち物を一つずつ順に2秒話す: each item in order, said one after another.
-    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)を(?:一つずつ|ひとつずつ|1つずつ)順に(.+?)秒(?:話す|はなす|言う|いう)$/d, code, mask)) &&
+    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)を(?:(?:一つずつ|ひとつずつ|1つずつ)順に(.+?)秒(?:ずつ)?|順に(.+?)秒ずつ)(?:話す|はなす|言う|いう)$/d, code, mask)) &&
         isMeijinPart(p[0].text, symbols, scope) && meijinListName(p[1].text, symbols, scope)) {
+      p[2] = p[2] || p[3];
       const say = read(`${p[0].text}は【${MEIJIN_BINDER}】の値を${p[2].text}秒話す`, scope.topicActor, each);
       return done([node('ForEach', { list: exprNode('VariableRead', { name: p[1].text, qualifier: null }), binder: MEIJIN_BINDER, body: say, actorRef: { kind: 'self' } })]);
     }

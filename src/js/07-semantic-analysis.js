@@ -103,6 +103,8 @@
   }
   // 名人 scripts belong to no part, so every action names who does it.
   const MEIJIN_SUBJECT_MESSAGE = '名人の 本文では、だれが するかを 文の はじめに 書きます。れい：ねこは前へ10歩進む';
+  // 決まり4: the sentence before has its subjects inside it, so none is carried on.
+  const MEIJIN_TOPIC_ENDED = 'すぐ前の 文からは 主語を 引きつげません（主語を ならべた 文、「もし」の 文、見出しの 文や、中に ほかの 主語を 書いた 文の あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む';
   function analyzeProject(project, compiled, { rootKeys = null } = {}) {
     const symbols = compiled.symbols,
       diags = [],
@@ -620,7 +622,7 @@
         }
         // 名人: a procedure called with no subject is the stage's; who does its sentences is written at the call (決まり7).
         const needsSubject = message => c.meijinCall ? add('S304', `手順【${c.meijinCall.name}】の 中に、だれが するかを 書いていない 文が あります。手順を 呼び出す 文の はじめに、だれが 行うかを 書きます。れい：ねこは【${c.meijinCall.name}】という手順を行う`, c.meijinCall.node, c.meijinCall.where)
-          : add('S304', c.meijin ? MEIJIN_SUBJECT_MESSAGE : message, n, where);
+          : add('S304', c.meijin ? (n.actorRef?.topicEnded ? MEIJIN_TOPIC_ENDED : MEIJIN_SUBJECT_MESSAGE) : message, n, where);
         // 名人: speech and sounds need who does them, as moves do (the script itself is no part; 画面は… names the stage).
         // Stopping every sound acts on the whole work.
         if ((c.meijin || c.meijinCall) && c.targetType === 'stage' && n.actorRef?.kind !== 'named' &&
@@ -1432,12 +1434,13 @@
   function meijinSelfWord(project, errors) {
     return errors.map(e => {
       if (e.code !== 'S304') return e;
-      const script = project.scripts.find(s => isMeijinScript(s) && scriptSourceKey(s) === e.where);
+      // A text with its own headings is checked unit by unit (script:unit-1); the unit belongs to its 名人 text.
+      const script = project.scripts.find(s => isMeijinScript(s) && (scriptSourceKey(s) === e.where || (s.document?.unitIds || []).some(id => 'script:' + id === e.where)));
       const text = script && String(script.source || '').split('\n')[e.line - 1]?.trim();
       const lines = String(script?.source || '').split('\n'), before = lines.slice(0, e.line - 1).reverse().find(l => l.trim() && !l.trim().startsWith('※'))?.trim() || '';
-      const several = /^(?:もし|そうでなければ|次のことを)|(?:みんな|それぞれ|順番に)|^[^、。「」]+?(?:と|も)[^、。「」]+?(?:は|が)、?|(?:とき|たら|ごとに)、$/.test(before);
+      const several = /^(?:もし|そうでなければ|次のことを)|(?:みんな|それぞれ|順番に)|^[^、。「」]+?(?:と|も)[^、。「」]+?(?:は|が)、?|(?:とき|たら|ごとに)、/.test(before);
       if (text && e.message === MEIJIN_SUBJECT_MESSAGE && several)
-        return { ...e, message: 'すぐ前の 文からは 主語を 引きつげません（主語が いくつも ある 文、「もし」の 文、見出しの 文の あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む' };
+        return { ...e, message: MEIJIN_TOPIC_ENDED };
       return text && /^自分(?:は|が|の)/.test(text) ? { ...e, message: '名人の 本文には、「自分」に あたる 部品が ありません。部品の 名前を 書きます。れい：ねこは前へ10歩進む／ねこのコピーを作る' } : e;
     });
   }
@@ -1534,7 +1537,7 @@
           const waiters = lanes || [who(n.actorRef)], waiter = waiters.join('と');
           for (const m of nodes.slice(i + 1)) {
             if (m.kind === 'CommentLine') continue;
-            if (controls.includes(m.kind) || !m.actorRef || m.actorRef.kind === 'all') break;
+            if (controls.includes(m.kind) || !m.actorRef || m.actorRef.kind === 'all' || m.laneRef) break;
             const other = who(m.actorRef);
             if (!other || waiters.includes(other)) break;
             const note = { code: 'I101', notice: true, line: m.sourceSpan?.startLine || 0, column: m.sourceSpan?.startColumn || 1, where: item.key,

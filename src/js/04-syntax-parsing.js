@@ -1363,6 +1363,27 @@
   }
   // The subject the following sentences inherit: the part, without the particle its own sentence was written with.
   function topicOf(actorRef) { const topic = {...actorRef}; delete topic.particle; return topic; }
+  // 名人 (決まり4): after a sentence whose subjects are inside it (もし, 主語を並べた文, 集まり, あいだ, 同時に始める,
+  // くり返しの中), no subject is carried on; 〜ながら (one part) carries its part. A sentence with none inside keeps it.
+  function meijinTopicAfter(nodes, topic) {
+    const inner = [], walk = v => { if (Array.isArray(v)) { v.forEach(walk); return; } if (!v || typeof v !== 'object') return; if (STATEMENT_EXPLICIT_ACTORS.has(v)) inner.push(topicOf(v.actorRef)); for (const k of ['body', 'thenBody', 'elseBody', 'lanes']) if (v[k]) walk(v[k]); };
+    walk(nodes);
+    const sets = nodes.some(n => ['ParallelEach', 'ForEach'].includes(n.kind));
+    if (!inner.length && !sets) return topic;
+    const same = a => a.kind === inner[0].kind && a.name === inner[0].name && JSON.stringify(a.value) === JSON.stringify(inner[0].value);
+    return !sets && nodes.length === 1 && nodes[0].kind === 'Parallel' && inner.every(same) ? inner[0] : { kind: 'self', topicEnded: true };
+  }
+  // 名人 (決まり2): a sentence of the part carried on that names what it acts on (ねこの動きを止める, 鳥に知らせる,
+  // 星のコピーを全部消す) waits for that part's wait, as the part's next sentence does.
+  function meijinLaneRefs(nodes, topic) {
+    let current = topic;
+    for (const n of nodes || []) {
+      if (!n || typeof n !== 'object') continue;
+      if (STATEMENT_EXPLICIT_ACTORS.has(n)) { current = topicOf(n.actorRef); continue; }
+      if (n.kind === 'Parallel') { for (const lane of n.lanes || []) meijinLaneRefs(lane, current); continue; }
+      if (['named', 'value'].includes(current?.kind) && n.actorRef && n.actorRef.kind !== 'all' && JSON.stringify(topicOf(n.actorRef)) !== JSON.stringify(current)) n.laneRef = { ...current };
+    }
+  }
   function sentenceActorSource(actorRef) { return actorRef?.kind === 'named' ? nameSource(actorRef.name) : '自分'; }
   function sentenceTarget(text, code, line, symbols, ctx, start) {
     const t = parseTargetPrefix(text, symbols, ctx);
@@ -2058,7 +2079,7 @@
         if(scope.meijin){
           const read=parseAt(line,()=>readMeijinLine(line,{symbols,scope:local,lines,top:depth===0,index:i,indent,nextCode,children:(at,childScope)=>block(at,lines[at].indent,childScope,depth+1)}));
           if(read?.rewrite){lines[i]=read.rewrite;continue;}
-          if(read){previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);i=read.index;continue;}
+          if(read){if(scope.meijin)meijinLaneRefs(read.nodes,scope.topicActor);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);i=read.index;continue;}
         }
         const repeatPrevious=surfaceCapture(/^これを(.+?)回(?:くり返す|くり返します|繰り返す|繰り返します)$/d,line.code);
         if(repeatPrevious){
@@ -2083,7 +2104,7 @@
         if(line.code==='ここまで')throw new AkariError('P203','「ここまで」は 書きません。次の 文の 行の はじめを 左へ もどすと、まとまりが おわります',line.lineNo,1);
         const rule=parseAt(line,()=>{try{return readContinuousSentence(line.code,line,symbols,local);}catch(error){if(error.draftRole?.kind==='ContinuousRule'){const next=lines[nextCode(i+1)],speed=next?surfaceCapture(/^(.+?秒に.+?歩の速さで)(?:動かす|動く)$/d,next.code):null;if(speed&&next.indent===indent){const motion=/(?:動き続ける|動かし続ける)$/.exec(surfaceMask(line.code));if(motion){const range=sourceRange(line.mapped.positions),last=sourceRange(next.mapped.positions);error.proposals=[{label:'2つの文を1つの「つづけて動くルール」にまとめる',source:line.code.slice(0,motion.index)+speed[0].text+motion[0],start:range.start,end:last.end}];}}}throw error;}});if(rule){if(depth!==0)throw new AkariError('P205','つづけて動くルールは、「もし」や「くり返す」の中には書けません。いちばん外に書いてください',line.lineNo,1);rules.push(rule);i++;continue;}
         const head=parseAt(line,()=>readBlockHead(line.code,symbols,local));if(head?.kind==='Else')break;
-        if(!head){const parts=parseAt(line,()=>parseSentenceSequence(line,symbols,local));previousSentenceStart=nodes.length;nodes.push(...parts);scope.topicSet=parts.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of parts)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);i++;continue;}
+        if(!head){const parts=parseAt(line,()=>parseSentenceSequence(line,symbols,local));if(scope.meijin)meijinLaneRefs(parts,scope.topicActor);previousSentenceStart=nodes.length;nodes.push(...parts);scope.topicSet=parts.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of parts)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!parts.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(parts,scope.topicActor);i++;continue;}
         previousSentenceStart=null;
         const controlActor=head.actorRef||scope.topicActor;
         let childScope={...scope,topicActor:{...controlActor},binders:[...(scope.binders||[])]},childStart=i+1,firstChild=nextCode(childStart),binderRange=null;
@@ -2110,6 +2131,7 @@
         fields.endLine=lines[Math.max(start,i-1)]?.lineNo||line.lineNo;
         const node=statementNode(head.kind,line,fields),location=SOURCE_RANGES.get(node);if(head.inlineBody)node.inlineComment='';if(location){const actorRange=SOURCE_RANGES.get(head)?.actorRange;if(actorRange)location.actorRange=actorRange;location.extent.end=lines[Math.max(start,i-1)]?.end??line.end;location.inlineContainer=!!head.inlineBody;if(head.kind==='ForEach'){location.binderRange=binderRange;location.binderInsert={at:line.end,indent:lines[firstChild]?.indent??indent+2};}}
         nodes.push(node);
+        if(scope.meijin)scope.topicActor=meijinTopicAfter([node],scope.topicActor);
       }
       tag();
       return {nodes,index:i};
