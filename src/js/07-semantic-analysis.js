@@ -137,10 +137,11 @@
     const misreadName = (name, other, meijin = false) => {
       const who = (fallback) => other ? messageExpression(other) : fallback;
       // 名人 reads these words; only the ending was not read (偶数じゃなかったら).
-      if (meijin && ['空', '空っぽ', '偶数', '奇数'].includes(name)) return `「${name}」は、「${who('点数')}が${name}なら」「${who('点数')}が${name}でなければ」の 形で 書きます`;
+      if (meijin && ['空', '空っぽ', '偶数', '奇数', 'ぐう数', 'ぐうすう', 'き数', 'きすう'].includes(name)) return `「${name}」は、「${who('点数')}が${name}なら」「${who('点数')}が${name}でなければ」の 形で 書きます`;
       if (name === '空' || name === '空っぽ') return `「${name}」は くらべる ことばに ありません。リストが 空かを しらべるときは「${who('持ち物')}の長さが0なら」のように 書きます`;
-      // An odd number's あまり is 1 or －1 (the あまり has the sign of the number), as 名人 reads 奇数.
-      if (name === '偶数' || name === '奇数') return `「${name}」は くらべる ことばに ありません。「${who('点数')}÷2のあまりが${name === '偶数' ? '0' : '1か－1'}なら」のように 書きます`;
+      // An odd number's あまり is 1 or －1 (the あまり has the sign of the number), as 名人 reads 奇数. ぐうすう・き数 are the same words.
+      const even = ['偶数', 'ぐう数', 'ぐうすう'].includes(name), odd = ['奇数', 'き数', 'きすう'].includes(name);
+      if (even || odd) return `「${name}」は くらべる ことばに ありません。「${who('点数')}÷2のあまりが${even ? '0' : '1か－1'}なら」のように 書きます`;
       const digits = /^(.+?)([0-9０-９]+(?:[.．][0-9０-９]+)?)$/.exec(name);
       if (digits && !symbols.projectVars?.has?.(digits[1]) && !symbols.projectLists?.has?.(digits[1]))
         return `「${name}」を 名前として 読みました。「${digits[1]}」は あかりの ことばに ありません。「${digits[1]}」を けして 書けるか たしかめてください。れい：前へ${digits[2]}歩進む`;
@@ -296,9 +297,6 @@
         }
         if (n.kind === 'PartName' || n.kind === 'PartState') {
           const c = actorContext(n.actorRef, ctx, ctx.node || n, where);
-          const holders = n.actorRef?.kind === 'named' ? [componentByName(n.actorRef.name)].filter(Boolean) : project.components;
-          if (n.kind === 'PartName' && holders.some(x => x.localData?.variables?.some(v => v.name === '名前') || x.localData?.lists?.some(v => v.name === '名前')))
-            add('S316', '「〜の名前」が、部品の 名前か、部品の 変数「名前」か 決まりません。変数なら「ねこの【名前】」のように【 】で かこみます', ctx.node || n, where);
           if (n.kind === 'PartState' && n.state === 'copyCount' && c.targetType && c.targetType !== 'sprite')
             add('S304', 'コピーを 作れるのは キャラクターだけです', ctx.node || n, where);
           return;
@@ -1428,6 +1426,10 @@
       if (e.code !== 'S304') return e;
       const script = project.scripts.find(s => isMeijinScript(s) && scriptSourceKey(s) === e.where);
       const text = script && String(script.source || '').split('\n')[e.line - 1]?.trim();
+      const lines = String(script?.source || '').split('\n'), before = lines.slice(0, e.line - 1).reverse().find(l => l.trim() && !l.trim().startsWith('※'))?.trim() || '';
+      const several = /^(?:もし|そうでなければ|次のことを)|(?:みんな|それぞれ|順番に)|^[^、。「」]+?(?:と|も)[^、。「」]+?(?:は|が)、?|(?:とき|たら|ごとに)、$/.test(before);
+      if (text && e.message === MEIJIN_SUBJECT_MESSAGE && several)
+        return { ...e, message: 'すぐ前の 文からは 主語を 引き継げません（主語が いくつも ある 文、「もし」の 文、見出しの 文の あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む' };
       return text && /^自分(?:は|が|の)/.test(text) ? { ...e, message: '名人の 本文には、「自分」に あたる 部品が ありません。部品の 名前を 書きます。れい：ねこは前へ10歩進む／ねこのコピーを作る' } : e;
     });
   }
@@ -1535,6 +1537,54 @@
       };
       walk(ast.body);
       for (const unit of ast.units || []) walk(unit.body);
+      // A word of あかり (大きさ, 向き) that is also the name of the data it may mean: written bare it is the word.
+      {
+        const owner = project.components.find(c => c.id === item.targetId);
+        const dataNames = new Set([...project.projectData.variables, ...project.projectData.lists, ...(owner?.localData?.variables || []), ...(owner?.localData?.lists || []),
+          ...(item.meijin ? project.components.flatMap(c => [...(c.localData?.variables || []), ...(c.localData?.lists || [])]) : [])].map(d => d.name));
+        const visit = node => {
+          if (!node || typeof node !== 'object') return;
+          if (Array.isArray(node)) { node.forEach(visit); return; }
+          const word = node.kind === 'SensorRead' && node.arg === undefined ? (SENSOR_SURFACES[node.sensor] || node.sensor) : null;
+          if (word && dataNames.has(word)) {
+            const note = { code: 'I103', notice: true, line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where: item.key,
+              message: `「${word}」は あかりの「${word}」です。へんすう「${word}」を 読むときは【${word}】と 書きます` };
+            const key = note.where + '|' + note.line + '|' + note.column + '|I103';
+            if (!seen.has(key)) { seen.add(key); notes.push(note); }
+          }
+          for (const [k, v] of Object.entries(node)) if (k !== 'sourceSpan' && v && typeof v === 'object') visit(v);
+        };
+        visit(ast.body); for (const unit of ast.units || []) visit(unit.body);
+        // 名人: ねこの大きさを120％にする changes the look even when ねこ has a variable 大きさ.
+        if (item.meijin) {
+          const script = project.scripts.find(s => scriptSourceKey(s) === item.key);
+          String(script?.source || '').split('\n').forEach((text, i) => {
+            for (const c of project.components) for (const v of c.localData?.variables || []) {
+              if (!MEIJIN_LOOK_WORDS.includes(v.name) || !text.includes(`${c.name}の${v.name}を`)) continue;
+              const note = { code: 'I103', notice: true, line: i + 1, column: text.indexOf(`${c.name}の${v.name}を`) + 1, where: item.key,
+                message: `「${c.name}の${v.name}」は ${c.name}の 見た目です。変数「${v.name}」を 変えるときは「${c.name}の【${v.name}】」と 書きます` };
+              const key = note.where + '|' + note.line + '|' + note.column + '|I103';
+              if (!seen.has(key)) { seen.add(key); notes.push(note); }
+            }
+          });
+        }
+      }
+      // 名人: 〜の名前 is the part's name; a part with a variable 名前 is told how the variable is written.
+      if (item.meijin) {
+        const named = project.components.filter(c => c.localData?.variables?.some(v => v.name === '名前') || c.localData?.lists?.some(v => v.name === '名前'));
+        const visit = node => {
+          if (!node || typeof node !== 'object') return;
+          if (Array.isArray(node)) { node.forEach(visit); return; }
+          if (node.kind === 'PartName' && named.length && (node.actorRef?.kind !== 'named' || named.some(c => c.name === node.actorRef.name))) {
+            const note = { code: 'I102', notice: true, line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where: item.key,
+              message: `「〜の名前」は 部品の 名前です。部品の 変数「名前」を 読むときは「${named[0].name}の【名前】」のように【 】で かこみます` };
+            const key = note.where + '|' + note.line + '|' + note.column + '|I102';
+            if (!seen.has(key)) { seen.add(key); notes.push(note); }
+          }
+          for (const [k, v] of Object.entries(node)) if (k !== 'sourceSpan' && v && typeof v === 'object') visit(v);
+        };
+        visit(ast.body); for (const unit of ast.units || []) visit(unit.body);
+      }
     }
     return notes;
   }

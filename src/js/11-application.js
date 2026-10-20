@@ -4565,7 +4565,13 @@
         const parsed = parseSyntax(source, { symbols: buildSymbols(project), targetId: script.targetId, event: script.event });
         if (!parsed.ast) { setStatus('書き方の まちがいを 直してから、名人モードに してね。'); return; }
         const headings = [parsed.ast, ...(parsed.ast.units || [])].map(unit => unit.heading).filter(Boolean);
-        if (headings.some(h => h.actorRef?.kind === 'self')) { setStatus('見出しの「自分」を 名前に してから、名人モードに してね。'); return; }
+        // A heading whose subject is 自分 (written, or not written) is written with the owner's name.
+        const lines = source.split('\n');
+        for (const unit of [parsed.ast, ...(parsed.ast.units || [])].filter(u => u.heading?.actorRef?.kind === 'self').sort((a, b) => b.sourceSpan.startLine - a.sourceSpan.startLine)) {
+          const at = unit.sourceSpan.startLine - 1, first = unit.body?.[0]?.sourceSpan, head = sentenceHeadingSource({ ...unit.heading, actorRef: { kind: 'named', name: owner.name } });
+          lines[at] = first?.startLine === unit.sourceSpan.startLine ? head + lines[at].slice(first.startColumn - 1) : head;
+        }
+        source = lines.join('\n');
         // The body's owner is written out, because a 名人 script belongs to no part.
         if (!headings.length) {
           const heading = { event: script.event, actorRef: { kind: 'named', name: owner.name }, filter: script.filter ?? null };

@@ -662,11 +662,12 @@ function runCoreTests() {
         eq([text, code], [text, 'P205']);
       }
     });
+    // A word of あかり next to a data of its name (大きさ, 名前) is the word; the data is written in 【 】 (a notice, no stop).
     test('meijin a name with two meanings and a part that is no copy stop the check', () => {
       const codes = (source, setup = () => {}) => { const p = meijinWork(source); setup(p); return compileProject(p).errors.map(e => e.code); };
       const own = name => p => p.components.find(c => c.id === 'core-cat').localData.variables.push({ id: 'core-cat-own', name, initialValue: 0 });
       eq([codes('ほかのなかまは「a」と言う。'), codes('ねこは消える。'), codes('ねこの大きさを120％にする。', own('大きさ')), codes('ねこは、自分の名前を言う。', own('名前'))],
-        [['P205'], ['S304'], ['P205'], ['S316']]);
+        [['P205'], ['S304'], [], []]);
       eq([codes('ねこの大きさを120％にする。'), codes('ねこは、自分の名前を言う。')], [[], []]);
     });
     test('meijin one sentence is one lane and keeps its order', () => {

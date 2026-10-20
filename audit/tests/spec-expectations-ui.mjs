@@ -133,6 +133,9 @@ const checks={
   'MC-417':async s=>{await s.select('w-neko');await s.code();await s.write('右へ10歩動く。');await s.blocks();const before=await s.mode();
     await s.select('meijin');const onMeijin=await s.mode(),text=await s.text();await s.select('w-neko');const back=await s.mode();
     return {expect:{blocksChosen:before==='blocks',meijinInCode:onMeijin==='code'&&text.includes('ねこは右へ10歩動く。'),backToBlocks:back==='blocks'},info:{before,onMeijin,back}};},
+  'MC-469':async s=>{await s.select('w-neko');await s.code();await s.write('作品を動かしたとき、\n  「やあ」と言う。');await s.startMeijin(true);
+    const scripts=await s.scripts(),meijin=scripts.filter(x=>x.mode==='meijin').map(x=>x.source);
+    return {expect:{heading:meijin.some(t=>t.includes('作品を動かしたとき、ねこは、')),body:meijin.some(t=>t.includes('「やあ」と言う。')),moved:!scripts.some(x=>x.mode!=='meijin'&&x.targetId==='w-neko'&&x.source.includes('やあ'))},info:{meijin}};},
   'MC-411':async s=>{await s.select('meijin');await s.code();
     const note=await s.page.evaluate(()=>[...document.querySelectorAll('.mode-blocked-note')].filter(n=>n.offsetParent).map(n=>n.textContent).join(''));
     return {expect:{blocksDisabled:await s.page.locator('#editorModeblocks').isDisabled(),saysCode:bare(note).includes('コードでなおします'),noRedFix:!bare(note).includes('赤いところを直す')},info:{note}};},

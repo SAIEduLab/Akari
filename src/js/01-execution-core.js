@@ -1211,6 +1211,7 @@
         const score = part => {
           const a = this.partActor(part), box = this.aabb(a);
           if (by.kind === 'position') return { 右: box.cx, 左: -box.cx, 上: -box.cy, 下: box.cy }[by.side];
+          if (by.kind === 'near') { const to = this.aabb(this.actor(this.resolveActorRef({ kind: 'named', name: by.to }, ctx.runtimeId))); return -Math.hypot(box.cx - to.cx, box.cy - to.cy); }
           const value = numberValue(this.readName({ name: by.name, qualifier: 'self' }, { ...ctx, runtimeId: part.part }), `「${by.name}」には 数が いります`);
           return by.order === 'max' ? value : -value;
         };
@@ -3705,6 +3706,8 @@
       finishTask(task, state = 'DONE') {
         task.extensionAbort?.abort();
         if (['DONE', 'CANCELLED', 'ERROR'].includes(task.state) && task.state !== state) return;
+        // 名人: copies made in a lane are the copies the flow made (できたコピー after the lanes).
+        if (state === 'DONE' && task.laneParent && task.createdCopies?.length) task.laneParent.createdCopies = [...(task.laneParent.createdCopies || []), ...task.createdCopies];
         // 名人: ねこと犬は1秒待つ — each lane's part waits; that wait goes on in the flow that started the lanes, so the
         // part's next sentence there waits for it (as after ねこは1秒待つ in one flow).
         if (state === 'DONE' && task.laneParent && task.holds?.size)
@@ -3900,6 +3903,16 @@
             const d = num(0), v = this.directionVector(n.direction, a);
             a.x += v.x * d; a.y += v.y * d;
             break;
+          }
+          // 名人: 〜のところへ行く — the centre comes to the other part's centre (where it is when the sentence runs).
+          case 'GOTO_PART':
+          case 'GLIDE_PART': {
+            const value = evalExpression(n.args.at(-1), ctx);
+            if (!isPart(value)) throw new AkariError('R411', `行き先の へんすうに 入っているのは「${valueText(value)}」で、部品では ありません`);
+            const to = this.runtime.aabb(this.runtime.partActor(value)), from = this.runtime.aabb(a);
+            const x = a.x + to.cx - from.cx, y = a.y + to.cy - from.cy;
+            if (n.op === 'GOTO_PART') { a.x = x; a.y = y; break; }
+            return this.execMotion(task, { ...n, op: 'GLIDE', args: [n.args[0], { kind: 'NumberLiteral', value: x }, { kind: 'NumberLiteral', value: y }] }, ctx);
           }
           case 'GLIDE_DIRECTION': {
             const seconds = num(0), distance = num(1), v = this.directionVector(n.direction, a);

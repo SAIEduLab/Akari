@@ -1853,6 +1853,180 @@
         "MC-406",
         "MC-407"
       ]
+    },
+    {
+      "id": "MI-158",
+      "section": "名人モード > 名人のできごと",
+      "summary": "「〜にふれたら、」は、ふれるまで待ってから一度だけ行う",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-440"
+      ]
+    },
+    {
+      "id": "MI-159",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "部品を入れた変数（主役）は、主語のほか「主役の大きさを…にする」「〜は、主役のところへ行く」にも書ける",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-441",
+        "MC-442",
+        "MC-443",
+        "MC-444"
+      ]
+    },
+    {
+      "id": "MI-160",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「ほかの」は、引き継いでいる主語の部品を除く。引き継ぐ主語がなく、すぐ前の主語が集まりのときは止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-445",
+        "MC-446"
+      ]
+    },
+    {
+      "id": "MI-161",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語を並べた文・「もし」の文の主語は引き継がず、そのあとの主語のない文は止める",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-447",
+        "MC-448"
+      ]
+    },
+    {
+      "id": "MI-162",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「ほう」は二つの部品のとき。三つ以上・集まりは「いちばん…もの」で書き、「いちばん」のない「もの」は止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-449",
+        "MC-450",
+        "MC-451"
+      ]
+    },
+    {
+      "id": "MI-163",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "部品を「や」でつなぐ文は止め、「と」でつなぐよう案内する",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-452",
+        "MC-453"
+      ]
+    },
+    {
+      "id": "MI-164",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「〜の約数」は、0より大きい整数のときだけ成り立つ",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-454",
+        "MC-455",
+        "MC-456"
+      ]
+    },
+    {
+      "id": "MI-165",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "並びの中で作ったコピーも、並びが終わるとその流れの「できたコピー」になる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-457"
+      ]
+    },
+    {
+      "id": "MI-166",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "受け取る値は「と」「、」で区切る。【 】で囲んだ名前は区切らない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-458",
+        "MC-459"
+      ]
+    },
+    {
+      "id": "MI-167",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「1秒かけて、〜のところへ動く」「〜のところへ1秒かけて動く」「〜まで行く」は「〜のところへ行く」と同じ行き先へ行く",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-460",
+        "MC-461",
+        "MC-462"
+      ]
+    },
+    {
+      "id": "MI-168",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「ぐうすう」「き数」「ばい数」「やくすう」も、漢字の書き方と同じに読む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-463"
+      ]
+    },
+    {
+      "id": "MI-169",
+      "section": "名人モード > 名人のできごと",
+      "summary": "「犬が「出発」の合図を受けたとき、」は、「「出発」という合図を受けたとき、犬は、」と同じ見出し",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-464"
+      ]
+    },
+    {
+      "id": "MI-170",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「一つずつ順に2秒話す」の2秒は、一つにつきの時間",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-465"
+      ]
+    },
+    {
+      "id": "MI-171",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「〜のうち、ねこにいちばん近いもの」は、ねこからのきょりがいちばん小さい部品",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-466"
+      ]
+    },
+    {
+      "id": "MI-172",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「〜のところへ行く」は、動いた部品の中心を相手の中心にそろえる。途中で相手が動いても行き先は変えない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-467",
+        "MC-468"
+      ]
+    },
+    {
+      "id": "MI-173",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "見出しの主語が「自分」の本文は、見出しの主語を持ち主の名前で書き直して名人の本文にする",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-469"
+      ]
     }
   ],
   "specGaps": []
