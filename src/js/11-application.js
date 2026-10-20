@@ -1357,7 +1357,7 @@
               note.className = 'mode-blocked-note';
               b.parentElement.append(note);
             }
-            note.textContent = 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
+            note.textContent = !draft && bindingContext(binding).meijin ? '名人モードの 本文は コードで なおします' : 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
           } else note?.remove();
         }
       }
@@ -1631,8 +1631,11 @@
       selectedId = MEIJIN_OWNER; currentEvent = 'start'; selectedScriptId = d.scriptId;
       hideSourceOverview(); renderTree(); renderProperties(); loadEditor(); renderComponents();
       const lines = el.editor.value.split('\n'), start = lines.slice(0, d.headLine - 1).reduce((sum, line) => sum + line.length + 1, 0);
-      el.editor.focus();
-      el.editor.setSelectionRange(start, start + (lines[d.headLine - 1] || '').length);
+      // The closed dialog gives focus back (and lets the page take focus) in its observer, which runs first.
+      queueMicrotask(() => {
+        el.editor.focus();
+        el.editor.setSelectionRange(start, start + (lines[d.headLine - 1] || '').length);
+      });
     }
     function paintCallable() {
       syncingDraft = true;
@@ -2494,6 +2497,9 @@
         first = project.scripts.find((x) => x.targetId === selectedId && x.event === currentEvent);
       el.event.value = sourceOverviewOpen ? 'all' : row && row !== first ? scriptSourceKey(row) : currentEvent;
       $('#scriptAdd').disabled = modelLocked() || project.scripts.length >= LIMITS.scripts;
+      $('#scriptAdd').textContent = currentIsMeijin() ? '名人の本文を ふやす' : '同じできごとの本文を ふやす';
+      $('#meijinDelete').hidden = !currentIsMeijin();
+      $('#meijinDelete').disabled = modelLocked();
       // 名人: code only; 「名人モードで 書く」 starts one from a script in code view.
       $('#meijinStart').hidden = currentIsMeijin() || (editorModes.get('script') || 'code') !== 'code' || document.body.dataset.uiLevel === 'entry';
       $('#meijinStart').disabled = modelLocked();
@@ -6535,6 +6541,19 @@
       // Keep the selected body in the current frame without creating an edit.
       if (!modelLocked()) pushHistoryNow();
     });
+    // 名人: the shown 名人 body is taken off the list (one step of undo).
+    $('#meijinDelete').onclick = () => {
+      if (modelLocked() || !currentIsMeijin() || !flushActiveEditor()) return;
+      const row = (selectedScriptId && project.scripts.find(x => x.id === selectedScriptId)) || meijinScripts()[0];
+      if (!row || !confirm('この 名人の本文を けしますか？')) return;
+      clearTimeout(historyTimer); pushHistoryNow();
+      project.scripts = project.scripts.filter(x => x !== row);
+      const rest = meijinScripts();
+      if (rest.length) { selectedScriptId = rest[0].id; } else { selectedId = 'stage'; currentEvent = 'start'; selectedScriptId = null; }
+      hideSourceOverview(); markDirty(); renderAll(); loadEditor(); refreshEditor();
+      clearTimeout(historyTimer); pushHistoryNow();
+      setStatus('名人の本文を けしました', 'ok');
+    };
     $('#scriptAdd').onclick = () => {
       if (modelLocked() || !flushActiveEditor()) return;
       try {

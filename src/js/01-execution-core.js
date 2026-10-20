@@ -3591,8 +3591,11 @@
               if (a) {
                 const nx = ensureFinite(br.startX * (1 - p) + br.targetX * p),
                   ny = ensureFinite(br.startY * (1 - p) + br.targetY * p);
-                const actualX = ensureFinite(a.x + nx - br.lastX),
-                  actualY = ensureFinite(a.y + ny - br.lastY);
+                // What else moved the part during the glide is kept; the rounding left by adding the steps is not
+                // (the move ends on its end point: よこ7歩 is 7, not 6.999999999999591).
+                const moved = (at, last, next) => { const d = at - last; return Math.abs(d) <= 1e-9 * Math.max(1, Math.abs(next)) ? 0 : d; };
+                const actualX = ensureFinite(nx + moved(a.x, br.lastX, nx)),
+                  actualY = ensureFinite(ny + moved(a.y, br.lastY, ny));
                 if (a.penDown && (br.lastX !== nx || br.lastY !== ny))
                   this.ui.penLine?.(
                     a.x + a.w / 2,

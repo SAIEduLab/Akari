@@ -124,6 +124,18 @@ const checks={
     return {expect:{meijin:scripts.some(x=>x.mode==='meijin'),ownerless:scripts.filter(x=>x.mode==='meijin').every(x=>x.targetId==='meijin'),listed}};},
   'MC-006':async s=>{await s.select('stage');await s.code();await s.write('ねこは右へ10歩動く。');await s.startMeijin(true);const before=await s.text();await s.page.locator('#editorModeblocks').click({force:true}).catch(()=>{});await s.page.waitForTimeout(250);
     return {expect:{stillCode:(await s.mode())==='code',sameText:(await s.text())===before}};},
+  'MC-416':async s=>{await s.select('meijin');await s.code();const meijin=async()=>(await s.scripts()).filter(x=>x.mode==='meijin').length;
+    const label=bare(await s.page.locator('#scriptAdd').textContent());await s.page.click('#scriptAdd');await s.page.waitForTimeout(300);
+    const bodies=await s.page.evaluate(()=>[...document.querySelectorAll('#eventSelect option')].map(o=>o.textContent.replace(/\s+/g,'')));const added=await meijin();
+    s.page.once('dialog',d=>d.accept());await s.page.click('#meijinDelete');await s.page.waitForTimeout(300);const removed=await meijin();
+    await s.page.click('#undoBtn');await s.page.waitForTimeout(300);const undone=await meijin();
+    return {expect:{label:label==='名人の本文をふやす',listed:bodies.includes('名人の本文1')&&bodies.includes('名人の本文2'),added:added===2,removed:removed===1,undone:undone===2},info:{label,bodies,added,removed,undone}};},
+  'MC-417':async s=>{await s.select('w-neko');await s.code();await s.write('右へ10歩動く。');await s.blocks();const before=await s.mode();
+    await s.select('meijin');const onMeijin=await s.mode(),text=await s.text();await s.select('w-neko');const back=await s.mode();
+    return {expect:{blocksChosen:before==='blocks',meijinInCode:onMeijin==='code'&&text.includes('ねこは右へ10歩動く。'),backToBlocks:back==='blocks'},info:{before,onMeijin,back}};},
+  'MC-411':async s=>{await s.select('meijin');await s.code();
+    const note=await s.page.evaluate(()=>[...document.querySelectorAll('.mode-blocked-note')].filter(n=>n.offsetParent).map(n=>n.textContent).join(''));
+    return {expect:{blocksDisabled:await s.page.locator('#editorModeblocks').isDisabled(),saysCode:bare(note).includes('コードでなおします'),noRedFix:!bare(note).includes('赤いところを直す')},info:{note}};},
   'MC-007':async s=>{await s.select('stage');await s.code();await s.startMeijin(false);const button=await s.visible('#meijinStart');const ordinary=(await s.scripts()).every(x=>x.mode!=='meijin');await s.blocks();
     return {expect:{ordinary,blocks:(await s.mode())==='blocks',buttonStill:button}};},
   'MC-008':async s=>{await s.select('stage');await s.code();await s.write('ねこは右へ10歩動く。');await s.startMeijin(true);await s.page.click('#undoBtn');await s.page.waitForTimeout(300);

@@ -7,6 +7,14 @@
   const MEIJIN_BINDER = 'この部品';
   const MEIJIN_SET_WORDS = /^(みんな|それぞれ|順番に)、?/;
   const meijinEscape = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // The 名人 forms below read a name written in 【 】 as the same name: the mask shows those spans, and the name is
+  // looked up without them.
+  const meijinBare = text => text.replace(/^【(.*)】$/, '$1');
+  function meijinNameMask(text) {
+    const mask = surfaceMask(text).split('');
+    for (const m of text.matchAll(/【[^】]*】/g)) for (let i = m.index; i < m.index + m[0].length; i++) mask[i] = text[i];
+    return mask.join('');
+  }
   function meijinPartNames(symbols) {
     return [...new Set((symbols?.project?.components || []).map(c => c.name))].sort((a, b) => b.length - a.length);
   }
@@ -203,10 +211,11 @@
   function meijinRewrite(code, symbols, ctx) {
     const mask = surfaceMask(code), parts = meijinPartNames(symbols);
     if (!parts.length) return null;
-    const alt = parts.map(meijinEscape).join('|'), capture = pattern => surfaceCapture(new RegExp(pattern, 'd'), code, mask);
+    const alt = parts.flatMap(name => ['【' + meijinEscape(name) + '】', meijinEscape(name)]).join('|'), nameMask = meijinNameMask(code),
+      capture = pattern => surfaceCapture(new RegExp(pattern, 'd'), code, nameMask);
     let p;
     const own = (part, name) => {
-      const component = symbols.project.components.find(c => c.name === part);
+      const component = symbols.project.components.find(c => c.name === meijinBare(part));
       return !!(component?.localData?.variables?.some(v => v.name === name) || component?.localData?.lists?.some(v => v.name === name));
     };
     // ねこの大きさを120％にする / ねこの色を「赤」にする / ねこの体力を1減らす: a change of a part's state, written by the
@@ -222,7 +231,7 @@
     if ((p = capture('^(' + alt + ')のペンを(下ろす|おろす|上げる|あげる)$'))) return p[0].text + 'はペンを' + p[1].text;
     if ((p = capture('^(' + alt + ')のすがたを(かくす|隠す|見せる|みせる)$'))) return p[0].text + 'はすがたを' + p[1].text;
     // ねこは、だんごのところへ行く / …へ1秒かけて動く / ゴールまで行く: to where the other part is when the sentence runs.
-    const place = other => `よこ（「${other}」のよこのばしょ）歩、たて（「${other}」のたてのばしょ）歩のばしょへ`;
+    const place = other => `よこ（「${meijinBare(other)}」のよこのばしょ）歩、たて（「${meijinBare(other)}」のたてのばしょ）歩のばしょへ`;
     if ((p = capture('^(' + alt + ')(?:は|が)、?(' + alt + ')(?:のところ(?:へ|まで)|まで)(?:行く|いく|動く|うごく)$')))
       return `${p[0].text}は、${place(p[1].text)}行く`;
     if ((p = capture('^(' + alt + ')(?:は|が)、?(' + alt + ')(?:のところ(?:へ|まで)|まで)(.+?)秒かけて(?:動く|うごく|行く|いく)$')))
@@ -237,7 +246,7 @@
     let out = code, changed = false;
     // build returns null to keep the text as written.
     const replaceAll = (pattern, build) => {
-      const protectedText = surfaceMask(out), re = new RegExp(pattern.source, 'gd');
+      const protectedText = meijinNameMask(out), re = new RegExp(pattern.source, 'gd');
       let result = '', at = 0, m;
       while ((m = re.exec(protectedText))) {
         const groups = m.indices.map(range => range ? out.slice(...range) : ''), next = build(groups);
@@ -247,20 +256,24 @@
       out = result + out.slice(at);
     };
     // もしねこがコピーなら / もし主役がコピーでなければ: whether that part is a copy.
-    replaceAll(/(もし、?|、|^)([^、。\u0001が]+?)がコピー(なら|でなければ|ではないなら)/, m =>
-      isMeijinPart(m[2], symbols, ctx) || meijinVariableName(m[2], symbols, ctx) ? `${m[1]}条件（${m[2]}のコピーである）が成り立${m[3] === 'なら' ? 'つなら' : 'たないなら'}` : null);
+    replaceAll(/(もし、?|、|^)(【[^】]*】|[^、。\u0001が【】]+?)がコピー(なら|でなければ|ではないなら)/, m =>
+      isMeijinPart(meijinBare(m[2]), symbols, ctx) || meijinVariableName(meijinBare(m[2]), symbols, ctx) ? `${m[1]}条件（${m[2]}のコピーである）が成り立${m[3] === 'なら' ? 'つなら' : 'たないなら'}` : null);
     // ねこが犬より右にいれば: the parts' positions compared.
     const side = { 右: ['よこ', '大き'], 左: ['よこ', '小さ'], 上: ['たて', '小さ'], 下: ['たて', '大き'] };
     replaceAll(new RegExp('(' + alt + ')が(' + alt + ')より(右|左|上|下)に(いれば|いなければ|いるあいだ|いるまで|いる)'), m => {
       const [axis, size] = side[m[3]], ending = { いれば: 'ければ', いなければ: 'くなければ', いるあいだ: 'いあいだ', いるまで: 'くなるまで', いる: 'い' }[m[4]];
-      return `「${m[1]}」の${axis}のばしょが「${m[2]}」の${axis}のばしょより${size}${ending}`;
+      return `「${meijinBare(m[1])}」の${axis}のばしょが「${meijinBare(m[2])}」の${axis}のばしょより${size}${ending}`;
     });
     // ねこから犬までのきょり: one part's distance to another.
-    replaceAll(new RegExp('(' + alt + ')から(' + alt + ')までの(?:きょり|距離)'), m => `「${m[1]}」の（「${m[2]}」までのきょり）`);
-    // 持ち物が空なら / 点数が偶数なら / 点数が10の倍数なら: the words of 国語 and 算数 for the same checks.
-    replaceAll(/(もし、?|、|^)([^、。\u0001が]+?)が空(なら|でなければ|のあいだ|であるあいだ|になるまで)/, m => `${m[1]}${m[2]}の長さが0と同じ${m[3] === 'のあいだ' ? 'であるあいだ' : m[3]}`);
-    replaceAll(/(もし、?|、|^)([^、。\u0001が]+?)が(偶数|奇数)(なら|でなければ)/, m => `${m[1]}${m[2]}÷2のあまりが${m[3] === '偶数' ? 0 : 1}と同じ${m[4]}`);
-    replaceAll(/(もし、?|、|^)([^、。\u0001が]+?)が([0-9０-９]+)の倍数(なら|でなければ)/, m => `${m[1]}${m[2]}÷${m[3]}のあまりが0と同じ${m[4]}`);
+    replaceAll(new RegExp('(' + alt + ')から(' + alt + ')までの(?:きょり|距離)'), m => `「${meijinBare(m[1])}」の（「${meijinBare(m[2])}」までのきょり）`);
+    // 持ち物が空なら / 点数が偶数なら / 点数が10の倍数なら / 点数が12の約数なら: the words of 国語 and 算数 for the same checks.
+    replaceAll(/(もし、?|、|^)(【[^】]*】|[^、。\u0001が【】]+?)が空(なら|でなければ|のあいだ|であるあいだ|になるまで)/, m => `${m[1]}${m[2]}の長さが0と同じ${m[3] === 'のあいだ' ? 'であるあいだ' : m[3]}`);
+    // The あまり has the sign of the number (－3÷2のあまり is －1), so an odd number is one whose あまり is 1 or －1.
+    replaceAll(/(もし、?|、|^)(【[^】]*】|[^、。\u0001が【】]+?)が(偶数|奇数)(なら|でなければ)/, m => m[3] === '偶数' ? `${m[1]}${m[2]}÷2のあまりが0と同じ${m[4]}` : `${m[1]}絶対値（${m[2]}÷2のあまり）が1と同じ${m[4]}`);
+    replaceAll(/(もし、?|、|^)(【[^】]*】|[^、。\u0001が【】]+?)が([0-9０-９]+)の倍数(なら|でなければ)/, m => `${m[1]}${m[2]}÷${m[3]}のあまりが0と同じ${m[4]}`);
+    // 約数: 0 divides no number and 12÷0 has no あまり, so 0 is ruled out first (かつ reads its right side only then).
+    replaceAll(/(もし、?|、|^)(【[^】]*】|[^、。\u0001が【】]+?)が([0-9０-９]+)の約数(なら|でなければ)/, m => `${m[1]}条件（${m[2]}が0とちがう かつ ${m[3]}÷${m[2]}のあまりが0と同じ）が成り立${m[4] === 'なら' ? 'つなら' : 'たないなら'}`);
+    replaceAll(/(もし、?|、|^)(【[^】]*】|[^、。\u0001が【】]+?)が(?:からっぽ|空っぽ)(なら|でなければ|のあいだ|であるあいだ|になるまで)/, m => `${m[1]}${m[2]}の長さが0と同じ${m[3] === 'のあいだ' ? 'であるあいだ' : m[3]}`);
     if (changed) return out;
     // 点数が10点になったら、ねこは…: wait until it becomes so, then do it (once).
     if (!/^もし/.test(mask) && (p = surfaceCapture(/^(.+?)になったら、(.+)$/d, code, mask))) return p[0].text + 'になるまで待って、' + p[1].text;
