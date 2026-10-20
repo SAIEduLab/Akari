@@ -10806,6 +10806,13 @@ function createAkariExtensionHost(options) {
       finishTask(task, state = 'DONE') {
         task.extensionAbort?.abort();
         if (['DONE', 'CANCELLED', 'ERROR'].includes(task.state) && task.state !== state) return;
+        // 名人: ねこと犬は1秒待つ — each lane's part waits; that wait goes on in the flow that started the lanes, so the
+        // part's next sentence there waits for it (as after ねこは1秒待つ in one flow).
+        if (state === 'DONE' && task.laneParent && task.holds?.size)
+          for (const [runtimeId, hold] of task.holds) {
+            const parent = (task.laneParent.holds ||= new Map()), held = parent.get(runtimeId);
+            if (!(held?.kind === 'time' && hold.kind === 'time' && held.deadline >= hold.deadline)) parent.set(runtimeId, hold);
+          }
         task.state = state;
         this.blocked.delete(task);
         for (const [key, control] of this.continuous) if (control.temporary && control.task === task) this.continuous.delete(key);
