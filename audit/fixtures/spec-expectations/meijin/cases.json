@@ -27478,7 +27478,7 @@
         },
         {
           "file": "LANGUAGE.md",
-          "quote": "「話し終わる」は、その部品の時間を書いた発話が終わることです（「〜が言い終わるまで待つ」も同じです）。時間を書かない発話は、すぐ終わったものとみなします。"
+          "quote": "「話し終わる」は、その部品の時間を書いた発話が終わることです（「〜が言い終わるまで待つ」も同じです）。待つ文には主語を書かず、本文全体が待ちます。待ち始めたときに話していなければ、すぐに進みます（ほかの本文で話し始める前に待ち始めたときも同じです）。時間を書かない発話は、すぐ終わったものとみなします。"
         }
       ],
       "world": {
@@ -30113,7 +30113,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "「話し終わる」は、その部品の時間を書いた発話が終わることです（「〜が言い終わるまで待つ」も同じです）。時間を書かない発話は、すぐ終わったものとみなします。"
+          "quote": "「話し終わる」は、その部品の時間を書いた発話が終わることです（「〜が言い終わるまで待つ」も同じです）。待つ文には主語を書かず、本文全体が待ちます。待ち始めたときに話していなければ、すぐに進みます（ほかの本文で話し始める前に待ち始めたときも同じです）。時間を書かない発話は、すぐ終わったものとみなします。"
         }
       ],
       "world": {
@@ -30179,7 +30179,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "「話し終わる」は、その部品の時間を書いた発話が終わることです（「〜が言い終わるまで待つ」も同じです）。時間を書かない発話は、すぐ終わったものとみなします。"
+          "quote": "「話し終わる」は、その部品の時間を書いた発話が終わることです（「〜が言い終わるまで待つ」も同じです）。待つ文には主語を書かず、本文全体が待ちます。待ち始めたときに話していなければ、すぐに進みます（ほかの本文で話し始める前に待ち始めたときも同じです）。時間を書かない発話は、すぐ終わったものとみなします。"
         }
       ],
       "world": {
@@ -40836,7 +40836,7 @@
       "basis": [
         {
           "file": "LANGUAGE.md",
-          "quote": "呼び出すときは、値を「、」でつなぐか、「として、」を重ねます（`【長さ】を5、【向き】を90として、【かく】という手順を行う。"
+          "quote": "呼び出す文の主語は文のはじめに書き、値を「、」でつなぐか、「として、」を重ねます（`【長さ】を5、【向き】を90として、【かく】という手順を行う。"
         }
       ],
       "world": {
@@ -47731,6 +47731,2686 @@
         "line": 3,
         "guidanceContains": [
           "【長さ】を5、【向き】を90として、【かく】という手順を行う"
+        ]
+      }
+    },
+    {
+      "id": "MC-553",
+      "item": "MI-217",
+      "kind": "run",
+      "title": "「ねこがおされたとき、犬は、」の中身の主語のない文は、犬が行う",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "どの見出しでも同じです（`ねこがおされたとき、犬は、` `1秒ごとに、ねこは、`）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこがおされたとき、犬は、\n  「x」と言う。"
+          }
+        ]
+      },
+      "inputs": [
+        {
+          "atMs": 100,
+          "click": "ねこ"
+        }
+      ],
+      "run": {
+        "untilMs": 300
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "犬",
+            "text": "x",
+            "atMs": 100
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-554",
+      "item": "MI-217",
+      "kind": "run",
+      "title": "「1秒ごとに、ねこは、」の中身の主語のない文は、ねこが行う",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "どの見出しでも同じです（`ねこがおされたとき、犬は、` `1秒ごとに、ねこは、`）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "1秒ごとに、ねこは、\n  「x」と言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 1500
+      },
+      "expect": {
+        "speechContains": [
+          {
+            "part": "ねこ",
+            "text": "x",
+            "atMs": 1000
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-555",
+      "item": "MI-218",
+      "kind": "run",
+      "title": "「ねこと犬が1秒かけて画面の右へ40歩動くあいだ、鳥は「x」と1秒話す。」で、三つが同時に始まる",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜あいだ」の前にも部品を並べられます（`ねこと犬が2秒かけて画面の右へ40歩動くあいだ、鳥は「がんばれ」と言う。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこと犬が1秒かけて画面の右へ40歩動くあいだ、鳥は「x」と1秒話す。\n鳥は「おわり」と言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 1500
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "鳥",
+            "text": "x",
+            "atMs": 0
+          },
+          {
+            "part": "鳥",
+            "text": "おわり",
+            "atMs": 1000
+          }
+        ],
+        "at": [
+          {
+            "atMs": 500,
+            "parts": {
+              "ねこ": {
+                "x": 20
+              },
+              "犬": {
+                "x": 220
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-556",
+      "item": "MI-218",
+      "kind": "check",
+      "title": "「ねこと犬は…あいだ、」は止まり、例に「ねこと犬が」を示す",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜あいだ」の前にも部品を並べられます（`ねこと犬が2秒かけて画面の右へ40歩動くあいだ、鳥は「がんばれ」と言う。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこと犬は1秒かけて画面の右へ40歩動くあいだ、鳥は「x」と1秒話す。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 1,
+        "guidanceContains": [
+          "れい：ねこと犬が1秒かけて"
+        ]
+      }
+    },
+    {
+      "id": "MC-557",
+      "item": "MI-219",
+      "kind": "run",
+      "title": "点数4で「もし点数が偶数で、20より小さいなら」は成り立つ",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "あとの条件の主語が前の条件と同じときは、省けます（`もし点数が偶数で、20より小さいなら`）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 4,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "もし点数が偶数で、20より小さいなら、ねこは「a」と言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 200
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "ねこ",
+            "text": "a",
+            "atMs": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-558",
+      "item": "MI-219",
+      "kind": "run",
+      "title": "点数24で「もし点数が偶数で、20より小さいなら」は成り立たない",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "あとの条件の主語が前の条件と同じときは、省けます（`もし点数が偶数で、20より小さいなら`）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 24,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "もし点数が偶数で、20より小さいなら、ねこは「a」と言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 200
+      },
+      "expect": {
+        "speech": [],
+        "final": {
+          "runtimeErrors": "none"
+        }
+      }
+    },
+    {
+      "id": "MC-559",
+      "item": "MI-220",
+      "kind": "run",
+      "title": "「犬は「a」と言う。ねこの大きさを120％にする。「b」と言う。」の「b」は犬が言う",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「ねこの大きさを120％にする」は、主語を書いた文ではなく、相手を書く命令です。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "犬は「a」と言う。\nねこの大きさを120％にする。\n「b」と言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 200
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "犬",
+            "text": "a",
+            "atMs": 0
+          },
+          {
+            "part": "犬",
+            "text": "b",
+            "atMs": 0
+          }
+        ],
+        "at": [
+          {
+            "atMs": 50,
+            "parts": {
+              "ねこ": {
+                "size": 120
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-560",
+      "item": "MI-220",
+      "kind": "run",
+      "title": "「犬は1秒待つ。ねこの大きさを120％にする。」は1秒たってから大きくなる",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「ねこの大きさを120％にする」は、主語を書いた文ではなく、相手を書く命令です。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "犬は1秒待つ。\nねこの大きさを120％にする。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 1500
+      },
+      "expect": {
+        "at": [
+          {
+            "atMs": 500,
+            "parts": {
+              "ねこ": {
+                "size": 100
+              }
+            }
+          },
+          {
+            "atMs": 1200,
+            "parts": {
+              "ねこ": {
+                "size": 120
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-561",
+      "item": "MI-221",
+      "kind": "run",
+      "title": "中の主語がすべてねこの並びのあとの主語のない文は、ねこが行う",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「次のことを同時に始める」の中の主語がすべて同じときは、その主語を引き継ぎます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "次のことを同時に始める。\n  ねこは「x」と言う。\n  ねこは右へ10歩動く。\n「b」と言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 200
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "ねこ",
+            "text": "x",
+            "atMs": 0
+          },
+          {
+            "part": "ねこ",
+            "text": "b",
+            "atMs": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-562",
+      "item": "MI-222",
+      "kind": "check",
+      "title": "「ねこは右へ10歩動いて、犬は左へ10歩動く。」のあとの主語のない文は止まる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "主語のちがう文を「〜て、」でつないだ文（`ねこは右へ10歩動いて、犬は左へ10歩動く。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこは右へ10歩動いて、犬は左へ10歩動く。\n「b」と言う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 2,
+        "guidanceContains": [
+          "引きつげません"
+        ]
+      }
+    },
+    {
+      "id": "MC-563",
+      "item": "MI-223",
+      "kind": "check",
+      "title": "見出し「作品を動かしたとき、ねこは、」の中身で、犬を書いた「もし」のあとの主語のない文は止まる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "この決まりは、見出しの中身と手順の中身でも同じです。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "作品を動かしたとき、ねこは、\n  もし点数が0なら、犬は「a」と言う。\n  「b」と言う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 3,
+        "guidanceContains": [
+          "引きつげません"
+        ]
+      }
+    },
+    {
+      "id": "MC-564",
+      "item": "MI-223",
+      "kind": "check",
+      "title": "手順の中身で、主語を並べた文のあとの主語のない文は止まる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "この決まりは、見出しの中身と手順の中身でも同じです。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "【p】という手順を、次のように作る。\n  ねこと鳥は「z」と言う。\n  「y」と言う。\n犬は【p】という手順を行う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 3,
+        "guidanceContains": [
+          "引きつげません"
+        ]
+      }
+    },
+    {
+      "id": "MC-565",
+      "item": "MI-224",
+      "kind": "run",
+      "title": "「ねこがおされたとき、「x」と言う。」は、おされたねこが言う",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜が〜にふれたとき、」の中身では、ふれた二つの部品のどちらか決まらないので、主語を書きます（書かないと作品チェックで止めます）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこがおされたとき、\n  「x」と言う。"
+          }
+        ]
+      },
+      "inputs": [
+        {
+          "atMs": 100,
+          "click": "ねこ"
+        }
+      ],
+      "run": {
+        "untilMs": 300
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "ねこ",
+            "text": "x",
+            "atMs": 100
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-566",
+      "item": "MI-224",
+      "kind": "check",
+      "title": "「だんごが星にふれたとき、「x」と言う。」は止まり、主語を書くよう案内する",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「〜が〜にふれたとき、」の中身では、ふれた二つの部品のどちらか決まらないので、主語を書きます（書かないと作品チェックで止めます）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "だんごが星にふれたとき、「x」と言う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 1,
+        "guidanceContains": [
+          "どちらが するかが 決まらない"
+        ]
+      }
+    },
+    {
+      "id": "MC-567",
+      "item": "MI-225",
+      "kind": "run",
+      "title": "「ねこは1秒待つ。ねこは「a」と言う。犬は「b」と言う。」で、犬も1秒後に話す",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "本文は書いた順に進むので、待っている部品の文まで来ると、その文とその後ろの文は待ちます（それより前に書いたほかの部品の文は、すぐに行います）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこは1秒待つ。\nねこは「a」と言う。\n犬は「b」と言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 1500
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "ねこ",
+            "text": "a",
+            "atMs": 1000
+          },
+          {
+            "part": "犬",
+            "text": "b",
+            "atMs": 1000
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-568",
+      "item": "MI-225",
+      "kind": "run",
+      "title": "「ねこは1秒待つ。点数を5にする。」の点数は1秒後に5になる",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "本文は書いた順に進むので、待っている部品の文まで来ると、その文とその後ろの文は待ちます（それより前に書いたほかの部品の文は、すぐに行います）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこは1秒待つ。\n点数を5にする。\n鳥は点数の値を言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 1500
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "鳥",
+            "text": "5",
+            "atMs": 1000
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-569",
+      "item": "MI-226",
+      "kind": "check",
+      "title": "並びの中の主語のない行は、前の行の主語を引き継がず、止まる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「次のことを同時に始める」のそれぞれの文は、並びの前の主語から始めます（前の行の主語は引き継ぎません）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "次のことを同時に始める。\n  ねこは1秒待つ。\n  「y」と言う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 3,
+        "guidanceContains": [
+          "だれが するかを"
+        ]
+      }
+    },
+    {
+      "id": "MC-570",
+      "item": "MI-226",
+      "kind": "run",
+      "title": "並びの前の主語は、並びのどの行にも引き継がれる",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「次のことを同時に始める」のそれぞれの文は、並びの前の主語から始めます（前の行の主語は引き継ぎません）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "犬は「z」と言う。\n次のことを同時に始める。\n  ねこは1秒待つ。\n  「y」と言う。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 200
+      },
+      "expect": {
+        "speech": [
+          {
+            "part": "犬",
+            "text": "z",
+            "atMs": 0
+          },
+          {
+            "part": "犬",
+            "text": "y",
+            "atMs": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "MC-571",
+      "item": "MI-227",
+      "kind": "check",
+      "title": "「作品を動かしたとき、主役は、」は止まる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "見出しの主語には、部品の名前を一つ書きます（変数や、いくつかの部品は書けません）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "作品を動かしたとき、主役は、\n  「x」と言う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 1,
+        "guidanceContains": [
+          "部品の 名前を 一つ"
+        ]
+      }
+    },
+    {
+      "id": "MC-572",
+      "item": "MI-227",
+      "kind": "check",
+      "title": "「作品を動かしたとき、ねこと犬は、」は止まる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "見出しの主語には、部品の名前を一つ書きます（変数や、いくつかの部品は書けません）。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "作品を動かしたとき、ねこと犬は、\n  「x」と言う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 1,
+        "guidanceContains": [
+          "部品の 名前を 一つ"
+        ]
+      }
+    },
+    {
+      "id": "MC-573",
+      "item": "MI-228",
+      "kind": "check",
+      "title": "「ねこは、犬が言い終わるまで待つ。」は、主語を書かないよう案内する",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "待つ文には主語を書かず、本文全体が待ちます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこは、犬が言い終わるまで待つ。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 1,
+        "guidanceContains": [
+          "だれが 待つかは 書きません"
+        ]
+      }
+    },
+    {
+      "id": "MC-574",
+      "item": "MI-228",
+      "kind": "check",
+      "title": "「ねこが言い終わるまで待ってから、犬は「b」と言う。」は、文を分けるよう案内する",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "待つ文には主語を書かず、本文全体が待ちます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこが言い終わるまで待ってから、犬は「b」と言う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 1,
+        "guidanceContains": [
+          "分けて"
+        ]
+      }
+    },
+    {
+      "id": "MC-575",
+      "item": "MI-228",
+      "kind": "check",
+      "title": "「主役が言い終わるまで待つ。」は、部品の名前を書くよう案内する",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "待つ文には主語を書かず、本文全体が待ちます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "主役が言い終わるまで待つ。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 1,
+        "guidanceContains": [
+          "部品の 名前"
+        ]
+      }
+    },
+    {
+      "id": "MC-576",
+      "item": "MI-229",
+      "kind": "run",
+      "title": "「点数を、ねこからいちばん近い星までのきょりにする。」で、ねこから星までのきょりになる",
+      "polarity": "positive",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「ねこからいちばん近い星までのきょり」とも書けます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "点数を、ねこからいちばん近い星までのきょりにする。"
+          }
+        ]
+      },
+      "run": {
+        "untilMs": 200
+      },
+      "expect": {
+        "final": {
+          "variables": {
+            "点数": 300
+          },
+          "runtimeErrors": "none"
+        }
+      }
+    },
+    {
+      "id": "MC-577",
+      "item": "MI-229",
+      "kind": "check",
+      "title": "「ねこは、犬にいちばん近い星の方を向く。」は止まり、リストから選ぶ書き方を案内する",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "「ねこからいちばん近い星までのきょり」とも書けます。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "ねこは、犬にいちばん近い星の方を向く。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 1,
+        "guidanceContains": [
+          "なかまのうち、犬にいちばん近いもの"
+        ]
+      }
+    },
+    {
+      "id": "MC-578",
+      "item": "MI-230",
+      "kind": "check",
+      "title": "「【長さ】を5として、【向き】を90として、ねこは【かく】という手順を行う。」は止まる",
+      "polarity": "negative",
+      "basis": [
+        {
+          "file": "LANGUAGE.md",
+          "quote": "呼び出す文の主語は文のはじめに書き、値を「、」でつなぐか、「として、」を重ねます（`【長さ】を5、【向き】を90として、【かく】という手順を行う。"
+        }
+      ],
+      "world": {
+        "parts": [
+          {
+            "name": "ねこ",
+            "x": 0,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 10
+            }
+          },
+          {
+            "name": "犬",
+            "x": 200,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 7
+            }
+          },
+          {
+            "name": "鳥",
+            "x": 100,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true,
+            "vars": {
+              "体力": 5
+            }
+          },
+          {
+            "name": "星",
+            "x": 300,
+            "y": 100,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "だんご",
+            "x": 0,
+            "y": 300,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          },
+          {
+            "name": "ゴール",
+            "x": 3000,
+            "y": 3000,
+            "direction": 0,
+            "size": 100,
+            "visible": true
+          }
+        ],
+        "variables": {
+          "点数": 0,
+          "主役": 0
+        },
+        "lists": {
+          "持ち物": [
+            "本",
+            "ぼうし"
+          ],
+          "なかま": []
+        },
+        "scripts": [
+          {
+            "owner": "meijin",
+            "source": "【かく】という手順を、長さと向きを受け取って、次のように作る。\n  前へ【長さ】歩進む。\n【長さ】を5として、【向き】を90として、ねこは【かく】という手順を行う。"
+          }
+        ]
+      },
+      "expect": {
+        "stops": true,
+        "line": 3,
+        "guidanceContains": [
+          "主語は 文の はじめに"
         ]
       }
     }

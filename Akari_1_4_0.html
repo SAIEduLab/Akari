@@ -18381,20 +18381,22 @@ function createAkariExtensionHost(options) {
     const parseAt=(line,fn)=>{try{return fn();}catch(error){if(error instanceof AkariError&&!error.line){error.line=line.lineNo;error.column=error.column||1;}throw error;}};
     let first=nextCode(0),heading=null,headingActorRange=null;
     if(first<lines.length&&lines[first].indent!==0)throw new AkariError('P209','いちばん 外の 文は、行の はじめを 右へ ずらさずに 書きます',lines[first].lineNo,1);
-    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols,ctx.previousHeading,ctx));if(found){heading=found.heading;const line=lines[first];if(found.actor)headingActorRange=sourceRange(line.mapped?.positions||[],found.actor.start,found.actor.end);if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','「作品を動かしたとき、自分は、」などの 次の 行は、行の はじめを 右へ ずらして 書いてください',lines[first].lineNo,1);}}
+    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols,ctx.previousHeading,ctx));if(found){heading=found.heading;const line=lines[first];if(ctx.meijin&&found.bodyTopic)baseCtx.topicActor={...found.bodyTopic};if(ctx.meijin&&found.body?.text){const who=/^(【[^】]+】|[^、。「」【】\s]+?)は、(.*)$/.exec(found.body.text),bare=who&&who[1].replace(/^【(.*)】$/,'$1');if(who&&((symbols?.project?.components||[]).some(c=>c.name===bare)||dataNameKind(bare,symbols,ctx)==='variable')){baseCtx.topicActor=dataNameKind(bare,symbols,ctx)==='variable'?{kind:'value',value:exprNode('VariableRead',{name:bare,qualifier:null})}:{kind:'named',name:bare};found.body={...found.body,text:who[2],start:found.body.end-who[2].length};}}if(found.actor)headingActorRange=sourceRange(line.mapped?.positions||[],found.actor.start,found.actor.end);if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','「作品を動かしたとき、自分は、」などの 次の 行は、行の はじめを 右へ ずらして 書いてください',lines[first].lineNo,1);}}
     const rules=[];
     function block(start,indent,scope,depth){
       if(depth>LIMITS.blockDepth)throw new AkariError('P208','「もし」や「くり返す」の 中に、ブロックが 重なりすぎています。いくつかの 動きに 分けてください',lines[start]?.lineNo||1,1);
-      scope={...scope,topicActor:{...scope.topicActor}};
+      // 名人: each line of a 並び starts from the subject before the 並び (the lines run side by side, R15).
+      const laneTopic=scope.laneTopic;
+      scope={...scope,topicActor:{...scope.topicActor},laneTopic:undefined};
       const nodes=[];let i=start,previousSentenceStart=null,tagLine=-1;
       // Each statement remembers the sentence it was read from (名人: one sentence is one lane).
       const tag=()=>{for(const n of nodes)if(!STATEMENT_LINE.has(n))STATEMENT_LINE.set(n,tagLine);};
-      while(i<lines.length){tag();tagLine=i;const line=lines[i];if(!line.code){if(line.comment)nodes.push(statementNode('CommentLine',line,{text:line.comment.slice(1),raw:line.raw,actorRef:{...scope.topicActor}}));i++;continue;}if(line.indent<indent)break;if(line.indent>indent)throw new AkariError('P209','同じ まとまりの 文は、行の はじめの 空白の 数を そろえてください',line.lineNo,1);
+      while(i<lines.length){tag();tagLine=i;const line=lines[i];if(laneTopic)scope.topicActor={...laneTopic};if(!line.code){if(line.comment)nodes.push(statementNode('CommentLine',line,{text:line.comment.slice(1),raw:line.raw,actorRef:{...scope.topicActor}}));i++;continue;}if(line.indent<indent)break;if(line.indent>indent)throw new AkariError('P209','同じ まとまりの 文は、行の はじめの 空白の 数を そろえてください',line.lineNo,1);
         const local={...scope,sourceLine:line,lineNo:line.lineNo};
         if(scope.meijin){
           const read=parseAt(line,()=>readMeijinLine(line,{symbols,scope:local,lines,top:depth===0,index:i,indent,nextCode,children:(at,childScope)=>block(at,lines[at].indent,childScope,depth+1)}));
           if(read?.rewrite){lines[i]=read.rewrite;continue;}
-          if(read){if(scope.meijin)meijinLaneRefs(read.nodes,scope.topicActor);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);i=read.index;continue;}
+          if(read){if(scope.meijin&&line.meijinOwned)for(const p of read.nodes)STATEMENT_EXPLICIT_ACTORS.delete(p);if(scope.meijin)meijinLaneRefs(read.nodes,scope.topicActor);previousSentenceStart=nodes.length;nodes.push(...read.nodes);scope.topicSet=read.nodes.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of read.nodes)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!read.nodes.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(read.nodes,scope.topicActor);if(scope.meijin){const named=new Set(read.nodes.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1)scope.topicActor={kind:'self',topicEnded:true};}i=read.index;continue;}
         }
         const repeatPrevious=surfaceCapture(/^これを(.+?)回(?:くり返す|くり返します|繰り返す|繰り返します)$/d,line.code);
         if(repeatPrevious){
@@ -18419,7 +18421,7 @@ function createAkariExtensionHost(options) {
         if(line.code==='ここまで')throw new AkariError('P203','「ここまで」は 書きません。次の 文の 行の はじめを 左へ もどすと、まとまりが おわります',line.lineNo,1);
         const rule=parseAt(line,()=>{try{return readContinuousSentence(line.code,line,symbols,local);}catch(error){if(error.draftRole?.kind==='ContinuousRule'){const next=lines[nextCode(i+1)],speed=next?surfaceCapture(/^(.+?秒に.+?歩の速さで)(?:動かす|動く)$/d,next.code):null;if(speed&&next.indent===indent){const motion=/(?:動き続ける|動かし続ける)$/.exec(surfaceMask(line.code));if(motion){const range=sourceRange(line.mapped.positions),last=sourceRange(next.mapped.positions);error.proposals=[{label:'2つの文を1つの「つづけて動くルール」にまとめる',source:line.code.slice(0,motion.index)+speed[0].text+motion[0],start:range.start,end:last.end}];}}}throw error;}});if(rule){if(depth!==0)throw new AkariError('P205','つづけて動くルールは、「もし」や「くり返す」の中には書けません。いちばん外に書いてください',line.lineNo,1);rules.push(rule);i++;continue;}
         const head=parseAt(line,()=>readBlockHead(line.code,symbols,local));if(head?.kind==='Else')break;
-        if(!head){const parts=parseAt(line,()=>parseSentenceSequence(line,symbols,local));if(scope.meijin)meijinLaneRefs(parts,scope.topicActor);previousSentenceStart=nodes.length;nodes.push(...parts);scope.topicSet=parts.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of parts)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!parts.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(parts,scope.topicActor);i++;continue;}
+        if(!head){const parts=parseAt(line,()=>parseSentenceSequence(line,symbols,local));if(scope.meijin&&line.meijinOwned)for(const p of parts)STATEMENT_EXPLICIT_ACTORS.delete(p);if(scope.meijin)meijinLaneRefs(parts,scope.topicActor);previousSentenceStart=nodes.length;nodes.push(...parts);scope.topicSet=parts.some(n=>['Parallel','ParallelEach','ForEach'].includes(n.kind));for(const part of parts)if(STATEMENT_EXPLICIT_ACTORS.has(part))scope.topicActor=topicOf(part.actorRef);if(scope.meijin&&!parts.some(p=>STATEMENT_EXPLICIT_ACTORS.has(p)))scope.topicActor=meijinTopicAfter(parts,scope.topicActor);if(scope.meijin){const named=new Set(parts.filter(p=>STATEMENT_EXPLICIT_ACTORS.has(p)).map(p=>JSON.stringify(topicOf(p.actorRef))));if(named.size>1)scope.topicActor={kind:'self',topicEnded:true};}i++;continue;}
         previousSentenceStart=null;
         const controlActor=head.actorRef||scope.topicActor;
         let childScope={...scope,topicActor:{...controlActor},binders:[...(scope.binders||[])]},childStart=i+1,firstChild=nextCode(childStart),binderRange=null;
@@ -19364,11 +19366,14 @@ function createAkariExtensionHost(options) {
   // 名人のできごと: だんごが星にふれたとき、/ 点数が10点以上になったとき、/ 1秒ごとに、
   function readMeijinHeading(code, mask, symbols, ctx) {
     let p;
+    // 作品を動かしたとき、ねこと犬は、: one part is the heading's subject.
+    if ((p = /^.+?(?:とき|たら|たびに|ごとに)、(.+?)は、$/.exec(mask)) && meijinPartList(p[1], symbols, ctx))
+      throw new AkariError('P205', `見出しの 主語には、部品の 名前を 一つ 書きます（「${p[1]}」のように いくつかの 部品は 書けません）。中身の 文に「${p[1]}は」と 書きます`);
     if (MEIJIN_WHEN_PRESSED.test(mask)) throw new AkariError('P205', MEIJIN_WHEN_PRESSED_MESSAGE);
     if ((p = surfaceCapture(/^(.+?)が(\u0001+)の合図を(?:受けた|うけた)とき、(.*)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, ctx) && /^「[^「」]+」$/.test(p[1].text))
       return { heading: { event: 'message', actorRef: { kind: 'named', name: meijinBare(p[0].text) }, filter: { message: p[1].text.slice(1, -1) } }, body: p[2], actor: p[0] };
     if ((p = surfaceCapture(/^(.+?)が(.+?)に(?:ふれた|触れた|さわった)とき、(.*)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, ctx) && isMeijinPart(p[1].text, symbols, ctx))
-      return { heading: { event: 'touchStart', actorRef: { kind: 'named', name: meijinBare(p[0].text) }, filter: { target: meijinBare(p[1].text) } }, body: p[2], actor: p[0] };
+      return { heading: { event: 'touchStart', actorRef: { kind: 'named', name: meijinBare(p[0].text) }, filter: { target: meijinBare(p[1].text) } }, body: p[2], actor: p[0], bodyTopic: { kind: 'self', mustName: 'touch' } };
     // 1秒ごとに: a number. The time is read once, before the first sentence runs, so a variable would not mean what it says.
     if ((p = surfaceCapture(/^(.+?)秒ごとに、(.*)$/d, code, mask))) {
       const seconds = parseExpression(p[0].text, symbols, ctx);
@@ -19453,13 +19458,16 @@ function createAkariExtensionHost(options) {
     });
     // ねこから犬までのきょり: one part's distance to another.
     replaceAll(new RegExp('(' + alt + ')から(' + alt + ')までの(?:きょり|距離)'), m => `「${meijinBare(m[1])}」の（「${meijinBare(m[2])}」までのきょり）`);
+    // ねこからいちばん近い星までのきょり: the nearest one to ねこ.
+    replaceAll(new RegExp('(' + alt + ')からいちばん近い(' + alt + ')までの(?:きょり|距離)'), m => `「${meijinBare(m[1])}」の（いちばん近い${m[2]}までのきょり）`);
     // 持ち物が空なら / 点数が偶数でなければ / 点数が10の倍数だったら / 持ち物が空のあいだ: the words of 国語 and 算数.
     // もし点数が20より小さい かつ 点数が偶数なら / 点数が偶数で、持ち物が空のあいだ、: each term is read; a term with 、
     // in it (三つ以上を「〜で、」で) is left for the guidance.
     replaceAll(new RegExp('(もし、?|^)([^。]+?(?:で、|であり、|\\s*かつ\\s*)[^。]+?)(なら|のあいだ|あいだ)、'), m => {
       const terms = m[2].split(/で、|であり、|\s*かつ\s*/).map(t => t.trim()), word = new RegExp('^' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:の)?$');
       if (terms.length < 2 || terms.some(t => !t || t.includes('、')) || !terms.some(t => word.test(t))) return null;
-      const read = terms.map(t => { const w = word.exec(t); return w ? meijinWordTest(w[1], w[2]) : t.replace(/の$/, ''); });
+      let subject = null;
+      const read = terms.map(t => { const w = word.exec(t); if (w) { subject = w[1]; return meijinWordTest(w[1], w[2]); } const own = /^(.+?)が/.exec(t); if (own) subject = own[1]; else if (subject) t = subject + 'が' + t; return t.replace(/の$/, ''); });
       return `${m[1]}条件（${read.join(' かつ ')}）${m[3] === 'なら' ? 'が成り立つなら' : 'が成り立つあいだ'}、`;
     });
     replaceAll(new RegExp('(もし、?)' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:で、|であり、|\\s*かつ\\s*)([^、。]+?)(なら|でなければ)、'), m => `${m[1]}条件（${meijinWordTest(m[2], m[3])} かつ ${m[4].trim()}）${m[5] === 'なら' ? 'が成り立つなら' : 'が成り立たないなら'}、`);
@@ -19553,7 +19561,7 @@ function createAkariExtensionHost(options) {
     const fails = () => failed ??= !attempt(() => read(code)) && !attempt(() => meijinRewrite(code, symbols, scope));
     let p;
     // ねこは2秒かけて…動くあいだ、犬は… / だんごは星にふれたとき、…: the subject before あいだ・とき is written with が.
-    if ((p = surfaceCapture(/^(.+?)は、?(.+?)(あいだ|間|うちに|とき)、(.+)$/d, code, mask)) && part(p[0].text) && fails()) {
+    if ((p = surfaceCapture(/^(.+?)は、?(.+?)(あいだ|間|うちに|とき)、(.+)$/d, code, mask)) && (part(p[0].text) || meijinPartList(p[0].text, symbols, scope)) && fails()) {
       const fixed = `${p[0].text}が${p[1].text}${p[2].text}、${p[3].text}`;
       if (p[2].text === 'とき' || attempt(() => readMeijinLine(surfaceLineSlice(line, 0, code.length, fixed), env)))
         return `「〜${p[2].text}」の 前の 主語は「が」で 書きます。れい：${fixed}`;
@@ -19659,7 +19667,7 @@ function createAkariExtensionHost(options) {
     }
     // 次のことを同時に始める。 (the lines under it start together)
     if (/^次のことを(?:同時に|いっしょに|一緒に)始める$/.test(mask)) {
-      const body = children(indented('Parallel', '「次のことを同時に始める」の 次の 行に、同時に 始める 文を 右へ ずらして 書きます'), { ...scope });
+      const body = children(indented('Parallel', '「次のことを同時に始める」の 次の 行に、同時に 始める 文を 右へ ずらして 書きます'), { ...scope, laneTopic: { ...(scope.topicActor || { kind: 'self' }) } });
       // One sentence is one lane: 「〜して、」 in it keeps its order.
       const lanes = []; let last;
       for (const n of body.nodes) {
@@ -19697,7 +19705,7 @@ function createAkariExtensionHost(options) {
       }
     }
     // XがPするあいだ、YはQ / XがPしているうちに、YはQ: two actions started together (a state before あいだ is a repeat).
-    if ((p = surfaceCapture(/^(.+?)が(.+?)(あいだ|間|うちに)、(.+)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope)) {
+    if ((p = surfaceCapture(/^(.+?)が(.+?)(あいだ|間|うちに)、(.+)$/d, code, mask)) && (isMeijinPart(p[0].text, symbols, scope) || meijinPartList(p[0].text, symbols, scope))) {
       for (const verb of [p[1].text, ...meijinPlainForms(p[1].text)]) {
         const left = attempt(() => read(p[0].text + 'は' + verb));
         if (left) return done([node('Parallel', { lanes: [left, read(p[3].text)] })]);
@@ -19749,6 +19757,8 @@ function createAkariExtensionHost(options) {
         const subject = meijinSubject(phrase, symbols, scope, previousTopic);
         if (!subject) continue;
         const rest = code.slice(restStart), order = MEIJIN_SET_WORDS.exec(surfaceMask(rest)), body = meijinBody(order ? rest.slice(order[0].length) : rest);
+        // ねこと犬は…あいだ、…: the subject before あいだ is written with が (the parts together).
+        if (subject.lanes && particle === 'は' && /(?:あいだ|間|うちに)、/.test(surfaceMask(rest))) throw sentenceDiagnostic(`「〜あいだ」の 前の 主語は「が」で 書きます。れい：${phrase}が${rest.replace(/^、/, '')}`, line, [], { kind: 'Parallel' });
         if (subject.lanes) return done([node('Parallel', { lanes: subject.lanes.map(name => read(name + 'は' + body)) })]);
         if (subject.value) {
           // 主役は右へ10歩動く / 主役が右へ10歩動く: the part in 主役 acts. (点数が10になったら… is no subject: it does not read so.)
@@ -19811,6 +19821,19 @@ function createAkariExtensionHost(options) {
         [{ label: '一つ消す', source: `${p[0].text}から${p[1].text}を一つ消す` }, { label: '全部消す', source: `${p[0].text}から${p[1].text}を全部消す` }], { kind: 'ListRemoveValue', missing: ['count'] });
       return done([node('ListRemoveValue', { target: { name: meijinBare(p[0].text), qualifier: null }, value: parseExpression(p[1].text, symbols, scope), actorRef: { ...scope.topicActor } })]);
     }
+    // ねこは、犬が言い終わるまで待つ / ねこが言い終わるまで待ってから、… / 主役が言い終わるまで待つ: the one form that is read.
+    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)が(?:言い|話し)終わるまで待つ$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
+      throw sentenceDiagnostic(`だれが 待つかは 書きません（本文 ぜんたいが 待ちます）。れい：${p[1].text}が言い終わるまで待つ`, line, [], { kind: 'WaitUntil' });
+    if ((p = surfaceCapture(/^(.+?)が((?:言い|話し)終わる)まで待って(?:から)?、(.+)$/d, code, mask)))
+      throw sentenceDiagnostic(`待つ 文を 分けて 書きます。れい：${p[0].text}が${p[1].text}まで待つ。${p[2].text}`, line, [], { kind: 'WaitUntil' });
+    if ((p = surfaceCapture(/^(.+?)が(?:言い|話し)終わるまで待つ$/d, code, mask)) && !isMeijinPart(p[0].text, symbols, scope))
+      throw sentenceDiagnostic('「〜が言い終わるまで待つ」の 〜には、部品の 名前を 書きます', line, [], { kind: 'WaitUntil' });
+    // 【長さ】を5として、…、ねこは【かく】という手順を行う: the subject is written first.
+    if ((p = surfaceCapture(/^(.+として)、(.+?)(?:は|が)、?(\u0001+という手順を行う)$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
+      throw sentenceDiagnostic(`主語は 文の はじめに 書きます。れい：${p[1].text}は、${p[0].text}、${p[2].text}`, line, [], { kind: 'UserActionCall' });
+    // ねこは、犬にいちばん近い星の方を向く: what it is near is chosen from a list.
+    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)にいちばん近い(.+?)の方を向く$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
+      throw sentenceDiagnostic(`何に 近いかを 書くときは、リストから えらびます。れい：えらんだ部品を、なかまのうち、${p[1].text}にいちばん近いものにする`, line, [], { kind: 'MotionCommand' });
     // Words that give no single meaning to a program (名人モードでも読めない書き方): say how to write it.
     const inName = m => meijinPartNames(symbols).find(name => { for (let at = code.indexOf(name); at >= 0; at = code.indexOf(name, at + 1)) if (at <= m.index && m.index + m[0].length <= at + name.length) return true; return false; });
     for (const [pattern, message] of MEIJIN_UNREADABLE) { const m = pattern.exec(mask); if (m) throw sentenceDiagnostic((typeof message === 'function' ? message(m) : message) + (inName(m) ? `。部品の 名前なら「【${inName(m)}】」のように【 】で かこみます` : ''), line, [], { kind: 'Sequence' }); }
@@ -19833,7 +19856,8 @@ function createAkariExtensionHost(options) {
     const rewrites = line.meijinRewrites || 0, rewritten = rewrites < 6 && meijinRewrite(code, symbols, scope);
     if (rewritten && rewritten !== code) {
       const next = surfaceLineSlice(line, 0, code.length, rewritten);
-      Object.assign(next, { comment: line.comment, inline: line.inline, meijinRewrites: rewrites + 1 });
+      const owned = meijinPartNames(symbols).find(name => code.startsWith(name + 'の') && rewritten.startsWith(name + 'は'));
+      Object.assign(next, { comment: line.comment, inline: line.inline, meijinRewrites: rewrites + 1, meijinOwned: line.meijinOwned || !!owned });
       return { rewrite: next };
     }
     return null;
@@ -21388,7 +21412,7 @@ function createAkariExtensionHost(options) {
   // 名人 scripts belong to no part, so every action names who does it.
   const MEIJIN_SUBJECT_MESSAGE = '名人の 本文では、だれが するかを 文の はじめに 書きます。れい：ねこは前へ10歩進む';
   // 決まり4: the sentence before has its subjects inside it, so none is carried on.
-  const MEIJIN_TOPIC_ENDED = 'すぐ前の 文からは 主語を 引きつげません（主語を ならべた 文、あつまりの 文、見出しの 文、「〜あいだ」「次のことを同時に始める」の 文、中に 主語を 書いた「もし」や くり返しの あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む';
+  const MEIJIN_TOPIC_ENDED = 'すぐ前の 文からは 主語を 引きつげません（主語を ならべた 文や 主語が 二つ ある 文、あつまりの 文、見出しの 文、「〜あいだ」「次のことを同時に始める」の 文、中に 主語を 書いた「もし」や くり返しの あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む';
   function analyzeProject(project, compiled, { rootKeys = null } = {}) {
     const symbols = compiled.symbols,
       diags = [],
@@ -21578,7 +21602,7 @@ function createAkariExtensionHost(options) {
         // いちばん近い is from the one who acts, and is written only in 〜の方を向く and 〜までのきょり: there a tie turns no one or
         // gives the same distance. Anywhere else a tie would need a hidden rule.
         const nearestFrom = (node, example) => { if (ctx.targetType === 'stage') add('S304', '「いちばん近い」は、だれから 近いかが いります。れい：' + example, ctx.node || node, where); };
-        if (n.kind === 'SensorRead' && n.sensor === 'DISTANCE_TO' && n.arg?.kind === 'PartNearest') { nearestFrom(n, '点数を、「ねこ」の（いちばん近い星までのきょり）にする'); collect(n.arg.of, ctx); return; }
+        if (n.kind === 'SensorRead' && n.sensor === 'DISTANCE_TO' && n.arg?.kind === 'PartNearest') { nearestFrom(n, '点数を、ねこからいちばん近い星までのきょりにする'); collect(n.arg.of, ctx); return; }
         if (n.kind === 'PartNearest') {
           if (ctx.node?.kind === 'MotionCommand' && ctx.node.op === 'POINT_TO' && ctx.node.args?.[0] === n) nearestFrom(n, 'ねこは、いちばん近い星の方を向く');
           else add('S304', '「いちばん近い」は「〜の方を向く」と「〜までのきょり」で 使います。れい：ねこは、いちばん近い星の方を向く', ctx.node || n, where);
@@ -21911,6 +21935,11 @@ function createAkariExtensionHost(options) {
           : add('S304', c.meijin ? (n.actorRef?.topicEnded ? MEIJIN_TOPIC_ENDED : MEIJIN_SUBJECT_MESSAGE) : message, n, where);
         // 名人: speech and sounds need who does them, as moves do (the script itself is no part; 画面は… names the stage).
         // Stopping every sound acts on the whole work.
+        // 名人 (決まり4・6): in a heading's body too, a sentence after one with other subjects in it names who does it; in
+        // 〜が〜にふれたとき、 it always does (either part could be meant).
+        if (c.meijin && c.targetType !== 'stage' && n.actorRef?.kind === 'self' && (n.actorRef.topicEnded || n.actorRef.mustName) &&
+          (['Say', 'Ask', 'MotionCommand', 'PenCommand', 'LooksCommand'].includes(n.kind) || (n.kind === 'SoundCommand' && n.op !== 'STOP_ALL')))
+          add('S304', n.actorRef.mustName ? '「〜が〜にふれたとき、」の 中身では、ふれた 二つの 部品の どちらが するかが 決まらないので、だれが するかを 書きます。れい：だんごが星にふれたとき、星は「いたい」と言う' : MEIJIN_TOPIC_ENDED, n, where);
         if ((c.meijin || c.meijinCall) && c.targetType === 'stage' && n.actorRef?.kind !== 'named' &&
           (['Say', 'Ask'].includes(n.kind) || (n.kind === 'SoundCommand' && n.op !== 'STOP_ALL')))
           needsSubject(MEIJIN_SUBJECT_MESSAGE);
@@ -22603,7 +22632,7 @@ function createAkariExtensionHost(options) {
       if(heading){
         const ref=heading.actorRef,actor=ref?.kind==='named'?(ref.name===project.stage.name||ref.name==='画面'?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
           context.targetId==='stage'?{id:'stage',type:'stage'}:project.components.find(c=>c.id===context.targetId);
-        if(!actor)errors.push({code:'S304',message:ref?.kind==='named'?`「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`:'この きっかけを 使う キャラクターや 部品が 見つかりません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
+        if(!actor)errors.push({code:'S304',message:ref?.kind==='named'?(context.meijin&&targetExists({name:ref.name,qualifier:null},buildSymbols(project),{})?`見出しの 主語には、部品の 名前を 一つ 書きます（「${ref.name}」のような へんすうや リストは 書けません）。中身の 文に 主語を 書きます`:`「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`):'この きっかけを 使う キャラクターや 部品が 見つかりません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
         else if(!EVENT_BY_TYPE[actor.type]?.includes(heading.event)&&!(context.meijin&&meijinEventOwner(heading.event,actor.type)))errors.push({code:'S304',message:`この キャラクターや 部品では、${EVENT_LABELS[heading.event]?'「'+EVENT_LABELS[heading.event]+'」の ':'この '}きっかけは 使えません。ほかの きっかけに してください`,line:unit.sourceSpan?.startLine||1,column:1,where:key});
         else resolved={...resolved,ownerId:actor.id,targetId:actor.id,targetType:actor.type,event:heading.event,filter:heading.filter||null};
       }

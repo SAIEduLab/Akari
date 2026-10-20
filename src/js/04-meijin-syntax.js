@@ -230,11 +230,14 @@
   // 名人のできごと: だんごが星にふれたとき、/ 点数が10点以上になったとき、/ 1秒ごとに、
   function readMeijinHeading(code, mask, symbols, ctx) {
     let p;
+    // 作品を動かしたとき、ねこと犬は、: one part is the heading's subject.
+    if ((p = /^.+?(?:とき|たら|たびに|ごとに)、(.+?)は、$/.exec(mask)) && meijinPartList(p[1], symbols, ctx))
+      throw new AkariError('P205', `見出しの 主語には、部品の 名前を 一つ 書きます（「${p[1]}」のように いくつかの 部品は 書けません）。中身の 文に「${p[1]}は」と 書きます`);
     if (MEIJIN_WHEN_PRESSED.test(mask)) throw new AkariError('P205', MEIJIN_WHEN_PRESSED_MESSAGE);
     if ((p = surfaceCapture(/^(.+?)が(\u0001+)の合図を(?:受けた|うけた)とき、(.*)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, ctx) && /^「[^「」]+」$/.test(p[1].text))
       return { heading: { event: 'message', actorRef: { kind: 'named', name: meijinBare(p[0].text) }, filter: { message: p[1].text.slice(1, -1) } }, body: p[2], actor: p[0] };
     if ((p = surfaceCapture(/^(.+?)が(.+?)に(?:ふれた|触れた|さわった)とき、(.*)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, ctx) && isMeijinPart(p[1].text, symbols, ctx))
-      return { heading: { event: 'touchStart', actorRef: { kind: 'named', name: meijinBare(p[0].text) }, filter: { target: meijinBare(p[1].text) } }, body: p[2], actor: p[0] };
+      return { heading: { event: 'touchStart', actorRef: { kind: 'named', name: meijinBare(p[0].text) }, filter: { target: meijinBare(p[1].text) } }, body: p[2], actor: p[0], bodyTopic: { kind: 'self', mustName: 'touch' } };
     // 1秒ごとに: a number. The time is read once, before the first sentence runs, so a variable would not mean what it says.
     if ((p = surfaceCapture(/^(.+?)秒ごとに、(.*)$/d, code, mask))) {
       const seconds = parseExpression(p[0].text, symbols, ctx);
@@ -319,13 +322,16 @@
     });
     // ねこから犬までのきょり: one part's distance to another.
     replaceAll(new RegExp('(' + alt + ')から(' + alt + ')までの(?:きょり|距離)'), m => `「${meijinBare(m[1])}」の（「${meijinBare(m[2])}」までのきょり）`);
+    // ねこからいちばん近い星までのきょり: the nearest one to ねこ.
+    replaceAll(new RegExp('(' + alt + ')からいちばん近い(' + alt + ')までの(?:きょり|距離)'), m => `「${meijinBare(m[1])}」の（いちばん近い${m[2]}までのきょり）`);
     // 持ち物が空なら / 点数が偶数でなければ / 点数が10の倍数だったら / 持ち物が空のあいだ: the words of 国語 and 算数.
     // もし点数が20より小さい かつ 点数が偶数なら / 点数が偶数で、持ち物が空のあいだ、: each term is read; a term with 、
     // in it (三つ以上を「〜で、」で) is left for the guidance.
     replaceAll(new RegExp('(もし、?|^)([^。]+?(?:で、|であり、|\\s*かつ\\s*)[^。]+?)(なら|のあいだ|あいだ)、'), m => {
       const terms = m[2].split(/で、|であり、|\s*かつ\s*/).map(t => t.trim()), word = new RegExp('^' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:の)?$');
       if (terms.length < 2 || terms.some(t => !t || t.includes('、')) || !terms.some(t => word.test(t))) return null;
-      const read = terms.map(t => { const w = word.exec(t); return w ? meijinWordTest(w[1], w[2]) : t.replace(/の$/, ''); });
+      let subject = null;
+      const read = terms.map(t => { const w = word.exec(t); if (w) { subject = w[1]; return meijinWordTest(w[1], w[2]); } const own = /^(.+?)が/.exec(t); if (own) subject = own[1]; else if (subject) t = subject + 'が' + t; return t.replace(/の$/, ''); });
       return `${m[1]}条件（${read.join(' かつ ')}）${m[3] === 'なら' ? 'が成り立つなら' : 'が成り立つあいだ'}、`;
     });
     replaceAll(new RegExp('(もし、?)' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:で、|であり、|\\s*かつ\\s*)([^、。]+?)(なら|でなければ)、'), m => `${m[1]}条件（${meijinWordTest(m[2], m[3])} かつ ${m[4].trim()}）${m[5] === 'なら' ? 'が成り立つなら' : 'が成り立たないなら'}、`);
@@ -419,7 +425,7 @@
     const fails = () => failed ??= !attempt(() => read(code)) && !attempt(() => meijinRewrite(code, symbols, scope));
     let p;
     // ねこは2秒かけて…動くあいだ、犬は… / だんごは星にふれたとき、…: the subject before あいだ・とき is written with が.
-    if ((p = surfaceCapture(/^(.+?)は、?(.+?)(あいだ|間|うちに|とき)、(.+)$/d, code, mask)) && part(p[0].text) && fails()) {
+    if ((p = surfaceCapture(/^(.+?)は、?(.+?)(あいだ|間|うちに|とき)、(.+)$/d, code, mask)) && (part(p[0].text) || meijinPartList(p[0].text, symbols, scope)) && fails()) {
       const fixed = `${p[0].text}が${p[1].text}${p[2].text}、${p[3].text}`;
       if (p[2].text === 'とき' || attempt(() => readMeijinLine(surfaceLineSlice(line, 0, code.length, fixed), env)))
         return `「〜${p[2].text}」の 前の 主語は「が」で 書きます。れい：${fixed}`;
@@ -525,7 +531,7 @@
     }
     // 次のことを同時に始める。 (the lines under it start together)
     if (/^次のことを(?:同時に|いっしょに|一緒に)始める$/.test(mask)) {
-      const body = children(indented('Parallel', '「次のことを同時に始める」の 次の 行に、同時に 始める 文を 右へ ずらして 書きます'), { ...scope });
+      const body = children(indented('Parallel', '「次のことを同時に始める」の 次の 行に、同時に 始める 文を 右へ ずらして 書きます'), { ...scope, laneTopic: { ...(scope.topicActor || { kind: 'self' }) } });
       // One sentence is one lane: 「〜して、」 in it keeps its order.
       const lanes = []; let last;
       for (const n of body.nodes) {
@@ -563,7 +569,7 @@
       }
     }
     // XがPするあいだ、YはQ / XがPしているうちに、YはQ: two actions started together (a state before あいだ is a repeat).
-    if ((p = surfaceCapture(/^(.+?)が(.+?)(あいだ|間|うちに)、(.+)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope)) {
+    if ((p = surfaceCapture(/^(.+?)が(.+?)(あいだ|間|うちに)、(.+)$/d, code, mask)) && (isMeijinPart(p[0].text, symbols, scope) || meijinPartList(p[0].text, symbols, scope))) {
       for (const verb of [p[1].text, ...meijinPlainForms(p[1].text)]) {
         const left = attempt(() => read(p[0].text + 'は' + verb));
         if (left) return done([node('Parallel', { lanes: [left, read(p[3].text)] })]);
@@ -615,6 +621,8 @@
         const subject = meijinSubject(phrase, symbols, scope, previousTopic);
         if (!subject) continue;
         const rest = code.slice(restStart), order = MEIJIN_SET_WORDS.exec(surfaceMask(rest)), body = meijinBody(order ? rest.slice(order[0].length) : rest);
+        // ねこと犬は…あいだ、…: the subject before あいだ is written with が (the parts together).
+        if (subject.lanes && particle === 'は' && /(?:あいだ|間|うちに)、/.test(surfaceMask(rest))) throw sentenceDiagnostic(`「〜あいだ」の 前の 主語は「が」で 書きます。れい：${phrase}が${rest.replace(/^、/, '')}`, line, [], { kind: 'Parallel' });
         if (subject.lanes) return done([node('Parallel', { lanes: subject.lanes.map(name => read(name + 'は' + body)) })]);
         if (subject.value) {
           // 主役は右へ10歩動く / 主役が右へ10歩動く: the part in 主役 acts. (点数が10になったら… is no subject: it does not read so.)
@@ -677,6 +685,19 @@
         [{ label: '一つ消す', source: `${p[0].text}から${p[1].text}を一つ消す` }, { label: '全部消す', source: `${p[0].text}から${p[1].text}を全部消す` }], { kind: 'ListRemoveValue', missing: ['count'] });
       return done([node('ListRemoveValue', { target: { name: meijinBare(p[0].text), qualifier: null }, value: parseExpression(p[1].text, symbols, scope), actorRef: { ...scope.topicActor } })]);
     }
+    // ねこは、犬が言い終わるまで待つ / ねこが言い終わるまで待ってから、… / 主役が言い終わるまで待つ: the one form that is read.
+    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)が(?:言い|話し)終わるまで待つ$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
+      throw sentenceDiagnostic(`だれが 待つかは 書きません（本文 ぜんたいが 待ちます）。れい：${p[1].text}が言い終わるまで待つ`, line, [], { kind: 'WaitUntil' });
+    if ((p = surfaceCapture(/^(.+?)が((?:言い|話し)終わる)まで待って(?:から)?、(.+)$/d, code, mask)))
+      throw sentenceDiagnostic(`待つ 文を 分けて 書きます。れい：${p[0].text}が${p[1].text}まで待つ。${p[2].text}`, line, [], { kind: 'WaitUntil' });
+    if ((p = surfaceCapture(/^(.+?)が(?:言い|話し)終わるまで待つ$/d, code, mask)) && !isMeijinPart(p[0].text, symbols, scope))
+      throw sentenceDiagnostic('「〜が言い終わるまで待つ」の 〜には、部品の 名前を 書きます', line, [], { kind: 'WaitUntil' });
+    // 【長さ】を5として、…、ねこは【かく】という手順を行う: the subject is written first.
+    if ((p = surfaceCapture(/^(.+として)、(.+?)(?:は|が)、?(\u0001+という手順を行う)$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
+      throw sentenceDiagnostic(`主語は 文の はじめに 書きます。れい：${p[1].text}は、${p[0].text}、${p[2].text}`, line, [], { kind: 'UserActionCall' });
+    // ねこは、犬にいちばん近い星の方を向く: what it is near is chosen from a list.
+    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)にいちばん近い(.+?)の方を向く$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
+      throw sentenceDiagnostic(`何に 近いかを 書くときは、リストから えらびます。れい：えらんだ部品を、なかまのうち、${p[1].text}にいちばん近いものにする`, line, [], { kind: 'MotionCommand' });
     // Words that give no single meaning to a program (名人モードでも読めない書き方): say how to write it.
     const inName = m => meijinPartNames(symbols).find(name => { for (let at = code.indexOf(name); at >= 0; at = code.indexOf(name, at + 1)) if (at <= m.index && m.index + m[0].length <= at + name.length) return true; return false; });
     for (const [pattern, message] of MEIJIN_UNREADABLE) { const m = pattern.exec(mask); if (m) throw sentenceDiagnostic((typeof message === 'function' ? message(m) : message) + (inName(m) ? `。部品の 名前なら「【${inName(m)}】」のように【 】で かこみます` : ''), line, [], { kind: 'Sequence' }); }
@@ -699,7 +720,8 @@
     const rewrites = line.meijinRewrites || 0, rewritten = rewrites < 6 && meijinRewrite(code, symbols, scope);
     if (rewritten && rewritten !== code) {
       const next = surfaceLineSlice(line, 0, code.length, rewritten);
-      Object.assign(next, { comment: line.comment, inline: line.inline, meijinRewrites: rewrites + 1 });
+      const owned = meijinPartNames(symbols).find(name => code.startsWith(name + 'の') && rewritten.startsWith(name + 'は'));
+      Object.assign(next, { comment: line.comment, inline: line.inline, meijinRewrites: rewrites + 1, meijinOwned: line.meijinOwned || !!owned });
       return { rewrite: next };
     }
     return null;

@@ -104,7 +104,7 @@
   // 名人 scripts belong to no part, so every action names who does it.
   const MEIJIN_SUBJECT_MESSAGE = '名人の 本文では、だれが するかを 文の はじめに 書きます。れい：ねこは前へ10歩進む';
   // 決まり4: the sentence before has its subjects inside it, so none is carried on.
-  const MEIJIN_TOPIC_ENDED = 'すぐ前の 文からは 主語を 引きつげません（主語を ならべた 文、あつまりの 文、見出しの 文、「〜あいだ」「次のことを同時に始める」の 文、中に 主語を 書いた「もし」や くり返しの あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む';
+  const MEIJIN_TOPIC_ENDED = 'すぐ前の 文からは 主語を 引きつげません（主語を ならべた 文や 主語が 二つ ある 文、あつまりの 文、見出しの 文、「〜あいだ」「次のことを同時に始める」の 文、中に 主語を 書いた「もし」や くり返しの あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む';
   function analyzeProject(project, compiled, { rootKeys = null } = {}) {
     const symbols = compiled.symbols,
       diags = [],
@@ -294,7 +294,7 @@
         // いちばん近い is from the one who acts, and is written only in 〜の方を向く and 〜までのきょり: there a tie turns no one or
         // gives the same distance. Anywhere else a tie would need a hidden rule.
         const nearestFrom = (node, example) => { if (ctx.targetType === 'stage') add('S304', '「いちばん近い」は、だれから 近いかが いります。れい：' + example, ctx.node || node, where); };
-        if (n.kind === 'SensorRead' && n.sensor === 'DISTANCE_TO' && n.arg?.kind === 'PartNearest') { nearestFrom(n, '点数を、「ねこ」の（いちばん近い星までのきょり）にする'); collect(n.arg.of, ctx); return; }
+        if (n.kind === 'SensorRead' && n.sensor === 'DISTANCE_TO' && n.arg?.kind === 'PartNearest') { nearestFrom(n, '点数を、ねこからいちばん近い星までのきょりにする'); collect(n.arg.of, ctx); return; }
         if (n.kind === 'PartNearest') {
           if (ctx.node?.kind === 'MotionCommand' && ctx.node.op === 'POINT_TO' && ctx.node.args?.[0] === n) nearestFrom(n, 'ねこは、いちばん近い星の方を向く');
           else add('S304', '「いちばん近い」は「〜の方を向く」と「〜までのきょり」で 使います。れい：ねこは、いちばん近い星の方を向く', ctx.node || n, where);
@@ -627,6 +627,11 @@
           : add('S304', c.meijin ? (n.actorRef?.topicEnded ? MEIJIN_TOPIC_ENDED : MEIJIN_SUBJECT_MESSAGE) : message, n, where);
         // 名人: speech and sounds need who does them, as moves do (the script itself is no part; 画面は… names the stage).
         // Stopping every sound acts on the whole work.
+        // 名人 (決まり4・6): in a heading's body too, a sentence after one with other subjects in it names who does it; in
+        // 〜が〜にふれたとき、 it always does (either part could be meant).
+        if (c.meijin && c.targetType !== 'stage' && n.actorRef?.kind === 'self' && (n.actorRef.topicEnded || n.actorRef.mustName) &&
+          (['Say', 'Ask', 'MotionCommand', 'PenCommand', 'LooksCommand'].includes(n.kind) || (n.kind === 'SoundCommand' && n.op !== 'STOP_ALL')))
+          add('S304', n.actorRef.mustName ? '「〜が〜にふれたとき、」の 中身では、ふれた 二つの 部品の どちらが するかが 決まらないので、だれが するかを 書きます。れい：だんごが星にふれたとき、星は「いたい」と言う' : MEIJIN_TOPIC_ENDED, n, where);
         if ((c.meijin || c.meijinCall) && c.targetType === 'stage' && n.actorRef?.kind !== 'named' &&
           (['Say', 'Ask'].includes(n.kind) || (n.kind === 'SoundCommand' && n.op !== 'STOP_ALL')))
           needsSubject(MEIJIN_SUBJECT_MESSAGE);
@@ -1319,7 +1324,7 @@
       if(heading){
         const ref=heading.actorRef,actor=ref?.kind==='named'?(ref.name===project.stage.name||ref.name==='画面'?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
           context.targetId==='stage'?{id:'stage',type:'stage'}:project.components.find(c=>c.id===context.targetId);
-        if(!actor)errors.push({code:'S304',message:ref?.kind==='named'?`「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`:'この きっかけを 使う キャラクターや 部品が 見つかりません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
+        if(!actor)errors.push({code:'S304',message:ref?.kind==='named'?(context.meijin&&targetExists({name:ref.name,qualifier:null},buildSymbols(project),{})?`見出しの 主語には、部品の 名前を 一つ 書きます（「${ref.name}」のような へんすうや リストは 書けません）。中身の 文に 主語を 書きます`:`「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`):'この きっかけを 使う キャラクターや 部品が 見つかりません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
         else if(!EVENT_BY_TYPE[actor.type]?.includes(heading.event)&&!(context.meijin&&meijinEventOwner(heading.event,actor.type)))errors.push({code:'S304',message:`この キャラクターや 部品では、${EVENT_LABELS[heading.event]?'「'+EVENT_LABELS[heading.event]+'」の ':'この '}きっかけは 使えません。ほかの きっかけに してください`,line:unit.sourceSpan?.startLine||1,column:1,where:key});
         else resolved={...resolved,ownerId:actor.id,targetId:actor.id,targetType:actor.type,event:heading.event,filter:heading.filter||null};
       }

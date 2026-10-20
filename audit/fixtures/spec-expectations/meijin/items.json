@@ -2497,6 +2497,158 @@
       "cases": [
         "MC-552"
       ]
+    },
+    {
+      "id": "MI-217",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "どの見出しのあとにも主語だけの行を書け、その部品が中身の主語のない文を行う（R3）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-553",
+        "MC-554"
+      ]
+    },
+    {
+      "id": "MI-218",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「〜あいだ」の前に部品を並べて書ける（R4）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-555",
+        "MC-556"
+      ]
+    },
+    {
+      "id": "MI-219",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "あとの条件の主語は、前の条件と同じなら省ける（R6）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-557",
+        "MC-558"
+      ]
+    },
+    {
+      "id": "MI-220",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの大きさを…にする」は主語を変えず、引き継いだ部品の待ちのあとに行う（R8）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-559",
+        "MC-560"
+      ]
+    },
+    {
+      "id": "MI-221",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "並びの中の主語がすべて同じなら、その主語を引き継ぐ（R9）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-561"
+      ]
+    },
+    {
+      "id": "MI-222",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語のちがう文を「〜て、」でつないだ文のあとは、主語を引き継がない（R10）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-562"
+      ]
+    },
+    {
+      "id": "MI-223",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "見出しの中身と手順の中身でも、別の主語の文のあとの主語のない文は止まる（R12）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-563",
+        "MC-564"
+      ]
+    },
+    {
+      "id": "MI-224",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "「〜がおされたとき、」の中身はおされた部品が行い、「〜が〜にふれたとき、」の中身には主語を書く（R13）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-565",
+        "MC-566"
+      ]
+    },
+    {
+      "id": "MI-225",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "待っている部品の文の後ろの文と、引き継いだ変数の文も待つ（R14）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-567",
+        "MC-568"
+      ]
+    },
+    {
+      "id": "MI-226",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びのそれぞれの文は、並びの前の主語から始める（R15）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-569",
+        "MC-570"
+      ]
+    },
+    {
+      "id": "MI-227",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "見出しの主語に変数やいくつかの部品を書くと、部品の名前を一つ書くよう案内する（R18）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-571",
+        "MC-572"
+      ]
+    },
+    {
+      "id": "MI-228",
+      "section": "名人モード > 名人の命令",
+      "summary": "「言い終わるまで待つ」の近い書き方には、読める形を案内する（R19）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-573",
+        "MC-574",
+        "MC-575"
+      ]
+    },
+    {
+      "id": "MI-229",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「ねこからいちばん近い星までのきょり」を読む（R22）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-576",
+        "MC-577"
+      ]
+    },
+    {
+      "id": "MI-230",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "主語を「〜として、」の後ろに書くと止まり、文のはじめに書くよう案内する（R25）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-578"
+      ]
     }
   ],
   "specGaps": []
