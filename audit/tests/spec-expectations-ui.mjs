@@ -42,7 +42,8 @@ async function open({level='basic',file='parts'}={}){
   await page.addInitScript(l=>{try{localStorage.setItem('akari.uiLevel.v1',l);}catch(_){}},level);
   await page.goto(pathToFileURL(product).href);await page.waitForFunction(()=>!!globalThis.Akari?.app);
   if(file){await page.setInputFiles('#fileInput',workFiles[file]);await page.waitForFunction(()=>Akari.app.project.components.some(c=>c.name==='ねこ'));}
-  if(await page.locator('#uiLevel').inputValue()!==level){await page.selectOption('#uiLevel',level);}
+  // A work with a 名人 text keeps 名人 chosen; the level stays the one chosen before it.
+  if(!['meijin',level].includes(await page.locator('#uiLevel').inputValue())){await page.selectOption('#uiLevel',level);}
   return {page,context};
 }
 const S=page=>({
@@ -60,7 +61,12 @@ const S=page=>({
     if(!opened){const text=await page.locator('#editorPending').isVisible()?await page.locator('#editorPending').textContent():'';return {issues:text?[text]:[],notes:[],where:'editor'};}
     const r=await page.evaluate(()=>({issues:[...document.querySelectorAll('#diagnosisBody .diagnosis-issue')].map(x=>x.textContent),notes:[...document.querySelectorAll('#diagnosisBody .diagnosis-note')].map(x=>x.textContent)}));
     await page.click('#diagnosisClose');await page.locator('#diagnosisModal').waitFor({state:'hidden'});return {...r,where:'list'};},
-  startMeijin:async accept=>{let kind=null;page.once('dialog',d=>{kind=d.type();accept?d.accept():d.dismiss();});await page.click('#meijinStart');await page.waitForTimeout(300);return kind;},
+  // 名人 is chosen in 見せ方; the confirm comes before the body becomes a 名人 text.
+  startMeijin:async accept=>{let kind=null;const take=d=>{kind=d.type();accept?d.accept():d.dismiss();};page.once('dialog',take);await page.selectOption('#uiLevel','meijin');await page.waitForTimeout(300);page.off('dialog',take);return kind;},
+  level:()=>page.evaluate(()=>({chosen:document.querySelector('#uiLevel').value,shown:document.body.dataset.uiLevel,
+    options:[...document.querySelectorAll('#uiLevel option')].map(o=>o.textContent.trim()),others:[...document.querySelectorAll('#uiLevel option')].filter(o=>o.value!=='meijin'&&!o.disabled).map(o=>o.value)})),
+  openFile:async file=>{await page.setInputFiles('#fileInput',file);await page.waitForTimeout(300);for(const id of ['#openConfirmProceed','#loseConfirmProceed'])if(await page.locator(id).isVisible())await page.click(id);await page.waitForTimeout(500);},
+  reload:async()=>{await page.waitForTimeout(1500);await page.reload();await page.waitForFunction(()=>!!globalThis.Akari?.app);await page.locator('#recoveryRestore').waitFor({state:'visible'});await page.click('#recoveryRestore');await page.waitForTimeout(500);},
 });
 const bare=t=>t.replace(/\s+/g,'');
 const runs=[];
@@ -113,15 +119,18 @@ const checks={
     const mode=await s.mode(),blocks=await s.page.evaluate(()=>{const ids=[];const walk=x=>{if(x.schemaId!=='Script')ids.push(x.schemaId);for(const b of Object.values(x.bodies||{}))b.forEach(walk);};walk(Akari.app.editorState.main.blockView);return ids;});
     await s.code();const code=(await s.text()).trim();
     return {expect:{switched:mode==='blocks',oneTimerBlock:blocks.length===1&&blocks[0]==='TimerReset',sameCode:code==='タイマーを0にする。'},info:{blocks,code}};},
+  'CC-181':async s=>{await s.page.click('#newBtn');await s.page.waitForTimeout(300);if(await s.page.locator('#loseConfirmProceed').isVisible())await s.page.click('#loseConfirmProceed');await s.page.waitForTimeout(500);
+    const l=await s.level();return {expect:{entry:l.chosen==='entry'&&l.shown==='entry',blocks:(await s.mode())==='blocks'},info:l};},
   // ── 名人 ──
-  'MC-001':async s=>{await s.select('w-neko');await s.code();return {expect:{button:await s.visible('#meijinStart')}};},
-  'MC-002':async s=>{await s.select('w-neko');await s.blocks();return {expect:{noButton:!(await s.visible('#meijinStart'))}};},
-  'MC-003':async s=>{await s.select('w-neko');const anywhere=await s.page.evaluate(()=>[...document.querySelectorAll('button,a,summary,option')].some(b=>b.textContent.includes('名人モードで 書く')&&b.offsetParent!==null));
-    return {expect:{nowhere:!anywhere,noCode:await s.page.locator('#editorModecode').isDisabled()}};},
+  'MC-001':async s=>{const l=await s.level();return {expect:{four:l.options.join('|')==='はじめて|かんたん|くわしく|名人'},info:l};},
+  'MC-002':async s=>{await s.select('w-neko');await s.code();const anywhere=await s.page.evaluate(()=>[...document.querySelectorAll('button,a,summary,option')].some(b=>b.textContent.includes('名人モードで 書く')&&b.offsetParent!==null));
+    return {expect:{nowhere:!anywhere}};},
+  'MC-003':async s=>{const before=await s.level();await s.page.selectOption('#uiLevel','basic',{timeout:1000}).catch(()=>{});await s.page.waitForTimeout(200);const after=await s.level();
+    return {expect:{meijin:before.chosen==='meijin'&&after.chosen==='meijin',noOthers:!before.others.length&&!after.others.length,advancedScreen:after.shown==='advanced'&&await s.visible('#diagnoseBtn')},info:{before,after}};},
   'MC-004':async s=>{await s.select('stage');await s.code();const kind=await s.startMeijin(false);return {expect:{confirm:kind==='confirm',notYet:(await s.scripts()).every(x=>x.mode!=='meijin')}};},
-  'MC-005':async s=>{await s.select('stage');await s.code();await s.startMeijin(true);const scripts=await s.scripts();
+  'MC-005':async s=>{await s.select('stage');await s.code();await s.startMeijin(true);const scripts=await s.scripts(),meijin=scripts.filter(x=>x.mode==='meijin');
     const listed=await s.page.evaluate(()=>[...document.querySelectorAll('#objectSelect option')].some(o=>o.value==='meijin'&&o.textContent.includes('名人の本文')));
-    return {expect:{meijin:scripts.some(x=>x.mode==='meijin'),ownerless:scripts.filter(x=>x.mode==='meijin').every(x=>x.targetId==='meijin'),listed}};},
+    return {expect:{empty:meijin.length===1&&meijin[0].source==='',ownerless:meijin.every(x=>x.targetId==='meijin'),listed,chosen:(await s.level()).chosen==='meijin'}};},
   'MC-006':async s=>{await s.select('stage');await s.code();await s.write('ねこは右へ10歩動く。');await s.startMeijin(true);const before=await s.text();await s.page.locator('#editorModeblocks').click({force:true}).catch(()=>{});await s.page.waitForTimeout(250);
     return {expect:{stillCode:(await s.mode())==='code',sameText:(await s.text())===before}};},
   'MC-416':async s=>{await s.select('meijin');await s.code();const meijin=async()=>(await s.scripts()).filter(x=>x.mode==='meijin').length;
@@ -142,13 +151,26 @@ const checks={
   'MC-411':async s=>{await s.select('meijin');await s.code();
     const note=await s.page.evaluate(()=>[...document.querySelectorAll('.mode-blocked-note')].filter(n=>n.offsetParent).map(n=>n.textContent).join(''));
     return {expect:{blocksDisabled:await s.page.locator('#editorModeblocks').isDisabled(),saysCode:bare(note).includes('コードでなおします'),noRedFix:!bare(note).includes('赤いところを直す')},info:{note}};},
-  'MC-007':async s=>{await s.select('stage');await s.code();await s.startMeijin(false);const button=await s.visible('#meijinStart');const ordinary=(await s.scripts()).every(x=>x.mode!=='meijin');await s.blocks();
-    return {expect:{ordinary,blocks:(await s.mode())==='blocks',buttonStill:button}};},
+  'MC-007':async s=>{await s.select('stage');await s.code();const kind=await s.startMeijin(false);const ordinary=(await s.scripts()).every(x=>x.mode!=='meijin'),level=await s.level();await s.blocks();
+    return {expect:{ordinary:kind==='confirm'&&ordinary,levelKept:level.chosen==='basic'&&level.shown==='basic',blocks:(await s.mode())==='blocks'},info:level};},
   'MC-008':async s=>{await s.select('stage');await s.code();await s.write('ねこは右へ10歩動く。');await s.startMeijin(true);await s.page.click('#undoBtn');await s.page.waitForTimeout(300);
-    const undone=(await s.scripts()).every(x=>x.mode!=='meijin');await s.blocks();const blocksAfterUndo=(await s.mode())==='blocks';
-    await s.code();await s.page.click('#redoBtn');await s.page.waitForTimeout(300);const redone=(await s.scripts()).some(x=>x.mode==='meijin');
+    const undone=(await s.scripts()).every(x=>x.mode!=='meijin'),afterUndo=await s.level();await s.blocks();const blocksAfterUndo=(await s.mode())==='blocks';
+    await s.code();await s.page.click('#redoBtn');await s.page.waitForTimeout(300);const redone=(await s.scripts()).some(x=>x.mode==='meijin'),afterRedo=await s.level();
     await s.page.locator('#editorModeblocks').click({force:true}).catch(()=>{});await s.page.waitForTimeout(250);
-    return {expect:{undone,blocksAfterUndo,redone,noBlocksAfterRedo:(await s.mode())==='code'}};},
+    return {expect:{undone,levelBack:afterUndo.chosen==='basic'&&afterUndo.others.includes('advanced'),blocksAfterUndo,redone,levelMeijin:afterRedo.chosen==='meijin',noBlocksAfterRedo:(await s.mode())==='code'},info:{afterUndo,afterRedo}};},
+  'MC-579':async s=>{await s.select('meijin');s.page.once('dialog',d=>d.accept());await s.page.click('#meijinDelete');await s.page.waitForTimeout(300);const l=await s.level();
+    return {expect:{gone:(await s.scripts()).every(x=>x.mode!=='meijin'),back:l.chosen==='basic'&&l.shown==='basic'&&l.others.includes('advanced')},info:l};},
+  'MC-580':async s=>{await s.select('w-neko');await s.startMeijin(true);const l=await s.level();
+    return {expect:{made:(await s.scripts()).some(x=>x.mode==='meijin'),chosen:l.chosen==='meijin',advancedScreen:l.shown==='advanced'&&await s.visible('#diagnoseBtn')},info:l};},
+  'MC-581':async s=>{await s.openFile(workFiles.meijin);const l=await s.level();return {expect:{meijin:l.chosen==='meijin'},info:l};},
+  'MC-582':async s=>{await s.openFile(workFiles.meijin);const during=await s.level();await s.openFile(workFiles.parts);const l=await s.level();
+    return {expect:{advanced:during.chosen==='meijin'&&l.chosen==='advanced'&&l.shown==='advanced',others:l.others.includes('basic')},info:{during,l}};},
+  'MC-583':async s=>{await s.select('meijin');await s.write('ねこは「こんにちは」と言う。');await s.reload();const l=await s.level();
+    return {expect:{restored:(await s.scripts()).some(x=>x.mode==='meijin'&&x.source==='ねこは「こんにちは」と言う。')&&l.chosen==='meijin'},info:l};},
+  'MC-584':async s=>{await s.page.selectOption('#uiLevel','advanced');await s.select('w-neko');await s.code();await s.write('右へ10歩動く。');await s.reload();const l=await s.level();
+    return {expect:{restored:(await s.scripts()).some(x=>x.targetId==='w-neko'&&x.source==='右へ10歩動く。')&&l.chosen==='advanced'&&l.shown==='advanced'},info:l};},
+  'MC-585':async s=>{await s.select('w-neko');await s.code();await s.write('右へ10歩動く。');const kind=await s.startMeijin(true);const scripts=await s.scripts();
+    return {expect:{noConfirm:kind===null&&scripts.some(x=>x.targetId==='w-neko'&&x.mode!=='meijin'&&x.source==='右へ10歩動く。'),oneMeijin:scripts.filter(x=>x.mode==='meijin').length===1}};},
   'MC-009':async s=>{const options=await s.page.evaluate(()=>[...document.querySelectorAll('#objectSelect option')].map(o=>[o.value,o.textContent.trim()]));
     const meijin=options.find(([v])=>v==='meijin');if(meijin)await s.select('meijin');
     return {expect:{listed:!!meijin&&meijin[1].includes('名人の本文'),opens:(await s.text()).trim()==='ねこは右へ10歩動く。'},info:{options}};},

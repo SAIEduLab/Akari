@@ -5973,7 +5973,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
     <button id="diagnoseBtn">作品チェック</button>
     <details id="entryProjectMenu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
     <button id="tutorialStart" type="button">いっしょに作る</button>
-    <label class="ui-level-label">見せ方 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
+    <label class="ui-level-label">見せ方 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option><option value="meijin">名人</option></select></label>
     <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
       <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品を ファイルにします。あとで つづきを 作るときは「開く」で その ファイルを えらびます。</p>
       <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見る ファイルを 作ります。</p>
@@ -6233,7 +6233,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
         <button id="formatBtn">コードを整える</button>
         <span class="exec-location" id="execLocation">いまの ばしょ：―</span>
       </div>
-      <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="meijinStart" type="button" hidden>名人モードで 書く</button><button id="editorCancel" type="button">入力を やめる</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の 取りこみ" hidden></section><div id="blockEditor" hidden></div>
+      <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を やめる</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の 取りこみ" hidden></section><div id="blockEditor" hidden></div>
       <div class="editor-shell">
         <div class="line-gutter" id="lineGutter" aria-hidden="true"></div>
         <textarea id="codeEditor" wrap="soft" spellcheck="false" aria-label="あかりのコード"></textarea>
@@ -22053,7 +22053,7 @@ function createAkariExtensionHost(options) {
         add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
       // 名人のできごと: 〜になったとき and 〜秒ごとに are read like any value; ふれる相手は部品。
       const heading = item.ast.heading, at = item.ast.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } };
-      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、コードの「名人モードで 書く」を おします（見せ方が「はじめて」の ときは、「かんたん」に してから おします）', only.sourceSpan ? only : at, item.key); }
+      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、「見せ方」で「名人」を えらびます', only.sourceSpan ? only : at, item.key); }
       const message = typeof item.filter === 'object' ? item.filter?.message : item.filter;
       const extensionEvent = !item.meijin && item.event === 'message' && typeof message === 'string' && message.startsWith('拡張:')
         ? EXTENSION_HOST.describe(message.slice(3), 'events') : null;
@@ -22737,7 +22737,7 @@ function createAkariExtensionHost(options) {
       });
       if (!reads) continue;
       const { proposals, draftRole, ...location } = first;
-      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、コードの「名人モードで 書く」を おします（見せ方が「はじめて」の ときは、「かんたん」に してから おします）' }, ...out.slice(at).filter(e => e.where !== key)];
+      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、「見せ方」で「名人」を えらびます' }, ...out.slice(at).filter(e => e.where !== key)];
     }
     return out;
   }
@@ -31020,9 +31020,23 @@ function createAkariExtensionHost(options) {
     const entryControlHomes=new Map();
     let tutorial=null, pausedTutorial=null, tutorialEpoch=0, workspaceIdentity=0,
       tutorialTimer=null, tutorialTrace=null, tutorialSave=null, tutorialExpected=null, tutorialInsertion=null;
+    // 見せ方: baseUiLevel is the level chosen other than 名人 (はじめて／かんたん／くわしく). A work with a 名人 text is shown
+    // as くわしく with 名人 chosen, and no other level can be chosen while it has one; without one, the chosen level comes
+    // back (undo, open, a new work). The work file and autosave keep only the chosen level.
+    let baseUiLevel='entry';
+    const workIsMeijin=()=>(project?.scripts||[]).some(isMeijinScript);
+    function applyUiLevel(){
+      const meijin=workIsMeijin();
+      document.body.dataset.meijinLevel=meijin?'on':'off';
+      document.body.dataset.uiLevel=meijin?'advanced':baseUiLevel;
+      for(const option of $('#uiLevel').options)if(option.value!=='meijin')option.disabled=meijin||(option.value==='entry'&&(document.body.dataset.editorMode||editorModes.get('script'))==='code');
+      $('#uiLevel').value=meijin?'meijin':baseUiLevel;
+    }
+    // The chosen level in the form the work's editor state keeps (はじめて is kept as かんたん).
+    const keptUiLevel=()=>baseUiLevel==='entry'?'basic':baseUiLevel;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      $('#uiLevel option[value="entry"]').disabled=(document.body.dataset.editorMode||editorModes.get('script'))==='code';
+      $('#uiLevel option[value="entry"]').disabled=workIsMeijin()||(document.body.dataset.editorMode||editorModes.get('script'))==='code';
       for(const node of [$('#undoBtn'),$('#redoBtn')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
         if(entry){
@@ -31363,7 +31377,7 @@ function createAkariExtensionHost(options) {
             source: d.source,
           },
           draft: true,
-          level: $('#uiLevel').value,
+          level: document.body.dataset.uiLevel,
         };
       }
       if (kind !== 'script') {
@@ -31378,13 +31392,13 @@ function createAkariExtensionHost(options) {
           definitionKind: kind,
           definition: d,
           args: d?.args || [],
-          level: $('#uiLevel').value,
+          level: document.body.dataset.uiLevel,
         };
       }
       const script = scriptBySourceKey(project, ownerKey);
       if (isMeijinScript(script) || (!script && selectedId === MEIJIN_OWNER))
         return { ownerKey, id: script?.id, scriptId: script?.id, filter: undefined, event: 'start', targetId: 'stage',
-          targetType: 'stage', args: [], meijin: true, level: $('#uiLevel').value };
+          targetType: 'stage', args: [], meijin: true, level: document.body.dataset.uiLevel };
       return {
         ownerKey,
         id: script?.id, scriptId: script?.id, filter: script?.filter,
@@ -31392,7 +31406,7 @@ function createAkariExtensionHost(options) {
         targetId: script?.targetId || (event ? id : selectedId),
         targetType: targetType(script?.targetId || (event ? id : selectedId)),
         args: [],
-        level: $('#uiLevel').value,
+        level: document.body.dataset.uiLevel,
       };
     }
     function getEditorSession(binding, { force = false } = {}) {
@@ -32614,8 +32628,6 @@ function createAkariExtensionHost(options) {
           actions, ...(copyHelp?.classList.contains('child-copy-help') ? [copyHelp] : []),
         );
       $('#formatBtn').hidden = block || currentIsMeijin();
-      // 「名人モードで 書く」 starts from a script shown as code.
-      $('#meijinStart').hidden = block || currentIsMeijin() || document.body.dataset.uiLevel === 'entry';
       syncPropertyScrollPadding();
       renderEntrySurface();
     }
@@ -32955,7 +32967,9 @@ function createAkariExtensionHost(options) {
     let restoringSnapshot=false;
     function restoreSnap(e,{restoreView=false}={}) {
       restoringSnapshot=true;
-      const view={uiLevel:$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'}};
+      const view={uiLevel:baseUiLevel,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'}};
+      // Going back to before the 名人 text was made also brings back how the body was shown then (はじめて shows blocks).
+      if(workIsMeijin()&&!(e.project.scripts||[]).some(isMeijinScript)&&e.editorState)view.editorModes.script=e.editorState.editorModes.script;
       try {
       recoveryEpoch++;
       validateAssetReferences(e.project, new AssetStore(e.assets));
@@ -33180,9 +33194,6 @@ function createAkariExtensionHost(options) {
       $('#scriptAdd').textContent = currentIsMeijin() ? '名人の本文を ふやす' : '同じできごとの本文を ふやす';
       $('#meijinDelete').hidden = !currentIsMeijin();
       $('#meijinDelete').disabled = modelLocked();
-      // 名人: code only; 「名人モードで 書く」 starts one from a script in code view.
-      $('#meijinStart').hidden = currentIsMeijin() || (editorModes.get('script') || 'code') !== 'code' || document.body.dataset.uiLevel === 'entry';
-      $('#meijinStart').disabled = modelLocked();
       $('#sourceHeadingBtn').hidden ||= currentIsMeijin();
       renderEntrySurface();
     }
@@ -35206,7 +35217,7 @@ function createAkariExtensionHost(options) {
           start: el.editor.selectionStart,
           end: el.editor.selectionEnd,
           event: currentEvent,
-          level: $('#uiLevel').value,
+          level: document.body.dataset.uiLevel,
         }),
         list = $('#hintUnavailable').checked ? all : all.filter((x) => x.enabled),
         r = drawHints(el.hints, list, $('#hintSearch').value, hintPage, insertHint);
@@ -35240,7 +35251,7 @@ function createAkariExtensionHost(options) {
     function startMeijin() {
       if (modelLocked() || currentIsMeijin()) return;
       // A body with 名人 forms in it does not read as an ordinary body, so it stays a draft in the code editor (S317
-      // tells the child to press this button): that text is taken as the body.
+      // tells the child to choose 名人 in 見せ方): that text is taken as the body.
       const flushed = flushActiveEditor(), draft = !flushed && mainEditor.session?.mode === 'code' && !$('#procModal').classList.contains('show') ? mainEditor.textarea?.value?.replace(/\r\n?/g, '\n') : null;
       if (!flushed && draft == null) return;
       const script = selectCurrentScript(), owner = targetById(selectedId);
@@ -35620,6 +35631,7 @@ function createAkariExtensionHost(options) {
       sync();
     }
     function renderAll() {
+      applyUiLevel();
       applyStage();
       renderTree();
       renderProperties();
@@ -35733,7 +35745,7 @@ function createAkariExtensionHost(options) {
       if(headerPending||pendingEditors.some(d=>d.kind==='draft'))callableDraft=validateCallableDraft({...callableDraftCore,
         name:$('#callableName').value,argsText:$('#callableArgs').value,...(callableDraftCore.type==='action'?{callPhrase:$('#callablePhrase').value}:{})});
       return validateEditorState({version:1,revision:recoveryEpoch,selectedId,currentEvent,selectedScriptId,
-        uiLevel:$('#uiLevel').value==='entry'?'basic':$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'},callableDraft,pendingEditors,
+        uiLevel:keptUiLevel(),sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'},callableDraft,pendingEditors,
         views:[mainEditor,draftEditor].filter(binding=>binding.session).map(binding=>({kind:binding.kind,ownerKey:bindingOwner(binding),
           codeSelection:{start:binding.textarea.selectionStart||0,end:binding.textarea.selectionEnd||0,direction:binding.textarea.selectionDirection||'none'},
           scrollState:{codeTop:binding.textarea.scrollTop,codeLeft:binding.textarea.scrollLeft}}))},project);
@@ -35752,9 +35764,9 @@ function createAkariExtensionHost(options) {
         try{stored=localStorage.getItem(STORAGE_KEYS.uiLevel);}catch(_){}
         if(normalizeEntryUiLevel(stored)==='entry')uiLevel='entry';
       }
-      $('#uiLevel').value=uiLevel;document.body.dataset.uiLevel=uiLevel;
+      baseUiLevel=uiLevel;
       for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,mode);
-      editorSessions.clear();invalidateEditors();hideSourceOverview();renderAll();loadEditor();
+      editorSessions.clear();invalidateEditors();hideSourceOverview();applyUiLevel();renderAll();loadEditor();
       if(state.callableDraft)restoreCallableDraft(state.callableDraft);
       for(const saved of state.pendingEditors){
         const binding=saved.kind==='draft'?draftEditor:mainEditor;
@@ -36579,7 +36591,7 @@ function createAkariExtensionHost(options) {
     function renderAppearance() {
       const body = $('#assetBody');
       body.textContent = '';
-      const advanced = $('#uiLevel').value !== 'basic',
+      const advanced = document.body.dataset.uiLevel !== 'basic',
         c = componentById(selectedId),
         hint = $('#costumeImageHint'),
         thumb = (assetId) => {
@@ -37333,7 +37345,6 @@ function createAkariExtensionHost(options) {
     $('#continueBtn').onclick = () => scheduler?.resume();
     $('#stepBtn').onclick = () => scheduler?.stepOne();
     $('#formatBtn').onclick = formatCurrent;
-    $('#meijinStart').onclick = startMeijin;
     $('#diagnoseBtn').onclick = showDiagnosis;
     $('#diagnosisClose').onclick = () => $('#diagnosisModal').classList.remove('show');
     function replaceCurrentProject(nextProject,nextAssets,targetId,event,status) {
@@ -37370,7 +37381,11 @@ function createAkariExtensionHost(options) {
     async function startProject() {
       if(tutorial||modelLocked())return;
       if(!(await askLose())||tutorial||modelLocked())return;
+      // A new work starts in はじめて, which shows blocks.
+      baseUiLevel='entry';editorModes.set('script','blocks');
+      try{localStorage.setItem(STORAGE_KEYS.uiLevel,'entry');localStorage.setItem(STORAGE_KEYS.editorMode,'blocks');}catch(_){}
       replaceCurrentProject(makeEmptyProject(),makeDefaultAssetStore(),'sprite-1','start','からっぽの 作品です。動かすものと できごとを えらんで、やることを 入れましょう');
+      applyUiLevel();renderHints();renderEntrySurface();renderEditorBinding(mainEditor);
     }
     $('#newBtn').onclick=startProject;
     // Two fixed built-in preview images, shared across cards and picker openings.
@@ -37590,19 +37605,29 @@ function createAkariExtensionHost(options) {
       if (f) await importSoundFile(f);
     };
     $('#uiLevel').onchange = () => {
+      // 名人: the selected body becomes a 名人 text after the confirm (an empty one when there is no body to move).
+      if($('#uiLevel').value==='meijin'){
+        $('#uiLevel').value=baseUiLevel;
+        if (tutorial || composingEditors.size || headerPending || activeDragCleanup) { setStatus('入力を 決めるか やめてから、見せ方を かえてね。'); return; }
+        if(!workIsMeijin()&&modelLocked())setStatus('動いている あいだは、名人モードに できません。止めてから えらんでね。');
+        else if(!workIsMeijin())startMeijin();
+        applyUiLevel();renderHints();renderEntrySurface();renderEditorBinding(mainEditor);mainEditor.view.render({force:true});
+        return;
+      }
       if($('#uiLevel').value==='entry'&&(document.body.dataset.editorMode||editorModes.get('script'))==='code'){
-        $('#uiLevel').value=document.body.dataset.uiLevel;
+        applyUiLevel();
         setStatus('「はじめて」はブロックで使うよ。先に「ブロック」をえらんでね。');
         return;
       }
       if (tutorial || composingEditors.size || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
-        $('#uiLevel').value=document.body.dataset.uiLevel;
+        applyUiLevel();
         setStatus('入力を 決めるか やめてから、見せ方を かえてね。');
         return;
       }
-      document.body.dataset.uiLevel = $('#uiLevel').value;
+      baseUiLevel = $('#uiLevel').value;
+      applyUiLevel();
       try {
-        localStorage.setItem(STORAGE_KEYS.uiLevel, $('#uiLevel').value);
+        localStorage.setItem(STORAGE_KEYS.uiLevel, baseUiLevel);
       } catch (_) {}
       renderHints();
       renderEntrySurface();
@@ -37614,13 +37639,13 @@ function createAkariExtensionHost(options) {
     try {
       storedUiLevel = localStorage.getItem(STORAGE_KEYS.uiLevel);
     } catch (_) {}
-    document.body.dataset.uiLevel = normalizeEntryUiLevel(storedUiLevel);
-    $('#uiLevel').value = document.body.dataset.uiLevel;
+    baseUiLevel = normalizeEntryUiLevel(storedUiLevel);
+    applyUiLevel();
     let storedEditorMode = null;
     try { storedEditorMode = localStorage.getItem(STORAGE_KEYS.editorMode); } catch (_) {}
     editorModes.set('script', ['code', 'blocks'].includes(storedEditorMode) ? storedEditorMode : 'blocks');
     if(document.body.dataset.uiLevel==='entry'&&editorModes.get('script')==='code'){
-      document.body.dataset.uiLevel='basic';$('#uiLevel').value='basic';
+      baseUiLevel='basic';applyUiLevel();
     }
     el.projectName.addEventListener('change', () => {
       if (modelLocked()) {

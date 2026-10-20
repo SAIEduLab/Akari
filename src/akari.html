@@ -38,7 +38,7 @@
     <button id="diagnoseBtn">作品チェック</button>
     <details id="entryProjectMenu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
     <button id="tutorialStart" type="button">いっしょに作る</button>
-    <label class="ui-level-label">見せ方 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
+    <label class="ui-level-label">見せ方 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option><option value="meijin">名人</option></select></label>
     <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
       <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品を ファイルにします。あとで つづきを 作るときは「開く」で その ファイルを えらびます。</p>
       <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見る ファイルを 作ります。</p>
@@ -298,7 +298,7 @@
         <button id="formatBtn">コードを整える</button>
         <span class="exec-location" id="execLocation">いまの ばしょ：―</span>
       </div>
-      <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="meijinStart" type="button" hidden>名人モードで 書く</button><button id="editorCancel" type="button">入力を やめる</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の 取りこみ" hidden></section><div id="blockEditor" hidden></div>
+      <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を やめる</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の 取りこみ" hidden></section><div id="blockEditor" hidden></div>
       <div class="editor-shell">
         <div class="line-gutter" id="lineGutter" aria-hidden="true"></div>
         <textarea id="codeEditor" wrap="soft" spellcheck="false" aria-label="あかりのコード"></textarea>

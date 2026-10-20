@@ -743,7 +743,7 @@
         add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
       // 名人のできごと: 〜になったとき and 〜秒ごとに are read like any value; ふれる相手は部品。
       const heading = item.ast.heading, at = item.ast.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } };
-      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、コードの「名人モードで 書く」を おします（見せ方が「はじめて」の ときは、「かんたん」に してから おします）', only.sourceSpan ? only : at, item.key); }
+      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、「見せ方」で「名人」を えらびます', only.sourceSpan ? only : at, item.key); }
       const message = typeof item.filter === 'object' ? item.filter?.message : item.filter;
       const extensionEvent = !item.meijin && item.event === 'message' && typeof message === 'string' && message.startsWith('拡張:')
         ? EXTENSION_HOST.describe(message.slice(3), 'events') : null;
@@ -1427,7 +1427,7 @@
       });
       if (!reads) continue;
       const { proposals, draftRole, ...location } = first;
-      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、コードの「名人モードで 書く」を おします（見せ方が「はじめて」の ときは、「かんたん」に してから おします）' }, ...out.slice(at).filter(e => e.where !== key)];
+      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、「見せ方」で「名人」を えらびます' }, ...out.slice(at).filter(e => e.where !== key)];
     }
     return out;
   }
