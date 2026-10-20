@@ -3,13 +3,13 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
-import {setTimeout as delay} from 'node:timers/promises';
 import {withBrowser,pageFor,snapshot,sha} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import productDialogs from '../lib/product-dialogs.cjs';
 const {answerProductConfirms}=productDialogs;
 import {install} from '../lib/ux-normal-ui.mjs';
 import {observeRunPreview,verifyRunPreview,observePaletteFold,observeInspector} from '../lib/run-preview-contract.mjs';
+import {writeZoomExtension,zoomExtensionArgs,zoomExtensionWorker,setNativeZoom} from '../lib/native-zoom.mjs';
 import {displayTexts,actionNames,bubbleCases,actionCases,verifyDisplay} from '../lib/speech-display-contract.mjs';
 
 const require=createRequire(import.meta.url),[chrome,output]=process.argv.slice(2),product=currentProductFile();
@@ -21,7 +21,6 @@ const frame=p=>p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAn
 async function shot(p,name){const c=await p.context().newCDPSession(p);try{fs.writeFileSync(path.join(dir,name),Buffer.from((await c.send('Page.captureScreenshot',{format:'png'})).data,'base64'));register(name);}finally{await c.detach();}}
 const hookedPages=new WeakSet();
 const pageAtWidth=(browser,width,fn)=>pageFor({newContext:options=>browser.newContext({...options,viewport:{width,height:848}})},product,fn);
-async function waitForZoomApi(worker){const deadline=Date.now()+8000;while(!await worker.evaluate(()=>!!globalThis.chrome?.tabs?.query)){if(Date.now()>deadline)throw Error('native zoom API unavailable');await delay(50);}}
 function hooks(p){if(hookedPages.has(p))return;hookedPages.add(p);p.setDefaultTimeout(8000);p.on('dialog',d=>d.accept());answerProductConfirms(p,true);p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});}
 async function showProperty(p,label){const field=p.locator('#properties input[aria-label="'+label+'"]');if(!await field.isVisible())await p.locator('.properties-window .blockui-side-toggle').click();await field.scrollIntoViewIfNeeded();return field;}
 async function setNames(p,show){await p.locator('#objectSelect').selectOption('stage');await (await showProperty(p,'名前を見せる')).setChecked(show);await p.locator('#objectSelect').selectOption('sprite-1');}
@@ -88,11 +87,10 @@ try{
  },600000);
  await run('DISPLAY-NATIVE-ZOOM',async()=>{
   const rows=[];for(const mode of ['code','blocks'])for(const requested of [1.25,2]){
-   const extension=fs.mkdtempSync(path.join(dir,'zoom-extension-')),profile=fs.mkdtempSync(path.join(dir,'zoom-profile-'));fs.writeFileSync(path.join(extension,'manifest.json'),JSON.stringify({manifest_version:3,name:'Local display audit zoom',version:'1.0',permissions:['tabs'],background:{service_worker:'worker.js'}}));fs.writeFileSync(path.join(extension,'worker.js'),'chrome.runtime.onInstalled.addListener(()=>{});');
-   const {chromium}=require('playwright'),context=await chromium.launchPersistentContext(profile,{executablePath:chrome,headless:true,viewport:null,offline:true,timeout:15000,ignoreDefaultArgs:['--disable-extensions'],args:['--allow-file-access-from-files','--disable-background-networking','--window-size=1366,848','--disable-extensions-except='+extension,'--load-extension='+extension]});
-   try{await context.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});const worker=context.serviceWorkers()[0]||await context.waitForEvent('serviceworker',{timeout:10000}),p=context.pages()[0];await p.goto(pathToFileURL(path.resolve(product)).href);await p.waitForFunction(()=>!!globalThis.Akari?.app);await fixture(p,{mode});await rename(p,actionNames[1]);const metrics=()=>p.evaluate(()=>({outerWidth,innerWidth,dpr:devicePixelRatio})),before=await metrics();
-    await waitForZoomApi(worker);
-    const actual=await worker.evaluate(async requested=>{const tab=(await chrome.tabs.query({})).find(t=>t.url?.startsWith('file:'));if(!tab)throw Error('local product tab missing');await chrome.tabs.setZoom(tab.id,requested);return chrome.tabs.getZoom(tab.id);},requested);await p.waitForFunction(({dpr,requested})=>Math.abs(devicePixelRatio/dpr-requested)<.02,{dpr:before.dpr,requested});await frame(p);const after=await metrics(),geometry=await actions(p);await shot(p,'zoom-'+rows.length+'.png');rows.push({mode,requested,actual,before,after,geometry});
+   const extension=fs.mkdtempSync(path.join(dir,'zoom-extension-')),profile=fs.mkdtempSync(path.join(dir,'zoom-profile-'));writeZoomExtension(extension,'Local display audit zoom');
+   const {chromium}=require('playwright'),context=await chromium.launchPersistentContext(profile,{executablePath:chrome,headless:true,viewport:null,offline:true,timeout:15000,ignoreDefaultArgs:['--disable-extensions'],args:['--allow-file-access-from-files','--disable-background-networking','--window-size=1366,848',...zoomExtensionArgs(extension)]});
+   try{await context.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});const worker=await zoomExtensionWorker(context),p=context.pages()[0];await p.goto(pathToFileURL(path.resolve(product)).href);await p.waitForFunction(()=>!!globalThis.Akari?.app);await fixture(p,{mode});await rename(p,actionNames[1]);const metrics=()=>p.evaluate(()=>({outerWidth,innerWidth,dpr:devicePixelRatio})),before=await metrics();
+    const actual=await setNativeZoom(context,worker,p,requested);await p.waitForFunction(({dpr,requested})=>Math.abs(devicePixelRatio/dpr-requested)<.02,{dpr:before.dpr,requested});await frame(p);const after=await metrics(),geometry=await actions(p);await shot(p,'zoom-'+rows.length+'.png');rows.push({mode,requested,actual,before,after,geometry});
    }finally{await context.close();}
   }return rows;
  });

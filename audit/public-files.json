@@ -143,6 +143,7 @@
     "audit/lib/japanese-intent-oracles.mjs",
     "audit/lib/license-contract.cjs",
     "audit/lib/meijin-example-world.mjs",
+    "audit/lib/native-zoom.mjs",
     "audit/lib/product-dialogs.cjs",
     "audit/lib/product-path.cjs",
     "audit/lib/product-source-contract.mjs",
