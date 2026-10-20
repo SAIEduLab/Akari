@@ -26456,27 +26456,30 @@ function createAkariExtensionHost(options) {
     cache.set(cacheKey, result);
     return JSON.parse(JSON.stringify(result));
   }
-  const EDITOR_AVAILABILITY_BY_CONTENT = new Map(), PROJECT_AVAILABILITY_PRINT = new WeakMap();
-  // Everything an insertion check reads besides the body text: names, kinds, data, the other bodies and procedures.
-  function projectAvailabilityPrint(project) {
-    if (!project || typeof project !== 'object') return '';
-    let print = PROJECT_AVAILABILITY_PRINT.get(project);
-    if (print === undefined) {
-      const named = list => (list || []).map(x => [x.id, x.name]);
-      const owner = c => [c.id, c.name, c.type, named(c.costumes), named(c.sounds), named(c.backdrops), c.localData, c.text ?? null];
-      print = JSON.stringify([owner(project.stage || {}), (project.components || []).map(owner), project.projectData,
-        (project.actions || []).map(a => [a.id, a.ownerId, a.name, a.args, a.source]), (project.functions || []).map(f => [f.id, f.ownerId, f.name, f.args, f.source]),
-        (project.scripts || []).map(s => [s.id, s.targetId, s.event, s.mode, s.filter ?? null, s.source]), project.extensions ?? null, project.settings ?? null]);
-      PROJECT_AVAILABILITY_PRINT.set(project, print);
-    }
-    return print;
+  const EDITOR_AVAILABILITY_BY_CONTENT = new Map();
+  // A short print of a long text (two 32-bit hashes and the length), so the keys stay small.
+  function availabilityHash(text) {
+    let a = 0x811c9dc5, b = 7;
+    for (let i = 0; i < text.length; i++) { const c = text.charCodeAt(i); a = Math.imul(a ^ c, 16777619); b = (Math.imul(b, 31) + c) | 0; }
+    return (a >>> 0).toString(36) + '.' + (b >>> 0).toString(36) + '.' + text.length;
+  }
+  // What an insertion check reads of the project: its names, kinds, places, data, the other bodies and procedures. It is
+  // read on every check, because the project may change in place (a part's place set in the properties).
+  function projectAvailabilityText(project) {
+    const named = list => (list || []).map(x => [x.id, x.name]);
+    const owner = c => [c.id, c.name, c.type, c.x ?? null, c.y ?? null, named(c.costumes), named(c.sounds), named(c.backdrops), c.localData, c.text ?? null];
+    return JSON.stringify([owner(project.stage || {}), (project.components || []).map(owner), project.projectData,
+      (project.actions || []).map(a => [a.id, a.ownerId, a.name, a.args, a.source]), (project.functions || []).map(f => [f.id, f.ownerId, f.name, f.args, f.source]),
+      (project.scripts || []).map(s => [s.id, s.targetId, s.event, s.mode, s.filter ?? null, s.source]), project.extensions ?? null, project.settings ?? null]);
   }
   function availabilityContentKey(session, schemaId, location, options) {
     const project = options.project || session.project, context = options.context || session.context || {};
-    if (!project || typeof session.sourceText !== 'string') return null;
-    let contextPrint;
-    try { contextPrint = JSON.stringify(context, (key, value) => (key === 'symbols' ? undefined : value)); } catch (error) { return null; }
-    return JSON.stringify([options.ownerKey ?? session.ownerKey, schemaId, location, session.sourceText, contextPrint, projectAvailabilityPrint(project)]);
+    if (!project || typeof project !== 'object' || typeof session.sourceText !== 'string' || typeof context !== 'object') return null;
+    try {
+      return [options.ownerKey ?? session.ownerKey, schemaId, location.parentId, location.body || '', location.input || '', location.index ?? '',
+        availabilityHash(session.sourceText), availabilityHash(JSON.stringify(context, (key, value) => (key === 'symbols' ? undefined : value))),
+        availabilityHash(projectAvailabilityText(project))].join('|');
+    } catch (error) { return null; }
   }
   function editorInsertionHints(session, location, options = {}) {
     if (!location.body) return [];
