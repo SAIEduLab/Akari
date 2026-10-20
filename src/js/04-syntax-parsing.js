@@ -1368,6 +1368,7 @@
   function meijinTopicAfter(nodes, topic) {
     const inner = [], walk = v => { if (Array.isArray(v)) { v.forEach(walk); return; } if (!v || typeof v !== 'object') return; if (STATEMENT_EXPLICIT_ACTORS.has(v)) inner.push(topicOf(v.actorRef)); for (const k of ['body', 'thenBody', 'elseBody', 'lanes']) if (v[k]) walk(v[k]); };
     walk(nodes);
+    if (nodes.length === 1 && nodes[0].speaksAs) return ['named', 'value'].includes(nodes[0].speaksAs.kind) ? topicOf(nodes[0].speaksAs) : topic;
     const sets = nodes.some(n => ['ParallelEach', 'ForEach'].includes(n.kind));
     if (!inner.length && !sets) return topic;
     const same = a => a.kind === inner[0].kind && a.name === inner[0].name && JSON.stringify(a.value) === JSON.stringify(inner[0].value);
@@ -1842,7 +1843,7 @@
     if(at<0)return;
     const write=body=>{try{return formatScript({kind:'Script',body}).trim().replace(/。$/,'').split('\n').join('\n'+' '.repeat(line.indent||0));}catch{return null;}};
     const together=write(nodes.map((n,i)=>i===at?{...n,actorRef:{kind:'all'}}:n)),only=write(nodes),who=sentenceActorSource(nodes[at].actorRef);
-    throw sentenceDiagnostic(`「待って」のあとに ほかの 主語の 文を つづけるときは、文を 分けて 書きます。みんなで 待つのか、${who}だけが 待つのかを えらんでください`,line,
+    throw sentenceDiagnostic(`「待って」のあとに ほかの 主語の 文を つづけるときは、文を 分けて 書きます。みんなで 待つのか、${who}だけが 待つのかを えらんでください（みんなで 待つときは「1秒待つ。」、${who}だけが 待つときは「${who}は1秒待つ。」と 書いて、次の 文を 書きます）`,line,
       [...(together?[{label:'みんなで 待ってから つづける',source:together}]:[]),...(only?[{label:`${who}だけが 待つ（ほかは すぐ 動く）`,source:only}]:[])],{kind:'Sequence'});
   }
   function sentenceDiagnostic(message,line,choices=[],draftRole=null) {

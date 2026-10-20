@@ -2322,6 +2322,181 @@
       "cases": [
         "MC-382"
       ]
+    },
+    {
+      "id": "MI-201",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "名人の書き方の入った部品の本文も、名人モードにできる（R1）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-522"
+      ]
+    },
+    {
+      "id": "MI-202",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "本文の中で作った手順の名前は、部品・変数・受け取る値と同じ名前に変えられない（R2）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-523",
+        "MC-524",
+        "MC-525"
+      ]
+    },
+    {
+      "id": "MI-203",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「偶数」などは、条件のどの項にも書け、「〜のあいだ」でもつなげる（R5）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-526",
+        "MC-527",
+        "MC-528",
+        "MC-529",
+        "MC-530"
+      ]
+    },
+    {
+      "id": "MI-204",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "名人の書き方も、主語を書かなければ前の文の主語が行う（R7）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-531",
+        "MC-532",
+        "MC-533",
+        "MC-534"
+      ]
+    },
+    {
+      "id": "MI-205",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "リストの名前を【 】で囲んでも、「一つ消す」「順に〜ずつ言う」で読む（R23）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-535",
+        "MC-536"
+      ]
+    },
+    {
+      "id": "MI-206",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "中に主語を書いた「もし」のあとは、前と同じ主語でも引き継がない（R11）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-537"
+      ]
+    },
+    {
+      "id": "MI-207",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びは一つの動作ずつ順に進み、手順を行う並びは、ほかの並びのあとに中身を始める（R16・R17）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-538",
+        "MC-539"
+      ]
+    },
+    {
+      "id": "MI-208",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "部品と同じ名前のリストを主語に書くと、「みんな」があってもなくても止める（R24）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-540",
+        "MC-541"
+      ]
+    },
+    {
+      "id": "MI-209",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "待っている部品のあとの、すぐ行う命令の知らせは「この 文は すぐ 行います」（R26）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-542"
+      ]
+    },
+    {
+      "id": "MI-210",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「2秒ずつ順に言う」も読み、「順に言う」「順に2秒言う」には書いた言葉で案内する（R28）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-543",
+        "MC-544",
+        "MC-545"
+      ]
+    },
+    {
+      "id": "MI-211",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "負の数や名前の「〜の倍数」にも、整数を書くよう案内する（R34）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-546",
+        "MC-547"
+      ]
+    },
+    {
+      "id": "MI-212",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「と」と「も」をまぜて部品を並べると止め、どちらかで並べるよう案内する（R35）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-548"
+      ]
+    },
+    {
+      "id": "MI-213",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "「〜秒のあいだ、ねこは…動き続ける。」のあとは、ねこを引き継ぐ（R36）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-549"
+      ]
+    },
+    {
+      "id": "MI-214",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "見出しの中身は、読点のあとの文と右へずらした文の両方に書ける（R37）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-550"
+      ]
+    },
+    {
+      "id": "MI-215",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "見出しの「自分は、」は、見出しの行で部品の名前を書くよう案内する（R38）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-551"
+      ]
+    },
+    {
+      "id": "MI-216",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語のない呼び出しの案内の例には、書いた値も入れる（R39）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-552"
+      ]
     }
   ],
   "specGaps": []

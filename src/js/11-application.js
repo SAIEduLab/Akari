@@ -4558,12 +4558,28 @@
       }
     }
     function startMeijin() {
-      if (modelLocked() || currentIsMeijin() || !flushActiveEditor()) return;
+      if (modelLocked() || currentIsMeijin()) return;
+      // A body with 名人 forms in it does not read as an ordinary body, so it stays a draft in the code editor (S317
+      // tells the child to press this button): that text is taken as the body.
+      const flushed = flushActiveEditor(), draft = !flushed && mainEditor.session?.mode === 'code' && !$('#procModal').classList.contains('show') ? mainEditor.textarea?.value?.replace(/\r\n?/g, '\n') : null;
+      if (!flushed && draft == null) return;
       const script = selectCurrentScript(), owner = targetById(selectedId);
-      let source = script?.source || '';
+      let source = draft ?? script?.source ?? '';
       if (source.trim()) {
-        const parsed = parseSyntax(source, { symbols: buildSymbols(project), targetId: script.targetId, event: script.event });
-        if (!parsed.ast) { setStatus('書き方の まちがいを 直してから、名人モードに してね。'); return; }
+        const parsed = parseSyntax(source, { symbols: buildSymbols(project), targetId: script?.targetId ?? selectedId, event: script?.event ?? currentEvent });
+        // A body the common grammar does not read may hold 名人 forms (the check says so, S317): it is taken when it
+        // reads as a 名人 text under a heading with its owner's name.
+        if (!parsed.ast) {
+          const headed = owner?.name ? sentenceHeadingSource({ event: script?.event ?? currentEvent, actorRef: { kind: 'named', name: owner.name }, filter: script?.filter ?? null }) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n') : null;
+          const without = cloneDesignProject(project);
+          without.scripts = without.scripts.filter(s => s.id !== script?.id);
+          const errorsOf = p => { try { return compileProject(p).errors.length; } catch (error) { if (!(error instanceof AkariError)) throw error; return Infinity; } }, before = errorsOf(without);
+          // The other bodies' errors stay as they are; the 名人 text adds none.
+          const reads = text => { const trial = cloneDesignProject(without); trial.scripts.push({ id: 'meijin-start-trial', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: text }); return errorsOf(trial) <= before; };
+          const meijin = [headed, source].find(text => text && reads(text));
+          if (!meijin) { setStatus('書き方の まちがいを 直してから、名人モードに してね。'); return; }
+          source = meijin;
+        } else {
         const headings = [parsed.ast, ...(parsed.ast.units || [])].map(unit => unit.heading).filter(Boolean);
         // A heading whose subject is 自分 (written, or not written) is written with the owner's name.
         const lines = source.split('\n');
@@ -4574,11 +4590,12 @@
         source = lines.join('\n');
         // The body's owner is written out, because a 名人 script belongs to no part.
         if (!headings.length) {
-          const heading = { event: script.event, actorRef: { kind: 'named', name: owner.name }, filter: script.filter ?? null };
+          const heading = { event: script?.event ?? currentEvent, actorRef: { kind: 'named', name: owner.name }, filter: script?.filter ?? null };
           source = sentenceHeadingSource(heading) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n');
         }
+        }
       }
-      if (!confirm(`名人モードで 書くと、この本文は ${owner?.name ? owner.name + 'の 本文から はなれて、' : ''}「動かすもの」の「名人の本文」に うつります。ブロックには もどせません。\n名人モードで 書きますか？`)) return;
+      if (!confirm(`名人モードで 書くと、この本文は ${owner?.name ? owner.name + 'から はなれて、' : ''}「動かすもの」の「名人の本文」に うつります。ブロックには もどせません。\n名人モードで 書きますか？`)) return;
       try {
         const next = cloneDesignProject(project), id = script?.id || ensureUniqueId('script');
         const row = { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source, ...(script?.document ? { document: cloneDesignProject(script.document) } : {}) };
@@ -4586,6 +4603,8 @@
         if (at >= 0) next.scripts.splice(at, 1, row); else next.scripts.push(row);
         validateDesignProject(next);
         clearTimeout(historyTimer); pushHistoryNow();
+        // The draft is now the 名人 text: its reading error is not shown any more.
+        if (draft != null) { if (mainEditor.session) { mainEditor.session.pendingEdit = null; mainEditor.session.blockDraft = null; } clearEditorFailure(mainEditor); }
         project = next; selectedId = MEIJIN_OWNER; currentEvent = 'start'; selectedScriptId = id;
         hideSourceOverview(); invalidateEditors(); markDirty(); renderTree(); renderProperties(); loadEditor(); renderComponents();
         clearTimeout(historyTimer); pushHistoryNow();

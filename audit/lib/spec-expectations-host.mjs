@@ -250,7 +250,12 @@ export function renameResult(api, c) {
       next = definition ? api.prepareMeijinProcedureRename(project, definition.id, to)
         : api.prepareResourceRename(project, resourceOf(x => (x.kind === 'action' || x.kind === 'function') && x.name === from).key, to);
     } else next = api.prepareResourceRename(project, resourceOf(x => x.kind === (what === 'part' ? 'component' : 'data') && x.name === from).key, to);
-  } catch (error) { return ['rename was refused: ' + (error.code || error.message)]; }
+  } catch (error) {
+    // A case may expect the rename to be refused, with the reason it gives.
+    if (c.expect.refused) return (c.expect.refusalContains ?? []).filter(word => !String(error.message).includes(word)).map(word => 'refusal lacks ' + word);
+    return ['rename was refused: ' + (error.code || error.message)];
+  }
+  if (c.expect.refused) return ['rename was not refused'];
   const joined = next.scripts.map(s => s.source).join('\n'), problems = [];
   for (const word of c.expect.sourceContains ?? []) if (!joined.includes(word)) problems.push('renamed text lacks ' + word);
   for (const word of c.expect.sourceAbsent ?? []) if (joined.includes(word)) problems.push('renamed text still has ' + word);

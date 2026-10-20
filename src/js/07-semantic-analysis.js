@@ -104,7 +104,7 @@
   // 名人 scripts belong to no part, so every action names who does it.
   const MEIJIN_SUBJECT_MESSAGE = '名人の 本文では、だれが するかを 文の はじめに 書きます。れい：ねこは前へ10歩進む';
   // 決まり4: the sentence before has its subjects inside it, so none is carried on.
-  const MEIJIN_TOPIC_ENDED = 'すぐ前の 文からは 主語を 引きつげません（主語を ならべた 文、「もし」の 文、見出しの 文や、中に ほかの 主語を 書いた 文の あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む';
+  const MEIJIN_TOPIC_ENDED = 'すぐ前の 文からは 主語を 引きつげません（主語を ならべた 文、あつまりの 文、見出しの 文、「〜あいだ」「次のことを同時に始める」の 文、中に 主語を 書いた「もし」や くり返しの あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む';
   function analyzeProject(project, compiled, { rootKeys = null } = {}) {
     const symbols = compiled.symbols,
       diags = [],
@@ -150,7 +150,7 @@
       return null;
     };
     // A part and a variable (or list) with the same name: a bare name there reads the data, though a part was meant.
-    const sameNameAsPart = (name) => `「${name}」は、部品の 名前と へんすうの 名前が 同じなので、どちらの ことか 決まりません`;
+    const sameNameAsPart = (name) => `「${name}」は、部品の 名前と ${symbols.projectLists?.has?.(name) ? 'リスト' : 'へんすう'}の 名前が 同じなので、どちらの ことか 決まりません`;
     // A read already told of (as a target or a subject) is not told of again where it is read as a value.
     const sameNameTold = new WeakSet();
     const checkComponentTarget = (expr, allowed, ctx, where, label = '部品', special = []) => {
@@ -165,11 +165,13 @@
         add('S304', `${label}「${name}」はここでは使えません。使える部品をえらんでください`, ctx.node, where);
     };
     let analyzeCallable = () => {};
+    // The values a call gives, as written: 【長さ】を5、【向き】を90 (for an example of the same call with a subject).
+    const callValues = n => { try { const names = n.argumentNames || [], values = n.args || []; return names.length && names.length === values.length ? names.map((x, i) => '【' + x + '】を' + messageExpression(values[i])).join('、') : ''; } catch (error) { if (!(error instanceof AkariError)) throw error; return ''; } };
     const actorContext = (ref, ctx, node, where) => {
       // 名人: the part held in a value acts; which part it is is known when the sentence runs.
       if (ref?.kind === 'value') {
         if (ref.value?.kind === 'VariableRead' && !ref.value.qualifier && componentByName(ref.value.name) && !sameNameTold.has(ref.value) && sameNameTold.add(ref.value))
-          add('S316', sameNameAsPart(ref.value.name) + '。だれが するかが 分からないので、どちらかの 名前を かえてください', node, where);
+          add('S316', sameNameAsPart(ref.value.name) + '。どちらかの 名前を かえてください', node, where);
         analyzeExpr(ref.value, ctx, where); return { ...ctx, targetId: null, targetType: null, valueActor: true };
       }
       if (!ref || ref.kind !== 'named') return ctx;
@@ -558,7 +560,7 @@
           if (!a) add('S301', `てじゅん「${n.name}」がありません`, n, where);
           else if (a.args.length !== n.args.length)
             add('S308', `てじゅん「${n.name}」に入れるものは${a.args.length}こです`+namedArgumentDetails(a.args,n.argumentNames), n, where);
-          else { checkArguments(n, a, where); analyzeCallable(a, 'action', c.meijin && c.targetType === 'stage' && n.actorRef?.kind !== 'named' ? { ...c, meijinCall: { node: n, where, name: n.name } } : c); }
+          else { checkArguments(n, a, where); analyzeCallable(a, 'action', c.meijin && c.targetType === 'stage' && n.actorRef?.kind !== 'named' ? { ...c, meijinCall: { node: n, where, name: n.name, given: callValues(n) } } : c); }
         }
         if (n.kind === 'MotionCommand' && n.op === 'POINT_TO')
           checkComponentTarget(n.args?.[0], null, c, where, '部品', ['マウス']);
@@ -621,7 +623,7 @@
             }
         }
         // 名人: a procedure called with no subject is the stage's; who does its sentences is written at the call (決まり7).
-        const needsSubject = message => c.meijinCall ? add('S304', `手順【${c.meijinCall.name}】の 中に、だれが するかを 書いていない 文が あります。手順を 呼び出す 文の はじめに、だれが 行うかを 書きます。れい：ねこは【${c.meijinCall.name}】という手順を行う`, c.meijinCall.node, c.meijinCall.where)
+        const needsSubject = message => c.meijinCall ? add('S304', `手順【${c.meijinCall.name}】の 中に、だれが するかを 書いていない 文が あります。手順を 呼び出す 文の はじめに、だれが 行うかを 書きます。れい：ねこは${c.meijinCall.given ? '、' + c.meijinCall.given + 'として、' : ''}【${c.meijinCall.name}】という手順を行う`, c.meijinCall.node, c.meijinCall.where)
           : add('S304', c.meijin ? (n.actorRef?.topicEnded ? MEIJIN_TOPIC_ENDED : MEIJIN_SUBJECT_MESSAGE) : message, n, where);
         // 名人: speech and sounds need who does them, as moves do (the script itself is no part; 画面は… names the stage).
         // Stopping every sound acts on the whole work.
@@ -1073,6 +1075,15 @@
     if (name === d.name) return cloneDesignProject(project);
     if ([...project.actions, ...project.functions, ...meijinProjectDefinitions(project)].some(x => x.name === name))
       throw new AkariError('F503', '自分で作ったブロックに 同じ名前が あります。ちがう名前に してください');
+    // A part, data or received value of the same name: the new name would be read as that one where it is written bare.
+    {
+      const s = buildSymbols(project), local = [...(s.individualByTargetId?.values?.() || [])];
+      const what = [project.stage, ...project.components].some(c => c.name === name) ? '部品'
+        : s.projectLists?.has(name) || local.some(x => x.lists?.has(name)) ? 'リスト'
+          : s.projectVars?.has(name) || local.some(x => x.variables?.has(name)) ? 'へんすう'
+            : meijinProjectDefinitions(project).some(x => (x.args || []).includes(name)) ? '入れるもの' : null;
+      if (what) throw new AkariError('F503', `「${name}」という ${what}が あるので、手順の 名前には できません。ちがう 名前に してください`);
+    }
     const next = cloneDesignProject(project), resource = { name: d.name }, records = sourceRegistry(project);
     const place = (record, source) => {
       if (source === null || source === record.source) return;
@@ -1438,7 +1449,12 @@
       const script = project.scripts.find(s => isMeijinScript(s) && (scriptSourceKey(s) === e.where || (s.document?.unitIds || []).some(id => 'script:' + id === e.where)));
       const text = script && String(script.source || '').split('\n')[e.line - 1]?.trim();
       const lines = String(script?.source || '').split('\n'), before = lines.slice(0, e.line - 1).reverse().find(l => l.trim() && !l.trim().startsWith('※'))?.trim() || '';
-      const several = /^(?:もし|そうでなければ|次のことを)|(?:みんな|それぞれ|順番に)|^[^、。「」]+?(?:と|も)[^、。「」]+?(?:は|が)、?|(?:とき|たら|ごとに)、/.test(before);
+      const several = /^(?:もし|そうでなければ|次のことを)|(?:みんな|それぞれ|順番に)|^[^、。「」]+?(?:と|も)[^、。「」]+?(?:は|が)、?|(?:とき|たら|ごとに)、./.test(before);
+      const part = project.components.find(c => c.type !== 'stage')?.name || 'ねこ', example = text && !/^自分/.test(text) ? `れい：${part}は${text.replace(/^、/, '')}` : null;
+      // 作品を動かしたとき、自分は、: a 名人 text has no 自分; the heading names the part.
+      if (text && e.message === MEIJIN_SUBJECT_MESSAGE && /、自分(?:は|が)、$/.test(before)) return { ...e, line: e.line - 1, message: `名人の 本文には「自分」に あたる 部品が ありません。見出しの「自分は、」を 部品の 名前に します。れい：${before.replace(/自分(は|が)、$/, part + 'は、')}` };
+      if (text && example && (e.message === MEIJIN_TOPIC_ENDED || (e.message === MEIJIN_SUBJECT_MESSAGE && several))) return { ...e, message: MEIJIN_TOPIC_ENDED.replace('れい：ねこは前へ10歩進む', example) };
+      if (text && example && e.message === MEIJIN_SUBJECT_MESSAGE) return { ...e, message: MEIJIN_SUBJECT_MESSAGE.replace('れい：ねこは前へ10歩進む', example) };
       if (text && e.message === MEIJIN_SUBJECT_MESSAGE && several)
         return { ...e, message: MEIJIN_TOPIC_ENDED };
       return text && /^自分(?:は|が|の)/.test(text) ? { ...e, message: '名人の 本文には、「自分」に あたる 部品が ありません。部品の 名前を 書きます。れい：ねこは前へ10歩進む／ねこのコピーを作る' } : e;
@@ -1541,7 +1557,7 @@
             const other = who(m.actorRef);
             if (!other || waiters.includes(other)) break;
             const note = { code: 'I101', notice: true, line: m.sourceSpan?.startLine || 0, column: m.sourceSpan?.startColumn || 1, where: item.key,
-              message: `${other}は すぐ ${NOTICE_VERBS[m.kind] || '動きます'}（待つのは ${waiter}だけです）。みんなで 待つときは、「待つ」の 文に 主語を 書きません` };
+              message: `${item.meijin && !NOTICE_VERBS[m.kind] && !['MotionCommand', 'LooksCommand', 'PenCommand'].includes(m.kind) ? 'この 文は すぐ 行います' : other + 'は すぐ ' + (NOTICE_VERBS[m.kind] || '動きます')}（待つのは ${waiter}だけです）。${item.meijin ? 'この 本文 ぜんたいで' : 'みんなで'} 待つときは、「待つ」の 文に 主語を 書きません` };
             const key = note.where + '|' + note.line + '|' + note.column;
             if (!seen.has(key)) { seen.add(key); notes.push(note); }
             break;

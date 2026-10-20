@@ -149,7 +149,7 @@ function verifyCaseShape(c, area, where, fail) {
   } else if (c.kind === 'rename') {
     verifyWorld(c.world, area, where, fail);
     if (!['part', 'variable', 'list', 'procedure'].includes(c.rename?.what) || !c.rename?.from || !c.rename?.to) fail(where, 'rename');
-    if (!(c.expect?.sourceContains?.length || c.expect?.sourceAbsent?.length)) fail(where, 'rename.expect');
+    if (!(c.expect?.sourceContains?.length || c.expect?.sourceAbsent?.length || (c.expect?.refused === true && c.expect?.refusalContains?.length))) fail(where, 'rename.expect');
   } else if (c.kind === 'ui') {
     if (!c.steps?.length || !c.expect?.length) fail(where, 'ui.steps and ui.expect');
   }

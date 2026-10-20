@@ -320,6 +320,14 @@
     // ねこから犬までのきょり: one part's distance to another.
     replaceAll(new RegExp('(' + alt + ')から(' + alt + ')までの(?:きょり|距離)'), m => `「${meijinBare(m[1])}」の（「${meijinBare(m[2])}」までのきょり）`);
     // 持ち物が空なら / 点数が偶数でなければ / 点数が10の倍数だったら / 持ち物が空のあいだ: the words of 国語 and 算数.
+    // もし点数が20より小さい かつ 点数が偶数なら / 点数が偶数で、持ち物が空のあいだ、: each term is read; a term with 、
+    // in it (三つ以上を「〜で、」で) is left for the guidance.
+    replaceAll(new RegExp('(もし、?|^)([^。]+?(?:で、|であり、|\\s*かつ\\s*)[^。]+?)(なら|のあいだ|あいだ)、'), m => {
+      const terms = m[2].split(/で、|であり、|\s*かつ\s*/).map(t => t.trim()), word = new RegExp('^' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:の)?$');
+      if (terms.length < 2 || terms.some(t => !t || t.includes('、')) || !terms.some(t => word.test(t))) return null;
+      const read = terms.map(t => { const w = word.exec(t); return w ? meijinWordTest(w[1], w[2]) : t.replace(/の$/, ''); });
+      return `${m[1]}条件（${read.join(' かつ ')}）${m[3] === 'なら' ? 'が成り立つなら' : 'が成り立つあいだ'}、`;
+    });
     replaceAll(new RegExp('(もし、?)' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:で、|であり、|\\s*かつ\\s*)([^、。]+?)(なら|でなければ)、'), m => `${m[1]}条件（${meijinWordTest(m[2], m[3])} かつ ${m[4].trim()}）${m[5] === 'なら' ? 'が成り立つなら' : 'が成り立たないなら'}、`);
     replaceAll(new RegExp('(もし、?|、|^)' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + MEIJIN_WORD_ENDING), m => `${m[1]}${meijinWordTest(m[2], m[3], m[4])}`);
     if (changed) return out;
@@ -328,7 +336,7 @@
     // 点数が10点になったら、ねこは…: wait until it becomes so, then do it (once).
     if (!/^もし/.test(mask) && (p = surfaceCapture(/^(.+?)になったら、(.+)$/d, code, mask))) return p[0].text + 'になるまで待って、' + p[1].text;
     // 持ち物から「本」を一つ消す: the first one; nothing happens when there is none.
-    if ((p = surfaceCapture(/^([^、。\u0001]+?)から(.+?)を(?:一つ|ひとつ|1つ)(?:消す|けす)$/d, code, mask)) && meijinListName(p[0].text, symbols, ctx)) {
+    if ((p = surfaceCapture(/^(\u0001+|[^、。\u0001]+?)から(.+?)を(?:一つ|ひとつ|1つ)(?:消す|けす)$/d, code, mask)) && meijinListName(p[0].text, symbols, ctx)) {
       const [list, value] = p.map(x => x.text);
       return `もし${list}に${value}が入っていれば、${list}の（${list}の中で${value}がはじめて出てくる番号）番目を消す`;
     }
@@ -430,7 +438,9 @@
     }
     // 点数が偶数じゃなかったら、: a word of 国語・算数 with an ending that is not read.
     // もし点数が偶数で、20より小さく、2より大きいなら: three or more are joined with かつ.
-    if ((p = new RegExp('^(?:もし、?)?' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:で、|であり、)[^。]*、').exec(mask)) && fails())
+    if ((p = new RegExp('^(?:もし、?)?' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:で、|であり、)([^。]*?)(?:なければ|ければ)、').exec(mask)) && !p[3].includes('、') && fails())
+      return `「〜で、…なければ」では、どこまでを うちけすのかが 決まりません。「もし${p[1]}が${p[2]}なら、」の 中に「もし${p[3]}なければ、」を 書きます`;
+    if ((p = new RegExp('^(?:もし、?)?' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:で、|であり、)([^。]*?、[^。]*?)(?:なら|あいだ)、').exec(mask)) && fails())
       return `「${p[2]}で、」に つなげる きまりは 一つです。三つ以上を つなぐときは「かつ」で つなぎます。れい：もし${p[1]}が${p[2]} かつ ${p[1]}が20より小さい かつ ${p[1]}が2より大きいなら、`;
     if ((p = new RegExp('^(?:もし、?)?' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?!' + MEIJIN_WORD_ENDING + '|になったら|になったとき)').exec(mask)) && fails())
       return `「${p[2]}」は、「${p[1]}が${p[2]}なら」「${p[1]}が${p[2]}でなければ」の 形で 書きます`;
@@ -441,10 +451,16 @@
     if ((p = surfaceCapture(/^(.+?)が(\u0001+)の合図を(?:受けた|うけた)とき、/d, code, mask)) && part(p[0].text))
       return `合図を 受けるときは「${p[1].text}という合図を受けたとき、${p[0].text}は、」と 書きます`;
     // ねこは、持ち物を順に2秒話す: 2秒 for each, or for all? (ずつ says each.)
-    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)を順に(.+?)秒(?:話す|はなす|言う|いう)$/d, code, mask)) && part(p[0].text))
-      return `「順に${p[2].text}秒話す」では、${p[2].text}秒が 一つずつの 時間か、ぜんぶの 時間かが 決まりません。一つずつなら「${p[0].text}は、${p[1].text}を順に${p[2].text}秒ずつ言う」と 書きます`;
+    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)を順に(.+?)秒(話す|はなす|言う|いう)$/d, code, mask)) && part(p[0].text))
+      return `「順に${p[2].text}秒${p[3].text}」では、${p[2].text}秒が 一つずつの 時間か、ぜんぶの 時間かが 決まりません。一つずつなら「${p[0].text}は、${p[1].text}を順に${p[2].text}秒ずつ言う」と 書きます`;
+    // ねこと犬も鳥も…: parts are joined with と or with も, not both.
+    if ((p = surfaceCapture(/^(.+?)と(.+?)も(.+?)も/d, code, mask)) && part(p[0].text) && part(p[1].text) && part(p[2].text))
+      return `部品は「と」か「も」の どちらかで ならべます。れい：${p[0].text}と${p[1].text}と${p[2].text}は、…／${p[0].text}も${p[1].text}も${p[2].text}も、…`;
+    // 点数が-3の倍数なら / 点数が【n】の倍数なら: the number is a whole number above 0, written as a number.
+    if ((p = surfaceCapture(/が([-－−][0-9０-９]+|【[^】]*】|[^、。が0-9０-９「」【】]+)の(倍数|ばい数|ばいすう|約数|やく数|やくすう)/d, code, mask)) && fails())
+      return `「${p[0].text}の${p[1].text}」は 読みません。「〜の倍数」「〜の約数」の 〜には、2や 12のような 0より 大きい 整数を 数で 書きます（へんすうは 書けません）`;
     // ねこは、持ち物を一つずつ順に言う: the time for each is not written.
-    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)を(?:一つずつ|ひとつずつ|1つずつ)順に(?:話す|はなす|言う|いう)$/d, code, mask)) && part(p[0].text))
+    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)を(?:(?:一つずつ|ひとつずつ|1つずつ)順に|順に)(?:話す|はなす|言う|いう)$/d, code, mask)) && part(p[0].text))
       return `一つを 話す 時間を 書きます。れい：${p[0].text}は、${p[1].text}を一つずつ順に2秒ずつ言う`;
     // なかまの1番目は「a」と言う: an item of a list is put into a variable first.
     if ((p = surfaceCapture(/^(.+?)の([0-9０-９]+)番目(?:は|が)/d, code, mask)) && meijinListName(p[0].text, symbols, scope) && fails())
@@ -490,11 +506,12 @@
         : meijinVariableName(name, symbols, scope) ? meijinValueActor(meijinVariableRead(name)) : null;
       const targetOf = name => isMeijinPart(name, symbols, scope) ? meijinPartRef(name)
         : meijinVariableName(name, symbols, scope) ? meijinVariableRead(name) : null;
+      // With no subject written, the subject carried on goes (決まり4); with none, the check asks who goes.
       const go = (subject, other, seconds) => {
-        const actorRef = actorOf(subject), to = targetOf(other);
+        const actorRef = subject === null ? { ...(scope.topicActor || { kind: 'self' }) } : actorOf(subject), to = targetOf(other);
         if (!actorRef || !to) return null;
         const moving = node('MotionCommand', seconds ? { op: 'GLIDE_PART', args: [parseExpression(seconds, symbols, scope), to], actorRef } : { op: 'GOTO_PART', args: [to], actorRef });
-        STATEMENT_EXPLICIT_ACTORS.add(moving);
+        if (subject !== null) STATEMENT_EXPLICIT_ACTORS.add(moving);
         return done([moving]);
       };
       const place = '(?:のところ(?:へ|まで)|まで)', verb = '(?:行く|いく|動く|うごく)';
@@ -502,6 +519,9 @@
       if ((q = surfaceCapture(new RegExp('^(.+?)(?:は|が)、?(.+?)' + place + verb + '$', 'd'), code, mask)) && (read = go(q[0].text, q[1].text))) return read;
       if ((q = surfaceCapture(new RegExp('^(.+?)(?:は|が)、?(.+?)' + place + '(.+?)秒かけて' + verb + '$', 'd'), code, mask)) && (read = go(q[0].text, q[1].text, q[2].text))) return read;
       if ((q = surfaceCapture(new RegExp('^(.+?)(?:は|が)、?(.+?)秒かけて、?(.+?)' + place + verb + '$', 'd'), code, mask)) && (read = go(q[0].text, q[2].text, q[1].text))) return read;
+      if ((q = surfaceCapture(new RegExp('^([^、。]+?)' + place + verb + '$', 'd'), code, mask)) && (read = go(null, q[0].text))) return read;
+      if ((q = surfaceCapture(new RegExp('^([^、。]+?)' + place + '(.+?)秒かけて' + verb + '$', 'd'), code, mask)) && (read = go(null, q[0].text, q[1].text))) return read;
+      if ((q = surfaceCapture(new RegExp('^([^、。]+?)秒かけて、?([^、。]+?)' + place + verb + '$', 'd'), code, mask)) && (read = go(null, q[1].text, q[0].text))) return read;
     }
     // 次のことを同時に始める。 (the lines under it start together)
     if (/^次のことを(?:同時に|いっしょに|一緒に)始める$/.test(mask)) {
@@ -564,6 +584,13 @@
         if (first) return done([node('Parallel', { lanes: [first, read(p[0].text + 'は' + p[2].text)] })]);
       }
     }
+    // Pしながら、Q with no subject: the two actions of the subject carried on (決まり4).
+    if ((p = surfaceCapture(/^([^は]+?)ながら、(.+)$/d, code, mask)) && ['named', 'value'].includes(scope.topicActor?.kind)) {
+      for (const verb of meijinDictionary(p[0].text)) {
+        const first = attempt(() => read(verb));
+        if (first) return done([node('Parallel', { lanes: [first, read(p[1].text)] })]);
+      }
+    }
     // なかまを、できたコピーにする / なかまを、ゴールにふれているものにする: the parts of a set at that moment are kept in
     // a list. A variable holds one part, so a set put into it is stopped.
     // A part chosen with 〜のうち、…もの may be none (a tie), so it is kept in a list too.
@@ -571,7 +598,7 @@
       const set = meijinSubject(p[1].text, symbols, scope, previousTopic)?.set;
       if (set) {
         if (!meijinListName(p[0].text, symbols, scope)) throw sentenceDiagnostic(set.kind === 'PartPick'
-          ? `「${p[1].text}」は、同じ ときに だれも えらばれない ことが あるので、へんすうには 入れられません。リストに 入れてから、その 1番目を 使います。れい：えらんだ部品を、${p[1].text}にする。${p[0].text}を、えらんだ部品の1番目にする`
+          ? `「${p[1].text}」は、きょりや 値が 同じで 一つに 決まらない ときは だれも えらばれないので、へんすうには 入れられません。リストに 入れてから、その 1番目を 使います。れい：えらんだ部品を、${p[1].text}にする。もしえらんだ部品が空でなければ、${p[0].text}を、えらんだ部品の1番目にする`
           : meijinSetIntoVariable(p[0].text) + (set.kind === 'CreatedCopies' ? '。「できたコピー」は、一つ だけ 作っても あつまりです。一つを 入れるときは、リストに 入れてから「' + p[0].text + 'を、なかまの1番目にする」のように 書きます' : ''), line, [], { kind: 'Assignment' });
         return done([node('Assignment', { target: { name: meijinBare(p[0].text), qualifier: null }, value: set })]);
       }
@@ -599,6 +626,9 @@
         }
         // 持ち物が空になるまで待つ / 持ち物が空のあいだ、くり返す: a condition on the list, not the list as a subject.
         if (subject.list && !order && /(?:まで、?(?:待つ|まつ|待って|まって|くり返す|繰り返す|くりかえす)|(?:の|である)?あいだ、|になったら、|になったとき、)/.test(surfaceMask(rest))) continue;
+        // A list with a part's name is not one reading (決まり5), with みんな or without.
+        if (subject.list && (symbols?.project?.components || []).some(c => c.name === meijinBare(phrase)))
+          throw new AkariError('S316', `「${meijinBare(phrase)}」は、部品の 名前と リストの 名前が 同じなので、どちらの ことか 決まりません。どちらかの 名前を かえてください`);
         if (subject.list && !order)
           throw sentenceDiagnostic(`「${phrase}」は 部品の あつまりです。「${phrase}は、みんな…」「${phrase}は、順番に…」のように 書きます`, line, [], { kind: 'ParallelEach' });
         const list = subject.set || subject.list, lane = read(body, meijinValueActor(meijinBinderRead()), each);
@@ -630,17 +660,22 @@
     if ((p = surfaceCapture(/^(.+?)(が(?:話し|言い)終わる|の音が鳴り終わる)まで待つ$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope))
       return done([node('WaitUntil', { condition: exprNode('PartState', { state: p[1].text !== 'の音が鳴り終わる' ? 'speechDone' : 'soundDone', actorRef: { kind: 'named', name: p[0].text } }), actorRef: { kind: 'all' } })]);
     // ねこは、持ち物を一つずつ順に2秒話す: each item in order, said one after another.
-    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)を(?:(?:一つずつ|ひとつずつ|1つずつ)順に(.+?)秒(?:ずつ)?|順に(.+?)秒ずつ)(?:話す|はなす|言う|いう)$/d, code, mask)) &&
-        isMeijinPart(p[0].text, symbols, scope) && meijinListName(p[1].text, symbols, scope)) {
-      p[2] = p[2] || p[3];
-      const say = read(`${p[0].text}は【${MEIJIN_BINDER}】の値を${p[2].text}秒話す`, scope.topicActor, each);
-      return done([node('ForEach', { list: exprNode('VariableRead', { name: p[1].text, qualifier: null }), binder: MEIJIN_BINDER, body: say, actorRef: { kind: 'self' } })]);
+    // The one who speaks is the subject written (a part, or a variable holding one), or the subject carried on; it is
+    // carried to the next sentence (one subject, 決まり4). The list may be written in 【 】.
+    if ((p = surfaceCapture(/^(?:(.+?)(?:は|が)、?)?(.+?)を(?:(?:一つずつ|ひとつずつ|1つずつ)順に(.+?)秒(?:ずつ)?|順に(.+?)秒ずつ|(.+?)秒ずつ(?:一つずつ|ひとつずつ|1つずつ)?順に)(?:話す|はなす|言う|いう)$/d, code, mask)) &&
+        meijinListName(p[1].text, symbols, scope)) {
+      const who = !p[0] ? { ...(scope.topicActor || { kind: 'self' }) } : isMeijinPart(p[0].text, symbols, scope) ? { kind: 'named', name: meijinBare(p[0].text) }
+        : meijinVariableName(p[0].text, symbols, scope) ? meijinValueActor(meijinVariableRead(p[0].text)) : null;
+      if (who) {
+        const say = read(`【${MEIJIN_BINDER}】の値を${(p[2] || p[3] || p[4]).text}秒話す`, who, each);
+        return done([node('ForEach', { list: meijinVariableRead(p[1].text), binder: MEIJIN_BINDER, body: say, actorRef: { kind: 'self' }, speaksAs: who })]);
+      }
     }
     // 持ち物から「本」を全部消す: every item that is the same. 「一つ」か「全部」かがない「消す」は数が決まらない。
-    if ((p = surfaceCapture(/^([^、。\u0001]+?)から(.+?)を((?:全部|ぜんぶ|すべて))?(?:消す|けす)$/d, code, mask)) && meijinListName(p[0].text, symbols, scope)) {
+    if ((p = surfaceCapture(/^(\u0001+|[^、。\u0001]+?)から(.+?)を((?:全部|ぜんぶ|すべて))?(?:消す|けす)$/d, code, mask)) && meijinListName(p[0].text, symbols, scope)) {
       if (!p[2]) throw sentenceDiagnostic(`いくつ 消すかが 決まりません。「${p[0].text}から${p[1].text}を一つ消す」か「${p[0].text}から${p[1].text}を全部消す」と 書きます`, line,
         [{ label: '一つ消す', source: `${p[0].text}から${p[1].text}を一つ消す` }, { label: '全部消す', source: `${p[0].text}から${p[1].text}を全部消す` }], { kind: 'ListRemoveValue', missing: ['count'] });
-      return done([node('ListRemoveValue', { target: { name: p[0].text, qualifier: null }, value: parseExpression(p[1].text, symbols, scope), actorRef: { ...scope.topicActor } })]);
+      return done([node('ListRemoveValue', { target: { name: meijinBare(p[0].text), qualifier: null }, value: parseExpression(p[1].text, symbols, scope), actorRef: { ...scope.topicActor } })]);
     }
     // Words that give no single meaning to a program (名人モードでも読めない書き方): say how to write it.
     const inName = m => meijinPartNames(symbols).find(name => { for (let at = code.indexOf(name); at >= 0; at = code.indexOf(name, at + 1)) if (at <= m.index && m.index + m[0].length <= at + name.length) return true; return false; });
