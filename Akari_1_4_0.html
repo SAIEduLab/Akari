@@ -18390,7 +18390,9 @@ function createAkariExtensionHost(options) {
       scope={...scope,topicActor:{...scope.topicActor},laneTopic:undefined};
       const nodes=[];let i=start,previousSentenceStart=null,tagLine=-1;
       // Each statement remembers the sentence it was read from (名人: one sentence is one lane).
-      const tag=()=>{for(const n of nodes)if(!STATEMENT_LINE.has(n))STATEMENT_LINE.set(n,tagLine);};
+      // Only the statements added since the last call are new (the list is only appended to, or cut at its end).
+      let tagged=0;
+      const tag=()=>{if(tagged>nodes.length)tagged=nodes.length;for(;tagged<nodes.length;tagged++){const n=nodes[tagged];if(!STATEMENT_LINE.has(n))STATEMENT_LINE.set(n,tagLine);}};
       while(i<lines.length){tag();tagLine=i;const line=lines[i];if(laneTopic)scope.topicActor={...laneTopic};if(!line.code){if(line.comment)nodes.push(statementNode('CommentLine',line,{text:line.comment.slice(1),raw:line.raw,actorRef:{...scope.topicActor}}));i++;continue;}if(line.indent<indent)break;if(line.indent>indent)throw new AkariError('P209','同じ まとまりの 文は、行の はじめの 空白の 数を そろえてください',line.lineNo,1);
         const local={...scope,sourceLine:line,lineNo:line.lineNo};
         if(scope.meijin){
