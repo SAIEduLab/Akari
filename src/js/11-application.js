@@ -4578,7 +4578,7 @@
           source = sentenceHeadingSource(heading) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n');
         }
       }
-      if (!confirm('名人モードで 書くと、この本文は ブロックに もどせません。\n名人モードで 書きますか？')) return;
+      if (!confirm(`名人モードで 書くと、この本文は ${owner?.name ? owner.name + 'の 本文から はなれて、' : ''}「動かすもの」の「名人の本文」に うつります。ブロックには もどせません。\n名人モードで 書きますか？`)) return;
       try {
         const next = cloneDesignProject(project), id = script?.id || ensureUniqueId('script');
         const row = { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source, ...(script?.document ? { document: cloneDesignProject(script.document) } : {}) };

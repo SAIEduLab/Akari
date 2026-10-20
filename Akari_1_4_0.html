@@ -8308,11 +8308,14 @@ function createAkariExtensionHost(options) {
         return a;
       }
       // 〜のうち、右にいるほう / 体力が大きいほう: one part only when the comparison decides it.
+      // ねこにいちばん近いもの is one of the others: ねこ itself is not among them.
       pickPart(parts, by, ctx) {
+        const base = by.kind === 'near' ? this.actor(this.resolveActorRef({ kind: 'named', name: by.to }, ctx.runtimeId)) : null;
+        if (base) parts = parts.filter(part => this.actor(part.part) !== base);
         const score = part => {
           const a = this.partActor(part), box = this.aabb(a);
           if (by.kind === 'position') return { 右: box.cx, 左: -box.cx, 上: -box.cy, 下: box.cy }[by.side];
-          if (by.kind === 'near') { const to = this.aabb(this.actor(this.resolveActorRef({ kind: 'named', name: by.to }, ctx.runtimeId))); return -Math.hypot(box.cx - to.cx, box.cy - to.cy); }
+          if (by.kind === 'near') { const to = this.aabb(base); return -Math.hypot(box.cx - to.cx, box.cy - to.cy); }
           const value = numberValue(this.readName({ name: by.name, qualifier: 'self' }, { ...ctx, runtimeId: part.part }), `「${by.name}」には 数が いります`);
           return by.order === 'max' ? value : -value;
         };
@@ -8332,7 +8335,7 @@ function createAkariExtensionHost(options) {
           else if (Math.abs(d - distance) < 1e-12) { tie = true; if (a.creationSequence < best.actor.creationSequence) best = { part, actor: a }; }
         }
         if (strict && (!best || tie)) return null;
-        if (!best) throw new AkariError('R405', 'いちばん 近い 部品が いません');
+        if (!best) throw new AkariError('R405', 'いちばん 近い 部品が いません（自分の ほかに 一つも ありません）。いるかを「もし〜なら、」で しらべてから 使います');
         return best.part;
       }
       // ねこにふれているもの / ゴールにふれている星: every visible part touching it now (of that part only, with of).
@@ -8520,7 +8523,7 @@ function createAkariExtensionHost(options) {
       deleteClone(runtimeId) {
         const a = this.requireActor({ runtimeId });
         if (!a.isClone)
-          throw new AkariError('R406', '「このコピーだけを消す」は コピーの 動きの 中でだけ 使えます');
+          throw new AkariError('R406', `「${this.component(runtimeId)?.name ?? ''}」は コピーでは ないので、消えません。「このコピーだけを消す」「消える」で 消えるのは コピーだけです`);
         this.actors.delete(runtimeId);
         this.ui.render?.();
       }
@@ -19188,7 +19191,7 @@ function createAkariExtensionHost(options) {
     [/の近く(?:へ|に|まで)/, '「近く」では、どこまで 行くかが 決まりません。「〜のところへ行く」か、歩の 数を 書きます'],
     [/^((?:その|あの)(?:子|人|もの|部品))(?:は|が)/, m => `「${m[1]}」では、どの 部品かが 決まりません。部品の 名前を 書きます`],
     [/て(?:あげる|あげます|くれる|もらう)$/, '「〜てあげる」「〜てもらう」は、プログラムでは する ことが かわらないので 書きません。「ねこは「やあ」と言う」のように 書きます'],
-    [/[0-9０-９]+回目に/, '何の 回数かが 決まりません。「もし回数が3と同じなら、」のように、数える 変数で しらべます'],
+    [/([0-9０-９]+)回目に/, m => `何の 回数かが 決まりません。「回数」のような へんすうで 数えて、「もし回数が${m[1]}と同じなら、」と 書きます`],
     [/(?:動き|進み|回り|うごき)(?:始める|はじめる)$/, '速さが 決まりません。「1秒に20歩の速さで、〜まで前へ動き続ける」のように 書きます'],
   ];
 
@@ -19255,7 +19258,11 @@ function createAkariExtensionHost(options) {
   // timed: 10秒のあいだ、ねこは1秒に20歩の速さで前へ動き続ける (the time ends it, no まで).
   function meijinMove(code, line, symbols, scope, timed = false) {
     const mask = surfaceMask(code);
-    if (!/(?:動き続ける|動きつづける|うごき続ける)$/.test(mask)) return null;
+    if (!/(?:動き続ける|動きつづける|うごき続ける)$/.test(mask)) {
+      if (/秒に.+?歩の速さで/.test(mask) && /まで/.test(mask) && /(?:前|後ろ|右|左|上|下)(?:へ|に)(?:動く|うごく|進む|すすむ)$/.test(mask))
+        throw sentenceDiagnostic('決めた 速さで 〜まで 動くときは「動き続ける」と 書きます。れい：' + code.replace(/(?:動く|うごく|進む|すすむ)$/, '動き続ける'), line, [], { kind: 'MoveUntil' });
+      return null;
+    }
     let actorRef = scope.topicActor || { kind: 'self' }, rest = code, explicit = false;
     const subject = surfaceCapture(/^(.+?)(?:は|が)、?(.+)$/d, code, mask);
     if (subject && (isMeijinPart(subject[0].text, symbols, scope) || meijinVariableName(subject[0].text, symbols, scope))) {
@@ -19339,7 +19346,7 @@ function createAkariExtensionHost(options) {
     if ((p = surfaceCapture(/^(.+?)秒ごとに、(.*)$/d, code, mask))) {
       const seconds = parseExpression(p[0].text, symbols, ctx);
       if (seconds.kind !== 'NumberLiteral')
-        throw new AkariError('P205', '「〜秒ごとに」の 時間は、作品を 動かしたときに 一度だけ 決まるので、へんすうは 書けません。数を 書きます。変わる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
+        throw new AkariError('P205', '「〜秒ごとに」の 時間は、作品を 動かしたときに 一度だけ 決まるので、「2秒ごとに」のように 数だけを 書きます（へんすうや 計算は 書けません）。変わる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
       if (!(seconds.value > 0))
         throw new AkariError('P205', '「〜秒ごとに」には、0より 大きい 数を 書きます。変わる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
       return { heading: { event: 'interval', actorRef: { kind: 'self' }, seconds: sentenceQuantity(seconds, '秒') }, body: p[1] };
@@ -19383,6 +19390,8 @@ function createAkariExtensionHost(options) {
     }
     if ((p = capture('^(' + alt + ')のペンを(下ろす|おろす|上げる|あげる)$'))) return p[0].text + 'はペンを' + p[1].text;
     if ((p = capture('^(' + alt + ')のすがたを(かくす|隠す|見せる|みせる)$'))) return p[0].text + 'はすがたを' + p[1].text;
+    // 【長さ】を5として、【向き】を90として、【かく】という手順を行う: the same as 【長さ】を5、【向き】を90として、….
+    if ((p = surfaceCapture(/^(.+?)として、(.+?として、?.*という手順を行う)$/d, code, mask))) return p[0].text + '、' + p[1].text;
     // 点数を、なかまの数にする / なかまを、ねこと犬と鳥にする: a comma after を; parts written together are a list. A data name in 【 】 is the same name.
     if ((p = surfaceCapture(/^(\u0001+|[^、。\u0001]+?)を、?(.+?)に(する|かえる|変える)$/d, code, mask)) && dataNameKind(meijinBare(p[0].text), symbols, ctx)) {
       const names = meijinPartList(p[1].text, symbols, ctx);
@@ -19447,30 +19456,33 @@ function createAkariExtensionHost(options) {
     if ((p = /^ほかの(.+)$/.exec(phrase))) {
       const list = set(p[1]);
       if (list && ctx.topicSet) throw new AkariError('P205', '「ほかの」の すぐ前の 文の 主語が、部品の あつまりです。「ほかの」は 一つの 部品を のぞくので、すぐ前の 文の 主語を 一つの 部品に します');
-      if (list && !previousTopic) throw new AkariError('P205', '「ほかの」は、引き継いでいる 主語の 部品を のぞいた ものです。前の 文に、だれが するかを 書きます');
+      if (list && !previousTopic) throw new AkariError('P205', '「ほかの」は、引きついでいる 主語の 部品を のぞいた ものです。前の 文に、だれが するかを 書きます');
       if (list) return { set: exprNode('PartExcept', { list, except: previousTopic }) };
     }
     if ((p = /^(.+?)のだれか(?:一人|ひとり|1人)$/.exec(phrase))) {
       const list = set(p[1]);
       if (list) return { set: exprNode('PartRandom', { list }) };
     }
-    if ((p = /^(.+?)のうち、(.+?)に(?:いちばん)?近い(?:ほう|もの)$/.exec(phrase)) && isMeijinPart(p[2], symbols, ctx)) {
+    // 〜のうち、…ほう (two parts) / 〜のうち、いちばん…もの (three or more, or a set): one part only.
+    // one: the words after のうち、 with いちばん put in.
+    const onePick = (of, words, one) => {
+      if (!/いちばん/.test(words) && !/ほう$/.test(words)) throw new AkariError('P205', `「${words}」では、一つに 決まりません。一つを えらぶときは「${of}のうち、${one}」と 書きます`);
+      if (/ほう$/.test(words) && meijinPartList(of, symbols, ctx)?.length !== 2) throw new AkariError('P205', `「ほう」は、二つの うちの 一つに 使います。三つ以上や リストのときは「${of}のうち、${one.replace(/ほう$/, 'もの')}」と 書きます`);
+    };
+    if ((p = /^(.+?)のうち、((.+?)に(?:いちばん)?近い(?:ほう|もの))$/.exec(phrase)) && isMeijinPart(p[3], symbols, ctx)) {
+      onePick(p[1], p[2], p[2].replace(/^(.+?)に(?:いちばん)?近い/, '$1にいちばん近い'));
       const list = set(p[1]);
-      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'near', to: meijinBare(p[2]) } }) };
+      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'near', to: meijinBare(p[3]) } }) };
     }
-    if ((p = /^(.+?)のうち、(?:いちばん)?(右|左|上|下)にいる(?:ほう|もの)$/.exec(phrase))) {
-      const two = meijinPartList(p[1], symbols, ctx)?.length === 2;
-      if (!/いちばん/.test(phrase) && !/ほう$/.test(phrase)) throw new AkariError('P205', `「${phrase.slice(p[1].length + 4)}」では、一つに 決まりません。いちばんの 一つなら「${p[1]}のうち、いちばん${phrase.slice(p[1].length + 4)}」と 書きます`);
-      if (/ほう$/.test(phrase) && !two) throw new AkariError('P205', '「ほう」は、二つの うちの 一つに 使います。三つ以上や リストのときは「いちばん右にいるもの」のように 書きます');
+    if ((p = /^(.+?)のうち、((?:いちばん)?(右|左|上|下)にいる(?:ほう|もの))$/.exec(phrase))) {
+      onePick(p[1], p[2], 'いちばん' + p[2].replace(/^いちばん/, ''));
       const list = set(p[1]);
-      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'position', side: p[2] } }) };
+      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'position', side: p[3] } }) };
     }
-    if ((p = /^(.+?)のうち、(?:いちばん)?(.+?)が(大きい|小さい)(?:ほう|もの)$/.exec(phrase))) {
-      const two = meijinPartList(p[1], symbols, ctx)?.length === 2;
-      if (!/いちばん/.test(phrase) && !/ほう$/.test(phrase)) throw new AkariError('P205', `「${phrase.slice(p[1].length + 4)}」では、一つに 決まりません。いちばんの 一つなら「${p[1]}のうち、いちばん${phrase.slice(p[1].length + 4)}」と 書きます`);
-      if (/ほう$/.test(phrase) && !two) throw new AkariError('P205', '「ほう」は、二つの うちの 一つに 使います。三つ以上や リストのときは「いちばん右にいるもの」のように 書きます');
+    if ((p = /^(.+?)のうち、((?:いちばん)?(.+?)が(大きい|小さい)(?:ほう|もの))$/.exec(phrase))) {
+      onePick(p[1], p[2], 'いちばん' + p[2].replace(/^いちばん/, ''));
       const list = set(p[1]);
-      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'variable', name: p[2], order: p[3] === '大きい' ? 'max' : 'min' } }) };
+      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'variable', name: p[3], order: p[4] === '大きい' ? 'max' : 'min' } }) };
     }
     if ((p = /^(.+?)に(?:ふれ|触れ|さわっ)ている(.+)$/.exec(phrase)) && isMeijinPart(p[1], symbols, ctx)) {
       const of = p[2] === 'もの' ? null : isMeijinPart(p[2], symbols, ctx) ? p[2] : undefined;
@@ -19639,6 +19651,11 @@ function createAkariExtensionHost(options) {
       if (p[2].text === 'うちに')
         throw sentenceDiagnostic(`「〜しているうちに」は、同時に 始める 動作を 書きます。れい：${p[0].text}が2秒かけて画面の右へ40歩動いているうちに、${p[3].text}`, line, [], { kind: 'Parallel', missing: ['action'] });
     }
+    // XはPしながら、YはQ: two parts are written with 〜あいだ.
+    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)ながら、(.+?)(?:は|が)、?(.+)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope) && isMeijinPart(p[2].text, symbols, scope)) {
+      const verb = meijinDictionary(p[1].text).find(v => attempt(() => read(p[0].text + 'は' + v)));
+      throw sentenceDiagnostic('「〜ながら」は、同じ 部品が 二つの 動作を 同時に するときに 使います。ちがう 部品なら「〜あいだ」で 書きます' + (verb ? `。れい：${p[0].text}が${verb}あいだ、${p[2].text}は${p[3].text}` : ''), line, [], { kind: 'Parallel' });
+    }
     // XはPしながら、Q: two actions of one part started together.
     if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)ながら、(.+)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope)) {
       for (const verb of meijinDictionary(p[1].text)) {
@@ -19648,18 +19665,22 @@ function createAkariExtensionHost(options) {
     }
     // なかまを、できたコピーにする / なかまを、ゴールにふれているものにする: the parts of a set at that moment are kept in
     // a list. A variable holds one part, so a set put into it is stopped.
-    if ((p = surfaceCapture(/^([^、。\u0001]+?)を、?(.+)に(?:する|かえる|変える)$/d, code, mask)) && dataNameKind(p[0].text, symbols, scope)) {
+    // A part chosen with 〜のうち、…もの may be none (a tie), so it is kept in a list too.
+    if ((p = surfaceCapture(/^(\u0001+|[^、。\u0001]+?)を、?(.+)に(?:する|かえる|変える)$/d, code, mask)) && dataNameKind(meijinBare(p[0].text), symbols, scope)) {
       const set = meijinSubject(p[1].text, symbols, scope, previousTopic)?.set;
       if (set) {
-        if (!meijinListName(p[0].text, symbols, scope)) throw sentenceDiagnostic(meijinSetIntoVariable(p[0].text) + (set.kind === 'CreatedCopies' ? '。「できたコピー」は、一つ だけ 作っても あつまりです。一つを 入れるときは、リストに 入れてから「' + p[0].text + 'を、なかまの1番目にする」のように 書きます' : ''), line, [], { kind: 'Assignment' });
-        return done([node('Assignment', { target: { name: p[0].text, qualifier: null }, value: set })]);
+        if (!meijinListName(p[0].text, symbols, scope)) throw sentenceDiagnostic(set.kind === 'PartPick'
+          ? `「${p[1].text}」は、同じ ときに だれも えらばれない ことが あるので、へんすうには 入れられません。リストに 入れてから、その 1番目を 使います。れい：えらんだ部品を、${p[1].text}にする。${p[0].text}を、えらんだ部品の1番目にする`
+          : meijinSetIntoVariable(p[0].text) + (set.kind === 'CreatedCopies' ? '。「できたコピー」は、一つ だけ 作っても あつまりです。一つを 入れるときは、リストに 入れてから「' + p[0].text + 'を、なかまの1番目にする」のように 書きます' : ''), line, [], { kind: 'Assignment' });
+        return done([node('Assignment', { target: { name: meijinBare(p[0].text), qualifier: null }, value: set })]);
       }
     }
     // A subject phrase: several parts, a set, or a variable holding a part. Every は／が is tried as its end.
     {
-      const both = surfaceCapture(/^(.+?)も(.+?)も、?(.+)$/d, code, mask);
-      if (both && isMeijinPart(both[0].text, symbols, scope) && isMeijinPart(both[1].text, symbols, scope))
-        return done([node('Parallel', { lanes: [both[0].text, both[1].text].map(name => read(name + 'は' + meijinBody(both[2].text))) })]);
+      const also = [];
+      for (let at = 0, i; (i = mask.indexOf('も', at)) > at && isMeijinPart(code.slice(at, i), symbols, scope); at = i + 1 + (mask[i + 1] === '、' ? 1 : 0)) also.push({ name: code.slice(at, i), end: i + 1 + (mask[i + 1] === '、' ? 1 : 0) });
+      if (also.length >= 2 && also.at(-1).end < code.length)
+        return done([node('Parallel', { lanes: also.map(({ name }) => read(name + 'は' + meijinBody(code.slice(also.at(-1).end)))) })]);
       const ends = [...mask.matchAll(/[はが]/g)].map(m => m.index).filter(at => at > 0 && at < mask.length - 1);
       for (const at of ends) {
         const phrase = code.slice(0, at), particle = mask[at], restStart = at + 1 + (mask[at + 1] === '、' ? 1 : 0);
@@ -19720,7 +19741,8 @@ function createAkariExtensionHost(options) {
       return done([node('ListRemoveValue', { target: { name: p[0].text, qualifier: null }, value: parseExpression(p[1].text, symbols, scope), actorRef: { ...scope.topicActor } })]);
     }
     // Words that give no single meaning to a program (名人モードでも読めない書き方): say how to write it.
-    for (const [pattern, message] of MEIJIN_UNREADABLE) { const m = pattern.exec(mask); if (m) throw sentenceDiagnostic(typeof message === 'function' ? message(m) : message, line, [], { kind: 'Sequence' }); }
+    const inName = m => meijinPartNames(symbols).find(name => { for (let at = code.indexOf(name); at >= 0; at = code.indexOf(name, at + 1)) if (at <= m.index && m.index + m[0].length <= at + name.length) return true; return false; });
+    for (const [pattern, message] of MEIJIN_UNREADABLE) { const m = pattern.exec(mask); if (m) throw sentenceDiagnostic((typeof message === 'function' ? message(m) : message) + (inName(m) ? `。部品の 名前なら「【${inName(m)}】」のように【 】で かこみます` : ''), line, [], { kind: 'Sequence' }); }
     // ねこは、一辺が20歩の四角をかく: which input of the procedure takes 20歩 is not written.
     if (!/^もし/.test(mask) && (p = surfaceCapture(/^(?:(.+?)(?:は|が)、?)?([^、。\u0001]+?)が([^、。]+?)の(.+?を(?:かく|描く|作る))$/d, code, mask))) {
       const [actor, noun, value, rest] = p.map(x => x?.text), procedure = [...(symbols?.actions?.values() || [])].find(d => d.name === rest && d.args?.length);
@@ -21340,9 +21362,11 @@ function createAkariExtensionHost(options) {
     };
     // A part and a variable (or list) with the same name: a bare name there reads the data, though a part was meant.
     const sameNameAsPart = (name) => `「${name}」は、部品の 名前と へんすうの 名前が 同じなので、どちらの ことか 決まりません`;
+    // A read already told of (as a target or a subject) is not told of again where it is read as a value.
+    const sameNameTold = new WeakSet();
     const checkComponentTarget = (expr, allowed, ctx, where, label = '部品', special = []) => {
       if (expr?.kind === 'VariableRead' && !expr.qualifier && componentByName(expr.name)) {
-        add('S316', sameNameAsPart(expr.name) + '。部品の ことなら、名前を「 」で かこんで 書きます', ctx.node, where); return;
+        sameNameTold.add(expr); add('S316', sameNameAsPart(expr.name) + '。部品の ことなら、名前を「 」で かこんで 書きます', ctx.node, where); return;
       }
       const name = expr?.kind === 'PartRef' ? expr.name : literalText(expr);
       if (name === null || special.includes(name)) return;
@@ -21355,7 +21379,7 @@ function createAkariExtensionHost(options) {
     const actorContext = (ref, ctx, node, where) => {
       // 名人: the part held in a value acts; which part it is is known when the sentence runs.
       if (ref?.kind === 'value') {
-        if (ref.value?.kind === 'VariableRead' && !ref.value.qualifier && componentByName(ref.value.name))
+        if (ref.value?.kind === 'VariableRead' && !ref.value.qualifier && componentByName(ref.value.name) && !sameNameTold.has(ref.value) && sameNameTold.add(ref.value))
           add('S316', sameNameAsPart(ref.value.name) + '。だれが するかが 分からないので、どちらかの 名前を かえてください', node, where);
         analyzeExpr(ref.value, ctx, where); return { ...ctx, targetId: null, targetType: null, valueActor: true };
       }
@@ -21363,6 +21387,9 @@ function createAkariExtensionHost(options) {
       const c = ref.name === project.stage.name || ref.name === '画面'
         ? { id: 'stage', type: 'stage' } : componentByName(ref.name);
       if (!c) { add('S301', `「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください${['ぼく','わたし','おれ','あたし','うち'].includes(ref.name)?'。自分の ことなら「自分は」と 書きます':''}`, node, where); return ctx; }
+      // 名人 (決まり5): a part's name with data of the same name is not one reading, wherever it is written.
+      if (ctx.meijin && c.id !== 'stage' && targetExists({ name: ref.name, qualifier: null }, symbols, ctx) && !sameNameTold.has(ref) && sameNameTold.add(ref))
+        add('S316', sameNameAsPart(ref.name) + '。どちらかの 名前を かえてください', node?.sourceSpan ? node : ctx.node, where);
       return { ...ctx, targetId: c.id, targetType: c.type };
     };
     const checkArguments = (n, def, where) => {
@@ -21534,6 +21561,9 @@ function createAkariExtensionHost(options) {
               where,
             );
           }
+          // 名人: a part's name is a value too, so data of the same name makes either reading possible (決まり5).
+          else if (ctx.meijin && !n.qualifier && componentByName(n.name) && !sameNameTold.has(n) && sameNameTold.add(n))
+            add('S316', sameNameAsPart(n.name) + '。どちらかの 名前を かえてください', ctx.node, where);
         }
         if (n.kind === 'ExtensionCalculation') checkExtensionOperation(n, 'calculations', where);
         if (n.kind === 'UserFunctionCall') {
@@ -21917,7 +21947,7 @@ function createAkariExtensionHost(options) {
         add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
       // 名人のできごと: 〜になったとき and 〜秒ごとに are read like any value; ふれる相手は部品。
       const heading = item.ast.heading, at = item.ast.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } };
-      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。この 本文で 使うときは、コードの「名人モードで 書く」を えらびます', only.sourceSpan ? only : at, item.key); }
+      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、コードの「名人モードで 書く」を おします（見せ方が「はじめて」の ときは、「かんたん」に してから おします）', only.sourceSpan ? only : at, item.key); }
       const message = typeof item.filter === 'object' ? item.filter?.message : item.filter;
       const extensionEvent = !item.meijin && item.event === 'message' && typeof message === 'string' && message.startsWith('拡張:')
         ? EXTENSION_HOST.describe(message.slice(3), 'events') : null;
@@ -22242,7 +22272,7 @@ function createAkariExtensionHost(options) {
     const lines = source.split('\n'), after = renamed(newName, new Set(quotes)).split('\n');
     const line = lines.findIndex((text, i) => text !== after[i] && !(() => { const a = read(text.trim(), project), b = read(after[i].trim(), next); return a.ast && b.ast && stableJson(shape(a.ast, true)) === stableJson(shape(b.ast, false)); })());
     throw new AkariError('S301', line < 0 ? '名人の 本文の 中で、名前を かえても 同じ ものを さすかを たしかめられません。名前を【 】で かこむなど、どれの ことか はっきり 書いてください'
-      : `名前を「${newName}」に すると、名人の 本文の ${line + 1}行目「${lines[line].trim()}」が ちがう 意味に 読めます。ちがう 名前に してください`);
+      : `名前を「${newName}」に すると、${(() => { const s = buildSymbols(project), what = project.components.some(c => c.name === newName) ? '部品' : s.projectLists?.has(newName) ? 'リスト' : s.projectVars?.has(newName) ? 'へんすう' : null; return what ? `「${newName}」という ${what}が あるので、` : ''; })()}名人の 本文の ${line + 1}行目「${lines[line].trim()}」が ちがう 意味に 読めます。ちがう 名前に してください`);
   }
   // A procedure made in a 名人 text is renamed in that text and wherever it is called; every changed text must read
   // the same with the new name.
@@ -22565,7 +22595,7 @@ function createAkariExtensionHost(options) {
   // no error as a 名人 script: the check then says so (S317) instead of a reading error that asks for a name or another
   // sentence. An error that gives its own guidance or choices (「空」は…, 「〜になったら」は…) is kept.
   // 10秒のあいだ、くり返す in an ordinary body asks for a state before あいだ; it is the 名人 timed repeat.
-  const GENERIC_READING_ERRORS = [/^まだ作っていない名前/, /読みとれません|読めません|読みとれないところ/, /がたりません/, /という 文は あかりに ありません/, /^つづけるきまりのおわりを「あいだ」に/];
+  const GENERIC_READING_ERRORS = [/^まだ作っていない名前/, /^この名前は【名前】のように【 】でかこんでください/, /読みとれません|読めません|読みとれないところ/, /がたりません/, /という 文は あかりに ありません/, /^つづけるきまりのおわりを「あいだ」に/];
   function meijinFormsInOrdinary(project, errors) {
     let out = errors;
     for (const script of project.scripts) {
@@ -22592,14 +22622,14 @@ function createAkariExtensionHost(options) {
       });
       if (!reads) continue;
       const { proposals, draftRole, ...location } = first;
-      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。この 本文で 使うときは、コードの「名人モードで 書く」を えらびます' }, ...out.slice(at).filter(e => e.where !== key)];
+      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、コードの「名人モードで 書く」を おします（見せ方が「はじめて」の ときは、「かんたん」に してから おします）' }, ...out.slice(at).filter(e => e.where !== key)];
     }
     return out;
   }
 
   // An ordinary body: a 国語・算数 word written as a sentence form (10の倍数, 12の約数, からっぽ) on the line where the
   // reading stopped. Say how to write it, with the names as written; a 名人 body reads these words.
-  const WORD_LINES = [[/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の倍数(?:なら|でなければ)/, m => `「${m[2]}の倍数」は くらべる ことばに ありません。「${m[1]}÷${m[2]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の約数(?:なら|でなければ)/, m => `「${m[2]}の約数」は くらべる ことばに ありません。「${m[1]}が0とちがっていて、${m[2]}÷${m[1]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が(からっぽ|カラッポ)(?:なら|でなければ)/, m => `「${m[2]}」は くらべる ことばに ありません。リストが 空かを しらべるときは「${m[1]}の長さが0なら」のように 書きます`]];
+  const WORD_LINES = [[/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の倍数(?:なら|でなければ)/, m => `「${m[2]}の倍数」は くらべる ことばに ありません。「${m[1]}が0とちがっていて、${m[1]}÷${m[2]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の約数(?:なら|でなければ)/, m => `「${m[2]}の約数」は くらべる ことばに ありません。${m[1]}が 整数なら「${m[1]}が0より大きくて、${m[2]}÷${m[1]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が(からっぽ|カラッポ)(?:なら|でなければ)/, m => `「${m[2]}」は くらべる ことばに ありません。リストが 空かを しらべるときは「${m[1]}の長さが0なら」のように 書きます`]];
   function wordLines(project, errors) {
     let out = errors;
     for (const script of project.scripts) {
@@ -22620,7 +22650,7 @@ function createAkariExtensionHost(options) {
       const lines = String(script?.source || '').split('\n'), before = lines.slice(0, e.line - 1).reverse().find(l => l.trim() && !l.trim().startsWith('※'))?.trim() || '';
       const several = /^(?:もし|そうでなければ|次のことを)|(?:みんな|それぞれ|順番に)|^[^、。「」]+?(?:と|も)[^、。「」]+?(?:は|が)、?|(?:とき|たら|ごとに)、$/.test(before);
       if (text && e.message === MEIJIN_SUBJECT_MESSAGE && several)
-        return { ...e, message: 'すぐ前の 文からは 主語を 引き継げません（主語が いくつも ある 文、「もし」の 文、見出しの 文の あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む' };
+        return { ...e, message: 'すぐ前の 文からは 主語を 引きつげません（主語が いくつも ある 文、「もし」の 文、見出しの 文の あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む' };
       return text && /^自分(?:は|が|の)/.test(text) ? { ...e, message: '名人の 本文には、「自分」に あたる 部品が ありません。部品の 名前を 書きます。れい：ねこは前へ10歩進む／ねこのコピーを作る' } : e;
     });
   }
@@ -22661,7 +22691,7 @@ function createAkariExtensionHost(options) {
       for (const n of nodes || []) {
         if (!n || typeof n !== 'object') continue;
         if (inLane && words[n.kind] && (n.kind === 'ReturnStatement' || !inLoop))
-          errors.push({ code: 'S315', message: '「' + words[n.kind] + '」は、同時に始めた ならびの 外の くり返しや 手順には とどきません', line: n.sourceSpan?.startLine || 0, column: n.sourceSpan?.startColumn || 1, where });
+          errors.push({ code: 'S315', message: '「' + words[n.kind] + '」は、同時に始めた ならびの 外の くり返しや 手順には とどきません。この 文は、ならびの 外に 書きます', line: n.sourceSpan?.startLine || 0, column: n.sourceSpan?.startColumn || 1, where });
         const loop = ['RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach', 'TimedRepeat'].includes(n.kind);
         if (n.kind === 'Parallel') for (const lane of n.lanes || []) inside(lane, where, true, false);
         if (n.kind === 'ParallelEach') inside(n.body, where, true, false);
@@ -22711,13 +22741,15 @@ function createAkariExtensionHost(options) {
         if (!Array.isArray(nodes)) return;
         nodes.forEach((n, i) => {
           for (const key of ['body', 'thenBody', 'elseBody']) walk(n?.[key]);
-          if (!['WaitTime', 'WaitUntil', 'BroadcastAndWait'].includes(n?.kind) || !n.actorRef || n.actorRef.kind === 'all') return;
-          const waiter = who(n.actorRef);
+          // ねこと犬は1秒待つ。 (名人): each part written waits, as one subject does (決まり2).
+          const lanes = n?.kind === 'Parallel' && n.lanes?.length > 1 && n.lanes.every(l => l.length === 1 && l[0].kind === 'WaitTime' && l[0].actorRef?.kind === 'named') ? n.lanes.map(l => l[0].actorRef.name) : null;
+          if (!lanes && (!['WaitTime', 'WaitUntil', 'BroadcastAndWait'].includes(n?.kind) || !n.actorRef || n.actorRef.kind === 'all')) return;
+          const waiters = lanes || [who(n.actorRef)], waiter = waiters.join('と');
           for (const m of nodes.slice(i + 1)) {
             if (m.kind === 'CommentLine') continue;
             if (controls.includes(m.kind) || !m.actorRef || m.actorRef.kind === 'all') break;
             const other = who(m.actorRef);
-            if (!other || other === waiter) break;
+            if (!other || waiters.includes(other)) break;
             const note = { code: 'I101', notice: true, line: m.sourceSpan?.startLine || 0, column: m.sourceSpan?.startColumn || 1, where: item.key,
               message: `${other}は すぐ ${NOTICE_VERBS[m.kind] || '動きます'}（待つのは ${waiter}だけです）。みんなで 待つときは、「待つ」の 文に 主語を 書きません` };
             const key = note.where + '|' + note.line + '|' + note.column;
@@ -22753,7 +22785,7 @@ function createAkariExtensionHost(options) {
             for (const c of project.components) for (const v of c.localData?.variables || []) {
               if (!MEIJIN_LOOK_WORDS.includes(v.name) || !text.includes(`${c.name}の${v.name}を`)) continue;
               const note = { code: 'I103', notice: true, line: i + 1, column: text.indexOf(`${c.name}の${v.name}を`) + 1, where: item.key,
-                message: `「${c.name}の${v.name}」は ${c.name}の 見た目です。変数「${v.name}」を 変えるときは「${c.name}の【${v.name}】」と 書きます` };
+                message: `「${c.name}の${v.name}」は ${c.name}の 見た目です。へんすう「${v.name}」を 変えるときは「${c.name}の【${v.name}】」と 書きます` };
               const key = note.where + '|' + note.line + '|' + note.column + '|I103';
               if (!seen.has(key)) { seen.add(key); notes.push(note); }
             }
@@ -22768,7 +22800,7 @@ function createAkariExtensionHost(options) {
           if (Array.isArray(node)) { node.forEach(visit); return; }
           if (node.kind === 'PartName' && named.length && (node.actorRef?.kind !== 'named' || named.some(c => c.name === node.actorRef.name))) {
             const note = { code: 'I102', notice: true, line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where: item.key,
-              message: `「〜の名前」は 部品の 名前です。部品の 変数「名前」を 読むときは「${named[0].name}の【名前】」のように【 】で かこみます` };
+              message: `「〜の名前」は 部品の 名前です。部品の へんすう「名前」を 読むときは「${named[0].name}の【名前】」のように【 】で かこみます` };
             const key = note.where + '|' + note.line + '|' + note.column + '|I102';
             if (!seen.has(key)) { seen.add(key); notes.push(note); }
           }
@@ -35071,7 +35103,7 @@ function createAkariExtensionHost(options) {
           source = sentenceHeadingSource(heading) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n');
         }
       }
-      if (!confirm('名人モードで 書くと、この本文は ブロックに もどせません。\n名人モードで 書きますか？')) return;
+      if (!confirm(`名人モードで 書くと、この本文は ${owner?.name ? owner.name + 'の 本文から はなれて、' : ''}「動かすもの」の「名人の本文」に うつります。ブロックには もどせません。\n名人モードで 書きますか？`)) return;
       try {
         const next = cloneDesignProject(project), id = script?.id || ensureUniqueId('script');
         const row = { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source, ...(script?.document ? { document: cloneDesignProject(script.document) } : {}) };

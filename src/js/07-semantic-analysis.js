@@ -149,9 +149,11 @@
     };
     // A part and a variable (or list) with the same name: a bare name there reads the data, though a part was meant.
     const sameNameAsPart = (name) => `「${name}」は、部品の 名前と へんすうの 名前が 同じなので、どちらの ことか 決まりません`;
+    // A read already told of (as a target or a subject) is not told of again where it is read as a value.
+    const sameNameTold = new WeakSet();
     const checkComponentTarget = (expr, allowed, ctx, where, label = '部品', special = []) => {
       if (expr?.kind === 'VariableRead' && !expr.qualifier && componentByName(expr.name)) {
-        add('S316', sameNameAsPart(expr.name) + '。部品の ことなら、名前を「 」で かこんで 書きます', ctx.node, where); return;
+        sameNameTold.add(expr); add('S316', sameNameAsPart(expr.name) + '。部品の ことなら、名前を「 」で かこんで 書きます', ctx.node, where); return;
       }
       const name = expr?.kind === 'PartRef' ? expr.name : literalText(expr);
       if (name === null || special.includes(name)) return;
@@ -164,7 +166,7 @@
     const actorContext = (ref, ctx, node, where) => {
       // 名人: the part held in a value acts; which part it is is known when the sentence runs.
       if (ref?.kind === 'value') {
-        if (ref.value?.kind === 'VariableRead' && !ref.value.qualifier && componentByName(ref.value.name))
+        if (ref.value?.kind === 'VariableRead' && !ref.value.qualifier && componentByName(ref.value.name) && !sameNameTold.has(ref.value) && sameNameTold.add(ref.value))
           add('S316', sameNameAsPart(ref.value.name) + '。だれが するかが 分からないので、どちらかの 名前を かえてください', node, where);
         analyzeExpr(ref.value, ctx, where); return { ...ctx, targetId: null, targetType: null, valueActor: true };
       }
@@ -172,6 +174,9 @@
       const c = ref.name === project.stage.name || ref.name === '画面'
         ? { id: 'stage', type: 'stage' } : componentByName(ref.name);
       if (!c) { add('S301', `「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください${['ぼく','わたし','おれ','あたし','うち'].includes(ref.name)?'。自分の ことなら「自分は」と 書きます':''}`, node, where); return ctx; }
+      // 名人 (決まり5): a part's name with data of the same name is not one reading, wherever it is written.
+      if (ctx.meijin && c.id !== 'stage' && targetExists({ name: ref.name, qualifier: null }, symbols, ctx) && !sameNameTold.has(ref) && sameNameTold.add(ref))
+        add('S316', sameNameAsPart(ref.name) + '。どちらかの 名前を かえてください', node?.sourceSpan ? node : ctx.node, where);
       return { ...ctx, targetId: c.id, targetType: c.type };
     };
     const checkArguments = (n, def, where) => {
@@ -343,6 +348,9 @@
               where,
             );
           }
+          // 名人: a part's name is a value too, so data of the same name makes either reading possible (決まり5).
+          else if (ctx.meijin && !n.qualifier && componentByName(n.name) && !sameNameTold.has(n) && sameNameTold.add(n))
+            add('S316', sameNameAsPart(n.name) + '。どちらかの 名前を かえてください', ctx.node, where);
         }
         if (n.kind === 'ExtensionCalculation') checkExtensionOperation(n, 'calculations', where);
         if (n.kind === 'UserFunctionCall') {
@@ -726,7 +734,7 @@
         add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
       // 名人のできごと: 〜になったとき and 〜秒ごとに are read like any value; ふれる相手は部品。
       const heading = item.ast.heading, at = item.ast.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } };
-      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。この 本文で 使うときは、コードの「名人モードで 書く」を えらびます', only.sourceSpan ? only : at, item.key); }
+      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、コードの「名人モードで 書く」を おします（見せ方が「はじめて」の ときは、「かんたん」に してから おします）', only.sourceSpan ? only : at, item.key); }
       const message = typeof item.filter === 'object' ? item.filter?.message : item.filter;
       const extensionEvent = !item.meijin && item.event === 'message' && typeof message === 'string' && message.startsWith('拡張:')
         ? EXTENSION_HOST.describe(message.slice(3), 'events') : null;
@@ -1051,7 +1059,7 @@
     const lines = source.split('\n'), after = renamed(newName, new Set(quotes)).split('\n');
     const line = lines.findIndex((text, i) => text !== after[i] && !(() => { const a = read(text.trim(), project), b = read(after[i].trim(), next); return a.ast && b.ast && stableJson(shape(a.ast, true)) === stableJson(shape(b.ast, false)); })());
     throw new AkariError('S301', line < 0 ? '名人の 本文の 中で、名前を かえても 同じ ものを さすかを たしかめられません。名前を【 】で かこむなど、どれの ことか はっきり 書いてください'
-      : `名前を「${newName}」に すると、名人の 本文の ${line + 1}行目「${lines[line].trim()}」が ちがう 意味に 読めます。ちがう 名前に してください`);
+      : `名前を「${newName}」に すると、${(() => { const s = buildSymbols(project), what = project.components.some(c => c.name === newName) ? '部品' : s.projectLists?.has(newName) ? 'リスト' : s.projectVars?.has(newName) ? 'へんすう' : null; return what ? `「${newName}」という ${what}が あるので、` : ''; })()}名人の 本文の ${line + 1}行目「${lines[line].trim()}」が ちがう 意味に 読めます。ちがう 名前に してください`);
   }
   // A procedure made in a 名人 text is renamed in that text and wherever it is called; every changed text must read
   // the same with the new name.
@@ -1374,7 +1382,7 @@
   // no error as a 名人 script: the check then says so (S317) instead of a reading error that asks for a name or another
   // sentence. An error that gives its own guidance or choices (「空」は…, 「〜になったら」は…) is kept.
   // 10秒のあいだ、くり返す in an ordinary body asks for a state before あいだ; it is the 名人 timed repeat.
-  const GENERIC_READING_ERRORS = [/^まだ作っていない名前/, /読みとれません|読めません|読みとれないところ/, /がたりません/, /という 文は あかりに ありません/, /^つづけるきまりのおわりを「あいだ」に/];
+  const GENERIC_READING_ERRORS = [/^まだ作っていない名前/, /^この名前は【名前】のように【 】でかこんでください/, /読みとれません|読めません|読みとれないところ/, /がたりません/, /という 文は あかりに ありません/, /^つづけるきまりのおわりを「あいだ」に/];
   function meijinFormsInOrdinary(project, errors) {
     let out = errors;
     for (const script of project.scripts) {
@@ -1401,14 +1409,14 @@
       });
       if (!reads) continue;
       const { proposals, draftRole, ...location } = first;
-      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。この 本文で 使うときは、コードの「名人モードで 書く」を えらびます' }, ...out.slice(at).filter(e => e.where !== key)];
+      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、コードの「名人モードで 書く」を おします（見せ方が「はじめて」の ときは、「かんたん」に してから おします）' }, ...out.slice(at).filter(e => e.where !== key)];
     }
     return out;
   }
 
   // An ordinary body: a 国語・算数 word written as a sentence form (10の倍数, 12の約数, からっぽ) on the line where the
   // reading stopped. Say how to write it, with the names as written; a 名人 body reads these words.
-  const WORD_LINES = [[/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の倍数(?:なら|でなければ)/, m => `「${m[2]}の倍数」は くらべる ことばに ありません。「${m[1]}÷${m[2]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の約数(?:なら|でなければ)/, m => `「${m[2]}の約数」は くらべる ことばに ありません。「${m[1]}が0とちがっていて、${m[2]}÷${m[1]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が(からっぽ|カラッポ)(?:なら|でなければ)/, m => `「${m[2]}」は くらべる ことばに ありません。リストが 空かを しらべるときは「${m[1]}の長さが0なら」のように 書きます`]];
+  const WORD_LINES = [[/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の倍数(?:なら|でなければ)/, m => `「${m[2]}の倍数」は くらべる ことばに ありません。「${m[1]}が0とちがっていて、${m[1]}÷${m[2]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の約数(?:なら|でなければ)/, m => `「${m[2]}の約数」は くらべる ことばに ありません。${m[1]}が 整数なら「${m[1]}が0より大きくて、${m[2]}÷${m[1]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が(からっぽ|カラッポ)(?:なら|でなければ)/, m => `「${m[2]}」は くらべる ことばに ありません。リストが 空かを しらべるときは「${m[1]}の長さが0なら」のように 書きます`]];
   function wordLines(project, errors) {
     let out = errors;
     for (const script of project.scripts) {
@@ -1429,7 +1437,7 @@
       const lines = String(script?.source || '').split('\n'), before = lines.slice(0, e.line - 1).reverse().find(l => l.trim() && !l.trim().startsWith('※'))?.trim() || '';
       const several = /^(?:もし|そうでなければ|次のことを)|(?:みんな|それぞれ|順番に)|^[^、。「」]+?(?:と|も)[^、。「」]+?(?:は|が)、?|(?:とき|たら|ごとに)、$/.test(before);
       if (text && e.message === MEIJIN_SUBJECT_MESSAGE && several)
-        return { ...e, message: 'すぐ前の 文からは 主語を 引き継げません（主語が いくつも ある 文、「もし」の 文、見出しの 文の あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む' };
+        return { ...e, message: 'すぐ前の 文からは 主語を 引きつげません（主語が いくつも ある 文、「もし」の 文、見出しの 文の あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む' };
       return text && /^自分(?:は|が|の)/.test(text) ? { ...e, message: '名人の 本文には、「自分」に あたる 部品が ありません。部品の 名前を 書きます。れい：ねこは前へ10歩進む／ねこのコピーを作る' } : e;
     });
   }
@@ -1470,7 +1478,7 @@
       for (const n of nodes || []) {
         if (!n || typeof n !== 'object') continue;
         if (inLane && words[n.kind] && (n.kind === 'ReturnStatement' || !inLoop))
-          errors.push({ code: 'S315', message: '「' + words[n.kind] + '」は、同時に始めた ならびの 外の くり返しや 手順には とどきません', line: n.sourceSpan?.startLine || 0, column: n.sourceSpan?.startColumn || 1, where });
+          errors.push({ code: 'S315', message: '「' + words[n.kind] + '」は、同時に始めた ならびの 外の くり返しや 手順には とどきません。この 文は、ならびの 外に 書きます', line: n.sourceSpan?.startLine || 0, column: n.sourceSpan?.startColumn || 1, where });
         const loop = ['RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach', 'TimedRepeat'].includes(n.kind);
         if (n.kind === 'Parallel') for (const lane of n.lanes || []) inside(lane, where, true, false);
         if (n.kind === 'ParallelEach') inside(n.body, where, true, false);
@@ -1520,13 +1528,15 @@
         if (!Array.isArray(nodes)) return;
         nodes.forEach((n, i) => {
           for (const key of ['body', 'thenBody', 'elseBody']) walk(n?.[key]);
-          if (!['WaitTime', 'WaitUntil', 'BroadcastAndWait'].includes(n?.kind) || !n.actorRef || n.actorRef.kind === 'all') return;
-          const waiter = who(n.actorRef);
+          // ねこと犬は1秒待つ。 (名人): each part written waits, as one subject does (決まり2).
+          const lanes = n?.kind === 'Parallel' && n.lanes?.length > 1 && n.lanes.every(l => l.length === 1 && l[0].kind === 'WaitTime' && l[0].actorRef?.kind === 'named') ? n.lanes.map(l => l[0].actorRef.name) : null;
+          if (!lanes && (!['WaitTime', 'WaitUntil', 'BroadcastAndWait'].includes(n?.kind) || !n.actorRef || n.actorRef.kind === 'all')) return;
+          const waiters = lanes || [who(n.actorRef)], waiter = waiters.join('と');
           for (const m of nodes.slice(i + 1)) {
             if (m.kind === 'CommentLine') continue;
             if (controls.includes(m.kind) || !m.actorRef || m.actorRef.kind === 'all') break;
             const other = who(m.actorRef);
-            if (!other || other === waiter) break;
+            if (!other || waiters.includes(other)) break;
             const note = { code: 'I101', notice: true, line: m.sourceSpan?.startLine || 0, column: m.sourceSpan?.startColumn || 1, where: item.key,
               message: `${other}は すぐ ${NOTICE_VERBS[m.kind] || '動きます'}（待つのは ${waiter}だけです）。みんなで 待つときは、「待つ」の 文に 主語を 書きません` };
             const key = note.where + '|' + note.line + '|' + note.column;
@@ -1562,7 +1572,7 @@
             for (const c of project.components) for (const v of c.localData?.variables || []) {
               if (!MEIJIN_LOOK_WORDS.includes(v.name) || !text.includes(`${c.name}の${v.name}を`)) continue;
               const note = { code: 'I103', notice: true, line: i + 1, column: text.indexOf(`${c.name}の${v.name}を`) + 1, where: item.key,
-                message: `「${c.name}の${v.name}」は ${c.name}の 見た目です。変数「${v.name}」を 変えるときは「${c.name}の【${v.name}】」と 書きます` };
+                message: `「${c.name}の${v.name}」は ${c.name}の 見た目です。へんすう「${v.name}」を 変えるときは「${c.name}の【${v.name}】」と 書きます` };
               const key = note.where + '|' + note.line + '|' + note.column + '|I103';
               if (!seen.has(key)) { seen.add(key); notes.push(note); }
             }
@@ -1577,7 +1587,7 @@
           if (Array.isArray(node)) { node.forEach(visit); return; }
           if (node.kind === 'PartName' && named.length && (node.actorRef?.kind !== 'named' || named.some(c => c.name === node.actorRef.name))) {
             const note = { code: 'I102', notice: true, line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where: item.key,
-              message: `「〜の名前」は 部品の 名前です。部品の 変数「名前」を 読むときは「${named[0].name}の【名前】」のように【 】で かこみます` };
+              message: `「〜の名前」は 部品の 名前です。部品の へんすう「名前」を 読むときは「${named[0].name}の【名前】」のように【 】で かこみます` };
             const key = note.where + '|' + note.line + '|' + note.column + '|I102';
             if (!seen.has(key)) { seen.add(key); notes.push(note); }
           }

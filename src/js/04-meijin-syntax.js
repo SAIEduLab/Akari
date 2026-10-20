@@ -82,7 +82,7 @@
     [/の近く(?:へ|に|まで)/, '「近く」では、どこまで 行くかが 決まりません。「〜のところへ行く」か、歩の 数を 書きます'],
     [/^((?:その|あの)(?:子|人|もの|部品))(?:は|が)/, m => `「${m[1]}」では、どの 部品かが 決まりません。部品の 名前を 書きます`],
     [/て(?:あげる|あげます|くれる|もらう)$/, '「〜てあげる」「〜てもらう」は、プログラムでは する ことが かわらないので 書きません。「ねこは「やあ」と言う」のように 書きます'],
-    [/[0-9０-９]+回目に/, '何の 回数かが 決まりません。「もし回数が3と同じなら、」のように、数える 変数で しらべます'],
+    [/([0-9０-９]+)回目に/, m => `何の 回数かが 決まりません。「回数」のような へんすうで 数えて、「もし回数が${m[1]}と同じなら、」と 書きます`],
     [/(?:動き|進み|回り|うごき)(?:始める|はじめる)$/, '速さが 決まりません。「1秒に20歩の速さで、〜まで前へ動き続ける」のように 書きます'],
   ];
 
@@ -149,7 +149,11 @@
   // timed: 10秒のあいだ、ねこは1秒に20歩の速さで前へ動き続ける (the time ends it, no まで).
   function meijinMove(code, line, symbols, scope, timed = false) {
     const mask = surfaceMask(code);
-    if (!/(?:動き続ける|動きつづける|うごき続ける)$/.test(mask)) return null;
+    if (!/(?:動き続ける|動きつづける|うごき続ける)$/.test(mask)) {
+      if (/秒に.+?歩の速さで/.test(mask) && /まで/.test(mask) && /(?:前|後ろ|右|左|上|下)(?:へ|に)(?:動く|うごく|進む|すすむ)$/.test(mask))
+        throw sentenceDiagnostic('決めた 速さで 〜まで 動くときは「動き続ける」と 書きます。れい：' + code.replace(/(?:動く|うごく|進む|すすむ)$/, '動き続ける'), line, [], { kind: 'MoveUntil' });
+      return null;
+    }
     let actorRef = scope.topicActor || { kind: 'self' }, rest = code, explicit = false;
     const subject = surfaceCapture(/^(.+?)(?:は|が)、?(.+)$/d, code, mask);
     if (subject && (isMeijinPart(subject[0].text, symbols, scope) || meijinVariableName(subject[0].text, symbols, scope))) {
@@ -233,7 +237,7 @@
     if ((p = surfaceCapture(/^(.+?)秒ごとに、(.*)$/d, code, mask))) {
       const seconds = parseExpression(p[0].text, symbols, ctx);
       if (seconds.kind !== 'NumberLiteral')
-        throw new AkariError('P205', '「〜秒ごとに」の 時間は、作品を 動かしたときに 一度だけ 決まるので、へんすうは 書けません。数を 書きます。変わる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
+        throw new AkariError('P205', '「〜秒ごとに」の 時間は、作品を 動かしたときに 一度だけ 決まるので、「2秒ごとに」のように 数だけを 書きます（へんすうや 計算は 書けません）。変わる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
       if (!(seconds.value > 0))
         throw new AkariError('P205', '「〜秒ごとに」には、0より 大きい 数を 書きます。変わる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
       return { heading: { event: 'interval', actorRef: { kind: 'self' }, seconds: sentenceQuantity(seconds, '秒') }, body: p[1] };
@@ -277,6 +281,8 @@
     }
     if ((p = capture('^(' + alt + ')のペンを(下ろす|おろす|上げる|あげる)$'))) return p[0].text + 'はペンを' + p[1].text;
     if ((p = capture('^(' + alt + ')のすがたを(かくす|隠す|見せる|みせる)$'))) return p[0].text + 'はすがたを' + p[1].text;
+    // 【長さ】を5として、【向き】を90として、【かく】という手順を行う: the same as 【長さ】を5、【向き】を90として、….
+    if ((p = surfaceCapture(/^(.+?)として、(.+?として、?.*という手順を行う)$/d, code, mask))) return p[0].text + '、' + p[1].text;
     // 点数を、なかまの数にする / なかまを、ねこと犬と鳥にする: a comma after を; parts written together are a list. A data name in 【 】 is the same name.
     if ((p = surfaceCapture(/^(\u0001+|[^、。\u0001]+?)を、?(.+?)に(する|かえる|変える)$/d, code, mask)) && dataNameKind(meijinBare(p[0].text), symbols, ctx)) {
       const names = meijinPartList(p[1].text, symbols, ctx);
@@ -341,30 +347,33 @@
     if ((p = /^ほかの(.+)$/.exec(phrase))) {
       const list = set(p[1]);
       if (list && ctx.topicSet) throw new AkariError('P205', '「ほかの」の すぐ前の 文の 主語が、部品の あつまりです。「ほかの」は 一つの 部品を のぞくので、すぐ前の 文の 主語を 一つの 部品に します');
-      if (list && !previousTopic) throw new AkariError('P205', '「ほかの」は、引き継いでいる 主語の 部品を のぞいた ものです。前の 文に、だれが するかを 書きます');
+      if (list && !previousTopic) throw new AkariError('P205', '「ほかの」は、引きついでいる 主語の 部品を のぞいた ものです。前の 文に、だれが するかを 書きます');
       if (list) return { set: exprNode('PartExcept', { list, except: previousTopic }) };
     }
     if ((p = /^(.+?)のだれか(?:一人|ひとり|1人)$/.exec(phrase))) {
       const list = set(p[1]);
       if (list) return { set: exprNode('PartRandom', { list }) };
     }
-    if ((p = /^(.+?)のうち、(.+?)に(?:いちばん)?近い(?:ほう|もの)$/.exec(phrase)) && isMeijinPart(p[2], symbols, ctx)) {
+    // 〜のうち、…ほう (two parts) / 〜のうち、いちばん…もの (three or more, or a set): one part only.
+    // one: the words after のうち、 with いちばん put in.
+    const onePick = (of, words, one) => {
+      if (!/いちばん/.test(words) && !/ほう$/.test(words)) throw new AkariError('P205', `「${words}」では、一つに 決まりません。一つを えらぶときは「${of}のうち、${one}」と 書きます`);
+      if (/ほう$/.test(words) && meijinPartList(of, symbols, ctx)?.length !== 2) throw new AkariError('P205', `「ほう」は、二つの うちの 一つに 使います。三つ以上や リストのときは「${of}のうち、${one.replace(/ほう$/, 'もの')}」と 書きます`);
+    };
+    if ((p = /^(.+?)のうち、((.+?)に(?:いちばん)?近い(?:ほう|もの))$/.exec(phrase)) && isMeijinPart(p[3], symbols, ctx)) {
+      onePick(p[1], p[2], p[2].replace(/^(.+?)に(?:いちばん)?近い/, '$1にいちばん近い'));
       const list = set(p[1]);
-      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'near', to: meijinBare(p[2]) } }) };
+      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'near', to: meijinBare(p[3]) } }) };
     }
-    if ((p = /^(.+?)のうち、(?:いちばん)?(右|左|上|下)にいる(?:ほう|もの)$/.exec(phrase))) {
-      const two = meijinPartList(p[1], symbols, ctx)?.length === 2;
-      if (!/いちばん/.test(phrase) && !/ほう$/.test(phrase)) throw new AkariError('P205', `「${phrase.slice(p[1].length + 4)}」では、一つに 決まりません。いちばんの 一つなら「${p[1]}のうち、いちばん${phrase.slice(p[1].length + 4)}」と 書きます`);
-      if (/ほう$/.test(phrase) && !two) throw new AkariError('P205', '「ほう」は、二つの うちの 一つに 使います。三つ以上や リストのときは「いちばん右にいるもの」のように 書きます');
+    if ((p = /^(.+?)のうち、((?:いちばん)?(右|左|上|下)にいる(?:ほう|もの))$/.exec(phrase))) {
+      onePick(p[1], p[2], 'いちばん' + p[2].replace(/^いちばん/, ''));
       const list = set(p[1]);
-      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'position', side: p[2] } }) };
+      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'position', side: p[3] } }) };
     }
-    if ((p = /^(.+?)のうち、(?:いちばん)?(.+?)が(大きい|小さい)(?:ほう|もの)$/.exec(phrase))) {
-      const two = meijinPartList(p[1], symbols, ctx)?.length === 2;
-      if (!/いちばん/.test(phrase) && !/ほう$/.test(phrase)) throw new AkariError('P205', `「${phrase.slice(p[1].length + 4)}」では、一つに 決まりません。いちばんの 一つなら「${p[1]}のうち、いちばん${phrase.slice(p[1].length + 4)}」と 書きます`);
-      if (/ほう$/.test(phrase) && !two) throw new AkariError('P205', '「ほう」は、二つの うちの 一つに 使います。三つ以上や リストのときは「いちばん右にいるもの」のように 書きます');
+    if ((p = /^(.+?)のうち、((?:いちばん)?(.+?)が(大きい|小さい)(?:ほう|もの))$/.exec(phrase))) {
+      onePick(p[1], p[2], 'いちばん' + p[2].replace(/^いちばん/, ''));
       const list = set(p[1]);
-      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'variable', name: p[2], order: p[3] === '大きい' ? 'max' : 'min' } }) };
+      if (list) return { set: exprNode('PartPick', { list, by: { kind: 'variable', name: p[3], order: p[4] === '大きい' ? 'max' : 'min' } }) };
     }
     if ((p = /^(.+?)に(?:ふれ|触れ|さわっ)ている(.+)$/.exec(phrase)) && isMeijinPart(p[1], symbols, ctx)) {
       const of = p[2] === 'もの' ? null : isMeijinPart(p[2], symbols, ctx) ? p[2] : undefined;
@@ -533,6 +542,11 @@
       if (p[2].text === 'うちに')
         throw sentenceDiagnostic(`「〜しているうちに」は、同時に 始める 動作を 書きます。れい：${p[0].text}が2秒かけて画面の右へ40歩動いているうちに、${p[3].text}`, line, [], { kind: 'Parallel', missing: ['action'] });
     }
+    // XはPしながら、YはQ: two parts are written with 〜あいだ.
+    if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)ながら、(.+?)(?:は|が)、?(.+)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope) && isMeijinPart(p[2].text, symbols, scope)) {
+      const verb = meijinDictionary(p[1].text).find(v => attempt(() => read(p[0].text + 'は' + v)));
+      throw sentenceDiagnostic('「〜ながら」は、同じ 部品が 二つの 動作を 同時に するときに 使います。ちがう 部品なら「〜あいだ」で 書きます' + (verb ? `。れい：${p[0].text}が${verb}あいだ、${p[2].text}は${p[3].text}` : ''), line, [], { kind: 'Parallel' });
+    }
     // XはPしながら、Q: two actions of one part started together.
     if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)ながら、(.+)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope)) {
       for (const verb of meijinDictionary(p[1].text)) {
@@ -542,18 +556,22 @@
     }
     // なかまを、できたコピーにする / なかまを、ゴールにふれているものにする: the parts of a set at that moment are kept in
     // a list. A variable holds one part, so a set put into it is stopped.
-    if ((p = surfaceCapture(/^([^、。\u0001]+?)を、?(.+)に(?:する|かえる|変える)$/d, code, mask)) && dataNameKind(p[0].text, symbols, scope)) {
+    // A part chosen with 〜のうち、…もの may be none (a tie), so it is kept in a list too.
+    if ((p = surfaceCapture(/^(\u0001+|[^、。\u0001]+?)を、?(.+)に(?:する|かえる|変える)$/d, code, mask)) && dataNameKind(meijinBare(p[0].text), symbols, scope)) {
       const set = meijinSubject(p[1].text, symbols, scope, previousTopic)?.set;
       if (set) {
-        if (!meijinListName(p[0].text, symbols, scope)) throw sentenceDiagnostic(meijinSetIntoVariable(p[0].text) + (set.kind === 'CreatedCopies' ? '。「できたコピー」は、一つ だけ 作っても あつまりです。一つを 入れるときは、リストに 入れてから「' + p[0].text + 'を、なかまの1番目にする」のように 書きます' : ''), line, [], { kind: 'Assignment' });
-        return done([node('Assignment', { target: { name: p[0].text, qualifier: null }, value: set })]);
+        if (!meijinListName(p[0].text, symbols, scope)) throw sentenceDiagnostic(set.kind === 'PartPick'
+          ? `「${p[1].text}」は、同じ ときに だれも えらばれない ことが あるので、へんすうには 入れられません。リストに 入れてから、その 1番目を 使います。れい：えらんだ部品を、${p[1].text}にする。${p[0].text}を、えらんだ部品の1番目にする`
+          : meijinSetIntoVariable(p[0].text) + (set.kind === 'CreatedCopies' ? '。「できたコピー」は、一つ だけ 作っても あつまりです。一つを 入れるときは、リストに 入れてから「' + p[0].text + 'を、なかまの1番目にする」のように 書きます' : ''), line, [], { kind: 'Assignment' });
+        return done([node('Assignment', { target: { name: meijinBare(p[0].text), qualifier: null }, value: set })]);
       }
     }
     // A subject phrase: several parts, a set, or a variable holding a part. Every は／が is tried as its end.
     {
-      const both = surfaceCapture(/^(.+?)も(.+?)も、?(.+)$/d, code, mask);
-      if (both && isMeijinPart(both[0].text, symbols, scope) && isMeijinPart(both[1].text, symbols, scope))
-        return done([node('Parallel', { lanes: [both[0].text, both[1].text].map(name => read(name + 'は' + meijinBody(both[2].text))) })]);
+      const also = [];
+      for (let at = 0, i; (i = mask.indexOf('も', at)) > at && isMeijinPart(code.slice(at, i), symbols, scope); at = i + 1 + (mask[i + 1] === '、' ? 1 : 0)) also.push({ name: code.slice(at, i), end: i + 1 + (mask[i + 1] === '、' ? 1 : 0) });
+      if (also.length >= 2 && also.at(-1).end < code.length)
+        return done([node('Parallel', { lanes: also.map(({ name }) => read(name + 'は' + meijinBody(code.slice(also.at(-1).end)))) })]);
       const ends = [...mask.matchAll(/[はが]/g)].map(m => m.index).filter(at => at > 0 && at < mask.length - 1);
       for (const at of ends) {
         const phrase = code.slice(0, at), particle = mask[at], restStart = at + 1 + (mask[at + 1] === '、' ? 1 : 0);
@@ -614,7 +632,8 @@
       return done([node('ListRemoveValue', { target: { name: p[0].text, qualifier: null }, value: parseExpression(p[1].text, symbols, scope), actorRef: { ...scope.topicActor } })]);
     }
     // Words that give no single meaning to a program (名人モードでも読めない書き方): say how to write it.
-    for (const [pattern, message] of MEIJIN_UNREADABLE) { const m = pattern.exec(mask); if (m) throw sentenceDiagnostic(typeof message === 'function' ? message(m) : message, line, [], { kind: 'Sequence' }); }
+    const inName = m => meijinPartNames(symbols).find(name => { for (let at = code.indexOf(name); at >= 0; at = code.indexOf(name, at + 1)) if (at <= m.index && m.index + m[0].length <= at + name.length) return true; return false; });
+    for (const [pattern, message] of MEIJIN_UNREADABLE) { const m = pattern.exec(mask); if (m) throw sentenceDiagnostic((typeof message === 'function' ? message(m) : message) + (inName(m) ? `。部品の 名前なら「【${inName(m)}】」のように【 】で かこみます` : ''), line, [], { kind: 'Sequence' }); }
     // ねこは、一辺が20歩の四角をかく: which input of the procedure takes 20歩 is not written.
     if (!/^もし/.test(mask) && (p = surfaceCapture(/^(?:(.+?)(?:は|が)、?)?([^、。\u0001]+?)が([^、。]+?)の(.+?を(?:かく|描く|作る))$/d, code, mask))) {
       const [actor, noun, value, rest] = p.map(x => x?.text), procedure = [...(symbols?.actions?.values() || [])].find(d => d.name === rest && d.args?.length);

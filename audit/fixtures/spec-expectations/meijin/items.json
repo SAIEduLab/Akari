@@ -1026,7 +1026,8 @@
       "cases": [
         "MC-207",
         "MC-208",
-        "MC-209"
+        "MC-209",
+        "MC-494"
       ]
     },
     {
@@ -2026,6 +2027,192 @@
       "coverage": "cases",
       "cases": [
         "MC-469"
+      ]
+    },
+    {
+      "id": "MI-174",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "部品と同じ名前の変数があるとき、値・行き先・くらべる文に書いた名前も止める（R4）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-470",
+        "MC-471",
+        "MC-472"
+      ]
+    },
+    {
+      "id": "MI-175",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「〜のうち、ねこにいちばん近いもの」は、ねこ自身を入れずに選ぶ（R5）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-473"
+      ]
+    },
+    {
+      "id": "MI-176",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「近い」も、「ほう」は二つ、三つ以上は「いちばん…もの」で書く（R6）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-474",
+        "MC-475"
+      ]
+    },
+    {
+      "id": "MI-177",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "比べて選んだ部品は、変数ではなくリストに入れる（R7）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-476",
+        "MC-477"
+      ]
+    },
+    {
+      "id": "MI-178",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "主語を並べた「待つ」でも、ほかの部品の次の文はすぐ行い、そのことを知らせる（R9）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-478",
+        "MC-479"
+      ]
+    },
+    {
+      "id": "MI-179",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "「作品を動かしたとき、ねこは、」の中身の主語のない文は、ねこが行う（R10）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-480"
+      ]
+    },
+    {
+      "id": "MI-180",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "「2回目に」の案内は、書いた数で、数える変数の書き方を示す（R15）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-481"
+      ]
+    },
+    {
+      "id": "MI-181",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「ねこも犬も鳥も、…」は三つの部品を並べた文（R16）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-482"
+      ]
+    },
+    {
+      "id": "MI-182",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "主語のちがう「〜ながら」は止まり、「〜あいだ」を案内する（R16）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-483",
+        "MC-484"
+      ]
+    },
+    {
+      "id": "MI-183",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "受け取る値が二つの呼び出しは、「、」でも「として、」を重ねても書ける（R16）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-485"
+      ]
+    },
+    {
+      "id": "MI-184",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "速さを書いて「〜まで…動く」と書いた文は止まり、「動き続ける」を案内する（R16）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-486"
+      ]
+    },
+    {
+      "id": "MI-185",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "変数に入れたコピーでない部品の「消える」は、行うときに R406 で止まる（R21）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-487"
+      ]
+    },
+    {
+      "id": "MI-186",
+      "section": "名人モード > 名人モードの本文の保存と実行データ",
+      "summary": "部品の本文の「自分は、だんごのところへ行く。」は、名人の書き方であることを案内する（R23）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-488"
+      ]
+    },
+    {
+      "id": "MI-187",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "手順の中身で前の文から主語を引き継ぐ文は、その主語が行う（R27）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-489"
+      ]
+    },
+    {
+      "id": "MI-188",
+      "section": "名人モード > 名人のできごと",
+      "summary": "「〜秒ごとに」の時間に計算を書くと止まり、数だけを書くよう案内する（R30）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-490"
+      ]
+    },
+    {
+      "id": "MI-189",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "並びの中の「〜になったら」は、その並びだけが待つ（R36）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-491"
+      ]
+    },
+    {
+      "id": "MI-190",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びの中に書いた並びの文は、外の並びの文のあとに行う（R37）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-492"
+      ]
+    },
+    {
+      "id": "MI-191",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "部品の名前の中の「ちょっと」は、名前なら【 】で囲むよう案内する（R38）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-493"
       ]
     }
   ],

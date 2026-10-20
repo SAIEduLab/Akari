@@ -1207,11 +1207,14 @@
         return a;
       }
       // 〜のうち、右にいるほう / 体力が大きいほう: one part only when the comparison decides it.
+      // ねこにいちばん近いもの is one of the others: ねこ itself is not among them.
       pickPart(parts, by, ctx) {
+        const base = by.kind === 'near' ? this.actor(this.resolveActorRef({ kind: 'named', name: by.to }, ctx.runtimeId)) : null;
+        if (base) parts = parts.filter(part => this.actor(part.part) !== base);
         const score = part => {
           const a = this.partActor(part), box = this.aabb(a);
           if (by.kind === 'position') return { 右: box.cx, 左: -box.cx, 上: -box.cy, 下: box.cy }[by.side];
-          if (by.kind === 'near') { const to = this.aabb(this.actor(this.resolveActorRef({ kind: 'named', name: by.to }, ctx.runtimeId))); return -Math.hypot(box.cx - to.cx, box.cy - to.cy); }
+          if (by.kind === 'near') { const to = this.aabb(base); return -Math.hypot(box.cx - to.cx, box.cy - to.cy); }
           const value = numberValue(this.readName({ name: by.name, qualifier: 'self' }, { ...ctx, runtimeId: part.part }), `「${by.name}」には 数が いります`);
           return by.order === 'max' ? value : -value;
         };
@@ -1231,7 +1234,7 @@
           else if (Math.abs(d - distance) < 1e-12) { tie = true; if (a.creationSequence < best.actor.creationSequence) best = { part, actor: a }; }
         }
         if (strict && (!best || tie)) return null;
-        if (!best) throw new AkariError('R405', 'いちばん 近い 部品が いません');
+        if (!best) throw new AkariError('R405', 'いちばん 近い 部品が いません（自分の ほかに 一つも ありません）。いるかを「もし〜なら、」で しらべてから 使います');
         return best.part;
       }
       // ねこにふれているもの / ゴールにふれている星: every visible part touching it now (of that part only, with of).
@@ -1419,7 +1422,7 @@
       deleteClone(runtimeId) {
         const a = this.requireActor({ runtimeId });
         if (!a.isClone)
-          throw new AkariError('R406', '「このコピーだけを消す」は コピーの 動きの 中でだけ 使えます');
+          throw new AkariError('R406', `「${this.component(runtimeId)?.name ?? ''}」は コピーでは ないので、消えません。「このコピーだけを消す」「消える」で 消えるのは コピーだけです`);
         this.actors.delete(runtimeId);
         this.ui.render?.();
       }
