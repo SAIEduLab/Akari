@@ -20,7 +20,7 @@ function fixture(){
  const box={...structuredClone(input),id:'q-box',name:'赤四角',type:'box',x:100,y:100,w:100,h:100,bg:'#ff3b30'};
  p.components=[cat,star,input,box];p.stage.backdrops=['空色','夜','森'].map((name,i)=>({id:'q-bg-'+i,name,kind:'color',value:'#ffffff'}));p.stage.backdropId='q-bg-1';
  p.projectData={variables:[{id:'q-score',name:'点数',initialValue:10}],lists:[{id:'q-list',name:'名前一覧',initialValue:['本','ぼうし']}]};
- p.actions=[];p.functions=[{id:'q-double',ownerId:'stage',name:'倍',args:['n'],source:'n×2を答えとして返す。'}];p.scripts=[];
+ p.actions=[{id:'q-jump',ownerId:'stage',name:'ジャンプ',args:[],source:'画面の上へ10歩動く。'}];p.functions=[{id:'q-double',ownerId:'stage',name:'倍',args:['n'],source:'n×2を答えとして返す。'}];p.scripts=[];
  const runtime=new A.RuntimeModel(p,{}),actor=runtime.actor('sprite-1');actor.scalePercent=120;actor.volume=50;actor.pitch=1;
  runtime.mouseX=300;runtime.mouseY=200;runtime.mouseDown=true;runtime.pressedKeys.add('a');runtime.startTime=0;runtime.now=()=>500;
  const compiled=A.compileProject(p);assert.equal(compiled.errors.length,0,JSON.stringify(compiled.errors));
@@ -41,7 +41,9 @@ for(const [key,source,expected,unit]of literal){
   if(key==='sensor:TOUCHING')runtime.actor('q-star').x=100;
   const ast=A.parseExpression(source,symbols),encoded=A.blockEncode(ast),decoded=A.blockDecode(encoded.tree),formatted=A.formatExpression(decoded),again=A.parseExpression(formatted,symbols);
   assert.equal(A.astEquivalent(ast,decoded),true);assert.equal(A.astEquivalent(ast,again),true);
-  const observations=[ast,decoded,again].map((node,i)=>({route:['source','block','regenerated-source'][i],actual:JSON.parse(JSON.stringify(A.evalExpression(node,ctx)))}));
+  // An event count is a condition of 〜まで待つ: it is read as a wait binds it (counted from now).
+  const evaluate=node=>node.kind==='EventCount'?A.evalExpression(runtime.bindEventCounts(node,ctx),ctx):A.evalExpression(node,ctx);
+  const observations=[ast,decoded,again].map((node,i)=>({route:['source','block','regenerated-source'][i],actual:JSON.parse(JSON.stringify(evaluate(node)))}));
   for(const observation of observations)compare(observation.actual,expected,unit);
   const variant=(text,wanted,change=()=>{})=>{change();const value=A.evalExpression(A.parseExpression(text,symbols),ctx);compare(value,wanted);variants.push({source:text,expected:wanted,actual:value});};
   if(key==='expression:BooleanLiteral')variant('条件の答え（あてはまらない）',false);
@@ -54,13 +56,14 @@ for(const [key,source,expected,unit]of literal){
   if(key==='state:クローンである')variant(source,true,()=>{actor.isClone=true;});
   if(key==='sensor:TOUCHING')variant(source,false,()=>{runtime.actor('q-star').x=300;});
   if(key==='sensor:TOUCHING_COLOR')variant(source,false,()=>{runtime.actor('q-box').x=400;});
+  if(key.startsWith('expression:EventCount:')){const bound=runtime.bindEventCounts(ast,ctx);runtime.eventCounts.set(bound.key,bound.baseline+bound.target);const value=A.evalExpression(bound,ctx);compare(value,true);variants.push({source,expected:true,actual:value,after:'the count reached'});}
   results.push({id,status:'PASS',source,expected,unit:unit||null,formatted,variants,observations,blockAstEquivalent:true});
  }catch(error){results.push({id,status:'FAIL',source,expected,unit:unit||null,variants,error:error.stack});}
 }
 const output=path.resolve(process.argv[2]),report={schema:'akari-fixed-values-v1',status:results.every(x=>x.status==='PASS')?'PASS':'FAIL',
  snapshot:snapshot(currentProductFile()),fixturePins,environment:'node / actual product evalExpression and RuntimeModel',
- nativeInputClaim:false,uxAcceptance:false,scope:'Q76 fixed values and semantic block/source roundtrip; pointer/key/focus browser obligations remain in the existing full browser gates',results};
+ nativeInputClaim:false,uxAcceptance:false,scope:'Q'+literal.length+' fixed values and semantic block/source roundtrip; pointer/key/focus browser obligations remain in the existing full browser gates',results};
 fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 if(report.status==='PASS')verifyValuesReport(report);
 for(const result of results)if(result.status!=='PASS')console.error(result.id+': '+result.error.split('\n').slice(0,2).join(' '));
-console.log(`Fixed Q76 values: ${results.filter(x=>x.status==='PASS').length}/${results.length} PASS`);if(report.status!=='PASS')process.exitCode=1;
+console.log(`Fixed Q${literal.length} values: ${results.filter(x=>x.status==='PASS').length}/${results.length} PASS`);if(report.status!=='PASS')process.exitCode=1;

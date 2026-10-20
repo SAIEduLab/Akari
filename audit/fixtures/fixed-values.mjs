@@ -1,9 +1,10 @@
-// Values authored from the original fixed Q76 table before product execution.
+// Values authored from the original fixed Q76 table before product execution; the two 1.4.0 event-count rows from LANGUAGE.md.
 export const fixedValues=[
  ['expression:NumberLiteral','5',5],['expression:StringLiteral','「青い空😀」','青い空😀'],
  ['expression:BooleanLiteral','条件の答え（あてはまる）',true],['expression:ListLiteral','［1、2、3］',[1,2,3]],
  ['expression:VariableRead','点数',10],['expression:ListRead','名前一覧の2番目','ぼうし'],
  ['expression:UserFunctionCall','（nを3として、【倍】で求めた答え）',6],
+ ['expression:EventCount:click','あかりが3回おされる',false],['expression:EventCount:action','あかりが2回【ジャンプ】する',false],
  ['operator:POS','＋2',2],['operator:NEG','－2',-2],['operator:NOT','条件（条件の答え（あてはまる））が成り立たない',false],
  ['operator:ADD','2＋3',5],['operator:SUB','2－3',-1],['operator:MUL','2×3',6],['operator:DIV','6÷3',2],['operator:POW','2＾3',8],
  ['operator:GTE','3が3以上',true],['operator:LTE','3が3以下',true],['operator:GT','3が3より大きい',false],
