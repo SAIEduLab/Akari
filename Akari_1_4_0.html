@@ -26443,9 +26443,40 @@ function createAkariExtensionHost(options) {
       EDITOR_AVAILABILITY_CACHE.set(session, cache);
     }
     if (cache.has(cacheKey)) return JSON.parse(JSON.stringify(cache.get(cacheKey)));
-    const result = computeBlockInsertionAvailability(session, schemaId, location, options);
+    // Undo and redo bring back a text checked before (a new session, the same words): its answers are kept by content.
+    const contentKey = availabilityContentKey(session, schemaId, location, options);
+    let result = contentKey && EDITOR_AVAILABILITY_BY_CONTENT.get(contentKey);
+    if (!result) {
+      result = computeBlockInsertionAvailability(session, schemaId, location, options);
+      if (contentKey) {
+        if (EDITOR_AVAILABILITY_BY_CONTENT.size >= 4000) EDITOR_AVAILABILITY_BY_CONTENT.clear();
+        EDITOR_AVAILABILITY_BY_CONTENT.set(contentKey, result);
+      }
+    }
     cache.set(cacheKey, result);
     return JSON.parse(JSON.stringify(result));
+  }
+  const EDITOR_AVAILABILITY_BY_CONTENT = new Map(), PROJECT_AVAILABILITY_PRINT = new WeakMap();
+  // Everything an insertion check reads besides the body text: names, kinds, data, the other bodies and procedures.
+  function projectAvailabilityPrint(project) {
+    if (!project || typeof project !== 'object') return '';
+    let print = PROJECT_AVAILABILITY_PRINT.get(project);
+    if (print === undefined) {
+      const named = list => (list || []).map(x => [x.id, x.name]);
+      const owner = c => [c.id, c.name, c.type, named(c.costumes), named(c.sounds), named(c.backdrops), c.localData, c.text ?? null];
+      print = JSON.stringify([owner(project.stage || {}), (project.components || []).map(owner), project.projectData,
+        (project.actions || []).map(a => [a.id, a.ownerId, a.name, a.args, a.source]), (project.functions || []).map(f => [f.id, f.ownerId, f.name, f.args, f.source]),
+        (project.scripts || []).map(s => [s.id, s.targetId, s.event, s.mode, s.filter ?? null, s.source]), project.extensions ?? null, project.settings ?? null]);
+      PROJECT_AVAILABILITY_PRINT.set(project, print);
+    }
+    return print;
+  }
+  function availabilityContentKey(session, schemaId, location, options) {
+    const project = options.project || session.project, context = options.context || session.context || {};
+    if (!project || typeof session.sourceText !== 'string') return null;
+    let contextPrint;
+    try { contextPrint = JSON.stringify(context, (key, value) => (key === 'symbols' ? undefined : value)); } catch (error) { return null; }
+    return JSON.stringify([options.ownerKey ?? session.ownerKey, schemaId, location, session.sourceText, contextPrint, projectAvailabilityPrint(project)]);
   }
   function editorInsertionHints(session, location, options = {}) {
     if (!location.body) return [];
