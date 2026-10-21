@@ -3464,6 +3464,8 @@
   let app = null;
 
   // Design-only geometry; image costumes use the existing independent w/h fields.
+  // Handle directions are on the screen ([-1, -1] is the top-left handle). Places are in the child frame:
+  // the part's centre from the bottom-left (y up), turned counterclockwise by its direction.
   const DESIGN_RESIZE_DIRECTIONS = Object.freeze({
     nw: [-1, -1],
     n: [0, -1],
@@ -3480,6 +3482,7 @@
       ? 'scale'
       : 'box';
   }
+  // The handle's place in the child frame (the screen's downward hy is the frame's −y).
   function designResizePoint(c, direction = 'se') {
     const [hx, hy] = DESIGN_RESIZE_DIRECTIONS[direction],
       s = c.scalePercent / 100,
@@ -3488,7 +3491,7 @@
       sn = Math.sin(rad),
       vx = (hx * c.w * s) / 2,
       vy = (hy * c.h * s) / 2;
-    return { x: c.x + c.w / 2 + vx * cs - vy * sn, y: c.y + c.h / 2 + vx * sn + vy * cs };
+    return { x: c.x + vx * cs + vy * sn, y: c.y + vx * sn - vy * cs };
   }
   function designResizeGeometry(c, direction, dx, dy, keepRatio = false) {
     const result = { x: c.x, y: c.y, w: c.w, h: c.h, scalePercent: c.scalePercent };
@@ -3505,8 +3508,9 @@
       rad = ((c.direction % 360) * Math.PI) / 180,
       cs = Math.cos(rad),
       sn = Math.sin(rad),
+      // The pointer travel (dx, dy in the child frame) in the part's own screen axes.
       lx = (dx * cs + dy * sn) / s,
-      ly = (-dx * sn + dy * cs) / s;
+      ly = (dx * sn - dy * cs) / s;
     if (designResizeMode(c) === 'scale') {
       result.scalePercent = Math.min(
         1000,
@@ -3520,8 +3524,9 @@
       );
       return result;
     }
-    let w = hx ? c.w + hx * lx : c.w,
-      h = hy ? c.h + hy * ly : c.h;
+    // The centre stays where it is, so both sides move: the size grows by twice the travel.
+    let w = hx ? c.w + 2 * hx * lx : c.w,
+      h = hy ? c.h + 2 * hy * ly : c.h;
     if (keepRatio && hx && hy) {
       const factor = Math.min(
         1200 / c.w,
@@ -3534,13 +3539,9 @@
       w = Math.min(1200, Math.max(8, w));
       h = Math.min(1200, Math.max(8, h));
     }
-    // Keep the opposite corner/edge fixed even under rotation and stage scaling.
-    const vx = (hx * (w - c.w) * s) / 2,
-      vy = (hy * (h - c.h) * s) / 2;
-    result.x = c.x + (c.w - w) / 2 + vx * cs - vy * sn;
-    result.y = c.y + (c.h - h) / 2 + vx * sn + vy * cs;
-    result.w = w;
-    result.h = h;
+    // Sizes made with the handles are whole steps; the centre (x, y) does not move.
+    result.w = hx ? Math.min(1200, Math.max(8, Math.round(w))) : c.w;
+    result.h = hy ? Math.min(1200, Math.max(8, Math.round(h))) : c.h;
     return Object.values(result).every(Number.isFinite)
       ? result
       : { x: c.x, y: c.y, w: c.w, h: c.h, scalePercent: c.scalePercent };

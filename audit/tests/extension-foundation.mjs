@@ -222,9 +222,9 @@ await withOrdinaryFileBrowser(async browser=>{
     try{
       await page.locator('#fileInput').setInputFiles(older);await questionAnswered();await page.waitForTimeout(500);
       const kept=await page.evaluate(()=>Akari.app.editorState.main.sourceText);const asked=messages.some(m=>m.includes('前の バージョン'));
-      acceptUpgrade=true;await page.locator('#fileInput').setInputFiles(older);await questionAnswered();await page.waitForFunction(()=>Akari.app.project.extensions?.required?.some(x=>x.id==='demo.offline'&&x.version==='1.1.0'));
+      acceptUpgrade=true;await page.locator('#fileInput').setInputFiles(older);await questionAnswered();await page.waitForFunction(()=>Akari.app.project.extensions?.required?.some(x=>x.id==='demo.offline'&&x.version==='1.2.0'));
       const recordedVersion=await page.evaluate(()=>Akari.app.project.extensions.required.find(x=>x.id==='demo.offline').version);
-      return{asked,namesVersions:messages.some(m=>m.includes('数の記憶')&&m.includes('1.0.0 → 1.1.0')),dismissedKeepsWork:kept===prepared.source,acceptedOpens:true,recordedVersion};
+      return{asked,namesVersions:messages.some(m=>m.includes('数の記憶')&&m.includes('1.0.0 → 1.2.0')),dismissedKeepsWork:kept===prepared.source,acceptedOpens:true,recordedVersion};
     }finally{page.off('dialog',onDialog);}
   });
   await evaluate('EXTENSION-ASYNC-PARALLEL-PAUSE-STOP',async()=>{

@@ -77,6 +77,13 @@
       repeatCount: 1000000,
       activeTasks: 2000,
     };
+    // The one place that writes the contract numbers; the extension Standard and the saved data read them.
+    const EXECUTABLE_CONTRACT = Object.freeze({
+      languageContractId: 4,
+      runtimeContractId: 4,
+      programFormatVersion: 4,
+      projectFormatVersion: 5,
+    });
     const profileRegistry = createAkariProfiles(STANDARD_LIMITS, {
       executableBytes: 64 * 1024 * 1024, logChars: 100000,
       historyEntries: 60, diagnosticsBytes: 8388608,
@@ -93,7 +100,7 @@
       select() { throw new Error('プロファイルは起動前にホスト側で選択してください'); },
     });
     const extensions = createAkariExtensionHost({
-      standard: { languageContractId: 4, runtimeContractId: 4 },
+      standard: { languageContractId: EXECUTABLE_CONTRACT.languageContractId, runtimeContractId: EXECUTABLE_CONTRACT.runtimeContractId },
       reservedNames: BUILTIN_DEFINITIONS.map(x => x.name),
       allowedCapabilities: options.allowedCapabilities || [],
       validateValue: validateExtensionValue,
@@ -940,6 +947,27 @@
           } catch (_) {}
       }
     }
+    // Positions are the part's centre measured from the bottom-left corner of the work screen (right and up are
+    // positive); directions grow counterclockwise from 0 = right. Only the screen view converts (08).
+    // 向き is always kept in 0 ≤ 向き < 360.
+    function normalizeDirection(d) {
+      const r = ((d % 360) + 360) % 360;
+      return r === 360 || Object.is(r, -0) ? 0 : r;
+    }
+    // A motion result within 10⁻⁹ of a whole number is that number (a closed square ends where it began).
+    function snapStep(v) {
+      const k = Math.round(v);
+      return Math.abs(v - k) < 1e-9 ? k : v;
+    }
+    // cos/sin of a direction in degrees, exact at the right angles (facing up and walking keeps よこ).
+    function cosDegrees(d) {
+      const r = ((d % 360) + 360) % 360;
+      return r === 0 ? 1 : r === 90 || r === 270 ? 0 : r === 180 ? -1 : Math.cos((d * Math.PI) / 180);
+    }
+    function sinDegrees(d) {
+      const r = ((d % 360) + 360) % 360;
+      return r === 0 || r === 180 ? 0 : r === 90 ? 1 : r === 270 ? -1 : Math.sin((d * Math.PI) / 180);
+    }
     class RuntimeModel {
       constructor(project, ui = {}, assetCache = null) {
         this.project = project;
@@ -974,13 +1002,28 @@
         this.timerOffset = 0;
         // How many times each part finished a procedure or was clicked (〜が10回【ジャンプ】するまで).
         this.eventCounts = new Map();
-        this.mouseX = 0;
-        this.mouseY = 0;
+        // Until the pointer enters the screen it reads よこ0・たて0 and touches no part.
+        this.mouseAt = { x: 0, y: 0, entered: false };
         this.mouseDown = false;
         this.pressedKeys = new Set();
         this.prng = new PRNG(seed >>> 0);
         this.runSeed = seed >>> 0;
         this.ui.render?.();
+      }
+      // The pointer's place in the child frame; setting it means the pointer has entered the screen.
+      get mouseX() {
+        return this.mouseAt.x;
+      }
+      set mouseX(x) {
+        this.mouseAt.x = x;
+        this.mouseAt.entered = true;
+      }
+      get mouseY() {
+        return this.mouseAt.y;
+      }
+      set mouseY(y) {
+        this.mouseAt.y = y;
+        this.mouseAt.entered = true;
       }
       now() {
         return (this.pausedAt === null ? nowMs() : this.pausedAt) - this.clockOffset;
@@ -1008,7 +1051,7 @@
           y: c.y,
           w: c.w,
           h: c.h,
-          direction: c.direction,
+          direction: normalizeDirection(c.direction),
           scalePercent: c.scalePercent,
           visible: c.visible,
           color: null,
@@ -1213,7 +1256,7 @@
         if (base) parts = parts.filter(part => this.actor(part.part) !== base);
         const score = part => {
           const a = this.partActor(part), box = this.aabb(a);
-          if (by.kind === 'position') return { 右: box.cx, 左: -box.cx, 上: -box.cy, 下: box.cy }[by.side];
+          if (by.kind === 'position') return { 右: box.cx, 左: -box.cx, 上: box.cy, 下: -box.cy }[by.side];
           if (by.kind === 'near') { const to = this.aabb(base); return -Math.hypot(box.cx - to.cx, box.cy - to.cy); }
           const value = numberValue(this.readName({ name: by.name, qualifier: 'self' }, { ...ctx, runtimeId: part.part }), `「${by.name}」には 数が いります`);
           return by.order === 'max' ? value : -value;
@@ -1245,7 +1288,7 @@
         for (const b of [...this.actors.values()].sort((x, y) => x.creationSequence - y.creationSequence)) {
           if (b.runtimeId === a.runtimeId || !b.visible || !a.visible || (base && b.baseId !== base)) continue;
           const bb = this.aabb(b);
-          if (box.left <= bb.right && box.right >= bb.left && box.top <= bb.bottom && box.bottom >= bb.top)
+          if (box.left <= bb.right && box.right >= bb.left && box.bottom <= bb.top && box.top >= bb.bottom)
             out.push(partValue(b.runtimeId, this.component(b.runtimeId)?.name ?? ''));
         }
         return out;
@@ -1261,18 +1304,18 @@
       stopPartSounds(runtimeId) {
         for (const [id, owner] of [...(this.audioOwners || [])]) if (owner === runtimeId) this.assetCache?.stopHandle(id, { notify: true });
       }
+      // The box around the turned and scaled part, in the child frame: bottom is the smaller たてのばしょ.
       aabb(a) {
         const sc = a.scalePercent / 100,
           hw = (a.w * sc) / 2,
           hh = (a.h * sc) / 2,
-          rad = a.direction * (Math.PI / 180),
-          cs = Math.cos(rad),
-          sn = Math.sin(rad);
+          cs = cosDegrees(a.direction),
+          sn = sinDegrees(a.direction);
         const ex = Math.abs(hw * cs) + Math.abs(hh * sn),
           ey = Math.abs(hw * sn) + Math.abs(hh * cs),
-          cx = a.x + a.w / 2,
-          cy = a.y + a.h / 2;
-        return { left: cx - ex, right: cx + ex, top: cy - ey, bottom: cy + ey, cx, cy };
+          cx = a.x,
+          cy = a.y;
+        return { left: cx - ex, right: cx + ex, bottom: cy - ey, top: cy + ey, cx, cy };
       }
       touching(runtimeId, target) {
         const a = this.requireActor({ runtimeId });
@@ -1281,16 +1324,17 @@
         if (target === '端')
           return (
             aa.left <= 0 ||
-            aa.top <= 0 ||
+            aa.bottom <= 0 ||
             aa.right >= this.project.stage.width ||
-            aa.bottom >= this.project.stage.height
+            aa.top >= this.project.stage.height
           );
         if (target === 'マウス')
           return (
+            this.mouseAt.entered &&
             this.mouseX >= aa.left &&
             this.mouseX <= aa.right &&
-            this.mouseY >= aa.top &&
-            this.mouseY <= aa.bottom
+            this.mouseY >= aa.bottom &&
+            this.mouseY <= aa.top
           );
         const targets = this.targetsOf(target).filter(
           (x) => x.runtimeId !== runtimeId && x.visible,
@@ -1303,7 +1347,7 @@
         return targets.some((b) => {
           const bb = this.aabb(b);
           return (
-            aa.left <= bb.right && aa.right >= bb.left && aa.top <= bb.bottom && aa.bottom >= bb.top
+            aa.left <= bb.right && aa.right >= bb.left && aa.bottom <= bb.top && aa.top >= bb.bottom
           );
         });
       }
@@ -1353,9 +1397,9 @@
           back?.kind === 'color' &&
           back.value.toLowerCase() === css.toLowerCase() &&
           aa.right >= 0 &&
-          aa.bottom >= 0 &&
+          aa.top >= 0 &&
           aa.left <= this.project.stage.width &&
-          aa.top <= this.project.stage.height
+          aa.bottom <= this.project.stage.height
         )
           return true;
         for (const b of this.actors.values()) {
@@ -1364,8 +1408,8 @@
           if (
             aa.left <= bb.right &&
             aa.right >= bb.left &&
-            aa.top <= bb.bottom &&
-            aa.bottom >= bb.top
+            aa.bottom <= bb.top &&
+            aa.top >= bb.bottom
           ) {
             const c = this.component(b.runtimeId);
             let vals = [];
@@ -2574,12 +2618,12 @@
         switch (direction) {
           case 'right': return { x: 1, y: 0 };
           case 'left': return { x: -1, y: 0 };
-          case 'up': return { x: 0, y: -1 };
-          case 'down': return { x: 0, y: 1 };
+          case 'up': return { x: 0, y: 1 };
+          case 'down': return { x: 0, y: -1 };
           case 'forward':
           case 'backward': {
-            const sign = direction === 'backward' ? -1 : 1, radians = actor.direction * Math.PI / 180;
-            return { x: sign * Math.cos(radians), y: sign * Math.sin(radians) };
+            const sign = direction === 'backward' ? -1 : 1;
+            return { x: sign * cosDegrees(actor.direction), y: sign * sinDegrees(actor.direction) };
           }
           default: throw new AkariError('R411', '動く 向きが 正しくありません');
         }
@@ -2663,10 +2707,9 @@
             this.ui.continuousStep?.(entry);
           }
           for (const { actor, x, y, nextX, nextY, delta } of moves) {
-            actor.x = nextX; actor.y = nextY;
+            actor.x = snapStep(nextX); actor.y = snapStep(nextY);
             if (actor.penDown && (delta.x || delta.y))
-              this.ui.penLine?.(x + actor.w / 2, y + actor.h / 2,
-                actor.x + actor.w / 2, actor.y + actor.h / 2, actor.penColor, actor.penSize);
+              this.ui.penLine?.(x, y, actor.x, actor.y, actor.penColor, actor.penSize);
           }
           this.continuousTime = end;
           // Keep position predicates on the same logical lattice as overlapping glides.
@@ -3605,17 +3648,10 @@
                 // What else moved the part during the glide is kept; the rounding left by adding the steps is not
                 // (the move ends on its end point: よこ7歩 is 7, not 6.999999999999591).
                 const moved = (at, last, next) => { const d = at - last; return Math.abs(d) <= 1e-9 * Math.max(1, Math.abs(next)) ? 0 : d; };
-                const actualX = ensureFinite(nx + moved(a.x, br.lastX, nx)),
-                  actualY = ensureFinite(ny + moved(a.y, br.lastY, ny));
+                const actualX = snapStep(ensureFinite(nx + moved(a.x, br.lastX, nx))),
+                  actualY = snapStep(ensureFinite(ny + moved(a.y, br.lastY, ny)));
                 if (a.penDown && (br.lastX !== nx || br.lastY !== ny))
-                  this.ui.penLine?.(
-                    a.x + a.w / 2,
-                    a.y + a.h / 2,
-                    actualX + a.w / 2,
-                    actualY + a.h / 2,
-                    a.penColor,
-                    a.penSize,
-                  );
+                  this.ui.penLine?.(a.x, a.y, actualX, actualY, a.penColor, a.penSize);
                 a.x = actualX;
                 a.y = actualY;
                 br.lastX = nx;
@@ -3928,10 +3964,9 @@
             ] }, ctx);
           }
           case 'MOVE': {
-            const d = num(0),
-              rad = a.direction * (Math.PI / 180);
-            a.x += Math.cos(rad) * d;
-            a.y += Math.sin(rad) * d;
+            const d = num(0);
+            a.x += cosDegrees(a.direction) * d;
+            a.y += sinDegrees(a.direction) * d;
             break;
           }
           case 'GOTO':
@@ -3968,23 +4003,24 @@
               const nearest = this.runtime.nearestPart(partList(evalExpression(n.args[0].of, ctx)), ctx.runtimeId, true);
               if (!nearest) break;
               const p = this.runtime.nearestTarget(ctx.runtimeId, nearest), aa = this.runtime.aabb(a);
-              a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
+              if (p.x !== aa.cx || p.y !== aa.cy) a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
               break;
             }
+            // A target whose centre is at the part's own centre keeps the direction.
             const target = targetValue(evalExpression(n.args[0], ctx)),
               p = this.runtime.nearestTarget(ctx.runtimeId, target),
               aa = this.runtime.aabb(a);
-            a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
+            if (p.x !== aa.cx || p.y !== aa.cy) a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
             break;
           }
           case 'SET_DIRECTION':
             a.direction = num(0);
             break;
           case 'TURN_RIGHT':
-            a.direction += num(0);
+            a.direction -= num(0);
             break;
           case 'TURN_LEFT':
-            a.direction -= num(0);
+            a.direction += num(0);
             break;
           case 'SET_X':
             a.x = num(0);
@@ -3999,16 +4035,12 @@
         ensureFinite(a.x);
         ensureFinite(a.y);
         ensureFinite(a.direction);
+        a.x = snapStep(a.x);
+        a.y = snapStep(a.y);
+        a.direction = normalizeDirection(snapStep(normalizeDirection(a.direction)));
         Object.assign(actor, { x: a.x, y: a.y, direction: a.direction });
         if (a.penDown && (before.x !== a.x || before.y !== a.y))
-          this.ui.penLine?.(
-            before.x + a.w / 2,
-            before.y + a.h / 2,
-            a.x + a.w / 2,
-            a.y + a.h / 2,
-            a.penColor,
-            a.penSize,
-          );
+          this.ui.penLine?.(before.x, before.y, a.x, a.y, a.penColor, a.penSize);
         this.ui.render?.();
       }
       bounce(a) {
@@ -4016,21 +4048,22 @@
           w = this.project.stage.width,
           h = this.project.stage.height;
         let hitX = box.left <= 0 || box.right >= w,
-          hitY = box.top <= 0 || box.bottom >= h;
+          hitY = box.bottom <= 0 || box.top >= h;
         if (hitX) a.direction = 180 - a.direction;
         if (hitY) a.direction = -a.direction;
         if (hitX || hitY) {
+          a.direction = normalizeDirection(a.direction);
           const b = this.runtime.aabb(a);
-          if (b.right - b.left > w) a.x = w / 2 - a.w / 2;
+          if (b.right - b.left > w) a.x = w / 2;
           else {
             if (b.left < 0) a.x += -b.left;
             if (b.right > w) a.x -= b.right - w;
           }
           const c = this.runtime.aabb(a);
-          if (c.bottom - c.top > h) a.y = h / 2 - a.h / 2;
+          if (c.top - c.bottom > h) a.y = h / 2;
           else {
-            if (c.top < 0) a.y += -c.top;
-            if (c.bottom > h) a.y -= c.bottom - h;
+            if (c.bottom < 0) a.y += -c.bottom;
+            if (c.top > h) a.y -= c.top - h;
           }
         }
       }
@@ -4242,12 +4275,6 @@
             t.callFrames.some((f) => f.runtimeId === runtimeId)) && t !== except) this.cancelTask(t);
       }
     }
-    const EXECUTABLE_CONTRACT = Object.freeze({
-      languageContractId: 4,
-      runtimeContractId: 4,
-      programFormatVersion: 4,
-      projectFormatVersion: 5,
-    });
     function validProducerLabel(value) {
       return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9.+_-]{0,79}$/.test(value);
     }

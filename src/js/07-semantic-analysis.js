@@ -3009,11 +3009,11 @@
       // A file written in another project format names its format in the data marker.
       const other = text.match(/<!-- AKARI-PROJECT-F(\d+)-DATA-BEGIN -->/);
       if (other && Number(other[1]) !== PROJECT_FORMAT_ID)
-        throw new AkariError(
+        throw Object.assign(new AkariError(
           'F502',
           (Number(other[1]) < PROJECT_FORMAT_ID ? '前の' : 'あたらしい') +
-            ' あかりで ほぞんした 作品なので、この あかりでは 開けないよ。',
-        );
+            ' あかりで ほぞんした 作品なので、この あかりでは 開けないよ。その 作品を 作った ときの あかりで 開いてね。',
+        ), { otherFormat: true });
       throw new AkariError(
         'F502',
         '作品の中身を読めません。あかりでほぞんした .akari.md のファイルをえらんでください',

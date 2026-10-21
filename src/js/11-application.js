@@ -2700,7 +2700,7 @@
         const p = designResizePoint(c, handle.dataset.resizeDirection),
           [hx, hy] = DESIGN_RESIZE_DIRECTIONS[handle.dataset.resizeDirection];
         handle.style.left = p.x + 'px';
-        handle.style.top = p.y + 'px';
+        handle.style.top = project.stage.height - p.y + 'px';
         handle.style.width = handle.style.height = 24 / stageScale + 'px';
         handle.style.minWidth = handle.style.minHeight = '0';
         handle.style.setProperty('--resize-dot', 12 / stageScale + 'px');
@@ -2714,10 +2714,11 @@
             px = small ? hx * 12 / stageScale : hx * Math.max(0, 18 / stageScale - (c.w * s) / 2),
             py = small ? hy * 12 / stageScale : hy * Math.max(0, 18 / stageScale - (c.h * s) / 2);
           handle.hidden = small && (hx === 0 || hy === 0);
-          handle.style.left = p.x + px * Math.cos(rad) - py * Math.sin(rad) + 'px';
-          handle.style.top = p.y + px * Math.sin(rad) + py * Math.cos(rad) + 'px';
+          // The offset is along the part's screen axes, which are turned by −向き on the screen.
+          handle.style.left = p.x + px * Math.cos(rad) + py * Math.sin(rad) + 'px';
+          handle.style.top = project.stage.height - p.y - px * Math.sin(rad) + py * Math.cos(rad) + 'px';
         }
-        const angle = (Math.atan2(hy, hx) * 180) / Math.PI + c.direction;
+        const angle = (Math.atan2(hy, hx) * 180) / Math.PI - c.direction;
         handle.style.cursor = ['ew-resize', 'nwse-resize', 'ns-resize', 'nesw-resize'][
           ((Math.round(angle / 45) % 4) + 4) % 4
         ];
@@ -2725,11 +2726,11 @@
       const outline = el.form.querySelector('.design-resize-outline');
       if (outline)
         Object.assign(outline.style, {
-          left: c.x + c.w / 2 - (c.w * s) / 2 + 'px',
-          top: c.y + c.h / 2 - (c.h * s) / 2 + 'px',
+          left: c.x - (c.w * s) / 2 + 'px',
+          top: project.stage.height - c.y - (c.h * s) / 2 + 'px',
           width: c.w * s + 'px',
           height: c.h * s + 'px',
-          transform: `rotate(${c.direction}deg)`,
+          transform: `rotate(${-c.direction}deg)`,
           borderWidth: 1.5 / stageScale + 'px',
         });
     }
@@ -2737,11 +2738,11 @@
       const n = el.form.querySelector(`[data-runtime-id="${CSS.escape(c.id)}"].component`);
       if (n)
         Object.assign(n.style, {
-          left: c.x + 'px',
-          top: c.y + 'px',
+          left: c.x - c.w / 2 + 'px',
+          top: project.stage.height - c.y - c.h / 2 + 'px',
           width: c.w + 'px',
           height: c.h + 'px',
-          transform: `rotate(${c.direction}deg) scale(${c.scalePercent / 100})`,
+          transform: `rotate(${-c.direction}deg) scale(${c.scalePercent / 100})`,
         });
       positionResizeHandles(c);
     }
@@ -2846,7 +2847,7 @@
             next = { scalePercent: clamp(c.scalePercent + delta, 1, 1000) };
           } else {
             const step = e.shiftKey ? 10 : 1;
-            next = designResizeGeometry(c, direction, key[0] * step, key[1] * step);
+            next = designResizeGeometry(c, direction, key[0] * step, -key[1] * step);
           }
           try {
             if (commitResize(c, next)) refreshEditor();
@@ -2911,7 +2912,8 @@
       if ($('#dataModal').classList.contains('show')) renderDataModal();
       if ($('#assetModal').classList.contains('show')) renderAppearance();
     }
-    function propRow(name, value, onchange, type = 'text') {
+    let propHelpSerial = 0;
+    function propRow(name, value, onchange, type = 'text', options = {}) {
       const r = document.createElement('div');
       r.className = 'prop-row';
       const n = document.createElement('div');
@@ -2923,6 +2925,7 @@
       inp.type = type === 'readonly' ? 'text' : type;
       inp.readOnly = type === 'readonly';
       inp.setAttribute('aria-label', name);
+      if (options.step) inp.step = options.step;
       inp.value = value ?? '';
       if (type === 'checkbox') inp.checked = !!value;
       inp.disabled = modelLocked();
@@ -2944,7 +2947,65 @@
       });
       v.appendChild(inp);
       r.append(n, v);
+      if (options.help) {
+        const help = document.createElement('p');
+        help.className = 'prop-help';
+        help.id = 'propHelp' + ++propHelpSerial;
+        help.textContent = options.help;
+        inp.setAttribute('aria-describedby', help.id);
+        r.append(help);
+      }
       return r;
+    }
+    // A part's box on the screen in the child frame (bottom is the smaller たてのばしょ), turned and scaled.
+    function designBox(c) {
+      const rad = (c.direction * Math.PI) / 180,
+        s = c.scalePercent / 100,
+        hw = (c.w * s) / 2,
+        hh = (c.h * s) / 2,
+        ex = Math.abs(hw * Math.cos(rad)) + Math.abs(hh * Math.sin(rad)),
+        ey = Math.abs(hw * Math.sin(rad)) + Math.abs(hh * Math.cos(rad));
+      return { left: c.x - ex, right: c.x + ex, bottom: c.y - ey, top: c.y + ey };
+    }
+    // Where a new part's centre goes, in whole steps. The first choice (start) is used when the part fits on the
+    // screen there and keeps 10 steps from every visible part. Otherwise the first such spot is taken from the top
+    // row down, left to right, in 20-step steps. When there is none, it goes 16 right and 16 down from the first
+    // choice while another part's centre is already there.
+    function newPartPlace(components, stage, w, h, start) {
+      const margin = 10,
+        boxes = components.filter((c) => c.visible).map(designBox),
+        free = (x, y) =>
+          x - w / 2 >= 0 && x + w / 2 <= stage.width && y - h / 2 >= 0 && y + h / 2 <= stage.height &&
+          !boxes.some((b) => x - w / 2 < b.right + margin && x + w / 2 > b.left - margin &&
+            y - h / 2 < b.top + margin && y + h / 2 > b.bottom - margin);
+      let x = Math.round(start.x),
+        y = Math.round(start.y);
+      if (free(x, y)) return { x, y };
+      for (let top = stage.height - margin; top - h >= margin; top -= 20)
+        for (let left = margin; left + w <= stage.width - margin; left += 20) {
+          const cx = Math.round(left + w / 2),
+            cy = Math.round(top - h / 2);
+          if (free(cx, cy)) return { x: cx, y: cy };
+        }
+      while (components.some((c) => Math.abs(c.x - x) < 1 && Math.abs(c.y - y) < 1)) {
+        x += 16;
+        y -= 16;
+      }
+      return { x, y };
+    }
+    // After the screen size changes, parts keep their steps from the bottom-left corner; name those now outside.
+    function noteOutsideParts() {
+      const outside = project.components.filter((c) => {
+        const b = designBox(c);
+        return b.right < 0 || b.left > project.stage.width || b.top < 0 || b.bottom > project.stage.height;
+      });
+      if (outside.length)
+        setStatus(`${outside.map((c) => `「${c.name}」`).join('')}は 画面の 外に あるよ。「せってい」の よこのばしょ・たてのばしょで もどせるよ`);
+    }
+    // 向き is kept in 0 ≤ 向き < 360 (450 is 90, −90 is 270).
+    function designDirection(value) {
+      const r = ((Number(value) % 360) + 360) % 360;
+      return r === 360 || Object.is(r, -0) ? 0 : r;
     }
 
     function propSection(title, ...rows) {
@@ -2982,6 +3043,7 @@
                 const n = Number(v);
                 if (!finite(n) || n < 200 || n > 1200) throw new Error('はばが 大きすぎるか 小さすぎます。200から1200までの 数を 入れてください');
                 project.stage.width = n;
+                noteOutsideParts();
               },
               'number',
             ),
@@ -2993,6 +3055,7 @@
                 if (!finite(n) || n < 150 || n > 800)
                   throw new Error('高さが 大きすぎるか 小さすぎます。150から800までの 数を 入れてください');
                 project.stage.height = n;
+                noteOutsideParts();
               },
               'number',
             ),
@@ -3081,6 +3144,7 @@
               c.w = n;
             },
             'number',
+            { step: 'any' },
           ),
           propRow(
             '\u9ad8\u3055',
@@ -3091,9 +3155,11 @@
               c.h = n;
             },
             'number',
+            { step: 'any' },
           ),
-          propRow('よこ', c.x, (v) => (c.x = Number(v)), 'number'),
-          propRow('たて', c.y, (v) => (c.y = Number(v)), 'number'),
+          propRow('よこのばしょ', c.x, (v) => (c.x = Number(v)), 'number', { step: 'any' }),
+          propRow('たてのばしょ', c.y, (v) => (c.y = Number(v)), 'number',
+            { step: 'any', help: '画面の 左下の はしから、まん中までの 歩数です' }),
         ),
         propSection(
           '\u8272',
@@ -3102,7 +3168,8 @@
         ),
         propSection(
           '\u305d\u306e\u4ed6',
-          propRow('向き', c.direction, (v) => (c.direction = Number(v)), 'number'),
+          propRow('向き', c.direction, (v) => (c.direction = designDirection(v)), 'number',
+            { step: 'any', help: '0＝右　90＝上　180＝左　270＝下' }),
           propRow(
             '\u5927\u304d\u3055%',
             c.scalePercent,
@@ -3112,6 +3179,7 @@
               c.scalePercent = n;
             },
             'number',
+            { step: 'any' },
           ),
         ),
       );
@@ -3504,12 +3572,14 @@
           const rect = el.form.getBoundingClientRect();
           return {
             x: ((e.clientX - rect.left) * project.stage.width) / rect.width,
-            y: ((e.clientY - rect.top) * project.stage.height) / rect.height,
+            y: ((rect.bottom - e.clientY) * project.stage.height) / rect.height,
           };
         },
         start = toStage(ev);
       let next = { x: c.x, y: c.y },
-        finished = false;
+        finished = false,
+        moved = false;
+      const placeText = (at) => `よこのばしょ ${at.x}　たてのばしょ ${at.y}`;
       // Like resize, moving previews a candidate; cancellation never edits the project.
       const move = (e) => {
         if (e.pointerId !== pointerId) return;
@@ -3519,9 +3589,13 @@
         }
         if (e.cancelable) e.preventDefault();
         const p = toStage(e);
+        // A press without movement keeps the place as it is (320.25 stays 320.25).
+        if (!moved && p.x === start.x && p.y === start.y) return;
+        moved = true;
         next = { x: Math.round(before.x + p.x - start.x), y: Math.round(before.y + p.y - start.y) };
         designResizePreview = { ...before, ...next };
         paintResizePreview(designResizePreview);
+        setStatus(placeText(next));
       };
       const finish = (event) => {
         if (finished) return;
@@ -3553,6 +3627,7 @@
         if (changed) refreshEditor();
         releaseShellPointer();
         if (cancel) setStatus('動かすのを やめました');
+        else if (changed) setStatus(placeText(c));
       };
       const up = (e) => {
           if (e.pointerId === pointerId) finish(e);
@@ -3592,12 +3667,14 @@
           const rect = el.form.getBoundingClientRect();
           return {
             x: ((e.clientX - rect.left) * project.stage.width) / rect.width,
-            y: ((e.clientY - rect.top) * project.stage.height) / rect.height,
+            y: ((rect.bottom - e.clientY) * project.stage.height) / rect.height,
           };
         },
         start = toStage(ev);
       let next = { x: c.x, y: c.y, w: c.w, h: c.h, scalePercent: c.scalePercent },
         finished = false;
+      const sizeText = (at) =>
+        designResizeMode(c) === 'scale' ? `${c.name}: ${at.scalePercent}%` : `はば ${at.w}　高さ ${at.h}`;
       const move = (e) => {
         if (e.pointerId !== pointerId) return;
         if (modelLocked() || componentById(id) !== c) {
@@ -3609,11 +3686,7 @@
         next = designResizeGeometry(before, direction, p.x - start.x, p.y - start.y, e.shiftKey);
         designResizePreview = { ...before, ...next };
         paintResizePreview(designResizePreview);
-        setStatus(
-          designResizeMode(c) === 'scale'
-            ? `${c.name}: ${next.scalePercent}%`
-            : `${c.name}: はば ${Math.round(next.w * 100) / 100} / \u9ad8\u3055 ${Math.round(next.h * 100) / 100}（Escで やめる）`,
-        );
+        setStatus(sizeText(next));
       };
       const finish = (event) => {
         if (finished) return;
@@ -3648,12 +3721,7 @@
           setStatus(
             '大きさを かえるのを やめました',
           );
-        else
-          setStatus(
-            changed
-              ? '大きさを かえました'
-              : '大きさは かわっていません',
-          );
+        else setStatus(changed ? sizeText(c) : '大きさは かわっていません');
       };
       const up = (e) => {
           if (e.pointerId === pointerId) finish(e);
@@ -3706,12 +3774,12 @@
           cs = Math.abs(Math.cos(angle)), sn = Math.abs(Math.sin(angle)), scale = copy.scalePercent / 100,
           visibleW = (copy.w * cs + copy.h * sn) * scale,
           visibleH = (copy.w * sn + copy.h * cs) * scale;
-        const offset = (position, size, visible, stageSize) => {
+        const offset = (position, delta, visible, stageSize) => {
           const half = Math.min(visible, stageSize) / 2;
-          return clamp(position + size / 2 + 16, half, stageSize - half) - size / 2;
+          return clamp(position + delta, half, stageSize - half);
         };
-        copy.x = offset(source.x, copy.w, visibleW, next.stage.width);
-        copy.y = offset(source.y, copy.h, visibleH, next.stage.height);
+        copy.x = offset(source.x, 16, visibleW, next.stage.width);
+        copy.y = offset(source.y, -16, visibleH, next.stage.height);
         next.components.push(copy);
         // Validate before committing; image bytes remain shared immutable assets.
         serializeProject(next, assetStore);
@@ -3908,7 +3976,8 @@
       heavyRight: Object.freeze({ name: '太い右', value: '➜', fg: '#2563eb' }),
       arrowHead: Object.freeze({ name: '矢じり', value: '➤', fg: '#2563eb' }),
     });
-    function addComponent(type, x = 80, y = 80, spritePreset = '') {
+    // x/y (a drop) is the new centre; without them the part is placed where it can be seen (newPartPlace).
+    function addComponent(type, x = null, y = null, spritePreset = '') {
       if (modelLocked() || !flushActiveEditor()) return;
       clearTimeout(historyTimer);
       pushHistoryNow();
@@ -3933,12 +4002,16 @@
         w =
           type === 'input' ? 160 : type === 'box' ? 120 : type === 'sprite' ? preset.w || 70 : 120,
         h = type === 'box' ? 80 : type === 'sprite' ? preset.h || 70 : 32,
+        auto = x === null || y === null,
+        place = auto
+          ? newPartPlace(project.components, project.stage, w, h, { x: 80 + w / 2, y: project.stage.height - 80 - h / 2 })
+          : { x: Math.round(x), y: Math.round(y) },
         base = {
           id,
           type,
           name,
-          x: Math.round(x),
-          y: Math.round(y),
+          x: place.x,
+          y: place.y,
           w,
           h,
           fg: type === 'sprite' ? preset.fg : '#111111',
@@ -4002,6 +4075,7 @@
       project.components.push(base);
       markDirty();
       selectObject(id);
+      if (auto) setStatus(`「${name}」を ふやしたよ。いま 動かすものは「${name}」だよ`);
     }
 
     let activeFailureId = null,
@@ -4929,6 +5003,7 @@
             const close = {
               exportChoiceModal: 'exportChoiceCancel',
               openConfirmModal: 'openConfirmCancel',
+              openRefusalModal: 'openRefusalClose',
               loseConfirmModal: 'loseConfirmCancel',
               assetModal: 'assetClose',
               procModal: 'procClose',
@@ -5164,9 +5239,10 @@
         catch (error) {
           // A newer release of the same extension may open the work; the person decides.
           const upgrades = error?.extensionUpgrades;
-          if (!upgrades || !confirm('この作品は、次の かくちょうの 前の バージョンで 作られています。\n' +
+          if (!upgrades) throw error;
+          if (!confirm('この作品は、次の かくちょうの 前の バージョンで 作られています。\n' +
             upgrades.map(item => '・' + item.name + '　' + item.from + ' → ' + item.to).join('\n') +
-            '\nいまの バージョンで 開きますか？　ほぞんすると、いまの バージョンで のこります。')) throw error;
+            '\nいまの バージョンで 開きますか？　ほぞんすると、いまの バージョンで のこります。')) throw Object.assign(error, { declined: true });
           loaded = await parseProjectFile(text, { upgradeExtensions: true });
         }
         // Keep the current workspace until the loaded editor can also be restored.
@@ -5213,6 +5289,8 @@
           restoreSnap(previous.current, { restoreView: true });
         }
         log(`${err.code || ''} 読みこめませんでした: ${err.message}`, 'error');
+        // The person chose not to open it with the newer extension: nothing to explain.
+        if (!err?.declined) showOpenRefusal(err);
       } finally {
         appState = 'DESIGN';
         renderAll();
@@ -5220,6 +5298,28 @@
       }
     }
 
+    // Every refusal of 開く stays on the screen until とじる; the work, its history and unsaved edits stay as they
+    // were. A file of another project format says which あかり opens it; any other refusal asks for an あかり file.
+    // The code and the full reason stay in 出力.
+    function openButtonShown() {
+      return [$('#openBtn'), $('#entryOpen'), $('#entryProjectMenu > summary')].find((n) => n?.getClientRects().length) || null;
+    }
+    function showOpenRefusal(error) {
+      $('#openRefusalMessage').textContent = error?.otherFormat
+        ? error.message
+        : 'あかりで ほぞんした ファイル（名前が「.akari.md」で おわる ファイル）を えらんでね。いまの 作品は そのままだよ。';
+      setStatus('ファイルを 開けなかったよ');
+      // The dialog focuses とじる and gives the focus back to 開く when it closes (setupModalAccessibility).
+      openButtonShown()?.focus({ preventScroll: true });
+      $('#openRefusalModal').classList.add('show');
+    }
+    function closeOpenRefusal() {
+      $('#openRefusalModal').classList.remove('show');
+      setTimeout(() => {
+        if (!document.querySelector('.modal.show,.modal.open,dialog[open]') && !openButtonShown()?.contains(document.activeElement))
+          openButtonShown()?.focus({ preventScroll: true });
+      }, 0);
+    }
     function openAutosaveDB() {
       return new Promise((resolve, reject) => {
         let settled = false,
@@ -6344,12 +6444,15 @@
         }
         const id = ensureUniqueId('sprite'),
           costumeId = ensureUniqueId('costume'),
+          shown = nativeSize ? Math.min(1, next.stage.width / w, next.stage.height / h) : 1,
+          place = newPartPlace(next.components, next.stage, w * shown, h * shown,
+            { x: next.stage.width / 2, y: next.stage.height / 2 }),
           sprite = {
             id,
             type: 'sprite',
             name,
-            x: Math.round((next.stage.width - w) / 2),
-            y: Math.round((next.stage.height - h) / 2),
+            x: place.x,
+            y: place.y,
             w,
             h,
             fg: '#f5a000',
@@ -6800,6 +6903,7 @@
     $('#exportChoiceCancel').onclick = () => $('#exportChoiceModal').classList.remove('show');
     $('#openBtn').onclick = requestOpenProject;
     $('#openConfirmProceed').onclick = selectProjectForOpen;
+    $('#openRefusalClose').onclick = closeOpenRefusal;
     $('#loseConfirmProceed').onclick = () => loseConfirm?.(true);
     $('#loseConfirmCancel').onclick = () => loseConfirm?.(false);
     $('#openConfirmCancel').onclick = () => {
@@ -6981,7 +7085,7 @@
     });
     $$('.tool').forEach((b) => {
       b.addEventListener('click', () =>
-        addComponent(b.dataset.type, 80, 80, b.dataset.spritePreset || ''),
+        addComponent(b.dataset.type, null, null, b.dataset.spritePreset || ''),
       );
       b.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('text/akari-tool', b.dataset.type);
@@ -7002,7 +7106,7 @@
         addComponent(
           type,
           ((e.clientX - r.left) * project.stage.width) / r.width,
-          ((e.clientY - r.top) * project.stage.height) / r.height,
+          ((r.bottom - e.clientY) * project.stage.height) / r.height,
           preset,
         );
       }

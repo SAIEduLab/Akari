@@ -1165,7 +1165,7 @@
   // Entry workshop: presentation and learning state, independent of file/runtime contracts.
   function normalizeEntryUiLevel(value) {
     if (value === null || value === 'entry') return 'entry';
-    if (value === 'advanced' || value === 'all') return 'advanced';
+    if (value === 'advanced') return 'advanced';
     return 'basic';
   }
   const ENTRY_BLOCK_SCHEMA_IDS = new Set([
@@ -1192,21 +1192,21 @@
   }
   function makeTutorialProject() {
     const p=makeEmptyProject();p.name='さかなキャッチ';
-    Object.assign(p.components[0],{name:'さかな',x:270,y:170,w:100,h:67,
+    Object.assign(p.components[0],{name:'さかな',x:320,y:197,w:100,h:67,
       costumes:[{id:'costume-blue',name:'青いさかな',kind:'image',assetId:'asset-practice-fish-blue'},
         {id:'costume-orange',name:'オレンジのさかな',kind:'image',assetId:'asset-practice-fish-orange'}],costumeId:'costume-blue'});
     p.stage.backdrops[0]={id:'backdrop-1',name:'海',kind:'color',value:'#e4f4fc'};
     p.projectData.variables=[{id:'practice-score',name:'点数',initialValue:0}];
-    p.components.push({id:'practice-board',type:'label',name:'点数ボード',x:20,y:20,w:600,h:45,fg:'#173047',bg:null,fontSize:24,
+    p.components.push({id:'practice-board',type:'label',name:'点数ボード',x:320,y:358,w:600,h:45,fg:'#173047',bg:null,fontSize:24,
       visible:true,direction:0,scalePercent:100,text:'さかなを キャッチ！',localData:{variables:[],lists:[]}});
     p.scripts=[{id:'practice-click',targetId:'sprite-1',event:'click',source:'ほかの動きを全部止める。'}];
     return p;
   }
   const TUTORIAL_BLOCKS=Object.freeze({
     speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
-    escape:{label:'ちがう ばしょへ にげる',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ行く。'},
-    swim:{label:'ゆっくり泳ぐ',source:'よこ430歩、たて180歩のばしょへ1秒かけて動く。'},
-    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ0.5秒かけて動く。'},
+    escape:{label:'ちがう ばしょへ にげる',source:'よこ120から540のどれか、たて100から230のどれかのばしょへ行く。'},
+    swim:{label:'ゆっくり泳ぐ',source:'よこ480歩、たて187歩のばしょへ1秒かけて動く。'},
+    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ120から540のどれか、たて100から230のどれかのばしょへ0.5秒かけて動く。'},
     repeat:{label:'くり返す',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
     right:{label:'右へ泳ぐ',source:'0.3秒かけて画面の右へ60歩動く。'},
     left:{label:'左へ泳ぐ',source:'0.3秒かけて画面の左へ60歩動く。'},

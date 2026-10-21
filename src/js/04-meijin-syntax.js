@@ -315,7 +315,7 @@
     replaceAll(/(もし、?|、|^)(【[^】]*】|[^、。\u0001が【】]+?)がコピー(なら|でなければ|ではないなら)/, m =>
       isMeijinPart(meijinBare(m[2]), symbols, ctx) || meijinVariableName(meijinBare(m[2]), symbols, ctx) ? `${m[1]}条件（${m[2]}のコピーである）が成り立${m[3] === 'なら' ? 'つなら' : 'たないなら'}` : null);
     // ねこが犬より右にいれば: the parts' positions compared.
-    const side = { 右: ['よこ', '大き'], 左: ['よこ', '小さ'], 上: ['たて', '小さ'], 下: ['たて', '大き'] };
+    const side = { 右: ['よこ', '大き'], 左: ['よこ', '小さ'], 上: ['たて', '大き'], 下: ['たて', '小さ'] };
     replaceAll(new RegExp('(' + alt + ')が(' + alt + ')より(右|左|上|下)に(いれば|いなければ|いるあいだ|いるまで|いる)'), m => {
       const [axis, size] = side[m[3]], ending = { いれば: 'ければ', いなければ: 'くなければ', いるあいだ: 'いあいだ', いるまで: 'くなるまで', いる: 'い' }[m[4]];
       return `${at(m[1])}の${axis}のばしょが${at(m[2])}の${axis}のばしょより${size}${ending}`;

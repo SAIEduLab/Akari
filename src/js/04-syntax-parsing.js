@@ -1527,7 +1527,7 @@
     }
     const directions={前:'forward',後ろ:'backward',右:'right',左:'left',上:'up',下:'down'};
     if(['向く','むく'].includes(verb)) {
-      if((p=surfaceCapture(/^(?:画面の)?(右|左|上|下)を$/d,body)))return node('SET_DIRECTION',[sentenceQuantity(exprNode('NumberLiteral',{value:{右:0,下:90,左:180,上:270}[p[0].text]}),'度')]);
+      if((p=surfaceCapture(/^(?:画面の)?(右|左|上|下)を$/d,body)))return node('SET_DIRECTION',[sentenceQuantity(exprNode('NumberLiteral',{value:{右:0,上:90,左:180,下:270}[p[0].text]}),'度')]);
       return null;
     }
     // Duration can follow the distance or direction role. Keep each capture's

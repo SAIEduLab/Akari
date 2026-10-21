@@ -363,6 +363,8 @@ button:focus-visible {
   background-color: #fff;
   background-image: radial-gradient(rgba(94, 126, 168, 0.24) 1px, transparent 1px);
   background-size: 10px 10px;
+  /* The dots are on every 10 steps from the bottom-left corner. */
+  background-position: left -5px bottom -5px;
   cursor: default;
 }
 #penCanvas {
@@ -519,6 +521,16 @@ button:focus-visible {
   width: 100%;
   height: 24px;
   border: 1px solid #aabbd0;
+}
+.prop-help {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0 10px 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted, #5f6b7a);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 .codewin {
   grid-column: 2;
@@ -5774,6 +5786,8 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 .export-example-scene{display:block;position:relative;width:210px;max-width:100%;height:118px;background:#def2ff;color:#17263b;overflow:hidden}
 .export-example-star{position:absolute;top:20px;left:30px;font-size:40px;color:#c27b00}.export-example-work-button{position:absolute;right:10px;bottom:15px;background:#fff;border:1px solid #3d6580;padding:3px 7px;font-size:11px}
 .project-choice-footer{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:12px;margin-top:16px}
+#openRefusalModal .project-choice-dialog{width:min(520px,100%)}
+#openRefusalModal p{word-break:keep-all;overflow-wrap:anywhere}
 @media(max-width:650px){.export-choices{grid-template-columns:1fr}.project-choice-dialog{padding:16px}.export-choice{padding:12px}}
 
 /* The entry layout keeps the same editor and stage; each area scrolls inside. */
@@ -6472,6 +6486,13 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
  <div class="project-choice-dialog">
   <p id="openConfirmMessage">まだほぞんしていない作品があります。ほぞんせずに、ほかの作品を開きますか？</p>
   <div class="project-choice-footer"><button id="openConfirmCancel" type="button">やめる</button><button id="openConfirmProceed" type="button">ほぞんせずに開く</button></div>
+ </div>
+</div>
+<div class="modal" id="openRefusalModal" role="alertdialog" aria-modal="true" aria-labelledby="openRefusalTitle" aria-describedby="openRefusalMessage">
+ <div class="project-choice-dialog">
+  <h2 id="openRefusalTitle">この ファイルは 開けなかったよ</h2>
+  <p id="openRefusalMessage"></p>
+  <div class="project-choice-footer"><button id="openRefusalClose" type="button">とじる</button></div>
  </div>
 </div>
 <div class="modal" id="loseConfirmModal" role="dialog" aria-modal="true" aria-labelledby="loseConfirmMessage">
@@ -7178,6 +7199,13 @@ function createAkariExtensionHost(options) {
       repeatCount: 1000000,
       activeTasks: 2000,
     };
+    // The one place that writes the contract numbers; the extension Standard and the saved data read them.
+    const EXECUTABLE_CONTRACT = Object.freeze({
+      languageContractId: 4,
+      runtimeContractId: 4,
+      programFormatVersion: 4,
+      projectFormatVersion: 5,
+    });
     const profileRegistry = createAkariProfiles(STANDARD_LIMITS, {
       executableBytes: 64 * 1024 * 1024, logChars: 100000,
       historyEntries: 60, diagnosticsBytes: 8388608,
@@ -7194,7 +7222,7 @@ function createAkariExtensionHost(options) {
       select() { throw new Error('プロファイルは起動前にホスト側で選択してください'); },
     });
     const extensions = createAkariExtensionHost({
-      standard: { languageContractId: 4, runtimeContractId: 4 },
+      standard: { languageContractId: EXECUTABLE_CONTRACT.languageContractId, runtimeContractId: EXECUTABLE_CONTRACT.runtimeContractId },
       reservedNames: BUILTIN_DEFINITIONS.map(x => x.name),
       allowedCapabilities: options.allowedCapabilities || [],
       validateValue: validateExtensionValue,
@@ -8041,6 +8069,27 @@ function createAkariExtensionHost(options) {
           } catch (_) {}
       }
     }
+    // Positions are the part's centre measured from the bottom-left corner of the work screen (right and up are
+    // positive); directions grow counterclockwise from 0 = right. Only the screen view converts (08).
+    // 向き is always kept in 0 ≤ 向き < 360.
+    function normalizeDirection(d) {
+      const r = ((d % 360) + 360) % 360;
+      return r === 360 || Object.is(r, -0) ? 0 : r;
+    }
+    // A motion result within 10⁻⁹ of a whole number is that number (a closed square ends where it began).
+    function snapStep(v) {
+      const k = Math.round(v);
+      return Math.abs(v - k) < 1e-9 ? k : v;
+    }
+    // cos/sin of a direction in degrees, exact at the right angles (facing up and walking keeps よこ).
+    function cosDegrees(d) {
+      const r = ((d % 360) + 360) % 360;
+      return r === 0 ? 1 : r === 90 || r === 270 ? 0 : r === 180 ? -1 : Math.cos((d * Math.PI) / 180);
+    }
+    function sinDegrees(d) {
+      const r = ((d % 360) + 360) % 360;
+      return r === 0 || r === 180 ? 0 : r === 90 ? 1 : r === 270 ? -1 : Math.sin((d * Math.PI) / 180);
+    }
     class RuntimeModel {
       constructor(project, ui = {}, assetCache = null) {
         this.project = project;
@@ -8075,13 +8124,28 @@ function createAkariExtensionHost(options) {
         this.timerOffset = 0;
         // How many times each part finished a procedure or was clicked (〜が10回【ジャンプ】するまで).
         this.eventCounts = new Map();
-        this.mouseX = 0;
-        this.mouseY = 0;
+        // Until the pointer enters the screen it reads よこ0・たて0 and touches no part.
+        this.mouseAt = { x: 0, y: 0, entered: false };
         this.mouseDown = false;
         this.pressedKeys = new Set();
         this.prng = new PRNG(seed >>> 0);
         this.runSeed = seed >>> 0;
         this.ui.render?.();
+      }
+      // The pointer's place in the child frame; setting it means the pointer has entered the screen.
+      get mouseX() {
+        return this.mouseAt.x;
+      }
+      set mouseX(x) {
+        this.mouseAt.x = x;
+        this.mouseAt.entered = true;
+      }
+      get mouseY() {
+        return this.mouseAt.y;
+      }
+      set mouseY(y) {
+        this.mouseAt.y = y;
+        this.mouseAt.entered = true;
       }
       now() {
         return (this.pausedAt === null ? nowMs() : this.pausedAt) - this.clockOffset;
@@ -8109,7 +8173,7 @@ function createAkariExtensionHost(options) {
           y: c.y,
           w: c.w,
           h: c.h,
-          direction: c.direction,
+          direction: normalizeDirection(c.direction),
           scalePercent: c.scalePercent,
           visible: c.visible,
           color: null,
@@ -8314,7 +8378,7 @@ function createAkariExtensionHost(options) {
         if (base) parts = parts.filter(part => this.actor(part.part) !== base);
         const score = part => {
           const a = this.partActor(part), box = this.aabb(a);
-          if (by.kind === 'position') return { 右: box.cx, 左: -box.cx, 上: -box.cy, 下: box.cy }[by.side];
+          if (by.kind === 'position') return { 右: box.cx, 左: -box.cx, 上: box.cy, 下: -box.cy }[by.side];
           if (by.kind === 'near') { const to = this.aabb(base); return -Math.hypot(box.cx - to.cx, box.cy - to.cy); }
           const value = numberValue(this.readName({ name: by.name, qualifier: 'self' }, { ...ctx, runtimeId: part.part }), `「${by.name}」には 数が いります`);
           return by.order === 'max' ? value : -value;
@@ -8346,7 +8410,7 @@ function createAkariExtensionHost(options) {
         for (const b of [...this.actors.values()].sort((x, y) => x.creationSequence - y.creationSequence)) {
           if (b.runtimeId === a.runtimeId || !b.visible || !a.visible || (base && b.baseId !== base)) continue;
           const bb = this.aabb(b);
-          if (box.left <= bb.right && box.right >= bb.left && box.top <= bb.bottom && box.bottom >= bb.top)
+          if (box.left <= bb.right && box.right >= bb.left && box.bottom <= bb.top && box.top >= bb.bottom)
             out.push(partValue(b.runtimeId, this.component(b.runtimeId)?.name ?? ''));
         }
         return out;
@@ -8362,18 +8426,18 @@ function createAkariExtensionHost(options) {
       stopPartSounds(runtimeId) {
         for (const [id, owner] of [...(this.audioOwners || [])]) if (owner === runtimeId) this.assetCache?.stopHandle(id, { notify: true });
       }
+      // The box around the turned and scaled part, in the child frame: bottom is the smaller たてのばしょ.
       aabb(a) {
         const sc = a.scalePercent / 100,
           hw = (a.w * sc) / 2,
           hh = (a.h * sc) / 2,
-          rad = a.direction * (Math.PI / 180),
-          cs = Math.cos(rad),
-          sn = Math.sin(rad);
+          cs = cosDegrees(a.direction),
+          sn = sinDegrees(a.direction);
         const ex = Math.abs(hw * cs) + Math.abs(hh * sn),
           ey = Math.abs(hw * sn) + Math.abs(hh * cs),
-          cx = a.x + a.w / 2,
-          cy = a.y + a.h / 2;
-        return { left: cx - ex, right: cx + ex, top: cy - ey, bottom: cy + ey, cx, cy };
+          cx = a.x,
+          cy = a.y;
+        return { left: cx - ex, right: cx + ex, bottom: cy - ey, top: cy + ey, cx, cy };
       }
       touching(runtimeId, target) {
         const a = this.requireActor({ runtimeId });
@@ -8382,16 +8446,17 @@ function createAkariExtensionHost(options) {
         if (target === '端')
           return (
             aa.left <= 0 ||
-            aa.top <= 0 ||
+            aa.bottom <= 0 ||
             aa.right >= this.project.stage.width ||
-            aa.bottom >= this.project.stage.height
+            aa.top >= this.project.stage.height
           );
         if (target === 'マウス')
           return (
+            this.mouseAt.entered &&
             this.mouseX >= aa.left &&
             this.mouseX <= aa.right &&
-            this.mouseY >= aa.top &&
-            this.mouseY <= aa.bottom
+            this.mouseY >= aa.bottom &&
+            this.mouseY <= aa.top
           );
         const targets = this.targetsOf(target).filter(
           (x) => x.runtimeId !== runtimeId && x.visible,
@@ -8404,7 +8469,7 @@ function createAkariExtensionHost(options) {
         return targets.some((b) => {
           const bb = this.aabb(b);
           return (
-            aa.left <= bb.right && aa.right >= bb.left && aa.top <= bb.bottom && aa.bottom >= bb.top
+            aa.left <= bb.right && aa.right >= bb.left && aa.bottom <= bb.top && aa.top >= bb.bottom
           );
         });
       }
@@ -8454,9 +8519,9 @@ function createAkariExtensionHost(options) {
           back?.kind === 'color' &&
           back.value.toLowerCase() === css.toLowerCase() &&
           aa.right >= 0 &&
-          aa.bottom >= 0 &&
+          aa.top >= 0 &&
           aa.left <= this.project.stage.width &&
-          aa.top <= this.project.stage.height
+          aa.bottom <= this.project.stage.height
         )
           return true;
         for (const b of this.actors.values()) {
@@ -8465,8 +8530,8 @@ function createAkariExtensionHost(options) {
           if (
             aa.left <= bb.right &&
             aa.right >= bb.left &&
-            aa.top <= bb.bottom &&
-            aa.bottom >= bb.top
+            aa.bottom <= bb.top &&
+            aa.top >= bb.bottom
           ) {
             const c = this.component(b.runtimeId);
             let vals = [];
@@ -9675,12 +9740,12 @@ function createAkariExtensionHost(options) {
         switch (direction) {
           case 'right': return { x: 1, y: 0 };
           case 'left': return { x: -1, y: 0 };
-          case 'up': return { x: 0, y: -1 };
-          case 'down': return { x: 0, y: 1 };
+          case 'up': return { x: 0, y: 1 };
+          case 'down': return { x: 0, y: -1 };
           case 'forward':
           case 'backward': {
-            const sign = direction === 'backward' ? -1 : 1, radians = actor.direction * Math.PI / 180;
-            return { x: sign * Math.cos(radians), y: sign * Math.sin(radians) };
+            const sign = direction === 'backward' ? -1 : 1;
+            return { x: sign * cosDegrees(actor.direction), y: sign * sinDegrees(actor.direction) };
           }
           default: throw new AkariError('R411', '動く 向きが 正しくありません');
         }
@@ -9764,10 +9829,9 @@ function createAkariExtensionHost(options) {
             this.ui.continuousStep?.(entry);
           }
           for (const { actor, x, y, nextX, nextY, delta } of moves) {
-            actor.x = nextX; actor.y = nextY;
+            actor.x = snapStep(nextX); actor.y = snapStep(nextY);
             if (actor.penDown && (delta.x || delta.y))
-              this.ui.penLine?.(x + actor.w / 2, y + actor.h / 2,
-                actor.x + actor.w / 2, actor.y + actor.h / 2, actor.penColor, actor.penSize);
+              this.ui.penLine?.(x, y, actor.x, actor.y, actor.penColor, actor.penSize);
           }
           this.continuousTime = end;
           // Keep position predicates on the same logical lattice as overlapping glides.
@@ -10706,17 +10770,10 @@ function createAkariExtensionHost(options) {
                 // What else moved the part during the glide is kept; the rounding left by adding the steps is not
                 // (the move ends on its end point: よこ7歩 is 7, not 6.999999999999591).
                 const moved = (at, last, next) => { const d = at - last; return Math.abs(d) <= 1e-9 * Math.max(1, Math.abs(next)) ? 0 : d; };
-                const actualX = ensureFinite(nx + moved(a.x, br.lastX, nx)),
-                  actualY = ensureFinite(ny + moved(a.y, br.lastY, ny));
+                const actualX = snapStep(ensureFinite(nx + moved(a.x, br.lastX, nx))),
+                  actualY = snapStep(ensureFinite(ny + moved(a.y, br.lastY, ny)));
                 if (a.penDown && (br.lastX !== nx || br.lastY !== ny))
-                  this.ui.penLine?.(
-                    a.x + a.w / 2,
-                    a.y + a.h / 2,
-                    actualX + a.w / 2,
-                    actualY + a.h / 2,
-                    a.penColor,
-                    a.penSize,
-                  );
+                  this.ui.penLine?.(a.x, a.y, actualX, actualY, a.penColor, a.penSize);
                 a.x = actualX;
                 a.y = actualY;
                 br.lastX = nx;
@@ -11029,10 +11086,9 @@ function createAkariExtensionHost(options) {
             ] }, ctx);
           }
           case 'MOVE': {
-            const d = num(0),
-              rad = a.direction * (Math.PI / 180);
-            a.x += Math.cos(rad) * d;
-            a.y += Math.sin(rad) * d;
+            const d = num(0);
+            a.x += cosDegrees(a.direction) * d;
+            a.y += sinDegrees(a.direction) * d;
             break;
           }
           case 'GOTO':
@@ -11069,23 +11125,24 @@ function createAkariExtensionHost(options) {
               const nearest = this.runtime.nearestPart(partList(evalExpression(n.args[0].of, ctx)), ctx.runtimeId, true);
               if (!nearest) break;
               const p = this.runtime.nearestTarget(ctx.runtimeId, nearest), aa = this.runtime.aabb(a);
-              a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
+              if (p.x !== aa.cx || p.y !== aa.cy) a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
               break;
             }
+            // A target whose centre is at the part's own centre keeps the direction.
             const target = targetValue(evalExpression(n.args[0], ctx)),
               p = this.runtime.nearestTarget(ctx.runtimeId, target),
               aa = this.runtime.aabb(a);
-            a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
+            if (p.x !== aa.cx || p.y !== aa.cy) a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
             break;
           }
           case 'SET_DIRECTION':
             a.direction = num(0);
             break;
           case 'TURN_RIGHT':
-            a.direction += num(0);
+            a.direction -= num(0);
             break;
           case 'TURN_LEFT':
-            a.direction -= num(0);
+            a.direction += num(0);
             break;
           case 'SET_X':
             a.x = num(0);
@@ -11100,16 +11157,12 @@ function createAkariExtensionHost(options) {
         ensureFinite(a.x);
         ensureFinite(a.y);
         ensureFinite(a.direction);
+        a.x = snapStep(a.x);
+        a.y = snapStep(a.y);
+        a.direction = normalizeDirection(snapStep(normalizeDirection(a.direction)));
         Object.assign(actor, { x: a.x, y: a.y, direction: a.direction });
         if (a.penDown && (before.x !== a.x || before.y !== a.y))
-          this.ui.penLine?.(
-            before.x + a.w / 2,
-            before.y + a.h / 2,
-            a.x + a.w / 2,
-            a.y + a.h / 2,
-            a.penColor,
-            a.penSize,
-          );
+          this.ui.penLine?.(before.x, before.y, a.x, a.y, a.penColor, a.penSize);
         this.ui.render?.();
       }
       bounce(a) {
@@ -11117,21 +11170,22 @@ function createAkariExtensionHost(options) {
           w = this.project.stage.width,
           h = this.project.stage.height;
         let hitX = box.left <= 0 || box.right >= w,
-          hitY = box.top <= 0 || box.bottom >= h;
+          hitY = box.bottom <= 0 || box.top >= h;
         if (hitX) a.direction = 180 - a.direction;
         if (hitY) a.direction = -a.direction;
         if (hitX || hitY) {
+          a.direction = normalizeDirection(a.direction);
           const b = this.runtime.aabb(a);
-          if (b.right - b.left > w) a.x = w / 2 - a.w / 2;
+          if (b.right - b.left > w) a.x = w / 2;
           else {
             if (b.left < 0) a.x += -b.left;
             if (b.right > w) a.x -= b.right - w;
           }
           const c = this.runtime.aabb(a);
-          if (c.bottom - c.top > h) a.y = h / 2 - a.h / 2;
+          if (c.top - c.bottom > h) a.y = h / 2;
           else {
-            if (c.top < 0) a.y += -c.top;
-            if (c.bottom > h) a.y -= c.bottom - h;
+            if (c.bottom < 0) a.y += -c.bottom;
+            if (c.top > h) a.y -= c.top - h;
           }
         }
       }
@@ -11343,12 +11397,6 @@ function createAkariExtensionHost(options) {
             t.callFrames.some((f) => f.runtimeId === runtimeId)) && t !== except) this.cancelTask(t);
       }
     }
-    const EXECUTABLE_CONTRACT = Object.freeze({
-      languageContractId: 4,
-      runtimeContractId: 4,
-      programFormatVersion: 4,
-      projectFormatVersion: 5,
-    });
     function validProducerLabel(value) {
       return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9.+_-]{0,79}$/.test(value);
     }
@@ -12979,8 +13027,8 @@ function createAkariExtensionHost(options) {
           id: 'sprite-1',
           type: 'sprite',
           name: 'あかり',
-          x: 230,
-          y: 110,
+          x: 320,
+          y: 200,
           w: 180,
           h: 180,
           fg: '#f5a000',
@@ -13067,8 +13115,8 @@ function createAkariExtensionHost(options) {
           "id": "sprite-1",
           "type": "sprite",
           "name": "たくどん",
-          "x": 120,
-          "y": 200,
+          "x": 168,
+          "y": 152,
           "w": 96,
           "h": 96,
           "fg": "#f5a000",
@@ -13096,8 +13144,8 @@ function createAkariExtensionHost(options) {
           "id": "dango",
           "type": "sprite",
           "name": "だんご",
-          "x": 420,
-          "y": 200,
+          "x": 468,
+          "y": 152,
           "w": 96,
           "h": 96,
           "fg": "#f5a000",
@@ -13125,8 +13173,8 @@ function createAkariExtensionHost(options) {
           "id": "title",
           "type": "label",
           "name": "題名",
-          "x": 20,
-          "y": 16,
+          "x": 320,
+          "y": 366,
           "w": 600,
           "h": 36,
           "fg": "#173047",
@@ -13145,8 +13193,8 @@ function createAkariExtensionHost(options) {
           "id": "guide",
           "type": "label",
           "name": "あんない",
-          "x": 20,
-          "y": 64,
+          "x": 320,
+          "y": 320,
           "w": 600,
           "h": 32,
           "fg": "#173047",
@@ -13167,7 +13215,7 @@ function createAkariExtensionHost(options) {
           "id": "dance-start",
           "targetId": "sprite-1",
           "event": "start",
-          "source": "たくどんはよこ120歩、たて200歩のばしょへ行く。\nだんごはよこ420歩、たて200歩のばしょへ行く。\nたくどんは画面の右を向く。\nだんごは画面の右を向く。\nたくどんは「いっしょに おどろう！」と1秒話す。\n2回くり返す。\n  たくどんはよこ180歩、たて140歩のばしょへ0.3秒かけて動く。\n  たくどんはよこ120歩、たて200歩のばしょへ0.3秒かけて動く。\n  だんごはよこ360歩、たて140歩のばしょへ0.3秒かけて動く。\n  だんごはよこ420歩、たて200歩のばしょへ0.3秒かけて動く。\n  たくどんは右に20度回る。\n  だんごは左に20度回る。\n  0.2秒待つ。\n  たくどんは左に40度回る。\n  だんごは右に40度回る。\n  0.2秒待つ。\n  たくどんは右に20度回る。\n  だんごは左に20度回る。\n  0.2秒待つ。\nたくどんは「きまった！」と1秒話す。\nだんごは「もういちど おどろう！」と1秒話す。"
+          "source": "たくどんはよこ168歩、たて152歩のばしょへ行く。\nだんごはよこ468歩、たて152歩のばしょへ行く。\nたくどんは画面の右を向く。\nだんごは画面の右を向く。\nたくどんは「いっしょに おどろう！」と1秒話す。\n2回くり返す。\n  たくどんはよこ228歩、たて212歩のばしょへ0.3秒かけて動く。\n  たくどんはよこ168歩、たて152歩のばしょへ0.3秒かけて動く。\n  だんごはよこ408歩、たて212歩のばしょへ0.3秒かけて動く。\n  だんごはよこ468歩、たて152歩のばしょへ0.3秒かけて動く。\n  たくどんは右に20度回る。\n  だんごは左に20度回る。\n  0.2秒待つ。\n  たくどんは左に40度回る。\n  だんごは右に40度回る。\n  0.2秒待つ。\n  たくどんは右に20度回る。\n  だんごは左に20度回る。\n  0.2秒待つ。\nたくどんは「きまった！」と1秒話す。\nだんごは「もういちど おどろう！」と1秒話す。"
         }
       ],
       "actions": [],
@@ -13208,8 +13256,8 @@ function createAkariExtensionHost(options) {
           "id": "sprite-1",
           "type": "sprite",
           "name": "たくどん",
-          "x": 296,
-          "y": 196,
+          "x": 320,
+          "y": 180,
           "w": 48,
           "h": 48,
           "fg": "#f5a000",
@@ -13237,8 +13285,8 @@ function createAkariExtensionHost(options) {
           "id": "title",
           "type": "label",
           "name": "題名",
-          "x": 20,
-          "y": 16,
+          "x": 320,
+          "y": 366,
           "w": 600,
           "h": 36,
           "fg": "#173047",
@@ -13257,8 +13305,8 @@ function createAkariExtensionHost(options) {
           "id": "guide",
           "type": "label",
           "name": "あんない",
-          "x": 20,
-          "y": 64,
+          "x": 320,
+          "y": 320,
           "w": 600,
           "h": 32,
           "fg": "#173047",
@@ -13279,7 +13327,7 @@ function createAkariExtensionHost(options) {
           "id": "flower-start",
           "targetId": "sprite-1",
           "event": "start",
-          "source": "作品の線とスタンプを全部消す。\nたくどんはペンを上げる。\nたくどんはよこ296歩、たて196歩のばしょへ行く。\nたくどんは画面の右を向く。\nたくどんはペンの色を「青」にする。\nたくどんはペンの太さを2にする。\nたくどんは「花もようを かくよ！」と1秒話す。\nたくどんはペンを下ろす。\n12回くり返す。\n  3回くり返す。\n    たくどんは前へ90歩進む。\n    たくどんは右に120度回る。\n    0.03秒待つ。\n  たくどんは右に30度回る。\n  0.08秒待つ。\nたくどんはペンを上げる。\nたくどんはよこ40歩、たて280歩のばしょへ行く。\nたくどんは「できた！ つぎは どんな もよう？」と1秒話す。"
+          "source": "作品の線とスタンプを全部消す。\nたくどんはペンを上げる。\nたくどんはよこ320歩、たて180歩のばしょへ行く。\nたくどんは画面の右を向く。\nたくどんはペンの色を「青」にする。\nたくどんはペンの太さを2にする。\nたくどんは「花もようを かくよ！」と1秒話す。\nたくどんはペンを下ろす。\n12回くり返す。\n  3回くり返す。\n    たくどんは前へ90歩進む。\n    たくどんは右に120度回る。\n    0.03秒待つ。\n  たくどんは右に30度回る。\n  0.08秒待つ。\nたくどんはペンを上げる。\nたくどんはよこ64歩、たて96歩のばしょへ行く。\nたくどんは「できた！ つぎは どんな もよう？」と1秒話す。"
         }
       ],
       "actions": [],
@@ -13336,8 +13384,8 @@ function createAkariExtensionHost(options) {
           "id": "sprite-1",
           "type": "sprite",
           "name": "たくどん",
-          "x": 20,
-          "y": 290,
+          "x": 60,
+          "y": 70,
           "w": 80,
           "h": 80,
           "fg": "#f5a000",
@@ -13365,8 +13413,8 @@ function createAkariExtensionHost(options) {
           "id": "star",
           "type": "sprite",
           "name": "星",
-          "x": 300,
-          "y": 180,
+          "x": 324,
+          "y": 196,
           "w": 48,
           "h": 48,
           "fg": "#f5a000",
@@ -13394,8 +13442,8 @@ function createAkariExtensionHost(options) {
           "id": "title",
           "type": "label",
           "name": "題名",
-          "x": 20,
-          "y": 16,
+          "x": 320,
+          "y": 366,
           "w": 600,
           "h": 36,
           "fg": "#173047",
@@ -13414,8 +13462,8 @@ function createAkariExtensionHost(options) {
           "id": "score",
           "type": "label",
           "name": "点数表示",
-          "x": 20,
-          "y": 64,
+          "x": 130,
+          "y": 320,
           "w": 220,
           "h": 32,
           "fg": "#173047",
@@ -13434,8 +13482,8 @@ function createAkariExtensionHost(options) {
           "id": "guide",
           "type": "label",
           "name": "案内",
-          "x": 260,
-          "y": 64,
+          "x": 440,
+          "y": 320,
           "w": 360,
           "h": 32,
           "fg": "#173047",
@@ -13456,13 +13504,13 @@ function createAkariExtensionHost(options) {
           "id": "game-start",
           "targetId": "stage",
           "event": "start",
-          "source": "受付を0にする。\n点数を0にする。\n「点数表示」の文字を（「てんすう：」と点数をつなげた文字）にかえる。\n「案内」の文字を（目標と「こ つかまえよう！」をつなげた文字）にかえる。\n星はよこ300歩、たて180歩のばしょへ行く。\n星は画面の右を向く。\nたくどんは画面の右を向く。\nたくどんは受付を1にする。"
+          "source": "受付を0にする。\n点数を0にする。\n「点数表示」の文字を（「てんすう：」と点数をつなげた文字）にかえる。\n「案内」の文字を（目標と「こ つかまえよう！」をつなげた文字）にかえる。\n星はよこ324歩、たて196歩のばしょへ行く。\n星は画面の右を向く。\nたくどんは画面の右を向く。\nたくどんは受付を1にする。"
         },
         {
           "id": "game-click",
           "targetId": "star",
           "event": "click",
-          "source": "もし受付が1と同じなら、\n  受付を0にする。\n  点数を1増やす。\n  「点数表示」の文字を（「てんすう：」と点数をつなげた文字）にかえる。\n  もし点数が目標以上なら、\n    すがたをかくす。\n    たくどんは「やったね！ ぜんぶ つかまえた！」と1.5秒話す。\n    4回くり返す。\n      たくどんは右に90度回る。\n      0.1秒待つ。\n  そうでなければ、\n    星はよこ140から520のどれか、たて120から280のどれかのばしょへ行く。\n    星は右に30度回る。\n    星は受付を1にする。"
+          "source": "もし受付が1と同じなら、\n  受付を0にする。\n  点数を1増やす。\n  「点数表示」の文字を（「てんすう：」と点数をつなげた文字）にかえる。\n  もし点数が目標以上なら、\n    すがたをかくす。\n    たくどんは「やったね！ ぜんぶ つかまえた！」と1.5秒話す。\n    4回くり返す。\n      たくどんは右に90度回る。\n      0.1秒待つ。\n  そうでなければ、\n    星はよこ170から540のどれか、たて100から250のどれかのばしょへ行く。\n    星は右に30度回る。\n    星は受付を1にする。"
         }
       ],
       "actions": [],
@@ -13589,8 +13637,8 @@ function createAkariExtensionHost(options) {
           "id": "title",
           "type": "label",
           "name": "題名",
-          "x": 16,
-          "y": 8,
+          "x": 321,
+          "y": 374,
           "w": 610,
           "h": 36,
           "text": "道をつくって めいろたんけん",
@@ -13609,8 +13657,8 @@ function createAkariExtensionHost(options) {
           "id": "guide",
           "type": "label",
           "name": "あんない",
-          "x": 16,
-          "y": 49,
+          "x": 321,
+          "y": 336,
           "w": 610,
           "h": 30,
           "text": "「しゅっぱつ」で動くよ。右の道を たどってみよう！",
@@ -13629,8 +13677,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-0-0",
           "type": "box",
           "name": "マス1",
-          "x": 18,
-          "y": 98,
+          "x": 38,
+          "y": 282,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13649,8 +13697,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-1-0",
           "type": "box",
           "name": "マス2",
-          "x": 61,
-          "y": 98,
+          "x": 81,
+          "y": 282,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13669,8 +13717,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-2-0",
           "type": "box",
           "name": "マス3",
-          "x": 104,
-          "y": 98,
+          "x": 124,
+          "y": 282,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13689,8 +13737,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-3-0",
           "type": "box",
           "name": "マス4",
-          "x": 147,
-          "y": 98,
+          "x": 167,
+          "y": 282,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13709,8 +13757,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-4-0",
           "type": "box",
           "name": "マス5",
-          "x": 190,
-          "y": 98,
+          "x": 210,
+          "y": 282,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13729,8 +13777,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-5-0",
           "type": "box",
           "name": "マス6",
-          "x": 233,
-          "y": 98,
+          "x": 253,
+          "y": 282,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13749,8 +13797,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-6-0",
           "type": "box",
           "name": "マス7",
-          "x": 276,
-          "y": 98,
+          "x": 296,
+          "y": 282,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13769,8 +13817,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-0-1",
           "type": "box",
           "name": "マス8",
-          "x": 18,
-          "y": 141,
+          "x": 38,
+          "y": 239,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13789,8 +13837,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-1-1",
           "type": "box",
           "name": "マス9",
-          "x": 61,
-          "y": 141,
+          "x": 81,
+          "y": 239,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13809,8 +13857,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-2-1",
           "type": "box",
           "name": "マス10",
-          "x": 104,
-          "y": 141,
+          "x": 124,
+          "y": 239,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13829,8 +13877,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-3-1",
           "type": "box",
           "name": "マス11",
-          "x": 147,
-          "y": 141,
+          "x": 167,
+          "y": 239,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13849,8 +13897,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-4-1",
           "type": "box",
           "name": "マス12",
-          "x": 190,
-          "y": 141,
+          "x": 210,
+          "y": 239,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13869,8 +13917,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-5-1",
           "type": "box",
           "name": "マス13",
-          "x": 233,
-          "y": 141,
+          "x": 253,
+          "y": 239,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13889,8 +13937,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-6-1",
           "type": "box",
           "name": "マス14",
-          "x": 276,
-          "y": 141,
+          "x": 296,
+          "y": 239,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13909,8 +13957,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-0-2",
           "type": "box",
           "name": "マス15",
-          "x": 18,
-          "y": 184,
+          "x": 38,
+          "y": 196,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13929,8 +13977,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-1-2",
           "type": "box",
           "name": "マス16",
-          "x": 61,
-          "y": 184,
+          "x": 81,
+          "y": 196,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13949,8 +13997,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-2-2",
           "type": "box",
           "name": "マス17",
-          "x": 104,
-          "y": 184,
+          "x": 124,
+          "y": 196,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13969,8 +14017,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-3-2",
           "type": "box",
           "name": "マス18",
-          "x": 147,
-          "y": 184,
+          "x": 167,
+          "y": 196,
           "w": 40,
           "h": 40,
           "text": "",
@@ -13989,8 +14037,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-4-2",
           "type": "box",
           "name": "マス19",
-          "x": 190,
-          "y": 184,
+          "x": 210,
+          "y": 196,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14009,8 +14057,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-5-2",
           "type": "box",
           "name": "マス20",
-          "x": 233,
-          "y": 184,
+          "x": 253,
+          "y": 196,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14029,8 +14077,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-6-2",
           "type": "box",
           "name": "マス21",
-          "x": 276,
-          "y": 184,
+          "x": 296,
+          "y": 196,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14049,8 +14097,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-0-3",
           "type": "box",
           "name": "マス22",
-          "x": 18,
-          "y": 227,
+          "x": 38,
+          "y": 153,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14069,8 +14117,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-1-3",
           "type": "box",
           "name": "マス23",
-          "x": 61,
-          "y": 227,
+          "x": 81,
+          "y": 153,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14089,8 +14137,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-2-3",
           "type": "box",
           "name": "マス24",
-          "x": 104,
-          "y": 227,
+          "x": 124,
+          "y": 153,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14109,8 +14157,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-3-3",
           "type": "box",
           "name": "マス25",
-          "x": 147,
-          "y": 227,
+          "x": 167,
+          "y": 153,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14129,8 +14177,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-4-3",
           "type": "box",
           "name": "マス26",
-          "x": 190,
-          "y": 227,
+          "x": 210,
+          "y": 153,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14149,8 +14197,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-5-3",
           "type": "box",
           "name": "マス27",
-          "x": 233,
-          "y": 227,
+          "x": 253,
+          "y": 153,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14169,8 +14217,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-6-3",
           "type": "box",
           "name": "マス28",
-          "x": 276,
-          "y": 227,
+          "x": 296,
+          "y": 153,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14189,8 +14237,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-0-4",
           "type": "box",
           "name": "マス29",
-          "x": 18,
-          "y": 270,
+          "x": 38,
+          "y": 110,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14209,8 +14257,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-1-4",
           "type": "box",
           "name": "マス30",
-          "x": 61,
-          "y": 270,
+          "x": 81,
+          "y": 110,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14229,8 +14277,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-2-4",
           "type": "box",
           "name": "マス31",
-          "x": 104,
-          "y": 270,
+          "x": 124,
+          "y": 110,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14249,8 +14297,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-3-4",
           "type": "box",
           "name": "マス32",
-          "x": 147,
-          "y": 270,
+          "x": 167,
+          "y": 110,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14269,8 +14317,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-4-4",
           "type": "box",
           "name": "マス33",
-          "x": 190,
-          "y": 270,
+          "x": 210,
+          "y": 110,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14289,8 +14337,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-5-4",
           "type": "box",
           "name": "マス34",
-          "x": 233,
-          "y": 270,
+          "x": 253,
+          "y": 110,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14309,8 +14357,8 @@ function createAkariExtensionHost(options) {
           "id": "tile-6-4",
           "type": "box",
           "name": "マス35",
-          "x": 276,
-          "y": 270,
+          "x": 296,
+          "y": 110,
           "w": 40,
           "h": 40,
           "text": "",
@@ -14329,8 +14377,8 @@ function createAkariExtensionHost(options) {
           "id": "goal",
           "type": "label",
           "name": "ゴール",
-          "x": 276,
-          "y": 270,
+          "x": 296,
+          "y": 110,
           "w": 40,
           "h": 40,
           "text": "⚑",
@@ -14349,8 +14397,8 @@ function createAkariExtensionHost(options) {
           "id": "sprite-1",
           "type": "sprite",
           "name": "たくどん",
-          "x": 22,
-          "y": 102,
+          "x": 38,
+          "y": 282,
           "w": 32,
           "h": 32,
           "text": "",
@@ -14378,8 +14426,8 @@ function createAkariExtensionHost(options) {
           "id": "path-title",
           "type": "label",
           "name": "道の名前",
-          "x": 342,
-          "y": 88,
+          "x": 482,
+          "y": 298,
           "w": 280,
           "h": 28,
           "text": "つくった道",
@@ -14398,8 +14446,8 @@ function createAkariExtensionHost(options) {
           "id": "path",
           "type": "label",
           "name": "道の表",
-          "x": 342,
-          "y": 124,
+          "x": 483,
+          "y": 214,
           "w": 282,
           "h": 125,
           "text": "ここに 動いた道が 出るよ。\n\n「しゅっぱつ」のブロックで\n向き・マス数・じゅんばんを\nかえてみよう。",
@@ -14418,8 +14466,8 @@ function createAkariExtensionHost(options) {
           "id": "step",
           "type": "label",
           "name": "今の動き",
-          "x": 342,
-          "y": 264,
+          "x": 482,
+          "y": 111,
           "w": 280,
           "h": 50,
           "text": "まだ 動いていないよ",
@@ -14438,8 +14486,8 @@ function createAkariExtensionHost(options) {
           "id": "go",
           "type": "button",
           "name": "しゅっぱつ",
-          "x": 18,
-          "y": 328,
+          "x": 103,
+          "y": 50,
           "w": 170,
           "h": 44,
           "text": "▶ しゅっぱつ",
@@ -14458,8 +14506,8 @@ function createAkariExtensionHost(options) {
           "id": "retry",
           "type": "button",
           "name": "もう一回",
-          "x": 199,
-          "y": 328,
+          "x": 268,
+          "y": 50,
           "w": 137,
           "h": 44,
           "text": "もう一回",
@@ -14478,8 +14526,8 @@ function createAkariExtensionHost(options) {
           "id": "status",
           "type": "label",
           "name": "お知らせ",
-          "x": 342,
-          "y": 326,
+          "x": 482,
+          "y": 45,
           "w": 280,
           "h": 58,
           "text": "ゴールまで 行けるかな？",
@@ -14500,19 +14548,19 @@ function createAkariExtensionHost(options) {
           "id": "maze-start",
           "targetId": "stage",
           "event": "start",
-          "source": "【歩いた道】を「」にする。\n「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n【列】を0にする。\n【行】を0にする。\n【失敗】を0にする。\n【順番】を0にする。\nたくどんはよこ22歩、たて102歩のばしょへ行く。\nたくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\nたくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\nたくどんは【動いている】を0にする。"
+          "source": "【歩いた道】を「」にする。\n「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n【列】を0にする。\n【行】を0にする。\n【失敗】を0にする。\n【順番】を0にする。\nたくどんはよこ38歩、たて282歩のばしょへ行く。\nたくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\nたくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\nたくどんは【動いている】を0にする。"
         },
         {
           "id": "maze-retry",
           "targetId": "retry",
           "event": "click",
-          "source": "もし【動いている】が0と同じなら、\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  たくどんはよこ22歩、たて102歩のばしょへ行く。\n  たくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  たくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。"
+          "source": "もし【動いている】が0と同じなら、\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  たくどんはよこ38歩、たて282歩のばしょへ行く。\n  たくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  たくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。"
         },
         {
           "id": "maze-go",
           "targetId": "go",
           "event": "click",
-          "source": "もし【動いている】が0と同じなら、\n  【動いている】を1にする。\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  たくどんはよこ22歩、たて102歩のばしょへ行く。\n  たくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  たくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\n  たくどんは進む方向を「右」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは進む方向を「下」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは進む方向を「右」、マス数を3として、【道を進む】という手順を行う。\n  たくどんは進む方向を「下」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは進む方向を「右」、マス数を1として、【道を進む】という手順を行う。\n  もし【失敗】が0と同じなら、\n    もし【列】が6と同じで、【行】が4と同じなら、\n      たくどんは「お知らせ」の文字を「やった！ ゴール！\n道を かえて また あそぼう」にかえる。\n    そうでなければ、\n      たくどんは「お知らせ」の文字を「あと すこし！\n道を つけ足してみよう」にかえる。\n  たくどんは【動いている】を0にする。"
+          "source": "もし【動いている】が0と同じなら、\n  【動いている】を1にする。\n  【歩いた道】を「」にする。\n  「道の表」の文字を「しゅっぱつを おしてね」にかえる。\n  【列】を0にする。\n  【行】を0にする。\n  【失敗】を0にする。\n  【順番】を0にする。\n  たくどんはよこ38歩、たて282歩のばしょへ行く。\n  たくどんは「今の動き」の文字を「まだ 動いていないよ」にかえる。\n  たくどんは「お知らせ」の文字を「ゴールまで 行けるかな？」にかえる。\n  たくどんは進む方向を「右」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは進む方向を「下」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは進む方向を「右」、マス数を3として、【道を進む】という手順を行う。\n  たくどんは進む方向を「下」、マス数を2として、【道を進む】という手順を行う。\n  たくどんは進む方向を「右」、マス数を1として、【道を進む】という手順を行う。\n  もし【失敗】が0と同じなら、\n    もし【列】が6と同じで、【行】が4と同じなら、\n      たくどんは「お知らせ」の文字を「やった！ ゴール！\n道を かえて また あそぼう」にかえる。\n    そうでなければ、\n      たくどんは「お知らせ」の文字を「あと すこし！\n道を つけ足してみよう」にかえる。\n  たくどんは【動いている】を0にする。"
         }
       ],
       "actions": [
@@ -14524,7 +14572,7 @@ function createAkariExtensionHost(options) {
             "進む方向",
             "マス数"
           ],
-          "source": "もし【失敗】が0と同じなら、\n  【順番】を1増やす。\n  【歩いた道】を（【歩いた道】と【順番】と「：」と進む方向と「へ 」とマス数と「マス\n」をつなげた文字）にする。\n  「道の表」の文字を【歩いた道】にかえる。\n  「今の動き」の文字を（【順番】と「番：」と進む方向と「へ 」とマス数と「マス」をつなげた文字）にかえる。\n  【マス数】回くり返す。\n    【次の列】を【列】にする。\n    【次の行】を【行】にする。\n    もし進む方向が「右」と同じなら、\n      【次の列】を1増やす。\n    もし進む方向が「左」と同じなら、\n      【次の列】を1減らす。\n    もし進む方向が「下」と同じなら、\n      【次の行】を1増やす。\n    もし進む方向が「上」と同じなら、\n      【次の行】を1減らす。\n    もし【次の列】が0より小さいか、【次の列】が6より大きければ、\n      【失敗】を1にする。\n    もし【次の行】が0より小さいか、【次の行】が4より大きければ、\n      【失敗】を1にする。\n    もし【失敗】が0と同じなら、\n      もし【かべ】の（【次の行】×7＋【次の列】＋1）番目が1と同じなら、\n        【失敗】を1にする。\n    もし【失敗】が1と同じなら、\n      「お知らせ」の文字を「かべに ぶつかった！\n道を なおして もう一回」にかえる。\n      このくり返しを終える。\n    【列】を【次の列】にする。\n    【行】を【次の行】にする。\n    たくどんはよこ（22＋【列】×43）歩、たて（102＋【行】×43）歩のばしょへ0.35秒かけて動く。\n    0.1秒待つ。"
+          "source": "もし【失敗】が0と同じなら、\n  【順番】を1増やす。\n  【歩いた道】を（【歩いた道】と【順番】と「：」と進む方向と「へ 」とマス数と「マス\n」をつなげた文字）にする。\n  「道の表」の文字を【歩いた道】にかえる。\n  「今の動き」の文字を（【順番】と「番：」と進む方向と「へ 」とマス数と「マス」をつなげた文字）にかえる。\n  【マス数】回くり返す。\n    【次の列】を【列】にする。\n    【次の行】を【行】にする。\n    もし進む方向が「右」と同じなら、\n      【次の列】を1増やす。\n    もし進む方向が「左」と同じなら、\n      【次の列】を1減らす。\n    もし進む方向が「下」と同じなら、\n      【次の行】を1増やす。\n    もし進む方向が「上」と同じなら、\n      【次の行】を1減らす。\n    もし【次の列】が0より小さいか、【次の列】が6より大きければ、\n      【失敗】を1にする。\n    もし【次の行】が0より小さいか、【次の行】が4より大きければ、\n      【失敗】を1にする。\n    もし【失敗】が0と同じなら、\n      もし【かべ】の（【次の行】×7＋【次の列】＋1）番目が1と同じなら、\n        【失敗】を1にする。\n    もし【失敗】が1と同じなら、\n      「お知らせ」の文字を「かべに ぶつかった！\n道を なおして もう一回」にかえる。\n      このくり返しを終える。\n    【列】を【次の列】にする。\n    【行】を【次の行】にする。\n    たくどんはよこ（38＋【列】×43）歩、たて（282－【行】×43）歩のばしょへ0.35秒かけて動く。\n    0.1秒待つ。"
         }
       ],
       "functions": [],
@@ -14669,8 +14717,8 @@ function createAkariExtensionHost(options) {
           "id": "title",
           "type": "label",
           "name": "題名",
-          "x": 18,
-          "y": 8,
+          "x": 323,
+          "y": 374,
           "w": 610,
           "h": 36,
           "text": "おひさまの 曲づくり",
@@ -14689,8 +14737,8 @@ function createAkariExtensionHost(options) {
           "id": "guide",
           "type": "label",
           "name": "あんない",
-          "x": 18,
-          "y": 48,
+          "x": 323,
+          "y": 336,
           "w": 610,
           "h": 32,
           "text": "音をおして えらぶ → 「音を上げる」で かえてみよう",
@@ -14709,8 +14757,8 @@ function createAkariExtensionHost(options) {
           "id": "bar-0",
           "type": "label",
           "name": "しょうせつ1",
-          "x": 18,
-          "y": 80,
+          "x": 165,
+          "y": 309,
           "w": 294,
           "h": 23,
           "text": "1しょうせつ",
@@ -14729,8 +14777,8 @@ function createAkariExtensionHost(options) {
           "id": "note-1",
           "type": "button",
           "name": "音1",
-          "x": 18,
-          "y": 105,
+          "x": 52,
+          "y": 273,
           "w": 68,
           "h": 44,
           "text": "ド",
@@ -14749,8 +14797,8 @@ function createAkariExtensionHost(options) {
           "id": "note-2",
           "type": "button",
           "name": "音2",
-          "x": 92,
-          "y": 105,
+          "x": 126,
+          "y": 273,
           "w": 68,
           "h": 44,
           "text": "ミ",
@@ -14769,8 +14817,8 @@ function createAkariExtensionHost(options) {
           "id": "note-3",
           "type": "button",
           "name": "音3",
-          "x": 166,
-          "y": 105,
+          "x": 200,
+          "y": 273,
           "w": 68,
           "h": 44,
           "text": "ソ",
@@ -14789,8 +14837,8 @@ function createAkariExtensionHost(options) {
           "id": "note-4",
           "type": "button",
           "name": "音4",
-          "x": 240,
-          "y": 105,
+          "x": 274,
+          "y": 273,
           "w": 68,
           "h": 44,
           "text": "ミ",
@@ -14809,8 +14857,8 @@ function createAkariExtensionHost(options) {
           "id": "bar-1",
           "type": "label",
           "name": "しょうせつ2",
-          "x": 330,
-          "y": 80,
+          "x": 477,
+          "y": 309,
           "w": 294,
           "h": 23,
           "text": "2しょうせつ",
@@ -14829,8 +14877,8 @@ function createAkariExtensionHost(options) {
           "id": "note-5",
           "type": "button",
           "name": "音5",
-          "x": 330,
-          "y": 105,
+          "x": 364,
+          "y": 273,
           "w": 68,
           "h": 44,
           "text": "ファ",
@@ -14849,8 +14897,8 @@ function createAkariExtensionHost(options) {
           "id": "note-6",
           "type": "button",
           "name": "音6",
-          "x": 404,
-          "y": 105,
+          "x": 438,
+          "y": 273,
           "w": 68,
           "h": 44,
           "text": "ラ",
@@ -14869,8 +14917,8 @@ function createAkariExtensionHost(options) {
           "id": "note-7",
           "type": "button",
           "name": "音7",
-          "x": 478,
-          "y": 105,
+          "x": 512,
+          "y": 273,
           "w": 68,
           "h": 44,
           "text": "ソ",
@@ -14889,8 +14937,8 @@ function createAkariExtensionHost(options) {
           "id": "note-8",
           "type": "button",
           "name": "音8",
-          "x": 552,
-          "y": 105,
+          "x": 586,
+          "y": 273,
           "w": 68,
           "h": 44,
           "text": "ミ",
@@ -14909,8 +14957,8 @@ function createAkariExtensionHost(options) {
           "id": "bar-2",
           "type": "label",
           "name": "しょうせつ3",
-          "x": 18,
-          "y": 158,
+          "x": 165,
+          "y": 231,
           "w": 294,
           "h": 23,
           "text": "3しょうせつ",
@@ -14929,8 +14977,8 @@ function createAkariExtensionHost(options) {
           "id": "note-9",
           "type": "button",
           "name": "音9",
-          "x": 18,
-          "y": 183,
+          "x": 52,
+          "y": 195,
           "w": 68,
           "h": 44,
           "text": "レ",
@@ -14949,8 +14997,8 @@ function createAkariExtensionHost(options) {
           "id": "note-10",
           "type": "button",
           "name": "音10",
-          "x": 92,
-          "y": 183,
+          "x": 126,
+          "y": 195,
           "w": 68,
           "h": 44,
           "text": "ファ",
@@ -14969,8 +15017,8 @@ function createAkariExtensionHost(options) {
           "id": "note-11",
           "type": "button",
           "name": "音11",
-          "x": 166,
-          "y": 183,
+          "x": 200,
+          "y": 195,
           "w": 68,
           "h": 44,
           "text": "ラ",
@@ -14989,8 +15037,8 @@ function createAkariExtensionHost(options) {
           "id": "note-12",
           "type": "button",
           "name": "音12",
-          "x": 240,
-          "y": 183,
+          "x": 274,
+          "y": 195,
           "w": 68,
           "h": 44,
           "text": "ソ",
@@ -15009,8 +15057,8 @@ function createAkariExtensionHost(options) {
           "id": "bar-3",
           "type": "label",
           "name": "しょうせつ4",
-          "x": 330,
-          "y": 158,
+          "x": 477,
+          "y": 231,
           "w": 294,
           "h": 23,
           "text": "4しょうせつ",
@@ -15029,8 +15077,8 @@ function createAkariExtensionHost(options) {
           "id": "note-13",
           "type": "button",
           "name": "音13",
-          "x": 330,
-          "y": 183,
+          "x": 364,
+          "y": 195,
           "w": 68,
           "h": 44,
           "text": "ミ",
@@ -15049,8 +15097,8 @@ function createAkariExtensionHost(options) {
           "id": "note-14",
           "type": "button",
           "name": "音14",
-          "x": 404,
-          "y": 183,
+          "x": 438,
+          "y": 195,
           "w": 68,
           "h": 44,
           "text": "レ",
@@ -15069,8 +15117,8 @@ function createAkariExtensionHost(options) {
           "id": "note-15",
           "type": "button",
           "name": "音15",
-          "x": 478,
-          "y": 183,
+          "x": 512,
+          "y": 195,
           "w": 68,
           "h": 44,
           "text": "ド",
@@ -15089,8 +15137,8 @@ function createAkariExtensionHost(options) {
           "id": "note-16",
           "type": "button",
           "name": "音16",
-          "x": 552,
-          "y": 183,
+          "x": 586,
+          "y": 195,
           "w": 68,
           "h": 44,
           "text": "ド",
@@ -15109,8 +15157,8 @@ function createAkariExtensionHost(options) {
           "id": "selected",
           "type": "label",
           "name": "えらんだ音",
-          "x": 18,
-          "y": 241,
+          "x": 323,
+          "y": 144,
           "w": 610,
           "h": 30,
           "text": "1番の音：ド ／ 長さ 1はく",
@@ -15129,8 +15177,8 @@ function createAkariExtensionHost(options) {
           "id": "pitch",
           "type": "button",
           "name": "音を上げる",
-          "x": 18,
-          "y": 278,
+          "x": 91,
+          "y": 102,
           "w": 145,
           "h": 40,
           "text": "音を上げる",
@@ -15149,8 +15197,8 @@ function createAkariExtensionHost(options) {
           "id": "length",
           "type": "button",
           "name": "長さをかえる",
-          "x": 174,
-          "y": 278,
+          "x": 247,
+          "y": 102,
           "w": 145,
           "h": 40,
           "text": "長さをかえる",
@@ -15169,8 +15217,8 @@ function createAkariExtensionHost(options) {
           "id": "swap",
           "type": "button",
           "name": "つぎと入れかえ",
-          "x": 330,
-          "y": 278,
+          "x": 403,
+          "y": 102,
           "w": 145,
           "h": 40,
           "text": "音を入れかえ",
@@ -15189,8 +15237,8 @@ function createAkariExtensionHost(options) {
           "id": "tempo",
           "type": "button",
           "name": "速さをかえる",
-          "x": 486,
-          "y": 278,
+          "x": 554,
+          "y": 102,
           "w": 135,
           "h": 40,
           "text": "速さ：120",
@@ -15209,8 +15257,8 @@ function createAkariExtensionHost(options) {
           "id": "play",
           "type": "button",
           "name": "聞く",
-          "x": 18,
-          "y": 325,
+          "x": 91,
+          "y": 55,
           "w": 145,
           "h": 40,
           "text": "▶ 聞く",
@@ -15229,8 +15277,8 @@ function createAkariExtensionHost(options) {
           "id": "stop",
           "type": "button",
           "name": "止める",
-          "x": 174,
-          "y": 325,
+          "x": 247,
+          "y": 55,
           "w": 145,
           "h": 40,
           "text": "■ 止める",
@@ -15249,8 +15297,8 @@ function createAkariExtensionHost(options) {
           "id": "restore",
           "type": "button",
           "name": "元の曲",
-          "x": 330,
-          "y": 325,
+          "x": 403,
+          "y": 55,
           "w": 145,
           "h": 40,
           "text": "元にもどす",
@@ -15269,8 +15317,8 @@ function createAkariExtensionHost(options) {
           "id": "status",
           "type": "label",
           "name": "お知らせ",
-          "x": 18,
-          "y": 370,
+          "x": 318,
+          "y": 17,
           "w": 600,
           "h": 26,
           "text": "4しょうせつの オリジナル曲。音も じゅんばんも かえられるよ",
@@ -15289,8 +15337,8 @@ function createAkariExtensionHost(options) {
           "id": "sprite-1",
           "type": "sprite",
           "name": "たくどん",
-          "x": 548,
-          "y": 319,
+          "x": 573,
+          "y": 56,
           "w": 50,
           "h": 50,
           "text": "",
@@ -15528,8 +15576,8 @@ function createAkariExtensionHost(options) {
           "id": "title",
           "type": "label",
           "name": "題名",
-          "x": 20,
-          "y": 10,
+          "x": 320,
+          "y": 371,
           "w": 600,
           "h": 38,
           "text": "ふたりの ふしぎな おさんぽ",
@@ -15548,8 +15596,8 @@ function createAkariExtensionHost(options) {
           "id": "chapter",
           "type": "label",
           "name": "場面の名前",
-          "x": 20,
-          "y": 58,
+          "x": 320,
+          "y": 326,
           "w": 600,
           "h": 32,
           "text": "はじまり：ふたつの道",
@@ -15568,8 +15616,8 @@ function createAkariExtensionHost(options) {
           "id": "sprite-1",
           "type": "sprite",
           "name": "たくどん",
-          "x": 62,
-          "y": 117,
+          "x": 112,
+          "y": 233,
           "w": 100,
           "h": 100,
           "text": "",
@@ -15597,8 +15645,8 @@ function createAkariExtensionHost(options) {
           "id": "dango",
           "type": "sprite",
           "name": "だんご",
-          "x": 479,
-          "y": 117,
+          "x": 529,
+          "y": 233,
           "w": 100,
           "h": 100,
           "text": "",
@@ -15626,8 +15674,8 @@ function createAkariExtensionHost(options) {
           "id": "narration",
           "type": "label",
           "name": "お話",
-          "x": 174,
-          "y": 106,
+          "x": 320,
+          "y": 228,
           "w": 292,
           "h": 132,
           "text": "たくどんと だんごは\nおべんとうを もって おさんぽ。\n目の前に ふたつの道。\nどちらへ 行こう？",
@@ -15646,8 +15694,8 @@ function createAkariExtensionHost(options) {
           "id": "left",
           "type": "button",
           "name": "左のえらび方",
-          "x": 24,
-          "y": 256,
+          "x": 167,
+          "y": 116,
           "w": 286,
           "h": 56,
           "text": "花の道へ 行く",
@@ -15666,8 +15714,8 @@ function createAkariExtensionHost(options) {
           "id": "right",
           "type": "button",
           "name": "右のえらび方",
-          "x": 330,
-          "y": 256,
+          "x": 473,
+          "y": 116,
           "w": 286,
           "h": 56,
           "text": "川の道へ 行く",
@@ -15686,8 +15734,8 @@ function createAkariExtensionHost(options) {
           "id": "replay",
           "type": "button",
           "name": "はじめから",
-          "x": 24,
-          "y": 333,
+          "x": 99,
+          "y": 45,
           "w": 150,
           "h": 44,
           "text": "はじめから",
@@ -15706,8 +15754,8 @@ function createAkariExtensionHost(options) {
           "id": "status",
           "type": "label",
           "name": "お知らせ",
-          "x": 191,
-          "y": 330,
+          "x": 404,
+          "y": 44,
           "w": 425,
           "h": 53,
           "text": "えらび方で お話が かわるよ。\nどんな おわりに なるかな？",
@@ -15943,6 +15991,8 @@ function createAkariExtensionHost(options) {
       compNames.add(c.name);
       for (const k of ['x', 'y', 'w', 'h', 'fontSize', 'direction', 'scalePercent'])
         if (!finite(c[k])) throw new AkariError('F503', `部品「${c.name}」の 数が 正しくありません`);
+      if (c.direction < 0 || c.direction >= 360)
+        throw new AkariError('F503', `部品「${c.name}」の 向きが 正しくありません。0以上で 360より 小さい 数に してください`);
       if (
         c.w < 8 ||
         c.w > 1200 ||
@@ -17841,7 +17891,7 @@ function createAkariExtensionHost(options) {
     }
     const directions={前:'forward',後ろ:'backward',右:'right',左:'left',上:'up',下:'down'};
     if(['向く','むく'].includes(verb)) {
-      if((p=surfaceCapture(/^(?:画面の)?(右|左|上|下)を$/d,body)))return node('SET_DIRECTION',[sentenceQuantity(exprNode('NumberLiteral',{value:{右:0,下:90,左:180,上:270}[p[0].text]}),'度')]);
+      if((p=surfaceCapture(/^(?:画面の)?(右|左|上|下)を$/d,body)))return node('SET_DIRECTION',[sentenceQuantity(exprNode('NumberLiteral',{value:{右:0,上:90,左:180,下:270}[p[0].text]}),'度')]);
       return null;
     }
     // Duration can follow the distance or direction role. Keep each capture's
@@ -19453,7 +19503,7 @@ function createAkariExtensionHost(options) {
     replaceAll(/(もし、?|、|^)(【[^】]*】|[^、。\u0001が【】]+?)がコピー(なら|でなければ|ではないなら)/, m =>
       isMeijinPart(meijinBare(m[2]), symbols, ctx) || meijinVariableName(meijinBare(m[2]), symbols, ctx) ? `${m[1]}条件（${m[2]}のコピーである）が成り立${m[3] === 'なら' ? 'つなら' : 'たないなら'}` : null);
     // ねこが犬より右にいれば: the parts' positions compared.
-    const side = { 右: ['よこ', '大き'], 左: ['よこ', '小さ'], 上: ['たて', '小さ'], 下: ['たて', '大き'] };
+    const side = { 右: ['よこ', '大き'], 左: ['よこ', '小さ'], 上: ['たて', '大き'], 下: ['たて', '小さ'] };
     replaceAll(new RegExp('(' + alt + ')が(' + alt + ')より(右|左|上|下)に(いれば|いなければ|いるあいだ|いるまで|いる)'), m => {
       const [axis, size] = side[m[3]], ending = { いれば: 'ければ', いなければ: 'くなければ', いるあいだ: 'いあいだ', いるまで: 'くなるまで', いる: 'い' }[m[4]];
       return `${at(m[1])}の${axis}のばしょが${at(m[2])}の${axis}のばしょより${size}${ending}`;
@@ -19899,10 +19949,10 @@ function createAkariExtensionHost(options) {
         SET_DIRECTION: Object.freeze({
           label: '向きを決める',
           inputs: Object.freeze(['向き']),
-          // The four screen directions are written as words: 画面の右を向く (0度), 下 (90度), 左 (180度), 上 (270度).
+          // The four screen directions are written as words: 画面の右を向く (0度), 上 (90度), 左 (180度), 下 (270度).
           format: (a, n) => {
             const v = n?.args?.[0], degrees = v?.kind === 'QuantityLiteral' && v.value?.kind === 'NumberLiteral' ? v.value.value : null;
-            const side = { 0: '右', 90: '下', 180: '左', 270: '上' }[degrees];
+            const side = { 0: '右', 90: '上', 180: '左', 270: '下' }[degrees];
             return side ? `画面の${side}を向く` : `向きを${a(0,'度')}にする`;
           },
         }),
@@ -24319,11 +24369,11 @@ function createAkariExtensionHost(options) {
       // A file written in another project format names its format in the data marker.
       const other = text.match(/<!-- AKARI-PROJECT-F(\d+)-DATA-BEGIN -->/);
       if (other && Number(other[1]) !== PROJECT_FORMAT_ID)
-        throw new AkariError(
+        throw Object.assign(new AkariError(
           'F502',
           (Number(other[1]) < PROJECT_FORMAT_ID ? '前の' : 'あたらしい') +
-            ' あかりで ほぞんした 作品なので、この あかりでは 開けないよ。',
-        );
+            ' あかりで ほぞんした 作品なので、この あかりでは 開けないよ。その 作品を 作った ときの あかりで 開いてね。',
+        ), { otherFormat: true });
       throw new AkariError(
         'F502',
         '作品の中身を読めません。あかりでほぞんした .akari.md のファイルをえらんでください',
@@ -24454,7 +24504,7 @@ function createAkariExtensionHost(options) {
   // 08 — Portable stage view and standalone export
   // ────────────────────────────────────────────────────────────────────────
   const AKARI_STAGE_CSS =
-    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:var(--speech-heading-gap,3px);margin-right:var(--speech-full-space,0px)}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }\n.sprite-bubble[data-show-speaker=\"false\"]::before{content:none;display:none}";
+    ':root{\n    --bg:#edf2f8;\n    --panel:#f6f8fb;\n    --panel2:#ffffff;\n    --panel3:#e9eef6;\n    --surface:#ffffff;\n    --surface-2:#f8fbff;\n    --dark:#1f2937;\n    --muted:#5f6b7a;\n    --line:#c7d2df;\n    --line-strong:#a9b8ca;\n    --hilite:#ffffff;\n    --shadow:rgba(38,57,89,.14);\n    --shadow-strong:rgba(27,39,58,.22);\n    --title1:#315a96;\n    --title2:#5076b6;\n    --title3:#6f92cb;\n    --accent:#2f6fd6;\n    --accent-soft:#eaf2ff;\n    --accent-strong:#1f56b4;\n    --danger:#c43b3b;\n    --success:#1d7d44;\n    --code:#fbfcfe;\n    --console:#1d2430;\n    --console-fg:#eef3fb;\n    --select:#2f6fd6;\n    --radius-sm:7px;\n    --radius:10px;\n    --radius-lg:14px;\n  }\n#formSurface{\n    position:relative;width:640px;height:400px;overflow:hidden;background-color:#fff;\n    background-image:radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px);\n    background-size:10px 10px;background-position:left -5px bottom -5px;cursor:default\n  }\n#penCanvas{position:absolute;inset:0;z-index:1;pointer-events:none}\n.component{position:absolute;z-index:2;user-select:none;transform-origin:center center}\n.ak-label{display:flex;align-items:center;white-space:pre-wrap;overflow:hidden;padding:2px 4px}\n.ak-button{\n    display:flex;align-items:center;justify-content:center;\n    border:1px solid var(--line-strong);border-radius:8px;\n    background:linear-gradient(180deg,#ffffff 0%,#eaf1fb 100%);\n    padding:2px 8px;cursor:pointer;\n    box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 1px 3px rgba(24,36,54,.08)\n  }\n.ak-button:active{transform:translateY(1px)}\n.ak-input{border:1px solid var(--line-strong);border-radius:8px;background:#fff;padding:3px 8px}\n.ak-box{border:1px solid #c5d2e2;border-radius:10px;background:linear-gradient(180deg,#fbfcfe 0%,#eef3f8 100%)}\n.ak-sprite{display:flex;align-items:center;justify-content:center;font-size:34px;cursor:pointer;background:transparent;line-height:1}\n.sprite-bubble{overflow-wrap:anywhere;max-height:160px;overflow:hidden;\n    position:absolute;z-index:20;background:#fff;border:1px solid #b7c5d8;border-radius:12px;padding:6px 10px;\n    min-width:40px;max-width:180px;pointer-events:none;box-shadow:0 8px 18px rgba(48,67,97,.18);white-space:pre-wrap\n  }\n.costume-img{width:100%;height:100%;object-fit:fill;pointer-events:none;user-select:none}\n.component{touch-action:none}\n.component.ak-input{touch-action:auto}\n.sprite-bubble{font-size:13px}\n.sprite-bubble::before{content:attr(data-speaker);display:block;font-size:0.8em;margin-bottom:var(--speech-heading-gap,3px);margin-right:var(--speech-full-space,0px)}' + "\n.sprite-bubble [data-speech-full]::before { content:attr(data-label); }\n.sprite-bubble[data-show-speaker=\"false\"]::before{content:none;display:none}";
   const AKARI_PLAYER_CSS =
     '*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#edf2f8;color:#1f2937;font:14px "Yu Gothic UI","Yu Gothic","Meiryo",sans-serif}button,input{font:inherit}button{padding:7px 12px;background:#fff;border:1px solid #a9b8ca;border-radius:7px;cursor:pointer}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #2f6fd6;outline-offset:2px}#playerRoot{width:max-content;min-width:min(100%,640px);max-width:100%;margin:0 auto;padding:14px}header{margin-bottom:12px}h1{font-size:20px;margin:0 0 10px;overflow-wrap:anywhere}.player-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px}#playerStatus{font-size:12px;color:#536273;margin-left:6px}.player-stage{max-width:100%;overflow:auto;border:1px solid #bccbe0;border-radius:10px;background:#fff}#formSurface{outline:none}#formSurface:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}#playerOutput{max-height:130px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;background:#fff;border:1px solid #c7d2df;border-radius:8px;margin:12px 0 0}.modal{display:none;position:fixed;inset:0;background:rgba(25,37,55,.4);z-index:10000;align-items:center;justify-content:center;padding:16px}.modal.show{display:flex}.question-box{width:min(500px,100%);max-height:90vh;overflow:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 12px 35px #0003}#questionText{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:14px;font-weight:700}#questionAnswer{width:100%;padding:8px;border:1px solid #a9b8ca;border-radius:7px}.question-controls{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}@media(max-width:600px){#playerRoot{padding:8px}h1{font-size:17px}}\n';
   function createAkariStageView(core, options) {
@@ -24751,9 +24801,10 @@ function createAkariExtensionHost(options) {
           }
         }
 
+        // The stored place is the centre from the bottom-left (y up); the screen measures from the top-left.
         Object.assign(node.style, {
-          left: a.x + 'px',
-          top: a.y + 'px',
+          left: a.x - c.w / 2 + 'px',
+          top: p.stage.height - a.y - c.h / 2 + 'px',
           width: c.w + 'px',
           height: c.h + 'px',
           color: a.color || c.fg,
@@ -24762,7 +24813,7 @@ function createAkariExtensionHost(options) {
           fontSize: c.fontSize + 'px',
           zIndex: String(2 + i),
           display: a.visible ? (c.type === 'input' ? 'block' : 'flex') : 'none',
-          transform: `rotate(${a.direction}deg) scale(${a.scalePercent / 100})`,
+          transform: `rotate(${-a.direction}deg) scale(${a.scalePercent / 100})`,
         });
         if (c.type === 'input') {
           if (Number.isSafeInteger(LIMITS.stringChars * 2) && LIMITS.stringChars * 2 <= 2147483647) node.maxLength = LIMITS.stringChars * 2; else node.removeAttribute('maxlength');
@@ -24903,10 +24954,12 @@ function createAkariExtensionHost(options) {
       }, 1600);
       timers.add(timer);
     }
+    // Pen points are centres in the child frame (y up).
     function penLine(x1, y1, x2, y2, color, size) {
+      const height = project().stage.height;
       pen.beginPath();
-      pen.moveTo(x1, y1);
-      pen.lineTo(x2, y2);
+      pen.moveTo(x1, height - y1);
+      pen.lineTo(x2, height - y2);
       pen.lineWidth = size;
       pen.lineCap = 'round';
       pen.strokeStyle = color;
@@ -24923,8 +24976,8 @@ function createAkariExtensionHost(options) {
       pen.save();
       try {
         const box = r.aabb(a);
-        pen.translate(box.cx, box.cy);
-        pen.rotate((a.direction * Math.PI) / 180);
+        pen.translate(box.cx, project().stage.height - box.cy);
+        pen.rotate((-a.direction * Math.PI) / 180);
         pen.scale(a.scalePercent / 100, a.scalePercent / 100);
         const co = record(c, a);
         if (c.type === 'sprite' && co?.kind === 'image') {
@@ -24957,7 +25010,7 @@ function createAkariExtensionHost(options) {
       if (!r || !rect.width || !rect.height) return;
       scheduler().inputBoundary(() => {
         r.mouseX = Math.round(((e.clientX - rect.left) * p.stage.width) / rect.width);
-        r.mouseY = Math.round(((e.clientY - rect.top) * p.stage.height) / rect.height);
+        r.mouseY = Math.round(((rect.bottom - e.clientY) * p.stage.height) / rect.height);
       });
     }
     on(form, 'pointerdown', (e) => {
@@ -26720,7 +26773,7 @@ function createAkariExtensionHost(options) {
   // Entry workshop: presentation and learning state, independent of file/runtime contracts.
   function normalizeEntryUiLevel(value) {
     if (value === null || value === 'entry') return 'entry';
-    if (value === 'advanced' || value === 'all') return 'advanced';
+    if (value === 'advanced') return 'advanced';
     return 'basic';
   }
   const ENTRY_BLOCK_SCHEMA_IDS = new Set([
@@ -26747,21 +26800,21 @@ function createAkariExtensionHost(options) {
   }
   function makeTutorialProject() {
     const p=makeEmptyProject();p.name='さかなキャッチ';
-    Object.assign(p.components[0],{name:'さかな',x:270,y:170,w:100,h:67,
+    Object.assign(p.components[0],{name:'さかな',x:320,y:197,w:100,h:67,
       costumes:[{id:'costume-blue',name:'青いさかな',kind:'image',assetId:'asset-practice-fish-blue'},
         {id:'costume-orange',name:'オレンジのさかな',kind:'image',assetId:'asset-practice-fish-orange'}],costumeId:'costume-blue'});
     p.stage.backdrops[0]={id:'backdrop-1',name:'海',kind:'color',value:'#e4f4fc'};
     p.projectData.variables=[{id:'practice-score',name:'点数',initialValue:0}];
-    p.components.push({id:'practice-board',type:'label',name:'点数ボード',x:20,y:20,w:600,h:45,fg:'#173047',bg:null,fontSize:24,
+    p.components.push({id:'practice-board',type:'label',name:'点数ボード',x:320,y:358,w:600,h:45,fg:'#173047',bg:null,fontSize:24,
       visible:true,direction:0,scalePercent:100,text:'さかなを キャッチ！',localData:{variables:[],lists:[]}});
     p.scripts=[{id:'practice-click',targetId:'sprite-1',event:'click',source:'ほかの動きを全部止める。'}];
     return p;
   }
   const TUTORIAL_BLOCKS=Object.freeze({
     speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
-    escape:{label:'ちがう ばしょへ にげる',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ行く。'},
-    swim:{label:'ゆっくり泳ぐ',source:'よこ430歩、たて180歩のばしょへ1秒かけて動く。'},
-    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ70から490のどれか、たて130から270のどれかのばしょへ0.5秒かけて動く。'},
+    escape:{label:'ちがう ばしょへ にげる',source:'よこ120から540のどれか、たて100から230のどれかのばしょへ行く。'},
+    swim:{label:'ゆっくり泳ぐ',source:'よこ480歩、たて187歩のばしょへ1秒かけて動く。'},
+    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ120から540のどれか、たて100から230のどれかのばしょへ0.5秒かけて動く。'},
     repeat:{label:'くり返す',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
     right:{label:'右へ泳ぐ',source:'0.3秒かけて画面の右へ60歩動く。'},
     left:{label:'左へ泳ぐ',source:'0.3秒かけて画面の左へ60歩動く。'},
@@ -30517,6 +30570,8 @@ function createAkariExtensionHost(options) {
   let app = null;
 
   // Design-only geometry; image costumes use the existing independent w/h fields.
+  // Handle directions are on the screen ([-1, -1] is the top-left handle). Places are in the child frame:
+  // the part's centre from the bottom-left (y up), turned counterclockwise by its direction.
   const DESIGN_RESIZE_DIRECTIONS = Object.freeze({
     nw: [-1, -1],
     n: [0, -1],
@@ -30533,6 +30588,7 @@ function createAkariExtensionHost(options) {
       ? 'scale'
       : 'box';
   }
+  // The handle's place in the child frame (the screen's downward hy is the frame's −y).
   function designResizePoint(c, direction = 'se') {
     const [hx, hy] = DESIGN_RESIZE_DIRECTIONS[direction],
       s = c.scalePercent / 100,
@@ -30541,7 +30597,7 @@ function createAkariExtensionHost(options) {
       sn = Math.sin(rad),
       vx = (hx * c.w * s) / 2,
       vy = (hy * c.h * s) / 2;
-    return { x: c.x + c.w / 2 + vx * cs - vy * sn, y: c.y + c.h / 2 + vx * sn + vy * cs };
+    return { x: c.x + vx * cs + vy * sn, y: c.y + vx * sn - vy * cs };
   }
   function designResizeGeometry(c, direction, dx, dy, keepRatio = false) {
     const result = { x: c.x, y: c.y, w: c.w, h: c.h, scalePercent: c.scalePercent };
@@ -30558,8 +30614,9 @@ function createAkariExtensionHost(options) {
       rad = ((c.direction % 360) * Math.PI) / 180,
       cs = Math.cos(rad),
       sn = Math.sin(rad),
+      // The pointer travel (dx, dy in the child frame) in the part's own screen axes.
       lx = (dx * cs + dy * sn) / s,
-      ly = (-dx * sn + dy * cs) / s;
+      ly = (dx * sn - dy * cs) / s;
     if (designResizeMode(c) === 'scale') {
       result.scalePercent = Math.min(
         1000,
@@ -30573,8 +30630,9 @@ function createAkariExtensionHost(options) {
       );
       return result;
     }
-    let w = hx ? c.w + hx * lx : c.w,
-      h = hy ? c.h + hy * ly : c.h;
+    // The centre stays where it is, so both sides move: the size grows by twice the travel.
+    let w = hx ? c.w + 2 * hx * lx : c.w,
+      h = hy ? c.h + 2 * hy * ly : c.h;
     if (keepRatio && hx && hy) {
       const factor = Math.min(
         1200 / c.w,
@@ -30587,13 +30645,9 @@ function createAkariExtensionHost(options) {
       w = Math.min(1200, Math.max(8, w));
       h = Math.min(1200, Math.max(8, h));
     }
-    // Keep the opposite corner/edge fixed even under rotation and stage scaling.
-    const vx = (hx * (w - c.w) * s) / 2,
-      vy = (hy * (h - c.h) * s) / 2;
-    result.x = c.x + (c.w - w) / 2 + vx * cs - vy * sn;
-    result.y = c.y + (c.h - h) / 2 + vx * sn + vy * cs;
-    result.w = w;
-    result.h = h;
+    // Sizes made with the handles are whole steps; the centre (x, y) does not move.
+    result.w = hx ? Math.min(1200, Math.max(8, Math.round(w))) : c.w;
+    result.h = hy ? Math.min(1200, Math.max(8, Math.round(h))) : c.h;
     return Object.values(result).every(Number.isFinite)
       ? result
       : { x: c.x, y: c.y, w: c.w, h: c.h, scalePercent: c.scalePercent };
@@ -33380,7 +33434,7 @@ function createAkariExtensionHost(options) {
         const p = designResizePoint(c, handle.dataset.resizeDirection),
           [hx, hy] = DESIGN_RESIZE_DIRECTIONS[handle.dataset.resizeDirection];
         handle.style.left = p.x + 'px';
-        handle.style.top = p.y + 'px';
+        handle.style.top = project.stage.height - p.y + 'px';
         handle.style.width = handle.style.height = 24 / stageScale + 'px';
         handle.style.minWidth = handle.style.minHeight = '0';
         handle.style.setProperty('--resize-dot', 12 / stageScale + 'px');
@@ -33394,10 +33448,11 @@ function createAkariExtensionHost(options) {
             px = small ? hx * 12 / stageScale : hx * Math.max(0, 18 / stageScale - (c.w * s) / 2),
             py = small ? hy * 12 / stageScale : hy * Math.max(0, 18 / stageScale - (c.h * s) / 2);
           handle.hidden = small && (hx === 0 || hy === 0);
-          handle.style.left = p.x + px * Math.cos(rad) - py * Math.sin(rad) + 'px';
-          handle.style.top = p.y + px * Math.sin(rad) + py * Math.cos(rad) + 'px';
+          // The offset is along the part's screen axes, which are turned by −向き on the screen.
+          handle.style.left = p.x + px * Math.cos(rad) + py * Math.sin(rad) + 'px';
+          handle.style.top = project.stage.height - p.y - px * Math.sin(rad) + py * Math.cos(rad) + 'px';
         }
-        const angle = (Math.atan2(hy, hx) * 180) / Math.PI + c.direction;
+        const angle = (Math.atan2(hy, hx) * 180) / Math.PI - c.direction;
         handle.style.cursor = ['ew-resize', 'nwse-resize', 'ns-resize', 'nesw-resize'][
           ((Math.round(angle / 45) % 4) + 4) % 4
         ];
@@ -33405,11 +33460,11 @@ function createAkariExtensionHost(options) {
       const outline = el.form.querySelector('.design-resize-outline');
       if (outline)
         Object.assign(outline.style, {
-          left: c.x + c.w / 2 - (c.w * s) / 2 + 'px',
-          top: c.y + c.h / 2 - (c.h * s) / 2 + 'px',
+          left: c.x - (c.w * s) / 2 + 'px',
+          top: project.stage.height - c.y - (c.h * s) / 2 + 'px',
           width: c.w * s + 'px',
           height: c.h * s + 'px',
-          transform: `rotate(${c.direction}deg)`,
+          transform: `rotate(${-c.direction}deg)`,
           borderWidth: 1.5 / stageScale + 'px',
         });
     }
@@ -33417,11 +33472,11 @@ function createAkariExtensionHost(options) {
       const n = el.form.querySelector(`[data-runtime-id="${CSS.escape(c.id)}"].component`);
       if (n)
         Object.assign(n.style, {
-          left: c.x + 'px',
-          top: c.y + 'px',
+          left: c.x - c.w / 2 + 'px',
+          top: project.stage.height - c.y - c.h / 2 + 'px',
           width: c.w + 'px',
           height: c.h + 'px',
-          transform: `rotate(${c.direction}deg) scale(${c.scalePercent / 100})`,
+          transform: `rotate(${-c.direction}deg) scale(${c.scalePercent / 100})`,
         });
       positionResizeHandles(c);
     }
@@ -33526,7 +33581,7 @@ function createAkariExtensionHost(options) {
             next = { scalePercent: clamp(c.scalePercent + delta, 1, 1000) };
           } else {
             const step = e.shiftKey ? 10 : 1;
-            next = designResizeGeometry(c, direction, key[0] * step, key[1] * step);
+            next = designResizeGeometry(c, direction, key[0] * step, -key[1] * step);
           }
           try {
             if (commitResize(c, next)) refreshEditor();
@@ -33591,7 +33646,8 @@ function createAkariExtensionHost(options) {
       if ($('#dataModal').classList.contains('show')) renderDataModal();
       if ($('#assetModal').classList.contains('show')) renderAppearance();
     }
-    function propRow(name, value, onchange, type = 'text') {
+    let propHelpSerial = 0;
+    function propRow(name, value, onchange, type = 'text', options = {}) {
       const r = document.createElement('div');
       r.className = 'prop-row';
       const n = document.createElement('div');
@@ -33603,6 +33659,7 @@ function createAkariExtensionHost(options) {
       inp.type = type === 'readonly' ? 'text' : type;
       inp.readOnly = type === 'readonly';
       inp.setAttribute('aria-label', name);
+      if (options.step) inp.step = options.step;
       inp.value = value ?? '';
       if (type === 'checkbox') inp.checked = !!value;
       inp.disabled = modelLocked();
@@ -33624,7 +33681,65 @@ function createAkariExtensionHost(options) {
       });
       v.appendChild(inp);
       r.append(n, v);
+      if (options.help) {
+        const help = document.createElement('p');
+        help.className = 'prop-help';
+        help.id = 'propHelp' + ++propHelpSerial;
+        help.textContent = options.help;
+        inp.setAttribute('aria-describedby', help.id);
+        r.append(help);
+      }
       return r;
+    }
+    // A part's box on the screen in the child frame (bottom is the smaller たてのばしょ), turned and scaled.
+    function designBox(c) {
+      const rad = (c.direction * Math.PI) / 180,
+        s = c.scalePercent / 100,
+        hw = (c.w * s) / 2,
+        hh = (c.h * s) / 2,
+        ex = Math.abs(hw * Math.cos(rad)) + Math.abs(hh * Math.sin(rad)),
+        ey = Math.abs(hw * Math.sin(rad)) + Math.abs(hh * Math.cos(rad));
+      return { left: c.x - ex, right: c.x + ex, bottom: c.y - ey, top: c.y + ey };
+    }
+    // Where a new part's centre goes, in whole steps. The first choice (start) is used when the part fits on the
+    // screen there and keeps 10 steps from every visible part. Otherwise the first such spot is taken from the top
+    // row down, left to right, in 20-step steps. When there is none, it goes 16 right and 16 down from the first
+    // choice while another part's centre is already there.
+    function newPartPlace(components, stage, w, h, start) {
+      const margin = 10,
+        boxes = components.filter((c) => c.visible).map(designBox),
+        free = (x, y) =>
+          x - w / 2 >= 0 && x + w / 2 <= stage.width && y - h / 2 >= 0 && y + h / 2 <= stage.height &&
+          !boxes.some((b) => x - w / 2 < b.right + margin && x + w / 2 > b.left - margin &&
+            y - h / 2 < b.top + margin && y + h / 2 > b.bottom - margin);
+      let x = Math.round(start.x),
+        y = Math.round(start.y);
+      if (free(x, y)) return { x, y };
+      for (let top = stage.height - margin; top - h >= margin; top -= 20)
+        for (let left = margin; left + w <= stage.width - margin; left += 20) {
+          const cx = Math.round(left + w / 2),
+            cy = Math.round(top - h / 2);
+          if (free(cx, cy)) return { x: cx, y: cy };
+        }
+      while (components.some((c) => Math.abs(c.x - x) < 1 && Math.abs(c.y - y) < 1)) {
+        x += 16;
+        y -= 16;
+      }
+      return { x, y };
+    }
+    // After the screen size changes, parts keep their steps from the bottom-left corner; name those now outside.
+    function noteOutsideParts() {
+      const outside = project.components.filter((c) => {
+        const b = designBox(c);
+        return b.right < 0 || b.left > project.stage.width || b.top < 0 || b.bottom > project.stage.height;
+      });
+      if (outside.length)
+        setStatus(`${outside.map((c) => `「${c.name}」`).join('')}は 画面の 外に あるよ。「せってい」の よこのばしょ・たてのばしょで もどせるよ`);
+    }
+    // 向き is kept in 0 ≤ 向き < 360 (450 is 90, −90 is 270).
+    function designDirection(value) {
+      const r = ((Number(value) % 360) + 360) % 360;
+      return r === 360 || Object.is(r, -0) ? 0 : r;
     }
 
     function propSection(title, ...rows) {
@@ -33662,6 +33777,7 @@ function createAkariExtensionHost(options) {
                 const n = Number(v);
                 if (!finite(n) || n < 200 || n > 1200) throw new Error('はばが 大きすぎるか 小さすぎます。200から1200までの 数を 入れてください');
                 project.stage.width = n;
+                noteOutsideParts();
               },
               'number',
             ),
@@ -33673,6 +33789,7 @@ function createAkariExtensionHost(options) {
                 if (!finite(n) || n < 150 || n > 800)
                   throw new Error('高さが 大きすぎるか 小さすぎます。150から800までの 数を 入れてください');
                 project.stage.height = n;
+                noteOutsideParts();
               },
               'number',
             ),
@@ -33761,6 +33878,7 @@ function createAkariExtensionHost(options) {
               c.w = n;
             },
             'number',
+            { step: 'any' },
           ),
           propRow(
             '\u9ad8\u3055',
@@ -33771,9 +33889,11 @@ function createAkariExtensionHost(options) {
               c.h = n;
             },
             'number',
+            { step: 'any' },
           ),
-          propRow('よこ', c.x, (v) => (c.x = Number(v)), 'number'),
-          propRow('たて', c.y, (v) => (c.y = Number(v)), 'number'),
+          propRow('よこのばしょ', c.x, (v) => (c.x = Number(v)), 'number', { step: 'any' }),
+          propRow('たてのばしょ', c.y, (v) => (c.y = Number(v)), 'number',
+            { step: 'any', help: '画面の 左下の はしから、まん中までの 歩数です' }),
         ),
         propSection(
           '\u8272',
@@ -33782,7 +33902,8 @@ function createAkariExtensionHost(options) {
         ),
         propSection(
           '\u305d\u306e\u4ed6',
-          propRow('向き', c.direction, (v) => (c.direction = Number(v)), 'number'),
+          propRow('向き', c.direction, (v) => (c.direction = designDirection(v)), 'number',
+            { step: 'any', help: '0＝右　90＝上　180＝左　270＝下' }),
           propRow(
             '\u5927\u304d\u3055%',
             c.scalePercent,
@@ -33792,6 +33913,7 @@ function createAkariExtensionHost(options) {
               c.scalePercent = n;
             },
             'number',
+            { step: 'any' },
           ),
         ),
       );
@@ -34184,12 +34306,14 @@ function createAkariExtensionHost(options) {
           const rect = el.form.getBoundingClientRect();
           return {
             x: ((e.clientX - rect.left) * project.stage.width) / rect.width,
-            y: ((e.clientY - rect.top) * project.stage.height) / rect.height,
+            y: ((rect.bottom - e.clientY) * project.stage.height) / rect.height,
           };
         },
         start = toStage(ev);
       let next = { x: c.x, y: c.y },
-        finished = false;
+        finished = false,
+        moved = false;
+      const placeText = (at) => `よこのばしょ ${at.x}　たてのばしょ ${at.y}`;
       // Like resize, moving previews a candidate; cancellation never edits the project.
       const move = (e) => {
         if (e.pointerId !== pointerId) return;
@@ -34199,9 +34323,13 @@ function createAkariExtensionHost(options) {
         }
         if (e.cancelable) e.preventDefault();
         const p = toStage(e);
+        // A press without movement keeps the place as it is (320.25 stays 320.25).
+        if (!moved && p.x === start.x && p.y === start.y) return;
+        moved = true;
         next = { x: Math.round(before.x + p.x - start.x), y: Math.round(before.y + p.y - start.y) };
         designResizePreview = { ...before, ...next };
         paintResizePreview(designResizePreview);
+        setStatus(placeText(next));
       };
       const finish = (event) => {
         if (finished) return;
@@ -34233,6 +34361,7 @@ function createAkariExtensionHost(options) {
         if (changed) refreshEditor();
         releaseShellPointer();
         if (cancel) setStatus('動かすのを やめました');
+        else if (changed) setStatus(placeText(c));
       };
       const up = (e) => {
           if (e.pointerId === pointerId) finish(e);
@@ -34272,12 +34401,14 @@ function createAkariExtensionHost(options) {
           const rect = el.form.getBoundingClientRect();
           return {
             x: ((e.clientX - rect.left) * project.stage.width) / rect.width,
-            y: ((e.clientY - rect.top) * project.stage.height) / rect.height,
+            y: ((rect.bottom - e.clientY) * project.stage.height) / rect.height,
           };
         },
         start = toStage(ev);
       let next = { x: c.x, y: c.y, w: c.w, h: c.h, scalePercent: c.scalePercent },
         finished = false;
+      const sizeText = (at) =>
+        designResizeMode(c) === 'scale' ? `${c.name}: ${at.scalePercent}%` : `はば ${at.w}　高さ ${at.h}`;
       const move = (e) => {
         if (e.pointerId !== pointerId) return;
         if (modelLocked() || componentById(id) !== c) {
@@ -34289,11 +34420,7 @@ function createAkariExtensionHost(options) {
         next = designResizeGeometry(before, direction, p.x - start.x, p.y - start.y, e.shiftKey);
         designResizePreview = { ...before, ...next };
         paintResizePreview(designResizePreview);
-        setStatus(
-          designResizeMode(c) === 'scale'
-            ? `${c.name}: ${next.scalePercent}%`
-            : `${c.name}: はば ${Math.round(next.w * 100) / 100} / \u9ad8\u3055 ${Math.round(next.h * 100) / 100}（Escで やめる）`,
-        );
+        setStatus(sizeText(next));
       };
       const finish = (event) => {
         if (finished) return;
@@ -34328,12 +34455,7 @@ function createAkariExtensionHost(options) {
           setStatus(
             '大きさを かえるのを やめました',
           );
-        else
-          setStatus(
-            changed
-              ? '大きさを かえました'
-              : '大きさは かわっていません',
-          );
+        else setStatus(changed ? sizeText(c) : '大きさは かわっていません');
       };
       const up = (e) => {
           if (e.pointerId === pointerId) finish(e);
@@ -34386,12 +34508,12 @@ function createAkariExtensionHost(options) {
           cs = Math.abs(Math.cos(angle)), sn = Math.abs(Math.sin(angle)), scale = copy.scalePercent / 100,
           visibleW = (copy.w * cs + copy.h * sn) * scale,
           visibleH = (copy.w * sn + copy.h * cs) * scale;
-        const offset = (position, size, visible, stageSize) => {
+        const offset = (position, delta, visible, stageSize) => {
           const half = Math.min(visible, stageSize) / 2;
-          return clamp(position + size / 2 + 16, half, stageSize - half) - size / 2;
+          return clamp(position + delta, half, stageSize - half);
         };
-        copy.x = offset(source.x, copy.w, visibleW, next.stage.width);
-        copy.y = offset(source.y, copy.h, visibleH, next.stage.height);
+        copy.x = offset(source.x, 16, visibleW, next.stage.width);
+        copy.y = offset(source.y, -16, visibleH, next.stage.height);
         next.components.push(copy);
         // Validate before committing; image bytes remain shared immutable assets.
         serializeProject(next, assetStore);
@@ -34588,7 +34710,8 @@ function createAkariExtensionHost(options) {
       heavyRight: Object.freeze({ name: '太い右', value: '➜', fg: '#2563eb' }),
       arrowHead: Object.freeze({ name: '矢じり', value: '➤', fg: '#2563eb' }),
     });
-    function addComponent(type, x = 80, y = 80, spritePreset = '') {
+    // x/y (a drop) is the new centre; without them the part is placed where it can be seen (newPartPlace).
+    function addComponent(type, x = null, y = null, spritePreset = '') {
       if (modelLocked() || !flushActiveEditor()) return;
       clearTimeout(historyTimer);
       pushHistoryNow();
@@ -34613,12 +34736,16 @@ function createAkariExtensionHost(options) {
         w =
           type === 'input' ? 160 : type === 'box' ? 120 : type === 'sprite' ? preset.w || 70 : 120,
         h = type === 'box' ? 80 : type === 'sprite' ? preset.h || 70 : 32,
+        auto = x === null || y === null,
+        place = auto
+          ? newPartPlace(project.components, project.stage, w, h, { x: 80 + w / 2, y: project.stage.height - 80 - h / 2 })
+          : { x: Math.round(x), y: Math.round(y) },
         base = {
           id,
           type,
           name,
-          x: Math.round(x),
-          y: Math.round(y),
+          x: place.x,
+          y: place.y,
           w,
           h,
           fg: type === 'sprite' ? preset.fg : '#111111',
@@ -34682,6 +34809,7 @@ function createAkariExtensionHost(options) {
       project.components.push(base);
       markDirty();
       selectObject(id);
+      if (auto) setStatus(`「${name}」を ふやしたよ。いま 動かすものは「${name}」だよ`);
     }
 
     let activeFailureId = null,
@@ -35609,6 +35737,7 @@ function createAkariExtensionHost(options) {
             const close = {
               exportChoiceModal: 'exportChoiceCancel',
               openConfirmModal: 'openConfirmCancel',
+              openRefusalModal: 'openRefusalClose',
               loseConfirmModal: 'loseConfirmCancel',
               assetModal: 'assetClose',
               procModal: 'procClose',
@@ -35844,9 +35973,10 @@ function createAkariExtensionHost(options) {
         catch (error) {
           // A newer release of the same extension may open the work; the person decides.
           const upgrades = error?.extensionUpgrades;
-          if (!upgrades || !confirm('この作品は、次の かくちょうの 前の バージョンで 作られています。\n' +
+          if (!upgrades) throw error;
+          if (!confirm('この作品は、次の かくちょうの 前の バージョンで 作られています。\n' +
             upgrades.map(item => '・' + item.name + '　' + item.from + ' → ' + item.to).join('\n') +
-            '\nいまの バージョンで 開きますか？　ほぞんすると、いまの バージョンで のこります。')) throw error;
+            '\nいまの バージョンで 開きますか？　ほぞんすると、いまの バージョンで のこります。')) throw Object.assign(error, { declined: true });
           loaded = await parseProjectFile(text, { upgradeExtensions: true });
         }
         // Keep the current workspace until the loaded editor can also be restored.
@@ -35893,6 +36023,8 @@ function createAkariExtensionHost(options) {
           restoreSnap(previous.current, { restoreView: true });
         }
         log(`${err.code || ''} 読みこめませんでした: ${err.message}`, 'error');
+        // The person chose not to open it with the newer extension: nothing to explain.
+        if (!err?.declined) showOpenRefusal(err);
       } finally {
         appState = 'DESIGN';
         renderAll();
@@ -35900,6 +36032,28 @@ function createAkariExtensionHost(options) {
       }
     }
 
+    // Every refusal of 開く stays on the screen until とじる; the work, its history and unsaved edits stay as they
+    // were. A file of another project format says which あかり opens it; any other refusal asks for an あかり file.
+    // The code and the full reason stay in 出力.
+    function openButtonShown() {
+      return [$('#openBtn'), $('#entryOpen'), $('#entryProjectMenu > summary')].find((n) => n?.getClientRects().length) || null;
+    }
+    function showOpenRefusal(error) {
+      $('#openRefusalMessage').textContent = error?.otherFormat
+        ? error.message
+        : 'あかりで ほぞんした ファイル（名前が「.akari.md」で おわる ファイル）を えらんでね。いまの 作品は そのままだよ。';
+      setStatus('ファイルを 開けなかったよ');
+      // The dialog focuses とじる and gives the focus back to 開く when it closes (setupModalAccessibility).
+      openButtonShown()?.focus({ preventScroll: true });
+      $('#openRefusalModal').classList.add('show');
+    }
+    function closeOpenRefusal() {
+      $('#openRefusalModal').classList.remove('show');
+      setTimeout(() => {
+        if (!document.querySelector('.modal.show,.modal.open,dialog[open]') && !openButtonShown()?.contains(document.activeElement))
+          openButtonShown()?.focus({ preventScroll: true });
+      }, 0);
+    }
     function openAutosaveDB() {
       return new Promise((resolve, reject) => {
         let settled = false,
@@ -37024,12 +37178,15 @@ function createAkariExtensionHost(options) {
         }
         const id = ensureUniqueId('sprite'),
           costumeId = ensureUniqueId('costume'),
+          shown = nativeSize ? Math.min(1, next.stage.width / w, next.stage.height / h) : 1,
+          place = newPartPlace(next.components, next.stage, w * shown, h * shown,
+            { x: next.stage.width / 2, y: next.stage.height / 2 }),
           sprite = {
             id,
             type: 'sprite',
             name,
-            x: Math.round((next.stage.width - w) / 2),
-            y: Math.round((next.stage.height - h) / 2),
+            x: place.x,
+            y: place.y,
             w,
             h,
             fg: '#f5a000',
@@ -37480,6 +37637,7 @@ function createAkariExtensionHost(options) {
     $('#exportChoiceCancel').onclick = () => $('#exportChoiceModal').classList.remove('show');
     $('#openBtn').onclick = requestOpenProject;
     $('#openConfirmProceed').onclick = selectProjectForOpen;
+    $('#openRefusalClose').onclick = closeOpenRefusal;
     $('#loseConfirmProceed').onclick = () => loseConfirm?.(true);
     $('#loseConfirmCancel').onclick = () => loseConfirm?.(false);
     $('#openConfirmCancel').onclick = () => {
@@ -37661,7 +37819,7 @@ function createAkariExtensionHost(options) {
     });
     $$('.tool').forEach((b) => {
       b.addEventListener('click', () =>
-        addComponent(b.dataset.type, 80, 80, b.dataset.spritePreset || ''),
+        addComponent(b.dataset.type, null, null, b.dataset.spritePreset || ''),
       );
       b.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('text/akari-tool', b.dataset.type);
@@ -37682,7 +37840,7 @@ function createAkariExtensionHost(options) {
         addComponent(
           type,
           ((e.clientX - r.left) * project.stage.width) / r.width,
-          ((e.clientY - r.top) * project.stage.height) / r.height,
+          ((r.bottom - e.clientY) * project.stage.height) / r.height,
           preset,
         );
       }

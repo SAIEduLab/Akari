@@ -43,7 +43,7 @@ export const extensionExpectedObservations = Object.freeze({
     idsStillRead: true, unknownRejected: true, duplicateNameRejected: true, nameClashesWithIdRejected: true, invalidNameRejected: true },
   'EXTENSION-VERSION-UPGRADE': { upgraded: '1.0.0→1.2.0', validates: true, stateKept: { value: 4 }, sameVersionChangedRejected: true,
     newerRecordedRejected: true, otherMajorRejected: true, prereleaseRejected: true, stateFormatRejected: true },
-  'EXTENSION-UPGRADE-OPEN-CONFIRM': { asked: true, namesVersions: true, dismissedKeepsWork: true, acceptedOpens: true, recordedVersion: '1.1.0' },
+  'EXTENSION-UPGRADE-OPEN-CONFIRM': { asked: true, namesVersions: true, dismissedKeepsWork: true, acceptedOpens: true, recordedVersion: '1.2.0' },
   // extensions/examples/meijin.js: operations with scope "meijin" are read only in 名人 text.
   'EXTENSION-MEIJIN-SCOPE': { meijinChecked: true, meijinSaid: ['7'], ordinaryCommandStopped: 'S317', ordinaryCalculationStopped: 'S317',
     ordinaryEventStopped: 'S317', otherExtensionOrdinary: true, blocks: ['ExtensionCommand:demo.offline/remember'], meijinHints: true, ordinaryHints: false,

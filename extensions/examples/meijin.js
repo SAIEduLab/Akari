@@ -2,7 +2,7 @@
 // An extension whose operations only 名人 text may use (scope "meijin"): no block, not in an ordinary body.
 const AkariMeijinExample = {
   manifest: {
-    id: 'demo.meijin', name: '名人の記録', version: '1.0.0', apiContract: 1,
+    id: 'demo.meijin', name: '名人の記録', version: '1.1.0', apiContract: 1,
     standard: { languageContractId: 4, runtimeContractId: 4 },
     description: '名人モードの本文でだけ使える、数を記録する命令と、記録した数を読む計算。',
     dependencies: [], capabilities: [], offline: true, selfContained: true,
