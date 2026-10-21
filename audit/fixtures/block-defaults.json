@@ -895,6 +895,16 @@
       "inlineComment": ""
     }
   },
+  "StopCommand:OWN_OTHERS": {
+    "id": "blockui-1",
+    "schemaId": "StopCommand:OWN_OTHERS",
+    "fields": {},
+    "inputs": {},
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
   "StopCommand:ALL": {
     "id": "blockui-1",
     "schemaId": "StopCommand:ALL",

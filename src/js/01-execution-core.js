@@ -165,6 +165,12 @@
       conditionTrue: 'そう なったとき',
       interval: '〜秒ごとに',
     };
+    // The touch targets that are no part: the whole stage edge (端) and its four sides, by the words code writes.
+    const EDGE_TARGETS = Object.freeze({ 端: '画面のはし', '端:上': '画面の上のはし', '端:下': '画面の下のはし', '端:右': '画面の右のはし', '端:左': '画面の左のはし' });
+    const isEdgeTarget = (target) => typeof target === 'string' && Object.hasOwn(EDGE_TARGETS, target);
+    // A body is named by its event; a touch body also by what it touches (「星」に ふれたとき, 画面のはしに ふれたとき).
+    const eventText = (event, filter) => event === 'touchStart' && typeof filter?.target === 'string' && filter.target
+      ? (isEdgeTarget(filter.target) ? EDGE_TARGETS[filter.target] : '「' + filter.target + '」') + 'に ふれたとき' : EVENT_LABELS[event];
     const BUILTIN_META = new Map(BUILTIN_DEFINITIONS.map((x) => [x.name, x]));
     class AkariError extends Error {
       constructor(code, message, line = 0, column = 0, detail = '') {
@@ -1321,13 +1327,14 @@
         const a = this.requireActor({ runtimeId });
         if (!a.visible) return false;
         const aa = this.aabb(a);
-        if (target === '端')
-          return (
-            aa.left <= 0 ||
-            aa.bottom <= 0 ||
-            aa.right >= this.project.stage.width ||
-            aa.top >= this.project.stage.height
-          );
+        // One side of the screen (画面の下のはし: たて0 and below); 画面のはし is any of the four. A part outside the screen
+        // touches the side it went out of.
+        const W = this.project.stage.width, H = this.project.stage.height;
+        if (target === '端:下') return aa.bottom <= 0;
+        if (target === '端:上') return aa.top >= H;
+        if (target === '端:左') return aa.left <= 0;
+        if (target === '端:右') return aa.right >= W;
+        if (target === '端') return aa.left <= 0 || aa.bottom <= 0 || aa.right >= W || aa.top >= H;
         if (target === 'マウス')
           return (
             this.mouseAt.entered &&
@@ -2532,6 +2539,10 @@
       b.set(arr);
     }
 
+    // Loop pacing (EventScheduler.paceTurn): the loop frames whose turns are paced, and the statements that change the
+    // screen (moving and turning, looks, text and backdrop, the pen and stamps, speech).
+    const PACED_LOOP_FRAMES = new Set(['repeatCount', 'forever', 'foreach', 'while', 'until']);
+    const PACED_SCREEN_KINDS = new Set(['MotionCommand', 'LooksCommand', 'PenCommand', 'Say']);
     class EventScheduler {
       constructor(project, compiled, runtime, ui = {}) {
         this.project = project;
@@ -2763,8 +2774,9 @@
               targetId: item.targetId || item.ownerId || parts[1],
               event: item.event || parts[2], filter: item.filter };
           });
+        // A key or a signal is matched here; what a touch body touches is watched (pollWatches), not matched.
         return scripts.filter((s) => s.targetId === targetId && s.event === event &&
-          (s.filter == null || (typeof s.filter === 'object' ?
+          (s.filter == null || !['keyDown', 'message'].includes(event) || (typeof s.filter === 'object' ?
             (event === 'keyDown' ? s.filter.key : s.filter.message) : s.filter) ===
             (event === 'keyDown' ? eventContext.key : eventContext.message)));
       }
@@ -2833,7 +2845,8 @@
         }
         return out;
       }
-      // 名人のできごと: ふれたとき, 〜になったとき and 〜秒ごとに are watched on the scheduler's clock.
+      // ふれたとき (every part's bodies and 名人), 〜になったとき and 〜秒ごとに (名人) are watched on the scheduler's clock:
+      // after every sentence of every flow and at every こま.
       initializeWatches() {
         this.watches = [];
         for (const item of this.compiled.items || []) {
@@ -2864,9 +2877,12 @@
               if (value && !w.last.get(w.targetId)) this.spawnWatch(w, w.targetId);
               w.last.set(w.targetId, value);
             } else {
+              // ふれたとき starts when not touching becomes touching. The first look at a part (the run's start, a new
+              // copy) only records it: a part that already touches starts after it has left and touched again. Every copy
+              // is looked at on its own; a hidden part touches nothing, so showing it where it touches is a change.
               for (const a of [...this.runtime.actors.values()].filter(a => a.baseId === w.targetId)) {
                 const touching = this.runtime.touching(a.runtimeId, w.item.filter.target);
-                if (touching && !w.last.get(a.runtimeId)) this.spawnWatch(w, a.runtimeId);
+                if (touching && w.last.has(a.runtimeId) && !w.last.get(a.runtimeId)) this.spawnWatch(w, a.runtimeId);
                 w.last.set(a.runtimeId, touching);
               }
             }
@@ -3078,10 +3094,32 @@
         }
         task.subject = { runtimeId: this.runtime.resolveActorRef(node.actorRef, relative) };
       }
+      // A turn of a loop that changed the screen (a part moved, turned or changed its looks, text, pen or speech) and
+      // waited nowhere: the next turn starts at the next こま of the logical clock (1/60 s, the grid of the continuous
+      // rules), so the motion shows without a wait sentence. A turn that only calculates goes on at once. Each loop
+      // frame keeps its own turn's marks; a lane marks the loops of the flow it belongs to. Not while stepping.
+      paceTurn(task, top) {
+        if (top.visual && !top.waited && !top.yielded && !this.paused) {
+          top.yielded = true;
+          task.execStack.push({ type: 'frameYield', node: top.node });
+          return true;
+        }
+        top.visual = top.waited = top.yielded = false;
+        return false;
+      }
+      markTurn(task, mark) {
+        for (let t = task; t; t = t.laneParent)
+          for (const frame of t.execStack) if (PACED_LOOP_FRAMES.has(frame.type)) frame[mark] = true;
+      }
+      nextFrameTime() {
+        const grid = 1000 / 60, origin = this.continuousOrigin ?? 0, now = this.runtime.now();
+        return origin + (Math.floor((now - origin) / grid + 1e-9) + 1) * grid;
+      }
       normalizeStack(task) {
         let guard = 0;
         while (task.execStack.length && guard++ < 1000) {
           const top = task.execStack[task.execStack.length - 1];
+          if (top.type === 'frameYield') return top;
           if (top.type === 'seq') {
             if (top.index < top.nodes.length) return top;
             task.execStack.pop();
@@ -3096,6 +3134,7 @@
           }
           if (top.type === 'repeatCount') {
             if (top.remaining > 0) {
+              if (this.paceTurn(task, top)) return task.execStack.at(-1);
               top.remaining--;
               task.execStack.push({ type: 'seq', nodes: top.node.body, index: 0 });
               if (!top.node.body.some((n) => n.kind !== 'CommentLine'))
@@ -3106,6 +3145,7 @@
             continue;
           }
           if (top.type === 'forever') {
+            if (this.paceTurn(task, top)) return task.execStack.at(-1);
             task.execStack.push({ type: 'seq', nodes: top.node.body, index: 0 });
             if (!top.node.body.some((n) => n.kind !== 'CommentLine'))
               return { type: 'idle', node: top.node };
@@ -3113,6 +3153,7 @@
           }
           if (top.type === 'foreach') {
             if (top.index < top.values.length) {
+              if (this.paceTurn(task, top)) return task.execStack.at(-1);
               const value = deepCopy(top.values[top.index++]);
               task.execStack.push({
                 type: 'seq',
@@ -3127,7 +3168,7 @@
             task.execStack.pop();
             continue;
           }
-          if (top.type === 'while' || top.type === 'until') return top;
+          if (top.type === 'while' || top.type === 'until') return this.paceTurn(task, top) ? task.execStack.at(-1) : top;
           break;
         }
         if (guard >= 1000) throw new AkariError('R413', 'くり返しが 多すぎて 先に すすめません');
@@ -3137,6 +3178,7 @@
         const top = this.normalizeStack(task);
         if (!top) return null;
         if (top.type === 'idle') return { kind: 'idle', node: top.node };
+        if (top.type === 'frameYield') { task.execStack.pop(); return { kind: 'frameYield', node: top.node }; }
         if (top.type === 'seq') {
           while (top.index < top.nodes.length) {
             const n = top.nodes[top.index++];
@@ -3164,6 +3206,12 @@
           step = this.nextStep(task);
           if (!step) {
             this.finishTask(task, 'DONE');
+            return true;
+          }
+          // The pacing of a loop (paceTurn): the next turn waits for the next こま.
+          if (step.kind === 'frameYield') {
+            this.block(task, { kind: 'time', deadline: this.nextFrameTime(), frame: true });
+            this.recheckBlocked(force);
             return true;
           }
           this.selectSubject(task, step.node);
@@ -3252,6 +3300,7 @@
       }
       executePreparedNode(task, n, originalNode = n) {
         this.selectSubject(task, n);
+        if (PACED_SCREEN_KINDS.has(n.kind)) this.markTurn(task, 'visual');
         const ctx = this.context(task);
         switch (n.kind) {
           case 'ExtensionCommand': {
@@ -3573,10 +3622,13 @@
           this.enqueue(child);
         }
         if (!wg.pending.size) { this.waitGroups.delete(wg.id); return; }
-        this.block(task, { kind: 'waitGroup', waitGroupId: wg.id });
+        this.block(task, { kind: 'waitGroup', waitGroupId: wg.id, lanes: true });
         return { requeue: false };
       }
       block(task, reason) {
+        // A wait of the flow (a time, a condition, a glide, an answer, a sound, a signal's work) is a wait of every loop
+        // turn it is in. A frame of the pacing, a calculation step and the wait for the flow's own lanes are not.
+        if (!reason.frame && reason.kind !== 'calculation' && !reason.lanes) this.markTurn(task, 'waited');
         task.state = 'BLOCKED';
         task.blockReason = { runtimeId: task.subject?.runtimeId || task.runtimeId, ...reason };
         this.blocked.add(task);
@@ -3908,6 +3960,13 @@
           for (const t of this.tasks.values()) if (t !== task) this.cancelTask(t);
           return;
         }
+        // 自分のほかの動きを止める: the part's other bodies and continuous rules stop, and what other flows move it
+        // ends where it is; this body (with its lanes) goes on, and the other parts go on.
+        if (n.op === 'OWN_OTHERS') {
+          const root = task.laneRoot || task;
+          this.stopPartMotion(task.subject?.runtimeId || task.runtimeId, task, t => (t.laneRoot || t) === root);
+          return;
+        }
         if (n.op === 'ALL') {
           this.stop();
           this.ui.allStopped?.();
@@ -3923,14 +3982,14 @@
       // The part's own bodies and continuous rules stop. Where another flow moves the part (〜秒かけて動く, 〜まで動き続ける)
       // or the part carries out a procedure for it, that motion or procedure ends where the part is, and the flow goes on
       // with its next sentence. Speech and waits are not motions and go on.
-      stopPartMotion(runtimeId, task) {
+      stopPartMotion(runtimeId, task, keep = null) {
         for (const [key, control] of this.continuous) {
-          if (control.runtimeId !== runtimeId) continue;
+          if (control.runtimeId !== runtimeId || (control.temporary && keep?.(control.task))) continue;
           if (control.temporary) this.continuous.delete(key);
           else if (control.state === 'ACTIVE') control.state = 'CANCELLED_UNTIL_FALSE';
         }
         for (const t of [...this.tasks.values()]) {
-          if (t === task) continue;
+          if (t === task || keep?.(t)) continue;
           if (t.runtimeId === runtimeId) { this.cancelTask(t); continue; }
           const at = t.callFrames.findIndex(frame => frame.runtimeId === runtimeId), br = t.blockReason;
           if (at >= 0) {
@@ -4362,7 +4421,7 @@
       for (const item of data.program) {
         const parts = typeof item.key === 'string' ? item.key.split(':') : [];
         const type = item.ownerId === 'stage' ? 'stage' : p.components.find(c => c.id === item.ownerId)?.type;
-        // 名人のできごと: ふれたとき for a part; 〜になったとき and 〜秒ごとに for a 名人 script (the stage).
+        // ふれたとき for a part; 〜になったとき and 〜秒ごとに for a 名人 script (the stage).
         const events = ['start', 'click', 'keyDown', 'message', 'backdropChanged',
           ...(type === 'input' ? ['valueChanged'] : []), ...(type === 'sprite' ? ['cloneStart'] : []),
           ...(type && type !== 'stage' ? ['touchStart'] : []), ...(type === 'stage' ? ['conditionTrue', 'interval'] : [])];
@@ -4380,7 +4439,7 @@
         )
           fail('動きの 中身が こわれています');
         const watched = item.event || parts[2];
-        if ((watched === 'touchStart' && !p.components.some(c => c.name === item.filter?.target)) ||
+        if ((watched === 'touchStart' && !isEdgeTarget(item.filter?.target) && !p.components.some(c => c.name === item.filter?.target)) ||
           (watched === 'conditionTrue' && typeof item.ast.heading?.condition?.kind !== 'string') ||
           (watched === 'interval' && typeof item.ast.heading?.seconds?.kind !== 'string'))
           fail('きっかけの 中身が 正しくありません');
@@ -4517,6 +4576,9 @@
       COLOR_NAMES,
       COLOR_LABELS,
       EVENT_LABELS,
+      EDGE_TARGETS,
+      isEdgeTarget,
+      eventText,
       BUILTIN_META,
       AkariError,
       ScriptSignal,

@@ -18968,6 +18968,7 @@
     "LocalListDeclaration",
     "StopCommand:THIS",
     "StopCommand:OTHERS",
+    "StopCommand:OWN_OTHERS",
     "StopCommand:ALL",
     "MotionCommand:SET_DIRECTION",
     "MotionCommand:POINT_TO",

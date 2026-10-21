@@ -304,7 +304,8 @@ function runCoreTests() {
             valueChanged: '新しい値',
           }[event];
           p.scripts = [
-            { targetId: id, event, source: value ? value + 'の値を言う。' : '点数に1を足す。' },
+            // A touch body names what it touches (the stage edge here).
+            { targetId: id, event, source: value ? value + 'の値を言う。' : '点数に1を足す。', ...(event === 'touchStart' ? { filter: { target: '端' } } : {}) },
           ];
           const compiled = compileProject(p);
           ok(!compiled.errors.length, JSON.stringify(compiled.errors));
@@ -361,7 +362,7 @@ function runCoreTests() {
       以前の値: '旧',
       新しい値: '新',
       空白キーが押されている: true,
-      端に触れている: false,
+      画面の端に触れている: false,
       '「赤」の色に触れている': false,
       マウスまでの距離: Math.hypot(320 - 35, 200 - 45),
     };

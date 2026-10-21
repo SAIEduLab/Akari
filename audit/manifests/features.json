@@ -374,6 +374,12 @@
       "source": "ほかの動きを全部止める。"
     },
     {
+      "id": "StopCommand:OWN_OTHERS",
+      "kind": "StopCommand",
+      "op": "OWN_OTHERS",
+      "source": "自分のほかの動きを止める。"
+    },
+    {
       "id": "StopCommand:ALL",
       "kind": "StopCommand",
       "op": "ALL",
@@ -543,6 +549,7 @@
     "LocalListDeclaration",
     "StopCommand:THIS",
     "StopCommand:OTHERS",
+    "StopCommand:OWN_OTHERS",
     "StopCommand:ALL",
     "MotionCommand:SET_DIRECTION",
     "MotionCommand:POINT_TO",

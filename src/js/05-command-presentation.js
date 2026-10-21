@@ -583,6 +583,7 @@
     for (const [value, label] of [
       ['THIS', 'この動きを止める'],
       ['OTHERS', 'ほかの動きを全部止める'],
+      ['OWN_OTHERS', '自分のほかの動きを止める'],
       ['ALL', '作品を全部止める'],
     ])
       add('StopCommand', 'statement', label, [], [], [], op('op', value));
@@ -853,12 +854,14 @@
       if (Object.hasOwn(value, 'filter')) {
         if (value.filter === null) heading.filter = null;
         else {
-          blockRecord(value.filter, ['key', 'message'], path + '.filter');
+          // A key (キーを おしたとき), a signal (合図を 受けたとき) or what is touched (ふれたとき: a part, or 端 and its sides).
+          blockRecord(value.filter, ['key', 'message', 'target'], path + '.filter');
           const keys = Object.keys(value.filter);
-          if (keys.length !== 1 || (keys[0] !== 'key' && keys[0] !== 'message'))
+          if (keys.length !== 1 || !['key', 'message', 'target'].includes(keys[0]))
             blockDataError('キーか合図を1つ選んでください', path);
           const key = keys[0];
-          if ((key === 'key' && value.event !== 'keyDown') || (key === 'message' && value.event !== 'message'))
+          if ((key === 'key' && value.event !== 'keyDown') || (key === 'message' && value.event !== 'message') ||
+            (key === 'target' && value.event !== 'touchStart') || (value.event === 'touchStart' && key !== 'target'))
             blockDataError('きっかけと、選んだキーや合図が合いません', path);
           heading.filter = { [key]: blockFieldValue({ type: 'string' }, value.filter[key], path + '.filter.' + key) };
         }

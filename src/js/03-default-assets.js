@@ -3031,7 +3031,8 @@
       if (typeof c.name !== 'string' || !c.name || cpLen(c.name) > 80 || compNames.has(c.name))
         throw new AkariError('F503', '部品の 名前が 正しくないか、ほかの 部品と 同じです');
       validateResourceName(c.name, '部品の 名前');
-      if (['マウス', '端'].includes(c.name))
+      // マウス and the stage edges (端, 端:上 …) are touch targets that are no part.
+      if (c.name === 'マウス' || isEdgeTarget(c.name))
         throw new AkariError('F503', '部品の 名前に「マウス」「端（はし）」は 使えません。ちがう 名前に してください');
       compNames.add(c.name);
       for (const k of ['x', 'y', 'w', 'h', 'fontSize', 'direction', 'scalePercent'])
@@ -3148,11 +3149,14 @@
       const key = x.id || `${x.targetId}::${x.event}`;
       if (sk.has(key)) throw new AkariError('F503', '同じ きっかけの 動きが 2つ いじょう あります');
       sk.add(key);
+      // A touch body names what it touches (filter.target: a part's name, or 端 and its sides).
+      if (x.event === 'touchStart' && (x.filter == null || !x.filter.target))
+        throw new AkariError('F503', 'ふれたときの 本文に、ふれる 相手が ありません');
       if (x.filter !== undefined && x.filter !== null) {
-        const filterKey = x.event === 'keyDown' ? 'key' : x.event === 'message' ? 'message' : null;
+        const filterKey = x.event === 'keyDown' ? 'key' : x.event === 'message' ? 'message' : x.event === 'touchStart' ? 'target' : null;
         if (!filterKey || !exactKeys(x.filter, [filterKey]) ||
           typeof x.filter[filterKey] !== 'string' || cpLen(x.filter[filterKey]) > LIMITS.stringChars)
-          throw new AkariError('F503', 'きっかけの きまり（どの キーか、どの 合図か）が 正しくありません');
+          throw new AkariError('F503', 'きっかけの きまり（どの キーか、どの 合図か、なにに ふれるか）が 正しくありません');
       }
       if (typeof x.source !== 'string' || cpLen(x.source) > LIMITS.sourceEach)
         throw new AkariError('F504', '本文の 文字が 多すぎます。文を へらしてください');

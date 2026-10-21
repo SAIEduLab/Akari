@@ -1119,6 +1119,24 @@
       ]
     },
     {
+      "id": "command:StopCommand:OWN_OTHERS",
+      "meaning": "自分のほかの動きを止める。その部品のほかの本文と、つづけて動くきまりを止め、この本文はつづける。ほかの部品の動きは止めない。",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "CORE catalog StopCommand:OWN_OTHERS"
+        },
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "LANG statement roundtrip StopCommand:OWN_OTHERS"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
       "id": "command:StopCommand:ALL",
       "meaning": "作品全体を止める。",
       "testReferences": [
@@ -1893,6 +1911,16 @@
     {
       "id": "StopCommand:OTHERS",
       "meaning": "ほかの実行をすべて止める。",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
+      "id": "StopCommand:OWN_OTHERS",
+      "meaning": "自分のほかの動きを止める。その部品のほかの本文と、つづけて動くきまりを止め、この本文はつづける。ほかの部品の動きは止めない。",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -4159,6 +4187,24 @@
       ]
     },
     {
+      "id": "command:StopCommand:OWN_OTHERS",
+      "meaning": "自分のほかの動きを止める",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "CORE catalog StopCommand:OWN_OTHERS"
+        },
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "LANG statement roundtrip StopCommand:OWN_OTHERS"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
       "id": "command:StopCommand:ALL",
       "meaning": "すべてを止める",
       "testReferences": [
@@ -5881,6 +5927,20 @@
       ]
     },
     {
+      "id": "event:label:touchStart",
+      "meaning": "labelのtouchStart",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "CORE event label:touchStart"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
       "id": "event:button:start",
       "meaning": "buttonのstart",
       "testReferences": [
@@ -5951,6 +6011,20 @@
       ]
     },
     {
+      "id": "event:button:touchStart",
+      "meaning": "buttonのtouchStart",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "CORE event button:touchStart"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
       "id": "event:box:start",
       "meaning": "boxのstart",
       "testReferences": [
@@ -6013,6 +6087,20 @@
         {
           "path": "audit/manifests/product-tests.json",
           "id": "CORE event box:backdropChanged"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
+      "id": "event:box:touchStart",
+      "meaning": "boxのtouchStart",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "CORE event box:touchStart"
         },
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -6105,6 +6193,20 @@
       ]
     },
     {
+      "id": "event:input:touchStart",
+      "meaning": "inputのtouchStart",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "CORE event input:touchStart"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
       "id": "event:sprite:start",
       "meaning": "spriteのstart",
       "testReferences": [
@@ -6181,6 +6283,20 @@
         {
           "path": "audit/manifests/product-tests.json",
           "id": "CORE event sprite:cloneStart"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
+      "id": "event:sprite:touchStart",
+      "meaning": "spriteのtouchStart",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "CORE event sprite:touchStart"
         },
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -8890,6 +9006,7 @@
       "CloneCommand:DELETE_SELF",
       "StopCommand:THIS",
       "StopCommand:OTHERS",
+      "StopCommand:OWN_OTHERS",
       "StopCommand:ALL",
       "LooksCommand:SET_SELF_TEXT",
       "LooksCommand:SET_INPUT",
@@ -8954,6 +9071,7 @@
       "LocalListDeclaration",
       "StopCommand:THIS",
       "StopCommand:OTHERS",
+      "StopCommand:OWN_OTHERS",
       "StopCommand:ALL",
       "MotionCommand:SET_DIRECTION",
       "MotionCommand:POINT_TO",

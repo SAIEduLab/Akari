@@ -514,17 +514,18 @@
       if (!fromPending) render({ force: true });
       return result;
     }
-    // A touch test names the stage edge as 端 (the word code also reads bare). The block shows and
-    // accepts the words the code writes, 画面のはし; other text slots keep 端 as written.
+    // A touch test names the stage edge as 端 and its sides as 端:上 …. The block shows and accepts the words the code
+    // writes (画面のはし, 画面の下のはし …); other text slots keep what is written.
     function edgeSlot(node, field) {
       if (node?.schemaId !== 'StringLiteral' || field?.key !== 'value') return false;
       return index.get(index.get(node.id)?.parentId)?.node?.schemaId === 'SensorRead:TOUCHING';
     }
     function edgeShown(node, field, value) {
-      return edgeSlot(node, field) && value === '端' ? '画面のはし' : value;
+      return edgeSlot(node, field) && isEdgeTarget(value) ? EDGE_TARGETS[value] : value;
     }
     function edgeStored(node, field, value) {
-      return edgeSlot(node, field) && ['画面のはし', '画面の端'].includes(String(value).trim()) ? '端' : value;
+      const written = String(value).trim().replace(/端$/, 'はし'), edge = edgeSlot(node, field) && Object.keys(EDGE_TARGETS).find(key => EDGE_TARGETS[key] === written);
+      return edge || value;
     }
     function readInputValue(input, field) {
       if (field.type === 'boolean') return input.value === 'true';
@@ -1309,7 +1310,7 @@
           ...p.sounds.map((x) => x.name),
           ...Object.keys(COLOR_NAMES).map((name) => COLOR_LABELS[name] || name),
           'マウス',
-          ...(edgeSlot(node, field) ? ['画面のはし'] : []),
+          ...(edgeSlot(node, field) ? Object.values(EDGE_TARGETS) : []),
           '空白',
           '上',
           '下',
@@ -1339,7 +1340,7 @@
           const actorText = actor => actor?.kind === 'named' ? actor.name : actor?.kind === 'all' || (!actor && field.everyone) ? 'みんな' : '自分';
           const text = field.type === 'actor-ref' ? actorText(value)
             : field.type === 'argument-names' ? (value || []).join('、')
-              : value ? (EVENT_LABELS[value.event] || value.event) + '、' + actorText(value.actorRef) +
+              : value ? (eventText(value.event, value.filter) || value.event) + '、' + actorText(value.actorRef) +
                 (value.filter?.key !== undefined ? '、キー「' + value.filter.key + '」'
                   : value.filter?.message !== undefined ? '、合図「' + value.filter.message + '」' : '') : '本文で決める';
           wrap.append(title, E('span', 'blockui-readonly-value', text, attrs));
@@ -1401,10 +1402,21 @@
           };scan(node.bodies);scan(node.inputs.rules);
           const location=session()?.nodeMap?.get(node.bodies.body?.[0]?.id)?.surface,range=location?.range||location?.extent,
             preview=range?session().sourceText.slice(range.start,range.end):node.bodies.body?.length?schemaOf(node.bodies.body[0]).label:'まだ ブロックが ありません';
-          group.append(E('p','blockui-trigger-scope',`かえる動き：${[...owners].join('・')} ／ ${EVENT_LABELS[currentEvent]}\n${preview}
+          group.append(E('p','blockui-trigger-scope',`かえる動き：${[...owners].join('・')} ／ ${eventText(currentEvent,currentFilter)}\n${preview}
 このまとまりの きっかけだけを かえます。ほかの 動きは かえません。`));
-          const event = choice('いつ動く？', 'event', Object.entries(EVENT_LABELS).filter(([key]) => !MEIJIN_EVENTS.includes(key)), currentEvent);
+          // The stage touches nothing, so its bodies are not offered ふれたとき.
+          const stageOwned = context().targetId === 'stage' && currentActor?.kind !== 'named';
+          const event = choice('いつ動く？', 'event', Object.entries(EVENT_LABELS).filter(([key]) => !MEIJIN_EVENTS.includes(key) && !(key === 'touchStart' && stageOwned && currentEvent !== 'touchStart')), currentEvent);
           event.setAttribute('aria-label','いつ動く？');event.parentElement.classList.add('blockui-trigger-choice');
+          // ふれたとき: what is touched — the other parts in the order of 作品, the stage edge, and its four sides. A new touch
+          // body touches the stage edge until another is chosen.
+          const ownerName = actorName(currentActor);
+          const touchTargets = [...(project()?.components || []).filter(c => c.name !== ownerName).map(c => [c.name, '「' + c.name + '」']), ...Object.entries(EDGE_TARGETS)];
+          if (typeof currentFilter?.target === 'string' && !touchTargets.some(([v]) => v === currentFilter.target)) touchTargets.push([currentFilter.target, isEdgeTarget(currentFilter.target) ? EDGE_TARGETS[currentFilter.target] : '「' + currentFilter.target + '」']);
+          const touchTarget = choice('なにに ふれたとき？', 'touch.target', touchTargets, currentFilter?.target ?? '端');
+          touchTarget.parentElement.classList.add('blockui-trigger-choice');
+          const syncTouch = () => { touchTarget.parentElement.hidden = event.value !== 'touchStart'; };
+          syncTouch(); listen(event, 'change', syncTouch);
           const details=E('details','blockui-trigger-details');details.append(E('summary','','くわしく（きっかけ・だれ・どれで動くか）'));group.append(details);
           const detailStart=group.children.length;
           const enabled = choice('きっかけ', 'enabled', [['no', '本文だけ'], ['yes', 'できごとを決める']], value ? 'yes' : 'no');
@@ -1416,21 +1428,25 @@
             if (filter.selectedOptions[0]?.disabled) filter.value = 'all';
             filterValue.parentElement.hidden = filter.value === 'all';
             for (const child of group.querySelectorAll('input,select'))
-              if (child !== enabled&&child!==event) child.disabled = isLocked() || options.readOnly || enabled.value !== 'yes';
+              if (child !== enabled&&child!==event&&child!==touchTarget) child.disabled = isLocked() || options.readOnly || enabled.value !== 'yes';
           };
           for(const child of [...group.children].slice(detailStart))details.append(child);
           listen(details,'input',()=>{group.dataset.triggerDetailed='true';group.dataset.triggerMetadataOnly='false';});
           listen(details,'change',()=>{group.dataset.triggerDetailed='true';group.dataset.triggerMetadataOnly='false';});
           sync(); listen(enabled, 'change', sync); listen(event, 'change',()=>{enabled.value='yes';group.dataset.triggerMetadataOnly=String(!value&&group.dataset.triggerDetailed!=='true');sync();}); listen(filter, 'change', sync);
+          // What is touched is chosen like the event: a body with no heading keeps its text and takes the partner.
+          listen(touchTarget, 'change',()=>{enabled.value='yes';group.dataset.triggerMetadataOnly=String(!value&&group.dataset.triggerDetailed!=='true');sync();});
           readValue = () => {
             if (enabled.value !== 'yes') return undefined;
             const heading = { event: event.value, actorRef: subject.read() };
-            if (filter.value !== 'all') heading.filter = { [filter.value]: filterValue.value };
+            if (event.value === 'touchStart') heading.filter = { target: touchTarget.value };
+            else if (filter.value !== 'all') heading.filter = { [filter.value]: filterValue.value };
             else if (currentFilter === null) heading.filter = null;
             return heading;
           };
           restore = () => {
             enabled.value = value ? 'yes' : 'no'; event.value = currentEvent; subject.restore();
+            touchTarget.value = currentFilter?.target ?? '端'; syncTouch();
             filter.value = currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all';
             filterValue.value = currentFilter?.key ?? currentFilter?.message ?? ''; sync();
           };
@@ -2296,7 +2312,7 @@
       head.append(E('strong', 'blockui-node-title', schema.label), nodeTools(node, info));
       if(schema.category==='script'){
         const heading=node.fields.heading,actor=heading?.actorRef?.kind==='named'?heading.actorRef.name:project()?.components.find(c=>c.id===context().targetId)?.name||project()?.stage?.name;
-        head.querySelector('strong').textContent=`${actor}・${EVENT_LABELS[heading?.event||context().event||'start']}`;
+        head.querySelector('strong').textContent=`${actor}・${eventText(heading?.event||context().event||'start',heading?heading.filter:context().filter)}`;
       }
       box.append(head);
       box.classList.toggle('blockui-selected', selected === node.id);
@@ -2905,7 +2921,7 @@
           'strong',
           '',
           kind === 'script'
-            ? EVENT_LABELS[tree?.fields.heading?.event||ctx.event||event] || event
+            ? eventText(tree?.fields.heading?.event||ctx.event||event, tree?.fields.heading ? tree.fields.heading.filter : ctx.filter) || event
             : kind === 'function'
               ? 'このブロックで 答えを出すとき'
               : 'このブロックを 使ったとき',

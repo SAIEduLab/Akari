@@ -852,7 +852,7 @@
       }
       else if (source) {
         const row = (event ? id : selectedId) === MEIJIN_OWNER ? { id: event ? ensureUniqueId('script') : id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: '' }
-          : { id: event ? ensureUniqueId('script') : id, targetId: event ? id : selectedId, event: event || currentEvent, source: '' };
+          : { id: event ? ensureUniqueId('script') : id, targetId: event ? id : selectedId, event: event || currentEvent, source: '', ...newBodyFilter(event || currentEvent) };
         updateScriptSource(row, source, next);
         next.scripts.push(row);
       }
@@ -904,15 +904,18 @@
       if (binding.kind === 'draft') paintCallable();
       return true;
     }
-    function runtimeEventText(eventType) {
-      return eventType === 'continuous' ? 'きまりに 合っている あいだ' : EVENT_LABELS[eventType] || eventType;
+    // A touch body is named with what it touches (「星」に ふれたとき), from the compiled body of the run.
+    function runtimeEventText(eventType, scriptKey = null) {
+      if (eventType === 'continuous') return 'きまりに 合っている あいだ';
+      const filter = scriptKey ? compiled?.items?.find(item => item.key === scriptKey)?.filter : null;
+      return eventText(eventType, filter) || eventType;
     }
     function diagnosticLocation(diagnostic) {
       const key = diagnostic?.where || diagnostic?.key || '', item = compiled?.items?.find(x => x.key === key),
         sourceKey = item?.documentKey || key, script = scriptBySourceKey(project, sourceKey),
         definition = project.actions.find(x => key === 'action:' + x.id) || project.functions.find(x => key === 'function:' + x.id);
       const owner = definition ? (key.startsWith('function:') ? '答えを もとめる「' : 'てじゅん「') + definition.name + '」'
-        : script || item ? (targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (EVENT_LABELS[item?.event || script?.event] || '動き')
+        : script || item ? (targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (eventText(item?.event || script?.event, item ? item.filter : script?.filter) || '動き')
         : 'この本文';
       return owner + (diagnostic?.line ? ' / ' + diagnostic.line + '行目' : '');
     }
@@ -1103,7 +1106,7 @@
       const heading = document.createElement('strong'); heading.textContent = 'どこに動きを入れるかたしかめる'; root.append(heading);
       for (const entry of plan.entries) {
         const actor = targetById(entry.metadata.targetId)?.name || 'この部品', event = entry.metadata.event,
-          label = actor + '・' + EVENT_LABELS[event];
+          label = actor + '・' + eventText(event, entry.metadata.filter);
         const row = document.createElement('p');
         row.textContent = entry.candidates.length ? label + 'には今の動きがあります' : label + 'に新しい動きを入れます'; root.append(row);
         {
@@ -1193,7 +1196,7 @@
           const hole=[...buildBlockIndex(binding.session.blockView).values()].find(entry=>entry.node.schemaId.startsWith('Hole:'));
           const context=bindingContext(binding),name=targetById(context.targetId)?.name||'この本文',label=hole?.node.fields.label||'ブロックや 数・文字';
           if(hole)binding.view.focus({id:hole.node.id});
-          return showEditorFailure(binding, `${name}・${EVENT_LABELS[context.event]||'この本文'}：${label}を入れる ところへ 動きました`, { preservePending: true });
+          return showEditorFailure(binding, `${name}・${eventText(context.event, context.filter)||'この本文'}：${label}を入れる ところへ 動きました`, { preservePending: true });
         }
         return true;
       }
@@ -2450,6 +2453,8 @@
       activeDragCleanup?.();
       return saveCodeBinding(mainEditor, options);
     }
+    // A new touch body touches the stage edge until its partner is chosen (いつ動く？) or written in its heading.
+    const newBodyFilter = event => event === 'touchStart' ? { filter: { target: '端' } } : {};
     function eventsFor(id) {
       if (id === MEIJIN_OWNER) return ['start'];
       return EVENT_BY_TYPE[targetType(id)] || EVENT_BY_TYPE.stage;
@@ -2500,8 +2505,11 @@
         choices.forEach((row, index) => {
           const option = document.createElement('option');
           option.value = index === 0 ? ev : scriptSourceKey(row);
-          const filter = row?.filter, value = filter?.key || filter?.message || (typeof filter === 'string' ? filter : '');
-          option.textContent = selectedId === MEIJIN_OWNER ? `名人の本文 ${index + 1}` : EVENT_LABELS[ev] + (rows.length > 1 ? ` ／ 本文${index + 1}` : '') +
+          const filter = row?.filter, value = ev === 'touchStart' ? '' : filter?.key || filter?.message || (typeof filter === 'string' ? filter : '');
+          // A touch body is named with what it touches (「星」に ふれたとき); bodies with the same partner are numbered among
+          // themselves. A part with no touch body has the one entry ふれたとき.
+          const same = ev === 'touchStart' ? rows.filter(x => x.filter?.target === filter?.target) : rows;
+          option.textContent = selectedId === MEIJIN_OWNER ? `名人の本文 ${index + 1}` : eventText(ev, filter) + (same.length > 1 ? ` ／ 本文${same.indexOf(row) + 1}` : '') +
             (value ? ` 「${value}」` : '');
           if (row) option.dataset.scriptKey = scriptSourceKey(row);
           el.event.appendChild(option);
@@ -4183,7 +4191,7 @@
       }
       renderMonitorSection(root, 'うまく いかなかったときの ようす', [
         ['動いていた部品', targetById(r.actor?.baseId || r.targetId)?.name || '画面'],
-        ['きっかけ', runtimeEventText(r.eventType)],
+        ['きっかけ', runtimeEventText(r.eventType, r.key)],
         ['動かしていた本文', r.source],
       ]);
       const identifiers = appendDiagnosticDetails(root, r, '動きの 番号: ' + r.taskId + '\n動いている部品: ' + r.runtimeId + '\n本文: ' + r.key);
@@ -4258,7 +4266,7 @@
         select = document.createElement('select'), apply = document.createElement('button'),
         cancel = document.createElement('button'), notice = document.createElement('p');
       explanation.textContent = `ここは文字です。リスト「${record.quotedList.name}」を使いますか？`;
-      preview.textContent = `${targetById(script.targetId)?.name || '画面'}・${EVENT_LABELS[script.event] || script.event}の本文、${record.quotedList.span.startLine}行目の ${range.original} だけを かえます。番目・秒数・ほかの文・リストの中身は そのままです。`;
+      preview.textContent = `${targetById(script.targetId)?.name || '画面'}・${eventText(script.event, script.filter) || script.event}の本文、${record.quotedList.span.startLine}行目の ${range.original} だけを かえます。番目・秒数・ほかの文・リストの中身は そのままです。`;
       select.id = 'listRepairChoice'; select.setAttribute('aria-label', 'ここで 使う リスト');
       select.style.maxWidth = '100%';
       const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = '使う リストを えらぶ'; select.append(placeholder);
@@ -4384,7 +4392,7 @@
       if (focus) {
         section('いまの 動き', [
           ['ようす', focus.state==='BLOCKED'?({time:focus.blockReason?.speechToken?'話している':'時間を待っている',condition:'そうなるまで 待っている',question:'答えを待っている',waitGroup:'ほかの動きを待っている',glide:'時間を かけて 動いている'}[focus.blockReason?.kind]||'終わるのを待っている'):({READY:'じゅんばんを 待っている',RUNNING:'動いている',DONE:'終わった',PAUSED:'いったん 止まっているよ',ERROR:'直すところがある',CANCELLED:'止めた'}[focus.state]||'動いている')],
-          ['きっかけ', `${targetById(focus.targetId)?.name||'作品'} / ${runtimeEventText(focus.eventType)}`],
+          ['きっかけ', `${targetById(focus.targetId)?.name||'作品'} / ${runtimeEventText(focus.eventType, focus.scriptId ? 'script:' + focus.scriptId : null)}`],
         ]);
         for (const f of focus.callFrames)
           section('てじゅん ' + f.name, [
@@ -4487,7 +4495,7 @@
               : null;
       const label = def
         ? `${parts[0] === 'action' ? 'てじゅん' : '答えを もとめる'} ${def.name}`
-        : `${targetById(loc.targetId)?.name || loc.targetId} / ${runtimeEventText(loc.event)}`;
+        : `${targetById(loc.targetId)?.name || loc.targetId} / ${runtimeEventText(loc.event, scriptKey)}`;
       $('#execLocation').textContent = `いま 動いている 文：${label} / ${loc.line}行`;
       if (scheduler?.paused) {
         hideSourceOverview();
@@ -4645,6 +4653,10 @@
         showEditorFailure(mainEditor, err);
       }
     }
+    // The heading of a body made a 名人 text: the part is written as its subject (and, for ふれたとき, as the topic).
+    function meijinHeadingSource(heading, name) {
+      return sentenceHeadingSource({ ...heading, actorRef: { kind: 'named', name } }) + (heading.event === 'touchStart' ? nameSource(name) + 'は、' : '');
+    }
     function startMeijin() {
       if (modelLocked() || currentIsMeijin()) return;
       // A body with 名人 forms in it does not read as an ordinary body, so it stays a draft in the code editor (S317
@@ -4658,7 +4670,7 @@
         // A body the common grammar does not read may hold 名人 forms (the check says so, S317): it is taken when it
         // reads as a 名人 text under a heading with its owner's name.
         if (!parsed.ast) {
-          const headed = owner?.name ? sentenceHeadingSource({ event: script?.event ?? currentEvent, actorRef: { kind: 'named', name: owner.name }, filter: script?.filter ?? null }) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n') : null;
+          const headed = owner?.name ? meijinHeadingSource({ event: script?.event ?? currentEvent, actorRef: { kind: 'named', name: owner.name }, filter: script?.filter ?? null }, owner.name) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n') : null;
           const without = cloneDesignProject(project);
           without.scripts = without.scripts.filter(s => s.id !== script?.id);
           const errorsOf = p => { try { return compileProject(p).errors.length; } catch (error) { if (!(error instanceof AkariError)) throw error; return Infinity; } }, before = errorsOf(without);
@@ -4669,17 +4681,18 @@
           source = meijin;
         } else {
         const headings = [parsed.ast, ...(parsed.ast.units || [])].map(unit => unit.heading).filter(Boolean);
-        // A heading whose subject is 自分 (written, or not written) is written with the owner's name.
+        // A heading whose subject is 自分 (written, or not written) is written with the owner's name. A touch heading names
+        // the toucher as the topic too (犬が「星」にふれたとき、犬は、): in 名人 text the sentences under it name who acts.
         const lines = source.split('\n');
-        for (const unit of [parsed.ast, ...(parsed.ast.units || [])].filter(u => u.heading?.actorRef?.kind === 'self').sort((a, b) => b.sourceSpan.startLine - a.sourceSpan.startLine)) {
-          const at = unit.sourceSpan.startLine - 1, first = unit.body?.[0]?.sourceSpan, head = sentenceHeadingSource({ ...unit.heading, actorRef: { kind: 'named', name: owner.name } });
+        for (const unit of [parsed.ast, ...(parsed.ast.units || [])].filter(u => u.heading?.actorRef?.kind === 'self' || u.heading?.event === 'touchStart').sort((a, b) => b.sourceSpan.startLine - a.sourceSpan.startLine)) {
+          const at = unit.sourceSpan.startLine - 1, first = unit.body?.[0]?.sourceSpan, head = meijinHeadingSource(unit.heading, unit.heading.actorRef?.kind === 'named' ? unit.heading.actorRef.name : owner.name);
           lines[at] = first?.startLine === unit.sourceSpan.startLine ? head + lines[at].slice(first.startColumn - 1) : head;
         }
         source = lines.join('\n');
         // The body's owner is written out, because a 名人 script belongs to no part.
         if (!headings.length) {
           const heading = { event: script?.event ?? currentEvent, actorRef: { kind: 'named', name: owner.name }, filter: script?.filter ?? null };
-          source = sentenceHeadingSource(heading) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n');
+          source = meijinHeadingSource(heading, owner.name) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n');
         }
         }
       }
@@ -6449,12 +6462,12 @@
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.components.map((x) => x.name));
         let name = fileStemCandidate(file, names);
-        if (['マウス', '端'].includes(name)) {
+        if (name === 'マウス' || isEdgeTarget(name)) {
           let n = 2,
             base = name;
           do {
             name = `${base}_${n++}`;
-          } while (names.has(name) || ['マウス', '端'].includes(name));
+          } while (names.has(name) || name === 'マウス' || isEdgeTarget(name));
         }
         validateResourceName(name, '部品の名前');
         const next = cloneDesignProject(project),
@@ -6734,7 +6747,7 @@
       try {
         if (project.scripts.length >= LIMITS.scripts) throw new AkariError('F504', '本文が いっぱいで、もう ふやせません。いらない 本文を けしてください');
         const next = cloneDesignProject(project), id = ensureUniqueId('script');
-        next.scripts.push(selectedId === MEIJIN_OWNER ? { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: '' } : { id, targetId: selectedId, event: currentEvent, source: '' });
+        next.scripts.push(selectedId === MEIJIN_OWNER ? { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: '' } : { id, targetId: selectedId, event: currentEvent, source: '', ...newBodyFilter(currentEvent) });
         validateDesignProject(next);
         clearTimeout(historyTimer); pushHistoryNow();
         project = next; selectedScriptId = id;

@@ -45,6 +45,9 @@
     COLOR_NAMES,
     COLOR_LABELS,
     EVENT_LABELS,
+    EDGE_TARGETS,
+    isEdgeTarget,
+    eventText,
     BUILTIN_META,
     AkariError,
     ScriptSignal,
@@ -117,18 +120,19 @@
   // 名人: scripts that belong to no part. In memory they carry this pseudo owner so the editor can select them.
   const MEIJIN_OWNER = 'meijin';
   const isMeijinScript = script => script?.mode === 'meijin';
+  // ふれたとき (touchStart) belongs to every part; the stage touches nothing.
   const EVENT_BY_TYPE = {
     stage: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    label: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    button: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    box: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    input: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'valueChanged'],
-    sprite: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'cloneStart'],
+    label: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'touchStart'],
+    button: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'touchStart'],
+    box: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'touchStart'],
+    input: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'valueChanged', 'touchStart'],
+    sprite: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'cloneStart', 'touchStart'],
   };
 
-  // 名人のできごと: written only as headings of a 名人 script (ふれたとき for a part, the others for the script itself).
-  const MEIJIN_EVENTS = Object.freeze(['touchStart', 'conditionTrue', 'interval']);
-  const meijinEventOwner = (event, type) => event === 'touchStart' ? !!type && type !== 'stage' : MEIJIN_EVENTS.includes(event) && type === 'stage';
+  // 名人のできごと: written only as headings of a 名人 script, for the script itself (〜になったとき, 〜秒ごとに).
+  const MEIJIN_EVENTS = Object.freeze(['conditionTrue', 'interval']);
+  const meijinEventOwner = (event, type) => MEIJIN_EVENTS.includes(event) && type === 'stage';
 
   const COMMAND_CATALOG = Object.freeze(
     [
@@ -503,6 +507,12 @@
         kind: 'StopCommand',
         op: 'OTHERS',
         source: 'ほかの動きを全部止める',
+      },
+      {
+        id: 'StopCommand:OWN_OTHERS',
+        kind: 'StopCommand',
+        op: 'OWN_OTHERS',
+        source: '自分のほかの動きを止める',
       },
       {
         id: 'StopCommand:ALL',

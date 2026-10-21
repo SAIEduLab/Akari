@@ -123,7 +123,7 @@
           s = `${formatExpressionCore(n.arg, PREC.POST)}キーがおされている`;
         else if (n.sensor === 'TOUCHING_COLOR')
           s = `${formatExpressionCore(n.arg, PREC.POST)}の色にふれている`;
-        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && n.arg.value === '端' ? '画面のはし' : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
+        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && isEdgeTarget(n.arg.value) ? EDGE_TARGETS[n.arg.value] : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
         p = PREC.POST;
         break;
       }

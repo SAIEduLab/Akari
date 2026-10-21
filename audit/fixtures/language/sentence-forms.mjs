@@ -63,9 +63,9 @@ const predicateRows=[
     forms:{plain:'押されている',ifYes:'押されていれば',ifNo:'押されていなければ',whileYes:'押されているあいだ',untilYes:'押されるまで',andYes:'押されていて',andNo:'押されていなくて',plainNo:'押されていない'}},
   {plain:'おされている',operand:'「空白」キーが',yes:sensor('KEY_DOWN',str('空白')),
     forms:{plain:'おされている',ifYes:'おされていれば',ifNo:'おされていなければ',whileYes:'おされているあいだ',untilYes:'おされるまで',andYes:'おされていて',andNo:'おされていなくて',plainNo:'おされていない'}},
-  {plain:'ふれている',operand:'端に',yes:sensor('TOUCHING',str('端')),
+  {plain:'ふれている',operand:'画面の端に',yes:sensor('TOUCHING',str('端')),
     forms:{plain:'ふれている',ifYes:'ふれていれば',ifNo:'ふれていなければ',whileYes:'ふれているあいだ',untilYes:'ふれるまで',andYes:'ふれていて',andNo:'ふれていなくて',plainNo:'ふれていない'}},
-  {plain:'触れている',operand:'端に',yes:sensor('TOUCHING',str('端')),
+  {plain:'触れている',operand:'画面の端に',yes:sensor('TOUCHING',str('端')),
     forms:{plain:'触れている',ifYes:'触れていれば',ifNo:'触れていなければ',whileYes:'触れているあいだ',untilYes:'触れるまで',andYes:'触れていて',andNo:'触れていなくて',plainNo:'触れていない'}},
   {plain:'入っている',operand:'名前一覧に「あかり」が',yes:contains(names,str('あかり')),
     forms:{plain:'入っている',ifYes:'入っていれば',ifNo:'入っていなければ',whileYes:'入っているあいだ',untilYes:'入るまで',andYes:'入っていて',andNo:'入っていなくて',plainNo:'入っていない'}},
@@ -282,9 +282,9 @@ export const sentenceFormCases=[
   // ── Fixed sentences ──
   {
     id:'SF-control-sentences',
-    source:'何もしない\nこの実行を止める\nほかの実行をすべて止める\n作品全体を止める',
-    expected:script([nothing(),statement('StopCommand',{op:'THIS'}),statement('StopCommand',{op:'OTHERS'}),statement('StopCommand',{op:'ALL'})]),
-    claims:{'sentence:NoOperation':'何もしない','sentence:StopCommand:THIS':'この実行を止める','sentence:StopCommand:OTHERS':'ほかの実行をすべて止める','sentence:StopCommand:ALL':'作品全体を止める'},
+    source:'何もしない\nこの実行を止める\nほかの実行をすべて止める\n自分のほかの動きを止める\n作品全体を止める',
+    expected:script([nothing(),statement('StopCommand',{op:'THIS'}),statement('StopCommand',{op:'OTHERS'}),statement('StopCommand',{op:'OWN_OTHERS'}),statement('StopCommand',{op:'ALL'})]),
+    claims:{'sentence:NoOperation':'何もしない','sentence:StopCommand:THIS':'この実行を止める','sentence:StopCommand:OTHERS':'ほかの実行をすべて止める','sentence:StopCommand:OWN_OTHERS':'自分のほかの動きを止める','sentence:StopCommand:ALL':'作品全体を止める'},
   },
   {
     id:'SF-looks-sentences',
@@ -652,10 +652,10 @@ export const sentenceFormCases=[
   // ── 「〜なくなるまで」 ──
   {
     id:'SF-until-negative',
-    source:'「空白」キーが押されなくなるまで待つ\n「空白」キーがおされなくなるまで待つ\n端にふれなくなるまで待つ\n端に触れなくなるまで待つ\n名前一覧に「あかり」が入らなくなるまで待つ',
+    source:'「空白」キーが押されなくなるまで待つ\n「空白」キーがおされなくなるまで待つ\n画面の端にふれなくなるまで待つ\n画面の端に触れなくなるまで待つ\n名前一覧に「あかり」が入らなくなるまで待つ',
     expected:script([statement('WaitUntil',{condition:not(sensor('KEY_DOWN',str('空白')))}),statement('WaitUntil',{condition:not(sensor('KEY_DOWN',str('空白')))}),statement('WaitUntil',{condition:not(sensor('TOUCHING',str('端')))}),
       statement('WaitUntil',{condition:not(sensor('TOUCHING',str('端')))}),statement('WaitUntil',{condition:not(contains(names,str('あかり')))})]),
-    claims:{'until-negative:押されている':'「空白」キーが押されなくなるまで','until-negative:おされている':'「空白」キーがおされなくなるまで','until-negative:ふれている':'端にふれなくなるまで','until-negative:触れている':'端に触れなくなるまで','until-negative:入っている':'名前一覧に「あかり」が入らなくなるまで'},
+    claims:{'until-negative:押されている':'「空白」キーが押されなくなるまで','until-negative:おされている':'「空白」キーがおされなくなるまで','until-negative:ふれている':'画面の端にふれなくなるまで','until-negative:触れている':'画面の端に触れなくなるまで','until-negative:入っている':'名前一覧に「あかり」が入らなくなるまで'},
   },
 
   // ── 旧基準表記の語尾 (基準機能を追跡する旧表記一覧) ──

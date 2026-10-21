@@ -250,7 +250,7 @@ async function runLimitBoundaryTests() {
       const p = base();
       p.components = Array.from({ length: 201 }, (_, i) => component(i));
       const slots = p.components.flatMap((c) =>
-        EVENT_BY_TYPE[c.type].map((event) => ({ targetId: c.id, event, source: '' })),
+        EVENT_BY_TYPE[c.type].map((event) => ({ targetId: c.id, event, source: '', ...(event === 'touchStart' ? { filter: { target: '端' } } : {}) })),
       );
       p.scripts = slots.slice(0, n);
       ok(p.scripts.length === n);

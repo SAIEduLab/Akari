@@ -4138,6 +4138,12 @@ body[data-editor-mode="blocks"] .prop-name {
   position: relative;
   z-index: 1;
 }
+/* A hat title (たくどん・「だんご」に ふれたとき) breaks only at its spaces, never inside a word. */
+.blockui-event-hat > strong,
+.blockui-world .blockui-script > .blockui-node-head > .blockui-node-title {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 .blockui-hat-owner {
   background: #fffc;
   border: 1px solid #0002;
@@ -7287,6 +7293,12 @@ function createAkariExtensionHost(options) {
       conditionTrue: 'そう なったとき',
       interval: '〜秒ごとに',
     };
+    // The touch targets that are no part: the whole stage edge (端) and its four sides, by the words code writes.
+    const EDGE_TARGETS = Object.freeze({ 端: '画面のはし', '端:上': '画面の上のはし', '端:下': '画面の下のはし', '端:右': '画面の右のはし', '端:左': '画面の左のはし' });
+    const isEdgeTarget = (target) => typeof target === 'string' && Object.hasOwn(EDGE_TARGETS, target);
+    // A body is named by its event; a touch body also by what it touches (「星」に ふれたとき, 画面のはしに ふれたとき).
+    const eventText = (event, filter) => event === 'touchStart' && typeof filter?.target === 'string' && filter.target
+      ? (isEdgeTarget(filter.target) ? EDGE_TARGETS[filter.target] : '「' + filter.target + '」') + 'に ふれたとき' : EVENT_LABELS[event];
     const BUILTIN_META = new Map(BUILTIN_DEFINITIONS.map((x) => [x.name, x]));
     class AkariError extends Error {
       constructor(code, message, line = 0, column = 0, detail = '') {
@@ -8443,13 +8455,14 @@ function createAkariExtensionHost(options) {
         const a = this.requireActor({ runtimeId });
         if (!a.visible) return false;
         const aa = this.aabb(a);
-        if (target === '端')
-          return (
-            aa.left <= 0 ||
-            aa.bottom <= 0 ||
-            aa.right >= this.project.stage.width ||
-            aa.top >= this.project.stage.height
-          );
+        // One side of the screen (画面の下のはし: たて0 and below); 画面のはし is any of the four. A part outside the screen
+        // touches the side it went out of.
+        const W = this.project.stage.width, H = this.project.stage.height;
+        if (target === '端:下') return aa.bottom <= 0;
+        if (target === '端:上') return aa.top >= H;
+        if (target === '端:左') return aa.left <= 0;
+        if (target === '端:右') return aa.right >= W;
+        if (target === '端') return aa.left <= 0 || aa.bottom <= 0 || aa.right >= W || aa.top >= H;
         if (target === 'マウス')
           return (
             this.mouseAt.entered &&
@@ -9654,6 +9667,10 @@ function createAkariExtensionHost(options) {
       b.set(arr);
     }
 
+    // Loop pacing (EventScheduler.paceTurn): the loop frames whose turns are paced, and the statements that change the
+    // screen (moving and turning, looks, text and backdrop, the pen and stamps, speech).
+    const PACED_LOOP_FRAMES = new Set(['repeatCount', 'forever', 'foreach', 'while', 'until']);
+    const PACED_SCREEN_KINDS = new Set(['MotionCommand', 'LooksCommand', 'PenCommand', 'Say']);
     class EventScheduler {
       constructor(project, compiled, runtime, ui = {}) {
         this.project = project;
@@ -9885,8 +9902,9 @@ function createAkariExtensionHost(options) {
               targetId: item.targetId || item.ownerId || parts[1],
               event: item.event || parts[2], filter: item.filter };
           });
+        // A key or a signal is matched here; what a touch body touches is watched (pollWatches), not matched.
         return scripts.filter((s) => s.targetId === targetId && s.event === event &&
-          (s.filter == null || (typeof s.filter === 'object' ?
+          (s.filter == null || !['keyDown', 'message'].includes(event) || (typeof s.filter === 'object' ?
             (event === 'keyDown' ? s.filter.key : s.filter.message) : s.filter) ===
             (event === 'keyDown' ? eventContext.key : eventContext.message)));
       }
@@ -9955,7 +9973,8 @@ function createAkariExtensionHost(options) {
         }
         return out;
       }
-      // 名人のできごと: ふれたとき, 〜になったとき and 〜秒ごとに are watched on the scheduler's clock.
+      // ふれたとき (every part's bodies and 名人), 〜になったとき and 〜秒ごとに (名人) are watched on the scheduler's clock:
+      // after every sentence of every flow and at every こま.
       initializeWatches() {
         this.watches = [];
         for (const item of this.compiled.items || []) {
@@ -9986,9 +10005,12 @@ function createAkariExtensionHost(options) {
               if (value && !w.last.get(w.targetId)) this.spawnWatch(w, w.targetId);
               w.last.set(w.targetId, value);
             } else {
+              // ふれたとき starts when not touching becomes touching. The first look at a part (the run's start, a new
+              // copy) only records it: a part that already touches starts after it has left and touched again. Every copy
+              // is looked at on its own; a hidden part touches nothing, so showing it where it touches is a change.
               for (const a of [...this.runtime.actors.values()].filter(a => a.baseId === w.targetId)) {
                 const touching = this.runtime.touching(a.runtimeId, w.item.filter.target);
-                if (touching && !w.last.get(a.runtimeId)) this.spawnWatch(w, a.runtimeId);
+                if (touching && w.last.has(a.runtimeId) && !w.last.get(a.runtimeId)) this.spawnWatch(w, a.runtimeId);
                 w.last.set(a.runtimeId, touching);
               }
             }
@@ -10200,10 +10222,32 @@ function createAkariExtensionHost(options) {
         }
         task.subject = { runtimeId: this.runtime.resolveActorRef(node.actorRef, relative) };
       }
+      // A turn of a loop that changed the screen (a part moved, turned or changed its looks, text, pen or speech) and
+      // waited nowhere: the next turn starts at the next こま of the logical clock (1/60 s, the grid of the continuous
+      // rules), so the motion shows without a wait sentence. A turn that only calculates goes on at once. Each loop
+      // frame keeps its own turn's marks; a lane marks the loops of the flow it belongs to. Not while stepping.
+      paceTurn(task, top) {
+        if (top.visual && !top.waited && !top.yielded && !this.paused) {
+          top.yielded = true;
+          task.execStack.push({ type: 'frameYield', node: top.node });
+          return true;
+        }
+        top.visual = top.waited = top.yielded = false;
+        return false;
+      }
+      markTurn(task, mark) {
+        for (let t = task; t; t = t.laneParent)
+          for (const frame of t.execStack) if (PACED_LOOP_FRAMES.has(frame.type)) frame[mark] = true;
+      }
+      nextFrameTime() {
+        const grid = 1000 / 60, origin = this.continuousOrigin ?? 0, now = this.runtime.now();
+        return origin + (Math.floor((now - origin) / grid + 1e-9) + 1) * grid;
+      }
       normalizeStack(task) {
         let guard = 0;
         while (task.execStack.length && guard++ < 1000) {
           const top = task.execStack[task.execStack.length - 1];
+          if (top.type === 'frameYield') return top;
           if (top.type === 'seq') {
             if (top.index < top.nodes.length) return top;
             task.execStack.pop();
@@ -10218,6 +10262,7 @@ function createAkariExtensionHost(options) {
           }
           if (top.type === 'repeatCount') {
             if (top.remaining > 0) {
+              if (this.paceTurn(task, top)) return task.execStack.at(-1);
               top.remaining--;
               task.execStack.push({ type: 'seq', nodes: top.node.body, index: 0 });
               if (!top.node.body.some((n) => n.kind !== 'CommentLine'))
@@ -10228,6 +10273,7 @@ function createAkariExtensionHost(options) {
             continue;
           }
           if (top.type === 'forever') {
+            if (this.paceTurn(task, top)) return task.execStack.at(-1);
             task.execStack.push({ type: 'seq', nodes: top.node.body, index: 0 });
             if (!top.node.body.some((n) => n.kind !== 'CommentLine'))
               return { type: 'idle', node: top.node };
@@ -10235,6 +10281,7 @@ function createAkariExtensionHost(options) {
           }
           if (top.type === 'foreach') {
             if (top.index < top.values.length) {
+              if (this.paceTurn(task, top)) return task.execStack.at(-1);
               const value = deepCopy(top.values[top.index++]);
               task.execStack.push({
                 type: 'seq',
@@ -10249,7 +10296,7 @@ function createAkariExtensionHost(options) {
             task.execStack.pop();
             continue;
           }
-          if (top.type === 'while' || top.type === 'until') return top;
+          if (top.type === 'while' || top.type === 'until') return this.paceTurn(task, top) ? task.execStack.at(-1) : top;
           break;
         }
         if (guard >= 1000) throw new AkariError('R413', 'くり返しが 多すぎて 先に すすめません');
@@ -10259,6 +10306,7 @@ function createAkariExtensionHost(options) {
         const top = this.normalizeStack(task);
         if (!top) return null;
         if (top.type === 'idle') return { kind: 'idle', node: top.node };
+        if (top.type === 'frameYield') { task.execStack.pop(); return { kind: 'frameYield', node: top.node }; }
         if (top.type === 'seq') {
           while (top.index < top.nodes.length) {
             const n = top.nodes[top.index++];
@@ -10286,6 +10334,12 @@ function createAkariExtensionHost(options) {
           step = this.nextStep(task);
           if (!step) {
             this.finishTask(task, 'DONE');
+            return true;
+          }
+          // The pacing of a loop (paceTurn): the next turn waits for the next こま.
+          if (step.kind === 'frameYield') {
+            this.block(task, { kind: 'time', deadline: this.nextFrameTime(), frame: true });
+            this.recheckBlocked(force);
             return true;
           }
           this.selectSubject(task, step.node);
@@ -10374,6 +10428,7 @@ function createAkariExtensionHost(options) {
       }
       executePreparedNode(task, n, originalNode = n) {
         this.selectSubject(task, n);
+        if (PACED_SCREEN_KINDS.has(n.kind)) this.markTurn(task, 'visual');
         const ctx = this.context(task);
         switch (n.kind) {
           case 'ExtensionCommand': {
@@ -10695,10 +10750,13 @@ function createAkariExtensionHost(options) {
           this.enqueue(child);
         }
         if (!wg.pending.size) { this.waitGroups.delete(wg.id); return; }
-        this.block(task, { kind: 'waitGroup', waitGroupId: wg.id });
+        this.block(task, { kind: 'waitGroup', waitGroupId: wg.id, lanes: true });
         return { requeue: false };
       }
       block(task, reason) {
+        // A wait of the flow (a time, a condition, a glide, an answer, a sound, a signal's work) is a wait of every loop
+        // turn it is in. A frame of the pacing, a calculation step and the wait for the flow's own lanes are not.
+        if (!reason.frame && reason.kind !== 'calculation' && !reason.lanes) this.markTurn(task, 'waited');
         task.state = 'BLOCKED';
         task.blockReason = { runtimeId: task.subject?.runtimeId || task.runtimeId, ...reason };
         this.blocked.add(task);
@@ -11030,6 +11088,13 @@ function createAkariExtensionHost(options) {
           for (const t of this.tasks.values()) if (t !== task) this.cancelTask(t);
           return;
         }
+        // 自分のほかの動きを止める: the part's other bodies and continuous rules stop, and what other flows move it
+        // ends where it is; this body (with its lanes) goes on, and the other parts go on.
+        if (n.op === 'OWN_OTHERS') {
+          const root = task.laneRoot || task;
+          this.stopPartMotion(task.subject?.runtimeId || task.runtimeId, task, t => (t.laneRoot || t) === root);
+          return;
+        }
         if (n.op === 'ALL') {
           this.stop();
           this.ui.allStopped?.();
@@ -11045,14 +11110,14 @@ function createAkariExtensionHost(options) {
       // The part's own bodies and continuous rules stop. Where another flow moves the part (〜秒かけて動く, 〜まで動き続ける)
       // or the part carries out a procedure for it, that motion or procedure ends where the part is, and the flow goes on
       // with its next sentence. Speech and waits are not motions and go on.
-      stopPartMotion(runtimeId, task) {
+      stopPartMotion(runtimeId, task, keep = null) {
         for (const [key, control] of this.continuous) {
-          if (control.runtimeId !== runtimeId) continue;
+          if (control.runtimeId !== runtimeId || (control.temporary && keep?.(control.task))) continue;
           if (control.temporary) this.continuous.delete(key);
           else if (control.state === 'ACTIVE') control.state = 'CANCELLED_UNTIL_FALSE';
         }
         for (const t of [...this.tasks.values()]) {
-          if (t === task) continue;
+          if (t === task || keep?.(t)) continue;
           if (t.runtimeId === runtimeId) { this.cancelTask(t); continue; }
           const at = t.callFrames.findIndex(frame => frame.runtimeId === runtimeId), br = t.blockReason;
           if (at >= 0) {
@@ -11484,7 +11549,7 @@ function createAkariExtensionHost(options) {
       for (const item of data.program) {
         const parts = typeof item.key === 'string' ? item.key.split(':') : [];
         const type = item.ownerId === 'stage' ? 'stage' : p.components.find(c => c.id === item.ownerId)?.type;
-        // 名人のできごと: ふれたとき for a part; 〜になったとき and 〜秒ごとに for a 名人 script (the stage).
+        // ふれたとき for a part; 〜になったとき and 〜秒ごとに for a 名人 script (the stage).
         const events = ['start', 'click', 'keyDown', 'message', 'backdropChanged',
           ...(type === 'input' ? ['valueChanged'] : []), ...(type === 'sprite' ? ['cloneStart'] : []),
           ...(type && type !== 'stage' ? ['touchStart'] : []), ...(type === 'stage' ? ['conditionTrue', 'interval'] : [])];
@@ -11502,7 +11567,7 @@ function createAkariExtensionHost(options) {
         )
           fail('動きの 中身が こわれています');
         const watched = item.event || parts[2];
-        if ((watched === 'touchStart' && !p.components.some(c => c.name === item.filter?.target)) ||
+        if ((watched === 'touchStart' && !isEdgeTarget(item.filter?.target) && !p.components.some(c => c.name === item.filter?.target)) ||
           (watched === 'conditionTrue' && typeof item.ast.heading?.condition?.kind !== 'string') ||
           (watched === 'interval' && typeof item.ast.heading?.seconds?.kind !== 'string'))
           fail('きっかけの 中身が 正しくありません');
@@ -11639,6 +11704,9 @@ function createAkariExtensionHost(options) {
       COLOR_NAMES,
       COLOR_LABELS,
       EVENT_LABELS,
+      EDGE_TARGETS,
+      isEdgeTarget,
+      eventText,
       BUILTIN_META,
       AkariError,
       ScriptSignal,
@@ -11742,6 +11810,9 @@ function createAkariExtensionHost(options) {
     COLOR_NAMES,
     COLOR_LABELS,
     EVENT_LABELS,
+    EDGE_TARGETS,
+    isEdgeTarget,
+    eventText,
     BUILTIN_META,
     AkariError,
     ScriptSignal,
@@ -11814,18 +11885,19 @@ function createAkariExtensionHost(options) {
   // 名人: scripts that belong to no part. In memory they carry this pseudo owner so the editor can select them.
   const MEIJIN_OWNER = 'meijin';
   const isMeijinScript = script => script?.mode === 'meijin';
+  // ふれたとき (touchStart) belongs to every part; the stage touches nothing.
   const EVENT_BY_TYPE = {
     stage: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    label: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    button: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    box: ['start', 'click', 'keyDown', 'message', 'backdropChanged'],
-    input: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'valueChanged'],
-    sprite: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'cloneStart'],
+    label: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'touchStart'],
+    button: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'touchStart'],
+    box: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'touchStart'],
+    input: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'valueChanged', 'touchStart'],
+    sprite: ['start', 'click', 'keyDown', 'message', 'backdropChanged', 'cloneStart', 'touchStart'],
   };
 
-  // 名人のできごと: written only as headings of a 名人 script (ふれたとき for a part, the others for the script itself).
-  const MEIJIN_EVENTS = Object.freeze(['touchStart', 'conditionTrue', 'interval']);
-  const meijinEventOwner = (event, type) => event === 'touchStart' ? !!type && type !== 'stage' : MEIJIN_EVENTS.includes(event) && type === 'stage';
+  // 名人のできごと: written only as headings of a 名人 script, for the script itself (〜になったとき, 〜秒ごとに).
+  const MEIJIN_EVENTS = Object.freeze(['conditionTrue', 'interval']);
+  const meijinEventOwner = (event, type) => MEIJIN_EVENTS.includes(event) && type === 'stage';
 
   const COMMAND_CATALOG = Object.freeze(
     [
@@ -12200,6 +12272,12 @@ function createAkariExtensionHost(options) {
         kind: 'StopCommand',
         op: 'OTHERS',
         source: 'ほかの動きを全部止める',
+      },
+      {
+        id: 'StopCommand:OWN_OTHERS',
+        kind: 'StopCommand',
+        op: 'OWN_OTHERS',
+        source: '自分のほかの動きを止める',
       },
       {
         id: 'StopCommand:ALL',
@@ -16004,7 +16082,8 @@ function createAkariExtensionHost(options) {
       if (typeof c.name !== 'string' || !c.name || cpLen(c.name) > 80 || compNames.has(c.name))
         throw new AkariError('F503', '部品の 名前が 正しくないか、ほかの 部品と 同じです');
       validateResourceName(c.name, '部品の 名前');
-      if (['マウス', '端'].includes(c.name))
+      // マウス and the stage edges (端, 端:上 …) are touch targets that are no part.
+      if (c.name === 'マウス' || isEdgeTarget(c.name))
         throw new AkariError('F503', '部品の 名前に「マウス」「端（はし）」は 使えません。ちがう 名前に してください');
       compNames.add(c.name);
       for (const k of ['x', 'y', 'w', 'h', 'fontSize', 'direction', 'scalePercent'])
@@ -16121,11 +16200,14 @@ function createAkariExtensionHost(options) {
       const key = x.id || `${x.targetId}::${x.event}`;
       if (sk.has(key)) throw new AkariError('F503', '同じ きっかけの 動きが 2つ いじょう あります');
       sk.add(key);
+      // A touch body names what it touches (filter.target: a part's name, or 端 and its sides).
+      if (x.event === 'touchStart' && (x.filter == null || !x.filter.target))
+        throw new AkariError('F503', 'ふれたときの 本文に、ふれる 相手が ありません');
       if (x.filter !== undefined && x.filter !== null) {
-        const filterKey = x.event === 'keyDown' ? 'key' : x.event === 'message' ? 'message' : null;
+        const filterKey = x.event === 'keyDown' ? 'key' : x.event === 'message' ? 'message' : x.event === 'touchStart' ? 'target' : null;
         if (!filterKey || !exactKeys(x.filter, [filterKey]) ||
           typeof x.filter[filterKey] !== 'string' || cpLen(x.filter[filterKey]) > LIMITS.stringChars)
-          throw new AkariError('F503', 'きっかけの きまり（どの キーか、どの 合図か）が 正しくありません');
+          throw new AkariError('F503', 'きっかけの きまり（どの キーか、どの 合図か、なにに ふれるか）が 正しくありません');
       }
       if (typeof x.source !== 'string' || cpLen(x.source) > LIMITS.sourceEach)
         throw new AkariError('F504', '本文の 文字が 多すぎます。文を へらしてください');
@@ -16824,8 +16906,17 @@ function createAkariExtensionHost(options) {
       if (EXTENSION_HOST.operations('events').length && this.starts('拡張の値') && !extensionValueIsData(this.symbols, this.ctx)) {
         this.i += '拡張の値'.length; return exprNode('SensorRead', { sensor: '拡張の値' });
       }
-      // 「画面のはし」 and 「画面の端」 name the stage edge, the same target as the bare word 端.
-      // A bare はし stays a name: a part may be called はし (橋, 箸).
+      // 画面の上のはし・画面の下のはし・画面の右のはし・画面の左のはし name one side of the screen (端:上 …).
+      const side = /^画面の(上|下|右|左)の(?:はし|端)/.exec(this.text.slice(this.i));
+      if (side && nameBoundary(this.text, this.i + side[0].length)) {
+        this.i += side[0].length;
+        return exprNode('StringLiteral', { value: '端:' + side[1] });
+      }
+      // 画面の左下のはし is the corner a place is measured from, not an edge to touch.
+      if (/^画面の(?:左下|右下|左上|右上)の(?:はし|端)に(?:ふれ|触れ)/.test(this.text.slice(this.i)))
+        this.err('P205', '「画面の左下のはし」は、ばしょを 決める ときの もとに する 角です。ふれるのは「画面のはし」か、「画面の下のはし」「画面の左のはし」のような 一つの はしです');
+      // 「画面のはし」 and 「画面の端」 name the stage edge (端). A bare はし or 端 stays a name: a part may be called はし
+      // (橋, 箸); without one, the sentence names 画面のはし (diagnoseSentenceIntent).
       const edgeWord = ['画面のはし', '画面の端'].find((w) => this.starts(w) && nameBoundary(this.text, this.i + w.length));
       if (edgeWord) {
         this.i += edgeWord.length;
@@ -16874,6 +16965,9 @@ function createAkariExtensionHost(options) {
         });
       }
       if (!token.exact) {
+        // A bare 端 before にふれ… names no edge (C-10): the edge is written 画面のはし.
+        if (token.name === '端' && /^に(?:ふれ|触れ)/.test(this.text.slice(this.i)))
+          this.err('P205', '画面の はしの ことなら、「画面のはし」と 書きます');
         if (WORD_LITERALS.includes(token.name))
           return exprNode('StringLiteral', { value: token.name });
       }
@@ -17088,9 +17182,8 @@ function createAkariExtensionHost(options) {
       ['キーをおさなくなるまで', 'キーがおされなくなるまで'], ['キーを押さなくなるまで', 'キーが押されなくなるまで'],
       ['キーをおすまで', 'キーがおされるまで'], ['キーを押すまで', 'キーが押されるまで'], ['キーをおしたら', 'キーがおされたら'], ['キーを押したら', 'キーが押されたら']])
       text = word(text, from, to);
-    // とおなじ (かな), さわる・当たる (ふれる)
-    for (const [from, to] of [['とおなじ', 'と同じ'], ['にさわっ', 'にふれ'], ['にさわる', 'にふれる'], ['にさわらな', 'にふれな'], ['にさわれ', 'にふれれ'],
-      ['に当たっ', 'にふれ'], ['にあたっ', 'にふれ'], ['に当たる', 'にふれる'], ['にあたる', 'にふれる'], ['に当たらな', 'にふれな'], ['にあたらな', 'にふれな']]) text = word(text, from, to);
+    // とおなじ (かな). さわる・当たる・ぶつかる are not read as ふれる (C-08: the check names ふれる).
+    text = word(text, 'とおなじ', 'と同じ');
     // すがたが3番 is すがたの番号が3; すがたが「丸」 is すがたの名前が「丸」
     text = text.replace(/(すがた|姿|はいけい|背景)が([0-9０-９]+)番目?/, '$1の番号が$2').replace(/(すがた|姿|はいけい|背景)が(?=「)/, '$1の名前が');
     // 未満／より多い／より少ない (again after たら: 10未満だったら)
@@ -17106,8 +17199,9 @@ function createAkariExtensionHost(options) {
       for (const [from, to] of [['があったら', 'が入っていれば'], ['がなかったら', 'が入っていなければ'], ['があれば', 'が入っていれば'], ['がなければ', 'が入っていなければ'], ['があるなら', 'が入っていれば'], ['がないなら', 'が入っていなければ'],
         ['があるあいだ', 'が入っているあいだ'], ['がないあいだ', 'が入っていないあいだ'], ['がある', 'が入っている'], ['がない', 'が入っていない']])
         if (surfaceMask(text).endsWith(from)) { text = ending(text, from, to); break; }
-    // たら (only after もし, form if)
-    if (form === 'if')
+    // たら (only after もし, form if). A touch is not read with たら (decisions §3): もし「星」にふれたら could mean each time
+    // or waiting, and ふれていたら・ふれていなかったら are written ふれていれば・ふれていなければ (diagnoseSentenceIntent).
+    if (form === 'if' && !/(?:ふれ|触れ)(?:ていたら|ていなかったら|たら)$/.test(surfaceMask(text)))
       for (const [from, to] of [['でなかったら', 'でなければ'], ['くなかったら', 'くなければ'], ['ていなかったら', 'ていなければ'], ['わなかったら', 'わなければ'],
         ['だったら', 'なら'], ['かったら', 'ければ'], ['ていたら', 'ていれば'], ['ちがったら', 'ちがえば'], ['違ったら', '違えば'],
         ['されたら', 'されていれば'], ['れたら', 'れていれば'], ['入ったら', '入っていれば']])
@@ -17552,7 +17646,7 @@ function createAkariExtensionHost(options) {
       case 'LocalListDeclaration':return `この中だけで使うリスト【${n.name}】を空で作る`;
       case 'ReturnStatement':return `${f(n.value)}を答えとして返す`;
       case 'UserActionCall':return (n.argumentNames?n.args.map((value,i)=>`${nameSource(n.argumentNames[i])}を${f(value)}`).join('、')+'として、':n.args.length===1&&['NumberLiteral','StringLiteral','VariableRead'].includes(n.args[0].kind)&&!(n.args[0].kind==='NumberLiteral'&&n.args[0].value<0)?f(n.args[0])+'をわたして、':n.args.length?'（'+n.args.map(value=>f(value)).join('、')+'）をわたして、':'')+`【${n.name}】という手順を行う`;
-      case 'StopCommand':return {THIS:'この動きを止める',OTHERS:'ほかの動きを全部止める',ALL:'作品を全部止める'}[n.op];
+      case 'StopCommand':return {THIS:'この動きを止める',OTHERS:'ほかの動きを全部止める',OWN_OTHERS:'自分のほかの動きを止める',ALL:'作品を全部止める'}[n.op];
       case 'MotionCommand':case 'LooksCommand':case 'PenCommand':case 'SoundCommand':case 'CloneCommand':return formatCommand(n);
       case 'IfStatement':return 'もし'+formatCondition(n.condition,'if')+'、';
       case 'RepeatCount':return sentenceQuantitySource(n.count,'回')+'くり返す';
@@ -17576,12 +17670,14 @@ function createAkariExtensionHost(options) {
     ['Continue', /^この回の残りをとばして、次の回へ進む$/d, 'Continue'],
     ['StopCommand:THIS', /^(?:この実行|この動き)を止める$/d, 'StopCommand', 'THIS'],
     ['StopCommand:OTHERS', /^ほかの(?:実行|動き)を(?:全部|ぜんぶ|すべて)止める$/d, 'StopCommand', 'OTHERS'],
+    // 自分のほかの動きを止める: only the part's own other bodies and rules (F-29); 全部 written in it says the same.
+    ['StopCommand:OWN_OTHERS', /^自分のほかの(?:実行|動き)を(?:全部|ぜんぶ|すべて)?止める$/d, 'StopCommand', 'OWN_OTHERS'],
     ['StopCommand:ALL', /^作品(?:を(?:全部|ぜんぶ|すべて)|(?:全体|全部|ぜんぶ)を)止める$/d, 'StopCommand', 'ALL'],
     ['LooksCommand:HIDE', /^(?:姿|すがた)を(?:かくす|隠す)$/d, 'LooksCommand', 'HIDE'],
     ['LooksCommand:SHOW', /^(?:姿|すがた)を(?:見せる|みせる)$/d, 'LooksCommand', 'SHOW'],
     ['LooksCommand:FRONT', /^いちばん手前へ出る$/d, 'LooksCommand', 'FRONT'],
     ['LooksCommand:BACK', /^いちばん(?:おく|奥)へ下がる$/d, 'LooksCommand', 'BACK'],
-    ['MotionCommand:BOUNCE', /^(?:画面の(?:はし|端)|端)に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/d, 'MotionCommand', 'BOUNCE'],
+    ['MotionCommand:BOUNCE', /^画面の(?:はし|端)に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/d, 'MotionCommand', 'BOUNCE'],
     ['PenCommand:DOWN', /^ペンを下ろす$/d, 'PenCommand', 'DOWN'],
     ['PenCommand:UP', /^ペンを上げる$/d, 'PenCommand', 'UP'],
     ['PenCommand:STAMP', /^(?:今の(?:姿|すがた)の)?スタンプを(?:押|お)す$/d, 'PenCommand', 'STAMP'],
@@ -17665,6 +17761,8 @@ function createAkariExtensionHost(options) {
     assign:/に(?:する|変える|かえる)$/,
   });
   const STATEMENT_EXPLICIT_ACTORS = new WeakSet();
+  // 「これを6回くり返す」 repeats the one sentence before it (the check says so when more come before it).
+  const REPEAT_PREVIOUS = new WeakSet();
   const STATEMENT_LINE = new WeakMap();
   // 待つ with a subject (だんごは0.2秒待つ) holds only that part; without one (0.2秒待つ, みんなは…) the whole flow
   // waits ({kind:'all'}). A wait does not take the subject of the line before it, only of its own sentence.
@@ -18172,9 +18270,95 @@ function createAkariExtensionHost(options) {
     const text = order.map(i => code[i]).join(''), positions = line.mapped?.positions ? order.map(i => line.mapped.positions[i]) : [];
     return { ...line, code: text, mapped: { text, positions } };
   }
+  // ふれたとき's partner as written: a part (in 「 」, 【 】 or bare), 画面のはし (端), or one side of it (端:下 …). A
+  // bare word that is no part reads as a part's name too (the check names it), unless it is no name at all (null).
+  // What can never be touched by the event says so: マウス, a colour, a corner, a bare はし or 端.
+  const TOUCH_MOUSE_MESSAGE='「ふれたとき」の 相手は、部品か 画面のはしです。マウスの やじるしが 重なったかは、「もし「マウス」にふれていれば、」で しらべます';
+  const TOUCH_CORNER_MESSAGE='「画面の左下のはし」は、ばしょを 決める ときの もとに する 角です。ふれるのは「画面のはし」か、「画面の下のはし」「画面の左のはし」のような 一つの はしです';
+  function touchTarget(text,symbols){
+    const t=text.trim(),parts=symbols?.project?.components||[];
+    if(/^画面の(?:はし|端)$/.test(t))return '端';
+    const side=/^画面の(上|下|右|左)の(?:はし|端)$/.exec(t);if(side)return '端:'+side[1];
+    if(/^画面の(?:左下|右下|左上|右上)の(?:はし|端)$/.test(t))throw new AkariError('P205',TOUCH_CORNER_MESSAGE);
+    const quoted=/^「([^「」]+)」$/.exec(t)||/^【([^【】]+)】$/.exec(t),name=quoted?quoted[1]:t;
+    if(name==='マウス')throw new AkariError('P205',TOUCH_MOUSE_MESSAGE);
+    if(/^「[^「」]+」の色$/.test(t)||(!parts.some(c=>c.name===name)&&/(?:の色|色)$/.test(name)))
+      throw new AkariError('P205','「ふれたとき」の 相手は、部品か 画面のはしです。色に ふれたかは、「もし「赤」の色にふれていれば、」で しらべます');
+    if(quoted||parts.some(c=>c.name===name))return name;
+    if((name==='はし'||name==='端'))throw new AkariError('P205','画面の はしの ことなら、「画面のはし」と 書きます。れい：画面のはしにふれたとき、');
+    // A bare name that is no part: the check says it is not found (as for 「 」). Words that are no name are not read.
+    try{validateName(name);}catch(error){if(error instanceof AkariError)return null;throw error;}
+    return /[、。（）［］「」【】]/.test(name)?null:name;
+  }
+  // The words before にふれ… : [the part that touches (written with が), what it touches]. The toucher is 自分, a name in
+  // 【 】 or a part; another word before が is the toucher too when what follows is a part or an edge (the check names a
+  // toucher that is not found). Otherwise the whole is what is touched.
+  function touchPhrase(head,symbols){
+    const mask=surfaceMask(head.text),parts=symbols?.project?.components||[];
+    for(let i=mask.indexOf('が',1);i>0;i=mask.indexOf('が',i+1)){
+      const who=head.text.slice(0,i),rest=head.text.slice(i+1),bare=who.replace(/^【(.*)】$/,'$1');
+      const sure=/^(?:「[^「」]+」|【[^【】]+】|画面の.+)$/.test(rest)||parts.some(c=>c.name===rest);
+      if(!sure||/[、。「」]/.test(who))continue;
+      if(who==='自分'||/^【[^【】]+】$/.test(who)||parts.some(c=>c.name===bare)||(()=>{try{validateName(bare);return true;}catch(error){if(error instanceof AkariError)return false;throw error;}})()){
+        const target=touchTarget(rest,symbols);
+        if(target!==null)return {actor:{text:who,start:head.start,end:head.start+i},target,targetPart:{start:head.start+i+1,end:head.end}};
+      }
+    }
+    // ねこは星にふれたとき: inside 〜とき the part is written with が.
+    for(let i=mask.indexOf('は',1);i>0;i=mask.indexOf('は',i+1)){const who=head.text.slice(0,i);
+      if((who==='自分'||parts.some(c=>c.name===who))&&touchTarget(head.text.slice(i+1),symbols)!==null)
+        throw new AkariError('P205',`「〜とき」の 中では、だれのことかを「${who}が」と 書きます。れい：${who}が${touchShown(touchTarget(head.text.slice(i+1),symbols))}にふれたとき、`);}
+    const target=touchTarget(head.text,symbols);
+    return target===null?null:{actor:null,target,targetPart:{start:head.start,end:head.end}};
+  }
+  // The names of the work (parts, data, procedures' inputs): a word inside one of them is no word of あかり there.
+  function knownWords(symbols,ctx={}){
+    return [...(symbols?.project?.components||[]).map(c=>c.name),...(symbols?.projectVars?.keys?.()||[]),...(symbols?.projectLists?.keys?.()||[]),
+      ...[...(symbols?.individualByTargetId?.values?.()||[])].flatMap(d=>[...(d.variables?.keys?.()||[]),...(d.lists?.keys?.()||[])]),...(ctx.localNames||[]),...(ctx.args||[])];
+  }
+  // How a touch target is written back: 画面のはし, 画面の下のはし, or the part's name in 「 」.
+  function touchShown(target){return isEdgeTarget(target)?EDGE_TARGETS[target]:formatExpression(exprNode('StringLiteral',{value:target}));}
+  // 「星」にふれたとき、/ ねこが「星」にふれたとき、/ 「星」にふれたとき、ねこは、 / 星にふれるたびに、 / 画面のはしにふれたとき、:
+  // the body's owner (or the part named as the subject or topic, whose body it then is) touches the target. The body may
+  // go on in the same line. 〜にふれたら is no heading (it could mean three things; diagnoseSentenceIntent says which).
+  function readTouchHeading(code,mask,symbols){
+    if(/^もし/.test(mask))return null;
+    const gone=surfaceCapture(/^(.+?)に(?:ふれ|触れ)なくなった(?:とき|ら)、?(.*)$/d,code,mask);
+    if(gone){let phrase=null;try{phrase=touchPhrase(gone[0],symbols);}catch(error){if(!(error instanceof AkariError))throw error;}
+      if(phrase)throw new AkariError('P205',touchGoneMessage(phrase.target));}
+    const p=surfaceCapture(/^(.+?)に(?:(?:ふれ|触れ)たとき|(?:ふれ|触れ)るたびに)、?(.*)$/d,code,mask);
+    if(!p||/[、。]/.test(surfaceMask(p[0].text)))return null;
+    const phrase=touchPhrase(p[0],symbols);
+    if(!phrase)return null;
+    let actor=phrase.actor,body=p[1];
+    const actorRef=text=>text==='自分'?{kind:'self'}:sentenceActor(text.replace(/^【(.*)】$/,'$1'),symbols);
+    // The topic line (「星」にふれたとき、ねこは、) names the owner as 作品を動かしたとき、ねこは、 does. With a subject written
+    // as well, the same name is the same heading; another name is left in the body (a 名人 form, which the check names).
+    const bm=surfaceMask(body.text),topic=/^(\u0001+|[^、。\u0001]+?)は(?:、(.*))?$/d.exec(bm);
+    if(topic&&(topic[2]!==undefined||topic[1].length===bm.length-1)){
+      const who=body.text.slice(0,topic[1].length),bare=who.replace(/^【(.*)】$/,'$1');
+      if(who==='自分'||/^【[^【】]+】$/.test(who)||(symbols?.project?.components||[]).some(c=>c.name===bare)){
+        const same=!actor||actor.text.replace(/^【(.*)】$/,'$1')===bare;
+        if(same){
+          if(!actor)actor={text:who,start:body.start,end:body.start+who.length};
+          const at=topic[2]===undefined?body.end:body.start+topic.indices[2][0];
+          body={text:body.text.slice(at-body.start),start:at,end:body.end};
+        }
+      }
+    }
+    const ref=actor?actorRef(actor.text):{kind:'self'};
+    return {heading:{event:'touchStart',actorRef:ref.kind==='self'?{kind:'self'}:ref,filter:{target:phrase.target}},body,
+      actor:actor&&actor.text!=='自分'?actor:undefined,target:isEdgeTarget(phrase.target)?undefined:phrase.targetPart};
+  }
+  // ド・レ・ミ … are pitches: the tone sentence takes the height in Hz (the C major scale from middle ド).
+  const SOLFEGE_HZ=Object.freeze({ド:262,レ:294,ミ:330,ファ:349,ソ:392,ラ:440,シ:494});
+  const solfegeMessage=note=>`「${note}」は 音の 高さの 名前です。${note}の 音を 出すときは「${SOLFEGE_HZ[note]}Hzの音を0.5秒鳴らす」のように、高さ（Hz）と 時間を 書きます`;
+  function touchGoneMessage(target){const shown=touchShown(target);
+    return `「〜にふれなくなったとき」は ありません。はなれるのを 待つときは、${shown}にふれたとき、の 中に「${shown}にふれなくなるまで待つ。」と 書いて、そのあとに することを 書きます`;}
   function readSentenceHeading(code,symbols,previousHeading=null,ctx={}) {
     const protectedCode = surfaceMask(code);
     if(ctx.meijin){const found=readMeijinHeading(code,protectedCode,symbols,ctx);if(found)return found;}
+    else{const touch=readTouchHeading(code,protectedCode,symbols);if(touch)return touch;}
     const same = surfaceCapture(/^(.+?)も同じ合図で動き始め、(.*)$/d,code,protectedCode);
     if(same){
       if(!previousHeading)throw new AkariError('P205','「同じ合図」の前に、「作品を動かしたとき、」や「…がおされたとき、」などの きっかけを 書いてください');
@@ -18235,9 +18419,9 @@ function createAkariExtensionHost(options) {
     return null;
   }
   function sentenceHeadingSource(heading) {
-    const actor=sentenceActorSource(heading.actorRef), filter=heading.filter == null ? null : formatExpression(exprNode('StringLiteral',{value:heading.filter.key??heading.filter.message}));
+    const actor=sentenceActorSource(heading.actorRef), filter=heading.filter == null || heading.event === 'touchStart' ? null : formatExpression(exprNode('StringLiteral',{value:heading.filter.key??heading.filter.message}));
     switch(heading.event){case 'start':return `作品を動かしたとき、${actor}は、`;case 'click':return `${actor}がおされたとき、`;case 'keyDown':return `${filter?filter+'キーをおすたびに':'キーがおされたとき'}、${actor}は、`;case 'message':return `${filter?filter+'という':''}合図を受けたとき、${actor}は、`;case 'backdropChanged':return `はいけいがかわったとき、${actor}は、`;case 'valueChanged':return `${actor}の中身がかわったとき、`;case 'cloneStart':return `${actor}のコピーが作られたとき、`;
-      case 'touchStart':return `${actor}が${heading.filter?.target??''}にふれたとき、`;case 'interval':return `${formatExpression(heading.seconds)}ごとに、`;case 'conditionTrue':return `条件（${formatExpression(heading.condition)}）が成り立ったとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
+      case 'touchStart':return `${heading.actorRef?.kind==='named'?actor+'が':''}${touchShown(heading.filter?.target??'')}にふれたとき、`;case 'interval':return `${formatExpression(heading.seconds)}ごとに、`;case 'conditionTrue':return `条件（${formatExpression(heading.condition)}）が成り立ったとき、`;default:throw new AkariError('P201','きっかけの書き方が分かりません。「始めると、」などのきっかけにしてください');}
   }
   function continuousCondition(text) {
     const mask=surfaceMask(text),suffix=/キー(?:を|が)(?:押|お)(?:して|されて)いる$/.exec(mask);
@@ -18333,7 +18517,10 @@ function createAkariExtensionHost(options) {
       text = whole(text, /^(.+)と(?:聞いて|きいて)、?(?:答え|返事)を待つ$/d, ([q]) => q + 'とたずねて、答えを待つ');
       text = word(text, 'という合図を送る', 'の合図を送る');
       text = word(text, 'という合図を送って、', 'の合図を送って、');
-      text = whole(text, /^((?:[^、。]+?は、?)?)(?:もし、?)?(?:画面の(?:はし|端)|端)に(?:ふれ|触れ)(?:たら|ると|れば|ていたら|ていれば|ているなら|ていると)、?(?:はね返る|跳ね返る)$/d, ([s]) => s + '画面のはしにふれていれば、はね返る');
+      // 画面の端に触れていれば、跳ね返る / もし画面のはしにふれているなら、はね返る / はね返る (alone: it bounces only at the edge)
+      // are the one bounce sentence. ふれたら・ふれると・ふれれば・ふれていたら are not read (diagnoseSentenceIntent).
+      text = whole(text, /^((?:[^、。]+?は、?)?)(?:もし、?)?画面の(?:はし|端)に(?:ふれ|触れ)(?:ていれば|ているなら)、?(?:はね返る|跳ね返る)$/d, ([s]) => s + '画面のはしにふれていれば、はね返る');
+      text = whole(text, /^((?:[^、。]+?は、?)?)(?:はね返る|跳ね返る|はねかえる)$/d, ([s]) => s + '画面のはしにふれていれば、はね返る');
       // コピーを作る with no owner is 自分のコピー.
       text = whole(text, /^((?:[^、。]+?は、?)?)コピーを((?:.+?)(?:つ|個|体))?(?:作る|つくる)$/d, ([s, n]) => s + '自分のコピーを' + (n || '') + '作る');
       text = whole(text, /^((?:[^、。]+?は、?)?)このコピーを(?:消す|けす)$/d, ([s]) => s + 'このコピーだけを消す');
@@ -18485,13 +18672,13 @@ function createAkariExtensionHost(options) {
   function diagnoseSentenceIntent(line,symbols,ctx,previousLine=null,nextLine=null) {
     const code=line.code,mask=surfaceMask(code);let p;
     const skipRest=/^(.*?は、?)?次のくり返しへ進む$/.exec(mask);
-    // A bare はし stays a name, because a part may be called はし (橋, 箸). Bouncing only happens at the stage edge,
-    // and a touch test names a part that must exist, so without such a part the child means 画面のはし.
-    const bounceForm=/^(?:[^、。]+?は、?)?(?:画面の(?:はし|端)|端)に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/;
-    const bareEdgeBounce=!bounceForm.test(mask)&&/^(.*?は、?)?(?:もし、?)?はしに(?:ふれ|触れ).*(?:はね返る|跳ね返る)$/.exec(mask);
+    // A bare はし stays a name, because a part may be called はし (橋, 箸); 端 is no part's name. Bouncing only happens
+    // at the stage edge, and a touch test names a part that must exist, so without such a part the child means 画面のはし.
+    const bounceForm=/^(?:[^、。]+?は、?)?画面の(?:はし|端)に(?:ふれて|触れて)いれば、?(?:はね返る|跳ね返る)$/;
+    const bareEdgeBounce=!bounceForm.test(mask)&&/^(.*?は、?)?(?:もし、?)?(?:はし|端)に(?:ふれ|触れ).*(?:はね返る|跳ね返る)$/.exec(mask);
     if(bareEdgeBounce)throw sentenceDiagnostic('画面の はしで はね返るときは、「画面のはしにふれていれば、はね返る」と 書きます',line,[{label:'画面の はしで はね返る',source:code.slice(0,bareEdgeBounce[1]?.length||0)+'画面のはしにふれていれば、はね返る'}],{kind:'MotionCommand'});
-    const bareEdgeTouch=/(^|もし|、|が|は)はしに(?:ふれ|触れ)/.exec(mask);
-    if(bareEdgeTouch&&!symbols?.project?.components?.some(c=>c.name==='はし')){
+    const bareEdgeTouch=/(^|もし|、|が|は)(はし|端)に(?:ふれ|触れ)/.exec(mask);
+    if(bareEdgeTouch&&(bareEdgeTouch[2]==='端'||!symbols?.project?.components?.some(c=>c.name==='はし'))){
       const at=bareEdgeTouch.index+bareEdgeTouch[1].length;
       throw sentenceDiagnostic('画面の はしの ことなら、「画面のはし」と 書きます',line,[{label:'画面の はしに ふれている',source:code.slice(0,at)+'画面の'+code.slice(at)}]);
     }
@@ -18505,7 +18692,110 @@ function createAkariExtensionHost(options) {
         const timed=/(?:秒(?:間)?かけて|秒(?:間)?(?:話す|はなす|言う|いう|鳴らす|ならす)|を(?:最後まで)?(?:鳴らす|ならす))/.test(surfaceMask(both[3]));
         throw sentenceDiagnostic('1つの 文に 書ける 主語は 1つです。主語ごとに 文を 分けて 書きます'+(timed?'。分けると、書いた じゅんに 一人ずつ 動きます。いっしょに 動かすときは、名人モードか、同じ できごとの 別の 本文で 書きます':''),line,parseSyntax(split+'。',{symbols}).ast?[{label:timed?'文を 分ける（じゅんに 動く）':'文を 分ける',source:split}]:[],{kind:'Sequence'});}}
     const knownName=name=>!!dataNameKind(name,symbols,ctx)||[...(ctx.localNames||[])].includes(name);
-    const reads=source=>{for(const text of [source+'。',source.replace(/、?$/,'、')+'\n  何もしない。']){try{if(parseSyntax(text,{symbols}).ast)return true;}catch(error){if(!(error instanceof AkariError))throw error;}}return false;};
+    // A sentence, a heading or もし (with a body), or a repeat (くり返す。 with a body).
+    const reads=source=>{for(const text of [source+'。',source.replace(/、?$/,'、')+'\n  何もしない。',source+'。\n  何もしない。']){try{if(parseSyntax(text,{symbols}).ast)return true;}catch(error){if(!(error instanceof AkariError))throw error;}}return false;};
+    // ── ふれる (decisions §3, C-04 … C-10, C-18, final call 6). Each form below is not read, so the line never reads as
+    // written; a fix is offered only when the whole line reads with it.
+    {
+      // 画面の左下のはし is the corner a place is measured from: the touch is with one of its two sides.
+      const corner=/画面の(左|右)(上|下)の(?:はし|端)(?=に(?:ふれ|触れ))/.exec(mask);
+      if(corner){const at=corner.index,end=at+corner[0].length,sides=[corner[2],corner[1]].map(side=>code.slice(0,at)+'画面の'+side+'のはし'+code.slice(end));
+        throw sentenceDiagnostic(TOUCH_CORNER_MESSAGE,line,sides.filter(reads).map(source=>({label:'「'+/画面の.のはし/.exec(source.slice(at))[0]+'」に する',source})),{kind:'IfStatement'});}
+      // 画面のはしにふれたら、はね返る (and ると・れば): はね返る is one sentence, with ふれていれば. ふれていたら is written ふれていれば.
+      const bounce=/^(.*?は、?)?(?:もし、?)?画面の(?:はし|端)に(?:ふれ|触れ)(たら|ると|れば|ていたら|ていると)、?(?:はね返る|跳ね返る)$/.exec(mask);
+      if(bounce)throw sentenceDiagnostic((bounce[2]==='ていたら'?'「ふれていたら」は「ふれていれば」と 書きます。':'')+'画面の はしで はね返るときは、「画面のはしにふれていれば、はね返る」と 書きます',line,
+        [{label:'画面の はしで はね返る',source:code.slice(0,bounce[1]?.length||0)+'画面のはしにふれていれば、はね返る'}],{kind:'MotionCommand'});
+      // もし「ねこ」にふれていたら (and ていなかったら): the state is written ふれていれば (ふれていなければ).
+      if(/に(?:ふれ|触れ)てい(?:たら|なかったら)/.test(mask)){
+        let out='',at=0;
+        for(const m of mask.matchAll(/に(?:ふれ|触れ)てい(たら|なかったら)/g)){out+=code.slice(at,m.index)+'にふれてい'+(m[1]==='たら'?'れば':'なければ');at=m.index+m[0].length;}
+        const source=out+code.slice(at);
+        throw sentenceDiagnostic('「ふれていたら」は 読みません。「もし「星」にふれていれば、」のように「ふれていれば」と 書きます',line,reads(source)?[{label:'「ふれていれば」と 書く',source}]:[],{kind:'IfStatement'});
+      }
+      // さわる・当たる・ぶつかる are written ふれる (one verb, one meaning); the line is read again with ふれる below.
+      let touchCode=code,touchMask=mask,verbNote='';
+      const verb=/に(さわ|当た|あた|ぶつか)(っ|る|ら|れ|り)/.exec(mask);
+      if(verb&&!knownWords(symbols,ctx).some(name=>name.includes('に'+verb[1]))){
+        let out='',at=0;
+        for(const m of mask.matchAll(/に(さわ|当た|あた|ぶつか)(っ|る|ら|れ|り)/g)){out+=code.slice(at,m.index)+'に'+{っ:'ふれ',る:'ふれる',ら:'ふれ',れ:'ふれれ',り:'ふれ'}[m[2]];at=m.index+m[0].length;}
+        touchCode=out+code.slice(at);touchMask=surfaceMask(touchCode);verbNote=`「${verb[1]}る」は「ふれる」と 書きます。`;
+      }
+      // 「星」にふれたら・ふれると・ふれれば / もし「星」にふれたら: each time, now, or once by waiting? Three meanings, three
+      // forms. The heading is offered only at the left margin; the wait only when the action is on the line.
+      // もし「星」にふれたとき: もし and 〜たとき are not written together.
+      const word=surfaceCapture(/^(もし、?)?(.+?)に(?:ふれ|触れ)(たら|ると|れば|たとき)、?(.*)$/d,touchCode,touchMask);
+      if(word&&(word[2].text!=='たとき'||word[0])&&!/[、。]/.test(surfaceMask(word[1].text))){
+        let phrase=null,mouse=false;
+        try{phrase=touchPhrase(word[1],symbols);}catch(error){if(!(error instanceof AkariError))throw error;mouse=/^「?マウス」?$/.test(word[1].text);if(mouse)phrase={actor:null,target:'マウス'};}
+        if(phrase){
+          const shown=(phrase.actor?phrase.actor.text+'が':'')+touchShown(phrase.target),rest=word[3].text,form=word[2].text;
+          const each=mouse?null:{label:'ふれる たびに する',source:`${shown}にふれたとき、${rest}`},now={label:'いま ふれているかを しらべる',source:`もし${shown}にふれていれば、${rest}`},
+            wait=form!=='たとき'&&rest?{label:'ふれるまで 待つ',source:`${shown}にふれるまで待って、${rest}`}:null;
+          // A 名人 heading names who touches, so the heading is offered only in an ordinary body.
+          const choices=(word[0]?[now,each,wait]:[each,now,wait]).filter(c=>c&&(c!==each||(!line.indent&&!ctx.meijin))&&reads(c.source));
+          const message=form==='たとき'?`「もし」と「〜たとき」は いっしょに 書きません。${mouse?'':`ふれる たびに するなら「${shown}にふれたとき、」、`}いま ふれているかを しらべるなら「もし${shown}にふれていれば、」と 書きます`
+            :`「〜にふれ${form}」は、いくつかの 意味に とれます。${mouse?'':`ふれる たびに するなら「${shown}にふれたとき、」、`}いま ふれているかを しらべるなら「もし${shown}にふれていれば、」、ふれるまで 待つなら「${shown}にふれるまで待つ」と 書きます`;
+          throw sentenceDiagnostic(verbNote+message,line,choices,{kind:'IfStatement',missing:['touchMeaning']});
+        }
+      }
+      if(verbNote)throw sentenceDiagnostic(verbNote.replace(/。$/,''),line,reads(touchCode)?[{label:'「ふれる」に する',source:touchCode}]:[],{kind:'IfStatement'});
+      // 「へや」にふれなくなったとき: no such event; leaving is waited for inside the touch body.
+      const gone=surfaceCapture(/^(?:もし、?)?(.+?)に(?:ふれ|触れ)なくなった(?:とき|ら)、?(.*)$/d,code,mask);
+      if(gone){let phrase=null;try{phrase=touchPhrase(gone[0],symbols);}catch(error){if(!(error instanceof AkariError))throw error;}
+        if(phrase)throw sentenceDiagnostic(touchGoneMessage(phrase.target),line,[],{kind:'Script'});}
+      // A touch heading inside a body: headings are written at the left margin.
+      if(line.indent>0){let found=null;try{found=readTouchHeading(code,mask,symbols);}catch(error){if(!(error instanceof AkariError))throw error;}
+        if(found)throw sentenceDiagnostic(`「${touchShown(found.heading.filter.target)}にふれたとき、」は 見出しです。行の はじめに 書きます`,line,[],{kind:'Script'});}
+    }
+    // ドの音を鳴らす: ド is a pitch, not a sound of the work (final call 11); the tone sentence takes its height in Hz.
+    {const note=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(ド|レ|ミ|ファ|ソ|ラ|シ)(?:の音)?を(?:([0-9０-９.．]+)秒)?(鳴らす|ならす|鳴らし始める|ならし始める)$/d,code,mask);
+      if(note&&!(symbols?.project?.sounds||[]).some(s=>s.name===note[1].text)&&!knownName(note[1].text)){
+        const start=/始める$/.test(note[3].text),source=`${note[0].text}${SOLFEGE_HZ[note[1].text]}Hzの音を${note[2]?.text||'0.5'}秒${start?'鳴らし始める':'鳴らす'}`;
+        throw sentenceDiagnostic(solfegeMessage(note[1].text),line,reads(source)?[{label:`${note[1].text}の 高さの 音を 鳴らす`,source}]:[],{kind:'SoundCommand'});}}
+    // ── Child wordings that are not read (final call 12). Each names the sentence that is written instead; a fix is
+    // offered when the whole line reads with it.
+    {
+      const parts=symbols?.project?.components||[],part=name=>name==='自分'||parts.some(c=>c.name===name.replace(/^[「【](.*)[」】]$/,'$1'));
+      const sound=name=>/^(?:音楽|音|おんがく|BGM)$/.test(name)||(symbols?.project?.sounds||[]).some(s=>s.name===name.replace(/^「(.*)」$/,'$1'))||/の音$/.test(name);
+      // ねこが話し終わったら・話しおわってから / 「音楽」が鳴り終わったら・音楽がおわったら: what comes next is the next line.
+      const after=surfaceCapture(/^(.+?)(?:が|は)、?((?:話し|はなし|言い|いい|鳴り|なり)?(?:終わ|おわ))(?:ったら|ってから|ったとき|ると|れば)、?(.*)$/d,code,mask);
+      if(after&&!/[、。]/.test(surfaceMask(after[0].text))){
+        const who=after[0].text,verb=after[1].text;
+        if(sound(who)&&!/^(?:話し|はなし|言い|いい)/.test(verb)){const name=who.replace(/の音$/,'').replace(/^「(.*)」$/,'$1');
+          throw sentenceDiagnostic(`音が 鳴り終わってから するときは、「「${/^(?:音楽|音|おんがく|BGM)$/.test(name)?'音楽':name}」を鳴らす。」の 次の 行に 書きます（「鳴らす」は 音が 鳴り終わるまで 待ちます）`,line,[],{kind:'SoundCommand'});}
+        if(part(who)&&/^(?:話し|はなし|言い|いい)/.test(verb))
+          throw sentenceDiagnostic(ctx.meijin?`名人の 本文では「${who}が話し終わるまで待つ。」と 書いてから、次の 文を 書きます`
+            :`「${who}が話し終わったら」は 読みません。話し終わってから するときは、同じ 本文で「${who}は「…」と2秒話す。」の 次の 行に 書きます（時間を 書いて 話すと、話し終わるまで 待ちます）。ちがう 部品の 本文なら、話したあとで「「つぎ」の合図を送る。」と 書いて、「「つぎ」という合図を受けたとき、」で 始めます`,line,[],{kind:'Say'});
+      }
+      // ちがったら、/ まちがえたら、/ そうじゃなかったら、: the other branch of もし is そうでなければ、.
+      const otherwise=surfaceCapture(/^(?:もし、?)?(?:ちがったら|ちがうなら|ちがえば|まちがえたら|まちがったら|まちがいなら|そうじゃなかったら|そうじゃないなら|そうでないとき(?:は)?|ちがう(?:とき|時)(?:は)?)、?(.*)$/d,code,mask);
+      if(otherwise)throw sentenceDiagnostic('「もし」の 文に あてはまらない ときに することは、「そうでなければ、」と 書きます',line,[{label:'「そうでなければ、」と 書く',source:'そうでなければ、'+otherwise[0].text}],{kind:'IfStatement'});
+      // はいけいが「夜の森」にかわったとき、: the heading is はいけいがかわったとき、; the name is checked inside it.
+      const backdrop=surfaceCapture(/^(?:はいけい|背景)が(.+?)に(?:かわった|変わった)(?:とき|ら)、?(.*)$/d,code,mask);
+      if(backdrop){const name=/^「.*」$/.test(backdrop[0].text)?backdrop[0].text:'「'+backdrop[0].text+'」',source='はいけいがかわったとき、'+backdrop[1].text;
+        throw sentenceDiagnostic(`はいけいの 名前で 分けるときは、「はいけいがかわったとき、」の 中に「もしはいけいの名前が${name}と同じなら、」と 書きます`,line,!line.indent&&reads(source)?[{label:'「はいけいがかわったとき、」に する',source}]:[],{kind:'Script'});}
+      // マウスのボタンをおしている: the button's state is マウスがおされている.
+      if(/マウス(?:のボタン)?を(?:おし|押し)て|マウスのボタンが(?:おされ|押され)て/.test(mask)){
+        const source=code.replace(/マウス(?:のボタン)?を(?:おし|押し)て|マウスのボタンが(?:おされ|押され)て/g,'マウスがおされて');
+        throw sentenceDiagnostic('マウスの ボタンを おしているかは「マウスがおされている」と 書きます',line,reads(source)?[{label:'「マウスがおされている」と 書く',source}]:[],{kind:'Condition'});
+      }
+      // 出てくる・あらわれて・かくれて・見えなくなる: a part shows or hides itself with すがたを見せる・すがたをかくす.
+      const looks=[[/(?:あらわれ|現れ)て、/g,'すがたを見せて、','すがたを見せる'],[/(?:かくれ|隠れ)て、/g,'すがたをかくして、','すがたをかくす'],
+        [/(?:出て|でて|やって)(?:きて、|きます$|くる$)/g,m=>m.endsWith('、')?'すがたを見せて、':'すがたを見せる','すがたを見せる'],[/(?<=^|[はが]、?)(?:出る|でる|出ます|でます)$/g,'すがたを見せる','すがたを見せる'],
+        [/見えなく(?:なって、|して、|なる$|する$)/g,m=>m.endsWith('、')?'すがたをかくして、':'すがたをかくす','すがたをかくす'],[/見えるように(?:なって、|して、|なる$|する$)/g,m=>m.endsWith('、')?'すがたを見せて、':'すがたを見せる','すがたを見せる']];
+      for(const [pattern,to,word] of looks){const m=new RegExp(pattern.source).exec(mask);if(!m)continue;
+        let out='',at=0;for(const found of mask.matchAll(pattern)){out+=code.slice(at,found.index)+(typeof to==='function'?to(found[0]):to);at=found.index+found[0].length;}
+        const source=out+code.slice(at);
+        throw sentenceDiagnostic(`「${m[0].replace(/[、]$/,'')}」は「${word}」と 書きます`,line,reads(source)?[{label:`「${word}」と 書く`,source}]:[],{kind:'LooksCommand'});}
+      // おにに・おにの: a part's name that ends with に or の is written in 「 」 where a part is named (ふれる 相手, 向く 相手).
+      for(const c of [...parts].sort((a,b)=>b.name.length-a.name.length)){
+        if(!/[にの]$/.test(c.name)||!nameSource(c.name).startsWith('【'))continue;
+        const at=mask.search(new RegExp('(?:^|もし、?|[、はがをと])'+c.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=に|の|まで|から)'));
+        if(at<0)continue;
+        const start=mask.indexOf(c.name,at),source=code.slice(0,start)+'「'+c.name+'」'+code.slice(start+c.name.length);
+        if(reads(source))throw sentenceDiagnostic(`「${c.name}」のように「に」や「の」で おわる 部品の 名前は、ふれる 相手や 向く 相手には「「${c.name}」」、だれが するかには【${c.name}】と 書きます`,line,[{label:'「 」で かこむ',source}],{kind:'Sequence'});
+      }
+    }
     // 書21: a 1.4.0 move form (右へ10歩動く, よこ100歩、たて50歩のばしょへ行く, よこのばしょを10増やす …) names the 1.5.0 form,
     // also as one 「〜して、」 of a longer sentence and after a lead word (そして) or an inline もし…なら、. The proposal
     // rewrites every such sentence of the chain, in the whole line; the message is the first one's.
@@ -18550,8 +18840,10 @@ function createAkariExtensionHost(options) {
     {const inner=actorNamePatterns(symbols).inner.exec(code);
       if(inner&&(inner[1]||/^(?:(?:押|お)され|クリックされ)/.test(inner[3]))){const proposal=(inner[1]||'')+inner[2]+'が'+code.slice(inner[0].length-inner[3].length);
         if(inner[1]?reads(proposal):true)throw sentenceDiagnostic(`${inner[1]?'「もし」の 中':'「〜とき」の 中'}では、だれのことかを「${inner[2]}が」と 書きます`,line,reads(proposal)?[{label:`「${inner[2]}が」と 書く`,source:proposal}]:[],{kind:inner[1]?'IfStatement':'Script'});}}
-    // A name with あかりの ことば in it (いのち, ちから, とくてん) is written in 【 】; written bare it is cut into other words.
-    {const names=[...(symbols?.projectVars?.keys?.()||[]),...(symbols?.projectLists?.keys?.()||[]),...[...(symbols?.individualByTargetId?.values?.()||[])].flatMap(d=>[...(d.variables?.keys?.()||[]),...(d.lists?.keys?.()||[])]),...(ctx.localNames||[]),...(ctx.args||[])];
+    // A name with あかりの ことば in it (いのち, ちから, とくてん, 辺の数) is written in 【 】; written bare it is cut into other
+    // words. The inputs of the work's procedures are names too (辺の数を6として、…).
+    {const names=[...(symbols?.projectVars?.keys?.()||[]),...(symbols?.projectLists?.keys?.()||[]),...[...(symbols?.individualByTargetId?.values?.()||[])].flatMap(d=>[...(d.variables?.keys?.()||[]),...(d.lists?.keys?.()||[])]),...(ctx.localNames||[]),...(ctx.args||[]),
+      ...[...(symbols?.actions?.values?.()||[]),...(symbols?.functions?.values?.()||[])].flatMap(d=>d?.args||[])];
       for(const name of [...new Set(names)].sort((a,b)=>b.length-a.length)){if(!nameSource(name).startsWith('【'))continue;const at=mask.indexOf(name);if(at<0)continue;
         // A name that is itself a word of あかり (大きさ, 向き): written bare it is that word (a notice tells of the data).
         if(RESERVED.has(name))continue;
@@ -18712,9 +19004,29 @@ function createAkariExtensionHost(options) {
       ],{kind:'RepeatCount',missing:['scope','angle']});const firstRange=sourceRange(previousLine.mapped.positions),lastRange=sourceRange(nextLine.mapped.positions);for(const proposal of error.proposals){proposal.start=firstRange.start;proposal.end=lastRange.end;}throw error;}
     }
   }
+  // 「「海」は何と読みますか」と言う: a かぎ inside a かぎ ends the outer one (final call 12). Inside 「 」 a quote is written
+  // 『 』; the fix turns the inner pairs into 『 』 when the line then reads.
+  function nestedQuoteDiagnostic(line,symbols){
+    const raw=line.raw,stack=[],inner=[];let max=0,first=-1,last=-1;
+    for(let i=0;i<raw.length;i++){const ch=raw[i];
+      if(stack.length&&ch==='\\'){i++;continue;}
+      if(!stack.length){if(ch==='※')break;if(ch==='【'||ch==='『'){const end=raw.indexOf(ch==='【'?'】':'』',i+1);if(end<0)return null;i=end;continue;}}
+      if(!/\s/.test(ch)){if(first<0)first=i;last=i;}
+      if(ch==='「'){stack.push(i);max=Math.max(max,stack.length);}
+      else if(ch==='」'&&stack.length){const open=stack.pop();if(stack.length)inner.push(open,i);}
+    }
+    if(stack.length||max<2||first<0)return null;
+    const text=raw.slice(first,last+1).split(''),at=new Set(inner.map(i=>i-first));
+    for(const i of at)text[i]=text[i]==='「'?'『':'』';
+    const fixed=text.join(''),error=new AkariError('P205','「 」の 中で かぎを 使うときは、『 』を 使います。れい：「『海』は何と読みますか」と言う',line.lineNo,1);
+    let reads=false;try{reads=!!parseSyntax(fixed.replace(/。?$/,'。'),{symbols}).ast;}catch(attempt){if(!(attempt instanceof AkariError))throw attempt;}
+    if(reads)error.proposals=[{label:'中の かぎを『 』に する',source:fixed.replace(/。$/,''),start:line.start+first,end:line.start+last+1-(raw[last]==='。'?1:0)}];
+    return error;
+  }
   function parseScript(source, symbols, ctx = {}) {
     if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','文字が多すぎて、これ いじょうは 書けません。文を 短くするか、ほかの 動きに 分けてください',1,1);
     const physical=normalizeSource(source).lines,headings=[];
+    for(const line of physical){if(line.continuation)continue;const nested=nestedQuoteDiagnostic(line,symbols);if(nested)throw nested;}
     let previousHeading=null;
     for(const line of physical){
       if(line.continuation||!line.code||/^[ \t\u3000]/u.test(line.raw))continue;
@@ -18759,9 +19071,9 @@ function createAkariExtensionHost(options) {
     if(ctx.definition){const names=localDeclarationNames(source);baseCtx.localNames.push(...names.vars,...names.lists);baseCtx.localVarNames=[...names.vars];for(const line of lines){const p=surfaceCapture(/^この中だけで使う(?:変数|リスト)(.+?)を(?:作り、最初は.+にする|空で作る)$/d,line.code);if(p)baseCtx.localNames.push(parsedDeclarationName(p[0].text));}}
     const nextCode=i=>{while(i<lines.length&&!lines[i].code)i++;return i;};
     const parseAt=(line,fn)=>{try{return fn();}catch(error){if(error instanceof AkariError&&!error.line){error.line=line.lineNo;error.column=error.column||1;}throw error;}};
-    let first=nextCode(0),heading=null,headingActorRange=null;
+    let first=nextCode(0),heading=null,headingActorRange=null,headingTargetRange=null;
     if(first<lines.length&&lines[first].indent!==0)throw new AkariError('P209','いちばん 外の 文は、行の はじめを 右へ ずらさずに 書きます',lines[first].lineNo,1);
-    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols,ctx.previousHeading,ctx));if(found){heading=found.heading;const line=lines[first];if(ctx.meijin&&found.bodyTopic)baseCtx.topicActor={...found.bodyTopic};if(ctx.meijin&&found.body?.text){const who=/^(【[^】]+】|[^、。「」【】\s]+?)は、(.*)$/.exec(found.body.text),bare=who&&who[1].replace(/^【(.*)】$/,'$1');if(who&&((symbols?.project?.components||[]).some(c=>c.name===bare)||dataNameKind(bare,symbols,ctx)==='variable')){baseCtx.topicActor=dataNameKind(bare,symbols,ctx)==='variable'?{kind:'value',value:exprNode('VariableRead',{name:bare,qualifier:null})}:{kind:'named',name:bare};found.body={...found.body,text:who[2],start:found.body.end-who[2].length};}}if(found.actor)headingActorRange=sourceRange(line.mapped?.positions||[],found.actor.start,found.actor.end);if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','「作品を動かしたとき、自分は、」などの 次の 行は、行の はじめを 右へ ずらして 書いてください',lines[first].lineNo,1);}}
+    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols,ctx.previousHeading,ctx));if(found){heading=found.heading;const line=lines[first];if(ctx.meijin&&found.bodyTopic)baseCtx.topicActor={...found.bodyTopic};if(ctx.meijin&&found.body?.text){const who=/^(【[^】]+】|[^、。「」【】\s]+?)は、(.*)$/.exec(found.body.text),bare=who&&who[1].replace(/^【(.*)】$/,'$1');if(who&&((symbols?.project?.components||[]).some(c=>c.name===bare)||dataNameKind(bare,symbols,ctx)==='variable')){baseCtx.topicActor=dataNameKind(bare,symbols,ctx)==='variable'?{kind:'value',value:exprNode('VariableRead',{name:bare,qualifier:null})}:{kind:'named',name:bare};found.body={...found.body,text:who[2],start:found.body.end-who[2].length};}}if(found.actor)headingActorRange=sourceRange(line.mapped?.positions||[],found.actor.start,found.actor.end);if(found.target)headingTargetRange=sourceRange(line.mapped?.positions||[],found.target.start,found.target.end);if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','「作品を動かしたとき、自分は、」などの 次の 行は、行の はじめを 右へ ずらして 書いてください',lines[first].lineNo,1);}}
     const rules=[];
     function block(start,indent,scope,depth){
       if(depth>LIMITS.blockDepth)throw new AkariError('P208','「もし」や「くり返す」の 中に、ブロックが 重なりすぎています。いくつかの 動きに 分けてください',lines[start]?.lineNo||1,1);
@@ -18784,7 +19096,7 @@ function createAkariExtensionHost(options) {
         if(repeatPrevious){
           if(previousSentenceStart===null||previousSentenceStart>=nodes.length)throw sentenceDiagnostic('「これを」の すぐ前の 行に、くり返したい 一文を 書いてください',line,[],{kind:'RepeatCount',missing:['precedingSentence']});
           const body=nodes.splice(previousSentenceStart),part=repeatPrevious[0],count=sentenceQuantity(parseMappedExpression(part.text,line.code,line,symbols,local,part.start),'回');
-          const repeat=statementNode('RepeatCount',line,{count,body,actorRef:{...scope.topicActor}});
+          const repeat=statementNode('RepeatCount',line,{count,body,actorRef:{...scope.topicActor}});REPEAT_PREVIOUS.add(repeat);
           const range=SOURCE_RANGES.get(body[0])?.range,location=SOURCE_RANGES.get(repeat);
           if(range&&location){location.range={start:range.start,end:location.range.end};location.extent.start=range.start;}
           nodes.push(repeat);previousSentenceStart=null;i++;continue;
@@ -18860,7 +19172,7 @@ function createAkariExtensionHost(options) {
       }
     }
     const ast={kind:'Script',body:result.nodes,...(heading?{heading}:{}),...(rules.length?{rules}:{}),source,sourceSpan:{startLine:1,startColumn:1,endLine:rawLines.length,endColumn:1}};
-    SOURCE_RANGES.set(ast,{range:{start:0,end:source.length},extent:{start:0,end:source.length},indent:0,inline:false,...(headingActorRange?{actorRange:headingActorRange}:{})});return ast;
+    SOURCE_RANGES.set(ast,{range:{start:0,end:source.length},extent:{start:0,end:source.length},indent:0,inline:false,...(headingActorRange?{actorRange:headingActorRange}:{}),...(headingTargetRange?{targetRange:headingTargetRange}:{})});return ast;
   }
   function readBlockHead(text,symbols,ctx={}) {
     const code=compactOutsideString(text),mask=surfaceMask(code),line=ctx.sourceLine||{raw:text,code:text,lineNo:ctx.lineNo||0};
@@ -18915,12 +19227,19 @@ function createAkariExtensionHost(options) {
     if((parts=surfaceCapture(/^(.+)の各要素を(.+)として、?(?:次のことを)?(?:くり返す|繰り返す|くりかえす)$/d,code)))return {kind:'ForEach',list:e(parts[0]),binder:parsedDeclarationName(parts[1].text)};
     if((parts=surfaceCapture(/^(.+(?:あいだ|間|まで))、?(?:次のことを)?(?:くり返す|繰り返す|くりかえす|くり返します|繰り返します|くりかえします)$/d,code))){const clause=readConditionClause(parts[0].text,symbols,ctx);return {kind:clause.mode==='while'?'RepeatWhile':'RepeatUntil',condition:clause.condition};}
     if((parts=surfaceCapture(/^(.+)回((?:.*)(?:進んで|すすんで|動いて|うごいて))、(.+)$/d,code))){const first=sentenceInfinitive(parts[1].text),last=parts[2].text,indent=' '.repeat(line.indent||0);throw sentenceDiagnostic('どこまでをくり返すのか分かりません。えらんでください',line,[{label:'前の動きだけをくり返す',source:`${parts[0].text}回くり返す。\n${indent}  ${first}。\n${indent}${last}`},{label:'2つの動きをくり返す',source:`${parts[0].text}回くり返す。\n${indent}  ${first}。\n${indent}  ${last}`}],{kind:'RepeatCount',missing:['scope']});}
-    // 〜たら without もし: a check needs もし (without it, 〜たら can mean waiting).
-    if((parts=surfaceCapture(/^((?!もし).+?たら)、(.*)$/d,code))&&!/(?:になったら|終わったら|小さくなったら)/.test(mask))
-      // The proposal is offered only when it reads (もしゲームが始まったら does not).
-      {let source=null;try{source='もし'+formatCondition(parseCondition('もし'+parts[0].text,symbols,ctx,'if'),'if')+'、'+(parts[1]?.text||'');}catch(error){if(!(error instanceof AkariError))throw error;}
-      throw sentenceDiagnostic('今そうなっているかを しらべるときは、はじめに「もし」を つけます',line,source?[{label:'もしを つける',source}]:[],{kind:'IfStatement',missing:['もし']});}
-    if(/(?:終わったら|小さくなったら)/.test(mask))throw sentenceDiagnostic('「〜たら」は2つの意味にとれます。そうなるときを待つなら「〜まで待つ」、今そうなっているかを調べるなら「もし〜なら、」と書きます',line,[],{kind:'Condition',missing:['triggerOrState']});
+    // 〜たら without もし: now (もし), once by waiting (〜まで待つ), or each time (an event's heading)? The three meanings,
+    // as for 〜にふれたら (C-09); the fixes are offered only when they read (もしゲームが始まったら does not).
+    const taraMessage='「〜たら」は、いくつかの 意味に とれます。いま そうなっているかを しらべるなら「もし〜なら、」、そうなるまで 待つなら「〜まで待つ。」、そうなる たびに するなら「〜がおされたとき、」のような できごとの 見出しで 書きます';
+    if((parts=surfaceCapture(/^((?!もし).+?たら)、(.*)$/d,code))&&!/(?:になったら|終わったら|小さくなったら)/.test(mask)){
+      const rest=parts[1]?.text||'',choices=[];
+      const readsAs=text=>{for(const source of [text+'。',text.replace(/、?$/,'、')+'\n  何もしない。']){try{if(parseSyntax(source,{symbols}).ast)return true;}catch(error){if(!(error instanceof AkariError))throw error;}}return false;};
+      try{const condition=parseCondition('もし'+parts[0].text,symbols,ctx,'if');
+        choices.push({label:'いま そうなっているかを しらべる',source:'もし'+formatCondition(condition,'if')+'、'+rest});
+        if(rest)choices.push({label:'そうなるまで 待つ',source:formatCondition(condition,'until')+'待って、'+rest});
+      }catch(error){if(!(error instanceof AkariError))throw error;}
+      throw sentenceDiagnostic(taraMessage,line,choices.filter(c=>readsAs(c.source)),{kind:'IfStatement',missing:['もし']});
+    }
+    if(/(?:終わったら|小さくなったら)/.test(mask))throw sentenceDiagnostic(taraMessage,line,[],{kind:'Condition',missing:['triggerOrState']});
     return null;
   }
   function blockSource(kind,fields={}) {
@@ -19542,6 +19861,8 @@ function createAkariExtensionHost(options) {
   // ねこといぬは… / ねこもいぬも…: the subject words as written, for a fix that rewrites the rest of the sentence
   // (the notice of B-17 keeps them).
   const MEIJIN_GROUP_SUBJECTS = new WeakMap();
+  // ねこと犬と鳥は、順番に、…: the parts of such a sentence (they start together; 作品チェック tells the child).
+  const MEIJIN_LISTED_IN_ORDER = new WeakMap();
   const meijinGroup = (parallel, subject) => { MEIJIN_GROUP_SUBJECTS.set(parallel, subject); return parallel; };
   const MEIJIN_DATA_SUFFIXES = ['の数だけ', 'の値', 'の答え', 'の中身', 'の長さ', 'の文字数', 'の色', 'のどれか', 'の中で', 'の中に', 'のあまり', 'の余り'];
   const MEIJIN_DIRECTIONS = { 前: 'forward', 後ろ: 'backward', 右: 'right', 左: 'left', 上: 'up', 下: 'down' };
@@ -19562,6 +19883,12 @@ function createAkariExtensionHost(options) {
   const MEIJIN_WHEN_PRESSED_MESSAGE = '「〜がおされると、」では、できごとか、その時を 待つのかが 決まりません。できごとなら「ねこがおされたとき、」、待つなら「ねこが1回おされるまで待つ。」と 書きます';
   const MEIJIN_UNREADABLE = [
     [MEIJIN_WHEN_PRESSED, MEIJIN_WHEN_PRESSED_MESSAGE],
+    // ふれる is the one touch verb; もし〜ふれたら and 〜ふれると have more than one meaning (C-08, C-09, C-11).
+    [/に(さわ|当た|あた|ぶつか)(?:っ|る|ら|れ|り)/, m => `「${m[1]}る」は「ふれる」と 書きます。れい：ねこが「星」にふれたとき、`],
+    [/^もし、?(.+?)が(.+?)に(?:ふれ|触れ)(?:たら|ると|れば)、/d, (m, code) => { const [a, b] = [1, 2].map(i => code.slice(...m.indices[i]));
+      return `「もし〜にふれたら」は 書きません。いま ふれているかを しらべるなら「もし${a}が${b}にふれていれば、」、ふれるまで 待つなら「${a}が${b}にふれたら、」、ふれる たびに するなら「${a}が${b}にふれたとき、」と 書きます`; }],
+    [/^(?!もし)(.+?)が(.+?)に(?:ふれ|触れ)(?:ると|れば)、/d, (m, code) => { const [a, b] = [1, 2].map(i => code.slice(...m.indices[i]));
+      return `「〜にふれると、」では、できごとか、ふれるまで 待つのかが 決まりません。できごとなら「${a}が${b}にふれたとき、」、待つなら「${a}が${b}にふれたら、」と 書きます`; }],
     [/(?<!に)いちばん近い(?![^、。]*?(?:の方を向く|までの(?:きょり|距離)))/, '「いちばん近い」は「〜の方を向く」と「〜までのきょり」で 使います。れい：ねこは、いちばん近い星の方を向く'],
     [/(?:のに|けれど|けれども|けど)、/, '「〜のに」「〜けれど」では、いつ 何を するかが 決まりません。「もし〜なら、」と「そうでなければ、」で 書きます'],
     [/(?:すこし|少し|ちょっと|しばらく|何度も|なんども|何回も|なんかいも|たくさん)/, m => `「${m[0]}」では、量や 時間が 決まりません。「10歩」「2秒」「3回」のように 数で 書きます`],
@@ -19754,8 +20081,22 @@ function createAkariExtensionHost(options) {
     if (MEIJIN_WHEN_PRESSED.test(mask)) throw new AkariError('P205', MEIJIN_WHEN_PRESSED_MESSAGE);
     if ((p = surfaceCapture(/^(.+?)が(\u0001+)の合図を(?:受けた|うけた)とき、(.*)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, ctx) && /^「[^「」]+」$/.test(p[1].text))
       return { heading: { event: 'message', actorRef: { kind: 'named', name: meijinBare(p[0].text) }, filter: { message: p[1].text.slice(1, -1) } }, body: p[2], actor: p[0] };
-    if ((p = surfaceCapture(/^(.+?)が(.+?)に(?:ふれた|触れた|さわった)とき、(.*)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, ctx) && isMeijinPart(p[1].text, symbols, ctx))
-      return { heading: { event: 'touchStart', actorRef: { kind: 'named', name: meijinBare(p[0].text) }, filter: { target: meijinBare(p[1].text) } }, body: p[2], actor: p[0], bodyTopic: { kind: 'self', mustName: 'touch' } };
+    // ねこが「星」にふれたとき、/ ねこが星にふれるたびに、/ ねこが画面のはしにふれたとき、(上・下・右・左のはしも): who touches is
+    // written first. Under the edge's heading a sentence with no subject is the toucher's; under a part's, it names who acts.
+    if ((p = surfaceCapture(/^(.+?)が(.+?)に(?:(?:ふれ|触れ)たとき|(?:ふれ|触れ)るたびに)、(.*)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, ctx)) {
+      const target = touchTarget(p[1].text, symbols);
+      if (target !== null && (isEdgeTarget(target) || isMeijinPart(target, symbols, ctx)))
+        return { heading: { event: 'touchStart', actorRef: { kind: 'named', name: meijinBare(p[0].text) }, filter: { target: meijinBare(target) } }, body: p[2], actor: p[0],
+          bodyTopic: isEdgeTarget(target) ? { kind: 'self' } : { kind: 'self', mustName: 'touch' } };
+    }
+    // 「星」にふれたとき、 with no one who touches: a 名人 text belongs to no part, so the heading names the part.
+    if (!/^もし/.test(mask) && (p = surfaceCapture(/^(.+?)に(?:(?:ふれ|触れ)たとき|(?:ふれ|触れ)るたびに)、(.*)$/d, code, mask)) && !/[、。が]/.test(surfaceMask(p[0].text))) {
+      const target = touchTarget(p[0].text, symbols);
+      if (target !== null && (isEdgeTarget(target) || isMeijinPart(target, symbols, ctx))) {
+        const who = (symbols?.project?.components || []).find(c => c.name !== meijinBare(target))?.name || 'ねこ';
+        throw new AkariError('P205', `名人の 本文では、だれが ふれるかを 見出しの はじめに 書きます。れい：${who}が${touchShown(target)}にふれたとき、`);
+      }
+    }
     // 1秒ごとに: a number. The time is read once, before the first sentence runs, so a variable would not mean what it says.
     if ((p = surfaceCapture(/^(.+?)秒ごとに、(.*)$/d, code, mask))) {
       const seconds = parseExpression(p[0].text, symbols, ctx);
@@ -19855,8 +20196,9 @@ function createAkariExtensionHost(options) {
     replaceAll(new RegExp('(もし、?)' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + '(?:で、|であり、|\\s*かつ\\s*)([^、。]+?)(なら|でなければ)、'), m => `${m[1]}条件（${meijinWordTest(m[2], m[3])} かつ ${m[4].trim()}）${m[5] === 'なら' ? 'が成り立つなら' : 'が成り立たないなら'}、`);
     replaceAll(new RegExp('(もし、?|、|^)' + MEIJIN_WORD_SUBJECT + 'が' + MEIJIN_WORD + MEIJIN_WORD_ENDING), m => `${m[1]}${meijinWordTest(m[2], m[3], m[4])}`);
     if (changed) return out;
-    // だんごが星にふれたら、…: wait until it touches, then do it (once), as 〜になったら.
-    if ((p = capture('^(' + alt + ')が(' + alt + ')に(?:ふれた|触れた|さわった)ら、(.+)$'))) return `${p[0].text}が${p[1].text}にふれるまで待って、${p[2].text}`;
+    // だんごが星にふれたら、… (also 「星」, 画面のはし and its sides): wait until it touches, then do it (once), as 〜になったら.
+    if ((p = capture('^(' + alt + ')が(' + alt + '|\u0001+|画面の(?:(?:上|下|右|左)の)?(?:はし|端))に(?:ふれた|触れた)ら、(.+)$')) &&
+      (!/^「/.test(p[1].text) || isMeijinPart(p[1].text.slice(1, -1), symbols, ctx)) && !/^（/.test(p[1].text)) return `${p[0].text}が${p[1].text}にふれるまで待って、${p[2].text}`;
     // 点数が10点になったら、ねこは…: wait until it becomes so, then do it (once).
     if (!/^もし/.test(mask) && (p = surfaceCapture(/^(.+?)になったら、(.+)$/d, code, mask))) return p[0].text + 'になるまで待って、' + p[1].text;
     // 持ち物から「本」を一つ消す: the first one; nothing happens when there is none.
@@ -19910,7 +20252,7 @@ function createAkariExtensionHost(options) {
       const list = set(p[1]);
       if (list) return { set: exprNode('PartPick', { list, by: { kind: 'variable', name: p[3], order: p[4] === '大きい' ? 'max' : 'min' } }) };
     }
-    if ((p = /^(.+?)に(?:ふれ|触れ|さわっ)ている(.+)$/.exec(phrase)) && isMeijinPart(p[1], symbols, ctx)) {
+    if ((p = /^(.+?)に(?:ふれ|触れ)ている(.+)$/.exec(phrase)) && isMeijinPart(p[1], symbols, ctx)) {
       const of = p[2] === 'もの' ? null : isMeijinPart(p[2], symbols, ctx) ? p[2] : undefined;
       if (of !== undefined) return { set: exprNode('PartsTouching', { target: meijinPartRef(p[1]), ...(of ? { of: meijinPartRef(of) } : {}) }) };
     }
@@ -20148,7 +20490,12 @@ function createAkariExtensionHost(options) {
         const rest = code.slice(restStart), order = MEIJIN_SET_WORDS.exec(surfaceMask(rest)), body = meijinBody(order ? rest.slice(order[0].length) : rest);
         // ねこと犬は…あいだ、…: the subject before あいだ is written with が (the parts together).
         if (subject.lanes && particle === 'は' && /(?:あいだ|間|うちに)、/.test(surfaceMask(rest))) throw sentenceDiagnostic(`「〜あいだ」の 前の 主語は「が」で 書きます。れい：${phrase}が${rest.replace(/^、/, '')}`, line, [], { kind: 'Parallel' });
-        if (subject.lanes) return done([meijinGroup(node('Parallel', { lanes: subject.lanes.map(name => read(name + 'は' + body)) }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''))]);
+        if (subject.lanes) {
+          // ねこと犬と鳥は、順番に、…: parts written together start together; the check says 順番に does not order them.
+          const lanes = meijinGroup(node('Parallel', { lanes: subject.lanes.map(name => read(name + 'は' + body)) }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''));
+          if (order?.[1] === '順番に') MEIJIN_LISTED_IN_ORDER.set(lanes, subject.lanes);
+          return done([lanes]);
+        }
         if (subject.value) {
           // 主役は前へ10歩進む / 主役が前へ10歩進む: the part in 主役 acts. (点数が10になったら… is no subject: it does not read so.)
           if (order) throw sentenceDiagnostic(`「みんな」「それぞれ」「順番に」は、部品の あつまりに 使います。「${phrase}」は 部品 一つなので、「${phrase}は${body}」と 書きます`, line, [], { kind: 'ParallelEach' });
@@ -20225,7 +20572,14 @@ function createAkariExtensionHost(options) {
       throw sentenceDiagnostic(`何に 近いかを 書くときは、リストから えらびます。れい：えらんだ部品を、なかまのうち、${p[1].text}にいちばん近いものにする`, line, [], { kind: 'MotionCommand' });
     // Words that give no single meaning to a program (名人モードでも読めない書き方): say how to write it.
     const inName = m => meijinPartNames(symbols).find(name => { for (let at = code.indexOf(name); at >= 0; at = code.indexOf(name, at + 1)) if (at <= m.index && m.index + m[0].length <= at + name.length) return true; return false; });
-    for (const [pattern, message] of MEIJIN_UNREADABLE) { const m = pattern.exec(mask); if (m) throw sentenceDiagnostic((typeof message === 'function' ? message(m) : message) + (inName(m) ? `。部品の 名前なら「【${inName(m)}】」のように【 】で かこみます` : ''), line, [], { kind: 'Sequence' }); }
+    // ねこが「星」にふれたら、 with what to do on the next lines: 〜にふれたら waits once for the action on its own line;
+    // what is done each time is written under the heading 〜にふれたとき、.
+    if ((p = surfaceCapture(/^(?!もし)(.+?)が(.+?)に(?:ふれ|触れ)たら、?$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope)) {
+      const each = `${p[0].text}が${p[1].text}にふれたとき、`;
+      throw sentenceDiagnostic(`「${p[0].text}が${p[1].text}にふれたら、」は、することを 同じ 行に つづけて 書きます（ふれるまで 待ってから 一度だけ します）。ふれる たびに するなら「${each}」と 書いて、次の 行を 右へ ずらします`, line,
+        env.indent === 0 && env.top ? [{ label: 'ふれる たびに する', source: each }] : [], { kind: 'IfStatement' });
+    }
+    for (const [pattern, message] of MEIJIN_UNREADABLE) { const m = pattern.exec(mask); if (m) throw sentenceDiagnostic((typeof message === 'function' ? message(m, code) : message) + (inName(m) ? `。部品の 名前なら「【${inName(m)}】」のように【 】で かこみます` : ''), line, [], { kind: 'Sequence' }); }
     // ねこは、一辺が20歩の四角をかく: which input of the procedure takes 20歩 is not written.
     if (!/^もし/.test(mask) && (p = surfaceCapture(/^(?:(.+?)(?:は|が)、?)?([^、。\u0001]+?)が([^、。]+?)の(.+?を(?:かく|描く|作る))$/d, code, mask))) {
       const [actor, noun, value, rest] = p.map(x => x?.text), procedure = [...(symbols?.actions?.values() || [])].find(d => d.name === rest && d.args?.length);
@@ -20844,6 +21198,7 @@ function createAkariExtensionHost(options) {
     for (const [value, label] of [
       ['THIS', 'この動きを止める'],
       ['OTHERS', 'ほかの動きを全部止める'],
+      ['OWN_OTHERS', '自分のほかの動きを止める'],
       ['ALL', '作品を全部止める'],
     ])
       add('StopCommand', 'statement', label, [], [], [], op('op', value));
@@ -21114,12 +21469,14 @@ function createAkariExtensionHost(options) {
       if (Object.hasOwn(value, 'filter')) {
         if (value.filter === null) heading.filter = null;
         else {
-          blockRecord(value.filter, ['key', 'message'], path + '.filter');
+          // A key (キーを おしたとき), a signal (合図を 受けたとき) or what is touched (ふれたとき: a part, or 端 and its sides).
+          blockRecord(value.filter, ['key', 'message', 'target'], path + '.filter');
           const keys = Object.keys(value.filter);
-          if (keys.length !== 1 || (keys[0] !== 'key' && keys[0] !== 'message'))
+          if (keys.length !== 1 || !['key', 'message', 'target'].includes(keys[0]))
             blockDataError('キーか合図を1つ選んでください', path);
           const key = keys[0];
-          if ((key === 'key' && value.event !== 'keyDown') || (key === 'message' && value.event !== 'message'))
+          if ((key === 'key' && value.event !== 'keyDown') || (key === 'message' && value.event !== 'message') ||
+            (key === 'target' && value.event !== 'touchStart') || (value.event === 'touchStart' && key !== 'target'))
             blockDataError('きっかけと、選んだキーや合図が合いません', path);
           heading.filter = { [key]: blockFieldValue({ type: 'string' }, value.filter[key], path + '.filter.' + key) };
         }
@@ -21629,7 +21986,7 @@ function createAkariExtensionHost(options) {
           s = `${formatExpressionCore(n.arg, PREC.POST)}キーがおされている`;
         else if (n.sensor === 'TOUCHING_COLOR')
           s = `${formatExpressionCore(n.arg, PREC.POST)}の色にふれている`;
-        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && n.arg.value === '端' ? '画面のはし' : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
+        else if (n.sensor === 'TOUCHING') s = `${n.arg?.kind === 'StringLiteral' && isEdgeTarget(n.arg.value) ? EDGE_TARGETS[n.arg.value] : formatExpressionCore(n.arg, PREC.POST)}にふれている`;
         p = PREC.POST;
         break;
       }
@@ -21888,6 +22245,12 @@ function createAkariExtensionHost(options) {
       if (expr?.kind === 'VariableRead' && !expr.qualifier && componentByName(expr.name)) {
         sameNameTold.add(expr); add('S316', sameNameAsPart(expr.name) + '。部品の ことなら、名前を「 」で かこんで 書きます', ctx.node, where); return;
       }
+      // 【おに】にふれていれば (an ordinary body): 【 】 names data; the part touched or faced is named in 「 」.
+      if (!ctx.meijin && expr?.kind === 'VariableRead' && expr.qualifier === 'exact' && componentByName(expr.name) && !targetExists({ name: expr.name, qualifier: null }, symbols, ctx)) {
+        // The value was read first and found no data of that name: this message says what it is instead.
+        for (let i = diags.length - 1; i >= 0; i--) if (diags[i].where === where && diags[i].code === 'S301' && diags[i].message.startsWith(`まだ作っていない名前「${expr.name}」`)) diags.splice(i, 1);
+        sameNameTold.add(expr); add('S301', `「${expr.name}」は 部品の 名前です。ふれる 相手や 向く 相手など、部品を さすときは「「${expr.name}」」と 書きます（【 】で かこむのは へんすうの 名前です）`, ctx.node, where); return;
+      }
       const name = expr?.kind === 'PartRef' ? expr.name : literalText(expr);
       if (name === null || special.includes(name)) return;
       const c = componentByName(name);
@@ -22072,7 +22435,7 @@ function createAkariExtensionHost(options) {
           const info = targetExists({ name: n.name, qualifier: n.qualifier }, symbols, ctx);
           if (info?.scope === 'project' && ctx.qualifiedRead === n)
             add('S301', `「${ctx.qualifiedName}」には「${n.name}」がありません。作品の へんすうや リストなら、「の」を つけずに ${n.name} と 書きます`, ctx.node, where);
-          if (!info) {
+          if (!info && !sameNameTold.has(n)) {
             const prefix =
               n.qualifier === 'self' && ctx.targetId ? `${targetLabel(ctx)}の自分には` : 'まだ作っていない';
             add(
@@ -22148,7 +22511,7 @@ function createAkariExtensionHost(options) {
           if (n.sensor === 'DISTANCE_TO')
             checkComponentTarget(n.arg, null, ctx, where, '部品', ['マウス']);
           if (n.sensor === 'TOUCHING')
-            checkComponentTarget(n.arg, null, ctx, where, '部品', ['マウス', '端']);
+            checkComponentTarget(n.arg, null, ctx, where, '部品', ['マウス', ...Object.keys(EDGE_TARGETS)]);
           if (n.sensor === 'TOUCHING_COLOR') {
             const v = literalText(n.arg);
             if (v !== null)
@@ -22322,7 +22685,7 @@ function createAkariExtensionHost(options) {
         if (n.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(n.op)) {
           const name = literalText(n.args?.[0]);
           if (name !== null && !project.sounds.some((x) => x.name === name))
-            add('S301', `音「${name}」がありません`, n, where);
+            add('S301', Object.hasOwn(SOLFEGE_HZ, name) ? `音「${name}」は ありません。${solfegeMessage(name)}` : `音「${name}」がありません`, n, where);
         }
         if (n.kind === 'LooksCommand' && n.op === 'SET_BACKDROP') {
           const name = literalText(n.args?.[0]);
@@ -22489,8 +22852,9 @@ function createAkariExtensionHost(options) {
       if (extensionEvent?.scope === 'meijin') add('S317', `拡張の できごと「${extensionEvent.displayName}」は、名人モードの 本文で だけ 使えます`, at, item.key);
       if (heading?.condition) analyzeExpr(heading.condition, { ...base, node: at }, item.key);
       if (heading?.seconds) analyzeExpr(heading.seconds, { ...base, node: at }, item.key);
-      if (item.event === 'touchStart' && !componentByName(item.filter?.target))
-        add('S301', `「${item.filter?.target}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, at, item.key);
+      // ふれたとき's partner is a part or the edge (端, 端:上 …); the message is at the heading, or the body's first line.
+      if (item.event === 'touchStart' && !isEdgeTarget(item.filter?.target) && !componentByName(item.filter?.target))
+        add('S301', `「${item.filter?.target}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, heading ? { sourceSpan: { startLine: item.ast.sourceSpan?.startLine || 1, startColumn: 1 } } : at, item.key);
       walk(item.ast.body, base, item.key, 0, true);
       for (const rule of item.ast.rules || []) {
         const c = actorContext(rule.actorRef, { ...base, node: rule }, rule, item.key);
@@ -22534,6 +22898,8 @@ function createAkariExtensionHost(options) {
       symbols: buildSymbols(project) });
     return scriptMetadataFromHeading(parsed.ast?.heading, script, project);
   }
+  // The stage has no outline to touch with: a touch body is written in the body of the part that touches.
+  const STAGE_TOUCH_MESSAGE = '画面は ほかの ものに ふれません。ふれる 部品の 本文に 書きます';
   function scriptMetadataFromHeading(heading, script, project) {
     if (!heading) return { targetId: script.targetId, event: script.event, filter: script.filter };
     const targetId = heading.actorRef?.kind === 'named'
@@ -22542,7 +22908,7 @@ function createAkariExtensionHost(options) {
     const type = targetId === 'stage' ? 'stage' : project.components.find((c) => c.id === targetId)?.type;
     if (!type) throw new AkariError('S301', 'きっかけに 書いた キャラクターや 部品が 見つかりません。名前を たしかめてください');
     if (!EVENT_BY_TYPE[type]?.includes(heading.event))
-      throw new AkariError('F506', 'この部品では使えないできごとです');
+      throw new AkariError('F506', heading.event === 'touchStart' && type === 'stage' ? STAGE_TOUCH_MESSAGE : 'この部品では使えないできごとです');
     return { targetId, event: heading.event, filter: heading.filter };
   }
   function updateScriptSource(script, source, project) {
@@ -22606,7 +22972,7 @@ function createAkariExtensionHost(options) {
       }) : ({
         key: scriptSourceKey(s), ownerId: s.targetId, id: s.id, scriptId: s.id,
         kind: 'script', event: s.event, filter: s.filter, source: s.source,
-        title: EVENT_LABELS[s.event],
+        title: eventText(s.event, s.filter),
         context: { id: s.id, scriptId: s.id, unitIds:s.document?.unitIds, filter: s.filter, ownerId: s.targetId, targetId: s.targetId,
           targetType: s.targetId === 'stage' ? 'stage' : project.components.find(c => c.id === s.targetId).type,
           event: s.event, args: [], definition: null, definitionKind: null },
@@ -22673,7 +23039,7 @@ function createAkariExtensionHost(options) {
       const localNames = new Set([...(record.context.args || []), ...local.localVarNames, ...local.localListNames]);
       const add = (resource, node, binding = 'name') => {
         // A procedure made in a 名人 text is read from its own lines; its places are not places in the script's text.
-        const range = record.pathPrefix ? null : SOURCE_RANGES.get(node)?.range;
+        const range = record.pathPrefix ? null : binding === 'touch' ? SOURCE_RANGES.get(node)?.targetRange : SOURCE_RANGES.get(node)?.range;
         references.push({ ...location(node), resourceKey: resource.key, name: resource.name, binding, nodePath: paths.get(node),
           ...(range ? { range: { start: range.start, end: range.end } } : {}) });
       };
@@ -22714,8 +23080,13 @@ function createAkariExtensionHost(options) {
         if (node.kind === 'PartRef' || node.kind === 'PartFamily')
           for (const r of resources.filter(r => r.kind === 'component' && r.ownerId !== 'stage' && r.name === node.name)) add(r, node, 'literal');
         if (node.kind === 'PartPick' && node.by?.kind === 'variable') data({ name: node.by.name, qualifier: 'self' }, node, null, bound);
+        // ふれたとき's partner, where the heading writes it (a common heading's token is renamed; 名人 text is renamed by
+        // its words). A body with no heading keeps its partner in the work (filter.target, renamed with the part).
         if (node.heading?.event === 'touchStart')
-          for (const r of resources.filter(r => r.kind === 'component' && r.name === node.heading.filter?.target)) add(r, node, 'literal');
+          for (const r of resources.filter(r => r.kind === 'component' && r.name === node.heading.filter?.target)) add(r, node, 'touch');
+        if (node === parsed.ast && !node.heading && record.kind === 'script' && record.context.event === 'touchStart')
+          for (const r of resources.filter(r => r.kind === 'component' && r.name === record.context.filter?.target))
+            references.push({ ...location(node), resourceKey: r.key, name: r.name, binding: 'filter', nodePath: paths.get(node) });
         // The subject's value is placed at its sentence (the value read itself has no place of its own).
         if (node.actorRef?.kind === 'value') {
           ownerId = null;
@@ -22727,7 +23098,7 @@ function createAkariExtensionHost(options) {
         if (node.kind === 'MotionCommand' && ['POINT_TO', 'GOTO_PART'].includes(node.op)) named('component', node.args?.[0], null, ['マウス']);
         if (node.kind === 'CloneCommand' && node.op === 'CREATE_TARGET') named('component', node.args?.[0]);
         if (node.kind === 'LooksCommand' && ['SET_TARGET_TEXT', 'SET_INPUT'].includes(node.op)) named('component', node.args?.[0]);
-        if (node.kind === 'SensorRead' && ['INPUT_VALUE', 'DISTANCE_TO', 'TOUCHING'].includes(node.sensor)) named('component', node.arg, null, ['マウス', '端']);
+        if (node.kind === 'SensorRead' && ['INPUT_VALUE', 'DISTANCE_TO', 'TOUCHING'].includes(node.sensor)) named('component', node.arg, null, ['マウス', ...Object.keys(EDGE_TARGETS)]);
         for (const [key, value] of Object.entries(node)) {
           if (['sourceSpan', 'actorRef', 'heading', 'source'].includes(key)) continue;
           const scoped = key === 'body' && node.kind === 'ForEach' ? new Set([...bound, node.binder]) : bound;
@@ -22879,6 +23250,17 @@ function createAkariExtensionHost(options) {
         const entry = [...session.nodeMap].find(([,loc]) => stableJson(loc.path) === stableJson(ref.nodePath));
         if (!entry) throw new AkariError('F503', '名前を 使っている ばしょを、たしかめられません');
         const [id,loc] = entry, node = index.get(id).node, original = at(session.syntaxAst,ref.nodePath);
+        // A touch body with no heading keeps its partner in the work only (renamed below).
+        if (ref.binding === 'filter') continue;
+        // ふれたとき's partner in the heading: the token is written again in its own way (「 」 or 【 】).
+        if (ref.binding === 'touch') {
+          const heading = node.fields.heading, range = loc.surface?.targetRange;
+          if (!heading?.filter || heading.filter.target !== resource.name || !range) throw new AkariError('F503', '書いた文の中で、ふれる 相手の 名前の ばしょを たしかめられません');
+          heading.filter.target = newName;
+          const token = compactOutsideString(record.source.slice(range.start, range.end));
+          edits.push({ ...range, text: token.startsWith('【') ? `【${newName}】` : formatExpression({ kind: 'StringLiteral', value: newName }) });
+          continue;
+        }
         if (ref.binding === 'actor') {
           const actor = node.fields.heading?.actorRef || node.fields.actorRef;
           if (!actor || actor.name !== resource.name) continue; // The stable alias 画面 keeps its spelling.
@@ -22924,6 +23306,9 @@ function createAkariExtensionHost(options) {
       const target=record.kind==='script'?scriptBySourceKey(next,record.key):next[record.kind==='action'?'actions':'functions'].find(d=>record.key===record.kind+':'+d.id);
       target.source=source;if(target.document&&source!==record.source)target.document.revision++;
     }
+    // ふれたときの相手 kept in the work (filter.target) is renamed with the part, with or without a heading.
+    if (resource.kind === 'component') for (const script of next.scripts)
+      if (script.event === 'touchStart' && script.filter?.target === resource.name) script.filter = { target: newName };
     const identity = rows => rows.map(r => [r.sourceKey,r.resourceKey,r.binding,r.nodePath]).map(stableJson).sort(), after = buildProjectReferenceGraph(next);
     if (after.uncertain.length!==graph.uncertain.length || stableJson(identity(graph.references)) !== stableJson(identity(after.references)))
       throw new AkariError('S301', 'その名前にすると、さすものや、どの部品のものかがかわってしまいます。ちがう名前にするか、どの部品のものか、はっきり書いてください');
@@ -23064,6 +23449,7 @@ function createAkariExtensionHost(options) {
         const ref=heading.actorRef,actor=ref?.kind==='named'?(ref.name===project.stage.name||ref.name==='画面'?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
           context.targetId==='stage'?{id:'stage',type:'stage'}:project.components.find(c=>c.id===context.targetId);
         if(!actor)errors.push({code:'S304',message:ref?.kind==='named'?(context.meijin&&targetExists({name:ref.name,qualifier:null},buildSymbols(project),{})?`見出しの 主語には、部品の 名前を 一つ 書きます（「${ref.name}」のような へんすうや リストは 書けません）。中身の 文に 主語を 書きます`:`「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`):'この きっかけを 使う キャラクターや 部品が 見つかりません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
+        else if(heading.event==='touchStart'&&actor.type==='stage')errors.push({code:'S304',message:STAGE_TOUCH_MESSAGE,line:unit.sourceSpan?.startLine||1,column:1,where:key});
         else if(!EVENT_BY_TYPE[actor.type]?.includes(heading.event)&&!(context.meijin&&meijinEventOwner(heading.event,actor.type)))errors.push({code:'S304',message:`この キャラクターや 部品では、${EVENT_LABELS[heading.event]?'「'+EVENT_LABELS[heading.event]+'」の ':'この '}きっかけは 使えません。ほかの きっかけに してください`,line:unit.sourceSpan?.startLine||1,column:1,where:key});
         else resolved={...resolved,ownerId:actor.id,targetId:actor.id,targetType:actor.type,event:heading.event,filter:heading.filter||null};
       }
@@ -23330,6 +23716,97 @@ function createAkariExtensionHost(options) {
     visit(ast.body); for (const unit of ast.units || []) visit(unit.body);
     return notes;
   }
+  // Programs that run but do something other than they say, a child's usual first try (C-17, final call 11). Each notice
+  // says what happens and names the sentence to write; none of them stops the work or changes what it means.
+  const NOTICE_WAITS = new Set(['WaitTime', 'WaitUntil', 'BroadcastAndWait', 'WaitBroadcastGroup', 'Ask', 'MoveUntil']);
+  const NOTICE_LOOPS = new Set(['RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach', 'TimedRepeat']);
+  const NOTICE_CHANGES = new Set(['Assignment', 'NumericUpdate', 'ListAppend', 'ListInsert', 'ListReplace', 'ListDelete', 'ListClear', 'ListRemoveValue']);
+  function silentWrongNotes(project, item, ast) {
+    const notes = [], note = (code, node, message) => notes.push({ code, notice: true, line: node?.sourceSpan?.startLine || item.ast?.sourceSpan?.startLine || 0,
+      column: node?.sourceSpan?.startColumn || 1, where: item.key, message });
+    const text = n => messageExpression(n);
+    const numeric = n => ['NumberLiteral', 'QuantityLiteral'].includes(n?.kind) || (n?.kind === 'UnaryExpression' && ['NEG', 'POS'].includes(n.op) && n.value?.kind === 'NumberLiteral');
+    // Every expression of a statement (its own, not those of the statements inside it), with whether it is negated.
+    const expressions = (node, visit) => {
+      const walk = (e, negated) => {
+        if (!e || typeof e !== 'object') return;
+        if (Array.isArray(e)) { e.forEach(x => walk(x, negated)); return; }
+        if (typeof e.kind !== 'string') return;
+        visit(e, negated);
+        for (const [key, value] of Object.entries(e)) if (key !== 'sourceSpan' && value && typeof value === 'object') walk(value, negated !== (e.kind === 'UnaryExpression' && e.op === 'NOT' && key === 'value'));
+      };
+      for (const [key, value] of Object.entries(node)) if (!['body', 'thenBody', 'elseBody', 'lanes', 'sourceSpan', 'actorRef', 'laneRef'].includes(key) && value && typeof value === 'object') walk(value, false);
+    };
+    const statements = function* (nodes) { for (const n of nodes || []) { if (!n || typeof n !== 'object') continue; yield n; for (const key of ['body', 'thenBody', 'elseBody']) yield* statements(n[key]); for (const lane of n.lanes || []) yield* statements(lane); } };
+    const touchOf = condition => { let found = null; expressions({ condition }, (e, negated) => { if (!found && !negated && e.kind === 'SensorRead' && e.sensor === 'TOUCHING') found = e; }); return found; };
+    const ends = nodes => [...statements(nodes)].some(m => NOTICE_WAITS.has(m.kind) || m.kind === 'MotionCommand' || m.kind === 'StopCommand' ||
+      (m.kind === 'LooksCommand' && m.op === 'HIDE') || (m.kind === 'CloneCommand' && ['DELETE_SELF', 'DELETE_ALL'].includes(m.op)) || (m.kind === 'Say' && m.seconds));
+    const keyOf = condition => condition?.kind === 'SensorRead' && condition.sensor === 'KEY_DOWN' && condition.arg?.kind === 'StringLiteral' ? condition.arg.value : null;
+    const visitList = (nodes, inLoop) => {
+      let heldKey = null, before = 0;
+      for (const n of nodes || []) {
+        if (!n || typeof n !== 'object' || n.kind === 'CommentLine') continue;
+        // 「これを6回くり返す」 after more than one sentence: only the one before it is repeated.
+        if (REPEAT_PREVIOUS.has(n) && before > 0)
+          note('I122', { sourceSpan: { startLine: n.sourceSpan?.endLine, startColumn: 1 } }, `「これを${text(n.count)}くり返す」は、すぐ前の 一つの 文だけを くり返します。前の いくつかの 文を くり返すときは、「${text(n.count)}くり返す。」と 書いて、その 下に くり返す 文を 右へ ずらして 書きます`);
+        before++;
+        // 「空白」キーがおされるまで待つ twice: the second wait ends at once on the key still held (0 seconds).
+        if (n.kind === 'WaitUntil') {
+          const key = keyOf(n.condition);
+          if (key !== null && heldKey === key)
+            note('I125', n, `「${key}」キーが おされるまで 待つ 文が つづくと、2つ目は、おしたままの キーで すぐに 終わります（時間は 0秒です）。あいだに「「${key}」キーがおされなくなるまで待つ。」を 書きます`);
+          // A wait for the key to be let go (or for anything else) ends the held press.
+          heldKey = key;
+        } else if (NOTICE_WAITS.has(n.kind) || NOTICE_LOOPS.has(n.kind) || n.kind === 'IfStatement' || (n.kind === 'Say' && n.seconds)) heldKey = null;
+        // もし「石」にふれていれば、点数を1増やす in a loop: it counts on every turn while they touch.
+        if (inLoop && n.kind === 'IfStatement') {
+          const touch = touchOf(n.condition), changes = [...statements(n.thenBody)].some(m => NOTICE_CHANGES.has(m.kind));
+          if (touch && changes && !ends(n.thenBody)) {
+            const target = touch.arg?.kind === 'StringLiteral' ? touchShown(touch.arg.value) : '「石」';
+            note('I121', n, `ふれている あいだ、くり返す たびに 値が かわります。ふれる たびに 1回だけ かえるなら「${target}にふれたとき、」を 使います`);
+          }
+        }
+        // 答え compared with a number: 答え is the text that was typed, never a number.
+        expressions(n, e => {
+          if (e.kind !== 'CompareExpression') return;
+          const [answer, other] = e.left?.kind === 'SensorRead' && e.left.sensor === '答え' ? [e.left, e.right] : e.right?.kind === 'SensorRead' && e.right.sensor === '答え' ? [e.right, e.left] : [];
+          if (!answer || !numeric(other)) return;
+          let example = null;
+          try { example = 'もし' + formatCondition({ ...e, [e.left === answer ? 'left' : 'right']: exprNode('BuiltinCall', { name: '数', args: [answer] }) }, 'if') + '、'; }
+          catch (error) { if (!(error instanceof AkariError)) throw error; }
+          note('I123', n, `「答え」は 書きこまれた 文字なので、数の ${text(other)} とは ${['EQ', 'NEQ'].includes(e.op) ? 'くらべても 同じに なりません' : '大きさを くらべられません（動かすと 止まります）'}。数として くらべるときは「数（答え）」と 書きます${example ? '。れい：' + example : ''}`);
+        });
+        // タイマーが30になるまで待つ: the timer goes up a little at a time and is hardly ever exactly 30.
+        expressions(n, e => {
+          if (e.kind !== 'CompareExpression' || e.op !== 'EQ') return;
+          const [, other] = e.left?.kind === 'SensorRead' && e.left.sensor === 'タイマー' ? [e.left, e.right] : e.right?.kind === 'SensorRead' && e.right.sensor === 'タイマー' ? [e.right, e.left] : [];
+          if (!numeric(other)) return;
+          const value = text(other), example = n.kind === 'WaitUntil' ? `タイマーが${value}より大きくなるまで待つ` : n.kind === 'RepeatUntil' ? `タイマーが${value}より大きくなるまで、くり返す`
+            : n.kind === 'RepeatWhile' ? `タイマーが${value}より小さいあいだ、くり返す` : `もしタイマーが${value}より大きければ、`;
+          note('I124', n, `タイマーは 少しずつ ふえるので、ちょうど ${value} に なる ことは ほとんど ありません${['WaitUntil', 'RepeatUntil'].includes(n.kind) ? '（待つのが 終わりません）' : ''}。「${example}」のように 書きます`);
+        });
+        // マウスがおされているあいだ in an おされたとき body: that body starts when the button is let go.
+        if (item.event === 'click') expressions(n, (e, negated) => {
+          if (!negated && e.kind === 'SensorRead' && e.sensor === 'マウスが押されている')
+            note('I126', n, '「おされたとき」は、マウスの ボタンを はなしたときに 始まるので、「マウスがおされている」は もう あてはまりません。おしている あいだ 動かすときは、「作品を動かしたとき、」の 本文の「ずっとくり返す。」の 中に「もしマウスがおされていれば、」を 書きます');
+        });
+        // 名人: ねこと犬と鳥は、順番に、… starts them together; 候補から【一覧】を全部消す looks for the list itself.
+        const listed = MEIJIN_LISTED_IN_ORDER.get(n);
+        if (listed) note('I127', n, `「${listed.join('と')}は、順番に、」のように 部品を ならべると、みんな いっしょに 動きます。順番に するときは、「なかまを、${listed.join('と')}にする。」と 書いてから「なかまは、順番に、…」と 書きます（なかまは リストの 名前です）`);
+        if (n.kind === 'ListRemoveValue' && n.value?.kind === 'VariableRead' && dataNameExists(project, n.value.name, 'lists'))
+          note('I128', n, `「${n.target.name}から【${n.value.name}】を全部消す」は、リスト【${n.value.name}】そのものを さがすので、何も 消えません。【${n.value.name}】の 中の ものを 消すときは「【${n.value.name}】の中身を先頭から一つずつ見て、次のことを行う。」の 中に「${n.target.name}から今見ているものを全部消す。」と 書きます`);
+        for (const key of ['body', 'thenBody', 'elseBody']) if (Array.isArray(n[key])) visitList(n[key], inLoop || NOTICE_LOOPS.has(n.kind));
+        for (const lane of n.lanes || []) visitList(lane, inLoop);
+      }
+    };
+    visitList(ast.body, false);
+    // 名人: 「つぎの日の朝」になったとき、 has no condition in it (it stops at once when the work is run).
+    const heading = ast.heading;
+    if (heading?.event === 'conditionTrue' && ['StringLiteral', 'NumberLiteral', 'QuantityLiteral', 'ListLiteral'].includes(heading.condition?.kind))
+      note('I129', { sourceSpan: { startLine: ast.sourceSpan?.startLine || 1, startColumn: 1 } }, `「${text(heading.condition)}になったとき、」には、どう なったときかが ありません（動かすと すぐ 止まります）。「場面が${text(heading.condition)}になったとき、」のように、へんすうが どう なったときかを 書きます`);
+    return notes;
+  }
+  const dataNameExists = (project, name, kind) => [project.projectData, ...project.components.map(c => c.localData)].some(d => d[kind].some(x => x.name === name));
   function projectNotes(project, compiled) {
     const notes = [], seen = new Set();
     const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach'];
@@ -23361,7 +23838,7 @@ function createAkariExtensionHost(options) {
       };
       walk(ast.body);
       for (const unit of ast.units || []) walk(unit.body);
-      for (const note of fixedPlaceNotes(project, item, ast)) {
+      for (const note of [...fixedPlaceNotes(project, item, ast), ...silentWrongNotes(project, item, ast)]) {
         const key = note.where + '|' + note.line + '|' + note.column + '|' + note.code;
         if (!seen.has(key)) { seen.add(key); notes.push(note); }
       }
@@ -26483,9 +26960,10 @@ function createAkariExtensionHost(options) {
       }
       if (before.schemaId !== after.schemaId || !same(before.fields, after.fields) || !same(before.annotations, after.annotations))
         return fallback(before, after);
-      // The touch test writes the stage edge as 画面のはし, so a change to or from the edge rewrites the whole test.
+      // The touch test writes the stage edge as 画面のはし (and its sides as 画面の下のはし …), so a change to or from an edge
+      // rewrites the whole test.
       if (before.schemaId === 'SensorRead:TOUCHING' && !same(before.inputs.arg, after.inputs.arg) &&
-        [before.inputs.arg, after.inputs.arg].some(n => n?.schemaId === 'StringLiteral' && n.fields.value === '端'))
+        [before.inputs.arg, after.inputs.arg].some(n => n?.schemaId === 'StringLiteral' && isEdgeTarget(n.fields.value)))
         return fallback(before, after);
       const schema = BLOCK_SCHEMA_BY_ID.get(before.schemaId), changes = [];
       for (const slot of schema.inputs) {
@@ -27231,14 +27709,14 @@ function createAkariExtensionHost(options) {
     'LooksCommand:SET_BACKDROP', 'SoundCommand:TONE_WAIT', 'SoundCommand:SAMPLE_WAIT',
   ]);
   // かんたん: the three move blocks of はじめて and 〜のところへ行く come first (final call 10), so the first page of
-  // よく使う shows them.
+  // よく使う shows them; 自分のほかの動きを止める is there too, and いつ動く？ offers ふれたとき (its hat).
   const BASIC_BLOCK_SCHEMA_IDS = new Set([
     'Say', 'MotionCommand:GOTO', 'MotionCommand:MOVE_BY', 'MotionCommand:MOVE', 'MotionCommand:GOTO_PART',
     'RepeatCount', 'WaitTime', 'MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT', 'IfStatement',
     'LooksCommand:SET_TARGET_TEXT', 'UserActionCall', 'SoundCommand:TONE_WAIT', 'MotionCommand:SET_DIRECTION',
     ...ENTRY_BLOCK_SCHEMA_IDS, 'Forever', 'LooksCommand:SHOW', 'LooksCommand:HIDE',
     'Assignment', 'NumericUpdate:ADD', 'ListReplace',
-    'PenCommand:DOWN', 'PenCommand:UP', 'PenCommand:SET_COLOR', 'PenCommand:SET_SIZE',
+    'PenCommand:DOWN', 'PenCommand:UP', 'PenCommand:SET_COLOR', 'PenCommand:SET_SIZE', 'StopCommand:OWN_OTHERS',
   ]);
   const TUTORIAL_FISH_ASSETS=[{"name": "blue", "sha256": "616a39d40c93c47912be5c1559d78ed5555ccc10b270699ade11a45e193d92a3", "base64": "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", "bytes": 9129}, {"name": "orange", "sha256": "22adce1b1d1bb17451a8b1b536912400f25ac30c47659506a9255f66af958354", "base64": "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", "bytes": 9318}];
   // Guided projects remain ordinary editable programs. Artwork and named data are
@@ -27528,6 +28006,12 @@ function createAkariExtensionHost(options) {
     Assignment: ['変数', '記録', '代入', '値を入れる'],
     NumericUpdate: ['増やす', '減らす', '足す', '引く', '点数'],
     VariableRead: ['変数', '値', '読む'],
+    // Holding a key to move: the continuous rule first, the repeat while it is held second (C-16).
+    ContinuousRule: ['おしているあいだ', 'おしている間', 'おしっぱなし', 'おしつづける', 'キーをおしているあいだ', 'つづけて動く', '動き続ける'],
+    RepeatWhile: ['おしているあいだ', 'おしっぱなし', 'あいだ', '間'],
+    // The touch words a child writes lead to ふれる (C-08, C-09).
+    'SensorRead:TOUCHING': ['ふれる', 'ふれたら', 'ふれたとき', 'さわる', 'さわったら', 'あたる', '当たる', 'ぶつかる', 'かさなる', 'はし'],
+    'StopCommand:OWN_OTHERS': ['止める', 'とめる', '自分だけ', 'ほかの動き', 'ストップ'],
   });
   function blockPaletteSearchText(schema, project) {
     const words = [schema.label, schema.id, schema.kind, schema.palette,
@@ -28074,17 +28558,18 @@ function createAkariExtensionHost(options) {
       if (!fromPending) render({ force: true });
       return result;
     }
-    // A touch test names the stage edge as 端 (the word code also reads bare). The block shows and
-    // accepts the words the code writes, 画面のはし; other text slots keep 端 as written.
+    // A touch test names the stage edge as 端 and its sides as 端:上 …. The block shows and accepts the words the code
+    // writes (画面のはし, 画面の下のはし …); other text slots keep what is written.
     function edgeSlot(node, field) {
       if (node?.schemaId !== 'StringLiteral' || field?.key !== 'value') return false;
       return index.get(index.get(node.id)?.parentId)?.node?.schemaId === 'SensorRead:TOUCHING';
     }
     function edgeShown(node, field, value) {
-      return edgeSlot(node, field) && value === '端' ? '画面のはし' : value;
+      return edgeSlot(node, field) && isEdgeTarget(value) ? EDGE_TARGETS[value] : value;
     }
     function edgeStored(node, field, value) {
-      return edgeSlot(node, field) && ['画面のはし', '画面の端'].includes(String(value).trim()) ? '端' : value;
+      const written = String(value).trim().replace(/端$/, 'はし'), edge = edgeSlot(node, field) && Object.keys(EDGE_TARGETS).find(key => EDGE_TARGETS[key] === written);
+      return edge || value;
     }
     function readInputValue(input, field) {
       if (field.type === 'boolean') return input.value === 'true';
@@ -28869,7 +29354,7 @@ function createAkariExtensionHost(options) {
           ...p.sounds.map((x) => x.name),
           ...Object.keys(COLOR_NAMES).map((name) => COLOR_LABELS[name] || name),
           'マウス',
-          ...(edgeSlot(node, field) ? ['画面のはし'] : []),
+          ...(edgeSlot(node, field) ? Object.values(EDGE_TARGETS) : []),
           '空白',
           '上',
           '下',
@@ -28899,7 +29384,7 @@ function createAkariExtensionHost(options) {
           const actorText = actor => actor?.kind === 'named' ? actor.name : actor?.kind === 'all' || (!actor && field.everyone) ? 'みんな' : '自分';
           const text = field.type === 'actor-ref' ? actorText(value)
             : field.type === 'argument-names' ? (value || []).join('、')
-              : value ? (EVENT_LABELS[value.event] || value.event) + '、' + actorText(value.actorRef) +
+              : value ? (eventText(value.event, value.filter) || value.event) + '、' + actorText(value.actorRef) +
                 (value.filter?.key !== undefined ? '、キー「' + value.filter.key + '」'
                   : value.filter?.message !== undefined ? '、合図「' + value.filter.message + '」' : '') : '本文で決める';
           wrap.append(title, E('span', 'blockui-readonly-value', text, attrs));
@@ -28961,10 +29446,21 @@ function createAkariExtensionHost(options) {
           };scan(node.bodies);scan(node.inputs.rules);
           const location=session()?.nodeMap?.get(node.bodies.body?.[0]?.id)?.surface,range=location?.range||location?.extent,
             preview=range?session().sourceText.slice(range.start,range.end):node.bodies.body?.length?schemaOf(node.bodies.body[0]).label:'まだ ブロックが ありません';
-          group.append(E('p','blockui-trigger-scope',`かえる動き：${[...owners].join('・')} ／ ${EVENT_LABELS[currentEvent]}\n${preview}
+          group.append(E('p','blockui-trigger-scope',`かえる動き：${[...owners].join('・')} ／ ${eventText(currentEvent,currentFilter)}\n${preview}
 このまとまりの きっかけだけを かえます。ほかの 動きは かえません。`));
-          const event = choice('いつ動く？', 'event', Object.entries(EVENT_LABELS).filter(([key]) => !MEIJIN_EVENTS.includes(key)), currentEvent);
+          // The stage touches nothing, so its bodies are not offered ふれたとき.
+          const stageOwned = context().targetId === 'stage' && currentActor?.kind !== 'named';
+          const event = choice('いつ動く？', 'event', Object.entries(EVENT_LABELS).filter(([key]) => !MEIJIN_EVENTS.includes(key) && !(key === 'touchStart' && stageOwned && currentEvent !== 'touchStart')), currentEvent);
           event.setAttribute('aria-label','いつ動く？');event.parentElement.classList.add('blockui-trigger-choice');
+          // ふれたとき: what is touched — the other parts in the order of 作品, the stage edge, and its four sides. A new touch
+          // body touches the stage edge until another is chosen.
+          const ownerName = actorName(currentActor);
+          const touchTargets = [...(project()?.components || []).filter(c => c.name !== ownerName).map(c => [c.name, '「' + c.name + '」']), ...Object.entries(EDGE_TARGETS)];
+          if (typeof currentFilter?.target === 'string' && !touchTargets.some(([v]) => v === currentFilter.target)) touchTargets.push([currentFilter.target, isEdgeTarget(currentFilter.target) ? EDGE_TARGETS[currentFilter.target] : '「' + currentFilter.target + '」']);
+          const touchTarget = choice('なにに ふれたとき？', 'touch.target', touchTargets, currentFilter?.target ?? '端');
+          touchTarget.parentElement.classList.add('blockui-trigger-choice');
+          const syncTouch = () => { touchTarget.parentElement.hidden = event.value !== 'touchStart'; };
+          syncTouch(); listen(event, 'change', syncTouch);
           const details=E('details','blockui-trigger-details');details.append(E('summary','','くわしく（きっかけ・だれ・どれで動くか）'));group.append(details);
           const detailStart=group.children.length;
           const enabled = choice('きっかけ', 'enabled', [['no', '本文だけ'], ['yes', 'できごとを決める']], value ? 'yes' : 'no');
@@ -28976,21 +29472,25 @@ function createAkariExtensionHost(options) {
             if (filter.selectedOptions[0]?.disabled) filter.value = 'all';
             filterValue.parentElement.hidden = filter.value === 'all';
             for (const child of group.querySelectorAll('input,select'))
-              if (child !== enabled&&child!==event) child.disabled = isLocked() || options.readOnly || enabled.value !== 'yes';
+              if (child !== enabled&&child!==event&&child!==touchTarget) child.disabled = isLocked() || options.readOnly || enabled.value !== 'yes';
           };
           for(const child of [...group.children].slice(detailStart))details.append(child);
           listen(details,'input',()=>{group.dataset.triggerDetailed='true';group.dataset.triggerMetadataOnly='false';});
           listen(details,'change',()=>{group.dataset.triggerDetailed='true';group.dataset.triggerMetadataOnly='false';});
           sync(); listen(enabled, 'change', sync); listen(event, 'change',()=>{enabled.value='yes';group.dataset.triggerMetadataOnly=String(!value&&group.dataset.triggerDetailed!=='true');sync();}); listen(filter, 'change', sync);
+          // What is touched is chosen like the event: a body with no heading keeps its text and takes the partner.
+          listen(touchTarget, 'change',()=>{enabled.value='yes';group.dataset.triggerMetadataOnly=String(!value&&group.dataset.triggerDetailed!=='true');sync();});
           readValue = () => {
             if (enabled.value !== 'yes') return undefined;
             const heading = { event: event.value, actorRef: subject.read() };
-            if (filter.value !== 'all') heading.filter = { [filter.value]: filterValue.value };
+            if (event.value === 'touchStart') heading.filter = { target: touchTarget.value };
+            else if (filter.value !== 'all') heading.filter = { [filter.value]: filterValue.value };
             else if (currentFilter === null) heading.filter = null;
             return heading;
           };
           restore = () => {
             enabled.value = value ? 'yes' : 'no'; event.value = currentEvent; subject.restore();
+            touchTarget.value = currentFilter?.target ?? '端'; syncTouch();
             filter.value = currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all';
             filterValue.value = currentFilter?.key ?? currentFilter?.message ?? ''; sync();
           };
@@ -29856,7 +30356,7 @@ function createAkariExtensionHost(options) {
       head.append(E('strong', 'blockui-node-title', schema.label), nodeTools(node, info));
       if(schema.category==='script'){
         const heading=node.fields.heading,actor=heading?.actorRef?.kind==='named'?heading.actorRef.name:project()?.components.find(c=>c.id===context().targetId)?.name||project()?.stage?.name;
-        head.querySelector('strong').textContent=`${actor}・${EVENT_LABELS[heading?.event||context().event||'start']}`;
+        head.querySelector('strong').textContent=`${actor}・${eventText(heading?.event||context().event||'start',heading?heading.filter:context().filter)}`;
       }
       box.append(head);
       box.classList.toggle('blockui-selected', selected === node.id);
@@ -30465,7 +30965,7 @@ function createAkariExtensionHost(options) {
           'strong',
           '',
           kind === 'script'
-            ? EVENT_LABELS[tree?.fields.heading?.event||ctx.event||event] || event
+            ? eventText(tree?.fields.heading?.event||ctx.event||event, tree?.fields.heading ? tree.fields.heading.filter : ctx.filter) || event
             : kind === 'function'
               ? 'このブロックで 答えを出すとき'
               : 'このブロックを 使ったとき',
@@ -32142,7 +32642,7 @@ function createAkariExtensionHost(options) {
       }
       else if (source) {
         const row = (event ? id : selectedId) === MEIJIN_OWNER ? { id: event ? ensureUniqueId('script') : id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: '' }
-          : { id: event ? ensureUniqueId('script') : id, targetId: event ? id : selectedId, event: event || currentEvent, source: '' };
+          : { id: event ? ensureUniqueId('script') : id, targetId: event ? id : selectedId, event: event || currentEvent, source: '', ...newBodyFilter(event || currentEvent) };
         updateScriptSource(row, source, next);
         next.scripts.push(row);
       }
@@ -32194,15 +32694,18 @@ function createAkariExtensionHost(options) {
       if (binding.kind === 'draft') paintCallable();
       return true;
     }
-    function runtimeEventText(eventType) {
-      return eventType === 'continuous' ? 'きまりに 合っている あいだ' : EVENT_LABELS[eventType] || eventType;
+    // A touch body is named with what it touches (「星」に ふれたとき), from the compiled body of the run.
+    function runtimeEventText(eventType, scriptKey = null) {
+      if (eventType === 'continuous') return 'きまりに 合っている あいだ';
+      const filter = scriptKey ? compiled?.items?.find(item => item.key === scriptKey)?.filter : null;
+      return eventText(eventType, filter) || eventType;
     }
     function diagnosticLocation(diagnostic) {
       const key = diagnostic?.where || diagnostic?.key || '', item = compiled?.items?.find(x => x.key === key),
         sourceKey = item?.documentKey || key, script = scriptBySourceKey(project, sourceKey),
         definition = project.actions.find(x => key === 'action:' + x.id) || project.functions.find(x => key === 'function:' + x.id);
       const owner = definition ? (key.startsWith('function:') ? '答えを もとめる「' : 'てじゅん「') + definition.name + '」'
-        : script || item ? (targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (EVENT_LABELS[item?.event || script?.event] || '動き')
+        : script || item ? (targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (eventText(item?.event || script?.event, item ? item.filter : script?.filter) || '動き')
         : 'この本文';
       return owner + (diagnostic?.line ? ' / ' + diagnostic.line + '行目' : '');
     }
@@ -32393,7 +32896,7 @@ function createAkariExtensionHost(options) {
       const heading = document.createElement('strong'); heading.textContent = 'どこに動きを入れるかたしかめる'; root.append(heading);
       for (const entry of plan.entries) {
         const actor = targetById(entry.metadata.targetId)?.name || 'この部品', event = entry.metadata.event,
-          label = actor + '・' + EVENT_LABELS[event];
+          label = actor + '・' + eventText(event, entry.metadata.filter);
         const row = document.createElement('p');
         row.textContent = entry.candidates.length ? label + 'には今の動きがあります' : label + 'に新しい動きを入れます'; root.append(row);
         {
@@ -32483,7 +32986,7 @@ function createAkariExtensionHost(options) {
           const hole=[...buildBlockIndex(binding.session.blockView).values()].find(entry=>entry.node.schemaId.startsWith('Hole:'));
           const context=bindingContext(binding),name=targetById(context.targetId)?.name||'この本文',label=hole?.node.fields.label||'ブロックや 数・文字';
           if(hole)binding.view.focus({id:hole.node.id});
-          return showEditorFailure(binding, `${name}・${EVENT_LABELS[context.event]||'この本文'}：${label}を入れる ところへ 動きました`, { preservePending: true });
+          return showEditorFailure(binding, `${name}・${eventText(context.event, context.filter)||'この本文'}：${label}を入れる ところへ 動きました`, { preservePending: true });
         }
         return true;
       }
@@ -33740,6 +34243,8 @@ function createAkariExtensionHost(options) {
       activeDragCleanup?.();
       return saveCodeBinding(mainEditor, options);
     }
+    // A new touch body touches the stage edge until its partner is chosen (いつ動く？) or written in its heading.
+    const newBodyFilter = event => event === 'touchStart' ? { filter: { target: '端' } } : {};
     function eventsFor(id) {
       if (id === MEIJIN_OWNER) return ['start'];
       return EVENT_BY_TYPE[targetType(id)] || EVENT_BY_TYPE.stage;
@@ -33790,8 +34295,11 @@ function createAkariExtensionHost(options) {
         choices.forEach((row, index) => {
           const option = document.createElement('option');
           option.value = index === 0 ? ev : scriptSourceKey(row);
-          const filter = row?.filter, value = filter?.key || filter?.message || (typeof filter === 'string' ? filter : '');
-          option.textContent = selectedId === MEIJIN_OWNER ? `名人の本文 ${index + 1}` : EVENT_LABELS[ev] + (rows.length > 1 ? ` ／ 本文${index + 1}` : '') +
+          const filter = row?.filter, value = ev === 'touchStart' ? '' : filter?.key || filter?.message || (typeof filter === 'string' ? filter : '');
+          // A touch body is named with what it touches (「星」に ふれたとき); bodies with the same partner are numbered among
+          // themselves. A part with no touch body has the one entry ふれたとき.
+          const same = ev === 'touchStart' ? rows.filter(x => x.filter?.target === filter?.target) : rows;
+          option.textContent = selectedId === MEIJIN_OWNER ? `名人の本文 ${index + 1}` : eventText(ev, filter) + (same.length > 1 ? ` ／ 本文${same.indexOf(row) + 1}` : '') +
             (value ? ` 「${value}」` : '');
           if (row) option.dataset.scriptKey = scriptSourceKey(row);
           el.event.appendChild(option);
@@ -35473,7 +35981,7 @@ function createAkariExtensionHost(options) {
       }
       renderMonitorSection(root, 'うまく いかなかったときの ようす', [
         ['動いていた部品', targetById(r.actor?.baseId || r.targetId)?.name || '画面'],
-        ['きっかけ', runtimeEventText(r.eventType)],
+        ['きっかけ', runtimeEventText(r.eventType, r.key)],
         ['動かしていた本文', r.source],
       ]);
       const identifiers = appendDiagnosticDetails(root, r, '動きの 番号: ' + r.taskId + '\n動いている部品: ' + r.runtimeId + '\n本文: ' + r.key);
@@ -35548,7 +36056,7 @@ function createAkariExtensionHost(options) {
         select = document.createElement('select'), apply = document.createElement('button'),
         cancel = document.createElement('button'), notice = document.createElement('p');
       explanation.textContent = `ここは文字です。リスト「${record.quotedList.name}」を使いますか？`;
-      preview.textContent = `${targetById(script.targetId)?.name || '画面'}・${EVENT_LABELS[script.event] || script.event}の本文、${record.quotedList.span.startLine}行目の ${range.original} だけを かえます。番目・秒数・ほかの文・リストの中身は そのままです。`;
+      preview.textContent = `${targetById(script.targetId)?.name || '画面'}・${eventText(script.event, script.filter) || script.event}の本文、${record.quotedList.span.startLine}行目の ${range.original} だけを かえます。番目・秒数・ほかの文・リストの中身は そのままです。`;
       select.id = 'listRepairChoice'; select.setAttribute('aria-label', 'ここで 使う リスト');
       select.style.maxWidth = '100%';
       const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = '使う リストを えらぶ'; select.append(placeholder);
@@ -35674,7 +36182,7 @@ function createAkariExtensionHost(options) {
       if (focus) {
         section('いまの 動き', [
           ['ようす', focus.state==='BLOCKED'?({time:focus.blockReason?.speechToken?'話している':'時間を待っている',condition:'そうなるまで 待っている',question:'答えを待っている',waitGroup:'ほかの動きを待っている',glide:'時間を かけて 動いている'}[focus.blockReason?.kind]||'終わるのを待っている'):({READY:'じゅんばんを 待っている',RUNNING:'動いている',DONE:'終わった',PAUSED:'いったん 止まっているよ',ERROR:'直すところがある',CANCELLED:'止めた'}[focus.state]||'動いている')],
-          ['きっかけ', `${targetById(focus.targetId)?.name||'作品'} / ${runtimeEventText(focus.eventType)}`],
+          ['きっかけ', `${targetById(focus.targetId)?.name||'作品'} / ${runtimeEventText(focus.eventType, focus.scriptId ? 'script:' + focus.scriptId : null)}`],
         ]);
         for (const f of focus.callFrames)
           section('てじゅん ' + f.name, [
@@ -35777,7 +36285,7 @@ function createAkariExtensionHost(options) {
               : null;
       const label = def
         ? `${parts[0] === 'action' ? 'てじゅん' : '答えを もとめる'} ${def.name}`
-        : `${targetById(loc.targetId)?.name || loc.targetId} / ${runtimeEventText(loc.event)}`;
+        : `${targetById(loc.targetId)?.name || loc.targetId} / ${runtimeEventText(loc.event, scriptKey)}`;
       $('#execLocation').textContent = `いま 動いている 文：${label} / ${loc.line}行`;
       if (scheduler?.paused) {
         hideSourceOverview();
@@ -35935,6 +36443,10 @@ function createAkariExtensionHost(options) {
         showEditorFailure(mainEditor, err);
       }
     }
+    // The heading of a body made a 名人 text: the part is written as its subject (and, for ふれたとき, as the topic).
+    function meijinHeadingSource(heading, name) {
+      return sentenceHeadingSource({ ...heading, actorRef: { kind: 'named', name } }) + (heading.event === 'touchStart' ? nameSource(name) + 'は、' : '');
+    }
     function startMeijin() {
       if (modelLocked() || currentIsMeijin()) return;
       // A body with 名人 forms in it does not read as an ordinary body, so it stays a draft in the code editor (S317
@@ -35948,7 +36460,7 @@ function createAkariExtensionHost(options) {
         // A body the common grammar does not read may hold 名人 forms (the check says so, S317): it is taken when it
         // reads as a 名人 text under a heading with its owner's name.
         if (!parsed.ast) {
-          const headed = owner?.name ? sentenceHeadingSource({ event: script?.event ?? currentEvent, actorRef: { kind: 'named', name: owner.name }, filter: script?.filter ?? null }) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n') : null;
+          const headed = owner?.name ? meijinHeadingSource({ event: script?.event ?? currentEvent, actorRef: { kind: 'named', name: owner.name }, filter: script?.filter ?? null }, owner.name) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n') : null;
           const without = cloneDesignProject(project);
           without.scripts = without.scripts.filter(s => s.id !== script?.id);
           const errorsOf = p => { try { return compileProject(p).errors.length; } catch (error) { if (!(error instanceof AkariError)) throw error; return Infinity; } }, before = errorsOf(without);
@@ -35959,17 +36471,18 @@ function createAkariExtensionHost(options) {
           source = meijin;
         } else {
         const headings = [parsed.ast, ...(parsed.ast.units || [])].map(unit => unit.heading).filter(Boolean);
-        // A heading whose subject is 自分 (written, or not written) is written with the owner's name.
+        // A heading whose subject is 自分 (written, or not written) is written with the owner's name. A touch heading names
+        // the toucher as the topic too (犬が「星」にふれたとき、犬は、): in 名人 text the sentences under it name who acts.
         const lines = source.split('\n');
-        for (const unit of [parsed.ast, ...(parsed.ast.units || [])].filter(u => u.heading?.actorRef?.kind === 'self').sort((a, b) => b.sourceSpan.startLine - a.sourceSpan.startLine)) {
-          const at = unit.sourceSpan.startLine - 1, first = unit.body?.[0]?.sourceSpan, head = sentenceHeadingSource({ ...unit.heading, actorRef: { kind: 'named', name: owner.name } });
+        for (const unit of [parsed.ast, ...(parsed.ast.units || [])].filter(u => u.heading?.actorRef?.kind === 'self' || u.heading?.event === 'touchStart').sort((a, b) => b.sourceSpan.startLine - a.sourceSpan.startLine)) {
+          const at = unit.sourceSpan.startLine - 1, first = unit.body?.[0]?.sourceSpan, head = meijinHeadingSource(unit.heading, unit.heading.actorRef?.kind === 'named' ? unit.heading.actorRef.name : owner.name);
           lines[at] = first?.startLine === unit.sourceSpan.startLine ? head + lines[at].slice(first.startColumn - 1) : head;
         }
         source = lines.join('\n');
         // The body's owner is written out, because a 名人 script belongs to no part.
         if (!headings.length) {
           const heading = { event: script?.event ?? currentEvent, actorRef: { kind: 'named', name: owner.name }, filter: script?.filter ?? null };
-          source = sentenceHeadingSource(heading) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n');
+          source = meijinHeadingSource(heading, owner.name) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n');
         }
         }
       }
@@ -37739,12 +38252,12 @@ function createAkariExtensionHost(options) {
         const canonical = await canonicalizeImage(new Uint8Array(await file.arrayBuffer())),
           names = new Set(project.components.map((x) => x.name));
         let name = fileStemCandidate(file, names);
-        if (['マウス', '端'].includes(name)) {
+        if (name === 'マウス' || isEdgeTarget(name)) {
           let n = 2,
             base = name;
           do {
             name = `${base}_${n++}`;
-          } while (names.has(name) || ['マウス', '端'].includes(name));
+          } while (names.has(name) || name === 'マウス' || isEdgeTarget(name));
         }
         validateResourceName(name, '部品の名前');
         const next = cloneDesignProject(project),
@@ -38024,7 +38537,7 @@ function createAkariExtensionHost(options) {
       try {
         if (project.scripts.length >= LIMITS.scripts) throw new AkariError('F504', '本文が いっぱいで、もう ふやせません。いらない 本文を けしてください');
         const next = cloneDesignProject(project), id = ensureUniqueId('script');
-        next.scripts.push(selectedId === MEIJIN_OWNER ? { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: '' } : { id, targetId: selectedId, event: currentEvent, source: '' });
+        next.scripts.push(selectedId === MEIJIN_OWNER ? { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: '' } : { id, targetId: selectedId, event: currentEvent, source: '', ...newBodyFilter(currentEvent) });
         validateDesignProject(next);
         clearTimeout(historyTimer); pushHistoryNow();
         project = next; selectedScriptId = id;

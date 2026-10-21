@@ -129,7 +129,7 @@ function makeAkariRegressionProject(api) {
       {
         "targetId": "sprite-1",
         "event": "message",
-        "source": "もし 受け取った知らせが「スタート」と同じなら、次のことをする。\n  4回くり返す。\n    20歩動く。\n    端に触れていれば跳ね返る。"
+        "source": "もし 受け取った知らせが「スタート」と同じなら、次のことをする。\n  4回くり返す。\n    20歩動く。\n    画面の端に触れていれば跳ね返る。"
       }
     ],
     "actions": [],

@@ -4126,6 +4126,12 @@ body[data-editor-mode="blocks"] .prop-name {
   position: relative;
   z-index: 1;
 }
+/* A hat title (たくどん・「だんご」に ふれたとき) breaks only at its spaces, never inside a word. */
+.blockui-event-hat > strong,
+.blockui-world .blockui-script > .blockui-node-head > .blockui-node-title {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 .blockui-hat-owner {
   background: #fffc;
   border: 1px solid #0002;
