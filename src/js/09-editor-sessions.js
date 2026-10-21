@@ -1435,7 +1435,16 @@
       try { const node = nodeForSearchHint(h, project, context, intent);
         return {...h, text:formatScript({kind:'Script',body:[blockDecode(node)]})};
       } catch (_) { return h; }
-    }).sort((a,b) => Number(!!b.binding) - Number(!!a.binding));
+    }).sort((a,b) => Number(!!b.binding) - Number(!!a.binding) || holdFirst(b.id, query) - holdFirst(a.id, query));
+  }
+  // Holding a key to move (C-16 with B-09): the continuous rule is taught first, so for the words of holding and of
+  // moving on at a speed its sentence and its block come before the repeat while a key is held.
+  const HOLD_SEARCH_WORDS = ['おしているあいだ', 'おしている間', 'おされているあいだ', 'おされている間', 'おしっぱなし', 'おしつづける',
+    '動き続ける', 'うごきつづける', 'つづけて動く', '速さ'];
+  function holdFirst(id, query) {
+    if (hintSchemaId(id) !== 'ContinuousRule') return 0;
+    const q = normalizeSearchText(query);
+    return Number(HOLD_SEARCH_WORDS.some(word => { const w = normalizeSearchText(word); return q.includes(w) || (q.length >= 4 && w.includes(q)); }));
   }
   function blockSearchCandidates(project, context, query, hints) {
     const schemas = BLOCK_SCHEMAS.filter(s => !s.draftOnly && ['statement','expression'].includes(s.category));
@@ -1457,6 +1466,9 @@
       out.push(configured ? {...schema, candidateNode:configureSearchNode(createBlock(schema.id, {
         draft:schema.inputs.some(s=>s.type==='target'), allowHoles:true}), intent)} : schema);
     }
+    // The continuous rule is no statement: search finds it too, and the palette puts it in the body's rules.
+    const rule = BLOCK_SCHEMA_BY_ID.get('ContinuousRule');
+    if (rule && !intent && matchesSearch(blockPaletteSearchText(rule), query)) out.splice(holdFirst(rule.id, query) ? 0 : out.length, 0, rule);
     return out;
   }
 

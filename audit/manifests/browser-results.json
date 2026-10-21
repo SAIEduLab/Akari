@@ -49,7 +49,9 @@
       "keys": [
         "runtime-fixed-seed-mode-switch-trace",
         "preparing-importing-lock-and-decode-failure-rollback",
-        "question-answer-and-question-stop-both-modes"
+        "question-answer-and-question-stop-both-modes",
+        "runtime-loop-pacing-real-time",
+        "runtime-picture-outline-touch"
       ]
     },
     {

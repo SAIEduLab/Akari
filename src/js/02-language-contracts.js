@@ -878,6 +878,9 @@
     // The timed move is the same block with its time (〇秒かけて、); it is shown as a second example.
     if (!pure) add('MotionCommand:MOVE_BY:timed', '動き', '1秒かけて、いまのばしょから、右へ10歩動く。', 'statement',
       type === 'stage' ? 'キャラクターや 部品で 使えます' : '');
+    // Holding a key to move is one sentence, the continuous rule (B-09, C-16); it is written in an event's body.
+    add('ContinuousRule', '動き', '「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける。', 'statement',
+      kind ? 'できごとの 本文で 使えます' : type === 'stage' ? 'キャラクターや 部品で 使えます' : '');
     for (const b of bindings) {
       activeBinding = {name:b.name, qualifier:b.qualifier, kind:b.kind};
       const name = b.text;

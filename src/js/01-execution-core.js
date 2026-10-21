@@ -614,6 +614,8 @@
       constructor(assetStore, services = {}) {
         this.assetStore = assetStore;
         this.imageByAssetId = new Map();
+        this.maskByAssetId = new Map();
+        this.maskByBytes = new Map();
         this.audioBufferByAssetId = new Map();
         this.objectUrls = new Map();
         this.activeAudioHandles = new Map();
@@ -744,6 +746,7 @@
                 '絵の 大きさが、きろくされた 大きさと 合いません',
               );
             this.imageByAssetId.set(id, img);
+            this.maskByAssetId.set(id, this.makeMask(a, img));
           } catch (error) {
             URL.revokeObjectURL(url);
             if (this.objectUrls.get(id) === url) this.objectUrls.delete(id);
@@ -796,6 +799,50 @@
       }
       getImage(id) {
         return this.imageByAssetId.get(id) || null;
+      }
+      // 絵の見えているところ (final call 17): a picture is read once, when it is loaded, into a grid of at most 64×64
+      // cells; a cell is seen when a pixel of the picture in it is not fully transparent. The grid is made from the
+      // picture's own pixels (the browser does not scale them), so it is the same on every machine, and it is kept for
+      // the same bytes across runs. Without a canvas, or for a picture that cannot be read, there is none: the part then
+      // touches with its box.
+      makeMask(asset, img) {
+        const key = asset.sha256 || asset.id;
+        if (this.maskByBytes.has(key)) return this.maskByBytes.get(key);
+        let mask = null;
+        try {
+          const iw = img.naturalWidth, ih = img.naturalHeight,
+            canvas = iw > 0 && ih > 0 ? (typeof OffscreenCanvas === 'function' ? new OffscreenCanvas(iw, ih) : globalThis.document?.createElement('canvas')) : null;
+          if (canvas) {
+            canvas.width = iw;
+            canvas.height = ih;
+            const g = canvas.getContext('2d', { willReadFrequently: true });
+            g.drawImage(img, 0, 0);
+            const data = g.getImageData(0, 0, iw, ih).data, w = Math.min(64, iw), h = Math.min(64, ih), cells = new Uint8Array(w * h),
+              column = new Uint16Array(iw);
+            for (let x = 0; x < iw; x++) column[x] = Math.floor((x * w) / iw);
+            for (let y = 0, at = 3; y < ih; y++) {
+              const row = Math.floor((y * h) / ih) * w;
+              for (let x = 0; x < iw; x++, at += 4) if (data[at]) cells[row + column[x]] = 1;
+            }
+            let left = w, right = -1, top = h, bottom = -1;
+            for (let r = 0; r < h; r++)
+              for (let c = 0; c < w; c++)
+                if (cells[r * w + c]) { left = Math.min(left, c); right = Math.max(right, c); top = Math.min(top, r); bottom = Math.max(bottom, r); }
+            // counts[(r + 1) * (w + 1) + c + 1]: the seen cells in rows 0..r and columns 0..c.
+            const counts = new Uint32Array((w + 1) * (h + 1));
+            for (let r = 0; r < h; r++)
+              for (let c = 0; c < w; c++)
+                counts[(r + 1) * (w + 1) + c + 1] = cells[r * w + c] + counts[r * (w + 1) + c + 1] + counts[(r + 1) * (w + 1) + c] - counts[r * (w + 1) + c];
+            mask = Object.freeze({ w, h, cells, counts, seen: right >= 0 ? Object.freeze({ left, right: right + 1, top, bottom: bottom + 1 }) : null });
+          }
+        } catch (_) {
+          mask = null;
+        }
+        this.maskByBytes.set(key, mask);
+        return mask;
+      }
+      getMask(id) {
+        return this.maskByAssetId.get(id) || null;
       }
       getAudioBuffer(id) {
         return this.audioBufferByAssetId.get(id) || null;
@@ -974,6 +1021,13 @@
       const r = ((d % 360) + 360) % 360;
       return r === 0 || r === 180 ? 0 : r === 90 ? 1 : r === 270 ? -1 : Math.sin((d * Math.PI) / 180);
     }
+    // What a kept touch answer of two parts depends on (RuntimeModel.partsTouch).
+    const pose = (a) => ({ x: a.x, y: a.y, direction: a.direction, scalePercent: a.scalePercent, costumeId: a.costumeId, w: a.w, h: a.h });
+    const samePose = (kept, a) => kept.x === a.x && kept.y === a.y && kept.direction === a.direction && kept.scalePercent === a.scalePercent &&
+      kept.costumeId === a.costumeId && kept.w === a.w && kept.h === a.h;
+    const watchPose = (a) => ({ ...pose(a), runtimeId: a.runtimeId, visible: a.visible });
+    const sameWatchPose = (kept, a) => kept.runtimeId === a.runtimeId && kept.visible === a.visible && samePose(kept, a);
+    const samePoses = (kept, now) => !!kept && kept.length === now.length && now.every((x, i) => Object.keys(x).every(k => kept[i][k] === x[k]));
     class RuntimeModel {
       constructor(project, ui = {}, assetCache = null) {
         this.project = project;
@@ -995,6 +1049,7 @@
           this.project.projectData.lists.map((d) => [d.name, deepCopy(d.initialValue)]),
         );
         this.actors = new Map();
+        this.touchCache = new Map();
         this.creationSequence = 0;
         for (let i = 0; i < this.project.components.length; i++) {
           const c = this.project.components[i];
@@ -1289,13 +1344,11 @@
       // ねこにふれているもの / ゴールにふれている星: every visible part touching it now (of that part only, with of).
       partsTouching(target, ofName) {
         if (!isPart(target)) throw new AkariError('R411', 'ふれる 相手には 部品を 書きます');
-        const a = this.partActor(target), box = this.aabb(a), base = ofName ? this.project.components.find(c => c.name === ofName)?.id : null;
+        const a = this.partActor(target), base = ofName ? this.project.components.find(c => c.name === ofName)?.id : null;
         const out = [];
         for (const b of [...this.actors.values()].sort((x, y) => x.creationSequence - y.creationSequence)) {
           if (b.runtimeId === a.runtimeId || !b.visible || !a.visible || (base && b.baseId !== base)) continue;
-          const bb = this.aabb(b);
-          if (box.left <= bb.right && box.right >= bb.left && box.bottom <= bb.top && box.top >= bb.bottom)
-            out.push(partValue(b.runtimeId, this.component(b.runtimeId)?.name ?? ''));
+          if (this.partsTouch(a, b)) out.push(partValue(b.runtimeId, this.component(b.runtimeId)?.name ?? ''));
         }
         return out;
       }
@@ -1326,23 +1379,31 @@
       touching(runtimeId, target) {
         const a = this.requireActor({ runtimeId });
         if (!a.visible) return false;
-        const aa = this.aabb(a);
         // One side of the screen (画面の下のはし: たて0 and below); 画面のはし is any of the four. A part outside the screen
-        // touches the side it went out of.
+        // touches the side it went out of. A picture part touches it with what is seen of it (visibleBox).
         const W = this.project.stage.width, H = this.project.stage.height;
-        if (target === '端:下') return aa.bottom <= 0;
-        if (target === '端:上') return aa.top >= H;
-        if (target === '端:左') return aa.left <= 0;
-        if (target === '端:右') return aa.right >= W;
-        if (target === '端') return aa.left <= 0 || aa.bottom <= 0 || aa.right >= W || aa.top >= H;
-        if (target === 'マウス')
+        if (isEdgeTarget(target)) {
+          const vb = this.visibleBox(a);
+          if (!vb) return false;
+          if (target === '端:下') return vb.bottom <= 0;
+          if (target === '端:上') return vb.top >= H;
+          if (target === '端:左') return vb.left <= 0;
+          if (target === '端:右') return vb.right >= W;
+          return vb.left <= 0 || vb.bottom <= 0 || vb.right >= W || vb.top >= H;
+        }
+        const aa = this.aabb(a);
+        // The mouse touches a picture part only where the picture is seen.
+        if (target === 'マウス') {
+          const mask = this.pictureMask(a);
           return (
             this.mouseAt.entered &&
             this.mouseX >= aa.left &&
             this.mouseX <= aa.right &&
             this.mouseY >= aa.bottom &&
-            this.mouseY <= aa.top
+            this.mouseY <= aa.top &&
+            (!mask || this.pictureSeenAt(a, mask, this.mouseX, this.mouseY))
           );
+        }
         const targets = this.targetsOf(target).filter(
           (x) => x.runtimeId !== runtimeId && x.visible,
         );
@@ -1351,12 +1412,106 @@
             throw new AkariError('R405', `部品「${target}」がありません`);
           return false;
         }
-        return targets.some((b) => {
-          const bb = this.aabb(b);
-          return (
-            aa.left <= bb.right && aa.right >= bb.left && aa.bottom <= bb.top && aa.top >= bb.bottom
-          );
-        });
+        return targets.some((b) => this.partsTouch(a, b));
+      }
+      // The cells of a part whose look is a picture (an imported picture or お絵かき); null for a look of text and for
+      // every other kind of part (label, button, box, input), which touch with their box (final call 17).
+      pictureMask(a) {
+        if (!a.costumeId || !this.assetCache?.getMask) return null;
+        const c = this.component(a.runtimeId);
+        if (c?.type !== 'sprite') return null;
+        const co = c.costumes?.find((x) => x.id === a.costumeId);
+        return co?.kind === 'image' ? this.assetCache.getMask(co.assetId) : null;
+      }
+      // Whether a picture is seen at (x, y) on the screen: the point is turned back by the part's direction and scaled
+      // into the picture, which fills the part's box (as it is drawn).
+      pictureSeenAt(a, mask, x, y) {
+        return this.pictureSampler(a, mask).seen(x, y);
+      }
+      // Where a point of the screen falls in a part's picture, as (column, row) of its cells, and whether that cell is seen.
+      pictureSampler(a, mask) {
+        const sc = a.scalePercent / 100, cs = cosDegrees(a.direction), sn = sinDegrees(a.direction), W = a.w * sc, H = a.h * sc,
+          ax = a.x, ay = a.y, mw = mask.w, mh = mask.h, cells = mask.cells;
+        const cell = (x, y) => {
+          const dx = x - ax, dy = y - ay;
+          return [((dx * cs + dy * sn) / W + 0.5) * mw, (0.5 - (dy * cs - dx * sn) / H) * mh];
+        };
+        return {
+          cell,
+          seen(x, y) {
+            const dx = x - ax, dy = y - ay, u = (dx * cs + dy * sn) / W + 0.5, v = 0.5 - (dy * cs - dx * sn) / H;
+            if (!(u >= -1e-9 && u <= 1 + 1e-9 && v >= -1e-9 && v <= 1 + 1e-9)) return false;
+            const col = Math.min(mw - 1, Math.max(0, Math.floor(u * mw))), row = Math.min(mh - 1, Math.max(0, Math.floor(v * mh)));
+            return cells[row * mw + col] === 1;
+          },
+          // Whether a cell is seen in the part of the picture that a rectangle of the screen covers (turned, the cells
+          // around it).
+          anySeenIn(left, right, bottom, top) {
+            let c0 = Infinity, c1 = -Infinity, r0 = Infinity, r1 = -Infinity;
+            for (const x of [left, right])
+              for (const y of [bottom, top]) { const [c, r] = cell(x, y); c0 = Math.min(c0, c); c1 = Math.max(c1, c); r0 = Math.min(r0, r); r1 = Math.max(r1, r); }
+            const cl = Math.max(0, Math.floor(c0 - 1e-9)), cr = Math.min(mw - 1, Math.ceil(c1 + 1e-9) - 1),
+              rt = Math.max(0, Math.floor(r0 - 1e-9)), rb = Math.min(mh - 1, Math.ceil(r1 + 1e-9) - 1);
+            if (cl > cr || rt > rb) return false;
+            const n = mask.counts, w1 = mw + 1;
+            return n[(rb + 1) * w1 + cr + 1] - n[rt * w1 + cr + 1] - n[(rb + 1) * w1 + cl] + n[rt * w1 + cl] > 0;
+          },
+        };
+      }
+      // The box around what is seen of a part: for a picture, around its seen cells (turned and scaled); for any other
+      // part, its box. A picture of which nothing is seen has none.
+      visibleBox(a) {
+        const mask = this.pictureMask(a);
+        if (!mask) return this.aabb(a);
+        if (!mask.seen) return null;
+        const sc = a.scalePercent / 100, cs = cosDegrees(a.direction), sn = sinDegrees(a.direction), W = a.w * sc, H = a.h * sc,
+          xs = [(mask.seen.left / mask.w - 0.5) * W, (mask.seen.right / mask.w - 0.5) * W],
+          ys = [(0.5 - mask.seen.bottom / mask.h) * H, (0.5 - mask.seen.top / mask.h) * H];
+        let left = Infinity, right = -Infinity, bottom = Infinity, top = -Infinity;
+        for (const lx of xs)
+          for (const ly of ys) {
+            const px = a.x + lx * cs - ly * sn, py = a.y + lx * sn + ly * cs;
+            left = Math.min(left, px); right = Math.max(right, px); bottom = Math.min(bottom, py); top = Math.max(top, py);
+          }
+        return { left, right, bottom, top, cx: a.x, cy: a.y };
+      }
+      // Whether two parts touch: their boxes overlap, as for every part, and where they overlap a point is seen of both
+      // — of a picture where its cells are seen, of any other part anywhere in its box (final call 17). The overlap is
+      // looked at in at most 64×64 points, no further apart than the finest picture cell. A pair's answer is kept until
+      // either part moves, turns, or changes its size or look.
+      partsTouch(a, b) {
+        const aa = this.aabb(a), bb = this.aabb(b);
+        if (!(aa.left <= bb.right && aa.right >= bb.left && aa.bottom <= bb.top && aa.top >= bb.bottom)) return false;
+        const ma = this.pictureMask(a), mb = this.pictureMask(b);
+        if (!ma && !mb) return true;
+        if ((ma && !ma.seen) || (mb && !mb.seen)) return false;
+        const [p, q] = a.runtimeId < b.runtimeId ? [a, b] : [b, a], key = p.runtimeId + '|' + q.runtimeId,
+          kept = this.touchCache.get(key);
+        if (kept && samePose(kept.p, p) && samePose(kept.q, q)) return kept.result;
+        const keep = (result) => {
+          if (this.touchCache.size >= 20000) this.touchCache.clear();
+          this.touchCache.set(key, { p: pose(p), q: pose(q), result });
+          return result;
+        };
+        // Only where both are seen can they touch: the boxes' overlap within the boxes of what is seen of each.
+        const va = this.visibleBox(a), vb = this.visibleBox(b),
+          left = Math.max(aa.left, bb.left, va.left, vb.left), right = Math.min(aa.right, bb.right, va.right, vb.right),
+          bottom = Math.max(aa.bottom, bb.bottom, va.bottom, vb.bottom), top = Math.min(aa.top, bb.top, va.top, vb.top), rw = right - left, rh = top - bottom;
+        if (rw < 0 || rh < 0) return keep(false);
+        const sa = ma && this.pictureSampler(a, ma), sb = mb && this.pictureSampler(b, mb);
+        if ((sa && !sa.anySeenIn(left, right, bottom, top)) || (sb && !sb.anySeenIn(left, right, bottom, top))) return keep(false);
+        const cell = (x, m) => (m ? Math.min((x.w * x.scalePercent) / 100 / m.w, (x.h * x.scalePercent) / 100 / m.h) : Infinity);
+        let step = Math.max(0.5, Math.min(cell(a, ma), cell(b, mb)));
+        if ((rw / step) * (rh / step) > 4096) step = Math.sqrt((rw * rh) / 4096);
+        const nx = Math.max(1, Math.ceil(rw / step)), ny = Math.max(1, Math.ceil(rh / step));
+        for (let j = 0; j < ny; j++) {
+          const y = bottom + ((j + 0.5) * rh) / ny;
+          for (let i = 0; i < nx; i++) {
+            const x = left + ((i + 0.5) * rw) / nx;
+            if ((!sa || sa.seen(x, y)) && (!sb || sb.seen(x, y))) return keep(true);
+          }
+        }
+        return keep(false);
       }
       distance(runtimeId, target) {
         const a = this.requireActor({ runtimeId }),
@@ -2543,6 +2698,17 @@
     // screen (moving and turning, looks, text and backdrop, the pen and stamps, speech).
     const PACED_LOOP_FRAMES = new Set(['repeatCount', 'forever', 'foreach', 'while', 'until']);
     const PACED_SCREEN_KINDS = new Set(['MotionCommand', 'LooksCommand', 'PenCommand', 'Say']);
+    // How many こま a paced flow may be behind and still catch up (EventScheduler.nextFrameTime): 100 ms.
+    const PACE_CATCH_UP = 6;
+    // The sentences that never move, turn or show a part or change its look or size (EventScheduler.pollWatches): after
+    // them, what touches what cannot have changed.
+    const STILL_KINDS = new Set(['Assignment', 'NumericUpdate', 'ListAppend', 'ListInsert', 'ListReplace', 'ListDelete', 'ListClear',
+      'LocalVariableDeclaration', 'LocalListDeclaration', 'Say', 'Ask', 'WaitTime', 'WaitUntil', 'Broadcast', 'BroadcastAndWait',
+      'WaitBroadcastGroup', 'SoundCommand', 'PenCommand', 'TimerReset', 'CommentLine', 'ReturnStatement', 'IfStatement', 'RepeatCount',
+      'Forever', 'ForEach', 'RepeatWhile', 'RepeatUntil']);
+    // The sentences that move or change only the part that does them (its subject), but for the ops that change another.
+    const OWN_PART_KINDS = new Set(['MotionCommand', 'LooksCommand']);
+    const OTHER_PART_OPS = new Set(['SET_TARGET_TEXT', 'SET_INPUT']);
     class EventScheduler {
       constructor(project, compiled, runtime, ui = {}) {
         this.project = project;
@@ -2574,6 +2740,13 @@
         this.continuousTime = null;
         this.continuousTick = 1;
         this.continuousTrace = [];
+        // What may have moved since the ふれたとき watches last looked (pollWatches): the parts a sentence, a glide or a
+        // rule moved (movedParts), or anything (geometryStamp counted up: a copy made or removed, an input, a sentence that
+        // can act on other parts, and every こま).
+        this.geometryStamp = 0;
+        this.movedParts = new Set();
+        this.pollTick = null;
+        this.dueAt = -Infinity;
       }
       initializeContinuous() {
         this.continuous.clear();
@@ -2717,6 +2890,7 @@
             if (this.continuousTrace.length > 1000) this.continuousTrace.shift();
             this.ui.continuousStep?.(entry);
           }
+          for (const { actor } of moves) this.movedParts.add(actor.runtimeId);
           for (const { actor, x, y, nextX, nextY, delta } of moves) {
             actor.x = snapStep(nextX); actor.y = snapStep(nextY);
             if (actor.penDown && (delta.x || delta.y))
@@ -2738,6 +2912,7 @@
       }
       inputBoundary(change) {
         this.advanceContinuous();
+        this.geometryStamp++;
         change();
         this.refreshContinuous();
         this.schedule();
@@ -2867,6 +3042,13 @@
       }
       pollWatches(now = this.runtime.now()) {
         if (!this.running || this.paused || !this.watches?.length) return;
+        // At every こま the touch watches look at every part again, whatever moved it.
+        const tick = Math.floor((now - (this.continuousOrigin ?? 0)) / (1000 / 60) + 1e-9);
+        if (tick !== this.pollTick) { this.pollTick = tick; this.geometryStamp++; }
+        const all = this.geometryStamp !== this.touchStamp, moved = all ? null : this.movedParts.size ? [...this.movedParts] : [];
+        this.touchStamp = this.geometryStamp;
+        this.movedNow = this.movedParts;
+        this.movedParts = new Set();
         for (const w of this.watches) {
           try {
             if (w.event === 'interval') {
@@ -2880,8 +3062,22 @@
               // ふれたとき starts when not touching becomes touching. The first look at a part (the run's start, a new
               // copy) only records it: a part that already touches starts after it has left and touched again. Every copy
               // is looked at on its own; a hidden part touches nothing, so showing it where it touches is a change.
-              for (const a of [...this.runtime.actors.values()].filter(a => a.baseId === w.targetId)) {
-                const touching = this.runtime.touching(a.runtimeId, w.item.filter.target);
+              // A part is looked at again only when it or what it touches has moved, turned, or changed its look, size or
+              // whether it is seen since its last look (the answer cannot have changed otherwise).
+              if (moved && !moved.length) continue;
+              const target = w.item.filter.target, partners = this.touchPartners(target), partnersMoved = !samePoses(w.partners, partners);
+              w.partners = partners;
+              w.poses ||= new Map();
+              // Only the parts that moved need a look (in the order of all parts), unless what they touch moved too.
+              const parts = moved && !partnersMoved
+                ? moved.length === 1 ? [this.runtime.actor(moved[0])].filter(a => a?.baseId === w.targetId)
+                  : [...this.runtime.actors.values()].filter(a => a.baseId === w.targetId && this.movedNow.has(a.runtimeId))
+                : [...this.runtime.actors.values()].filter(a => a.baseId === w.targetId);
+              for (const a of parts) {
+                const kept = w.poses.get(a.runtimeId);
+                if (!partnersMoved && kept && sameWatchPose(kept, a)) continue;
+                w.poses.set(a.runtimeId, watchPose(a));
+                const touching = this.runtime.touching(a.runtimeId, target);
                 if (touching && w.last.has(a.runtimeId) && !w.last.get(a.runtimeId)) this.spawnWatch(w, a.runtimeId);
                 w.last.set(a.runtimeId, touching);
               }
@@ -2892,6 +3088,13 @@
             return;
           }
         }
+      }
+      // What a ふれたとき watch's answers depend on besides the part itself: the mouse, the parts of that name (and their
+      // copies), or nothing (the screen's sides do not move).
+      touchPartners(target) {
+        if (isEdgeTarget(target)) return [];
+        if (target === 'マウス') return [{ x: this.runtime.mouseX, y: this.runtime.mouseY, entered: this.runtime.mouseAt.entered }];
+        return this.runtime.targetsOf(target).map(watchPose);
       }
       spawnWatch(watch, runtimeId) {
         const task = this.createTask(watch.targetId, runtimeId, watch.event, {}, null, watch.scriptId);
@@ -3034,11 +3237,13 @@
         const started = nowMs();
         let count = 0;
         try {
+          // A slice runs for at most 8 ms. The count only bounds a slice when the clock does not move (a test's clock);
+          // it is large enough for 300 paced copies to take their turn at every こま (final call 17).
           while (
             this.running &&
             !this.paused &&
             this.ready.length &&
-            count < 200 &&
+            count < 2000 &&
             nowMs() - started < 8
           ) {
             this.runTurn(false);
@@ -3055,7 +3260,7 @@
               ['time', 'condition', 'glide', 'calculation'].includes(t.blockReason?.kind),
             )
           )
-            this.schedule(16);
+            this.schedule(this.wakeDelay());
         }
       }
       // A part speaks until its timed speech ends (名人: ねこが話し終わるまで待つ).
@@ -3111,9 +3316,24 @@
         for (let t = task; t; t = t.laneParent)
           for (const frame of t.execStack) if (PACED_LOOP_FRAMES.has(frame.type)) frame[mark] = true;
       }
-      nextFrameTime() {
-        const grid = 1000 / 60, origin = this.continuousOrigin ?? 0, now = this.runtime.now();
-        return origin + (Math.floor((now - origin) / grid + 1e-9) + 1) * grid;
+      // The こま a paced turn waits for. A flow that waited for こま k waits next for こま k+1, also when the page woke
+      // after it: a late wake runs the turns that are due at once, so the speed stays that of the logical clock (1秒に
+      // 300歩 for 5歩 a turn). A flow further behind (a page that stopped for a while) starts again from the next こま,
+      // so it does not run a long burst of turns. Any other wait ends the chain (block).
+      nextFrameTime(task) {
+        const grid = 1000 / 60, origin = this.continuousOrigin ?? 0,
+          tick = Math.floor((this.runtime.now() - origin) / grid + 1e-9) + 1,
+          next = task.paceTick != null && task.paceTick + 1 > tick - PACE_CATCH_UP ? task.paceTick + 1 : tick;
+        task.paceTick = next;
+        return origin + next * grid;
+      }
+      // When the loop sleeps: at the end of the next wait that ends within a こま (the next こま of a paced loop), so
+      // the wake is not just before it; otherwise in 16 ms, to look at the conditions, glides and rules again.
+      wakeDelay() {
+        let due = Infinity;
+        for (const t of this.blocked) if (t.blockReason?.kind === 'time') due = Math.min(due, t.blockReason.deadline);
+        const delay = Math.ceil(due - this.runtime.now());
+        return delay <= 17 ? Math.max(0, delay) : 16;
       }
       normalizeStack(task) {
         let guard = 0;
@@ -3210,7 +3430,7 @@
           }
           // The pacing of a loop (paceTurn): the next turn waits for the next こま.
           if (step.kind === 'frameYield') {
-            this.block(task, { kind: 'time', deadline: this.nextFrameTime(), frame: true });
+            this.block(task, { kind: 'time', deadline: this.nextFrameTime(task), frame: true });
             this.recheckBlocked(force);
             return true;
           }
@@ -3225,6 +3445,7 @@
           if (step.kind !== 'idle') this.ui.beforeStatement?.(task, step.node);
           if (step.kind === 'node') this.executeNode(task, step.node);
           else if (step.kind === 'loopHeader') this.executeLoopHeader(task, step.frame);
+          if (step.kind === 'node') this.markMoved(task, step.node);
           if (task.state === 'RUNNING' && !this.blocked.has(task)) {
             const next = this.normalizeStack(task);
             if (!next) this.finishTask(task, 'DONE');
@@ -3238,6 +3459,13 @@
           this.taskError(task, err);
           return true;
         }
+      }
+      // After a sentence, what it may have moved, for the ふれたとき watches (pollWatches): a sentence that acts only on
+      // its own part marks that part; any other sentence that is not still, everything.
+      markMoved(task, node) {
+        if (STILL_KINDS.has(node.kind)) return;
+        const own = OWN_PART_KINDS.has(node.kind) && !node.laneRef && node.actorRef?.kind !== 'all' && !OTHER_PART_OPS.has(node.op) && this.runtime.actor(task.subject?.runtimeId);
+        if (own) this.movedParts.add(own.runtimeId); else this.geometryStamp++;
       }
       prepareCooperativeNode(task, node, loopFrame = null) {
         if (!hasUserFunction(node)) return false;
@@ -3266,7 +3494,7 @@
           const keep=bool(evalExpression(outcome.value.condition,this.context(task)));
           if (reason.loopFrame.type==='while'?keep:!keep) this.enterBody(task,reason.loopFrame.node.body);
           else task.execStack.pop();
-        } else this.executePreparedNode(task,outcome.value,reason.originalNode);
+        } else { this.executePreparedNode(task,outcome.value,reason.originalNode); this.markMoved(task,reason.originalNode); }
         if (task.state==='RUNNING') {
           if (this.normalizeStack(task)) this.enqueue(task); else this.finishTask(task,'DONE');
         }
@@ -3629,6 +3857,8 @@
         // A wait of the flow (a time, a condition, a glide, an answer, a sound, a signal's work) is a wait of every loop
         // turn it is in. A frame of the pacing, a calculation step and the wait for the flow's own lanes are not.
         if (!reason.frame && reason.kind !== 'calculation' && !reason.lanes) this.markTurn(task, 'waited');
+        if (!reason.frame && reason.kind !== 'calculation') task.paceTick = null;
+        if (reason.kind !== 'time' || !(reason.deadline >= this.dueAt)) this.dueAt = -Infinity;
         task.state = 'BLOCKED';
         task.blockReason = { runtimeId: task.subject?.runtimeId || task.runtimeId, ...reason };
         this.blocked.add(task);
@@ -3637,6 +3867,7 @@
       hold(task, reason) {
         const runtimeId = task.subject?.runtimeId || task.runtimeId;
         (task.holds ||= new Map()).set(runtimeId, { runtimeId, ...reason });
+        if (reason.kind === 'condition') this.conditionHolds = true;
       }
       holdOver(task, hold) {
         if (hold.kind === 'time') return this.runtime.now() >= hold.deadline;
@@ -3661,15 +3892,19 @@
         return true;
       }
       // A condition that comes true ends its hold then, even if it is false again when the part's statement comes.
+      // A part's wait for a condition ends when it holds; with no such wait (conditionHolds), nothing is looked at.
       pollHolds() {
+        if (!this.conditionHolds) return;
+        let left = false;
         for (const task of this.tasks.values()) {
           if (!task.holds?.size || ['CANCELLED', 'DONE', 'ERROR'].includes(task.state)) continue;
           for (const [runtimeId, hold] of task.holds) {
             if (hold.kind !== 'condition') continue;
-            try { if (this.holdOver(task, hold)) task.holds.delete(runtimeId); }
-            catch (err) { this.taskError(task, err); break; }
+            try { if (this.holdOver(task, hold)) task.holds.delete(runtimeId); else left = true; }
+            catch (err) { this.taskError(task, err); left = true; break; }
           }
         }
+        this.conditionHolds = left;
       }
       unblock(task) {
         if (!this.blocked.has(task) || ['CANCELLED', 'DONE', 'ERROR'].includes(task.state)) return;
@@ -3691,6 +3926,7 @@
         }
       }
       advanceGlide(t, br, now) {
+              this.movedParts.add(br.runtimeId);
               const p = clamp((now - br.startTime) / br.duration, 0, 1),
                 a = this.runtime.actor(br.runtimeId);
               if (!a) throw new AkariError('R405', '動かす キャラクターや 部品が 見つかりません');
@@ -3723,7 +3959,7 @@
       }
       recheckBlocked(force = false) {
         if (this.running && (!this.paused || force)) {
-          for (const complete of (this.extensionCompletions || []).splice(0)) complete();
+          for (const complete of (this.extensionCompletions || []).splice(0)) { this.geometryStamp++; complete(); }
           for (const event of (this.extensionEvents || []).splice(0))
             this.spawnDistributed('message', { message: '拡張:' + event.name, payload: event.payload });
         }
@@ -3732,8 +3968,20 @@
         this.drainExternalUnblocks();
         this.pollWatches();
         this.pollHolds();
-        const now = this.runtime.now(),
-          arr = [...this.blocked].sort((a, b) => a.createdSequence - b.createdSequence);
+        const now = this.runtime.now();
+        // While every blocked flow waits for a time not yet reached (paced loops between こま), nothing is due; the
+        // earliest such time is kept (dueAt) until a flow blocks again (block).
+        if (now < this.dueAt) return;
+        let due = false, next = Infinity;
+        for (const t of this.blocked) {
+          const br = t.blockReason;
+          if (!br) continue;
+          if (br.kind !== 'time' || now >= br.deadline) { due = true; break; }
+          next = Math.min(next, br.deadline);
+        }
+        if (!due) { this.dueAt = next; return; }
+        this.dueAt = -Infinity;
+        const arr = [...this.blocked].sort((a, b) => a.createdSequence - b.createdSequence);
         const timed = [];
         for (const t of arr) {
           const br = t.blockReason;
@@ -4102,23 +4350,25 @@
           this.ui.penLine?.(before.x, before.y, a.x, a.y, a.penColor, a.penSize);
         this.ui.render?.();
       }
+      // A picture part bounces with what is seen of it (final call 17); a picture of which nothing is seen does not.
       bounce(a) {
-        const box = this.runtime.aabb(a),
+        const box = this.runtime.visibleBox(a),
           w = this.project.stage.width,
           h = this.project.stage.height;
+        if (!box) return;
         let hitX = box.left <= 0 || box.right >= w,
           hitY = box.bottom <= 0 || box.top >= h;
         if (hitX) a.direction = 180 - a.direction;
         if (hitY) a.direction = -a.direction;
         if (hitX || hitY) {
           a.direction = normalizeDirection(a.direction);
-          const b = this.runtime.aabb(a);
+          const b = this.runtime.visibleBox(a);
           if (b.right - b.left > w) a.x = w / 2;
           else {
             if (b.left < 0) a.x += -b.left;
             if (b.right > w) a.x -= b.right - w;
           }
-          const c = this.runtime.aabb(a);
+          const c = this.runtime.visibleBox(a);
           if (c.top - c.bottom > h) a.y = h / 2;
           else {
             if (c.bottom < 0) a.y += -c.bottom;

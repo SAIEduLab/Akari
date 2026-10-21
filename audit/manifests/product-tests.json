@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "6acb96ccedcc69a14a4153db8524a117b8c0335915332006f041423bc22ad56c",
+  "fixedIdSha256": "f14a13e99887b658d89efa38be73294e714d13f26ad0892f5c82a557944e5acc",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -529,6 +529,8 @@
         "CORE catalog ForEach",
         "CORE catalog MotionCommand:MOVE",
         "CORE catalog MotionCommand:GOTO",
+        "CORE catalog MotionCommand:MOVE_BY",
+        "CORE catalog MotionCommand:GOTO_PART",
         "CORE catalog MotionCommand:GLIDE",
         "CORE catalog MotionCommand:TURN_RIGHT",
         "CORE catalog MotionCommand:TURN_LEFT",
@@ -758,6 +760,8 @@
         "LANG statement roundtrip ForEach",
         "LANG statement roundtrip MotionCommand:MOVE",
         "LANG statement roundtrip MotionCommand:GOTO",
+        "LANG statement roundtrip MotionCommand:MOVE_BY",
+        "LANG statement roundtrip MotionCommand:GOTO_PART",
         "LANG statement roundtrip MotionCommand:GLIDE",
         "LANG statement roundtrip MotionCommand:TURN_RIGHT",
         "LANG statement roundtrip MotionCommand:TURN_LEFT",
@@ -876,6 +880,8 @@
         "TEST-BLOCK-SCHEMA StopCommand:ALL",
         "TEST-BLOCK-SCHEMA MotionCommand:MOVE",
         "TEST-BLOCK-SCHEMA MotionCommand:GOTO",
+        "TEST-BLOCK-SCHEMA MotionCommand:MOVE_BY",
+        "TEST-BLOCK-SCHEMA MotionCommand:GOTO_PART",
         "TEST-BLOCK-SCHEMA MotionCommand:GLIDE",
         "TEST-BLOCK-SCHEMA MotionCommand:SET_DIRECTION",
         "TEST-BLOCK-SCHEMA MotionCommand:TURN_RIGHT",

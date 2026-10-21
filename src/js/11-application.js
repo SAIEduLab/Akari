@@ -376,9 +376,12 @@
         $('#'+id).setAttribute('aria-pressed',String(currentEvent===event));
       }
       for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).disabled=$('#'+origin).disabled;
+      // What はじめて keeps but does not show: blocks and rules it has not in this body, and every body of another event
+      // (keys, signals, ふれたとき …), which only the two buttons above could open.
       const tree=mainEditor.session?.blockView;
-      const outside=tree&&[...buildBlockIndex(tree).values()].some(({node})=>
-        BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category==='statement'&&!ENTRY_BLOCK_SCHEMA_IDS.has(node.schemaId));
+      const outside=(tree&&[...buildBlockIndex(tree).values()].some(({node})=>
+        ['statement','rule'].includes(BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category)&&!ENTRY_BLOCK_SCHEMA_IDS.has(node.schemaId)))||
+        (project?.scripts||[]).some(s=>!['start','click'].includes(s.event)&&!isMeijinScript(s)&&String(s.source||'').trim());
       $('#entryOutside').hidden=!entry||!outside||!!tutorial;
     }
     function selectEntryEvent(event) {

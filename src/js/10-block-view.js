@@ -900,8 +900,23 @@
       availabilityCache.set(key, result);
       return result;
     }
+    // A continuous rule found by search goes into the rules of the body's heading, as with 「＋ つづけて動くルール」.
+    function ruleAvailability() {
+      const slot = tree && BLOCK_SCHEMA_BY_ID.get(tree.schemaId)?.inputs.find(s => s.key === 'rules');
+      if (!slot) return { enabled: false, reason: 'できごとの 本文で 使えます' };
+      if ((tree.inputs.rules || []).length >= slot.maxItems) return { enabled: false, reason: 'つづけて動くルールは これ以上 ふやせません' };
+      return { enabled: true };
+    }
     function paletteAdd(schema) {
       const location = destination || defaultDestination();
+      if (schema.category === 'rule') {
+        const a = ruleAvailability();
+        if (!a.enabled) { announce(a.reason, true); return; }
+        const result = operate({ type: 'variadic-insert', parentId: tree.id, input: 'rules', index: (tree.inputs.rules || []).length,
+          node: createBlock('ContinuousRule', { idPrefix: viewId, draft: true, allowHoles: true }) });
+        if (result.ok) announce('つづけて動くルールを 入れました。きまりと 速さを 決めてね');
+        return;
+      }
       if (schema.category === 'expression' && !location?.input) {
         announce(
           'あいている ところへ おしたまま 動かしてね。あいている ところの「計算を入れる」からも 入れられます',
@@ -1115,6 +1130,7 @@
     }
     function paletteAvailability(schema, location) {
       if (schema.candidateReason) return {enabled:false, reason:schema.candidateReason, node:schema.candidateNode};
+      if (schema.category === 'rule') return ruleAvailability();
       // A value may be picked up before its destination is chosen. The actual
       // socket is checked by the existing common validator on preview and drop.
       if (schema.category === 'expression' && !location?.input)
@@ -1245,8 +1261,11 @@
         );
         b.disabled = isLocked();
         b._akariSearchCandidate = schema;
-        b.dataset.blockuiDrag = 'palette';
-        b.dataset.blockuiDragSchema = schema.id;
+        // A rule is put in with the button only: it has no place among the sentences of a body.
+        if (schema.category !== 'rule') {
+          b.dataset.blockuiDrag = 'palette';
+          b.dataset.blockuiDragSchema = schema.id;
+        }
         try {
           b.append(previewNode(schema, a.node));
           if (schema.binding||schema.lessonKey||schema.candidateKey==='timed-speech') b.append(E('small', 'blockui-bound-name', schema.searchLabel));
