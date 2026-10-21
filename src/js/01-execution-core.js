@@ -93,7 +93,7 @@
       select() { throw new Error('プロファイルは起動前にホスト側で選択してください'); },
     });
     const extensions = createAkariExtensionHost({
-      standard: { languageContractId: 2, runtimeContractId: 2 },
+      standard: { languageContractId: 3, runtimeContractId: 3 },
       reservedNames: BUILTIN_DEFINITIONS.map(x => x.name),
       allowedCapabilities: options.allowedCapabilities || [],
       validateValue: validateExtensionValue,
@@ -103,6 +103,8 @@
     extensions.seal();
     function validateExtensionValue(value, shape) {
       assertRuntimeValueLimit(value);
+      if (isPart(value) || (Array.isArray(value) && value.some(isPart)))
+        throw new AkariError('E705', 'かくちょうには キャラクターや 部品を わたせません');
       const valid = shape.type === 'number' ? isNumberValue(value) && unitOf(value) === shape.unit :
         shape.type === 'string' ? typeof value === 'string' :
         shape.type === 'boolean' ? typeof value === 'boolean' :
@@ -152,6 +154,9 @@
       backdropChanged: 'はいけいが かわったとき',
       valueChanged: '中身が かわったとき',
       cloneStart: 'コピーが できたとき',
+      touchStart: 'ふれたとき',
+      conditionTrue: 'そう なったとき',
+      interval: '〜秒ごとに',
     };
     const BUILTIN_META = new Map(BUILTIN_DEFINITIONS.map((x) => [x.name, x]));
     class AkariError extends Error {
@@ -194,7 +199,19 @@
       return a.length === b.length && a.every((x, i) => x === b[i]);
     };
     const safeId = (id) => typeof id === 'string' && /^[a-z][a-z0-9-]{0,63}$/.test(id);
-    const scalar = (v) => isNumberValue(v) || typeof v === 'string' || typeof v === 'boolean';
+    // 名人: a part as a value. The name is kept for display; identity is the runtime id.
+    const isPart = (v) => exactKeys(v, ['part', 'name']) && typeof v.part === 'string' && typeof v.name === 'string';
+    const partValue = (runtimeId, name) => Object.freeze({ part: runtimeId, name });
+    const scalar = (v) => isNumberValue(v) || typeof v === 'string' || typeof v === 'boolean' || isPart(v);
+    const partList = (v) => {
+      if (!Array.isArray(v)) throw new AkariError('R411', '「みんな」「それぞれ」「順番に」は、部品の あつまりに 使います');
+      const other = v.find(x => !isPart(x));
+      if (other !== undefined) throw new AkariError('R411', `「みんな」「それぞれ」「順番に」の リストに、部品では ない「${valueText(other)}」が 入っています。部品だけを 入れた リストに 使います`);
+      return v;
+    };
+    // A target is a part's name (every instance of it) or a part value (that one instance).
+    const targetValue = (v) => isPart(v) ? v : stringv(v);
+    const targetName = (v) => isPart(v) ? v.name : stringv(v);
     const listValue = (v) => Array.isArray(v) && v.every(scalar);
     function assertRuntimeValueLimit(v) {
       if (typeof v === 'number') ensureFinite(v);
@@ -212,6 +229,7 @@
       return v;
     }
     const valueText = (v) => {
+      if (isPart(v)) return v.name;
       if (typeof v === 'boolean') return v ? 'あてはまる' : 'あてはまらない';
       if (isQuantity(v)) return valueText(v.magnitude) + (v.unit || '');
       if (typeof v === 'number') return Object.is(v, -0) ? '0' : String(v);
@@ -256,6 +274,7 @@
       }
       if (isNumberValue(a) && isNumberValue(b))
         return unitOf(a) === unitOf(b) && numberValue(a) === numberValue(b);
+      if (isPart(a) || isPart(b)) return isPart(a) && isPart(b) && a.part === b.part;
       return (typeof a === typeof b && Object.is(a, b)) || (typeof a === typeof b && a === b);
     };
     function validateColorHex(v, allowNull = false) {
@@ -296,6 +315,11 @@
     // that part waits until the hold ends. A wait without one (みんな, {kind:'all'}) stops the whole flow.
     function everyoneWaitKind(kind) {
       return ['WaitTime', 'WaitUntil', 'BroadcastAndWait', 'WaitBroadcastGroup'].includes(kind);
+    }
+    function hasEventCount(node) {
+      if (!node || typeof node !== 'object') return false;
+      if (node.kind === 'EventCount') return true;
+      return Object.values(node).some(v => v && typeof v === 'object' && hasEventCount(v));
     }
     function everyoneStatement(node) {
       return node?.actorRef ? node.actorRef.kind === 'all' : everyoneWaitKind(node?.kind);
@@ -946,6 +970,10 @@
         this.clockOffset = 0;
         this.pausedAt = null;
         this.startTime = this.now();
+        // タイマーを0にする restarts the timer as an offset from the run's start, which is kept.
+        this.timerOffset = 0;
+        // How many times each part finished a procedure or was clicked (〜が10回【ジャンプ】するまで).
+        this.eventCounts = new Map();
         this.mouseX = 0;
         this.mouseY = 0;
         this.mouseDown = false;
@@ -1015,6 +1043,33 @@
           throw new AkariError('R405', '動かす キャラクターや 部品が 見つかりません');
         return id;
       }
+      countEvent(key) {
+        this.eventCounts.set(key, (this.eventCounts.get(key) || 0) + 1);
+      }
+      // A まで on counts compares with the counts when the wait or the repeat began.
+      bindEventCounts(condition, ctx) {
+        if (!condition || typeof condition !== 'object') return condition;
+        if (Array.isArray(condition)) return condition.map(x => this.bindEventCounts(x, ctx));
+        if (condition.kind === 'EventCount') {
+          const runtimeId = this.resolveActorRef(condition.actorRef, ctx.runtimeId);
+          const key = runtimeId + (condition.event === 'action' ? '|action|' + condition.name : '|click');
+          const target = numberInUnit(evalExpression(condition.count, ctx), '回');
+          if (!Number.isSafeInteger(target) || target < 0)
+            throw new AkariError('R413', '回数は 0、1、2 のような 数に します。マイナスや 小数は 使えません');
+          return { kind: 'EventCountBound', key, baseline: this.eventCounts.get(key) || 0, target };
+        }
+        const out = {};
+        for (const [k, v] of Object.entries(condition)) out[k] = v && typeof v === 'object' ? this.bindEventCounts(v, ctx) : v;
+        return out;
+      }
+      // A part value used as a subject must still exist (a deleted copy does not).
+      partRuntimeId(v) {
+        if (!isPart(v)) throw new AkariError('R411', `主語の へんすうに 入っているのは「${valueText(v)}」で、部品では ありません。先に「主役をねこにする」のように 部品を 入れます`);
+        // A copy that is gone (このコピーだけを消す, 全部消す) is not there any more; a part is always there.
+        if (v.part !== 'stage' && !this.actor(v.part))
+          throw new AkariError('R405', `主語の へんすうに 入っている「${v.name}」の コピーは、もう 消えています`);
+        return v.part;
+      }
       requireActor(ctx) {
         const a = this.actor(ctx.runtimeId);
         if (!a)
@@ -1034,6 +1089,8 @@
           const b = ctx.task.execStack[i].binder;
           if (b && b.name === name) return { found: true, value: b.value };
         }
+        if (!ctx.task.execStack.some(f => f.type === 'callBoundary'))
+          for (const b of ctx.task.inheritedBinders || []) if (b.name === name) return { found: true, value: b.value };
         return { found: false };
       }
       resolveBinding(name, qualifier, ctx) {
@@ -1138,6 +1195,72 @@
           .filter((a) => a.baseId === base.id)
           .sort((a, b) => a.creationSequence - b.creationSequence);
       }
+      targetsOf(target) {
+        if (!isPart(target)) return this.instancesByName(target);
+        const a = this.actor(target.part);
+        if (!a) throw new AkariError('R405', '動かす キャラクターや 部品が 見つかりません');
+        return [a];
+      }
+      partActor(part) {
+        const a = this.actor(part.part);
+        if (!a) throw new AkariError('R405', '動かす キャラクターや 部品が 見つかりません');
+        return a;
+      }
+      // 〜のうち、右にいるほう / 体力が大きいほう: one part only when the comparison decides it.
+      // ねこにいちばん近いもの is one of the others: ねこ itself is not among them.
+      pickPart(parts, by, ctx) {
+        const base = by.kind === 'near' ? this.actor(this.resolveActorRef({ kind: 'named', name: by.to }, ctx.runtimeId)) : null;
+        if (base) parts = parts.filter(part => this.actor(part.part) !== base);
+        const score = part => {
+          const a = this.partActor(part), box = this.aabb(a);
+          if (by.kind === 'position') return { 右: box.cx, 左: -box.cx, 上: -box.cy, 下: box.cy }[by.side];
+          if (by.kind === 'near') { const to = this.aabb(base); return -Math.hypot(box.cx - to.cx, box.cy - to.cy); }
+          const value = numberValue(this.readName({ name: by.name, qualifier: 'self' }, { ...ctx, runtimeId: part.part }), `「${by.name}」には 数が いります`);
+          return by.order === 'max' ? value : -value;
+        };
+        const scored = parts.map(part => ({ part, score: score(part) })), best = Math.max(...scored.map(x => x.score));
+        const top = scored.filter(x => x.score === best);
+        return top.length === 1 ? [top[0].part] : [];
+      }
+      // いちばん近い星: of the parts other than the one who acts. Undecided (a tie, or none) gives null when strict:
+      // the one who acts toward it then does nothing (名人 M-06). Otherwise the earlier made wins a tie.
+      nearestPart(parts, runtimeId, strict = false) {
+        const from = this.aabb(this.requireActor({ runtimeId }));
+        let best = null, distance = Infinity, tie = false;
+        for (const part of parts) {
+          if (part.part === runtimeId) continue;
+          const a = this.partActor(part), box = this.aabb(a), d = Math.hypot(box.cx - from.cx, box.cy - from.cy);
+          if (d < distance - 1e-12) { best = { part, actor: a }; distance = d; tie = false; }
+          else if (Math.abs(d - distance) < 1e-12) { tie = true; if (a.creationSequence < best.actor.creationSequence) best = { part, actor: a }; }
+        }
+        if (strict && (!best || tie)) return null;
+        if (!best) throw new AkariError('R405', 'いちばん 近い 部品が いません（自分の ほかに 一つも ありません）。いるかを「もし〜なら、」で しらべてから 使います');
+        return best.part;
+      }
+      // ねこにふれているもの / ゴールにふれている星: every visible part touching it now (of that part only, with of).
+      partsTouching(target, ofName) {
+        if (!isPart(target)) throw new AkariError('R411', 'ふれる 相手には 部品を 書きます');
+        const a = this.partActor(target), box = this.aabb(a), base = ofName ? this.project.components.find(c => c.name === ofName)?.id : null;
+        const out = [];
+        for (const b of [...this.actors.values()].sort((x, y) => x.creationSequence - y.creationSequence)) {
+          if (b.runtimeId === a.runtimeId || !b.visible || !a.visible || (base && b.baseId !== base)) continue;
+          const bb = this.aabb(b);
+          if (box.left <= bb.right && box.right >= bb.left && box.top <= bb.bottom && box.bottom >= bb.top)
+            out.push(partValue(b.runtimeId, this.component(b.runtimeId)?.name ?? ''));
+        }
+        return out;
+      }
+      // The parts whose sounds are playing now.
+      soundingParts() {
+        const playing = this.assetCache?.activeAudioHandles, out = new Set();
+        for (const [id, runtimeId] of this.audioOwners || []) {
+          if (playing?.has(id)) out.add(runtimeId); else this.audioOwners.delete(id);
+        }
+        return out;
+      }
+      stopPartSounds(runtimeId) {
+        for (const [id, owner] of [...(this.audioOwners || [])]) if (owner === runtimeId) this.assetCache?.stopHandle(id, { notify: true });
+      }
       aabb(a) {
         const sc = a.scalePercent / 100,
           hw = (a.w * sc) / 2,
@@ -1169,11 +1292,11 @@
             this.mouseY >= aa.top &&
             this.mouseY <= aa.bottom
           );
-        const targets = this.instancesByName(target).filter(
+        const targets = this.targetsOf(target).filter(
           (x) => x.runtimeId !== runtimeId && x.visible,
         );
         if (!targets.length) {
-          if (!this.project.components.some((c) => c.name === target))
+          if (!isPart(target) && !this.project.components.some((c) => c.name === target))
             throw new AkariError('R405', `部品「${target}」がありません`);
           return false;
         }
@@ -1189,8 +1312,8 @@
           aa = this.aabb(a);
         if (target === 'マウス')
           return ensureFinite(Math.hypot(this.mouseX - aa.cx, this.mouseY - aa.cy));
-        const ts = this.instancesByName(target).filter((x) => x.runtimeId !== runtimeId);
-        if (!ts.length) throw new AkariError('R405', `部品「${target}」がありません`);
+        const ts = this.targetsOf(target).filter((x) => x.runtimeId !== runtimeId);
+        if (!ts.length) throw new AkariError('R405', `部品「${isPart(target) ? target.name : target}」がありません`);
         let best = Infinity;
         for (const b of ts) {
           const bb = this.aabb(b);
@@ -1202,8 +1325,8 @@
         const a = this.requireActor({ runtimeId }),
           aa = this.aabb(a);
         if (target === 'マウス') return { x: this.mouseX, y: this.mouseY };
-        const ts = this.instancesByName(target).filter((x) => x.runtimeId !== runtimeId);
-        if (!ts.length) throw new AkariError('R405', `部品「${target}」がありません`);
+        const ts = this.targetsOf(target).filter((x) => x.runtimeId !== runtimeId);
+        if (!ts.length) throw new AkariError('R405', `部品「${isPart(target) ? target.name : target}」がありません`);
         let best = null,
           bd = Infinity;
         for (const b of ts) {
@@ -1299,7 +1422,7 @@
       deleteClone(runtimeId) {
         const a = this.requireActor({ runtimeId });
         if (!a.isClone)
-          throw new AkariError('R406', '「このコピーだけを消す」は コピーの 動きの 中でだけ 使えます');
+          throw new AkariError('R406', `「${this.component(runtimeId)?.name ?? ''}」は コピーでは ないので、消えません。「このコピーだけを消す」「消える」で 消えるのは コピーだけです`);
         this.actors.delete(runtimeId);
         this.ui.render?.();
       }
@@ -1326,7 +1449,12 @@
         const a = ctx.runtimeId && ctx.runtimeId !== 'stage' ? this.actor(ctx.runtimeId) : null,
           volume = a?.volume ?? this.stage.volume,
           pitch = a?.pitch ?? this.stage.pitch;
-        return this.assetCache.startTone(freq, duration, volume, pitch, onEnded);
+        return this.ownSound(this.assetCache.startTone(freq, duration, volume, pitch, onEnded), ctx.runtimeId);
+      }
+      // Who plays a sound: 名人 waits for one part's sounds (鳴り終わる) and stops them (〜の音を止める).
+      ownSound(handleId, runtimeId) {
+        (this.audioOwners ||= new Map()).set(handleId, runtimeId || 'stage');
+        return handleId;
       }
       startSample(name, ctx, onEnded = null) {
         const snd = this.project.sounds.find((x) => x.name === name);
@@ -1336,7 +1464,7 @@
         const a = ctx.runtimeId && ctx.runtimeId !== 'stage' ? this.actor(ctx.runtimeId) : null,
           volume = a?.volume ?? this.stage.volume,
           pitch = a?.pitch ?? this.stage.pitch;
-        return this.assetCache.startSample(buf, volume, pitch, onEnded);
+        return this.ownSound(this.assetCache.startSample(buf, volume, pitch, onEnded), ctx.runtimeId);
       }
       stopAllAudio(notify = false) {
         this.assetCache?.stopAllHandles({ notify });
@@ -1416,13 +1544,13 @@
       for (const data of [project.projectData, ...project.components.map(c => c?.localData)]) {
         if (!data || !Array.isArray(data.variables) || !Array.isArray(data.lists)) reject('へんすう・リストが 正しくありません');
         for (const d of data.variables) {
-          if (!scalar(d?.initialValue)) reject('へんすうの はじめの 中身が 正しくありません');
+          if (!scalar(d?.initialValue) || isPart(d.initialValue)) reject('へんすうの はじめの 中身が 正しくありません');
           if (d.expectedUnit != null && !UNIT_TAGS.includes(d.expectedUnit)) reject('へんすうの たんいが 正しくありません');
           try { assertRuntimeValueLimit(d.initialValue); validateExpectedUnit(d.initialValue, d.expectedUnit); }
           catch (e) { if (fail) fail(e.message); else throw e; }
         }
         for (const d of data.lists) {
-          if (!listValue(d?.initialValue)) reject('リストの はじめの 中身が 正しくありません');
+          if (!listValue(d?.initialValue) || d.initialValue.some(isPart)) reject('リストの はじめの 中身が 正しくありません');
           try { assertRuntimeValueLimit(d.initialValue); } catch (e) { if (fail) fail(e.message); else throw e; }
         }
       }
@@ -1470,8 +1598,59 @@
           return quantity(numberInUnit(evalExpression(ast.value, ctx, budget), ast.unit), ast.unit);
         case 'UnitlessRead':
           return numberValue(evalExpression(ast.value, ctx, budget));
+        case 'EventCountBound':
+          return (ctx.runtime.eventCounts.get(ast.key) || 0) - ast.baseline >= ast.target;
+        case 'EventCount':
+          throw new AkariError('R411', '回数の 条件は「〜まで待つ」と「〜まで、くり返す」で 使います');
+        case 'PartRef': {
+          const runtimeId = ctx.runtime.resolveActorRef({ kind: 'named', name: ast.name }, ctx.runtimeId);
+          return partValue(runtimeId, ast.name);
+        }
+        // 名人 part sets: each is a list of parts, in the order of the work's parts and their copies.
+        case 'PartFamily':
+          return ctx.runtime.instancesByName(ast.name).map(a => partValue(a.runtimeId, ast.name));
+        case 'PartExcept': {
+          const except = evalExpression(ast.except, ctx, budget);
+          return partList(evalExpression(ast.list, ctx, budget)).filter(p => !isPart(except) || p.part !== except.part);
+        }
+        case 'PartRandom': {
+          const parts = partList(evalExpression(ast.list, ctx, budget));
+          return parts.length ? [parts[Math.floor(ctx.runtime.prng.nextFloat() * parts.length)]] : [];
+        }
+        case 'PartPick':
+          return ctx.runtime.pickPart(partList(evalExpression(ast.list, ctx, budget)), ast.by, ctx);
+        case 'PartNearest':
+          return ctx.runtime.nearestPart(partList(evalExpression(ast.of, ctx, budget)), ctx.runtimeId);
+        case 'PartsTouching':
+          return ctx.runtime.partsTouching(evalExpression(ast.target, ctx, budget), ast.of ? ast.of.name : null);
+        case 'CreatedCopies':
+          return (ctx.task?.createdCopies || []).filter(p => ctx.runtime.actor(p.part));
+        case 'PartName': {
+          const runtimeId = ast.actorRef?.kind === 'value'
+            ? ctx.runtime.partRuntimeId(evalExpression(ast.actorRef.value, ctx, budget))
+            : ctx.runtime.resolveActorRef(ast.actorRef, ctx.runtimeId);
+          return runtimeId === 'stage' ? ctx.runtime.project.stage.name : ctx.runtime.component(runtimeId)?.name ?? '';
+        }
+        case 'PartState': {
+          const runtimeId = ast.actorRef?.kind === 'value'
+            ? ctx.runtime.partRuntimeId(evalExpression(ast.actorRef.value, ctx, budget))
+            : ctx.runtime.resolveActorRef(ast.actorRef, ctx.runtimeId);
+          if (ast.state === 'speechDone') return !ctx.scheduler?.speaking(runtimeId);
+          if (ast.state === 'soundDone') return !ctx.runtime.soundingParts().has(runtimeId);
+          if (ast.state === 'copyCount') {
+            const base = ctx.runtime.actor(runtimeId)?.baseId;
+            return [...ctx.runtime.actors.values()].filter(a => a.isClone && a.baseId === base).length;
+          }
+          throw new AkariError('R411', '部品の ようすを 読み取れません');
+        }
+        case 'DeadlineBound':
+          return ctx.runtime.now() < ast.deadline;
+        case 'PartValue':
+          return ast.value;
         case 'ActorQualifiedRead': {
-          const runtimeId = ctx.runtime.resolveActorRef(ast.actorRef, ctx.runtimeId);
+          const runtimeId = ast.actorRef?.kind === 'value'
+            ? ctx.runtime.partRuntimeId(evalExpression(ast.actorRef.value, ctx, budget))
+            : ctx.runtime.resolveActorRef(ast.actorRef, ctx.runtimeId);
           return evalExpression(ast.value, { ...ctx, runtimeId }, budget);
         }
         case 'NumberLiteral':
@@ -1747,7 +1926,7 @@
         case 'マウスが押されている':
           return r.mouseDown;
         case 'タイマー':
-          return quantity((r.now() - r.startTime) / 1000, '秒');
+          return quantity((r.now() - r.startTime - r.timerOffset) / 1000, '秒');
         case '拡張の値':
           if (!Object.hasOwn(ctx.eventContext || {}, 'payload')) throw new AkariError('E705', '拡張「できごとの値」は かくちょうの できごとの 中で 使ってください');
           return assertRuntimeValueLimit(ctx.eventContext.payload);
@@ -1773,7 +1952,7 @@
         case '新しい背景名':
           return ctx.eventContext?.newName ?? '';
         case 'INPUT_VALUE': {
-          const name = stringv(evalExpression(ast.arg, ctx, budget));
+          const name = targetName(evalExpression(ast.arg, ctx, budget));
           const c = r.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」がありません`);
           if (c.type !== 'input') throw new AkariError('R406', `「${name}」は 入力らんでは ありません`);
@@ -1781,11 +1960,11 @@
           return inst?.inputValue ?? c.text;
         }
         case 'DISTANCE_TO':
-          return quantity(r.distance(ctx.runtimeId, stringv(evalExpression(ast.arg, ctx, budget))), '歩');
+          return quantity(r.distance(ctx.runtimeId, targetValue(evalExpression(ast.arg, ctx, budget))), '歩');
         case 'KEY_DOWN':
           return r.pressedKeys.has(stringv(evalExpression(ast.arg, ctx, budget)));
         case 'TOUCHING':
-          return r.touching(ctx.runtimeId, stringv(evalExpression(ast.arg, ctx, budget)));
+          return r.touching(ctx.runtimeId, targetValue(evalExpression(ast.arg, ctx, budget)));
         case 'TOUCHING_COLOR':
           return r.touchingColor(ctx.runtimeId, stringv(evalExpression(ast.arg, ctx, budget)));
         default:
@@ -2040,6 +2219,11 @@
       } else if (n.kind === 'ListDelete') {
         if (idx > arr.length) throw new AkariError('R404', 'けす 番号の ものが リストに ありません');
         arr.splice(idx - 1, 1);
+      } else if (n.kind === 'ListRemoveValue') {
+        // 名人: 持ち物から「本」を全部消す — every item that is the same; none is no change.
+        const v = evalExpression(n.value, ctx, budget);
+        b.set(arr.filter(item => !sameValue(item, v)));
+        return;
       }
       b.set(arr);
     }
@@ -2054,6 +2238,7 @@
     function valueExpression(value) {
       if (isQuantity(value)) return {kind:'QuantityLiteral',unit:value.unit,value:{kind:'NumberLiteral',value:value.magnitude}};
       if (Array.isArray(value)) return {kind:'ListLiteral',items:value.map(valueExpression)};
+      if (isPart(value)) return {kind:'PartValue',value};
       return {kind:typeof value==='number'?'NumberLiteral':typeof value==='boolean'?'BooleanLiteral':'StringLiteral',value};
     }
     function* calculationCheckpoint(budget) {
@@ -2067,7 +2252,7 @@
         return yield* runUserFunctionSteps(ast.name,args,ctx,budget,(ctx.callDepth||0)+1,ast.argumentNames||[]);
       }
       if (ast.kind === 'ActorQualifiedRead') return yield* evalExpressionSteps(ast.value,
-        {...ctx,runtimeId:ctx.runtime.resolveActorRef(ast.actorRef,ctx.runtimeId)},budget);
+        {...ctx,runtimeId:ast.actorRef?.kind==='value'?ctx.runtime.partRuntimeId(yield* evalExpressionSteps(ast.actorRef.value,ctx,budget)):ctx.runtime.resolveActorRef(ast.actorRef,ctx.runtimeId)},budget);
       if (ast.kind === 'LogicalExpression') {
         const left=bool(yield* evalExpressionSteps(ast.left,ctx,budget));
         if (ast.op==='AND') return left ? bool(yield* evalExpressionSteps(ast.right,ctx,budget)) : false;
@@ -2357,6 +2542,8 @@
         if (!this.running || this.paused) return;
         for (const [key, control] of this.continuous) {
           if (!this.runtime.actor(control.runtimeId)) { this.continuous.delete(key); continue; }
+          // A 名人 move (〜まで動き続ける) keeps its speed until its statement ends it.
+          if (control.temporary) continue;
           try {
             if (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(control.rule)) {
               if (!control.evaluator) control.evaluator = this.evaluateContinuous(control);
@@ -2397,13 +2584,42 @@
           default: throw new AkariError('R411', '動く 向きが 正しくありません');
         }
       }
+      // 名人: the earliest end time of a move (〜秒のあいだ…動き続ける) inside the step, or the step's own end.
+      moveDeadlineWithin(from, to) {
+        let end = to;
+        for (const [key, control] of this.continuous) {
+          const br = control.temporary ? control.task.blockReason : null;
+          if (br?.kind === 'moveUntil' && br.key === key && br.deadline !== null && br.deadline > from && br.deadline < end) end = br.deadline;
+        }
+        return end;
+      }
+      // 名人: the distance of a move in this step: speed × time since it began, less what it has already moved.
+      moveDistance(control, end) {
+        const total = Math.round(control.speed * (end - control.startTime) / 1000 * 1e9) / 1e9, step = total - control.moved;
+        control.moved = total;
+        return step;
+      }
+      // 名人: a move ends when its time is reached, or at a clock step where its condition holds (the part stops there).
+      settleMoves(at, onStep) {
+        for (const [key, control] of [...this.continuous]) {
+          if (!control.temporary) continue;
+          const task = control.task, br = task.blockReason;
+          if (br?.kind !== 'moveUntil' || br.key !== key) { this.continuous.delete(key); continue; }
+          try {
+            if ((br.deadline !== null && at >= br.deadline) || (onStep && br.condition && bool(evalExpression(br.condition, this.context(task, { runtimeId: br.runtimeId }))))) {
+              this.continuous.delete(key);
+              this.unblock(task);
+            }
+          } catch (err) { this.continuous.delete(key); this.taskError(task, err); }
+        }
+      }
       advanceContinuous(at = this.runtime.now(), refresh = true) {
         if (!this.running || this.paused || this.continuousTime === null) return;
         if (!Number.isFinite(at) || at < this.continuousTime)
           throw new AkariError('R412', '時計を 前へ もどせません');
         while (this.continuousTime < at) {
           const grid = this.continuousOrigin + this.continuousTick * (1000 / 60),
-            end = Math.min(at, grid), seconds = (end - this.continuousTime) / 1000,
+            end = this.moveDeadlineWithin(this.continuousTime, Math.min(at, grid)), seconds = (end - this.continuousTime) / 1000,
             sums = new Map();
           const entries = [], moves = [];
           let failedControl = null;
@@ -2413,8 +2629,8 @@
               if (!actor) { this.continuous.delete(key); continue; }
               if (control.state !== 'ACTIVE') continue;
               failedControl = control;
-              const v = this.directionVector(control.rule.direction, actor),
-                dx = v.x * control.speed * seconds, dy = v.y * control.speed * seconds,
+              const v = this.directionVector(control.rule.direction, actor), distance = control.temporary ? this.moveDistance(control, end) : control.speed * seconds,
+                dx = v.x * distance, dy = v.y * distance,
                 delta = sums.get(control.runtimeId) || { x: 0, y: 0 };
               delta.x = ensureFinite(delta.x + dx);
               delta.y = ensureFinite(delta.y + dy);
@@ -2460,7 +2676,8 @@
               catch (err) { this.taskError(task, err); break; }
             }
           }
-          if (end === grid) { this.continuousTick++; if (refresh) this.refreshContinuous(); }
+          this.settleMoves(end, end === grid);
+          if (end === grid) { this.continuousTick++; if (refresh) this.refreshContinuous(); if (this.continuous.size) this.pollWatches(end); }
           if (this.paused || !this.running) break;
         }
         if (this.continuous.size) this.ui.render?.();
@@ -2552,6 +2769,7 @@
         this.schedule();
       }
       spawnForRuntime(runtimeId, eventType, eventContext = {}, waitGroupId = null) {
+        if (eventType === 'click') this.runtime.countEvent(runtimeId + '|click');
         let targetId;
         if (runtimeId === 'stage') targetId = 'stage';
         else {
@@ -2572,9 +2790,58 @@
         }
         return out;
       }
-      spawnDistributed(eventType, eventContext = {}, waitGroupId = null) {
+      // 名人のできごと: ふれたとき, 〜になったとき and 〜秒ごとに are watched on the scheduler's clock.
+      initializeWatches() {
+        this.watches = [];
+        for (const item of this.compiled.items || []) {
+          if (!item.key.startsWith('script:') || !['touchStart', 'conditionTrue', 'interval'].includes(item.event)) continue;
+          const targetId = item.targetId || item.ownerId, scriptId = item.key.slice('script:'.length);
+          const task = { taskId: `watch:${item.key}`, scriptId, runtimeId: targetId, targetId, eventType: item.event, eventContext: {},
+            subject: { runtimeId: targetId }, callFrames: [], execStack: [], broadcastGroups: new Map(), state: 'RUNNING', currentNode: item.ast.body?.[0] };
+          const watch = { item, targetId, scriptId, event: item.event, task, last: new Map() };
+          if (item.event === 'interval') {
+            try {
+              watch.period = numberInUnit(evalExpression(item.ast.heading.seconds, this.context(task)), '秒');
+              if (!(watch.period > 0)) throw new AkariError('R412', '「〜秒ごとに」の 時間は 0より 大きく します');
+            } catch (err) { this.taskError(task, err); return; }
+            watch.nextAt = ensureFinite(this.runtime.now() + watch.period * 1000);
+          }
+          this.watches.push(watch);
+        }
+      }
+      pollWatches(now = this.runtime.now()) {
+        if (!this.running || this.paused || !this.watches?.length) return;
+        for (const w of this.watches) {
+          try {
+            if (w.event === 'interval') {
+              // A new run each time, even while the last one still runs.
+              for (let guard = 0; now >= w.nextAt && guard < 100; guard++) { this.spawnWatch(w, w.targetId); w.nextAt += w.period * 1000; }
+            } else if (w.event === 'conditionTrue') {
+              const value = bool(evalExpression(w.item.ast.heading.condition, this.context(w.task)));
+              if (value && !w.last.get(w.targetId)) this.spawnWatch(w, w.targetId);
+              w.last.set(w.targetId, value);
+            } else {
+              for (const a of [...this.runtime.actors.values()].filter(a => a.baseId === w.targetId)) {
+                const touching = this.runtime.touching(a.runtimeId, w.item.filter.target);
+                if (touching && !w.last.get(a.runtimeId)) this.spawnWatch(w, a.runtimeId);
+                w.last.set(a.runtimeId, touching);
+              }
+            }
+          } catch (err) {
+            this.watches = this.watches.filter(x => x !== w);
+            this.taskError(w.task, err);
+            return;
+          }
+        }
+      }
+      spawnWatch(watch, runtimeId) {
+        const task = this.createTask(watch.targetId, runtimeId, watch.event, {}, null, watch.scriptId);
+        if (task) this.enqueue(task);
+      }
+      spawnDistributed(eventType, eventContext = {}, waitGroupId = null, only = null) {
         const out = [];
         for (const rid of this.orderedRuntimeIds()) {
+          if (only && !only.has(rid)) continue;
           if (eventType === 'start' && rid !== 'stage' && this.runtime.actor(rid)?.isClone)
             continue;
           out.push(...this.spawnMatching(
@@ -2620,6 +2887,7 @@
         this.activeQuestion = null;
         this.initializeContinuous();
         this.spawnDistributed('start', {});
+        this.initializeWatches();
         this.ui.state?.();
         this.schedule();
       }
@@ -2638,6 +2906,7 @@
         this.questionTimer = null;
         this.loopScheduled = false;
         this.continuous.clear();
+        this.watches = [];
         this.runtime.pauseClock();
         this.running = false;
         this.paused = false;
@@ -2723,16 +2992,34 @@
         if (this.running && !this.paused) {
           if (this.ready.length) this.schedule();
           else if (
-            this.continuous.size || [...this.blocked].some((t) =>
+            this.continuous.size || this.watches?.length || [...this.blocked].some((t) =>
               ['time', 'condition', 'glide', 'calculation'].includes(t.blockReason?.kind),
             )
           )
             this.schedule(16);
         }
       }
+      // A part speaks until its timed speech ends (名人: ねこが話し終わるまで待つ).
+      speaking(runtimeId) {
+        for (const t of this.blocked) if (t.blockReason?.speechToken && t.blockReason.runtimeId === runtimeId) return true;
+        return false;
+      }
+      // 名人: 犬と鳥に「出発」と知らせる — the runtime ids of the parts (a list of parts counts each).
+      targetRuntimeIds(targets, ctx) {
+        const ids = new Set();
+        for (const target of targets) {
+          const value = evalExpression(target, ctx);
+          for (const part of Array.isArray(value) ? partList(value) : [value]) {
+            if (!isPart(part)) throw new AkariError('R411', '知らせる 相手には 部品を 書きます');
+            ids.add(part.part);
+          }
+        }
+        return ids;
+      }
       context(task, extra = {}) {
         return {
           runtime: this.runtime,
+          scheduler: this,
           compiled: this.compiled,
           task,
           runtimeId: task.subject?.runtimeId || task.callFrames.at(-1)?.runtimeId || task.runtimeId,
@@ -2742,6 +3029,10 @@
       }
       selectSubject(task, node) {
         const relative = task.callFrames.at(-1)?.runtimeId || task.runtimeId;
+        if (node?.actorRef?.kind === 'value') {
+          task.subject = { runtimeId: this.runtime.partRuntimeId(evalExpression(node.actorRef.value, this.context(task))) };
+          return;
+        }
         task.subject = { runtimeId: this.runtime.resolveActorRef(node.actorRef, relative) };
       }
       normalizeStack(task) {
@@ -2756,6 +3047,7 @@
           if (top.type === 'callBoundary') {
             task.execStack.pop();
             const finishedFrame = task.callFrames.pop();
+            this.runtime.countEvent(finishedFrame.runtimeId + '|action|' + finishedFrame.name);
             for (const id of finishedFrame.broadcastGroups?.values() || []) this.waitGroups.delete(id);
             continue;
           }
@@ -2901,7 +3193,7 @@
 
       executeLoopHeader(task, frame) {
         if (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && this.prepareCooperativeNode(task, frame.node, frame)) return;
-        const v = bool(evalExpression(frame.node.condition, this.context(task)));
+        const v = bool(evalExpression(frame.condition || frame.node.condition, this.context(task)));
         const keep = frame.type === 'while' ? v : !v;
         if (keep) {
           task.execStack.push({ type: 'seq', nodes: frame.node.body, index: 0 });
@@ -2939,6 +3231,9 @@
             if (result !== null) task.lastAnswer = result;
             return;
           }
+          case 'TimerReset':
+            this.runtime.timerOffset = this.runtime.now() - this.runtime.startTime;
+            return;
           case 'NoOperation':
             return;
           case 'Assignment':
@@ -2960,6 +3255,7 @@
           case 'ListReplace':
           case 'ListDelete':
           case 'ListClear':
+          case 'ListRemoveValue':
             execListMutation(n, ctx);
             this.ui.renderMonitor?.();
             return;
@@ -2985,9 +3281,11 @@
             return;
           }
           case 'RepeatUntil': {
-            const v = bool(evalExpression(n.condition, ctx));
+            // Counts (〜が3回おされるまで) are compared with those when the repeat began.
+            const condition = hasEventCount(originalNode.condition) ? this.runtime.bindEventCounts(originalNode.condition, ctx) : null;
+            const v = bool(evalExpression(condition || n.condition, ctx));
             if (!v) {
-              task.execStack.push({ type: 'until', node: originalNode });
+              task.execStack.push({ type: 'until', node: originalNode, ...(condition ? { condition } : {}) });
               this.enterBody(task, n.body);
             }
             return;
@@ -3022,9 +3320,11 @@
             return { requeue: false };
           }
           case 'WaitUntil': {
-            if (bool(evalExpression(n.condition, ctx))) return;
-            if (!everyoneStatement(n)) { this.hold(task, { kind: 'condition', condition: originalNode.condition }); return; }
-            this.block(task, { kind: 'condition', condition: originalNode.condition });
+            // Counts (〜が10回【ジャンプ】するまで) are compared with those when the wait began.
+            const condition = hasEventCount(originalNode.condition) ? this.runtime.bindEventCounts(originalNode.condition, ctx) : originalNode.condition;
+            if (bool(evalExpression(condition === originalNode.condition ? n.condition : condition, ctx))) return;
+            if (!everyoneStatement(n)) { this.hold(task, { kind: 'condition', condition }); return; }
+            this.block(task, { kind: 'condition', condition });
             return { requeue: false };
           }
           case 'Say': {
@@ -3053,7 +3353,7 @@
             return { requeue: false };
           }
           case 'Broadcast': {
-            const msg = stringv(evalExpression(n.message, ctx));
+            const msg = stringv(evalExpression(n.message, ctx)), only = n.targets ? this.targetRuntimeIds(n.targets, ctx) : null;
             const ref = n.broadcastRef || n.groupId;
             const references = task.callFrames.at(-1)?.broadcastGroups || task.broadcastGroups;
             if (ref) {
@@ -3062,9 +3362,9 @@
               const wg = { id: `wait-${++this.waitSeq}`, sender: task, pending: new Set(), ref, references };
               references.set(ref, wg.id);
               this.waitGroups.set(wg.id, wg);
-              this.spawnDistributed('message', { message: msg }, wg.id);
+              this.spawnDistributed('message', { message: msg }, wg.id, only);
               if (!wg.pending.size) { references.delete(ref); this.waitGroups.delete(wg.id); }
-            } else this.spawnDistributed('message', { message: msg });
+            } else this.spawnDistributed('message', { message: msg }, null, only);
             return;
           }
           case 'WaitBroadcastGroup': {
@@ -3077,10 +3377,10 @@
             return { requeue: false };
           }
           case 'BroadcastAndWait': {
-            const msg = stringv(evalExpression(n.message, ctx)),
+            const msg = stringv(evalExpression(n.message, ctx)), only = n.targets ? this.targetRuntimeIds(n.targets, ctx) : null,
               wg = { id: `wait-${++this.waitSeq}`, sender: task, pending: new Set() };
             this.waitGroups.set(wg.id, wg);
-            const ts = this.spawnDistributed('message', { message: msg }, wg.id);
+            const ts = this.spawnDistributed('message', { message: msg }, wg.id, only);
             if (ts.length) {
               if (!everyoneStatement(n)) { this.hold(task, { kind: 'waitGroup', waitGroupId: wg.id }); return; }
               this.block(task, { kind: 'waitGroup', waitGroupId: wg.id });
@@ -3088,6 +3388,44 @@
             }
             this.waitGroups.delete(wg.id);
             return;
+          }
+          case 'Parallel':
+            return this.startLanes(task, n.lanes.map(nodes => ({ nodes, binder: null })));
+          case 'ParallelEach': {
+            // The limit is checked before any lane starts (startLanes); then every member must be a part.
+            const values = evalExpression(n.list, ctx);
+            if (!Array.isArray(values)) throw new AkariError('R411', '「みんな」は 部品の あつまりに 使います');
+            if (this.tasks.size + values.length <= LIMITS.activeTasks) partList(values);
+            return this.startLanes(task, values.map(value => ({ nodes: n.body, binder: { name: n.binder, value } })));
+          }
+          // 名人: 【…】という手順を、次のように作る only registers the procedure.
+          case 'ActionDefinition':
+            return;
+          // 10秒のあいだ、くり返す: each round begins only while the time from the start has not passed.
+          case 'TimedRepeat': {
+            const sec = numberInUnit(evalExpression(n.seconds, ctx), '秒');
+            if (sec < 0) throw new AkariError('R412', 'くり返す 時間は 0より 小さく できません');
+            if (sec > 0) {
+              task.execStack.push({ type: 'while', node: originalNode, condition: { kind: 'DeadlineBound', deadline: ensureFinite(this.runtime.now() + sec * 1000) } });
+              this.enterBody(task, n.body);
+            }
+            return;
+          }
+          // ねこは、1秒に20歩の速さで、ゴールにふれるまで前へ動き続ける (or for a time): on the clock of the continuous rules.
+          case 'MoveUntil': {
+            const actor = this.runtime.requireActor(ctx),
+              seconds = numberInUnit(evalExpression(n.seconds, ctx), '秒'),
+              distance = numberInUnit(evalExpression(n.distance, ctx), '歩');
+            if (seconds <= 0) throw new AkariError('R412', '速さの時間は0より大きくします');
+            const condition = n.condition ? (hasEventCount(n.condition) ? this.runtime.bindEventCounts(n.condition, ctx) : n.condition) : null;
+            const deadline = n.duration ? ensureFinite(this.runtime.now() + numberInUnit(evalExpression(n.duration, ctx), '秒') * 1000) : null;
+            if ((condition && bool(evalExpression(condition, ctx))) || (deadline !== null && deadline <= this.runtime.now())) return;
+            this.directionVector(n.direction, actor);
+            this.advanceContinuous();
+            const key = `move:${task.taskId}:${++this.waitSeq}`;
+            this.continuous.set(key, { rule: { id: key, direction: n.direction }, runtimeId: ctx.runtimeId, task, state: 'ACTIVE', speed: ensureFinite(distance / seconds), temporary: true, startTime: this.continuousTime, moved: 0 });
+            this.block(task, { kind: 'moveUntil', key, condition, deadline });
+            return { requeue: false };
           }
           case 'UserActionCall':
             this.callAction(task, n, ctx);
@@ -3166,6 +3504,35 @@
           index: 0,
         });
       }
+      startLanes(task, lanes) {
+        if (this.tasks.size + lanes.length > LIMITS.activeTasks)
+          throw new AkariError('R413', '同時に 動いている 動きが 多すぎます。コピーや 合図を へらしてください');
+        const wg = { id: `wait-${++this.waitSeq}`, sender: task, pending: new Set() };
+        this.waitGroups.set(wg.id, wg);
+        const binders = [...(task.inheritedBinders || [])];
+        for (let i = task.execStack.length - 1; i >= 0 && task.execStack[i].type !== 'callBoundary'; i--)
+          if (task.execStack[i].binder) binders.unshift(task.execStack[i].binder);
+        for (const lane of lanes) {
+          if (!lane.nodes.some(x => x.kind !== 'CommentLine')) continue;
+          const child = {
+            taskId: `task-${++this.seq}`, scriptId: task.scriptId, subject: { ...task.subject },
+            broadcastGroups: new Map(), targetId: task.targetId, runtimeId: task.runtimeId,
+            eventType: task.eventType, eventContext: { ...task.eventContext }, lastAnswer: task.lastAnswer,
+            // Frames are shared, so a lane reads and writes the same この中だけ variables as its flow.
+            callFrames: [...task.callFrames],
+            inheritedBinders: lane.binder ? [...binders, lane.binder] : binders,
+            execStack: [{ type: 'seq', nodes: lane.nodes, index: 0 }],
+            state: 'READY', waitGroupId: wg.id, createdSequence: this.seq, error: null,
+            laneParent: task, laneRoot: task.laneRoot || task,
+          };
+          this.tasks.set(child.taskId, child);
+          wg.pending.add(child.taskId);
+          this.enqueue(child);
+        }
+        if (!wg.pending.size) { this.waitGroups.delete(wg.id); return; }
+        this.block(task, { kind: 'waitGroup', waitGroupId: wg.id });
+        return { requeue: false };
+      }
       block(task, reason) {
         task.state = 'BLOCKED';
         task.blockReason = { runtimeId: task.subject?.runtimeId || task.runtimeId, ...reason };
@@ -3184,8 +3551,10 @@
         return bool(evalExpression(hold.condition, this.context(task, { runtimeId: hold.runtimeId })));
       }
       // Before a statement of a held part runs, the flow waits for the rest of that part's wait.
+      // 名人: a sentence of the part carried on (laneRef) that acts on another part waits for the carried part's wait.
       awaitHold(task, step) {
-        const runtimeId = task.subject?.runtimeId, hold = runtimeId && task.holds?.get(runtimeId);
+        const lane = step.node?.laneRef && (step.node.laneRef.kind === 'value' ? this.runtime.partRuntimeId(evalExpression(step.node.laneRef.value, this.context(task))) : this.runtime.resolveActorRef(step.node.laneRef, task.callFrames.at(-1)?.runtimeId || task.runtimeId));
+        const runtimeId = lane && task.holds?.get(lane) ? lane : task.subject?.runtimeId, hold = runtimeId && task.holds?.get(runtimeId);
         if (!hold || step.kind === 'idle' || everyoneStatement(step.node)) return false;
         task.holds.delete(runtimeId);
         if (this.holdOver(task, hold)) return false;
@@ -3233,8 +3602,11 @@
               if (a) {
                 const nx = ensureFinite(br.startX * (1 - p) + br.targetX * p),
                   ny = ensureFinite(br.startY * (1 - p) + br.targetY * p);
-                const actualX = ensureFinite(a.x + nx - br.lastX),
-                  actualY = ensureFinite(a.y + ny - br.lastY);
+                // What else moved the part during the glide is kept; the rounding left by adding the steps is not
+                // (the move ends on its end point: よこ7歩 is 7, not 6.999999999999591).
+                const moved = (at, last, next) => { const d = at - last; return Math.abs(d) <= 1e-9 * Math.max(1, Math.abs(next)) ? 0 : d; };
+                const actualX = ensureFinite(nx + moved(a.x, br.lastX, nx)),
+                  actualY = ensureFinite(ny + moved(a.y, br.lastY, ny));
                 if (a.penDown && (br.lastX !== nx || br.lastY !== ny))
                   this.ui.penLine?.(
                     a.x + a.w / 2,
@@ -3260,6 +3632,7 @@
         if (!this.running || (this.paused && !force)) return;
         this.advanceContinuous();
         this.drainExternalUnblocks();
+        this.pollWatches();
         this.pollHolds();
         const now = this.runtime.now(),
           arr = [...this.blocked].sort((a, b) => a.createdSequence - b.createdSequence);
@@ -3278,6 +3651,10 @@
             if (br.kind === 'condition' && bool(evalExpression(br.condition, this.context(t, { runtimeId: br.runtimeId }))))
               this.unblock(t);
             else if (br.kind === 'time' && now >= br.deadline) timed.push(t);
+            else if (br.kind === 'moveUntil') {
+              // Settled on the clock (settleMoves); a move whose control is gone has ended.
+              if (!this.continuous.has(br.key)) this.unblock(t);
+            }
             else if (br.kind === 'glide') {
               this.advanceGlide(t, br, now);
               const p = clamp((now - br.startTime) / br.duration, 0, 1);
@@ -3334,8 +3711,18 @@
       finishTask(task, state = 'DONE') {
         task.extensionAbort?.abort();
         if (['DONE', 'CANCELLED', 'ERROR'].includes(task.state) && task.state !== state) return;
+        // 名人: copies made in a lane are the copies the flow made (できたコピー after the lanes).
+        if (state === 'DONE' && task.laneParent && task.createdCopies?.length) task.laneParent.createdCopies = [...(task.laneParent.createdCopies || []), ...task.createdCopies];
+        // 名人: ねこと犬は1秒待つ — each lane's part waits; that wait goes on in the flow that started the lanes, so the
+        // part's next sentence there waits for it (as after ねこは1秒待つ in one flow).
+        if (state === 'DONE' && task.laneParent && task.holds?.size)
+          for (const [runtimeId, hold] of task.holds) {
+            const parent = (task.laneParent.holds ||= new Map()), held = parent.get(runtimeId);
+            if (!(held?.kind === 'time' && hold.kind === 'time' && held.deadline >= hold.deadline)) parent.set(runtimeId, hold);
+          }
         task.state = state;
         this.blocked.delete(task);
+        for (const [key, control] of this.continuous) if (control.temporary && control.task === task) this.continuous.delete(key);
         this.ready = this.ready.filter((x) => x !== task);
         this.questionQueue = this.questionQueue.filter((q) => q.task !== task);
         if (this.activeQuestion?.task === task) {
@@ -3361,6 +3748,8 @@
         }
         if (['DONE', 'CANCELLED', 'ERROR'].includes(state)) this.tasks.delete(task.taskId);
         for (const [id, wg] of this.waitGroups) if (wg.sender === task) this.waitGroups.delete(id);
+        if (['DONE', 'CANCELLED', 'ERROR'].includes(state))
+          for (const t of [...this.tasks.values()]) if (t.laneParent === task) this.cancelTask(t);
         task.broadcastGroups?.clear();
         for (const frame of task.callFrames) frame.broadcastGroups?.clear();
         this.ui.renderMonitor?.();
@@ -3374,11 +3763,14 @@
           ...task.callFrames.map((f) => `自分で作ったブロック ${f.name}`),
           ...(e.akariCallStack || []),
         ];
-        const frame = task.callFrames.at(-1),
-          key =
+        const frame = task.callFrames.at(-1);
+        let key =
             e.akariSource?.key || task.sourceKey ||
             (frame ? `action:${frame.id}` : task.scriptId ? `script:${task.scriptId}` : `script:${task.targetId}:${task.eventType}`),
           line = e.line || task.currentNode?.sourceSpan?.startLine || 1;
+        // 名人: an error in a procedure made in a 名人 script's text is shown at its line in that script.
+        const textAction = key.startsWith('action:meijin-') ? this.compiled.items?.find(item => item.key === key)?.definition : null;
+        if (textAction?.scriptId && !e.akariSource) { key = `script:${textAction.scriptId}`; line += textAction.line - 1; }
         const definition = key.startsWith('function:')
           ? this.project.functions.find((x) => x.id === key.slice(9))
           : key.startsWith('action:')
@@ -3460,7 +3852,8 @@
       }
       execStop(task, n) {
         if (n.op === 'THIS') {
-          this.finishTask(task, 'DONE');
+          this.finishTask(task.laneRoot || task, 'DONE');
+          if (task.laneRoot) this.finishTask(task, 'DONE');
           return { requeue: false };
         }
         if (n.op === 'OTHERS') {
@@ -3473,6 +3866,33 @@
           this.stop();
           this.ui.allStopped?.();
           return { requeue: false };
+        }
+        // 名人: ねこの動きを止める (not its copies) / 星のコピーの動きを止める (every copy of it).
+        if (n.op === 'PART') this.stopPartMotion(task.subject?.runtimeId, task);
+        if (n.op === 'COPIES') {
+          const base = this.runtime.actor(task.subject?.runtimeId)?.baseId;
+          for (const copy of [...this.runtime.actors.values()].filter(a => a.isClone && a.baseId === base)) this.stopPartMotion(copy.runtimeId, task);
+        }
+      }
+      // The part's own bodies and continuous rules stop. Where another flow moves the part (〜秒かけて動く, 〜まで動き続ける)
+      // or the part carries out a procedure for it, that motion or procedure ends where the part is, and the flow goes on
+      // with its next sentence. Speech and waits are not motions and go on.
+      stopPartMotion(runtimeId, task) {
+        for (const [key, control] of this.continuous) {
+          if (control.runtimeId !== runtimeId) continue;
+          if (control.temporary) this.continuous.delete(key);
+          else if (control.state === 'ACTIVE') control.state = 'CANCELLED_UNTIL_FALSE';
+        }
+        for (const t of [...this.tasks.values()]) {
+          if (t === task) continue;
+          if (t.runtimeId === runtimeId) { this.cancelTask(t); continue; }
+          const at = t.callFrames.findIndex(frame => frame.runtimeId === runtimeId), br = t.blockReason;
+          if (at >= 0) {
+            if (br?.speechToken && this.speechTokens.get(br.runtimeId) === br.speechToken) { this.ui.clearSpeech?.(br.runtimeId); this.speechTokens.delete(br.runtimeId); }
+            const boundary = t.execStack.findIndex(entry => entry.type === 'callBoundary' && entry.frame === t.callFrames[at]);
+            if (boundary >= 0) { t.execStack.length = boundary; t.callFrames.length = at; }
+            if (this.blocked.has(t)) this.unblock(t);
+          } else if (br?.runtimeId === runtimeId && ['glide', 'moveUntil'].includes(br.kind) && this.blocked.has(t)) this.unblock(t);
         }
       }
 
@@ -3488,6 +3908,16 @@
             const d = num(0), v = this.directionVector(n.direction, a);
             a.x += v.x * d; a.y += v.y * d;
             break;
+          }
+          // 名人: 〜のところへ行く — the centre comes to the other part's centre (where it is when the sentence runs).
+          case 'GOTO_PART':
+          case 'GLIDE_PART': {
+            const value = evalExpression(n.args.at(-1), ctx);
+            if (!isPart(value)) throw new AkariError('R411', `行き先の へんすうに 入っているのは「${valueText(value)}」で、部品では ありません`);
+            const to = this.runtime.aabb(this.runtime.partActor(value)), from = this.runtime.aabb(a);
+            const x = a.x + to.cx - from.cx, y = a.y + to.cy - from.cy;
+            if (n.op === 'GOTO_PART') { a.x = x; a.y = y; break; }
+            return this.execMotion(task, { ...n, op: 'GLIDE', args: [n.args[0], { kind: 'NumberLiteral', value: x }, { kind: 'NumberLiteral', value: y }] }, ctx);
           }
           case 'GLIDE_DIRECTION': {
             const seconds = num(0), distance = num(1), v = this.directionVector(n.direction, a);
@@ -3533,7 +3963,15 @@
             return { requeue: false };
           }
           case 'POINT_TO': {
-            const target = stringv(evalExpression(n.args[0], ctx)),
+            // 名人: いちばん近い… that is not one part turns no one.
+            if (n.args[0]?.kind === 'PartNearest') {
+              const nearest = this.runtime.nearestPart(partList(evalExpression(n.args[0].of, ctx)), ctx.runtimeId, true);
+              if (!nearest) break;
+              const p = this.runtime.nearestTarget(ctx.runtimeId, nearest), aa = this.runtime.aabb(a);
+              a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
+              break;
+            }
+            const target = targetValue(evalExpression(n.args[0], ctx)),
               p = this.runtime.nearestTarget(ctx.runtimeId, target),
               aa = this.runtime.aabb(a);
             a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
@@ -3663,7 +4101,7 @@
           return;
         }
         if (n.op === 'SET_TARGET_TEXT') {
-          const name = stringv(arg(0)),
+          const name = targetName(arg(0)),
             v = valueText(arg(1)),
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」がありません`);
@@ -3674,7 +4112,7 @@
           return;
         }
         if (n.op === 'SET_INPUT') {
-          const name = stringv(arg(0)),
+          const name = targetName(arg(0)),
             v = assertRuntimeValueLimit(stringv(arg(1))),
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」がありません`);
@@ -3690,6 +4128,7 @@
         }
       }
       execPen(task, n, ctx) {
+        if (n.op === 'CLEAR') { this.ui.penClear?.(); return; }
         const a = this.runtime.requireActor(ctx);
         if (n.op === 'DOWN') a.penDown = true;
         else if (n.op === 'UP') a.penDown = false;
@@ -3713,6 +4152,11 @@
           ended = (id) => this.queueExternalUnblock(id);
         if (n.op === 'STOP_ALL') {
           this.runtime.stopAllAudio(true);
+          return;
+        }
+        // 名人: ねこの音を止める — only the sounds that part plays.
+        if (n.op === 'STOP_PART') {
+          this.runtime.stopPartSounds(ctx.runtimeId);
           return;
         }
         if (n.op === 'SET_VOLUME') {
@@ -3749,16 +4193,28 @@
         let src;
         if (n.op === 'CREATE_SELF') src = ctx.runtimeId;
         else if (n.op === 'CREATE_TARGET') {
-          const name = stringv(evalExpression(n.args[0], ctx)),
+          // 名人: the part may be a value (主役のコピーを作る copies the part held there).
+          const target = targetValue(evalExpression(n.args[0], ctx)), name = isPart(target) ? target.name : target,
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」がありません`);
           if (c.type !== 'sprite')
             throw new AkariError('R406', 'コピーを 作れるのは キャラクターだけです');
           const candidates = this.runtime.instancesByName(name);
-          src = candidates[0]?.runtimeId || c.id;
+          src = isPart(target) ? this.runtime.partActor(target).runtimeId : candidates[0]?.runtimeId || c.id;
+        } else if (n.op === 'DELETE_ALL') {
+          // 名人: 星のコピーを全部消す — every copy of that part; the part itself stays.
+          const base = this.runtime.actor(ctx.runtimeId)?.baseId;
+          for (const copy of [...this.runtime.actors.values()].filter(a => a.isClone && a.baseId === base)) {
+            this.runtime.deleteClone(copy.runtimeId);
+            this.cancelRuntimeTasks(copy.runtimeId, task);
+          }
+          return;
         } else {
+          const own = ctx.runtimeId === task.runtimeId;
           this.runtime.deleteClone(ctx.runtimeId);
           this.cancelRuntimeTasks(ctx.runtimeId, task);
+          // 名人: a copy named as the subject (できたコピーは…消える) goes; the flow that said so goes on.
+          if (!own) return;
           this.finishTask(task, 'DONE');
           return { requeue: false };
         }
@@ -3771,10 +4227,14 @@
         if(component?.type!=='sprite')throw new AkariError('R406','コピーを 作れるのは キャラクターだけです');
         const receivers=this.matchingScripts(component.id,'cloneStart',{sourceRuntimeId:src}).filter(script=>this.hasExecutable(this.scriptAst(component.id,'cloneStart',script.id))).length;
         if(this.tasks.size+count*receivers>LIMITS.activeTasks)throw new AkariError('R413','同時に 動いている 動きが 多すぎます。コピーや 合図を へらしてください');
+        // 名人: できたコピー are the copies this statement made.
+        const made = [];
         for(let i=0;i<count;i++){
           const rid = this.runtime.createClone(src);
+          made.push(partValue(rid, component.name));
           this.spawnForRuntime(rid, 'cloneStart', { sourceRuntimeId: src });
         }
+        task.createdCopies = made;
       }
       cancelRuntimeTasks(runtimeId, except = null) {
         for (const t of this.tasks.values())
@@ -3783,10 +4243,10 @@
       }
     }
     const EXECUTABLE_CONTRACT = Object.freeze({
-      languageContractId: 2,
-      runtimeContractId: 2,
-      programFormatVersion: 2,
-      projectFormatVersion: 3,
+      languageContractId: 3,
+      runtimeContractId: 3,
+      programFormatVersion: 3,
+      projectFormatVersion: 4,
     });
     function validProducerLabel(value) {
       return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9.+_-]{0,79}$/.test(value);
@@ -3842,8 +4302,20 @@
         if(!phrase||callPhrases.has(phrase))fail('短い よび方が 空っぽか、同じ ものが 2つ あります');
         callPhrases.add(phrase);
       }
+      // 名人: procedures made in a 名人 script's text travel with their program items.
+      const textActions = data.program.filter(item => item && typeof item.key === 'string' && item.key.startsWith('action:meijin-')).map(item => {
+        const d = item.definition;
+        if (!exactKeys(d, ['id', 'ownerId', 'name', 'args', 'scriptId', 'line']) || item.key !== `action:${d.id}` || d.ownerId !== 'stage' ||
+          typeof d.name !== 'string' || !d.name || cpLen(d.name) > 32 || !Array.isArray(d.args) || d.args.length > 16 ||
+          d.args.some(a => typeof a !== 'string' || !a || cpLen(a) > 32) || !safeId(d.scriptId) || !Number.isSafeInteger(d.line) || d.line < 1 ||
+          p.actions.some(a => a.name === d.name))
+          fail('名人の 本文で 作った 手順が 正しくありません');
+        return { ...d, meijin: true };
+      });
+      if (new Set(textActions.map(d => d.name)).size !== textActions.length) fail('名人の 本文で 作った 手順が 正しくありません');
       const definitionKeys = new Map([
         ...p.actions.map(d => [`action:${d.id}`, d]),
+        ...textActions.map(d => [`action:${d.id}`, d]),
         ...p.functions.map(d => [`function:${d.id}`, d]),
       ]);
       if ([...definitionKeys.values()].some(d => d.ownerId !== 'stage'))
@@ -3852,7 +4324,10 @@
         astByKey = new Map();
       const validActorRef = (ref, node) => !ref ||
         (exactKeys(ref, ['kind']) && (ref.kind === 'self' || (ref.kind === 'all' && everyoneWaitKind(node?.kind)))) ||
-        ((exactKeys(ref, ['kind', 'name']) || exactKeys(ref, ['kind', 'name', 'targetId'])) &&
+        // 名人: a subject read from a value (主役は…) is checked when it runs.
+        (exactKeys(ref, ['kind', 'value']) && ref.kind === 'value' && !!ref.value && typeof ref.value.kind === 'string') ||
+        // ねこが…: the written particle が may be kept with a named subject.
+        ([['kind', 'name'], ['kind', 'name', 'targetId']].some(keys => exactKeys(ref, keys) || (ref?.particle === 'が' && exactKeys(ref, [...keys, 'particle']))) &&
           ref.kind === 'named' && typeof ref.name === 'string' &&
           (ref.name === '画面' || ref.name === p.stage.name || p.components.some(c => c.name === ref.name)) &&
           (ref.targetId === undefined || ownerIds.has(ref.targetId)));
@@ -3860,8 +4335,10 @@
       for (const item of data.program) {
         const parts = typeof item.key === 'string' ? item.key.split(':') : [];
         const type = item.ownerId === 'stage' ? 'stage' : p.components.find(c => c.id === item.ownerId)?.type;
+        // 名人のできごと: ふれたとき for a part; 〜になったとき and 〜秒ごとに for a 名人 script (the stage).
         const events = ['start', 'click', 'keyDown', 'message', 'backdropChanged',
-          ...(type === 'input' ? ['valueChanged'] : []), ...(type === 'sprite' ? ['cloneStart'] : [])];
+          ...(type === 'input' ? ['valueChanged'] : []), ...(type === 'sprite' ? ['cloneStart'] : []),
+          ...(type && type !== 'stage' ? ['touchStart'] : []), ...(type === 'stage' ? ['conditionTrue', 'interval'] : [])];
         if (
           typeof item.key !== 'string' ||
           !ownerIds.has(item.ownerId) ||
@@ -3875,8 +4352,13 @@
           !Array.isArray(item.ast.body)
         )
           fail('動きの 中身が こわれています');
+        const watched = item.event || parts[2];
+        if ((watched === 'touchStart' && !p.components.some(c => c.name === item.filter?.target)) ||
+          (watched === 'conditionTrue' && typeof item.ast.heading?.condition?.kind !== 'string') ||
+          (watched === 'interval' && typeof item.ast.heading?.seconds?.kind !== 'string'))
+          fail('きっかけの 中身が 正しくありません');
         if (item.filter != null) {
-          const event = item.event || parts[2], field = event === 'keyDown' ? 'key' : event === 'message' ? 'message' : null;
+          const event = item.event || parts[2], field = event === 'keyDown' ? 'key' : event === 'message' ? 'message' : event === 'touchStart' ? 'target' : null;
           if (!field || !exactKeys(item.filter, [field]) || typeof item.filter[field] !== 'string' ||
             cpLen(item.filter[field]) > LIMITS.stringChars) fail('きっかけの キーや 合図の 名前が 正しくありません');
         }
@@ -3899,8 +4381,10 @@
           }
           if (node.kind === 'Hole') fail('書きかけの ところを さいごまで 書いてください');
           if (Object.hasOwn(node, 'actorRef') && !validActorRef(node.actorRef, node)) fail('動かす キャラクターや 部品が 正しくありません');
-          if (node.kind === 'MotionCommand' && ['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(node.op) &&
+          if (((node.kind === 'MotionCommand' && ['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(node.op)) || node.kind === 'MoveUntil') &&
             !directions.includes(node.direction)) fail('動く 向きが 正しくありません');
+          // Values made while running are never saved.
+          if (['PartValue', 'DeadlineBound', 'EventCountBound'].includes(node.kind)) fail('動きの 中身が こわれています');
           if (node.argumentNames !== undefined && (!Array.isArray(node.argumentNames) ||
             node.argumentNames.some(name => typeof name !== 'string' || !name || cpLen(name) > 32) ||
             new Set(node.argumentNames).size !== node.argumentNames.length ||
@@ -3930,7 +4414,7 @@
         astByKey,
         errors: [],
         symbols: {
-          actions: new Map(p.actions.map((x) => [x.name, x])),
+          actions: new Map([...p.actions, ...textActions].map((x) => [x.name, x])),
           functions: new Map(p.functions.map((x) => [x.name, x])),
         },
       };
@@ -3994,6 +4478,7 @@
       addNumericUpdate,
       validateExpectedUnit,
       validateRuntimeData,
+      isPart,
       freezeRecord,
       snapshotEntries,
       LIMITS,

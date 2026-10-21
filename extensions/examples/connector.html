@@ -29,7 +29,7 @@
     }
     if (request?.jsonrpc!=='2.0'||request.method!=='akari.hello'||typeof request.id!=='string'||event.ports.length!==1||
       !params||typeof params.nonce!=='string'||typeof params.connectionId!=='string'||typeof params.sessionId!=='string'||
-      params.apiContract!==1||params.standard?.languageContractId!==2||params.standard?.runtimeContractId!==2||
+      params.apiContract!==1||params.standard?.languageContractId!==3||params.standard?.runtimeContractId!==3||
       !Array.isArray(params.capabilities)||params.capabilities.some(value=>!supported.includes(value))) return;
     const connection={port:event.ports[0],id:params.connectionId,sessionId:params.sessionId,capabilities:[...params.capabilities],sequence:0,timers:new Map(),closed:false};
     function send(message) { if(!connection.closed)connection.port.postMessage(message); }
@@ -74,7 +74,7 @@
     };
     connection.port.onmessageerror=()=>close(connection);connection.port.start();connections.add(connection);
     event.source.postMessage({jsonrpc:'2.0',id:request.id,result:{nonce:params.nonce,connectionId:connection.id,apiContract:1,
-      standard:{languageContractId:2,runtimeContractId:2},capabilities:connection.capabilities}},event.origin==='null'?'*':event.origin);
+      standard:{languageContractId:3,runtimeContractId:3},capabilities:connection.capabilities}},event.origin==='null'?'*':event.origin);
     status.textContent='接続しています';document.getElementById('notify').disabled=document.getElementById('disconnect').disabled=false;
   });
   document.getElementById('notify').onclick=()=>{

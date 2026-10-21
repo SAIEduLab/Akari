@@ -640,6 +640,15 @@
           "何もしない→終わりマーカー",
           "作品/対象の値不変、後続マーカーあり"
         ]
+      },
+      {
+        "id": "C-TimerReset",
+        "cells": [
+          "C-TimerReset",
+          "1秒待つ→タイマーを0にする→（タイマー）を言う",
+          "タイマーを0から数え直す",
+          "1秒の時点で「0秒」と言う"
+        ]
       }
     ],
     "Q": [
@@ -698,6 +707,24 @@
           "W0、引数nをn×2として返す計算をUI定義",
           "3を倍にする計算へ渡す",
           "6"
+        ]
+      },
+      {
+        "id": "Q-expression:EventCount:click",
+        "cells": [
+          "Q-expression:EventCount:click",
+          "W0、待ち始めの回数を数え始める",
+          "あかりが3回おされる",
+          "数え始めはfalse、3回おされた後はtrue"
+        ]
+      },
+      {
+        "id": "Q-expression:EventCount:action",
+        "cells": [
+          "Q-expression:EventCount:action",
+          "W0、手順【ジャンプ】、待ち始めの回数を数え始める",
+          "あかりが2回【ジャンプ】する",
+          "数え始めはfalse、2回行った後はtrue"
         ]
       },
       {
@@ -1947,6 +1974,22 @@
         ]
       },
       {
+        "id": "S-EventCount:action",
+        "cells": [
+          "EventCount:action / S-EventCount:action",
+          "expression:EventCount",
+          "「〜まで待つ」「〜まで、くり返す」の条件の穴。U04/U05/U06/U13"
+        ]
+      },
+      {
+        "id": "S-EventCount:click",
+        "cells": [
+          "EventCount:click / S-EventCount:click",
+          "expression:EventCount",
+          "「〜まで待つ」「〜まで、くり返す」の条件の穴。U04/U05/U06/U13"
+        ]
+      },
+      {
         "id": "S-ContinuousRule",
         "cells": [
           "ContinuousRule / S-ContinuousRule",
@@ -2079,6 +2122,14 @@
         "cells": [
           "Continue / S-Continue",
           "command:Continue",
+          "命令の追加先。U04/U05/U06/U13"
+        ]
+      },
+      {
+        "id": "S-TimerReset",
+        "cells": [
+          "TimerReset / S-TimerReset",
+          "command:TimerReset",
           "命令の追加先。U04/U05/U06/U13"
         ]
       },

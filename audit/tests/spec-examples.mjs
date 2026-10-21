@@ -15,10 +15,10 @@ import {buildDerivedProduct} from '../../extensions/build.mjs';
 const require=createRequire(import.meta.url),out=process.argv[2];
 if(!out)throw Error('usage: node audit/tests/spec-examples.mjs <result.json>');
 const product=currentProductFile(),inputs=snapshot(product),api=loadApi(fs.readFileSync(product,'utf8'));
-// The extension guide's examples name the extensions of extensions/examples/offline.js.
+// The extension guide's examples name the extensions of extensions/examples/offline.js and meijin.js.
 const artifacts=path.resolve(out).replace(/\.json$/,'.artifacts'),derivedFile=path.join(artifacts,'derived-offline.html');
-const {offline,text}=require('../../extensions/examples/offline.js');
-await buildDerivedProduct({product,output:derivedFile,extensions:[offline,text]});
+const {offline,text}=require('../../extensions/examples/offline.js'),{meijin}=require('../../extensions/examples/meijin.js');
+await buildDerivedProduct({product,output:derivedFile,extensions:[offline,text,meijin]});
 const apis={standard:api,'offline-extensions':loadApi(fs.readFileSync(derivedFile,'utf8'))};
 const documents=readSpecExampleDocuments(),main=checkSpecExamples(documents,apis);
 
@@ -42,6 +42,11 @@ const negatives=[
   ['document-without-blocks-detected','no-blocks:NEGATIVE.md',doc(fence('何もしない。')),doc('説明だけの文書。\n')],
   // The derived product is load-bearing: the standard product rejects the extension examples.
   ['extension-context-detected','rejected:EXTENSIONS.md:',[extensionDocument],[{...extensionDocument,context:'standard'}]],
+  // 名人 examples are read as 名人 scripts; a 名人 text that the check stops is a failed example, one it reads is a failed rejected example.
+  ['meijin-example-rejected-detected','rejected:NEGATIVE.md:2',doc(fence('ねこは右へ10歩動く。','meijin')),doc(fence('ねこは右へ10歩動く。\nねこはゆっくり前へ10歩進む。','meijin'))],
+  ['meijin-rejected-example-accepted-detected','accepted:NEGATIVE.md:2',doc(fence('ねこはゆっくり前へ10歩進む。','meijin-rejected')),doc(fence('ねこは右へ10歩動く。','meijin-rejected'))],
+  ['meijin-rejected-unit-masking-detected','accepted:NEGATIVE.md:2:ねこは右へ10歩動く。',doc(fence('ねこはゆっくり前へ10歩進む。\nねこは犬の近くへ行く。','meijin-rejected')),
+    doc(fence('ねこはゆっくり前へ10歩進む。\nねこは右へ10歩動く。','meijin-rejected'))],
 ].map(([id,expected,control,mutated])=>{
   const hit=failures=>failures.find(failure=>failure.startsWith(expected));
   const found=hit(failuresOf(mutated));

@@ -101,6 +101,10 @@
     }
     return diagnostics;
   }
+  // 名人 scripts belong to no part, so every action names who does it.
+  const MEIJIN_SUBJECT_MESSAGE = '名人の 本文では、だれが するかを 文の はじめに 書きます。れい：ねこは前へ10歩進む';
+  // 決まり4: the sentence before has its subjects inside it, so none is carried on.
+  const MEIJIN_TOPIC_ENDED = 'すぐ前の 文からは 主語を 引きつげません（主語を ならべた 文や 主語が 二つ ある 文、あつまりの 文、見出しの 文、「〜あいだ」「次のことを同時に始める」の 文、中に 主語を 書いた「もし」や くり返しの あとです）。この 文に だれが するかを 書きます。れい：ねこは前へ10歩進む';
   function analyzeProject(project, compiled, { rootKeys = null } = {}) {
     const symbols = compiled.symbols,
       diags = [],
@@ -128,10 +132,32 @@
     };
     const literalText = (e) => (e?.kind === 'StringLiteral' ? e.value : null);
     const componentByName = (name) => project.components.find((c) => c.name === name) || null;
-    // 向き and 色 are commonly written for the character's direction and color; say how those are written.
-    const wordHint = (name) => ({ 向き: '。キャラクターの 向きは「方向」で 読み、「画面の右を向く」や「向きを45度にする」で かえます', 色: '。キャラクターの 色は「表示色を赤にする」で かえます' })[name] || (/^[〇一二三四五六七八九十百千]+つ?$/.test(name) ? '。数は 3や 10のように 数字で 書きます' : '');
+    // 色 is commonly written for the character's color; say how it is written.
+    const wordHint = (name) => ({ 色: '。キャラクターの 色は「表示色を赤にする」で かえます' })[name] || (/^[〇一二三四五六七八九十百千]+つ?$/.test(name) ? '。数は 3や 10のように 数字で 書きます' : '');
+    // A word that is not a name was read as one (まっすぐ10, 空, 偶数): say how to write it instead of asking to make it.
+    // The example writes the value it was compared with (スコアが偶数 → スコア÷2のあまりが0なら).
+    const misreadName = (name, other, meijin = false) => {
+      const who = (fallback) => other ? messageExpression(other) : fallback;
+      // 名人 reads these words; only the ending was not read (偶数じゃなかったら).
+      if (meijin && ['空', '空っぽ', '偶数', '奇数', 'ぐう数', 'ぐうすう', 'き数', 'きすう'].includes(name)) return `「${name}」は、「${who('点数')}が${name}なら」「${who('点数')}が${name}でなければ」の 形で 書きます`;
+      if (name === '空' || name === '空っぽ') return `「${name}」は くらべる ことばに ありません。リストが 空かを しらべるときは「${who('持ち物')}の長さが0なら」のように 書きます`;
+      // An odd number's あまり is 1 or －1 (the あまり has the sign of the number), as 名人 reads 奇数. ぐうすう・き数 are the same words.
+      const even = ['偶数', 'ぐう数', 'ぐうすう'].includes(name), odd = ['奇数', 'き数', 'きすう'].includes(name);
+      if (even || odd) return `「${name}」は くらべる ことばに ありません。「${who('点数')}÷2のあまりが${even ? '0' : '1か－1'}なら」のように 書きます`;
+      const digits = /^(.+?)([0-9０-９]+(?:[.．][0-9０-９]+)?)$/.exec(name);
+      if (digits && !symbols.projectVars?.has?.(digits[1]) && !symbols.projectLists?.has?.(digits[1]))
+        return `「${name}」を 名前として 読みました。「${digits[1]}」は あかりの ことばに ありません。「${digits[1]}」を けして 書けるか たしかめてください。れい：前へ${digits[2]}歩進む`;
+      return null;
+    };
+    // A part and a variable (or list) with the same name: a bare name there reads the data, though a part was meant.
+    const sameNameAsPart = (name) => `「${name}」は、部品の 名前と ${symbols.projectLists?.has?.(name) ? 'リスト' : 'へんすう'}の 名前が 同じなので、どちらの ことか 決まりません`;
+    // A read already told of (as a target or a subject) is not told of again where it is read as a value.
+    const sameNameTold = new WeakSet();
     const checkComponentTarget = (expr, allowed, ctx, where, label = '部品', special = []) => {
-      const name = literalText(expr);
+      if (expr?.kind === 'VariableRead' && !expr.qualifier && componentByName(expr.name)) {
+        sameNameTold.add(expr); add('S316', sameNameAsPart(expr.name) + '。部品の ことなら、名前を「 」で かこんで 書きます', ctx.node, where); return;
+      }
+      const name = expr?.kind === 'PartRef' ? expr.name : literalText(expr);
       if (name === null || special.includes(name)) return;
       const c = componentByName(name);
       if (!c) add('S301', `${label}「${name}」がありません`, ctx.node, where);
@@ -139,11 +165,22 @@
         add('S304', `${label}「${name}」はここでは使えません。使える部品をえらんでください`, ctx.node, where);
     };
     let analyzeCallable = () => {};
+    // The values a call gives, as written: 【長さ】を5、【向き】を90 (for an example of the same call with a subject).
+    const callValues = n => { try { const names = n.argumentNames || [], values = n.args || []; return names.length && names.length === values.length ? names.map((x, i) => '【' + x + '】を' + messageExpression(values[i])).join('、') : ''; } catch (error) { if (!(error instanceof AkariError)) throw error; return ''; } };
     const actorContext = (ref, ctx, node, where) => {
+      // 名人: the part held in a value acts; which part it is is known when the sentence runs.
+      if (ref?.kind === 'value') {
+        if (ref.value?.kind === 'VariableRead' && !ref.value.qualifier && componentByName(ref.value.name) && !sameNameTold.has(ref.value) && sameNameTold.add(ref.value))
+          add('S316', sameNameAsPart(ref.value.name) + '。どちらかの 名前を かえてください', node, where);
+        analyzeExpr(ref.value, ctx, where); return { ...ctx, targetId: null, targetType: null, valueActor: true };
+      }
       if (!ref || ref.kind !== 'named') return ctx;
       const c = ref.name === project.stage.name || ref.name === '画面'
         ? { id: 'stage', type: 'stage' } : componentByName(ref.name);
       if (!c) { add('S301', `「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください${['ぼく','わたし','おれ','あたし','うち'].includes(ref.name)?'。自分の ことなら「自分は」と 書きます':''}`, node, where); return ctx; }
+      // 名人 (決まり5): a part's name with data of the same name is not one reading, wherever it is written.
+      if (ctx.meijin && c.id !== 'stage' && targetExists({ name: ref.name, qualifier: null }, symbols, ctx) && !sameNameTold.has(ref) && sameNameTold.add(ref))
+        add('S316', sameNameAsPart(ref.name) + '。どちらかの 名前を かえてください', node?.sourceSpan ? node : ctx.node, where);
       return { ...ctx, targetId: c.id, targetType: c.type };
     };
     const checkArguments = (n, def, where) => {
@@ -241,12 +278,43 @@
     };
     const analyzeExpr = (expr, initialContext, where) => {
       const scoped = [];
+      // A word compared with a value (点数が偶数): the guidance writes the value as written.
+      const partner = new Map();
+      (function walk(n) { if (!n || typeof n !== 'object') return; if (Array.isArray(n)) { n.forEach(walk); return; }
+        if (n.kind === 'CompareExpression') { partner.set(n.right, n.left); partner.set(n.left, n.right); }
+        for (const [k, v] of Object.entries(n)) if (k !== 'sourceSpan' && v && typeof v === 'object') walk(v); })(expr);
       const collect = (n, ctx) => {
         if (!n || typeof n !== 'object') return;
         if (n.kind === 'ActorQualifiedRead') {
           // 「ねこ」の点数 reads ねこ's own data; the project's 点数 is written without 「ねこ」の.
           const own = n.actorRef?.kind === 'named' && n.value?.kind === 'VariableRead' && !n.value.qualifier ? { qualifiedName: n.actorRef.name, qualifiedRead: n.value } : {};
           collect(n.value, { ...actorContext(n.actorRef, ctx, n, where), ...own }); return;
+        }
+        // 名人: a part written as a value must exist; 「〜の名前」 is undecided when the part has data called 名前.
+        // いちばん近い is from the one who acts, and is written only in 〜の方を向く and 〜までのきょり: there a tie turns no one or
+        // gives the same distance. Anywhere else a tie would need a hidden rule.
+        const nearestFrom = (node, example) => { if (ctx.targetType === 'stage') add('S304', '「いちばん近い」は、だれから 近いかが いります。れい：' + example, ctx.node || node, where); };
+        if (n.kind === 'SensorRead' && n.sensor === 'DISTANCE_TO' && n.arg?.kind === 'PartNearest') { nearestFrom(n, '点数を、ねこからいちばん近い星までのきょりにする'); collect(n.arg.of, ctx); return; }
+        if (n.kind === 'PartNearest') {
+          if (ctx.node?.kind === 'MotionCommand' && ctx.node.op === 'POINT_TO' && ctx.node.args?.[0] === n) nearestFrom(n, 'ねこは、いちばん近い星の方を向く');
+          else add('S304', '「いちばん近い」は「〜の方を向く」と「〜までのきょり」で 使います。れい：ねこは、いちばん近い星の方を向く', ctx.node || n, where);
+          collect(n.of, ctx); return;
+        }
+        if (n.kind === 'PartRef' || n.kind === 'PartFamily') {
+          if (!componentByName(n.name)) add('S301', `「${n.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, ctx.node || n, where);
+          return;
+        }
+        if (n.kind === 'PartName' || n.kind === 'PartState') {
+          const c = actorContext(n.actorRef, ctx, ctx.node || n, where);
+          if (n.kind === 'PartState' && n.state === 'copyCount' && c.targetType && c.targetType !== 'sprite')
+            add('S304', 'コピーを 作れるのは キャラクターだけです', ctx.node || n, where);
+          return;
+        }
+        if (n.kind === 'EventCount') {
+          // The part must exist and, for a procedure, the procedure too; the count is read like any value.
+          actorContext(n.actorRef, ctx, n, where);
+          if (n.event === 'action' && !symbols.actions?.has?.(n.name)) add('S301', `てじゅん「${n.name}」が ありません`, n, where);
+          collect(n.count, ctx); return;
         }
         if (['VariableRead', 'UserFunctionCall', 'BuiltinCall', 'SensorRead', 'ExtensionCalculation'].includes(n.kind))
           scoped.push([n, ctx]);
@@ -278,11 +346,15 @@
               n.qualifier === 'self' && ctx.targetId ? `${targetLabel(ctx)}の自分には` : 'まだ作っていない';
             add(
               'S301',
+              (n.qualifier !== 'self' && misreadName(n.name, partner.get(n), ctx.meijin)) ||
               `${prefix}名前「${n.name}」${n.qualifier === 'self' && ctx.targetId ? 'がありません' : 'です。名前をたしかめるか、その名前のへんすうかリストを作ってください'}${wordHint(n.name)}`,
               ctx.node,
               where,
             );
           }
+          // 名人: a part's name is a value too, so data of the same name makes either reading possible (決まり5).
+          else if (ctx.meijin && !n.qualifier && componentByName(n.name) && !sameNameTold.has(n) && sameNameTold.add(n))
+            add('S316', sameNameAsPart(n.name) + '。どちらかの 名前を かえてください', ctx.node, where);
         }
         if (n.kind === 'ExtensionCalculation') checkExtensionOperation(n, 'calculations', where);
         if (n.kind === 'UserFunctionCall') {
@@ -312,9 +384,9 @@
             add('S311', '拡張「できごとの値」は、入れてあるかくちょうのできごとの中だけで使えます', ctx.node, where);
           if (eventOnly[n.sensor]) {
             if (ctx.definition)
-              add('S311', `「${formatExpression(n)}」は、自分で作ったブロックの中ではそのまま使えません。きっかけの中で使い、入れるものとしてわたしてください`, ctx.node, where);
+              add('S311', `「${messageExpression(n)}」は、自分で作ったブロックの中ではそのまま使えません。きっかけの中で使い、入れるものとしてわたしてください`, ctx.node, where);
             else if (ctx.event !== eventOnly[n.sensor] && n.sensor !== '拡張の値')
-              add('S311', `「${formatExpression(n)}」は「${EVENT_LABELS[eventOnly[n.sensor]]}」のきっかけの中で使います`, ctx.node, where);
+              add('S311', `「${messageExpression(n)}」は「${EVENT_LABELS[eventOnly[n.sensor]]}」のきっかけの中で使います`, ctx.node, where);
           }
           if (
             [
@@ -329,13 +401,13 @@
             ].includes(n.sensor) &&
             ctx.targetType === 'stage'
           )
-            add('S304', `「${formatExpression(n)}」は画面では使えません。キャラクターの動きの中で使ってください`, ctx.node, where);
+            add('S304', ctx.meijin ? `名人の 本文では、だれの「${messageExpression(n)}」かを 書きます。れい：「ねこ」の${messageExpression(n)}` : `「${messageExpression(n)}」は画面では使えません。キャラクターの動きの中で使ってください`, ctx.node, where);
           if (
             ['衣装番号', '衣装名'].includes(n.sensor) &&
             ctx.targetType &&
             ctx.targetType !== 'sprite'
           )
-            add('S304', `「${formatExpression(n)}」はキャラクターでだけ使えます`, ctx.node, where);
+            add('S304', `「${messageExpression(n)}」はキャラクターでだけ使えます`, ctx.node, where);
           if (n.sensor === 'KEY_DOWN') {
             const key = literalText(n.arg);
             if (key !== null && !validKeyName(key)) add('S301', keyNameMessage(key), ctx.node, where);
@@ -389,6 +461,8 @@
           continue;
         }
         seenExecutable = true;
+        // 名人: 【…】という手順を、次のように作る only registers the procedure (read as its own item).
+        if (n.kind === 'ActionDefinition') continue;
         const exprFields = [
           'value',
           'condition',
@@ -397,9 +471,12 @@
           'seconds',
           'question',
           'message',
+          'distance',
+          'duration',
         ];
         for (const f of exprFields) if (n[f]) analyzeExpr(n[f], c, where);
         for (const x of n.args || []) analyzeExpr(x, c, where);
+        for (const x of n.targets || []) analyzeExpr(x, c, where);
         if (n.kind === 'ExtensionCommand') checkExtensionOperation(n, 'commands', where);
         checkStaticRoleUnits(n, where);
         if (n.index) analyzeExpr(n.index, c, where);
@@ -413,6 +490,7 @@
             'ListReplace',
             'ListDelete',
             'ListClear',
+            'ListRemoveValue',
           ].includes(n.kind)
         ) {
           const info = targetExists(n.target, symbols, c);
@@ -482,7 +560,7 @@
           if (!a) add('S301', `てじゅん「${n.name}」がありません`, n, where);
           else if (a.args.length !== n.args.length)
             add('S308', `てじゅん「${n.name}」に入れるものは${a.args.length}こです`+namedArgumentDetails(a.args,n.argumentNames), n, where);
-          else { checkArguments(n, a, where); analyzeCallable(a, 'action', c); }
+          else { checkArguments(n, a, where); analyzeCallable(a, 'action', c.meijin && c.targetType === 'stage' && n.actorRef?.kind !== 'named' ? { ...c, meijinCall: { node: n, where, name: n.name, given: callValues(n) } } : c); }
         }
         if (n.kind === 'MotionCommand' && n.op === 'POINT_TO')
           checkComponentTarget(n.args?.[0], null, c, where, '部品', ['マウス']);
@@ -495,6 +573,9 @@
           c.targetType !== 'sprite'
         )
           add('S304', '自分のコピーを作ったりけしたりできるのは、キャラクターだけです', n, where);
+        // 名人: ねこは消える — only a copy goes; the part itself never does.
+        if (c.meijin && n.kind === 'CloneCommand' && n.op === 'DELETE_SELF' && n.actorRef?.kind === 'named')
+          add('S304', `「${n.actorRef.name}」は コピーでは ないので、消えません。消えるのは コピーだけです。れい：できたコピーは、それぞれ消える`, n, where);
         if (n.kind === 'LooksCommand' && n.op === 'SET_TARGET_TEXT')
           checkComponentTarget(n.args?.[0], ['label', 'button', 'box'], c, where, '文字をかえる部品');
         if (n.kind === 'LooksCommand' && n.op === 'SET_INPUT')
@@ -541,8 +622,22 @@
               add('S304', `色「${name}」は使える色ではありません。使える色は 黒・白・ねずみ色・赤・だいだい・黄・緑・水色・青・むらさき・もも色・茶 です`, n, where);
             }
         }
-        if (['MotionCommand', 'PenCommand'].includes(n.kind) && c.targetType === 'stage')
-          add('S304', '動くことやペンでかくことは、画面ではできません。部品で使ってください', n, where);
+        // 名人: a procedure called with no subject is the stage's; who does its sentences is written at the call (決まり7).
+        const needsSubject = message => c.meijinCall ? add('S304', `手順【${c.meijinCall.name}】の 中に、だれが するかを 書いていない 文が あります。手順を 呼び出す 文の はじめに、だれが 行うかを 書きます。れい：ねこは${c.meijinCall.given ? '、' + c.meijinCall.given + 'として、' : ''}【${c.meijinCall.name}】という手順を行う`, c.meijinCall.node, c.meijinCall.where)
+          : add('S304', c.meijin ? (n.actorRef?.topicEnded ? MEIJIN_TOPIC_ENDED : MEIJIN_SUBJECT_MESSAGE) : message, n, where);
+        // 名人: speech and sounds need who does them, as moves do (the script itself is no part; 画面は… names the stage).
+        // Stopping every sound acts on the whole work.
+        // 名人 (決まり4・6): in a heading's body too, a sentence after one with other subjects in it names who does it; in
+        // 〜が〜にふれたとき、 it always does (either part could be meant).
+        if (c.meijin && c.targetType !== 'stage' && n.actorRef?.kind === 'self' && (n.actorRef.topicEnded || n.actorRef.mustName) &&
+          (['Say', 'Ask', 'MotionCommand', 'PenCommand', 'LooksCommand'].includes(n.kind) || (n.kind === 'SoundCommand' && n.op !== 'STOP_ALL')))
+          add('S304', n.actorRef.mustName ? '「〜が〜にふれたとき、」の 中身では、ふれた 二つの 部品の どちらが するかが 決まらないので、だれが するかを 書きます。れい：だんごが星にふれたとき、星は「いたい」と言う' : MEIJIN_TOPIC_ENDED, n, where);
+        if ((c.meijin || c.meijinCall) && c.targetType === 'stage' && n.actorRef?.kind !== 'named' &&
+          (['Say', 'Ask'].includes(n.kind) || (n.kind === 'SoundCommand' && n.op !== 'STOP_ALL')))
+          needsSubject(MEIJIN_SUBJECT_MESSAGE);
+        // Clearing every line and stamp acts on the whole work, so the stage may do it.
+        if (['MotionCommand', 'PenCommand'].includes(n.kind) && c.targetType === 'stage' && !(n.kind === 'PenCommand' && n.op === 'CLEAR'))
+          needsSubject('動くことやペンでかくことは、画面ではできません。部品で使ってください');
         if (
           n.kind === 'LooksCommand' &&
           [
@@ -560,9 +655,9 @@
           ].includes(n.op) &&
           c.targetType === 'stage'
         )
-          add('S304', 'このかえ方は、画面では使えません。部品で使ってください', n, where);
+          needsSubject('このかえ方は、画面では使えません。部品で使ってください');
         if (
-          n.kind === 'ForEach' &&
+          n.kind === 'ForEach' && n.binder !== MEIJIN_BINDER &&
           [
             ...(c.binders || []),
             ...(c.localVarNames || []),
@@ -575,10 +670,15 @@
           walk(n.thenBody, c, where, loopDepth, false);
           walk(n.elseBody, c, where, loopDepth, false);
         } else if (
-          ['RepeatCount', 'RepeatWhile', 'RepeatUntil', 'ForEach', 'Forever'].includes(n.kind)
+          ['RepeatCount', 'RepeatWhile', 'RepeatUntil', 'ForEach', 'Forever', 'TimedRepeat'].includes(n.kind)
         ) {
           const cc = n.kind === 'ForEach' ? { ...c, binders: [...(c.binders || []), n.binder] } : c;
           walk(n.body, cc, where, loopDepth + 1, false);
+        } else if (n.kind === 'Parallel') {
+          // A lane's control words are checked by laneControlPlacement (S315).
+          for (const lane of n.lanes || []) walk(lane, c, where, loopDepth + 1, false);
+        } else if (n.kind === 'ParallelEach') {
+          walk(n.body, { ...c, binders: [...(c.binders || []), n.binder] }, where, loopDepth + 1, false);
         }
       }
     };
@@ -588,7 +688,7 @@
       const key = `${kind}:${def.id}`,
         item = itemsByKey.get(key);
       if (!item) return;
-      const ck = `${key}|${parentCtx.targetId || '*'}|${parentCtx.targetType || '*'}`;
+      const ck = `${key}|${parentCtx.targetId || '*'}|${parentCtx.targetType || '*'}|${parentCtx.meijinCall ? 'meijin' : ''}`;
       if (visitedCallContexts.has(ck)) return;
       visitedCallContexts.add(ck);
       const base = {
@@ -597,6 +697,7 @@
         targetId: parentCtx.targetId || null,
         definition: def,
         definitionKind: kind,
+        meijinCall: parentCtx.meijinCall || null,
         args: item.args || [],
         localVarNames: item.localVarNames || [],
         localListNames: item.localListNames || [],
@@ -634,9 +735,23 @@
         localListNames: item.localListNames || [],
         binders: [],
         availableLocalNames: new Set(),
+        // 名人: under a heading that names the stage (作品を動かしたとき、画面1は、) the sentences are the stage's, as in
+        // the stage's own body; elsewhere a 名人 text belongs to no part.
+        meijin: !!item.meijin && !(item.ast?.heading?.actorRef?.kind === 'named' && [project.stage.name, '画面'].includes(item.ast.heading.actorRef.name)),
       };
       for (const d of staticScaleDiagnostics(item.ast, item.key))
         add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
+      // 名人のできごと: 〜になったとき and 〜秒ごとに are read like any value; ふれる相手は部品。
+      const heading = item.ast.heading, at = item.ast.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } };
+      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、「見せ方」で「名人」を えらびます', only.sourceSpan ? only : at, item.key); }
+      const message = typeof item.filter === 'object' ? item.filter?.message : item.filter;
+      const extensionEvent = !item.meijin && item.event === 'message' && typeof message === 'string' && message.startsWith('拡張:')
+        ? EXTENSION_HOST.describe(message.slice(3), 'events') : null;
+      if (extensionEvent?.scope === 'meijin') add('S317', `拡張の できごと「${extensionEvent.displayName}」は、名人モードの 本文で だけ 使えます`, at, item.key);
+      if (heading?.condition) analyzeExpr(heading.condition, { ...base, node: at }, item.key);
+      if (heading?.seconds) analyzeExpr(heading.seconds, { ...base, node: at }, item.key);
+      if (item.event === 'touchStart' && !componentByName(item.filter?.target))
+        add('S301', `「${item.filter?.target}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, at, item.key);
       walk(item.ast.body, base, item.key, 0, true);
       for (const rule of item.ast.rules || []) {
         const c = actorContext(rule.actorRef, { ...base, node: rule }, rule, item.key);
@@ -675,6 +790,7 @@
     return project.scripts.find((script) => scriptSourceKey(script) === key) || null;
   }
   function scriptHeadingMetadata(source, script, project) {
+    if (isMeijinScript(script)) return { targetId: MEIJIN_OWNER, event: 'start', filter: undefined };
     const parsed = parseSyntax(source, { targetId: script.targetId, event: script.event,
       symbols: buildSymbols(project) });
     return scriptMetadataFromHeading(parsed.ast?.heading, script, project);
@@ -692,7 +808,9 @@
   }
   function updateScriptSource(script, source, project) {
     const metadata = scriptHeadingMetadata(source, script, project);
-    const before=parseSyntax(script.source,{symbols:buildSymbols(project)}).ast,after=parseSyntax(source,{symbols:buildSymbols(project)}).ast;
+    // A 名人 script is read with the 名人 grammar, so its units keep their identities too.
+    const reading = isMeijinScript(script) ? { targetId: 'stage', event: 'start', meijin: true } : {};
+    const before=parseSyntax(script.source,{...reading,symbols:buildSymbols(project)}).ast,after=parseSyntax(source,{...reading,symbols:buildSymbols(project)}).ast;
     if(after&&(after.units||script.document)){
       const ids=new Set(),scan=value=>{if(!value||typeof value!=='object')return;for(const [key,child]of Object.entries(value)){if(key==='id'&&typeof child==='string')ids.add(child);else if(key==='unitIds'&&Array.isArray(child))child.forEach(id=>ids.add(id));else if(child&&typeof child==='object')scan(child);}};scan(project);
       const fresh=()=>{let i=1;while(ids.has('unit-'+i))i++;const id='unit-'+i;ids.add(id);return id;};
@@ -721,7 +839,7 @@
   }
   // The complete set of editable source bodies. No syntax filtering is permitted here.
   function sourceRegistry(project) {
-    const owners = new Map([['stage', 'stage'], ...project.components.map(c => [c.id, c.type])]);
+    const owners = new Map([['stage', 'stage'], [MEIJIN_OWNER, MEIJIN_OWNER], ...project.components.map(c => [c.id, c.type])]);
     const keys = new Set();
     const register = (key, ownerId, source) => {
       if (!owners.has(ownerId) || keys.has(key) || typeof source !== 'string')
@@ -730,6 +848,7 @@
     };
     for (const s of project.scripts) {
       register(scriptSourceKey(s), s.targetId, s.source);
+      if (isMeijinScript(s)) continue;
       if (!EVENT_BY_TYPE[owners.get(s.targetId)]?.includes(s.event))
         throw new AkariError('F506', 'この部品では使えないできごとです');
     }
@@ -739,7 +858,13 @@
         if (d.ownerId !== 'stage') throw new AkariError('F503', '自分で作ったブロックが、画面のものになっていません。作品の中身がこわれています');
       }
     return [
-      ...project.scripts.map(s => ({
+      ...project.scripts.map(s => isMeijinScript(s) ? ({
+        key: scriptSourceKey(s), ownerId: MEIJIN_OWNER, id: s.id, scriptId: s.id,
+        kind: 'script', event: 'start', filter: undefined, source: s.source, title: '名人の本文',
+        // Belongs to no part; its sentences name who acts, and it runs as the stage's.
+        context: { id: s.id, scriptId: s.id, unitIds: s.document?.unitIds, filter: undefined, ownerId: 'stage', targetId: 'stage',
+          targetType: 'stage', event: 'start', args: [], definition: null, definitionKind: null, meijin: true },
+      }) : ({
         key: scriptSourceKey(s), ownerId: s.targetId, id: s.id, scriptId: s.id,
         kind: 'script', event: s.event, filter: s.filter, source: s.source,
         title: EVENT_LABELS[s.event],
@@ -791,24 +916,31 @@
   function buildProjectReferenceGraph(project, { drafts = [] } = {}) {
     const resources = projectResourceNodes(project), references = [], uncertain = [], symbols = buildSymbols(project);
     const records = [...sourceRegistry(project), ...drafts];
+    // Procedures made in a 名人 script's text: their uses are at their lines in that script.
+    for (const d of meijinProjectDefinitions(project)) records.push({ key: `script:${d.scriptId}`, ownerId: MEIJIN_OWNER, kind: 'action', title: `名人の本文の手順「${d.name}」`,
+      source: d.source, lineOffset: d.line - 1, pathPrefix: ['meijinDefinition', d.id],
+      context: { ownerId: 'stage', targetId: null, targetType: null, event: null, args: d.args, definition: d, definitionKind: 'action', meijin: true } });
     const actor = ref => ref?.kind === 'named' ? ref.targetId || (ref.name === '画面' || ref.name === project.stage.name ? 'stage' : project.components.find(c => c.name === ref.name)?.id) : null;
     for (const record of records) {
       const parsed = parseSyntax(record.source, { ...record.context, symbols });
       const ownerName = record.ownerId === 'stage' ? project.stage.name : project.components.find(c => c.id === record.ownerId)?.name;
-      const location = node => ({ sourceKey: record.key, ownerId: record.ownerId, title: [ownerName, record.title || '本文'].filter(Boolean).join(' / '), line: node?.sourceSpan?.startLine || 1 });
+      const location = node => ({ sourceKey: record.key, ownerId: record.ownerId, title: [ownerName, record.title || '本文'].filter(Boolean).join(' / '), line: (node?.sourceSpan?.startLine || 1) + (record.lineOffset || 0) });
       if (record.incomplete) uncertain.push({ ...location(), kind: null, reason: 'まだ決まっていない入力があるので、名前を使っているところをぜんぶは調べられません。入力を決めてから、もう一度ためしてください' });
       if (!parsed.ast) { uncertain.push({ ...location(), kind: null, reason: '書きかけの本文があるので、名前を使っているところをぜんぶは調べられません。本文を書きおえてから、もう一度ためしてください' }); continue; }
       const paths = new WeakMap();
       const indexPaths = (node,path=[]) => {if(!node||typeof node!=='object')return;paths.set(node,path);for(const [key,value]of Object.entries(node)){if(['sourceSpan','source'].includes(key))continue;if(Array.isArray(value))value.forEach((child,i)=>indexPaths(child,[...path,key,i]));else if(value&&typeof value==='object')indexPaths(value,[...path,key]);}};
-      indexPaths(parsed.ast);
+      indexPaths(parsed.ast, record.pathPrefix || []);
       const local = syntaxItem(record.key, parsed.ast, record.context);
       const localNames = new Set([...(record.context.args || []), ...local.localVarNames, ...local.localListNames]);
       const add = (resource, node, binding = 'name') => {
-        const range = SOURCE_RANGES.get(node)?.range;
+        // A procedure made in a 名人 text is read from its own lines; its places are not places in the script's text.
+        const range = record.pathPrefix ? null : SOURCE_RANGES.get(node)?.range;
         references.push({ ...location(node), resourceKey: resource.key, name: resource.name, binding, nodePath: paths.get(node),
           ...(range ? { range: { start: range.start, end: range.end } } : {}) });
       };
       const named = (kind, expr, ownerId, special = []) => {
+        // 名人: a part written as a value is recorded where it is read (PartRef); いちばん近い… names its set there.
+        if (['PartRef', 'PartNearest'].includes(expr?.kind)) return;
         if (expr?.kind !== 'StringLiteral') {
           uncertain.push({ ...location(expr), kind, targetOwnerId: ownerId || null, reason: '動かしてはじめて決まる名前を使っているので、ここでは調べられません' }); return;
         }
@@ -839,6 +971,17 @@
         }
         if (node.kind === 'VariableRead') data(node, node, ownerId, bound);
         if (node.target?.name) data(node.target, node.target, ownerId, bound);
+        // 名人: parts as values, the part held in a value as the subject, 〜が大きいほう, and ふれたとき's other part.
+        if (node.kind === 'PartRef' || node.kind === 'PartFamily')
+          for (const r of resources.filter(r => r.kind === 'component' && r.ownerId !== 'stage' && r.name === node.name)) add(r, node, 'literal');
+        if (node.kind === 'PartPick' && node.by?.kind === 'variable') data({ name: node.by.name, qualifier: 'self' }, node, null, bound);
+        if (node.heading?.event === 'touchStart')
+          for (const r of resources.filter(r => r.kind === 'component' && r.name === node.heading.filter?.target)) add(r, node, 'literal');
+        // The subject's value is placed at its sentence (the value read itself has no place of its own).
+        if (node.actorRef?.kind === 'value') {
+          ownerId = null;
+          if (node.actorRef.value.kind === 'VariableRead') data(node.actorRef.value, node, null, bound); else walk(node.actorRef.value, null, bound);
+        }
         if (node.kind === 'LooksCommand' && node.op === 'SET_COSTUME') named('costume', node.args?.[0], ownerId);
         if (node.kind === 'LooksCommand' && node.op === 'SET_BACKDROP') named('backdrop', node.args?.[0]);
         if (node.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(node.op)) named('sound', node.args?.[0]);
@@ -863,6 +1006,105 @@
     return { resource, references: graph.references.filter(r => r.resourceKey === resourceKey),
       uncertain: graph.uncertain.filter(r => (!r.kind || r.kind === resource.kind) && (!r.targetOwnerId || r.targetOwnerId === resource.ownerId)) };
   }
+  // 名人: the text has no blocks. The name is changed where it is written as a name (not in speech, a signal, nor a ※
+  // note), and the text must then read the same, with the new name, as before. A quoted name is changed only where it
+  // names the thing (「ねこ」のよこのばしょ, 「ねこ」にふれていれば), not where it is words (「ねこ」と言う, 「ねこ」の合図).
+  // When the bare new name reads differently (ねこ → ねこが), it is written in 【 】, as a renamed block writes it; if
+  // that does not read the same either, the rename is refused with the line whose reading changes.
+  function meijinRenamedSource(record, project, next, resource, newName) {
+    const source = record.source, old = resource.name;
+    if (!source.includes(old)) return null;
+    const quotes = [];
+    for (let i = 0; i < source.length; i++) {
+      const ch = source[i];
+      if (ch === '※') { const end = source.indexOf('\n', i); i = end < 0 ? source.length : end; continue; }
+      if (ch === '「' || ch === '『') {
+        const close = source.indexOf(ch === '「' ? '」' : '』', i + 1), end = close < 0 ? source.length : close + 1;
+        if (source.slice(i + 1, end - 1) === old) quotes.push(i);
+        i = end - 1;
+      }
+    }
+    // Another name that holds this one (子ねこ for ねこ) is kept whole.
+    const names = [...project.components, ...project.actions, ...project.functions, ...project.projectData.variables, ...project.projectData.lists,
+      ...project.components.flatMap(c => [...(c.localData?.variables || []), ...(c.localData?.lists || [])])].map(x => x.name);
+    const longer = [...new Set(names)].filter(name => name !== old && name.includes(old)).sort((a, b) => b.length - a.length);
+    // written: how a bare name is written; changed: the quotes (by their place) that name the thing.
+    const renamed = (written, changed) => {
+      let out = '', i = 0;
+      while (i < source.length) {
+        const ch = source[i];
+        if (ch === '※') { const end = source.indexOf('\n', i); out += source.slice(i, end < 0 ? source.length : end); i = end < 0 ? source.length : end; continue; }
+        if (ch === '「' || ch === '『') {
+          const close = source.indexOf(ch === '「' ? '」' : '』', i + 1), end = close < 0 ? source.length : close + 1;
+          out += changed.has(i) ? ch + newName + source[end - 1] : source.slice(i, end);
+          i = end; continue;
+        }
+        const kept = longer.find(name => source.startsWith(name, i));
+        if (kept) { out += kept; i += kept.length; continue; }
+        if (source.startsWith(old, i)) { out += written; i += old.length; continue; }
+        out += ch; i++;
+      }
+      return out;
+    };
+    // The places where a quoted word names this thing (the reference graph's literal places).
+    const literal = new Set(buildProjectReferenceGraph(project).references
+      .filter(r => r.sourceKey === record.key && r.resourceKey === resource.key && r.binding === 'literal' && r.nodePath).map(r => r.nodePath.join('.')));
+    // A name in 【 】 is the same name as written bare. Before the rename, a name (and a quoted word in a literal
+    // place) stands for the new name.
+    const shape = (ast, renaming) => {
+      const walk = (v, path, key) => Array.isArray(v) ? v.map((x, i) => walk(x, [...path, i], key)) : v && typeof v === 'object'
+        ? Object.fromEntries(Object.entries(v).filter(([k]) => !['sourceSpan', 'source', 'raw', 'inlineComment', 'comment', 'endLine', 'text', 'exact'].includes(k))
+          .map(([k, x]) => [k, k === 'qualifier' && x === 'exact' ? null
+            : renaming && x === old && (k === 'name' || k === 'target' || (k === 'value' && v.kind === 'StringLiteral' && literal.has(path.join('.')))) ? newName : walk(x, [...path, k], k)]))
+        : v;
+      return walk(ast, [], null);
+    };
+    const read = (text, p) => parseSyntax(text, { ...record.context, symbols: buildSymbols(p) });
+    const before = read(source, project), want = before.ast && stableJson(shape(before.ast, true));
+    const reads = text => { const after = read(text, next); return !!want && !!after.ast && stableJson(shape(after.ast, false)) === want; };
+    // Which quotes name the thing is found by trying them (a few quotes at most; more are tried all or none).
+    const choices = quotes.length <= 6 ? [...Array(1 << quotes.length).keys()].map(mask => new Set(quotes.filter((_, i) => mask & (1 << i)))) : [new Set(), new Set(quotes)];
+    for (const written of [newName, '【' + newName + '】']) for (const changed of choices) { const text = renamed(written, changed); if (reads(text)) return text; }
+    const lines = source.split('\n'), after = renamed(newName, new Set(quotes)).split('\n');
+    const line = lines.findIndex((text, i) => text !== after[i] && !(() => { const a = read(text.trim(), project), b = read(after[i].trim(), next); return a.ast && b.ast && stableJson(shape(a.ast, true)) === stableJson(shape(b.ast, false)); })());
+    throw new AkariError('S301', line < 0 ? '名人の 本文の 中で、名前を かえても 同じ ものを さすかを たしかめられません。名前を【 】で かこむなど、どれの ことか はっきり 書いてください'
+      : `名前を「${newName}」に すると、${(() => { const s = buildSymbols(project), what = project.components.some(c => c.name === newName) ? '部品' : s.projectLists?.has(newName) ? 'リスト' : s.projectVars?.has(newName) ? 'へんすう' : null; return what ? `「${newName}」という ${what}が あるので、` : ''; })()}名人の 本文の ${line + 1}行目「${lines[line].trim()}」が ちがう 意味に 読めます。ちがう 名前に してください`);
+  }
+  // A procedure made in a 名人 text is renamed in that text and wherever it is called; every changed text must read
+  // the same with the new name.
+  function prepareMeijinProcedureRename(project, definitionId, newName) {
+    const d = meijinProjectDefinitions(project).find(x => x.id === definitionId);
+    if (!d) throw new AkariError('F503', '名前を かえる てじゅんが 見つかりません');
+    const name = normalizeCharsOutsideString(String(newName ?? '').trim());
+    validateName(name, { callable: true });
+    if (name === d.name) return cloneDesignProject(project);
+    if ([...project.actions, ...project.functions, ...meijinProjectDefinitions(project)].some(x => x.name === name))
+      throw new AkariError('F503', '自分で作ったブロックに 同じ名前が あります。ちがう名前に してください');
+    // A part, data or received value of the same name: the new name would be read as that one where it is written bare.
+    {
+      const s = buildSymbols(project), local = [...(s.individualByTargetId?.values?.() || [])];
+      const what = [project.stage, ...project.components].some(c => c.name === name) ? '部品'
+        : s.projectLists?.has(name) || local.some(x => x.lists?.has(name)) ? 'リスト'
+          : s.projectVars?.has(name) || local.some(x => x.variables?.has(name)) ? 'へんすう'
+            : meijinProjectDefinitions(project).some(x => (x.args || []).includes(name)) ? '入れるもの' : null;
+      if (what) throw new AkariError('F503', `「${name}」という ${what}が あるので、手順の 名前には できません。ちがう 名前に してください`);
+    }
+    const next = cloneDesignProject(project), resource = { name: d.name }, records = sourceRegistry(project);
+    const place = (record, source) => {
+      if (source === null || source === record.source) return;
+      const target = record.kind === 'script' ? scriptBySourceKey(next, record.key) : next[record.kind === 'action' ? 'actions' : 'functions'].find(x => record.key === record.kind + ':' + x.id);
+      target.source = source;
+      if (target.document) target.document.revision++;
+    };
+    // The text that makes it first, so the others read the new name as a procedure.
+    const own = records.find(r => r.key === `script:${d.scriptId}`);
+    place(own, meijinRenamedSource(own, project, next, resource, name));
+    for (const record of records) if (record !== own) place(record, meijinRenamedSource(record, project, next, resource, name));
+    if (!meijinProjectDefinitions(next).some(x => x.id === d.id && x.name === name))
+      throw new AkariError('S301', '名人の 本文の 見出しで、てじゅんの 名前を かえられませんでした。名前を【 】で かこんで 書いてください');
+    validateDesignProject(next);
+    return next;
+  }
   function prepareBindingRename(project, resourceKey, newName, options = {}) {
     const graph = buildProjectReferenceGraph(project, options), resource = graph.resources.find(r => r.key === resourceKey);
     if (!resource) throw new AkariError('F503', '名前をかえるものが見つかりません');
@@ -885,6 +1127,12 @@
       const rows = grouped.get(ref.sourceKey) || []; rows.push(ref); grouped.set(ref.sourceKey,rows);
     }
     for (const record of sourceRegistry(project)) {
+      if (record.context.meijin) {
+        if (options.drafts?.some(d => d.key === record.key)) continue;
+        const source = meijinRenamedSource(record, project, next, resource, newName);
+        if (source !== null) { const target = scriptBySourceKey(next, record.key); target.source = source; if (target.document && source !== record.source) target.document.revision++; }
+        continue;
+      }
       const refs = grouped.get(record.key); if (!refs) continue;
       const session = createEditorSession(record.key,record.source,record.context,project), tree = cloneDesignProject(session.blockView), index = buildBlockIndex(tree), edits = [];
       if (!session.syntaxAst || !tree) throw new AkariError('S301', '本文のどこで名前を使っているか、決められません');
@@ -953,7 +1201,10 @@
       ? next.components.find(c => c.id === resource.ownerId).costumes : resource.kind === 'backdrop' ? next.stage.backdrops : next.sounds;
     if (items.some(x => x.id !== resource.id && x.name === newName)) throw new AkariError('F503', '同じ名前があります');
     const graph = buildProjectReferenceGraph(project, options), grouped = new Map();
+    // 名人: the name is changed in the text and the text must read the same (as for parts and data).
+    const meijinKeys = new Set(project.scripts.filter(isMeijinScript).map(scriptSourceKey));
     for (const ref of impact.references) {
+      if (meijinKeys.has(ref.sourceKey)) continue;
       if (ref.binding !== 'literal' || !ref.range || options.drafts?.some(r => r.key === ref.sourceKey)) throw new AkariError('S301', '書きかけを先に決めてから、名前をかえてください');
       if (graph.references.some(other => other.sourceKey === ref.sourceKey && other.range?.start === ref.range.start && other.range?.end === ref.range.end && other.resourceKey !== resourceKey))
         throw new AkariError('S301', '同じ名前が、いくつかのものをさしています。どれのことか、はっきり書いてから名前をかえてください');
@@ -972,6 +1223,11 @@
       if (record.document) record.document.revision++;
     }
     items.find(x => x.id === resource.id).name = newName;
+    for (const record of sourceRegistry(project)) {
+      if (!record.context.meijin || options.drafts?.some(d => d.key === record.key)) continue;
+      const source = meijinRenamedSource(record, project, next, resource, newName);
+      if (source !== null && source !== record.source) { const target = scriptBySourceKey(next, record.key); target.source = source; if (target.document) target.document.revision++; }
+    }
     validateDesignProject(next);
     return next;
   }
@@ -1034,6 +1290,14 @@
     };
     for (const record of sourceRegistry(project))
       parseOne(record.key, record.source, record.context);
+    // Procedures made in a 名人 script's text: read as procedures, reported at their lines in that script.
+    for (const d of meijinProjectDefinitions(project)) {
+      const key = `action:${d.id}`, before = errors.length;
+      if (project.actions.some(a => a.name === d.name) || symbols.actions.get(d.name)?.id !== d.id)
+        errors.push({ code: 'S302', message: `手順「${d.name}」は もう あります。ちがう 名前に してください`, line: d.headLine, column: 1, where: `script:${d.scriptId}` });
+      else parseOne(key, d.source, { ownerId: 'stage', targetId: null, targetType: null, event: null, args: d.args, definition: d, definitionKind: 'action', meijin: true });
+      for (const error of errors.slice(before)) if (error.where === key || !error.where) Object.assign(error, { where: `script:${d.scriptId}`, line: (error.line || 1) + d.line - 1 });
+    }
     if(items.filter(item=>!item.definitionKind).length>LIMITS.scripts)errors.push({code:'F504',message:'できごとが多すぎます。使わないできごとをけしてください',line:0,column:1,where:'project'});
     const rules = items.flatMap(item => (item.ast.rules || []).map((rule, index) => ({
       ...rule, id: `${item.key}:rule:${index}`, targetId: item.targetId || item.ownerId,
@@ -1060,15 +1324,16 @@
       if(heading){
         const ref=heading.actorRef,actor=ref?.kind==='named'?(ref.name===project.stage.name||ref.name==='画面'?{id:'stage',type:'stage'}:project.components.find(c=>c.name===ref.name)):
           context.targetId==='stage'?{id:'stage',type:'stage'}:project.components.find(c=>c.id===context.targetId);
-        if(!actor)errors.push({code:'S304',message:ref?.kind==='named'?`「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`:'この きっかけを 使う キャラクターや 部品が 見つかりません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
-        else if(!EVENT_BY_TYPE[actor.type]?.includes(heading.event))errors.push({code:'S304',message:`この キャラクターや 部品では、${EVENT_LABELS[heading.event]?'「'+EVENT_LABELS[heading.event]+'」の ':'この '}きっかけは 使えません。ほかの きっかけに してください`,line:unit.sourceSpan?.startLine||1,column:1,where:key});
+        if(!actor)errors.push({code:'S304',message:ref?.kind==='named'?(context.meijin&&targetExists({name:ref.name,qualifier:null},buildSymbols(project),{})?`見出しの 主語には、部品の 名前を 一つ 書きます（「${ref.name}」のような へんすうや リストは 書けません）。中身の 文に 主語を 書きます`:`「${ref.name}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`):'この きっかけを 使う キャラクターや 部品が 見つかりません',line:unit.sourceSpan?.startLine||1,column:1,where:key});
+        else if(!EVENT_BY_TYPE[actor.type]?.includes(heading.event)&&!(context.meijin&&meijinEventOwner(heading.event,actor.type)))errors.push({code:'S304',message:`この キャラクターや 部品では、${EVENT_LABELS[heading.event]?'「'+EVENT_LABELS[heading.event]+'」の ':'この '}きっかけは 使えません。ほかの きっかけに してください`,line:unit.sourceSpan?.startLine||1,column:1,where:key});
         else resolved={...resolved,ownerId:actor.id,targetId:actor.id,targetType:actor.type,event:heading.event,filter:heading.filter||null};
       }
       return syntaxItem(unitKey,unit,resolved);
     });
   }
   function analyzeAst(ast, project, context = {}) {
-    validateSyntaxAst(ast);
+    // A 名人 script has its own sentence kinds; no block reads it.
+    if (!context.meijin) validateSyntaxAst(ast);
     // A definition draft is inspected in a private candidate environment; it is never registered here.
     let candidate = project;
     const kind = context.definitionKind || null,
@@ -1110,7 +1375,7 @@
     compiled.items = compiled.items.filter((x) => x.key !== key && x.documentKey !== key);
     compiled.items.push(...items);
     compiled.astByKey=syntaxItemMap(compiled.items,compiled.errors);
-    return analyzeProject(candidate, compiled, { rootKeys: new Set(items.map(item=>item.key)) });
+    return placeMeijinDefinitionErrors(candidate, analyzeProject(candidate, compiled, { rootKeys: new Set(items.map(item=>item.key)) }));
   }
   function compileProject(project) {
     try {
@@ -1126,8 +1391,236 @@
       };
     }
     const compiled = parseProjectSyntax(project);
-    compiled.errors.push(...analyzeProject(project, compiled));
+    compiled.errors.push(...placeMeijinDefinitionErrors(project, [...analyzeProject(project, compiled), ...eventCountPlacement(compiled), ...laneControlPlacement(compiled)]));
+    compiled.errors = meijinSelfWord(project, wordLines(project, meijinFormsInOrdinary(project, compiled.errors)));
+    compiled.notes = projectNotes(project, compiled);
     return compiled;
+  }
+  // A 名人 form written in an ordinary body (主役をねこにする, ねこは、いちばん近い星の方を向く, 1秒ごとに、…) reads with
+  // no error as a 名人 script: the check then says so (S317) instead of a reading error that asks for a name or another
+  // sentence. An error that gives its own guidance or choices (「空」は…, 「〜になったら」は…) is kept.
+  // 10秒のあいだ、くり返す in an ordinary body asks for a state before あいだ; it is the 名人 timed repeat.
+  const GENERIC_READING_ERRORS = [/^まだ作っていない名前/, /^この名前は【名前】のように【 】でかこんでください/, /読みとれません|読めません|読みとれないところ/, /がたりません/, /という 文は あかりに ありません/, /^つづけるきまりのおわりを「あいだ」に/];
+  function meijinFormsInOrdinary(project, errors) {
+    let out = errors;
+    for (const script of project.scripts) {
+      if (isMeijinScript(script) || !script.source?.trim()) continue;
+      const key = scriptSourceKey(script), at = out.findIndex(e => e.where === key), first = out[at];
+      if (!first || !['P201', 'P205', 'S301'].includes(first.code) || first.proposals?.length || !GENERIC_READING_ERRORS.some(re => re.test(first.message))) continue;
+      // As written (its own headings and procedures), or as the part's sentences: in 名人 text they are read under a
+      // heading that names the part.
+      const owner = project.components.find(c => c.id === script.targetId)?.name, sources = [script.source];
+      if (owner && /^[^\s、。「」【】（）()]+$/.test(owner)) {
+        sources.push(`作品を動かしたとき、${owner}は、\n` + script.source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n'));
+        // A part's body names no subject (or names 自分): in a 名人 text the part is written as the subject.
+        const named = text => project.components.some(c => text.startsWith(c.name) && /^[はがともや、]/.test(text.slice(c.name.length)));
+        sources.push(script.source.split('\n').map(line => {
+          const [, indent, text] = /^(\s*)(.*)$/.exec(line);
+          if (!text || /^(?:もし|そうでなければ|ずっと|次のことを|※)/.test(text) || /(?:とき|たら|ごとに)、$/.test(text) || named(text)) return line;
+          return indent + owner + 'は、' + text.replace(/^自分(?:は|が)、?/, '');
+        }).join('\n'));
+      }
+      const reads = sources.some(source => {
+        const trial = cloneDesignProject(project);
+        trial.scripts = [{ id: 'meijin-reading', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source }];
+        try { return compileProject(trial).errors.length === 0; } catch (error) { if (!(error instanceof AkariError)) throw error; return false; }
+      });
+      if (!reads) continue;
+      const { proposals, draftRole, ...location } = first;
+      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、「見せ方」で「名人」を えらびます' }, ...out.slice(at).filter(e => e.where !== key)];
+    }
+    return out;
+  }
+
+  // An ordinary body: a 国語・算数 word written as a sentence form (10の倍数, 12の約数, からっぽ) on the line where the
+  // reading stopped. Say how to write it, with the names as written; a 名人 body reads these words.
+  const WORD_LINES = [[/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の倍数(?:なら|でなければ)/, m => `「${m[2]}の倍数」は くらべる ことばに ありません。「${m[1]}が0とちがっていて、${m[1]}÷${m[2]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が([0-9０-９]+)の約数(?:なら|でなければ)/, m => `「${m[2]}の約数」は くらべる ことばに ありません。${m[1]}が 整数なら「${m[1]}が0より大きくて、${m[2]}÷${m[1]}のあまりが0なら」のように 書きます`], [/^\s*(?:もし、?)?([^、。が「」\s]+?)が(からっぽ|カラッポ)(?:なら|でなければ)/, m => `「${m[2]}」は くらべる ことばに ありません。リストが 空かを しらべるときは「${m[1]}の長さが0なら」のように 書きます`]];
+  function wordLines(project, errors) {
+    let out = errors;
+    for (const script of project.scripts) {
+      const key = scriptSourceKey(script), at = out.findIndex(e => e.where === key), first = out[at];
+      if (isMeijinScript(script) || !first || !['P201', 'P205', 'S301', 'S317'].includes(first.code) || first.proposals?.length) continue;
+      const text = String(script.source || '').split('\n')[first.line - 1] || '';
+      for (const [re, say] of WORD_LINES) { const m = re.exec(text); if (m) { out = [...out.slice(0, at), { ...first, code: 'S301', message: say(m) }, ...out.slice(at + 1)]; break; } }
+    }
+    return out;
+  }
+  // 名人: a sentence that starts with 自分 where no part is its 自分 (the text belongs to no part) is told so, not
+  // that the subject is missing (the child wrote one).
+  function meijinSelfWord(project, errors) {
+    return errors.map(e => {
+      if (e.code !== 'S304') return e;
+      // A text with its own headings is checked unit by unit (script:unit-1); the unit belongs to its 名人 text.
+      const script = project.scripts.find(s => isMeijinScript(s) && (scriptSourceKey(s) === e.where || (s.document?.unitIds || []).some(id => 'script:' + id === e.where)));
+      const text = script && String(script.source || '').split('\n')[e.line - 1]?.trim();
+      const lines = String(script?.source || '').split('\n'), before = lines.slice(0, e.line - 1).reverse().find(l => l.trim() && !l.trim().startsWith('※'))?.trim() || '';
+      const several = /^(?:もし|そうでなければ|次のことを)|(?:みんな|それぞれ|順番に)|^[^、。「」]+?(?:と|も)[^、。「」]+?(?:は|が)、?|(?:とき|たら|ごとに)、./.test(before);
+      const part = project.components.find(c => c.type !== 'stage')?.name || 'ねこ', example = text && !/^自分/.test(text) ? `れい：${part}は${text.replace(/^、/, '')}` : null;
+      // 作品を動かしたとき、自分は、: a 名人 text has no 自分; the heading names the part.
+      if (text && e.message === MEIJIN_SUBJECT_MESSAGE && /、自分(?:は|が)、$/.test(before)) return { ...e, line: e.line - 1, message: `名人の 本文には「自分」に あたる 部品が ありません。見出しの「自分は、」を 部品の 名前に します。れい：${before.replace(/自分(は|が)、$/, part + 'は、')}` };
+      if (text && example && (e.message === MEIJIN_TOPIC_ENDED || (e.message === MEIJIN_SUBJECT_MESSAGE && several))) return { ...e, message: MEIJIN_TOPIC_ENDED.replace('れい：ねこは前へ10歩進む', example) };
+      if (text && example && e.message === MEIJIN_SUBJECT_MESSAGE) return { ...e, message: MEIJIN_SUBJECT_MESSAGE.replace('れい：ねこは前へ10歩進む', example) };
+      if (text && e.message === MEIJIN_SUBJECT_MESSAGE && several)
+        return { ...e, message: MEIJIN_TOPIC_ENDED };
+      return text && /^自分(?:は|が|の)/.test(text) ? { ...e, message: '名人の 本文には、「自分」に あたる 部品が ありません。部品の 名前を 書きます。れい：ねこは前へ10歩進む／ねこのコピーを作る' } : e;
+    });
+  }
+  // A message names an expression as written; the 名人 parts of it (no block has them) are written by their words.
+  function messageExpression(n) {
+    try { return formatExpression(n); } catch (error) { if (!(error instanceof AkariError)) throw error; }
+    return formatExpression(meijinPlainExpression(n));
+  }
+  // The kinds only a 名人 script makes (an ordinary body never holds them).
+  const MEIJIN_ONLY_KINDS = new Set(['PartRef', 'PartFamily', 'PartExcept', 'PartRandom', 'PartPick', 'PartNearest', 'PartsTouching', 'CreatedCopies',
+    'PartName', 'PartState', 'Parallel', 'ParallelEach', 'MoveUntil', 'TimedRepeat', 'ActionDefinition', 'ListRemoveValue']);
+  function meijinOnlyNode(ast) {
+    const pending = [ast];
+    while (pending.length) {
+      const node = pending.pop();
+      if (!node || typeof node !== 'object') continue;
+      if (Array.isArray(node)) { pending.push(...node); continue; }
+      if (MEIJIN_ONLY_KINDS.has(node.kind) || node.actorRef?.kind === 'value' || node.targets || (node.kind === 'StopCommand' && ['PART', 'COPIES'].includes(node.op)) ||
+        (node.kind === 'SoundCommand' && node.op === 'STOP_PART') || (node.kind === 'CloneCommand' && node.op === 'DELETE_ALL')) return node;
+      for (const [key, value] of Object.entries(node)) if (key !== 'sourceSpan' && value && typeof value === 'object') pending.push(value);
+    }
+    return null;
+  }
+  // An error in a procedure made in a 名人 script's text is shown at its line in that script.
+  function placeMeijinDefinitionErrors(project, errors) {
+    const places = new Map(meijinProjectDefinitions(project).map(d => [`action:${d.id}`, d]));
+    if (places.size) for (const error of errors) {
+      const d = places.get(error.where);
+      if (d) Object.assign(error, { where: `script:${d.scriptId}`, line: (error.line || 1) + d.line - 1 });
+    }
+    return errors;
+  }
+  // A lane (次のことを同時に始める, なかまは、みんな…) runs on its own: このくり返しを終える, 次の回へ進む and
+  // 答えとして返す cannot reach the repeat or the procedure outside it.
+  function laneControlPlacement(compiled) {
+    const errors = [], words = { Break: 'このくり返しを終える', Continue: 'この回の残りをとばして、次の回へ進む', ReturnStatement: '答えとして返す' };
+    const inside = (nodes, where, inLane, inLoop) => {
+      for (const n of nodes || []) {
+        if (!n || typeof n !== 'object') continue;
+        if (inLane && words[n.kind] && (n.kind === 'ReturnStatement' || !inLoop))
+          errors.push({ code: 'S315', message: '「' + words[n.kind] + '」は、同時に始めた ならびの 外の くり返しや 手順には とどきません。この 文は、ならびの 外に 書きます', line: n.sourceSpan?.startLine || 0, column: n.sourceSpan?.startColumn || 1, where });
+        const loop = ['RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach', 'TimedRepeat'].includes(n.kind);
+        if (n.kind === 'Parallel') for (const lane of n.lanes || []) inside(lane, where, true, false);
+        if (n.kind === 'ParallelEach') inside(n.body, where, true, false);
+        for (const key of ['body', 'thenBody', 'elseBody']) if (n.kind !== 'ParallelEach') inside(n[key], where, inLane, inLoop || loop);
+      }
+    };
+    for (const item of compiled.items || []) {
+      const ast = compiled.astByKey?.get(item.key);
+      if (ast) { inside(ast.body, item.key, false, false); for (const unit of ast.units || []) inside(unit.body, item.key, false, false); }
+    }
+    return errors;
+  }
+  // 〜が3回おされる counts from when a まで begins, so it is read only in the condition of 〜まで待つ／〜まで、くり返す.
+  function eventCountPlacement(compiled) {
+    const errors = [], until = ['WaitUntil', 'RepeatUntil'];
+    const find = (value, found) => { if (!value || typeof value !== 'object') return; if (value.kind === 'EventCount') found.push(value); for (const v of Object.values(value)) if (v && typeof v === 'object') find(v, found); };
+    for (const item of compiled.items || []) {
+      const ast = compiled.astByKey?.get(item.key);
+      const visit = node => {
+        if (!node || typeof node !== 'object') return;
+        if (Array.isArray(node)) { node.forEach(visit); return; }
+        for (const [key, value] of Object.entries(node)) {
+          if (!value || typeof value !== 'object') continue;
+          if (until.includes(node.kind) && key === 'condition') continue;
+          if (['body', 'thenBody', 'elseBody', 'units', 'rules', 'lanes'].includes(key)) { visit(value); continue; }
+          const found = []; find(value, found);
+          for (const n of found) errors.push({ code: 'S314', message: '回数の 条件（〜回おされる、〜回【手順】する）は「〜まで待つ」と「〜まで、くり返す」の 中で 使います', line: n.sourceSpan?.startLine || node.sourceSpan?.startLine || 0, column: n.sourceSpan?.startColumn || node.sourceSpan?.startColumn || 1, where: item.key });
+        }
+      };
+      if (ast) { visit(ast.body); for (const unit of ast.units || []) visit(unit.body); }
+    }
+    return errors;
+  }
+  // Notices never stop a run, a save or an export. ねこは1秒待つ。だんごは言う。: only ねこ waits, so だんご's
+  // sentence runs at once; say so where the next sentence of the same flow has another subject.
+  // The notice names what the next sentence does: だんごは すぐ 話します (a sentence that speaks), …すぐ 動きます (any other).
+  const NOTICE_VERBS = { Say: '話します', Ask: 'たずねます', SoundCommand: '音を 鳴らします', WaitTime: '待ちはじめます', WaitUntil: '待ちはじめます', BroadcastAndWait: '待ちはじめます' };
+  function projectNotes(project, compiled) {
+    const notes = [], seen = new Set();
+    const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach'];
+    for (const item of compiled.items || []) {
+      const ast = compiled.astByKey?.get(item.key);
+      if (!ast) continue;
+      const self = item.targetId === 'stage' ? project.stage.name : project.components.find(c => c.id === item.targetId)?.name || '自分';
+      const who = ref => ref?.kind === 'named' ? ref.name : ref?.kind === 'self' ? self : null;
+      const walk = nodes => {
+        if (!Array.isArray(nodes)) return;
+        nodes.forEach((n, i) => {
+          for (const key of ['body', 'thenBody', 'elseBody']) walk(n?.[key]);
+          // ねこと犬は1秒待つ。 (名人): each part written waits, as one subject does (決まり2).
+          const lanes = n?.kind === 'Parallel' && n.lanes?.length > 1 && n.lanes.every(l => l.length === 1 && l[0].kind === 'WaitTime' && l[0].actorRef?.kind === 'named') ? n.lanes.map(l => l[0].actorRef.name) : null;
+          if (!lanes && (!['WaitTime', 'WaitUntil', 'BroadcastAndWait'].includes(n?.kind) || !n.actorRef || n.actorRef.kind === 'all')) return;
+          const waiters = lanes || [who(n.actorRef)], waiter = waiters.join('と');
+          for (const m of nodes.slice(i + 1)) {
+            if (m.kind === 'CommentLine') continue;
+            if (controls.includes(m.kind) || !m.actorRef || m.actorRef.kind === 'all' || m.laneRef) break;
+            const other = who(m.actorRef);
+            if (!other || waiters.includes(other)) break;
+            const note = { code: 'I101', notice: true, line: m.sourceSpan?.startLine || 0, column: m.sourceSpan?.startColumn || 1, where: item.key,
+              message: `${item.meijin && !NOTICE_VERBS[m.kind] && !['MotionCommand', 'LooksCommand', 'PenCommand'].includes(m.kind) ? 'この 文は すぐ 行います' : other + 'は すぐ ' + (NOTICE_VERBS[m.kind] || '動きます')}（待つのは ${waiter}だけです）。${item.meijin ? 'この 本文 ぜんたいで' : 'みんなで'} 待つときは、「待つ」の 文に 主語を 書きません` };
+            const key = note.where + '|' + note.line + '|' + note.column;
+            if (!seen.has(key)) { seen.add(key); notes.push(note); }
+            break;
+          }
+        });
+      };
+      walk(ast.body);
+      for (const unit of ast.units || []) walk(unit.body);
+      // A word of あかり (大きさ, 向き) that is also the name of the data it may mean: written bare it is the word.
+      {
+        const owner = project.components.find(c => c.id === item.targetId);
+        const dataNames = new Set([...project.projectData.variables, ...project.projectData.lists, ...(owner?.localData?.variables || []), ...(owner?.localData?.lists || []),
+          ...(item.meijin ? project.components.flatMap(c => [...(c.localData?.variables || []), ...(c.localData?.lists || [])]) : [])].map(d => d.name));
+        const visit = node => {
+          if (!node || typeof node !== 'object') return;
+          if (Array.isArray(node)) { node.forEach(visit); return; }
+          const word = node.kind === 'SensorRead' && node.arg === undefined ? (SENSOR_SURFACES[node.sensor] || node.sensor) : null;
+          if (word && dataNames.has(word)) {
+            const note = { code: 'I103', notice: true, line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where: item.key,
+              message: `「${word}」は あかりの「${word}」です。へんすう「${word}」を 読むときは【${word}】と 書きます` };
+            const key = note.where + '|' + note.line + '|' + note.column + '|I103';
+            if (!seen.has(key)) { seen.add(key); notes.push(note); }
+          }
+          for (const [k, v] of Object.entries(node)) if (k !== 'sourceSpan' && v && typeof v === 'object') visit(v);
+        };
+        visit(ast.body); for (const unit of ast.units || []) visit(unit.body);
+        // 名人: ねこの大きさを120％にする changes the look even when ねこ has a variable 大きさ.
+        if (item.meijin) {
+          const script = project.scripts.find(s => scriptSourceKey(s) === item.key);
+          String(script?.source || '').split('\n').forEach((text, i) => {
+            for (const c of project.components) for (const v of c.localData?.variables || []) {
+              if (!MEIJIN_LOOK_WORDS.includes(v.name) || !text.includes(`${c.name}の${v.name}を`)) continue;
+              const note = { code: 'I103', notice: true, line: i + 1, column: text.indexOf(`${c.name}の${v.name}を`) + 1, where: item.key,
+                message: `「${c.name}の${v.name}」は ${c.name}の 見た目です。へんすう「${v.name}」を 変えるときは「${c.name}の【${v.name}】」と 書きます` };
+              const key = note.where + '|' + note.line + '|' + note.column + '|I103';
+              if (!seen.has(key)) { seen.add(key); notes.push(note); }
+            }
+          });
+        }
+      }
+      // 名人: 〜の名前 is the part's name; a part with a variable 名前 is told how the variable is written.
+      if (item.meijin) {
+        const named = project.components.filter(c => c.localData?.variables?.some(v => v.name === '名前') || c.localData?.lists?.some(v => v.name === '名前'));
+        const visit = node => {
+          if (!node || typeof node !== 'object') return;
+          if (Array.isArray(node)) { node.forEach(visit); return; }
+          if (node.kind === 'PartName' && named.length && (node.actorRef?.kind !== 'named' || named.some(c => c.name === node.actorRef.name))) {
+            const note = { code: 'I102', notice: true, line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where: item.key,
+              message: `「〜の名前」は 部品の 名前です。部品の へんすう「名前」を 読むときは「${named[0].name}の【名前】」のように【 】で かこみます` };
+            const key = note.where + '|' + note.line + '|' + note.column + '|I102';
+            if (!seen.has(key)) { seen.add(key); notes.push(note); }
+          }
+          for (const [k, v] of Object.entries(node)) if (k !== 'sourceSpan' && v && typeof v === 'object') visit(v);
+        };
+        visit(ast.body); for (const unit of ast.units || []) visit(unit.body);
+      }
+    }
+    return notes;
   }
 
   // Independent of the formatter and block schema: executable hierarchy plus source-order comment anchors.
@@ -1162,6 +1655,8 @@
         // A statement without a subject is 自分's; a wait without one is the whole flow's (みんな).
         if (key === 'actorRef' && child?.kind === (EVERYONE_WAITS.has(value.kind) ? 'all' : 'self')) continue;
         if (key === 'argumentNames' && Array.isArray(child) && child.length === 0) continue;
+        // The subject's が is how the sentence is written, not what it does.
+        if (key === 'particle' && value.kind === 'named') continue;
         // A script without rules has no rule list; an emptied block rule list is the same script.
         if (key === 'rules' && Array.isArray(child) && child.length === 0) continue;
         out[key] =
@@ -2074,7 +2569,10 @@
         lists: project.projectData.lists.map(orderedDataRecord),
       },
       components: project.components.map(orderedComponentRecord),
-      scripts: project.scripts.map((x) => ({
+      scripts: project.scripts.map((x) => isMeijinScript(x) ? ({
+        id: x.id, mode: 'meijin', source: x.source,
+        ...(x.document?{document:{revision:x.document.revision,unitIds:[...x.document.unitIds]}}:{}),
+      }) : ({
         ...(x.id ? { id: x.id } : {}),
         targetId: x.targetId,
         event: x.event,
@@ -2101,6 +2599,15 @@
       assets,
     };
   }
+  // A saved 名人 script has neither owner nor event; in memory it takes the editor's pseudo owner.
+  function inMemoryScripts(scripts) {
+    return scripts.map(x => {
+      if (x?.mode === undefined) return x;
+      if (x.mode !== 'meijin' || !exactKeys(x, ['id', 'mode', 'source', ...(Object.hasOwn(x, 'document') ? ['document'] : [])]))
+        throw new AkariError('F503', '名人の本文の 形が 正しくありません');
+      return { id: x.id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: x.source, ...(x.document ? { document: x.document } : {}) };
+    });
+  }
   function validateSerializedProjectStructure(root) {
     if (
       !exactKeys(root, [
@@ -2124,6 +2631,7 @@
       throw new AkariError('F503', '作品の ファイルの 形が、あかりで 読める 形と 合いません');
     if (!Array.isArray(root.assets) || root.assets.length > LIMITS.assets)
       throw new AkariError('F504', '絵や音が多すぎます。いらない絵や音をけしてください', 0, 0, '絵や音の数が、上限より多いです');
+    if (Array.isArray(root.scripts)) root = { ...root, scripts: inMemoryScripts(root.scripts) };
     const design = {
       ...(Object.hasOwn(root, 'extensions') ? { extensions: AKARI_RUNTIME.validateExtensionEnvelope(root.extensions) } : {}),
       schema: root.schema,
@@ -2214,8 +2722,9 @@
   function validateEditorState(state,project) {
     if(!exactKeys(state,['version','revision','selectedId','currentEvent','selectedScriptId','uiLevel','sourceOverviewOpen','editorModes','callableDraft','pendingEditors','views'])||state.version!==1||!Number.isSafeInteger(state.revision)||state.revision<0)
       throw new AkariError('F503','なおしていたときのきろくの形が、正しくありません');
-    const actor=state.selectedId==='stage'?{type:'stage'}:project.components.find(c=>c.id===state.selectedId);
-    if(!actor||!EVENT_BY_TYPE[actor.type]?.includes(state.currentEvent)||
+    // 名人の本文 is selected under its pseudo owner, with the one slot 'start'.
+    const actor=state.selectedId==='stage'?{type:'stage'}:state.selectedId===MEIJIN_OWNER&&project.scripts.some(isMeijinScript)?{type:MEIJIN_OWNER}:project.components.find(c=>c.id===state.selectedId);
+    if(!actor||!(actor.type===MEIJIN_OWNER?state.currentEvent==='start':EVENT_BY_TYPE[actor.type]?.includes(state.currentEvent))||
       state.selectedScriptId!==null&&!project.scripts.some(s=>s.id===state.selectedScriptId&&s.targetId===state.selectedId&&s.event===state.currentEvent)||
       !['basic','advanced'].includes(state.uiLevel)||typeof state.sourceOverviewOpen!=='boolean'||
       !exactKeys(state.editorModes,['script','draft'])||!Object.values(state.editorModes).every(mode=>['code','blocks'].includes(mode)))
@@ -2404,6 +2913,7 @@
     }
     out.push('## \u3067\u304d\u3054\u3068\u306e\u30b3\u30fc\u30c9');
     for (const script of root.scripts) {
+      if (script.mode === 'meijin') { out.push('### ' + markdownText('名人の本文'), markdownFence(script.source)); continue; }
       const target =
         script.targetId === 'stage'
           ? root.stage
@@ -2529,7 +3039,7 @@
       );
     const store = new AssetStore();
     for (const record of root.assets) store.addImmutable(await validateLoadedAssetRecord(record));
-    const project = { ...root };
+    const project = { ...root, scripts: inMemoryScripts(root.scripts) };
     delete project.assets;
     delete project.editorState;
     validateAssetReferences(project, store, { serializedAssetIds: assetIds });

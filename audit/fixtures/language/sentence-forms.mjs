@@ -189,6 +189,13 @@ export const sentenceFormCases=[
     expected:script([command('MotionCommand','SET_X',[num(100)])]),
     claims:{'sentence:MotionCommand:SET_X':'横位置を100にする'},
   },
+  // タイマーを0にする: the timer counts again from 0 (LANGUAGE.md タイマー).
+  {
+    id:'SF-timer-reset',
+    source:'タイマーを0にする',
+    expected:script([statement('TimerReset')]),
+    claims:{'sentence:TimerReset':'タイマーを0にする'},
+  },
 
   // ── Control blocks and sentences read by their own readers ──
   {

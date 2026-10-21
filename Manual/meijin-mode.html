@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>あかり 1.4.0 名人モード</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#edf2f8;
+  --surface:#fff;
+  --surface2:#f7f9fc;
+  --line:#cbd7e6;
+  --ink:#223044;
+  --muted:#607084;
+  --accent:#2f6fd6;
+  --accent-soft:#eaf2ff;
+  --good:#19733e;
+  --warn:#9a6500;
+  --danger:#a93636;
+  --code:#182231;
+  --code-ink:#f2f6fc;
+  --shadow:0 8px 28px rgba(36,54,82,.10);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:"Yu Gothic UI","Yu Gothic","Meiryo",system-ui,sans-serif;
+  color:var(--ink);
+  background:linear-gradient(180deg,#f8fbff 0,var(--bg) 480px);
+  line-height:1.75;
+}
+a{color:var(--accent)}
+header{
+  background:linear-gradient(135deg,#315a96,#527fc4);
+  color:#fff;
+  padding:48px 20px 42px;
+}
+.header-inner,.layout{max-width:1180px;margin:auto}
+.kicker{font-size:.9rem;font-weight:700;letter-spacing:.08em;opacity:.9}
+h1{margin:.25rem 0 .5rem;font-size:clamp(2rem,4vw,3.2rem);line-height:1.25}
+.lead{max-width:860px;margin:0;color:#f4f7ff;font-size:1.08rem}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:26px;padding:26px 20px 64px}
+nav{
+  position:sticky;
+  top:18px;
+  align-self:start;
+  background:rgba(255,255,255,.95);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  box-shadow:var(--shadow);
+}
+nav strong{display:block;margin:2px 6px 8px}
+nav a{
+  display:block;
+  text-decoration:none;
+  color:#34465d;
+  padding:7px 9px;
+  border-radius:8px;
+  font-size:.92rem;
+}
+nav a:hover{background:var(--accent-soft);color:#1d4f9f}
+main{min-width:0}
+section{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:clamp(20px,3vw,34px);
+  margin-bottom:22px;
+  box-shadow:var(--shadow);
+}
+h2{margin:0 0 16px;font-size:1.65rem;line-height:1.35}
+h3{margin:28px 0 10px;font-size:1.2rem}
+p{margin:.7rem 0}
+ul,ol{padding-left:1.5rem}
+li+li{margin-top:.42rem}
+code.inline{
+  font-family:"BIZ UDGothic","Yu Gothic UI",monospace;
+  background:#f3f6fa;
+  border-radius:5px;
+  padding:.08rem .3rem;
+}
+kbd{
+  background:#f2f5f9;
+  border:1px solid #bac7d7;
+  border-bottom-width:2px;
+  border-radius:5px;
+  padding:.05rem .35rem;
+  font:inherit;
+  font-size:.9em;
+}
+.code{
+  margin:14px 0;
+  border-radius:12px;
+  overflow:auto;
+  background:var(--code);
+  color:var(--code-ink);
+  border:1px solid #28384d;
+  box-shadow:0 5px 18px rgba(24,34,49,.14);
+}
+.code .bar{
+  padding:7px 12px;
+  background:#263448;
+  color:#cbd7e7;
+  font-size:.82rem;
+  border-bottom:1px solid #34465f;
+}
+pre{
+  margin:0;
+  padding:15px 17px;
+  white-space:pre;
+  overflow:auto;
+  font-family:"BIZ UDGothic","Yu Gothic UI","Meiryo",monospace;
+  line-height:1.8;
+  font-size:.96rem;
+}
+.callout{
+  border-left:5px solid var(--accent);
+  background:var(--accent-soft);
+  padding:13px 16px;
+  border-radius:9px;
+  margin:16px 0;
+}
+.callout.good{border-color:var(--good);background:#edf8f1}
+.callout.warn{border-color:#d18b00;background:#fff7df}
+.callout.danger{border-color:var(--danger);background:#fff0f0}
+.cards,.grid3{display:grid;gap:12px}
+.cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{
+  border:1px solid #d8e1ec;
+  border-radius:12px;
+  padding:14px;
+  background:var(--surface2);
+}
+.card strong{display:block;margin-bottom:4px}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem}
+th,td{border:1px solid #d5deea;padding:9px 10px;text-align:left;vertical-align:top}
+th{background:#eef3f9}
+.checklist{list-style:"✓  ";padding-left:1.45rem}
+.checklist li::marker{color:var(--good);font-weight:800}
+.flow{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:7px;
+  margin:14px 0;
+}
+.flow span{
+  border:1px solid #b9c8da;
+  background:#fff;
+  border-radius:999px;
+  padding:5px 10px;
+  font-weight:700;
+}
+.flow b{color:#8190a2}
+.scope{
+  display:grid;
+  grid-template-columns:36px 1fr;
+  gap:8px 12px;
+  align-items:start;
+}
+.scope .n{
+  width:32px;height:32px;
+  border-radius:50%;
+  display:grid;place-items:center;
+  background:#eaf2ff;color:#235aab;font-weight:800;
+}
+.badge{
+  display:inline-block;
+  border-radius:999px;
+  padding:2px 8px;
+  font-size:.78rem;
+  font-weight:700;
+  background:#eaf2ff;
+  color:#235aab;
+  vertical-align:middle;
+}
+footer{
+  max-width:1180px;
+  margin:0 auto 40px;
+  padding:0 20px;
+  color:var(--muted);
+  font-size:.9rem;
+}
+@media(max-width:920px){
+  .layout{grid-template-columns:1fr}
+  nav{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}
+  nav strong{grid-column:1/-1}
+  .cards,.grid3{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  nav{grid-template-columns:1fr}
+  header{padding-top:34px}
+}
+@media print{
+  body{background:#fff}
+  header{background:#fff;color:#000;padding:20px 0}
+  .lead{color:#333}
+  .layout{display:block;padding:0}
+  nav{display:none}
+  section{box-shadow:none;break-inside:avoid}
+}
+
+/* Shared reading conventions; no external fonts, images or scripts. */
+html{scroll-padding-top:24px}
+a:focus-visible,summary:focus-visible{outline:3px solid #a65300;outline-offset:4px}
+.skip-link{position:absolute;left:16px;top:-100px;z-index:10;padding:12px 18px;background:#fff;color:#173f72}
+.skip-link:focus{top:12px}
+.book-links{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}
+.book-links a{color:#fff;background:#244b7b;border:1px solid #b5ccea;border-radius:99px;padding:8px 14px;text-decoration:none;font-weight:700}
+.chapter-links{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 0}
+.chapter-links a{padding:10px 14px;background:#eaf2ff;border:1px solid #aac0de;border-radius:10px;text-decoration:none;font-weight:700}
+.reading-note{padding:14px 18px;border-left:5px solid #33704c;background:#eff8f1;border-radius:8px;margin:18px 0}
+.table-scroll{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid #cbd7e6}
+th{background:#edf3fa;color:#233d5e}
+pre{max-width:100%;overflow-x:auto;tab-size:2}
+p,li,td,a{overflow-wrap:anywhere}
+details{border:1px solid #cbd7e6;border-radius:12px;padding:14px 18px;margin:12px 0;background:#fbfdff}
+summary{font-weight:800;cursor:pointer;color:#234f93}
+.mini-label{font-size:.85rem;letter-spacing:.05em;font-weight:800;color:#355d87}
+.task-list{counter-reset:task;list-style:none;padding:0;display:grid;gap:12px}
+.task-list>li{counter-increment:task;position:relative;padding:18px 18px 18px 62px;border:1px solid #cfdeec;border-radius:14px;background:#f8fbff}
+.task-list>li::before{content:counter(task,decimal-leading-zero);position:absolute;left:16px;top:16px;color:#234f93;font-size:1.25rem;font-weight:900}
+.code-sample{padding:20px;background:#182b42;color:#f5f9ff;border-radius:12px;line-height:1.8}
+.quick-nav{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}
+.quick-nav a{padding:8px 12px;border:1px solid #b3c9e0;border-radius:99px;background:#f3f8ff;text-decoration:none}
+@media(min-width:901px){nav[aria-label="目次"]{max-height:calc(100vh - 36px);overflow-y:auto}}
+@media(max-width:520px){th,td{padding:9px;font-size:.94rem}.task-list>li{padding-right:12px}.hero h1{font-size:2.5rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+@media print{.book-links,.chapter-links,.skip-link,.quick-nav{display:none}details{break-inside:avoid}a{color:#163a64}}
+
+
+/* The pale reading panel has its own foreground, including inside the dark hero. */
+#code-ownership, #code-ownership h2, #code-ownership p { color:#22354b; }
+#code-ownership::selection, #code-ownership *::selection { background:#244b7b; color:#ffffff; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">本文へ進む</a>
+<header>
+  <div class="header-inner">
+    <div class="kicker">AKARI 1.4.0 MEIJIN MODE</div>
+    <div class="book-links"><a href="../MANUAL.html">← マニュアルの入口</a><a href="../MANUAL.html#meijin">名人モードの あらまし</a><a href="./code-mode-advanced.html">コードモード 上級</a><a href="../Akari_1_4_0.html">あかりを使う</a></div>
+<h1>名人モード</h1><section class="section" id="code-ownership" style="padding:20px;margin:20px 0;border:1px solid #c6d8e6;border-radius:12px;background:#f3f8fc">
+  <h2>名人の 本文は、どの 部品にも 入らない</h2>
+  <p>名人の 本文は、キャラクターや 文字などの 部品にも、画面にも 入らない 本文だよ。「動かすもの」で「名人の本文」を えらぶと 開くよ。</p>
+  <p>文の はじめに「ねこは」「なかまは」のように だれが するかを 書いて、いくつもの 部品を 一つの 本文で 動かすよ。ふだんの 国語の 文に 近い 書き方が できるよ。</p>
+</section>
+    <p class="lead">名人モードは、コードで 書く 人の ための モードだよ。部品を 値として あつかい、いくつもの 動きを 同時に 始め、国語として 自然な 文で 作品を 書けるよ。そのかわり、ブロックには もどせないよ。</p>
+  </div>
+</header>
+
+<div class="layout">
+  <nav aria-label="目次">
+    <strong>目次</strong>
+    <a href="#what">名人モードって なに？</a>
+    <a href="#start">はじめ方と、もどせない こと</a>
+    <a href="#rules">名人の 本文の きまり</a>
+    <a href="#values">部品を <ruby>値<rt>あたい</rt></ruby>として 使う</a>
+    <a href="#together">同時に 動かす</a>
+    <a href="#time">時間で 区切る・待つ</a>
+    <a href="#procedure">本文の 中で 手順を 作る</a>
+    <a href="#events">名人の できごと</a>
+    <a href="#natural">国語として 自然な 書き方</a>
+    <a href="#commands">名人の 命令</a>
+    <a href="#ng">名人モードでも 読めない 書き方</a>
+    <a href="#trouble">こまったとき</a>
+  </nav>
+
+  <main id="main-content" tabindex="-1">
+    <section id="what">
+      <h2>名人モードって なに？</h2>
+      <p>ふだんの 本文は、一つの 部品の 本文だよ。「自分は」が その 部品で、ブロックと コードを 切りかえて 同じ 本文を なおせるよ。</p>
+      <p>名人の 本文は、作品 ぜんたいを 動かす 人の 本文だよ。だれが するかを 文ごとに 書き、つぎのような ことが できるよ。</p>
+      <div class="cards">
+        <div class="card"><strong>部品を <ruby>値<rt>あたい</rt></ruby>として 使う</strong>「主役を ねこに する」と 書いて、へんすうに 入れた 部品を 動かせるよ。</div>
+        <div class="card"><strong>いくつもの 動きを 同時に</strong>「ねこと だんごは、…」「〜あいだ」「〜ながら」で、一つの 本文の 中で 同時に 動かせるよ。</div>
+        <div class="card"><strong>自然な 国語の 文</strong>「だんごの ところへ 行く」「持ち物が 空なら」のように、ふだんの 言い方で 書けるよ。</div>
+        <div class="card"><strong>本文の 中で 手順や できごとを 作る</strong>「〜という 手順を、次のように 作る」「1秒ごとに、」が 本文の 中に 書けるよ。</div>
+      </div>
+      <div class="callout warn"><strong>できない こと：</strong>名人の 本文は ブロックに できないよ。「整える」も 使わず、書いた とおりに のこすよ。</div>
+    </section>
+
+    <section id="start">
+      <h2>はじめ方と、もどせない こと</h2>
+      <ol class="task-list">
+        <li><strong>名人に する 本文を 開く</strong>名人の 本文に したい 本文を、本文らんで 開くよ。本文が ない ときや 空の ときは、空の 名人の 本文が できるよ。</li>
+        <li><strong>「見せ方」で「名人」を えらぶ</strong>「名人モードで 書くと、この本文は たくどんから はなれて、「動かすもの」の「名人の本文」に うつります。ブロックには もどせません。」と たずねられるよ。「OK」で 名人の 本文に なるよ。「キャンセル」なら 何も かわらず、見せ方も もとの ままだよ。</li>
+        <li><strong>書きはじめる</strong>部品の 本文を 名人に したときは、さいしょに「作品を動かしたとき、たくどんは、」のような 見出しが つくよ。だれの 動きだったかを 名人の 本文に のこすためだよ。見出しの 書き方が かわる ことも あるよ（「「空白」キーをおしたとき、」は「「空白」キーをおすたびに、たくどんは、」に なるよ）。本文が 空の ときは、見出しは つかないよ。</li>
+      </ol>
+      <div class="callout danger"><strong>もどせない よ：</strong>名人の 本文を ふつうの 本文に もどす ことは できないよ。まちがえて 名人に したときは、「もとにもどす」で もどせるよ。</div>
+      <p>名人の 本文が ある 作品では、見せ方は「名人」の ままで、ほかの 見せ方は えらべないよ。画面は「くわしく」と 同じで、部品や 画面の 本文も 書けるよ。「もとにもどす」で 名人の 本文が なくなったり、名人の 本文を 全部 けしたり すると、「名人」を えらぶ 前の 見せ方に もどるよ。名人の 本文が ある 作品を 開くと「名人」に なるよ。「新しく作る」は「はじめて」から 始まるよ。</p>
+      <p>名人の 本文は、「動かすもの」の「名人の本文」から いくつでも 作れるよ。名人の 本文を ひらいて「名人の本文を ふやす」を おすと、一つ ふえるよ。いらなく なったら「この 名人の本文を けす」で けせるよ（「もとにもどす」で もどせるよ）。部品や へんすうの 名前を かえると、名人の 本文の 中の 名前も いっしょに かわるよ。そのままでは 意味が かわる 名前（「ねこが」など）は、【ねこが】のように【 】で かこんで 書きかえるよ。</p>
+    </section>
+
+    <section id="rules">
+      <h2>名人の 本文の きまり</h2>
+      <ol>
+        <li><strong>だれが するかを 書く。</strong>動く・見た目・話す・たずねる・音・ペンの 文には、「ねこは」のような 主語が いるよ。主語が ないと 作品チェックで 止まるよ。作品 ぜんたいへの 命令（背景を かえる、すべての 音を 止める、作品の 線と スタンプを 全部 消す）は 主語なしで 書けるよ。</li>
+        <li><strong>主語の ない「1秒待つ」は、本文 ぜんたいが 待つ。</strong>前の 文に 主語が あっても 同じだよ。「ねこは 1秒 待つ」と 主語を 書くと、ねこだけが 待つよ。ねこの つぎの 文は 待ってから するけれど、それより 前に 書いた ほかの 部品の 文は すぐ するよ。「犬は 1秒 待ってから、ねこの 動きを 止める。」は、1秒 たってから 止めるよ。</li>
+        <li><strong>主語は つぎの 文に 引きつがれる。</strong>「ねこは右へ10歩動く。」の つぎの 文で 主語を 書かなければ、ねこが するよ。べつの 主語を 書くまで つづくよ。「ねこと 犬は…」「ねこも 犬も…」「なかまは、みんな…」「〜あいだ」「次のことを 同時に 始める」の 文や、中に 主語を 書いた「もし」や くり返しの あとは、主語を 書きなおそう（作品チェックが 教えてくれるよ）。</li>
+        <li><strong>「〜とき」「〜あいだ」「〜たら」の 前の 主語は「が」、あとの 主語は「は」。</strong>「だんごが 星に ふれたとき、星は すがたを かくす」のように 書くよ。あとの 主語を「が」で 書いても 同じ 意味に 読むよ。</li>
+        <li><strong>見出しの ない 文は、作品を 動かしたときに 始まる。</strong></li>
+        <li><strong>手順の 中で 主語を 書かない 文は、手順を よび出した 文の 主語が する。</strong></li>
+        <li><strong>意味が 一つに 決まらない 文は 止まる。</strong>作品チェックが 場所と わけを 教えるよ。</li>
+      </ol>
+    </section>
+
+    <section id="values">
+      <h2>部品を <ruby>値<rt>あたい</rt></ruby>として 使う</h2>
+      <p>部品の 名前は、その 部品 そのものを あらわす <ruby>値<rt>あたい</rt></ruby>だよ。へんすうや リストに 入れたり、手順に わたしたり できるよ。</p>
+      <div class="code"><div class="bar">名人の本文：へんすうに 入れた 部品</div><pre>主役をねこにする。
+主役は右へ10歩動く。
+主役は、自分の名前を言う。
+もし主役がねこなら、主役は「にゃあ」と言う。</pre></div>
+      <div class="code"><div class="bar">名人の本文：部品の あつまり</div><pre>なかまを、ねこと犬と鳥にする。
+なかまは、みんな右へ10歩動く。
+なかまは、順番に「やあ」と1秒話す。
+ねこ以外のなかまは、右へ10歩動く。
+なかまのだれか一人が「はい」と言う。
+点数を、なかまの数にする。</pre></div>
+      <ul>
+        <li>「みんな」「それぞれ」は 全員が 同時に 始め、全員が おわってから つぎの 文へ 進むよ。「順番に」は 一人ずつ だよ。</li>
+        <li>部品を ならべるときは「ねこと 犬」のように「と」で つなぐよ。「ねこや 犬」の「や」は、ほかにも いる ときの 言い方なので 読まないよ。</li>
+        <li>「主役」のように 部品を 入れた へんすうは、主語のほか、「主役の 大きさを 120％に する」「ねこは、主役の ところへ 行く」にも 書けるよ。</li>
+        <li>「ほかの なかま」は、いま 引きついでいる 主語の 部品を のぞいた なかま だよ。</li>
+        <li>「なかま」のように いくつもの 部品を 入れるときは、「なかま」という リストを 作っておくよ。へんすうには 部品を 一つだけ 入れるよ。「できたコピー」も「なかまを、できたコピーにする。」で リストに 入れられるよ。</li>
+        <li>部品の <ruby>値<rt>あたい</rt></ruby>は、動かしている あいだだけ へんすうや リストに 入るよ。作品ファイルに ほぞんする 最初の 値には できないよ。</li>
+        <li>【 】の ない「〜の名前」は、部品の 名前だよ。部品が「名前」という へんすうを 持つときに へんすうの ほうを 使うなら、「ねこの【名前】」と 書こう（作品チェックが 教えてくれるよ）。</li>
+      </ul>
+      <div class="code"><div class="bar">名人の本文：くらべて えらぶ・コピー</div><pre>ねこと犬のうち、右にいるほうは「勝ち！」と言う。
+ねこは、いちばん近い星の方を向く。
+点数を、ねこから犬までのきょりにする。
+星のコピーを5つ作る。
+できたコピーは、それぞれ前へ10歩進んでから、消える。</pre></div>
+      <ul>
+        <li>くらべて 一つに 決まらないとき（同じ きょり、同じ 体力）は、だれも 動かないよ。</li>
+        <li>「なかまのうち、ねこにいちばん近いもの」は、ねこ 自身を のぞいて えらぶよ。えらんだ 部品は リストに 入れて 使おう（だれも えらばれない ことが あるからだよ）。何に 近いかを 書かない「いちばん近い」は「〜の方を向く」と「〜までのきょり」で 使うよ。きょりが 同じ ものが 二つ あると、向く ときは 向かず、きょりは その きょりに なるよ。</li>
+        <li>「できたコピー」は、その 流れで さいごに 作った コピー だよ。「消える」は コピーだけが できるよ。</li>
+      </ul>
+    </section>
+
+    <section id="together">
+      <h2>同時に 動かす</h2>
+      <p>名人の 本文では、一つの 本文の 中で いくつもの 動きを 同時に 始められるよ。どれも、全部が おわってから つぎの 文へ 進むよ。</p>
+      <div class="code"><div class="bar">名人の本文：同時に 始める</div><pre>ねことだんごは、2秒かけて画面の右へ40歩動く。
+ねこが2秒かけて画面の右へ40歩動くあいだ、犬は「がんばれ！」と1秒話す。
+ねこは「まってー！」と2秒話しながら、2秒かけて画面の右へ40歩動く。
+次のことを同時に始める。
+  ねこは2秒かけて画面の右へ40歩動く。
+  犬は「ぼくも行くよ」と1秒話す。
+犬は「ついた！」と言う。</pre></div>
+      <ul>
+        <li>「ねこと 犬が 2秒かけて 動くあいだ、鳥は…」のように、「〜あいだ」の 前に 部品を ならべても いいよ。「次のことを同時に始める」の 中の 文は、それぞれ だれが するかを 書こう。</li>
+        <li>「次のことを同時に始める」は、右へ ずらした 文を 一文ずつ 同時に 始めるよ。一つの 文の 中を「〜して、」で つないだ 動きは、その 文の 中で じゅんに するよ。</li>
+        <li>「〜ながら」は、一つの 部品が 二つの 動きを 同時に するときに 使うよ。ちがう 部品なら「〜あいだ」で 書こう。「ねこも 犬も 鳥も、…」のように「も」で ならべても いいよ。</li>
+        <li>「〜しているうちに」の 前には、始める 動きを 書くよ（れい：ねこが 2秒かけて 画面の右へ 40歩 動いているうちに、…）。「ねこが 動いているうちに」だけでは 止まるよ。</li>
+        <li>同時に 始めた 中の「この動きを止める」は、本文 ぜんたいを 止めるよ。中で「このくり返しを終える」は 外の くり返しに とどかないので 止まるよ。</li>
+      </ul>
+    </section>
+
+    <section id="time">
+      <h2>時間で 区切る・待つ</h2>
+      <div class="code"><div class="bar">名人の本文：〜まで・〜秒のあいだ・〜になったら</div><pre>ねこは、1秒に20歩の速さで、ゴールにふれるまで前へ動き続ける。
+10秒のあいだ、ねこは1秒に20歩の速さで前へ動き続ける。
+10秒のあいだ、くり返す。
+  1秒待つ。
+  点数を1増やす。
+点数が10点になったら、ねこは「やった！」と言う。</pre></div>
+      <ul>
+        <li>「〜まで 動き続ける」には 速さが いるよ。「ゴールにふれる」が なりたった ところで 止まるよ。なりたったかは、1秒を 60に 分けた ときごとに しらべるよ。「〜秒のあいだ」は ちょうど その 時間で 止まるよ。</li>
+        <li>「〜になったら、」は、そうなるまで 本文 ぜんたいが 待ってから、一回だけ するよ。そうなる たびに したいときは「〜になったとき、」の できごとを 使おう。</li>
+      </ul>
+    </section>
+
+    <section id="procedure">
+      <h2>本文の 中で 手順を 作る</h2>
+      <div class="code"><div class="bar">名人の本文：手順を 作って 使う</div><pre>【四角をかく】という手順を、一辺の長さを受け取って、次のように作る。
+  ペンを下ろす。
+  4回くり返す。
+    前へ【一辺の長さ】歩進む。
+    右に90度回る。
+ねこは、【一辺の長さ】を20歩として、【四角をかく】という手順を行う。
+【あいさつ】という手順を、相手を受け取って、次のように作る。
+  相手は「こんにちは」と言う。
+相手を犬として、【あいさつ】という手順を行う。</pre></div>
+      <ul>
+        <li>「〜という手順を、次のように作る」は 手順を 作るだけで、その場では 動かないよ。右へ ずらした 文が 中身だよ。</li>
+        <li>作った 手順は「自分で作ったブロック」の 一覧に「（名人の本文）」として 出るよ。そこから「名人の本文で ひらく」で その 行へ 行けるし、「名前を かえる」で 名前を かえられるよ（本文の 中の よび出しも かわるよ）。中身を なおすときは、名人の 本文を なおそう。</li>
+        <li>受け取る 部品は、手順の 中で 主語に できるよ（「相手は…」）。</li>
+      </ul>
+    </section>
+
+    <section id="events">
+      <h2>名人の できごと</h2>
+      <div class="code"><div class="bar">名人の本文：できごと</div><pre>だんごが星にふれたとき、星はすがたをかくす。
+点数が10点以上になったとき、ねこは「やった！」と言う。
+1秒ごとに、点数を1増やす。</pre></div>
+      <ul>
+        <li>「〜にふれたとき」は、ふれて いない ときから ふれた ときに かわる たびに 始まるよ。「〜にふれたら」は、ふれるまで 待ってから 一回だけ するよ。</li>
+        <li>「犬が「出発」の合図を受けたとき、」は、犬が 合図を 受けた ときに 始まるよ。</li>
+        <li>「ねこが おされたとき、犬は、」のように、見出しの あとに だれが するかを 書けるよ。書かないときは、おされた ねこが するよ。</li>
+        <li>「だんごが 星に ふれたとき、」の 中身では、だれが するかを 書こう（だんごか 星か 決まらないからだよ）。</li>
+        <li>「〜になったとき」は、なりたって いない ときから なりたつ ときに かわる たびに 始まるよ。作品を 動かした ときに もう なりたっていれば、そのとき 一回 始まるよ。</li>
+        <li>「〜秒ごとに」には 数を 書くよ。へんすうは 書けないよ。かわる 間かくで くり返したいときは、ふつうの「ずっとくり返す。」の 中に「間隔秒待つ。」と 書こう。</li>
+      </ul>
+    </section>
+
+    <section id="natural">
+      <h2>国語として 自然な 書き方</h2>
+      <div class="code"><div class="bar">名人の本文：ふだんの 言い方</div><pre>ねこは、だんごのところへ1秒かけて動く。
+もしねこが犬より右にいれば、ねこは「ぼくが前だ」と言う。
+ねこは、持ち物を一つずつ順に2秒ずつ言う。
+持ち物から「本」を一つ消す。
+もし持ち物が空なら、ねこは「からっぽ」と言う。
+もし点数が偶数なら、ねこは「ぐうすう」と言う。
+もし点数が10の倍数なら、ねこは「きりがいい」と言う。</pre></div>
+      <ul>
+        <li>「〜のところへ 行く」は、その 文を した ときの 相手の 場所へ 行くよ。行った 部品の まん中が、相手の まん中に くるよ。「だんごまで 行く」「1秒かけて、だんごの ところへ 動く」も 同じだよ。</li>
+        <li>「からっぽ」「空っぽ」は「空」と 同じだよ。「もし点数が12の約数なら」も 書けるよ（点数が 0の ときは なりたたないよ）。0は 倍数に 入れないよ。「〜の倍数」「〜の約数」の 〜には、2や 12のような 0より 大きい 整数を 書こう。「もし点数が偶数で、20より小さいなら」のように、ほかの きまりと つなげても いいよ（あとの「点数が」は はぶけるよ）。「ぐうすう」「き数」「ばい数」のように かなで 書いても いいよ。</li>
+        <li>「持ち物から「本」を 消す」だけでは、一つか 全部か 決まらないので 止まるよ。「一つ消す」「全部消す」と 書こう。</li>
+      </ul>
+    </section>
+
+    <section id="commands">
+      <h2>名人の 命令</h2>
+      <p>名人の 本文を 書く 人は、部品を 動かす 立場だよ。動きは「ねこは 前へ 10歩 進む」、ようすを かえるときは「ねこの 大きさを …に する」と 書くよ。</p>
+      <div class="code"><div class="bar">名人の本文：命令</div><pre>ねこの大きさを120％にする。
+ねこの色を「赤」にする。
+ねこの体力を1減らす。
+犬に「出発」と知らせる。
+ねこの動きを止める。
+星のコピーを全部消す。
+ねこが話し終わるまで待つ。
+ねこが言い終わるまで待つ。
+点数を、星のコピーの数にする。
+作品の線とスタンプを全部消す。</pre></div>
+      <ul>
+        <li>「犬に「出発」と知らせる」は、犬の「合図を受けたとき」だけを 始めるよ。</li>
+        <li>「ねこの動きを止める」で、ねこの できごとで 始まった 本文が 止まるよ。ねこを 動かし続ける きまり（<ruby>継続<rt>けいぞく</rt></ruby>ルール）も 止まるよ。</li>
+        <li>ほかの 本文で ねこが 動いているときは、その 動きだけが その場で おわるよ。その 本文は つぎの 文へ 進むよ。</li>
+        <li>ねこが 話す ことや 待つ ことは 止めないよ（ねこが している 手順の 中の ときは、手順ごと おわるよ）。</li>
+        <li>【 】の ない「ねこの 大きさ」は、ねこの 見た目の 大きさだよ。ねこが「大きさ」という へんすうを 持つときに へんすうの ほうを 使うなら、「ねこの【大きさ】」と 書こう（作品チェックが 教えてくれるよ）。</li>
+      </ul>
+    </section>
+
+    <section id="ng">
+      <h2>名人モードでも 読めない 書き方</h2>
+      <p>つぎの 書き方は、プログラムの 意味が 一つに 決まらないので 止まるよ。作品チェックが 書き方を 教えてくれるよ。</p>
+      <div class="table-scroll"><table>
+        <thead><tr><th>書き方</th><th>なぜ 止まる？</th><th>こう 書こう</th></tr></thead>
+        <tbody>
+          <tr><td><code class="ng">点数が10点以上なので、ねこは「やった」と言う。</code></td><td>「ので」は わけを 言う ことば。いつ するか 決まらない</td><td>もし〜なら、／〜になったら、</td></tr>
+          <tr><td><code class="ng">ねこはゆっくり前へ10歩進む。</code></td><td>どれだけ ゆっくりか 決まらない</td><td>1秒かけて 前へ 10歩 動く</td></tr>
+          <tr><td><code class="ng">ねこは、犬の近くへ行く。</code></td><td>どこまでが 近くか 決まらない</td><td>犬の ところへ 行く／歩の 数を 書く</td></tr>
+          <tr><td><code class="ng">その子は右へ10歩動く。</code></td><td>どの 部品か 決まらない</td><td>部品の 名前を 書く</td></tr>
+          <tr><td><code class="ng">ねこがおされると、犬は「いたい」と言う。</code></td><td>できごとか、その時を 待つのか 決まらない</td><td>ねこが おされたとき、／ねこが 1回 おされるまで 待つ。</td></tr>
+          <tr><td><code class="ng">ねこが動いているうちに、犬は「まって」と言う。</code></td><td>いまの ようすを しらべるのか、そう なるまで 待つのか 決まらない</td><td>ねこが 2秒かけて 画面の右へ 40歩 動いているうちに、…</td></tr>
+          <tr><td><code class="ng">ねこは、一辺が20歩の四角をかく。</code></td><td>20歩を 手順の どの 入れるものに わたすか 決まらない</td><td>【一辺の長さ】を 20歩として、【四角をかく】という 手順を 行う</td></tr>
+          <tr><td><code class="ng">ねこは前へ十歩進む。</code></td><td>漢数字は 読まない</td><td>前へ 10歩 進む</td></tr>
+          <tr><td><code class="ng">持ち物から「本」を消す。</code></td><td>一つか 全部か 決まらない</td><td>一つ消す／全部消す</td></tr>
+          <tr><td><code class="ng">主役を、いちばん近い星にする。</code></td><td>同じ きょりの とき どれを えらぶか 決まらない</td><td>ねこは、いちばん近い星の方を向く。／えらんだ部品を、なかまのうち、ねこにいちばん近いものにする。もしえらんだ部品が空でなければ、主役を、えらんだ部品の1番目にする。</td></tr>
+          <tr><td><code class="ng">間隔秒ごとに、点数を1増やす。</code></td><td>「〜秒ごとに」の 時間は、作品を 動かした ときに 一度だけ 決まるので、へんすうは 書けない</td><td>ずっとくり返す。の 中で 間隔秒待つ。</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="trouble">
+      <h2>こまったとき</h2>
+      <details><summary>ブロックで 見たい</summary><p>名人の 本文は ブロックに できないよ。ブロックで 作りたいときは、ふつうの 本文で 作ろう。名人に した すぐ あとなら「もとにもどす」で もどせるよ。</p></details>
+      <details><summary>「だれが するかを 書きます」と 出る</summary><p>動く・話す・音の 文の はじめに「ねこは」のような 主語を 書こう。前の 文の 主語を 引きつぐ ことも できるよ。</p></details>
+      <details><summary>「〜秒ごとに」に へんすうを 使いたい</summary><p>「ずっとくり返す。」の 中に「間隔秒待つ。」と「点数を1増やす。」を 書こう。へんすうが かわれば 間かくも かわるよ。</p></details>
+      <details><summary>きまりを くわしく 知りたい</summary><p>LANGUAGE.md の「名人モード」の 章に、名人の 本文の きまりが ぜんぶ 書いて あるよ。</p></details>
+      <div class="chapter-links"><a href="../MANUAL.html#meijin">← マニュアルの 名人モード</a><a href="./code-mode-advanced.html">コードモード 上級</a></div>
+    </section>
+  </main>
+</div>
+<footer>
+  <p>あかり 1.4.0 の マニュアルです。名人モードの くわしい きまりは <a href="../LANGUAGE.md">LANGUAGE.md</a> の「名人モード」の 章を 見てね。</p>
+</footer>
+</body>
+</html>

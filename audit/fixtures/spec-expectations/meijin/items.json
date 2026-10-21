@@ -1,0 +1,2682 @@
+{
+  "schema": "akari-spec-items-v1",
+  "area": "meijin",
+  "items": [
+    {
+      "id": "MI-001",
+      "section": "名人モード > できること・できないこと",
+      "summary": "名人モードには、「見せ方」で「名人」を選んで入る（「名人モードで 書く」のボタンはない）",
+      "polarity": "both",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-001",
+        "MC-002"
+      ]
+    },
+    {
+      "id": "MI-002",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "名人の本文がある作品では、「見せ方」は「名人」に決まり、ほかの見せ方は選べない。名人の本文がなくなると、「名人」を選ぶ前の見せ方に戻る",
+      "polarity": "both",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-003",
+        "MC-579",
+        "MC-585"
+      ]
+    },
+    {
+      "id": "MI-003",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "「見せ方」で「名人」を選ぶと確認が出て、「OK」で本文欄で開いている本文は名人モードになる（本文が空のときは、空の名人の本文ができる）",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-004",
+        "MC-005",
+        "MC-580"
+      ]
+    },
+    {
+      "id": "MI-004",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "名人モードにした本文は、ブロック表示に切り替えられない（名人モードの本文はコード表示だけで編集する）",
+      "polarity": "negative",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-006",
+        "MC-411"
+      ]
+    },
+    {
+      "id": "MI-005",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "確認で「キャンセル」を選ぶと何も変わらず、「見せ方」も元のまま",
+      "polarity": "negative",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-007"
+      ]
+    },
+    {
+      "id": "MI-006",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "名人モードにする操作は、元に戻す・やり直すの対象になる（元に戻すと、「名人」を選ぶ前の見せ方に戻る）",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-008"
+      ]
+    },
+    {
+      "id": "MI-007",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "名人モードの本文は部品・画面のどれにも属さず、「動かすもの」の「名人の本文」から開く",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-009"
+      ]
+    },
+    {
+      "id": "MI-008",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "名人の本文はいくつでも作れ、作品を動かすとどの本文も始まる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-016",
+        "MC-017"
+      ]
+    },
+    {
+      "id": "MI-009",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "名人モードの本文は「整える」の対象にせず、書いたとおりに保存し表示する",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-010",
+        "MC-027"
+      ]
+    },
+    {
+      "id": "MI-010",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "名人モードの本文を通常の本文に戻せない",
+      "polarity": "negative",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-011"
+      ]
+    },
+    {
+      "id": "MI-011",
+      "section": "名人モード > できること・できないこと",
+      "summary": "本文の中で作った手順は「自分で作ったブロック」の一覧に「（名人の本文）」として出て、「名人の本文で ひらく」でその行を開く",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-012",
+        "MC-013",
+        "MC-014"
+      ]
+    },
+    {
+      "id": "MI-012",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "部品・変数・リストの名前を変えると、名人モードの本文の中の名前も同じく変わる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-050",
+        "MC-051",
+        "MC-052",
+        "MC-053",
+        "MC-054",
+        "MC-055"
+      ]
+    },
+    {
+      "id": "MI-013",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "一覧で手順の名前を変えると、名人の本文の見出しと、すべての本文の呼び出しが変わる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-056",
+        "MC-057",
+        "MC-058"
+      ]
+    },
+    {
+      "id": "MI-014",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "作品チェックは名人モードの文法で本文を読み、読める文は止めない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-049"
+      ]
+    },
+    {
+      "id": "MI-015",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "意味が一つに決まらない文は、場所（行）と理由を示して実行を止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-015",
+        "MC-046",
+        "MC-047",
+        "MC-048"
+      ]
+    },
+    {
+      "id": "MI-016",
+      "section": "名人モード",
+      "summary": "共通の文法（命令・式・条件・できごとの見出し・待ち方）は名人モードの本文でもそのまま使える",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-018",
+        "MC-019",
+        "MC-020",
+        "MC-021",
+        "MC-022",
+        "MC-410"
+      ]
+    },
+    {
+      "id": "MI-141",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "【 】で囲んだ部品の名前も、名人の書き方（〜のところへ行く、〜より右にいれば など）で同じに読む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-412"
+      ]
+    },
+    {
+      "id": "MI-142",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「〜の約数」は、0でなく、その数を割ったあまりが0のとき成り立つ。「からっぽ」「空っぽ」は「空」と同じ",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-413",
+        "MC-414",
+        "MC-415"
+      ]
+    },
+    {
+      "id": "MI-143",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "「名人の本文を ふやす」で名人の本文が増え、作った順に並ぶ。「この 名人の本文を けす」で一覧から消え、元に戻せる",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-416"
+      ]
+    },
+    {
+      "id": "MI-144",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "「ブロック」の表示を選んでいても、名人の本文はコード表示で開き、ほかの本文に移ると選んでいた表示に戻る",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-417"
+      ]
+    },
+    {
+      "id": "MI-145",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "そのままの名前では意味が変わる名前に変えると、名人の本文の中では新しい名前を【 】で囲んで書き換える。「 」の中の文字は変えない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-418",
+        "MC-419"
+      ]
+    },
+    {
+      "id": "MI-146",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語のない手順の呼び出しは、手順の中に主語の要る文があると、呼び出しの行で止め、呼び出す文に主語を書くよう案内する",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-420"
+      ]
+    },
+    {
+      "id": "MI-147",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "同じ時刻に始めた動作は書いた順に行い、同じ部品が同時に二つ話すと、あとに書いた方が見える",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-421",
+        "MC-422"
+      ]
+    },
+    {
+      "id": "MI-148",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "activeTasks は、本文の流れ、並びの一つずつ、並びを待っている流れをそれぞれ1と数える（上限2000をこえる並びは始めない）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-423",
+        "MC-424"
+      ]
+    },
+    {
+      "id": "MI-149",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "リストを主語にしない条件の形（持ち物が空になるまで待つ、持ち物が空のあいだ、持ち物が空になったら）は、条件として読む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-425",
+        "MC-426"
+      ]
+    },
+    {
+      "id": "MI-150",
+      "section": "名人モード > 名人の命令",
+      "summary": "部品の、あかりの言葉と同じ名前の変数は「ねこの【大きさ】を5にする」と書いて変えられる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-427"
+      ]
+    },
+    {
+      "id": "MI-151",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "【 】で囲んだ部品の名前は、主語を並べる文・集まりに入れる文・値にする文でも同じに読む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-428",
+        "MC-429"
+      ]
+    },
+    {
+      "id": "MI-152",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語のない手順の呼び出しは、手順の中の発話・質問・見た目の文でも、呼び出しの行で止める",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-430"
+      ]
+    },
+    {
+      "id": "MI-153",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "名前を変えても、話す言葉・合図の名前としての「 」と、別の名前の一部は変わらない。部品の名前として書いた「 」は変わる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-431",
+        "MC-432"
+      ]
+    },
+    {
+      "id": "MI-154",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「空」「偶数」などは「〜でないなら」「〜だったら」「〜になったとき、」でも同じに読む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-433",
+        "MC-434"
+      ]
+    },
+    {
+      "id": "MI-155",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "画面を主語にした見出しの中身は画面が行う。部品と同じ名前の変数があると作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-435",
+        "MC-436"
+      ]
+    },
+    {
+      "id": "MI-157",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "主語のちがう文を「〜して、」でつなぐと、書いた順に行う",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-439"
+      ]
+    },
+    {
+      "id": "MI-156",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語を書いた「待つ」はその部品だけが待ち、その部品の次の文が待つ。主語を並べた「待つ」も同じ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-437",
+        "MC-438"
+      ]
+    },
+    {
+      "id": "MI-017",
+      "section": "名人モード > 名人モードの本文の保存と実行データ",
+      "summary": "名人モードの本文だけの種類（書き方）を共通の本文に書くと、作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-028",
+        "MC-029",
+        "MC-030",
+        "MC-031",
+        "MC-032",
+        "MC-033",
+        "MC-034",
+        "MC-035",
+        "MC-036",
+        "MC-037",
+        "MC-038",
+        "MC-039",
+        "MC-040",
+        "MC-041",
+        "MC-042",
+        "MC-043",
+        "MC-044",
+        "MC-045"
+      ]
+    },
+    {
+      "id": "MI-018",
+      "section": "名人モード > 名人モードの本文の保存と実行データ",
+      "summary": "作品形式4の scripts の項目は、名人モードの本文で mode \"meijin\" を持ち、targetId と event を持たない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-023",
+        "MC-024",
+        "MC-025"
+      ]
+    },
+    {
+      "id": "MI-019",
+      "section": "名人モード > 名人モードの本文の保存と実行データ",
+      "summary": "名人モードの本文は、書いたとおりの日本語の本文のまま保存され、開き直しても変わらない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-026"
+      ]
+    },
+    {
+      "id": "MI-020",
+      "section": "名人モード > 名人モードの本文の保存と実行データ",
+      "summary": "名人モードの本文は、ブロックの編集状態を持たない",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは「保存した名人の本文の項目に、ブロックの編集状態にあたる欄が一つもない」こと。仕様はその欄の名前を書いていないので、lacks に書く欄名を決められない"
+    },
+    {
+      "id": "MI-021",
+      "section": "名人モード > 名人モードの本文の保存と実行データ",
+      "summary": "プログラム形式3に PartRef・Parallel・ParallelEach・PartExcept・PartRandom・PartPick・PartsTouching・CreatedCopies・PartFamily・PartNearest・PartName・PartState・MoveUntil・TimedRepeat・ActionDefinition などの構文の種類が加わる",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは、名人の本文から作る実行データの木に、表にある構文の種類が現れること。この形式には実行データの木を観察する欄がない"
+    },
+    {
+      "id": "MI-022",
+      "section": "名人モード > 名人モードの本文の保存と実行データ",
+      "summary": "本文の中で作った手順は、プログラム形式3の項目 action:meijin-… に definition（id・ownerId・name・args・scriptId・line）を持って書き出され、作品形式4の actions には入らない",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは、書き出した実行データの項目名と definition の欄、および作品の actions に入らないこと。この形式には実行データの項目を観察する欄がない"
+    },
+    {
+      "id": "MI-023",
+      "section": "名人モード > 名人モードの本文の保存と実行データ",
+      "summary": "「〜から〜までのきょり」「〜になったら」「空」「偶数」「〜の倍数」「〜がコピーなら」「一つ消す」「〜のところへ行く」などは、共通の本文と同じ構文の種類（DISTANCE_TO・WaitUntil・GOTO・GLIDE など）で表される",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは、名人の書き方が実行データの木で、共通の本文と同じ構文の種類（持ち主を決めた DISTANCE_TO、WaitUntil とそのあとの文、長さ・あまりの比較、相手の位置への GOTO・GLIDE など）になること。この形式には実行データの木を観察する欄がない（動作の結果は run の事例で確かめた）"
+    },
+    {
+      "id": "MI-024",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの動きを止める」は、ねこのつづけて動くルールも止める",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは、ねこの「つづけて動くルール」（キーを押している間などの継続の動き）が止まること。仕様に、つづけて動くルールを名人の本文やねこの本文に書く文の例がなく、本文を書けない"
+    },
+    {
+      "id": "MI-025",
+      "section": "名人モード",
+      "summary": "子ども向けの説明は Manual/meijin-mode.html にある",
+      "polarity": "positive",
+      "coverage": "document-only",
+      "reason": "説明文書の所在を案内する文で、確かめる動作がない"
+    },
+    {
+      "id": "MI-026",
+      "section": "資源の上限",
+      "summary": "名人モードで同時に始めた並びも activeTasks に数え、上限（2000）を超えるときは始める前に検査して一つも始めない",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは、上限を超える要求で一つも始まらず誤りになること。同時の流れを2000以上作る世界は、部品500・コピー500の上限の中では作れず、数え方（個々の流れか並びのまとまりか）も仕様にないので、超える境目の数を手計算できない"
+    },
+    {
+      "id": "MI-027",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "動き・見た目・発話・音・ペンの文には主語が要り、主語のない文は作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-059",
+        "MC-060",
+        "MC-061",
+        "MC-062",
+        "MC-063",
+        "MC-064",
+        "MC-065"
+      ]
+    },
+    {
+      "id": "MI-028",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "作品全体への命令（背景をかえる・すべての音を止める・作品の線とスタンプを全部消す）は主語なしで書ける",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-066",
+        "MC-067",
+        "MC-068",
+        "MC-069"
+      ]
+    },
+    {
+      "id": "MI-029",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "「画面は」と書いた文は画面が行う",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-070"
+      ]
+    },
+    {
+      "id": "MI-030",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語のない「1秒待つ」は、この本文全体が待つ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-071"
+      ]
+    },
+    {
+      "id": "MI-031",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "部品を主語にした「待つ」は、その部品だけが待つ（共通の文法を名人の本文で使う）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-072"
+      ]
+    },
+    {
+      "id": "MI-032",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "従属節（もし・あいだ・とき）の主語は「が」、主節の主語は「は」で書く。従属節に「は」で主語を書くと読めない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-073",
+        "MC-074",
+        "MC-075"
+      ]
+    },
+    {
+      "id": "MI-033",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主節の主語を「が」で書いても「は」と同じ意味に読む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-076",
+        "MC-077"
+      ]
+    },
+    {
+      "id": "MI-034",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主節の主語は、次に別の主語を書くまで後の文に引き継がれる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-078",
+        "MC-079"
+      ]
+    },
+    {
+      "id": "MI-035",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "部品の名前はその部品を表す値で、変数・リスト・手順の受け取る値に入れられる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-080",
+        "MC-081"
+      ]
+    },
+    {
+      "id": "MI-036",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "できごとの見出しのない文は、作品を動かしたときに始まる",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-082",
+        "MC-083",
+        "MC-084"
+      ]
+    },
+    {
+      "id": "MI-037",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "手順の中身で主語を書かない文は、呼び出した文の主語が行う",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-247",
+        "MC-248"
+      ]
+    },
+    {
+      "id": "MI-038",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "部品を変数に入れ、その変数を主語にすると、実行するときに変数に入っている部品が動作する",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-085",
+        "MC-086",
+        "MC-087",
+        "MC-088",
+        "MC-089",
+        "MC-092",
+        "MC-093",
+        "MC-094"
+      ]
+    },
+    {
+      "id": "MI-039",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「もし主役がねこなら」は、入っている部品と名前で書いた部品が同じかを調べる",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-090",
+        "MC-095",
+        "MC-096"
+      ]
+    },
+    {
+      "id": "MI-040",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「〜の名前」は部品の名前の文字を表し、部品が「名前」という変数を持つときは作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-091",
+        "MC-097",
+        "MC-098",
+        "MC-099"
+      ]
+    },
+    {
+      "id": "MI-041",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "作品ファイルに保存する変数の最初の値には部品を使えない（部品の値を入れられるのは実行中だけ）",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは、変数の最初の値に部品を指定した作品が受け付けられないこと。世界の変数の最初の値は数・文字・リストで書く形式で、部品を指定する書き方がない（文字「ねこ」は部品の値ではない）。「実行中には変数に入れられる」ことは c_var の事例で確かめた"
+    },
+    {
+      "id": "MI-042",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "消えたコピーを指す値を主語にすると、実行の誤り R405 で止まる",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-100",
+        "MC-101",
+        "MC-102"
+      ]
+    },
+    {
+      "id": "MI-043",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "拡張機能には部品の値をわたせない",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは、拡張機能の呼び出し（拡張「拡張名」「機能名」（引数））に部品の値（主役など）をわたした本文が断られること。拡張機能の登録を世界に書く欄がなく、登録のない拡張は部品の値と無関係に未登録として止まるので、部品の値をわたしたことが理由の停止かを区別できない"
+    },
+    {
+      "id": "MI-044",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「なかまを、ねこと犬と鳥にする」で部品の集まりを変数に入れられ、「なかまの数」は集まりに入っている部品の数になる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-103",
+        "MC-104",
+        "MC-105",
+        "MC-106",
+        "MC-107"
+      ]
+    },
+    {
+      "id": "MI-045",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「みんな」は集まりの全員が同時に始め、全員が終わってから次の文へ進む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-108",
+        "MC-109",
+        "MC-110"
+      ]
+    },
+    {
+      "id": "MI-046",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「それぞれ」は集まりの全員が同時に始め、その文の「自分」はそれぞれの部品になる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-111",
+        "MC-112",
+        "MC-113",
+        "MC-114",
+        "MC-115",
+        "MC-116"
+      ]
+    },
+    {
+      "id": "MI-047",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「順番に」は集まりの並び順に一人ずつ、前の部品が終わってから次の部品が行う",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-117",
+        "MC-118",
+        "MC-119"
+      ]
+    },
+    {
+      "id": "MI-048",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「ねこ以外のなかま」は集まりからその部品を除いたもの",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-120",
+        "MC-121"
+      ]
+    },
+    {
+      "id": "MI-049",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「ほかのなかま」は集まりから直前の文の主語を除いたもの。直前の文に主語がなければ作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-122",
+        "MC-123",
+        "MC-124",
+        "MC-125"
+      ]
+    },
+    {
+      "id": "MI-050",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「なかまのだれか一人」は集まりから乱数で一人を選ぶ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-126",
+        "MC-127",
+        "MC-128"
+      ]
+    },
+    {
+      "id": "MI-051",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "手順の受け取る値に部品を入れると、手順の中で主語にできる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-129",
+        "MC-130",
+        "MC-131",
+        "MC-132",
+        "MC-133"
+      ]
+    },
+    {
+      "id": "MI-052",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「できたコピー」は、その流れで最後にコピーを作った文が作ったコピーの集まり（元の部品と消えたコピーは含まない）。「消える」はそのコピーを消し、コピーでない部品に使うと作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-134",
+        "MC-135",
+        "MC-136",
+        "MC-137",
+        "MC-138",
+        "MC-139",
+        "MC-140",
+        "MC-141"
+      ]
+    },
+    {
+      "id": "MI-053",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「〜にふれているもの」「〜にふれている星」は、その文を実行したときに当てはまる部品すべて。なければ何もしない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-142",
+        "MC-143",
+        "MC-144",
+        "MC-145",
+        "MC-146",
+        "MC-147",
+        "MC-148",
+        "MC-149",
+        "MC-150"
+      ]
+    },
+    {
+      "id": "MI-054",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「〜のうち、…ほう」は比べて一つに決まった部品が動作し、同じ値で決まらないときはだれも動作しない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-151",
+        "MC-152",
+        "MC-153",
+        "MC-154",
+        "MC-155",
+        "MC-156",
+        "MC-157",
+        "MC-158",
+        "MC-159",
+        "MC-160",
+        "MC-161"
+      ]
+    },
+    {
+      "id": "MI-055",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「いちばん…もの」は比べて一つに決まった部品が動作し、同じ値で決まらないときはだれも動作しない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-162",
+        "MC-163",
+        "MC-164",
+        "MC-165",
+        "MC-166",
+        "MC-167"
+      ]
+    },
+    {
+      "id": "MI-056",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「いちばん近い」は主語の部品からのきょりがいちばん小さいもの。同じきょりが二つ以上なら「〜の方を向く」ではだれも向かない。ほかの文では作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-168",
+        "MC-169",
+        "MC-170",
+        "MC-171",
+        "MC-172",
+        "MC-173",
+        "MC-391"
+      ]
+    },
+    {
+      "id": "MI-057",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「いちばん近い」の「〜までのきょり」は、同じきょりのものが二つ以上あるときそのきょりになる",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは、同じきょりの星が二つあるとき「〜までのきょり」の値がそのきょりになること。「いちばん近い…までのきょり」を主語つきの文にした書き方の例が仕様になく、文の形を決められない"
+    },
+    {
+      "id": "MI-058",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「〜から〜までのきょり」は二つの部品の中心の間のきょり（歩）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-174",
+        "MC-175"
+      ]
+    },
+    {
+      "id": "MI-059",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "主語を並べた文（ねことだんごは、…／ねこもだんごも、…）は、書いた動作を同時に始め、全部が終わってから次の文へ進む",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-176",
+        "MC-177",
+        "MC-178",
+        "MC-179",
+        "MC-180",
+        "MC-181",
+        "MC-182",
+        "MC-183",
+        "MC-184",
+        "MC-185"
+      ]
+    },
+    {
+      "id": "MI-060",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「Aあいだ、B」はAとBの動作を同時に始め、全部が終わってから次の文へ進む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-186",
+        "MC-187",
+        "MC-188"
+      ]
+    },
+    {
+      "id": "MI-061",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「Aているうちに、B」はAとBの動作を同時に始め、全部が終わってから次の文へ進む。前に動作の量がない形（「ねこが動いているうちに」）は作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-189",
+        "MC-190",
+        "MC-191",
+        "MC-192"
+      ]
+    },
+    {
+      "id": "MI-062",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「Aながら、B」はAとBの動作を同時に始め、全部が終わってから次の文へ進む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-193",
+        "MC-194"
+      ]
+    },
+    {
+      "id": "MI-063",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「次のことを同時に始める」は、字下げした文を一文ずつ同時に始め、全部が終わってから次の文へ進む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-195",
+        "MC-196",
+        "MC-197",
+        "MC-198"
+      ]
+    },
+    {
+      "id": "MI-064",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "同時に始める一つの文の中を「〜して、」でつないだ動作は、その文の中では順に行う",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-201"
+      ]
+    },
+    {
+      "id": "MI-065",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「〜あいだ」の前が状態（点数が3より小さいあいだ）のときは、これまでどおり条件のくり返しとして読む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-202"
+      ]
+    },
+    {
+      "id": "MI-066",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "同時に始めた動作は、いちばん長いものが終わってから次の文へ進む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-199",
+        "MC-200"
+      ]
+    },
+    {
+      "id": "MI-067",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びは、同じ本文の「この中だけ」の変数と、「一つずつ見て」の呼び名を共有する",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-203",
+        "MC-204",
+        "MC-397"
+      ]
+    },
+    {
+      "id": "MI-068",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びの中の主語のない「1秒待つ」は、その並びだけが待つ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-205"
+      ]
+    },
+    {
+      "id": "MI-069",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びの中の「この動きを止める」は、本文全体と、ほかの並びを止める",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-206"
+      ]
+    },
+    {
+      "id": "MI-070",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びの中の「このくり返しを終える」「この回の残りをとばして、次の回へ進む」「答えとして返す」は作品チェックで止める",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-207",
+        "MC-208",
+        "MC-209",
+        "MC-494"
+      ]
+    },
+    {
+      "id": "MI-071",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びの中で実行の誤りが起きると、本文全体を止める",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-210"
+      ]
+    },
+    {
+      "id": "MI-072",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びの中で「たずねる」と、質問は一つずつ順に出る",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-211"
+      ]
+    },
+    {
+      "id": "MI-073",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びの中に並びを書ける（終わると activeTasks は0に戻る）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-212"
+      ]
+    },
+    {
+      "id": "MI-074",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「〜あいだ」の前が動作（量のある動き）か状態（条件の活用）かは、述語が条件の活用にあるかで決まる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-213",
+        "MC-214",
+        "MC-215"
+      ]
+    },
+    {
+      "id": "MI-075",
+      "section": "資源の上限",
+      "summary": "名人モードで同時に始めた並び（次のことを同時に始める・みんな）も activeTasks に数え、すべて終わると動いている流れは0になる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-216",
+        "MC-217",
+        "MC-218"
+      ]
+    },
+    {
+      "id": "MI-076",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "「〜まで…動き続ける」は決めた速さで、条件が成り立つこまの位置まで動き続け、本文はそのあいだ待つ。速さを書かないと作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-219",
+        "MC-220",
+        "MC-221",
+        "MC-222",
+        "MC-223",
+        "MC-224",
+        "MC-225",
+        "MC-226",
+        "MC-227"
+      ]
+    },
+    {
+      "id": "MI-077",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "「〜秒のあいだ…動き続ける」は、こまの途中でもちょうどその時間で止まる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-228",
+        "MC-229",
+        "MC-230"
+      ]
+    },
+    {
+      "id": "MI-078",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "「〜秒のあいだ、くり返す」は、各回のはじめに残りの時間を調べ、過ぎていれば終える",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-231",
+        "MC-232",
+        "MC-233"
+      ]
+    },
+    {
+      "id": "MI-079",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "「〜秒のあいだ」は、その文を始めたときから時間を数える",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-234"
+      ]
+    },
+    {
+      "id": "MI-080",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "「〜秒のあいだ」は一時停止中は数えない",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "一時停止の操作は画面の操作でだけ行える（実行の入力に一時停止がない）",
+      "cases": [
+        "MC-235"
+      ]
+    },
+    {
+      "id": "MI-081",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "「動き続ける」は画面の更新の間隔や重さで止まる位置が変わらない",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは、画面の更新の間隔や重さを変えても止まる位置が同じこと。この形式では更新の間隔や負荷を変えられず、論理時計の結果を一つだけ書ける"
+    },
+    {
+      "id": "MI-082",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "「〜になったら」は、本文全体がそうなるまで待ってから次の動作をする（一回だけ）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-236",
+        "MC-237",
+        "MC-238",
+        "MC-239",
+        "MC-240"
+      ]
+    },
+    {
+      "id": "MI-083",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "「〜という手順を、次のように作る」は手順を登録するだけで、実行しない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-241",
+        "MC-245"
+      ]
+    },
+    {
+      "id": "MI-084",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "登録した手順を「ねこは【ジャンプ】という手順を行う」で呼べる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-243",
+        "MC-244",
+        "MC-246"
+      ]
+    },
+    {
+      "id": "MI-085",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "受け取る値の名前は、見出しでは【 】なしで書け、中身では【 】で囲む",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-242",
+        "MC-249",
+        "MC-250"
+      ]
+    },
+    {
+      "id": "MI-086",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "本文の中で作った手順は、ほかの本文からも呼べる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-251"
+      ]
+    },
+    {
+      "id": "MI-087",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "同じ名前の手順は作れない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-252",
+        "MC-253"
+      ]
+    },
+    {
+      "id": "MI-088",
+      "section": "名人モード > 名人のできごと",
+      "summary": "「AがBにふれたとき」は、ふれていない状態からふれた状態に変わるたびに始まる",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-254",
+        "MC-255",
+        "MC-256",
+        "MC-257",
+        "MC-258",
+        "MC-259"
+      ]
+    },
+    {
+      "id": "MI-089",
+      "section": "名人モード > 名人のできごと",
+      "summary": "「〜になったとき」は、条件が成り立たない状態から成り立つ状態に変わるたびに始まり、動かした時点で成り立っていれば一回始まる",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-260",
+        "MC-261",
+        "MC-262",
+        "MC-263",
+        "MC-264"
+      ]
+    },
+    {
+      "id": "MI-090",
+      "section": "名人モード > 名人のできごと",
+      "summary": "「〜秒ごとに」は、動かしてから決めた時間ごとに新しく始まり、前の回が終わっていなくても始まる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-265",
+        "MC-266",
+        "MC-267",
+        "MC-268"
+      ]
+    },
+    {
+      "id": "MI-091",
+      "section": "名人モード > 名人のできごと",
+      "summary": "「〜秒ごとに」の時間にへんすうは書けない",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-269"
+      ]
+    },
+    {
+      "id": "MI-092",
+      "section": "名人モード > 名人のできごと",
+      "summary": "変わる間かくでくり返すときは「ずっとくり返す。」の中に「間隔秒待つ。」と書く",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-270",
+        "MC-271"
+      ]
+    },
+    {
+      "id": "MI-093",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「ねこは、だんごのところへ行く」は、文を実行したときの相手の位置へ行く",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-272",
+        "MC-281",
+        "MC-282",
+        "MC-283"
+      ]
+    },
+    {
+      "id": "MI-094",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「ねこは、だんごのところへ1秒かけて動く」は、動いている途中で相手が動いても行き先を変えない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-273",
+        "MC-284"
+      ]
+    },
+    {
+      "id": "MI-095",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「もしねこが犬より右にいれば」は、よこのばしょが大きいことを調べる（左・上・下も同様）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-274",
+        "MC-285",
+        "MC-286",
+        "MC-287",
+        "MC-288",
+        "MC-289",
+        "MC-290"
+      ]
+    },
+    {
+      "id": "MI-096",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「ねこは、持ち物を一つずつ順に2秒話す」は、リストの先頭から一つずつ、話し終えてから次へ進み、空なら何もしない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-275",
+        "MC-291",
+        "MC-292"
+      ]
+    },
+    {
+      "id": "MI-097",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「持ち物から「本」を一つ消す」は先頭に近いもの一つを、「全部消す」は同じものをすべて消し、ないときは何もしない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-276",
+        "MC-277",
+        "MC-293",
+        "MC-294",
+        "MC-295",
+        "MC-296"
+      ]
+    },
+    {
+      "id": "MI-098",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「一つ」か「全部」かを書かない「持ち物から「本」を消す」は、数が決まらないため止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-297",
+        "MC-298",
+        "MC-299"
+      ]
+    },
+    {
+      "id": "MI-099",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「もし持ち物が空なら」は、リストの長さが0のとき成り立つ",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-278",
+        "MC-300",
+        "MC-301"
+      ]
+    },
+    {
+      "id": "MI-100",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「もし点数が偶数なら」は、2で割ったあまりが0のとき成り立つ（共通の本文では読めない）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-279",
+        "MC-302",
+        "MC-303",
+        "MC-304",
+        "MC-305"
+      ]
+    },
+    {
+      "id": "MI-140",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「もし点数が奇数なら」は、2で割ったあまりが1か－1のとき成り立つ（－3も奇数）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-408",
+        "MC-409"
+      ]
+    },
+    {
+      "id": "MI-101",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「もし点数が10の倍数なら」は、10で割ったあまりが0のとき成り立つ",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-280",
+        "MC-306",
+        "MC-307",
+        "MC-308"
+      ]
+    },
+    {
+      "id": "MI-102",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの大きさを120％にする」は、共通の「ねこは大きさを120％にする」と同じ命令",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-309",
+        "MC-328"
+      ]
+    },
+    {
+      "id": "MI-103",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの向きを90度にする」は、ねこの向きを90度にする",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-312",
+        "MC-329"
+      ]
+    },
+    {
+      "id": "MI-104",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこのよこのばしょを100にする」は、ねこのよこのばしょを100にする",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-313",
+        "MC-330"
+      ]
+    },
+    {
+      "id": "MI-105",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの色を「赤」にする」「ねこのすがたを「えがお」にかえる」「ねこのペンの色を「青」にする」「ねこの音の大きさを50％にする」を読める",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-310",
+        "MC-311",
+        "MC-314",
+        "MC-315"
+      ]
+    },
+    {
+      "id": "MI-106",
+      "section": "名人モード > 名人の命令",
+      "summary": "色・すがた・ペンの色・音の大きさを変えた結果が、共通の「表示色」などの命令と同じになる",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは、表示色・すがた・ペンの色・音の大きさの値が変わること。実行の観察に使える欄は位置・向き・大きさ・表示・変数・リストだけで、色・すがた・ペン・音量を読む欄がない"
+    },
+    {
+      "id": "MI-107",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの体力を1減らす」のように、部品のデータを「の」で読み書きできる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-316",
+        "MC-331",
+        "MC-332",
+        "MC-333"
+      ]
+    },
+    {
+      "id": "MI-108",
+      "section": "名人モード > 名人の命令",
+      "summary": "部品が同じ名前の変数（例：変数「大きさ」）を持つとき、「ねこの大きさを…」は作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-334",
+        "MC-335"
+      ]
+    },
+    {
+      "id": "MI-109",
+      "section": "名人モード > 名人の命令",
+      "summary": "「犬に「出発」と知らせる」は、犬の「合図を受けたとき」の本文だけを始める。合図を受ける本文がない部品には何も起きない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-317",
+        "MC-336",
+        "MC-340"
+      ]
+    },
+    {
+      "id": "MI-110",
+      "section": "名人モード > 名人の命令",
+      "summary": "「犬と鳥に「出発」と知らせる」は、書いた部品すべての「合図を受けたとき」の本文を始める",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-318",
+        "MC-337",
+        "MC-338",
+        "MC-339"
+      ]
+    },
+    {
+      "id": "MI-111",
+      "section": "名人モード > 名人の命令",
+      "summary": "「犬に「出発」と知らせて、その合図で始まったことが全部終わるまで待つ」は、同じ相手に限って使える",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-341",
+        "MC-342"
+      ]
+    },
+    {
+      "id": "MI-112",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの動きを止める」は、ねこの本文（ねこのできごとで始まった本文）を止める。ほかの本文は止めない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-319",
+        "MC-343",
+        "MC-344"
+      ]
+    },
+    {
+      "id": "MI-113",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの動きを止める」は、ほかの流れでねこが動いているとき、その動きをその場で終え、その流れは次の文へ進む",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-345",
+        "MC-346",
+        "MC-347",
+        "MC-348"
+      ]
+    },
+    {
+      "id": "MI-114",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの動きを止める」は、話すこと・待つことは止めない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-349",
+        "MC-350"
+      ]
+    },
+    {
+      "id": "MI-115",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの動きを止める」はコピーを含まず、コピーは「ねこのコピーの動きを止める」で止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-351",
+        "MC-352"
+      ]
+    },
+    {
+      "id": "MI-116",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの音を止める」は、ねこが鳴らしている音だけを止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-320",
+        "MC-353",
+        "MC-354",
+        "MC-355"
+      ]
+    },
+    {
+      "id": "MI-117",
+      "section": "名人モード > 名人の命令",
+      "summary": "「星のコピーを全部消す」は、星のコピーをすべて消し、元の星は消さない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-321",
+        "MC-356",
+        "MC-357"
+      ]
+    },
+    {
+      "id": "MI-118",
+      "section": "名人モード > 名人の命令",
+      "summary": "「もしねこがコピーなら」は、ねこがコピーのときに成り立つ（名前で書いたねこは元の部品）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-322",
+        "MC-358"
+      ]
+    },
+    {
+      "id": "MI-119",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこが話し終わるまで待つ」は、ねこの時間を書いた発話が終わるまで待ち、時間を書かない発話はすぐ終わったものとみなす",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-323",
+        "MC-361",
+        "MC-362"
+      ]
+    },
+    {
+      "id": "MI-120",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの音が鳴り終わるまで待つ」は、ねこが鳴らしている音がすべて終わるまで待つ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-324",
+        "MC-363",
+        "MC-364"
+      ]
+    },
+    {
+      "id": "MI-121",
+      "section": "名人モード > 名人の命令",
+      "summary": "「星のコピーの数」は、星のコピーの数を表す",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-325",
+        "MC-359",
+        "MC-360"
+      ]
+    },
+    {
+      "id": "MI-122",
+      "section": "名人モード > 名人の命令",
+      "summary": "「作品の線とスタンプを全部消す」は作品全体への命令として主語なしで書ける",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-326",
+        "MC-327"
+      ]
+    },
+    {
+      "id": "MI-123",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "「名人モードでも読めない書き方」の例の24文を続けた本文は、1行目で止まる",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-392"
+      ]
+    },
+    {
+      "id": "MI-124",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "理由・逆接（ので・ても・のに）の文は読めず、作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-365",
+        "MC-366",
+        "MC-367",
+        "MC-368"
+      ]
+    },
+    {
+      "id": "MI-125",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "例示「〜たり」、何の回数か決まらない「3回目に」、まねる範囲の決まらない「〜のように」、お願いの形（〜てください）の文は読めず、作品チェックで止める",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-369",
+        "MC-379",
+        "MC-383",
+        "MC-384"
+      ]
+    },
+    {
+      "id": "MI-126",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "量や時間の決まらない言葉（ゆっくり・近く・しばらく・となり）の文は読めず、作品チェックで止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-370",
+        "MC-371",
+        "MC-372",
+        "MC-373",
+        "MC-374"
+      ]
+    },
+    {
+      "id": "MI-127",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "指す相手の決まらない「それ」「その子」の文は読めず、作品チェックで止める",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-375",
+        "MC-376"
+      ]
+    },
+    {
+      "id": "MI-128",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "受け手に意味のない「〜てあげる」「話しかける」の文は読めず、作品チェックで止める",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-377",
+        "MC-378"
+      ]
+    },
+    {
+      "id": "MI-129",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "速さのない「動き始める」「はしまで進む」の文は読めず、作品チェックで止める",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-380",
+        "MC-381"
+      ]
+    },
+    {
+      "id": "MI-130",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "受け取る値への対応が決まらない名詞句（「一辺が20歩の四角をかく」）は読めず、「【一辺の長さ】を20歩として、【四角をかく】という手順を行う」の形を案内する",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-385",
+        "MC-386"
+      ]
+    },
+    {
+      "id": "MI-131",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "漢数字（「十歩」）の文は読めず、数字の書き方（「十歩」→「10歩」）を案内する",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-387",
+        "MC-388"
+      ]
+    },
+    {
+      "id": "MI-132",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "流れの中に書いた「ねこがおされると、」は、できごとの見出しか、その時を待つのかが決まらないため読めない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-389",
+        "MC-390",
+        "MC-398"
+      ]
+    },
+    {
+      "id": "MI-133",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "部品の集まりはリストに入れる。集まりを変数に入れる文は作品チェックで止め、できたコピーやふれているものの集まりもリストに入れられる",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-393",
+        "MC-394",
+        "MC-395",
+        "MC-396"
+      ]
+    },
+    {
+      "id": "MI-134",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語は、その文に書くか前の文から引き継ぐ。引き継ぐ主語がない文に主語がないときは止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-399",
+        "MC-400"
+      ]
+    },
+    {
+      "id": "MI-135",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "見出しの行のあとの、右へずらしていない文は見出しのない文で、作品を動かしたときに始まる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-401"
+      ]
+    },
+    {
+      "id": "MI-136",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "コピーは元の部品と同じではない。まだコピーを作っていないときの「できたコピー」は空の集まりで、何もしない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-402",
+        "MC-403"
+      ]
+    },
+    {
+      "id": "MI-137",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「いちばん近い〜までのきょり」は主語の部品からのきょりで、主語を書く",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-404"
+      ]
+    },
+    {
+      "id": "MI-138",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "「〜になったら」は、待ち始めたときにもうそうなっていれば待たずに次の動作をする",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-405"
+      ]
+    },
+    {
+      "id": "MI-139",
+      "section": "名人モード > 名人のできごと",
+      "summary": "「〜秒ごとに」の最初の回は決めた時間がたったとき。0や負の数は止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-406",
+        "MC-407"
+      ]
+    },
+    {
+      "id": "MI-158",
+      "section": "名人モード > 名人のできごと",
+      "summary": "「〜にふれたら、」は、ふれるまで待ってから一度だけ行う",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-440"
+      ]
+    },
+    {
+      "id": "MI-159",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "部品を入れた変数（主役）は、主語のほか「主役の大きさを…にする」「〜は、主役のところへ行く」にも書ける",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-441",
+        "MC-442",
+        "MC-443",
+        "MC-444"
+      ]
+    },
+    {
+      "id": "MI-160",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「ほかの」は、引き継いでいる主語の部品を除く。引き継ぐ主語がなく、すぐ前の主語が集まりのときは止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-445",
+        "MC-446"
+      ]
+    },
+    {
+      "id": "MI-161",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語を並べた文・「もし」の文の主語は引き継がず、そのあとの主語のない文は止める",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-447",
+        "MC-448"
+      ]
+    },
+    {
+      "id": "MI-162",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「ほう」は二つの部品のとき。三つ以上・集まりは「いちばん…もの」で書き、「いちばん」のない「もの」は止める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-449",
+        "MC-450",
+        "MC-451"
+      ]
+    },
+    {
+      "id": "MI-163",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "部品を「や」でつなぐ文は止め、「と」でつなぐよう案内する",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-452",
+        "MC-453"
+      ]
+    },
+    {
+      "id": "MI-164",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「〜の約数」は、0より大きい整数のときだけ成り立つ",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-454",
+        "MC-455",
+        "MC-456"
+      ]
+    },
+    {
+      "id": "MI-165",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "並びの中で作ったコピーも、並びが終わるとその流れの「できたコピー」になる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-457"
+      ]
+    },
+    {
+      "id": "MI-166",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "受け取る値は「と」「、」で区切る。【 】で囲んだ名前は区切らない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-458",
+        "MC-459"
+      ]
+    },
+    {
+      "id": "MI-167",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「1秒かけて、〜のところへ動く」「〜のところへ1秒かけて動く」「〜まで行く」は「〜のところへ行く」と同じ行き先へ行く",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-460",
+        "MC-461",
+        "MC-462"
+      ]
+    },
+    {
+      "id": "MI-168",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「ぐうすう」「き数」「ばい数」「やくすう」も、漢字の書き方と同じに読む",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-463"
+      ]
+    },
+    {
+      "id": "MI-169",
+      "section": "名人モード > 名人のできごと",
+      "summary": "「犬が「出発」の合図を受けたとき、」は、「「出発」という合図を受けたとき、犬は、」と同じ見出し",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-464"
+      ]
+    },
+    {
+      "id": "MI-170",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「一つずつ順に2秒話す」の2秒は、一つにつきの時間",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-465"
+      ]
+    },
+    {
+      "id": "MI-171",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「〜のうち、ねこにいちばん近いもの」は、ねこからのきょりがいちばん小さい部品",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-466"
+      ]
+    },
+    {
+      "id": "MI-172",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「〜のところへ行く」は、動いた部品の中心を相手の中心にそろえる。途中で相手が動いても行き先は変えない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-467",
+        "MC-468"
+      ]
+    },
+    {
+      "id": "MI-173",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "見出しの主語が「自分」の本文は、見出しの主語を持ち主の名前で書き直して名人の本文にする",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-469"
+      ]
+    },
+    {
+      "id": "MI-174",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "部品と同じ名前の変数があるとき、値・行き先・くらべる文に書いた名前も止める（R4）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-470",
+        "MC-471",
+        "MC-472"
+      ]
+    },
+    {
+      "id": "MI-175",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「〜のうち、ねこにいちばん近いもの」は、ねこ自身を入れずに選ぶ（R5）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-473"
+      ]
+    },
+    {
+      "id": "MI-176",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「近い」も、「ほう」は二つ、三つ以上は「いちばん…もの」で書く（R6）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-474",
+        "MC-475"
+      ]
+    },
+    {
+      "id": "MI-177",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "比べて選んだ部品は、変数ではなくリストに入れる（R7）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-476",
+        "MC-477"
+      ]
+    },
+    {
+      "id": "MI-178",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "主語を並べた「待つ」でも、ほかの部品の次の文はすぐ行い、そのことを知らせる（R9）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-478",
+        "MC-479"
+      ]
+    },
+    {
+      "id": "MI-179",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "「作品を動かしたとき、ねこは、」の中身の主語のない文は、ねこが行う（R10）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-480"
+      ]
+    },
+    {
+      "id": "MI-180",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "「2回目に」の案内は、書いた数で、数える変数の書き方を示す（R15）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-481"
+      ]
+    },
+    {
+      "id": "MI-181",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「ねこも犬も鳥も、…」は三つの部品を並べた文（R16）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-482"
+      ]
+    },
+    {
+      "id": "MI-182",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "主語のちがう「〜ながら」は止まり、「〜あいだ」を案内する（R16）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-483",
+        "MC-484"
+      ]
+    },
+    {
+      "id": "MI-183",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "受け取る値が二つの呼び出しは、「、」でも「として、」を重ねても書ける（R16）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-485"
+      ]
+    },
+    {
+      "id": "MI-184",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "速さを書いて「〜まで…動く」と書いた文は止まり、「動き続ける」を案内する（R16）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-486"
+      ]
+    },
+    {
+      "id": "MI-185",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "変数に入れたコピーでない部品の「消える」は、行うときに R406 で止まる（R21）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-487"
+      ]
+    },
+    {
+      "id": "MI-186",
+      "section": "名人モード > 名人モードの本文の保存と実行データ",
+      "summary": "部品の本文の「自分は、だんごのところへ行く。」は、名人の書き方であることを案内する（R23）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-488"
+      ]
+    },
+    {
+      "id": "MI-187",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "手順の中身で前の文から主語を引き継ぐ文は、その主語が行う（R27）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-489"
+      ]
+    },
+    {
+      "id": "MI-188",
+      "section": "名人モード > 名人のできごと",
+      "summary": "「〜秒ごとに」の時間に計算を書くと止まり、数だけを書くよう案内する（R30）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-490"
+      ]
+    },
+    {
+      "id": "MI-189",
+      "section": "名人モード > 時間で区切る・続ける",
+      "summary": "並びの中の「〜になったら」は、その並びだけが待つ（R36）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-491"
+      ]
+    },
+    {
+      "id": "MI-190",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びの中に書いた並びの文は、外の並びの文のあとに行う（R37）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-492"
+      ]
+    },
+    {
+      "id": "MI-191",
+      "section": "名人モード > 名人モードでも読めない書き方",
+      "summary": "部品の名前の中の「ちょっと」は、名前なら【 】で囲むよう案内する（R38）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-493"
+      ]
+    },
+    {
+      "id": "MI-192",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "別の主語を中に書いた文のあとの主語のない文は止まる。「〜ながら」はその部品を引き継ぐ（R1・R2 の判断 X）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-495",
+        "MC-496",
+        "MC-497",
+        "MC-498",
+        "MC-499",
+        "MC-500",
+        "MC-501",
+        "MC-502",
+        "MC-503"
+      ]
+    },
+    {
+      "id": "MI-193",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語を引き継いだ、相手を書く命令も、その主語の待ちのあとに行う（R3 の判断 A）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-504",
+        "MC-505",
+        "MC-506",
+        "MC-507"
+      ]
+    },
+    {
+      "id": "MI-194",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "前の文の主語があっても、主語を書かない「待つ」は本文全体が待つ（R8 の判断 A）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-508"
+      ]
+    },
+    {
+      "id": "MI-195",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「〜の倍数」「〜の約数」の〜は0より大きい整数。0や小数は止める（R13 の判断 A）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-509",
+        "MC-510",
+        "MC-511"
+      ]
+    },
+    {
+      "id": "MI-196",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「偶数」などは、ほかの条件と「〜で、」「かつ」でつなげる。三つ以上は「かつ」（R14 の判断 B）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-512",
+        "MC-513",
+        "MC-514",
+        "MC-515",
+        "MC-516"
+      ]
+    },
+    {
+      "id": "MI-197",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「一つずつ順に2秒ずつ言う」「順に2秒ずつ言う」は一つにつき2秒。「順に2秒話す」は止める（R18 の判断 A）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-517",
+        "MC-518",
+        "MC-519"
+      ]
+    },
+    {
+      "id": "MI-198",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "ほかのものが一つもないとき、「いちばん近い〜の方を向く」はだれも向かず、次の文へ進む（R22 の判断 A）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-520"
+      ]
+    },
+    {
+      "id": "MI-199",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主役から引き継いだ主語は、文を行うときに主役に入っている部品（R28 の判断 A）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-521"
+      ]
+    },
+    {
+      "id": "MI-200",
+      "section": "名人モード > 名人の命令",
+      "summary": "「〜が言い終わるまで待つ」は「〜が話し終わるまで待つ」と同じ（R32 の判断 A）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-382"
+      ]
+    },
+    {
+      "id": "MI-201",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "名人の書き方の入った部品の本文も、名人モードにできる（R1）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-522"
+      ]
+    },
+    {
+      "id": "MI-202",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "本文の中で作った手順の名前は、部品・変数・受け取る値と同じ名前に変えられない（R2）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-523",
+        "MC-524",
+        "MC-525"
+      ]
+    },
+    {
+      "id": "MI-203",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「偶数」などは、条件のどの項にも書け、「〜のあいだ」でもつなげる（R5）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-526",
+        "MC-527",
+        "MC-528",
+        "MC-529",
+        "MC-530"
+      ]
+    },
+    {
+      "id": "MI-204",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "名人の書き方も、主語を書かなければ前の文の主語が行う（R7）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-531",
+        "MC-532",
+        "MC-533",
+        "MC-534"
+      ]
+    },
+    {
+      "id": "MI-205",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "リストの名前を【 】で囲んでも、「一つ消す」「順に〜ずつ言う」で読む（R23）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-535",
+        "MC-536"
+      ]
+    },
+    {
+      "id": "MI-206",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "中に主語を書いた「もし」のあとは、前と同じ主語でも引き継がない（R11）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-537"
+      ]
+    },
+    {
+      "id": "MI-207",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びは一つの動作ずつ順に進み、手順を行う並びは、ほかの並びのあとに中身を始める（R16・R17）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-538",
+        "MC-539"
+      ]
+    },
+    {
+      "id": "MI-208",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "部品と同じ名前のリストを主語に書くと、「みんな」があってもなくても止める（R24）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-540",
+        "MC-541"
+      ]
+    },
+    {
+      "id": "MI-209",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "待っている部品のあとの、すぐ行う命令の知らせは「この 文は すぐ 行います」（R26）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-542"
+      ]
+    },
+    {
+      "id": "MI-210",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "「2秒ずつ順に言う」も読み、「順に言う」「順に2秒言う」には書いた言葉で案内する（R28）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-543",
+        "MC-544",
+        "MC-545"
+      ]
+    },
+    {
+      "id": "MI-211",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "負の数や名前の「〜の倍数」にも、整数を書くよう案内する（R34）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-546",
+        "MC-547"
+      ]
+    },
+    {
+      "id": "MI-212",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「と」と「も」をまぜて部品を並べると止め、どちらかで並べるよう案内する（R35）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-548"
+      ]
+    },
+    {
+      "id": "MI-213",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "「〜秒のあいだ、ねこは…動き続ける。」のあとは、ねこを引き継ぐ（R36）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-549"
+      ]
+    },
+    {
+      "id": "MI-214",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "見出しの中身は、読点のあとの文と右へずらした文の両方に書ける（R37）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-550"
+      ]
+    },
+    {
+      "id": "MI-215",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "見出しの「自分は、」は、見出しの行で部品の名前を書くよう案内する（R38）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-551"
+      ]
+    },
+    {
+      "id": "MI-216",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語のない呼び出しの案内の例には、書いた値も入れる（R39）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-552"
+      ]
+    },
+    {
+      "id": "MI-217",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "どの見出しのあとにも主語だけの行を書け、その部品が中身の主語のない文を行う（R3）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-553",
+        "MC-554"
+      ]
+    },
+    {
+      "id": "MI-218",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "「〜あいだ」の前に部品を並べて書ける（R4）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-555",
+        "MC-556"
+      ]
+    },
+    {
+      "id": "MI-219",
+      "section": "名人モード > 国語として自然な書き方",
+      "summary": "あとの条件の主語は、前の条件と同じなら省ける（R6）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-557",
+        "MC-558"
+      ]
+    },
+    {
+      "id": "MI-220",
+      "section": "名人モード > 名人の命令",
+      "summary": "「ねこの大きさを…にする」は主語を変えず、引き継いだ部品の待ちのあとに行う（R8）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-559",
+        "MC-560"
+      ]
+    },
+    {
+      "id": "MI-221",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "並びの中の主語がすべて同じなら、その主語を引き継ぐ（R9）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-561"
+      ]
+    },
+    {
+      "id": "MI-222",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "主語のちがう文を「〜て、」でつないだ文のあとは、主語を引き継がない（R10）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-562"
+      ]
+    },
+    {
+      "id": "MI-223",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "見出しの中身と手順の中身でも、別の主語の文のあとの主語のない文は止まる（R12）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-563",
+        "MC-564"
+      ]
+    },
+    {
+      "id": "MI-224",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "「〜がおされたとき、」の中身はおされた部品が行い、「〜が〜にふれたとき、」の中身には主語を書く（R13）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-565",
+        "MC-566"
+      ]
+    },
+    {
+      "id": "MI-225",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "待っている部品の文の後ろの文と、引き継いだ変数の文も待つ（R14）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "MC-567",
+        "MC-568"
+      ]
+    },
+    {
+      "id": "MI-226",
+      "section": "名人モード > 一つの流れで同時に行う",
+      "summary": "並びのそれぞれの文は、並びの前の主語から始める（R15）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-569",
+        "MC-570"
+      ]
+    },
+    {
+      "id": "MI-227",
+      "section": "名人モード > 名人モードの本文の決まり",
+      "summary": "見出しの主語に変数やいくつかの部品を書くと、部品の名前を一つ書くよう案内する（R18）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-571",
+        "MC-572"
+      ]
+    },
+    {
+      "id": "MI-228",
+      "section": "名人モード > 名人の命令",
+      "summary": "「言い終わるまで待つ」の近い書き方には、読める形を案内する（R19）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-573",
+        "MC-574",
+        "MC-575"
+      ]
+    },
+    {
+      "id": "MI-229",
+      "section": "名人モード > 部品を値として使う",
+      "summary": "「ねこからいちばん近い星までのきょり」を読む（R22）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "MC-576",
+        "MC-577"
+      ]
+    },
+    {
+      "id": "MI-230",
+      "section": "名人モード > 本文の中で手順を作る",
+      "summary": "主語を「〜として、」の後ろに書くと止まり、文のはじめに書くよう案内する（R25）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "MC-578"
+      ]
+    },
+    {
+      "id": "MI-231",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "名人の本文がある作品を開くと「名人」になり、ない作品を開くと「名人」を選ぶ前の見せ方になる",
+      "polarity": "both",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-581",
+        "MC-582"
+      ]
+    },
+    {
+      "id": "MI-232",
+      "section": "名人モード > 名人モードの仕組み",
+      "summary": "自動で残した作品から戻すと、残したときの見せ方に戻り、名人の本文がある作品なら「名人」になる",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "MC-583",
+        "MC-584"
+      ]
+    }
+  ],
+  "specGaps": []
+}

@@ -3,11 +3,11 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
-import {setTimeout as delay} from 'node:timers/promises';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
+import {writeZoomExtension,zoomExtensionArgs,zoomExtensionWorker,setNativeZoom} from '../lib/native-zoom.mjs';
 import {componentControlSizes,componentControlTargets,verifyComponentControlReach,verifyComponentControls} from '../lib/component-controls-contract.mjs';
 
 const require=createRequire(import.meta.url),[chrome,output]=process.argv.slice(2);
@@ -192,22 +192,16 @@ await withBrowser(chrome,async browser=>{
 },480000);
 await run('COMPONENT-CONTROLS-ZOOM',async()=>{
   const extension=path.resolve(directory,'zoom-extension'),profile=path.resolve(directory,'zoom-profile');fs.mkdirSync(extension);
-  fs.writeFileSync(path.join(extension,'manifest.json'),JSON.stringify({manifest_version:3,name:'Local component audit zoom',version:'1.0',permissions:['tabs'],background:{service_worker:'worker.js'}}));
-  fs.writeFileSync(path.join(extension,'worker.js'),'chrome.runtime.onInstalled.addListener(()=>{});');
+  writeZoomExtension(extension,'Local component audit zoom');
   const {chromium}=require('playwright'),context=await chromium.launchPersistentContext(profile,{executablePath:chrome,headless:true,viewport:null,offline:true,timeout:15000,
-    ignoreDefaultArgs:['--disable-extensions'],args:['--allow-file-access-from-files','--disable-background-networking','--window-size=1366,768','--disable-extensions-except='+extension,'--load-extension='+extension]});
+    ignoreDefaultArgs:['--disable-extensions'],args:['--allow-file-access-from-files','--disable-background-networking','--window-size=1366,768',...zoomExtensionArgs(extension)]});
   try{await context.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});
-    const worker=context.serviceWorkers()[0]||await context.waitForEvent('serviceworker',{timeout:10000}),p=context.pages()[0];
-    const apiDeadline=Date.now()+8000;
-    while(!await worker.evaluate(()=>!!globalThis.chrome?.tabs?.query)){
-      if(Date.now()>apiDeadline)throw Error('native zoom API unavailable');
-      await delay(50);
-    }
+    const worker=await zoomExtensionWorker(context),p=context.pages()[0];
     await p.goto(pathToFileURL(path.resolve(product)).href);await fixture(p);await picker(p,true);
     const windowState=()=>p.evaluate(()=>({outerWidth,outerHeight,innerWidth,innerHeight,dpr:devicePixelRatio,cssZoom:getComputedStyle(document.documentElement).zoom}));
     const windowBefore=await windowState(),observations=[];
     for(const requested of [1.25,1.5,2]){
-      const actual=await worker.evaluate(async zoom=>{const tab=(await chrome.tabs.query({})).find(t=>t.url?.startsWith('file:'));await chrome.tabs.setZoom(tab.id,zoom);return chrome.tabs.getZoom(tab.id);},requested);
+      const actual=await setNativeZoom(context,worker,p,requested);
       await p.waitForFunction(({dpr,requested})=>Math.abs(devicePixelRatio/dpr-requested)<.02,{dpr:windowBefore.dpr,requested});await frame(p);
       observations.push({requested,actual,windowBefore,windowAfter:await windowState(),exercise:await exercise(p,'controls-zoom-'+requested)});
     }return observations;

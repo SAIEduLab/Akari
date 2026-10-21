@@ -1,0 +1,914 @@
+{
+  "schema": "akari-spec-items-v1",
+  "area": "common",
+  "items": [
+    {
+      "id": "CI-001",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "条件を先に書いた「条件まで、Xは待つ」を、「Xは、条件まで待つ」と同じ意味で読む（作品チェックで誤りにしない・動きが同じ）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-001",
+        "CC-002",
+        "CC-003",
+        "CC-004"
+      ]
+    },
+    {
+      "id": "CI-002",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "条件を先に書いた待つ文は、整えると「Xは、条件まで待つ」の後の形で書き出す（ブロックとの往復も同じ）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-005",
+        "CC-006",
+        "CC-007",
+        "CC-008"
+      ]
+    },
+    {
+      "id": "CI-003",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "条件を先に書いた待つ文でも、引用の中の「、」は区切りに使わない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-009",
+        "CC-010"
+      ]
+    },
+    {
+      "id": "CI-004",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "条件を先に書いても、待つのは書いた部品だけで、ほかの部品の文は先に進む（主語のない待つとは違う）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-011",
+        "CC-012"
+      ]
+    },
+    {
+      "id": "CI-005",
+      "section": "読めない書き方",
+      "summary": "「みんなが〜まで待つ」は読めず、「みんなは」か主語なしを案内する。「みんなは」と主語なしは読める",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "CC-013",
+        "CC-014"
+      ]
+    },
+    {
+      "id": "CI-006",
+      "section": "読めない書き方",
+      "summary": "「点数が10になるまで、自分は待つ」の語順は読める（以前は読めなかった）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-015",
+        "CC-016"
+      ]
+    },
+    {
+      "id": "CI-010",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "「Xは、Yが10回【手順】するまで待つ」「Yが3回おされるまで、くり返す」「Yが3回おされるまで待つ」を読む（整えても書いたとおり）",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "CC-017",
+        "CC-018",
+        "CC-019",
+        "CC-020",
+        "CC-031",
+        "CC-032",
+        "CC-033"
+      ]
+    },
+    {
+      "id": "CI-011",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "「おされる」は、その部品がおされた回数を数え、回数に達したら待ちを終える・くり返しを終える",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-021",
+        "CC-022"
+      ]
+    },
+    {
+      "id": "CI-012",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "数え始めは待ち始めたとき（くり返しでは始めたとき）で、それより前の回数は数えない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-023",
+        "CC-024",
+        "CC-029"
+      ]
+    },
+    {
+      "id": "CI-013",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "「おされる」は、書いた部品がおされた回数だけを数える（ほかの部品のおされは数えない）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-025"
+      ]
+    },
+    {
+      "id": "CI-014",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "【手順】は、書いた部品が主語の呼び出しが「終わった」回数を数える（始まりでは数えない）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-026",
+        "CC-027",
+        "CC-028"
+      ]
+    },
+    {
+      "id": "CI-015",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "【手順】の回数は、書いた部品が主語の呼び出しだけを数える（ほかの部品の同じ手順の呼び出しは数えない）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-030"
+      ]
+    },
+    {
+      "id": "CI-016",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "回数が0回なら、待たずに進む。くり返しでは本文を行わない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-034",
+        "CC-035"
+      ]
+    },
+    {
+      "id": "CI-017",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "数えられるのは手順の終わりと「おされる」だけで、ほかの動き（動く・言うなど）は数えられず読めない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "CC-036",
+        "CC-037",
+        "CC-038"
+      ]
+    },
+    {
+      "id": "CI-018",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "回数条件の待つも、主語を書けばその部品だけが待ち、主語を書かなければ動き全体が待つ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-039",
+        "CC-040"
+      ]
+    },
+    {
+      "id": "CI-019",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "回数は待ち始めたときに一度だけ評価される（待っている間に回数の元の変数が変わっても、回数は変わらない）",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "観察したいのは「待っている途中で回数の元の変数を書き換えても待つ回数が変わらない」こと。しかし仕様には、回数の位置に変数や式を書く書き方（「（点数）回おされる」など）が示されておらず、数のほかの書き方をこの形式で書くと推測になる。回数が数の直書きだけだと、一度だけ評価されることは観察できない",
+      "cases": []
+    },
+    {
+      "id": "CI-021",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "主語の「が」は整えても「は」にならず、書いたとおりに保つ（「ねこが10歩進む」は「ねこが前へ10歩進む」）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-061",
+        "CC-062",
+        "CC-063",
+        "CC-064"
+      ]
+    },
+    {
+      "id": "CI-022",
+      "section": "同じ意味の書き方",
+      "summary": "「ねこは」「ねこも」「ねこだけ」の主語の整えた形：「は」で書き出す（「ねこも10歩進む」は「ねこは前へ10歩進む」）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-065",
+        "CC-066",
+        "CC-067"
+      ]
+    },
+    {
+      "id": "CI-023",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "主語の「は」と「が」は同じ意味で、実行の結果が同じ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-068",
+        "CC-069"
+      ]
+    },
+    {
+      "id": "CI-024",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "「ねこが1秒待つ」は「ねこは1秒待つ」と同じく、部品だけが待つ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-070"
+      ]
+    },
+    {
+      "id": "CI-025",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "「〜とき」「もし」の中の主語は「が」で書く。「ねこは」と書くと読めない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "CC-071",
+        "CC-072",
+        "CC-073",
+        "CC-074",
+        "CC-075"
+      ]
+    },
+    {
+      "id": "CI-026",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "ブロックの主語の欄の横の「は／が」で選べ、新しいブロックは「は」。コードとの往復で変わらない",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "ブロックの欄の操作と表示は、画面の操作でだけ確かめられる（world を使う形式では表せない）",
+      "cases": [
+        "CC-076",
+        "CC-077"
+      ]
+    },
+    {
+      "id": "CI-027",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "「が」で書いた主語は、保存して開き直しても「が」のまま",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-078"
+      ]
+    },
+    {
+      "id": "CI-030",
+      "section": "制御の対象と自分",
+      "summary": "見出しに書いた対象と同じ対象の文には、整えたとき主語を書かない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-079",
+        "CC-080",
+        "CC-081"
+      ]
+    },
+    {
+      "id": "CI-031",
+      "section": "制御の対象と自分",
+      "summary": "囲いの中の別の対象の文には、主語を書く",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-082"
+      ]
+    },
+    {
+      "id": "CI-032",
+      "section": "制御の対象と自分",
+      "summary": "囲いの外の文には、主語を書く",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-083"
+      ]
+    },
+    {
+      "id": "CI-033",
+      "section": "制御の対象と自分",
+      "summary": "「待つ」の文には主語を書く。主語のない「待つ」には主語を足さず、動き全体が待つ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-084",
+        "CC-085",
+        "CC-086"
+      ]
+    },
+    {
+      "id": "CI-034",
+      "section": "制御の対象と自分",
+      "summary": "「そうでなければ」の枝も同じ対象を受け継ぐので、同じ対象の文の主語を省く",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-087"
+      ]
+    },
+    {
+      "id": "CI-035",
+      "section": "制御の対象と自分",
+      "summary": "見出しに対象を書いていない囲いの中では、主語を省かない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-088"
+      ]
+    },
+    {
+      "id": "CI-036",
+      "section": "制御の対象と自分",
+      "summary": "主語を書いた文と、主語を省いた文は同じ意味（実行の結果が同じ）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-089",
+        "CC-090"
+      ]
+    },
+    {
+      "id": "CI-037",
+      "section": "制御の対象と自分",
+      "summary": "ブロックから書き出すときも、見出しの対象と同じ対象の文には主語を書かない",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "ブロックの操作（対象欄の選択）とコードへの書き出しは、画面の操作でだけ確かめられる",
+      "cases": [
+        "CC-091"
+      ]
+    },
+    {
+      "id": "CI-038",
+      "section": "制御の対象と自分",
+      "summary": "主語を省く整形は、もし・回数・あいだ・まで・ずっとのどの見出しでも同じ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-092",
+        "CC-093",
+        "CC-094"
+      ]
+    },
+    {
+      "id": "CI-040",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "部品だけが待つ文のあとに、同じ流れの中で別の部品の文が続くと、止めない知らせを出す。出ない場合（主語のない待つ・同じ部品の文・最後の文・待つ前の文・別の流れ）は出さない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "CC-041",
+        "CC-042",
+        "CC-043",
+        "CC-044",
+        "CC-045",
+        "CC-046",
+        "CC-047",
+        "CC-048",
+        "CC-049"
+      ]
+    },
+    {
+      "id": "CI-041",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "「〜まで待つ」（条件・回数）の部品だけの待つ文でも、別の部品の文が続くと同じ知らせを出す",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-050",
+        "CC-051",
+        "CC-052"
+      ]
+    },
+    {
+      "id": "CI-042",
+      "section": "エラーと上限",
+      "summary": "知らせは実行を止めない（知らせの出る作品が最後まで動く）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-053"
+      ]
+    },
+    {
+      "id": "CI-043",
+      "section": "エラーと上限",
+      "summary": "知らせは保存を止めない（知らせの出る作品を保存して開き直せる）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-054"
+      ]
+    },
+    {
+      "id": "CI-044",
+      "section": "エラーと上限",
+      "summary": "知らせは書き出しを止めない",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "書き出し（「うごく作品を ファイルにする」）はファイルを作る画面の操作であり、world を使う check・run・file の形式では表せないため、画面の操作の事例（kind: ui）で確かめる",
+      "cases": [
+        "CC-055"
+      ]
+    },
+    {
+      "id": "CI-045",
+      "section": "エラーと上限",
+      "summary": "作品チェックは、誤りのほかに、止めない「知らせ」を表示する",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "作品チェックの画面の表示（誤りと知らせの区別）は画面の操作でだけ確かめられるため、画面の操作の事例（kind: ui）で確かめる",
+      "cases": [
+        "CC-056"
+      ]
+    },
+    {
+      "id": "CI-046",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "部品だけが待つ文の意味：ほかの部品の文はすぐ動き、同じ部品の次の文は待ち終わるまで止まる。主語のない待つは動き全体が待つ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-057",
+        "CC-058",
+        "CC-059",
+        "CC-060"
+      ]
+    },
+    {
+      "id": "CI-050",
+      "section": "読めない書き方",
+      "summary": "主語を2つ書いた文（ねこもだんごも〜、ねことだんごは〜）は読めず、主語ごとに文を分けるよう案内する",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-095",
+        "CC-096"
+      ]
+    },
+    {
+      "id": "CI-051",
+      "section": "読めない書き方",
+      "summary": "主語を2つ書いた時間つきの文の案内は、分けると書いた順に一人ずつ動くことを示す",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-097",
+        "CC-098"
+      ]
+    },
+    {
+      "id": "CI-052",
+      "section": "読めない書き方",
+      "summary": "主語を分けたあとの動き：時間をかけて動く文や時間を書いた発話は書いた順に一人ずつ動き、「待つ」の文（ねこは1秒待つ。だんごは1秒待つ。）は同時に待つ",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-099",
+        "CC-100",
+        "CC-101",
+        "CC-102"
+      ]
+    },
+    {
+      "id": "CI-054",
+      "section": "条件分岐と反復",
+      "summary": "「と同じ」の「〜になるまで」は、整えると「点数が10になるまで」と「と同じ」を付けずに書き出す",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-103",
+        "CC-104"
+      ]
+    },
+    {
+      "id": "CI-055",
+      "section": "同じ意味の書き方",
+      "summary": "意味に「と同じ」が要る形（と同じであるあいだ・と同じでなくなるまで）は、整えても「と同じ」を残す",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-105",
+        "CC-106"
+      ]
+    },
+    {
+      "id": "CI-056",
+      "section": "条件分岐と反復",
+      "summary": "「と同じ」を書いた「〜になるまで」と、書かない「〜になるまで」は同じ意味で動く",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-107",
+        "CC-108"
+      ]
+    },
+    {
+      "id": "CI-057",
+      "section": "同じ意味の書き方",
+      "summary": "答えを変数に入れる文の整えた形は「答えを名前に入れる」（「名前という変数に」「名前に答えを」「名前を答えにする」も同じ意味で読む）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-109",
+        "CC-110",
+        "CC-111",
+        "CC-112"
+      ]
+    },
+    {
+      "id": "CI-058",
+      "section": "合図・質問・できごと",
+      "summary": "答えを変数に入れるどの書き方でも同じ意味で動く（作品・自分・【名前】のどのへんすうの書き方でも）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-117",
+        "CC-118",
+        "CC-119",
+        "CC-120",
+        "CC-121",
+        "CC-122",
+        "CC-123"
+      ]
+    },
+    {
+      "id": "CI-059",
+      "section": "同じ意味の書き方",
+      "summary": "数・文字の値を変数に入れる文（「5を点数に入れる」）は、「点数を5にする」と書き出す",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-113",
+        "CC-114"
+      ]
+    },
+    {
+      "id": "CI-060",
+      "section": "同じ意味の書き方",
+      "summary": "リストの名前に「〜を…に入れる」と書くと、最後に入れるか番目を選ぶよう案内する",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-115"
+      ]
+    },
+    {
+      "id": "CI-061",
+      "section": "同じ意味の書き方",
+      "summary": "コピーの数を「つ」「個」「体」のどれで書いても読める。整えた形は「つ」",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-124",
+        "CC-125",
+        "CC-126",
+        "CC-127"
+      ]
+    },
+    {
+      "id": "CI-062",
+      "section": "自然文の役割を保つ追加表現",
+      "summary": "「自分のコピーを3つ作る」は3つ作る（「体」「個」でも、「コピーを〜作って、…」でも同じ）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-128",
+        "CC-129",
+        "CC-130",
+        "CC-131"
+      ]
+    },
+    {
+      "id": "CI-063",
+      "section": "自然文の役割を保つ追加表現",
+      "summary": "コピーの数が0なら何も作らず誤りにならない。合計が500ちょうどまではつくれる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-132",
+        "CC-133"
+      ]
+    },
+    {
+      "id": "CI-065",
+      "section": "自然文の役割を保つ追加表現",
+      "summary": "現在のコピー数との合計が500を超える要求や不正な数は、一部だけ作らず拒否する",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-134"
+      ]
+    },
+    {
+      "id": "CI-066",
+      "section": "読めない書き方",
+      "summary": "読めない語のあとに数がつづく文（まっすぐ10歩進む）は、名前を作るよう案内せず、書き方（前へ10歩進む）を案内する",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-135",
+        "CC-136",
+        "CC-137"
+      ]
+    },
+    {
+      "id": "CI-067",
+      "section": "読めない書き方",
+      "summary": "「空」「偶数」のような国語・算数の言葉で書いた条件は、名前を作るよう案内せず、書き方を案内する",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-138",
+        "CC-139",
+        "CC-140"
+      ]
+    },
+    {
+      "id": "CI-068",
+      "section": "読み取れる状態の一覧",
+      "summary": "「向き」は「方向」と同じ意味で読む。ほかの部品の向きも読み、整えるときは「向き」で書き出す",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-141",
+        "CC-142",
+        "CC-143"
+      ]
+    },
+    {
+      "id": "CI-069",
+      "section": "読み取れる状態の一覧",
+      "summary": "自分の向き・ほかの部品の向きを、「向き」でも「方向」でも変数に入れられ、同じ値（度）になる",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-144",
+        "CC-145"
+      ]
+    },
+    {
+      "id": "CI-070",
+      "section": "動き・見た目・ペン",
+      "summary": "「作品の線とスタンプを全部消す」は作品全体への命令なので、画面の本文でも使える。ほかの動き・ペンの文は画面の本文では使えない",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "CC-146",
+        "CC-147",
+        "CC-148",
+        "CC-149"
+      ]
+    },
+    {
+      "id": "CI-071",
+      "section": "動き・見た目・ペン",
+      "summary": "画面の本文の「作品の線とスタンプを全部消す」を実行しても誤りにならず、ほかの本文は動き続ける。部品が引いた線は消える",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-150",
+        "CC-151"
+      ]
+    },
+    {
+      "id": "CI-072",
+      "section": "読み取れる状態の一覧",
+      "summary": "「タイマーを0にする」で、タイマーを0から数え直す",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-152"
+      ]
+    },
+    {
+      "id": "CI-073",
+      "section": "読み取れる状態の一覧",
+      "summary": "「タイマーを0にする」は読める文で、整えても変わらない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-153",
+        "CC-154"
+      ]
+    },
+    {
+      "id": "CI-074",
+      "section": "コードとブロックで同じ本文を編集する",
+      "summary": "「タイマーを0にする」はブロックにもできる（読める本文はブロック表示にでき、往復しても変わらない）",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "ブロックの表示と操作は画面の操作でだけ確かめられる。なお仕様には、このブロックの名前・置き場所（どのなかまか）は書かれていないので、手順にその名前は書けない（specGaps に記録）",
+      "cases": [
+        "CC-155"
+      ]
+    },
+    {
+      "id": "CI-075",
+      "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
+      "summary": "作品形式の番号が3（以前）の作品は、1.4.0で開けず、断る（変換しない）",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-156",
+        "CC-157",
+        "CC-158"
+      ]
+    },
+    {
+      "id": "CI-076",
+      "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
+      "summary": "作品形式4・言語契約3の作品は開ける",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-159"
+      ]
+    },
+    {
+      "id": "CI-077",
+      "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
+      "summary": "より新しい作品形式（5）の作品も開けず、断る",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-160"
+      ]
+    },
+    {
+      "id": "CI-078",
+      "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
+      "summary": "言語契約の番号が合わない作品は、作品形式が4でも開けず、断る",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-161",
+        "CC-162"
+      ]
+    },
+    {
+      "id": "CI-079",
+      "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
+      "summary": "復元データの印が作品形式3（F3）のファイルは、F502で断り、「前の あかりで ほぞんした 作品なので、この あかりでは 開けないよ。」と示して現在の作品を保持する",
+      "polarity": "negative",
+      "coverage": "unexpressible",
+      "reason": "open-declared は「形式の番号を名乗らせて開く」操作で、復元データの印（AKARI-PROJECT-F3-DATA-BEGIN）を書き換えたファイルを作れない。観察したいのは、断るときのエラー番号（F502）、示す文（「前の あかりで ほぞんした 作品なので、この あかりでは 開けないよ。」）、そして現在の作品が変わらないこと",
+      "cases": []
+    },
+    {
+      "id": "CI-080",
+      "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
+      "summary": "作品形式3の自動保存（akari-workspace-f3・akari.autosave.f3）は読まず、消しもしない。自動保存は akari-workspace-f4・akari.autosave.f4 を使う",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "ブラウザーの保存領域（IndexedDB・localStorage）の中の名前と、F3の自動保存が復元の対象にならず消えないことの観察が要る。画面の操作だけでは保存領域の中身を確かめられず、この形式の check・run・file・ui でも表せない",
+      "cases": []
+    },
+    {
+      "id": "CI-081",
+      "section": "保存・復元・書き出し > 保存・実行データの契約と検証",
+      "summary": "保存データは formatVersion 4・languageContractId 3、実行データは projectFormatVersion 4・programFormatVersion 3・languageContractId 3・runtimeContractId 3 を持ち、作品ファイルの復元データは F4 の印（AKARI-PROJECT-F4-DATA-BEGIN・END）で囲まれる",
+      "polarity": "positive",
+      "coverage": "unexpressible",
+      "reason": "書き出した保存ファイル・実行データの中の欄の値を読む観察が要る。file の save-reopen は scripts の欄と本文しか確かめられず、実行データの欄は形式に表す場所がない",
+      "cases": []
+    },
+    {
+      "id": "CI-083",
+      "section": "同じ意味の書き方",
+      "summary": "自分で作ったブロックの「この中だけ」のへんすうにも、答えを入れる文を同じに書ける（「答えを【返事】に入れる」）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-116"
+      ]
+    },
+    {
+      "id": "CI-084",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "条件を先に書く語順は「待つ」の文だけ。主語を書かずに読点を入れた「〜まで、待つ」は主語のない待つと同じ",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "CC-163",
+        "CC-164"
+      ]
+    },
+    {
+      "id": "CI-085",
+      "section": "日本語の作文と文法 > 役割と語順",
+      "summary": "部品だけが待つ文のあとに別の部品の待つ文が続くとき、知らせは「すぐ 待ちはじめます」で、すぐに動く文の行を示す",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-165"
+      ]
+    },
+    {
+      "id": "CI-086",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "回数が0以上の整数でないときは、実行したときに止める",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-166"
+      ]
+    },
+    {
+      "id": "CI-087",
+      "section": "同じ意味の書き方",
+      "summary": "コピーの数え方は「つ」「個」「体」だけ。上限をこえる数は、実行したときに一つも作らずに止める",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-167",
+        "CC-168"
+      ]
+    },
+    {
+      "id": "CI-088",
+      "section": "読めない書き方",
+      "summary": "時間をかけて動く文は、決めた終点で止まる（そのあと場所を言うと、書いた数のとおりになる）",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-169"
+      ]
+    },
+    {
+      "id": "CI-089",
+      "section": "短い条件文でくり返す・待つ > できごとの回数で待つ・くり返す",
+      "summary": "途中で止められた手順の呼び出しは「終わった回数」に数えない。受け取る値のある手順も数える。主語を書いて呼んだ手順は書いた部品の回数になる",
+      "polarity": "both",
+      "coverage": "cases",
+      "cases": [
+        "CC-170",
+        "CC-171",
+        "CC-172"
+      ]
+    },
+    {
+      "id": "CI-090",
+      "section": "読めない書き方",
+      "summary": "「からっぽ」「空っぽ」「奇数」「〜の倍数」「〜の約数」の条件は、名前を作るよう案内せず、書いた名前を使って書き方を案内する",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-173",
+        "CC-174",
+        "CC-175",
+        "CC-176",
+        "CC-179"
+      ]
+    },
+    {
+      "id": "CI-091",
+      "section": "動き・見た目・ペン > 移動量と座標の意味",
+      "summary": "外接長方形の辺が触れていればふれている。部品は画面の外の位置にも置け、位置をおさえない",
+      "polarity": "positive",
+      "coverage": "cases",
+      "cases": [
+        "CC-177",
+        "CC-178"
+      ]
+    },
+    {
+      "id": "CI-092",
+      "section": "読めない書き方",
+      "summary": "部品の本文で主語なし・「自分は」で書いた名人の書き方は、名人モードの書き方だと案内し、「見せ方」で「名人」を選ぶよう伝える",
+      "polarity": "negative",
+      "coverage": "cases",
+      "cases": [
+        "CC-180"
+      ]
+    },
+    {
+      "id": "CI-093",
+      "section": "画面の見方",
+      "summary": "「新しく作る」で作った作品は「はじめて」で始める",
+      "polarity": "positive",
+      "coverage": "ui-only",
+      "reason": "画面の操作でだけ確かめられる",
+      "cases": [
+        "CC-181"
+      ]
+    }
+  ],
+  "specGaps": []
+}

@@ -106,7 +106,8 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 - **workflowの契約**（`workflow-contract`）: 必須ジョブと`needs`、トリガー、`continue-on-error`の禁止、全ジョブの`timeout-minutes`、artifact保持3日、mainの実行を途中で取り消さない並行制御を、workflowの文面から検査します。段の実行はgate・runnerの入口に限ります。
 - **結果の形式**: 終了コードだけで判定していた段も、case IDを持つ結果（`akari-gate-cases-v1`）を書き、validatorが全case PASSの集合を確認します。
 - **文の形の網羅**（`sentence-form-coverage`）: 製品の有限な文型表（`SENTENCE_FORMS`、`CONDITION_FORMS`、`SENTENCE_TE_FORMS`等）の全項目に、独立した入力と期待値を持つ事例が必要です。到達できない項目は網羅の不足としてFAILになり、製品の表から消します。項目を外しても結果が変わらないことで、各項目が必要なことを確かめます。
-- **仕様の例文**（`spec-examples`）: LANGUAGE.mdとEXTENSIONS.mdの`text`ブロックは、製品の構文解析器で読めます。読めない例は`<!-- akari-example: rejected -->`で明示し、拒否されることを確かめます。
+- **仕様の例文**（`spec-examples`）: LANGUAGE.mdとEXTENSIONS.mdの`text`ブロックは、製品の構文解析器で読めます。読めない例は`<!-- akari-example: rejected -->`で明示し、拒否されることを確かめます。名人モードの例は`<!-- akari-example: meijin -->`（一つの名人の本文として読め、作品チェックが誤りを出さない）と`<!-- akari-example: meijin-rejected -->`（一文ずつ、作品チェックが止める）で明示します。名人の例を読む作品は、例が名前を挙げる部品・データ・音・すがたを持ちます（`audit/lib/meijin-example-world.mjs`）。
+- **仕様の期待値**（`spec-expectations-static`、`spec-expectations`）: `audit/fixtures/spec-expectations/`は、LANGUAGE.mdの文だけから手で書いた、共通の文法と名人モードの期待値（整形、作品チェック、実行の経過、保存、名前の変更、画面の操作）です。形式は`audit/fixtures/spec-expectations/SCHEMA.md`に定めます。静的な検査は、各事例が仕様の文を一字違わず引用すること、項目が事例か理由でおおわれること、壊したデータを検査自身が拒否することを確かめ、製品を読み込みません。実行の検査は、製品の実体で全事例を動かします。画面の操作の事例は、ブラウザーで製品の画面を事例の手順どおりに操作して確かめます（`spec-expectations-ui`）。期待値を製品の出力から作りません。仕様が決めていないことは`specGaps`に残し、推測で期待値にしません。
 - **現行schemaの網羅**: `audit/fixtures/block-schemas.json`は、現行のブロックschemaをLANGUAGE.mdから手で書いた独立の期待値です。ブラウザー群`schemas`は、`features.json`のschema全件にGUI行を持ちます。
 - **命名**: 関数・ID・ファイル名・gate段に、版番号や過去の作業名を使いません。`static-contract`が拒否します。
 
@@ -204,6 +205,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | command:Forever | 無限反復 | 条件は真偽; 回数は0以上の整数; 必須本文には実行文; 既存スコープと上限 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:UserActionCall | 増やす（3）を実行する | 元の名前と全引数を保持; S301/S308; 呼出し元の対象制約; 求値では禁止 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | command:NoOperation | 何もしない | 状態変更なし; 空でない必須本文を構成する実行文 | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
+| command:TimerReset | タイマーを0にする | タイマーの値を0に戻し、そこからまた数える | GUI-CATALOG; GUI-SCHEMA; GUI-STMT |
 | ast:Script | 最上位本文（空配列可） | 構造上限・本文owner/context | 構造化した本文の入口。エラーsourceの保存と実行成功条件を区別; GUI-SCHEMA |
 | comment:line | 独立コメントの本文・位置・空白 | ※直後から行末全文; コメントだけは必須本文を満たさない | ※以降の全文・目印列・注釈付随先を比較。閉じ境界だけの所属差を許可; GUI-SCHEMA |
 | branch:else | elseの有無・枝・注釈 | 同じ字下げの直前Ifのみ; 存在する枝は実行文必須 | 分岐実行・hasElse・elseCommentの保持と差分検出。枝のGUI操作はBROWSER-LANGで別確認 |
@@ -220,6 +222,7 @@ Node実行は決定的な検査を補助します。DOM、pointer、IME、focus�
 | expression:VariableRead | 名前と所属修飾による値参照 | 未定義でもVariableReadを保持; exact/self/projectを区別 | 既存CUIの値/拒否の代表例; 独立AST fieldはGUI-SCHEMA、GUI操作はBROWSER-LANG |
 | expression:ListRead | 1から始まるリスト要素番号参照 | list型; 整数index; 範囲外R404 | 既存CUIの値/拒否の代表例; 独立AST fieldはGUI-SCHEMA、GUI操作はBROWSER-LANG |
 | expression:UserFunctionCall | 求値を名前と全実引数で呼ぶ | S301/S308をAST保持して診断; 副作用禁止とcallDepth/functionOps | 既存CUIの値/拒否の代表例; 独立AST fieldはGUI-SCHEMA、GUI操作はBROWSER-LANG |
+| expression:EventCount | 手順の終わりや「おされる」の回数を、待ち始めてからの数で条件にする | 数え始めは待ち始め（くり返しではくり返しの始め）。回数は始めに一度だけ評価する0以上の整数 | GUI-SCHEMA |
 | operator:POS | 単項正号 | 数だけ | 正号・負値への正号・0の評価、型違反R411とformatter往復を検査。実GUI操作はschema suiteで別検査; GUI-SCHEMA |
 | operator:NEG | 単項負号 | 累乗より低い優先順位 | 演算結果/短絡の代表例をself-testで検査。GUI構造はschema suite、評価順一致はruntime traceで別検査; GUI-SCHEMA |
 | operator:NOT | 真偽否定 | 真偽だけ; 比較より低く論理より高い | 演算結果/短絡の代表例をself-testで検査。GUI構造はschema suite、評価順一致はruntime traceで別検査; GUI-SCHEMA |

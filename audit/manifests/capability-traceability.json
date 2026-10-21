@@ -1333,6 +1333,24 @@
           "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
         }
       ]
+    },
+    {
+      "id": "command:TimerReset",
+      "meaning": "タイマーを0にする。",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "CORE catalog TimerReset"
+        },
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "LANG statement roundtrip TimerReset"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
     }
   ],
   "schemas": [
@@ -1441,6 +1459,34 @@
         {
           "path": "audit/browser/cases/browser-schemas.cjs",
           "id": "ActorQualifiedRead"
+        }
+      ]
+    },
+    {
+      "id": "EventCount:action",
+      "meaning": "手順の終わりの回数を、待ち始めてからの数で条件にする",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "TEST-BLOCK-SCHEMA EventCount:action"
+        }
+      ]
+    },
+    {
+      "id": "EventCount:click",
+      "meaning": "「おされる」の回数を、待ち始めてからの数で条件にする",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "TEST-BLOCK-SCHEMA EventCount:click"
         }
       ]
     },
@@ -1627,6 +1673,20 @@
         {
           "path": "audit/tests/japanese-contract-static.mjs",
           "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
+      "id": "TimerReset",
+      "meaning": "タイマーを0にする。",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "TEST-BLOCK-SCHEMA TimerReset"
         }
       ]
     },
@@ -4355,6 +4415,24 @@
       ]
     },
     {
+      "id": "command:TimerReset",
+      "meaning": "タイマーを0にする",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "CORE catalog TimerReset"
+        },
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "LANG statement roundtrip TimerReset"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
       "id": "ast:Script",
       "meaning": "最上位本文（空配列可）",
       "testReferences": [
@@ -4509,6 +4587,24 @@
         {
           "path": "audit/manifests/product-tests.json",
           "id": "TEST-BLOCK-SCHEMA UserFunctionCall"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
+      "id": "expression:EventCount",
+      "meaning": "手順の終わりや「おされる」の回数を、待ち始めてからの数で条件にする",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "TEST-BLOCK-SCHEMA EventCount:action"
+        },
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "TEST-BLOCK-SCHEMA EventCount:click"
         },
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -8863,7 +8959,8 @@
       "LocalListDeclaration",
       "Forever",
       "UserActionCall",
-      "NoOperation"
+      "NoOperation",
+      "TimerReset"
     ],
     "schemaIds": [
       "Script",
@@ -8874,6 +8971,8 @@
       "QuantityLiteral",
       "UnitlessRead",
       "ActorQualifiedRead",
+      "EventCount:action",
+      "EventCount:click",
       "ContinuousRule",
       "MotionCommand:MOVE_DIRECTION",
       "MotionCommand:GLIDE_DIRECTION",
@@ -8891,6 +8990,7 @@
       "NoOperation",
       "Break",
       "Continue",
+      "TimerReset",
       "IfStatement",
       "RepeatCount",
       "RepeatWhile",

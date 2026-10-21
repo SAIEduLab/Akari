@@ -7,8 +7,8 @@ import {fixedValues} from '../fixtures/fixed-values.mjs';
 
 export const fixturePins=Object.freeze({
   'audit/fixtures/composition-acceptance.json':'54ee2bd97ad40ad5fa2997c4853c9673c78e7bae5e04429fe3e5d67c72f8c039',
-  'audit/fixtures/actions-transfer-plan.json':'d63d9134e5e21313d19d0b3b888cb616c51f1c709bd396c3e71bc3cb6e2556cc',
-  'audit/fixtures/fixed-values.mjs':'5b7e75de2b0dc4e9f350fb73d92ce55208e2f3f3b5d2bf05ab219845e7c1ec1b',
+  'audit/fixtures/actions-transfer-plan.json':'00ee3ad7f8714497120af61b204b8887e7d7f1c2cb3da6fe7ff2280e86d3b1b9',
+  'audit/fixtures/fixed-values.mjs':'a9e6b568b8abe1fd23534702d495f14988b5aa6213cecc5e4de41e6b0004abcb',
 });
 export function transferFixtures(){
   for(const [file,hash]of Object.entries(fixturePins))assert.equal(sha(fs.readFileSync(file)),hash,'unchanged independent fixture '+file);
@@ -57,7 +57,7 @@ export function verifyValuesReport(r){
     }
     const required={
       'expression:BooleanLiteral':1,'builtin:四捨五入':1,'builtin:乱数':1,'builtin:CONTAINS':1,'builtin:INDEX_OF':1,
-      'state:マウスが押されている':3,'sensor:KEY_DOWN':3,'state:クローンである':1,'sensor:TOUCHING':1,'sensor:TOUCHING_COLOR':1,
+      'expression:EventCount:click':1,'expression:EventCount:action':1,'state:マウスが押されている':3,'sensor:KEY_DOWN':3,'state:クローンである':1,'sensor:TOUCHING':1,'sensor:TOUCHING_COLOR':1,
     }[key]||0;
     assert.equal(row.variants.length,required);for(const variant of row.variants){
       if(key==='builtin:乱数')assert.ok(Number.isInteger(variant.actual)&&variant.actual>=1&&variant.actual<=10);

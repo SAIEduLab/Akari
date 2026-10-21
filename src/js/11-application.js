@@ -340,9 +340,23 @@
     const entryControlHomes=new Map();
     let tutorial=null, pausedTutorial=null, tutorialEpoch=0, workspaceIdentity=0,
       tutorialTimer=null, tutorialTrace=null, tutorialSave=null, tutorialExpected=null, tutorialInsertion=null;
+    // 見せ方: baseUiLevel is the level chosen other than 名人 (はじめて／かんたん／くわしく). A work with a 名人 text is shown
+    // as くわしく with 名人 chosen, and no other level can be chosen while it has one; without one, the chosen level comes
+    // back (undo, open, a new work). The work file and autosave keep only the chosen level.
+    let baseUiLevel='entry';
+    const workIsMeijin=()=>(project?.scripts||[]).some(isMeijinScript);
+    function applyUiLevel(){
+      const meijin=workIsMeijin();
+      document.body.dataset.meijinLevel=meijin?'on':'off';
+      document.body.dataset.uiLevel=meijin?'advanced':baseUiLevel;
+      for(const option of $('#uiLevel').options)if(option.value!=='meijin')option.disabled=meijin||(option.value==='entry'&&(document.body.dataset.editorMode||editorModes.get('script'))==='code');
+      $('#uiLevel').value=meijin?'meijin':baseUiLevel;
+    }
+    // The chosen level in the form the work's editor state keeps (はじめて is kept as かんたん).
+    const keptUiLevel=()=>baseUiLevel==='entry'?'basic':baseUiLevel;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      $('#uiLevel option[value="entry"]').disabled=(document.body.dataset.editorMode||editorModes.get('script'))==='code';
+      $('#uiLevel option[value="entry"]').disabled=workIsMeijin()||(document.body.dataset.editorMode||editorModes.get('script'))==='code';
       for(const node of [$('#undoBtn'),$('#redoBtn')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
         if(entry){
@@ -683,7 +697,7 @@
             source: d.source,
           },
           draft: true,
-          level: $('#uiLevel').value,
+          level: document.body.dataset.uiLevel,
         };
       }
       if (kind !== 'script') {
@@ -698,10 +712,13 @@
           definitionKind: kind,
           definition: d,
           args: d?.args || [],
-          level: $('#uiLevel').value,
+          level: document.body.dataset.uiLevel,
         };
       }
       const script = scriptBySourceKey(project, ownerKey);
+      if (isMeijinScript(script) || (!script && selectedId === MEIJIN_OWNER))
+        return { ownerKey, id: script?.id, scriptId: script?.id, filter: undefined, event: 'start', targetId: 'stage',
+          targetType: 'stage', args: [], meijin: true, level: document.body.dataset.uiLevel };
       return {
         ownerKey,
         id: script?.id, scriptId: script?.id, filter: script?.filter,
@@ -709,7 +726,7 @@
         targetId: script?.targetId || (event ? id : selectedId),
         targetType: targetType(script?.targetId || (event ? id : selectedId)),
         args: [],
-        level: $('#uiLevel').value,
+        level: document.body.dataset.uiLevel,
       };
     }
     function getEditorSession(binding, { force = false } = {}) {
@@ -756,6 +773,8 @@
         } else session.pendingEdit = draft ? null : pending;
       }
       session.mode = resolvedEditorMode(editorModes, binding.kind, session.syntaxAst);
+      // A 名人 script is code only; the remembered view is kept for the other scripts.
+      if (binding.kind !== 'draft' && bindingContext(binding).meijin) session.mode = 'code';
       editorSessions.set(cacheKey, session);
       binding.session = session;
       return session;
@@ -832,8 +851,8 @@
         updateScriptSource(old, source, next);
       }
       else if (source) {
-        const row = { id: event ? ensureUniqueId('script') : id,
-          targetId: event ? id : selectedId, event: event || currentEvent, source: '' };
+        const row = (event ? id : selectedId) === MEIJIN_OWNER ? { id: event ? ensureUniqueId('script') : id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: '' }
+          : { id: event ? ensureUniqueId('script') : id, targetId: event ? id : selectedId, event: event || currentEvent, source: '' };
         updateScriptSource(row, source, next);
         next.scripts.push(row);
       }
@@ -981,7 +1000,10 @@
       return false;
     }
     function sourceImportPlan(binding, source) {
-      const context = bindingContext(binding), symbols = buildSymbols(project),
+      const context = bindingContext(binding);
+      // A 名人 script keeps its headings: they are its own events, never sent to the parts' bodies.
+      if (context.meijin) return null;
+      const symbols = buildSymbols(project),
         parsed = parseSyntax(source, { ...context, symbols });
       if (!parsed.ast?.units?.length) return null;
       sourceCandidate(binding, bindingOwner(binding), source);
@@ -1131,7 +1153,7 @@
         if (binding === mainEditor) {
           const parsed = parseSyntax(source, { ...bindingContext(binding), symbols: buildSymbols(project) }),
             plan = sourceImportPlan(binding, source);
-          if (plan || (fromInput && parsed.ast?.heading)) {
+          if (plan || (fromInput && parsed.ast?.heading && !bindingContext(binding).meijin)) {
             binding.session.pendingEdit = { ownerKey: bindingOwner(binding), kind: plan ? 'source-import' : 'heading-source',
               value: source, reason: plan ? '取りこむ ところを たしかめて 決めてください' : 'きっかけの ある 文は まだ 書きかけです。コードと ブロックを 切りかえるか、動かすと 決まります' };
             if (plan) showSourceImport(binding, source, plan); else hideSourceImport();
@@ -1333,9 +1355,11 @@
         b.disabled =
           ['PREPARING', 'IMPORTING'].includes(appState) ||
           (!draft&&mode==='code'&&document.body.dataset.uiLevel==='entry') ||
-          (mode === 'blocks' && (!session.syntaxAst || invalidCodePending));
+          (mode === 'blocks' && (!session.syntaxAst || invalidCodePending)) ||
+          (!draft && mode === 'blocks' && bindingContext(binding).meijin);
         b.title =
-          mode === 'blocks' && (!session.syntaxAst || invalidCodePending)
+          !draft && mode === 'blocks' && bindingContext(binding).meijin ? '名人モードの 本文は ブロックに できません'
+          : mode === 'blocks' && (!session.syntaxAst || invalidCodePending)
             ? '書き方の まちがいを コードで 直すと、ブロックで 見られます'
             : '';
         if (mode === 'blocks') {
@@ -1347,7 +1371,7 @@
               note.className = 'mode-blocked-note';
               b.parentElement.append(note);
             }
-            note.textContent = 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
+            note.textContent = !draft && bindingContext(binding).meijin ? '名人モードの 本文は コードで なおします' : 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
           } else note?.remove();
         }
       }
@@ -1374,6 +1398,10 @@
       }
     }
     function switchEditorMode(binding, mode) {
+      if (binding === mainEditor && mode === 'blocks' && bindingContext(binding).meijin) {
+        setStatus('名人モードの 本文は ブロックに できません。コードで なおしてね。');
+        return false;
+      }
       if(binding===mainEditor&&mode==='code'&&document.body.dataset.uiLevel==='entry'){
         setStatus('コードを 見るときは、見せ方を「かんたん」か「くわしく」に してね。');
         return false;
@@ -1557,7 +1585,71 @@
           o.textContent = `${type === 'action' ? 'てじゅん' : '答えを もとめる'}：${d.name}`;
           sel.appendChild(o);
         }
+      // Procedures made in a 名人 text are listed too: shown, opened and renamed here, written in that text.
+      const made = meijinProjectDefinitions(project);
+      if (made.length) {
+        const group = document.createElement('optgroup');
+        group.label = '名人の本文で 作った てじゅん';
+        for (const d of made) {
+          const o = document.createElement('option');
+          o.value = 'meijin:' + d.id;
+          o.textContent = `てじゅん：${d.name}（名人の本文）`;
+          group.appendChild(o);
+        }
+        sel.appendChild(group);
+      }
       sel.value = prefer;
+    }
+    let meijinProcedureId = '';
+    function showMeijinProcedure(id) {
+      const d = meijinProjectDefinitions(project).find(x => x.id === id);
+      if (!d) { hideMeijinProcedure(); return false; }
+      meijinProcedureId = id;
+      $('#procModal .proc-edit').classList.add('meijin-proc');
+      $('#meijinProcPanel').hidden = false;
+      $('#meijinProcTitle').textContent = `てじゅん「${d.name}」／` + (d.args.length ? `入れるもの（${d.args.join('、')}）／` : '') + `名人の本文の ${d.headLine}行目`;
+      $('#meijinProcBody').textContent = d.source;
+      $('#meijinProcName').value = d.name;
+      $('#meijinProcError').hidden = true;
+      $('#callableSelect').value = 'meijin:' + id;
+      for (const button of ['#callableDelete', '#callableSave', '#callableFormat']) $(button).disabled = true;
+      $('#meijinProcRename').disabled = modelLocked();
+      return true;
+    }
+    function hideMeijinProcedure() {
+      if (!meijinProcedureId) return;
+      meijinProcedureId = '';
+      $('#procModal .proc-edit').classList.remove('meijin-proc');
+      $('#meijinProcPanel').hidden = true;
+      $('#callableSave').disabled = $('#callableFormat').disabled = false;
+    }
+    function renameMeijinProcedure() {
+      if (modelLocked() || !meijinProcedureId) return;
+      try {
+        const next = prepareMeijinProcedureRename(project, meijinProcedureId, $('#meijinProcName').value);
+        clearTimeout(historyTimer); pushHistoryNow();
+        project = next;
+        invalidateEditors(); markDirty(); pushHistoryNow();
+        renderCallableOptions('meijin:' + meijinProcedureId); showMeijinProcedure(meijinProcedureId);
+        loadEditor(); refreshEditor();
+        log('名人の本文で 作った てじゅんの 名前を かえました', 'ok');
+      } catch (error) {
+        $('#meijinProcError').hidden = false;
+        $('#meijinProcError').textContent = error.message;
+      }
+    }
+    function openMeijinProcedure() {
+      const d = meijinProjectDefinitions(project).find(x => x.id === meijinProcedureId);
+      if (!d || !flushActiveEditor()) return;
+      $('#procModal').classList.remove('show');
+      selectedId = MEIJIN_OWNER; currentEvent = 'start'; selectedScriptId = d.scriptId;
+      hideSourceOverview(); renderTree(); renderProperties(); loadEditor(); renderComponents();
+      const lines = el.editor.value.split('\n'), start = lines.slice(0, d.headLine - 1).reduce((sum, line) => sum + line.length + 1, 0);
+      // The closed dialog gives focus back (and lets the page take focus) in its observer, which runs first.
+      queueMicrotask(() => {
+        el.editor.focus();
+        el.editor.setSelectionRange(start, start + (lines[d.headLine - 1] || '').length);
+      });
     }
     function paintCallable() {
       syncingDraft = true;
@@ -1855,7 +1947,7 @@
         (block ? $('#componentActions') : el.props).prepend(
           actions, ...(copyHelp?.classList.contains('child-copy-help') ? [copyHelp] : []),
         );
-      $('#formatBtn').hidden = block;
+      $('#formatBtn').hidden = block || currentIsMeijin();
       syncPropertyScrollPadding();
       renderEntrySurface();
     }
@@ -1966,8 +2058,12 @@
       return z;
     };
     const componentById = (id) => project.components.find((c) => c.id === id);
-    const targetById = (id) => (id === 'stage' ? project.stage : componentById(id));
-    const targetType = (id) => (id === 'stage' ? 'stage' : componentById(id)?.type);
+    // 名人 scripts belong to no part; the editor lists them under this pseudo owner.
+    const MEIJIN_TARGET = Object.freeze({ id: MEIJIN_OWNER, name: '名人の本文', type: MEIJIN_OWNER });
+    const targetById = (id) => (id === 'stage' ? project.stage : id === MEIJIN_OWNER ? MEIJIN_TARGET : componentById(id));
+    const targetType = (id) => (id === 'stage' ? 'stage' : id === MEIJIN_OWNER ? MEIJIN_OWNER : componentById(id)?.type);
+    const meijinScripts = () => project.scripts.filter(isMeijinScript);
+    const currentIsMeijin = () => selectedId === MEIJIN_OWNER;
     const modelLocked = () => appState !== 'DESIGN' || !!runtime || !!scheduler;
     function revokeDesignUrls() {
       for (const u of designObjectUrls.values()) URL.revokeObjectURL(u);
@@ -2191,7 +2287,9 @@
     let restoringSnapshot=false;
     function restoreSnap(e,{restoreView=false}={}) {
       restoringSnapshot=true;
-      const view={uiLevel:$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'}};
+      const view={uiLevel:baseUiLevel,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'}};
+      // Going back to before the 名人 text was made also brings back how the body was shown then (はじめて shows blocks).
+      if(workIsMeijin()&&!(e.project.scripts||[]).some(isMeijinScript)&&e.editorState)view.editorModes.script=e.editorState.editorModes.script;
       try {
       recoveryEpoch++;
       validateAssetReferences(e.project, new AssetStore(e.assets));
@@ -2222,6 +2320,8 @@
       paintCallable();
       $('#procModal').classList.toggle('show', !!e.draftOpen || hasCallableDraft());
       renderCallableOptions(callableLoadedKey);
+      // A procedure made in a 名人 text that was shown is shown again as the restored text makes it (or no longer).
+      if (meijinProcedureId) showMeijinProcedure(meijinProcedureId);
       lastObservedFingerprint = stateFingerprintCore();
       renderAll();
       loadEditor();
@@ -2351,6 +2451,7 @@
       return saveCodeBinding(mainEditor, options);
     }
     function eventsFor(id) {
+      if (id === MEIJIN_OWNER) return ['start'];
       return EVENT_BY_TYPE[targetType(id)] || EVENT_BY_TYPE.stage;
     }
     function selectCurrentScript() {
@@ -2385,6 +2486,7 @@
       };
       add('stage', project.stage.name);
       for (const c of project.components) add(c.id, c.name);
+      if (meijinScripts().length) add(MEIJIN_OWNER, MEIJIN_TARGET.name);
       el.obj.value = selectedId;
       el.event.innerHTML = '';
       if (sourceOverviewOpen) {
@@ -2399,7 +2501,7 @@
           const option = document.createElement('option');
           option.value = index === 0 ? ev : scriptSourceKey(row);
           const filter = row?.filter, value = filter?.key || filter?.message || (typeof filter === 'string' ? filter : '');
-          option.textContent = EVENT_LABELS[ev] + (rows.length > 1 ? ` ／ 本文${index + 1}` : '') +
+          option.textContent = selectedId === MEIJIN_OWNER ? `名人の本文 ${index + 1}` : EVENT_LABELS[ev] + (rows.length > 1 ? ` ／ 本文${index + 1}` : '') +
             (value ? ` 「${value}」` : '');
           if (row) option.dataset.scriptKey = scriptSourceKey(row);
           el.event.appendChild(option);
@@ -2409,6 +2511,10 @@
         first = project.scripts.find((x) => x.targetId === selectedId && x.event === currentEvent);
       el.event.value = sourceOverviewOpen ? 'all' : row && row !== first ? scriptSourceKey(row) : currentEvent;
       $('#scriptAdd').disabled = modelLocked() || project.scripts.length >= LIMITS.scripts;
+      $('#scriptAdd').textContent = currentIsMeijin() ? '名人の本文を ふやす' : '同じできごとの本文を ふやす';
+      $('#meijinDelete').hidden = !currentIsMeijin();
+      $('#meijinDelete').disabled = modelLocked();
+      $('#sourceHeadingBtn').hidden ||= currentIsMeijin();
       renderEntrySurface();
     }
     function hideSourceOverview() {
@@ -2764,7 +2870,7 @@
       el.tree.textContent = '';
       el.tree.setAttribute('role', 'listbox');
       el.tree.setAttribute('aria-label', '\u4f5c\u54c1\u306e\u90e8\u54c1');
-      const ids = ['stage', ...project.components.map((c) => c.id)];
+      const ids = ['stage', ...project.components.map((c) => c.id), ...(meijinScripts().length ? [MEIJIN_OWNER] : [])];
       const row = (id, label) => {
         const d = document.createElement('div');
         d.className = 'tree-item' + (id === selectedId ? ' selected' : '');
@@ -2796,6 +2902,7 @@
       row('stage', `\u25a3 ${project.stage.name}`);
       for (const c of project.components)
         row(c.id, `${c.type === 'sprite' ? '\u2605' : '\u2022'} ${c.name}`);
+      if (meijinScripts().length) row(MEIJIN_OWNER, '\u270e ' + MEIJIN_TARGET.name);
     }
     function rollbackDesign(before) {
       project = before;
@@ -4430,7 +4537,7 @@
           start: el.editor.selectionStart,
           end: el.editor.selectionEnd,
           event: currentEvent,
-          level: $('#uiLevel').value,
+          level: document.body.dataset.uiLevel,
         }),
         list = $('#hintUnavailable').checked ? all : all.filter((x) => x.enabled),
         r = drawHints(el.hints, list, $('#hintSearch').value, hintPage, insertHint);
@@ -4461,8 +4568,63 @@
         showEditorFailure(mainEditor, err);
       }
     }
+    function startMeijin() {
+      if (modelLocked() || currentIsMeijin()) return;
+      // A body with 名人 forms in it does not read as an ordinary body, so it stays a draft in the code editor (S317
+      // tells the child to choose 名人 in 見せ方): that text is taken as the body.
+      const flushed = flushActiveEditor(), draft = !flushed && mainEditor.session?.mode === 'code' && !$('#procModal').classList.contains('show') ? mainEditor.textarea?.value?.replace(/\r\n?/g, '\n') : null;
+      if (!flushed && draft == null) return;
+      const script = selectCurrentScript(), owner = targetById(selectedId);
+      let source = draft ?? script?.source ?? '';
+      if (source.trim()) {
+        const parsed = parseSyntax(source, { symbols: buildSymbols(project), targetId: script?.targetId ?? selectedId, event: script?.event ?? currentEvent });
+        // A body the common grammar does not read may hold 名人 forms (the check says so, S317): it is taken when it
+        // reads as a 名人 text under a heading with its owner's name.
+        if (!parsed.ast) {
+          const headed = owner?.name ? sentenceHeadingSource({ event: script?.event ?? currentEvent, actorRef: { kind: 'named', name: owner.name }, filter: script?.filter ?? null }) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n') : null;
+          const without = cloneDesignProject(project);
+          without.scripts = without.scripts.filter(s => s.id !== script?.id);
+          const errorsOf = p => { try { return compileProject(p).errors.length; } catch (error) { if (!(error instanceof AkariError)) throw error; return Infinity; } }, before = errorsOf(without);
+          // The other bodies' errors stay as they are; the 名人 text adds none.
+          const reads = text => { const trial = cloneDesignProject(without); trial.scripts.push({ id: 'meijin-start-trial', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: text }); return errorsOf(trial) <= before; };
+          const meijin = [headed, source].find(text => text && reads(text));
+          if (!meijin) { setStatus('書き方の まちがいを 直してから、名人モードに してね。'); return; }
+          source = meijin;
+        } else {
+        const headings = [parsed.ast, ...(parsed.ast.units || [])].map(unit => unit.heading).filter(Boolean);
+        // A heading whose subject is 自分 (written, or not written) is written with the owner's name.
+        const lines = source.split('\n');
+        for (const unit of [parsed.ast, ...(parsed.ast.units || [])].filter(u => u.heading?.actorRef?.kind === 'self').sort((a, b) => b.sourceSpan.startLine - a.sourceSpan.startLine)) {
+          const at = unit.sourceSpan.startLine - 1, first = unit.body?.[0]?.sourceSpan, head = sentenceHeadingSource({ ...unit.heading, actorRef: { kind: 'named', name: owner.name } });
+          lines[at] = first?.startLine === unit.sourceSpan.startLine ? head + lines[at].slice(first.startColumn - 1) : head;
+        }
+        source = lines.join('\n');
+        // The body's owner is written out, because a 名人 script belongs to no part.
+        if (!headings.length) {
+          const heading = { event: script?.event ?? currentEvent, actorRef: { kind: 'named', name: owner.name }, filter: script?.filter ?? null };
+          source = sentenceHeadingSource(heading) + '\n' + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n');
+        }
+        }
+      }
+      if (!confirm(`名人モードで 書くと、この本文は ${owner?.name ? owner.name + 'から はなれて、' : ''}「動かすもの」の「名人の本文」に うつります。ブロックには もどせません。\n名人モードで 書きますか？`)) return;
+      try {
+        const next = cloneDesignProject(project), id = script?.id || ensureUniqueId('script');
+        const row = { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source, ...(script?.document ? { document: cloneDesignProject(script.document) } : {}) };
+        const at = script ? project.scripts.indexOf(script) : -1;
+        if (at >= 0) next.scripts.splice(at, 1, row); else next.scripts.push(row);
+        validateDesignProject(next);
+        clearTimeout(historyTimer); pushHistoryNow();
+        // The draft is now the 名人 text: its reading error is not shown any more.
+        if (draft != null) { if (mainEditor.session) { mainEditor.session.pendingEdit = null; mainEditor.session.blockDraft = null; } clearEditorFailure(mainEditor); }
+        project = next; selectedId = MEIJIN_OWNER; currentEvent = 'start'; selectedScriptId = id;
+        hideSourceOverview(); invalidateEditors(); markDirty(); renderTree(); renderProperties(); loadEditor(); renderComponents();
+        clearTimeout(historyTimer); pushHistoryNow();
+        setStatus('名人モードに しました。この本文は コードで 書きます。');
+      } catch (error) { showEditorFailure(mainEditor, error); }
+    }
     function formatCurrent() {
       if (modelLocked() || !flushEditor(mainEditor)) return;
+      if (currentIsMeijin()) { setStatus('名人モードの 本文は、書いたとおりに のこします。'); return; }
       try {
         const s = getEditorSession(mainEditor);
         if (!s.syntaxAst) throw new Error('書き方の まちがいを 直してから 整えてください');
@@ -4789,6 +4951,7 @@
       sync();
     }
     function renderAll() {
+      applyUiLevel();
       applyStage();
       renderTree();
       renderProperties();
@@ -4820,6 +4983,18 @@
           showDiagnosticMessage(p, d, diagnosticLocation(d));
           body.appendChild(p);
         }
+      // Notices do not stop anything; they say how a correct sentence will run.
+      if (c.notes?.length) {
+        const h3 = document.createElement('h3');
+        h3.textContent = 'ⓘ 知らせ（動かすことは できます）';
+        body.appendChild(h3);
+        for (const d of c.notes) {
+          const p = document.createElement('div');
+          p.className = 'diagnosis-note';
+          p.textContent = diagnosticLocation(d) + ': ' + d.message;
+          body.appendChild(p);
+        }
+      }
       $('#diagnosisModal').classList.add('show');
     }
     let exportBusy = false;
@@ -4890,7 +5065,7 @@
       if(headerPending||pendingEditors.some(d=>d.kind==='draft'))callableDraft=validateCallableDraft({...callableDraftCore,
         name:$('#callableName').value,argsText:$('#callableArgs').value,...(callableDraftCore.type==='action'?{callPhrase:$('#callablePhrase').value}:{})});
       return validateEditorState({version:1,revision:recoveryEpoch,selectedId,currentEvent,selectedScriptId,
-        uiLevel:$('#uiLevel').value==='entry'?'basic':$('#uiLevel').value,sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'},callableDraft,pendingEditors,
+        uiLevel:keptUiLevel(),sourceOverviewOpen,editorModes:{script:mainEditor.session?.mode||'code',draft:draftEditor.session?.mode||'code'},callableDraft,pendingEditors,
         views:[mainEditor,draftEditor].filter(binding=>binding.session).map(binding=>({kind:binding.kind,ownerKey:bindingOwner(binding),
           codeSelection:{start:binding.textarea.selectionStart||0,end:binding.textarea.selectionEnd||0,direction:binding.textarea.selectionDirection||'none'},
           scrollState:{codeTop:binding.textarea.scrollTop,codeLeft:binding.textarea.scrollLeft}}))},project);
@@ -4909,9 +5084,9 @@
         try{stored=localStorage.getItem(STORAGE_KEYS.uiLevel);}catch(_){}
         if(normalizeEntryUiLevel(stored)==='entry')uiLevel='entry';
       }
-      $('#uiLevel').value=uiLevel;document.body.dataset.uiLevel=uiLevel;
+      baseUiLevel=uiLevel;
       for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,mode);
-      editorSessions.clear();invalidateEditors();hideSourceOverview();renderAll();loadEditor();
+      editorSessions.clear();invalidateEditors();hideSourceOverview();applyUiLevel();renderAll();loadEditor();
       if(state.callableDraft)restoreCallableDraft(state.callableDraft);
       for(const saved of state.pendingEditors){
         const binding=saved.kind==='draft'?draftEditor:mainEditor;
@@ -5519,6 +5694,7 @@
       $('#callableHintNext').disabled = r.page === r.pages - 1;
     }
     function clearCallable(type = 'action') {
+      hideMeijinProcedure();
       captureEditorView(draftEditor);
       editorDraftSerial++;
       callableDraftCore = { ownerId: 'stage', type, name: '', argsText: '', source: '', editId: '', loadedKey: '' };
@@ -5531,6 +5707,7 @@
       const [type, id] = v.split(':'),
         d = (type === 'action' ? project.actions : project.functions).find((x) => x.id === id);
       if (!d) return;
+      hideMeijinProcedure();
       captureEditorView(draftEditor);
       callableDraftCore = {
         ownerId: d.ownerId,
@@ -5734,7 +5911,7 @@
     function renderAppearance() {
       const body = $('#assetBody');
       body.textContent = '';
-      const advanced = $('#uiLevel').value !== 'basic',
+      const advanced = document.body.dataset.uiLevel !== 'basic',
         c = componentById(selectedId),
         hint = $('#costumeImageHint'),
         thumb = (assetId) => {
@@ -6401,12 +6578,25 @@
       // Keep the selected body in the current frame without creating an edit.
       if (!modelLocked()) pushHistoryNow();
     });
+    // 名人: the shown 名人 body is taken off the list (one step of undo).
+    $('#meijinDelete').onclick = () => {
+      if (modelLocked() || !currentIsMeijin() || !flushActiveEditor()) return;
+      const row = (selectedScriptId && project.scripts.find(x => x.id === selectedScriptId)) || meijinScripts()[0];
+      if (!row || !confirm('この 名人の本文を けしますか？')) return;
+      clearTimeout(historyTimer); pushHistoryNow();
+      project.scripts = project.scripts.filter(x => x !== row);
+      const rest = meijinScripts();
+      if (rest.length) { selectedScriptId = rest[0].id; } else { selectedId = 'stage'; currentEvent = 'start'; selectedScriptId = null; }
+      hideSourceOverview(); markDirty(); renderAll(); loadEditor(); refreshEditor();
+      clearTimeout(historyTimer); pushHistoryNow();
+      setStatus('名人の本文を けしました', 'ok');
+    };
     $('#scriptAdd').onclick = () => {
       if (modelLocked() || !flushActiveEditor()) return;
       try {
         if (project.scripts.length >= LIMITS.scripts) throw new AkariError('F504', '本文が いっぱいで、もう ふやせません。いらない 本文を けしてください');
         const next = cloneDesignProject(project), id = ensureUniqueId('script');
-        next.scripts.push({ id, targetId: selectedId, event: currentEvent, source: '' });
+        next.scripts.push(selectedId === MEIJIN_OWNER ? { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: '' } : { id, targetId: selectedId, event: currentEvent, source: '' });
         validateDesignProject(next);
         clearTimeout(historyTimer); pushHistoryNow();
         project = next; selectedScriptId = id;
@@ -6511,7 +6701,11 @@
     async function startProject() {
       if(tutorial||modelLocked())return;
       if(!(await askLose())||tutorial||modelLocked())return;
+      // A new work starts in はじめて, which shows blocks.
+      baseUiLevel='entry';editorModes.set('script','blocks');
+      try{localStorage.setItem(STORAGE_KEYS.uiLevel,'entry');localStorage.setItem(STORAGE_KEYS.editorMode,'blocks');}catch(_){}
       replaceCurrentProject(makeEmptyProject(),makeDefaultAssetStore(),'sprite-1','start','からっぽの 作品です。動かすものと できごとを えらんで、やることを 入れましょう');
+      applyUiLevel();renderHints();renderEntrySurface();renderEditorBinding(mainEditor);
     }
     $('#newBtn').onclick=startProject;
     // Two fixed built-in preview images, shared across cards and picker openings.
@@ -6673,6 +6867,11 @@
     $('#dataAdd').onclick = addData;
     $('#callableSelect').onchange = () => {
       const next = $('#callableSelect').value;
+      if (next.startsWith('meijin:')) {
+        if (confirmCallableDiscard()) showMeijinProcedure(next.slice('meijin:'.length));
+        else $('#callableSelect').value = callableLoadedKey;
+        return;
+      }
       if (confirmCallableDiscard()) { loadCallable(next); pushHistoryNow(); }
       else $('#callableSelect').value = callableLoadedKey;
     };
@@ -6683,6 +6882,8 @@
       if (confirmCallableDiscard()) { clearCallable('function'); pushHistoryNow(); }
     };
     $('#callableSave').onclick = saveCallable;
+    $('#meijinProcRename').onclick = renameMeijinProcedure;
+    $('#meijinProcOpen').onclick = openMeijinProcedure;
     $('#callableFormat').onclick = formatCallable;
     $('#callableDelete').onclick = deleteCallable;
     $('#callableName').oninput = updateCallableHeader;
@@ -6724,19 +6925,29 @@
       if (f) await importSoundFile(f);
     };
     $('#uiLevel').onchange = () => {
+      // 名人: the selected body becomes a 名人 text after the confirm (an empty one when there is no body to move).
+      if($('#uiLevel').value==='meijin'){
+        $('#uiLevel').value=baseUiLevel;
+        if (tutorial || composingEditors.size || headerPending || activeDragCleanup) { setStatus('入力を 決めるか やめてから、見せ方を かえてね。'); return; }
+        if(!workIsMeijin()&&modelLocked())setStatus('動いている あいだは、名人モードに できません。止めてから えらんでね。');
+        else if(!workIsMeijin())startMeijin();
+        applyUiLevel();renderHints();renderEntrySurface();renderEditorBinding(mainEditor);mainEditor.view.render({force:true});
+        return;
+      }
       if($('#uiLevel').value==='entry'&&(document.body.dataset.editorMode||editorModes.get('script'))==='code'){
-        $('#uiLevel').value=document.body.dataset.uiLevel;
+        applyUiLevel();
         setStatus('「はじめて」はブロックで使うよ。先に「ブロック」をえらんでね。');
         return;
       }
       if (tutorial || composingEditors.size || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
-        $('#uiLevel').value=document.body.dataset.uiLevel;
+        applyUiLevel();
         setStatus('入力を 決めるか やめてから、見せ方を かえてね。');
         return;
       }
-      document.body.dataset.uiLevel = $('#uiLevel').value;
+      baseUiLevel = $('#uiLevel').value;
+      applyUiLevel();
       try {
-        localStorage.setItem(STORAGE_KEYS.uiLevel, $('#uiLevel').value);
+        localStorage.setItem(STORAGE_KEYS.uiLevel, baseUiLevel);
       } catch (_) {}
       renderHints();
       renderEntrySurface();
@@ -6748,13 +6959,13 @@
     try {
       storedUiLevel = localStorage.getItem(STORAGE_KEYS.uiLevel);
     } catch (_) {}
-    document.body.dataset.uiLevel = normalizeEntryUiLevel(storedUiLevel);
-    $('#uiLevel').value = document.body.dataset.uiLevel;
+    baseUiLevel = normalizeEntryUiLevel(storedUiLevel);
+    applyUiLevel();
     let storedEditorMode = null;
     try { storedEditorMode = localStorage.getItem(STORAGE_KEYS.editorMode); } catch (_) {}
     editorModes.set('script', ['code', 'blocks'].includes(storedEditorMode) ? storedEditorMode : 'blocks');
     if(document.body.dataset.uiLevel==='entry'&&editorModes.get('script')==='code'){
-      document.body.dataset.uiLevel='basic';$('#uiLevel').value='basic';
+      baseUiLevel='basic';applyUiLevel();
     }
     el.projectName.addEventListener('change', () => {
       if (modelLocked()) {

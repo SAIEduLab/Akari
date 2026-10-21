@@ -14,7 +14,8 @@ const inputs=snapshot(product),report={schema:'akari-speech-preview-v1',status:'
 const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 const settle=p=>p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
 async function prepare(p,c){
- await p.locator('#newBtn').click();await p.locator('#editorModecode').click();await p.locator('#uiLevel').selectOption('basic');
+ // 新しく作る starts in はじめて, where code cannot be shown: かんたん comes first.
+ await p.locator('#newBtn').click();await p.locator('#uiLevel').selectOption('basic');await p.locator('#editorModecode').click();
  await nameLegacyFixtureActor(p);
  const dango=p.locator('[data-sprite-preset="dango"]');await reveal(dango);await dango.click();
  const texts=c.kind==='short'?previewShortTexts:previewLongTexts,seconds=c.kind==='short'?2:10;

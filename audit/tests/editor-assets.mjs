@@ -26,6 +26,17 @@ async function reveal(locator) {
   return locator;
 }
 const click = async (p, selector) => (await reveal(p.locator(selector))).click();
+// 新しく作る starts the new work in はじめて; these checks go on in the level and view they were in.
+const newWork = async p => {
+  const level = await p.locator('#uiLevel').inputValue(), mode = await p.evaluate(() => document.body.dataset.editorMode);
+  await click(p, '#newBtn');
+  await p.waitForFunction(() => document.querySelector('#loseConfirmModal.show') || document.querySelector('#uiLevel').value === 'entry');
+  // The confirm is answered as answerProductConfirms answers it (a wait is not an action that runs its handler).
+  await p.evaluate(() => document.querySelector('#loseConfirmModal.show #loseConfirmProceed')?.click());
+  await p.waitForFunction(() => document.querySelector('#uiLevel').value === 'entry');
+  if (level !== 'entry') await p.locator('#uiLevel').selectOption(level);
+  if (mode === 'code' && level !== 'entry') await click(p, '#editorModecode');
+};
 const state = p => p.evaluate(() => ({project:JSON.stringify(Akari.app.project),assets:Akari.app.assetStore.ids(),history:Akari.app.editorState.history,redo:Akari.app.editorState.redo}));
 const current = p => p.evaluate(() => structuredClone(Akari.app.project.components.find(c => c.id === document.querySelector('#objectSelect').value)));
 async function select(p,id) { await (await reveal(p.locator('#objectSelect'))).selectOption(id); }
@@ -113,7 +124,7 @@ const cases = {
       Akari.app.project.name='複製用の画像と個体データ';
       return Akari.serializeProject(Akari.app.project,Akari.app.assetStore);
     });
-    await click(p,'#newBtn');
+    await newWork(p);
     await p.locator('#fileInput').setInputFiles({name:'duplicate-fixture.akari.md',mimeType:'text/plain',buffer:Buffer.from(fixture)});
     await p.waitForFunction(()=>Akari.app.project.name==='複製用の画像と個体データ'&&Akari.app.editorState.state==='DESIGN');
     await select(p,'sprite-1');
@@ -216,7 +227,7 @@ const cases = {
     await click(p,'#redoBtn');await select(p,c.id);assert.deepEqual(await imageInfo(p),image);
     await click(p,'.prop-duplicate');const copy=await current(p);assert.equal(copy.costumes[0].assetId,c.costumes[0].assetId);
     const saved=path.join(artifacts,'drawing.akari.md');let pending=p.waitForEvent('download');await click(p,'#saveBtn');await (await pending).saveAs(saved);
-    await click(p,'#newBtn');await p.locator('#fileInput').setInputFiles(saved);await p.waitForFunction(id=>Akari.app.project.components.some(c=>c.id===id),copy.id);await select(p,copy.id);assert.deepEqual(await imageInfo(p),image);
+    await newWork(p);await p.locator('#fileInput').setInputFiles(saved);await p.waitForFunction(id=>Akari.app.project.components.some(c=>c.id===id),copy.id);await select(p,copy.id);assert.deepEqual(await imageInfo(p),image);
     const generated=path.join(artifacts,'drawing.html');pending=p.waitForEvent('download');await click(p,'#exportBtn');await p.locator('#exportControls').click();await (await pending).saveAs(generated);
     await p.goto(pathToFileURL(path.resolve(generated)).href);await p.locator('#playerStart').click();
     await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='RUNNING');
@@ -244,7 +255,7 @@ const cases = {
     await p.screenshot({path:path.join(artifacts,'drawing-mobile.png'),fullPage:true});
   },
   async 'format-contract-and-import'(p) {
-    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:3});
+    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:3,runtimeContractId:3,programFormatVersion:3,projectFormatVersion:4});
     await p.locator('#fileInput').setInputFiles({name:'saved-project.akari.md',mimeType:'text/plain',buffer:Buffer.from(savedFile)});
     await p.waitForFunction(()=>Akari.app.project.name==='作品の保存確認'&&Akari.app.editorState.state==='DESIGN');
     assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),(""+currentProductVersion()+""));
@@ -253,7 +264,7 @@ const cases = {
   },
   async 'format-malformed-state-protection'(p) {
     const before=await state(p);
-    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": 2','"languageContractId": 1'),savedFile.replace('"formatVersion": 3','"formatVersion": "3"')]) {
+    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": 3','"languageContractId": 1'),savedFile.replace('"formatVersion": 4','"formatVersion": "4"')]) {
       const result=await p.evaluate(async text=>{try{await Akari.parseProjectFile(text);return 'accepted';}catch(e){return e.code;}},text);
       assert.notEqual(result,'accepted');assert.deepEqual(await state(p),before);
     }
@@ -306,7 +317,7 @@ const cases = {
       return {sha256:a.sha256,byteLength:a.byteLength,components:r.project.components.filter(c=>c.costumes?.some(co=>co.assetId===a.id)).map(c=>({name:c.name,w:c.w,h:c.h}))};
     },text);
     assert.equal(restored.sha256,expected);assert.equal(restored.byteLength,35664);assert.deepEqual(restored.components,[{name:first.name,w:180,h:180},{name:second.name,w:180,h:180}]);
-    await click(p,'#newBtn');await p.locator('#fileInput').setInputFiles(saved);
+    await newWork(p);await p.locator('#fileInput').setInputFiles(saved);
     await p.waitForFunction(id=>Akari.app.project.components.some(c=>c.id===id),second.id);await select(p,second.id);
     assert.deepEqual(await imageInfo(p),image,'save and reload preserve decoded pixels');
     const generated=path.join(artifacts,'dango.html');pending=p.waitForEvent('download');await click(p,'#exportBtn');await p.locator('#exportControls').click();await (await pending).saveAs(generated);

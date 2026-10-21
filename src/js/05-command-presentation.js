@@ -240,7 +240,7 @@
         CREATE_SELF: Object.freeze({
           label: '自分のコピーを作る',
           inputs: Object.freeze([]),
-          format: (a,n) => n.count===undefined?'自分のコピーを作る':`自分のコピーを${formatExpression(n.count)}体作る`,
+          format: (a,n) => n.count===undefined?'自分のコピーを作る':`自分のコピーを${formatExpression(n.count)}つ作る`,
         }),
         DELETE_SELF: Object.freeze({
           label: 'このコピーだけを消す',
@@ -250,7 +250,7 @@
         CREATE_TARGET: Object.freeze({
           label: 'えらんだキャラクターのコピーを作る',
           inputs: Object.freeze(['だれ']),
-          format: (a,n) => `${a(0)}のコピーを${n.count===undefined?'':formatExpression(n.count)+'体'}作る`,
+          format: (a,n) => `${a(0)}のコピーを${n.count===undefined?'':formatExpression(n.count)+'つ'}作る`,
         }),
       }),
     }),
@@ -322,6 +322,7 @@
         WaitTime: '待つ',
         WaitUntil: '待つ',
         StopCommand: '止める',
+        TimerReset: 'しらべる',
       };
       const palette =
         groups[kind] ||
@@ -412,6 +413,15 @@
       [field('actorRef', 'だれの', 'actor-ref', { kind: 'self' })],
       [expression('value', '読む中身')], [], null,
       { capability: 'actor-qualified-read', semanticRoles: ['actorRef', 'value'] });
+    // 〜が10回【ジャンプ】するまで / 〜が3回おされるまで: used as the whole condition of a まで.
+    add('EventCount', 'expression', '手順を 行った 回数',
+      [field('actorRef', 'だれが', 'actor-ref', { kind: 'self' }), name('name', '手順の名前', 'ジャンプ', true)],
+      [expression('count', '何回', 3)], [], op('event', 'action'),
+      { capability: 'event-count:action', semanticRoles: ['actorRef', 'name', 'count'] });
+    add('EventCount', 'expression', 'おされた 回数',
+      [field('actorRef', 'だれが', 'actor-ref', { kind: 'self' })],
+      [expression('count', '何回', 3)], [], op('event', 'click'),
+      { capability: 'event-count:click', semanticRoles: ['actorRef', 'count'] });
     add('ContinuousRule', 'rule', 'きまりに あてはまる間、動きつづける',
       [field('actorRef', 'だれが動く', 'actor-ref', { kind: 'self' }),
         field('direction', '進む向き', 'direction', 'right')],
@@ -473,6 +483,7 @@
       ['NoOperation', '何もしない'],
       ['Break', 'このくり返しを終える'],
       ['Continue', 'この回の のこりを とばして 次の回へ'],
+      ['TimerReset', 'タイマーを 0に する'],
     ])
       add(kind, 'statement', label);
     add(
@@ -731,11 +742,11 @@
       );
     for (const [kind, category, collection] of [
       ['ExtensionCommand', 'statement', 'commands'], ['ExtensionCalculation', 'expression', 'calculations'],
-    ]) for (const operation of EXTENSION_HOST.operations(collection)) {
+    ]) for (const operation of EXTENSION_HOST.operations(collection).filter(x => x.scope !== 'meijin')) {
       const labels = operation.args.map(x => x.name);
       add(kind, category, operation.displayName, [], [args(labels, { initialValues: operation.args.map(extensionDefaultExpression) })], [], { key: 'name', value: operation.name }, { palette: 'かくちょう' });
     }
-    if (EXTENSION_HOST.operations('events').length)
+    if (EXTENSION_HOST.operations('events').some(x => x.scope !== 'meijin'))
       add('SensorRead', 'expression', 'かくちょうの できごとの 中身', [], [], [], { key: 'sensor', value: '拡張の値' }, { palette: 'かくちょう' });
     return Object.freeze(schemas);
   })();
@@ -764,6 +775,8 @@
         ? 'name'
         : kind === 'SensorRead'
           ? 'sensor'
+          : kind === 'EventCount'
+          ? 'event'
           : [
                 'NumericUpdate',
                 'StopCommand',
@@ -797,15 +810,18 @@
     const type = field.type;
     if (value === undefined && field.required === false) return undefined;
     if (type === 'actor-ref') {
-      blockRecord(value, ['kind', 'name'], path);
+      blockRecord(value, ['kind', 'name', 'particle'], path);
       // みんな (the whole flow) is a subject only a wait takes.
       if (!['self', 'named', ...(field.everyone ? ['all'] : [])].includes(value.kind)) blockDataError('だれが動くかの書き方が正しくありません', path);
       if (value.kind === 'self' || value.kind === 'all') {
         if (Object.hasOwn(value, 'name')) blockDataError('「自分」にはほかの名前を付けられません', path);
+        if (Object.hasOwn(value, 'particle')) blockDataError('主語の「が」は 名前で えらんだ ときに 使います', path);
         return { kind: value.kind };
       }
       blockFieldValue({ type: 'name' }, value.name, path + '.name');
-      return { kind: 'named', name: value.name };
+      // ねこが…: the subject is written with が; は is the default and is not stored.
+      if (Object.hasOwn(value, 'particle') && value.particle !== 'が') blockDataError('主語の あとには「は」か「が」を 書きます', path + '.particle');
+      return value.particle === 'が' ? { kind: 'named', name: value.name, particle: 'が' } : { kind: 'named', name: value.name };
     }
     if (type === 'argument-names') {
       if (!Array.isArray(value) || value.length > LIMITS.sourceEach)

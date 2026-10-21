@@ -97,6 +97,9 @@ await withBrowser(browserPath,async browser=>{
         await p.locator('#editorMode'+mode).click();
         await p.locator('#sourceOverviewBtn').click();await p.locator('#newBtn').click();await productConfirmAnswered(p);
         assert.equal(await p.locator('#sourceOverview').isVisible(),false,'new project opens the editor');
+        // A new work starts in はじめて (blocks); the check goes on in くわしく with the view it was in.
+        assert.equal(await p.locator('#uiLevel').inputValue(),'entry','a new work starts in はじめて');
+        await p.locator('#uiLevel').selectOption('advanced');if(mode==='code')await p.locator('#editorModecode').click();
         assert.equal(await p.locator('#eventSelect').inputValue(),'start');
         assert.equal(await p.evaluate(()=>Akari.app.project.scripts.every(s=>s.source==='')),true,'new work has empty source');
         await p.locator('#sampleBtn').click();if(await p.locator('#openConfirmModal').isVisible())await p.locator('#openConfirmProceed').click();await p.locator('#samplePicker [data-sample-id="dance"]').click();

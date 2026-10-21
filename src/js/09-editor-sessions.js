@@ -53,7 +53,8 @@
       editorCheckError('文脈の世代が不正です');
     const ctx = editorContext(ownerKey, context),
       parsed = parseSyntax(source, { ...ctx, ...(project ? {symbols:buildSymbols(project)} : {}) }),
-      encoded = parsed.ast ? blockEncode(parsed.ast) : null;
+      // A 名人 script is code only.
+      encoded = parsed.ast && !ctx.meijin ? blockEncode(parsed.ast) : null;
     return {
       ownerKey,
       ownerKind,
@@ -259,6 +260,17 @@
       nodeIds.set(node, id);
     }
     return { tree: encoded.tree, nodeMap, nodeIds };
+  }
+  // The は／が of every written subject, in reading order (は when none is recorded).
+  function subjectParticles(ast) {
+    const out = [], walk = value => {
+      if (Array.isArray(value)) { value.forEach(walk); return; }
+      if (!value || typeof value !== 'object') return;
+      if (value.actorRef?.kind === 'named') out.push(value.actorRef.particle || 'は');
+      for (const [key, child] of Object.entries(value)) if (key !== 'actorRef' && key !== 'sourceSpan') walk(child);
+    };
+    walk(ast);
+    return out;
   }
   function preserveBlockSource(session, tree, sourceOrigins = new Map()) {
     const source = session.sourceText, oldIndex = buildBlockIndex(session.blockView);
@@ -758,7 +770,8 @@
     };
     apply(operation);
     const candidateAst = blockDecode(tree, draftCodec);
-    if (astEquivalent(original, candidateAst)) return unchanged();
+    // は／が of a subject is written text, not meaning: astEquivalent leaves it out, so a change of it alone is still an edit.
+    if (astEquivalent(original, candidateAst) && stableJson(subjectParticles(original)) === stableJson(subjectParticles(candidateAst))) return unchanged();
     const hasHole = [...buildBlockIndex(tree).values()].some(entry =>
       BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId)?.kind === 'Hole');
     if (hasHole) {
@@ -826,7 +839,8 @@
     };
     const candidateProject = editorCandidateProject(session, source, project, context),
       diagnostics = editorDiagnostics(parsed.ast, candidateProject, context),
-      encoded = session.blockDraft ? reidentifyDraft(blockEncode(parsed.ast))
+      encoded = context.meijin ? { tree: null, nodeMap: new Map(), nodeIds: new WeakMap() }
+        : session.blockDraft ? reidentifyDraft(blockEncode(parsed.ast))
         : editorReidentify(blockEncode(parsed.ast), tree, parsed.ast);
     const result = {
       changed: true,
@@ -876,9 +890,43 @@
       EDITOR_AVAILABILITY_CACHE.set(session, cache);
     }
     if (cache.has(cacheKey)) return JSON.parse(JSON.stringify(cache.get(cacheKey)));
-    const result = computeBlockInsertionAvailability(session, schemaId, location, options);
+    // Undo and redo bring back a text checked before (a new session, the same words): its answers are kept by content.
+    const contentKey = availabilityContentKey(session, schemaId, location, options);
+    let result = contentKey && EDITOR_AVAILABILITY_BY_CONTENT.get(contentKey);
+    if (!result) {
+      result = computeBlockInsertionAvailability(session, schemaId, location, options);
+      if (contentKey) {
+        if (EDITOR_AVAILABILITY_BY_CONTENT.size >= 4000) EDITOR_AVAILABILITY_BY_CONTENT.clear();
+        EDITOR_AVAILABILITY_BY_CONTENT.set(contentKey, result);
+      }
+    }
     cache.set(cacheKey, result);
     return JSON.parse(JSON.stringify(result));
+  }
+  const EDITOR_AVAILABILITY_BY_CONTENT = new Map();
+  // A short print of a long text (two 32-bit hashes and the length), so the keys stay small.
+  function availabilityHash(text) {
+    let a = 0x811c9dc5, b = 7;
+    for (let i = 0; i < text.length; i++) { const c = text.charCodeAt(i); a = Math.imul(a ^ c, 16777619); b = (Math.imul(b, 31) + c) | 0; }
+    return (a >>> 0).toString(36) + '.' + (b >>> 0).toString(36) + '.' + text.length;
+  }
+  // What an insertion check reads of the project: its names, kinds, places, data, the other bodies and procedures. It is
+  // read on every check, because the project may change in place (a part's place set in the properties).
+  function projectAvailabilityText(project) {
+    const named = list => (list || []).map(x => [x.id, x.name]);
+    const owner = c => [c.id, c.name, c.type, c.x ?? null, c.y ?? null, named(c.costumes), named(c.sounds), named(c.backdrops), c.localData, c.text ?? null];
+    return JSON.stringify([owner(project.stage || {}), (project.components || []).map(owner), project.projectData,
+      (project.actions || []).map(a => [a.id, a.ownerId, a.name, a.args, a.source]), (project.functions || []).map(f => [f.id, f.ownerId, f.name, f.args, f.source]),
+      (project.scripts || []).map(s => [s.id, s.targetId, s.event, s.mode, s.filter ?? null, s.source]), project.extensions ?? null, project.settings ?? null]);
+  }
+  function availabilityContentKey(session, schemaId, location, options) {
+    const project = options.project || session.project, context = options.context || session.context || {};
+    if (!project || typeof project !== 'object' || typeof session.sourceText !== 'string' || typeof context !== 'object') return null;
+    try {
+      return [options.ownerKey ?? session.ownerKey, schemaId, location.parentId, location.body || '', location.input || '', location.index ?? '',
+        availabilityHash(session.sourceText), availabilityHash(JSON.stringify(context, (key, value) => (key === 'symbols' ? undefined : value))),
+        availabilityHash(projectAvailabilityText(project))].join('|');
+    } catch (error) { return null; }
   }
   function editorInsertionHints(session, location, options = {}) {
     if (!location.body) return [];
@@ -1091,7 +1139,7 @@
       ].includes(schema.kind)
     )
       return 'operator';
-    if (schema.kind === 'SensorRead') return 'sense';
+    if (schema.kind === 'SensorRead' || schema.kind === 'TimerReset') return 'sense';
     if (schema.kind === 'UserFunctionCall' || schema.kind === 'UserActionCall') return 'action';
     return (
       {

@@ -4,7 +4,7 @@ function createAkariExtensionHost(options) {
   'use strict';
   options = options || {};
   const API_CONTRACT = 1;
-  const standard = Object.freeze({ languageContractId: 2, runtimeContractId: 2, ...(options.standard || {}) });
+  const standard = Object.freeze({ languageContractId: 3, runtimeContractId: 3, ...(options.standard || {}) });
   const records = new Map(), names = new Set(), labels = new Set(), connections = new Set();
   let session = null, sequence = 0, savedState = {}, sealed = false;
   const fail = (code, message) => { const error = new Error(message); error.code = code; throw error; };
@@ -123,10 +123,12 @@ function createAkariExtensionHost(options) {
       if (!Array.isArray(manifest[kind])) fail('E701','拡張の機能一覧が不正です');
       for (const operation of manifest[kind]) {
         const required = kind === 'events' ? ['id','name','description','payload'] : ['id','name','description','args','returns','async'];
-        if (!keys(operation,required,kind==='events'?[]:['capability']) || !identifier(operation.id) || ids.has(operation.id) ||
+        if (!keys(operation,required,kind==='events'?['scope']:['capability','scope']) || !identifier(operation.id) || ids.has(operation.id) ||
           typeof operation.name !== 'string' || !operation.name.trim() || /[\r\n「」]/.test(operation.name) ||
           typeof operation.description !== 'string' || names.has(operation.name) || proposedNames.has(operation.name) ||
           (options.reservedNames || []).includes(operation.name)) fail('E702','拡張の識別子・名前が不正または重複しています');
+        // scope "meijin": only 名人 text may use it (no block, no ordinary body); "all" (the default) everywhere.
+        if (own(operation,'scope') && !['all','meijin'].includes(operation.scope)) fail('E701','拡張の使える本文（scope）が不正です');
         ids.add(operation.id); proposedNames.add(operation.name);
         if (kind === 'events') spec(operation.payload);
         else {
@@ -155,7 +157,7 @@ function createAkariExtensionHost(options) {
   function operations(kind) {
     const key = kindKey(kind); if (!key) fail('E701','拡張の機能区分が不正です');
     return [...records.values()].flatMap(record => record.manifest[key].map(operation => freeze({
-      ...copy(operation), displayName:operation.name, name:record.manifest.id+'/'+operation.id,
+      ...copy(operation), scope:operation.scope||'all', displayName:operation.name, name:record.manifest.id+'/'+operation.id,
       qualifiedName:record.manifest.id+'/'+operation.id, extensionId:record.manifest.id, kind:key,
       extensionName:record.manifest.name || record.manifest.id,
     })));

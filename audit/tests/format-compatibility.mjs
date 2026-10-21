@@ -24,7 +24,7 @@ assert.notEqual(currentRelease,priorRelease);
 const priorSource=source.replace(producerPattern,(_all,a,_value,b)=>a+priorRelease+b);
 assert.notEqual(priorSource,source,'prior producer fixture must be a different product build');
 const api=loadApi(source),priorApi=loadApi(priorSource),plain=x=>JSON.parse(JSON.stringify(x));
-const contracts={languageContractId:2,runtimeContractId:2,programFormatVersion:2,projectFormatVersion:3};
+const contracts={languageContractId:3,runtimeContractId:3,programFormatVersion:3,projectFormatVersion:4};
 // Incompatible contract values: the previous number, the current number as text, and null.
 const incompatible=current=>[current-1,String(current),null];
 const autosaveDatabase='akari-workspace-f'+contracts.projectFormatVersion;
@@ -61,7 +61,7 @@ const editSaved=(text,key,value)=>{
 await run('FORMAT-PROJECT-PRODUCER-INDEPENDENT',async()=>{
   const loaded=await api.parseProjectFile(savedPrior);
   assert.equal(loaded.project.appVersion,priorRelease);
-  assert.equal(loaded.project.languageContractId,2);
+  assert.equal(loaded.project.languageContractId,contracts.languageContractId);
   assert.equal(loaded.project.formatVersion,contracts.projectFormatVersion);
   assert.equal('languageVersion' in loaded.project,false);
   assert.deepEqual(plain(loaded.project.scripts),plain(priorProject.scripts),'exact source and ownership survive load');
@@ -131,7 +131,7 @@ await run('FORMAT-FINGERPRINT-METADATA-EXCLUSION',async()=>{
   p.appVersion=currentRelease;assert.equal(fingerprint(p,store),base,'producer label must not make project dirty');
   p.name+=' 改';assert.notEqual(fingerprint(p,store),base,'content change must make project dirty');
   p.name=priorProject.name;p.languageContractId=1;assert.notEqual(fingerprint(p,store),base,'language contract must affect fingerprint');
-  p.languageContractId=2;p.formatVersion=contracts.projectFormatVersion-1;assert.notEqual(fingerprint(p,store),base,'project format must affect fingerprint');
+  p.languageContractId=contracts.languageContractId;p.formatVersion=contracts.projectFormatVersion-1;assert.notEqual(fingerprint(p,store),base,'project format must affect fingerprint');
   p.formatVersion=contracts.projectFormatVersion;p.scripts[0].source+='\n';assert.notEqual(fingerprint(p,store),base,'source change must affect fingerprint');
   return {producerIgnored:true,contentAndContractsTracked:true};
 });

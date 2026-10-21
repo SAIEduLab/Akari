@@ -34,6 +34,7 @@ export const extensionFoundationIds = Object.freeze([
   'EXTENSION-JAPANESE-NAMES',
   'EXTENSION-VERSION-UPGRADE',
   'EXTENSION-UPGRADE-OPEN-CONFIRM',
+  'EXTENSION-MEIJIN-SCOPE',
 ]);
 export const extensionExpectedObservations = Object.freeze({
   'EXTENSION-STATE-LIFETIME': { runRestart: 0, projectRestart: 7, runSnapshot: 0, projectSnapshot: 7, runRestored: 0, projectRestored: 5,
@@ -43,6 +44,10 @@ export const extensionExpectedObservations = Object.freeze({
   'EXTENSION-VERSION-UPGRADE': { upgraded: '1.0.0→1.2.0', validates: true, stateKept: { value: 4 }, sameVersionChangedRejected: true,
     newerRecordedRejected: true, otherMajorRejected: true, prereleaseRejected: true, stateFormatRejected: true },
   'EXTENSION-UPGRADE-OPEN-CONFIRM': { asked: true, namesVersions: true, dismissedKeepsWork: true, acceptedOpens: true, recordedVersion: '1.1.0' },
+  // extensions/examples/meijin.js: operations with scope "meijin" are read only in 名人 text.
+  'EXTENSION-MEIJIN-SCOPE': { meijinChecked: true, meijinSaid: ['7'], ordinaryCommandStopped: 'S317', ordinaryCalculationStopped: 'S317',
+    ordinaryEventStopped: 'S317', otherExtensionOrdinary: true, blocks: ['ExtensionCommand:demo.offline/remember'], meijinHints: true, ordinaryHints: false,
+    invalidScopeRejected: 'E701', scopes: ['meijin', 'meijin', 'meijin'] },
   'EXTENSION-STANDARD-POLICIES': { standardUnchanged: true, standardFrozen: true, keys: 42 },
   'EXTENSION-PROFILE-INHERIT-FINITE-UNLIMITED': { adjustable: 36, inherited: true, finite: true, unlimited: true, stable: true },
   'EXTENSION-PROFILE-STRICT-REGISTRATION': { invalidRejected: 16, engineGuards: 6, duplicateRejected: true, canonicalHash: true },

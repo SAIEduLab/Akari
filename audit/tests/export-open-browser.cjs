@@ -70,8 +70,8 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
       assert.deepEqual(box,{x:0,y:0,width:640,height:400});await p.screenshot({path:path.join(out,'artwork-iframe.png')});return{box,automatic:true};},host);
   });
   await run('EXPORT-ARTWORK-INITIALIZATION-ERROR',async()=>{
-    const file=generate('invalid-contract',marker),html=fs.readFileSync(file,'utf8');assert.equal(html.split('"runtimeContractId":2').length,2);
-    fs.writeFileSync(file,html.replace('"runtimeContractId":2','"runtimeContractId":0'));
+    const file=generate('invalid-contract',marker),html=fs.readFileSync(file,'utf8');assert.equal(html.split('"runtimeContractId":3').length,2);
+    fs.writeFileSync(file,html.replace('"runtimeContractId":3','"runtimeContractId":0'));
     return withPage(b,async p=>{await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='ERROR');
       assert.equal(await p.locator('#playerActivation').isVisible(),false);await p.locator('#playerOutput details summary').click();
       assert.match(await p.locator('#playerOutput').innerText(),/X602/);return{rejected:true,detailsVisible:true,errorCode:(await p.locator('#playerOutput details pre').innerText()).match(/^[A-Z]\d+/)?.[0]};},file);
@@ -190,7 +190,7 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
       views:[{kind:'script',ownerKey:'script:incoming-second',codeSelection:{start:1,end:3,direction:'forward'},scrollState:{codeTop:0,codeLeft:0}}]};
     const valid=api.serializeProject(incoming,api.makeDefaultAssetStore(),editor),variants=[];
     const stored=async p=>p.evaluate(async()=>{
-      const req=indexedDB.open('akari-workspace-f3',1),db=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+      const req=indexedDB.open('akari-workspace-f4',1),db=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
       try{const get=db.transaction('workspace','readonly').objectStore('workspace').get('latest'),rec=await new Promise((resolve,reject)=>{get.onsuccess=()=>resolve(get.result);get.onerror=()=>reject(get.error);});
         if(!rec)return null;const decoded=await Akari.decodeWorkspaceHistory(rec.workspace);
         return {cursor:decoded.cursor,frames:decoded.frames.map(f=>({project:JSON.stringify(f.project),pending:f.editorState.pendingEditors,callableDraft:f.editorState.callableDraft}))};

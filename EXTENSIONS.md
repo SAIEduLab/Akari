@@ -15,7 +15,7 @@ import { buildDerivedProduct } from './extensions/build.mjs';
 import examples from './extensions/examples/offline.js';
 
 await buildDerivedProduct({
-  product: './Akari_1_3_1.html',
+  product: './Akari_1_4_0.html',
   output: './derived-offline.html',
   extensions: [examples.offline, examples.text],
   profiles: [],
@@ -55,10 +55,11 @@ await buildDerivedProduct({
 | `state` | 状態形式の正整数 `formatVersion`、JSONの `initial`、任意の `persist`（`"run"` 既定、または `"project"`） |
 | `commands`、`calculations` | `id/name/description/args/returns/async`。任意の `capability` |
 | `events` | `id/name/description/payload` |
+| `scope`（命令・計算・できごとごと、任意） | `"all"`（既定。どの本文でも使える）または `"meijin"`（名人モードの本文でだけ使える） |
 
 引数は `{name,type,unit}`、結果とできごとの値は `{type,unit}` で定義します。型は `number/string/boolean/list/value`、命令の結果だけ `void` も使えます。数の単位は `歩/秒/度/回/番目/点/個/％/Hz` または単位なしの `null`。単位付き数の実際の値は `{magnitude,unit}` です。リストは既存の数・文字・条件の答えを並べた値です。Promiseや任意オブジェクトを作品の式の値へ混入させません。
 
-同じ拡張IDの再登録、機能ID・日本語名の重複、標準の予約名との衝突、契約不一致、依存先不足を診断します。登録失敗では登録表を変更しません。登録名を固定された標準の文型に差し込むことはできません。
+同じ拡張IDの再登録、機能ID・日本語名の重複、標準の予約名との衝突、契約不一致、依存先不足、`scope` の不正な値を診断します。登録失敗では登録表を変更しません。登録名を固定された標準の文型に差し込むことはできません。
 
 登録時に、キーを整列したmanifestとfactoryの `Function.prototype.toString()` の間へ改行を一つ入れたUTF-8列のSHA-256を求めます。これが `contentHash` です。ID・版が同じでも内容hashが違えば復元を拒否します。factoryの空白やコメント変更も同一性に影響します。
 
@@ -68,6 +69,22 @@ await buildDerivedProduct({
 - 空白一つでも変えたら版を上げます。同じ版で内容が違う拡張は、作品を開くときに拒否されます。
 - 同じメジャー版の中では、拡張ID、機能ID、日本語の拡張名・機能名、引数の個数・型・単位、作品に保存する状態の `formatVersion` を変えません。変える場合はメジャー版を上げます。
 - 製品は、作品に記録した版より新しい同じメジャー版の拡張が登録されていれば、確認したうえで新しい版で作品を開けます（後述）。
+
+### 名人モードだけの命令・計算・できごと
+
+命令・計算・できごとに `scope: "meijin"` を書くと、その機能は名人モードの本文でだけ使えます。[meijin.js](extensions/examples/meijin.js) がその例です。
+
+- 名人モードの本文には、ほかの拡張と同じく `拡張「拡張名」「機能名」（…）`・`拡張計算「拡張名」「機能名」（…）` と書きます。名人の本文の「書ける ことば」にも出ます。
+- ブロックにはなりません。ブロックの道具箱と、名人モードでない本文の「書ける ことば」には出ません。
+- 名人モードでない本文（部品・画面の本文、自分で作ったブロック）に書くと、作品チェックが「名人モードの 本文で だけ 使えます」（S317）で止めます。名人モードだけのできごとの合図を受ける見出しを、名人モードでない本文に書いたときも同じです。
+- 登録名を名人の自然な文型（「〜のところへ行く」など）に差し込むことはできません。部品の値は、名人モードの本文からも拡張にわたせません（E705）。
+- `scope` を書かない機能と `"all"` の機能は、これまでどおりどの本文でもブロックでも使えます。拡張API契約は `1` のままです。
+
+<!-- akari-example: meijin -->
+```text
+拡張「名人の記録」「数を記録する」（7）。
+ねこは拡張計算「名人の記録」「記録した数」（）を言う。
+```
 
 ## factoryと実行の寿命
 

@@ -15,7 +15,7 @@ const require=createRequire(import.meta.url);
 const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
 const {loadApi}=require('../browser/cases/audit-lib.cjs');
 const {answerProductConfirms}=require('../lib/product-dialogs.cjs');
-const autosaved='このパソコンに のこしたよ',autosaveDatabase='akari-workspace-f3',autosaveFallback='akari.autosave.f3';
+const autosaved='このパソコンに のこしたよ',autosaveDatabase='akari-workspace-f4',autosaveFallback='akari.autosave.f4';
 const regressionProject=makeRegressionProject(loadApi(fs.readFileSync(product,'utf8')));
 regressionProject.scripts=[{targetId:'stage',event:'start',source:'何もしない。'}];
 regressionProject.actions=[];regressionProject.functions=[];
@@ -185,7 +185,7 @@ await withBrowser(browser,async b=>{
     await fill(p,source);await mode(p,'blocks');await number(p).fill('3');await number(p).press('Enter');
     const save=async(id,name)=>{const pending=p.waitForEvent('download');await click(p,id);if(id==='exportBtn')await p.locator('#exportControls').click();const f=path.join(dir,name);await (await pending).saveAs(f);return f;};
     const file=await save('saveBtn','editor-gui-saved.akari.md'),saved=fs.readFileSync(file,'utf8');
-    assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F3-DATA-BEGIN'));
+    assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F4-DATA-BEGIN'));
     const initial=await state(p);await click(p,'newBtn');await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);assert.equal((await state(p)).project,initial.project);
     const generated=await save('exportBtn','editor-gui-player.html');
     const c=await b.newContext({offline:true}),errors=[],network=[];

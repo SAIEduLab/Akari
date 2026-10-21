@@ -5,17 +5,22 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {snapshot,withBrowser,sha} from '../lib/product-test-host.mjs';
+import {meijinExampleErrors} from '../lib/meijin-example-world.mjs';
 
 // Additional documentation checks; does not replace any product acceptance test.
 const [browserPath,output]=process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output),'new documentation evidence directory required');
 fs.mkdirSync(output,{recursive:true});
-const pages=['index.html','MANUAL.html','Manual/block-mode.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html','Manual/code-mode-advanced.html'];
+const pages=['index.html','MANUAL.html','Manual/block-mode.html','Manual/code-mode-beginner.html','Manual/code-mode-intermediate.html','Manual/code-mode-advanced.html','Manual/meijin-mode.html'];
+// The 名人 manual's examples are 名人 text: each is checked as a whole 名人 script in a work with the parts and data it
+// names (no errors), and each written-as-wrong example (code class="ng") must be stopped by the check.
+const meijinPage='Manual/meijin-mode.html';
 const before=snapshot(currentProductFile());
 const html=fs.readFileSync(currentProductFile(),'utf8');
 const context=vm.createContext({console,TextEncoder,TextDecoder,Blob,URL,structuredClone,setTimeout,clearTimeout});
 vm.runInContext(html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>')),context,{timeout:30000});
 const api=vm.runInContext('Akari',context);
+const meijinWork=source=>meijinExampleErrors(api,source);
 const decode=s=>s.replace(/&#(x[0-9a-f]+|\d+);/gi,(_,n)=>String.fromCodePoint(n[0].toLowerCase()==='x'?parseInt(n.slice(1),16):Number(n))).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&amp;/g,'&');
 const sources=Object.fromEntries(pages.map(p=>[p,fs.readFileSync(p,'utf8')]));
 const snippets=[];const links=[];
@@ -26,6 +31,11 @@ for(const [file,source] of Object.entries(sources)){
   assert.ok(source.includes('lang="ja"')&&source.includes('name="viewport"'));
   for(const [index,m] of [...source.matchAll(/<pre\b[^>]*>([\s\S]*?)<\/pre>/g)].entries()){
     const code=decode(m[1].replace(/<[^>]+>/g,''));
+    if(file===meijinPage){
+      const errors=meijinWork(code);
+      assert.deepEqual(errors,[],file+': 名人 example '+(index+1));
+      snippets.push({file,index:index+1,sha256:sha(code),status:'MEIJIN_CHECK_PASS'});continue;
+    }
     const parsed=api.parseSyntax(code);
     assert.ok(parsed.ast,file+': example '+(index+1)+' '+JSON.stringify(parsed.syntaxDiagnostics));
     snippets.push({file,index:index+1,sha256:sha(code),status:'SYNTAX_PASS'});
@@ -41,8 +51,13 @@ for(const [file,source] of Object.entries(sources)){
 }
 // Include the inline alternate command examples as well as complete preformatted examples.
 for(const file of pages){
-  for(const m of sources[file].matchAll(/<code\b[^>]*>([^<]+)<\/code>/g)){
-    const code=decode(m[1]);if(!code.endsWith('。'))continue;
+  for(const m of sources[file].matchAll(/<code\b([^>]*)>([^<]+)<\/code>/g)){
+    const code=decode(m[2]);if(!code.endsWith('。'))continue;
+    if(file===meijinPage){
+      const stopped=meijinWork(code).length>0;
+      assert.equal(stopped,/class="ng"/.test(m[1]),file+': inline 名人 '+(stopped?'stopped':'read')+' '+code);
+      snippets.push({file,inline:code,status:stopped?'MEIJIN_STOPPED_AS_WRITTEN':'MEIJIN_CHECK_PASS'});continue;
+    }
     assert.ok(api.parseSyntax(code).ast,file+': inline command '+code);
   }
 }

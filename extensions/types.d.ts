@@ -9,8 +9,10 @@ export interface ArgumentSpec extends ValueSpec { name: string }
 export interface Operation {
   id: string; name: string; description: string; args: ArgumentSpec[];
   returns: ValueSpec; async: boolean; capability?: string;
+  /** "meijin": usable only in 名人 text (no block, not in an ordinary body). "all" (the default): everywhere. */
+  scope?: 'all' | 'meijin';
 }
-export interface ExtensionEvent { id: string; name: string; description: string; payload: ValueSpec }
+export interface ExtensionEvent { id: string; name: string; description: string; payload: ValueSpec; scope?: 'all' | 'meijin' }
 export interface Standard { languageContractId: number; runtimeContractId: number }
 export interface Identity { id: string; version: string; contentHash: string }
 export interface Manifest {
@@ -49,7 +51,7 @@ export interface Instance {
 }
 export type Factory = (api: FactoryApi) => Instance;
 export type OperationKind = 'command' | 'calculation' | 'event' | 'commands' | 'calculations' | 'events';
-export type Description = (Operation | ExtensionEvent) & { extensionId: string; extensionName: string; name: string; qualifiedName: string; displayName: string; kind: string };
+export type Description = (Operation | ExtensionEvent) & { extensionId: string; extensionName: string; name: string; qualifiedName: string; displayName: string; kind: string; scope: 'all' | 'meijin' };
 export interface Upgrade { id: string; name: string; from: string; to: string }
 export interface StateInfo { id: string; name: string; formatVersion: number; persist: 'run' | 'project' }
 export interface ExtensionHost {

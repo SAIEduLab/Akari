@@ -20,7 +20,7 @@ const settled=p=>p.waitForFunction(()=>document.querySelector('#autosaveState').
 const edit=async(p,source)=>{await p.locator('#codeEditor').fill(source);await p.locator('#codeEditor').press('Tab');};
 const restore=async p=>{await p.reload();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));};
 async function record(p){return p.evaluate(async()=>{
-  const rec=await new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f3',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>{db.close();resolve(get.result||null);};get.onerror=()=>reject(get.error);};});
+  const rec=await new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f4',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>{db.close();resolve(get.result||null);};get.onerror=()=>reject(get.error);};});
   if(!rec)return null;const decoded=await Akari.decodeWorkspaceHistory(rec.workspace),frame=decoded.frames[decoded.cursor];
   return {revision:rec.revision,updatedAt:rec.updatedAt,cursor:decoded.cursor,frameCount:decoded.frames.length,project:frame.project,editorState:frame.editorState};
 });}

@@ -38,7 +38,7 @@
     <button id="diagnoseBtn">作品チェック</button>
     <details id="entryProjectMenu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
     <button id="tutorialStart" type="button">いっしょに作る</button>
-    <label class="ui-level-label">見せ方 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
+    <label class="ui-level-label">見せ方 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option><option value="meijin">名人</option></select></label>
     <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
       <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品を ファイルにします。あとで つづきを 作るときは「開く」で その ファイルを えらびます。</p>
       <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見る ファイルを 作ります。</p>
@@ -283,6 +283,7 @@
         <label>動かすもの <select id="objectSelect"></select></label>
         <label>なおす動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="なおす動きを えらびます。きっかけは「いつ動く？」で かえます"></select></label>
         <button id="scriptAdd" type="button">同じできごとの本文を ふやす</button>
+        <button id="meijinDelete" type="button" hidden>この 名人の本文を けす</button>
       </div>
       <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">「動かす」を おしたとき</button><button id="entryClickEvent" type="button">キャラが おされたとき</button></div>
       <p id="entryOutside" role="status" hidden>この作品には、ほかのブロックも あるよ。そのまま のこっています。かえるときは 見せ方を「かんたん」か「くわしく」に しよう。</p>
@@ -397,6 +398,15 @@
           <button id="callableDelete">この 自分で作ったブロックを けす</button>
         </div>
         <div class="proc-edit">
+          <div id="meijinProcPanel" class="meijin-proc-panel" hidden>
+            <div id="meijinProcTitle" class="asset-target"></div>
+            <p>この てじゅんは、名人の本文の 中で 作りました。中身を なおすときは、名人の本文を なおします。</p>
+            <pre id="meijinProcBody" aria-label="てじゅんの 中身"></pre>
+            <label>名前 <input id="meijinProcName"></label>
+            <button id="meijinProcRename" type="button">名前を かえる</button>
+            <button id="meijinProcOpen" type="button">名人の本文で ひらく</button>
+            <p id="meijinProcError" class="field-error" role="alert" hidden></p>
+          </div>
           <details id="callableConceptHelp" class="child-help"><summary>自分で作ったブロックの ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
             <p>てじゅんは、いくつかの 動きを まとめて、名前で 使うものです。れい：「あいさつ」という 名前で、名前を 話して おじぎする 動きを まとめます。</p>
             <p>「答えを もとめる」は、中で 使った 数や 文字から 答えを 出します。れい：点数を 2倍にして、その 答えを 返します。</p>
@@ -545,6 +555,7 @@
 <!-- @include js/02-language-contracts.js -->
 <!-- @include js/03-default-assets.js -->
 <!-- @include js/04-syntax-parsing.js -->
+<!-- @include js/04-meijin-syntax.js -->
 <!-- @include js/05-command-presentation.js -->
 <!-- @include js/06-source-formatting.js -->
 <!-- @include js/07-semantic-analysis.js -->

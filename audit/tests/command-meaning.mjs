@@ -72,6 +72,7 @@ for(const op of ['THIS','OTHERS','ALL'])add('StopCommand:'+op,'0.1秒待つ。'+
 for(const id of ['Break','Continue'])add(id,'3回くり返す。\n  点数に1を足す。\n  '+source(id)+'\n  点数に100を足す。',p=>score(p,0),h=>{h.start();eq(h.score(),id==='Break'?1:3);});
 add('Forever','ずっとくり返す。\n  右に15度回る。',()=>{},h=>{h.start(6,true);assert.ok(h.actor().direction>=30);h.scheduler.pause();const direction=h.actor().direction;assert.equal(h.scheduler.paused,true);h.scheduler.stop();eq(h.actor().direction,direction);eq(h.scheduler.running,false);eq(h.scheduler.ready,[]);});
 add('UserActionCall','（3）を渡して、【増やす】という手順を行う。',(p,v)=>{p.actions=[{id:'command-action',ownerId:'stage',name:'増やす',args:['量'],source:'自分の個体点数に量を足す。'}];if(v)p.scripts[0].source='量を3として、【増やす】という手順を行う。';},h=>{h.start();eq(h.actor().vars.get('個体点数'),13);eq(h.actor('command-star').vars.get('個体点数'),20);eq(h.score(),10);});
+add('TimerReset','1秒待つ。\nタイマーを0にする。\n（タイマー）を言う。',()=>{},h=>{h.start();h.at(1000);eq(h.say(),['0秒']);});
 add('NoOperation','何もしない。\n「終わり」と言う。',()=>{},h=>{const before=h.capture();h.start();const after=h.capture();eq(after.actors,before.actors);eq(after.variables,before.variables);eq(after.lists,before.lists);eq(h.say(),['終わり']);});
 eq([...cases.keys()].sort(),[...ids].sort());const variants=new Set(['IfStatement','RepeatCount','RepeatWhile','RepeatUntil','MotionCommand:BOUNCE','LooksCommand:NEXT_BACKDROP','LooksCommand:PREV_BACKDROP','LooksCommand:NEXT_COSTUME','LooksCommand:PREV_COSTUME','UserActionCall']);
 const results=[];

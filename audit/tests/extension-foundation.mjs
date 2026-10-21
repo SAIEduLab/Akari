@@ -88,6 +88,28 @@ function externalFactory(api){return{commands:{remember(args){if(!api.connector)
 let derived,player,externalDerived;
 try{const {buildDerivedProduct}=await import('../../extensions/build.mjs');derived=path.join(directory,'derived.html');await buildDerivedProduct({product:candidate,output:derived,extensions:[...definitions,{manifest:asyncManifest,factory:asyncFactory}],profiles:[profile],profile:{id:profile.id,version:profile.version},allowedCapabilities:[]});}catch(error){console.error('Derived product build: '+error.stack);}
 try{const {buildDerivedProduct}=await import('../../extensions/build.mjs');externalDerived=path.join(directory,'external-derived.html');await buildDerivedProduct({product:candidate,output:externalDerived,extensions:[...definitions,{manifest:externalManifest,factory:externalFactory}],allowedCapabilities:['demo.add']});}catch(error){console.error('External derived product build: '+error.stack);}
+// The 名人-only example (scope "meijin"), built and run as an independent derived author would, on the real runtime.
+await check('EXTENSION-MEIJIN-SCOPE',async()=>{
+  const {buildDerivedProduct}=await import('../../extensions/build.mjs'),{meijin}=require('../../extensions/examples/meijin.js'),file=path.join(directory,'meijin-derived.html');
+  await buildDerivedProduct({product:candidate,output:file,extensions:[offline,meijin]});
+  const html=fs.readFileSync(file,'utf8'),context={console,TextEncoder,TextDecoder,Uint8Array,Uint32Array,ArrayBuffer,Blob,URL,structuredClone,crypto:crypto.webcrypto,setTimeout,clearTimeout,AbortController,queueMicrotask};
+  vm.runInNewContext(html.slice(html.indexOf('<script>')+8,html.lastIndexOf('</script>')),context,{timeout:30000});
+  const M=context.Akari,work=scripts=>{const p=M.makeEmptyProject();p.components[0].name='ねこ';p.components[0].costumes=[{id:'c-face',name:'顔',kind:'text',value:'●'}];p.components[0].costumeId='c-face';
+    p.scripts=scripts.map((s,i)=>({id:'s'+i,event:'start',source:'',...(s.meijin?{mode:'meijin',targetId:'meijin'}:{targetId:p.components[0].id})}));p.scripts.forEach((s,i)=>M.updateScriptSource(s,scripts[i].source,p));return p;};
+  const first=p=>M.compileProject(p).errors[0]?.code||null;
+  const text='拡張「名人の記録」「数を記録する」（7）。\nねこは拡張計算「名人の記録」「記録した数」（）を言う。',p=work([{meijin:true,source:text}]),compiled=M.compileProject(p);
+  const said=[];let now=0;const r=new M.RuntimeModel(p,{});r.now=()=>now;const q=new M.EventScheduler(p,compiled,r,{say:(id,t)=>said.push(String(t))});q.schedule=()=>{};
+  try{q.start();for(;now<100;now++){for(let i=0;i<50&&q.ready.length;i++)q.runTurn();q.recheckBlocked();}}finally{q.stop();}
+  const hints=target=>M.hintCandidates(work([{meijin:true,source:''}]),target,{}).some(x=>x.text.includes('「名人の記録」'));
+  let invalidScopeRejected=null;try{const host=M.createAkariExtensionHost();host.register({...structuredClone(meijin.manifest),id:'audit.badscope',name:'監査の記録',commands:[{...meijin.manifest.commands[0],scope:'block'}],calculations:[],events:[]},meijin.factory);}catch(error){invalidScopeRejected=error.code;}
+  // Values made in the product's own context are compared as plain data.
+  return plain({meijinChecked:compiled.errors.length===0,meijinSaid:said,ordinaryCommandStopped:first(work([{source:'拡張「名人の記録」「数を記録する」（7）。'}])),
+    ordinaryCalculationStopped:first(work([{source:'拡張計算「名人の記録」「記録した数」（）を言う。'}])),
+    ordinaryEventStopped:first(work([{source:'「拡張:demo.meijin/recorded」という合図を受けたとき、\n  「きた」と言う。'}])),
+    otherExtensionOrdinary:first(work([{source:'拡張「数の記憶」「数を記憶する」（9）。'}]))===null,
+    blocks:M.BLOCK_SCHEMAS.filter(s=>s.id.startsWith('ExtensionCommand:')).map(s=>s.id),meijinHints:hints('meijin'),ordinaryHints:hints(work([]).components[0].id),
+    invalidScopeRejected,scopes:['commands','calculations','events'].map(kind=>M.extensions.operations(kind).find(x=>x.extensionId==='demo.meijin').scope)});
+});
 const install=`globalThis.auditDefinitions=[{manifest:${JSON.stringify(offline.manifest)},factory:${offline.factory.toString()}},{manifest:${JSON.stringify(text.manifest)},factory:${text.factory.toString()}}];`;
 // Ordinary local files use opaque origin "null". Do not change that contract
 // with --allow-file-access-from-files, or mask requests with abort routes.
@@ -294,7 +316,7 @@ await withOrdinaryFileBrowser(async browser=>{
   for(const active of [standard,fork].filter(Boolean)){pageErrors.push(...active.errors);networkErrors.push(...active.requests,...active.sockets);await active.context.close();}
 }).catch(error=>{pageErrors.push(error.message);console.error(error.stack);});
 for(const id of extensionFoundationIds)if(!results.has(id))results.set(id,{id,status:'FAIL',error:'Required check not executed'});
-const artifactNames=['candidate.html','derived.html','player.html','peer.html','external-derived.html','external-player.html'].filter(name=>fs.existsSync(path.join(directory,name)));
+const artifactNames=['candidate.html','derived.html','player.html','peer.html','external-derived.html','external-player.html','meijin-derived.html'].filter(name=>fs.existsSync(path.join(directory,name)));
 const report={schema:'akari-extension-foundation-v1',status:[...results.values()].every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:inputs,
   provenance:{run:process.env.GITHUB_RUN_ID||'local',attempt:process.env.GITHUB_RUN_ATTEMPT||'1'},
   environment:{platform:process.platform,browser:browserEnvironment.version,playwright:require('playwright/package.json').version},

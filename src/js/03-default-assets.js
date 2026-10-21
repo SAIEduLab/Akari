@@ -2966,13 +2966,15 @@
       addId(d.id);
       validateName(d.name);
       if (isList) {
+        // A part is a value only while the work runs; saved data never holds one.
         if (
           !listValue(d.initialValue) ||
+          d.initialValue.some(isPart) ||
           d.initialValue.length > LIMITS.listItems ||
           d.initialValue.some((v) => !valueWithinLimit(v))
         )
           throw new AkariError('F504', 'リストの はじめの 中身が 多すぎるか、正しくありません');
-      } else if (!scalar(d.initialValue) || !valueWithinLimit(d.initialValue))
+      } else if (!scalar(d.initialValue) || isPart(d.initialValue) || !valueWithinLimit(d.initialValue))
         throw new AkariError('F504', 'へんすうの はじめの 中身が 大きすぎるか、正しくありません');
       if (!isList) {
         if (d.expectedUnit != null && !UNIT_TAGS.includes(d.expectedUnit))
@@ -3105,6 +3107,22 @@
     const sk = new Set();
     let sourceTotal = 0;
     for (const x of p.scripts) {
+      // 名人: the pseudo owner in memory; the saved form has neither owner nor event.
+      if (x?.mode !== undefined) {
+        if (x.mode !== 'meijin' || !exactKeys(x, ['id', 'mode', 'targetId', 'event', 'source', ...(Object.hasOwn(x, 'document') ? ['document'] : [])]) ||
+          x.targetId !== MEIJIN_OWNER || x.event !== 'start' || typeof x.source !== 'string')
+          throw new AkariError('F503', '名人の本文の 形が 正しくありません');
+        addId(x.id);
+        if (x.document !== undefined) {
+          const d = x.document;
+          if (!exactKeys(d, ['revision', 'unitIds']) || !Number.isSafeInteger(d.revision) || d.revision < 0 || !Array.isArray(d.unitIds) || !d.unitIds.length || d.unitIds.length > LIMITS.scripts)
+            throw new AkariError('F503', 'コードの まとまりの きろくが 正しくありません');
+          for (const id of d.unitIds) addId(id);
+        }
+        if (cpLen(x.source) > LIMITS.sourceEach) throw new AkariError('F504', '本文の 文字が 多すぎます。文を へらしてください');
+        sourceTotal += cpLen(x.source);
+        continue;
+      }
       if (!exactKeys(x, ['targetId', 'event', 'source',
         ...(Object.hasOwn(x || {}, 'id') ? ['id'] : []),
         ...(Object.hasOwn(x || {}, 'document') ? ['document'] : []),
@@ -3216,6 +3234,8 @@
     const projectVars = new Map(project.projectData.variables.map((x) => [x.name, x]));
     const projectLists = new Map(project.projectData.lists.map((x) => [x.name, x]));
     const actions = new Map(project.actions.map((x) => [x.name, x]));
+    // Procedures made in the text of a 名人 script are procedures of the work (a name already used stays the first one's).
+    for (const d of meijinProjectDefinitions(project)) if (!actions.has(d.name)) actions.set(d.name, d);
     const functions = new Map(project.functions.map((x) => [x.name, x]));
     const actionCallPhrases=new Map(project.actions.filter(x=>typeof x.callPhrase==='string'&&x.callPhrase.trim()).map(x=>[actionCallPhraseKey(x.callPhrase),x]));
     const individualNames = new Set(),
