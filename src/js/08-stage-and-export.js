@@ -632,7 +632,12 @@
       previousFocus = null,
       automaticAttempted = false,
       backgroundPaused = false,
-      runtimeFailed = false;
+      runtimeFailed = false,
+      // When ▶ 動かす was pressed: ■ 止める takes its place, and the second press of a double press within 0.5 s (a
+      // repeated click, or a tap or a pen press) does nothing. endFrame looks, after a flow ended, whether the whole run
+      // has ended.
+      startPressedAt = -Infinity,
+      endFrame = null;
     const designUrls = new Map();
     const message = (text) => {
       output.hidden = false;
@@ -642,15 +647,27 @@
       else output.appendChild(document.createTextNode(addition));
       output.scrollTop = output.scrollHeight;
     };
+    // The buttons follow the editor's rule. Stopped: ▶ 動かす only. Getting ready: ■ 止める only. Running: ■ 止める (where
+    // ▶ 動かす was) and ⏸ いったん止める; paused, ■ 止める and ▶ つづける. Finished (every body done, or 作品を全部止める): ■
+    // 止める only, and the last picture stays.
     function state() {
+      // A scheduler that stopped by itself (作品を全部止める) ends the run; ■ 止める (dispose) lets go of it first.
       if (phase === 'RUNNING' || phase === 'PAUSED') {
-        phase = scheduler?.running ? (scheduler.paused ? 'PAUSED' : 'RUNNING') : 'STOPPED';
+        phase = !scheduler ? 'STOPPED' : !scheduler.running ? 'FINISHED'
+          : scheduler.paused ? 'PAUSED' : scheduler.ended() ? 'FINISHED' : 'RUNNING';
       }
-      if (start) start.disabled = phase === 'LOADING' || phase === 'PREPARING' || phase === 'ERROR';
-      if (pause) pause.disabled = !scheduler?.running;
-      if (stop) stop.disabled = !scheduler?.running && phase !== 'PREPARING';
-      if (pause) pause.textContent =
-        phase === 'PAUSED' ? '▶ つづける' : '⏸ いったん止める';
+      const runScreen = ['PREPARING', 'RUNNING', 'PAUSED', 'FINISHED'].includes(phase);
+      if (start) {
+        start.hidden = runScreen;
+        start.disabled = phase === 'LOADING' || phase === 'ERROR';
+      }
+      if (stop) stop.hidden = !runScreen;
+      if (pause) {
+        pause.hidden = phase !== 'RUNNING' && phase !== 'PAUSED';
+        pause.textContent = phase === 'PAUSED' ? '▶ つづける' : '⏸ いったん止める';
+      }
+      // The focus does not fall to the page when its button goes away.
+      if (document.activeElement?.hidden) form.focus({ preventScroll: true });
       if (status) status.textContent =
         {
           LOADING: '読みこみ中',
@@ -658,6 +675,7 @@
           PREPARING: 'じゅんび中',
           RUNNING: '動いているよ',
           PAUSED: 'いったん 止まっているよ',
+          FINISHED: 'おわったよ。もう一度 動かすときは「■ 止める」を おしてから「▶ 動かす」を おしてね',
           STOPPED: '止まっています',
           ERROR: '\u958b\u3051\u307e\u305b\u3093',
         }[phase] || '';
@@ -701,6 +719,8 @@
     function dispose() {
       epoch++;
       backgroundPaused = false;
+      if (endFrame !== null) cancelAnimationFrame(endFrame);
+      endFrame = null;
       if (activation) activation.hidden = true;
       view?.clearInput();
       const oldScheduler = scheduler;
@@ -808,10 +828,15 @@
           ask,
           closeQuestion,
           state,
+          // A flow ended: once the scheduler has settled, the run may have ended by itself.
+          renderMonitor: () => {
+            if (phase === 'RUNNING' && endFrame === null) endFrame = requestAnimationFrame(() => { endFrame = null; state(); });
+          },
+          // 作品を全部止める: the run screen keeps its last picture until ■ 止める.
           allStopped: () => {
             const generation = epoch;
             setTimeout(() => {
-              if (generation === epoch) stopRun();
+              if (generation === epoch && runtime) { phase = 'FINISHED'; flush(); state(); }
             }, 0);
           },
           runtimeError: (_, e) => fail(e),
@@ -829,7 +854,6 @@
         view.seedHeldInput();
         phase = 'RUNNING';
         scheduler.start();
-        if (start) start.textContent = '\u21bb \u3082\u3046\u4e00\u5ea6';
         flush();
         state();
         form.focus({ preventScroll: true });
@@ -862,8 +886,11 @@
       designUrls.set(id, url);
       return url;
     }
-    if (start) start.onclick = startRun;
-    if (stop) stop.onclick = stopRun;
+    if (start) start.onclick = (event) => { startPressedAt = event.timeStamp; startRun(); };
+    if (stop) stop.onclick = (event) => {
+      if (event.timeStamp - startPressedAt < 500 && (event.detail > 1 || ['touch', 'pen'].includes(event.pointerType))) return;
+      stopRun();
+    };
     if (pause) pause.onclick = () => {
       view?.clearInput();
       if (!scheduler?.running) return;
@@ -1083,7 +1110,7 @@
       '</style>\n</head>\n<body>\n' +
       '<main id="playerRoot">' + (artwork ? '' : '<header><h1 id="playerTitle">' +
       title +
-      '</h1><div class="player-controls"><button id="playerStart" disabled>▶ はじめる</button><button id="playerPause" disabled>⏸ いったん止める</button><button id="playerStop" disabled>■ 止める</button><span id="playerStatus" role="status">読みこみ中</span></div></header>') +
+      '</h1><div class="player-controls"><button id="playerStart" disabled>▶ 動かす</button><button id="playerStop" hidden>■ 止める</button><button id="playerPause" hidden>⏸ いったん止める</button><span id="playerStatus" role="status">読みこみ中</span></div></header>') +
       '<div class="player-stage"' + (artwork ? ' style="width:' + payload.project.stage.width + 'px;height:' + payload.project.stage.height + 'px"' : '') + '><div id="formSurface" tabindex="0"><canvas id="penCanvas"></canvas></div>' + (artwork ? '<div id="playerActivation" hidden><button id="playerActivate" type="button">ここをおしてはじめる</button></div>' : '') + '</div><pre id="playerOutput" role="log" hidden></pre></main>' +
       '<div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionText"><div class="question-box"><div id="questionText"></div><input id="questionAnswer" aria-label="\u7b54\u3048" autocomplete="off"><div class="question-controls"><button id="questionStop">動きを止める</button><button id="questionSubmit">\u7b54\u3048\u308b</button></div></div></div>' +
       '<noscript>この作品を動かすには、JavaScriptを使えるようにしてください。</noscript>\n<script>\n' +

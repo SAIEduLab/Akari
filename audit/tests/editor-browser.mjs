@@ -175,7 +175,8 @@ await withBrowser(browser,async b=>{
     await fill(p,'もし条件（条件の答え（あてはまる））が成り立つなら、1秒待つ。\nもし条件（条件の答え（あてはまる））が成り立つなら、点数に（1÷0）を足す。');await mode(p,'blocks');
     await click(p,'runBtn');await p.waitForFunction(()=>!document.querySelector('#pauseBtn').disabled);await click(p,'pauseBtn');assert.equal(await p.evaluate(()=>Akari.app.editorState.state),'PAUSED');
     await click(p,'stepBtn');assert.ok(await p.locator('#blockEditor .blockui-current').count());
-    await mode(p,'code');await mode(p,'blocks');assert.ok(await p.locator('#blockEditor .blockui-current').count());
+    // On the run screen the view is switched in 本文と動きのようす (the toolbar shows neither the level nor the toggle).
+    await click(p,'runtimeInspectBtn');await mode(p,'code');await mode(p,'blocks');assert.ok(await p.locator('#blockEditor .blockui-current').count());await click(p,'runtimeInspectorClose');
     await click(p,'continueBtn');await p.locator('#failureModal.show').waitFor();await click(p,'failureClose');
     const highlighted=await p.locator('#blockEditor .blockui-current').getAttribute('data-schema-id');assert.equal(highlighted,'BinaryExpression:DIV');
     assert.match(await p.locator('#failureBody').textContent(),/R/);await click(p,'stopBtn');

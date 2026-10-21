@@ -101,7 +101,8 @@ async function main() {
       const player=await context.newPage();await player.goto(pathToFileURL(exported).href);await player.waitForFunction(()=>!document.querySelector('#playerStart').disabled);await (await reveal(player.locator('#playerStart'))).click();
       await player.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('検証完了：6')||document.querySelector('#formSurface').textContent.includes('検証完了：6'));
       const output=await player.locator('#playerOutput').textContent(),stage=await player.locator('#formSurface').textContent();await (await reveal(player.locator('#playerStop'))).click();
-      assert.equal(await player.locator('#playerStop').isDisabled(),true);
+      // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
+      assert.equal(await player.locator('#playerStop').isHidden(),true);assert.equal(await player.locator('#playerStart').isVisible(),true);
       await player.close();return {downloadName:download.suggestedFilename(),bytes:fs.statSync(exported).size,licenseRetained:true,output,stage,stopped:true};
     });
     assert.deepEqual(pageErrors,[]);assert.deepEqual(networkRequests,[]);

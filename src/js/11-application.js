@@ -282,6 +282,11 @@
       autosaveTimer = null,
       recoveryData = null,
       appState = 'DESIGN',
+      // The run screen after the run ended (every body done, or 作品を全部止める): the last picture stays, ■ 止める only.
+      runFinished = false,
+      // When ▶ 動かす was pressed: ■ 止める takes its place, and the second press of a double press (a repeated click, or
+      // a tap) within 0.5 s does nothing.
+      runPressedAt = -Infinity,
       generationToken = 0,
       designObjectUrls = new Map(),
       previewAudio = null;
@@ -340,23 +345,39 @@
     const entryControlHomes=new Map();
     let tutorial=null, pausedTutorial=null, tutorialEpoch=0, workspaceIdentity=0,
       tutorialTimer=null, tutorialTrace=null, tutorialSave=null, tutorialExpected=null, tutorialInsertion=null;
-    // 見せ方: baseUiLevel is the level chosen other than 名人 (はじめて／かんたん／くわしく). A work with a 名人 text is shown
-    // as くわしく with 名人 chosen, and no other level can be chosen while it has one; without one, the chosen level comes
-    // back (undo, open, a new work). The work file and autosave keep only the chosen level.
+    // The level (レベル): baseUiLevel is the level chosen other than 名人 (はじめて／かんたん／くわしく). A work with a 名人 text is
+    // shown as くわしく with 名人 chosen, and no other level can be chosen while it has one; without one, the chosen level
+    // comes back (undo, open, a new work). The work file and autosave keep only the chosen level.
     let baseUiLevel='entry';
     const workIsMeijin=()=>(project?.scripts||[]).some(isMeijinScript);
-    function applyUiLevel(){
-      const meijin=workIsMeijin();
+    // The levels the picker offers depend on the view: blocks はじめて／かんたん／くわしく, code かんたん／くわしく／名人, and a
+    // work with a 名人 text only 名人. A level that cannot be chosen is not in the list at all (not a disabled option).
+    const UI_LEVEL_NAMES={entry:'はじめて',basic:'かんたん',advanced:'くわしく',meijin:'名人'};
+    // The view the main editor shows (the list of all bodies uses the remembered view).
+    const shownEditorMode=()=>(!sourceOverviewOpen&&mainEditor.session?.mode)||editorModes.get('script')||'blocks';
+    function uiLevelChoices(view=shownEditorMode()){return workIsMeijin()?['meijin']:view==='blocks'?['entry','basic','advanced']:['basic','advanced','meijin'];}
+    // shown: the view the editor has just been laid out in (syncEditorShell). Returns true when the shown level changed.
+    function applyUiLevel(shown=null){
+      const meijin=workIsMeijin(),before=document.body.dataset.uiLevel;
+      // はじめて is a block level: a view laid out in code (a body the blocks cannot show, or 名人 text that went away) goes
+      // on at かんたん. The view is never changed by a level.
+      if(!meijin&&baseUiLevel==='entry'&&shown==='code')baseUiLevel='basic';
       document.body.dataset.meijinLevel=meijin?'on':'off';
       document.body.dataset.uiLevel=meijin?'advanced':baseUiLevel;
-      for(const option of $('#uiLevel').options)if(option.value!=='meijin')option.disabled=meijin||(option.value==='entry'&&(document.body.dataset.editorMode||editorModes.get('script'))==='code');
-      $('#uiLevel').value=meijin?'meijin':baseUiLevel;
+      const select=$('#uiLevel'),choices=uiLevelChoices(shown||shownEditorMode()),value=meijin?'meijin':baseUiLevel;
+      if([...select.options].map(o=>o.value).join()!==choices.join())
+        select.replaceChildren(...choices.map(level=>{const option=document.createElement('option');option.value=level;option.textContent=UI_LEVEL_NAMES[level];return option;}));
+      select.value=value;
+      // The コード／ブロック toggle is not shown where it can do nothing: at はじめて (blocks only) and in a 名人 work (code only),
+      // which also holds for the 自分で作ったブロック editor.
+      $('#editorModecode').parentElement.hidden=meijin||baseUiLevel==='entry';
+      $('#callableModecode').parentElement.hidden=meijin;
+      return before!==undefined&&before!==document.body.dataset.uiLevel;
     }
     // The chosen level in the form the work's editor state keeps (はじめて is kept as かんたん).
     const keptUiLevel=()=>baseUiLevel==='entry'?'basic':baseUiLevel;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      $('#uiLevel option[value="entry"]').disabled=workIsMeijin()||(document.body.dataset.editorMode||editorModes.get('script'))==='code';
       for(const node of [$('#undoBtn'),$('#redoBtn')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
         if(entry){
@@ -370,7 +391,6 @@
       if(entry){if(designer.parentElement!==main)main.insertBefore(designer,side);if(objects&&side.firstElementChild!==objects)side.prepend(objects);}
       else if(entryLayoutPlaced&&document.body.dataset.editorMode==='blocks'){side.prepend(designer);side.insertBefore(objects,$('.properties-window'));}
       entryLayoutPlaced=entry;
-      $('.codewin > .win-title').textContent=entry?'組み立てる ばしょ':'コード';
       for(const [id,event] of [['entryStartEvent','start'],['entryClickEvent','click']]) {
         $('#'+id).disabled=modelLocked()||!eventsFor(selectedId).includes(event);
         $('#'+id).setAttribute('aria-pressed',String(currentEvent===event));
@@ -776,8 +796,12 @@
         } else session.pendingEdit = draft ? null : pending;
       }
       session.mode = resolvedEditorMode(editorModes, binding.kind, session.syntaxAst);
-      // A 名人 script is code only; the remembered view is kept for the other scripts.
-      if (binding.kind !== 'draft' && bindingContext(binding).meijin) session.mode = 'code';
+      // A work with a 名人 text is code only, for every body and the 自分で作ったブロック editor; the view it opens in is
+      // decided by the content, whatever view a file or the autosave kept.
+      if (workIsMeijin()) {
+        session.mode = 'code';
+        editorModes.set(binding.kind, 'code');
+      }
       editorSessions.set(cacheKey, session);
       binding.session = session;
       return session;
@@ -1358,28 +1382,19 @@
       for (const mode of ['code', 'blocks']) {
         const b = $(draft ? `#callableMode${mode}` : `#editorMode${mode}`);
         b.setAttribute('aria-pressed', String(session.mode === mode));
-        b.disabled =
-          ['PREPARING', 'IMPORTING'].includes(appState) ||
-          (!draft&&mode==='code'&&document.body.dataset.uiLevel==='entry') ||
-          (mode === 'blocks' && (!session.syntaxAst || invalidCodePending)) ||
-          (!draft && mode === 'blocks' && bindingContext(binding).meijin);
-        b.title =
-          !draft && mode === 'blocks' && bindingContext(binding).meijin ? '名人モードの 本文は ブロックに できません'
-          : mode === 'blocks' && (!session.syntaxAst || invalidCodePending)
-            ? '書き方の まちがいを コードで 直すと、ブロックで 見られます'
-            : '';
-        if (mode === 'blocks') {
-          // Touch screens never show a title, so the reason is also visible text.
-          let note = b.parentElement.querySelector(':scope > .mode-blocked-note');
-          if (b.title) {
-            if (!note) {
-              note = document.createElement('span');
-              note.className = 'mode-blocked-note';
-              b.parentElement.append(note);
-            }
-            note.textContent = !draft && bindingContext(binding).meijin ? '名人モードの 本文は コードで なおします' : 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
-          } else note?.remove();
+        b.disabled = ['PREPARING', 'IMPORTING'].includes(appState);
+        // A code error keeps ブロック where it is, in a pale colour; a press says why under the toggle (modeBlockedNote)
+        // instead of switching. It is not hidden, so the toggle does not flicker while the child types.
+        const refused = mode === 'blocks' && (!session.syntaxAst || invalidCodePending);
+        if (refused) {
+          b.setAttribute('aria-disabled', 'true');
+          b.setAttribute('aria-describedby', modeBlockedNote(binding).id);
+        } else {
+          b.removeAttribute('aria-disabled');
+          b.removeAttribute('aria-describedby');
+          modeBlockedNote(binding).hidden = true;
         }
+        b.title = refused ? '書き方の まちがいを コードで 直すと、ブロックで 見られます' : '';
       }
       if (blocks && (draft || !sourceOverviewOpen)) {
         binding.view.render();
@@ -1403,13 +1418,42 @@
         try { localStorage.setItem(STORAGE_KEYS.editorMode, mode); } catch (_) {}
       }
     }
+    // The note under a コード／ブロック toggle that says why ブロック does not open: it shows on a press of the pale ブロック
+    // and goes away at the next press or key anywhere.
+    function modeBlockedNote(binding) {
+      const id = binding.kind === 'draft' ? 'callableModeBlockedNote' : 'modeBlockedNote';
+      let note = document.getElementById(id);
+      if (!note) {
+        note = document.createElement('p');
+        note.id = id;
+        note.className = 'mode-blocked-note';
+        note.setAttribute('role', 'status');
+        note.hidden = true;
+        note.textContent = 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
+        if (binding.kind === 'draft') $('#callableModecode').parentElement.after(note);
+        else $('.menutool').append(note);
+      }
+      return note;
+    }
+    function showModeBlockedNote(binding) {
+      const note = modeBlockedNote(binding);
+      note.hidden = false;
+      const hide = () => {
+        note.hidden = true;
+        document.removeEventListener('pointerdown', hide, true);
+        document.removeEventListener('keydown', hide, true);
+      };
+      document.addEventListener('pointerdown', hide, true);
+      document.addEventListener('keydown', hide, true);
+    }
     function switchEditorMode(binding, mode) {
-      if (binding === mainEditor && mode === 'blocks' && bindingContext(binding).meijin) {
-        setStatus('名人モードの 本文は ブロックに できません。コードで なおしてね。');
+      // A work with a 名人 text is code only, for every body (the toggle is not shown there).
+      if (mode === 'blocks' && workIsMeijin()) {
+        setStatus('名人の 本文が ある 作品は、コードで 書くよ。');
         return false;
       }
       if(binding===mainEditor&&mode==='code'&&document.body.dataset.uiLevel==='entry'){
-        setStatus('コードを 見るときは、見せ方を「かんたん」か「くわしく」に してね。');
+        setStatus('コードを 見るときは、「かんたん」か「くわしく」を えらんでね。');
         return false;
       }
       const draftSession = binding.session;
@@ -1796,7 +1840,11 @@
         'diagnoseBtn',
       ])
         tools.append($('#' + id));
-      toolbar.insertBefore($('.ui-level-label'), $('#tutorialStart'));
+      // The right end of the toolbar, left to right: コード／ブロック, the level, the work name (the level's choices depend
+      // on the view). ヒント sits right after お手本を開く and opens over the page, so the bar keeps one row.
+      toolbar.insertBefore($('.ui-level-label'), $('#projectName'));
+      $('#sampleBtn').after($('#basicActionGuide'));
+      installToolbarMenus(toolbar);
       toolbox.append(tools);
       // Native reverse Tab may leave a partly visible button clipped in this ribbon.
       tools.addEventListener('focusin', (event) => {
@@ -1809,17 +1857,9 @@
       const componentControls = document.createElement('div');
       componentControls.id = 'componentControls';
       componentControls.className = 'component-controls';
-      componentControls.tabIndex = 0;
+      // The tools under the part list; the column on the right scrolls as one (the region is no scroller of its own).
       componentControls.setAttribute('role', 'region');
       componentControls.setAttribute('aria-label', '部品と作品の道具');
-      componentControls.addEventListener('keydown', (event) => {
-        if (event.target !== componentControls || event.altKey || event.ctrlKey || event.metaKey)
-          return;
-        if (event.key === 'Home' || event.key === 'End') {
-          event.preventDefault();
-          componentControls.scrollTop = event.key === 'Home' ? 0 : componentControls.scrollHeight;
-        }
-      });
       side.children[0].append(componentControls);
       const componentActions = document.createElement('div');
       componentActions.id = 'componentActions';
@@ -1922,6 +1962,38 @@
         true,
       );
     }
+    // The toolbar's menus (ヒント, はじめて's 作品) open over the page: a second press of the summary, a press anywhere
+    // else or Escape closes them (Escape gives the focus back to the summary). The toolbar stays at the top of the page
+    // when it scrolls; scrolling to a place keeps it clear of the toolbar, whose height can change as it wraps.
+    function installToolbarMenus(toolbar) {
+      document.addEventListener('pointerdown', (event) => {
+        for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]'))
+          if (!menu.contains(event.target)) menu.open = false;
+      }, true);
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || event.isComposing) return;
+        for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]')) {
+          menu.open = false;
+          if (menu.contains(document.activeElement) || document.activeElement === document.body) menu.querySelector('summary').focus({ preventScroll: true });
+        }
+      });
+      // An open menu stays inside the window at narrow widths: it shifts left (or right) by what would stick out.
+      for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu'))
+        menu.addEventListener('toggle', () => {
+          const panel = menu.querySelector(':scope > :not(summary)');
+          menu.style.setProperty('--menu-shift', '0px');
+          if (!menu.open || !panel) return;
+          const r = panel.getBoundingClientRect(), room = document.documentElement.clientWidth - 16;
+          menu.style.setProperty('--menu-shift', (r.right > room ? Math.max(16 - r.left, room - r.right) : r.left < 16 ? 16 - r.left : 0) + 'px');
+        });
+      // A choice in はじめて's 作品 menu closes it.
+      toolbar.addEventListener('click', (event) => {
+        if (event.target.closest('.entry-project-actions button')) $('#entryProjectMenu').open = false;
+      });
+      const syncHeight = () => document.documentElement.style.setProperty('--toolbar-h', toolbar.offsetHeight + 'px');
+      if (typeof ResizeObserver === 'function') new ResizeObserver(syncHeight).observe(toolbar);
+      syncHeight();
+    }
     function syncEditorShell(mode) {
       if (!document.body.dataset.editorMode || shellPointer) return;
       const block = mode === 'blocks',
@@ -1944,17 +2016,14 @@
         }
         $('#hintsDisclosure').open = false;
       }
-      $('.codewin > .win-title').textContent = block ? 'ブロック' : 'コード';
       $('#designerHeading').textContent = block ? '画面' : '画面づくり';
       $('.objects-window > .win-title').textContent = block ? 'キャラクター・部品' : '作品';
-      const actions = $('.prop-actions'),
-        copyHelp = actions?.nextElementSibling;
-      if (actions)
-        (block ? $('#componentActions') : el.props).prepend(
-          actions, ...(copyHelp?.classList.contains('child-copy-help') ? [copyHelp] : []),
-        );
+      const actions = $('.prop-actions');
+      if (actions) (block ? $('#componentActions') : el.props).prepend(actions);
       $('#formatBtn').hidden = block || currentIsMeijin();
       syncPropertyScrollPadding();
+      // The level list follows the view (blocks or code); a view in code at はじめて goes on at かんたん.
+      if (applyUiLevel(mode)) renderHints();
       renderEntrySurface();
     }
 
@@ -2131,12 +2200,24 @@
     function openRuntimeInspector() {
       if (!['RUNNING', 'PAUSED'].includes(appState) || inspectorNodes.length) return;
       stageView.clearInput();
-      for (const [node, target] of [[$('.codewin'), $('#runtimeInspectorBody')], [$('.monitor-window'), $('#runtimeInspectorBody')], [$('#editorModecode').parentElement, $('#runtimeInspectorModes')], [$('#uiLevel').closest('label'), $('#runtimeInspectorModes')]]) {
+      // The dialog shows the running bodies with the コード／ブロック toggle and the strip of the running sentence; the level is
+      // chosen on the edit screen only.
+      for (const [node, target] of [[$('.codewin'), $('#runtimeInspectorBody')], [$('.monitor-window'), $('#runtimeInspectorBody')], [$('#editorModecode').parentElement, $('#runtimeInspectorModes')], [$('#runStrip'), $('#runtimeInspectorStrip')]]) {
         const marker = document.createComment('runtime inspector return point');
         node.before(marker); inspectorNodes.push({node, marker}); target.append(node);
       }
       $('#runtimeInspector').showModal();
       renderEditorBinding(mainEditor);
+      // The line numbers were laid out while the body was not shown (the run screen); lay them out in the dialog, and
+      // bring the running sentence into view.
+      updateGutter();
+      if (activeLoc?.key === bindingOwner(mainEditor)) {
+        if (mainEditor.session?.mode === 'blocks') $('#blockEditor .blockui-current')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        else {
+          el.editor.scrollTop = Math.max(0, (wrappedCodeLines().lines[activeLoc.line - 1]?.top || 0) - Math.floor(el.editor.clientHeight / 3));
+          el.gutter.scrollTop = el.editor.scrollTop;
+        }
+      }
       $('#runtimeInspectorClose').focus();
     }
     $('#runtimeInspectBtn').onclick = openRuntimeInspector;
@@ -2207,6 +2288,7 @@
         if (n) n.disabled = locked;
       }
       $('#saveBtn').disabled = appState === 'IMPORTING' || appState === 'PREPARING';
+      $('#uiLevel').disabled = appState === 'IMPORTING';
       // Do not change history ownership while an asynchronous import is still settling.
       // Runtime inspection keeps its existing target/event navigation.
       el.obj.disabled = el.event.disabled = appState === 'IMPORTING' || appState === 'PREPARING';
@@ -2217,7 +2299,10 @@
         b.draggable = !locked;
       });
       $$('.hint-button').forEach((b) => (b.disabled = locked || b.dataset.unavailable === 'true'));
-      document.body.classList.toggle('runtime', appState === 'RUNNING' || appState === 'PAUSED');
+      // The run screen: from ▶ 動かす (getting ready) until ■ 止める, also paused, stopped by an error and finished. The edit
+      // screen (DESIGN, IMPORTING) shows ▶ 動かす only, the run screen ■ 止める only, in the same place.
+      document.body.classList.toggle('runtime', ['PREPARING', 'RUNNING', 'PAUSED'].includes(appState));
+      document.body.classList.toggle('run-finished', runFinished);
       if (locked && appState !== 'IMPORTING') closeEditingModals();
       if (mainEditor.view) renderEditorBinding(mainEditor);
       updateDirty();
@@ -2525,7 +2610,7 @@
       $('#scriptAdd').textContent = currentIsMeijin() ? '名人の本文を ふやす' : '同じできごとの本文を ふやす';
       $('#meijinDelete').hidden = !currentIsMeijin();
       $('#meijinDelete').disabled = modelLocked();
-      $('#sourceHeadingBtn').hidden ||= currentIsMeijin();
+      $('#sourceHeadingBtn').hidden ||= workIsMeijin();
       renderEntrySurface();
     }
     function hideSourceOverview() {
@@ -2573,8 +2658,8 @@
       };
       const records = sourceRegistry(project), byKey = new Map(records.map(r => [r.key, r]));
       const owned = records.filter(r => r.ownerId === selectedId);
-      root.setAttribute('aria-label', targetById(selectedId).name + ' のすべてのコード');
-      if (!owned.length) root.append(make('p', 'この部品には まだ コードが ありません。できごとを えらんで 本文を 作れます。'));
+      root.setAttribute('aria-label', targetById(selectedId).name + ' のすべての本文');
+      if (!owned.length) root.append(make('p', 'この部品には まだ 本文が ありません。できごとを えらんで 本文を 作れます。'));
       const queue = [...owned.filter(r => r.source.trim()), ...owned.filter(r => !r.source.trim())];
       const included = new Set(queue.map(r => r.key));
       for (let i = 0; i < queue.length; i++) {
@@ -3091,7 +3176,7 @@
       duplicate.type = 'button';
       duplicate.className = 'prop-duplicate';
       duplicate.textContent = '見た目のコピー';
-      duplicate.title = '見た目と せっていを コピーします（コードは コピーしません）';
+      duplicate.title = '見た目と せっていを コピーします（本文は コピーしません）';
       duplicate.disabled = modelLocked() || project.components.length >= LIMITS.components;
       duplicate.onclick = duplicateSelectedComponent;
       const del = document.createElement('button');
@@ -3100,12 +3185,10 @@
       del.textContent = '🗑 この部品を けす';
       del.disabled = modelLocked();
       del.onclick = deleteSelectedComponent;
-      const copyHelp = document.createElement('small');
-      copyHelp.className = 'child-copy-help';
-      copyHelp.textContent = '見た目と せっていを コピーします。コードは コピーしません。';
-      duplicate.setAttribute('aria-description', copyHelp.textContent);
+      // What the copy does is said by its title, its description and the ヒント (見た目のコピー); no line of its own.
+      duplicate.setAttribute('aria-description', '見た目と せっていを コピーします。本文は コピーしません。');
       actions.append(title, duplicate, del);
-      (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions, copyHelp);
+      (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions);
       el.props.append(
         propSection(
           'きほん',
@@ -4479,8 +4562,25 @@
           (def ? `action:${def.id}` : task.scriptId ? `script:${task.scriptId}` : `script:${task.targetId}:${task.eventType}`),
         line: error?.line || node?.sourceSpan?.startLine || activeLoc?.line || 1,
         column: error?.column || node?.sourceSpan?.startColumn || 1,
+        // The sentence the run strip shows: a statement ends on its line; a sentence with a body shows its first line.
+        endLine: error ? null : node?.sourceSpan?.endLine ?? null,
+        endColumn: error ? null : node?.sourceSpan?.endColumn ?? null,
         error: error || null,
       };
+    }
+    // The strip under the stage on the run screen: whose body runs, after which event and on which line, and the sentence
+    // itself in a box. At はじめて only the part and the sentence (its blocks have no line numbers, and it has two events).
+    function paintRunStrip(text = '', sentence = '') {
+      $('#execLocation').textContent = 'いま 動いている 文：' + (text || '―');
+      $('#execSentence').textContent = sentence;
+      $('#execSentence').hidden = !sentence;
+    }
+    function runningSentence(source, loc) {
+      const line = String(source ?? '').split(/\r\n?|\n/)[loc.line - 1];
+      if (line == null) return '';
+      const chars = [...line], start = Math.max(0, (loc.column || 1) - 1),
+        end = loc.endLine === loc.line && loc.endColumn >= loc.column ? loc.endColumn : chars.length;
+      return chars.slice(start, end).join('').trim().replace(/[。、]$/, '');
     }
     function paintExecutionLocation() {
       if (!activeLoc) return;
@@ -4496,10 +4596,12 @@
             : parts[0] === 'function'
               ? project.functions.find((x) => x.id === parts[1])
               : null;
-      const label = def
-        ? `${parts[0] === 'action' ? 'てじゅん' : '答えを もとめる'} ${def.name}`
-        : `${targetById(loc.targetId)?.name || loc.targetId} / ${runtimeEventText(loc.event, scriptKey)}`;
-      $('#execLocation').textContent = `いま 動いている 文：${label} / ${loc.line}行`;
+      const owner = def
+          ? `${parts[0] === 'action' ? 'てじゅん' : '答えを もとめる'} ${def.name}`
+          : targetById(loc.targetId)?.name || loc.targetId,
+        label = document.body.dataset.uiLevel === 'entry' ? owner
+          : def ? `${owner} / ${loc.line}行目` : `${owner} / ${runtimeEventText(loc.event, scriptKey)} / ${loc.line}行目`;
+      paintRunStrip(label, runningSentence(def?.source ?? script?.source, loc));
       if (scheduler?.paused) {
         hideSourceOverview();
         // Runtime document units have their own IDs; editor selection belongs
@@ -4553,6 +4655,21 @@
       }
       if (flags & 2) renderMonitor();
       if (flags & 4) paintExecutionLocation();
+      // A flow ended or the run state changed (flag 2): the run may have ended by itself. A pause (stepping, or a stop by
+      // an error) is not an end; the run ends there when it goes on and nothing is left.
+      if (flags & 2 && scheduler?.running && !scheduler.paused && scheduler.ended()) finishRun();
+    }
+    // The run has ended (every body done, or 作品を全部止める). The run screen stays as it is, with its last picture, and
+    // shows only ■ 止める; the status says how to run again.
+    function finishRun() {
+      if (runFinished || !runtime || !['RUNNING', 'PAUSED'].includes(appState)) return;
+      runFinished = true;
+      appState = 'RUNNING';
+      if (inspectorNodes.length) closeRuntimeInspector();
+      activeLoc = null;
+      paintRunStrip();
+      setStatus('おわったよ。もう一度 動かすときは「■ 止める」を おしてから「▶ 動かす」を おしてね');
+      updateRunState();
     }
 
     function refreshEditor() {
@@ -4663,7 +4780,7 @@
     function startMeijin() {
       if (modelLocked() || currentIsMeijin()) return;
       // A body with 名人 forms in it does not read as an ordinary body, so it stays a draft in the code editor (S317
-      // tells the child to choose 名人 in 見せ方): that text is taken as the body.
+      // tells the child to choose 名人 in code): that text is taken as the body.
       const flushed = flushActiveEditor(), draft = !flushed && mainEditor.session?.mode === 'code' && !$('#procModal').classList.contains('show') ? mainEditor.textarea?.value?.replace(/\r\n?/g, '\n') : null;
       if (!flushed && draft == null) return;
       const script = selectCurrentScript(), owner = targetById(selectedId);
@@ -4743,10 +4860,12 @@
       const tutorialRunEpoch=tutorial?.epoch,bridgeGeneration=generationToken;
       return {
         render: () => requestRuntimePaint(3),
+        // 作品を全部止める: every body, rule and sound has stopped and no input starts a body; the run screen keeps the
+        // last picture until ■ 止める.
         allStopped: () => {
           const token = generationToken;
           setTimeout(() => {
-            if (token === generationToken) stopRun();
+            if (token === generationToken) finishRun();
           }, 0);
         },
         renderMonitor: () => requestRuntimePaint(2),
@@ -4843,8 +4962,11 @@
       try {
         if (req.needsAudio) runtimeCache.ensureAudioContext();
         appState = 'PREPARING';
+        runFinished = false;
         setStatus('絵や音を じゅんびしています');
         updateRunState();
+        // The run screen starts now; the focus goes to the stage, not to the page (▶ 動かす is not shown there).
+        el.form.focus({ preventScroll: true });
         (async () => {
           try {
             await runtimeCache.prepare(project, req, token);
@@ -4896,11 +5018,12 @@
       disposeRuntime();
       el.form.querySelectorAll('.sprite-bubble').forEach((n) => n.remove());
       appState = 'DESIGN';
+      runFinished = false;
       pen.clearRect(0, 0, el.canvas.width, el.canvas.height);
       confirmTutorialOperation('stop');
       renderAll();
       loadEditor();
-      $('#execLocation').textContent = 'いま 動いている 文：―';
+      paintRunStrip();
       setStatus('止めました');
       if(tutorial){tutorialRefresh();focusTutorialTarget();return;}
       if (sourceOverviewOpen) $('#sourceEditBtn').focus({ preventScroll: true });
@@ -4912,18 +5035,20 @@
       else el.editor.focus({ preventScroll: true });
     }
     function updateRunState() {
-      const running = !!scheduler?.running;
+      const running = !!scheduler?.running && !runFinished;
       if (running) appState = scheduler.paused ? 'PAUSED' : 'RUNNING';
       el.runState.textContent =
         appState === 'PREPARING'
           ? 'じゅんび中'
           : appState === 'IMPORTING'
             ? '読みこみ中'
-            : running
-              ? scheduler.paused
-                ? 'いったん 止まっているよ'
-                : '動いているよ'
-              : '止まっています';
+            : runFinished
+              ? 'おわったよ'
+              : running
+                ? scheduler.paused
+                  ? 'いったん 止まっているよ'
+                  : '動いているよ'
+                : '止まっています';
       el.runState.className = 'runstate ' + (running ? 'run-on' : 'run-off');
       $('#pauseBtn').disabled = !running || scheduler.paused;
       $('#continueBtn').disabled = !running || !scheduler.paused;
@@ -4932,6 +5057,7 @@
       $('#runBtn').disabled = appState !== 'DESIGN';
       $('#stopBtn').disabled = appState === 'DESIGN' || appState === 'IMPORTING';
       updateEditingLock();
+      if (running && !scheduler.paused) requestRuntimePaint(2);
     }
     function showBubble(rid, text, value) {
       stageView.showBubble(rid, text, value);
@@ -5207,7 +5333,8 @@
         if(normalizeEntryUiLevel(stored)==='entry')uiLevel='entry';
       }
       baseUiLevel=uiLevel;
-      for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,mode);
+      // A work with a 名人 text opens in code, whatever view the file or the autosave kept; nothing is said about it.
+      for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,workIsMeijin()?'code':mode);
       editorSessions.clear();invalidateEditors();hideSourceOverview();applyUiLevel();renderAll();loadEditor();
       if(state.callableDraft)restoreCallableDraft(state.callableDraft);
       for(const saved of state.pendingEditors){
@@ -5225,8 +5352,9 @@
           const source=formatScript(ast,{allowHoles:true});Object.assign(session,{syntaxAst:ast,blockView:encoded.tree,nodeMap:encoded.nodeMap,nodeIds:encoded.nodeIds,nextBlockId:encoded.nodeMap.size+1,
             blockDraft:{baseline,ast,tree:encoded.tree,source,codeSource:saved.mode==='code'?saved.source:undefined,pending:session.pendingEdit}});
         }
-        editorModes.set(binding.kind,saved.mode);session.mode=saved.mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
-        if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(session.pendingEdit))throw new AkariError('F503','書きかけの 入力を もとに もどせません');
+        const mode=workIsMeijin()?'code':saved.mode;
+        editorModes.set(binding.kind,mode);session.mode=mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
+        if(mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(session.pendingEdit))throw new AkariError('F503','書きかけの 入力を もとに もどせません');
         showEditorFailure(binding,saved.pending.reason||'書きかけの 本文を もどしました',{preservePending:true});
         if(binding===mainEditor&&saved.pending.kind==='source-import'){const plan=sourceImportPlan(binding,saved.source);if(plan)showSourceImport(binding,saved.source,plan);}
       }
@@ -6813,8 +6941,13 @@
       }
     };
 
-    $('#runBtn').onclick = startRun;
-    $('#stopBtn').onclick = stopRun;
+    $('#runBtn').addEventListener('click', (event) => { runPressedAt = event.timeStamp; startRun(); });
+    // ■ 止める takes ▶ 動かす's place: the second press of a double press within 0.5 s of ▶ (a repeated click, or a tap or
+    // a pen press) does nothing; a press of its own (one click, a key) stops at once.
+    $('#stopBtn').addEventListener('click', (event) => {
+      if (event.timeStamp - runPressedAt < 500 && (event.detail > 1 || ['touch', 'pen'].includes(event.pointerType))) return;
+      stopRun();
+    });
     $('#pauseBtn').onclick = () => scheduler?.pause();
     $('#continueBtn').onclick = () => scheduler?.resume();
     $('#stepBtn').onclick = () => scheduler?.stepOne();
@@ -7080,23 +7213,20 @@
       if (f) await importSoundFile(f);
     };
     $('#uiLevel').onchange = () => {
+      // The level is chosen on the edit screen only (the picker is not shown while the work runs). The list holds only the
+      // levels of the view, so choosing one never changes the view.
+      if (modelLocked() || !uiLevelChoices().includes($('#uiLevel').value)) { applyUiLevel(); return; }
       // 名人: the selected body becomes a 名人 text after the confirm (an empty one when there is no body to move).
       if($('#uiLevel').value==='meijin'){
         $('#uiLevel').value=baseUiLevel;
-        if (tutorial || composingEditors.size || headerPending || activeDragCleanup) { setStatus('入力を 決めるか やめてから、見せ方を かえてね。'); return; }
-        if(!workIsMeijin()&&modelLocked())setStatus('動いている あいだは、名人モードに できません。止めてから えらんでね。');
-        else if(!workIsMeijin())startMeijin();
+        if (tutorial || composingEditors.size || headerPending || activeDragCleanup) { setStatus('入力を 決めるか やめてから、レベルを かえてね。'); return; }
+        if(!workIsMeijin())startMeijin();
         applyUiLevel();renderHints();renderEntrySurface();renderEditorBinding(mainEditor);mainEditor.view.render({force:true});
-        return;
-      }
-      if($('#uiLevel').value==='entry'&&(document.body.dataset.editorMode||editorModes.get('script'))==='code'){
-        applyUiLevel();
-        setStatus('「はじめて」はブロックで使うよ。先に「ブロック」をえらんでね。');
         return;
       }
       if (tutorial || composingEditors.size || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
         applyUiLevel();
-        setStatus('入力を 決めるか やめてから、見せ方を かえてね。');
+        setStatus('入力を 決めるか やめてから、レベルを かえてね。');
         return;
       }
       baseUiLevel = $('#uiLevel').value;
@@ -7267,7 +7397,10 @@
         },
       });
       for (const mode of ['code', 'blocks'])
-        $(`#${p}Mode${mode}`).onclick = () => switchEditorMode(binding, mode);
+        $(`#${p}Mode${mode}`).onclick = (event) => {
+          if (event.currentTarget.getAttribute('aria-disabled') === 'true') showModeBlockedNote(binding);
+          else switchEditorMode(binding, mode);
+        };
       $(`#${p}Cancel`).dataset.blockuiAction = 'cancel';
       $(`#${p}Cancel`).onclick = () => cancelEditorPending(binding);
     }

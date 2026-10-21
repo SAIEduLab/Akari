@@ -1055,12 +1055,6 @@ button:focus-visible {
   min-height: 28px;
   padding: 0 9px;
 }
-.exec-location {
-  margin-left: auto;
-  color: #536273;
-  font-size: 12px;
-  white-space: nowrap;
-}
 .editor-shell {
   position: relative;
   display: grid;
@@ -1245,8 +1239,7 @@ body[data-ui-level="basic"] #diagnoseBtn,
 body[data-ui-level="basic"] #pauseBtn,
 body[data-ui-level="basic"] #continueBtn,
 body[data-ui-level="basic"] #stepBtn,
-body[data-ui-level="basic"] #formatBtn,
-body[data-ui-level="basic"] #execLocation {
+body[data-ui-level="basic"] #formatBtn {
   display: none;
 }
 body[data-ui-level="basic"] .menutool .sep {
@@ -1277,12 +1270,6 @@ body {
 .editor-modes [aria-pressed="true"] {
   background: #204f87;
   color: white;
-}
-.editor-modes .mode-blocked-note {
-  align-self: center;
-  color: #8a2c0d;
-  font-size: 13px;
-  line-height: 1.3;
 }
 .editor-pending {
   padding: 6px;
@@ -2362,11 +2349,6 @@ button:focus-visible {
 .code-hints {
   min-width: 0;
 }
-#execLocation {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 42%;
-}
 
 .hint-panel {
   flex: 1;
@@ -2692,7 +2674,7 @@ body[data-editor-mode="blocks"] {
 }
 body[data-editor-mode] #app {
   height: 100dvh;
-  min-height: 720px;
+  min-height: 600px;
   grid-template-rows: auto minmax(0, 1fr) auto;
   min-width: 0;
 }
@@ -3040,10 +3022,6 @@ body[data-editor-mode] .debugbar :is(#undoBtn, #redoBtn):focus-visible {
   flex-wrap: wrap;
   gap: 8px;
 }
-body[data-editor-mode] #execLocation {
-  font-size: 11px;
-  color: var(--muted);
-}
 body[data-editor-mode] .editor-shell {
   min-height: 70px;
   border-radius: 0 0 15px 15px;
@@ -3276,9 +3254,6 @@ body[data-editor-mode="blocks"] .prop-name {
   body[data-editor-mode] #projectName {
     max-width: 200px;
   }
-  body[data-editor-mode] .debugbar #execLocation {
-    max-width: 180px;
-  }
 }
 @media (max-width: 1000px) {
   body[data-editor-mode] #app {
@@ -3380,10 +3355,6 @@ body[data-editor-mode="blocks"] .prop-name {
   }
   body[data-editor-mode] .code-head select {
     max-width: 210px;
-  }
-  body[data-editor-mode] .debugbar #execLocation {
-    max-width: 100%;
-    margin-left: 0;
   }
   body[data-editor-mode="blocks"] .codewin {
     height: 780px;
@@ -4392,15 +4363,12 @@ body[data-editor-mode="blocks"] .designer-wrap {
 .blockui-component-picker {
   display: none;
 }
-/* Side panels may scroll rather than collapse the chooser when settings open. */
+/* The part list is no scroller of its own: the part panel takes its content height and the column on the right
+   scrolls as one, so every part tile and the tools under them are reached the same way (no hidden inner band). */
 body[data-editor-mode="blocks"] .side > .objects-window {
-  flex: 1 0 230px;
-  min-height: 230px;
-  overflow: hidden;
-}
-body[data-editor-mode="blocks"] .side > .objects-window:has(.blockui-component-picker[open]) {
-  flex-basis: 370px;
-  min-height: 370px;
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
 }
 body[data-editor-mode="blocks"] .objects-window .tree {
   display: flex;
@@ -4409,23 +4377,15 @@ body[data-editor-mode="blocks"] .objects-window .tree {
   gap: 7px;
   flex-wrap: wrap;
   padding: 10px;
-  flex: 1 1 140px;
-  min-height: 140px;
-  overflow: auto;
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
 }
-/* Keep the complete action area reachable independently from the component list. */
 body[data-editor-mode="blocks"] .component-controls {
-  flex: 0 1 auto;
-  min-height: 120px;
-  max-height: 60%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-}
-.component-controls:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: -3px;
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
 }
 body[data-editor-mode="blocks"] .component-controls .prop-actions {
   position: static;
@@ -4496,11 +4456,6 @@ body[data-editor-mode="blocks"] .blockui-component-picker[open] > .tool-list {
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   align-content: start;
-}
-body[data-editor-mode="blocks"] .objects-window:has(.blockui-component-picker[open]) > .tree {
-  flex: 1 1 auto;
-  max-height: none;
-  min-height: 58px;
 }
 body[data-editor-mode="blocks"] .project-tools {
   border-top: 1px solid #dce7ef;
@@ -4689,12 +4644,7 @@ body[data-editor-mode="code"] #componentActions,
   }
   body[data-editor-mode="blocks"] .side > .objects-window {
     flex: none;
-    height: 230px;
-  }
-  body[data-editor-mode="blocks"] .side > .objects-window:has(.blockui-component-picker[open]) {
-    flex: none;
-    height: min(460px, 72dvh);
-    min-height: 420px;
+    height: auto;
   }
   body[data-editor-mode="blocks"] .blockui-component-picker[open] > .tool-list {
     height: 220px;
@@ -5582,13 +5532,16 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction
 .runtime-inspector-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex:none; }
 #runtimeInspectorModes { margin-left:auto; }
 #runtimeInspectorBody { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:8px; flex:1; min-height:0; overflow:auto; }
-#runtimeInspectorBody > .codewin { display:flex; min-height:0; min-width:0; overflow:auto; }
+#runtimeInspectorBody > .codewin { display:flex; min-height:0; min-width:0; overflow:auto; grid-column:1; grid-row:1; }
+#runtimeInspectorBody > .monitor-window { grid-column:2; grid-row:1; }
+#runtimeInspectorStrip:empty { display:none; }
+#runtimeInspectorStrip > .run-strip { padding:0 2px; }
 #runtimeInspectorBody .debugbar { padding:6px; flex:none; }
 #runtimeInspectorBody .editor-shell { flex:1; min-height:160px; }
 #runtimeInspectorBody #blockEditor { flex:1; min-height:260px; }
 #runtimeInspectorBody .blockui-layout { flex:1; min-height:0; }
 #runtimeInspectorBody .monitor-window { display:flex; min-height:160px; overflow:auto; }
-@media(max-width:700px) { #runtimeInspectorBody { grid-template-columns:minmax(0,1fr); } #runtimeInspectorModes { margin-left:0; } }
+@media(max-width:700px) { #runtimeInspectorBody { grid-template-columns:minmax(0,1fr); } #runtimeInspectorBody > .monitor-window { grid-column:1; grid-row:2; } #runtimeInspectorModes { margin-left:0; } }
 .blockui-local-help { font-size:12px; max-width:100%; }
 .blockui-local-help p { white-space:normal; line-height:1.6; }
 .blockui-operator { min-width:90px; padding:5px; }
@@ -5657,9 +5610,7 @@ body.runtime[data-editor-mode] .main > .codewin > .debugbar {
   display: flex; grid-column: 1 / -1; grid-row: 2;
   min-width: 0; padding: 6px; margin: 0; flex-wrap: wrap;
 }
-body.runtime[data-editor-mode] .debugbar #execLocation { display:inline-block; max-width:100%; }
 body.runtime[data-editor-mode] .debugbar :is(#pauseBtn,#continueBtn,#stepBtn) { display: inline-flex; }
-body.runtime[data-editor-mode] .menutool > :is(#newBtn,#sampleBtn,#openBtn) { display:none; }
 body.runtime[data-editor-mode] .debugbar > :is(#redoBtn,#formatBtn,#resetBtn) { display:none; }
 #runtimeInspector #runtimeInspectBtn { display:none; }
 body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }
@@ -5743,9 +5694,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 .child-help-panel:focus-visible { outline: 3px solid var(--accent, #307cac); outline-offset: -3px; }
 .child-help .child-scroll-help { padding-bottom: 8px; border-bottom: 1px solid var(--line, #d8e3ec); }
 .menutool > .child-help { flex: 0 0 auto; }
-.menutool > .child-help[open] { flex: 1 0 100%; }
 .menutool > .child-help > summary { width: max-content; }
-.child-copy-help { display: block; padding: 4px 10px; font-size: 12px; line-height: 1.5; white-space: normal; }
 .child-material-name { display: block; line-height: 1.6; }
 .child-material-note { display: block; font-size: inherit; line-height: 1.5; white-space: normal; }
 .sprite-preset-grid .tool:has(.child-material-name) { min-height: 72px; }
@@ -5887,17 +5836,24 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
  body[data-ui-level="entry"] .blockui-layout { min-height:340px; }
 }
 
-/* ── Toolbar: 表示, コード/ブロック and the work name are pinned to the top-right corner, so they
-   stay in the same place in every view, width and font. Only the action buttons on the left wrap. ── */
+/* ── Toolbar: コード/ブロック, the level and the work name are pinned to the top-right corner, left to right, so
+   they stay in the same place in every view, width and font. The level's place does not move when the toggle is not
+   shown (はじめて, a 名人 work); its free space joins the left. Only the action buttons on the left wrap. ── */
 @media (min-width: 701px) {
   body[data-editor-mode] .menutool {
     --tb-pad: 18px;
     --tb-gap: 7px;
     --tb-name: 172px;
     --tb-modes: 176px;
-    --tb-level: 114px;
-    position: relative;
+    --tb-level: 100px;
     padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-modes) + var(--tb-level) + 3 * var(--tb-gap));
+  }
+  body[data-editor-mode] .menutool:has(> .editor-modes[hidden]) {
+    padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
+  }
+  /* The run screen shows neither the level nor the toggle (they change nothing there). */
+  body.runtime[data-editor-mode] .menutool {
+    padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-gap));
   }
   body[data-editor-mode] .menutool > :is(.ui-level-label, .editor-modes, #projectName) {
     position: absolute;
@@ -5910,9 +5866,19 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
     min-width: 0;
     max-width: none;
   }
-  body[data-editor-mode] .menutool > .editor-modes {
+  body[data-editor-mode] .menutool > .ui-level-label {
     top: 7px;
     right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-gap));
+    box-sizing: border-box;
+    width: var(--tb-level);
+    height: 44px;
+    padding: 0;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+  body[data-editor-mode] .menutool > .editor-modes {
+    top: 7px;
+    right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
     box-sizing: border-box;
     width: var(--tb-modes);
     height: 44px;
@@ -5920,22 +5886,17 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
   body[data-editor-mode] .menutool > .editor-modes button {
     flex: 1 1 0;
     min-width: 0;
+    white-space: nowrap;
   }
-  body[data-editor-mode] .menutool > .ui-level-label {
-    top: 7px;
-    right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-modes) + 2 * var(--tb-gap));
-    box-sizing: border-box;
-    width: var(--tb-level);
-    height: 44px;
-    padding: 0;
-    justify-content: flex-end;
+  body[data-editor-mode] .menutool > .mode-blocked-note {
+    right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
   }
 }
 @media (min-width: 701px) and (max-width: 1300px) {
   body[data-editor-mode] .menutool { --tb-pad: 10px; --tb-gap: 4px; --tb-name: 150px; --tb-modes: 140px; }
 }
 @media (min-width: 701px) and (max-width: 1100px) {
-  body[data-editor-mode] .menutool { --tb-name: 112px; --tb-modes: 136px; }
+  body[data-editor-mode] .menutool { --tb-name: 100px; --tb-modes: 152px; --tb-level: 96px; }
   body[data-editor-mode] .menutool > .editor-modes button { padding-inline: 4px; }
 }
 
@@ -5968,6 +5929,92 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 .blockui-categories > [data-blockui-category="comment"]::before { content: "※"; }
 
 #formSurface { font-family: var(--font-stage); }
+
+/* ── 1.5.0 editor screens ──────────────────────────────────────────────────────────────────────────────────────────
+   The edit screen (止まっているとき) shows ▶ 動かす only; the run screen (getting ready, running, paused, stopped by an
+   error, finished) shows ■ 止める only, in ▶'s place. The other toolbar buttons stay where they are, disabled while the
+   work runs. ⏸, ▶ つづける, 1つずつ 動かす and 本文を見て たしかめる are run-screen controls (かんたん・くわしく), not shown
+   once the run has ended. */
+body:not(.runtime) #stopBtn,
+body.runtime #runBtn { display: none !important; }
+body:not(.runtime) .debugbar :is(#pauseBtn, #continueBtn, #stepBtn) { display: none !important; }
+body.run-finished .debugbar :is(#pauseBtn, #continueBtn, #stepBtn, #runtimeInspectBtn) { display: none !important; }
+/* もとにもどす is an edit-screen control; the run screen's bar holds the run controls only. */
+body.runtime .debugbar > #undoBtn { display: none !important; }
+body.runtime.run-finished[data-editor-mode] .main > .codewin > .debugbar { display: none !important; }
+body.runtime .menutool > :is(.ui-level-label, .editor-modes, .mode-blocked-note) { display: none !important; }
+.editor-modes[hidden] { display: none !important; }
+:is(#editorModeblocks, #callableModeblocks)[aria-disabled="true"] { opacity: 0.5; }
+/* Why ブロック does not open while the code has a mistake: shown under the toggle after a press of the pale ブロック. */
+.mode-blocked-note { margin: 0; padding: 6px 10px; border: 1px solid #c98a6a; border-radius: 8px; background: #fff7f2; color: #8a2c0d; font-size: 14px; line-height: 1.5; }
+.mode-blocked-note[hidden] { display: none !important; }
+.menutool > .mode-blocked-note { position: absolute; top: calc(100% + 6px); right: 10px; z-index: 61; max-width: 20rem; box-shadow: 0 6px 16px #18364b30; }
+
+/* The strip under the stage on the run screen, at every level: いま 動いている 文：who / which event / which line, and
+   the sentence itself in a box. */
+.run-strip { display: none; }
+body.runtime .run-strip { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; padding: 6px 10px; font-size: 14px; line-height: 1.5; color: var(--dark, #283e50); }
+.run-strip > .exec-location { max-width: 100%; color: var(--muted, #536273); overflow-wrap: anywhere; }
+.exec-sentence { max-width: 100%; padding: 2px 10px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fff; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; white-space: pre-wrap; }
+.exec-sentence[hidden] { display: none; }
+
+/* The toolbar (with the name Akari) stays at the top of the page when the page scrolls; it paints above the page and
+   below dialogs. Scrolling to a place keeps that place below the toolbar (its height follows its rows). */
+html { overflow-x: hidden; overflow-y: auto; scroll-padding-top: var(--toolbar-h, 0px); }
+body { overflow: visible !important; }
+.menutool { position: sticky; top: 0; z-index: 500; }
+
+/* ヒント (right of お手本を開く) and はじめて's 作品 open over the page under the toolbar: the toolbar keeps its height and
+   the other buttons keep their places. A long ヒント scrolls inside. */
+.menutool > details.toolbar-menu { position: relative; flex: 0 0 auto; }
+.menutool > details.toolbar-menu > summary { box-sizing: border-box; min-height: 36px; padding: 5px 12px; border: 1px solid #bda47a66; border-radius: 10px; background: #fffaf0d9; line-height: 24px; cursor: pointer; white-space: nowrap; }
+.menutool > #basicActionGuide > .child-help-panel,
+.menutool > #entryProjectMenu > .entry-project-actions { position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
+.menutool > #basicActionGuide > .child-help-panel { width: min(34rem, calc(100vw - 32px)); max-height: min(60dvh, 420px); }
+.menutool > #entryProjectMenu > .entry-project-actions { border-radius: 10px; }
+body[data-editor-mode] .menutool #uiLevel { box-sizing: border-box; width: 100%; min-width: 0; height: 36px; padding: 0 6px; }
+
+/* Block view: the heading 本文 sits at the left of the 動かすもの row, and すべての本文・画面の本文・いつ動く？ share one row with
+   もとにもどす・やり直す, so the workspace gets the height. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-rows: repeat(8, auto) minmax(0, 1fr);
+}
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > * { grid-column: 1 / -1; min-width: 0; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .win-title {
+  grid-row: 1; justify-self: start; align-self: start; z-index: 1; display: flex; align-items: center;
+  height: auto; min-height: 0; margin: 0; padding: 8px 0 0 12px; border: 0; background: none; font-size: 14px; font-weight: 700; line-height: 30px; pointer-events: none;
+}
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .code-head { grid-row: 1; padding-left: 58px; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryEvents { grid-row: 2; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryOutside { grid-row: 3; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #tutorialGuide { grid-row: 4; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .source-nav { grid-row: 5; grid-column: 1; align-self: stretch; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar { grid-row: 5; grid-column: 2; justify-content: flex-end; flex-wrap: wrap; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #sourceOverview { grid-row: 6; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-overview="true"] > #sourceOverview { grid-row: 9; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #editorPending { grid-row: 7; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #sourceImport { grid-row: 8; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #blockEditor { grid-row: 9; }
+/* The editor fits the window from 600 px high; the block area may shrink to 300 px. */
+body[data-editor-mode="blocks"] #blockEditor .blockui-layout { min-height: 300px; }
+
+
+/* はじめて while running: the stage takes the large column; the 使うブロック list is put away and the built blocks stay. */
+body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr) clamp(420px, 56vw, 820px); }
+body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-palette { display: none !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layout { grid-template-columns: minmax(0, 1fr) !important; }
+
+/* Touch screens: the toolbar's controls are at least 40 px high (no wider). */
+@media (pointer: coarse) {
+  body[data-editor-mode] .menutool > button,
+  body[data-editor-mode] .menutool > details.toolbar-menu > summary,
+  body[data-editor-mode] .menutool > #projectName,
+  body[data-editor-mode] #uiLevel { height: auto; min-height: 40px; }
+  body[data-editor-mode] .menutool > :is(.editor-modes, .ui-level-label) { height: 48px; }
+  body[data-editor-mode] .menutool > .editor-modes button { min-height: 40px; }
+}
 </style>
 </head>
 <body>
@@ -5993,16 +6040,16 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
     <button id="procBtn" aria-label="自分で作ったブロック">自分で作ったブロック</button>
     <button id="dataBtn" aria-label="へんすう・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
-    <details id="entryProjectMenu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
+    <details id="entryProjectMenu" class="toolbar-menu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
     <button id="tutorialStart" type="button">いっしょに作る</button>
-    <label class="ui-level-label">見せ方 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option><option value="meijin">名人</option></select></label>
-    <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
+    <label class="ui-level-label"><select id="uiLevel" aria-label="レベル"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
+    <details id="basicActionGuide" class="child-help toolbar-menu"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
       <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品を ファイルにします。あとで つづきを 作るときは「開く」で その ファイルを えらびます。</p>
       <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見る ファイルを 作ります。</p>
       <p id="assetActionHelp"><strong>絵や音をまとめる</strong>：使う 絵や音を 入れたり、名前を たしかめたりします。</p>
       <p id="dataActionHelp"><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</strong>：点数や 名前を 1つ おぼえる はこと、持ち物のように じゅんばんに ならべる リストを 作ります。</p>
       <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：えらんだ ものを 動かす、やることの まとまりです。「なおす動き」で えらびます。「いつ動く？」で 動く きっかけを かえます。</p>
-      <p><strong>見た目のコピー</strong>：見た目と せっていを もう1つ 作ります。コードは コピーしません。</p>
+      <p><strong>見た目のコピー</strong>：見た目と せっていを もう1つ 作ります。本文は コピーしません。</p>
       <p><strong>もとにもどす・やり直す</strong>：決めた ことを 1つ もとにもどす・もどした ことを もう一度 やる ボタンです。「入力を やめる」は、いま かえかけている 入力を やめます。</p>
     </div></details>
     <input id="projectName" value="はじめてのあかり" aria-label="作品名">
@@ -6217,6 +6264,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
           </div>
         </div>
       </div>
+      <div class="run-strip" id="runStrip"><span class="exec-location" id="execLocation">いま 動いている 文：―</span><span class="exec-sentence" id="execSentence" hidden></span></div>
     </section>
 
     <div class="side">
@@ -6234,8 +6282,8 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
       </section>
     </div>
 
-    <section class="window active codewin">
-      <div class="win-title">コード</div>
+    <section class="window active codewin" aria-labelledby="codeHeading">
+      <div class="win-title" id="codeHeading">本文</div>
       <div class="code-head">
         <label>動かすもの <select id="objectSelect"></select></label>
         <label>なおす動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="なおす動きを えらびます。きっかけは「いつ動く？」で かえます"></select></label>
@@ -6245,15 +6293,14 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
       <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">「動かす」を おしたとき</button><button id="entryClickEvent" type="button">キャラが おされたとき</button></div>
       <p id="entryOutside" role="status" hidden>この 作品には、「はじめて」では 見えない 動きも あるよ。けさずに のこしてあるよ。見るときは、ブロックで「かんたん」を えらんでね。</p>
       <section id="tutorialGuide" aria-label="いっしょに作る" hidden><p id="tutorialText" aria-live="polite"></p><div id="tutorialChoices" hidden></div><button id="tutorialFinish" type="button" hidden>ほぞんしておわる</button><button id="tutorialExit" type="button">いっしょに作るのをやめる</button><button id="tutorialVerifySave" type="button" hidden>ほぞんした作品をたしかめる</button><input id="tutorialSavedFile" type="file" accept=".akari.md,.md" hidden></section>
-      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文を なおす ところへ もどる</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
-      <div id="sourceOverview" aria-label="えらんだものの すべてのコード" hidden></div>
+      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべての本文</button><button id="sourceEditBtn" type="button" hidden>本文を なおす ところへ もどる</button><button id="sourceStageBtn" type="button" hidden>画面の本文</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
+      <div id="sourceOverview" aria-label="えらんだものの すべての本文" hidden></div>
       <div class="debugbar">
         <button id="pauseBtn">⏸ いったん止める</button>
         <button id="continueBtn">▶ つづける</button>
         <button id="stepBtn">1つずつ 動かす</button>
         <button id="runtimeInspectBtn" type="button" hidden aria-controls="runtimeInspector">本文を見て たしかめる</button>
         <button id="formatBtn">コードを整える</button>
-        <span class="exec-location" id="execLocation">いま 動いている 文：―</span>
       </div>
       <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を やめる</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の 取りこみ" hidden></section><div id="blockEditor" hidden></div>
       <div class="editor-shell">
@@ -6422,7 +6469,8 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 </div>
 
 <dialog id="runtimeInspector" aria-labelledby="runtimeInspectorTitle">
-  <div class="runtime-inspector-head"><strong id="runtimeInspectorTitle">本文と動きのようす</strong><div id="runtimeInspectorModes"></div><button id="runtimeInspectorStop" type="button">止める</button><button id="runtimeInspectorClose" type="button">作品画面に もどる</button></div>
+  <div class="runtime-inspector-head"><strong id="runtimeInspectorTitle">本文と動きのようす</strong><div id="runtimeInspectorModes"></div><button id="runtimeInspectorStop" type="button">■ 止める</button><button id="runtimeInspectorClose" type="button">作品画面に もどる</button></div>
+  <div id="runtimeInspectorStrip"></div>
   <div id="runtimeInspectorBody"></div>
 </dialog>
 
@@ -6476,9 +6524,9 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
   <p id="exportChoiceDescription">ファイルにした うごく作品を 開いたときの、はじめ方を えらびます。</p>
   <div class="export-choices">
    <button id="exportControls" class="export-choice" type="button" aria-labelledby="exportControlsTitle" aria-describedby="exportControlsDescription">
-    <span class="export-choice-title" id="exportControlsTitle">▶ はじめるボタンをつける</span>
-    <span id="exportControlsDescription">ボタンをおすと、作品がはじまります。動きをいったん止めたり、終わらせたりできます。</span>
-    <span class="export-example" aria-hidden="true"><span class="export-example-label">見本</span><span class="export-example-player"><span class="export-example-title">星の作品</span><span class="export-example-controls"><span>▶ はじめる</span><span>いったん止める</span><span>止める</span></span><span class="export-example-scene"><span class="export-example-star">★</span><span class="export-example-work-button">作品のボタン</span></span></span></span>
+    <span class="export-choice-title" id="exportControlsTitle">▶ 動かすボタンをつける</span>
+    <span id="exportControlsDescription">「▶ 動かす」をおすと、作品が動きます。動いているあいだは、「■ 止める」と「⏸ いったん止める」が出ます。</span>
+    <span class="export-example" aria-hidden="true"><span class="export-example-label">見本</span><span class="export-example-player"><span class="export-example-title">星の作品</span><span class="export-example-controls"><span>▶ 動かす</span></span><span class="export-example-scene"><span class="export-example-star">★</span><span class="export-example-work-button">作品のボタン</span></span></span></span>
    </button>
    <button id="exportArtwork" class="export-choice" type="button" aria-labelledby="exportArtworkTitle" aria-describedby="exportArtworkDescription exportArtworkNote">
     <span class="export-choice-title" id="exportArtworkTitle">作品をすぐにはじめる</span>
@@ -9827,6 +9875,9 @@ function createAkariExtensionHost(options) {
     // Loop pacing (EventScheduler.paceTurn): the loop frames whose turns are paced, and the statements that change the
     // screen (moving and turning, looks, text and backdrop, the pen and stamps, speech).
     const PACED_LOOP_FRAMES = new Set(['repeatCount', 'forever', 'foreach', 'while', 'until']);
+    // Events that can start a body after every flow has ended: input from outside the work, and 名人's conditions and
+    // intervals. The other events (start, signals, a backdrop change, a copy, a touch) start only from a running flow.
+    const RESTARTING_EVENTS = new Set(['click', 'keyDown', 'valueChanged', 'conditionTrue', 'interval']);
     const PACED_SCREEN_KINDS = new Set(['MotionCommand', 'LooksCommand', 'PenCommand', 'Say']);
     // How many こま a paced flow may be behind and still catch up (EventScheduler.nextFrameTime): 100 ms.
     const PACE_CATCH_UP = 6;
@@ -10322,6 +10373,13 @@ function createAkariExtensionHost(options) {
         this.runtime.stopAllAudio(false);
         this.ui.closeQuestion?.();
         this.ui.state?.();
+      }
+      // The run has ended by itself: no flow runs, waits or is queued, no continuous rule is kept, no question is open, and
+      // no body can start again (none waits for input, a 名人 condition or interval, or an extension).
+      ended() {
+        if (!this.running || this.tasks.size || this.ready.length || this.continuous.size || this.questionQueue.length ||
+          this.activeQuestion || this.extensionEvents?.length || extensions.active) return false;
+        return !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event));
       }
       pause() {
         if (!this.running) return;
@@ -11757,7 +11815,7 @@ function createAkariExtensionHost(options) {
       )
         fail('画面の 大きさが 正しくありません');
       if(Object.hasOwn(p.stage,'showSpeechNames')&&typeof p.stage.showSpeechNames!=='boolean')
-        fail('ふきだしの 名前の 見せ方が 正しくありません');
+        fail('ふきだしに 名前を 出すかどうかの せっていが 正しくありません');
       validateRuntimeData(p, fail);
       const ownerIds = new Set(['stage', ...p.components.map(c => c.id)]);
       const callPhrases=new Set();
@@ -23146,7 +23204,7 @@ function createAkariExtensionHost(options) {
         add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
       // 名人のできごと: 〜になったとき and 〜秒ごとに are read like any value; ふれる相手は部品。
       const heading = item.ast.heading, at = item.ast.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } };
-      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、「見せ方」で「名人」を えらびます', only.sourceSpan ? only : at, item.key); }
+      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、コードで「名人」を えらびます', only.sourceSpan ? only : at, item.key); }
       const message = typeof item.filter === 'object' ? item.filter?.message : item.filter;
       const extensionEvent = !item.meijin && item.event === 'message' && typeof message === 'string' && message.startsWith('拡張:')
         ? EXTENSION_HOST.describe(message.slice(3), 'events') : null;
@@ -23853,7 +23911,7 @@ function createAkariExtensionHost(options) {
       });
       if (!reads) continue;
       const { proposals, draftRole, ...location } = first;
-      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、「見せ方」で「名人」を えらびます' }, ...out.slice(at).filter(e => e.where !== key)];
+      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人モードの 本文で だけ 使えます。名人モードに するときは、コードで「名人」を えらびます' }, ...out.slice(at).filter(e => e.where !== key)];
     }
     return out;
   }
@@ -26350,7 +26408,12 @@ function createAkariExtensionHost(options) {
       previousFocus = null,
       automaticAttempted = false,
       backgroundPaused = false,
-      runtimeFailed = false;
+      runtimeFailed = false,
+      // When ▶ 動かす was pressed: ■ 止める takes its place, and the second press of a double press within 0.5 s (a
+      // repeated click, or a tap or a pen press) does nothing. endFrame looks, after a flow ended, whether the whole run
+      // has ended.
+      startPressedAt = -Infinity,
+      endFrame = null;
     const designUrls = new Map();
     const message = (text) => {
       output.hidden = false;
@@ -26360,15 +26423,27 @@ function createAkariExtensionHost(options) {
       else output.appendChild(document.createTextNode(addition));
       output.scrollTop = output.scrollHeight;
     };
+    // The buttons follow the editor's rule. Stopped: ▶ 動かす only. Getting ready: ■ 止める only. Running: ■ 止める (where
+    // ▶ 動かす was) and ⏸ いったん止める; paused, ■ 止める and ▶ つづける. Finished (every body done, or 作品を全部止める): ■
+    // 止める only, and the last picture stays.
     function state() {
+      // A scheduler that stopped by itself (作品を全部止める) ends the run; ■ 止める (dispose) lets go of it first.
       if (phase === 'RUNNING' || phase === 'PAUSED') {
-        phase = scheduler?.running ? (scheduler.paused ? 'PAUSED' : 'RUNNING') : 'STOPPED';
+        phase = !scheduler ? 'STOPPED' : !scheduler.running ? 'FINISHED'
+          : scheduler.paused ? 'PAUSED' : scheduler.ended() ? 'FINISHED' : 'RUNNING';
       }
-      if (start) start.disabled = phase === 'LOADING' || phase === 'PREPARING' || phase === 'ERROR';
-      if (pause) pause.disabled = !scheduler?.running;
-      if (stop) stop.disabled = !scheduler?.running && phase !== 'PREPARING';
-      if (pause) pause.textContent =
-        phase === 'PAUSED' ? '▶ つづける' : '⏸ いったん止める';
+      const runScreen = ['PREPARING', 'RUNNING', 'PAUSED', 'FINISHED'].includes(phase);
+      if (start) {
+        start.hidden = runScreen;
+        start.disabled = phase === 'LOADING' || phase === 'ERROR';
+      }
+      if (stop) stop.hidden = !runScreen;
+      if (pause) {
+        pause.hidden = phase !== 'RUNNING' && phase !== 'PAUSED';
+        pause.textContent = phase === 'PAUSED' ? '▶ つづける' : '⏸ いったん止める';
+      }
+      // The focus does not fall to the page when its button goes away.
+      if (document.activeElement?.hidden) form.focus({ preventScroll: true });
       if (status) status.textContent =
         {
           LOADING: '読みこみ中',
@@ -26376,6 +26451,7 @@ function createAkariExtensionHost(options) {
           PREPARING: 'じゅんび中',
           RUNNING: '動いているよ',
           PAUSED: 'いったん 止まっているよ',
+          FINISHED: 'おわったよ。もう一度 動かすときは「■ 止める」を おしてから「▶ 動かす」を おしてね',
           STOPPED: '止まっています',
           ERROR: '\u958b\u3051\u307e\u305b\u3093',
         }[phase] || '';
@@ -26419,6 +26495,8 @@ function createAkariExtensionHost(options) {
     function dispose() {
       epoch++;
       backgroundPaused = false;
+      if (endFrame !== null) cancelAnimationFrame(endFrame);
+      endFrame = null;
       if (activation) activation.hidden = true;
       view?.clearInput();
       const oldScheduler = scheduler;
@@ -26526,10 +26604,15 @@ function createAkariExtensionHost(options) {
           ask,
           closeQuestion,
           state,
+          // A flow ended: once the scheduler has settled, the run may have ended by itself.
+          renderMonitor: () => {
+            if (phase === 'RUNNING' && endFrame === null) endFrame = requestAnimationFrame(() => { endFrame = null; state(); });
+          },
+          // 作品を全部止める: the run screen keeps its last picture until ■ 止める.
           allStopped: () => {
             const generation = epoch;
             setTimeout(() => {
-              if (generation === epoch) stopRun();
+              if (generation === epoch && runtime) { phase = 'FINISHED'; flush(); state(); }
             }, 0);
           },
           runtimeError: (_, e) => fail(e),
@@ -26547,7 +26630,6 @@ function createAkariExtensionHost(options) {
         view.seedHeldInput();
         phase = 'RUNNING';
         scheduler.start();
-        if (start) start.textContent = '\u21bb \u3082\u3046\u4e00\u5ea6';
         flush();
         state();
         form.focus({ preventScroll: true });
@@ -26580,8 +26662,11 @@ function createAkariExtensionHost(options) {
       designUrls.set(id, url);
       return url;
     }
-    if (start) start.onclick = startRun;
-    if (stop) stop.onclick = stopRun;
+    if (start) start.onclick = (event) => { startPressedAt = event.timeStamp; startRun(); };
+    if (stop) stop.onclick = (event) => {
+      if (event.timeStamp - startPressedAt < 500 && (event.detail > 1 || ['touch', 'pen'].includes(event.pointerType))) return;
+      stopRun();
+    };
     if (pause) pause.onclick = () => {
       view?.clearInput();
       if (!scheduler?.running) return;
@@ -26801,7 +26886,7 @@ function createAkariExtensionHost(options) {
       '</style>\n</head>\n<body>\n' +
       '<main id="playerRoot">' + (artwork ? '' : '<header><h1 id="playerTitle">' +
       title +
-      '</h1><div class="player-controls"><button id="playerStart" disabled>▶ はじめる</button><button id="playerPause" disabled>⏸ いったん止める</button><button id="playerStop" disabled>■ 止める</button><span id="playerStatus" role="status">読みこみ中</span></div></header>') +
+      '</h1><div class="player-controls"><button id="playerStart" disabled>▶ 動かす</button><button id="playerStop" hidden>■ 止める</button><button id="playerPause" hidden>⏸ いったん止める</button><span id="playerStatus" role="status">読みこみ中</span></div></header>') +
       '<div class="player-stage"' + (artwork ? ' style="width:' + payload.project.stage.width + 'px;height:' + payload.project.stage.height + 'px"' : '') + '><div id="formSurface" tabindex="0"><canvas id="penCanvas"></canvas></div>' + (artwork ? '<div id="playerActivation" hidden><button id="playerActivate" type="button">ここをおしてはじめる</button></div>' : '') + '</div><pre id="playerOutput" role="log" hidden></pre></main>' +
       '<div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionText"><div class="question-box"><div id="questionText"></div><input id="questionAnswer" aria-label="\u7b54\u3048" autocomplete="off"><div class="question-controls"><button id="questionStop">動きを止める</button><button id="questionSubmit">\u7b54\u3048\u308b</button></div></div></div>' +
       '<noscript>この作品を動かすには、JavaScriptを使えるようにしてください。</noscript>\n<script>\n' +
@@ -28704,7 +28789,7 @@ function createAkariExtensionHost(options) {
     );
     workspaceShell.append(workspaceTip);
     const modeSelect = E('select', '', null, {
-      'aria-label': 'ブロックの形',
+      'aria-label': 'ブロックの しゅるい',
       'data-blockui-palette-mode': 'true',
     });
     for (const [v, l] of [
@@ -28739,7 +28824,7 @@ function createAkariExtensionHost(options) {
       }),
       pageLabel = E('span'),
       paletteOptions = E('details', 'blockui-palette-options');
-    paletteOptions.append(E('summary', '', 'ブロックの見せ方'), outsideLabel);
+    paletteOptions.append(E('summary', '', 'ブロックの しゅるい'), outsideLabel);
     palettePages.append(previous, pageLabel, next);
     paletteOptions.append(modeSelect);
     const searchLabel=E('label','blockui-search-label','ブロックを さがす');
@@ -28758,7 +28843,7 @@ function createAkariExtensionHost(options) {
       E('p','','＋で ブロックを 入れます。あいている ところには 文字・数・へんすう・リストを えらびます。「たずねる」で 待った 返事は「答え」で 使えます。とちゅうでも ほぞんできます。'),
       E('p','','あいている ところに 入れる 中身には、文字「おはよう」、数の 10、「あてはまる・あてはまらない」などが あります。'),
       E('p','','つなぐブロックは、「話す」「待つ」など、してほしいことです。本文（ほんぶん）は、ブロックを じゅん番に ならべるところです。'),
-      E('p','','ブロックは なかまごとに分かれています。れい：「よく使う」には「話す」「待つ」があります。「ブロックを さがす」に言葉を入れると、さがせます。「ブロックの見せ方」で、つなぐブロックと はめるブロックの どちらを見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない理由も読めます。'),
+      E('p','','ブロックは なかまごとに分かれています。れい：「よく使う」には「話す」「待つ」があります。「ブロックを さがす」に言葉を入れると、さがせます。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない理由も読めます。'),
       E('p','','とちゅうに入れる：本、ぼうしの間にかさを入れると、本、かさ、ぼうしになります。入れかえる：かさを ぼうしに かえるように、えらんだ中身を かえます。'),
       E('p','','リストには、中身が1つずつ ならんでいます。1つずつ使うブロックでは、前から じゅんに同じ動きをします。'),
       E('p','','「同じ数を くり返し かける」（＾）は、同じ数を 何回も かける 計算です。2＾3 は 2×2×2 で 8 に なります。計算や くらべ方の しるしだけを かえても、左右の 中身は のこります。'),
@@ -29640,8 +29725,8 @@ function createAkariExtensionHost(options) {
             'p',
             'blockui-empty',
             location?.input
-              ? 'ここに 入れられる ブロックが ありません。なかまを かえるか、「ブロックの見せ方」で 使えない 理由を 見られます。つなぐブロックを ふやすときは「＋ ここに入れる」を おしてください'
-              : 'この ばしょで 使える ブロックが ありません。なかまを かえるか、「ブロックの見せ方」で 使えない理由を見られます。',
+              ? 'ここに 入れられる ブロックが ありません。なかまを かえるか、「ブロックの しゅるい」で 使えない 理由を 見られます。つなぐブロックを ふやすときは「＋ ここに入れる」を おしてください'
+              : 'この ばしょで 使える ブロックが ありません。なかまを かえるか、「ブロックの しゅるい」で 使えない理由を見られます。',
           ),
         );
       previous.disabled = page === 0;
@@ -32404,6 +32489,11 @@ function createAkariExtensionHost(options) {
       autosaveTimer = null,
       recoveryData = null,
       appState = 'DESIGN',
+      // The run screen after the run ended (every body done, or 作品を全部止める): the last picture stays, ■ 止める only.
+      runFinished = false,
+      // When ▶ 動かす was pressed: ■ 止める takes its place, and the second press of a double press (a repeated click, or
+      // a tap) within 0.5 s does nothing.
+      runPressedAt = -Infinity,
       generationToken = 0,
       designObjectUrls = new Map(),
       previewAudio = null;
@@ -32462,23 +32552,39 @@ function createAkariExtensionHost(options) {
     const entryControlHomes=new Map();
     let tutorial=null, pausedTutorial=null, tutorialEpoch=0, workspaceIdentity=0,
       tutorialTimer=null, tutorialTrace=null, tutorialSave=null, tutorialExpected=null, tutorialInsertion=null;
-    // 見せ方: baseUiLevel is the level chosen other than 名人 (はじめて／かんたん／くわしく). A work with a 名人 text is shown
-    // as くわしく with 名人 chosen, and no other level can be chosen while it has one; without one, the chosen level comes
-    // back (undo, open, a new work). The work file and autosave keep only the chosen level.
+    // The level (レベル): baseUiLevel is the level chosen other than 名人 (はじめて／かんたん／くわしく). A work with a 名人 text is
+    // shown as くわしく with 名人 chosen, and no other level can be chosen while it has one; without one, the chosen level
+    // comes back (undo, open, a new work). The work file and autosave keep only the chosen level.
     let baseUiLevel='entry';
     const workIsMeijin=()=>(project?.scripts||[]).some(isMeijinScript);
-    function applyUiLevel(){
-      const meijin=workIsMeijin();
+    // The levels the picker offers depend on the view: blocks はじめて／かんたん／くわしく, code かんたん／くわしく／名人, and a
+    // work with a 名人 text only 名人. A level that cannot be chosen is not in the list at all (not a disabled option).
+    const UI_LEVEL_NAMES={entry:'はじめて',basic:'かんたん',advanced:'くわしく',meijin:'名人'};
+    // The view the main editor shows (the list of all bodies uses the remembered view).
+    const shownEditorMode=()=>(!sourceOverviewOpen&&mainEditor.session?.mode)||editorModes.get('script')||'blocks';
+    function uiLevelChoices(view=shownEditorMode()){return workIsMeijin()?['meijin']:view==='blocks'?['entry','basic','advanced']:['basic','advanced','meijin'];}
+    // shown: the view the editor has just been laid out in (syncEditorShell). Returns true when the shown level changed.
+    function applyUiLevel(shown=null){
+      const meijin=workIsMeijin(),before=document.body.dataset.uiLevel;
+      // はじめて is a block level: a view laid out in code (a body the blocks cannot show, or 名人 text that went away) goes
+      // on at かんたん. The view is never changed by a level.
+      if(!meijin&&baseUiLevel==='entry'&&shown==='code')baseUiLevel='basic';
       document.body.dataset.meijinLevel=meijin?'on':'off';
       document.body.dataset.uiLevel=meijin?'advanced':baseUiLevel;
-      for(const option of $('#uiLevel').options)if(option.value!=='meijin')option.disabled=meijin||(option.value==='entry'&&(document.body.dataset.editorMode||editorModes.get('script'))==='code');
-      $('#uiLevel').value=meijin?'meijin':baseUiLevel;
+      const select=$('#uiLevel'),choices=uiLevelChoices(shown||shownEditorMode()),value=meijin?'meijin':baseUiLevel;
+      if([...select.options].map(o=>o.value).join()!==choices.join())
+        select.replaceChildren(...choices.map(level=>{const option=document.createElement('option');option.value=level;option.textContent=UI_LEVEL_NAMES[level];return option;}));
+      select.value=value;
+      // The コード／ブロック toggle is not shown where it can do nothing: at はじめて (blocks only) and in a 名人 work (code only),
+      // which also holds for the 自分で作ったブロック editor.
+      $('#editorModecode').parentElement.hidden=meijin||baseUiLevel==='entry';
+      $('#callableModecode').parentElement.hidden=meijin;
+      return before!==undefined&&before!==document.body.dataset.uiLevel;
     }
     // The chosen level in the form the work's editor state keeps (はじめて is kept as かんたん).
     const keptUiLevel=()=>baseUiLevel==='entry'?'basic':baseUiLevel;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      $('#uiLevel option[value="entry"]').disabled=workIsMeijin()||(document.body.dataset.editorMode||editorModes.get('script'))==='code';
       for(const node of [$('#undoBtn'),$('#redoBtn')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
         if(entry){
@@ -32492,7 +32598,6 @@ function createAkariExtensionHost(options) {
       if(entry){if(designer.parentElement!==main)main.insertBefore(designer,side);if(objects&&side.firstElementChild!==objects)side.prepend(objects);}
       else if(entryLayoutPlaced&&document.body.dataset.editorMode==='blocks'){side.prepend(designer);side.insertBefore(objects,$('.properties-window'));}
       entryLayoutPlaced=entry;
-      $('.codewin > .win-title').textContent=entry?'組み立てる ばしょ':'コード';
       for(const [id,event] of [['entryStartEvent','start'],['entryClickEvent','click']]) {
         $('#'+id).disabled=modelLocked()||!eventsFor(selectedId).includes(event);
         $('#'+id).setAttribute('aria-pressed',String(currentEvent===event));
@@ -32898,8 +33003,12 @@ function createAkariExtensionHost(options) {
         } else session.pendingEdit = draft ? null : pending;
       }
       session.mode = resolvedEditorMode(editorModes, binding.kind, session.syntaxAst);
-      // A 名人 script is code only; the remembered view is kept for the other scripts.
-      if (binding.kind !== 'draft' && bindingContext(binding).meijin) session.mode = 'code';
+      // A work with a 名人 text is code only, for every body and the 自分で作ったブロック editor; the view it opens in is
+      // decided by the content, whatever view a file or the autosave kept.
+      if (workIsMeijin()) {
+        session.mode = 'code';
+        editorModes.set(binding.kind, 'code');
+      }
       editorSessions.set(cacheKey, session);
       binding.session = session;
       return session;
@@ -33480,28 +33589,19 @@ function createAkariExtensionHost(options) {
       for (const mode of ['code', 'blocks']) {
         const b = $(draft ? `#callableMode${mode}` : `#editorMode${mode}`);
         b.setAttribute('aria-pressed', String(session.mode === mode));
-        b.disabled =
-          ['PREPARING', 'IMPORTING'].includes(appState) ||
-          (!draft&&mode==='code'&&document.body.dataset.uiLevel==='entry') ||
-          (mode === 'blocks' && (!session.syntaxAst || invalidCodePending)) ||
-          (!draft && mode === 'blocks' && bindingContext(binding).meijin);
-        b.title =
-          !draft && mode === 'blocks' && bindingContext(binding).meijin ? '名人モードの 本文は ブロックに できません'
-          : mode === 'blocks' && (!session.syntaxAst || invalidCodePending)
-            ? '書き方の まちがいを コードで 直すと、ブロックで 見られます'
-            : '';
-        if (mode === 'blocks') {
-          // Touch screens never show a title, so the reason is also visible text.
-          let note = b.parentElement.querySelector(':scope > .mode-blocked-note');
-          if (b.title) {
-            if (!note) {
-              note = document.createElement('span');
-              note.className = 'mode-blocked-note';
-              b.parentElement.append(note);
-            }
-            note.textContent = !draft && bindingContext(binding).meijin ? '名人モードの 本文は コードで なおします' : 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
-          } else note?.remove();
+        b.disabled = ['PREPARING', 'IMPORTING'].includes(appState);
+        // A code error keeps ブロック where it is, in a pale colour; a press says why under the toggle (modeBlockedNote)
+        // instead of switching. It is not hidden, so the toggle does not flicker while the child types.
+        const refused = mode === 'blocks' && (!session.syntaxAst || invalidCodePending);
+        if (refused) {
+          b.setAttribute('aria-disabled', 'true');
+          b.setAttribute('aria-describedby', modeBlockedNote(binding).id);
+        } else {
+          b.removeAttribute('aria-disabled');
+          b.removeAttribute('aria-describedby');
+          modeBlockedNote(binding).hidden = true;
         }
+        b.title = refused ? '書き方の まちがいを コードで 直すと、ブロックで 見られます' : '';
       }
       if (blocks && (draft || !sourceOverviewOpen)) {
         binding.view.render();
@@ -33525,13 +33625,42 @@ function createAkariExtensionHost(options) {
         try { localStorage.setItem(STORAGE_KEYS.editorMode, mode); } catch (_) {}
       }
     }
+    // The note under a コード／ブロック toggle that says why ブロック does not open: it shows on a press of the pale ブロック
+    // and goes away at the next press or key anywhere.
+    function modeBlockedNote(binding) {
+      const id = binding.kind === 'draft' ? 'callableModeBlockedNote' : 'modeBlockedNote';
+      let note = document.getElementById(id);
+      if (!note) {
+        note = document.createElement('p');
+        note.id = id;
+        note.className = 'mode-blocked-note';
+        note.setAttribute('role', 'status');
+        note.hidden = true;
+        note.textContent = 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
+        if (binding.kind === 'draft') $('#callableModecode').parentElement.after(note);
+        else $('.menutool').append(note);
+      }
+      return note;
+    }
+    function showModeBlockedNote(binding) {
+      const note = modeBlockedNote(binding);
+      note.hidden = false;
+      const hide = () => {
+        note.hidden = true;
+        document.removeEventListener('pointerdown', hide, true);
+        document.removeEventListener('keydown', hide, true);
+      };
+      document.addEventListener('pointerdown', hide, true);
+      document.addEventListener('keydown', hide, true);
+    }
     function switchEditorMode(binding, mode) {
-      if (binding === mainEditor && mode === 'blocks' && bindingContext(binding).meijin) {
-        setStatus('名人モードの 本文は ブロックに できません。コードで なおしてね。');
+      // A work with a 名人 text is code only, for every body (the toggle is not shown there).
+      if (mode === 'blocks' && workIsMeijin()) {
+        setStatus('名人の 本文が ある 作品は、コードで 書くよ。');
         return false;
       }
       if(binding===mainEditor&&mode==='code'&&document.body.dataset.uiLevel==='entry'){
-        setStatus('コードを 見るときは、見せ方を「かんたん」か「くわしく」に してね。');
+        setStatus('コードを 見るときは、「かんたん」か「くわしく」を えらんでね。');
         return false;
       }
       const draftSession = binding.session;
@@ -33918,7 +34047,11 @@ function createAkariExtensionHost(options) {
         'diagnoseBtn',
       ])
         tools.append($('#' + id));
-      toolbar.insertBefore($('.ui-level-label'), $('#tutorialStart'));
+      // The right end of the toolbar, left to right: コード／ブロック, the level, the work name (the level's choices depend
+      // on the view). ヒント sits right after お手本を開く and opens over the page, so the bar keeps one row.
+      toolbar.insertBefore($('.ui-level-label'), $('#projectName'));
+      $('#sampleBtn').after($('#basicActionGuide'));
+      installToolbarMenus(toolbar);
       toolbox.append(tools);
       // Native reverse Tab may leave a partly visible button clipped in this ribbon.
       tools.addEventListener('focusin', (event) => {
@@ -33931,17 +34064,9 @@ function createAkariExtensionHost(options) {
       const componentControls = document.createElement('div');
       componentControls.id = 'componentControls';
       componentControls.className = 'component-controls';
-      componentControls.tabIndex = 0;
+      // The tools under the part list; the column on the right scrolls as one (the region is no scroller of its own).
       componentControls.setAttribute('role', 'region');
       componentControls.setAttribute('aria-label', '部品と作品の道具');
-      componentControls.addEventListener('keydown', (event) => {
-        if (event.target !== componentControls || event.altKey || event.ctrlKey || event.metaKey)
-          return;
-        if (event.key === 'Home' || event.key === 'End') {
-          event.preventDefault();
-          componentControls.scrollTop = event.key === 'Home' ? 0 : componentControls.scrollHeight;
-        }
-      });
       side.children[0].append(componentControls);
       const componentActions = document.createElement('div');
       componentActions.id = 'componentActions';
@@ -34044,6 +34169,38 @@ function createAkariExtensionHost(options) {
         true,
       );
     }
+    // The toolbar's menus (ヒント, はじめて's 作品) open over the page: a second press of the summary, a press anywhere
+    // else or Escape closes them (Escape gives the focus back to the summary). The toolbar stays at the top of the page
+    // when it scrolls; scrolling to a place keeps it clear of the toolbar, whose height can change as it wraps.
+    function installToolbarMenus(toolbar) {
+      document.addEventListener('pointerdown', (event) => {
+        for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]'))
+          if (!menu.contains(event.target)) menu.open = false;
+      }, true);
+      document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || event.isComposing) return;
+        for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]')) {
+          menu.open = false;
+          if (menu.contains(document.activeElement) || document.activeElement === document.body) menu.querySelector('summary').focus({ preventScroll: true });
+        }
+      });
+      // An open menu stays inside the window at narrow widths: it shifts left (or right) by what would stick out.
+      for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu'))
+        menu.addEventListener('toggle', () => {
+          const panel = menu.querySelector(':scope > :not(summary)');
+          menu.style.setProperty('--menu-shift', '0px');
+          if (!menu.open || !panel) return;
+          const r = panel.getBoundingClientRect(), room = document.documentElement.clientWidth - 16;
+          menu.style.setProperty('--menu-shift', (r.right > room ? Math.max(16 - r.left, room - r.right) : r.left < 16 ? 16 - r.left : 0) + 'px');
+        });
+      // A choice in はじめて's 作品 menu closes it.
+      toolbar.addEventListener('click', (event) => {
+        if (event.target.closest('.entry-project-actions button')) $('#entryProjectMenu').open = false;
+      });
+      const syncHeight = () => document.documentElement.style.setProperty('--toolbar-h', toolbar.offsetHeight + 'px');
+      if (typeof ResizeObserver === 'function') new ResizeObserver(syncHeight).observe(toolbar);
+      syncHeight();
+    }
     function syncEditorShell(mode) {
       if (!document.body.dataset.editorMode || shellPointer) return;
       const block = mode === 'blocks',
@@ -34066,17 +34223,14 @@ function createAkariExtensionHost(options) {
         }
         $('#hintsDisclosure').open = false;
       }
-      $('.codewin > .win-title').textContent = block ? 'ブロック' : 'コード';
       $('#designerHeading').textContent = block ? '画面' : '画面づくり';
       $('.objects-window > .win-title').textContent = block ? 'キャラクター・部品' : '作品';
-      const actions = $('.prop-actions'),
-        copyHelp = actions?.nextElementSibling;
-      if (actions)
-        (block ? $('#componentActions') : el.props).prepend(
-          actions, ...(copyHelp?.classList.contains('child-copy-help') ? [copyHelp] : []),
-        );
+      const actions = $('.prop-actions');
+      if (actions) (block ? $('#componentActions') : el.props).prepend(actions);
       $('#formatBtn').hidden = block || currentIsMeijin();
       syncPropertyScrollPadding();
+      // The level list follows the view (blocks or code); a view in code at はじめて goes on at かんたん.
+      if (applyUiLevel(mode)) renderHints();
       renderEntrySurface();
     }
 
@@ -34253,12 +34407,24 @@ function createAkariExtensionHost(options) {
     function openRuntimeInspector() {
       if (!['RUNNING', 'PAUSED'].includes(appState) || inspectorNodes.length) return;
       stageView.clearInput();
-      for (const [node, target] of [[$('.codewin'), $('#runtimeInspectorBody')], [$('.monitor-window'), $('#runtimeInspectorBody')], [$('#editorModecode').parentElement, $('#runtimeInspectorModes')], [$('#uiLevel').closest('label'), $('#runtimeInspectorModes')]]) {
+      // The dialog shows the running bodies with the コード／ブロック toggle and the strip of the running sentence; the level is
+      // chosen on the edit screen only.
+      for (const [node, target] of [[$('.codewin'), $('#runtimeInspectorBody')], [$('.monitor-window'), $('#runtimeInspectorBody')], [$('#editorModecode').parentElement, $('#runtimeInspectorModes')], [$('#runStrip'), $('#runtimeInspectorStrip')]]) {
         const marker = document.createComment('runtime inspector return point');
         node.before(marker); inspectorNodes.push({node, marker}); target.append(node);
       }
       $('#runtimeInspector').showModal();
       renderEditorBinding(mainEditor);
+      // The line numbers were laid out while the body was not shown (the run screen); lay them out in the dialog, and
+      // bring the running sentence into view.
+      updateGutter();
+      if (activeLoc?.key === bindingOwner(mainEditor)) {
+        if (mainEditor.session?.mode === 'blocks') $('#blockEditor .blockui-current')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        else {
+          el.editor.scrollTop = Math.max(0, (wrappedCodeLines().lines[activeLoc.line - 1]?.top || 0) - Math.floor(el.editor.clientHeight / 3));
+          el.gutter.scrollTop = el.editor.scrollTop;
+        }
+      }
       $('#runtimeInspectorClose').focus();
     }
     $('#runtimeInspectBtn').onclick = openRuntimeInspector;
@@ -34329,6 +34495,7 @@ function createAkariExtensionHost(options) {
         if (n) n.disabled = locked;
       }
       $('#saveBtn').disabled = appState === 'IMPORTING' || appState === 'PREPARING';
+      $('#uiLevel').disabled = appState === 'IMPORTING';
       // Do not change history ownership while an asynchronous import is still settling.
       // Runtime inspection keeps its existing target/event navigation.
       el.obj.disabled = el.event.disabled = appState === 'IMPORTING' || appState === 'PREPARING';
@@ -34339,7 +34506,10 @@ function createAkariExtensionHost(options) {
         b.draggable = !locked;
       });
       $$('.hint-button').forEach((b) => (b.disabled = locked || b.dataset.unavailable === 'true'));
-      document.body.classList.toggle('runtime', appState === 'RUNNING' || appState === 'PAUSED');
+      // The run screen: from ▶ 動かす (getting ready) until ■ 止める, also paused, stopped by an error and finished. The edit
+      // screen (DESIGN, IMPORTING) shows ▶ 動かす only, the run screen ■ 止める only, in the same place.
+      document.body.classList.toggle('runtime', ['PREPARING', 'RUNNING', 'PAUSED'].includes(appState));
+      document.body.classList.toggle('run-finished', runFinished);
       if (locked && appState !== 'IMPORTING') closeEditingModals();
       if (mainEditor.view) renderEditorBinding(mainEditor);
       updateDirty();
@@ -34647,7 +34817,7 @@ function createAkariExtensionHost(options) {
       $('#scriptAdd').textContent = currentIsMeijin() ? '名人の本文を ふやす' : '同じできごとの本文を ふやす';
       $('#meijinDelete').hidden = !currentIsMeijin();
       $('#meijinDelete').disabled = modelLocked();
-      $('#sourceHeadingBtn').hidden ||= currentIsMeijin();
+      $('#sourceHeadingBtn').hidden ||= workIsMeijin();
       renderEntrySurface();
     }
     function hideSourceOverview() {
@@ -34695,8 +34865,8 @@ function createAkariExtensionHost(options) {
       };
       const records = sourceRegistry(project), byKey = new Map(records.map(r => [r.key, r]));
       const owned = records.filter(r => r.ownerId === selectedId);
-      root.setAttribute('aria-label', targetById(selectedId).name + ' のすべてのコード');
-      if (!owned.length) root.append(make('p', 'この部品には まだ コードが ありません。できごとを えらんで 本文を 作れます。'));
+      root.setAttribute('aria-label', targetById(selectedId).name + ' のすべての本文');
+      if (!owned.length) root.append(make('p', 'この部品には まだ 本文が ありません。できごとを えらんで 本文を 作れます。'));
       const queue = [...owned.filter(r => r.source.trim()), ...owned.filter(r => !r.source.trim())];
       const included = new Set(queue.map(r => r.key));
       for (let i = 0; i < queue.length; i++) {
@@ -35213,7 +35383,7 @@ function createAkariExtensionHost(options) {
       duplicate.type = 'button';
       duplicate.className = 'prop-duplicate';
       duplicate.textContent = '見た目のコピー';
-      duplicate.title = '見た目と せっていを コピーします（コードは コピーしません）';
+      duplicate.title = '見た目と せっていを コピーします（本文は コピーしません）';
       duplicate.disabled = modelLocked() || project.components.length >= LIMITS.components;
       duplicate.onclick = duplicateSelectedComponent;
       const del = document.createElement('button');
@@ -35222,12 +35392,10 @@ function createAkariExtensionHost(options) {
       del.textContent = '🗑 この部品を けす';
       del.disabled = modelLocked();
       del.onclick = deleteSelectedComponent;
-      const copyHelp = document.createElement('small');
-      copyHelp.className = 'child-copy-help';
-      copyHelp.textContent = '見た目と せっていを コピーします。コードは コピーしません。';
-      duplicate.setAttribute('aria-description', copyHelp.textContent);
+      // What the copy does is said by its title, its description and the ヒント (見た目のコピー); no line of its own.
+      duplicate.setAttribute('aria-description', '見た目と せっていを コピーします。本文は コピーしません。');
       actions.append(title, duplicate, del);
-      (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions, copyHelp);
+      (document.body.dataset.editorMode === 'blocks' ? $('#componentActions') : el.props).append(actions);
       el.props.append(
         propSection(
           'きほん',
@@ -36601,8 +36769,25 @@ function createAkariExtensionHost(options) {
           (def ? `action:${def.id}` : task.scriptId ? `script:${task.scriptId}` : `script:${task.targetId}:${task.eventType}`),
         line: error?.line || node?.sourceSpan?.startLine || activeLoc?.line || 1,
         column: error?.column || node?.sourceSpan?.startColumn || 1,
+        // The sentence the run strip shows: a statement ends on its line; a sentence with a body shows its first line.
+        endLine: error ? null : node?.sourceSpan?.endLine ?? null,
+        endColumn: error ? null : node?.sourceSpan?.endColumn ?? null,
         error: error || null,
       };
+    }
+    // The strip under the stage on the run screen: whose body runs, after which event and on which line, and the sentence
+    // itself in a box. At はじめて only the part and the sentence (its blocks have no line numbers, and it has two events).
+    function paintRunStrip(text = '', sentence = '') {
+      $('#execLocation').textContent = 'いま 動いている 文：' + (text || '―');
+      $('#execSentence').textContent = sentence;
+      $('#execSentence').hidden = !sentence;
+    }
+    function runningSentence(source, loc) {
+      const line = String(source ?? '').split(/\r\n?|\n/)[loc.line - 1];
+      if (line == null) return '';
+      const chars = [...line], start = Math.max(0, (loc.column || 1) - 1),
+        end = loc.endLine === loc.line && loc.endColumn >= loc.column ? loc.endColumn : chars.length;
+      return chars.slice(start, end).join('').trim().replace(/[。、]$/, '');
     }
     function paintExecutionLocation() {
       if (!activeLoc) return;
@@ -36618,10 +36803,12 @@ function createAkariExtensionHost(options) {
             : parts[0] === 'function'
               ? project.functions.find((x) => x.id === parts[1])
               : null;
-      const label = def
-        ? `${parts[0] === 'action' ? 'てじゅん' : '答えを もとめる'} ${def.name}`
-        : `${targetById(loc.targetId)?.name || loc.targetId} / ${runtimeEventText(loc.event, scriptKey)}`;
-      $('#execLocation').textContent = `いま 動いている 文：${label} / ${loc.line}行`;
+      const owner = def
+          ? `${parts[0] === 'action' ? 'てじゅん' : '答えを もとめる'} ${def.name}`
+          : targetById(loc.targetId)?.name || loc.targetId,
+        label = document.body.dataset.uiLevel === 'entry' ? owner
+          : def ? `${owner} / ${loc.line}行目` : `${owner} / ${runtimeEventText(loc.event, scriptKey)} / ${loc.line}行目`;
+      paintRunStrip(label, runningSentence(def?.source ?? script?.source, loc));
       if (scheduler?.paused) {
         hideSourceOverview();
         // Runtime document units have their own IDs; editor selection belongs
@@ -36675,6 +36862,21 @@ function createAkariExtensionHost(options) {
       }
       if (flags & 2) renderMonitor();
       if (flags & 4) paintExecutionLocation();
+      // A flow ended or the run state changed (flag 2): the run may have ended by itself. A pause (stepping, or a stop by
+      // an error) is not an end; the run ends there when it goes on and nothing is left.
+      if (flags & 2 && scheduler?.running && !scheduler.paused && scheduler.ended()) finishRun();
+    }
+    // The run has ended (every body done, or 作品を全部止める). The run screen stays as it is, with its last picture, and
+    // shows only ■ 止める; the status says how to run again.
+    function finishRun() {
+      if (runFinished || !runtime || !['RUNNING', 'PAUSED'].includes(appState)) return;
+      runFinished = true;
+      appState = 'RUNNING';
+      if (inspectorNodes.length) closeRuntimeInspector();
+      activeLoc = null;
+      paintRunStrip();
+      setStatus('おわったよ。もう一度 動かすときは「■ 止める」を おしてから「▶ 動かす」を おしてね');
+      updateRunState();
     }
 
     function refreshEditor() {
@@ -36785,7 +36987,7 @@ function createAkariExtensionHost(options) {
     function startMeijin() {
       if (modelLocked() || currentIsMeijin()) return;
       // A body with 名人 forms in it does not read as an ordinary body, so it stays a draft in the code editor (S317
-      // tells the child to choose 名人 in 見せ方): that text is taken as the body.
+      // tells the child to choose 名人 in code): that text is taken as the body.
       const flushed = flushActiveEditor(), draft = !flushed && mainEditor.session?.mode === 'code' && !$('#procModal').classList.contains('show') ? mainEditor.textarea?.value?.replace(/\r\n?/g, '\n') : null;
       if (!flushed && draft == null) return;
       const script = selectCurrentScript(), owner = targetById(selectedId);
@@ -36865,10 +37067,12 @@ function createAkariExtensionHost(options) {
       const tutorialRunEpoch=tutorial?.epoch,bridgeGeneration=generationToken;
       return {
         render: () => requestRuntimePaint(3),
+        // 作品を全部止める: every body, rule and sound has stopped and no input starts a body; the run screen keeps the
+        // last picture until ■ 止める.
         allStopped: () => {
           const token = generationToken;
           setTimeout(() => {
-            if (token === generationToken) stopRun();
+            if (token === generationToken) finishRun();
           }, 0);
         },
         renderMonitor: () => requestRuntimePaint(2),
@@ -36965,8 +37169,11 @@ function createAkariExtensionHost(options) {
       try {
         if (req.needsAudio) runtimeCache.ensureAudioContext();
         appState = 'PREPARING';
+        runFinished = false;
         setStatus('絵や音を じゅんびしています');
         updateRunState();
+        // The run screen starts now; the focus goes to the stage, not to the page (▶ 動かす is not shown there).
+        el.form.focus({ preventScroll: true });
         (async () => {
           try {
             await runtimeCache.prepare(project, req, token);
@@ -37018,11 +37225,12 @@ function createAkariExtensionHost(options) {
       disposeRuntime();
       el.form.querySelectorAll('.sprite-bubble').forEach((n) => n.remove());
       appState = 'DESIGN';
+      runFinished = false;
       pen.clearRect(0, 0, el.canvas.width, el.canvas.height);
       confirmTutorialOperation('stop');
       renderAll();
       loadEditor();
-      $('#execLocation').textContent = 'いま 動いている 文：―';
+      paintRunStrip();
       setStatus('止めました');
       if(tutorial){tutorialRefresh();focusTutorialTarget();return;}
       if (sourceOverviewOpen) $('#sourceEditBtn').focus({ preventScroll: true });
@@ -37034,18 +37242,20 @@ function createAkariExtensionHost(options) {
       else el.editor.focus({ preventScroll: true });
     }
     function updateRunState() {
-      const running = !!scheduler?.running;
+      const running = !!scheduler?.running && !runFinished;
       if (running) appState = scheduler.paused ? 'PAUSED' : 'RUNNING';
       el.runState.textContent =
         appState === 'PREPARING'
           ? 'じゅんび中'
           : appState === 'IMPORTING'
             ? '読みこみ中'
-            : running
-              ? scheduler.paused
-                ? 'いったん 止まっているよ'
-                : '動いているよ'
-              : '止まっています';
+            : runFinished
+              ? 'おわったよ'
+              : running
+                ? scheduler.paused
+                  ? 'いったん 止まっているよ'
+                  : '動いているよ'
+                : '止まっています';
       el.runState.className = 'runstate ' + (running ? 'run-on' : 'run-off');
       $('#pauseBtn').disabled = !running || scheduler.paused;
       $('#continueBtn').disabled = !running || !scheduler.paused;
@@ -37054,6 +37264,7 @@ function createAkariExtensionHost(options) {
       $('#runBtn').disabled = appState !== 'DESIGN';
       $('#stopBtn').disabled = appState === 'DESIGN' || appState === 'IMPORTING';
       updateEditingLock();
+      if (running && !scheduler.paused) requestRuntimePaint(2);
     }
     function showBubble(rid, text, value) {
       stageView.showBubble(rid, text, value);
@@ -37329,7 +37540,8 @@ function createAkariExtensionHost(options) {
         if(normalizeEntryUiLevel(stored)==='entry')uiLevel='entry';
       }
       baseUiLevel=uiLevel;
-      for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,mode);
+      // A work with a 名人 text opens in code, whatever view the file or the autosave kept; nothing is said about it.
+      for(const [kind,mode]of Object.entries(state.editorModes))editorModes.set(kind,workIsMeijin()?'code':mode);
       editorSessions.clear();invalidateEditors();hideSourceOverview();applyUiLevel();renderAll();loadEditor();
       if(state.callableDraft)restoreCallableDraft(state.callableDraft);
       for(const saved of state.pendingEditors){
@@ -37347,8 +37559,9 @@ function createAkariExtensionHost(options) {
           const source=formatScript(ast,{allowHoles:true});Object.assign(session,{syntaxAst:ast,blockView:encoded.tree,nodeMap:encoded.nodeMap,nodeIds:encoded.nodeIds,nextBlockId:encoded.nodeMap.size+1,
             blockDraft:{baseline,ast,tree:encoded.tree,source,codeSource:saved.mode==='code'?saved.source:undefined,pending:session.pendingEdit}});
         }
-        editorModes.set(binding.kind,saved.mode);session.mode=saved.mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
-        if(saved.mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(session.pendingEdit))throw new AkariError('F503','書きかけの 入力を もとに もどせません');
+        const mode=workIsMeijin()?'code':saved.mode;
+        editorModes.set(binding.kind,mode);session.mode=mode;binding.textarea.value=saved.source;renderEditorBinding(binding);
+        if(mode==='blocks'&&saved.pending.field&&!binding.view.restorePending(session.pendingEdit))throw new AkariError('F503','書きかけの 入力を もとに もどせません');
         showEditorFailure(binding,saved.pending.reason||'書きかけの 本文を もどしました',{preservePending:true});
         if(binding===mainEditor&&saved.pending.kind==='source-import'){const plan=sourceImportPlan(binding,saved.source);if(plan)showSourceImport(binding,saved.source,plan);}
       }
@@ -38935,8 +39148,13 @@ function createAkariExtensionHost(options) {
       }
     };
 
-    $('#runBtn').onclick = startRun;
-    $('#stopBtn').onclick = stopRun;
+    $('#runBtn').addEventListener('click', (event) => { runPressedAt = event.timeStamp; startRun(); });
+    // ■ 止める takes ▶ 動かす's place: the second press of a double press within 0.5 s of ▶ (a repeated click, or a tap or
+    // a pen press) does nothing; a press of its own (one click, a key) stops at once.
+    $('#stopBtn').addEventListener('click', (event) => {
+      if (event.timeStamp - runPressedAt < 500 && (event.detail > 1 || ['touch', 'pen'].includes(event.pointerType))) return;
+      stopRun();
+    });
     $('#pauseBtn').onclick = () => scheduler?.pause();
     $('#continueBtn').onclick = () => scheduler?.resume();
     $('#stepBtn').onclick = () => scheduler?.stepOne();
@@ -39202,23 +39420,20 @@ function createAkariExtensionHost(options) {
       if (f) await importSoundFile(f);
     };
     $('#uiLevel').onchange = () => {
+      // The level is chosen on the edit screen only (the picker is not shown while the work runs). The list holds only the
+      // levels of the view, so choosing one never changes the view.
+      if (modelLocked() || !uiLevelChoices().includes($('#uiLevel').value)) { applyUiLevel(); return; }
       // 名人: the selected body becomes a 名人 text after the confirm (an empty one when there is no body to move).
       if($('#uiLevel').value==='meijin'){
         $('#uiLevel').value=baseUiLevel;
-        if (tutorial || composingEditors.size || headerPending || activeDragCleanup) { setStatus('入力を 決めるか やめてから、見せ方を かえてね。'); return; }
-        if(!workIsMeijin()&&modelLocked())setStatus('動いている あいだは、名人モードに できません。止めてから えらんでね。');
-        else if(!workIsMeijin())startMeijin();
+        if (tutorial || composingEditors.size || headerPending || activeDragCleanup) { setStatus('入力を 決めるか やめてから、レベルを かえてね。'); return; }
+        if(!workIsMeijin())startMeijin();
         applyUiLevel();renderHints();renderEntrySurface();renderEditorBinding(mainEditor);mainEditor.view.render({force:true});
-        return;
-      }
-      if($('#uiLevel').value==='entry'&&(document.body.dataset.editorMode||editorModes.get('script'))==='code'){
-        applyUiLevel();
-        setStatus('「はじめて」はブロックで使うよ。先に「ブロック」をえらんでね。');
         return;
       }
       if (tutorial || composingEditors.size || [mainEditor,draftEditor].some(binding=>binding.session?.pendingEdit&&binding.session.pendingEdit.kind!=='block-draft') || headerPending || activeDragCleanup) {
         applyUiLevel();
-        setStatus('入力を 決めるか やめてから、見せ方を かえてね。');
+        setStatus('入力を 決めるか やめてから、レベルを かえてね。');
         return;
       }
       baseUiLevel = $('#uiLevel').value;
@@ -39389,7 +39604,10 @@ function createAkariExtensionHost(options) {
         },
       });
       for (const mode of ['code', 'blocks'])
-        $(`#${p}Mode${mode}`).onclick = () => switchEditorMode(binding, mode);
+        $(`#${p}Mode${mode}`).onclick = (event) => {
+          if (event.currentTarget.getAttribute('aria-disabled') === 'true') showModeBlockedNote(binding);
+          else switchEditorMode(binding, mode);
+        };
       $(`#${p}Cancel`).dataset.blockuiAction = 'cancel';
       $(`#${p}Cancel`).onclick = () => cancelEditorPending(binding);
     }

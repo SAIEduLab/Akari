@@ -9,7 +9,7 @@
       },
       "specification": {
         "path": "LANGUAGE.md",
-        "text": "部品一覧と、その下の道具欄を別々に縦スクロール"
+        "text": "「キャラクター・部品」の中を別にスクロールさせず、列が画面に入りきらないときは、右の列全体をスクロールします"
       },
       "auditContract": {
         "path": "AUDIT.md",

@@ -36,16 +36,16 @@
     <button id="procBtn" aria-label="自分で作ったブロック">自分で作ったブロック</button>
     <button id="dataBtn" aria-label="へんすう・リスト" aria-describedby="dataActionHelp"><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</button>
     <button id="diagnoseBtn">作品チェック</button>
-    <details id="entryProjectMenu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
+    <details id="entryProjectMenu" class="toolbar-menu"><summary>作品</summary><div class="entry-project-actions"><button id="entryNew" type="button">新しく作る</button><button id="entryOpen" type="button">開く</button><button id="entryExport" type="button">うごく作品を ファイルにする</button></div></details>
     <button id="tutorialStart" type="button">いっしょに作る</button>
-    <label class="ui-level-label">見せ方 <select id="uiLevel"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option><option value="meijin">名人</option></select></label>
-    <details id="basicActionGuide" class="child-help"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
+    <label class="ui-level-label"><select id="uiLevel" aria-label="レベル"><option value="entry" selected>はじめて</option><option value="basic">かんたん</option><option value="advanced">くわしく</option></select></label>
+    <details id="basicActionGuide" class="child-help toolbar-menu"><summary>ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの中で 指を上へ 動かすと 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
       <p id="saveActionHelp"><strong><ruby class="child-word">保存<rt>ほぞん</rt></ruby></strong>：作った作品を ファイルにします。あとで つづきを 作るときは「開く」で その ファイルを えらびます。</p>
       <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見る ファイルを 作ります。</p>
       <p id="assetActionHelp"><strong>絵や音をまとめる</strong>：使う 絵や音を 入れたり、名前を たしかめたりします。</p>
       <p id="dataActionHelp"><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</strong>：点数や 名前を 1つ おぼえる はこと、持ち物のように じゅんばんに ならべる リストを 作ります。</p>
       <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：えらんだ ものを 動かす、やることの まとまりです。「なおす動き」で えらびます。「いつ動く？」で 動く きっかけを かえます。</p>
-      <p><strong>見た目のコピー</strong>：見た目と せっていを もう1つ 作ります。コードは コピーしません。</p>
+      <p><strong>見た目のコピー</strong>：見た目と せっていを もう1つ 作ります。本文は コピーしません。</p>
       <p><strong>もとにもどす・やり直す</strong>：決めた ことを 1つ もとにもどす・もどした ことを もう一度 やる ボタンです。「入力を やめる」は、いま かえかけている 入力を やめます。</p>
     </div></details>
     <input id="projectName" value="はじめてのあかり" aria-label="作品名">
@@ -260,6 +260,7 @@
           </div>
         </div>
       </div>
+      <div class="run-strip" id="runStrip"><span class="exec-location" id="execLocation">いま 動いている 文：―</span><span class="exec-sentence" id="execSentence" hidden></span></div>
     </section>
 
     <div class="side">
@@ -277,8 +278,8 @@
       </section>
     </div>
 
-    <section class="window active codewin">
-      <div class="win-title">コード</div>
+    <section class="window active codewin" aria-labelledby="codeHeading">
+      <div class="win-title" id="codeHeading">本文</div>
       <div class="code-head">
         <label>動かすもの <select id="objectSelect"></select></label>
         <label>なおす動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="なおす動きを えらびます。きっかけは「いつ動く？」で かえます"></select></label>
@@ -288,15 +289,14 @@
       <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">「動かす」を おしたとき</button><button id="entryClickEvent" type="button">キャラが おされたとき</button></div>
       <p id="entryOutside" role="status" hidden>この 作品には、「はじめて」では 見えない 動きも あるよ。けさずに のこしてあるよ。見るときは、ブロックで「かんたん」を えらんでね。</p>
       <section id="tutorialGuide" aria-label="いっしょに作る" hidden><p id="tutorialText" aria-live="polite"></p><div id="tutorialChoices" hidden></div><button id="tutorialFinish" type="button" hidden>ほぞんしておわる</button><button id="tutorialExit" type="button">いっしょに作るのをやめる</button><button id="tutorialVerifySave" type="button" hidden>ほぞんした作品をたしかめる</button><input id="tutorialSavedFile" type="file" accept=".akari.md,.md" hidden></section>
-      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべてのコード</button><button id="sourceEditBtn" type="button" hidden>本文を なおす ところへ もどる</button><button id="sourceStageBtn" type="button" hidden>画面のコード</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
-      <div id="sourceOverview" aria-label="えらんだものの すべてのコード" hidden></div>
+      <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべての本文</button><button id="sourceEditBtn" type="button" hidden>本文を なおす ところへ もどる</button><button id="sourceStageBtn" type="button" hidden>画面の本文</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
+      <div id="sourceOverview" aria-label="えらんだものの すべての本文" hidden></div>
       <div class="debugbar">
         <button id="pauseBtn">⏸ いったん止める</button>
         <button id="continueBtn">▶ つづける</button>
         <button id="stepBtn">1つずつ 動かす</button>
         <button id="runtimeInspectBtn" type="button" hidden aria-controls="runtimeInspector">本文を見て たしかめる</button>
         <button id="formatBtn">コードを整える</button>
-        <span class="exec-location" id="execLocation">いま 動いている 文：―</span>
       </div>
       <div class="editor-modes" role="group" aria-label="本文の 見せ方"><button id="editorModecode" type="button" aria-pressed="true">コード</button><button id="editorModeblocks" type="button" aria-pressed="false">ブロック</button><button id="editorCancel" type="button">入力を やめる</button></div><div id="editorPending" class="editor-pending" role="status" hidden></div><section id="sourceImport" class="editor-pending" aria-label="文章の 取りこみ" hidden></section><div id="blockEditor" hidden></div>
       <div class="editor-shell">
@@ -465,7 +465,8 @@
 </div>
 
 <dialog id="runtimeInspector" aria-labelledby="runtimeInspectorTitle">
-  <div class="runtime-inspector-head"><strong id="runtimeInspectorTitle">本文と動きのようす</strong><div id="runtimeInspectorModes"></div><button id="runtimeInspectorStop" type="button">止める</button><button id="runtimeInspectorClose" type="button">作品画面に もどる</button></div>
+  <div class="runtime-inspector-head"><strong id="runtimeInspectorTitle">本文と動きのようす</strong><div id="runtimeInspectorModes"></div><button id="runtimeInspectorStop" type="button">■ 止める</button><button id="runtimeInspectorClose" type="button">作品画面に もどる</button></div>
+  <div id="runtimeInspectorStrip"></div>
   <div id="runtimeInspectorBody"></div>
 </dialog>
 
@@ -519,9 +520,9 @@
   <p id="exportChoiceDescription">ファイルにした うごく作品を 開いたときの、はじめ方を えらびます。</p>
   <div class="export-choices">
    <button id="exportControls" class="export-choice" type="button" aria-labelledby="exportControlsTitle" aria-describedby="exportControlsDescription">
-    <span class="export-choice-title" id="exportControlsTitle">▶ はじめるボタンをつける</span>
-    <span id="exportControlsDescription">ボタンをおすと、作品がはじまります。動きをいったん止めたり、終わらせたりできます。</span>
-    <span class="export-example" aria-hidden="true"><span class="export-example-label">見本</span><span class="export-example-player"><span class="export-example-title">星の作品</span><span class="export-example-controls"><span>▶ はじめる</span><span>いったん止める</span><span>止める</span></span><span class="export-example-scene"><span class="export-example-star">★</span><span class="export-example-work-button">作品のボタン</span></span></span></span>
+    <span class="export-choice-title" id="exportControlsTitle">▶ 動かすボタンをつける</span>
+    <span id="exportControlsDescription">「▶ 動かす」をおすと、作品が動きます。動いているあいだは、「■ 止める」と「⏸ いったん止める」が出ます。</span>
+    <span class="export-example" aria-hidden="true"><span class="export-example-label">見本</span><span class="export-example-player"><span class="export-example-title">星の作品</span><span class="export-example-controls"><span>▶ 動かす</span></span><span class="export-example-scene"><span class="export-example-star">★</span><span class="export-example-work-button">作品のボタン</span></span></span></span>
    </button>
    <button id="exportArtwork" class="export-choice" type="button" aria-labelledby="exportArtworkTitle" aria-describedby="exportArtworkDescription exportArtworkNote">
     <span class="export-choice-title" id="exportArtworkTitle">作品をすぐにはじめる</span>

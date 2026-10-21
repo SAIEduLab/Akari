@@ -35,11 +35,11 @@ fs.writeFileSync(workFiles.parts,work());fs.writeFileSync(workFiles.meijin,work(
 
 const browser=await chromium.launch({executablePath:browserPath,headless:true});
 const pageErrors=[],network=[];
-async function open({level='basic',file='parts'}={}){
+async function open({level='basic',view='blocks',file='parts'}={}){
   const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true});
   await context.route(/^https?:\/\//,r=>{network.push(r.request().url());return r.abort();});
   const page=await context.newPage();page.setDefaultTimeout(8000);page.on('pageerror',e=>pageErrors.push(e.message));
-  await page.addInitScript(l=>{try{localStorage.setItem('akari.uiLevel.v1',l);}catch(_){}},level);
+  await page.addInitScript(([l,v])=>{try{localStorage.setItem('akari.uiLevel.v1',l);localStorage.setItem('akari.editorMode.v1',v);}catch(_){}},[level,view]);
   await page.goto(pathToFileURL(product).href);await page.waitForFunction(()=>!!globalThis.Akari?.app);
   if(file){await page.setInputFiles('#fileInput',workFiles[file]);await page.waitForFunction(()=>Akari.app.project.components.some(c=>c.name==='ねこ'));}
   // A work with a 名人 text keeps 名人 chosen; the level stays the one chosen before it.
@@ -61,8 +61,10 @@ const S=page=>({
     if(!opened){const text=await page.locator('#editorPending').isVisible()?await page.locator('#editorPending').textContent():'';return {issues:text?[text]:[],notes:[],where:'editor'};}
     const r=await page.evaluate(()=>({issues:[...document.querySelectorAll('#diagnosisBody .diagnosis-issue')].map(x=>x.textContent),notes:[...document.querySelectorAll('#diagnosisBody .diagnosis-note')].map(x=>x.textContent)}));
     await page.click('#diagnosisClose');await page.locator('#diagnosisModal').waitFor({state:'hidden'});return {...r,where:'list'};},
-  // 名人 is chosen in 見せ方; the confirm comes before the body becomes a 名人 text.
-  startMeijin:async accept=>{let kind=null;const take=d=>{kind=d.type();accept?d.accept():d.dismiss();};page.once('dialog',take);await page.selectOption('#uiLevel','meijin');await page.waitForTimeout(300);page.off('dialog',take);return kind;},
+  // 名人 is chosen in code (コードで「名人」を選ぶ); the confirm comes before the body becomes a 名人 text.
+  startMeijin:async accept=>{let kind=null;const take=d=>{kind=d.type();accept?d.accept():d.dismiss();};
+    if(await page.locator('#editorModecode').isVisible()&&await page.locator('#editorModecode').getAttribute('aria-pressed')!=='true'){await page.click('#editorModecode');await page.waitForTimeout(150);}
+    page.once('dialog',take);await page.selectOption('#uiLevel','meijin');await page.waitForTimeout(300);page.off('dialog',take);return kind;},
   level:()=>page.evaluate(()=>({chosen:document.querySelector('#uiLevel').value,shown:document.body.dataset.uiLevel,
     options:[...document.querySelectorAll('#uiLevel option')].map(o=>o.textContent.trim()),others:[...document.querySelectorAll('#uiLevel option')].filter(o=>o.value!=='meijin'&&!o.disabled).map(o=>o.value)})),
   openFile:async file=>{await page.setInputFiles('#fileInput',file);await page.waitForTimeout(300);for(const id of ['#openConfirmProceed','#loseConfirmProceed'])if(await page.locator(id).isVisible())await page.click(id);await page.waitForTimeout(500);},
@@ -148,9 +150,13 @@ const checks={
   'MC-522':async s=>{await s.select('w-neko');await s.code();await s.write('だんごのところへ行く。');await s.startMeijin(true);
     const meijin=(await s.scripts()).filter(x=>x.mode==='meijin').map(x=>x.source),errors=await s.page.evaluate(()=>Akari.compileProject(Akari.app.project).errors.map(e=>e.code));
     return {expect:{made:meijin.some(t=>t.includes('作品を動かしたとき、ねこは、')&&t.includes('だんごのところへ行く。')),checks:!errors.length},info:{meijin,errors}};},
-  'MC-411':async s=>{await s.select('meijin');await s.code();
-    const note=await s.page.evaluate(()=>[...document.querySelectorAll('.mode-blocked-note')].filter(n=>n.offsetParent).map(n=>n.textContent).join(''));
-    return {expect:{blocksDisabled:await s.page.locator('#editorModeblocks').isDisabled(),saysCode:bare(note).includes('コードでなおします'),noRedFix:!bare(note).includes('赤いところを直す')},info:{note}};},
+  // A work with a 名人 text is code only: the コード／ブロック toggle is not shown (MC-411 retired).
+  'MC-587':async s=>{await s.select('meijin');const toggle=await s.page.evaluate(()=>!!document.querySelector('#editorModecode').closest('.editor-modes').getClientRects().length);
+    return {expect:{noToggle:!toggle,code:(await s.mode())==='code'}};},
+  // A mistake in the code: ブロック stays, pale; a press says how to come back and the view stays code.
+  'MC-588':async s=>{await s.select('w-neko');await s.code();await s.write('「こんにちは」と言');await s.page.locator('#editorModeblocks').click({force:true});await s.page.waitForTimeout(200);
+    const note=await s.page.evaluate(()=>{const n=document.querySelector('#modeBlockedNote');return n?.getClientRects().length?n.textContent:'';});
+    return {expect:{pale:(await s.page.locator('#editorModeblocks').getAttribute('aria-disabled'))==='true',stillCode:(await s.mode())==='code',says:bare(note).includes('赤いところを直すと、ブロックにもどれる')},info:{note}};},
   'MC-007':async s=>{await s.select('stage');await s.code();const kind=await s.startMeijin(false);const ordinary=(await s.scripts()).every(x=>x.mode!=='meijin'),level=await s.level();await s.blocks();
     return {expect:{ordinary:kind==='confirm'&&ordinary,levelKept:level.chosen==='basic'&&level.shown==='basic',blocks:(await s.mode())==='blocks'},info:level};},
   'MC-008':async s=>{await s.select('stage');await s.code();await s.write('ねこは右へ10歩動く。');await s.startMeijin(true);await s.page.click('#undoBtn');await s.page.waitForTimeout(300);
@@ -160,8 +166,9 @@ const checks={
     return {expect:{undone,levelBack:afterUndo.chosen==='basic'&&afterUndo.others.includes('advanced'),blocksAfterUndo,redone,levelMeijin:afterRedo.chosen==='meijin',noBlocksAfterRedo:(await s.mode())==='code'},info:{afterUndo,afterRedo}};},
   'MC-579':async s=>{await s.select('meijin');s.page.once('dialog',d=>d.accept());await s.page.click('#meijinDelete');await s.page.waitForTimeout(300);const l=await s.level();
     return {expect:{gone:(await s.scripts()).every(x=>x.mode!=='meijin'),back:l.chosen==='basic'&&l.shown==='basic'&&l.others.includes('advanced')},info:l};},
-  'MC-580':async s=>{await s.select('w-neko');await s.startMeijin(true);const l=await s.level();
-    return {expect:{made:(await s.scripts()).some(x=>x.mode==='meijin'),chosen:l.chosen==='meijin',advancedScreen:l.shown==='advanced'&&await s.visible('#diagnoseBtn')},info:l};},
+  // Blocks offer はじめて／かんたん／くわしく only, and a level never switches the view (MC-580 retired).
+  'MC-586':async s=>{const l=await s.level();
+    return {expect:{threeOnly:l.options.join('|')==='はじめて|かんたん|くわしく',noMeijin:!l.options.includes('名人'),stillBlocks:(await s.mode())==='blocks'},info:l};},
   'MC-581':async s=>{await s.openFile(workFiles.meijin);const l=await s.level();return {expect:{meijin:l.chosen==='meijin'},info:l};},
   'MC-582':async s=>{await s.openFile(workFiles.meijin);const during=await s.level();await s.openFile(workFiles.parts);const l=await s.level();
     return {expect:{advanced:during.chosen==='meijin'&&l.chosen==='advanced'&&l.shown==='advanced',others:l.others.includes('basic')},info:{during,l}};},
@@ -209,13 +216,16 @@ const checks={
     for(let i=0;i<60&&at===null;i++){await s.page.waitForTimeout(250);if(await said())at=Date.now()-t0;}
     return {expect:{notDuringPause:!duringPause,afterTenRunningSeconds:at!==null&&at>=14500&&at<=17500},info:{at}};},
 };
-const levelOf=c=>{const steps=c.steps.join(' ');return /「見せ方」で「はじめて」/.test(steps)?'entry':/「見せ方」で「くわしく」/.test(steps)?'advanced':'basic';};
+// A step chooses the level together with its view: 「ブロックで「はじめて」を選ぶ」, 「コードで「くわしく」を選ぶ」. 名人 is chosen
+// by the case itself (it turns a body into 名人 text), from code at かんたん; without a step the work opens in blocks at かんたん.
+const LEVELS={はじめて:'entry',かんたん:'basic',くわしく:'advanced',名人:'basic'};
+const levelOf=c=>{const m=c.steps.join(' ').match(/(コード|ブロック)で「(はじめて|かんたん|くわしく|名人)」を選/);return m?{view:m[1]==='コード'?'code':'blocks',level:LEVELS[m[2]]}:{view:'blocks',level:'basic'};};
 const usesMeijinWork=c=>/名人の本文に|「名人の本文」を選|名人モードの本文を開く|名人モードの本文に|名人の本文を一つ持つ作品/.test(c.steps.join(' '));
 for(const c of uiCases){
-  const level=levelOf(c),file=usesMeijinWork(c)?'meijin':'parts';
+  const {level,view}=levelOf(c),file=usesMeijinWork(c)?'meijin':'parts';
   let page,context;
   try{
-    ({page,context}=await open({level,file}));
+    ({page,context}=await open({level,view,file}));
     if(c.id==='MC-235')await page.evaluate(()=>{const p=Akari.app.project;if(!p.projectData.variables.some(v=>v.name==='点数'))p.projectData.variables.push({id:'w-score',name:'点数',initialValue:0});});
     const fn=checks[c.id];if(!fn)throw Error('no browser route for '+c.id);
     const {expect,info}=await fn(S(page)),missed=Object.entries(expect).filter(([,v])=>v!==true).map(([k])=>k);

@@ -172,8 +172,9 @@ await withBrowser(browserPath,async browser=>{
       const before=await p.evaluate(()=>({project:JSON.stringify(Akari.app.project),history:Akari.app.editorState.history,source:Akari.app.editorState.main.sourceText}));
       await p.locator('#codeEditor').fill('もし');
       await p.locator('#sourceOverviewBtn').click();
-      await p.waitForFunction(()=>document.querySelector('#editorModeblocks').disabled,null,{timeout:3000});
-      assert.equal(await p.locator('#editorModeblocks').isDisabled(),true,'unfinished syntax cannot enter blocks');
+      // ブロック stays in its place, pale (aria-disabled): a press explains instead of switching.
+      await p.waitForFunction(()=>document.querySelector('#editorModeblocks').getAttribute('aria-disabled')==='true',null,{timeout:3000});
+      assert.equal(await p.locator('#editorModeblocks').getAttribute('aria-disabled'),'true','unfinished syntax cannot enter blocks');
       assert.equal(await p.locator('#codeEditor').inputValue(),'もし','unfinished original remains visible');
       assert.equal(await p.locator('#sourceOverview').isVisible(),false,'unfinished input guards navigation');
       assert.equal(await p.evaluate(()=>Akari.app.editorState.main.pendingEdit.ownerKey),'script:button-1:message');

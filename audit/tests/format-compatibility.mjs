@@ -265,7 +265,8 @@ await withBrowser(browserPath,async browser=>{
       await p.locator('#playerStart:not([disabled])').click();
       await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('形式互換')||
         document.querySelector('#formSurface').textContent.includes('形式互換'));
-      await p.locator('#playerStop').click();assert.equal(await p.locator('#playerStop').isDisabled(),true);
+      // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
+      await p.locator('#playerStop').click();assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
     }finally{await context.close();}
     pageErrors.push(...errors);networkRequests.push(...network);
     assert.deepEqual(errors,[]);assert.deepEqual(network,[]);

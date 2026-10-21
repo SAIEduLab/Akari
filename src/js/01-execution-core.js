@@ -2697,6 +2697,9 @@
     // Loop pacing (EventScheduler.paceTurn): the loop frames whose turns are paced, and the statements that change the
     // screen (moving and turning, looks, text and backdrop, the pen and stamps, speech).
     const PACED_LOOP_FRAMES = new Set(['repeatCount', 'forever', 'foreach', 'while', 'until']);
+    // Events that can start a body after every flow has ended: input from outside the work, and 名人's conditions and
+    // intervals. The other events (start, signals, a backdrop change, a copy, a touch) start only from a running flow.
+    const RESTARTING_EVENTS = new Set(['click', 'keyDown', 'valueChanged', 'conditionTrue', 'interval']);
     const PACED_SCREEN_KINDS = new Set(['MotionCommand', 'LooksCommand', 'PenCommand', 'Say']);
     // How many こま a paced flow may be behind and still catch up (EventScheduler.nextFrameTime): 100 ms.
     const PACE_CATCH_UP = 6;
@@ -3192,6 +3195,13 @@
         this.runtime.stopAllAudio(false);
         this.ui.closeQuestion?.();
         this.ui.state?.();
+      }
+      // The run has ended by itself: no flow runs, waits or is queued, no continuous rule is kept, no question is open, and
+      // no body can start again (none waits for input, a 名人 condition or interval, or an extension).
+      ended() {
+        if (!this.running || this.tasks.size || this.ready.length || this.continuous.size || this.questionQueue.length ||
+          this.activeQuestion || this.extensionEvents?.length || extensions.active) return false;
+        return !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event));
       }
       pause() {
         if (!this.running) return;
@@ -4627,7 +4637,7 @@
       )
         fail('画面の 大きさが 正しくありません');
       if(Object.hasOwn(p.stage,'showSpeechNames')&&typeof p.stage.showSpeechNames!=='boolean')
-        fail('ふきだしの 名前の 見せ方が 正しくありません');
+        fail('ふきだしに 名前を 出すかどうかの せっていが 正しくありません');
       validateRuntimeData(p, fail);
       const ownerIds = new Set(['stage', ...p.components.map(c => c.id)]);
       const callPhrases=new Set();

@@ -65,7 +65,8 @@ try{
     await p.locator('#pauseBtn').click();preview.paused=await p.evaluate(()=>Akari.app.editorState.state);
     await p.locator('#stepBtn').click();preview.afterStep=await p.evaluate(()=>Akari.app.editorState.state);
     await p.locator('#continueBtn').click();preview.resumed=await p.evaluate(()=>Akari.app.editorState.state);
-    await p.locator('#runtimeInspectorClose').click();preview.inspector.closed=!await p.locator('#runtimeInspector').evaluate(n=>n.open);preview.inspector.modeControlsReturned=await p.locator('.menutool #editorModecode').isVisible();
+    await p.locator('#runtimeInspectorClose').click();preview.inspector.closed=!await p.locator('#runtimeInspector').evaluate(n=>n.open);// The toggle goes back to its toolbar place, where the run screen does not show it (it changes nothing there).
+    preview.inspector.modeControlsReturned=await p.locator('.menutool > .editor-modes #editorModecode').count()===1;preview.inspector.modeControlsShownWhileRunning=await p.locator('.menutool #editorModecode').isVisible();
     await p.locator('#stopBtn').click();preview.stopped=await observeRunPreview(p);verifyRunPreview(preview,mode,level);const paletteFold=mode==='blocks'?await observePaletteFold(p,()=>shot(p,'folded-'+level+'.png')):null;await setNames(p,true);history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));const on=await speech(p);await p.locator('#stopBtn').click();return{mode,level,history,off,on,preview,paletteFold,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
    }));return{initial,rows};
   });

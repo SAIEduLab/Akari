@@ -34,11 +34,11 @@ const ids=[
 ];
 const fixed={
   'EXPORT-CHOICE-CANCEL-FOCUS':{downloads:0,staticExamples:0},
-  'EXPORT-CONTROLS-DEFAULT-OPERATIONS':{title:'検証用の作品',restart:true,pauseResumeStop:true},
+  'EXPORT-CONTROLS-DEFAULT-OPERATIONS':{title:'検証用の作品',restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:true},
   'EXPORT-ARTWORK-SIZE-RELOAD-INPUT':{noControls:true,nativeButtonAndKey:true},
   'EXPORT-ARTWORK-QUESTION-ANSWER-STOP':{answer:true,stop:true},
   'EXPORT-ARTWORK-AUDIO-PERMITTED':{automatic:true},
-  'EXPORT-ARTWORK-IMAGE-PEN-STOP':{painted:true,programStop:true},
+  'EXPORT-ARTWORK-IMAGE-PEN-STOP':{painted:true,programStop:true,pictureKept:true},
   'EXPORT-ARTWORK-CACHED-RETURN':{persistedEvents:'same execution retained',nativeHistoryBack:true},
   'EXPORT-ARTWORK-IFRAME':{automatic:true},
   'EXPORT-ARTWORK-INITIALIZATION-ERROR':{rejected:true,detailsVisible:true,errorCode:'X602'},

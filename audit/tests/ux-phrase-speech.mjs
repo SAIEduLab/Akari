@@ -115,10 +115,12 @@ try{await withBrowser(chrome,async browser=>{
  });
  await run('speech/stop-and-rerun',async p=>{
   await prepare(p,{scripts:[{id:'first',targetId:'sprite-1',event:'start',source:say(speechTexts[0])+'\n1秒待つ。\nすべてを止める。'},{id:'second',targetId:'dango',event:'start',source:say(speechTexts[1])}]});await setView(p,speechViews[0]);await start(p);const initial=await open(p,'sprite-1');
-  // STOP_ALL changes scheduler state before its queued UI disposal. Await the
-  // completed visible stop within the existing timeout; retain every assertion.
+  // STOP_ALL ends the run: the run screen keeps its last picture (おわったよ) until ■ 止める goes back to the edit screen.
+  // The full-text dialog opened on the speech stays open over the ended run; it is closed before ■ 止める.
+  await p.waitForFunction(()=>document.querySelector('#runState').textContent==='おわったよ');const afterFinish=await stopped(p);
+  if(afterFinish.open)await p.keyboard.press('Escape');await p.locator('#stopBtn').click();
   await p.waitForFunction(()=>document.querySelector('#runState').textContent==='止まっています'&&!document.querySelector('#valueModal').classList.contains('show')&&document.querySelectorAll('.sprite-bubble').length===0);const afterStop=await stopped(p);
-  await start(p);const rerun=await open(p,'dango');await p.keyboard.press('Escape');await p.locator('#stopBtn').click();return{initial,afterStop,rerun,afterUiStop:await stopped(p)};
+  await start(p);const rerun=await open(p,'dango');await p.keyboard.press('Escape');await p.locator('#stopBtn').click();return{initial,afterFinish,afterStop,rerun,afterUiStop:await stopped(p)};
  });
  await run('speech/clone-identity',async p=>{
   await prepare(p,{scripts:[{id:'first',targetId:'sprite-1',event:'start',source:'自分のコピーを作る。\n'+say(speechTexts[0]).replace('と言う。','と10秒話す。')},{id:'clone',targetId:'sprite-1',event:'cloneStart',source:say(speechTexts[1]).replace('と言う。','と10秒話す。')}]});await setView(p,speechViews[0]);await start(p);const b=(await bubbles(p)).sort((a,b)=>a.id.localeCompare(b.id)),original=await open(p,'sprite-1');await p.keyboard.press('Escape');const clone=await open(p,'sprite-1-clone-3','keyboard');await p.screenshot({path:path.join(dir,'clone-dialog.png')});return{bubbles:b,original,clone};

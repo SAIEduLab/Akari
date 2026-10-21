@@ -670,11 +670,10 @@
       "id": "ui:component-controls-scroll",
       "editorMode": "blocks",
       "regionLabel": "部品と作品の道具",
-      "separateComponentListScroll": true,
+      "separateComponentListScroll": false,
       "targets": [
         ".prop-duplicate",
         ".prop-delete",
-        ".child-copy-help",
         "#componentPickerCore > summary",
         "#soundQuickAdd",
         "#assetBtn",

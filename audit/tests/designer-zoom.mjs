@@ -174,18 +174,20 @@ const cases = {
   },
   async 'DESIGN-ZOOM-RUNTIME'(p) {
     await size(p); await (async()=>{const control=p.locator('#codeEditor'); await openBodyForTest(control.page()); return control.fill('「実行中」と言う。\n60秒待つ。');})();
-    await p.locator('#runBtn').click(); await p.waitForFunction(() => Akari.app.editorState.state === 'RUNNING');
-    const before = await state(p);
+    // The view is chosen on the edit screen (the run screen shows neither the level nor the toggle), so each view runs once.
     for (const m of ['code', 'blocks']) {
-      await mode(p, m); await p.locator('#stageZoomReset').click(); await p.locator('#stageZoomOut').click();
+      await mode(p, m);
+      await p.locator('#runBtn').click(); await p.waitForFunction(() => Akari.app.editorState.state === 'RUNNING');
+      const before = await state(p);
+      await p.locator('#stageZoomReset').click(); await p.locator('#stageZoomOut').click();
       assert.equal(await p.evaluate(() => Akari.app.editorState.state), 'RUNNING');
       await p.locator('#stageZoomFit').click(); await assertFit(p);
+      await p.locator('#pauseBtn').click();
+      for (const button of ['#stageZoomIn', '#stageZoomFit']) await p.locator(button).click();
+      assert.equal(await p.locator('#continueBtn').isEnabled(), true);
+      assert.deepEqual(await state(p), before, 'zoom during run/pause preserves design');
+      await p.locator('#stopBtn').click(); await assertFit(p);
     }
-    await p.locator('#pauseBtn').click();
-    for (const button of ['#stageZoomIn', '#stageZoomFit']) await p.locator(button).click();
-    assert.equal(await p.locator('#continueBtn').isEnabled(), true);
-    assert.deepEqual(await state(p), before, 'zoom during run/pause preserves design');
-    await p.locator('#stopBtn').click(); await assertFit(p);
   },
   async 'DESIGN-ZOOM-SAVE-EXPORT'(p) {
     await size(p); await (async()=>{const control=p.locator('#codeEditor'); await openBodyForTest(control.page()); return control.fill('「ズーム確認」と言う。');})();

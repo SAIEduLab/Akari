@@ -199,7 +199,7 @@ const cases = {
     assert.match(await p.locator('#bodyActionHelp').innerText(),/やることの まとまり/);
     assert.match(await p.locator('#bodyActionHelp').innerText(),/「なおす動き」で えらびます/);
     assert.equal(await p.locator('#eventSelect').locator('xpath=..').locator('rt').count(),0,'なおす needs no reading');
-    assert.match(await p.locator('#basicActionGuide').innerText(),/コードは コピーしません/);
+    assert.match(await p.locator('#basicActionGuide').innerText(),/本文は コピーしません/);
     assert.match(await p.locator('#basicActionGuide').innerText(),/決めた ことを 1つ もとにもどす/);
     const help=await textFits(p.locator('#basicActionGuide p'));
     const tailReach=await keyboardPanelTail(p,'#basicActionGuide');
@@ -228,28 +228,25 @@ const cases = {
     const before=await p.evaluate(()=>JSON.parse(JSON.stringify(Akari.app.project)));
     const original=before.components.find(c=>c.id==='sprite-1');
     assert.equal(await p.locator('#properties .prop-duplicate').innerText(),'見た目のコピー');
-    assert.equal(await p.locator('#properties .prop-duplicate').getAttribute('title'),'見た目と せっていを コピーします（コードは コピーしません）');
-    assert.equal(await p.locator('#properties .child-copy-help').isVisible(),true,'copy scope visible before pressing');
-    assert.match(await p.locator('#properties .child-copy-help').innerText(),/コードは コピーしません/);
+    // What the copy keeps is said by the button's title and description and by ヒント's 見た目のコピー; there is no
+    // always-visible line of its own (the side column keeps its tools in view).
+    assert.equal(await p.locator('#properties .prop-duplicate').getAttribute('title'),'見た目と せっていを コピーします（本文は コピーしません）');
+    assert.equal(await p.locator('.child-copy-help').count(),0,'no separate copy line');
     const copyHelpModes={before:await state(p),steps:[]};
-    const copyActionsReference=await p.locator('.prop-actions').elementHandle(),
-      copyHelpReference=await p.locator('.child-copy-help').elementHandle();
-    assert.ok(copyActionsReference&&copyHelpReference,'existing actions and copy explanation nodes required');
+    const copyActionsReference=await p.locator('.prop-actions').elementHandle();
+    assert.ok(copyActionsReference,'existing actions node required');
     try {
       for(const mode of ['code','blocks','code']) {
         await click(p,'#editorMode'+mode);
-        const placement=await p.evaluate(({actionsReference,helpReference})=>{
-          const actions=document.querySelector('.prop-actions'),help=document.querySelector('.child-copy-help');
+        const placement=await p.evaluate(({actionsReference})=>{
+          const actions=document.querySelector('.prop-actions');
           return {mode:document.body.dataset.editorMode,actionsHost:actions?.parentElement?.id,
-            helpHost:help?.parentElement?.id,adjacent:actions?.nextElementSibling===help,
-            sameActionsNode:actions===actionsReference,sameHelpNode:help===helpReference,
-            helpCount:document.querySelectorAll('.child-copy-help').length,
-            text:help?.textContent,ariaDescription:actions?.querySelector('.prop-duplicate')?.getAttribute('aria-description')};
-        },{actionsReference:copyActionsReference,helpReference:copyHelpReference});
+            sameActionsNode:actions===actionsReference,helpCount:document.querySelectorAll('.child-copy-help').length,
+            ariaDescription:actions?.querySelector('.prop-duplicate')?.getAttribute('aria-description')};
+        },{actionsReference:copyActionsReference});
         const expectedHost=mode==='blocks'?'componentActions':'properties';
-        assert.deepEqual(placement,{mode,actionsHost:expectedHost,helpHost:expectedHost,adjacent:true,
-          sameActionsNode:true,sameHelpNode:true,helpCount:1,
-          text:"見た目と せっていを コピーします。コードは コピーしません。",ariaDescription:"見た目と せっていを コピーします。コードは コピーしません。"});
+        assert.deepEqual(placement,{mode,actionsHost:expectedHost,sameActionsNode:true,helpCount:0,
+          ariaDescription:"見た目と せっていを コピーします。本文は コピーしません。"});
         const observedState=await state(p);
         assert.deepEqual(observedState,copyHelpModes.before,'mode moves preserve the actual project, source, history, redo, and dirty state');
         copyHelpModes.steps.push({...placement,state:observedState});
@@ -257,7 +254,7 @@ const cases = {
       copyHelpModes.after=await state(p);
       assert.deepEqual(copyHelpModes.after,copyHelpModes.before);
     } finally {
-      await copyActionsReference.dispose(); await copyHelpReference.dispose();
+      await copyActionsReference.dispose();
     }
     await click(p,'#properties .prop-duplicate');
     const after=await p.evaluate(()=>JSON.parse(JSON.stringify(Akari.app.project)));
@@ -384,7 +381,8 @@ const cases = {
       for(const mode of ['code','blocks']) {
         await click(p,'#editorMode'+mode);
         const before=await state(p);
-        const controls={}; for(const id of ['saveBtn','exportBtn','runBtn','stopBtn'])controls[id]=await reachable(p.locator('#'+id));
+        // The edit screen shows ▶ 動かす; ■ 止める is on the run screen only, in the same place.
+        const controls={}; for(const id of ['saveBtn','exportBtn','runBtn'])controls[id]=await reachable(p.locator('#'+id));
         const summary=await keyboardDetails(p,'#basicActionGuide');
         const help=await textFits(p.locator('#basicActionGuide p'));
         const tailReach=await keyboardPanelTail(p,'#basicActionGuide');

@@ -14,10 +14,11 @@ export async function showAdvancedCode(page) {
   await page.locator('#editorModecode').click();
 }
 
-export async function installGreetingFixture(page) {
+// keepRunning: the greeting body then waits 10 seconds, so the run has not ended (an ended run shows ■ 止める only).
+export async function installGreetingFixture(page,{keepRunning=false}={}) {
   // The fixed greeting fixture uses the normal event selector.
   if(await page.locator('#uiLevel').inputValue()==='entry')await page.locator('#uiLevel').selectOption('basic');
-  const text=await page.evaluate(()=>Akari.serializeProject(Akari.makeDefaultProject(),Akari.makeDefaultAssetStore()));
+  const text=await page.evaluate(keepRunning=>{const p=Akari.makeDefaultProject();if(keepRunning)p.scripts[0].source+='\n  10秒待つ。';return Akari.serializeProject(p,Akari.makeDefaultAssetStore());},keepRunning);
   await page.locator('#fileInput').setInputFiles({name:'greeting-fixture.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)});
   await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN'&&Akari.app.project.name==='はじめてのあかり');
   await page.locator('#objectSelect').selectOption('sprite-1');

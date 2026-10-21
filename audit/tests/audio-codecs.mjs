@@ -47,7 +47,8 @@ async function player(browser,file,expected,invalid=false){
       await p.waitForFunction(expected=>document.querySelector('#playerOutput').textContent.includes(expected),expected);
       assert.equal(await p.evaluate(()=>typeof globalThis.Akari),'undefined');
       assert.ok(!(await p.locator('#playerOutput').textContent()).includes('R415'));
-      await p.locator('#playerStop').click();assert.equal(await p.locator('#playerStop').isDisabled(),true);
+      // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
+      await p.locator('#playerStop').click();assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
     }
   }finally{await context.close();}
 }

@@ -20,7 +20,7 @@ export function verifyRunPreview(o,mode,level){
   assert.deepEqual(o.controls.map(c=>c.enabled),[true,true,false,true]);
   assert.equal(o.paused,'PAUSED');assert.equal(o.afterStep,'PAUSED');assert.equal(o.resumed,'RUNNING');assert.equal(o.stopped.state,'DESIGN');assert.equal(o.stopped.runtime,false);assert.equal(o.stopped.editorVisible,true);
   assert.equal(o.stopped.source,o.source,'stop restores the unchanged authored project');
-  const v=o.inspector;assert.equal(v.opened,true);assert.equal(v.readOnly,true);assert.equal(v.monitorVisible,true);assert.equal(v.visibleMode,mode);assert.equal(v.alternateMode,mode==='code'?'blocks':'code');assert.equal(v.restoredMode,mode);assert.equal(v.sourcePreserved,true);assert.equal(v.executionLocationVisible,true);assert.equal(v.closed,true);assert.equal(v.modeControlsReturned,true);
+  const v=o.inspector;assert.equal(v.opened,true);assert.equal(v.readOnly,true);assert.equal(v.monitorVisible,true);assert.equal(v.visibleMode,mode);assert.equal(v.alternateMode,mode==='code'?'blocks':'code');assert.equal(v.restoredMode,mode);assert.equal(v.sourcePreserved,true);assert.equal(v.executionLocationVisible,true);assert.equal(v.closed,true);assert.equal(v.modeControlsReturned,true);assert.equal(v.modeControlsShownWhileRunning,false);
 }
 export function verifyRunPreviewReport(report){
   const rows=report.results.find(r=>r.id==='DISPLAY-SETTINGS')?.observed?.rows;

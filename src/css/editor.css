@@ -1043,12 +1043,6 @@ button:focus-visible {
   min-height: 28px;
   padding: 0 9px;
 }
-.exec-location {
-  margin-left: auto;
-  color: #536273;
-  font-size: 12px;
-  white-space: nowrap;
-}
 .editor-shell {
   position: relative;
   display: grid;
@@ -1233,8 +1227,7 @@ body[data-ui-level="basic"] #diagnoseBtn,
 body[data-ui-level="basic"] #pauseBtn,
 body[data-ui-level="basic"] #continueBtn,
 body[data-ui-level="basic"] #stepBtn,
-body[data-ui-level="basic"] #formatBtn,
-body[data-ui-level="basic"] #execLocation {
+body[data-ui-level="basic"] #formatBtn {
   display: none;
 }
 body[data-ui-level="basic"] .menutool .sep {
@@ -1265,12 +1258,6 @@ body {
 .editor-modes [aria-pressed="true"] {
   background: #204f87;
   color: white;
-}
-.editor-modes .mode-blocked-note {
-  align-self: center;
-  color: #8a2c0d;
-  font-size: 13px;
-  line-height: 1.3;
 }
 .editor-pending {
   padding: 6px;
@@ -2350,11 +2337,6 @@ button:focus-visible {
 .code-hints {
   min-width: 0;
 }
-#execLocation {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 42%;
-}
 
 .hint-panel {
   flex: 1;
@@ -2680,7 +2662,7 @@ body[data-editor-mode="blocks"] {
 }
 body[data-editor-mode] #app {
   height: 100dvh;
-  min-height: 720px;
+  min-height: 600px;
   grid-template-rows: auto minmax(0, 1fr) auto;
   min-width: 0;
 }
@@ -3028,10 +3010,6 @@ body[data-editor-mode] .debugbar :is(#undoBtn, #redoBtn):focus-visible {
   flex-wrap: wrap;
   gap: 8px;
 }
-body[data-editor-mode] #execLocation {
-  font-size: 11px;
-  color: var(--muted);
-}
 body[data-editor-mode] .editor-shell {
   min-height: 70px;
   border-radius: 0 0 15px 15px;
@@ -3264,9 +3242,6 @@ body[data-editor-mode="blocks"] .prop-name {
   body[data-editor-mode] #projectName {
     max-width: 200px;
   }
-  body[data-editor-mode] .debugbar #execLocation {
-    max-width: 180px;
-  }
 }
 @media (max-width: 1000px) {
   body[data-editor-mode] #app {
@@ -3368,10 +3343,6 @@ body[data-editor-mode="blocks"] .prop-name {
   }
   body[data-editor-mode] .code-head select {
     max-width: 210px;
-  }
-  body[data-editor-mode] .debugbar #execLocation {
-    max-width: 100%;
-    margin-left: 0;
   }
   body[data-editor-mode="blocks"] .codewin {
     height: 780px;
@@ -4380,15 +4351,12 @@ body[data-editor-mode="blocks"] .designer-wrap {
 .blockui-component-picker {
   display: none;
 }
-/* Side panels may scroll rather than collapse the chooser when settings open. */
+/* The part list is no scroller of its own: the part panel takes its content height and the column on the right
+   scrolls as one, so every part tile and the tools under them are reached the same way (no hidden inner band). */
 body[data-editor-mode="blocks"] .side > .objects-window {
-  flex: 1 0 230px;
-  min-height: 230px;
-  overflow: hidden;
-}
-body[data-editor-mode="blocks"] .side > .objects-window:has(.blockui-component-picker[open]) {
-  flex-basis: 370px;
-  min-height: 370px;
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
 }
 body[data-editor-mode="blocks"] .objects-window .tree {
   display: flex;
@@ -4397,23 +4365,15 @@ body[data-editor-mode="blocks"] .objects-window .tree {
   gap: 7px;
   flex-wrap: wrap;
   padding: 10px;
-  flex: 1 1 140px;
-  min-height: 140px;
-  overflow: auto;
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
 }
-/* Keep the complete action area reachable independently from the component list. */
 body[data-editor-mode="blocks"] .component-controls {
-  flex: 0 1 auto;
-  min-height: 120px;
-  max-height: 60%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-}
-.component-controls:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: -3px;
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
 }
 body[data-editor-mode="blocks"] .component-controls .prop-actions {
   position: static;
@@ -4484,11 +4444,6 @@ body[data-editor-mode="blocks"] .blockui-component-picker[open] > .tool-list {
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   align-content: start;
-}
-body[data-editor-mode="blocks"] .objects-window:has(.blockui-component-picker[open]) > .tree {
-  flex: 1 1 auto;
-  max-height: none;
-  min-height: 58px;
 }
 body[data-editor-mode="blocks"] .project-tools {
   border-top: 1px solid #dce7ef;
@@ -4677,12 +4632,7 @@ body[data-editor-mode="code"] #componentActions,
   }
   body[data-editor-mode="blocks"] .side > .objects-window {
     flex: none;
-    height: 230px;
-  }
-  body[data-editor-mode="blocks"] .side > .objects-window:has(.blockui-component-picker[open]) {
-    flex: none;
-    height: min(460px, 72dvh);
-    min-height: 420px;
+    height: auto;
   }
   body[data-editor-mode="blocks"] .blockui-component-picker[open] > .tool-list {
     height: 220px;
@@ -5570,13 +5520,16 @@ body[data-editor-mode] .code-assist:has(#codeIssue.issue-error) { flex-direction
 .runtime-inspector-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px; flex:none; }
 #runtimeInspectorModes { margin-left:auto; }
 #runtimeInspectorBody { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:8px; flex:1; min-height:0; overflow:auto; }
-#runtimeInspectorBody > .codewin { display:flex; min-height:0; min-width:0; overflow:auto; }
+#runtimeInspectorBody > .codewin { display:flex; min-height:0; min-width:0; overflow:auto; grid-column:1; grid-row:1; }
+#runtimeInspectorBody > .monitor-window { grid-column:2; grid-row:1; }
+#runtimeInspectorStrip:empty { display:none; }
+#runtimeInspectorStrip > .run-strip { padding:0 2px; }
 #runtimeInspectorBody .debugbar { padding:6px; flex:none; }
 #runtimeInspectorBody .editor-shell { flex:1; min-height:160px; }
 #runtimeInspectorBody #blockEditor { flex:1; min-height:260px; }
 #runtimeInspectorBody .blockui-layout { flex:1; min-height:0; }
 #runtimeInspectorBody .monitor-window { display:flex; min-height:160px; overflow:auto; }
-@media(max-width:700px) { #runtimeInspectorBody { grid-template-columns:minmax(0,1fr); } #runtimeInspectorModes { margin-left:0; } }
+@media(max-width:700px) { #runtimeInspectorBody { grid-template-columns:minmax(0,1fr); } #runtimeInspectorBody > .monitor-window { grid-column:1; grid-row:2; } #runtimeInspectorModes { margin-left:0; } }
 .blockui-local-help { font-size:12px; max-width:100%; }
 .blockui-local-help p { white-space:normal; line-height:1.6; }
 .blockui-operator { min-width:90px; padding:5px; }
@@ -5645,9 +5598,7 @@ body.runtime[data-editor-mode] .main > .codewin > .debugbar {
   display: flex; grid-column: 1 / -1; grid-row: 2;
   min-width: 0; padding: 6px; margin: 0; flex-wrap: wrap;
 }
-body.runtime[data-editor-mode] .debugbar #execLocation { display:inline-block; max-width:100%; }
 body.runtime[data-editor-mode] .debugbar :is(#pauseBtn,#continueBtn,#stepBtn) { display: inline-flex; }
-body.runtime[data-editor-mode] .menutool > :is(#newBtn,#sampleBtn,#openBtn) { display:none; }
 body.runtime[data-editor-mode] .debugbar > :is(#redoBtn,#formatBtn,#resetBtn) { display:none; }
 #runtimeInspector #runtimeInspectBtn { display:none; }
 body.runtime[data-editor-mode] .main { grid-template-columns:minmax(0,1fr) 250px; gap:10px; }
@@ -5731,9 +5682,7 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-world .blockui-field.block
 .child-help-panel:focus-visible { outline: 3px solid var(--accent, #307cac); outline-offset: -3px; }
 .child-help .child-scroll-help { padding-bottom: 8px; border-bottom: 1px solid var(--line, #d8e3ec); }
 .menutool > .child-help { flex: 0 0 auto; }
-.menutool > .child-help[open] { flex: 1 0 100%; }
 .menutool > .child-help > summary { width: max-content; }
-.child-copy-help { display: block; padding: 4px 10px; font-size: 12px; line-height: 1.5; white-space: normal; }
 .child-material-name { display: block; line-height: 1.6; }
 .child-material-note { display: block; font-size: inherit; line-height: 1.5; white-space: normal; }
 .sprite-preset-grid .tool:has(.child-material-name) { min-height: 72px; }
@@ -5875,17 +5824,24 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
  body[data-ui-level="entry"] .blockui-layout { min-height:340px; }
 }
 
-/* ── Toolbar: 表示, コード/ブロック and the work name are pinned to the top-right corner, so they
-   stay in the same place in every view, width and font. Only the action buttons on the left wrap. ── */
+/* ── Toolbar: コード/ブロック, the level and the work name are pinned to the top-right corner, left to right, so
+   they stay in the same place in every view, width and font. The level's place does not move when the toggle is not
+   shown (はじめて, a 名人 work); its free space joins the left. Only the action buttons on the left wrap. ── */
 @media (min-width: 701px) {
   body[data-editor-mode] .menutool {
     --tb-pad: 18px;
     --tb-gap: 7px;
     --tb-name: 172px;
     --tb-modes: 176px;
-    --tb-level: 114px;
-    position: relative;
+    --tb-level: 100px;
     padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-modes) + var(--tb-level) + 3 * var(--tb-gap));
+  }
+  body[data-editor-mode] .menutool:has(> .editor-modes[hidden]) {
+    padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
+  }
+  /* The run screen shows neither the level nor the toggle (they change nothing there). */
+  body.runtime[data-editor-mode] .menutool {
+    padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-gap));
   }
   body[data-editor-mode] .menutool > :is(.ui-level-label, .editor-modes, #projectName) {
     position: absolute;
@@ -5898,9 +5854,19 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
     min-width: 0;
     max-width: none;
   }
-  body[data-editor-mode] .menutool > .editor-modes {
+  body[data-editor-mode] .menutool > .ui-level-label {
     top: 7px;
     right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-gap));
+    box-sizing: border-box;
+    width: var(--tb-level);
+    height: 44px;
+    padding: 0;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+  body[data-editor-mode] .menutool > .editor-modes {
+    top: 7px;
+    right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
     box-sizing: border-box;
     width: var(--tb-modes);
     height: 44px;
@@ -5908,22 +5874,17 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
   body[data-editor-mode] .menutool > .editor-modes button {
     flex: 1 1 0;
     min-width: 0;
+    white-space: nowrap;
   }
-  body[data-editor-mode] .menutool > .ui-level-label {
-    top: 7px;
-    right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-modes) + 2 * var(--tb-gap));
-    box-sizing: border-box;
-    width: var(--tb-level);
-    height: 44px;
-    padding: 0;
-    justify-content: flex-end;
+  body[data-editor-mode] .menutool > .mode-blocked-note {
+    right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
   }
 }
 @media (min-width: 701px) and (max-width: 1300px) {
   body[data-editor-mode] .menutool { --tb-pad: 10px; --tb-gap: 4px; --tb-name: 150px; --tb-modes: 140px; }
 }
 @media (min-width: 701px) and (max-width: 1100px) {
-  body[data-editor-mode] .menutool { --tb-name: 112px; --tb-modes: 136px; }
+  body[data-editor-mode] .menutool { --tb-name: 100px; --tb-modes: 152px; --tb-level: 96px; }
   body[data-editor-mode] .menutool > .editor-modes button { padding-inline: 4px; }
 }
 
@@ -5956,3 +5917,89 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 .blockui-categories > [data-blockui-category="comment"]::before { content: "※"; }
 
 #formSurface { font-family: var(--font-stage); }
+
+/* ── 1.5.0 editor screens ──────────────────────────────────────────────────────────────────────────────────────────
+   The edit screen (止まっているとき) shows ▶ 動かす only; the run screen (getting ready, running, paused, stopped by an
+   error, finished) shows ■ 止める only, in ▶'s place. The other toolbar buttons stay where they are, disabled while the
+   work runs. ⏸, ▶ つづける, 1つずつ 動かす and 本文を見て たしかめる are run-screen controls (かんたん・くわしく), not shown
+   once the run has ended. */
+body:not(.runtime) #stopBtn,
+body.runtime #runBtn { display: none !important; }
+body:not(.runtime) .debugbar :is(#pauseBtn, #continueBtn, #stepBtn) { display: none !important; }
+body.run-finished .debugbar :is(#pauseBtn, #continueBtn, #stepBtn, #runtimeInspectBtn) { display: none !important; }
+/* もとにもどす is an edit-screen control; the run screen's bar holds the run controls only. */
+body.runtime .debugbar > #undoBtn { display: none !important; }
+body.runtime.run-finished[data-editor-mode] .main > .codewin > .debugbar { display: none !important; }
+body.runtime .menutool > :is(.ui-level-label, .editor-modes, .mode-blocked-note) { display: none !important; }
+.editor-modes[hidden] { display: none !important; }
+:is(#editorModeblocks, #callableModeblocks)[aria-disabled="true"] { opacity: 0.5; }
+/* Why ブロック does not open while the code has a mistake: shown under the toggle after a press of the pale ブロック. */
+.mode-blocked-note { margin: 0; padding: 6px 10px; border: 1px solid #c98a6a; border-radius: 8px; background: #fff7f2; color: #8a2c0d; font-size: 14px; line-height: 1.5; }
+.mode-blocked-note[hidden] { display: none !important; }
+.menutool > .mode-blocked-note { position: absolute; top: calc(100% + 6px); right: 10px; z-index: 61; max-width: 20rem; box-shadow: 0 6px 16px #18364b30; }
+
+/* The strip under the stage on the run screen, at every level: いま 動いている 文：who / which event / which line, and
+   the sentence itself in a box. */
+.run-strip { display: none; }
+body.runtime .run-strip { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-width: 0; padding: 6px 10px; font-size: 14px; line-height: 1.5; color: var(--dark, #283e50); }
+.run-strip > .exec-location { max-width: 100%; color: var(--muted, #536273); overflow-wrap: anywhere; }
+.exec-sentence { max-width: 100%; padding: 2px 10px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fff; font-size: 15px; font-weight: 600; overflow-wrap: anywhere; white-space: pre-wrap; }
+.exec-sentence[hidden] { display: none; }
+
+/* The toolbar (with the name Akari) stays at the top of the page when the page scrolls; it paints above the page and
+   below dialogs. Scrolling to a place keeps that place below the toolbar (its height follows its rows). */
+html { overflow-x: hidden; overflow-y: auto; scroll-padding-top: var(--toolbar-h, 0px); }
+body { overflow: visible !important; }
+.menutool { position: sticky; top: 0; z-index: 500; }
+
+/* ヒント (right of お手本を開く) and はじめて's 作品 open over the page under the toolbar: the toolbar keeps its height and
+   the other buttons keep their places. A long ヒント scrolls inside. */
+.menutool > details.toolbar-menu { position: relative; flex: 0 0 auto; }
+.menutool > details.toolbar-menu > summary { box-sizing: border-box; min-height: 36px; padding: 5px 12px; border: 1px solid #bda47a66; border-radius: 10px; background: #fffaf0d9; line-height: 24px; cursor: pointer; white-space: nowrap; }
+.menutool > #basicActionGuide > .child-help-panel,
+.menutool > #entryProjectMenu > .entry-project-actions { position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
+.menutool > #basicActionGuide > .child-help-panel { width: min(34rem, calc(100vw - 32px)); max-height: min(60dvh, 420px); }
+.menutool > #entryProjectMenu > .entry-project-actions { border-radius: 10px; }
+body[data-editor-mode] .menutool #uiLevel { box-sizing: border-box; width: 100%; min-width: 0; height: 36px; padding: 0 6px; }
+
+/* Block view: the heading 本文 sits at the left of the 動かすもの row, and すべての本文・画面の本文・いつ動く？ share one row with
+   もとにもどす・やり直す, so the workspace gets the height. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-rows: repeat(8, auto) minmax(0, 1fr);
+}
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > * { grid-column: 1 / -1; min-width: 0; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .win-title {
+  grid-row: 1; justify-self: start; align-self: start; z-index: 1; display: flex; align-items: center;
+  height: auto; min-height: 0; margin: 0; padding: 8px 0 0 12px; border: 0; background: none; font-size: 14px; font-weight: 700; line-height: 30px; pointer-events: none;
+}
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .code-head { grid-row: 1; padding-left: 58px; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryEvents { grid-row: 2; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryOutside { grid-row: 3; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #tutorialGuide { grid-row: 4; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .source-nav { grid-row: 5; grid-column: 1; align-self: stretch; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar { grid-row: 5; grid-column: 2; justify-content: flex-end; flex-wrap: wrap; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #sourceOverview { grid-row: 6; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-overview="true"] > #sourceOverview { grid-row: 9; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #editorPending { grid-row: 7; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #sourceImport { grid-row: 8; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #blockEditor { grid-row: 9; }
+/* The editor fits the window from 600 px high; the block area may shrink to 300 px. */
+body[data-editor-mode="blocks"] #blockEditor .blockui-layout { min-height: 300px; }
+
+
+/* はじめて while running: the stage takes the large column; the 使うブロック list is put away and the built blocks stay. */
+body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr) clamp(420px, 56vw, 820px); }
+body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-palette { display: none !important; }
+body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layout { grid-template-columns: minmax(0, 1fr) !important; }
+
+/* Touch screens: the toolbar's controls are at least 40 px high (no wider). */
+@media (pointer: coarse) {
+  body[data-editor-mode] .menutool > button,
+  body[data-editor-mode] .menutool > details.toolbar-menu > summary,
+  body[data-editor-mode] .menutool > #projectName,
+  body[data-editor-mode] #uiLevel { height: auto; min-height: 40px; }
+  body[data-editor-mode] .menutool > :is(.editor-modes, .ui-level-label) { height: 48px; }
+  body[data-editor-mode] .menutool > .editor-modes button { min-height: 40px; }
+}

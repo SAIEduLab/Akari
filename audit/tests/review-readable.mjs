@@ -27,7 +27,7 @@ async function openPage(browser,viewport,level='basic'){
   page.setDefaultTimeout(8000);
   await page.goto(pathToFileURL(product).href);
   await page.waitForFunction(()=>!!globalThis.Akari?.app);
-  await installGreetingFixture(page);
+  await installGreetingFixture(page,{keepRunning:true});
   await page.locator('#uiLevel').selectOption(level);
   return {page,context};
 }
@@ -110,9 +110,9 @@ async function stageSpeechReview(browser){
     await page.locator('#editorModecode').click();
     await page.waitForFunction(()=>document.body.dataset.editorMode==='code'&&getComputedStyle(document.querySelector('.codewin')).display!=='none');
     assert.ok(await page.locator('#codeEditor').isVisible(),'basic runtime can switch to its existing code view');
-    await page.locator('#uiLevel').selectOption('advanced');
-    assert.equal(await page.locator('#uiLevel').inputValue(),'advanced','basic runtime can switch into advanced mode');
-    assert.ok(await page.locator('#codeEditor').isVisible());
+    // The level is chosen on the edit screen only: neither the run screen nor 本文と動きのようす offers it.
+    assert.equal(await page.locator('#uiLevel').isVisible(),false,'no level picker while the work runs');
+    assert.equal(await page.locator('#runtimeInspector #uiLevel').count(),0);
     await page.locator('#pauseBtn').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='PAUSED');
     await page.locator('#continueBtn').click();
@@ -120,7 +120,10 @@ async function stageSpeechReview(browser){
     await page.locator('#runtimeInspectorStop').click();
     await page.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
     assert.ok(await page.locator('#codeEditor').isVisible(),'stop returns to the existing code editor');
-    transition={basicBlocksRun:true,basicCodeViewVisible:true,advancedModeSwitch:true,pauseResume:true,stopReturnsToCodeEditor:true};
+    await page.locator('#uiLevel').selectOption('advanced');
+    assert.equal(await page.locator('#uiLevel').inputValue(),'advanced','the edit screen switches into advanced mode');
+    assert.ok(await page.locator('#codeEditor').isVisible());
+    transition={basicBlocksRun:true,basicCodeViewVisible:true,levelOnEditScreenOnly:true,advancedModeSwitch:true,pauseResume:true,stopReturnsToCodeEditor:true};
     await context.close();
   }catch(error){await context.close();throw Error(`basic runtime mode transition: ${error.message}`);}
   return {observations,transition,coverage:{viewports,levels},checks:['stage-visible','speech-rendered-size','stop-editor-return','advanced-code-monitor-retained','advanced-pause-resume','basic-code-view-and-advanced-switch']};

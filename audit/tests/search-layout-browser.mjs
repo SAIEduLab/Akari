@@ -65,7 +65,7 @@ async function exercise(p,callable=false,imagePrefix,observe){
   await number.click();await number.press('ControlOrMeta+A');await number.press('Backspace');await p.keyboard.insertText('0.1');await number.press('Tab');await frame(p);o.after=await state(p,callable);
   await p.keyboard.press('ControlOrMeta+z');o.undoEdit=await state(p,callable);await p.keyboard.press('ControlOrMeta+z');o.undo=await state(p,callable);
   await p.keyboard.press('ControlOrMeta+Shift+z');o.redoInsert=await state(p,callable);await p.keyboard.press('ControlOrMeta+Shift+z');o.redo=await state(p,callable);
-  o.reachable=await reach(p,callable?['callableSave','callableSaveProject','procClose','callableModecode','callableModeblocks']:['runBtn','stopBtn','saveBtn','editorModecode','editorModeblocks']);
+  o.reachable=await reach(p,callable?['callableSave','callableSaveProject','procClose','callableModecode','callableModeblocks']:['runBtn','saveBtn','editorModecode','editorModeblocks']);
   if(callable){
     await number.fill('－');await number.press('Tab');
     await p.locator('#callableModecode').click();await frame(p);

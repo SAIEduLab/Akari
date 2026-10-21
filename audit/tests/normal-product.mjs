@@ -53,8 +53,9 @@ const evidence=await withBrowser(browserPath,async browser=>{
   assert.equal(await p.evaluate(()=>globalThis.__injected),undefined);
   assert.equal(await p.evaluate(()=>globalThis.Akari),undefined);
   await p.screenshot({path:path.join(dir,'normal-player.png'),fullPage:true});
+  // ■ 止める takes ▶ 動かす's place: a stopped player shows ▶ only.
   await p.locator('#playerStop').click();
-  assert.equal(await p.locator('#playerStop').isDisabled(),true);
+  assert.equal(await p.locator('#playerStop').isHidden(),true);assert.equal(await p.locator('#playerStart').isVisible(),true);
  } finally {await context.close();}
  assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
  // Observe cleanup across fresh contexts, including storage, globals and listeners.

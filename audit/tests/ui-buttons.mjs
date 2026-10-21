@@ -57,11 +57,11 @@ const cases = {
   async 'UI-BUTTON-SOURCE-NAV'(p) {
     for(const m of ['code','blocks']) {
       await mode(p,m); await select(p,'stage'); const before=await fingerprint(p);
-      await visible(p,'#sourceOverviewBtn'); assert.equal(await p.locator('#sourceOverviewBtn').innerText(),'すべてのコード');
+      await visible(p,'#sourceOverviewBtn'); assert.equal(await p.locator('#sourceOverviewBtn').innerText(),'すべての本文');
       await visible(p,'#sourceEditBtn',false); await visible(p,'#sourceStageBtn',false);
       await click(p,'#sourceOverviewBtn'); await visible(p,'#sourceOverview'); await visible(p,'#sourceOverviewBtn',false); await visible(p,'#sourceEditBtn');
       assert.equal(await p.locator('#sourceEditBtn').innerText(),'本文を なおす ところへ もどる'); await click(p,'#sourceEditBtn'); assert.deepEqual(await fingerprint(p),before);
-      await select(p,'sprite-1'); await visible(p,'#sourceStageBtn'); assert.equal(await p.locator('#sourceStageBtn').innerText(),'画面のコード');
+      await select(p,'sprite-1'); await visible(p,'#sourceStageBtn'); assert.equal(await p.locator('#sourceStageBtn').innerText(),'画面の本文');
       await click(p,'#sourceOverviewBtn'); await visible(p,'#sourceStageBtn'); await click(p,'#sourceStageBtn');
       assert.equal(await p.locator('#objectSelect').inputValue(),'stage'); await visible(p,'#sourceStageBtn',false);
     }
@@ -92,11 +92,14 @@ const cases = {
     return {plainCodeLabels:true,blockFolding:true,actionsOutsideFold:true,duplicateDelete:true};
   },
   async 'UI-BUTTON-LEVELS'(p) {
-    assert.deepEqual(await p.locator('#uiLevel option').evaluateAll(es=>es.map(e=>e.value)),['entry','basic','advanced','meijin']);
+    // The levels offered follow the view; a level that cannot be chosen is not in the list (not a disabled option).
+    const offered=()=>p.locator('#uiLevel option').evaluateAll(es=>es.map(e=>e.value+(e.disabled?'(disabled)':'')));
+    await mode(p,'code'); assert.deepEqual(await offered(),['basic','advanced','meijin']);
+    await mode(p,'blocks'); assert.deepEqual(await offered(),['entry','basic','advanced']);
     for(const level of ['basic','advanced']) { await p.locator('#uiLevel').selectOption(level); assert.equal(await p.evaluate(()=>document.body.dataset.uiLevel),level); await p.reload(); assert.equal(await p.locator('#uiLevel').inputValue(),level); }
-    // Existing user preference is an external compatibility fixture, not an app state mutation.
-    await p.evaluate(()=>localStorage.setItem('akari.uiLevel.v1','all')); await p.reload(); assert.equal(await p.locator('#uiLevel').inputValue(),'advanced');
-    return {levels:['basic','advanced'],legacyAll:'advanced',reload:true};
+    // A stored value that is not one of the levels counts as no setting the work can use; it goes on at かんたん.
+    await p.evaluate(()=>localStorage.setItem('akari.uiLevel.v1','all')); await p.reload(); assert.equal(await p.locator('#uiLevel').inputValue(),'basic');
+    return {levels:['basic','advanced'],perView:true,unknownStored:'basic',reload:true};
   },
   async 'UI-BUTTON-PENDING'(p) {
     await fill(p,'1を言う。'); await mode(p,'blocks'); const mainBefore=await fingerprint(p);

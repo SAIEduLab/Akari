@@ -9,7 +9,7 @@ export const childLanguageUiIds = Object.freeze([
 
 export const childInsertionConceptHints=Object.freeze({
   "commandAndBody": "つなぐブロックは、「話す」「待つ」など、してほしいことです。本文（ほんぶん）は、ブロックを じゅん番に ならべるところです。",
-  "palette": "ブロックは なかまごとに分かれています。れい：「よく使う」には「話す」「待つ」があります。「ブロックを さがす」に言葉を入れると、さがせます。「ブロックの見せ方」で、つなぐブロックと はめるブロックの どちらを見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない理由も読めます。"
+  "palette": "ブロックは なかまごとに分かれています。れい：「よく使う」には「話す」「待つ」があります。「ブロックを さがす」に言葉を入れると、さがせます。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない理由も読めます。"
 });
 
 function readable(rows,min=1) {
@@ -53,7 +53,7 @@ function panelReach(observation,method,basic=false) {
   }
   if(basic) {
     const text=observation.bottom.tail.map(r=>r.text).join(' ');
-    assert.ok(text.includes('コードは コピーしません')&&text.includes('決めた ことを 1つ もとにもどす')&&text.includes('入力を やめる'));
+    assert.ok(text.includes('本文は コピーしません')&&text.includes('決めた ことを 1つ もとにもどす')&&text.includes('入力を やめる'));
   }
   if(method==='native-keyboard') {
     panelMeasurement(observation.afterArrow);
@@ -137,10 +137,9 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   assert.equal(typeof copyModes.before.dirty,'boolean');
   for(const step of copyModes.steps) {
     const host=step.mode==='blocks'?'componentActions':'properties';
-    assert.equal(step.actionsHost,host);assert.equal(step.helpHost,host);
-    for(const key of ['adjacent','sameActionsNode','sameHelpNode'])assert.equal(step[key],true);
-    assert.equal(step.helpCount,1);assert.equal(step.text,"見た目と せっていを コピーします。コードは コピーしません。");
-    assert.equal(step.ariaDescription,"見た目と せっていを コピーします。コードは コピーしません。");
+    assert.equal(step.actionsHost,host);assert.equal(step.sameActionsNode,true);
+    assert.equal(step.helpCount,0,'no separate copy line');
+    assert.equal(step.ariaDescription,"見た目と せっていを コピーします。本文は コピーしません。");
     assert.deepEqual(step.state,copyModes.before,'moving one explanation node leaves the actual project/history intact');
   }
   assert.deepEqual(copyModes.after,copyModes.before);
@@ -173,7 +172,7 @@ export function verifyChildLanguageUi(report,inputs,environment) {
     [1180,757,'code'],[1180,757,'blocks'],[1188,848,'code'],[1188,848,'blocks'],[390,844,'code'],[390,844,'blocks'],
   ]);
   for(const observation of responsive.observations) {
-    assert.deepEqual(Object.keys(observation.controls),['saveBtn','exportBtn','runBtn','stopBtn']);
+    assert.deepEqual(Object.keys(observation.controls),['saveBtn','exportBtn','runBtn']);
     for(const rect of Object.values(observation.controls))bounds(rect,observation.viewport);
     readable(observation.help,8);panelReach(observation.tailReach,'native-keyboard',true);assert.deepEqual(observation.reading?.map(r=>r.text),['保存ほぞん','変数へんすう','本文ほんぶん']);
     const text=observation.reading.map(r=>r.text).join(' ');
@@ -198,10 +197,10 @@ export function verifyChildLanguageUiNegatives(report,inputs,environment) {
     ['copy-code-changed',r=>r.results[1].evidence.scriptsAfter.push({targetId:'sprite-copy',event:'start',source:'1を言う。'})],
     ['missing-copy-settings',r=>{r.results[1].evidence.copy={};r.results[1].evidence.original={};}],
     ['missing-copy-mode-observation',r=>delete r.results[1].evidence.copyHelpModes],
-    ['copy-help-old-mode-host',r=>r.results[1].evidence.copyHelpModes.steps[1].helpHost='properties'],
-    ['copy-help-not-adjacent',r=>r.results[1].evidence.copyHelpModes.steps[1].adjacent=false],
+    ['copy-actions-old-mode-host',r=>r.results[1].evidence.copyHelpModes.steps[1].actionsHost='properties'],
+    ['copy-help-line-shown',r=>r.results[1].evidence.copyHelpModes.steps[1].helpCount=1],
     ['copy-mode-history-changed',r=>r.results[1].evidence.copyHelpModes.steps[1].state.history++],
-    ['copy-help-node-recreated',r=>r.results[1].evidence.copyHelpModes.steps[1].sameHelpNode=false],
+    ['copy-actions-node-recreated',r=>r.results[1].evidence.copyHelpModes.steps[1].sameActionsNode=false],
     ['copy-help-aria-changed',r=>r.results[1].evidence.copyHelpModes.steps[1].ariaDescription='コードもコピーします'],
     ['wrong-data-value',r=>r.results[2].evidence.variableValue=10],
     ['reordered-list',r=>r.results[2].evidence.listValue.reverse()],

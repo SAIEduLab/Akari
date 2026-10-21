@@ -5,7 +5,7 @@ export const componentControlSizes = Object.freeze([
   [1920,1080], [1366,768], [1280,720], [1024,768], [760,600], [390,600], [320,500],
 ]);
 export const componentControlTargets = Object.freeze([
-  '.prop-duplicate', '.prop-delete', '.child-copy-help',
+  '.prop-duplicate', '.prop-delete',
   '#componentPickerCore > summary', '#soundQuickAdd', '#assetBtn', '#dataBtn',
 ]);
 export const componentControlIds = Object.freeze([
@@ -14,7 +14,7 @@ export const componentControlIds = Object.freeze([
 ]);
 export const componentControlsFeature = Object.freeze({
   id:'ui:component-controls-scroll', editorMode:'blocks', regionLabel:'部品と作品の道具',
-  separateComponentListScroll:true, targets:componentControlTargets,
+  separateComponentListScroll:false, targets:componentControlTargets,
   preservedState:['project','source','history','redo','dirty'],
   levels:['basic','advanced'], pickerStates:['closed','open'], viewports:componentControlSizes,
   browserZoom:[1.25,1.5,2], testIds:componentControlIds,
@@ -47,7 +47,11 @@ function exercise(observation) {
   observation.targets.forEach(verifyComponentControlReach);
   assert.ok(observation.region.height>=100,'usable action area remains');
   assert.ok(observation.treeHeight>=58,'component list retains a usable row');
-  assert.equal(observation.help,'見た目と せっていを コピーします。コードは コピーしません。');
+  // The column on the right scrolls as one: neither the part list nor the tools are a scroller of their own.
+  assert.equal(observation.listScroller,false,'part list is no scroller of its own');
+  assert.equal(observation.controlsScroller,false,'tools are no scroller of their own');
+  assert.equal(observation.help,'見た目と せっていを コピーします。本文は コピーしません。');
+  assert.equal(observation.separateHelpLines,0,'the copy scope is the button description, not a line of its own');
   assert.ok(observation.clicks.soundFileChooser&&observation.clicks.assetDialog&&observation.clicks.dataDialog,
     'sound file chooser and both visible dialogs must actually open');
   assert.ok(observation.wheelEvents.every(e=>e.trusted&&e.deltaY!==0),'native wheel evidence required');
@@ -71,8 +75,7 @@ export function verifyComponentControls(report,inputs) {
   const keyboard=rows['COMPONENT-CONTROLS-KEYBOARD'];
   assert.deepEqual(keyboard.map(r=>r.level),['basic','advanced']);
   for (const row of keyboard) {
-    preserved(row); assert.ok(row.endScroll>row.startScroll,'End scrolls the focused action region');
-    assert.equal(row.homeScroll,0,'Home returns to its top');
+    preserved(row); assert.ok(row.endScroll>=row.startScroll,'Tab moves the column toward the focused tool');
     for (const selector of ['#soundQuickAdd','#assetBtn','#dataBtn']) {
       const reached=row.forward.find(r=>r.selector===selector),reverse=row.reverse.find(r=>r.selector===selector);
       assert.ok(reached&&reverse,'Tab and Shift+Tab reach '+selector);
@@ -80,12 +83,12 @@ export function verifyComponentControls(report,inputs) {
     }
   }
   const list=rows['COMPONENT-CONTROLS-LIST'];
-  preserved(list); assert.ok(list.treeScroll>0&&list.lastHit,'last of 25 components reached with native wheel');
-  assert.equal(list.controlsScrollBefore,list.controlsScrollAfter,'list wheel does not scroll the action area');
-  assert.equal(list.treeScrollBeforeControls,list.treeScrollAfterControls,'action wheel does not scroll the list');
-  assert.ok(list.controlsScrollAfterWheel>list.controlsScrollAfter,'separate action scroll actually moves');
+  preserved(list); assert.ok(list.lastHit&&list.columnAtLastTile>list.columnBefore,'last of 25 components reached by wheeling the column');
+  assert.ok(list.columnAtTools>=list.columnAtLastTile,'the same column wheel goes on to the tools');
+  assert.equal(list.listScroller,false);assert.equal(list.controlsScroller,false);
+  assert.ok(list.wheelEvents.length>0&&list.wheelEvents.every(e=>e.trusted&&e.deltaY!==0),'native wheel evidence required');
   const touch=rows['COMPONENT-CONTROLS-TOUCH'];
-  preserved(touch); assert.ok(touch.swipes>0&&touch.scrollAfter>touch.scrollBefore,'native touch swipe scrolls action area');
+  preserved(touch); assert.ok(touch.swipes>0&&touch.scrollAfter>touch.scrollBefore,'native touch swipe scrolls the column');
   assert.ok(touch.trustedTouches>0,'Chromium-generated touch events required');
   verifyComponentControlReach(touch.target); assert.equal(touch.dialogOpened,true);
   const zoom=rows['COMPONENT-CONTROLS-ZOOM'];
