@@ -1073,6 +1073,7 @@
       extent: { start: line.start + (line.indent || 0), end: line.end },
       indent: line.indent || 0,
       inline: !!line.inline,
+      rewritten: !!line.rewritten,
     });
     return node;
   }
@@ -1359,7 +1360,9 @@
     }
     return {...line, code:replacement ?? code, mapped:{text:replacement ?? code, positions:mappedPositions},
       start:positions.length ? positions[0]-(line.indent||0) : line.start, physicalStart:line.physicalStart ?? line.start,
-      startColumn:positions.length ? cpLen(line.raw.slice(0,positions[0]-(line.physicalStart??line.start)))+1 : line.startColumn||1, inline:true, comment:''};
+      startColumn:positions.length ? cpLen(line.raw.slice(0,positions[0]-(line.physicalStart??line.start)))+1 : line.startColumn||1, inline:true, comment:'',
+      // Text put in place of what was written (a 名人 rewrite, a subject put in front): its range is not that text's own.
+      rewritten:!!line.rewritten||(replacement!==null&&replacement!==code)};
   }
   function sentenceActor(text,symbols) {
     if (text === '自分') return {kind:'self'};
@@ -1653,7 +1656,8 @@
     if(place)return place;
     // 「ロケット」のところへ行く / マウスのところへ行く (the mouse needs no 「 」), with the time first.
     if(MOVE_VERBS.part.includes(verb)&&(p=surfaceCapture(new RegExp('^、?(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)$','d'),body))){
-      const text=p[1].text,mouse=['マウス','「マウス」'].includes(text);
+      const text=p[1].text,mouse=['マウス','「マウス」'].includes(text),screen=screenPlaceSource(surfaceMask(text),symbols);
+      if(screen)throw new AkariError('P205',screen.message);
       const target=mouse?exprNode('StringLiteral',{value:'マウス'}):componentTarget(e(text,p[1].start),symbols,ctx);
       if(mouse){const range=sourceRange(line.mapped?.positions||[],p[1].start,p[1].end);if(range)SOURCE_RANGES.set(target,{range});}
       const made=node('GOTO_PART',[target]);
@@ -1683,8 +1687,30 @@
     // A 1.4.0 move form names the 1.5.0 one (the proposal is made for the whole line by diagnoseSentenceIntent).
     const removed=removedMoveGuidance(code);
     if(removed)throw new AkariError('P205',removed.message);
-    if(/(?:動く|うごく|進む|すすむ|歩く|あるく)/.test(verb))throw new AkariError('P205','動くときは 歩数を 書きます。れい：前へ10歩進む／'+MOVE_EXAMPLE_HERE);
+    // 「いぬ」のところへ動く / 「いぬ」のところへ1秒かけて行く: a part's place is gone to with 行く, the time first.
+    if((p=surfaceCapture(new RegExp('^、?(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?$','d'),body)))
+      throw new AkariError('P205',partPlaceGuidance(p[1].text,(p[0]||p[2])?.text,verb,!!p[2],symbols).message);
+    // The steps are asked for only when none are written (3回、前へ10歩進む is no move sentence: other readers take it).
+    if(/(?:動く|うごく|進む|すすむ|歩く|あるく)/.test(verb)&&!surfaceMask(body).includes('歩'))throw new AkariError('P205','動くときは 歩数を 書きます。れい：前へ10歩進む／'+MOVE_EXAMPLE_HERE);
     return null;
+  }
+  // 画面のまん中・画面のどこか are no parts: 〜のところへ行く goes to a part or the mouse, and a place of the screen is
+  // written from the bottom-left corner (with the size of the work's screen). null for any other target.
+  function screenPlaceSource(mask,symbols) {
+    const m=/^画面の(?:(まん中|真ん中|まんなか|中央|中心)|(どこか))$/.exec(mask);if(!m)return null;
+    const w=symbols?.project?.stage?.width??640,h=symbols?.project?.stage?.height??400;
+    const source=m[1]?`画面の左下のはしから、右へ${w/2}歩、上へ${h/2}歩のばしょへ行く`:`画面の左下のはしから、右へ0歩から${w}歩のどれか、上へ0歩から${h}歩のどれかのばしょへ行く`;
+    return {source,message:`「〜のところへ行く」の 行き先は、部品か マウスです。画面の ${m[1]?'まん中':'どこか'}へ 行くときは「${source}」と 書きます`};
+  }
+  // 〜のところへ動く, 〜のところへ1秒かけて行く and 画面のまん中のところへ行く name the readable sentence (source: the
+  // sentence without its subject, the time first).
+  function partPlaceGuidance(target,time,verb,timeAfter,symbols) {
+    const screen=screenPlaceSource(surfaceMask(target),symbols),seconds=time?time+'秒かけて、':'';
+    if(screen)return {message:screen.message,source:seconds+screen.source,label:'決めた ばしょへ 行く'};
+    const source=seconds+target+'のところへ行く';
+    return MOVE_VERBS.part.includes(verb)&&timeAfter
+      ? {message:'「〇秒かけて、」は 文の はじめに 書きます。れい：'+source,source,label:'時間を はじめに 書く'}
+      : {message:'部品の ところへは「行く」と 書きます。れい：'+source,source,label:'「行く」と 書く'};
   }
   // The 1.4.0 move forms that are not read (LANGUAGE.md 読めない書き方): each names the 1.5.0 form. A move along the
   // screen's directions means the same from いまのばしょ, so it gets a proposal; a place counted the 1.4.0 way (from the
@@ -1997,7 +2023,12 @@
       }
       // 10歩下がる / 1秒休む / 1回転する: a word Akari does not have, after a number.
       const unknown = /(?:^|て、?|で、?|[0-9０-９.．]+(?:歩|度|秒|個|点|番目)?(?:に|へ|を|だけ|間)?)([\p{L}ー]+(?:する|る|う|く|す|つ|む|ぶ|ぐ))$/u.exec(code);
-      if (nameMessage && unknown && !dataNameKind(unknown[1], symbols, ctx))
+      // A verb of あかり (3回、前へ10歩進む / 3回、右に90度回る) is not said to be missing, and the words before it are no
+      // name to put in 【 】: the sentence around the verb is what does not read.
+      const known = unknown && (Object.values(MOVE_VERBS).some(verbs => verbs.includes(unknown[1])) || SENTENCE_TE_FORMS.some(([, verb]) => verb === unknown[1]));
+      if (nameMessage && known && !dataNameKind(unknown[1], symbols, ctx))
+        throw new AkariError('P201', `この 文は 読めません。書き方を たしかめてください: ${line.code}`, line.lineNo, 1);
+      if (nameMessage && unknown && !known && !dataNameKind(unknown[1], symbols, ctx))
         throw new AkariError('P205', `「${unknown[1]}」という 文は あかりに ありません。「書ける ことば」から 近い 文を えらんでください`, line.lineNo, 1);
       throw error;
     }
@@ -2096,9 +2127,13 @@
     const knownName=name=>!!dataNameKind(name,symbols,ctx)||[...(ctx.localNames||[])].includes(name);
     const reads=source=>{for(const text of [source+'。',source.replace(/、?$/,'、')+'\n  何もしない。']){try{if(parseSyntax(text,{symbols}).ast)return true;}catch(error){if(!(error instanceof AkariError))throw error;}}return false;};
     // 書21: a 1.4.0 move form (右へ10歩動く, よこ100歩、たて50歩のばしょへ行く, よこのばしょを10増やす …) names the 1.5.0 form,
-    // also as one 「〜して、」 of a longer sentence. The proposal rewrites that sentence only, in the whole line.
+    // also as one 「〜して、」 of a longer sentence and after a lead word (そして) or an inline もし…なら、. The proposal
+    // rewrites every such sentence of the chain, in the whole line; the message is the first one's.
     {
-      const lead=new RegExp('^(?:(?:'+LEAD_WORDS+')、)?').exec(mask)[0],clauses=[];let start=lead.length;
+      // A lead word may come right before the old move (そのあと上へ5歩動く): the 1.4.0 forms began with 上へ・下へ too.
+      const leadOf=text=>LEAD_BEFORE.exec(text)?.[0]||new RegExp('^(?:'+LEAD_WORDS+')(?=(?:上|下)(?:へ|に)|よこ|たて|横|縦)').exec(text)?.[0]||'';
+      const lead=leadOf(mask),inlineHead=/^(?:もし.+?(?:なら(?:ば)?|れば|えば|てば|たら)|そうでなければ|でなければ|それ以外なら|そうでないなら|そうでなかったら)、/.exec(mask.slice(lead.length))?.[0]||'';
+      const clauses=[];let start=lead.length+inlineHead.length;
       for(let i=start;i<mask.length;i++){
         if(mask[i]!=='、')continue;
         const pair=SENTENCE_TE_FORMS.find(([te])=>i-start>te.length&&mask.startsWith(te,i-te.length));
@@ -2106,21 +2141,25 @@
       }
       clauses.push({start,end:code.length,pair:null});
       const teForm={動く:'動いて',進む:'進んで'};
-      for(const clause of clauses){
+      let first=null,whole=code;
+      // From the last sentence to the first, so the places of the earlier ones still hold.
+      for(const clause of [...clauses].reverse()){
+        // そのあと上へ5歩動く: a lead word of a later sentence stays in front of it.
+        clause.start+=leadOf(mask.slice(clause.start,clause.end)).length;
         const text=code.slice(clause.start,clause.end),plain=clause.pair?text.slice(0,-clause.pair[0].length)+(clause.pair[0]==='行って'?'行く':clause.pair[1]):text;
         const found=removedMoveGuidance(plain);
         if(!found)continue;
-        let proposal=null,source=found.source;
+        first=found;
+        let source=found.source,rewritten=null;
         // 画面の右へ10歩すべる: the verb is fixed first, then the move form.
         if(source&&!reads(source))source=removedMoveGuidance(source)?.source||source;
         if(source){
-          let rewritten=canonicalStatementSource(source,symbols);
+          rewritten=canonicalStatementSource(source,symbols);
           if(clause.pair){const verb=/(?:動く|進む)$/.exec(rewritten);rewritten=verb?rewritten.slice(0,-2)+teForm[verb[0]]:null;}
-          const whole=rewritten&&code.slice(0,clause.start)+rewritten+code.slice(clause.end);
-          if(whole&&reads(whole))proposal=whole;
         }
-        throw sentenceDiagnostic(found.message,line,proposal?[{label:found.label||'1.5.0の 書き方に する',source:proposal}]:[],{kind:'MotionCommand'});
+        whole=rewritten&&whole!==null?whole.slice(0,clause.start)+rewritten+whole.slice(clause.end):null;
       }
+      if(first)throw sentenceDiagnostic(first.message,line,whole&&reads(whole)?[{label:first.label||'1.5.0の 書き方に する',source:whole}]:[],{kind:'MotionCommand'});
     }
     // 横位置・縦位置 (and マウスの…) are written よこのばしょ・たてのばしょ.
     if(/(?:横|縦)位置/.test(mask)){
@@ -2186,18 +2225,35 @@
       const bare=name=>name&&!/^[「【（]/.test(name)&&!dataNameKind(name,symbols,ctx)&&/^[\p{L}ー0-9０-９]+$/u.test(name);
       if(sound&&bare(sound[2])&&(symbols?.project?.sounds||[]).some(s=>s.name===sound[2]))throw fixed('音の 名前は「 」で かこんで 書きます',code.replace(sound[2],'「'+sound[2]+'」'),'「 」で かこむ','SoundCommand');
       if(signal&&bare(signal[2]))throw fixed('合図の 名前は「 」で かこんで 書きます',code.replace(signal[2]+'の合図','「'+signal[2]+'」の合図'),'「 」で かこむ','Broadcast');}
-    // ゴールに着いたら、: reaching a part is touching it (each time it happens, or once by waiting).
-    if((p=surfaceCapture(/^(?:もし、?)?(.+?)に(?:着|つ)(?:いたら|くと|けば|いた(?:とき|時))、?(.*)$/d,code,mask))&&!/[、。]/.test(surfaceMask(p[0].text))){
-      const name=p[0].text.replace(/^「(.*)」$/,'$1'),edge=/^(?:画面の)?(?:はし|端)$/.test(name),target=edge?'画面のはし':'「'+name+'」',rest=p[1].text,indent=' '.repeat(line.indent||0);
-      const wait=`${target}にふれるまで待つ。`+(rest?`\n${indent}${rest}`:'');
-      throw sentenceDiagnostic(`「${name}」に 着くのは、「${name}」に ふれることです。ふれるたびに するなら「${target}にふれたとき、」、ふれるまで 待つなら「${target}にふれるまで待つ。」と 書きます`,line,
-        reads(`${target}にふれるまで待つ`+(rest?`。\n${rest}`:''))?[{label:'ふれるまで 待つ',source:wait.replace(/。$/,'')}]:[],{kind:'Condition',missing:['touchEventOrWait']});
+    // ゴールに着いたら、: reaching a part is touching it, and 〜たら has the three meanings of 〜にふれたら (C-09): each time
+    // (the heading, offered at the left margin), now (もし…ていれば) or once by waiting (offered when the action is on
+    // this line). With もし written, its meaning (now) comes first. A choice is offered only when it reads.
+    if((p=surfaceCapture(/^(もし、?)?(.+?)に(?:着|つ)(?:いたら|くと|けば|いた(?:とき|時))、?(.*)$/d,code,mask))&&!/[、。]/.test(surfaceMask(p[1].text))){
+      const name=p[1].text.replace(/^「(.*)」$/,'$1'),edge=/^(?:画面の)?(?:はし|端)$/.test(name),target=edge?'画面のはし':'「'+name+'」',rest=p[2].text;
+      const each={label:'ふれる たびに する',source:`${target}にふれたとき、${rest}`},now={label:'いま ふれているかを しらべる',source:`もし${target}にふれていれば、${rest}`},
+        wait=rest?{label:'ふれるまで 待つ',source:`${target}にふれるまで待って、${rest}`}:null;
+      const choices=(p[0]?[now,each,wait]:[each,now,wait]).filter(c=>c&&(c!==each||!line.indent)&&reads(c.source));
+      throw sentenceDiagnostic(`${target}に 着くのは、${target}に ふれることです。ふれる たびに するなら「${target}にふれたとき、」、いま ふれているかを しらべるなら「もし${target}にふれていれば、」、ふれるまで 待つなら「${target}にふれるまで待つ」と 書きます`,line,
+        choices,{kind:'IfStatement',missing:['touchMeaning']});
     }
     // 画面の外へ出たら、: being out is touching the edge of the screen.
     if((p=surfaceCapture(/^(?:もし、?)?画面の(?:外|そと)(?:へ|に)(?:出|で)(?:たら|ると|れば|た(?:とき|時))、?(.*)$/d,code,mask))){
       const source='もし画面のはしにふれていれば、'+p[0].text;
       throw sentenceDiagnostic('画面の はしに 来たかを しらべるときは「もし画面のはしにふれていれば、」と 書きます',line,
         reads(source)?[{label:'画面の はしに ふれているか しらべる',source:source}]:[],{kind:'IfStatement'});
+    }
+    // 画面の外へ出る: no sentence does that; the part moves past the edge and is hidden.
+    if(/^(?:[^、。\u0001]+?は、?)?(?:[^、。]+?秒(?:かけて|で)、?)?画面の(?:外|そと)(?:へ|に)(?:出る|でる|出ます|でます|出ていく|でていく|出て行く|行く|いく|飛び出す|とび出す|とびだす)$/.test(mask))
+      throw sentenceDiagnostic('画面の 外へ 出る 文は ありません。画面の はしの 外まで 動いてから、すがたを かくします。れい：「2秒かけて、いまのばしょから、右へ800歩動く。」と 書いて、次に「すがたをかくす。」と 書きます',line,[],{kind:'MotionCommand'});
+    // 「いぬ」のところへ動く / 「いぬ」のところへ1秒かけて行く / 画面のまん中のところへ行く: the readable sentence, with the
+    // fix when the place is a part, the mouse or a place of the screen.
+    if((p=surfaceCapture(new RegExp('^((?:[^、。\\u0001]+?は、?)?)(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?('+[...MOVE_VERBS.here,...MOVE_VERBS.part].join('|')+')$','d'),code,mask))){
+      const [who,before,target,after,verb]=p,name=target.text.replace(/^「(.*)」$/,'$1'),screen=screenPlaceSource(surfaceMask(target.text),symbols);
+      if(screen||after||!MOVE_VERBS.part.includes(verb.text)){
+        const found=partPlaceGuidance(target.text,(before||after)?.text,verb.text,!!after,symbols),source=who.text+found.source;
+        const known=screen||name==='マウス'||symbols?.project?.components?.some(c=>c.name===name);
+        throw sentenceDiagnostic(found.message,line,known&&reads(source)?[{label:found.label,source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});
+      }
     }
     // 点数が10になったら、 (no もし): waiting or checking is not decided; 10歩進んだら、1秒待つ: an order is 「〜して、」.
     if(!/^もし/.test(mask)&&/になったら、?$/.test(mask))

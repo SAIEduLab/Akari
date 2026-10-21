@@ -309,8 +309,26 @@
       ]
     },
     {
+      "id": "command:MotionCommand:MOVE_BY",
+      "meaning": "いまのばしょから、右へ10歩動く。",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "CORE catalog MotionCommand:MOVE_BY"
+        },
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "LANG statement roundtrip MotionCommand:MOVE_BY"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
       "id": "command:MotionCommand:GOTO",
-      "meaning": "横100、縦50の位置へ行く。",
+      "meaning": "画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -327,16 +345,16 @@
       ]
     },
     {
-      "id": "command:MotionCommand:GLIDE",
-      "meaning": "横200、縦100の位置へ1秒かけて動く。",
+      "id": "command:MotionCommand:GOTO_PART",
+      "meaning": "マウスのところへ行く。",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
-          "id": "CORE catalog MotionCommand:GLIDE"
+          "id": "CORE catalog MotionCommand:GOTO_PART"
         },
         {
           "path": "audit/manifests/product-tests.json",
-          "id": "LANG statement roundtrip MotionCommand:GLIDE"
+          "id": "LANG statement roundtrip MotionCommand:GOTO_PART"
         },
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -391,42 +409,6 @@
         {
           "path": "audit/manifests/product-tests.json",
           "id": "LANG statement roundtrip MotionCommand:SET_DIRECTION"
-        },
-        {
-          "path": "audit/tests/japanese-contract-static.mjs",
-          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
-        }
-      ]
-    },
-    {
-      "id": "command:MotionCommand:SET_X",
-      "meaning": "横位置を100にする。",
-      "testReferences": [
-        {
-          "path": "audit/manifests/product-tests.json",
-          "id": "CORE catalog MotionCommand:SET_X"
-        },
-        {
-          "path": "audit/manifests/product-tests.json",
-          "id": "LANG statement roundtrip MotionCommand:SET_X"
-        },
-        {
-          "path": "audit/tests/japanese-contract-static.mjs",
-          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
-        }
-      ]
-    },
-    {
-      "id": "command:MotionCommand:SET_Y",
-      "meaning": "縦位置を50にする。",
-      "testReferences": [
-        {
-          "path": "audit/manifests/product-tests.json",
-          "id": "CORE catalog MotionCommand:SET_Y"
-        },
-        {
-          "path": "audit/manifests/product-tests.json",
-          "id": "LANG statement roundtrip MotionCommand:SET_Y"
         },
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -1505,8 +1487,8 @@
       ]
     },
     {
-      "id": "MotionCommand:MOVE_DIRECTION",
-      "meaning": "画面の右へ10歩動く。画面の向きへ動き、向きは変えない",
+      "id": "MotionCommand:GOTO",
+      "meaning": "画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。画面の左下のはしから部品のまん中を数える",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -1514,13 +1496,13 @@
         },
         {
           "path": "audit/browser/cases/browser-schemas.cjs",
-          "id": "MotionCommand:MOVE_DIRECTION"
+          "id": "MotionCommand:GOTO"
         }
       ]
     },
     {
-      "id": "MotionCommand:GLIDE_DIRECTION",
-      "meaning": "2秒かけて画面の右へ40歩動く。開始位置から終点へ一回すべる",
+      "id": "MotionCommand:MOVE_BY",
+      "meaning": "いまのばしょから、右へ10歩動く。今いるところから動き、向きは変えない",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -1528,7 +1510,55 @@
         },
         {
           "path": "audit/browser/cases/browser-schemas.cjs",
-          "id": "MotionCommand:GLIDE_DIRECTION"
+          "id": "MotionCommand:MOVE_BY"
+        }
+      ]
+    },
+    {
+      "id": "MotionCommand:MOVE",
+      "meaning": "前へ10歩進む。今の向きへ進む（後ろへは反対の向き）",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "MotionCommand:MOVE"
+        }
+      ]
+    },
+    {
+      "id": "MotionCommand:GOTO_PART",
+      "meaning": "マウスのところへ行く。自分のまん中を、相手のまん中に合わせる",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        },
+        {
+          "path": "audit/browser/cases/browser-schemas.cjs",
+          "id": "MotionCommand:GOTO_PART"
+        }
+      ]
+    },
+    {
+      "id": "MotionCommand:TURN_RIGHT",
+      "meaning": "右に15度回る。",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
+      "id": "MotionCommand:TURN_LEFT",
+      "meaning": "左に15度回る。",
+      "testReferences": [
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
         }
       ]
     },
@@ -1881,78 +1911,8 @@
       ]
     },
     {
-      "id": "MotionCommand:MOVE",
-      "meaning": "前へ10歩進む。",
-      "testReferences": [
-        {
-          "path": "audit/tests/japanese-contract-static.mjs",
-          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
-        }
-      ]
-    },
-    {
-      "id": "MotionCommand:GOTO",
-      "meaning": "横100、縦50の位置へ行く。",
-      "testReferences": [
-        {
-          "path": "audit/tests/japanese-contract-static.mjs",
-          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
-        }
-      ]
-    },
-    {
-      "id": "MotionCommand:GLIDE",
-      "meaning": "横200、縦100の位置へ1秒かけて動く。",
-      "testReferences": [
-        {
-          "path": "audit/tests/japanese-contract-static.mjs",
-          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
-        }
-      ]
-    },
-    {
       "id": "MotionCommand:SET_DIRECTION",
       "meaning": "向きを90度にする。",
-      "testReferences": [
-        {
-          "path": "audit/tests/japanese-contract-static.mjs",
-          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
-        }
-      ]
-    },
-    {
-      "id": "MotionCommand:TURN_RIGHT",
-      "meaning": "右に15度回る。",
-      "testReferences": [
-        {
-          "path": "audit/tests/japanese-contract-static.mjs",
-          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
-        }
-      ]
-    },
-    {
-      "id": "MotionCommand:TURN_LEFT",
-      "meaning": "左に15度回る。",
-      "testReferences": [
-        {
-          "path": "audit/tests/japanese-contract-static.mjs",
-          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
-        }
-      ]
-    },
-    {
-      "id": "MotionCommand:SET_X",
-      "meaning": "横位置を100にする。",
-      "testReferences": [
-        {
-          "path": "audit/tests/japanese-contract-static.mjs",
-          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
-        }
-      ]
-    },
-    {
-      "id": "MotionCommand:SET_Y",
-      "meaning": "縦位置を50にする。",
       "testReferences": [
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -3372,7 +3332,7 @@
     },
     {
       "id": "command:MotionCommand:MOVE",
-      "meaning": "10歩動く",
+      "meaning": "前へ10歩進む（「1秒かけて、」で時間をかけて進む）",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -3389,8 +3349,26 @@
       ]
     },
     {
+      "id": "command:MotionCommand:MOVE_BY",
+      "meaning": "いまのばしょから、右へ10歩、上へ5歩動く（一つの向きだけ、「2秒かけて、」も書ける）",
+      "testReferences": [
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "CORE catalog MotionCommand:MOVE_BY"
+        },
+        {
+          "path": "audit/manifests/product-tests.json",
+          "id": "LANG statement roundtrip MotionCommand:MOVE_BY"
+        },
+        {
+          "path": "audit/tests/japanese-contract-static.mjs",
+          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
+        }
+      ]
+    },
+    {
       "id": "command:MotionCommand:GOTO",
-      "meaning": "横100、縦50の位置へ行く",
+      "meaning": "画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く（「1秒かけて、」も書ける）",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -3407,16 +3385,16 @@
       ]
     },
     {
-      "id": "command:MotionCommand:GLIDE",
-      "meaning": "1秒で横200、縦100の位置へ滑る",
+      "id": "command:MotionCommand:GOTO_PART",
+      "meaning": "「ロケット」のところへ行く／マウスのところへ行く（「1秒かけて、」も書ける）",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
-          "id": "CORE catalog MotionCommand:GLIDE"
+          "id": "CORE catalog MotionCommand:GOTO_PART"
         },
         {
           "path": "audit/manifests/product-tests.json",
-          "id": "LANG statement roundtrip MotionCommand:GLIDE"
+          "id": "LANG statement roundtrip MotionCommand:GOTO_PART"
         },
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -3426,7 +3404,7 @@
     },
     {
       "id": "command:MotionCommand:TURN_RIGHT",
-      "meaning": "右に15度回る",
+      "meaning": "右に15度回る（「1秒かけて、」で時間をかけて回る）",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -3444,7 +3422,7 @@
     },
     {
       "id": "command:MotionCommand:TURN_LEFT",
-      "meaning": "左に15度回る",
+      "meaning": "左に15度回る（「1秒かけて、」で時間をかけて回る）",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -3471,42 +3449,6 @@
         {
           "path": "audit/manifests/product-tests.json",
           "id": "LANG statement roundtrip MotionCommand:SET_DIRECTION"
-        },
-        {
-          "path": "audit/tests/japanese-contract-static.mjs",
-          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
-        }
-      ]
-    },
-    {
-      "id": "command:MotionCommand:SET_X",
-      "meaning": "横位置を100にする",
-      "testReferences": [
-        {
-          "path": "audit/manifests/product-tests.json",
-          "id": "CORE catalog MotionCommand:SET_X"
-        },
-        {
-          "path": "audit/manifests/product-tests.json",
-          "id": "LANG statement roundtrip MotionCommand:SET_X"
-        },
-        {
-          "path": "audit/tests/japanese-contract-static.mjs",
-          "id": "JAPANESE-CONTRACT/CURRENT-CAPABILITY-COVERAGE"
-        }
-      ]
-    },
-    {
-      "id": "command:MotionCommand:SET_Y",
-      "meaning": "縦位置を50にする",
-      "testReferences": [
-        {
-          "path": "audit/manifests/product-tests.json",
-          "id": "CORE catalog MotionCommand:SET_Y"
-        },
-        {
-          "path": "audit/manifests/product-tests.json",
-          "id": "LANG statement roundtrip MotionCommand:SET_Y"
         },
         {
           "path": "audit/tests/japanese-contract-static.mjs",
@@ -6400,7 +6342,7 @@
     },
     {
       "id": "runtime:glide",
-      "meaning": "滑走と他taskの並行実行",
+      "meaning": "「〇秒かけて、」の移動・回転と他taskの並行実行",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -8903,13 +8845,12 @@
       "WaitUntil",
       "ForEach",
       "MotionCommand:MOVE",
+      "MotionCommand:MOVE_BY",
       "MotionCommand:GOTO",
-      "MotionCommand:GLIDE",
+      "MotionCommand:GOTO_PART",
       "MotionCommand:TURN_RIGHT",
       "MotionCommand:TURN_LEFT",
       "MotionCommand:SET_DIRECTION",
-      "MotionCommand:SET_X",
-      "MotionCommand:SET_Y",
       "MotionCommand:POINT_TO",
       "MotionCommand:BOUNCE",
       "LooksCommand:SET_SCALE",
@@ -8974,8 +8915,12 @@
       "EventCount:action",
       "EventCount:click",
       "ContinuousRule",
-      "MotionCommand:MOVE_DIRECTION",
-      "MotionCommand:GLIDE_DIRECTION",
+      "MotionCommand:GOTO",
+      "MotionCommand:MOVE_BY",
+      "MotionCommand:MOVE",
+      "MotionCommand:GOTO_PART",
+      "MotionCommand:TURN_RIGHT",
+      "MotionCommand:TURN_LEFT",
       "WaitBroadcastGroup",
       "TargetReference",
       "CommentLine",
@@ -9010,14 +8955,7 @@
       "StopCommand:THIS",
       "StopCommand:OTHERS",
       "StopCommand:ALL",
-      "MotionCommand:MOVE",
-      "MotionCommand:GOTO",
-      "MotionCommand:GLIDE",
       "MotionCommand:SET_DIRECTION",
-      "MotionCommand:TURN_RIGHT",
-      "MotionCommand:TURN_LEFT",
-      "MotionCommand:SET_X",
-      "MotionCommand:SET_Y",
       "MotionCommand:POINT_TO",
       "MotionCommand:BOUNCE",
       "LooksCommand:FRONT",

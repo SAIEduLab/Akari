@@ -9,6 +9,158 @@
     },
     "annotations": {}
   },
+  "MotionCommand:GOTO": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:GOTO",
+    "fields": {
+      "xDir": "right",
+      "yDir": "up"
+    },
+    "inputs": {
+      "x": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      },
+      "y": {
+        "id": "blockui-3",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 0
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:MOVE_BY": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:MOVE_BY",
+    "fields": {
+      "xDir": "right",
+      "yDir": "up"
+    },
+    "inputs": {
+      "x": {
+        "id": "blockui-2",
+        "schemaId": "NumberLiteral",
+        "fields": {
+          "value": 10
+        },
+        "inputs": {},
+        "bodies": {},
+        "annotations": {}
+      }
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:MOVE": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:MOVE",
+    "fields": {
+      "direction": "forward"
+    },
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 10
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:GOTO_PART": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:GOTO_PART",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "StringLiteral",
+          "fields": {
+            "value": "マウス"
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:TURN_RIGHT": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:TURN_RIGHT",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
+  "MotionCommand:TURN_LEFT": {
+    "id": "blockui-1",
+    "schemaId": "MotionCommand:TURN_LEFT",
+    "fields": {},
+    "inputs": {
+      "args": [
+        {
+          "id": "blockui-2",
+          "schemaId": "NumberLiteral",
+          "fields": {
+            "value": 0
+          },
+          "inputs": {},
+          "bodies": {},
+          "annotations": {}
+        }
+      ]
+    },
+    "bodies": {},
+    "annotations": {
+      "inlineComment": ""
+    }
+  },
   "TargetReference": {
     "id": "blockui-1",
     "schemaId": "TargetReference",
@@ -753,200 +905,9 @@
       "inlineComment": ""
     }
   },
-  "MotionCommand:MOVE": {
-    "id": "blockui-1",
-    "schemaId": "MotionCommand:MOVE",
-    "fields": {},
-    "inputs": {
-      "args": [
-        {
-          "id": "blockui-2",
-          "schemaId": "NumberLiteral",
-          "fields": {
-            "value": 0
-          },
-          "inputs": {},
-          "bodies": {},
-          "annotations": {}
-        }
-      ]
-    },
-    "bodies": {},
-    "annotations": {
-      "inlineComment": ""
-    }
-  },
-  "MotionCommand:GOTO": {
-    "id": "blockui-1",
-    "schemaId": "MotionCommand:GOTO",
-    "fields": {},
-    "inputs": {
-      "args": [
-        {
-          "id": "blockui-2",
-          "schemaId": "NumberLiteral",
-          "fields": {
-            "value": 0
-          },
-          "inputs": {},
-          "bodies": {},
-          "annotations": {}
-        },
-        {
-          "id": "blockui-3",
-          "schemaId": "NumberLiteral",
-          "fields": {
-            "value": 0
-          },
-          "inputs": {},
-          "bodies": {},
-          "annotations": {}
-        }
-      ]
-    },
-    "bodies": {},
-    "annotations": {
-      "inlineComment": ""
-    }
-  },
-  "MotionCommand:GLIDE": {
-    "id": "blockui-1",
-    "schemaId": "MotionCommand:GLIDE",
-    "fields": {},
-    "inputs": {
-      "args": [
-        {
-          "id": "blockui-2",
-          "schemaId": "NumberLiteral",
-          "fields": {
-            "value": 0
-          },
-          "inputs": {},
-          "bodies": {},
-          "annotations": {}
-        },
-        {
-          "id": "blockui-3",
-          "schemaId": "NumberLiteral",
-          "fields": {
-            "value": 0
-          },
-          "inputs": {},
-          "bodies": {},
-          "annotations": {}
-        },
-        {
-          "id": "blockui-4",
-          "schemaId": "NumberLiteral",
-          "fields": {
-            "value": 0
-          },
-          "inputs": {},
-          "bodies": {},
-          "annotations": {}
-        }
-      ]
-    },
-    "bodies": {},
-    "annotations": {
-      "inlineComment": ""
-    }
-  },
   "MotionCommand:SET_DIRECTION": {
     "id": "blockui-1",
     "schemaId": "MotionCommand:SET_DIRECTION",
-    "fields": {},
-    "inputs": {
-      "args": [
-        {
-          "id": "blockui-2",
-          "schemaId": "NumberLiteral",
-          "fields": {
-            "value": 0
-          },
-          "inputs": {},
-          "bodies": {},
-          "annotations": {}
-        }
-      ]
-    },
-    "bodies": {},
-    "annotations": {
-      "inlineComment": ""
-    }
-  },
-  "MotionCommand:TURN_RIGHT": {
-    "id": "blockui-1",
-    "schemaId": "MotionCommand:TURN_RIGHT",
-    "fields": {},
-    "inputs": {
-      "args": [
-        {
-          "id": "blockui-2",
-          "schemaId": "NumberLiteral",
-          "fields": {
-            "value": 0
-          },
-          "inputs": {},
-          "bodies": {},
-          "annotations": {}
-        }
-      ]
-    },
-    "bodies": {},
-    "annotations": {
-      "inlineComment": ""
-    }
-  },
-  "MotionCommand:TURN_LEFT": {
-    "id": "blockui-1",
-    "schemaId": "MotionCommand:TURN_LEFT",
-    "fields": {},
-    "inputs": {
-      "args": [
-        {
-          "id": "blockui-2",
-          "schemaId": "NumberLiteral",
-          "fields": {
-            "value": 0
-          },
-          "inputs": {},
-          "bodies": {},
-          "annotations": {}
-        }
-      ]
-    },
-    "bodies": {},
-    "annotations": {
-      "inlineComment": ""
-    }
-  },
-  "MotionCommand:SET_X": {
-    "id": "blockui-1",
-    "schemaId": "MotionCommand:SET_X",
-    "fields": {},
-    "inputs": {
-      "args": [
-        {
-          "id": "blockui-2",
-          "schemaId": "NumberLiteral",
-          "fields": {
-            "value": 0
-          },
-          "inputs": {},
-          "bodies": {},
-          "annotations": {}
-        }
-      ]
-    },
-    "bodies": {},
-    "annotations": {
-      "inlineComment": ""
-    }
-  },
-  "MotionCommand:SET_Y": {
-    "id": "blockui-1",
-    "schemaId": "MotionCommand:SET_Y",
     "fields": {},
     "inputs": {
       "args": [

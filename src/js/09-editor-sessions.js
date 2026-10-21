@@ -1182,11 +1182,12 @@
     'Say', 'WaitTime', 'RepeatCount', 'LooksCommand:SET_COSTUME',
     'LooksCommand:SET_BACKDROP', 'SoundCommand:TONE_WAIT', 'SoundCommand:SAMPLE_WAIT',
   ]);
+  // かんたん: the three move blocks of はじめて and 〜のところへ行く come first (final call 10), so the first page of
+  // よく使う shows them.
   const BASIC_BLOCK_SCHEMA_IDS = new Set([
-    'Say', 'MotionCommand:GOTO_PART', 'RepeatCount', 'WaitTime',
-    'MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT', 'IfStatement',
-    'LooksCommand:SET_TARGET_TEXT', 'UserActionCall', 'SoundCommand:TONE_WAIT',
-    'MotionCommand:MOVE', 'MotionCommand:SET_DIRECTION',
+    'Say', 'MotionCommand:GOTO', 'MotionCommand:MOVE_BY', 'MotionCommand:MOVE', 'MotionCommand:GOTO_PART',
+    'RepeatCount', 'WaitTime', 'MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT', 'IfStatement',
+    'LooksCommand:SET_TARGET_TEXT', 'UserActionCall', 'SoundCommand:TONE_WAIT', 'MotionCommand:SET_DIRECTION',
     ...ENTRY_BLOCK_SCHEMA_IDS, 'Forever', 'LooksCommand:SHOW', 'LooksCommand:HIDE',
     'Assignment', 'NumericUpdate:ADD', 'ListReplace',
     'PenCommand:DOWN', 'PenCommand:UP', 'PenCommand:SET_COLOR', 'PenCommand:SET_SIZE',
@@ -1294,7 +1295,7 @@
   }
   function tutorialExtensionSteps(course,leaf,offset,tag) {
     const root=i=>['bodies','body',i],steps=[];let ref,value,min=1,max=10;
-    if(leaf==='swim'){steps.push(tutorialInsert(tag+'-random','randomSwim',offset));ref=[...root(offset),'inputs','args',0];value=.5;min=.5;max=2;}
+    if(leaf==='swim'){steps.push(tutorialInsert(tag+'-random','randomSwim',offset));ref=[...root(offset),'inputs','seconds'];value=.5;min=.5;max=2;}
     if(leaf==='zigzag'){
       steps.push(tutorialInsert(tag+'-repeat','repeat',offset),tutorialInsert(tag+'-right','right',0,root(offset)),tutorialInsert(tag+'-left','left',1,root(offset)));
       ref=[...root(offset),'inputs','count'];value=3;min=1;max=5;

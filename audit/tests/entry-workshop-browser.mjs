@@ -209,13 +209,13 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   const file=await p.evaluate(()=>{const project=Akari.makeEmptyProject();project.name='座標取り込みの実操作';
    const first=project.components[0];Object.assign(first,{x:123.75,y:80.25,direction:35,scalePercent:65});
    const second=structuredClone(first);Object.assign(second,{id:'sprite-2',name:'二人目',x:-20.5,y:130.125});second.costumes=second.costumes.map(c=>({...c,id:c.id+'-second'}));second.costumeId+='-second';project.components.push(second);
-   project.scripts=[{id:'position-main',targetId:'sprite-1',event:'start',source:'横25.5、縦－33.25の位置に行く。'}];return Akari.serializeProject(project,Akari.makeDefaultAssetStore());});
+   project.scripts=[{id:'position-main',targetId:'sprite-1',event:'start',source:'画面の左下のはしから、右へ25.5歩、上へ－33.25歩のばしょへ行く。'}];return Akari.serializeProject(project,Akari.makeDefaultAssetStore());});
   await p.locator('#fileInput').setInputFiles({name:'position.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
   await p.waitForFunction(()=>Akari.app.project.name==='座標取り込みの実操作');await p.locator('#objectSelect').selectOption('sprite-1');
   const positions=async()=>p.evaluate(()=>Akari.app.project.components.map(c=>({id:c.id,x:c.x,y:c.y}))),before=await positions(),observations=[];
   const blockValues=()=>p.evaluate(()=>{const s=Akari.app.editorState.main,scalar=n=>n.schemaId==='QuantityLiteral'?scalar(n.inputs.value):n.schemaId.startsWith('UnaryExpression')?-scalar(n.inputs.value):n.fields.value;
-   return s.blockView.bodies.body.filter(n=>['MotionCommand:GOTO','MotionCommand:GLIDE'].includes(n.schemaId)).map(n=>({schema:n.schemaId,values:n.inputs.args.map(scalar)}));});
-  for(const schema of ['MotionCommand:GOTO','MotionCommand:GLIDE']){await p.locator('#blockEditor [data-blockui-schema="'+schema+'"]').click();const values=await blockValues();assert.deepEqual(values[0].values,[25.5,-33.25]);assert.deepEqual(values.at(-1).values.slice(-2),[123.75,80.25]);observations.push({schema,values});}
+   return s.blockView.bodies.body.filter(n=>n.schemaId==='MotionCommand:GOTO').map(n=>({schema:n.schemaId,values:[n.inputs.x,n.inputs.y].map(scalar)}));});
+  for(const schema of ['MotionCommand:GOTO']){await p.locator('#blockEditor [data-blockui-schema="'+schema+'"]').click();const values=await blockValues();assert.deepEqual(values[0].values,[25.5,-33.25]);assert.deepEqual(values.at(-1).values.slice(-2),[123.75,80.25]);observations.push({schema,values});}
   assert.deepEqual(await positions(),before);await p.locator('#stageZoomOut').click();
   const sprite=p.locator('#formSurface .component[data-id="sprite-1"]');await sprite.scrollIntoViewIfNeeded();let box=await sprite.boundingBox();
   await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();await p.mouse.move(box.x+box.width/2+14,box.y+box.height/2+9,{steps:3});await p.keyboard.press('Escape');await p.mouse.up();assert.deepEqual(await positions(),before,'cancel restores confirmed decimals');

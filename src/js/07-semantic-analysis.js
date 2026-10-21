@@ -577,6 +577,11 @@
         }
         if (n.kind === 'MotionCommand' && ['POINT_TO', 'GOTO_PART'].includes(n.op))
           checkComponentTarget(n.args?.[0], null, c, where, '部品', ['マウス']);
+        // 〜のところへ行く goes to a part or the mouse (final call 3): another value (点数, a calculation, a place) would only
+        // fail when it runs, so it stops here. 名人 also goes to a part held in a value.
+        const goal = n.kind === 'MotionCommand' && n.op === 'GOTO_PART' && !c.meijin ? n.args?.[0] : null;
+        if (goal && !['StringLiteral', 'PartRef', 'Hole'].includes(goal.kind) && !(goal.kind === 'VariableRead' && !goal.qualifier && componentByName(goal.name)))
+          add('S304', '「〜のところへ行く」の 行き先には、部品の 名前（れい：「ロケット」）か マウスを 書きます', n, where);
         if (n.kind === 'CloneCommand' && n.op === 'CREATE_TARGET')
           checkComponentTarget(n.args?.[0], ['sprite'], c, where, 'コピーするキャラクター');
         if (
@@ -1555,32 +1560,49 @@
   const NOTICE_VERBS = { Say: '話します', Ask: 'たずねます', SoundCommand: '音を 鳴らします', WaitTime: '待ちはじめます', WaitUntil: '待ちはじめます', BroadcastAndWait: '待ちはじめます' };
   // B-17: 画面の左下のはしから、右へ320歩のばしょへ行く goes to たて0 (the bottom edge). The notice says so and gives the two
   // fixes: keep the place (上へ（たてのばしょ）歩) or write the 0 (上へ0歩). 画面の左下のはしへ行く means 0 on purpose.
+  // The fixes are offered wherever the sentence's own text is known: on its own line, after another sentence of the line,
+  // as an inline body, and for a 名人 group subject (ねこといぬは…: one notice, whose fixes keep the subjects). Inside a
+  // 「〜して、」 chain the sentence was read as rewritten text, so the notice comes without them. A fix is offered only
+  // when the whole text still reads with it.
   function fixedPlaceNotes(project, item, ast) {
     const notes = [], script = project.scripts.find(s => scriptSourceKey(s) === item.key), source = typeof script?.source === 'string' ? script.source : null;
+    const oneLeg = node => { const w = node?.kind === 'MotionCommand' && node.op === 'GOTO' ? MOVE_WRITTEN_LEGS.get(node) : null; return w && !w.originOnly && w.x !== w.y ? w : null; };
+    let context, symbols;
+    const reads = text => {
+      if (context === undefined) { context = sourceRegistry(project).find(r => r.key === item.key)?.context || null; symbols = buildSymbols(project); }
+      return !!context && !!parseSyntax(text, { ...context, key: item.key, symbols }).ast;
+    };
     const visit = node => {
       if (!node || typeof node !== 'object') return;
       if (Array.isArray(node)) { node.forEach(visit); return; }
-      const written = node.kind === 'MotionCommand' && node.op === 'GOTO' ? MOVE_WRITTEN_LEGS.get(node) : null;
-      if (written && !written.originOnly && written.x !== written.y) {
+      const group = node.kind === 'Parallel' ? MEIJIN_GROUP_SUBJECTS.get(node) : undefined;
+      const lanes = group !== undefined && node.lanes?.length && node.lanes.every(l => l.length === 1 && oneLeg(l[0])) ? node.lanes.map(l => l[0]) : null;
+      const goto = lanes ? lanes[0] : node, written = oneLeg(goto);
+      if (written) {
         const missing = written.x ? 'y' : 'x', across = missing === 'x';
         const message = across
           ? 'よこの歩数を書いていないので、右へ0歩（画面の左のはし）へ行きます。よこを今のままにするときは「右へ（よこのばしょ）歩」を書きます'
           : 'たての歩数を書いていないので、上へ0歩（画面の下のはし）へ行きます。たてを今のままにするときは「上へ（たてのばしょ）歩」を書きます';
-        const location = SOURCE_RANGES.get(node), range = location && !location.inline ? location.range : null, proposals = [];
+        const location = SOURCE_RANGES.get(node), range = location && !location.rewritten ? location.range : null, proposals = [];
         if (range && source) {
-          const explicit = STATEMENT_EXPLICIT_ACTORS.has(node), write = leg => {
-            const fixed = { ...node, inlineComment: '', [missing]: exprNode('QuantityLiteral', { unit: '歩', value: leg }) };
-            try { return formatScript({ kind: 'Script', body: [fixed] }, explicit ? {} : { inheritedActor: node.actorRef }).trim().replace(/。$/, ''); }
+          const original = source.slice(range.start, range.end), write = (leg, subject) => {
+            const fixed = { ...goto, inlineComment: '', [missing]: exprNode('QuantityLiteral', { unit: '歩', value: leg }) };
+            try { return formatScript({ kind: 'Script', body: [fixed] }, subject ? {} : { inheritedActor: goto.actorRef }).trim().replace(/。$/, ''); }
             catch (error) { if (error instanceof AkariError) return null; throw error; }
           };
           for (const [label, leg] of [[across ? '「右へ（よこのばしょ）歩」を 書く' : '「上へ（たてのばしょ）歩」を 書く', exprNode('SensorRead', { sensor: across ? '横位置' : '縦位置' })],
             [across ? '「右へ0歩」を 書く' : '「上へ0歩」を 書く', exprNode('NumberLiteral', { value: 0 })]]) {
-            const text = write(leg);
-            if (text) proposals.push({ label, source: text, start: range.start, end: range.end, original: source.slice(range.start, range.end) });
+            let text = lanes ? null : write(leg, STATEMENT_EXPLICIT_ACTORS.has(goto));
+            if (lanes) {
+              const bare = write(leg, false), named = write(leg, true);
+              if (bare && named?.endsWith(bare)) text = group.replace(/、$/, '') + (named.slice(0, -bare.length).endsWith('、') ? '、' : '') + bare;
+            }
+            if (text && reads(source.slice(0, range.start) + text + source.slice(range.end))) proposals.push({ label, source: text, start: range.start, end: range.end, original });
           }
         }
         notes.push({ code: 'I120', notice: true, line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where: item.key, message,
           ...(proposals.length ? { proposals } : {}) });
+        if (lanes) return;
       }
       for (const [k, v] of Object.entries(node)) if (k !== 'sourceSpan' && v && typeof v === 'object') visit(v);
     };

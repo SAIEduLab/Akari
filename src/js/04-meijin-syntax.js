@@ -46,6 +46,10 @@
   const meijinBinderRead = () => exprNode('VariableRead', { name: MEIJIN_BINDER, qualifier: null });
   // A copy removes itself with 消える (the same as このコピーだけを消す).
   const meijinBody = text => text.replace(/(?:消える|きえる)$/, 'このコピーだけを消す');
+  // ねこといぬは… / ねこもいぬも…: the subject words as written, for a fix that rewrites the rest of the sentence
+  // (the notice of B-17 keeps them).
+  const MEIJIN_GROUP_SUBJECTS = new WeakMap();
+  const meijinGroup = (parallel, subject) => { MEIJIN_GROUP_SUBJECTS.set(parallel, subject); return parallel; };
   const MEIJIN_DATA_SUFFIXES = ['の数だけ', 'の値', 'の答え', 'の中身', 'の長さ', 'の文字数', 'の色', 'のどれか', 'の中で', 'の中に', 'のあまり', 'の余り'];
   const MEIJIN_DIRECTIONS = { 前: 'forward', 後ろ: 'backward', 右: 'right', 左: 'left', 上: 'up', 下: 'down' };
   // 十歩 → 10歩, 三百二十秒 → 320秒 (for the message only).
@@ -160,8 +164,13 @@
       actorRef = isMeijinPart(subject[0].text, symbols, scope) ? { kind: 'named', name: meijinBare(subject[0].text) } : meijinValueActor(meijinVariableRead(subject[0].text));
       rest = subject[1].text; explicit = true;
     }
-    if (/^(?:.+?秒に.+?歩の速さで、?)?(?:.+?まで、?)?(?:(?:いま|今)の(?:ばしょ|場所)から、?)?画面の(?:右|左|上|下)(?:へ|に)/.test(surfaceMask(rest)))
-      throw sentenceDiagnostic('動き続ける 文には「画面の」を 書きません。れい：ねこは、1秒に20歩の速さで、画面のはしにふれるまで右へ動き続ける', line, [], { kind: 'MoveUntil' });
+    const screenWay = /^(?:.+?秒に.+?歩の速さで、?)?(?:.+?まで、?)?(?:(?:いま|今)の(?:ばしょ|場所)から、?)?画面の(?:右|左|上|下)(?:へ|に)/.exec(surfaceMask(rest));
+    if (screenWay) {
+      // The fix takes out that 画面の, in the whole line (10秒のあいだ、 in front is kept), as the common rule does.
+      const at = code.length - rest.length + screenWay[0].length - 5, whole = compactOutsideString(line.code);
+      const fixed = whole.endsWith(code) ? whole.slice(0, whole.length - code.length) + code.slice(0, at) + code.slice(at + 3) : null;
+      throw sentenceDiagnostic('動き続ける 文には「画面の」を 書きません。れい：ねこは、1秒に20歩の速さで、画面のはしにふれるまで右へ動き続ける', line, fixed ? [{ label: '「画面の」を とる', source: fixed }] : [], { kind: 'MoveUntil' });
+    }
     const m = surfaceCapture(/^(?:(.+?)秒に(.+?)歩の速さで、?)?(?:(.+?)まで、?)?(?:(?:いま|今)の(?:ばしょ|場所)から、?)?(前|後ろ|右|左|上|下)(?:へ|に)(?:(.+?)秒に(.+?)歩の速さで)?(?:動き続ける|動きつづける|うごき続ける)$/d, rest);
     if (!m) return null;
     const seconds = m[0] || m[4], distance = m[1] || m[5], until = m[2];
@@ -170,6 +179,20 @@
     const local = { ...scope, topicActor: actorRef }, e = text => parseExpression(text, symbols, local);
     return { actorRef, explicit, direction: MEIJIN_DIRECTIONS[m[3].text], seconds: sentenceQuantity(e(seconds.text), '秒'), distance: sentenceQuantity(e(distance.text), '歩'),
       ...(until ? { condition: parseCondition(until.text + 'まで', symbols, local, 'until') } : {}) };
+  }
+
+  // A 1.4.0 move form as the action of 〜あいだ／〜うちに／〜ながら names the 1.5.0 form (B-10), as a sentence of its own
+  // does. The fix rewrites that action in its own verb form (動くあいだ, 動いているうちに, 動きながら) and is offered
+  // when the rewritten action reads. null when the action is no such form.
+  function meijinRemovedMove(action, line, before, after, form, reads) {
+    for (const plain of [action, ...meijinPlainForms(action), ...(form === 'ながら' ? meijinDictionary(action) : [])]) {
+      const found = removedMoveGuidance(plain);
+      if (!found) continue;
+      const stem = found.source && /動く$/.test(found.source) ? found.source.slice(0, -2) : null;
+      const fixed = stem !== null && reads(stem + '動く') ? before + stem + { ながら: '動き', ている: '動いている', plain: '動く' }[form] + after : null;
+      return sentenceDiagnostic(found.message, line, fixed ? [{ label: found.label || '1.5.0の 書き方に する', source: fixed }] : [], { kind: 'Parallel' });
+    }
+    return null;
   }
 
   // In-text procedures: 【ジャンプ】という手順を、次のように作る。 The body is read as the procedure; the sentence
@@ -577,6 +600,8 @@
         const left = attempt(() => read(p[0].text + 'は' + verb));
         if (left) return done([node('Parallel', { lanes: [left, read(p[3].text)] })]);
       }
+      const old = meijinRemovedMove(p[1].text, line, p[0].text + 'が', p[2].text + '、' + p[3].text, /(?:て|で)いる$/.test(surfaceMask(p[1].text)) ? 'ている' : 'plain', text => attempt(() => read(p[0].text + 'は' + text)));
+      if (old) throw old;
       // ねこが動いているうちに: no action to start. Reading it as a state would give the same words two timings.
       if (p[2].text === 'うちに')
         throw sentenceDiagnostic(`「〜しているうちに」は、同時に 始める 動作を 書きます。れい：${p[0].text}が2秒かけて、いまのばしょから、右へ40歩動いているうちに、${p[3].text}`, line, [], { kind: 'Parallel', missing: ['action'] });
@@ -592,6 +617,8 @@
         const first = attempt(() => read(p[0].text + 'は' + verb));
         if (first) return done([node('Parallel', { lanes: [first, read(p[0].text + 'は' + p[2].text)] })]);
       }
+      const old = meijinRemovedMove(p[1].text, line, code.slice(0, p[1].start), 'ながら、' + p[2].text, 'ながら', text => attempt(() => read(p[0].text + 'は' + text)));
+      if (old) throw old;
     }
     // Pしながら、Q with no subject: the two actions of the subject carried on (決まり4).
     if ((p = surfaceCapture(/^([^は]+?)ながら、(.+)$/d, code, mask)) && ['named', 'value'].includes(scope.topicActor?.kind)) {
@@ -599,6 +626,8 @@
         const first = attempt(() => read(verb));
         if (first) return done([node('Parallel', { lanes: [first, read(p[1].text)] })]);
       }
+      const old = meijinRemovedMove(p[0].text, line, '', 'ながら、' + p[1].text, 'ながら', text => attempt(() => read(text)));
+      if (old) throw old;
     }
     // なかまを、できたコピーにする / なかまを、ゴールにふれているものにする: the parts of a set at that moment are kept in
     // a list. A variable holds one part, so a set put into it is stopped.
@@ -617,7 +646,7 @@
       const also = [];
       for (let at = 0, i; (i = mask.indexOf('も', at)) > at && isMeijinPart(code.slice(at, i), symbols, scope); at = i + 1 + (mask[i + 1] === '、' ? 1 : 0)) also.push({ name: code.slice(at, i), end: i + 1 + (mask[i + 1] === '、' ? 1 : 0) });
       if (also.length >= 2 && also.at(-1).end < code.length)
-        return done([node('Parallel', { lanes: also.map(({ name }) => read(name + 'は' + meijinBody(code.slice(also.at(-1).end)))) })]);
+        return done([meijinGroup(node('Parallel', { lanes: also.map(({ name }) => read(name + 'は' + meijinBody(code.slice(also.at(-1).end)))) }), code.slice(0, also.at(-1).end))]);
       const ends = [...mask.matchAll(/[はが]/g)].map(m => m.index).filter(at => at > 0 && at < mask.length - 1);
       for (const at of ends) {
         const phrase = code.slice(0, at), particle = mask[at], restStart = at + 1 + (mask[at + 1] === '、' ? 1 : 0);
@@ -626,7 +655,7 @@
         const rest = code.slice(restStart), order = MEIJIN_SET_WORDS.exec(surfaceMask(rest)), body = meijinBody(order ? rest.slice(order[0].length) : rest);
         // ねこと犬は…あいだ、…: the subject before あいだ is written with が (the parts together).
         if (subject.lanes && particle === 'は' && /(?:あいだ|間|うちに)、/.test(surfaceMask(rest))) throw sentenceDiagnostic(`「〜あいだ」の 前の 主語は「が」で 書きます。れい：${phrase}が${rest.replace(/^、/, '')}`, line, [], { kind: 'Parallel' });
-        if (subject.lanes) return done([node('Parallel', { lanes: subject.lanes.map(name => read(name + 'は' + body)) })]);
+        if (subject.lanes) return done([meijinGroup(node('Parallel', { lanes: subject.lanes.map(name => read(name + 'は' + body)) }), code.slice(0, restStart) + (order ? rest.slice(0, order[0].length) : ''))]);
         if (subject.value) {
           // 主役は前へ10歩進む / 主役が前へ10歩進む: the part in 主役 acts. (点数が10になったら… is no subject: it does not read so.)
           if (order) throw sentenceDiagnostic(`「みんな」「それぞれ」「順番に」は、部品の あつまりに 使います。「${phrase}」は 部品 一つなので、「${phrase}は${body}」と 書きます`, line, [], { kind: 'ParallelEach' });

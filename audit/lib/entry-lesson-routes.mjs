@@ -11,7 +11,7 @@ export function auditRoute(course='score',leaf='goal'){
 export function auditOperation(id,course='score',leaf='goal'){
  const root=i=>['bodies','body',i],parentCount=course==='score'?2:1,offset=3+parentCount,tag=course+'-'+leaf;
  const insert=(key,at,parent=[],body='body')=>({kind:'insert',key,at,parent,body});
- const fields={swim:{ref:[...root(offset),'inputs','args',0],value:1.5},zigzag:{ref:[...root(offset),'inputs','count'],value:2},small:{ref:[...root(offset),'inputs','args',0],value:55},
+ const fields={swim:{ref:[...root(offset),'inputs','seconds'],value:1.5},zigzag:{ref:[...root(offset),'inputs','count'],value:2},small:{ref:[...root(offset),'inputs','args',0],value:55},
  goal:{ref:[...root(offset),'inputs','condition','inputs','right'],value:4},bonus:{ref:[...root(offset),'inputs','condition','inputs','right'],value:4},
  remaining:{ref:[...root(offset),'inputs','args',1,'inputs','args',1,'inputs','args',1,'inputs','left'],value:8},
  melody:{ref:[...root(offset+2),'inputs','args',0],value:740},costume:{ref:[...root(offset+1),'inputs','args',0],value:55},dance:{ref:[...root(offset),'inputs','count'],value:2}};

@@ -150,7 +150,7 @@ const semanticStep=async(s,id)=>{const row=semanticRows[s.id],edits=row.edits||{
   if(edits.value.value!==undefined){const number=(await byId(inner.id)).inputs.value;await editField(number.id,{key:'value',type:'number'},false,edits.value.value);}}
  const result={sentence:await sentenceIs(row),runtime:await runObserve(row)};
  if(edits.actorRef&&categoryOf(s.id)!=='expression')result.restored=await restoreSelf(s.id,edits.actorRef);return result;};
-const SEMANTIC_GENERIC=new Set(['QuantityLiteral','UnitlessRead','ActorQualifiedRead','MotionCommand:MOVE_DIRECTION','MotionCommand:GLIDE_DIRECTION']);
+const SEMANTIC_GENERIC=new Set(['QuantityLiteral','UnitlessRead','ActorQualifiedRead','MotionCommand:MOVE_BY']);
 const fieldChoice=(s,f)=>semanticRows[s.id]?.edits?.[f.key];
 const numberChoice=(s,input,index)=>{const edits=semanticRows[s.id]?.edits||{};if(input.key==='args'&&Array.isArray(edits.args))return edits.args[index];return typeof edits[input.key]==='number'?edits[input.key]:undefined;};
 const genericRow=async(s,evidence)=>{
@@ -266,10 +266,11 @@ function roleUnit(schema,key,index){
  if(['WaitTime','Say'].includes(schema)&&key==='seconds')return '秒';
  if(schema==='ContinuousRule')return {seconds:'秒',distance:'歩'}[key]||null;
  if(['ListInsert','ListReplace','ListDelete','ListRead'].includes(schema)&&key==='index')return '番目';
+ // The move sentences (LANGUAGE.md 745-760): legs in 歩, the time in 秒 on every move and turn block.
+ if(['MotionCommand:GOTO','MotionCommand:MOVE_BY'].includes(schema)&&['x','y'].includes(key))return '歩';
+ if(schema.startsWith('MotionCommand:')&&key==='seconds')return '秒';
  const args={
-  'MotionCommand:MOVE':['歩'],'MotionCommand:GOTO':['歩','歩'],'MotionCommand:GLIDE':['秒','歩','歩'],
-  'MotionCommand:MOVE_DIRECTION':['歩'],'MotionCommand:GLIDE_DIRECTION':['秒','歩'],
-  'MotionCommand:SET_X':['歩'],'MotionCommand:SET_Y':['歩'],'MotionCommand:SET_DIRECTION':['度'],
+  'MotionCommand:MOVE':['歩'],'MotionCommand:SET_DIRECTION':['度'],
   'MotionCommand:TURN_RIGHT':['度'],'MotionCommand:TURN_LEFT':['度'],
   'LooksCommand:SET_SCALE':['％'],'SoundCommand:SET_VOLUME':['％'],
   'SoundCommand:TONE':['Hz','秒'],'SoundCommand:TONE_WAIT':['Hz','秒']
