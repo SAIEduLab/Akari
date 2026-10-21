@@ -93,6 +93,16 @@
           line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where,
         });
       }
+      // A time written below 0 (待つ, 話す, 〇秒かけて動く・回る・〜のところへ行く, 鳴らす) stops before running.
+      const timed = node.kind === 'SoundCommand' && ['TONE', 'TONE_WAIT'].includes(node.op) ? node.args?.[1]
+        : ['WaitTime', 'Say', 'MotionCommand'].includes(node.kind) ? node.seconds : undefined;
+      const time = timed === undefined ? undefined : staticNumericMagnitude(timed);
+      if (time !== undefined && time < 0) diagnostics.push({
+        code: 'R412', message: node.kind === 'WaitTime' ? '待つ 時間は 0より 小さく できません' : node.kind === 'Say' ? '話す 時間は 0より 小さく できません'
+          : node.kind === 'SoundCommand' ? '音は30〜5000Hz、0.01〜60秒です'
+          : ['TURN_RIGHT', 'TURN_LEFT'].includes(node.op) ? '回る 時間（〜秒かけて）は 0より 小さく できません' : '動く 時間（〜秒かけて）は 0より 小さく できません',
+        line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where,
+      });
       for (const [key, value] of Object.entries(node)) {
         if (key === 'sourceSpan' || key === 'actorRef') continue;
         if (Array.isArray(value)) pending.push(...value.slice().reverse());
@@ -473,6 +483,9 @@
           'message',
           'distance',
           'duration',
+          // The legs of 決めたばしょへ行く / いまのばしょから動く.
+          'x',
+          'y',
         ];
         for (const f of exprFields) if (n[f]) analyzeExpr(n[f], c, where);
         for (const x of n.args || []) analyzeExpr(x, c, where);
@@ -562,7 +575,7 @@
             add('S308', `てじゅん「${n.name}」に入れるものは${a.args.length}こです`+namedArgumentDetails(a.args,n.argumentNames), n, where);
           else { checkArguments(n, a, where); analyzeCallable(a, 'action', c.meijin && c.targetType === 'stage' && n.actorRef?.kind !== 'named' ? { ...c, meijinCall: { node: n, where, name: n.name, given: callValues(n) } } : c); }
         }
-        if (n.kind === 'MotionCommand' && n.op === 'POINT_TO')
+        if (n.kind === 'MotionCommand' && ['POINT_TO', 'GOTO_PART'].includes(n.op))
           checkComponentTarget(n.args?.[0], null, c, where, '部品', ['マウス']);
         if (n.kind === 'CloneCommand' && n.op === 'CREATE_TARGET')
           checkComponentTarget(n.args?.[0], ['sprite'], c, where, 'コピーするキャラクター');
@@ -985,7 +998,7 @@
         if (node.kind === 'LooksCommand' && node.op === 'SET_COSTUME') named('costume', node.args?.[0], ownerId);
         if (node.kind === 'LooksCommand' && node.op === 'SET_BACKDROP') named('backdrop', node.args?.[0]);
         if (node.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(node.op)) named('sound', node.args?.[0]);
-        if (node.kind === 'MotionCommand' && node.op === 'POINT_TO') named('component', node.args?.[0], null, ['マウス']);
+        if (node.kind === 'MotionCommand' && ['POINT_TO', 'GOTO_PART'].includes(node.op)) named('component', node.args?.[0], null, ['マウス']);
         if (node.kind === 'CloneCommand' && node.op === 'CREATE_TARGET') named('component', node.args?.[0]);
         if (node.kind === 'LooksCommand' && ['SET_TARGET_TEXT', 'SET_INPUT'].includes(node.op)) named('component', node.args?.[0]);
         if (node.kind === 'SensorRead' && ['INPUT_VALUE', 'DISTANCE_TO', 'TOUCHING'].includes(node.sensor)) named('component', node.arg, null, ['マウス', '端']);
@@ -1540,6 +1553,40 @@
   // sentence runs at once; say so where the next sentence of the same flow has another subject.
   // The notice names what the next sentence does: だんごは すぐ 話します (a sentence that speaks), …すぐ 動きます (any other).
   const NOTICE_VERBS = { Say: '話します', Ask: 'たずねます', SoundCommand: '音を 鳴らします', WaitTime: '待ちはじめます', WaitUntil: '待ちはじめます', BroadcastAndWait: '待ちはじめます' };
+  // B-17: 画面の左下のはしから、右へ320歩のばしょへ行く goes to たて0 (the bottom edge). The notice says so and gives the two
+  // fixes: keep the place (上へ（たてのばしょ）歩) or write the 0 (上へ0歩). 画面の左下のはしへ行く means 0 on purpose.
+  function fixedPlaceNotes(project, item, ast) {
+    const notes = [], script = project.scripts.find(s => scriptSourceKey(s) === item.key), source = typeof script?.source === 'string' ? script.source : null;
+    const visit = node => {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) { node.forEach(visit); return; }
+      const written = node.kind === 'MotionCommand' && node.op === 'GOTO' ? MOVE_WRITTEN_LEGS.get(node) : null;
+      if (written && !written.originOnly && written.x !== written.y) {
+        const missing = written.x ? 'y' : 'x', across = missing === 'x';
+        const message = across
+          ? 'よこの歩数を書いていないので、右へ0歩（画面の左のはし）へ行きます。よこを今のままにするときは「右へ（よこのばしょ）歩」を書きます'
+          : 'たての歩数を書いていないので、上へ0歩（画面の下のはし）へ行きます。たてを今のままにするときは「上へ（たてのばしょ）歩」を書きます';
+        const location = SOURCE_RANGES.get(node), range = location && !location.inline ? location.range : null, proposals = [];
+        if (range && source) {
+          const explicit = STATEMENT_EXPLICIT_ACTORS.has(node), write = leg => {
+            const fixed = { ...node, inlineComment: '', [missing]: exprNode('QuantityLiteral', { unit: '歩', value: leg }) };
+            try { return formatScript({ kind: 'Script', body: [fixed] }, explicit ? {} : { inheritedActor: node.actorRef }).trim().replace(/。$/, ''); }
+            catch (error) { if (error instanceof AkariError) return null; throw error; }
+          };
+          for (const [label, leg] of [[across ? '「右へ（よこのばしょ）歩」を 書く' : '「上へ（たてのばしょ）歩」を 書く', exprNode('SensorRead', { sensor: across ? '横位置' : '縦位置' })],
+            [across ? '「右へ0歩」を 書く' : '「上へ0歩」を 書く', exprNode('NumberLiteral', { value: 0 })]]) {
+            const text = write(leg);
+            if (text) proposals.push({ label, source: text, start: range.start, end: range.end, original: source.slice(range.start, range.end) });
+          }
+        }
+        notes.push({ code: 'I120', notice: true, line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where: item.key, message,
+          ...(proposals.length ? { proposals } : {}) });
+      }
+      for (const [k, v] of Object.entries(node)) if (k !== 'sourceSpan' && v && typeof v === 'object') visit(v);
+    };
+    visit(ast.body); for (const unit of ast.units || []) visit(unit.body);
+    return notes;
+  }
   function projectNotes(project, compiled) {
     const notes = [], seen = new Set();
     const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach'];
@@ -1571,6 +1618,10 @@
       };
       walk(ast.body);
       for (const unit of ast.units || []) walk(unit.body);
+      for (const note of fixedPlaceNotes(project, item, ast)) {
+        const key = note.where + '|' + note.line + '|' + note.column + '|' + note.code;
+        if (!seen.has(key)) { seen.add(key); notes.push(note); }
+      }
       // A word of あかり (大きさ, 向き) that is also the name of the data it may mean: written bare it is the word.
       {
         const owner = project.components.find(c => c.id === item.targetId);
@@ -1627,13 +1678,13 @@
   function syntaxComparison(ast) {
     const consumedUnit = (node, key, i) => {
       if (key === 'count' && node.kind === 'RepeatCount') return '回';
-      if (key === 'seconds' && ['WaitTime', 'Say', 'ContinuousRule'].includes(node.kind)) return '秒';
+      if (key === 'seconds' && ['WaitTime', 'Say', 'ContinuousRule', 'MotionCommand'].includes(node.kind)) return '秒';
+      if (['x', 'y'].includes(key) && node.kind === 'MotionCommand') return '歩';
       if (key === 'distance' && node.kind === 'ContinuousRule') return '歩';
       if (key === 'index' && ['ListItemRead', 'ListInsert', 'ListReplace', 'ListDelete'].includes(node.kind)) return '番目';
       if (key !== 'args') return null;
-      if (node.kind === 'MotionCommand' && !['POINT_TO', 'BOUNCE'].includes(node.op))
-        return ['SET_DIRECTION', 'TURN_RIGHT', 'TURN_LEFT'].includes(node.op) ? '度'
-          : ['GLIDE', 'GLIDE_DIRECTION'].includes(node.op) && i === 0 ? '秒' : '歩';
+      if (node.kind === 'MotionCommand' && !['POINT_TO', 'BOUNCE', 'GOTO_PART'].includes(node.op))
+        return ['SET_DIRECTION', 'TURN_RIGHT', 'TURN_LEFT'].includes(node.op) ? '度' : '歩';
       if (node.kind === 'LooksCommand' && node.op === 'SET_SCALE') return '％';
       if (node.kind === 'SoundCommand')
         return node.op === 'SET_VOLUME' ? '％' : ['TONE', 'TONE_WAIT'].includes(node.op) ? i === 0 ? 'Hz' : '秒' : null;

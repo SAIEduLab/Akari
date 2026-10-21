@@ -4488,7 +4488,7 @@
       const label = def
         ? `${parts[0] === 'action' ? 'てじゅん' : '答えを もとめる'} ${def.name}`
         : `${targetById(loc.targetId)?.name || loc.targetId} / ${runtimeEventText(loc.event)}`;
-      $('#execLocation').textContent = `いまの ばしょ：${label} / ${loc.line}行`;
+      $('#execLocation').textContent = `いま 動いている 文：${label} / ${loc.line}行`;
       if (scheduler?.paused) {
         hideSourceOverview();
         // Runtime document units have their own IDs; editor selection belongs
@@ -4884,7 +4884,7 @@
       confirmTutorialOperation('stop');
       renderAll();
       loadEditor();
-      $('#execLocation').textContent = 'いまの ばしょ：―';
+      $('#execLocation').textContent = 'いま 動いている 文：―';
       setStatus('止めました');
       if(tutorial){tutorialRefresh();focusTutorialTarget();return;}
       if (sourceOverviewOpen) $('#sourceEditBtn').focus({ preventScroll: true });
@@ -5039,6 +5039,26 @@
       updateRunState();
       el.projectName.value = project.name;
     }
+    // The fix of a notice opens its body in the editor and changes it there, so undo and the editor follow it. A body
+    // changed since the check is not touched.
+    function applyNoteProposal(note, proposal) {
+      if (modelLocked() || !flushActiveEditor()) return;
+      const item = compileProject(project).items.find(x => x.key === note.where),
+        script = item && scriptBySourceKey(project, item.documentKey || item.key);
+      if (!script || typeof script.source !== 'string' || script.source.slice(proposal.start, proposal.end) !== proposal.original) {
+        setStatus('本文が かわったので、もう一度「作品チェック」を おしてね');
+        return;
+      }
+      if (script.targetId !== selectedId && !selectObject(script.targetId)) return;
+      currentEvent = script.event; selectedScriptId = script.id || null; loadEditor();
+      const source = script.source.slice(0, proposal.start) + proposal.source + script.source.slice(proposal.end);
+      try {
+        commitSource(mainEditor, source, { atomic: true });
+        renderEditorBinding(mainEditor); refreshEditor();
+        $('#diagnosisModal').classList.remove('show');
+        setStatus('直したよ');
+      } catch (error) { showEditorFailure(mainEditor, error); }
+    }
     function showDiagnosis() {
       if (!flushActiveEditor()) return;
       const c = compileProject(project),
@@ -5070,6 +5090,14 @@
           const p = document.createElement('div');
           p.className = 'diagnosis-note';
           p.textContent = diagnosticLocation(d) + ': ' + d.message;
+          // A notice that names its fix offers it, as a code proposal does (the fix changes the body it is in).
+          for (const proposal of d.proposals || []) {
+            if (typeof proposal.source !== 'string') continue;
+            const fix = document.createElement('button');
+            fix.type = 'button'; fix.dataset.noteFix = ''; fix.textContent = proposal.label || proposal.source; fix.title = proposal.source;
+            fix.onclick = () => applyNoteProposal(d, proposal);
+            p.append(' ', fix);
+          }
           body.appendChild(p);
         }
       }

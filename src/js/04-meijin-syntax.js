@@ -75,7 +75,7 @@
     [/言い終わ/, '「言い終わる」は、「ねこが言い終わるまで待つ」の 形で 書きます'],
     [/(?:と同じように|(?<!次)のように)/, '「〜のように」では、まねる はんいが 決まりません。する ことを 一つずつ 文に 書きます'],
     [/(?:はし|端)まで(?:進む|動く|行く)$/, '速さが 決まりません。「1秒に20歩の速さで、画面のはしにふれるまで前へ動き続ける」のように 書きます'],
-    [/て(?:ください|くれ|ほしい)$/, 'お願いの 形は 読みません。「ねこは右へ10歩動く」のように、する ことを 書きます'],
+    [/て(?:ください|くれ|ほしい)$/, 'お願いの 形は 読みません。「ねこは前へ10歩進む」のように、する ことを 書きます'],
     [/ので、/, '「〜ので」は 理由を 言う ことばで、いつ するかは 決まりません。しらべるときは「もし〜なら、」、そうなるまで 待つときは「〜になったら、」と 書きます'],
     [/ても、/, '「〜ても」では、いつ 何を するかが 決まりません。「もし〜なら、」と「そうでなければ、」で 書きます'],
     [/(?:たり|だり)、.+(?:たり|だり)する$/, '「〜たり、〜たりする」では、どちらを いつ するかが 決まりません。する ことを 一つずつ 文に 書きます'],
@@ -160,7 +160,9 @@
       actorRef = isMeijinPart(subject[0].text, symbols, scope) ? { kind: 'named', name: meijinBare(subject[0].text) } : meijinValueActor(meijinVariableRead(subject[0].text));
       rest = subject[1].text; explicit = true;
     }
-    const m = surfaceCapture(/^(?:(.+?)秒に(.+?)歩の速さで、?)?(?:(.+?)まで、?)?(?:画面の)?(前|後ろ|右|左|上|下)(?:へ|に)(?:(.+?)秒に(.+?)歩の速さで)?(?:動き続ける|動きつづける|うごき続ける)$/d, rest);
+    if (/^(?:.+?秒に.+?歩の速さで、?)?(?:.+?まで、?)?(?:(?:いま|今)の(?:ばしょ|場所)から、?)?画面の(?:右|左|上|下)(?:へ|に)/.test(surfaceMask(rest)))
+      throw sentenceDiagnostic('動き続ける 文には「画面の」を 書きません。れい：ねこは、1秒に20歩の速さで、画面のはしにふれるまで右へ動き続ける', line, [], { kind: 'MoveUntil' });
+    const m = surfaceCapture(/^(?:(.+?)秒に(.+?)歩の速さで、?)?(?:(.+?)まで、?)?(?:(?:いま|今)の(?:ばしょ|場所)から、?)?(前|後ろ|右|左|上|下)(?:へ|に)(?:(.+?)秒に(.+?)歩の速さで)?(?:動き続ける|動きつづける|うごき続ける)$/d, rest);
     if (!m) return null;
     const seconds = m[0] || m[4], distance = m[1] || m[5], until = m[2];
     if (!until === !timed) return null;
@@ -439,7 +441,7 @@
       for (const v of variables) {
         const trial = code.split(v).join(parts[0]);
         if (fails() && attempt(() => readMeijinLine(surfaceLineSlice(line, 0, code.length, trial), env)))
-          return `「${v}」は へんすうです。この 書き方には 部品の 名前を 書きます（部品を 入れた へんすうは「${nameSource(v)}は右へ10歩動く」のように 主語に 使えます）`;
+          return `「${v}」は へんすうです。この 書き方には 部品の 名前を 書きます（部品を 入れた へんすうは「${nameSource(v)}は前へ10歩進む」のように 主語に 使えます）`;
       }
     }
     // 点数が偶数じゃなかったら、: a word of 国語・算数 with an ending that is not read.
@@ -506,17 +508,18 @@
     }
     // ねこは、だんごのところへ行く / …のところへ1秒かけて動く / ねこは、1秒かけてだんごのところへ動く / ゴールまで行く:
     // the centre of the one who goes comes to the centre of the other, where it is when the sentence runs (きょり is
-    // measured between centres too). A variable holding a part stands for either part.
+    // measured between centres too). A variable holding a part stands for either part; マウス is the mouse, as in
+    // common text. The time is the move's optional 〇秒かけて, as for the other move sentences.
     {
       const actorOf = name => isMeijinPart(name, symbols, scope) ? { kind: 'named', name: meijinBare(name) }
         : meijinVariableName(name, symbols, scope) ? meijinValueActor(meijinVariableRead(name)) : null;
       const targetOf = name => isMeijinPart(name, symbols, scope) ? meijinPartRef(name)
-        : meijinVariableName(name, symbols, scope) ? meijinVariableRead(name) : null;
+        : meijinVariableName(name, symbols, scope) ? meijinVariableRead(name) : ['マウス', '「マウス」'].includes(name) ? exprNode('StringLiteral', { value: 'マウス' }) : null;
       // With no subject written, the subject carried on goes (決まり4); with none, the check asks who goes.
       const go = (subject, other, seconds) => {
         const actorRef = subject === null ? { ...(scope.topicActor || { kind: 'self' }) } : actorOf(subject), to = targetOf(other);
         if (!actorRef || !to) return null;
-        const moving = node('MotionCommand', seconds ? { op: 'GLIDE_PART', args: [parseExpression(seconds, symbols, scope), to], actorRef } : { op: 'GOTO_PART', args: [to], actorRef });
+        const moving = node('MotionCommand', { op: 'GOTO_PART', args: [to], ...(seconds ? { seconds: sentenceQuantity(parseExpression(seconds, symbols, scope), '秒') } : {}), actorRef });
         if (subject !== null) STATEMENT_EXPLICIT_ACTORS.add(moving);
         return done([moving]);
       };
@@ -576,7 +579,7 @@
       }
       // ねこが動いているうちに: no action to start. Reading it as a state would give the same words two timings.
       if (p[2].text === 'うちに')
-        throw sentenceDiagnostic(`「〜しているうちに」は、同時に 始める 動作を 書きます。れい：${p[0].text}が2秒かけて画面の右へ40歩動いているうちに、${p[3].text}`, line, [], { kind: 'Parallel', missing: ['action'] });
+        throw sentenceDiagnostic(`「〜しているうちに」は、同時に 始める 動作を 書きます。れい：${p[0].text}が2秒かけて、いまのばしょから、右へ40歩動いているうちに、${p[3].text}`, line, [], { kind: 'Parallel', missing: ['action'] });
     }
     // XはPしながら、YはQ: two parts are written with 〜あいだ.
     if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)ながら、(.+?)(?:は|が)、?(.+)$/d, code, mask)) && isMeijinPart(p[0].text, symbols, scope) && isMeijinPart(p[2].text, symbols, scope)) {
@@ -625,7 +628,7 @@
         if (subject.lanes && particle === 'は' && /(?:あいだ|間|うちに)、/.test(surfaceMask(rest))) throw sentenceDiagnostic(`「〜あいだ」の 前の 主語は「が」で 書きます。れい：${phrase}が${rest.replace(/^、/, '')}`, line, [], { kind: 'Parallel' });
         if (subject.lanes) return done([node('Parallel', { lanes: subject.lanes.map(name => read(name + 'は' + body)) })]);
         if (subject.value) {
-          // 主役は右へ10歩動く / 主役が右へ10歩動く: the part in 主役 acts. (点数が10になったら… is no subject: it does not read so.)
+          // 主役は前へ10歩進む / 主役が前へ10歩進む: the part in 主役 acts. (点数が10になったら… is no subject: it does not read so.)
           if (order) throw sentenceDiagnostic(`「みんな」「それぞれ」「順番に」は、部品の あつまりに 使います。「${phrase}」は 部品 一つなので、「${phrase}は${body}」と 書きます`, line, [], { kind: 'ParallelEach' });
           const nodes = attempt(() => read(body, meijinValueActor(subject.value)));
           if (!nodes) continue;

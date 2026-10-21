@@ -979,6 +979,15 @@
       return candidate;
     }
   }
+  // What a new block takes from the work: the owner's centre (決めたばしょへ行く) and the first other part in the order
+  // the parts were made (〜のところへ行く), or the mouse when there is none. The palette preview shows the same.
+  function blockCreationDefaults(project, targetId) {
+    const component = project?.components?.find(c => c.id === targetId);
+    return {
+      designPosition: component && Number.isFinite(component.x) && Number.isFinite(component.y) ? { x: component.x, y: component.y } : null,
+      partTarget: project?.components?.find(c => c.id !== targetId)?.name || 'マウス',
+    };
+  }
   function computeBlockInsertionAvailability(session, schemaId, location, options = {}) {
     const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
     if (!schema) return { enabled: false, reason: 'この ブロックは 使えません', diagnostics: [] };
@@ -988,9 +997,8 @@
     const creationContext = options.context || session.context || {},
       creationProject = options.project || session.project,
       component = creationProject?.components?.find(c => c.id === creationContext.targetId),
-      designPosition = component && Number.isFinite(component.x) && Number.isFinite(component.y)
-        ? { x: component.x, y: component.y } : null;
-    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft, designPosition });
+      { designPosition, partTarget } = blockCreationDefaults(creationProject, creationContext.targetId);
+    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft, designPosition, partTarget });
     if (schemaId === 'NumberLiteral' && location?.input) {
       const parent = buildBlockIndex(session.blockView).get(location.parentId)?.node;
       if (parent?.schemaId === 'ContinuousRule' && ['seconds', 'distance'].includes(location.input))
@@ -1168,14 +1176,14 @@
     if (value === 'advanced') return 'advanced';
     return 'basic';
   }
+  // The move blocks of はじめて: 決めたばしょへ行く, いまのばしょから動く (its time can be added) and 前へ進む.
   const ENTRY_BLOCK_SCHEMA_IDS = new Set([
-    'MotionCommand:MOVE_DIRECTION', 'MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT',
-    'MotionCommand:GOTO', 'MotionCommand:GLIDE', 'MotionCommand:GLIDE_DIRECTION',
+    'MotionCommand:GOTO', 'MotionCommand:MOVE_BY', 'MotionCommand:MOVE', 'MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT',
     'Say', 'WaitTime', 'RepeatCount', 'LooksCommand:SET_COSTUME',
     'LooksCommand:SET_BACKDROP', 'SoundCommand:TONE_WAIT', 'SoundCommand:SAMPLE_WAIT',
   ]);
   const BASIC_BLOCK_SCHEMA_IDS = new Set([
-    'Say', 'MotionCommand:GLIDE', 'MotionCommand:GOTO', 'RepeatCount', 'WaitTime',
+    'Say', 'MotionCommand:GOTO_PART', 'RepeatCount', 'WaitTime',
     'MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT', 'IfStatement',
     'LooksCommand:SET_TARGET_TEXT', 'UserActionCall', 'SoundCommand:TONE_WAIT',
     'MotionCommand:MOVE', 'MotionCommand:SET_DIRECTION',
@@ -1204,12 +1212,12 @@
   }
   const TUTORIAL_BLOCKS=Object.freeze({
     speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
-    escape:{label:'ちがう ばしょへ にげる',source:'よこ120から540のどれか、たて100から230のどれかのばしょへ行く。'},
-    swim:{label:'ゆっくり泳ぐ',source:'よこ480歩、たて187歩のばしょへ1秒かけて動く。'},
-    randomSwim:{label:'あちこちへ泳ぐ',source:'よこ120から540のどれか、たて100から230のどれかのばしょへ0.5秒かけて動く。'},
+    escape:{label:'ちがう ばしょへ にげる',source:'画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
+    swim:{label:'ゆっくり泳ぐ',source:'1秒かけて、画面の左下のはしから、右へ480歩、上へ187歩のばしょへ行く。'},
+    randomSwim:{label:'あちこちへ泳ぐ',source:'0.5秒かけて、画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
     repeat:{label:'くり返す',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
-    right:{label:'右へ泳ぐ',source:'0.3秒かけて画面の右へ60歩動く。'},
-    left:{label:'左へ泳ぐ',source:'0.3秒かけて画面の左へ60歩動く。'},
+    right:{label:'右へ泳ぐ',source:'0.3秒かけて、いまのばしょから、右へ60歩動く。'},
+    left:{label:'左へ泳ぐ',source:'0.3秒かけて、いまのばしょから、左へ60歩動く。'},
     small:{label:'小さくする',source:'大きさを70％にする。'},
     point:{label:'点数を1ふやす',source:'点数を1増やす。'},
     score:{label:'点数を見せる',source:'「点数ボード」の文字を（「つかまえた：」と点数をつなげた文字）にかえる。'},
@@ -1356,7 +1364,7 @@
     ].filter(([, re]) => re.test(q));
     if (direction.length === 1 && /行[くき]|い[くき]|進[むみ]|すす[むみ]|動[くきか]|うご[くきか]|移動/.test(q)
       && !/回|まわ|向[くき]|む[くき]/.test(q))
-      return {schemaId:'MotionCommand:MOVE_DIRECTION', direction:direction[0][0]};
+      return {schemaId:'MotionCommand:MOVE_BY', direction:direction[0][0]};
     if (/小さ|ちいさ|縮小|縮め/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:50};
     if (/大きく|おおきく|拡大/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:150};
     if (/(?:番目|ばんめ)/.test(q) && /入[れる]|いれ|挿入|そうにゅう/.test(q) && !/置き換|おきか|替え/.test(q)) {
@@ -1391,7 +1399,12 @@
   }
   function configureSearchNode(node, intent) {
     if (!intent || node.schemaId !== intent.schemaId) return node;
-    if (intent.direction) node.fields.direction = intent.direction;
+    // いまのばしょから動く starts as 右へ10歩: the leg moves to the axis of the direction asked for.
+    if (intent.direction && node.schemaId === 'MotionCommand:MOVE_BY') {
+      const vertical = ['up', 'down'].includes(intent.direction);
+      if (vertical && node.inputs.x) { node.inputs.y = node.inputs.x; delete node.inputs.x; }
+      node.fields[vertical ? 'yDir' : 'xDir'] = intent.direction;
+    } else if (intent.direction) node.fields.direction = intent.direction;
     if (intent.scale !== undefined) {
       const oldId = node.inputs.args[0].id;
       node.inputs.args[0] = createBlock('NumberLiteral');
@@ -1446,11 +1459,11 @@
   }
 
   const BLOCK_SEARCH_SYNONYMS = Object.freeze({
-    'MotionCommand:MOVE_DIRECTION': ['画面の右', '画面の左', 'みぎ', 'ひだり', '方向へ進む', '移動'],
+    'MotionCommand:MOVE_BY': ['動く', 'うごく', '移動', 'ばしょ', 'いまのばしょ', '右へ', '左へ', '上へ', '下へ', 'みぎ', 'ひだり', 'うえ', 'した', '歩く', 'ずらす', 'なめらかに動く', '時間をかける'],
     ListInsert: ['挿入', 'そうにゅう', '途中に入れる', '番号の前に入れる'],
-    'MotionCommand:MOVE': ['うごく', '動く', '移動', '進む', 'すすむ', '右へ', '左へ', '前へ'],
-    'MotionCommand:GOTO': ['場所へ行く', '座標', '移動', '位置'],
-    'MotionCommand:GLIDE': ['すべる', 'なめらかに動く', '移動', '時間をかける'],
+    'MotionCommand:MOVE': ['進む', 'すすむ', '前へ', '後ろへ', 'まっすぐ', '歩く', 'あるく', '動く', 'うごく', '移動'],
+    'MotionCommand:GOTO': ['行く', 'いく', 'ばしょ', '場所へ行く', '決めたばしょ', '座標', '移動', '左下のはし'],
+    'MotionCommand:GOTO_PART': ['ところへ行く', '行く', 'いく', 'マウス', '追いかける', 'ついていく', '近づく', 'ばしょ', '移動'],
     'MotionCommand:TURN_RIGHT': ['右回り', '回る', 'まわる', '向きを変える', '回転'],
     'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '向きを変える', '回転'],
     'LooksCommand:SHOW': ['見せる', '表示', '出す'],

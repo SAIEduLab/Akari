@@ -5,22 +5,29 @@
     MotionCommand: Object.freeze({
       palette: '動き',
       operations: Object.freeze({
-        MOVE_DIRECTION: Object.freeze({label:'方向へ動く',inputs:Object.freeze(['歩数']),format:(a,n)=>`${{right:'画面の右',left:'画面の左',up:'画面の上',down:'画面の下',forward:'前',backward:'後ろ'}[n.direction]}へ${a(0,'歩')}動く`}),
-        GLIDE_DIRECTION: Object.freeze({label:'時間をかけて方向へ動く',inputs:Object.freeze(['秒','歩数']),format:(a,n)=>`${a(0,'秒')}かけて${{right:'画面の右',left:'画面の左',up:'画面の上',down:'画面の下',forward:'前',backward:'後ろ'}[n.direction]}へ${a(1,'歩')}動く`}),
-        MOVE: Object.freeze({
-          label: '前へ 進む',
-          inputs: Object.freeze(['歩数']),
-          format: (a) => `前へ${a(0,'歩')}進む`,
-        }),
+        // The four move sentences (LANGUAGE.md 動きの文). A leg is one direction word and its steps, written
+        // horizontal first; an optional time comes first of all (2秒かけて、…).
         GOTO: Object.freeze({
-          label: 'ばしょへ行く',
-          inputs: Object.freeze(['よこの ばしょ', 'たての ばしょ']),
-          format: (a) => `よこ${a(0)}、たて${a(1)}のばしょへ行く`,
+          label: '決めたばしょへ行く',
+          inputs: Object.freeze([]),
+          format: (a, n) => `${moveTimeSource(n)}画面の左下のはしから、${moveLegsSource(n)}のばしょへ行く`,
         }),
-        GLIDE: Object.freeze({
-          label: '時間をかけて ばしょへ動く',
-          inputs: Object.freeze(['秒', 'よこの ばしょ', 'たての ばしょ']),
-          format: (a) => `よこ${a(1)}、たて${a(2)}のばしょへ${a(0,'秒')}かけて動く`,
+        MOVE_BY: Object.freeze({
+          label: 'いまのばしょから動く',
+          inputs: Object.freeze([]),
+          format: (a, n) => `${moveTimeSource(n)}いまのばしょから、${moveLegsSource(n)}動く`,
+        }),
+        // 後ろへ is written with 動く: 進む says forward, 下がる also reads as 下へ.
+        MOVE: Object.freeze({
+          label: '前へ進む',
+          inputs: Object.freeze(['歩数']),
+          format: (a, n) => `${moveTimeSource(n)}${n.direction === 'backward' ? `後ろへ${a(0,'歩')}動く` : `前へ${a(0,'歩')}進む`}`,
+        }),
+        // The centre comes to the other's centre; the mouse is written without 「 」.
+        GOTO_PART: Object.freeze({
+          label: '〜のところへ行く',
+          inputs: Object.freeze(['行く相手']),
+          format: (a, n) => `${moveTimeSource(n)}${n.args?.[0]?.kind === 'StringLiteral' && n.args[0].value === 'マウス' ? 'マウス' : a(0)}のところへ行く`,
         }),
         SET_DIRECTION: Object.freeze({
           label: '向きを決める',
@@ -35,22 +42,12 @@
         TURN_RIGHT: Object.freeze({
           label: '右に回る',
           inputs: Object.freeze(['何度']),
-          format: (a) => `右に${a(0,'度')}回る`,
+          format: (a, n) => `${moveTimeSource(n)}右に${a(0,'度')}回る`,
         }),
         TURN_LEFT: Object.freeze({
           label: '左に回る',
           inputs: Object.freeze(['何度']),
-          format: (a) => `左に${a(0,'度')}回る`,
-        }),
-        SET_X: Object.freeze({
-          label: 'よこの ばしょを決める',
-          inputs: Object.freeze(['よこの ばしょ']),
-          format: (a) => `よこのばしょを${a(0)}にする`,
-        }),
-        SET_Y: Object.freeze({
-          label: 'たての ばしょを決める',
-          inputs: Object.freeze(['たての ばしょ']),
-          format: (a) => `たてのばしょを${a(0)}にする`,
+          format: (a, n) => `${moveTimeSource(n)}左に${a(0,'度')}回る`,
         }),
         POINT_TO: Object.freeze({
           label: 'だれかの方を向く',
@@ -258,7 +255,17 @@
   function formatCommand(node) {
     const command = COMMAND_PRESENTATION[node.kind]?.operations[node.op];
     if (!command) throw new AkariError('P201', `未対応の命令 ${node.kind}:${node.op}`);
-    return command.format((index, unit) => {const slot=sentenceFormFor(node)?.roleSlots.find(role=>role.path===`args.${index}`);if(unit&&slot?.unit!==unit)throw new AkariError('P205','文型の単位の役割が一致しません');const arg=node.args?.[index];if(!unit&&node.kind==='MotionCommand'&&['GOTO','GLIDE'].includes(node.op)&&arg?.kind==='QuantityLiteral'&&arg.unit==='歩'&&arg.value?.kind==='BuiltinCall'&&arg.value.name==='乱数')return formatExpression(arg.value);return unit ? sentenceQuantitySource(arg,slot.unit) : formatExpression(arg);}, node);
+    return command.format((index, unit) => {const slot=sentenceFormFor(node)?.roleSlots.find(role=>role.path===`args.${index}`);if(unit&&slot?.unit!==unit)throw new AkariError('P205','文型の単位の役割が一致しません');const arg=node.args?.[index];return unit ? sentenceQuantitySource(arg,slot.unit) : formatExpression(arg);}, node);
+  }
+  const MOVE_DIRECTION_WORDS = Object.freeze({ right: '右', left: '左', up: '上', down: '下' });
+  // 2秒かけて、 (the time of a move or a turn) is written first, with its comma.
+  function moveTimeSource(n) {
+    return n.seconds ? sentenceQuantitySource(n.seconds, '秒') + 'かけて、' : '';
+  }
+  // 右へ10歩、上へ5歩: the horizontal leg first, whatever order the code was written in.
+  function moveLegsSource(n) {
+    return [['x', 'xDir'], ['y', 'yDir']].filter(([key]) => n[key])
+      .map(([key, dir]) => MOVE_DIRECTION_WORDS[n[dir]] + 'へ' + sentenceQuantitySource(n[key], '歩')).join('、');
   }
   const BLOCK_SCHEMAS = (() => {
     const schemas = [];
@@ -428,12 +435,23 @@
       [expression('condition', 'つづける きまり', true), expression('seconds', '何秒に', 1),
         expression('distance', '何歩の速さ', 20)], [], null,
       { capability: 'continuous-state-motion', semanticRoles: ['actorRef', 'condition', 'direction', 'seconds', 'distance'] });
-    for (const [value, label, labels] of [
-      ['MOVE_DIRECTION', '向きを決めて 動く', ['何歩']],
-      ['GLIDE_DIRECTION', '時間をかけて 向きを決めて 動く', ['何秒で', '何歩']],
-    ]) add('MotionCommand', 'statement', label,
-      [field('direction', '進む向き', 'direction', 'right')], [args(labels)], [], op('op', value),
-      { palette: '動き', capability: 'absolute-direction-motion:' + value });
+    // The move blocks keep one leg per axis (右・左 and 上・下). 決めたばしょへ行く always has both legs; いまのばしょから動く
+    // has one or two. Every move and turn takes an optional time (〇秒かけて、).
+    const seconds = () => input('seconds', 'かける時間', 'expression', { required: false });
+    const legDirections = [field('xDir', 'よこの向き', 'direction', 'right', { choices: ['right', 'left'] }),
+      field('yDir', 'たての向き', 'direction', 'up', { choices: ['up', 'down'] })];
+    add('MotionCommand', 'statement', '決めたばしょへ行く', legDirections,
+      [input('x', 'よこの歩数'), input('y', 'たての歩数'), seconds()], [], op('op', 'GOTO'),
+      { palette: '動き', capability: 'place-motion:GOTO' });
+    add('MotionCommand', 'statement', 'いまのばしょから動く', legDirections,
+      [input('x', 'よこの歩数', 'expression', { required: false }), input('y', 'たての歩数', 'expression', { required: false }), seconds()],
+      [], op('op', 'MOVE_BY'), { palette: '動き', capability: 'place-motion:MOVE_BY' });
+    add('MotionCommand', 'statement', '前へ進む', [field('direction', '進む向き', 'direction', 'forward', { choices: ['forward', 'backward'] })],
+      [args(['何歩']), seconds()], [], op('op', 'MOVE'), { palette: '動き', capability: 'facing-motion:MOVE' });
+    add('MotionCommand', 'statement', '〜のところへ行く', [], [args(['行く相手']), seconds()], [], op('op', 'GOTO_PART'),
+      { palette: '動き', capability: 'part-motion:GOTO_PART' });
+    for (const [value, label] of [['TURN_RIGHT', '右に回る'], ['TURN_LEFT', '左に回る']])
+      add('MotionCommand', 'statement', label, [], [args(['何度']), seconds()], [], op('op', value), { palette: '動き' });
     add('WaitBroadcastGroup', 'statement', 'その合図で始まったことが全部終わるまで待つ',
       [field('broadcastRef', '待つ合図', 'reference', 'その合図')], [], [], null,
       { capability: 'notification-group-wait' });
@@ -850,7 +868,8 @@
     if (type === 'unit' || type === 'direction') {
       const values = type === 'unit' ? ['歩', '度', '秒', '回', '番目', '点', '個', '％', 'Hz']
         : ['right', 'left', 'up', 'down', 'forward', 'backward'];
-      if (!values.includes(value)) blockStructureError(type === 'unit' ? 'たんいを えらんでください' : '進む 向きを えらんでください', path);
+      if (!values.includes(value) || (field.choices && !field.choices.includes(value)))
+        blockStructureError(type === 'unit' ? 'たんいを えらんでください' : '進む 向きを えらんでください', path);
       return value;
     }
     if (type === 'reference' && (typeof value !== 'string' || !value.length))
@@ -1014,10 +1033,14 @@
       node[slot.key] = slot.multiple
         ? Array.from({ length: slot.initialItems ?? slot.minItems }, (_, index) =>
             !draft && schema.id === 'LooksCommand:SET_INPUT' && index === 0
-              ? valueNode('入力らん') : !draft && ['MotionCommand:MOVE', 'MotionCommand:MOVE_DIRECTION'].includes(schema.id) && index === 0
-                ? valueNode(10) : make())
+              ? valueNode('入力らん') : !draft && schema.id === 'MotionCommand:MOVE' && index === 0
+                ? valueNode(10) : !draft && schema.id === 'MotionCommand:GOTO_PART' && index === 0
+                  // The first part in the work other than the body's owner, or the mouse (LANGUAGE.md 動きの文).
+                  ? valueNode(typeof context.partTarget === 'string' && context.partTarget ? context.partTarget : 'マウス') : make())
         : make();
     }
+    // A new いまのばしょから動く moves 右へ10歩; its second leg and the time are added in the block.
+    if (schema.id === 'MotionCommand:MOVE_BY') node.x = valueNode(10);
     for (const slot of schema.bodies)
       node[slot.key] =
         slot.requiredExecutable && (!slot.when || node[slot.when])
@@ -1030,9 +1053,9 @@
     if (!draft && position && Number.isFinite(position.x) && Number.isFinite(position.y)) {
       const coordinate = value => value < 0 || Object.is(value, -0)
         ? { kind: 'UnaryExpression', op: 'NEG', value: valueNode(Math.abs(value)) } : valueNode(value);
-      const positions = { 'MotionCommand:GOTO': [[0,'x'],[1,'y']], 'MotionCommand:GLIDE': [[1,'x'],[2,'y']],
-        'MotionCommand:SET_X': [[0,'x']], 'MotionCommand:SET_Y': [[0,'y']] }[schema.id] || [];
-      for (const [index, key] of positions) node.args[index] = coordinate(position[key]);
+      // A new 決めたばしょへ行く holds the part's current centre (右へ よこ歩、上へ たて歩); a negative place keeps 右へ/上へ
+      // with its sign, as the code writes it.
+      if (schema.id === 'MotionCommand:GOTO') { node.x = coordinate(position.x); node.y = coordinate(position.y); }
     }
     validateSyntaxAst(node, schema.category, { allowHoles: draft || context.allowHoles === true });
     return node;

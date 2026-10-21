@@ -198,7 +198,8 @@
       }
       // ねこは、点数が10になるまで待つ: a wait that names its subject takes 、 after it, so the subject that waits and
       // the subject inside the condition read apart (as in ねこは、3回くり返す and the other headings with a condition).
-      line(depth,actor+(actor&&n.kind==='WaitUntil'?'、':'')+text,comment);if(n.kind!=='Hole'&&!everyone)previousActor=actorRef;
+      // たくどんは、いまのばしょから、…: the comma keeps a long run of kana apart (B-06).
+      line(depth,actor+(actor&&(n.kind==='WaitUntil'||text.startsWith('いまのばしょから'))?'、':'')+text,comment);if(n.kind!=='Hole'&&!everyone)previousActor=actorRef;
     }};
     if(ast.heading)line(0,sentenceHeadingSource(ast.heading));
     emit(ast.body,ast.heading?1:0,options.inheritedActor);

@@ -3642,6 +3642,16 @@
               const p = clamp((now - br.startTime) / br.duration, 0, 1),
                 a = this.runtime.actor(br.runtimeId);
               if (!a) throw new AkariError('R405', '動かす キャラクターや 部品が 見つかりません');
+              // 〇秒かけて、右に90度回る: the direction goes from where it started by the part of the turn; what else
+              // turned the part meanwhile is kept, as for a move.
+              if (br.turn !== undefined) {
+                const next = br.startDirection + br.turn * p, written = normalizeDirection(br.lastDirection),
+                  turned = ((a.direction - written) % 360 + 540) % 360 - 180, other = Math.abs(turned) <= 1e-9 ? 0 : turned;
+                a.direction = normalizeDirection(snapStep(normalizeDirection(ensureFinite(next + other))));
+                br.lastDirection = next;
+                this.ui.render?.();
+                return;
+              }
               if (a) {
                 const nx = ensureFinite(br.startX * (1 - p) + br.targetX * p),
                   ny = ensureFinite(br.startY * (1 - p) + br.targetY * p);
@@ -3935,67 +3945,45 @@
       execMotion(task, n, ctx) {
         const actor = this.runtime.requireActor(ctx),
           a = { ...actor },
-          num = (i) => numberInUnit(evalExpression(n.args[i], ctx),
-            ['SET_DIRECTION', 'TURN_RIGHT', 'TURN_LEFT'].includes(n.op) ? '度' :
-            ['GLIDE', 'GLIDE_DIRECTION'].includes(n.op) && i === 0 ? '秒' : '歩');
+          num = (i) => numberInUnit(evalExpression(n.args[i], ctx), ['SET_DIRECTION', 'TURN_RIGHT', 'TURN_LEFT'].includes(n.op) ? '度' : '歩');
         const before = { x: a.x, y: a.y };
+        // 〇秒かけて (a move or a turn): read first, as it is written first. Where it goes and how far it turns are
+        // fixed when it starts (LANGUAGE.md 動きの文); a time of 0 moves at once.
+        const seconds = n.seconds ? numberInUnit(evalExpression(n.seconds, ctx), '秒') : null;
+        if (seconds !== null && seconds < 0)
+          throw new AkariError('R412', ['TURN_RIGHT', 'TURN_LEFT'].includes(n.op) ? '回る 時間（〜秒かけて）は 0より 小さく できません' : '動く 時間（〜秒かけて）は 0より 小さく できません');
+        const timed = seconds !== null && seconds > 0;
+        const leg = (key, dirKey, back) => n[key] ? numberInUnit(evalExpression(n[key], ctx), '歩') * (n[dirKey] === back ? -1 : 1) : 0;
+        let target = null;
         switch (n.op) {
-          case 'MOVE_DIRECTION': {
-            const d = num(0), v = this.directionVector(n.direction, a);
-            a.x += v.x * d; a.y += v.y * d;
-            break;
-          }
-          // 名人: 〜のところへ行く — the centre comes to the other part's centre (where it is when the sentence runs).
-          case 'GOTO_PART':
-          case 'GLIDE_PART': {
-            const value = evalExpression(n.args.at(-1), ctx);
-            if (!isPart(value)) throw new AkariError('R411', `行き先の へんすうに 入っているのは「${valueText(value)}」で、部品では ありません`);
-            const to = this.runtime.aabb(this.runtime.partActor(value)), from = this.runtime.aabb(a);
-            const x = a.x + to.cx - from.cx, y = a.y + to.cy - from.cy;
-            if (n.op === 'GOTO_PART') { a.x = x; a.y = y; break; }
-            return this.execMotion(task, { ...n, op: 'GLIDE', args: [n.args[0], { kind: 'NumberLiteral', value: x }, { kind: 'NumberLiteral', value: y }] }, ctx);
-          }
-          case 'GLIDE_DIRECTION': {
-            const seconds = num(0), distance = num(1), v = this.directionVector(n.direction, a);
-            return this.execMotion(task, { ...n, op: 'GLIDE', args: [
-              { kind: 'NumberLiteral', value: seconds },
-              { kind: 'NumberLiteral', value: a.x + v.x * distance },
-              { kind: 'NumberLiteral', value: a.y + v.y * distance },
-            ] }, ctx);
-          }
-          case 'MOVE': {
-            const d = num(0);
-            a.x += cosDegrees(a.direction) * d;
-            a.y += sinDegrees(a.direction) * d;
-            break;
-          }
+          // 決めたばしょへ行く / いまのばしょから動く: よこ first, then たて, whatever order they were written in.
           case 'GOTO':
-            a.x = num(0);
-            a.y = num(1);
+          case 'MOVE_BY': {
+            const dx = leg('x', 'xDir', 'left'), dy = leg('y', 'yDir', 'down');
+            target = n.op === 'GOTO' ? { x: dx, y: dy } : { x: a.x + dx, y: a.y + dy };
             break;
-          case 'GLIDE': {
-            const sec = num(0),
-              tx = num(1),
-              ty = num(2);
-            if (sec < 0) throw new AkariError('R412', '動く 時間（〜秒かけて）は 0より 小さく できません');
-            if (sec === 0) {
-              a.x = tx;
-              a.y = ty;
-              break;
+          }
+          // 〜のところへ行く: the centre comes to the other's centre, where it is when the sentence runs. A part with
+          // copies is the part itself (its copies are not looked at); before the pointer enters, the mouse is at 0・0.
+          case 'GOTO_PART': {
+            const value = evalExpression(n.args[0], ctx), from = this.runtime.aabb(a);
+            if (!isPart(value) && typeof value !== 'string') throw new AkariError('R411', `行き先の へんすうに 入っているのは「${valueText(value)}」で、部品では ありません`);
+            let to;
+            if (isPart(value)) to = this.runtime.aabb(this.runtime.partActor(value));
+            else if (value === 'マウス') to = { cx: this.runtime.mouseX, cy: this.runtime.mouseY };
+            else {
+              const base = this.project.components.find((c) => c.name === value), other = base && this.runtime.actor(base.id);
+              if (!other) throw new AkariError('R405', `部品「${value}」がありません`);
+              to = this.runtime.aabb(other);
             }
-            this.block(task, {
-              kind: 'glide',
-              startTime: this.runtime.now(),
-              deadline: ensureFinite(this.runtime.now() + sec * 1000),
-              duration: ensureFinite(sec * 1000),
-              startX: a.x,
-              startY: a.y,
-              targetX: tx,
-              targetY: ty,
-              lastX: a.x,
-              lastY: a.y,
-            });
-            return { requeue: false };
+            target = { x: a.x + to.cx - from.cx, y: a.y + to.cy - from.cy };
+            break;
+          }
+          // 前へ10歩進む / 後ろへ10歩動く: along the direction the part faces.
+          case 'MOVE': {
+            const d = num(0) * (n.direction === 'backward' ? -1 : 1);
+            target = { x: a.x + cosDegrees(a.direction) * d, y: a.y + sinDegrees(a.direction) * d };
+            break;
           }
           case 'POINT_TO': {
             // 名人: いちばん近い… that is not one part turns no one.
@@ -4016,21 +4004,33 @@
           case 'SET_DIRECTION':
             a.direction = num(0);
             break;
+          // 右に回る is clockwise (the direction gets smaller); with a time it turns a little each frame.
           case 'TURN_RIGHT':
-            a.direction -= num(0);
+          case 'TURN_LEFT': {
+            const turn = num(0) * (n.op === 'TURN_RIGHT' ? -1 : 1);
+            if (timed) {
+              ensureFinite(turn);
+              this.block(task, { kind: 'glide', startTime: this.runtime.now(), deadline: ensureFinite(this.runtime.now() + seconds * 1000),
+                duration: ensureFinite(seconds * 1000), startDirection: a.direction, turn, lastDirection: a.direction });
+              return { requeue: false };
+            }
+            a.direction += turn;
             break;
-          case 'TURN_LEFT':
-            a.direction += num(0);
-            break;
-          case 'SET_X':
-            a.x = num(0);
-            break;
-          case 'SET_Y':
-            a.y = num(0);
-            break;
+          }
           case 'BOUNCE':
             this.bounce(a);
             break;
+        }
+        if (target) {
+          ensureFinite(target.x);
+          ensureFinite(target.y);
+          if (timed) {
+            this.block(task, { kind: 'glide', startTime: this.runtime.now(), deadline: ensureFinite(this.runtime.now() + seconds * 1000),
+              duration: ensureFinite(seconds * 1000), startX: a.x, startY: a.y, targetX: target.x, targetY: target.y, lastX: a.x, lastY: a.y });
+            return { requeue: false };
+          }
+          a.x = target.x;
+          a.y = target.y;
         }
         ensureFinite(a.x);
         ensureFinite(a.y);
@@ -4408,8 +4408,13 @@
           }
           if (node.kind === 'Hole') fail('書きかけの ところを さいごまで 書いてください');
           if (Object.hasOwn(node, 'actorRef') && !validActorRef(node.actorRef, node)) fail('動かす キャラクターや 部品が 正しくありません');
-          if (((node.kind === 'MotionCommand' && ['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(node.op)) || node.kind === 'MoveUntil') &&
-            !directions.includes(node.direction)) fail('動く 向きが 正しくありません');
+          if (node.kind === 'MoveUntil' && !directions.includes(node.direction)) fail('動く 向きが 正しくありません');
+          // The move sentences: 前へ／後ろへ, one leg per axis (both for 決めたばしょへ行く), and 〜のところへ行く's partner.
+          if (node.kind === 'MotionCommand' && ((node.op === 'MOVE' && !['forward', 'backward'].includes(node.direction)) ||
+            (['GOTO', 'MOVE_BY'].includes(node.op) && (!['right', 'left'].includes(node.xDir) || !['up', 'down'].includes(node.yDir) ||
+              (node.op === 'GOTO' ? !(node.x && node.y) : !(node.x || node.y)))) ||
+            (node.op === 'GOTO_PART' && (!Array.isArray(node.args) || node.args.length !== 1))))
+            fail('動く 向きが 正しくありません');
           // Values made while running are never saved.
           if (['PartValue', 'DeadlineBound', 'EventCountBound'].includes(node.kind)) fail('動きの 中身が こわれています');
           if (node.argumentNames !== undefined && (!Array.isArray(node.argumentNames) ||

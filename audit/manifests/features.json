@@ -104,16 +104,22 @@
       "source": "前へ10歩進む。"
     },
     {
+      "id": "MotionCommand:MOVE_BY",
+      "kind": "MotionCommand",
+      "op": "MOVE_BY",
+      "source": "いまのばしょから、右へ10歩動く。"
+    },
+    {
       "id": "MotionCommand:GOTO",
       "kind": "MotionCommand",
       "op": "GOTO",
-      "source": "よこ100歩、たて50歩のばしょへ行く。"
+      "source": "画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く。"
     },
     {
-      "id": "MotionCommand:GLIDE",
+      "id": "MotionCommand:GOTO_PART",
       "kind": "MotionCommand",
-      "op": "GLIDE",
-      "source": "よこ200歩、たて100歩のばしょへ1秒かけて動く。"
+      "op": "GOTO_PART",
+      "source": "マウスのところへ行く。"
     },
     {
       "id": "MotionCommand:TURN_RIGHT",
@@ -132,18 +138,6 @@
       "kind": "MotionCommand",
       "op": "SET_DIRECTION",
       "source": "向きを45度にする。"
-    },
-    {
-      "id": "MotionCommand:SET_X",
-      "kind": "MotionCommand",
-      "op": "SET_X",
-      "source": "よこのばしょを100にする。"
-    },
-    {
-      "id": "MotionCommand:SET_Y",
-      "kind": "MotionCommand",
-      "op": "SET_Y",
-      "source": "たてのばしょを50にする。"
     },
     {
       "id": "MotionCommand:POINT_TO",
@@ -510,8 +504,12 @@
     "EventCount:action",
     "EventCount:click",
     "ContinuousRule",
-    "MotionCommand:MOVE_DIRECTION",
-    "MotionCommand:GLIDE_DIRECTION",
+    "MotionCommand:GOTO",
+    "MotionCommand:MOVE_BY",
+    "MotionCommand:MOVE",
+    "MotionCommand:GOTO_PART",
+    "MotionCommand:TURN_RIGHT",
+    "MotionCommand:TURN_LEFT",
     "WaitBroadcastGroup",
     "TargetReference",
     "CommentLine",
@@ -546,14 +544,7 @@
     "StopCommand:THIS",
     "StopCommand:OTHERS",
     "StopCommand:ALL",
-    "MotionCommand:MOVE",
-    "MotionCommand:GOTO",
-    "MotionCommand:GLIDE",
     "MotionCommand:SET_DIRECTION",
-    "MotionCommand:TURN_RIGHT",
-    "MotionCommand:TURN_LEFT",
-    "MotionCommand:SET_X",
-    "MotionCommand:SET_Y",
     "MotionCommand:POINT_TO",
     "MotionCommand:BOUNCE",
     "LooksCommand:FRONT",

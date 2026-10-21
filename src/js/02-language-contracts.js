@@ -235,16 +235,22 @@
         source: '前へ10歩進む',
       },
       {
+        id: 'MotionCommand:MOVE_BY',
+        kind: 'MotionCommand',
+        op: 'MOVE_BY',
+        source: 'いまのばしょから、右へ10歩動く',
+      },
+      {
         id: 'MotionCommand:GOTO',
         kind: 'MotionCommand',
         op: 'GOTO',
-        source: 'よこ100歩、たて50歩のばしょへ行く',
+        source: '画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行く',
       },
       {
-        id: 'MotionCommand:GLIDE',
+        id: 'MotionCommand:GOTO_PART',
         kind: 'MotionCommand',
-        op: 'GLIDE',
-        source: 'よこ200歩、たて100歩のばしょへ1秒かけて動く',
+        op: 'GOTO_PART',
+        source: 'マウスのところへ行く',
       },
       {
         id: 'MotionCommand:TURN_RIGHT',
@@ -263,18 +269,6 @@
         kind: 'MotionCommand',
         op: 'SET_DIRECTION',
         source: '向きを45度にする',
-      },
-      {
-        id: 'MotionCommand:SET_X',
-        kind: 'MotionCommand',
-        op: 'SET_X',
-        source: 'よこのばしょを100にする',
-      },
-      {
-        id: 'MotionCommand:SET_Y',
-        kind: 'MotionCommand',
-        op: 'SET_Y',
-        source: 'たてのばしょを50にする',
       },
       {
         id: 'MotionCommand:POINT_TO',
@@ -850,6 +844,11 @@
           reason =
             '\u6587\u5b57\u30fb\u30dc\u30bf\u30f3\u30fb\u56db\u89d2\u3092\u5148\u306b\u4f5c\u308a\u307e\u3059';
       }
+      // 〜のところへ行く names another part of the work (the first one), or the mouse when there is none.
+      if (x.op === 'GOTO_PART') {
+        const other = project.components.find((c) => c.id !== targetId);
+        if (other) text = `「${other.name}」のところへ行く`;
+      }
       if (x.kind === 'CloneCommand') {
         if (x.op === 'CREATE_TARGET') {
           const c = project.components.find((c) => c.type === 'sprite');
@@ -866,7 +865,8 @@
       }
       add(x.id, labels[x.kind] || 'もし・くり返し', text, 'statement', reason);
     }
-    if (!pure) add('MotionCommand:MOVE_DIRECTION', '動き', '画面の右へ10歩動く。', 'statement',
+    // The timed move is the same block with its time (〇秒かけて、); it is shown as a second example.
+    if (!pure) add('MotionCommand:MOVE_BY:timed', '動き', '1秒かけて、いまのばしょから、右へ10歩動く。', 'statement',
       type === 'stage' ? 'キャラクターや 部品で 使えます' : '');
     for (const b of bindings) {
       activeBinding = {name:b.name, qualifier:b.qualifier, kind:b.kind};
@@ -1135,8 +1135,16 @@
     '押されたキー': 'おされたキー', '以前の値': '前の中身', '新しい値': '新しい中身', '音程': '音の高さ', '音量': '音の大きさ',
     '方向': '向き',
   });
-  // Internal names that are no longer read in code (the owner cut them); the others stay readable.
-  const SENSOR_CUT_WORDS = Object.freeze(['クローンである']);
+  // Internal names that are no longer read in code (the owner cut them); the others stay readable. 位置 is not read
+  // anywhere (B-11): 横位置 is written よこのばしょ.
+  const SENSOR_CUT_WORDS = Object.freeze(['クローンである', '横位置', '縦位置', 'マウスの横位置', 'マウスの縦位置']);
+  // Other spellings read as the same state (場所 and 横・縦 are school kanji); the formatter writes the SENSOR_SURFACES word.
+  const SENSOR_ALIASES = Object.freeze({
+    'よこの場所': '横位置', '横のばしょ': '横位置', '横の場所': '横位置',
+    'たての場所': '縦位置', '縦のばしょ': '縦位置', '縦の場所': '縦位置',
+    'マウスのよこの場所': 'マウスの横位置', 'マウスの横のばしょ': 'マウスの横位置', 'マウスの横の場所': 'マウスの横位置',
+    'マウスのたての場所': 'マウスの縦位置', 'マウスの縦のばしょ': 'マウスの縦位置', 'マウスの縦の場所': 'マウスの縦位置',
+  });
   // Block names: the written word, with spaces where a child reads them in pieces.
   const SENSOR_LABELS = Object.freeze({
     'マウスの横位置': 'マウスの よこのばしょ', 'マウスの縦位置': 'マウスの たてのばしょ', 'マウスが押されている': 'マウスが おされている',
@@ -1146,7 +1154,7 @@
   const BUILTIN_SURFACES = Object.freeze({ '余り': 'あまり' });
   const BUILTIN_LABELS = Object.freeze({ '数': '数に直す', '文字': '文字に直す', '乱数': 'AからBのどれか', '余り': 'あまり' });
   // Every written sensor word is reserved like the internal one, so a same-named datum is written 【name】.
-  const RESERVED = new Set([...GRAMMAR_REGISTRY.reserved, ...GRAMMAR_REGISTRY.sensors, ...Object.values(SENSOR_SURFACES)]);
+  const RESERVED = new Set([...GRAMMAR_REGISTRY.reserved, ...GRAMMAR_REGISTRY.sensors, ...Object.values(SENSOR_SURFACES), ...Object.keys(SENSOR_ALIASES)]);
   const GRAMMAR_HINTS = GRAMMAR_REGISTRY.hints;
 
   // Ephemeral UTF-16 source coordinates. Never serialized or part of the semantic AST.

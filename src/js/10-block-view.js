@@ -1048,7 +1048,7 @@
     }
     function previewNode(schema, candidate) {
       const node =
-          candidate || createBlock(schema.id, { ...context(), idPrefix: viewId + '-preview' }),
+          candidate || createBlock(schema.id, { ...context(), ...blockCreationDefaults(project(), context().targetId), idPrefix: viewId + '-preview' }),
         box = E('span', 'blockui-preview', null, { 'data-shape-kind': blockShapeKind(schema) }),
         main = E('span', 'blockui-preview-main');
       attachShape(box, blockShapeKind(schema));
@@ -1236,7 +1236,8 @@
             'data-schema-id': schema.id,
             'data-lesson-block': schema.lessonKey || '',
             title: a.reason || schema.label,
-            'aria-label': (schema.searchLabel || schema.label) + 'を入れる',
+            // The block's name in 「 」, so a name such as 〜のところへ行く reads apart from を入れる (B-15).
+            'aria-label': '「' + (schema.searchLabel || schema.label) + '」を入れる',
             'data-search-binding': schema.candidateKey || '',
             'aria-disabled': !a.enabled,
           },
@@ -1462,8 +1463,9 @@
       }
       if (field.type === 'unit' || field.type === 'direction') {
         input = E('select', '', null, attrs);
+        // The direction words of the language (右へ, 上へ, 前へ …); a field may offer only some of them.
         const choices = field.type === 'unit' ? ['歩', '度', '秒', '回', '番目', '点', '個', '％', 'Hz'].map(v => [v, v])
-          : [['right', '画面の右'], ['left', '画面の左'], ['up', '画面の上'], ['down', '画面の下'], ['forward', '前'], ['backward', '後ろ']];
+          : [['right', '右'], ['left', '左'], ['up', '上'], ['down', '下'], ['forward', '前'], ['backward', '後ろ']].filter(([v]) => !field.choices || field.choices.includes(v));
         for (const [v, label] of choices) input.append(E('option', '', label, { value: v }));
         input.value = value;
       } else if (field.type === 'boolean' || field.type === 'qualifier') {
@@ -2119,6 +2121,94 @@
       }
       return wrap;
     }
+    function renderMotionBlock(node, schema, main) {
+      const value = schema.discriminator.value, extra = editDisclosure(node, 'extra', 'なおす', 'blockui-extra'), extraControls = E('div', 'blockui-extra-controls');
+      extra.querySelector('summary').setAttribute('aria-label', schema.label + 'を なおす');
+      extra.append(extraControls);
+      const text = s => E('span', 'blockui-phrase-text', s), fieldOf = key => schema.fields.find(f => f.key === key);
+      const numberField = BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value');
+      // A number is its own box with the unit after it; a range shows the unit on both ends (1 秒から 3 秒の どれか, as
+      // the code writes it); anything else keeps its slot.
+      const quantity = (key, unit, index) => {
+        const slot = schema.inputs.find(s => s.key === key), child = index === undefined ? node.inputs[key] : node.inputs[key]?.[index];
+        const wrapper = child?.schemaId === 'QuantityLiteral' && child.fields.unit === unit ? child : null, inner = wrapper ? wrapper.inputs.value : child;
+        if (inner?.schemaId === 'NumberLiteral') main.append(fieldControl(inner, numberField), text(unit));
+        else if (inner?.schemaId === 'BuiltinCall:乱数' && inner.inputs.args?.length === 2) {
+          const args = BLOCK_SCHEMA_BY_ID.get('BuiltinCall:乱数').inputs.find(s => s.key === 'args');
+          main.append(renderInput(inner, args, 0), text(unit + 'から'), renderInput(inner, args, 1), text(unit + 'のどれか'));
+        } else if (wrapper) main.append(renderInput(wrapper, BLOCK_SCHEMA_BY_ID.get('QuantityLiteral').inputs.find(s => s.key === 'value')), text(unit));
+        else main.append(renderInput(node, slot, index), text(unit));
+      };
+      const actor = fieldOf('actorRef');
+      if (actor) main.append(fieldControl(node, actor));
+      // The time comes first. Of the move blocks, はじめて adds it only to いまのばしょから動く (not to 決めたばしょへ行く
+      // or 前へ進む); a time already written can always be taken off.
+      const timeLabel = { GOTO: '時間をかけて行く', GOTO_PART: '時間をかけて行く', MOVE_BY: '時間をかけて動く', MOVE: '時間をかけて進む', TURN_RIGHT: '時間をかけて回る', TURN_LEFT: '時間をかけて回る' }[value];
+      if (node.inputs.seconds) {
+        quantity('seconds', '秒'); main.append(text('かけて、'));
+        extraControls.append(button('時間を外す', 'motion-untimed', () => operate({ type: 'optional-input-remove', parentId: node.id, input: 'seconds' })));
+      } else if (doc.body?.dataset.uiLevel !== 'entry' || !['GOTO', 'MOVE'].includes(value))
+        extraControls.append(button(timeLabel, 'motion-timed', () => { const seconds = createBlock('NumberLiteral', { idPrefix: viewId }); seconds.fields.value = 1; return operate({ type: 'expression', parentId: node.id, input: 'seconds', node: seconds }); }));
+      const steps = n => { const literal = createBlock('NumberLiteral', { idPrefix: viewId }); literal.fields.value = n; return literal; };
+      if (value === 'GOTO' || value === 'MOVE_BY') {
+        main.append(text(value === 'GOTO' ? '画面の左下のはしから、' : 'いまのばしょから、'));
+        const both = !!(node.inputs.x && node.inputs.y);
+        if (value === 'MOVE_BY' && !both) {
+          // One direction: 右・左・上・下 in one choice; a choice on the other axis moves the steps there (one undo step).
+          const key = node.inputs.x ? 'x' : 'y', current = node.fields[key === 'x' ? 'xDir' : 'yDir'];
+          const select = E('select', 'blockui-motion-direction', null, { 'aria-label': schema.label + 'の 向き', 'data-block-id': node.id, 'data-blockui-action': 'motion-direction' });
+          for (const [v, word] of [['right', '右'], ['left', '左'], ['up', '上'], ['down', '下']]) select.append(E('option', '', word, { value: v }));
+          select.value = current; select.disabled = isLocked() || !!options.readOnly;
+          listen(select, 'change', () => {
+            const to = select.value, toKey = ['right', 'left'].includes(to) ? 'x' : 'y', replacement = structuredClone(node);
+            if (toKey !== key) { replacement.inputs[toKey] = replacement.inputs[key]; delete replacement.inputs[key]; }
+            replacement.fields[toKey === 'x' ? 'xDir' : 'yDir'] = to;
+            operate({ type: 'replace', id: node.id, node: replacement });
+          });
+          main.append(select, text('へ')); quantity(key, '歩');
+        } else {
+          // 決めたばしょへ行く writes 右へ・上へ as words; a choice is shown only where the code wrote 左へ or 下へ.
+          for (const [key, dirKey, plain] of [['x', 'xDir', 'right'], ['y', 'yDir', 'up']]) {
+            if (!node.inputs[key]) continue;
+            if (key === 'y' && node.inputs.x) main.append(text('、'));
+            if (value === 'GOTO' && node.fields[dirKey] === plain) main.append(text(plain === 'right' ? '右へ' : '上へ'));
+            else main.append(fieldControl(node, fieldOf(dirKey)), text('へ'));
+            quantity(key, '歩');
+          }
+        }
+        main.append(text(value === 'GOTO' ? 'のばしょへ行く' : '動く'));
+        if (value === 'MOVE_BY') {
+          if (!node.inputs.y) extraControls.append(button('＋ たてにも動く', 'motion-leg-add-y', () => operate({ type: 'expression', parentId: node.id, input: 'y', node: steps(10) })));
+          if (!node.inputs.x) extraControls.append(button('＋ よこにも動く', 'motion-leg-add-x', () => operate({ type: 'expression', parentId: node.id, input: 'x', node: steps(10) })));
+          if (both) extraControls.append(button('たてを外す', 'motion-leg-remove-y', () => operate({ type: 'optional-input-remove', parentId: node.id, input: 'y' })),
+            button('よこを外す', 'motion-leg-remove-x', () => operate({ type: 'optional-input-remove', parentId: node.id, input: 'x' })));
+        }
+      } else if (value === 'MOVE') {
+        main.append(fieldControl(node, fieldOf('direction')), text('へ')); quantity('args', '歩', 0);
+        main.append(text(node.fields.direction === 'backward' ? '動く' : '進む'));
+      } else if (value === 'GOTO_PART') {
+        // The other is a part of the work (not the body's owner) or the mouse.
+        const target = node.inputs.args[0];
+        if (target?.schemaId === 'StringLiteral') {
+          const owner = subjectName(node), names = [...(project()?.components || []).map(c => c.name).filter(name => name !== owner), 'マウス'];
+          if (!names.includes(target.fields.value)) names.unshift(target.fields.value);
+          const select = E('select', 'blockui-motion-target', null, { 'aria-label': schema.label + 'の 相手', 'data-block-id': node.id, 'data-blockui-action': 'motion-target' });
+          for (const name of names) select.append(E('option', '', name === 'マウス' ? 'マウス' : '「' + name + '」', { value: name }));
+          select.value = target.fields.value; select.disabled = isLocked() || !!options.readOnly;
+          // The whole sentence is written again, so the mouse reads マウス (not 「マウス」) as the code writes it.
+          listen(select, 'change', () => {
+            const replacement = structuredClone(node);
+            replacement.inputs.args[0].fields.value = select.value;
+            operate({ type: 'replace', id: node.id, node: replacement });
+          });
+          main.append(select);
+        } else main.append(renderInput(node, schema.inputs.find(s => s.key === 'args'), 0));
+        main.append(text('のところへ行く'));
+      } else {
+        main.append(text(value === 'TURN_RIGHT' ? '右に' : '左に')); quantity('args', '度', 0); main.append(text('回る'));
+      }
+      if (extraControls.childElementCount) main.append(extra);
+    }
     function renderPhrase(node, schema, main) {
       if (
         ['NumberLiteral', 'StringLiteral', 'BooleanLiteral', 'CommentLine'].includes(schema.kind)
@@ -2156,16 +2246,25 @@
               typeof following === 'string' && following.startsWith(unit))
             displayParts[i + 1] = following.slice(unit.length);
         }
+        // 50％から150％のどれか: a range in a slot with a fixed unit shows the unit on both ends, as the code writes it.
+        const unitRange = part => {
+          const path = part.slot.key + (part.index === undefined ? '' : '.' + part.index), unit = form?.roleSlots.find(role => role.path === path)?.unit;
+          const values = node.inputs?.[part.slot.key], value = Array.isArray(values) ? values[part.index] : values;
+          const inner = value?.schemaId === 'QuantityLiteral' && value.fields?.unit === unit ? value.inputs.value : null;
+          if (!unit || inner?.schemaId !== 'BuiltinCall:乱数' || inner.inputs.args?.length !== 2) return null;
+          const args = BLOCK_SCHEMA_BY_ID.get('BuiltinCall:乱数').inputs.find(s => s.key === 'args');
+          return [renderInput(inner, args, 0), E('span', 'blockui-phrase-text', unit + 'から'), renderInput(inner, args, 1), E('span', 'blockui-phrase-text', unit + 'のどれか')];
+        };
         for (const part of displayParts)
-          main.append(
+          main.append(...(
             typeof part === 'string'
-              ? E('span', 'blockui-phrase-text', part)
+              ? [E('span', 'blockui-phrase-text', part)]
               : part.lineBreak
-                ? E('span', 'blockui-phrase-break')
+                ? [E('span', 'blockui-phrase-break')]
               : part.field
-                ? fieldControl(node, part.field)
-                : renderInput(node, part.slot, part.index),
-          );
+                ? [fieldControl(node, part.field)]
+                : unitRange(part) || [renderInput(node, part.slot, part.index)]
+          ));
         return;
       }
       main.append(E('span', 'blockui-phrase-text', schema.label));
@@ -2282,6 +2381,10 @@
               main.append(fieldControl(literal,BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f=>f.key==='value')));
               main.append(E('span','blockui-phrase-text',unit));
               if(child?.schemaId==='QuantityLiteral')extraControls.append(fieldControl(child,BLOCK_SCHEMA_BY_ID.get('QuantityLiteral').fields.find(f=>f.key==='unit')));
+            }else if(literal?.schemaId==='BuiltinCall:乱数'&&literal.inputs.args?.length===2){
+              // 1 秒から 3 秒の どれか: a range takes the unit on both ends, as the code writes it.
+              const args=BLOCK_SCHEMA_BY_ID.get('BuiltinCall:乱数').inputs.find(s=>s.key==='args');
+              main.append(renderInput(literal,args,0),E('span','blockui-phrase-text',unit+'から'),renderInput(literal,args,1),E('span','blockui-phrase-text',unit+'のどれか'));
             }else {main.append(slot(key));if(child?.schemaId!=='QuantityLiteral')main.append(E('span','blockui-phrase-text',unit));}
             extraControls.append(button('計算で決める','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を計算で決める'}));
           };
@@ -2336,11 +2439,10 @@
           const args = schema.inputs.find(s => s.key === 'args');
           main.append(renderInput(node, args, 0), E('span', '', 'から'), renderInput(node, args, 1), E('span', '', 'のどれか'));
         }
-        else if (schema.kind === 'MotionCommand' && ['MOVE_DIRECTION', 'GLIDE_DIRECTION'].includes(schema.discriminator?.value)) {
-          const args = schema.inputs.find(s => s.key === 'args');
-          if (schema.discriminator.value === 'GLIDE_DIRECTION') main.append(field('actorRef'), renderInput(node, args, 0), E('span', '', 'かけて'), field('direction'), E('span', '', 'へ'), renderInput(node, args, 1), E('span', '', '動く'));
-          else main.append(field('actorRef'), field('direction'), E('span', '', 'へ'), renderInput(node, args, 0), E('span', '', '動く'));
-        }
+        // The move blocks and the turns read like their code (LANGUAGE.md 動きの文). 歩・秒・度 are text, with no unit to
+        // choose. なおす adds or removes the time (〇秒かけて、) and, on いまのばしょから動く, the second direction.
+        else if (schema.kind === 'MotionCommand' && ['GOTO', 'MOVE_BY', 'MOVE', 'GOTO_PART', 'TURN_RIGHT', 'TURN_LEFT'].includes(schema.discriminator?.value))
+          renderMotionBlock(node, schema, main);
         else if (schema.draftOnly) {
           box.classList.add('blockui-draft-hole');
           const info = index.get(node.id), label = node.fields.label || schema.label;
