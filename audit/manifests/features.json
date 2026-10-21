@@ -1,5 +1,5 @@
 {
-  "productVersion": "1.4.0",
+  "productVersion": "1.5.0",
   "COMMAND_CATALOG": [
     {
       "id": "Assignment",
@@ -493,10 +493,10 @@
     "activeTasks": 2000
   },
   "EXECUTABLE_CONTRACT": {
-    "languageContractId": 3,
-    "runtimeContractId": 3,
-    "programFormatVersion": 3,
-    "projectFormatVersion": 4
+    "languageContractId": 4,
+    "runtimeContractId": 4,
+    "programFormatVersion": 4,
+    "projectFormatVersion": 5
   },
   "schemaIds": [
     "Script",

@@ -4,7 +4,7 @@ function createAkariExtensionHost(options) {
   'use strict';
   options = options || {};
   const API_CONTRACT = 1;
-  const standard = Object.freeze({ languageContractId: 3, runtimeContractId: 3, ...(options.standard || {}) });
+  const standard = Object.freeze({ languageContractId: 4, runtimeContractId: 4, ...(options.standard || {}) });
   const records = new Map(), names = new Set(), labels = new Set(), connections = new Set();
   let session = null, sequence = 0, savedState = {}, sealed = false;
   const fail = (code, message) => { const error = new Error(message); error.code = code; throw error; };

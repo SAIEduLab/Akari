@@ -74,7 +74,7 @@
     };
     connection.port.onmessageerror=()=>close(connection);connection.port.start();connections.add(connection);
     event.source.postMessage({jsonrpc:'2.0',id:request.id,result:{nonce:params.nonce,connectionId:connection.id,apiContract:1,
-      standard:{languageContractId:3,runtimeContractId:3},capabilities:connection.capabilities}},event.origin==='null'?'*':event.origin);
+      standard:{languageContractId:4,runtimeContractId:4},capabilities:connection.capabilities}},event.origin==='null'?'*':event.origin);
     status.textContent='接続しています';document.getElementById('notify').disabled=document.getElementById('disconnect').disabled=false;
   });
   document.getElementById('notify').onclick=()=>{

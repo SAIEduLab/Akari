@@ -93,7 +93,7 @@
       select() { throw new Error('プロファイルは起動前にホスト側で選択してください'); },
     });
     const extensions = createAkariExtensionHost({
-      standard: { languageContractId: 3, runtimeContractId: 3 },
+      standard: { languageContractId: 4, runtimeContractId: 4 },
       reservedNames: BUILTIN_DEFINITIONS.map(x => x.name),
       allowedCapabilities: options.allowedCapabilities || [],
       validateValue: validateExtensionValue,
@@ -4243,10 +4243,10 @@
       }
     }
     const EXECUTABLE_CONTRACT = Object.freeze({
-      languageContractId: 3,
-      runtimeContractId: 3,
-      programFormatVersion: 3,
-      projectFormatVersion: 4,
+      languageContractId: 4,
+      runtimeContractId: 4,
+      programFormatVersion: 4,
+      projectFormatVersion: 5,
     });
     function validProducerLabel(value) {
       return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9.+_-]{0,79}$/.test(value);

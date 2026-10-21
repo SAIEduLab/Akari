@@ -6488,7 +6488,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 (() => {
   'use strict';
   // Release labels identify the producer; data contracts determine acceptance.
-  const PRODUCT_RELEASE = '1.4.0';
+  const PRODUCT_RELEASE = '1.5.0';
   function productLabel(compact = false) {
     return `あかり${compact ? '' : ' '}${PRODUCT_RELEASE}`;
   }
@@ -6603,7 +6603,7 @@ function createAkariExtensionHost(options) {
   'use strict';
   options = options || {};
   const API_CONTRACT = 1;
-  const standard = Object.freeze({ languageContractId: 3, runtimeContractId: 3, ...(options.standard || {}) });
+  const standard = Object.freeze({ languageContractId: 4, runtimeContractId: 4, ...(options.standard || {}) });
   const records = new Map(), names = new Set(), labels = new Set(), connections = new Set();
   let session = null, sequence = 0, savedState = {}, sealed = false;
   const fail = (code, message) => { const error = new Error(message); error.code = code; throw error; };
@@ -7194,7 +7194,7 @@ function createAkariExtensionHost(options) {
       select() { throw new Error('プロファイルは起動前にホスト側で選択してください'); },
     });
     const extensions = createAkariExtensionHost({
-      standard: { languageContractId: 3, runtimeContractId: 3 },
+      standard: { languageContractId: 4, runtimeContractId: 4 },
       reservedNames: BUILTIN_DEFINITIONS.map(x => x.name),
       allowedCapabilities: options.allowedCapabilities || [],
       validateValue: validateExtensionValue,
@@ -11344,10 +11344,10 @@ function createAkariExtensionHost(options) {
       }
     }
     const EXECUTABLE_CONTRACT = Object.freeze({
-      languageContractId: 3,
-      runtimeContractId: 3,
-      programFormatVersion: 3,
-      projectFormatVersion: 4,
+      languageContractId: 4,
+      runtimeContractId: 4,
+      programFormatVersion: 4,
+      projectFormatVersion: 5,
     });
     function validProducerLabel(value) {
       return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9.+_-]{0,79}$/.test(value);
