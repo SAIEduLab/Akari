@@ -11,12 +11,14 @@ const plain = value => {
 
 export function buildProject(api, world, { saved = false } = {}) {
   const p = api.makeEmptyProject(), base = p.components.find(c => c.type === 'sprite');
+  // world.stage sets the work screen's size; a part without x/y is at the screen's centre (SCHEMA.md world).
+  if (world.stage) Object.assign(p.stage, { width: world.stage.width ?? p.stage.width, height: world.stage.height ?? p.stage.height });
   const ids = new Map();
   p.components = (world.parts ?? []).map((part, i) => {
     const id = 'w-part-' + i;
     ids.set(part.name, id);
     return {
-      ...structuredClone(base), id, name: part.name, x: part.x ?? 0, y: part.y ?? 0, w: part.w ?? 40, h: part.h ?? 40,
+      ...structuredClone(base), id, name: part.name, x: part.x ?? p.stage.width / 2, y: part.y ?? p.stage.height / 2, w: part.w ?? 40, h: part.h ?? 40,
       direction: part.direction ?? 0, scalePercent: part.size ?? 100, visible: part.visible ?? true,
       costumes: [{ id: id + '-face', ...FACE }, { id: id + '-smile', ...SMILE }], costumeId: id + '-face',
       localData: { variables: Object.entries(part.vars ?? {}).map(([name, initialValue], j) => ({ id: id + '-v' + j, name, initialValue })), lists: [] },

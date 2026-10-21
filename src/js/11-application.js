@@ -2940,6 +2940,7 @@
           markDirty();
           renderAll();
           refreshEditor();
+          options.after?.();
         } catch (err) {
           log(`${err.code || ''} ${err.message}`, 'error');
           rollbackDesign(before);
@@ -3043,9 +3044,9 @@
                 const n = Number(v);
                 if (!finite(n) || n < 200 || n > 1200) throw new Error('はばが 大きすぎるか 小さすぎます。200から1200までの 数を 入れてください');
                 project.stage.width = n;
-                noteOutsideParts();
               },
               'number',
+              { after: noteOutsideParts },
             ),
             propRow(
               '\u9ad8\u3055',
@@ -3055,9 +3056,9 @@
                 if (!finite(n) || n < 150 || n > 800)
                   throw new Error('高さが 大きすぎるか 小さすぎます。150から800までの 数を 入れてください');
                 project.stage.height = n;
-                noteOutsideParts();
               },
               'number',
+              { after: noteOutsideParts },
             ),
           ),
           propSection('ふきだし',
@@ -3774,9 +3775,10 @@
           cs = Math.abs(Math.cos(angle)), sn = Math.abs(Math.sin(angle)), scale = copy.scalePercent / 100,
           visibleW = (copy.w * cs + copy.h * sn) * scale,
           visibleH = (copy.w * sn + copy.h * cs) * scale;
+        // 16 right and 16 down on the screen, in whole steps, kept on the screen.
         const offset = (position, delta, visible, stageSize) => {
           const half = Math.min(visible, stageSize) / 2;
-          return clamp(position + delta, half, stageSize - half);
+          return Math.round(clamp(position + delta, half, stageSize - half));
         };
         copy.x = offset(source.x, 16, visibleW, next.stage.width);
         copy.y = offset(source.y, -16, visibleH, next.stage.height);
@@ -4203,8 +4205,8 @@
       ]);
       if (r.actor)
         renderMonitorSection(root, 'うまく いかなかったときの この部品の ようす', [
-          ['よこ', r.actor.x],
-          ['たて', r.actor.y],
+          ['よこのばしょ', r.actor.x],
+          ['たてのばしょ', r.actor.y],
           ['向き', r.actor.direction],
           ...r.actor.variables,
           ...r.actor.lists,
@@ -4369,8 +4371,8 @@
         const a = runtime.actor(selectedId);
         if (a)
           section(componentById(selectedId)?.name || selectedId, [
-            ['よこ', a.x],
-            ['たて', a.y],
+            ['よこのばしょ', a.x],
+            ['たてのばしょ', a.y],
             ['向き', a.direction],
             ['\u5927\u304d\u3055', a.scalePercent],
             ...a.vars,
@@ -5279,6 +5281,8 @@
             : '作品を開きました',
           diagnostics.length ? 'error' : 'ok',
         );
+        // Opening always gives an answer on the screen: the work's name, and how many places need fixing.
+        setStatus(`「${project.name}」を 開いたよ` + (diagnostics.length ? `。なおす ところが ${diagnostics.length}か所 あるよ` : ''));
       } catch (err) {
         if (previous) {
           history = previous.history;
@@ -5301,8 +5305,10 @@
     // Every refusal of 開く stays on the screen until とじる; the work, its history and unsaved edits stay as they
     // were. A file of another project format says which あかり opens it; any other refusal asks for an あかり file.
     // The code and the full reason stay in 出力.
+    // At はじめて 開く is inside the 作品 menu; while that menu is closed its summary takes the focus.
     function openButtonShown() {
-      return [$('#openBtn'), $('#entryOpen'), $('#entryProjectMenu > summary')].find((n) => n?.getClientRects().length) || null;
+      return [$('#openBtn'), $('#entryOpen'), $('#entryProjectMenu > summary')]
+        .find((n) => n && (n.checkVisibility ? n.checkVisibility({ visibilityProperty: true }) : n.getClientRects().length > 0)) || null;
     }
     function showOpenRefusal(error) {
       $('#openRefusalMessage').textContent = error?.otherFormat
