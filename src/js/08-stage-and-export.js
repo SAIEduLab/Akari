@@ -120,17 +120,19 @@
       const b =
         p.stage.backdrops.find((x) => x.id === (r?.stage.backdropId || p.stage.backdropId)) ||
         p.stage.backdrops[0];
-      form.style.backgroundRepeat = 'no-repeat';
-      form.style.backgroundPosition = 'center';
+      // The dots lie over the backdrop on every 10 steps from the bottom-left corner, at any screen height.
+      const dots = 'radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px)';
+      form.style.backgroundRepeat = 'repeat, no-repeat';
+      form.style.backgroundPosition = 'left -5px bottom -5px, center';
       if (b.kind === 'color') {
         form.style.backgroundColor = b.value;
-        form.style.backgroundImage = 'none';
-        form.style.backgroundSize = 'auto';
+        form.style.backgroundImage = dots;
+        form.style.backgroundSize = '10px 10px';
       } else {
         const url = options.imageUrl(b.assetId);
         form.style.backgroundColor = b.fill;
-        form.style.backgroundImage = url ? `url("${url}")` : 'none';
-        form.style.backgroundSize = b.fit === 'stretch' ? '100% 100%' : b.fit;
+        form.style.backgroundImage = url ? `${dots}, url("${url}")` : dots;
+        form.style.backgroundSize = '10px 10px, ' + (b.fit === 'stretch' ? '100% 100%' : b.fit);
       }
       fitStage();
     }

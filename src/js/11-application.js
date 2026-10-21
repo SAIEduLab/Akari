@@ -2995,6 +2995,7 @@
       return { x, y };
     }
     // After the screen size changes, parts keep their steps from the bottom-left corner; name those now outside.
+    // With none outside, the new size replaces an earlier note, which may no longer hold.
     function noteOutsideParts() {
       const outside = project.components.filter((c) => {
         const b = designBox(c);
@@ -3002,11 +3003,11 @@
       });
       if (outside.length)
         setStatus(`${outside.map((c) => `「${c.name}」`).join('')}は 画面の 外に あるよ。「せってい」の よこのばしょ・たてのばしょで もどせるよ`);
+      else setStatus(`画面の はば ${project.stage.width}　高さ ${project.stage.height}`);
     }
     // 向き is kept in 0 ≤ 向き < 360 (450 is 90, −90 is 270).
     function designDirection(value) {
-      const r = ((Number(value) % 360) + 360) % 360;
-      return r === 360 || Object.is(r, -0) ? 0 : r;
+      return normalizedDesignDirection(Number(value));
     }
 
     function propSection(title, ...rows) {

@@ -187,7 +187,7 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
     eq(exec('名前一覧から1番目を削除する').lists,[['名前一覧',[8]]]);
     eq(exec('名前一覧の中身を全部消す').lists,[['名前一覧',[]]]);
     eq(exec('縦50、横100の位置に行く').actor,{x:100,y:50,direction:0});
-    eq(exec('15度左に回る').actor.direction,-15);
+    eq(exec('15度左に回る').actor.direction,15);
     eq(exec('「値」を「入力欄」に入れる').input,'値');
     eq(exec('0.2秒、440Hzの音を鳴らし始める').calls,[['tone',440,0.2,false]]);
     eq(exec('0.2秒、440Hzの音を鳴らす').blocked.kind,'audio');
@@ -206,7 +206,7 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
     for(const [source,code] of [['点数を余り（1、0）にする','R401'],['もし「123」に1が含まれていれば、点数を1にする','R411'],['もし［1、2］に［1］が含まれていれば、点数を1にする','R411']]) {
       const result=exec(source);eq(result.errors[0]?.[0],code);eq(result.vars,[['点数',5]]);
     }
-    // The regression actor is 180×180 at 横230・縦110 on a 640×400 stage.
+    // The regression actor is 180×180 with its centre at 横320・縦200 on a 640×400 stage.
     for(const [source,actor] of [
       ['横位置を－20にする\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:0,y:110,direction:0}],
       ['横位置を0にする\n方向を180度にする\n画面の端にふれていれば、はね返る',{x:0,y:110,direction:0}],
@@ -243,7 +243,7 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
       ['もし1が2でないなら、\n  何もしない。','もし1が2と同じでなければ、\n  何もしない。'],['もし1が1か2なら、\n  何もしない。','もし1が1と同じか、1が2と同じなら、\n  何もしない。'],
       ['マスコットをクリックしたら、\n  何もしない。','マスコットがおされたとき、\n  何もしない。'],['「空白」キーをおしたとき、マスコットは、\n  何もしない。','「空白」キーをおすたびに、マスコットは、\n  何もしない。'],
       ['「a」と「b」をつなげて言う。','「a」と「b」をつなげて言う。'],['つなぐ（「a」、「b」）を言う。','「a」と「b」をつなげて言う。'],['あまり（10、3）を言う。','10÷3のあまりを言う。'],
-      ['向きを90度にする。','画面の下を向く。'],['（1＋2）秒待つ。','（1＋2）秒待つ。'],
+      ['向きを90度にする。','画面の上を向く。'],['（1＋2）秒待つ。','（1＋2）秒待つ。'],
     ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));eq(api.formatScript(r.ast).trim(),written);}
     // A condition with もし missing, and 〜になったら, are not guessed.
     for(const source of ['1が2より小さかったら、\n  何もしない。','もし1が2になったら、\n  何もしない。']){const r=read(source);ok(!r.ast,source);}

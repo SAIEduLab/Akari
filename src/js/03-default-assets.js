@@ -2865,6 +2865,11 @@
       throw new AkariError('F512', `${label}「${name}」には 名前に 使えない 文字（「 」や 行がえ など）が 入っています。その 文字を けしてください`);
     return name;
   }
+  // 向き is kept in 0 ≤ 向き < 360. A work whose file brings 450 or −90 opens with 90 or 270, and is not refused.
+  function normalizedDesignDirection(d) {
+    const r = ((d % 360) + 360) % 360;
+    return r === 360 || Object.is(r, -0) ? 0 : r;
+  }
   function validateDesignProject(p) {
     if (
       !exactKeys(p, [
@@ -3031,8 +3036,6 @@
       compNames.add(c.name);
       for (const k of ['x', 'y', 'w', 'h', 'fontSize', 'direction', 'scalePercent'])
         if (!finite(c[k])) throw new AkariError('F503', `部品「${c.name}」の 数が 正しくありません`);
-      if (c.direction < 0 || c.direction >= 360)
-        throw new AkariError('F503', `部品「${c.name}」の 向きが 正しくありません。0以上で 360より 小さい 数に してください`);
       if (
         c.w < 8 ||
         c.w > 1200 ||

@@ -17,7 +17,7 @@ async function prepare(p,{texts=speechTexts,names=ordinaryNames,scripts=null}={}
  await install(p,'',{mode:'code'});
  const name='発話契約03-'+(++serial),file=await p.evaluate(({texts,names,scripts,name})=>{
   const q=structuredClone(Akari.app.project);q.name=name;
-  q.components.forEach((c,i)=>{c.name=names[i];Object.assign(c,i===0?{x:80,y:180}:{x:420,y:180});});
+  q.components.forEach((c,i)=>{c.name=names[i];Object.assign(c,i===0?{x:170,y:130}:{x:510,y:130});});
   q.projectData.variables.push({id:'long-string',name:'文章',initialValue:'値'.repeat(170)});
   // Dedicated reading fixtures allow ten seconds; B10 below keeps its independent, exact two-second source.
   q.scripts=scripts||q.components.map((c,i)=>({id:'speech-'+i,targetId:c.id,event:'start',source:Akari.formatExpression({kind:'StringLiteral',value:texts[i]})+'と10秒話す。'}));

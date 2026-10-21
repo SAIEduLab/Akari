@@ -3,8 +3,9 @@ export const speechNameNames = ['あかり', 'だんご'];
 export const speechNameShortTexts = ['あか', 'あお'];
 export const speechNameLongTexts = ['赤い花が咲いた。'.repeat(9)+'見えますか。', '青い鳥が飛んだ。'.repeat(9)+'聞こえます。'];
 export const speechNameSource = '始めると、あかりはすぐに『あか』と2秒話します。だんごも同じ合図で動き始め、1秒待ってから『あお』と2秒話します。';
-export const speechNamePositions = [{x:70,y:110}, {x:390,y:110}];
-export const speechNameEdgePositions = [{x:0,y:0}, {x:460,y:220}];
+// Part centres from the bottom-left (180×180 parts): the middle pair, and the pair touching the top-left and bottom-right corners.
+export const speechNamePositions = [{x:160,y:200}, {x:480,y:200}];
+export const speechNameEdgePositions = [{x:90,y:310}, {x:550,y:90}];
 export const speechNameLayoutCases = [
  {id:'speech-name/1180x757/28',width:1180,height:757,scale:28,kind:'short'},
  {id:'speech-name/1188x848/29',width:1188,height:848,scale:29,kind:'short'},

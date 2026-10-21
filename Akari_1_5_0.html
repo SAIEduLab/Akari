@@ -15825,6 +15825,11 @@ function createAkariExtensionHost(options) {
       throw new AkariError('F512', `${label}「${name}」には 名前に 使えない 文字（「 」や 行がえ など）が 入っています。その 文字を けしてください`);
     return name;
   }
+  // 向き is kept in 0 ≤ 向き < 360. A work whose file brings 450 or −90 opens with 90 or 270, and is not refused.
+  function normalizedDesignDirection(d) {
+    const r = ((d % 360) + 360) % 360;
+    return r === 360 || Object.is(r, -0) ? 0 : r;
+  }
   function validateDesignProject(p) {
     if (
       !exactKeys(p, [
@@ -15991,8 +15996,6 @@ function createAkariExtensionHost(options) {
       compNames.add(c.name);
       for (const k of ['x', 'y', 'w', 'h', 'fontSize', 'direction', 'scalePercent'])
         if (!finite(c[k])) throw new AkariError('F503', `部品「${c.name}」の 数が 正しくありません`);
-      if (c.direction < 0 || c.direction >= 360)
-        throw new AkariError('F503', `部品「${c.name}」の 向きが 正しくありません。0以上で 360より 小さい 数に してください`);
       if (
         c.w < 8 ||
         c.w > 1200 ||
@@ -23862,7 +23865,7 @@ function createAkariExtensionHost(options) {
       bg: c.bg,
       fontSize: c.fontSize,
       visible: c.visible,
-      direction: c.direction,
+      direction: normalizedDesignDirection(c.direction),
       scalePercent: c.scalePercent,
       text: c.text,
       localData: {
@@ -24399,7 +24402,11 @@ function createAkariExtensionHost(options) {
       );
     const store = new AssetStore();
     for (const record of root.assets) store.addImmutable(await validateLoadedAssetRecord(record));
-    const project = { ...root, scripts: inMemoryScripts(root.scripts) };
+    const project = {
+      ...root,
+      components: root.components.map((c) => ({ ...c, direction: normalizedDesignDirection(c.direction) })),
+      scripts: inMemoryScripts(root.scripts),
+    };
     delete project.assets;
     delete project.editorState;
     validateAssetReferences(project, store, { serializedAssetIds: assetIds });
@@ -24622,17 +24629,19 @@ function createAkariExtensionHost(options) {
       const b =
         p.stage.backdrops.find((x) => x.id === (r?.stage.backdropId || p.stage.backdropId)) ||
         p.stage.backdrops[0];
-      form.style.backgroundRepeat = 'no-repeat';
-      form.style.backgroundPosition = 'center';
+      // The dots lie over the backdrop on every 10 steps from the bottom-left corner, at any screen height.
+      const dots = 'radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px)';
+      form.style.backgroundRepeat = 'repeat, no-repeat';
+      form.style.backgroundPosition = 'left -5px bottom -5px, center';
       if (b.kind === 'color') {
         form.style.backgroundColor = b.value;
-        form.style.backgroundImage = 'none';
-        form.style.backgroundSize = 'auto';
+        form.style.backgroundImage = dots;
+        form.style.backgroundSize = '10px 10px';
       } else {
         const url = options.imageUrl(b.assetId);
         form.style.backgroundColor = b.fill;
-        form.style.backgroundImage = url ? `url("${url}")` : 'none';
-        form.style.backgroundSize = b.fit === 'stretch' ? '100% 100%' : b.fit;
+        form.style.backgroundImage = url ? `${dots}, url("${url}")` : dots;
+        form.style.backgroundSize = '10px 10px, ' + (b.fit === 'stretch' ? '100% 100%' : b.fit);
       }
       fitStage();
     }
@@ -33729,6 +33738,7 @@ function createAkariExtensionHost(options) {
       return { x, y };
     }
     // After the screen size changes, parts keep their steps from the bottom-left corner; name those now outside.
+    // With none outside, the new size replaces an earlier note, which may no longer hold.
     function noteOutsideParts() {
       const outside = project.components.filter((c) => {
         const b = designBox(c);
@@ -33736,11 +33746,11 @@ function createAkariExtensionHost(options) {
       });
       if (outside.length)
         setStatus(`${outside.map((c) => `「${c.name}」`).join('')}は 画面の 外に あるよ。「せってい」の よこのばしょ・たてのばしょで もどせるよ`);
+      else setStatus(`画面の はば ${project.stage.width}　高さ ${project.stage.height}`);
     }
     // 向き is kept in 0 ≤ 向き < 360 (450 is 90, −90 is 270).
     function designDirection(value) {
-      const r = ((Number(value) % 360) + 360) % 360;
-      return r === 360 || Object.is(r, -0) ? 0 : r;
+      return normalizedDesignDirection(Number(value));
     }
 
     function propSection(title, ...rows) {

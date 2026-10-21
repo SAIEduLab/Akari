@@ -2502,7 +2502,7 @@
       bg: c.bg,
       fontSize: c.fontSize,
       visible: c.visible,
-      direction: c.direction,
+      direction: normalizedDesignDirection(c.direction),
       scalePercent: c.scalePercent,
       text: c.text,
       localData: {
@@ -3039,7 +3039,11 @@
       );
     const store = new AssetStore();
     for (const record of root.assets) store.addImmutable(await validateLoadedAssetRecord(record));
-    const project = { ...root, scripts: inMemoryScripts(root.scripts) };
+    const project = {
+      ...root,
+      components: root.components.map((c) => ({ ...c, direction: normalizedDesignDirection(c.direction) })),
+      scripts: inMemoryScripts(root.scripts),
+    };
     delete project.assets;
     delete project.editorState;
     validateAssetReferences(project, store, { serializedAssetIds: assetIds });
