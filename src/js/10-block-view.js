@@ -1609,8 +1609,17 @@
       if (schema.bodies.length) box.append(E('span', 'blockui-preview-cavity'));
       return box;
     }
+    // The list is checked at the end of the body the next block goes into, not right after the selected block, so choosing
+    // another block of that body asks nothing again (PERF-01). A block whose answer depends on its place is checked there,
+    // and pressing a block always checks the place it goes (paletteAdd).
+    const PLACE_DEPENDENT_KINDS = new Set(['WaitBroadcastGroup', 'LocalVariableDeclaration', 'LocalListDeclaration']);
+    function listedPlace(location) {
+      const siblings = !destination && location?.body ? index.get(location.parentId)?.node?.bodies?.[location.body] : null;
+      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement') ? { ...location, index: siblings.length } : location;
+    }
     function paletteAvailability(schema, location) {
       if (schema.candidateReason) return {enabled:false, reason:schema.candidateReason, node:schema.candidateNode};
+      if (location?.body && !PLACE_DEPENDENT_KINDS.has(schema.kind)) location = listedPlace(location);
       if (schema.category === 'rule') return ruleAvailability();
       // A value may be picked up before its destination is chosen. The actual
       // socket is checked by the existing common validator on preview and drop.
