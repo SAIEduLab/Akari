@@ -1311,11 +1311,15 @@
           );
         if (binding.session?.blockDraft){
           if (preserveView) return false;
-          const hole=[...buildBlockIndex(binding.session.blockView).values()].find(entry=>entry.node.schemaId.startsWith('Hole:'));
-          const label=hole?.node.fields.label||'ブロックや 数・文字';
-          // The focus goes to the empty place; the message says what to put there (FCB-03, I5V-14).
+          const index=buildBlockIndex(binding.session.blockView),hole=[...index.values()].find(entry=>entry.node.schemaId.startsWith('Hole:'));
+          const parent=hole?.body?index.get(hole.parentId)?.node:null;
+          const label=(parent&&BLOCK_SCHEMA_BY_ID.get(parent.schemaId)?.bodies.find(slot=>slot.key===hole.body)?.label)||hole?.node.fields.label||'ブロックや 数・文字';
+          // The focus goes to the empty place; the message names the place and what goes in it, one wording per kind
+          // of hole (FCB-03, final call 33): a loop's inside takes くり返すこと, a branch of 「もし」 takes することを and is
+          // named in 「 」, a hole a value fills names that value (I5V-14).
           if(hole)binding.view.focus({id:hole.node.id});
-          return showEditorFailure(binding, `あいている ところが あるよ。${label}を 入れてね`, { preservePending: true });
+          const branch=parent?.schemaId==='IfStatement'?{thenBody:'もし',elseBody:'そうでなければ'}[hole.body]:null;
+          return showEditorFailure(binding, branch?`「${branch}」の ところが あいているよ。することを 入れてね`:`あいている ところが あるよ。${label}を 入れてね`, { preservePending: true });
         }
         return true;
       }
@@ -3176,11 +3180,22 @@
     // How far a press must move before it carries a part or a handle, in screen pixels: a finger wobbles more than a
     // mouse or a pen (Chrome's own tap slop is about 15 px).
     const pointerSlop = (e) => e.pointerType === 'touch' ? 8 : 3;
-    let designResizeSmall = null;
+    let designResizeSmall = null, designHandlesShown = null;
     // On a small on-screen part, edge handles would cover the picture: only the corners show, just outside the part.
     function designHandlesSmall(c) {
       const stageScale = el.form.getBoundingClientRect().width / project.stage.width || 1, s = c.scalePercent / 100;
       return designResizeMode(c) === 'box' && Math.min(c.w * s, c.h * s) * stageScale < 64;
+    }
+    // How the handles are shown is decided when they are first shown for a part at its size and screen scale, and a
+    // drag keeps it from the press through the release (A-R2-05, A-08): the handle stays under the pointer after a drag
+    // that made a small part larger than 64 px. A change made another way (せってい, keys, もとにもどす, the screen's
+    // zoom) or another part decides it again.
+    const designHandleKey = (c) => [c.id, c.w, c.h, c.scalePercent, Math.round(el.form.getBoundingClientRect().width * 100)].join(' ');
+    function designHandlesSmallShown(c) {
+      if (designResizeSmall !== null) return designResizeSmall;
+      const key = designHandleKey(c);
+      if (designHandlesShown?.key !== key) designHandlesShown = { key, small: designHandlesSmall(c) };
+      return designHandlesShown.small;
     }
     function positionResizeHandles(c = designResizePreview || componentById(selectedId)) {
       if (!c) return;
@@ -3203,7 +3218,7 @@
         if (designResizeMode(c) === 'box') {
           // On a small on-screen part, edge handles would cover the picture: keep
           // only the corners and move them just outside the part.
-          const small = designResizeSmall ?? designHandlesSmall(c),
+          const small = designHandlesSmallShown(c),
             rad = ((c.direction % 360) * Math.PI) / 180,
             px = small ? hx * 12 / stageScale : hx * Math.max(0, 18 / stageScale - (c.w * s) / 2),
             py = small ? hy * 12 / stageScale : hy * Math.max(0, 18 / stageScale - (c.h * s) / 2);
@@ -4220,9 +4235,9 @@
       let next = { x: c.x, y: c.y, w: c.w, h: c.h, scalePercent: c.scalePercent },
         finished = false,
         moved = false;
-      // The handles keep their offset from the part for the whole drag (A-R2-05): whether the part counts as small (its
-      // corner handles just outside it) is decided at the press and again after the release.
-      designResizeSmall = designHandlesSmall(c);
+      // The handles keep their offset from the part for the whole drag (A-R2-05): the part counts as small (its corner
+      // handles just outside it) as the handles were shown at the press.
+      const pressSmall = designResizeSmall = designHandlesSmallShown(c);
       const sizeText = (at) =>
         designResizeMode(c) === 'scale' ? `${c.name}: ${at.scalePercent}%` : `はば ${at.w}　高さ ${at.h}`;
       const move = (e) => {
@@ -4267,6 +4282,9 @@
         } catch (error) {
           log(error.message, 'error');
         }
+        // A part that was small at the press keeps its corner handles just outside it, so the handle stays under the
+        // pointer; one that became small gets them now, so its handles do not lie on each other.
+        if (changed) designHandlesShown = { key: designHandleKey(c), small: pressSmall || designHandlesSmall(c) };
         renderProperties();
         renderComponents();
         if (changed) refreshEditor();
