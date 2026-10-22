@@ -3,6 +3,12 @@ import fs from 'node:fs';import path from 'node:path';import cp from 'node:child
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';import {currentProductFile} from '../lib/product-path.cjs';
 import {tutorialSteps,browserIds,deniedRoutes,verifyEntryReport,entryProvenance} from '../lib/entry-workshop-contract.mjs';
 import {pressStop,DOUBLE_PRESS_MS} from '../lib/stop-press.cjs';
+import {chooseView,refusedViewPress} from '../browser/cases/view-toggle.cjs';
+// はじめて's 作品 menu, touched during the tutorial. The run screen keeps its place but does not show it (final call 21),
+// so a touch there lands on what is under that place and still opens nothing.
+async function tapEntryProjectMenu(p){const menu=p.locator('#entryProjectMenu > summary');if(await menu.isVisible()){await menu.tap();return;}
+ const at=await menu.evaluate(e=>{const r=e.getBoundingClientRect(),hidden=n=>getComputedStyle(n).visibility==='hidden';return{x:r.x+r.width/2,y:r.y+r.height/2,width:r.width,hidden:hidden(e),running:document.body.classList.contains('runtime')};});
+ assert.ok(at.running&&at.hidden&&at.width>0,'the 作品 menu is hidden only on the run screen, with its place kept');await p.touchscreen.tap(at.x,at.y);}
 const [chrome,out]=process.argv.slice(2);if(!chrome||!out)throw Error('browser and fresh report are required');
 const product=currentProductFile(),output=path.resolve(out),artifacts=output+'.artifacts';
 assert.ok(!fs.existsSync(output)&&!fs.existsSync(artifacts),'fresh evidence');fs.mkdirSync(artifacts,{recursive:true});
@@ -145,13 +151,14 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   }await p.setViewportSize({width:390,height:844});const narrow={size:{width:390,height:844},screenshot:await picture(p,'entry-narrow')};return{viewports,narrow,autoStarted:false};});
  await row(browser,browserIds[1],async p=>{const before=await read(p),states=[];
   assert.equal(await p.locator('.menutool > .ui-level-label #uiLevel').count(),1,'display level stays in the top toolbar');
-  // はじめて is blocks only: the コード／ブロック toggle is not shown, and the code view does not offer はじめて at all.
-  assert.equal(await p.locator('#editorModecode').isVisible(),false,'entry shows no view toggle');
-  await p.locator('#uiLevel').selectOption('basic');await p.locator('#editorModecode').click();
+  // はじめて is blocks only (LANGUAGE.md 画面の見方, final call 22): the toggle shows 「ブロックモード ⇄」, a press keeps the
+  // blocks and says to choose かんたん or くわしく, and the code view does not offer はじめて at all.
+  await refusedViewPress(p,'entry');assert.deepEqual(await read(p),before,'a refused view press changes nothing');
+  await p.locator('#uiLevel').selectOption('basic');await chooseView(p,'code');
   assert.equal(await p.locator('#uiLevel option[value="entry"]').count(),0,'entry is not offered in code view');
   await p.locator('#uiLevel').evaluate(el=>{el.value='entry';el.dispatchEvent(new Event('change',{bubbles:true}));});
   assert.equal(await p.locator('#uiLevel').inputValue(),'basic','synthetic selection cannot create an entry/code mismatch');
-  await p.locator('#editorModeblocks').click();
+  await chooseView(p,'blocks');
   assert.equal(await p.locator('#uiLevel option[value="entry"]').count(),1);
   await p.locator('#uiLevel').selectOption('entry');
 
@@ -261,7 +268,7 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   return{exited,restored:await read(p),staleCallbackIgnored:true,progressNotPersisted:true};
  });
  await row(browser,browserIds[12],async p=>{p.entryTouch=true;await p.locator('#tutorialStart').tap();const steps=[];let downloaded=null;
-  for(const id of tutorialSteps){await waitStep(p,id);const resumed=await exitAndResume(p,id);if(resumed.downloaded)downloaded=resumed.downloaded;const before=await read(p);await p.locator('#entryProjectMenu > summary').tap();assert.deepEqual(content(await read(p)),content(before),'touch cannot open unrelated menu '+id);
+  for(const id of tutorialSteps){await waitStep(p,id);const resumed=await exitAndResume(p,id);if(resumed.downloaded)downloaded=resumed.downloaded;const before=await read(p);await tapEntryProjectMenu(p);assert.deepEqual(content(await read(p)),content(before),'touch cannot open unrelated menu '+id);
    if(id==='verify-save'){const choosing=p.waitForEvent('filechooser');await p.locator('#tutorialVerifySave').tap();await (await choosing).setFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);}
    else {const file=await positive(p,id);if(file)downloaded=file;await waitStep(p,tutorialSteps[tutorialSteps.indexOf(id)+1]);}
    steps.push({id,before,after:await read(p)});
@@ -294,7 +301,7 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
      await p.waitForFunction(fieldInView,ref.id);
      for(const bad of ['', '-', '999999']){
       await control.fill(bad);await control.press('Enter');assert.equal((await read(p)).step,id,'invalid numeric input cannot advance');
-      if(bad==='999999')assert.match(await p.locator('#statusText').textContent(),/光る数は.+から.+の中でえらぼう/,'range error explains the permitted numbers');
+      if(bad==='999999')assert.match(await p.locator('#statusText').textContent(),/光る 数は .+から.+の 中で えらぼう/,'range error explains the permitted numbers');
       await control.press('Escape');assert.equal((await fieldAt(p,op.ref)).value,ref.value,'cancel restores only the edited value');
       const after=await read(p);assert.equal(after.project,before.project);assert.equal(after.history,before.history);
       assert.equal(await p.locator('#editorPending').isHidden(),true,'a cancelled edit leaves no message to fix');
