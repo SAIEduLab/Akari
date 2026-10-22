@@ -3128,7 +3128,9 @@
         return out;
       }
       // ふれたとき (every part's bodies and 名人), 〜になったとき and 〜秒ごとに (名人) are watched on the scheduler's clock:
-      // after every sentence of every flow and at every こま.
+      // after every sentence of every flow and at every こま. A body started by a change (ふれたとき, 〜になったとき)
+      // starts at most once in a こま for the same part (for 画面のはし: for each side); started keeps the こま of the last
+      // start, so a change back and forth inside that こま (かくして また見せる, a turn that flips the box) is only recorded.
       initializeWatches() {
         this.watches = [];
         for (const item of this.compiled.items || []) {
@@ -3136,7 +3138,7 @@
           const targetId = item.targetId || item.ownerId, scriptId = item.key.slice('script:'.length);
           const task = { taskId: `watch:${item.key}`, scriptId, runtimeId: targetId, targetId, eventType: item.event, eventContext: {},
             subject: { runtimeId: targetId }, callFrames: [], execStack: [], broadcastGroups: new Map(), state: 'RUNNING', currentNode: item.ast.body?.[0] };
-          const watch = { item, targetId, scriptId, event: item.event, task, last: new Map() };
+          const watch = { item, targetId, scriptId, event: item.event, task, last: new Map(), started: new Map() };
           if (item.event === 'interval') {
             try {
               watch.period = numberInUnit(evalExpression(item.ast.heading.seconds, this.context(task)), '秒');
@@ -3163,7 +3165,10 @@
               for (let guard = 0; now >= w.nextAt && guard < 100; guard++) { this.spawnWatch(w, w.targetId); w.nextAt += w.period * 1000; }
             } else if (w.event === 'conditionTrue') {
               const value = bool(evalExpression(w.item.ast.heading.condition, this.context(w.task)));
-              if (value && !w.last.get(w.targetId)) this.spawnWatch(w, w.targetId);
+              if (value && !w.last.get(w.targetId) && w.started.get(w.targetId) !== tick) {
+                w.started.set(w.targetId, tick);
+                this.spawnWatch(w, w.targetId);
+              }
               w.last.set(w.targetId, value);
             } else {
               // ふれたとき starts when not touching becomes touching. The first look at a part (the run's start, a new
@@ -3184,16 +3189,22 @@
                 const kept = w.poses.get(a.runtimeId);
                 if (!partnersMoved && kept && sameWatchPose(kept, a)) continue;
                 w.poses.set(a.runtimeId, watchPose(a));
-                // 画面のはし is any one of the four sides: a side the part did not touch before starts it too (a ball
-                // that bounced off the right side and goes on into the top one near a corner).
+                // 画面のはし watches the four sides one by one: a side that goes from not touched to touched starts it
+                // (also while another side stays touched, as for a ball that bounced off the right side and goes on into
+                // the top one near a corner), and two sides touched at once start it once.
                 if (target === '端') {
-                  const sides = EDGE_SIDES.filter(side => this.runtime.touching(a.runtimeId, side)), before = w.last.get(a.runtimeId);
-                  if (before && sides.some(side => !before.includes(side))) this.spawnWatch(w, a.runtimeId);
+                  const sides = EDGE_SIDES.filter(side => this.runtime.touching(a.runtimeId, side)), before = w.last.get(a.runtimeId),
+                    fresh = before ? sides.filter(side => !before.includes(side) && w.started.get(a.runtimeId + '|' + side) !== tick) : [];
+                  for (const side of fresh) w.started.set(a.runtimeId + '|' + side, tick);
+                  if (fresh.length) this.spawnWatch(w, a.runtimeId);
                   w.last.set(a.runtimeId, sides);
                   continue;
                 }
                 const touching = this.runtime.touching(a.runtimeId, target);
-                if (touching && w.last.has(a.runtimeId) && !w.last.get(a.runtimeId)) this.spawnWatch(w, a.runtimeId);
+                if (touching && w.last.has(a.runtimeId) && !w.last.get(a.runtimeId) && w.started.get(a.runtimeId) !== tick) {
+                  w.started.set(a.runtimeId, tick);
+                  this.spawnWatch(w, a.runtimeId);
+                }
                 w.last.set(a.runtimeId, touching);
               }
             }
@@ -4512,15 +4523,22 @@
         this.ui.render?.();
       }
       // A picture part bounces with what is seen of it (final call 17); a picture of which nothing is seen does not.
+      // A touched side turns only the part of the direction that goes into it, as Scratch does: the right side a
+      // direction below 90 or above 270 (to 180 − direction), the left side one between 90 and 270, the top one between
+      // 0 and 180 (to − direction), the bottom one above 180. Going away from a side or along it, or touching both
+      // sides of one axis, keeps that part, so two bounces in one こま do not send the part back into the side.
       bounce(a) {
         const box = this.runtime.visibleBox(a),
           w = this.project.stage.width,
           h = this.project.stage.height;
         if (!box) return;
-        let hitX = box.left <= 0 || box.right >= w,
-          hitY = box.bottom <= 0 || box.top >= h;
-        if (hitX) a.direction = 180 - a.direction;
-        if (hitY) a.direction = -a.direction;
+        const hitX = box.left <= 0 || box.right >= w,
+          hitY = box.bottom <= 0 || box.top >= h,
+          d = normalizeDirection(a.direction),
+          lr = (box.left <= 0) !== (box.right >= w),
+          bt = (box.bottom <= 0) !== (box.top >= h);
+        if (lr && (box.right >= w ? d < 90 || d > 270 : d > 90 && d < 270)) a.direction = 180 - a.direction;
+        if (bt && (box.top >= h ? d > 0 && d < 180 : d > 180)) a.direction = -a.direction;
         if (hitX || hitY) {
           a.direction = normalizeDirection(a.direction);
           const b = this.runtime.visibleBox(a);
