@@ -8175,6 +8175,8 @@
       const draft = binding.kind === 'draft',
         p = draft ? 'callable' : 'editor';
       binding.view = createBlockEditorView({
+        // A notice's rewrite by the block (I120, p2 Q5 (d)) is the same as the one under the code and in 作品チェック.
+        onNoticeFix: (note, proposal) => applyNoteProposal(note, proposal),
         onExpand:
           binding.kind === 'script'
             ? () => {
