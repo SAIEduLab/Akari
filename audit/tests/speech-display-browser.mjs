@@ -92,9 +92,10 @@ try{
     await p.locator('#uiLevel').selectOption('basic');await p.locator('#sampleBtn').click();if(await p.locator('#loseConfirmModal.show').isVisible())await p.locator('#loseConfirmProceed').click();
     await p.locator('#samplePicker [data-sample-id="maze"]').click();await p.waitForFunction(()=>Akari.app.project.components.length>=40);
     await p.locator('#editorModeblocks').click();await p.locator('#uiLevel').selectOption('entry');await p.waitForFunction(()=>document.body.dataset.uiLevel==='entry');
+    await frame(p);const editStage=await p.locator('#formSurface').evaluate(e=>e.getBoundingClientRect().toJSON());
     await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await frame(p);
     const preview=await observeRunPreview(p),stage=await p.locator('#formSurface').evaluate(e=>e.getBoundingClientRect().toJSON()),parts=await p.evaluate(()=>Akari.app.project.components.length);
-    await shot(p,'preview-entry-maze-'+height+'.png');await pressStop(p.locator('#stopBtn'));return{height,parts,stage,preview};}));
+    await shot(p,'preview-entry-maze-'+height+'.png');await pressStop(p.locator('#stopBtn'));return{height,parts,editStage,stage,preview};}));
    return{initial,rows,runScreens,entryManyParts};
   });
   await run('DISPLAY-PERSISTENCE',async()=>{

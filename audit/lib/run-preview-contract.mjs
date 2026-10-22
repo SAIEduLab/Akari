@@ -63,7 +63,9 @@ export function verifyRunPreviewReport(report){
   const many=observed.entryManyParts;assert.deepEqual(many?.map(r=>r.height),[768,650]);
   for(const r of many){const o=r.preview;assert.ok(r.parts>=40,'a work with many parts');assert.equal(o.level,'entry');assert.equal(o.state,'RUNNING');
     assert.equal(o.palette.visible,false,'the block list is put away');assert.ok(o.scene.width>o.workspace.width,'the stage takes the larger column');inside(o.scene,o.viewport);
-    assert.ok(r.stage.height>=Math.min(380,o.viewport.height*0.45),'the screen stays big with many parts: '+Math.round(r.stage.height)+' of '+o.viewport.height);
+    // D-19 and F-14: the stage gets bigger while the work runs, so the run screen's stage is at least the edit screen's.
+    const size=b=>Math.round(b.width)+'x'+Math.round(b.height);assert.ok(r.editStage&&r.editStage.width>0,'the edit screen stage is measured');
+    assert.ok(r.stage.width>=r.editStage.width-1&&r.stage.height>=r.editStage.height-1,'the screen gets bigger while the work runs, also with many parts: '+size(r.editStage)+' before ▶, '+size(r.stage)+' running, at 1366x'+o.viewport.height);
     assert.ok(r.stage.width>=o.scene.width*0.5,'the screen fills its column');
     const stop=o.controls[0];inside(stop.rect,o.viewport);assert.equal(stop.hit,true);for(const c of o.controls.slice(1))assert.equal(c.rect.visible,false);}
 }
