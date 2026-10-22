@@ -1101,6 +1101,21 @@
     const samePose = (kept, a) => kept.x === a.x && kept.y === a.y && kept.direction === a.direction && kept.scalePercent === a.scalePercent &&
       kept.costumeId === a.costumeId && kept.w === a.w && kept.h === a.h;
     const watchPose = (a) => ({ ...pose(a), runtimeId: a.runtimeId, visible: a.visible });
+    // Whether a parallelogram (a corner p and its two sides a and b) and an upright rectangle overlap by more than eps
+    // on every line that could separate them: the rectangle's two sides and the parallelogram's two (RuntimeModel.partsTouch).
+    function overlap(px, py, ax, ay, bx, by, left, right, bottom, top, eps) {
+      if (Math.min(right, px + Math.max(0, ax) + Math.max(0, bx)) - Math.max(left, px + Math.min(0, ax) + Math.min(0, bx)) <= eps ||
+        Math.min(top, py + Math.max(0, ay) + Math.max(0, by)) - Math.max(bottom, py + Math.min(0, ay) + Math.min(0, by)) <= eps) return false;
+      const cx = (left + right) / 2, cy = (bottom + top) / 2, hx = (right - left) / 2, hy = (top - bottom) / 2;
+      // Across a side: the parallelogram spans p and p plus the other side, the rectangle its centre and half its size.
+      const apart = (nx, ny, ox, oy) => {
+        const len = Math.hypot(nx, ny);
+        if (!len) return false;
+        const p = px * nx + py * ny, d = ox * nx + oy * ny, c = cx * nx + cy * ny, h = hx * Math.abs(nx) + hy * Math.abs(ny);
+        return Math.min(p + Math.max(0, d), c + h) - Math.max(p + Math.min(0, d), c - h) <= eps * len;
+      };
+      return !apart(-ay, ax, bx, by) && !apart(-by, bx, ax, ay);
+    }
     const sameWatchPose = (kept, a) => kept.runtimeId === a.runtimeId && kept.visible === a.visible && samePose(kept, a);
     const samePoses = (kept, now) => !!kept && kept.length === now.length && now.every((x, i) => Object.keys(x).every(k => kept[i][k] === x[k]));
     // A subject or heading written 画面 is the work screen, unless a part is named 画面: then it is that part (as for
@@ -1589,12 +1604,14 @@
         const cell = (x, m) => (m ? Math.min((x.w * x.scalePercent) / 100 / m.w, (x.h * x.scalePercent) / 100 / m.h) : Infinity);
         const step = Math.max(0.5, Math.min(cell(a, ma), cell(b, mb)));
         // A wider overlap (more than 32×32 points) is looked at cell by cell instead, which costs less and does not step
-        // over a thin seen strip as a coarser point grid could: each seen cell of the finer picture there is a small box on
-        // the screen, and the other part touches it where its own seen cells (or its box) overlap that box (cells that only
-        // meet at a side do not overlap). Only the cells around the overlap are looked at: the overlap turned back into the
-        // picture, widened by what a turned cell's box can reach beyond the cell.
+        // over a thin seen strip as a coarser point grid could: each seen cell of the finer picture there is a small turned
+        // square on the screen, and the other part touches it where one of its own seen cells (or its box) overlaps that
+        // square (cells that only meet at a side do not overlap). Only the cells around the overlap are looked at: the
+        // overlap turned back into the picture, widened by what a turned cell's box can reach beyond the cell. A cell's box
+        // on the screen (touches) only rules cells out, since a turned cell's box is wider than the cell; the cell itself
+        // decides (cellTouches).
         if ((rw / step) * (rh / step) > 1024) {
-          const [x, m, sx, other] = !mb || (ma && cell(a, ma) <= cell(b, mb)) ? [a, ma, sa, sb] : [b, mb, sb, sa];
+          const [x, m, sx, other, om] = !mb || (ma && cell(a, ma) <= cell(b, mb)) ? [a, ma, sa, sb, mb] : [b, mb, sb, sa, ma];
           const sc = x.scalePercent / 100, W = x.w * sc, H = x.h * sc, cs = cosDegrees(x.direction), sn = sinDegrees(x.direction);
           let c0 = Infinity, c1 = -Infinity, r0 = Infinity, r1 = -Infinity;
           for (const px of [left, right])
@@ -1614,6 +1631,23 @@
             const L = Math.max(l, left) + 1e-6, R = Math.min(rr, right) - 1e-6, B = Math.max(bo, bottom) + 1e-6, T = Math.min(to, top) - 1e-6;
             return L < R && B < T && (!other || other.anySeenIn(L, R, B, T));
           };
+          // The cell in column c and row r as it lies on the screen (a corner and its two sides), against what is seen of
+          // the other part: each of the other's seen cells that the cell, turned into the other picture, reaches (there the
+          // other's cells are squares of side 1), or the overlap of the boxes for a part with no picture. Two such shapes
+          // overlap when no line along a side of either separates them (overlap).
+          const ew = W / m.w, eh = H / m.h, e1x = ew * cs, e1y = ew * sn, e2x = eh * sn, e2y = -eh * cs, on = om?.counts, ow1 = om ? om.w + 1 : 0;
+          const cellTouches = (c, r) => {
+            const lx = (c / m.w - 0.5) * W, ly = (0.5 - r / m.h) * H, px = x.x + lx * cs - ly * sn, py = x.y + lx * sn + ly * cs;
+            if (!other) return overlap(px, py, e1x, e1y, e2x, e2y, left, right, bottom, top, 1e-6);
+            const [u0, v0] = other.cell(px, py), [u1, v1] = other.cell(px + e1x, py + e1y), [u2, v2] = other.cell(px + e2x, py + e2y),
+              f1u = u1 - u0, f1v = v1 - v0, f2u = u2 - u0, f2v = v2 - v0;
+            const c0 = Math.max(0, Math.floor(u0 + Math.min(0, f1u) + Math.min(0, f2u))), c1 = Math.min(om.w - 1, Math.ceil(u0 + Math.max(0, f1u) + Math.max(0, f2u)) - 1),
+              r0 = Math.max(0, Math.floor(v0 + Math.min(0, f1v) + Math.min(0, f2v))), r1 = Math.min(om.h - 1, Math.ceil(v0 + Math.max(0, f1v) + Math.max(0, f2v)) - 1);
+            if (c0 > c1 || r0 > r1 || on[(r1 + 1) * ow1 + c1 + 1] - on[r0 * ow1 + c1 + 1] - on[(r1 + 1) * ow1 + c0] + on[r0 * ow1 + c0] === 0) return false;
+            for (let rr = r0; rr <= r1; rr++)
+              for (let cc = c0; cc <= c1; cc++) if (om.cells[rr * om.w + cc] && overlap(u0, v0, f1u, f1v, f2u, f2v, cc, cc + 1, rr, rr + 1, 1e-9)) return true;
+            return false;
+          };
           // Blocks of 4×4 cells first: a block with no seen cell, or whose box the other part does not touch, holds no
           // cell that touches it, so the answer is that of looking at every cell.
           for (let br = rFrom; br <= rTo; br += 4)
@@ -1621,7 +1655,7 @@
               const br2 = Math.min(rTo, br + 3), bc2 = Math.min(cTo, bc + 3);
               if (n[(br2 + 1) * w1 + bc2 + 1] - n[br * w1 + bc2 + 1] - n[(br2 + 1) * w1 + bc] + n[br * w1 + bc] === 0 || !touches(bc, bc2, br, br2)) continue;
               for (let r = br; r <= br2; r++)
-                for (let c = bc; c <= bc2; c++) if (m.cells[r * m.w + c] && touches(c, c, r, r)) return keep(true);
+                for (let c = bc; c <= bc2; c++) if (m.cells[r * m.w + c] && touches(c, c, r, r) && cellTouches(c, r)) return keep(true);
             }
           return keep(false);
         }
