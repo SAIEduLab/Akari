@@ -60,8 +60,9 @@ const negatives=[
     ()=>run([withClaims('SF-timer-reset',{'sentence:Assignment':'タイマーを0にする'})])],
   ['absent-node-detected','absent-node:SF-wait-polite:sentence:Forever',()=>run([base('SF-wait-polite')]),
     ()=>run([withClaims('SF-wait-polite',{'sentence:Forever':'1秒待ちます'})])],
-  ['unmatched-surface-detected','unmatched-surface:SF-glide-te:te:すべって',()=>run([base('SF-glide-te')]),
-    ()=>run([withClaims('SF-glide-te',{'te:すべって':'姿をかくす'})])],
+  // The te entry the case reaches itself (動いて), so the control does not depend on the leftover すべって entries.
+  ['unmatched-surface-detected','unmatched-surface:SF-glide-te:te:動いて',()=>run([base('SF-glide-te')]),
+    ()=>run([withClaims('SF-glide-te',{'te:動いて':'姿をかくす'})])],
   ['condition-context-detected','condition-context:SF-contains-while:condition:含まれている/plain',()=>run([base('SF-contains-while')]),
     ()=>run([withClaims('SF-contains-while',{'condition:含まれている/plain':'【名前一覧】に「あかり」が含まれている'})])],
   ['condition-longer-surface-detected','condition-longer-surface:SF-contains-while:condition:含まれている/whileYes',()=>run([base('SF-contains-while')]),
