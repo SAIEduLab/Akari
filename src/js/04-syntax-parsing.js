@@ -2226,10 +2226,11 @@
         catch (attempt) { if (!(attempt instanceof AkariError)) throw attempt; }
         if (reads) throw new AkariError('P205', `「${who[0].text}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, line.lineNo, 1);
       }
-      // The 【 】 advice, or the whole sentence not read (F-26): the request, unit and verb guidance below may apply.
-      const nameMessage = error.message === 'この 名前は【名前】のように【 】で かこんでください' || (error.code === 'P201' && !error.proposals?.length && /^「[\s\S]+」は 読めません。書き方を たしかめてください。$/.test(error.message));
-      // 10歩進んでください / 10歩進め / 10歩進もう / 進んでね: a request or a call is written as 「進む」.
-      if (nameMessage) {
+      // unreadName: the sentence began with a word that is no bare name (1秒休む), so the verb after it is looked at.
+      const nameMessage = error.message === 'この 名前は【名前】のように【 】で かこんでください' || !!error.unreadName;
+      // 10歩進んでください / 10歩進め / 10歩進もう / 進んでね: a request or a call is written as 「進む」, also when the
+      // whole sentence is not read (F-26).
+      if (nameMessage || (error.code === 'P201' && !error.proposals?.length && /^「[\s\S]+」は 読めません。書き方を たしかめてください。$/.test(error.message))) {
         const readsAs = text => { try { const part = surfaceLineSlice(line, 0, code.length, text); part.comment = line.comment; return !!parseSentenceSequence(part, symbols, { ...ctx, naturalVariant: true }); } catch (attempt) { if (!(attempt instanceof AkariError)) throw attempt; return false; } };
         const mask = surfaceMask(code), stem = text => sentenceInfinitive(text);
         const forms = [];
@@ -2638,7 +2639,7 @@
     }
     // 1秒まって / 10歩進んだ: an action is written 〜する.
     {const past=/(?:った|んだ|いた|いだ|した)$/.exec(mask);const te=past?code.slice(0,-past[0].length)+({った:'って',んだ:'んで',いた:'いて',いだ:'いで',した:'して'})[past[0]]:/(?:って|んで|いて|いで|して|えて|めて|げて|せて|れて|ねて|べて|けて)$/.test(mask)?code:null;
-      if(te){const plain=sentenceInfinitive(te);if(plain&&plain!==te&&reads(plain))throw fixed(past?'これから する ことは「進む」のように 書きます':'文の おわりは「待つ」のように 書きます',plain,'〜する に する');}}
+      if(te){const plain=sentenceInfinitive(te);if(plain&&plain!==te&&reads(plain))throw fixed(`${past?'これから する ことは':'文の おわりは'}「${canonicalStatementSource(plain,symbols)}」のように 書きます`,plain,'〜する に する');}}
     // 10歩進みません: what is not done is not written.
     if(/(?:みません|りません|きません|ちません|いません|えません|せません|べません|めません|れません|ぎません|びません)$/.test(mask)||(/しません$/.test(mask)&&!/^何もしません$/.test(mask)))
       throw sentenceDiagnostic('しないことは 書けません。しないときは その文を 書かないか、「何もしない」と 書きます',line,[]);
@@ -3012,11 +3013,24 @@
   function sentenceReadError(error,line){
     if(error.code!=='P201'||error.proposals?.length)return;
     const code=compactOutsideString(line.code||''),calc=/^計算の「([\s\S]+)」の ところが 読めません/.exec(error.message);
-    if(!code||(!calc&&!/^この 文は 読めません/.test(error.message)))return;
-    if(calc){let mask;try{mask=surfaceMask(code);}catch(caught){if(!(caught instanceof AkariError))throw caught;return;}
-      const at=code.lastIndexOf(calc[1]);
-      if(at>0&&mask[at]==='\u0001'){error.message=`計算の「${calc[1]}」の ところが 読めません。書き方を たしかめてください`;return;}}
-    error.message=`「${code}」は 読めません。書き方を たしかめてください。`;
+    if(!code||(!calc&&!/^この 文は 読めません/.test(error.message)&&!/^「[\s\S]+」は 読めません。書き方を たしかめてください。$/.test(error.message)))return;
+    if(calc){const at=code.lastIndexOf(calc[1]);
+      if(at>0&&insideParens(code,at)){error.message=`計算の「${calc[1]}」の ところが 読めません。書き方を たしかめてください`;return;}}
+    error.message=`「${writtenSentence(line)}」は 読めません。書き方を たしかめてください。`;
+  }
+  // 計算 is the text inside （ ） (F-26): a 「 」 is words, even when the reader looked into it.
+  function insideParens(code,at){
+    let depth=0,quote=0;
+    for(let i=0;i<at;i++){const ch=code[i];if(ch==='「')quote++;else if(ch==='」'&&quote)quote--;else if(!quote&&ch==='（')depth++;else if(!quote&&ch==='）'&&depth)depth--;}
+    return depth>0;
+  }
+  // The sentence as the child wrote it, with its spaces (F-26: a message quotes what was written); the read text when
+  // the line was put in place of what was written.
+  function writtenSentence(line){
+    const code=compactOutsideString(line.code||''),positions=line.mapped?.positions,base=line.physicalStart??line.start;
+    if(line.rewritten||!positions?.length||typeof line.raw!=='string'||typeof base!=='number')return code;
+    const text=line.raw.slice(positions[0]-base,positions[positions.length-1]-base+1).trim();
+    return compactOutsideString(text)===code?text:code;
   }
   function readBlockHead(text,symbols,ctx={}) {
     const code=compactOutsideString(text),mask=surfaceMask(code),line=ctx.sourceLine||{raw:text,code:text,lineNo:ctx.lineNo||0};
@@ -3572,9 +3586,9 @@
     }
     // A name before を…にする (and the list and number forms below) is the data changed; any other sentence has no
     // such name, so a word at its start is not asked to be put in 【 】 (作品を動かしたとき, 右へ動いたりする).
-    let t = null;
+    let t = null, unreadName = false;
     try { t = parseTargetPrefix(code, symbols, ctx); }
-    catch (error) { if (!(error instanceof AkariError) || error.code !== 'P205' || /(?:を追加する|を挿入する|番目を削除する|を空にする|を足す|を引く|にする)$/.test(code)) throw error; }
+    catch (error) { if (!(error instanceof AkariError) || error.code !== 'P205' || /(?:を追加する|を挿入する|番目を削除する|を空にする|を足す|を引く|にする)$/.test(code)) throw error; unreadName = true; }
     if (t) {
       validateName(t.name);
       const rest = code.slice(t.len),
@@ -3629,7 +3643,7 @@
     } catch (err) {
       if (err instanceof AkariError && err.code === 'P206') throw err;
     }
-    throw new AkariError('P201', `「${line.code}」は 読めません。書き方を たしかめてください。`, line.lineNo, 1);
+    throw Object.assign(new AkariError('P201', `「${line.code}」は 読めません。書き方を たしかめてください。`, line.lineNo, 1), unreadName ? { unreadName } : {});
   }
   function parseArgumentText(inner, symbols, ctx, lineNo) {
     if (!inner) return [];
