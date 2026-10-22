@@ -1102,7 +1102,10 @@
     const reads = text => { const after = read(text, next); return !!want && !!after.ast && stableJson(shape(after.ast, false)) === want; };
     // Which quotes name the thing is found by trying them (a few quotes at most; more are tried all or none).
     const choices = quotes.length <= 6 ? [...Array(1 << quotes.length).keys()].map(mask => new Set(quotes.filter((_, i) => mask & (1 << i)))) : [new Set(), new Set(quotes)];
-    for (const written of [newName, '【' + newName + '】']) for (const changed of choices) { const text = renamed(written, changed); if (reads(text)) return text; }
+    // The new name is tried first as a renamed block (and 整える) writes it: bare when it can stand bare, otherwise in
+    // 【 】 (ねこ → 【ねこが】は、…), even where the bare name would also read now that the part has that name.
+    const writings = bareName(newName) ? [newName, '【' + newName + '】'] : ['【' + newName + '】', newName];
+    for (const written of writings) for (const changed of choices) { const text = renamed(written, changed); if (reads(text)) return text; }
     const lines = source.split('\n'), after = renamed(newName, new Set(quotes)).split('\n');
     const line = lines.findIndex((text, i) => text !== after[i] && !(() => { const a = read(text.trim(), project), b = read(after[i].trim(), next); return a.ast && b.ast && stableJson(shape(a.ast, true)) === stableJson(shape(b.ast, false)); })());
     throw new AkariError('S301', line < 0 ? '名人の 本文の 中で、名前を かえても 同じ ものを さすかを たしかめられません。名前を【 】で かこむなど、どれの ことか はっきり 書いてください'
