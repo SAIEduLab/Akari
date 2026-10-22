@@ -4350,12 +4350,25 @@
         for (const frame of task.callFrames) frame.broadcastGroups?.clear();
         this.ui.renderMonitor?.();
       }
+      // Whose body a flow is and its きっかけ, by the words the child sees: the part (the part a copy was made from), the
+      // screen, or the 名人の本文, and the heading as the body selector names it (「星」に ふれたとき); never an internal id.
+      ownerName(task) {
+        const id = task.targetId;
+        if (id === 'stage') return this.project.stage?.name || '画面';
+        if (id === 'meijin') return '名人の本文';
+        const c = this.project.components.find(x => x.id === id) || this.project.components.find(x => x.id === this.runtime.actor(id)?.baseId);
+        return c?.name ?? '動き';
+      }
+      flowName(task) {
+        const item = task.scriptId ? this.compiled.items?.find(x => x.key === 'script:' + task.scriptId) : null;
+        return `${this.ownerName(task)} / ${task.eventType === 'continuous' ? 'つづけて動くルール' : eventText(task.eventType, item?.filter) || task.eventType}`;
+      }
       taskError(task, err) {
         task.error =
           err instanceof AkariError ? err : new AkariError('R411', err?.message || String(err));
         const e = task.error;
         task.errorCallStack = [
-          `きっかけ ${task.targetId} / ${EVENT_LABELS[task.eventType] || task.eventType}`,
+          this.flowName(task),
           ...task.callFrames.map((f) => `自分で作ったブロック ${f.name}`),
           ...(e.akariCallStack || []),
         ];
