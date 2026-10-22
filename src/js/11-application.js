@@ -5392,8 +5392,29 @@
     let hintPage = 0,
       callableHintPage = 0;
     const composingEditors = new WeakSet();
+    // 書ける ことば names a value by its group in the block list (FCB-13): しらべる for a reading of the screen, へんすう・リスト
+    // for a value written as it is (［1、2、3］, 条件の答え（あてはまる）), 計算 for a calculation and the ready-made ones. A
+    // calculation for くわしく only (2＾3, 平方根, 正弦 …) is not offered below くわしく, as in the block list (F-21).
+    const hintGroups = new Map(), HINT_SENSE_KINDS = new Set(['SensorRead', 'TimerReset', 'InputValueRead']),
+      HINT_DATA_KINDS = new Set(['BooleanLiteral', 'ListLiteral', 'StringLiteral', 'NumberLiteral', 'QuantityLiteral', 'VariableRead', 'ListRead']);
+    function hintGroup(h, symbols) {
+      if (h.mode !== 'expression') return null;
+      const key = h.category + '|' + h.text;
+      if (hintGroups.has(key)) return hintGroups.get(key);
+      let group = { label: h.category === 'はじめから ある 計算' ? '計算' : h.category || '計算', advanced: false };
+      if (h.category !== 'しらべる') try {
+        const node = parseExpression(h.text, symbols, {});
+        group = { label: HINT_SENSE_KINDS.has(node?.kind) || node?.kind === 'SensorRead' ? 'しらべる' : HINT_DATA_KINDS.has(node?.kind) ? 'へんすう・リスト' : '計算',
+          advanced: ADVANCED_ONLY_SCHEMA_IDS.has(node?.kind + ':' + (node?.kind === 'BuiltinCall' ? node.name : node?.op)) };
+      } catch (error) { if (!(error instanceof AkariError)) throw error; }
+      if (hintGroups.size > 2000) hintGroups.clear();
+      hintGroups.set(key, group);
+      return group;
+    }
     function drawHints(root, candidates, search, offset, insert) {
       root.textContent = '';
+      const symbols = buildSymbols(project), advanced = document.body.dataset.uiLevel === 'advanced';
+      candidates = candidates.filter(h => advanced || !hintGroup(h, symbols)?.advanced);
       const query = search.trim().toLocaleLowerCase(),
         filtered = searchHintCandidates(candidates, query, project),
         page = Math.min(offset, Math.max(0, Math.ceil(filtered.length / 24) - 1)),
@@ -5403,7 +5424,7 @@
         b.className = 'hint-button';
         b.textContent =
           // A value is named by its group in the block list (しらべる, 計算, …): 計算 is only for calculations (F-26).
-          (h.mode === 'expression' ? (h.category || '計算') + ' · ' : '') +
+          (h.mode === 'expression' ? hintGroup(h, symbols).label + ' · ' : '') +
           h.text +
           (h.reason ? '\n' + h.reason : '');
         b.title = h.category + (h.reason ? ' / ' + h.reason : '');
@@ -5637,8 +5658,11 @@
       if (!(compiled.items || []).some(item => !item.definitionKind &&
         (hasSentence(item.ast?.body) || hasSentence(item.ast?.rules) ||
           (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
-        setStatus(shownEditorMode() === 'blocks' ? 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね'
-          : '本文が まだ ないよ。コードに 文を 書いてね');
+        // A body that holds only a メモ has something on the screen, but nothing that moves (E2E-R2-14).
+        const memo = (compiled.items || []).some(item => (item.ast?.body || []).length || (item.ast?.units || []).some(unit => unit.body?.length));
+        setStatus(shownEditorMode() === 'blocks'
+          ? memo ? 'メモは 動かないよ。メモの ほかに、動く ブロックを 入れてね' : 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね'
+          : memo ? 'メモは 動かないよ。メモの ほかに、動く 文を 書いてね' : '本文が まだ ないよ。コードに 文を 書いてね');
         return;
       }
       try {
@@ -8266,9 +8290,10 @@
           event.stopImmediatePropagation();
           event.key.toLowerCase() === 'y' || event.shiftKey ? redoDo() : undo();
         }
-        // Delete stays inside the block editor; on a selected sentence the editor itself deletes the block (E-05).
+        // Delete stays inside the block editor; on a selected sentence the editor itself deletes the block (E-05), and on a
+        // selected value it says what to do instead (FCB-20), as Backspace does.
         if (event.key === 'Delete' && event.target.closest('#blockEditor,#callableBlocks') &&
-            !event.target.matches('.blockui-world .blockui-node.blockui-statement'))
+            !event.target.matches('.blockui-world .blockui-node:is(.blockui-statement, .blockui-expression)'))
           event.stopPropagation();
       },
       true,
