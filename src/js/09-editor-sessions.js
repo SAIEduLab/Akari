@@ -1101,8 +1101,10 @@
   function applyCreationDefaults(node, project, targetId) {
     const first = node?.inputs?.args?.[0];
     if (first?.schemaId !== 'NumberLiteral' || first.fields.value !== 0) return node;
-    const owner = project?.components?.find(c => c.id === targetId), other = project?.components?.find(c => c.id !== targetId)?.name;
-    const name = node.schemaId === 'MotionCommand:POINT_TO' ? other || 'マウス' : node.schemaId === 'CloneCommand:CREATE_TARGET' ? other || owner?.name : null;
+    const parts = project?.components || [], other = parts.find(c => c.id !== targetId)?.name,
+      character = (parts.find(c => c.id !== targetId && c.type === 'sprite') || parts.find(c => c.id === targetId && c.type === 'sprite'))?.name;
+    // Only a character (not a button or a label) has copies.
+    const name = node.schemaId === 'MotionCommand:POINT_TO' ? other || 'マウス' : node.schemaId === 'CloneCommand:CREATE_TARGET' ? character : null;
     if (name) Object.assign(first, { schemaId: 'StringLiteral', fields: { value: name } });
     else if (CREATION_NUMBERS.has(node.schemaId)) first.fields.value = CREATION_NUMBERS.get(node.schemaId);
     return node;
