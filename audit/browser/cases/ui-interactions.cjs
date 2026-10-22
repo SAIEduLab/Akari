@@ -139,6 +139,44 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
   await test('UI-outside-drop-preserves-state',async()=>{
    await fixture('1を言う。\n2を言う。');const old=await state(),h=await nodes('Say').first().locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').boundingBox();await page.mouse.move(h.x+h.width/2,h.y+h.height/2);await page.mouse.down();await page.mouse.move(10,10,{steps:7});await page.mouse.up();const now=await state();for(const key of ['source','history','redo'])assert.equal(now[key],old[key]);assert.equal(now.pending,null);assert.equal(await root.locator('.blockui-drop-preview,.blockui-drop-invalid').count(),0);await page.waitForTimeout(400);
   });
+  // B-02/B-03 (LANGUAGE.md いまのばしょから動く): the one direction is chosen from 右・左・上・下, the other leg is added and
+  // either leg taken off, and a time is added and taken off. Each edit writes the sentence in its written form (horizontal leg
+  // first, the new leg 10歩, the time 1秒) and is one undo step that gives the sentence back (R1-B-01: 左 and 下 were refused).
+  await test('UI-move-by-directions-legs-time-undo',async()=>{
+   await (await reveal(page.locator('#objectSelect'))).selectOption('sprite-1');await (await reveal(page.locator('#eventSelect'))).selectOption('start');
+   const word={right:'右',left:'左',up:'上',down:'下'},axis=d=>['right','left'].includes(d)?'x':'y',leg=(d,n=10)=>word[d]+'へ'+n+'歩';
+   const sentence=(x,y)=>'いまのばしょから、'+[x,y].filter(Boolean).join('、')+'動く。';
+   const block=()=>nodes('MotionCommand:MOVE_BY').first(),extra=action=>block().locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-extra [data-blockui-action="'+action+'"]');
+   const settle=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+   const source=async()=>(await state()).source.trim();
+   const step=async(what,act,want)=>{const before=await state();await act();await settle();const after=await state();
+    assert.equal(after.source.trim(),want,what);assert.equal(after.pending,null,what+' leaves no pending edit');assert.equal(after.history,before.history+1,what+' is one undo step');return before;};
+   const undo=async(before,what)=>{await page.locator('#undoBtn').click();await settle();const now=await state();assert.equal(now.source,before.source,'one undo gives back the sentence before '+what);assert.equal(now.history,before.history);};
+   const chosen=()=>block().locator('[data-blockui-action="motion-direction"]');
+   const select=async()=>{if(!await block().evaluate(e=>e.classList.contains('blockui-selected')))await U.clickNode(block());};
+   const changes=[],legs=[],times=[];
+   // All 12 changes of the one direction.
+   for(const from of Object.keys(word))for(const to of Object.keys(word)){if(from===to)continue;
+    await fixture(sentence(leg(from)));const what=word[from]+'→'+word[to];
+    const before=await step(what,()=>chosen().selectOption(to),sentence(axis(to)==='x'?leg(to):null,axis(to)==='y'?leg(to):null));
+    assert.equal(await chosen().inputValue(),to,what+' shows the new direction');await undo(before,what);assert.equal(await chosen().inputValue(),from,what+' undone shows the old direction');changes.push(what);}
+   // The other leg added in each of its two directions, then either leg taken off.
+   for(const start of Object.keys(word))for(const added of axis(start)==='x'?['up','down']:['right','left'])for(const off of ['start','added']){
+    await fixture(sentence(leg(start)));const a=axis(start),b=a==='x'?'y':'x',what=word[start]+' + '+word[added]+' − '+off;
+    const two=(sx,sy)=>sentence(sx,sy),x=d=>axis(d)==='x'?leg(d):null,y=d=>axis(d)==='y'?leg(d):null,plain=b==='x'?'right':'up';
+    await select();const s0=await step(what+' add',async()=>(await reveal(extra('motion-leg-add-'+b))).click(),two(x(start)??x(plain),y(start)??y(plain)));
+    let s1=null;if(added!==plain){const field=root.locator('[data-blockui-field="'+(b==='x'?'xDir':'yDir')+'"][data-block-id="'+await block().getAttribute('data-block-id')+'"]');
+     s1=await step(what+' direction',()=>field.selectOption(added),two(x(start)??x(added),y(start)??y(added)));}
+    await select();const kept=off==='start'?added:start;
+    const s2=await step(what+' off',async()=>(await reveal(extra('motion-leg-remove-'+(off==='start'?a:b)))).click(),sentence(x(kept),y(kept)));
+    await undo(s2,what+' off');if(s1)await undo(s1,what+' direction');await undo(s0,what+' add');assert.equal(await source(),sentence(leg(start)));legs.push(what);}
+   // A time added and taken off, for each direction.
+   for(const d of Object.keys(word)){await fixture(sentence(leg(d)));await select();
+    const t0=await step(word[d]+' timed',async()=>(await reveal(extra('motion-timed'))).click(),'1秒かけて、'+sentence(axis(d)==='x'?leg(d):null,axis(d)==='y'?leg(d):null));
+    await select();const t1=await step(word[d]+' untimed',async()=>(await reveal(extra('motion-untimed'))).click(),sentence(axis(d)==='x'?leg(d):null,axis(d)==='y'?leg(d):null));
+    await undo(t1,word[d]+' untimed');await undo(t0,word[d]+' timed');times.push(word[d]);}
+   assert.equal(changes.length,12);assert.equal(legs.length,16);assert.equal(times.length,4);
+  });
   await test('UI-keyboard-only-create-move-delete-history',async()=>{
    await fixture('何もしない。');const tabTo=async locator=>{for(let i=0;i<500;i++){if(await locator.evaluate(e=>e===document.activeElement))return;await page.keyboard.press('Tab');}throw Error('Keyboard target not reachable: '+await locator.getAttribute('data-blockui-action'));};const openWithKeyboard=async node=>{await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));const more=node.locator(':scope > .blockui-node-head [data-blockui-action="more"]');await tabTo(more);if(!await more.evaluate(e=>e.closest('details').open))await page.keyboard.press('Enter');await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));assert.equal(await more.evaluate(e=>e.closest('details').open),true,'keyboard disclosure must be open');};const toolsToggle=root.locator('[data-blockui-action="palette-tools-toggle"]');if(await toolsToggle.getAttribute('aria-expanded')==='false'){await tabTo(toolsToggle);await page.keyboard.press('Enter');assert.equal(await toolsToggle.getAttribute('aria-expanded'),'true');}if(await root.locator('.blockui-palette-options').getAttribute('open')===null){await tabTo(root.locator('.blockui-palette-options > summary'));await page.keyboard.press('Enter');}await tabTo(root.locator('[data-blockui-palette-mode]'));await page.keyboard.press('Home');await tabTo(root.locator('[data-blockui-search]'));await page.keyboard.press('Control+a');await page.keyboard.type('Say');await tabTo(root.locator('[data-blockui-schema="Say"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation','Say']);await openWithKeyboard(nodes('Say')); await tabTo(nodes('Say').locator(':scope > .blockui-node-head [data-blockui-action="move-up"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['Say','NoOperation']);await openWithKeyboard(nodes('Say')); await tabTo(nodes('Say').locator(':scope > .blockui-node-head [data-blockui-action="remove"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation']);await page.keyboard.press('Control+z');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['Say','NoOperation']);await page.keyboard.press('Control+y');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation']);
   });
