@@ -1137,12 +1137,18 @@
       return { ast: parseScript(source, context.symbols, context), syntaxDiagnostics: [] };
     } catch (error) {
       if (!(error instanceof AkariError)) throw error;
+      // 10の倍数・12の約数・からっぽ in an ordinary body: the code view shows the same guidance as the check (FCM-19).
+      let word = null;
+      if (!context.meijin && !error.proposals?.length && ['P201', 'P205'].includes(error.code)) {
+        const text = String(source).split('\n')[(error.line || 1) - 1] || '';
+        for (const [pattern, say] of WORD_LINES) { const m = pattern.exec(text); if (m) { word = say(m); break; } }
+      }
       return {
         ast: null,
         syntaxDiagnostics: [
           {
-            code: error.code,
-            message: error.message,
+            code: word ? 'S301' : error.code,
+            message: word || error.message,
             line: error.line || 0,
             column: error.column || 1,
             where: context.key || context.ownerKey || '',
