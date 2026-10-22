@@ -1667,13 +1667,15 @@
     // another block of that body asks nothing again (PERF-01). A block whose answer depends on its place is checked there,
     // and pressing a block always checks the place it goes (paletteAdd).
     const PLACE_DEPENDENT_KINDS = new Set(['WaitBroadcastGroup', 'LocalVariableDeclaration', 'LocalListDeclaration']);
+    // A body of 答えを もとめる ends with its 「〜を答えとして返す」, so its end is the place just before it (PERF-R2-01).
     function listedPlace(location) {
       const siblings = !destination && location?.body ? index.get(location.parentId)?.node?.bodies?.[location.body] : null;
-      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement') ? { ...location, index: siblings.length } : location;
+      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement')
+        ? { ...location, index: siblings.length - (siblings.at(-1)?.schemaId === 'ReturnStatement' ? 1 : 0) } : location;
     }
-    function paletteAvailability(schema, location) {
+    function paletteAvailability(schema, location, exact = false) {
       if (schema.candidateReason) return {enabled:false, reason:schema.candidateReason, node:schema.candidateNode};
-      if (location?.body && !PLACE_DEPENDENT_KINDS.has(schema.kind)) location = listedPlace(location);
+      if (!exact && location?.body && !PLACE_DEPENDENT_KINDS.has(schema.kind)) location = listedPlace(location);
       if (schema.category === 'rule') return ruleAvailability();
       // A value may be picked up before its destination is chosen. The actual
       // socket is checked by the existing common validator on preview and drop.
@@ -1786,9 +1788,12 @@
           '',
           'palette-add',
           () => {
-            if (!a.enabled) {
+            // The list was checked at the end of the body (PERF-01): a press checks the place the block really goes.
+            const real = a.enabled ? a : paletteAvailability(schema, destination || defaultDestination(), true);
+            if (!real.enabled) {
+              if (real.reason) reason.textContent = real.reason;
               reason.hidden = false;
-              announce(a.reason, true);
+              announce(real.reason || a.reason, true);
               return;
             }
             paletteAdd(schema);
