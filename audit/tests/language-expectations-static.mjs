@@ -7,8 +7,8 @@ const read=p=>JSON.parse(fs.readFileSync(p)),manifest=read('audit/manifests/lang
 const oracle=read('audit/fixtures/capability-oracle.json');
 assert.equal(finiteCases.length,256);assert.equal(new Set(finiteCases.map(c=>c.id)).size,42);
 assert.deepEqual(finiteCases,manifest.cases.map(({id,key,source,canonical})=>({id,key,source,canonical})));
-assert.equal(sha(JSON.stringify(manifest.cases)),'a38f60ab8a9070ed6b4d23c20384a6ac2fb501532ef54968aebca24f1f3c8c3e','independent source/canonical AST expectations');
-assert.equal(sha(JSON.stringify({golden:expected.golden,corpus:expected.corpus,schemaIds:expected.schemaIds})),'9a2f60ac40f3474d6602a6a4e6d2da1f5ee7e6776fa377e1fe058c7a0229fd82','independent runtime/corpus expectations');
+assert.equal(sha(JSON.stringify(manifest.cases)),'e4901debf6992b74ffb428eb90ee92e65c01b814187937f75022a268ede26fac','independent source/canonical AST expectations');
+assert.equal(sha(JSON.stringify({golden:expected.golden,corpus:expected.corpus,schemaIds:expected.schemaIds})),'a8ff6c28193c17a79168be065be2f4101c3eef5e3314b1cb431ff988fc68244d','independent runtime/corpus expectations');
 const ids=expectedLanguageIds(manifest);assert.equal(ids.length,607);assert.equal(new Set(ids).size,ids.length);
 assert.deepEqual(Object.keys(expected.golden).sort(),manifest.cases.map(c=>c.id+'/'+c.key).sort());
 for(const c of manifest.cases){assert.ok(c.source&&c.canonical&&c.canonicalAst);assert.ok(expected.golden[c.id+'/'+c.key]);}

@@ -1,13 +1,13 @@
 {
   "schema": "akari-finite-semantic-variants-v1",
   "source": "audit/reviewed/PUBLIC_SEMANTIC_UX_SPEC.md",
-  "policy": "Finite independent inputs and expected traces; generated without loading or querying product code. No row is a UX claim. Quantity axes apply where meaningful; illegal counts are separate negatives.",
+  "policy": "Finite independent inputs and expected traces; generated without loading or querying product code. No row is a UX claim. Quantity axes apply where meaningful; illegal counts are separate negatives. The move rows use the LANGUAGE.md move sentences (いまのばしょから); a surface the language no longer reads leaves the positive set and its slot holds a read surface. Loops that never wait are observed once per こま.",
   "cases": [
     {
       "id": "V01/001",
       "group": "V01",
-      "source": "あかりは画面の右へ0歩動く。",
-      "inputHash": "ba99fdbbaa91b626799c2258abeb0a64fef950c7f6bba6a77a4cc9618325973e",
+      "source": "あかりはいまのばしょから、右へ0歩動く。",
+      "inputHash": "29c8efcd7a9391aaecac7cc9c032dae4cb6a05152ad916ffa1baad319d31eb17",
       "expected": [
         {
           "x": 100
@@ -18,8 +18,8 @@
     {
       "id": "V02/001",
       "group": "V02",
-      "source": "あかりを0.5秒かけて画面の右へ0歩動かす。",
-      "inputHash": "2bf46da47f5e85adeb4117abc6998af635b9ed0ebf53fcb4ad332b70b3cdf878",
+      "source": "あかりを0.5秒かけて、いまのばしょから、右へ0歩動かす。",
+      "inputHash": "24e6eece6e6a55791b7ed83080ef23ca7c193bea8e7d0f23b61b6f1c2358bce9",
       "expected": [
         {
           "x": 100
@@ -44,8 +44,8 @@
     {
       "id": "V03/001",
       "group": "V03",
-      "source": "あかりは（0＋0）歩、画面の右へ動く。",
-      "inputHash": "18b907764babcbcb2ded217ece5a4f1f65938c8b7fd8fa43bcee4ae29ae5db45",
+      "source": "あかりはいまのばしょから、右へ（0＋0）歩動く。",
+      "inputHash": "bdaf74b81f46670a4121fa7afbd463fffc2b538f684268f910f71bc224b4b27c",
       "expected": [
         {
           "x": 100
@@ -56,8 +56,8 @@
     {
       "id": "V01/002",
       "group": "V01",
-      "source": "あかりを画面の右へ0歩動かす。",
-      "inputHash": "ab925f3b2463228ce2e23b41e15e8c2f94b3cfce91cad543acda23ecdb7439d5",
+      "source": "あかりをいまのばしょから、右へ0歩動かす。",
+      "inputHash": "6887ed30a700c110f570c2a335767a1d24ced2b53595e674e387d45c9bdf3503",
       "expected": [
         {
           "x": 100
@@ -68,8 +68,8 @@
     {
       "id": "V02/002",
       "group": "V02",
-      "source": "あかりを0歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "8d4c83882ade78621fc35c829c734b288ff98c2275e5e8006cc872efde3bccba",
+      "source": "あかりは0.5秒かけて、いまのばしょから、右へ0歩動く。",
+      "inputHash": "7ae52417c144a7db6769df257f31ec9f3bcd9df345db3ad0c8f4fe13238c284c",
       "expected": [
         {
           "x": 100
@@ -94,8 +94,8 @@
     {
       "id": "V03/002",
       "group": "V03",
-      "source": "あかりは０歩、画面の右へ動く。",
-      "inputHash": "8f5fd4ce705d494ae6b68a4941f9114a9746eeddf6a889e159a2a4e2d10d9317",
+      "source": "あかりはいまのばしょから、右へ０歩動く。",
+      "inputHash": "6fafb918c1c96a6918d319dea2f7a14e329a3da6888b86fb09d746623419d7c4",
       "expected": [
         {
           "x": 100
@@ -106,8 +106,8 @@
     {
       "id": "V01/003",
       "group": "V01",
-      "source": "あかりは画面の右へ1歩動く。",
-      "inputHash": "72b8de397d1742bd4addc7f84f49e674463a70aad49e05cda8e0097bdb8dcfa0",
+      "source": "あかりはいまのばしょから、右へ1歩動く。",
+      "inputHash": "4aca846a63490b00b5c808fcd775a8efea3cd286168cfbc8bc716223872e8cb3",
       "expected": [
         {
           "x": 101
@@ -118,8 +118,8 @@
     {
       "id": "V02/003",
       "group": "V02",
-      "source": "あかりを0.5秒かけて画面の右へ1歩動かす。",
-      "inputHash": "64a2797228b2fa188141d00c43b6ce0503a080252700c543057f28f2bb2a93a5",
+      "source": "あかりを0.5秒かけて、いまのばしょから、右へ1歩動かす。",
+      "inputHash": "2ef6b4dd5a4e2712b92c52eb8bf5573dd95c2e6b7c4be69a65426d1db513ac49",
       "expected": [
         {
           "x": 100
@@ -144,8 +144,8 @@
     {
       "id": "V03/003",
       "group": "V03",
-      "source": "あかりは（1＋0）歩、画面の右へ動く。",
-      "inputHash": "0087856624ec45100c05ea77b1ecc878df29556dffefc695ce5e1b87b425b6f1",
+      "source": "あかりはいまのばしょから、右へ（1＋0）歩動く。",
+      "inputHash": "904db63762466618984e428d2f903692d23949d3104d53455eedeaacfb127929",
       "expected": [
         {
           "x": 101
@@ -156,8 +156,8 @@
     {
       "id": "V01/004",
       "group": "V01",
-      "source": "あかりを画面の右へ1歩動かす。",
-      "inputHash": "f45fe66fad779456ea0917014337d79eb6aba4826e89f52f0504358cd30939f1",
+      "source": "あかりをいまのばしょから、右へ1歩動かす。",
+      "inputHash": "14780ff980293a8978e3c8ffcbaba6e1e99135ca4acf1bc4b7a214af8aaa1a48",
       "expected": [
         {
           "x": 101
@@ -168,8 +168,8 @@
     {
       "id": "V02/004",
       "group": "V02",
-      "source": "あかりを1歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "37ee973720d8ea01149bb24787dcb0572155d14cf61132be07b1d96b137ca512",
+      "source": "あかりは0.5秒かけて、いまのばしょから、右へ1歩動く。",
+      "inputHash": "6649ebdcb607ac5018730c0dbbf467776506101e3d66a2ffc0392070093e16a6",
       "expected": [
         {
           "x": 100
@@ -194,8 +194,8 @@
     {
       "id": "V03/004",
       "group": "V03",
-      "source": "あかりは１歩、画面の右へ動く。",
-      "inputHash": "f12ed71e9135d18290133cd851971faf672a40ca3fb9ea107a4f08a54c3d8408",
+      "source": "あかりはいまのばしょから、右へ１歩動く。",
+      "inputHash": "950f748d7836d72ccd2ef45adff392676dfab49a33140110bb79b2b1f7791a4c",
       "expected": [
         {
           "x": 101
@@ -206,8 +206,8 @@
     {
       "id": "V01/005",
       "group": "V01",
-      "source": "あかりは画面の右へ7歩動く。",
-      "inputHash": "6129bb11b5f2e11b35359954396c2f34e785eb2883a5bafb1625fe40f251d125",
+      "source": "あかりはいまのばしょから、右へ7歩動く。",
+      "inputHash": "51ca2ad4a3dac37d6efab2e34db31434384a99507faf38ee4748dc1862f21e8a",
       "expected": [
         {
           "x": 107
@@ -218,8 +218,8 @@
     {
       "id": "V02/005",
       "group": "V02",
-      "source": "あかりを0.5秒かけて画面の右へ7歩動かす。",
-      "inputHash": "0a2e1d768147adc9e559396e0d554f722cdef533ca8ea6c2193b85efb020adad",
+      "source": "あかりを0.5秒かけて、いまのばしょから、右へ7歩動かす。",
+      "inputHash": "d142d887524c875840824fca34d9e4ec594a928f880712715f48924b8bcddf3c",
       "expected": [
         {
           "x": 100
@@ -244,8 +244,8 @@
     {
       "id": "V03/005",
       "group": "V03",
-      "source": "あかりは（7＋0）歩、画面の右へ動く。",
-      "inputHash": "9a4940a0441ce0e922f1eb5478c28854321a84b0865b540685ceb08e5b3c9e85",
+      "source": "あかりはいまのばしょから、右へ（7＋0）歩動く。",
+      "inputHash": "787da4e3252395ae7b860f6e9ef3811ee558f4ad089ab0f8786c94ed027c6c8b",
       "expected": [
         {
           "x": 107
@@ -256,8 +256,8 @@
     {
       "id": "V01/006",
       "group": "V01",
-      "source": "あかりを画面の右へ7歩動かす。",
-      "inputHash": "9c384c92bf298b78023e014156148e04efb05ae8001bd42f7d301dc21646c280",
+      "source": "あかりをいまのばしょから、右へ7歩動かす。",
+      "inputHash": "69f44a0f3d7d702f0bd5474281dd8dcd99a98b0ffa3cfd85f520635188378107",
       "expected": [
         {
           "x": 107
@@ -268,8 +268,8 @@
     {
       "id": "V02/006",
       "group": "V02",
-      "source": "あかりを7歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "36fbdbdeb8cfffbe7df8058ee88609b180ab0a4f72e0544f0d9b12ef1c86eb53",
+      "source": "あかりは0.5秒かけて、いまのばしょから、右へ7歩動く。",
+      "inputHash": "046ef65646fa8449265cbc8ca7acf4161465ab48b0076b37f0abc5188fa2ea56",
       "expected": [
         {
           "x": 100
@@ -294,8 +294,8 @@
     {
       "id": "V03/006",
       "group": "V03",
-      "source": "あかりは７歩、画面の右へ動く。",
-      "inputHash": "c89cf5abf239c31c7528f5446c347276b064eac29e34b2ee839f9cb45160fdfc",
+      "source": "あかりはいまのばしょから、右へ７歩動く。",
+      "inputHash": "4cdfd970105d62afe557dac7822b5f00eef6d7c367eb7ad40046d18da51ddeb2",
       "expected": [
         {
           "x": 107
@@ -306,8 +306,8 @@
     {
       "id": "V01/007",
       "group": "V01",
-      "source": "あかりは画面の右へ2.5歩動く。",
-      "inputHash": "3ceea063b1c47484beeeef3a2dbcd7c96b2c8d4546fea68e52dd30fbeeb9d604",
+      "source": "あかりはいまのばしょから、右へ2.5歩動く。",
+      "inputHash": "6b063517dc00fc4a0ba9a2e5ec38fad83cbdda2a571b44aeddde56e0d269d79a",
       "expected": [
         {
           "x": 102.5
@@ -318,8 +318,8 @@
     {
       "id": "V02/007",
       "group": "V02",
-      "source": "あかりを0.5秒かけて画面の右へ2.5歩動かす。",
-      "inputHash": "6b4ec24d536f471ee98daff8ddee719b3b155ee71541904b0e858ed21f8f1262",
+      "source": "あかりを0.5秒かけて、いまのばしょから、右へ2.5歩動かす。",
+      "inputHash": "da89235b13a93afb739ead31f22fb94f599e938da9a70d60c4f5a31c425e61c0",
       "expected": [
         {
           "x": 100
@@ -344,8 +344,8 @@
     {
       "id": "V03/007",
       "group": "V03",
-      "source": "あかりは（2.5＋0）歩、画面の右へ動く。",
-      "inputHash": "15b9d9352eca4ab13585de02637f6ed368ff296c8fe1d78bb355578604908f00",
+      "source": "あかりはいまのばしょから、右へ（2.5＋0）歩動く。",
+      "inputHash": "e350be176fea90ac9476703ed362687657bece92d399a5f9f821ffd7a9a055e8",
       "expected": [
         {
           "x": 102.5
@@ -356,8 +356,8 @@
     {
       "id": "V01/008",
       "group": "V01",
-      "source": "あかりを画面の右へ2.5歩動かす。",
-      "inputHash": "070493cc48d0972a81ed4d6ac872fe6205fcd3fb85ad88ffb15f821eb5d0b1ff",
+      "source": "あかりをいまのばしょから、右へ2.5歩動かす。",
+      "inputHash": "0bce2af8a84b9140123ea4c51b69e540296dbf8a38b4f224967c492174d4ab77",
       "expected": [
         {
           "x": 102.5
@@ -368,8 +368,8 @@
     {
       "id": "V02/008",
       "group": "V02",
-      "source": "あかりを2.5歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "f3cd59614e35dc809aa153572c91a01bb1cd548d6059e8f1aadbdedccb038280",
+      "source": "あかりは0.5秒かけて、いまのばしょから、右へ2.5歩動く。",
+      "inputHash": "8ce68ef94b92dbe20f0b17db43f1f3c1e7fd613dca101f454067470e0b459585",
       "expected": [
         {
           "x": 100
@@ -394,8 +394,8 @@
     {
       "id": "V03/008",
       "group": "V03",
-      "source": "あかりは２．５歩、画面の右へ動く。",
-      "inputHash": "71ce8b2827b9607484b129322dd7a61800fcf1ab66efb46077337b971b33ac49",
+      "source": "あかりはいまのばしょから、右へ２．５歩動く。",
+      "inputHash": "c8bba7286e55d8a4c31c647445cd29e705b627797d07bdb36537892fe15eb286",
       "expected": [
         {
           "x": 102.5
@@ -406,8 +406,8 @@
     {
       "id": "V01/009",
       "group": "V01",
-      "source": "あかりは画面の右へ－3歩動く。",
-      "inputHash": "7e76687ce0be1f72ed34f29b12ab0a91dbd47ba5425c4c95487386410c8b3015",
+      "source": "あかりはいまのばしょから、右へ－3歩動く。",
+      "inputHash": "733e6f64262d9367e4f87b5c3efb5f850fec276b44b7c38a535077b13f5e4c9f",
       "expected": [
         {
           "x": 97
@@ -418,8 +418,8 @@
     {
       "id": "V02/009",
       "group": "V02",
-      "source": "あかりを0.5秒かけて画面の右へ－3歩動かす。",
-      "inputHash": "2860d074d4b0b09a8c70ff22b2a1486b4bcf86aee4e84f766310dbb8087d708c",
+      "source": "あかりを0.5秒かけて、いまのばしょから、右へ－3歩動かす。",
+      "inputHash": "bcf2064a68cbabc457dc364c219279397c7344d8a1c390a05a62a8aa5c921a20",
       "expected": [
         {
           "x": 100
@@ -444,8 +444,8 @@
     {
       "id": "V03/009",
       "group": "V03",
-      "source": "あかりは（－3＋0）歩、画面の右へ動く。",
-      "inputHash": "c7a2af93815044d9852d37f878d5d47e4edbe1127fbeaaab19c246e0d32bef0c",
+      "source": "あかりはいまのばしょから、右へ（－3＋0）歩動く。",
+      "inputHash": "301c70d4fcf3236658a84b982719a744d17475d0a3b4452ead84383ddb2e3c4c",
       "expected": [
         {
           "x": 97
@@ -456,8 +456,8 @@
     {
       "id": "V01/010",
       "group": "V01",
-      "source": "あかりを画面の右へ－3歩動かす。",
-      "inputHash": "57337153bfc14d522dec3284b81ae3ec1afd496731131e0d5ef2e729f5254d38",
+      "source": "あかりをいまのばしょから、右へ－3歩動かす。",
+      "inputHash": "75a13ac316fc7c206bf6021faca2fff5ce8b801c175dc89d00de30aaf3a28ec9",
       "expected": [
         {
           "x": 97
@@ -468,8 +468,8 @@
     {
       "id": "V02/010",
       "group": "V02",
-      "source": "あかりを－3歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "3a6e9307038c0da1825808ac17386f8511630b0a52770aef6caeff7cd9209640",
+      "source": "あかりは0.5秒かけて、いまのばしょから、右へ－3歩動く。",
+      "inputHash": "dac999ba8438d688c6ff173d4d86e6f18ff84782d39daffaf8d90d2f217c6f33",
       "expected": [
         {
           "x": 100
@@ -494,8 +494,8 @@
     {
       "id": "V03/010",
       "group": "V03",
-      "source": "あかりは－３歩、画面の右へ動く。",
-      "inputHash": "6739755cab77209e1a27eb1555c3ec3782f78ac2f67a5583d87e7e25d7b99d95",
+      "source": "あかりはいまのばしょから、右へ－３歩動く。",
+      "inputHash": "a66b589b284fe0d4e9c85d5b9a3fb11b73bd724d715dd46bf1259cf23979b9eb",
       "expected": [
         {
           "x": 97
@@ -506,8 +506,8 @@
     {
       "id": "V01/011",
       "group": "V01",
-      "source": "星は画面の右へ0歩動く。",
-      "inputHash": "45b4114f0e429b31d77d2bb9af73578b025bbf95d4345bf175193e5f4145467f",
+      "source": "星はいまのばしょから、右へ0歩動く。",
+      "inputHash": "e82f3b7363490539cf2c8f21191e336b07cdbd3f26db1be25d63074e11d5b81b",
       "expected": [
         {
           "x": 100
@@ -518,8 +518,8 @@
     {
       "id": "V02/011",
       "group": "V02",
-      "source": "星を0.5秒かけて画面の右へ0歩動かす。",
-      "inputHash": "df2edeb94056e932c0090d2a16063f3b272469116be66cddfab25e20aabd2cd4",
+      "source": "星を0.5秒かけて、いまのばしょから、右へ0歩動かす。",
+      "inputHash": "27e5717ef2664a4d9bd50bf934e6daaa777836559f8e0a406d553375a9f3bb9c",
       "expected": [
         {
           "x": 100
@@ -544,8 +544,8 @@
     {
       "id": "V03/011",
       "group": "V03",
-      "source": "星は（0＋0）歩、画面の右へ動く。",
-      "inputHash": "0b81d12e680b0945ae1372834dee8f36f9006b71c144de9bbcd8f6c88626d581",
+      "source": "星はいまのばしょから、右へ（0＋0）歩動く。",
+      "inputHash": "9b25680176a6993552fe57278f29d6eff58a73429e0559c3618ffedc37c7b4de",
       "expected": [
         {
           "x": 100
@@ -556,8 +556,8 @@
     {
       "id": "V01/012",
       "group": "V01",
-      "source": "星を画面の右へ0歩動かす。",
-      "inputHash": "a48ce1c811f769b2fa76e053a4e6b865d946612223054aab46e7a08ce521505a",
+      "source": "星をいまのばしょから、右へ0歩動かす。",
+      "inputHash": "16dadd85d404e5d39f373fcb9fdc2d939ed45ef774245f261d354b20f840375d",
       "expected": [
         {
           "x": 100
@@ -568,8 +568,8 @@
     {
       "id": "V02/012",
       "group": "V02",
-      "source": "星を0歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "3c1b93f190510c18815c4f7f4cf7cf63cb12366614cc7391a89841124e00d79f",
+      "source": "星は0.5秒かけて、いまのばしょから、右へ0歩動く。",
+      "inputHash": "99130b42da5e68c011fc818ddd15d3dcd2f03fa1546a11b6dc5fc1bbedd676d5",
       "expected": [
         {
           "x": 100
@@ -594,8 +594,8 @@
     {
       "id": "V03/012",
       "group": "V03",
-      "source": "星は０歩、画面の右へ動く。",
-      "inputHash": "a36eb00d5b03dab0ea5b113675f1b396001ae630135eddadd6d81d584a96bfa9",
+      "source": "星はいまのばしょから、右へ０歩動く。",
+      "inputHash": "dd66f51f49b4550e95b53bacbcc6f4214a6035623f130d73aef35fd4c84cda69",
       "expected": [
         {
           "x": 100
@@ -606,8 +606,8 @@
     {
       "id": "V01/013",
       "group": "V01",
-      "source": "星は画面の右へ1歩動く。",
-      "inputHash": "2733aabf69e448e5ac6697d5032f1cf6edc1dac6aeb8065e4b6099aabebc60e5",
+      "source": "星はいまのばしょから、右へ1歩動く。",
+      "inputHash": "0744ccb23b2c0af4c3edf6ff05c3500585c9bbd540a62e451657271e18ea84a9",
       "expected": [
         {
           "x": 101
@@ -618,8 +618,8 @@
     {
       "id": "V02/013",
       "group": "V02",
-      "source": "星を0.5秒かけて画面の右へ1歩動かす。",
-      "inputHash": "7da0e021b73a679178dc6f67d9ca93669eb104892db27ffaaaa40e3ce0f82c55",
+      "source": "星を0.5秒かけて、いまのばしょから、右へ1歩動かす。",
+      "inputHash": "53ec39b63284b99e6ee7387882f73c4c3a129b3dfe3b4898e6f07dce32efe578",
       "expected": [
         {
           "x": 100
@@ -644,8 +644,8 @@
     {
       "id": "V03/013",
       "group": "V03",
-      "source": "星は（1＋0）歩、画面の右へ動く。",
-      "inputHash": "dfaf55afb7ca56b6daa53f8d496ede076abd19fac1d4a41e5b66a907ac737858",
+      "source": "星はいまのばしょから、右へ（1＋0）歩動く。",
+      "inputHash": "5581a9b12cf390923005de2f330547f0c423b9c203867b683fbd914709b52afb",
       "expected": [
         {
           "x": 101
@@ -656,8 +656,8 @@
     {
       "id": "V01/014",
       "group": "V01",
-      "source": "星を画面の右へ1歩動かす。",
-      "inputHash": "85e20edbbb1552c396650e843b5a7881df571b1285b6f4d0462ecfb0e9235623",
+      "source": "星をいまのばしょから、右へ1歩動かす。",
+      "inputHash": "d373e3b88d5e03ef94b4f1f678f6bae3c0099da4d5be5c24875aa3171cec0fc7",
       "expected": [
         {
           "x": 101
@@ -668,8 +668,8 @@
     {
       "id": "V02/014",
       "group": "V02",
-      "source": "星を1歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "8422b20ac72e0b75f49bf7f77f6aa53dea0c63901c1226a440a2ab611f8d10bc",
+      "source": "星は0.5秒かけて、いまのばしょから、右へ1歩動く。",
+      "inputHash": "ffe301cd63e4692923c8d51c79786534296026d398133dee698cf7fe5c6ebdee",
       "expected": [
         {
           "x": 100
@@ -694,8 +694,8 @@
     {
       "id": "V03/014",
       "group": "V03",
-      "source": "星は１歩、画面の右へ動く。",
-      "inputHash": "f1164255aefc88d55ebee2acff67c865d0e5a93ecece4ee0a94fe174706bfadf",
+      "source": "星はいまのばしょから、右へ１歩動く。",
+      "inputHash": "4996d766df84630bbf55596e2255762f13a117361231efaf7241bea6a2a5a737",
       "expected": [
         {
           "x": 101
@@ -706,8 +706,8 @@
     {
       "id": "V01/015",
       "group": "V01",
-      "source": "星は画面の右へ7歩動く。",
-      "inputHash": "93b79e7f13d9b21227721e82bb128870144b0ddbf7fa5898bc40a5212578507a",
+      "source": "星はいまのばしょから、右へ7歩動く。",
+      "inputHash": "c44f5e67fc84069ccd6e6ceb7e08d069dc5e8ac60b9f27347896aa0da1708d53",
       "expected": [
         {
           "x": 107
@@ -718,8 +718,8 @@
     {
       "id": "V02/015",
       "group": "V02",
-      "source": "星を0.5秒かけて画面の右へ7歩動かす。",
-      "inputHash": "0affd1f49a7f39564afd39eaa3dd348f9acfe1dd73f3cbe38844bccec352710f",
+      "source": "星を0.5秒かけて、いまのばしょから、右へ7歩動かす。",
+      "inputHash": "f7b1acfbefaa3203d1fea0f7476eb9f3fd32da796e2487d22d18774786835b56",
       "expected": [
         {
           "x": 100
@@ -744,8 +744,8 @@
     {
       "id": "V03/015",
       "group": "V03",
-      "source": "星は（7＋0）歩、画面の右へ動く。",
-      "inputHash": "4754b797a2cc626a8eb5b08c775a1f28cfb9bd4df7b35bf9a9c8c0e4293b068e",
+      "source": "星はいまのばしょから、右へ（7＋0）歩動く。",
+      "inputHash": "541b04ced50ab564346f731f61f079463be58927548ffa5b4ffe7e67418a4a74",
       "expected": [
         {
           "x": 107
@@ -756,8 +756,8 @@
     {
       "id": "V01/016",
       "group": "V01",
-      "source": "星を画面の右へ7歩動かす。",
-      "inputHash": "5947b2cb4bef5643080c486fbda699036627dc6efdd9118f6534c58038298ad6",
+      "source": "星をいまのばしょから、右へ7歩動かす。",
+      "inputHash": "42aaa212fb050e129b9866d5c397d5f5ed7371814415fb7f00833fb42c510242",
       "expected": [
         {
           "x": 107
@@ -768,8 +768,8 @@
     {
       "id": "V02/016",
       "group": "V02",
-      "source": "星を7歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "57ed56b03d71abfcdc4b58da738bd5bcc10d1962ad717f7bc3062fa8f7c9d1a7",
+      "source": "星は0.5秒かけて、いまのばしょから、右へ7歩動く。",
+      "inputHash": "ca4f4bf9ebbfc08ef13ccdb6d77332eaeb021d67d4a084ae434e6ffe8aba4257",
       "expected": [
         {
           "x": 100
@@ -794,8 +794,8 @@
     {
       "id": "V03/016",
       "group": "V03",
-      "source": "星は７歩、画面の右へ動く。",
-      "inputHash": "dbc73cff77a04e6a66c0ec5db638962499d37eaafbd905e634c1336c7d5585ba",
+      "source": "星はいまのばしょから、右へ７歩動く。",
+      "inputHash": "7a94f209d5cb7966834adf9b3dead9c1780ad1720582c241dd511e1c3817f60b",
       "expected": [
         {
           "x": 107
@@ -806,8 +806,8 @@
     {
       "id": "V01/017",
       "group": "V01",
-      "source": "星は画面の右へ2.5歩動く。",
-      "inputHash": "572e58858b598e5234543756a777337986a9532f0409cb8699fb05329efa86c2",
+      "source": "星はいまのばしょから、右へ2.5歩動く。",
+      "inputHash": "0bd79353c4ab1e3b029d314f33d0c7eeb9d773745753470522d60983a25dd3da",
       "expected": [
         {
           "x": 102.5
@@ -818,8 +818,8 @@
     {
       "id": "V02/017",
       "group": "V02",
-      "source": "星を0.5秒かけて画面の右へ2.5歩動かす。",
-      "inputHash": "cd7b28b09ea91526eb7fcd55ef4bacda141b7be914e63584b54a78711fce88de",
+      "source": "星を0.5秒かけて、いまのばしょから、右へ2.5歩動かす。",
+      "inputHash": "2a2ae57fad097695935c40ee114b98d6e788cd2e2fb842b3e0e5e76c8a210bce",
       "expected": [
         {
           "x": 100
@@ -844,8 +844,8 @@
     {
       "id": "V03/017",
       "group": "V03",
-      "source": "星は（2.5＋0）歩、画面の右へ動く。",
-      "inputHash": "fb1e44a0b6c0d63ef076eb67f379ca791803416b98f00af7930e5ecb5ea2e663",
+      "source": "星はいまのばしょから、右へ（2.5＋0）歩動く。",
+      "inputHash": "bcb5aa8a31c6dc6c343c57bc37b11efb7bffdc26edf31e5d37937b04785fe544",
       "expected": [
         {
           "x": 102.5
@@ -856,8 +856,8 @@
     {
       "id": "V01/018",
       "group": "V01",
-      "source": "星を画面の右へ2.5歩動かす。",
-      "inputHash": "516993ce24012df06a45bd0864b8aed508fe31638a676b21ca0dd611d43efa3a",
+      "source": "星をいまのばしょから、右へ2.5歩動かす。",
+      "inputHash": "c4a57be41ca50c8caf76bfc3b6fb3f7442bf38eb8892cbfd8c8eb74c8fc519a9",
       "expected": [
         {
           "x": 102.5
@@ -868,8 +868,8 @@
     {
       "id": "V02/018",
       "group": "V02",
-      "source": "星を2.5歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "d7184f87e4cd29c614851f6660b50fbee5707ce797cfb67a9f460e06bc0742d6",
+      "source": "星は0.5秒かけて、いまのばしょから、右へ2.5歩動く。",
+      "inputHash": "b7c697d66f1c029debf9a212409dd2e24b6039c0c8a6ee7997c75196d284e3d7",
       "expected": [
         {
           "x": 100
@@ -894,8 +894,8 @@
     {
       "id": "V03/018",
       "group": "V03",
-      "source": "星は２．５歩、画面の右へ動く。",
-      "inputHash": "0f2ca27f9003221af91969d98351a3c4cc79da559ce8c75c6469397ee8947ee9",
+      "source": "星はいまのばしょから、右へ２．５歩動く。",
+      "inputHash": "d5c7c1e3f9df15852d7bbcb0f2e19f22b7757dabb6ddeafacaf68ba4bb72301c",
       "expected": [
         {
           "x": 102.5
@@ -906,8 +906,8 @@
     {
       "id": "V01/019",
       "group": "V01",
-      "source": "星は画面の右へ－3歩動く。",
-      "inputHash": "c9b3e7816303818964ba1eea66a609f6bec334143a24d1cab9b5c33c67e1918f",
+      "source": "星はいまのばしょから、右へ－3歩動く。",
+      "inputHash": "eea080946e9d3d62a62ccc20f332fd4abf3606ede618569852fad843a831f936",
       "expected": [
         {
           "x": 97
@@ -918,8 +918,8 @@
     {
       "id": "V02/019",
       "group": "V02",
-      "source": "星を0.5秒かけて画面の右へ－3歩動かす。",
-      "inputHash": "23ad3a5475a84e07fad1d919057318e8dcd091928aaa32babf2cc9e75351b59e",
+      "source": "星を0.5秒かけて、いまのばしょから、右へ－3歩動かす。",
+      "inputHash": "c33e2142a2d0514b8d36846c0a5809078e20791d53dfca3e37f29d41b2bfff9e",
       "expected": [
         {
           "x": 100
@@ -944,8 +944,8 @@
     {
       "id": "V03/019",
       "group": "V03",
-      "source": "星は（－3＋0）歩、画面の右へ動く。",
-      "inputHash": "a236bfa4159d7bb8d6990a21ee53fb7ceb5e3f0d6d27fb58ad54ca9ceef1f377",
+      "source": "星はいまのばしょから、右へ（－3＋0）歩動く。",
+      "inputHash": "9245036d46b504ac0c5df23b40e8308bac666473e11709641321de4ccdb1330f",
       "expected": [
         {
           "x": 97
@@ -956,8 +956,8 @@
     {
       "id": "V01/020",
       "group": "V01",
-      "source": "星を画面の右へ－3歩動かす。",
-      "inputHash": "2efcae6713205a5573d1b08fa16ae8936d6135ea87128068b25fb544ee2d6e6b",
+      "source": "星をいまのばしょから、右へ－3歩動かす。",
+      "inputHash": "7f928256b6630a28c9d461eff40802af2f957aecffcab7c63981463c755f0ee1",
       "expected": [
         {
           "x": 97
@@ -968,8 +968,8 @@
     {
       "id": "V02/020",
       "group": "V02",
-      "source": "星を－3歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "4b16100e0c0fcb5abe2c677dc32aec756d19c5009bb2b1d66e61dbbce1a79511",
+      "source": "星は0.5秒かけて、いまのばしょから、右へ－3歩動く。",
+      "inputHash": "079be30039320e38ca9afe894fbc80941bc69bf54315d11f985bfb016857a84f",
       "expected": [
         {
           "x": 100
@@ -994,8 +994,8 @@
     {
       "id": "V03/020",
       "group": "V03",
-      "source": "星は－３歩、画面の右へ動く。",
-      "inputHash": "ddce399c813feb48c153903afbdfbcb60e13feded7ca56eab8270ecbb27b5847",
+      "source": "星はいまのばしょから、右へ－３歩動く。",
+      "inputHash": "dc81f78616f0c9d75766ab565263c0839405292ade0bd7acae2120e647a10525",
       "expected": [
         {
           "x": 97
@@ -1006,8 +1006,8 @@
     {
       "id": "V01/021",
       "group": "V01",
-      "source": "はなをは画面の右へ0歩動く。",
-      "inputHash": "ab9ac99d83861210962f6c161459dbd055c08c97f02a04e17ce68dc133022b15",
+      "source": "はなをはいまのばしょから、右へ0歩動く。",
+      "inputHash": "344e7c3c01ec19b5fca623ed93e1dc931a1f45b16e7f9d7a1ea08889bb892432",
       "expected": [
         {
           "x": 100
@@ -1018,8 +1018,8 @@
     {
       "id": "V02/021",
       "group": "V02",
-      "source": "はなをを0.5秒かけて画面の右へ0歩動かす。",
-      "inputHash": "56807e172cd20727ed2fa1a0f85788289717a07587b85ebee9818dbda73703a1",
+      "source": "はなをを0.5秒かけて、いまのばしょから、右へ0歩動かす。",
+      "inputHash": "72dec86e61492a00915b936bffb9c6eb96f6df349f21b2d67371944ffa00dcc4",
       "expected": [
         {
           "x": 100
@@ -1044,8 +1044,8 @@
     {
       "id": "V03/021",
       "group": "V03",
-      "source": "はなをは（0＋0）歩、画面の右へ動く。",
-      "inputHash": "e8810c9cf7374e19a78a4606708359569a4786349e3d10f0294a99b73d778178",
+      "source": "はなをはいまのばしょから、右へ（0＋0）歩動く。",
+      "inputHash": "081b59444d26226cad42c5645c0e2a82a5e55672ecb2f56e286a500a16d8e7ce",
       "expected": [
         {
           "x": 100
@@ -1056,8 +1056,8 @@
     {
       "id": "V01/022",
       "group": "V01",
-      "source": "はなをを画面の右へ0歩動かす。",
-      "inputHash": "82d534ac6e2c00248940ce4b309a45402950c8e9510f0367b2ff060860461489",
+      "source": "はなををいまのばしょから、右へ0歩動かす。",
+      "inputHash": "a280cdce100d23b2e1c8fde00543d0e141c6ba6df870ed4f5fd44ffe02ff0a64",
       "expected": [
         {
           "x": 100
@@ -1068,8 +1068,8 @@
     {
       "id": "V02/022",
       "group": "V02",
-      "source": "はなをを0歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "ae2e36f0f601f359ba92fa5d2aadfde5b89477ba520b1736b0a52ed60763f6bf",
+      "source": "はなをは0.5秒かけて、いまのばしょから、右へ0歩動く。",
+      "inputHash": "b33a2744c3bb0abc181d0ab92c6cfbb10b736e959a98feae7d4c71c23f3b7c1c",
       "expected": [
         {
           "x": 100
@@ -1094,8 +1094,8 @@
     {
       "id": "V03/022",
       "group": "V03",
-      "source": "はなをは０歩、画面の右へ動く。",
-      "inputHash": "4ffd342d313e1030b4d17e8699bd7fc335230e350d343eac81995248dc6399ac",
+      "source": "はなをはいまのばしょから、右へ０歩動く。",
+      "inputHash": "ded8b66f19c9ac94dc806de3e6b8b6f1aeaee3ca311e120e0b2deedff6eacc4d",
       "expected": [
         {
           "x": 100
@@ -1106,8 +1106,8 @@
     {
       "id": "V01/023",
       "group": "V01",
-      "source": "はなをは画面の右へ1歩動く。",
-      "inputHash": "6649cb457c52e9178f1fe4713a8d043480885fb01c883de0b5bcc55770fda499",
+      "source": "はなをはいまのばしょから、右へ1歩動く。",
+      "inputHash": "3c92e0ae5386d4b92faa11b19d115e8c04cb2ff013619dbaa06d250855e10d09",
       "expected": [
         {
           "x": 101
@@ -1118,8 +1118,8 @@
     {
       "id": "V02/023",
       "group": "V02",
-      "source": "はなをを0.5秒かけて画面の右へ1歩動かす。",
-      "inputHash": "673d85b7aa95f75eaf2024ed96af1a7e9040d829dc0e1f1751a0b248842d8448",
+      "source": "はなをを0.5秒かけて、いまのばしょから、右へ1歩動かす。",
+      "inputHash": "c6c6cd4d6080a048a7eefce78a57567df90944e73439188fb57a1dd04625b680",
       "expected": [
         {
           "x": 100
@@ -1144,8 +1144,8 @@
     {
       "id": "V03/023",
       "group": "V03",
-      "source": "はなをは（1＋0）歩、画面の右へ動く。",
-      "inputHash": "c113de4b75ed615ed42ddc94b7b814418dbc878c3e327ad612728c7caa8b1e03",
+      "source": "はなをはいまのばしょから、右へ（1＋0）歩動く。",
+      "inputHash": "c2e42e4d9db240d8f9e4e18cf9cfb1d7c64b04be5a2122d05276db08b924df2f",
       "expected": [
         {
           "x": 101
@@ -1156,8 +1156,8 @@
     {
       "id": "V01/024",
       "group": "V01",
-      "source": "はなをを画面の右へ1歩動かす。",
-      "inputHash": "348d75778e7b93f875c3fb14f76abf9c72df66fc000b005d995bf1e43768d52c",
+      "source": "はなををいまのばしょから、右へ1歩動かす。",
+      "inputHash": "57c53dd882f1f0c172fac91d177b43a9be0773ea99bf90170699845b21774356",
       "expected": [
         {
           "x": 101
@@ -1168,8 +1168,8 @@
     {
       "id": "V02/024",
       "group": "V02",
-      "source": "はなをを1歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "09afc25c1e0263d441f51f4f1aa80a83456638ded3a580b2fe469dba5e076fe1",
+      "source": "はなをは0.5秒かけて、いまのばしょから、右へ1歩動く。",
+      "inputHash": "a3afb1cda7188674d206ad36a902c79f48879573f10de9d7efd612ecee1478c4",
       "expected": [
         {
           "x": 100
@@ -1194,8 +1194,8 @@
     {
       "id": "V03/024",
       "group": "V03",
-      "source": "はなをは１歩、画面の右へ動く。",
-      "inputHash": "11df220938aa6ac27f190e965c2258eb7a8a2134277fea7134fa03748fdfe1e0",
+      "source": "はなをはいまのばしょから、右へ１歩動く。",
+      "inputHash": "7f02a8251e67f634bfdf7e07b1b4fb10517e2e84e70600b0938513321e6eb8b4",
       "expected": [
         {
           "x": 101
@@ -1206,8 +1206,8 @@
     {
       "id": "V01/025",
       "group": "V01",
-      "source": "はなをは画面の右へ7歩動く。",
-      "inputHash": "fd558eec348aca7f7e372f8bb1256f9d8d05b007edb4dd5e34f867fdeed8db29",
+      "source": "はなをはいまのばしょから、右へ7歩動く。",
+      "inputHash": "4bb601cab7db12afe0930d519439f1358d0bd3b6513f1676c9027b259e54cbc2",
       "expected": [
         {
           "x": 107
@@ -1218,8 +1218,8 @@
     {
       "id": "V02/025",
       "group": "V02",
-      "source": "はなをを0.5秒かけて画面の右へ7歩動かす。",
-      "inputHash": "2c48bac327ae9b9cba35c8338051f4b509caf355d1e2e160f94fb0492b9f1ed0",
+      "source": "はなをを0.5秒かけて、いまのばしょから、右へ7歩動かす。",
+      "inputHash": "7b825a5ee7a238deb6d02a7eba375b6f255e3aefaa1f819f82cca55ffd9d2de7",
       "expected": [
         {
           "x": 100
@@ -1244,8 +1244,8 @@
     {
       "id": "V03/025",
       "group": "V03",
-      "source": "はなをは（7＋0）歩、画面の右へ動く。",
-      "inputHash": "33efc63baad4027f92b67588661b5bff6f0fff07be195c2163672b728911b3b8",
+      "source": "はなをはいまのばしょから、右へ（7＋0）歩動く。",
+      "inputHash": "b1df0f2d7f7e9088944d07d63a9387fe09266da164f7b2069ec8a3d825d66c4c",
       "expected": [
         {
           "x": 107
@@ -1256,8 +1256,8 @@
     {
       "id": "V01/026",
       "group": "V01",
-      "source": "はなをを画面の右へ7歩動かす。",
-      "inputHash": "a0a90f66e7eb79aa65ca93fdfd6ba2b227837e05a9a3ab172128a49d124e5dfb",
+      "source": "はなををいまのばしょから、右へ7歩動かす。",
+      "inputHash": "6c23f835ea9c6f2ac822c45b69d45e9b7adf7a7a8675c8a9fa05a915dfa09f05",
       "expected": [
         {
           "x": 107
@@ -1268,8 +1268,8 @@
     {
       "id": "V02/026",
       "group": "V02",
-      "source": "はなをを7歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "7e46f3f53289a9e7bce0c720cb7a68d8c40fb00ee09e8d966b0742f6ca2c04a7",
+      "source": "はなをは0.5秒かけて、いまのばしょから、右へ7歩動く。",
+      "inputHash": "122053566e30ec9612399cd26c6510def2989ea251c2d1992a99d0252dc8aeb2",
       "expected": [
         {
           "x": 100
@@ -1294,8 +1294,8 @@
     {
       "id": "V03/026",
       "group": "V03",
-      "source": "はなをは７歩、画面の右へ動く。",
-      "inputHash": "e73277cb783b371117df9ec859a019385f99010ed53bbc7dcb7aaf881bb2452b",
+      "source": "はなをはいまのばしょから、右へ７歩動く。",
+      "inputHash": "9d8913091a537f93fad14be112da418fce85f9a08c819b7baba90a675b7e9eda",
       "expected": [
         {
           "x": 107
@@ -1306,8 +1306,8 @@
     {
       "id": "V01/027",
       "group": "V01",
-      "source": "はなをは画面の右へ2.5歩動く。",
-      "inputHash": "f9de346e64eb849da8974c4659ea665f4a592b51d171117279f9b7da2404010a",
+      "source": "はなをはいまのばしょから、右へ2.5歩動く。",
+      "inputHash": "4a57e28a964f8bca0d1953ccd6f8abbd85f5483b8168182fb85e4ad8b18916c6",
       "expected": [
         {
           "x": 102.5
@@ -1318,8 +1318,8 @@
     {
       "id": "V02/027",
       "group": "V02",
-      "source": "はなをを0.5秒かけて画面の右へ2.5歩動かす。",
-      "inputHash": "f50f46efa349caba84ac96eda7fe28a13aa793fa7c7d40e5fadbef16a80388af",
+      "source": "はなをを0.5秒かけて、いまのばしょから、右へ2.5歩動かす。",
+      "inputHash": "34831c54a8cd9fca534444d4c2866bc8a4178d319876bc43e9e4fc2c742fdad3",
       "expected": [
         {
           "x": 100
@@ -1344,8 +1344,8 @@
     {
       "id": "V03/027",
       "group": "V03",
-      "source": "はなをは（2.5＋0）歩、画面の右へ動く。",
-      "inputHash": "22da7389531da849a588bd4d1a35278d184f29e69d292f941bb2437bf6604ece",
+      "source": "はなをはいまのばしょから、右へ（2.5＋0）歩動く。",
+      "inputHash": "3bc886d28e20a851471608e1e8f2913bc9fe06e877120d6a698c757f8a61ccfa",
       "expected": [
         {
           "x": 102.5
@@ -1356,8 +1356,8 @@
     {
       "id": "V01/028",
       "group": "V01",
-      "source": "はなをを画面の右へ2.5歩動かす。",
-      "inputHash": "efbebd471c0d8a912e2082c86d06ed5bf71eeb2f68e01902b4ff125b60c7a785",
+      "source": "はなををいまのばしょから、右へ2.5歩動かす。",
+      "inputHash": "f71e81c652dd027e492e897bab9cd285187bda0b787c56b9180238fb87dc9610",
       "expected": [
         {
           "x": 102.5
@@ -1368,8 +1368,8 @@
     {
       "id": "V02/028",
       "group": "V02",
-      "source": "はなをを2.5歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "8b3bcd03c0c840a637e5f4a2d7361a2fde55bb6156febe228b20981e6c39163f",
+      "source": "はなをは0.5秒かけて、いまのばしょから、右へ2.5歩動く。",
+      "inputHash": "c2a11f0cae5e963de3603cfcb68db16b30d2c1f147bdf555fd4989e89569bf48",
       "expected": [
         {
           "x": 100
@@ -1394,8 +1394,8 @@
     {
       "id": "V03/028",
       "group": "V03",
-      "source": "はなをは２．５歩、画面の右へ動く。",
-      "inputHash": "bcb9a4af75f72970845126c23b46c9e2cfafdd29058a5f22db6157327d9d3ca0",
+      "source": "はなをはいまのばしょから、右へ２．５歩動く。",
+      "inputHash": "68c4959f978c6cd0542747d6bf60a2579b76f7406b91bb94c6cb0385750bd003",
       "expected": [
         {
           "x": 102.5
@@ -1406,8 +1406,8 @@
     {
       "id": "V01/029",
       "group": "V01",
-      "source": "はなをは画面の右へ－3歩動く。",
-      "inputHash": "941d1344a29686fc807cdb98255fc048d1f047549f63d5667322cc3467fd7ced",
+      "source": "はなをはいまのばしょから、右へ－3歩動く。",
+      "inputHash": "5ab25bf2fb029335d72797b561c45a91bc9a74a312eb998f1bbffdef28d8c111",
       "expected": [
         {
           "x": 97
@@ -1418,8 +1418,8 @@
     {
       "id": "V02/029",
       "group": "V02",
-      "source": "はなをを0.5秒かけて画面の右へ－3歩動かす。",
-      "inputHash": "94fef9cc9775648448accf3720a76e6f0680349c86b6f8d5eafc767cdfc25d96",
+      "source": "はなをを0.5秒かけて、いまのばしょから、右へ－3歩動かす。",
+      "inputHash": "b8513038e5c7d5a5d584bfee386778092538e27ef1e284a60def6f5eddbfc000",
       "expected": [
         {
           "x": 100
@@ -1444,8 +1444,8 @@
     {
       "id": "V03/029",
       "group": "V03",
-      "source": "はなをは（－3＋0）歩、画面の右へ動く。",
-      "inputHash": "0b06a1ef3cdafdb9abf62cd7e35e4c4aea3fb50a84b951d4e69405efc6082b41",
+      "source": "はなをはいまのばしょから、右へ（－3＋0）歩動く。",
+      "inputHash": "df84c1bca579d61aa8ad1a1c62266e535c2f3a62cb8086e5aa8ae16eef5d8f37",
       "expected": [
         {
           "x": 97
@@ -1456,8 +1456,8 @@
     {
       "id": "V01/030",
       "group": "V01",
-      "source": "はなをを画面の右へ－3歩動かす。",
-      "inputHash": "f6e77cf80c69a910713292da8a7a122f594d6ba50054a7802020395a7ce40cdc",
+      "source": "はなををいまのばしょから、右へ－3歩動かす。",
+      "inputHash": "60f660e32b177ce14b1d3b0092e570b54551e6fcb20382b78a6667035223ac94",
       "expected": [
         {
           "x": 97
@@ -1468,8 +1468,8 @@
     {
       "id": "V02/030",
       "group": "V02",
-      "source": "はなをを－3歩、0.5秒かけて画面の右へ動かす。",
-      "inputHash": "3a4e6bc7c38efb74a38fba108c6869709c715bf4f4124fd16030b56357758bfb",
+      "source": "はなをは0.5秒かけて、いまのばしょから、右へ－3歩動く。",
+      "inputHash": "ee10bdd7e69de9c71d77e4f8103af9f53a3bc634d5db1cd1365dcd14e796db03",
       "expected": [
         {
           "x": 100
@@ -1494,8 +1494,8 @@
     {
       "id": "V03/030",
       "group": "V03",
-      "source": "はなをは－３歩、画面の右へ動く。",
-      "inputHash": "a437e968aa9a37e01b5f7f9ef299c7278972e5489718eca5df9a1488fd97100e",
+      "source": "はなをはいまのばしょから、右へ－３歩動く。",
+      "inputHash": "2b8f26833cd67ef52539a37c72652a52aad9aca9c4aa20649f2931f86191bd4a",
       "expected": [
         {
           "x": 97
@@ -1506,8 +1506,8 @@
     {
       "id": "V04/001",
       "group": "V04",
-      "source": "あかりは画面の右へ1歩動いて、「次」と言う。",
-      "inputHash": "a0cbcb4409fb292a1a529410ac7cc7f505cdd34cc6bb114bc3160675a7dac151",
+      "source": "あかりはいまのばしょから、右へ1歩動いて、「次」と言う。",
+      "inputHash": "ca0e7b9f871d7ece6a64e96c742a7655f9e25faa3fb79a083301d5a2aa4cec63",
       "expected": [
         {
           "x": 101,
@@ -1521,8 +1521,8 @@
     {
       "id": "V05/001",
       "group": "V05",
-      "source": "あかりは画面の右へ1歩動く。最後に、「あかり」と言う。",
-      "inputHash": "e4de2001d26cd7c7bd67532b48fae75e1a5b060bb6018fcf9a6f947ec2f394ef",
+      "source": "あかりはいまのばしょから、右へ1歩動く。最後に、「あかり」と言う。",
+      "inputHash": "7cbeebe3bb4227ffaa8e23b2014483d4f4edb24049808124b8194e3de4298d43",
       "expected": [
         {
           "x": 101,
@@ -1536,8 +1536,8 @@
     {
       "id": "V05/002",
       "group": "V05",
-      "source": "あかりは画面の右へ1歩動く。次に、「あかり」と言う。",
-      "inputHash": "1e69a9a8bbdb1dab3c04d2654e4d07858dcc3499161e4d24a0a5ad636271e576",
+      "source": "あかりはいまのばしょから、右へ1歩動く。次に、「あかり」と言う。",
+      "inputHash": "16b9e91c67d3e4c2b8d663e94b8bb0271abdff3ee9680951d1927ee5a3ba6474",
       "expected": [
         {
           "x": 101,
@@ -1551,8 +1551,8 @@
     {
       "id": "V05/003",
       "group": "V05",
-      "source": "あかりは画面の右へ1歩動く。そのあと、「あかり」と言う。",
-      "inputHash": "23c3a2346b6725e4e12abd99d2e741253fc8a51b38afc1899df9651a3b4484fc",
+      "source": "あかりはいまのばしょから、右へ1歩動く。そのあと、「あかり」と言う。",
+      "inputHash": "0d0480309e5e54cc116c2df6fb41a7f30c12baf75021e12a4181c65cda4eda53",
       "expected": [
         {
           "x": 101,
@@ -1566,8 +1566,8 @@
     {
       "id": "V05/004",
       "group": "V05",
-      "source": "あかりは画面の右へ1歩動く。それから、「あかり」と言う。",
-      "inputHash": "9b1ff84b7ee56109f94513014d6c6635e615e65bcba912f48cc3d2955367aaf0",
+      "source": "あかりはいまのばしょから、右へ1歩動く。それから、「あかり」と言う。",
+      "inputHash": "532da4e01ac7d15b324f522f79d5960722364cee57d24d892e42ebda38ce0909",
       "expected": [
         {
           "x": 101,
@@ -1581,8 +1581,8 @@
     {
       "id": "V04/002",
       "group": "V04",
-      "source": "あかりは画面の右へ1歩動く\n「次」と言う",
-      "inputHash": "5994d89d5f5a9393611b4a817f3141590ace3021a8a13e72c7941ba815f4fb92",
+      "source": "あかりはいまのばしょから、右へ1歩動く\n「次」と言う",
+      "inputHash": "059f5220c71c79cc87bc42803318dd5bae7dc916735343850a341dcb0f0dff93",
       "expected": [
         {
           "x": 101,
@@ -1596,8 +1596,8 @@
     {
       "id": "V05/005",
       "group": "V05",
-      "source": "あかりを画面の右へ1歩動かす。最後に、「あかり」と言う。",
-      "inputHash": "adc4cf046eee5f39960552ec4b0a850f30dbbbb65d2517d1cd727ab0356d21c8",
+      "source": "あかりをいまのばしょから、右へ1歩動かす。最後に、「あかり」と言う。",
+      "inputHash": "736704d7b27b8bc9780452380d172a66890b13530e519878f019b3a57d7b3729",
       "expected": [
         {
           "x": 101,
@@ -1611,8 +1611,8 @@
     {
       "id": "V05/006",
       "group": "V05",
-      "source": "あかりを画面の右へ1歩動かす。次に、「あかり」と言う。",
-      "inputHash": "ddfaacaad3283cd3307d93559d5c1073502b4a58bc6b5545bf33d88b289ec001",
+      "source": "あかりをいまのばしょから、右へ1歩動かす。次に、「あかり」と言う。",
+      "inputHash": "4fcc9084a87af02316a89d7a75e21c13b201d1507d5c021aaa595d333fb44e6e",
       "expected": [
         {
           "x": 101,
@@ -1626,8 +1626,8 @@
     {
       "id": "V05/007",
       "group": "V05",
-      "source": "あかりを画面の右へ1歩動かす。そのあと、「あかり」と言う。",
-      "inputHash": "558ac2af11b6a427074d9045292f9eb6aabb90845308650370ff2b2a8c0a39f1",
+      "source": "あかりをいまのばしょから、右へ1歩動かす。そのあと、「あかり」と言う。",
+      "inputHash": "dccc20c456bbe3fc45bf79cd2f9bfeb820bbbc86da0cec5887bcafceebfb1d8f",
       "expected": [
         {
           "x": 101,
@@ -1641,8 +1641,8 @@
     {
       "id": "V05/008",
       "group": "V05",
-      "source": "あかりを画面の右へ1歩動かす。それから、「あかり」と言う。",
-      "inputHash": "d103c8ac5deba05c1daa4d7bc572d72a73513eec25145a3b0e07d67353b9c59b",
+      "source": "あかりをいまのばしょから、右へ1歩動かす。それから、「あかり」と言う。",
+      "inputHash": "94719b02da2deadfc9fd241e233e80c30e584839f57090a9c6e7b0374ec5e5e0",
       "expected": [
         {
           "x": 101,
@@ -1656,8 +1656,8 @@
     {
       "id": "V04/003",
       "group": "V04",
-      "source": "星は画面の右へ1歩動いて、「次」と言う。",
-      "inputHash": "b2a6974ccb289c1a2966f17e7a8b30f3fa8019be6f210960be3bb6516ca9b468",
+      "source": "星はいまのばしょから、右へ1歩動いて、「次」と言う。",
+      "inputHash": "1fd4805e469a065c90e392e00ba37f0803822a07309b4070cba06de8ec64c6f2",
       "expected": [
         {
           "x": 101,
@@ -1671,8 +1671,8 @@
     {
       "id": "V05/009",
       "group": "V05",
-      "source": "星は画面の右へ1歩動く。最後に、「星」と言う。",
-      "inputHash": "e31a68a17d2612692201141e1d2ad965003d9bd5c54099ac9dd411291baede7e",
+      "source": "星はいまのばしょから、右へ1歩動く。最後に、「星」と言う。",
+      "inputHash": "b0896ec40abcd1008bc94f426218cb6bdf5866528ba8fdde08f5cab3917c4cad",
       "expected": [
         {
           "x": 101,
@@ -1686,8 +1686,8 @@
     {
       "id": "V05/010",
       "group": "V05",
-      "source": "星は画面の右へ1歩動く。次に、「星」と言う。",
-      "inputHash": "289b4fbb6492875454b010ad355686552f169cb69bfe16312d87b2ee856177e8",
+      "source": "星はいまのばしょから、右へ1歩動く。次に、「星」と言う。",
+      "inputHash": "ea41c307ab594b7f164cb38f0dabfb963d01ccb1e3e368c1b241da839a3fb0dd",
       "expected": [
         {
           "x": 101,
@@ -1701,8 +1701,8 @@
     {
       "id": "V05/011",
       "group": "V05",
-      "source": "星は画面の右へ1歩動く。そのあと、「星」と言う。",
-      "inputHash": "7894aa2fd9aae145dfb054d8dc21d1a0c259d09909fdeedb14b409f0f2256b2c",
+      "source": "星はいまのばしょから、右へ1歩動く。そのあと、「星」と言う。",
+      "inputHash": "30feed32d2e2b34bfe439a0a1018f3303903dca340dd7ee4ae3cd3f5eaae3be8",
       "expected": [
         {
           "x": 101,
@@ -1716,8 +1716,8 @@
     {
       "id": "V05/012",
       "group": "V05",
-      "source": "星は画面の右へ1歩動く。それから、「星」と言う。",
-      "inputHash": "cfde3badad783081db15641856cd513876a46382cc2bbce1298e7434b019bb53",
+      "source": "星はいまのばしょから、右へ1歩動く。それから、「星」と言う。",
+      "inputHash": "d2ea02519a310c2f94b7d0212f7b9dd22a7f9f01a2020acd8aea4ff8a549c1c5",
       "expected": [
         {
           "x": 101,
@@ -1731,8 +1731,8 @@
     {
       "id": "V04/004",
       "group": "V04",
-      "source": "星は画面の右へ1歩動く\n「次」と言う",
-      "inputHash": "326be63beb8d0464ed092a0b5940993b02ad68a4cc52059e7ef4108a0f06c31c",
+      "source": "星はいまのばしょから、右へ1歩動く\n「次」と言う",
+      "inputHash": "4e1d1f435bf71c95e1741a58c3871b4463c318497ae5299e34fd5c0c24fb52a8",
       "expected": [
         {
           "x": 101,
@@ -1746,8 +1746,8 @@
     {
       "id": "V05/013",
       "group": "V05",
-      "source": "星を画面の右へ1歩動かす。最後に、「星」と言う。",
-      "inputHash": "2fb72c3ec3ec11824552c9e60265524462cd031c2b054d046666fb2594778b02",
+      "source": "星をいまのばしょから、右へ1歩動かす。最後に、「星」と言う。",
+      "inputHash": "4bc5f28075347d612b0678202547eaba6714952ad827cd1c745a3169bb189899",
       "expected": [
         {
           "x": 101,
@@ -1761,8 +1761,8 @@
     {
       "id": "V05/014",
       "group": "V05",
-      "source": "星を画面の右へ1歩動かす。次に、「星」と言う。",
-      "inputHash": "d86b248feced9892189f80be799b0255b065528db89afc2917d62c4d23853f50",
+      "source": "星をいまのばしょから、右へ1歩動かす。次に、「星」と言う。",
+      "inputHash": "1096f2ffb277dc12c42751532b2869b66d2bbf20dbe9d6f78a837031620006f1",
       "expected": [
         {
           "x": 101,
@@ -1776,8 +1776,8 @@
     {
       "id": "V05/015",
       "group": "V05",
-      "source": "星を画面の右へ1歩動かす。そのあと、「星」と言う。",
-      "inputHash": "ada4a27e61aa84dba050bc3d990ea85dd0b011eedbfa26b61c7828bb1522e977",
+      "source": "星をいまのばしょから、右へ1歩動かす。そのあと、「星」と言う。",
+      "inputHash": "7c16d0abce061f31785f428b85e4775ba5481c7dd7b3d4833607337c4faf6fb6",
       "expected": [
         {
           "x": 101,
@@ -1791,8 +1791,8 @@
     {
       "id": "V05/016",
       "group": "V05",
-      "source": "星を画面の右へ1歩動かす。それから、「星」と言う。",
-      "inputHash": "cfa8259696455a061567b707d8901bb54dcdde72c1e75c6517f24a83ad119a84",
+      "source": "星をいまのばしょから、右へ1歩動かす。それから、「星」と言う。",
+      "inputHash": "a8fe6b6d3ec205efe28f84a07291bebadcc025270e08b03a632ebaf04eefe658",
       "expected": [
         {
           "x": 101,
@@ -1806,8 +1806,8 @@
     {
       "id": "V04/005",
       "group": "V04",
-      "source": "はなをは画面の右へ1歩動いて、「次」と言う。",
-      "inputHash": "d009c939ca09600ce3da6366c25850b0fd82b07a2b83c5b223c3ed6b6d70d83c",
+      "source": "はなをはいまのばしょから、右へ1歩動いて、「次」と言う。",
+      "inputHash": "d957b6b1769c9dd2020fd1dd5f2b6479f281a220fc0b951ceeb8951f7d0753d9",
       "expected": [
         {
           "x": 101,
@@ -1821,8 +1821,8 @@
     {
       "id": "V05/017",
       "group": "V05",
-      "source": "はなをは画面の右へ1歩動く。最後に、「はなを」と言う。",
-      "inputHash": "0ed81daf6e6b51c4656d77acdc389840f06d2a3963fc363d0b131f998dc4a195",
+      "source": "はなをはいまのばしょから、右へ1歩動く。最後に、「はなを」と言う。",
+      "inputHash": "baba76081079ead009bee85dd7d8414002ddf29054faa2c4cf41d5b1f303b878",
       "expected": [
         {
           "x": 101,
@@ -1836,8 +1836,8 @@
     {
       "id": "V05/018",
       "group": "V05",
-      "source": "はなをは画面の右へ1歩動く。次に、「はなを」と言う。",
-      "inputHash": "ab0d18cebb84db36328115051fe8bacf515e14c409708bec4002cb825d21a968",
+      "source": "はなをはいまのばしょから、右へ1歩動く。次に、「はなを」と言う。",
+      "inputHash": "d73142b014d3bd50fec6ee5853f32043b96312f8e700bc8151ea709a8a479260",
       "expected": [
         {
           "x": 101,
@@ -1851,8 +1851,8 @@
     {
       "id": "V05/019",
       "group": "V05",
-      "source": "はなをは画面の右へ1歩動く。そのあと、「はなを」と言う。",
-      "inputHash": "382b5bcee6b2a684bd16bc2d2ff33f0c773ff82e9f299b7d166fc047296e504d",
+      "source": "はなをはいまのばしょから、右へ1歩動く。そのあと、「はなを」と言う。",
+      "inputHash": "0706f7541c7053934ed37e0655f4df69b033b177ff7d9ade0284b02918a4b7a9",
       "expected": [
         {
           "x": 101,
@@ -1866,8 +1866,8 @@
     {
       "id": "V05/020",
       "group": "V05",
-      "source": "はなをは画面の右へ1歩動く。それから、「はなを」と言う。",
-      "inputHash": "d2a7408e1590351ec6796a79c7aad0e03bd29af2f98fdb4bc9777c629a6af5bf",
+      "source": "はなをはいまのばしょから、右へ1歩動く。それから、「はなを」と言う。",
+      "inputHash": "e2da94e2ae74b956175ab7e14a7f8818bcf9eb7050b585c28b9b82a0127edfa2",
       "expected": [
         {
           "x": 101,
@@ -1881,8 +1881,8 @@
     {
       "id": "V04/006",
       "group": "V04",
-      "source": "はなをは画面の右へ1歩動く\n「次」と言う",
-      "inputHash": "385f3daedbf6bbe2478020a00e35f65f297b06676685ea297de2965458aae401",
+      "source": "はなをはいまのばしょから、右へ1歩動く\n「次」と言う",
+      "inputHash": "a732089d579f15adc611e08eb0b231bade01729bd20321120b1aa6ea849dc49f",
       "expected": [
         {
           "x": 101,
@@ -1896,8 +1896,8 @@
     {
       "id": "V05/021",
       "group": "V05",
-      "source": "はなをを画面の右へ1歩動かす。最後に、「はなを」と言う。",
-      "inputHash": "e6de82f461445c6d89f21e498fd97fb9609b831d1b8f279dc31321dba8d49818",
+      "source": "はなををいまのばしょから、右へ1歩動かす。最後に、「はなを」と言う。",
+      "inputHash": "50b975b684868c58074d8260480c6e94c7b75632010f41241f2c4b631970fcc8",
       "expected": [
         {
           "x": 101,
@@ -1911,8 +1911,8 @@
     {
       "id": "V05/022",
       "group": "V05",
-      "source": "はなをを画面の右へ1歩動かす。次に、「はなを」と言う。",
-      "inputHash": "ad6c2f1aa5df8a41033ea3f6849873f21f626b2c4f21882e47f692b29a47874d",
+      "source": "はなををいまのばしょから、右へ1歩動かす。次に、「はなを」と言う。",
+      "inputHash": "3dba8a413bfd65a022fb9a3e23c773cd9d504ea228408b18d9cfc776561044b4",
       "expected": [
         {
           "x": 101,
@@ -1926,8 +1926,8 @@
     {
       "id": "V05/023",
       "group": "V05",
-      "source": "はなをを画面の右へ1歩動かす。そのあと、「はなを」と言う。",
-      "inputHash": "6d4cd5b6c8b8a948bd74b07b59b45117a98a292604cb842ed92847d7acb04a37",
+      "source": "はなををいまのばしょから、右へ1歩動かす。そのあと、「はなを」と言う。",
+      "inputHash": "e7dd93e98ba978dcd849069a5985f9bb609db339444aabe4a586d9d6b218f791",
       "expected": [
         {
           "x": 101,
@@ -1941,8 +1941,8 @@
     {
       "id": "V05/024",
       "group": "V05",
-      "source": "はなをを画面の右へ1歩動かす。それから、「はなを」と言う。",
-      "inputHash": "49f38849b527942839fab440c83374142f99e37fb4f11a8b0bb9b86f238dfb40",
+      "source": "はなををいまのばしょから、右へ1歩動かす。それから、「はなを」と言う。",
+      "inputHash": "ac8fdfd7ed8cc40c876f99d18694c081bc2a80f1cd655d8f484d135e50030ca3",
       "expected": [
         {
           "x": 101,
@@ -1956,8 +1956,8 @@
     {
       "id": "V06/001",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、あかりは画面の右へ1秒に0歩の速さで動き続ける。",
-      "inputHash": "1e8fee3881f3cc88b19aaba54d249f7a984b9a0587d7aa139e90f7a9150a53a8",
+      "source": "「a」キーを押しているあいだ、あかりは右へ1秒に0歩の速さで動き続ける。",
+      "inputHash": "ee868f849adba233e69403bbe5c8d178b0a715bcf6ea90d8618279dc0bac190f",
       "expected": [
         {
           "x": 100
@@ -1996,8 +1996,8 @@
     {
       "id": "V06/002",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、あかりは1秒に0歩の速さで画面の右へ動く。",
-      "inputHash": "f9e6a8af668e00d57a60358edac961ce3c6d0e1153d001c923d8077ecadf7fda",
+      "source": "「a」キーを押しているあいだ、あかりは1秒に0歩の速さで右へ動く。",
+      "inputHash": "3958e9fc8adc51af6f95b5c8b4e85b1adc37283da1c3afc066954933fdf5ec88",
       "expected": [
         {
           "x": 100
@@ -2036,8 +2036,8 @@
     {
       "id": "V06/003",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、あかりは画面の右へ1秒に1歩の速さで動き続ける。",
-      "inputHash": "2c7cf61f7b492e50b5ad649c80986b6419798b470c5f219a6ea8e1ebec441b88",
+      "source": "「a」キーを押しているあいだ、あかりは右へ1秒に1歩の速さで動き続ける。",
+      "inputHash": "57dfc34ba50f1d69bc39dbdd29256e5827f2db7aaf0dbe6208377ea9ed4bef50",
       "expected": [
         {
           "x": 100
@@ -2076,8 +2076,8 @@
     {
       "id": "V06/004",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、あかりは1秒に1歩の速さで画面の右へ動く。",
-      "inputHash": "01ab27d9c6a77a4f8bfec9026012d2d76cd56eacbf05f3b7d3bf52b77592d975",
+      "source": "「a」キーを押しているあいだ、あかりは1秒に1歩の速さで右へ動く。",
+      "inputHash": "9d4e5649fd2d62814af4574eed940a4eaee8c812b229eeabc7367b806d68b201",
       "expected": [
         {
           "x": 100
@@ -2116,8 +2116,8 @@
     {
       "id": "V06/005",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、あかりは画面の右へ1秒に7歩の速さで動き続ける。",
-      "inputHash": "cbc42a862cf3896bdb6e1a95396f1e68ab5020ef6864bca2ae0d66ba377d45d7",
+      "source": "「a」キーを押しているあいだ、あかりは右へ1秒に7歩の速さで動き続ける。",
+      "inputHash": "13fdc8df3a704e6aaf253986f5d0fcd5a4b326b1352062ee5b2a1fba0fa2cb6f",
       "expected": [
         {
           "x": 100
@@ -2156,8 +2156,8 @@
     {
       "id": "V06/006",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、あかりは1秒に7歩の速さで画面の右へ動く。",
-      "inputHash": "1c0d6b7b6cda408d0b0f09242ef5768f4a47a89dd2cb77a2da397166cb8cfba1",
+      "source": "「a」キーを押しているあいだ、あかりは1秒に7歩の速さで右へ動く。",
+      "inputHash": "26f49e280e7dfca5e3cca422b5b6cf7526b3778cdfa3efcf454ed53d684c59df",
       "expected": [
         {
           "x": 100
@@ -2196,8 +2196,8 @@
     {
       "id": "V06/007",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、あかりは画面の右へ1秒に2.5歩の速さで動き続ける。",
-      "inputHash": "9d894c2984769551dcf7c7f3a432f53f9de76f6d6b3b8589e32bd3f90ba8c808",
+      "source": "「a」キーを押しているあいだ、あかりは右へ1秒に2.5歩の速さで動き続ける。",
+      "inputHash": "8bd710073da5b9d3e2ccdf0e63cbdd112c2ca5874b894ab1c19ac2e91a1d996f",
       "expected": [
         {
           "x": 100
@@ -2236,8 +2236,8 @@
     {
       "id": "V06/008",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、あかりは1秒に2.5歩の速さで画面の右へ動く。",
-      "inputHash": "cd00b824343ff07d76a02eb1482232f494549d211e9c5740752f7522ee4021b8",
+      "source": "「a」キーを押しているあいだ、あかりは1秒に2.5歩の速さで右へ動く。",
+      "inputHash": "620b6aaf6750595d75fee9b33688f017e991a90e50b48be03dc2f2c8a8b07037",
       "expected": [
         {
           "x": 100
@@ -2276,8 +2276,8 @@
     {
       "id": "V06/009",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、星は画面の右へ1秒に0歩の速さで動き続ける。",
-      "inputHash": "84a13b8cc025856c7c9ef25661c62b494dad979eecfa503a053b9d183b207922",
+      "source": "「a」キーを押しているあいだ、星は右へ1秒に0歩の速さで動き続ける。",
+      "inputHash": "374f422af34bacf6b48dc3eda0fee37b8d6f940d8683a858adb0e83915d5b7ea",
       "expected": [
         {
           "x": 100
@@ -2316,8 +2316,8 @@
     {
       "id": "V06/010",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、星は1秒に0歩の速さで画面の右へ動く。",
-      "inputHash": "8ce76491822caa7b7f1c9ac43d6310d1a14f7b79056cc26c17d4643a71ba5ef6",
+      "source": "「a」キーを押しているあいだ、星は1秒に0歩の速さで右へ動く。",
+      "inputHash": "a0f0f70c009d5c151b35e588d79956f065f43eb6a406361fe8dcdea12996bdf8",
       "expected": [
         {
           "x": 100
@@ -2356,8 +2356,8 @@
     {
       "id": "V06/011",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、星は画面の右へ1秒に1歩の速さで動き続ける。",
-      "inputHash": "b1b7b25b5f81571588eae7e8e5e65ca8d554725d58b95108fcf84759385dfffe",
+      "source": "「a」キーを押しているあいだ、星は右へ1秒に1歩の速さで動き続ける。",
+      "inputHash": "b64e7588c4653c8f20176259164e7893668cf45b850c800637b537763ca519a5",
       "expected": [
         {
           "x": 100
@@ -2396,8 +2396,8 @@
     {
       "id": "V06/012",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、星は1秒に1歩の速さで画面の右へ動く。",
-      "inputHash": "30923563cc06c1bcd87cc364c09fc45ebf86c8087214a8baae960c760fa7fb45",
+      "source": "「a」キーを押しているあいだ、星は1秒に1歩の速さで右へ動く。",
+      "inputHash": "f1077d905b92aa0461de156f71dfa26c9da998075e686c3593cd56af259cf67c",
       "expected": [
         {
           "x": 100
@@ -2436,8 +2436,8 @@
     {
       "id": "V06/013",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、星は画面の右へ1秒に7歩の速さで動き続ける。",
-      "inputHash": "5ee14bdb80c90eaf7986e6d23d24850b54d4adbacdf2e8d793dec852f7fa5f37",
+      "source": "「a」キーを押しているあいだ、星は右へ1秒に7歩の速さで動き続ける。",
+      "inputHash": "5f5ab8c749f0c316d263b9cfaf363bace99bc8601d9d22c9ab03f31c40cef17b",
       "expected": [
         {
           "x": 100
@@ -2476,8 +2476,8 @@
     {
       "id": "V06/014",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、星は1秒に7歩の速さで画面の右へ動く。",
-      "inputHash": "95919f07f86160b0bac7a98d87e739b56bda5c3279139ff9a98a55a6484b3e0d",
+      "source": "「a」キーを押しているあいだ、星は1秒に7歩の速さで右へ動く。",
+      "inputHash": "dc15edacc50aedc826366c7a0c856d60dc67819bf4ed86824ecae690bc6c1751",
       "expected": [
         {
           "x": 100
@@ -2516,8 +2516,8 @@
     {
       "id": "V06/015",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、星は画面の右へ1秒に2.5歩の速さで動き続ける。",
-      "inputHash": "c9f4e1b1a451aafdc18229901fd14e433db549717efd1b8d5da1f65e2a06ea70",
+      "source": "「a」キーを押しているあいだ、星は右へ1秒に2.5歩の速さで動き続ける。",
+      "inputHash": "5ceaaeee1219df1c760f609fa1bf4224a03c126c714a3739dbd0f664e04a30d6",
       "expected": [
         {
           "x": 100
@@ -2556,8 +2556,8 @@
     {
       "id": "V06/016",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、星は1秒に2.5歩の速さで画面の右へ動く。",
-      "inputHash": "532a45631eaa622c49feba652a876d69414efea4979273e68c12ea6be154c442",
+      "source": "「a」キーを押しているあいだ、星は1秒に2.5歩の速さで右へ動く。",
+      "inputHash": "8b83c80b77205fa8ed17956839aedfe91fa23a9655e997d58b4ce0ce34bbf8d2",
       "expected": [
         {
           "x": 100
@@ -2596,8 +2596,8 @@
     {
       "id": "V06/017",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、はなをは画面の右へ1秒に0歩の速さで動き続ける。",
-      "inputHash": "42732184005aede83601607937e34a992c9dff4ab807371438e552e8fb03e7f7",
+      "source": "「a」キーを押しているあいだ、はなをは右へ1秒に0歩の速さで動き続ける。",
+      "inputHash": "9489db3dc03dd679576bd63bca896f9233e82dacec8b3fb622c1b2a80570a9b2",
       "expected": [
         {
           "x": 100
@@ -2636,8 +2636,8 @@
     {
       "id": "V06/018",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、はなをは1秒に0歩の速さで画面の右へ動く。",
-      "inputHash": "087e26f05e4d58bf5f09fb76aeeecb6acfbcc21d6dd80a8c510265e439a8be3e",
+      "source": "「a」キーを押しているあいだ、はなをは1秒に0歩の速さで右へ動く。",
+      "inputHash": "accc1ceb51952b6d8dc6837593332825ef70eb6b7cbd6bc995597d034cbcc500",
       "expected": [
         {
           "x": 100
@@ -2676,8 +2676,8 @@
     {
       "id": "V06/019",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、はなをは画面の右へ1秒に1歩の速さで動き続ける。",
-      "inputHash": "7323b118c018d7e5dd9532f4307665d6f6bebf1772f24288e562afb73d55afa2",
+      "source": "「a」キーを押しているあいだ、はなをは右へ1秒に1歩の速さで動き続ける。",
+      "inputHash": "ebc2d09328092c4fd7e206cbc00c50f3ec9d68c4b03f71653e80a0d6e65ed952",
       "expected": [
         {
           "x": 100
@@ -2716,8 +2716,8 @@
     {
       "id": "V06/020",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、はなをは1秒に1歩の速さで画面の右へ動く。",
-      "inputHash": "db499d7535e91d3456310a701ba57b1e607e9b08e19b37de518d676b6b6bb5db",
+      "source": "「a」キーを押しているあいだ、はなをは1秒に1歩の速さで右へ動く。",
+      "inputHash": "0205f1ba1aac8c36b160bde4f9c7ee41af79565a5fe50a83d747aad94e942258",
       "expected": [
         {
           "x": 100
@@ -2756,8 +2756,8 @@
     {
       "id": "V06/021",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、はなをは画面の右へ1秒に7歩の速さで動き続ける。",
-      "inputHash": "2f667ff231f1bde811cd9feea6d32a537ae4c89456853ce323c5c81ce3ec28f0",
+      "source": "「a」キーを押しているあいだ、はなをは右へ1秒に7歩の速さで動き続ける。",
+      "inputHash": "30605f410146d810c85e47b46fea0b828d42bc902b4f039473623c1f2fc8d830",
       "expected": [
         {
           "x": 100
@@ -2796,8 +2796,8 @@
     {
       "id": "V06/022",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、はなをは1秒に7歩の速さで画面の右へ動く。",
-      "inputHash": "143c3559c04428ef95fa4d72e2e81b76a4fe859212fa55c0a46f9c1b53b134ec",
+      "source": "「a」キーを押しているあいだ、はなをは1秒に7歩の速さで右へ動く。",
+      "inputHash": "6a43b61de59d04bf92982ecb15f51950189c4f3dcba2de4b42b86d254ff704b9",
       "expected": [
         {
           "x": 100
@@ -2836,8 +2836,8 @@
     {
       "id": "V06/023",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、はなをは画面の右へ1秒に2.5歩の速さで動き続ける。",
-      "inputHash": "fe65496b61ff22b8903f8e4f4d8018b96c04af5aaf1dfb59faf41e8182322923",
+      "source": "「a」キーを押しているあいだ、はなをは右へ1秒に2.5歩の速さで動き続ける。",
+      "inputHash": "66e75b89816c5b098b3cdf5fbedeecb7eae14c3c38b4de52eb8f3522c23e2d85",
       "expected": [
         {
           "x": 100
@@ -2876,8 +2876,8 @@
     {
       "id": "V06/024",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、はなをは1秒に2.5歩の速さで画面の右へ動く。",
-      "inputHash": "e6346138d653cbb49d23577a148ca05fcab5a8b1668b87400f89f155fb1c4eb0",
+      "source": "「a」キーを押しているあいだ、はなをは1秒に2.5歩の速さで右へ動く。",
+      "inputHash": "2c6430bbf6db110a149f00f119d9af54ded7746b119b1bd6d0512c976c7a754f",
       "expected": [
         {
           "x": 100
@@ -2924,11 +2924,31 @@
           "lists": {
             "持ち物": []
           }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "持ち物": []
+          }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "持ち物": []
+          }
         }
       ],
       "lists": {
         "持ち物": []
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/002",
@@ -2941,11 +2961,31 @@
           "lists": {
             "持ち物": []
           }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "持ち物": []
+          }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "持ち物": []
+          }
         }
       ],
       "lists": {
         "持ち物": []
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/003",
@@ -2960,13 +3000,37 @@
           "lists": {
             "持ち物": []
           }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "持ち物": []
+          }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "持ち物": []
+          }
         }
       ],
       "lists": {
         "持ち物": [
           "本"
         ]
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/004",
@@ -2981,13 +3045,37 @@
           "lists": {
             "持ち物": []
           }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "持ち物": []
+          }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "持ち物": []
+          }
         }
       ],
       "lists": {
         "持ち物": [
           "本"
         ]
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/005",
@@ -2997,29 +3085,21 @@
       "expected": [
         {
           "speech": [
-            "本",
-            "ぼうし",
             "本"
           ],
           "lists": {
             "持ち物": []
           }
-        }
-      ],
-      "lists": {
-        "持ち物": [
-          "本",
-          "ぼうし",
-          "本"
-        ]
-      }
-    },
-    {
-      "id": "V07/006",
-      "group": "V07",
-      "source": "【持ち物】の各要素を項目として、次のことをくり返す。\n  項目の値を言う。\n  【持ち物】の中身を全部消す。",
-      "inputHash": "72ef9f3a94709e450adf66b11af712f4df89a795a34981fbb63169f4816db9e9",
-      "expected": [
+        },
+        {
+          "speech": [
+            "本",
+            "ぼうし"
+          ],
+          "lists": {
+            "持ち物": []
+          }
+        },
         {
           "speech": [
             "本",
@@ -3037,7 +3117,65 @@
           "ぼうし",
           "本"
         ]
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
+    },
+    {
+      "id": "V07/006",
+      "group": "V07",
+      "source": "【持ち物】の各要素を項目として、次のことをくり返す。\n  項目の値を言う。\n  【持ち物】の中身を全部消す。",
+      "inputHash": "72ef9f3a94709e450adf66b11af712f4df89a795a34981fbb63169f4816db9e9",
+      "expected": [
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "持ち物": []
+          }
+        },
+        {
+          "speech": [
+            "本",
+            "ぼうし"
+          ],
+          "lists": {
+            "持ち物": []
+          }
+        },
+        {
+          "speech": [
+            "本",
+            "ぼうし",
+            "本"
+          ],
+          "lists": {
+            "持ち物": []
+          }
+        }
+      ],
+      "lists": {
+        "持ち物": [
+          "本",
+          "ぼうし",
+          "本"
+        ]
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/007",
@@ -3050,11 +3188,31 @@
           "lists": {
             "参加者": []
           }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "参加者": []
+          }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "参加者": []
+          }
         }
       ],
       "lists": {
         "参加者": []
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/008",
@@ -3067,11 +3225,31 @@
           "lists": {
             "参加者": []
           }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "参加者": []
+          }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "参加者": []
+          }
         }
       ],
       "lists": {
         "参加者": []
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/009",
@@ -3086,13 +3264,37 @@
           "lists": {
             "参加者": []
           }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "参加者": []
+          }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "参加者": []
+          }
         }
       ],
       "lists": {
         "参加者": [
           "本"
         ]
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/010",
@@ -3107,13 +3309,37 @@
           "lists": {
             "参加者": []
           }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "参加者": []
+          }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "参加者": []
+          }
         }
       ],
       "lists": {
         "参加者": [
           "本"
         ]
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/011",
@@ -3123,29 +3349,21 @@
       "expected": [
         {
           "speech": [
-            "本",
-            "ぼうし",
             "本"
           ],
           "lists": {
             "参加者": []
           }
-        }
-      ],
-      "lists": {
-        "参加者": [
-          "本",
-          "ぼうし",
-          "本"
-        ]
-      }
-    },
-    {
-      "id": "V07/012",
-      "group": "V07",
-      "source": "【参加者】の各要素を一品として、次のことをくり返す。\n  一品の値を言う。\n  【参加者】の中身を全部消す。",
-      "inputHash": "c746312df6bf41b0d1a39775866637fa90d59c1006fac16fe7201115b11422c0",
-      "expected": [
+        },
+        {
+          "speech": [
+            "本",
+            "ぼうし"
+          ],
+          "lists": {
+            "参加者": []
+          }
+        },
         {
           "speech": [
             "本",
@@ -3163,7 +3381,65 @@
           "ぼうし",
           "本"
         ]
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
+    },
+    {
+      "id": "V07/012",
+      "group": "V07",
+      "source": "【参加者】の各要素を一品として、次のことをくり返す。\n  一品の値を言う。\n  【参加者】の中身を全部消す。",
+      "inputHash": "c746312df6bf41b0d1a39775866637fa90d59c1006fac16fe7201115b11422c0",
+      "expected": [
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "参加者": []
+          }
+        },
+        {
+          "speech": [
+            "本",
+            "ぼうし"
+          ],
+          "lists": {
+            "参加者": []
+          }
+        },
+        {
+          "speech": [
+            "本",
+            "ぼうし",
+            "本"
+          ],
+          "lists": {
+            "参加者": []
+          }
+        }
+      ],
+      "lists": {
+        "参加者": [
+          "本",
+          "ぼうし",
+          "本"
+        ]
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/013",
@@ -3176,11 +3452,31 @@
           "lists": {
             "花と星": []
           }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "花と星": []
+          }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "花と星": []
+          }
         }
       ],
       "lists": {
         "花と星": []
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/014",
@@ -3193,11 +3489,31 @@
           "lists": {
             "花と星": []
           }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "花と星": []
+          }
+        },
+        {
+          "speech": [],
+          "lists": {
+            "花と星": []
+          }
         }
       ],
       "lists": {
         "花と星": []
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/015",
@@ -3212,13 +3528,37 @@
           "lists": {
             "花と星": []
           }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "花と星": []
+          }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "花と星": []
+          }
         }
       ],
       "lists": {
         "花と星": [
           "本"
         ]
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/016",
@@ -3233,13 +3573,37 @@
           "lists": {
             "花と星": []
           }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "花と星": []
+          }
+        },
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "花と星": []
+          }
         }
       ],
       "lists": {
         "花と星": [
           "本"
         ]
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V07/017",
@@ -3249,29 +3613,21 @@
       "expected": [
         {
           "speech": [
-            "本",
-            "ぼうし",
             "本"
           ],
           "lists": {
             "花と星": []
           }
-        }
-      ],
-      "lists": {
-        "花と星": [
-          "本",
-          "ぼうし",
-          "本"
-        ]
-      }
-    },
-    {
-      "id": "V07/018",
-      "group": "V07",
-      "source": "【花と星】の各要素を見た物として、次のことをくり返す。\n  見た物の値を言う。\n  【花と星】の中身を全部消す。",
-      "inputHash": "d0c3712810e2e35d599e3bbda249e93c7334a03c9945022f027c523e020c9a31",
-      "expected": [
+        },
+        {
+          "speech": [
+            "本",
+            "ぼうし"
+          ],
+          "lists": {
+            "花と星": []
+          }
+        },
         {
           "speech": [
             "本",
@@ -3289,7 +3645,65 @@
           "ぼうし",
           "本"
         ]
-      }
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
+    },
+    {
+      "id": "V07/018",
+      "group": "V07",
+      "source": "【花と星】の各要素を見た物として、次のことをくり返す。\n  見た物の値を言う。\n  【花と星】の中身を全部消す。",
+      "inputHash": "d0c3712810e2e35d599e3bbda249e93c7334a03c9945022f027c523e020c9a31",
+      "expected": [
+        {
+          "speech": [
+            "本"
+          ],
+          "lists": {
+            "花と星": []
+          }
+        },
+        {
+          "speech": [
+            "本",
+            "ぼうし"
+          ],
+          "lists": {
+            "花と星": []
+          }
+        },
+        {
+          "speech": [
+            "本",
+            "ぼうし",
+            "本"
+          ],
+          "lists": {
+            "花と星": []
+          }
+        }
+      ],
+      "lists": {
+        "花と星": [
+          "本",
+          "ぼうし",
+          "本"
+        ]
+      },
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
     },
     {
       "id": "V08/001",
@@ -4244,6 +4658,12 @@
       "expected": [
         {
           "speech": []
+        },
+        {
+          "speech": []
+        },
+        {
+          "speech": []
         }
       ],
       "actions": [
@@ -4251,6 +4671,14 @@
           "name": "おじぎ",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4262,6 +4690,12 @@
       "expected": [
         {
           "speech": []
+        },
+        {
+          "speech": []
+        },
+        {
+          "speech": []
         }
       ],
       "actions": [
@@ -4269,6 +4703,14 @@
           "name": "おじぎ",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4282,6 +4724,16 @@
           "speech": [
             "呼ばれた"
           ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
         }
       ],
       "actions": [
@@ -4289,6 +4741,14 @@
           "name": "おじぎ",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4302,6 +4762,16 @@
           "speech": [
             "呼ばれた"
           ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
         }
       ],
       "actions": [
@@ -4309,6 +4779,14 @@
           "name": "おじぎ",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4320,26 +4798,15 @@
       "expected": [
         {
           "speech": [
-            "呼ばれた",
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
             "呼ばれた",
             "呼ばれた"
           ]
-        }
-      ],
-      "actions": [
-        {
-          "name": "おじぎ",
-          "args": [],
-          "source": "「呼ばれた」と言う。"
-        }
-      ]
-    },
-    {
-      "id": "V11/006",
-      "group": "V11",
-      "source": "3回くり返す。\n  【おじぎ】という手順を行う。",
-      "inputHash": "5bb416ffebd471dec43c2da741d18689782078da3f58f671589d4531e0a4060a",
-      "expected": [
+        },
         {
           "speech": [
             "呼ばれた",
@@ -4354,6 +4821,55 @@
           "args": [],
           "source": "「呼ばれた」と言う。"
         }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
+    },
+    {
+      "id": "V11/006",
+      "group": "V11",
+      "source": "3回くり返す。\n  【おじぎ】という手順を行う。",
+      "inputHash": "5bb416ffebd471dec43c2da741d18689782078da3f58f671589d4531e0a4060a",
+      "expected": [
+        {
+          "speech": [
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた",
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた",
+            "呼ばれた",
+            "呼ばれた"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "name": "おじぎ",
+          "args": [],
+          "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
       ]
     },
     {
@@ -4364,6 +4880,12 @@
       "expected": [
         {
           "speech": []
+        },
+        {
+          "speech": []
+        },
+        {
+          "speech": []
         }
       ],
       "actions": [
@@ -4371,6 +4893,14 @@
           "name": "あいさつをする",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4382,6 +4912,12 @@
       "expected": [
         {
           "speech": []
+        },
+        {
+          "speech": []
+        },
+        {
+          "speech": []
         }
       ],
       "actions": [
@@ -4389,6 +4925,14 @@
           "name": "あいさつをする",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4402,6 +4946,16 @@
           "speech": [
             "呼ばれた"
           ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
         }
       ],
       "actions": [
@@ -4409,6 +4963,14 @@
           "name": "あいさつをする",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4422,6 +4984,16 @@
           "speech": [
             "呼ばれた"
           ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
         }
       ],
       "actions": [
@@ -4429,6 +5001,14 @@
           "name": "あいさつをする",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4440,26 +5020,15 @@
       "expected": [
         {
           "speech": [
-            "呼ばれた",
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
             "呼ばれた",
             "呼ばれた"
           ]
-        }
-      ],
-      "actions": [
-        {
-          "name": "あいさつをする",
-          "args": [],
-          "source": "「呼ばれた」と言う。"
-        }
-      ]
-    },
-    {
-      "id": "V11/012",
-      "group": "V11",
-      "source": "3回くり返す。\n  【あいさつをする】という手順を行う。",
-      "inputHash": "c6f5d4b4347620591291720f8da02b65d0a70a23d31a549bf78b16a39dcfee2a",
-      "expected": [
+        },
         {
           "speech": [
             "呼ばれた",
@@ -4474,6 +5043,55 @@
           "args": [],
           "source": "「呼ばれた」と言う。"
         }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
+    },
+    {
+      "id": "V11/012",
+      "group": "V11",
+      "source": "3回くり返す。\n  【あいさつをする】という手順を行う。",
+      "inputHash": "c6f5d4b4347620591291720f8da02b65d0a70a23d31a549bf78b16a39dcfee2a",
+      "expected": [
+        {
+          "speech": [
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた",
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた",
+            "呼ばれた",
+            "呼ばれた"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "name": "あいさつをする",
+          "args": [],
+          "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
       ]
     },
     {
@@ -4484,6 +5102,12 @@
       "expected": [
         {
           "speech": []
+        },
+        {
+          "speech": []
+        },
+        {
+          "speech": []
         }
       ],
       "actions": [
@@ -4491,6 +5115,14 @@
           "name": "星の手順",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4502,6 +5134,12 @@
       "expected": [
         {
           "speech": []
+        },
+        {
+          "speech": []
+        },
+        {
+          "speech": []
         }
       ],
       "actions": [
@@ -4509,6 +5147,14 @@
           "name": "星の手順",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4522,6 +5168,16 @@
           "speech": [
             "呼ばれた"
           ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
         }
       ],
       "actions": [
@@ -4529,6 +5185,14 @@
           "name": "星の手順",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4542,6 +5206,16 @@
           "speech": [
             "呼ばれた"
           ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた"
+          ]
         }
       ],
       "actions": [
@@ -4549,6 +5223,14 @@
           "name": "星の手順",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -4560,26 +5242,15 @@
       "expected": [
         {
           "speech": [
-            "呼ばれた",
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
             "呼ばれた",
             "呼ばれた"
           ]
-        }
-      ],
-      "actions": [
-        {
-          "name": "星の手順",
-          "args": [],
-          "source": "「呼ばれた」と言う。"
-        }
-      ]
-    },
-    {
-      "id": "V11/018",
-      "group": "V11",
-      "source": "3回くり返す。\n  【星の手順】という手順を行う。",
-      "inputHash": "7623cbd595113515237368dc217388b6023a6b62a01fb3bc28c323586d693981",
-      "expected": [
+        },
         {
           "speech": [
             "呼ばれた",
@@ -4593,6 +5264,55 @@
           "name": "星の手順",
           "args": [],
           "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
+        }
+      ]
+    },
+    {
+      "id": "V11/018",
+      "group": "V11",
+      "source": "3回くり返す。\n  【星の手順】という手順を行う。",
+      "inputHash": "7623cbd595113515237368dc217388b6023a6b62a01fb3bc28c323586d693981",
+      "expected": [
+        {
+          "speech": [
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた",
+            "呼ばれた"
+          ]
+        },
+        {
+          "speech": [
+            "呼ばれた",
+            "呼ばれた",
+            "呼ばれた"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "name": "星の手順",
+          "args": [],
+          "source": "「呼ばれた」と言う。"
+        }
+      ],
+      "steps": [
+        {
+          "at": 17
+        },
+        {
+          "at": 34
         }
       ]
     },
@@ -5421,8 +6141,8 @@
     {
       "id": "V06/025",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、あかりは画面の右へ1秒に－3歩の速さで動き続ける。",
-      "inputHash": "38158967500a2bf52b680cdaf65f5686f2c25c85aeb7a2846c9d242f2be16e54",
+      "source": "「a」キーを押しているあいだ、あかりは右へ1秒に－3歩の速さで動き続ける。",
+      "inputHash": "c3a8b1f2ea7768be22f157918af434a7326ffaafd24b4ce75f40a692cdf12bac",
       "expected": [
         {
           "x": 100
@@ -5461,8 +6181,8 @@
     {
       "id": "V06/026",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、あかりは1秒に－3歩の速さで画面の右へ動く。",
-      "inputHash": "9fdb0aeffb429c01344eec0aed09ca102e3562ffcd58fa2b1d8e4da0c55f9179",
+      "source": "「a」キーを押しているあいだ、あかりは1秒に－3歩の速さで右へ動く。",
+      "inputHash": "bbb0551121f6ad21ef48c452f499f1a422ba5a013271a451abc793301fe157ba",
       "expected": [
         {
           "x": 100
@@ -5501,8 +6221,8 @@
     {
       "id": "V06/027",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、星は画面の右へ1秒に－3歩の速さで動き続ける。",
-      "inputHash": "ed41cce01b71d3b4763061f6cb06c4804843515e56d4cba63a200fc377c1d26c",
+      "source": "「a」キーを押しているあいだ、星は右へ1秒に－3歩の速さで動き続ける。",
+      "inputHash": "8404969570081cf2c62960f88add366c37b500053a265189439350b046f66924",
       "expected": [
         {
           "x": 100
@@ -5541,8 +6261,8 @@
     {
       "id": "V06/028",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、星は1秒に－3歩の速さで画面の右へ動く。",
-      "inputHash": "5428f0341d3145f03ea71de0b1bd26e593a6e740e3fbc80ebd8bce882bcb70d0",
+      "source": "「a」キーを押しているあいだ、星は1秒に－3歩の速さで右へ動く。",
+      "inputHash": "ce204bffa6d0fba90eed6edfbc0ccc0edbb122d76144e0816b5e9c49fb6a496a",
       "expected": [
         {
           "x": 100
@@ -5581,8 +6301,8 @@
     {
       "id": "V06/029",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、はなをは画面の右へ1秒に－3歩の速さで動き続ける。",
-      "inputHash": "0c59ad057477fdb50588796fa17f0c8b721dee09f73b88a7837361d28a9af594",
+      "source": "「a」キーを押しているあいだ、はなをは右へ1秒に－3歩の速さで動き続ける。",
+      "inputHash": "b09b3f04f29e67e925383fac1d7973e4b23567f9cfc999d50688a025278cf461",
       "expected": [
         {
           "x": 100
@@ -5621,8 +6341,8 @@
     {
       "id": "V06/030",
       "group": "V06",
-      "source": "「a」キーを押しているあいだ、はなをは1秒に－3歩の速さで画面の右へ動く。",
-      "inputHash": "b8aa564471060d112e7031707227639690353788a03217df84af4f8c56cffe42",
+      "source": "「a」キーを押しているあいだ、はなをは1秒に－3歩の速さで右へ動く。",
+      "inputHash": "de15b81a4a1c60d12394fef1543e612e3949ef33f36cac02284e7e6a5944e6ac",
       "expected": [
         {
           "x": 100

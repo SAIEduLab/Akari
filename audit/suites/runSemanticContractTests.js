@@ -339,15 +339,12 @@ function runSemanticContractTests() {
         "LooksCommand:SET_TARGET_TEXT",
         "LooksCommand:SHOW",
         "MotionCommand:BOUNCE",
-        "MotionCommand:GLIDE",
-        "MotionCommand:GLIDE_DIRECTION",
         "MotionCommand:GOTO",
+        "MotionCommand:GOTO_PART",
         "MotionCommand:MOVE",
-        "MotionCommand:MOVE_DIRECTION",
+        "MotionCommand:MOVE_BY",
         "MotionCommand:POINT_TO",
         "MotionCommand:SET_DIRECTION",
-        "MotionCommand:SET_X",
-        "MotionCommand:SET_Y",
         "MotionCommand:TURN_LEFT",
         "MotionCommand:TURN_RIGHT",
         "PenCommand:CLEAR",
@@ -367,6 +364,7 @@ function runSemanticContractTests() {
         "SoundCommand:TONE_WAIT",
         "StopCommand:ALL",
         "StopCommand:OTHERS",
+        "StopCommand:OWN_OTHERS",
         "StopCommand:THIS",
         "UserActionCall",
         "WaitTime",
@@ -400,7 +398,7 @@ function runSemanticContractTests() {
       // broadcast and the continuous rule is a script rule, so they are written as sentences.
       for (const [kind, source] of [
         ['WaitBroadcastGroup', 'みんなに「出発」と知らせる\nその知らせを受けて始めたことが全部終わるまで待つ\n0を返す'],
-        ['ContinuousRule', '条件（条件の答え（あてはまる））が成り立つあいだ、自分は画面の右へ1秒に20歩の速さで動き続ける\n0を返す'],
+        ['ContinuousRule', '条件（条件の答え（あてはまる））が成り立つあいだ、自分は右へ1秒に20歩の速さで動き続ける\n0を返す'],
       ]) {
         const p = base();
         p.functions = [{ ownerId: 'stage', id: 'function-effect', name: '計算', args: [], source }];
@@ -474,7 +472,7 @@ function runSemanticContractTests() {
       p.scripts.push({
         targetId: 'sprite-1',
         event: 'start',
-        source: '横0、縦0の位置へ行く\n1秒で横100、縦200の位置へ滑る\n「滑走完了」と言う',
+        source: '画面の左下のはしから、右へ0歩、上へ0歩のばしょへ行く\n1秒かけて、画面の左下のはしから、右へ100歩、上へ200歩のばしょへ行く\n「滑走完了」と言う',
       });
       const traces = [];
       for (const blocks of [false, true]) {
@@ -523,8 +521,16 @@ function runSemanticContractTests() {
       let api=Akari, compiled=api.compileProject(p);eq(compiled.errors,[]);
       if(packed){api=Akari.createAkariRuntime();const loaded=api.restoreExecutable(Akari.packExecutable(p));p=loaded.project;compiled=loaded.compiled;}
       const speech=[],r=new api.RuntimeModel(p,{}),q=new api.EventScheduler(p,compiled,r,{say:(id,text)=>speech.push([id,text])});
-      r.now=()=>0;q.schedule=()=>{};
-      try{q.start();for(let i=0;i<1000&&q.ready.length;i++)q.runTurn();eq(q.errorRecords.map(e=>e.code),expectedError?[expectedError]:[]);eq(q.tasks.size,0);
+      let clock=0;r.now=()=>clock;q.schedule=()=>{};
+      try{q.start();
+        // A loop turn that changes the screen without waiting waits for the next こま (loop pacing), so the logical
+        // clock moves to the earliest wake until every flow has ended.
+        for(let i=0;i<1000&&(q.ready.length||q.tasks.size);i++){
+          if(q.ready.length){q.runTurn();continue;}
+          const due=Math.min(...[...q.blocked].map(t=>t.blockReason?.kind==='time'?t.blockReason.deadline:Infinity));
+          if(!Number.isFinite(due))break;clock=due;q.recheckBlocked();
+        }
+        eq(q.errorRecords.map(e=>e.code),expectedError?[expectedError]:[]);eq(q.tasks.size,0);
         return{cat:r.actor('cat').x,dog:r.actor('dog').x,catValue:r.actor('cat').vars.get('個体値'),projectValues:Object.fromEntries(r.projectVars),speech};}
       finally{q.stop();}
     };
@@ -538,15 +544,15 @@ function runSemanticContractTests() {
     ];
     test('control actors survive move duplicate remove and header edits', () => {
       const examples=[
-        ['もし横位置が0より大きければ、','  右へ2歩動く。',103,102],
-        ['個体値回くり返す。','  右へ2歩動く。',121,120],
-        ['横位置が110より小さいあいだ、くり返す。','  右へ2歩動く。',111,110],
-        ['横位置が110以上になるまで、くり返す。','  右へ2歩動く。',111,110],
-        ['ずっとくり返す。','  右へ2歩動く。\n  いまのくり返しを終える。',103,102],
-        ['個体一覧の中身を先頭から一つずつ見て、次のことを行う。','  右へ2歩動く。',107,106],
+        ['もしよこのばしょが0より大きければ、','  いまのばしょから、右へ2歩動く。',103,102],
+        ['個体値回くり返す。','  いまのばしょから、右へ2歩動く。',121,120],
+        ['よこのばしょが110より小さいあいだ、くり返す。','  いまのばしょから、右へ2歩動く。',111,110],
+        ['よこのばしょが110以上になるまで、くり返す。','  いまのばしょから、右へ2歩動く。',111,110],
+        ['ずっとくり返す。','  いまのばしょから、右へ2歩動く。\n  いまのくり返しを終える。',103,102],
+        ['個体一覧の中身を先頭から一つずつ見て、次のことを行う。','  いまのばしょから、右へ2歩動く。',107,106],
       ];
       for(const [header,body,movedX,removedX] of examples){
-        const source='いぬは右へ1歩動く。\n'+header+'\n'+body,p=actorUnitFixture(source),
+        const source='いぬは、いまのばしょから、右へ1歩動く。\n'+header+'\n'+body,p=actorUnitFixture(source),
           s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0),b=s.blockView.bodies.body;
         for(const remove of [false,true]){
           const e=prepareBlockEdit(s,remove?{type:'remove',id:b[0].id}:{type:'move',id:b[1].id,parentId:s.blockView.id,body:'body',index:0}),
@@ -557,7 +563,7 @@ function runSemanticContractTests() {
         }
       }
       for(const [kind,header,breaks] of actorUnitControls){
-        const body='  右へ2歩動く。'+(breaks?'\n  いまのくり返しを終える。':''),source=header+'\n'+body+'\nいぬは右へ1歩動く。',p=actorUnitFixture(source),
+        const body='  いまのばしょから、右へ2歩動く。'+(breaks?'\n  いまのくり返しを終える。':''),source=header+'\n'+body+'\nいぬは、いまのばしょから、右へ1歩動く。',p=actorUnitFixture(source),
           s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0),b=s.blockView.bodies.body;
         eq(s.syntaxAst.body[0].kind,kind);
         for(const duplicate of [false,true]){
@@ -566,22 +572,22 @@ function runSemanticContractTests() {
           const out=actorUnitRun(actorUnitFixture(e.source));eq([out.cat,out.dog],[duplicate?4:2,101]);
         }
       }
-      const source='いぬは何もしない。\nもし横位置が0より大きければ、\n  右へ2歩動く。',p=actorUnitFixture(source),s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0),
+      const source='いぬは何もしない。\nもしよこのばしょが0より大きければ、\n  いまのばしょから、右へ2歩動く。',p=actorUnitFixture(source),s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0),
         e=prepareBlockEdit(s,{type:'field',id:s.blockView.bodies.body[1].id,key:'actorRef',value:{kind:'self'}});
       eq(e.syntaxAst.body[1].actorRef,{kind:'self'});eq(e.syntaxAst.body[1].thenBody[0].actorRef,{kind:'named',name:'いぬ'});
       eq(actorUnitRun(actorUnitFixture(e.source)).dog,100);
     });
     test('explicit control subjects preserve scope source and else', () => {
       for(const [kind,header,breaks] of actorUnitControls){
-        const source='いぬは、'+header+'\n  自分は右へ2歩動く。'+(breaks?'\n  いまのくり返しを終える。':'')+'\n右へ3歩動く。',p=actorUnitFixture(source),ast=parseSyntax(source).ast;
+        const source='いぬは、'+header+'\n  自分は、いまのばしょから、右へ2歩動く。'+(breaks?'\n  いまのくり返しを終える。':'')+'\nいまのばしょから、右へ3歩動く。',p=actorUnitFixture(source),ast=parseSyntax(source).ast;
         ok(ast,source);eq(ast.body[0].kind,kind);eq(ast.body[0].actorRef,{kind:'named',name:'いぬ'});eq(ast.body[1].actorRef,{kind:'self'});
         const text=formatScript(blockDecode(blockEncode(ast).tree));ok(astEquivalent(ast,parseSyntax(text).ast));
         const s=createEditorSession('script:core-start',source,{targetId:'cat',event:'start'},p,0);eq(prepareBlockEdit(s,{type:'noop'}).source,source);
         const out=actorUnitRun(p);eq([out.cat,out.dog],[5,100]);
       }
       for(const inline of [false,true]){
-        const source=inline?'いぬは、もし点数が1と同じなら、右へ9歩動く。\nそうでなければ、右へ2歩動く。\n右へ3歩動く。'
-          :'いぬは、もし点数が1と同じなら、\n  右へ9歩動く。\nそうでなければ、\n  右へ2歩動く。\n右へ3歩動く。';
+        const source=inline?'いぬは、もし点数が1と同じなら、いまのばしょから、右へ9歩動く。\nそうでなければ、いまのばしょから、右へ2歩動く。\nいまのばしょから、右へ3歩動く。'
+          :'いぬは、もし点数が1と同じなら、\n  いまのばしょから、右へ9歩動く。\nそうでなければ、\n  いまのばしょから、右へ2歩動く。\nいまのばしょから、右へ3歩動く。';
         const out=actorUnitRun(actorUnitFixture(source));eq([out.cat,out.dog],[3,102]);
         const ast=parseSyntax(source).ast;ok(astEquivalent(ast,parseSyntax(formatScript(ast)).ast));
       }
@@ -596,7 +602,7 @@ function runSemanticContractTests() {
           const out=actorUnitRun(p);eq(out.catValue,21);
         }
       }
-      const stage=actorUnitFixture('画面は何もしない。\nもし点数が0と同じなら、\n  自分は右へ2歩動く。');eq(actorUnitRun(stage).cat,2);
+      const stage=actorUnitFixture('画面は何もしない。\nもし点数が0と同じなら、\n  自分は、いまのばしょから、右へ2歩動く。');eq(actorUnitRun(stage).cat,2);
       const p=actorUnitFixture('いぬは何もしない。\nもし点数が0と同じなら、\n  自分は個体値を1増やす。');
       p.components[0].localData.variables=[];
       ok(compileProject(p).errors.some(d=>d.code==='S301'&&d.line===3),'reject missing self data even if dog has it');
@@ -621,7 +627,7 @@ function runSemanticContractTests() {
       const forms=['点数を1秒増やす。','点数を1秒減らす。','点数に1秒を足す。','点数から1秒を引く。','1秒を点数に足す。','1秒を点数から引く。'];
       for(const statement of forms){
         for(const individual of [false,true]){
-          const p=actorUnitFixture('右へ10歩動く。\n'+(individual?'いぬは':'')+statement),d={id:'core-unit-score',name:'点数',initialValue:{magnitude:0,unit:'点'},expectedUnit:'点'};
+          const p=actorUnitFixture('いまのばしょから、右へ10歩動く。\n'+(individual?'いぬは':'')+statement),d={id:'core-unit-score',name:'点数',initialValue:{magnitude:0,unit:'点'},expectedUnit:'点'};
           if(individual)p.components[1].localData.variables.push(d);else p.projectData.variables=[d];
           const errors=compileProject(p).errors;ok(errors.some(d=>d.code==='R417'&&d.line===2),statement);reject(()=>packExecutable(p),'X601');
           const ast=parseSyntax(p.scripts[0].source).ast;p.scripts[0].source=formatScript(blockDecode(blockEncode(ast).tree));ok(compileProject(p).errors.some(d=>d.code==='R417'));

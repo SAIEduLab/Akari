@@ -140,7 +140,16 @@
         "cells": [
           "C-MotionCommand:MOVE",
           "前へ10歩",
-          "方向0のあかりx100→110、y100不変"
+          "向き0のあかりx100→110、y100不変"
+        ]
+      },
+      {
+        "id": "C-MotionCommand:MOVE_BY",
+        "cells": [
+          "C-MotionCommand:MOVE_BY",
+          "W0、あかりx100/y100/向き90",
+          "いまのばしょから、右へ10歩",
+          "x100→110、y100と向き90は不変。別試行の1秒かけて右へ100歩・下へ50歩はt=0.5秒でx150/y75、1秒後x200/y50。次命令は完了前に出ない"
         ]
       },
       {
@@ -148,17 +157,17 @@
         "cells": [
           "C-MotionCommand:GOTO",
           "W0、あかりx25/y75",
-          "横100、縦50へ",
-          "x25/y75→x100/y50、他対象不変"
+          "画面の左下のはしから、右へ100歩、上へ50歩のばしょへ",
+          "x25/y75→x100/y50、他対象不変。別試行の1秒かけてはx50/y150からt=0.5秒でx75/y100、1秒後x100/y50。次命令は完了前に出ない"
         ]
       },
       {
-        "id": "C-MotionCommand:GLIDE",
+        "id": "C-MotionCommand:GOTO_PART",
         "cells": [
-          "C-MotionCommand:GLIDE",
-          "W0、あかりx50/y50、時刻±0.2秒・座標±5歩",
-          "横200、縦100へ1秒かけて移動",
-          "t=0.5秒付近でx125/y75、1秒後x200/y100。次命令は完了前に出ない"
+          "C-MotionCommand:GOTO_PART",
+          "W0、あかりx25/y75、作品上の論理マウス位置150/250",
+          "マウスのところへ",
+          "あかりの中心がマウスと同じx150/y250、向き0不変"
         ]
       },
       {
@@ -166,7 +175,7 @@
         "cells": [
           "C-MotionCommand:TURN_RIGHT",
           "右に15度",
-          "方向0→15、座標不変"
+          "向き0→345（右回りで小さくなる）、座標不変"
         ]
       },
       {
@@ -174,51 +183,34 @@
         "cells": [
           "C-MotionCommand:TURN_LEFT",
           "左に15度",
-          "方向0→−15（mod360では345）、座標不変"
+          "向き0→15（左回りで大きくなる）、座標不変"
         ]
       },
       {
         "id": "C-MotionCommand:SET_DIRECTION",
         "cells": [
           "C-MotionCommand:SET_DIRECTION",
-          "W0、方向15",
-          "方向90度",
-          "方向15→90"
-        ]
-      },
-      {
-        "id": "C-MotionCommand:SET_X",
-        "cells": [
-          "C-MotionCommand:SET_X",
-          "W0、x25",
-          "横位置100",
-          "x25→100、y100不変"
-        ]
-      },
-      {
-        "id": "C-MotionCommand:SET_Y",
-        "cells": [
-          "C-MotionCommand:SET_Y",
-          "縦位置50",
-          "y100→50、x100不変"
+          "W0、向き15",
+          "向き45度",
+          "向き15→45"
         ]
       },
       {
         "id": "C-MotionCommand:POINT_TO",
         "cells": [
           "C-MotionCommand:POINT_TO",
-          "W0、作品上の論理マウス位置150/250",
+          "W0、あかりの中心150/150、作品上の論理マウス位置150/250",
           "マウスを向く",
-          "部品中心150/150、マウス150/250で方向90（座標不変）"
+          "マウスが真上にあるので向き90（上）、座標不変"
         ]
       },
       {
         "id": "C-MotionCommand:BOUNCE",
         "cells": [
           "C-MotionCommand:BOUNCE",
-          "W0、640×480画面、100×100部品x540/y100/方向0",
-          "画面端ならはね返る",
-          "右辺に接触・右向きなら左向き180。非接触の別試行は方向0不変"
+          "W0、640×480画面、100×100の文字の部品の中心x590/y100/向き0",
+          "画面のはしにふれていれば、はね返る",
+          "右辺が右のはしに接触・右向きなら左向き180、ばしょ不変。非接触(x100)の別試行は向き0不変"
         ]
       },
       {
@@ -297,7 +289,7 @@
           "C-PenCommand:DOWN",
           "W0、ペン青/太さ3、最初は上",
           "ペンを下ろす→前へ20歩",
-          "中心150/150→170/150へ太さ3・青の線が1本"
+          "中心100/100→120/100へ太さ3・青の線が1本"
         ]
       },
       {
@@ -545,6 +537,15 @@
         ]
       },
       {
+        "id": "C-StopCommand:OWN_OTHERS",
+        "cells": [
+          "C-StopCommand:OWN_OTHERS",
+          "W0、同じ部品の別本文と別の部品の本文が同時開始",
+          "自分のほかの動きを止める",
+          "現在本文の後続台詞あり、同じ部品の別本文の後続台詞なし、別の部品の本文の後続台詞あり"
+        ]
+      },
+      {
         "id": "C-StopCommand:ALL",
         "cells": [
           "C-StopCommand:ALL",
@@ -620,8 +621,8 @@
         "id": "C-Forever",
         "cells": [
           "C-Forever",
-          "ずっと15度回転",
-          "複数回動く。UI一時停止で方向が止まり、UI停止で編集へ戻る。有限反復へ置き換えない"
+          "ずっと左に15度回転",
+          "待たない回は次のこま（60分の1秒）から始まり、こまごとに15度ずつ回る。UI一時停止で向きが止まり、UI停止で編集へ戻る。有限反復へ置き換えない"
         ]
       },
       {
@@ -1388,6 +1389,14 @@
         ]
       },
       {
+        "id": "E-event:label:touchStart",
+        "cells": [
+          "E-event:label:touchStart",
+          "label / touchStart",
+          "本文の持ち主が相手（部品か画面のはし）にふれていない状態からふれた状態に変わるたびに1回出る。動かしたときにもうふれていれば出ず、ふれたままでは出ない。はなれてまたふれると出る。別の相手とふれても非起動。"
+        ]
+      },
+      {
         "id": "E-event:button:start",
         "cells": [
           "E-event:button:start",
@@ -1428,6 +1437,14 @@
         ]
       },
       {
+        "id": "E-event:button:touchStart",
+        "cells": [
+          "E-event:button:touchStart",
+          "button / touchStart",
+          "本文の持ち主が相手（部品か画面のはし）にふれていない状態からふれた状態に変わるたびに1回出る。動かしたときにもうふれていれば出ず、ふれたままでは出ない。はなれてまたふれると出る。別の相手とふれても非起動。"
+        ]
+      },
+      {
         "id": "E-event:box:start",
         "cells": [
           "E-event:box:start",
@@ -1465,6 +1482,14 @@
           "E-event:box:backdropChanged",
           "box / backdropChanged",
           "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、コピーはcloneだけ。"
+        ]
+      },
+      {
+        "id": "E-event:box:touchStart",
+        "cells": [
+          "E-event:box:touchStart",
+          "box / touchStart",
+          "本文の持ち主が相手（部品か画面のはし）にふれていない状態からふれた状態に変わるたびに1回出る。動かしたときにもうふれていれば出ず、ふれたままでは出ない。はなれてまたふれると出る。別の相手とふれても非起動。"
         ]
       },
       {
@@ -1516,6 +1541,14 @@
         ]
       },
       {
+        "id": "E-event:input:touchStart",
+        "cells": [
+          "E-event:input:touchStart",
+          "input / touchStart",
+          "本文の持ち主が相手（部品か画面のはし）にふれていない状態からふれた状態に変わるたびに1回出る。動かしたときにもうふれていれば出ず、ふれたままでは出ない。はなれてまたふれると出る。別の相手とふれても非起動。"
+        ]
+      },
+      {
         "id": "E-event:sprite:start",
         "cells": [
           "E-event:sprite:start",
@@ -1561,6 +1594,14 @@
           "E-event:sprite:cloneStart",
           "sprite / cloneStart",
           "正対象のマーカーだけが1回出る。別対象/別キー/別知らせは非起動。holdは押下イベントを反復しない。背景/入力は旧新値、コピーはcloneだけ。"
+        ]
+      },
+      {
+        "id": "E-event:sprite:touchStart",
+        "cells": [
+          "E-event:sprite:touchStart",
+          "sprite / touchStart",
+          "本文の持ち主が相手（部品か画面のはし）にふれていない状態からふれた状態に変わるたびに1回出る。動かしたときにもうふれていれば出ず、ふれたままでは出ない。はなれてまたふれると出る。別の相手とふれても非起動。"
         ]
       }
     ],
@@ -1998,22 +2039,6 @@
         ]
       },
       {
-        "id": "S-MotionCommand:MOVE_DIRECTION",
-        "cells": [
-          "MotionCommand:MOVE_DIRECTION / S-MotionCommand:MOVE_DIRECTION",
-          "明記なし",
-          "値/条件/対象の該当穴。U04/U05/U06/U13"
-        ]
-      },
-      {
-        "id": "S-MotionCommand:GLIDE_DIRECTION",
-        "cells": [
-          "MotionCommand:GLIDE_DIRECTION / S-MotionCommand:GLIDE_DIRECTION",
-          "明記なし",
-          "値/条件/対象の該当穴。U04/U05/U06/U13"
-        ]
-      },
-      {
         "id": "S-WaitBroadcastGroup",
         "cells": [
           "WaitBroadcastGroup / S-WaitBroadcastGroup",
@@ -2278,6 +2303,14 @@
         ]
       },
       {
+        "id": "S-StopCommand:OWN_OTHERS",
+        "cells": [
+          "StopCommand:OWN_OTHERS / S-StopCommand:OWN_OTHERS",
+          "command:StopCommand:OWN_OTHERS",
+          "命令の追加先。U04/U05/U06/U13"
+        ]
+      },
+      {
         "id": "S-StopCommand:ALL",
         "cells": [
           "StopCommand:ALL / S-StopCommand:ALL",
@@ -2302,10 +2335,18 @@
         ]
       },
       {
-        "id": "S-MotionCommand:GLIDE",
+        "id": "S-MotionCommand:MOVE_BY",
         "cells": [
-          "MotionCommand:GLIDE / S-MotionCommand:GLIDE",
-          "command:MotionCommand:GLIDE",
+          "MotionCommand:MOVE_BY / S-MotionCommand:MOVE_BY",
+          "command:MotionCommand:MOVE_BY",
+          "命令の追加先。U04/U05/U06/U13"
+        ]
+      },
+      {
+        "id": "S-MotionCommand:GOTO_PART",
+        "cells": [
+          "MotionCommand:GOTO_PART / S-MotionCommand:GOTO_PART",
+          "command:MotionCommand:GOTO_PART",
           "命令の追加先。U04/U05/U06/U13"
         ]
       },
@@ -2330,22 +2371,6 @@
         "cells": [
           "MotionCommand:TURN_LEFT / S-MotionCommand:TURN_LEFT",
           "command:MotionCommand:TURN_LEFT",
-          "命令の追加先。U04/U05/U06/U13"
-        ]
-      },
-      {
-        "id": "S-MotionCommand:SET_X",
-        "cells": [
-          "MotionCommand:SET_X / S-MotionCommand:SET_X",
-          "command:MotionCommand:SET_X",
-          "命令の追加先。U04/U05/U06/U13"
-        ]
-      },
-      {
-        "id": "S-MotionCommand:SET_Y",
-        "cells": [
-          "MotionCommand:SET_Y / S-MotionCommand:SET_Y",
-          "command:MotionCommand:SET_Y",
           "命令の追加先。U04/U05/U06/U13"
         ]
       },

@@ -50,7 +50,9 @@ export function compositionExecution({draft:d,makeProject,mode='source',source=d
  const states=[];
  try{
   scheduler.start();pump();states.push(state());
-  const times={I07:[],I08:[1999,2000,3999,4000,5999,6000],I09:[999,1000],I10:[],I11:[999,1000,1999,2000],I12:[999,1000]}[d.id];
+  // I10 calls a procedure that turns twice in a repeat that never waits, so its second call starts on the next こま
+  // (1/60 s; LANGUAGE.md くり返しと画面の動き).
+  const times={I07:[],I08:[1999,2000,3999,4000,5999,6000],I09:[999,1000],I10:[17],I11:[999,1000,1999,2000],I12:[999,1000]}[d.id];
   for(const time of times){clock=time;if(d.id==='I09'&&time===1000){assert(reply,'question was not awaiting an answer');const answer=reply;reply=null;answer('はる「青空」');}
    scheduler.advanceContinuous?.(clock);scheduler.recheckBlocked(true);pump();states.push(state());}
   return {execution:'actual EventScheduler / RuntimeModel',source,roundtrip,states,trace,errors,projectAfter:copy(p),initialSourcePreserved:mode==='source'};

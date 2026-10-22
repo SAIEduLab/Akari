@@ -16,10 +16,11 @@ const [output]=process.argv.slice(2);assert.ok(output,'usage: ci-regression.mjs 
 const {results,pass}=caseRecorder();
 // Reproduce the actual product's 350 ms post-cancel click guard with a controlled clock.
 const source=fs.readFileSync(currentProductFile(),'utf8');
-const start=source.indexOf('    function cancelDrag() {'),end=source.indexOf('    function previewDrag(',start);
+const start=source.indexOf('    function cancelDrag({ animate = false } = {}) {'),end=source.indexOf('    function previewDrag(',start);
 assert.ok(start>0&&end>start);
-const sandbox={Date:{now:()=>1000},drag:{started:true},ghost:null,snapPreview:null,dragFrame:null,
-  suppressClickUntil:0,root:{querySelectorAll:()=>[],classList:{remove(){}}},notifyPending(){},updateControls(){}};
+// The block view's drag state also holds a long-press timer, a reason line and the palette's delete zone.
+const sandbox={Date:{now:()=>1000},drag:{started:true},ghost:null,snapPreview:null,dragFrame:null,clearTimeout(){},showDragReason(){},
+  palette:{classList:{remove(){}}},suppressClickUntil:0,root:{querySelectorAll:()=>[],classList:{remove(){}}},notifyPending(){},updateControls(){}};
 vm.runInNewContext(source.slice(start,end)+';cancelDrag();',sandbox);
 assert.equal(sandbox.suppressClickUntil,1350);assert.equal(sandbox.drag,null);pass('click-guard/cancel-sets-suppression');
 const clickStart=source.indexOf("        if (Date.now() < suppressClickUntil) {",end);

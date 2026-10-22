@@ -19,6 +19,8 @@ const fixtureApi = loadApi(fs.readFileSync(currentProductFile(),'utf8'));
 const savedProject = makeRegressionProject(fixtureApi);
 savedProject.name = '作品の保存確認';
 const savedFile = fixtureApi.serializeProject(savedProject, fixtureApi.makeDefaultAssetStore());
+// The contract numbers are the release record's (features.json), not copies in this test.
+const contract = JSON.parse(fs.readFileSync('audit/manifests/features.json','utf8')).EXECUTABLE_CONTRACT;
 async function reveal(locator) {
   if (!await locator.isVisible()) for (const panel of await locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all())
     await panel.locator('.blockui-side-toggle').click();
@@ -194,7 +196,12 @@ const cases = {
     await open(p);await draw(p,'rectangle',[100,100],[120,115],true);await commit(p);
     let c=await current(p), image=await imageInfo(p);assert.equal(c.w,image.width);assert.equal(c.h,image.height);assert.equal(c.scalePercent,100);
     assert.ok(image.width>=20&&image.width<=21);assert.ok(image.height>=15&&image.height<=16);
-    assert.ok(image.count>250);assert.ok(c.x>200&&c.y>100);
+    // The regression work's ボタン1 (centre 88/355, 120×34) blocks that row up to its right side 148 plus the 10-step gap,
+    // so the first free left side on the 20-step grid from 10 is 170.
+    const button=JSON.parse((await state(p)).project).components.find(b=>b.id==='button-1');
+    assert.deepEqual([button.x,button.w],[88,120]);
+    const blocked=button.x+button.w/2+10,left=10+20*Math.ceil((blocked-10)/20);
+    assert.ok(image.count>250);assert.equal(c.x,Math.round(left+c.w/2));assert.equal(c.y,Math.round(400-10-c.h/2));
     await open(p);await draw(p,'rectangle',[100,100],[101,101],true);await commit(p);
     c=await current(p);image=await imageInfo(p);assert.equal(c.w,8);assert.equal(c.h,8);assert.equal(image.width,8);assert.equal(image.height,8);
     assert.equal(c.scalePercent,100);assert.ok(image.count<=4);assert.deepEqual(image.first,[0,0,0,0]);assert.ok(image.left>=2&&image.top>=2);
@@ -202,10 +209,10 @@ const cases = {
   async 'paint-large-stage-fit'(p) {
     await open(p);await draw(p,'fill',[10,10]);await commit(p);
     const c=await current(p);assert.equal(c.w,500);assert.equal(c.h,500);assert.equal(c.scalePercent,80);
-    assert.equal(c.x+c.w/2,320);assert.equal(c.y+c.h/2,200);
+    assert.equal(c.x,320+16);assert.equal(c.y,200-16);
     assert.equal((await imageInfo(p)).count,250000);
     await click(p,'.prop-duplicate');const copy=await current(p);
-    assert.equal(copy.scalePercent,80);assert.equal(copy.y+c.h/2,200,'scaled duplicate stays within stage');
+    assert.equal(copy.scalePercent,80);assert.equal(copy.y,200,'scaled duplicate stays within stage');
     assert.equal(copy.x,c.x+16);assert.equal(copy.costumes[0].assetId,c.costumes[0].assetId);
   },
   async 'paint-discard'(p) {
@@ -255,7 +262,7 @@ const cases = {
     await p.screenshot({path:path.join(artifacts,'drawing-mobile.png'),fullPage:true});
   },
   async 'format-contract-and-import'(p) {
-    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),{languageContractId:3,runtimeContractId:3,programFormatVersion:3,projectFormatVersion:4});
+    assert.deepEqual(await p.evaluate(()=>Akari.EXECUTABLE_CONTRACT),contract);
     await p.locator('#fileInput').setInputFiles({name:'saved-project.akari.md',mimeType:'text/plain',buffer:Buffer.from(savedFile)});
     await p.waitForFunction(()=>Akari.app.project.name==='作品の保存確認'&&Akari.app.editorState.state==='DESIGN');
     assert.equal(await p.evaluate(()=>Akari.app.project.appVersion),(""+currentProductVersion()+""));
@@ -264,7 +271,9 @@ const cases = {
   },
   async 'format-malformed-state-protection'(p) {
     const before=await state(p);
-    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": 3','"languageContractId": 1'),savedFile.replace('"formatVersion": 4','"formatVersion": "4"')]) {
+    for(const text of [savedFile.replace(("# あかり "+currentProductVersion()+" の作品"),'# tampered'),savedFile.replace('"languageContractId": '+contract.languageContractId,'"languageContractId": 1'),
+      savedFile.replace('"formatVersion": '+contract.projectFormatVersion,'"formatVersion": "'+contract.projectFormatVersion+'"')]) {
+      assert.notEqual(text,savedFile,'each malformed file differs from the saved one');
       const result=await p.evaluate(async text=>{try{await Akari.parseProjectFile(text);return 'accepted';}catch(e){return e.code;}},text);
       assert.notEqual(result,'accepted');assert.deepEqual(await state(p),before);
     }

@@ -10,7 +10,7 @@ import {verifyCapabilityContract,corpusPath,corpusMarkdownPath} from '../lib/cap
 // A changed oracle needs an explicit, reviewed contract change, never a refresh
 // from candidate observations. Static success is not a product execution PASS.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const frozenFixtureSha256 = '76b4a2b27871a7a406b5b2bf489e12d11d938c194b83269b439b8337a808a875';
+const frozenFixtureSha256 = '394876a56697c737ec71bf7544d7fe79ddd6fa07717668215bd35cb4eb4f2fa0';
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const unique = (values, label) => assert.equal(new Set(values).size, values.length, label + ': duplicate');
 const sameSet = (actual, expected, label) => {

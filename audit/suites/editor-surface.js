@@ -22,11 +22,15 @@ function runEditorSurface10(api, forms) {
     ['delete-index','名前一覧の3番目を消す。',['inputs','index','inputs','value'],2,'名前一覧の2番目を消す。'],
     ['input','「入力欄」に3を入れる。',['inputs','args',1],8,'「入力欄」に8を入れる。'],
     ['turn','左に３度回る。',['inputs','args',0,'inputs','value'],8,'左に8度回る。'],
-    ['goto-x','横3、縦3の位置へ行く。',['inputs','args',0,'inputs','value'],8,'横8、縦3の位置へ行く。'],
-    ['goto-y','横3、縦3の位置へ行く。',['inputs','args',1,'inputs','value'],8,'横3、縦8の位置へ行く。'],
-    ['glide-x','横3、縦3の位置へ3秒かけて動く。',['inputs','args',1,'inputs','value'],8,'横8、縦3の位置へ3秒かけて動く。'],
-    ['glide-y','横3、縦3の位置へ3秒かけて動く。',['inputs','args',2,'inputs','value'],8,'横3、縦8の位置へ3秒かけて動く。'],
-    ['glide-time','横3、縦3の位置へ3秒かけて動く。',['inputs','args',0,'inputs','value'],8,'横3、縦3の位置へ8秒かけて動く。'],
+    ['goto-x','画面の左下のはしから、右へ3歩、上へ3歩のばしょへ行く。',['inputs','x','inputs','value'],8,'画面の左下のはしから、右へ8歩、上へ3歩のばしょへ行く。'],
+    ['goto-y','画面の左下のはしから、右へ3歩、上へ3歩のばしょへ行く。',['inputs','y','inputs','value'],8,'画面の左下のはしから、右へ3歩、上へ8歩のばしょへ行く。'],
+    ['glide-x','3秒かけて、画面の左下のはしから、右へ3歩、上へ3歩のばしょへ行く。',['inputs','x','inputs','value'],8,'3秒かけて、画面の左下のはしから、右へ8歩、上へ3歩のばしょへ行く。'],
+    ['glide-y','3秒かけて、画面の左下のはしから、右へ3歩、上へ3歩のばしょへ行く。',['inputs','y','inputs','value'],8,'3秒かけて、画面の左下のはしから、右へ3歩、上へ8歩のばしょへ行く。'],
+    ['glide-time','3秒かけて、画面の左下のはしから、右へ3歩、上へ3歩のばしょへ行く。',['inputs','seconds','inputs','value'],8,'8秒かけて、画面の左下のはしから、右へ3歩、上へ3歩のばしょへ行く。'],
+    ['move-by-x','いまのばしょから、左へ3歩、下へ3歩動く。',['inputs','x','inputs','value'],8,'いまのばしょから、左へ8歩、下へ3歩動く。'],
+    ['move-by-y','いまのばしょから、左へ3歩、下へ3歩動く。',['inputs','y','inputs','value'],8,'いまのばしょから、左へ3歩、下へ8歩動く。'],
+    ['move-by-time','3秒かけて、いまのばしょから、右へ3歩動く。',['inputs','seconds','inputs','value'],8,'8秒かけて、いまのばしょから、右へ3歩動く。'],
+    ['turn-time','3秒かけて、右に3度回る。',['inputs','seconds','inputs','value'],8,'8秒かけて、右に3度回る。'],
     ['tone-frequency','3Hzの音を3秒鳴らす。',['inputs','args',0,'inputs','value'],8,'8Hzの音を3秒鳴らす。'],
     ['tone-time','3Hzの音を3秒鳴らす。',['inputs','args',1,'inputs','value'],8,'3Hzの音を8秒鳴らす。'],
     ['wait','3秒待つ。',['inputs','seconds','inputs','value'],8,'8秒待つ。'],
@@ -98,13 +102,13 @@ function runEditorSurface10(api, forms) {
     eq(n.thenBody[0].sourceSpan.startColumn,3);eq(n.elseBody[0].sourceSpan.startColumn,3);
   });
   test('RELEASE-EDIT/batch-role-offsets',()=>{
-    const s=setup('横3、縦3の位置へ3秒かけて動く。 ※ 末尾 '), args=s.blockView.bodies.body[0].inputs.args;
+    const s=setup('3秒かけて、画面の左下のはしから、上へ3歩、右へ3歩のばしょへ行く。 ※ 末尾 '), inputs=s.blockView.bodies.body[0].inputs;
     const result=api.prepareBlockEdit(s,{type:'batch',operations:[
-      {type:'field',id:args[0].inputs.value.id,key:'value',value:10},
-      {type:'field',id:args[1].inputs.value.id,key:'value',value:200},
-      {type:'field',id:args[2].inputs.value.id,key:'value',value:50},
+      {type:'field',id:inputs.seconds.inputs.value.id,key:'value',value:10},
+      {type:'field',id:inputs.x.inputs.value.id,key:'value',value:200},
+      {type:'field',id:inputs.y.inputs.value.id,key:'value',value:50},
     ]});
-    eq(result.source,'横200、縦50の位置へ10秒かけて動く。 ※ 末尾 ');
+    eq(result.source,'10秒かけて、画面の左下のはしから、上へ50歩、右へ200歩のばしょへ行く。 ※ 末尾 ');
   });
   test('RELEASE-EDIT/predicate-in-expression-slot',()=>{
     const source='（0＋0）の値を言う。 ※ 末尾  \n「😀」  と言う。\n',s=setup(source);

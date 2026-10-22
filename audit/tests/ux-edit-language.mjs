@@ -61,11 +61,15 @@ check('source/edit-second-event-preserves-first',()=>{
 for(const value of ['「ほし」と。※始めると、だんご','全角１２３＋と空 白','一行目\n  二行目'])check('quotes/'+value,()=>{
  const p=project(`始めると、あかりは『${value}』と1秒話します。`),r=execute(p,[{at:1000,visible:{}}]);assert.deepEqual(r.trace,[[0,'sprite-1',value]]);return r;
 });
-for(const source of ['「値」と－1秒話す。','「値」と1歩秒話す。'])check('timed/atomic-rejection/'+source,()=>{
+// LANGUAGE.md 時間付き発話と短い自然文: a negative time written as a number is stopped by the 作品チェック before
+// running (R412), a time in another unit too (R417); a time that becomes negative while running stops the sentence
+// without speaking (R412).
+for(const source of ['「値」と－1秒話す。','「値」と1歩秒話す。','「値」と（点数－1）秒話す。'])check('timed/atomic-rejection/'+source,()=>{
  const p=project(source),compiled=A.compileProject(p),runtime=new A.RuntimeModel(p,{}),speech=[],errors=[];runtime.now=()=>0;
  if(source.includes('1歩秒')){assert.deepEqual(Array.from(compiled.errors,e=>e.code),['R417']);return {compileRejected:true,code:'R417',speech:[]};}
+ if(source.includes('－1秒')){assert.deepEqual(Array.from(compiled.errors,e=>e.code),['R412']);return {compileRejected:true,code:'R412',speech:[]};}
  const scheduler=new A.EventScheduler(p,compiled,runtime,{say:(...args)=>speech.push(args),runtimeError:(task,error)=>errors.push(error.code)});scheduler.schedule=()=>{};
- try{assert.equal(compiled.errors.length,0);scheduler.start();while(scheduler.ready.length)scheduler.runTurn(true);assert.deepEqual(speech,[]);assert.equal(errors.length,1);return {speech,errors};}finally{scheduler.stop();}
+ try{assert.equal(compiled.errors.length,0);scheduler.start();while(scheduler.ready.length)scheduler.runTurn(true);assert.deepEqual(speech,[]);assert.deepEqual(errors,['R412']);return {speech,errors};}finally{scheduler.stop();}
 });
 for(const source of ['これを2回くり返します。','だんごも同じ合図で動き始め、1秒待ちます。','くり返しが終わると、あかりは「終」と1秒話します。'])check('refusal/'+source,()=>{const result=A.parseSyntax(source);assert.equal(result.ast,null);assert.equal(result.syntaxDiagnostics[0].code,'P205');return plain(result.syntaxDiagnostics);});
 function runClock(api,p,steps,clock=null){

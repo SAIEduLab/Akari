@@ -10,6 +10,7 @@ import { currentProductFile } from '../lib/product-path.cjs';
 import { snapshot, sha } from '../lib/product-test-host.mjs';
 import { loadApi } from '../browser/cases/audit-lib.cjs';
 import { answerProductConfirms } from '../lib/product-dialogs.cjs';
+import { installGreetingFixture } from '../lib/gate-ui-fixture.mjs';
 import { browserEnvironment } from '../lib/browser-environment.mjs';
 import { extensionFoundationIds, extensionExpectedObservations, verifyExtensionFoundation } from '../lib/extension-foundation-contract.mjs';
 
@@ -127,8 +128,9 @@ await withOrdinaryFileBrowser(async browser=>{
   // locator action, so the opening step waits for that action before reading the result.
   if(fork)await answerProductConfirms(fork.page,true);
   const productQuestionAnswered=page=>page.locator('#loseConfirmModal').waitFor({state:'hidden'});
-  await check('EXTENSION-STANDARD-NO-NETWORK',async()=>{await standard.page.locator('#runBtn').click();await standard.page.locator('#stopBtn').click();await standard.page.waitForTimeout(300);return{httpRequests:standard.requests.length,socketRequests:standard.sockets.length,errors:standard.errors.length,unblocked:true};});
-  await check('EXTENSION-DERIVED-NO-NETWORK',async()=>{assert.ok(fork);await fork.page.locator('#runBtn').click();await fork.page.locator('#stopBtn').click();await fork.page.waitForTimeout(300);return{httpRequests:fork.requests.length,socketRequests:fork.sockets.length,errors:fork.errors.length,unblocked:true};});
+  // The first work has no sentence and does not run (LANGUAGE.md 新しい作品とお手本、吹出し), so a running work is opened first.
+  await check('EXTENSION-STANDARD-NO-NETWORK',async()=>{await installGreetingFixture(standard.page,{keepRunning:true});await standard.page.locator('#runBtn').click();await standard.page.locator('#stopBtn').click();await standard.page.waitForTimeout(300);return{httpRequests:standard.requests.length,socketRequests:standard.sockets.length,errors:standard.errors.length,unblocked:true};});
+  await check('EXTENSION-DERIVED-NO-NETWORK',async()=>{assert.ok(fork);await installGreetingFixture(fork.page,{keepRunning:true});await fork.page.locator('#runBtn').click();await fork.page.locator('#stopBtn').click();await fork.page.waitForTimeout(300);return{httpRequests:fork.requests.length,socketRequests:fork.sockets.length,errors:fork.errors.length,unblocked:true};});
   async function evaluate(id,fn){await check(id,async()=>{assert.ok(fork);return fork.page.evaluate(fn);});}
   await evaluate('EXTENSION-REGISTRATION-COLLISION-TYPES',()=>{
     const R=Akari.createAkariRuntime({extensions:auditDefinitions}),host=R.extensions;let duplicateRejected=false,invalidNumberRejected=false,promiseCalculationRejected=false;
@@ -241,12 +243,12 @@ await withOrdinaryFileBrowser(async browser=>{
     async function run(source,additional=[]){const p=A.makeEmptyProject();p.projectData.variables=[{id:'counter',name:'回数',initialValue:0}];p.functions=[{id:'identity',ownerId:'stage',name:'現在',args:['値'],source:'値を答えとして返す。'}];p.scripts=[{id:'recurring-start',targetId:'sprite-1',event:'start',source},...additional];const c=A.compileProject(p);if(c.errors.length)throw Error(JSON.stringify(c.errors));const errors=[],logs=[],runtime=new A.RuntimeModel(p,{}),q=new A.EventScheduler(p,c,runtime,{say:(_,v)=>logs.push(v),runtimeError:(_,e)=>errors.push(e.message)});q.start();return{q,runtime,logs,errors};}
     const recurring=await run('【現在】（回数）が3より小さいあいだ、くり返す。\n  回数を1増やす。\n回数を言う。');await delay(100);recurring.q.stop();if(recurring.logs.join(',')!=='3'||recurring.runtime.projectVars.get('回数')!==3||recurring.errors.length)throw Error('Cooperative RepeatWhile did not reevaluate');
     const waiting=await run('【現在】（回数）が1以上になるまで待つ。\n「再開」を言う。',[{id:'parallel-update',targetId:'sprite-1',event:'start',source:'0.02秒待つ。\n回数を1にする。'}]);await delay(120);waiting.q.stop();if(waiting.logs.join(',')!=='再開'||waiting.errors.length)throw Error('Cooperative WaitUntil did not observe other event');
-    const motion=await run('【現在】（回数）が0以上のあいだ、自分は画面の右へ1秒に60歩の速さで動き続ける。',[{id:'motion-cancel',targetId:'sprite-1',event:'click',source:'ほかの実行をすべて止める。\n0.1秒待つ。\n回数を-1にする。\n0.1秒待つ。\n回数を0にする。'}]);
+    const motion=await run('【現在】（回数）が0以上のあいだ、自分は右へ1秒に60歩の速さで動き続ける。',[{id:'motion-cancel',targetId:'sprite-1',event:'click',source:'ほかの実行をすべて止める。\n0.1秒待つ。\n回数を-1にする。\n0.1秒待つ。\n回数を0にする。'}]);
     async function state(expected){const until=performance.now()+2000;while(performance.now()<until){if([...motion.q.continuous.values()].some(c=>c.state===expected))return;await delay(5);}throw Error('Missing continuous state '+expected);}
     await state('ACTIVE');motion.q.spawnForRuntime('sprite-1','click',{});await state('CANCELLED_UNTIL_FALSE');await state('INACTIVE');await state('ACTIVE');motion.q.stop();if(motion.errors.length)throw Error(motion.errors.join(','));
     // A continuous predicate may itself call an offline extension; Stop must
     // advance motion while its extension session is still alive.
-    const p2=A.makeEmptyProject();p2.scripts=[{id:'extension-motion',targetId:'sprite-1',event:'start',source:'拡張計算「demo.offline」「double」（1）が0以上のあいだ、自分は画面の右へ1秒に60歩の速さで動き続ける。'}];const c2=A.compileProject(p2);if(c2.errors.length)throw Error(JSON.stringify(c2.errors));const errors=[],q2=new A.EventScheduler(p2,c2,new A.RuntimeModel(p2,{}),{runtimeError:(_,e)=>errors.push(e.message)});q2.start();await delay(25);q2.stop();if(errors.length)throw Error(errors.join(','));
+    const p2=A.makeEmptyProject();p2.scripts=[{id:'extension-motion',targetId:'sprite-1',event:'start',source:'拡張計算「demo.offline」「double」（1）が0以上のあいだ、自分は右へ1秒に60歩の速さで動き続ける。'}];const c2=A.compileProject(p2);if(c2.errors.length)throw Error(JSON.stringify(c2.errors));const errors=[],q2=new A.EventScheduler(p2,c2,new A.RuntimeModel(p2,{}),{runtimeError:(_,e)=>errors.push(e.message)});q2.start();await delay(25);q2.stop();if(errors.length)throw Error(errors.join(','));
     return{overStandard,responsive,stopped:!second.running&&second.tasks.size===0,standardRejected};
   });
   await check('EXTENSION-EVENT-LANGUAGE',async()=>{

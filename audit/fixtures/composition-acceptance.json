@@ -7,7 +7,7 @@
     "planSha256": "27673006b29ec3732fcab19b17c200db7b80146c8b794930a6151f82e7e4c405",
     "acquiredProductSha256": "d5da5c93a7486a35fe84b42a1013092c594da989e02da76ad9b978c4453fa302",
     "targetCommit": "3efed0eb69df3979cb83bc8b85611a42d335a538",
-    "extraction": "Unmodified I07-I12 rows supplied by the parent; include I10 extra definitions. Expectations precede acceptance."
+    "extraction": "I07-I12 rows supplied by the parent, with I10 extra definitions. When a language contract stops reading a form a row uses, the row is rewritten to the current canonical form from LANGUAGE.md alone, keeping its intent and expectation. Expectations precede acceptance."
   },
   "drafts": [
     {
@@ -94,9 +94,9 @@
       "id": "I12",
       "intent": "あかりのコピーを3体作る。コピーは20歩だけ右へ進み、1秒後にコピーだけ消える。元のあかりは残る。",
       "expected": "最大3体のコピー、各+20歩。1秒後にコピー0、元のあかり1体。コピーだけのできごとが走り、保存作品にコピーを持ち込まない。",
-      "mainFirstDraft": "作品を動かしたとき、あかりは、\n  自分のコピーを3体作る。\nあかりのコピーが作られたとき、\n  画面の右へ20歩動いて、1秒待つ。\n  このコピーだけを消す。",
+      "mainFirstDraft": "作品を動かしたとき、あかりは、\n  自分のコピーを3体作る。\nあかりのコピーが作られたとき、\n  いまのばしょから、右へ20歩動いて、1秒待つ。\n  このコピーだけを消す。",
       "extra": null,
-      "draftSha256": "41b121c5b7a9f3d5218a58ef36d262edbc1fe3e8e31b5a7ccd2bda2b24c25ef5",
+      "draftSha256": "4012da7781650cb52a628b76613c2de53bf9771154de4a26ae9dde0e019dcedb",
       "writtenBeforeVisibleLaunch": true,
       "reviewBeforeAcceptance": {
         "grammar": "代理評価者（AI）の国語的自己点検。主語/述語、助詞、量/時機/順序/範囲を意図に対応。製品が受理するかは未確認。",

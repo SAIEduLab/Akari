@@ -24,7 +24,8 @@ assert.notEqual(currentRelease,priorRelease);
 const priorSource=source.replace(producerPattern,(_all,a,_value,b)=>a+priorRelease+b);
 assert.notEqual(priorSource,source,'prior producer fixture must be a different product build');
 const api=loadApi(source),priorApi=loadApi(priorSource),plain=x=>JSON.parse(JSON.stringify(x));
-const contracts={languageContractId:3,runtimeContractId:3,programFormatVersion:3,projectFormatVersion:4};
+// The contract numbers are the release record's (features.json), not copies in this test.
+const contracts=JSON.parse(fs.readFileSync('audit/manifests/features.json','utf8')).EXECUTABLE_CONTRACT;
 // Incompatible contract values: the previous number, the current number as text, and null.
 const incompatible=current=>[current-1,String(current),null];
 const autosaveDatabase='akari-workspace-f'+contracts.projectFormatVersion;

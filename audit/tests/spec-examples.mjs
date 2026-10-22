@@ -43,10 +43,10 @@ const negatives=[
   // The derived product is load-bearing: the standard product rejects the extension examples.
   ['extension-context-detected','rejected:EXTENSIONS.md:',[extensionDocument],[{...extensionDocument,context:'standard'}]],
   // 名人 examples are read as 名人 scripts; a 名人 text that the check stops is a failed example, one it reads is a failed rejected example.
-  ['meijin-example-rejected-detected','rejected:NEGATIVE.md:2',doc(fence('ねこは右へ10歩動く。','meijin')),doc(fence('ねこは右へ10歩動く。\nねこはゆっくり前へ10歩進む。','meijin'))],
-  ['meijin-rejected-example-accepted-detected','accepted:NEGATIVE.md:2',doc(fence('ねこはゆっくり前へ10歩進む。','meijin-rejected')),doc(fence('ねこは右へ10歩動く。','meijin-rejected'))],
-  ['meijin-rejected-unit-masking-detected','accepted:NEGATIVE.md:2:ねこは右へ10歩動く。',doc(fence('ねこはゆっくり前へ10歩進む。\nねこは犬の近くへ行く。','meijin-rejected')),
-    doc(fence('ねこはゆっくり前へ10歩進む。\nねこは右へ10歩動く。','meijin-rejected'))],
+  ['meijin-example-rejected-detected','rejected:NEGATIVE.md:2',doc(fence('ねこは、いまのばしょから、右へ10歩動く。','meijin')),doc(fence('ねこは、いまのばしょから、右へ10歩動く。\nねこはゆっくり前へ10歩進む。','meijin'))],
+  ['meijin-rejected-example-accepted-detected','accepted:NEGATIVE.md:2',doc(fence('ねこはゆっくり前へ10歩進む。','meijin-rejected')),doc(fence('ねこは、いまのばしょから、右へ10歩動く。','meijin-rejected'))],
+  ['meijin-rejected-unit-masking-detected','accepted:NEGATIVE.md:2:ねこは、いまのばしょから、右へ10歩動く。',doc(fence('ねこはゆっくり前へ10歩進む。\nねこは犬の近くへ行く。','meijin-rejected')),
+    doc(fence('ねこはゆっくり前へ10歩進む。\nねこは、いまのばしょから、右へ10歩動く。','meijin-rejected'))],
 ].map(([id,expected,control,mutated])=>{
   const hit=failures=>failures.find(failure=>failure.startsWith(expected));
   const found=hit(failuresOf(mutated));

@@ -211,7 +211,7 @@ export async function fileResult(api, c) {
   const problems = [];
   if (c.action === 'open-declared') {
     // A work with text costumes only: opening it needs no image decoding.
-    let text = api.serializeProject(buildProject(api, { parts: [{ name: 'ねこ' }], scripts: [{ owner: 'ねこ', source: 'ねこは右へ10歩動く。' }] }, { saved: true }).project);
+    let text = api.serializeProject(buildProject(api, { parts: [{ name: 'ねこ' }], scripts: [{ owner: 'ねこ', source: 'ねこはいまのばしょから、右へ10歩動く。' }] }, { saved: true }).project);
     // The untouched file must open, so a refusal below comes from the declared number alone.
     try { await api.parseProjectFile(text); } catch (error) { return ['the control file does not open: ' + error.code]; }
     // A declared number rewrites the data marker and the numbers the file holds; any other key cannot be declared here.

@@ -21,6 +21,10 @@ const make=(name,n)=>({
   'missing-tone-frequency':'1秒、'.repeat(n)+'鳴らす',
   'duplicate-input-value':'1を'.repeat(n)+'「値」に入れる',
   'long-valid':Array(n).fill('何もしない').join('\n'),
+  // The 1.5.0 move sentences (LANGUAGE.md 動きの文); the 1.4.0 forms above stay as inputs that must be refused quickly.
+  'duplicate-steps':'右へ1歩、'.repeat(n)+'動く',
+  'duplicate-move-time':'1秒かけて、'.repeat(n)+'画面の左下のはしから、右へ1歩、上へ2歩のばしょへ行く',
+  'missing-move-destination':'1秒かけて、'.repeat(n)+'行く',
 })[name];
 if(process.argv[2]==='--worker') {
   const [name,count]=process.argv.slice(3), source=make(name,Number(count));
@@ -40,7 +44,8 @@ if(process.argv[2]==='--worker') {
     return JSON.parse(r.stdout);
   };
   for(const name of ['unclosed-string','unclosed-name','unclosed-parens','duplicate-particles','duplicate-time','duplicate-coordinates','long-valid',
-    'missing-slide-destination','missing-slide-duration','comparison-late-failure','comparison-missing-marker','missing-tone-frequency','duplicate-input-value'])
+    'missing-slide-destination','missing-slide-duration','comparison-late-failure','comparison-missing-marker','missing-tone-frequency','duplicate-input-value',
+    'duplicate-steps','duplicate-move-time','missing-move-destination'])
     for(const n of [1000,4000,12000]) {
       const row=measure(name,n);assert.equal(row.accepted,name==='long-valid');results.push(row);
     }

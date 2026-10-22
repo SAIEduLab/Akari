@@ -24,7 +24,9 @@ async function prepare(p,{source=triggerSources.plain,extra=[],target='sprite-1'
  await p.locator('#fileInput').setInputFiles({name:'trigger03.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await p.waitForFunction(name=>Akari.app.project.name===name,name);await p.locator('#uiLevel').selectOption('basic');await p.locator('#objectSelect').selectOption(target);await p.locator('#eventSelect').selectOption(event);if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorMode'+mode).click();actions=[];
 }
 async function open(p,index=null){
- if(index!==null)await click(p,p.locator('#blockEditor .blockui-script > .blockui-node-head > .blockui-node-title').nth(index),'select motion group '+index);
+ // The work bench hides a motion group's title; choosing a block of the group selects the group.
+ if(index!==null){const block=p.locator('#blockEditor .blockui-script').nth(index).locator(':scope > .blockui-node-content > .blockui-body > .blockui-statement').first();
+  await block.click({position:{x:12,y:12}});actions.push({kind:'click',target:'select motion group '+index});}
  await click(p,p.locator('#sourceHeadingBtn'),'いつ動く？ entry');assert.equal(await role(p,'event').count(),1);assert.equal(await p.locator('#blockEditor .blockui-trigger-details[open]').count(),0);
 }
 async function change(p,event){await choose(p,role(p,'event'),event,'いつ動く？');await click(p,p.locator('#blockEditor [data-blockui-action="heading-commit"]:visible'),'この動きのきっかけを変える');await settle(p);assert.equal((await state(p)).pending,null);}

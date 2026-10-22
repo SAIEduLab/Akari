@@ -21,30 +21,37 @@ async function runProductContractTests() {
         }
         if (!rejected) throw new Error('不正データが受理されました');
       };
+    // The contract numbers come from features.json (AUDIT_EXECUTABLE_CONTRACT); the data markers carry the
+    // project format number, and files of the format before and after are refused with F502 (LANGUAGE.md
+    // 保存・実行データの契約と検証).
+    const marker = (n) => 'AKARI-PROJECT-F' + n + '-DATA-';
     await test('FORMAT-EXECUTABLE-CONTRACT', async () => {
       const expected = {
-        languageContractId: 3,
-        runtimeContractId: 3,
-        programFormatVersion: 3,
-        projectFormatVersion: 4,
+        languageContractId: AUDIT_EXECUTABLE_CONTRACT.languageContractId,
+        runtimeContractId: AUDIT_EXECUTABLE_CONTRACT.runtimeContractId,
+        programFormatVersion: AUDIT_EXECUTABLE_CONTRACT.programFormatVersion,
+        projectFormatVersion: AUDIT_EXECUTABLE_CONTRACT.projectFormatVersion,
       };
       if (JSON.stringify(AKARI_RUNTIME.EXECUTABLE_CONTRACT) !== JSON.stringify(expected))
         throw new Error('実行データの契約が一致しません');
-      const p = makeRegressionProject(),
+      const format = expected.projectFormatVersion,
+        p = makeRegressionProject(),
         text = serializeProject(p, new AssetStore());
       if (
         !text.startsWith('# あかり ' + PRODUCT_RELEASE + ' の作品') ||
-        !text.includes('<!-- AKARI-PROJECT-F4-DATA-BEGIN -->') ||
-        !text.includes('<!-- AKARI-PROJECT-F4-DATA-END -->')
+        !text.includes('<!-- ' + marker(format) + 'BEGIN -->') ||
+        !text.includes('<!-- ' + marker(format) + 'END -->')
       )
         throw new Error('作品の版またはマーカーが一致しません');
       const loaded = await parseProjectFile(text);
       if (JSON.stringify(loaded.project) !== JSON.stringify(p))
         throw new Error('作品の往復で変化しました');
-      const olderFormat = text.replaceAll('AKARI-PROJECT-F4-DATA-', 'AKARI-PROJECT-F3-DATA-');
-      const olderError = await parseProjectFile(olderFormat).then(() => null, (error) => error);
-      if (olderError?.code !== 'F502' || olderError.message !== '前の あかりで ほぞんした 作品なので、この あかりでは 開けないよ。')
-        throw new Error('前の形式の作品を F502 で ことわりませんでした');
+      for (const [other, words] of [[format - 1, '前の'], [format + 1, 'あたらしい']]) {
+        const otherFormat = text.replaceAll(marker(format), marker(other));
+        const otherError = await parseProjectFile(otherFormat).then(() => null, (error) => error);
+        if (otherError?.code !== 'F502' || otherError.message !== words + ' あかりで ほぞんした 作品なので、この あかりでは 開けないよ。その 作品を 作った ときの あかりで 開いてね。')
+          throw new Error('作品形式' + other + 'の作品を F502 で ことわりませんでした');
+      }
       const otherProducer = text.replaceAll(PRODUCT_RELEASE, '7.8.9');
       const imported = await parseProjectFile(otherProducer);
       if (imported.project.appVersion !== '7.8.9' || imported.diagnostics.length)
@@ -56,7 +63,8 @@ async function runProductContractTests() {
     });
     await test('RELEASE-PROJECT-MARKER-BOUNDARIES', async () => {
       const p = makeRegressionProject();
-      p.scripts = [{targetId:'stage',event:'start',source:'※ <!-- AKARI-PROJECT-F4-DATA-BEGIN -->\n※ ```json\n※ <!-- AKARI-PROJECT-F4-DATA-END -->\nもし'}];
+      const format = AUDIT_EXECUTABLE_CONTRACT.projectFormatVersion;
+      p.scripts = [{targetId:'stage',event:'start',source:'※ <!-- ' + marker(format) + 'BEGIN -->\n※ ```json\n※ <!-- ' + marker(format) + 'END -->\nもし'}];
       const text = serializeProject(p, new AssetStore());
       if (JSON.stringify((await parseProjectFile(text)).project)!==JSON.stringify(p)) throw Error('本文境界が変化しました');
       await reject(() => parseProjectFile(text.slice(0,-40)));
@@ -97,8 +105,8 @@ async function runProductContractTests() {
         !s ||
         s.type !== 'sprite' ||
         s.name !== 'あかり' ||
-        s.x !== 230 ||
-        s.y !== 110 ||
+        s.x !== 320 ||
+        s.y !== 200 ||
         s.w !== 180 ||
         s.h !== 180
       )
