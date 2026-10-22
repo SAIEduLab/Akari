@@ -116,7 +116,7 @@ async function exitAndResume(p,id){
  return {record:{id,before,retained,after,remainingGuards},downloaded};
 }
 async function deny(p,route){
- const ids={new:'newBtn',sample:'sampleBtn',open:'openBtn',export:'exportBtn',redo:'redoBtn',dialog:'openConfirmProceed'};
+ const ids={new:'newBtn',sample:'sampleBtn',open:'openBtn',export:'exportBtn',redo:'redoBtn',dialog:'loseConfirmProceed'};
  if(route==='sample')await p.locator('#sampleBtn').click({force:true});
  else if(route==='mouse-menu')await p.locator('#entryProjectMenu > summary').click({force:true});
  else if(route==='keyboard-enter'||route==='keyboard-space')await p.locator('#newBtn').evaluate((el,route)=>{const event=new KeyboardEvent('keydown',{key:route==='keyboard-enter'?'Enter':' ',bubbles:true,cancelable:true});el.dispatchEvent(event);if(!event.defaultPrevented)throw Error('Forbidden keyboard activation was not canceled');el.click();},route);
@@ -201,10 +201,10 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
   return{unchangedResume:old,changed,asked,cancelledRestart:await read(p)};});
  await row(browser,browserIds[7],async p=>{const downloaded=await reach(p,'verify-save');const before=await read(p);
   await p.locator('#tutorialSavedFile').dispatchEvent('cancel');assert.equal((await read(p)).step,'verify-save');
-  await p.locator('#tutorialSavedFile').setInputFiles({name:'broken.akari.md',mimeType:'text/plain',buffer:Buffer.from('not a project')});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('ほぞんを たしかめた けっか'));
+  await p.locator('#tutorialSavedFile').setInputFiles({name:'broken.akari.md',mimeType:'text/plain',buffer:Buffer.from('not a project')});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('ほぞんを たしかめられなかったよ'));
   assert.equal((await read(p)).step,'verify-save');assert.deepEqual(content(await read(p)),content(before));
   const different=await p.evaluate(()=>{const project=Akari.makeEmptyProject();project.name='違う作品';return Akari.serializeProject(project,Akari.makeDefaultAssetStore());});
-  await p.locator('#tutorialSavedFile').setInputFiles({name:'same-name.akari.md',mimeType:'text/plain',buffer:Buffer.from(different)});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('中身が ちがいます'));
+  await p.locator('#tutorialSavedFile').setInputFiles({name:'same-name.akari.md',mimeType:'text/plain',buffer:Buffer.from(different)});await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('中身が ちがうよ'));
   const refused=await read(p);assert.equal(refused.step,'verify-save');assert.deepEqual(content(refused),content(before));
   await p.locator('#tutorialSavedFile').setInputFiles(downloaded);await p.waitForFunction(()=>!document.body.dataset.tutorialStep);assert.equal((await read(p)).project,before.project);
   return{before,refused,retried:await read(p),cancelDidNotComplete:true,parseFailureDidNotComplete:true,mismatchDidNotComplete:true};});
@@ -230,16 +230,18 @@ await withBrowser(chrome,async browser=>{report.browser=browser.version();
  });
  await row(browser,browserIds[9],async p=>{
   await reach(p,'speech-text');const r=await roles(p),input=field(p,r.text),before=await read(p);
-  await input.fill('違う言葉');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
-  await input.fill('つかまった！');await input.dispatchEvent('compositionstart');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
+  // F-04: the child's own words go on; empty text stays on the step with 「ことばを 入れてね」.
+  await input.fill('');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');assert.match(await p.locator('#tutorialText').innerText(),/ことばを 入れてね/);
+  await input.fill('ぼくの ことば');await input.dispatchEvent('compositionstart');await input.press('Enter');assert.equal((await read(p)).step,'speech-text');
   await input.dispatchEvent('compositionend');await input.press('Enter');await waitStep(p,'add-escape');
+  assert.equal(await p.evaluate(()=>Akari.app.editorState.main.blockView.bodies.body[1]?.inputs?.value?.fields?.value),'ぼくの ことば','the work keeps the child\'s own words');
   const wrong=await read(p),destination=await roles(p);
   await p.locator('#blockEditor [data-blockui-action="body-insert"][data-parent-id="'+destination.root+'"][data-blockui-body="body"][data-insert-index="2"]').first().click();
   await p.locator('#blockEditor [data-lesson-block="escape"]').dblclick();await waitStep(p,'run-original');
   assert.equal(await p.evaluate(()=>Akari.app.editorState.main.blockView.bodies.body.filter(n=>n.schemaId==='MotionCommand:GOTO').length),1);
   await p.locator('#tutorialExit').focus();await p.keyboard.press('Tab');assert.equal(await p.evaluate(()=>document.activeElement.dataset.tutorialBlocked!=='true'&&document.activeElement.getClientRects().length>0),true);
   const pending=await read(p);await p.locator('#tutorialExit').click();assert.equal((await read(p)).step,null);
-  return{before,wrong,pending,afterExit:await read(p),wrongTextDidNotAdvance:true,unconfirmedIMEDidNotAdvance:true,doubleClickInsertedOnce:true};
+  return{before,wrong,pending,afterExit:await read(p),emptyTextDidNotAdvance:true,ownWordsKept:true,unconfirmedIMEDidNotAdvance:true,doubleClickInsertedOnce:true};
  });
  await row(browser,browserIds[10],async p=>{
   await reach(p,'save-work');const before=await read(p);await p.evaluate(()=>{window.originalCreateURL=URL.createObjectURL;URL.createObjectURL=()=>{throw Error('Injected download preparation failure');};});

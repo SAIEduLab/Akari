@@ -21,12 +21,13 @@ const state=p=>p.evaluate(()=>{const s=Akari.app.editorState;return{project:JSON
 async function edit(p,text='「編集した作品」と言う。'){await p.locator('#codeEditor').fill(text);await p.waitForFunction(t=>Akari.app.editorState.main.sourceText===t,text);await p.waitForTimeout(350);}
 async function save(p){const wait=p.waitForEvent('download');await p.locator('#saveBtn').click();const d=await wait;await d.saveAs(path.join(out,'saved-'+report.results.length+'.akari.md'));await p.waitForFunction(()=>!Akari.app.editorState.dirty);}
 async function chooser(p){const wait=p.waitForEvent('filechooser');await p.locator('#openBtn').click();return wait;}
-async function acceptedChooser(p){await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();const wait=p.waitForEvent('filechooser');await p.locator('#openConfirmProceed').click();return wait;}
+async function acceptedChooser(p){await p.locator('#openBtn').click();await p.locator('#loseConfirmModal.show').waitFor();const wait=p.waitForEvent('filechooser');await p.locator('#loseConfirmProceed').click();return wait;}
 async function run(id,fn){try{const evidence=await fn();report.results.push({id,status:'PASS',evidence});console.log(id+': PASS');}catch(e){report.results.push({id,status:'FAIL',error:e.stack,evidence:e.evidence||null});console.error(id+': FAIL '+e.message);}fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));}
 async function withPage(b,fn,file=product,width=1180){const p=await page(b,file,width);try{return await fn(p);}finally{await p.context().close();}}
 // The product asks about unsaved work in its own dialog. Answer it by pressing the visible
 // 「やめる」 button and report the question that was shown.
-const loseQuestion='まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。';
+// It names the work it is about (I5a).
+const loseQuestion='「検証用の作品」には まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。';
 async function askedAndCancelled(p,trigger){await trigger();await p.locator('#loseConfirmModal.show').waitFor();const asked=[await p.locator('#loseConfirmMessage').innerText()];assert.equal(await p.locator('#loseConfirmCancel').innerText(),'やめる');assert.equal(await p.locator('#loseConfirmProceed').innerText(),'すてて つづける');await p.locator('#loseConfirmCancel').click();await p.locator('#loseConfirmModal').waitFor({state:'hidden'});return asked;}
 async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const AC=window.AudioContext;window.AudioContext=class extends AC{createOscillator(){const o=super.createOscillator(),start=o.start;o.start=(...a)=>{__tones.push({at:performance.now(),frequency:o.frequency.value});return start.apply(o,a);};return o;}};});}
 (async()=>{
@@ -139,13 +140,13 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
     const c=await b.newContext({offline:true});await c.addInitScript(()=>{indexedDB.open=()=>{throw new Error('injected unavailable storage');};Storage.prototype.setItem=()=>{throw new Error('injected storage failure');};});
     const p=await c.newPage();p.on('pageerror',e=>report.pageErrors.push(e.message));try{
       await p.goto(pathToFileURL(product).href);await install(p);await edit(p);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('のこせなかったよ'));
-      await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();return{faultInjection:'IndexedDB and localStorage unavailable',unsavedStillProtected:true};
+      await p.locator('#openBtn').click();await p.locator('#loseConfirmModal.show').waitFor();return{faultInjection:'IndexedDB and localStorage unavailable',unsavedStillProtected:true};
     }finally{await c.close();}
   });
   await run('OPEN-RECOVERY-DIRTY-PROTECTED',()=>withPage(b,async p=>{
     await install(p);await edit(p,'「復旧の未保存」と言う。');await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='このパソコンに のこしたよ');
-    await p.reload();await p.locator('#recoveryRestore').click();await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();
-    await p.locator('#openConfirmCancel').click();assert.ok(await p.evaluate(()=>Akari.app.project.scripts.some(s=>s.source.includes('復旧の未保存'))));return{restoredUnsavedProtected:true};
+    await p.reload();await p.locator('#recoveryRestore').click();await p.locator('#openBtn').click();await p.locator('#loseConfirmModal.show').waitFor();
+    await p.locator('#loseConfirmCancel').click();assert.ok(await p.evaluate(()=>Akari.app.project.scripts.some(s=>s.source.includes('復旧の未保存'))));return{restoredUnsavedProtected:true};
   }));
   await run('OPEN-RECOVERY-SAVED-DRAFT-CLEAN',async()=>{
     const variants=[];
@@ -168,7 +169,7 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
       }else{await p.locator('#procBtn').click();await p.locator('#callableName').fill('保存後の手順');await p.locator('#procClose').click();}
       const before=await content();const asked=await askedAndCancelled(p,()=>p.locator('#newBtn').click());const afterNewCancel=await content();
       assert.deepEqual(asked,[loseQuestion]);assert.equal(nativeDialogs.length,0);assert.deepEqual(afterNewCancel,before);
-      await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();await p.locator('#openConfirmCancel').click();
+      await p.locator('#openBtn').click();await p.locator('#loseConfirmModal.show').waitFor();await p.locator('#loseConfirmCancel').click();
       const afterOpenCancel=await content();assert.deepEqual(afterOpenCancel,before);
       return {cleanDialogs,openedNew:true,editedDialogs:asked.length,before,afterNewCancel,afterOpenCancel};
     });
@@ -179,10 +180,10 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
       await save(p);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='このパソコンに のこしたよ');
       const savedText=fs.readFileSync(path.join(out,'saved-'+report.results.length+'.akari.md'),'utf8');
       await p.reload();await p.locator('#recoveryRestore').click();let pickers=0;p.on('filechooser',()=>pickers++);await p.locator('#openBtn').click();
-      const observed={kind,savedUnchangedConfirmation:await p.locator('#openConfirmModal').isVisible(),pickers};
-      if(observed.savedUnchangedConfirmation)await p.locator('#openConfirmCancel').click();else await p.locator('#fileInput').dispatchEvent('cancel');
+      const observed={kind,savedUnchangedConfirmation:await p.locator('#loseConfirmModal.show').isVisible(),pickers};
+      if(observed.savedUnchangedConfirmation)await p.locator('#loseConfirmCancel').click();else await p.locator('#fileInput').dispatchEvent('cancel');
       if(kind==='blocks'){
-        await p.locator('#editorCancel').click();await p.locator('#openBtn').click();observed.cancelledSavedPendingConfirmation=await p.locator('#openConfirmModal').isVisible();
+        await p.locator('#editorCancel').click();await p.locator('#openBtn').click();observed.cancelledSavedPendingConfirmation=await p.locator('#loseConfirmModal.show').isVisible();
       }
       observed.newProject=await newDraftProtection(savedText,kind);
       variants.push(observed);
@@ -195,10 +196,10 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
     return{variants,savedCallable};
   });
 
-  await run('OPEN-CLEAN-AUTOSAVE-DIRECT',()=>withPage(b,async p=>{await install(p);await save(p);await p.waitForFunction(()=>document.querySelector('#autosaveState')?.textContent==='このパソコンに のこしたよ',null,{timeout:10000}).catch(()=>{});assert.equal(await p.locator('#autosaveState').innerText(),'このパソコンに のこしたよ');await chooser(p);assert.equal(await p.locator('#openConfirmModal').isVisible(),false);await p.locator('#fileInput').dispatchEvent('cancel');return{direct:true,autosavePresent:true};}));
-  await run('OPEN-DIRTY-CANCEL-STATE-KEYBOARD',()=>withPage(b,async p=>{await install(p);await edit(p);const before=await state(p);let pickers=0;p.on('filechooser',()=>pickers++);await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();assert.equal(pickers,0);assert.doesNotMatch(await p.locator('#openConfirmModal').innerText(),/ファイル|はい/);await p.screenshot({path:path.join(out,'open-unsaved.png')});await p.keyboard.press('Escape');await p.locator('#openConfirmModal').waitFor({state:'hidden'});assert.deepEqual(await state(p),before);assert.equal(await p.locator('#openBtn').evaluate(n=>document.activeElement===n),true);return{before,after:await state(p),pickers};}));
-  await run('OPEN-APPROVAL-PICKER-CANCEL-REUSE',()=>withPage(b,async p=>{await install(p);await edit(p);const before=await state(p);let dialogs=0;p.on('dialog',d=>{dialogs++;return d.dismiss();});await acceptedChooser(p);await p.locator('#fileInput').dispatchEvent('cancel');assert.deepEqual(await state(p),before);await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();await p.locator('#openConfirmCancel').click();assert.equal(dialogs,0);return{currentRetained:true,confirmationAgain:true,before,after:await state(p)};}));
-  await run('OPEN-SAVE-EDIT-UNDO-REDO',()=>withPage(b,async p=>{await install(p);await edit(p,'「保存した作品」と言う。');await save(p);await chooser(p);await p.locator('#fileInput').dispatchEvent('cancel');await edit(p,'「保存後の編集」と言う。');await p.locator('#undoBtn').click();await chooser(p);assert.equal(await p.locator('#openConfirmModal').isVisible(),false);await p.locator('#fileInput').dispatchEvent('cancel');await p.locator('#redoBtn').click();await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();await p.locator('#openConfirmCancel').click();return{saveClean:true,undoClean:true,redoDirty:true};}));
+  await run('OPEN-CLEAN-AUTOSAVE-DIRECT',()=>withPage(b,async p=>{await install(p);await save(p);await p.waitForFunction(()=>document.querySelector('#autosaveState')?.textContent==='このパソコンに のこしたよ',null,{timeout:10000}).catch(()=>{});assert.equal(await p.locator('#autosaveState').innerText(),'このパソコンに のこしたよ');await chooser(p);assert.equal(await p.locator('#loseConfirmModal.show').isVisible(),false);await p.locator('#fileInput').dispatchEvent('cancel');return{direct:true,autosavePresent:true};}));
+  await run('OPEN-DIRTY-CANCEL-STATE-KEYBOARD',()=>withPage(b,async p=>{await install(p);await edit(p);const before=await state(p);let pickers=0;p.on('filechooser',()=>pickers++);await p.locator('#openBtn').click();await p.locator('#loseConfirmModal.show').waitFor();assert.equal(pickers,0);assert.doesNotMatch(await p.locator('#loseConfirmModal.show').innerText(),/ファイル|はい/);await p.screenshot({path:path.join(out,'open-unsaved.png')});await p.keyboard.press('Escape');await p.locator('#loseConfirmModal.show').waitFor({state:'hidden'});assert.deepEqual(await state(p),before);assert.equal(await p.locator('#openBtn').evaluate(n=>document.activeElement===n),true);return{before,after:await state(p),pickers};}));
+  await run('OPEN-APPROVAL-PICKER-CANCEL-REUSE',()=>withPage(b,async p=>{await install(p);await edit(p);const before=await state(p);let dialogs=0;p.on('dialog',d=>{dialogs++;return d.dismiss();});await acceptedChooser(p);await p.locator('#fileInput').dispatchEvent('cancel');assert.deepEqual(await state(p),before);await p.locator('#openBtn').click();await p.locator('#loseConfirmModal.show').waitFor();await p.locator('#loseConfirmCancel').click();assert.equal(dialogs,0);return{currentRetained:true,confirmationAgain:true,before,after:await state(p)};}));
+  await run('OPEN-SAVE-EDIT-UNDO-REDO',()=>withPage(b,async p=>{await install(p);await edit(p,'「保存した作品」と言う。');await save(p);await chooser(p);await p.locator('#fileInput').dispatchEvent('cancel');await edit(p,'「保存後の編集」と言う。');await p.locator('#undoBtn').click();await chooser(p);assert.equal(await p.locator('#loseConfirmModal.show').isVisible(),false);await p.locator('#fileInput').dispatchEvent('cancel');await p.locator('#redoBtn').click();await p.locator('#openBtn').click();await p.locator('#loseConfirmModal.show').waitFor();await p.locator('#loseConfirmCancel').click();return{saveClean:true,undoClean:true,redoDirty:true};}));
   await run('OPEN-APPROVED-CORRUPT-RETAINED',async()=>{
     const incoming=make('「一つ目」と言う。');incoming.name='入れ替える作品';incoming.scripts[0].id='incoming-first';
     incoming.scripts.push({id:'incoming-second',targetId:'stage',event:'start',source:'「二つ目」と言う。'});
@@ -237,7 +238,7 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
       // A refused 開く stays on the screen until とじる (1.5.0); closing it leaves the work and its autosave as they were.
       await p.locator('#openRefusalModal.show').waitFor();assert.equal(await p.locator('#openRefusalTitle').textContent(),'この ファイルは 開けなかったよ');await p.locator('#openRefusalClose').click();await p.locator('#openRefusalModal').waitFor({state:'hidden'});
       assert.deepEqual(await state(p),before);
-      await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();
+      await p.locator('#openBtn').click();await p.locator('#loseConfirmModal.show').waitFor();
       variants.push({kind,before,after,autosaveBefore,autosaveAfter,faultTriggered,confirmationAgain:true,dialogs});
     });
     // A valid selected second body must still load, including its unfinished text.
@@ -253,7 +254,7 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
   await run('OPEN-APPROVED-SUCCESS-SAME-SELECTION',()=>withPage(b,async p=>{await install(p);await edit(p);let dialogs=0;p.on('dialog',d=>{dialogs++;return d.dismiss();});const text=api.serializeProject(make('「読込み後」と言う。'),api.makeDefaultAssetStore()),file={name:'same.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)};let f=await acceptedChooser(p);await f.setFiles(file);await p.waitForFunction(()=>Akari.app.project.scripts[0].source==='「読込み後」と言う。');assert.equal(dialogs,0);f=await chooser(p);await f.setFiles(file);await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');return{oneConfirmation:true,sameSelection:true,dialogs};}));
   await run('OPEN-ALTERNATE-ROUTE-PROTECTED',()=>withPage(b,async p=>{await install(p);await edit(p);const before=await state(p),native=[];p.on('dialog',d=>{native.push(d.message());return d.dismiss();});const dialogs=await askedAndCancelled(p,()=>p.locator('#fileInput').setInputFiles({name:'other.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(make(marker),api.makeDefaultAssetStore()))}));assert.deepEqual(await state(p),before);assert.equal(dialogs.length,1);assert.equal(native.length,0);return{dialogs,retained:true,before,after:await state(p)};}));
   await run('OPEN-CHANGED-AFTER-APPROVAL',()=>withPage(b,async p=>{await install(p);await edit(p);const f=await acceptedChooser(p);await p.locator('#codeEditor').evaluate(n=>{n.value='「承諾後の変更」と言う。';n.dispatchEvent(new Event('input',{bubbles:true}));});await p.waitForTimeout(350);const before=await state(p),native=[];p.on('dialog',d=>{native.push(d.message());return d.dismiss();});const dialogs=await askedAndCancelled(p,()=>f.setFiles({name:'other.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(make(marker),api.makeDefaultAssetStore()))}));assert.deepEqual(await state(p),before);assert.equal(dialogs.length,1);assert.equal(native.length,0);return{changedStateProtected:true,before,after:await state(p),dialogs};}));
-  await run('OPEN-UNFINISHED-CODE-AND-SAVED-DRAFT',()=>withPage(b,async p=>{await install(p);await p.locator('#codeEditor').fill('「書きかけ');await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();await p.locator('#openConfirmCancel').click();assert.equal(await p.locator('#codeEditor').inputValue(),'「書きかけ');await save(p);await chooser(p);assert.equal(await p.locator('#openConfirmModal').isVisible(),false);await p.locator('#fileInput').dispatchEvent('cancel');return{unfinishedProtected:true,savedUnchangedDirect:true};}));
+  await run('OPEN-UNFINISHED-CODE-AND-SAVED-DRAFT',()=>withPage(b,async p=>{await install(p);await p.locator('#codeEditor').fill('「書きかけ');await p.locator('#openBtn').click();await p.locator('#loseConfirmModal.show').waitFor();await p.locator('#loseConfirmCancel').click();assert.equal(await p.locator('#codeEditor').inputValue(),'「書きかけ');await save(p);await chooser(p);assert.equal(await p.locator('#loseConfirmModal.show').isVisible(),false);await p.locator('#fileInput').dispatchEvent('cancel');return{unfinishedProtected:true,savedUnchangedDirect:true};}));
  }finally{await b.close();}
 
  const blocked=await chromium.launch({executablePath:browserPath,headless:true,args:['--allow-file-access-from-files','--disable-background-networking','--autoplay-policy=document-user-activation-required']});
@@ -275,7 +276,7 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
       await p.goto(pathToFileURL(generate('activation-denied',tone)).href);await p.locator('#playerActivate').click();
       await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='ERROR');
       assert.equal(await p.locator('#playerActivation').isVisible(),false);assert.doesNotMatch(await p.locator('#playerOutput').innerText(),/冒頭/);
-      assert.match(await p.locator('#playerOutput').innerText(),/音をはじめられませんでした/);await p.locator('#playerOutput details summary').click();
+      assert.match(await p.locator('#playerOutput').innerText(),/音を 出せなかったよ/);await p.locator('#playerOutput details summary').click();
       assert.match(await p.locator('#playerOutput').innerText(),/R415/);return{faultInjection:'resume rejected after native user operation',safeStop:true,childMessage:true,details:true,errorCode:(await p.locator('#playerOutput details pre').innerText()).match(/^[A-Z]\d+/)?.[0]};
     }finally{await c.close();}
   });

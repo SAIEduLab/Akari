@@ -84,7 +84,7 @@ const S=page=>({
   // The level picker removes the levels the view does not offer (1.5.0: hidden, not disabled).
   level:()=>page.evaluate(()=>({chosen:document.querySelector('#uiLevel').value,shown:document.body.dataset.uiLevel,
     options:[...document.querySelectorAll('#uiLevel option')].filter(o=>!o.hidden).map(o=>o.textContent.trim()),others:[...document.querySelectorAll('#uiLevel option')].filter(o=>o.value!=='meijin'&&!o.disabled&&!o.hidden).map(o=>o.value)})),
-  openFile:async file=>{await page.setInputFiles('#fileInput',file);await page.waitForTimeout(300);for(const id of ['#openConfirmProceed','#loseConfirmProceed'])if(await page.locator(id).isVisible())await page.click(id);await page.waitForTimeout(500);},
+  openFile:async file=>{await page.setInputFiles('#fileInput',file);await page.waitForTimeout(300);for(const id of ['#loseConfirmProceed'])if(await page.locator(id).isVisible())await page.click(id);await page.waitForTimeout(500);},
   // The page is loaded again and the autosaved work is restored; seen() looks at the page before 「もどす」 is pressed.
   reload:async(seen=null)=>{await page.waitForTimeout(1500);await page.reload();await page.waitForFunction(()=>!!globalThis.Akari?.app);await page.locator('#recoveryRestore').waitFor({state:'visible'});const before=seen?await seen():null;await page.click('#recoveryRestore');await page.waitForTimeout(500);return before;},
   newWork:async()=>{await (await reveal(page.locator('#newBtn'))).click();await page.waitForTimeout(300);if(await page.locator('#loseConfirmProceed').isVisible())await page.click('#loseConfirmProceed');await page.waitForTimeout(500);},

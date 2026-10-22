@@ -107,7 +107,7 @@ function evidenceFor(id,e){
     }
     assert.deepEqual(e.validSecond,{selectedScriptId:'incoming-second',input:'「読込み途中'});
   }
-  if(['OPEN-ALTERNATE-ROUTE-PROTECTED','OPEN-CHANGED-AFTER-APPROVAL'].includes(id)){assert.deepEqual(e.dialogs,['まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。']);}
+  if(['OPEN-ALTERNATE-ROUTE-PROTECTED','OPEN-CHANGED-AFTER-APPROVAL'].includes(id)){assert.deepEqual(e.dialogs,['「検証用の作品」には まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。']);}
   if(id==='OPEN-RECOVERY-SAVED-DRAFT-CLEAN'){
     assert.deepEqual(e.variants.map(x=>x.kind),['code','blocks']);
     for(const variant of e.variants){assert.equal(variant.savedUnchangedConfirmation,false);assert.equal(variant.pickers,1);}

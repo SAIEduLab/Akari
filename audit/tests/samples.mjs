@@ -7,9 +7,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {currentProductFile} from '../lib/product-path.cjs';
-import productDialogs from '../lib/product-dialogs.cjs';
 import {pressStop} from '../lib/stop-press.cjs';
-const {answerProductConfirms}=productDialogs;
 import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {samplesFeature,sampleTestIds,sampleExpected,verifySamples} from '../lib/samples-contract.mjs';
@@ -43,7 +41,7 @@ const fingerprint=page=>page.evaluate(()=>{
  }
  return{project:JSON.stringify(Akari.app.project),editor,source:document.querySelector('#codeEditor').value};
 });
-async function picker(page){await page.locator('#sampleBtn').click();if(await page.locator('#openConfirmModal').isVisible())await page.locator('#openConfirmProceed').click();assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);}
+async function picker(page){await page.locator('#sampleBtn').click();if(await page.locator('#loseConfirmModal.show').isVisible())await page.locator('#loseConfirmProceed').click();assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);}
 async function open(page,id){await picker(page);await page.locator('#samplePicker [data-sample-id="'+id+'"]').click();await page.waitForFunction(name=>Akari.app.project.name===name,samplesFeature.names[samplesFeature.ids.indexOf(id)]);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),false);}
 const metadata=id=>A.sampleCatalog().find(x=>x.id===id);
 async function source(page){return page.evaluate(()=>Akari.app.editorState.main.sourceText);}
@@ -51,14 +49,16 @@ async function command(page,node,action){await U.nodeAction(node,action);}
 async function checkHistory(page,before){const after=await source(page);assert.notEqual(after,before);await page.locator('#undoBtn').click();assert.equal(await source(page),before);await page.locator('#redoBtn').click();assert.equal(await source(page),after);await page.locator('#undoBtn').click();return after;}
 try{await withBrowser(chrome,async browser=>{
  report.environment.browser=browser.version();assert.equal(browser.version(),browserEnvironment.version);assert.equal(report.environment.playwright,browserEnvironment.playwright);
- const test=(id,fn)=>row(id,()=>pageFor(browser,product,async page=>{page.setDefaultTimeout(10000);page.on('dialog',d=>d.accept());await answerProductConfirms(page,true);page.on('pageerror',e=>report.pageErrors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});await page.setViewportSize({width:1366,height:900});try{return await fn(page);}catch(e){await page.screenshot({path:path.join(dir,'failure-'+id+'.png')}).catch(()=>{});throw e;}}));
+ // The product asks one question before unsaved work is replaced (#loseConfirmModal). The steps answer it themselves:
+ // picker() goes on, and the checks about the question press やめる; no handler answers it for them.
+ const test=(id,fn)=>row(id,()=>pageFor(browser,product,async page=>{page.setDefaultTimeout(10000);page.on('dialog',d=>d.accept());page.on('pageerror',e=>report.pageErrors.push(e.message));page.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});await page.setViewportSize({width:1366,height:900});try{return await fn(page);}catch(e){await page.screenshot({path:path.join(dir,'failure-'+id+'.png')}).catch(()=>{});throw e;}}));
  await test('SAMPLES-CHOICE-CONFIRM',async page=>{
-  const original=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),false);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);assert.deepEqual(await fingerprint(page),original);await page.locator('#samplePickerClose').click();assert.deepEqual(await fingerprint(page),original);
+  const original=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#loseConfirmModal.show').isVisible(),false);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);assert.deepEqual(await fingerprint(page),original);await page.locator('#samplePickerClose').click();assert.deepEqual(await fingerprint(page),original);
   await page.locator('#sampleBtn').click();await page.keyboard.press('Escape');assert.deepEqual(await fingerprint(page),original);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),false);
   for(const level of ['basic','advanced'])for(const mode of ['code','blocks'])for(const id of samplesFeature.ids){await page.locator('#uiLevel').selectOption(level);await page.locator('#editorMode'+mode).click();await open(page,id);assert.equal(await page.locator('#uiLevel').inputValue(),level);assert.equal(await page.locator('#editorMode'+mode).getAttribute('aria-pressed'),'true');assert.equal(await page.locator('#objectSelect').inputValue(),metadata(id).targetId);assert.equal(await page.locator('#eventSelect').inputValue(),metadata(id).event);}
  });
  await test('SAMPLES-CANCEL-PENDING',async page=>{
-  await open(page,'flower');await page.locator('#uiLevel').selectOption('advanced');await page.locator('#editorModecode').click();await page.locator('#codeEditor').fill('たくどんは書きかけの');await page.waitForTimeout(400);const code=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),true);await page.locator('#openConfirmCancel').click();assert.deepEqual(await fingerprint(page),code);await page.locator('#sampleBtn').click();await page.keyboard.press('Escape');assert.deepEqual(await fingerprint(page),code);
+  await open(page,'flower');await page.locator('#uiLevel').selectOption('advanced');await page.locator('#editorModecode').click();await page.locator('#codeEditor').fill('たくどんは書きかけの');await page.waitForTimeout(400);const code=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#loseConfirmModal.show').isVisible(),true);await page.locator('#loseConfirmCancel').click();assert.deepEqual(await fingerprint(page),code);await page.locator('#sampleBtn').click();await page.keyboard.press('Escape');assert.deepEqual(await fingerprint(page),code);
   await open(page,'flower');await page.locator('#editorModeblocks').click();
   const number=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] input[data-blockui-field="value"]').first();
   const twoFrames=()=>page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
@@ -68,7 +68,7 @@ try{await withBrowser(chrome,async browser=>{
     return{scroll:{top:workspace.scrollTop,left:workspace.scrollLeft},cachedScroll:Akari.app.editorState.main.scrollState,
      workspace:workspace.getBoundingClientRect().toJSON(),outsideDiagnostic:{hidden:outside.hidden,text:outside.textContent,rect:outside.getBoundingClientRect().toJSON()},
      inlineDiagnostic:{text:inside.textContent,role:inside.getAttribute('role'),rect:inside.getBoundingClientRect().toJSON()},
-     pending:JSON.parse(JSON.stringify(pending)),focus:{id:document.activeElement?.id,field:document.activeElement?.dataset?.blockuiField},confirmation:document.querySelector('#openConfirmModal').classList.contains('show'),picker:document.querySelector('#samplePicker').open};
+     pending:JSON.parse(JSON.stringify(pending)),focus:{id:document.activeElement?.id,field:document.activeElement?.dataset?.blockuiField},confirmation:document.querySelector('#loseConfirmModal').classList.contains('show'),picker:document.querySelector('#samplePicker').open};
    });
    report.diagnostics??={};report.diagnostics.cancelPendingBlock??=[];report.diagnostics.cancelPendingBlock.push({phase,...observation});save();return observation;
   };
@@ -77,13 +77,13 @@ try{await withBrowser(chrome,async browser=>{
   await twoFrames();const baseline=await trace('after-input-four-frames');
   assert.deepEqual(baseline.scroll,settled.scroll,'input-induced scrolling settled before opening');assert.deepEqual(baseline.workspace,settled.workspace,'input-induced layout settled before opening');
   const block=await fingerprint(page);
-  await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),true);await trace('after-open');await twoFrames();await trace('after-open-two-frames');
-  await page.locator('#openConfirmCancel').click();await trace('after-confirm-cancel');await twoFrames();await trace('after-confirm-cancel-two-frames');
+  await page.locator('#sampleBtn').click();assert.equal(await page.locator('#loseConfirmModal.show').isVisible(),true);await trace('after-open');await twoFrames();await trace('after-open-two-frames');
+  await page.locator('#loseConfirmCancel').click();await trace('after-confirm-cancel');await twoFrames();await trace('after-confirm-cancel-two-frames');
   assert.deepEqual(await fingerprint(page),block);assert.equal(await number.inputValue(),'bad');
   await picker(page);await twoFrames();await trace('after-picker-proceed');assert.deepEqual(await fingerprint(page),block);
   await page.locator('#samplePickerClose').click();await twoFrames();await trace('after-picker-close');assert.deepEqual(await fingerprint(page),block);
   await picker(page);await page.keyboard.press('Escape');await twoFrames();await trace('after-picker-escape');assert.deepEqual(await fingerprint(page),block);
-  await open(page,'dance');await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('action');await page.locator('#callableName').fill('書きかけ');await page.locator('#callableName').press('Tab');await page.waitForTimeout(400);const draft=await fingerprint(page);await page.locator('#procClose').click();const closed=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#openConfirmModal').isVisible(),true);await page.locator('#openConfirmCancel').click();assert.deepEqual(await fingerprint(page),closed);assert.deepEqual((await fingerprint(page)).editor.callableDraft,draft.editor.callableDraft);
+  await open(page,'dance');await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('action');await page.locator('#callableName').fill('書きかけ');await page.locator('#callableName').press('Tab');await page.waitForTimeout(400);const draft=await fingerprint(page);await page.locator('#procClose').click();const closed=await fingerprint(page);await page.locator('#sampleBtn').click();assert.equal(await page.locator('#loseConfirmModal.show').isVisible(),true);await page.locator('#loseConfirmCancel').click();assert.deepEqual(await fingerprint(page),closed);assert.deepEqual((await fingerprint(page)).editor.callableDraft,draft.editor.callableDraft);
  });
  await test('SAMPLES-RESET-ISOLATION',async page=>{
   for(const from of samplesFeature.ids)for(const to of samplesFeature.ids.filter(x=>x!==from)){await open(page,from);await page.locator('#editorModecode').click();await page.locator('#codeEditor').fill((await source(page))+'\nたくどんは「改造中」と言う。');await page.waitForTimeout(100);await open(page,to);assert.deepEqual(await page.evaluate(()=>JSON.parse(JSON.stringify(Akari.app.project))),plain(A.makeSampleProject(to)));assert.equal(await page.locator('#undoBtn').isDisabled(),true);assert.equal(await page.locator('#redoBtn').isDisabled(),true);}
@@ -134,7 +134,7 @@ try{await withBrowser(chrome,async browser=>{
   const pictureUrls=new Set();
   const imagePolicy=await page.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content');assert.equal(imagePolicy.split(';').map(s=>s.trim()).find(s=>s.startsWith('img-src ')),'img-src blob:','sample art must preserve the original image CSP');
   for(const [width,height] of [[1280,720],[1920,1080],[390,844]])for(const level of ['basic','advanced'])for(const mode of ['code','blocks']){
-   await page.setViewportSize({width,height});await page.locator('#uiLevel').selectOption(level);await page.locator('#editorMode'+mode).click();const before=await fingerprint(page);await page.locator('#sampleBtn').focus();await page.keyboard.press('Enter');assert.equal(await page.locator('#openConfirmModal').isVisible(),false);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);
+   await page.setViewportSize({width,height});await page.locator('#uiLevel').selectOption(level);await page.locator('#editorMode'+mode).click();const before=await fingerprint(page);await page.locator('#sampleBtn').focus();await page.keyboard.press('Enter');assert.equal(await page.locator('#loseConfirmModal.show').isVisible(),false);assert.equal(await page.locator('#samplePicker').evaluate(e=>e.open),true);
    const dialog=page.locator('#samplePicker'),cards=dialog.locator('[data-sample-id]');assert.equal(await dialog.evaluate(e=>e.tagName),'DIALOG');assert.equal(await cards.count(),6);assert.equal(await page.locator('#sampleGrid').count(),1);
    const bounds=await dialog.boundingBox();assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=width+1&&bounds.y+bounds.height<=height+1);
    assert.equal(await dialog.evaluate(e=>e.scrollWidth<=e.clientWidth+1),true,'no horizontal dialog overflow');

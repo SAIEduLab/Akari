@@ -107,7 +107,7 @@ await withBrowser(browserPath,async browser=>{
         await p.locator('#uiLevel').selectOption('advanced');if(mode==='code')await p.locator('#editorModecode').click();
         assert.equal(await p.locator('#eventSelect').inputValue(),'start');
         assert.equal(await p.evaluate(()=>Akari.app.project.scripts.every(s=>s.source==='')),true,'new work has empty source');
-        await p.locator('#sampleBtn').click();if(await p.locator('#openConfirmModal').isVisible())await p.locator('#openConfirmProceed').click();await p.locator('#samplePicker [data-sample-id="dance"]').click();
+        await p.locator('#sampleBtn').click();if(await p.locator('#loseConfirmModal.show').isVisible())await p.locator('#loseConfirmProceed').click();await p.locator('#samplePicker [data-sample-id="dance"]').click();
         const editor=mode==='code'?p.locator('#codeEditor'):p.locator('#blockEditor');
         assert.ok(await editor.isVisible());
         if(mode==='code')assert.ok(await editor.isEditable());
