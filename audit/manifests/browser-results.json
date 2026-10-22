@@ -227,6 +227,8 @@
         "UI-when-button-refused-with-code-error",
         "UI-entry-places-offer-no-calculation",
         "UI-entry-loop-draft-no-hidden-notice",
+        "UI-carry-over-a-value-not-refused",
+        "UI-carry-from-a-value-with-mouse",
         "UI-keyboard-only-create-move-delete-history",
         "UI-touch-pointer-drag",
         "UI-pen-pointer-drag",

@@ -252,6 +252,34 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
    assert.equal(after.loops,1,'the loop is in the work');assert.equal(after.notice,0,'no notice about movements はじめて cannot show');assert.equal(after.top,before.top,'the workspace stays where it was');
    await page.locator('#uiLevel').selectOption('advanced');
   });
+  // Carries a block with the mouse. The place is measured once the carry has begun, because the places to put it
+  // open between the sentences then and move the sentences below them.
+  const carry=async(from,target)=>{const settle=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+   await page.mouse.move(from.x,from.y);await page.mouse.down();await page.mouse.move(from.x+12,from.y+4,{steps:3});await page.mouse.move(from.x+60,from.y+10,{steps:4});await settle();
+   const to=await target();await page.mouse.move(to.x,to.y,{steps:8});await settle();
+   const refused=await page.evaluate(()=>[...document.querySelectorAll('body *')].some(n=>n.children.length===0&&n.getClientRects().length&&n.textContent.replace(/\s+/g,'').includes('ここにはおけないよ')));
+   await page.mouse.up();await settle();return refused;};
+  const middle=async l=>{const b=await l.boundingBox();return{x:b.x+b.width/2,y:b.y+b.height/2};};
+  // E1-R1-03 (E-04): a sentence carried over the number of a placed sentence goes before or after that sentence
+  // (上半分で離すとその前、下半分で離すとその後ろ) and is never refused there.
+  await test('UI-carry-over-a-value-not-refused',async()=>{
+   for(const [dy,expected] of [[-6,'1秒待つ。\n1秒待つ。\n2秒待つ。'],[6,'1秒待つ。\n2秒待つ。\n1秒待つ。']]){
+    await fixture('1秒待つ。\n2秒待つ。');const before=await state();
+    const item=root.locator('.blockui-palette-item [data-blockui-schema="WaitTime"]').first();await item.scrollIntoViewIfNeeded();
+    const refused=await carry(await middle(item),async()=>{const m=await middle(nodes('WaitTime').nth(1).locator('[data-blockui-field="value"]').first());return{x:m.x,y:m.y+dy};});
+    const after=await state();
+    assert.equal(refused,false,'a sentence over the number 2 is not refused ('+dy+')');
+    assert.equal(after.source.trim(),expected,'the sentence goes before or after 2秒待つ ('+dy+')');assert.equal(after.history,before.history+1);
+   }
+  });
+  // E1-R1-04 (E-09): with the mouse a placed sentence is carried from its value as well as from its words; a press there
+  // without moving keeps editing the value.
+  await test('UI-carry-from-a-value-with-mouse',async()=>{
+   await fixture('「a」と言う。\n「b」と言う。');const start=await state();
+   const pill=nodes('Say').first().locator('[data-blockui-field="value"]').first();
+   await carry(await middle(pill),async()=>{const b=await nodes('Say').nth(1).locator(':scope > .blockui-node-content > .blockui-node-main').first().boundingBox();return{x:b.x+b.width/2,y:b.y+b.height-3};});
+   const moved=await state();assert.equal(moved.source.trim(),'「b」と言う。\n「a」と言う。','a placed sentence is carried from its value with the mouse');assert.equal(moved.history,start.history+1);
+  });
   await test('UI-keyboard-only-create-move-delete-history',async()=>{
    await fixture('何もしない。');const tabTo=async locator=>{for(let i=0;i<500;i++){if(await locator.evaluate(e=>e===document.activeElement))return;await page.keyboard.press('Tab');}throw Error('Keyboard target not reachable: '+await locator.getAttribute('data-blockui-action'));};const openWithKeyboard=async node=>{await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));const more=node.locator(':scope > .blockui-node-head [data-blockui-action="more"]');await tabTo(more);if(!await more.evaluate(e=>e.closest('details').open))await page.keyboard.press('Enter');await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));assert.equal(await more.evaluate(e=>e.closest('details').open),true,'keyboard disclosure must be open');};const toolsToggle=root.locator('[data-blockui-action="palette-tools-toggle"]');if(await toolsToggle.getAttribute('aria-expanded')==='false'){await tabTo(toolsToggle);await page.keyboard.press('Enter');assert.equal(await toolsToggle.getAttribute('aria-expanded'),'true');}if(await root.locator('.blockui-palette-options').getAttribute('open')===null){await tabTo(root.locator('.blockui-palette-options > summary'));await page.keyboard.press('Enter');}await tabTo(root.locator('[data-blockui-palette-mode]'));await page.keyboard.press('Home');await tabTo(root.locator('[data-blockui-search]'));await page.keyboard.press('Control+a');await page.keyboard.type('Say');await tabTo(root.locator('[data-blockui-schema="Say"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation','Say']);await openWithKeyboard(nodes('Say')); await tabTo(nodes('Say').locator(':scope > .blockui-node-head [data-blockui-action="move-up"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['Say','NoOperation']);await openWithKeyboard(nodes('Say')); await tabTo(nodes('Say').locator(':scope > .blockui-node-head [data-blockui-action="remove"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation']);await page.keyboard.press('Control+z');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['Say','NoOperation']);await page.keyboard.press('Control+y');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation']);
   });
