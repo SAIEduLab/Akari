@@ -1798,9 +1798,9 @@
       if (found || negated) return;
       if (e.kind === 'ActorQualifiedRead' && e.actorRef?.kind === 'named' && e.value?.kind === 'SensorRead' && e.value.sensor === 'TOUCHING') found = { ...e.value, toucher: e.actorRef.name };
       else if (e.kind === 'SensorRead' && e.sensor === 'TOUCHING') found = e; }); return found; };
-    // The touch ends with かくす・動く・待つ・コピーを消す・止める (LANGUAGE.md); a turn is no move there.
-    const TURNS = new Set(['TURN_RIGHT', 'TURN_LEFT', 'SET_DIRECTION', 'POINT_TO']);
-    const ends = nodes => [...statements(nodes)].some(m => NOTICE_WAITS.has(m.kind) || (m.kind === 'MotionCommand' && !TURNS.has(m.op)) || m.kind === 'StopCommand' ||
+    // The touch may end with かくす・動く・回る・向きを変える・待つ・時間を書いた話す文・コピーを消す・止める (LANGUAGE.md): a turn
+    // turns the part's box and outline too.
+    const ends = nodes => [...statements(nodes)].some(m => NOTICE_WAITS.has(m.kind) || m.kind === 'MotionCommand' || m.kind === 'StopCommand' ||
       (m.kind === 'LooksCommand' && m.op === 'HIDE') || (m.kind === 'CloneCommand' && ['DELETE_SELF', 'DELETE_ALL'].includes(m.op)) || (m.kind === 'Say' && m.seconds));
     const keyOf = condition => condition?.kind === 'SensorRead' && condition.sensor === 'KEY_DOWN' && condition.arg?.kind === 'StringLiteral' ? condition.arg.value : null;
     const visitList = (nodes, inLoop) => {
@@ -1903,7 +1903,8 @@
             : [project.projectData, owner].filter(Boolean).some(d => d.variables.some(v => v.name === name)) ? 'variable'
             : [project.projectData, owner].filter(Boolean).some(d => d.lists.some(l => l.name === name)) ? 'list' : null;
           if (data && project.sounds.some(s => s.name === name))
-            note('I132', n, `この 文の「${name}」は 音の 名前で、${data === 'list' ? 'リスト' : 'へんすう'}の「${name}」では ありません。` + (data === 'variable' ? `へんすうの 数の 高さで 鳴らすときは「【${name}】Hzの音を0.5秒鳴らす」と 書きます` : `リストの 中身の 音を 鳴らすときは「（${name}の1番目）を鳴らす」のように 書きます`));
+            // The words are LANGUAGE.md's; a list gets no second sentence.
+            note('I132', n, `「${name}」は 音の 名前です。` + (data === 'variable' ? `へんすう「${name}」の 中身は 使いません。へんすうの 数の 高さで 鳴らすときは「【${name}】Hzの音を0.5秒鳴らす」と 書きます` : `リスト「${name}」の 中身は 使いません`));
         }
         // 名人: ねこと犬と鳥は、順番に、… starts them together; 候補から【一覧】を全部消す looks for the list itself.
         const listed = MEIJIN_LISTED_IN_ORDER.get(n);
