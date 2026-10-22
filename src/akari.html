@@ -418,7 +418,7 @@
           <details id="callableConceptHelp" class="child-help"><summary>自分で作ったブロックの ヒント</summary><div class="child-help-panel" tabindex="0" aria-label="ヒントのつづきを読む"><p class="child-scroll-help">つづきは、白い わくの 中を 指で 上に なぞると 読めます。キーボードでは Tabで 白い わくを えらび、↓キーを おします。</p>
             <p>てじゅんは、いくつかの 動きを まとめて、名前で 使うものです。れい：「あいさつ」という 名前で、名前を 話して おじぎする 動きを まとめます。</p>
             <p>「答えを もとめる」は、中で 使った 数や 文字から 答えを 出します。れい：点数を 2倍にして、その 答えを 返します。</p>
-            <p>名前と 入れるものを 決めて、下に 動きを 書きます。「自分で作ったブロックを 決める」を おすと、ほかの 動きから その 名前で 使えます。</p>
+            <p>名前と 入れるものを 決めて、下に 本文を 書きます。「自分で作ったブロックを 決める」を おすと、ほかの 本文から その 名前で 使えます。</p>
           </div></details>
           <input id="callableEditingId" type="hidden">
           <label>しゅるい <select id="callableType"><option value="action">てじゅん</option><option value="function">答えを もとめる</option></select></label>
@@ -440,10 +440,10 @@
 
 <div class="modal" id="dataModal" role="dialog" aria-modal="true" aria-label="へんすう・リスト">
   <div class="dialog" style="height:min(620px,88vh)">
-    <div class="win-title">へんすう・リスト（作品の もの・部品ごとの もの）</div>
+    <div class="win-title">へんすう・リスト（作品の もの・キャラクターや 部品ごとの もの）</div>
     <div class="dialog-body">
       <div class="asset-toolbar">
-        <label>どこで使う <select id="dataScope"><option value="project">作品</option><option value="self">えらんだ部品</option></select></label>
+        <label>どこで使う <select id="dataScope"><option value="project">作品</option><option value="self">えらんだ キャラクター</option></select></label>
         <label>しゅるい <select id="dataKind"><option value="variable">へんすう：1つ おぼえる はこ</option><option value="list">リスト：じゅんばんに ならべる</option></select></label>
         <input id="dataName" placeholder="名前" aria-label="へんすう・リストの 名前" aria-describedby="dataConceptHelp dataFormError" style="width:150px;padding:6px">
         <input id="dataInitial" aria-label="はじめの 中身" aria-describedby="dataConceptHelp dataFormError" style="width:280px;padding:6px">
@@ -455,7 +455,7 @@
       <p id="dataFormError" role="alert" hidden></p>
       <div id="dataConceptHelp" class="child-help">
         <p><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby></strong>は、中身を 1つ おぼえる はこです。れい：「点数」に 10、「名前」に「あかり」を 入れます。<strong>リスト</strong>は、中身を じゅんばんに ならべて おぼえる ものです。れい：「持ち物」に 本、かさ、ぼうしを ならべます。</p>
-        <p>中身は、へんすうや リストに 入っている 数や 文字の ことです。「しゅるい」で 入れものを えらび、「はじめの 中身」で 動き始める前の 中身を 決めます。「作品」は みんなで、「えらんだ部品」は その部品で 使います。</p>
+        <p>中身は、へんすうや リストに 入っている 数や 文字の ことです。「しゅるい」で 入れものを えらび、「はじめの 中身」で 動き始める前の 中身を 決めます。「作品」は みんなで、「えらんだ キャラクター」や「えらんだ 部品」は、えらんだ ものだけで 使います。</p>
         <p>動かすと「はじめの中身」から 始まり、動いている間の 中身は「動きのようす」で 見られます。はじめの 中身と へんすう・リストの 作り方は、作品と いっしょに ほぞんされます。</p>
       </div>
       <div id="dataBody"></div>
@@ -494,7 +494,7 @@
     <div class="dialog-foot"><button id="questionStop">■ 止める</button> <button id="questionSubmit">答える</button></div>
   </div>
 </div>
-<div class="modal" id="failureModal" role="dialog" aria-modal="true" aria-label="動きが止まった きろく"><div class="dialog"><div class="win-title">動きが 止まった きろく</div><div class="record-controls"><label for="failureSelect">きろく</label><select id="failureSelect"></select></div><div class="dialog-body" id="failureBody"></div><div class="dialog-foot"><button id="failureClose">とじる</button></div></div></div>
+<div class="modal" id="failureModal" role="dialog" aria-modal="true" aria-label="動きが 止まった きろく"><div class="dialog"><div class="win-title">動きが 止まった きろく</div><div class="record-controls"><label for="failureSelect">きろく</label><select id="failureSelect"></select></div><div class="dialog-body" id="failureBody"></div><div class="dialog-foot"><button id="failureClose">とじる</button></div></div></div>
 <div class="modal" id="valueModal" role="dialog" aria-modal="true" aria-labelledby="valueTitle"><div class="dialog"><div class="win-title" id="valueTitle">中身の 全部</div><div class="record-controls" id="valueListControls"><button id="valueItemPrev">前の 中身</button><label for="valueItem">番号</label><input id="valueItem" type="number" min="1" step="1"><span id="valueCount"></span><button id="valueItemNext">次の 中身</button></div><p id="valueNotice" class="dialog-body" role="status"></p><pre class="dialog-body value-output" id="valueOutput" tabindex="0"></pre><div class="dialog-foot"><button id="valuePagePrev">前のページ</button> <span id="valuePage"></span> <button id="valuePageNext">次のページ</button> <button id="valueClose">とじる</button></div></div></div>
 
 
@@ -556,7 +556,7 @@
  </div>
 </div>
 <dialog id="samplePicker" class="sample-picker" aria-labelledby="samplePickerTitle">
- <header><h2 id="samplePickerTitle">どのお手本を開く？</h2><button id="samplePickerClose" type="button" autofocus>とじる ×</button></header>
+ <header><h2 id="samplePickerTitle">どの お手本を 開く？</h2><button id="samplePickerClose" type="button" autofocus>とじる ×</button></header>
  <div id="sampleGrid" class="sample-grid"></div>
 </dialog>
 <script>

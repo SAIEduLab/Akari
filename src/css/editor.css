@@ -5784,7 +5784,7 @@ body[data-ui-level="entry"] #blockEditor { flex:1; min-height:0; overflow:hidden
 body[data-ui-level="entry"] #blockEditor[hidden] { display:none; }
 body[data-ui-level="entry"] .blockui-layout { flex:1; height:auto; min-height:0; grid-template-columns:240px minmax(0,1fr); }
 body[data-ui-level="entry"] .blockui-palette { display:flex; flex-direction:column; min-height:0; }
-body[data-ui-level="entry"] .blockui-palette::before { content:'ブロックの一覧'; padding:8px; font-weight:bold; }
+body[data-ui-level="entry"] .blockui-palette::before { content:'ブロックの いちらん'; padding:8px; font-weight:bold; }
 body[data-ui-level="entry"] .blockui-palette-list { flex:1; min-height:0; overflow:auto; }
 body[data-ui-level="entry"] :is(.blockui-palette-controls,.blockui-categories,.blockui-palette-options,.blockui-palette-tools,.blockui-search-scope,.blockui-search-restore) { display:none; }
 body[data-ui-level="entry"] .blockui-palette-item { margin:4px; }
@@ -6418,7 +6418,8 @@ body[data-ui-level="entry"] .status #statusText { color: #1d3448; font-weight: 7
 /* Child text is written with spaces between phrases; a line breaks only at a space or a punctuation mark (F-19). */
 :is(.status, #statusText, .modal p, .project-choice-dialog p, .project-choice-dialog h2, #tutorialText, #entryOutside,
   .export-choice, .sample-card-copy, .diagnosis-issue, .diagnosis-note, #failureBody > .diagnostic-help,
-  .child-help, .child-help-panel, .blockui-empty, .blockui-local-help, .editor-pending, .monitor-empty) {
+  .child-help, .child-help-panel, .blockui-empty, .blockui-local-help, .editor-pending, .monitor-empty,
+  .monitor-title, .monitor-key, .monitor-value, .failure-open, #codeIssue) {
   word-break: keep-all; overflow-wrap: anywhere;
 }
 /* The run-failure dialog: Akari's lines around the reason, which sits in a box with its place, as in 作品チェック. */

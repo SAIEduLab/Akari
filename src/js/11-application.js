@@ -2052,7 +2052,7 @@
       componentPicker.id = 'componentPickerCore';
       const componentTitle = document.createElement('summary');
       componentTitle.textContent =
-        '\uff0b \u30ad\u30e3\u30e9\u30af\u30bf\u30fc\u30fb\u90e8\u54c1\u3092\u3075\u3084\u3059';
+        '＋ キャラクター・部品を ふやす';
       componentPicker.append(componentTitle);
       componentControls.append(componentPicker);
       for (const selector of ['.properties-window', '.monitor-window']) {
@@ -3012,7 +3012,7 @@
         card.dataset.ownerId = record.ownerId;
         const shared = record.ownerId !== selectedId;
         const heading = make('h3', `${shared ? project.stage.name + ' ／ ' : ''}${record.title}`);
-        const edit = button('この本文を なおす', () => {
+        const edit = button('この 本文を なおす', () => {
           if (!flushActiveEditor()) return;
           if (record.kind === 'script') {
             if (!selectObject(record.ownerId)) return;
@@ -3040,7 +3040,7 @@
               readOnly: true,
               root: preview, getSession: () => session, getProject: () => project,
               getContext: () => record.context, isLocked: () => true,
-              onOperation: () => ({ ok: false, reason: '「この本文を なおす」を えらんでね' }),
+              onOperation: () => ({ ok: false, reason: '「この 本文を なおす」を えらんでね' }),
             }));
           } else {
             if (!session.syntaxAst) body.append(make('p', '書き方を たしかめてください。入力した 本文を 見せています。', 'source-error'));
@@ -3381,6 +3381,13 @@
       if ($('#assetModal').classList.contains('show')) renderAppearance();
     }
     let propHelpSerial = 0;
+    // A name the work cannot take, said before the work is checked (FS2-01): why, and what to write instead.
+    function checkPartName(v, { stage = false } = {}) {
+      if (!v) throw new Error(stage ? '画面の 名前を 書いてね' : '名前を 書いてね');
+      if (cpLen(v) > 80) throw new Error('名前は 80文字までに してね');
+      if (/[\p{Cc}\p{Zl}\p{Zp}「」]/u.test(v)) throw new Error('名前に「 」や 行がえは 使えないよ。けしてね');
+      if (!stage && (v === 'マウス' || isEdgeTarget(v))) throw new Error('「マウス」と「端（はし）」は 名前に 使えないよ。ちがう 名前に してね');
+    }
     // A rename that the work refuses (prepareResourceRename), said in the status line's voice.
     const PROPERTY_REFUSALS = Object.freeze({
       '同じ 名前が あります': 'ほかの キャラクターや 部品と ちがう 名前に してね',
@@ -3424,7 +3431,7 @@
           rollbackDesign(before);
           // The field goes back to what it was; the status line says why and what to write, in its own voice (F-11: no
           // silent no-op; F-18). Another check of the work (with a code) is said in the teacher log only.
-          setStatus(err.code ? PROPERTY_REFUSALS[err.message] || `「${name}」は その 中身に できなかったよ。もとに もどしたよ` : err.message);
+          setStatus(err.code ? PROPERTY_REFUSALS[err.message] || `「${name}」は その 数や 文字には できないよ。もとに もどしたよ` : err.message);
         }
       });
       v.appendChild(inp);
@@ -3511,8 +3518,7 @@
           propSection(
             'きほん',
             propRow('\u540d\u524d', project.stage.name, (v) => {
-              if (!v.trim())
-                throw new Error('画面の 名前を 書いてね');
+              checkPartName(v.trim(), { stage: true });
               project = prepareResourceRename(project,'component:stage',v.trim(),{drafts:resourceDraftRecords()});
               invalidateEditors();
             }),
@@ -3582,7 +3588,7 @@
           'きほん',
           propRow('\u540d\u524d', c.name, (v) => {
             v = v.trim();
-            if (!v) throw new Error('名前を 書いてね');
+            checkPartName(v);
             if (project.components.some((x) => x !== c && x.name === v))
               throw new Error('ほかの キャラクターや 部品と ちがう 名前に してね');
             project = prepareResourceRename(project,'component:'+c.id,v,{drafts:resourceDraftRecords()});
@@ -3607,12 +3613,19 @@
           propRow(
             c.type === 'sprite' ? '\u4ee3\u308f\u308a\u306e\u6587\u5b57' : '\u6587\u5b57',
             c.text,
-            (v) => (c.text = v),
+            (v) => {
+              if (cpLen(v) > LIMITS.stringChars) throw new Error(`文字は ${LIMITS.stringChars}文字までに してね`);
+              c.text = v;
+            },
           ),
           propRow(
             '文字の 大きさ',
             c.fontSize,
-            (v) => (c.fontSize = Number(v)),
+            (v) => {
+              const n = Number(v);
+              if (n < 8 || n > 200) throw new Error('文字の 大きさは 8から200までの 数に してね');
+              c.fontSize = n;
+            },
             'number',
           ),
         ),
@@ -4673,7 +4686,7 @@
       lead.textContent = entry ? '動きが とちゅうで 止まったよ。作った ブロックは そのままだよ。'
         : '動きが とちゅうで 止まったよ。書いた 本文と、うまく いかなかったときの きろくは のこっているよ。';
       reason.className = 'failure-reason'; place.className = 'failure-place'; why.className = 'failure-why';
-      place.textContent = diagnosticLocation(r); why.textContent = childDiagnosticText(r);
+      place.textContent = diagnosticLocation(r); why.textContent = childDiagnosticText(r, diagnosticSource(r));
       reason.append(place, why);
       const latest = r.id === scheduler.errorRecords.at(-1)?.id, sentence = diagnosticSentence(r),
         framed = latest && !!document.querySelector('#blockEditor .blockui-current');
@@ -4876,11 +4889,12 @@
         const last = records.at(-1),
           button = document.createElement('button');
         button.className = 'failure-open';
-        button.textContent = `動きが止まった きろくを 見る（${records.length}こ）`;
+        button.textContent = `動きが 止まった きろくを 見る（${records.length}こ）`;
         button.onclick = () => showFailureDetails();
         el.monitor.appendChild(button);
+        // 動きのようす speaks in Akari's voice (F-18): the reason, in the language's polite words, is in the record.
         section('さいごに うまく いかなかったとき', [
-          ['直す手がかり', childDiagnosticText(last)],
+          ['直す手がかり', 'わけは「動きが 止まった きろくを 見る」で 見られるよ'],
           ['ばしょ', diagnosticLocation(last)],
           ['うまく いかなかった やること', last.statement],
         ]);
@@ -5562,9 +5576,13 @@
           activeTaskId = task.taskId;
           activeLoc = sourceLocation(task, null, err);
           requestRuntimePaint(7);
-          const stack = task.errorCallStack?.length
+          // The order of the calls names the part (たくどん), not its inner id, below くわしく (F-28).
+          const owner = task.targetId === 'stage' ? project.stage.name : task.targetId === MEIJIN_OWNER ? '名人の本文' : componentById(task.targetId)?.name,
+            calls = (task.errorCallStack || []).map((entry, i) => i === 0 && owner && document.body.dataset.uiLevel !== 'advanced'
+              ? entry.replace('きっかけ ' + task.targetId + ' /', 'きっかけ ' + owner + ' /') : entry);
+          const stack = calls.length
             ? `
-使った じゅんばん：${task.errorCallStack.join(' → ')}`
+使った じゅんばん：${calls.join(' → ')}`
             : '';
           // 出力 is the teacher's surface: one polite voice per line (F-18).
           log(`${err.code} 動きが うまく いきませんでした：${err.message}${stack}`, 'error');
@@ -6502,6 +6520,9 @@
       }
     }
     function renderDataModal() {
+      // The choice names what is chosen, as the part tools do (F-23): えらんだ キャラクター, えらんだ 部品.
+      const chosen = componentById(selectedId);
+      $('#dataScope option[value="self"]').textContent = 'えらんだ ' + (chosen && chosen.type !== 'sprite' ? '部品' : 'キャラクター');
       updateDataForm();
       const body = $('#dataBody');
       body.textContent = '';
@@ -6514,7 +6535,7 @@
       } else {
         const c = componentById(selectedId);
         if (!c) {
-          body.textContent = 'へんすう・リストを かえる 部品を 先に えらんでください。';
+          body.textContent = 'へんすう・リストを かえる キャラクターや 部品を 先に えらんでください。';
           return;
         }
         vars = c.localData.variables;
