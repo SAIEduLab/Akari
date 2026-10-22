@@ -281,10 +281,10 @@
     root.setAttribute('aria-label', 'ブロックで作るところ');
     const controls = E('div', 'blockui-view-controls'),
       destinationLabel = E('div', 'blockui-destination', '本文の いちばん下に入れる'),
-      cancelButton = button('とちゅうで やめる', 'cancel', () => cancel()),
+      cancelButton = button('入力を やめる', 'cancel', () => cancel()),
       commitButton = button('決める', 'commit', () => flush({explicit:true})),
       messageBox = E('div', 'blockui-message', '', { 'aria-live': 'polite' }),
-      // An input's mistake is shown right under the field, in the floating 決める・とちゅうで やめる (E-12).
+      // An input's mistake is shown right under the field, in the floating 決める and やめる (E-12).
       fieldError = E('p', 'blockui-field-error', '', { id: viewId + '-field-error' });
     controls.append(fieldError, destinationLabel, commitButton, cancelButton);
     root.append(controls, messageBox);
@@ -424,7 +424,7 @@
       E('p','','「同じ数を くり返し かける」（＾）は、同じ 数を 何回も かける 計算です。2＾3 は 2×2×2 で 8 に なります。計算や くらべ方の しるしだけを かえても、左右の 中身は のこります。'),
       E('p','','メモは、あとで 思い出せるように 書く ひとことです。動きは かわりません。'),
       E('p','','「見た目のコピー」は、見た目と せっていが 同じ 部品を もう1つ 作ります。本文は コピーしません。「自分のコピーを作る」の コピーは、動いている あいだだけの 部品で、もとの 部品の 本文で 動きます。'),
-      E('p','','「とちゅうで やめる」は、いま えらんだ 入れる ばしょや、かえかけている 文字・組み立てを やめます。「もとにもどす」は、もう 決めた ことを 1つ もどします。'));
+      E('p','','「入力を やめる」「入れるのを やめる」「もっていくのを やめる」は、いま している ことを やめるよ。「もとにもどす」は、もう 決めた ことを 1つ もどすよ。'));
     paletteControls.append(help);
     paletteControls.id = viewId + '-palette-tools';
     paletteControls.hidden = true;
@@ -705,7 +705,7 @@
           ok: false,
           pending: true,
           reason: replacement
-            ? 'もとの ばしょに 入れる ブロックを えらぶか、「とちゅうで やめる」を おしてね'
+            ? 'もとの ばしょに 入れる ブロックを えらぶか、「' + cancelLabel() + '」を おしてね'
             : 'ブロックを おく ところで はなしてね。やめるときは Esc キーを おしてね',
         };
       if (!pending) return { ok: true };
@@ -727,12 +727,12 @@
       if (p.composing || p.input.dataset.composing === 'true')
         return refused('日本語の へんかんを おわらせてから、もう一度 やってね');
       if (session()?.ownerKey !== p.ownerKey)
-        return refused('入れている とちゅうで、なおしていた ところが かわったよ。「決める」を おすか、「とちゅうで やめる」を おしてね');
+        return refused('入れている とちゅうで、なおしていた ところが かわったよ。「決める」を おすか、「' + cancelLabel() + '」を おしてね');
       if (
         session()?.sourceRevision !== p.sourceRevision ||
         session()?.contextRevision !== p.contextRevision
       ) {
-        return refused('入れている とちゅうで、本文や まわりが かわったよ。「とちゅうで やめる」を おして、もう一度 あいている ところを えらんでね');
+        return refused('入れている とちゅうで、本文や まわりが かわったよ。「' + cancelLabel() + '」を おして、もう一度 あいている ところを えらんでね');
       }
       let value;
       try {
@@ -808,7 +808,13 @@
       announce('入れるのを やめたよ。組み立てていた ブロックは のこっているよ');
       return { ok: true };
     }
+    // One やめる per state, named by what it stops (F-23): a block put in that still has holes, the input being typed, a
+    // block being moved, or the place chosen for the next block.
+    function cancelLabel() {
+      return session()?.blockDraft ? '入れるのを やめる' : pending ? '入力を やめる' : replacement || moving ? 'もっていくのを やめる' : '入れるのを やめる';
+    }
     function cancel() {
+      const stopped = cancelLabel().replace(/やめる$/, 'やめたよ');
       const field = pending;
       pending = null;
       destination = null;
@@ -834,7 +840,7 @@
               : String(value ?? '');
         field.input.setAttribute('aria-invalid', 'false');
       }
-      announce('とちゅうで やめたよ');
+      announce(stopped);
       render({ force: true });
       return { ok: true };
     }
@@ -857,6 +863,7 @@
       commitButton.disabled = isLocked() || !pending;
       const draft = session()?.blockDraft;
       cancelButton.disabled = !pending && !moving && !drag && !replacement && !destination && !draft;
+      cancelButton.textContent = cancelLabel();
       // While a block is only being carried, what it does is shown by the pointer (E-04): no controls cover the blocks.
       controls.hidden = !pending && !moving && !replacement && !destination && !draft;
       root.classList.toggle('blockui-interacting', !controls.hidden);
@@ -942,7 +949,7 @@
       }
       clearOfControls();
     }
-    // The selected field's tools never lie under 決める・とちゅうで やめる: they go down below them.
+    // The selected field's tools never lie under 決める and やめる: they go down below them.
     function clearOfControls() {
       if (controls.hidden) return;
       const c = controls.getBoundingClientRect();
@@ -4529,7 +4536,7 @@
           notifyPending(); renderReplacement(); renderPalette(); updateControls(); showImpliedDestination();
           for (const selected of workspace.querySelectorAll('.blockui-chosen-destination')) selected.classList.remove('blockui-chosen-destination');
           for (const slot of workspace.querySelectorAll('.blockui-slot-active')) slot.classList.remove('blockui-slot-active');
-          announce('えらぶのを やめたよ。組み立てている ものは「とちゅうで やめる」、決めた ことは「もとにもどす」で もどせるよ');
+          announce('えらぶのを やめたよ。' + (session()?.blockDraft ? '入れかけの ブロックは「入れるのを やめる」で やめられるよ。' : '') + '決めた ことは「もとにもどす」で もどせるよ');
         }
         return;
       }
