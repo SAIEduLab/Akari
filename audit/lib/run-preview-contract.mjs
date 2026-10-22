@@ -24,9 +24,17 @@ export function verifyRunPreview(o,mode,level){
   assert.equal(o.stopped.source,o.source,'stop restores the unchanged authored project');
   const v=o.inspector;assert.equal(v.opened,true);assert.equal(v.readOnly,true);assert.equal(v.monitorVisible,true);assert.equal(v.visibleMode,mode);assert.equal(v.alternateMode,mode==='code'?'blocks':'code');assert.equal(v.restoredMode,mode);assert.equal(v.sourcePreserved,true);assert.equal(v.executionLocationVisible,true);assert.equal(v.closed,true);assert.equal(v.modeControlsReturned,true);assert.equal(v.modeControlsShownWhileRunning,false);
 }
-// The other two combinations of the run screen. はじめて shows ■ 止める only: no ⏸ いったん止める, ▶ つづける, 1つずつ 動かす
-// or 本文を見て たしかめる (LANGUAGE.md 作る画面と動かす画面). A 名人 work has the くわしく screen with those controls, and no
-// 「コード」「ブロック」 switch anywhere, also in 「本文と動きのようす」: blocks cannot be chosen while it runs.
+// The other two combinations of the run screen. ⏸ いったん止める and ▶ つづける are on the run screen at every level, はじめて
+// too; 1つずつ 動かす and 本文を見て たしかめる are not at はじめて (final call 21; LANGUAGE.md 作る画面と動かす画面). A 名人
+// work has the くわしく screen with those controls. The run screen shows no view toggle; 「本文と動きのようす」 has it, and in a
+// 名人 work a press keeps the code and says why under it, 「名人は、コードモードで だけ 使えるよ」 (final calls 22, 23).
+// At はじめて the run screen shows ■, ⏸ and ▶ つづける; 1つずつ 動かす is not there.
+function verifyEntryRunControls(o){
+  const [,pause,resume,step]=o.controls;
+  for(const c of [pause,resume]){inside(c.rect,o.viewport);assert.equal(c.rect.visible,true,c.id+' is on the はじめて run screen');assert.equal(c.hit,true,'actual hit target '+c.id);}
+  assert.deepEqual([pause.enabled,resume.enabled],[true,false],'running: ⏸ can be pressed, ▶ つづける cannot');
+  assert.equal(step.rect.visible,false,'1つずつ 動かす is not on the はじめて run screen');
+}
 export function verifyRunScreen(o,mode,level){
   const shown=level==='meijin'?'advanced':level;
   assert.equal(o.mode,mode);assert.equal(o.level,shown);assert.equal(o.chosen,level);assert.equal(o.state,'RUNNING');assert.equal(o.runtime,true);
@@ -39,15 +47,21 @@ export function verifyRunScreen(o,mode,level){
   assert.equal(o.runShown,false,'the run screen shows no ▶ 動かす');assert.equal(o.switchShown,false,'the run screen shows no コード／ブロック switch');
   const stop=o.controls[0];inside(stop.rect,o.viewport);assert.equal(stop.rect.visible,true);assert.equal(stop.hit,true,'actual hit target stopBtn');assert.equal(stop.enabled,true);
   if(level==='entry'){
-    for(const c of o.controls.slice(1))assert.equal(c.rect.visible,false,c.id+' is not on the はじめて run screen');
+    verifyEntryRunControls(o);
     assert.equal(o.inspectShown,false,'本文を見て たしかめる is not on the はじめて run screen');assert.equal(o.inspector,null);
   } else {
     for(const c of o.controls){inside(c.rect,o.viewport);assert.equal(c.rect.visible,true);assert.equal(c.hit,true,'actual hit target '+c.id);}
     assert.deepEqual(o.controls.map(c=>c.enabled),[true,true,false,true]);assert.equal(o.inspectShown,true);
     assert.equal(o.paused,'PAUSED');assert.equal(o.afterStep,'PAUSED');assert.equal(o.resumed,'RUNNING');
     const v=o.inspector;assert.equal(v.opened,true);assert.equal(v.readOnly,true);assert.equal(v.monitorVisible,true);assert.equal(v.executionLocationVisible,true);
-    assert.equal(v.codeVisible,true);assert.equal(v.blocksVisible,false);assert.deepEqual(v.switches,[],'no コード／ブロック switch in 本文と動きのようす');
-    assert.equal(v.afterBlocksPress,'code','blocks cannot be chosen while a 名人 work runs');assert.equal(v.sourcePreserved,true);assert.equal(v.closed,true);
+    assert.equal(v.codeVisible,true);assert.equal(v.blocksVisible,false);
+    // The one toggle there names the code, 「コードモード ⇄」, and is refused for the 名人 work; its note shows only after a press.
+    assert.deepEqual(v.toggles,[{id:'editorModeblocks',label:'コードモード ⇄',name:'コードモード',refused:'meijin',inInspector:true}],'本文と動きのようす has the view toggle');
+    assert.equal(v.noteBefore,null,'no note before the press');
+    assert.equal(v.afterBlocksPress,'code','blocks cannot be chosen while a 名人 work runs');assert.equal(v.afterPress.codeVisible,true);assert.equal(v.afterPress.blocksVisible,false);
+    assert.deepEqual(v.afterPress.toggles,v.toggles,'the toggle stays as it was');
+    assert.deepEqual(v.afterPress.note,{text:'名人は、コードモードで だけ 使えるよ',role:'status',inInspector:true},'the note under the toggle says why');
+    assert.equal(v.sourcePreserved,true);assert.equal(v.closed,true);
   }
   assert.equal(o.stopped.state,'DESIGN');assert.equal(o.stopped.runtime,false);assert.equal(o.stopped.editorVisible,true);
   assert.equal(o.stopped.source,o.source,'stop restores the unchanged authored project');
@@ -67,17 +81,19 @@ export function verifyRunPreviewReport(report){
     const size=b=>Math.round(b.width)+'x'+Math.round(b.height);assert.ok(r.editStage&&r.editStage.width>0,'the edit screen stage is measured');
     assert.ok(r.stage.width>=r.editStage.width-1&&r.stage.height>=r.editStage.height-1,'the screen gets bigger while the work runs, also with many parts: '+size(r.editStage)+' before ▶, '+size(r.stage)+' running, at 1366x'+o.viewport.height);
     assert.ok(r.stage.width>=o.scene.width*0.5,'the screen fills its column');
-    const stop=o.controls[0];inside(stop.rect,o.viewport);assert.equal(stop.hit,true);for(const c of o.controls.slice(1))assert.equal(c.rect.visible,false);}
+    const stop=o.controls[0];inside(stop.rect,o.viewport);assert.equal(stop.hit,true);verifyEntryRunControls(o);}
 }
-// 「本文を見て たしかめる」 of a 名人 work: the body in code, no コード／ブロック switch, and a press on the hidden ブロック changes nothing.
+// 「本文を見て たしかめる」 of a 名人 work: the body in code, and the view toggle there. A press on 「コードモード ⇄」, as a
+// child makes it, keeps the code and shows the note under the toggle (final call 22; LANGUAGE.md 作る画面と動かす画面).
 export async function observeMeijinInspector(page){
   const source=await page.evaluate(()=>JSON.stringify(Akari.app.project.scripts));await page.locator('#runtimeInspectBtn').click();await page.locator('#runtimeInspector[open]').waitFor();
-  const collect=()=>page.evaluate(()=>({mode:document.body.dataset.editorMode,codeVisible:!!document.querySelector('#codeEditor').getClientRects().length,blocksVisible:!!document.querySelector('#blockEditor').getClientRects().length,readOnly:document.querySelector('#codeEditor').readOnly,
+  const collect=()=>page.evaluate(()=>(shown=>({mode:document.body.dataset.editorMode,codeVisible:!!document.querySelector('#codeEditor').getClientRects().length,blocksVisible:!!document.querySelector('#blockEditor').getClientRects().length,readOnly:document.querySelector('#codeEditor').readOnly,
     monitorVisible:!!document.querySelector('#runtimeInspector .runtime-monitor').getClientRects().length,executionLocationVisible:!!document.querySelector('#runtimeInspector #execLocation').getClientRects().length,
-    switches:[...document.querySelectorAll('button')].filter(b=>/^(コード|ブロック)$/.test(b.textContent.trim())&&b.getClientRects().length&&getComputedStyle(b).visibility!=='hidden').map(b=>b.id||b.textContent.trim())}));
-  const first=await collect();await page.locator('#editorModeblocks').click({force:true,timeout:1000}).catch(()=>{});await page.waitForTimeout(200);const after=await collect();
+    toggles:['editorModecode','editorModeblocks'].map(id=>document.getElementById(id)).filter(shown).map(b=>({id:b.id,label:b.textContent,name:b.getAttribute('aria-label'),refused:b.dataset.refused||null,inInspector:!!b.closest('#runtimeInspector')})),
+    note:shown(document.getElementById('modeBlockedNote'))?(n=>({text:n.textContent,role:n.getAttribute('role'),inInspector:!!n.closest('#runtimeInspector')}))(document.getElementById('modeBlockedNote')):null}))(n=>!!n&&!n.hidden&&!!n.getClientRects().length&&getComputedStyle(n).visibility!=='hidden'));
+  const first=await collect();await page.locator('#runtimeInspector #editorModeblocks').click({timeout:3000});await page.waitForTimeout(200);const after=await collect();
   return{opened:await page.locator('#runtimeInspector').evaluate(n=>n.open),readOnly:first.readOnly,monitorVisible:first.monitorVisible,executionLocationVisible:first.executionLocationVisible,codeVisible:first.codeVisible,blocksVisible:first.blocksVisible,
-    switches:[...new Set([...first.switches,...after.switches])],afterBlocksPress:after.mode,sourcePreserved:source===await page.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
+    toggles:first.toggles,noteBefore:first.note,afterBlocksPress:after.mode,afterPress:{codeVisible:after.codeVisible,blocksVisible:after.blocksVisible,toggles:after.toggles,note:after.note},sourcePreserved:source===await page.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
 }
 export async function observeInspector(page,mode){
   const source=await page.evaluate(()=>JSON.stringify(Akari.app.project.scripts));await page.locator('#runtimeInspectBtn').click();await page.locator('#runtimeInspector[open]').waitFor();
