@@ -3043,17 +3043,13 @@
       compNames.add(c.name);
       for (const k of ['x', 'y', 'w', 'h', 'fontSize', 'direction', 'scalePercent'])
         if (!finite(c[k])) throw new AkariError('F503', `部品「${c.name}」の 数が 正しくありません`);
-      if (
-        c.w < 8 ||
-        c.w > 1200 ||
-        c.h < 8 ||
-        c.h > 1200 ||
-        c.fontSize < 8 ||
-        c.fontSize > 200 ||
-        c.scalePercent < 1 ||
-        c.scalePercent > 1000
-      )
-        throw new AkariError('F504', `部品「${c.name}」の 大きさが 大きすぎるか 小さすぎます`);
+      // Each size says which one it is and what it may be (the せってい row's refusal names it too).
+      if (c.w < 8 || c.w > 1200 || c.h < 8 || c.h > 1200)
+        throw new AkariError('F504', `部品「${c.name}」の はばと 高さは、8から1200までの 数に します`);
+      if (c.fontSize < 8 || c.fontSize > 200)
+        throw new AkariError('F504', `部品「${c.name}」の 文字の 大きさは、8から200までの 数に します`);
+      if (c.scalePercent < 1 || c.scalePercent > 1000)
+        throw new AkariError('F504', `部品「${c.name}」の 大きさは、1から1000％までの 数に します`);
       if (
         !validateColorHex(c.fg) ||
         !validateColorHex(c.bg, true) ||
