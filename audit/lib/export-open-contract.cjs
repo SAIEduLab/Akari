@@ -4,6 +4,7 @@ const ids=[
   "EXPORT-CHOICE-NARROW-ONE-DOWNLOAD",
   "EXPORT-CONTROLS-DEFAULT-OPERATIONS",
   "EXPORT-CONTROLS-FINISHED",
+  "EXPORT-CONTROLS-SCALE",
   "EXPORT-ARTWORK-SIZE-RELOAD-INPUT",
   "EXPORT-ARTWORK-QUESTION-ANSWER-STOP",
   "EXPORT-ARTWORK-AUDIO-PERMITTED",
@@ -37,6 +38,7 @@ const fixed={
   'EXPORT-CHOICE-CANCEL-FOCUS':{downloads:0,staticExamples:0},
   'EXPORT-CONTROLS-DEFAULT-OPERATIONS':{title:'検証用の作品',restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:true,singlePressWithinHalfSecondRuns:true},
   'EXPORT-CONTROLS-FINISHED':{bodiesEnded:'playerStop:■ 止める',bodiesState:'FINISHED',stopAll:'playerStop:■ 止める',stopAllState:'FINISHED',sentenceAfterStopAllSaid:false,afterStop:['playerStart:▶ 動かす','playerStart:▶ 動かす']},
+  'EXPORT-CONTROLS-SCALE':{small1366:true,small1920:true,large1920:true,large1366Fits:true},
   'EXPORT-ARTWORK-SIZE-RELOAD-INPUT':{noControls:true,nativeButtonAndKey:true},
   'EXPORT-ARTWORK-QUESTION-ANSWER-STOP':{answer:true,stop:true},
   'EXPORT-ARTWORK-AUDIO-PERMITTED':{automatic:true},
@@ -63,6 +65,7 @@ const fixed={
   'EXPORT-NO-AUDIO-DOES-NOT-WAIT':{automatic:true},
 };
 const extraKeys={
+  'EXPORT-CONTROLS-SCALE':['observed'],
   'EXPORT-CHOICE-NARROW-ONE-DOWNLOAD':['count','box'],
   'EXPORT-ARTWORK-SIZE-RELOAD-INPUT':['box'],
   'EXPORT-ARTWORK-AUDIO-PERMITTED':['starts'],
