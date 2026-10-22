@@ -775,11 +775,14 @@
       paintFrame = null;
       view?.clear();
     }
+    // 開いたら すぐに 動かす has no ▶ 動かす: when the question's ■ 止める stops it (LANGUAGE.md keeps 質問・回答・停止 there,
+    // and its run again is a reload of the page), the page says so instead of leaving a still stage with no word.
     function stopRun() {
       dispose();
       phase = 'STOPPED';
       flush();
       state();
+      if (artwork) message('止めたよ。もう一度 動かすときは、この ページを 読みこみなおしてね');
       (start || form).focus({ preventScroll: true });
     }
     async function audioActivation(localCache, attempt, gesture) {
