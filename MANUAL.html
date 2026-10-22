@@ -275,6 +275,9 @@ th,td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid #c
 th{background:#edf3fa;color:#233d5e}
 pre{max-width:100%;overflow-x:auto;tab-size:2}
 p,li,td,a{overflow-wrap:anywhere}
+/* Children's text breaks only at spaces and punctuation (LANGUAGE.md 子ども向けの文); a run longer than the line still wraps. Code keeps its own breaking. */
+p,li,td,th,dd,summary,h1,h2,h3,.lead,.card,.callout,.note,.reading-note,.ui-item,.category,.rule,.choice>div,.step,.ref,.scope>div{word-break:keep-all;overflow-wrap:anywhere}
+pre,code,kbd{word-break:normal}
 details{border:1px solid #cbd7e6;border-radius:12px;padding:14px 18px;margin:12px 0;background:#fbfdff}
 summary{font-weight:800;cursor:pointer;color:#234f93}
 .mini-label{font-size:.85rem;letter-spacing:.05em;font-weight:800;color:#355d87}
