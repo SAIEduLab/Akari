@@ -10,6 +10,7 @@ import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {editorAssetIds,verifyEditorAssets} from '../lib/feature-contract.mjs';
 import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView,shownView} from '../browser/cases/view-toggle.cjs';
 
 const [browserPath, output] = process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output), 'fresh feature evidence required');
@@ -38,7 +39,8 @@ const newWork = async p => {
   await p.evaluate(() => document.querySelector('#loseConfirmModal.show #loseConfirmProceed')?.click());
   await p.waitForFunction(() => document.querySelector('#uiLevel').value === 'entry');
   if (level !== 'entry') await p.locator('#uiLevel').selectOption(level);
-  if (mode === 'code' && level !== 'entry') await click(p, '#editorModecode');
+  // The one view toggle is pressed only when the other view is on the screen (final call 22).
+  if (mode === 'code' && level !== 'entry') await chooseView(p, 'code', {reveal});
 };
 const state = p => p.evaluate(() => ({project:JSON.stringify(Akari.app.project),assets:Akari.app.assetStore.ids(),history:Akari.app.editorState.history,redo:Akari.app.editorState.redo}));
 const current = p => p.evaluate(() => structuredClone(Akari.app.project.components.find(c => c.id === document.querySelector('#objectSelect').value)));
@@ -152,7 +154,7 @@ const cases = {
   },
   async 'paint-entry-empty-focus'(p) {
     for(const mode of ['code','blocks']) {
-      await click(p,'#editorMode'+mode);
+      await chooseView(p,mode,{reveal});assert.equal(await shownView(p),mode);
       assert.equal(await p.locator('#paintAdd').evaluate(e=>e.previousElementSibling.id),'imageObjectAdd');
       await open(p);assert.equal(await p.locator('#paintCommit').isDisabled(),true);
       assert.equal(await p.locator('#paintModal .dialog-body').evaluate(e=>e.scrollHeight<=e.clientHeight+1),true,'desktop drawing tools and canvas fit together');

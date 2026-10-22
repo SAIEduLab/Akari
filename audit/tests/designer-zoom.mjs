@@ -9,6 +9,7 @@ import {loadApi} from '../browser/cases/audit-lib.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {designerZoomIds, verifyDesignerZoom} from '../lib/feature-contract.mjs';
 import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 
 const [browserPath, output] = process.argv.slice(2);
 assert.ok(output && !fs.existsSync(output), 'fresh designer evidence required');
@@ -23,7 +24,8 @@ async function reveal(locator) {
   return locator;
 }
 async function select(p, id) { await (await reveal(p.locator('#objectSelect'))).selectOption(id); }
-async function mode(p, value) { await (async()=>{const control=p.locator('#editorMode' + value); await openBodyForTest(control.page()); return control.click();})(); await settle(p); }
+// The one view toggle is pressed only when the other view is on the screen (final call 22); the view asked for must show.
+async function mode(p, value) { await chooseView(p, value, {open: openBodyForTest}); await p.waitForFunction(v => document.body.dataset.editorMode === v, value); await settle(p); }
 async function size(p, width = 900, height = 600) {
   await select(p, 'stage');
   for (const [index, value] of [[1, width], [2, height]]) {
