@@ -5337,6 +5337,7 @@
         state: updateRunState,
       };
     }
+    const keptPictureMasks = new Map();
     function startRun() {
       if (!tutorialAllows(tutorial,'run')) return;
       if (modelLocked()) return;
@@ -5402,6 +5403,9 @@
         token = ++generationToken;
       $('#listRepairPanel')?.remove();
       runtimeCache = new AssetRuntimeCache(assetStore);
+      // A picture's outline grid depends only on its bytes, so the editor keeps the grids across runs (PERF-04): a second
+      // ▶ does not read every pixel again.
+      runtimeCache.maskByBytes = keptPictureMasks;
       try {
         if (req.needsAudio) runtimeCache.ensureAudioContext();
         appState = 'PREPARING';
