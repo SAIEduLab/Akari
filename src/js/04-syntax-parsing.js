@@ -2624,7 +2624,9 @@
         const variable=cmp&&[...(symbols?.project?.projectData?.variables||[]),...(symbols?.project?.components||[]).flatMap(c=>c.localData?.variables||[])].find(v=>v.name===cmp[2]);
         const text=cmp&&(cmp[2]==='答え'||(variable&&typeof variable.initialValue==='string'&&!/^－?-?[0-9０-９]+(?:[.．][0-9０-９]+)?$/.test(variable.initialValue)));
         const word=cmp?.[3];
-        if(text&&!dataNameKind(word,symbols,ctx)&&!(symbols?.project?.components||[]).some(c=>c.name===word)&&!knownWords(symbols,ctx).includes(word)&&!['空','空っぽ','からっぽ','カラッポ','偶数','奇数','コピー'].includes(word)){
+        // A word of あかり there (タイマー, よこのばしょ) is a value, not a word to quote: only a bare unknown name is.
+        const bareName=word&&(()=>{try{return parseExpression(word,symbols,ctx).kind==='VariableRead';}catch(error){if(!(error instanceof AkariError))throw error;return false;}})();
+        if(text&&bareName&&!dataNameKind(word,symbols,ctx)&&!(symbols?.project?.components||[]).some(c=>c.name===word)&&!knownWords(symbols,ctx).includes(word)&&!['空','空っぽ','からっぽ','カラッポ','偶数','奇数','コピー'].includes(word)){
           const at=(cmp[1]||'').length+cmp[2].length+1,source=code.slice(0,at)+'「'+word+'」'+code.slice(at+word.length);
           const fix=ctx.meijin?source:canonicalStatementSource(source,symbols),first=fix.split('\n')[0],example=first.includes('、')?first.slice(0,first.indexOf('、')+1):first;
           if(reads(source))throw sentenceDiagnostic(`${cmp[2]==='答え'?'答え':'文字'}と くらべる ことばは「 」で かこみます。れい：${example}`,line,[{label:'「 」で かこむ',source:fix}],{kind:'IfStatement'});
