@@ -2057,7 +2057,7 @@
   // 「〜にふれなくなったとき」: leaving is waited for inside the touch body. The heading names who touches as it was written;
   // a 名人 text names it in the wait too (its sentences have their subject), with a part of the work as the example
   // when none was written.
-  let bareNameLooking=false,unreadLooking=false;
+  let bareNameLooking=false,unreadLooking=false,chainLooking=false;
   function touchGoneMessage(phrase,symbols,meijin=false){
     const shown=touchShown(phrase.target),who=phrase.actor?.text||(meijin?(symbols?.project?.components||[]).find(c=>c.name!==phrase.target)?.name||'ねこ':null);
     const heading=(who?who+'が':'')+shown+'にふれたとき、',wait=(meijin?who+'が':'')+shown+'にふれなくなるまで待つ。';
@@ -2315,8 +2315,11 @@
       const known = unknown && (Object.values(MOVE_VERBS).some(verbs => verbs.includes(unknown[1])) || SENTENCE_TE_FORMS.some(([, verb]) => verb === unknown[1]));
       if (nameMessage && known && !dataNameKind(unknown[1], symbols, ctx))
         throw new AkariError('P201', `「${line.code}」は 読めません。書き方を たしかめてください。`, line.lineNo, 1);
+      // The word quoted is a whole word (F-26, FM2-05): a piece that begins inside a word (ずつ進む, どまわる, 倍にする,
+      // の速さで…) is not quoted; the sentence as written is.
+      const whole = unknown && /^(?:[\p{Script=Han}]|(?![ずどのにへをでがとだ])[\p{Script=Hiragana}ー])[^のにへをでが]*$/u.test(unknown[1]);
       if (nameMessage && unknown && !known && !dataNameKind(unknown[1], symbols, ctx))
-        throw new AkariError('P205', `「${unknown[1]}」という 文は あかりに ありません。「書ける ことば」から 近い 文を えらんでください`, line.lineNo, 1);
+        throw new AkariError('P205', `「${whole ? unknown[1] : writtenSentence(line)}」という 文は あかりに ありません。「書ける ことば」から 近い 文を えらんでください`, line.lineNo, 1);
       throw error;
     }
   }
@@ -2639,6 +2642,15 @@
           let source='',at=0;for(const m of mask.matchAll(kana)){const from=m.index+m[1].length;source+=code.slice(at,from)+KANA_DIRECTIONS[m[2]];at=from+m[2].length;}source+=code.slice(at);
           const word=KANA_DIRECTIONS[new RegExp(kana.source).exec(mask)[2]];
           nearIf(`向きは「${word}へ」のように 漢字で 書きます。れい：〔文〕`,'漢字で 書く',source,'MotionCommand');}}
+      // FM2-05: 10歩ずつ進む / 右に90どまわる / 大きさを2倍にする / 1秒に10歩の速さで前へ動き続ける (no 〜あいだ).
+      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(?:(前|後ろ)(?:へ|に))?([0-9０-９.．]+)歩ずつ(?:進む|すすむ|動く|うごく)$/d,code,mask))&&unread())
+        nearIf('前へ 動くときは「〔文〕」のように 書きます','「前へ〇歩進む」と 書く',`${p[0].text}${p[1]?.text||'前'}へ${p[2].text}歩進む`,'MotionCommand');
+      if((p=surfaceCapture(/^(.*?[0-9０-９.．）]+)(?:ど|ド)((?:まわる|回る|回って、.*|まわって、.*))$/d,code,mask))&&unread())
+        nearIf('角度は「90度」のように「度」と 書きます。れい：〔文〕','「度」と 書く',p[0].text+'度'+p[1].text,'MotionCommand');
+      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)大きさを([0-9０-９.．]+)倍に(?:する|かえる)$/d,code,mask))&&unread())
+        nearIf('大きさは「〔文〕」のように ％で 書きます','％で 書く',`${p[0].text}大きさを${Math.round(number(p[1].text)*100)}％にする`,'LooksCommand');
+      if(!ctx.meijin&&/(?:動き続ける|動かし続ける|うごきつづける|動きつづける)$/.test(mask)&&!/(?:あいだ|間)、|まで/.test(mask)&&unread())
+        throw sentenceDiagnostic('つづけて 動くときは、はじめに「〜あいだ、」を 書きます。れい：「右」キーがおされているあいだ、右へ1秒に200歩の速さで動き続ける',line,[],{kind:'ContinuousRule'});
       // 「やった」としゃべる: speaking is 言う (話す with a time).
       if((p=surfaceCapture(/^(.*?と)((?:[0-9０-９.．]+秒(?:間)?)?)(?:しゃべる|喋る)$/d,code,mask))&&unread())
         nearIf('話す ときは「〔文〕」と 書きます',p[1].text?'「話す」と 書く':'「言う」と 書く',p[1].text?`${p[0].text}${p[1].text}話す`:`${p[0].text}言う`,'Say');
@@ -2897,7 +2909,8 @@
     // fix when the place is a part, the mouse or a place of the screen.
     if(/のところ(?:へ|に)/.test(mask)&&(p=surfaceCapture(new RegExp('^((?:[^、。\\u0001]+?は、?)?)(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?('+[...MOVE_VERBS.here,...MOVE_VERBS.part].join('|')+')$','d'),code,mask))){
       const [who,before,target,after,verb]=p,name=target.text.replace(/^「(.*)」$/,'$1'),screen=screenPlaceSource(surfaceMask(target.text),symbols);
-      if(screen||after||!MOVE_VERBS.part.includes(verb.text)){
+      // A place with 、 in it is a chain (1秒待って、「ロケット」のところへ…): its clauses are looked at one by one below.
+      if(!/、/.test(surfaceMask(target.text))&&(screen||after||!MOVE_VERBS.part.includes(verb.text))){
         const found=partPlaceGuidance(target.text,(before||after)?.text,verb.text,!!after,symbols),source=who.text+found.source;
         const known=screen||name==='マウス'||symbols?.project?.components?.some(c=>c.name===name);
         throw sentenceDiagnostic(found.message,line,known&&reads(source)?[{label:found.label,source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});
@@ -2914,6 +2927,35 @@
     {const after=/^(?!もし)([^、。]+?)(んだら|ったら|いたら|いだら|したら|えたら|けたら|めたら|れたら|せたら|ねたら|てたら)、(.+)$/.exec(mask);
       if(after){const head=code.slice(0,after[1].length),rest=code.slice(after[1].length+after[2].length+1),te=head+after[2].replace(/たら$/,'て').replace(/だら$/,'で')+'、'+rest;
         if(reads(te))throw fixed(ctx.meijin?'「〜したら、」は 読みません。じゅんに するときは「〜して、」で つなぎます。そう なるのを 待つときは「〜になったら、」と 書きます':'「〜たら」は「もし」の 文で 使います。じゅんに するときは「〜して、」で つなぎます',te,'「〜して、」で つなぐ','Sequence');}}
+    // A 「〜して、」 chain that does not read (R2-B-04): each clause is looked at on its own, in its own words, as a sentence
+    // of its own would be; a fix for a clause is offered for the whole line, the clause keeping its て-form.
+    // Only the clause forms whose line-wide checks would point the wrong way are looked at (ゆっくり, a time after the
+    // angle or the place), so an ordinary chain is read once (PERF-02).
+    if(!chainLooking&&mask.includes('、')&&/ゆっくり|度、?[^、。]*?秒(?:間)?(?:かけて|で)|のところ(?:へ|に)、?[^、。]*?秒(?:間)?(?:かけて|で)/.test(mask)){
+      const clauses=[];let start=0;
+      for(let i=0;i<mask.length;i++){
+        if(mask[i]!=='、')continue;
+        const head=mask.slice(start,i),pair=SENTENCE_TE_FORMS.find(([te])=>head.length>te.length&&head.endsWith(te));
+        if(!pair||/(?:を(?:わたし|渡し)て|として)$/.test(head)||new RegExp('^(?:'+LEAD_WORDS+')$').test(head)||/(?:たずねて|聞いて|きいて)$/.test(head))continue;
+        clauses.push({start,end:i,pair});start=i+1;
+      }
+      let whole=null;
+      if(clauses.length&&start<code.length){chainLooking=true;try{whole=reads(code);}finally{chainLooking=false;}}
+      if(clauses.length&&start<code.length&&!whole){
+        clauses.push({start,end:code.length,pair:null});
+        const dictionary=(text,pair)=>pair[0]==='行って'&&!/(?:手順|てじゅん)を行って$/.test(text)?text.slice(0,-3)+'行く':pair[0]==='いって'&&/[へに]いって$/.test(text)?text.slice(0,-3)+'いく':text.slice(0,-pair[0].length)+pair[1];
+        const teOf=text=>/行く$/.test(text)?text.slice(0,-2)+'行って':/いく$/.test(text)?text.slice(0,-2)+'いって':(()=>{const back=SENTENCE_TE_FORMS.find(([,plain])=>text.endsWith(plain));return back?text.slice(0,-back[1].length)+back[0]:null;})();
+        for(const clause of clauses){
+          const text=code.slice(clause.start,clause.end),plain=clause.pair?dictionary(text,clause.pair):text;
+          const part=surfaceLineSlice(line,clause.start,clause.end,plain);part.indent=line.indent;
+          let found=null;chainLooking=true;
+          try{diagnoseSentenceIntent(part,symbols,ctx);}catch(error){if(!(error instanceof AkariError))throw error;found=error;}finally{chainLooking=false;}
+          if(!found||found.code!=='P205')continue;
+          const fix=found.proposals?.[0],rewritten=fix?(clause.pair?teOf(fix.source):fix.source):null,source=rewritten?code.slice(0,clause.start)+rewritten+code.slice(clause.end):null;
+          throw sentenceDiagnostic(found.message,line,source&&reads(source)?[{label:fix.label,source}]:[],found.draftRole||null);
+        }
+      }
+    }
     // ゆっくり10歩進む (ゆっくり10 was read as a name): slowly is a time to take.
     if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(?:(前|後ろ|右|左|上|下)(?:へ|に))?ゆっくり(?:と)?(?:(前|後ろ|右|左|上|下)(?:へ|に))?([0-9０-９.．]+)歩(?:進む|すすむ|動く|うごく|歩く|あるく)$/d,code,mask))){
       const way=p[1]?.text||p[2]?.text||'前',facing=['前','後ろ'].includes(way),slow=`${p[0].text}1秒かけて、${facing?'':'いまのばしょから、'}${way}へ${p[3].text}歩${way==='前'?'進む':'動く'}`;
