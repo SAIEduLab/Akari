@@ -2187,6 +2187,7 @@
       const actions = $('.prop-actions');
       if (actions) (block ? $('#componentActions') : el.props).prepend(actions);
       $('#formatBtn').hidden = block || currentIsMeijin();
+      syncWideInert();
       syncPropertyScrollPadding();
       // The level list follows the view (blocks or code); a view in code at はじめて goes on at かんたん.
       if (applyUiLevel(mode)) renderHints();
@@ -2285,7 +2286,18 @@
       setStageEnlarged(false);
     }, true);
     // With the workspace made wide, the stage stays small at the bottom right; pressing it brings the columns back.
-    $('#stageThumbnail').onclick = () => $('#blockEditor [data-blockui-action="workspace-expand"]')?.click();
+    // 画面も見る brings the columns back and gives the focus to 作業台を広く, which made them go (AX-05).
+    $('#stageThumbnail').onclick = () => {
+      const toggle = $('#blockEditor [data-blockui-action="workspace-expand"]');
+      toggle?.click(); toggle?.focus({ preventScroll: true });
+    };
+    // In wide mode the thumbnail stands for the small stage behind it: the stage and its handles are no Tab stops then.
+    // The run screen and the code view do not use wide mode.
+    function syncWideInert() {
+      const wrap = $('#designerWindow > .designer-wrap');
+      if (wrap) wrap.inert = document.body.dataset.workbenchWide === 'true' && document.body.dataset.editorMode === 'blocks' &&
+        !document.body.classList.contains('runtime') && !document.body.classList.contains('stage-enlarged');
+    }
     $('#stageZoomOut').onclick = () => setStageZoom(visibleStageScale - 0.1);
     $('#stageZoomIn').onclick = () => setStageZoom(visibleStageScale + 0.1);
     $('#stageZoomReset').onclick = () => setStageZoom(1);
@@ -2524,6 +2536,10 @@
       // screen (DESIGN, IMPORTING) shows ▶ 動かす only, the run screen ■ 止める only, in the same place.
       document.body.classList.toggle('runtime', ['PREPARING', 'RUNNING', 'PAUSED'].includes(appState));
       document.body.classList.toggle('run-finished', runFinished);
+      syncWideInert();
+      // はじめて's run screen shows the blocks to read only: they are not Tab stops between the stage and ■ 止める (AX-11).
+      const world = $('#blockEditor .blockui-world');
+      if (world) world.inert = document.body.dataset.uiLevel === 'entry' && ['PREPARING', 'RUNNING', 'PAUSED'].includes(appState);
       if (locked && appState !== 'IMPORTING') closeEditingModals();
       if (mainEditor.view) renderEditorBinding(mainEditor);
       updateDirty();
@@ -7805,6 +7821,7 @@
                 const expanded = document.body.dataset.workbenchWide !== 'true';
                 document.body.dataset.workbenchWide = String(expanded);
                 $('#stageThumbnail').hidden = !expanded;
+                syncWideInert();
                 requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
                 return expanded;
               }
