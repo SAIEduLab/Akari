@@ -4748,11 +4748,16 @@
         const events = ['start', 'click', 'keyDown', 'message', 'backdropChanged',
           ...(type === 'input' ? ['valueChanged'] : []), ...(type === 'sprite' ? ['cloneStart'] : []),
           ...(type && type !== 'stage' ? ['touchStart'] : []), ...(type === 'stage' ? ['conditionTrue', 'interval'] : [])];
+        // A later heading of a body saved without unit IDs keeps the key analysis gives it:
+        // script:document:<the body's key>:unit:<n>, where the body's key is script:<id> or script:<owner>:<event>.
+        const documentUnit = parts[1] === 'document' && parts[2] === 'script' && parts.at(-2) === 'unit' &&
+          /^[1-9][0-9]{0,4}$/.test(parts.at(-1)) && parts.at(-1) !== '1' &&
+          ((parts.length === 6 && safeId(parts[3])) || (parts.length === 7 && ownerIds.has(parts[3]) && /^[A-Za-z]{1,32}$/.test(parts[4])));
         if (
           typeof item.key !== 'string' ||
           !ownerIds.has(item.ownerId) ||
           (item.key.startsWith('script:')
-            ? !((parts.length === 2 && safeId(parts[1]) && item.id === parts[1] &&
+            ? !((((parts.length === 2 && safeId(parts[1])) || documentUnit) && item.id === parts.slice(1).join(':') &&
                 item.targetId === item.ownerId && events.includes(item.event)) ||
               (parts.length === 3 && parts[1] === item.ownerId && events.includes(parts[2])))
             : definitionKeys.get(item.key)?.ownerId !== item.ownerId) ||
