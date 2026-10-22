@@ -1150,7 +1150,8 @@ button:focus-visible {
   font-size: 12px;
 }
 .dirty-state.dirty {
-  color: #a56800;
+  /* 5.6:1 on the status line (the 12 px note 「ファイルに まだ ほぞんしていないよ」). */
+  color: #8f5a00;
   font-weight: 700;
 }
 .diagnosis-summary {
@@ -2723,6 +2724,10 @@ body[data-editor-mode] :is(select, input:not([type="checkbox"]):not([type="radio
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
+/* On the code view's orange toolbar the ring is darker, so it stands out from the whole gradient (4.5:1 or more). The
+   level and the name need the ids to outweigh the rule above (its :is() counts the ids of #codeEditor・#callableCode). */
+body[data-editor-mode="code"] .menutool :is(button, summary):focus-visible,
+body[data-editor-mode="code"] #app > .menutool :is(#uiLevel, #projectName):focus-visible { outline-color: #6b3a0f; }
 body[data-editor-mode] .menutool > button {
   height: 36px;
   border-radius: 10px;
@@ -3030,7 +3035,8 @@ body[data-editor-mode] .editor-shell {
 body[data-editor-mode] .line-gutter {
   background: #f4eadf;
   border-color: var(--line);
-  color: #ad9a84;
+  /* The line numbers are read (「3行目」 in the messages): 4.6:1 on the gutter. */
+  color: #7a6650;
 }
 body[data-editor-mode] #codeEditor {
   color: #3b332c;
@@ -5169,7 +5175,7 @@ body.runtime #formSurface .design-resize-outline,
   position: relative;
 }
 .color-preset[aria-pressed="true"] .color-chip::after {
-  content: "\2713";
+  content: "\2713" / "";
   position: absolute;
   right: -5px;
   bottom: -5px;
@@ -6025,7 +6031,8 @@ body.runtime .menutool > .mode-blocked-note { display: none !important; }
 body.runtime .run-strip { container: run-strip / inline-size; display: flex; flex: none; flex-wrap: wrap; align-items: center; align-content: center; gap: 4px 10px; min-width: 0; padding: 6px 10px; font-size: 14px; line-height: 21px; color: var(--dark, #283e50); }
 .run-strip > .exec-location { flex: 0 1 auto; box-sizing: border-box; min-width: 0; max-width: 65%; height: 21px; color: var(--muted, #536273); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .exec-sentence { flex: 1 1 0; box-sizing: border-box; min-width: 0; height: 29px; padding: 2px 10px; border: 1px solid var(--line-strong, #bbcddc); border-radius: 8px; background: #fff; font-size: 15px; font-weight: 600; line-height: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.exec-sentence[hidden] { display: block; visibility: hidden; }
+/* The empty box keeps its place: this wins over the page-wide [hidden] { display: none !important }. */
+.run-strip > .exec-sentence[hidden] { display: block !important; visibility: hidden; }
 body[data-ui-level="entry"] .run-strip > .exec-location { max-width: 45%; }
 @container run-strip (max-width: 759px) {
   body:not([data-ui-level="entry"]) .run-strip > :is(.exec-location, .exec-sentence) { flex: 1 0 100%; max-width: none; }
@@ -6073,9 +6080,13 @@ body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryEvents { grid-row
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryOutside { grid-row: 3; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #tutorialGuide { grid-row: 4; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > .source-nav { grid-row: 5; grid-column: 1; align-self: stretch; align-items: flex-start; }
-/* When the row wraps at a narrow width, もとにもどす・やり直す keep their one-line labels. */
-body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar > :is(#undoBtn, #redoBtn) { flex: none; white-space: nowrap; }
+/* When the row wraps at a narrow width, もとにもどす・やり直す (and はじめに もどす) keep their one-line labels. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar > button { flex: none; white-space: nowrap; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar { grid-row: 5; grid-column: 2; justify-content: flex-end; flex-wrap: wrap; }
+/* The two groups do not fit side by side (placeSourceRow in installEditorShell): もとにもどす… take the row under
+   すべての本文…, so neither lies under the other. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-row-wrap="true"] > .source-nav { grid-column: 1 / -1; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-row-wrap="true"] > .debugbar { grid-row: 6; grid-column: 1 / -1; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #sourceOverview { grid-row: 6; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-overview="true"] > #sourceOverview { grid-row: 9; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #editorPending { grid-row: 7; }
@@ -6085,6 +6096,10 @@ body[data-editor-mode="blocks"]:not(.runtime) .codewin > #blockEditor { grid-row
 body[data-editor-mode="blocks"] #blockEditor .blockui-layout { min-height: 300px; }
 
 
+/* The ✓ of the chosen event button is for the eye: aria-pressed already says which one is chosen, so its name does
+   not read it. */
+body[data-ui-level="entry"] #entryEvents button[aria-pressed="true"]::before { content: '✓ ' / ''; }
+
 /* はじめて while running: the stage takes the large column; the ブロックの一覧 is put away and the built blocks stay.
    On a narrow screen the stage column stays inside the window (100% less the 10 px column gap). The キャラクター・部品
    list under the stage is no higher than on the edit screen (170 px) and scrolls inside, so a work with many parts
@@ -6092,6 +6107,9 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-layout { min-height: 300px
 body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr) clamp(min(420px, 100% - 10px), 56vw, 820px); }
 body[data-ui-level="entry"].runtime[data-editor-mode] .main > .side { max-height: 170px; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-palette { display: none !important; }
+/* 作業台を広く／画面も見る has no use while the work runs: not shown, its room kept (final call 21), so ■ 止める gives back
+   the layout the child left. */
+body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor [data-blockui-action="workspace-expand"] { visibility: hidden !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layout { grid-template-columns: minmax(0, 1fr) !important; }
 /* On a narrow screen there is no room for a second column: はじめて's run screen is one column, the stage (with the
    strip that shows the running sentence) and then the part list, as at かんたん; the blocks come back after ■ 止める.
@@ -6180,6 +6198,18 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
   padding: 0 6px; border: 1px solid #0002; border-radius: 13px; background: #ffffffb3; font-weight: 700; line-height: 1; color: inherit;
 }
 .blockui-world .blockui-extra[open] > summary { background: #fff; border-color: #6c8ca5; }
+/* 「…」 opens its panel over the workspace, right under the block's face and as wide as it (where it would be in the
+   flow), as ほかのそうさ opens its list (E-12): the blocks below keep their places. While it is open, its block lies
+   above the others and the places between blocks do not take presses. */
+.blockui-world .blockui-node-main:has(> .blockui-extra[open]) { position: relative; }
+.blockui-world .blockui-extra[open] { flex-basis: auto; }
+.blockui-world .blockui-extra[open] > .blockui-extra-controls {
+  position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 2px); box-sizing: border-box; min-width: min(220px, 100%);
+  padding: 8px 10px; background: #fff; border: 1px solid #9db3c5; border-radius: 9px; box-shadow: 0 3px 10px #12324d26;
+}
+.blockui-world .blockui-body:has(.blockui-extra[open]) { z-index: 2; }
+.blockui-world .blockui-node:has(.blockui-extra[open]) { z-index: 110; }
+.blockui-world .blockui-body:has(.blockui-extra[open]) > .blockui-insertion { pointer-events: none; }
 .blockui-world .blockui-subject-text { font-weight: 700; }
 .blockui-world .blockui-value-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
 .blockui-world .blockui-value-row > .blockui-slot-label { min-width: 4em; font-size: 12px; font-weight: 500; }
@@ -6336,6 +6366,14 @@ body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
   /* The rows above the body and はじめて's event buttons are pressed by a finger too (AX-07). */
   body[data-editor-mode] .codewin > :is(.code-head, .source-nav, #entryEvents) :is(button, select) { min-height: 40px !important; }
   body[data-editor-mode] .menutool > button { min-width: 40px; }
+  /* So are the bars' buttons (もとにもどす・やり直す, はじめに もどす, コードを整える, and the run screen's ⏸／▶ つづける,
+     1つずつ 動かす, 本文を見て たしかめる) and はじめて's もとにもどす・やり直す in the toolbar. */
+  body[data-editor-mode] :is(.debugbar, #entryRunControls) button,
+  body[data-editor-mode] .menutool > :is(#undoBtn, #redoBtn) { min-height: 40px !important; }
+  /* The title row of せってい and 動きのようす is as high as its 40 px toggle (▸ せってい, ▸ 動きのようす), and a folded
+     section as high as its title, so a finger can press all of the toggle. */
+  body[data-editor-mode="blocks"] .side > :is(.properties-window, .monitor-window) > .win-title:has(> .blockui-side-toggle) { height: auto; min-height: 40px; }
+  body[data-editor-mode="blocks"] .side > .blockui-side-folded { flex-basis: auto; min-height: 0; }
 }
 
 /* 大きく見る (E-21): the stage at 100% laid over the page with a dim backdrop; 「もどる」 or Escape gives back the layout. */
@@ -6380,7 +6418,8 @@ body[data-ui-level="entry"][data-editor-mode="blocks"][data-workbench-wide="true
 }
 #stageThumbnail[hidden] { display: none; }
 #stageThumbnail:focus-visible { outline: 3px solid #10324f; outline-offset: 1px; box-shadow: 0 0 0 5px #fff; }
-body:not([data-workbench-wide="true"]) #stageThumbnail, body.runtime #stageThumbnail { display: none; }
+/* The thumbnail stands for the small stage of wide mode in the block view only: the code view shows the whole stage. */
+body:not([data-workbench-wide="true"]) #stageThumbnail, body:not([data-editor-mode="blocks"]) #stageThumbnail, body.runtime #stageThumbnail { display: none; }
 /* The small stage takes the right end of the workspace: the navigation strip ends left of it and the blocks wrap
    before it, so it covers no button and no block (E-21). */
 @media (min-width: 761px) {
@@ -12521,7 +12560,10 @@ function createAkariExtensionHost(options) {
     function validProducerLabel(value) {
       return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9.+_-]{0,79}$/.test(value);
     }
-    function restoreExecutable(data) {
+    // packed (only when a file is made, generateStandaloneHtml): the file's assets by id, each with the record whose bytes
+    // were hashed while packing and the text made from them. An asset whose text is that same text is not decoded and
+    // hashed again; every other check still runs. The player passes nothing and checks every asset.
+    function restoreExecutable(data, { packed = null } = {}) {
       const fail = (message) => {
         throw new AkariError('X602', message);
       };
@@ -12719,10 +12761,12 @@ function createAkariExtensionHost(options) {
         )
           fail('絵や音の しゅるいが 正しくありません');
         total += a.byteLength;
-        if (total > LIMITS.assetRawTotal || decodedBase64Length(a.dataBase64) !== a.byteLength)
+        const known = packed?.get(a.id),
+          checked = !!known && known.text === a.dataBase64 && known.record?.sha256 === a.sha256 && known.record.byteLength === a.byteLength;
+        if (total > LIMITS.assetRawTotal || (!checked && decodedBase64Length(a.dataBase64) !== a.byteLength))
           fail('絵や音の 大きさが 正しくありません');
-        const bytes = decodeBase64(a.dataBase64);
-        if (sha256Fallback(bytes) !== a.sha256)
+        const bytes = checked ? known.record.bytes : decodeBase64(a.dataBase64);
+        if (!checked && sha256Fallback(bytes) !== a.sha256)
           fail('絵や音の 中身が こわれています');
         store.addImmutable({
           id: a.id,
@@ -27654,7 +27698,8 @@ function createAkariExtensionHost(options) {
             availableHeight: scaleParent.clientHeight -
               parseFloat(style.paddingTop || 0) - parseFloat(style.paddingBottom || 0),
           })
-        : Math.min(1, Math.max(1, available) / width);
+        : Math.min(1, Math.max(1, available) / width,
+            options.availableHeight ? Math.max(1, options.availableHeight()) / height : 1);
       scaleTarget.style.transform = 'scale(' + scale + ')';
       viewport.style.width = width * scale + 'px';
       viewport.style.height = height * scale + 'px';
@@ -28575,6 +28620,14 @@ function createAkariExtensionHost(options) {
             return document.documentElement.clientWidth - parseFloat(page.paddingLeft || 0) - parseFloat(page.paddingRight || 0) -
               parseFloat(box.borderLeftWidth || 0) - parseFloat(box.borderRightWidth || 0);
           },
+          // The height is the window's below the title and the buttons: a stage too tall for it shrinks until both its
+          // width and its height fit (LANGUAGE.md: the ▶ export 「同じ縮尺処理を使います」).
+          availableHeight: () => {
+            const page = getComputedStyle(root), box = getComputedStyle(form.closest('.player-stage')), header = root.querySelector('header');
+            return document.documentElement.clientHeight - parseFloat(page.paddingTop || 0) - parseFloat(page.paddingBottom || 0) -
+              (header ? header.offsetHeight + parseFloat(getComputedStyle(header).marginBottom || 0) : 0) -
+              parseFloat(box.borderTopWidth || 0) - parseFloat(box.borderBottomWidth || 0);
+          },
         }),
         getProject: () => session.project,
         getRuntime: () => runtime,
@@ -28594,6 +28647,9 @@ function createAkariExtensionHost(options) {
         },
         onValueDetails: value => message((typeof value === 'string' ? 'ふきだしの 文 ぜんぶ：' : '数を 短くして 見せているよ。もとの 数：') + core.valueText(value)),
       });
+      // When the title or the status line takes another row (a narrow window), the stage fits again below it.
+      const header = root.querySelector('header');
+      if (header && typeof ResizeObserver === 'function') new ResizeObserver(() => view.fitStage()).observe(header);
       flush();
       phase = 'READY';
       state();
@@ -28693,11 +28749,14 @@ function createAkariExtensionHost(options) {
   function generateStandaloneHtml(project, assetStore = new AssetStore(), { presentation = 'controls' } = {}) {
     if (!['controls', 'artwork'].includes(presentation)) throw new AkariError('X605', '作品のはじめ方が正しくありません');
     const artwork = presentation === 'artwork';
+    assetStore = withDefaultMascotAsset(project, assetStore || new AssetStore());
     const payload = packExecutable(project, assetStore),
       payloadJson = inlineJson(payload),
       title = escapeHtmlText(payload.project.name);
-    // The file is made only when its player would open it: the same check the player runs on the same JSON.
-    AKARI_RUNTIME.restoreExecutable(JSON.parse(payloadJson));
+    // The file is made only when its player would open it: the same check the player runs on the same JSON. Packing
+    // has just hashed each asset's bytes and written its text, so that text is not decoded and hashed a second time.
+    AKARI_RUNTIME.restoreExecutable(JSON.parse(payloadJson),
+      { packed: new Map(payload.assets.map(a => [a.id, { text: a.dataBase64, record: assetStore.get(a.id) }])) });
     const definitions = EXTENSION_HOST.exportDefinitions();
     const selected = AKARI_RUNTIME.profiles.describe();
     const configuration = `{extensions:[${definitions.map(x => `{manifest:${inlineJson(x.manifest)},factory:(${x.factorySource})}`).join(',')}],profiles:${inlineJson(selected.profiles.map(({id,version,limits})=>({id,version,limits})))},profile:${inlineJson(selected.selected ? {id:selected.selected.id,version:selected.selected.version} : null)},allowedCapabilities:${inlineJson(FOUNDATION_CONFIGURATION.allowedCapabilities || [])}}`;
@@ -28721,6 +28780,8 @@ function createAkariExtensionHost(options) {
       // No dots before the first paint either (renderStage paints the backdrop alone).
       '\n#formSurface{background-image:none}' +
       (artwork ? '\nhtml,body{background:transparent}#playerRoot{min-width:0;max-width:none;margin:0;padding:0}.player-stage{position:relative;max-width:none;overflow:visible;border:0;border-radius:0;background:transparent}.stage-viewport{margin:0!important}#playerActivation{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1000;background:transparent}#playerActivation[hidden]{display:none}#playerActivate{border:2px solid #000;border-radius:12px;background:#fff;color:#000;opacity:1;max-width:100%;padding:12px 18px;font-weight:700}#playerOutput{max-width:100vw}' : '') +
+      // On a touch screen the player's buttons are 40 px tall, as the editor's are.
+      '\n@media(pointer:coarse){.player-controls button,.question-controls button{min-height:40px}}' +
       '</style>\n</head>\n<body>\n' +
       '<main id="playerRoot">' + (artwork ? '' : '<header><h1 id="playerTitle">' +
       title +
@@ -30274,7 +30335,7 @@ function createAkariExtensionHost(options) {
     '四捨五入':'ししゃごにゅう','自然対数':'しぜんたいすう','常用対数':'じょうようたいすう','何文字目':'なんもじめ',
     '切り上げ':'きりあげ','切り捨て':'きりすて','繰り返す':'くりかえす','繰り返し':'くりかえし','追いかける':'おいかける',
     '分かれ道':'わかれみち','見えなく':'みえなく','出てくる':'でてくる','右回り':'みぎまわり','左回り':'ひだりまわり',
-    '非表示':'ひひょうじ','周波数':'しゅうはすう','文字数':'もじすう','絶対値':'ぜったいち','平方根':'へいほうこん',
+    '非表示':'ひひょうじ','周波数':'しゅうはすう','音楽':'おんがく','文字数':'もじすう','絶対値':'ぜったいち','平方根':'へいほうこん',
     '逆正弦':'ぎゃくせいげん','逆余弦':'ぎゃくよげん','逆正接':'ぎゃくせいせつ','何番目':'なんばんめ','持ち物':'もちもの',
     '見た目':'みため','大きさ':'おおきさ','小さく':'ちいさく','小さい':'ちいさい','大きく':'おおきく','新しい':'あたらしい',
     '近づく':'ちかづく','落ちる':'おちる','消える':'きえる','増やす':'ふやす','減らす':'へらす','見せる':'みせる',
@@ -30328,8 +30389,12 @@ function createAkariExtensionHost(options) {
     if (direction.length === 1 && /行[くき]|い[くき]|進[むみ]|すす[むみ]|動[くきか]|うご[くきか]|移動/.test(q)
       && !/回|まわ|向[くき]|む[くき]/.test(q))
       return {schemaId:'MotionCommand:MOVE_BY', direction:direction[0][0]};
-    if (/小さ|ちいさ|縮小|縮め/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:50};
-    if (/大きく|おおきく|拡大/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:150};
+    // 音を小さく／大きく is the sound's 大きさ. A comparison (より小さい) and the pen's 太さ are found by their own words.
+    const smaller = /小さ|ちいさ|縮小|縮め/.test(q), larger = /大きく|おおきく|拡大/.test(q),
+      other = /より|くらべ|比べ|ぺん|太さ|ふとさ/.test(q);
+    if ((smaller || larger) && /音|おと/.test(q)) return {schemaId:'SoundCommand:SET_VOLUME', scale:smaller ? 50 : 100};
+    if (smaller && !other) return {schemaId:'LooksCommand:SET_SCALE', scale:50};
+    if (larger && !other) return {schemaId:'LooksCommand:SET_SCALE', scale:150};
     if (/(?:番目|ばんめ)/.test(q) && /入[れる]|いれ|挿入|そうにゅう/.test(q) && !/置き換|おきか|替え/.test(q)) {
       const match = q.match(/(\d+)(?:番目|ばんめ)/), index = match ? Number(match[1]) : null;
       return {schemaId:'ListInsert', ...(Number.isSafeInteger(index) && index >= 1 ? {index} : {})};
@@ -30482,10 +30547,12 @@ function createAkariExtensionHost(options) {
           candidateKey:hint.id, candidateReason:hint.reason}); boundSchemas.add(schema.id);
       } catch (_) { /* An unavailable incomplete hint remains visible through the generic schema. */ }
     }
+    // The block of the intent comes first, set as asked; the blocks the words name stay after it (E-13: 小さい finds より小さい too).
     for (const schema of schemas) {
       if (boundSchemas.has(schema.id)) continue;
-      if (!(intent ? schema.id === intent.schemaId : matchesSearch(blockPaletteSearchText(schema), query))) continue;
-      const configured = intent && (intent.direction || intent.scale !== undefined || intent.index !== undefined);
+      const intended = intent && schema.id === intent.schemaId;
+      if (!intended && !matchesSearch(blockPaletteSearchText(schema), query)) continue;
+      const configured = intended && (intent.direction || intent.scale !== undefined || intent.index !== undefined);
       out.push(configured ? {...schema, candidateNode:configureSearchNode(createBlock(schema.id, {
         draft:schema.inputs.some(s=>s.type==='target'), allowHoles:true}), intent)} : schema);
     }
@@ -30516,7 +30583,7 @@ function createAkariExtensionHost(options) {
         ...((BLOCK_SEARCH_SYNONYMS[schema.id] || BLOCK_SEARCH_SYNONYMS[schema.kind]) || [])].filter(Boolean).map(searchReading);
       return Math.min(2, ...words.flatMap(word => own.map(text => found(text, word))));
     };
-    const rank = schema => { const q = quality(schema); return (q === 2 ? 60 : 0) + (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 30) + (q ? 10 : 0) + wordStart(schema); };
+    const rank = schema => { if (intent && schema.id === intent.schemaId) return -1; const q = quality(schema); return (q === 2 ? 60 : 0) + (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 30) + (q ? 10 : 0) + wordStart(schema); };
     out.splice(0, out.length, ...out.map((schema, i) => ({ schema, i, r: rank(schema) })).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.schema));
     // A key named in the search (スペース, エンター …): the blocks that wait for it, repeat until it is pressed and read it
     // come first, with that key (F2-11).
@@ -30527,7 +30594,7 @@ function createAkariExtensionHost(options) {
     }
     // The continuous rule is no statement: search finds it too, and the palette puts it in the body's rules.
     const rule = BLOCK_SCHEMA_BY_ID.get('ContinuousRule');
-    if (rule && !intent && matchesSearch(blockPaletteSearchText(rule), query)) out.splice(holdFirst(rule.id, query) ? 0 : out.length, 0, rule);
+    if (rule && matchesSearch(blockPaletteSearchText(rule), query)) out.splice(holdFirst(rule.id, query) ? 0 : out.length, 0, rule);
     return out;
   }
 
@@ -30539,8 +30606,8 @@ function createAkariExtensionHost(options) {
     'MotionCommand:MOVE': ['進む', 'すすむ', '前へ', '後ろへ', 'まっすぐ', '歩く', 'あるく', '動く', 'うごく', '移動'],
     'MotionCommand:GOTO': ['行く', 'いく', 'ばしょ', '場所へ行く', '決めたばしょ', '座標', '移動', '左下のはし', 'もどる', '戻る'],
     'MotionCommand:GOTO_PART': ['ところへ行く', '行く', 'いく', 'マウス', '追いかける', 'ついていく', '近づく', 'ばしょ', '移動'],
-    'MotionCommand:TURN_RIGHT': ['右回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
-    'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
+    'MotionCommand:TURN_RIGHT': ['右回り', '右へ回る', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
+    'MotionCommand:TURN_LEFT': ['左回り', '左へ回る', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
     'MotionCommand:BOUNCE': ['はね返る', 'はねかえる', 'はねる', 'かべ', 'ぶつかる'],
     CompareExpression: ['くらべる', '比べる'],
     // 以上・以下 read as their code (F2-03); the older face words and the readings still find them.
@@ -30576,9 +30643,12 @@ function createAkariExtensionHost(options) {
     VariableRead: ['変数', '値', '読む', 'スコア'],
     Broadcast: ['合図', 'メッセージ', '知らせる', 'しらせる', 'つたえる'],
     BroadcastAndWait: ['合図', 'メッセージ', '知らせる', 'しらせる', 'つたえる'],
-    // ドレミ and its names (ド・レ・ミ・ファ・ソ・ラ・シ) lead to the Hz tone, as the work check guides them.
-    'SoundCommand:TONE_WAIT': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
-    'SoundCommand:TONE': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
+    // ドレミ and its names (ド・レ・ミ・ファ・ソ・ラ・シ) lead to the Hz tone, as the work check guides them. 鳴る and 音楽
+    // lead to every block that plays a sound.
+    'SoundCommand:TONE_WAIT': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ', '鳴る', '音楽'],
+    'SoundCommand:TONE': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ', '鳴る', '音楽'],
+    'SoundCommand:SAMPLE_WAIT': ['鳴る', '音楽'],
+    'SoundCommand:SAMPLE': ['鳴る', '音楽'],
     // Pressing with the mouse or a finger (クリック, タッチ) and holding a key.
     'SensorRead:マウスが押されている': ['クリック', 'タッチ', 'おす', '押す'],
     'EventCount:click': ['クリック', 'タッチ', 'おす', '押す'],
@@ -30955,6 +31025,7 @@ function createAkariExtensionHost(options) {
       // An input's mistake is shown right under the field, in the floating 決める and やめる (E-12).
       fieldError = E('p', 'blockui-field-error', '', { id: viewId + '-field-error' });
     controls.append(fieldError, destinationLabel, commitButton, cancelButton);
+    commitButton.style.pointerEvents = cancelButton.style.pointerEvents = 'auto';
     root.append(controls, messageBox);
     const layout = E('div', 'blockui-layout'),
       palette = E('aside', 'blockui-palette', null, {
@@ -30972,14 +31043,15 @@ function createAkariExtensionHost(options) {
         'aria-label': '作業台の見え方',
       });
     const zoomLabel = button('100%', 'zoom-reset', () => setZoom(1), {
-      'aria-label': '大きさを100%に もどす',
+      'aria-label': '作業台を 100%に もどす',
     });
-    // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back.
+    // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back. They are named by what they zoom,
+    // apart from the stage's 「大きく見る」 and as its own 「作品画面を 大きく」 (Y2-08).
     const minus = button('−', 'zoom-out', () => setZoom(blockZoomStep(zoom, -1)), {
-        'aria-label': '小さく見る',
+        'aria-label': '作業台を 小さく',
       }),
       plus = button('＋', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
-        'aria-label': '大きく見る',
+        'aria-label': '作業台を 大きく',
       });
     // The workspace goes back to its top-left corner: 「さいしょへ」 (F-22).
     const home = button('さいしょへ', 'workspace-home', () => {
@@ -31021,6 +31093,7 @@ function createAkariExtensionHost(options) {
           '作業台を広く',
           'workspace-expand',
           () => {
+            if (isLocked()) return;
             const expanded = options.onExpand();
             wide.textContent = expanded
               ? '画面も見る'
@@ -31499,7 +31572,7 @@ function createAkariExtensionHost(options) {
       return session()?.blockDraft ? '入れるのを やめる' : pending ? '入力を やめる' : replacement || moving ? 'もっていくのを やめる' : '入れるのを やめる';
     }
     function cancel() {
-      const stopped = cancelLabel().replace(/やめる$/, 'やめたよ');
+      const stopped = cancelLabel().replace(/やめる$/, 'やめたよ'), hadKeys = root.contains(doc.activeElement);
       const field = pending;
       pending = null;
       destination = null;
@@ -31527,6 +31600,8 @@ function createAkariExtensionHost(options) {
       }
       announce(stopped);
       render({ force: true });
+      // The pressed やめる (or the field) is no longer shown: the keys stay in the block view, not on the page (E2-01).
+      if (hadKeys && (!doc.activeElement || doc.activeElement === doc.body)) keepKeys();
       return { ok: true };
     }
     function destinationDescription() {
@@ -31597,6 +31672,9 @@ function createAkariExtensionHost(options) {
       const view = doc.documentElement, room = workspace.getBoundingClientRect(),
         w = controls.offsetWidth || 300, h = controls.offsetHeight || 40,
         field = pending?.input?.isConnected && !pending.input.closest('dialog') ? pending.input.getBoundingClientRect() : null;
+      // Lying over the blocks under a field, only 決める and やめる take a press: a press on the words (a mistake shown)
+      // reaches the field under them, so another field starts its input and the old number goes back (LANGUAGE.md 242).
+      controls.style.pointerEvents = field?.width ? 'none' : '';
       let spot;
       if (field?.width) {
         const under = field.bottom + 4 + h <= view.clientHeight - 4 ? field.bottom + 4 : Math.max(4, field.top - h - 4);
@@ -31877,7 +31955,9 @@ function createAkariExtensionHost(options) {
       if(options.tutorialActive?.())options.onDestinationSelected?.({...location});
       else {
         if (keyboard && paletteControls.hidden) paletteToggle.click();
+        // The last word is kept, selected, so a new word typed replaces it (E-01, E-16).
         search.focus({ preventScroll: true });
+        search.select();
       }
     }
     // A block put in from the list with no place chosen goes right after the selected sentence, or at the end of the
@@ -32317,13 +32397,15 @@ function createAkariExtensionHost(options) {
     // another block of that body asks nothing again (PERF-01). A block whose answer depends on its place is checked there,
     // and pressing a block always checks the place it goes (paletteAdd).
     const PLACE_DEPENDENT_KINDS = new Set(['WaitBroadcastGroup', 'LocalVariableDeclaration', 'LocalListDeclaration']);
+    // A body of 答えを もとめる ends with its 「〜を答えとして返す」, so its end is the place just before it (PERF-R2-01).
     function listedPlace(location) {
       const siblings = !destination && location?.body ? index.get(location.parentId)?.node?.bodies?.[location.body] : null;
-      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement') ? { ...location, index: siblings.length } : location;
+      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement')
+        ? { ...location, index: siblings.length - (siblings.at(-1)?.schemaId === 'ReturnStatement' ? 1 : 0) } : location;
     }
-    function paletteAvailability(schema, location) {
+    function paletteAvailability(schema, location, exact = false) {
       if (schema.candidateReason) return {enabled:false, reason:schema.candidateReason, node:schema.candidateNode};
-      if (location?.body && !PLACE_DEPENDENT_KINDS.has(schema.kind)) location = listedPlace(location);
+      if (!exact && location?.body && !PLACE_DEPENDENT_KINDS.has(schema.kind)) location = listedPlace(location);
       if (schema.category === 'rule') return ruleAvailability();
       // A value may be picked up before its destination is chosen. The actual
       // socket is checked by the existing common validator on preview and drop.
@@ -32350,9 +32432,14 @@ function createAkariExtensionHost(options) {
         }
       return out;
     }
+    // A block of the list or a なかま that has the keys keeps them when the list is made again (Escape, もとにもどす): the
+    // same one, else the first block or the search field, never the page (Y2-06).
+    const PALETTE_KEYS = '[data-blockui-action="palette-add"],[data-blockui-action="palette-category"]',
+      paletteKey = n => ['data-blockui-action', 'data-blockui-category', 'data-blockui-schema', 'data-search-binding'].map(a => n.getAttribute(a)).join('|');
     function renderPalette() {
       if (options.readOnly) return;
       if (destroyed) return;
+      const kept = doc.activeElement?.matches?.(PALETTE_KEYS) && palette.contains(doc.activeElement) ? paletteKey(doc.activeElement) : null;
       faceSymbols = null;
       powerHelp.hidden = document.body.dataset.uiLevel !== 'advanced';
       modeSelect.value = paletteMode;
@@ -32470,9 +32557,12 @@ function createAkariExtensionHost(options) {
           '',
           'palette-add',
           () => {
-            if (!a.enabled) {
+            // The list was checked at the end of the body (PERF-01): a press checks the place the block really goes.
+            const real = a.enabled ? a : paletteAvailability(schema, destination || defaultDestination(), true);
+            if (!real.enabled) {
+              if (real.reason) reason.textContent = real.reason;
               reason.hidden = false;
-              announce(a.reason, true);
+              announce(real.reason || a.reason, true);
               return;
             }
             paletteAdd(schema);
@@ -32525,6 +32615,9 @@ function createAkariExtensionHost(options) {
         );
       if(!options.tutorialActive?.()&&category&&!query&&!candidates.length)paletteList.append(button('すべての なかまで さがす','search-all',()=>{category='';categoryExplicit=false;renderPalette();search.focus();}));
       paletteList.scrollTop = scroll;
+      if (kept && !isLocked() && (!doc.activeElement || doc.activeElement === doc.body))
+        ([...palette.querySelectorAll(PALETTE_KEYS)].find(n => paletteKey(n) === kept) ||
+          palette.querySelector('[data-blockui-action="palette-add"]') || search).focus({ preventScroll: true });
       scheduleGeometry();
       options.onPresentation?.();
     }
@@ -33225,7 +33318,16 @@ function createAkariExtensionHost(options) {
       const result = operate({ type: 'remove', id: node.id });
       if (!result.ok && index.get(info?.parentId)?.node.schemaId !== 'Script')
         announce(errorText(result.error || result.reason) + '。「いったん 使わない」で 入れかえるか、まとまりごと けしてね', true);
+      if (result.ok) keepKeys();
       return result;
+    }
+    // After a block is deleted (けす, a drop on the list, Delete) or a やめる is pressed, the keys stay in the block view: on
+    // the block now selected, else on the workspace. On the page, the next Delete would delete the whole part (E2-01).
+    function keepKeys() {
+      // While the work runs, the keys belong to the work.
+      if (isLocked()) return;
+      const id = session()?.blockSelection;
+      ((id && locationElement({ id })) || workspace).focus({ preventScroll: true });
     }
     function statementBody(parent, slot) {
       const enabled = !slot.when || parent.fields[slot.when];
@@ -34116,6 +34218,9 @@ function createAkariExtensionHost(options) {
           (s?.notices || []).map(d => d.line + ':' + d.code + ':' + d.message).join(','),
         ].join('|');
       root.dataset.locked = String(!!isLocked());
+      // 作業台を広く cannot be used while the work runs (はじめて shows the blocks then): its place stays, as the run bar's
+      // buttons do (final call 21).
+      if (wide) wide.style.visibility = isLocked() ? 'hidden' : '';
       if (drag && nextSignature !== signature) cancelDrag();
       if (pending) {
         updateControls();
@@ -34268,6 +34373,8 @@ function createAkariExtensionHost(options) {
         );
         n?.focus({ preventScroll: true });
       }
+      // A control not drawn again (its block made anew by もとにもどす) leaves the keys in the block view (Y2-06).
+      if ((focusKey || focusNode) && (!doc.activeElement || doc.activeElement === doc.body)) keepKeys();
     }
     function resolveLocation(value) {
       if (!value || (value.key && value.key !== session()?.ownerKey)) return {};
@@ -34546,9 +34653,11 @@ function createAkariExtensionHost(options) {
         if (!n.classList.contains('blockui-insertion-end')) right = Math.max(right, (r.right - box.left) / zoom);
         bottom = Math.max(bottom, (r.bottom - box.top) / zoom);
       }
-      const across = (workspace.clientWidth - 24) / (right + 24),
+      // A body that fits at 100% stays at 100% (LANGUAGE.md 250); the margin is kept only for one that has to shrink.
+      const fits = right <= workspace.clientWidth && bottom <= workspace.clientHeight,
+        across = (workspace.clientWidth - 24) / (right + 24),
         down = (workspace.clientHeight - 24) / (bottom + 24);
-      setZoom(Math.min(1, Math.max(0.75, Math.min(across, down))));
+      setZoom(fits ? 1 : Math.min(1, Math.max(0.75, Math.min(across, down))));
       workspace.scrollTo({ top: 0, left: 0 });
       rememberViewState();
     }
@@ -34765,6 +34874,7 @@ function createAkariExtensionHost(options) {
       return state.id ? (state.run ? runIds(state.id) : [state.id]) : [];
     }
     function beginGhost(state) {
+      hideDropNote();
       const source = state.schemaId
         ? state.element.querySelector('.blockui-preview')
         : state.element.closest('.blockui-node');
@@ -34866,10 +34976,15 @@ function createAkariExtensionHost(options) {
       dragReason.textContent = text;
     }
     // A message near where the block was let go, seen where the child is looking (E-04); the live region reads it too.
-    function showDropNote(text, x, y) {
-      announce(text);
+    // The next carry takes it away, so it never stays over the next drop (E2-10).
+    function hideDropNote() {
       clearTimeout(dropNoteTimer);
       dropNote?.remove();
+      dropNote = null;
+    }
+    function showDropNote(text, x, y) {
+      announce(text);
+      hideDropNote();
       dropNote = E('div', 'blockui-drop-note', text, { 'aria-hidden': 'true' });
       doc.body.append(dropNote);
       const w = dropNote.offsetWidth, h = dropNote.offsetHeight, view = doc.documentElement;
@@ -35221,7 +35336,7 @@ function createAkariExtensionHost(options) {
         const ids = carriedIds(state);
         const result = ids.length > 1 ? operate({ type: 'batch', operations: ids.map(id => ({ type: 'remove', id })) })
           : removeBlock(index.get(state.id)?.node || { id: state.id });
-        if (result.ok) showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY);
+        if (result.ok) { keepKeys(); showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY); }
         return;
       }
       if (!state.valid || !state.location) {
@@ -36750,6 +36865,13 @@ function createAkariExtensionHost(options) {
         canSplit: entries.every(x => x.independent), projectFingerprint: currentFingerprint() };
     }
     function hideSourceImport() { $('#sourceImport').hidden = true; $('#sourceImport').replaceChildren(); }
+    // While the import review waits, ▶ 動かす and うごく作品を ファイルにする say how to finish it, in the words of the
+    // review's own buttons.
+    function sourceImportChoice() {
+      if ($('#sourceImport').hidden) return '';
+      const take = ['#sourceImportConfirm', '#sourceImportSeparate', '#sourceImportEditCurrent'].map((id) => $(id)).find((b) => b && !b.disabled);
+      return take ? `「${take.textContent}」か「取りこみを やめる」を おしてね` : '「取りこみを やめる」を おしてね';
+    }
     function confirmSourceImport(binding, source, separate = false, editCurrent = false) {
       if (modelLocked() || composingEditors.has(binding.textarea) || binding.textarea.value !== source) return false;
       try {
@@ -36757,7 +36879,8 @@ function createAkariExtensionHost(options) {
         if (!plan || (editCurrent ? !plan.canEditCurrent : (!separate && !plan.safe) || (plan.hasExisting && !plan.canSplit))) return false;
         if (editCurrent || !plan.hasExisting) {
           commitSource(binding, source, { atomic: true });
-          hideSourceImport(); renderEditorBinding(binding); refreshEditor(); return true;
+          hideSourceImport(); renderEditorBinding(binding); refreshEditor();
+          setStatus('書いた 文を 本文に 入れたよ'); return true;
         }
         const next = cloneDesignProject(project), old = scriptBySourceKey(next, plan.ownerKey),
           incoming = plan.entries.filter(x => separate || !x.equal), ids = allIds();
@@ -36846,6 +36969,11 @@ function createAkariExtensionHost(options) {
             binding.session.pendingEdit = { ownerKey: bindingOwner(binding), kind: plan ? 'source-import' : 'heading-source',
               value: source, reason: plan ? '取りこむ ところを たしかめて 決めてください' : '書き方は だいじょうぶです。きっかけは、「▶ 動かす」を おすか、ブロックモードに すると 決まります' };
             if (plan) showSourceImport(binding, source, plan); else hideSourceImport();
+            // The text reads now: a mistake shown for an earlier keystroke goes away above the code. With the review, the
+            // status line says what waits instead; a body with its own heading keeps the line until its check is done
+            // (refreshEditor says 「✓ 書き方を 直せたよ」 or points to the new mistake, E2E-R2-11).
+            clearEditorFailure(binding);
+            if (plan) { editorFailureStatus = null; setStatus('本文を 入れる ところを たしかめてね。' + sourceImportChoice()); }
             scheduleAutosave(); updateDirty(); return false;
           }
         }
@@ -37559,6 +37687,25 @@ function createAkariExtensionHost(options) {
         $('.debugbar').prepend(b);
       }
       $('.debugbar').append($('#resetBtn'));
+      // In the block view すべての本文・画面の本文・いつ動く？ and もとにもどす・やり直す (くわしく: and はじめに もどす) share one
+      // row. When the two groups do not fit side by side, もとにもどす… take the row under it (data-source-row-wrap), so
+      // no button lies under another and every label keeps one line (はばが 足りないときは 折り返します).
+      const sourceNav = code.querySelector(':scope > .source-nav'), debugbar = code.querySelector(':scope > .debugbar');
+      const groupWidth = (box) => {
+        const shown = [...box.children].filter((c) => c.getClientRects().length && getComputedStyle(c).position !== 'absolute');
+        if (!shown.length) return 0;
+        const s = getComputedStyle(box), px = (v) => parseFloat(v) || 0;
+        return shown.reduce((sum, c) => sum + c.getBoundingClientRect().width, 0) + (shown.length - 1) * px(s.columnGap)
+          + px(s.paddingLeft) + px(s.paddingRight) + px(s.borderLeftWidth) + px(s.borderRightWidth) + px(s.marginLeft) + px(s.marginRight);
+      };
+      const placeSourceRow = () => {
+        const s = getComputedStyle(code), room = code.clientWidth - (parseFloat(s.paddingLeft) || 0) - (parseFloat(s.paddingRight) || 0) - (parseFloat(s.columnGap) || 0);
+        const wrap = String(document.body.dataset.editorMode === 'blocks' && groupWidth(sourceNav) + groupWidth(debugbar) > room + 0.5);
+        if (code.dataset.sourceRowWrap !== wrap) code.dataset.sourceRowWrap = wrap;
+      };
+      // A button shown or put away (a level, the list of all bodies) changes what the groups need, as a new width does.
+      const sourceRowObserver = new ResizeObserver(placeSourceRow);
+      for (const box of [code, sourceNav, debugbar, ...sourceNav.children, ...debugbar.children]) sourceRowObserver.observe(box);
       const undoButton = $('#undoBtn'), undoHome = document.createElement('span'),
         callableTitle = $('#procModal > .dialog > .win-title');
       undoButton.before(undoHome);
@@ -37590,18 +37737,19 @@ function createAkariExtensionHost(options) {
       // on the view). ヒント sits right after お手本を開く and opens over the page, so the bar keeps one row.
       toolbar.insertBefore($('.ui-level-label'), $('#projectName'));
       $('#sampleBtn').after($('#basicActionGuide'));
-      // A help paragraph with ruby would be read with its readings (「保存 ほぞん」) as a description: the controls get its
-      // text without them (AX-09).
+      installToolbarMenus(toolbar);
+      toolbox.append(tools);
+      // A control described by a ヒント paragraph gets the paragraph's text as its own description (AX-09): a reference
+      // into the closed ヒント reads as nothing, and a paragraph with ruby would be read with its readings (「保存
+      // ほぞん」). Run once every such control is in the page (the 作品の道具 buttons are moved into the toolbox above).
       for (const control of $$('[aria-describedby]')) {
         const help = document.getElementById(control.getAttribute('aria-describedby'));
-        if (!help?.closest('#basicActionGuide') || !help.querySelector('rt')) continue;
+        if (!help?.closest('#basicActionGuide')) continue;
         const copy = help.cloneNode(true);
         copy.querySelectorAll('rt').forEach((rt) => rt.remove());
         control.setAttribute('aria-description', copy.textContent.replace(/\s+/g, ' ').trim());
         control.removeAttribute('aria-describedby');
       }
-      installToolbarMenus(toolbar);
-      toolbox.append(tools);
       // Native reverse Tab may leave a partly visible button clipped in this ribbon.
       tools.addEventListener('focusin', (event) => {
         if (event.target.matches('button,select'))
@@ -37811,11 +37959,12 @@ function createAkariExtensionHost(options) {
       // One name for each window in both views (F-23): 「作品」 names the work.
       $('#designerHeading').textContent = '画面';
       $('.objects-window > .win-title').textContent = 'キャラクター・部品';
-      const actions = $('.prop-actions');
-      if (actions) (block ? $('#componentActions') : el.props).prepend(actions);
+      // The part's actions go above its せってい in code and under the part list in blocks. The padding they need is read
+      // when they move (their ResizeObserver follows later changes), not with every keystroke (PERF-R2-03).
+      const actions = $('.prop-actions'), actionsHome = block ? $('#componentActions') : el.props;
+      if (actions && actionsHome.firstElementChild !== actions) { actionsHome.prepend(actions); syncPropertyScrollPadding(); }
       $('#formatBtn').hidden = block || currentIsMeijin();
       syncWideInert();
-      syncPropertyScrollPadding();
       // The level list follows the view (blocks or code); a view in code at はじめて goes on at かんたん.
       if (applyUiLevel(mode)) renderHints();
       renderEntrySurface();
@@ -37894,11 +38043,17 @@ function createAkariExtensionHost(options) {
       if (on === document.body.classList.contains('stage-enlarged')) return;
       document.body.classList.toggle('stage-enlarged', on);
       // The enlarged stage is modal: everything around #designerWindow (toolbar, other windows, status line) is inert
-      // until it closes, so Tab stays on the stage and a hidden control cannot be pressed (AX-02).
+      // until it closes, so Tab stays on the stage and a hidden control cannot be pressed (AX-02). The status line's live
+      // region stays out of it, so a screen reader still hears what happens (おわったよ…): its neighbours are inert instead.
       for (const node of document.querySelectorAll('[data-enlarged-inert]')) { node.inert = false; delete node.dataset.enlargedInert; }
+      const live = $('#statusLive'), makeInert = (sibling) => {
+        if (sibling.inert) return;
+        if (sibling.contains(live)) { for (const child of sibling.children) if (child !== live) makeInert(child); return; }
+        sibling.inert = true; sibling.dataset.enlargedInert = '';
+      };
       if (on) for (let node = $('#designerWindow'); node && node.id !== 'app'; node = node.parentElement)
         for (const sibling of node.parentElement?.children || [])
-          if (sibling !== node && !sibling.inert) { sibling.inert = true; sibling.dataset.enlargedInert = ''; }
+          if (sibling !== node) makeInert(sibling);
       button.textContent = on ? 'もどる' : '大きく見る';
       button.setAttribute('aria-pressed', String(on));
       if (on) { enlargedFrom = stageZoom; setStageZoom(1); }
@@ -37916,7 +38071,8 @@ function createAkariExtensionHost(options) {
     // 画面も見る brings the columns back and gives the focus to 作業台を広く, which made them go (AX-05).
     $('#stageThumbnail').onclick = () => {
       const toggle = $('#blockEditor [data-blockui-action="workspace-expand"]');
-      toggle?.click(); toggle?.focus({ preventScroll: true });
+      toggle?.click();
+      if (toggle?.getClientRects().length) toggle.focus({ preventScroll: true }); else el.form.focus({ preventScroll: true });
     };
     // In wide mode the thumbnail stands for the small stage behind it: the stage and its handles are no Tab stops then.
     // The run screen and the code view do not use wide mode.
@@ -40553,27 +40709,40 @@ function createAkariExtensionHost(options) {
     }
 
     let codeLineLayout = null, codeLineMeasure = null;
+    // A line's wrapped height depends only on its text and the editor's width and font (the key): a line measured once
+    // is not laid out again, so a keystroke measures the lines it changed, not the whole body (PERF-R2-03). A font that
+    // finishes loading measures again.
+    let codeLineHeights = { key: '', heights: new Map() };
+    document.fonts?.addEventListener?.('loadingdone', () => { codeLineHeights = { key: '', heights: new Map() }; codeLineLayout = null; });
     function wrappedCodeLines() {
       const editor = el.editor, style = getComputedStyle(editor),
         width = Math.max(1, editor.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)),
-        key = [width, style.font, style.letterSpacing, style.tabSize].join('|');
+        key = [width, style.font, style.letterSpacing, style.lineHeight, style.tabSize].join('|');
       if (codeLineLayout?.source === editor.value && codeLineLayout.key === key) return codeLineLayout;
       if (!codeLineMeasure) {
         codeLineMeasure = document.createElement('div');
         codeLineMeasure.setAttribute('aria-hidden', 'true');
         document.body.append(codeLineMeasure);
       }
-      Object.assign(codeLineMeasure.style, { position:'fixed', left:'-100000px', top:'0', visibility:'hidden',
-        pointerEvents:'none', width:width+'px', font:style.font, letterSpacing:style.letterSpacing,
-        lineHeight:style.lineHeight, tabSize:style.tabSize, whiteSpace:'pre-wrap', overflowWrap:'anywhere' });
-      const fragment = document.createDocumentFragment(), rows = [];
-      for (const text of editor.value.split('\n')) {
-        const row = document.createElement('div'); row.textContent = text || '\u200b'; rows.push(row); fragment.append(row);
+      if (codeLineHeights.key !== key || codeLineHeights.heights.size > 50000) {
+        codeLineHeights = { key, heights: new Map() };
+        Object.assign(codeLineMeasure.style, { position:'fixed', left:'-100000px', top:'0', visibility:'hidden',
+          pointerEvents:'none', width:width+'px', font:style.font, letterSpacing:style.letterSpacing,
+          lineHeight:style.lineHeight, tabSize:style.tabSize, whiteSpace:'pre-wrap', overflowWrap:'anywhere' });
       }
-      codeLineMeasure.replaceChildren(fragment);
+      const known = codeLineHeights.heights, texts = editor.value.split('\n'), fragment = document.createDocumentFragment(), fresh = [];
+      for (const text of texts) {
+        if (known.has(text)) continue;
+        const row = document.createElement('div'); row.textContent = text || '\u200b';
+        known.set(text, 0); fresh.push([text, row]); fragment.append(row);
+      }
+      if (fresh.length) {
+        codeLineMeasure.replaceChildren(fragment);
+        for (const [text, row] of fresh) known.set(text, Math.max(22, row.getBoundingClientRect().height));
+        codeLineMeasure.replaceChildren();
+      }
       let height = 0;
-      const lines = rows.map(row => { const top = height; height += Math.max(22, row.getBoundingClientRect().height); return { top, height:height-top }; });
-      codeLineMeasure.replaceChildren();
+      const lines = texts.map(text => { const top = height; height += known.get(text); return { top, height:height-top }; });
       return codeLineLayout = { source:editor.value, key, lines, height };
     }
     let gutterMarks = { errors: [], notices: [] };
@@ -41215,7 +41384,7 @@ function createAkariExtensionHost(options) {
       // Every refusal is said the same way: まだ 動かせないよ。, the reason, and 。 at the end (FM2-13).
       const refuse = (reason) => setStatus('まだ 動かせないよ。' + sentence(reason));
       if (!flushActiveEditor()) {
-        refuse(editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
+        refuse(sourceImportChoice() || editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
         return;
       }
       if(tutorial){
@@ -41233,7 +41402,7 @@ function createAkariExtensionHost(options) {
         return;
       }
       if (!flushActiveEditor()) {
-        refuse(editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
+        refuse(sourceImportChoice() || editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
         return;
       }
       compiled = compileProject(project);
@@ -41597,7 +41766,14 @@ function createAkariExtensionHost(options) {
     let exportBusy = false;
     function exportProject() {
       if(tutorial)return;
-      if (!flushActiveEditor()) return;
+      if (!flushActiveEditor()) {
+        // A press that cannot make the file says why (the review waits, or the code has a mistake).
+        const why = sourceImportChoice() || editorFailureStatus;
+        if (why) setStatus('まだ ファイルに できないよ。' + why + (why.endsWith('。') ? '' : '。'));
+        return;
+      }
+      clearTimeout(historyTimer);
+      pushHistoryNow();
       if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから、うごく作品を ファイルにしてね','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
       if (hasCallableDraft()) {
@@ -41623,6 +41799,14 @@ function createAkariExtensionHost(options) {
       button.disabled = true;
       $('#exportControls').disabled = $('#exportArtwork').disabled = true;
       setStatus('うごく作品を ファイルに しているよ');
+      // The file is made after the next paint, so that sentence shows while it is made: a work with many pictures takes
+      // seconds, and the page cannot paint meanwhile. A timer stands in where no frame comes (a hidden page).
+      let started = false;
+      const make = () => { if (!started) { started = true; writePlayerFile(presentation, button); } };
+      requestAnimationFrame(() => setTimeout(make, 0));
+      setTimeout(make, 200);
+    }
+    function writePlayerFile(presentation, button) {
       let url = null;
       try {
         const html = generateStandaloneHtml(project, assetStore, { presentation }),
@@ -43611,6 +43795,9 @@ function createAkariExtensionHost(options) {
       }
       baseUiLevel = $('#uiLevel').value;
       applyUiLevel();
+      // はじめて has no すべての本文 (nor its 「本文を なおす ところへ もどる」): the list closes, and the body it was opened
+      // from is shown again, as that button would.
+      if (baseUiLevel === 'entry' && sourceOverviewOpen) { hideSourceOverview(); loadEditor(); }
       try {
         localStorage.setItem(STORAGE_KEYS.uiLevel, baseUiLevel);
       } catch (_) {}
@@ -43720,6 +43907,13 @@ function createAkariExtensionHost(options) {
       setTimeout(()=>$('#runBtn').focus({preventScroll:true}),0);
     };
 
+    // Delete removes the selected part only while the child works with the parts: the focus is on the stage, the part
+    // list or the tools that add parts, or it is on the page and the last press was there (a part list row takes no
+    // focus). After a press in the body window (a block's 「けす」, もとにもどす, the 本文 heading) or the toolbar, Delete
+    // never removes a part.
+    const PART_PLACES = '#designerWindow, .side, .toolbox';
+    let partPressed = false;
+    document.addEventListener('pointerdown', (e) => { partPressed = !!e.target.closest?.(PART_PLACES); }, true);
     window.addEventListener('keydown', (e) => {
       if (
         e.isComposing ||
@@ -43730,8 +43924,10 @@ function createAkariExtensionHost(options) {
       )
         return;
       if (document.querySelector('.modal.show')) return;
-      const tag = document.activeElement?.tagName;
+      const focused = document.activeElement, tag = focused?.tagName;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
+      const onPage = !focused || focused === document.body || focused === document.documentElement;
+      if (!(onPage ? partPressed : focused.closest(PART_PLACES))) return;
       e.preventDefault();
       deleteSelectedComponent();
     });
@@ -43905,6 +44101,8 @@ function createAkariExtensionHost(options) {
       'click',
       (event) => {
         const target = event.target.closest('button,.tree-item,.tool');
+        // うごく作品を ファイルにする closes the input itself and says why it does not go on (exportProject), as ▶ does.
+        if (target?.matches('#exportBtn,#entryExport')) return;
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           // The note under the code holds the way out of a pending edit (its rewrites and 書いた文のまま考える).
