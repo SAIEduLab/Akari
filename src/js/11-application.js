@@ -5125,11 +5125,20 @@
     }
     // Nothing goes on, but an input can start a body again: the status names the first such body's input (the stage's
     // bodies first, then the parts' in the order they were made). A body that starts by itself later (〜秒ごとに, そう
-    // なったとき) keeps 動いているよ.
+    // なったとき) keeps 動いているよ. A body for an event of a running extension (合図「拡張:拡張ID/機能ID」 that the
+    // extension registers) is started from outside the work, as a click or a key body is (lead decision P22 E2); any
+    // other 「拡張:…」 name is an ordinary signal of the work.
     const RUN_HINT_KEYS = { 空白: 'スペース', 決定: 'エンター', 取消: 'エスケープ' };
     let runHint = '';
+    const signalName = item => String((item.filter && typeof item.filter === 'object' ? item.filter.message : item.filter) ?? '');
+    function waitsForExtension(item) {
+      if (scheduler?.waitsForExtension) return scheduler.waitsForExtension(item);
+      const name = signalName(item);
+      return EXTENSION_HOST.active && item.event === 'message' && name.startsWith('拡張:') && !!EXTENSION_HOST.describe(name.slice(3), 'events');
+    }
     function restartHint() {
-      const items = compiled?.items || [], inputs = items.filter(item => ['click', 'keyDown', 'valueChanged'].includes(item.event));
+      const items = compiled?.items || [],
+        inputs = items.filter(item => ['click', 'keyDown', 'valueChanged'].includes(item.event) || waitsForExtension(item));
       if (!inputs.length || items.some(item => ['conditionTrue', 'interval'].includes(item.event))) return '';
       const order = id => id === 'stage' ? -1 : project.components.findIndex(c => c.id === id),
         item = inputs.reduce((first, next) => order(next.targetId) < order(first.targetId) ? next : first),
@@ -5137,6 +5146,7 @@
       // The stage is 画面 here, as on はじめて's 「画面が おされたとき」 (F-23).
       if (item.event === 'click') return item.targetId === 'stage' ? '画面を おすと 動くよ' : `「${name}」を おすと 動くよ`;
       if (item.event === 'valueChanged') return `「${name}」に 入れると 動くよ`;
+      if (item.event === 'message') return `「${signalName(item)}」の 合図を 受けると 動くよ`;
       const key = item.filter?.key;
       return key ? `「${RUN_HINT_KEYS[key] || key}」キーを おすと 動くよ` : 'キーを おすと 動くよ';
     }
