@@ -312,7 +312,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  何もしない。"
+      "canonicalFormatted": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】とよぶ。\n  何もしない。"
     },
     {
       "id": "JPF-028",
@@ -340,7 +340,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  何もしない。"
+      "canonicalFormatted": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】とよぶ。\n  何もしない。"
     },
     {
       "id": "JPF-002",
@@ -620,7 +620,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  何もしない。"
+      "canonicalFormatted": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】とよぶ。\n  何もしない。"
     },
     {
       "id": "JPF-028",
@@ -648,7 +648,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】と呼ぶ。\n  何もしない。"
+      "canonicalFormatted": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【項目】とよぶ。\n  何もしない。"
     },
     {
       "id": "JPF-003",
@@ -3001,7 +3001,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-017",
@@ -3026,7 +3026,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-018",
@@ -3051,7 +3051,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-018",
@@ -3076,7 +3076,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-018",
@@ -3101,7 +3101,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-018",
@@ -3126,7 +3126,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-019",
@@ -3151,7 +3151,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3減らす。"
+      "canonicalFormatted": "点数を3へらす。"
     },
     {
       "id": "JPF-019",
@@ -3176,7 +3176,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3減らす。"
+      "canonicalFormatted": "点数を3へらす。"
     },
     {
       "id": "JPF-019",
@@ -3201,7 +3201,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3減らす。"
+      "canonicalFormatted": "点数を3へらす。"
     },
     {
       "id": "JPF-019",
@@ -3226,7 +3226,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3減らす。"
+      "canonicalFormatted": "点数を3へらす。"
     },
     {
       "id": "JPF-022",
@@ -3250,7 +3250,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の最後に3を入れる。"
+      "canonicalFormatted": "名前一覧のさいごに3を入れる。"
     },
     {
       "id": "JPF-022",
@@ -3274,7 +3274,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の最後に3を入れる。"
+      "canonicalFormatted": "名前一覧のさいごに3を入れる。"
     },
     {
       "id": "JPF-023",
@@ -3691,7 +3691,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3減らす。"
+      "canonicalFormatted": "点数を3へらす。"
     },
     {
       "id": "JPF-034",
@@ -3716,7 +3716,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3減らす。"
+      "canonicalFormatted": "点数を3へらす。"
     },
     {
       "id": "JPF-034",
@@ -3741,7 +3741,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3減らす。"
+      "canonicalFormatted": "点数を3へらす。"
     },
     {
       "id": "JPF-034",
@@ -3766,7 +3766,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3減らす。"
+      "canonicalFormatted": "点数を3へらす。"
     },
     {
       "id": "JPF-036",
@@ -4011,7 +4011,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-033",
@@ -4036,7 +4036,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-033",
@@ -4061,7 +4061,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-033",
@@ -4086,7 +4086,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-033",
@@ -4111,7 +4111,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-033",
@@ -4136,7 +4136,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-033",
@@ -4161,7 +4161,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-033",
@@ -4186,7 +4186,7 @@
           }
         ]
       },
-      "canonicalFormatted": "点数を3増やす。"
+      "canonicalFormatted": "点数を3ふやす。"
     },
     {
       "id": "JPF-035",
@@ -4210,7 +4210,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の最後に3を入れる。"
+      "canonicalFormatted": "名前一覧のさいごに3を入れる。"
     },
     {
       "id": "JPF-035",
@@ -4234,7 +4234,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の最後に3を入れる。"
+      "canonicalFormatted": "名前一覧のさいごに3を入れる。"
     },
     {
       "id": "JPF-035",
@@ -4258,7 +4258,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の最後に3を入れる。"
+      "canonicalFormatted": "名前一覧のさいごに3を入れる。"
     },
     {
       "id": "JPF-035",
@@ -4282,7 +4282,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の最後に3を入れる。"
+      "canonicalFormatted": "名前一覧のさいごに3を入れる。"
     },
     {
       "id": "JPF-035",
@@ -4306,7 +4306,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の最後に3を入れる。"
+      "canonicalFormatted": "名前一覧のさいごに3を入れる。"
     },
     {
       "id": "JPF-035",
@@ -4330,7 +4330,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の最後に3を入れる。"
+      "canonicalFormatted": "名前一覧のさいごに3を入れる。"
     },
     {
       "id": "JPF-035",
@@ -4354,7 +4354,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の最後に3を入れる。"
+      "canonicalFormatted": "名前一覧のさいごに3を入れる。"
     },
     {
       "id": "JPF-035",
@@ -4378,7 +4378,7 @@
           }
         ]
       },
-      "canonicalFormatted": "名前一覧の最後に3を入れる。"
+      "canonicalFormatted": "名前一覧のさいごに3を入れる。"
     },
     {
       "id": "JPF-038",

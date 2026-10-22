@@ -230,11 +230,11 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
       eq([n.kind,n.op,n.actorRef],[kind,op,{kind:'named',name:'マスコット'}]);eq(api.formatScript(r.ast).trim(),source.replace('は、','は'));}
     for(const source of ['名前一覧に「あ」を入れる。','マスコットは名前一覧に「あ」を入れる。']){const r=read(source);ok(!r.ast,source);
       ok(/さいごに入れるのか、何番目かと 入れかえるのか/.test(r.syntaxDiagnostics[0].message),source);}
-    // 1.3.1: headings are written in easy words; the older words are still read.
+    // 1.3.1: headings are written in easy words; the older words are still read. 1.5.0 writes the keyboard's own key names (「スペース」キー).
     for(const [source,written] of [
       ['マスコットがクリックされたとき、\n  「a」と言う。','マスコットがおされたとき、'],
       ['マスコットがおされたとき、\n  「a」と言う。','マスコットがおされたとき、'],
-      ['「空白」キーを押すたびに、マスコットは、\n  「a」と言う。','「空白」キーをおすたびに、マスコットは、'],
+      ['「空白」キーを押すたびに、マスコットは、\n  「a」と言う。','「スペース」キーをおすたびに、マスコットは、'],
       ['キーが押されたとき、マスコットは、\n  「a」と言う。','キーがおされたとき、マスコットは、'],
       ['背景が変わったとき、マスコットは、\n  「a」と言う。','はいけいがかわったとき、マスコットは、'],
     ]){const r=read(source);ok(r.ast,source+' '+JSON.stringify(r.syntaxDiagnostics));eq(api.formatScript(r.ast).split('\n')[0],written);}
@@ -245,7 +245,7 @@ function runLanguageForms(api, manifest, golden, referenceCorpus, schemaIds, inl
       ['10歩進み、右に90度回る。','前へ10歩進む。\n右に90度回る。'],['10歩進んで右に90度回る。','前へ10歩進む。\n右に90度回る。'],
       ['もし1が2より小さかったら、\n  何もしない。','もし1が2より小さければ、\n  何もしない。'],['もし1が2未満なら、\n  何もしない。','もし1が2より小さければ、\n  何もしない。'],
       ['もし1が2でないなら、\n  何もしない。','もし1が2と同じでなければ、\n  何もしない。'],['もし1が1か2なら、\n  何もしない。','もし1が1と同じか、1が2と同じなら、\n  何もしない。'],
-      ['マスコットをクリックしたら、\n  何もしない。','マスコットがおされたとき、\n  何もしない。'],['「空白」キーをおしたとき、マスコットは、\n  何もしない。','「空白」キーをおすたびに、マスコットは、\n  何もしない。'],
+      ['マスコットをクリックしたら、\n  何もしない。','マスコットがおされたとき、\n  何もしない。'],['「空白」キーをおしたとき、マスコットは、\n  何もしない。','「スペース」キーをおすたびに、マスコットは、\n  何もしない。'],
       ['「a」と「b」をつなげて言う。','「a」と「b」をつなげて言う。'],['つなぐ（「a」、「b」）を言う。','「a」と「b」をつなげて言う。'],['あまり（10、3）を言う。','10÷3のあまりを言う。'],
       ['向きを90度にする。','画面の上を向く。'],['（1＋2）秒待つ。','（1＋2）秒待つ。'],
       ['マスコットはいまのばしょから、右へ10歩動く。','マスコットは、いまのばしょから、右へ10歩動く。'],['マスコットを、いまのばしょから、右へ10歩動かす。','マスコットは、いまのばしょから、右へ10歩動く。'],
