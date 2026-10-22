@@ -3569,7 +3569,20 @@
       if (highlightedId === key) return;
       for (const n of workspace.querySelectorAll('.blockui-current')) n.classList.remove('blockui-current');
       highlightedId = key;
-      locationElement(point)?.classList.add('blockui-current');
+      markedElement(point)?.classList.add('blockui-current');
+    }
+    // The element that shows a running or failing place: its block, a number that is its own field in the sentence
+    // (1 秒, 99999 Hz: E-02, F-06), else the nearest block that holds it.
+    function markedElement(point) {
+      const own = locationElement(point);
+      if (own || point.body || !point.id) return own;
+      const flat = [...workspace.querySelectorAll('.blockui-flat-value')].find(n => n.dataset.blockId === point.id);
+      if (flat) return flat;
+      for (let entry = index.get(point.id); entry?.parentId; entry = index.get(entry.parentId)) {
+        const holder = locationElement({ id: entry.parentId });
+        if (holder) return holder;
+      }
+      return null;
     }
     function revealNode(id) {
       let entry = index.get(id),
