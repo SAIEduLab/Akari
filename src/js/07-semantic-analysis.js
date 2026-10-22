@@ -93,6 +93,12 @@
           line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where,
         });
       }
+      // 99999Hzの音を1秒鳴らす: a height written outside 30–5000Hz stops before running, as running would (FCS-03); the
+      // mark is on the number.
+      if (node.kind === 'SoundCommand' && ['TONE', 'TONE_WAIT'].includes(node.op)) {
+        const hz = staticNumericMagnitude(node.args?.[0]), mark = node.args?.[0]?.sourceSpan || node.args?.[0]?.value?.sourceSpan || node.sourceSpan;
+        if (hz !== undefined && (hz < 30 || hz > 5000)) diagnostics.push({ code: 'R412', message: '音の 高さは 30Hzから 5000Hzまでの 数に します', line: mark?.startLine || 0, column: mark?.startColumn || 1, where });
+      }
       // A time written below 0 (待つ, 話す, 〇秒かけて動く・回る・〜のところへ行く, 鳴らす) stops before running.
       const timed = node.kind === 'SoundCommand' && ['TONE', 'TONE_WAIT'].includes(node.op) ? node.args?.[1]
         : ['WaitTime', 'Say', 'MotionCommand'].includes(node.kind) ? node.seconds : undefined;
@@ -680,6 +686,9 @@
           checkComponentTarget(n.args?.[0], ['label', 'button', 'box'], c, where, '文字をかえる部品');
         if (n.kind === 'LooksCommand' && n.op === 'SET_INPUT')
           checkComponentTarget(n.args?.[0], ['input'], c, where, '入力らん');
+        // かばんを言う: a list is not said as it is (running would stop there, FCM-17); its items are.
+        if (n.kind === 'Say' && n.value?.kind === 'VariableRead' && targetExists({ name: n.value.name, qualifier: n.value.qualifier }, symbols, c)?.kind === 'list')
+          add('S304', `リストは そのまま 言えません。中身を 言うときは「${n.value.name}の1番目を言う」のように 書きます`, n, where);
         if (n.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(n.op)) {
           const name = literalText(n.args?.[0]), arg = n.args?.[0];
           // ピアノの音を鳴らす with no sound and no data ピアノ (P10/P20 B(3)): the name is a sound's, so the child is told to
