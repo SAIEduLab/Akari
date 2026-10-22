@@ -59,7 +59,7 @@ export const extensionExpectedObservations = Object.freeze({
     roomy: { components: 600, sourceEach: 150000, listItems: 20000, functionOps: 2000000 }, roomyInherits: true,
     unlimited: ['components', 'sourceEach', 'listItems', 'functionOps'], unlimitedInherits: true,
     roomyRuntimeComponents: 600, standardComponents: 500, sameAsScript: true, alteredDetected: true },
-  'EXTENSION-REGISTRATION-COLLISION-TYPES': { duplicateRejected: true, invalidNumberRejected: true, promiseCalculationRejected: true },
+  'EXTENSION-REGISTRATION-COLLISION-TYPES': { duplicateRejected: true, invalidNumberRejected: true, promiseCalculationRejected: true, olderStandardRejected: 'E701', currentStandardAccepted: true },
   'EXTENSION-INDEPENDENT-CALCULATIONS': { doubled: 14, shouted: 'HELLO!', independent: true },
   'EXTENSION-COMMAND-EVENT-STATE': { remembered: 9, value: 9, event: 9, restored: 9 },
   'EXTENSION-SESSION-CANCELLATION': { staleRejected: true, signalAborted: true, ended: true },
