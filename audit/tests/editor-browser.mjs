@@ -8,7 +8,7 @@ import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import {verifySurfaceResults} from '../lib/verify-surface-results.mjs';
-import {pressStop} from '../lib/stop-press.cjs';
+import {pressStop,pressAfterDoublePress} from '../lib/stop-press.cjs';
 import {chooseView} from '../browser/cases/view-toggle.cjs';
 const [browser,output]=process.argv.slice(2), product=currentProductFile(), before=snapshot(product);
 if(!output||fs.existsSync(output))throw Error('Supply a new output path');
@@ -17,7 +17,9 @@ const require=createRequire(import.meta.url);
 const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
 const {loadApi}=require('../browser/cases/audit-lib.cjs');
 const {answerProductConfirms}=require('../lib/product-dialogs.cjs');
-const autosaved='このパソコンに のこしたよ',autosaveDatabase='akari-workspace-f5',autosaveFallback='akari.autosave.f5';
+// The storage names and the data marks carry the saved-file format number of the release record (features.json).
+const projectFormat=JSON.parse(fs.readFileSync('audit/manifests/features.json','utf8')).EXECUTABLE_CONTRACT.projectFormatVersion;
+const autosaved='このパソコンに のこしたよ',autosaveDatabase='akari-workspace-f'+projectFormat,autosaveFallback='akari.autosave.f'+projectFormat;
 const regressionProject=makeRegressionProject(loadApi(fs.readFileSync(product,'utf8')));
 regressionProject.scripts=[{targetId:'stage',event:'start',source:'何もしない。'}];
 regressionProject.actions=[];regressionProject.functions=[];
@@ -180,7 +182,8 @@ await withBrowser(browser,async b=>{
     await click(p,'stepBtn');assert.ok(await p.locator('#blockEditor .blockui-current').count());
     // On the run screen the view is switched in 本文と動きのようす (the toolbar shows neither the level nor the toggle).
     await click(p,'runtimeInspectBtn');await mode(p,'code');await mode(p,'blocks');assert.ok(await p.locator('#blockEditor .blockui-current').count());await click(p,'runtimeInspectorClose');
-    await click(p,'continueBtn');await p.locator('#failureModal.show').waitFor();await click(p,'failureClose');
+    // ▶ つづける is pressed after the 0.5 s in which a second press of the ⏸／▶ つづける place does nothing.
+    await pressAfterDoublePress(await reveal(p.locator('#continueBtn')));await p.locator('#failureModal.show').waitFor();await click(p,'failureClose');
     const highlighted=await p.locator('#blockEditor .blockui-current').getAttribute('data-schema-id');assert.equal(highlighted,'BinaryExpression:DIV');
     assert.match(await p.locator('#failureBody').textContent(),/R/);await pressStop(await reveal(p.locator('#stopBtn')));
     return{sameLineBody:true,errorRole:highlighted,pausedModeSwitch:true};
@@ -189,7 +192,7 @@ await withBrowser(browser,async b=>{
     await fill(p,source);await mode(p,'blocks');await number(p).fill('3');await number(p).press('Enter');
     const save=async(id,name)=>{const pending=p.waitForEvent('download');await click(p,id);if(id==='exportBtn')await p.locator('#exportControls').click();const f=path.join(dir,name);await (await pending).saveAs(f);return f;};
     const file=await save('saveBtn','editor-gui-saved.akari.md'),saved=fs.readFileSync(file,'utf8');
-    assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F5-DATA-BEGIN'));
+    assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F'+projectFormat+'-DATA-BEGIN'));
     const initial=await state(p);await click(p,'newBtn');await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);assert.equal((await state(p)).project,initial.project);
     const generated=await save('exportBtn','editor-gui-player.html');
     const c=await b.newContext({offline:true}),errors=[],network=[];
