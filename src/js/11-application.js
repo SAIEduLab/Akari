@@ -1974,6 +1974,16 @@
       // on the view). ヒント sits right after お手本を開く and opens over the page, so the bar keeps one row.
       toolbar.insertBefore($('.ui-level-label'), $('#projectName'));
       $('#sampleBtn').after($('#basicActionGuide'));
+      // A help paragraph with ruby would be read with its readings (「保存 ほぞん」) as a description: the controls get its
+      // text without them (AX-09).
+      for (const control of $$('[aria-describedby]')) {
+        const help = document.getElementById(control.getAttribute('aria-describedby'));
+        if (!help?.closest('#basicActionGuide') || !help.querySelector('rt')) continue;
+        const copy = help.cloneNode(true);
+        copy.querySelectorAll('rt').forEach((rt) => rt.remove());
+        control.setAttribute('aria-description', copy.textContent.replace(/\s+/g, ' ').trim());
+        control.removeAttribute('aria-describedby');
+      }
       installToolbarMenus(toolbar);
       toolbox.append(tools);
       // Native reverse Tab may leave a partly visible button clipped in this ribbon.
@@ -2328,6 +2338,8 @@
       statusSerial++;
       if (el.status.textContent === m) return;
       el.status.textContent = m;
+      // A screen reader hears what the line says (a refusal, おわったよ, …), but not the place shown while a part is dragged.
+      if (!/^よこのばしょ /.test(m || '')) $('#statusLive').textContent = m;
       if (m && document.body.dataset.uiLevel === 'entry' && typeof el.status.animate === 'function') {
         statusFlash?.cancel();
         statusFlash = el.status.animate([{ backgroundColor: '#ffe9a8' }, { backgroundColor: 'transparent' }], { duration: 1600, easing: 'ease-out' });
