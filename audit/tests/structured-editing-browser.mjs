@@ -6,13 +6,15 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
+import {cancelInput} from '../browser/cases/cancel-input.cjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),output=path.resolve(out),dir=output.replace(/\.json$/,'')+'.artifacts',product=currentProductFile();fs.mkdirSync(dir,{recursive:true});
 const report={schema:'akari-structured-editing-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},pageErrors:[],networkRequests:[],results:[]},save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 const state=p=>p.evaluate(()=>{const a=Akari.app,s=a.editorState.main;return{project:JSON.stringify(a.project),source:s.sourceText,history:a.editorState.history,redo:a.editorState.redo,selected:a.selectedScriptId,owner:s.ownerKey,pending:s.pendingEdit,diagnostics:s.diagnostics};});
 async function reveal(locator){const closed=()=>locator.locator('xpath=ancestor::details[not(@open)]');for(let i=0;await closed().count();i++){assert.ok(i<12,'disclosure ancestors open');await closed().first().locator(':scope > summary').click();}return locator;}
 async function install(page,source,message=false){
  const file=await page.evaluate(({source,message})=>{const p=Akari.makeEmptyProject();p.components[0].name='あかり';p.name='構造編集';Object.assign(p.components[0],{x:100,y:100,direction:0});p.scripts=[{id:'structured-main',targetId:'sprite-1',event:'start',source}];if(message)p.scripts.push({id:'structured-sender',targetId:'stage',event:'start',source:'みんなに「出発」と知らせる。'});return Akari.serializeProject(p,Akari.makeDefaultAssetStore());},{source,message});
-  await page.locator('#fileInput').setInputFiles({name:'structured.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await page.waitForFunction(()=>Akari.app.project.name==='構造編集');await page.locator('#uiLevel').selectOption('advanced');await page.locator('#objectSelect').selectOption('sprite-1');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await page.locator('#editorModeblocks').click();assert.equal((await state(page)).owner,'script:structured-main');
+  await page.locator('#fileInput').setInputFiles({name:'structured.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await page.waitForFunction(()=>Akari.app.project.name==='構造編集');await page.locator('#uiLevel').selectOption('advanced');await page.locator('#objectSelect').selectOption('sprite-1');if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await chooseView(page,'blocks');assert.equal((await state(page)).owner,'script:structured-main');
 }
 const sourceCases=[['empty',''],['heading','作品を動かしたとき、あかりは、\n  「本文」と言う。'],['body','「本文」と言う。']];
 try{await withBrowser(chrome,async browser=>{
@@ -30,7 +32,7 @@ try{await withBrowser(chrome,async browser=>{
   const filter=event==='keyDown'?'key':'message',value=event==='keyDown'?'右':'出発';await(await reveal(role('filter.kind'))).selectOption(filter);await(await reveal(role('filter.value'))).fill(value);await role('filter.value').press('Enter');
   const ready=await state(p);assert.equal(ready.pending,null);const metadata=await p.evaluate(()=>{const s=Akari.app.project.scripts.find(s=>s.id==='structured-main'),ast=Akari.app.editorState.main.syntaxAst;return{id:s.id,event:s.event,filter:s.filter,body:ast.body.map(n=>n.value?.value)};});assert.deepEqual(metadata,{id:'structured-main',event,filter:{[filter]:value},body:kind==='empty'?[]:['本文']});
   // A bad actor name stays a draft; cancellation restores the current revision.
-  await(await reveal(role('actorRef.kind'))).selectOption('named');const named=await state(p);await(await reveal(role('actorRef.name'))).fill('いない対象');await role('actorRef.name').press('Enter');await p.waitForFunction(()=>!!Akari.app.editorState.main.pendingEdit);assert.equal((await state(p)).project,named.project);await p.locator('#editorCancel').click();const cancelled=await state(p);assert.equal(cancelled.project,named.project);assert.deepEqual(cancelled.diagnostics,[]);
+  await(await reveal(role('actorRef.kind'))).selectOption('named');const named=await state(p);await(await reveal(role('actorRef.name'))).fill('いない対象');await role('actorRef.name').press('Enter');await p.waitForFunction(()=>!!Akari.app.editorState.main.pendingEdit);assert.equal((await state(p)).project,named.project);await cancelInput(p);const cancelled=await state(p);assert.equal(cancelled.project,named.project);assert.deepEqual(cancelled.diagnostics,[]);
   // A work with no sentence in any body does not run (1.5.0): the status says how to put one in and nothing changes.
   // The empty key body is the only body of its work; the message case also has the stage's sending body.
   const nothingToRun=kind==='empty'&&event==='keyDown',beforeRun=await state(p);

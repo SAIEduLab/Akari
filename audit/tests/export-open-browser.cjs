@@ -1,4 +1,6 @@
 const {pressStop,DOUBLE_PRESS_MS}=require('../lib/stop-press.cjs');
+const {chooseView}=require('../browser/cases/view-toggle.cjs');
+const {cancelInput}=require('../browser/cases/cancel-input.cjs');
 const fs=require('fs'),path=require('path'),assert=require('assert/strict'),crypto=require('crypto'),{pathToFileURL}=require('url'),{chromium}=require('playwright');
 const {loadApi}=require('../browser/cases/audit-lib.cjs');
 const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
@@ -16,7 +18,7 @@ async function page(b,file=product,width=1180){const c=await b.newContext({offli
  // Entry first-start behavior is covered independently by entry-workshop.
  if(file===product)await c.addInitScript(()=>localStorage.setItem('akari.uiLevel.v1','basic'));
  await c.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});const p=await c.newPage();p.setDefaultTimeout(15000);p.on('pageerror',e=>report.pageErrors.push(e.message));await p.goto(pathToFileURL(file).href);return p;}
-async function install(p,source=marker){const text=api.serializeProject(make(source),api.makeDefaultAssetStore());await p.locator('#fileInput').setInputFiles({name:'検証.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)});await p.waitForFunction(()=>Akari.app.project.name==='検証用の作品'&&Akari.app.editorState.state==='DESIGN');await p.locator('#uiLevel').selectOption('advanced');await p.locator('#objectSelect').selectOption('stage');await p.locator('#eventSelect').selectOption('start');if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModecode').click();}
+async function install(p,source=marker){const text=api.serializeProject(make(source),api.makeDefaultAssetStore());await p.locator('#fileInput').setInputFiles({name:'検証.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)});await p.waitForFunction(()=>Akari.app.project.name==='検証用の作品'&&Akari.app.editorState.state==='DESIGN');await p.locator('#uiLevel').selectOption('advanced');await p.locator('#objectSelect').selectOption('stage');await p.locator('#eventSelect').selectOption('start');if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await chooseView(p,'code');}
 const state=p=>p.evaluate(()=>{const s=Akari.app.editorState;return{project:JSON.stringify(Akari.app.project),source:s.main.sourceText,history:s.history,redo:s.redo,dirty:s.dirty,hasDraft:s.hasDraft};});
 async function edit(p,text='「編集した作品」と言う。'){await p.locator('#codeEditor').fill(text);await p.waitForFunction(t=>Akari.app.editorState.main.sourceText===t,text);await p.waitForTimeout(350);}
 async function save(p){const wait=p.waitForEvent('download');await p.locator('#saveBtn').click();const d=await wait;await d.saveAs(path.join(out,'saved-'+report.results.length+'.akari.md'));await p.waitForFunction(()=>!Akari.app.editorState.dirty);}
@@ -191,14 +193,14 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
     for(const kind of ['code','blocks'])await withPage(b,async p=>{
       await install(p,kind==='blocks'?'点数を3にする。':marker);
       if(kind==='code')await p.locator('#codeEditor').fill('「保存した書きかけ');
-      else{await p.locator('#editorModeblocks').click();await p.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first().fill('bad');await p.keyboard.press('Tab');}
+      else{await chooseView(p,'blocks');await p.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first().fill('bad');await p.keyboard.press('Tab');}
       await save(p);await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='このパソコンに のこしたよ');
       const savedText=fs.readFileSync(path.join(out,'saved-'+report.results.length+'.akari.md'),'utf8');
       await p.reload();await p.locator('#recoveryRestore').click();let pickers=0;p.on('filechooser',()=>pickers++);await p.locator('#openBtn').click();
       const observed={kind,savedUnchangedConfirmation:await p.locator('#loseConfirmModal.show').isVisible(),pickers};
       if(observed.savedUnchangedConfirmation)await p.locator('#loseConfirmCancel').click();else await p.locator('#fileInput').dispatchEvent('cancel');
       if(kind==='blocks'){
-        await p.locator('#editorCancel').click();await p.locator('#openBtn').click();observed.cancelledSavedPendingConfirmation=await p.locator('#loseConfirmModal.show').isVisible();
+        await cancelInput(p);await p.locator('#openBtn').click();observed.cancelledSavedPendingConfirmation=await p.locator('#loseConfirmModal.show').isVisible();
       }
       observed.newProject=await newDraftProtection(savedText,kind);
       variants.push(observed);

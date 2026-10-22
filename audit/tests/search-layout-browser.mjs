@@ -7,6 +7,8 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {writeZoomExtension,zoomExtensionArgs,zoomExtensionWorker,setNativeZoom} from '../lib/native-zoom.mjs';
 import {searchLayoutSizes,searchLayoutSamples,searchLayoutSource,verifySearchLayoutReport,verifySearchLayoutObservation} from '../lib/search-layout-contract.mjs';
+import {chooseView,shownView} from '../browser/cases/view-toggle.cjs';
+import {shownCancel,cancelInput} from '../browser/cases/cancel-input.cjs';
 
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2);
 if(!chrome||!out)throw Error('Usage: search-layout-browser.mjs <browser> <report>');
@@ -27,8 +29,8 @@ async function fixture(p,callable=false){
   const file=await p.evaluate(source=>{const project=Akari.makeEmptyProject();project.name='検索欄の検証';project.scripts=[{id:'search-main',targetId:'sprite-1',event:'start',source}];return Akari.serializeProject(project,Akari.app.assetStore);},searchLayoutSource);
   await p.locator('#fileInput').setInputFiles({name:'search-layout.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
   await p.waitForFunction(()=>Akari.app.project.name==='検索欄の検証');await p.locator('#uiLevel').selectOption('advanced');await p.locator('#objectSelect').selectOption('sprite-1');await p.locator('#eventSelect').selectOption('start');
-  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModeblocks').click();
-  if(callable){await p.locator('#procBtn').click();await p.locator('#callableName').fill('検索の手順');await p.locator('#callableModecode').click();await p.locator('#callableCode').fill(searchLayoutSource);await p.locator('#callableCode').press('Tab');await p.locator('#callableModeblocks').click();}
+  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await chooseView(p,'blocks');
+  if(callable){await p.locator('#procBtn').click();await p.locator('#callableName').fill('検索の手順');await chooseView(p,'code',{prefix:'callable'});await p.locator('#callableCode').fill(searchLayoutSource);await p.locator('#callableCode').press('Tab');await chooseView(p,'blocks',{prefix:'callable'});}
   await openPaletteTools(p.locator(rootFor(callable)));
   await frame(p);
 }
@@ -46,7 +48,10 @@ async function measure(p,root){
       summaryClipped:clipped(summary),scopeText:scope.textContent,scopeFontSize:parseFloat(getComputedStyle(scope).fontSize),scopeClipped:clipped(scope),optionsExpanded:options.open};
   },{root,samples:searchLayoutSamples});
 }
-async function reach(p,ids){const out={};for(const id of ids){const locator=p.locator('#'+id);await locator.scrollIntoViewIfNeeded();await frame(p);out[id]=await locator.evaluate(e=>{const r=e.getBoundingClientRect();return{rect:r.toJSON(),viewport:{width:innerWidth,height:innerHeight},hit:e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};});}return out;}
+// The one view toggle (final call 22) shows …Modecode while the blocks show and …Modeblocks while the code shows; each is
+// measured in the view where it is the toggle, and the blocks are shown again.
+async function reachToggle(p,prefix){const out={};for(const [id,view] of [[prefix+'Modecode','blocks'],[prefix+'Modeblocks','code']]){await chooseView(p,view,{prefix});await frame(p);Object.assign(out,await reach(p,[id]));}await chooseView(p,'blocks',{prefix});await frame(p);return out;}
+async function reach(p,ids,locators={}){const out={};for(const id of ids){const locator=locators[id]||p.locator('#'+id);await locator.scrollIntoViewIfNeeded();await frame(p);out[id]=await locator.evaluate(e=>{const r=e.getBoundingClientRect();return{rect:r.toJSON(),viewport:{width:innerWidth,height:innerHeight},hit:e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};});}return out;}
 async function exercise(p,callable=false,imagePrefix,observe){
   const root=rootFor(callable),search=p.locator(root+' [data-blockui-search]'),summary=p.locator(root+' .blockui-palette-options summary'),o={before:await state(p,callable),initial:await measure(p,root)};
   observe(o);
@@ -65,14 +70,15 @@ async function exercise(p,callable=false,imagePrefix,observe){
   await number.click();await number.press('ControlOrMeta+A');await number.press('Backspace');await p.keyboard.insertText('0.1');await number.press('Tab');await frame(p);o.after=await state(p,callable);
   await p.keyboard.press('ControlOrMeta+z');o.undoEdit=await state(p,callable);await p.keyboard.press('ControlOrMeta+z');o.undo=await state(p,callable);
   await p.keyboard.press('ControlOrMeta+Shift+z');o.redoInsert=await state(p,callable);await p.keyboard.press('ControlOrMeta+Shift+z');o.redo=await state(p,callable);
-  o.reachable=await reach(p,callable?['callableSave','callableSaveProject','procClose','callableModecode','callableModeblocks']:['runBtn','saveBtn','editorModecode','editorModeblocks']);
+  o.reachable={...await reach(p,callable?['callableSave','callableSaveProject','procClose']:['runBtn','saveBtn']),...await reachToggle(p,callable?'callable':'editor')};
   if(callable){
     await number.fill('－');await number.press('Tab');
-    await p.locator('#callableModecode').click();await frame(p);
-    o.pendingCancel={value:await number.inputValue(),shown:await p.locator('#callablePending').isVisible(),blocksRetained:await p.locator('#callableModeblocks').getAttribute('aria-pressed')};
+    await chooseView(p,'code',{prefix:'callable'});await frame(p);
+    o.pendingCancel={value:await number.inputValue(),shown:await p.locator('#callablePending').isVisible(),blocksRetained:String(await shownView(p,'callable')==='blocks')};
     await capture(p,imagePrefix+'-pending-cancel.png');
-    Object.assign(o.reachable,await reach(p,['callableCancel']));
-    await p.locator('#callableCancel').click();o.cancelled=await state(p,true);
+    // The callable editor's cancel is the one shown (FCB-11): while the floating 決める・やめる is open, that one.
+    Object.assign(o.reachable,await reach(p,['callableCancel'],{callableCancel:await shownCancel(p,'callable')}));
+    await cancelInput(p,'callable');o.cancelled=await state(p,true);
   }
   return o;
 }
