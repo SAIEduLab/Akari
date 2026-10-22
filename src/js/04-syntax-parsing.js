@@ -2936,8 +2936,12 @@
     // Keep the comma mandatory, and accept only a complete finite control form.
     if(!ctx.explicitControlActor){
       const actor=surfaceCapture(/^(.+?)は、(.+)$/d,code);
-      if(actor){
-        const actorRef=sentenceActor(actor[0].text),fragment=surfaceLineSlice(line,actor[1].start,actor[1].end);
+      // A part's name is looked up first (こはるは、… names the part こはる). Words that are no name (そのあと、星は、…)
+      // are not a control's subject: the line is read as a sentence instead.
+      let actorRef=null;
+      if(actor){try{actorRef=sentenceActor(actor[0].text,symbols);}catch(error){if(!(error instanceof AkariError))throw error;}}
+      if(actorRef){
+        const fragment=surfaceLineSlice(line,actor[1].start,actor[1].end);
         fragment.comment=line.comment;
         const head=readBlockHead(actor[1].text,symbols,{...ctx,sourceLine:fragment,topicActor:actorRef,explicitControlActor:true});
         if(head&&head.kind!=='Else'){
