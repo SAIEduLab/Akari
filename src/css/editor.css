@@ -6156,6 +6156,18 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
   padding: 0 6px; border: 1px solid #0002; border-radius: 13px; background: #ffffffb3; font-weight: 700; line-height: 1; color: inherit;
 }
 .blockui-world .blockui-extra[open] > summary { background: #fff; border-color: #6c8ca5; }
+/* 「…」 opens its panel over the workspace, right under the block's face and as wide as it (where it would be in the
+   flow), as ほかのそうさ opens its list (E-12): the blocks below keep their places. While it is open, its block lies
+   above the others and the places between blocks do not take presses. */
+.blockui-world .blockui-node-main:has(> .blockui-extra[open]) { position: relative; }
+.blockui-world .blockui-extra[open] { flex-basis: auto; }
+.blockui-world .blockui-extra[open] > .blockui-extra-controls {
+  position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 2px); box-sizing: border-box; min-width: min(220px, 100%);
+  padding: 8px 10px; background: #fff; border: 1px solid #9db3c5; border-radius: 9px; box-shadow: 0 3px 10px #12324d26;
+}
+.blockui-world .blockui-body:has(.blockui-extra[open]) { z-index: 2; }
+.blockui-world .blockui-node:has(.blockui-extra[open]) { z-index: 110; }
+.blockui-world .blockui-body:has(.blockui-extra[open]) > .blockui-insertion { pointer-events: none; }
 .blockui-world .blockui-subject-text { font-weight: 700; }
 .blockui-world .blockui-value-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
 .blockui-world .blockui-value-row > .blockui-slot-label { min-width: 4em; font-size: 12px; font-weight: 500; }
