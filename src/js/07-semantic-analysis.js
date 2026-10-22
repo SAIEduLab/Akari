@@ -1499,7 +1499,16 @@
     compiled.items = compiled.items.filter((x) => x.key !== key && x.documentKey !== key);
     compiled.items.push(...items);
     compiled.astByKey=syntaxItemMap(compiled.items,compiled.errors);
-    return placeMeijinDefinitionErrors(candidate, analyzeProject(candidate, compiled, { rootKeys: new Set(items.map(item=>item.key)) }));
+    const out = placeMeijinDefinitionErrors(candidate, analyzeProject(candidate, compiled, { rootKeys: new Set(items.map(item=>item.key)) }));
+    // The code view gives S317 for a 名人 form, as the check does (FM2-04: いちばん近い星の方を向く).
+    if (!context.meijin && !kind && typeof ast.source === 'string') {
+      const keys = new Set([key, ...items.map(item => item.key)]), at = out.findIndex(e => keys.has(e.where));
+      if (at >= 0 && genericReadingError(out[at]) && meijinTrialReads(candidate, ast.source, targetId)) {
+        const { proposals, draftRole, ...location } = out[at];
+        return [...out.slice(0, at), { ...location, code: 'S317', message: MEIJIN_ONLY_MESSAGE }, ...out.slice(at + 1).filter(e => !keys.has(e.where))];
+      }
+    }
+    return out;
   }
   function compileProject(project) {
     try {
@@ -1525,31 +1534,38 @@
   // sentence. An error that gives its own guidance or choices (「空」は…, 「〜になったら」は…) is kept.
   // 10秒のあいだ、くり返す in an ordinary body asks for a state before あいだ; it is the 名人 timed repeat.
   const GENERIC_READING_ERRORS = [/^まだ 作っていない 名前/, /^この 名前は【名前】のように【 】で かこんでください/, /読みとれません|読めません|読めない ところ/, /が たりません/, /という 文は あかりに ありません/, /^つづける きまりの おわりを「あいだ」に/];
+  // Whether a part's body reads with no error as a 名人 text: as written (its own headings and procedures), or as the
+  // part's sentences, which a 名人 text writes under a heading that names the part.
+  function meijinTrialReads(project, source, targetId) {
+    const owner = project.components.find(c => c.id === targetId)?.name, sources = [source];
+    if (owner && /^[^\s、。「」【】（）()]+$/.test(owner)) {
+      sources.push(`作品を動かしたとき、${owner}は、\n` + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n'));
+      // A part's body names no subject (or names 自分): in a 名人 text the part is written as the subject.
+      const named = text => project.components.some(c => text.startsWith(c.name) && /^[はがともや、]/.test(text.slice(c.name.length)));
+      sources.push(source.split('\n').map(line => {
+        const [, indent, text] = /^(\s*)(.*)$/.exec(line);
+        if (!text || /^(?:もし|そうでなければ|ずっと|次のことを|※)/.test(text) || /(?:とき|たら|ごとに)、$/.test(text) || named(text)) return line;
+        return indent + owner + 'は、' + text.replace(/^自分(?:は|が)、?/, '');
+      }).join('\n'));
+    }
+    // A text that does not even read as 名人 text is not compiled (the code view tries this on every change).
+    let symbols = null;
+    return sources.some(text => {
+      try { if (!parseSyntax(text, { symbols: symbols ||= buildSymbols(project), meijin: true }).ast) return false; } catch (error) { if (!(error instanceof AkariError)) throw error; return false; }
+      const trial = cloneDesignProject(project);
+      trial.scripts = [{ id: 'meijin-reading', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: text }];
+      try { return compileProject(trial).errors.length === 0; } catch (error) { if (!(error instanceof AkariError)) throw error; return false; }
+    });
+  }
+  // The first error of a body, when it is a reading error that gives no guidance of its own (S317 is given instead when
+  // the body reads as 名人).
+  const genericReadingError = first => !!first && ['P201', 'P205', 'S301'].includes(first.code) && !first.proposals?.length && GENERIC_READING_ERRORS.some(re => re.test(first.message));
   function meijinFormsInOrdinary(project, errors) {
     let out = errors;
     for (const script of project.scripts) {
       if (isMeijinScript(script) || !script.source?.trim()) continue;
       const key = scriptSourceKey(script), at = out.findIndex(e => e.where === key), first = out[at];
-      if (!first || !['P201', 'P205', 'S301'].includes(first.code) || first.proposals?.length || !GENERIC_READING_ERRORS.some(re => re.test(first.message))) continue;
-      // As written (its own headings and procedures), or as the part's sentences: in 名人 text they are read under a
-      // heading that names the part.
-      const owner = project.components.find(c => c.id === script.targetId)?.name, sources = [script.source];
-      if (owner && /^[^\s、。「」【】（）()]+$/.test(owner)) {
-        sources.push(`作品を動かしたとき、${owner}は、\n` + script.source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n'));
-        // A part's body names no subject (or names 自分): in a 名人 text the part is written as the subject.
-        const named = text => project.components.some(c => text.startsWith(c.name) && /^[はがともや、]/.test(text.slice(c.name.length)));
-        sources.push(script.source.split('\n').map(line => {
-          const [, indent, text] = /^(\s*)(.*)$/.exec(line);
-          if (!text || /^(?:もし|そうでなければ|ずっと|次のことを|※)/.test(text) || /(?:とき|たら|ごとに)、$/.test(text) || named(text)) return line;
-          return indent + owner + 'は、' + text.replace(/^自分(?:は|が)、?/, '');
-        }).join('\n'));
-      }
-      const reads = sources.some(source => {
-        const trial = cloneDesignProject(project);
-        trial.scripts = [{ id: 'meijin-reading', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source }];
-        try { return compileProject(trial).errors.length === 0; } catch (error) { if (!(error instanceof AkariError)) throw error; return false; }
-      });
-      if (!reads) continue;
+      if (!genericReadingError(first) || !meijinTrialReads(project, script.source, script.targetId)) continue;
       const { proposals, draftRole, ...location } = first;
       out = [...out.slice(0, at), { ...location, code: 'S317', message: MEIJIN_ONLY_MESSAGE }, ...out.slice(at).filter(e => e.where !== key)];
     }

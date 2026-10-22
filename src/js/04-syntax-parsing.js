@@ -1154,12 +1154,16 @@
         const text = String(source).split('\n')[(error.line || 1) - 1] || '';
         for (const [pattern, say] of WORD_LINES) { const m = pattern.exec(text); if (m) { word = say(m); break; } }
       }
+      // A 名人 form in a part's body (点数が10になったとき、 / あかりが2秒かけて、前へ40歩進むあいだ、…): the code view says
+      // S317, as the check does (FM2-04). Only a body of the work is tried (its key and part), never a probe of a phrase.
+      const meijin = !word && !context.meijin && !context.definitionKind && !context.definition && (context.key || context.ownerKey) && context.targetId && context.symbols?.project
+        && genericReadingError(error) && meijinTrialReads(context.symbols.project, String(source), context.targetId);
       return {
         ast: null,
         syntaxDiagnostics: [
           {
-            code: word ? 'S301' : error.code,
-            message: word || error.message,
+            code: word ? 'S301' : meijin ? 'S317' : error.code,
+            message: word || (meijin ? MEIJIN_ONLY_MESSAGE : error.message),
             line: error.line || 0,
             column: error.column || 1,
             where: context.key || context.ownerKey || '',
