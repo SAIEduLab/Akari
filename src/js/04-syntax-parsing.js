@@ -2639,7 +2639,9 @@
         // A name that is itself a word of あかり (大きさ, 向き): written bare it is that word (a notice tells of the data).
         if(RESERVED.has(name))continue;
         const bracketed=code.slice(0,at)+'【'+name+'】'+code.slice(at+name.length);
-        if(reads(bracketed))throw sentenceDiagnostic(`「${name}」のように あかりの ことばが 入った 名前は、【${name}】と【 】で かこんで 書きます`,line,[{label:'【 】で かこむ',source:canonicalStatementSource(bracketed,symbols)}]);}}
+        // The message names the word of あかり inside the name (もちもの has の), so the child sees why.
+        const inside=NAME_BREAKS.filter(word=>word.length&&name.includes(word)).sort((a,b)=>b.length-a.length)[0];
+        if(reads(bracketed))throw sentenceDiagnostic(inside?`「${name}」には あかりの ことば「${inside}」が 入っているので、【${name}】と【 】で かこんで 書きます`:`「${name}」のように あかりの ことばが 入った 名前は、【${name}】と【 】で かこんで 書きます`,line,[{label:'【 】で かこむ',source:canonicalStatementSource(bracketed,symbols)}]);}}
     const unquoted=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([^\u0001、。]+?)と(?:([^、。\u0001]+?)秒(?:間)?)?(?:言う|いう|話す|はなす|言います|話します)$/d,code,mask);
     if(unquoted&&!knownName(unquoted[1].text)&&/^[\p{L}ー！？!?]+$/u.test(unquoted[1].text)){
       let state=false;try{state=parseExpression(unquoted[1].text,symbols,ctx).kind==='SensorRead';}catch(error){if(!(error instanceof AkariError))throw error;}
