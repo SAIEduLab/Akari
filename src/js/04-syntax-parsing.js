@@ -3123,8 +3123,14 @@
       }
     }
     if(unclear)throw sentenceDiagnostic('「〜に〜を入れる」では、さいごに入れるのか、何番目かと 入れかえるのか 分かりません。えらんでください',working,[{label:'さいごに入れる',source:`${unclear[0].text}の最後に${unclear[1].text}を入れる`},{label:'どれかと 入れかえる（何番目かを えらぶ）',source:`${unclear[0].text}の〔番号を入れる〕番目を${unclear[1].text}にかえる`}],{kind:'ListMutation',target:unclear[0].text,missing:['operation','indexIfReplace']});
-    const delayed=surfaceCapture(/^(.+)秒後に(.+)$/d,code);
-    if(delayed)throw sentenceDiagnostic('待ってから 動くときは、「待つ」と「動く」の 2つの 文に 分けます',working,[{label:'待ってから次の動きをする',source:`${delayed[0].text}秒待つ。\n${' '.repeat(working.indent||0)}${delayed[1].text}`}],{kind:'Sequence',missing:['motionDestinationIfAbsent']});
+    // 10秒後に右へ10歩動く: the move is written as the code writes it (いまのばしょから、右へ10歩動く), so the
+    // second sentence of the fix reads too.
+    const delayed=surfaceCapture(/^(.+)秒後に、?(.+)$/d,code);
+    if(delayed){
+      const rest=delayed[1].text,readable=text=>{try{return !!parseSyntax(text+'。',{symbols}).ast;}catch(error){if(!(error instanceof AkariError))throw error;return false;}};
+      const then=[rest,'いまのばしょから、'+rest].find(readable);
+      throw sentenceDiagnostic('待ってから 動くときは、「待つ」と「動く」の 2つの 文に 分けます',working,[{label:'待ってから次の動きをする',source:`${delayed[0].text}秒待つ。\n${' '.repeat(working.indent||0)}${then?canonicalStatementSource(then,symbols):rest}`}],{kind:'Sequence',missing:['motionDestinationIfAbsent']});
+    }
     if(directError)throw directError;
     // The preserved advanced spellings are parsed structurally by the original finite parser.
     try {const legacy=parseLegacySimpleStatement(working,symbols,ctx);legacy.actorRef={...(ctx.topicActor||{kind:'self'})};return everyoneWait(legacy,ctx);}
