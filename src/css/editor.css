@@ -5861,10 +5861,8 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
   body[data-editor-mode] .menutool:has(> .editor-modes[hidden]) {
     padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
   }
-  /* The run screen shows neither the level nor the toggle (they change nothing there). */
-  body.runtime[data-editor-mode] .menutool {
-    padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-gap));
-  }
+  /* The run screen shows neither the level nor the toggle (they change nothing there), but keeps their room, so the
+     buttons wrap as on the edit screen and ■ 止める comes where ▶ 動かす was. */
   body[data-editor-mode] .menutool > :is(.ui-level-label, .editor-modes, #projectName) {
     position: absolute;
     margin: 0;
@@ -5954,13 +5952,18 @@ body.run-finished .debugbar :is(#pauseBtn, #continueBtn, #stepBtn, #runtimeInspe
 /* もとにもどす is an edit-screen control; the run screen's bar holds the run controls only. */
 body.runtime .debugbar > #undoBtn { display: none !important; }
 body.runtime.run-finished[data-editor-mode] .main > .codewin > .debugbar { display: none !important; }
-body.runtime .menutool > :is(.ui-level-label, .editor-modes, .mode-blocked-note) { display: none !important; }
+/* The level and the toggle are not shown on the run screen; their room stays, so no toolbar button moves. */
+body.runtime .menutool > :is(.ui-level-label, .editor-modes) { visibility: hidden !important; }
+body.runtime .menutool > .mode-blocked-note { display: none !important; }
 .editor-modes[hidden] { display: none !important; }
-:is(#editorModeblocks, #callableModeblocks)[aria-disabled="true"] { opacity: 0.5; }
+:is(#editorModeblocks, #callableModeblocks, #sourceHeadingBtn)[aria-disabled="true"] { opacity: 0.5; }
 /* Why ブロック does not open while the code has a mistake: shown under the toggle after a press of the pale ブロック. */
 .mode-blocked-note { margin: 0; padding: 6px 10px; border: 1px solid #c98a6a; border-radius: 8px; background: #fff7f2; color: #8a2c0d; font-size: 14px; line-height: 1.5; }
 .mode-blocked-note[hidden] { display: none !important; }
 .menutool > .mode-blocked-note { position: absolute; top: calc(100% + 6px); right: 10px; z-index: 61; max-width: 20rem; box-shadow: 0 6px 16px #18364b30; }
+/* The same note under いつ動く？ (its left is set to the button's when it opens). */
+.source-nav { position: relative; }
+.source-nav > .mode-blocked-note { position: absolute; top: calc(100% + 6px); z-index: 61; width: max-content; max-width: min(20rem, calc(100% - 16px)); box-shadow: 0 6px 16px #18364b30; }
 
 /* The strip under the stage on the run screen, at every level: いま 動いている 文：who / which event / which line, and
    the sentence itself in a box. Its height never depends on the sentence, so the stage keeps its size from sentence
@@ -5994,7 +5997,7 @@ body { overflow: visible !important; }
 /* While the work runs a menu stays in its place, pale like the other toolbar buttons, and does not open. */
 .menutool > details.toolbar-menu > summary[aria-disabled="true"] { opacity: 0.5; cursor: default; }
 .menutool > #basicActionGuide > .child-help-panel,
-.menutool > #entryProjectMenu > .entry-project-actions { position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
+.menutool > #entryProjectMenu > .entry-project-actions { position: fixed; top: calc(var(--toolbar-h, 0px) + 6px); left: auto; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
 .menutool > #basicActionGuide > .child-help-panel { width: min(34rem, calc(100vw - 32px)); max-height: min(60dvh, 420px); }
 .menutool > #entryProjectMenu > .entry-project-actions { border-radius: 10px; }
 body[data-editor-mode] .menutool #uiLevel { box-sizing: border-box; width: 100%; min-width: 0; height: 36px; padding: 0 6px; }
@@ -6027,8 +6030,11 @@ body[data-editor-mode="blocks"] #blockEditor .blockui-layout { min-height: 300px
 
 
 /* はじめて while running: the stage takes the large column; the ブロックの一覧 is put away and the built blocks stay.
-   On a narrow screen the stage column stays inside the window (100% less the 10 px column gap). */
+   On a narrow screen the stage column stays inside the window (100% less the 10 px column gap). The キャラクター・部品
+   list under the stage is no higher than on the edit screen (170 px) and scrolls inside, so a work with many parts
+   does not take the stage's height. */
 body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr) clamp(min(420px, 100% - 10px), 56vw, 820px); }
+body[data-ui-level="entry"].runtime[data-editor-mode] .main > .side { max-height: 170px; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-palette { display: none !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layout { grid-template-columns: minmax(0, 1fr) !important; }
 
@@ -6207,6 +6213,9 @@ body[data-editor-mode] :is(#blockEditor, #callableBlocks) .blockui-palette.block
 /* The text of the blocks, the block list and the workspace controls is not selected by a press or a drag (E-11);
    the text in an input is. */
 #blockEditor, #callableBlocks, .blockui-drag-ghost { -webkit-user-select: none; user-select: none; }
+/* The same for the rows above the workspace (本文・動かすもの, the event buttons, すべての本文 … もとにもどす): a drag that
+   starts in their empty space selects nothing. */
+body[data-editor-mode="blocks"] .codewin > :is(.win-title, .code-head, #entryEvents, .source-nav, .debugbar) { -webkit-user-select: none; user-select: none; }
 #blockEditor :is(input, textarea), #callableBlocks :is(input, textarea) { -webkit-user-select: text; user-select: text; }
 body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
 
@@ -6221,6 +6230,9 @@ body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
   .status, #statusText, .editor-pending, #entryOutside, .mode-blocked-note, .monitor-empty, .blockui-trigger-scope, .diagnostic-help) {
   word-break: auto-phrase;
 }
+/* The notes under ブロック and いつ動く？ are one short sentence whose phrases are spaced: they break at the spaces
+   (「…ブロックに」 then 「もどれるよ」), never inside a phrase. */
+:is(#modeBlockedNote, #callableModeBlockedNote, #headingBlockedNote) { word-break: keep-all; overflow-wrap: anywhere; }
 
 /* Touch screens (E-19): what a finger presses is at least 40 × 40 px — the fields, choices and buttons in the blocks,
    the category buttons (36 px to see, 40 px to press), the stage's size handles and zoom buttons, and the right
@@ -6277,6 +6289,14 @@ body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .side 
 body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .win-title,
 body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .run-strip { display: none; }
 body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > .designer-wrap { height: 158px; padding: 6px; overflow: hidden; }
+/* はじめて keeps the stage in the page's grid, not in the right column: it becomes the same small stage at the bottom
+   right, the part list under it is put away, and the blocks take the whole width. */
+body[data-ui-level="entry"][data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .main > .side { display: none !important; }
+body[data-ui-level="entry"][data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) .main > #designerWindow {
+  position: fixed; z-index: 400; right: 18px; bottom: 44px; box-sizing: border-box; width: 228px; height: 158px; min-height: 0; margin: 0;
+  overflow: hidden; border-radius: 12px; box-shadow: 0 6px 18px #12324d40; background: #fff;
+}
+body[data-ui-level="entry"][data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #designerWindow > #designHelp { display: none; }
 #stageThumbnail {
   position: absolute; inset: 0; z-index: 3500; width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0;
   border: 2px solid #6c8ca5; border-radius: 12px; background: transparent; cursor: pointer;

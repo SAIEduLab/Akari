@@ -408,9 +408,10 @@
       }
       for(const [id,origin] of [['entryNew','newBtn'],['entryOpen','openBtn'],['entryExport','exportBtn']]) $('#'+id).disabled=$('#'+origin).disabled;
       // What はじめて keeps but does not show: blocks and rules it has not in this body, and every body of another event
-      // (keys, signals, ふれたとき …), which only the two buttons above could open.
+      // (keys, signals, ふれたとき …), which only the two buttons above could open. The holes of a block being put in
+      // (〔くり返すことを入れる〕) are not such blocks.
       const tree=mainEditor.session?.blockView;
-      const outside=(tree&&[...buildBlockIndex(tree).values()].some(({node})=>
+      const outside=(tree&&[...buildBlockIndex(tree).values()].some(({node})=>!String(node.schemaId).startsWith('Hole:')&&
         ['statement','rule'].includes(BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category)&&!ENTRY_BLOCK_SCHEMA_IDS.has(node.schemaId)))||
         (project?.scripts||[]).some(s=>!['start','click'].includes(s.event)&&!isMeijinScript(s)&&String(s.source||'').trim());
       $('#entryOutside').hidden=!entry||!outside||!!tutorial;
@@ -1430,6 +1431,19 @@
         }
         b.title = refused ? '書き方の まちがいを コードで 直すと、ブロックで 見られます' : '';
       }
+      if (!draft) {
+        // いつ動く？ opens the block view as well, so a code error makes it pale in the same way; a press says why under
+        // it (headingBlockedNote) instead of doing nothing.
+        const heading = $('#sourceHeadingBtn');
+        if (!session.syntaxAst || invalidCodePending) {
+          heading.setAttribute('aria-disabled', 'true');
+          heading.setAttribute('aria-describedby', headingBlockedNote().id);
+        } else {
+          heading.removeAttribute('aria-disabled');
+          heading.removeAttribute('aria-describedby');
+          headingBlockedNote().hidden = true;
+        }
+      }
       if (blocks && (draft || !sourceOverviewOpen)) {
         binding.view.render();
         const mark = activeLoc || keptFail;
@@ -1470,9 +1484,26 @@
       }
       return note;
     }
-    function showModeBlockedNote(binding) {
-      const note = modeBlockedNote(binding);
+    // The same note under いつ動く？ in the row above the body.
+    function headingBlockedNote() {
+      let note = document.getElementById('headingBlockedNote');
+      if (!note) {
+        note = document.createElement('p');
+        note.id = 'headingBlockedNote';
+        note.className = 'mode-blocked-note';
+        note.setAttribute('role', 'status');
+        note.hidden = true;
+        note.textContent = 'コードの 赤い ところを 直すと、ブロックに もどれるよ';
+        $('#sourceHeadingBtn').after(note);
+      }
+      return note;
+    }
+    function showModeBlockedNote(binding) { showBlockedNote(modeBlockedNote(binding)); }
+    function showBlockedNote(note) {
       note.hidden = false;
+      // Under いつ動く？, kept inside the row at narrow widths.
+      if (note.id === 'headingBlockedNote')
+        note.style.left = Math.max(8, Math.min($('#sourceHeadingBtn').offsetLeft, note.parentElement.clientWidth - note.offsetWidth - 8)) + 'px';
       const hide = () => {
         note.hidden = true;
         document.removeEventListener('pointerdown', hide, true);
@@ -1645,7 +1676,7 @@
       binding.textarea.value = readSource(binding);
       clearEditorFailure(binding);
       renderEditorBinding(binding);
-      if (binding === mainEditor) refreshEditor();
+      if (binding === mainEditor) { refreshEditor(); renderEntrySurface(); }
       setStatus('入力を やめたよ');
     }
     function editorContentFingerprint(state) {
@@ -1905,7 +1936,8 @@
         const add = document.createElement('button');
         add.type = 'button';
         add.className = 'entry-add';
-        add.dataset.spritePreset = preset;
+        // An attribute of its own: [data-sprite-preset] names the toolbox's tools only.
+        add.dataset.entryPreset = preset;
         add.textContent = '＋ ' + label;
         add.addEventListener('click', () => addComponent('sprite', null, null, preset));
         entryAdd.append(add);
@@ -2027,21 +2059,27 @@
           if (menu.contains(document.activeElement) || document.activeElement === document.body) menu.querySelector('summary').focus({ preventScroll: true });
         }
       });
-      // An open menu stays inside the window at narrow widths: it shifts left (or right) by what would stick out.
+      // An open menu opens under the whole toolbar (its top follows --toolbar-h), so on a wrapped toolbar it covers none
+      // of the rows below the menu's own row. It stays inside the window at narrow widths: it shifts left (or right) by
+      // what would stick out, again whenever the toolbar changes size while it is open.
+      const placeMenu = (menu) => {
+        const panel = menu.querySelector(':scope > :not(summary)');
+        menu.style.setProperty('--menu-shift', '0px');
+        if (!menu.open || !panel) return;
+        const r = panel.getBoundingClientRect(), room = document.documentElement.clientWidth - 16;
+        menu.style.setProperty('--menu-shift', (r.right > room ? Math.max(16 - r.left, room - r.right) : r.left < 16 ? 16 - r.left : 0) + 'px');
+      };
       for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu'))
-        menu.addEventListener('toggle', () => {
-          const panel = menu.querySelector(':scope > :not(summary)');
-          menu.style.setProperty('--menu-shift', '0px');
-          if (!menu.open || !panel) return;
-          const r = panel.getBoundingClientRect(), room = document.documentElement.clientWidth - 16;
-          menu.style.setProperty('--menu-shift', (r.right > room ? Math.max(16 - r.left, room - r.right) : r.left < 16 ? 16 - r.left : 0) + 'px');
-        });
+        menu.addEventListener('toggle', () => placeMenu(menu));
       // A choice in はじめて's 作品 menu closes it. A menu does not open while the work runs (updateEditingLock).
       toolbar.addEventListener('click', (event) => {
         if (event.target.closest('.entry-project-actions button')) $('#entryProjectMenu').open = false;
         if (event.target.closest('details.toolbar-menu > summary[aria-disabled="true"]')) event.preventDefault();
       });
-      const syncHeight = () => document.documentElement.style.setProperty('--toolbar-h', toolbar.offsetHeight + 'px');
+      const syncHeight = () => {
+        document.documentElement.style.setProperty('--toolbar-h', toolbar.offsetHeight + 'px');
+        for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]')) placeMenu(menu);
+      };
       if (typeof ResizeObserver === 'function') new ResizeObserver(syncHeight).observe(toolbar);
       syncHeight();
     }
@@ -5168,9 +5206,11 @@
         return;
       }
       // A work with no sentence in any body (notes do not count) does not run: the status says how to put one in.
+      // A continuing rule (「…あいだ、…動き続ける。」) is a sentence too, even alone in its body.
       const hasSentence = nodes => (nodes || []).some(node => node.kind !== 'CommentLine');
       if (!(compiled.items || []).some(item => !item.definitionKind &&
-        (hasSentence(item.ast?.body) || (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
+        (hasSentence(item.ast?.body) || hasSentence(item.ast?.rules) ||
+          (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
         setStatus('ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね');
         return;
       }
@@ -6315,7 +6355,11 @@
     function updateCallableHeader() {
       if (syncingDraft) return;
       if (!syncCallableDraft()) return;
-      if (draftEditor.session?.mode !== 'blocks' && !saveCodeBinding(draftEditor)) return;
+      // A code error still renders the draft's toggle, so ブロック turns pale and its press says why (as in the main editor).
+      if (draftEditor.session?.mode !== 'blocks' && !saveCodeBinding(draftEditor)) {
+        if (draftEditor.view) renderEditorBinding(draftEditor);
+        return;
+      }
       paintCallable();
       if (draftEditor.view) {
         renderEditorBinding(draftEditor);
@@ -7654,6 +7698,8 @@
           clearEditorFailure(binding);
           if (binding.session) binding.session.pendingEdit = binding.session.blockDraft
             ? binding.session.blockDraft.pending : null;
+          // はじめて's note on blocks it does not show follows the body as it is again.
+          if (binding === mainEditor) renderEntrySurface();
         },
       });
       for (const mode of ['code', 'blocks'])
@@ -7757,7 +7803,7 @@
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#loseConfirmModal,#samplePicker') ||
-          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"]')
+          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"]')
         )
           return;
         if (!flushActiveEditor()) {
@@ -7830,7 +7876,8 @@
     };
     $('#sourceOverviewBtn').onclick = () => { if (flushActiveEditor()) showSourceOverview(); };
     $('#sourceEditBtn').onclick = () => { hideSourceOverview(); loadEditor(); };
-    $('#sourceHeadingBtn').onclick = () => {
+    $('#sourceHeadingBtn').onclick = (event) => {
+      if (event.currentTarget.getAttribute('aria-disabled') === 'true') { showBlockedNote(headingBlockedNote()); return; }
       if (modelLocked() || !switchEditorMode(mainEditor, 'blocks')) return;
       const selected=$('#blockEditor .blockui-selected'),scope=selected?.closest('.blockui-script');
       const field=(scope||$('#blockEditor')).querySelector('[data-blockui-structured-role="heading.event"]');
