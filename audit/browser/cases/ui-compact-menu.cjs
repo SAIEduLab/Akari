@@ -1,4 +1,5 @@
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {chooseView}=require('./view-toggle.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Bounded real pointer QA for compact block menus. No forced or hidden clicks.
@@ -19,7 +20,7 @@ const hash=()=>crypto.createHash('sha256').update(fs.readFileSync(html)).digest(
  async function run(id,fn){try{results.push({id,pass:true,evidence:await fn()});console.log('PASS',id);}catch(error){results.push({id,pass:false,error:error.stack,evidence:{screenshot:prefix+'-failure.png'}});await page.screenshot({path:prefix+'-failure.png'}).catch(()=>{});throw error;}finally{save();}}
  async function fixture(source){
   if(await root.isVisible()&&await root.locator('[data-blockui-action="cancel"]').isEnabled())await (await reveal(root.locator('[data-blockui-action="cancel"]'))).click();
-  await (async()=>{const control=await reveal(page.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();await (async()=>{const control=await reveal(page.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();
+  await chooseView(page,'code',{reveal:reveal,open:openBodyForTest});await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();await chooseView(page,'blocks',{reveal:reveal,open:openBodyForTest});
  }
  async function menuEvidence(node){
   await U.openNodeMenu(node);const menu=node.locator(':scope > .blockui-node-head .blockui-actions'),items=menu.locator('.blockui-action-items');

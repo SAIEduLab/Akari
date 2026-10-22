@@ -3,6 +3,7 @@
 // ASTs, and save and reopen. Rows listed in the schema contract's semanticRows also
 // check the hand-written sentence and runtime result LANGUAGE.md gives them.
 const {pressStop}=require('../../lib/stop-press.cjs');
+const {chooseView}=require('./view-toggle.cjs');
 const {setupRegressionPage, completeRegressionHoles, openPaletteTools, openBodyForTest} = require('./regression-setup.cjs');
 const U=require('./ui-routes.cjs');
 const L=require('./audit-lib.cjs'),assert=require('assert/strict'),{pathToFileURL}=require('url');
@@ -21,7 +22,7 @@ const openPage=async()=>{await p.goto(pathToFileURL(L.path.join(dir,manifest.can
 let inputId=await openPage();let draft=false,rootId='#blockEditor';
 const session=()=>p.evaluate(d=>(d?Akari.app.editorState.draft:Akari.app.editorState.main),draft);
 const projectText=()=>p.evaluate(()=>JSON.stringify(Akari.app.project));
-const mode=async which=>{await p.locator(`#${draft?'callable':'editor'}Mode${which}`).click();await p.locator(rootId).waitFor({state:which==='blocks'?'visible':'hidden'});};
+const mode=async which=>{await chooseView(p,which,{prefix:draft?'callable':'editor'});await p.locator(rootId).waitFor({state:which==='blocks'?'visible':'hidden'});};
 const root=()=>p.locator(rootId),node=(id)=>root().locator('.blockui-node[data-block-id="'+id+'"]');
 const walkTree=(n,fn)=>{fn(n);for(const v of Object.values(n.inputs||{}))(Array.isArray(v)?v:[v]).forEach(c=>walkTree(c,fn));for(const v of Object.values(n.bodies||{}))v.forEach(c=>walkTree(c,fn));};
 const locate=async schema=>{const s=await session(),found=[];walkTree(s.blockView,n=>{if(n.schemaId===schema)found.push(n);});return found;};

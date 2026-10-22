@@ -5,6 +5,7 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {autosaveSources,autosaveSuffix,autosaveCallable,verifyAutosaveStateReport} from '../lib/autosave-state-contract.mjs';
 import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),output=path.resolve(out),product=currentProductFile(),artifacts=output+'.artifacts';
 fs.mkdirSync(artifacts,{recursive:true});
@@ -39,7 +40,7 @@ async function fixture(p,source,document,{actions=[],extraScripts=[]}={}){
   setupPhase(p,'fixture-import');await p.locator('#fileInput').setInputFiles({name:'autosave-state.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
   setupPhase(p,'fixture-wait-project');await p.waitForFunction(()=>Akari.app.project.name==='自動保存状態の検証');setupPhase(p,'fixture-project-loaded');await p.locator('#uiLevel').selectOption('advanced');
   await p.locator('#objectSelect').selectOption('sprite-1');await p.locator('#eventSelect').selectOption('start');
-  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModecode').click();setupPhase(p,'fixture-complete');
+  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await chooseView(p,'code');setupPhase(p,'fixture-complete');
   }catch(error){setupRecords.get(p)?.push({phase:'fixture-failed',at:Date.now(),state:await Promise.race([p.evaluate(()=>({ready:document.readyState,state:globalThis.Akari?.app?.editorState?.state,name:globalThis.Akari?.app?.project?.name,input:document.querySelector('#fileInput')?.value,console:document.querySelector('#console')?.textContent})).catch(e=>({error:e.message})),new Promise(resolve=>setTimeout(()=>resolve({unavailable:'diagnostic timeout after 2 seconds'}),2000))])});throw error;}
   finally{p.setDefaultTimeout(8000);}
 }

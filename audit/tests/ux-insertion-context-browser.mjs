@@ -7,6 +7,7 @@ import {currentProductFile} from '../lib/product-path.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {insertionSources,verifyInsertionContextObservation,verifyInsertionContextReport} from '../lib/insertion-context-contract.mjs';
 import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2);
 if(!chrome||!out)throw Error('Usage: ux-insertion-context-browser.mjs <browser> <fresh-report>');
 const output=path.resolve(out),artifacts=output+'.artifacts',product=currentProductFile(),started=performance.now();
@@ -34,7 +35,7 @@ async function install(p,source){
   const file=await p.evaluate(source=>{const project=Akari.makeEmptyProject();project.name='命令と値の追加先';project.scripts=[{id:'insertion-main',targetId:'sprite-1',event:'start',source}];return Akari.serializeProject(project,Akari.makeDefaultAssetStore());},source);
   await p.locator('#fileInput').setInputFiles({name:'insertion-context.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
   await p.waitForFunction(()=>Akari.app.project.name==='命令と値の追加先');await p.locator('#objectSelect').selectOption('sprite-1');
-  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModeblocks').click();
+  if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await chooseView(p,'blocks');
   await p.evaluate(()=>{globalThis.insertionContextTrace=[];let down=null;
     for(const kind of ['pointerdown','pointerup','click','focusin','blur','change','input','compositionstart','compositionend'])document.querySelector('#blockEditor').addEventListener(kind,event=>{
       if(kind==='pointerdown')down=event.target;

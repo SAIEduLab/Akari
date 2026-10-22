@@ -1,5 +1,6 @@
 const U = require('./ui-routes.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {chooseView}=require('./view-toggle.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
 const {chromium}=require('playwright'),assert=require('assert/strict'),{pathToFileURL}=require('url'),path=require('path'),fs=require('fs');
 (async()=>{
@@ -10,12 +11,12 @@ const {chromium}=require('playwright'),assert=require('assert/strict'),{pathToFi
  try{
  for(const [n,where]of [[8333,'start'],[8333,'middle'],[8333,'end'],[16666,'start'],[16666,'middle'],[16666,'end']]){
   const source=Array(n).fill('何もしない').join('\n'),at=where==='start'?0:where==='middle'?Math.floor(n/2)*6:source.length,p=await setup(source,at),before=await state(p),started=Date.now();
-  await (async()=>{const control=p.locator('#editorModeblocks'); await openBodyForTest(control.page()); return control.click();})();const ms=Date.now()-started;await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+  await chooseView(p,'blocks',{open:openBodyForTest});const ms=Date.now()-started;await p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const view=await p.evaluate(()=>{const s=Akari.app.editorState.main,n=document.querySelector('#blockEditor .blockui-selected'),r=n?.getBoundingClientRect(),w=document.querySelector('#blockEditor .blockui-workspace').getBoundingClientRect();return{selection:s.blockSelection,focused:document.activeElement?.dataset.blockId===s.blockSelection,count:document.querySelectorAll('#blockEditor .blockui-statement').length,path:n?.querySelector(':scope > .blockui-shape path')?.getAttribute('d'),visible:!!r&&r.bottom>w.top&&r.top<w.bottom,line:s.nodeMap.get(s.blockSelection)?.sourceSpan?.startLine}});
   assert.equal((await state(p)).mode,'blocks');assert(view.count<=120);assert(view.focused&&view.visible&&view.path);assert.equal(view.line,where==='start'?1:where==='middle'?Math.floor(n/2)+1:n);
-  await p.screenshot({path:path.join(out,`${n}-${where}.png`)});const backStarted=Date.now();await (async()=>{const control=p.locator('#editorModecode'); await openBodyForTest(control.page()); return control.click();})();const backMs=Date.now()-backStarted;assert.deepEqual(await state(p),before);results.push({id:'BROWSER-LONG-SWITCH',n,characters:source.length,where,inputMs:p.inputMs,ms,backMs,redoPreserved:before.redo,...view,roundTrip:true});await p.close();
+  await p.screenshot({path:path.join(out,`${n}-${where}.png`)});const backStarted=Date.now();await chooseView(p,'code',{open:openBodyForTest});const backMs=Date.now()-backStarted;assert.deepEqual(await state(p),before);results.push({id:'BROWSER-LONG-SWITCH',n,characters:source.length,where,inputMs:p.inputMs,ms,backMs,redoPreserved:before.redo,...view,roundTrip:true});await p.close();
  }
- const source=['1を言う。',...Array(298).fill('何もしない。'),'2を言う。'].join('\n'),p=await setup(source,source.length),before=await state(p);await (async()=>{const control=p.locator('#editorModeblocks'); await openBodyForTest(control.page()); return control.click();})();const root=p.locator('#blockEditor');
+ const source=['1を言う。',...Array(298).fill('何もしない。'),'2を言う。'].join('\n'),p=await setup(source,source.length),before=await state(p);await chooseView(p,'blocks',{open:openBodyForTest});const root=p.locator('#blockEditor');
  const ids=()=>root.locator('.blockui-statement').evaluateAll(ns=>ns.map(n=>n.dataset.blockId));let rendered=await ids();assert(rendered.length>0&&rendered.length<=120&&rendered.length<300);assert.equal(new Set(rendered).size,rendered.length);
  assert.deepEqual(await root.locator('.blockui-workspace .blockui-statement[data-schema-id="Say"] [data-schema-id="NumberLiteral"] [data-blockui-field="value"]').evaluateAll(ns=>ns.map(n=>n.value)),['1','2'],'opening and selected final statements remain visible');
  const gapActions=[];

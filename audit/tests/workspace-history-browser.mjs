@@ -6,6 +6,7 @@ import {createRequire} from 'node:module';
 import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 const require=createRequire(import.meta.url),[chrome,outputArg]=process.argv.slice(2),output=path.resolve(outputArg),product=currentProductFile();
 const report={schema:'akari-workspace-history-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},pageErrors:[],results:[]};
 fs.mkdirSync(path.dirname(output),{recursive:true});
@@ -18,7 +19,7 @@ try{await withBrowser(chrome,async browser=>{
  const run=async(id,fn)=>{const row={id,status:'RUNNING'};report.results.push(row);try{row.observed=await pageFor(browser,product,async page=>{
   page.setDefaultTimeout(8000);page.on('dialog',d=>d.accept());page.on('pageerror',e=>report.pageErrors.push(e.message));
   await page.locator('#uiLevel').selectOption('advanced');await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#eventSelect').selectOption('start');
-  if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await page.locator('#editorModecode').click();return fn(page);
+  if(await page.locator('#sourceOverview').isVisible())await page.locator('#sourceEditBtn').click();await chooseView(page,'code');return fn(page);
  });row.status='PASS';}catch(error){row.status='FAIL';row.error=error.stack;}save();console.log(row.status+' '+id);};
  await run('history/browser-thirty-undo-redo',async page=>{
   for(let i=1;i<=35;i++){await page.locator('#codeEditor').fill(`「履歴${i}」と言う。`);await page.waitForTimeout(280);}
@@ -31,14 +32,14 @@ try{await withBrowser(chrome,async browser=>{
   return{frames:30,restoredHistory:27,restoredRedo:3,cursor:26,firstRetained:'「履歴6」と言う。',sharedAssets:1};
  });
  await run('history/browser-pending-number',async page=>{
-  await page.locator('#codeEditor').fill('10歩動く。');await page.waitForTimeout(300);await page.locator('#editorModeblocks').click();
+  await page.locator('#codeEditor').fill('10歩動く。');await page.waitForTimeout(300);await chooseView(page,'blocks');
   const field=page.locator('#blockEditor .blockui-node[data-schema-id="MotionCommand:MOVE"] [data-blockui-field="value"]');await field.fill('－');await settled(page);await restore(page);
   assert.equal(await field.inputValue(),'－');assert.equal(await page.evaluate(()=>Akari.app.editorState.main.pendingEdit.value),'－');
   await page.locator('#undoBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.main.pendingEdit),null);assert.equal(await field.inputValue(),'10');
   await page.locator('#redoBtn').click();assert.equal(await field.inputValue(),'－');return{input:'－',restored:'－',undo:'10',redo:'－'};
  });
  await run('history/browser-closed-return-hole',async page=>{
-  await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('function');await page.locator('#callableName').fill('書きかけの答え');await page.locator('#callableModeblocks').click();
+  await page.locator('#procBtn').click();await page.locator('#callableType').selectOption('function');await page.locator('#callableName').fill('書きかけの答え');await chooseView(page,'blocks',{prefix:'callable'});
   await openPaletteTools(page.locator('#callableBlocks'));await page.locator('#callableBlocks [data-blockui-search]').fill('ReturnStatement');await page.locator('#callableBlocks [data-blockui-schema="ReturnStatement"]').click();await page.locator('#procClose').click();await settled(page);await restore(page);
   assert.equal(await page.locator('#procModal').isVisible(),false);await page.locator('#procBtn').click();assert.equal(await page.locator('#callableName').inputValue(),'書きかけの答え');
   assert.equal(await page.locator('#callableBlocks .blockui-node[data-schema-id="Hole:expression"]').count(),1);return{name:'書きかけの答え',closed:true,reopened:true,hole:1};

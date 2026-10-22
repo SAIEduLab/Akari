@@ -30,6 +30,7 @@ const actor=(state,id=actors.cat)=>{const a=state.actors.find(x=>x.id===id);asse
 const says=o=>o.trace.filter(x=>x.kind==='say'),moves=(o,id=actors.cat)=>o.trace.filter(x=>x.kind==='motion'&&x.id===id);
 // Candidate label that shows each oracle meaning on screen in the child wording.
 import {visibleChoices} from '../lib/japanese-gate-contract.mjs';
+import {chooseView,refusedViewPress} from '../browser/cases/view-toggle.cjs';
 function verifyIntent(id,o){
  assert.deepEqual(o.errors,[]);assert.ok(o.roundtrips.length>0);const end=actor(o.final),speech=says(o),motion=moves(o);
  switch(id){
@@ -60,7 +61,7 @@ async function reveal(l){
  for(const detail of await l.locator('xpath=ancestor::details[not(@open)]').all())await detail.locator(':scope > summary').click();return l;
 }
 const click=async(p,id)=>(await reveal(p.locator('#'+id))).click();
-async function fill(p,source){if(!await p.locator('#codeEditor').isVisible()&&await p.locator('#editorModecode').isVisible())await click(p,'editorModecode');if(await p.locator('#sourceOverview').isVisible())await click(p,'sourceEditBtn');await (await reveal(p.locator('#codeEditor'))).fill(source);await p.waitForTimeout(400);}
+async function fill(p,source){if(!await p.locator('#codeEditor').isVisible()&&await p.locator('#editorModecode').isVisible())await chooseView(p,'code',{reveal});if(await p.locator('#sourceOverview').isVisible())await click(p,'sourceEditBtn');await (await reveal(p.locator('#codeEditor'))).fill(source);await p.waitForTimeout(400);}
 const uiState=p=>p.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,project:JSON.stringify(Akari.app.project),history:s.history,redo:s.redo,dirty:s.dirty,state:s.state,pending:!!s.main.pendingEdit};});
 async function installProject(p,scenario){const project=await p.evaluate(browserScenario,{scenario,projectOnly:true});const text=await p.evaluate(project=>Akari.serializeProject(project,Akari.makeDefaultAssetStore()),project);
  await p.locator('#fileInput').setInputFiles({name:'intent.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)});await p.waitForFunction(name=>Akari.app.project.name===name,project.name);if(await p.locator('#uiLevel').count())await p.locator('#uiLevel').selectOption('advanced');await(await reveal(p.locator('#objectSelect'))).selectOption(project.scripts[0].targetId);await(await reveal(p.locator('#eventSelect'))).selectOption(project.scripts[0].event);return project;
@@ -97,7 +98,7 @@ try{await withBrowser(chrome,async browser=>{
  // preservation and non-execution only, not that narrative prose is executable.
  for(const item of corpus.cases)await run(item.id+'/original-prose-ui',async p=>{
   const originals=item.sections.filter(s=>s.label.startsWith('作文候補'));const checks=[];
-  await installProject(p,{id:item.id+'-preservation',source:'10歩進む。'});await click(p,'editorModecode');await observeUi(p);
+  await installProject(p,{id:item.id+'-preservation',source:'10歩進む。'});await chooseView(p,'code',{reveal});await observeUi(p);
   const pendingState=()=>p.evaluate(()=>{const s=Akari.app.editorState.main;return{ownerKey:s.ownerKey,mode:s.mode,pending:s.pendingEdit};});
   for(const entry of originals){
    const valid=await uiState(p),owner=(await pendingState()).ownerKey;assert.equal(valid.pending,false);assert.equal(valid.state,'DESIGN');
@@ -106,7 +107,8 @@ try{await withBrowser(chrome,async browser=>{
    assert.equal(pending.mode,'code');assert.equal(pending.ownerKey,owner);assert.equal(pending.pending?.ownerKey,owner);
    assert.equal(pending.pending?.kind,'code');assert.equal(pending.pending?.value,entry.text);assert.equal(initial.pending,true);
    for(const k of ['source','project','history','redo','dirty','state'])assert.deepEqual(initial[k],valid[k],k+' changed while preserving original prose');
-   assert.equal(await p.locator('#editorModeblocks').isDisabled(),true,'unparsed prose cannot become executable blocks');
+   // The view toggle stays in code and says why (final call 22): unparsed prose cannot become executable blocks.
+   await refusedViewPress(p,'error');assert.deepEqual(await uiState(p),initial,'unparsed prose cannot become executable blocks');assert.deepEqual(await pendingState(),pending);
    await click(p,'runBtn');const afterRun=await uiState(p),afterRunPending=await pendingState(),observedAfterRun=await p.evaluate(()=>__intentObserved);
    assert.deepEqual(afterRun,initial,'rejected execution changed the pending transaction');
    assert.equal(await p.locator('#codeEditor').inputValue(),entry.text);assert.deepEqual(afterRunPending,pending,'rejected execution changed the pending owner/source');
@@ -174,7 +176,7 @@ try{await withBrowser(chrome,async browser=>{
  // Actual pointer/keyboard route: OS repeats must not be counted as new presses.
  await run('CI-03/real-keyboard-repeat-events',async p=>{await installProject(p,{...scenarios[2],actions:[{name:'ジャンプ',args:[],source:'「ジャンプ」と言う。'}]});await observeUi(p);await click(p,'runBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await p.locator('#formSurface').focus();await p.keyboard.down('Space');await p.waitForTimeout(100);await p.keyboard.down('Space');await p.waitForTimeout(100);await p.keyboard.up('Space');await p.keyboard.down('Space');await p.keyboard.up('Space');await p.waitForTimeout(100);const observed=await p.evaluate(()=>__intentObserved);assert.deepEqual(observed.say.map(x=>x.value),['ジャンプ','ジャンプ']);await pressStop(await reveal(p.locator('#stopBtn')));return observed;});
  await run('CI-12/real-question-response-and-stop',async p=>{await installProject(p,scenarios[11]);await observeUi(p);await click(p,'runBtn');await p.locator('#questionModal.show').waitFor();assert.deepEqual(await p.evaluate(()=>__intentObserved.say),[]);await p.locator('#questionAnswer').fill('青い ねこ「※」');await click(p,'questionSubmit');await p.waitForFunction(()=>__intentObserved.say.length===1);assert.equal(await p.evaluate(()=>__intentObserved.say[0].value),'青い ねこ「※」さん、こんにちは');await pressStop(await reveal(p.locator('#stopBtn')));await click(p,'runBtn');await p.locator('#questionModal.show').waitFor();const before=await p.evaluate(()=>__intentObserved.say.length);await p.keyboard.press('Escape');assert.equal((await uiState(p)).state,'DESIGN');await p.waitForTimeout(100);assert.equal(await p.evaluate(()=>__intentObserved.say.length),before);return{literalAnswer:true,waited:true,escapeStopsWithoutAnswer:true};});
- await run('UI/quantity-edit-roundtrip-undo',async p=>{await installProject(p,{id:'UI',source:'点数を１０点にする。点数の値を言う。'});await click(p,'editorModeblocks');const before=await uiState(p),number=p.locator('#blockEditor [data-schema-id="QuantityLiteral"] [data-blockui-field="value"]').first();await (await reveal(number)).fill('１２');await number.press('Enter');await click(p,'editorModecode');assert.match((await uiState(p)).source,/(?:１２|12)点/);await click(p,'undoBtn');assert.equal((await uiState(p)).source,before.source);await click(p,'redoBtn');await observeUi(p);await click(p,'runBtn');await p.waitForFunction(()=>__intentObserved.say.length===1);assert.equal(await p.evaluate(()=>__intentObserved.say[0].value),'12点');await pressStop(await reveal(p.locator('#stopBtn')));return{visibleUnits:true,fullWidthEdit:true,sharedUndo:true};});
+ await run('UI/quantity-edit-roundtrip-undo',async p=>{await installProject(p,{id:'UI',source:'点数を１０点にする。点数の値を言う。'});await chooseView(p,'blocks',{reveal});const before=await uiState(p),number=p.locator('#blockEditor [data-schema-id="QuantityLiteral"] [data-blockui-field="value"]').first();await (await reveal(number)).fill('１２');await number.press('Enter');await chooseView(p,'code',{reveal});assert.match((await uiState(p)).source,/(?:１２|12)点/);await click(p,'undoBtn');assert.equal((await uiState(p)).source,before.source);await click(p,'redoBtn');await observeUi(p);await click(p,'runBtn');await p.waitForFunction(()=>__intentObserved.say.length===1);assert.equal(await p.evaluate(()=>__intentObserved.say[0].value),'12点');await pressStop(await reveal(p.locator('#stopBtn')));return{visibleUnits:true,fullWidthEdit:true,sharedUndo:true};});
  await run('CI-20/media-save-reload-player-offline',async p=>{return mediaRoundtrip(p,browser);});
  },900000);
 }catch(error){report.results.push({id:error.code==='PRODUCT_BOOT'?'PRODUCT/boot':'ENVIRONMENT/required-browser',status:error.code==='PRODUCT_BOOT'?'FAIL':'PENDING',detail:error.stack});}
@@ -192,7 +194,7 @@ async function mediaRoundtrip(p,browser){
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGPgihL5DwACYgF4Xsu9FAAAAABJRU5ErkJggg==','base64');
  await click(p,'assetBtn');await p.locator('#imageBackdropInput').setInputFiles({name:'森の絵.png',mimeType:'image/png',buffer:png});await p.waitForFunction(()=>Akari.app.project.stage.backdrops.some(b=>b.name==='森の絵'));
  await p.locator('#soundInput').setInputFiles({name:'こんにちは.wav',mimeType:'audio/wav',buffer:wav});await p.waitForFunction(()=>Akari.app.project.sounds.some(s=>s.name==='こんにちは'));await click(p,'assetClose');
- await fill(p,scenario.source);const before=await uiState(p);await click(p,'editorModeblocks');await click(p,'editorModecode');assert.equal((await uiState(p)).source,before.source);
+ await fill(p,scenario.source);const before=await uiState(p);await chooseView(p,'blocks',{reveal});await chooseView(p,'code',{reveal});assert.equal((await uiState(p)).source,before.source);
  await observeUi(p);await click(p,'runBtn');await p.waitForFunction(()=>globalThis.__intentScheduler?.running);const started=await p.evaluate(()=>performance.now());await p.waitForFunction(()=>__intentObserved.motion.length>0);const motion=await p.evaluate(()=>__intentObserved.motion);assert.ok(motion[0].time-started>=400,'movement did not wait for the known 0.5 s audio');assert.equal(motion[0].x,10);await pressStop(await reveal(p.locator('#stopBtn')));
  const download=async(id,name)=>{const promise=p.waitForEvent('download');await click(p,id);if(id==='exportBtn')await p.locator('#exportControls').click();const file=path.join(evidenceDir,name);await(await promise).saveAs(file);return file;};
  const saved=await download('saveBtn','intent-media.akari.md'),generated=await download('exportBtn','intent-player.html'),project=await p.evaluate(()=>JSON.stringify(Akari.app.project));

@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {snapshot, withBrowser, pageFor} from '../lib/product-test-host.mjs';
 import U from '../browser/cases/ui-routes.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 
 export const uiButtonIds = ['UI-BUTTON-SOURCE-NAV','UI-BUTTON-BASIC-HISTORY','UI-BUTTON-SIDE-ACTIONS','UI-BUTTON-LEVELS','UI-BUTTON-PENDING','UI-BUTTON-BLOCK-DESTINATION','UI-BUTTON-BLOCK-INSERTION','UI-BUTTON-BLOCK-COMMANDS','UI-BUTTON-RESPONSIVE'];
 const [browserPath, output] = process.argv.slice(2);
@@ -20,7 +21,7 @@ async function reveal(l) {
 }
 async function click(p, s) { await (await reveal(p.locator(s))).click(); }
 async function body(p) { if (await p.locator('#sourceOverview').isVisible()) await click(p,'#sourceEditBtn'); }
-async function mode(p, m) { await body(p); await click(p,'#editorMode'+m); }
+async function mode(p, m) { await body(p); await chooseView(p,m,{reveal}); }
 async function select(p,id) { await (await reveal(p.locator('#objectSelect'))).selectOption(id); }
 async function fill(p, source) { await mode(p,'code'); await p.locator('#codeEditor').fill(source); await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source); await p.waitForTimeout(350); }
 const number = (p, root='#blockEditor') => p.locator(root+' .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first();
@@ -107,7 +108,7 @@ const cases = {
     await number(p).fill('4'); await visible(p,'#blockEditor [data-blockui-action="commit"]'); await click(p,'#blockEditor [data-blockui-action="cancel"]'); assert.deepEqual(await fingerprint(p),mainBefore);
     await number(p).fill('5'); await click(p,'#blockEditor [data-blockui-action="commit"]'); assert.equal((await fingerprint(p)).source,'5を言う。'); assert.equal((await fingerprint(p)).history,mainBefore.history+1); await settledHidden(p.locator('#blockEditor [data-blockui-action="commit"]')); await visible(p,'#blockEditor [data-blockui-action="commit"]',false);
     await callable(p); await visible(p,'#callableCancel',false); await visible(p,'#callablePending',false);
-    await click(p,'#callableModeblocks'); const before=await fingerprint(p), n=number(p,'#callableBlocks');
+    await chooseView(p,'blocks',{prefix:'callable',reveal}); const before=await fingerprint(p), n=number(p,'#callableBlocks');
     await n.fill('invalid'); await n.press('Enter'); assert.equal(await n.getAttribute('aria-invalid'),'true'); await visible(p,'#callableBlocks [data-blockui-action="cancel"]'); assert.deepEqual(await fingerprint(p),before);
     await click(p,'#callableBlocks [data-blockui-action="cancel"]'); assert.deepEqual(await fingerprint(p),before); assert.equal(await number(p,'#callableBlocks').inputValue(),'1');
     await p.locator('#callableName').fill('長'.repeat(501)); await visible(p,'#callablePending'); await visible(p,'#callableCancel'); assert.deepEqual(await fingerprint(p),before); await click(p,'#callableCancel'); assert.deepEqual(await fingerprint(p),before); await visible(p,'#callableCancel',false);
@@ -119,7 +120,7 @@ const cases = {
   async 'UI-BUTTON-BLOCK-DESTINATION'(p) {
     await fill(p,'1を言う。'); await mode(p,'blocks');
     for(const root of ['#blockEditor','#callableBlocks']) {
-      if(root==='#callableBlocks') { await callable(p); await click(p,'#callableModeblocks'); }
+      if(root==='#callableBlocks') { await callable(p); await chooseView(p,'blocks',{prefix:'callable',reveal}); }
       const before=await fingerprint(p);
       for(const method of ['button','Escape']) {
         await p.locator(root+' [data-blockui-action="body-insert"]').first().click(); await visible(p,root+' [data-blockui-action="cancel"]'); assert.equal(await p.locator(root+' [data-blockui-action="cancel"]').isEnabled(),true); await visible(p,root+' [data-blockui-action="commit"]',false);
@@ -132,7 +133,7 @@ const cases = {
   },
   async 'UI-BUTTON-BLOCK-INSERTION'(p) {
     const roots=[]; for (const root of ['#blockEditor','#callableBlocks']) {
-    if(root==='#blockEditor') { await fill(p,'1を言う。\n2を言う。\n3を言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1を言う。\n2を言う。\n3を言う。'); await p.waitForTimeout(350); await click(p,'#callableModeblocks'); } const before=await fingerprint(p);
+    if(root==='#blockEditor') { await fill(p,'1を言う。\n2を言う。\n3を言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1を言う。\n2を言う。\n3を言う。'); await p.waitForTimeout(350); await chooseView(p,'blocks',{prefix:'callable',reveal}); } const before=await fingerprint(p);
     const insertions=p.locator(root+' .blockui-script > .blockui-node-content > .blockui-body > [data-blockui-action="body-insert"]'); assert.equal(await insertions.count(),4,'three statements need four insertion boundaries');
     const sizes=[]; for(let i=0;i<4;i++) { const b=insertions.nth(i); assert.equal(await b.isVisible(),true); const r=await reachable(b); assert.ok(r.width>=24&&r.height>=(i===3?24:8),i===3?'minimum pointer target 24px':'a place between blocks is a thin line (E-07)'); sizes.push(r); assert.ok(await p.locator(root+' .blockui-chosen-destination').count()); await p.keyboard.press('Escape'); }
     assert.deepEqual(await fingerprint(p),before); assert.ok(await p.locator(root+' [data-blockui-drag="node"]').count()>=3,'drag alternative remains available');
@@ -149,7 +150,7 @@ const cases = {
   },
   async 'UI-BUTTON-BLOCK-COMMANDS'(p) {
     const roots=[]; for (const root of ['#blockEditor','#callableBlocks']) {
-    if(root==='#blockEditor') { await fill(p,'1を言う。\n2を言う。\n3を言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1を言う。\n2を言う。\n3を言う。'); await p.waitForTimeout(350); await click(p,'#callableModeblocks'); }
+    if(root==='#blockEditor') { await fill(p,'1を言う。\n2を言う。\n3を言う。'); await mode(p,'blocks'); } else { await callable(p,'Action'); await p.locator('#callableCode').fill('1を言う。\n2を言う。\n3を言う。'); await p.waitForTimeout(350); await chooseView(p,'blocks',{prefix:'callable',reveal}); }
     const says=()=>p.locator(root+' .blockui-node[data-schema-id="'+'Say'+'"]'); const values=()=>p.locator(root+' .blockui-node[data-schema-id="NumberLiteral"] input').evaluateAll(es=>es.map(e=>e.value));
     async function action(index,a,expected) { const before=await fingerprint(p); await U.nodeAction(says().nth(index),a); assert.deepEqual(await values(),expected); assert.equal((await fingerprint(p)).history,before.history+1,a+' changes once'); }
     await action(0,'duplicate',['1','1','2','3']); await action(1,'move-down',['1','2','1','3']); await action(3,'move-up',['1','2','3','1']); await action(3,'remove',['1','2','3']);

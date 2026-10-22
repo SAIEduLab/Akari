@@ -1,6 +1,7 @@
 // Explicit regression preconditions, entered through the real file-open and editor UI.
 // The production factory and every product API remain untouched.
 const {makeRegressionProject} = require('../../fixtures/regression-project.cjs');
+const {chooseView} = require('./view-toggle.cjs');
 const factorySource = `globalThis.makeAkariRegressionProject = (${makeRegressionProject.toString()});`;
 async function installRegressionFactory(page) {
   await page.addInitScript({content: factorySource});
@@ -29,7 +30,7 @@ async function openRegressionEditor(page, {target = 'stage', mode = 'code'} = {}
   if (target) await (await revealRegressionControl(page.locator('#objectSelect'))).selectOption(target);
   if (target) await (await revealRegressionControl(page.locator('#eventSelect'))).selectOption('start');
   if (await page.locator('#sourceOverview').isVisible()) await (await revealRegressionControl(page.locator('#sourceEditBtn'))).click();
-  if (mode) await (await revealRegressionControl(page.locator('#editorMode' + mode))).click();
+  if (mode) await chooseView(page, mode, {reveal: revealRegressionControl});
 }
 async function setupRegressionPage(page, options) {
   await page.waitForFunction(() => !!globalThis.Akari?.app);

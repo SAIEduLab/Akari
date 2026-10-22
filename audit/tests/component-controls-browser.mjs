@@ -9,6 +9,7 @@ import {snapshot,sha,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {writeZoomExtension,zoomExtensionArgs,zoomExtensionWorker,setNativeZoom} from '../lib/native-zoom.mjs';
 import {componentControlSizes,componentControlTargets,verifyComponentControlReach,verifyComponentControls} from '../lib/component-controls-contract.mjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 
 const require=createRequire(import.meta.url),[chrome,output]=process.argv.slice(2);
 assert.ok(chrome&&output,'Usage: component-controls-browser.mjs <fixed browser> <fresh report>');
@@ -52,12 +53,12 @@ async function fixture(p) {
   await p.locator('#uiLevel').selectOption('advanced');
   await p.locator('#objectSelect').selectOption('sprite-1');
   if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();
-  await p.locator('#editorModecode').click();
+  await chooseView(p,'code');
   await p.locator('#codeEditor').fill('「変更した動き」と言う。');
   await p.waitForFunction(()=>Akari.app.editorState.main.sourceText==='「変更した動き」と言う。');
   await p.locator('#undoBtn').click();
   await p.waitForFunction(()=>Akari.app.editorState.main.sourceText==='「元の動き」と言う。');
-  await p.locator('#editorModeblocks').click(); await frame(p);
+  await chooseView(p,'blocks'); await frame(p);
   // The column on the right is the one scroller of the part list and its tools (the page, where the column is not a
   // scroller of its own); native wheel and touch input over the column is recorded.
   await p.evaluate(()=>{

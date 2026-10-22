@@ -1,4 +1,5 @@
 const {pressStop}=require('../../lib/stop-press.cjs');
+const {chooseView}=require('./view-toggle.cjs');
 const {answerProductConfirms}=require('../../lib/product-dialogs.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
@@ -25,7 +26,7 @@ async function resizeBounds(p,id){const c=await component(p,id),h=p.locator('[da
 assert(Math.abs(changed.w-changed.h*original.w/original.h)<=0.5*(1+original.w/original.h)+1e-9&&(changed.w!==original.w||changed.h!==original.h),'Shift keeps the ratio: '+JSON.stringify({original,changed}));await history(p,before,await state(p));}return{min:true,max:true,keyboardBoundaryNoOp:true,shiftRatio:!scale};}
 (async()=>{const browser=await chromium.launch({executablePath:process.env.AKARI_BROWSER,headless:true});try{
 for(const viewport of [{width:1366,height:768},{width:768,height:1024},{width:390,height:844}])for(const mode of ['code','blocks']){
- const context=await browser.newContext({viewport,acceptDownloads:true,hasTouch:true}),p=await context.newPage();p.setDefaultTimeout(10000);p.on('pageerror',e=>errors.push(e.stack));let acceptDialog=true;p.on('dialog',d=>acceptDialog?d.accept():d.dismiss());await answerProductConfirms(p);await p.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});await p.goto(url);await setupRegressionPage(p);await (async()=>{const control=p.locator('#editorMode'+mode); await openBodyForTest(control.page()); return control.click();})();
+ const context=await browser.newContext({viewport,acceptDownloads:true,hasTouch:true}),p=await context.newPage();p.setDefaultTimeout(10000);p.on('pageerror',e=>errors.push(e.stack));let acceptDialog=true;p.on('dialog',d=>acceptDialog?d.accept():d.dismiss());await answerProductConfirms(p);await p.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});await p.goto(url);await setupRegressionPage(p);await chooseView(p,mode,{open:openBodyForTest});
  const run=async(id,fn)=>{try{results.push({id,viewport,mode,pass:true,evidence:await fn()});}catch(e){results.push({id,viewport,mode,pass:false,error:e.stack});await p.screenshot({path:L.path.join(dir,id+'-'+viewport.width+'-'+mode+'.png')});}L.result(L.path.join(dir,'modern-browser.json'),{manifest,browser:browser.version(),results,errors,network});};
  await run('DESIGN-STANDARD-SPRITES',async()=>{
   const source=L.read(L.path.join(dir,manifest.candidate)),vm=require('vm'),

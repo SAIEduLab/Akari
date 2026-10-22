@@ -6,6 +6,7 @@ import {root,withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {browserEnvironment} from '../lib/browser-environment.mjs';
 import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 const require=createRequire(import.meta.url),[chrome,outputArg]=process.argv.slice(2),output=path.resolve(outputArg),product=path.join(root,currentProductFile()),dir=output.replace(/\.json$/,'')+'.artifacts';
 const report={schema:'akari-resource-references-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},pageErrors:[],networkRequests:[],results:[]};
 fs.mkdirSync(dir,{recursive:true});const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
@@ -49,7 +50,7 @@ try{await withBrowser(chrome,async browser=>{
   await install(page,'点数を言う。');await page.locator('#dataBtn').click();const before=await state(page),row=page.locator('#dataBody .extension-row').filter({has:page.locator('b',{hasText:'へんすう 点数'})});await row.getByRole('button',{name:'けす',exact:true}).click();assert.deepEqual(await state(page),before);assert.match(await page.locator('#dataBody .reference-issue').textContent(),/点数.*けす ことが できません/);return{referenceShown:true,projectHistoryAssetsUnchanged:true};
  });
   await run('references/browser-component-rename',async page=>{
-   const source='あかりはいまのばしょから、右へ30歩動く。\n「あかり🐈」と言う。';await install(page,source);await page.locator('#editorModecode').click();const before=await state(page);
+   const source='あかりはいまのばしょから、右へ30歩動く。\n「あかり🐈」と言う。';await install(page,source);await chooseView(page,'code');const before=await state(page);
    const name=page.locator('#properties input[aria-label="名前"]');await name.fill('灯り');await name.press('Tab');await page.waitForFunction(()=>Akari.app.project.components[0].name==='灯り');await page.waitForFunction(n=>Akari.app.editorState.history===n,before.history+1);
    const renamed=await state(page);assert.equal(JSON.parse(renamed.project).scripts[0].source,source.replace('あかりは','灯りは'));await page.locator('#undoBtn').click();assert.equal((await state(page)).project,before.project);await page.locator('#redoBtn').click();assert.equal((await state(page)).project,renamed.project);
    await page.locator('#runBtn').click();await page.waitForFunction(()=>parseFloat(document.querySelector('#formSurface .component[data-id="sprite-1"]').style.left)===260);assert.equal(await page.locator('.sprite-bubble .sprite-bubble-text').textContent(),'あかり🐈');
@@ -57,11 +58,11 @@ try{await withBrowser(chrome,async browser=>{
    const prefixSource='灯は画面の左下のはしから、右へ100歩、上へ（たてのばしょ）歩のばしょへ行く。\n【灯合図】という手順を行う。\n「灯合図🐈」と言う。';
    const prefixFile=await page.evaluate(source=>{const p=Akari.makeDefaultProject();p.name='主語と手順の保護';p.components[0].name='灯';p.scripts=[{id:'prefix-body',targetId:'sprite-1',event:'start',source}];p.actions=[{id:'prefix-action',ownerId:'stage',name:'灯合図',args:[],source:'何もしない。'}];p.functions=[];return Akari.serializeProject(p,Akari.makeDefaultAssetStore());},prefixSource);
    const askedLoseQuestion=[];
-   await openFixture(page,{name:'actor-prefix.akari.md',mimeType:'text/plain',buffer:Buffer.from(prefixFile)},'主語と手順の保護',async()=>{await page.locator('#loseConfirmModal.show').waitFor();askedLoseQuestion.push(await page.locator('#loseConfirmMessage').innerText());await page.locator('#loseConfirmProceed').click();});assert.deepEqual(askedLoseQuestion,['「参照の保護」には まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。']);await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#editorModecode').click();
+   await openFixture(page,{name:'actor-prefix.akari.md',mimeType:'text/plain',buffer:Buffer.from(prefixFile)},'主語と手順の保護',async()=>{await page.locator('#loseConfirmModal.show').waitFor();askedLoseQuestion.push(await page.locator('#loseConfirmMessage').innerText());await page.locator('#loseConfirmProceed').click();});assert.deepEqual(askedLoseQuestion,['「参照の保護」には まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。']);await page.locator('#objectSelect').selectOption('sprite-1');await chooseView(page,'code');
    const prefixBefore=await state(page),referenceIds=()=>page.evaluate(()=>Akari.buildProjectReferenceGraph(Akari.app.project).references.map(r=>JSON.stringify([r.sourceKey,r.resourceKey,r.binding,r.nodePath])).sort()),beforeIds=await referenceIds();
    await page.locator('#properties input[aria-label="名前"]').fill('灯新');await page.locator('#properties input[aria-label="名前"]').press('Tab');await page.waitForFunction(()=>Akari.app.project.components[0].name==='灯新');await page.waitForFunction(n=>Akari.app.editorState.history===n,prefixBefore.history+1);
    const prefixRenamed=await state(page),expectedPrefix=prefixSource.replace('灯は','灯新は');assert.equal(JSON.parse(prefixRenamed.project).scripts[0].source,expectedPrefix);assert.equal(JSON.parse(prefixRenamed.project).actions[0].name,'灯合図');assert.deepEqual(await referenceIds(),beforeIds);
-   await page.locator('#editorModeblocks').click();await page.locator('#editorModecode').click();assert.equal((await state(page)).project,prefixRenamed.project);assert.equal((await state(page)).history,prefixRenamed.history);
+   await chooseView(page,'blocks');await chooseView(page,'code');assert.equal((await state(page)).project,prefixRenamed.project);assert.equal((await state(page)).history,prefixRenamed.history);
    await page.locator('#undoBtn').click();assert.equal((await state(page)).project,prefixBefore.project);await page.locator('#redoBtn').click();assert.equal((await state(page)).project,prefixRenamed.project);
    const prefixPending=page.waitForEvent('download');await page.locator('#saveBtn').click();const prefixDownload=await prefixPending,prefixPath=path.join(dir,'renamed-actor-prefix.akari.md');await prefixDownload.saveAs(prefixPath);
    const savedPrefix=await page.evaluate(t=>Akari.parseProjectFile(t).then(r=>JSON.stringify(r.project)),fs.readFileSync(prefixPath,'utf8'));assert.equal(savedPrefix,prefixRenamed.project);

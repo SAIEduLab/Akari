@@ -1,5 +1,6 @@
 const {DOUBLE_PRESS_MS}=require('../../lib/stop-press.cjs');
 const {makeRegressionProject, setupRegressionPage, openRegressionEditor, installRegressionFactory} = require('./regression-setup.cjs');
+const {chooseView}=require('./view-toggle.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
 const { currentProductFile } = require("./../../lib/product-path.cjs");
 // Targeted UI regression check, not a substitute for the complete product audit.
@@ -29,7 +30,7 @@ async function setup(browser,id){
  await page.goto(pathToFileURL(file).href);await setupRegressionPage(page);
  await (await reveal(page.locator('#objectSelect'))).selectOption('sprite-1');await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「SPRITE」と言う。');})();
  await (await reveal(page.locator('#objectSelect'))).selectOption('stage');await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「STAGE」と言う。\n20秒待つ。');})();
- await (async()=>{const control=await reveal(page.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();
+ await chooseView(page,'blocks',{reveal:reveal,open:openBodyForTest});
  // fitStage uses ResizeObserver. Wait for the visible stage scale to settle.
  await page.waitForFunction(()=>{const r=document.querySelector('#formSurface').getBoundingClientRect();return r.width>0&&r.width<400;});
  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
