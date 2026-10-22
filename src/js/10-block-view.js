@@ -1253,6 +1253,8 @@
       else {
         if (keyboard && paletteControls.hidden) paletteToggle.click();
         search.focus({ preventScroll: true });
+        // The word kept from the last search is selected, so the next word typed takes its place (E2-06, as E-01).
+        if (search.value) search.select();
       }
     }
     // A block put in from the list with no place chosen goes right after the selected sentence, or at the end of the
