@@ -2116,6 +2116,12 @@
         for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]'))
           if (!menu.contains(event.target)) menu.open = false;
       }, true);
+      // The keyboard's way out: when the focus moves on past an open menu, the menu closes (the focus is not moved), so it
+      // never covers the control the child tabs to.
+      document.addEventListener('focusin', (event) => {
+        for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]'))
+          if (!menu.contains(event.target)) menu.open = false;
+      });
       document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape' || event.isComposing) return;
         for (const menu of toolbar.querySelectorAll(':scope > details.toolbar-menu[open]')) {
@@ -2259,6 +2265,12 @@
       const button = $('#stageEnlarge');
       if (on === document.body.classList.contains('stage-enlarged')) return;
       document.body.classList.toggle('stage-enlarged', on);
+      // The enlarged stage is modal: everything around #designerWindow (toolbar, other windows, status line) is inert
+      // until it closes, so Tab stays on the stage and a hidden control cannot be pressed (AX-02).
+      for (const node of document.querySelectorAll('[data-enlarged-inert]')) { node.inert = false; delete node.dataset.enlargedInert; }
+      if (on) for (let node = $('#designerWindow'); node && node.id !== 'app'; node = node.parentElement)
+        for (const sibling of node.parentElement?.children || [])
+          if (sibling !== node && !sibling.inert) { sibling.inert = true; sibling.dataset.enlargedInert = ''; }
       button.textContent = on ? 'もどる' : '大きく見る';
       button.setAttribute('aria-pressed', String(on));
       if (on) { enlargedFrom = stageZoom; setStageZoom(1); }
