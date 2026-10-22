@@ -242,9 +242,19 @@
       if (other !== undefined) throw new AkariError('R411', `「みんな」「それぞれ」「順番に」の リストに、部品では ない「${valueText(other)}」が 入っています。部品だけを 入れた リストに 使います`);
       return v;
     };
-    // A target is a part's name (every instance of it) or a part value (that one instance).
-    const targetValue = (v) => isPart(v) ? v : stringv(v);
-    const targetName = (v) => isPart(v) ? v.name : stringv(v);
+    // A target is a part's name (every instance of it) or a part value (that one instance). What else is written there
+    // stops with the words need() makes (partNeeded), only then.
+    const targetValue = (v, need) => isPart(v) || typeof v === 'string' ? v : stringv(v, need?.());
+    const targetName = (v, need) => isPart(v) ? v.name : typeof v === 'string' ? v : stringv(v, need?.());
+    // The words when a part's name is needed: the kind of part the sentence takes, and an example from the child's own
+    // work, a part of that kind (for ふれる, きょり and 向く another part, or the mouse), never a name the work does not have.
+    const PART_KINDS = Object.freeze({ text: ['文字・ボタン・四角の 部品', ['label', 'button', 'box']], input: ['入力らん', ['input']], copy: ['キャラクター', ['sprite']] });
+    function partNeeded(ctx, kind = null) {
+      const [words, types] = PART_KINDS[kind] || ['キャラクターや 部品', null], own = ctx?.runtime?.actor?.(ctx.runtimeId)?.baseId,
+        part = ctx?.runtime?.project?.components?.find(c => (kind || c.id !== own) && (!types || types.includes(c.type))),
+        example = part ? '「' + part.name + '」' : kind ? null : '「マウス」';
+      return `ここには ${words}の 名前が いります` + (example ? '。れい：' + example : '');
+    }
     const listValue = (v) => Array.isArray(v) && v.every(scalar);
     function assertRuntimeValueLimit(v) {
       if (typeof v === 'number') ensureFinite(v);
@@ -1478,8 +1488,10 @@
           (x) => x.runtimeId !== runtimeId && x.visible,
         );
         if (!targets.length) {
-          if (!isPart(target) && !this.project.components.some((c) => c.name === target))
-            throw new AkariError('R405', `部品「${target}」が ありません`);
+          if (!isPart(target) && !this.project.components.some((c) => c.name === target)) {
+            const other = this.project.components.find(c => c.id !== a.baseId);
+            throw new AkariError('R405', `部品「${target}」が ありません。ふれる 相手には、作品に ある キャラクターや 部品の 名前を 書きます。れい：「${other?.name ?? 'マウス'}」`);
+          }
           return false;
         }
         return targets.some((b) => this.partsTouch(a, b));
@@ -2282,7 +2294,7 @@
         case '新しい背景名':
           return ctx.eventContext?.newName ?? '';
         case 'INPUT_VALUE': {
-          const name = targetName(evalExpression(ast.arg, ctx, budget));
+          const name = targetName(evalExpression(ast.arg, ctx, budget), () => partNeeded(ctx, 'input'));
           const c = r.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」が ありません`);
           if (c.type !== 'input') throw new AkariError('R406', `「${name}」は 入力らんでは ありません`);
@@ -2290,11 +2302,11 @@
           return inst?.inputValue ?? c.text;
         }
         case 'DISTANCE_TO':
-          return quantity(r.distance(ctx.runtimeId, targetValue(evalExpression(ast.arg, ctx, budget))), '歩');
+          return quantity(r.distance(ctx.runtimeId, targetValue(evalExpression(ast.arg, ctx, budget), () => partNeeded(ctx))), '歩');
         case 'KEY_DOWN':
           return r.pressedKeys.has(stringv(evalExpression(ast.arg, ctx, budget)));
         case 'TOUCHING':
-          return r.touching(ctx.runtimeId, targetValue(evalExpression(ast.arg, ctx, budget)));
+          return r.touching(ctx.runtimeId, targetValue(evalExpression(ast.arg, ctx, budget), () => partNeeded(ctx)));
         case 'TOUCHING_COLOR':
           return r.touchingColor(ctx.runtimeId, stringv(evalExpression(ast.arg, ctx, budget)));
         default:
@@ -4507,7 +4519,7 @@
               break;
             }
             // A target whose centre is at the part's own centre keeps the direction.
-            const target = targetValue(evalExpression(n.args[0], ctx)),
+            const target = targetValue(evalExpression(n.args[0], ctx), () => partNeeded(ctx)),
               p = this.runtime.nearestTarget(ctx.runtimeId, target),
               aa = this.runtime.aabb(a);
             if (p.x !== aa.cx || p.y !== aa.cy) a.direction = (Math.atan2(p.y - aa.cy, p.x - aa.cx) * 180) / Math.PI;
@@ -4656,7 +4668,7 @@
           return;
         }
         if (n.op === 'SET_TARGET_TEXT') {
-          const name = targetName(arg(0)),
+          const name = targetName(arg(0), () => partNeeded(ctx, 'text')),
             v = valueText(arg(1), true),
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」が ありません`);
@@ -4667,7 +4679,7 @@
           return;
         }
         if (n.op === 'SET_INPUT') {
-          const name = targetName(arg(0)),
+          const name = targetName(arg(0), () => partNeeded(ctx, 'input')),
             v = assertRuntimeValueLimit(stringv(arg(1))),
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」が ありません`);
@@ -4750,7 +4762,7 @@
         if (n.op === 'CREATE_SELF') src = ctx.runtimeId;
         else if (n.op === 'CREATE_TARGET') {
           // 名人: the part may be a value (主役のコピーを作る copies the part held there).
-          const target = targetValue(evalExpression(n.args[0], ctx)), name = isPart(target) ? target.name : target,
+          const target = targetValue(evalExpression(n.args[0], ctx), () => partNeeded(ctx, 'copy')), name = isPart(target) ? target.name : target,
             c = this.project.components.find((x) => x.name === name);
           if (!c) throw new AkariError('R405', `部品「${name}」が ありません`);
           if (c.type !== 'sprite')
