@@ -282,12 +282,13 @@ const cases = {
     // Keep this stable case ID and every save/reload/export check. The embedded PNG
     // is intentionally resized to 180x180; see AUDIT.md for the contract migration.
     const expected='35eea719e70c3f4ec196c800e107232cee7a16408b44cb04f6094d9c622d7158';
-    const mascot=p.locator('[data-sprite-preset="akariMascot"]'),dango=p.locator('[data-sprite-preset="dango"]');
+    // The toolbox choices; はじめて's ＋ buttons (#entryAddRow) carry the same preset names and are not counted here.
+    const mascot=p.locator('.tool.sprite-preset[data-sprite-preset="akariMascot"]'),dango=p.locator('.tool.sprite-preset[data-sprite-preset="dango"]');
     assert.equal(await mascot.count(),1,'the original mascot choice is retained');
     assert.equal(await dango.count(),1);
     assert.equal((await dango.locator('xpath=ancestor::details[1]').locator('summary').innerText()).replace(/\s+/g,''),'マスコット2しゅるい');
     await p.waitForFunction(()=>{
-      const i=document.querySelector('[data-sprite-preset="dango"] img');
+      const i=document.querySelector('.tool.sprite-preset[data-sprite-preset="dango"] img');
       return i?.complete&&i.naturalWidth===180&&i.naturalHeight===180;
     });
     const thumbnailPixels=await dango.locator('img').evaluate(async i=>{

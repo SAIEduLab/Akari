@@ -17,7 +17,7 @@ async function prepare(p,c){
  // 新しく作る starts in はじめて, where code cannot be shown: かんたん comes first.
  await p.locator('#newBtn').click();await p.locator('#uiLevel').selectOption('basic');await p.locator('#editorModecode').click();
  await nameLegacyFixtureActor(p);
- const dango=p.locator('[data-sprite-preset="dango"]');await reveal(dango);await dango.click();
+ const dango=p.locator('.tool.sprite-preset[data-sprite-preset="dango"]');await reveal(dango);await dango.click();
  const texts=c.kind==='short'?previewShortTexts:previewLongTexts,seconds=c.kind==='short'?2:10;
  for(const [i,name] of previewNames.entries()){
   const id=await p.evaluate(name=>Akari.app.project.components.find(c=>c.name===name).id,name);

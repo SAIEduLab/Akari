@@ -22,6 +22,8 @@ const uiCases=areas.flatMap(area=>files[area].cases.cases.filter(c=>c.kind==='ui
 const directory=path.resolve(out).replace(/\.json$/,'.artifacts');fs.mkdirSync(directory,{recursive:true});
 
 const {clickNode}=require('../browser/cases/ui-routes.cjs');
+// The toolbox's 「はじめから ある キャラクター」 buttons; はじめて's own ＋ buttons (#entryAddRow) carry the same preset names.
+const TOOLBOX_PRESET='.tool.sprite-preset';
 
 // Works the steps start from: parts named in the cases, text costumes, the variable 点数 (0), no body yet; one with a 名人
 // body, and one that also has 星. Positions are centres from the bottom-left corner of the 640×400 screen.
@@ -83,7 +85,8 @@ const S=page=>({
   level:()=>page.evaluate(()=>({chosen:document.querySelector('#uiLevel').value,shown:document.body.dataset.uiLevel,
     options:[...document.querySelectorAll('#uiLevel option')].filter(o=>!o.hidden).map(o=>o.textContent.trim()),others:[...document.querySelectorAll('#uiLevel option')].filter(o=>o.value!=='meijin'&&!o.disabled&&!o.hidden).map(o=>o.value)})),
   openFile:async file=>{await page.setInputFiles('#fileInput',file);await page.waitForTimeout(300);for(const id of ['#openConfirmProceed','#loseConfirmProceed'])if(await page.locator(id).isVisible())await page.click(id);await page.waitForTimeout(500);},
-  reload:async()=>{await page.waitForTimeout(1500);await page.reload();await page.waitForFunction(()=>!!globalThis.Akari?.app);await page.locator('#recoveryRestore').waitFor({state:'visible'});await page.click('#recoveryRestore');await page.waitForTimeout(500);},
+  // The page is loaded again and the autosaved work is restored; seen() looks at the page before 「もどす」 is pressed.
+  reload:async(seen=null)=>{await page.waitForTimeout(1500);await page.reload();await page.waitForFunction(()=>!!globalThis.Akari?.app);await page.locator('#recoveryRestore').waitFor({state:'visible'});const before=seen?await seen():null;await page.click('#recoveryRestore');await page.waitForTimeout(500);return before;},
   newWork:async()=>{await (await reveal(page.locator('#newBtn'))).click();await page.waitForTimeout(300);if(await page.locator('#loseConfirmProceed').isVisible())await page.click('#loseConfirmProceed');await page.waitForTimeout(500);},
   // せってい: one row per setting, found by its name.
   prop:async(label,value)=>{const input=page.locator('#properties input[aria-label="'+label+'"]');await (await reveal(input)).fill(String(value));await input.press('Tab');await page.waitForTimeout(150);},
@@ -195,7 +198,7 @@ const checks={
     const corner=await screenPoint(s,150-W/2+0.08*W,150+W/2-0.08*W);await s.page.mouse.move(corner.x,corner.y);await s.page.waitForTimeout(300);const atCorner=await listen(s,one.id,1800);
     const centre=await screenPoint(s,150,150);await s.page.mouse.move(centre.x,centre.y);await s.page.waitForTimeout(1200);const atCentre=await listen(s,one.id,1800);await s.stop();
     return {expect:{boxesOnly:corners.length>0&&corners.every(t=>t==='はなれている'),circlesOverlap:overlap.includes('ふれた'),mouseCorner:atCorner.length>0&&atCorner.every(t=>t==='はなれている'),mouseCentre:atCentre.includes('ふれた')},info:{a,b,corners,overlap,atCorner,atCentre}};},
-  'CC-293':async s=>{await s.code();const add=async()=>{const before=await s.page.evaluate(()=>Akari.app.project.components.map(c=>c.id));await (await reveal(s.page.locator('[data-sprite-preset="star"]'))).click();await s.page.waitForTimeout(200);return s.page.evaluate(b=>Akari.app.project.components.find(c=>!b.includes(c.id)),before);};
+  'CC-293':async s=>{await s.code();const add=async()=>{const before=await s.page.evaluate(()=>Akari.app.project.components.map(c=>c.id));await (await reveal(s.page.locator(TOOLBOX_PRESET+'[data-sprite-preset="star"]'))).click();await s.page.waitForTimeout(200);return s.page.evaluate(b=>Akari.app.project.components.find(c=>!b.includes(c.id)),before);};
     const one=await add(),two=await add();await place(s,one,{x:200,y:200,w:70,h:70});await place(s,two,{x:265,y:265,w:70,h:70});
     await s.select(one.id);await s.page.selectOption('#eventSelect','start');await s.code();await s.write(touchLoop(two.name));await s.run();const stars=await listen(s,one.id);await s.stop();
     const circle=await paintCircle(s,70);await place(s,circle,{x:265,y:265});await s.select(two.id);await s.prop('よこのばしょ',1000);
@@ -318,8 +321,10 @@ const checks={
     return {expect:{advanced:during.chosen==='meijin'&&l.chosen==='advanced'&&l.shown==='advanced',others:l.others.includes('basic')},info:{during,l}};},
   'MC-583':async s=>{await s.select('meijin');await s.write('ねこは「こんにちは」と言う。');await s.reload();const l=await s.level();
     return {expect:{restored:(await s.scripts()).some(x=>x.mode==='meijin'&&x.source==='ねこは「こんにちは」と言う。')&&l.chosen==='meijin'},info:l};},
-  'MC-584':async s=>{await s.page.selectOption('#uiLevel','advanced');await s.select('w-neko');await s.code();await s.write('いまのばしょから、右へ10歩動く。');await s.reload();const l=await s.level();
-    return {expect:{restored:(await s.scripts()).some(x=>x.targetId==='w-neko'&&x.source==='いまのばしょから、右へ10歩動く。')&&l.chosen==='advanced'&&l.shown==='advanced'},info:l};},
+  // The level this browser keeps (akari.uiLevel.v1) is かんたん when the page loads again, so only the autosave record can bring くわしく back.
+  'MC-584':async s=>{await s.page.selectOption('#uiLevel','advanced');await s.select('w-neko');await s.code();await s.write('いまのばしょから、右へ10歩動く。');
+    await s.page.evaluate(()=>localStorage.setItem('akari.uiLevel.v1','basic'));const kept=await s.reload(()=>s.page.evaluate(()=>localStorage.getItem('akari.uiLevel.v1')));const l=await s.level();
+    return {expect:{keptBasic:kept==='basic',restored:(await s.scripts()).some(x=>x.targetId==='w-neko'&&x.source==='いまのばしょから、右へ10歩動く。')&&l.chosen==='advanced'&&l.shown==='advanced'},info:{kept,l}};},
   'MC-585':async s=>{await s.select('w-neko');await s.code();await s.write('いまのばしょから、右へ10歩動く。');const l=await s.level(),kind=await s.startMeijin(true);const scripts=await s.scripts();
     return {expect:{noConfirm:l.options.join('|')==='名人'&&kind===null&&scripts.some(x=>x.targetId==='w-neko'&&x.mode!=='meijin'&&x.source==='いまのばしょから、右へ10歩動く。'),oneMeijin:scripts.filter(x=>x.mode==='meijin').length===1},info:l};},
   // Blocks offer はじめて／かんたん／くわしく only, and a level never switches the view (MC-580 retired).
@@ -350,7 +355,7 @@ const checks={
 // MC-659/660: 「新しく作る」, だんご from the presets, then a 名人 body whose touch event watches たくどん (both picture parts).
 async function touchMeijin(s,second,expected){const p=s.page;await s.newWork();
   // A new work opens at ブロックの「はじめて」, which shows neither the part picker nor コード: かんたん is chosen first.
-  await p.selectOption('#uiLevel','basic');await p.waitForTimeout(250);await (await reveal(p.locator('[data-sprite-preset="dango"]'))).click();await p.waitForTimeout(300);
+  await p.selectOption('#uiLevel','basic');await p.waitForTimeout(250);await (await reveal(p.locator(TOOLBOX_PRESET+'[data-sprite-preset="dango"]'))).click();await p.waitForTimeout(300);
   const takudon=await s.part('たくどん'),dango=await s.part('だんご');await s.code();await s.startMeijin(true);await s.write('');
   await s.write('だんごがたくどんにふれたとき、だんごは「ふれた」と言う。\nだんごは画面の左下のはしから、右へ520歩、上へ400歩のばしょへ行く。\n1秒待つ。\n'+second);
   // Every start of the touch body is counted where the product says it (EventScheduler.ui.say), not only what stays on the screen.
