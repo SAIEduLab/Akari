@@ -21,11 +21,13 @@ const events=p=>p.evaluate(()=>window.autosaveAudit.events);
 const settled=p=>p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='このパソコンに のこしたよ',null,{timeout:10000});
 const edit=async(p,source)=>{await p.locator('#codeEditor').fill(source);await p.locator('#codeEditor').press('Tab');};
 const restore=async p=>{await p.reload();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));};
-async function record(p){return p.evaluate(async()=>{
-  const rec=await new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f5',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>{db.close();resolve(get.result||null);};get.onerror=()=>reject(get.error);};});
+// The autosave database carries the saved-file format number of the release record (features.json).
+const autosaveDatabase='akari-workspace-f'+JSON.parse(fs.readFileSync('audit/manifests/features.json','utf8')).EXECUTABLE_CONTRACT.projectFormatVersion;
+async function record(p){return p.evaluate(async autosaveDatabase=>{
+  const rec=await new Promise((resolve,reject)=>{const req=indexedDB.open(autosaveDatabase,1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>{db.close();resolve(get.result||null);};get.onerror=()=>reject(get.error);};});
   if(!rec)return null;const decoded=await Akari.decodeWorkspaceHistory(rec.workspace),frame=decoded.frames[decoded.cursor];
   return {revision:rec.revision,updatedAt:rec.updatedAt,cursor:decoded.cursor,frameCount:decoded.frames.length,project:frame.project,editorState:frame.editorState};
-});}
+},autosaveDatabase);}
 const setupRecords=new WeakMap();
 const setupPhase=(p,phase)=>setupRecords.get(p)?.push({phase,at:Date.now()});
 async function fixture(p,source,document,{actions=[],extraScripts=[]}={}){
