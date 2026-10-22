@@ -342,9 +342,10 @@ const cases = {
     const historyAfter=(await state(p)).history;
     assert.deepEqual(newValues,oldValues);
     assert.equal(historyAfter,before.history+1,'only operator change is committed');
+    // The block tools are spaced by 文節 (F-19, I5V-13).
     const repeat=p.locator('#blockEditor .blockui-node[data-schema-id="RepeatCount"]'); await U.openNodeMenu(repeat);
-    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="remove"]').innerText(),'このまとまりと中のブロックをけす');
-    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="duplicate"]').innerText(),'同じものをもう1つ作る');
+    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="remove"]').innerText(),'この まとまりと 中の ブロックを けす');
+    assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="duplicate"]').innerText(),'同じものを もう1つ 作る');
     await p.keyboard.press('Escape');
     await p.locator('#blockEditor [data-blockui-action="body-insert"]').first().click();
     // One やめる per state, named with its object (F-23; FCB-11): choosing where a block goes is 「入れるのを やめる」.
