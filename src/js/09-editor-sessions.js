@@ -1095,32 +1095,52 @@
   }
   // A new block from the list comes with values that run and change something, as the 書ける ことば examples have them
   // (FCB-05): the other part (or the mouse) to face, a part to copy (the other part, else itself), ペンの太さ 3, 音の大きさ
-  // 50％, 1つ and 1段階. A value other than the 0 of a new block is kept. The block is changed in place.
+  // 50％, 1つ, 1段階 and 向き 45度 (0度 is where a new part already looks). A part's words go to a part of the work that
+  // has them: 「文字1」の文字を「こんにちは」にかえる, 「入力らん1」に「こんにちは」を入れる (F2-01). 〜のどれか picks from 1
+  // to 6, as a die does. A value other than the one of a new block is kept. The block is changed in place.
   const CREATION_NUMBERS = new Map([['PenCommand:SET_SIZE', 3], ['SoundCommand:SET_VOLUME', 50], ['LooksCommand:FORWARD_LAYERS', 1],
-    ['LooksCommand:BACKWARD_LAYERS', 1], ['SoundCommand:PITCH_UP', 1], ['SoundCommand:PITCH_DOWN', 1]]);
+    ['LooksCommand:BACKWARD_LAYERS', 1], ['SoundCommand:PITCH_UP', 1], ['SoundCommand:PITCH_DOWN', 1], ['MotionCommand:SET_DIRECTION', 45]]);
   function applyCreationDefaults(node, project, targetId) {
-    const first = node?.inputs?.args?.[0];
-    if (first?.schemaId !== 'NumberLiteral' || first.fields.value !== 0) return node;
-    const parts = project?.components || [], other = parts.find(c => c.id !== targetId)?.name,
+    const args = node?.inputs?.args, first = args?.[0], parts = project?.components || [];
+    const zero = value => value?.schemaId === 'NumberLiteral' && value.fields.value === 0,
+      text = (value, words) => Object.assign(value, { schemaId: 'StringLiteral', fields: { value: words } });
+    if (node?.schemaId === 'LooksCommand:SET_TARGET_TEXT' || node?.schemaId === 'LooksCommand:SET_INPUT') {
+      const input = node.schemaId === 'LooksCommand:SET_INPUT',
+        part = parts.find(c => input ? c.type === 'input' : ['label', 'button', 'box'].includes(c.type))?.name;
+      if (part && (zero(first) || (input && first?.schemaId === 'StringLiteral' && first.fields.value === '入力らん'))) text(first, part);
+      if (zero(args?.[1])) text(args[1], 'こんにちは');
+      return node;
+    }
+    if (node?.schemaId === 'BuiltinCall:乱数' && args?.length === 2 && args.every(zero)) {
+      args[0].fields.value = 1; args[1].fields.value = 6;
+      return node;
+    }
+    if (!zero(first)) return node;
+    const other = parts.find(c => c.id !== targetId)?.name,
       character = (parts.find(c => c.id !== targetId && c.type === 'sprite') || parts.find(c => c.id === targetId && c.type === 'sprite'))?.name;
     // Only a character (not a button or a label) has copies.
     const name = node.schemaId === 'MotionCommand:POINT_TO' ? other || 'マウス' : node.schemaId === 'CloneCommand:CREATE_TARGET' ? character : null;
-    if (name) Object.assign(first, { schemaId: 'StringLiteral', fields: { value: name } });
+    if (name) text(first, name);
     else if (CREATION_NUMBERS.has(node.schemaId)) first.fields.value = CREATION_NUMBERS.get(node.schemaId);
     return node;
   }
   function computeBlockInsertionAvailability(session, schemaId, location, options = {}) {
     const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
     if (!schema) return { enabled: false, reason: 'この ブロックは 使えないよ', diagnostics: [] };
-    // Values on simple command previews remain visible choices. Enclosures and
-    // persistent rules start with visible holes, never an implicit true/0/no-op.
-    const draft = schema.bodies.some(slot => slot.requiredExecutable) || ['ContinuousRule','ReturnStatement'].includes(schema.kind) || schema.inputs.some(slot => slot.type === 'target');
+    // Values on simple command previews remain visible choices. Enclosures, persistent rules and 〜まで待つ start with
+    // visible holes, never an implicit true/0/no-op (LANGUAGE.md: a condition stays to be chosen; F2-05).
+    const draft = schema.bodies.some(slot => slot.requiredExecutable) || ['ContinuousRule','ReturnStatement','WaitUntil'].includes(schema.kind) || schema.inputs.some(slot => slot.type === 'target');
     const creationContext = options.context || session.context || {},
       creationProject = options.project || session.project,
       component = creationProject?.components?.find(c => c.id === creationContext.targetId),
       { designPosition, partTarget, costume, backdrop } = blockCreationDefaults(creationProject, creationContext.targetId);
     let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode))
       : applyCreationDefaults(createBlock(schemaId, { draft, allowHoles: draft, designPosition, partTarget, costume, backdrop }), creationProject, creationContext.targetId);
+    // 〜まで待つ comes as a draft, but whether a wait may go here is checked on a filled one: 答えを もとめる has no waits.
+    if (schema.kind === 'WaitUntil' && draft && !options.candidateNode) {
+      const filled = computeBlockInsertionAvailability(session, schemaId, location, { ...options, candidateNode: createBlock(schemaId, { idPrefix: 'wait-check' }) });
+      if (!filled.enabled) return { ...filled, node };
+    }
     if (schemaId === 'NumberLiteral' && location?.input) {
       const parent = buildBlockIndex(session.blockView).get(location.parentId)?.node;
       if (parent?.schemaId === 'ContinuousRule' && ['seconds', 'distance'].includes(location.input))
@@ -1357,26 +1377,26 @@
   const TUTORIAL_BLOCKS=Object.freeze({
     speech:{label:'話す',source:'「こんにちは」と1秒話す。'},
     escape:{label:'ちがう ばしょへ にげる',source:'画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
-    swim:{label:'ゆっくり泳ぐ',source:'1秒かけて、画面の左下のはしから、右へ480歩、上へ187歩のばしょへ行く。'},
-    randomSwim:{label:'あちこちへ泳ぐ',source:'0.5秒かけて、画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
+    swim:{label:'ゆっくり 泳ぐ',source:'1秒かけて、画面の左下のはしから、右へ480歩、上へ187歩のばしょへ行く。'},
+    randomSwim:{label:'あちこちへ 泳ぐ',source:'0.5秒かけて、画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
     repeat:{label:'くり返す',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
-    right:{label:'右へ泳ぐ',source:'0.3秒かけて、いまのばしょから、右へ60歩動く。'},
-    left:{label:'左へ泳ぐ',source:'0.3秒かけて、いまのばしょから、左へ60歩動く。'},
+    right:{label:'右へ 泳ぐ',source:'0.3秒かけて、いまのばしょから、右へ60歩動く。'},
+    left:{label:'左へ 泳ぐ',source:'0.3秒かけて、いまのばしょから、左へ60歩動く。'},
     small:{label:'小さくする',source:'大きさを70％にする。'},
-    point:{label:'点数を1ふやす',source:'点数を1ふやす。'},
-    score:{label:'点数を見せる',source:'「点数ボード」の文字を（「つかまえた：」と点数をつなげた文字）にかえる。'},
+    point:{label:'点数を 1 ふやす',source:'点数を1ふやす。'},
+    score:{label:'点数を 見せる',source:'「点数ボード」の文字を（「つかまえた：」と点数をつなげた文字）にかえる。'},
     finish:{label:'5ひきなら',source:'もし点数が5以上なら、\n  0秒待つ。',hole:'thenBody'},
     bonus:{label:'3ひきなら',source:'もし点数が3と同じなら、\n  0秒待つ。',hole:'thenBody'},
     bonusPoint:{label:'おまけの点を ふやす',source:'点数を2ふやす。'},
-    cheer:{label:'おいわいのことば',source:'「クリア！」と0.5秒話す。'},
-    remaining:{label:'のこりを見せる',source:'「点数ボード」の文字を（「あと：」と最大（0、10－点数）をつなげた文字）にかえる。'},
-    tone:{label:'音を鳴らす',source:'880Hzの音を0.1秒鳴らす。'},
+    cheer:{label:'おいわいの ことば',source:'「クリア！」と0.5秒話す。'},
+    remaining:{label:'のこりを 見せる',source:'「点数ボード」の文字を（「あと：」と最大（0、10－点数）をつなげた文字）にかえる。'},
+    tone:{label:'音を 鳴らす',source:'880Hzの音を0.1秒鳴らす。'},
     lowTone:{label:'ひくい音',source:'523Hzの音を0.1秒鳴らす。'},
-    midTone:{label:'まん中の音',source:'659Hzの音を0.1秒鳴らす。'},
+    midTone:{label:'まん中の 音',source:'659Hzの音を0.1秒鳴らす。'},
     highTone:{label:'たかい音',source:'784Hzの音を0.1秒鳴らす。'},
-    costume:{label:'すがたをかえる',source:'次のすがたにかえる。'},
-    turn:{label:'くるっと回る',source:'右に90度回る。'},
-    wait:{label:'少し待つ',source:'0.1秒待つ。'},
+    costume:{label:'すがたを かえる',source:'次のすがたにかえる。'},
+    turn:{label:'くるっと 回る',source:'右に90度回る。'},
+    wait:{label:'少し 待つ',source:'0.1秒待つ。'},
   });
   function tutorialCandidate(key,project,identity=key) {
     const spec=TUTORIAL_BLOCKS[key],parsed=parseScript(spec.source,buildSymbols(project),{targetId:'sprite-1',event:'click'});
@@ -1420,17 +1440,17 @@
     tutorialInsert('add-escape','escape',2),...tutorialTry('original',3),
     tutorialDefine({id:'choose-course',action:'choice',choice:'course',message:'できた！ どんな 遊びを 足そう？ ここで「ほぞんして おわる」を おしても いいよ。'})]);
   const TUTORIAL_COURSES=Object.freeze([
-    {id:'motion',label:'動きをつけよう',description:'泳ぎ方を かえて 遊ぼう。',children:[
-      {id:'swim',label:'あちこちへ泳ぐ',description:'行く ばしょと 速さを かえよう。'},
-      {id:'zigzag',label:'いったりきたり',description:'くり返しで 泳がせよう。'},
-      {id:'small',label:'小さなさかな',description:'大きさを かえて、つかまえよう。'}]},
-    {id:'score',label:'ゲームにしよう',description:'つかまえた 数を 見せよう。',children:[
+    {id:'motion',label:'動きを つけよう',description:'泳ぎ方を かえて 遊ぼう。',children:[
+      {id:'swim',label:'あちこちへ 泳ぐ',description:'行く ばしょと 速さを かえよう。'},
+      {id:'zigzag',label:'いったり きたり',description:'くり返しで 泳がせよう。'},
+      {id:'small',label:'小さな さかな',description:'大きさを かえて、つかまえよう。'}]},
+    {id:'score',label:'ゲームに しよう',description:'つかまえた 数を 見せよう。',children:[
       {id:'goal',label:'めざせ、5ひき！',description:'決めた 数で、おいわいしよう。'},
       {id:'bonus',label:'おまけの点',description:'ある 数に なったら、点を ふやそう。'},
       {id:'remaining',label:'あと何びき？',description:'ひき算で、のこりを 見せよう。'}]},
-    {id:'show',label:'音やすがたで遊ぼう',description:'キャッチしたときの 音や すがたを 作ろう。',children:[
-      {id:'melody',label:'音をならべよう',description:'短い メロディーを 作ろう。'},
-      {id:'costume',label:'さかながへんしん',description:'ちがう すがたで 遊ぼう。'},
+    {id:'show',label:'音や すがたで 遊ぼう',description:'キャッチしたときの 音や すがたを 作ろう。',children:[
+      {id:'melody',label:'音を ならべよう',description:'短い メロディーを 作ろう。'},
+      {id:'costume',label:'さかなが へんしん',description:'ちがう すがたで 遊ぼう。'},
       {id:'dance',label:'くるくるショー',description:'回る 動きと、待つ 時間を 組もう。'}]},
   ]);
   function tutorialCourseSteps(course,offset,tag) {
@@ -1650,17 +1670,46 @@
       : parseScript(hint.text, symbols, context).body[0];
     return configureSearchNode(blockEncode(ast).tree, intent);
   }
+  // 書ける ことば finds a sentence by the same words as its block (F2-11): ランダム finds 1から2のどれか.
+  function hintSearchSynonyms(id) {
+    const schemaId = hintSchemaId(id), builtin = /^builtin:(.+)$/.exec(schemaId);
+    return (builtin ? BLOCK_SEARCH_SYNONYMS['BuiltinCall:' + builtin[1]] : BLOCK_SEARCH_SYNONYMS[schemaId]) || [];
+  }
   function searchHintCandidates(candidates, query, project, context = {}) {
     if (!query.trim()) return candidates;
     const intent = searchIntent(query), matched = candidates.filter(h => intent
       ? (h.binding && matchesSearch(h.binding.name, query)) || hintSchemaId(h.id) === intent.schemaId
-      : matchesSearch(h.text + ' ' + h.category + ' ' + h.searchTerms.join(' '), query));
+      : matchesSearch(h.text + ' ' + h.category + ' ' + h.searchTerms.join(' ') + ' ' + hintSearchSynonyms(h.id).join(' '), query));
     return matched.map(h => {
       if (!intent || !project) return h;
       try { const node = nodeForSearchHint(h, project, context, intent);
         return {...h, text:formatScript({kind:'Script',body:[blockDecode(node)]},{symbols:buildSymbols(project)})};
       } catch (_) { return h; }
     }).sort((a,b) => Number(!!b.binding) - Number(!!a.binding) || holdFirst(b.id, query) - holdFirst(a.id, query));
+  }
+  // The keys a child names in a search, by the names the code writes (「スペース」キー, 「エンター」キー).
+  const SEARCH_KEYS = Object.freeze({ すぺーす: '空白', えんたー: '決定', りたーん: '決定', えすけーぷ: '取消' });
+  function searchKey(query) {
+    const q = normalizeSearchText(query).replace(/[「」]/g, '').replace(/きー$/, '');
+    return Object.hasOwn(SEARCH_KEYS, q) ? SEARCH_KEYS[q] : null;
+  }
+  // 〜キーがおされるまで待つ／くり返す (what it repeats stays to be chosen) and 〜キーがおされている, with the key.
+  function keyedSearchCandidate(schemaId, key, project) {
+    const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
+    if (!schema) return null;
+    const sensorOnly = schemaId === 'SensorRead:KEY_DOWN', node = createBlock(schemaId, { draft: !sensorOnly, allowHoles: true, idPrefix: 'search-key' }),
+      sensor = sensorOnly ? node : createBlock('SensorRead:KEY_DOWN', { idPrefix: 'search-key-sensor' });
+    sensor.inputs.arg.fields.value = key;
+    if (!sensorOnly) { sensor.id = node.inputs.condition.id; node.inputs.condition = sensor; }
+    let text = '';
+    try {
+      // The first line is the block's words; what it repeats is still to be chosen, so the copy written here has 何もしない.
+      const written = structuredClone(node);
+      for (const key of Object.keys(written.bodies || {})) written.bodies[key] = [createBlock('NoOperation', { idPrefix: 'search-key-text' })];
+      const decoded = blockDecode(written), symbols = project ? buildSymbols(project) : undefined;
+      text = (sensorOnly ? formatExpression(decoded) : formatScript({ kind: 'Script', body: [decoded] }, { symbols })).split(/\n/)[0];
+    } catch (_) { /* The face says what it is. */ }
+    return { ...schema, candidateNode: node, candidateKey: 'key:' + key + ':' + schemaId, ...(text ? { searchLabel: text, searchCaption: true } : {}) };
   }
   // Holding a key to move (C-16 with B-09): the continuous rule is taught first, so for the words of holding and of
   // moving on at a speed its sentence and its block come before the repeat while a key is held.
@@ -1720,6 +1769,13 @@
     };
     const rank = schema => { const q = quality(schema); return (q === 2 ? 60 : 0) + (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 30) + (q ? 10 : 0) + wordStart(schema); };
     out.splice(0, out.length, ...out.map((schema, i) => ({ schema, i, r: rank(schema) })).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.schema));
+    // A key named in the search (スペース, エンター …): the blocks that wait for it, repeat until it is pressed and read it
+    // come first, with that key (F2-11).
+    const key = searchKey(query);
+    if (key) {
+      const keyed = ['WaitUntil', 'RepeatUntil', 'SensorRead:KEY_DOWN'].map(id => keyedSearchCandidate(id, key, project)).filter(Boolean);
+      out.splice(0, out.length, ...keyed, ...out.filter(s => !keyed.some(k => k.id === s.id)));
+    }
     // The continuous rule is no statement: search finds it too, and the palette puts it in the body's rules.
     const rule = BLOCK_SCHEMA_BY_ID.get('ContinuousRule');
     if (rule && !intent && matchesSearch(blockPaletteSearchText(rule), query)) out.splice(holdFirst(rule.id, query) ? 0 : out.length, 0, rule);
@@ -1754,6 +1810,9 @@
     Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒', 'ひょうじ', '発表', 'はっぴょう', 'せりふ', 'ふきだし', 'こえ'],
     Ask: ['質問', 'たずねる', '答え', 'きく', '聞く', 'しつもん', 'もんだい', '問題', 'クイズ'],
     WaitTime: ['待つ', 'まつ', '時間', '秒'],
+    // Waiting for a key, and repeating until one is pressed (F2-11).
+    WaitUntil: ['スペース', 'スペースキー', 'エンター', 'エンターキー', 'キー'],
+    RepeatUntil: ['スペース', 'スペースキー', 'エンター', 'エンターキー', 'キー'],
     IfStatement: ['もし', '条件', 'なら', '分かれ道'],
     RepeatCount: ['くり返す', '繰り返す', '何度も', '回数'],
     UserActionCall: ['動作', '手順', '呼び出す', '実行'],

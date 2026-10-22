@@ -8,10 +8,18 @@
     const at = lines.slice(0, diagnostic.line - 1).reduce((n, l) => n + l.length + 1, 0) + text.match(/^[ \u3000\t]*/)[0].length;
     try { return insertionContext(source, at, at).depth > 0; } catch (_) { return null; }
   }
+  // The names an example may use (FM2-12): the work's first variable or list and its first sound, never one the work
+  // does not have. Without the work, the example leaves them out.
+  function diagnosticExampleNames(work) {
+    const data = [...(work?.projectData?.variables || []), ...(work?.components || []).flatMap(c => c?.localData?.variables || []),
+      ...(work?.projectData?.lists || [])].find(x => typeof x?.name === 'string' && x.name);
+    return { value: data ? nameSource(data.name) : null, sound: work?.sounds?.find(x => typeof x?.name === 'string' && x.name)?.name || null };
+  }
   // Presentation only: parser/runtime diagnostics and their original messages stay unchanged. With the body's source,
   // an indentation message names もし／くり返す only for a line inside one (F-24); the parser's Tab message is shown as it is.
-  function childDiagnosticText(diagnostic, source = null) {
-    const message = String(diagnostic?.message || diagnostic || '書き方を たしかめてください');
+  // With the work, the examples name its own data and sounds.
+  function childDiagnosticText(diagnostic, source = null, work = null) {
+    const message = String(diagnostic?.message || diagnostic || '書き方を たしかめてください'), names = diagnosticExampleNames(work);
     if (diagnostic?.code === 'R403')
       return '計算の 答えが 大きすぎるなどの 理由で、あかりで 使える 数に なりませんでした。使う 数や 計算の しかたを たしかめてください。';
     if (/「ではない」が 2つ つづいています/.test(message))
@@ -30,12 +38,16 @@
       return '「 」・【 】・（ ）などの とじる しるしを 足します。れい：「こんにちは」';
     if (/で つなぐ きまりを、1つずつ（ ）で かこんで|きまりを 1つずつ（ ）で かこんで 分けて/.test(message))
       return '「で、」「か、」で つなぐ 文の 中に「かつ」「または」は 書けません。ぜんぶを「条件（…）が成り立つ」で ひとまとめに します。れい：もし条件（1が1と同じかつ2が2と同じかつ3が3と同じ）が成り立つなら、';
-    if (/くらべる 2つの ものを（ ）か【 】で かこんで/.test(message))
-      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。れい：【点数】が10より大きい';
+    if (/くらべる 2つの ものを（ ）か【 】で かこんで/.test(message)) {
+      // The name is the one the child wrote before が (もし点数が…), else the work's own data.
+      const line = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/)[diagnostic.line - 1] || '' : '',
+        own = /^[ 　\t]*(?:もし)?([^\s　、。「」（）【】]+?)が/.exec(line)?.[1];
+      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。れい：【' + (own || names.value?.replace(/^【|】$/g, '') || '点数') + '】が10より大きい';
+    }
     if (/言う ことは「「文字」と言う」/.test(message))
-      return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。へんすうの 中身を 話すときは「点数を言う」のように 書きます。';
+      return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。' + (names.value ? 'へんすうの 中身を 話すときは「' + names.value + 'を言う」のように 書きます。' : '');
     if (/そのまま 言う 文字か、入れた 音か/.test(message))
-      return 'そのまま 話す 文字・鳴らす 音・へんすう・リストの 中身から えらびます。れい：「おはよう」と言う／「ベル」を鳴らす／点数を言う。';
+      return 'そのまま 話す 文字・鳴らす 音・へんすう・リストの 中身から えらびます。れい：' + ['「おはよう」と言う', names.sound && '「' + names.sound + '」を鳴らす', names.value && names.value + 'を言う'].filter(Boolean).join('／') + '。';
     if (/重ねるときは、次の 行に 書いて/.test(message))
       return '「もし」「くり返す」の 中の 文は、次の 行に 書いて 行の はじめを 右へ ずらします。\nれい：2回くり返す。\n  2回くり返す。\n    「おはよう」と言う。';
     if (/いちばん 外の 文は、行の はじめを 右へ ずらさずに/.test(message))
@@ -50,8 +62,17 @@
       return '中の 文を 同じ 行と 次の 行の 両方に 書いています。次の 行に まとめ、行の はじめを 右へ ずらしてください。\nれい：2回くり返す。\n  「おはよう」と言う。';
     if (/「ここまで」は 書きません/.test(message))
       return '「ここまで」を けして、次の 文の はじめを 左へ もどします。\nれい：2回くり返す。\n  「中」と言う。\n「外」と言う。';
-    if (/と 組になる「もし」が ありません/.test(message))
+    if (/と 組になる「もし」が ありません/.test(message)) {
+      // Only a line that starts with そうでなければ／でなければ is about its もし (F-24). Another line that comes out of the
+      // body (one not moved to the right) is told to move to the right, with the body's own heading (FM2-01).
+      const lines = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/) : null,
+        text = lines?.[diagnostic.line - 1]?.replace(/^[ 　\t]+/, '');
+      if (text && !/^(?:そうでなければ|でなければ)/.test(text)) {
+        const heading = lines[0] && /、$/.test(lines[0].trim()) && !/^[ 　\t]/.test(lines[0]) ? lines[0].trim() : '作品を動かしたとき、';
+        return '「' + heading + '」の 中の 文は、上の 文と 同じ だけ 右へ ずらして 書きます。\nれい：' + heading + '\n  ' + splitComment(text).code.trim();
+      }
       return '「そうでなければ、」は、組に なる「もし」と 行の はじめを そろえます。上に「もし」が あるか たしかめてください。';
+    }
     if (/の 中では、動く・音を 出す・待つ|の 中では、この ブロックは 使えません/.test(message))
       return '「答えを もとめる」では、部品を 動かす・音を 出す・待つ などの やることは 使えません。これらは「てじゅん」へ 入れます。れい：1＋2を答えとして返す。';
     if (/の 中からは、作品や 部品の へんすう・リストを かえられません/.test(message))
@@ -134,6 +155,8 @@
       diagnosticPage = 0,
       diagnosticsOpen = false,
       diagnosticsByLine = new Map(),
+      // 作品チェックの知らせ of the shown body by line (P11 (d)); the host puts them on session.notices.
+      noticesByLine = new Map(),
       branchLines = new Map(),
       branchSourceLines = new Map();
     const phraseCache = new Map();
@@ -959,9 +982,14 @@
         // right end of the workspace under or above it. A mistake is always shown right under the field.
         if (!(pending.shown && pending.error)) {
           const own = pending.input.closest('.blockui-field') || pending.input,
+            // On a touch screen the place after the selected block can be pressed over 40 px (16 above its line, 24 below:
+            // editor.css), so they keep off all of it (AX-03).
+            coarse = doc.defaultView.matchMedia?.('(pointer: coarse)').matches,
             marks = [...world.querySelectorAll('.blockui-insertion, input, select, textarea, summary, button')]
               .filter(n => !own.contains(n) && n.checkVisibility?.({ visibilityProperty: true }) !== false)
-              .map(n => n.getBoundingClientRect()).filter(b => b.width && b.height >= 12),
+              .map(n => { const r = n.getBoundingClientRect();
+                return coarse && n.classList.contains('blockui-implied-destination') ? { left: r.left, right: r.right, top: r.top - 16, bottom: r.top + 24, width: r.width, height: 40 } : r; })
+              .filter(b => b.width && b.height >= 12),
             at = (x) => Math.max(4, Math.min(x, view.clientWidth - w - 4)),
             free = ([x, y]) => y >= Math.max(4, room.top) && y + h <= Math.min(room.bottom, view.clientHeight - 4) &&
               !marks.some(b => b.right > x && b.left < x + w && b.bottom > y && b.top < y + h),
@@ -1514,7 +1542,8 @@
       }
       if (parts && schema.id === 'BuiltinCall:LENGTH' && listCountFace(node))
         return parts.map((part) => (typeof part === 'string' ? part.replace(/^の長さ$/, 'の数') : part));
-      if (!parts || schema.kind !== 'UserActionCall' || node?.inputs?.args?.length) return parts;
+      // 答えを もとめる too: （【ごうけい】で求めた答え） (F2-02).
+      if (!parts || !['UserActionCall', 'UserFunctionCall'].includes(schema.kind) || node?.inputs?.args?.length) return parts;
       return parts.map((part) => (typeof part === 'string' ? part.replace(/^をわたして、/, '') : part));
     }
     function paletteLabel(schema) {
@@ -1545,7 +1574,7 @@
       ['表示', 'ひょうじ'], ['段階', 'だんかい'], ['以上', 'いじょう'], ['以下', 'いか'], ['未満', 'みまん'], ['値', 'あたい'],
       ['成', 'な', 'り'], ['求', 'もと', 'め'], ['増', 'ふ', 'や'], ['減', 'へ', 'ら'], ['残', 'のこ', 'り'], ['呼', 'よ', 'ぶ'], ['捨', 'す', 'て'], ['続', 'つづ', 'け']];
     const FACE_READING_SOURCE = FACE_READINGS.map(([word, , next]) => next ? word + '(?=' + next + ')' : word).join('|'),
-      FACE_READING_SKIP = '.blockui-node, input, select, textarea, ruby, .blockui-preview-slot, [data-blockui-field]';
+      FACE_READING_SKIP = '.blockui-node, input, select, textarea, ruby, .blockui-preview-slot, [data-blockui-field], .blockui-subject-text, .blockui-subject-chip';
     function faceRuby(root) {
       if (!['entry', 'basic'].includes(document.body.dataset.uiLevel)) return root;
       const found = new RegExp(FACE_READING_SOURCE), texts = [],
@@ -1595,7 +1624,10 @@
                 : 'あてはまらない'
               : n?.schemaId === 'VariableRead'
                 ? n.fields.name
-                : null;
+                // 〜キーがおされるまで待つ from a search shows its key (F2-11).
+                : n?.schemaId === 'SensorRead:KEY_DOWN' && n.inputs?.arg?.schemaId === 'StringLiteral'
+                  ? '「' + keySurface(n.inputs.arg.fields.value) + '」キーが おされている'
+                  : null;
       const pill = (text, condition = false) =>
         E('span', 'blockui-preview-slot' + (condition ? ' blockui-preview-condition' : ''), text || ' ');
       if (['NumberLiteral', 'StringLiteral', 'BooleanLiteral'].includes(schema.kind))
@@ -1638,9 +1670,12 @@
                   : [value];
               for (const [i, child] of children.entries()) {
                 if (i) main.append(doc.createTextNode(slot.separator || '、'));
-                // A key shows by the keyboard's name, as in the workspace (F-34).
+                // A key shows by the keyboard's name, as in the workspace (F-34); the part to go to is in 「 」, as the
+                // placed block's choice and the code write it, and the mouse is マウス (R2-B-11).
                 const text =
-                  (schema.id === 'SensorRead:KEY_DOWN' && child?.schemaId === 'StringLiteral' ? keySurface(child.fields.value) : scalar(child)) ??
+                  (schema.id === 'SensorRead:KEY_DOWN' && child?.schemaId === 'StringLiteral' ? keySurface(child.fields.value)
+                    : schema.id === 'MotionCommand:GOTO_PART' && child?.schemaId === 'StringLiteral' && child.fields.value !== 'マウス' ? '「' + child.fields.value + '」'
+                    : scalar(child)) ??
                   (slot.type === 'target'
                     ? child?.fields?.name || 'へんすう'
                     : slot.labels?.[part.index ?? i] || slot.label);
@@ -1676,6 +1711,20 @@
           reason: 'あいている ところへ はめる ブロック',
         };
       return availability(schema.id, location, schema.candidateNode);
+    }
+    // One call for each てじゅん and 答えを もとめる of the work, written as 書ける ことば writes it (ジャンプ with 高さを1として、).
+    function definitionCalls(work) {
+      if (!work) return [];
+      const handed = d => (d.args || []).length ? d.args.map(arg => nameSource(arg) + 'を1').join('、') + 'として、' : '', out = [];
+      for (const [kind, list] of [['UserActionCall', work.actions], ['UserFunctionCall', work.functions]])
+        for (const d of list || []) {
+          const action = kind === 'UserActionCall', text = action ? `${handed(d)}【${d.name}】というてじゅんを行う` : `（${handed(d)}【${d.name}】で求めた答え）`;
+          try {
+            out.push({ ...BLOCK_SCHEMA_BY_ID.get(kind), candidateNode: nodeForSearchHint({ mode: action ? 'statement' : 'expression', text }, work, context()),
+              candidateKey: (action ? 'action:' : 'function:') + d.id, searchLabel: text });
+          } catch (_) { /* A definition whose call cannot be written yet is left out of the list. */ }
+        }
+      return out;
     }
     function renderPalette() {
       if (options.readOnly) return;
@@ -1728,7 +1777,15 @@
         projectState = project();
       const hints = !query ? [] : location?.body ? editorInsertionHints(session(), location, {project:projectState,context:context()})
         : hintCandidates(projectState, context().targetId, {source:session()?.sourceText || '', ...context()});
-      const searched = query ? blockSearchCandidates(projectState, context(), query, hints) : all;
+      const searched = (query ? blockSearchCandidates(projectState, context(), query, hints) : all)
+        // 自分で作ったブロック: a call names a てじゅん or 答えを もとめる of the work, never one that does not exist; 「返す」
+        // is a block of 答えを もとめる only (F2-06).
+        .filter(s => !(['UserActionCall', 'UserFunctionCall'].includes(s.kind) && !s.candidateNode)
+          && (s.kind !== 'ReturnStatement' || context().definitionKind === 'function'));
+      if (!query) {
+        const calls = definitionCalls(projectState), at = searched.findIndex(s => blockPaletteGroup(s) === 'action');
+        searched.splice(at < 0 ? searched.length : at, 0, ...calls);
+      }
       const speech=searched.find(s=>s.id==='Say');
       if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:entry?'話す':'ことばと 時間を 決めて 話す'});}
       // はじめて: the loop comes with its number of times (F-03); what it repeats goes into its hole, from the next block
@@ -1748,8 +1805,11 @@
           (!entry || s.id !== 'Say' || s.candidateKey === 'timed-speech') &&
           (unitChoice || s.id !== 'QuantityLiteral') && (unitChoice || !ADVANCED_ONLY_SCHEMA_IDS.has(s.id)),
       );
-      if (!showOutside && !entry)
+      // はじめて too lists only what can go in here, so its blocks fit one page; one plain line says why some are gone (F2-12).
+      const listed = candidates.length;
+      if (!showOutside)
         candidates = candidates.filter((s) => paletteAvailability(s, location).enabled);
+      const hiddenAtEntry = entry && candidates.length < listed;
       if ((entry || category === 'basic') && !query) {
         const order = entry ? ENTRY_PALETTE_ORDER : [...BASIC_BLOCK_SCHEMA_IDS];
         candidates.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
@@ -1763,6 +1823,15 @@
       // Keep the normal palette visible: a lesson guides a choice, never makes it.
       const scroll = paletteList.scrollTop;
       paletteList.replaceChildren();
+      // A heading is no block: a search for ふれたとき or a key says where the body's きっかけ is chosen (F2-11).
+      const headingWord = query && [['ふれたとき', /ふれ(?:た|る)とき|さわ(?:った|る)とき|あた(?:った|る)とき|ぶつか(?:った|る)とき/], ['キーを おしたとき', /^(?:すぺーす|えんたー|えすけーぷ)(?:きー)?$|きーを?お(?:した|す|された)とき/]]
+        .find(([, re]) => re.test(normalizeSearchText(query).replace(/[「」]/g, '')))?.[0];
+      if (headingWord)
+        paletteList.append(E('p', 'blockui-empty blockui-heading-hint', headingWord + 'に 動かすには、本文の 上の「いつ動く？」で「' + headingWord + '」を えらんでね'));
+      if (hiddenAtEntry)
+        paletteList.append(E('p', 'blockui-empty blockui-entry-hidden', context().targetId === 'stage'
+          ? '画面では、動きと すがたの ブロックは 使えないよ。キャラクターを えらぶと 使えるよ'
+          : 'ここで 使えない ブロックは かくしているよ'));
       for (const schema of candidates) {
         const a = paletteAvailability(schema, location),
           item = E('div', 'blockui-palette-item', null, {
@@ -1805,7 +1874,8 @@
         }
         try {
           b.append(faceRuby(previewNode(schema, a.node)));
-          if (schema.binding||schema.lessonKey||schema.candidateKey==='timed-speech') b.append(E('small', 'blockui-bound-name', schema.searchLabel));
+          // はじめて lists one speech block, so it needs no caption apart from the others (FM2-15).
+          if (schema.binding||schema.lessonKey||schema.searchCaption||(schema.candidateKey==='timed-speech'&&!entry)) b.append(E('small', 'blockui-bound-name', schema.searchLabel));
         } catch (_) {
           b.textContent = paletteLabel(schema);
         }
@@ -1821,6 +1891,9 @@
             'blockui-empty',
             // A search already looks through every なかま: it asks for other words.
             query ? '「' + searchText.trim() + '」に 合う ブロックが ないよ。ほかの ことばで さがしてみてね。れい：うごく・まつ・いう'
+            // The work has no てじゅん or 答えを もとめる yet: the toolbar's 自分で作ったブロック makes one (F2-06).
+            : category === 'action' && !(projectState?.actions?.length || projectState?.functions?.length)
+              ? '自分で作ったブロックは まだ ないよ。上の「自分で作ったブロック」で 作れるよ'
             : location?.input
               ? 'ここに 入れられる ブロックが ないよ。なかまを かえてね。「ブロックの しゅるい」の「使えないブロックも見せる」で、使えない わけも 見られるよ。つなぐブロックを ふやすときは「＋ ここに入れる」を おしてね'
               : 'この ばしょで 使える ブロックが ないよ。なかまを かえてね。「ブロックの しゅるい」の「使えないブロックも見せる」で、使えない わけも 見られるよ。',
@@ -1886,11 +1959,14 @@
     function subjectFace(node, field) {
       const value = node.fields[field.key], owner = node.schemaId === 'ActorQualifiedRead';
       // A subject carried over from a sentence before (おばあさんは かくれる。「うんとこしょ」と2秒話す。) is not written in
-      // this one, but another part does it: the face shows it pale and in （ ） (E2E-R1-04). The body's own part is not shown.
+      // this one, but another part does it (E2E-R1-04, final call 30): the だれが place of the face shows that part as a pale
+      // chip, apart from the sentence's words, which stay those of the code. The body's own part is not shown.
       if (!owner && value?.kind === 'named' && !schemaOf(node)?.bodies?.length && !subjectWritten(node, value.name) &&
           value.name !== project()?.components.find(c => c.id === context().targetId)?.name) {
-        const carried = E('span', 'blockui-phrase-text blockui-subject-text blockui-subject-carried', '（' + value.name + (value.particle || 'は') + '）', { 'data-block-id': node.id });
-        carried.style.opacity = '0.6';
+        const why = '前の 文の「' + value.name + (value.particle || 'は') + '」を ひきついで、' + value.name + 'が します',
+          carried = E('span', 'blockui-subject-chip blockui-subject-carried', '（' + value.name + (value.particle || 'は') + '）', { 'data-block-id': node.id, 'data-carried-subject': value.name, title: why, role: 'note', 'aria-label': why });
+        Object.assign(carried.style, { display: 'inline-flex', alignItems: 'center', alignSelf: 'center', padding: '0 7px', minHeight: '20px',
+          border: '1px dashed currentColor', borderRadius: '10px', opacity: '0.6', marginRight: '4px', fontSize: '0.92em', whiteSpace: 'nowrap' });
         return carried;
       }
       if (!owner && (value?.kind !== 'named' || !subjectWritten(node, value.name))) return doc.createDocumentFragment();
@@ -2388,7 +2464,7 @@
       // Moving a block is 「もっていく」: 「動かす」 is only for the characters and ▶ 動かす (E-05, §4).
       const move = button('ほかへ もっていく', 'move', () => moveStart(node), { 'data-block-id': node.id }),
         duplicate = button(
-          '同じものをもう1つ作る',
+          '同じものを もう1つ 作る',
           'duplicate',
           () => {
             if (info.body)
@@ -2453,7 +2529,7 @@
       if (info.body) {
         commands.append(
           button(
-            schema.bodies.length ? 'このまとまりと中のブロックをけす' : 'このブロックをけす',
+            schema.bodies.length ? 'この まとまりと 中の ブロックを けす' : 'この ブロックを けす',
             'remove',
             () => removeBlock(node, info),
             { 'data-block-id': node.id },
@@ -2552,7 +2628,7 @@
         if (diagnostics.length) {
           box.classList.add('blockui-diagnostic');
           const ul = E('ul', 'blockui-node-diagnostics');
-          for (const d of diagnostics) { const item = E('li', 'diagnostic-help', childDiagnosticText(d, session()?.sourceText)); appendDiagnosticDetails(item, d); ul.append(item); }
+          for (const d of diagnostics) { const item = E('li', 'diagnostic-help', childDiagnosticText(d, session()?.sourceText, project())); appendDiagnosticDetails(item, d); ul.append(item); }
           box.append(ul);
         }
       }
@@ -2783,7 +2859,8 @@
     }
     function valueTools(location, label, child) {
       const types = E('select', 'blockui-value-type', null, { 'aria-label': label + 'の中身の しゅるい', 'data-blockui-value-type': 'true' });
-      for (const [value, text] of [['','ちがう ものに かえる'],['NumberLiteral','数'],['StringLiteral','文字'],['SensorRead:答え','答え'],['VariableRead','名前'],['expression','計算']])
+      // A calculation goes in with 「計算を入れる」 next to it, the one control for it (F2-17).
+      for (const [value, text] of [['','ちがう ものに かえる'],['NumberLiteral','数'],['StringLiteral','文字'],['SensorRead:答え','答え'],['VariableRead','名前']])
         types.append(E('option', '', text, { value }));
       types.disabled = isLocked();
       listen(types, 'change', () => {
@@ -2865,7 +2942,8 @@
       if (actor) main.append(fieldControl(node, actor));
       // The time comes first. Of the move blocks, はじめて adds it only to いまのばしょから動く (not to 決めたばしょへ行く,
       // 前へ進む or a 〜のところへ行く of a work made at another level); a time already written can always be taken off.
-      const timeLabel = { GOTO: '時間をかけて行く', GOTO_PART: '時間をかけて行く', MOVE_BY: '時間をかけて動く', MOVE: '時間をかけて進む', TURN_RIGHT: '時間をかけて回る', TURN_LEFT: '時間をかけて回る' }[value];
+      // 後ろへ reads 動く, so its time is 時間をかけて動く (R2-B-11).
+      const timeLabel = { GOTO: '時間をかけて行く', GOTO_PART: '時間をかけて行く', MOVE_BY: '時間をかけて動く', MOVE: node.fields.direction === 'backward' ? '時間をかけて動く' : '時間をかけて進む', TURN_RIGHT: '時間をかけて回る', TURN_LEFT: '時間をかけて回る' }[value];
       if (node.inputs.seconds) {
         quantity('seconds', '秒'); main.append(text('かけて、'));
         extraControls.append(button('時間を外す', 'motion-untimed', () => operate({ type: 'optional-input-remove', parentId: node.id, input: 'seconds' })));
@@ -3006,7 +3084,7 @@
       head.append(E('strong', 'blockui-node-title', schema.label), nodeTools(node, info));
       if(schema.category==='script'){
         const heading=node.fields.heading,actor=heading?.actorRef?.kind==='named'?heading.actorRef.name:project()?.components.find(c=>c.id===context().targetId)?.name||project()?.stage?.name;
-        head.querySelector('strong').textContent=`${actor}・${eventText(heading?.event||context().event||'start',heading?heading.filter:context().filter)}`;
+        head.querySelector('strong').textContent=`${actor}・${headingTitle(heading?.event||context().event||'start',heading?heading.filter:context().filter)}`;
       }
       box.append(head);
       box.classList.toggle('blockui-selected', selected === node.id);
@@ -3029,7 +3107,7 @@
       if (diagnostics.length) {
         box.classList.add('blockui-diagnostic');
         const ul = E('ul', 'blockui-node-diagnostics');
-        for (const d of diagnostics) { const item = E('li', 'diagnostic-help', childDiagnosticText(d, session()?.sourceText)); appendDiagnosticDetails(item, d); ul.append(item); }
+        for (const d of diagnostics) { const item = E('li', 'diagnostic-help', childDiagnosticText(d, session()?.sourceText, project())); appendDiagnosticDetails(item, d); ul.append(item); }
         box.append(ul);
         const warning = button(
           '⚠ たしかめる',
@@ -3040,14 +3118,38 @@
           },
           {
             'aria-label': diagnostics.length + 'か所の 直す手がかりを見せる',
-            title: diagnostics.map((d) => childDiagnosticText(d, session()?.sourceText)).join('\n'),
+            title: diagnostics.map((d) => childDiagnosticText(d, session()?.sourceText, project())).join('\n'),
           },
         );
         head.prepend(warning);
+      } else if (schema.category === 'statement' && (noticesByLine.get(line) || []).length && lineNodes.get(line) === node.id) {
+        // A notice says how a correct sentence runs (P11 (d)): blue and ⓘ, never the orange of a mistake. Its text opens
+        // under the block, with the rewrite it names when it has one.
+        const notices = noticesByLine.get(line);
+        box.classList.add('blockui-notice');
+        const ul = E('ul', 'blockui-node-notices', null, { 'data-block-id': node.id });
+        ul.hidden = true;
+        Object.assign(ul.style, { gridColumn: '1/-1', color: '#1f4f7a', background: '#eef5fc', padding: '7px 10px 7px 25px', margin: '5px 0',
+          fontSize: '12px', overflowWrap: 'anywhere', whiteSpace: 'normal', maxWidth: '660px', position: 'relative', zIndex: '2' });
+        for (const d of notices) {
+          const item = E('li', 'notice-help', d.message);
+          for (const proposal of options.onNoteProposal ? d.proposals || [] : []) {
+            if (typeof proposal?.source !== 'string') continue;
+            item.append(' ', button(proposal.label || proposal.source, 'notice-fix', () => options.onNoteProposal(d, proposal),
+              { title: proposal.source, 'data-note-fix': '' }));
+          }
+          ul.append(item);
+        }
+        box.append(ul);
+        const mark = button('ⓘ 知らせ', 'notices', () => { selection(node.id); ul.hidden = !ul.hidden; mark.setAttribute('aria-expanded', String(!ul.hidden)); },
+          { 'aria-label': notices.length + 'この 知らせを 見せる', 'aria-expanded': 'false', title: notices.map(d => d.message).join(' ／ ') });
+        Object.assign(mark.style, { color: '#1f5f99', fontSize: '12px' });
+        head.prepend(mark);
       }
       const content = E('div', 'blockui-node-content'),
         main = E('div', 'blockui-node-main');
       content.hidden = collapsed.has(node.id);
+      if (box.classList.contains('blockui-notice')) Object.assign(main.style, { outline: '2px dashed #3b82c4', outlineOffset: '0', borderRadius: '6px' });
       if (schema.category === 'script') {
         for (const field of schema.fields) {
           const edit = E('details', 'blockui-heading-editor');
@@ -3061,9 +3163,10 @@
           list.append(E('summary', '', rules.length ? 'つづけて動くルール（' + rules.length + 'こ）' : '＋ キーを おす間など、つづけて動かす'));
           for (const [i, rule] of rules.entries()) {
             const row = E('div', 'blockui-rule-row'); row.append(renderNode(rule));
-            row.append(button('このルールを けす', 'rule-remove', () => operate({ type: 'variadic-remove', parentId: node.id, input: 'rules', index: i })));
-            if (i) row.append(button('前のルールへ', 'rule-up', () => operate({ type: 'variadic-move', parentId: node.id, input: 'rules', index: i, toIndex: i - 1 })));
-            if (i + 1 < rules.length) row.append(button('次のルールへ', 'rule-down', () => operate({ type: 'variadic-move', parentId: node.id, input: 'rules', index: i, toIndex: i + 2 })));
+            // The same words as a block's own tools (F-19, F-23): この ルールを けす, ↑ まえへ, ↓ あとへ.
+            row.append(button('この ルールを けす', 'rule-remove', () => operate({ type: 'variadic-remove', parentId: node.id, input: 'rules', index: i })));
+            if (i) row.append(button('↑ まえへ', 'rule-up', () => operate({ type: 'variadic-move', parentId: node.id, input: 'rules', index: i, toIndex: i - 1 })));
+            if (i + 1 < rules.length) row.append(button('↓ あとへ', 'rule-down', () => operate({ type: 'variadic-move', parentId: node.id, input: 'rules', index: i, toIndex: i + 2 })));
             list.append(row);
           }
           const add = button('＋ つづけて動くルール', 'rule-add', () => operate({ type: 'variadic-insert', parentId: node.id, input: 'rules', index: rules.length,
@@ -3101,7 +3204,8 @@
             const current=node.inputs.value,
               shown=current.schemaId==='StringLiteral'?'literal':String(choices.findIndex(h=>h.binding.name===current.fields.name&&h.binding.qualifier===current.fields.qualifier));
             data.append(E('option','','文字を話す',{value:'literal'}));
-            if(!entry||shown==='-1')data.append(E('option','','計算の答えを話す',{value:'expression'}));
+            // A calculation is put in with 「計算を入れる」 (F2-17): this choice only names one that is there.
+            if(shown==='-1')data.append(E('option','','計算の答えを話す',{value:'expression'}));
             for(const [i,hint]of choices.entries())data.append(E('option','',hint.text+'の いまの中身',{value:String(i)}));
             data.value=shown;
             if(!data.value)data.value='expression';data.disabled=isLocked()||options.readOnly;
@@ -3177,15 +3281,16 @@
           renderMotionBlock(node, schema, main);
         else if (schema.draftOnly) {
           box.classList.add('blockui-draft-hole');
-          const info = index.get(node.id), label = node.fields.label || schema.label;
-          main.append(E('span', 'blockui-hole-label', '〔' + label + 'を えらぶ〕'));
+          const info = index.get(node.id), label = node.fields.label || schema.label,
+            holeLabel = () => E('span', 'blockui-hole-label', '〔' + label + 'を えらぶ〕');
+          // The hole is one control with one wording: 〔くり返すことを えらぶ〕 (F2-18).
+          const holeButton = (action, aria) => { const b = button('', action, () => chooseDestination(listLocation(info)), { 'aria-label': aria }); b.append(holeLabel()); return b; };
           if (schema.category === 'statement' && info?.body)
-            main.append(button('することを えらぶ', 'hole-select-statement',
-              () => chooseDestination(listLocation(info)), { 'aria-label': label + 'に ブロックを入れる' }));
+            main.append(holeButton('hole-select-statement', label + 'に ブロックを入れる'));
           else if (schema.category === 'expression' && info?.input)
-            main.append(button('中身を えらぶ', 'hole-select-expression',
-              () => chooseDestination(listLocation(info)), { 'aria-label': label + 'の中身を えらぶ' }));
+            main.append(holeButton('hole-select-expression', label + 'の中身を えらぶ'));
           else if (schema.category === 'target' && info?.input) {
+            main.append(holeLabel());
             const picker = E('select', '', null, { 'aria-label': label + 'を えらぶ', 'data-blockui-hole-target': node.id });
             picker.append(E('option', '', 'かえるものを えらぶ', { value: '' }));
             for (const name of namesFor(node, { type: 'name' })) picker.append(E('option', '', name, { value: name }));
@@ -3197,7 +3302,7 @@
             });
             main.append(picker);
             if(options.onData)main.append(button('＋ へんすう・リストを作る','create-data',()=>options.onData()));
-          }
+          } else main.append(holeLabel());
         } else {
           // Existing phrase/alias presentation is retained. Optional new roles
           // are explicit controls without being hidden by cached legacy text.
@@ -3291,7 +3396,7 @@
       diagnosticPage = Math.min(diagnosticPage, pages - 1);
       const ul = E('ul');
       for (const d of diagnostics.slice(diagnosticPage * 20, (diagnosticPage + 1) * 20)) {
-        const item = E('li', 'diagnostic-help', diagnosticPlace(d) + childDiagnosticText(d, session()?.sourceText));
+        const item = E('li', 'diagnostic-help', diagnosticPlace(d) + childDiagnosticText(d, session()?.sourceText, project()));
         appendDiagnosticDetails(item, d); ul.append(item);
       }
       details.append(ul);
@@ -3388,6 +3493,7 @@
           s?.contextRevision,
           s?.mode,
           !!isLocked(),
+          (s?.notices || []).map(d => d.line + ':' + d.code + ':' + d.message).join(','),
         ].join('|');
       root.dataset.locked = String(!!isLocked());
       if (drag && nextSignature !== signature) cancelDrag();
@@ -3462,6 +3568,12 @@
       lineNodes = new Map();
       highlightedId = null;
       diagnosticsByLine = new Map();
+      noticesByLine = new Map();
+      // The notice marks are edit-screen controls: the run screen shows none (P11 (d), reconciled).
+      if (!isLocked()) for (const d of s?.notices || []) if (d?.line && (!d.where || d.where === s?.ownerKey)) {
+        if (!noticesByLine.has(d.line)) noticesByLine.set(d.line, []);
+        noticesByLine.get(d.line).push(d);
+      }
       for (const [id, entry] of index) {
         const line = s?.nodeMap?.get?.(id)?.sourceSpan?.startLine;
         if (line && schemaOf(entry.node)?.category === 'statement' && !lineNodes.has(line))
@@ -3654,6 +3766,13 @@
       svg.append(path);
       box.prepend(svg);
     }
+    // A key or a signal body names its key or signal, as a touch body names what it touches (F2-04): 「右」キーを おしたとき,
+    // 「開始」という 合図を 受けたとき (the code writes 「開始」という合図を受けたとき、).
+    function headingTitle(event, filter) {
+      if (event === 'keyDown' && typeof filter?.key === 'string') return '「' + keySurface(filter.key) + '」キーを おしたとき';
+      if (event === 'message' && typeof filter?.message === 'string') return '「' + filter.message + '」という 合図を 受けたとき';
+      return eventText(event, filter);
+    }
     function eventHat() {
       const ctx = context(),
         p = project(),
@@ -3671,7 +3790,7 @@
           'strong',
           '',
           kind === 'script'
-            ? eventText(tree?.fields.heading?.event||ctx.event||event, tree?.fields.heading ? tree.fields.heading.filter : ctx.filter) || event
+            ? headingTitle(tree?.fields.heading?.event||ctx.event||event, tree?.fields.heading ? tree.fields.heading.filter : ctx.filter) || event
             : kind === 'function'
               ? 'この ブロックで 答えを 出すとき'
               : 'この ブロックを 使ったとき',
