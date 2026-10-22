@@ -1930,7 +1930,7 @@
     if (ichi()) return ichi();
     // 1秒で前へ10歩すべる: the time is written 〇秒かけて.
     if (/(?:滑る|すべる)$/.test(mask))
-      return { message: '時間を かけて 動くときは「1秒かけて、前へ10歩進む」のように「〇秒かけて、」を 書きます', source: code.replace(/(?:滑る|すべる)$/, '動く'), label: '時間を かけて 動く' };
+      return { message: '時間を かけて 動くときは「1秒かけて、前へ10歩進む」のように「〇秒かけて、」を 書きます', source: code.replace(/(?:滑る|すべる)$/, '動く'), label: '「' + /(?:滑る|すべる)$/.exec(mask)[0] + '」を 書きかえる' };
     return null;
   }
   // 1秒から3秒のどれか (the unit on both ends, B-12) reads as 1から3のどれか秒. Every character keeps its place in the
@@ -2753,7 +2753,7 @@
       }
       clauses.push({start,end:code.length,pair:null});
       const teForm={動く:'動いて',進む:'進んで'};
-      let first=null,whole=code;
+      let first=null,example=null,whole=code;
       // From the last sentence to the first, so the places of the earlier ones still hold.
       for(const clause of [...clauses].reverse()){
         // そのあと上へ5歩動く: a lead word of a later sentence stays in front of it.
@@ -2761,17 +2761,20 @@
         const text=code.slice(clause.start,clause.end),plain=clause.pair?text.slice(0,-clause.pair[0].length)+(clause.pair[0]==='行って'||clause.pair[0]==='いって'&&/[へに]いって$/.test(text)?'行く':clause.pair[1]):text;
         const found=removedMoveGuidance(plain);
         if(!found)continue;
-        first=found;
+        first=found;example=null;
         let source=found.source,rewritten=null;
         // 画面の右へ10歩すべる: the verb is fixed first, then the move form.
         if(source&&!reads(source))source=removedMoveGuidance(source)?.source||source;
         if(source){
-          rewritten=canonicalStatementSource(source,symbols);
+          rewritten=example=canonicalStatementSource(source,symbols);
           if(clause.pair){const verb=/(?:動く|進む)$/.exec(rewritten);rewritten=verb?rewritten.slice(0,-2)+teForm[verb[0]]:null;}
         }
         whole=rewritten&&whole!==null?whole.slice(0,clause.start)+rewritten+whole.slice(clause.end):null;
       }
-      if(first)throw sentenceDiagnostic(first.message,line,whole&&reads(whole)?[{label:first.label||'書き方を なおす',source:whole}]:[],{kind:'MotionCommand'});
+      // The example in the message is the sentence the rewrite writes (R2-B-11): no 読点 after the subject, 〇秒かけて,
+      // and the unit on both ends of a どれか.
+      const message=first&&first.source&&example?first.message.split('れい：'+first.source).join('れい：'+example.replace(/。$/,'')):first?.message;
+      if(first)throw sentenceDiagnostic(message,line,whole&&reads(whole)?[{label:first.label||'書き方を なおす',source:whole}]:[],{kind:'MotionCommand'});
     }
     // いまのばしょから、右へ10歩、左へ5歩動く: one leg on each axis; two numbers on one axis add up to one leg.
     if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?(?:[^、。]+?秒(?:間)?かけて、?)?(?:いま|今)の(?:ばしょ|場所)から、?)(右|左|上|下)(?:へ|に)([0-9０-９]+)歩、?(右|左|上|下)(?:へ|に)([0-9０-９]+)歩(動く|うごく)$/d,code,mask))){
