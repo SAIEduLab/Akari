@@ -9,19 +9,21 @@ import {currentProductFile} from '../lib/product-path.cjs';
 import {install,reveal} from '../lib/ux-normal-ui.mjs';
 import {listRepairCases,isolatedListCases,shopping,sourceFor,fixedFor,verifyListRepairReport} from '../lib/ux-phrase-list-contract.mjs';
 import {pressStop} from '../lib/stop-press.cjs';
+// The one view toggle (final call 22): chooseView presses it only when the other view is on the screen.
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),output=path.resolve(out),dir=output+'.artifacts',product=currentProductFile();
 fs.mkdirSync(dir,{recursive:true});
 const report={schema:'akari-ux-phrase-list-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,pageErrors:[],networkRequests:[],environment:{browser:null,playwright:require('playwright/package.json').version},results:[]};
 const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
 const state=p=>p.evaluate(()=>({project:structuredClone(Akari.app.project),source:Akari.app.editorState.main.sourceText,state:Akari.app.editorState.state,history:Akari.app.editorState.history,redo:Akari.app.editorState.redo}));
 const panel=p=>p.evaluate(()=>{const root=document.querySelector('#listRepairPanel'),s=root.querySelector('select');return {project:structuredClone(Akari.app.project),state:Akari.app.editorState.state,text:root.innerText,options:[...s.options].map(o=>o.textContent),choice:s.value,selectDisabled:s.disabled,applyDisabled:root.querySelector('#listRepairApply').disabled,selection:[document.querySelector('#codeEditor').selectionStart,document.querySelector('#codeEditor').selectionEnd]};});
-async function gui(p){await nameLegacyFixtureActor(p);await p.locator('#dataBtn').click();await p.locator('#dataKind').selectOption('list');await p.locator('#dataName').fill('買うもの');await p.locator('#dataItems').fill(shopping.join('\n'));await p.locator('#dataAdd').click();await p.locator('#dataClose').click();await p.locator('#editorModecode').click();await p.locator('#codeEditor').fill(sourceFor(2));await p.locator('#codeEditor').press('Tab');}
+async function gui(p){await nameLegacyFixtureActor(p);await p.locator('#dataBtn').click();await p.locator('#dataKind').selectOption('list');await p.locator('#dataName').fill('買うもの');await p.locator('#dataItems').fill(shopping.join('\n'));await p.locator('#dataAdd').click();await p.locator('#dataClose').click();await chooseView(p,'code');await p.locator('#codeEditor').fill(sourceFor(2));await p.locator('#codeEditor').press('Tab');}
 async function fixture(p,c={}){
  await install(p,c.source??sourceFor(2),{mode:c.mode||'code',
   actorLists:c.local||c.dango?[{id:'akari-list',name:c.dango?'あかり専用':'買うもの',initialValue:['鉛筆','ノート','消しゴム']}]:[],
   localLists:c.dango?[{id:'dango-list',name:'買うもの',initialValue:['鉛筆','ノート','消しゴム']}]:[],extraScripts:c.extraScripts||[]});
  if(c.name||c.noLists||c.documentBefore){const file=await p.evaluate(({name,noLists,documentBefore})=>{const q=structuredClone(Akari.app.project);if(name||noLists)q.projectData.lists=noLists?[]:[{id:'shopping',name,initialValue:['りんご','パン','牛乳']}];if(documentBefore)q.scripts[0].document=documentBefore;q.name='リスト境界';return Akari.serializeProject(q,Akari.app.assetStore);},{name:c.name,noLists:!!c.noLists,documentBefore:c.documentBefore});await p.locator('#fileInput').setInputFiles({name:'list-boundary.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});await p.waitForFunction(()=>Akari.app.project.name==='リスト境界');
-  await p.locator('#objectSelect').selectOption('sprite-1');await p.locator('#eventSelect').selectOption('start');if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModecode').click();
+  await p.locator('#objectSelect').selectOption('sprite-1');await p.locator('#eventSelect').selectOption('start');if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await chooseView(p,'code');
  }
 }
 async function fail(p){await p.locator('#runBtn').click();await p.locator('#failureModal.show').waitFor();return p.evaluate(()=>({state:Akari.app.editorState.state,code:document.querySelector('.failure-summary').textContent.match(/^R\d+/)?.[0]||null,summary:document.querySelector('.failure-summary').textContent,project:structuredClone(Akari.app.project)}));}
@@ -76,7 +78,8 @@ try{await withBrowser(chrome,async browser=>{
  for(const [id,source]of [['boundary/generated-player-r411',sourceFor(2)],['boundary/generated-player-r404',fixedFor(4)]])await run(id,async p=>{
   await fixture(p,{source});const before=(await state(p)).project,html=await p.evaluate(()=>Akari.generateStandaloneHtml(Akari.app.project,Akari.app.assetStore)),after=(await state(p)).project,file=path.join(dir,id.replaceAll('/','-')+'.html');fs.writeFileSync(file,html);
   await p.goto(pathToFileURL(file).href);const executions=[],stopped=[];
-  for(let i=0;i<2;i++){await p.locator('#playerStart:not([disabled])').click();await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='PAUSED');executions.push(await p.evaluate(()=>({state:document.querySelector('#playerRoot').dataset.state,output:document.querySelector('#playerOutput').textContent,bubbles:[...document.querySelectorAll('.sprite-bubble-text')].map(e=>e.textContent),stopDisabled:document.querySelector('#playerStop').disabled})));await p.screenshot({path:path.join(dir,id.replaceAll('/','-')+'-'+i+'.png')});await pressStop(p.locator('#playerStop'));stopped.push(await p.locator('#playerRoot').getAttribute('data-state'));}
+  for(let i=0;i<2;i++){await p.locator('#playerStart:not([disabled])').click();// A mistake stops the player in FAILED: ■ 止める only (LANGUAGE.md 書き出した作品のはじめ方, lead decision 27).
+   await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='FAILED');executions.push(await p.evaluate(()=>({state:document.querySelector('#playerRoot').dataset.state,output:document.querySelector('#playerOutput').textContent,bubbles:[...document.querySelectorAll('.sprite-bubble-text')].map(e=>e.textContent),stopDisabled:document.querySelector('#playerStop').disabled})));await p.screenshot({path:path.join(dir,id.replaceAll('/','-')+'-'+i+'.png')});await pressStop(p.locator('#playerStop'));stopped.push(await p.locator('#playerRoot').getAttribute('data-state'));}
   return {classification:'generated HTML API / actual offline file player / pointer controls',source,before,after,file,executions,stopped};
  });
 },600000);}catch(e){report.hostFailure=e.stack;}
