@@ -512,9 +512,10 @@
         p = project(),
         rect = form.getBoundingClientRect();
       if (!r || !rect.width || !rect.height) return;
+      // Within the screen (よこ0〜はば・たて0〜高さ), also for a finger dragged on past the edge (the part keeps the pointer).
       scheduler().inputBoundary(() => {
-        r.mouseX = Math.round(((e.clientX - rect.left) * p.stage.width) / rect.width);
-        r.mouseY = Math.round(((rect.bottom - e.clientY) * p.stage.height) / rect.height);
+        r.mouseX = Math.min(p.stage.width, Math.max(0, Math.round(((e.clientX - rect.left) * p.stage.width) / rect.width)));
+        r.mouseY = Math.min(p.stage.height, Math.max(0, Math.round(((rect.bottom - e.clientY) * p.stage.height) / rect.height)));
       });
     }
     on(form, 'pointerdown', (e) => {
@@ -638,9 +639,8 @@
       automaticAttempted = false,
       backgroundPaused = false,
       runtimeFailed = false,
-      // When ▶ 動かす was pressed: ■ 止める takes its place, and the second press of a double press within 0.5 s (a
-      // repeated click, or a tap or a pen press) does nothing. endFrame looks, after a flow ended, whether the whole run
-      // has ended.
+      // When ▶ 動かす was pressed: ■ 止める takes its place, and a press of it within 0.5 s (the second press of a double
+      // press) does nothing. endFrame looks, after a flow ended, whether the whole run has ended.
       startPressedAt = -Infinity,
       endFrame = null;
     const designUrls = new Map();
@@ -899,7 +899,7 @@
     }
     if (start) start.onclick = (event) => { startPressedAt = event.timeStamp; startRun(); };
     if (stop) stop.onclick = (event) => {
-      if (event.timeStamp - startPressedAt < 500 && (event.detail > 1 || ['touch', 'pen'].includes(event.pointerType))) return;
+      if (event.timeStamp - startPressedAt < 500) return;
       stopRun();
     };
     if (pause) pause.onclick = () => {

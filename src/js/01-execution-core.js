@@ -168,6 +168,7 @@
     // The touch targets that are no part: the whole stage edge (端) and its four sides, by the words code writes.
     const EDGE_TARGETS = Object.freeze({ 端: '画面のはし', '端:上': '画面の上のはし', '端:下': '画面の下のはし', '端:右': '画面の右のはし', '端:左': '画面の左のはし' });
     const isEdgeTarget = (target) => typeof target === 'string' && Object.hasOwn(EDGE_TARGETS, target);
+    const EDGE_SIDES = Object.freeze(['端:上', '端:下', '端:右', '端:左']);
     // A body is named by its event; a touch body also by what it touches (「星」に ふれたとき, 画面のはしに ふれたとき).
     const eventText = (event, filter) => event === 'touchStart' && typeof filter?.target === 'string' && filter.target
       ? (isEdgeTarget(filter.target) ? EDGE_TARGETS[filter.target] : '「' + filter.target + '」') + 'に ふれたとき' : EVENT_LABELS[event];
@@ -1042,6 +1043,11 @@
     const watchPose = (a) => ({ ...pose(a), runtimeId: a.runtimeId, visible: a.visible });
     const sameWatchPose = (kept, a) => kept.runtimeId === a.runtimeId && kept.visible === a.visible && samePose(kept, a);
     const samePoses = (kept, now) => !!kept && kept.length === now.length && now.every((x, i) => Object.keys(x).every(k => kept[i][k] === x[k]));
+    // A subject or heading written 画面 is the work screen, unless a part is named 画面: then it is that part (as for
+    // 今 and はし), and the screen is still named by its own name (画面1).
+    function namesStage(project, name) {
+      return name === project.stage.name || (name === '画面' && !project.components.some((c) => c.name === '画面'));
+    }
     class RuntimeModel {
       constructor(project, ui = {}, assetCache = null) {
         this.project = project;
@@ -1154,7 +1160,7 @@
         let id = relativeRuntimeId;
         // みんな ({kind:'all'}, a wait of the whole flow) reads its time or condition as 自分.
         if (ref && ref.kind === 'named') {
-          id = ref.targetId || (ref.name === '画面' || ref.name === this.project.stage.name ? 'stage' :
+          id = ref.targetId || (namesStage(this.project, ref.name) ? 'stage' :
             this.project.components.find((c) => c.name === ref.name)?.id);
         }
         if (id !== 'stage' && !this.actor(id))
@@ -1491,8 +1497,8 @@
       }
       // Whether two parts touch: their boxes overlap, as for every part, and where they overlap a point is seen of both
       // — of a picture where its cells are seen, of any other part anywhere in its box (final call 17). The overlap is
-      // looked at in at most 64×64 points, no further apart than the finest picture cell. A pair's answer is kept until
-      // either part moves, turns, or changes its size or look.
+      // looked at in points no further apart than the finest picture cell (at most 64×64 of them; a wider overlap cell by
+      // cell). A pair's answer is kept until either part moves, turns, or changes its size or look.
       partsTouch(a, b) {
         const aa = this.aabb(a), bb = this.aabb(b);
         if (!(aa.left <= bb.right && aa.right >= bb.left && aa.bottom <= bb.top && aa.top >= bb.bottom)) return false;
@@ -1515,8 +1521,26 @@
         const sa = ma && this.pictureSampler(a, ma), sb = mb && this.pictureSampler(b, mb);
         if ((sa && !sa.anySeenIn(left, right, bottom, top)) || (sb && !sb.anySeenIn(left, right, bottom, top))) return keep(false);
         const cell = (x, m) => (m ? Math.min((x.w * x.scalePercent) / 100 / m.w, (x.h * x.scalePercent) / 100 / m.h) : Infinity);
-        let step = Math.max(0.5, Math.min(cell(a, ma), cell(b, mb)));
-        if ((rw / step) * (rh / step) > 4096) step = Math.sqrt((rw * rh) / 4096);
+        const step = Math.max(0.5, Math.min(cell(a, ma), cell(b, mb)));
+        // A wider overlap is looked at cell by cell instead (a point grid coarser than a cell could step over a thin seen
+        // strip): each seen cell of the finer picture there is a small box on the screen, and the other part touches it
+        // where its own seen cells (or its box) overlap that box (cells that only meet at a side do not overlap).
+        if ((rw / step) * (rh / step) > 4096) {
+          const [x, m, other] = !mb || (ma && cell(a, ma) <= cell(b, mb)) ? [a, ma, sb] : [b, mb, sa];
+          const sc = x.scalePercent / 100, W = x.w * sc, H = x.h * sc, cs = cosDegrees(x.direction), sn = sinDegrees(x.direction);
+          for (let r = 0; r < m.h; r++)
+            for (let c = 0; c < m.w; c++) {
+              if (!m.cells[r * m.w + c]) continue;
+              let l = Infinity, rr = -Infinity, bo = Infinity, to = -Infinity;
+              for (const [u, v] of [[c, r], [c + 1, r], [c, r + 1], [c + 1, r + 1]]) {
+                const lx = (u / m.w - 0.5) * W, ly = (0.5 - v / m.h) * H, px = x.x + lx * cs - ly * sn, py = x.y + lx * sn + ly * cs;
+                l = Math.min(l, px); rr = Math.max(rr, px); bo = Math.min(bo, py); to = Math.max(to, py);
+              }
+              const L = Math.max(l, left) + 1e-6, R = Math.min(rr, right) - 1e-6, B = Math.max(bo, bottom) + 1e-6, T = Math.min(to, top) - 1e-6;
+              if (L < R && B < T && (!other || other.anySeenIn(L, R, B, T))) return keep(true);
+            }
+          return keep(false);
+        }
         const nx = Math.max(1, Math.ceil(rw / step)), ny = Math.max(1, Math.ceil(rh / step));
         for (let j = 0; j < ny; j++) {
           const y = bottom + ((j + 0.5) * rh) / ny;
@@ -3097,6 +3121,14 @@
                 const kept = w.poses.get(a.runtimeId);
                 if (!partnersMoved && kept && sameWatchPose(kept, a)) continue;
                 w.poses.set(a.runtimeId, watchPose(a));
+                // 画面のはし is any one of the four sides: a side the part did not touch before starts it too (a ball
+                // that bounced off the right side and goes on into the top one near a corner).
+                if (target === '端') {
+                  const sides = EDGE_SIDES.filter(side => this.runtime.touching(a.runtimeId, side)), before = w.last.get(a.runtimeId);
+                  if (before && sides.some(side => !before.includes(side))) this.spawnWatch(w, a.runtimeId);
+                  w.last.set(a.runtimeId, sides);
+                  continue;
+                }
                 const touching = this.runtime.touching(a.runtimeId, target);
                 if (touching && w.last.has(a.runtimeId) && !w.last.get(a.runtimeId)) this.spawnWatch(w, a.runtimeId);
                 w.last.set(a.runtimeId, touching);
@@ -3344,6 +3376,14 @@
         top.visual = top.waited = top.yielded = false;
         return false;
       }
+      // A 〜まで／〜あいだ loop checks its condition when a turn ends and waits for the こま only when another turn
+      // follows: the body goes on the stack under the こま's wait. When the condition ends the loop, it goes on at once.
+      enterLoopTurn(task, frame) {
+        const pace = frame.visual && !frame.waited && !this.paused;
+        frame.visual = frame.waited = frame.yielded = false;
+        this.enterBody(task, frame.node.body);
+        if (pace) task.execStack.push({ type: 'frameYield', node: frame.node });
+      }
       markTurn(task, mark) {
         for (let t = task; t; t = t.laneParent)
           for (const frame of t.execStack) if (PACED_LOOP_FRAMES.has(frame.type)) frame[mark] = true;
@@ -3420,7 +3460,7 @@
             task.execStack.pop();
             continue;
           }
-          if (top.type === 'while' || top.type === 'until') return this.paceTurn(task, top) ? task.execStack.at(-1) : top;
+          if (top.type === 'while' || top.type === 'until') return top;
           break;
         }
         if (guard >= 1000) throw new AkariError('R413', 'くり返しが 多すぎて 先に すすめません');
@@ -3524,7 +3564,7 @@
         this.blocked.delete(task); task.blockReason=null; task.state='RUNNING';
         if (reason.loopFrame) {
           const keep=bool(evalExpression(outcome.value.condition,this.context(task)));
-          if (reason.loopFrame.type==='while'?keep:!keep) this.enterBody(task,reason.loopFrame.node.body);
+          if (reason.loopFrame.type==='while'?keep:!keep) this.enterLoopTurn(task,reason.loopFrame);
           else task.execStack.pop();
         } else { this.executePreparedNode(task,outcome.value,reason.originalNode); this.markMoved(task,reason.originalNode); }
         if (task.state==='RUNNING') {
@@ -3546,9 +3586,8 @@
         if (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && this.prepareCooperativeNode(task, frame.node, frame)) return;
         const v = bool(evalExpression(frame.condition || frame.node.condition, this.context(task)));
         const keep = frame.type === 'while' ? v : !v;
-        if (keep) {
-          task.execStack.push({ type: 'seq', nodes: frame.node.body, index: 0 });
-        } else task.execStack.pop();
+        if (keep) this.enterLoopTurn(task, frame);
+        else task.execStack.pop();
         return { requeue: true };
       }
       enterBody(task, nodes, binder = null) {
@@ -4912,6 +4951,7 @@
       execFunctionNodes,
       execListMutation,
       EventScheduler,
+      namesStage,
       BUILTIN_DEFINITIONS,
       EXECUTABLE_CONTRACT,
       validProducerLabel,

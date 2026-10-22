@@ -201,7 +201,7 @@
     };
     const subjectContext = node => {
       const subject = subjectName(node),
-        targetId = subject === '画面' || subject === project()?.stage?.name ? 'stage'
+        targetId = (project() ? namesStage(project(), subject) : subject === '画面') ? 'stage'
           : project()?.components.find(c => c.name === subject)?.id;
       return { ...context(), targetId };
     };
@@ -2740,29 +2740,30 @@
       const quantity = (key, unit, index) => main.append(...unitValue(node, key, index, unit));
       const actor = fieldOf('actorRef');
       if (actor) main.append(fieldControl(node, actor));
-      // The time comes first. Of the move blocks, はじめて adds it only to いまのばしょから動く (not to 決めたばしょへ行く
-      // or 前へ進む); a time already written can always be taken off.
+      // The time comes first. Of the move blocks, はじめて adds it only to いまのばしょから動く (not to 決めたばしょへ行く,
+      // 前へ進む or a 〜のところへ行く of a work made at another level); a time already written can always be taken off.
       const timeLabel = { GOTO: '時間をかけて行く', GOTO_PART: '時間をかけて行く', MOVE_BY: '時間をかけて動く', MOVE: '時間をかけて進む', TURN_RIGHT: '時間をかけて回る', TURN_LEFT: '時間をかけて回る' }[value];
       if (node.inputs.seconds) {
         quantity('seconds', '秒'); main.append(text('かけて、'));
         extraControls.append(button('時間を外す', 'motion-untimed', () => operate({ type: 'optional-input-remove', parentId: node.id, input: 'seconds' })));
-      } else if (doc.body?.dataset.uiLevel !== 'entry' || !['GOTO', 'MOVE'].includes(value))
+      } else if (doc.body?.dataset.uiLevel !== 'entry' || !['GOTO', 'MOVE', 'GOTO_PART'].includes(value))
         extraControls.append(button(timeLabel, 'motion-timed', () => { const seconds = createBlock('NumberLiteral', { idPrefix: viewId }); seconds.fields.value = 1; return operate({ type: 'expression', parentId: node.id, input: 'seconds', node: seconds }); }));
       const steps = n => { const literal = createBlock('NumberLiteral', { idPrefix: viewId }); literal.fields.value = n; return literal; };
       if (value === 'GOTO' || value === 'MOVE_BY') {
         main.append(text(value === 'GOTO' ? '画面の左下のはしから、' : 'いまのばしょから、'));
         const both = !!(node.inputs.x && node.inputs.y);
         if (value === 'MOVE_BY' && !both) {
-          // One direction: 右・左・上・下 in one choice; a choice on the other axis moves the steps there (one undo step).
+          // One direction: 右・左・上・下 in one choice; a choice on the other axis moves the steps there (one undo step),
+          // and the axis left behind goes back to its plain direction (右・上), as the code read back has it.
           const key = node.inputs.x ? 'x' : 'y', current = node.fields[key === 'x' ? 'xDir' : 'yDir'];
           const select = E('select', 'blockui-motion-direction', null, { 'aria-label': schema.label + 'の 向き', 'data-block-id': node.id, 'data-blockui-action': 'motion-direction' });
           for (const [v, word] of [['right', '右'], ['left', '左'], ['up', '上'], ['down', '下']]) select.append(E('option', '', word, { value: v }));
           select.value = current; select.disabled = isLocked() || !!options.readOnly;
           listen(select, 'change', () => {
             const to = select.value, toKey = ['right', 'left'].includes(to) ? 'x' : 'y', replacement = structuredClone(node);
-            if (toKey !== key) { replacement.inputs[toKey] = replacement.inputs[key]; delete replacement.inputs[key]; }
+            if (toKey !== key) { replacement.inputs[toKey] = replacement.inputs[key]; delete replacement.inputs[key]; replacement.fields[key === 'x' ? 'xDir' : 'yDir'] = key === 'x' ? 'right' : 'up'; }
             replacement.fields[toKey === 'x' ? 'xDir' : 'yDir'] = to;
-            operate({ type: 'replace', id: node.id, node: replacement });
+            if (!operate({ type: 'replace', id: node.id, node: replacement }).ok) select.value = current;
           });
           main.append(select, text('へ')); quantity(key, '歩');
         } else {
@@ -2779,8 +2780,10 @@
         if (value === 'MOVE_BY') {
           if (!node.inputs.y) extraControls.append(button('＋ たてにも動く', 'motion-leg-add-y', () => operate({ type: 'expression', parentId: node.id, input: 'y', node: steps(10) })));
           if (!node.inputs.x) extraControls.append(button('＋ よこにも動く', 'motion-leg-add-x', () => operate({ type: 'expression', parentId: node.id, input: 'x', node: steps(10) })));
-          if (both) extraControls.append(button('たてを外す', 'motion-leg-remove-y', () => operate({ type: 'optional-input-remove', parentId: node.id, input: 'y' })),
-            button('よこを外す', 'motion-leg-remove-x', () => operate({ type: 'optional-input-remove', parentId: node.id, input: 'x' })));
+          // Taking a leg off also sets its direction back to 右・上 (the code no longer writes it).
+          const removeLeg = key => { const replacement = structuredClone(node); delete replacement.inputs[key]; replacement.fields[key === 'x' ? 'xDir' : 'yDir'] = key === 'x' ? 'right' : 'up'; return operate({ type: 'replace', id: node.id, node: replacement }); };
+          if (both) extraControls.append(button('たてを外す', 'motion-leg-remove-y', () => removeLeg('y')),
+            button('よこを外す', 'motion-leg-remove-x', () => removeLeg('x')));
         }
       } else if (value === 'MOVE') {
         main.append(fieldControl(node, fieldOf('direction')), text('へ')); quantity('args', '歩', 0);

@@ -286,8 +286,8 @@
       appState = 'DESIGN',
       // The run screen after the run ended (every body done, or 作品を全部止める): the last picture stays, ■ 止める only.
       runFinished = false,
-      // When ▶ 動かす was pressed: ■ 止める takes its place, and the second press of a double press (a repeated click, or
-      // a tap) within 0.5 s does nothing.
+      // When ▶ 動かす was pressed: ■ 止める takes its place, and a press of it within 0.5 s (the second press of a double
+      // press) does nothing.
       runPressedAt = -Infinity,
       generationToken = 0,
       designObjectUrls = new Map(),
@@ -1078,7 +1078,7 @@
           const out = {};
           for (const [key, child] of Object.entries(value)) {
             if (key === 'actorRef' && child?.kind === 'named') {
-              const id = child.targetId || (child.name === project.stage.name || child.name === '画面'
+              const id = child.targetId || (namesStage(project, child.name)
                 ? 'stage' : project.components.find(c => c.name === child.name)?.id);
               out[key] = id === targetId ? { kind: 'self' } : visit(child);
             } else out[key] = visit(child);
@@ -7195,10 +7195,10 @@
     };
 
     $('#runBtn').addEventListener('click', (event) => { runPressedAt = event.timeStamp; startRun(); });
-    // ■ 止める takes ▶ 動かす's place: the second press of a double press within 0.5 s of ▶ (a repeated click, or a tap or
-    // a pen press) does nothing; a press of its own (one click, a key) stops at once.
+    // ■ 止める takes ▶ 動かす's place: a press within 0.5 s of ▶ is the second press of a double press and does nothing
+    // (a click, a tap, a pen press or a key alike).
     $('#stopBtn').addEventListener('click', (event) => {
-      if (event.timeStamp - runPressedAt < 500 && (event.detail > 1 || ['touch', 'pen'].includes(event.pointerType))) return;
+      if (event.timeStamp - runPressedAt < 500) return;
       stopRun();
     });
     $('#pauseBtn').onclick = () => scheduler?.pause();

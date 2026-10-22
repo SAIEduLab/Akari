@@ -483,6 +483,13 @@ export const sentenceFormCases=[
     expected:script([legs('GOTO',{x:steps(100),y:steps(50)}),hide()]),
     claims:{'te:行って':'画面の左下のはしから、右へ100歩、上へ50歩のばしょへ行って','sentence:LooksCommand:HIDE':'姿を隠す'},
   },
+  // The kana verbs of the move sentences read in です・ます and in the て形 too (LANGUAGE.md 動きの文).
+  {
+    id:'SF-move-kana-verbs',
+    source:'いまのばしょから、右へ10歩うごきます\n後ろへ10歩さがります\n後ろへ10歩さがって、姿を見せる',
+    expected:script([legs('MOVE_BY',{x:steps(10)}),forward(10,{direction:'backward'}),forward(10,{direction:'backward'}),show()]),
+    claims:{'polite:うごきます':'いまのばしょから、右へ10歩うごきます','polite:さがります':'後ろへ10歩さがります','te:さがって':'後ろへ10歩さがって'},
+  },
   {
     id:'SF-te-glide-hide-show-wait',
     source:'1秒かけて、画面の左下のはしから、右へ200歩、上へ100歩のばしょへ行って、姿を隠して、姿をみせて、1秒まって、姿を見せる',
