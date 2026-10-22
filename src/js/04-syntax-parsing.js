@@ -1367,6 +1367,18 @@
   }
   // Patterns made of the parts' names, built once per symbols: every line of a long body uses them.
   const ACTOR_NAME_PATTERNS=new WeakMap();
+  // The part names diagnoseSentenceIntent looks for, longest first, with their patterns (made once per symbols).
+  const PART_NAME_PATTERNS=new WeakMap();
+  function partNamePatterns(symbols){
+    const cached=symbols&&PART_NAME_PATTERNS.get(symbols);if(cached)return cached;
+    const names=[...(symbols?.project?.components||[])].map(c=>c.name).sort((a,b)=>b.length-a.length),escape=name=>name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const patterns={
+      endingInParticle:names.filter(name=>/[にの]$/.test(name)&&nameSource(name).startsWith('【')).map(name=>({name,pattern:new RegExp('(?:^|もし、?|[、はがをと])'+escape(name)+'(?=に|の|まで|から)')})),
+      looking:names.map(name=>({name,pattern:new RegExp('(?:^|もし、?|[、はがをと])'+escape(name)+'(?=に(?:ふれ|触れ)|の方を向|までのきょり)')})),
+    };
+    if(symbols)PART_NAME_PATTERNS.set(symbols,patterns);
+    return patterns;
+  }
   function actorNamePatterns(symbols) {
     const cached=symbols&&ACTOR_NAME_PATTERNS.get(symbols);if(cached)return cached;
     const components=(symbols?.project?.components||[]).map(c=>c.name),stage=symbols?.project?.stage?.name;
@@ -2554,9 +2566,12 @@
         const source=out+code.slice(at);
         throw sentenceDiagnostic(`「${m[0].replace(/[、]$/,'')}」は「${word}」と 書きます`,line,reads(source)?[{label:`「${word}」と 書く`,source}]:[],{kind:'LooksCommand'});}
       // おにに・おにの: a part's name that ends with に or の is written in 「 」 where a part is named (ふれる 相手, 向く 相手).
-      for(const c of [...parts].sort((a,b)=>b.name.length-a.name.length)){
-        if(!/[にの]$/.test(c.name)||!nameSource(c.name).startsWith('【'))continue;
-        const at=mask.search(new RegExp('(?:^|もし、?|[、はがをと])'+c.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=に|の|まで|から)'));
+      // The names and their patterns are made once per work (PERF-02); a line is looked at for a name it contains.
+      const named=partNamePatterns(symbols);
+      for(const {name:cName,pattern} of named.endingInParticle){
+        const c={name:cName};
+        if(!mask.includes(cName))continue;
+        const at=mask.search(pattern);
         if(at<0)continue;
         const start=mask.indexOf(c.name,at),source=code.slice(0,start)+'「'+c.name+'」'+code.slice(start+c.name.length);
         if(reads(source))throw sentenceDiagnostic(`「${c.name}」のように「に」や「の」で おわる 部品の 名前は、ふれる 相手や 向く 相手には「「${c.name}」」、だれが するかには【${c.name}】と 書きます`,line,[{label:'「 」で かこむ',source}],{kind:'Sequence'});
@@ -2564,8 +2579,10 @@
       // はし・はな・がまくん written bare before にふれ… (C-10): a name that begins like は or が is not read as the part;
       // in 「 」 it is. Said only when the line does not read as written and reads with the name in 「 」 (the line read
       // as written does not look again).
-      for(const c of bareNameLooking?[]:[...parts].sort((a,b)=>b.name.length-a.name.length)){
-        const at=mask.search(new RegExp('(?:^|もし、?|[、はがをと])'+c.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=に(?:ふれ|触れ)|の方を向|までのきょり)'));
+      for(const {name:cName,pattern} of bareNameLooking||!/に(?:ふれ|触れ)|の方を向|までのきょり/.test(mask)?[]:named.looking){
+        const c={name:cName};
+        if(!mask.includes(cName))continue;
+        const at=mask.search(pattern);
         if(at<0)continue;
         const start=mask.indexOf(c.name,at),source=code.slice(0,start)+'「'+c.name+'」'+code.slice(start+c.name.length);
         let written;bareNameLooking=true;try{written=reads(code);}finally{bareNameLooking=false;}
