@@ -315,14 +315,14 @@
       }),
       workspace = E('div', 'blockui-workspace', null, {
         tabindex: '0',
-        'aria-label': 'ブロックで 書く 本文の らん',
+        'aria-label': 'ブロックの作業台',
       }),
       paletteControls = E('div', 'blockui-palette-controls');
     const workspaceShell = E('div', 'blockui-workspace-shell'),
       plane = E('div', 'blockui-plane'),
       world = E('div', 'blockui-world'),
       navigation = E('div', 'blockui-navigation', null, {
-        'aria-label': '本文の らんの 見え方',
+        'aria-label': '作業台の見え方',
       });
     const zoomLabel = button('100%', 'zoom-reset', () => setZoom(1), {
       'aria-label': '大きさを100%に もどす',
@@ -371,13 +371,13 @@
     }
     const wide = options.onExpand
       ? button(
-          '本文の らんを 広く',
+          '作業台を広く',
           'workspace-expand',
           () => {
             const expanded = options.onExpand();
             wide.textContent = expanded
-              ? '画面も 見る'
-              : '本文の らんを 広く';
+              ? '画面も見る'
+              : '作業台を広く';
             wide.setAttribute('aria-pressed', String(expanded));
             scheduleGeometry();
           },
@@ -392,7 +392,7 @@
     const workspaceTip = E(
       'div',
       'blockui-workspace-tip',
-      'ブロックを つかんで つなげよう · ブロックの ない ところを おしたまま ずらすと、本文の らんの 見える ところが かわるよ',
+      'ブロックを つかんで つなげよう · ブロックの ない ところを おしたまま ずらすと、作業台の 見える ところが かわるよ',
     );
     workspaceShell.append(workspaceTip);
     const modeSelect = E('select', '', null, {
