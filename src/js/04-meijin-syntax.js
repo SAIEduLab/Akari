@@ -768,7 +768,7 @@
     // ねこは、犬にいちばん近い星の方を向く: what it is near is chosen from a list.
     if ((p = surfaceCapture(/^(.+?)(?:は|が)、?(.+?)にいちばん近い(.+?)の方を向く$/d, code, mask)) && isMeijinPart(p[1].text, symbols, scope))
       throw sentenceDiagnostic(`何に 近いかを 書くときは、リストから えらびます。れい：えらんだ部品を、なかまのうち、${p[1].text}にいちばん近いものにする`, line, [], { kind: 'MotionCommand' });
-    // Words that give no single meaning to a program (名人モードでも読めない書き方): say how to write it.
+    // Words that give no single meaning to a program (名人の本文でも読めない書き方): say how to write it.
     const inName = m => meijinPartNames(symbols).find(name => { for (let at = code.indexOf(name); at >= 0; at = code.indexOf(name, at + 1)) if (at <= m.index && m.index + m[0].length <= at + name.length) return true; return false; });
     // ねこが「星」にふれたら、 with what to do on the next lines: 〜にふれたら waits once for the action on its own line;
     // what is done each time is written under the heading 〜にふれたとき、.
@@ -789,7 +789,7 @@
     // ねこは前へ十歩進む: numbers are written in digits (一つ in 一つ消す・一つずつ is a word, not a count).
     for (const m of mask.matchAll(/[〇一二三四五六七八九十百千万]+(?:歩|秒|回|度|個|番目|点|つ)/g))
       if (!/^一つ$/.test(m[0]) && !/[\p{Script=Han}]/u.test(mask[m.index - 1] || ''))
-        throw sentenceDiagnostic(`「${m[0]}」は 漢数字です。名人モードでも、数は「${meijinDigits(m[0])}」のように 数字で 書きます`, line, [], { kind: 'Sequence' });
+        throw sentenceDiagnostic(`「${m[0]}」は 漢数字です。名人の本文でも、数は「${meijinDigits(m[0])}」のように 数字で 書きます`, line, [], { kind: 'Sequence' });
     if (!scope.meijinProbe) {
       const near = meijinNearMiss(code, mask, symbols, scope, env, line, read, attempt);
       if (near) throw sentenceDiagnostic(near, line, [], { kind: 'Sequence' });
