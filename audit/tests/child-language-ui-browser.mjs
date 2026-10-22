@@ -379,7 +379,7 @@ const cases = {
   },
   async 'CHILD-UI-RESPONSIVE-WORDS'(p) {
     const observations=[];
-    for(const viewport of [{width:1180,height:757},{width:1188,height:848},{width:390,height:844}]) {
+    for(const viewport of [{width:1180,height:757},{width:1188,height:848},{width:1024,height:768},{width:768,height:1024},{width:390,height:844}]) {
       await p.setViewportSize(viewport);
       for(const mode of ['code','blocks']) {
         await click(p,'#editorMode'+mode);
@@ -393,8 +393,9 @@ const cases = {
         for(const term of reading){assert.equal(term.rects,1,'term keeps a natural whole');assert.equal(term.whiteSpace,'nowrap');}
         await summary.press('Enter'); assert.deepEqual(await state(p),before);
         // ■ 止める shows on the run screen only, in ▶'s place: it is measured there, at the same sizes and in both views.
+        const runAt=await p.locator('#runBtn').boundingBox();
         await click(p,'#runBtn'); await p.waitForFunction(()=>document.body.classList.contains('runtime')&&!!document.querySelector('#stopBtn').getClientRects().length);
-        const stop=p.locator('#stopBtn'),runScreen={stopBtn:await reachable(stop),stopHit:await stop.evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return e===hit||e.contains(hit);}),runShown:await p.locator('#runBtn').isVisible()};
+        const stop=p.locator('#stopBtn'),stopAt=await stop.boundingBox(),runScreen={runAt,stopAt,stopBtn:await reachable(stop),stopHit:await stop.evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return e===hit||e.contains(hit);}),runShown:await p.locator('#runBtn').isVisible()};
         await pressStop(stop); await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN'); assert.deepEqual(await state(p),before,'running and stopping keep the work');
         observations.push({viewport,mode,controls,runScreen,help,reading,tailReach});
       }

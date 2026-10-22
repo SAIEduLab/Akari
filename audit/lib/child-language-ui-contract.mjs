@@ -53,7 +53,8 @@ function panelReach(observation,method,basic=false) {
   }
   if(basic) {
     const text=observation.bottom.tail.map(r=>r.text).join(' ');
-    assert.ok(text.includes('本文は もちません')&&text.includes('決めた ことを 1つ もとにもどす')&&text.includes('入力を やめる'));
+    // The last two explanations of the guide (1.5.0 adds 画面・部品・作業台の 大きさ after 見た目のコピー).
+    assert.ok(text.includes('作業台の 大きさ')&&text.includes('決めた ことを 1つ もとにもどす')&&text.includes('入力を やめる'),'the last explanations are reached: '+text.slice(0,80));
   }
   if(method==='native-keyboard') {
     panelMeasurement(observation.afterArrow);
@@ -169,13 +170,15 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   const responsive=rows['CHILD-UI-RESPONSIVE-WORDS'];
   for(const key of ['ordinaryScroll','keyboard','helpPreservesEditing'])assert.equal(responsive[key],true);
   assert.deepEqual(responsive.observations?.map(o=>[o.viewport.width,o.viewport.height,o.mode]),[
-    [1180,757,'code'],[1180,757,'blocks'],[1188,848,'code'],[1188,848,'blocks'],[390,844,'code'],[390,844,'blocks'],
+    [1180,757,'code'],[1180,757,'blocks'],[1188,848,'code'],[1188,848,'blocks'],[1024,768,'code'],[1024,768,'blocks'],[768,1024,'code'],[768,1024,'blocks'],[390,844,'code'],[390,844,'blocks'],
   ]);
   for(const observation of responsive.observations) {
     assert.deepEqual(Object.keys(observation.controls),['saveBtn','exportBtn','runBtn']);
     for(const rect of Object.values(observation.controls))bounds(rect,observation.viewport);
     // ■ 止める on the run screen: inside the viewport, the real hit target, and ▶ 動かす is not shown there.
     bounds(observation.runScreen?.stopBtn,observation.viewport);assert.equal(observation.runScreen.stopHit,true,'■ 止める is the hit target at its centre');assert.equal(observation.runScreen.runShown,false,'the run screen shows no ▶ 動かす');
+    // ■ 止める comes where ▶ 動かす was, also where the toolbar wraps (D1-03).
+    const {runAt,stopAt}=observation.runScreen;assert.ok(runAt&&stopAt&&Math.abs(stopAt.x-runAt.x)<=2&&Math.abs(stopAt.y-runAt.y)<=2,'■ 止める in ▶\'s place at '+observation.viewport.width+'x'+observation.viewport.height+' '+observation.mode+': '+JSON.stringify({runAt,stopAt}));
     readable(observation.help,8);panelReach(observation.tailReach,'native-keyboard',true);assert.deepEqual(observation.reading?.map(r=>r.text),['保存ほぞん','変数へんすう','本文ほんぶん']);
     const text=observation.reading.map(r=>r.text).join(' ');
     for(const reading of ['ほぞん','へんすう','ほんぶん'])assert.ok(text.includes(reading));
