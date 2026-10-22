@@ -1041,6 +1041,8 @@
         choices.className = 'intent-choices';
         choices.setAttribute('role', 'group');
         choices.setAttribute('aria-label', 'どの動きにしますか');
+        // A mouse press keeps the focus in the code, so the note is not drawn again (taking its button away) before the click.
+        choices.addEventListener('mousedown', (event) => event.preventDefault());
         for (const proposal of proposals) {
           if (typeof proposal.source !== 'string') continue;
           const button = document.createElement('button');
@@ -1449,6 +1451,11 @@
         ? $('#callableHints').closest('.hint-panel')
         : $('.code-assist .hint-panel');
       hint.hidden = blocks;
+      // The note that offers rewrites comes right after the code in the code view, on the screen (above the line under the
+      // code) and in the Tab order; in the block view it stays above the workspace.
+      const pendingNote = $(draft ? '#callablePending' : '#editorPending'), workspace = $(draft ? '#callableBlocks' : '#sourceImport');
+      if (blocks ? pendingNote.nextElementSibling !== workspace : pendingNote.previousElementSibling !== textRoot)
+        blocks ? workspace.before(pendingNote) : textRoot.after(pendingNote);
       const invalidCodePending = session.pendingEdit?.kind === 'code' && !session.blockDraft;
       paintBindingModeToggle(binding);
       if (!draft) {
@@ -8142,7 +8149,8 @@
         const target = event.target.closest('button,.tree-item,.tool');
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
-          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#loseConfirmModal,#samplePicker') ||
+          // The note under the code holds the way out of a pending edit (its rewrites and 書いた文のまま考える).
+          target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#loseConfirmModal,#samplePicker,#editorPending,#callablePending') ||
           // ▶ 動かす closes the input itself and says why it does not run (startRun).
           target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"],#runBtn')
         )
@@ -8198,6 +8206,8 @@
         if (
           root.contains(event.target) ||
           event.target === binding.textarea ||
+          // The focus may go to the note's rewrites (Tab from the code): they decide the pending edit themselves.
+          event.target.closest('#editorPending,#callablePending') ||
           event.target.matches('#callableName,#callableArgs,#callablePhrase')
         )
           return;
