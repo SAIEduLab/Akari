@@ -2231,11 +2231,12 @@
       // One name for each window in both views (F-23): 「作品」 names the work.
       $('#designerHeading').textContent = '画面';
       $('.objects-window > .win-title').textContent = 'キャラクター・部品';
-      const actions = $('.prop-actions');
-      if (actions) (block ? $('#componentActions') : el.props).prepend(actions);
+      // The part's actions go above its せってい in code and under the part list in blocks. The padding they need is read
+      // when they move (their ResizeObserver follows later changes), not with every keystroke (PERF-R2-03).
+      const actions = $('.prop-actions'), actionsHome = block ? $('#componentActions') : el.props;
+      if (actions && actionsHome.firstElementChild !== actions) { actionsHome.prepend(actions); syncPropertyScrollPadding(); }
       $('#formatBtn').hidden = block || currentIsMeijin();
       syncWideInert();
-      syncPropertyScrollPadding();
       // The level list follows the view (blocks or code); a view in code at はじめて goes on at かんたん.
       if (applyUiLevel(mode)) renderHints();
       renderEntrySurface();
@@ -4923,27 +4924,40 @@
     }
 
     let codeLineLayout = null, codeLineMeasure = null;
+    // A line's wrapped height depends only on its text and the editor's width and font (the key): a line measured once
+    // is not laid out again, so a keystroke measures the lines it changed, not the whole body (PERF-R2-03). A font that
+    // finishes loading measures again.
+    let codeLineHeights = { key: '', heights: new Map() };
+    document.fonts?.addEventListener?.('loadingdone', () => { codeLineHeights = { key: '', heights: new Map() }; codeLineLayout = null; });
     function wrappedCodeLines() {
       const editor = el.editor, style = getComputedStyle(editor),
         width = Math.max(1, editor.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)),
-        key = [width, style.font, style.letterSpacing, style.tabSize].join('|');
+        key = [width, style.font, style.letterSpacing, style.lineHeight, style.tabSize].join('|');
       if (codeLineLayout?.source === editor.value && codeLineLayout.key === key) return codeLineLayout;
       if (!codeLineMeasure) {
         codeLineMeasure = document.createElement('div');
         codeLineMeasure.setAttribute('aria-hidden', 'true');
         document.body.append(codeLineMeasure);
       }
-      Object.assign(codeLineMeasure.style, { position:'fixed', left:'-100000px', top:'0', visibility:'hidden',
-        pointerEvents:'none', width:width+'px', font:style.font, letterSpacing:style.letterSpacing,
-        lineHeight:style.lineHeight, tabSize:style.tabSize, whiteSpace:'pre-wrap', overflowWrap:'anywhere' });
-      const fragment = document.createDocumentFragment(), rows = [];
-      for (const text of editor.value.split('\n')) {
-        const row = document.createElement('div'); row.textContent = text || '\u200b'; rows.push(row); fragment.append(row);
+      if (codeLineHeights.key !== key || codeLineHeights.heights.size > 50000) {
+        codeLineHeights = { key, heights: new Map() };
+        Object.assign(codeLineMeasure.style, { position:'fixed', left:'-100000px', top:'0', visibility:'hidden',
+          pointerEvents:'none', width:width+'px', font:style.font, letterSpacing:style.letterSpacing,
+          lineHeight:style.lineHeight, tabSize:style.tabSize, whiteSpace:'pre-wrap', overflowWrap:'anywhere' });
       }
-      codeLineMeasure.replaceChildren(fragment);
+      const known = codeLineHeights.heights, texts = editor.value.split('\n'), fragment = document.createDocumentFragment(), fresh = [];
+      for (const text of texts) {
+        if (known.has(text)) continue;
+        const row = document.createElement('div'); row.textContent = text || '\u200b';
+        known.set(text, 0); fresh.push([text, row]); fragment.append(row);
+      }
+      if (fresh.length) {
+        codeLineMeasure.replaceChildren(fragment);
+        for (const [text, row] of fresh) known.set(text, Math.max(22, row.getBoundingClientRect().height));
+        codeLineMeasure.replaceChildren();
+      }
       let height = 0;
-      const lines = rows.map(row => { const top = height; height += Math.max(22, row.getBoundingClientRect().height); return { top, height:height-top }; });
-      codeLineMeasure.replaceChildren();
+      const lines = texts.map(text => { const top = height; height += known.get(text); return { top, height:height-top }; });
       return codeLineLayout = { source:editor.value, key, lines, height };
     }
     function updateGutter(errors = []) {
