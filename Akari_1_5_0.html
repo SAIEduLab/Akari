@@ -9321,8 +9321,8 @@ function createAkariExtensionHost(options) {
         // square on the screen, and the other part touches it where one of its own seen cells (or its box) overlaps that
         // square (cells that only meet at a side do not overlap). Only the cells around the overlap are looked at: the
         // overlap turned back into the picture, widened by what a turned cell's box can reach beyond the cell. A cell's box
-        // on the screen (touches) only rules cells out, since a turned cell's box is wider than the cell; the cell itself
-        // decides (cellTouches).
+        // on the screen (inOverlap) and where its corners fall in the other picture (reaches) only rule cells out, since
+        // both are wider than the cell; the cell itself decides (cellTouches).
         if ((rw / step) * (rh / step) > 1024) {
           const [x, m, sx, other, om] = !mb || (ma && cell(a, ma) <= cell(b, mb)) ? [a, ma, sa, sb, mb] : [b, mb, sb, sa, ma];
           const sc = x.scalePercent / 100, W = x.w * sc, H = x.h * sc, cs = cosDegrees(x.direction), sn = sinDegrees(x.direction);
@@ -9332,43 +9332,68 @@ function createAkariExtensionHost(options) {
           const cw = W / m.w, ch = H / m.h, mc = Math.ceil((cw + ch) / cw) + 1, mr = Math.ceil((cw + ch) / ch) + 1;
           const cFrom = Math.max(0, Math.floor(c0) - mc), cTo = Math.min(m.w - 1, Math.ceil(c1) + mc),
             rFrom = Math.max(0, Math.floor(r0) - mr), rTo = Math.min(m.h - 1, Math.ceil(r1) + mr);
-          // Whether the other part touches the box on the screen of the cells in columns c..c2 and rows r..r2, within the
-          // overlap. Each coordinate of the box is a sum of one term of a column and one of a row, so its smallest and
-          // largest values are those of the terms (the same numbers as from the four corners). A block's box holds the
-          // boxes of its cells.
+          // Where the box on the screen of the cells in columns c..c2 and rows r..r2 lies: 0 outside the overlap, 2 all
+          // inside it (then so is the box of each of these cells), 1 partly. Each coordinate of the box is a sum of one term
+          // of a column and one of a row, so its smallest and largest values are those of the terms (the same numbers as
+          // from the four corners). A block's box holds the boxes of its cells.
           const n = m.counts, w1 = m.w + 1;
-          const touches = (c, c2, r, r2) => {
+          const inOverlap = (c, c2, r, r2) => {
             const lx0 = (c / m.w - 0.5) * W, lx1 = ((c2 + 1) / m.w - 0.5) * W, ly0 = (0.5 - r / m.h) * H, ly1 = (0.5 - (r2 + 1) / m.h) * H,
               l = x.x + Math.min(lx0 * cs, lx1 * cs) - Math.max(ly0 * sn, ly1 * sn), rr = x.x + Math.max(lx0 * cs, lx1 * cs) - Math.min(ly0 * sn, ly1 * sn),
               bo = x.y + Math.min(lx0 * sn, lx1 * sn) + Math.min(ly0 * cs, ly1 * cs), to = x.y + Math.max(lx0 * sn, lx1 * sn) + Math.max(ly0 * cs, ly1 * cs);
-            const L = Math.max(l, left) + 1e-6, R = Math.min(rr, right) - 1e-6, B = Math.max(bo, bottom) + 1e-6, T = Math.min(to, top) - 1e-6;
-            return L < R && B < T && (!other || other.anySeenIn(L, R, B, T));
+            if (!(Math.max(l, left) + 1e-6 < Math.min(rr, right) - 1e-6 && Math.max(bo, bottom) + 1e-6 < Math.min(to, top) - 1e-6)) return 0;
+            return l >= left && rr <= right && bo >= bottom && to <= top ? 2 : 1;
+          };
+          // Where the other part has a picture: a corner (c, r) of this picture's cells falls in the other's cells at
+          // (u00 + c·uc + r·ur, v00 + c·vc + r·vr), with the same turn and scale for every cell. So each cell there is the
+          // parallelogram with the sides (uc, vc) (one cell across) and (ur, vr) (one cell down), in the other's cells,
+          // which are squares of side 1; nothing is turned again for each cell.
+          const on = om?.counts, ow1 = om ? om.w + 1 : 0;
+          const at = (c, r) => {
+            const lx = (c / m.w - 0.5) * W, ly = (0.5 - r / m.h) * H;
+            return other.cell(x.x + lx * cs - ly * sn, x.y + lx * sn + ly * cs);
+          };
+          const [u00, v00] = other ? at(0, 0) : [0, 0], [u10, v10] = other ? at(1, 0) : [0, 0], [u01, v01] = other ? at(0, 1) : [0, 0],
+            uc = u10 - u00, vc = v10 - v00, ur = u01 - u00, vr = v01 - v00,
+            uLo = Math.min(0, uc) + Math.min(0, ur), uHi = Math.max(0, uc) + Math.max(0, ur), vLo = Math.min(0, vc) + Math.min(0, vr), vHi = Math.max(0, vc) + Math.max(0, vr);
+          // Whether a seen cell of the other part lies where the cells in columns c..c2 and rows r..r2 fall in its cells
+          // (their four corners, a little widened): when none does, none of these cells can touch it.
+          const reaches = (c, c2, r, r2) => {
+            const u = u00 + Math.min(c * uc, (c2 + 1) * uc) + Math.min(r * ur, (r2 + 1) * ur), u2 = u00 + Math.max(c * uc, (c2 + 1) * uc) + Math.max(r * ur, (r2 + 1) * ur),
+              v = v00 + Math.min(c * vc, (c2 + 1) * vc) + Math.min(r * vr, (r2 + 1) * vr), v2 = v00 + Math.max(c * vc, (c2 + 1) * vc) + Math.max(r * vr, (r2 + 1) * vr);
+            const c0 = Math.max(0, Math.floor(u - 1e-9)), c1 = Math.min(om.w - 1, Math.ceil(u2 + 1e-9) - 1),
+              r0 = Math.max(0, Math.floor(v - 1e-9)), r1 = Math.min(om.h - 1, Math.ceil(v2 + 1e-9) - 1);
+            return c0 <= c1 && r0 <= r1 && on[(r1 + 1) * ow1 + c1 + 1] - on[r0 * ow1 + c1 + 1] - on[(r1 + 1) * ow1 + c0] + on[r0 * ow1 + c0] > 0;
           };
           // The cell in column c and row r as it lies on the screen (a corner and its two sides), against what is seen of
-          // the other part: each of the other's seen cells that the cell, turned into the other picture, reaches (there the
-          // other's cells are squares of side 1), or the overlap of the boxes for a part with no picture. Two such shapes
-          // overlap when no line along a side of either separates them (overlap).
-          const ew = W / m.w, eh = H / m.h, e1x = ew * cs, e1y = ew * sn, e2x = eh * sn, e2y = -eh * cs, on = om?.counts, ow1 = om ? om.w + 1 : 0;
+          // the other part: each of the other's seen cells that the cell reaches in the other picture, or the overlap of the
+          // boxes for a part with no picture. Two such shapes overlap when no line along a side of either separates them
+          // (overlap).
+          const ew = W / m.w, eh = H / m.h, e1x = ew * cs, e1y = ew * sn, e2x = eh * sn, e2y = -eh * cs;
           const cellTouches = (c, r) => {
-            const lx = (c / m.w - 0.5) * W, ly = (0.5 - r / m.h) * H, px = x.x + lx * cs - ly * sn, py = x.y + lx * sn + ly * cs;
-            if (!other) return overlap(px, py, e1x, e1y, e2x, e2y, left, right, bottom, top, 1e-6);
-            const [u0, v0] = other.cell(px, py), [u1, v1] = other.cell(px + e1x, py + e1y), [u2, v2] = other.cell(px + e2x, py + e2y),
-              f1u = u1 - u0, f1v = v1 - v0, f2u = u2 - u0, f2v = v2 - v0;
-            const c0 = Math.max(0, Math.floor(u0 + Math.min(0, f1u) + Math.min(0, f2u))), c1 = Math.min(om.w - 1, Math.ceil(u0 + Math.max(0, f1u) + Math.max(0, f2u)) - 1),
-              r0 = Math.max(0, Math.floor(v0 + Math.min(0, f1v) + Math.min(0, f2v))), r1 = Math.min(om.h - 1, Math.ceil(v0 + Math.max(0, f1v) + Math.max(0, f2v)) - 1);
+            if (!other) {
+              const lx = (c / m.w - 0.5) * W, ly = (0.5 - r / m.h) * H;
+              return overlap(x.x + lx * cs - ly * sn, x.y + lx * sn + ly * cs, e1x, e1y, e2x, e2y, left, right, bottom, top, 1e-6);
+            }
+            const u0 = u00 + c * uc + r * ur, v0 = v00 + c * vc + r * vr;
+            const c0 = Math.max(0, Math.floor(u0 + uLo)), c1 = Math.min(om.w - 1, Math.ceil(u0 + uHi) - 1),
+              r0 = Math.max(0, Math.floor(v0 + vLo)), r1 = Math.min(om.h - 1, Math.ceil(v0 + vHi) - 1);
             if (c0 > c1 || r0 > r1 || on[(r1 + 1) * ow1 + c1 + 1] - on[r0 * ow1 + c1 + 1] - on[(r1 + 1) * ow1 + c0] + on[r0 * ow1 + c0] === 0) return false;
             for (let rr = r0; rr <= r1; rr++)
-              for (let cc = c0; cc <= c1; cc++) if (om.cells[rr * om.w + cc] && overlap(u0, v0, f1u, f1v, f2u, f2v, cc, cc + 1, rr, rr + 1, 1e-9)) return true;
+              for (let cc = c0; cc <= c1; cc++) if (om.cells[rr * om.w + cc] && overlap(u0, v0, uc, vc, ur, vr, cc, cc + 1, rr, rr + 1, 1e-9)) return true;
             return false;
           };
-          // Blocks of 4×4 cells first: a block with no seen cell, or whose box the other part does not touch, holds no
-          // cell that touches it, so the answer is that of looking at every cell.
+          // Blocks of 4×4 cells first: a block with no seen cell, outside the overlap, or where no seen cell of the other
+          // picture lies, holds no cell that touches it, so the answer is that of looking at every cell.
           for (let br = rFrom; br <= rTo; br += 4)
             for (let bc = cFrom; bc <= cTo; bc += 4) {
               const br2 = Math.min(rTo, br + 3), bc2 = Math.min(cTo, bc + 3);
-              if (n[(br2 + 1) * w1 + bc2 + 1] - n[br * w1 + bc2 + 1] - n[(br2 + 1) * w1 + bc] + n[br * w1 + bc] === 0 || !touches(bc, bc2, br, br2)) continue;
+              if (n[(br2 + 1) * w1 + bc2 + 1] - n[br * w1 + bc2 + 1] - n[(br2 + 1) * w1 + bc] + n[br * w1 + bc] === 0 ||
+                (other && !reaches(bc, bc2, br, br2))) continue;
+              const where = inOverlap(bc, bc2, br, br2);
+              if (!where) continue;
               for (let r = br; r <= br2; r++)
-                for (let c = bc; c <= bc2; c++) if (m.cells[r * m.w + c] && touches(c, c, r, r) && cellTouches(c, r)) return keep(true);
+                for (let c = bc; c <= bc2; c++) if (m.cells[r * m.w + c] && (where === 2 || inOverlap(c, c, r, r)) && cellTouches(c, r)) return keep(true);
             }
           return keep(false);
         }
@@ -27837,7 +27862,9 @@ function createAkariExtensionHost(options) {
       // While a work runs, a finger on the screen is the mouse wherever it starts: it does not scroll the page, and a
       // sideways swipe does not go back to the page before. On the edit screen and in a player before ▶ the page still
       // scrolls up and down (and zooms) under a finger on the screen, but a sideways swipe does not leave the page.
-      const touch = r ? 'none' : 'pan-y pinch-zoom';
+      // 開いたら すぐに 動かす keeps the work at its own size, so there (runTouch: 'pinch-zoom') two fingers on the
+      // running screen zoom and move the page to reach a part the window cuts off; one finger is still the mouse.
+      const touch = r ? options.runTouch || 'none' : 'pan-y pinch-zoom';
       if (form.style.touchAction !== touch) {
         form.style.touchAction = touch;
         form.style.overscrollBehavior = r ? 'none' : 'none auto';
@@ -28732,7 +28759,8 @@ function createAkariExtensionHost(options) {
         canvas,
         // An exported work is the work alone: no dots (they are the editor's ruler).
         dots: false,
-        ...(artwork ? { getScale: () => 1 } : {
+        // 開いたら すぐに 動かす: the set size, never scaled; two fingers zoom the page while it runs (final call 36).
+        ...(artwork ? { getScale: () => 1, runTouch: 'pinch-zoom' } : {
           // With ▶ the room is the window, not the box around the stage (that box takes the stage's own width): the
           // stage shows at its own size when it fits and shrinks to fit otherwise, as the editor does.
           availableWidth: () => {

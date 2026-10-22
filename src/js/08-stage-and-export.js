@@ -119,7 +119,9 @@
       // While a work runs, a finger on the screen is the mouse wherever it starts: it does not scroll the page, and a
       // sideways swipe does not go back to the page before. On the edit screen and in a player before ▶ the page still
       // scrolls up and down (and zooms) under a finger on the screen, but a sideways swipe does not leave the page.
-      const touch = r ? 'none' : 'pan-y pinch-zoom';
+      // 開いたら すぐに 動かす keeps the work at its own size, so there (runTouch: 'pinch-zoom') two fingers on the
+      // running screen zoom and move the page to reach a part the window cuts off; one finger is still the mouse.
+      const touch = r ? options.runTouch || 'none' : 'pan-y pinch-zoom';
       if (form.style.touchAction !== touch) {
         form.style.touchAction = touch;
         form.style.overscrollBehavior = r ? 'none' : 'none auto';
@@ -1014,7 +1016,8 @@
         canvas,
         // An exported work is the work alone: no dots (they are the editor's ruler).
         dots: false,
-        ...(artwork ? { getScale: () => 1 } : {
+        // 開いたら すぐに 動かす: the set size, never scaled; two fingers zoom the page while it runs (final call 36).
+        ...(artwork ? { getScale: () => 1, runTouch: 'pinch-zoom' } : {
           // With ▶ the room is the window, not the box around the stage (that box takes the stage's own width): the
           // stage shows at its own size when it fits and shrinks to fit otherwise, as the editor does.
           availableWidth: () => {
