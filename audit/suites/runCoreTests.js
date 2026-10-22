@@ -130,6 +130,20 @@ function runCoreTests() {
       [13, '3回くり返す。\n  何もしない\nここまで', 3],
     ];
     // One full-width space at a line's start is the indent of two spaces, and 整える writes the two spaces (LANGUAGE.md).
+    // LANGUAGE.md 読めない文の案内: when a nearer way of writing is shown (れい：…), that example is itself a readable
+    // sentence, also when the child wrote two よこ or two たて directions (一つの文には、よこを一つ、たてを一つまで書けます).
+    test('a move message example is itself readable', () => {
+      for (const source of ['右へ10歩動く。', '右へ左へ20歩動く。', '右へ20歩左へ動く。', '上へ下へ5歩動く。', 'いまのばしょから、右へ20歩、左へ10歩動く。']) {
+        const diagnostics = parseSyntax(source, { symbols: sy }).syntaxDiagnostics || [];
+        ok(diagnostics.length, source + ' is refused');
+        for (const d of diagnostics) {
+          const example = String(d.message).split('れい：')[1];
+          if (!example) continue;
+          const sentence = example.replace(/。$/, '') + '。', again = parseSyntax(sentence, { symbols: sy });
+          eq({ source, sentence, codes: (again.syntaxDiagnostics || []).map((x) => x.code) }, { source, sentence, codes: [] });
+        }
+      }
+    });
     test('indent full-width space reads as two spaces', () => {
       const wide = parseScript('もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n　点数を1にする', sy),
         narrow = parseScript('もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  点数を1にする', sy);
