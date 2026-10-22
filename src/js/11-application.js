@@ -1007,9 +1007,12 @@
       const { script, definition } = diagnosticOwner(diagnostic);
       return definition?.source ?? script?.source ?? null;
     }
-    function showDiagnosticMessage(root, diagnostic, location = '', original = null, source = null) {
+    // A sentence of a list ends as the others do (FM2-13): with 。, unless it ends with its own mark.
+    const sentence = text => /[。？！]$/.test(text) ? text : text + '。';
+    function showDiagnosticMessage(root, diagnostic, location = '', original = null, source = null, { listItem = false } = {}) {
       // A full-width colon after the place (F-26: no ASCII colon in child text).
-      const helpText = (location ? location + '：' : '') + childDiagnosticText(diagnostic, source),
+      const reason = childDiagnosticText(diagnostic, source),
+        helpText = (location ? location + '：' : '') + (listItem ? sentence(reason) : reason),
         detailText = diagnosticDetailText(diagnostic, original),
         previousHelp = root.querySelector(':scope > .diagnostic-help'),
         previousDetail = root.querySelector(':scope > .diagnostic-details > pre');
@@ -1026,6 +1029,12 @@
       indicator.textContent = ''; indicator.hidden = true; delete indicator.dataset.notice;
     }
     function showEditorFailure(binding, error, { preservePending = false } = {}) {
+      // A reading error that a 名人 text would read says S317 here too, once the code view has checked it (FM2-04).
+      if (binding.textarea && genericReadingError(error?.diagnostics?.[0] || error)) {
+        const shown = error?.diagnostics?.length ? error.diagnostics : [error], checked = checkedEditorErrors(binding, binding.textarea.value, shown);
+        if (checked && checked !== shown && checked[0]?.code === 'S317')
+          error = Object.assign(new AkariError(checked[0].code, checked[0].message, checked[0].line, checked[0].column), { diagnostics: checked });
+      }
       const reason = error?.message || String(error),
         n = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
       delete n.dataset.notice;
@@ -1080,7 +1089,7 @@
       const firstDiagnostic = error?.diagnostics?.[0] || error, issueLine = firstDiagnostic?.line || error?.line;
       editorFailureStatus = binding.session?.mode === 'blocks' ? childDiagnosticText(firstDiagnostic, binding.textarea?.value)
         : issueLine ? `書き方に 直す ところが あるよ。コードの ${issueLine}行目を 見てね`
-        : '書き方に 直す ところが あるよ。コードの 上の せつめいを 見てね';
+        : '書き方に 直す ところが あるよ。コードの 下の せつめいを 見てね';
       setStatus(editorFailureStatus);
       if (binding.session?.pendingEdit && !preservePending) {
         binding.session.pendingEdit.reason = reason;
@@ -5221,10 +5230,67 @@
         : meijinTextLabel(script) || `「${targetById(script?.targetId)?.name || project.stage.name}」の ${eventText(script?.event, script?.filter)}の 本文`;
       return `止まっているよ。${place}に ⓘ の 知らせが あるよ`;
     }
+    // What the code view says about a body (FM2-04, FM2-10, FCM-19, FCM-25): a reading error that a 名人 text would read
+    // says S317, as 作品チェック and ▶ do, and a body with its own heading that the code view holds until ▶ (or the block
+    // view) is checked for its names and meanings before the line under the code calls it fine. Both checks compile a
+    // trial work, so they run after a short wait, never on the keystroke; the line under the code follows when they are
+    // done. Returns the errors to show, or null while the heading body is still being checked.
+    const editorChecks = new Map();
+    let editorCheckTimer = 0;
+    function genericReadingError(d) {
+      return ['P201', 'P205', 'S301'].includes(d?.code) && !d.proposals?.length && GENERIC_READING_ERRORS.some(re => re.test(d.message));
+    }
+    function checkedEditorErrors(binding, source, errs, headingAst = null) {
+      if (!headingAst && !genericReadingError(errs[0])) return errs;
+      const owner = bindingOwner(binding), key = owner + '\n' + (headingAst ? 'heading\n' : '') + source;
+      if (editorChecks.has(key)) return editorChecks.get(key);
+      clearTimeout(editorCheckTimer);
+      editorCheckTimer = setTimeout(() => {
+        editorCheckTimer = 0;
+        if (modelLocked() || bindingOwner(binding) !== owner) return;
+        let found = errs, taken = false;
+        try {
+          if (headingAst) {
+            // What ▶ would say: taking the body (its heading may change the event or the part) and then the check of the
+            // work, for this body (S317 included).
+            const next = sourceCandidate(binding, owner, source), old = scriptBySourceKey(project, owner),
+              row = old ? next.scripts[project.scripts.indexOf(old)] : next.scripts.at(-1), key = row && scriptSourceKey(row);
+            found = key ? compileProject(next).errors.filter(e => e.where === key) : [];
+            taken = true;
+          } else found = meijinFormError(owner, source, found);
+        } catch (error) { if (!(error instanceof AkariError)) throw error; found = error.diagnostics?.length ? error.diagnostics : [error]; }
+        editorChecks.set(key, found);
+        if (editorChecks.size > 40) editorChecks.delete(editorChecks.keys().next().value);
+        // The note under the code that holds the text not yet taken says the same.
+        if (!headingAst && found !== errs && binding.session?.pendingEdit?.value === source &&
+            !$(binding.kind === 'draft' ? '#callablePending' : '#editorPending').hidden)
+          showEditorFailure(binding, Object.assign(new AkariError(found[0].code, found[0].message, found[0].line, found[0].column), { diagnostics: found }));
+        // The status line points to the line, as for a reading error (and says so no more once it is fixed).
+        if (headingAst && found.length && binding.session?.pendingEdit?.value === source) {
+          // As ▶ would say it: a body that could be taken has a mistake in the work (作品に), one that could not in its text.
+          editorFailureStatus = `${taken ? '作品' : '書き方'}に 直す ところが あるよ。${found[0].line ? `コードの ${found[0].line}行目を 見てね` : 'コードの 下の せつめいを 見てね'}`;
+          setStatus(editorFailureStatus);
+        }
+        if (binding === mainEditor) refreshEditor();
+      }, 250);
+      return headingAst ? null : errs;
+    }
+    // The S317 trial of meijinFormsInOrdinary for a body the code view shows (its text, taken or not).
+    function meijinFormError(owner, source, errs) {
+      const script = scriptBySourceKey(project, owner);
+      if (!script || isMeijinScript(script) || !genericReadingError(errs[0])) return errs;
+      const trial = cloneDesignProject(project), own = trial.scripts.find(x => x.id === script.id);
+      if (!own) return errs;
+      own.source = source;
+      const out = meijinFormsInOrdinary(trial, [{ ...errs[0], where: scriptSourceKey(own) }]);
+      if (out[0]?.code !== 'S317') return errs;
+      const { proposals, ...first } = errs[0];
+      return [{ ...first, code: 'S317', message: out[0].message }, ...errs.slice(1)];
+    }
     function refreshEditor() {
       if (!mainEditor.view) return;
       const session = getEditorSession(mainEditor), pending = session.pendingEdit;
-      let errs = session.diagnostics || [], notice = '';
+      let errs = session.diagnostics?.length ? checkedEditorErrors(mainEditor, session.sourceText, session.diagnostics) : [], notice = '';
       // The visible pending source can differ from the valid project baseline.
       // Never show a baseline success message over a rejected code edit.
       if (composingEditors.has(el.editor)) {
@@ -5234,7 +5300,17 @@
           key: session.ownerKey, symbols: buildSymbols(project) });
         errs = parsed.syntaxDiagnostics.length ? parsed.syntaxDiagnostics
           : staticScaleDiagnostics(parsed.ast, session.ownerKey);
-        if (!errs.length) notice = pending.reason || '入力を 決めてください';
+        // A text that reads but was refused when it was taken (its heading names no part, say) shows that mistake, with
+        // its line, as the note under the code does.
+        if (!errs.length && pending.kind === 'code' && pending.diagnostics?.length) errs = pending.diagnostics;
+        // A body with its own heading is checked for its names and meanings too before the line says it is fine.
+        const checked = pending.kind === 'source-import' ? errs
+          : checkedEditorErrors(mainEditor, pending.value, errs, pending.kind === 'heading-source' && !errs.length ? parsed.ast : null);
+        if (checked === null) notice = '書き方を たしかめています';
+        else {
+          errs = checked;
+          if (!errs.length) notice = pending.reason || '入力を 決めてください';
+        }
       } else if (session.blockDraft) {
         errs = []; notice = pending?.reason || 'あいている ところに ブロックや 数・文字を 入れてください';
       } else if (pending) {
@@ -5265,7 +5341,9 @@
       } else {
         el.issue.textContent = notice || '✓ このコードの 書き方は だいじょうぶです';
         el.issue.className = '';
-        if (!notice && editorFailureStatus !== null) {
+        // The mistake the status line pointed to is gone: say so (a body with its own heading is fine once its check is
+        // done), so the line never asks to fix a line that is fine (E2E-R2-11).
+        if ((!notice || (pending?.kind === 'heading-source' && notice === pending.reason)) && editorFailureStatus !== null) {
           if (el.status.textContent === editorFailureStatus) setStatus('✓ 書き方を 直せたよ');
           editorFailureStatus = null;
         }
@@ -5481,7 +5559,8 @@
       if (!tutorialAllows(tutorial,'run')) return;
       if (modelLocked()) return;
       // A refused run always tells the child why nothing moved.
-      const refuse = (reason) => setStatus('まだ 動かせないよ。' + reason);
+      // Every refusal is said the same way: まだ 動かせないよ。, the reason, and 。 at the end (FM2-13).
+      const refuse = (reason) => setStatus('まだ 動かせないよ。' + sentence(reason));
       if (!flushActiveEditor()) {
         refuse(editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
         return;
@@ -5834,7 +5913,7 @@
         for (const d of c.errors) {
           const p = document.createElement('div');
           p.className = 'diagnosis-issue';
-          showDiagnosticMessage(p, d, diagnosticLocation(d), null, diagnosticSource(d));
+          showDiagnosticMessage(p, d, diagnosticLocation(d), null, diagnosticSource(d), { listItem: true });
           body.appendChild(p);
         }
       // Notices do not stop anything; they say how a correct sentence will run.
@@ -5845,7 +5924,7 @@
         for (const d of c.notes) {
           const p = document.createElement('div');
           p.className = 'diagnosis-note';
-          p.textContent = diagnosticLocation(d) + '：' + d.message;
+          p.textContent = diagnosticLocation(d) + '：' + sentence(d.message);
           // A notice that names its fix offers it, as a code proposal does (the fix changes the body it is in).
           for (const proposal of d.proposals || []) {
             if (typeof proposal.source !== 'string') continue;
