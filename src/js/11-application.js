@@ -7797,6 +7797,13 @@
       setTimeout(()=>$('#runBtn').focus({preventScroll:true}),0);
     };
 
+    // Delete removes the selected part only while the child works with the parts: the focus is on the stage, the part
+    // list or the tools that add parts, or it is on the page and the last press was there (a part list row takes no
+    // focus). After a press in the body window (a block's 「けす」, もとにもどす, the 本文 heading) or the toolbar, Delete
+    // never removes a part.
+    const PART_PLACES = '#designerWindow, .side, .toolbox';
+    let partPressed = false;
+    document.addEventListener('pointerdown', (e) => { partPressed = !!e.target.closest?.(PART_PLACES); }, true);
     window.addEventListener('keydown', (e) => {
       if (
         e.isComposing ||
@@ -7807,8 +7814,10 @@
       )
         return;
       if (document.querySelector('.modal.show')) return;
-      const tag = document.activeElement?.tagName;
+      const focused = document.activeElement, tag = focused?.tagName;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
+      const onPage = !focused || focused === document.body || focused === document.documentElement;
+      if (!(onPage ? partPressed : focused.closest(PART_PLACES))) return;
       e.preventDefault();
       deleteSelectedComponent();
     });
