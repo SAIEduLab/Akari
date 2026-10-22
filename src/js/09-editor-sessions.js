@@ -1665,17 +1665,46 @@
       : parseScript(hint.text, symbols, context).body[0];
     return configureSearchNode(blockEncode(ast).tree, intent);
   }
+  // 書ける ことば finds a sentence by the same words as its block (F2-11): ランダム finds 1から2のどれか.
+  function hintSearchSynonyms(id) {
+    const schemaId = hintSchemaId(id), builtin = /^builtin:(.+)$/.exec(schemaId);
+    return (builtin ? BLOCK_SEARCH_SYNONYMS['BuiltinCall:' + builtin[1]] : BLOCK_SEARCH_SYNONYMS[schemaId]) || [];
+  }
   function searchHintCandidates(candidates, query, project, context = {}) {
     if (!query.trim()) return candidates;
     const intent = searchIntent(query), matched = candidates.filter(h => intent
       ? (h.binding && matchesSearch(h.binding.name, query)) || hintSchemaId(h.id) === intent.schemaId
-      : matchesSearch(h.text + ' ' + h.category + ' ' + h.searchTerms.join(' '), query));
+      : matchesSearch(h.text + ' ' + h.category + ' ' + h.searchTerms.join(' ') + ' ' + hintSearchSynonyms(h.id).join(' '), query));
     return matched.map(h => {
       if (!intent || !project) return h;
       try { const node = nodeForSearchHint(h, project, context, intent);
         return {...h, text:formatScript({kind:'Script',body:[blockDecode(node)]},{symbols:buildSymbols(project)})};
       } catch (_) { return h; }
     }).sort((a,b) => Number(!!b.binding) - Number(!!a.binding) || holdFirst(b.id, query) - holdFirst(a.id, query));
+  }
+  // The keys a child names in a search, by the names the code writes (「スペース」キー, 「エンター」キー).
+  const SEARCH_KEYS = Object.freeze({ すぺーす: '空白', えんたー: '決定', りたーん: '決定', えすけーぷ: '取消' });
+  function searchKey(query) {
+    const q = normalizeSearchText(query).replace(/[「」]/g, '').replace(/きー$/, '');
+    return Object.hasOwn(SEARCH_KEYS, q) ? SEARCH_KEYS[q] : null;
+  }
+  // 〜キーがおされるまで待つ／くり返す (what it repeats stays to be chosen) and 〜キーがおされている, with the key.
+  function keyedSearchCandidate(schemaId, key, project) {
+    const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
+    if (!schema) return null;
+    const sensorOnly = schemaId === 'SensorRead:KEY_DOWN', node = createBlock(schemaId, { draft: !sensorOnly, allowHoles: true, idPrefix: 'search-key' }),
+      sensor = sensorOnly ? node : createBlock('SensorRead:KEY_DOWN', { idPrefix: 'search-key-sensor' });
+    sensor.inputs.arg.fields.value = key;
+    if (!sensorOnly) { sensor.id = node.inputs.condition.id; node.inputs.condition = sensor; }
+    let text = '';
+    try {
+      // The first line is the block's words; what it repeats is still to be chosen, so the copy written here has 何もしない.
+      const written = structuredClone(node);
+      for (const key of Object.keys(written.bodies || {})) written.bodies[key] = [createBlock('NoOperation', { idPrefix: 'search-key-text' })];
+      const decoded = blockDecode(written), symbols = project ? buildSymbols(project) : undefined;
+      text = (sensorOnly ? formatExpression(decoded) : formatScript({ kind: 'Script', body: [decoded] }, { symbols })).split(/\n/)[0];
+    } catch (_) { /* The face says what it is. */ }
+    return { ...schema, candidateNode: node, candidateKey: 'key:' + key + ':' + schemaId, ...(text ? { searchLabel: text, searchCaption: true } : {}) };
   }
   // Holding a key to move (C-16 with B-09): the continuous rule is taught first, so for the words of holding and of
   // moving on at a speed its sentence and its block come before the repeat while a key is held.
@@ -1735,6 +1764,13 @@
     };
     const rank = schema => { const q = quality(schema); return (q === 2 ? 60 : 0) + (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 30) + (q ? 10 : 0) + wordStart(schema); };
     out.splice(0, out.length, ...out.map((schema, i) => ({ schema, i, r: rank(schema) })).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.schema));
+    // A key named in the search (スペース, エンター …): the blocks that wait for it, repeat until it is pressed and read it
+    // come first, with that key (F2-11).
+    const key = searchKey(query);
+    if (key) {
+      const keyed = ['WaitUntil', 'RepeatUntil', 'SensorRead:KEY_DOWN'].map(id => keyedSearchCandidate(id, key, project)).filter(Boolean);
+      out.splice(0, out.length, ...keyed, ...out.filter(s => !keyed.some(k => k.id === s.id)));
+    }
     // The continuous rule is no statement: search finds it too, and the palette puts it in the body's rules.
     const rule = BLOCK_SCHEMA_BY_ID.get('ContinuousRule');
     if (rule && !intent && matchesSearch(blockPaletteSearchText(rule), query)) out.splice(holdFirst(rule.id, query) ? 0 : out.length, 0, rule);
@@ -1769,6 +1805,9 @@
     Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒', 'ひょうじ', '発表', 'はっぴょう', 'せりふ', 'ふきだし', 'こえ'],
     Ask: ['質問', 'たずねる', '答え', 'きく', '聞く', 'しつもん', 'もんだい', '問題', 'クイズ'],
     WaitTime: ['待つ', 'まつ', '時間', '秒'],
+    // Waiting for a key, and repeating until one is pressed (F2-11).
+    WaitUntil: ['スペース', 'スペースキー', 'エンター', 'エンターキー', 'キー'],
+    RepeatUntil: ['スペース', 'スペースキー', 'エンター', 'エンターキー', 'キー'],
     IfStatement: ['もし', '条件', 'なら', '分かれ道'],
     RepeatCount: ['くり返す', '繰り返す', '何度も', '回数'],
     UserActionCall: ['動作', '手順', '呼び出す', '実行'],

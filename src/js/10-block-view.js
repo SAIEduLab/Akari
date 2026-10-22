@@ -1596,7 +1596,10 @@
                 : 'あてはまらない'
               : n?.schemaId === 'VariableRead'
                 ? n.fields.name
-                : null;
+                // 〜キーがおされるまで待つ from a search shows its key (F2-11).
+                : n?.schemaId === 'SensorRead:KEY_DOWN' && n.inputs?.arg?.schemaId === 'StringLiteral'
+                  ? '「' + keySurface(n.inputs.arg.fields.value) + '」キーが おされている'
+                  : null;
       const pill = (text, condition = false) =>
         E('span', 'blockui-preview-slot' + (condition ? ' blockui-preview-condition' : ''), text || ' ');
       if (['NumberLiteral', 'StringLiteral', 'BooleanLiteral'].includes(schema.kind))
@@ -1792,6 +1795,15 @@
       // Keep the normal palette visible: a lesson guides a choice, never makes it.
       const scroll = paletteList.scrollTop;
       paletteList.replaceChildren();
+      // A heading is no block: a search for ふれたとき or a key says where the body's きっかけ is chosen (F2-11).
+      const headingWord = query && [['ふれたとき', /ふれ(?:た|る)とき|さわ(?:った|る)とき|あた(?:った|る)とき|ぶつか(?:った|る)とき/], ['キーを おしたとき', /^(?:すぺーす|えんたー|えすけーぷ)(?:きー)?$|きーを?お(?:した|す|された)とき/]]
+        .find(([, re]) => re.test(normalizeSearchText(query).replace(/[「」]/g, '')))?.[0];
+      if (headingWord)
+        paletteList.append(E('p', 'blockui-empty blockui-heading-hint', headingWord + 'に 動かすには、本文の 上の「いつ動く？」で「' + headingWord + '」を えらんでね'));
+      if (hiddenAtEntry)
+        paletteList.append(E('p', 'blockui-empty blockui-entry-hidden', context().targetId === 'stage'
+          ? '画面では、動きと すがたの ブロックは 使えないよ。キャラクターを えらぶと 使えるよ'
+          : 'ここで 使えない ブロックは かくしているよ'));
       for (const schema of candidates) {
         const a = paletteAvailability(schema, location),
           item = E('div', 'blockui-palette-item', null, {
