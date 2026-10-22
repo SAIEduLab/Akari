@@ -81,9 +81,11 @@ const S=page=>({
   samePlace:(a,b)=>!!a&&!!b&&a.w>0&&b.w>0&&Math.abs(a.x-b.x)<2.5&&Math.abs(a.y-b.y)<2.5,
   // Controls shown on both screens keep their places (the run screen does not pack the bar).
   unmoved:(edit,run,except=[])=>Object.keys(edit).filter(id=>!except.includes(id)&&edit[id].shown&&run[id]?.shown).every(id=>Math.abs(edit[id].x-run[id].x)<2.5&&Math.abs(edit[id].y-run[id].y)<2.5),
-  // The work's name while it runs: plain text, not a field to write in.
-  nameIsText:()=>page.evaluate(()=>{const n=document.querySelector('#projectName'),cs=getComputedStyle(n),clear=c=>c==='transparent'||/rgba\(.*,\s*0\)$/.test(c);
-    return n.disabled&&cs.pointerEvents==='none'&&clear(cs.backgroundColor)&&(clear(cs.borderTopColor)||cs.borderTopStyle==='none'||parseFloat(cs.borderTopWidth)===0);}),
+  // The work's name while it runs: plain text in the name box's place, not a field to write in. The text is seen, says
+  // the work's name and is not an input; the box keeps its room but is not seen and cannot be written in.
+  nameIsText:()=>page.evaluate(()=>{const t=[...document.querySelectorAll('.menutool *')].find(e=>e.id!=='projectName'&&e.textContent===Akari.app.project.name&&!e.children.length&&e.getClientRects().length&&getComputedStyle(e).visibility==='visible'),n=document.querySelector('#projectName');
+    if(!t)return false;const tr=t.getBoundingClientRect(),nr=n.getBoundingClientRect(),cs=getComputedStyle(n);
+    return !t.matches('input,textarea,select,[contenteditable],[contenteditable="true"]')&&(cs.visibility==='hidden'||!n.getClientRects().length)&&n.disabled&&Math.abs(tr.x-nr.x)<2.5&&Math.abs(tr.y-nr.y)<2.5;}),
   write:async text=>{await page.fill('#codeEditor',text);await page.waitForTimeout(450);},
   text:()=>page.locator('#codeEditor').inputValue(),
   visible:selector=>page.locator(selector).isVisible(),
@@ -285,36 +287,52 @@ const checks={
     const shows=t=>t.label===VIEW_NAMES[t.view]+' ⇄'&&t.name===VIEW_NAMES[t.view]&&(t.view==='blocks'?t.blocksShown&&!t.codeShown:t.codeShown&&!t.blocksShown);
     const first=await look();await pressViewToggle(p,'callable');await p.waitForTimeout(250);const second=await look();await pressViewToggle(p,'callable');await p.waitForTimeout(250);const third=await look();
     return {expect:{toggle:shows(first),switched:second.view!==first.view&&shows(second),back:third.view===first.view&&shows(third)},info:{first,second,third}};},
-  // はじめて's run screen (final call 21): ⏸ いったん止める and ▶ つづける, no 1つずつ 動かす or 本文を見て たしかめる.
+  // はじめて's run screen (final call 21, lead decision 26): ⏸ いったん止める and ▶ つづける take turns right under the work's
+  // screen; 1つずつ 動かす and 本文を見て たしかめる are not there; 作品, ↶ ↷ and いっしょに作る are not shown and keep their places.
   'CC-334':async s=>{const p=s.page;await s.select('w-neko');
     const wait=p.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="WaitTime"]:visible').first();for(let i=0;i<3;i++){await wait.click();await p.waitForTimeout(250);}
     const body=(await s.scripts()).find(x=>x.targetId==='w-neko'&&x.event==='start');
-    const kept=['undoBtn','redoBtn','tutorialStart'],gone=['entryProjectMenu','uiLevel','editorModecode'];
-    const edit=await s.toolbar();await p.click('#runBtn');await p.waitForTimeout(500);
+    const gone=['entryProjectMenu','undoBtn','redoBtn','tutorialStart','uiLevel','editorModecode'];
+    const edit=await s.toolbar();await p.click('#runBtn');await p.waitForTimeout(600);
+    // The place of ⏸／▶ つづける is in the screen's window, right under the screen and its 「いま 動いている 文：」 band.
+    const under=await p.evaluate(()=>{const r=q=>document.querySelector(q).getBoundingClientRect(),view=r('.stage-viewport'),strip=r('#runStrip'),slot=r('#pauseBtn'),win=r('#designerWindow');
+      const between=[...document.querySelectorAll('#designerWindow *')].filter(e=>(e.matches('button,input,select,label,a')||[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))&&e.getClientRects().length&&getComputedStyle(e).visibility==='visible').filter(e=>{const b=e.getBoundingClientRect();return b.top>=view.bottom-1&&b.bottom<=strip.top+1;}).map(e=>e.id||e.className);
+      return {between,gap:slot.top-strip.bottom,inWindow:slot.left>=win.left&&slot.right<=win.right&&slot.bottom<=win.bottom,overlapsX:slot.left<view.right&&slot.right>view.left};});
     const run=await s.toolbar(),nameIsText=await s.nameIsText(),band=bare(await p.locator('#execLocation').innerText()),sentence=bare(await p.locator('#execSentence').innerText().catch(()=>''));
     await p.click('#pauseBtn');const pausedAt=await p.evaluate(()=>performance.now());await p.waitForTimeout(300);const paused=await s.toolbar();await p.waitForTimeout(1200);
-    // The three waits take 3 s of run time; paused after about 0.5 s, the rest is under 3 s once ▶ つづける is pressed.
+    // The three waits take 3 s of run time; paused after about 0.5 s, the rest is under 3 s once ▶ つづける is pressed (more
+    // than 0.5 s after ⏸, the time in which a second press of that place does nothing).
     await p.evaluate(()=>{globalThis.__doneAt=null;new MutationObserver(()=>{if(!globalThis.__doneAt&&/おわったよ/.test(document.querySelector('#statusText').textContent))globalThis.__doneAt=performance.now();}).observe(document.querySelector('#statusText'),{childList:true,characterData:true,subtree:true});});
-    const resumedAt=await p.evaluate(()=>performance.now());await p.click('#continueBtn');await p.waitForFunction(()=>globalThis.__doneAt!==null,null,{timeout:5000}).catch(()=>{});
+    const resumedAt=await p.evaluate(()=>performance.now());await p.click('#continueBtn');await p.waitForTimeout(200);const resumed=await s.toolbar();await p.waitForFunction(()=>globalThis.__doneAt!==null,null,{timeout:5000}).catch(()=>{});
     const doneAfter=await p.evaluate(at=>globalThis.__doneAt===null?null:globalThis.__doneAt-at,resumedAt);
+    await p.waitForTimeout(600);await p.click('#stopBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');const back=await s.toolbar();
     return {expect:{threeWaits:!!body&&body.source.trim()==='1秒待つ。\n1秒待つ。\n1秒待つ。',
       stopAndName:run.stopBtn.shown&&s.samePlace(edit.runBtn,run.stopBtn)&&s.samePlace(edit.projectName,run.projectName)&&nameIsText,
       hiddenKeepingPlace:gone.every(id=>edit[id].shown&&!run[id].shown&&s.samePlace(edit[id],run[id]))&&s.unmoved(edit,run,['runBtn','stopBtn']),
-      runControls:run.pauseBtn.shown&&!run.stepBtn.shown&&!run.runtimeInspectBtn.shown&&kept.every(id=>run[id].shown&&!run[id].pressable&&s.samePlace(edit[id],run[id])),
-      band:band==='いま動いている文：ねこ'&&sentence==='1秒待つ',pausedControls:paused.continueBtn.shown&&paused.continueBtn.pressable&&!paused.stepBtn.shown&&!paused.runtimeInspectBtn.shown,
-      continues:doneAfter!==null&&doneAfter>1500&&doneAfter<2800},info:{body,band,sentence,doneAfter,pausedAt,edit,run}};},
+      runControls:run.pauseBtn.shown&&!run.continueBtn.shown&&!run.stepBtn.shown&&!run.runtimeInspectBtn.shown&&!under.between.length&&under.gap>=-1&&under.gap<12&&under.inWindow&&under.overlapsX,
+      band:band==='いま動いている文：ねこ'&&sentence==='1秒待つ',
+      pausedControls:paused.continueBtn.shown&&paused.continueBtn.pressable&&!paused.pauseBtn.shown&&s.samePlace(run.pauseBtn,paused.continueBtn)&&Math.abs(run.pauseBtn.w-paused.continueBtn.w)<1&&!paused.stepBtn.shown&&!paused.runtimeInspectBtn.shown,
+      continues:doneAfter!==null&&doneAfter>1500&&doneAfter<2800&&resumed.pauseBtn.shown&&!resumed.continueBtn.shown&&s.samePlace(paused.continueBtn,resumed.pauseBtn),
+      backToEdit:back.runBtn.shown&&!back.stopBtn.shown&&['runBtn','entryProjectMenu','undoBtn','redoBtn','tutorialStart'].every(id=>back[id].shown&&s.samePlace(edit[id],back[id]))},
+      info:{body,band,sentence,doneAfter,pausedAt,under,edit,run,paused}};},
   // The exported player with 「「▶ 動かす」の ボタンを つける」 shows only the buttons that can be pressed (final call 21).
   'CC-335':async s=>{const p=s.page;await s.select('w-neko');await s.code();await s.write('3秒待つ。');
     await (await reveal(p.locator('#exportBtn'))).click();await p.locator('#exportChoiceModal').waitFor({state:'visible'});
     const downloading=p.waitForEvent('download');await p.click('#exportControls');const file=path.join(directory,'CC-335-player.html');await (await downloading).saveAs(file);
     const q=await p.context().newPage();q.on('pageerror',e=>pageErrors.push(e.message));await q.goto(pathToFileURL(file).href);await q.waitForFunction(()=>document.querySelector('#playerRoot')?.dataset.state==='READY');
-    const shown=()=>q.evaluate(()=>['playerStart','playerStop','playerPause'].filter(id=>{const e=document.getElementById(id);return e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';}).map(id=>document.getElementById(id).textContent.trim()).join('|'));
+    // ⏸ いったん止める and ▶ つづける share one place (one button with both labels): only the label that applies is seen, and
+    // while neither applies the place keeps its room unseen.
+    const shown=()=>q.evaluate(()=>{const seen=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility==='visible';
+      return ['playerStart','playerStop','playerPause'].map(id=>document.getElementById(id)).filter(e=>e&&seen(e)).map(e=>(e.children.length?[...e.children].filter(seen).map(c=>c.textContent).join(''):e.textContent).trim()).filter(Boolean).join('|');});
     const scene=()=>q.evaluate(()=>[...document.querySelectorAll('#formSurface .component')].map(c=>[c.style.left,c.style.top,c.style.transform,c.style.display].join(' ')).join('|')+'|'+document.querySelectorAll('#formSurface .sprite-bubble').length);
-    const ready=await shown(),startScene=await scene(),startBox=await q.locator('#playerStart').boundingBox();await q.click('#playerStart');await q.waitForTimeout(500);
-    const running=await shown(),stopBox=await q.locator('#playerStop').boundingBox();await q.click('#playerPause');await q.waitForTimeout(200);const paused=await shown();
+    const ready=await shown(),startScene=await scene(),startBox=await q.locator('#playerStart').boundingBox();await q.click('#playerStart');await q.waitForTimeout(600);
+    const running=await shown(),stopBox=await q.locator('#playerStop').boundingBox(),pauseBox=await q.locator('#playerPause').boundingBox();
+    // ▶ つづける is pressed after the 0.5 s in which a second press of the ⏸／▶ つづける place does nothing.
+    await q.click('#playerPause');await q.waitForTimeout(600);const paused=await shown(),continueBox=await q.locator('#playerPause').boundingBox();
     await q.click('#playerPause');await q.waitForTimeout(4000);const finished=await shown();await q.click('#playerStop');await q.waitForTimeout(300);
     const stopped={shown:await shown(),state:await q.locator('#playerRoot').getAttribute('data-state'),scene:await scene()};await q.close();
-    return {expect:{ready:ready==='▶ 動かす',running:running==='■ 止める|⏸ いったん止める'&&!!stopBox&&Math.abs(stopBox.x-startBox.x)<2&&Math.abs(stopBox.y-startBox.y)<2,paused:paused==='■ 止める|▶ つづける',
+    return {expect:{ready:ready==='▶ 動かす',running:running==='■ 止める|⏸ いったん止める'&&!!stopBox&&Math.abs(stopBox.x-startBox.x)<2&&Math.abs(stopBox.y-startBox.y)<2,
+      paused:paused==='■ 止める|▶ つづける'&&Math.abs(pauseBox.x-continueBox.x)<1&&Math.abs(pauseBox.y-continueBox.y)<1&&Math.abs(pauseBox.width-continueBox.width)<1,
       finished:finished==='■ 止める',stopped:stopped.shown==='▶ 動かす'&&!['RUNNING','PAUSED','FINISHED'].includes(stopped.state)&&stopped.scene===startScene},info:{ready,running,paused,finished,stopped,startScene}};},
   // The body selector is 「きっかけ」 (final call 19).
   'CC-336':async s=>{const p=s.page;await s.select('w-neko');const why='どの きっかけの 本文を なおすかを えらびます';
