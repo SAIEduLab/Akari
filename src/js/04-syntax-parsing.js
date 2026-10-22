@@ -633,6 +633,13 @@
       return located(parseExpression(compact.slice(1,-1),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(1,-1)}));
     if (mask.startsWith('今の') && !symbols?.project?.components.some(component=>component.name==='今'))
       return located(parseExpression(compact.slice(2),symbols,{...ctx,_parserDepth:depth,sourcePositions:ctx.sourcePositions?.slice(2)}));
+    // おみくじのどれか (E2E-R2-12): one item of a list is picked by its number, 1 to the list's 数. The error carries the
+    // value written out, for the sentence's own rewrite (〜を言う).
+    {const pick=/^【([^【】「」]+)】のどれか$/.exec(compact)||/^([^\u0001、。（）]+?)のどれか$/.exec(mask),name=pick?.[1];
+      if(name&&dataNameKind(name,symbols,ctx)==='list'){
+        const value=`${nameSource(name)}の（1から${nameSource(name)}の数のどれか）番目`;
+        throw Object.assign(new AkariError('P205',`リストの 中から 1つ えらぶときは「${value}」と 書きます`,ctx.lineNo||0,1),{listPick:value});
+      }}
     // The kana spellings たした・ひいた・わった read the same (F-20).
     const arithmetic=[['をかけた',/^(.+?)と(.+?)をかけた(?:数|答え)$/d,'MUL'],['を足した',/^(.+?)(?:に|と)(.+?)を足した(?:数|答え)$/d,'ADD'],['をたした',/^(.+?)(?:に|と)(.+?)をたした(?:数|答え)$/d,'ADD'],
       ['を引いた',/^(.+?)から(.+?)を引いた(?:数|答え)$/d,'SUB'],['をひいた',/^(.+?)から(.+?)をひいた(?:数|答え)$/d,'SUB'],['で割った',/^(.+?)を(.+?)で割った(?:数|答え)$/d,'DIV'],['でわった',/^(.+?)を(.+?)でわった(?:数|答え)$/d,'DIV']];
@@ -1545,7 +1552,17 @@
       part.comment = line.comment;
       return readRoleStatement(replacement,part,symbols,ctx);
     }
-    const e = (part) => parseMappedExpression(part.text, code, line, symbols, ctx, part.start);
+    // A list's どれか (E2E-R2-12) is rewritten in place: おみくじのどれかを言う → おみくじの（1からおみくじの数のどれか）番目を言う.
+    const e = (part) => {
+      try { return parseMappedExpression(part.text, code, line, symbols, ctx, part.start); }
+      catch (error) {
+        if (!error?.listPick) throw error;
+        const source = code.slice(0, part.start) + error.listPick + code.slice(part.start + part.text.length);
+        let readable = false;
+        try { readable = !!parseSyntax(source + '。', { symbols }).ast; } catch (attempt) { if (!(attempt instanceof AkariError)) throw attempt; }
+        throw Object.assign(sentenceDiagnostic(error.message, line, readable ? [{ label: 'リストから 1つ えらぶ', source: canonicalStatementSource(source, symbols) }] : []), { listPick: error.listPick });
+      }
+    };
     const q = (part,unit) => {if(surfaceMask(part.text).endsWith(unit))throw new AkariError('P205','「歩」や「秒」などは 1回だけ 書きます。れい：前へ10歩進む');return sentenceQuantity(e(part),unit);};
     const target = part => sentenceTarget(part.text,code,line,symbols,ctx,part.start);
     const node = (kind,props={}) => statementNode(kind,line,{...props,actorRef:{...(ctx.topicActor || {kind:'self'})}});
@@ -1618,7 +1635,7 @@
           if(args.length<2)throw new AkariError('P205','つなげるものを 2つ いじょう ならべます。れい：「点数は」と点数をつなげて言う');props.value=exprNode('BuiltinCall',{name:'つなぐ',args});break;
         }
         case 'quote': props.value=e(parts[0]); if(props.value.kind!=='StringLiteral') throw new AkariError('P205','言う ことは「「文字」と言う」、へんすうの 中身は「点数を言う」のように 書きます'); break;
-        case 'value': {const part=parts[0], raw=part.text.endsWith('の値') && !(part.text === '拡張の値' && EXTENSION_HOST.operations('events').length && !extensionValueIsData(symbols, ctx))?{...part,text:part.text.slice(0,-2)}:part;let error;try{props.value=e(raw);}catch(caught){if(!(caught instanceof AkariError))throw caught;error=caught;}
+        case 'value': {const part=parts[0], raw=part.text.endsWith('の値') && !(part.text === '拡張の値' && EXTENSION_HOST.operations('events').length && !extensionValueIsData(symbols, ctx))?{...part,text:part.text.slice(0,-2)}:part;let error;try{props.value=e(raw);}catch(caught){if(!(caught instanceof AkariError)||caught.listPick)throw caught;error=caught;}
           const resolvedName=props.value?.kind==='VariableRead'?props.value.name:raw.text,
             unknownWord=/^[\p{L}ー][\p{L}\p{N}ー]*$/u.test(raw.text)&&!symbols?.allDataNames?.has(resolvedName)&&![...(ctx.localNames||[]),...(ctx.binders||[]),...(ctx.args||[])].includes(resolvedName);
           if(form.kind==='Say'&&unknownWord&&(error||props.value?.kind==='VariableRead')&&!part.text.endsWith('の値')){
