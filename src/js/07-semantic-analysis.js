@@ -148,7 +148,7 @@
     const wordHint = (name) => ({ 色: '。キャラクターの 色は「色を「赤」にする」で かえます' })[name] || (/^[〇一二三四五六七八九十百千]+つ?$/.test(name) ? '。数は 3や 10のように 数字で 書きます' : '');
     // A word that is not a name was read as one (まっすぐ10, 空, 偶数): say how to write it instead of asking to make it.
     // The example writes the value it was compared with (スコアが偶数 → スコア÷2のあまりが0なら).
-    const misreadName = (name, other, meijin = false) => {
+    const misreadName = (name, other, meijin = false, node = null) => {
       const who = (fallback) => other ? messageExpression(other) : fallback;
       // 名人 reads these words; only the ending was not read (偶数じゃなかったら).
       if (meijin && ['空', '空っぽ', '偶数', '奇数', 'ぐう数', 'ぐうすう', 'き数', 'きすう'].includes(name)) return `「${name}」は、「${who('点数')}が${name}なら」「${who('点数')}が${name}でなければ」の 形で 書きます`;
@@ -156,9 +156,20 @@
       // An odd number's あまり is 1 or －1 (the あまり has the sign of the number), as 名人 reads 奇数. ぐうすう・き数 are the same words.
       const even = ['偶数', 'ぐう数', 'ぐうすう'].includes(name), odd = ['奇数', 'き数', 'きすう'].includes(name);
       if (even || odd) return `「${name}」は くらべる ことばに ありません。「${who('点数')}÷2のあまりが${even ? '0' : '1か－1'}なら」のように 書きます`;
+      // すがたを次にする / はいけいを次にする: the next look has its own sentence.
+      if (/^(?:次|つぎ)$/.test(name) && node?.kind === 'LooksCommand' && ['SET_COSTUME', 'SET_BACKDROP'].includes(node.op))
+        return node.op === 'SET_COSTUME' ? 'つぎの すがたに するときは「つぎのすがたにかえる」と 書きます' : 'つぎの はいけいに するときは「つぎのはいけいにかえる」と 書きます';
+      // 十 / 十歩 (FM2-03): a number in kanji is written in digits; no name to make is named.
+      if (/^[〇一二三四五六七八九十百千万]+(?:つ|歩|秒|回|度|個|番目|点)?$/.test(name) && name !== '一つ') return `「${name}」は 漢数字です。数は「${meijinDigits(name)}」のように 数字で 書きます`;
       const digits = /^(.+?)([0-9０-９]+(?:[.．][0-9０-９]+)?)$/.exec(name);
-      if (digits && !symbols.projectVars?.has?.(digits[1]) && !symbols.projectLists?.has?.(digits[1]))
-        return `「${name}」を 名前として 読みました。「${digits[1]}」は あかりの ことばに ありません。「${digits[1]}」を けして 書けるか たしかめてください。れい：前へ${digits[2]}歩進む`;
+      if (digits && !symbols.projectVars?.has?.(digits[1]) && !symbols.projectLists?.has?.(digits[1])) {
+        // 点数たす1: a sum is written with ＋ (also －, ×, ÷), inside （ ）.
+        const op = /^(.+?)(たす|足す|ひく|引く|かける|わる|割る)$/.exec(digits[1]);
+        if (op) { const [sign, word] = { たす: ['＋', 'たし'], 足す: ['＋', 'たし'], ひく: ['－', 'ひき'], 引く: ['－', 'ひき'], かける: ['×', 'かけ'], わる: ['÷', 'わり'], 割る: ['÷', 'わり'] }[op[2]];
+          return `${word}算は「（${op[1]}${sign}${digits[2]}）」のように「${sign}」で 書きます`; }
+        // The move example only where the sentence is a move (まっすぐ10 → 前へ10歩進む).
+        return `「${name}」を 名前として 読みました。「${digits[1]}」は あかりの ことばに ありません。「${digits[1]}」を けして 書けるか たしかめてください${node?.kind === 'MotionCommand' ? `。れい：前へ${digits[2]}歩進む` : ''}`;
+      }
       return null;
     };
     // 名人: a part's value written with no part (E2E-R2-01, C-touch-R2-04). The example is the form that reads, with a
@@ -179,6 +190,17 @@
       }
       if (n.sensor === 'クローンである') return `名人の 本文では、だれが コピーかを 書きます。れい：もし${part}がコピーなら、`;
       return `名人の 本文では、だれの「${messageExpression(n)}」かを 書きます。れい：${part}の${messageExpression(n)}`;
+    };
+    // コスチュームを「丸」にする / いろを「赤」にする / 文字を「あ」にする (FM2-03): a part's look written as data; the
+    // sentence that changes it is named, never a variable to make. null for any other name.
+    const propertyWord = (name, value, ctx) => {
+      let shown = '「…」';
+      try { if (value) shown = messageExpression(value); } catch (error) { if (!(error instanceof AkariError)) throw error; }
+      if (/^(?:コスチューム|こすちゅーむ|衣装|いしょう)$/.test(name)) return `すがたを かえるときは「すがたを${shown}にかえる」と 書きます`;
+      if (/^(?:いろ|カラー|からー)$/.test(name)) return `色を かえるときは「色を${shown}にする」と 書きます`;
+      if (/^(?:文字|もじ)$/.test(name)) return ['label', 'button', 'box'].includes(ctx?.targetType) ? null
+        : `文字を かえられるのは、文字・ボタン・四角の 部品です。キャラクターが 話すときは「${shown}と言う」と 書きます`;
+      return null;
     };
     // A part and a variable (or list) with the same name: a bare name there reads the data, though a part was meant.
     const sameNameAsPart = (name) => `「${name}」は、部品の 名前と ${symbols.projectLists?.has?.(name) ? 'リスト' : 'へんすう'}の 名前が 同じなので、どちらの ことか 決まりません`;
@@ -397,7 +419,7 @@
               n.qualifier === 'self' && ctx.targetId ? `${targetLabel(ctx)}の自分には` : 'まだ 作っていない';
             add(
               'S301',
-              (n.qualifier !== 'self' && misreadName(n.name, partner.get(n), ctx.meijin)) ||
+              (n.qualifier !== 'self' && misreadName(n.name, partner.get(n), ctx.meijin, ctx.node)) ||
               `${prefix} 名前「${n.name}」${n.qualifier === 'self' && ctx.targetId ? 'が ありません' : 'です。名前を たしかめるか、その 名前の へんすうか リストを 作ってください'}${wordHint(n.name)}`,
               ctx.node,
               where,
@@ -553,7 +575,8 @@
               'S301',
               n.target.qualifier === 'self' && c.targetId
                 ? `${targetLabel(c)}の自分には「${n.target.name}」が ありません`
-                : `「${n.target.name}」という へんすうや リストが ありません。名前を たしかめるか、その 名前の へんすうか リストを 作ってください${wordHint(n.target.name)}`,
+                : (n.kind === 'Assignment' && !n.target.qualifier && propertyWord(n.target.name, n.value, c)) ||
+                  `「${n.target.name}」という へんすうや リストが ありません。名前を たしかめるか、その 名前の へんすうか リストを 作ってください${wordHint(n.target.name)}`,
               n,
               where,
             );
@@ -645,7 +668,9 @@
           // put the sound in and write its name in 「 」, never to make a variable.
           if (arg?.kind === 'VariableRead' && !arg.qualifier && !targetExists({ name: arg.name, qualifier: null }, symbols, c)) {
             for (let i = diags.length - 1; i >= 0; i--) if (diags[i].where === where && diags[i].code === 'S301' && diags[i].message.startsWith(`まだ 作っていない 名前「${arg.name}」`)) diags.splice(i, 1);
-            add('S301', `この 作品には「${arg.name}」という 音が ありません。音を 入れてから、名前を「 」で かこんで「「${arg.name}」を${n.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}」と 書きます`, n, where);
+            // 音を鳴らす: the word 音 is no sound's name; the sound is named (FM2-03).
+            add('S301', /^(?:音|音楽|おと|おんがく|BGM)$/.test(arg.name) ? `鳴らす 音の 名前を「 」で 書きます。れい：「${project.sounds[0]?.name || 'ニャー'}」の音を鳴らす`
+              : `この 作品には「${arg.name}」という 音が ありません。音を 入れてから、名前を「 」で かこんで「「${arg.name}」を${n.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}」と 書きます`, n, where);
           }
           // A ドレミ name with no such sound stops with the Hz guidance (final call 29), quoted or not and at every level.
           if (name !== null && !project.sounds.some((x) => x.name === name))

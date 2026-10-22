@@ -2609,6 +2609,24 @@
         const source=code.replace(/より(おおきい|ちいさい)/g,(all,word)=>word==='おおきい'?'より大きい':'より小さい');
         throw sentenceDiagnostic('くらべる ことばは「より大きい」「より小さい」と 書きます',line,choice('「大きい」「小さい」と 書く',source),{kind:'IfStatement'});
       }
+      // もし答えがりんごなら (FM2-02): a word compared with 答え, or with a variable that holds text, is written in 「 」.
+      // Read bare it is a name to make, and the program would never match.
+      {const cmp=/^(もし、?)?([^、。\u0001【】（）\s]+?)が([^、。\u0001「」【】（）\s0-9０-９．.－\-＋+]+?)(なら|ならば|だったら|でなければ|じゃなかったら|と同じ|とちがう|と違う|になる)/.exec(mask);
+        const variable=cmp&&[...(symbols?.project?.projectData?.variables||[]),...(symbols?.project?.components||[]).flatMap(c=>c.localData?.variables||[])].find(v=>v.name===cmp[2]);
+        const text=cmp&&(cmp[2]==='答え'||(variable&&typeof variable.initialValue==='string'&&!/^－?-?[0-9０-９]+(?:[.．][0-9０-９]+)?$/.test(variable.initialValue)));
+        const word=cmp?.[3];
+        if(text&&!dataNameKind(word,symbols,ctx)&&!(symbols?.project?.components||[]).some(c=>c.name===word)&&!knownWords(symbols,ctx).includes(word)&&!['空','空っぽ','からっぽ','カラッポ','偶数','奇数','コピー'].includes(word)){
+          const at=(cmp[1]||'').length+cmp[2].length+1,source=code.slice(0,at)+'「'+word+'」'+code.slice(at+word.length);
+          const fix=ctx.meijin?source:canonicalStatementSource(source,symbols),first=fix.split('\n')[0],example=first.includes('、')?first.slice(0,first.indexOf('、')+1):first;
+          if(reads(source))throw sentenceDiagnostic(`${cmp[2]==='答え'?'答え':'文字'}と くらべる ことばは「 」で かこみます。れい：${example}`,line,[{label:'「 」で かこむ',source:fix}],{kind:'IfStatement'});
+        }}
+      // 前へ十歩進む / かばんの一番目 (FM2-03): numbers are written in digits, as 名人 says (一つ is a word, not a count).
+      if(!ctx.meijin){const kanji=/[〇一二三四五六七八九十百千万]+(?:歩|秒|回|度|個|番目|点|つ)/g;
+        for(const m of mask.matchAll(kanji)){
+          if(/^一つ$/.test(m[0])||/[\p{Script=Han}]/u.test(mask[m.index-1]||'')||knownWords(symbols,ctx).some(name=>name.includes(m[0])))continue;
+          const digits=meijinDigits(m[0]),source=code.slice(0,m.index)+digits+code.slice(m.index+m[0].length);
+          throw sentenceDiagnostic(`「${m[0]}」は 漢数字です。数は「${digits}」のように 数字で 書きます`,line,reads(source)?[{label:'数字で 書く',source:canonicalStatementSource(source,symbols)}]:[],{kind:'Sequence'});
+        }}
       // FM2-11: more near forms. Each is said only when the line reads with its fix, so a sentence that only looks like
       // one keeps its own message.
       const nearIf=(message,label,source,kind)=>{const fix=choice(label,source);if(fix.length)throw sentenceDiagnostic(message.replace('〔文〕',fix[0].source),line,fix,{kind});};
