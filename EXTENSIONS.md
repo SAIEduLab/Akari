@@ -65,7 +65,7 @@ await buildDerivedProduct({
 
 ### 座標と向き
 
-Standard契約（言語契約4・runtime契約4）では、作品の座標は画面の左下のはしを0とし、右と上が正です。部品のよこのばしょ・たてのばしょは部品の中心です。向きは右を0度として、左回りにふえます（上は90度）。製品が提供する実行情報のなかの部品の `x`・`y` は、画面の左下のはしから部品のまん中までの歩数（右と上が正）、`direction` は右が0、上が90の左回りで、0以上360未満です。拡張にわたす数と、拡張が返す数も、このきまりで読みます。拡張API契約は `1` のままです。
+Standard契約（言語契約4・runtime契約4）では、作品の座標は画面の左下のはしを0とし、右と上が正です。部品のよこのばしょ・たてのばしょは部品の中心です。向きは右を0度として、左回りにふえます（上は90度）。製品が提供する実行情報のなかの部品の `x`・`y` は、画面の左下のはしから部品のまん中までの歩数（右と上が正）、`direction` は右が0、上が90の左回りで、0以上360未満です。拡張にわたす数と、拡張が返す数も、このきまりで読みます（引数の単位を `歩`・`度` にすると、作品の `よこのばしょ`・`たてのばしょ`・`向き` をそのままわたせ、`{magnitude,unit}` で届きます）。拡張API契約は `1` のままです。
 
 ### 版の運用
 
@@ -103,7 +103,7 @@ Standard契約（言語契約4・runtime契約4）では、作品の座標は画
 | `signal`、`sessionId` | sessionの取消と識別 |
 | `connector` | 明示的に接続して版・能力を確認したコネクタ、未接続時は `null` |
 
-factoryは `{commands, calculations, initialize?, dispose?}` を返します。機能表のキーはmanifestの機能ID、handlerは `(args, context)` です。contextには `signal/sessionId` と製品が提供する実行情報があります。factoryと `initialize()` は同期処理とし、失敗時は既に作ったinstanceを破棄します。`dispose()` は資源解放に使い、終了後の状態変更・できごと送信を行いません。
+factoryは `{commands, calculations, initialize?, dispose?}` を返します。機能表のキーはmanifestの機能ID、handlerは `(args, context)` です。contextには `signal/sessionId` と製品が提供する実行情報があります。拡張API契約 `1` で拡張が頼れるのは `signal` と `sessionId` だけです（[types.d.ts](extensions/types.d.ts) の `InvokeContext`）。そのほかの実行情報は製品の内部の形で、版によって変わることがあります。呼び出した部品のばしょや向きが要る拡張は、単位 `歩`・`歩`・`度` の引数を登録し、`拡張「拡張名」「機能名」（よこのばしょ、たてのばしょ、向き）` のように引数でわたします（数は「座標と向き」のきまりで読みます）。factoryと `initialize()` は同期処理とし、失敗時は既に作ったinstanceを破棄します。`dispose()` は資源解放に使い、終了後の状態変更・できごと送信を行いません。
 
 計算は `async:false` とし、即座に既存型の値を返します。命令は `async:true` ならPromiseを返せます。待機は呼出元の処理だけを止め、ほかのできごとや停止操作を処理します。長時間処理は `context.signal` を確認し、timer・外部要求を取り消してください。同期の無限ループを契約外のJavaScriptから強制停止する保証はありません。
 
