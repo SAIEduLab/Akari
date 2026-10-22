@@ -6195,6 +6195,10 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #editorPending[data-notice="block-draft"],
 body[data-editor-mode="blocks"]:not(.runtime):has(#editorPending[data-notice="block-draft"]) #editorCancel { display: none; }
 :is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls[hidden] { display: none; }
+/* One cancel control per state (F-23): while the block view's floating 決める・とちゅうで やめる is open, the editor's
+   入力を やめる is not shown next to it. */
+body[data-editor-mode="blocks"]:has(#blockEditor:not([hidden]) > .blockui-view-controls:not([hidden])) #editorCancel,
+#procModal:has(#callableBlocks:not([hidden]) > .blockui-view-controls:not([hidden])) #callableCancel { display: none !important; }
 .blockui-view-controls > .blockui-field-error { flex-basis: 100%; margin: 0; color: #9f281e; font-size: 13px; white-space: normal; }
 .blockui-view-controls > .blockui-field-error:empty { display: none; }
 :is(#blockEditor, #callableBlocks).blockui-editor > .blockui-message.blockui-message-near-field {
