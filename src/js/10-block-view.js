@@ -351,15 +351,16 @@
       navigation = E('div', 'blockui-navigation', null, {
         'aria-label': '作業台の見え方',
       });
+    // The workspace's zoom is named by the 作業台, as the stage's is by 作品画面 (Y2-08): 「大きく見る」 opens the stage.
     const zoomLabel = button('100%', 'zoom-reset', () => setZoom(1), {
-      'aria-label': '大きさを100%に もどす',
+      'aria-label': '作業台を 100%に もどす',
     });
     // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back.
     const minus = button('−', 'zoom-out', () => setZoom(blockZoomStep(zoom, -1)), {
-        'aria-label': '小さく見る',
+        'aria-label': '作業台を 小さく',
       }),
       plus = button('＋', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
-        'aria-label': '大きく見る',
+        'aria-label': '作業台を 大きく',
       });
     // The workspace goes back to its top-left corner: 「さいしょへ」 (F-22).
     const home = button('さいしょへ', 'workspace-home', () => {
