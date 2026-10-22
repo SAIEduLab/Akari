@@ -5782,7 +5782,7 @@ body[data-ui-level="entry"] #blockEditor { flex:1; min-height:0; overflow:hidden
 body[data-ui-level="entry"] #blockEditor[hidden] { display:none; }
 body[data-ui-level="entry"] .blockui-layout { flex:1; height:auto; min-height:0; grid-template-columns:240px minmax(0,1fr); }
 body[data-ui-level="entry"] .blockui-palette { display:flex; flex-direction:column; min-height:0; }
-body[data-ui-level="entry"] .blockui-palette::before { content:'使うブロック'; padding:8px; font-weight:bold; }
+body[data-ui-level="entry"] .blockui-palette::before { content:'ブロックの一覧'; padding:8px; font-weight:bold; }
 body[data-ui-level="entry"] .blockui-palette-list { flex:1; min-height:0; overflow:auto; }
 body[data-ui-level="entry"] :is(.blockui-palette-controls,.blockui-categories,.blockui-palette-options,.blockui-palette-tools,.blockui-search-scope,.blockui-search-restore) { display:none; }
 body[data-ui-level="entry"] .blockui-palette-item { margin:4px; }
@@ -6026,7 +6026,7 @@ body[data-editor-mode="blocks"]:not(.runtime) .codewin > #blockEditor { grid-row
 body[data-editor-mode="blocks"] #blockEditor .blockui-layout { min-height: 300px; }
 
 
-/* はじめて while running: the stage takes the large column; the 使うブロック list is put away and the built blocks stay.
+/* はじめて while running: the stage takes the large column; the ブロックの一覧 is put away and the built blocks stay.
    On a narrow screen the stage column stays inside the window (100% less the 10 px column gap). */
 body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr) clamp(min(420px, 100% - 10px), 56vw, 820px); }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-palette { display: none !important; }
@@ -6322,3 +6322,45 @@ body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp[hidden] 
 body[data-tutorial-step] .blockui-world .blockui-insertion.tutorial-target:not(.blockui-insertion-end) {
   height: 28px; min-height: 28px; line-height: 26px; font-size: 13px; color: #123b72 !important;
 }
+
+/* The status line (F-11): one saving sentence — what this computer keeps, then the file — and, with nothing changed,
+   only かえた ところは ないよ. At はじめて the line is larger (setStatus lights a new sentence for a moment). */
+.status > .save-line { display: inline-flex; flex-wrap: wrap; gap: 0 4px; min-width: 0; }
+.status > .save-line > #autosaveState.save-quiet { display: none; }
+.status > .save-line > #autosaveState:not(.save-quiet)::after { content: '。'; }
+#statusText:empty { display: none; }
+body[data-ui-level="entry"] .status,
+body[data-ui-level="entry"] .status .runstate { font-size: 15px; }
+body[data-ui-level="entry"] .status #statusText { color: #1d3448; font-weight: 700; border-radius: 6px; padding: 0 4px; }
+
+/* Child text is written with spaces between phrases; a line breaks only at a space or a punctuation mark (F-19). */
+:is(.status, #statusText, .modal p, .project-choice-dialog p, .project-choice-dialog h2, #tutorialText, #entryOutside,
+  .export-choice, .sample-card-copy, .diagnosis-issue, .diagnosis-note, #failureBody > .diagnostic-help) {
+  word-break: keep-all; overflow-wrap: anywhere;
+}
+
+/* はじめて adds a character with three buttons in キャラクター・部品 (F-13). */
+#entryAddRow { display: none; }
+body[data-ui-level="entry"] #entryAddRow { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 10px; flex: none; }
+body[data-ui-level="entry"] #entryAddRow > .entry-add {
+  min-height: 36px; padding: 4px 12px; border: 1px solid #9aaec8; border-radius: 10px; background: #fffdf5; font-size: 14px;
+}
+@media (pointer: coarse) { body[data-ui-level="entry"] #entryAddRow > .entry-add { min-height: 40px; } }
+
+/* 作品チェック's ⚠ (F-08): a block with a mistake keeps an orange frame on its face, also while it is selected or has the
+   focus, whose rings are drawn around the whole block. */
+.blockui-world .blockui-node.blockui-diagnostic > .blockui-node-content > .blockui-node-main {
+  outline: 3px solid #d9730d; outline-offset: 0; border-radius: 6px;
+}
+
+/* The block list toggle (F-09): put away, the list gives its width to the workspace. はじめて has no toggle. */
+body[data-editor-mode="blocks"] #blockEditor .blockui-library-hidden .blockui-layout,
+body[data-editor-mode="blocks"] #blockEditor.blockui-library-hidden .blockui-layout { grid-template-columns: 0 minmax(0, 1fr); }
+body[data-ui-level="entry"] [data-blockui-action="library-toggle"] { display: none; }
+
+/* はじめて's block list fits on one page at 1366 × 768 (F-03): small gaps between the blocks, a lower face, and short
+   blocks two to a row (a wide one takes its own row). A finger still gets 40 px. */
+body[data-ui-level="entry"] .blockui-palette-list { flex-flow: row wrap; align-items: flex-start; align-content: flex-start; gap: 4px 0; padding-bottom: 8px; }
+body[data-ui-level="entry"] .blockui-palette-item { margin: 0 4px; }
+body[data-ui-level="entry"] .blockui-palette-item .blockui-preview-main { min-height: 34px; padding-top: 5px; padding-bottom: 5px; }
+@media (pointer: coarse) { body[data-ui-level="entry"] .blockui-palette-item .blockui-preview-main { min-height: 40px; } }
