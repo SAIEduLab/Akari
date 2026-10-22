@@ -6452,3 +6452,26 @@ body[data-ui-level="entry"] .blockui-palette-list { flex-flow: row wrap; align-i
 body[data-ui-level="entry"] .blockui-palette-item { margin: 0 4px; }
 body[data-ui-level="entry"] .blockui-palette-item .blockui-preview-main { min-height: 34px; padding-top: 5px; padding-bottom: 5px; }
 @media (pointer: coarse) { body[data-ui-level="entry"] .blockui-palette-item .blockui-preview-main { min-height: 40px; } }
+
+/* 作品チェックの知らせ (ⓘ) where its sentence is, at every level (p2 Q5 (d)): blue, never the orange or red of a mistake.
+   Code view: the line number and 「ⓘ N行目：…」 under the code. Block view: the block is outlined with a blue dashed line
+   and carries 「ⓘ 知らせ」, which opens the notice's text under the block. */
+:root { --notice-ink: #1f5f99; --notice-edge: #3b82c4; --notice-soft: #e8f1fb; }
+.gutter-line.notice { background: var(--notice-soft); color: var(--notice-ink); border-left-color: var(--notice-edge); font-weight: 700; }
+#codeIssue.issue-notice, body[data-editor-mode] #codeIssue.issue-notice { min-width: 0; max-width: 100%; overflow: visible; color: var(--notice-ink); font-size: 13px; font-weight: 700; white-space: normal; }
+body[data-editor-mode] .code-assist:has(#codeIssue.issue-notice) { flex-direction: column; align-items: stretch; max-height: min(260px, 35vh); overflow: auto; }
+#codeIssue.issue-notice > [data-note-fix] { margin-left: 4px; }
+.blockui-node-notices { grid-column: 1 / -1; display: none; margin: 5px 0; padding: 7px 10px 7px 25px; background: #eef5fc; color: #1f4f7a; font-size: 12px; overflow-wrap: anywhere; }
+.blockui-node-notices.blockui-open { display: block; }
+.blockui-world .blockui-node-notices { position: relative; z-index: 2; max-width: 660px; white-space: normal; }
+.blockui-node-head > [data-blockui-action="notices"] { min-height: 26px; padding: 1px 5px; border: 0; background: transparent; box-shadow: none; color: var(--notice-ink); font-size: 12px; }
+.blockui-world .blockui-node.blockui-notice > .blockui-node-content > .blockui-node-main { outline: 2px dashed var(--notice-edge); outline-offset: 0; border-radius: 6px; }
+/* The notice marks are edit-screen controls: the run screen shows neither 「ⓘ 知らせ」, its list, the outline nor a
+   rewrite button (■ 止める brings them back, and the status line then points to them). */
+body.runtime :is(#blockEditor, #callableBlocks) [data-blockui-action="notices"],
+body.runtime .blockui-node-notices,
+body.runtime :is(#editorPending, #callablePending) .intent-choices { display: none !important; }
+body.runtime .blockui-world .blockui-node.blockui-notice > .blockui-node-content > .blockui-node-main { outline: 0; }
+/* A subject carried over from another part's sentence (おばあさんは かくれる。「うんとこしょ」と2秒話す。) is shown on the
+   block as a pale chip in （ ）: it is not written in the code (lead decision 30). */
+.blockui-world .blockui-subject-carried { display: inline-flex; align-items: center; padding: 0 6px; border: 1px dashed #8a9bb0; border-radius: 999px; background: #ffffff99; color: #5b6b80; font-weight: 400; }

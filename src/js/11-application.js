@@ -1440,6 +1440,7 @@
       const session = getEditorSession(binding),
         draft = binding.kind === 'draft',
         blocks = session.mode === 'blocks';
+      session.notices = bodyNotices(session);
       if (!draft) syncEditorShell(sourceOverviewOpen ? chosenEditorMode() : session.mode);
       const textRoot = draft ? binding.textarea : el.editor.closest('.editor-shell');
       textRoot.hidden = blocks;
@@ -4934,11 +4935,16 @@
       codeLineMeasure.replaceChildren();
       return codeLineLayout = { source:editor.value, key, lines, height };
     }
-    function updateGutter(errors = []) {
+    let gutterMarks = { errors: [], notices: [] };
+    function updateGutter(errors = [], notices = mainEditor.session?.notices || []) {
+      gutterMarks = { errors, notices };
+      // A code view that is not on the screen (the block view) has no width to lay its lines out in: it is laid out when
+      // it is shown (the observer below), not with every character on a line of its own.
+      if (!el.editor.clientWidth) return;
       const layout = wrappedCodeLines(), count = layout.lines.length,
         key = bindingOwner(mainEditor),
         active = activeLoc?.key === key ? activeLoc.line : 0,
-        errs = new Set(errors.map((x) => x.line));
+        errs = new Set(errors.map((x) => x.line)), noticeLines = new Set(notices.map((x) => x.line));
       for (const mark of [activeLoc, keptFail]) if (mark?.key === key && mark.error) errs.add(mark.line);
       let first = 1;
       while (first < count && layout.lines[first].top < el.editor.scrollTop - 220) first++;
@@ -4950,7 +4956,7 @@
       for (let i = first; i <= last; i++) {
         const d = document.createElement('div');
         d.className =
-          'gutter-line' + (i === active ? ' active' : '') + (errs.has(i) ? ' error' : '');
+          'gutter-line' + (i === active ? ' active' : '') + (errs.has(i) ? ' error' : noticeLines.has(i) ? ' notice' : '');
         d.textContent = i;
         d.style.cssText = `position:absolute;top:${layout.lines[i-1].top}px;height:${layout.lines[i-1].height}px;width:100%`;
         space.appendChild(d);
@@ -4958,6 +4964,8 @@
       el.gutter.appendChild(space);
       el.gutter.scrollTop = el.editor.scrollTop;
     }
+    // Shown again after the block view, or given another width: the line numbers follow the lines.
+    new ResizeObserver(() => { if (el.editor.clientWidth) updateGutter(gutterMarks.errors, gutterMarks.notices); }).observe(el.editor);
     function sourceLocation(task, node, error = null) {
       const frame = task.callFrames[task.callFrames.length - 1],
         def = frame ? project.actions.find((x) => x.name === frame.name) : null;
@@ -5131,6 +5139,71 @@
       setStatus(text || '動いているよ');
     }
 
+    // 作品チェックの知らせ at every level (p2 Q5 (d)): they are worked out for the whole work after a change, in a timer and
+    // never on the input path, and shown where their sentence is: 「ⓘ 知らせ」 on the block (the block view draws it from
+    // session.notices), the line number in blue and 「ⓘ N行目：…」 under the code. A mistake comes first: a body with a
+    // mistake or with an edit not yet decided shows no notice. Until the work is checked again, a body whose text has not
+    // changed keeps its notices and a changed body shows none. 作品チェック (くわしく・名人) keeps its list.
+    let noticeKey = null, noticeWanted = null, noticeList = [], noticeTimer = 0, noticeSources = new Map(), pointedNotices = '';
+    function noticeSourceOf(owner) {
+      return scriptBySourceKey(project, owner)?.source ?? project.actions.find(a => owner === 'action:' + a.id)?.source
+        ?? project.functions.find(f => owner === 'function:' + f.id)?.source ?? null;
+    }
+    function cachedNotices() {
+      // Each change starts the wait again, so the work is checked once the child stops for a moment.
+      const key = JSON.stringify(project);
+      if (key !== noticeKey && key !== noticeWanted) {
+        noticeWanted = key;
+        clearTimeout(noticeTimer);
+        noticeTimer = setTimeout(checkNotices, 150);
+      }
+      return noticeList.filter(d => noticeSources.get(d.owner) === noticeSourceOf(d.owner));
+    }
+    function checkNotices() {
+      noticeTimer = 0;
+      // Not while the work runs (its text does not change), and not while the child is in the middle of something in a
+      // body (a field, a word being typed, a block carried): a little later.
+      const busy = modelLocked() || [mainEditor, draftEditor].some(b => b.session?.pendingEdit || b.session?.blockDraft)
+        || composingEditors.has(el.editor) || composingEditors.has(draftEditor.textarea) || document.querySelector('.blockui-dragging');
+      if (busy) { noticeTimer = setTimeout(checkNotices, 400); return; }
+      noticeWanted = null;
+      const key = JSON.stringify(project);
+      if (key !== noticeKey) {
+        let checked = { items: [], notes: [] };
+        try { checked = compileProject(project); } catch (error) { if (!(error instanceof AkariError)) throw error; }
+        // A 名人 text's flows are items of their own: a notice belongs to the body (the document) its item comes from.
+        const owner = where => checked.items?.find(item => item.key === where)?.documentKey || where;
+        noticeList = (checked.notes || []).map(d => ({ ...d, owner: owner(d.where) }));
+        noticeSources = new Map(noticeList.map(d => [d.owner, noticeSourceOf(d.owner)]));
+        noticeKey = key;
+      }
+      const shown = b => (b.session?.notices || []).map(d => d.line + ':' + d.code).join();
+      for (const binding of [mainEditor, draftEditor]) {
+        if (!binding.view || !binding.session) continue;
+        if (shown(binding) === bodyNotices(binding.session).map(d => d.line + ':' + d.code).join()) continue;
+        if (binding === mainEditor) refreshEditor(); else renderEditorBinding(binding);
+      }
+    }
+    function bodyNotices(session) {
+      if (!session || session.pendingEdit || session.blockDraft || session.diagnostics?.length || !session.syntaxAst) return [];
+      return cachedNotices().filter(d => d.owner === session.ownerKey && noticeSources.get(d.owner) === session.sourceText)
+        .sort((a, b) => (a.line || 0) - (b.line || 0) || (a.column || 0) - (b.column || 0));
+    }
+    // ■ 止める points to the notices of the run once: the same notices after the next run say only 止まっているよ. A
+    // notice in a body that is not shown names that body.
+    function stopStatusWithNotices() {
+      const notes = compiled?.notes || [], key = notes.map(d => d.where + '|' + d.line + '|' + d.code).join(',');
+      const before = pointedNotices;
+      pointedNotices = key;
+      if (!notes.length || key === before) return '止まっているよ';
+      const owner = d => compiled.items?.find(item => item.key === d.where)?.documentKey || d.where;
+      const shown = d => sourceOverviewOpen ? scriptBySourceKey(project, owner(d))?.targetId === selectedId : owner(d) === bindingOwner(mainEditor);
+      if (notes.some(shown)) return '止まっているよ。ⓘ が ついた ところに 知らせが あるよ';
+      const { key: where, script, definition } = diagnosticOwner({ where: owner(notes[0]) });
+      const place = definition ? (where.startsWith('function:') ? '答えを もとめる「' : 'てじゅん「') + definition.name + '」'
+        : meijinTextLabel(script) || `「${targetById(script?.targetId)?.name || project.stage.name}」の ${eventText(script?.event, script?.filter)}の 本文`;
+      return `止まっているよ。${place}に ⓘ の 知らせが あるよ`;
+    }
     function refreshEditor() {
       if (!mainEditor.view) return;
       const session = getEditorSession(mainEditor), pending = session.pendingEdit;
@@ -5151,9 +5224,27 @@
         errs = pending.diagnostics?.length ? pending.diagnostics : [];
         if (!errs.length) notice = pending.reason || '入力を 決めてください';
       }
+      const notices = !errs.length && !notice && !pending ? bodyNotices(session) : [];
+      session.notices = notices;
       if (errs.length) {
         showDiagnosticMessage(el.issue, errs[0], (errs[0].line || 1) + '行目', null, el.editor.value);
         el.issue.className = 'issue-error';
+      } else if (notices.length) {
+        // The first notice from the top, with how many more there are; one that names its fix offers it (I120).
+        const first = notices[0];
+        el.issue.textContent = 'ⓘ ' + (first.line || 1) + '行目：' + first.message + (notices.length > 1 ? `（ほかに ${notices.length - 1}つ あります）` : '');
+        for (const proposal of first.proposals || []) {
+          if (typeof proposal.source !== 'string') continue;
+          const fix = document.createElement('button');
+          fix.type = 'button'; fix.dataset.noteFix = ''; fix.textContent = proposal.label || proposal.source; fix.title = proposal.source;
+          fix.onclick = () => applyNoteProposal(first, proposal);
+          el.issue.append(' ', fix);
+        }
+        el.issue.className = 'issue-notice';
+        if (editorFailureStatus !== null) {
+          if (el.status.textContent === editorFailureStatus) setStatus('✓ 書き方を 直せたよ');
+          editorFailureStatus = null;
+        }
       } else {
         el.issue.textContent = notice || '✓ このコードの 書き方は だいじょうぶです';
         el.issue.className = '';
@@ -5162,7 +5253,7 @@
           editorFailureStatus = null;
         }
       }
-      updateGutter(errs);
+      updateGutter(errs, notices);
       renderEditorBinding(mainEditor);
       if (session.mode === 'code') renderHints();
     }
@@ -5507,7 +5598,7 @@
       renderAll();
       loadEditor();
       paintRunStrip();
-      setStatus('止まっているよ');
+      setStatus(stopStatusWithNotices());
       if(tutorial){tutorialRefresh();focusTutorialTarget();return;}
       if (sourceOverviewOpen) $('#sourceEditBtn').focus({ preventScroll: true });
       else if (mainEditor.session?.mode === 'blocks') {
