@@ -467,6 +467,16 @@
             else if (ctx.event !== eventOnly[n.sensor] && n.sensor !== '拡張の値')
               add('S311', `「${messageExpression(n)}」は「${EVENT_LABELS[eventOnly[n.sensor]]}」の きっかけの 本文で 使います`, ctx.node, where);
           }
+          // What a ふれている names (C-touch-R2-02/-04): 'part' for 「ねこ」の「星」 (ねこ touches 星), 'place' for 「ゆか」の上
+          // (ゆか itself is touched), 'number' for 点数, 10 or 星のよこのばしょ. null when the partner is one that can be touched.
+          const touchArg = n.sensor === 'TOUCHING' ? n.arg : null,
+            touchOf = touchArg?.kind === 'ActorQualifiedRead' && touchArg.actorRef?.kind === 'named' && touchArg.value?.kind === 'StringLiteral' && componentByName(touchArg.actorRef.name) ? touchArg.actorRef.name : null,
+            touchData = touchArg?.kind === 'VariableRead' && !componentByName(touchArg.name)
+              ? [...project.projectData.variables, ...project.components.flatMap(c => c.localData.variables)].find(v => v.name === touchArg.name) : null,
+            touchProblem = !touchArg ? null
+              : touchOf ? (componentByName(touchArg.value.value) || touchArg.value.value === 'マウス' || Object.hasOwn(EDGE_TARGETS, touchArg.value.value) ? 'part' : 'place')
+              : ['NumberLiteral', 'QuantityLiteral', 'BinaryExpression', 'UnaryExpression'].includes(touchArg.kind)
+                || (touchArg.kind === 'ActorQualifiedRead' && touchArg.value?.kind === 'SensorRead') || (touchData && typeof touchData.initialValue === 'number') ? 'number' : null;
           if (
             [
               '横位置',
@@ -478,7 +488,9 @@
               'TOUCHING',
               'TOUCHING_COLOR',
             ].includes(n.sensor) &&
-            ctx.targetType === 'stage'
+            ctx.targetType === 'stage' &&
+            // A partner that cannot be touched gets one message below, with who touches in 名人; 「ねこ」の「星」 gets this one.
+            !(ctx.meijin && (touchProblem === 'place' || touchProblem === 'number'))
           )
             add('S304', ctx.meijin ? meijinSubjectSensorMessage(n, ctx.node) : `「${messageExpression(n)}」は 画面では 使えません。キャラクターの 本文で 使ってください`, ctx.node, where);
           if (
@@ -499,20 +511,23 @@
             checkComponentTarget(n.arg, null, ctx, where, '部品', ['マウス', ...Object.keys(EDGE_TARGETS)]);
             // What is touched is a part, the edge or the mouse (C-touch-R2-02): 「ゆか」の上 is ゆか itself, and a number
             // (点数, 10, 星のよこのばしょ) is no partner. A variable that starts with text may hold a part's name.
-            const arg = n.arg;
-            const data = arg?.kind === 'VariableRead' && !componentByName(arg.name)
-              ? [...project.projectData.variables, ...project.components.flatMap(c => c.localData.variables)].find(v => v.name === arg.name) : null;
-            const of = arg?.kind === 'ActorQualifiedRead' && arg.actorRef?.kind === 'named' && arg.value?.kind === 'StringLiteral' ? arg.actorRef.name : null;
-            const numeric = ['NumberLiteral', 'QuantityLiteral', 'BinaryExpression', 'UnaryExpression'].includes(arg?.kind)
-              || (arg?.kind === 'ActorQualifiedRead' && arg.value?.kind === 'SensorRead') || (data && typeof data.initialValue === 'number');
-            if ((of && componentByName(of)) || numeric) {
-              // The example is the sentence written, with a partner other than the body's own part (or the mouse), and in
-              // 名人 with who touches.
+            const arg = n.arg, of = touchOf, owner = ctx.targetType !== 'stage' ? project.components.find(c => c.id === ctx.targetId)?.name : null;
+            // The example is the sentence written, with a partner other than the body's own part (or the mouse), and in
+            // 名人 with who touches: the subject written, else a character of the work.
+            const sentence = (who, shown) => ctx.node?.kind === 'WaitUntil' ? `${who}${shown}にふれるまで待つ` : ctx.node?.kind === 'RepeatUntil' ? `${who}${shown}にふれるまで、くり返す`
+              : ctx.node?.kind === 'RepeatWhile' ? `${who}${shown}にふれているあいだ、くり返す` : `もし${who}${shown}にふれていれば、`;
+            if (touchProblem === 'place' || touchProblem === 'number') {
               const partner = of || project.components.find(c => c.id !== ctx.targetId && c.type === 'sprite')?.name || project.components.find(c => c.id !== ctx.targetId)?.name || 'マウス';
-              const who = ctx.meijin ? (project.components.find(c => c.type === 'sprite' && c.name !== partner)?.name || 'ねこ') + 'が' : '', shown = touchShown(partner);
-              const example = ctx.node?.kind === 'WaitUntil' ? `${who}${shown}にふれるまで待つ` : ctx.node?.kind === 'RepeatUntil' ? `${who}${shown}にふれるまで、くり返す`
-                : ctx.node?.kind === 'RepeatWhile' ? `${who}${shown}にふれているあいだ、くり返す` : `もし${who}${shown}にふれていれば、`;
-              add('S304', 'ふれる 相手は、部品か 画面のはしか マウスです。' + (of ? `「${of}」の ${arg.value.value}に のったかも、「${of}」に ふれたかで しらべます。` : '数には ふれられません。') + 'れい：' + example, ctx.node, where);
+              const who = ctx.meijin ? (owner || project.components.find(c => c.type === 'sprite' && c.name !== partner)?.name || 'ねこ') + 'が' : '';
+              add('S304', 'ふれる 相手は、部品か 画面のはしか マウスです。' + (of ? `「${of}」の ${arg.value.value}に のったかも、「${of}」に ふれたかで しらべます。` : '数には ふれられません。') + 'れい：' + sentence(who, touchShown(partner)), ctx.node, where);
+            }
+            // 「ねこ」の「星」にふれている (C-touch-R2-04): ねこ is who touches. 名人 with no subject is told by the subject
+            // message above; an ordinary body touches with its own part, and 画面's body is told that it has none.
+            if (touchProblem === 'part' && (owner || !ctx.meijin) && !(ctx.targetType === 'stage' && !ctx.meijin)) {
+              const shown = touchShown(arg.value.value);
+              add('S304', ctx.meijin ? `だれが ふれるかは「${of}が」と 書きます。れい：${sentence(of + 'が', shown)}`
+                : of === owner ? `ふれるのは この 本文の ${of}なので、「「${of}」の」は 書きません。れい：${sentence('', shown)}`
+                : `「${of}」が ふれたかは、${of}の 本文で しらべます。この 本文に 書くと、${owner}が ふれたかを しらべます。れい：${sentence('', shown)}`, ctx.node, where);
             }
           }
           if (n.sensor === 'TOUCHING_COLOR') {
