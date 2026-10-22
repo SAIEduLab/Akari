@@ -2226,7 +2226,8 @@
         catch (attempt) { if (!(attempt instanceof AkariError)) throw attempt; }
         if (reads) throw new AkariError('P205', `「${who[0].text}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, line.lineNo, 1);
       }
-      const nameMessage = error.message === 'この 名前は【名前】のように【 】で かこんでください';
+      // The 【 】 advice, or the whole sentence not read (F-26): the request, unit and verb guidance below may apply.
+      const nameMessage = error.message === 'この 名前は【名前】のように【 】で かこんでください' || (error.code === 'P201' && !error.proposals?.length && /^「[\s\S]+」は 読めません。書き方を たしかめてください。$/.test(error.message));
       // 10歩進んでください / 10歩進め / 10歩進もう / 進んでね: a request or a call is written as 「進む」.
       if (nameMessage) {
         const readsAs = text => { try { const part = surfaceLineSlice(line, 0, code.length, text); part.comment = line.comment; return !!parseSentenceSequence(part, symbols, { ...ctx, naturalVariant: true }); } catch (attempt) { if (!(attempt instanceof AkariError)) throw attempt; return false; } };
@@ -2762,7 +2763,7 @@
       if(line.continuation||!line.code||/^[ \t\u3000]/u.test(line.raw))continue;
       const code=line.mapped.text,mask=surfaceMask(code);let start=0,inLine=false;
       for(let i=0;i<=mask.length;i++)if(i===mask.length||mask[i]==='。'){
-        if(i>start){let found=null;try{found=readSentenceHeading(code.slice(start,i),symbols,previousHeading,ctx);}catch(error){if(!(error instanceof AkariError))throw error;if(!error.line){error.line=line.lineNo;error.column=1;}headingError??=error;}
+        if(i>start){let found=null;try{found=readSentenceHeading(code.slice(start,i),symbols,previousHeading,ctx);}catch(error){if(!(error instanceof AkariError))throw error;if(!error.proposals?.length){const slip=headingSlip(surfaceLineSlice(line,start,i),symbols,{...ctx,previousHeading});if(slip)error=slip;}if(!error.line){error.line=line.lineNo;error.column=1;}headingError??=error;}
           if(found){headings.push({start:line.mapped.positions[start],lineNo:line.lineNo,columnOffset:line.mapped.positions[start]-line.start,previousHeading});previousHeading=found.heading;inLine=true;}}
         start=i+1;
       }
@@ -2802,6 +2803,27 @@
   // 行のはじめ (F-24): a full-width space counts as two small spaces (整える writes small ones); a Tab is refused. A line
   // moved right with no もし or くり返す around it is told to line up with the line before it.
   const INDENT_TAB_MESSAGE='Tabキーでは 行の はじめを ずらせません。スペースキーで 空白を 2つ 入れます。';
+  // A heading written a little off (F-26): ▶ 動かす or a flag for the start, a part's name in 「 」 before おされたとき,
+  // クリックしたとき with no part, or no 、 at its end. Each names the heading that reads; null when none applies.
+  const PRESSED_HEADING='(?:が(?:押|お)され(?:た(?:とき|ら)|ると|るたびに)|を(?:押|お)し(?:た(?:とき|ら))|を(?:押|お)す(?:と|たびに)|がクリックされ(?:た(?:とき|ら)|ると|るたびに)|をクリックし(?:た(?:とき|ら))|をクリックする(?:と|たびに))';
+  function headingSlip(line,symbols,ctx){
+    const code=compactOutsideString(line.code||''),mask=surfaceMask(code),parts=symbols?.project?.components||[];
+    const heads=text=>{try{return !!readSentenceHeading(text,symbols,ctx.previousHeading,ctx);}catch(error){if(!(error instanceof AkariError))throw error;return false;}};
+    let p=new RegExp('^(「?▶\\s*(?:動かす)?」?|旗|はた|緑の旗|みどりの旗|みどりのはた)'+PRESSED_HEADING+'、?(.*)$').exec(code);
+    if(p&&!parts.some(c=>c.name===p[1])&&heads('作品を動かしたとき、'+p[2]))
+      return sentenceDiagnostic('「▶ 動かす」を おした ときに 始めるときは、「作品を動かしたとき、」と 書きます',line,[{label:'「作品を動かしたとき、」に する',source:'作品を動かしたとき、'+p[2]}],{kind:'Script'});
+    p=new RegExp('^「([^「」]+)」('+PRESSED_HEADING+'、?.*)$').exec(code);
+    if(p&&symbols?.project&&!parts.some(c=>c.name===p[1])&&!namesStage(symbols.project,p[1]))
+      return sentenceDiagnostic(`「${p[1]}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`,line,[],{kind:'Script'});
+    if(p&&parts.some(c=>c.name===p[1])&&heads(nameSource(p[1])+p[2])){const source=nameSource(p[1])+p[2];
+      return sentenceDiagnostic(`おされる キャラクターや 部品の 名前は、「 」で かこまずに 書きます。れい：${nameSource(p[1])}がおされたとき、`,line,[{label:'「 」を とる',source}],{kind:'Script'});}
+    p=/^(?:クリックした(?:とき|ら)|クリックする(?:と|たびに)|クリックすると)、?(.*)$/.exec(code);
+    if(p&&heads('おされたとき、'+p[1]))
+      return sentenceDiagnostic('この 部品が おされた ときに 始めるときは、「おされたとき、」と 書きます',line,[{label:'「おされたとき、」に する',source:'おされたとき、'+p[1]}],{kind:'Script'});
+    if(!/、$/.test(mask)&&/(?:とき|たびに|ごとに|たら|ると)$/.test(mask)&&heads(code+'、'))
+      return sentenceDiagnostic(`見出しの おわりには「、」を 書きます。れい：${code}、`,line,[{label:'「、」を 書く',source:code+'、'}],{kind:'Script'});
+    return null;
+  }
   function indentWidth(prefix){return prefix.length+(prefix.match(/\u3000/gu)||[]).length;}
   function parseScriptUnit(source, symbols, ctx = {}) {
     if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','文字が 多すぎて、これ いじょうは 書けません。文を 短くするか、ほかの 動きに 分けてください',1,1);
@@ -2813,7 +2835,7 @@
     const parseAt=(line,fn)=>{try{return fn();}catch(error){if(error instanceof AkariError){sentenceReadError(error,line);if(!error.line){error.line=line.lineNo;error.column=error.column||1;}}throw error;}};
     let first=nextCode(0),heading=null,headingActorRange=null,headingTargetRange=null;
     if(first<lines.length&&lines[first].indent!==0)throw new AkariError('P209','いちばん 外の 文は、行の はじめを 右へ ずらさずに 書きます',lines[first].lineNo,1);
-    if(first<lines.length){const found=parseAt(lines[first],()=>readSentenceHeading(lines[first].code,symbols,ctx.previousHeading,ctx));if(found){heading=found.heading;const line=lines[first];if(ctx.meijin&&found.bodyTopic)baseCtx.topicActor={...found.bodyTopic};if(ctx.meijin&&found.body?.text){const who=/^(【[^】]+】|[^、。「」【】\s]+?)は、(.*)$/.exec(found.body.text),bare=who&&who[1].replace(/^【(.*)】$/,'$1');if(who&&((symbols?.project?.components||[]).some(c=>c.name===bare)||dataNameKind(bare,symbols,ctx)==='variable')){baseCtx.topicActor=dataNameKind(bare,symbols,ctx)==='variable'?{kind:'value',value:exprNode('VariableRead',{name:bare,qualifier:null})}:{kind:'named',name:bare};found.body={...found.body,text:who[2],start:found.body.end-who[2].length};}}if(found.actor)headingActorRange=sourceRange(line.mapped?.positions||[],found.actor.start,found.actor.end);if(found.target)headingTargetRange=sourceRange(line.mapped?.positions||[],found.target.start,found.target.end);if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','「作品を動かしたとき、」などの 次の 行は、行の はじめを 右へ ずらして 書きます',lines[first].lineNo,1);}}
+    if(first<lines.length){const found=parseAt(lines[first],()=>{let read=null,failure=null;try{read=readSentenceHeading(lines[first].code,symbols,ctx.previousHeading,ctx);}catch(error){if(!(error instanceof AkariError)||error.proposals?.length)throw error;failure=error;}if(read)return read;const slip=headingSlip(lines[first],symbols,ctx);if(slip)throw slip;if(failure)throw failure;return null;});if(found){heading=found.heading;const line=lines[first];if(ctx.meijin&&found.bodyTopic)baseCtx.topicActor={...found.bodyTopic};if(ctx.meijin&&found.body?.text){const who=/^(【[^】]+】|[^、。「」【】\s]+?)は、(.*)$/.exec(found.body.text),bare=who&&who[1].replace(/^【(.*)】$/,'$1');if(who&&((symbols?.project?.components||[]).some(c=>c.name===bare)||dataNameKind(bare,symbols,ctx)==='variable')){baseCtx.topicActor=dataNameKind(bare,symbols,ctx)==='variable'?{kind:'value',value:exprNode('VariableRead',{name:bare,qualifier:null})}:{kind:'named',name:bare};found.body={...found.body,text:who[2],start:found.body.end-who[2].length};}}if(found.actor)headingActorRange=sourceRange(line.mapped?.positions||[],found.actor.start,found.actor.end);if(found.target)headingTargetRange=sourceRange(line.mapped?.positions||[],found.target.start,found.target.end);if(found.body.text){const body=surfaceLineSlice(line,found.body.start,found.body.end);const following=lines.find((entry,index)=>index>first&&entry.lineNo!==line.lineNo&&entry.code);const headingIndent=following?.indent>0?following.indent:2;body.indent=headingIndent;body.comment=line.comment;lines.splice(first,1,body);for(let j=first+1;j<lines.length&&lines[j].lineNo===line.lineNo;j++)lines[j].indent=headingIndent;}else lines.splice(first,1);first=nextCode(first);if(first<lines.length&&lines[first].indent===0)throw new AkariError('P202','「作品を動かしたとき、」などの 次の 行は、行の はじめを 右へ ずらして 書きます',lines[first].lineNo,1);}}
     const rules=[];
     function block(start,indent,scope,depth){
       if(depth>LIMITS.blockDepth)throw new AkariError('P208','「もし」や「くり返す」の 中に、ブロックが 重なりすぎています。いくつかの 動きに 分けてください',lines[start]?.lineNo||1,1);
@@ -3485,7 +3507,11 @@
       });
       if (clause) return statementNode('WaitUntil', line, { condition: clause.condition });
     }
-    const t = parseTargetPrefix(code, symbols, ctx);
+    // A name before を…にする (and the list and number forms below) is the data changed; any other sentence has no
+    // such name, so a word at its start is not asked to be put in 【 】 (作品を動かしたとき, 右へ動いたりする).
+    let t = null;
+    try { t = parseTargetPrefix(code, symbols, ctx); }
+    catch (error) { if (!(error instanceof AkariError) || error.code !== 'P205' || /(?:を追加する|を挿入する|番目を削除する|を空にする|を足す|を引く|にする)$/.test(code)) throw error; }
     if (t) {
       validateName(t.name);
       const rest = code.slice(t.len),

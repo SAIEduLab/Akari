@@ -832,6 +832,9 @@
       ? (heading.actorRef.targetId || (namesStage(project, heading.actorRef.name) ? 'stage' :
         project.components.find((c) => c.name === heading.actorRef.name)?.id)) : script.targetId;
     const type = targetId === 'stage' ? 'stage' : project.components.find((c) => c.id === targetId)?.type;
+    // 旗がおされたとき (the start button of other tools): the start is 作品を動かしたとき、.
+    if (!type && heading.event === 'click' && /^(?:旗|はた|緑の旗|みどりの旗|みどりのはた|▶(?:動かす)?)$/.test(heading.actorRef?.name || ''))
+      throw new AkariError('S301', '「▶ 動かす」を おした ときに 始めるときは、「作品を動かしたとき、」と 書きます', 1, 1);
     if (!type) throw new AkariError('S301', 'きっかけに 書いた キャラクターや 部品が 見つかりません。名前を たしかめてください');
     // The stage's 「星」にふれたとき、 keeps the body as it was; the check says why at the heading (S304).
     if (heading.event === 'touchStart' && type === 'stage') return { targetId: script.targetId, event: script.event, filter: script.filter };
