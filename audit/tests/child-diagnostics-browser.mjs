@@ -23,23 +23,23 @@ const cases=[
     'もし条件（（1が2と同じではない）ではない）が成り立つなら、\n  「おはよう」と言う。','P201','「ではない」が 2つ つづいています。前の ほうを（ ）で かこんでください','「条件（…）が成り立たない」で 書きます'],
   ['parentheses','（1＋2］を言う。','（1＋2）を言う。','P207','かっこの 開く しるしと とじる しるしが 合っているか たしかめてください','開く しるしと とじる しるしを そろえます'],
   ['closing','「こんにちはと言う。','「こんにちは」と言う。','P207','「 」・【 】・（ ）などの とじる しるしを 書いてください','とじる しるしを 足します'],
-  ['quote','おはようと言う。','「おはよう」と言う。','P205','言うことは「「文字」と言う」、へんすうの 中身は「点数の値を言う」のように 書きます','話す 文字は「 」で かこみます'],
+  ['quote','おはようと言う。','「おはよう」と言う。','P205','言う ことは「「文字」と言う」、へんすうの 中身は「点数を言う」のように 書きます','話す 文字は「 」で かこみます'],
   ['nested','もし1が1と同じなら、もし2が2と同じなら、「おはよう」と言う。',
     'もし1が1と同じなら、\n  もし2が2と同じなら、\n    「おはよう」と言う。','P201','「もし」や「くり返す」の 中に 重ねるときは、次の 行に 書いて、行の はじめを 右へ ずらしてください','行の はじめを 右へ ずらします'],
   ['repeat','「おはよう」と言うことを2回くり返すことを2回くり返す。',
     '2回くり返す。\n  2回くり返す。\n    「おはよう」と言う。','P201','くり返しの 中に くり返しを 重ねるときは、次の 行に 書いて、行の はじめを 右へ ずらしてください','行の はじめを 右へ ずらします'],
   ['tab','2回くり返す。\n\t「おはよう」と言う。','2回くり返す。\n  「おはよう」と言う。',
-    'P209','行の はじめを 右へ ずらすときは、小さい 空白で 書きます。Tabキーや 大きい 空白を 使っていないか たしかめてください','小さい 空白を 使います'],
+    'P209','Tabキーでは 行の はじめを ずらせません。スペースキーで 空白を 2つ 入れます。','スペースキーで 空白を 2つ 入れます'],
   ['outer-indent','  「おはよう」と言う。','「おはよう」と言う。','P209','いちばん 外の 文は、行の はじめを 右へ ずらさずに 書きます','いちばん 外の 文は 行の 左から'],
   ['heading-indent','始めると、\n「おはよう」と言う。','始めると、\n  「おはよう」と言う。',
-    'P202','「作品を動かしたとき、自分は、」などの 次の 行は、行の はじめを 右へ ずらして 書いてください','などの 次の 行は、はじめを 右へ'],
+    'P202','「作品を動かしたとき、」などの 次の 行は、行の はじめを 右へ ずらして 書きます','などの 次の 行は、はじめを 右へ'],
   ['alignment','2回くり返す。\n  「おはよう」と言う。\n   1秒待つ。','2回くり返す。\n  「おはよう」と言う。\n  1秒待つ。',
     'P209','同じ まとまりの 文は、行の はじめの 空白の 数を そろえてください','はじめの 空白の 数を そろえます'],
   ['delay','1秒後に10歩動く。','1秒待つ。\n10歩動く。','P205','待ってから 動くときは、「待つ」と「動く」の 2つの 文に 分けます','2つの 文に 分けます'],
   ['argument-name','（1＋2を10として、【足す】で求めた答え）を言う。','（点数を10として、【足す】で求めた答え）を言う。',
     'P205','入れるものの 名前を たしかめてください。れい：点数を10として、','名前を 1つ 書きます'],
   ['argument-duplicate','（点数を10、点数を20として、【足す】で求めた答え）を言う。',
-    '（点数を10、名前を「あかり」として、【足す】で求めた答え）を言う。','P205','入れるものの名前「点数」を2回書いています。名前は1回ずつ書いてください','同じ 名前が 2つ いじょう あります'],
+    '（点数を10、名前を「あかり」として、【足す】で求めた答え）を言う。','P205','入れるものの 名前「点数」を 2回 書いています。名前は 1回ずつ 書いてください','同じ 名前が 2つ いじょう あります'],
   ['argument-bundle','（10、20を渡して、【足す】で求めた答え）を言う。','（（10、20）を渡して、【足す】で求めた答え）を言う。',
     'P205','入れるものを（ ）で かこんでください。れい：（10、「あかり」）をわたして、','（ ）で ひとまとめに します'],
 ];
@@ -147,7 +147,7 @@ try {await withBrowser(chrome,async browser=>{
       q.name='計算の動き';return Akari.serializeProject(q,Akari.app.assetStore);});
     await p.locator('#fileInput').setInputFiles({name:'effects.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
     await p.waitForFunction(()=>Akari.app.project.name==='計算の動き');const before=await state(p);
-    const errors=await p.evaluate(()=>Akari.compileProject(Akari.app.project).errors);assert.ok(errors.some(d=>d.code==='S305'&&d.message==='「答えをもとめる」の 中では、動く・音を 出す・待つ などの やることは 使えません'));
+    const errors=await p.evaluate(()=>Akari.compileProject(Akari.app.project).errors);assert.ok(errors.some(d=>d.code==='S305'&&d.message==='「答えを もとめる」の 中では、動く・音を 出す・待つ などの やることは 使えません'));
     await p.locator('#diagnoseBtn').click();const issue=p.locator('#diagnosisBody .diagnosis-issue').filter({hasText:'S305'}).first();
     const primary=await issue.locator('> .diagnostic-help').innerText();assert.match(primary,/音を 出す・待つ/);assert.match(primary,/「てじゅん」へ 入れます/);assert.match(primary,/足す/);assert.ok(!primary.includes('function:diagnostic-function'));
     await issue.locator('> details > summary').click();const detail=await issue.locator('> details > pre').innerText();assert.match(detail,/S305/);assert.match(detail,/やることは 使えません/);
@@ -156,7 +156,7 @@ try {await withBrowser(chrome,async browser=>{
   await run('runtime/list-reference',async p=>{
     await install(p,{source:'「買うもの」の2番目を2秒話す。'});const before=await state(p);
     await p.locator('#runBtn').click();await p.locator('#failureModal.show').waitFor();
-    const primary=await p.locator('#failureBody > .diagnostic-help').innerText();assert.match(primary,/ならんだ ものを おぼえる リスト/);assert.match(primary,/あかり/);assert.match(primary,/1行目/);assert.match(primary,/のこっています/);
+    const primary=await p.locator('#failureBody > .diagnostic-help').innerText();assert.match(primary,/ならんだ ものを おぼえる リスト/);assert.match(primary,/あかり/);assert.match(primary,/1行目/);assert.match(primary,/のこっているよ/);
     assert.doesNotMatch(primary,/script:|sprite-1|R411/);
     const raw=p.locator('#failureBody .failure-summary');assert.equal(await raw.isVisible(),false);
     await p.locator('#failureBody > details').first().locator('> summary').focus();
@@ -208,7 +208,7 @@ try {await withBrowser(chrome,async browser=>{
     assert.equal(await p.locator('#codeIssue > details').evaluate(e=>e.open),true);
     const geometry=await summary.evaluate(e=>{const r=e.getBoundingClientRect();return {rect:r.toJSON(),hit:e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)),font:getComputedStyle(e).fontSize,viewport:{width:innerWidth,height:innerHeight}};});
     assert.ok(geometry.hit);assert.ok(geometry.rect.height>=28);assert.ok(parseFloat(geometry.font)>=13);
-    assert.match(await p.locator('#codeIssue > details > pre').innerText(),/言うことは/);assert.deepEqual(await state(p),before);
+    assert.match(await p.locator('#codeIssue > details > pre').innerText(),/言う ことは/);assert.deepEqual(await state(p),before);
     return {entry:touch?'native touch tap':'native keyboard Enter',geometry,before,after:await state(p)};
   },{touch});
 });
