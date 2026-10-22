@@ -5,12 +5,12 @@
 | 要件ID | 根拠・期待値 | 実装箇所 | 試験ID・起動先 | 証拠 |
 |---|---|---|---|---|
 | ENTRY-SETTINGS | 初回のみブロック表示の「はじめて」。保存済みの「かんたん」「くわしく」を保つ。「はじめて」はブロックモードだけで、見せ方の切りかえボタン（「ブロックモード ⇄」）を押してもコードモードにせず、ボタンの下に「コードで 書くときは、上の「かんたん」か「くわしく」を えらんでね」と出す | normalizeEntryUiLevel、uiLevelハンドラー | entry-workshop-core / ENTRY-SETTINGS、entry-workshop-browser / ENTRY-MODE-PRESERVATION | entry-unit.json、entry-browser.json |
-| ENTRY-SURFACE | 左ブロック・中央編集・右作品と部品。常設操作、内部スクロール | 入門CSS、renderEntrySurface、syncEditorShell | ENTRY-FIRST-VIEW | 1280×720、1366×768、1920×1080の画像と領域境界 |
+| ENTRY-SURFACE | 左ブロック・中央編集・右作品と部品。常設操作、内部スクロール。動かす画面では「■ 止める」と作品名だけをツールバーに出し、「↶ もとにもどす」「↷ やり直す」「いっしょに作る」「作品」なども場所をあけたまま出さない。きっかけのボタン・「＋ だんご」などのボタン・選んだブロックの道具・「＋ ここに入れる」も出さず、作品の画面を大きくする（はば650ピクセル以下は作品の画面と部品の一列）。「⏸ いったん止める」と「▶ つづける」は作品の画面のすぐ下の同じ場所にかわりばんこに出し、まちがいの知らせで止まったあとはどちらも出さない（LANGUAGE.md「作る画面と動かす画面」） | 入門CSS、renderEntrySurface、syncEditorShell | ENTRY-FIRST-VIEW | 1280×720、1366×768、1920×1080の画像と領域境界 |
 | ENTRY-CATALOG | 入門集合と通常基本を別に検証。既存本文を削除しない | ENTRY_BLOCK_SCHEMA_IDS、BASIC_BLOCK_SCHEMA_IDS、renderPalette | ENTRY-CATALOG、ENTRY-MODE-PRESERVATION、既存search-bindings | スキーマ列、本文・履歴比較 |
 | EDITOR-APPEND | 明示挿入点が優先、未指定は最上位末尾。選択を挿入点扱いしない | 既存defaultDestination、paletteAdd、prepareBlockEdit、追加後focus | EDITOR-APPEND-POSITION、既存ux-insertion-context-browser | 追加・Undo/Redo、明示点・入れ子・原文の比較 |
 | EDITOR-DESIGN-POSITION | 新規座標だけに確定設計位置。倍率・実行座標を混ぜない | computeBlockInsertionAvailability、createSyntaxNode | EDITOR-DESIGN-POSITION、EDITOR-POSITION-DEFAULTS、既存designer-zoom | 整数・小数・負数・外側座標、API標準値 |
 | TUTORIAL-DEFINITIONS | 共通手順と9分岐に許可、入力、判定、回復、出口を定義 | TUTORIAL_STEPS、tutorialAdvance、tutorialAllows | TUTORIAL-DEFINITIONS、TUTORIAL-TRANSITIONS | 機械可読な定義と各経路の遷移拒否ケース |
-| TUTORIAL-GUARD | 外観だけに依存せず、操作入口とDOM経路で拒否する | tutorialCapture、tutorialOperationAllowed、run/save/undo/openの入口 | TUTORIAL-ALL-STEPS | 代表の全手順と9分岐の固有手順×19禁止経路の変更前後比較、手順画像 |
+| TUTORIAL-GUARD | 外観だけに依存せず、操作入口とDOM経路で拒否する。どの手順でも「■ 止める」「⏸ いったん止める」「▶ つづける」「いっしょに 作るのを やめる」は許可し、うすくせず、強調の対象にもしない（Tabでは手順の場所のあとに進む） | tutorialCapture、tutorialOperationAllowed、run/save/undo/openの入口 | TUTORIAL-ALL-STEPS | 代表の全手順と9分岐の固有手順×19禁止経路の変更前後比較、手順画像 |
 | TUTORIAL-RUNTIME | 通常ランタイムの発話・逃げる座標変化・点数・条件・大きさ・衣装・回転を観察する | bridgeのbeforeStatement、tutorialCollectRuntime、tutorialFacts | TUTORIAL-ALL-STEPS | 実操作・確定本文・実行到達に基づく手順通過 |
 | TUTORIAL-EXIT | 実行を止め、制限と強調を解き、作品と未確定入力を残す | finishTutorial、releaseInteraction | TUTORIAL-ALL-STEPS、TUTORIAL-PENDING-EXIT、TUTORIAL-PROTECTED-START | 代表の全手順と9分岐の固有手順で退出・保持・解除、合成IME中の保持、開始取消、退出後の通常編集 |
 | TUTORIAL-RESUME | 同じページ・未変更の同じ練習だけ再検査。進度を永続保存しない | pausedTutorial、workspaceIdentity、beginTutorial | TUTORIAL-RESUME-IDENTITY | 続行・改造後の開始取消の比較 |
@@ -64,17 +64,17 @@ RUNTIME-CLICK-KEYBOARDは、IDを持つ複数のクリック本文の先頭が�
 
 | 親コース | 子コース | 新たに経験する操作・変化 |
 |---|---|---|
-| 動き：滑らかな移動を足す | あちこちへ泳ぐ | 座標と移動時間、秒数の自由変更 |
+| 動き：滑らかな移動を足す | あちこちへ 泳ぐ | 座標と移動時間、秒数の自由変更 |
 | 同上 | いったりきたり | 反復の囲い、右・左の順序、回数の自由変更 |
-| 同上 | 小さなさかな | 大きさの％と捕まえやすさ、45〜100の自由変更 |
+| 同上 | 小さな さかな | 大きさの％と捕まえやすさ、45〜100の自由変更 |
 | ゲーム：点数を増やし表示する | めざせ、5ひき | 条件の囲い、到達後の発話、目標数の自由変更 |
 | 同上 | おまけの点 | 一致条件で加点、条件の数の自由変更 |
 | 同上 | あと何びき | 引き算と0を下限にした残り表示、目標数の自由変更 |
-| 音：キャッチ音を足す | 音をならべよう | 3音の順序と待機、音の高さの自由変更 |
-| 同上 | さかながへんしん | 2つの衣装の切替、大きさの自由変更 |
+| 音：キャッチ音を足す | 音を ならべよう | 3音の順序と待機、音の高さの自由変更 |
+| 同上 | さかなが へんしん | 2つの衣装の切替、大きさの自由変更 |
 | 同上 | くるくるショー | 回転・待機・反復、回数の自由変更 |
 
-子コースは一つ作って終わるだけでなく、他の親コースを足せる。選んだ親は重複させない。同じ親の別の子を無断で置換しない。各選択点に「ほぞんしておわる」を置く。最後は通常ファイルの内容照合で完了する。
+子コースは一つ作って終わるだけでなく、他の親コースを足せる。選んだ親は重複させない。同じ親の別の子を無断で置換しない。各選択点に「ほぞんして おわる」を置く。最後は通常ファイルの内容照合で完了する。
 
 絵2点・点数ボード・点数0・見える「自分のほかの動きを止める。」ブロックを教材の土台として用意する。最初の場面で「いちばん上の ブロックは、前に おしたときの 動きを 止めて、はじめから 動くための ものだよ。」と説明する。通常のクリック本文に児童が命令を挿入し、専用ランタイム・新スキーマ・保存形式は増やさない。連打で未完了の前の実行を止めるため、次のクリックは新しい反応として動く。条件のコースは条件成立時にお祝いし、その後も遊べる。停止・再実行で点数・位置・姿は初期状態へ戻る。
 
