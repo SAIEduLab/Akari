@@ -2596,7 +2596,14 @@
       const result = operate({ type: 'remove', id: node.id });
       if (!result.ok && index.get(info?.parentId)?.node.schemaId !== 'Script')
         announce(errorText(result.error || result.reason) + '。「いったん 使わない」で 入れかえるか、まとまりごと けしてね', true);
+      if (result.ok) keepFocusInBlocks();
       return result;
+    }
+    // After a block is deleted (けす, a drop on the list), the focus stays in the blocks: on the block now selected, else
+    // on the workspace. The next Delete or Backspace then acts on a block, never on the page (E2-01).
+    function keepFocusInBlocks() {
+      const id = session()?.blockSelection, n = id && index.has(id) ? locationElement({ id }) : null;
+      (n || workspace).focus({ preventScroll: true });
     }
     function statementBody(parent, slot) {
       const enabled = !slot.when || parent.fields[slot.when];
@@ -4596,7 +4603,7 @@
         const ids = carriedIds(state);
         const result = ids.length > 1 ? operate({ type: 'batch', operations: ids.map(id => ({ type: 'remove', id })) })
           : removeBlock(index.get(state.id)?.node || { id: state.id });
-        if (result.ok) showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY);
+        if (result.ok) { keepFocusInBlocks(); showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY); }
         return;
       }
       if (!state.valid || !state.location) {
