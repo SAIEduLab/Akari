@@ -3673,12 +3673,22 @@
       workspace.scrollTop = top;
       rememberViewState();
     }
-    // 見わたす: the body fits the workspace both ways, but never below 75%, where a child could no longer read it (E-07).
+    // 見わたす: the body fits the workspace both ways, but never below 75%, where a child could no longer read it, and
+    // never above 100% (E-07). What is measured is the body's own blocks from the top left of the world, not the places
+    // between them that span the workspace nor the room kept below the world.
     function fitBlocks() {
       const script = world.querySelector('.blockui-script');
       if (!script) return;
-      const across = (workspace.clientWidth - 80) / (script.offsetWidth + 56),
-        down = (workspace.clientHeight - 24) / (world.offsetHeight + 24);
+      const box = world.getBoundingClientRect();
+      let right = 0, bottom = 0;
+      for (const n of world.querySelectorAll(':scope > .blockui-event-hat, .blockui-script > .blockui-node-content > .blockui-node-main > details > summary, .blockui-statement .blockui-node-main, .blockui-insertion-end')) {
+        const r = n.getBoundingClientRect();
+        if (!r.width && !r.height) continue;
+        if (!n.classList.contains('blockui-insertion-end')) right = Math.max(right, (r.right - box.left) / zoom);
+        bottom = Math.max(bottom, (r.bottom - box.top) / zoom);
+      }
+      const across = (workspace.clientWidth - 24) / (right + 24),
+        down = (workspace.clientHeight - 24) / (bottom + 24);
       setZoom(Math.min(1, Math.max(0.75, Math.min(across, down))));
       workspace.scrollTo({ top: 0, left: 0 });
       rememberViewState();
