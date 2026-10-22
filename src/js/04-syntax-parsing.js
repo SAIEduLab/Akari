@@ -1988,13 +1988,13 @@
   // its own (diagnoseSentenceIntent) and right after a もし block, where the line is first read as that もし's other
   // branch (readBlockHead), before 〜たら's three meanings.
   function otherwiseGuidance(code,mask,line){
-    const otherwise=surfaceCapture(/^(?:もし、?)?(?:ちがったら|ちがうなら|ちがえば|まちがえたら|まちがったら|まちがいなら|そうじゃなかったら|そうじゃないなら|そうでないとき(?:は)?|ちがう(?:とき|時)(?:は)?)、?(.*)$/d,code,mask);
+    const otherwise=surfaceCapture(/^(?:もし、?)?(?:ちがったら|ちがうなら|ちがえば|まちがえたら|まちがったら|まちがいなら|そうじゃなかったら|そうじゃないなら|そうじゃなければ|そうでないなら|そうでないとき(?:は)?|ちがう(?:とき|時)(?:は)?)、?(.*)$/d,code,mask);
     return otherwise?sentenceDiagnostic('「もし」の 文に あてはまらない ときに することは、「そうでなければ、」と 書きます',line,[{label:'「そうでなければ、」と 書く',source:'そうでなければ、'+otherwise[0].text}],{kind:'IfStatement'}):null;
   }
   // 「〜にふれなくなったとき」: leaving is waited for inside the touch body. The heading names who touches as it was written;
   // a 名人 text names it in the wait too (its sentences have their subject), with a part of the work as the example
   // when none was written.
-  let bareNameLooking=false;
+  let bareNameLooking=false,unreadLooking=false;
   function touchGoneMessage(phrase,symbols,meijin=false){
     const shown=touchShown(phrase.target),who=phrase.actor?.text||(meijin?(symbols?.project?.components||[]).find(c=>c.name!==phrase.target)?.name||'ねこ':null);
     const heading=(who?who+'が':'')+shown+'にふれたとき、',wait=(meijin?who+'が':'')+shown+'にふれなくなるまで待つ。';
@@ -2440,6 +2440,69 @@
       const screen=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(.+)を画面に(?:出す|だす|書く|かく|表示する)$/d,code,mask);
       if((name&&!TEXT_PART_TYPES.includes(symbols?.project?.components?.find(c=>c.name===name)?.type))||screen)
         throw sentenceDiagnostic('画面に 出すときは、「文字」の 部品を おいて「「文字1」に 点数を 出す」と 書きます',line,[],{kind:'LooksCommand'});}
+    // ── More wordings a child writes (F-26, final call 12): each is looked at only when the line does not read as
+    // written, and names the sentence to write; a fix is offered when the line reads with it.
+    {
+      let readMemo=null;
+      const unread=()=>{if(unreadLooking)return false;if(readMemo===null){unreadLooking=true;try{readMemo=reads(code);}finally{unreadLooking=false;}}return !readMemo;};
+      const choice=(label,source)=>reads(source)?[{label,source:canonicalStatementSource(source,symbols)}]:[];
+      const number=text=>Number(text.replace(/[０-９．]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)));
+      const parts=symbols?.project?.components||[];
+      if(!ctx.meijin){
+        if(/(?:たり|だり)、.+(?:たり|だり)する$/.test(mask)&&unread())
+          throw sentenceDiagnostic('「〜たり、〜たりする」では、どちらを いつ するかが 決まりません。する ことを 一つずつ 文に 書きます',line,[],{kind:'Sequence'});
+        // 点数が10なので、…: a reason says nothing of when; now (もし) or once by waiting, in the child's words.
+        if((p=surfaceCapture(/^(?:もし、?)?(.+?)(?:なので|ので)、(.*)$/d,code,mask))&&unread()){
+          const condition=becomesCondition(p[0].text,symbols,ctx),now=condition?'もし'+formatCondition(condition,'if')+'、':'もし〜なら、',wait=condition?formatCondition(condition,'until')+'待つ。':'〜になるまで待つ。';
+          throw sentenceDiagnostic(`「〜ので」は 理由を 言う ことばで、いつ するかは 決まりません。いま しらべるなら「${now}」、そうなるまで 待つなら「${wait}」と 書きます`,line,condition&&p[1].text?choice('いま そうなっていたら する',now+p[1].text):[],{kind:'IfStatement'});
+        }
+        if(/^.+?(?:ても|でも)、/.test(mask)&&unread())
+          throw sentenceDiagnostic('「〜ても」では、いつ 何を するかが 決まりません。「もし〜なら、」と「そうでなければ、」で 書きます',line,[],{kind:'IfStatement'});
+        if(/(?:のに|けれど|けれども|けど)、/.test(mask)&&unread())
+          throw sentenceDiagnostic('「〜のに」「〜けれど」では、いつ 何を するかが 決まりません。「もし〜なら、」と「そうでなければ、」で 書きます',line,[],{kind:'IfStatement'});
+        // 1秒ごとに、 is a 名人 heading; an ordinary body repeats with a wait.
+        if((p=surfaceCapture(/^(?:[^、。\u0001]+?は、?)?([^、。]+?)秒(?:間)?ごとに、?(.*)$/d,code,mask))&&unread())
+          throw sentenceDiagnostic(`「${p[0].text}秒ごとに、」は 名人の本文の 書き方です。ふつうの 本文では「ずっとくり返す。」の 中に、する ことと「${p[0].text}秒待つ。」を 書きます`,line,[],{kind:'Forever'});
+      }
+      // 2秒かけて、ねこは、…: the time is written after who does it (ねこは、2秒かけて、…).
+      if((p=surfaceCapture(/^([^、。\u0001]+?秒(?:間)?かけて)、?([^、。\u0001]+?)(?:は|が)、?(.+)$/d,code,mask))&&(p[1].text==='自分'||parts.some(c=>c.name===p[1].text.replace(/^【(.*)】$/,'$1')))&&unread()){
+        const source=`${p[1].text}は、${p[0].text}、${p[2].text}`;
+        throw sentenceDiagnostic(`「〇秒かけて、」は、だれが するかの あとに 書きます。れい：${canonicalStatementSource(source,symbols)}`,line,choice('時間を 主語の あとに 書く',source),{kind:'MotionCommand'});
+      }
+      // 前え10歩進む: the へ of a direction is written へ (a removed move form is written as today's).
+      if((p=/(^|もし、?|[はが、])(前|後ろ|右|左|上|下)え(?=[0-9０-９（])/.exec(mask))&&!knownWords(symbols,ctx).some(name=>name.startsWith(p[2]+'え'))){
+        const at=p.index+p[1].length+p[2].length,fixedCode=code.slice(0,at)+'へ'+code.slice(at+1),source=reads(fixedCode)?fixedCode:removedMoveGuidance(fixedCode)?.source||fixedCode;
+        throw sentenceDiagnostic(`向きを いう「へ」は、「え」ではなく「へ」と 書きます。れい：${canonicalStatementSource(source,symbols)}`,line,choice('「へ」に する',source),{kind:'MotionCommand'});
+      }
+      // 10かいくり返す / 1分待つ / 1回転する / 2びょう話す: counts, times and turns take 回・秒・度.
+      const unit=(pattern,message,label,to)=>{const m=surfaceCapture(pattern,code,mask);if(m&&unread())throw sentenceDiagnostic(message,line,choice(label,to(m.map(x=>x?.text??''))),{kind:'Sequence'});};
+      unit(/^(.*?[0-9０-９.．]+)(?:かい|カイ)(.*)$/d,'回数は「10回」のように「回」と 書きます','「回」と 書く',([a,b])=>a+'回'+b);
+      unit(/^(.*?)([0-9０-９.．]+)(?:ふん|分)(?:かん|間)?(待つ|まつ)$/d,'待つ 時間は 秒で 書きます。れい：60秒待つ','秒で 書く',([a,n])=>a+number(n)*60+'秒待つ');
+      unit(/^(.*?)([0-9０-９.．]+)回転(?:する)?$/d,'回るときは「右に360度回る」のように 角度で 書きます','角度で 書く',([a,n])=>a+'右に'+number(n)*360+'度回る');
+      unit(/^(.*?[0-9０-９.．]+)(?:びょう|ビョウ)(?!(?:かん|間)?(?:待つ|まつ)$)(.*)$/d,'時間は「2秒」のように「秒」と 書きます','「秒」と 書く',([a,b])=>a+'秒'+b);
+      // 2秒「こんにちは」と話す: the time comes after the words.
+      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([0-9０-９.．]+)秒(?:間)?、?(\u0001+)と(?:話す|はなす|言う|いう)$/d,code,mask))&&unread()){
+        const source=`${p[0].text}${p[2].text}と${p[1].text}秒話す`;
+        throw sentenceDiagnostic(`話す 時間は、ことばの あとに 書きます。れい：${canonicalStatementSource(source,symbols)}`,line,choice('時間を あとに 書く',source),{kind:'Say'});
+      }
+      // 90度回る / くり返す / すがたをかえる / 音を止める / 10歩下がる / よりおおきい: the near sentence.
+      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([^、。]+?)度(?:回る|まわる)$/d,code,mask))&&!/(?:右|左)(?:に|へ)/.test(p[1].text)&&unread())
+        throw sentenceDiagnostic('回る 向きを「右に」か「左に」で 書きます',line,[...choice('右に 回る',`${p[0].text}右に${p[1].text}度回る`),...choice('左に 回る',`${p[0].text}左に${p[1].text}度回る`)],{kind:'MotionCommand'});
+      if(/^(?:くり返す|繰り返す|くりかえす)$/.test(mask)&&unread())
+        throw sentenceDiagnostic('何回 くり返すかを 書きます。れい：10回くり返す。ずっと くり返すときは「ずっとくり返す。」と 書きます',line,[...choice('10回 くり返す','10回くり返す'),...choice('ずっと くり返す','ずっとくり返す')],{kind:'RepeatCount'});
+      // The message shows the sentence as the fix writes it.
+      const near=(message,label,source,kind)=>{const fix=choice(label,source);throw sentenceDiagnostic(message.replace('〔文〕',fix[0]?.source||source),line,fix,{kind});};
+      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)すがたを(?:かえる|変える)$/d,code,mask))&&unread())
+        near('どの すがたに するかを 書きます。つぎの すがたに するときは「〔文〕」と 書きます','つぎの すがたに する',p[0].text+'つぎのすがたにかえる','LooksCommand');
+      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)音を(?:止める|とめる)$/d,code,mask))&&unread())
+        near('鳴っている 音を 止めるときは「〔文〕」と 書きます','すべての 音を 止める',p[0].text+'すべての音を止める','SoundCommand');
+      if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)([0-9０-９.．]+)歩(?:下がる|さがる)$/d,code,mask))&&unread())
+        near('後ろへ 動くときは「〔文〕」と 書きます','後ろへ 動く',`${p[0].text}後ろへ${p[1].text}歩進む`,'MotionCommand');
+      if(/より(?:おおきい|ちいさい)/.test(mask)&&unread()){
+        const source=code.replace(/より(おおきい|ちいさい)/g,(all,word)=>word==='おおきい'?'より大きい':'より小さい');
+        throw sentenceDiagnostic('くらべる ことばは「より大きい」「より小さい」と 書きます',line,choice('「大きい」「小さい」と 書く',source),{kind:'IfStatement'});
+      }
+    }
     // ── Child wordings that are not read (final call 12). Each names the sentence that is written instead; a fix is
     // offered when the whole line reads with it.
     {
