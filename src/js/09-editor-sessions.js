@@ -279,6 +279,9 @@
     walk(ast);
     return out;
   }
+  // The line breaks that end a text written again keep their place. The spaces at the end of its last line stay with that
+  // line: they may be the end of its memo (「※ 移動先 」), which must not pass to the line written there now.
+  const closingBreaks = text => /(?:\r\n?|\n)\s*$/.exec(text || '')?.[0] || '';
   // symbols: the work's names, so a reprinted block uses the F-34 forms (点数を言う, 持ち物の数, 色を…にする).
   function preserveBlockSource(session, tree, sourceOrigins = new Map(), symbols = null) {
     const source = session.sourceText, oldIndex = buildBlockIndex(session.blockView);
@@ -386,7 +389,7 @@
       const lineSchema = ['statement','rule'].includes(schema.category);
       const range = lineSchema ? location?.extent : location?.range;
       if (!range) return null;
-      if(schema.category==='script')return [{...range,text:standard(after)+(/\s*$/.exec(source.slice(range.start,range.end))?.[0]||'')}];
+      if(schema.category==='script')return [{...range,text:standard(after)+closingBreaks(source.slice(range.start,range.end))}];
       if (location.inline && (BLOCK_SCHEMA_BY_ID.get(after.schemaId)?.bodies.length || /[\r\n]/.test(standard(after)))) return null;
       return [{...range, text:lineSchema ? moved(after, location.indent) : location?.conditionForm ? formatCondition(blockDecode(after),location.conditionForm) : standard(after)}];
     };
@@ -530,7 +533,7 @@
     for(const unit of units(tree)){
       const original=before.get(unit.id),range=original&&session.nodeMap.get(original.id)?.surface?.range,raw=range?session.sourceText.slice(range.start,range.end):null;
       const same=original&&JSON.stringify(original)===JSON.stringify(unit);
-      const formatted=same&&raw!==null?raw:normalizeSource(formatScript(blockDecode(unit),{symbols})).lines.filter(line=>!line.continuation).map(line=>line.raw).join(newline)+(raw?.match(/\s*$/)?.[0]||'');
+      const formatted=same&&raw!==null?raw:normalizeSource(formatScript(blockDecode(unit),{symbols})).lines.filter(line=>!line.continuation).map(line=>line.raw).join(newline)+closingBreaks(raw);
       if(source&&!/[\r\n]$/.test(source))source+=newline;
       source+=formatted;
     }
