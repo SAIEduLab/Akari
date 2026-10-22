@@ -1418,7 +1418,7 @@
     ['送って','送る'], ['上げて','上げる'], ['あげて','上げる'], ['下げて','下げる'], ['下がって','下がる'], ['さがって','さがる'],
     ['出て','出る'], ['はね返って','はね返る'], ['聞いて','たずねて、答えを待つ'], ['きいて','たずねて、答えを待つ'], ['たずねて','たずねて、答えを待つ'], ['して','する'],
   ].map(Object.freeze));
-  // すべる (滑る) is not read in 1.5.0. Its て-form only lets the move guidance find the clause and name 〇秒かけて.
+  // すべる (滑る) is no longer read. Its て-form only lets the move guidance find the clause and name 〇秒かけて.
   const GUIDED_TE_FORMS = Object.freeze([...SENTENCE_TE_FORMS, ...[['すべって','すべる'], ['滑って','滑る']].map(Object.freeze)]);
   function surfaceCapture(pattern, code, protectedCode = surfaceMask(code)) {
     const match = pattern.exec(protectedCode);
@@ -1774,7 +1774,7 @@
         return made;
       }
     }
-    // A 1.4.0 move form names the 1.5.0 one (the proposal is made for the whole line by diagnoseSentenceIntent).
+    // A removed move form names the one written now (the proposal is made for the whole line by diagnoseSentenceIntent).
     const removed=removedMoveGuidance(code);
     if(removed)throw new AkariError('P205',removed.message);
     // 「いぬ」のところへ動く / 「いぬ」のところへ1秒かけて行く: a part's place is gone to with 行く, the time first.
@@ -1802,8 +1802,8 @@
       ? {message:'「〇秒かけて、」は 文の はじめに 書きます。れい：'+source,source,label:'時間を はじめに 書く'}
       : {message:'部品の ところへは「行く」と 書きます。れい：'+source,source,label:'「行く」と 書く'};
   }
-  // The 1.4.0 move forms that are not read (LANGUAGE.md 読めない書き方): each names the 1.5.0 form. A move along the
-  // screen's directions means the same from いまのばしょ, so it gets a proposal; a place counted the 1.4.0 way (from the
+  // The removed move forms that are not read (LANGUAGE.md 読めない書き方): each names the form written now. A move along
+  // the screen's directions means the same from いまのばしょ, so it gets a proposal; a place counted the old way (from the
   // top-left corner) would land somewhere else, so it gets the message only. null for any other sentence.
   const MOVE_OLD_VERB = '(?:動く|うごく|進む|すすむ|歩く|あるく|動かす|うごかす|行く|いく)';
   // ねこは、いまのばしょから、…: the subject before いまのばしょから takes 、 as the formatter writes it (B-06).
@@ -1836,7 +1836,7 @@
     // いまの位置から / 〜の位置へ行く: 位置 is written ばしょ.
     const ichi = () => /位置/.test(mask) && /(?:行く|いく|動く|うごく|進む|すすむ|歩く|あるく|滑る|すべる)$/.test(mask)
       ? { message: '「位置」は 読みません。「ばしょ」と 書きます。れい：' + code.replace(/位置/g, 'ばしょ'), source: code.replace(/位置/g, 'ばしょ'), label: '「ばしょ」と 書く' } : null;
-    // いまのばしょから… and 画面の左下のはしから… are the 1.5.0 sentences.
+    // いまのばしょから… and 画面の左下のはしから… are the sentences of today.
     if (/^(?:(?:いま|今)の|画面の左下)/.test(rmask)) return ichi();
     // 右へ10歩動く / 画面の右へ10歩動く / 10歩右へ動く / 右へ10歩、上へ5歩動く, with the time first or before the verb.
     const LEG = '(?:画面の)?(右|左|上|下)(?:へ|に)([^、]+?)歩', LEG_BACK = '([^、]+?)歩、?(?:画面の)?(右|左|上|下)(?:へ|に)';
@@ -1859,7 +1859,7 @@
       const source = `${movingSubject(proposalSubject)}${time ? time + '、' : ''}いまのばしょから、${legs.map(([word, amount]) => word + 'へ' + amount + '歩').join('、')}動く`;
       return { message: '画面の 向きへ 動くときは、「いまのばしょから、」を 書きます。れい：' + source, source, label: 'いまのばしょから 動く' };
     }
-    // よこ100歩、たて50歩のばしょへ行く / 横100、縦50の位置へ行く / 1秒で横200、縦100の位置へ滑る: the 1.4.0 numbers
+    // よこ100歩、たて50歩のばしょへ行く / 横100、縦50の位置へ行く / 1秒で横200、縦100の位置へ滑る: the old numbers
     // count from the top-left corner, so the place is written again from the bottom-left corner.
     if (/(?:よこ|たて|横|縦)[^、]+、(?:よこ|たて|横|縦)[^、]+?の(?:ばしょ|場所|位置)(?:へ|に)/.test(rmask) && /(?:行く|いく|動く|うごく|滑る|すべる)$/.test(rmask))
       return { message: '決めた ばしょへ 行くときは、画面の 左下の はしから 数えて「' + MOVE_EXAMPLE_FIXED + '」のように 書きます。ばしょは 部品の まん中で 数えます' };
@@ -2489,11 +2489,11 @@
         break;
       }
     }
-    // 書21: a 1.4.0 move form (右へ10歩動く, よこ100歩、たて50歩のばしょへ行く, よこのばしょを10増やす …) names the 1.5.0 form,
+    // 書21: a removed move form (右へ10歩動く, よこ100歩、たて50歩のばしょへ行く, よこのばしょを10増やす …) names the form of today,
     // also as one 「〜して、」 of a longer sentence and after a lead word (そして) or an inline もし…なら、. The proposal
     // rewrites every such sentence of the chain, in the whole line; the message is the first one's.
     {
-      // A lead word may come right before the old move (そのあと上へ5歩動く): the 1.4.0 forms began with 上へ・下へ too.
+      // A lead word may come right before the old move (そのあと上へ5歩動く): the removed forms began with 上へ・下へ too.
       const leadOf=text=>LEAD_BEFORE.exec(text)?.[0]||new RegExp('^(?:'+LEAD_WORDS+')(?=(?:上|下)(?:へ|に)|よこ|たて|横|縦)').exec(text)?.[0]||'';
       const lead=leadOf(mask),inlineHead=/^(?:もし.+?(?:なら(?:ば)?|れば|えば|てば|たら)|そうでなければ|でなければ|それ以外なら|そうでないなら|そうでなかったら)、/.exec(mask.slice(lead.length))?.[0]||'';
       const clauses=[];let start=lead.length+inlineHead.length;
@@ -2522,7 +2522,7 @@
         }
         whole=rewritten&&whole!==null?whole.slice(0,clause.start)+rewritten+whole.slice(clause.end):null;
       }
-      if(first)throw sentenceDiagnostic(first.message,line,whole&&reads(whole)?[{label:first.label||'1.5.0の 書き方に する',source:whole}]:[],{kind:'MotionCommand'});
+      if(first)throw sentenceDiagnostic(first.message,line,whole&&reads(whole)?[{label:first.label||'書き方を なおす',source:whole}]:[],{kind:'MotionCommand'});
     }
     // 横位置・縦位置 (and マウスの…) are written よこのばしょ・たてのばしょ.
     if(/(?:横|縦)位置/.test(mask)){

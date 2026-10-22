@@ -189,7 +189,7 @@
       ...(until ? { condition: parseCondition(until.text + 'まで', symbols, local, 'until') } : {}) };
   }
 
-  // A 1.4.0 move form as the action of 〜あいだ／〜うちに／〜ながら names the 1.5.0 form (B-10), as a sentence of its own
+  // A removed move form as the action of 〜あいだ／〜うちに／〜ながら names the form written now (B-10), as a sentence of its own
   // does. The fix rewrites that action in its own verb form (動くあいだ, 動いているうちに, 動きながら) and is offered
   // when the rewritten action reads. null when the action is no such form.
   function meijinRemovedMove(action, line, before, after, form, reads) {
@@ -198,7 +198,7 @@
       if (!found) continue;
       const stem = found.source && /動く$/.test(found.source) ? found.source.slice(0, -2) : null;
       const fixed = stem !== null && reads(stem + '動く') ? before + stem + { ながら: '動き', ている: '動いている', plain: '動く' }[form] + after : null;
-      return sentenceDiagnostic(found.message, line, fixed ? [{ label: found.label || '1.5.0の 書き方に する', source: fixed }] : [], { kind: 'Parallel' });
+      return sentenceDiagnostic(found.message, line, fixed ? [{ label: found.label || '書き方を なおす', source: fixed }] : [], { kind: 'Parallel' });
     }
     return null;
   }
