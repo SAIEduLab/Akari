@@ -1831,7 +1831,7 @@
     const m=/^画面の(?:(まん中|真ん中|まんなか|中央|中心)|(どこか))$/.exec(mask);if(!m)return null;
     const w=symbols?.project?.stage?.width??640,h=symbols?.project?.stage?.height??400;
     const source=m[1]?`画面の左下のはしから、右へ${w/2}歩、上へ${h/2}歩のばしょへ行く`:`画面の左下のはしから、右へ0歩から${w}歩のどれか、上へ0歩から${h}歩のどれかのばしょへ行く`;
-    return {source,message:`「〜のところへ行く」の 行き先は、部品か マウスです。画面の ${m[1]?'まん中':'どこか'}へ 行くときは「${source}」と 書きます`};
+    return {source,place:m[1]?'まん中':'どこか',message:`「〜のところへ行く」の 行き先は、部品か マウスです。画面の ${m[1]?'まん中':'どこか'}へ 行くときは「${source}」と 書きます`};
   }
   // 〜のところへ動く, 〜のところへ1秒かけて行く and 画面のまん中のところへ行く name the readable sentence (source: the
   // sentence without its subject, the time first).
@@ -2925,6 +2925,21 @@
         const found=partPlaceGuidance(target.text,(before||after)?.text,verb.text,!!after,symbols),source=who.text+found.source;
         const known=screen||name==='マウス'||symbols?.project?.components?.some(c=>c.name===name);
         throw sentenceDiagnostic(found.message,line,known&&reads(source)?[{label:found.label,source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});
+      }
+    }
+    // 画面のまん中へ行く / まん中へ行く / 画面のどこかへ行く (E2E-R2-13): a place of the screen is written from the bottom-left
+    // corner, with the size of this work's screen (final call 3 keeps 画面のまん中 out of the language).
+    if((p=surfaceCapture(new RegExp('^((?:[^、。\\u0001]+?は、?)?)(?:(.+?)'+MOVE_TIME+'、?)?(画面の(?:まん中|真ん中|まんなか|中央|中心|どこか)|まん中|真ん中|まんなか)(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?('+[...MOVE_VERBS.fixed,...MOVE_VERBS.here].join('|')+')$','d'),code,mask))){
+      const [who,before,place,after]=p,screen=screenPlaceSource(surfaceMask(place.text.startsWith('画面の')?place.text:'画面の'+place.text),symbols),
+        time=(before||after)?.text;
+      // A part named まん中 is gone to as a part.
+      if(!place.text.startsWith('画面の')&&symbols?.project?.components?.some(c=>c.name===place.text)){
+        const source=who.text+(time?time+'秒かけて、':'')+'「'+place.text+'」のところへ行く';
+        throw sentenceDiagnostic(`キャラクターや 部品の ところへ 行くときは「「${place.text}」のところへ行く」と 書きます`,line,reads(source)?[{label:'「ところへ行く」と 書く',source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});
+      }
+      if(screen){
+        const source=who.text+(time?time+'秒かけて、':'')+screen.source;
+        throw sentenceDiagnostic(`画面の ${screen.place}へ 行くときは、画面の左下のはしからの 歩数で「${screen.source}」と 書きます`,line,reads(source)?[{label:'決めた ばしょへ 行く',source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});
       }
     }
     // 点数が10になったら、 (no もし): waiting or checking is not decided; 10歩進んだら、1秒待つ: an order is 「〜して、」.
