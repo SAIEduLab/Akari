@@ -1217,8 +1217,8 @@
         'SensorRead:KEY_DOWN',
         'SensorRead:TOUCHING',
         'SensorRead:TOUCHING_COLOR',
-        'SensorRead:\u30de\u30a6\u30b9\u304c\u62bc\u3055\u308c\u3066\u3044\u308b',
-        'SensorRead:\u30af\u30ed\u30fc\u30f3\u3067\u3042\u308b',
+        'SensorRead:マウスが押されている',
+        'SensorRead:クローンである',
       ].includes(schema.id);
     return boolean ? 'boolean' : 'value';
   }

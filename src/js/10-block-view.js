@@ -293,31 +293,31 @@
       }),
       workspace = E('div', 'blockui-workspace', null, {
         tabindex: '0',
-        'aria-label': '\u30d6\u30ed\u30c3\u30af\u306e\u4f5c\u696d\u53f0',
+        'aria-label': 'ブロックで 書く 本文の らん',
       }),
       paletteControls = E('div', 'blockui-palette-controls');
     const workspaceShell = E('div', 'blockui-workspace-shell'),
       plane = E('div', 'blockui-plane'),
       world = E('div', 'blockui-world'),
       navigation = E('div', 'blockui-navigation', null, {
-        'aria-label': '作業台の見え方',
+        'aria-label': '本文の らんの 見え方',
       });
     const zoomLabel = button('100%', 'zoom-reset', () => setZoom(1), {
       'aria-label': '大きさを100%に もどす',
     });
     // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back.
-    const minus = button('\u2212', 'zoom-out', () => setZoom(blockZoomStep(zoom, -1)), {
-        'aria-label': '\u5c0f\u3055\u304f\u898b\u308b',
+    const minus = button('−', 'zoom-out', () => setZoom(blockZoomStep(zoom, -1)), {
+        'aria-label': '小さく見る',
       }),
-      plus = button('\uff0b', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
-        'aria-label': '\u5927\u304d\u304f\u898b\u308b',
+      plus = button('＋', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
+        'aria-label': '大きく見る',
       });
     // The workspace goes back to its top-left corner: 「さいしょへ」 (F-22).
-    const home = button('\u3055\u3044\u3057\u3087\u3078', 'workspace-home', () => {
+    const home = button('さいしょへ', 'workspace-home', () => {
         workspace.scrollTo({ left: 0, top: 0 });
         workspace.focus({ preventScroll: true });
       }),
-      fit = button('\u898b\u308f\u305f\u3059', 'workspace-fit', () => fitBlocks());
+      fit = button('見わたす', 'workspace-fit', () => fitBlocks());
     // 「ブロックを しまう」 puts the block list away so the body gets its width, and reads 「ブロックを 出す」 while it is
     // away (F-09). はじめて has no such button: its short list always stays.
     const libraryToggle = button(
@@ -349,13 +349,13 @@
     }
     const wide = options.onExpand
       ? button(
-          '\u4f5c\u696d\u53f0\u3092\u5e83\u304f',
+          '本文の らんを 広く',
           'workspace-expand',
           () => {
             const expanded = options.onExpand();
             wide.textContent = expanded
-              ? '\u753b\u9762\u3082\u898b\u308b'
-              : '\u4f5c\u696d\u53f0\u3092\u5e83\u304f';
+              ? '画面も 見る'
+              : '本文の らんを 広く';
             wide.setAttribute('aria-pressed', String(expanded));
             scheduleGeometry();
           },
@@ -370,7 +370,7 @@
     const workspaceTip = E(
       'div',
       'blockui-workspace-tip',
-      'ブロックを つかんで つなげよう · ブロックの ない ところを おしたまま ずらすと、作業台の 見える ところが かわるよ',
+      'ブロックを つかんで つなげよう · ブロックの ない ところを おしたまま ずらすと、本文の らんの 見える ところが かわるよ',
     );
     workspaceShell.append(workspaceTip);
     const modeSelect = E('select', '', null, {
@@ -710,7 +710,7 @@
       if (!pending) return { ok: true };
       const p = pending;
       if(p.field.type==='heading'&&!explicit){
-        const reason='いつ動くかを えらんだら「この動きの きっかけを かえる」を おしてね';
+        const reason='いつ動くかを えらんだら「この 本文の きっかけを かえる」を おしてね';
         announce(reason,true);return {ok:false,pending:true,reason};
       }
       // A mistake found when the input is to be decided is shown right under the field (E-12).
@@ -1408,10 +1408,10 @@
       if (value) {
         if (schema.kind === 'RepeatCount') {
           const token = value.find((p) => p?.slot?.key === 'count');
-          if (token) value = [token, ' \u56de\u304f\u308a\u8fd4\u3059'];
+          if (token) value = [token, ' 回くり返す'];
         } else if (schema.kind === 'IfStatement') {
           const token = value.find((p) => p?.slot?.key === 'condition');
-          if (token) value = ['\u3082\u3057 ', token, ' \u306a\u3089'];
+          if (token) value = ['もし ', token, ' なら'];
         } else if (schema.kind === 'Forever') value = ['ずっと'];
         else if (schema.kind === 'CompareExpression') {
           // The same order as the code: 1が2とちがう.
@@ -1525,7 +1525,7 @@
       if (['NumberLiteral', 'StringLiteral', 'BooleanLiteral'].includes(schema.kind))
         main.append(pill(scalar(node) || schema.fields[0]?.label));
       else if (schema.kind === 'CommentLine')
-        main.append(doc.createTextNode('\u203b \u30e1\u30e2'));
+        main.append(doc.createTextNode('※ メモ'));
       else if (schema.kind === 'Say') {
         main.append(pill(scalar(node.inputs.value) ?? 'ことば'));
         if (node.inputs.seconds) main.append(doc.createTextNode(node.inputs.value?.schemaId === 'StringLiteral' ? 'と ' : 'を '), pill(scalar(node.inputs.seconds) ?? '秒数'), doc.createTextNode(' 秒話す'));
@@ -1611,19 +1611,19 @@
       const all = registry.filter((s) => entry || paletteMode === 'all' || s.category === paletteMode);
       const groups = [
         ['basic', 'よく使う'],
-        ['', '\u3059\u3079\u3066'],
-        ['motion', '\u52d5\u304d'],
-        ['look', '\u898b\u305f\u76ee'],
-        ['control', '\u3082\u3057\u30fb\u304f\u308a\u8fd4\u3057'],
+        ['', 'すべて'],
+        ['motion', '動き'],
+        ['look', '見た目'],
+        ['control', 'もし・くり返し'],
         ['event', '合図'],
         ['data', 'へんすう・リスト'],
-        ['operator', '\u8a08\u7b97'],
-        ['sense', '\u3057\u3089\u3079\u308b'],
-        ['sound', '\u97f3'],
-        ['pen', '\u30da\u30f3'],
+        ['operator', '計算'],
+        ['sense', 'しらべる'],
+        ['sound', '音'],
+        ['pen', 'ペン'],
         ['action', '自分で作ったブロック'],
         ['clone', 'コピー'],
-        ['comment', '\u30e1\u30e2'],
+        ['comment', 'メモ'],
       ];
       const categoryScroll = categorySelect.scrollTop;
       categorySelect.replaceChildren();
@@ -1691,7 +1691,7 @@
           reason = E(
             'small',
             'blockui-unavailable',
-            a.reason || '\u3053\u306e\u5834\u6240\u3067\u306f\u4f7f\u3048\u307e\u305b\u3093',
+            a.reason || 'この ばしょでは 使えないよ',
           );
         const b = button(
           '',
@@ -1892,16 +1892,16 @@
           restore = () => { mode.value = value === undefined ? 'positional' : 'named'; names.forEach((name, i) => { name.value = value?.[i] || ''; }); sync(); };
         } else {
           const currentEvent=value?.event||context().event||'start',currentActor=value?.actorRef||{kind:'self'},currentFilter=value?value.filter:context().filter;
-          const actorName = ref => ref?.kind==='named' ? ref.name : project()?.components.find(c=>c.id===context().targetId)?.name||project()?.stage?.name||'この動き';
+          const actorName = ref => ref?.kind==='named' ? ref.name : project()?.components.find(c=>c.id===context().targetId)?.name||project()?.stage?.name||'この 本文';
           const owners=new Set([actorName(currentActor)]),scan=part=>{
             if(!part||typeof part!=='object')return;
             if(part.fields?.actorRef)owners.add(actorName(part.fields.actorRef.kind==='self'?currentActor:part.fields.actorRef));
             for(const [key,child]of Object.entries(part))if(key!=='units'&&child&&typeof child==='object')Array.isArray(child)?child.forEach(scan):scan(child);
           };scan(node.bodies);scan(node.inputs.rules);
           const location=session()?.nodeMap?.get(node.bodies.body?.[0]?.id)?.surface,range=location?.range||location?.extent,
-            preview=range?session().sourceText.slice(range.start,range.end):node.bodies.body?.length?schemaOf(node.bodies.body[0]).label:'まだ ブロックが ありません';
-          group.append(E('p','blockui-trigger-scope',`かえる動き：${[...owners].join('・')} ／ ${eventText(currentEvent,currentFilter)}\n${preview}
-この 本文の きっかけだけを かえます。ほかの 本文は かえません。`));
+            preview=range?session().sourceText.slice(range.start,range.end):node.bodies.body?.length?schemaOf(node.bodies.body[0]).label:'まだ ブロックが ないよ';
+          group.append(E('p','blockui-trigger-scope',`かえる 本文：${[...owners].join('・')} ／ ${eventText(currentEvent,currentFilter)}\n${preview}
+この 本文の きっかけだけを かえるよ。ほかの 本文は そのままだよ。`));
           // The stage touches nothing, so its bodies are not offered ふれたとき.
           const stageOwned = context().targetId === 'stage' && currentActor?.kind !== 'named';
           const event = choice('いつ動く？', 'event', Object.entries(EVENT_LABELS).filter(([key]) => !MEIJIN_EVENTS.includes(key) && !(key === 'touchStart' && stageOwned && currentEvent !== 'touchStart')), currentEvent);
@@ -1915,7 +1915,7 @@
           touchTarget.parentElement.classList.add('blockui-trigger-choice');
           const syncTouch = () => { touchTarget.parentElement.hidden = event.value !== 'touchStart'; };
           syncTouch(); listen(event, 'change', syncTouch);
-          const details=E('details','blockui-trigger-details');details.append(E('summary','','くわしく（きっかけ・だれ・どれで動くか）'));group.append(details);
+          const details=E('details','blockui-trigger-details');details.append(E('summary','','もっと えらぶ（だれ・どの キー・どの 合図）'));group.append(details);
           const detailStart=group.children.length;
           const enabled = choice('きっかけ', 'enabled', [['no', '本文だけ'], ['yes', 'きっかけを 決める']], value ? 'yes' : 'no');
           const subject = actor(currentActor, 'actorRef.');
@@ -1957,7 +1957,7 @@
         listen(group, 'change', () => { changed = true; group.dispatchEvent(new doc.defaultView.Event('input', { bubbles: true })); });
         if (!options.readOnly) {
           editInput(group, node, field, annotation);
-          if(field.type==='heading')group.append(button('この動きの きっかけを かえる','heading-commit',()=>flush({explicit:true})),button('かえるのを やめる','heading-cancel',()=>cancel()));
+          if(field.type==='heading')group.append(button('この 本文の きっかけを かえる','heading-commit',()=>flush({explicit:true})),button('かえるのを やめる','heading-cancel',()=>cancel()));
           listen(group, 'change', event => { if (field.type!=='heading'&&event.target.tagName === 'SELECT') flush(); });
           listen(group, 'focusout', event => {
             if (field.type!=='heading'&&!group.contains(event.relatedTarget) && !event.relatedTarget?.closest('[data-blockui-action="cancel"],[data-blockui-action="edit-text"],[data-blockui-text-action]'))
@@ -3539,7 +3539,7 @@
         p = project(),
         [kind, id, event] = session()?.ownerKey?.split(':') || [],
         who = id === 'stage' ? p?.stage : p?.components.find((c) => c.id === id),
-        name = tree?.fields.heading?.actorRef?.kind==='named'?tree.fields.heading.actorRef.name:who?.name||p?.components.find(c=>c.id===ctx.targetId)?.name||ctx.definition?.name||'この動き';
+        name = tree?.fields.heading?.actorRef?.kind==='named'?tree.fields.heading.actorRef.name:who?.name||p?.components.find(c=>c.id===ctx.targetId)?.name||ctx.definition?.name||'この 本文';
       const hat = E('div', 'blockui-event-hat', null, {
         'data-palette-tone': kind === 'script' ? 'event' : 'action',
         'data-shape-kind': 'hat',
@@ -4622,18 +4622,18 @@
   // Color picker data is presentation-only. Persist the existing fg/bg hex or null.
   const COLOR_PRESETS = Object.freeze(
     [
-      '\u8d64',
-      '\u6a59',
-      '\u9ec4',
-      '\u7dd1',
-      '\u6c34\u8272',
-      '\u9752',
-      '\u7d2b',
-      '\u6843',
-      '\u8336',
-      '\u767d',
-      '\u7070',
-      '\u9ed2',
+      '赤',
+      '橙',
+      '黄',
+      '緑',
+      '水色',
+      '青',
+      '紫',
+      '桃',
+      '茶',
+      '白',
+      '灰',
+      '黒',
     ].map((name) => Object.freeze({ name, label: COLOR_LABELS[name] || name, value: COLOR_NAMES[name] })),
   );
   function pickerHex(value) {
