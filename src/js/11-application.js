@@ -7746,6 +7746,8 @@
       if (!pauseSlotPress(event) || !scheduler) return;
       scheduler.resume();
       if (tutorial) focusTutorialTarget();
+      // In 本文と動きのようす the stage is behind the dialog: the focus stays in the same place, on ⏸.
+      else if (event.currentTarget.closest('#runtimeInspector')) $('#pauseBtn').focus({ preventScroll: true });
       else el.form.focus({ preventScroll: true });
     };
     $('#stepBtn').onclick = () => scheduler?.stepOne();
