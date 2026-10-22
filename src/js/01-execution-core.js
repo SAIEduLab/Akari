@@ -3451,9 +3451,10 @@
         task.subject = { runtimeId: this.runtime.resolveActorRef(node.actorRef, relative) };
       }
       // A turn of a loop that changed the screen (a part moved, turned or changed its looks, text, pen or speech) and
-      // waited nowhere: the next turn starts at the next こま of the logical clock (1/60 s, the grid of the continuous
-      // rules), so the motion shows without a wait sentence. A turn that only calculates goes on at once. Each loop
-      // frame keeps its own turn's marks; a lane marks the loops of the flow it belongs to. Not while stepping.
+      // waited nowhere: the flow waits for the next こま of the logical clock (1/60 s, the grid of the continuous rules)
+      // before it goes on, whatever comes next (the next turn, or the sentence after the loop), so the motion shows
+      // without a wait sentence. A turn that only calculates goes on at once. Each loop frame keeps its own turn's
+      // marks; a lane marks the loops of the flow it belongs to. Not while stepping.
       paceTurn(task, top) {
         if (top.visual && !top.waited && !top.yielded && !this.paused) {
           top.yielded = true;
@@ -3463,13 +3464,11 @@
         top.visual = top.waited = top.yielded = false;
         return false;
       }
-      // A 〜まで／〜あいだ loop checks its condition when a turn ends and waits for the こま only when another turn
-      // follows: the body goes on the stack under the こま's wait. When the condition ends the loop, it goes on at once.
+      // A 〜まで／〜あいだ loop reads its condition when the loop is reached and once before each next turn, after the
+      // こま's wait of a paced turn (normalizeStack), at the flow's own turn.
       enterLoopTurn(task, frame) {
-        const pace = frame.visual && !frame.waited && !this.paused;
         frame.visual = frame.waited = frame.yielded = false;
         this.enterBody(task, frame.node.body);
-        if (pace) task.execStack.push({ type: 'frameYield', node: frame.node });
       }
       markTurn(task, mark) {
         for (let t = task; t; t = t.laneParent)
@@ -3512,8 +3511,8 @@
             continue;
           }
           if (top.type === 'repeatCount') {
+            if (this.paceTurn(task, top)) return task.execStack.at(-1);
             if (top.remaining > 0) {
-              if (this.paceTurn(task, top)) return task.execStack.at(-1);
               top.remaining--;
               task.execStack.push({ type: 'seq', nodes: top.node.body, index: 0 });
               if (!top.node.body.some((n) => n.kind !== 'CommentLine'))
@@ -3531,8 +3530,8 @@
             continue;
           }
           if (top.type === 'foreach') {
+            if (this.paceTurn(task, top)) return task.execStack.at(-1);
             if (top.index < top.values.length) {
-              if (this.paceTurn(task, top)) return task.execStack.at(-1);
               const value = deepCopy(top.values[top.index++]);
               task.execStack.push({
                 type: 'seq',
@@ -3548,9 +3547,10 @@
             continue;
           }
           if (top.type === 'while' || top.type === 'until') {
-            // A turn has ended: its condition is read now, before any other flow takes its next step
-            // (くり返しと画面の動き). A body with no sentence, and a condition calculated a little at a time, keep the
-            // check as a step of its own.
+            // A paced turn waits for the next こま first; then the condition is read once, at this flow's own turn
+            // (くり返しと画面の動き), after the flows earlier in the order have taken that こま's steps. A body with no
+            // sentence, and a condition calculated a little at a time, keep the check as a step of its own.
+            if (this.paceTurn(task, top)) return task.execStack.at(-1);
             const condition = top.condition || top.node.condition;
             if (!top.node.body.some((n) => n.kind !== 'CommentLine') ||
               (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(condition))) return top;
@@ -4029,6 +4029,9 @@
         // turn it is in. A frame of the pacing, a calculation step and the wait for the flow's own lanes are not.
         if (!reason.frame && reason.kind !== 'calculation' && !reason.lanes) this.markTurn(task, 'waited');
         if (!reason.frame && reason.kind !== 'calculation') task.paceTick = null;
+        // A こま's wait shows every change made so far: a loop around it waits again only for changes made after it.
+        if (reason.frame)
+          for (let t = task; t; t = t.laneParent) for (const frame of t.execStack) if (PACED_LOOP_FRAMES.has(frame.type)) frame.visual = false;
         if (reason.kind !== 'time' || !(reason.deadline >= this.dueAt)) this.dueAt = -Infinity;
         task.state = 'BLOCKED';
         task.blockReason = { runtimeId: task.subject?.runtimeId || task.runtimeId, ...reason };
