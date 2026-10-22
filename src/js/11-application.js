@@ -8069,7 +8069,7 @@
       for (let parent=field.parentElement;parent;parent=parent.parentElement)
         if (parent.tagName==='DETAILS') parent.open=true;
       field.scrollIntoView({block:'center'}); field.focus({preventScroll:true});
-      setStatus('「いつ動く？」で きっかけを えらんでね。「この動きの きっかけを かえる」で 決まるよ。「かえるのを やめる」で もとに もどれるよ');
+      setStatus('「いつ動く？」で きっかけを えらんでね。「この 本文の きっかけを かえる」で 決まるよ。「かえるのを やめる」で もとに もどれるよ');
     };
     $('#sourceStageBtn').onclick = () => { if (selectObject('stage')) showSourceOverview(); };
     $('#procClose').onclick = () => {
