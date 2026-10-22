@@ -1794,6 +1794,9 @@
     'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
     'MotionCommand:BOUNCE': ['はね返る', 'はねかえる', 'はねる', 'かべ', 'ぶつかる'],
     CompareExpression: ['くらべる', '比べる'],
+    // 以上・以下 read as their code (F2-03); the older face words and the readings still find them.
+    'CompareExpression:GTE': ['くらべる', '比べる', 'いじょう', 'と同じか より大きい', 'と同じかより大きい'],
+    'CompareExpression:LTE': ['くらべる', '比べる', 'いか', 'と同じか より小さい', 'と同じかより小さい'],
     'BuiltinCall:乱数': ['ランダム', 'でたらめ', 'さいころ'],
     // The words of what a child wants to make lead to the block too (E-13): でてくる, きえる, しつもん, おわる …
     'LooksCommand:SHOW': ['見せる', '表示', '出す', 'でてくる', '出てくる', 'あらわれる', 'みえる'],
