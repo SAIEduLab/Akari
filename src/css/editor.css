@@ -5940,9 +5940,8 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 
 /* ── 1.5.0 editor screens ──────────────────────────────────────────────────────────────────────────────────────────
    The edit screen (止まっているとき) shows ▶ 動かす only; the run screen (getting ready, running, paused, stopped by an
-   error, finished) shows ■ 止める only, in ▶'s place. The other toolbar buttons stay where they are, disabled while the
-   work runs. ⏸, ▶ つづける, 1つずつ 動かす and 本文を見て たしかめる are run-screen controls (かんたん・くわしく), not shown
-   once the run has ended. */
+   error, finished) shows ■ 止める only, in ▶'s place. ⏸ and ▶ つづける are run-screen controls at every level, 1つずつ
+   動かす and 本文を見て たしかめる at かんたん・くわしく; none of them is shown once the run has ended. */
 body:not(.runtime) #stopBtn,
 body.runtime #runBtn { display: none !important; }
 body:not(.runtime) .debugbar :is(#pauseBtn, #continueBtn, #stepBtn) { display: none !important; }
@@ -5950,8 +5949,17 @@ body.run-finished .debugbar :is(#pauseBtn, #continueBtn, #stepBtn, #runtimeInspe
 /* もとにもどす is an edit-screen control; the run screen's bar holds the run controls only. */
 body.runtime .debugbar > #undoBtn { display: none !important; }
 body.runtime.run-finished[data-editor-mode] .main > .codewin > .debugbar { display: none !important; }
-/* The level and the toggle are not shown on the run screen; their room stays, so no toolbar button moves. */
-body.runtime .menutool > :is(.ui-level-label, .editor-modes) { visibility: hidden !important; }
+/* The run screen's toolbar (final call 21) shows ■ 止める in ▶ 動かす's place and the work's name as plain text. The
+   buttons that cannot be used while the work runs (新しく作る, お手本を開く, ヒント, 開く, 保存, うごく作品を ファイルにする,
+   はじめて's 作品 menu, もとにもどす・やり直す and いっしょに作る there), the level and the view toggle are not shown, but
+   their room stays, so no toolbar button moves at any width. */
+body.runtime .menutool > :is(#newBtn, #sampleBtn, #basicActionGuide, #openBtn, #saveBtn, #exportBtn, #entryProjectMenu, #undoBtn, #redoBtn, #tutorialStart, .ui-level-label, .editor-modes) { visibility: hidden !important; }
+body.runtime .menutool > #projectName { border-color: transparent; background: transparent; box-shadow: none; color: var(--dark, #283e50); -webkit-text-fill-color: currentColor; opacity: 1; cursor: default; pointer-events: none; }
+/* はじめて's ⏸ いったん止める and ▶ つづける sit under the stage while the work runs (1つずつ 動かす and 本文を見て たしかめる
+   are for かんたん and up). */
+#entryRunControls { display: none; }
+body[data-ui-level="entry"].runtime:not(.run-finished) #entryRunControls { display: flex; flex: none; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 2px 10px 8px; }
+#entryRunControls > button { min-height: 36px; padding: 0 14px; font-weight: 700; }
 body.runtime .menutool > .mode-blocked-note { display: none !important; }
 .editor-modes[hidden] { display: none !important; }
 /* The toggle is one button (final call 22): of the two, only the one that switches away from the view shown is there. */

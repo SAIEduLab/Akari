@@ -384,9 +384,12 @@
     const keptUiLevel=()=>baseUiLevel==='entry'?'basic':baseUiLevel;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      for(const node of [$('#undoBtn'),$('#redoBtn')]){
+      // はじめて has no bar under the body: もとにもどす・やり直す go to the toolbar, and ⏸ いったん止める・▶ つづける (final call
+      // 21) under the stage, as on a video.
+      for(const node of [$('#undoBtn'),$('#redoBtn'),$('#pauseBtn'),$('#continueBtn')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
-        if(entry){
+        if(entry&&['pauseBtn','continueBtn'].includes(node.id)){if(node.parentElement!==$('#entryRunControls'))$('#entryRunControls').append(node);}
+        else if(entry){
           // Keep もとにもどす before やり直す whichever control was moved last.
           const tool=$('.menutool'),anchor=node===$('#undoBtn')&&$('#redoBtn').parentElement===tool?$('#redoBtn'):$('#tutorialStart');
           if(node.parentElement!==tool||node.nextElementSibling!==anchor)tool.insertBefore(node,anchor);
@@ -2450,8 +2453,8 @@
         const n = $('#' + id);
         if (n) n.disabled = locked;
       }
-      // The other toolbar controls stay where they are and cannot be pressed while the work runs (保存, いっしょに作る, and
-      // the ヒント and 作品 menus too).
+      // The other toolbar controls cannot be pressed while the work runs (保存, いっしょに作る, and the ヒント and 作品 menus
+      // too); the run screen does not show them, but keeps their room (final call 21).
       $('#saveBtn').disabled = locked;
       $('#tutorialStart').disabled = locked;
       for (const menu of [$('#basicActionGuide'), $('#entryProjectMenu')]) {
