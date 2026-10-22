@@ -100,7 +100,8 @@
             availableHeight: scaleParent.clientHeight -
               parseFloat(style.paddingTop || 0) - parseFloat(style.paddingBottom || 0),
           })
-        : Math.min(1, Math.max(1, available) / width);
+        : Math.min(1, Math.max(1, available) / width,
+            options.availableHeight ? Math.max(1, options.availableHeight()) / height : 1);
       scaleTarget.style.transform = 'scale(' + scale + ')';
       viewport.style.width = width * scale + 'px';
       viewport.style.height = height * scale + 'px';
@@ -1021,6 +1022,14 @@
             return document.documentElement.clientWidth - parseFloat(page.paddingLeft || 0) - parseFloat(page.paddingRight || 0) -
               parseFloat(box.borderLeftWidth || 0) - parseFloat(box.borderRightWidth || 0);
           },
+          // The height is the window's below the title and the buttons: a stage too tall for it shrinks until both its
+          // width and its height fit (LANGUAGE.md: the ▶ export 「同じ縮尺処理を使います」).
+          availableHeight: () => {
+            const page = getComputedStyle(root), box = getComputedStyle(form.closest('.player-stage')), header = root.querySelector('header');
+            return document.documentElement.clientHeight - parseFloat(page.paddingTop || 0) - parseFloat(page.paddingBottom || 0) -
+              (header ? header.offsetHeight + parseFloat(getComputedStyle(header).marginBottom || 0) : 0) -
+              parseFloat(box.borderTopWidth || 0) - parseFloat(box.borderBottomWidth || 0);
+          },
         }),
         getProject: () => session.project,
         getRuntime: () => runtime,
@@ -1040,6 +1049,9 @@
         },
         onValueDetails: value => message((typeof value === 'string' ? 'ふきだしの 文 ぜんぶ：' : '数を 短くして 見せているよ。もとの 数：') + core.valueText(value)),
       });
+      // When the title or the status line takes another row (a narrow window), the stage fits again below it.
+      const header = root.querySelector('header');
+      if (header && typeof ResizeObserver === 'function') new ResizeObserver(() => view.fitStage()).observe(header);
       flush();
       phase = 'READY';
       state();
@@ -1139,11 +1151,14 @@
   function generateStandaloneHtml(project, assetStore = new AssetStore(), { presentation = 'controls' } = {}) {
     if (!['controls', 'artwork'].includes(presentation)) throw new AkariError('X605', '作品のはじめ方が正しくありません');
     const artwork = presentation === 'artwork';
+    assetStore = withDefaultMascotAsset(project, assetStore || new AssetStore());
     const payload = packExecutable(project, assetStore),
       payloadJson = inlineJson(payload),
       title = escapeHtmlText(payload.project.name);
-    // The file is made only when its player would open it: the same check the player runs on the same JSON.
-    AKARI_RUNTIME.restoreExecutable(JSON.parse(payloadJson));
+    // The file is made only when its player would open it: the same check the player runs on the same JSON. Packing
+    // has just hashed each asset's bytes and written its text, so that text is not decoded and hashed a second time.
+    AKARI_RUNTIME.restoreExecutable(JSON.parse(payloadJson),
+      { packed: new Map(payload.assets.map(a => [a.id, { text: a.dataBase64, record: assetStore.get(a.id) }])) });
     const definitions = EXTENSION_HOST.exportDefinitions();
     const selected = AKARI_RUNTIME.profiles.describe();
     const configuration = `{extensions:[${definitions.map(x => `{manifest:${inlineJson(x.manifest)},factory:(${x.factorySource})}`).join(',')}],profiles:${inlineJson(selected.profiles.map(({id,version,limits})=>({id,version,limits})))},profile:${inlineJson(selected.selected ? {id:selected.selected.id,version:selected.selected.version} : null)},allowedCapabilities:${inlineJson(FOUNDATION_CONFIGURATION.allowedCapabilities || [])}}`;
@@ -1167,6 +1182,8 @@
       // No dots before the first paint either (renderStage paints the backdrop alone).
       '\n#formSurface{background-image:none}' +
       (artwork ? '\nhtml,body{background:transparent}#playerRoot{min-width:0;max-width:none;margin:0;padding:0}.player-stage{position:relative;max-width:none;overflow:visible;border:0;border-radius:0;background:transparent}.stage-viewport{margin:0!important}#playerActivation{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1000;background:transparent}#playerActivation[hidden]{display:none}#playerActivate{border:2px solid #000;border-radius:12px;background:#fff;color:#000;opacity:1;max-width:100%;padding:12px 18px;font-weight:700}#playerOutput{max-width:100vw}' : '') +
+      // On a touch screen the player's buttons are 40 px tall, as the editor's are.
+      '\n@media(pointer:coarse){.player-controls button,.question-controls button{min-height:40px}}' +
       '</style>\n</head>\n<body>\n' +
       '<main id="playerRoot">' + (artwork ? '' : '<header><h1 id="playerTitle">' +
       title +

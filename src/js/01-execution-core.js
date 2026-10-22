@@ -4862,7 +4862,10 @@
     function validProducerLabel(value) {
       return typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9.+_-]{0,79}$/.test(value);
     }
-    function restoreExecutable(data) {
+    // packed (only when a file is made, generateStandaloneHtml): the file's assets by id, each with the record whose bytes
+    // were hashed while packing and the text made from them. An asset whose text is that same text is not decoded and
+    // hashed again; every other check still runs. The player passes nothing and checks every asset.
+    function restoreExecutable(data, { packed = null } = {}) {
       const fail = (message) => {
         throw new AkariError('X602', message);
       };
@@ -5060,10 +5063,12 @@
         )
           fail('絵や音の しゅるいが 正しくありません');
         total += a.byteLength;
-        if (total > LIMITS.assetRawTotal || decodedBase64Length(a.dataBase64) !== a.byteLength)
+        const known = packed?.get(a.id),
+          checked = !!known && known.text === a.dataBase64 && known.record?.sha256 === a.sha256 && known.record.byteLength === a.byteLength;
+        if (total > LIMITS.assetRawTotal || (!checked && decodedBase64Length(a.dataBase64) !== a.byteLength))
           fail('絵や音の 大きさが 正しくありません');
-        const bytes = decodeBase64(a.dataBase64);
-        if (sha256Fallback(bytes) !== a.sha256)
+        const bytes = checked ? known.record.bytes : decodeBase64(a.dataBase64);
+        if (!checked && sha256Fallback(bytes) !== a.sha256)
           fail('絵や音の 中身が こわれています');
         store.addImmutable({
           id: a.id,
