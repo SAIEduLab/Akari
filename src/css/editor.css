@@ -6038,7 +6038,9 @@ body[data-editor-mode="blocks"]:not(.runtime) .codewin > .code-head { grid-row: 
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryEvents { grid-row: 2; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #entryOutside { grid-row: 3; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #tutorialGuide { grid-row: 4; }
-body[data-editor-mode="blocks"]:not(.runtime) .codewin > .source-nav { grid-row: 5; grid-column: 1; align-self: stretch; }
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .source-nav { grid-row: 5; grid-column: 1; align-self: stretch; align-items: flex-start; }
+/* When the row wraps at a narrow width, もとにもどす・やり直す keep their one-line labels. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar > :is(#undoBtn, #redoBtn) { flex: none; white-space: nowrap; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > .debugbar { grid-row: 5; grid-column: 2; justify-content: flex-end; flex-wrap: wrap; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #sourceOverview { grid-row: 6; }
 body[data-editor-mode="blocks"]:not(.runtime) .codewin[data-source-overview="true"] > #sourceOverview { grid-row: 9; }
@@ -6057,6 +6059,17 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-colu
 body[data-ui-level="entry"].runtime[data-editor-mode] .main > .side { max-height: 170px; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-palette { display: none !important; }
 body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layout { grid-template-columns: minmax(0, 1fr) !important; }
+/* On a narrow screen there is no room for a second column: はじめて's run screen is one column, the stage (with the
+   strip that shows the running sentence) and then the part list, as at かんたん; the blocks come back after ■ 止める.
+   The body window stays for いっしょに作る's guide. */
+@media (max-width: 650px) {
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto auto; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > #designerWindow { grid-column: 1; grid-row: 1; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .side { grid-column: 1; grid-row: 2; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .codewin { grid-column: 1; grid-row: 3; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .codewin > :not(#tutorialGuide) { display: none !important; }
+  body[data-ui-level="entry"].runtime[data-editor-mode] .main > .codewin:not(:has(> #tutorialGuide:not([hidden]))) { display: none !important; }
+}
 
 /* Touch screens: the toolbar's controls are at least 40 px high (no wider). */
 @media (pointer: coarse) {
