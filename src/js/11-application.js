@@ -2394,6 +2394,9 @@
     function openRuntimeInspector() {
       if (!['RUNNING', 'PAUSED'].includes(appState) || inspectorNodes.length) return;
       stageView.clearInput();
+      // The dialog opens on the body of the sentence 「いま 動いている 文：」 names, not on the body chosen before the run.
+      flushRuntimePaint();
+      paintExecutionLocation({ follow: true });
       // The dialog shows the running bodies with the コード／ブロック toggle and the strip of the running sentence; the level is
       // chosen on the edit screen only.
       for (const [node, target] of [[$('.codewin'), $('#runtimeInspectorBody')], [$('.monitor-window'), $('#runtimeInspectorBody')], [$('#editorModecode').parentElement, $('#runtimeInspectorModes')], [$('#runStrip'), $('#runtimeInspectorStrip')]]) {
@@ -4784,7 +4787,7 @@
         ['いま 動いている 本文', live.length ? `${live.length}こ` : 'ないよ'],
         ...(focus ? [
           ['ようす', taskStateText(focus)],
-          ['きっかけ', `${targetById(focus.targetId)?.name||'作品'} / ${runtimeEventText(focus.eventType, focus.scriptId ? 'script:' + focus.scriptId : null)}`],
+          ['きっかけ', `${meijinTextLabel(focus.scriptId ? runningScript('script:' + focus.scriptId) : null)||targetById(focus.targetId)?.name||'作品'} / ${runtimeEventText(focus.eventType, focus.scriptId ? 'script:' + focus.scriptId : null)}`],
         ] : []),
       ]);
       if (document.body.dataset.uiLevel === 'advanced')
@@ -4910,7 +4913,15 @@
         end = loc.endLine === loc.line && loc.endColumn >= loc.column ? loc.endColumn : chars.length;
       return chars.slice(start, end).join('').trim().replace(/[。、]$/, '');
     }
-    function paintExecutionLocation() {
+    // The body a running item comes from (a 名人 text's flows run as items of its own).
+    function runningScript(scriptKey) {
+      return scriptBySourceKey(project, compiled?.items?.find((item) => item.key === scriptKey)?.documentKey || scriptKey);
+    }
+    function meijinTextLabel(script) {
+      return script && isMeijinScript(script) ? `名人の本文 ${meijinScripts().indexOf(script) + 1}` : null;
+    }
+    // follow: the editor shows the body of the sentence that runs (while paused, and when 本文を見て たしかめる opens).
+    function paintExecutionLocation({ follow = !!scheduler?.paused } = {}) {
       if (!activeLoc) return;
       const loc = activeLoc,
         parts = loc.key.split(':'),
@@ -4924,13 +4935,14 @@
             : parts[0] === 'function'
               ? project.functions.find((x) => x.id === parts[1])
               : null;
+      // A 名人 text belongs to no part: its sentences are named by the text (名人の本文 1), not by their subject.
       const owner = def
           ? `${parts[0] === 'action' ? 'てじゅん' : '答えを もとめる'} ${def.name}`
-          : targetById(loc.targetId)?.name || loc.targetId,
+          : meijinTextLabel(script) || targetById(loc.targetId)?.name || loc.targetId,
         label = document.body.dataset.uiLevel === 'entry' ? owner
           : def ? `${owner} / ${loc.line}行目` : `${owner} / ${runtimeEventText(loc.event, scriptKey)} / ${loc.line}行目`;
       paintRunStrip(label, runningSentence(def?.source ?? script?.source, loc));
-      if (scheduler?.paused) {
+      if (follow) {
         hideSourceOverview();
         // Runtime document units have their own IDs; editor selection belongs
         // to the complete source body that can be saved and restored.
@@ -4956,7 +4968,7 @@
       if (mainEditor.session.mode === 'blocks' && mainEditor.session.ownerKey === loc.key)
         mainEditor.view.highlight(loc);
       updateGutter();
-      if (scheduler?.paused) {
+      if (follow) {
         const top = wrappedCodeLines().lines[loc.line - 1]?.top || 0;
         if (top < el.editor.scrollTop || top > el.editor.scrollTop + el.editor.clientHeight - 22)
           el.editor.scrollTop = Math.max(0, top - Math.floor(el.editor.clientHeight / 3));
