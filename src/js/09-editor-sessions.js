@@ -1469,6 +1469,7 @@
     '鳴らす':'ならす','止める':'とめる','止まる':'とまる','終わる':'おわる','終わり':'おわり','始める':'はじめる',
     '始まる':'はじまる','続ける':'つづける','続き':'つづき','変える':'かえる','変わる':'かわる','決める':'きめる',
     '決まる':'きまる','入れる':'いれる','入る':'はいる','入っ':'はいっ','出す':'だす','書く':'かく','回る':'まわる','回し':'まわし',
+    '回す':'まわす','比べる':'くらべる','数える':'かぞえる','戻る':'もどる',
     '下ろす':'おろす','下げる':'さげる','下がる':'さがる','上げる':'あげる','上がる':'あがる','行う':'おこなう','行った':'おこなった','行く':'いく','答え':'こたえ','後ろ':'うしろ','速さ':'はやさ','長さ':'ながさ',
     '高さ':'たかさ','太さ':'ふとさ','向き':'むき','余り':'あまり','一つ':'ひとつ','同じ':'おなじ','歩く':'あるく',
     '点数':'てんすう','代金':'だいきん','変数':'へんすう','手順':'てじゅん','計算':'けいさん','挿入':'そうにゅう',
@@ -1649,13 +1650,31 @@
     // よく使う blocks first, then the ones whose name starts with the word (or has it right after a particle): まつ
     // finds 秒待つ before …まで待つ (E-13). The order is otherwise kept.
     const words = searchQueryVariants(query).map(searchReading).filter(word => [...word].length >= 2 || word === searchReading(query));
+    const marks = ['を', 'に', 'の', 'で', 'と', 'へ', 'が', 'は', 'て', '、', '・', 'びょう', 'かい', 'ばんめ'];
     const wordStart = schema => {
       const names = [schema.searchLabel, schema.label].filter(Boolean).map(searchReading);
       if (words.some(word => names.some(name => name.startsWith(word)))) return 0;
-      const marks = ['を', 'に', 'の', 'で', 'と', 'へ', 'が', 'は', 'て', '、', '・', 'びょう', 'かい', 'ばんめ'];
       return words.some(word => names.some(name => marks.some(mark => name.includes(mark + word)))) ? 1 : 2;
     };
-    const rank = schema => (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 3) + wordStart(schema);
+    // How the word is found in the block's own words (its name, its search words, a bound name): 0 a whole word, 1 the
+    // start of a word, 2 only inside another word (てん in かいてん, ど in いどう, かく in かくす) or only in the words
+    // a whole family of blocks shares (線をかく・スタンプをおす for every ペン block). 2 comes after every other block
+    // (E-13). A verb written whole (かく, おす) is not the start of a longer one.
+    const kana = /[ぁ-ゟ゠-ヿ]/, verb = /[うくぐすつぬぶむる]$/, particles = marks.slice(0, 11);
+    const found = (text, word) => {
+      if (text === word) return 0;
+      for (let at = text.indexOf(word); at >= 0; at = text.indexOf(word, at + 1)) {
+        const before = text.slice(0, at), after = text[at + word.length];
+        if ((!before || !/[\p{L}ー]$/u.test(before) || particles.some(mark => before.endsWith(mark))) && !(verb.test(word) && after && kana.test(after))) return 1;
+      }
+      return 2;
+    };
+    const quality = schema => {
+      const own = [schema.searchLabel, schema.label, schema.binding?.name,
+        ...((BLOCK_SEARCH_SYNONYMS[schema.id] || BLOCK_SEARCH_SYNONYMS[schema.kind]) || [])].filter(Boolean).map(searchReading);
+      return Math.min(2, ...words.flatMap(word => own.map(text => found(text, word))));
+    };
+    const rank = schema => { const q = quality(schema); return (q === 2 ? 60 : 0) + (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 30) + (q ? 10 : 0) + wordStart(schema); };
     out.splice(0, out.length, ...out.map((schema, i) => ({ schema, i, r: rank(schema) })).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.schema));
     // The continuous rule is no statement: search finds it too, and the palette puts it in the body's rules.
     const rule = BLOCK_SCHEMA_BY_ID.get('ContinuousRule');
@@ -1663,26 +1682,32 @@
     return out;
   }
 
+  // The words a child uses for what a block does find it too (E-13): くらべる, ランダム, まわす, やめる, へる, クリック …
   const BLOCK_SEARCH_SYNONYMS = Object.freeze({
     'MotionCommand:MOVE_BY': ['動く', 'うごく', '移動', 'ばしょ', 'いまのばしょ', '右へ', '左へ', '上へ', '下へ', 'みぎ', 'ひだり', 'うえ', 'した', '歩く', 'ずらす', 'なめらかに動く', '時間をかける',
-      'おちる', '落ちる', 'さがる', 'のぼる', 'ゆっくり'],
+      'おちる', '落ちる', 'さがる', 'のぼる', 'ゆっくり', 'ジャンプ', 'とぶ', 'とびはねる'],
     ListInsert: ['挿入', 'そうにゅう', '途中に入れる', '番号の前に入れる'],
     'MotionCommand:MOVE': ['進む', 'すすむ', '前へ', '後ろへ', 'まっすぐ', '歩く', 'あるく', '動く', 'うごく', '移動'],
-    'MotionCommand:GOTO': ['行く', 'いく', 'ばしょ', '場所へ行く', '決めたばしょ', '座標', '移動', '左下のはし'],
+    'MotionCommand:GOTO': ['行く', 'いく', 'ばしょ', '場所へ行く', '決めたばしょ', '座標', '移動', '左下のはし', 'もどる', '戻る'],
     'MotionCommand:GOTO_PART': ['ところへ行く', '行く', 'いく', 'マウス', '追いかける', 'ついていく', '近づく', 'ばしょ', '移動'],
-    'MotionCommand:TURN_RIGHT': ['右回り', '回る', 'まわる', '向きを変える', '回転'],
-    'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '向きを変える', '回転'],
+    'MotionCommand:TURN_RIGHT': ['右回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
+    'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
+    'MotionCommand:BOUNCE': ['はね返る', 'はねかえる', 'はねる', 'かべ', 'ぶつかる'],
+    CompareExpression: ['くらべる', '比べる'],
+    'BuiltinCall:乱数': ['ランダム', 'でたらめ', 'さいころ'],
     // The words of what a child wants to make lead to the block too (E-13): でてくる, きえる, しつもん, おわる …
     'LooksCommand:SHOW': ['見せる', '表示', '出す', 'でてくる', '出てくる', 'あらわれる', 'みえる'],
     'LooksCommand:HIDE': ['隠す', 'かくす', '非表示', 'きえる', '消える', 'かくれる', 'みえなくする'],
     'LooksCommand:SET_COSTUME': ['きがえる', 'みため', '見た目'],
     // 「「点数らん」に点数を出す」 is how a child says it (F-31): 出す, 書く and 表示 lead to the part's text block.
     'LooksCommand:SET_TARGET_TEXT': ['出す', '書く', '表示', '文字', '点数'],
-    'StopCommand:ALL': ['とめる', '止める', 'おわる', 'おわり'],
-    'StopCommand:THIS': ['とめる', '止める'],
+    'StopCommand:ALL': ['とめる', '止める', 'とまる', '止まる', 'やめる', 'ストップ', 'おわる', 'おわり', 'おしまい'],
+    'StopCommand:THIS': ['とめる', '止める', 'とまる', '止まる', 'やめる', 'ストップ'],
+    'StopCommand:OTHERS': ['とめる', '止める', 'とまる', '止まる', 'やめる'],
+    Break: ['やめる', 'ぬける', 'おわる'],
     'PenCommand:DOWN': ['せん', '線', 'かく', 'えがく'],
     'LooksCommand:SET_SCALE': ['大きさ', 'おおきさ', 'サイズ'],
-    Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒', 'ひょうじ', '発表', 'はっぴょう'],
+    Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒', 'ひょうじ', '発表', 'はっぴょう', 'せりふ', 'ふきだし', 'こえ'],
     Ask: ['質問', 'たずねる', '答え', 'きく', '聞く', 'しつもん', 'もんだい', '問題', 'クイズ'],
     WaitTime: ['待つ', 'まつ', '時間', '秒'],
     IfStatement: ['もし', '条件', 'なら', '分かれ道'],
@@ -1690,14 +1715,25 @@
     UserActionCall: ['動作', '手順', '呼び出す', '実行'],
     UserFunctionCall: ['計算', '答え', '関数', '値を求める'],
     Assignment: ['変数', '記録', '代入', '値を入れる'],
-    NumericUpdate: ['増やす', '減らす', '足す', '引く', '点数'],
-    VariableRead: ['変数', '値', '読む'],
+    // ふやす and へらす each keep their own words, so ひく finds へらす, not ふやす.
+    'NumericUpdate:ADD': ['増やす', 'ふやす', '増える', 'ふえる', '足す', 'たす', 'プラス', '数える', 'かぞえる', '点数', 'スコア'],
+    'NumericUpdate:SUB': ['減らす', 'へらす', '減る', 'へる', '引く', 'ひく', 'マイナス', '点数', 'スコア'],
+    VariableRead: ['変数', '値', '読む', 'スコア'],
+    Broadcast: ['合図', 'メッセージ', '知らせる', 'しらせる', 'つたえる'],
+    BroadcastAndWait: ['合図', 'メッセージ', '知らせる', 'しらせる', 'つたえる'],
+    // ドレミ and its names (ド・レ・ミ・ファ・ソ・ラ・シ) lead to the Hz tone, as the work check guides them.
+    'SoundCommand:TONE_WAIT': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
+    'SoundCommand:TONE': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
+    // Pressing with the mouse or a finger (クリック, タッチ) and holding a key.
+    'SensorRead:マウスが押されている': ['クリック', 'タッチ', 'おす', '押す'],
+    'EventCount:click': ['クリック', 'タッチ', 'おす', '押す'],
+    'SensorRead:KEY_DOWN': ['おす', '押す'],
     // Holding a key to move: the continuous rule first, the repeat while it is held second (C-16).
-    ContinuousRule: ['おしているあいだ', 'おしている間', 'おしっぱなし', 'おしつづける', 'キーをおしているあいだ', 'つづけて動く', '動き続ける'],
+    ContinuousRule: ['おしているあいだ', 'おしている間', 'おしっぱなし', 'おしつづける', 'キーをおしているあいだ', 'つづけて動く', '動き続ける', 'はやく', 'はやい'],
     RepeatWhile: ['おしているあいだ', 'おしっぱなし', 'あいだ', '間'],
     // The touch words a child writes lead to ふれる (C-08, C-09).
-    'SensorRead:TOUCHING': ['ふれる', 'ふれたら', 'ふれたとき', 'さわる', 'さわったら', 'あたる', '当たる', 'ぶつかる', 'かさなる', 'はし'],
-    'StopCommand:OWN_OTHERS': ['止める', 'とめる', '自分だけ', 'ほかの動き', 'ストップ'],
+    'SensorRead:TOUCHING': ['ふれる', 'ふれたら', 'ふれたとき', 'さわる', 'さわったら', 'あたる', '当たる', 'ぶつかる', 'かさなる', 'はし', 'タッチ', 'かべ'],
+    'StopCommand:OWN_OTHERS': ['止める', 'とめる', 'とまる', '止まる', 'やめる', '自分だけ', 'ほかの動き', 'ストップ'],
   });
   function blockPaletteSearchText(schema, project) {
     const words = [schema.label, schema.id, schema.kind, schema.palette,
@@ -1705,7 +1741,8 @@
     const operation = schema.id.includes(':') ? schema.id.slice(schema.id.indexOf(':') + 1) : null;
     for (const form of SENTENCE_FORMS) {
       if (form.kind !== schema.kind || (form.op && operation && form.op !== operation)) continue;
-      words.push(form.intent, ...(schema.kind==='MotionCommand'?[]:form.verbForms || []), ...(form.nounForms || []).filter(word=>word!=='動く対象'),
+      // The move verbs and the verbs of ふやす・へらす are shared by blocks of other meanings: their own search words say them.
+      words.push(form.intent, ...(['MotionCommand', 'NumericUpdate'].includes(schema.kind)?[]:form.verbForms || []), ...(form.nounForms || []).filter(word=>word!=='動く対象'),
         ...(form.acceptedReadings || []));
     }
     return words.filter(Boolean).join(' ').toLocaleLowerCase();
