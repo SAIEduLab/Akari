@@ -644,6 +644,8 @@
       startPressedAt = -Infinity,
       endFrame = null;
     const designUrls = new Map();
+    // A file that cannot start cannot be put right here: whoever made it makes it again.
+    const CANNOT_START = 'この 作品を 動かせなかったよ。作った 人に、もう一度 ファイルに してもらってね。';
     const message = (text) => {
       output.hidden = false;
       const addition = (output.textContent ? '\n' : '') + String(text);
@@ -652,9 +654,19 @@
       else output.appendChild(document.createTextNode(addition));
       output.scrollTop = output.scrollHeight;
     };
+    // A sentence for the child, then the code and the rule's own words folded under 「先生むけの くわしい せつめい」, as
+    // in the editor.
+    const explain = (text, error, code) => {
+      message(text);
+      const details = document.createElement('details'), summary = document.createElement('summary'), raw = document.createElement('pre');
+      summary.textContent = '先生むけの くわしい せつめい';
+      raw.textContent = `${error?.code || code} ${error?.message || error}${error?.detail ? '\n' + error.detail : ''}`;
+      details.append(summary, raw);
+      output.appendChild(details);
+    };
     // The buttons follow the editor's rule. Stopped: ▶ 動かす only. Getting ready: ■ 止める only. Running: ■ 止める (where
-    // ▶ 動かす was) and ⏸ いったん止める; paused, ■ 止める and ▶ つづける. Finished (every body done, or 作品を全部止める): ■
-    // 止める only, and the last picture stays.
+    // ▶ 動かす was) and ⏸ いったん止める; paused, ■ 止める and ▶ つづける. Finished (every body done, or 作品を全部止める), and
+    // stopped by a mistake (FAILED, which cannot go on): ■ 止める only, and the last picture stays.
     function state() {
       // After every body ended, a body that starts again (on a touch, say) goes on running; after 作品を全部止める the
       // scheduler takes no input.
@@ -666,7 +678,7 @@
       }
       // The last picture stays: a ふきだし shown without a time stays too.
       if (phase === 'FINISHED') view?.keepBubbles();
-      const runScreen = ['PREPARING', 'RUNNING', 'PAUSED', 'FINISHED'].includes(phase);
+      const runScreen = ['PREPARING', 'RUNNING', 'PAUSED', 'FINISHED', 'FAILED'].includes(phase);
       if (start) {
         start.hidden = runScreen;
         start.disabled = phase === 'LOADING' || phase === 'ERROR';
@@ -686,6 +698,7 @@
           RUNNING: '動いているよ',
           PAUSED: 'いったん 止めたよ',
           FINISHED: 'おわったよ。もう一度 動かすときは「■ 止める」を おしてから「▶ 動かす」を おしてね',
+          FAILED: '動きが とちゅうで 止まったよ。「■ 止める」を おすと、はじめに もどるよ',
           STOPPED: '止まっているよ',
           ERROR: '開けないよ',
         }[phase] || '';
@@ -718,12 +731,15 @@
       root.inert = true;
       answer.focus();
     }
+    // A mistake found while the work runs stops it where it is. It cannot go on (no ▶ つづける); ■ 止める goes back to the
+    // start. The reason shows without its code, which is in the fold.
     function fail(error) {
       backgroundPaused = false;
       runtimeFailed = true;
       scheduler?.pause();
       view?.clearInput();
-      message(`${error.code || 'R411'} ${error.message || error}`);
+      if (scheduler) phase = 'FAILED';
+      explain(error?.code ? error.message : '動きが とちゅうで 止まったよ。', error, 'R411');
       flush();
       state();
     }
@@ -772,14 +788,9 @@
     function startupFailure(error, gesture = false) {
       dispose();
       phase = artwork ? 'ERROR' : 'STOPPED';
-      if (artwork) {
-        message(gesture ? '音を 出せなかったよ。この 作品を ちがう 画面で 開いてみてね。'
-          : '作品を 動かせなかったよ。「くわしく」を 見てね。');
-        const details = document.createElement('details'), summary = document.createElement('summary'), raw = document.createElement('pre');
-        summary.textContent = 'くわしく';
-        raw.textContent = `${error.code || 'R415'} ${error.message || error}${error.detail ? '\n' + error.detail : ''}`;
-        details.append(summary, raw); output.appendChild(details);
-      } else message(`${error.code || 'R415'} ${error.message || error}`);
+      // The same words with ▶ and without: what to do, then the code and the reason in the fold.
+      explain(gesture || error?.code === 'R415' ? '音を 出せなかったよ。この 作品を ちがう 画面で 開いてみてね。' : CANNOT_START,
+        error, 'R415');
       flush(); state();
     }
     async function startRun() {
@@ -1014,7 +1025,7 @@
       if (artwork) startupFailure(e);
       else {
         phase = 'ERROR';
-        message(`${e.code || 'X602'} ${e.message || e}`);
+        explain(CANNOT_START, e, 'X602');
         state();
       }
     }
@@ -1135,9 +1146,9 @@
       '<main id="playerRoot">' + (artwork ? '' : '<header><h1 id="playerTitle">' +
       title +
       '</h1><div class="player-controls"><button id="playerStart" disabled>▶ 動かす</button><button id="playerStop" hidden>■ 止める</button><button id="playerPause" hidden>⏸ いったん止める</button><span id="playerStatus" role="status">読みこみ中</span></div></header>') +
-      '<div class="player-stage"' + (artwork ? ' style="width:' + payload.project.stage.width + 'px;height:' + payload.project.stage.height + 'px"' : '') + '><div id="formSurface" tabindex="0"><canvas id="penCanvas"></canvas></div>' + (artwork ? '<div id="playerActivation" hidden><button id="playerActivate" type="button">ここをおしてはじめる</button></div>' : '') + '</div><pre id="playerOutput" role="log" hidden></pre></main>' +
-      '<div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionText"><div class="question-box"><div id="questionText"></div><input id="questionAnswer" aria-label="\u7b54\u3048" autocomplete="off"><div class="question-controls"><button id="questionStop">動きを止める</button><button id="questionSubmit">\u7b54\u3048\u308b</button></div></div></div>' +
-      '<noscript>この作品を動かすには、JavaScriptを使えるようにしてください。</noscript>\n<script>\n' +
+      '<div class="player-stage"' + (artwork ? ' style="width:' + payload.project.stage.width + 'px;height:' + payload.project.stage.height + 'px"' : '') + '><div id="formSurface" tabindex="0"><canvas id="penCanvas"></canvas></div>' + (artwork ? '<div id="playerActivation" hidden><button id="playerActivate" type="button">ここを おして はじめる</button></div>' : '') + '</div><pre id="playerOutput" role="log" hidden></pre></main>' +
+      '<div class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionText"><div class="question-box"><div id="questionText"></div><input id="questionAnswer" aria-label="\u7b54\u3048" autocomplete="off"><div class="question-controls"><button id="questionStop">■ 止める</button><button id="questionSubmit">\u7b54\u3048\u308b</button></div></div></div>' +
+      '<noscript>この 作品を 動かすには、JavaScriptを 使えるように してください。</noscript>\n<script>\n' +
       script +
       '\n<' +
       '/script>\n</body>\n</html>\n';
