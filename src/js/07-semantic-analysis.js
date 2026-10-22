@@ -783,7 +783,7 @@
         add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
       // 名人のできごと: 〜になったとき and 〜秒ごとに are read like any value; ふれる相手は部品。
       const heading = item.ast.heading, at = item.ast.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } };
-      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人の本文で だけ 使えます。使うときは、コードモードで「名人」を えらびます', only.sourceSpan ? only : at, item.key); }
+      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', MEIJIN_ONLY_MESSAGE, only.sourceSpan ? only : at, item.key); }
       const message = typeof item.filter === 'object' ? item.filter?.message : item.filter;
       const extensionEvent = !item.meijin && item.event === 'message' && typeof message === 'string' && message.startsWith('拡張:')
         ? EXTENSION_HOST.describe(message.slice(3), 'events') : null;
@@ -791,8 +791,8 @@
       if (heading?.condition) analyzeExpr(heading.condition, { ...base, node: at }, item.key);
       if (heading?.seconds) analyzeExpr(heading.seconds, { ...base, node: at }, item.key);
       // ふれたとき's partner is a part or the edge (端, 端:上 …); the message is at the heading, or the body's first line.
-      // 画面の右にふれたとき names one side of the screen: 画面の右のはし.
-      const side = /^画面の(上|下|右|左)$/.exec(item.filter?.target ?? '')?.[1];
+      // 画面の右にふれたとき and 右のはしにふれたとき name one side of the screen: 画面の右のはし.
+      const sideOf = /^(?:画面の(上|下|右|左)|(上|下|右|左)の(?:はし|端))$/.exec(item.filter?.target ?? ''), side = sideOf?.[1] || sideOf?.[2];
       if (item.event === 'touchStart' && !isEdgeTarget(item.filter?.target) && !componentByName(item.filter?.target))
         add('S301', side ? `画面の ${side}の はしの ことなら、「画面の${side}のはし」と 書きます` : `「${item.filter?.target}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, heading ? { sourceSpan: { startLine: item.ast.sourceSpan?.startLine || 1, startColumn: 1 } } : at, item.key);
       walk(item.ast.body, base, item.key, 0, true);
@@ -1500,7 +1500,7 @@
       });
       if (!reads) continue;
       const { proposals, draftRole, ...location } = first;
-      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人の本文で だけ 使えます。使うときは、コードモードで「名人」を えらびます' }, ...out.slice(at).filter(e => e.where !== key)];
+      out = [...out.slice(0, at), { ...location, code: 'S317', message: MEIJIN_ONLY_MESSAGE }, ...out.slice(at).filter(e => e.where !== key)];
     }
     return out;
   }
