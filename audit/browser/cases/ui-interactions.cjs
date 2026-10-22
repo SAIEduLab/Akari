@@ -204,6 +204,27 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
    }finally{await cdp.send('Emulation.setTouchEmulationEnabled',{enabled:false}).catch(()=>{});await cdp.detach().catch(()=>{});}
    assert.ok(seen.filter(w=>!w.includes('scrolled')).length>=4&&seen.filter(w=>w.includes('scrolled')).length>=4,'blocks in view, scrolled and not: '+seen.length);
   });
+  // D1-04 (LANGUAGE.md コードとブロックで同じ本文を編集する): while the code has a mistake, 「いつ動く？」 is pale like 「ブロック」
+  // and a press keeps the code view; it shows 「コードの 赤い ところを 直すと、ブロックに もどれるよ」 under 「いつ動く？」, and a
+  // press elsewhere takes it away.
+  await test('UI-when-button-refused-with-code-error',async()=>{
+   await (await reveal(page.locator('#editorModecode'))).click();await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「こんにちは」と言');})();await page.waitForTimeout(400);
+   const when=page.locator('#sourceHeadingBtn'),blocks=page.locator('#editorModeblocks'),before=await state();
+   assert.equal(await blocks.getAttribute('aria-disabled'),'true','ブロック is pale while the code has a mistake');
+   assert.equal(await when.getAttribute('aria-disabled'),'true','いつ動く？ is pale like ブロック');
+   const look=async e=>e.evaluate(n=>{const c=getComputedStyle(n);return{opacity:c.opacity,color:c.color};});assert.deepEqual(await look(when),await look(blocks),'the same pale look as ブロック');
+   await when.click({force:true});await page.waitForTimeout(200);
+   const note=await when.evaluate(button=>{const b=button.getBoundingClientRect(),words='コードの赤いところを直すと、ブロックにもどれるよ';
+    const shown=[...document.querySelectorAll('body *')].filter(n=>n.children.length===0&&n.getClientRects().length&&n.textContent.replace(/\s+/g,'').includes(words));
+    return shown.map(n=>{const r=n.getBoundingClientRect();return{top:r.top,left:r.left,right:r.right,below:r.top>=b.bottom-1&&r.left<b.right+80&&r.right>b.left-80};});});
+   assert.ok(note.some(n=>n.below),'the note shows under いつ動く？: '+JSON.stringify(note));
+   assert.equal((await state()).mode,'code','the press keeps the code view');
+   await page.locator('#formSurface').click({position:{x:5,y:5}});await page.waitForTimeout(200);
+   const later=await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(n=>n.children.length===0&&n.getClientRects().length&&n.textContent.replace(/\s+/g,'').includes('コードの赤いところを直すと、ブロックにもどれるよ')).length);
+   assert.equal(later,0,'a press elsewhere takes the note away');
+   const after=await state();assert.equal(after.source,before.source);assert.equal(after.history,before.history);
+   await (async()=>{const control=await reveal(page.locator('#codeEditor')); return control.fill('');})();await page.waitForTimeout(400);
+  });
   await test('UI-keyboard-only-create-move-delete-history',async()=>{
    await fixture('何もしない。');const tabTo=async locator=>{for(let i=0;i<500;i++){if(await locator.evaluate(e=>e===document.activeElement))return;await page.keyboard.press('Tab');}throw Error('Keyboard target not reachable: '+await locator.getAttribute('data-blockui-action'));};const openWithKeyboard=async node=>{await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));const more=node.locator(':scope > .blockui-node-head [data-blockui-action="more"]');await tabTo(more);if(!await more.evaluate(e=>e.closest('details').open))await page.keyboard.press('Enter');await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));assert.equal(await more.evaluate(e=>e.closest('details').open),true,'keyboard disclosure must be open');};const toolsToggle=root.locator('[data-blockui-action="palette-tools-toggle"]');if(await toolsToggle.getAttribute('aria-expanded')==='false'){await tabTo(toolsToggle);await page.keyboard.press('Enter');assert.equal(await toolsToggle.getAttribute('aria-expanded'),'true');}if(await root.locator('.blockui-palette-options').getAttribute('open')===null){await tabTo(root.locator('.blockui-palette-options > summary'));await page.keyboard.press('Enter');}await tabTo(root.locator('[data-blockui-palette-mode]'));await page.keyboard.press('Home');await tabTo(root.locator('[data-blockui-search]'));await page.keyboard.press('Control+a');await page.keyboard.type('Say');await tabTo(root.locator('[data-blockui-schema="Say"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation','Say']);await openWithKeyboard(nodes('Say')); await tabTo(nodes('Say').locator(':scope > .blockui-node-head [data-blockui-action="move-up"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['Say','NoOperation']);await openWithKeyboard(nodes('Say')); await tabTo(nodes('Say').locator(':scope > .blockui-node-head [data-blockui-action="remove"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation']);await page.keyboard.press('Control+z');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['Say','NoOperation']);await page.keyboard.press('Control+y');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation']);
   });
