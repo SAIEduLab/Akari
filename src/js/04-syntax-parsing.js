@@ -3118,6 +3118,18 @@
     if(typeof source!=='string'||cpLen(source)>LIMITS.sourceEach)throw new AkariError('P208','文字が多すぎて、これ いじょうは 書けません。文を 短くするか、ほかの 動きに 分けてください',1,1);
     const physical=normalizeSource(source).lines,headings=[];
     for(const line of physical){if(line.continuation)continue;const nested=nestedQuoteDiagnostic(line,symbols);if(nested)throw nested;}
+    // A 「, 【 or （ left open, or a ） that closes nothing, is told on the line where that mark is (F2-06 of the manuals'
+    // review; it was 0, shown as 1行目): each line's code is scanned as the parser masks it, and the place is mapped back.
+    for(const line of physical){
+      if(line.continuation||!line.mapped.text)continue;
+      try{surfaceMask(line.mapped.text);}catch(error){
+        const at=error instanceof AkariError&&error.code==='P207'&&Number.isInteger(error.markAt)?line.mapped.positions[error.markAt]:undefined;
+        if(at===undefined)continue;
+        // The physical line the place is on (a 「 」 may go on over lines).
+        const where=physical.findLast(item=>item.lineNo>=line.lineNo&&item.start<=at)||line;
+        error.line=where.lineNo;error.column=at-where.start+1;throw error;
+      }
+    }
     let previousHeading=null,headingError=null;
     for(const line of physical){
       if(line.continuation||!line.code||/^[ \t\u3000]/u.test(line.raw))continue;
@@ -3642,8 +3654,9 @@
   function surfaceMask(text) {
     // Without a quote, a bracket or ※ nothing is hidden (and no bracket can be left open).
     if (typeof text === 'string' && !/[「『【（［）］※]/.test(text)) return text;
-    const out = text.split(''), stack = [];
-    let quote = '';
+    // The place of the mark that is left open, or of a ） that closes the wrong one, goes with P207 (markAt).
+    const out = text.split(''), stack = [], opens = [];
+    let quote = '', quoteAt = 0;
     for (let i = 0; i < text.length; i++) {
       const ch = text[i];
       if (quote) {
@@ -3657,19 +3670,20 @@
       }
       if (ch === '※') { for(let j=i;j<text.length;j++) out[j]='\u0001'; break; }
       if (ch === '「' || ch === '『' || ch === '【') {
-        quote = ch === '「' ? '」' : ch === '『' ? '』' : '】';
+        quote = ch === '「' ? '」' : ch === '『' ? '』' : '】'; quoteAt = i;
         out[i] = '\u0001';
         continue;
       }
       if (ch === '（' || ch === '［') {
-        stack.push(ch === '（' ? '）' : '］');
+        stack.push(ch === '（' ? '）' : '］'); opens.push(i);
         out[i] = '\u0001';
       } else if (ch === '）' || ch === '］') {
-        if (stack.pop() !== ch) throw new AkariError('P207', 'かっこの 開く しるしと とじる しるしが 合っているか たしかめてください');
+        opens.pop();
+        if (stack.pop() !== ch) throw Object.assign(new AkariError('P207', 'かっこの 開く しるしと とじる しるしが 合っているか たしかめてください'), { markAt: i });
         out[i] = '\u0001';
       } else if (stack.length) out[i] = '\u0001';
     }
-    if (quote || stack.length) throw new AkariError('P207', '「 」・【 】・（ ）などの とじる しるしを 書いてください');
+    if (quote || stack.length) throw Object.assign(new AkariError('P207', '「 」・【 】・（ ）などの とじる しるしを 書いてください'), { markAt: quote ? quoteAt : opens[0] });
     return out.join('');
   }
   function readLegacySurfaceStatement(code, line, symbols, ctx) {
