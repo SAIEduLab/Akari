@@ -1974,18 +1974,19 @@
       // on the view). ヒント sits right after お手本を開く and opens over the page, so the bar keeps one row.
       toolbar.insertBefore($('.ui-level-label'), $('#projectName'));
       $('#sampleBtn').after($('#basicActionGuide'));
-      // A help paragraph with ruby would be read with its readings (「保存 ほぞん」) as a description: the controls get its
-      // text without them (AX-09).
+      installToolbarMenus(toolbar);
+      toolbox.append(tools);
+      // A control described by a ヒント paragraph gets the paragraph's text as its own description (AX-09): a reference
+      // into the closed ヒント reads as nothing, and a paragraph with ruby would be read with its readings (「保存
+      // ほぞん」). Run once every such control is in the page (the 作品の道具 buttons are moved into the toolbox above).
       for (const control of $$('[aria-describedby]')) {
         const help = document.getElementById(control.getAttribute('aria-describedby'));
-        if (!help?.closest('#basicActionGuide') || !help.querySelector('rt')) continue;
+        if (!help?.closest('#basicActionGuide')) continue;
         const copy = help.cloneNode(true);
         copy.querySelectorAll('rt').forEach((rt) => rt.remove());
         control.setAttribute('aria-description', copy.textContent.replace(/\s+/g, ' ').trim());
         control.removeAttribute('aria-describedby');
       }
-      installToolbarMenus(toolbar);
-      toolbox.append(tools);
       // Native reverse Tab may leave a partly visible button clipped in this ribbon.
       tools.addEventListener('focusin', (event) => {
         if (event.target.matches('button,select'))
