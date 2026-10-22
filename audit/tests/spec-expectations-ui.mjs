@@ -6,6 +6,7 @@ import {pathToFileURL} from 'node:url';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
 import {readExpectationFiles,verifyExpectations,verifyExpectationsUiReport,areas,expectationsRoot} from '../lib/spec-expectations.mjs';
+import {VIEW_NAMES,chooseView,shownView,readViewToggle,pressViewToggle,viewRefusalNote} from '../browser/cases/view-toggle.cjs';
 
 // GA-EXEC (real browser): every screen-operation case (kind ui) of the expectation data, done with the product's own
 // controls in the order its steps give. The checks below follow each case's steps and assert its listed results;
@@ -63,11 +64,26 @@ const readBlock=locator=>locator.evaluate(main=>{const read=el=>{let s='';for(co
 const S=page=>({
   page,
   select:async id=>{await (await reveal(page.locator('#objectSelect'))).selectOption(id);await page.waitForTimeout(150);},
-  code:async()=>{if(await page.locator('#editorModecode').getAttribute('aria-pressed')!=='true')await page.click('#editorModecode');await page.waitForTimeout(150);},
-  blocks:async()=>{await page.click('#editorModeblocks');await page.waitForTimeout(250);},
-  mode:()=>page.evaluate(()=>document.querySelector('#editorModeblocks').getAttribute('aria-pressed')==='true'?'blocks':'code'),
-  // The コード／ブロック switch is shown (a switch that is only pale still counts as shown).
-  toggle:()=>page.evaluate(()=>{const m=document.querySelector('#editorModecode')?.closest('.editor-modes');return !!m&&!!m.getClientRects().length&&getComputedStyle(m).visibility!=='hidden';}),
+  // The view on the screen, chosen with the one view toggle 「ブロックモード ⇄」「コードモード ⇄」 (final call 22).
+  code:async()=>{await chooseView(page,'code');await page.waitForTimeout(150);},
+  blocks:async()=>{await chooseView(page,'blocks');await page.waitForTimeout(250);},
+  mode:()=>shownView(page),
+  // The view toggle as the screen shows it: its label while it is on the screen and neither pale nor hidden, else ''.
+  toggle:()=>page.evaluate(()=>{const b=document.querySelector('#editorModecode:not([hidden]),#editorModeblocks:not([hidden])');if(!b||!b.getClientRects().length)return '';const cs=getComputedStyle(b);
+    return cs.visibility==='hidden'||Number(cs.opacity)<1||b.disabled||b.getAttribute('aria-disabled')==='true'?'':b.textContent;}),
+  // A press of the view toggle, which shows the label the step names.
+  press:async label=>{const t=await readViewToggle(page);if(t.label!==label)throw Error('the view toggle shows '+t.label+', not '+label);await pressViewToggle(page);await page.waitForTimeout(250);},
+  // The note under the view toggle while it shows, when it is a role=status note; else ''.
+  note:async()=>{const text=await viewRefusalNote(page);if(!text)return '';return await page.locator('#modeBlockedNote').getAttribute('role')==='status'?text:'(not role=status) '+text;},
+  // The toolbar's and the run strip's controls as the screen shows them: shown (laid out, not visibility:hidden), place, pressable.
+  toolbar:()=>page.evaluate(()=>Object.fromEntries([...document.querySelectorAll('.menutool [id], #runStrip [id], #pauseBtn, #continueBtn, #stepBtn, #runtimeInspectBtn')].filter(e=>e.id&&e.matches('button,select,input,details')).map(e=>{const r=e.getBoundingClientRect(),cs=getComputedStyle(e);
+    return [e.id,{shown:!!e.getClientRects().length&&cs.visibility!=='hidden',x:r.x,y:r.y,w:r.width,h:r.height,pressable:!e.disabled&&e.getAttribute('aria-disabled')!=='true'}];}))),
+  samePlace:(a,b)=>!!a&&!!b&&a.w>0&&b.w>0&&Math.abs(a.x-b.x)<2.5&&Math.abs(a.y-b.y)<2.5,
+  // Controls shown on both screens keep their places (the run screen does not pack the bar).
+  unmoved:(edit,run,except=[])=>Object.keys(edit).filter(id=>!except.includes(id)&&edit[id].shown&&run[id]?.shown).every(id=>Math.abs(edit[id].x-run[id].x)<2.5&&Math.abs(edit[id].y-run[id].y)<2.5),
+  // The work's name while it runs: plain text, not a field to write in.
+  nameIsText:()=>page.evaluate(()=>{const n=document.querySelector('#projectName'),cs=getComputedStyle(n),clear=c=>c==='transparent'||/rgba\(.*,\s*0\)$/.test(c);
+    return n.disabled&&cs.pointerEvents==='none'&&clear(cs.backgroundColor)&&(clear(cs.borderTopColor)||cs.borderTopStyle==='none'||parseFloat(cs.borderTopWidth)===0);}),
   write:async text=>{await page.fill('#codeEditor',text);await page.waitForTimeout(450);},
   text:()=>page.locator('#codeEditor').inputValue(),
   visible:selector=>page.locator(selector).isVisible(),
@@ -78,8 +94,8 @@ const S=page=>({
     const r=await page.evaluate(()=>({issues:[...document.querySelectorAll('#diagnosisBody .diagnosis-issue')].map(x=>x.textContent),notes:[...document.querySelectorAll('#diagnosisBody .diagnosis-note')].map(x=>x.textContent)}));
     await page.click('#diagnosisClose');await page.locator('#diagnosisModal').waitFor({state:'hidden'});return {...r,where:'list'};},
   // 名人 is chosen in code (コードで「名人」を選ぶ); the confirm comes before the body becomes a 名人 text.
-  startMeijin:async accept=>{let kind=null;const take=d=>{kind=d.type();accept?d.accept():d.dismiss();};
-    if(await page.locator('#editorModecode').isVisible()&&await page.locator('#editorModecode').getAttribute('aria-pressed')!=='true'){await page.click('#editorModecode');await page.waitForTimeout(150);}
+  startMeijin:async accept=>{let kind=null;const take=d=>{kind=d.type();page.__akariLastDialog={type:kind,message:d.message()};accept?d.accept():d.dismiss();};
+    if(await chooseView(page,'code'))await page.waitForTimeout(150);
     page.once('dialog',take);await page.selectOption('#uiLevel','meijin');await page.waitForTimeout(300);page.off('dialog',take);return kind;},
   // The level picker removes the levels the view does not offer (1.5.0: hidden, not disabled).
   level:()=>page.evaluate(()=>({chosen:document.querySelector('#uiLevel').value,shown:document.body.dataset.uiLevel,
@@ -163,14 +179,14 @@ const checks={
     await s.select('w-neko');await s.code();await s.write('ペンを下ろす。\nいまのばしょから、右へ100歩動く。');await s.select('stage');await s.code();await s.write('2秒待つ。\n作品の線とスタンプを全部消す。');
     const check=await s.check();await s.run();await s.page.waitForTimeout(1000);const early=await pen();await s.page.waitForTimeout(2300);const late=await pen();
     return {expect:{lineAtOneSecond:early>0,clearedAfterThree:late===0,noIssue:check.issues.length===0},info:{early,late}};},
-  'CC-155':async s=>{await s.select('w-neko');await s.code();await s.write('タイマーを0にする。');await s.blocks();
-    const mode=await s.mode(),pale=await s.page.locator('#editorModeblocks').getAttribute('aria-disabled'),note=await s.page.evaluate(()=>{const n=document.querySelector('#modeBlockedNote');return n?.getClientRects().length?n.textContent:'';});
+  'CC-155':async s=>{await s.select('w-neko');await s.code();await s.write('タイマーを0にする。');await s.press('コードモード ⇄');
+    const mode=await s.mode(),label=await s.toggle(),note=await s.note();
     const blocks=await s.page.evaluate(()=>{const ids=[];const walk=x=>{if(x.schemaId!=='Script')ids.push(x.schemaId);for(const b of Object.values(x.bodies||{}))b.forEach(walk);};walk(Akari.app.editorState.main.blockView);return ids;});
-    await s.code();const code=(await s.text()).trim();await s.blocks();await s.category('sense');const sense=await s.palette();
-    return {expect:{switched:mode==='blocks'&&pale!=='true'&&!note,oneTimerBlock:blocks.length===1&&blocks[0]==='TimerReset',sameCode:code==='タイマーを0にする。',inSense:sense.includes('TimerReset')},info:{blocks,code,note}};},
+    await s.press('ブロックモード ⇄');const back=await s.mode(),code=(await s.text()).trim();await s.press('コードモード ⇄');await s.category('sense');const sense=await s.palette();
+    return {expect:{switched:mode==='blocks'&&label==='ブロックモード ⇄'&&!note,oneTimerBlock:blocks.length===1&&blocks[0]==='TimerReset',sameCode:back==='code'&&code==='タイマーを0にする。',inSense:sense.includes('TimerReset')},info:{blocks,code,note,label}};},
   'CC-181':async s=>{await s.newWork();const l=await s.level(),takudon=await s.part('たくどん');
     const empty=(await s.scripts()).every(x=>!x.source.trim());
-    return {expect:{entry:l.chosen==='entry'&&l.shown==='entry',blocks:(await s.mode())==='blocks'&&!(await s.toggle()),centre:!!takudon&&takudon.x===320&&takudon.y===200,noCommands:empty},info:{l,takudon}};},
+    return {expect:{entry:l.chosen==='entry'&&l.shown==='entry',blocks:(await s.mode())==='blocks'&&(await s.toggle())==='ブロックモード ⇄',centre:!!takudon&&takudon.x===320&&takudon.y===200,noCommands:empty},info:{l,takudon}};},
   'CC-243':async s=>{await s.newWork();await s.page.selectOption('#uiLevel','advanced');await s.page.waitForTimeout(200);const id=(await s.part('たくどん')).id;await s.select(id);
     const x=await s.propValue('よこのばしょ'),y=await s.propValue('たてのばしょ'),yHelp=bare(await s.propHelp('たてのばしょ')),dirHelp=bare(await s.propHelp('向き'));
     await s.select('stage');await s.prop('高さ',300);await s.select(id);const after=await s.propValue('たてのばしょ');
@@ -204,24 +220,31 @@ const checks={
     const circle=await paintCircle(s,70);await place(s,circle,{x:265,y:265});await s.select(two.id);await s.prop('よこのばしょ',1000);
     await s.select(one.id);await s.page.selectOption('#eventSelect','start');await s.write(touchLoop(circle.name));await s.run();const withCircle=await listen(s,one.id);await s.stop();
     return {expect:{starBoxes:stars.includes('ふれた'),circleSeen:withCircle.length>0&&withCircle.every(t=>t==='はなれている')},info:{stars,withCircle,circle:await s.part(circle.name)}};},
-  'CC-294':async s=>{const step1=await s.level(),toggle1=await s.toggle();await s.page.selectOption('#uiLevel','basic');await s.page.waitForTimeout(200);await s.code();const step2=await s.level();
-    const step3=await s.level();await s.page.selectOption('#uiLevel','advanced');await s.page.waitForTimeout(200);await s.blocks();const step4=await s.level();
+  'CC-294':async s=>{const step1=await s.level(),toggle1=await s.toggle();await s.page.selectOption('#uiLevel','basic');await s.page.waitForTimeout(200);await s.press('ブロックモード ⇄');const step2=await s.level(),mode2=await s.mode(),toggle2=await s.toggle();
+    const step3=await s.level();await s.page.selectOption('#uiLevel','advanced');await s.page.waitForTimeout(200);await s.press('コードモード ⇄');const step4=await s.level(),mode4=await s.mode();
     const named=await s.page.getByRole('combobox',{name:'レベル',exact:true}).evaluateAll(es=>es.map(e=>e.id));
-    const layout=await s.page.evaluate(()=>{const box=e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom};},modes=box(document.querySelector('#editorModecode').closest('.editor-modes')),level=box(document.querySelector('#uiLevel')),name=box(document.querySelector('#projectName'));
+    const layout=await s.page.evaluate(()=>{const box=e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom};},modes=box(document.querySelector('#editorModecode:not([hidden]),#editorModeblocks:not([hidden])')),level=box(document.querySelector('#uiLevel')),name=box(document.querySelector('#projectName'));
       const heading=[...document.querySelectorAll('label,span,div,strong,legend')].some(e=>e.getClientRects().length&&e.textContent.trim()==='見せ方');return{modes,level,name,heading,innerWidth};});
     const row=[layout.modes,layout.level,layout.name],sameRow=row.every(b=>b.top<layout.level.bottom&&b.bottom>layout.level.top);
-    return {expect:{entryBlocks:step1.options.join('|')==='はじめて|かんたん|くわしく'&&!toggle1,codeKeepsBasic:step2.chosen==='basic',codeLevels:step3.options.join('|')==='かんたん|くわしく|名人',
-      blocksKeepAdvanced:step4.chosen==='advanced'&&step4.options.join('|')==='はじめて|かんたん|くわしく',named:named.length===1&&named[0]==='uiLevel'&&!layout.heading,
+    return {expect:{entryBlocks:step1.options.join('|')==='はじめて|かんたん|くわしく'&&toggle1==='ブロックモード ⇄',codeKeepsBasic:mode2==='code'&&toggle2==='コードモード ⇄'&&step2.chosen==='basic',codeLevels:step3.options.join('|')==='かんたん|くわしく|名人',
+      blocksKeepAdvanced:mode4==='blocks'&&step4.chosen==='advanced'&&step4.options.join('|')==='はじめて|かんたん|くわしく',named:named.length===1&&named[0]==='uiLevel'&&!layout.heading,
       order:sameRow&&layout.modes.right<=layout.level.left&&layout.level.right<=layout.name.left},info:{step1,step2,step3,step4,named,layout}};},
   'CC-295':async s=>{const p=s.page;await s.select('w-takudon');await s.code();await s.write('ずっとくり返す。\n  1秒待つ。');
-    const edit={run:await p.locator('#runBtn').isVisible(),stop:await p.locator('#stopBtn').isVisible(),level:await p.locator('#uiLevel').isVisible(),toggle:await s.toggle()},runBox=await p.locator('#runBtn').boundingBox();
+    const work=['newBtn','sampleBtn','basicActionGuide','openBtn','saveBtn','exportBtn'],gone=[...work,'uiLevel','editorModeblocks'];
+    const edit=await s.toolbar(),editToggle=await s.toggle(),runBox=await p.locator('#runBtn').boundingBox();
     // A double press of ▶ 動かす: its second press lands on ■ 止める, which took ▶'s place (二度押し, LANGUAGE.md).
     await p.mouse.dblclick(runBox.x+runBox.width/2,runBox.y+runBox.height/2);await p.locator('#stopBtn').waitFor({state:'visible'});const stopBox=await p.locator('#stopBtn').boundingBox();await p.waitForTimeout(100);
     const early={state:await p.evaluate(()=>Akari.app.editorState.state),run:await p.locator('#runBtn').isVisible(),stop:await p.locator('#stopBtn').isVisible()};
-    await p.waitForTimeout(1000);const band=bare(await p.locator('#execLocation').innerText()),sentence=bare(await p.locator('#execSentence').innerText().catch(()=>'')),running={level:await p.locator('#uiLevel').isVisible(),toggle:await s.toggle(),run:await p.locator('#runBtn').isVisible()};
-    await p.click('#stopBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');const back=await p.locator('#runBtn').isVisible();
-    return {expect:{editScreen:edit.run&&!edit.stop&&edit.level&&edit.toggle,doublePressIgnored:early.state==='RUNNING'&&!early.run&&early.stop&&Math.abs(stopBox.x-runBox.x)<2&&Math.abs(stopBox.y-runBox.y)<2,
-      runScreen:!running.level&&!running.toggle&&!running.run&&band.startsWith('いま動いている文：')&&band.includes('たくどん')&&band.includes('「動かす」をおしたとき')&&/\d+行目/.test(band)&&sentence.length>0,stopped:back},info:{edit,early,band,sentence,running}};},
+    await p.waitForTimeout(1000);const band=bare(await p.locator('#execLocation').innerText()),sentence=bare(await p.locator('#execSentence').innerText().catch(()=>'')),run=await s.toolbar(),nameIsText=await s.nameIsText();
+    await p.click('#pauseBtn');await p.waitForTimeout(200);const paused=await s.toolbar();
+    await p.click('#stopBtn');await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');const back=await s.toolbar();
+    return {expect:{editScreen:edit.runBtn.shown&&!edit.stopBtn.shown&&work.every(id=>edit[id].shown)&&edit.uiLevel.shown&&editToggle==='コードモード ⇄',
+      doublePressIgnored:early.state==='RUNNING'&&!early.run&&early.stop&&Math.abs(stopBox.x-runBox.x)<2&&Math.abs(stopBox.y-runBox.y)<2,
+      runHidesKeepingPlace:gone.every(id=>!run[id].shown&&s.samePlace(edit[id],run[id])),notPacked:s.unmoved(edit,run,['runBtn','stopBtn']),
+      stopAndName:s.samePlace(edit.runBtn,run.stopBtn)&&run.stopBtn.shown&&s.samePlace(edit.projectName,run.projectName)&&nameIsText,
+      runControls:run.pauseBtn.shown&&run.stepBtn.shown&&run.runtimeInspectBtn.shown&&!run.runBtn.shown,
+      band:band.startsWith('いま動いている文：')&&band.includes('たくどん')&&band.includes('「動かす」をおしたとき')&&/\d+行目/.test(band)&&sentence.length>0,
+      pausedContinue:paused.continueBtn.shown&&paused.continueBtn.pressable,stopped:back.runBtn.shown&&!back.stopBtn.shown},info:{band,sentence,early,edit,run}};},
   'CC-296':async s=>{const p=s.page,motion=['MotionCommand:GOTO','MotionCommand:MOVE_BY','MotionCommand:MOVE'],extra=id=>p.locator('#blockEditor .blockui-node[data-block-id="'+id+'"]');
     const timedOps=async ids=>{const out={};for(const n of ids){const node=extra(n.id);await clickNode(node);out[n.s]=await node.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-extra [data-blockui-action="motion-timed"]').count();}return out;};
     await s.select('w-neko');await s.category('motion');const entry=await s.palette();for(const id of motion)await s.place(id);const entryTimed=await timedOps((await s.tree()).b.body);
@@ -245,33 +268,146 @@ const checks={
     return {expect:{dialog:bare(title)===bare('この ファイルは 開けなかったよ')&&bare(message)===bare('前の あかりで ほぞんした 作品なので、この あかりでは 開けないよ。その 作品を 作った ときの あかりで 開いてね。'),closeFocused:focusClose==='openRefusalClose',
       // 開く sits in the 作品 menu at はじめて; with the menu closed its summary is the 開く control that takes the focus.
       backToOpen:['entryOpen','entryProjectMenu'].includes(focusOpen),unchanged:JSON.stringify(after)===JSON.stringify(before)},info:{title,message,focusClose,focusOpen}};},
+  // The one view toggle (final call 22): it names the view on the screen, and its accessible name says the same.
+  'CC-331':async s=>{const p=s.page;await s.select('w-neko');
+    const look=async()=>({label:await s.toggle(),view:await s.mode(),named:{blocks:await p.getByRole('button',{name:'ブロックモード',exact:true}).count(),code:await p.getByRole('button',{name:'コードモード',exact:true}).count()},
+      buttons:await p.locator('.menutool > .editor-modes > button').evaluateAll(es=>es.filter(e=>!e.hidden&&e.getClientRects().length).length),blocksShown:await s.visible('#blockEditor'),codeShown:await s.visible('#codeEditor')});
+    const first=await look();await s.press('ブロックモード ⇄');const second=await look();await s.press('コードモード ⇄');const third=await look();
+    return {expect:{oneToggle:first.buttons===1&&first.label==='ブロックモード ⇄'&&first.view==='blocks'&&first.blocksShown&&first.named.blocks===1&&first.named.code===0,
+      toCode:second.codeShown&&!second.blocksShown&&second.label==='コードモード ⇄'&&second.named.code===1&&second.named.blocks===0,back:third.blocksShown&&third.label==='ブロックモード ⇄'&&third.view==='blocks'},info:{first,second,third}};},
+  'CC-332':async s=>{const p=s.page,label=await s.toggle();await s.press('ブロックモード ⇄');const view=await s.mode(),note=await s.note();
+    await p.locator('#formSurface').click({position:{x:5,y:5}});await p.waitForTimeout(200);const later=await s.note();
+    await s.press('ブロックモード ⇄');const again=await s.note();await p.keyboard.press('Shift');await p.waitForTimeout(200);const afterKey=await s.note();
+    const why='コードで 書くときは、上の「かんたん」か「くわしく」を えらんでね';
+    return {expect:{shown:label==='ブロックモード ⇄',stays:view==='blocks'&&(await s.level()).chosen==='entry',says:note===why,hides:!later,keyHides:again===why&&!afterKey},info:{label,note,later,again,afterKey}};},
+  'CC-333':async s=>{const p=s.page;await (await reveal(p.locator('#procBtn'))).click();await p.locator('#procModal').waitFor({state:'visible'});await p.getByRole('button',{name:'新しい てじゅん',exact:true}).click();await p.waitForTimeout(300);
+    const look=async()=>{const t=await readViewToggle(p,'callable');return {...t,blocksShown:await s.visible('#callableBlocks'),codeShown:await s.visible('#callableCode')};};
+    const shows=t=>t.label===VIEW_NAMES[t.view]+' ⇄'&&t.name===VIEW_NAMES[t.view]&&(t.view==='blocks'?t.blocksShown&&!t.codeShown:t.codeShown&&!t.blocksShown);
+    const first=await look();await pressViewToggle(p,'callable');await p.waitForTimeout(250);const second=await look();await pressViewToggle(p,'callable');await p.waitForTimeout(250);const third=await look();
+    return {expect:{toggle:shows(first),switched:second.view!==first.view&&shows(second),back:third.view===first.view&&shows(third)},info:{first,second,third}};},
+  // はじめて's run screen (final call 21): ⏸ いったん止める and ▶ つづける, no 1つずつ 動かす or 本文を見て たしかめる.
+  'CC-334':async s=>{const p=s.page;await s.select('w-neko');
+    const wait=p.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="WaitTime"]:visible').first();for(let i=0;i<3;i++){await wait.click();await p.waitForTimeout(250);}
+    const body=(await s.scripts()).find(x=>x.targetId==='w-neko'&&x.event==='start');
+    const kept=['undoBtn','redoBtn','tutorialStart'],gone=['entryProjectMenu','uiLevel','editorModecode'];
+    const edit=await s.toolbar();await p.click('#runBtn');await p.waitForTimeout(500);
+    const run=await s.toolbar(),nameIsText=await s.nameIsText(),band=bare(await p.locator('#execLocation').innerText()),sentence=bare(await p.locator('#execSentence').innerText().catch(()=>''));
+    await p.click('#pauseBtn');const pausedAt=await p.evaluate(()=>performance.now());await p.waitForTimeout(300);const paused=await s.toolbar();await p.waitForTimeout(1200);
+    // The three waits take 3 s of run time; paused after about 0.5 s, the rest is under 3 s once ▶ つづける is pressed.
+    await p.evaluate(()=>{globalThis.__doneAt=null;new MutationObserver(()=>{if(!globalThis.__doneAt&&/おわったよ/.test(document.querySelector('#statusText').textContent))globalThis.__doneAt=performance.now();}).observe(document.querySelector('#statusText'),{childList:true,characterData:true,subtree:true});});
+    const resumedAt=await p.evaluate(()=>performance.now());await p.click('#continueBtn');await p.waitForFunction(()=>globalThis.__doneAt!==null,null,{timeout:5000}).catch(()=>{});
+    const doneAfter=await p.evaluate(at=>globalThis.__doneAt===null?null:globalThis.__doneAt-at,resumedAt);
+    return {expect:{threeWaits:!!body&&body.source.trim()==='1秒待つ。\n1秒待つ。\n1秒待つ。',
+      stopAndName:run.stopBtn.shown&&s.samePlace(edit.runBtn,run.stopBtn)&&s.samePlace(edit.projectName,run.projectName)&&nameIsText,
+      hiddenKeepingPlace:gone.every(id=>edit[id].shown&&!run[id].shown&&s.samePlace(edit[id],run[id]))&&s.unmoved(edit,run,['runBtn','stopBtn']),
+      runControls:run.pauseBtn.shown&&!run.stepBtn.shown&&!run.runtimeInspectBtn.shown&&kept.every(id=>run[id].shown&&!run[id].pressable&&s.samePlace(edit[id],run[id])),
+      band:band==='いま動いている文：ねこ'&&sentence==='1秒待つ',pausedControls:paused.continueBtn.shown&&paused.continueBtn.pressable&&!paused.stepBtn.shown&&!paused.runtimeInspectBtn.shown,
+      continues:doneAfter!==null&&doneAfter>1500&&doneAfter<2800},info:{body,band,sentence,doneAfter,pausedAt,edit,run}};},
+  // The exported player with 「「▶ 動かす」の ボタンを つける」 shows only the buttons that can be pressed (final call 21).
+  'CC-335':async s=>{const p=s.page;await s.select('w-neko');await s.code();await s.write('3秒待つ。');
+    await (await reveal(p.locator('#exportBtn'))).click();await p.locator('#exportChoiceModal').waitFor({state:'visible'});
+    const downloading=p.waitForEvent('download');await p.click('#exportControls');const file=path.join(directory,'CC-335-player.html');await (await downloading).saveAs(file);
+    const q=await p.context().newPage();q.on('pageerror',e=>pageErrors.push(e.message));await q.goto(pathToFileURL(file).href);await q.waitForFunction(()=>document.querySelector('#playerRoot')?.dataset.state==='READY');
+    const shown=()=>q.evaluate(()=>['playerStart','playerStop','playerPause'].filter(id=>{const e=document.getElementById(id);return e&&e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden';}).map(id=>document.getElementById(id).textContent.trim()).join('|'));
+    const scene=()=>q.evaluate(()=>[...document.querySelectorAll('#formSurface .component')].map(c=>[c.style.left,c.style.top,c.style.transform,c.style.display].join(' ')).join('|')+'|'+document.querySelectorAll('#formSurface .sprite-bubble').length);
+    const ready=await shown(),startScene=await scene(),startBox=await q.locator('#playerStart').boundingBox();await q.click('#playerStart');await q.waitForTimeout(500);
+    const running=await shown(),stopBox=await q.locator('#playerStop').boundingBox();await q.click('#playerPause');await q.waitForTimeout(200);const paused=await shown();
+    await q.click('#playerPause');await q.waitForTimeout(4000);const finished=await shown();await q.click('#playerStop');await q.waitForTimeout(300);
+    const stopped={shown:await shown(),state:await q.locator('#playerRoot').getAttribute('data-state'),scene:await scene()};await q.close();
+    return {expect:{ready:ready==='▶ 動かす',running:running==='■ 止める|⏸ いったん止める'&&!!stopBox&&Math.abs(stopBox.x-startBox.x)<2&&Math.abs(stopBox.y-startBox.y)<2,paused:paused==='■ 止める|▶ つづける',
+      finished:finished==='■ 止める',stopped:stopped.shown==='▶ 動かす'&&!['RUNNING','PAUSED','FINISHED'].includes(stopped.state)&&stopped.scene===startScene},info:{ready,running,paused,finished,stopped,startScene}};},
+  // The body selector is 「きっかけ」 (final call 19).
+  'CC-336':async s=>{const p=s.page;await s.select('w-neko');const why='どの きっかけの 本文を なおすかを えらびます';
+    const selector=await p.locator('#eventSelect').evaluate(e=>({label:[...e.labels[0].childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim(),title:e.title,described:(e.getAttribute('aria-describedby')||'').split(' ').map(id=>document.getElementById(id)?.textContent||'').join(' ')}));
+    const named=await p.getByRole('combobox',{name:'きっかけ'}).evaluateAll(es=>es.map(e=>e.id));
+    const add=bare(await p.locator('#scriptAdd').innerText());
+    await (await reveal(p.locator('#sourceOverviewBtn'))).click();await p.waitForTimeout(300);const all=await p.locator('#eventSelect').evaluate(e=>e.selectedOptions[0]?.textContent.trim());
+    return {expect:{named:selector.label==='きっかけ'&&named.includes('eventSelect'),explained:selector.title===why,
+      addButton:add===bare('同じ きっかけの 本文を ふやす'),allBodies:all==='すべての本文を 見せています'},info:{selector,named,add,all}};},
+  'CC-337':async s=>{const p=s.page;await s.select('w-neko');await s.category('motion');await s.place('MotionCommand:MOVE');const before=await s.scripts();
+    // The script block's own 「いつ動く？」 opens its heading editor.
+    await p.locator('#blockEditor details.blockui-heading-editor > summary').first().click();await p.waitForTimeout(250);
+    const panel=p.locator('#blockEditor details.blockui-heading-editor[open]').first(),text=await panel.innerText();
+    const commit=await panel.locator('[data-blockui-action="heading-commit"]').innerText(),cancel=panel.getByRole('button',{name:'かえるのを やめる',exact:true});
+    const cancels=await cancel.count();await cancel.click();await p.waitForTimeout(250);
+    const after=await s.scripts(),selected={target:await p.locator('#objectSelect').inputValue(),event:await p.locator('#eventSelect').inputValue()};
+    return {expect:{panel:commit.trim()==='この 本文の きっかけを かえる'&&/かえる 本文：/.test(text)&&cancels===1&&before.some(x=>x.targetId==='w-neko'&&x.event==='start'&&x.source.includes('前へ')),
+      unchanged:JSON.stringify(after)===JSON.stringify(before)&&selected.target==='w-neko'&&selected.event==='start'},info:{text,commit,selected}};},
+  // F-23's one word per idea, on every edit screen; 名人 is never 「名人モード」 (final call 23).
+  'CC-338':async s=>{const p=s.page,banned=['できごと','なおす動き','作業欄','組み立てる ばしょ','作る ばしょ','自動で のこす','自動保存','名人モード'],seen=[];
+    const read=async where=>{if(await p.locator('#basicActionGuide').count()){const g=p.locator('#basicActionGuide');if(await g.isVisible()&&!await g.evaluate(e=>e.open))await g.locator(':scope > summary').click();}
+      const text=await p.evaluate(()=>{const parts=[document.body.innerText];for(const e of document.querySelectorAll('select'))if(e.getClientRects().length)parts.push([...e.options].filter(o=>!o.hidden).map(o=>o.textContent).join(' '));
+        for(const e of document.querySelectorAll('[title],[aria-label]'))if(e.getClientRects().length)parts.push(e.title||'',e.getAttribute('aria-label')||'');return parts.join('\n');});
+      const heading=await p.locator('.objects-window > .win-title').innerText().catch(()=>'');seen.push({where,found:banned.filter(w=>text.includes(w)),kyara:/キャラ(?!クター)/.test(text),heading,view:await s.mode()});
+      if(await p.locator('#basicActionGuide').isVisible()&&await p.locator('#basicActionGuide').evaluate(e=>e.open))await p.locator('#basicActionGuide > summary').click();};
+    for(const [view,level] of [['blocks','entry'],['blocks','basic'],['blocks','advanced'],['code','basic'],['code','advanced']]){
+      if(view==='code'&&await s.mode()==='blocks'){await p.selectOption('#uiLevel','basic');await p.waitForTimeout(200);await s.code();}
+      await p.selectOption('#uiLevel',level);await p.waitForTimeout(250);await read(view+'/'+level);}
+    await s.openFile(workFiles.meijin);await p.waitForTimeout(300);await read('meijin/'+(await s.level()).chosen);
+    return {expect:{noVariant:seen.every(x=>!x.found.length),kyara:seen.every(x=>!x.kyara),heading:seen.every(x=>x.heading.trim()==='キャラクター・部品')&&seen.some(x=>x.view==='blocks')&&seen.some(x=>x.view==='code')},info:{seen}};},
+  'CC-347':async s=>{const p=s.page;await s.newWork();await p.selectOption('#uiLevel','basic');await p.waitForTimeout(250);await p.click('#runBtn');await p.waitForTimeout(400);
+    const status=await p.locator('#statusText').innerText(),state=await p.evaluate(()=>Akari.app.editorState.state);
+    return {expect:{notRun:state==='DESIGN'&&(await s.mode())==='blocks',says:status.trim()==='ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね'},info:{status,state}};},
+  'CC-348':async s=>{const p=s.page;await s.newWork();await p.selectOption('#uiLevel','basic');await p.waitForTimeout(250);await s.press('ブロックモード ⇄');await p.click('#runBtn');await p.waitForTimeout(400);
+    const status=await p.locator('#statusText').innerText(),state=await p.evaluate(()=>Akari.app.editorState.state);
+    return {expect:{notRun:state==='DESIGN'&&(await s.mode())==='code',says:status.trim()==='本文が まだ ないよ。コードに 文を 書いてね',noPlus:!status.includes('＋ ここに入れる')},info:{status,state}};},
+  // 本文を見て たしかめる opens the body the band names, not the one chosen on the edit screen (MW-04).
+  'CC-349':async s=>{const p=s.page,source='ずっとくり返す。\n  1秒待つ。';await s.select('w-neko');await p.selectOption('#eventSelect','start');await s.code();await s.write(source);await s.select('w-dango');
+    await s.run();await p.waitForTimeout(1000);const band=bare(await p.locator('#execLocation').innerText()),line=Number(band.match(/(\d+)行目/)?.[1]);
+    await p.click('#runtimeInspectBtn');await p.locator('#runtimeInspector[open]').waitFor();await p.waitForTimeout(300);
+    const shown=await p.evaluate(()=>{const t=document.querySelector('#runtimeInspector #codeEditor');return t&&t.getClientRects().length?{text:t.value,top:t.scrollTop,lineHeight:parseFloat(getComputedStyle(t).lineHeight)||20,height:t.clientHeight}:null;});
+    await p.locator('#runtimeInspectorClose').click();await s.stop();
+    const lineSeen=!!shown&&line>=1&&(line-1)*shown.lineHeight>=shown.top-1&&(line-1)*shown.lineHeight<shown.top+shown.height;
+    return {expect:{band:band.includes('ねこ')&&band.includes('「動かす」をおしたとき')&&line>=1,opensRunning:!!shown&&shown.text===source&&lineSeen},info:{band,line,shown}};},
+  // The toolbar keeps one row at 1366 and 1093 px on the edit and run screens (final call 22); at 800 px the wrapped
+  // buttons never cover the view toggle, the level picker or the work's name.
+  'CC-350':async s=>{const p=s.page,rows=[];
+    const row=async where=>{const r=await p.evaluate(()=>{const items=[...document.querySelectorAll('.menutool > *')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&getComputedStyle(e).position!=='absolute'&&getComputedStyle(e).position!=='fixed')
+      .map(e=>{const b=e.getBoundingClientRect();return{id:e.id||e.className,top:b.top,bottom:b.bottom,left:b.left,right:b.right};});return{items,innerWidth};});
+      const one=r.items.every(a=>r.items.every(b=>a.top<b.bottom&&b.top<a.bottom));rows.push({where,one,items:r.items.length});};
+    const both=async where=>{await row(where+'/edit');await s.run();await p.waitForTimeout(400);await row(where+'/run');await s.stop();};
+    for(const width of [1366,1093]){await p.setViewportSize({width,height:900});await s.openFile(workFiles.parts);await p.selectOption('#uiLevel','basic');await p.waitForTimeout(200);await s.select('w-neko');await p.selectOption('#eventSelect','start');
+     await s.code();await s.write('ずっとくり返す。\n  1秒待つ。');await s.blocks();
+      for(const level of ['entry','basic','advanced']){await p.selectOption('#uiLevel',level);await p.waitForTimeout(250);await both(width+'/blocks/'+level);}
+      await p.selectOption('#uiLevel','basic');await p.waitForTimeout(200);await s.code();
+      for(const level of ['basic','advanced']){await p.selectOption('#uiLevel',level);await p.waitForTimeout(250);await both(width+'/code/'+level);}
+      await s.openFile(workFiles.meijin);await both(width+'/meijin');}
+    await p.setViewportSize({width:800,height:900});await s.openFile(workFiles.parts);await p.selectOption('#uiLevel','basic');await p.waitForTimeout(250);
+    const narrow=await p.evaluate(()=>{const box=e=>{const r=e.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom};},fixed=['#editorModecode:not([hidden]),#editorModeblocks:not([hidden])','#uiLevel','#projectName'].map(q=>box(document.querySelector(q)));
+      const others=[...document.querySelectorAll('.menutool button, .menutool summary, .menutool select, .menutool input')].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden'&&!e.matches('#editorModecode,#editorModeblocks,#uiLevel,#projectName')).map(box);
+      const meets=(a,b)=>a.left<b.right-1&&b.left<a.right-1&&a.top<b.bottom-1&&b.top<a.bottom-1;
+      return{covered:others.filter(o=>fixed.some(f=>meets(o,f))).length,outside:[...fixed,...others].filter(b=>b.left<-1||b.right>innerWidth+1).length,count:others.length};});
+    return {expect:{oneRow:rows.length===24&&rows.every(r=>r.one),narrow:narrow.covered===0&&narrow.outside===0&&narrow.count>0},info:{rows:rows.filter(r=>!r.one),narrow}};},
   // ── 名人 ──
   'MC-001':async s=>{const l=await s.level();return {expect:{three:l.options.join('|')==='かんたん|くわしく|名人',noEntry:!l.options.includes('はじめて')},info:l};},
-  'MC-002':async s=>{await s.select('w-neko');await s.code();const anywhere=await s.page.evaluate(()=>[...document.querySelectorAll('button,a,summary,option')].some(b=>b.textContent.includes('名人モードで 書く')&&b.offsetParent!==null));
+  'MC-002':async s=>{await s.select('w-neko');await s.code();const anywhere=await s.page.evaluate(()=>[...document.querySelectorAll('button,a,summary,option')].some(b=>/名人モードで ?書く|名人で ?書く/.test(b.textContent)&&b.offsetParent!==null));
     return {expect:{nowhere:!anywhere}};},
   'MC-003':async s=>{const before=await s.level();await s.page.selectOption('#uiLevel','basic',{timeout:1000}).catch(()=>{});await s.page.waitForTimeout(200);const after=await s.level();
     const screen=await s.visible('#diagnoseBtn')&&await s.visible('#procBtn')&&await s.visible('#formatBtn');
-    return {expect:{meijin:before.chosen==='meijin'&&after.chosen==='meijin'&&before.options.join('|')==='名人'&&after.options.join('|')==='名人',noOthers:!before.others.length&&!after.others.length,advancedScreen:after.shown==='advanced'&&screen,noToggle:!(await s.toggle())},info:{before,after}};},
-  'MC-004':async s=>{await s.select('stage');await s.code();const kind=await s.startMeijin(false);return {expect:{confirm:kind==='confirm',notYet:(await s.scripts()).every(x=>x.mode!=='meijin')}};},
+    return {expect:{meijin:before.chosen==='meijin'&&after.chosen==='meijin'&&before.options.join('|')==='名人'&&after.options.join('|')==='名人',noOthers:!before.others.length&&!after.others.length,advancedScreen:after.shown==='advanced'&&screen,toggleCode:(await s.toggle())==='コードモード ⇄'},info:{before,after}};},
+  // The confirm before a body becomes a 名人 text (final call 23).
+  'MC-004':async s=>{await s.select('w-neko');await s.code();const kind=await s.startMeijin(false),message=s.page.__akariLastDialog?.message;
+    return {expect:{confirm:kind==='confirm'&&message==='名人で 書くと、この本文は ねこから はなれて、「動かすもの」の「名人の本文」に うつります。ブロックには もどせません。\n名人で 書きますか？',notYet:(await s.scripts()).every(x=>x.mode!=='meijin')},info:{message}};},
   'MC-005':async s=>{await s.select('stage');await s.code();await s.startMeijin(true);const scripts=await s.scripts(),meijin=scripts.filter(x=>x.mode==='meijin');
     const listed=await s.page.evaluate(()=>[...document.querySelectorAll('#objectSelect option')].some(o=>o.value==='meijin'&&o.textContent.includes('名人の本文')));
     return {expect:{empty:meijin.length===1&&meijin[0].source==='',ownerless:meijin.every(x=>x.targetId==='meijin'),listed,chosen:(await s.level()).chosen==='meijin'}};},
-  'MC-006':async s=>{await s.select('stage');await s.code();await s.write('ねこは、いまのばしょから、右へ10歩動く。');await s.startMeijin(true);const before=await s.text();await s.page.locator('#editorModeblocks').click({force:true,timeout:1000}).catch(()=>{});await s.page.waitForTimeout(250);
-    const blocks=await s.page.evaluate(()=>[...document.querySelectorAll('button')].some(b=>b.textContent.trim()==='ブロック'&&b.getClientRects().length));
-    const after=await s.text();return {expect:{noToggle:!(await s.toggle())&&!blocks,stillCode:(await s.mode())==='code',sameText:after===before},info:{before,after}};},
-  'MC-007':async s=>{await s.select('stage');await s.code();const kind=await s.startMeijin(false);const ordinary=(await s.scripts()).every(x=>x.mode!=='meijin'),level=await s.level();await s.blocks();
-    return {expect:{ordinary:kind==='confirm'&&ordinary,levelKept:level.chosen==='basic'&&level.shown==='basic',blocks:(await s.mode())==='blocks'},info:level};},
+  'MC-006':async s=>{await s.select('stage');await s.code();await s.write('ねこは、いまのばしょから、右へ10歩動く。');await s.startMeijin(true);const before=await s.text(),label=await s.toggle();await s.press('コードモード ⇄');
+    const after=await s.text(),note=await s.note();return {expect:{shown:label==='コードモード ⇄',stillCode:(await s.mode())==='code',sameText:after===before,says:note==='名人は、コードモードで だけ 使えるよ'},info:{before,after,note}};},
+  'MC-007':async s=>{await s.select('stage');await s.code();const kind=await s.startMeijin(false);const ordinary=(await s.scripts()).every(x=>x.mode!=='meijin'),level=await s.level();await s.press('コードモード ⇄');
+    return {expect:{ordinary:kind==='confirm'&&ordinary,levelKept:level.chosen==='basic'&&level.shown==='basic',blocks:(await s.mode())==='blocks'&&(await s.toggle())==='ブロックモード ⇄'},info:level};},
   'MC-008':async s=>{await s.select('stage');await s.code();await s.write('ねこは、いまのばしょから、右へ10歩動く。');await s.startMeijin(true);await s.page.click('#undoBtn');await s.page.waitForTimeout(300);
-    const undone=(await s.scripts()).every(x=>x.mode!=='meijin'),afterUndo=await s.level();await s.blocks();const blocksAfterUndo=(await s.mode())==='blocks';
-    await s.code();await s.page.click('#redoBtn');await s.page.waitForTimeout(300);const redone=(await s.scripts()).some(x=>x.mode==='meijin'),afterRedo=await s.level();
-    return {expect:{undone,levelBack:afterUndo.chosen==='basic'&&afterUndo.others.includes('advanced'),blocksAfterUndo,redone,levelMeijin:afterRedo.chosen==='meijin',noToggleAfterRedo:!(await s.toggle())&&(await s.mode())==='code'},info:{afterUndo,afterRedo}};},
+    const undone=(await s.scripts()).every(x=>x.mode!=='meijin'),afterUndo=await s.level();await s.press('コードモード ⇄');const blocksAfterUndo=(await s.mode())==='blocks';
+    await s.press('ブロックモード ⇄');await s.page.click('#redoBtn');await s.page.waitForTimeout(300);const redone=(await s.scripts()).some(x=>x.mode==='meijin'),afterRedo=await s.level();
+    await s.press('コードモード ⇄');const note=await s.note();
+    return {expect:{undone,levelBack:afterUndo.chosen==='basic'&&afterUndo.others.includes('advanced'),blocksAfterUndo,redone,levelMeijin:afterRedo.chosen==='meijin',refusedAfterRedo:(await s.mode())==='code'&&note==='名人は、コードモードで だけ 使えるよ'},info:{afterUndo,afterRedo,note}};},
   'MC-009':async s=>{const options=await s.page.evaluate(()=>[...document.querySelectorAll('#objectSelect option')].map(o=>[o.value,o.textContent.trim()]));
     const meijin=options.find(([v])=>v==='meijin');if(meijin)await s.select('meijin');
     return {expect:{listed:!!meijin&&meijin[1].includes('名人の本文'),opens:(await s.text()).trim()===MEIJIN_SOURCE},info:{options}};},
   'MC-010':async s=>{await s.select('meijin');await s.write('ねこが前へ10歩進む\n主役が「やあ」と言う');const before=await s.text();
     if(await s.page.locator('#formatBtn').isVisible()&&await s.page.locator('#formatBtn').isEnabled())await s.page.click('#formatBtn');await s.page.waitForTimeout(300);return {expect:{unchanged:(await s.text())===before}};},
-  'MC-011':async s=>{await s.select('meijin');const revert=await s.page.evaluate(()=>[...document.querySelectorAll('button,summary,option,a')].some(b=>b.offsetParent!==null&&/通常の本文に|ふつうの本文に|名人モードを ?やめる/.test(b.textContent)));
-    return {expect:{noRevert:!revert,noToggle:!(await s.toggle())&&(await s.mode())==='code'}};},
+  'MC-011':async s=>{await s.select('meijin');const revert=await s.page.evaluate(()=>[...document.querySelectorAll('button,summary,option,a')].some(b=>b.offsetParent!==null&&/通常の本文に|ふつうの本文に|名人モードを ?やめる|名人を ?やめる/.test(b.textContent)));
+    await s.press('コードモード ⇄');const note=await s.note();
+    return {expect:{noRevert:!revert,refused:(await s.mode())==='code'&&note==='名人は、コードモードで だけ 使えるよ'},info:{note}};},
   'MC-012':async s=>{await s.select('meijin');await s.write('【ジャンプ】という手順を、次のように作る。\n  いまのばしょから、上へ20歩動く。');await s.page.click('#procBtn');await s.page.waitForTimeout(300);
     const before=await s.page.evaluate(()=>[...document.querySelectorAll('#callableSelect option')].map(o=>o.textContent));
     await s.page.click('#callableNewAction');await s.page.fill('#callableName','おじぎ');await s.page.click('#callableSave');await s.page.waitForTimeout(400);
@@ -312,7 +448,7 @@ const checks={
   'MC-469':async s=>{await s.select('w-neko');await s.code();await s.write('作品を動かしたとき、\n  「やあ」と言う。');await s.startMeijin(true);
     const scripts=await s.scripts(),meijin=scripts.filter(x=>x.mode==='meijin').map(x=>x.source),l=await s.level();
     return {expect:{heading:meijin.some(t=>t.includes('作品を動かしたとき、ねこは、')),body:meijin.some(t=>t.includes('「やあ」と言う。')),moved:!scripts.some(x=>x.mode!=='meijin'&&x.targetId==='w-neko'&&x.source.includes('やあ')),
-      meijinOnly:l.options.join('|')==='名人'&&!(await s.toggle())},info:{meijin,l}};},
+      meijinOnly:l.options.join('|')==='名人'&&(await s.toggle())==='コードモード ⇄'},info:{meijin,l}};},
   'MC-522':async s=>{await s.select('w-neko');await s.code();await s.write('いちばん近いだんごの方を向く。');await s.startMeijin(true);
     const meijin=(await s.scripts()).filter(x=>x.mode==='meijin').map(x=>x.source),errors=await s.page.evaluate(()=>Akari.compileProject(Akari.app.project).errors.map(e=>e.code));
     return {expect:{made:meijin.some(t=>t.includes('作品を動かしたとき、ねこは、')&&t.includes('いちばん近いだんごの方を向く。')),checks:!errors.length},info:{meijin,errors}};},
@@ -332,38 +468,49 @@ const checks={
   // Blocks offer はじめて／かんたん／くわしく only, and a level never switches the view (MC-580 retired).
   'MC-586':async s=>{const l=await s.level();
     return {expect:{threeOnly:l.options.join('|')==='はじめて|かんたん|くわしく',noMeijin:!l.options.includes('名人'),stillBlocks:(await s.mode())==='blocks'},info:l};},
-  // A work with a 名人 text is code only: no コード／ブロック switch anywhere, not even pale (MC-411 retired).
-  'MC-587':async s=>{const p=s.page,switches=()=>p.evaluate(()=>[...document.querySelectorAll('button')].filter(b=>/^(コード|ブロック)$/.test(b.textContent.trim())&&b.getClientRects().length).map(b=>b.id||b.textContent.trim()));
-    await s.select('meijin');const meijin={switches:await switches(),code:await s.visible('#codeEditor')};
-    await s.select('w-neko');const neko={switches:await switches(),code:await s.visible('#codeEditor')};
-    await p.click('#procBtn');await p.locator('#procModal').waitFor({state:'visible'});await p.click('#callableNewAction');await p.waitForTimeout(200);const callable={switches:await switches(),code:await s.visible('#callableCode')};await p.click('#procClose');
-    await s.select('meijin');await s.run();await p.locator('#runtimeInspectBtn').waitFor({state:'visible'});await p.click('#runtimeInspectBtn');await p.waitForTimeout(300);
-    const inspector={switches:await switches(),code:await p.evaluate(()=>!!document.querySelector('#runtimeInspector[open] #codeEditor')?.getClientRects().length)};
-    return {expect:{noSwitch:[meijin,neko,callable,inspector].every(v=>!v.switches.length),code:meijin.code&&neko.code&&callable.code&&inspector.code},info:{meijin,neko,callable,inspector}};},
-  // A mistake in the code: ブロック stays, pale; a press says how to come back, the view stays code, and a press elsewhere hides it.
-  'MC-588':async s=>{await s.select('w-neko');await s.code();await s.write('「こんにちは」と言');await s.page.locator('#editorModeblocks').click({force:true});await s.page.waitForTimeout(200);
-    const shown=()=>s.page.evaluate(()=>{const n=document.querySelector('#modeBlockedNote');return n?.getClientRects().length?n.textContent:'';}),note=await shown();
-    await s.page.locator('#formSurface').click({position:{x:5,y:5}});await s.page.waitForTimeout(200);const later=await shown();
-    return {expect:{pale:(await s.page.locator('#editorModeblocks').getAttribute('aria-disabled'))==='true'&&(await s.mode())==='code',says:bare(note).includes('コードの赤いところを直すと、ブロックにもどれるよ'),hides:!later},info:{note,later}};},
-  'MC-659':async s=>touchMeijin(s,'だんごは画面の左下のはしから、右へ490歩、上へ370歩のばしょへ行く。',false),
-  'MC-660':async s=>touchMeijin(s,'だんごは、たくどんのところへ行く。',true),
+  // A work with a 名人 text is code only: every toggle stays in code and says why (final calls 22, 23); the run screen has none.
+  'MC-587':async s=>{const p=s.page,why='名人は、コードモードで だけ 使えるよ';
+    await s.select('meijin');const label=await s.toggle();await s.press('コードモード ⇄');const meijin={view:await s.mode(),note:await s.note(),code:await s.visible('#codeEditor')};
+    await s.select('w-neko');await s.press('コードモード ⇄');const neko={view:await s.mode(),note:await s.note(),code:await s.visible('#codeEditor')};
+    await (await reveal(p.locator('#procBtn'))).click();await p.locator('#procModal').waitFor({state:'visible'});if(!await p.locator('#callableCode').isVisible()&&!await p.locator('#callableBlocks').isVisible())await p.click('#callableNewAction');await p.waitForTimeout(200);
+    const callableBefore=await readViewToggle(p,'callable');await pressViewToggle(p,'callable');await p.waitForTimeout(200);
+    const callable={label:callableBefore.label,view:(await readViewToggle(p,'callable')).view,note:await viewRefusalNote(p,'callable'),code:await s.visible('#callableCode')};await p.click('#procClose');
+    await s.select('meijin');await s.run();await p.locator('#runtimeInspectBtn').waitFor({state:'visible'});const runToggle=await s.toggle();
+    await p.click('#runtimeInspectBtn');await p.locator('#runtimeInspector[open]').waitFor();await p.waitForTimeout(300);await pressViewToggle(p);await p.waitForTimeout(200);
+    const inspector={view:await s.mode(),note:await s.note(),host:await p.locator('#modeBlockedNote').evaluate(n=>n.parentElement?.id||''),code:await p.evaluate(()=>!!document.querySelector('#runtimeInspector[open] #codeEditor')?.getClientRects().length)};
+    return {expect:{editToolbar:label==='コードモード ⇄'&&meijin.view==='code'&&meijin.note===why,neko:neko.view==='code'&&neko.note===why,callable:callable.label==='コードモード ⇄'&&callable.view==='code'&&callable.note===why,
+      runToolbar:!runToggle,inspector:inspector.view==='code'&&inspector.note===why&&inspector.host==='runtimeInspectorModes',code:meijin.code&&neko.code&&callable.code&&inspector.code},info:{meijin,neko,callable,runToggle,inspector}};},
+  // A mistake in the code: the toggle is not pale; a press keeps the code and says how to come back, until the next press or key.
+  'MC-588':async s=>{const p=s.page,why='コードの 赤い ところを 直すと、ブロックに もどれるよ';await s.select('w-neko');await s.code();await s.write('「こんにちは」と言');
+    const label=await s.toggle();await s.press('コードモード ⇄');const view=await s.mode(),note=await s.note();
+    await p.locator('#formSurface').click({position:{x:5,y:5}});await p.waitForTimeout(200);const later=await s.note();
+    await s.press('コードモード ⇄');const again=await s.note();await p.keyboard.press('Shift');await p.waitForTimeout(200);const afterKey=await s.note();
+    return {expect:{notPale:label==='コードモード ⇄'&&view==='code',says:note===why,hides:!later,keyHides:again===why&&!afterKey},info:{label,note,later,again,afterKey}};},
+  // Two お絵かき circles whose bounding boxes meet only at a corner do not touch (owner decision 17).
+  'MC-659':async s=>{const p=s.page;await s.code();const moon=await paintCircle(s,200);await s.select(moon.id);await s.prop('名前','つき');
+    const placed=await place(s,{...moon,name:'つき'},{x:150,y:150}),W=placed.w,H=placed.h;
+    const before=await p.evaluate(()=>Akari.app.project.components.map(c=>c.id));await (await reveal(p.locator('#properties .prop-duplicate'))).click();await p.waitForTimeout(300);
+    const copy=await p.evaluate(b=>Akari.app.project.components.find(c=>!b.includes(c.id)),before);await s.select(copy.id);await s.prop('名前','たま');
+    const at=v=>String(Math.round(v*100)/100);
+    return countTouches(s,'たまが「つき」にふれたとき、たまは「ふれた」と言う。\nたまは画面の左下のはしから、右へ550歩、上へ300歩のばしょへ行く。\n1秒待つ。\nたまは画面の左下のはしから、右へ'+at(150+W*0.9)+'歩、上へ'+at(150+H*0.9)+'歩のばしょへ行く。',false,{W,H,moon:placed,copy:await s.part('たま')});},
+  'MC-660':async s=>{const p=s.page;await s.newWork();
+    // A new work opens at ブロックの「はじめて」, which shows neither the part picker nor コード: かんたん is chosen first.
+    await p.selectOption('#uiLevel','basic');await p.waitForTimeout(250);await (await reveal(p.locator(TOOLBOX_PRESET+'[data-sprite-preset="dango"]'))).click();await p.waitForTimeout(300);
+    const takudon=await s.part('たくどん'),dango=await s.part('だんご');await s.press('ブロックモード ⇄');
+    return countTouches(s,'だんごがたくどんにふれたとき、だんごは「ふれた」と言う。\nだんごは画面の左下のはしから、右へ520歩、上へ400歩のばしょへ行く。\n1秒待つ。\nだんごは、たくどんのところへ行く。',true,{takudon,dango});},
   'MC-701':async s=>{await s.select('w-neko');await s.code();await s.write('「星」にふれたとき、\n  「いたい」と言う。');await s.startMeijin(true);
     const scripts=await s.scripts(),meijin=scripts.filter(x=>x.mode==='meijin').map(x=>x.source);
     return {expect:{heading:meijin.some(t=>t.includes('ねこが「星」にふれたとき、ねこは、')),body:meijin.some(t=>t.includes('「いたい」と言う。')),moved:!scripts.some(x=>x.mode!=='meijin'&&x.targetId==='w-neko'&&x.source.includes('いたい'))},info:{meijin}};},
   'MC-707':async s=>{const opened={mode:await s.mode(),level:await s.level(),toggle:await s.toggle()};await s.select('meijin');const meijin={mode:await s.mode(),text:await s.text()};
     await s.select('w-neko');const neko={mode:await s.mode(),toggle:await s.toggle()};
-    return {expect:{opensInCode:opened.mode==='code'&&opened.level.options.join('|')==='名人',noToggle:!opened.toggle,meijinText:meijin.mode==='code'&&meijin.text===MEIJIN_SOURCE,nekoCode:neko.mode==='code'&&!neko.toggle},info:{opened,meijin,neko}};},
+    return {expect:{opensInCode:opened.mode==='code'&&opened.level.options.join('|')==='名人',toggleCode:opened.toggle==='コードモード ⇄',meijinText:meijin.mode==='code'&&meijin.text===MEIJIN_SOURCE,nekoCode:neko.mode==='code'&&neko.toggle==='コードモード ⇄'},info:{opened,meijin,neko}};},
 };
-// MC-659/660: 「新しく作る」, だんご from the presets, then a 名人 body whose touch event watches たくどん (both picture parts).
-async function touchMeijin(s,second,expected){const p=s.page;await s.newWork();
-  // A new work opens at ブロックの「はじめて」, which shows neither the part picker nor コード: かんたん is chosen first.
-  await p.selectOption('#uiLevel','basic');await p.waitForTimeout(250);await (await reveal(p.locator(TOOLBOX_PRESET+'[data-sprite-preset="dango"]'))).click();await p.waitForTimeout(300);
-  const takudon=await s.part('たくどん'),dango=await s.part('だんご');await s.code();await s.startMeijin(true);await s.write('');
-  await s.write('だんごがたくどんにふれたとき、だんごは「ふれた」と言う。\nだんごは画面の左下のはしから、右へ520歩、上へ400歩のばしょへ行く。\n1秒待つ。\n'+second);
-  // Every start of the touch body is counted where the product says it (EventScheduler.ui.say), not only what stays on the screen.
+// MC-659/660: the case's 名人 body, from code, then ▶ and 3 seconds. Every start of the touch body is counted where the
+// product says it (EventScheduler.ui.say), not only what stays on the screen.
+async function countTouches(s,source,expected,info){const p=s.page;await s.code();await s.startMeijin(true);await s.write('');await s.write(source);
   await p.evaluate(()=>{globalThis.__said=[];const Q=Akari.EventScheduler.prototype,start=Q.start;Q.start=function(...a){const say=this.ui.say;this.ui.say=(id,value)=>{__said.push(value);return say?.(id,value);};return start.apply(this,a);};});
-  await s.run();await p.waitForTimeout(3000);const said=await p.evaluate(()=>__said.filter(v=>v==='ふれた').length),dangoAt=await p.evaluate(id=>{const a=document.querySelector('.component[data-runtime-id="'+id+'"]');return a&&{left:a.style.left,top:a.style.top};},dango?.id);await s.stop();
-  return {expect:expected?{touchedOnce:said===1}:{notTouched:said===0},info:{takudon,dango,said,dangoAt}};}
+  await s.run();await p.waitForTimeout(3000);const said=await p.evaluate(()=>__said.filter(v=>v==='ふれた').length);await s.stop();
+  return {expect:expected?{touchedOnce:said===1}:{notTouched:said===0},info:{...info,said}};}
 // A step chooses the level together with its view: 「ブロックで「はじめて」を選ぶ」, 「コードで「くわしく」を選ぶ」. 名人 is chosen
 // by the case itself (it turns a body into 名人 text), from code at かんたん; without a step the work opens in blocks at かんたん.
 const LEVELS={はじめて:'entry',かんたん:'basic',くわしく:'advanced',名人:'basic'};
