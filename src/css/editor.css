@@ -6015,6 +6015,10 @@ body { overflow: visible !important; }
 .menutool > #entryProjectMenu > .entry-project-actions { position: fixed; top: calc(var(--toolbar-h, 0px) + 6px); left: auto; z-index: 60; translate: var(--menu-shift, 0px) 0; box-shadow: 0 8px 24px #18364b40; }
 .menutool > #basicActionGuide > .child-help-panel { width: min(34rem, calc(100vw - 32px)); max-height: min(60dvh, 420px); }
 .menutool > #entryProjectMenu > .entry-project-actions { border-radius: 10px; }
+/* はじめて's 作品 opens a menu: it ends with ▾ instead of the ▶ that ▶ 動かす beside it also shows. */
+.menutool > #entryProjectMenu > summary { list-style: none; }
+.menutool > #entryProjectMenu > summary::-webkit-details-marker { display: none; }
+.menutool > #entryProjectMenu > summary::after { content: " ▾" / ""; }
 body[data-editor-mode] .menutool #uiLevel { box-sizing: border-box; width: 100%; min-width: 0; height: 36px; padding: 0 6px; }
 
 /* Block view: the heading 本文 sits at the left of the 動かすもの row, and すべての本文・画面の本文・いつ動く？ share one row with

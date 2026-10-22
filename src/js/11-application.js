@@ -519,7 +519,7 @@
       const step=tutorialStep(tutorial);if(!step||step.action!=='choice'||modelLocked()||!flushActiveEditor())return;
       let extra;
       if(key==='finish')extra=[tutorialDefine({id:'save-work',action:'save',message:'「保存」を おして、作った 作品を ファイルに ほぞんしよう。'}),
-        tutorialDefine({id:'verify-save',action:'verify-save',message:'「ほぞんした作品をたしかめる」を おして、いま ほぞんした ファイルを えらぼう。'})];
+        tutorialDefine({id:'verify-save',action:'verify-save',message:'「ほぞんした 作品を たしかめる」を おして、いま ほぞんした ファイルを えらぼう。'})];
       else if(step.choice==='course'){
         const course=TUTORIAL_COURSES.find(c=>c.id===key);if(!course||tutorial.courses.includes(key))return;
         tutorial.courses.push(key);extra=tutorialCourseSteps(key,tutorialBody().length,key);
@@ -1185,22 +1185,23 @@
         if (destination) { selectedId = destination.targetId; currentEvent = destination.event; selectedScriptId = destination.id || null; }
         invalidateEditors(); clearEditorFailure(binding); markDirty(); renderTree(); renderProperties(); loadEditor();
         clearTimeout(historyTimer); pushHistoryNow();
-        setStatus('いまの 動きは のこして、えらんだ 本文に 動きを 入れたよ'); return true;
+        setStatus('いまの 本文は のこして、えらんだ ところに 本文を 入れたよ'); return true;
       } catch (error) { return showEditorFailure(binding, error, { preservePending: true }); }
     }
     function showSourceImport(binding, source, plan) {
       const root = $('#sourceImport'); root.replaceChildren(); root.hidden = false;
-      const heading = document.createElement('strong'); heading.textContent = 'どこに動きを入れるかたしかめる'; root.append(heading);
+      // The panel speaks of 本文 (F-23), in the plain voice of a confirmation (F-18), spaced by phrase (F-19).
+      const heading = document.createElement('strong'); heading.textContent = '本文を 入れる ところを たしかめる'; root.append(heading);
       for (const entry of plan.entries) {
-        const actor = targetById(entry.metadata.targetId)?.name || 'この部品', event = entry.metadata.event,
+        const actor = targetById(entry.metadata.targetId)?.name || 'この 本文', event = entry.metadata.event,
           label = actor + '・' + eventText(event, entry.metadata.filter);
         const row = document.createElement('p');
-        row.textContent = entry.candidates.length ? label + 'には今の動きがあります' : label + 'に新しい動きを入れます'; root.append(row);
+        row.textContent = entry.candidates.length ? label + 'には いまの 本文が あるよ' : label + 'に 新しい 本文を 入れるよ'; root.append(row);
         {
           const details = document.createElement('details'), summary = document.createElement('summary');
-          summary.textContent = entry.candidates.length ? (entry.equal ? '今の動きは そのまま のこします' : '今の動きと取りこむ動きをくらべる') : '新しく入れる動きを見る'; details.append(summary);
+          summary.textContent = entry.candidates.length ? (entry.equal ? 'いまの 本文は そのまま のこすよ' : 'いまの 本文と 取りこむ 本文を くらべる') : '新しく 入れる 本文を 見る'; details.append(summary);
           if(plan.canEditCurrent && !plan.safe)details.open = true;
-          for (const text of [...entry.candidates.map(x => '今の動き：\n' + x.text), '取りこむ動き：\n' + entry.text]) {
+          for (const text of [...entry.candidates.map(x => 'いまの 本文：\n' + x.text), '取りこむ 本文：\n' + entry.text]) {
             const pre = document.createElement('pre'); pre.textContent = text; pre.style.whiteSpace = 'pre-wrap'; pre.style.maxHeight = '140px'; pre.style.overflow = 'auto'; details.append(pre);
           }
           root.append(details);
@@ -1208,19 +1209,19 @@
       }
       if (!plan.safe) {
         const notice = document.createElement('p'); notice.textContent = !plan.canSplit
-          ? '動きの まとまりを べつべつに 分けられません。前の「始めると、」などを 使う 文が あります。書きかけの 文章は のこっています。「取りこみを やめる」で 今の 動きへ もどれます。'
-          : '同じきっかけの動きが 今の動きと ちがうか、2つ いじょう あります。入れても 今の動きは のこります。くらべてから ボタンを えらんでください。'; root.append(notice);
+          ? '本文を べつべつに 分けられないよ。前の「始めると、」などを 使う 文が あるよ。書きかけの 文章は のこっているよ。「取りこみを やめる」で いまの 本文に もどれるよ。'
+          : '同じ きっかけの 本文が いまの 本文と ちがうか、2つ いじょう あるよ。入れても いまの 本文は のこるよ。くらべてから ボタンを えらんでね。'; root.append(notice);
       }
       const confirm = document.createElement('button'); confirm.type = 'button'; confirm.id = 'sourceImportConfirm';
-      confirm.textContent = plan.hasExisting ? '今の動きを のこして 入れる' : '書いた文の動きを入れる'; confirm.disabled = !plan.safe;
+      confirm.textContent = plan.hasExisting ? 'いまの 本文を のこして 入れる' : '書いた 文を 本文に 入れる'; confirm.disabled = !plan.safe;
       confirm.onclick = () => confirmSourceImport(binding, source); root.append(confirm);
       if (plan.hasExisting && !plan.safe && plan.canSplit) {
         const separate = document.createElement('button'); separate.type = 'button'; separate.id = 'sourceImportSeparate';
-        separate.textContent = '今の 動きを のこして、ほかの 動きとして 入れる'; separate.onclick = () => confirmSourceImport(binding, source, true); root.append(separate);
+        separate.textContent = 'いまの 本文を のこして、べつの 本文として 入れる'; separate.onclick = () => confirmSourceImport(binding, source, true); root.append(separate);
       }
       if(plan.canEditCurrent && !plan.safe){
         const edit = document.createElement('button'); edit.type = 'button'; edit.id = 'sourceImportEditCurrent';
-        edit.textContent = 'この本文を 取りこむ動きに かえる'; edit.onclick = () => confirmSourceImport(binding, source, false, true);root.append(edit);
+        edit.textContent = 'この 本文を 取りこむ 本文に かえる'; edit.onclick = () => confirmSourceImport(binding, source, false, true);root.append(edit);
       }
       const cancel = document.createElement('button'); cancel.type = 'button'; cancel.id = 'sourceImportCancel'; cancel.textContent = '取りこみを やめる';
       cancel.onclick = () => cancelEditorPending(binding); root.append(cancel);
@@ -1245,7 +1246,7 @@
             plan = sourceImportPlan(binding, source);
           if (plan || (fromInput && parsed.ast?.heading && !bindingContext(binding).meijin)) {
             binding.session.pendingEdit = { ownerKey: bindingOwner(binding), kind: plan ? 'source-import' : 'heading-source',
-              value: source, reason: plan ? '取りこむ ところを たしかめて 決めてください' : 'きっかけの ある 文は まだ 書きかけです。コードと ブロックを 切りかえるか、動かすと 決まります' };
+              value: source, reason: plan ? '取りこむ ところを たしかめて 決めてください' : '書き方は だいじょうぶです。きっかけは、「▶ 動かす」を おすか、ブロックモードに すると 決まります' };
             if (plan) showSourceImport(binding, source, plan); else hideSourceImport();
             scheduleAutosave(); updateDirty(); return false;
           }
@@ -1334,7 +1335,7 @@
         if (!tutorialOperationAllowed(binding, operation)) {
           const step=tutorialStep(tutorial),role=step?.ref?tutorialField(mainEditor.session?.blockView,step):null;
           if(binding===mainEditor&&step?.free&&operation.type==='field'&&operation.id===role?.node?.id&&operation.key===role.key)
-            throw new Error('光る数は'+step.min+'から'+step.max+'の中でえらぼう。'+(step.integer?step.min+'、'+(step.min+1)+'のように、1ずつふえる数にしよう。':''));
+            throw new Error('光る 数は '+step.min+'から'+step.max+'の 中で えらぼう。'+(step.integer?step.min+'、'+(step.min+1)+'のように、1ずつ ふえる 数に しよう。':''));
           throw new Error('今は、あんないの ブロックだけを 使おう。');
         }
         if (modelLocked()) throw new Error('動いている あいだと 取りこみ中は なおせません');
@@ -1721,6 +1722,7 @@
       return true;
     }
     function cancelEditorPending(binding) {
+      const importing = binding === mainEditor && !$('#sourceImport').hidden;
       if (binding === mainEditor) hideSourceImport();
       const draft = binding.session?.blockDraft;
       if (draft) {
@@ -1739,7 +1741,7 @@
       clearEditorFailure(binding);
       renderEditorBinding(binding);
       if (binding === mainEditor) { refreshEditor(); renderEntrySurface(); }
-      setStatus('入力を やめたよ');
+      setStatus(importing ? '取りこみを やめたよ' : '入力を やめたよ');
     }
     function editorContentFingerprint(state) {
       return stableJson([state.callableDraft,state.pendingEditors.map(d=>({kind:d.kind,ownerKey:d.kind==='draft'?'draft':d.ownerKey,source:d.source,
@@ -3114,10 +3116,10 @@
       const help = $('#designHelp'), mode = c ? designResizeMode(c) : null,
         zoom = $('#stageZoomReset').textContent.trim();
       help.textContent = (!mode ? '' : mode === 'scale'
-        ? '青い 丸を おしたまま 動かすと、形を かえずに 大きく・小さく できるよ。'
-        : '青い 丸を おしたまま 動かすと、大きさが かわるよ。' + (matchMedia('(pointer: coarse)').matches
-          ? '「たて・よこを そろえる」を おしてから 動かすと、形は そのままだよ。'
-          : 'Shiftキーを おしながら 角の 丸を 動かすと、形は そのままだよ。'))
+        ? '青い 丸を おしたまま ひっぱると、形を かえずに 大きく・小さく できるよ。'
+        : '青い 丸を おしたまま ひっぱると、大きさが かわるよ。' + (matchMedia('(pointer: coarse)').matches
+          ? '「たて・よこを そろえる」を おしてから ひっぱると、形は そのままだよ。'
+          : 'Shiftキーを おしながら 角の 丸を ひっぱると、形は そのままだよ。'))
         + (zoom && zoom !== '100%' ? '上の「' + zoom + '」を おすと、画面を 100%で 見られるよ。' : '');
       help.hidden = !help.textContent;
     }
@@ -3157,8 +3159,8 @@
         handle.dataset.resizeDirection = direction;
         handle.title =
           mode === 'scale'
-            ? 'おしたまま 動かすと、形を かえずに 大きく・小さく できます'
-            : 'おしたまま 動かして たて・よこを かえる（Shiftを おしながら 角を 動かすと 形は そのまま）';
+            ? 'おしたまま ひっぱると、形を かえずに 大きく・小さく できます'
+            : 'おしたまま ひっぱって たて・よこを かえる（Shiftを おしながら 角を ひっぱると 形は そのまま）';
         handle.setAttribute(
           'aria-label',
           `${c.name}: ${labels[direction]}の 大きさを かえる`,
@@ -3372,7 +3374,7 @@
         return b.right < 0 || b.left > project.stage.width || b.top < 0 || b.bottom > project.stage.height;
       });
       if (outside.length)
-        setStatus(`${outside.map((c) => `「${c.name}」`).join('')}は 画面の 外に あるよ。「せってい」の よこのばしょ・たてのばしょで もどせるよ`);
+        setStatus(`${outside.map((c) => `「${c.name}」`).join('と ')}は 画面の 外に あるよ。「せってい」の よこのばしょ・たてのばしょで もどせるよ`);
       else setStatus(`画面の はば ${project.stage.width}　高さ ${project.stage.height}`);
     }
     // 向き is kept in 0 ≤ 向き < 360 (450 is 90, −90 is 270).
@@ -3432,8 +3434,9 @@
               { after: noteOutsideParts },
             ),
           ),
+          // State words, not sentences of the language (F-22: 「すがたを見せる」 is a sentence).
           propSection('ふきだし',
-            propRow('名前を見せる',project.stage.showSpeechNames!==false,
+            propRow('名前の ひょうじ',project.stage.showSpeechNames!==false,
               v=>(project.stage.showSpeechNames=v),'checkbox')),
         );
         syncPropertyScrollPadding();
@@ -3476,7 +3479,7 @@
             project = prepareResourceRename(project,'component:'+c.id,v,{drafts:resourceDraftRecords()});
             invalidateEditors();
           }),
-          propRow('見せる', c.visible, (v) => (c.visible = v), 'checkbox'),
+          propRow('見えている', c.visible, (v) => (c.visible = v), 'checkbox'),
           propRow(
             'しゅるい',
             {
@@ -4449,7 +4452,7 @@
       project.components.push(base);
       markDirty();
       selectObject(id);
-      if (auto) setStatus(`「${name}」を ふやしたよ。いま 動かすものは「${name}」だよ`);
+      if (auto) setStatus(`「${name}」を おいたよ。いま 動かすものは「${name}」だよ`);
     }
 
     let activeFailureId = null,
@@ -4778,7 +4781,7 @@
       // はじめて and かんたん show what a child can see: how many bodies run now and what the chosen one does, in
       // Akari's own words. くわしく adds the scheduler's counts.
       section('いまの 動き', [
-        ['いま 動いている 本文', `${live.length}つ`],
+        ['いま 動いている 本文', live.length ? `${live.length}こ` : 'ないよ'],
         ...(focus ? [
           ['ようす', taskStateText(focus)],
           ['きっかけ', `${targetById(focus.targetId)?.name||'作品'} / ${runtimeEventText(focus.eventType, focus.scriptId ? 'script:' + focus.scriptId : null)}`],
@@ -5025,7 +5028,8 @@
       const order = id => id === 'stage' ? -1 : project.components.findIndex(c => c.id === id),
         item = inputs.reduce((first, next) => order(next.targetId) < order(first.targetId) ? next : first),
         name = targetById(item.targetId)?.name || project.stage.name;
-      if (item.event === 'click') return `「${name}」を おすと 動くよ`;
+      // The stage is 画面 here, as on はじめて's 「画面が おされたとき」 (F-23).
+      if (item.event === 'click') return item.targetId === 'stage' ? '画面を おすと 動くよ' : `「${name}」を おすと 動くよ`;
       if (item.event === 'valueChanged') return `「${name}」に 入れると 動くよ`;
       const key = item.filter?.key;
       return key ? `「${RUN_HINT_KEYS[key] || key}」キーを おすと 動くよ` : 'キーを おすと 動くよ';
@@ -5085,7 +5089,8 @@
         const b = document.createElement('button');
         b.className = 'hint-button';
         b.textContent =
-          (h.mode === 'expression' ? '計算 · ' : '') +
+          // A value is named by its group in the block list (しらべる, 計算, …): 計算 is only for calculations (F-26).
+          (h.mode === 'expression' ? (h.category || '計算') + ' · ' : '') +
           h.text +
           (h.reason ? '\n' + h.reason : '');
         b.title = h.category + (h.reason ? ' / ' + h.reason : '');
@@ -7479,7 +7484,7 @@
     $('#tutorialExit').onclick=()=>{finishTutorial(false);setStatus('とちゅうの 作品は のこっているよ。じゆうに つづけられるよ。');};
     $('#tutorialVerifySave').onclick=()=>{if(tutorialAllows(tutorial,'verify-save')){$('#tutorialSavedFile').value='';$('#tutorialSavedFile').click();}};
     $('#tutorialSavedFile').onchange=event=>{const file=event.target.files?.[0];event.target.value='';verifyTutorialSave(file);};
-    $('#tutorialSavedFile').addEventListener('cancel',()=>{if(tutorial){tutorialNotice={step:tutorialStep(tutorial)?.id,text:'ファイルを えらぶのを やめたよ。もう一度 えらぶか、「いっしょに作るのをやめる」を おしてね。'};tutorialRefresh();}});
+    $('#tutorialSavedFile').addEventListener('cancel',()=>{if(tutorial){tutorialNotice={step:tutorialStep(tutorial)?.id,text:'ファイルを えらぶのを やめたよ。もう一度 えらぶか、「いっしょに 作るのを やめる」を おしてね。'};tutorialRefresh();}});
     $('#callableSaveProject').onclick = saveProject;
     $('#exportBtn').onclick = exportProject;
     $('#exportControls').onclick = () => downloadProject('controls');
