@@ -2969,7 +2969,7 @@
       }
       if(screen){
         const source=who.text+(time?time+'秒かけて、':'')+screen.source;
-        throw sentenceDiagnostic(`画面の ${screen.place}へ 行くときは、画面の左下のはしからの 歩数で「${screen.source}」と 書きます`,line,reads(source)?[{label:'決めた ばしょへ 行く',source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});
+        throw sentenceDiagnostic(`画面の ${screen.place}へ 行くときは、画面の 左下の はしから 数えて「${screen.source}」と 書きます`,line,reads(source)?[{label:'決めた ばしょへ 行く',source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});
       }
     }
     // 点数が10になったら、 (no もし): waiting or checking is not decided; 10歩進んだら、1秒待つ: an order is 「〜して、」.
