@@ -375,6 +375,7 @@
           '作業台を広く',
           'workspace-expand',
           () => {
+            if (isLocked()) return;
             const expanded = options.onExpand();
             wide.textContent = expanded
               ? '画面も見る'
@@ -3405,6 +3406,9 @@
           !!isLocked(),
         ].join('|');
       root.dataset.locked = String(!!isLocked());
+      // 作業台を広く cannot be used while the work runs (はじめて shows the blocks then): its place stays, as the run bar's
+      // buttons do (final call 21).
+      if (wide) wide.style.visibility = isLocked() ? 'hidden' : '';
       if (drag && nextSignature !== signature) cancelDrag();
       if (pending) {
         updateControls();
