@@ -123,7 +123,7 @@ function verifyCaseShape(c, area, where, fail) {
     if (c.polarity === 'negative' && c.expect?.stops !== true && !(c.expect?.notices?.length)) fail(where, 'a negative check must stop or give a notice');
     for (const n of c.expect?.notices ?? []) if (typeof n.contains !== 'string' || !n.contains) fail(where, 'notice contains');
     const word = w => (typeof w === 'string' && w) || (Array.isArray(w) && w.length && w.every(x => typeof x === 'string' && x));
-    for (const key of ['guidanceContains', 'guidanceAbsent']) for (const w of c.expect?.[key] ?? []) if (!word(w)) fail(where, key + ' entries are words or lists of spellings');
+    for (const key of ['guidanceContains', 'guidanceAbsent', 'fixContains']) for (const w of c.expect?.[key] ?? []) if (!word(w)) fail(where, key + ' entries are words or lists of spellings');
   } else if (c.kind === 'run') {
     verifyWorld(c.world, area, where, fail);
     const until = c.run?.untilMs;
