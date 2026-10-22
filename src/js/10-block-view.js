@@ -1984,7 +1984,7 @@
       if (!owner && value?.kind === 'named' && !schemaOf(node)?.bodies?.length && !subjectWritten(node, value.name) &&
           value.name !== project()?.components.find(c => c.id === context().targetId)?.name) {
         const why = '前の 文の「' + value.name + (value.particle || 'は') + '」を ひきついで、' + value.name + 'が します',
-          carried = E('span', 'blockui-subject-chip blockui-subject-carried', value.name, { 'data-block-id': node.id, 'data-carried-subject': value.name, title: why, role: 'note', 'aria-label': why });
+          carried = E('span', 'blockui-subject-chip blockui-subject-carried', '（' + value.name + (value.particle || 'は') + '）', { 'data-block-id': node.id, 'data-carried-subject': value.name, title: why, role: 'note', 'aria-label': why });
         Object.assign(carried.style, { display: 'inline-flex', alignItems: 'center', alignSelf: 'center', padding: '0 7px', minHeight: '20px',
           border: '1px dashed currentColor', borderRadius: '10px', opacity: '0.6', marginRight: '4px', fontSize: '0.92em', whiteSpace: 'nowrap' });
         return carried;
