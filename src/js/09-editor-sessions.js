@@ -1372,26 +1372,26 @@
   const TUTORIAL_BLOCKS=Object.freeze({
     speech:{label:'話す',source:'「こんにちは」と1秒話す。'},
     escape:{label:'ちがう ばしょへ にげる',source:'画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
-    swim:{label:'ゆっくり泳ぐ',source:'1秒かけて、画面の左下のはしから、右へ480歩、上へ187歩のばしょへ行く。'},
-    randomSwim:{label:'あちこちへ泳ぐ',source:'0.5秒かけて、画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
+    swim:{label:'ゆっくり 泳ぐ',source:'1秒かけて、画面の左下のはしから、右へ480歩、上へ187歩のばしょへ行く。'},
+    randomSwim:{label:'あちこちへ 泳ぐ',source:'0.5秒かけて、画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
     repeat:{label:'くり返す',source:'3回くり返す。\n  0秒待つ。',hole:'body'},
-    right:{label:'右へ泳ぐ',source:'0.3秒かけて、いまのばしょから、右へ60歩動く。'},
-    left:{label:'左へ泳ぐ',source:'0.3秒かけて、いまのばしょから、左へ60歩動く。'},
+    right:{label:'右へ 泳ぐ',source:'0.3秒かけて、いまのばしょから、右へ60歩動く。'},
+    left:{label:'左へ 泳ぐ',source:'0.3秒かけて、いまのばしょから、左へ60歩動く。'},
     small:{label:'小さくする',source:'大きさを70％にする。'},
-    point:{label:'点数を1ふやす',source:'点数を1ふやす。'},
-    score:{label:'点数を見せる',source:'「点数ボード」の文字を（「つかまえた：」と点数をつなげた文字）にかえる。'},
+    point:{label:'点数を 1 ふやす',source:'点数を1ふやす。'},
+    score:{label:'点数を 見せる',source:'「点数ボード」の文字を（「つかまえた：」と点数をつなげた文字）にかえる。'},
     finish:{label:'5ひきなら',source:'もし点数が5以上なら、\n  0秒待つ。',hole:'thenBody'},
     bonus:{label:'3ひきなら',source:'もし点数が3と同じなら、\n  0秒待つ。',hole:'thenBody'},
     bonusPoint:{label:'おまけの点を ふやす',source:'点数を2ふやす。'},
-    cheer:{label:'おいわいのことば',source:'「クリア！」と0.5秒話す。'},
-    remaining:{label:'のこりを見せる',source:'「点数ボード」の文字を（「あと：」と最大（0、10－点数）をつなげた文字）にかえる。'},
-    tone:{label:'音を鳴らす',source:'880Hzの音を0.1秒鳴らす。'},
+    cheer:{label:'おいわいの ことば',source:'「クリア！」と0.5秒話す。'},
+    remaining:{label:'のこりを 見せる',source:'「点数ボード」の文字を（「あと：」と最大（0、10－点数）をつなげた文字）にかえる。'},
+    tone:{label:'音を 鳴らす',source:'880Hzの音を0.1秒鳴らす。'},
     lowTone:{label:'ひくい音',source:'523Hzの音を0.1秒鳴らす。'},
-    midTone:{label:'まん中の音',source:'659Hzの音を0.1秒鳴らす。'},
+    midTone:{label:'まん中の 音',source:'659Hzの音を0.1秒鳴らす。'},
     highTone:{label:'たかい音',source:'784Hzの音を0.1秒鳴らす。'},
-    costume:{label:'すがたをかえる',source:'次のすがたにかえる。'},
-    turn:{label:'くるっと回る',source:'右に90度回る。'},
-    wait:{label:'少し待つ',source:'0.1秒待つ。'},
+    costume:{label:'すがたを かえる',source:'次のすがたにかえる。'},
+    turn:{label:'くるっと 回る',source:'右に90度回る。'},
+    wait:{label:'少し 待つ',source:'0.1秒待つ。'},
   });
   function tutorialCandidate(key,project,identity=key) {
     const spec=TUTORIAL_BLOCKS[key],parsed=parseScript(spec.source,buildSymbols(project),{targetId:'sprite-1',event:'click'});
@@ -1435,17 +1435,17 @@
     tutorialInsert('add-escape','escape',2),...tutorialTry('original',3),
     tutorialDefine({id:'choose-course',action:'choice',choice:'course',message:'できた！ どんな 遊びを 足そう？ ここで「ほぞんして おわる」を おしても いいよ。'})]);
   const TUTORIAL_COURSES=Object.freeze([
-    {id:'motion',label:'動きをつけよう',description:'泳ぎ方を かえて 遊ぼう。',children:[
-      {id:'swim',label:'あちこちへ泳ぐ',description:'行く ばしょと 速さを かえよう。'},
-      {id:'zigzag',label:'いったりきたり',description:'くり返しで 泳がせよう。'},
-      {id:'small',label:'小さなさかな',description:'大きさを かえて、つかまえよう。'}]},
-    {id:'score',label:'ゲームにしよう',description:'つかまえた 数を 見せよう。',children:[
+    {id:'motion',label:'動きを つけよう',description:'泳ぎ方を かえて 遊ぼう。',children:[
+      {id:'swim',label:'あちこちへ 泳ぐ',description:'行く ばしょと 速さを かえよう。'},
+      {id:'zigzag',label:'いったり きたり',description:'くり返しで 泳がせよう。'},
+      {id:'small',label:'小さな さかな',description:'大きさを かえて、つかまえよう。'}]},
+    {id:'score',label:'ゲームに しよう',description:'つかまえた 数を 見せよう。',children:[
       {id:'goal',label:'めざせ、5ひき！',description:'決めた 数で、おいわいしよう。'},
       {id:'bonus',label:'おまけの点',description:'ある 数に なったら、点を ふやそう。'},
       {id:'remaining',label:'あと何びき？',description:'ひき算で、のこりを 見せよう。'}]},
-    {id:'show',label:'音やすがたで遊ぼう',description:'キャッチしたときの 音や すがたを 作ろう。',children:[
-      {id:'melody',label:'音をならべよう',description:'短い メロディーを 作ろう。'},
-      {id:'costume',label:'さかながへんしん',description:'ちがう すがたで 遊ぼう。'},
+    {id:'show',label:'音や すがたで 遊ぼう',description:'キャッチしたときの 音や すがたを 作ろう。',children:[
+      {id:'melody',label:'音を ならべよう',description:'短い メロディーを 作ろう。'},
+      {id:'costume',label:'さかなが へんしん',description:'ちがう すがたで 遊ぼう。'},
       {id:'dance',label:'くるくるショー',description:'回る 動きと、待つ 時間を 組もう。'}]},
   ]);
   function tutorialCourseSteps(course,offset,tag) {
