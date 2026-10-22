@@ -1646,9 +1646,10 @@
       const goto = lanes ? lanes[0] : node, written = oneLeg(goto);
       if (written) {
         const missing = written.x ? 'y' : 'x', across = missing === 'x';
+        // FM2-13: what happens in plain words, いま written in kana (F-20).
         const message = across
-          ? 'よこの 歩数を 書いていないので、右へ0歩（画面の 左の はし）へ 行きます。よこを 今の ままに するときは「右へ（よこのばしょ）歩」を 書きます'
-          : 'たての 歩数を 書いていないので、上へ0歩（画面の 下の はし）へ 行きます。たてを 今の ままに するときは「上へ（たてのばしょ）歩」を 書きます';
+          ? 'よこの 歩数を 書いていないので、よこは 0歩（画面の 左の はし）に なります。よこを いまの ままに するときは「右へ（よこのばしょ）歩」と 書きます'
+          : 'たての 歩数を 書いていないので、たては 0歩（画面の 下の はし）に なります。たてを いまの ままに するときは「上へ（たてのばしょ）歩」と 書きます';
         const location = SOURCE_RANGES.get(node), proposals = [];
         let range = location && !location.rewritten ? location.range : null, chained = false;
         // Inside a 「〜して、」 chain (…のばしょへ行って、) the sentence was read as 行く: the fix is made for the clause as
@@ -1705,8 +1706,14 @@
       for (const [key, value] of Object.entries(node)) if (!['body', 'thenBody', 'elseBody', 'lanes', 'sourceSpan', 'actorRef', 'laneRef'].includes(key) && value && typeof value === 'object') walk(value, false);
     };
     const statements = function* (nodes) { for (const n of nodes || []) { if (!n || typeof n !== 'object') continue; yield n; for (const key of ['body', 'thenBody', 'elseBody']) yield* statements(n[key]); for (const lane of n.lanes || []) yield* statements(lane); } };
-    const touchOf = condition => { let found = null; expressions({ condition }, (e, negated) => { if (!found && !negated && e.kind === 'SensorRead' && e.sensor === 'TOUCHING') found = e; }); return found; };
-    const ends = nodes => [...statements(nodes)].some(m => NOTICE_WAITS.has(m.kind) || m.kind === 'MotionCommand' || m.kind === 'StopCommand' ||
+    // The touch of a condition, with who touches when it is written (名人: ねこが「石」にふれていれば).
+    const touchOf = condition => { let found = null; expressions({ condition }, (e, negated) => {
+      if (found || negated) return;
+      if (e.kind === 'ActorQualifiedRead' && e.actorRef?.kind === 'named' && e.value?.kind === 'SensorRead' && e.value.sensor === 'TOUCHING') found = { ...e.value, toucher: e.actorRef.name };
+      else if (e.kind === 'SensorRead' && e.sensor === 'TOUCHING') found = e; }); return found; };
+    // The touch ends with かくす・動く・待つ・コピーを消す・止める (LANGUAGE.md); a turn is no move there.
+    const TURNS = new Set(['TURN_RIGHT', 'TURN_LEFT', 'SET_DIRECTION', 'POINT_TO']);
+    const ends = nodes => [...statements(nodes)].some(m => NOTICE_WAITS.has(m.kind) || (m.kind === 'MotionCommand' && !TURNS.has(m.op)) || m.kind === 'StopCommand' ||
       (m.kind === 'LooksCommand' && m.op === 'HIDE') || (m.kind === 'CloneCommand' && ['DELETE_SELF', 'DELETE_ALL'].includes(m.op)) || (m.kind === 'Say' && m.seconds));
     const keyOf = condition => condition?.kind === 'SensorRead' && condition.sensor === 'KEY_DOWN' && condition.arg?.kind === 'StringLiteral' ? condition.arg.value : null;
     const visitList = (nodes, inLoop) => {
@@ -1727,12 +1734,30 @@
           // A wait for the key to be let go (or for anything else) ends the held press.
           heldKey = key;
         } else if (NOTICE_WAITS.has(n.kind) || NOTICE_LOOPS.has(n.kind) || n.kind === 'IfStatement' || (n.kind === 'Say' && n.seconds)) heldKey = null;
+        // A loop whose one wait is 「スペース」キーがおされるまで待つ: held down, the next round's wait ends at once too, so
+        // it counts on every round (C-touch-R2-10). Said only when nothing else in the round could wait in between.
+        if (NOTICE_LOOPS.has(n.kind) && Array.isArray(n.body)) {
+          const steps = n.body.filter(m => m && m.kind !== 'CommentLine'), waits = steps.filter(m => m.kind === 'WaitUntil' && keyOf(m.condition) !== null);
+          const others = steps.filter(m => !waits.includes(m) && (NOTICE_WAITS.has(m.kind) || NOTICE_LOOPS.has(m.kind) || m.kind === 'IfStatement' || (m.kind === 'Say' && m.seconds)));
+          if (waits.length === 1 && !others.length) {
+            const shown = formatExpression({ kind: 'StringLiteral', value: keySurface(keyOf(waits[0].condition)) });
+            note('I125', waits[0], `キーを おしたままだと、くり返しの 次の 回の「おされるまで待つ」も すぐ 終わります（おしている あいだ、回ごとに すすみます）。1回 おす ごとに 1回 するときは、この 文の あとに「${shown}キーがおされなくなるまで待つ。」を 書きます`);
+          }
+        }
         // もし「石」にふれていれば、点数を1増やす in a loop: it counts on every turn while they touch.
         if (inLoop && n.kind === 'IfStatement') {
           const touch = touchOf(n.condition), changes = [...statements(n.thenBody)].some(m => NOTICE_CHANGES.has(m.kind));
           if (touch && changes && !ends(n.thenBody)) {
-            const target = touch.arg?.kind === 'StringLiteral' ? touchShown(touch.arg.value) : '「石」';
-            note('I121', n, `ふれている あいだ、くり返す たびに 点数などが かわります。ふれる たびに 1回だけ かえるなら「${target}にふれたとき、」を 使います`);
+            // The heading named is one the check reads (C-touch-R2-03): 名人 writes who touches; the mouse has no
+            // ふれたとき heading, so the count waits for the mouse to leave; a partner known only when running is
+            // described without a made-up name.
+            const target = touch.arg?.kind === 'StringLiteral' ? touch.arg.value : touch.arg?.kind === 'PartRef' ? touch.arg.name : null;
+            const who = item.meijin ? (touch.toucher || null) : null;
+            const tail = target === 'マウス' ? 'なら、かえる 文の あとに「「マウス」にふれなくなるまで待つ。」を 書きます'
+              : target === null ? 'なら、「もし」の かわりに「〜にふれたとき、」の 見出しで 書きます'
+              : item.meijin && !who ? null
+              : `なら「${who ? who + 'が' : ''}${touchShown(target)}にふれたとき、」を 使います`;
+            if (tail) note('I121', n, `ふれている あいだ、くり返す たびに 点数などが かわります。ふれる たびに 1回だけ かえる${tail}`);
           }
         }
         // 答え compared with a number: 答え is the text that was typed, never a number.
@@ -1743,7 +1768,10 @@
           // Equal or not: the number is written as text (「7」). Larger or smaller: 数（答え） makes the answer a number.
           const same = ['EQ', 'NEQ'].includes(e.op), value = staticNumericMagnitude(other);
           let example = null;
-          try { example = 'もし' + formatCondition({ ...e, [e.left === answer ? 'right' : 'left']: same && value !== undefined ? exprNode('StringLiteral', { value: decimalSource(value) }) : other, [e.left === answer ? 'left' : 'right']: same ? answer : exprNode('BuiltinCall', { name: '数', args: [answer] }) }, 'if') + '、'; }
+          // The example keeps the form written (C-touch-R2-10): 答えが「7」になるまで待つ, not the もし of another sentence.
+          const written = n.kind === 'WaitUntil' && n.condition === e ? ['until', s => s + '待つ'] : n.kind === 'RepeatUntil' && n.condition === e ? ['until', s => s + '、くり返す']
+            : n.kind === 'RepeatWhile' && n.condition === e ? ['while', s => s + '、くり返す'] : ['if', s => 'もし' + s + '、'];
+          try { example = written[1](formatCondition({ ...e, [e.left === answer ? 'right' : 'left']: same && value !== undefined ? exprNode('StringLiteral', { value: decimalSource(value) }) : other, [e.left === answer ? 'left' : 'right']: same ? answer : exprNode('BuiltinCall', { name: '数', args: [answer] }) }, written[0])); }
           catch (error) { if (!(error instanceof AkariError)) throw error; }
           note('I123', n, same ? `答えは 文字です。数の 答えと くらべるときは「${example || 'もし答えが「7」なら、'}」のように「 」で かこみます`
             : `答えは 文字なので、大きさを くらべられません（動かすと 止まります）。数として くらべるときは「${example || 'もし数（答え）が7より大きければ、'}」のように「数（答え）」と 書きます`);
@@ -1754,19 +1782,27 @@
           const [, other] = e.left?.kind === 'SensorRead' && e.left.sensor === 'タイマー' ? [e.left, e.right] : e.right?.kind === 'SensorRead' && e.right.sensor === 'タイマー' ? [e.right, e.left] : [];
           if (!numeric(other)) return;
           const value = text(other), example = n.kind === 'WaitUntil' ? `タイマーが${value}より大きくなるまで待つ` : n.kind === 'RepeatUntil' ? `タイマーが${value}より大きくなるまで、くり返す`
-            : n.kind === 'RepeatWhile' ? `タイマーが${value}より小さいあいだ、くり返す` : `もしタイマーが${value}より大きければ、`;
-          note('I124', n, `タイマーは 少しずつ とびとびに すすむので、ちょうど ${value}に ならない ことが あります${['WaitUntil', 'RepeatUntil'].includes(n.kind) ? '（待つのが 終わらない ことが あります）' : ''}。「${example}」と 書きます`);
+            : n.kind === 'RepeatWhile' ? `タイマーが${value}より小さいあいだ、くり返す` : null;
+          // もしタイマーが5なら: 「より大きければ」 would do it on every turn after 5 seconds; once is a wait (C-touch-R2-10).
+          note('I124', n, `タイマーは 少しずつ とびとびに すすむので、ちょうど ${value}に ならない ことが あります${['WaitUntil', 'RepeatUntil'].includes(n.kind) ? '（待つのが 終わらない ことが あります）' : ''}。`
+            + (example ? `「${example}」と 書きます` : `${value}秒 たってから 1回 するときは、「タイマーが${value}より大きくなるまで待つ。」の 次の 行に 書きます`));
         });
         // マウスがおされているあいだ in an おされたとき body: that body starts when the button is let go.
-        if (item.event === 'click') expressions(n, (e, negated) => {
-          if (!negated && e.kind === 'SensorRead' && e.sensor === 'マウスが押されている')
-            note('I126', n, '「おされたとき」は マウスを はなしてから 始まるので、「マウスがおされているあいだ」は もう あてはまりません。おしている あいだ 動かすときは、「作品を動かしたとき、」の 中で「ずっとくり返す。」と「もしマウスがおされていて、「マウス」にふれていれば、」を 使います');
+        // The words quoted are those written (もしマウスがおされていれば), and in 名人 the part pressed is who touches the mouse
+        // (C-touch-R2-09). A wait for the next press (〜おされるまで) is no mistake there.
+        if (item.event === 'click' && !['WaitUntil', 'RepeatUntil'].includes(n.kind)) expressions(n, (e, negated) => {
+          if (!negated && e.kind === 'SensorRead' && e.sensor === 'マウスが押されている') {
+            const written = n.kind === 'IfStatement' ? 'もしマウスがおされていれば' : 'マウスがおされているあいだ';
+            const pressed = item.meijin && ast.heading?.actorRef?.kind === 'named' ? ast.heading.actorRef.name : null;
+            note('I126', n, `「おされたとき」は マウスを はなしてから 始まるので、「${written}」は もう あてはまりません。おしている あいだ 動かすときは、「作品を動かしたとき、」の 中で「ずっとくり返す。」と「もしマウスがおされていて、${pressed ? pressed + 'が' : ''}「マウス」にふれていれば、」を 使います`);
+          }
         });
-        // 「こんにちは」と言う。「さようなら」と言う。: an untimed 言う goes on at once, so the next speech (or the stop of the
-        // work) comes before the first is seen (F-35).
+        // 「こんにちは」と言う。「さようなら」と言う。: an untimed 言う goes on at once, so the next speech comes before the
+        // first is seen (F-35). 作品を全部止める keeps the last picture, ふきだし and all (F-30): the speech is seen there, so
+        // it is not told of (P12).
         if (n.kind === 'Say' && n.seconds === undefined) {
           const next = (nodes || []).slice(nodes.indexOf(n) + 1).find(m => m && m.kind !== 'CommentLine');
-          if (next && (next.kind === 'Say' || (next.kind === 'StopCommand' && next.op === 'ALL'))) {
+          if (next && next.kind === 'Say') {
             const said = n.value?.kind === 'StringLiteral' ? text(n.value) : '「…」';
             note('I130', n, `時間を 書かない「言う」は、すぐ 次の 文へ 進みます。ことばを じゅんばんに 見せるときは「${said}と2秒話す」と 書きます`);
           }
@@ -1799,6 +1835,75 @@
     return notes;
   }
   const dataNameExists = (project, name, kind) => [project.projectData, ...project.components.map(c => c.localData)].some(d => d[kind].some(x => x.name === name));
+  // Flows that never show or never reach what they say (P13: E2E-R1-04, E2E-R1-07). Each is a notice only.
+  // I133: a part that hid itself earlier in this flow speaks, and no other flow shows it again.
+  // I134: a wait for a part to touch something, when the sentences that move the part come after the wait in the same
+  //   flow and no other flow moves the part or what it touches (the mouse moves by itself).
+  // I135: the sentence after a ずっとくり返す that no このくり返しを終える ends.
+  const FLOW_LOOPS = new Set(['RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach', 'TimedRepeat']);
+  const flowStatements = function* (nodes) { for (const n of nodes || []) { if (!n || typeof n !== 'object') continue; yield n; for (const k of ['body', 'thenBody', 'elseBody']) yield* flowStatements(n[k]); for (const l of n.lanes || []) yield* flowStatements(l); } };
+  // A このくり返しを終える that ends this loop (not one inside a loop in it).
+  const endsLoop = nodes => (nodes || []).some(n => n && (n.kind === 'Break' || (!FLOW_LOOPS.has(n.kind) && (['body', 'thenBody', 'elseBody'].some(k => endsLoop(n[k])) || (n.lanes || []).some(l => endsLoop(l))))));
+  function flowNotes(project, compiled, item, ast) {
+    const notes = [], note = (code, node, message) => notes.push({ code, notice: true, line: node?.sourceSpan?.startLine || 0, column: node?.sourceSpan?.startColumn || 1, where: item.key, message });
+    const ownerOf = it => it.targetId === 'stage' ? project.stage.name : project.components.find(c => c.id === it.targetId)?.name || null;
+    const owner = item.meijin ? null : ownerOf(item);
+    // 自分 is the body's part; a 名人 heading that names a part (かごは、) makes it that part.
+    const who = (ref, it = item) => ref?.kind === 'named' ? ref.name : (!ref || ref.kind === 'self') && it.targetId !== 'stage' ? project.components.find(c => c.id === it.targetId)?.name || null : (!ref || ref.kind === 'self') && !it.meijin ? ownerOf(it) : null;
+    const script = project.scripts.find(s => scriptSourceKey(s) === item.key), lines = String(script?.source || '').split('\n');
+    const written = (n, name) => (lines[(n.sourceSpan?.startLine || 1) - 1] || '').includes(name);
+    // Which flows move or show a part: [item key, flow, part].
+    const movers = [], showers = [];
+    for (const other of compiled.items || []) { const a = compiled.astByKey?.get(other.key); if (!a) continue;
+      for (const [flow, nodes] of [['body', a.body], ...(a.units || []).map((u, i) => ['unit' + i, u.body]), ['rules', a.rules]])
+        for (const m of flowStatements(nodes)) { if (m.kind === 'MotionCommand' || m.kind === 'ContinuousRule') movers.push([other.key, flow, who(m.actorRef, other)]);
+          if (m.kind === 'LooksCommand' && m.op === 'SHOW') showers.push([other.key, flow, who(m.actorRef, other)]); } }
+    for (const [flow, nodes] of [['body', ast.body], ...(ast.units || []).map((u, i) => ['unit' + i, u.body])]) {
+      const visit = (list, hidden) => {
+        (list || []).forEach((n, i) => {
+          if (!n || typeof n !== 'object' || n.kind === 'CommentLine') return;
+          const actor = who(n.actorRef);
+          if (n.kind === 'Say' && actor && hidden.has(actor) && !showers.some(([k, f, w]) => w === actor && !(k === item.key && f === flow))) {
+            // A subject carried over from the sentence before, when the body's owner is someone else: say who speaks and
+            // how the owner speaks instead.
+            const inherited = !item.meijin && actor !== owner && !written(n, actor);
+            let example = null;
+            if (inherited && owner && item.targetId !== 'stage') { try { example = formatScript({ kind: 'Script', body: [{ ...n, actorRef: { kind: 'named', name: owner }, inlineComment: '' }] }, {}).trim(); } catch (error) { if (!(error instanceof AkariError)) throw error; } }
+            note('I133', n, (inherited ? `この 文は、前の 文の「${actor}は」を ひきついで、${actor}が 話します。` : '') + `${actor}は すがたを かくして いるので、ことばは 見えません。`
+              + (example ? `${owner}が 話すときは「${example}」と 書きます` : `話す 前に「${actor}はすがたを見せる。」を 書きます`));
+          }
+          if (n.kind === 'LooksCommand' && n.op === 'HIDE' && actor) hidden.add(actor);
+          if (n.kind === 'LooksCommand' && n.op === 'SHOW' && actor) hidden.delete(actor);
+          if (n.kind === 'WaitUntil') {
+            let toucher = null, target = null;
+            const walk = e => { if (!e || typeof e !== 'object' || toucher) return;
+              if (e.kind === 'ActorQualifiedRead' && e.value?.kind === 'SensorRead' && e.value.sensor === 'TOUCHING') { toucher = e.actorRef?.name || null; target = e.value.arg; }
+              else if (e.kind === 'SensorRead' && e.sensor === 'TOUCHING' && owner) { toucher = owner; target = e.arg; }
+              else for (const v of Object.values(e)) if (v && typeof v === 'object') walk(v); };
+            walk(n.condition);
+            const targetName = target?.kind === 'StringLiteral' ? target.value : target?.kind === 'PartRef' ? target.name : null;
+            const movesTarget = targetName === 'マウス' || (targetName && movers.some(([, , w]) => w === targetName));
+            const movedLater = toucher && [...flowStatements(list.slice(i + 1))].some(m => (m.kind === 'MotionCommand' || m.kind === 'ContinuousRule') && who(m.actorRef) === toucher);
+            const elsewhere = movers.some(([k, f, w]) => w === toucher && !(k === item.key && f === flow));
+            if (toucher && movedLater && !elsewhere && !movesTarget) {
+              const shown = targetName ? touchShown(targetName) : '「…」';
+              note('I134', n, `${toucher}が ${shown}に ふれるまで、ここで 待ちます。${toucher}を 動かす 文は この あとに あるので、${toucher}は 動かないまま 待ちつづけます。`
+                + (item.meijin ? `ふれる たびに するときは「${toucher}が${shown}にふれたとき、」と 書いて、することを 次の 行に 右へ ずらして 書きます` : `ふれる たびに するときは「${shown}にふれたとき、」の 本文に 書きます`));
+            }
+          }
+          if (n.kind === 'Forever' && !endsLoop(n.body)) {
+            const next = list.slice(i + 1).find(m => m && m.kind !== 'CommentLine');
+            if (next) note('I135', next, '「ずっとくり返す。」は 終わらないので、この 文は 行いません。'
+              + (item.meijin ? 'くり返しと 同時に するときは、「次のことを同時に始める。」の 中に 書くか、「〜とき、」の 見出しで 書きます' : 'くり返しと 同時に するときは、「同じ きっかけの 本文を ふやす」で 本文を ふやして、そこに 書きます'));
+          }
+          for (const k of ['body', 'thenBody', 'elseBody']) if (Array.isArray(n[k])) visit(n[k], new Set(hidden));
+          for (const l of n.lanes || []) visit(l, new Set(hidden));
+        });
+      };
+      visit(nodes, new Set());
+    }
+    return notes;
+  }
   function projectNotes(project, compiled) {
     const notes = [], seen = new Set();
     const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach'];
@@ -1830,7 +1935,7 @@
       };
       walk(ast.body);
       for (const unit of ast.units || []) walk(unit.body);
-      for (const note of [...fixedPlaceNotes(project, item, ast), ...silentWrongNotes(project, item, ast)]) {
+      for (const note of [...fixedPlaceNotes(project, item, ast), ...silentWrongNotes(project, item, ast), ...flowNotes(project, compiled, item, ast)]) {
         const key = note.where + '|' + note.line + '|' + note.column + '|' + note.code;
         if (!seen.has(key)) { seen.add(key); notes.push(note); }
       }
