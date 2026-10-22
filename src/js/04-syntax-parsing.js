@@ -2027,15 +2027,20 @@
   }
   // ド・レ・ミ … are pitches: the tone sentence takes the height in Hz (the C major scale from middle ド).
   const SOLFEGE_HZ=Object.freeze({ド:262,レ:294,ミ:330,ファ:349,ソ:392,ラ:440,シ:494});
-  // ドを鳴らす (from ドの音を鳴らす): a bare ド・レ・ミ … that names no data is the name of a sound, as 「ド」 (the check tells when
-  // the work has no such sound, I131).
+  // ドを鳴らす (from ドの音を鳴らす): a bare ド・レ・ミ … is the name of a sound, as 「ド」. A sound sentence's name always means
+  // a sound: data named ド is never used there (final call 29; the check stops when the work has no such sound, and I132
+  // says that the name is the sound's).
   function solfegeSound(node,symbols,ctx={}){
-    if(node?.kind!=='VariableRead'||node.qualifier||!Object.hasOwn(SOLFEGE_HZ,node.name)||dataNameKind(node.name,symbols,ctx)||(ctx.localNames||[]).includes(node.name))return node;
+    if(node?.kind!=='VariableRead'||node.qualifier||!Object.hasOwn(SOLFEGE_HZ,node.name))return node;
     const literal=exprNode('StringLiteral',{value:node.name}),location=SOURCE_RANGES.get(node);
     if(location)SOURCE_RANGES.set(literal,location);
     return literal;
   }
   const solfegeMessage=note=>`「${note}」は 音の 高さの 名前です。${note}の 音を 出すときは「${SOLFEGE_HZ[note]}Hzの音を0.5秒鳴らす」のように、高さ（Hz）と 時間を 書きます`;
+  // A ドレミ name with no such sound in the work (final call 29, P10/P20): the check stops with the Hz guidance. When the
+  // work has data of that name, the message says that the sound sentence does not use it.
+  const solfegeMissingMessage=(note,dataKind=null)=>`この 作品には「${note}」という 音が ありません。ドレミの 高さで 鳴らすときは「${SOLFEGE_HZ[note]}Hzの音を0.5秒鳴らす」のように Hzで 書きます（ド 262、レ 294、ミ 330、ファ 349、ソ 392、ラ 440、シ 494）`
+    +(dataKind?`。音の 文の「${note}」は 音の 名前で、${dataKind==='list'?'リスト':'へんすう'}の「${note}」では ありません`:'');
   // ちがったら、/ まちがえたら、/ そうじゃなかったら、: the other branch of もし is そうでなければ、. Looked for in a line of
   // its own (diagnoseSentenceIntent) and right after a もし block, where the line is first read as that もし's other
   // branch (readBlockHead), before 〜たら's three meanings.
@@ -2501,10 +2506,10 @@
       if(line.indent>0){let found=null;try{found=readTouchHeading(code,mask,symbols);}catch(error){if(!(error instanceof AkariError))throw error;}
         if(found)throw sentenceDiagnostic(`「${touchShown(found.heading.filter.target)}にふれたとき、」は 見出しです。行の はじめに 書きます`,line,[],{kind:'Script'});}
     }
-    // ドの音を鳴らす is the sound named ド (LANGUAGE.md 音と待機); with no such sound the check gives a notice (I131).
-    // 2秒のドの音を鳴らす and the like, with a time, are no sentence of a sound: the tone is written in Hz.
+    // ドの音を鳴らす is the sound named ド (LANGUAGE.md 音と待機). ドの音を0.5秒鳴らす and the like, with a time, are no
+    // sentence of a sound, also when the work has a sound ド (G-R2-09): the tone is written in Hz.
     {const note=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(ド|レ|ミ|ファ|ソ|ラ|シ)(?:の音)?を([0-9０-９.．]+)秒(鳴らす|ならす|鳴らし始める|ならし始める)$/d,code,mask);
-      if(note&&!(symbols?.project?.sounds||[]).some(s=>s.name===note[1].text)&&!knownName(note[1].text)){
+      if(note){
         const start=/始める$/.test(note[3].text),source=`${note[0].text}${SOLFEGE_HZ[note[1].text]}Hzの音を${note[2].text}秒${start?'鳴らし始める':'鳴らす'}`;
         throw sentenceDiagnostic(solfegeMessage(note[1].text),line,reads(source)?[{label:`${note[1].text}の 高さの 音を 鳴らす`,source}]:[],{kind:'SoundCommand'});}}
     // 1秒から3歩のどれか: the two numbers of どれか take the same unit (F-33).
@@ -2796,9 +2801,15 @@
         throw sentenceDiagnostic(who&&!EVERYONE_WORDS.includes(who)?'この 文は、いつも みんなで 待ちます。だれが 待つかは 書かずに「その合図で始まったことが全部終わるまで待つ」と 書きます':'「その合図で始まったことが全部終わるまで待つ」と 書きます',line,[{label:'書きかえる',source:'その合図で始まったことが全部終わるまで待つ'}],{kind:'WaitBroadcastGroup'});}
     // ベルを鳴らす / スタートの合図を送る: a sound's or signal's name is written in 「 」.
     {const sound=/^(?:(.+?)は、?)?(.+?)(?:の音)?を(?:鳴らす|ならす|鳴らし始める|ならし始める|最後まで鳴らす)$/.exec(code),signal=/^(?:(.+?)は、?)?(.+?)の合図を送(?:る|って.+)$/.exec(code);
-      const bare=name=>name&&!/^[「【（]/.test(name)&&!dataNameKind(name,symbols,ctx)&&/^[\p{L}ー0-9０-９]+$/u.test(name);
+      const bare=name=>name&&!/^[「【（]/.test(name)&&(!dataNameKind(name,symbols,ctx)||(sound&&name===sound[2]&&Object.hasOwn(SOLFEGE_HZ,name)))&&/^[\p{L}ー0-9０-９]+$/u.test(name);
+      // ドの音を鳴らす with no sound ド (final call 29): the check stops with the Hz guidance, and the unquoted form can be
+      // written as the tone of that height (鳴らし始める keeps its verb).
+      if(sound&&bare(sound[2])&&Object.hasOwn(SOLFEGE_HZ,sound[2])&&!(symbols?.project?.sounds||[]).some(s=>s.name===sound[2])){
+        const hz=SOLFEGE_HZ[sound[2]],start=/始める$/.test(code),source=`${sound[1]?sound[1]+'は':''}${hz}Hzの音を0.5秒${start?'鳴らし始める':'鳴らす'}`;
+        throw sentenceDiagnostic(solfegeMissingMessage(sound[2],dataNameKind(sound[2],symbols,ctx)),line,reads(source)?[{label:`${sound[2]}の 高さの 音を 鳴らす`,source:canonicalStatementSource(source,symbols)}]:[],{kind:'SoundCommand'});
+      }
       // A sound of the work is named in 「 」, a ドレミ name too (LANGUAGE.md 音と待機: with a sound ド in the work,
-      // ドの音を鳴らす is stopped and written 「ド」を鳴らす). Without such a sound a ドレミ name reads, with a notice (I131).
+      // ドの音を鳴らす is stopped and written 「ド」を鳴らす).
       if(sound&&bare(sound[2])&&(symbols?.project?.sounds||[]).some(s=>s.name===sound[2]))throw fixed('音の 名前は「 」で かこんで 書きます',code.replace(sound[2],'「'+sound[2]+'」'),'「 」で かこむ','SoundCommand');
       if(signal&&bare(signal[2]))throw fixed('合図の 名前は「 」で かこんで 書きます',code.replace(signal[2]+'の合図','「'+signal[2]+'」の合図'),'「 」で かこむ','Broadcast');}
     // ゴールに着いたら、: reaching a part is touching it, and 〜たら has the three meanings of 〜にふれたら (C-09): each time

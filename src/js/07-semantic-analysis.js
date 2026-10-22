@@ -621,9 +621,16 @@
         if (n.kind === 'LooksCommand' && n.op === 'SET_INPUT')
           checkComponentTarget(n.args?.[0], ['input'], c, where, '入力らん');
         if (n.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(n.op)) {
-          const name = literalText(n.args?.[0]);
+          const name = literalText(n.args?.[0]), arg = n.args?.[0];
+          // ピアノの音を鳴らす with no sound and no data ピアノ (P10/P20 B(3)): the name is a sound's, so the child is told to
+          // put the sound in and write its name in 「 」, never to make a variable.
+          if (arg?.kind === 'VariableRead' && !arg.qualifier && !targetExists({ name: arg.name, qualifier: null }, symbols, c)) {
+            for (let i = diags.length - 1; i >= 0; i--) if (diags[i].where === where && diags[i].code === 'S301' && diags[i].message.startsWith(`まだ 作っていない 名前「${arg.name}」`)) diags.splice(i, 1);
+            add('S301', `この 作品には「${arg.name}」という 音が ありません。音を 入れてから、名前を「 」で かこんで「「${arg.name}」を${n.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}」と 書きます`, n, where);
+          }
+          // A ドレミ name with no such sound stops with the Hz guidance (final call 29), quoted or not and at every level.
           if (name !== null && !project.sounds.some((x) => x.name === name))
-            { if (!Object.hasOwn(SOLFEGE_HZ, name)) add('S301', `「${name}」という 音が 見つかりません。名前を たしかめるか、その 名前の 音を 入れてください`, n, where); }
+            add('S301', Object.hasOwn(SOLFEGE_HZ, name) ? solfegeMissingMessage(name, dataNameKind(name, symbols, c)) : `「${name}」という 音が 見つかりません。名前を たしかめるか、その 名前の 音を 入れてください`, n, where);
         }
         if (n.kind === 'LooksCommand' && n.op === 'SET_BACKDROP') {
           const name = literalText(n.args?.[0]);
@@ -1764,11 +1771,16 @@
             note('I130', n, `時間を 書かない「言う」は、すぐ 次の 文へ 進みます。ことばを じゅんばんに 見せるときは「${said}と2秒話す」と 書きます`);
           }
         }
-        // ドの音を鳴らす with no sound named ド: the pitches are written in Hz.
+        // 「ド」を鳴らす in a work with a sound ド and data named ド (final call 29): the sentence plays the sound; the data is
+        // never used there (I132). With no sound ド the check stops instead (S301), so I131 is gone.
         if (n.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(n.op)) {
           const arg = n.args?.[0], name = arg?.kind === 'StringLiteral' ? arg.value : null;
-          if (name !== null && Object.hasOwn(SOLFEGE_HZ, name) && !project.sounds.some(s => s.name === name))
-            note('I131', n, `この 作品には「${name}」という 音が ありません。ドレミの 高さで 鳴らすときは「${SOLFEGE_HZ[name]}Hzの音を0.5秒鳴らす」のように Hzで 書きます（ド 262、レ 294、ミ 330、ファ 349、ソ 392、ラ 440、シ 494）`);
+          const owner = project.components.find(c => c.id === item.targetId)?.localData;
+          const data = name === null || !Object.hasOwn(SOLFEGE_HZ, name) ? null
+            : [project.projectData, owner].filter(Boolean).some(d => d.variables.some(v => v.name === name)) ? 'variable'
+            : [project.projectData, owner].filter(Boolean).some(d => d.lists.some(l => l.name === name)) ? 'list' : null;
+          if (data && project.sounds.some(s => s.name === name))
+            note('I132', n, `この 文の「${name}」は 音の 名前で、${data === 'list' ? 'リスト' : 'へんすう'}の「${name}」では ありません。` + (data === 'variable' ? `へんすうの 数の 高さで 鳴らすときは「【${name}】Hzの音を0.5秒鳴らす」と 書きます` : `リストの 中身の 音を 鳴らすときは「（${name}の1番目）を鳴らす」のように 書きます`));
         }
         // 名人: ねこと犬と鳥は、順番に、… starts them together; 候補から【一覧】を全部消す looks for the list itself.
         const listed = MEIJIN_LISTED_IN_ORDER.get(n);
