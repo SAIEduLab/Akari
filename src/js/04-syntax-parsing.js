@@ -1019,7 +1019,11 @@
       if (node && this.ctx.sourcePositions) {
         const range = sourceRange(this.ctx.sourcePositions, start, this.i);
         if (range) {
-          const previous = SOURCE_RANGES.get(node), token = key === 'basic' && node.kind === 'ActorQualifiedRead' && node.actorRef.kind === 'named' ? readNameToken(this.text, start) : null;
+          // 「ロケット」のよこのばしょ: the part's name in 「 」 has its place too, so renaming the part changes it (R2-B-02).
+          const named = key === 'basic' && node.kind === 'ActorQualifiedRead' && node.actorRef.kind === 'named',
+            close = named && this.text[start] === '「' ? this.text.indexOf('」', start + 1) : -1,
+            quoted = close > start && this.text.slice(start + 1, close) === node.actorRef.name ? { name: node.actorRef.name, end: close + 1 } : null;
+          const previous = SOURCE_RANGES.get(node), token = quoted || (named ? readNameToken(this.text, start) : null);
           const actorRange = token && token.name === node.actorRef?.name ? sourceRange(this.ctx.sourcePositions, start, token.end) : previous?.actorRange;
           SOURCE_RANGES.set(node, { ...previous, range, ...(actorRange ? { actorRange } : {}) });
         }

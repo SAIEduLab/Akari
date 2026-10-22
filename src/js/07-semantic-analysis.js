@@ -1276,7 +1276,7 @@
       const unique=[...new Map(edits.map(e=>[e.start+':'+e.end,e])).values()].sort((a,b)=>b.start-a.start);
       for (const edit of unique) {if(edit.end>boundary)throw new AkariError('F503','名前を かえる ところが、重なっています');source=source.slice(0,edit.start)+edit.text+source.slice(edit.end);boundary=edit.start;}
       const parsed=parseSyntax(source,{...record.context,symbols:buildSymbols(next)});
-      if(!parsed.ast||!astEquivalent(parsed.ast,blockDecode(tree)))throw new AkariError('S301','この 書き方では、名前を かえても 同じ ものを さした ままか、たしかめられません。名前を【 】で かこむなど、どれの ことか はっきり 書いてください');
+      if(!parsed.ast||!astEquivalent(parsed.ast,blockDecode(tree)))throw new AkariError('S301','この 書き方では、名前を かえても 同じ ものを さした ままか、たしかめられません。どれの ことか はっきり 書いてください（へんすうの 名前は【 】、部品の 名前は「 」で かこみます）');
       const target=record.kind==='script'?scriptBySourceKey(next,record.key):next[record.kind==='action'?'actions':'functions'].find(d=>record.key===record.kind+':'+d.id);
       target.source=source;if(target.document&&source!==record.source)target.document.revision++;
     }
