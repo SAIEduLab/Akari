@@ -134,13 +134,15 @@
         : project.components.find((c) => c.id === ctx.targetId)?.name ||
           ctx.targetId ||
           '呼び出し元未確定';
-    const add = (code, message, node, where) => {
+    // proposals: rewrites of the body's text (start/end in that text), which the code view offers as buttons.
+    const add = (code, message, node, where, proposals = null) => {
       const d = {
         code,
         message,
         line: node?.sourceSpan?.startLine || 0,
         column: node?.sourceSpan?.startColumn || 1,
         where,
+        ...(proposals?.length ? { proposals } : {}),
       };
       const k = `${d.code}|${d.message}|${d.line}|${d.column}|${d.where}`;
       if (!diagKeys.has(k)) {
@@ -196,6 +198,21 @@
       }
       if (n.sensor === 'クローンである') return `名人の 本文では、だれが コピーかを 書きます。れい：もし${part}がコピーなら、`;
       return `名人の 本文では、だれの「${messageExpression(n)}」かを 書きます。れい：${part}の${messageExpression(n)}`;
+    };
+    // The same, as a rewrite of the condition the child wrote (C-touch-R2-04), when who touches is sure: 「ねこ」の「星」 names
+    // ねこ, or the work has one character other than the partner. The text keeps the child's words and ending.
+    const meijinTouchProposals = (n, where, ctx) => {
+      const range = SOURCE_RANGES.get(n)?.range, text = !ctx.definition ? scriptBySourceKey(project, where)?.source : null;
+      if (!['TOUCHING', 'TOUCHING_COLOR'].includes(n.sensor) || !range || typeof text !== 'string') return null;
+      const arg = n.arg, qualified = arg?.kind === 'ActorQualifiedRead' && arg.actorRef?.kind === 'named' ? arg : null,
+        partner = qualified ? qualified.value : arg, partnerName = partner?.kind === 'StringLiteral' ? partner.value : null,
+        others = project.components.filter(c => c.type === 'sprite' && c.name !== partnerName),
+        part = qualified ? qualified.actorRef.name : others.length === 1 ? others[0].name : null,
+        original = text.slice(range.start, range.end), written = qualified ? original.replace(/^\s*「[^」]+」\s*の\s*/, '') : original;
+      if (!part || (qualified && written === original)) return null;
+      const source = part + 'が' + written, next = text.slice(0, range.start) + source + text.slice(range.end);
+      try { if (!parseSyntax(next, { symbols, meijin: true }).ast) return null; } catch (error) { if (!(error instanceof AkariError)) throw error; return null; }
+      return [{ label: 'だれが ふれるかを 書く', source, start: range.start, end: range.end, original }];
     };
     // コスチュームを「丸」にする / いろを「赤」にする / 文字を「あ」にする (FM2-03): a part's look written as data; the
     // sentence that changes it is named, never a variable to make. null for any other name.
@@ -492,7 +509,8 @@
             // A partner that cannot be touched gets one message below, with who touches in 名人; 「ねこ」の「星」 gets this one.
             !(ctx.meijin && (touchProblem === 'place' || touchProblem === 'number'))
           )
-            add('S304', ctx.meijin ? meijinSubjectSensorMessage(n, ctx.node) : `「${messageExpression(n)}」は 画面では 使えません。キャラクターの 本文で 使ってください`, ctx.node, where);
+            add('S304', ctx.meijin ? meijinSubjectSensorMessage(n, ctx.node) : `「${messageExpression(n)}」は 画面では 使えません。キャラクターの 本文で 使ってください`, ctx.node, where,
+              ctx.meijin ? meijinTouchProposals(n, where, ctx) : null);
           if (
             ['衣装番号', '衣装名'].includes(n.sensor) &&
             ctx.targetType &&
