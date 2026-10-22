@@ -3,6 +3,7 @@ const ids=[
   "EXPORT-CHOICE-CANCEL-FOCUS",
   "EXPORT-CHOICE-NARROW-ONE-DOWNLOAD",
   "EXPORT-CONTROLS-DEFAULT-OPERATIONS",
+  "EXPORT-CONTROLS-FINISHED",
   "EXPORT-ARTWORK-SIZE-RELOAD-INPUT",
   "EXPORT-ARTWORK-QUESTION-ANSWER-STOP",
   "EXPORT-ARTWORK-AUDIO-PERMITTED",
@@ -35,6 +36,7 @@ const ids=[
 const fixed={
   'EXPORT-CHOICE-CANCEL-FOCUS':{downloads:0,staticExamples:0},
   'EXPORT-CONTROLS-DEFAULT-OPERATIONS':{title:'検証用の作品',restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:true,singlePressWithinHalfSecondRuns:true},
+  'EXPORT-CONTROLS-FINISHED':{bodiesEnded:'playerStop:■ 止める',bodiesState:'FINISHED',stopAll:'playerStop:■ 止める',stopAllState:'FINISHED',afterStop:['playerStart:▶ 動かす','playerStart:▶ 動かす']},
   'EXPORT-ARTWORK-SIZE-RELOAD-INPUT':{noControls:true,nativeButtonAndKey:true},
   'EXPORT-ARTWORK-QUESTION-ANSWER-STOP':{answer:true,stop:true},
   'EXPORT-ARTWORK-AUDIO-PERMITTED':{automatic:true},
