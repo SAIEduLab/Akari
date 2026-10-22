@@ -1135,11 +1135,14 @@
   function generateStandaloneHtml(project, assetStore = new AssetStore(), { presentation = 'controls' } = {}) {
     if (!['controls', 'artwork'].includes(presentation)) throw new AkariError('X605', '作品のはじめ方が正しくありません');
     const artwork = presentation === 'artwork';
+    assetStore = withDefaultMascotAsset(project, assetStore || new AssetStore());
     const payload = packExecutable(project, assetStore),
       payloadJson = inlineJson(payload),
       title = escapeHtmlText(payload.project.name);
-    // The file is made only when its player would open it: the same check the player runs on the same JSON.
-    AKARI_RUNTIME.restoreExecutable(JSON.parse(payloadJson));
+    // The file is made only when its player would open it: the same check the player runs on the same JSON. Packing
+    // has just hashed each asset's bytes and written its text, so that text is not decoded and hashed a second time.
+    AKARI_RUNTIME.restoreExecutable(JSON.parse(payloadJson),
+      { packed: new Map(payload.assets.map(a => [a.id, { text: a.dataBase64, record: assetStore.get(a.id) }])) });
     const definitions = EXTENSION_HOST.exportDefinitions();
     const selected = AKARI_RUNTIME.profiles.describe();
     const configuration = `{extensions:[${definitions.map(x => `{manifest:${inlineJson(x.manifest)},factory:(${x.factorySource})}`).join(',')}],profiles:${inlineJson(selected.profiles.map(({id,version,limits})=>({id,version,limits})))},profile:${inlineJson(selected.selected ? {id:selected.selected.id,version:selected.selected.version} : null)},allowedCapabilities:${inlineJson(FOUNDATION_CONFIGURATION.allowedCapabilities || [])}}`;
