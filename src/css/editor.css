@@ -5848,7 +5848,8 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
  body[data-ui-level="entry"] .main { grid-template-columns:minmax(0,1fr) 280px; }
  body[data-ui-level="entry"] .blockui-layout { grid-template-columns:190px minmax(0,1fr); }
 }
-@media(max-width:700px) {
+/* はじめて's one-column page starts where the block view's does (760 px), so the stage never shrinks to nothing between. */
+@media(max-width:760px) {
  body[data-ui-level="entry"] #app { height:auto; min-height:100dvh; }
  body[data-ui-level="entry"] .main { display:flex; flex-direction:column; overflow:visible; }
  body[data-ui-level="entry"] .codewin { min-height:550px; }
