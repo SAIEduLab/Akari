@@ -1231,7 +1231,9 @@
       if(options.tutorialActive?.())options.onDestinationSelected?.({...location});
       else {
         if (keyboard && paletteControls.hidden) paletteToggle.click();
+        // The last word is kept, selected, so a new word typed replaces it (E-01, E-16).
         search.focus({ preventScroll: true });
+        search.select();
       }
     }
     // A block put in from the list with no place chosen goes right after the selected sentence, or at the end of the
