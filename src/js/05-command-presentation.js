@@ -651,8 +651,9 @@
       [
         'CompareExpression',
         [
-          ['GTE', 'と同じか より大きい'],
-          ['LTE', 'と同じか より小さい'],
+          // The face reads as the code (F2-03, LANGUAGE.md: 以上・以下 are written in kanji on every surface).
+          ['GTE', '以上'],
+          ['LTE', '以下'],
           ['GT', 'より大きい'],
           ['LT', 'より小さい'],
           ['EQ', 'と同じ'],
@@ -1030,6 +1031,9 @@
     if (schema.discriminator) node[schema.discriminator.key] = schema.discriminator.value;
     for (const field of schema.fields)
       if (field.required !== false) node[field.key] = blockFieldValue(field, field.initial, 'create.' + field.key);
+    // A call names a ブロック of the work when the editor gives one (F2-06, E2E-R2-07), never a name that is not there.
+    const own = schema.kind === 'UserActionCall' ? context.actionName : schema.kind === 'UserFunctionCall' ? context.functionName : null;
+    if (typeof own === 'string' && own && schema.fields.some(field => field.key === 'name')) node.name = blockFieldValue(schema.fields.find(field => field.key === 'name'), own, 'create.name');
     const valueNode = (value) =>
       Array.isArray(value)
         ? { kind: 'ListLiteral', items: [] }
@@ -1048,6 +1052,8 @@
         : slot.type === 'target' ? { name: '値', qualifier: null } : valueNode(NEW_BLOCK_VALUES[schema.id + '|' + slot.key] ?? slot.initial ?? (
           schema.id === 'LooksCommand:SET_SCALE' ? 100 :
           ['MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT'].includes(schema.id) ? 15 :
+          // 向きを45度にする changes a new part's direction (0 is the direction it has, F2-16).
+          schema.id === 'MotionCommand:SET_DIRECTION' ? 45 :
           // A colour is named as the child names it (F-21), as the hints write it: 色を「赤」に, ペンの色を「青」に.
           schema.id === 'LooksCommand:SET_COLOR' ? '赤' : schema.id === 'PenCommand:SET_COLOR' ? '青' : 0
         ));
@@ -1060,8 +1066,11 @@
         ? Array.from({ length: slot.initialItems ?? slot.minItems }, (_, index) =>
             !draft && index === 0 && typeof named === 'string' && named
               ? valueNode(named) : !draft && tone && index < tone.length
-              ? valueNode(tone[index]) : !draft && schema.id === 'LooksCommand:SET_INPUT' && index === 0
-              ? valueNode('入力らん') : !draft && schema.id === 'MotionCommand:MOVE' && index === 0
+              ? valueNode(tone[index]) : !draft && ['LooksCommand:SET_INPUT', 'LooksCommand:SET_TARGET_TEXT'].includes(schema.id) && index < 2
+              // The part the editor names, else the name a new 入力らん／文字 part gets, and the words the hint writes (F2-01).
+              ? valueNode(index === 1 ? 'こんにちは' : schema.id === 'LooksCommand:SET_INPUT' ? context.inputTarget || '入力らん1' : context.textTarget || '文字1')
+              // 1から6のどれか: a die, so the value changes (F2-16).
+              : !draft && schema.id === 'BuiltinCall:乱数' && index < 2 ? valueNode(index ? 6 : 1) : !draft && schema.id === 'MotionCommand:MOVE' && index === 0
                 ? valueNode(10) : !draft && ['MotionCommand:GOTO_PART', 'MotionCommand:POINT_TO'].includes(schema.id) && index === 0
                   // The first part in the work other than the body's owner, or the mouse (LANGUAGE.md 動きの文).
                   ? valueNode(typeof context.partTarget === 'string' && context.partTarget ? context.partTarget : 'マウス')

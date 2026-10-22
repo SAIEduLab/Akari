@@ -93,6 +93,12 @@
           line: node.sourceSpan?.startLine || 0, column: node.sourceSpan?.startColumn || 1, where,
         });
       }
+      // 99999Hzの音を1秒鳴らす: a height written outside 30–5000Hz stops before running, as running would (FCS-03); the
+      // mark is on the number.
+      if (node.kind === 'SoundCommand' && ['TONE', 'TONE_WAIT'].includes(node.op)) {
+        const hz = staticNumericMagnitude(node.args?.[0]), mark = node.args?.[0]?.sourceSpan || node.args?.[0]?.value?.sourceSpan || node.sourceSpan;
+        if (hz !== undefined && (hz < 30 || hz > 5000)) diagnostics.push({ code: 'R412', message: '音の 高さは 30Hzから 5000Hzまでの 数に します', line: mark?.startLine || 0, column: mark?.startColumn || 1, where });
+      }
       // A time written below 0 (待つ, 話す, 〇秒かけて動く・回る・〜のところへ行く, 鳴らす) stops before running.
       const timed = node.kind === 'SoundCommand' && ['TONE', 'TONE_WAIT'].includes(node.op) ? node.args?.[1]
         : ['WaitTime', 'Say', 'MotionCommand'].includes(node.kind) ? node.seconds : undefined;
@@ -148,7 +154,7 @@
     const wordHint = (name) => ({ 色: '。キャラクターの 色は「色を「赤」にする」で かえます' })[name] || (/^[〇一二三四五六七八九十百千]+つ?$/.test(name) ? '。数は 3や 10のように 数字で 書きます' : '');
     // A word that is not a name was read as one (まっすぐ10, 空, 偶数): say how to write it instead of asking to make it.
     // The example writes the value it was compared with (スコアが偶数 → スコア÷2のあまりが0なら).
-    const misreadName = (name, other, meijin = false) => {
+    const misreadName = (name, other, meijin = false, node = null) => {
       const who = (fallback) => other ? messageExpression(other) : fallback;
       // 名人 reads these words; only the ending was not read (偶数じゃなかったら).
       if (meijin && ['空', '空っぽ', '偶数', '奇数', 'ぐう数', 'ぐうすう', 'き数', 'きすう'].includes(name)) return `「${name}」は、「${who('点数')}が${name}なら」「${who('点数')}が${name}でなければ」の 形で 書きます`;
@@ -156,9 +162,50 @@
       // An odd number's あまり is 1 or －1 (the あまり has the sign of the number), as 名人 reads 奇数. ぐうすう・き数 are the same words.
       const even = ['偶数', 'ぐう数', 'ぐうすう'].includes(name), odd = ['奇数', 'き数', 'きすう'].includes(name);
       if (even || odd) return `「${name}」は くらべる ことばに ありません。「${who('点数')}÷2のあまりが${even ? '0' : '1か－1'}なら」のように 書きます`;
+      // すがたを次にする / はいけいを次にする: the next look has its own sentence.
+      if (/^(?:次|つぎ)$/.test(name) && node?.kind === 'LooksCommand' && ['SET_COSTUME', 'SET_BACKDROP'].includes(node.op))
+        return node.op === 'SET_COSTUME' ? 'つぎの すがたに するときは「つぎのすがたにかえる」と 書きます' : 'つぎの はいけいに するときは「つぎのはいけいにかえる」と 書きます';
+      // 十 / 十歩 (FM2-03): a number in kanji is written in digits; no name to make is named.
+      if (/^[〇一二三四五六七八九十百千万]+(?:つ|歩|秒|回|度|個|番目|点)?$/.test(name) && name !== '一つ') return `「${name}」は 漢数字です。数は「${meijinDigits(name)}」のように 数字で 書きます`;
       const digits = /^(.+?)([0-9０-９]+(?:[.．][0-9０-９]+)?)$/.exec(name);
-      if (digits && !symbols.projectVars?.has?.(digits[1]) && !symbols.projectLists?.has?.(digits[1]))
-        return `「${name}」を 名前として 読みました。「${digits[1]}」は あかりの ことばに ありません。「${digits[1]}」を けして 書けるか たしかめてください。れい：前へ${digits[2]}歩進む`;
+      if (digits && !symbols.projectVars?.has?.(digits[1]) && !symbols.projectLists?.has?.(digits[1])) {
+        // 点数たす1: a sum is written with ＋ (also －, ×, ÷), inside （ ）.
+        const op = /^(.+?)(たす|足す|ひく|引く|かける|わる|割る)$/.exec(digits[1]);
+        if (op) { const [sign, word] = { たす: ['＋', 'たし'], 足す: ['＋', 'たし'], ひく: ['－', 'ひき'], 引く: ['－', 'ひき'], かける: ['×', 'かけ'], わる: ['÷', 'わり'], 割る: ['÷', 'わり'] }[op[2]];
+          return `${word}算は「（${op[1]}${sign}${digits[2]}）」のように「${sign}」で 書きます`; }
+        // The move example only where the sentence is a move (まっすぐ10 → 前へ10歩進む).
+        return `「${name}」を 名前として 読みました。「${digits[1]}」は あかりの ことばに ありません。「${digits[1]}」を けして 書けるか たしかめてください${node?.kind === 'MotionCommand' ? `。れい：前へ${digits[2]}歩進む` : ''}`;
+      }
+      return null;
+    };
+    // 名人: a part's value written with no part (E2E-R2-01, C-touch-R2-04). The example is the form that reads, with a
+    // character of the work: ねこが「星」にふれていれば (who touches is written with が), ねこがコピーなら, ねこのよこのばしょ.
+    // 「ねこ」の「星」にふれている (read as ねこ's 「星」) names ねこ as who touches.
+    const meijinSubjectSensorMessage = (n, statement) => {
+      const sprites = project.components.filter(c => c.type === 'sprite'), arg = n.arg;
+      const qualified = arg?.kind === 'ActorQualifiedRead' && arg.actorRef?.kind === 'named' ? arg : null;
+      const partner = qualified ? qualified.value : arg, partnerName = partner?.kind === 'StringLiteral' ? partner.value : partner?.kind === 'PartRef' ? partner.name : null;
+      const part = qualified?.actorRef.name || (sprites.find(c => c.name !== partnerName) || project.components.find(c => c.name !== partnerName))?.name || 'ねこ';
+      if (['TOUCHING', 'TOUCHING_COLOR'].includes(n.sensor)) {
+        let shown = null;
+        try { shown = n.sensor === 'TOUCHING' && partnerName !== null ? touchShown(partnerName) : formatExpression(exprNode('SensorRead', { sensor: n.sensor, arg: partner })).replace(/にふれている$/, ''); } catch (error) { if (!(error instanceof AkariError)) throw error; }
+        shown ||= '「星」';
+        const example = statement?.kind === 'WaitUntil' ? `${part}が${shown}にふれるまで待つ` : statement?.kind === 'RepeatUntil' ? `${part}が${shown}にふれるまで、くり返す`
+          : statement?.kind === 'RepeatWhile' ? `${part}が${shown}にふれているあいだ、くり返す` : `もし${part}が${shown}にふれていれば、`;
+        return `名人の 本文では、だれが ふれるかを 書きます。れい：${example}`;
+      }
+      if (n.sensor === 'クローンである') return `名人の 本文では、だれが コピーかを 書きます。れい：もし${part}がコピーなら、`;
+      return `名人の 本文では、だれの「${messageExpression(n)}」かを 書きます。れい：${part}の${messageExpression(n)}`;
+    };
+    // コスチュームを「丸」にする / いろを「赤」にする / 文字を「あ」にする (FM2-03): a part's look written as data; the
+    // sentence that changes it is named, never a variable to make. null for any other name.
+    const propertyWord = (name, value, ctx) => {
+      let shown = '「…」';
+      try { if (value) shown = messageExpression(value); } catch (error) { if (!(error instanceof AkariError)) throw error; }
+      if (/^(?:コスチューム|こすちゅーむ|衣装|いしょう)$/.test(name)) return `すがたを かえるときは「すがたを${shown}にかえる」と 書きます`;
+      if (/^(?:いろ|カラー|からー)$/.test(name)) return `色を かえるときは「色を${shown}にする」と 書きます`;
+      if (/^(?:文字|もじ)$/.test(name)) return ['label', 'button', 'box'].includes(ctx?.targetType) ? null
+        : `文字を かえられるのは、文字・ボタン・四角の 部品です。キャラクターが 話すときは「${shown}と言う」と 書きます`;
       return null;
     };
     // A part and a variable (or list) with the same name: a bare name there reads the data, though a part was meant.
@@ -378,7 +425,7 @@
               n.qualifier === 'self' && ctx.targetId ? `${targetLabel(ctx)}の自分には` : 'まだ 作っていない';
             add(
               'S301',
-              (n.qualifier !== 'self' && misreadName(n.name, partner.get(n), ctx.meijin)) ||
+              (n.qualifier !== 'self' && misreadName(n.name, partner.get(n), ctx.meijin, ctx.node)) ||
               `${prefix} 名前「${n.name}」${n.qualifier === 'self' && ctx.targetId ? 'が ありません' : 'です。名前を たしかめるか、その 名前の へんすうか リストを 作ってください'}${wordHint(n.name)}`,
               ctx.node,
               where,
@@ -433,13 +480,13 @@
             ].includes(n.sensor) &&
             ctx.targetType === 'stage'
           )
-            add('S304', ctx.meijin ? `名人の 本文では、だれの「${messageExpression(n)}」かを 書きます。れい：「ねこ」の${messageExpression(n)}` : `「${messageExpression(n)}」は 画面では 使えません。キャラクターの 本文で 使ってください`, ctx.node, where);
+            add('S304', ctx.meijin ? meijinSubjectSensorMessage(n, ctx.node) : `「${messageExpression(n)}」は 画面では 使えません。キャラクターの 本文で 使ってください`, ctx.node, where);
           if (
             ['衣装番号', '衣装名'].includes(n.sensor) &&
             ctx.targetType &&
             ctx.targetType !== 'sprite'
           )
-            add('S304', `「${messageExpression(n)}」は キャラクターで だけ 使えます`, ctx.node, where);
+            add('S304', ctx.meijin && ctx.targetType === 'stage' ? meijinSubjectSensorMessage(n, ctx.node) : `「${messageExpression(n)}」は キャラクターで だけ 使えます`, ctx.node, where);
           if (n.sensor === 'KEY_DOWN') {
             const key = literalText(n.arg);
             if (key !== null && !validKeyName(key)) add('S301', keyNameMessage(key), ctx.node, where);
@@ -448,8 +495,26 @@
             checkComponentTarget(n.arg, ['input'], ctx, where, '入力らん');
           if (n.sensor === 'DISTANCE_TO')
             checkComponentTarget(n.arg, null, ctx, where, '部品', ['マウス']);
-          if (n.sensor === 'TOUCHING')
+          if (n.sensor === 'TOUCHING') {
             checkComponentTarget(n.arg, null, ctx, where, '部品', ['マウス', ...Object.keys(EDGE_TARGETS)]);
+            // What is touched is a part, the edge or the mouse (C-touch-R2-02): 「ゆか」の上 is ゆか itself, and a number
+            // (点数, 10, 星のよこのばしょ) is no partner. A variable that starts with text may hold a part's name.
+            const arg = n.arg;
+            const data = arg?.kind === 'VariableRead' && !componentByName(arg.name)
+              ? [...project.projectData.variables, ...project.components.flatMap(c => c.localData.variables)].find(v => v.name === arg.name) : null;
+            const of = arg?.kind === 'ActorQualifiedRead' && arg.actorRef?.kind === 'named' && arg.value?.kind === 'StringLiteral' ? arg.actorRef.name : null;
+            const numeric = ['NumberLiteral', 'QuantityLiteral', 'BinaryExpression', 'UnaryExpression'].includes(arg?.kind)
+              || (arg?.kind === 'ActorQualifiedRead' && arg.value?.kind === 'SensorRead') || (data && typeof data.initialValue === 'number');
+            if ((of && componentByName(of)) || numeric) {
+              // The example is the sentence written, with a partner other than the body's own part (or the mouse), and in
+              // 名人 with who touches.
+              const partner = of || project.components.find(c => c.id !== ctx.targetId && c.type === 'sprite')?.name || project.components.find(c => c.id !== ctx.targetId)?.name || 'マウス';
+              const who = ctx.meijin ? (project.components.find(c => c.type === 'sprite' && c.name !== partner)?.name || 'ねこ') + 'が' : '', shown = touchShown(partner);
+              const example = ctx.node?.kind === 'WaitUntil' ? `${who}${shown}にふれるまで待つ` : ctx.node?.kind === 'RepeatUntil' ? `${who}${shown}にふれるまで、くり返す`
+                : ctx.node?.kind === 'RepeatWhile' ? `${who}${shown}にふれているあいだ、くり返す` : `もし${who}${shown}にふれていれば、`;
+              add('S304', 'ふれる 相手は、部品か 画面のはしか マウスです。' + (of ? `「${of}」の ${arg.value.value}に のったかも、「${of}」に ふれたかで しらべます。` : '数には ふれられません。') + 'れい：' + example, ctx.node, where);
+            }
+          }
           if (n.sensor === 'TOUCHING_COLOR') {
             const v = literalText(n.arg);
             if (v !== null)
@@ -534,7 +599,8 @@
               'S301',
               n.target.qualifier === 'self' && c.targetId
                 ? `${targetLabel(c)}の自分には「${n.target.name}」が ありません`
-                : `「${n.target.name}」という へんすうや リストが ありません。名前を たしかめるか、その 名前の へんすうか リストを 作ってください${wordHint(n.target.name)}`,
+                : (n.kind === 'Assignment' && !n.target.qualifier && propertyWord(n.target.name, n.value, c)) ||
+                  `「${n.target.name}」という へんすうや リストが ありません。名前を たしかめるか、その 名前の へんすうか リストを 作ってください${wordHint(n.target.name)}`,
               n,
               where,
             );
@@ -620,10 +686,22 @@
           checkComponentTarget(n.args?.[0], ['label', 'button', 'box'], c, where, '文字をかえる部品');
         if (n.kind === 'LooksCommand' && n.op === 'SET_INPUT')
           checkComponentTarget(n.args?.[0], ['input'], c, where, '入力らん');
+        // かばんを言う: a list is not said as it is (running would stop there, FCM-17); its items are.
+        if (n.kind === 'Say' && n.value?.kind === 'VariableRead' && targetExists({ name: n.value.name, qualifier: n.value.qualifier }, symbols, c)?.kind === 'list')
+          add('S304', `リストは そのまま 言えません。中身を 言うときは「${n.value.name}の1番目を言う」のように 書きます`, n, where);
         if (n.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(n.op)) {
-          const name = literalText(n.args?.[0]);
+          const name = literalText(n.args?.[0]), arg = n.args?.[0];
+          // ピアノの音を鳴らす with no sound and no data ピアノ (P10/P20 B(3)): the name is a sound's, so the child is told to
+          // put the sound in and write its name in 「 」, never to make a variable.
+          if (arg?.kind === 'VariableRead' && !arg.qualifier && !targetExists({ name: arg.name, qualifier: null }, symbols, c)) {
+            for (let i = diags.length - 1; i >= 0; i--) if (diags[i].where === where && diags[i].code === 'S301' && diags[i].message.startsWith(`まだ 作っていない 名前「${arg.name}」`)) diags.splice(i, 1);
+            // 音を鳴らす: the word 音 is no sound's name; the sound is named (FM2-03).
+            add('S301', /^(?:音|音楽|おと|おんがく|BGM)$/.test(arg.name) ? `鳴らす 音の 名前を「 」で 書きます。れい：「${project.sounds[0]?.name || 'ニャー'}」の音を鳴らす`
+              : `この 作品には「${arg.name}」という 音が ありません。音を 入れてから、名前を「 」で かこんで「「${arg.name}」を${n.op === 'SAMPLE' ? '鳴らし始める' : '鳴らす'}」と 書きます`, n, where);
+          }
+          // A ドレミ name with no such sound stops with the Hz guidance (final call 29), quoted or not and at every level.
           if (name !== null && !project.sounds.some((x) => x.name === name))
-            { if (!Object.hasOwn(SOLFEGE_HZ, name)) add('S301', `「${name}」という 音が 見つかりません。名前を たしかめるか、その 名前の 音を 入れてください`, n, where); }
+            add('S301', Object.hasOwn(SOLFEGE_HZ, name) ? solfegeMissingMessage(name, dataNameKind(name, symbols, c)) : `「${name}」という 音が 見つかりません。名前を たしかめるか、その 名前の 音を 入れてください`, n, where);
         }
         if (n.kind === 'LooksCommand' && n.op === 'SET_BACKDROP') {
           const name = literalText(n.args?.[0]);
@@ -783,7 +861,7 @@
         add(d.code, d.message, { sourceSpan: { startLine: d.line, startColumn: d.column } }, d.where);
       // 名人のできごと: 〜になったとき and 〜秒ごとに are read like any value; ふれる相手は部品。
       const heading = item.ast.heading, at = item.ast.body?.[0] || { sourceSpan: { startLine: 1, startColumn: 1 } };
-      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', 'この 書き方は、名人の本文で だけ 使えます。使うときは、コードモードで「名人」を えらびます', only.sourceSpan ? only : at, item.key); }
+      if (!item.meijin) { const only = meijinOnlyNode(item.ast); if (only) add('S317', MEIJIN_ONLY_MESSAGE, only.sourceSpan ? only : at, item.key); }
       const message = typeof item.filter === 'object' ? item.filter?.message : item.filter;
       const extensionEvent = !item.meijin && item.event === 'message' && typeof message === 'string' && message.startsWith('拡張:')
         ? EXTENSION_HOST.describe(message.slice(3), 'events') : null;
@@ -791,8 +869,8 @@
       if (heading?.condition) analyzeExpr(heading.condition, { ...base, node: at }, item.key);
       if (heading?.seconds) analyzeExpr(heading.seconds, { ...base, node: at }, item.key);
       // ふれたとき's partner is a part or the edge (端, 端:上 …); the message is at the heading, or the body's first line.
-      // 画面の右にふれたとき names one side of the screen: 画面の右のはし.
-      const side = /^画面の(上|下|右|左)$/.exec(item.filter?.target ?? '')?.[1];
+      // 画面の右にふれたとき and 右のはしにふれたとき name one side of the screen: 画面の右のはし.
+      const sideOf = /^(?:画面の(上|下|右|左)|(上|下|右|左)の(?:はし|端))$/.exec(item.filter?.target ?? ''), side = sideOf?.[1] || sideOf?.[2];
       if (item.event === 'touchStart' && !isEdgeTarget(item.filter?.target) && !componentByName(item.filter?.target))
         add('S301', side ? `画面の ${side}の はしの ことなら、「画面の${side}のはし」と 書きます` : `「${item.filter?.target}」という キャラクターや 部品が 見つかりません。名前を たしかめてください`, heading ? { sourceSpan: { startLine: item.ast.sourceSpan?.startLine || 1, startColumn: 1 } } : at, item.key);
       walk(item.ast.body, base, item.key, 0, true);
@@ -1250,7 +1328,7 @@
       const unique=[...new Map(edits.map(e=>[e.start+':'+e.end,e])).values()].sort((a,b)=>b.start-a.start);
       for (const edit of unique) {if(edit.end>boundary)throw new AkariError('F503','名前を かえる ところが、重なっています');source=source.slice(0,edit.start)+edit.text+source.slice(edit.end);boundary=edit.start;}
       const parsed=parseSyntax(source,{...record.context,symbols:buildSymbols(next)});
-      if(!parsed.ast||!astEquivalent(parsed.ast,blockDecode(tree)))throw new AkariError('S301','この 書き方では、名前を かえても 同じ ものを さした ままか、たしかめられません。名前を【 】で かこむなど、どれの ことか はっきり 書いてください');
+      if(!parsed.ast||!astEquivalent(parsed.ast,blockDecode(tree)))throw new AkariError('S301','この 書き方では、名前を かえても 同じ ものを さした ままか、たしかめられません。どれの ことか はっきり 書いてください（へんすうの 名前は【 】、部品の 名前は「 」で かこみます）');
       const target=record.kind==='script'?scriptBySourceKey(next,record.key):next[record.kind==='action'?'actions':'functions'].find(d=>record.key===record.kind+':'+d.id);
       target.source=source;if(target.document&&source!==record.source)target.document.revision++;
     }
@@ -1448,7 +1526,16 @@
     compiled.items = compiled.items.filter((x) => x.key !== key && x.documentKey !== key);
     compiled.items.push(...items);
     compiled.astByKey=syntaxItemMap(compiled.items,compiled.errors);
-    return placeMeijinDefinitionErrors(candidate, analyzeProject(candidate, compiled, { rootKeys: new Set(items.map(item=>item.key)) }));
+    const out = placeMeijinDefinitionErrors(candidate, analyzeProject(candidate, compiled, { rootKeys: new Set(items.map(item=>item.key)) }));
+    // The code view gives S317 for a 名人 form, as the check does (FM2-04: いちばん近い星の方を向く).
+    if (!context.meijin && !kind && typeof ast.source === 'string') {
+      const keys = new Set([key, ...items.map(item => item.key)]), at = out.findIndex(e => keys.has(e.where));
+      if (at >= 0 && genericReadingError(out[at]) && meijinTrialReads(candidate, ast.source, targetId)) {
+        const { proposals, draftRole, ...location } = out[at];
+        return [...out.slice(0, at), { ...location, code: 'S317', message: MEIJIN_ONLY_MESSAGE }, ...out.slice(at + 1).filter(e => !keys.has(e.where))];
+      }
+    }
+    return out;
   }
   function compileProject(project) {
     try {
@@ -1473,34 +1560,41 @@
   // no error as a 名人 script: the check then says so (S317) instead of a reading error that asks for a name or another
   // sentence. An error that gives its own guidance or choices (「空」は…, 「〜になったら」は…) is kept.
   // 10秒のあいだ、くり返す in an ordinary body asks for a state before あいだ; it is the 名人 timed repeat.
-  const GENERIC_READING_ERRORS = [/^まだ 作っていない 名前/, /^この 名前は【名前】のように【 】で かこんでください/, /読みとれません|読めません|読めない ところ/, /が たりません/, /という 文は あかりに ありません/, /^つづける きまりの おわりを「あいだ」に/];
+  const GENERIC_READING_ERRORS = [/^まだ 作っていない 名前/, /^この 名前は ?【名前】のように ?【 】で かこんでください/, /読みとれません|読めません|読めない ところ/, /が たりません/, /という 文は あかりに ありません/, /^つづける きまりの おわりを「あいだ」に/];
+  // Whether a part's body reads with no error as a 名人 text: as written (its own headings and procedures), or as the
+  // part's sentences, which a 名人 text writes under a heading that names the part.
+  function meijinTrialReads(project, source, targetId) {
+    const owner = project.components.find(c => c.id === targetId)?.name, sources = [source];
+    if (owner && /^[^\s、。「」【】（）()]+$/.test(owner)) {
+      sources.push(`作品を動かしたとき、${owner}は、\n` + source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n'));
+      // A part's body names no subject (or names 自分): in a 名人 text the part is written as the subject.
+      const named = text => project.components.some(c => text.startsWith(c.name) && /^[はがともや、]/.test(text.slice(c.name.length)));
+      sources.push(source.split('\n').map(line => {
+        const [, indent, text] = /^(\s*)(.*)$/.exec(line);
+        if (!text || /^(?:もし|そうでなければ|ずっと|次のことを|※)/.test(text) || /(?:とき|たら|ごとに)、$/.test(text) || named(text)) return line;
+        return indent + owner + 'は、' + text.replace(/^自分(?:は|が)、?/, '');
+      }).join('\n'));
+    }
+    // A text that does not even read as 名人 text is not compiled (the code view tries this on every change).
+    let symbols = null;
+    return sources.some(text => {
+      try { if (!parseSyntax(text, { symbols: symbols ||= buildSymbols(project), meijin: true }).ast) return false; } catch (error) { if (!(error instanceof AkariError)) throw error; return false; }
+      const trial = cloneDesignProject(project);
+      trial.scripts = [{ id: 'meijin-reading', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: text }];
+      try { return compileProject(trial).errors.length === 0; } catch (error) { if (!(error instanceof AkariError)) throw error; return false; }
+    });
+  }
+  // The first error of a body, when it is a reading error that gives no guidance of its own (S317 is given instead when
+  // the body reads as 名人).
+  const genericReadingError = first => !!first && ['P201', 'P205', 'S301'].includes(first.code) && !first.proposals?.length && GENERIC_READING_ERRORS.some(re => re.test(first.message));
   function meijinFormsInOrdinary(project, errors) {
     let out = errors;
     for (const script of project.scripts) {
       if (isMeijinScript(script) || !script.source?.trim()) continue;
       const key = scriptSourceKey(script), at = out.findIndex(e => e.where === key), first = out[at];
-      if (!first || !['P201', 'P205', 'S301'].includes(first.code) || first.proposals?.length || !GENERIC_READING_ERRORS.some(re => re.test(first.message))) continue;
-      // As written (its own headings and procedures), or as the part's sentences: in 名人 text they are read under a
-      // heading that names the part.
-      const owner = project.components.find(c => c.id === script.targetId)?.name, sources = [script.source];
-      if (owner && /^[^\s、。「」【】（）()]+$/.test(owner)) {
-        sources.push(`作品を動かしたとき、${owner}は、\n` + script.source.split('\n').map(line => line.trim() ? '  ' + line : line).join('\n'));
-        // A part's body names no subject (or names 自分): in a 名人 text the part is written as the subject.
-        const named = text => project.components.some(c => text.startsWith(c.name) && /^[はがともや、]/.test(text.slice(c.name.length)));
-        sources.push(script.source.split('\n').map(line => {
-          const [, indent, text] = /^(\s*)(.*)$/.exec(line);
-          if (!text || /^(?:もし|そうでなければ|ずっと|次のことを|※)/.test(text) || /(?:とき|たら|ごとに)、$/.test(text) || named(text)) return line;
-          return indent + owner + 'は、' + text.replace(/^自分(?:は|が)、?/, '');
-        }).join('\n'));
-      }
-      const reads = sources.some(source => {
-        const trial = cloneDesignProject(project);
-        trial.scripts = [{ id: 'meijin-reading', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source }];
-        try { return compileProject(trial).errors.length === 0; } catch (error) { if (!(error instanceof AkariError)) throw error; return false; }
-      });
-      if (!reads) continue;
+      if (!genericReadingError(first) || !meijinTrialReads(project, script.source, script.targetId)) continue;
       const { proposals, draftRole, ...location } = first;
-      out = [...out.slice(0, at), { ...location, code: 'S317', message: 'この 書き方は、名人の本文で だけ 使えます。使うときは、コードモードで「名人」を えらびます' }, ...out.slice(at).filter(e => e.where !== key)];
+      out = [...out.slice(0, at), { ...location, code: 'S317', message: MEIJIN_ONLY_MESSAGE }, ...out.slice(at).filter(e => e.where !== key)];
     }
     return out;
   }
@@ -1639,9 +1733,10 @@
       const goto = lanes ? lanes[0] : node, written = oneLeg(goto);
       if (written) {
         const missing = written.x ? 'y' : 'x', across = missing === 'x';
+        // FM2-13: what happens in plain words, いま written in kana (F-20).
         const message = across
-          ? 'よこの 歩数を 書いていないので、右へ0歩（画面の 左の はし）へ 行きます。よこを 今の ままに するときは「右へ（よこのばしょ）歩」を 書きます'
-          : 'たての 歩数を 書いていないので、上へ0歩（画面の 下の はし）へ 行きます。たてを 今の ままに するときは「上へ（たてのばしょ）歩」を 書きます';
+          ? 'よこの 歩数を 書いていないので、よこは 0歩（画面の 左の はし）に なります。よこを いまの ままに するときは「右へ（よこのばしょ）歩」と 書きます'
+          : 'たての 歩数を 書いていないので、たては 0歩（画面の 下の はし）に なります。たてを いまの ままに するときは「上へ（たてのばしょ）歩」と 書きます';
         const location = SOURCE_RANGES.get(node), proposals = [];
         let range = location && !location.rewritten ? location.range : null, chained = false;
         // Inside a 「〜して、」 chain (…のばしょへ行って、) the sentence was read as 行く: the fix is made for the clause as
@@ -1698,8 +1793,14 @@
       for (const [key, value] of Object.entries(node)) if (!['body', 'thenBody', 'elseBody', 'lanes', 'sourceSpan', 'actorRef', 'laneRef'].includes(key) && value && typeof value === 'object') walk(value, false);
     };
     const statements = function* (nodes) { for (const n of nodes || []) { if (!n || typeof n !== 'object') continue; yield n; for (const key of ['body', 'thenBody', 'elseBody']) yield* statements(n[key]); for (const lane of n.lanes || []) yield* statements(lane); } };
-    const touchOf = condition => { let found = null; expressions({ condition }, (e, negated) => { if (!found && !negated && e.kind === 'SensorRead' && e.sensor === 'TOUCHING') found = e; }); return found; };
-    const ends = nodes => [...statements(nodes)].some(m => NOTICE_WAITS.has(m.kind) || m.kind === 'MotionCommand' || m.kind === 'StopCommand' ||
+    // The touch of a condition, with who touches when it is written (名人: ねこが「石」にふれていれば).
+    const touchOf = condition => { let found = null; expressions({ condition }, (e, negated) => {
+      if (found || negated) return;
+      if (e.kind === 'ActorQualifiedRead' && e.actorRef?.kind === 'named' && e.value?.kind === 'SensorRead' && e.value.sensor === 'TOUCHING') found = { ...e.value, toucher: e.actorRef.name };
+      else if (e.kind === 'SensorRead' && e.sensor === 'TOUCHING') found = e; }); return found; };
+    // The touch ends with かくす・動く・待つ・コピーを消す・止める (LANGUAGE.md); a turn is no move there.
+    const TURNS = new Set(['TURN_RIGHT', 'TURN_LEFT', 'SET_DIRECTION', 'POINT_TO']);
+    const ends = nodes => [...statements(nodes)].some(m => NOTICE_WAITS.has(m.kind) || (m.kind === 'MotionCommand' && !TURNS.has(m.op)) || m.kind === 'StopCommand' ||
       (m.kind === 'LooksCommand' && m.op === 'HIDE') || (m.kind === 'CloneCommand' && ['DELETE_SELF', 'DELETE_ALL'].includes(m.op)) || (m.kind === 'Say' && m.seconds));
     const keyOf = condition => condition?.kind === 'SensorRead' && condition.sensor === 'KEY_DOWN' && condition.arg?.kind === 'StringLiteral' ? condition.arg.value : null;
     const visitList = (nodes, inLoop) => {
@@ -1720,12 +1821,30 @@
           // A wait for the key to be let go (or for anything else) ends the held press.
           heldKey = key;
         } else if (NOTICE_WAITS.has(n.kind) || NOTICE_LOOPS.has(n.kind) || n.kind === 'IfStatement' || (n.kind === 'Say' && n.seconds)) heldKey = null;
+        // A loop whose one wait is 「スペース」キーがおされるまで待つ: held down, the next round's wait ends at once too, so
+        // it counts on every round (C-touch-R2-10). Said only when nothing else in the round could wait in between.
+        if (NOTICE_LOOPS.has(n.kind) && Array.isArray(n.body)) {
+          const steps = n.body.filter(m => m && m.kind !== 'CommentLine'), waits = steps.filter(m => m.kind === 'WaitUntil' && keyOf(m.condition) !== null);
+          const others = steps.filter(m => !waits.includes(m) && (NOTICE_WAITS.has(m.kind) || NOTICE_LOOPS.has(m.kind) || m.kind === 'IfStatement' || (m.kind === 'Say' && m.seconds)));
+          if (waits.length === 1 && !others.length) {
+            const shown = formatExpression({ kind: 'StringLiteral', value: keySurface(keyOf(waits[0].condition)) });
+            note('I125', waits[0], `キーを おしたままだと、くり返しの 次の 回の「おされるまで待つ」も すぐ 終わります（おしている あいだ、回ごとに すすみます）。1回 おす ごとに 1回 するときは、この 文の あとに「${shown}キーがおされなくなるまで待つ。」を 書きます`);
+          }
+        }
         // もし「石」にふれていれば、点数を1増やす in a loop: it counts on every turn while they touch.
         if (inLoop && n.kind === 'IfStatement') {
           const touch = touchOf(n.condition), changes = [...statements(n.thenBody)].some(m => NOTICE_CHANGES.has(m.kind));
           if (touch && changes && !ends(n.thenBody)) {
-            const target = touch.arg?.kind === 'StringLiteral' ? touchShown(touch.arg.value) : '「石」';
-            note('I121', n, `ふれている あいだ、くり返す たびに 点数などが かわります。ふれる たびに 1回だけ かえるなら「${target}にふれたとき、」を 使います`);
+            // The heading named is one the check reads (C-touch-R2-03): 名人 writes who touches; the mouse has no
+            // ふれたとき heading, so the count waits for the mouse to leave; a partner known only when running is
+            // described without a made-up name.
+            const target = touch.arg?.kind === 'StringLiteral' ? touch.arg.value : touch.arg?.kind === 'PartRef' ? touch.arg.name : null;
+            const who = item.meijin ? (touch.toucher || null) : null;
+            const tail = target === 'マウス' ? 'なら、かえる 文の あとに「「マウス」にふれなくなるまで待つ。」を 書きます'
+              : target === null ? 'なら、「もし」の かわりに「〜にふれたとき、」の 見出しで 書きます'
+              : item.meijin && !who ? null
+              : `なら「${who ? who + 'が' : ''}${touchShown(target)}にふれたとき、」を 使います`;
+            if (tail) note('I121', n, `ふれている あいだ、くり返す たびに 点数などが かわります。ふれる たびに 1回だけ かえる${tail}`);
           }
         }
         // 答え compared with a number: 答え is the text that was typed, never a number.
@@ -1736,7 +1855,10 @@
           // Equal or not: the number is written as text (「7」). Larger or smaller: 数（答え） makes the answer a number.
           const same = ['EQ', 'NEQ'].includes(e.op), value = staticNumericMagnitude(other);
           let example = null;
-          try { example = 'もし' + formatCondition({ ...e, [e.left === answer ? 'right' : 'left']: same && value !== undefined ? exprNode('StringLiteral', { value: decimalSource(value) }) : other, [e.left === answer ? 'left' : 'right']: same ? answer : exprNode('BuiltinCall', { name: '数', args: [answer] }) }, 'if') + '、'; }
+          // The example keeps the form written (C-touch-R2-10): 答えが「7」になるまで待つ, not the もし of another sentence.
+          const written = n.kind === 'WaitUntil' && n.condition === e ? ['until', s => s + '待つ'] : n.kind === 'RepeatUntil' && n.condition === e ? ['until', s => s + '、くり返す']
+            : n.kind === 'RepeatWhile' && n.condition === e ? ['while', s => s + '、くり返す'] : ['if', s => 'もし' + s + '、'];
+          try { example = written[1](formatCondition({ ...e, [e.left === answer ? 'right' : 'left']: same && value !== undefined ? exprNode('StringLiteral', { value: decimalSource(value) }) : other, [e.left === answer ? 'left' : 'right']: same ? answer : exprNode('BuiltinCall', { name: '数', args: [answer] }) }, written[0])); }
           catch (error) { if (!(error instanceof AkariError)) throw error; }
           note('I123', n, same ? `答えは 文字です。数の 答えと くらべるときは「${example || 'もし答えが「7」なら、'}」のように「 」で かこみます`
             : `答えは 文字なので、大きさを くらべられません（動かすと 止まります）。数として くらべるときは「${example || 'もし数（答え）が7より大きければ、'}」のように「数（答え）」と 書きます`);
@@ -1747,32 +1869,48 @@
           const [, other] = e.left?.kind === 'SensorRead' && e.left.sensor === 'タイマー' ? [e.left, e.right] : e.right?.kind === 'SensorRead' && e.right.sensor === 'タイマー' ? [e.right, e.left] : [];
           if (!numeric(other)) return;
           const value = text(other), example = n.kind === 'WaitUntil' ? `タイマーが${value}より大きくなるまで待つ` : n.kind === 'RepeatUntil' ? `タイマーが${value}より大きくなるまで、くり返す`
-            : n.kind === 'RepeatWhile' ? `タイマーが${value}より小さいあいだ、くり返す` : `もしタイマーが${value}より大きければ、`;
-          note('I124', n, `タイマーは 少しずつ とびとびに すすむので、ちょうど ${value}に ならない ことが あります${['WaitUntil', 'RepeatUntil'].includes(n.kind) ? '（待つのが 終わらない ことが あります）' : ''}。「${example}」と 書きます`);
+            : n.kind === 'RepeatWhile' ? `タイマーが${value}より小さいあいだ、くり返す` : null;
+          // もしタイマーが5なら: 「より大きければ」 would do it on every turn after 5 seconds; once is a wait (C-touch-R2-10).
+          note('I124', n, `タイマーは 少しずつ とびとびに すすむので、ちょうど ${value}に ならない ことが あります${['WaitUntil', 'RepeatUntil'].includes(n.kind) ? '（待つのが 終わらない ことが あります）' : ''}。`
+            + (example ? `「${example}」と 書きます` : `${value}秒 たってから 1回 するときは、「タイマーが${value}より大きくなるまで待つ。」の 次の 行に 書きます`));
         });
         // マウスがおされているあいだ in an おされたとき body: that body starts when the button is let go.
-        if (item.event === 'click') expressions(n, (e, negated) => {
-          if (!negated && e.kind === 'SensorRead' && e.sensor === 'マウスが押されている')
-            note('I126', n, '「おされたとき」は マウスを はなしてから 始まるので、「マウスがおされているあいだ」は もう あてはまりません。おしている あいだ 動かすときは、「作品を動かしたとき、」の 中で「ずっとくり返す。」と「もしマウスがおされていて、「マウス」にふれていれば、」を 使います');
+        // The words quoted are those written (もしマウスがおされていれば), and in 名人 the part pressed is who touches the mouse
+        // (C-touch-R2-09). A wait for the next press (〜おされるまで) is no mistake there.
+        if (item.event === 'click' && !['WaitUntil', 'RepeatUntil'].includes(n.kind)) expressions(n, (e, negated) => {
+          if (!negated && e.kind === 'SensorRead' && e.sensor === 'マウスが押されている') {
+            const written = n.kind === 'IfStatement' ? 'もしマウスがおされていれば' : 'マウスがおされているあいだ';
+            const pressed = item.meijin && ast.heading?.actorRef?.kind === 'named' ? ast.heading.actorRef.name : null;
+            note('I126', n, `「おされたとき」は マウスを はなしてから 始まるので、「${written}」は もう あてはまりません。おしている あいだ 動かすときは、「作品を動かしたとき、」の 中で「ずっとくり返す。」と「もしマウスがおされていて、${pressed ? pressed + 'が' : ''}「マウス」にふれていれば、」を 使います`);
+          }
         });
-        // 「こんにちは」と言う。「さようなら」と言う。: an untimed 言う goes on at once, so the next speech (or the stop of the
-        // work) comes before the first is seen (F-35).
+        // 「こんにちは」と言う。「さようなら」と言う。: an untimed 言う goes on at once, so the next speech comes before the
+        // first is seen (F-35). 作品を全部止める keeps the last picture, ふきだし and all (F-30): the speech is seen there, so
+        // it is not told of (P12).
         if (n.kind === 'Say' && n.seconds === undefined) {
           const next = (nodes || []).slice(nodes.indexOf(n) + 1).find(m => m && m.kind !== 'CommentLine');
-          if (next && (next.kind === 'Say' || (next.kind === 'StopCommand' && next.op === 'ALL'))) {
+          if (next && next.kind === 'Say') {
             const said = n.value?.kind === 'StringLiteral' ? text(n.value) : '「…」';
             note('I130', n, `時間を 書かない「言う」は、すぐ 次の 文へ 進みます。ことばを じゅんばんに 見せるときは「${said}と2秒話す」と 書きます`);
           }
         }
-        // ドの音を鳴らす with no sound named ド: the pitches are written in Hz.
+        // 「ド」を鳴らす in a work with a sound ド and data named ド (final call 29): the sentence plays the sound; the data is
+        // never used there (I132). With no sound ド the check stops instead (S301), so I131 is gone.
         if (n.kind === 'SoundCommand' && ['SAMPLE', 'SAMPLE_WAIT'].includes(n.op)) {
           const arg = n.args?.[0], name = arg?.kind === 'StringLiteral' ? arg.value : null;
-          if (name !== null && Object.hasOwn(SOLFEGE_HZ, name) && !project.sounds.some(s => s.name === name))
-            note('I131', n, `この 作品には「${name}」という 音が ありません。ドレミの 高さで 鳴らすときは「${SOLFEGE_HZ[name]}Hzの音を0.5秒鳴らす」のように Hzで 書きます（ド 262、レ 294、ミ 330、ファ 349、ソ 392、ラ 440、シ 494）`);
+          const owner = project.components.find(c => c.id === item.targetId)?.localData;
+          const data = name === null || !Object.hasOwn(SOLFEGE_HZ, name) ? null
+            : [project.projectData, owner].filter(Boolean).some(d => d.variables.some(v => v.name === name)) ? 'variable'
+            : [project.projectData, owner].filter(Boolean).some(d => d.lists.some(l => l.name === name)) ? 'list' : null;
+          if (data && project.sounds.some(s => s.name === name))
+            note('I132', n, `この 文の「${name}」は 音の 名前で、${data === 'list' ? 'リスト' : 'へんすう'}の「${name}」では ありません。` + (data === 'variable' ? `へんすうの 数の 高さで 鳴らすときは「【${name}】Hzの音を0.5秒鳴らす」と 書きます` : `リストの 中身の 音を 鳴らすときは「（${name}の1番目）を鳴らす」のように 書きます`));
         }
         // 名人: ねこと犬と鳥は、順番に、… starts them together; 候補から【一覧】を全部消す looks for the list itself.
         const listed = MEIJIN_LISTED_IN_ORDER.get(n);
-        if (listed) note('I127', n, `「${listed.join('と')}は、順番に、」のように 主語を ならべた 文は、みんな いっしょに 始めます。一人ずつ じゅんばんに するときは、「なかまを、${listed.join('と')}にする。」と リストに 入れて、「なかまは、順番に、…」と 書きます`);
+        // The words quoted are the child's, with their spaces (FM2-14): ねこと だんごは、順番に.
+        const writtenLine = listed ? String(project.scripts.find(s => scriptSourceKey(s) === item.key)?.source || '').split('\n')[(n.sourceSpan?.startLine || 1) - 1] || '' : '';
+        const writtenOrder = listed && /^\s*(.+?順番に)、?/.exec(writtenLine)?.[1];
+        if (listed) note('I127', n, `「${writtenOrder ? writtenOrder + '、' : listed.join('と') + 'は、順番に、'}」のように 主語を ならべた 文は、みんな いっしょに 始めます。一人ずつ じゅんばんに するときは、「なかまを、${listed.join('と')}にする。」と リストに 入れて、「なかまは、順番に、…」と 書きます`);
         if (n.kind === 'ListRemoveValue' && n.value?.kind === 'VariableRead' && dataNameExists(project, n.value.name, 'lists'))
           note('I128', n, `「${n.target.name}から【${n.value.name}】を全部消す」は、リストの 中に リスト【${n.value.name}】を さがすので、何も 消えません。リストの 中身を 一つずつ 消すときは、「【${n.value.name}】の中身を先頭から一つずつ見て、次のことを行う。」の 中に「${n.target.name}から今見ているものを全部消す。」と 書きます`);
         for (const key of ['body', 'thenBody', 'elseBody']) if (Array.isArray(n[key])) visitList(n[key], inLoop || NOTICE_LOOPS.has(n.kind));
@@ -1787,6 +1925,75 @@
     return notes;
   }
   const dataNameExists = (project, name, kind) => [project.projectData, ...project.components.map(c => c.localData)].some(d => d[kind].some(x => x.name === name));
+  // Flows that never show or never reach what they say (P13: E2E-R1-04, E2E-R1-07). Each is a notice only.
+  // I133: a part that hid itself earlier in this flow speaks, and no other flow shows it again.
+  // I134: a wait for a part to touch something, when the sentences that move the part come after the wait in the same
+  //   flow and no other flow moves the part or what it touches (the mouse moves by itself).
+  // I135: the sentence after a ずっとくり返す that no このくり返しを終える ends.
+  const FLOW_LOOPS = new Set(['RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach', 'TimedRepeat']);
+  const flowStatements = function* (nodes) { for (const n of nodes || []) { if (!n || typeof n !== 'object') continue; yield n; for (const k of ['body', 'thenBody', 'elseBody']) yield* flowStatements(n[k]); for (const l of n.lanes || []) yield* flowStatements(l); } };
+  // A このくり返しを終える that ends this loop (not one inside a loop in it).
+  const endsLoop = nodes => (nodes || []).some(n => n && (n.kind === 'Break' || (!FLOW_LOOPS.has(n.kind) && (['body', 'thenBody', 'elseBody'].some(k => endsLoop(n[k])) || (n.lanes || []).some(l => endsLoop(l))))));
+  function flowNotes(project, compiled, item, ast) {
+    const notes = [], note = (code, node, message) => notes.push({ code, notice: true, line: node?.sourceSpan?.startLine || 0, column: node?.sourceSpan?.startColumn || 1, where: item.key, message });
+    const ownerOf = it => it.targetId === 'stage' ? project.stage.name : project.components.find(c => c.id === it.targetId)?.name || null;
+    const owner = item.meijin ? null : ownerOf(item);
+    // 自分 is the body's part; a 名人 heading that names a part (かごは、) makes it that part.
+    const who = (ref, it = item) => ref?.kind === 'named' ? ref.name : (!ref || ref.kind === 'self') && it.targetId !== 'stage' ? project.components.find(c => c.id === it.targetId)?.name || null : (!ref || ref.kind === 'self') && !it.meijin ? ownerOf(it) : null;
+    const script = project.scripts.find(s => scriptSourceKey(s) === item.key), lines = String(script?.source || '').split('\n');
+    const written = (n, name) => (lines[(n.sourceSpan?.startLine || 1) - 1] || '').includes(name);
+    // Which flows move or show a part: [item key, flow, part].
+    const movers = [], showers = [];
+    for (const other of compiled.items || []) { const a = compiled.astByKey?.get(other.key); if (!a) continue;
+      for (const [flow, nodes] of [['body', a.body], ...(a.units || []).map((u, i) => ['unit' + i, u.body]), ['rules', a.rules]])
+        for (const m of flowStatements(nodes)) { if (m.kind === 'MotionCommand' || m.kind === 'ContinuousRule') movers.push([other.key, flow, who(m.actorRef, other)]);
+          if (m.kind === 'LooksCommand' && m.op === 'SHOW') showers.push([other.key, flow, who(m.actorRef, other)]); } }
+    for (const [flow, nodes] of [['body', ast.body], ...(ast.units || []).map((u, i) => ['unit' + i, u.body])]) {
+      const visit = (list, hidden) => {
+        (list || []).forEach((n, i) => {
+          if (!n || typeof n !== 'object' || n.kind === 'CommentLine') return;
+          const actor = who(n.actorRef);
+          if (n.kind === 'Say' && actor && hidden.has(actor) && !showers.some(([k, f, w]) => w === actor && !(k === item.key && f === flow))) {
+            // A subject carried over from the sentence before, when the body's owner is someone else: say who speaks and
+            // how the owner speaks instead.
+            const inherited = !item.meijin && actor !== owner && !written(n, actor);
+            let example = null;
+            if (inherited && owner && item.targetId !== 'stage') { try { example = formatScript({ kind: 'Script', body: [{ ...n, actorRef: { kind: 'named', name: owner }, inlineComment: '' }] }, {}).trim(); } catch (error) { if (!(error instanceof AkariError)) throw error; } }
+            note('I133', n, (inherited ? `この 文は、前の 文の「${actor}は」を ひきついで、${actor}が 話します。` : '') + `${actor}は すがたを かくして いるので、ことばは 見えません。`
+              + (example ? `${owner}が 話すときは「${example}」と 書きます` : `話す 前に「${actor}はすがたを見せる。」を 書きます`));
+          }
+          if (n.kind === 'LooksCommand' && n.op === 'HIDE' && actor) hidden.add(actor);
+          if (n.kind === 'LooksCommand' && n.op === 'SHOW' && actor) hidden.delete(actor);
+          if (n.kind === 'WaitUntil') {
+            let toucher = null, target = null;
+            const walk = e => { if (!e || typeof e !== 'object' || toucher) return;
+              if (e.kind === 'ActorQualifiedRead' && e.value?.kind === 'SensorRead' && e.value.sensor === 'TOUCHING') { toucher = e.actorRef?.name || null; target = e.value.arg; }
+              else if (e.kind === 'SensorRead' && e.sensor === 'TOUCHING' && owner) { toucher = owner; target = e.arg; }
+              else for (const v of Object.values(e)) if (v && typeof v === 'object') walk(v); };
+            walk(n.condition);
+            const targetName = target?.kind === 'StringLiteral' ? target.value : target?.kind === 'PartRef' ? target.name : null;
+            const movesTarget = targetName === 'マウス' || (targetName && movers.some(([, , w]) => w === targetName));
+            const movedLater = toucher && [...flowStatements(list.slice(i + 1))].some(m => (m.kind === 'MotionCommand' || m.kind === 'ContinuousRule') && who(m.actorRef) === toucher);
+            const elsewhere = movers.some(([k, f, w]) => w === toucher && !(k === item.key && f === flow));
+            if (toucher && movedLater && !elsewhere && !movesTarget) {
+              const shown = targetName ? touchShown(targetName) : '「…」';
+              note('I134', n, `${toucher}が ${shown}に ふれるまで、ここで 待ちます。${toucher}を 動かす 文は この あとに あるので、${toucher}は 動かないまま 待ちつづけます。`
+                + (item.meijin ? `ふれる たびに するときは「${toucher}が${shown}にふれたとき、」と 書いて、することを 次の 行に 右へ ずらして 書きます` : `ふれる たびに するときは「${shown}にふれたとき、」の 本文に 書きます`));
+            }
+          }
+          if (n.kind === 'Forever' && !endsLoop(n.body)) {
+            const next = list.slice(i + 1).find(m => m && m.kind !== 'CommentLine');
+            if (next) note('I135', next, '「ずっとくり返す。」は 終わらないので、この 文は 行いません。'
+              + (item.meijin ? 'くり返しと 同時に するときは、「次のことを同時に始める。」の 中に 書くか、「〜とき、」の 見出しで 書きます' : 'くり返しと 同時に するときは、「同じ きっかけの 本文を ふやす」で 本文を ふやして、そこに 書きます'));
+          }
+          for (const k of ['body', 'thenBody', 'elseBody']) if (Array.isArray(n[k])) visit(n[k], new Set(hidden));
+          for (const l of n.lanes || []) visit(l, new Set(hidden));
+        });
+      };
+      visit(nodes, new Set());
+    }
+    return notes;
+  }
   function projectNotes(project, compiled) {
     const notes = [], seen = new Set();
     const controls = ['IfStatement', 'RepeatCount', 'RepeatWhile', 'RepeatUntil', 'Forever', 'ForEach'];
@@ -1818,7 +2025,7 @@
       };
       walk(ast.body);
       for (const unit of ast.units || []) walk(unit.body);
-      for (const note of [...fixedPlaceNotes(project, item, ast), ...silentWrongNotes(project, item, ast)]) {
+      for (const note of [...fixedPlaceNotes(project, item, ast), ...silentWrongNotes(project, item, ast), ...flowNotes(project, compiled, item, ast)]) {
         const key = note.where + '|' + note.line + '|' + note.column + '|' + note.code;
         if (!seen.has(key)) { seen.add(key); notes.push(note); }
       }

@@ -781,7 +781,27 @@
         return text.replace(/よこのばしょ/g, meijinWho + 'のよこのばしょ').split('\n').map((line) => /^\s+(?:「|前へ|右に)/.test(line) ? line.replace(/^(\s+)/, '$1' + meijinWho + 'は') : line).join('\n');
       if (!['Say', 'Ask', 'MotionCommand', 'LooksCommand', 'PenCommand', 'SoundCommand', 'CloneCommand'].includes(x.kind) || /^「[^」]+」の(?:文字|コピー)|^はいけい|^「[^」]+」に「/.test(text)) return text;
       if (/^自分の/.test(text)) return text.replace(/^自分の/, meijinWho + 'の');
+      // 色を「赤」にする is the form (F-25); written out without symbols it would become 表示色 (F2-15).
+      if (x.id === 'LooksCommand:SET_COLOR' && !usedNames.has('色')) return meijinWho + 'は' + text.replace(/。$/, '') + '。';
       return canonicalStatementSource(meijinWho + 'は' + text.replace(/。$/, ''), null) + '。';
+    };
+    // 名人: a value of a part names whose it is (E2E-R2-01): ねこのよこのばしょ, ねこが「赤」の色にふれている.
+    const MEIJIN_OF_SENSORS = new Set(['横位置', '縦位置', '方向', '大きさ', '衣装番号', '衣装名']);
+    const meijinValue = (text, sensor = null) => !meijinWho ? text
+      : sensor && MEIJIN_OF_SENSORS.has(sensor) ? meijinWho + 'の' + text
+      : sensor === 'クローンである' ? meijinWho + 'がコピー'
+      : /^(?:画面のはしにふれている|「[^」]+」の色にふれている)$/.test(text) ? meijinWho + 'が' + text
+      : /^「[^」]+」までのきょり$/.test(text) ? meijinWho + 'の' + text : text;
+    // A value hint is listed under the palette group of its block (F2-08), and the post-primary ones only at くわしく.
+    const valueGroups = { operator: '計算', sense: 'しらべる', data: 'へんすう・リスト', action: '自分で作ったブロック' };
+    const advancedOnly = options.level === 'entry' || options.level === 'basic';
+    let hintSymbols = null;
+    // The group is that of the value as written for a part's own body; in 名人 text the shown text names whose it is.
+    const valueHint = (id, text, shown = text) => {
+      let schema = null;
+      try { schema = syntaxSchema(parseExpression(text, hintSymbols ||= buildSymbols(project))); } catch (error) { if (!(error instanceof AkariError)) throw error; }
+      if (schema && advancedOnly && ADVANCED_ONLY_SCHEMA_IDS.has(schema.id)) return;
+      add(id, (schema && valueGroups[blockPaletteGroup(schema)]) || '計算', shown, 'expression');
     };
     for (const x of catalog) {
       let text = x.source,
@@ -823,20 +843,22 @@
       // work counts up, よこのばしょ grows as the part goes right, and the stage waits. Only a calculation (pure) has no
       // action to put inside.
       const counter = n && !n.readonly ? n.text : null, body = pure ? '何もしない。' : type === 'stage' ? '1秒待つ。' : '前へ10歩進む。';
+      // In 答えを もとめる (pure) a loop changes its own number, so it ends and means something (F2-07); a loop that
+      // never ends there (ずっと, a key that is never pressed in a calculation) is not offered.
+      if (pure && (x.kind === 'Forever' || x.kind === 'RepeatUntil' || (!counter && ['RepeatWhile', 'RepeatCount', 'IfStatement'].includes(x.kind)))) continue;
       if (x.kind === 'IfStatement')
-        text = pure ? `もし${v}が10以上なら、\n  何もしない。` : n ? `もし${v}が10以上なら、\n  「やったね」と言う。`
+        text = pure ? `もし${counter}が10より大きいなら、\n  ${counter}を10にする。` : n ? `もし${v}が10以上なら、\n  「やったね」と言う。`
           : type === 'stage' ? 'もしタイマーが10以上なら、\n  「10秒 たったよ」と言う。'
           : 'もしよこのばしょが300より大きいなら、\n  「右の ほうだよ」と言う。\nそうでなければ、\n  「左の ほうだよ」と言う。';
       if (x.kind === 'RepeatWhile')
-        text = counter && !pure ? `${counter}が10より小さいあいだ、くり返す。\n  ${counter}を1ふやす。`
-          : pure ? `${v}が10より小さいあいだ、くり返す。\n  何もしない。`
+        text = counter ? `${counter}が10より小さいあいだ、くり返す。\n  ${counter}を1ふやす。`
           : type === 'stage' ? 'タイマーが3より小さいあいだ、くり返す。\n  1秒待つ。' : 'よこのばしょが300より小さいあいだ、くり返す。\n  前へ10歩進む。';
       if (x.kind === 'RepeatUntil')
         text = `「スペース」キーがおされるまで、くり返す。\n  ${body}`;
       if (x.kind === 'RepeatCount')
-        text = `3回くり返す。\n  ${body}`;
+        text = `3回くり返す。\n  ${pure ? counter + 'を1ふやす。' : body}`;
       if (x.kind === 'Forever')
-        text = `ずっとくり返す。\n  ${pure ? '何もしない。' : type === 'stage' ? '1秒待つ。' : '右に15度回る。'}`;
+        text = `ずっとくり返す。\n  ${type === 'stage' ? '1秒待つ。' : '右に15度回る。'}`;
       // A character's line is said in its own voice (F-18: no です・ます in what a part says).
       if (x.id === 'Say')
         text = '「やったね」と言う';
@@ -888,10 +910,11 @@
           reason =
             '\u6587\u5b57\u30fb\u30dc\u30bf\u30f3\u30fb\u56db\u89d2\u3092\u5148\u306b\u4f5c\u308a\u307e\u3059';
       }
-      // 〜のところへ行く names another part of the work (the first one), or the mouse when there is none.
+      // 〜のところへ行く names another part of the work (the first one), or the mouse when there is none. In 名人 text the
+      // part that goes is the example's subject, so it goes elsewhere (E2E-R2-05).
       if (x.op === 'GOTO_PART') {
-        const other = project.components.find((c) => c.id !== targetId);
-        if (other) text = `「${other.name}」のところへ行く`;
+        const other = project.components.find((c) => c.id !== targetId && c.name !== meijinActor);
+        text = other ? `「${other.name}」のところへ行く` : 'マウスのところへ行く';
       }
       if (x.kind === 'CloneCommand') {
         if (x.op === 'CREATE_TARGET') {
@@ -1027,7 +1050,7 @@
       )
         continue;
       // The candidate is the written word (SENSOR_SURFACES), not the internal sensor name.
-      add('sensor:' + sensor, 'しらべる', SENSOR_SURFACES[sensor] || sensor, 'expression');
+      add('sensor:' + sensor, 'しらべる', meijinValue(SENSOR_SURFACES[sensor] || sensor, sensor), 'expression');
     }
     const exprs = [
       '2\uff0b3\u00d74',
@@ -1061,18 +1084,16 @@
       if (c.type === 'input') exprs.push(`\u300c${c.name}\u300dの中身`);
     for (const operation of EXTENSION_HOST.operations('calculations').filter(x => x.scope !== 'meijin' || targetId === MEIJIN_OWNER)) exprs.push(extensionSurface(operation.name,true,operation.args.map(extensionDefaultExpression)));
     if (EXTENSION_HOST.operations('events').some(x => x.scope !== 'meijin' || targetId === MEIJIN_OWNER)) exprs.push('拡張「できごとの値」');
-    for (const text of exprs) add('expr:' + text, '計算', text, 'expression');
+    for (const text of exprs) valueHint('expr:' + text, text, meijinValue(text));
     for (const b of GRAMMAR_REGISTRY.builtins) {
       const args =
         b.name === '\u6570'
           ? ['\u300c12\u300d']
           : Array.from({ length: Math.max(b.minArgs, ['最小', '最大'].includes(b.name) ? 2 : 0) }, (_, i) => String(i + 1));
       // The written form, as the formatter writes it (1から2のどれか, 1÷2のあまり, （1と2をつなげた文字）).
-      add(
+      valueHint(
         'builtin:' + b.name,
-        'はじめから ある 計算',
         b.name === '乱数' && args.length === 2 ? `${args[0]}から${args[1]}のどれか` : b.name === '余り' ? `${args[0]}÷${args[1]}のあまり` : b.name === 'つなぐ' ? `（${args.join('と')}をつなげた文字）` : `${BUILTIN_SURFACES[b.name] || b.name}（${args.join('、')}）`,
-        'expression',
       );
     }
     return out;
