@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {buildProduct,repositoryRoot,sourceDirectories} from '../../src/build.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
-import {productSourceIds,verifyProductSource} from '../lib/product-source-contract.mjs';
+import {productSourceIds,verifyProductSource,childGlossaryIssues} from '../lib/product-source-contract.mjs';
 
 const output=path.resolve(process.argv[2]||'audit-evidence/product-source.json');
 assert.ok(!fs.existsSync(output),'fresh result required: '+output);
@@ -36,7 +36,26 @@ check('REJECT-INCLUDE-OUTSIDE-SOURCE',()=>{for(const target of ['js/../../extens
 check('REJECT-INCLUDE-ALIAS',()=>{for(const alias of ['css/../js/12-public-api.js','js/./12-public-api.js','js//12-public-api.js'])assert.throws(()=>variant(withInclude(alias)),/include alias/,alias);});
 check('REJECT-UNLISTED-PORTABLE',()=>{const other='extensions/other.js',text="const other = 1;\nif (typeof module !== 'undefined') module.exports = {other};\n";assert.throws(()=>variant({[core]:coreText.replace('// @portable extensions/profiles.js','// @portable '+other),[other]:text}),/not an allowed portable extension: extensions\/other\.js/);});
 check('REJECT-UNEMBEDDED-PORTABLE',()=>{const line='// @portable extensions/foundation.js\n';assert.ok(coreText.includes(line));assert.throws(()=>variant({[core]:coreText.replace(line,'')}),/portable extensions not embedded: extensions\/foundation\.js/);});
-
+// F-23: the strings of the product (its screens and the exported player) and the manuals use no banned variant. The
+// portable extension files built into the product are the fork developers' interface and are left out.
+const manuals=['MANUAL.html',...list('Manual').filter(file=>file.endsWith('.html'))];
+const embedded=['extensions/foundation.js','extensions/profiles.js'].map(file=>{const text=read(file).replace(/\n$/,'');return text.slice(0,text.lastIndexOf('\n')+1);});
+const productText=product.toString('utf8'),productInput=text=>({file:currentProductFile(),kind:'product',text,embedded});
+check('CHILD-GLOSSARY-ONE-WORD',()=>{assert.ok(manuals.length>=6,'the manuals are scanned');assert.deepEqual(childGlossaryIssues([productInput(productText),...manuals.map(file=>({file,kind:'html',text:read(file)}))]),[]);});
+// The scan finds a banned word in a string, a template and markup, and in the real product text; it skips comments,
+// キャラクター, the code name 拡張「できごとの値」 (not a banned word next to it), only the exact not-screen strings, and only
+// the embedded extension files (the product scanned without them reports their できごと).
+check('REJECT-BANNED-CHILD-WORD',()=>{
+  const words=files=>childGlossaryIssues(files).map(i=>i.word).sort();
+  assert.deepEqual(words([{file:'a.js',kind:'script',text:"// なおす動き\nconst a='「なおす動き」で えらびます', b=`名人モードで ${a}`, c='キャラクター', d='キャラが おされたとき';"}]),['なおす動き','名人モード','キャラ'].sort());
+  assert.deepEqual(words([{file:'b.js',kind:'script',text:"const e='拡張「できごとの値」は 本文で 使います', f='拡張「できごとの値」と できごと', h='## できごとのコード', i='自動保存DBを開けません。';"}]),['できごと','自動保存'].sort());
+  assert.deepEqual(words([{file:'c.html',kind:'html',text:'<!-- 作業欄 --><p>作る ばしょ</p><button aria-label="自動保存">x</button><script>const g="作業欄";</script>'}]),['作る ばしょ','自動保存'].sort());
+  const label='「きっかけ」で <span class="child-word">えらびます</span>';assert.ok(productText.includes(label));
+  assert.deepEqual(words([productInput(productText.replace(label,'「なおす動き」で えらびます'))]),['なおす動き']);
+  const hint='いまの 本文を のこして 入れる';assert.ok(productText.includes(hint));
+  assert.deepEqual(words([productInput(productText.replace(hint,'今の 動きを のこして 自動保存'))]),['自動保存']);
+  assert.ok(words([{file:currentProductFile(),kind:'product',text:productText}]).includes('できごと'),'the embedded extension files are in the scanned script');
+});
 const report={schema:'akari-product-source-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),productSha256:sha(product),buildSha256:sha(Buffer.from(built.html,'utf8')),sources:built.sources,results};
 assert.deepEqual(results.map(r=>r.id),productSourceIds);
 fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
