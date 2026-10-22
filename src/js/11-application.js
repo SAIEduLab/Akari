@@ -8024,6 +8024,11 @@
       try {
         localStorage.setItem(STORAGE_KEYS.uiLevel, baseUiLevel);
       } catch (_) {}
+      // はじめて shows the start and click bodies only, with a button for each: a body of another きっかけ chosen before gives
+      // way to the start body (the click body for a part with no start), so the body shown is the one a pressed button
+      // names (F-05, F2-04).
+      if (document.body.dataset.uiLevel === 'entry' && !['start', 'click'].includes(currentEvent))
+        selectEntryEvent(eventsFor(selectedId).includes('start') ? 'start' : 'click');
       renderHints();
       renderEntrySurface();
       renderEditorBinding(mainEditor);
