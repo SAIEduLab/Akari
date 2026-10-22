@@ -41,6 +41,11 @@ function work(meijinSource=null,extra=[]){
 }
 const workFiles={parts:path.join(directory,'parts.akari.md'),meijin:path.join(directory,'meijin.akari.md'),star:path.join(directory,'star.akari.md'),f4:path.join(directory,'format-4.akari.md')};
 fs.writeFileSync(workFiles.parts,work());fs.writeFileSync(workFiles.meijin,work(MEIJIN_SOURCE));fs.writeFileSync(workFiles.star,work(null,[['w-hoshi','星']]));
+// CC-416: a work with the two parts 「おじいさん」「おばあさん」 only.
+function kabuWork(){const p=A.makeEmptyProject(),base=p.components.find(c=>c.type==='sprite');
+  p.components=[['w-ojii','おじいさん'],['w-obaa','おばあさん']].map(([id,name],i)=>({...structuredClone(base),id,name,x:160+240*i,y:150,w:60,h:60,costumes:[{id:id+'-face',name:'顔',kind:'text',value:'●'}],costumeId:id+'-face'}));
+  p.scripts=[];return A.serializeProject(p);}
+workFiles.kabu=path.join(directory,'kabu.akari.md');fs.writeFileSync(workFiles.kabu,kabuWork());
 // CC-297: a saved work whose data marks are the ones of saved-file format 4.
 fs.writeFileSync(workFiles.f4,work().replaceAll('AKARI-PROJECT-F'+A.PROJECT_FORMAT_ID+'-DATA-','AKARI-PROJECT-F4-DATA-'));
 
@@ -52,7 +57,7 @@ async function open({level='basic',view='blocks',file='parts'}={}){
   const page=await context.newPage();page.setDefaultTimeout(8000);page.on('pageerror',e=>pageErrors.push(e.message));
   await page.addInitScript(([l,v])=>{try{localStorage.setItem('akari.uiLevel.v1',l);localStorage.setItem('akari.editorMode.v1',v);}catch(_){}},[level,view]);
   await page.goto(pathToFileURL(product).href);await page.waitForFunction(()=>!!globalThis.Akari?.app);
-  if(file){await page.setInputFiles('#fileInput',workFiles[file]);await page.waitForFunction(()=>Akari.app.project.components.some(c=>c.name==='ねこ'));}
+  if(file){await page.setInputFiles('#fileInput',workFiles[file]);await page.waitForFunction(()=>Akari.app.project.components.some(c=>c.name==='ねこ'||c.name==='おじいさん'));}
   // A work with a 名人 text keeps 名人 chosen; the level stays the one chosen before it.
   if(!['meijin',level].includes(await page.locator('#uiLevel').inputValue())){await page.selectOption('#uiLevel',level);}
   return {page,context};
@@ -568,6 +573,95 @@ const checks={
     return {expect:{character:sprite.copy==='見た目のコピー'&&sprite.del==='🗑 この キャラクターを けす'&&sprite.title==='見た目と せっていが 同じ キャラクターを もう1つ 作ります（本文は もちません）',
       part:text.copy==='見た目のコピー'&&text.del==='🗑 この 部品を けす'&&text.title==='見た目と せっていが 同じ 部品を もう1つ 作ります（本文は もちません）',
       hint:hint.includes('見た目と せっていが 同じ キャラクターや 部品を もう1つ 作ります。本文は もちません。'),names:names.map(n=>n.trim()).includes('名前の ひょうじ')},info:{sprite,text,hint,names}};},
+  // ── Notices (P11 (d)) and the new-block values. ──
+  // はじめて's blocks also mark a sentence with a notice: a blue dashed outline and 「ⓘ 知らせ」, whose press opens the text.
+  'CC-411':async s=>{const p=s.page;await s.select('w-neko');
+    const say=p.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema^="Say"]:visible').first();await say.click();await p.waitForTimeout(250);await say.click();await p.waitForTimeout(250);
+    const nodes=p.locator('#blockEditor .blockui-node[data-schema-id="Say"]');
+    for(const [i,text] of [[0,'あ'],[1,'い']]){const node=nodes.nth(i),field=node.locator('[data-schema-id="StringLiteral"] input[data-blockui-field="value"]').first();await field.fill(text);await field.press('Enter');await p.waitForTimeout(250);
+      await clickNode(node);const extra=node.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-extra');if(await extra.count()&&!await extra.evaluate(e=>e.open))await extra.locator(':scope > summary').click();
+      await node.locator('[data-blockui-action="speech-untimed"]').first().click();await p.waitForTimeout(300);
+      // The 「…」 panel floats over the next block; it is closed before that block is chosen.
+      if(await extra.count()&&await extra.evaluate(e=>e.open))await extra.locator(':scope > summary').click();await p.waitForTimeout(200);}
+    const source=await p.evaluate(()=>Akari.app.editorState.main.sourceText);
+    const look=()=>p.evaluate(()=>{const n=[...document.querySelectorAll('#blockEditor .blockui-node[data-schema-id="Say"]')],seen=e=>!!e&&e.getClientRects().length>0&&getComputedStyle(e).visibility==='visible';
+      return n.map(x=>{const mark=x.querySelector(':scope > .blockui-node-head [data-blockui-action="notices"]'),list=x.querySelector(':scope > .blockui-node-notices'),cs=getComputedStyle(x.querySelector(':scope > .blockui-node-content > .blockui-node-main')),rgb=(cs.outlineColor.match(/\d+/g)||[]).map(Number);
+        return {notice:x.classList.contains('blockui-notice'),dashed:cs.outlineStyle==='dashed'&&rgb.length>=3&&rgb[2]>rgb[0],mark:seen(mark),text:seen(list)?list.innerText.trim():''};});});
+    const first=await look();await p.locator('#blockEditor .blockui-node[data-schema-id="Say"] [data-blockui-action="notices"]').first().click();await p.waitForTimeout(250);const opened=await look();
+    await p.locator('#blockEditor .blockui-node[data-schema-id="Say"] [data-blockui-action="notices"]').first().click();await p.waitForTimeout(250);const closed=await look();
+    return {expect:{twoUntimed:source.trim()==='「あ」と言う。\n「い」と言う。',marked:first[0].notice&&first[0].dashed&&first[0].mark&&!first[1].notice&&!first[1].mark,
+      opens:opened[0].text.startsWith('時間を 書かない「言う」は、すぐ 次の 文へ 進みます。'),closes:closed[0].text===''},info:{source,first,opened,closed}};},
+  // The code view marks a notice by a blue line number and 「ⓘ N行目：」 under the code; a second notice is counted, and a
+  // notice with a fix offers it.
+  'CC-412':async s=>{const p=s.page;await s.select('w-neko');
+    const look=()=>p.evaluate(()=>({issue:document.querySelector('#codeIssue').innerText.trim(),kind:document.querySelector('#codeIssue').className,notice:[...document.querySelectorAll('.gutter-line.notice')].map(n=>Number(n.textContent)),
+      error:document.querySelectorAll('.gutter-line.error').length,blue:(()=>{const n=document.querySelector('.gutter-line.notice'),o=document.querySelector('.gutter-line:not(.notice):not(.error):not(.active)');return !!n&&!!o&&getComputedStyle(n).color!==getComputedStyle(o).color;})(),
+      fixes:[...document.querySelectorAll('#codeIssue [data-note-fix]')].map(b=>b.title)}));
+    await s.write('「あ」と言う。\n「い」と言う。');const two=await look();await s.write('「あ」と言う。\n「い」と言う。\n画面の左下のはしから、右へ320歩のばしょへ行く。');const three=await look();
+    await s.write('画面の左下のはしから、右へ320歩のばしょへ行く。');const one=await look();
+    return {expect:{notice:two.notice.includes(1)&&two.issue.startsWith('ⓘ 1行目：時間を 書かない「言う」は、すぐ 次の 文へ 進みます。')&&two.error===0&&two.kind==='issue-notice'&&two.blue,
+      counted:three.issue.startsWith('ⓘ 1行目：')&&three.issue.includes('（ほかに 1つ あります）')&&three.notice.includes(3),
+      fixes:one.issue.startsWith('ⓘ 1行目：たての 歩数を 書いていないので、')&&one.fixes.length===2&&one.fixes.some(t=>t.includes('上へ（たてのばしょ）歩'))&&one.fixes.some(t=>t.includes('上へ0歩'))},info:{two,three,one}};},
+  // A mistake comes first: with one, no notice mark is shown.
+  'CC-413':async s=>{const p=s.page;await s.select('w-neko');await s.write('「あ」と言う。\n「い」と言う。\n右へ10歩動く。');
+    const r=await p.evaluate(()=>({issue:document.querySelector('#codeIssue').innerText.trim(),kind:document.querySelector('#codeIssue').className,notice:document.querySelectorAll('.gutter-line.notice').length,error:[...document.querySelectorAll('.gutter-line.error')].map(n=>Number(n.textContent))}));
+    return {expect:{mistakeFirst:r.kind.includes('issue-error')&&r.error.includes(3)&&r.issue.includes('3行目'),noNotice:!r.issue.includes('ⓘ')&&r.notice===0},info:r};},
+  // The run screen shows no notice; ■ says once that there is one, names the body when it is another one, and says
+  // only 止まっているよ when the same notice comes again.
+  'CC-414':async s=>{const p=s.page,two='「あ」と言う。\n「い」と言う。';await s.select('w-neko');await s.write(two);
+    const marks=()=>p.evaluate(()=>{const seen=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility==='visible';return {issue:seen(document.querySelector('#codeIssue'))&&document.querySelector('#codeIssue').innerText.includes('ⓘ'),
+      outlines:[...document.querySelectorAll('.blockui-node-main')].filter(e=>seen(e)&&getComputedStyle(e).outlineStyle==='dashed').length,marks:[...document.querySelectorAll('[data-blockui-action="notices"],.blockui-node-notices')].filter(seen).length,fixes:[...document.querySelectorAll('[data-note-fix]')].filter(seen).length,blue:[...document.querySelectorAll('.gutter-line.notice')].filter(seen).length};});
+    const line=async()=>(await p.locator('#statusText').innerText()).trim();
+    await s.run();await p.waitForTimeout(300);const running=await marks();await p.waitForTimeout(700);await s.stop();const first=await line(),back=await marks();
+    await s.run();await p.waitForTimeout(1000);await s.stop();const again=await line();
+    await s.write('');await s.select('w-dango');await s.write(two);await s.select('w-neko');await s.run();await p.waitForTimeout(1000);await s.stop();const other=await line();
+    return {expect:{noneWhileRunning:!running.issue&&running.outlines===0&&running.marks===0&&running.fixes===0&&running.blue===0,onceAfterStop:first==='止まっているよ。ⓘ が ついた ところに 知らせが あるよ'&&back.issue,
+      sameAgain:again==='止まっているよ',namesOther:other==='止まっているよ。「だんご」の 「動かす」を おしたときの 本文に ⓘ の 知らせが あるよ'},info:{running,first,back,again,other}};},
+  // A rewrite button right under the code works with the mouse and with Tab and Enter.
+  'CC-415':async s=>{const p=s.page;await s.select('w-neko');
+    // The rewrite button names its sentence in its title; it is the one right under the code.
+    const fix=source=>p.locator('button[title^="'+source.replace(/。$/,'')+'"]:visible').first();
+    await s.write('もし画面のはしにふれていたら、はね返る。');const under=await fix('画面のはしにふれていれば、はね返る。').evaluate(b=>{const c=document.querySelector('#codeEditor').getBoundingClientRect(),area=b.closest('#editorPending,#codeIssue'),box=area.getBoundingClientRect();return {gap:box.top-c.bottom,where:area.id};}).catch(()=>({gap:NaN}));
+    await fix('画面のはしにふれていれば、はね返る。').click();await p.waitForTimeout(450);const mouse=await s.text();
+    // Tab goes from the code through what lies before the button (the 先生むけ details) to the rewrite button.
+    await s.write('ドの音を0.5秒鳴らす。');await p.locator('#codeEditor').focus();let tabs=0;do{await p.keyboard.press('Tab');tabs++;}while(tabs<4&&await p.evaluate(()=>!(document.activeElement?.tagName==='BUTTON'&&document.activeElement.title)));const focused=await p.evaluate(()=>{const a=document.activeElement;return a?.tagName==='BUTTON'?a.title.replace(/。?$/,'。'):null;});
+    await p.keyboard.press('Enter');await p.waitForTimeout(450);const keyboard=await s.text();
+    return {expect:{mouse:under.gap>=-1&&under.gap<8&&mouse.trim()==='画面のはしにふれていれば、はね返る。',keyboard:focused==='262Hzの音を0.5秒鳴らす。'&&keyboard.trim()==='262Hzの音を0.5秒鳴らす。'},info:{under,mouse,focused,tabs,keyboard}};},
+  // A sentence with no subject after 「おばあさんは…」 shows the carried-over subject as a pale chip in its だれが slot, and the
+  // code does not write it (lead decision 30).
+  'CC-416':async s=>{const p=s.page,source='おばあさんは「こんにちは」と言う。\n「うんとこしょ」と2秒話す。\n「やあ」と言う。';await s.select('w-ojii');await s.write(source);await s.press('コードモード ⇄');
+    const chips=await p.evaluate(()=>[...document.querySelectorAll('#blockEditor .blockui-script .blockui-node[data-schema-id^="Say"]')].map(n=>{const c=n.querySelector('.blockui-subject-carried'),seen=c&&c.getClientRects().length>0;
+      return {chip:seen?c.textContent.trim():null,title:c?.title||c?.getAttribute('aria-description')||'',pale:seen?Number(getComputedStyle(c).opacity)<1||/rgb\(1[2-9]\d|rgb\(2\d\d/.test(getComputedStyle(c).color):false,read:n.querySelector(':scope > .blockui-node-content > .blockui-node-main')?.innerText.replace(/\s+/g,'')||''};}));
+    await s.press('ブロックモード ⇄');const back=await s.text();
+    return {expect:{firstNamed:chips.length===3&&chips[0].chip===null&&chips[0].read.includes('おばあさんは'),carried:chips[1].chip==='（おばあさんは）'&&chips[2].chip==='（おばあさんは）'&&chips[1].pale,
+      explained:chips[1].title==='前の 文の「おばあさんは」を ひきついで、おばあさんが します',notWritten:back===source&&!back.includes('（おばあさんは）')},info:{chips,back}};},
+  // はじめて's 「回数を決めてくり返す」 comes with 3, and 「前へ進む」 put after it goes inside it.
+  'CC-417':async s=>{const p=s.page;await s.newWork();const id=(await s.part('たくどん')).id;await s.select(id);
+    const shown=await p.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="RepeatCount"]:visible').first().evaluate(e=>[...e.querySelectorAll('input')].map(i=>i.value).join(',')||e.innerText.replace(/\s+/g,''));
+    await p.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="RepeatCount"]:visible').first().click();await p.waitForTimeout(300);
+    await p.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="MotionCommand:MOVE"]:visible').first().click();await p.waitForTimeout(300);
+    const source=await p.evaluate(()=>Akari.app.editorState.main.sourceText);await s.run();await p.waitForFunction(()=>/おわったよ/.test(document.querySelector('#statusText').textContent),null,{timeout:6000}).catch(()=>{});
+    // The part's centre on the run screen, from its place on the screen (left/top in screen steps, the bottom-left frame).
+    const after=await p.evaluate(id=>{const e=document.querySelector('#formSurface .component[data-runtime-id="'+id+'"]');return e?{x:parseFloat(e.style.left)+e.offsetWidth/2,y:Akari.app.project.stage.height-parseFloat(e.style.top)-e.offsetHeight/2}:null;},id),failure=await p.locator('#failureModal.show').count();await s.stop();
+    return {expect:{three:/3/.test(shown),inside:source.trim()==='3回くり返す。\n  前へ10歩進む。',ran:failure===0&&!!after&&Math.abs(after.x-350)<1e-6&&Math.abs(after.y-200)<1e-6},info:{shown,source,after}};},
+  // An empty 「回数を決めてくり返す」 alone does not run: the focus goes to its inside, and the line names the hole.
+  'CC-418':async s=>{const p=s.page;await s.newWork();await s.select((await s.part('たくどん')).id);
+    await p.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="RepeatCount"]:visible').first().click();await p.waitForTimeout(300);
+    await p.click('#runBtn');await p.waitForTimeout(400);const r=await p.evaluate(()=>{const a=document.activeElement;return {state:Akari.app.editorState.state,line:document.querySelector('#statusText').textContent.trim(),
+      focus:a?.dataset?.blockuiAction||a?.tagName,hole:/^Hole:/.test(a?.dataset?.schemaId||''),inLoop:!!a?.parentElement?.closest?.('.blockui-node[data-schema-id="RepeatCount"]')};});
+    return {expect:{notRun:r.state==='DESIGN',focusInside:(r.focus==='body-insert'||r.hole)&&r.inLoop,line:r.line==='まだ 動かせないよ。あいている ところが あるよ。くり返すことを 入れてね'},info:r};},
+  // くわしく's new blocks come with values that run: the first other part, 3, 50％, 1つ, 1段階, and the rule 1秒に200歩.
+  'CC-419':async s=>{const p=s.page;await s.select('w-neko');await openPaletteTools(p.locator('#blockEditor'));
+    for(const id of ['MotionCommand:POINT_TO','CloneCommand:CREATE_TARGET','PenCommand:SET_SIZE','SoundCommand:SET_VOLUME','LooksCommand:FORWARD_LAYERS','SoundCommand:PITCH_UP']){
+      await p.locator('#blockEditor [data-blockui-search]').first().fill('');await s.category('all');const add=p.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="'+id+'"]');
+      if(!await add.first().isVisible()){const all=p.locator('#blockEditor [data-blockui-action="palette-category"]').filter({hasText:'すべて'});if(await all.count())await all.first().click();await p.waitForTimeout(200);}
+      await add.first().click();await p.waitForTimeout(300);}
+    const blocks=await p.evaluate(()=>Akari.app.editorState.main.sourceText);
+    await (await reveal(p.locator('#blockEditor [data-blockui-action="rule-add"], #blockEditor button:has-text("＋ キーを おす間など、つづけて動かす")').first())).click();await p.waitForTimeout(400);
+    const ruleNode=p.locator('#blockEditor .blockui-node[data-schema-id="ContinuousRule"]').first(),rule=await ruleNode.count()?{text:await readBlock(ruleNode.locator(':scope > .blockui-node-content > .blockui-node-main'))}:null;if(rule)rule.hole=/〔つづけるきまりを(えらぶ|入れる)〕/.test(rule.text);
+    await s.press('ブロックモード ⇄');const code=await s.text();
+    const want=['「だんご」の方を向く。','「だんご」のコピーを作る。','ペンの太さを3にする。','音の大きさを50％にする。','重なりを1つ手前にする。','音の高さを1段階上げる。'];
+    return {expect:{values:want.every(t=>blocks.includes(t)),rule:!!rule&&rule.text.includes('1秒に200歩')&&rule.hole,code:want.every(t=>code.includes(t))&&code.includes('1秒に200歩')},info:{blocks,rule,code}};},
   // ── 名人 ──
   'MC-001':async s=>{const l=await s.level();return {expect:{three:l.options.join('|')==='かんたん|くわしく|名人',noEntry:!l.options.includes('はじめて')},info:l};},
   'MC-002':async s=>{await s.select('w-neko');await s.code();const anywhere=await s.page.evaluate(()=>[...document.querySelectorAll('button,a,summary,option')].some(b=>/名人モードで ?書く|名人で ?書く/.test(b.textContent)&&b.offsetParent!==null));
@@ -707,7 +801,7 @@ const LEVELS={はじめて:'entry',かんたん:'basic',くわしく:'advanced',
 const levelOf=c=>{const m=c.steps.join(' ').match(/(コード|ブロック)で「(はじめて|かんたん|くわしく|名人)」(を選|のまま)/);return m?{view:m[1]==='コード'?'code':'blocks',level:LEVELS[m[2]]}:{view:'blocks',level:'basic'};};
 const usesMeijinWork=c=>/名人の本文に|「名人の本文」を選|名人モードの本文を開く|名人モードの本文に|名人の本文を一つ持つ作品/.test(c.steps.join(' '));
 // Works a case names by its parts rather than by a 名人 body.
-const FILE_FOR={'MC-235':'parts','MC-659':'parts','MC-660':'parts','MC-701':'star'};
+const FILE_FOR={'CC-416':'kabu','MC-235':'parts','MC-659':'parts','MC-660':'parts','MC-701':'star'};
 // AKARI_SPEC_UI_ONLY=CC-295,MC-006 runs only those cases while looking into them; such a run never passes.
 const only=process.env.AKARI_SPEC_UI_ONLY?.split(',').filter(Boolean);
 for(const c of uiCases){
