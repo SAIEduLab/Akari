@@ -5092,7 +5092,7 @@
           // The other bodies' errors stay as they are; the 名人 text adds none.
           const reads = text => { const trial = cloneDesignProject(without); trial.scripts.push({ id: 'meijin-start-trial', mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source: text }); return errorsOf(trial) <= before; };
           const meijin = [headed, source].find(text => text && reads(text));
-          if (!meijin) { setStatus('書き方の まちがいを 直してから、名人モードに してね。'); return; }
+          if (!meijin) { setStatus('書き方の まちがいを 直してから、「名人」を えらんでね。'); return; }
           source = meijin;
         } else {
         const headings = [parsed.ast, ...(parsed.ast.units || [])].map(unit => unit.heading).filter(Boolean);
@@ -5111,7 +5111,8 @@
         }
         }
       }
-      if (!confirm(`名人モードで 書くと、この 本文は ${owner?.name ? owner.name + 'から はなれて、' : ''}「動かすもの」の「名人の本文」に うつるよ。ブロックには もどせないよ。\n名人モードで 書く？`)) return;
+      // The owner-approved wording (final call 23).
+      if (!confirm(`名人で 書くと、この本文は ${owner?.name ? owner.name + 'から はなれて、' : ''}「動かすもの」の「名人の本文」に うつります。ブロックには もどせません。\n名人で 書きますか？`)) return;
       try {
         const next = cloneDesignProject(project), id = script?.id || ensureUniqueId('script');
         const row = { id, mode: 'meijin', targetId: MEIJIN_OWNER, event: 'start', source, ...(script?.document ? { document: cloneDesignProject(script.document) } : {}) };
@@ -5124,12 +5125,12 @@
         project = next; selectedId = MEIJIN_OWNER; currentEvent = 'start'; selectedScriptId = id;
         hideSourceOverview(); invalidateEditors(); markDirty(); renderTree(); renderProperties(); loadEditor(); renderComponents();
         clearTimeout(historyTimer); pushHistoryNow();
-        setStatus('名人モードに したよ。この 本文は コードで 書いてね');
+        setStatus('「名人の本文」に うつしたよ。この 本文は コードモードで 書いてね');
       } catch (error) { showEditorFailure(mainEditor, error); }
     }
     function formatCurrent() {
       if (modelLocked() || !flushEditor(mainEditor)) return;
-      if (currentIsMeijin()) { setStatus('名人モードの 本文は、書いたとおりに のこすよ'); return; }
+      if (currentIsMeijin()) { setStatus('名人の本文は、書いたとおりに のこすよ'); return; }
       try {
         const s = getEditorSession(mainEditor);
         if (!s.syntaxAst) throw new Error('書き方の まちがいを 直してから 整えてください');
