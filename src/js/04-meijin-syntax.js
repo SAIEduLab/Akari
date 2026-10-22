@@ -297,9 +297,9 @@
     if ((p = surfaceCapture(/^(.+?)秒ごとに、(.*)$/d, code, mask))) {
       const seconds = parseExpression(p[0].text, symbols, ctx);
       if (seconds.kind !== 'NumberLiteral')
-        throw new AkariError('P205', '「〜秒ごとに」の 時間は、作品を 動かしたときに 一度だけ 決まるので、「2秒ごとに」のように 数だけを 書きます（へんすうや 計算は 書けません）。かわる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
+        throw new AkariError('P205', `「〜秒ごとに」の 時間は、作品を 動かしたときに 一度だけ 決まるので、「2秒ごとに」のように 数だけを 書きます（へんすうや 計算は 書けません）。かわる 時間で くり返すときは「ずっとくり返す。」の 中に「${p[0].text}秒待つ。」と 書きます`);
       if (!(seconds.value > 0))
-        throw new AkariError('P205', '「〜秒ごとに」には、0より 大きい 数を 書きます。かわる 間かくで くり返すときは「ずっとくり返す。」の 中に「間隔秒待つ。」と 書きます');
+        throw new AkariError('P205', '「〜秒ごとに」には、0より 大きい 数を 書きます。かわる 時間で くり返すときは「ずっとくり返す。」の 中に「〇秒待つ。」と 書きます');
       return { heading: { event: 'interval', actorRef: { kind: 'self' }, seconds: sentenceQuantity(seconds, '秒') }, body: p[1] };
     }
     if (!/^もし/.test(mask) && (p = surfaceCapture(/^(.+?)になったとき、(.*)$/d, code, mask))) {
