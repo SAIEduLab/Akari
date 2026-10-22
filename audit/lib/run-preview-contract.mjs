@@ -5,9 +5,11 @@ import assert from 'node:assert/strict';
 const inside=(r,v)=>assert.ok(r.width>0&&r.height>0&&r.left>=-1&&r.top>=-1&&r.right<=v.width+1&&r.bottom<=v.height+1,'visible playback control');
 export async function observeRunPreview(page){
   return page.evaluate(()=>{
-    const rect=selector=>{const n=document.querySelector(selector),r=n.getBoundingClientRect(),style=getComputedStyle(n);return{...r.toJSON(),visible:!!n.getClientRects().length&&style.visibility!=='hidden'&&style.display!=='none'};};
+    const rect=selector=>{const n=document.querySelector(selector);if(!n)return{x:0,y:0,width:0,height:0,top:0,left:0,right:0,bottom:0,visible:false};const r=n.getBoundingClientRect(),style=getComputedStyle(n);return{...r.toJSON(),visible:!!n.getClientRects().length&&style.visibility!=='hidden'&&style.display!=='none'};};
     const control=id=>{const n=document.getElementById(id),r=n.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return{id,rect:rect('#'+id),enabled:!n.disabled,hit:hit===n||n.contains(hit)};};
-    return{mode:document.body.dataset.editorMode,level:document.body.dataset.uiLevel,state:Akari.app.editorState.state,runtime:document.body.classList.contains('runtime'),viewport:{width:innerWidth,height:innerHeight},scene:rect('#designerWindow'),editorVisible:rect('#codeEditor').visible||rect('#blockEditor').visible,controls:['stopBtn','pauseBtn','continueBtn','stepBtn'].map(control),source:JSON.stringify(Akari.app.project.scripts),focusInScene:document.activeElement===document.querySelector('#formSurface')};
+    const shownButton=id=>{const n=document.getElementById(id);return !!n&&!!n.getClientRects().length&&getComputedStyle(n).visibility!=='hidden';};
+    return{mode:document.body.dataset.editorMode,level:document.body.dataset.uiLevel,chosen:document.querySelector('#uiLevel').value,state:Akari.app.editorState.state,runShown:shownButton('runBtn'),
+      switchShown:shownButton('editorModecode')||shownButton('editorModeblocks'),inspectShown:shownButton('runtimeInspectBtn'),palette:rect('#blockEditor .blockui-palette'),workspace:rect('#blockEditor .blockui-workspace'),runtime:document.body.classList.contains('runtime'),viewport:{width:innerWidth,height:innerHeight},scene:rect('#designerWindow'),editorVisible:rect('#codeEditor').visible||rect('#blockEditor').visible,controls:['stopBtn','pauseBtn','continueBtn','stepBtn'].map(control),source:JSON.stringify(Akari.app.project.scripts),focusInScene:document.activeElement===document.querySelector('#formSurface')};
   });
 }
 export function verifyRunPreview(o,mode,level){
@@ -15,17 +17,58 @@ export function verifyRunPreview(o,mode,level){
   assert.equal(o.editorVisible,false,'playback must leave the small editing workspace');
   inside(o.scene,o.viewport);assert.ok(o.scene.width>=o.viewport.width*0.6,'playback uses the main width');
   assert.ok(o.scene.height>=Math.min(380,o.viewport.height*0.45),'playback uses the main height');
-  assert.equal(o.focusInScene,true);assert.deepEqual(o.controls.map(c=>c.id),['stopBtn','pauseBtn','continueBtn','stepBtn']);
+  assert.equal(o.focusInScene,true);assert.deepEqual(o.controls.map(c=>c.id),['stopBtn','pauseBtn','continueBtn','stepBtn']);assert.equal(o.runShown,false,'the run screen shows no ▶ 動かす');
   for(const c of o.controls){inside(c.rect,o.viewport);assert.equal(c.rect.visible,true);assert.equal(c.hit,true,'actual hit target '+c.id);}
   assert.deepEqual(o.controls.map(c=>c.enabled),[true,true,false,true]);
   assert.equal(o.paused,'PAUSED');assert.equal(o.afterStep,'PAUSED');assert.equal(o.resumed,'RUNNING');assert.equal(o.stopped.state,'DESIGN');assert.equal(o.stopped.runtime,false);assert.equal(o.stopped.editorVisible,true);
   assert.equal(o.stopped.source,o.source,'stop restores the unchanged authored project');
   const v=o.inspector;assert.equal(v.opened,true);assert.equal(v.readOnly,true);assert.equal(v.monitorVisible,true);assert.equal(v.visibleMode,mode);assert.equal(v.alternateMode,mode==='code'?'blocks':'code');assert.equal(v.restoredMode,mode);assert.equal(v.sourcePreserved,true);assert.equal(v.executionLocationVisible,true);assert.equal(v.closed,true);assert.equal(v.modeControlsReturned,true);assert.equal(v.modeControlsShownWhileRunning,false);
 }
+// The other two combinations of the run screen. はじめて shows ■ 止める only: no ⏸ いったん止める, ▶ つづける, 1つずつ 動かす
+// or 本文を見て たしかめる (LANGUAGE.md 作る画面と動かす画面). A 名人 work has the くわしく screen with those controls, and no
+// 「コード」「ブロック」 switch anywhere, also in 「本文と動きのようす」: blocks cannot be chosen while it runs.
+export function verifyRunScreen(o,mode,level){
+  const shown=level==='meijin'?'advanced':level;
+  assert.equal(o.mode,mode);assert.equal(o.level,shown);assert.equal(o.chosen,level);assert.equal(o.state,'RUNNING');assert.equal(o.runtime,true);
+  // はじめて puts the block list away and the stage in the larger column, and the assembled blocks stay small beside it (D-19, F-14).
+  if(level==='entry'){assert.equal(o.palette.visible,false,'the block list is put away');assert.equal(o.workspace.visible,true,'the assembled blocks stay in view');assert.ok(o.scene.width>o.workspace.width,'the stage takes the larger column');}
+  else{assert.equal(o.editorVisible,false,'playback must leave the small editing workspace');assert.ok(o.scene.width>=o.viewport.width*0.6,'playback uses the main width');}
+  inside(o.scene,o.viewport);
+  assert.ok(o.scene.height>=Math.min(380,o.viewport.height*0.45),'playback uses the main height');
+  assert.equal(o.focusInScene,true);assert.deepEqual(o.controls.map(c=>c.id),['stopBtn','pauseBtn','continueBtn','stepBtn']);
+  assert.equal(o.runShown,false,'the run screen shows no ▶ 動かす');assert.equal(o.switchShown,false,'the run screen shows no コード／ブロック switch');
+  const stop=o.controls[0];inside(stop.rect,o.viewport);assert.equal(stop.rect.visible,true);assert.equal(stop.hit,true,'actual hit target stopBtn');assert.equal(stop.enabled,true);
+  if(level==='entry'){
+    for(const c of o.controls.slice(1))assert.equal(c.rect.visible,false,c.id+' is not on the はじめて run screen');
+    assert.equal(o.inspectShown,false,'本文を見て たしかめる is not on the はじめて run screen');assert.equal(o.inspector,null);
+  } else {
+    for(const c of o.controls){inside(c.rect,o.viewport);assert.equal(c.rect.visible,true);assert.equal(c.hit,true,'actual hit target '+c.id);}
+    assert.deepEqual(o.controls.map(c=>c.enabled),[true,true,false,true]);assert.equal(o.inspectShown,true);
+    assert.equal(o.paused,'PAUSED');assert.equal(o.afterStep,'PAUSED');assert.equal(o.resumed,'RUNNING');
+    const v=o.inspector;assert.equal(v.opened,true);assert.equal(v.readOnly,true);assert.equal(v.monitorVisible,true);assert.equal(v.executionLocationVisible,true);
+    assert.equal(v.codeVisible,true);assert.equal(v.blocksVisible,false);assert.deepEqual(v.switches,[],'no コード／ブロック switch in 本文と動きのようす');
+    assert.equal(v.afterBlocksPress,'code','blocks cannot be chosen while a 名人 work runs');assert.equal(v.sourcePreserved,true);assert.equal(v.closed,true);
+  }
+  assert.equal(o.stopped.state,'DESIGN');assert.equal(o.stopped.runtime,false);assert.equal(o.stopped.editorVisible,true);
+  assert.equal(o.stopped.source,o.source,'stop restores the unchanged authored project');
+}
 export function verifyRunPreviewReport(report){
-  const rows=report.results.find(r=>r.id==='DISPLAY-SETTINGS')?.observed?.rows;
+  const observed=report.results.find(r=>r.id==='DISPLAY-SETTINGS')?.observed,rows=observed?.rows,screens=observed?.runScreens;
   assert.deepEqual(rows?.map(r=>r.mode+'/'+r.level),['code/basic','code/advanced','blocks/basic','blocks/advanced']);
   for(const r of rows){verifyRunPreview(r.preview,r.mode,r.level);if(r.mode==='blocks')verifyPaletteFold(r.paletteFold);else assert.equal(r.paletteFold,null);}
+  assert.deepEqual(screens?.map(r=>r.mode+'/'+r.level),['blocks/entry','code/meijin']);
+  for(const r of screens){verifyRunScreen(r.preview,r.mode,r.level);assert.equal(r.sourcePreserved,true);}
+  assert.deepEqual(screens[0].picker,['entry','basic','advanced'],'blocks offer はじめて／かんたん／くわしく');assert.deepEqual(screens[1].picker,['meijin'],'a 名人 work keeps 名人');
+}
+// 「本文を見て たしかめる」 of a 名人 work: the body in code, no コード／ブロック switch, and a press on the hidden ブロック changes nothing.
+export async function observeMeijinInspector(page){
+  const source=await page.evaluate(()=>JSON.stringify(Akari.app.project.scripts));await page.locator('#runtimeInspectBtn').click();await page.locator('#runtimeInspector[open]').waitFor();
+  const collect=()=>page.evaluate(()=>({mode:document.body.dataset.editorMode,codeVisible:!!document.querySelector('#codeEditor').getClientRects().length,blocksVisible:!!document.querySelector('#blockEditor').getClientRects().length,readOnly:document.querySelector('#codeEditor').readOnly,
+    monitorVisible:!!document.querySelector('#runtimeInspector .runtime-monitor').getClientRects().length,executionLocationVisible:!!document.querySelector('#runtimeInspector #execLocation').getClientRects().length,
+    switches:[...document.querySelectorAll('button')].filter(b=>/^(コード|ブロック)$/.test(b.textContent.trim())&&b.getClientRects().length&&getComputedStyle(b).visibility!=='hidden').map(b=>b.id||b.textContent.trim())}));
+  const first=await collect();await page.locator('#editorModeblocks').click({force:true,timeout:1000}).catch(()=>{});await page.waitForTimeout(200);const after=await collect();
+  return{opened:await page.locator('#runtimeInspector').evaluate(n=>n.open),readOnly:first.readOnly,monitorVisible:first.monitorVisible,executionLocationVisible:first.executionLocationVisible,codeVisible:first.codeVisible,blocksVisible:first.blocksVisible,
+    switches:[...new Set([...first.switches,...after.switches])],afterBlocksPress:after.mode,sourcePreserved:source===await page.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
 }
 export async function observeInspector(page,mode){
   const source=await page.evaluate(()=>JSON.stringify(Akari.app.project.scripts));await page.locator('#runtimeInspectBtn').click();await page.locator('#runtimeInspector[open]').waitFor();

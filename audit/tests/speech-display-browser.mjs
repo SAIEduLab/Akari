@@ -9,7 +9,7 @@ import productDialogs from '../lib/product-dialogs.cjs';
 import {pressStop} from '../lib/stop-press.cjs';
 const {answerProductConfirms}=productDialogs;
 import {install} from '../lib/ux-normal-ui.mjs';
-import {observeRunPreview,verifyRunPreview,observePaletteFold,observeInspector} from '../lib/run-preview-contract.mjs';
+import {observeRunPreview,verifyRunPreview,verifyRunScreen,observePaletteFold,observeInspector,observeMeijinInspector} from '../lib/run-preview-contract.mjs';
 import {writeZoomExtension,zoomExtensionArgs,zoomExtensionWorker,setNativeZoom} from '../lib/native-zoom.mjs';
 import {displayTexts,actionNames,bubbleCases,actionCases,verifyDisplay} from '../lib/speech-display-contract.mjs';
 
@@ -69,7 +69,23 @@ try{
     await p.locator('#runtimeInspectorClose').click();preview.inspector.closed=!await p.locator('#runtimeInspector').evaluate(n=>n.open);// The toggle goes back to its toolbar place, where the run screen does not show it (it changes nothing there).
     preview.inspector.modeControlsReturned=await p.locator('.menutool > .editor-modes #editorModecode').count()===1;preview.inspector.modeControlsShownWhileRunning=await p.locator('.menutool #editorModecode').isVisible();
     await pressStop(p.locator('#stopBtn'));preview.stopped=await observeRunPreview(p);verifyRunPreview(preview,mode,level);const paletteFold=mode==='blocks'?await observePaletteFold(p,()=>shot(p,'folded-'+level+'.png')):null;await setNames(p,true);history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));const on=await speech(p);await pressStop(p.locator('#stopBtn'));return{mode,level,history,off,on,preview,paletteFold,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
-   }));return{initial,rows};
+   }));
+   // The other two of the six run-screen combinations (AUDIT.md): blocks at はじめて, and code with a 名人 text. The same two
+   // speaking bodies are made at かんたん in code; はじめて is then chosen in blocks, or the open body becomes a 名人 text.
+   const runScreens=[];for(const [mode,level] of [['blocks','entry'],['code','meijin']])runScreens.push(await pageAtWidth(browser,1180,async p=>{
+    await fixture(p,{mode:'code',level:'basic'});
+    if(level==='entry'){await p.locator('#editorModeblocks').click();await p.locator('#uiLevel').selectOption('entry');await p.waitForFunction(()=>document.body.dataset.uiLevel==='entry'&&document.body.dataset.editorMode==='blocks');}
+    else{await p.locator('#uiLevel').selectOption('meijin');await p.waitForFunction(()=>document.querySelector('#uiLevel').value==='meijin'&&Akari.app.project.scripts.some(s=>s.mode==='meijin'));}
+    const source=await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts)),picker=await p.evaluate(()=>[...document.querySelectorAll('#uiLevel option')].filter(o=>!o.hidden).map(o=>o.value));
+    const shown=await speech(p),preview=await observeRunPreview(p);await shot(p,'preview-'+mode+'-'+level+'.png');preview.inspector=null;
+    if(level==='meijin'){preview.inspector=await observeMeijinInspector(p);await shot(p,'inspector-code-meijin.png');
+     await p.locator('#pauseBtn').click();preview.paused=await p.evaluate(()=>Akari.app.editorState.state);
+     await p.locator('#stepBtn').click();preview.afterStep=await p.evaluate(()=>Akari.app.editorState.state);
+     await p.locator('#continueBtn').click();preview.resumed=await p.evaluate(()=>Akari.app.editorState.state);
+     await p.locator('#runtimeInspectorClose').click();preview.inspector.closed=!await p.locator('#runtimeInspector').evaluate(n=>n.open);}
+    await pressStop(p.locator('#stopBtn'));preview.stopped=await observeRunPreview(p);verifyRunScreen(preview,mode,level);
+    return{mode,level,picker,speakers:shown.bubbles.length,preview,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
+   }));return{initial,rows,runScreens};
   });
   await run('DISPLAY-PERSISTENCE',async()=>{
    const rows=[];for(const show of [false,true])rows.push(await pageFor(browser,product,async p=>{
