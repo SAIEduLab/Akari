@@ -5861,10 +5861,8 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
   body[data-editor-mode] .menutool:has(> .editor-modes[hidden]) {
     padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-level) + 2 * var(--tb-gap));
   }
-  /* The run screen shows neither the level nor the toggle (they change nothing there). */
-  body.runtime[data-editor-mode] .menutool {
-    padding-right: calc(var(--tb-pad) + var(--tb-name) + var(--tb-gap));
-  }
+  /* The run screen shows neither the level nor the toggle (they change nothing there), but keeps their room, so the
+     buttons wrap as on the edit screen and ■ 止める comes where ▶ 動かす was. */
   body[data-editor-mode] .menutool > :is(.ui-level-label, .editor-modes, #projectName) {
     position: absolute;
     margin: 0;
@@ -5954,7 +5952,9 @@ body.run-finished .debugbar :is(#pauseBtn, #continueBtn, #stepBtn, #runtimeInspe
 /* もとにもどす is an edit-screen control; the run screen's bar holds the run controls only. */
 body.runtime .debugbar > #undoBtn { display: none !important; }
 body.runtime.run-finished[data-editor-mode] .main > .codewin > .debugbar { display: none !important; }
-body.runtime .menutool > :is(.ui-level-label, .editor-modes, .mode-blocked-note) { display: none !important; }
+/* The level and the toggle are not shown on the run screen; their room stays, so no toolbar button moves. */
+body.runtime .menutool > :is(.ui-level-label, .editor-modes) { visibility: hidden !important; }
+body.runtime .menutool > .mode-blocked-note { display: none !important; }
 .editor-modes[hidden] { display: none !important; }
 :is(#editorModeblocks, #callableModeblocks)[aria-disabled="true"] { opacity: 0.5; }
 /* Why ブロック does not open while the code has a mistake: shown under the toggle after a press of the pale ブロック. */
