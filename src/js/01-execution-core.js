@@ -4771,8 +4771,10 @@
           state.pitch = ensureFinite(state.pitch + (n.op === 'PITCH_UP' ? v : -v));
           return;
         }
+        // A sound's name is text (a へんすう whose value is a number stops here); the example is a sound of the work.
         if (n.op === 'SAMPLE' || n.op === 'SAMPLE_WAIT') {
-          const name = stringv(evalExpression(n.args[0], ctx)),
+          const value = evalExpression(n.args[0], ctx),
+            name = typeof value === 'string' ? value : stringv(value, `鳴らす 音の 名前は 文字です。れい：「${this.project.sounds?.[0]?.name || 'ベル'}」を鳴らす`),
             hid = this.runtime.startSample(name, ctx, n.op === 'SAMPLE_WAIT' ? ended : null);
           if (n.op === 'SAMPLE_WAIT') {
             this.block(task, { kind: 'audio', handleId: hid });
