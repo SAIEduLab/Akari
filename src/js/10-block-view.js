@@ -42,7 +42,8 @@
       // The name is the one the child wrote before が (もし点数が…), else the work's own data.
       const line = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/)[diagnostic.line - 1] || '' : '',
         own = /^[ 　\t]*(?:もし)?([^\s　、。「」（）【】]+?)が/.exec(line)?.[1];
-      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。れい：【' + (own || names.value?.replace(/^【|】$/g, '') || '点数') + '】が10より大きい';
+      const name = own || names.value?.replace(/^【|】$/g, '');
+      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。' + (name ? 'れい：【' + name + '】が10より大きい' : '');
     }
     if (/言う ことは「「文字」と言う」/.test(message))
       return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。' + (names.value ? 'へんすうの 中身を 話すときは「' + names.value + 'を言う」のように 書きます。' : '');
@@ -126,6 +127,8 @@
       rendering = false,
       destroyed = false,
       signature = '',
+      // The body's text the view was last drawn for (owner, text and context revisions).
+      textKey = '',
       tree = null,
       index = new Map(),
       selected = '',
@@ -1145,6 +1148,19 @@
         const rise = box.getBoundingClientRect().top - extent(box).top;
         if (rise > 0) head.style.transform = 'translateY(' + -rise / zoom + 'px)';
       };
+      // Tools right above a block near the top of the workspace would reach under the bars over it, where they cannot
+      // be pressed: they go right under the block instead when more of them shows there.
+      const inView = () => {
+        const above = head.getBoundingClientRect(), top = room.top + 2;
+        if (above.top >= top) return;
+        const under = extent(box).bottom + 4, bottom = room.top + workspace.clientHeight - 2,
+          shownAbove = Math.max(0, above.bottom - Math.max(above.top, top)), shownUnder = Math.max(0, Math.min(bottom, under + above.height) - under);
+        if (shownUnder <= shownAbove) return;
+        box.classList.remove('blockui-tools-above'); head.style.transform = '';
+        const left = Math.max(room.left + 8, Math.min(above.left, room.left + workspace.clientWidth - 8 - above.width));
+        head.style.maxWidth = Math.max(120, room.left + workspace.clientWidth - 8 - left) / zoom + 'px';
+        moveTo(head, left, under);
+      };
       // The first of the places that covers nothing, else the one that covers the least.
       const bestOf = (spots, w, h, own) => {
         let best = spots[0], fewest = Infinity;
@@ -1181,6 +1197,7 @@
                 far = room.right - 8 - above.width, shifted = { left: far, top: above.top, right: far + above.width, bottom: above.bottom };
               if (far > above.left && covers(above, [box, head]) && covers(shifted, [box, head]) < covers(above, [box, head]))
                 head.style.left = left + (far - above.left) / zoom + 'px';
+              inView();
             }
           }
         }
@@ -1188,7 +1205,7 @@
       if (showsSlotHead) {
         const owner = ownerOf(slot), sr = extent(slot), hr = slotHead.getBoundingClientRect(), w = hr.width, h = hr.height;
         if (inline) {
-          const line = editing.querySelector(':scope > input, :scope > textarea').getBoundingClientRect();
+          const line = (editing.querySelector(':scope > input, :scope > textarea') || editing).getBoundingClientRect();
           moveTo(slotHead, sr.right + 8, line.top + Math.max(0, (Math.min(line.height, 60 * zoom) - h) / 2));
           // A selected value's tools go after them on that line, or right above the value.
           surface.push(slotHead);
@@ -1211,7 +1228,7 @@
         const owner = ownerOf(box.parentElement), r = head.getBoundingClientRect(),
           spot = owner && fits(owner, head) ? [extent(owner).right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4] : null;
         if (spot && !covers({ left: spot[0], top: spot[1], right: spot[0] + r.width, bottom: spot[1] + r.height }, [box, head])) moveTo(head, ...spot);
-        else { box.classList.add('blockui-tools-above'); aboveSurface(); }
+        else { box.classList.add('blockui-tools-above'); aboveSurface(); inView(); }
       }
       clearOfControls();
     }
@@ -1399,7 +1416,7 @@
         announce(a.reason, true);
         return;
       }
-      const node = a.node || applyCreationDefaults(createBlock(schema.id, { ...context(), idPrefix: viewId }), project(), context().targetId);
+      const node = a.node || applyCreationDefaults(createBlock(schema.id, { ...context(), ...blockCreationDefaults(project(), context().targetId), idPrefix: viewId }), project(), context().targetId);
       const wraps = wrapCount(schema, node, location);
       const op = location.body
         ? { type: wraps ? 'wrap' : 'insert', ...location, node }
@@ -2478,8 +2495,9 @@
         event.stopPropagation();
         selection(node.id);
       });
+      // The toggle comes a moment after the press: a menu drawn anew in between (and kept open) is not closed by the old one.
       listen(menu, 'toggle', () => {
-        if (!menu.open) return;
+        if (!menu.open || !menu.isConnected) return;
         for (const other of root.querySelectorAll('.blockui-actions[open]'))
           if (other !== menu) other.open = false;
         placeActions(menu, commands, { reveal: true });
@@ -2588,6 +2606,7 @@
             () => {
               if (!flush().ok) return;
               collapsed.has(node.id) ? collapsed.delete(node.id) : collapsed.add(node.id);
+              menu.open = false;
               render({ force: true });
             },
             { 'aria-expanded': !collapsed.has(node.id), 'data-block-id': node.id },
@@ -2602,6 +2621,7 @@
             'annotations',
             () => {
               openAnnotations.add(node.id);
+              menu.open = false;
               render({ force: true });
               const details = [...workspace.querySelectorAll('.blockui-annotations')].find(
                 (n) => n.parentElement?.parentElement?.dataset.blockId === node.id,
@@ -3543,6 +3563,15 @@
         notifyPending();
       }
       if (nextSignature !== signature) moving = null;
+      // The selected block's 「ほかのそうさ」 stays open when the view is drawn again for the same text: the work check's
+      // notices arrive a moment after a change (P11 (d)), and a drawing put off while a field had the keys comes when the
+      // press on 「ほかのそうさ」 takes them; neither may close it under the child's press. Its own たたむ and メモ close it.
+      const nextTextKey = [s?.ownerKey, s?.sourceRevision, s?.contextRevision].join('|'),
+        keptMenu = textKey === nextTextKey
+          ? workspace.querySelector('.blockui-node.blockui-selected > .blockui-node-head .blockui-actions[open]')?.closest('.blockui-node')?.dataset.blockId : null,
+        // The control of that menu that has the keys (「ほかのそうさ」 itself or one of its items) gets them back.
+        menuKey = keptMenu && doc.activeElement?.closest?.('.blockui-actions[open]') ? doc.activeElement.dataset?.blockuiAction : null;
+      textKey = nextTextKey;
       const ownerChanged = s?.ownerKey !== displaySession?.ownerKey,
         scroll = ownerChanged
           ? { top: s?.scrollState?.blockTop || 0, left: s?.scrollState?.blockLeft || 0 }
@@ -3656,6 +3685,9 @@
       updateGeometry();
       observeMore();
       selection(selected, s?.blockSelectionLocation || null);
+      const keptOpen = keptMenu && keptMenu === selected
+        ? [...workspace.querySelectorAll('.blockui-node.blockui-selected > .blockui-node-head .blockui-actions')].find(m => m.closest('.blockui-node')?.dataset.blockId === keptMenu) : null;
+      if (keptOpen) keptOpen.open = true;
       lightEmptyValue();
       workspace.scrollTop = scroll.top;
       workspace.scrollLeft = scroll.left;
@@ -3679,6 +3711,7 @@
         );
         n?.focus({ preventScroll: true });
       }
+      if (keptOpen && menuKey) keptOpen.querySelector('[data-blockui-action="' + menuKey + '"]')?.focus({ preventScroll: true });
       // A control not drawn again (its block made anew by もとにもどす) leaves the keys in the block view (Y2-06).
       if ((focusKey || focusNode) && (!doc.activeElement || doc.activeElement === doc.body)) keepKeys();
     }
@@ -4693,7 +4726,8 @@
         node = target.closest('.blockui-node'),
         field = target.closest('.blockui-field');
       for (const n of root.querySelectorAll('.blockui-editing-field')) n.classList.remove('blockui-editing-field');
-      if (field && field.dataset.fieldType !== 'number' && target.matches('input,textarea')) {
+      // Only a field's own text box has an editing surface; the boxes of a group (だれが, いつ動く？) stay in their group.
+      if (field && field.dataset.fieldType !== 'number' && target.matches('input,textarea') && target.parentElement === field) {
         // The field keeps the box it has now; the editing surface lies over the blocks (E-12).
         const idle = field.getBoundingClientRect();
         field.style.setProperty('--blockui-idle-width', idle.width / zoom + 'px');

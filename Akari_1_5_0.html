@@ -29104,6 +29104,9 @@ function createAkariExtensionHost(options) {
     walk(ast);
     return out;
   }
+  // The line breaks that end a text written again keep their place. The spaces at the end of its last line stay with that
+  // line: they may be the end of its memo (「※ 移動先 」), which must not pass to the line written there now.
+  const closingBreaks = text => /(?:\r\n?|\n)\s*$/.exec(text || '')?.[0] || '';
   // symbols: the work's names, so a reprinted block uses the F-34 forms (点数を言う, 持ち物の数, 色を…にする).
   function preserveBlockSource(session, tree, sourceOrigins = new Map(), symbols = null) {
     const source = session.sourceText, oldIndex = buildBlockIndex(session.blockView);
@@ -29211,7 +29214,7 @@ function createAkariExtensionHost(options) {
       const lineSchema = ['statement','rule'].includes(schema.category);
       const range = lineSchema ? location?.extent : location?.range;
       if (!range) return null;
-      if(schema.category==='script')return [{...range,text:standard(after)+(/\s*$/.exec(source.slice(range.start,range.end))?.[0]||'')}];
+      if(schema.category==='script')return [{...range,text:standard(after)+closingBreaks(source.slice(range.start,range.end))}];
       if (location.inline && (BLOCK_SCHEMA_BY_ID.get(after.schemaId)?.bodies.length || /[\r\n]/.test(standard(after)))) return null;
       return [{...range, text:lineSchema ? moved(after, location.indent) : location?.conditionForm ? formatCondition(blockDecode(after),location.conditionForm) : standard(after)}];
     };
@@ -29355,7 +29358,7 @@ function createAkariExtensionHost(options) {
     for(const unit of units(tree)){
       const original=before.get(unit.id),range=original&&session.nodeMap.get(original.id)?.surface?.range,raw=range?session.sourceText.slice(range.start,range.end):null;
       const same=original&&JSON.stringify(original)===JSON.stringify(unit);
-      const formatted=same&&raw!==null?raw:normalizeSource(formatScript(blockDecode(unit),{symbols})).lines.filter(line=>!line.continuation).map(line=>line.raw).join(newline)+(raw?.match(/\s*$/)?.[0]||'');
+      const formatted=same&&raw!==null?raw:normalizeSource(formatScript(blockDecode(unit),{symbols})).lines.filter(line=>!line.continuation).map(line=>line.raw).join(newline)+closingBreaks(raw);
       if(source&&!/[\r\n]$/.test(source))source+=newline;
       source+=formatted;
     }
@@ -29906,14 +29909,18 @@ function createAkariExtensionHost(options) {
   }
   // What a new block takes from the work: the owner's centre (決めたばしょへ行く), the first other part in the order
   // the parts were made (〜のところへ行く) or the mouse when there is none, and the next costume and backdrop after the
-  // ones shown now (the same one when there is only one), so 「すがたを かえる」 changes what is seen (F-03). The palette
-  // preview shows the same.
+  // ones shown now (the same one when there is only one), so 「すがたを かえる」 changes what is seen (F-03). A copy is
+  // made of another character, else of the owner (LANGUAGE.md 395), and a part's words go to the first 文字・ボタン・四角
+  // or 入力らん part of the work, by its own name, as 書ける ことば writes them (F2-01). The palette preview shows the same.
   function blockCreationDefaults(project, targetId) {
-    const component = project?.components?.find(c => c.id === targetId),
+    const parts = project?.components || [], component = parts.find(c => c.id === targetId),
       next = (items, id) => items?.length ? items[(Math.max(0, items.findIndex(x => x.id === id)) + 1) % items.length].name : undefined;
     return {
       designPosition: component && Number.isFinite(component.x) && Number.isFinite(component.y) ? { x: component.x, y: component.y } : null,
-      partTarget: project?.components?.find(c => c.id !== targetId)?.name || 'マウス',
+      partTarget: parts.find(c => c.id !== targetId)?.name || 'マウス',
+      spriteTarget: (parts.find(c => c.id !== targetId && c.type === 'sprite') || (component?.type === 'sprite' ? component : null))?.name,
+      textTarget: parts.find(c => ['label', 'button', 'box'].includes(c.type))?.name,
+      inputTarget: parts.find(c => c.type === 'input')?.name,
       costume: next(component?.costumes, component?.costumeId),
       backdrop: next(project?.stage?.backdrops, project?.stage?.backdropId),
     };
@@ -29921,28 +29928,38 @@ function createAkariExtensionHost(options) {
   // A new block from the list comes with values that run and change something, as the 書ける ことば examples have them
   // (FCB-05): the other part (or the mouse) to face, a part to copy (the other part, else itself), ペンの太さ 3, 音の大きさ
   // 50％, 1つ, 1段階 and 向き 45度 (0度 is where a new part already looks). A part's words go to a part of the work that
-  // has them: 「文字1」の文字を「こんにちは」にかえる, 「入力らん1」に「こんにちは」を入れる (F2-01). 〜のどれか picks from 1
-  // to 6, as a die does. A value other than the one of a new block is kept. The block is changed in place.
+  // has them, whatever it is named: 「文字1」の文字を「こんにちは」にかえる, 「入力らん1」に「こんにちは」を入れる and
+  // （「入力らん1」の中身） (F2-01). 〜のどれか picks from 1 to 6, as a die does. A value other than the one of a new block is kept. The block is changed in place.
   const CREATION_NUMBERS = new Map([['PenCommand:SET_SIZE', 3], ['SoundCommand:SET_VOLUME', 50], ['LooksCommand:FORWARD_LAYERS', 1],
     ['LooksCommand:BACKWARD_LAYERS', 1], ['SoundCommand:PITCH_UP', 1], ['SoundCommand:PITCH_DOWN', 1], ['MotionCommand:SET_DIRECTION', 45]]);
   function applyCreationDefaults(node, project, targetId) {
     const args = node?.inputs?.args, first = args?.[0], parts = project?.components || [];
     const zero = value => value?.schemaId === 'NumberLiteral' && value.fields.value === 0,
-      text = (value, words) => Object.assign(value, { schemaId: 'StringLiteral', fields: { value: words } });
+      text = (value, words) => Object.assign(value, { schemaId: 'StringLiteral', fields: { value: words } }),
+      // The name a new block is given when the editor names no part: the first part of that kind, or one that is not there.
+      unnamed = (value, names) => zero(value) || (value?.schemaId === 'StringLiteral' && names.includes(value.fields.value) && !parts.some(c => c.name === value.fields.value));
     if (node?.schemaId === 'LooksCommand:SET_TARGET_TEXT' || node?.schemaId === 'LooksCommand:SET_INPUT') {
       const input = node.schemaId === 'LooksCommand:SET_INPUT',
         part = parts.find(c => input ? c.type === 'input' : ['label', 'button', 'box'].includes(c.type))?.name;
-      if (part && (zero(first) || (input && first?.schemaId === 'StringLiteral' && first.fields.value === '入力らん'))) text(first, part);
+      if (part && unnamed(first, input ? ['入力らん', '入力らん1'] : ['文字1'])) text(first, part);
       if (zero(args?.[1])) text(args[1], 'こんにちは');
+      return node;
+    }
+    if (node?.schemaId === 'SensorRead:INPUT_VALUE') {
+      const part = parts.find(c => c.type === 'input')?.name;
+      if (part && unnamed(node.inputs?.arg, ['入力らん1'])) text(node.inputs.arg, part);
       return node;
     }
     if (node?.schemaId === 'BuiltinCall:乱数' && args?.length === 2 && args.every(zero)) {
       args[0].fields.value = 1; args[1].fields.value = 6;
       return node;
     }
-    if (!zero(first)) return node;
     const other = parts.find(c => c.id !== targetId)?.name,
       character = (parts.find(c => c.id !== targetId && c.type === 'sprite') || parts.find(c => c.id === targetId && c.type === 'sprite'))?.name;
+    // A copy given the first other part, a button or a label, is a copy of a character instead.
+    if (node?.schemaId === 'CloneCommand:CREATE_TARGET' && character && first?.schemaId === 'StringLiteral'
+      && parts.some(c => c.name === first.fields.value && c.type !== 'sprite')) text(first, character);
+    if (!zero(first)) return node;
     // Only a character (not a button or a label) has copies.
     const name = node.schemaId === 'MotionCommand:POINT_TO' ? other || 'マウス' : node.schemaId === 'CloneCommand:CREATE_TARGET' ? character : null;
     if (name) text(first, name);
@@ -30640,6 +30657,8 @@ function createAkariExtensionHost(options) {
     'StopCommand:OTHERS': ['とめる', '止める', 'とまる', '止まる', 'やめる'],
     Break: ['やめる', 'ぬける', 'おわる'],
     'PenCommand:DOWN': ['せん', '線', 'かく', 'えがく'],
+    // ペンを太く・線を細く is how a child says the pen's 太さ (E-13, E2-04: the size intent leaves ペン and 太さ alone).
+    'PenCommand:SET_SIZE': ['太く', 'ふとく', '細く', 'ほそく', '太い', 'ふとい', '細い', 'ほそい', 'ペンを太く', 'ペンを細く', '線を太く', '線を細く'],
     'LooksCommand:SET_SCALE': ['大きさ', 'おおきさ', 'サイズ'],
     Say: ['話す', '言う', 'いう', 'はなす', 'しゃべる', '発言', 'こんにちは', '秒', 'ひょうじ', '発表', 'はっぴょう', 'せりふ', 'ふきだし', 'こえ'],
     Ask: ['質問', 'たずねる', '答え', 'きく', '聞く', 'しつもん', 'もんだい', '問題', 'クイズ'],
@@ -30751,7 +30770,8 @@ function createAkariExtensionHost(options) {
       // The name is the one the child wrote before が (もし点数が…), else the work's own data.
       const line = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/)[diagnostic.line - 1] || '' : '',
         own = /^[ 　\t]*(?:もし)?([^\s　、。「」（）【】]+?)が/.exec(line)?.[1];
-      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。れい：【' + (own || names.value?.replace(/^【|】$/g, '') || '点数') + '】が10より大きい';
+      const name = own || names.value?.replace(/^【|】$/g, '');
+      return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。' + (name ? 'れい：【' + name + '】が10より大きい' : '');
     }
     if (/言う ことは「「文字」と言う」/.test(message))
       return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。' + (names.value ? 'へんすうの 中身を 話すときは「' + names.value + 'を言う」のように 書きます。' : '');
@@ -30835,6 +30855,8 @@ function createAkariExtensionHost(options) {
       rendering = false,
       destroyed = false,
       signature = '',
+      // The body's text the view was last drawn for (owner, text and context revisions).
+      textKey = '',
       tree = null,
       index = new Map(),
       selected = '',
@@ -31854,6 +31876,19 @@ function createAkariExtensionHost(options) {
         const rise = box.getBoundingClientRect().top - extent(box).top;
         if (rise > 0) head.style.transform = 'translateY(' + -rise / zoom + 'px)';
       };
+      // Tools right above a block near the top of the workspace would reach under the bars over it, where they cannot
+      // be pressed: they go right under the block instead when more of them shows there.
+      const inView = () => {
+        const above = head.getBoundingClientRect(), top = room.top + 2;
+        if (above.top >= top) return;
+        const under = extent(box).bottom + 4, bottom = room.top + workspace.clientHeight - 2,
+          shownAbove = Math.max(0, above.bottom - Math.max(above.top, top)), shownUnder = Math.max(0, Math.min(bottom, under + above.height) - under);
+        if (shownUnder <= shownAbove) return;
+        box.classList.remove('blockui-tools-above'); head.style.transform = '';
+        const left = Math.max(room.left + 8, Math.min(above.left, room.left + workspace.clientWidth - 8 - above.width));
+        head.style.maxWidth = Math.max(120, room.left + workspace.clientWidth - 8 - left) / zoom + 'px';
+        moveTo(head, left, under);
+      };
       // The first of the places that covers nothing, else the one that covers the least.
       const bestOf = (spots, w, h, own) => {
         let best = spots[0], fewest = Infinity;
@@ -31890,6 +31925,7 @@ function createAkariExtensionHost(options) {
                 far = room.right - 8 - above.width, shifted = { left: far, top: above.top, right: far + above.width, bottom: above.bottom };
               if (far > above.left && covers(above, [box, head]) && covers(shifted, [box, head]) < covers(above, [box, head]))
                 head.style.left = left + (far - above.left) / zoom + 'px';
+              inView();
             }
           }
         }
@@ -31897,7 +31933,7 @@ function createAkariExtensionHost(options) {
       if (showsSlotHead) {
         const owner = ownerOf(slot), sr = extent(slot), hr = slotHead.getBoundingClientRect(), w = hr.width, h = hr.height;
         if (inline) {
-          const line = editing.querySelector(':scope > input, :scope > textarea').getBoundingClientRect();
+          const line = (editing.querySelector(':scope > input, :scope > textarea') || editing).getBoundingClientRect();
           moveTo(slotHead, sr.right + 8, line.top + Math.max(0, (Math.min(line.height, 60 * zoom) - h) / 2));
           // A selected value's tools go after them on that line, or right above the value.
           surface.push(slotHead);
@@ -31920,7 +31956,7 @@ function createAkariExtensionHost(options) {
         const owner = ownerOf(box.parentElement), r = head.getBoundingClientRect(),
           spot = owner && fits(owner, head) ? [extent(owner).right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4] : null;
         if (spot && !covers({ left: spot[0], top: spot[1], right: spot[0] + r.width, bottom: spot[1] + r.height }, [box, head])) moveTo(head, ...spot);
-        else { box.classList.add('blockui-tools-above'); aboveSurface(); }
+        else { box.classList.add('blockui-tools-above'); aboveSurface(); inView(); }
       }
       clearOfControls();
     }
@@ -32108,7 +32144,7 @@ function createAkariExtensionHost(options) {
         announce(a.reason, true);
         return;
       }
-      const node = a.node || applyCreationDefaults(createBlock(schema.id, { ...context(), idPrefix: viewId }), project(), context().targetId);
+      const node = a.node || applyCreationDefaults(createBlock(schema.id, { ...context(), ...blockCreationDefaults(project(), context().targetId), idPrefix: viewId }), project(), context().targetId);
       const wraps = wrapCount(schema, node, location);
       const op = location.body
         ? { type: wraps ? 'wrap' : 'insert', ...location, node }
@@ -33187,8 +33223,9 @@ function createAkariExtensionHost(options) {
         event.stopPropagation();
         selection(node.id);
       });
+      // The toggle comes a moment after the press: a menu drawn anew in between (and kept open) is not closed by the old one.
       listen(menu, 'toggle', () => {
-        if (!menu.open) return;
+        if (!menu.open || !menu.isConnected) return;
         for (const other of root.querySelectorAll('.blockui-actions[open]'))
           if (other !== menu) other.open = false;
         placeActions(menu, commands, { reveal: true });
@@ -33297,6 +33334,7 @@ function createAkariExtensionHost(options) {
             () => {
               if (!flush().ok) return;
               collapsed.has(node.id) ? collapsed.delete(node.id) : collapsed.add(node.id);
+              menu.open = false;
               render({ force: true });
             },
             { 'aria-expanded': !collapsed.has(node.id), 'data-block-id': node.id },
@@ -33311,6 +33349,7 @@ function createAkariExtensionHost(options) {
             'annotations',
             () => {
               openAnnotations.add(node.id);
+              menu.open = false;
               render({ force: true });
               const details = [...workspace.querySelectorAll('.blockui-annotations')].find(
                 (n) => n.parentElement?.parentElement?.dataset.blockId === node.id,
@@ -34252,6 +34291,15 @@ function createAkariExtensionHost(options) {
         notifyPending();
       }
       if (nextSignature !== signature) moving = null;
+      // The selected block's 「ほかのそうさ」 stays open when the view is drawn again for the same text: the work check's
+      // notices arrive a moment after a change (P11 (d)), and a drawing put off while a field had the keys comes when the
+      // press on 「ほかのそうさ」 takes them; neither may close it under the child's press. Its own たたむ and メモ close it.
+      const nextTextKey = [s?.ownerKey, s?.sourceRevision, s?.contextRevision].join('|'),
+        keptMenu = textKey === nextTextKey
+          ? workspace.querySelector('.blockui-node.blockui-selected > .blockui-node-head .blockui-actions[open]')?.closest('.blockui-node')?.dataset.blockId : null,
+        // The control of that menu that has the keys (「ほかのそうさ」 itself or one of its items) gets them back.
+        menuKey = keptMenu && doc.activeElement?.closest?.('.blockui-actions[open]') ? doc.activeElement.dataset?.blockuiAction : null;
+      textKey = nextTextKey;
       const ownerChanged = s?.ownerKey !== displaySession?.ownerKey,
         scroll = ownerChanged
           ? { top: s?.scrollState?.blockTop || 0, left: s?.scrollState?.blockLeft || 0 }
@@ -34365,6 +34413,9 @@ function createAkariExtensionHost(options) {
       updateGeometry();
       observeMore();
       selection(selected, s?.blockSelectionLocation || null);
+      const keptOpen = keptMenu && keptMenu === selected
+        ? [...workspace.querySelectorAll('.blockui-node.blockui-selected > .blockui-node-head .blockui-actions')].find(m => m.closest('.blockui-node')?.dataset.blockId === keptMenu) : null;
+      if (keptOpen) keptOpen.open = true;
       lightEmptyValue();
       workspace.scrollTop = scroll.top;
       workspace.scrollLeft = scroll.left;
@@ -34388,6 +34439,7 @@ function createAkariExtensionHost(options) {
         );
         n?.focus({ preventScroll: true });
       }
+      if (keptOpen && menuKey) keptOpen.querySelector('[data-blockui-action="' + menuKey + '"]')?.focus({ preventScroll: true });
       // A control not drawn again (its block made anew by もとにもどす) leaves the keys in the block view (Y2-06).
       if ((focusKey || focusNode) && (!doc.activeElement || doc.activeElement === doc.body)) keepKeys();
     }
@@ -35402,7 +35454,8 @@ function createAkariExtensionHost(options) {
         node = target.closest('.blockui-node'),
         field = target.closest('.blockui-field');
       for (const n of root.querySelectorAll('.blockui-editing-field')) n.classList.remove('blockui-editing-field');
-      if (field && field.dataset.fieldType !== 'number' && target.matches('input,textarea')) {
+      // Only a field's own text box has an editing surface; the boxes of a group (だれが, いつ動く？) stay in their group.
+      if (field && field.dataset.fieldType !== 'number' && target.matches('input,textarea') && target.parentElement === field) {
         // The field keeps the box it has now; the editing surface lies over the blocks (E-12).
         const idle = field.getBoundingClientRect();
         field.style.setProperty('--blockui-idle-width', idle.width / zoom + 'px');
