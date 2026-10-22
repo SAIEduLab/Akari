@@ -203,12 +203,19 @@ console.log('Asset diagnostics: original errors persisted before stalled screens
 let contextClosed=0,viewportOptions;
 await pageFor({async newContext(options){viewportOptions=options;return {async route(){},async newPage(){return {on(){},setDefaultTimeout(ms){assert.equal(ms,30000);},async goto(){},async waitForFunction(){}};},async close(){contextClosed++;}};}},'fixture.html',async()=>{}, {viewport:{width:1440,height:1100},offline:false});
 assert.deepEqual(viewportOptions,{viewport:{width:1440,height:1100},offline:true});assert.equal(contextClosed,1);pass('fixture-readiness/offline-viewport-context');
-let readinessChecks=0;
-await installRegressionProject({async evaluate(){return {name:'監査の基準作品',text:'fixture'};},locator(){return {async setInputFiles(){},async selectOption(){},async isVisible(){return false;},async click(){}};},async waitForFunction(predicate,name,options){
+let readinessChecks=0,shown='blocks';const presses=[],waits=[];
+// The one view toggle (final call 22): only the button that switches away from the view on the screen is there.
+const toggleDocument=()=>{const there='editorMode'+(shown==='blocks'?'code':'blocks');return {getElementById:id=>({hidden:id!==there,getClientRects:()=>id===there?[{}]:[]})};};
+await installRegressionProject({async evaluate(){return {name:'監査の基準作品',text:'fixture'};},locator(selector){return {async setInputFiles(){},async selectOption(){},async isVisible(){return false;},async click(){presses.push(selector);if(selector==='#editorModecode'&&shown==='blocks')shown='code';}};},async waitForFunction(predicate,name,options){
+  waits.push(predicate);
+  if(waits.length>1){const value=vm.runInNewContext('('+predicate.toString()+')('+JSON.stringify(name)+')',{document:toggleDocument()});assert.ok(value,'the fixture waits only for a view that is on the screen');return {async jsonValue(){return value;}};}
   assert.equal(options.polling,100);
   const ready=(state,input)=>vm.runInNewContext('('+predicate.toString()+')('+JSON.stringify(name)+')',{document:{querySelector:()=>({value:input})},Akari:{app:{project:{name},editorState:{state}}}});
   assert.equal(ready('DESIGN','pending-file'),false);assert.equal(ready('PREPARING',''),false);assert.equal(ready('DESIGN',''),true);readinessChecks++;
 }});
-assert.equal(readinessChecks,1,'the readiness predicate was evaluated');pass('fixture-readiness/unfinished-import-rejected');
+assert.equal(readinessChecks,1,'the readiness predicate was evaluated');
+// The blocks were shown, so the fixture pressed 「ブロックモード ⇄」 once and waited for the code (showView).
+assert.deepEqual(presses.filter(s=>s.startsWith('#editorMode')),['#editorModecode']);assert.equal(shown,'code');assert.equal(waits.length,3);
+pass('fixture-readiness/unfinished-import-rejected');
 console.log('Fixture readiness: unfinished import/state rejected; initial viewport and offline context preserved PASS');
 writeCaseReport(output,'ci-regression',results);
