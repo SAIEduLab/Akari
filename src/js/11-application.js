@@ -974,11 +974,12 @@
     }
     function clearEditorFailure(binding) {
       const indicator = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
-      indicator.textContent = ''; indicator.hidden = true;
+      indicator.textContent = ''; indicator.hidden = true; delete indicator.dataset.notice;
     }
     function showEditorFailure(binding, error, { preservePending = false } = {}) {
       const reason = error?.message || String(error),
         n = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
+      delete n.dataset.notice;
       const originalDetails = [error?.code, reason, error?.detail,
         ...(error?.diagnostics || []).map(d => [d.code, d.where,
           d.line ? d.line + '行 / ' + (d.column || 1) + '文字目' : '', d.message, d.detail].filter(Boolean).join(' / '))].filter(Boolean).join('\n');
@@ -1349,6 +1350,8 @@
           binding.textarea.value = candidate.draftSource;
           const pending = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
           pending.textContent = 'あいている ところに ブロックや 数・文字を 入れてください';
+          // In blocks the floating controls say this by the block (E-12); the code view shows it here.
+          pending.dataset.notice = 'block-draft';
           pending.hidden = false;
           renderEditorBinding(binding);
           scheduleAutosave();
@@ -2072,6 +2075,7 @@
         $('#stageZoomIn').disabled = scale >= 2;
         $('#stageZoomFit').setAttribute('aria-pressed', String(stageZoom === null));
         positionResizeHandles();
+        updateDesignHelp();
       },
       canInteract: () => !document.querySelector('.modal.show,.modal.open')&&(!tutorial
         ||(tutorialAllows(tutorial,'runtime:click')&&!tutorialTrace?.busy&&tutorialTrace?.clicks<tutorialStep(tutorial).clicks)),
@@ -2883,6 +2887,7 @@
           ((Math.round(angle / 45) % 4) + 4) % 4
         ];
       }
+      updateDesignHelp(el.form.querySelector('.design-resize-handle') ? c : null);
       const outline = el.form.querySelector('.design-resize-outline');
       if (outline)
         Object.assign(outline.style, {
@@ -2928,11 +2933,26 @@
         )
         ?.focus({ preventScroll: true });
     }
+    // はじめて has no ヒント, so what the handles' and the zoom's titles say is written under the screen (E-22): how the
+    // handles change a part's size while a part shows them, and how to see the screen at 100%. The other levels have it
+    // in ヒント.
+    function updateDesignHelp(c = el.form.querySelector('.design-resize-handle') && componentById(selectedId)) {
+      const help = $('#designHelp'), mode = c ? designResizeMode(c) : null,
+        zoom = $('#stageZoomReset').textContent.trim();
+      help.textContent = (!mode ? '' : mode === 'scale'
+        ? '青い 丸を おしたまま 動かすと、形を かえずに 大きく・小さく できるよ。'
+        : '青い 丸を おしたまま 動かすと、大きさが かわるよ。' + (matchMedia('(pointer: coarse)').matches
+          ? '「たて・よこを そろえる」を おしてから 動かすと、形は そのままだよ。'
+          : 'Shiftキーを おしながら 角の 丸を 動かすと、形は そのままだよ。'))
+        + (zoom && zoom !== '100%' ? '上の「' + zoom + '」を おすと、画面を 100%で 見られるよ。' : '');
+      help.hidden = !help.textContent;
+    }
     function renderResizeHandle() {
       el.form
         .querySelectorAll('.design-resize-handle,.design-resize-outline')
         .forEach((n) => n.remove());
       $('#designRatioLock').hidden = true;
+      updateDesignHelp(null);
       if (modelLocked() || selectedId === 'stage') return;
       const c = componentById(selectedId),
         mode = designResizeMode(c);
@@ -7493,6 +7513,17 @@
               }
             : null,
         root: $(draft ? '#callableBlocks' : '#blockEditor'),
+        // The free middle of the row above the workspace, between すべての本文… and もとにもどす…: the floating
+        // 「とちゅうで やめる」 goes there while a place is chosen, so it covers no block (E-12).
+        controlsSpace: draft ? null : () => {
+          const nav = $('.codewin > .source-nav'), bar = $('.codewin > .debugbar');
+          if (!nav?.getClientRects().length || !bar?.getClientRects().length) return null;
+          const shown = (n) => [...n.children].filter(c => c.getClientRects().length && getComputedStyle(c).visibility !== 'hidden').map(c => c.getBoundingClientRect());
+          const left = shown(nav), right = shown(bar), row = bar.getBoundingClientRect();
+          if (Math.abs(nav.getBoundingClientRect().top - row.top) > 4) return null;
+          return { left: Math.max(nav.getBoundingClientRect().left, ...left.map(r => r.right)) + 8,
+            right: Math.min(row.right, ...right.map(r => r.left)) - 8, top: row.top, bottom: row.bottom };
+        },
         getSession: () => getEditorSession(binding),
         getProject: () => project,
         getContext: () => bindingContext(binding),

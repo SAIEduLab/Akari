@@ -6038,6 +6038,10 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
 :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button::before { flex: none; width: 12px; height: 12px; margin: 0; font-size: 9px; line-height: 12px; }
 :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button[aria-pressed="true"] { border-color: #6c8ca5; background: #eaf3fa; }
 :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-palette-list { grid-column: 1; grid-row: 3; gap: 10px; padding: 10px 8px 40px; }
+/* In 「自分で作ったブロック」 the block area keeps room for every category, the list and the workspace; when the dialog
+   is short, the form above it scrolls away instead of the list being squeezed. */
+#procModal:has(#callableBlocks:not([hidden])) .proc-edit { overflow: auto; }
+#procModal #callableBlocks:not([hidden]) { flex: 1 0 460px; min-height: 460px; }
 
 /* Thin lines between blocks (E-07): the place between two blocks is an 8 px line; the last place of a body keeps
    「＋ ここに入れる」 (28 px). While a block is carried, while a place is being chosen and while a block is being moved,
@@ -6126,12 +6130,23 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
   position: absolute !important; left: 0; top: calc(100% + 4px); z-index: 130; min-width: 180px; max-width: 330px;
 }
 .blockui-world .blockui-input-slot.blockui-slot-active { flex-wrap: nowrap; }
-/* 決める・とちゅうで やめる and the input's mistake float under the field being edited, or over the top of the workspace. */
+/* 決める・とちゅうで やめる and the input's mistake float under the field being edited; while a place is chosen they float
+   in the free middle of the row above the workspace, or in a corner of the workspace that has no block. */
 :is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls {
-  position: absolute; z-index: 140; left: var(--blockui-controls-left, 312px); top: var(--blockui-controls-top, 0px);
-  max-width: min(520px, calc(100% - 16px)); box-sizing: border-box; padding: 5px 8px; border: 1px solid #9db3c5; border-radius: 9px;
+  position: fixed; z-index: 140; left: var(--blockui-controls-left, 312px); top: var(--blockui-controls-top, 0px);
+  max-width: min(520px, calc(100vw - 16px)); box-sizing: border-box; padding: 5px 8px; border: 1px solid #9db3c5; border-radius: 9px;
   background: #eef5fbf5; box-shadow: 0 4px 12px #12324d30;
 }
+/* What the controls already say, and what a carried block shows by the pointer, is not repeated over the blocks at the
+   bottom: the live region keeps the words for a screen reader (E-04, E-12). A mistake that is not a field's still shows. */
+:is(#blockEditor, #callableBlocks).blockui-editor.blockui-interacting > .blockui-message:not(.blockui-error),
+:is(#blockEditor, #callableBlocks).blockui-editor.blockui-drag-active > .blockui-message {
+  position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); border: 0; box-shadow: none;
+}
+/* In blocks, an enclosure that waits for its count says so in the floating controls; the same notice above the editor
+   would push the blocks down and up again (E-12). It shows in the code view, and a refused ▶ still shows its own. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #editorPending[data-notice="block-draft"],
+body[data-editor-mode="blocks"]:not(.runtime):has(#editorPending[data-notice="block-draft"]) #editorCancel { display: none; }
 :is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls[hidden] { display: none; }
 .blockui-view-controls > .blockui-field-error { flex-basis: 100%; margin: 0; color: #9f281e; font-size: 13px; white-space: normal; }
 .blockui-view-controls > .blockui-field-error:empty { display: none; }
@@ -6246,6 +6261,15 @@ body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #desig
 #stageThumbnail[hidden] { display: none; }
 #stageThumbnail:focus-visible { outline: 3px solid #10324f; outline-offset: 1px; box-shadow: 0 0 0 5px #fff; }
 body:not([data-workbench-wide="true"]) #stageThumbnail, body.runtime #stageThumbnail { display: none; }
+
+/* はじめて has no ヒント: how to change a part's size (and to see the screen at 100%) is written under the screen while a
+   part shows its handles (E-22). Its room is kept when no part is selected, so the screen never moves. */
+#designHelp { display: none; }
+body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp {
+  display: block; flex: none; box-sizing: border-box; min-height: calc(3em + 10px); margin: 0; padding: 4px 12px 6px;
+  font-size: 13px; line-height: 1.5; color: var(--muted, #536273);
+}
+body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp[hidden] { visibility: hidden; }
 
 /* たて・よこを そろえる over the stage (E-22): shown on a touch screen while a part with a box is selected. */
 #designerWindow { position: relative; }

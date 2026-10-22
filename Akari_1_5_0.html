@@ -6050,6 +6050,10 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
 :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button::before { flex: none; width: 12px; height: 12px; margin: 0; font-size: 9px; line-height: 12px; }
 :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-categories > .blockui-button[aria-pressed="true"] { border-color: #6c8ca5; background: #eaf3fa; }
 :is(#blockEditor, #callableBlocks) .blockui-palette > .blockui-palette-list { grid-column: 1; grid-row: 3; gap: 10px; padding: 10px 8px 40px; }
+/* In 「自分で作ったブロック」 the block area keeps room for every category, the list and the workspace; when the dialog
+   is short, the form above it scrolls away instead of the list being squeezed. */
+#procModal:has(#callableBlocks:not([hidden])) .proc-edit { overflow: auto; }
+#procModal #callableBlocks:not([hidden]) { flex: 1 0 460px; min-height: 460px; }
 
 /* Thin lines between blocks (E-07): the place between two blocks is an 8 px line; the last place of a body keeps
    「＋ ここに入れる」 (28 px). While a block is carried, while a place is being chosen and while a block is being moved,
@@ -6138,12 +6142,23 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
   position: absolute !important; left: 0; top: calc(100% + 4px); z-index: 130; min-width: 180px; max-width: 330px;
 }
 .blockui-world .blockui-input-slot.blockui-slot-active { flex-wrap: nowrap; }
-/* 決める・とちゅうで やめる and the input's mistake float under the field being edited, or over the top of the workspace. */
+/* 決める・とちゅうで やめる and the input's mistake float under the field being edited; while a place is chosen they float
+   in the free middle of the row above the workspace, or in a corner of the workspace that has no block. */
 :is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls {
-  position: absolute; z-index: 140; left: var(--blockui-controls-left, 312px); top: var(--blockui-controls-top, 0px);
-  max-width: min(520px, calc(100% - 16px)); box-sizing: border-box; padding: 5px 8px; border: 1px solid #9db3c5; border-radius: 9px;
+  position: fixed; z-index: 140; left: var(--blockui-controls-left, 312px); top: var(--blockui-controls-top, 0px);
+  max-width: min(520px, calc(100vw - 16px)); box-sizing: border-box; padding: 5px 8px; border: 1px solid #9db3c5; border-radius: 9px;
   background: #eef5fbf5; box-shadow: 0 4px 12px #12324d30;
 }
+/* What the controls already say, and what a carried block shows by the pointer, is not repeated over the blocks at the
+   bottom: the live region keeps the words for a screen reader (E-04, E-12). A mistake that is not a field's still shows. */
+:is(#blockEditor, #callableBlocks).blockui-editor.blockui-interacting > .blockui-message:not(.blockui-error),
+:is(#blockEditor, #callableBlocks).blockui-editor.blockui-drag-active > .blockui-message {
+  position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); border: 0; box-shadow: none;
+}
+/* In blocks, an enclosure that waits for its count says so in the floating controls; the same notice above the editor
+   would push the blocks down and up again (E-12). It shows in the code view, and a refused ▶ still shows its own. */
+body[data-editor-mode="blocks"]:not(.runtime) .codewin > #editorPending[data-notice="block-draft"],
+body[data-editor-mode="blocks"]:not(.runtime):has(#editorPending[data-notice="block-draft"]) #editorCancel { display: none; }
 :is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls[hidden] { display: none; }
 .blockui-view-controls > .blockui-field-error { flex-basis: 100%; margin: 0; color: #9f281e; font-size: 13px; white-space: normal; }
 .blockui-view-controls > .blockui-field-error:empty { display: none; }
@@ -6258,6 +6273,15 @@ body[data-editor-mode="blocks"][data-workbench-wide="true"]:not(.runtime) #desig
 #stageThumbnail[hidden] { display: none; }
 #stageThumbnail:focus-visible { outline: 3px solid #10324f; outline-offset: 1px; box-shadow: 0 0 0 5px #fff; }
 body:not([data-workbench-wide="true"]) #stageThumbnail, body.runtime #stageThumbnail { display: none; }
+
+/* はじめて has no ヒント: how to change a part's size (and to see the screen at 100%) is written under the screen while a
+   part shows its handles (E-22). Its room is kept when no part is selected, so the screen never moves. */
+#designHelp { display: none; }
+body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp {
+  display: block; flex: none; box-sizing: border-box; min-height: calc(3em + 10px); margin: 0; padding: 4px 12px 6px;
+  font-size: 13px; line-height: 1.5; color: var(--muted, #536273);
+}
+body[data-ui-level="entry"]:not(.runtime) #designerWindow > #designHelp[hidden] { visibility: hidden; }
 
 /* たて・よこを そろえる over the stage (E-22): shown on a touch screen while a part with a box is selected. */
 #designerWindow { position: relative; }
@@ -6532,6 +6556,7 @@ body[data-tutorial-step] .blockui-world .blockui-insertion.tutorial-target:not(.
           </div>
         </div>
       </div>
+      <p id="designHelp" class="child-help design-help" hidden></p>
       <div class="run-strip" id="runStrip"><span class="exec-location" id="execLocation">いま 動いている 文：―</span><span class="exec-sentence" id="execSentence" hidden></span></div>
     </section>
 
@@ -29315,7 +29340,10 @@ function createAkariExtensionHost(options) {
     });
     listen(doc.defaultView, 'resize', () => {
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]')) menu.open = false;
+      placeControls();
     });
+    // The controls are fixed to the window, so they follow the page and the editor when either scrolls.
+    listen(doc, 'scroll', (event) => { if (event.target !== workspace) placeControls(); }, { capture: true, passive: true });
     function rememberViewState(owner = displaySession) {
       if (owner)
         owner.scrollState = {
@@ -29676,7 +29704,8 @@ function createAkariExtensionHost(options) {
       commitButton.disabled = isLocked() || !pending;
       const draft = session()?.blockDraft;
       cancelButton.disabled = !pending && !moving && !drag && !replacement && !destination && !draft;
-      controls.hidden = !pending && !moving && !drag && !replacement && !destination && !draft;
+      // While a block is only being carried, what it does is shown by the pointer (E-04): no controls cover the blocks.
+      controls.hidden = !pending && !moving && !replacement && !destination && !draft;
       root.classList.toggle('blockui-interacting', !controls.hidden);
       root.classList.toggle('blockui-moving', !!moving || !!drag?.started);
       // While a place for a sentence is chosen or a sentence is moved, the places between blocks open up (E-07).
@@ -29689,33 +29718,69 @@ function createAkariExtensionHost(options) {
         if (described.length) pending.input.setAttribute('aria-describedby', described.join(' '));
         else pending.input.removeAttribute('aria-describedby');
       }
-      placeControls();
       destinationLabel.textContent = replacement
         ? 'もとの ばしょに 入れる ブロックを えらんでください'
         : moving
-          ? 'どこへ もっていくか えらんでください'
+          ? moving.type === 'run'
+            ? 'この ブロックから 下の ' + runIds(moving.id).length + 'この ブロックを もっていく ところを えらんでください'
+            : 'どこへ もっていくか えらんでください'
           : destination?.input
             ? destinationDescription()
             : destination?.body
               ? destinationDescription()
               : draft ? 'あいている ところを えらんで、ブロックを 入れてください' : '入れたら「決める」を おしてください';
+      placeControls();
     }
-    // The floating controls go right under the field being edited, or over the top left of the workspace while a place
-    // is chosen or a block is moved: they never take a row of their own, so nothing moves (E-12).
+    // The floating controls never take a row of their own, so nothing moves (E-12). They go right under the field being
+    // edited (above it when the window ends below). While a place is chosen, a block is moved or an enclosure waits for
+    // what goes in it, they go in the free middle of the row above the workspace (options.controlsSpace), else in a
+    // corner of the workspace where they cover no block, else over its top left.
     function placeControls() {
-      if (controls.hidden) return;
-      const box = root.getBoundingClientRect(), shell = workspaceShell.getBoundingClientRect();
-      if (!box.width) return;
-      const field = pending?.input?.isConnected && !pending.input.closest('dialog') ? pending.input.getBoundingClientRect() : null;
-      let left = shell.left - box.left + 8, top = shell.top - box.top + 6;
-      if (field && field.width) {
-        left = field.left - box.left;
-        top = field.bottom - box.top + 4;
+      if (controls.hidden || !root.getBoundingClientRect().width) return;
+      const view = doc.documentElement, room = workspace.getBoundingClientRect(),
+        w = controls.offsetWidth || 300, h = controls.offsetHeight || 40,
+        field = pending?.input?.isConnected && !pending.input.closest('dialog') ? pending.input.getBoundingClientRect() : null;
+      let spot;
+      if (field?.width)
+        spot = { x: field.left, y: field.bottom + 4 + h <= view.clientHeight - 4 ? field.bottom + 4 : Math.max(4, field.top - h - 4) };
+      else {
+        const free = options.controlsSpace?.();
+        spot = free && free.right - free.left >= w
+          ? { x: free.left, y: free.top + Math.max(0, (free.bottom - free.top - h) / 2) }
+          : freeCorner(room, w, h) || { x: room.left + 8, y: room.top + 6 };
       }
-      const width = controls.offsetWidth || 300;
-      left = Math.max(4, Math.min(left, box.width - width - 4));
-      controls.style.setProperty('--blockui-controls-left', Math.round(left) + 'px');
-      controls.style.setProperty('--blockui-controls-top', Math.round(top) + 'px');
+      // The controls are fixed to the window: they may lie over the row above the workspace, outside the editor's box.
+      const x = Math.round(Math.max(4, Math.min(spot.x, view.clientWidth - w - 4))), y = Math.round(spot.y);
+      controls.style.setProperty('--blockui-controls-left', x + 'px');
+      controls.style.setProperty('--blockui-controls-top', y + 'px');
+      // A transformed ancestor (a dialog) moves what is fixed: correct by what is measured.
+      const r = controls.getBoundingClientRect();
+      if (Math.abs(r.left - x) > 0.5 || Math.abs(r.top - y) > 0.5) {
+        controls.style.setProperty('--blockui-controls-left', Math.round(2 * x - r.left) + 'px');
+        controls.style.setProperty('--blockui-controls-top', Math.round(2 * y - r.top) + 'px');
+      }
+      clearOfControls();
+    }
+    // The selected field's tools never lie under 決める・とちゅうで やめる: they go down below them.
+    function clearOfControls() {
+      if (controls.hidden) return;
+      const c = controls.getBoundingClientRect();
+      for (const head of workspace.querySelectorAll('.blockui-input-slot.blockui-slot-active > .blockui-slot-head')) {
+        const r = head.getBoundingClientRect();
+        if (!r.width || r.right <= c.left || r.left >= c.right || r.bottom <= c.top || r.top >= c.bottom) continue;
+        head.style.top = (parseFloat(doc.defaultView.getComputedStyle(head).top) || 0) + (c.bottom + 4 - r.top) / zoom + 'px';
+      }
+    }
+    // A corner of the workspace (top right, bottom right, bottom left) where a w × h box covers no block, no hole and no
+    // 「＋ ここに入れる」 at the end of a body.
+    function freeCorner(room, w, h) {
+      const blockers = [...world.querySelectorAll('.blockui-statement, .blockui-event-hat, .blockui-insertion-end, .blockui-hole-target, .blockui-chosen-destination')]
+        .map(n => n.getBoundingClientRect()).filter(b => b.width && b.bottom > room.top && b.top < room.bottom);
+      const right = room.left + workspace.clientWidth - 8 - w, bottom = room.top + workspace.clientHeight - 6 - h;
+      for (const c of [{ x: right, y: room.top + 6 }, { x: right, y: bottom }, { x: room.left + 8, y: bottom }])
+        if (c.x >= room.left && c.y >= room.top && blockers.every(b => b.right <= c.x || b.left >= c.x + w || b.bottom <= c.y || b.top >= c.y + h))
+          return c;
+      return null;
     }
     function listLocation(info) {
       return info?.body
@@ -29743,7 +29808,11 @@ function createAkariExtensionHost(options) {
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
         if (menu.closest('.blockui-node')?.dataset.blockId !== id) menu.open = false;
       for(const slot of workspace.querySelectorAll('.blockui-slot-active'))slot.classList.remove('blockui-slot-active');
-      const selectedNode=[...workspace.querySelectorAll('.blockui-node')].find(n=>n.dataset.blockId===id),slot=selectedNode?.parentElement.closest('.blockui-input-slot');
+      // A number that is its own field in the sentence (1 秒, E-02) has its tools on its own place: the field being
+      // edited keeps them while its sentence is the selected block.
+      const selectedNode=[...workspace.querySelectorAll('.blockui-node')].find(n=>n.dataset.blockId===id),active=doc.activeElement,
+        flat=selectedNode&&active?.matches?.('input,textarea')&&selectedNode.contains(active)?active.closest('.blockui-flat-value'):null,
+        slot=selectedNode?.parentElement.closest('.blockui-input-slot')||(flat?.closest('.blockui-node')===selectedNode?flat:null);
       if(slot){slot.classList.add('blockui-slot-active');doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));}
     }
     // The floating tools (E-12) go beside the sentence they belong to, right of its whole block (an enclosure with what
@@ -29800,8 +29869,14 @@ function createAkariExtensionHost(options) {
           moveTo(slotHead, owner.getBoundingClientRect().right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4);
           below = { owner, top: slotHead.getBoundingClientRect().bottom + 4 };
         } else {
-          const sr = slot.getBoundingClientRect(), w = slotHead.getBoundingClientRect().width;
-          moveTo(slotHead, Math.max(room.left + 8, Math.min(sr.left, room.right - 8 - w)), sr.bottom + 4);
+          // Under the field, unless that covers another value of the same sentence (a long value wraps the rest of the
+          // sentence onto the next line): then under the whole sentence.
+          const sr = slot.getBoundingClientRect(), w = slotHead.getBoundingClientRect().width, x = Math.max(room.left + 8, Math.min(sr.left, room.right - 8 - w));
+          moveTo(slotHead, x, sr.bottom + 4);
+          const r = slotHead.getBoundingClientRect(),
+            covered = owner && [...owner.querySelectorAll('.blockui-input-slot, .blockui-field, input, select, button')]
+              .some(n => !slot.contains(n) && !slotHead.contains(n) && (b => b.width && b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom)(n.getBoundingClientRect()));
+          if (covered) moveTo(slotHead, x, lineOf(owner).getBoundingClientRect().bottom + 4);
         }
       }
       if (head?.getClientRects().length && box.classList.contains('blockui-expression')) {
@@ -29809,6 +29884,7 @@ function createAkariExtensionHost(options) {
         if (owner && fits(owner, head)) moveTo(head, owner.getBoundingClientRect().right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4);
         else box.classList.add('blockui-tools-above');
       }
+      clearOfControls();
     }
     // The place a block from the list would go (right after the selected sentence) is shown on its line (E-08).
     function showImpliedDestination() {
@@ -29836,7 +29912,7 @@ function createAkariExtensionHost(options) {
           'blockui-chosen-destination',
           sameLocation(location, locationFromElement(n)),
         );
-      announce(destinationDescription() + (modeChanged ? ' 見せるブロックを「すべてのブロック」に かえました。なかまと さがす言葉は そのままです。' : ''));
+      announce(destinationDescription() + (modeChanged ? ' 「ブロックの しゅるい」を「すべてのブロック」に かえました。なかまと さがす言葉は そのままです。' : ''));
       if(options.tutorialActive?.())options.onDestinationSelected?.({...location});
       else {
         if (keyboard && paletteControls.hidden) paletteToggle.click();
@@ -30093,6 +30169,13 @@ function createAkariExtensionHost(options) {
       phraseCache.set(schema.id, value);
       return value;
     }
+    // A call that hands nothing over is written without 「をわたして、」 (【てじゅん】という手順を行う), so its block and its
+    // face in the list read the same as its code (E-14).
+    function shownPhrase(schema, node) {
+      const parts = phrase(schema);
+      if (!parts || schema.kind !== 'UserActionCall' || node?.inputs?.args?.length) return parts;
+      return parts.map((part) => (typeof part === 'string' ? part.replace(/^をわたして、/, '') : part));
+    }
     function paletteLabel(schema) {
       if (['NumberLiteral', 'StringLiteral', 'BooleanLiteral', 'CommentLine'].includes(schema.kind))
         return schema.kind === 'CommentLine' ? '※ メモ' : schema.label;
@@ -30161,7 +30244,7 @@ function createAkariExtensionHost(options) {
         }
       }
       else {
-        const parts = phrase(schema);
+        const parts = shownPhrase(schema, node);
         if (parts)
           for (const part of parts) {
             if (typeof part === 'string') main.append(doc.createTextNode(part));
@@ -31457,7 +31540,7 @@ function createAkariExtensionHost(options) {
           );
         return;
       }
-      const parts = phrase(schema);
+      const parts = shownPhrase(schema, node);
       if (parts) {
         const displayParts = [...parts];
         // A value whose unit the sentence fixes shows that unit itself (unitValue, E-02), so the phrase does not repeat
@@ -34139,11 +34222,12 @@ function createAkariExtensionHost(options) {
     }
     function clearEditorFailure(binding) {
       const indicator = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
-      indicator.textContent = ''; indicator.hidden = true;
+      indicator.textContent = ''; indicator.hidden = true; delete indicator.dataset.notice;
     }
     function showEditorFailure(binding, error, { preservePending = false } = {}) {
       const reason = error?.message || String(error),
         n = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
+      delete n.dataset.notice;
       const originalDetails = [error?.code, reason, error?.detail,
         ...(error?.diagnostics || []).map(d => [d.code, d.where,
           d.line ? d.line + '行 / ' + (d.column || 1) + '文字目' : '', d.message, d.detail].filter(Boolean).join(' / '))].filter(Boolean).join('\n');
@@ -34514,6 +34598,8 @@ function createAkariExtensionHost(options) {
           binding.textarea.value = candidate.draftSource;
           const pending = $(binding.kind === 'draft' ? '#callablePending' : '#editorPending');
           pending.textContent = 'あいている ところに ブロックや 数・文字を 入れてください';
+          // In blocks the floating controls say this by the block (E-12); the code view shows it here.
+          pending.dataset.notice = 'block-draft';
           pending.hidden = false;
           renderEditorBinding(binding);
           scheduleAutosave();
@@ -35237,6 +35323,7 @@ function createAkariExtensionHost(options) {
         $('#stageZoomIn').disabled = scale >= 2;
         $('#stageZoomFit').setAttribute('aria-pressed', String(stageZoom === null));
         positionResizeHandles();
+        updateDesignHelp();
       },
       canInteract: () => !document.querySelector('.modal.show,.modal.open')&&(!tutorial
         ||(tutorialAllows(tutorial,'runtime:click')&&!tutorialTrace?.busy&&tutorialTrace?.clicks<tutorialStep(tutorial).clicks)),
@@ -36048,6 +36135,7 @@ function createAkariExtensionHost(options) {
           ((Math.round(angle / 45) % 4) + 4) % 4
         ];
       }
+      updateDesignHelp(el.form.querySelector('.design-resize-handle') ? c : null);
       const outline = el.form.querySelector('.design-resize-outline');
       if (outline)
         Object.assign(outline.style, {
@@ -36093,11 +36181,26 @@ function createAkariExtensionHost(options) {
         )
         ?.focus({ preventScroll: true });
     }
+    // はじめて has no ヒント, so what the handles' and the zoom's titles say is written under the screen (E-22): how the
+    // handles change a part's size while a part shows them, and how to see the screen at 100%. The other levels have it
+    // in ヒント.
+    function updateDesignHelp(c = el.form.querySelector('.design-resize-handle') && componentById(selectedId)) {
+      const help = $('#designHelp'), mode = c ? designResizeMode(c) : null,
+        zoom = $('#stageZoomReset').textContent.trim();
+      help.textContent = (!mode ? '' : mode === 'scale'
+        ? '青い 丸を おしたまま 動かすと、形を かえずに 大きく・小さく できるよ。'
+        : '青い 丸を おしたまま 動かすと、大きさが かわるよ。' + (matchMedia('(pointer: coarse)').matches
+          ? '「たて・よこを そろえる」を おしてから 動かすと、形は そのままだよ。'
+          : 'Shiftキーを おしながら 角の 丸を 動かすと、形は そのままだよ。'))
+        + (zoom && zoom !== '100%' ? '上の「' + zoom + '」を おすと、画面を 100%で 見られるよ。' : '');
+      help.hidden = !help.textContent;
+    }
     function renderResizeHandle() {
       el.form
         .querySelectorAll('.design-resize-handle,.design-resize-outline')
         .forEach((n) => n.remove());
       $('#designRatioLock').hidden = true;
+      updateDesignHelp(null);
       if (modelLocked() || selectedId === 'stage') return;
       const c = componentById(selectedId),
         mode = designResizeMode(c);
@@ -40658,6 +40761,17 @@ function createAkariExtensionHost(options) {
               }
             : null,
         root: $(draft ? '#callableBlocks' : '#blockEditor'),
+        // The free middle of the row above the workspace, between すべての本文… and もとにもどす…: the floating
+        // 「とちゅうで やめる」 goes there while a place is chosen, so it covers no block (E-12).
+        controlsSpace: draft ? null : () => {
+          const nav = $('.codewin > .source-nav'), bar = $('.codewin > .debugbar');
+          if (!nav?.getClientRects().length || !bar?.getClientRects().length) return null;
+          const shown = (n) => [...n.children].filter(c => c.getClientRects().length && getComputedStyle(c).visibility !== 'hidden').map(c => c.getBoundingClientRect());
+          const left = shown(nav), right = shown(bar), row = bar.getBoundingClientRect();
+          if (Math.abs(nav.getBoundingClientRect().top - row.top) > 4) return null;
+          return { left: Math.max(nav.getBoundingClientRect().left, ...left.map(r => r.right)) + 8,
+            right: Math.min(row.right, ...right.map(r => r.left)) - 8, top: row.top, bottom: row.bottom };
+        },
         getSession: () => getEditorSession(binding),
         getProject: () => project,
         getContext: () => bindingContext(binding),

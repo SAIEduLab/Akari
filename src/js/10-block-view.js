@@ -436,7 +436,10 @@
     });
     listen(doc.defaultView, 'resize', () => {
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]')) menu.open = false;
+      placeControls();
     });
+    // The controls are fixed to the window, so they follow the page and the editor when either scrolls.
+    listen(doc, 'scroll', (event) => { if (event.target !== workspace) placeControls(); }, { capture: true, passive: true });
     function rememberViewState(owner = displaySession) {
       if (owner)
         owner.scrollState = {
@@ -797,7 +800,8 @@
       commitButton.disabled = isLocked() || !pending;
       const draft = session()?.blockDraft;
       cancelButton.disabled = !pending && !moving && !drag && !replacement && !destination && !draft;
-      controls.hidden = !pending && !moving && !drag && !replacement && !destination && !draft;
+      // While a block is only being carried, what it does is shown by the pointer (E-04): no controls cover the blocks.
+      controls.hidden = !pending && !moving && !replacement && !destination && !draft;
       root.classList.toggle('blockui-interacting', !controls.hidden);
       root.classList.toggle('blockui-moving', !!moving || !!drag?.started);
       // While a place for a sentence is chosen or a sentence is moved, the places between blocks open up (E-07).
@@ -810,33 +814,69 @@
         if (described.length) pending.input.setAttribute('aria-describedby', described.join(' '));
         else pending.input.removeAttribute('aria-describedby');
       }
-      placeControls();
       destinationLabel.textContent = replacement
         ? 'もとの ばしょに 入れる ブロックを えらんでください'
         : moving
-          ? 'どこへ もっていくか えらんでください'
+          ? moving.type === 'run'
+            ? 'この ブロックから 下の ' + runIds(moving.id).length + 'この ブロックを もっていく ところを えらんでください'
+            : 'どこへ もっていくか えらんでください'
           : destination?.input
             ? destinationDescription()
             : destination?.body
               ? destinationDescription()
               : draft ? 'あいている ところを えらんで、ブロックを 入れてください' : '入れたら「決める」を おしてください';
+      placeControls();
     }
-    // The floating controls go right under the field being edited, or over the top left of the workspace while a place
-    // is chosen or a block is moved: they never take a row of their own, so nothing moves (E-12).
+    // The floating controls never take a row of their own, so nothing moves (E-12). They go right under the field being
+    // edited (above it when the window ends below). While a place is chosen, a block is moved or an enclosure waits for
+    // what goes in it, they go in the free middle of the row above the workspace (options.controlsSpace), else in a
+    // corner of the workspace where they cover no block, else over its top left.
     function placeControls() {
-      if (controls.hidden) return;
-      const box = root.getBoundingClientRect(), shell = workspaceShell.getBoundingClientRect();
-      if (!box.width) return;
-      const field = pending?.input?.isConnected && !pending.input.closest('dialog') ? pending.input.getBoundingClientRect() : null;
-      let left = shell.left - box.left + 8, top = shell.top - box.top + 6;
-      if (field && field.width) {
-        left = field.left - box.left;
-        top = field.bottom - box.top + 4;
+      if (controls.hidden || !root.getBoundingClientRect().width) return;
+      const view = doc.documentElement, room = workspace.getBoundingClientRect(),
+        w = controls.offsetWidth || 300, h = controls.offsetHeight || 40,
+        field = pending?.input?.isConnected && !pending.input.closest('dialog') ? pending.input.getBoundingClientRect() : null;
+      let spot;
+      if (field?.width)
+        spot = { x: field.left, y: field.bottom + 4 + h <= view.clientHeight - 4 ? field.bottom + 4 : Math.max(4, field.top - h - 4) };
+      else {
+        const free = options.controlsSpace?.();
+        spot = free && free.right - free.left >= w
+          ? { x: free.left, y: free.top + Math.max(0, (free.bottom - free.top - h) / 2) }
+          : freeCorner(room, w, h) || { x: room.left + 8, y: room.top + 6 };
       }
-      const width = controls.offsetWidth || 300;
-      left = Math.max(4, Math.min(left, box.width - width - 4));
-      controls.style.setProperty('--blockui-controls-left', Math.round(left) + 'px');
-      controls.style.setProperty('--blockui-controls-top', Math.round(top) + 'px');
+      // The controls are fixed to the window: they may lie over the row above the workspace, outside the editor's box.
+      const x = Math.round(Math.max(4, Math.min(spot.x, view.clientWidth - w - 4))), y = Math.round(spot.y);
+      controls.style.setProperty('--blockui-controls-left', x + 'px');
+      controls.style.setProperty('--blockui-controls-top', y + 'px');
+      // A transformed ancestor (a dialog) moves what is fixed: correct by what is measured.
+      const r = controls.getBoundingClientRect();
+      if (Math.abs(r.left - x) > 0.5 || Math.abs(r.top - y) > 0.5) {
+        controls.style.setProperty('--blockui-controls-left', Math.round(2 * x - r.left) + 'px');
+        controls.style.setProperty('--blockui-controls-top', Math.round(2 * y - r.top) + 'px');
+      }
+      clearOfControls();
+    }
+    // The selected field's tools never lie under 決める・とちゅうで やめる: they go down below them.
+    function clearOfControls() {
+      if (controls.hidden) return;
+      const c = controls.getBoundingClientRect();
+      for (const head of workspace.querySelectorAll('.blockui-input-slot.blockui-slot-active > .blockui-slot-head')) {
+        const r = head.getBoundingClientRect();
+        if (!r.width || r.right <= c.left || r.left >= c.right || r.bottom <= c.top || r.top >= c.bottom) continue;
+        head.style.top = (parseFloat(doc.defaultView.getComputedStyle(head).top) || 0) + (c.bottom + 4 - r.top) / zoom + 'px';
+      }
+    }
+    // A corner of the workspace (top right, bottom right, bottom left) where a w × h box covers no block, no hole and no
+    // 「＋ ここに入れる」 at the end of a body.
+    function freeCorner(room, w, h) {
+      const blockers = [...world.querySelectorAll('.blockui-statement, .blockui-event-hat, .blockui-insertion-end, .blockui-hole-target, .blockui-chosen-destination')]
+        .map(n => n.getBoundingClientRect()).filter(b => b.width && b.bottom > room.top && b.top < room.bottom);
+      const right = room.left + workspace.clientWidth - 8 - w, bottom = room.top + workspace.clientHeight - 6 - h;
+      for (const c of [{ x: right, y: room.top + 6 }, { x: right, y: bottom }, { x: room.left + 8, y: bottom }])
+        if (c.x >= room.left && c.y >= room.top && blockers.every(b => b.right <= c.x || b.left >= c.x + w || b.bottom <= c.y || b.top >= c.y + h))
+          return c;
+      return null;
     }
     function listLocation(info) {
       return info?.body
@@ -864,7 +904,11 @@
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
         if (menu.closest('.blockui-node')?.dataset.blockId !== id) menu.open = false;
       for(const slot of workspace.querySelectorAll('.blockui-slot-active'))slot.classList.remove('blockui-slot-active');
-      const selectedNode=[...workspace.querySelectorAll('.blockui-node')].find(n=>n.dataset.blockId===id),slot=selectedNode?.parentElement.closest('.blockui-input-slot');
+      // A number that is its own field in the sentence (1 秒, E-02) has its tools on its own place: the field being
+      // edited keeps them while its sentence is the selected block.
+      const selectedNode=[...workspace.querySelectorAll('.blockui-node')].find(n=>n.dataset.blockId===id),active=doc.activeElement,
+        flat=selectedNode&&active?.matches?.('input,textarea')&&selectedNode.contains(active)?active.closest('.blockui-flat-value'):null,
+        slot=selectedNode?.parentElement.closest('.blockui-input-slot')||(flat?.closest('.blockui-node')===selectedNode?flat:null);
       if(slot){slot.classList.add('blockui-slot-active');doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));}
     }
     // The floating tools (E-12) go beside the sentence they belong to, right of its whole block (an enclosure with what
@@ -921,8 +965,14 @@
           moveTo(slotHead, owner.getBoundingClientRect().right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4);
           below = { owner, top: slotHead.getBoundingClientRect().bottom + 4 };
         } else {
-          const sr = slot.getBoundingClientRect(), w = slotHead.getBoundingClientRect().width;
-          moveTo(slotHead, Math.max(room.left + 8, Math.min(sr.left, room.right - 8 - w)), sr.bottom + 4);
+          // Under the field, unless that covers another value of the same sentence (a long value wraps the rest of the
+          // sentence onto the next line): then under the whole sentence.
+          const sr = slot.getBoundingClientRect(), w = slotHead.getBoundingClientRect().width, x = Math.max(room.left + 8, Math.min(sr.left, room.right - 8 - w));
+          moveTo(slotHead, x, sr.bottom + 4);
+          const r = slotHead.getBoundingClientRect(),
+            covered = owner && [...owner.querySelectorAll('.blockui-input-slot, .blockui-field, input, select, button')]
+              .some(n => !slot.contains(n) && !slotHead.contains(n) && (b => b.width && b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom)(n.getBoundingClientRect()));
+          if (covered) moveTo(slotHead, x, lineOf(owner).getBoundingClientRect().bottom + 4);
         }
       }
       if (head?.getClientRects().length && box.classList.contains('blockui-expression')) {
@@ -930,6 +980,7 @@
         if (owner && fits(owner, head)) moveTo(head, owner.getBoundingClientRect().right + 8, below?.owner === owner ? below.top : lineOf(owner).getBoundingClientRect().top + 4);
         else box.classList.add('blockui-tools-above');
       }
+      clearOfControls();
     }
     // The place a block from the list would go (right after the selected sentence) is shown on its line (E-08).
     function showImpliedDestination() {
@@ -957,7 +1008,7 @@
           'blockui-chosen-destination',
           sameLocation(location, locationFromElement(n)),
         );
-      announce(destinationDescription() + (modeChanged ? ' 見せるブロックを「すべてのブロック」に かえました。なかまと さがす言葉は そのままです。' : ''));
+      announce(destinationDescription() + (modeChanged ? ' 「ブロックの しゅるい」を「すべてのブロック」に かえました。なかまと さがす言葉は そのままです。' : ''));
       if(options.tutorialActive?.())options.onDestinationSelected?.({...location});
       else {
         if (keyboard && paletteControls.hidden) paletteToggle.click();
@@ -1214,6 +1265,13 @@
       phraseCache.set(schema.id, value);
       return value;
     }
+    // A call that hands nothing over is written without 「をわたして、」 (【てじゅん】という手順を行う), so its block and its
+    // face in the list read the same as its code (E-14).
+    function shownPhrase(schema, node) {
+      const parts = phrase(schema);
+      if (!parts || schema.kind !== 'UserActionCall' || node?.inputs?.args?.length) return parts;
+      return parts.map((part) => (typeof part === 'string' ? part.replace(/^をわたして、/, '') : part));
+    }
     function paletteLabel(schema) {
       if (['NumberLiteral', 'StringLiteral', 'BooleanLiteral', 'CommentLine'].includes(schema.kind))
         return schema.kind === 'CommentLine' ? '※ メモ' : schema.label;
@@ -1282,7 +1340,7 @@
         }
       }
       else {
-        const parts = phrase(schema);
+        const parts = shownPhrase(schema, node);
         if (parts)
           for (const part of parts) {
             if (typeof part === 'string') main.append(doc.createTextNode(part));
@@ -2578,7 +2636,7 @@
           );
         return;
       }
-      const parts = phrase(schema);
+      const parts = shownPhrase(schema, node);
       if (parts) {
         const displayParts = [...parts];
         // A value whose unit the sentence fixes shows that unit itself (unitValue, E-02), so the phrase does not repeat

@@ -90,7 +90,7 @@ try{await withBrowser(chrome,async browser=>{
  });
  await test('SAMPLES-BLOCK-EDIT',async page=>{
   await page.locator('#uiLevel').selectOption('advanced');
-  for(const id of samplesFeature.ids){await open(page,id);await page.locator('#editorModeblocks').click();const original=await source(page);const number=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] input[data-blockui-field="value"]').first();const value=await number.inputValue();await number.fill(String(Number(value)+1));await number.press('Enter');await checkHistory(page,original);
+  for(const id of samplesFeature.ids){await open(page,id);await page.locator('#editorModeblocks').click();const original=await source(page);const number=page.locator('#blockEditor :is(.blockui-node[data-schema-id="NumberLiteral"], .blockui-flat-value) input[data-blockui-field="value"]').first();const value=await number.inputValue();await number.fill(String(Number(value)+1));await number.press('Enter');await checkHistory(page,original);
    const statement=()=>!['dance','flower'].includes(id)?page.locator('#blockEditor .blockui-node[data-schema-id="Assignment"]').first():page.locator('#blockEditor .blockui-script > .blockui-node-content > .blockui-body > .blockui-node').first();
    await command(page,statement(),'replace-noop');assert.ok(await page.locator('#blockEditor [data-schema-id="NoOperation"]').count());await checkHistory(page,original);
    await command(page,statement(),'move-down');await checkHistory(page,original);

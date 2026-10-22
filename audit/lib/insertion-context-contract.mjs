@@ -59,7 +59,7 @@ export function verifyInsertionContextObservation(id,o){
     assert.equal(o.chosen.scope,'すべての なかまから さがしています');assert.ok(o.chosen.candidates.includes('Say'));
   }else if(id==='selection/empty-keyboard-mode'){
     assert.equal(o.before.source,'');chosen(o,'body',0,['']);sameDocument(o.chosen,o.before);assert.equal(o.chosen.mode,'all');assert.equal(o.chosen.query,'待つ');
-    assert.match(o.chosen.message,/見せるブロック/);assert.equal(o.after.shape.length,1);assert.equal(o.after.shape[0].kind,'WaitTime');assert.equal(o.after.shape[0].seconds,1);
+    assert.match(o.chosen.message,/「ブロックの しゅるい」を「すべてのブロック」に/);assert.equal(o.after.shape.length,1);assert.equal(o.after.shape[0].kind,'WaitTime');assert.equal(o.after.shape[0].seconds,1);
     assert.equal(o.after.history,o.before.history+1);clean(o.after);travel(o,1);
   }else if(id==='selection/value-unavailable'){
     assert.equal(o.selected.chosen.length,1);assert.equal(o.selected.chosen[0].input,'value');assert.match(o.selected.destination,/に 入れる ブロックを えらんでいます/);assert.match(o.selected.destination,/ここに入れる/);
