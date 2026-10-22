@@ -32,7 +32,7 @@
       const supplied = context.args ?? definition.args,
         args = Array.isArray(supplied) ? supplied : [];
       if (!Array.isArray(supplied) || args.length > LIMITS.args)
-        report('S308', '入れるものの 数が 多すぎるか、書き方が まちがっています。入れるものを へらすか、書き方を たしかめてね。');
+        report('S308', '入れるものの 数が 多すぎるか、書き方が まちがっています。入れるものを へらすか、書き方を たしかめてください。');
       const names = new Set();
       for (const name of args) {
         try {
@@ -40,7 +40,7 @@
         } catch (error) {
           report('S302', error.message);
         }
-        if (names.has(name)) report('S302', '入れるものに 同じ 名前が 2つ いじょう あります。ちがう 名前に してね');
+        if (names.has(name)) report('S302', '入れるものに 同じ 名前が 2つ いじょう あります。ちがう 名前に してください');
         names.add(name);
       }
       analysisContext = { ...context, args };
@@ -186,7 +186,7 @@
         event = existing?.event || context.event || (parts.length === 3 ? parts[2] : null),
         target = targetId === 'stage' ? { type: 'stage' } : project.components.find((x) => x.id === targetId);
       if (!target || !EVENT_BY_TYPE[target.type]?.includes(event))
-        editorError('だれが 動くか、いつ 動くかが かわりました。もう一度 えらんでから やってね。');
+        editorError('だれが 動くか、いつ 動くかが かわったよ。もう一度 えらんでから やってね。');
       const row = existing || { ...(parts.length === 2 ? { id: parts[1] } : {}), targetId, event, source: '' };
       updateScriptSource(row, source, candidate);
       if (!existing) candidate.scripts.push(row);
@@ -206,14 +206,14 @@
       candidate.scripts.length > LIMITS.scripts ||
       candidate.actions.length + candidate.functions.length > LIMITS.callables
     )
-      editorError('動きの まとまりと 自分で作ったブロックの 数が、いちばん 大きい かずを こえました。いらない ものを けしてね。');
+      editorError('本文と 自分で作ったブロックの 数が、いちばん 大きい 数を こえたよ。いらない ものを けしてね。');
     let total = 0;
     for (const record of [...candidate.scripts, ...candidate.actions, ...candidate.functions]) {
       if (typeof record.source !== 'string' || cpLen(record.source) > LIMITS.sourceEach)
-        editorError('1つの 動きの まとまりの 文字の 数が、いちばん 大きい かずを こえました。少し へらしてね。');
+        editorError('1つの 本文の 文字の 数が、いちばん 大きい 数を こえたよ。少し へらしてね。');
       total += cpLen(record.source);
     }
-    if (total > LIMITS.sourceTotal) editorError('作品ぜんぶの コードの 長さが、いちばん 大きい かずを こえました。いらない ところを けしてね。');
+    if (total > LIMITS.sourceTotal) editorError('作品ぜんぶの 本文の 長さが、いちばん 大きい 数を こえたよ。いらない ところを けしてね。');
     return candidate;
   }
   function editorReidentify(encoded, previousTree, ast) {
@@ -502,10 +502,10 @@
   function prepareBlockEdit(session, operation, options = {}) {
     const project = options.project || session.project,
       context = editorContext(session.ownerKey, options.context || session.context || {});
-    if (options.locked) editorError('動いている ときや じゅんび中は、なおせません。止まってから もう一度 やってね。');
+    if (options.locked) editorError('動いている ときや じゅんびの とちゅうは、なおせないよ。「■ 止める」を おしてから、もう一度 やってね。');
     for (const key of ['ownerKey', 'sourceRevision', 'contextRevision'])
       if (options[key] !== undefined && options[key] !== session[key])
-        editorError('とちゅうで 作品が かわりました。もう一度 やってね。');
+        editorError('とちゅうで 作品が かわったよ。もう一度 やってね。');
     if (!session.syntaxAst || !session.blockView)
       editorError('先に 書き方の まちがいを 直してね。そうすると ブロックが 使えるよ。');
     if (
@@ -547,7 +547,7 @@
       operationCount = 0;
     const lookup = (id) => {
       const result = buildBlockIndex(tree).get(id);
-      if (!result) editorError('その ブロックが 見つかりません。もう一度 えらんでね。');
+      if (!result) editorError('その ブロックが 見つからないよ。もう一度 えらんでね。');
       return result;
     };
     const fresh = (node, preserveSource = false) => {
@@ -565,7 +565,7 @@
     };
     const position = (value, length, allowEnd = false) => {
       if (!Number.isInteger(value) || value < 0 || value > (allowEnd ? length : length - 1))
-        editorError('そこには 入れられません。ほかの ばしょを えらんでね。');
+        editorError('そこには 入れられないよ。ほかの ばしょを えらんでね。');
       return value;
     };
     const bodySlot = (parentId, key) => {
@@ -573,14 +573,14 @@
         schema = BLOCK_SCHEMA_BY_ID.get(parent.schemaId),
         slot = schema.bodies.find((x) => x.key === key);
       if (!slot || (slot.when && !parent.fields[slot.when]))
-        editorError('そこには ブロックを つなげません。ほかの ばしょを えらんでね。');
+        editorError('そこには ブロックを つなげないよ。ほかの ばしょを えらんでね。');
       return { parent, slot, array: parent.bodies[key] };
     };
     const inputSlot = (parentId, key, index, append = false) => {
       const parent = lookup(parentId).node,
         schema = BLOCK_SCHEMA_BY_ID.get(parent.schemaId),
         slot = schema.inputs.find((x) => x.key === key);
-      if (!slot) editorError('そこには 計算を 入れられません。ほかの ばしょを えらんでね。');
+      if (!slot) editorError('そこには 計算を 入れられないよ。ほかの ばしょを えらんでね。');
       if (slot.required === false && slot.multiple && !Object.hasOwn(parent.inputs, key)) parent.inputs[key] = [];
       if (slot.multiple) position(index, parent.inputs[key].length, append);
       else if (index !== undefined && index !== null) editorCheckError('固定入力に番号は指定しません');
@@ -588,7 +588,7 @@
     };
     const setInput = (location, node) => {
       const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId);
-      if (schema?.category !== location.slot.type) editorError('その 計算は そこには 入れられません。合う ばしょを えらんでね。');
+      if (schema?.category !== location.slot.type) editorError('その 計算は そこには 入れられないよ。合う ばしょを えらんでね。');
       if (location.slot.multiple) location.array[location.index] = node;
       else location.parent.inputs[location.slot.key] = node;
     };
@@ -605,7 +605,7 @@
       if (!entry.parentId) editorCheckError('本文全体はこの操作では置換できません');
       if (entry.body) {
         if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement')
-          editorError('ここには ブロックを つなげてね。計算は ここには 入れられません。');
+          editorError('ここには ブロックを つなげてね。計算は ここには 入れられないよ。');
         lookup(entry.parentId).node.bodies[entry.body][entry.index] = node;
       } else setInput(inputSlot(entry.parentId, entry.input, entry.index), node);
     };
@@ -666,7 +666,7 @@
           at = position(op.index, destination.array.length, true),
           node = fresh(op.type === 'duplicate' ? lookup(op.id).node : op.node, op.type === 'duplicate');
         if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement')
-          editorError('ここには ブロックを 入れてね。計算は ここには 入れられません。');
+          editorError('ここには ブロックを 入れてね。計算は ここには 入れられないよ。');
         // A visible body placeholder is replaced by the command the child chooses (inserted, copied or moved there).
         // Complete existing bodies still use ordinary insertion semantics.
         if (loneHole(destination.array)) destination.array.splice(0, 1, node);
@@ -681,16 +681,16 @@
         let at = position(op.index, destination.array.length, true), node, source = null, from = null;
         if (op.id) {
           const entry = lookup(op.id), target = lookup(op.parentId);
-          if (!entry.body) editorError('この ブロックは ここから もっていけません。');
+          if (!entry.body) editorError('この ブロックは ここから もっていけないよ。');
           if (target.node.id === op.id || target.ancestors.includes(op.id))
-            editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
+            editorError('ブロックを 自分の 中には もっていけないよ。ほかの ところを えらんでね。');
           source = lookup(entry.parentId).node.bodies[entry.body]; from = entry;
           node = entry.node;
         } else node = fresh(op.node);
         const inner = BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.bodies?.[0]?.key;
         if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement' || !inner) editorCheckError('囲いではありません');
         if (node.bodies[inner].some(n => n.schemaId !== 'Hole:statement'))
-          editorError('中に ブロックが ある 囲いは、下の ブロックを 中に 入れられません。');
+          editorError('中に ブロックが ある 囲いは、下の ブロックを 中に 入れられないよ。');
         if (source) {
           if (source === destination.array && from.index < at) at--;
           source.splice(from.index, 1);
@@ -707,10 +707,10 @@
       // A block and the blocks below it in the same body move together (E-06 「ここから下を まとめて もっていく」).
       if (op.type === 'move-run') {
         const entry = lookup(op.id), target = lookup(op.parentId);
-        if (!entry.body) editorError('この ブロックは ここから もっていけません。');
+        if (!entry.body) editorError('この ブロックは ここから もっていけないよ。');
         const source = lookup(entry.parentId).node.bodies[entry.body], run = source.slice(entry.index);
         if (run.some(n => n.id === target.node.id || target.ancestors.includes(n.id)))
-          editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
+          editorError('ブロックを 自分の 中には もっていけないよ。ほかの ところを えらんでね。');
         const destination = bodySlot(op.parentId, op.body);
         const at = position(op.index, destination.array.length, true);
         // Within its own body a run moves up only; anywhere at or below its first block it stays where it is.
@@ -724,10 +724,10 @@
       }
       if (op.type === 'remove') {
         const entry = lookup(op.id);
-        if (!entry.body) editorError('この 計算は けせません。ほかの 計算と 入れかえてね。ならんでいる ものは「外す」で 外せるよ。');
+        if (!entry.body) editorError('この 計算は けせないよ。ほかの 計算と 入れかえてね。ならんでいる ものは「外す」で 外せるよ。');
         const parent=lookup(entry.parentId).node,array=parent.bodies[entry.body],slot=BLOCK_SCHEMA_BY_ID.get(parent.schemaId).bodies.find(s=>s.key===entry.body);
         if(slot.requiredExecutable&&!array.some((node,i)=>i!==entry.index&&!['CommentLine','Hole:statement'].includes(node.schemaId))){
-          if(!options.draft)editorError(`${slot.label}には ブロックが 1つ いります。先に 新しい ブロックを 入れるか、「何もしない」に 入れかえてね`);
+          if(!options.draft)editorError(`${slot.label}には ブロックが 1つ いるよ。先に 新しい ブロックを 入れるか、「何もしない」に 入れかえてね`);
           const hole=fresh(createBlock('Hole:statement',{allowHoles:true}));hole.fields.label=slot.label;array.splice(entry.index,1,hole);selectedId=hole.id;return;
         }
         array.splice(entry.index, 1);
@@ -744,9 +744,9 @@
       if (op.type === 'move') {
         const entry = lookup(op.id),
           target = lookup(op.parentId);
-        if (!entry.body) editorError('この ブロックは ここから もっていけません。');
+        if (!entry.body) editorError('この ブロックは ここから もっていけないよ。');
         if (target.node.id === op.id || target.ancestors.includes(op.id))
-          editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
+          editorError('ブロックを 自分の 中には もっていけないよ。ほかの ところを えらんでね。');
         const source = lookup(entry.parentId).node.bodies[entry.body],
           destination = bodySlot(op.parentId, op.body),
           at = position(op.index, destination.array.length, true);
@@ -774,7 +774,7 @@
       }
       if(op.type==='optional-input-remove'){
         const location=inputSlot(op.parentId,op.input);
-        if(location.slot.required!==false||location.slot.multiple)editorError('ここは 外せません。');
+        if(location.slot.required!==false||location.slot.multiple)editorError('ここは 外せないよ。');
         delete location.parent.inputs[op.input];selectedId=op.parentId;return;
       }
       if (op.type === 'expression-move') {
@@ -784,10 +784,10 @@
           !entry.input ||
           BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId)?.category !== 'expression'
         )
-          editorError('この 計算は ここから もっていけません。');
+          editorError('この 計算は ここから もっていけないよ。');
         const destination = inputSlot(op.parentId, op.input, op.index);
         if (target.node.id === op.id || target.ancestors.includes(op.id))
-          editorError('ブロックを 自分の 中には もっていけません。ほかの ところを えらんでね。');
+          editorError('ブロックを 自分の 中には もっていけないよ。ほかの ところを えらんでね。');
         if (
           entry.parentId === op.parentId &&
           entry.input === op.input &&
@@ -808,7 +808,7 @@
         if (op.type === 'variadic-insert') {
           const node = fresh(op.node);
           if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== location.slot.type)
-            editorError('そこには 入れられない ものです。合う ものを 入れてね。');
+            editorError('そこには 入れられない ものだよ。合う ものを 入れてね。');
           location.array.splice(op.index, 0, node);
           selectedId = node.id;
         } else if (op.type === 'variadic-remove') {
@@ -859,7 +859,7 @@
     }
     if (!parsed.ast) editorError(parsed.syntaxDiagnostics.map((x) => x.message).join('\n'));
     if (!astEquivalent(candidateAst, parsed.ast))
-      editorError('このまま なおすと、動きや メモが かわってしまうので、できませんでした。');
+      editorError('このまま なおすと、動きや メモが かわってしまうので、できなかったよ。');
     const reidentifyDraft = (encoded) => {
       const ids = new Map();
       const pair = (before, after) => {
@@ -923,7 +923,7 @@
     if (options.validateCandidate) {
       const verdict = options.validateCandidate(result, candidateProject);
       if (verdict === false || verdict?.ok === false)
-        editorError(verdict?.message || '作品の きまりに 合わないので、できませんでした。');
+        editorError(verdict?.message || '作品の きまりに 合わないので、できなかったよ。');
       if (verdict && typeof verdict.then === 'function')
         editorCheckError('確定前の検証は同期して行います');
     }
@@ -1037,26 +1037,31 @@
       return candidate;
     }
   }
-  // What a new block takes from the work: the owner's centre (決めたばしょへ行く) and the first other part in the order
-  // the parts were made (〜のところへ行く), or the mouse when there is none. The palette preview shows the same.
+  // What a new block takes from the work: the owner's centre (決めたばしょへ行く), the first other part in the order
+  // the parts were made (〜のところへ行く) or the mouse when there is none, and the next costume and backdrop after the
+  // ones shown now (the same one when there is only one), so 「すがたを かえる」 changes what is seen (F-03). The palette
+  // preview shows the same.
   function blockCreationDefaults(project, targetId) {
-    const component = project?.components?.find(c => c.id === targetId);
+    const component = project?.components?.find(c => c.id === targetId),
+      next = (items, id) => items?.length ? items[(Math.max(0, items.findIndex(x => x.id === id)) + 1) % items.length].name : undefined;
     return {
       designPosition: component && Number.isFinite(component.x) && Number.isFinite(component.y) ? { x: component.x, y: component.y } : null,
       partTarget: project?.components?.find(c => c.id !== targetId)?.name || 'マウス',
+      costume: next(component?.costumes, component?.costumeId),
+      backdrop: next(project?.stage?.backdrops, project?.stage?.backdropId),
     };
   }
   function computeBlockInsertionAvailability(session, schemaId, location, options = {}) {
     const schema = BLOCK_SCHEMA_BY_ID.get(schemaId);
-    if (!schema) return { enabled: false, reason: 'この ブロックは 使えません', diagnostics: [] };
+    if (!schema) return { enabled: false, reason: 'この ブロックは 使えないよ', diagnostics: [] };
     // Values on simple command previews remain visible choices. Enclosures and
     // persistent rules start with visible holes, never an implicit true/0/no-op.
     const draft = schema.bodies.some(slot => slot.requiredExecutable) || ['ContinuousRule','ReturnStatement'].includes(schema.kind) || schema.inputs.some(slot => slot.type === 'target');
     const creationContext = options.context || session.context || {},
       creationProject = options.project || session.project,
       component = creationProject?.components?.find(c => c.id === creationContext.targetId),
-      { designPosition, partTarget } = blockCreationDefaults(creationProject, creationContext.targetId);
-    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft, designPosition, partTarget });
+      { designPosition, partTarget, costume, backdrop } = blockCreationDefaults(creationProject, creationContext.targetId);
+    let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode)) : createBlock(schemaId, { draft, allowHoles: draft, designPosition, partTarget, costume, backdrop });
     if (schemaId === 'NumberLiteral' && location?.input) {
       const parent = buildBlockIndex(session.blockView).get(location.parentId)?.node;
       if (parent?.schemaId === 'ContinuousRule' && ['seconds', 'distance'].includes(location.input))
@@ -1248,6 +1253,12 @@
     'Say', 'WaitTime', 'RepeatCount', 'LooksCommand:SET_COSTUME',
     'LooksCommand:SET_BACKDROP', 'SoundCommand:TONE_WAIT', 'SoundCommand:SAMPLE_WAIT',
   ]);
+  // The palette of はじめて shows 話す, 待つ and くり返す first, then the moves, すがた and 音 (F-03).
+  const ENTRY_PALETTE_ORDER = Object.freeze([
+    'Say', 'WaitTime', 'RepeatCount',
+    'MotionCommand:GOTO', 'MotionCommand:MOVE_BY', 'MotionCommand:MOVE', 'MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT',
+    'LooksCommand:SET_COSTUME', 'SoundCommand:TONE_WAIT', 'LooksCommand:SET_BACKDROP', 'SoundCommand:SAMPLE_WAIT',
+  ]);
   // かんたん: the three move blocks of はじめて and 〜のところへ行く come first (final call 10), so the first page of
   // よく使う shows them; 自分のほかの動きを止める is there too, and いつ動く？ offers ふれたとき (its hat).
   const BASIC_BLOCK_SCHEMA_IDS = new Set([
@@ -1257,6 +1268,12 @@
     ...ENTRY_BLOCK_SCHEMA_IDS, 'Forever', 'LooksCommand:SHOW', 'LooksCommand:HIDE',
     'Assignment', 'NumericUpdate:ADD', 'ListReplace',
     'PenCommand:DOWN', 'PenCommand:UP', 'PenCommand:SET_COLOR', 'PenCommand:SET_SIZE', 'StopCommand:OWN_OTHERS',
+  ]);
+  // かんたん keeps to the mathematics of primary school (F-21): 三角関数・対数・指数・平方根・絶対値・累乗 are blocks of
+  // くわしく only. A block already in a body is shown at every level.
+  const ADVANCED_ONLY_SCHEMA_IDS = new Set([
+    'BuiltinCall:絶対値', 'BuiltinCall:平方根', 'BuiltinCall:正弦', 'BuiltinCall:余弦', 'BuiltinCall:正接', 'BuiltinCall:逆正弦',
+    'BuiltinCall:逆余弦', 'BuiltinCall:逆正接', 'BuiltinCall:自然対数', 'BuiltinCall:常用対数', 'BuiltinCall:指数', 'BinaryExpression:POW',
   ]);
   const TUTORIAL_FISH_ASSETS=[{"name": "blue", "sha256": "616a39d40c93c47912be5c1559d78ed5555ccc10b270699ade11a45e193d92a3", "base64": "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", "bytes": 9129}, {"name": "orange", "sha256": "22adce1b1d1bb17451a8b1b536912400f25ac30c47659506a9255f66af958354", "base64": "iVBORw0KGgoAAAANSUhEUgAAALQAAAB4CAYAAABb59j9AAAkLUlEQVR4nO2deZRc1X3nv79731JLb+puCbTYRmwGyTbYwiwaSaU2JAaHhJFNtZFBAoex5OQY+2Ank8WZU+oZJjNJ5sDEzsQWCZslBuiS8DFgO2NDWoWESAwyi5BsS4AIkhDqlnqr7lreu/f+5o9X1WoJLV29Vivvc04fqateVd9671u/972/e+/vAiEhISEhISEhISEhISEhIdVJexISAE11O0JCxkQqBYFhQuZQ1CHTlVQCVvn/m5Mz1z32+aZ7gaFoHXIawm99lZFKwGrLQG1Y0TivxpF/HbfFyqyn8znfXLzqh90HUwC1AWaq21mtiKluQEgAA8QpiLYM1OOfb2qJ2fJ5V9LK7rwuOEJEbSH/FwBemAyD0OkIT04VwCkIagui7ubWmastokc0A55hRYBFDB1zSGY93bJy89Et7UnI1jT0VLe7GrHOfEjIRNKehKQ26PU3zo41Rv3vuZJW5xVrbUBEwfVhAnmaWQrx/R/81jmLgMMFBogAnur2Vxuh5ZgiyhajNQ29Idm4oDmmXopYYvWAx0YzJNFx10Z4BrrWpo/KWrW6NQ29LhF2EE9GaDmmgBMthiB8D6BYQbEWdEqhGosAEA5p1lftWtB9CG1A2EE8njBCTzIli2HW3zg7lk42P+JKesQ3iBUVm9OIGQCEzzAxm+YaI77d1gaDRHj9TiSM0JNIRwJWSwZqQ7JxQYxk2pG0YNBjAwLRCK4FA2wRDBEKms2iZPronnVhGu84wm/4JJBKQbQnIVsyUE98YdZttUK+LIgWDHisiSBGImYAIICUARxBccPi+xSm8T5AeDImCObg3K5bDtmWgQKATTfPvFcI3G0YUAaaTm8xTgkxtGuTzHnmlpVPHnniJ3dd6N6w9JMKybQBAKJ/v9mPUNBjhAECA1vWJeRyAFsALF84i6k1PZQn/kHynPk1wjzgSmoZ8NiUUm5jOffGESDFOPh36a75GQRfmKE2MQjrEnILgOUAgIzBOvC/B6GHgq4QZhDSSYFdnbQFQEtbRp3suH33XdZw3ucXUvqPnr3BEfxXlqB5gx77INjj1A7tSkgn7vzNdZ+98KXsgG+K2s7MmQVFKzK9J31Ne1KW2718XUafjQKvWNCl6FL679kPA4QUCEgInBB5AYDXL7Ixu6a+t1cvsYSI+UX1O5GIHdXGLN356iHrvXf7GoQgFE+fkhsVhpnrohZd+9kL4UZt9A14fZZFrBS/5jqi01P8YtyRB3IaOz2Tf6951S/6j2t7KZJj4SxGMm3OBoFXJOjhQ66pFERb29nZu2aA0J4UW3Z10okRuHv9dfWWW7ws4tIVGnxVweNP2JLmRB1RJwDAtVDsL2L79v3ofH8AkIKJwaDx74ATEQoFX194cRNftmguaaUlESHqCEhZGkcUQN+g8pm517XlC57P+wTx87XNNS/Q5/6p67jP3Z6UW3Z10nSO3iMSdHmYdfOtzbP9Ir59y6YjXwOOHyA4Gyhf0OEi3vO317sXzS6eV1Tmc0xmacEzSyKWnBmJCMAARd/AUwZas3ajNu9/pwc7Xz2EfE5J17XAzBNu64xhXL3kI2g+J86+r0GAAYEJADMgBFmWIMRcCVBwfN4zfVLQq8z8S6X4R6oQebVx7bN9J56L6SbuigS9PjmjvoGtbkfStkKBbl/5o8PvlKc7TnRDJ4ohTzzslrvnb6935zUPXA3QTUy4wWicXxOVDjOQL2p4ihlgTQQYAyEtQYKI3tp7FLtffx9EBCkFmCdeB0QE31eYOasGVy/9CIz54N9kgIOLyJqDB8iSQkYcAcsi5AsGnjJHBOGfDfFmuPrZhtZ/6R56fSphARkzHYJXRYJ+6Kb6hqhl72mIypk5z7w9wOK61enD+8oDBhPd2PGEUxBYmKThnjj36JJEWcSS6BLXFih4Bp5vYJgVglSwIArOGwNwHYl8zscbr72Pd9/pRSQSzPcKxDwZfW4GCYFiwcdli+bggouaUSz6IDr932YGA2wQXF7pWEQxN7D4/TnVDeBZ2xabe7KDz8xduyNXeg0hnRQn9iOqiYoFHbOdfcSodW2SyvC+XEHfuOqp7t3TJVJze1ICQPmi9D1ybZMQxS/ZUtwMwrKyiPOeYQJrEAmcIs1GBHS+P4jXdhxEtr8IN2LBGGCy+8sEgjYGsbiD5dddANuRFd8dhgkctiVkzJUgAeQKeo8gPBNxxD/QzZlfA8eCAVrTptpm/I1K0JLQ4BtoV5IUxPmcojVf2ty5sT0JpzUNb6IbPRra25MyOcxW9D267CIXuMsQr3Qt0cwM9Of1kIhpJKOoDBw61A82gGWJk97uJwsiQGtGU3MM0Zg9praUxc0MRF0pI47AYEF7RHheQPxV9NbMs+VjO1IJ61Spy6lg1IJWDAaDpYBwBCHn8+qVT3ZtKGVCSreyqYdTEEBCUOmk5x9NXGfYfMU3fGN93I4N5hR8bTQAEFHFaTXbDjpamDSLcSqCv6+UGVfvzoABsyEiqzYq4QcuPONr8+TAoegDs//454PVZEXGJGgCiBlGCkAShGb+ZjJ95L5UKbpN5aSZcuqtfJJ7Hlz6GcfFn9uSrrUtgWxOQRtWAMmyJx7V3yn1sqqFM3nnMcDMbBgkaqOSLEnIe3ova/5ufNW27wLl4AFMZedxzIIuPc+CYRqiQvYVeUMy3bkamLq0Hrcn5ZBHLlkLDb4rYgv05ZQBwBTYinCkdBQwsx6yIxGJXF7/sxDmL6Mrtz0HTK0NGRdBDx3H8Ooj5GSLvHE/uWu+lT6Qn0xRM0DoSEhqyaiXU4tiF18Yu8cSWBt1Zax3QDHAZjS2IuTklO1IbdSyDAO+Ns8VfPONpjte2DVV0XpcR6+I4PQVWUVtum0+FV/+we+eM5/aYNYvGp/5C6eD25OSAKaWjOp5eHHLpRfHXqqNybt9zbHeAV8RgUIxnw464WdErxBEZGXzSg8UlInY4tqoLX4xuHHJ3dQGQ20w3JGY1HWr4xqhhx2v4jZZvuZ9AyyunehcddlilKOyLeluQUCuqMfskc9uCCARXEWtylm74Hdhl/5jyh2FM8LMWgiSdXELuYLu0Ia/Vrdq225OQUzWbL8JmeBPgDXos5KC5sfJPLfx800tLRmojsT4rzLnFAS1pnXPPx6LykXfmMGiNkRkhWI+BUICrMHFPnC+B5A2KFIf/Dh1YC8LLvYCqgiQPDYl7TQQkTQG3Jv1VcQWLZagl7LlaE1g5tSELyiZkAg99DqGcSQJKYCCj1Vf3Ny5cbwGYDiVEli4m6g1rXOPLlttSXrEMCNf1IqIwvIMp4JEkGgu9kHEmmF9aCmsuVfBmrkQFGkMjjEKqvM16MOvw9//PPTRPSA7BlguYEaWmWNmTUSyvsFBts/f+EaXv2bxt/4lP9EdxgkVNBCI2hJgS5D0Dd+RTHc90p6ETKYx6lEm5pQgajMA0L9hySM1EWt1Nq+0NkwiGNkLORkkAZUPOjuXJOEuaIWo+9BpX8KqAG/v0yju3ADT/y7IbQB4pKIGM1jXxyzLU7y7d4BvnL1m6z7uSFjUMjGinvhbAEEoA+Eb1lGLHt50c/PDrWnodBKi3BOuBG5PSqI2s//+K+cVHlv2WG3MWt076GtjIEMxnwaSYJUHRZsQW/7fEb36W4GYWZd+GEEClsFswCZ4nKwI3EuTqPnceljzFoO9geCLMZI/SSBBZPXllHJtsaA2xs91/ePiFmrJqGDC0wR8zJEcNJYIPew9QICqc4WVLZqNrZu6VgGV5arLt6tD9y+dXx+n56IRMb8n6ysRWozTQwJQBVC0ETU3PghRMxsw6gPeWBsDEaSDgt+1hhQCgBkScW7Lt+HtfRoUaQJ45EHWGNYRR0rbImTz/qrGO7Zv5PWLbFq7wx/PjzppEa102qz+gvFrHLrth1+c+dj9KxrnURvMSMrEciolhovZtmh+T1b5oZhHQClLEV38pyUx+4CwjhOzMQZSCBARenr6oJSGlDLwhCRLUdwgevUfQc64MLAuFchHCJIFX5u8p3Vt1N7Q/fCS22jtDn+8I/Xk36IJdr/HypV0S7Mtn//B754zvzUNfbpcNadSAmjD+w8sOb8s5mxeKTlO6/POakiCi71wFtwC+8OJIDKL40+bMQZCCGx/6RX8xy/fhU/91hew+He/hPs3poeiNUMCYFBkBqJLU2BTeWAVREJpiEDUckP3A4tvo7bxtR+TZjk+8J4MP2qTrc3pc9XMCBJvHQmZPaB2xSPWxX2DSkkiq3pmUFQrFERWK4Lamx6FiM8qXbFjcaws5s0//hlu//qfwTAQj0WhlEJvbx/+8Mtfwv/+b38GKQSEoCBXTQKDP/8m/HczIKf2WP56hBgGWxIm5krZPeAvm/X727dyKmHROGQ/pqwTRQQ757MWRPPrhXn+8Zubb2nJQK1fcyzqMkqLONuTIrtfPVgWswjFPDJIgP0c7A8vg6g5F0OLDEsYE5Q4fffgIfzBn/xXRCIRzKivgyRCxHUxb+4c/P2D/xcbNz0NIQS0LguX4Hx0xdD/K0UQSGkmX7OpiciHex9Ycj7aMno0SYIPvPdY32BMf5wgC4qNZpoXtcRjT3xh1m1r74c/tFHO+kUWtWVU98B7f1Nb767qz+nQM1cKa1hzr8LJMqTMDCLCPz66Cb19WbiOA6UUGIHYlVJomFGP7z3yOHzfhxACpfo5sGZ9AiLaCGgfoxM1iXxBc8SW5wubf4qHEu4WJES5QM9omfI0FxGEp9l4io0teUM62Xx3axqaUwlJa3f4nQ8uXlobk1/v7/d8TEo9axrRqFj1Q4BRoGgTrOaFONnnIiL4SuGXr++G49gw5njrwMywbRv73zuEfztwCERUyu4ZkFML2XQpWBdGfb6EINmbU35tjXNxN9RftrRlFNYlxjTfZsoFDQSi1gApDV3vynvTyZkbqS2jBtoT58Zd+bAyEEaznPDpnhSIgLUfpLqmO2xAdgwUbS49cOz0MTOEEMjl8vjVm28jEnE/sDCAmWFJie6efuz89Z6hxwAGhAzet7zUcpQIwOof9FVtVH796ENLktSWUeVlcqN8v+qAAGKC7M4bryEqb334hvrvmIL581jcPr/gaU0TPWjCBmS5iF22ArJ2FtgbRODiq+YUjQ42ZxzZO/Pco1McwBrjEGNIaxbMkJbAvfxQIoJdC3i01qPqrpYQ5HT2eea8+Q13CUF39fYVzaT5Zjawm+ej5srbETl/calTlS/dUqepDWETpOpO9hQzHNvGubOaoJQ66WoXYwzisSjOnRVE+aFjht537OdFEInBolZ1cWteN9RfUlubGa31qDpBAwAEiQ9f2GRAxODJbCOB/QKICJFLP4vaK1fDbr4ArLzSyFp1nq6Tw4B0YHJd0Ed2lx465pGJCMYYRKMRXL7wEhQKRYiTeGylFGY2N+HyBZeUHkNpGL0I1fUGyIpUnLY7GQSSpTnVX+15KHEe1o0u61FVV6hcNGXWOTWYNatG+L6iCVwjd4pGlE6Jl4OoaUb8019C/BM3gdx4YENomnUajYY6/NpJnyqf2y/edEP5geOitOPY6Ontw+/9dgvciAutNcrDLKbvbXDucGmQZuxJVCKQr9jEojLKUP85mDudmN6CBoKTfMFFTVMvGhLBpHe/AHvuJ1Bz5e1wz7sK0NOo08gMsiLw/+2fwaqA0vL0oaeFEDDGIHHNp7FmVSveO/Q+DDMsy4KUEocOd+HjCz6Kb331jmDOvxAoz8rx3voZ2C+M63kgkMzmlHFscXvPD5bOD0YRK9NoVV0VrTVq61w0NseglJ7IFcwjg0orOrwchBtHdOHvIH7FLZA1zWAvh+rvNBrAikIf/Q38t/9faS708R3EsvX4zj1/jr+4+w9gSYkjR7oxMJjDDZ9Ziqce+T84d1YzOCglBpCEyXXB2/ujUY0Sng4KBlxMPGbFwFwauaksSk/Z0PcHGkKEYlHh4kua8bHLZ8PzTt5JmTDYgOwoaq/5fZAdPcmFCqZWwo6A/SK8A6+g8NbWwHPbkdIh1Th+SYDxQbFm1HxuPUR8NobPnitTHmTZt/8gdryyE3PmnIvFV1wOADDMEIShGXq551Pw3vwxyKkb8dzokcLMuiZqyYG8eqFh33XLsHs3UXrk9T6qKLwwpCTMml07KUUOK6cUrf0CiATc+deg9po74cz5ONgvgHW1dhoZkC5M/37ktt5TuuvIk0ZqrQ3mf2gubv6967H4isvBzEG+Ggi+4MJG8VdpeL95EuTUj7uYgcB25IqabYuu6Jv/8/mUTlfUOayaK6C1QV19BDNmRKGUmXq7cSqo5CP9PES0HrHLViB+2QrIaH2Q4isLv5pgDXIboN77V+S2fBsm11USdTlHHQQQKYNyZkrrUgeQQTBDX4Li7sdQeOk7Fc+FrggCDLOORy2XBFVsO6rizAfRgdEwIzKqQoNTwvBO45yPo+aaOxGZfw1g/GGdpSr6UrIGObXw9j6NwZ9+Feq9l0orvoNpM4Gl0hBkYAmClHLoedN/ALnMf0F+2z0jXq0y5uYawBgkKh1gqaqJPk3N8aluQmWU7yJ+HkQSkUt/G9bMC1B8azv8I2+CLDeYSD+OHacxwRoUbYLpP4iBf/oD2POWwLn492Cde3mwQHaYWNkfgO5+E/6+5+C9+Qy42AeKzTrlIM34tpNkvqgBwlW9DyfqZ7RleksW/4yRrmoEPeW1DsdC2YZ4OViN82HN+DCK+19B8Z0XYQa7g05mtWAUYDkguPD3b4W/fytEZAZk8yXHVn2zgjr8Ojh3JFiH6NQGHcDJEHMJBsAM2x+srEJAVQiameFGJOrqI9Caq9c/n4nS2j2A4J53FeyZF6Lw1lb4h39TPVEaGFoQS05N8KvKwz/w4rBOHgUjgJZzbCRwAjqAp4IIpA3rmoiMDcB8CsDzSCcFcOZsR9UI2rYkIhF7evjn01HuEBazEDXNiMxfDHX0ndIoY7CMqWoYqpQkS+Km459jBjA1FXI1M9u2dFD05gEAdnWOKMpVhaCB4NxNezGXYQO4dfD3/xK5XT9FkMmvMjEfB1ddDj0oa8sgpooK6FdFluOsoSwKOwpv/8sY3Pl08LuoZjFXNySmcZZjWhPsnwYIC7mdT8M78EqQ5SCquug3raDKtsWrmgg9rS0HG0AGsSG38yl4+3ccy2xM189UBRgGs0ZF9RKqQtCitC1Z99EcLGty9vcbN9gAdgQm34fsiw/CO7gT5MSrK6sxzWAG21JYA3m/T9rWVgDAusyIeqdVYzkCDU+zdF1ZzNkuDL6Shh7sDiYqhWIeFZoxVG49yEOTNF5leeiqiNBl+nrzU92EkcMGcOLwD+5E9sUHYfJ9oZjHgCCgPgLEbABgE7EFmPmNg/GuHCeTcqTF0qtG0ESEnu58aX+9Ko7Ux2UydmBw51PB77KKhrinEUoHQv4fHcDazcC7vYAgsGURCHjxY627PSwYWQ4aqBLLwcywLIHenjyy/UXU1LofqBFRFYSZjHHF18CMGLDzfeDBl4DePPDMr4Gf/T7o0pgxgz49CQBYOGvEJ7cqBA0cm+DfeXgADTMiKBarbAicDSBtgE2QyTjw6rHOXyjmijAMaAM01wB7u4BbHwsesyRw7YUwF82RMjug35qTq32ZGURi5BP8q0bQACAEofNQNlhTWE22o9z5G+wOOn/ZrjCTUQGliUbBDwKfHHWAjjeBbzwV2AwAmD8D+J/Xs4m6QuRz+in6xj8VuTthgUdexLFqBF22HT3VZjvCTEZF6BNPCwG2AGwLiJTU9qtO4B9+ATz0MmCJIDp/pAF48nZgVg2omDMAaDOAiuwGUEWCBgLb4XkK//Z2Ny5bNGfqbUc5k3HgVeR2/aS07jAU86kgAA3RIGNR7tprAxzJAYe6gdfeA57fB/x8L3BkMOgM9uaBj50LPLoS+EgDawhLDhb0lsZ3rn2Rk7NlpfuHV5Wgg+KAEvvf7cV5FzaaeNyBMTz5mZhy/bZSJiP3xo9BwgozGaeAAVgEZD3gT34CDPhAuRChZ4BXDwK9BaAnD0gRRGpLAHkf+MYS4E+XA64FZItAfQxMktuorc1we1IiXVlbqkrQQBClC3nfHNjXIy5fNAf9gz7LE0v6TCTlTAaFmYxKIAqsw9O/ArpygCNKUZoC8QLBv9oEYl9+fiDmay8C+gtAzmfdWGPL3kG1pfGOF7YM36+9EqpO0Maw31hr23v3HN150aUz++ti1n8YyCs9KdsaMx+bk/H6U/AOhpmMkcAMOBawpwvozgWeuXy2tAHqXGBGFFh4LnDVh4DrLgIumRlYk6ODQd7ZtQgFT+elNF9lgLArPaoTXlWCZkDVuWT7Bu907Stea8fc+WzUdiGJ2WCCR1wCMZtcL3K7fgzd/36YyRghREDRBy6eCTzcChiULhQFAycLzgHm1AHNscByFBUw6JWsighWedfEHau7z/t+05e3/2Ys21NUTaGZof3BDXcM5Lw7Vz/Tvw/MOPLw4rub6tx7e7K+LzCBmwQxgywnEHW+P7AZoZhHTNlHx93jHycABRUMovgGQ2IS5SKmzKo2ZlmDBf18XWT2Z7Crk9CW0aPdlHXKI3R5/8L6E/YvbE9CJhckCLFZ3+nPHloxo8Ze2pP1Jm5PQqKgyqgqBsIOxVwRhGByUU/uJM+V6lvKE6oSGwbblpCeb3wwvkKtQVGZ0YoZmOK5HMxgSdBxm6zBon6kdVPXqvYkJKcgWtPQQMagNW1Y4Y58Ub0ddaUwPIFKG6oqFPrl0SLFB3/ESW7lDLAloRxJZtDjO+tv37aH25NypJuwnoopE3RpD3BjC5J5xXfcvOnIHUN7gJc+FLXBoD0pGu7c9nb3AN9gjDGOJcA8tg99hpZN3FuHDMevrXPsXFH98cwvb9vA6xfZo8lqnMiUCJoZxpEkbEmyqLAqme56JJWA1ZrGB7xTcBtKWPPWbNtTLJgvu7YQUoINh8qbrjDgN9TZTravuKEhNvc7vH6RjbU7xqXox6QL2jB0xCIhiQ/klVn5xc2dG9cvgt2WOfVE7vJuo413bt+YzetVUUdKS8JMqP0IGXdKczq8hjrbzmbVxrrVL6zGrjRjzQ41Ft88nEkVNDP8mE3SMO/rM2LZLZuOPN6RgLV2x5nXjVFbRvH6RXbjHds2ZvP+qqgjZcQOPHUVTWMKOQUcZMV0wwzHGRhQG+pWb13FyaTEOvBIJ++PhEkTdDnHrA3vG8gHWyGvXwT7xK2QTwet3eEHot6+sT/nrbQlDsQjUmieqFKYIeOBYTZSgh1byGy/f1/tqq2rOQWB9rQZTzEDkyVohl/nkFXU/PgRXy9b/fThfe1JyJFE5hOhtTt87khYTV9+8fEj/bxMa+ybUWtbhit/r5CJxzCriC1F1JHC98yqulVbv8ntSYm28Y3MZSZU0AwwMfSMqLAHPN644omulWt+2H3gWFpudFBLRnFHwpq9Zuu+o4OFZUXPPD6jwbYB1qGvrg6YwYbhB8HG7OvN+p+pv2PbRu5IWNSaHvXAyZmYsIEVZrAUYCkgewvmvtZNXd9MpSDWoZSOGyPUklHMKUHUdgDAyv4NSw+5trxbEJArakXhnuBTBjNrIUjWxS27WNQd2RzdOXvN9n3ckbCoZXRD2iNlQoa+SzlmtgXJnM+rVz7ZtaE9CdmaRmnwc/wob1dAbTA9Dy9ucWz5d7GIXNA3oEywN0i1ldM/e2EOqqbXxSyr6JscM/9F/LZt9wFARyphtYxyfkYljLugyzlmKYBBH6u+tLlzY3sSTmsaFRXdq5Tyt//l1KLYxRfG7rEl3S0IGAyitaAqWuF+tsEAI4jKVl3cQq6gO7Thr9Wt2rZ7eMCZjLaMq6CZ4UdtspXhfXll7rztyaMdqQSs0+WYx5Phc2iHonXUWlAoaOSLwX7hRNW0WHH6M2QvYhbyRX1cVJ4Mi3Ei4xa1hqflBllce9uTRzs6JlHMQGlUESDuSFgz7tjesfe9vitzg/7XGbx3Rq0tpQAxs+JwlHGsMHPQAa+LWdKSNFgsmu/6oMvjt227jxnEKYjJFjMwTp3C8tTPguaOgby4c/XTQznmSU+lEcBoyahStB4E8N2D6xc9oGKxeyxJa2tjVmwwr+FroxFsvDymL7UQVD1zmQiBkZ2g9gT1NNkIIlkbtaRhRsE3zxV8842mO17YBZTukpQ+trXWJDNmy8EMrz5CTrbIQ1M/OQUxWZ7pTO1GKiHLk8X7Hlx2keviLsO8MuKIZk8xckWtg+mNlW9bxQwUCz4sSx4ryDaFMDOEpFLBy3F8X8CA2UhBVm3MQq6gPRCeFxB/Fb018ywAcCphARkz1dd99II2MALghqiQfUXekEx3rg7mMIOn+kOdCAOE9qQo++uD6xPN8Yhe6dh0V9SRFynNyBU0DLNCBR1IAuGtvUfw1t6jIKJStJ4iVTMgJOHqJR9BvMYplVQbw9txkEoGSEQdQRFXIFfQgwQ8KCD+PnJr5tfA8VmmcfgUY2ZUgiagHgBbAkIzfzOZPnJfChDrAJ6ohPl4wCkILExSWdi8flEsXxu/0VfmK1JSIu5Ku+AZ5D3DBNYjEbfjWHjnrW689suDwZJEOfnlgMtVpy64uAmfvGIuisXRbSvNDCZizQyyLSHjEYmib6A1/9qW9A95zzxTf/u2PaVjCeljQaJaGI2g37QFNQkC8hOcY54omEFb1iXk8Lwob0pcki+aNUy4QRJd4toCx4m7tEXsiVkSZobtWMj2FfCL7e8i21+E61pjjpCVQgQsu/YCxOLOiAv0lAoZMcAGZRG7EgygP6+O2pKeE4Lvj1yUf56u2OEDgUfGrnTV3YXLVCToDdc31tlx8X7MFpRT+E+3bOp8dDJyzBNF2YogeWySzJ6/vd6d1zxwNUA3DRe30oyCZ6C0CfYM5mMCL9cTKeQV3njtEN59p3fSdvQqF+f52OWzcdFHm+F5p47OHLSaCWyMAUlB0rUFXCfw3Nmc6gbwLAvePGC85+bd/tLR8ms7UglreRV45DNRkaDbkzPPNYZ/ppS49bYfde6czBzzRMMpiC1IiOFRuyxuQfJTDL5JG7484oh6KYKtnPOegdLMAGuAIaUAQHL3zsPY9+ZRCnz1xFoQYxixuI1l114wtLFtMNABAGyonIRhkCWFtCXBtQVAwEBee0Jgn1b4iYbZJhDJ1N/+3JCIuT0ZlI5oTZtqtpLDqchotSdn1hSUiK3+4eHOks2oKv80HpSj9pZdnXTiUC3/5PqZvZ3ZJURiqWvTIq354yDMiEclYAL7kfMMXNfC3j1H9as7DjIYsCxBzBj3uiJEhHze15+8Yg5fcHETip4CgSAFWUSEqCMgSwv6jGHkPdNvNB/S4JdrXfunStDLbk//27R2x1B6lduTcsuuTlq+LqMnYjbcRDOqUbNUCqKtym8948GQJdnVSTjJBeaOREP2gP/xmGt9KJvXnxNA3DCWEODU17l1hWwR/7r9XfT0FFDU0ETjK2qtDeadG8fSlvODrisDEEBvVnm2hZwy/JpriU6l+V8U4+2G5poXsL+rd7iAgZKdWDiLh1uv6UrFgi7bj4loTLVT7tmfSuAAcGTDlXWOiDpeTi1raopa773ff9XrvzhwpSqoJTnF5S3Nxzz8TkTs+5o++em5P5p/QaNXyHs+kXimJi5VT8F/vbnGPkwrMr0ne23ghwEgY9BW3ZmpSgnnNYyB4QLfAmD5wll8qjRW+80z77UE7jYMKANDNPoRSmbouE0yr3lLa7qr5XTt27IuMXRXWL4uo0vfprNGwCcSCnqcYQ7O6ZZ1CbkcwBYAXbsz3JqGfuILs25zLb7fMEU9w4pGOfVAELQjYPI+XyduaXmhZusrVrRxrgaA5QCAjBnvtXrThVDQk0RHAlZLBmpDsnFBjOQzUYvm9xfZJ6q4vJmqccjKFs33btl85A/PpkzTeBDOEZ4kWjJQqQSsVenu3TlfLytqfrwhImxiaB6hBWCAJYEKPg+y8v+aAULm7O+cV0IYoSeZ4enOTTfPvFdU4KsZUPUuWX2FMDqfilDQU0AqBbFwN6hCX21sAphwSLO+ateC7kNoA9oQRujhhIKeQirx1QyoWoes3oL+w1ufPPq9MDqfnFDQU0xZmBtWNM6rceTfRC1xS3/BaEPHFe00jgB5BgeLfeKSSMPhQjKNaTMcPZmEncIppi0D1Z6EXPXD7gMrnuhaOVA091kS0iJQucoqMVgIImP4j1b//PAgcHbnksdCGKGrhFP6as3FmE1uTvGWWzZ1tZytc2jGizBCVwltbTCtaeiOBKwvbu7cmDX6Cga/XeOSy2DNbNo4DEAh05FUIsh0bFjROO9HX5z5zGM3N78IBCm/qW1ZSMgoKYt3zSLY7cnGuUBp9l9IyHQllQotYchZBgMUCjskJCQkJCQkJCQkZKL4/xuJnl8dsRWSAAAAAElFTkSuQmCC", "bytes": 9318}];
   // Guided projects remain ordinary editable programs. Artwork and named data are
@@ -1274,7 +1291,8 @@
     p.projectData.variables=[{id:'practice-score',name:'点数',initialValue:0}];
     p.components.push({id:'practice-board',type:'label',name:'点数ボード',x:320,y:358,w:600,h:45,fg:'#173047',bg:null,fontSize:24,
       visible:true,direction:0,scalePercent:100,text:'さかなを キャッチ！',localData:{variables:[],lists:[]}});
-    p.scripts=[{id:'practice-click',targetId:'sprite-1',event:'click',source:'ほかの動きを全部止める。'}];
+    // The visible guard against fast clicks (F-29): only this fish's earlier movement stops, then the body goes on.
+    p.scripts=[{id:'practice-click',targetId:'sprite-1',event:'click',source:'自分のほかの動きを止める。'}];
     return p;
   }
   const TUTORIAL_BLOCKS=Object.freeze({
@@ -1286,11 +1304,11 @@
     right:{label:'右へ泳ぐ',source:'0.3秒かけて、いまのばしょから、右へ60歩動く。'},
     left:{label:'左へ泳ぐ',source:'0.3秒かけて、いまのばしょから、左へ60歩動く。'},
     small:{label:'小さくする',source:'大きさを70％にする。'},
-    point:{label:'点数を1ふやす',source:'点数を1増やす。'},
+    point:{label:'点数を1ふやす',source:'点数を1ふやす。'},
     score:{label:'点数を見せる',source:'「点数ボード」の文字を（「つかまえた：」と点数をつなげた文字）にかえる。'},
     finish:{label:'5ひきなら',source:'もし点数が5以上なら、\n  0秒待つ。',hole:'thenBody'},
     bonus:{label:'3ひきなら',source:'もし点数が3と同じなら、\n  0秒待つ。',hole:'thenBody'},
-    bonusPoint:{label:'おまけの点を足す',source:'点数を2増やす。'},
+    bonusPoint:{label:'おまけの点を足す',source:'点数を2ふやす。'},
     cheer:{label:'おいわいのことば',source:'「クリア！」と0.5秒話す。'},
     remaining:{label:'のこりを見せる',source:'「点数ボード」の文字を（「あと：」と最大（0、10－点数）をつなげた文字）にかえる。'},
     tone:{label:'音を鳴らす',source:'880Hzの音を0.1秒鳴らす。'},
@@ -1328,36 +1346,39 @@
     recovery:s.action==='runtime:click'?'retry-current-run':'stay-and-correct',next:'committed content and observed runtime only',
     exit:'stop-runtime-and-release-all-guards; retain work and pending input'});}
   const tutorialInsert=(id,key,at,parent=[],body='body',message)=>tutorialDefine({id,block:key,at,parent,body,
-    message:message||'光る「＋」を おして、「'+TUTORIAL_BLOCKS[key].label+'」を入れよう。'});
+    message:message||'光る「＋」を おして、「'+TUTORIAL_BLOCKS[key].label+'」を 入れよう。'});
   const tutorialTry=(tag,clicks=2)=>[
-    tutorialDefine({id:'run-'+tag,action:'run',message:'「動かす」を おしてみよう。何が かわったかな？'}),
-    tutorialDefine({id:'try-'+tag,action:'runtime:click',clicks,message:'さかなを'+clicks+'回キャッチして、動きを見てみよう。'}),
-    tutorialDefine({id:'stop-'+tag,action:'stop',message:'「止める」で、作る ばしょに もどろう。'})];
+    tutorialDefine({id:'run-'+tag,action:'run',message:'「▶ 動かす」を おしてみよう。何が かわったかな？'}),
+    tutorialDefine({id:'try-'+tag,action:'runtime:click',clicks,message:'さかなを '+clicks+'回 キャッチして、動きを 見てみよう。'}),
+    tutorialDefine({id:'stop-'+tag,action:'stop',message:'「■ 止める」を おして、作る 画面に もどろう。'})];
   const TUTORIAL_STEPS=Object.freeze([
-    tutorialDefine({id:'choose-click',action:'event:click',message:'「キャラが おされたとき」を えらぼう。さかなを おすと 動く作品を 作るよ。'}),
+    // The click button is named by the fish (F-23), and the first block is explained (F-29).
+    tutorialDefine({id:'choose-click',action:'event:click',message:'「「さかな」が おされたとき」を えらぼう。さかなを おすと 動く 作品を 作るよ。いちばん上の ブロックは、前に おしたときの 動きを 止めて、はじめから 動くための ものだよ。'}),
     tutorialInsert('add-speech','speech',1),
-    tutorialDefine({id:'speech-text',ref:['bodies','body',1,'inputs','value'],value:'つかまった！',message:'言うことを「つかまった！」にして、Enter キーを おしてね。'}),
+    // The child's own words (F-04): any text that is not empty goes on, and the later steps use it. つかまった！ is the example.
+    tutorialDefine({id:'speech-text',ref:['bodies','body',1,'inputs','value'],value:'つかまった！',ownWords:true,
+      message:'さかなが 言う ことばを 入れて、Enter キーを おしてね。れい：つかまった！',emptyMessage:'ことばを 入れてね'}),
     tutorialInsert('add-escape','escape',2),...tutorialTry('original',3),
-    tutorialDefine({id:'choose-course',action:'choice',choice:'course',message:'できた！ どんな遊びを足そう？ ここでほぞんして終わってもいいよ。'})]);
+    tutorialDefine({id:'choose-course',action:'choice',choice:'course',message:'できた！ どんな 遊びを 足そう？ ここで「ほぞんしておわる」を おしても いいよ。'})]);
   const TUTORIAL_COURSES=Object.freeze([
-    {id:'motion',label:'動きをつけよう',description:'泳ぎ方をかえて遊ぼう。',children:[
+    {id:'motion',label:'動きをつけよう',description:'泳ぎ方を かえて 遊ぼう。',children:[
       {id:'swim',label:'あちこちへ泳ぐ',description:'行く ばしょと 速さを かえよう。'},
-      {id:'zigzag',label:'いったりきたり',description:'くり返しで泳がせよう。'},
-      {id:'small',label:'小さなさかな',description:'大きさをかえて、つかまえよう。'}]},
-    {id:'score',label:'ゲームにしよう',description:'つかまえた数を見せよう。',children:[
-      {id:'goal',label:'めざせ、5ひき！',description:'決めた数で、おいわいしよう。'},
-      {id:'bonus',label:'おまけの点',description:'ある数になったら、点をふやそう。'},
-      {id:'remaining',label:'あと何びき？',description:'ひき算で、のこりを見せよう。'}]},
+      {id:'zigzag',label:'いったりきたり',description:'くり返しで 泳がせよう。'},
+      {id:'small',label:'小さなさかな',description:'大きさを かえて、つかまえよう。'}]},
+    {id:'score',label:'ゲームにしよう',description:'つかまえた 数を 見せよう。',children:[
+      {id:'goal',label:'めざせ、5ひき！',description:'決めた 数で、おいわいしよう。'},
+      {id:'bonus',label:'おまけの点',description:'ある 数に なったら、点を ふやそう。'},
+      {id:'remaining',label:'あと何びき？',description:'ひき算で、のこりを 見せよう。'}]},
     {id:'show',label:'音やすがたで遊ぼう',description:'キャッチしたときの 音や すがたを 作ろう。',children:[
-      {id:'melody',label:'音をならべよう',description:'短いメロディーを作ろう。'},
-      {id:'costume',label:'さかながへんしん',description:'ちがうすがたで遊ぼう。'},
-      {id:'dance',label:'くるくるショー',description:'回る動きと、待つ時間を組もう。'}]},
+      {id:'melody',label:'音をならべよう',description:'短い メロディーを 作ろう。'},
+      {id:'costume',label:'さかながへんしん',description:'ちがう すがたで 遊ぼう。'},
+      {id:'dance',label:'くるくるショー',description:'回る 動きと、待つ 時間を 組もう。'}]},
   ]);
   function tutorialCourseSteps(course,offset,tag) {
     const steps=course==='motion'?[tutorialInsert(tag+'-swim','swim',offset)]:course==='score'?
       [tutorialInsert(tag+'-point','point',offset),tutorialInsert(tag+'-score','score',offset+1)]:[tutorialInsert(tag+'-tone','tone',offset)];
     return [...steps,...tutorialTry(tag),tutorialDefine({id:tag+'-choose',action:'choice',choice:'extension',course,offset,
-      message:'ここまでできたね！ つぎは、どれを作ろう？'})];
+      message:'ここまで できたね！ つぎは、どれを 作ろう？'})];
   }
   function tutorialExtensionSteps(course,leaf,offset,tag) {
     const root=i=>['bodies','body',i],steps=[];let ref,value,min=1,max=10;
@@ -1387,13 +1408,20 @@
       ref=[...root(offset),'inputs','count'];value=3;min=1;max=5;
     }
     const clicks=course==='score'?6:2;
-    const question={swim:'泳ぐ時間をかえよう。数を大きくすると、ゆっくり泳ぐよ。',zigzag:'何回いったりきたりする？ くり返す回数をかえよう。',small:'どのくらい小さくする？ 100なら、もとの大きさだよ。',goal:'何びきでおいわいする？ ゴールの数をかえよう。',bonus:'何びき目でおまけがもらえる？ その数をかえよう。',remaining:'全部で何びきつかまえる？ はじめの数をかえよう。',melody:'まん中の音をかえよう。数を大きくすると、高い音になるよ。',costume:'へんしんしたら、どの大きさにする？ 100がもとの大きさだよ。',dance:'何回くるくる回る？ くり返す回数をかえよう。'}[leaf];
+    const question={swim:'泳ぐ 時間を かえよう。数を 大きくすると、ゆっくり 泳ぐよ。',zigzag:'何回 いったり きたり する？ くり返す 回数を かえよう。',small:'どのくらい 小さくする？ 100なら、もとの 大きさだよ。',goal:'何びきで おいわいする？ ゴールの 数を かえよう。',bonus:'何びき目で おまけが もらえる？ その 数を かえよう。',remaining:'全部で 何びき つかまえる？ はじめの 数を かえよう。',melody:'まん中の 音を かえよう。数を 大きくすると、たかい 音に なるよ。',costume:'へんしんしたら、どの 大きさに する？ 100が もとの 大きさだよ。',dance:'何回 くるくる 回る？ くり返す 回数を かえよう。'}[leaf];
     steps.push(...tutorialTry(tag,clicks),tutorialDefine({id:tag+'-change',ref,value,free:true,min,max,
-      integer:leaf!=='swim',message:question+' 光る数を'+min+'から'+max+'の中で、今とちがう数にして、Enter キーを おしてね。'}),
+      integer:leaf!=='swim',message:question+' 光る 数を '+min+'から'+max+'の 中で、いまと ちがう 数に して、Enter キーを おしてね。'}),
       ...tutorialTry(tag+'-remix',clicks),tutorialDefine({id:tag+'-undo',action:'undo',ref,value,
-        message:'「もとにもどす」を1回 おしてね。自分でかえた数が、もとにもどるよ。'}),
-      tutorialDefine({id:tag+'-next',action:'choice',choice:'course',message:'できた！ ほかの遊びも足す？ ほぞんして、自分で遊んでもいいよ。'}));
+        message:'「もとにもどす」を 1回 おしてね。自分で かえた 数が、もとに もどるよ。'}),
+      tutorialDefine({id:tag+'-next',action:'choice',choice:'course',message:'できた！ ほかの 遊びも 足す？「ほぞんしておわる」を おして、自分で 遊んでも いいよ。'}));
     return steps;
+  }
+  // A free step takes the child's own number (in its range, not the one shown) and an ownWords step the child's own
+  // words, any text that is not empty (F-04). The accepted value goes into state.values, and the expected trees and the
+  // later steps use it; an empty text keeps the step with its emptyMessage.
+  function tutorialFreeValueAccepted(step,v) {
+    if(step?.input?.type==='text')return typeof v==='string'&&!!v.trim()&&cpLen(v)<=100;
+    return typeof v==='number'&&Number.isFinite(v)&&v>=step.min&&v<=step.max&&v!==step.value&&!(step.integer&&!Number.isInteger(v));
   }
   function tutorialSequence(state) {return state?.steps||TUTORIAL_STEPS;}
   function tutorialStep(state) {return state&&!['exited','complete'].includes(state.phase)?tutorialSequence(state)[state.index]:null;}
@@ -1406,7 +1434,7 @@
     for(const step of steps){
       if(step.block){const loc=tutorialDestination(tree,step),parent=tutorialNodeAt(tree,step.parent||[]),items=parent.bodies[loc.body],node=tutorialCandidate(step.block,project,step.id);
         if(items.length===1&&items[0].schemaId==='Hole:statement')items.splice(0,1,node);else items.splice(loc.index,0,node);}
-      if(step.ref){const role=tutorialField(tree,step);if(!role.node)editorCheckError('案内の入力先が見つかりません: '+step.id);role.node.fields[role.key]=step.free?(values[step.id]??step.value):step.value;}
+      if(step.ref){const role=tutorialField(tree,step);if(!role.node)editorCheckError('案内の入力先が見つかりません: '+step.id);role.node.fields[role.key]=step.free||step.ownWords?(values[step.id]??step.value):step.value;}
       states.push(structuredClone(tree));
     }return states;
   }
@@ -1425,7 +1453,7 @@
     '調べる':'しらべる','尋ねる':'たずねる','触れる':'ふれる','当たる':'あたる','重なる':'かさなる','重なり':'かさなり',
     '鳴らす':'ならす','止める':'とめる','止まる':'とまる','終わる':'おわる','終わり':'おわり','始める':'はじめる',
     '始まる':'はじまる','続ける':'つづける','続き':'つづき','変える':'かえる','変わる':'かわる','決める':'きめる',
-    '決まる':'きまる','入れる':'いれる','入る':'はいる','入っ':'はいっ','出す':'だす','回る':'まわる','回し':'まわし',
+    '決まる':'きまる','入れる':'いれる','入る':'はいる','入っ':'はいっ','出す':'だす','書く':'かく','回る':'まわる','回し':'まわし',
     '下ろす':'おろす','下げる':'さげる','下がる':'さがる','上げる':'あげる','上がる':'あがる','行う':'おこなう','行った':'おこなった','行く':'いく','答え':'こたえ','後ろ':'うしろ','速さ':'はやさ','長さ':'ながさ',
     '高さ':'たかさ','太さ':'ふとさ','向き':'むき','余り':'あまり','一つ':'ひとつ','同じ':'おなじ','歩く':'あるく',
     '点数':'てんすう','代金':'だいきん','変数':'へんすう','手順':'てじゅん','計算':'けいさん','挿入':'そうにゅう',
@@ -1633,6 +1661,8 @@
     'LooksCommand:SHOW': ['見せる', '表示', '出す', 'でてくる', '出てくる', 'あらわれる', 'みえる'],
     'LooksCommand:HIDE': ['隠す', 'かくす', '非表示', 'きえる', '消える', 'かくれる', 'みえなくする'],
     'LooksCommand:SET_COSTUME': ['きがえる', 'みため', '見た目'],
+    // 「「点数らん」に点数を出す」 is how a child says it (F-31): 出す, 書く and 表示 lead to the part's text block.
+    'LooksCommand:SET_TARGET_TEXT': ['出す', '書く', '表示', '文字', '点数'],
     'StopCommand:ALL': ['とめる', '止める', 'おわる', 'おわり'],
     'StopCommand:THIS': ['とめる', '止める'],
     'PenCommand:DOWN': ['せん', '線', 'かく', 'えがく'],

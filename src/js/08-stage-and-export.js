@@ -440,7 +440,7 @@
         full.hidden = full.dataset.always !== 'true';
         full.type = 'button';
         full.dataset.label = presentation.rounded ? 'もとの 数' : '全部';
-        full.setAttribute('aria-label', presentation.rounded ? '数を 短くして 見せています。もとの 数を 見る' : 'ふきだしの 文を ぜんぶ 見る');
+        full.setAttribute('aria-label', presentation.rounded ? '数を 短くして 見せているよ。もとの 数を 見る' : 'ふきだしの 文を ぜんぶ 見る');
         full.style.pointerEvents = 'auto';
         full.onclick = e => { e.stopPropagation(); options.onValueDetails?.(actualValue, speakerLabel); };
         b.appendChild(full);
@@ -681,13 +681,13 @@
       if (status) status.textContent =
         {
           LOADING: '読みこみ中',
-          READY: 'じゅんび できました',
+          READY: 'じゅんび できたよ',
           PREPARING: 'じゅんび中',
           RUNNING: '動いているよ',
-          PAUSED: 'いったん 止まっているよ',
+          PAUSED: 'いったん 止めたよ',
           FINISHED: 'おわったよ。もう一度 動かすときは「■ 止める」を おしてから「▶ 動かす」を おしてね',
-          STOPPED: '止まっています',
-          ERROR: '\u958b\u3051\u307e\u305b\u3093',
+          STOPPED: '止まっているよ',
+          ERROR: '開けないよ',
         }[phase] || '';
       root.dataset.state = phase;
     }
@@ -766,15 +766,15 @@
       // A pending resume on a suspended context is the browser's activation gate.
       // Decode errors and closed/interrupted contexts never become an activation button.
       if (!gesture && ac.state === 'suspended' && (!failure || failure.name === 'NotAllowedError')) return false;
-      throw new core.AkariError('R415', '音をはじめられませんでした', 0, 0,
+      throw new core.AkariError('R415', '音を はじめられませんでした', 0, 0,
         failure?.message || 'AudioContext state: ' + ac.state);
     }
     function startupFailure(error, gesture = false) {
       dispose();
       phase = artwork ? 'ERROR' : 'STOPPED';
       if (artwork) {
-        message(gesture ? '音をはじめられませんでした。この作品を ちがう 画面で 開いてみてください。'
-          : '作品をはじめられませんでした。「くわしく」を見てください。');
+        message(gesture ? '音を 出せなかったよ。この 作品を ちがう 画面で 開いてみてね。'
+          : '作品を 動かせなかったよ。「くわしく」を 見てね。');
         const details = document.createElement('details'), summary = document.createElement('summary'), raw = document.createElement('pre');
         summary.textContent = 'くわしく';
         raw.textContent = `${error.code || 'R415'} ${error.message || error}${error.detail ? '\n' + error.detail : ''}`;
@@ -799,7 +799,7 @@
           const audioContext = localCache.ensureAudioContext();
           if (artwork) audioContext.addEventListener('error', event => {
             if (token !== epoch || cache !== localCache) return;
-            startupFailure(new core.AkariError('R415', '音をはじめられませんでした', 0, 0,
+            startupFailure(new core.AkariError('R415', '音を はじめられませんでした', 0, 0,
               event.message || 'AudioContext error event; state: ' + audioContext.state));
           }, { once: true });
         }
@@ -991,12 +991,12 @@
           message(text);
           if (details?.rounded) {
             const full = document.createElement('details'), summary = document.createElement('summary'), raw = document.createElement('span');
-            summary.textContent = 'かずを 短くして 見せています。本当の かずを 見る';
+            summary.textContent = '数を 短くして 見せているよ。もとの 数を 見る';
             raw.textContent = details.rawText;
             full.append(summary, raw); output.appendChild(full);
           }
         },
-        onValueDetails: value => message((typeof value === 'string' ? 'ふきだしの 文ぜんぶ（えらんで コピーできます）：' : '数を 短くして 見せています。もとの 数（えらんで コピーできます）：') + core.valueText(value)),
+        onValueDetails: value => message((typeof value === 'string' ? 'ふきだしの 文 ぜんぶ：' : '数を 短くして 見せているよ。もとの 数：') + core.valueText(value)),
       });
       flush();
       phase = 'READY';
@@ -1018,7 +1018,7 @@
     if (compiled.errors.length) {
       const error = new AkariError(
         'X601',
-        '作品の まちがいを 直してから、うごく作品を ファイルにしてください',
+        '作品の まちがいを 直してから、うごく作品を ファイルにしてね',
       );
       error.diagnostics = compiled.errors;
       throw error;
@@ -1104,7 +1104,7 @@
     if (/<\/script/i.test(script))
       throw new AkariError(
         'X603',
-        'うごく作品を 安全な ファイルに できませんでした',
+        'うごく作品を 安全な ファイルに できなかったよ',
       );
     const html =
       '<!DOCTYPE html>\n<!-- SPDX-License-Identifier: MIT -->\n<!--\n' +
@@ -1131,7 +1131,7 @@
     if (new TextEncoder().encode(html).length > LIMITS.executableBytes)
       throw new AkariError(
         'X604',
-        '作品が 大きすぎて、うごく作品の ファイルに できません。絵や 音を へらしてみてください',
+        '作品が 大きすぎて、うごく作品の ファイルに できないよ。絵や 音を へらしてみてね',
       );
     return html;
   }

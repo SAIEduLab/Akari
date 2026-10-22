@@ -312,7 +312,7 @@
     ) => {
       const id = kind + (discriminator ? ':' + discriminator.value : '');
       const groups = {
-        Script: '動きのまとまり',
+        Script: '本文',
         TargetReference: 'へんすう・リスト',
         CommentLine: 'メモ',
         UserActionCall: 'てじゅん',
@@ -340,9 +340,10 @@
             : ['Assignment', 'NumericUpdate'].includes(kind)
               ? 'へんすう・リスト'
               : 'もし・くり返し');
-      // A wait names who waits (みんな is the whole flow). The one-line group wait always waits with the whole flow.
+      // Who acts is chosen in 「だれが」 for every sentence (F-27); a wait also offers みんな (the whole flow). The one-line
+      // group wait always waits with the whole flow.
       if (category === 'statement' && kind !== 'WaitBroadcastGroup')
-        fields = [...fields, field('actorRef', EVERYONE_WAITS.has(kind) ? 'だれが待つ' : 'だれが動く', 'actor-ref', undefined, { required: false, ...(EVERYONE_WAITS.has(kind) ? { everyone: true } : {}) })];
+        fields = [...fields, field('actorRef', 'だれが', 'actor-ref', undefined, { required: false, ...(EVERYONE_WAITS.has(kind) ? { everyone: true } : {}) })];
       const annotations =
         category === 'statement'
           ? [
@@ -401,13 +402,13 @@
     const expression = (key, label, initial) =>
       input(key, label, 'expression', initial === undefined ? {} : { initial });
     const op = (key, value) => ({ key, value });
-    add('Script', 'script', '動きのまとまり',
-      [field('heading', 'できごとの きっかけ', 'heading', undefined, { required: false })],
+    add('Script', 'script', '本文',
+      [field('heading', 'きっかけ', 'heading', undefined, { required: false })],
       [input('rules', 'つづけて動くルール', 'rule', {
         required: false, multiple: true, minItems: 0, maxItems: LIMITS.activeTasks, variadic: true,
-      }),input('units','できごとのまとまり','script',{
+      }),input('units','ほかの きっかけの 本文','script',{
         required:false,multiple:true,minItems:1,maxItems:LIMITS.scripts,variadic:true,
-      })], [body('body', '動きのまとまり', false)]);
+      })], [body('body', '本文', false)]);
     for (const role of ['expression', 'statement', 'target', 'rule'])
       add('Hole', role, 'あいている ところ', [field('label', 'ここに入れるもの', 'string', '中身')],
         [], [], op('role', role), { draftOnly: true, capability: 'draft-hole:' + role });
@@ -416,13 +417,13 @@
       { capability: 'quantity-value', semanticRoles: ['value', 'unit'] });
     add('UnitlessRead', 'expression', 'たんいを とった数', [], [expression('value', '中身')], [], null,
       { capability: 'unitless-read', semanticRoles: ['value'] });
-    add('ActorQualifiedRead', 'expression', 'えらんだキャラの中身',
+    add('ActorQualifiedRead', 'expression', 'えらんだ キャラクターの 中身',
       [field('actorRef', 'だれの', 'actor-ref', { kind: 'self' })],
       [expression('value', '読む中身')], [], null,
       { capability: 'actor-qualified-read', semanticRoles: ['actorRef', 'value'] });
     // 〜が10回【ジャンプ】するまで / 〜が3回おされるまで: used as the whole condition of a まで.
-    add('EventCount', 'expression', '手順を 行った 回数',
-      [field('actorRef', 'だれが', 'actor-ref', { kind: 'self' }), name('name', '手順の名前', 'ジャンプ', true)],
+    add('EventCount', 'expression', 'てじゅんを 行った 回数',
+      [field('actorRef', 'だれが', 'actor-ref', { kind: 'self' }), name('name', 'てじゅんの 名前', 'ジャンプ', true)],
       [expression('count', '何回', 3)], [], op('event', 'action'),
       { capability: 'event-count:action', semanticRoles: ['actorRef', 'name', 'count'] });
     add('EventCount', 'expression', 'おされた 回数',
@@ -746,8 +747,9 @@
                 : value === 'INPUT_VALUE'
                   ? '入力らん'
                   : 'だれ',
+            // A colour is named as the child names it (F-21): 「赤」, not #ff0000.
             value === 'TOUCHING_COLOR'
-              ? '#ff0000'
+              ? '赤'
               : value === 'KEY_DOWN'
                 ? '空白'
                 : value === 'INPUT_VALUE'
@@ -766,22 +768,23 @@
       add(kind, category, operation.displayName, [], [args(labels, { initialValues: operation.args.map(extensionDefaultExpression) })], [], { key: 'name', value: operation.name }, { palette: 'かくちょう' });
     }
     if (EXTENSION_HOST.operations('events').some(x => x.scope !== 'meijin'))
-      add('SensorRead', 'expression', 'かくちょうの できごとの 中身', [], [], [], { key: 'sensor', value: '拡張の値' }, { palette: 'かくちょう' });
+      add('SensorRead', 'expression', 'かくちょうの きっかけの 中身', [], [], [], { key: 'sensor', value: '拡張の値' }, { palette: 'かくちょう' });
     return Object.freeze(schemas);
   })();
   const BLOCK_SCHEMA_BY_ID = new Map(BLOCK_SCHEMAS.map((schema) => [schema.id, schema]));
   function blockStructureError(message, path = '') {
     throw new AkariError(
       'P210',
-      `ブロックの組み方に まちがいが あります: ${message}`,
+      `ブロックの 組み方に まちがいが あります。${message}`,
       0,
       0,
       path,
     );
   }
-  // Checks that only fail on broken saved data: first what to do, then the reason.
+  // Checks that only fail on broken saved data: the child is told what to do; the reason and where it is go to the
+  // details (F-07).
   function blockDataError(message, path = '') {
-    throw new AkariError('P210', `作品の ファイルが こわれているかもしれません。先生に 見てもらってね。（${message}）`, 0, 0, path);
+    throw new AkariError('P210', '作品の ファイルが こわれているかもしれないよ。先生に 見てもらってね。', 0, 0, message + (path ? '（' + path + '）' : ''));
   }
   function syntaxSchema(node, expected) {
     if (!node || typeof node !== 'object' || Array.isArray(node))
@@ -895,7 +898,7 @@
         }
       if (!field.multiline && /[\r\n]/.test(value)) blockDataError('1行で書いてください', path);
       if (type === 'string' && cpLen(value) > LIMITS.stringChars)
-        blockStructureError('文字が長すぎます。短くしてください', path);
+        blockStructureError('文字が 長すぎます。短く してください', path);
       if (type === 'annotation' && value && value[0] !== '※')
         blockStructureError('メモは「※」から書きはじめます。れい：※ ここで回る', path);
     }
@@ -907,14 +910,14 @@
     const visit = (node, type, path, blockDepth, expressionDepth) => {
       const schema = syntaxSchema(node, type);
       if(node.units&&(type!=='script'||path!=='root'))
-        blockDataError('きっかけのまとまりは、いちばん外に置いてください',path);
+        blockDataError('きっかけの 本文は、いちばん 外に 置いてください',path);
       if (schema.draftOnly && !allowHoles) blockStructureError('空いているところが あります。うめてから動かしてください', path);
       if (active.has(node)) blockDataError('ブロックが自分の中に入っています', path);
       active.add(node);
       if (++count > LIMITS.sourceEach)
-        blockStructureError('ブロックが多すぎて、使える数をこえています。ブロックをへらしてください', path);
+        blockStructureError('ブロックが 多すぎて、使える 数を こえています。ブロックを へらしてください', path);
       if (blockDepth > LIMITS.blockDepth || expressionDepth > LIMITS.expressionDepth)
-        blockStructureError('ブロックの中にブロックを重ねすぎています。重ねる数をへらしてください', path);
+        blockStructureError('ブロックの 中に ブロックを 重ねすぎています。重ねる 数を へらしてください', path);
       const allowed = [
         ...(type === 'target' && schema.kind !== 'Hole' ? [] : ['kind']),
         ...schema.fields.map((x) => x.key),
@@ -949,7 +952,7 @@
       )
         blockStructureError('名前を【 】でかこむか、使う ばしょを えらんでください', path);
       if (Object.hasOwn(node, 'argumentNames') && node.argumentNames !== undefined && (!Array.isArray(node.args) || node.argumentNames.length !== node.args.length))
-        blockStructureError('入れるものと名前の数が合いません。同じ数にしてください', path + '.argumentNames');
+        blockStructureError('入れるものと 名前の 数が 合いません。同じ 数に してください', path + '.argumentNames');
       for (const slot of schema.inputs) {
         if (!Object.hasOwn(node, slot.key) && slot.required === false) continue;
         const value = node[slot.key];
@@ -1033,9 +1036,15 @@
           ['MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT'].includes(schema.id) ? 15 : 0
         ));
       if (slot.multiple && slot.initialValues && !draft) { node[slot.key] = slot.initialValues.map(cloneDesignProject); continue; }
+      // A new block runs as it is and shows or plays something (F-03): すがた and はいけい take the next name of the
+      // work when the editor gives one, and a tone is 440Hz for 0.5秒.
+      const named = { 'LooksCommand:SET_COSTUME': context.costume, 'LooksCommand:SET_BACKDROP': context.backdrop }[schema.id],
+        tone = ['SoundCommand:TONE_WAIT', 'SoundCommand:TONE'].includes(schema.id) ? [440, 0.5] : null;
       node[slot.key] = slot.multiple
         ? Array.from({ length: slot.initialItems ?? slot.minItems }, (_, index) =>
-            !draft && schema.id === 'LooksCommand:SET_INPUT' && index === 0
+            !draft && index === 0 && typeof named === 'string' && named
+              ? valueNode(named) : !draft && tone && index < tone.length
+              ? valueNode(tone[index]) : !draft && schema.id === 'LooksCommand:SET_INPUT' && index === 0
               ? valueNode('入力らん') : !draft && schema.id === 'MotionCommand:MOVE' && index === 0
                 ? valueNode(10) : !draft && schema.id === 'MotionCommand:GOTO_PART' && index === 0
                   // The first part in the work other than the body's owner, or the mouse (LANGUAGE.md 動きの文).
@@ -1124,13 +1133,13 @@
       ids.add(block.id);
       const schema = BLOCK_SCHEMA_BY_ID.get(block.schemaId);
       if (!schema || (type && schema.category !== type))
-        blockDataError('ブロックの種類か、つなぐ先が正しくありません', path);
+        blockDataError('ブロックの しゅるいか、つなぐ 先が 正しくありません', path);
       if (
         ++count > LIMITS.sourceEach ||
         blockDepth > LIMITS.blockDepth ||
         expressionDepth > LIMITS.expressionDepth
       )
-        blockStructureError('ブロックが多すぎるか、中に重ねすぎています。ブロックをへらしてください', path);
+        blockStructureError('ブロックが 多すぎるか、中に 重ねすぎています。ブロックを へらしてください', path);
       blockRecord(
         block.fields,
         schema.fields.map((x) => x.key),
