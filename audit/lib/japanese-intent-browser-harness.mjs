@@ -51,12 +51,19 @@ export function browserScenario({scenario:s,mode='source',projectOnly=false}) {
   };
   const state=()=>({time:clock,actors:actors(),vars:copy([...r.projectVars]),lists:copy([...r.projectLists]),says:trace.filter(t=>t.kind==='say').length,blocked:q.blocked.size});
   const pump=()=>{let turns=0;while(q.ready.length&&turns++<10000)q.runTurn(true);demand(turns<10000,'scheduler did not quiesce');demand(!errors.length,'runtime: '+JSON.stringify(errors));};
+  // A loop whose turn changed the screen waits for the next こま before its next turn (LANGUAGE.md くり返しと画面の動き).
+  // The clock moves on to such a こま by itself, in order, but never past a time a step gives, nor past a wait of the
+  // work's own (a time, a glide), which the scenario's steps reach as before.
+  const frames=limit=>{for(let n=0;n<100000;n++){const waits=[...q.blocked].map(t=>t.blockReason).filter(b=>b?.kind==='time'),
+      frame=Math.min(...waits.filter(b=>b.frame).map(b=>b.deadline)),other=Math.min(...waits.filter(b=>!b.frame).map(b=>b.deadline));
+    if(!(Number.isFinite(frame)&&frame<=limit&&frame<=other))return;clock=Math.max(clock,frame);q.advanceContinuous?.(clock);q.recheckBlocked(true);pump();}
+    demand(false,'paced loops did not end');};
   q.start();
   const nextRandom=r.prng.nextUint32.bind(r.prng);
   r.prng.nextUint32=()=>{const value=nextRandom();trace.push({kind:'random',value,time:clock});return value;};
   pump();const checkpoints=[state()];
   for(const step of s.steps||[]){
-    if(step.at!==undefined){clock=step.at;q.advanceContinuous?.(clock);q.recheckBlocked(true);}
+    if(step.at!==undefined){frames(step.at);clock=step.at;q.advanceContinuous?.(clock);q.recheckBlocked(true);}
     if(step.key){demand(typeof q.setKeyState==='function','setKeyState API missing');const fresh=q.setKeyState(step.key,step.down);
       if(step.down&&fresh){demand(typeof q.spawnDistributed==='function','spawnDistributed API missing');q.spawnDistributed('keyDown',{key:step.key});}
       q.recheckBlocked(true);
@@ -64,6 +71,6 @@ export function browserScenario({scenario:s,mode='source',projectOnly=false}) {
     if(step.answer!==undefined){demand(typeof answer==='function','question did not wait for a response');const reply=answer;answer=null;reply(step.answer);q.recheckBlocked(true);}
     pump();checkpoints.push(state());
   }
-  const final=state();q.stop();
+  frames(Infinity);const final=state();q.stop();
   return {project:p,roundtrips,trace,checkpoints,final,errors,execution:'real EventScheduler / RuntimeModel'};
 }
