@@ -5249,7 +5249,8 @@
       }
     }
     function bodyNotices(session) {
-      if (!session || session.pendingEdit || session.blockDraft || session.diagnostics?.length || !session.syntaxAst) return [];
+      // The run screen shows no notice (its marks are edit-screen controls), so a running work is not looked at for them.
+      if (modelLocked() || !session || session.pendingEdit || session.blockDraft || session.diagnostics?.length || !session.syntaxAst) return [];
       return cachedNotices().filter(d => d.owner === session.ownerKey && noticeSources.get(d.owner) === session.sourceText)
         .sort((a, b) => (a.line || 0) - (b.line || 0) || (a.column || 0) - (b.column || 0));
     }
