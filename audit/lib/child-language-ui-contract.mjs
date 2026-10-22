@@ -7,9 +7,10 @@ export const childLanguageUiIds = Object.freeze([
   'CHILD-UI-RESPONSIVE-WORDS','CHILD-UI-TOUCH-HELP',
 ]);
 
+// The block view's 「いまの作り方のヒント」 speaks in the plain register, one register per surface (LANGUAGE.md 1042, F-18; FCB-18).
 export const childInsertionConceptHints=Object.freeze({
-  "commandAndBody": "つなぐブロックは、「話す」「待つ」など、してほしい ことです。本文（ほんぶん）は、ブロックを じゅんばんに ならべる ところです。",
-  "palette": "ブロックは なかまごとに 分かれています。れい：「よく使う」には「話す」「待つ」が あります。「ブロックを さがす」に ことばを 入れると、さがせます。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない 理由も 読めます。"
+  "commandAndBody": "つなぐブロックは、「話す」「待つ」など、してほしい ことだよ。本文（ほんぶん）は、ブロックを じゅんばんに ならべる ところだよ。",
+  "palette": "ブロックは なかまごとに 分かれているよ。れい：「よく使う」には「話す」「待つ」が あるよ。「ブロックを さがす」に ことばを 入れると、さがせるよ。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべるよ。「使えないブロックも見せる」を えらぶと、使えない わけも 読めるよ。"
 });
 
 function readable(rows,min=1) {
@@ -115,7 +116,9 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   const action=rows['CHILD-UI-ACTION-HELP'];
   for(const key of ['keyboardHelp','generatedPlayerWords','projectSourcePreserved'])assert.equal(action[key],true);
   readable(action.help,8);panelReach(action.tailReach,'native-keyboard',true);
-  assert.equal(action.editReading,null);assert.match(action.editMeaning,/「なおす動き」で えらびます/);
+  assert.equal(action.editReading,null);
+  // The body selector is 「きっかけ」 (final call 19, F-23): one word per idea, never 「なおす動き」 or 「できごと」.
+  assert.match(action.editMeaning,/「きっかけ」で えらびます/);assert.doesNotMatch(action.editMeaning,/なおす動き|できごと/);
   assert.deepEqual(action.downloadTypes,['akari.md','html']);
   assert.match(action.saveFile,/\.akari\.md$/); assert.match(action.exportFile,/\.html$/);
   const copy=rows['CHILD-UI-COPY-SEMANTICS'];
@@ -140,7 +143,8 @@ export function verifyChildLanguageUi(report,inputs,environment) {
     const host=step.mode==='blocks'?'componentActions':'properties';
     assert.equal(step.actionsHost,host);assert.equal(step.sameActionsNode,true);
     assert.equal(step.helpCount,0,'no separate copy line');
-    assert.equal(step.ariaDescription,"見た目と せっていが 同じ 部品を もう1つ 作ります。本文は もちません。");
+    // The fixed mascot is a sprite, and F-23 calls a sprite a キャラクター (other parts are 部品).
+    assert.equal(step.ariaDescription,"見た目と せっていが 同じ キャラクターを もう1つ 作ります。本文は もちません。");
     assert.deepEqual(step.state,copyModes.before,'moving one explanation node leaves the actual project/history intact');
   }
   assert.deepEqual(copyModes.after,copyModes.before);

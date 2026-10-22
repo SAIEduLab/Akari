@@ -75,8 +75,10 @@ export function verifyChildDiagnosticsReport(report,inputs) {
     assert.doesNotMatch(d.visible,/しるしの絵や音|記録と合いません|足りない絵や音/);assert.ok(d.detail.includes(code));assert.ok(d.detail.includes(message));
     assert.deepEqual(d.downloads,[]);assert.deepEqual(d.after,d.before);
   }
-  const imported=rows.get('import/current-and-incoming');assert.match(imported.preview,/今の動き：\n「もとの動き」と言う。/);
-  assert.match(imported.preview,/取りこむ動き：\n始めると、あかりは「新しい動き」と言う。/);assert.deepEqual(imported.after,imported.before);
+  // The import panel names bodies 本文 and writes いま (F-23 glossary, final call 20; FCS-10).
+  const imported=rows.get('import/current-and-incoming');assert.match(imported.preview,/いまの 本文：\n「もとの動き」と言う。/);
+  assert.match(imported.preview,/取りこむ 本文：\n始めると、あかりは「新しい動き」と言う。/);assert.doesNotMatch(imported.preview,/今の動き|取りこむ動き/);
+  assert.deepEqual(imported.after,imported.before);
   for(const name of ['keyboard','touch']){
     const d=rows.get('reach/'+name+'-390');assert.equal(d.geometry.viewport.width,390);
     assert.equal(d.geometry.hit,true);assert.ok(d.geometry.rect.height>=28);assert.ok(parseFloat(d.geometry.font)>=13);
