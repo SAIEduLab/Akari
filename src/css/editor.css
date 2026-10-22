@@ -1249,12 +1249,6 @@ body {
 .component.ak-input {
   touch-action: auto;
 }
-/* On the run screen a finger on the stage acts as the mouse, wherever it starts: it does not scroll the page or swipe
-   back to the previous page (「マウスのところへ行く」 and drawing with a finger follow it). The page keeps its own swipe
-   gestures outside the stage. */
-body.runtime #formSurface { touch-action: none; overscroll-behavior: none; }
-body.runtime .component.ak-input { touch-action: auto; }
-html:has(body.runtime) { overscroll-behavior-x: none; }
 .editor-modes {
   display: flex;
   gap: 5px;
