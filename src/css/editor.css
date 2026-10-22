@@ -5958,9 +5958,10 @@ body.runtime .debugbar > #undoBtn { display: none !important; }
 body.runtime.run-finished[data-editor-mode] .main > .codewin > .debugbar { display: none !important; }
 /* The run screen's toolbar (final call 21) shows ■ 止める in ▶ 動かす's place and the work's name as plain text. The
    buttons that cannot be used while the work runs (新しく作る, お手本を開く, ヒント, 開く, 保存, うごく作品を ファイルにする,
-   はじめて's 作品 menu, もとにもどす・やり直す and いっしょに作る there), the level and the view toggle are not shown, but
-   their room stays, so no toolbar button moves at any width. */
-body.runtime .menutool > :is(#newBtn, #sampleBtn, #basicActionGuide, #openBtn, #saveBtn, #exportBtn, #entryProjectMenu, #undoBtn, #redoBtn, #tutorialStart, .ui-level-label, .editor-modes) { visibility: hidden !important; }
+   and はじめて's 作品 menu that holds three of them), the level and the view toggle are not shown, but their room stays,
+   so no toolbar button moves at any width. The other buttons (はじめて's もとにもどす・やり直す, いっしょに作る) stay,
+   locked. */
+body.runtime .menutool > :is(#newBtn, #sampleBtn, #basicActionGuide, #openBtn, #saveBtn, #exportBtn, #entryProjectMenu, .ui-level-label, .editor-modes) { visibility: hidden !important; }
 body.runtime .menutool > #projectName { border-color: transparent; background: transparent; box-shadow: none; color: var(--dark, #283e50); -webkit-text-fill-color: currentColor; opacity: 1; cursor: default; pointer-events: none; }
 /* はじめて's ⏸ いったん止める and ▶ つづける sit under the stage while the work runs (1つずつ 動かす and 本文を見て たしかめる
    are for かんたん and up). */
@@ -5971,9 +5972,9 @@ body.runtime .menutool > .mode-blocked-note { display: none !important; }
 .editor-modes[hidden] { display: none !important; }
 /* The toggle is one button (final call 22): of the two, only the one that switches away from the view shown is there. */
 .editor-modes > button[hidden] { display: none !important; }
-:is(#editorModecode, #editorModeblocks, #callableModecode, #callableModeblocks, #sourceHeadingBtn)[aria-disabled="true"] { opacity: 0.5; }
-/* Why the toggle does not switch (はじめて, a 名人 work, a mistake in the code): shown under it after a press of the pale
-   toggle. */
+#sourceHeadingBtn[aria-disabled="true"] { opacity: 0.5; }
+/* Why the toggle does not switch (はじめて, a 名人 work, a mistake in the code): shown under it after a press. The toggle
+   itself keeps its look. */
 .mode-blocked-note { margin: 0; padding: 6px 10px; border: 1px solid #c98a6a; border-radius: 8px; background: #fff7f2; color: #8a2c0d; font-size: 14px; line-height: 1.5; }
 .mode-blocked-note[hidden] { display: none !important; }
 .menutool > .mode-blocked-note { position: absolute; top: calc(100% + 6px); right: 10px; z-index: 61; max-width: 20rem; box-shadow: 0 6px 16px #18364b30; }

@@ -1483,8 +1483,8 @@
     // The コード／ブロック toggle (final call 22) is one button that shows the view on the screen with ⇄: 「ブロックモード ⇄」
     // or 「コードモード ⇄」. A press switches to the other view, and the label follows. Of the group's two buttons only the
     // one that switches away from the view shown is there (…Modecode in blocks, …Modeblocks in code); its name says the
-    // view. Where a press cannot switch (はじめて, a work with a 名人 text, a mistake in the code) the button is pale, and
-    // a press keeps the view and says why under it (modeBlockedNote).
+    // view. The toggle is never pale or hidden: where a press cannot switch (はじめて, a work with a 名人 text, a mistake in
+    // the code) it keeps the view and says why under it (modeBlockedNote).
     const VIEW_NAMES = { blocks: 'ブロックモード', code: 'コードモード' };
     const MODE_REFUSALS = {
       entry: 'コードで 書くときは、上の「かんたん」か「くわしく」を えらんでね',
@@ -1516,11 +1516,11 @@
         b.disabled = ['PREPARING', 'IMPORTING'].includes(appState);
         if (refusal) {
           if (note.textContent !== MODE_REFUSALS[refusal]) note.textContent = MODE_REFUSALS[refusal];
-          b.setAttribute('aria-disabled', 'true');
+          b.dataset.refused = refusal;
           b.setAttribute('aria-describedby', note.id);
           b.removeAttribute('title');
         } else {
-          b.removeAttribute('aria-disabled');
+          delete b.dataset.refused;
           b.removeAttribute('aria-describedby');
           b.title = `おすと、${VIEW_NAMES[mode]}に かわるよ`;
           note.hidden = true;
@@ -5380,7 +5380,7 @@
         (hasSentence(item.ast?.body) || hasSentence(item.ast?.rules) ||
           (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
         setStatus(shownEditorMode() === 'blocks' ? 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね'
-          : '本文が まだ ないよ。「本文」の ところに 文を 書いてね');
+          : '本文が まだ ないよ。コードに 文を 書いてね');
         return;
       }
       try {
@@ -7887,7 +7887,7 @@
       });
       for (const mode of ['code', 'blocks'])
         $(`#${p}Mode${mode}`).onclick = (event) => {
-          if (event.currentTarget.getAttribute('aria-disabled') === 'true') showModeBlockedNote(binding);
+          if (event.currentTarget.dataset.refused) showModeBlockedNote(binding);
           else switchEditorMode(binding, mode);
         };
       $(`#${p}Cancel`).dataset.blockuiAction = 'cancel';
