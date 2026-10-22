@@ -6348,8 +6348,10 @@ body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
   .blockui-world .blockui-insertion.blockui-insertion-end,
   :is(.blockui-drag-statement, .blockui-moving-block, .blockui-choosing) .blockui-world .blockui-insertion { height: 40px !important; min-height: 40px !important; line-height: 38px; }
   /* The place after the selected block lies above that block's face (lifted to z-index 60 while selected), so all 40 px
-     of it can be pressed (AX-03). A block whose field is being edited keeps its popovers on top. */
-  .blockui-world .blockui-node:not(:has(.blockui-slot-active)) + .blockui-insertion.blockui-implied-destination { position: relative; z-index: 61; }
+     of it can be pressed (AX-03), also while one of the block's fields is being edited (final call 35, Ob2): 決める and
+     入力を やめる stay outside it. The fields of the blocks on both sides keep 33-35 px where they meet it (LANGUAGE.md's
+     exception to E-19's 40 px). */
+  .blockui-world .blockui-node + .blockui-insertion.blockui-implied-destination { position: relative; z-index: 61; }
   .blockui-world .blockui-insertion.blockui-implied-destination::after {
     content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 40px; z-index: 6;
   }
