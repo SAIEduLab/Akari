@@ -257,7 +257,8 @@
         "mock-desktop-code-layout",
         "mock-block-layout-source-invariant",
         "disclosure-discoverability-source-invariant",
-        "six-width-layout"
+        "six-width-layout",
+        "entry-wide-workbench"
       ]
     },
     {
