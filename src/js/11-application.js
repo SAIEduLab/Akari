@@ -1311,11 +1311,15 @@
           );
         if (binding.session?.blockDraft){
           if (preserveView) return false;
-          const hole=[...buildBlockIndex(binding.session.blockView).values()].find(entry=>entry.node.schemaId.startsWith('Hole:'));
-          const label=hole?.node.fields.label||'ブロックや 数・文字';
-          // The focus goes to the empty place; the message says what to put there (FCB-03, I5V-14).
+          const index=buildBlockIndex(binding.session.blockView),hole=[...index.values()].find(entry=>entry.node.schemaId.startsWith('Hole:'));
+          const parent=hole?.body?index.get(hole.parentId)?.node:null;
+          const label=(parent&&BLOCK_SCHEMA_BY_ID.get(parent.schemaId)?.bodies.find(slot=>slot.key===hole.body)?.label)||hole?.node.fields.label||'ブロックや 数・文字';
+          // The focus goes to the empty place; the message names the place and what goes in it, one wording per kind
+          // of hole (FCB-03, final call 33): a loop's inside takes くり返すこと, a branch of 「もし」 takes することを and is
+          // named in 「 」, a hole a value fills names that value (I5V-14).
           if(hole)binding.view.focus({id:hole.node.id});
-          return showEditorFailure(binding, `あいている ところが あるよ。${label}を 入れてね`, { preservePending: true });
+          const branch=parent?.schemaId==='IfStatement'?{thenBody:'もし',elseBody:'そうでなければ'}[hole.body]:null;
+          return showEditorFailure(binding, branch?`「${branch}」の ところが あいているよ。することを 入れてね`:`あいている ところが あるよ。${label}を 入れてね`, { preservePending: true });
         }
         return true;
       }
