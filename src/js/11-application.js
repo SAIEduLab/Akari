@@ -8181,7 +8181,7 @@
             : null,
         root: $(draft ? '#callableBlocks' : '#blockEditor'),
         // The free middle of the row above the workspace, between すべての本文… and もとにもどす…: the floating
-        // 「とちゅうで やめる」 goes there while a place is chosen, so it covers no block (E-12).
+        // The cancel control (「入れるのを やめる」) goes there while a place is chosen, so it covers no block (E-12).
         controlsSpace: draft ? null : () => {
           const nav = $('.codewin > .source-nav'), bar = $('.codewin > .debugbar');
           if (!nav?.getClientRects().length || !bar?.getClientRects().length) return null;

@@ -6105,7 +6105,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
 
 /* ── 1.5.0 block view (theme E) ──────────────────────────────────────────────────────────────────────────────────────
    Nothing a child does to select or edit a block moves the other blocks: the tools of the selected block, the slot tools
-   and 決める・とちゅうで やめる float over the workspace. */
+   and 決める and its cancel (入れるのを やめる／入力を やめる) float over the workspace. */
 
 /* The block list (E-17): every category above one list that scrolls, with no pages. */
 :is(#blockEditor, #callableBlocks) .blockui-palette { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
@@ -6213,7 +6213,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
   position: absolute !important; left: 0; top: calc(100% + 4px); z-index: 130; width: max-content; min-width: 180px; max-width: 330px;
 }
 .blockui-world .blockui-input-slot.blockui-slot-active { flex-wrap: nowrap; }
-/* 決める・とちゅうで やめる and the input's mistake float under the field being edited; while a place is chosen they float
+/* 決める, its cancel (入れるのを やめる／入力を やめる) and the input's mistake float under the field being edited; while a place is chosen they float
    in the free middle of the row above the workspace, or in a corner of the workspace that has no block. */
 :is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls {
   position: fixed; z-index: 140; left: var(--blockui-controls-left, 312px); top: var(--blockui-controls-top, 0px);
@@ -6231,7 +6231,7 @@ body[data-ui-level="entry"].runtime[data-editor-mode] #blockEditor .blockui-layo
 body[data-editor-mode="blocks"]:not(.runtime) .codewin > #editorPending[data-notice="block-draft"],
 body[data-editor-mode="blocks"]:not(.runtime):has(#editorPending[data-notice="block-draft"]) #editorCancel { display: none; }
 :is(#blockEditor, #callableBlocks).blockui-editor > .blockui-view-controls[hidden] { display: none; }
-/* One cancel control per state (F-23): while the block view's floating 決める・とちゅうで やめる is open, the editor's
+/* One cancel control per state (F-23): while the block view's floating 決める and its cancel is open, the editor's
    入力を やめる is not shown next to it. */
 body[data-editor-mode="blocks"]:has(#blockEditor:not([hidden]) > .blockui-view-controls:not([hidden])) #editorCancel,
 #procModal:has(#callableBlocks:not([hidden]) > .blockui-view-controls:not([hidden])) #callableCancel { display: none !important; }
