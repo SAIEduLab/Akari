@@ -8,6 +8,11 @@ import {snapshot,withBrowser,pageFor} from '../lib/product-test-host.mjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 // Lets the registered product-confirm answer run before state is read directly.
 const productConfirmAnswered=page=>page.locator('#loseConfirmModal').waitFor({state:'hidden'});
+// The value field of the first number block of the open body. A number in a hole is typed into in place (1.5.0), so the
+// field belongs to the NumberLiteral block by its data-block-id rather than sitting inside an element of that schema.
+const numberField=async page=>{const id=await page.evaluate(()=>{const walk=x=>{if(!x||typeof x!=='object')return null;if(x.schemaId==='NumberLiteral')return x.id;
+    for(const v of Object.values(x.inputs||{}))for(const y of [].concat(v)){const r=walk(y);if(r)return r;}for(const b of Object.values(x.bodies||{}))for(const y of b){const r=walk(y);if(r)return r;}return null;};
+  return walk(Akari.app.editorState.main.blockView);});if(!id)throw Error('the open body has no number block');return page.locator('#blockEditor [data-blockui-field="value"][data-block-id="'+id+'"]');};
 
 const [browserPath,output='audit-evidence/source-ownership.json']=process.argv.slice(2);
 const inputs=snapshot(currentProductFile()), api=loadApi(fs.readFileSync(currentProductFile(),'utf8'));
@@ -106,7 +111,7 @@ await withBrowser(browserPath,async browser=>{
         const editor=mode==='code'?p.locator('#codeEditor'):p.locator('#blockEditor');
         assert.ok(await editor.isVisible());
         if(mode==='code')assert.ok(await editor.isEditable());
-        else assert.equal(await editor.locator('[data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first().isEditable(),true);
+        else assert.equal(await (await numberField(p)).isEditable(),true);
         await p.locator('#sourceOverviewBtn').click();
         await p.locator('#fileInput').setInputFiles(md);await productConfirmAnswered(p);await p.waitForFunction(()=>Akari.app.project.name==='コードの所属を読む');await p.locator('#uiLevel').selectOption('advanced');
         assert.equal(await p.locator('#sourceOverview').isVisible(),false,'import closes a previous overview');
@@ -117,20 +122,22 @@ await withBrowser(browserPath,async browser=>{
         await p.screenshot({path:path.join(dir,`ownership-direct-${mode}.png`)});
         if(mode==='code')await p.locator('#codeEditor').fill(changed);
         else{
-          const value=p.locator('#blockEditor [data-schema-id="NumberLiteral"] [data-blockui-field="value"]').first();
+          const value=await numberField(p);
           assert.ok(await value.isEditable());await value.fill('4');await value.press('Enter');
         }
         const source=()=>p.evaluate(()=>Akari.app.editorState.main.sourceText);
-        assert.equal(await source(),changed);
+        // The code made from blocks writes てじゅん in kana (LANGUAGE.md 同じ意味の書き方); typed code keeps what was typed.
+        const edited=mode==='blocks'?changed.replace('という手順を行う','というてじゅんを行う'):changed;
+        assert.equal(await source(),edited);
         await p.locator('#undoBtn').click();assert.equal(await source(),original);
-        await p.locator('#redoBtn').click();assert.equal(await source(),changed);
+        await p.locator('#redoBtn').click();assert.equal(await source(),edited);
         await p.locator('#objectSelect').selectOption('sprite-1');
         assert.equal(await p.locator('#eventSelect').inputValue(),'start','first nonempty compatible event opens');
         await p.locator('#eventSelect').selectOption('message');
         await p.locator('#objectSelect').selectOption('stage');
         assert.equal(await p.locator('#eventSelect').inputValue(),'message','current event with source is preserved');
         await p.locator('#objectSelect').selectOption('button-1');
-        assert.equal(await p.locator('#eventSelect').inputValue(),'click');assert.equal(await source(),changed,'selection preserves edited source');
+        assert.equal(await p.locator('#eventSelect').inputValue(),'click');assert.equal(await source(),edited,'selection preserves edited source');
         await p.locator('#eventSelect').selectOption('start');
         await p.locator('#formSurface .component[data-id="button-1"]').click();
         assert.equal(await p.locator('#eventSelect').inputValue(),'start','reselection preserves an explicitly selected empty event');

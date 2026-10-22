@@ -244,7 +244,7 @@ await withBrowser(browserPath,async browser=>{
     for(const [label,changed] of [['format',p=>{p.formatVersion=contracts.projectFormatVersion-1;}],['language',p=>{p.languageContractId='2';}],['malformed',p=>{p.components.push(plain(p.components[0]));}]]){
       await browserPage('FORMAT-BROWSER-AUTOSAVE-RECOVERY/'+label,async p=>{
         await seedAutosave(p,makeRecord('',changed));await p.reload();
-        await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('もどせるか たしかめられませんでした'));
+        await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('もどせるか、たしかめられなかったよ'));
         assert.equal(await p.locator('#recoveryModal.show').count(),0);
         assert.notEqual(await p.evaluate(()=>Akari.app.project.name),priorProject.name,'invalid recovery changed current project');
       });
