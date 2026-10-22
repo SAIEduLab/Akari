@@ -967,12 +967,34 @@
         definition = project.actions.find(x => key === 'action:' + x.id) || project.functions.find(x => key === 'function:' + x.id);
       return { key, item, script, definition };
     }
-    function diagnosticLocation(diagnostic) {
+    // Where a message points: the body (its owner and きっかけ) and the line. The block view has no line numbers (はじめて
+    // shows blocks only), so there the place is the sentence itself, as its block reads.
+    function diagnosticLocation(diagnostic, { blocks = shownEditorMode() === 'blocks' } = {}) {
       const { key, item, script, definition } = diagnosticOwner(diagnostic);
       const owner = definition ? (key.startsWith('function:') ? '答えを もとめる「' : 'てじゅん「') + definition.name + '」'
         : script || item ? (targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (eventText(item?.event || script?.event, item ? item.filter : script?.filter) || '動き')
         : 'この本文';
-      return owner + (diagnostic?.line ? ' / ' + diagnostic.line + '行目' : '');
+      if (!diagnostic?.line) return owner;
+      if (!blocks) return owner + ' / ' + diagnostic.line + '行目';
+      const sentence = diagnosticSentence(diagnostic);
+      return owner + (sentence ? ' / 「' + sentence + '」' : '');
+    }
+    // Where the child finds the first mistake when ▶ 動かす is refused (F-07, F-08): the block view marks it with ⚠ and an
+    // orange frame, the code view marks its line number in red. A mistake in a body that is not shown names that body.
+    function fixPointer(diagnostic) {
+      const { script, definition } = diagnosticOwner(diagnostic);
+      if (definition) return `「自分で作ったブロック」の「${definition.name}」を 見てね。`;
+      const mark = shownEditorMode() === 'blocks' ? '⚠ が ついた ところを 見てね。'
+        : diagnostic?.line ? `コードの ${diagnostic.line}行目を 見てね。` : 'コードの 赤い ところを 見てね。';
+      if (!script || (!sourceOverviewOpen && scriptBySourceKey(project, bindingOwner(mainEditor)) === script)) return mark;
+      const name = isMeijinScript(script) ? '名人の本文' : targetById(script.targetId)?.name || '画面',
+        event = isMeijinScript(script) ? '' : eventText(script.event, script.filter);
+      return `「${name}」の ${event ? event + 'の ' : ''}本文を えらんで、${mark}`;
+    }
+    // The sentence on a message's line, without its last 。 or 、.
+    function diagnosticSentence(diagnostic) {
+      const source = diagnosticSource(diagnostic) ?? diagnostic?.source ?? '';
+      return String(source).split(/\r\n?|\n/)[(diagnostic?.line || 0) - 1]?.trim().replace(/[。、]$/, '') || '';
     }
     // The text the diagnostic's line numbers count in: the indentation message reads its line (F-24).
     function diagnosticSource(diagnostic) {
@@ -980,7 +1002,8 @@
       return definition?.source ?? script?.source ?? null;
     }
     function showDiagnosticMessage(root, diagnostic, location = '', original = null, source = null) {
-      const helpText = (location ? location + ': ' : '') + childDiagnosticText(diagnostic, source),
+      // A full-width colon after the place (F-26: no ASCII colon in child text).
+      const helpText = (location ? location + '：' : '') + childDiagnosticText(diagnostic, source),
         detailText = diagnosticDetailText(diagnostic, original),
         previousHelp = root.querySelector(':scope > .diagnostic-help'),
         previousDetail = root.querySelector(':scope > .diagnostic-details > pre');
@@ -4475,13 +4498,17 @@
       activeFailureId = id ?? records.at(-1).id;
       const select = $('#failureSelect');
       select.textContent = '';
+      const entry = document.body.dataset.uiLevel === 'entry';
       for (const r of [...records].reverse()) {
         const option = document.createElement('option');
         option.value = String(r.id);
-        option.textContent = '#' + r.id + ' ' + diagnosticLocation(r);
+        // はじめて shows no numbers: the place is the part, the きっかけ and the sentence.
+        option.textContent = (entry ? '' : '#' + r.id + ' ') + diagnosticLocation(r);
         select.appendChild(option);
       }
       select.value = String(activeFailureId);
+      // The stop's place is marked on the body before the help says so (the paint waits for the next frame otherwise).
+      flushRuntimePaint();
       renderFailureDetails();
       $('#failureModal').classList.add('show');
     }
@@ -4490,12 +4517,25 @@
         root = $('#failureBody');
       root.textContent = '';
       if (!r) return;
-      const help = document.createElement('div'); help.className = 'diagnostic-help';
-      // The help names only the controls of this level: はじめて has no 「本文を見て たしかめる」 and no line numbers; the
-      // place to fix keeps its orange frame after ■ 止める (keptFail).
-      help.textContent = document.body.dataset.uiLevel === 'entry'
-        ? '動きが とちゅうで 止まったよ。作った ブロックは そのままだよ。\n' + childDiagnosticText(r) + '\n「とじる」を おしてから「■ 止める」を おして、オレンジの わくの ところを なおしてね。'
-        : '動きが とちゅうで 止まったよ。書いた 本文と、うまく いかなかったときの きろくは のこっているよ。\n' + diagnosticLocation(r) + ': ' + childDiagnosticText(r) + '\n「とじる」の あと、「本文を見て たしかめる」で やることを たしかめられるよ。書きなおすときは「■ 止める」を おしてから なおしてね。';
+      const entry = document.body.dataset.uiLevel === 'entry';
+      // Akari speaks to the child in one voice (〜よ／〜ね); the reason is the language's rule, set apart in a box with its
+      // place, as 作品チェック shows it (F-18: one register per surface). The help names only the controls of this level:
+      // はじめて has no 「本文を見て たしかめる」 and no line numbers. There the place to fix keeps its orange frame after
+      // ■ 止める (keptFail), and the help promises the frame only when the body shows it; otherwise it names the sentence.
+      const help = document.createElement('div'); help.className = 'diagnostic-help failure-help';
+      const lead = document.createElement('p'), reason = document.createElement('div'), place = document.createElement('div'),
+        why = document.createElement('div'), next = document.createElement('p');
+      lead.textContent = entry ? '動きが とちゅうで 止まったよ。作った ブロックは そのままだよ。'
+        : '動きが とちゅうで 止まったよ。書いた 本文と、うまく いかなかったときの きろくは のこっているよ。';
+      reason.className = 'failure-reason'; place.className = 'failure-place'; why.className = 'failure-why';
+      place.textContent = diagnosticLocation(r); why.textContent = childDiagnosticText(r);
+      reason.append(place, why);
+      const latest = r.id === scheduler.errorRecords.at(-1)?.id, sentence = diagnosticSentence(r),
+        framed = latest && !!document.querySelector('#blockEditor .blockui-current');
+      next.textContent = !entry ? '「とじる」の あと、「本文を見て たしかめる」で やることを たしかめられるよ。書きなおすときは「■ 止める」を おしてから なおしてね。'
+        : framed ? '「とじる」を おしてから「■ 止める」を おして、オレンジの わくの ところを なおしてね。'
+        : '「とじる」を おしてから「■ 止める」を おして、' + (sentence ? '「' + sentence + '」の ブロックを なおしてね。' : 'この ブロックを なおしてね。');
+      help.append(lead, reason, next);
       root.append(help);
       const details = appendDiagnosticDetails(root, r, `${r.code}: ${r.message}\n${r.key} / ${r.line}\u884c\n${r.statement}\n${r.callStack.join(' \u2192 ')}`);
       details.querySelector('pre').className = 'failure-summary';
@@ -5236,22 +5276,25 @@
       if (compiled.errors.length) {
         showDiagnosis();
         log('作品に まちがいが あるので 動かしません。「作品チェック」を 見て 直してください', 'error');
-        refuse('作品に 直す ところが あるよ。⚠ が ついた ところを 見てね。');
+        refuse('作品に 直す ところが あるよ。' + fixPointer(compiled.errors[0]));
         return;
       }
-      // A work with no sentence in any body (notes do not count) does not run: the status says how to put one in.
-      // A continuing rule (「…あいだ、…動き続ける。」) is a sentence too, even alone in its body.
+      // A work with no sentence in any body (notes do not count) does not run: the status says how to put one in, with
+      // the controls of the view on the screen. A continuing rule (「…あいだ、…動き続ける。」) is a sentence too, even alone
+      // in its body.
       const hasSentence = nodes => (nodes || []).some(node => node.kind !== 'CommentLine');
       if (!(compiled.items || []).some(item => !item.definitionKind &&
         (hasSentence(item.ast?.body) || hasSentence(item.ast?.rules) ||
           (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
-        setStatus('ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね');
+        setStatus(shownEditorMode() === 'blocks' ? 'ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね'
+          : '本文が まだ ないよ。「本文」の ところに 文を 書いてね');
         return;
       }
       try {
         validateAssetReferences(project, assetStore);
       } catch (err) {
         log(`${err.code || ''} 絵や音の チェック: ${err.message}`, 'error');
+        refuse(document.body.dataset.uiLevel === 'entry' ? 'この 作品の 絵や音が たりないよ。' : '絵や音が たりないよ。「絵や音を まとめる」で たしかめてね。');
         return;
       }
       pen.clearRect(0, 0, el.canvas.width, el.canvas.height);
@@ -5549,7 +5592,7 @@
         for (const d of c.notes) {
           const p = document.createElement('div');
           p.className = 'diagnosis-note';
-          p.textContent = diagnosticLocation(d) + ': ' + d.message;
+          p.textContent = diagnosticLocation(d) + '：' + d.message;
           // A notice that names its fix offers it, as a code proposal does (the fix changes the body it is in).
           for (const proposal of d.proposals || []) {
             if (typeof proposal.source !== 'string') continue;
