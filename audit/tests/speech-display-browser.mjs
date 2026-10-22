@@ -12,6 +12,7 @@ import {install} from '../lib/ux-normal-ui.mjs';
 import {observeRunPreview,verifyRunPreview,verifyRunScreen,observePaletteFold,observeInspector,observeMeijinInspector} from '../lib/run-preview-contract.mjs';
 import {writeZoomExtension,zoomExtensionArgs,zoomExtensionWorker,setNativeZoom} from '../lib/native-zoom.mjs';
 import {displayTexts,actionNames,bubbleCases,actionCases,verifyDisplay} from '../lib/speech-display-contract.mjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 
 const require=createRequire(import.meta.url),[chrome,output]=process.argv.slice(2),product=currentProductFile();
 assert.ok(chrome&&output);const dir=path.resolve(output+'.artifacts');assert.ok(!fs.existsSync(output)&&!fs.existsSync(dir),'fresh output required');fs.mkdirSync(dir,{recursive:true});
@@ -24,7 +25,7 @@ const hookedPages=new WeakSet();
 const pageAtWidth=(browser,width,fn)=>pageFor({newContext:options=>browser.newContext({...options,viewport:{width,height:848}})},product,fn);
 function hooks(p){if(hookedPages.has(p))return;hookedPages.add(p);p.setDefaultTimeout(8000);p.on('dialog',d=>d.accept());answerProductConfirms(p,true);p.on('pageerror',e=>report.pageErrors.push(e.message));p.on('request',r=>{if(/^https?:/.test(r.url()))report.networkRequests.push(r.url());});}
 async function showProperty(p,label){const field=p.locator('#properties input[aria-label="'+label+'"]');if(!await field.isVisible())await p.locator('.properties-window .blockui-side-toggle').click();await field.scrollIntoViewIfNeeded();return field;}
-async function setNames(p,show){await p.locator('#objectSelect').selectOption('stage');await (await showProperty(p,'名前を見せる')).setChecked(show);await p.locator('#objectSelect').selectOption('sprite-1');}
+async function setNames(p,show){await p.locator('#objectSelect').selectOption('stage');await (await showProperty(p,'名前の ひょうじ')).setChecked(show);await p.locator('#objectSelect').selectOption('sprite-1');}
 async function fixture(p,{show=true,kind='short',mode='code',level='advanced',untimed=false}={}){
   hooks(p);const texts=displayTexts[kind],seconds=kind==='short'?2:10;
   await install(p,untimed?'「一」と言う。\n1秒待つ。\n「二」と言う。\n3秒待つ。':'「'+texts[0]+'」と'+seconds+'秒話す。',
@@ -58,7 +59,7 @@ try{
  await withBrowser(chrome,async browser=>{
   report.browser=browser.version();
   await run('DISPLAY-SETTINGS',async()=>{
-   const initial=await pageFor(browser,product,async p=>{hooks(p);const model=await p.evaluate(()=>Akari.makeEmptyProject().stage.showSpeechNames);await p.locator('#objectSelect').selectOption('stage');return{model,checkbox:await (await showProperty(p,'名前を見せる')).isChecked()};});
+   const initial=await pageFor(browser,product,async p=>{hooks(p);const model=await p.evaluate(()=>Akari.makeEmptyProject().stage.showSpeechNames);await p.locator('#objectSelect').selectOption('stage');return{model,checkbox:await (await showProperty(p,'名前の ひょうじ')).isChecked()};});
    const rows=[];for(const mode of ['code','blocks'])for(const level of ['basic','advanced'])rows.push(await pageAtWidth(browser,1180,async p=>{
     await fixture(p,{mode,level});await scale(p,100);const source=await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts)),history=[];
     await setNames(p,false);history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));await p.locator('#undoBtn').click();history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));await p.locator('#redoBtn').click();history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));
@@ -67,14 +68,14 @@ try{
     await p.locator('#stepBtn').click();preview.afterStep=await p.evaluate(()=>Akari.app.editorState.state);
     await p.locator('#continueBtn').click();preview.resumed=await p.evaluate(()=>Akari.app.editorState.state);
     await p.locator('#runtimeInspectorClose').click();preview.inspector.closed=!await p.locator('#runtimeInspector').evaluate(n=>n.open);// The toggle goes back to its toolbar place, where the run screen does not show it (it changes nothing there).
-    preview.inspector.modeControlsReturned=await p.locator('.menutool > .editor-modes #editorModecode').count()===1;preview.inspector.modeControlsShownWhileRunning=await p.locator('.menutool #editorModecode').isVisible();
+    preview.inspector.modeControlsReturned=await p.locator('.menutool > .editor-modes').locator('#editorModecode, #editorModeblocks').count()===2;preview.inspector.modeControlsShownWhileRunning=await p.locator('.menutool').locator('#editorModecode:not([hidden]), #editorModeblocks:not([hidden])').isVisible();
     await pressStop(p.locator('#stopBtn'));preview.stopped=await observeRunPreview(p);verifyRunPreview(preview,mode,level);const paletteFold=mode==='blocks'?await observePaletteFold(p,()=>shot(p,'folded-'+level+'.png')):null;await setNames(p,true);history.push(await p.evaluate(()=>Akari.app.project.stage.showSpeechNames));const on=await speech(p);await pressStop(p.locator('#stopBtn'));return{mode,level,history,off,on,preview,paletteFold,sourcePreserved:source===await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts))};
    }));
    // The other two of the six run-screen combinations (AUDIT.md): blocks at はじめて, and code with a 名人 text. The same two
    // speaking bodies are made at かんたん in code; はじめて is then chosen in blocks, or the open body becomes a 名人 text.
    const runScreens=[];for(const [mode,level] of [['blocks','entry'],['code','meijin']])runScreens.push(await pageAtWidth(browser,1180,async p=>{
     await fixture(p,{mode:'code',level:'basic'});
-    if(level==='entry'){await p.locator('#editorModeblocks').click();await p.locator('#uiLevel').selectOption('entry');await p.waitForFunction(()=>document.body.dataset.uiLevel==='entry'&&document.body.dataset.editorMode==='blocks');}
+    if(level==='entry'){await chooseView(p,'blocks');await p.locator('#uiLevel').selectOption('entry');await p.waitForFunction(()=>document.body.dataset.uiLevel==='entry'&&document.body.dataset.editorMode==='blocks');}
     else{await p.locator('#uiLevel').selectOption('meijin');await p.waitForFunction(()=>document.querySelector('#uiLevel').value==='meijin'&&Akari.app.project.scripts.some(s=>s.mode==='meijin'));}
     const source=await p.evaluate(()=>JSON.stringify(Akari.app.project.scripts)),picker=await p.evaluate(()=>[...document.querySelectorAll('#uiLevel option')].filter(o=>!o.hidden).map(o=>o.value));
     const shown=await speech(p),preview=await observeRunPreview(p);await shot(p,'preview-'+mode+'-'+level+'.png');preview.inspector=null;
@@ -91,7 +92,7 @@ try{
    const entryManyParts=[];for(const height of [768,650])entryManyParts.push(await pageFor({newContext:options=>browser.newContext({...options,viewport:{width:1366,height}})},product,async p=>{hooks(p);
     await p.locator('#uiLevel').selectOption('basic');await p.locator('#sampleBtn').click();if(await p.locator('#loseConfirmModal.show').isVisible())await p.locator('#loseConfirmProceed').click();
     await p.locator('#samplePicker [data-sample-id="maze"]').click();await p.waitForFunction(()=>Akari.app.project.components.length>=40);
-    await p.locator('#editorModeblocks').click();await p.locator('#uiLevel').selectOption('entry');await p.waitForFunction(()=>document.body.dataset.uiLevel==='entry');
+    await chooseView(p,'blocks');await p.locator('#uiLevel').selectOption('entry');await p.waitForFunction(()=>document.body.dataset.uiLevel==='entry');
     await frame(p);const editStage=await p.locator('#formSurface').evaluate(e=>e.getBoundingClientRect().toJSON());
     await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await frame(p);
     const preview=await observeRunPreview(p),stage=await p.locator('#formSurface').evaluate(e=>e.getBoundingClientRect().toJSON()),parts=await p.evaluate(()=>Akari.app.project.components.length);

@@ -3,6 +3,7 @@ const { currentProductFile } = require("./../../lib/product-path.cjs");
 const U=require('./ui-routes.cjs');
 const {withFreshPage}=require('./ui-case.cjs');
 const {setupRegressionPage,openPaletteTools}=require('./regression-setup.cjs');
+const {chooseView,viewToggle,readViewToggle}=require('./view-toggle.cjs');
 const {openBodyForTest} = require('./regression-setup.cjs');
 const fs=require('fs'),path=require('path'),crypto=require('crypto'),assert=require('assert/strict'),{pathToFileURL}=require('url');
 const {chromium}=require('playwright');
@@ -13,7 +14,7 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
  let page,root;
  const nodes=id=>root.locator('.blockui-node[data-schema-id="'+id+'"]');
  const state=()=>page.evaluate(()=>{const s=Akari.app.editorState;return{source:s.main.sourceText,history:s.history,redo:s.redo,pending:s.main.pendingEdit,mode:s.main.mode,owner:s.main.ownerKey,selection:s.main.blockSelection,scroll:s.main.scrollState,ast:s.main.syntaxAst};});
- const fixture=async source=>{if(await root.isVisible()){const cancel=root.locator('[data-blockui-action="cancel"]');if(await cancel.isEnabled())await cancel.click();}await (async()=>{const control=await reveal(page.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();await (async()=>{const control=await reveal(page.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();assert.equal((await state()).mode,'blocks');};
+ const fixture=async source=>{if(await root.isVisible()){const cancel=root.locator('[data-blockui-action="cancel"]');if(await cancel.isEnabled())await cancel.click();}await chooseView(page,'code',{reveal:reveal,open:openBodyForTest});await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill(source);})();await chooseView(page,'blocks',{reveal:reveal,open:openBodyForTest});assert.equal((await state()).mode,'blocks');};
  const selected=new Set((process.argv[4]||'').split(',').filter(Boolean));
  const test=async(id,fn)=>{
   if(selected.size&&!selected.has(id))return;
@@ -32,7 +33,7 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
   }catch(error){results.push({id,pass:false,error:error.stack});console.log('FAIL',id,error.message);}
  };
  try{
-  await test('UI-empty-body-switch',async()=>{await fixture('');assert.equal((await state()).source,'');assert.equal(await nodes('Script').count(),1);await (async()=>{const control=await reveal(page.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();assert.equal(await page.locator('#codeEditor').inputValue(),'');await (async()=>{const control=await reveal(page.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();assert.equal((await state()).ast.body.length,0);});
+  await test('UI-empty-body-switch',async()=>{await fixture('');assert.equal((await state()).source,'');assert.equal(await nodes('Script').count(),1);await chooseView(page,'code',{reveal:reveal,open:openBodyForTest});assert.equal(await page.locator('#codeEditor').inputValue(),'');await chooseView(page,'blocks',{reveal:reveal,open:openBodyForTest});assert.equal((await state()).ast.body.length,0);});
   await test('UI-pending-number-commit-cancel',async()=>{
    await fixture('点数を1にする\n点数に2を足す');const old=await state(),field=nodes('NumberLiteral').first().locator('input');
    await (await reveal(field)).fill('-');await (await reveal(root.locator('[data-blockui-action="commit"]'))).click();let now=await state();assert.equal(now.source,old.source);assert.equal(now.history,old.history);assert.equal(now.pending.value,'-');
@@ -93,7 +94,7 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
    assert.equal((await page.locator('.blockui-drop-note').textContent()).trim(),'ここには おけないよ');await page.waitForTimeout(400);
   });
   await test('UI-IME-switch-hold-end-commit',async()=>{
-   await fixture('1を言う');const old=await state(),field=nodes('NumberLiteral').locator('input');await field.dispatchEvent('compositionstart');await (await reveal(field)).fill('24');await (async()=>{const control=await reveal(page.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();assert.equal((await state()).mode,'blocks');assert.equal((await state()).source,old.source);await field.dispatchEvent('compositionend');await field.press('Enter');assert.equal((await state()).ast.body[0].value.value,24);
+   await fixture('1を言う');const old=await state(),field=nodes('NumberLiteral').locator('input');await field.dispatchEvent('compositionstart');await (await reveal(field)).fill('24');await chooseView(page,'code',{reveal:reveal,open:openBodyForTest});assert.equal((await state()).mode,'blocks');assert.equal((await state()).source,old.source);await field.dispatchEvent('compositionend');await field.press('Enter');assert.equal((await state()).ast.body[0].value.value,24);
   });
   await test('UI-palette-drag-new-nested-location',async()=>{
    await fixture('2回くり返す。\n  何もしない。');await U.openDetails(root.locator('.blockui-palette-options'));await root.locator('[data-blockui-palette-mode]').selectOption('statement');await root.locator('.blockui-palette-options > summary').click();await (await reveal(root.locator('[data-blockui-search]'))).fill('Say');const candidate=root.locator('[data-blockui-schema="Say"]');
@@ -111,12 +112,12 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
   });
   await test('UI-else-branch-focus-nested-comments',async()=>{
    const source='もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  もし 条件（条件の答え（あてはまらない））が成り立つなら、次のことをする。\n    何もしない。\n  そうでなければ、次のことをする。 ※ 内側\n    ※ 本文コメント\n    何もしない。\n※ 外側枝の前\nそうでなければ、次のことをする。 ※ 外側\n  何もしない。';
-   await fixture(source);for(const line of [4,8]){await (async()=>{const control=await reveal(page.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();const offset=source.split('\n').slice(0,line-1).join('\n').length+1;await page.locator('#codeEditor').evaluate((e,at)=>{e.setSelectionRange(at,at);e.focus();},offset);await (async()=>{const control=await reveal(page.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();const active=await page.evaluate(()=>({body:document.activeElement.dataset.blockuiBodyWrapper,line:document.activeElement.dataset.sourceLine}));assert.equal(active.body,'elseBody');assert.equal(Number(active.line),line);assert.equal((await state()).source,source);}
+   await fixture(source);for(const line of [4,8]){await chooseView(page,'code',{reveal:reveal,open:openBodyForTest});const offset=source.split('\n').slice(0,line-1).join('\n').length+1;await page.locator('#codeEditor').evaluate((e,at)=>{e.setSelectionRange(at,at);e.focus();},offset);await chooseView(page,'blocks',{reveal:reveal,open:openBodyForTest});const active=await page.evaluate(()=>({body:document.activeElement.dataset.blockuiBodyWrapper,line:document.activeElement.dataset.sourceLine}));assert.equal(active.body,'elseBody');assert.equal(Number(active.line),line);assert.equal((await state()).source,source);}
    assert.equal(await root.locator('[data-blockui-body-wrapper="elseBody"][data-source-line]').count(),2);
   });
   await test('UI-else-selection-follows-formatting',async()=>{
-   const source='もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n\n  何もしない。\nそうでなければ、次のことをする。\n  何もしない。';await fixture(source);await U.openAnnotations(nodes('IfStatement').first());await (async()=>{const control=await reveal(page.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();const offset=source.indexOf('そうでなければ');await page.locator('#codeEditor').evaluate((e,at)=>{e.setSelectionRange(at,at);e.focus();},offset);await (async()=>{const control=await reveal(page.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();assert.equal(await page.evaluate(()=>Akari.app.editorState.main.blockSelectionLocation.line),4);
-   const annotation=root.locator('[data-blockui-annotation="elseComment"]');await annotation.fill('※ 位置確認');await annotation.press('Enter');const updated=await state(),line=updated.source.split('\n').findIndex(x=>x.startsWith('そうでなければ'))+1;assert.equal(line,3,JSON.stringify(updated));assert.equal(await page.evaluate(()=>Akari.app.editorState.main.blockSelectionLocation.line),line);await (async()=>{const control=await reveal(page.locator('#editorModecode')); await openBodyForTest(control.page()); return control.click();})();assert.equal(await page.locator('#codeEditor').evaluate(e=>e.value.slice(0,e.selectionStart).split('\n').length),line);await (async()=>{const control=await reveal(page.locator('#editorModeblocks')); await openBodyForTest(control.page()); return control.click();})();
+   const source='もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n\n  何もしない。\nそうでなければ、次のことをする。\n  何もしない。';await fixture(source);await U.openAnnotations(nodes('IfStatement').first());await chooseView(page,'code',{reveal:reveal,open:openBodyForTest});const offset=source.indexOf('そうでなければ');await page.locator('#codeEditor').evaluate((e,at)=>{e.setSelectionRange(at,at);e.focus();},offset);await chooseView(page,'blocks',{reveal:reveal,open:openBodyForTest});assert.equal(await page.evaluate(()=>Akari.app.editorState.main.blockSelectionLocation.line),4);
+   const annotation=root.locator('[data-blockui-annotation="elseComment"]');await annotation.fill('※ 位置確認');await annotation.press('Enter');const updated=await state(),line=updated.source.split('\n').findIndex(x=>x.startsWith('そうでなければ'))+1;assert.equal(line,3,JSON.stringify(updated));assert.equal(await page.evaluate(()=>Akari.app.editorState.main.blockSelectionLocation.line),line);await chooseView(page,'code',{reveal:reveal,open:openBodyForTest});assert.equal(await page.locator('#codeEditor').evaluate(e=>e.value.slice(0,e.selectionStart).split('\n').length),line);await chooseView(page,'blocks',{reveal:reveal,open:openBodyForTest});
   });
   // A finger or a pen carries a block once it moves sideways more than 12 px (E-09); a shorter move is a press.
   for(const pointerType of ['touch','pen'])await test('UI-'+pointerType+'-pointer-drag',async()=>{
@@ -209,16 +210,17 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
    }finally{await cdp.send('Emulation.setTouchEmulationEnabled',{enabled:false}).catch(()=>{});await cdp.detach().catch(()=>{});}
    assert.ok(seen.filter(w=>!w.includes('scrolled')).length>=4&&seen.filter(w=>w.includes('scrolled')).length>=4,'blocks in view, scrolled and not: '+seen.length);
   });
-  // D1-04 (LANGUAGE.md コードとブロックで同じ本文を編集する): while the code has a mistake, 「いつ動く？」 is pale like 「ブロック」
-  // and a press keeps the code view; it shows 「コードの 赤い ところを 直すと、ブロックに もどれるよ」 under 「いつ動く？」, and a
-  // press elsewhere takes it away.
+  // D1-04 (LANGUAGE.md コードとブロックで同じ本文を編集する): while the code has a mistake, 「いつ動く？」 is pale and a press
+  // keeps the code view; it shows 「コードの 赤い ところを 直すと、ブロックに もどれるよ」 under 「いつ動く？」, and a press elsewhere
+  // takes it away. The view toggle 「コードモード ⇄」 is never pale (final call 22): it is refused, and says why when pressed.
   await test('UI-when-button-refused-with-code-error',async()=>{
-   await (await reveal(page.locator('#editorModecode'))).click();await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「こんにちは」と言');})();await page.waitForTimeout(400);
-   const when=page.locator('#sourceHeadingBtn'),blocks=page.locator('#editorModeblocks'),before=await state();
-   assert.equal(await blocks.getAttribute('aria-disabled'),'true','ブロック is pale while the code has a mistake');
-   assert.equal(await when.getAttribute('aria-disabled'),'true','いつ動く？ is pale like ブロック');
+   await chooseView(page,'code',{reveal:reveal});await (async()=>{const control=await reveal(page.locator('#codeEditor')); await openBodyForTest(control.page()); return control.fill('「こんにちは」と言');})();await page.waitForTimeout(400);
+   const when=page.locator('#sourceHeadingBtn'),toggle=viewToggle(page),before=await state();
+   assert.equal((await readViewToggle(page)).refused,'error','the view toggle is refused while the code has a mistake');
+   assert.equal(await when.getAttribute('aria-disabled'),'true','いつ動く？ is pale while the code has a mistake');
    // The pale look is the refused state's opacity; each button keeps its own colour in both states.
-   const pale=async e=>Number(await e.evaluate(n=>getComputedStyle(n).opacity));assert.equal(await pale(when),await pale(blocks),'the same pale look as ブロック');assert.ok(await pale(when)<1,'いつ動く？ is pale');
+   const pale=async e=>Number(await e.evaluate(n=>getComputedStyle(n).opacity));assert.ok(await pale(when)<1,'いつ動く？ is pale');
+   assert.equal(await pale(toggle),1,'the view toggle is not pale');assert.equal(await toggle.getAttribute('aria-disabled'),null,'the view toggle is not made unpressable');
    await when.click({force:true});await page.waitForTimeout(200);
    const note=await when.evaluate(button=>{const b=button.getBoundingClientRect(),words='コードの赤いところを直すと、ブロックにもどれるよ';
     const shown=[...document.querySelectorAll('body *')].filter(n=>n.children.length===0&&n.getClientRects().length&&n.textContent.replace(/\s+/g,'').includes(words));
@@ -248,11 +250,14 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
   });
   // E1-R1-06 (E-03, E-12): at はじめて a loop put in from the block list, with its body still to fill, is not a movement
   // that はじめて cannot show: no 「「はじめて」では 見えない 動きも あるよ」 notice, and the workspace does not move.
+  // The regression work holds bodies はじめて cannot show, so its notice is there before any loop: the case starts from
+  // 「新しく作る」, which opens at はじめて with nothing hidden, so a notice could come only from the loop being put in.
   await test('UI-entry-loop-draft-no-hidden-notice',async()=>{
-   await fixture('');await page.locator('#uiLevel').selectOption('entry');await page.waitForFunction(()=>document.body.dataset.uiLevel==='entry');
+   await (await reveal(page.locator('#newBtn'))).click();if(await page.locator('#loseConfirmProceed').isVisible())await page.locator('#loseConfirmProceed').click();
+   await page.waitForFunction(()=>document.body.dataset.uiLevel==='entry'&&Akari.app.project.scripts.every(s=>!s.source.trim()));
    const notice=()=>page.evaluate(()=>[...document.querySelectorAll('body *')].filter(n=>n.children.length===0&&n.getClientRects().length&&n.textContent.replace(/\s+/g,'').includes('「はじめて」では見えない')).length);
    const top=()=>root.locator('.blockui-workspace').evaluate(e=>Math.round(e.getBoundingClientRect().top));
-   const before={notice:await notice(),top:await top()};
+   const before={notice:await notice(),top:await top()};assert.equal(before.notice,0,'a new work shows no notice at はじめて');
    await root.locator('.blockui-palette-item [data-blockui-schema="RepeatCount"]').first().click();await page.waitForTimeout(300);
    const after={notice:await notice(),top:await top(),loops:await nodes('RepeatCount').count()};
    assert.equal(after.loops,1,'the loop is in the work');assert.equal(after.notice,0,'no notice about movements はじめて cannot show');assert.equal(after.top,before.top,'the workspace stays where it was');
