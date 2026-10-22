@@ -5784,8 +5784,7 @@ body[data-ui-level="entry"] :is(.blockui-heading-editor,.blockui-rules) { displa
 body[data-ui-level="entry"] .menutool>:is(#newBtn,#openBtn,#exportBtn,#resetBtn,#imageObjectAdd,#paintAdd,#soundQuickAdd,#assetBtn,#procBtn,#dataBtn,#diagnoseBtn,.sep) { display:none; }
 body[data-ui-level="entry"] :is(#entryProjectMenu,#tutorialStart) { display:block; }
 body[data-ui-level="entry"] #entryEvents { display:flex; flex-wrap:wrap; gap:6px; padding:6px 10px; }
-/* The ✓ is for the eye: aria-pressed already says which one is chosen, so the name does not read it. */
-body[data-ui-level="entry"] #entryEvents button[aria-pressed="true"]::before { content:'✓ ' / ''; }
+body[data-ui-level="entry"] #entryEvents button[aria-pressed="true"]::before { content:'✓ '; }
 body[data-ui-level="entry"] .code-head { display:flex; padding:6px 10px; }
 body[data-ui-level="entry"] #blockEditor { flex:1; min-height:0; overflow:hidden; display:flex; flex-direction:column; }
 body[data-ui-level="entry"] #blockEditor[hidden] { display:none; }
@@ -6057,6 +6056,10 @@ body[data-editor-mode="blocks"]:not(.runtime) .codewin > #blockEditor { grid-row
 /* The editor fits the window from 600 px high; the block area may shrink to 300 px. */
 body[data-editor-mode="blocks"] #blockEditor .blockui-layout { min-height: 300px; }
 
+
+/* The ✓ of the chosen event button is for the eye: aria-pressed already says which one is chosen, so its name does
+   not read it. */
+body[data-ui-level="entry"] #entryEvents button[aria-pressed="true"]::before { content: '✓ ' / ''; }
 
 /* はじめて while running: the stage takes the large column; the ブロックの一覧 is put away and the built blocks stay.
    On a narrow screen the stage column stays inside the window (100% less the 10 px column gap). The キャラクター・部品

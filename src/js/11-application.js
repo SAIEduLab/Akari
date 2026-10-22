@@ -5762,7 +5762,7 @@
       if (!flushActiveEditor()) {
         // A press that cannot make the file says why (the review waits, or the code has a mistake).
         const why = sourceImportChoice() || editorFailureStatus;
-        if (why) setStatus('まだ ファイルに できないよ。' + why);
+        if (why) setStatus('まだ ファイルに できないよ。' + why + (why.endsWith('。') ? '' : '。'));
         return;
       }
       clearTimeout(historyTimer);
@@ -8063,12 +8063,13 @@
       'click',
       (event) => {
         const target = event.target.closest('button,.tree-item,.tool');
+        // うごく作品を ファイルにする closes the input itself and says why it does not go on (exportProject), as ▶ does.
+        if (target?.matches('#exportBtn,#entryExport')) return;
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           target.closest('#blockEditor,#callableBlocks,.editor-modes,#sourceImport,#loseConfirmModal,#samplePicker') ||
-          // ▶ 動かす and うごく作品を ファイルにする close the input themselves and say why they do not go on (startRun,
-          // exportProject).
-          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"],#runBtn,#exportBtn,#entryExport')
+          // ▶ 動かす closes the input itself and says why it does not run (startRun).
+          target.matches('#tutorialStart,#tutorialExit,#undoBtn,#redoBtn,#saveBtn,#callableSaveProject,#newBtn,#sampleBtn,#openBtn,#procBtn,#procClose,[data-blockui-action="cancel"],#sourceHeadingBtn[aria-disabled="true"],#runBtn')
         )
           return;
         if (!flushActiveEditor()) {
