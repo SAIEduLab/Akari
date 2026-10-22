@@ -6,21 +6,24 @@ const{chromium}=require('playwright');
 (async()=>{
  const dir=L.path.resolve(process.argv[2]||'audit-evidence/browser/candidate'),manifest=L.verifyManifest(dir),url=pathToFileURL(L.path.join(dir,manifest.candidate)).href,results=[],traces={},errors=[],network=[];
  const browser=await chromium.launch({executablePath:(process.env.AKARI_BROWSER||undefined),headless:true,args:['--allow-file-access-from-files']});
- const api=L.loadApi(L.read(L.path.join(dir,manifest.candidate))),objects=[{id:'stage',type:'stage'},{id:'button-1',type:'button'},{id:'sprite-1',type:'sprite'},{id:'trace-label',type:'label'},{id:'trace-box',type:'box'},{id:'trace-input',type:'input'}],events=JSON.parse(JSON.stringify(api.EVENT_BY_TYPE)),expected=objects.flatMap(o=>events[o.type].map(event=>({id:'event:'+o.type+':'+event,...o,event}))),fixtures={};assert.equal(expected.length,32);
+ const api=L.loadApi(L.read(L.path.join(dir,manifest.candidate))),objects=[{id:'stage',type:'stage'},{id:'button-1',type:'button'},{id:'sprite-1',type:'sprite'},{id:'trace-label',type:'label'},{id:'trace-box',type:'box'},{id:'trace-input',type:'input'}],events=JSON.parse(JSON.stringify(api.EVENT_BY_TYPE)),expected=objects.flatMap(o=>events[o.type].map(event=>({id:'event:'+o.type+':'+event,...o,event}))),fixtures={};assert.equal(expected.length,37);
  function fixture(mode,error){const p=makeRegressionProject(api),defaultSpriteName=p.components.find(x=>x.id==='sprite-1').name;p.name='全イベント観測';p.scripts=[];p.projectData.lists.find(x=>x.name==='名前一覧').initialValue=[];p.projectData.variables.find(x=>x.name==='点数').initialValue=error?1:0;
-  p.components.find(x=>x.id==='button-1').x=30;p.components.find(x=>x.id==='button-1').y=30;p.components.find(x=>x.id==='sprite-1').x=420;p.components.find(x=>x.id==='sprite-1').y=200;
-  // Keep the input clear of the sprite's settled (100, 200) bounds at every zoom.
-  // Previously its right edge crossed the sprite's click center after pixel rounding.
-  const button=p.components.find(x=>x.id==='button-1');for(const[id,type,x,y]of [['trace-label','label',30,110],['trace-box','box',250,30],['trace-input','input',440,30]])p.components.push({...JSON.parse(JSON.stringify(button)),id,type,name:type==='input'?'入力欄1':type==='box'?'四角1':'文字1',x,y,w:140,h:36,text:type==='input'?'初期入力':type,localData:{variables:[],lists:[]}});
+  // Positions are centres from the bottom-left corner. No part touches an edge when the run starts, so each ふれたとき
+  // body starts exactly once: the sprite's when its start body goes to (0, 0), the others' when their click (the input's
+  // value change) moves them off the right edge. Keep every part clear of the sprite's settled (100, 200) bounds
+  // (よこ 10..190, たて 110..290) and of the stage click point (590, 60) at every zoom.
+  p.components.find(x=>x.id==='button-1').x=300;p.components.find(x=>x.id==='button-1').y=60;p.components.find(x=>x.id==='sprite-1').x=420;p.components.find(x=>x.id==='sprite-1').y=200;
+  const button=p.components.find(x=>x.id==='button-1');for(const[id,type,x,y]of [['trace-label','label',300,140],['trace-box','box',480,60],['trace-input','input',480,140]])p.components.push({...JSON.parse(JSON.stringify(button)),id,type,name:type==='input'?'入力欄1':type==='box'?'四角1':'文字1',x,y,w:140,h:36,text:type==='input'?'初期入力':type,localData:{variables:[],lists:[]}});
   if(p.stage.backdrops.length<2)p.stage.backdrops.push({id:'trace-backdrop',name:'第二背景',kind:'color',value:'#ffffff'});
   for(const e of expected){const tag=e.type+':'+e.event;let source='名前一覧に「'+(mode==='blocks'?'編集中':tag)+'」を追加する\n名前一覧に乱数（1、100000）を追加する\n0.1秒待つ\n名前一覧に乱数（1、100000）を追加する';
-   if(e.type==='sprite'&&e.event==='start')source+='\n横0、縦0の位置へ行く\n0.1秒で横100、縦200の位置へ滑る';
+   if(e.type==='sprite'&&e.event==='start')source+='\n画面の左下のはしから、右へ0歩、上へ0歩のばしょへ行く\n0.1秒かけて、画面の左下のはしから、右へ100歩、上へ200歩のばしょへ行く';
    if(e.type==='stage'&&e.event==='start')source+='\n0.05秒待つ\n「滑走中」と言う\n0.05秒待つ';
    if(e.type==='button'&&e.event==='click')source+='\nみんなに「観測知らせ」と知らせて、知らせを受けて始めたことが全部終わるまで待つ\n次の背景にする\n「'+defaultSpriteName+'」のコピーを作る';
    const sensor={message:'受け取った知らせ',keyDown:'押されたキー',valueChanged:'新しい値',backdropChanged:'新しい背景名'}[e.event];if(sensor)source+='\n名前一覧に'+sensor+'を追加する';
+   if((e.event==='click'&&['button','label','box'].includes(e.type))||(e.type==='input'&&e.event==='valueChanged'))source+='\nいまのばしょから、右へ1000歩動く';
    source+='\nもし 点数が1と同じなら、次のことをする\n  1÷0を言う\n名前一覧に「完了:'+tag+'」を追加する';
    if(e.event==='cloneStart')source+='\nこのコピーだけを消す';else source+='\nこのスクリプトを止める';
-   const ast=api.parseSyntax(source).ast;assert.ok(ast);p.scripts.push({targetId:e.id,event:e.event,source:api.formatScript(ast)});
+   const ast=api.parseSyntax(source).ast;assert.ok(ast);p.scripts.push({targetId:e.id,event:e.event,...(e.event==='touchStart'?{filter:{target:'端'}}:{}),source:api.formatScript(ast)});
   }assert.deepEqual(JSON.parse(JSON.stringify(api.compileProject(p).errors)),[]);return p;
  }
  // The observer calls every original method. Only the external clock and seed

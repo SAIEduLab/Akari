@@ -170,6 +170,8 @@ try {await withBrowser(chrome,async browser=>{
     const file=await p.evaluate(()=>Akari.serializeProject(Akari.app.project,Akari.app.assetStore).replaceAll(Akari.diagnostics.DEFAULT_MASCOT_SHA256,'0'.repeat(64)));
     const previous=await p.locator('#console').textContent();await p.locator('#fileInput').setInputFiles({name:'broken-digest.akari.md',mimeType:'text/plain',buffer:Buffer.from(file)});
     await p.waitForFunction(previous=>document.querySelector('#console').textContent!==previous,previous);
+    // A refused 開く stays on the screen until とじる (1.5.0); the child closes it before reading 出力.
+    await p.locator('#openRefusalModal.show').waitFor();assert.equal(await p.locator('#openRefusalTitle').textContent(),'この ファイルは 開けなかったよ');assert.doesNotMatch(await p.locator('#openRefusalModal').innerText(),/F508|記録と合いません/);await p.locator('#openRefusalClose').click();await p.locator('#openRefusalModal').waitFor({state:'hidden'});
     const outputReachability=await openOutputWithWheel(p);const visible=await p.locator('#console').innerText();assert.match(visible,/作品ファイルを 開けませんでした/);assert.match(visible,/えらんだ ファイルは かえていません/);assert.doesNotMatch(visible,/記録と合いません|F508/);
     const disclosure=p.locator('#console > details').last();await disclosure.locator('> summary').click();const detail=await disclosure.locator('> pre').innerText();assert.match(detail,/F508.*読みこめませんでした: 絵や音の中身が、記録と合いません/);
     assert.deepEqual(await state(p),before);return {visible,detail,before,after:await state(p),source:'genuinely malformed serialized asset digest',outputReachability};

@@ -83,8 +83,8 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
       assert.deepEqual(box,{x:0,y:0,width:640,height:400});await p.screenshot({path:path.join(out,'artwork-iframe.png')});return{box,automatic:true};},host);
   });
   await run('EXPORT-ARTWORK-INITIALIZATION-ERROR',async()=>{
-    const file=generate('invalid-contract',marker),html=fs.readFileSync(file,'utf8');assert.equal(html.split('"runtimeContractId":3').length,2);
-    fs.writeFileSync(file,html.replace('"runtimeContractId":3','"runtimeContractId":0'));
+    const file=generate('invalid-contract',marker),html=fs.readFileSync(file,'utf8');assert.equal(html.split('"runtimeContractId":4').length,2);
+    fs.writeFileSync(file,html.replace('"runtimeContractId":4','"runtimeContractId":0'));
     return withPage(b,async p=>{await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='ERROR');
       assert.equal(await p.locator('#playerActivation').isVisible(),false);await p.locator('#playerOutput details summary').click();
       assert.match(await p.locator('#playerOutput').innerText(),/X602/);return{rejected:true,detailsVisible:true,errorCode:(await p.locator('#playerOutput details pre').innerText()).match(/^[A-Z]\d+/)?.[0]};},file);
@@ -203,7 +203,7 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
       views:[{kind:'script',ownerKey:'script:incoming-second',codeSelection:{start:1,end:3,direction:'forward'},scrollState:{codeTop:0,codeLeft:0}}]};
     const valid=api.serializeProject(incoming,api.makeDefaultAssetStore(),editor),variants=[];
     const stored=async p=>p.evaluate(async()=>{
-      const req=indexedDB.open('akari-workspace-f4',1),db=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+      const req=indexedDB.open('akari-workspace-f5',1),db=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
       try{const get=db.transaction('workspace','readonly').objectStore('workspace').get('latest'),rec=await new Promise((resolve,reject)=>{get.onsuccess=()=>resolve(get.result);get.onerror=()=>reject(get.error);});
         if(!rec)return null;const decoded=await Akari.decodeWorkspaceHistory(rec.workspace);
         return {cursor:decoded.cursor,frames:decoded.frames.map(f=>({project:JSON.stringify(f.project),pending:f.editorState.pendingEditors,callableDraft:f.editorState.callableDraft}))};
@@ -229,6 +229,9 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
       await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN'&&document.querySelector('#console').textContent.includes('読みこめませんでした'));
       const after=await state(p),autosaveAfter=await stored(p),faultTriggered=await p.evaluate(()=>!!window.openRestoreFault);
       assert.deepEqual(after,before);assert.deepEqual(autosaveAfter,autosaveBefore);assert.equal(dialogs,0);assert.equal(faultTriggered,kind==='restore-failure');
+      // A refused 開く stays on the screen until とじる (1.5.0); closing it leaves the work and its autosave as they were.
+      await p.locator('#openRefusalModal.show').waitFor();assert.equal(await p.locator('#openRefusalTitle').textContent(),'この ファイルは 開けなかったよ');await p.locator('#openRefusalClose').click();await p.locator('#openRefusalModal').waitFor({state:'hidden'});
+      assert.deepEqual(await state(p),before);
       await p.locator('#openBtn').click();await p.locator('#openConfirmModal.show').waitFor();
       variants.push({kind,before,after,autosaveBefore,autosaveAfter,faultTriggered,confirmationAgain:true,dialogs});
     });

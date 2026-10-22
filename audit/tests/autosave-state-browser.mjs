@@ -20,7 +20,7 @@ const settled=p=>p.waitForFunction(()=>document.querySelector('#autosaveState').
 const edit=async(p,source)=>{await p.locator('#codeEditor').fill(source);await p.locator('#codeEditor').press('Tab');};
 const restore=async p=>{await p.reload();await p.locator('#recoveryRestore').click();await p.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));};
 async function record(p){return p.evaluate(async()=>{
-  const rec=await new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f4',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>{db.close();resolve(get.result||null);};get.onerror=()=>reject(get.error);};});
+  const rec=await new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f5',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),get=tx.objectStore('workspace').get('latest');get.onsuccess=()=>{db.close();resolve(get.result||null);};get.onerror=()=>reject(get.error);};});
   if(!rec)return null;const decoded=await Akari.decodeWorkspaceHistory(rec.workspace),frame=decoded.frames[decoded.cursor];
   return {revision:rec.revision,updatedAt:rec.updatedAt,cursor:decoded.cursor,frameCount:decoded.frames.length,project:frame.project,editorState:frame.editorState};
 });}
@@ -124,6 +124,9 @@ try{await withBrowser(chrome,async browser=>{
     await p.locator('#projectName').fill('自動保存状態の検証・手順');await p.locator('#projectName').press('Tab');await settled(p);await restore(p);await instrument(p);
     const o={restoredFromStorage:true,before:await state(p),paused:await pause(p)};await settled(p);o.settled=await state(p);o.record=await record(p);
     await p.locator('#failureClose').click();
+    // 保存 cannot be pressed on the run screen (1.5.0, LANGUAGE.md 「作る画面と動かす画面」): stop first, then save.
+    o.saveDisabledWhilePaused=await p.locator('#saveBtn').isDisabled();if(!o.saveDisabledWhilePaused)throw Error('保存 can be pressed while paused');
+    await p.locator('#stopBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN');
     const [download]=await Promise.all([p.waitForEvent('download'),p.locator('#saveBtn').click()]),file=await download.path();
     if(!file)throw Error('Manual project download did not complete');
     o.exported=await p.evaluate(async text=>{const parsed=await Akari.parseProjectFile(text);return{project:parsed.project,editorState:parsed.editorState};},fs.readFileSync(file,'utf8'));

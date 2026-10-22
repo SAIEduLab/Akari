@@ -10,7 +10,7 @@ const require=createRequire(import.meta.url),[chrome,outputArg]=process.argv.sli
 const report={schema:'akari-workspace-history-browser-v1',status:'RUNNING',snapshot:snapshot(product),uxAcceptance:false,environment:{browser:null,playwright:require('playwright/package.json').version},pageErrors:[],results:[]};
 fs.mkdirSync(path.dirname(output),{recursive:true});
 const save=()=>fs.writeFileSync(output,JSON.stringify(report,null,2)+'\n');
-const readRecord=page=>page.evaluate(()=>new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f4',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),q=tx.objectStore('workspace').get('latest');q.onsuccess=()=>{db.close();const r=q.result;resolve(r?{updatedAt:r.updatedAt,revision:r.revision,workspace:{...r.workspace,assets:r.workspace.assets.map(a=>({...a,blob:a.blob?{size:a.blob.size,type:a.blob.type}:null}))}}:null);};q.onerror=()=>reject(q.error);};}));
+const readRecord=page=>page.evaluate(()=>new Promise((resolve,reject)=>{const req=indexedDB.open('akari-workspace-f5',1);req.onerror=()=>reject(req.error);req.onsuccess=()=>{const db=req.result,tx=db.transaction('workspace','readonly'),q=tx.objectStore('workspace').get('latest');q.onsuccess=()=>{db.close();const r=q.result;resolve(r?{updatedAt:r.updatedAt,revision:r.revision,workspace:{...r.workspace,assets:r.workspace.assets.map(a=>({...a,blob:a.blob?{size:a.blob.size,type:a.blob.type}:null}))}}:null);};q.onerror=()=>reject(q.error);};}));
 const settled=page=>page.waitForFunction(()=>document.querySelector('#autosaveState').textContent.includes('このパソコンに のこしたよ'),null,{timeout:12000});
 const restore=async page=>{await page.reload();await page.locator('#recoveryRestore').click();await page.waitForFunction(()=>!document.querySelector('#recoveryModal').classList.contains('show'));};
 try{await withBrowser(chrome,async browser=>{
@@ -32,7 +32,7 @@ try{await withBrowser(chrome,async browser=>{
  });
  await run('history/browser-pending-number',async page=>{
   await page.locator('#codeEditor').fill('10歩動く。');await page.waitForTimeout(300);await page.locator('#editorModeblocks').click();
-  const field=page.locator('#blockEditor .blockui-node[data-schema-id="NumberLiteral"] [data-blockui-field="value"]');await field.fill('－');await settled(page);await restore(page);
+  const field=page.locator('#blockEditor .blockui-node[data-schema-id="MotionCommand:MOVE"] [data-blockui-field="value"]');await field.fill('－');await settled(page);await restore(page);
   assert.equal(await field.inputValue(),'－');assert.equal(await page.evaluate(()=>Akari.app.editorState.main.pendingEdit.value),'－');
   await page.locator('#undoBtn').click();assert.equal(await page.evaluate(()=>Akari.app.editorState.main.pendingEdit),null);assert.equal(await field.inputValue(),'10');
   await page.locator('#redoBtn').click();assert.equal(await field.inputValue(),'－');return{input:'－',restored:'－',undo:'10',redo:'－'};

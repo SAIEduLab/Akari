@@ -45,13 +45,20 @@ const editActor=async(id,name,schemaId)=>{const before=await session(),current=(
  if(SUBJECTLESS.has(schemaId)){if((await session()).pendingEdit)await (await reveal(p.locator('#editorCancel'))).click();const after=await session();assert.equal(after.pendingEdit,null);assert.equal(after.sourceText,before.sourceText,'a sentence without a subject keeps its text');assert.deepEqual((await locate(schemaId))[0].fields.actorRef||{kind:'self'},current,'a sentence without a subject keeps its block subject');return{key:'actorRef',type:'actor-ref',before:current,subjectInSentence:false,unchanged:true};}
  const value={kind:'named',name},after=await session();assert.equal(after.pendingEdit,null,schemaId+' subject '+name+' refused: '+after.pendingEdit?.reason+' '+JSON.stringify(after.pendingEdit?.value));assert.deepEqual((await locate(schemaId))[0].fields.actorRef,value,'block subject');
  if(categoryOf(schemaId)!=='expression')assert.ok(after.sourceText.split('\n').some(line=>line.trimStart().startsWith(name+'は')||line.includes('、'+name+'は')),'sentence names its subject: '+after.sourceText);
- assert.notDeepEqual(value,current);return{key:'actorRef',type:'actor-ref',before:current,value};};
+ assert.notDeepEqual(value,current);await closeWho();return{key:'actorRef',type:'actor-ref',before:current,value};};
 // Back to the default subject, so later statements keep the subject the row's other
 // operations were written for (an explicit subject also becomes the topic, LANGUAGE.md 202).
-const restoreSelf=async(schemaId,named)=>{const n=(await locate(schemaId))[0],kind=root().locator('[data-blockui-structured-role="actorRef.kind"][data-block-id="'+n.id+'"]');await (await reveal(kind)).selectOption('self');await settle();
+// The だれが choice stays open over the sentence until its summary is pressed again (1.5.0); close it when done.
+const closeWho=async()=>{for(const summary of await root().locator('details.blockui-who[open] > summary').all())if(await summary.isVisible())await summary.click();};
+const restoreSelf=async(schemaId,named)=>{const n=(await locate(schemaId))[0],kind=root().locator('[data-blockui-structured-role="actorRef.kind"][data-block-id="'+n.id+'"]');await (await reveal(kind)).selectOption('self');await settle();await closeWho();
  const after=await session();assert.equal(after.pendingEdit,null);assert.deepEqual((await locate(schemaId))[0].fields.actorRef,{kind:'self'},'subject restored');
  if(categoryOf(schemaId)!=='expression')assert.ok(!after.sourceText.split('\n').some(line=>line.trimStart().startsWith(named+'は')),'restored sentence has no explicit subject');return{kind:'self'};};
-const editReference=async(id,f)=>{const control=root().locator('[data-blockui-field="'+f.key+'"][data-block-id="'+id+'"]'),before=await session(),project=await projectText(),shown=await (await reveal(control)).inputValue();
+const editReference=async(id,f)=>{const node0=await byId(id);
+ // A 「〜の合図を送る」 shows no field for its link to the wait after it: that link comes from the code that follows
+ // (1.5.0, E-14 / I4V-09), so it is not a choice of the block and stays as it was.
+ if(node0.schemaId==='Broadcast'&&f.key==='broadcastRef'){assert.equal(await root().locator('[data-blockui-field="'+f.key+'"][data-block-id="'+id+'"]').count(),0,'no field for the internal broadcastRef');
+  return{key:f.key,type:f.type,before:node0.fields[f.key]??null,shown:false,internal:true};}
+ const control=root().locator('[data-blockui-field="'+f.key+'"][data-block-id="'+id+'"]'),before=await session(),project=await projectText(),shown=await (await reveal(control)).inputValue();
  // LANGUAGE.md 439: the broadcast is bound by position, so a typed name cannot rebind it.
  await control.fill(shown+'改');await control.press('Tab');await p.waitForFunction(d=>!!(d?Akari.app.editorState.draft:Akari.app.editorState.main).pendingEdit,draft);
  const pending=(await session()).pendingEdit;assert.ok(pending.reason,'reference change explains its refusal');assert.equal(await projectText(),project,'refused reference leaves the project unchanged');
@@ -64,12 +71,31 @@ const editArgumentNames=async(id,f)=>{const n=await byId(id),names=ARGUMENT_NAME
  await (await reveal(root().locator('[data-blockui-structured-role="argumentNames.mode"][data-block-id="'+id+'"]'))).selectOption('named');
  for(const [i,name]of names.entries()){const input=root().locator('[data-blockui-structured-role="argumentNames.'+i+'"][data-block-id="'+id+'"]');await (await reveal(input)).fill(name);if(i===names.length-1)await input.press('Enter');}await settle();
  assert.equal((await session()).pendingEdit,null);assert.deepEqual((await locate(n.schemaId))[0].fields.argumentNames,names,'named arguments');return{key:f.key,type:f.type,before:n.fields.argumentNames??null,value:names};};
+// Directions of the move blocks (LANGUAGE.md 789-791). いまのばしょから動く starts with one direction, chosen from
+// 右・左・上・下; the other one is added with 「＋ たてにも動く」／「＋ よこにも動く」 and taken off again with
+// 「たてを外す」／「よこを外す」. 決めたばしょへ行く shows 「右へ」「上へ」 as words with no choice unless the code writes
+// 左へ／下へ. Every other direction is a choice of its field; the choices are the product schema's.
+const directionChoices=(schemaId,key)=>api.BLOCK_SCHEMA_BY_ID.get(schemaId)?.fields.find(x=>x.key===key)?.choices||['left','right'];
+const editMoveDirection=async(id,f,choice)=>{const n=await byId(id),schemaId=n.schemaId;
+ if(!['MotionCommand:MOVE_BY','MotionCommand:GOTO'].includes(schemaId)||await root().locator('[data-blockui-field="'+f.key+'"][data-block-id="'+id+'"]').count())return null;
+ const choices=directionChoices(schemaId,f.key),leg=f.key==='xDir'?'x':'y',main=node(id).locator(':scope > .blockui-node-content > .blockui-node-main');
+ if(schemaId==='MotionCommand:GOTO'){const word=f.key==='xDir'?'右へ':'上へ';assert.ok((await main.innerText()).replace(/\s+/g,'').includes(word),'fixed word '+word);
+  assert.equal(await main.locator('select[data-blockui-field="'+f.key+'"],select[data-blockui-action="motion-direction"]').count(),0,'no direction choice in a fixed place');assert.equal(n.fields[f.key],choices[0]);return{key:f.key,type:f.type,before:n.fields[f.key],fixedWord:word,noChoice:true};}
+ const single=main.locator(':scope > [data-blockui-action="motion-direction"]');
+ if(n.inputs[leg]&&await single.count()){const before=await single.inputValue(),value=choice??choices.find(c=>c!==before);await (await reveal(single)).selectOption(value);await settle();
+  const after=await session();assert.equal(after.pendingEdit,null);assert.equal((await locate(schemaId))[0].fields[f.key],value,'one direction chosen');assert.notEqual(value,before);return{key:f.key,type:f.type,before,value,oneDirection:true};}
+ const source=(await session()).sourceText,add=node(id).locator('.blockui-extra [data-blockui-action="motion-leg-add-'+leg+'"]');await (await reveal(add)).click();await settle();id=(await locate(schemaId))[0].id;
+ const control=root().locator('[data-blockui-field="'+f.key+'"][data-block-id="'+id+'"]'),before=await control.inputValue(),value=choice??choices.find(c=>c!==before);await (await reveal(control)).selectOption(value);await settle();
+ assert.equal((await session()).pendingEdit,null);assert.equal((await locate(schemaId))[0].fields[f.key],value,'added direction chosen');
+ await (await reveal(node(id).locator('.blockui-extra [data-blockui-action="motion-leg-remove-'+leg+'"]'))).click();await settle();{const now=(await session()).sourceText;assert.equal(now,source,'taking the added direction off restores the sentence: '+JSON.stringify({now,source}));}
+ return{key:f.key,type:f.type,before,value,addedAndRemoved:true};};
 const editField=async(id,f,annotation=false,choice)=>{
+ if(!annotation&&f.type==='direction'){const moved=await editMoveDirection(id,f,choice);if(moved)return moved;}
  if(!annotation&&f.type==='actor-ref'){const schemaId=(await byId(id)).schemaId,name=choice??await ownerName(),result=await editActor(id,name,schemaId);if(!result.unchanged)result.restored=await restoreSelf(schemaId,name);return result;}
  if(!annotation&&f.type==='reference')return editReference(id,f);
  if(!annotation&&f.type==='heading')return editHeading(id,f);
  if(f.key==='hasElse')await U.openNodeMenu(node(id));if(annotation)await U.openAnnotations(node(id));let control=root().locator('['+(annotation?'data-blockui-annotation':'data-blockui-field')+'="'+f.key+'"][data-block-id="'+id+'"]');if(annotation){const details=control.locator('xpath=ancestor::details[1]');if(!(await details.getAttribute('open')!==null))await (await reveal(details.locator('summary'))).click();}const before=await control.inputValue(),signedParentId=await control.getAttribute('data-signed-parent-id'),signedNumber=f.type==='number'&&!!signedParentId;let value;
- if(f.type==='boolean'){value=before==='true'?'false':'true';await (await reveal(control)).selectOption(value);}else if(f.type==='qualifier'){value=before==='project'?'exact':'project';await (await reveal(control)).selectOption(value);}else if(f.type==='unit'){value=choice??(before==='点'?'歩':'点');await (await reveal(control)).selectOption(value);}else if(f.type==='direction'){value=choice??(before==='left'?'right':'left');await (await reveal(control)).selectOption(value);}else{value=annotation?(f.fixtureValue||'※ 注釈  '):f.type==='number'?(choice!==undefined?String(choice):signedNumber?'-13':'13'):f.type==='comment'?' コメント改　 ':f.type==='string'?'文字改':f.key==='binder'?'要素改':'名前改';await (await reveal(control)).fill(value);await control.press('Tab');}
+ if(f.type==='boolean'){value=before==='true'?'false':'true';await (await reveal(control)).selectOption(value);}else if(f.type==='qualifier'){value=before==='project'?'exact':'project';await (await reveal(control)).selectOption(value);}else if(f.type==='unit'){value=choice??(before==='点'?'歩':'点');await (await reveal(control)).selectOption(value);}else if(f.type==='direction'){const schemaId=(await byId(id)).schemaId;value=choice??directionChoices(schemaId,f.key).find(c=>c!==before);await (await reveal(control)).selectOption(value);}else{value=annotation?(f.fixtureValue||'※ 注釈  '):f.type==='number'?(choice!==undefined?String(choice):signedNumber?'-13':'13'):f.type==='comment'?' コメント改　 ':f.type==='string'?'文字改':f.key==='binder'?'要素改':'名前改';await (await reveal(control)).fill(value);await control.press('Tab');}
  if(f.key==='hasElse'&&value==='true')await completeRegressionHoles(p,rootId,id);
  const active=await session();assert.equal(active.pendingEdit,null,`${id}.${f.key} pending`);if(signedNumber){const nodes=[];walkTree(active.blockView,n=>nodes.push(n));const unary=nodes.find(n=>n.id===signedParentId);assert.ok(unary,'original signed parent remains in the tree');assert.equal(unary.inputs.value.id,id,'edited magnitude remains under the original signed parent');assert.equal(unary.schemaId,'UnaryExpression:NEG','merged signed control preserves the original negation');assert.equal(unary.inputs.value.schemaId,'NumberLiteral');assert.equal(unary.inputs.value.fields.value,13,'original child magnitude remains exactly13');}assert.notEqual(value,before);return{key:f.key,type:f.type,before,value,annotation};};
 const action=(id,name)=>({click:async()=>{await U.openNodeMenu(node(id));await node(id).locator(':scope > .blockui-node-head [data-blockui-action="'+name+'"]').click();}});
@@ -95,7 +121,12 @@ const structuralOperations=async(s,id)=>{
  }
  let current=await session(),originalId=s.category==='target'?current.blockView.bodies.body[0].id:s.category==='script'?current.blockView.bodies.body[0].id:id;
  const container=await append('RepeatCount');await editField(container.bodies.body[0].id,{key:'inlineComment',fixtureValue:'※ 移動先 '},true);await action(originalId,'duplicate').click();current=await session();const list=[];const walk=n=>{list.push(n);for(const children of Object.values(n.bodies||{}))children.forEach(walk);};walk(current.blockView);const original=list.find(n=>n.id===originalId),copy=list.filter(n=>n.schemaId===original.schemaId&&n.id!==originalId&&n.id!==container.id).find(n=>JSON.stringify({...n,id:null})===JSON.stringify({...original,id:null}))||list.find(n=>n.schemaId===original.schemaId&&n.id!==originalId&&n.id!==container.id);
- assert.ok(copy,'duplicate present');await action(copy.id,'move').click();await bodyPosition(container.id,'body',1).click();current=await session();const moved=current.blockView.bodies.body.find(n=>n.id===container.id).bodies.body;assert.equal(moved.at(-1).id,copy.id);await action(copy.id,'move-up').click();await action(copy.id,'move-down').click();const before=await session();await action(copy.id,'remove').click();await historyRoundtrip(before);return{scope:s.category==='target'?'required target through owning statement':s.category==='script'?'root body child':'statement',duplicate:true,nestedMove:true,reorderBothDirections:true,delete:true,undoRedoExact:true};
+ assert.ok(copy,'duplicate present');await action(copy.id,'move').click();await bodyPosition(container.id,'body',1).click();current=await session();const containerIndex=current.blockView.bodies.body.findIndex(n=>n.id===container.id),moved=current.blockView.bodies.body[containerIndex].bodies.body;assert.equal(moved.at(-1).id,copy.id);
+ // A committed edit may give the blocks new ids (1.5.0), so the copy is found again by its place after each move.
+ const shape=treeShape(moved.at(-1)),inner=async()=>(await session()).blockView.bodies.body[containerIndex].bodies.body;
+ await action(copy.id,'move-up').click();const up=(await inner()).at(-2);assert.equal(treeShape(up),shape,'move-up moves the copy one place up');
+ await action(up.id,'move-down').click();const down=(await inner()).at(-1);assert.equal(treeShape(down),shape,'move-down moves it back');
+ const before=await session();await action(down.id,'remove').click();await historyRoundtrip(before);return{scope:s.category==='target'?'required target through owning statement':s.category==='script'?'root body child':'statement',duplicate:true,nestedMove:true,reorderBothDirections:true,delete:true,undoRedoExact:true};
 };
 const download=async name=>{const pending=p.waitForEvent('download');await (await reveal(p.locator('#saveBtn'))).click();const file=L.path.join(output,name);await (await pending).saveAs(file);return file;};
 const reopen=async(file,expected)=>{await (await reveal(p.locator('#newBtn'))).click();assert.notEqual(await projectText(),expected);await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(expected=>JSON.stringify(Akari.app.project)===expected,expected);};
@@ -116,7 +147,12 @@ const saveReopenDraft=async(path,schemaId,index)=>{const before=await session(),
 const holeShown=async(id,schemaId)=>{const shown=node(id);await shown.waitFor({state:'visible'});assert.equal(await shown.getAttribute('data-schema-id'),schemaId);assert.ok((await shown.getAttribute('class')).includes('blockui-draft-hole'),'hole is drawn as an open place');const label=await shown.locator('.blockui-hole-label').first().textContent();assert.match(label,/^〔.+を えらぶ〕$/,'hole asks for a choice');return label;};
 const treeShape=tree=>JSON.stringify(tree,(key,value)=>key==='id'?undefined:value);
 const runRefused=async()=>{const before=await session(),project=await projectText();await (await reveal(p.locator('#runBtn'))).click();await p.waitForTimeout(400);assert.equal(await p.evaluate(()=>Akari.app.editorState.state),'DESIGN','an unfinished body does not run');assert.equal(await projectText(),project);const after=await session();assert.equal(after.pendingEdit?.kind,'block-draft');assert.equal(treeShape(after.blockView),treeShape(before.blockView),'the draft is kept');assert.equal(await p.locator('#editorPending').isVisible(),true,'the open place is pointed out');return{refused:true,notice:(await p.locator('#editorPending').innerText()).slice(0,200)};};
-const chooseExpression=async(holeId,schema)=>{await (await reveal(node(holeId).locator('[data-blockui-action="hole-select-expression"]').first())).click();await (await paletteButton(schema,'expression')).click();};
+// A compact numeric hole is a number field in its slot (1.5.0): choosing the field shows the slot's tools,
+// whose 「計算を入れる」 opens the expression palette.
+const chooseExpression=async(holeId,schema)=>{const compact=root().locator('[data-expression-hole="true"][data-block-id="'+holeId+'"]');
+ if(await compact.count()){await (await reveal(compact)).click();await (await reveal(compact.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-input-slot ")][1]').locator(':scope > .blockui-slot-head [data-blockui-action="slot-select"]'))).click();}
+ else await (await reveal(node(holeId).locator('[data-blockui-action="hole-select-expression"]').first())).click();
+ await (await paletteButton(schema,'expression')).click();};
 const chooseStatement=async(holeId,schema)=>{await (await reveal(node(holeId).locator('[data-blockui-action="hole-select-statement"]').first())).click();await (await paletteButton(schema,'statement')).click();};
 const chooseTarget=async(holeId,name)=>{await (await reveal(root().locator('[data-blockui-hole-target="'+holeId+'"]'))).selectOption(name);};
 const readMonitor=()=>p.evaluate(()=>Object.fromEntries([...document.querySelectorAll('#runtimeMonitor .monitor-row')].map(r=>[r.querySelector('.monitor-key')?.textContent,[...(r.querySelector('.monitor-value')?.childNodes||[])].filter(n=>n.nodeType===3).map(n=>n.textContent).join('')])));
@@ -159,6 +195,10 @@ const genericRow=async(s,evidence)=>{
  for(const f of s.fields.filter(f=>f.type!=='argument-names')){evidence.fields.push(await editField(id,f,false,fieldChoice(s,f)));id=(await locate(s.id))[0].id;}
  // Edit every value slot through its own child controls, including fixed arity arguments.
  for(const input of s.inputs){let created=(await locate(s.id))[0];
+  // 〜のところへ行く: the partner is chosen from the work's parts and マウス, never typed (LANGUAGE.md 789).
+  if(s.id==='MotionCommand:GOTO_PART'&&input.key==='args'){const target=node(id).locator(':scope > .blockui-node-content > .blockui-node-main [data-blockui-action="motion-target"]').first(),before=await target.inputValue(),options=await target.locator('option').evaluateAll(o=>o.map(x=>x.value)),value=options.find(v=>v!==before);
+   assert.equal(created.inputs.args[0].fields.value,before,'the shown partner is the block\'s');await (await reveal(target)).selectOption(value);await settle();created=(await locate(s.id))[0];id=created.id;assert.equal((await session()).pendingEdit,null);assert.equal(created.inputs.args[0].fields.value,value,'chosen partner');
+   evidence.inputs.push({key:input.key,multiple:input.multiple,count:1,edited:[{index:0,schema:created.inputs.args[0].schemaId,key:'value',type:'part-choice',before,value,options}]});continue;}
   if(created.inputs[input.key]===undefined){assert.equal(input.required,false,'required input missing '+s.id+'.'+input.key);
    // Optional roles absent from a new block: timed speech has its own control; the others are recorded as absent.
    if(s.id==='Say'&&input.key==='seconds'){await (await reveal(node(id).locator('[data-blockui-action="speech-timed"]').first())).click();created=(await locate(s.id))[0];assert.ok(created.inputs.seconds,'timed speech adds its time');}
@@ -249,6 +289,14 @@ async function reveal(locator){
   if(!await locator.isVisible())for(const panel of await locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-side-folded ")]').all())await panel.locator('.blockui-side-toggle').click();
   const controls=locator.locator('xpath=ancestor::*[contains(concat(" ",normalize-space(@class)," ")," blockui-palette-controls ")]');
   if(await controls.count())await openPaletteTools(controls.locator('..'));
+  // A block's own tools (だれが, ほかのそうさ) are in its head, shown while the block is selected: select it first.
+  const owner=locator.locator('xpath=ancestor::div[contains(concat(" ",normalize-space(@class)," ")," blockui-node-tools ")][1]/../..');
+  if(await owner.count()&&!await owner.evaluate(e=>e.classList.contains('blockui-selected')))await U.clickNode(owner);
+  // A selected value's own tools (「全部見て なおす」) are drawn over the words after it, and so over its sentence's
+  // 「…」. A child chooses the sentence itself first: press the block where nothing lies over it.
+  const extra=locator.locator('xpath=ancestor::details[contains(concat(" ",normalize-space(@class)," ")," blockui-extra ")][1]');
+  if(await extra.count()&&await extra.getAttribute('open')===null){const summary=extra.locator(':scope > summary');
+   if(await summary.isVisible()&&!await summary.evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return !!hit&&e.contains(hit);}))await extra.locator('xpath=ancestor::article[1]').click({position:{x:4,y:4}});}
   // Open the outermost closed disclosure first; inner ones are re-read after each click.
   const ancestors=locator.locator(await locator.evaluate(e=>e.tagName==='SUMMARY')?'xpath=parent::details/ancestor::details[not(@open)]':'xpath=ancestor::details[not(@open)]');
   for(let i=0;await ancestors.count();i++){assert.ok(i<12,'disclosure ancestors open');await ancestors.first().locator(':scope > summary').click();}

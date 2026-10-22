@@ -7,12 +7,15 @@ async function openDetails(details){
  assert.notEqual(await details.getAttribute('open'),null);return true;
 }
 const openHints=page=>openDetails(page.locator('#hintsDisclosure'));
+// The tools of a selected block or value are drawn over the words next to it (1.5.0: they never move other
+// blocks). A child presses the block where nothing lies over it, so a covered field or word is passed over.
+const uncovered=async l=>await l.isVisible()&&await l.evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return !!hit&&e.contains(hit);});
 async function clickNode(node){
  await node.waitFor({state:'visible'});
  const ownInput=node.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-field input, :scope > .blockui-node-content > .blockui-node-main > .blockui-field textarea').first();
  const ownText=node.locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text, :scope > .blockui-node-content > .blockui-node-main > .blockui-punctuation').first();
- if(await ownInput.isVisible())await ownInput.click();
- else if(await ownText.isVisible())await ownText.click();
+ if(await uncovered(ownInput))await ownInput.click();
+ else if(await uncovered(ownText))await ownText.click();
  else await node.click({position:{x:2,y:2}});
 }
 async function openNodeMenu(node){

@@ -15,7 +15,7 @@ const require=createRequire(import.meta.url);
 const {makeRegressionProject}=require('../fixtures/regression-project.cjs');
 const {loadApi}=require('../browser/cases/audit-lib.cjs');
 const {answerProductConfirms}=require('../lib/product-dialogs.cjs');
-const autosaved='このパソコンに のこしたよ',autosaveDatabase='akari-workspace-f4',autosaveFallback='akari.autosave.f4';
+const autosaved='このパソコンに のこしたよ',autosaveDatabase='akari-workspace-f5',autosaveFallback='akari.autosave.f5';
 const regressionProject=makeRegressionProject(loadApi(fs.readFileSync(product,'utf8')));
 regressionProject.scripts=[{targetId:'stage',event:'start',source:'何もしない。'}];
 regressionProject.actions=[];regressionProject.functions=[];
@@ -51,10 +51,11 @@ await withBrowser(browser,async b=>{
     const changed=source.replace('点数を3','点数を7');assert.equal((await state(p)).source,changed);assert.equal((await state(p)).history,initial.history+1);
     assert.ok(await number(p).evaluate(t=>document.activeElement===t));
     await click(p,'undoBtn');assert.equal((await state(p)).source,source);await click(p,'redoBtn');assert.equal((await state(p)).source,changed);
-    await mode(p,'code');await fill(p,'横3、縦3の位置へ3秒かけて動く。');
-    const at='横'.length;await p.locator('#codeEditor').evaluate((t,n)=>t.setSelectionRange(n,n+1),at);await mode(p,'blocks');
+    const glide='3秒かけて、画面の左下のはしから、右へ3歩、上へ3歩のばしょへ行く。';
+    await mode(p,'code');await fill(p,glide);
+    const at=glide.indexOf('右へ3')+'右へ'.length;await p.locator('#codeEditor').evaluate((t,n)=>t.setSelectionRange(n,n+1),at);await mode(p,'blocks');
     const selected=await p.evaluate(()=>{const s=Akari.app.editorState.main;return s.nodeMap.get(s.blockSelection).path;});
-    assert.deepEqual(selected,['body',0,'args',1,'value']);
+    assert.deepEqual(selected,['body',0,'x','value']);
     const nativeHistory=[];
     for(const editorMode of ['code','blocks']){
       await mode(p,editorMode);
@@ -186,11 +187,11 @@ await withBrowser(browser,async b=>{
     await fill(p,source);await mode(p,'blocks');await number(p).fill('3');await number(p).press('Enter');
     const save=async(id,name)=>{const pending=p.waitForEvent('download');await click(p,id);if(id==='exportBtn')await p.locator('#exportControls').click();const f=path.join(dir,name);await (await pending).saveAs(f);return f;};
     const file=await save('saveBtn','editor-gui-saved.akari.md'),saved=fs.readFileSync(file,'utf8');
-    assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F4-DATA-BEGIN'));
+    assert.ok(saved.startsWith(("# あかり "+currentProductVersion()+" の作品")));assert.ok(saved.includes('AKARI-PROJECT-F5-DATA-BEGIN'));
     const initial=await state(p);await click(p,'newBtn');await p.locator('#fileInput').setInputFiles(file);await p.waitForFunction(s=>Akari.app.editorState.main.sourceText===s,source);assert.equal((await state(p)).project,initial.project);
     const generated=await save('exportBtn','editor-gui-player.html');
     const c=await b.newContext({offline:true}),errors=[],network=[];
-    try{await c.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});const player=await c.newPage();player.on('pageerror',e=>errors.push(e.message));await player.goto(pathToFileURL(path.resolve(generated)).href);await player.locator('#playerStart:not([disabled])').click();await player.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('5'));await player.locator('#playerStop').click();assert.equal(await player.locator('#playerStop').isDisabled(),true);}finally{await c.close();}
+    try{await c.route(/^https?:/,r=>{network.push(r.request().url());return r.abort();});const player=await c.newPage();player.on('pageerror',e=>errors.push(e.message));await player.goto(pathToFileURL(path.resolve(generated)).href);await player.locator('#playerStart:not([disabled])').click();await player.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('5'));await player.locator('#playerStop').click();assert.equal(await player.locator('#playerStop').isHidden(),true);assert.equal(await player.locator('#playerStart').isVisible(),true);}finally{await c.close();}
     assert.deepEqual(errors,[]);assert.deepEqual(network,[]);
     return{sourceExact:true,offline:true,saveSha256:sha(saved),generatedSha256:sha(fs.readFileSync(generated))};
   });

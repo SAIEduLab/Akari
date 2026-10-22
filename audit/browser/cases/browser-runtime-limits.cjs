@@ -15,12 +15,12 @@ await run('continuous-number-overflow',async p=>{
  const virtual=await p.evaluate(()=>{
   const A=Akari,large='1'+'0'.repeat(308),out=[];
   const execute=(direction,speed,stopAtBoundary=false)=>{
-   const project=A.makeEmptyProject(),source=`「右」キーが押されているあいだは、たくどんは画面の${direction}へ1秒に${speed}歩の速さで動き続ける。`;
+   const project=A.makeEmptyProject(),source=`「右」キーが押されているあいだは、たくどんは${direction}へ1秒に${speed}歩の速さで動き続ける。`;
    project.scripts[0].source=source;const before=JSON.stringify(project),compiled=A.compileProject(project),runtime=new A.RuntimeModel(project,{}),errors=[],trace=[];let clock=0;
    if(compiled.errors.length)throw Error(JSON.stringify(compiled.errors));runtime.now=()=>clock;
    const scheduler=new A.EventScheduler(project,compiled,runtime,{runtimeError:(task,error)=>errors.push({code:error.code,key:error.akariSource?.key,line:error.line}),continuousStep:entry=>trace.push(entry)});scheduler.schedule=()=>{};scheduler.start();scheduler.setKeyState('右',true);clock=speed===30?250:2000;
    if(stopAtBoundary)scheduler.stop();else scheduler.advanceContinuous(clock);
-   const actor=runtime.actor('sprite-1'),observed={direction,speed:speed===30?30:'10^308',stopAtBoundary,running:scheduler.running,paused:scheduler.paused,x:actor.x,y:actor.y,errors,record:scheduler.errorRecords[0]?{key:scheduler.errorRecords[0].key,source:scheduler.errorRecords[0].source,line:scheduler.errorRecords[0].line}:null,traceEnd:trace.at(-1)?.to,traceX:trace.reduce((sum,entry)=>sum+entry.dx,0),traceY:trace.reduce((sum,entry)=>sum+entry.dy,0)};
+   const actor=runtime.actor('sprite-1'),start=project.components.find(c=>c.id==='sprite-1'),observed={direction,startX:start.x,startY:start.y,speed:speed===30?30:'10^308',stopAtBoundary,running:scheduler.running,paused:scheduler.paused,x:actor.x,y:actor.y,errors,record:scheduler.errorRecords[0]?{key:scheduler.errorRecords[0].key,source:scheduler.errorRecords[0].source,line:scheduler.errorRecords[0].line}:null,traceEnd:trace.at(-1)?.to,traceX:trace.reduce((sum,entry)=>sum+entry.dx,0),traceY:trace.reduce((sum,entry)=>sum+entry.dy,0)};
    scheduler.stop();if(scheduler.running||scheduler.paused||scheduler.tasks.size||scheduler.continuous.size)throw Error('stop did not clean runtime');if(JSON.stringify(project)!==before)throw Error('runtime changed saved project');
    return observed;
   };
@@ -28,10 +28,10 @@ await run('continuous-number-overflow',async p=>{
  });
  for(const row of virtual.slice(0,4)){assert.equal(row.running,true);assert.equal(row.paused,true);assert.deepEqual(row.errors,[{code:'R403',key:'script:script-start',line:1}]);assert.equal(row.record.key,'script:script-start');assert.equal(row.record.line,1);assert.ok(row.record.source.includes('歩の速さで'));assert.ok(Number.isFinite(row.x)&&Number.isFinite(row.y));assert.ok(row.traceEnd<2000);}
  assert.equal(virtual[4].running,false);assert.equal(virtual[4].paused,false);assert.equal(virtual[4].errors.length,1);
- assert.deepEqual(virtual[5].errors,[]);assert.equal(virtual[5].running,false);assert.ok(Math.abs(virtual[5].x-237.5)<1e-9);assert.equal(virtual[5].y,110);assert.equal(virtual[5].traceEnd,250);assert.ok(Math.abs(virtual[5].traceX-7.5)<1e-9);assert.equal(virtual[5].traceY,0);
+ assert.deepEqual(virtual[5].errors,[]);assert.equal(virtual[5].running,false);assert.ok(Math.abs(virtual[5].x-(virtual[5].startX+7.5))<1e-9);assert.equal(virtual[5].y,virtual[5].startY);assert.equal(virtual[5].traceEnd,250);assert.ok(Math.abs(virtual[5].traceX-7.5)<1e-9);assert.equal(virtual[5].traceY,0);
  const browser=[];
  for(const mode of ['code','blocks']){
-  const project=base(),actor=project.components.find(c=>c.id==='sprite-1');project.scripts=[{id:'overflow-rule',targetId:actor.id,event:'start',source:`「右」キーが押されているあいだは、${actor.name}は画面の右へ1秒に${'1'+'0'.repeat(308)}歩の速さで動き続ける。`}];
+  const project=base(),actor=project.components.find(c=>c.id==='sprite-1');project.scripts=[{id:'overflow-rule',targetId:actor.id,event:'start',source:`「右」キーが押されているあいだは、${actor.name}は右へ1秒に${'1'+'0'.repeat(308)}歩の速さで動き続ける。`}];
   await open(p,project,'continuous-overflow-'+mode);await p.locator('#editorMode'+mode).click();const before=await state(p);
   await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');await p.keyboard.down('ArrowRight');await p.locator('#failureModal.show').waitFor();await p.keyboard.up('ArrowRight');
   assert.equal(await p.evaluate(()=>Akari.app.editorState.state),'PAUSED');assert.match(await p.locator('#failureBody').textContent(),/R403/);assert.match(await p.locator('#failureBody .failure-summary').textContent(),/script:overflow-rule \/ 1行/);assert.equal(await p.evaluate(()=>Akari.app.editorState.main.sourceText),project.scripts[0].source);

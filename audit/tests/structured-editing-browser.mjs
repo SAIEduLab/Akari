@@ -30,8 +30,13 @@ try{await withBrowser(chrome,async browser=>{
   const ready=await state(p);assert.equal(ready.pending,null);const metadata=await p.evaluate(()=>{const s=Akari.app.project.scripts.find(s=>s.id==='structured-main'),ast=Akari.app.editorState.main.syntaxAst;return{id:s.id,event:s.event,filter:s.filter,body:ast.body.map(n=>n.value?.value)};});assert.deepEqual(metadata,{id:'structured-main',event,filter:{[filter]:value},body:kind==='empty'?[]:['本文']});
   // A bad actor name stays a draft; cancellation restores the current revision.
   await(await reveal(role('actorRef.kind'))).selectOption('named');const named=await state(p);await(await reveal(role('actorRef.name'))).fill('いない対象');await role('actorRef.name').press('Enter');await p.waitForFunction(()=>!!Akari.app.editorState.main.pendingEdit);assert.equal((await state(p)).project,named.project);await p.locator('#editorCancel').click();const cancelled=await state(p);assert.equal(cancelled.project,named.project);assert.deepEqual(cancelled.diagnostics,[]);
-  await p.locator('#runBtn').click();await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');if(event==='keyDown'){await p.locator('#formSurface').focus();await p.keyboard.press('ArrowRight');}if(kind!=='empty'){await p.locator('.sprite-bubble-text').waitFor();assert.equal(await p.locator('.sprite-bubble-text').textContent(),'本文');}await p.locator('#stopBtn').click();
-  await p.screenshot({path:path.join(dir,'heading-'+kind+'-'+event+'.png')});return{kind,event,filter:value,stableId:true,oneHistoryStep:true,undoRedo:true,cancelAtomic:true,bodyPreserved:true,run:true};
+  // A work with no sentence in any body does not run (1.5.0): the status says how to put one in and nothing changes.
+  // The empty key body is the only body of its work; the message case also has the stage's sending body.
+  const nothingToRun=kind==='empty'&&event==='keyDown',beforeRun=await state(p);
+  await p.locator('#runBtn').click();
+  if(nothingToRun){await p.waitForFunction(()=>document.querySelector('#statusText').textContent.includes('ブロックが まだ ないよ'));assert.equal(await p.evaluate(()=>Akari.app.editorState.state),'DESIGN');assert.equal((await state(p)).project,beforeRun.project);assert.equal((await state(p)).history,beforeRun.history);}
+  else{await p.waitForFunction(()=>Akari.app.editorState.state==='RUNNING');if(event==='keyDown'){await p.locator('#formSurface').focus();await p.keyboard.press('ArrowRight');}if(kind!=='empty'){await p.locator('.sprite-bubble-text').waitFor();assert.equal(await p.locator('.sprite-bubble-text').textContent(),'本文');}await p.locator('#stopBtn').click();}
+  await p.screenshot({path:path.join(dir,'heading-'+kind+'-'+event+'.png')});return{kind,event,filter:value,stableId:true,oneHistoryStep:true,undoRedo:true,cancelAtomic:true,bodyPreserved:true,run:!nothingToRun,emptyWorkRefused:nothingToRun};
  });
  const original=JSON.parse(fs.readFileSync('audit/fixtures/basic-intents.json')).cases.find(c=>c.id==='T03').source;
  for(const order of [['condition','seconds','distance'],['distance','condition','seconds'],['seconds','distance','condition']])await run('continuous/'+order.join('-'),async p=>{

@@ -48,12 +48,12 @@ try{await withBrowser(chrome,async browser=>{
   await install(page,'点数を言う。');await page.locator('#dataBtn').click();const before=await state(page),row=page.locator('#dataBody .extension-row').filter({has:page.locator('b',{hasText:'へんすう 点数'})});await row.getByRole('button',{name:'けす',exact:true}).click();assert.deepEqual(await state(page),before);assert.match(await page.locator('#dataBody .reference-issue').textContent(),/点数.*けす ことが できません/);return{referenceShown:true,projectHistoryAssetsUnchanged:true};
  });
   await run('references/browser-component-rename',async page=>{
-   const source='あかりは画面の右へ30歩動く。\n「あかり🐈」と言う。';await install(page,source);await page.locator('#editorModecode').click();const before=await state(page);
+   const source='あかりはいまのばしょから、右へ30歩動く。\n「あかり🐈」と言う。';await install(page,source);await page.locator('#editorModecode').click();const before=await state(page);
    const name=page.locator('#properties input[aria-label="名前"]');await name.fill('灯り');await name.press('Tab');await page.waitForFunction(()=>Akari.app.project.components[0].name==='灯り');await page.waitForFunction(n=>Akari.app.editorState.history===n,before.history+1);
    const renamed=await state(page);assert.equal(JSON.parse(renamed.project).scripts[0].source,source.replace('あかりは','灯りは'));await page.locator('#undoBtn').click();assert.equal((await state(page)).project,before.project);await page.locator('#redoBtn').click();assert.equal((await state(page)).project,renamed.project);
    await page.locator('#runBtn').click();await page.waitForFunction(()=>parseFloat(document.querySelector('#formSurface .component[data-id="sprite-1"]').style.left)===260);assert.equal(await page.locator('.sprite-bubble .sprite-bubble-text').textContent(),'あかり🐈');
    await page.locator('#stopBtn').click();
-   const prefixSource='灯は横位置を100にする。\n【灯合図】という手順を行う。\n「灯合図🐈」と言う。';
+   const prefixSource='灯は画面の左下のはしから、右へ100歩、上へ（たてのばしょ）歩のばしょへ行く。\n【灯合図】という手順を行う。\n「灯合図🐈」と言う。';
    const prefixFile=await page.evaluate(source=>{const p=Akari.makeDefaultProject();p.name='主語と手順の保護';p.components[0].name='灯';p.scripts=[{id:'prefix-body',targetId:'sprite-1',event:'start',source}];p.actions=[{id:'prefix-action',ownerId:'stage',name:'灯合図',args:[],source:'何もしない。'}];p.functions=[];return Akari.serializeProject(p,Akari.makeDefaultAssetStore());},prefixSource);
    const askedLoseQuestion=[];
    await openFixture(page,{name:'actor-prefix.akari.md',mimeType:'text/plain',buffer:Buffer.from(prefixFile)},'主語と手順の保護',async()=>{await page.locator('#loseConfirmModal.show').waitFor();askedLoseQuestion.push(await page.locator('#loseConfirmMessage').innerText());await page.locator('#loseConfirmProceed').click();});assert.deepEqual(askedLoseQuestion,['まだ ほぞんしていない ところが あるよ。このまま つづけると、いまの 作品は なくなるよ。']);await page.locator('#objectSelect').selectOption('sprite-1');await page.locator('#editorModecode').click();
@@ -65,7 +65,7 @@ try{await withBrowser(chrome,async browser=>{
    const prefixPending=page.waitForEvent('download');await page.locator('#saveBtn').click();const prefixDownload=await prefixPending,prefixPath=path.join(dir,'renamed-actor-prefix.akari.md');await prefixDownload.saveAs(prefixPath);
    const savedPrefix=await page.evaluate(t=>Akari.parseProjectFile(t).then(r=>JSON.stringify(r.project)),fs.readFileSync(prefixPath,'utf8'));assert.equal(savedPrefix,prefixRenamed.project);
    await openFixture(page,prefixPath,'主語と手順の保護');assert.equal(JSON.parse((await state(page)).project).components[0].name,'灯新');assert.equal((await state(page)).project,prefixRenamed.project);assert.deepEqual(await referenceIds(),beforeIds);
-   await page.locator('#runBtn').click();await page.waitForFunction(()=>parseFloat(document.querySelector('#formSurface .component[data-id="sprite-1"]').style.left)===100);assert.equal(await page.locator('.sprite-bubble .sprite-bubble-text').textContent(),'灯合図🐈');await page.locator('#stopBtn').click();assert.equal((await state(page)).project,prefixRenamed.project);
+   await page.locator('#runBtn').click();await page.waitForFunction(()=>parseFloat(document.querySelector('#formSurface .component[data-id="sprite-1"]').style.left)===10);assert.equal(await page.locator('.sprite-bubble .sprite-bubble-text').textContent(),'灯合図🐈');await page.locator('#stopBtn').click();assert.equal((await state(page)).project,prefixRenamed.project);
 return{referenceOnly:true,undoRedo:true,runtimeX:260,proseUnchanged:true};
   });
   await run('references/browser-data-rename',async page=>{
