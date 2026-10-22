@@ -147,7 +147,11 @@
       geometryFrame = null,
       ghost = null,
       snapPreview = null,
-      bodyObserver = null;
+      bodyObserver = null,
+      // The height the workspace keeps while the places between blocks are open, and what kept its place when they
+      // opened for a chosen place or a moved block (keepInView).
+      planeFloor = 0,
+      openAnchor = null;
     const shapeObserver =
       typeof ResizeObserver === 'function' ? new ResizeObserver(() => scheduleGeometry()) : null;
     const E = (tag, className = '', text = null, attrs = {}) => {
@@ -856,9 +860,18 @@
       controls.hidden = !pending && !moving && !replacement && !destination && !draft;
       root.classList.toggle('blockui-interacting', !controls.hidden);
       root.classList.toggle('blockui-moving', !!moving || !!drag?.started);
-      // While a place for a sentence is chosen or a sentence is moved, the places between blocks open up (E-07).
-      root.classList.toggle('blockui-choosing', !!destination?.body);
-      root.classList.toggle('blockui-moving-block', !!moving && schemaOf(index.get(moving.id)?.node)?.category === 'statement');
+      // While a place for a sentence is chosen or a sentence is moved, the places between blocks open up (E-07); the
+      // chosen place, or the block being moved, stays where it is on the screen.
+      const choosing = !!destination?.body, movingBlock = !!moving && schemaOf(index.get(moving.id)?.node)?.category === 'statement',
+        opens = choosing || movingBlock, changes = opens !== root.matches('.blockui-choosing,.blockui-moving-block'),
+        anchor = !changes ? null : !opens ? openAnchor : movingBlock ? locationElement({ id: moving.id })
+          : [...world.querySelectorAll('[data-blockui-body]')].find(n => sameLocation(destination, locationFromElement(n)));
+      keepInView(anchor, () => {
+        root.classList.toggle('blockui-choosing', choosing);
+        root.classList.toggle('blockui-moving-block', movingBlock);
+      });
+      if (changes) openAnchor = opens ? anchor : null;
+      if (!opens && !drag?.started) planeFloor = 0;
       fieldError.textContent = pending?.shown && pending.error || '';
       if (pending?.input) {
         const described = (pending.input.getAttribute('aria-describedby') || '').split(' ').filter(id => id && id !== fieldError.id);
@@ -972,6 +985,7 @@
         n.classList.toggle('blockui-selected', n.dataset.blockId === id);
       showImpliedDestination();
       placeNodeTools();
+      if (!id) for (const n of workspace.querySelectorAll('.blockui-focused')) n.classList.remove('blockui-focused');
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
         if (menu.closest('.blockui-node')?.dataset.blockId !== id) menu.open = false;
       for(const slot of workspace.querySelectorAll('.blockui-slot-active'))slot.classList.remove('blockui-slot-active');
@@ -981,6 +995,14 @@
         flat=selectedNode&&active?.matches?.('input,textarea')&&selectedNode.contains(active)?active.closest('.blockui-flat-value'):null,
         slot=selectedNode?.parentElement.closest('.blockui-input-slot')||(flat?.closest('.blockui-node')===selectedNode?flat:null);
       if(slot){slot.classList.add('blockui-slot-active');doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));}
+    }
+    // With nothing selected the next block from the list goes to the end of the body (E-08); the focus goes to the
+    // workspace, so Delete has no block to take.
+    function letGoOfSelection() {
+      if (!selected) return false;
+      selection('');
+      if (doc.activeElement?.closest?.('.blockui-world')) workspace.focus({ preventScroll: true });
+      return true;
     }
     // The floating tools (E-12) go beside the sentence they belong to, right of its whole block (an enclosure with what
     // is in it), where they cover no other block: first the selected block's tools, under them the selected field's
@@ -1130,9 +1152,8 @@
     }
     // The place a block from the list would go (right after the selected sentence) is shown on its line (E-08).
     function showImpliedDestination() {
-      const info = !destination && !moving && selectedStatement(),
-        implied = info && { parentId: info.parentId, body: info.body, index: info.index + 1 };
-      for (const n of workspace.querySelectorAll('.blockui-insertion'))
+      const implied = !destination && !moving && selectedStatement() && defaultDestination();
+      for (const n of workspace.querySelectorAll('.blockui-insertion,.blockui-hole-target'))
         n.classList.toggle('blockui-implied-destination', !!implied && sameLocation(implied, locationFromElement(n)));
     }
     // A place chosen with the keyboard (Enter on 「＋ ここに入れる」) opens 「ブロックを さがす」 to type in (E-16).
@@ -1162,9 +1183,11 @@
       }
     }
     // A block put in from the list with no place chosen goes right after the selected sentence, or at the end of the
-    // body when nothing is selected (E-08).
+    // body when nothing is selected (E-08). A selected enclosure that holds only its hole (a loop just put in) takes the
+    // block into that hole.
     function defaultDestination() {
-      const info = selectedStatement();
+      const info = selectedStatement(), first = info && schemaOf(info.node)?.bodies?.[0]?.key, inner = first && info.node.bodies?.[first];
+      if (inner?.length === 1 && inner[0].schemaId === 'Hole:statement') return { parentId: info.node.id, body: first, index: 0 };
       if (info) return { parentId: info.parentId, body: info.body, index: info.index + 1 };
       return tree ? { parentId: tree.id, body: 'body', index: tree.bodies.body.length } : null;
     }
@@ -2965,31 +2988,35 @@
         } else if(schema.kind==='RepeatCount'||schema.kind==='Say'||schema.kind==='WaitTime'){
           const {extra,extraControls}=extraDisclosure(node,schema.label+'の数・計算・時間を なおす');
           const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
-          // 2 秒, 3 回: the unit is text (E-02); 計算で決める puts a calculation in the number's place.
+          // 2 秒, 3 回: the unit is text (E-02); 計算で決める puts a calculation in the number's place. はじめて has no value
+          // blocks to put there, so it shows neither 計算で決める nor 計算の答えを話す (E-12).
+          const entry=document.body.dataset.uiLevel==='entry';
           const numberSlot=(key,unit)=>{
             main.append(...unitValue(node,key,undefined,unit));
-            extraControls.append(button('計算で決める','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を計算で決める'}));
+            if(!entry)extraControls.append(button('計算で決める','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を計算で決める'}));
           };
           if(schema.kind==='Say'){
             main.append(slot('value'));
             const localContext=subjectContext(node),choices=hintCandidates(project(),localContext.targetId,{source:session()?.sourceText||'',...localContext}).filter(h=>h.id.startsWith('read:')&&h.binding?.kind!=='list'&&h.enabled);
             const data=E('select','blockui-speech-data',null,{'aria-label':'話す 文字か、へんすうの 中身を えらぶ'});
-            data.append(E('option','','文字を話す',{value:'literal'}),E('option','','計算の答えを話す',{value:'expression'}));
+            const current=node.inputs.value,
+              shown=current.schemaId==='StringLiteral'?'literal':String(choices.findIndex(h=>h.binding.name===current.fields.name&&h.binding.qualifier===current.fields.qualifier));
+            data.append(E('option','','文字を話す',{value:'literal'}));
+            if(!entry||shown==='-1')data.append(E('option','','計算の答えを話す',{value:'expression'}));
             for(const [i,hint]of choices.entries())data.append(E('option','',hint.text+'の いまの中身',{value:String(i)}));
-            const current=node.inputs.value;
-            data.value=current.schemaId==='StringLiteral'?'literal':String(choices.findIndex(h=>h.binding.name===current.fields.name&&h.binding.qualifier===current.fields.qualifier));
+            data.value=shown;
             if(!data.value)data.value='expression';data.disabled=isLocked()||options.readOnly;
             listen(data,'change',()=>{
               if(data.value==='expression'){chooseDestination({parentId:node.id,input:'value'});return;}
               const replacement=data.value==='literal'?createBlock('StringLiteral'):nodeForSearchHint(choices[Number(data.value)],project(),localContext);
               if(data.value==='literal')replacement.fields.value=current.fields.name||current.fields.value||'';
               operate({type:'expression',parentId:node.id,input:'value',node:replacement});
-            });extraControls.append(data);
+            });if(data.options.length>1)extraControls.append(data);
             // The words of its code (E-14): 「こんにちは」と 2秒 話す for words, 点数を 2秒 話す for a value.
             if(node.inputs.seconds){main.append(E('span','blockui-phrase-text',node.inputs.value?.schemaId==='StringLiteral'?'と':'を'));numberSlot('seconds','秒');main.append(E('span','blockui-phrase-text','話す'));extraControls.append(button('時間を外す','speech-untimed',()=>operate({type:'optional-input-remove',parentId:node.id,input:'seconds'})));}
             else {main.append(E('span','blockui-phrase-text','と言う'));extraControls.append(button('秒数を決めて話す','speech-timed',()=>{const seconds=createBlock('NumberLiteral');seconds.fields.value=2;return operate({type:'expression',parentId:node.id,input:'seconds',node:seconds});}));}
           }else {numberSlot(schema.kind==='RepeatCount'?'count':'seconds',schema.kind==='RepeatCount'?'回':'秒');main.append(E('span','blockui-phrase-text',schema.kind==='RepeatCount'?'くり返す':'待つ'));}
-          main.append(extra);
+          if(extraControls.childElementCount)main.append(extra);
         } else if (node.schemaId === 'UnaryExpression:NEG' && node.inputs.value?.schemaId === 'NumberLiteral') {
           const child = node.inputs.value, numberField = BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value'),
             control = fieldControl(child, numberField), input = control.querySelector('input');
@@ -3619,6 +3646,7 @@
         Math.max(
           workspace.clientHeight,
           1100,
+          planeFloor,
           Math.ceil(world.offsetHeight * zoom + workspace.clientHeight * 0.4),
         ) + 'px';
       zoomLabel.textContent = Math.round(zoom * 100) + '%';
@@ -3645,12 +3673,22 @@
       workspace.scrollTop = top;
       rememberViewState();
     }
-    // 見わたす: the body fits the workspace both ways, but never below 75%, where a child could no longer read it (E-07).
+    // 見わたす: the body fits the workspace both ways, but never below 75%, where a child could no longer read it, and
+    // never above 100% (E-07). What is measured is the body's own blocks from the top left of the world, not the places
+    // between them that span the workspace nor the room kept below the world.
     function fitBlocks() {
       const script = world.querySelector('.blockui-script');
       if (!script) return;
-      const across = (workspace.clientWidth - 80) / (script.offsetWidth + 56),
-        down = (workspace.clientHeight - 24) / (world.offsetHeight + 24);
+      const box = world.getBoundingClientRect();
+      let right = 0, bottom = 0;
+      for (const n of world.querySelectorAll(':scope > .blockui-event-hat, .blockui-script > .blockui-node-content > .blockui-node-main > details > summary, .blockui-statement .blockui-node-main, .blockui-insertion-end')) {
+        const r = n.getBoundingClientRect();
+        if (!r.width && !r.height) continue;
+        if (!n.classList.contains('blockui-insertion-end')) right = Math.max(right, (r.right - box.left) / zoom);
+        bottom = Math.max(bottom, (r.bottom - box.top) / zoom);
+      }
+      const across = (workspace.clientWidth - 24) / (right + 24),
+        down = (workspace.clientHeight - 24) / (bottom + 24);
       setZoom(Math.min(1, Math.max(0.75, Math.min(across, down))));
       workspace.scrollTo({ top: 0, left: 0 });
       rememberViewState();
@@ -3692,6 +3730,23 @@
       try { workspace.setPointerCapture(pointerId); } catch (_) {}
       workspace.classList.add('blockui-panning');
     }
+    // Opening the places between blocks (E-07) moves every block under an opened place. What the child points at (the
+    // carried block, the chosen place, the block being moved) keeps its place on the screen: the workspace scrolls by
+    // what opened above it, so a press that moves a little and lets go on the spot changes nothing (E-04).
+    function keepInView(anchor, change) {
+      const before = anchor?.isConnected && anchor.getClientRects().length ? anchor.getBoundingClientRect() : null;
+      if (!before) { change(); return; }
+      workspace.style.overflowAnchor = 'none';
+      change();
+      const after = anchor.getBoundingClientRect(),
+        shift = after.top + after.height / 2 - (before.top + before.height / 2);
+      if (Math.abs(shift) >= 0.5) {
+        const need = Math.ceil(workspace.scrollTop + shift + workspace.clientHeight);
+        if (need > plane.offsetHeight) { planeFloor = need; plane.style.height = need + 'px'; }
+        workspace.scrollTop += shift;
+      }
+      workspace.style.overflowAnchor = '';
+    }
     const touchLike = (type) => type === 'touch' || type === 'pen',
       // A press that moves no more than this is a press (E-09); a mouse starts carrying sooner.
       slopOf = (type) => (touchLike(type) ? 12 : 5),
@@ -3703,6 +3758,15 @@
     // A field, a choice, a 「…」 or a button in a placed block keeps a press for itself (E-09).
     const CONTROL_IN_BLOCK = 'input,textarea,select,summary,a,button:not([data-blockui-drag])';
     const dropPendingPan = () => { clearTimeout(pendingPan?.holdTimer); pendingPan = null; };
+    // A number, a word or a choice typed into a block belongs to that block: carried from its field, the block that
+    // holds it goes (not the value alone, which no place between sentences could take).
+    const LITERAL_KINDS = new Set(['NumberLiteral', 'StringLiteral', 'BooleanLiteral']);
+    function carrierOf(handle) {
+      let carrier = handle;
+      while (carrier && LITERAL_KINDS.has(schemaOf(index.get(carrier.dataset.blockId)?.node)?.kind))
+        carrier = carrier.parentElement?.closest('[data-blockui-drag="node"]');
+      return carrier && !carrier.disabled && carrier.getAttribute('aria-disabled') !== 'true' ? carrier : handle;
+    }
     listen(workspace, 'pointerdown', (event) => {
       if (event.pointerType !== 'touch') return;
       pinchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -3726,7 +3790,7 @@
       const handle = event.target.closest('[data-blockui-drag="node"]');
       if (handle && event.target.closest(CONTROL_IN_BLOCK)) {
         if (!pressHandle(event)) return;
-        const start = pendingPan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: workspace.scrollLeft, top: workspace.scrollTop, handle };
+        const start = pendingPan = { id: event.pointerId, x: event.clientX, y: event.clientY, left: workspace.scrollLeft, top: workspace.scrollTop, handle: carrierOf(handle) };
         start.holdTimer = setTimeout(() => {
           if (pendingPan !== start) return;
           pendingPan = null;
@@ -3775,16 +3839,23 @@
       )
         return;
       startPan(event.pointerId, event.clientX, event.clientY);
+      pan.blank = true;
       event.preventDefault();
     });
     listen(workspace, 'pointermove', (event) => {
       if (!pan || pan.id !== event.pointerId) return;
+      if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > slopOf(event.pointerType)) pan.moved = true;
       workspace.scrollLeft = pan.left + pan.x - event.clientX;
       workspace.scrollTop = pan.top + pan.y - event.clientY;
       event.preventDefault();
     });
+    // A press on the empty workspace that does not move lets go of the selected block, so the next block from the list
+    // goes to the end of the body (E-08).
     listen(workspace, 'pointerup', (event) => {
-      if (pan?.id === event.pointerId) endPan();
+      if (pan?.id !== event.pointerId) return;
+      const press = pan.blank && !pan.moved;
+      endPan();
+      if (press) letGoOfSelection();
     });
     listen(workspace, 'pointercancel', endPan);
     // A block that hands its finger over to the workspace loses the capture too; only the workspace's own loss ends the move.
@@ -3883,9 +3954,15 @@
     }
     // Inside the workspace a sentence goes to the nearest place: before a block from its upper half, after it from its
     // lower half, after an enclosure from below its bottom line (E-04). A value goes to a value place within 40 px.
-    // Right over a place of the other kind (a sentence over a value, a value over a line between sentences) that place
-    // is the answer: it cannot take the block, so the carried block turns grey and says why, and letting go there
-    // puts nothing in.
+    // Right over a place of the other kind (a sentence over an empty value hole, a value over a line between sentences)
+    // that place is the answer: it cannot take the block, so the carried block turns grey and says why, and letting go
+    // there puts nothing in. A sentence over a value already in a block (its number or its words) is over that block,
+    // so it goes before or after the block as over the block's other words.
+    function emptyValueHole(element) {
+      const at = locationFromElement(element), parent = at?.input ? index.get(at.parentId)?.node : null,
+        value = parent && (at.index === undefined ? parent.inputs[at.input] : parent.inputs[at.input]?.[at.index]);
+      return BLOCK_SCHEMA_BY_ID.get(value?.schemaId)?.kind === 'Hole';
+    }
     function dragCandidate(event) {
       const bounds = workspace.getBoundingClientRect();
       if (
@@ -3901,7 +3978,8 @@
         category = schema?.category,
         carried = (drag?.parts || []).filter(Boolean);
       const direct = doc.elementFromPoint(event.clientX, event.clientY)?.closest('[data-blockui-drop]');
-      if (direct && world.contains(direct) && !carried.some(part => part.contains(direct))) return direct;
+      if (direct && world.contains(direct) && !carried.some(part => part.contains(direct)) &&
+          (category !== 'statement' || direct.dataset.blockuiBody || emptyValueHole(direct))) return direct;
       let best = null,
         distance = Infinity;
       const candidates =
@@ -3971,9 +4049,14 @@
         try {
           state.element.releasePointerCapture(state.pointerId);
         } catch (_) {}
+      // The places close again around where the block goes in, or around the carried block when it stays where it was.
+      const own = state?.id && index.get(state.id), to = state?.valid && state.location,
+        beside = own && to && to.parentId === own.parentId && to.body === own.body && (to.index === own.index || to.index === own.index + 1),
+        anchor = state?.started && root.classList.contains('blockui-drag-statement') ? (to && !beside ? state.target : state.parts?.[0]) : null;
       for (const n of root.querySelectorAll('.blockui-drop-preview,.blockui-drop-invalid,.blockui-dragging,.blockui-lift'))
         n.classList.remove('blockui-drop-preview', 'blockui-drop-invalid', 'blockui-dragging', 'blockui-lift');
-      root.classList.remove('blockui-drag-active', 'blockui-drag-statement');
+      keepInView(anchor, () => root.classList.remove('blockui-drag-active', 'blockui-drag-statement'));
+      if (!root.matches('.blockui-choosing,.blockui-moving-block')) planeFloor = 0;
       notifyPending();
       updateControls();
     }
@@ -4020,6 +4103,7 @@
 
       if (valid) reason = !location.body ? 'ここの 中身を 入れかえる' : wraps ? '下の ' + wraps + 'この ブロックを 中に 入れる' : 'ここにつなぐ';
       drag.location = location;
+      drag.target = element;
       drag.valid = valid;
       drag.wraps = wraps;
       if (element) element.classList.add(valid ? 'blockui-drop-preview' : 'blockui-drop-invalid');
@@ -4032,9 +4116,18 @@
         const r = element.getBoundingClientRect();
         snapPreview = E('div', 'blockui-snap-preview', reason);
         snapPreview.setAttribute('aria-hidden', 'true');
-        snapPreview.style.left = r.left + 8 + 'px';
-        snapPreview.style.top = (location.body ? r.top - 14 : r.bottom + 2) + 'px';
+        let left = r.left + 8, top = location.body ? r.top - 14 : r.bottom + 2;
+        snapPreview.style.left = left + 'px';
+        snapPreview.style.top = top + 'px';
         doc.body.append(snapPreview);
+        // The words stay readable beside the carried block: right of it, or above it where the window ends (E-03).
+        const g = ghost?.getBoundingClientRect(), s = snapPreview.getBoundingClientRect();
+        if (g?.width && s.left < g.right && s.right > g.left && s.top < g.bottom && s.bottom > g.top) {
+          if (g.right + 8 + s.width <= doc.documentElement.clientWidth - 4) left = g.right + 8;
+          else top = Math.max(4, g.top - s.height - 4);
+          snapPreview.style.left = left + 'px';
+          snapPreview.style.top = top + 'px';
+        }
       }
       const spoken = drag.deleteZone ? 'ここで はなすと けす' : reason || 'ここで はなすと 入れるのを やめるよ';
       if (drag.reason !== spoken) {
@@ -4052,6 +4145,10 @@
       const rect = workspace.getBoundingClientRect(),
         beforeTop = workspace.scrollTop,
         beforeLeft = workspace.scrollLeft;
+      // A block taken up close to an edge does not carry the workspace along at once: the edges scroll only after the
+      // pointer has gone 24 px from where it was pressed, so a press that moves a little never scrolls (E-04).
+      drag.edgeArmed ||= Math.hypot(drag.clientX - drag.startX, drag.clientY - drag.startY) > 24;
+      if (!drag.edgeArmed) { dragFrame = doc.defaultView.requestAnimationFrame(scrollDrag); return; }
       if (drag.clientX >= rect.left - 30 && drag.clientX <= rect.right + 30) {
         if (drag.clientY >= rect.top - 30 && drag.clientY < rect.top + 32)
           workspace.scrollTop -= distance;
@@ -4111,13 +4208,36 @@
       return !handle || handle.disabled || handle.getAttribute('aria-disabled') === 'true' || isLocked() || pinch ||
         event.button !== 0 || event.isPrimary === false ? null : handle;
     }
+    // A mouse pressed on a field, a choice, a 「…」 or a button of a placed block carries the block once it moves past the
+    // slop, as from the block's words (E-09); a press that does not move keeps the control's own click, and a field
+    // being typed in keeps the press for its caret and its selection.
+    let controlPress = null;
     listen(root, 'pointerdown', (event) => {
       pointerFocusTarget = event.target;
       pointerFocusPrevious = doc.activeElement;
       lastPointerType = event.pointerType || 'mouse';
-      const handle = pressHandle(event);
-      if (!handle || (handle.dataset.blockuiDrag === 'node' && event.target.closest(CONTROL_IN_BLOCK))) return;
+      controlPress = null;
+      const handle = pressHandle(event), control = event.target.closest(CONTROL_IN_BLOCK);
+      if (!handle) return;
+      if (handle.dataset.blockuiDrag === 'node' && control) {
+        if (!touchLike(event.pointerType) && control !== doc.activeElement && !control.closest('.blockui-editing-field'))
+          controlPress = { id: event.pointerId, x: event.clientX, y: event.clientY, handle: carrierOf(handle), control };
+        return;
+      }
       pressBlock(handle, event.pointerId, event.pointerType, event.clientX, event.clientY);
+    });
+    // A choice opens its list when the press ends without moving, so the press can carry the block first.
+    listen(root, 'mousedown', (event) => {
+      if (controlPress?.control.tagName === 'SELECT' && event.target.closest('select') === controlPress.control &&
+          typeof controlPress.control.showPicker === 'function') { event.preventDefault(); controlPress.picker = true; }
+    });
+    listen(root, 'pointerup', (event) => {
+      const press = controlPress;
+      if (press?.id !== event.pointerId) return;
+      controlPress = null;
+      if (!press.picker || !press.control.isConnected || press.control.disabled) return;
+      press.control.focus({ preventScroll: true });
+      try { press.control.showPicker(); } catch (_) {}
     });
     // A press that carries the block once it moves; a touch held still for a moment lifts the block first (E-09).
     function pressBlock(handle, pointerId, pointerType, x, y, { held = false } = {}) {
@@ -4158,6 +4278,17 @@
       return true;
     }
     listen(root, 'pointermove', (event) => {
+      if (controlPress?.id === event.pointerId && !drag) {
+        const press = controlPress;
+        if (!(event.buttons & 1)) controlPress = null;
+        else if (Math.hypot(event.clientX - press.x, event.clientY - press.y) >= slopOf('mouse')) {
+          controlPress = null;
+          // The control gives the press up to the block: no text stays selected in it.
+          if (doc.activeElement === press.control && press.control.matches('input,textarea')) press.control.blur();
+          doc.getSelection?.()?.removeAllRanges();
+          pressBlock(press.handle, press.id, 'mouse', press.x, press.y);
+        }
+      }
       if (!drag || drag.pointerId !== event.pointerId) return;
       if (
         isLocked() ||
@@ -4190,7 +4321,7 @@
         clearTimeout(drag.holdTimer);
         beginGhost(drag);
         if (BLOCK_SCHEMA_BY_ID.get(drag.schemaId)?.category === 'statement' || schemaOf(index.get(drag.id)?.node)?.category === 'statement')
-          root.classList.add('blockui-drag-statement');
+          keepInView(drag.id ? drag.parts?.[0] : null, () => root.classList.add('blockui-drag-statement'));
       }
       drag.clientX = event.clientX;
       drag.clientY = event.clientY;
@@ -4341,6 +4472,8 @@
           return;
         }
         if (pending) cancelField();
+        else if (!destination && !replacement && !moving && !drag && !session()?.blockDraft && letGoOfSelection())
+          announce('えらぶのを やめたよ。つぎに 入れる ブロックは、本文の さいごに 入るよ');
         else {
           destination = null; replacement = null; moving = null; cancelDrag();
           notifyPending(); renderReplacement(); renderPalette(); updateControls(); showImpliedDestination();
