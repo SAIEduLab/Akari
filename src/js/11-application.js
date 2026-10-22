@@ -1169,6 +1169,13 @@
         canSplit: entries.every(x => x.independent), projectFingerprint: currentFingerprint() };
     }
     function hideSourceImport() { $('#sourceImport').hidden = true; $('#sourceImport').replaceChildren(); }
+    // While the import review waits, ▶ 動かす and うごく作品を ファイルにする say how to finish it, in the words of the
+    // review's own buttons.
+    function sourceImportChoice() {
+      if ($('#sourceImport').hidden) return '';
+      const take = ['#sourceImportConfirm', '#sourceImportSeparate', '#sourceImportEditCurrent'].map((id) => $(id)).find((b) => b && !b.disabled);
+      return take ? `「${take.textContent}」か「取りこみを やめる」を おしてね` : '「取りこみを やめる」を おしてね';
+    }
     function confirmSourceImport(binding, source, separate = false, editCurrent = false) {
       if (modelLocked() || composingEditors.has(binding.textarea) || binding.textarea.value !== source) return false;
       try {
@@ -1176,7 +1183,8 @@
         if (!plan || (editCurrent ? !plan.canEditCurrent : (!separate && !plan.safe) || (plan.hasExisting && !plan.canSplit))) return false;
         if (editCurrent || !plan.hasExisting) {
           commitSource(binding, source, { atomic: true });
-          hideSourceImport(); renderEditorBinding(binding); refreshEditor(); return true;
+          hideSourceImport(); renderEditorBinding(binding); refreshEditor();
+          setStatus('書いた 文を 本文に 入れたよ'); return true;
         }
         const next = cloneDesignProject(project), old = scriptBySourceKey(next, plan.ownerKey),
           incoming = plan.entries.filter(x => separate || !x.equal), ids = allIds();
@@ -1265,6 +1273,11 @@
             binding.session.pendingEdit = { ownerKey: bindingOwner(binding), kind: plan ? 'source-import' : 'heading-source',
               value: source, reason: plan ? '取りこむ ところを たしかめて 決めてください' : '書き方は だいじょうぶです。きっかけは、「▶ 動かす」を おすか、ブロックモードに すると 決まります' };
             if (plan) showSourceImport(binding, source, plan); else hideSourceImport();
+            // The text reads now: a mistake shown for an earlier keystroke goes away above the code. With the review, the
+            // status line says what waits instead; a body with its own heading keeps the line until its check is done
+            // (refreshEditor says 「✓ 書き方を 直せたよ」 or points to the new mistake, E2E-R2-11).
+            clearEditorFailure(binding);
+            if (plan) { editorFailureStatus = null; setStatus('本文を 入れる ところを たしかめてね。' + sourceImportChoice()); }
             scheduleAutosave(); updateDirty(); return false;
           }
         }
@@ -1978,6 +1991,25 @@
         $('.debugbar').prepend(b);
       }
       $('.debugbar').append($('#resetBtn'));
+      // In the block view すべての本文・画面の本文・いつ動く？ and もとにもどす・やり直す (くわしく: and はじめに もどす) share one
+      // row. When the two groups do not fit side by side, もとにもどす… take the row under it (data-source-row-wrap), so
+      // no button lies under another and every label keeps one line (はばが 足りないときは 折り返します).
+      const sourceNav = code.querySelector(':scope > .source-nav'), debugbar = code.querySelector(':scope > .debugbar');
+      const groupWidth = (box) => {
+        const shown = [...box.children].filter((c) => c.getClientRects().length && getComputedStyle(c).position !== 'absolute');
+        if (!shown.length) return 0;
+        const s = getComputedStyle(box), px = (v) => parseFloat(v) || 0;
+        return shown.reduce((sum, c) => sum + c.getBoundingClientRect().width, 0) + (shown.length - 1) * px(s.columnGap)
+          + px(s.paddingLeft) + px(s.paddingRight) + px(s.borderLeftWidth) + px(s.borderRightWidth) + px(s.marginLeft) + px(s.marginRight);
+      };
+      const placeSourceRow = () => {
+        const s = getComputedStyle(code), room = code.clientWidth - (parseFloat(s.paddingLeft) || 0) - (parseFloat(s.paddingRight) || 0) - (parseFloat(s.columnGap) || 0);
+        const wrap = String(document.body.dataset.editorMode === 'blocks' && groupWidth(sourceNav) + groupWidth(debugbar) > room + 0.5);
+        if (code.dataset.sourceRowWrap !== wrap) code.dataset.sourceRowWrap = wrap;
+      };
+      // A button shown or put away (a level, the list of all bodies) changes what the groups need, as a new width does.
+      const sourceRowObserver = new ResizeObserver(placeSourceRow);
+      for (const box of [code, sourceNav, debugbar, ...sourceNav.children, ...debugbar.children]) sourceRowObserver.observe(box);
       const undoButton = $('#undoBtn'), undoHome = document.createElement('span'),
         callableTitle = $('#procModal > .dialog > .win-title');
       undoButton.before(undoHome);
@@ -2009,18 +2041,19 @@
       // on the view). ヒント sits right after お手本を開く and opens over the page, so the bar keeps one row.
       toolbar.insertBefore($('.ui-level-label'), $('#projectName'));
       $('#sampleBtn').after($('#basicActionGuide'));
-      // A help paragraph with ruby would be read with its readings (「保存 ほぞん」) as a description: the controls get its
-      // text without them (AX-09).
+      installToolbarMenus(toolbar);
+      toolbox.append(tools);
+      // A control described by a ヒント paragraph gets the paragraph's text as its own description (AX-09): a reference
+      // into the closed ヒント reads as nothing, and a paragraph with ruby would be read with its readings (「保存
+      // ほぞん」). Run once every such control is in the page (the 作品の道具 buttons are moved into the toolbox above).
       for (const control of $$('[aria-describedby]')) {
         const help = document.getElementById(control.getAttribute('aria-describedby'));
-        if (!help?.closest('#basicActionGuide') || !help.querySelector('rt')) continue;
+        if (!help?.closest('#basicActionGuide')) continue;
         const copy = help.cloneNode(true);
         copy.querySelectorAll('rt').forEach((rt) => rt.remove());
         control.setAttribute('aria-description', copy.textContent.replace(/\s+/g, ' ').trim());
         control.removeAttribute('aria-describedby');
       }
-      installToolbarMenus(toolbar);
-      toolbox.append(tools);
       // Native reverse Tab may leave a partly visible button clipped in this ribbon.
       tools.addEventListener('focusin', (event) => {
         if (event.target.matches('button,select'))
@@ -2230,11 +2263,12 @@
       // One name for each window in both views (F-23): 「作品」 names the work.
       $('#designerHeading').textContent = '画面';
       $('.objects-window > .win-title').textContent = 'キャラクター・部品';
-      const actions = $('.prop-actions');
-      if (actions) (block ? $('#componentActions') : el.props).prepend(actions);
+      // The part's actions go above its せってい in code and under the part list in blocks. The padding they need is read
+      // when they move (their ResizeObserver follows later changes), not with every keystroke (PERF-R2-03).
+      const actions = $('.prop-actions'), actionsHome = block ? $('#componentActions') : el.props;
+      if (actions && actionsHome.firstElementChild !== actions) { actionsHome.prepend(actions); syncPropertyScrollPadding(); }
       $('#formatBtn').hidden = block || currentIsMeijin();
       syncWideInert();
-      syncPropertyScrollPadding();
       // The level list follows the view (blocks or code); a view in code at はじめて goes on at かんたん.
       if (applyUiLevel(mode)) renderHints();
       renderEntrySurface();
@@ -2313,11 +2347,17 @@
       if (on === document.body.classList.contains('stage-enlarged')) return;
       document.body.classList.toggle('stage-enlarged', on);
       // The enlarged stage is modal: everything around #designerWindow (toolbar, other windows, status line) is inert
-      // until it closes, so Tab stays on the stage and a hidden control cannot be pressed (AX-02).
+      // until it closes, so Tab stays on the stage and a hidden control cannot be pressed (AX-02). The status line's live
+      // region stays out of it, so a screen reader still hears what happens (おわったよ…): its neighbours are inert instead.
       for (const node of document.querySelectorAll('[data-enlarged-inert]')) { node.inert = false; delete node.dataset.enlargedInert; }
+      const live = $('#statusLive'), makeInert = (sibling) => {
+        if (sibling.inert) return;
+        if (sibling.contains(live)) { for (const child of sibling.children) if (child !== live) makeInert(child); return; }
+        sibling.inert = true; sibling.dataset.enlargedInert = '';
+      };
       if (on) for (let node = $('#designerWindow'); node && node.id !== 'app'; node = node.parentElement)
         for (const sibling of node.parentElement?.children || [])
-          if (sibling !== node && !sibling.inert) { sibling.inert = true; sibling.dataset.enlargedInert = ''; }
+          if (sibling !== node) makeInert(sibling);
       button.textContent = on ? 'もどる' : '大きく見る';
       button.setAttribute('aria-pressed', String(on));
       if (on) { enlargedFrom = stageZoom; setStageZoom(1); }
@@ -2335,7 +2375,8 @@
     // 画面も見る brings the columns back and gives the focus to 作業台を広く, which made them go (AX-05).
     $('#stageThumbnail').onclick = () => {
       const toggle = $('#blockEditor [data-blockui-action="workspace-expand"]');
-      toggle?.click(); toggle?.focus({ preventScroll: true });
+      toggle?.click();
+      if (toggle?.getClientRects().length) toggle.focus({ preventScroll: true }); else el.form.focus({ preventScroll: true });
     };
     // In wide mode the thumbnail stands for the small stage behind it: the stage and its handles are no Tab stops then.
     // The run screen and the code view do not use wide mode.
@@ -4972,27 +5013,40 @@
     }
 
     let codeLineLayout = null, codeLineMeasure = null;
+    // A line's wrapped height depends only on its text and the editor's width and font (the key): a line measured once
+    // is not laid out again, so a keystroke measures the lines it changed, not the whole body (PERF-R2-03). A font that
+    // finishes loading measures again.
+    let codeLineHeights = { key: '', heights: new Map() };
+    document.fonts?.addEventListener?.('loadingdone', () => { codeLineHeights = { key: '', heights: new Map() }; codeLineLayout = null; });
     function wrappedCodeLines() {
       const editor = el.editor, style = getComputedStyle(editor),
         width = Math.max(1, editor.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)),
-        key = [width, style.font, style.letterSpacing, style.tabSize].join('|');
+        key = [width, style.font, style.letterSpacing, style.lineHeight, style.tabSize].join('|');
       if (codeLineLayout?.source === editor.value && codeLineLayout.key === key) return codeLineLayout;
       if (!codeLineMeasure) {
         codeLineMeasure = document.createElement('div');
         codeLineMeasure.setAttribute('aria-hidden', 'true');
         document.body.append(codeLineMeasure);
       }
-      Object.assign(codeLineMeasure.style, { position:'fixed', left:'-100000px', top:'0', visibility:'hidden',
-        pointerEvents:'none', width:width+'px', font:style.font, letterSpacing:style.letterSpacing,
-        lineHeight:style.lineHeight, tabSize:style.tabSize, whiteSpace:'pre-wrap', overflowWrap:'anywhere' });
-      const fragment = document.createDocumentFragment(), rows = [];
-      for (const text of editor.value.split('\n')) {
-        const row = document.createElement('div'); row.textContent = text || '\u200b'; rows.push(row); fragment.append(row);
+      if (codeLineHeights.key !== key || codeLineHeights.heights.size > 50000) {
+        codeLineHeights = { key, heights: new Map() };
+        Object.assign(codeLineMeasure.style, { position:'fixed', left:'-100000px', top:'0', visibility:'hidden',
+          pointerEvents:'none', width:width+'px', font:style.font, letterSpacing:style.letterSpacing,
+          lineHeight:style.lineHeight, tabSize:style.tabSize, whiteSpace:'pre-wrap', overflowWrap:'anywhere' });
       }
-      codeLineMeasure.replaceChildren(fragment);
+      const known = codeLineHeights.heights, texts = editor.value.split('\n'), fragment = document.createDocumentFragment(), fresh = [];
+      for (const text of texts) {
+        if (known.has(text)) continue;
+        const row = document.createElement('div'); row.textContent = text || '\u200b';
+        known.set(text, 0); fresh.push([text, row]); fragment.append(row);
+      }
+      if (fresh.length) {
+        codeLineMeasure.replaceChildren(fragment);
+        for (const [text, row] of fresh) known.set(text, Math.max(22, row.getBoundingClientRect().height));
+        codeLineMeasure.replaceChildren();
+      }
       let height = 0;
-      const lines = rows.map(row => { const top = height; height += Math.max(22, row.getBoundingClientRect().height); return { top, height:height-top }; });
-      codeLineMeasure.replaceChildren();
+      const lines = texts.map(text => { const top = height; height += known.get(text); return { top, height:height-top }; });
       return codeLineLayout = { source:editor.value, key, lines, height };
     }
     let gutterMarks = { errors: [], notices: [] };
@@ -5634,7 +5688,7 @@
       // Every refusal is said the same way: まだ 動かせないよ。, the reason, and 。 at the end (FM2-13).
       const refuse = (reason) => setStatus('まだ 動かせないよ。' + sentence(reason));
       if (!flushActiveEditor()) {
-        refuse(editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
+        refuse(sourceImportChoice() || editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
         return;
       }
       if(tutorial){
@@ -5652,7 +5706,7 @@
         return;
       }
       if (!flushActiveEditor()) {
-        refuse(editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
+        refuse(sourceImportChoice() || editorFailureStatus || '書きかけの ところを 直してから「▶ 動かす」を おしてね。');
         return;
       }
       compiled = compileProject(project);
@@ -6016,7 +6070,14 @@
     let exportBusy = false;
     function exportProject() {
       if(tutorial)return;
-      if (!flushActiveEditor()) return;
+      if (!flushActiveEditor()) {
+        // A press that cannot make the file says why (the review waits, or the code has a mistake).
+        const why = sourceImportChoice() || editorFailureStatus;
+        if (why) setStatus('まだ ファイルに できないよ。' + why + (why.endsWith('。') ? '' : '。'));
+        return;
+      }
+      clearTimeout(historyTimer);
+      pushHistoryNow();
       if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから、うごく作品を ファイルにしてね','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
       if (hasCallableDraft()) {
@@ -6042,6 +6103,14 @@
       button.disabled = true;
       $('#exportControls').disabled = $('#exportArtwork').disabled = true;
       setStatus('うごく作品を ファイルに しているよ');
+      // The file is made after the next paint, so that sentence shows while it is made: a work with many pictures takes
+      // seconds, and the page cannot paint meanwhile. A timer stands in where no frame comes (a hidden page).
+      let started = false;
+      const make = () => { if (!started) { started = true; writePlayerFile(presentation, button); } };
+      requestAnimationFrame(() => setTimeout(make, 0));
+      setTimeout(make, 200);
+    }
+    function writePlayerFile(presentation, button) {
       let url = null;
       try {
         const html = generateStandaloneHtml(project, assetStore, { presentation }),
@@ -8030,6 +8099,9 @@
       }
       baseUiLevel = $('#uiLevel').value;
       applyUiLevel();
+      // はじめて has no すべての本文 (nor its 「本文を なおす ところへ もどる」): the list closes, and the body it was opened
+      // from is shown again, as that button would.
+      if (baseUiLevel === 'entry' && sourceOverviewOpen) { hideSourceOverview(); loadEditor(); }
       try {
         localStorage.setItem(STORAGE_KEYS.uiLevel, baseUiLevel);
       } catch (_) {}
@@ -8139,6 +8211,13 @@
       setTimeout(()=>$('#runBtn').focus({preventScroll:true}),0);
     };
 
+    // Delete removes the selected part only while the child works with the parts: the focus is on the stage, the part
+    // list or the tools that add parts, or it is on the page and the last press was there (a part list row takes no
+    // focus). After a press in the body window (a block's 「けす」, もとにもどす, the 本文 heading) or the toolbar, Delete
+    // never removes a part.
+    const PART_PLACES = '#designerWindow, .side, .toolbox';
+    let partPressed = false;
+    document.addEventListener('pointerdown', (e) => { partPressed = !!e.target.closest?.(PART_PLACES); }, true);
     window.addEventListener('keydown', (e) => {
       if (
         e.isComposing ||
@@ -8149,8 +8228,10 @@
       )
         return;
       if (document.querySelector('.modal.show')) return;
-      const tag = document.activeElement?.tagName;
+      const focused = document.activeElement, tag = focused?.tagName;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return;
+      const onPage = !focused || focused === document.body || focused === document.documentElement;
+      if (!(onPage ? partPressed : focused.closest(PART_PLACES))) return;
       e.preventDefault();
       deleteSelectedComponent();
     });
@@ -8324,6 +8405,8 @@
       'click',
       (event) => {
         const target = event.target.closest('button,.tree-item,.tool');
+        // うごく作品を ファイルにする closes the input itself and says why it does not go on (exportProject), as ▶ does.
+        if (target?.matches('#exportBtn,#entryExport')) return;
         if (!target || modelLocked() || target.closest('#colorModal,#paintModal')) return;
         if (
           // The note under the code holds the way out of a pending edit (its rewrites and 書いた文のまま考える).
