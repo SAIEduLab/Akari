@@ -2717,8 +2717,9 @@
     // ベルを鳴らす / スタートの合図を送る: a sound's or signal's name is written in 「 」.
     {const sound=/^(?:(.+?)は、?)?(.+?)(?:の音)?を(?:鳴らす|ならす|鳴らし始める|ならし始める|最後まで鳴らす)$/.exec(code),signal=/^(?:(.+?)は、?)?(.+?)の合図を送(?:る|って.+)$/.exec(code);
       const bare=name=>name&&!/^[「【（]/.test(name)&&!dataNameKind(name,symbols,ctx)&&/^[\p{L}ー0-9０-９]+$/u.test(name);
-      // ドの音を鳴らす is read as the sound named ド (LANGUAGE.md 音と待機), so a ドレミ name is not sent to 「 」.
-      if(sound&&bare(sound[2])&&!Object.hasOwn(SOLFEGE_HZ,sound[2])&&(symbols?.project?.sounds||[]).some(s=>s.name===sound[2]))throw fixed('音の 名前は「 」で かこんで 書きます',code.replace(sound[2],'「'+sound[2]+'」'),'「 」で かこむ','SoundCommand');
+      // A sound of the work is named in 「 」, a ドレミ name too (LANGUAGE.md 音と待機: with a sound ド in the work,
+      // ドの音を鳴らす is stopped and written 「ド」を鳴らす). Without such a sound a ドレミ name reads, with a notice (I131).
+      if(sound&&bare(sound[2])&&(symbols?.project?.sounds||[]).some(s=>s.name===sound[2]))throw fixed('音の 名前は「 」で かこんで 書きます',code.replace(sound[2],'「'+sound[2]+'」'),'「 」で かこむ','SoundCommand');
       if(signal&&bare(signal[2]))throw fixed('合図の 名前は「 」で かこんで 書きます',code.replace(signal[2]+'の合図','「'+signal[2]+'」の合図'),'「 」で かこむ','Broadcast');}
     // ゴールに着いたら、: reaching a part is touching it, and 〜たら has the three meanings of 〜にふれたら (C-09): each time
     // (the heading, offered at the left margin of an ordinary body), now (もし…ていれば) or once by waiting (offered when
