@@ -2865,6 +2865,13 @@
           if(firstChild<lines.length&&lines[firstChild].indent>indent){const declaration=surfaceCapture(/^この中では、今見ているものを(.+?)と(?:呼ぶ|よぶ)$/d,lines[firstChild].code);if(declaration){binderRange=sourceRange(lines[firstChild].mapped.positions,declaration[0].start,declaration[0].end);head.binder=parsedDeclarationName(declaration[0].text);childStart=firstChild+1;firstChild=nextCode(childStart);}}
           childScope.binders.push(head.binder);
         }
+        // The next line at the same place is the body written without moving it right (F-26: the message names the fix).
+        if(!head.inlineBody&&firstChild<lines.length&&lines[firstChild].indent===indent&&lines[firstChild].code&&!/^(?:そうでなければ|でなければ)/.test(surfaceMask(lines[firstChild].code))){
+          const sentence=text=>/、$/.test(text)?text:text+'。',written=sentence(line.code);
+          throw Object.assign(sentenceDiagnostic(`「${written}」の 中で する 文は、次の 行の はじめを 右へ ずらして 書きます。
+れい：${written}
+  ${sentence(lines[firstChild].code)}`,line,[],{kind:head.kind,missing:['body']}),{code:'P202'});
+        }
         if(!head.inlineBody&&(firstChild>=lines.length||lines[firstChild].indent<=indent))throw Object.assign(sentenceDiagnostic('「もし」や「くり返す」の 中に、する ことを 書いてください。何も しないときは「何もしない」と 書けます。\nれい：2回くり返す。\n  「やあ」と言う。',line,[],{kind:head.kind,missing:['body']}),{code:'P202'});
         if(head.inlineBody&&firstChild<lines.length&&lines[firstChild].indent>indent)throw new AkariError('P209','中の 文を、同じ 行と 次の 行の 両方に 書かないでください',lines[firstChild].lineNo,1);
         const child=head.inlineBody?{nodes:head.inlineBody,index:i+1}:block(childStart,lines[firstChild].indent,childScope,depth+1);
