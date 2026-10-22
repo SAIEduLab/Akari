@@ -3246,16 +3246,18 @@
         this.ui.closeQuestion?.();
         this.ui.state?.();
       }
-      // Nothing goes on now: no flow runs, waits or is queued, no continuous rule is kept, and no question is open. A body
-      // may still start again (ended).
+      // Nothing goes on now: no flow runs, waits or is queued, no continuous rule is kept, no question is open, and no
+      // extension event or answer waits to be taken in. A body may still start again (ended).
       idle() {
         return !(!this.running || this.tasks.size || this.ready.length || this.continuous.size || this.questionQueue.length ||
-          this.activeQuestion || this.extensionEvents?.length || extensions.active);
+          this.activeQuestion || this.extensionEvents?.length || this.extensionCompletions?.length);
       }
       // The run has ended by itself: it is idle, and no body can start again (none waits for input, a 名人 condition or
-      // interval, or an extension).
+      // interval, or an extension event while the extensions run). An extension that is only registered keeps nothing going.
       ended() {
-        return this.idle() && !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event));
+        return this.idle() && !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event) ||
+          (extensions.active && item.event === 'message' &&
+            String((item.filter && typeof item.filter === 'object' ? item.filter.message : item.filter) ?? '').startsWith('拡張:')));
       }
       pause() {
         if (!this.running) return;
