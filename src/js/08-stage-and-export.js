@@ -116,11 +116,12 @@
       form.style.width = p.stage.width + 'px';
       form.style.height = p.stage.height + 'px';
       // While a work runs, a finger on the screen is the mouse wherever it starts: it does not scroll the page, and a
-      // sideways swipe does not go back to the page before (the edit screen keeps the page's own touch).
-      const touch = r ? 'none' : '';
+      // sideways swipe does not go back to the page before. On the edit screen and in a player before ▶ the page still
+      // scrolls up and down (and zooms) under a finger on the screen, but a sideways swipe does not leave the page.
+      const touch = r ? 'none' : 'pan-y pinch-zoom';
       if (form.style.touchAction !== touch) {
         form.style.touchAction = touch;
-        form.style.overscrollBehavior = touch;
+        form.style.overscrollBehavior = r ? 'none' : 'none auto';
       }
       if (canvas.width !== p.stage.width) canvas.width = p.stage.width;
       if (canvas.height !== p.stage.height) canvas.height = p.stage.height;
