@@ -14,6 +14,7 @@ import {browserEnvironment as expectedBrowser} from '../lib/browser-environment.
 import {collectLanguageFrame,childUxProvenance} from '../lib/child-ux-observations.mjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
 import {pressStop} from '../lib/stop-press.cjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 
 const [browserPath, output = 'audit-evidence/child-language-ui.json'] = process.argv.slice(2);
 const require=createRequire(import.meta.url),playwrightVersion=require('playwright/package.json').version;
@@ -148,7 +149,8 @@ async function keyboardPanelTail(p,selector) {
 async function touchPanelTail(p,selector) {
   const panel=p.locator(selector+' > .child-help-panel');await reachable(panel);
   const initial=await panelMetrics(panel),clip=initial.clip;
-  assert.match(await panel.locator('.child-scroll-help').innerText(),/指を上へ 動かす/);
+  // Gestures are なぞる and ひっぱる, not 動かす (FCS-15; 動かす is for characters and ▶ 動かす, LANGUAGE.md コードとブロック).
+  assert.match(await panel.locator('.child-scroll-help').innerText(),/指で 上に なぞる/);
   const distance=Math.floor(clip.height*.6),plannedSwipes=initial.maxScroll>0?Math.ceil(initial.maxScroll/Math.max(1,distance-10))+1:0;
   assert.ok(plannedSwipes<=8,'bounded geometric gesture plan');
   const session=await p.context().newCDPSession(p);
@@ -198,8 +200,9 @@ const cases = {
     assert.match(await p.locator('#saveActionHelp').innerText(),/あとで つづきを 作るとき/);
     assert.match(await p.locator('#exportActionHelp').innerText(),/動かして 見る/);
     assert.match(await p.locator('#bodyActionHelp').innerText(),/する ことを ならべた もの/);
-    assert.match(await p.locator('#bodyActionHelp').innerText(),/「なおす動き」で えらびます/);
-    assert.equal(await p.locator('#eventSelect').locator('xpath=..').locator('rt').count(),0,'なおす needs no reading');
+    // The body selector is 「きっかけ」 (final call 19, F-23): one word per idea, never 「なおす動き」 or 「できごと」.
+    assert.match(await p.locator('#bodyActionHelp').innerText(),/「きっかけ」で えらびます/);assert.doesNotMatch(await p.locator('#bodyActionHelp').innerText(),/なおす動き|できごと/);
+    assert.equal(await p.locator('#eventSelect').locator('xpath=..').locator('rt').count(),0,'きっかけ needs no reading');
     // 見た目のコピー adds a part that holds no body, and is not the 「コピー」 a run makes (F-23, LANGUAGE.md 173).
     assert.match(await p.locator('#basicActionGuide').innerText(),/本文は もちません/);
     assert.match(await p.locator('#basicActionGuide').innerText(),/「コピー」とは べつの もの/);
@@ -233,14 +236,15 @@ const cases = {
     assert.equal(await p.locator('#properties .prop-duplicate').innerText(),'見た目のコピー');
     // What the copy keeps is said by the button's title and description and by ヒント's 見た目のコピー; there is no
     // always-visible line of its own (the side column keeps its tools in view).
-    assert.equal(await p.locator('#properties .prop-duplicate').getAttribute('title'),'見た目と せっていが 同じ 部品を もう1つ 作ります（本文は もちません）');
+    // sprite-1 is a sprite, and F-23 calls a sprite a キャラクター (any other part a 部品; FCS-08).
+    assert.equal(await p.locator('#properties .prop-duplicate').getAttribute('title'),'見た目と せっていが 同じ キャラクターを もう1つ 作ります（本文は もちません）');
     assert.equal(await p.locator('.child-copy-help').count(),0,'no separate copy line');
     const copyHelpModes={before:await state(p),steps:[]};
     const copyActionsReference=await p.locator('.prop-actions').elementHandle();
     assert.ok(copyActionsReference,'existing actions node required');
     try {
       for(const mode of ['code','blocks','code']) {
-        await click(p,'#editorMode'+mode);
+        await chooseView(p,mode,{reveal});
         const placement=await p.evaluate(({actionsReference})=>{
           const actions=document.querySelector('.prop-actions');
           return {mode:document.body.dataset.editorMode,actionsHost:actions?.parentElement?.id,
@@ -249,7 +253,7 @@ const cases = {
         },{actionsReference:copyActionsReference});
         const expectedHost=mode==='blocks'?'componentActions':'properties';
         assert.deepEqual(placement,{mode,actionsHost:expectedHost,sameActionsNode:true,helpCount:0,
-          ariaDescription:"見た目と せっていが 同じ 部品を もう1つ 作ります。本文は もちません。"});
+          ariaDescription:"見た目と せっていが 同じ キャラクターを もう1つ 作ります。本文は もちません。"});
         const observedState=await state(p);
         assert.deepEqual(observedState,copyHelpModes.before,'mode moves preserve the actual project, source, history, redo, and dirty state');
         copyHelpModes.steps.push({...placement,state:observedState});
@@ -315,7 +319,7 @@ const cases = {
       definitionArgsPreserved:action.args,registeredSource:action.source};
   },
   async 'CHILD-UI-BLOCK-WORDS'(p) {
-    await source(p,'2 + 3を言う。\n2回くり返す。\n  1を言う。'); await click(p,'#editorModeblocks');
+    await source(p,'2 + 3を言う。\n2回くり返す。\n  1を言う。'); await chooseView(p,'blocks',{reveal});
     await openPaletteTools(p.locator('#blockEditor'));
     const before=await state(p), summary=await keyboardDetails(p,'#blockEditor .blockui-local-help');
     for(const text of ['あいている ところに 入れる 中身','文字「おはよう」','「あてはまる・あてはまらない」','「同じ数を くり返し かける」（＾）','2×2×2 で 8','コピー','もとにもどす'])
@@ -343,7 +347,8 @@ const cases = {
     assert.equal(await repeat.locator(':scope > .blockui-node-head [data-blockui-action="duplicate"]').innerText(),'同じものをもう1つ作る');
     await p.keyboard.press('Escape');
     await p.locator('#blockEditor [data-blockui-action="body-insert"]').first().click();
-    assert.equal(await p.locator('#blockEditor [data-blockui-action="cancel"]').innerText(),'とちゅうで やめる');
+    // One やめる per state, named with its object (F-23; FCB-11): choosing where a block goes is 「入れるのを やめる」.
+    assert.equal(await p.locator('#blockEditor [data-blockui-action="cancel"]').innerText(),'入れるのを やめる');
     await p.locator('#blockEditor [data-blockui-action="cancel"]').click();
     await click(p,'#undoBtn'); assert.equal((await state(p)).source,before.source);
     return {textNumberBooleanSupport:true,powerExample:true,help,truthExample,insertionConceptHints,leftRightValuesPreserved:oldValues,
@@ -382,7 +387,7 @@ const cases = {
     for(const viewport of [{width:1180,height:757},{width:1188,height:848},{width:1024,height:768},{width:768,height:1024},{width:390,height:844}]) {
       await p.setViewportSize(viewport);
       for(const mode of ['code','blocks']) {
-        await click(p,'#editorMode'+mode);
+        await chooseView(p,mode,{reveal});
         const before=await state(p);
         // The edit screen shows ▶ 動かす; ■ 止める is on the run screen only, in the same place.
         const controls={}; for(const id of ['saveBtn','exportBtn','runBtn'])controls[id]=await reachable(p.locator('#'+id));

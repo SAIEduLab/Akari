@@ -7,6 +7,7 @@ import {withBrowser,pageFor,snapshot} from '../lib/product-test-host.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {answerProductConfirms} from '../lib/product-dialogs.cjs';
 import {reveal} from '../lib/ux-normal-ui.mjs';
+import {chooseView} from '../browser/cases/view-toggle.cjs';
 
 const require=createRequire(import.meta.url),[chrome,out]=process.argv.slice(2),product=currentProductFile();
 const output=path.resolve(out||'audit-evidence/child-diagnostics.json'),dir=output+'.artifacts';
@@ -59,7 +60,7 @@ async function install(p,{source='「もとの動き」と言う。',args=[]}={}
   await p.waitForFunction(()=>Akari.app.project.name==='診断のことば');
   await p.locator('#uiLevel').selectOption('advanced');await p.locator('#objectSelect').selectOption('sprite-1');
   if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();
-  await p.locator('#editorModecode').click();
+  await chooseView(p,'code');
 }
 async function openOutputWithWheel(p) {
   const observations=[],panel=p.locator('.monitor-window'),output=panel.locator('.output-disclosure'),summary=output.locator('> summary');
@@ -77,7 +78,7 @@ async function openOutputWithWheel(p) {
     return{wheelCount,after};
   }
   for(const mode of ['code','blocks']){
-  await p.locator('#editorMode'+mode).click();
+  await chooseView(p,mode);
   const toggle=panel.locator('.blockui-side-toggle');if(await toggle.isVisible()&&await toggle.getAttribute('aria-expanded')==='false')await toggle.click();
   for(const [width,height]of [[1180,757],[1366,768],[1188,848]]){
     await p.setViewportSize({width,height});
@@ -189,9 +190,9 @@ try {await withBrowser(chrome,async browser=>{
   await run('import/current-and-incoming',async p=>{
     await install(p);const before=await state(p),source='始めると、あかりは「新しい動き」と言う。あかりがクリックされると、「もうひとつ」と言う。';
     await p.locator('#codeEditor').fill(source);await p.locator('#codeEditor').press('Tab');await p.locator('#sourceImport').waitFor({state:'visible'});
-    const root=p.locator('#sourceImport');assert.match(await root.innerText(),/今の動き/);assert.equal(await p.locator('#sourceImportConfirm').isDisabled(),true);
+    const root=p.locator('#sourceImport');assert.match(await root.innerText(),/いまの 本文/);assert.equal(await p.locator('#sourceImportConfirm').isDisabled(),true);
     for(const summary of await root.locator('details:not([open]) > summary').all())await summary.click();
-    const preview=await root.innerText();assert.match(preview,/今の動き：\n「もとの動き」と言う。/);assert.match(preview,/取りこむ動き：\n始めると、あかりは「新しい動き」と言う。/);
+    const preview=await root.innerText();assert.match(preview,/いまの 本文：\n「もとの動き」と言う。/);assert.match(preview,/取りこむ 本文：\n始めると、あかりは「新しい動き」と言う。/);
     assert.equal((await state(p)).project,before.project);await p.locator('#sourceImportCancel').click();assert.deepEqual(await state(p),before);
     return {preview,before,after:await state(p),source};
   });
