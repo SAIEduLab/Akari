@@ -223,6 +223,7 @@
         "UI-else-selection-follows-formatting",
         "UI-outside-drop-preserves-state",
         "UI-move-by-directions-legs-time-undo",
+        "UI-press-move-release-in-place-keeps-source",
         "UI-keyboard-only-create-move-delete-history",
         "UI-touch-pointer-drag",
         "UI-pen-pointer-drag",

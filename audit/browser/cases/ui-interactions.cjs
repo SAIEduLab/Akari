@@ -177,6 +177,33 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
     await undo(t1,word[d]+' untimed');await undo(t0,word[d]+' timed');times.push(word[d]);}
    assert.equal(changes.length,12);assert.equal(legs.length,16);assert.equal(times.length,4);
   });
+  // E1-R1-01 (E-04, E-07, E-09): a short press, move and release on a placed block, where nothing else moves under the
+  // pointer, leaves the work as it was: no new order and no history step. Every block in view, the workspace scrolled and
+  // not, with the mouse (8 steps, past the 5-step slop) and a finger moving sideways (18 steps).
+  await test('UI-press-move-release-in-place-keeps-source',async()=>{
+   await fixture(Array.from({length:10},(_,i)=>'「'+(i+1)+'」と言う。').join('\n'));
+   const settle=()=>page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+   const workspace=root.locator('.blockui-workspace'),cdp=await page.context().newCDPSession(page),seen=[];
+   try{await cdp.send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});
+    for(const scrolled of [false,true]){
+     await workspace.evaluate((w,s)=>{w.scrollTop=s?Math.min(80,w.scrollHeight-w.clientHeight):0;},scrolled);await settle();
+     const view=await workspace.boundingBox(),count=await nodes('Say').count();
+     for(let i=0;i<count;i++){
+      const word=nodes('Say').nth(i).locator(':scope > .blockui-node-content > .blockui-node-main > .blockui-phrase-text').first(),box=await word.boundingBox();
+      if(!box||box.y<view.y||box.y+box.height>view.y+view.height)continue;
+      for(const [kind,dx] of [['mouse',8],['touch',18]]){
+       const before=await state(),b=await word.boundingBox(),x=b.x+b.width/2,y=b.y+b.height/2;
+       if(kind==='mouse'){await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+dx,y,{steps:4});await page.mouse.up();}
+       else{await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});for(let k=1;k<=4;k++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+dx*k/4,y}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
+       await settle();const after=await state(),what=kind+' on block '+(i+1)+(scrolled?' (scrolled)':'');
+       assert.equal(after.source,before.source,what+' keeps the order');assert.equal(after.history,before.history,what+' makes no history step');assert.equal(after.pending,null,what);
+       seen.push(what);
+      }
+     }
+    }
+   }finally{await cdp.send('Emulation.setTouchEmulationEnabled',{enabled:false}).catch(()=>{});await cdp.detach().catch(()=>{});}
+   assert.ok(seen.filter(w=>!w.includes('scrolled')).length>=4&&seen.filter(w=>w.includes('scrolled')).length>=4,'blocks in view, scrolled and not: '+seen.length);
+  });
   await test('UI-keyboard-only-create-move-delete-history',async()=>{
    await fixture('何もしない。');const tabTo=async locator=>{for(let i=0;i<500;i++){if(await locator.evaluate(e=>e===document.activeElement))return;await page.keyboard.press('Tab');}throw Error('Keyboard target not reachable: '+await locator.getAttribute('data-blockui-action'));};const openWithKeyboard=async node=>{await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));const more=node.locator(':scope > .blockui-node-head [data-blockui-action="more"]');await tabTo(more);if(!await more.evaluate(e=>e.closest('details').open))await page.keyboard.press('Enter');await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));assert.equal(await more.evaluate(e=>e.closest('details').open),true,'keyboard disclosure must be open');};const toolsToggle=root.locator('[data-blockui-action="palette-tools-toggle"]');if(await toolsToggle.getAttribute('aria-expanded')==='false'){await tabTo(toolsToggle);await page.keyboard.press('Enter');assert.equal(await toolsToggle.getAttribute('aria-expanded'),'true');}if(await root.locator('.blockui-palette-options').getAttribute('open')===null){await tabTo(root.locator('.blockui-palette-options > summary'));await page.keyboard.press('Enter');}await tabTo(root.locator('[data-blockui-palette-mode]'));await page.keyboard.press('Home');await tabTo(root.locator('[data-blockui-search]'));await page.keyboard.press('Control+a');await page.keyboard.type('Say');await tabTo(root.locator('[data-blockui-schema="Say"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation','Say']);await openWithKeyboard(nodes('Say')); await tabTo(nodes('Say').locator(':scope > .blockui-node-head [data-blockui-action="move-up"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['Say','NoOperation']);await openWithKeyboard(nodes('Say')); await tabTo(nodes('Say').locator(':scope > .blockui-node-head [data-blockui-action="remove"]'));await page.keyboard.press('Enter');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation']);await page.keyboard.press('Control+z');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['Say','NoOperation']);await page.keyboard.press('Control+y');assert.deepEqual((await state()).ast.body.map(n=>n.kind),['NoOperation']);
   });
