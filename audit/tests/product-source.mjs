@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {buildProduct,repositoryRoot,sourceDirectories} from '../../src/build.mjs';
 import {currentProductFile} from '../lib/product-path.cjs';
 import {snapshot,sha} from '../lib/product-test-host.mjs';
-import {productSourceIds,verifyProductSource,childGlossaryIssues} from '../lib/product-source-contract.mjs';
+import {productSourceIds,verifyProductSource,childGlossaryIssues,childSpacingIssues,CHILD_SPACING_RUN} from '../lib/product-source-contract.mjs';
 
 const output=path.resolve(process.argv[2]||'audit-evidence/product-source.json');
 assert.ok(!fs.existsSync(output),'fresh result required: '+output);
@@ -47,7 +47,7 @@ check('CHILD-GLOSSARY-ONE-WORD',()=>{assert.ok(manuals.length>=6,'the manuals ar
 // the embedded extension files (the product scanned without them reports their できごと).
 check('REJECT-BANNED-CHILD-WORD',()=>{
   const words=files=>childGlossaryIssues(files).map(i=>i.word).sort();
-  assert.deepEqual(words([{file:'a.js',kind:'script',text:"// なおす動き\nconst a='「なおす動き」で えらびます', b=`名人モードで ${a}`, c='キャラクター', d='キャラが おされたとき';"}]),['なおす動き','名人モード','キャラ'].sort());
+  assert.deepEqual(words([{file:'a.js',kind:'script',text:"// なおす動き\nconst a='「なおす動き」で えらびます', b=`名人モードで ${a}`, c='キャラクター', d='キャラが おされたとき', z='とちゅうで やめる';"}]),['なおす動き','名人モード','キャラ','とちゅうで やめる'].sort());
   assert.deepEqual(words([{file:'b.js',kind:'script',text:"const e='拡張「できごとの値」は 本文で 使います', f='拡張「できごとの値」と できごと', h='## できごとのコード', i='自動保存DBを開けません。';"}]),['できごと','自動保存'].sort());
   assert.deepEqual(words([{file:'c.html',kind:'html',text:'<!-- 作業欄 --><p>作る ばしょ</p><button aria-label="自動保存">x</button><script>const g="作業欄";</script>'}]),['作る ばしょ','自動保存'].sort());
   const label='「きっかけ」で <span class="child-word">えらびます</span>';assert.ok(productText.includes(label));
@@ -55,6 +55,20 @@ check('REJECT-BANNED-CHILD-WORD',()=>{
   const hint='いまの 本文を のこして 入れる';assert.ok(productText.includes(hint));
   assert.deepEqual(words([productInput(productText.replace(hint,'今の 動きを のこして 自動保存'))]),['自動保存']);
   assert.ok(words([{file:currentProductFile(),kind:'product',text:productText}]).includes('できごと'),'the embedded extension files are in the scanned script');
+});
+// F-19 (lead decision 32): no unspaced child text beyond the allowlist, and no allowlist entry that is gone.
+const spacing=JSON.parse(read('audit/fixtures/child-spacing-allowlist.json')),spacingInputs=[productInput(productText),...manuals.map(file=>({file,kind:'html',text:read(file)}))];
+const allowed=Object.values(spacing.texts).flat();
+check('CHILD-SPACING-RUNS',()=>{assert.equal(spacing.schema,'akari-child-spacing-allowlist-v1');assert.equal(spacing.run,CHILD_SPACING_RUN);assert.deepEqual(childSpacingIssues(spacingInputs,allowed),[]);});
+// The lint finds an unspaced string, template and markup text, leaves spaced text, quoted parts and allowlisted texts
+// alone, and lists an allowlist entry that no text has any more.
+check('REJECT-UNSPACED-CHILD-TEXT',()=>{
+  const texts=(files,list=[])=>childSpacingIssues(files,list).map(i=>i.text).sort();
+  assert.deepEqual(texts([{file:'a.js',kind:'script',text:"// ここをおしてはじめる\nconst a='ここをおしてはじめる', b=`うごかしてみよう`, c='ここを おして はじめる', d='「いまのばしょから」と書く', e='いまのばしょから';"}],['いまのばしょから','もうないもじれつ']),['ここをおしてはじめる','うごかしてみよう'].sort());
+  assert.deepEqual(childSpacingIssues([{file:'a.js',kind:'script',text:"const e='いまのばしょから';"}],['いまのばしょから','もうないもじれつ'],{stale:true}),['もうないもじれつ']);
+  assert.deepEqual(texts([{file:'b.html',kind:'html',text:'<!-- ここをおしてはじめる --><p>ここをおしてはじめる</p><p>ここを おして はじめる</p><code>いまのばしょから</code><ruby>以上<rt>いじょう</rt></ruby>'}]),['ここをおしてはじめる']);
+  const label="'じゅんび できたよ'";assert.ok(productText.includes(label));
+  assert.deepEqual(childSpacingIssues([productInput(productText.replace(label,"'じゅんびできたよ'"))],spacing.texts[currentProductFile()]).map(i=>i.text),['じゅんびできたよ']);
 });
 const report={schema:'akari-product-source-v1',status:results.every(r=>r.status==='PASS')?'PASS':'FAIL',snapshot:snapshot(currentProductFile()),productSha256:sha(product),buildSha256:sha(Buffer.from(built.html,'utf8')),sources:built.sources,results};
 assert.deepEqual(results.map(r=>r.id),productSourceIds);

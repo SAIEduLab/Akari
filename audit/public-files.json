@@ -83,6 +83,7 @@
     "audit/fixtures/block-defaults.json",
     "audit/fixtures/block-schemas.json",
     "audit/fixtures/capability-oracle.json",
+    "audit/fixtures/child-spacing-allowlist.json",
     "audit/fixtures/child-ux-plan.json",
     "audit/fixtures/composition-acceptance.json",
     "audit/fixtures/finite-semantic-variants.json",

@@ -18,6 +18,8 @@ export const productSourceIds = [
   'REJECT-UNEMBEDDED-PORTABLE',
   'CHILD-GLOSSARY-ONE-WORD',
   'REJECT-BANNED-CHILD-WORD',
+  'CHILD-SPACING-RUNS',
+  'REJECT-UNSPACED-CHILD-TEXT',
 ];
 
 // F-23 (final calls 19, 20, 23; LANGUAGE.md 子ども向けの言葉): the child screens and the manuals use one word per idea.
@@ -28,6 +30,8 @@ export const childGlossaryBanned = Object.freeze([
   ['自動で のこす', /自動で\s*のこす/, 'このパソコンに のこす'], ['自動保存', /自動保存/, 'このパソコンに のこす'],
   ['キャラ', /キャラ(?!クター)/, 'キャラクター'], ['命令一覧', /命令一覧/, 'ブロックの一覧'], ['使うブロック', /使うブロック/, 'ブロックの一覧'],
   ['名人モード', /名人モード/, '名人'],
+  // E2-05: each やめる names what it stops (入力を やめる, 入れるのを やめる, もっていくのを やめる).
+  ['とちゅうで やめる', /とちゅうで\s*やめる/, '入力を やめる／入れるのを やめる／もっていくのを やめる'],
 ]);
 // What the scan leaves out, each for its own reason:
 // - a code name: the extension expressions 拡張「…」 are written in the code as EXTENSIONS.md and LANGUAGE.md define them
@@ -80,6 +84,39 @@ export function childGlossaryIssues(files) {
     } else if (kind === 'script') strings(file, text, embedded);
     else scan(file, markupText(text));
   }
+  return issues;
+}
+
+// F-19 (lead decision 32): child text is spaced by 文節. The lint is a run-length test minus an allowlist, with no 文節
+// segmenter: a text with no space at all (ASCII or full-width) whose words, after the quoted parts are taken out, hold six
+// or more hiragana in a row is unspaced, unless it is on the allowlist (audit/fixtures/child-spacing-allowlist.json).
+// What is taken out first: 「…」『…』【…】（…）〔…〕 (code, names and the child's own words) and the code names 拡張「…」.
+// Script strings are scanned whole; markup and the manuals text by text between tags, with <rt> readings, <code>, <pre>
+// and <kbd> left out. The allowlist holds exact texts. With {stale: true} the entries no scanned text has any more are
+// listed instead (the docs and the screens change on their own, so a gone entry is a note for the next re-record,
+// not a failure).
+export const CHILD_SPACING_RUN = 6;
+const quotedParts = text => codeNames(text).replace(/「[^「」]*」|『[^『』]*』|【[^【】]*】|（[^（）]*）|〔[^〔〕]*〕/g, ' ');
+export const unspacedChildText = text => !/[ 　]/.test(text) && new RegExp('[ぁ-ゖ]{' + CHILD_SPACING_RUN + ',}').test(quotedParts(text));
+const markupTexts = html => markupText(html).replace(/<rt>[^<]*<\/rt>/g, '').replace(/<(code|pre|kbd)\b[\s\S]*?<\/\1>/g, '\n')
+  .replace(/<[^>]+>/g, '\n').split('\n').map(s => s.trim()).filter(Boolean);
+export function childSpacingIssues(files, allowlist, {stale: listStale = false} = {}) {
+  const allowed = new Set(allowlist), seen = new Set(), issues = [];
+  const scan = (file, text) => { if (!unspacedChildText(text)) return; seen.add(text); if (!allowed.has(text)) issues.push({file, text}); };
+  const strings = (file, script, embedded = []) => {
+    const skip = embedded.map(text => { const at = script.indexOf(text); assert.ok(text && at >= 0, file + ' embeds the file it leaves out'); return [at, at + text.length]; });
+    for (const s of scriptStrings(script)) if (!skip.some(([from, to]) => s.at >= from && s.at < to)) scan(file, s.text);
+  };
+  for (const {file, kind, text, embedded} of files) {
+    if (kind === 'product') {
+      const open = text.indexOf('<script>'), close = text.lastIndexOf('</script>');
+      assert.ok(open >= 0 && close > open, file + ' has its script');
+      for (const t of markupTexts(text.slice(0, open) + text.slice(close + 9))) scan(file, t);
+      strings(file, text.slice(open + 8, close), embedded);
+    } else if (kind === 'script') strings(file, text, embedded);
+    else for (const t of markupTexts(text)) scan(file, t);
+  }
+  if (listStale) return [...allowed].filter(text => !seen.has(text));
   return issues;
 }
 
