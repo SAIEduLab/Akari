@@ -6213,6 +6213,9 @@ body[data-editor-mode] :is(#blockEditor, #callableBlocks) .blockui-palette.block
 /* The text of the blocks, the block list and the workspace controls is not selected by a press or a drag (E-11);
    the text in an input is. */
 #blockEditor, #callableBlocks, .blockui-drag-ghost { -webkit-user-select: none; user-select: none; }
+/* The same for the rows above the workspace (本文・動かすもの, the event buttons, すべての本文 … もとにもどす): a drag that
+   starts in their empty space selects nothing. */
+body[data-editor-mode="blocks"] .codewin > :is(.win-title, .code-head, #entryEvents, .source-nav, .debugbar) { -webkit-user-select: none; user-select: none; }
 #blockEditor :is(input, textarea), #callableBlocks :is(input, textarea) { -webkit-user-select: text; user-select: text; }
 body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
 
