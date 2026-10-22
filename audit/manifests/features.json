@@ -11,19 +11,19 @@
       "id": "NumericUpdate:ADD",
       "kind": "NumericUpdate",
       "op": "ADD",
-      "source": "点数を1増やす。"
+      "source": "点数を1ふやす。"
     },
     {
       "id": "NumericUpdate:SUB",
       "kind": "NumericUpdate",
       "op": "SUB",
-      "source": "点数を1減らす。"
+      "source": "点数を1へらす。"
     },
     {
       "id": "ListAppend",
       "kind": "ListAppend",
       "op": "",
-      "source": "名前一覧の最後に「あかり」を入れる。"
+      "source": "名前一覧のさいごに「あかり」を入れる。"
     },
     {
       "id": "ListReplace",
@@ -77,7 +77,7 @@
       "id": "RepeatUntil",
       "kind": "RepeatUntil",
       "op": "",
-      "source": "「空白」キーがおされるまで、くり返す。\n  何もしない。"
+      "source": "「スペース」キーがおされるまで、くり返す。\n  何もしない。"
     },
     {
       "id": "WaitTime",
@@ -95,7 +95,7 @@
       "id": "ForEach",
       "kind": "ForEach",
       "op": "",
-      "source": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【名前】と呼ぶ。\n  何もしない。"
+      "source": "名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【名前】とよぶ。\n  何もしない。"
     },
     {
       "id": "MotionCommand:MOVE",
@@ -161,7 +161,7 @@
       "id": "LooksCommand:SET_COLOR",
       "kind": "LooksCommand",
       "op": "SET_COLOR",
-      "source": "表示色を「赤」にする。"
+      "source": "色を「赤」にする。"
     },
     {
       "id": "LooksCommand:HIDE",
@@ -437,7 +437,7 @@
       "id": "UserActionCall",
       "kind": "UserActionCall",
       "op": "",
-      "source": "3をわたして、【増やす】という手順を行う。"
+      "source": "3をわたして、【増やす】というてじゅんを行う。"
     },
     {
       "id": "NoOperation",

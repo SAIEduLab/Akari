@@ -1,6 +1,6 @@
 {
   "schema": "akari-product-tests-v1",
-  "fixedIdSha256": "1f689adf9ac82473056f682ceb3ec97354363666d45e4e3a507f4db3117c231e",
+  "fixedIdSha256": "bdd42f13a92e8bcbf258670a38b9bb45497b7ced1c90926e92866efbbc46f52f",
   "suites": [
     {
       "name": "runExtendedTests",
@@ -492,6 +492,7 @@
         "CORE AST roundtrip 4",
         "CORE indent triple nesting execution",
         "CORE indent comments else and line numbers",
+        "CORE indent full-width space reads as two spaces",
         "CORE indent reject 0",
         "CORE indent reject 1",
         "CORE indent reject 2",

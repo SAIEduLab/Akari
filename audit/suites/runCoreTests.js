@@ -110,7 +110,8 @@ function runCoreTests() {
       [2, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない。\n 点数を1にする', 3],
       [3, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない。\n    点数を1にする', 3],
       [4, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n\t点数を1にする', 2],
-      [5, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n　点数を1にする', 2],
+      // A full-width space at a line's start reads as two spaces (LANGUAGE.md); two of them are one indent too deep here.
+      [5, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない。\n　　点数を1にする', 3],
       [6, 'そうでなければ、次のことをする。\n  何もしない', 1],
       [7,
         'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  何もしない\n点数を1にする\nそうでなければ、次のことをする。\n  何もしない',
@@ -128,6 +129,14 @@ function runCoreTests() {
       [11, 'もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  ※ コメントだけ', 1],
       [13, '3回くり返す。\n  何もしない\nここまで', 3],
     ];
+    // One full-width space at a line's start is the indent of two spaces, and 整える writes the two spaces (LANGUAGE.md).
+    test('indent full-width space reads as two spaces', () => {
+      const wide = parseScript('もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n　点数を1にする', sy),
+        narrow = parseScript('もし 条件（条件の答え（あてはまる））が成り立つなら、次のことをする。\n  点数を1にする', sy);
+      eq(clean(wide), clean(narrow));
+      eq(formatScript(wide), formatScript(narrow));
+      ok(!formatScript(wide).includes('\u3000'), 'the formatted text keeps a full-width space');
+    });
     for (const [i, source, line] of invalid)
       test('indent reject ' + i, () => {
         let e;
