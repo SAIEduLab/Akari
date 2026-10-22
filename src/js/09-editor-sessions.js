@@ -1136,6 +1136,11 @@
       { designPosition, partTarget, costume, backdrop } = blockCreationDefaults(creationProject, creationContext.targetId);
     let node = options.candidateNode ? JSON.parse(JSON.stringify(options.candidateNode))
       : applyCreationDefaults(createBlock(schemaId, { draft, allowHoles: draft, designPosition, partTarget, costume, backdrop }), creationProject, creationContext.targetId);
+    // 〜まで待つ comes as a draft, but whether a wait may go here is checked on a filled one: 答えを もとめる has no waits.
+    if (schema.kind === 'WaitUntil' && draft && !options.candidateNode) {
+      const filled = computeBlockInsertionAvailability(session, schemaId, location, { ...options, candidateNode: createBlock(schemaId, { idPrefix: 'wait-check' }) });
+      if (!filled.enabled) return { ...filled, node };
+    }
     if (schemaId === 'NumberLiteral' && location?.input) {
       const parent = buildBlockIndex(session.blockView).get(location.parentId)?.node;
       if (parent?.schemaId === 'ContinuousRule' && ['seconds', 'distance'].includes(location.input))
