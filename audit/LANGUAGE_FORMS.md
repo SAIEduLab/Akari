@@ -27,8 +27,6 @@ R/L はデータの対象、Q/E/X/Y/T/F/A/N は式です。引用文字列、明
 | 017 | 2 | `[Rに][Eを]加える` | NumericUpdate.ADD target/value; binding/current value then E then update |
 | 018 | 4 | `[Rを][E][だけ]増やす`; fixed order | NumericUpdate.ADD; increment, not final value |
 | 019 | 4 | `[Rを][E][だけ]減らす`; fixed order | NumericUpdate.SUB; current minus E |
-| 020 | 4 | `[横X、縦Yの位置][へ/に]行く` | MotionCommand.GOTO args=[X,Y]; actor then X then Y |
-| 021 | 8 | `[T秒で][coordinateの位置へ]滑る/すべる`; includes 039 composition | MotionCommand.GLIDE args=[T,X,Y]; actor then T,X,Y then start/wait |
 | 022 | 2 | `[Lの末尾に][Eを]追加する` | ListAppend target/value; resolve list/type, E, value/size checks, mutate |
 | 023 | 2 | `[Lから][N番目を]削除する` | ListDelete target/index; list then N then range then mutate |
 | 024 | 2 | `[Lのすべての要素を]削除する` | ListClear.target; clear value, retain definition |
@@ -46,10 +44,12 @@ R/L はデータの対象、Q/E/X/Y/T/F/A/N は式です。引用文字列、明
 | 036 | 4 | `[LのN番目に][Eを]` or reverse; `挿入する` | ListInsert.target/index/value; list/type, N/integer/range, E, size, mutate |
 | 037 | 4 | `[Qに][Eを]` or reverse; `入れる` | LooksCommand.SET_INPUT args=[Q,E]; Q then E, existing original-component action |
 | 038 | 8 | `[Dに][A度]` or reverse; `回る`; D=右/左 | TURN_RIGHT/LEFT args=[A]; actor then A |
-| 039 | 4 | `[縦Y、横X]` or standard XY; each label once; 行くへ/に; also slide | GOTO [X,Y] / GLIDE [T,X,Y]; expression evaluation never follows surface order |
-| 040 | 16 | `[coordinateの位置へ][optional one comma][T秒で]滑る/すべる`; XY/YX | GLIDE [T,X,Y]; no 位置に or 秒後に expansion |
 | 041 | 8 | `[FHzの音を][T秒]` or `[T秒、][FHzの音を]`; each wait terminal | SoundCommand.TONE/TONE_WAIT args=[F,T]; F then T then range/start/wait |
 | 042 | 4 | `[Yより][Xが]大きい/小さい` versus canonical `[Xが][Yより]` | CompareExpression.GT/LT left=X/right=Y; left then right; logical order unchanged |
+| 043 | 10 | `画面の左下のはしから、[右/左へX歩]、[上/下へY歩]のばしょへ行く`; たてを先に、端・場所、へ/に | MotionCommand.GOTO xDir/yDir, x/y; centre from the bottom-left; よこ then たて whatever the written order |
+| 044 | 8 | `いまのばしょから、[右/左へX歩][、上/下へY歩]動く`; one or two legs, either order; 今の場所から | MotionCommand.MOVE_BY xDir/yDir, x/y as written; よこ then たて; the direction stays |
+| 045 | 8 | `[T秒かけて、]` before a move or turn, `のばしょへT秒かけて行く`, `T秒で、` | GOTO/MOVE_BY/TURN_RIGHT seconds; T then よこ then たて whatever the written order; the target is fixed at the start; 0秒 ends at once |
+| 046 | 6 | `画面の左下のはしへ行く`; a fixed place with one leg; `「P」のところへ行く` | GOTO with the unwritten leg 0歩 (整える writes 右へ0歩/上へ0歩); GOTO_PART args=[P], own centre to P's centre |
 
 ## 保証
 

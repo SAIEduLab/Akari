@@ -962,7 +962,7 @@
     },
     {
       "id": "command:MotionCommand:BOUNCE",
-      "capability": "端に触れていれば跳ね返る",
+      "capability": "画面の端に触れていれば跳ね返る",
       "ast": "MotionCommand op=BOUNCE",
       "cui": "CODE-STMT",
       "gui": "GUI-EDIT-STMT schema `MotionCommand:BOUNCE`; fields=なし; inputs=args[]; bodies=なし; annotations=inlineComment",

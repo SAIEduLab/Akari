@@ -3504,7 +3504,7 @@
     },
     {
       "id": "command:MotionCommand:BOUNCE",
-      "meaning": "端に触れていれば跳ね返る",
+      "meaning": "画面の端に触れていれば跳ね返る",
       "testReferences": [
         {
           "path": "audit/manifests/product-tests.json",
@@ -8280,7 +8280,7 @@
     },
     {
       "id": "CLOSED-ACTOR-ORDER-EXTENSION",
-      "meaning": "登録済み役割文型では「画面の右へ、あかりを30歩動かす」等の対象句の追加位置も受理。同じ役割とtrace、重複役割・無指定量の拒否を保持。",
+      "meaning": "移動の文では文頭の対象句「あかりを、いまのばしょから、右へ30歩動かす」（読点なしも）を「あかりは、いまのばしょから、右へ30歩動く」と同じ役割とtraceで受理。歩数の途中に置いた対象句（「いまのばしょから、右へ、あかりを30歩動かす」）、重複役割・無指定量の拒否を保持。",
       "testReferences": [
         {
           "path": "audit/tests/natural-roles.mjs",
@@ -8439,7 +8439,7 @@
       ]
     },
     {
-      "meaning": "- TIME-TRACE：1秒待つ、1秒ですべる、1秒後に、キーまで待つ、音を始める/鳴らす、手順内の待ちを、別実行の進行と一緒に確認",
+      "meaning": "- TIME-TRACE：1秒待つ、1秒かけて動く・回る、1秒後に、キーまで待つ、音を始める/鳴らす、手順内の待ちを、別実行の進行と一緒に確認",
       "testReferences": [
         {
           "path": "audit/tests/semantic-negative-pairs.mjs",
@@ -8769,7 +8769,7 @@
       ]
     },
     {
-      "meaning": "| 10秒後に右へ10歩動く | 10秒かけた移動 | 10秒待ってから右へ10歩動く形を提案 |",
+      "meaning": "| 10秒後に右へ10歩動く | 10秒かけた移動 | 10秒待ってから「いまのばしょから、右へ10歩動く」形を提案 |",
       "testReferences": [
         {
           "path": "audit/tests/semantic-negative-pairs.mjs",
@@ -8782,7 +8782,7 @@
       ]
     },
     {
-      "meaning": "| 右へ10歩動く | 向きを勝手に右へ変える | 画面の右へ移動。向きも変えたいときだけ向く文 |",
+      "meaning": "| 右へ10歩動く | 向きを勝手に右へ変える | 読まずに「いまのばしょから、右へ10歩動く」へ直す案内。向きは変えない |",
       "testReferences": [
         {
           "path": "audit/tests/semantic-negative-pairs.mjs",
