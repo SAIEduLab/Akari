@@ -103,7 +103,7 @@ Standard契約（言語契約4・runtime契約4）では、作品の座標は画
 | `signal`、`sessionId` | sessionの取消と識別 |
 | `connector` | 明示的に接続して版・能力を確認したコネクタ、未接続時は `null` |
 
-factoryは `{commands, calculations, initialize?, dispose?}` を返します。機能表のキーはmanifestの機能ID、handlerは `(args, context)` です。contextには `signal/sessionId` と製品が提供する実行情報があります。拡張API契約 `1` で拡張が頼れるのは `signal` と `sessionId` だけです（[types.d.ts](extensions/types.d.ts) の `InvokeContext`）。そのほかの実行情報は製品の内部の形で、版によって変わることがあります。呼び出した部品のばしょや向きが要る拡張は、単位 `歩`・`歩`・`度` の引数を登録し、`拡張「拡張名」「機能名」（よこのばしょ、たてのばしょ、向き）` のように引数でわたします（数は「座標と向き」のきまりで読みます）。factoryと `initialize()` は同期処理とし、失敗時は既に作ったinstanceを破棄します。`dispose()` は資源解放に使い、終了後の状態変更・できごと送信を行いません。
+factoryは `{commands, calculations, initialize?, dispose?}` を返します。機能表のキーはmanifestの機能ID、handlerは `(args, context)` です。contextには、`signal`・`sessionId` と、呼び出した文の持ち主（部品、または `"stage"`）を示す `runtimeId`、その部品の見え方を返す `runtime.actor(runtimeId)` があります（[types.d.ts](extensions/types.d.ts) の `InvokeContext` と `PartView`）。拡張API契約 `1` で拡張が頼れるのは、この四つだけです。`runtime.actor(context.runtimeId)` は呼び出した部品の `{runtimeId, baseId, isClone, x, y, direction}` を返し、画面が呼び出したときは `null` です。`x`・`y`・`direction` は「座標と向き」のきまりの数です。この見え方は読むだけにし、書きかえません。そのほかの実行情報は製品の内部の形で、版によって変わることがあります。ばしょや向きを引数でわたしてもかまいません（単位 `歩`・`歩`・`度` の引数を登録し、`拡張「拡張名」「機能名」（よこのばしょ、たてのばしょ、向き）` のように書きます）。factoryと `initialize()` は同期処理とし、失敗時は既に作ったinstanceを破棄します。`dispose()` は資源解放に使い、終了後の状態変更・できごと送信を行いません。
 
 計算は `async:false` とし、即座に既存型の値を返します。命令は `async:true` ならPromiseを返せます。待機は呼出元の処理だけを止め、ほかのできごとや停止操作を処理します。長時間処理は `context.signal` を確認し、timer・外部要求を取り消してください。同期の無限ループを契約外のJavaScriptから強制停止する保証はありません。
 
