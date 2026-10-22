@@ -1677,6 +1677,20 @@
         };
       return availability(schema.id, location, schema.candidateNode);
     }
+    // One call for each てじゅん and 答えを もとめる of the work, written as 書ける ことば writes it (ジャンプ with 高さを1として、).
+    function definitionCalls(work) {
+      if (!work) return [];
+      const handed = d => (d.args || []).length ? d.args.map(arg => nameSource(arg) + 'を1').join('、') + 'として、' : '', out = [];
+      for (const [kind, list] of [['UserActionCall', work.actions], ['UserFunctionCall', work.functions]])
+        for (const d of list || []) {
+          const action = kind === 'UserActionCall', text = action ? `${handed(d)}【${d.name}】というてじゅんを行う` : `（${handed(d)}【${d.name}】で求めた答え）`;
+          try {
+            out.push({ ...BLOCK_SCHEMA_BY_ID.get(kind), candidateNode: nodeForSearchHint({ mode: action ? 'statement' : 'expression', text }, work, context()),
+              candidateKey: (action ? 'action:' : 'function:') + d.id, searchLabel: text });
+          } catch (_) { /* A definition whose call cannot be written yet is left out of the list. */ }
+        }
+      return out;
+    }
     function renderPalette() {
       if (options.readOnly) return;
       if (destroyed) return;
@@ -1728,7 +1742,15 @@
         projectState = project();
       const hints = !query ? [] : location?.body ? editorInsertionHints(session(), location, {project:projectState,context:context()})
         : hintCandidates(projectState, context().targetId, {source:session()?.sourceText || '', ...context()});
-      const searched = query ? blockSearchCandidates(projectState, context(), query, hints) : all;
+      const searched = (query ? blockSearchCandidates(projectState, context(), query, hints) : all)
+        // 自分で作ったブロック: a call names a てじゅん or 答えを もとめる of the work, never one that does not exist; 「返す」
+        // is a block of 答えを もとめる only (F2-06).
+        .filter(s => !(['UserActionCall', 'UserFunctionCall'].includes(s.kind) && !s.candidateNode)
+          && (s.kind !== 'ReturnStatement' || context().definitionKind === 'function'));
+      if (!query) {
+        const calls = definitionCalls(projectState), at = searched.findIndex(s => blockPaletteGroup(s) === 'action');
+        searched.splice(at < 0 ? searched.length : at, 0, ...calls);
+      }
       const speech=searched.find(s=>s.id==='Say');
       if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:entry?'話す':'ことばと 時間を 決めて 話す'});}
       // はじめて: the loop comes with its number of times (F-03); what it repeats goes into its hole, from the next block
@@ -1748,8 +1770,11 @@
           (!entry || s.id !== 'Say' || s.candidateKey === 'timed-speech') &&
           (unitChoice || s.id !== 'QuantityLiteral') && (unitChoice || !ADVANCED_ONLY_SCHEMA_IDS.has(s.id)),
       );
-      if (!showOutside && !entry)
+      // はじめて too lists only what can go in here, so its blocks fit one page; one plain line says why some are gone (F2-12).
+      const listed = candidates.length;
+      if (!showOutside)
         candidates = candidates.filter((s) => paletteAvailability(s, location).enabled);
+      const hiddenAtEntry = entry && candidates.length < listed;
       if ((entry || category === 'basic') && !query) {
         const order = entry ? ENTRY_PALETTE_ORDER : [...BASIC_BLOCK_SCHEMA_IDS];
         candidates.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
@@ -1805,7 +1830,8 @@
         }
         try {
           b.append(faceRuby(previewNode(schema, a.node)));
-          if (schema.binding||schema.lessonKey||schema.candidateKey==='timed-speech') b.append(E('small', 'blockui-bound-name', schema.searchLabel));
+          // はじめて lists one speech block, so it needs no caption apart from the others (FM2-15).
+          if (schema.binding||schema.lessonKey||schema.searchCaption||(schema.candidateKey==='timed-speech'&&!entry)) b.append(E('small', 'blockui-bound-name', schema.searchLabel));
         } catch (_) {
           b.textContent = paletteLabel(schema);
         }
@@ -1821,6 +1847,9 @@
             'blockui-empty',
             // A search already looks through every なかま: it asks for other words.
             query ? '「' + searchText.trim() + '」に 合う ブロックが ないよ。ほかの ことばで さがしてみてね。れい：うごく・まつ・いう'
+            // The work has no てじゅん or 答えを もとめる yet: the toolbar's 自分で作ったブロック makes one (F2-06).
+            : category === 'action' && !(projectState?.actions?.length || projectState?.functions?.length)
+              ? '自分で作ったブロックは まだ ないよ。上の「自分で作ったブロック」で 作れるよ'
             : location?.input
               ? 'ここに 入れられる ブロックが ないよ。なかまを かえてね。「ブロックの しゅるい」の「使えないブロックも見せる」で、使えない わけも 見られるよ。つなぐブロックを ふやすときは「＋ ここに入れる」を おしてね'
               : 'この ばしょで 使える ブロックが ないよ。なかまを かえてね。「ブロックの しゅるい」の「使えないブロックも見せる」で、使えない わけも 見られるよ。',
