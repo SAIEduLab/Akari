@@ -3518,6 +3518,8 @@
           (s?.notices || []).map(d => d.line + ':' + d.code + ':' + d.message).join(','),
         ].join('|');
       root.dataset.locked = String(!!isLocked());
+      // While the work runs, 作業台を広く has nothing to widen: it keeps its place, unseen (E2-12, as final call 21).
+      if (wide) wide.style.visibility = isLocked() ? 'hidden' : '';
       if (drag && nextSignature !== signature) cancelDrag();
       if (pending) {
         updateControls();
