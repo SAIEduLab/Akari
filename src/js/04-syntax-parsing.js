@@ -1833,7 +1833,15 @@
     // ねこを右へ10歩動かす: the part moved is the subject.
     if (!at && /動かす$|うごかす$/.test(rmask)) { at = subjectAt(/^((?:[^、。]+?を、?)?)/); rest = code.slice(at); rmask = mask.slice(at); }
     const proposalSubject = code.slice(0, at).replace(/を(、?)$/, 'は$1');
-    // いまの位置から / 〜の位置へ行く: 位置 is written ばしょ.
+    // マウスの位置へ行く / 「星」のばしょへ行く: going to a part or the mouse is 〜のところへ行く (a place with no steps
+    // counted is no ばしょ of today's sentences).
+    const toPart = /^((?:[^、。]+?秒(?:間)?かけて、?)?)(.+?)の(位置|ばしょ|場所)(?:へ|に)(行く|いく)$/.exec(rmask);
+    if (toPart && !/[、歩]/.test(toPart[2]) && !/^画面/.test(toPart[2]) && !/^(?:いま|今)$/.test(toPart[2])) {
+      const time = toPart[1] ? rest.slice(0, toPart[1].length).replace(/、?$/, '、') : '';
+      const source = `${movingSubject(proposalSubject)}${time}${rest.slice(toPart[1].length, toPart[1].length + toPart[2].length)}のところへ行く`;
+      return { message: `キャラクターや 部品、マウスの ところへ 行くときは、「${source}」と 書きます`, source, label: '「ところへ行く」と 書く' };
+    }
+    // いまの位置から / 画面の左下の位置から…のばしょへ行く: 位置 is written ばしょ.
     const ichi = () => /位置/.test(mask) && /(?:行く|いく|動く|うごく|進む|すすむ|歩く|あるく|滑る|すべる)$/.test(mask)
       ? { message: '「位置」は 読みません。「ばしょ」と 書きます。れい：' + code.replace(/位置/g, 'ばしょ'), source: code.replace(/位置/g, 'ばしょ'), label: '「ばしょ」と 書く' } : null;
     // いまのばしょから… and 画面の左下のはしから… are the sentences of today.
@@ -1856,7 +1864,15 @@
       time = p[1].text;
     }
     if (legs) {
-      const source = `${movingSubject(proposalSubject)}${time ? time + '、' : ''}いまのばしょから、${legs.map(([word, amount]) => word + 'へ' + amount + '歩').join('、')}動く`;
+      const head = `${movingSubject(proposalSubject)}${time ? time + '、' : ''}いまのばしょから、`;
+      // 右へ10歩、左へ5歩: one leg on each axis. Two numbers on one axis are written as the one leg they add up to.
+      const sign = { 右: 1, 上: 1, 左: -1, 下: -1 }, axis = word => ['右', '左'].includes(word) ? 'x' : 'y';
+      if (legs.length === 2 && axis(legs[0][0]) === axis(legs[1][0])) {
+        const steps = legs.map(([word, amount]) => /^[0-9]+$/.test(amount) ? sign[word] * Number(amount) : NaN), net = steps[0] + steps[1];
+        const word = axis(legs[0][0]) === 'x' ? (net < 0 ? '左' : '右') : (net < 0 ? '下' : '上'), source = Number.isFinite(net) ? `${head}${word}へ${Math.abs(net)}歩動く` : null;
+        return { message: '画面の 向きへ 動くときは、「いまのばしょから、」を 書いて、「右へ」「左へ」と「上へ」「下へ」を 1つずつ 書きます。れい：' + (source || 'いまのばしょから、右へ10歩、上へ5歩動く'), ...(source ? { source, label: 'いまのばしょから 動く' } : {}) };
+      }
+      const source = `${head}${legs.map(([word, amount]) => word + 'へ' + amount + '歩').join('、')}動く`;
       return { message: '画面の 向きへ 動くときは、「いまのばしょから、」を 書きます。れい：' + source, source, label: 'いまのばしょから 動く' };
     }
     // よこ100歩、たて50歩のばしょへ行く / 横100、縦50の位置へ行く / 1秒で横200、縦100の位置へ滑る: the old numbers
@@ -2592,10 +2608,24 @@
       }
       if(first)throw sentenceDiagnostic(first.message,line,whole&&reads(whole)?[{label:first.label||'書き方を なおす',source:whole}]:[],{kind:'MotionCommand'});
     }
-    // 横位置・縦位置 (and マウスの…) are written よこのばしょ・たてのばしょ.
-    if(/(?:横|縦)位置/.test(mask)){
-      const source=code.replace(/(横|縦)位置/g,(all,axis)=>axis==='横'?'よこのばしょ':'たてのばしょ');
-      throw sentenceDiagnostic(`「位置」は 読みません。「${/横位置/.test(mask)?'よこのばしょ':'たてのばしょ'}」と 書きます`,line,reads(source)?[{label:'「ばしょ」と 書く',source:canonicalStatementSource(source,symbols)}]:[]);
+    // いまのばしょから、右へ10歩、左へ5歩動く: one leg on each axis; two numbers on one axis add up to one leg.
+    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?(?:[^、。]+?秒(?:間)?かけて、?)?(?:いま|今)の(?:ばしょ|場所)から、?)(右|左|上|下)(?:へ|に)([0-9０-９]+)歩、?(右|左|上|下)(?:へ|に)([0-9０-９]+)歩(動く|うごく)$/d,code,mask))){
+      const [head,w1,n1,w2,n2]=p.map(x=>x?.text),axis=word=>['右','左'].includes(word)?'x':'y',sign={右:1,上:1,左:-1,下:-1};
+      if(axis(w1)===axis(w2)){const net=sign[w1]*Number(n1.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)))+sign[w2]*Number(n2.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)));
+        const word=axis(w1)==='x'?(net<0?'左':'右'):(net<0?'下':'上'),source=`${head}${word}へ${Math.abs(net)}歩動く`;
+        throw sentenceDiagnostic(`「右へ」「左へ」と「上へ」「下へ」は 1つずつ 書きます。ここでは「${canonicalStatementSource(source,symbols)}」と 同じです`,line,reads(source)?[{label:'1つに まとめる',source:canonicalStatementSource(source,symbols)}]:[],{kind:'MotionCommand'});}
+    }
+    // 横位置・よこの位置・縦位置 (and マウスの…) are written よこのばしょ・たてのばしょ.
+    if(/(?:横|縦|よこ|たて)の?位置/.test(mask)){
+      const source=code.replace(/(横|縦|よこ|たて)の?位置/g,(all,axis)=>/^(?:横|よこ)/.test(axis)?'よこのばしょ':'たてのばしょ');
+      throw sentenceDiagnostic(`「位置」は 読みません。「${/(?:横|よこ)の?位置/.test(mask)?'よこのばしょ':'たてのばしょ'}」と 書きます`,line,reads(source)?[{label:'「ばしょ」と 書く',source:canonicalStatementSource(source,symbols)}]:[]);
+    }
+    // 位置 / マウスの位置 as a value: the place has two numbers, よこのばしょ and たてのばしょ.
+    // The words in 「 」 are hidden; the text in （ ） is looked at.
+    const words=code.replace(/「[^」]*」/g,m=>'\u0001'.repeat(m.length));
+    if((p=/(?:^|[（、をがはにと])((?:[^、。（）\u0001をがはにと]+?の)?)位置(?=[）をがはの]|$|と|より|に)/.exec(words))&&!knownWords(symbols,ctx).some(name=>name.includes('位置'))){
+      const of=p[1];
+      throw sentenceDiagnostic(`「位置」は 読みません。「${of}よこのばしょ」か「${of}たてのばしょ」と 書きます`,line,[],{kind:'Sequence'});
     }
     // ねこはおされたとき、 / もしねこは…なら、: inside 〜とき and もし the subject takes が.
     {const inner=actorNamePatterns(symbols).inner.exec(code);
@@ -2755,7 +2785,9 @@
     }
     // 「点数は」と点数を言う: two things said together are joined.
     if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(\u0001+)と([^\u0001、。]+?)を(?:つなげて)?(?:([^、。\u0001]+?)秒(?:間)?)?(?:つなげて)?(?:言う|いう|話す|はなす)$/d,code,mask))&&p[1].text.startsWith('「')&&(p[3]||!mask.includes('つなげて')))
-      throw fixed('2つを ならべて 言うときは、「つなげて言う」と 書きます',p[3]?`（${p[1].text}と${p[2].text}をつなげた文字）を${p[3].text}秒話す`:`${p[0].text}${p[1].text}と${p[2].text}をつなげて言う`,'つなげて 言う','Say');
+      // With a time (〜をつなげて2秒話す), the joined text is said for that time: the message names that sentence.
+      throw p[3]?fixed(`時間を つけて 話すときは「${canonicalStatementSource(`${p[0].text}（${p[1].text}と${p[2].text}をつなげた文字）を${p[3].text}秒話す`,symbols)}」と 書きます`,`${p[0].text}（${p[1].text}と${p[2].text}をつなげた文字）を${p[3].text}秒話す`,'時間を つけて 話す','Say')
+        :fixed('2つを ならべて 言うときは、「つなげて言う」と 書きます',`${p[0].text}${p[1].text}と${p[2].text}をつなげて言う`,'つなげて 言う','Say');
     // もしねこがおされたら: a click starts with its own heading.
     if((p=surfaceCapture(/^もし、?(.+?)が(?:おされ|押され|クリックされ)(?:たら|ていれば|ているなら|れば|ると)、?$/d,code,mask))){
       const who=p[0].text.replace(/^「(.*)」$/,'$1');
