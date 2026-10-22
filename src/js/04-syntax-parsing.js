@@ -993,7 +993,9 @@
       const expression=formatExpressionCore(value), tail=negative?'成り立たない':'成り立つ';
       return `条件（${expression}）が${tail}${form==='if'?'なら':form==='while'?'あいだ':form==='until'?'まで':''}`;
     }
-    const source=value.kind==='ActorQualifiedRead' && value.value.kind==='SensorRead' && ['TOUCHING','TOUCHING_COLOR'].includes(value.value.sensor) ? `${nameSource(value.actorRef.name)}が${formatExpressionCore(value.value)}` : formatExpressionCore(value), mask=surfaceMask(source);
+    // 名人: ねこが「星」にふれている and ねこがコピーである name who with が (the common form 「ねこ」の… reads the part's value).
+    const source=value.kind==='ActorQualifiedRead' && value.value.kind==='SensorRead' && ['TOUCHING','TOUCHING_COLOR'].includes(value.value.sensor) ? `${nameSource(value.actorRef.name)}が${formatExpressionCore(value.value)}`
+      : value.kind==='ActorQualifiedRead' && value.actorRef?.kind==='named' && value.value.kind==='SensorRead' && value.value.sensor==='クローンである' ? `${nameSource(value.actorRef.name)}がコピーである` : formatExpressionCore(value), mask=surfaceMask(source);
     const predicate=['SensorRead','CompareExpression','ActorQualifiedRead'].includes(value.kind)||(value.kind==='BuiltinCall'&&value.name==='CONTAINS');
     const record=predicate?CONDITION_FORMS.find(r=>mask.endsWith(r.plain)):null;
     if(record) {
@@ -2438,6 +2440,20 @@
     if(sideTouch&&symbols?.project&&namesStage(symbols.project,'画面')){
       const at=sideTouch.index+sideTouch[1].length+3+sideTouch[2].length,source=code.slice(0,at)+'のはし'+code.slice(at),side=sideTouch[2];
       throw sentenceDiagnostic(`画面の ${side}の はしの ことなら、「画面の${side}のはし」と 書きます`,line,reads(source)?[{label:`画面の ${side}の はしに ふれている`,source}]:[]);
+    }
+    // 名人 (E2E-R2-01): who touches is written bare (もし「ねこ」が「星」にふれていれば → もしねこが「星」にふれていれば), and a
+    // 名人 text has no 自分 (もし自分がコピーであるなら → もしねこがコピーなら). Said only when the line does not read.
+    if(ctx.meijin){
+      const parts=symbols?.project?.components||[],quotedWho=/(^|もし、?|、)「([^「」]+)」が(?=[^、。]*?に(?:ふれ|触れ))/.exec(code);
+      if(quotedWho&&parts.some(c=>c.name===quotedWho[2])&&!reads(code)){
+        const at=quotedWho.index+quotedWho[1].length,source=code.slice(0,at)+quotedWho[2]+code.slice(at+quotedWho[2].length+2);
+        if(reads(source))throw sentenceDiagnostic(`名人の 本文では、ふれる 部品の 名前を「 」で かこまずに 書きます。れい：${source}`,line,[{label:'「 」を とる',source}],{kind:'IfStatement'});
+      }
+      const self=/^(もし、?)自分(が|は)/.exec(mask),first=(parts.find(c=>c.type==='sprite')||parts[0])?.name;
+      if(self&&first&&!reads(code)){
+        const source=code.slice(0,self[1].length)+first+'が'+code.slice(self[0].length);
+        throw sentenceDiagnostic(`名人の 本文には、「自分」に あたる 部品が ありません。部品の 名前を 書きます。れい：${reads(source)?source:`もし${first}がコピーなら、`}`,line,reads(source)?[{label:`「${first}」に する`,source}]:[],{kind:'IfStatement'});
+      }
     }
     // ── ふれる (decisions §3, C-04 … C-10, C-18, final call 6). Each form below is not read, so the line never reads as
     // written; a fix is offered only when the whole line reads with it.

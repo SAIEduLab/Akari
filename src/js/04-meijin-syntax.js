@@ -366,9 +366,10 @@
       }
       out = result + out.slice(at);
     };
-    // もしねこがコピーなら / もし主役がコピーでなければ: whether that part is a copy.
-    replaceAll(/(もし、?|、|^)(【[^】]*】|[^、。\u0001が【】]+?)がコピー(なら|でなければ|ではないなら)/, m =>
-      isMeijinPart(meijinBare(m[2]), symbols, ctx) || meijinVariableName(meijinBare(m[2]), symbols, ctx) ? `${m[1]}条件（${m[2]}のコピーである）が成り立${m[3] === 'なら' ? 'つなら' : 'たないなら'}` : null);
+    // もしねこがコピーなら / もし主役がコピーでなければ: whether that part is a copy (ねこがコピーであるなら, as the common
+    // 自分がコピーであるなら, is the same).
+    replaceAll(/(もし、?|、|^)(【[^】]*】|[^、。\u0001が【】]+?)がコピー(であるなら|であれば|なら|でなければ|ではないなら|でないなら)/, m =>
+      isMeijinPart(meijinBare(m[2]), symbols, ctx) || meijinVariableName(meijinBare(m[2]), symbols, ctx) ? `${m[1]}条件（${m[2]}のコピーである）が成り立${['なら', 'であるなら', 'であれば'].includes(m[3]) ? 'つなら' : 'たないなら'}` : null);
     // ねこが犬より右にいれば: the parts' positions compared.
     const side = { 右: ['よこ', '大き'], 左: ['よこ', '小さ'], 上: ['たて', '大き'], 下: ['たて', '小さ'] };
     replaceAll(new RegExp('(' + alt + ')が(' + alt + ')より(右|左|上|下)に(いれば|いなければ|いるあいだ|いるまで|いる)'), m => {

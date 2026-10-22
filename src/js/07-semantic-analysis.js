@@ -161,6 +161,25 @@
         return `「${name}」を 名前として 読みました。「${digits[1]}」は あかりの ことばに ありません。「${digits[1]}」を けして 書けるか たしかめてください。れい：前へ${digits[2]}歩進む`;
       return null;
     };
+    // 名人: a part's value written with no part (E2E-R2-01, C-touch-R2-04). The example is the form that reads, with a
+    // character of the work: ねこが「星」にふれていれば (who touches is written with が), ねこがコピーなら, ねこのよこのばしょ.
+    // 「ねこ」の「星」にふれている (read as ねこ's 「星」) names ねこ as who touches.
+    const meijinSubjectSensorMessage = (n, statement) => {
+      const sprites = project.components.filter(c => c.type === 'sprite'), arg = n.arg;
+      const qualified = arg?.kind === 'ActorQualifiedRead' && arg.actorRef?.kind === 'named' ? arg : null;
+      const partner = qualified ? qualified.value : arg, partnerName = partner?.kind === 'StringLiteral' ? partner.value : partner?.kind === 'PartRef' ? partner.name : null;
+      const part = qualified?.actorRef.name || (sprites.find(c => c.name !== partnerName) || project.components.find(c => c.name !== partnerName))?.name || 'ねこ';
+      if (['TOUCHING', 'TOUCHING_COLOR'].includes(n.sensor)) {
+        let shown = null;
+        try { shown = n.sensor === 'TOUCHING' && partnerName !== null ? touchShown(partnerName) : formatExpression(exprNode('SensorRead', { sensor: n.sensor, arg: partner })).replace(/にふれている$/, ''); } catch (error) { if (!(error instanceof AkariError)) throw error; }
+        shown ||= '「星」';
+        const example = statement?.kind === 'WaitUntil' ? `${part}が${shown}にふれるまで待つ` : statement?.kind === 'RepeatUntil' ? `${part}が${shown}にふれるまで、くり返す`
+          : statement?.kind === 'RepeatWhile' ? `${part}が${shown}にふれているあいだ、くり返す` : `もし${part}が${shown}にふれていれば、`;
+        return `名人の 本文では、だれが ふれるかを 書きます。れい：${example}`;
+      }
+      if (n.sensor === 'クローンである') return `名人の 本文では、だれが コピーかを 書きます。れい：もし${part}がコピーなら、`;
+      return `名人の 本文では、だれの「${messageExpression(n)}」かを 書きます。れい：${part}の${messageExpression(n)}`;
+    };
     // A part and a variable (or list) with the same name: a bare name there reads the data, though a part was meant.
     const sameNameAsPart = (name) => `「${name}」は、部品の 名前と ${symbols.projectLists?.has?.(name) ? 'リスト' : 'へんすう'}の 名前が 同じなので、どちらの ことか 決まりません`;
     // A read already told of (as a target or a subject) is not told of again where it is read as a value.
@@ -433,13 +452,13 @@
             ].includes(n.sensor) &&
             ctx.targetType === 'stage'
           )
-            add('S304', ctx.meijin ? `名人の 本文では、だれの「${messageExpression(n)}」かを 書きます。れい：「ねこ」の${messageExpression(n)}` : `「${messageExpression(n)}」は 画面では 使えません。キャラクターの 本文で 使ってください`, ctx.node, where);
+            add('S304', ctx.meijin ? meijinSubjectSensorMessage(n, ctx.node) : `「${messageExpression(n)}」は 画面では 使えません。キャラクターの 本文で 使ってください`, ctx.node, where);
           if (
             ['衣装番号', '衣装名'].includes(n.sensor) &&
             ctx.targetType &&
             ctx.targetType !== 'sprite'
           )
-            add('S304', `「${messageExpression(n)}」は キャラクターで だけ 使えます`, ctx.node, where);
+            add('S304', ctx.meijin && ctx.targetType === 'stage' ? meijinSubjectSensorMessage(n, ctx.node) : `「${messageExpression(n)}」は キャラクターで だけ 使えます`, ctx.node, where);
           if (n.sensor === 'KEY_DOWN') {
             const key = literalText(n.arg);
             if (key !== null && !validKeyName(key)) add('S301', keyNameMessage(key), ctx.node, where);
