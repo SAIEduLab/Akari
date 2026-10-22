@@ -2192,8 +2192,9 @@
         if (block && code.compareDocumentPosition(side) & Node.DOCUMENT_POSITION_PRECEDING) main.insertBefore(code, side);
         else if (!block && code !== main.lastElementChild) main.append(code);
       }
-      $('#designerHeading').textContent = block ? '画面' : '画面づくり';
-      $('.objects-window > .win-title').textContent = block ? 'キャラクター・部品' : '作品';
+      // One name for each window in both views (F-23): 「作品」 names the work.
+      $('#designerHeading').textContent = '画面';
+      $('.objects-window > .win-title').textContent = 'キャラクター・部品';
       const actions = $('.prop-actions');
       if (actions) (block ? $('#componentActions') : el.props).prepend(actions);
       $('#formatBtn').hidden = block || currentIsMeijin();
@@ -5908,7 +5909,7 @@
           diagnostics.length ? 'error' : 'ok',
         );
         // Opening always gives an answer on the screen: the work's name, and how many places need fixing.
-        setStatus(`「${project.name}」を 開いたよ` + (diagnostics.length ? `。なおす ところが ${diagnostics.length}か所 あるよ` : ''));
+        setStatus(`「${project.name}」を 開いたよ` + (diagnostics.length ? `。直す ところが ${diagnostics.length}か所 あるよ` : ''));
       } catch (err) {
         if (previous) {
           history = previous.history;
