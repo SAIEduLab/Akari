@@ -1936,7 +1936,8 @@
         const add = document.createElement('button');
         add.type = 'button';
         add.className = 'entry-add';
-        add.dataset.spritePreset = preset;
+        // An attribute of its own: [data-sprite-preset] names the toolbox's tools only.
+        add.dataset.entryPreset = preset;
         add.textContent = '＋ ' + label;
         add.addEventListener('click', () => addComponent('sprite', null, null, preset));
         entryAdd.append(add);
