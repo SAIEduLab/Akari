@@ -1498,6 +1498,12 @@
       }
       binding.renderedOwner = session.ownerKey;
       if (!draft && sourceOverviewOpen) renderSourceOverview();
+      // The 自分で作ったブロック editor's code view says its first notice under the code too (its block view marks the block).
+      if (draft) {
+        const line = $('#callableIssue'), first = !blocks && $('#callablePending').hidden ? session.notices[0] : null;
+        line.hidden = !first;
+        line.textContent = first ? 'ⓘ ' + (first.line || 1) + '行目：' + first.message + (session.notices.length > 1 ? `（ほかに ${session.notices.length - 1}つ あります）` : '') : '';
+      }
     }
     function rememberEditorMode(kind, mode) {
       editorModes.set(kind, mode);

@@ -6465,6 +6465,8 @@ body[data-ui-level="entry"] .blockui-palette-item .blockui-preview-main { min-he
 #codeIssue.issue-notice, body[data-editor-mode] #codeIssue.issue-notice { min-width: 0; max-width: 100%; overflow: visible; color: var(--notice-ink); font-size: 13px; font-weight: 700; white-space: normal; }
 body[data-editor-mode] .code-assist:has(#codeIssue.issue-notice) { flex-direction: column; align-items: stretch; max-height: min(260px, 35vh); overflow: auto; }
 #codeIssue.issue-notice > [data-note-fix] { margin-left: 4px; }
+#callableIssue { margin: 4px 0; color: var(--notice-ink); font-size: 13px; font-weight: 700; word-break: keep-all; overflow-wrap: anywhere; }
+#callableIssue[hidden] { display: none; }
 .blockui-node-notices { grid-column: 1 / -1; display: none; margin: 5px 0; padding: 7px 10px 7px 25px; background: #eef5fc; color: #1f4f7a; font-size: 12px; overflow-wrap: anywhere; }
 .blockui-node-notices.blockui-open { display: block; }
 .blockui-world .blockui-node-notices { position: relative; z-index: 2; max-width: 660px; white-space: normal; }
