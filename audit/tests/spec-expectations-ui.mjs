@@ -487,6 +487,87 @@ const checks={
     const r={bubble:await s.bubble('w-neko'),line:(await p.locator('#statusText').innerText()).trim(),notice:(await p.locator('#codeIssue').innerText().catch(()=>'')).trim()};
     await s.stop();await p.waitForTimeout(300);const after=(await p.locator('#codeIssue').innerText().catch(()=>'')).trim();
     return {expect:{bubbleKept:r.bubble==='まけ'&&r.line==='作品が 止まったよ。作る 画面に もどるときは「■ 止める」を おしてね',noNotice:!r.notice.includes('ⓘ')&&!after.includes('ⓘ')},info:{...r,after}};},
+  // はじめて's run screen keeps only what can be used (lead decision 34): no event, ＋ or block tool buttons, a larger
+  // screen with the blocks small beside it; at 650 px or less the screen and the parts list in one column.
+  'CC-392':async s=>{const p=s.page;await p.setViewportSize({width:1366,height:900});await s.select('w-neko');
+    const wait=p.locator('#blockEditor [data-blockui-action="palette-add"][data-blockui-schema="WaitTime"]:visible').first();for(let i=0;i<3;i++){await wait.click();await p.waitForTimeout(250);}
+    const second=p.locator('#blockEditor .blockui-node[data-schema-id="WaitTime"]').nth(1);await clickNode(second);await p.waitForTimeout(200);
+    const look=()=>p.evaluate(()=>{const seen=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility==='visible',all=q=>[...document.querySelectorAll(q)];
+      const box=q=>{const e=document.querySelector(q);if(!e||!seen(e))return null;const b=e.getBoundingClientRect();return {x:b.x,y:b.y,w:b.width,h:b.height,bottom:b.bottom,right:b.right};};
+      return {events:all('#entryEvents button').filter(seen).length,adds:all('.entry-add').filter(seen).length,tools:all('#blockEditor [data-blockui-action="move-up"],#blockEditor [data-blockui-action="move-down"],#blockEditor [data-blockui-action="remove"]').filter(seen).length,
+        inserts:all('#blockEditor [data-blockui-action="body-insert"]').filter(seen).length,pale:all('#entryEvents button,.entry-add,#blockEditor .blockui-node-head button').filter(e=>seen(e)&&(e.disabled||Number(getComputedStyle(e).opacity)<1)).length,
+        blocks:all('#blockEditor .blockui-node').filter(seen).length,stage:box('#formFrame'),strip:box('#runStrip'),slot:box('#runPauseSlot'),parts:box('#projectTree'),editor:box('#blockEditor'),scroll:document.documentElement.scrollWidth>innerWidth+1};});
+    const before=await look();await s.run();await p.waitForTimeout(500);const wide=await look();await p.waitForTimeout(3000);await s.stop();const back=await look();
+    await p.setViewportSize({width:600,height:900});await p.waitForTimeout(300);const narrowEdit=await look();await s.run();await p.waitForTimeout(500);const narrow=await look();await s.stop();await p.waitForTimeout(300);const narrowBack=await look();
+    const column=n=>!!n.stage&&!!n.parts&&n.parts.y>=n.stage.bottom-1&&n.blocks===0&&!!n.strip&&!!n.slot&&n.slot.y>=n.stage.bottom-1&&n.slot.bottom<=n.parts.y+1&&!n.scroll;
+    return {expect:{nothingUnusable:before.events>0&&before.adds>0&&before.tools>0&&before.inserts>0&&wide.events===0&&wide.adds===0&&wide.tools===0&&wide.inserts===0&&wide.pale===0,
+      largerWithBlocks:!!wide.stage&&wide.stage.w>before.stage.w&&wide.blocks>0,back:back.events>0&&back.adds>0&&back.inserts>0,
+      oneColumn:column(narrow),restored:narrowBack.blocks>0&&narrowBack.events===narrowEdit.events&&narrowBack.inserts===narrowEdit.inserts},info:{before,wide,back,narrowEdit,narrow,narrowBack}};},
+  // A screen height change that leaves a part outside says so and keeps the part where it is (A-07, A-20).
+  'CC-403':async s=>{const p=s.page;await s.newWork();await p.selectOption('#uiLevel','advanced');await p.waitForTimeout(200);const id=(await s.part('たくどん')).id;await s.select(id);
+    await s.prop('たてのばしょ',600);await s.select('stage');await s.prop('高さ',300);const line=(await p.locator('#statusText').innerText()).trim();await s.select(id);const y=await s.propValue('たてのばしょ');
+    return {expect:{note:line==='「たくどん」は 画面の 外に あるよ。「せってい」の よこのばしょ・たてのばしょで もどせるよ',kept:y==='600'},info:{line,y}};},
+  // The stage dots lie on the backdrop every 10 steps from the bottom-left corner, on the edit screen, the run screen and
+  // 大きく見る, also at a height that is not a multiple of 10 (A-16). The dots are found in a screenshot of the screen at
+  // 100%: columns from the left edge and rows from the bottom edge, at 0, 10, 20… steps.
+  'CC-404':async s=>{const p=s.page;await s.newWork();await p.selectOption('#uiLevel','advanced');await p.waitForTimeout(200);await s.select('stage');
+    // The bottom-left corner of the screen is scrolled into view, and a 60-step square there is read at 100%.
+    const dots=async()=>{const reset=p.locator('#stageZoomReset');if(await reset.isVisible())await reset.click();await p.waitForTimeout(200);
+      await p.locator('#formSurface').evaluate(n=>{for(let v=n.parentElement;v;v=v.parentElement){v.scrollTop=v.scrollHeight;v.scrollLeft=0;}});await p.waitForTimeout(150);
+      const r=await p.locator('#formSurface').evaluate(n=>{const b=n.getBoundingClientRect();return {x:b.left+scrollX,bottom:b.bottom+scrollY,k:b.width/n.clientWidth};}),size=Math.ceil(60*r.k);
+      const shot=await p.screenshot({clip:{x:r.x,y:r.bottom-size,width:size,height:size}});
+      return p.evaluate(async({b64,k})=>{const raw=atob(b64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);const img=await createImageBitmap(new Blob([bytes],{type:'image/png'})),c=new OffscreenCanvas(img.width,img.height),g=c.getContext('2d');g.drawImage(img,0,0);
+        const d=g.getImageData(0,0,img.width,img.height).data,z=img.width/Math.ceil(60*k)*k,px=(x,y)=>{const i=(Math.round(y)*img.width+Math.round(x))*4;return [d[i],d[i+1],d[i+2]];};
+        const bg=px(5*z,img.height-1-5*z),differs=(a,b)=>Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2])>18;
+        // A dot at (10i, 10j) steps: its ink differs from the backdrop, which shows between two dots (5 steps away).
+        let on=0,off=0;for(let i=1;i<=4;i++)for(let j=1;j<=4;j++){const x=10*i*z,y=img.height-1-10*j*z;if(differs(px(x,y),bg))on++;if(differs(px(x+5*z,y-5*z),bg))off++;}
+        return {on,off,bg,scale:z,size:[img.width,img.height]};},{b64:shot.toString('base64'),k:r.k});};
+    // ▶ 動かす does not run a work with no sentence (CC-347, CC-348), so the run screen of step 6 is reached with one
+    // body that waits; it draws nothing on the screen.
+    const edit=await dots();await s.prop('高さ',405);const tall=await dots();await s.select((await s.part('たくどん')).id);await s.code();await s.write('3秒待つ。');await s.select('stage');await s.run();await p.waitForTimeout(500);const running=await dots();await s.stop();
+    await p.locator('#stageZoomFull, #designerFullscreen, button:has-text("大きく見る")').first().click();await p.waitForTimeout(400);const full=await dots();
+    const ok=d=>d.on===16&&d.off===0;
+    return {expect:{onBackdrop:ok(edit)&&ok(tall),running:ok(running),large:ok(full)},info:{edit,tall,running,full}};},
+  // A made file shows no stage dots in either way to start (P7/P21 (c)).
+  'CC-405':async s=>{const p=s.page;await s.newWork();await p.selectOption('#uiLevel','advanced');await p.waitForTimeout(200);
+    const make=async(button,name)=>{await (await reveal(p.locator('#exportBtn'))).click();await p.locator('#exportChoiceModal').waitFor({state:'visible'});const downloading=p.waitForEvent('download');await p.click(button);
+      const file=path.join(directory,name);await (await downloading).saveAs(file);return file;};
+    const dotted=q=>q.evaluate(()=>[document.querySelector('#formSurface'),...document.querySelectorAll('#formSurface *')].some(e=>/radial-gradient/.test(getComputedStyle(e).backgroundImage)));
+    const controls=await make('#exportControls','CC-405-controls.html'),q=await p.context().newPage();await q.goto(pathToFileURL(controls).href);await q.waitForFunction(()=>document.querySelector('#playerRoot')?.dataset.state==='READY');
+    const ready=await dotted(q);await q.click('#playerStart');await q.waitForTimeout(500);const running=await dotted(q);await q.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='FINISHED',null,{timeout:4000}).catch(()=>{});const finished=await dotted(q);await q.close();
+    const artwork=await make('#exportArtwork','CC-405-artwork.html'),r=await p.context().newPage();await r.goto(pathToFileURL(artwork).href);await r.waitForTimeout(500);const opened=await dotted(r);await r.close();
+    return {expect:{controls:!ready&&!running&&!finished,artwork:!opened},info:{ready,running,finished,opened}};},
+  // A toolbox drop puts the part's centre where it is let go (A-11): 四角 at よこ100・たて300.
+  'CC-406':async s=>{const p=s.page;await s.newWork();await p.selectOption('#uiLevel','advanced');await p.waitForTimeout(200);await s.code();
+    // At 100% one step is one pixel; a drop's place is a whole pixel, so a smaller screen could not show the 1-step rule.
+    if(await p.locator('#stageZoomReset').isVisible()){await p.click('#stageZoomReset');await p.waitForTimeout(200);}
+    const before=await p.evaluate(()=>Akari.app.project.components.map(c=>c.id)),r=await p.locator('#formSurface').evaluate(n=>{const b=n.getBoundingClientRect();return {w:b.width,h:b.height,W:Akari.app.project.stage.width,H:Akari.app.project.stage.height};});
+    const tool=await reveal(p.locator('.tool[data-type="box"]'));await tool.dragTo(p.locator('#formSurface'),{targetPosition:{x:100*r.w/r.W,y:r.h-300*r.h/r.H}});await p.waitForTimeout(300);
+    const id=await p.evaluate(b=>Akari.app.project.components.find(c=>!b.includes(c.id))?.id,before);if(id)await s.select(id);
+    const got={x:Number(await s.propValue('よこのばしょ')),y:Number(await s.propValue('たてのばしょ')),w:Number(await s.propValue('はば')),h:Number(await s.propValue('高さ'))};
+    return {expect:{centre:!!id&&Math.abs(got.x-100)<=1&&Math.abs(got.y-300)<=1,size:got.w===120&&got.h===80},info:{id,got}};},
+  // While a part is dragged the bottom line reads its centre, and while it is resized its size; resizing keeps the
+  // centre, so 10 steps out on the right handle make it 20 steps wider (A-08, A-15).
+  'CC-407':async s=>{const p=s.page;await s.newWork();await p.selectOption('#uiLevel','advanced');await p.waitForTimeout(200);const id=(await s.part('たくどん')).id;await s.select(id);
+    const k=await p.locator('#formSurface').evaluate(n=>n.getBoundingClientRect().width/Akari.app.project.stage.width),part=p.locator('#formSurface .component[data-id="'+id+'"]'),b=await part.boundingBox();
+    const cx=b.x+b.width/2,cy=b.y+b.height/2;await p.mouse.move(cx,cy);await p.mouse.down();await p.mouse.move(cx+25*k,cy+35*k,{steps:4});await p.mouse.move(cx+50*k,cy+70*k,{steps:4});
+    const dragging=(await p.locator('#statusText').innerText()).trim();await p.mouse.up();await p.waitForTimeout(200);
+    const moved={x:await s.propValue('よこのばしょ'),y:await s.propValue('たてのばしょ'),w:await s.propValue('はば'),h:await s.propValue('高さ')};
+    const handle=p.locator('.design-resize-handle[data-resize-for="'+id+'"][data-resize-direction="e"]'),hb=await handle.boundingBox(),hx=hb.x+hb.width/2,hy=hb.y+hb.height/2;
+    await p.mouse.move(hx,hy);await p.mouse.down();await p.mouse.move(hx+5*k,hy,{steps:3});await p.mouse.move(hx+10*k,hy,{steps:3});const resizing=(await p.locator('#statusText').innerText()).trim();await p.mouse.up();await p.waitForTimeout(200);
+    const resized={x:await s.propValue('よこのばしょ'),y:await s.propValue('たてのばしょ'),w:await s.propValue('はば'),h:await s.propValue('高さ')};
+    return {expect:{dragLine:dragging==='よこのばしょ 370　たてのばしょ 130',moved:moved.x==='370'&&moved.y==='130',resizeLine:resizing==='はば 200　高さ 180',resized:resized.x==='370'&&resized.y==='130'&&resized.w==='200'&&resized.h==='180'},info:{dragging,moved,resizing,resized,k}};},
+  // キャラクター and 部品 are named apart on the delete button and the copy's title; the ヒント names both (F-23).
+  'CC-408':async s=>{const p=s.page;await s.newWork();await p.selectOption('#uiLevel','advanced');await p.waitForTimeout(200);
+    const actions=()=>p.evaluate(()=>{const d=document.querySelector('.prop-actions .prop-delete'),c=document.querySelector('.prop-actions .prop-duplicate');return {del:d?.textContent??null,copy:c?.textContent??null,title:c?.title??null};});
+    await s.select((await s.part('たくどん')).id);const sprite=await actions();
+    const before=await p.evaluate(()=>Akari.app.project.components.map(c=>c.id));await (await reveal(p.locator('.tool[data-type="label"]'))).click();await p.waitForTimeout(300);
+    const label=await p.evaluate(b=>Akari.app.project.components.find(c=>!b.includes(c.id))?.id,before);await s.select(label);const text=await actions();
+    const hint=await p.evaluate(()=>[...document.querySelectorAll('#basicActionGuide p')].map(n=>n.textContent).find(t=>t.startsWith('見た目のコピー'))||'');
+    await s.select('stage');const names=await p.locator('#properties .prop-name').allInnerTexts();
+    return {expect:{character:sprite.copy==='見た目のコピー'&&sprite.del==='🗑 この キャラクターを けす'&&sprite.title==='見た目と せっていが 同じ キャラクターを もう1つ 作ります（本文は もちません）',
+      part:text.copy==='見た目のコピー'&&text.del==='🗑 この 部品を けす'&&text.title==='見た目と せっていが 同じ 部品を もう1つ 作ります（本文は もちません）',
+      hint:hint.includes('見た目と せっていが 同じ キャラクターや 部品を もう1つ 作ります。本文は もちません。'),names:names.map(n=>n.trim()).includes('名前の ひょうじ')},info:{sprite,text,hint,names}};},
   // ── 名人 ──
   'MC-001':async s=>{const l=await s.level();return {expect:{three:l.options.join('|')==='かんたん|くわしく|名人',noEntry:!l.options.includes('はじめて')},info:l};},
   'MC-002':async s=>{await s.select('w-neko');await s.code();const anywhere=await s.page.evaluate(()=>[...document.querySelectorAll('button,a,summary,option')].some(b=>/名人モードで ?書く|名人で ?書く/.test(b.textContent)&&b.offsetParent!==null));
