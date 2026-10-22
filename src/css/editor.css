@@ -5941,27 +5941,51 @@ body[data-ui-level="entry"].runtime[data-editor-mode] .menutool>#sampleBtn { dis
 
 /* ── 1.5.0 editor screens ──────────────────────────────────────────────────────────────────────────────────────────
    The edit screen (止まっているとき) shows ▶ 動かす only; the run screen (getting ready, running, paused, stopped by an
-   error, finished) shows ■ 止める only, in ▶'s place. ⏸ and ▶ つづける are run-screen controls at every level, 1つずつ
-   動かす and 本文を見て たしかめる at かんたん・くわしく; none of them is shown once the run has ended. */
+   error, finished) shows ■ 止める only, in ▶'s place. ⏸ いったん止める and ▶ つづける take turns in one place at every
+   level, 1つずつ 動かす and 本文を見て たしかめる are for かんたん and up. The run screen never shows a button that cannot be
+   pressed: such a button (while getting ready, once the run has ended, after a mistake stopped it) is marked
+   data-inactive and is not shown, but its place stays, so the stage and the buttons keep their places and sizes from
+   ▶ 動かす to ■ 止める. */
 body:not(.runtime) #stopBtn,
 body.runtime #runBtn { display: none !important; }
-body:not(.runtime) .debugbar :is(#pauseBtn, #continueBtn, #stepBtn) { display: none !important; }
-body.run-finished .debugbar :is(#pauseBtn, #continueBtn, #stepBtn, #runtimeInspectBtn) { display: none !important; }
+body:not(.runtime) .run-pause-slot, body:not(.runtime) .debugbar #stepBtn { display: none !important; }
+body.runtime :is(#pauseBtn, #continueBtn, #stepBtn, #runtimeInspectBtn)[data-inactive="true"] { visibility: hidden !important; }
+/* One place, one width: ⏸ いったん止める and ▶ つづける lie on each other, and the wider one sets the place's width. */
+.run-pause-slot { display: inline-grid; flex: none; }
+.run-pause-slot > button { grid-area: 1 / 1; justify-content: center; }
 /* もとにもどす is an edit-screen control; the run screen's bar holds the run controls only. */
 body.runtime .debugbar > #undoBtn { display: none !important; }
-body.runtime.run-finished[data-editor-mode] .main > .codewin > .debugbar { display: none !important; }
 /* The run screen's toolbar (final call 21) shows ■ 止める in ▶ 動かす's place and the work's name as plain text. The
    buttons that cannot be used while the work runs (新しく作る, お手本を開く, ヒント, 開く, 保存, うごく作品を ファイルにする,
-   and はじめて's 作品 menu that holds three of them), the level and the view toggle are not shown, but their room stays,
-   so no toolbar button moves at any width. The other buttons (はじめて's もとにもどす・やり直す, いっしょに作る) stay,
-   locked. */
-body.runtime .menutool > :is(#newBtn, #sampleBtn, #basicActionGuide, #openBtn, #saveBtn, #exportBtn, #entryProjectMenu, .ui-level-label, .editor-modes) { visibility: hidden !important; }
-body.runtime .menutool > #projectName { border-color: transparent; background: transparent; box-shadow: none; color: var(--dark, #283e50); -webkit-text-fill-color: currentColor; opacity: 1; cursor: default; pointer-events: none; }
-/* はじめて's ⏸ いったん止める and ▶ つづける sit under the stage while the work runs (1つずつ 動かす and 本文を見て たしかめる
-   are for かんたん and up). */
+   はじめて's 作品 menu that holds three of them, and はじめて's もとにもどす・やり直す and いっしょに作る), the level and the view
+   toggle are not shown, but their room stays, so no toolbar button moves at any width. At every level the run
+   screen's toolbar shows ■ 止める and the work's name only (いっしょに作る's guide keeps its own exit). */
+body.runtime .menutool > :is(#newBtn, #sampleBtn, #basicActionGuide, #openBtn, #saveBtn, #exportBtn, #entryProjectMenu, #undoBtn, #redoBtn, #tutorialStart, .ui-level-label, .editor-modes) { visibility: hidden !important; }
+/* The name: the box keeps its room, and the same words stand in it as plain text (not an edit field). */
+body.runtime .menutool > #projectName { visibility: hidden !important; }
+.project-name-text { position: absolute; z-index: 1; box-sizing: border-box; display: flex; align-items: center; margin: 0; padding-right: 4px; overflow: hidden; color: var(--dark, #283e50); white-space: nowrap; text-overflow: ellipsis; pointer-events: none; }
+.project-name-text[hidden] { display: none !important; }
+/* はじめて's place of ⏸ いったん止める／▶ つづける sits under the stage for the whole run screen (1つずつ 動かす and 本文を見て
+   たしかめる are for かんたん and up). */
 #entryRunControls { display: none; }
-body[data-ui-level="entry"].runtime:not(.run-finished) #entryRunControls { display: flex; flex: none; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 2px 10px 8px; }
-#entryRunControls > button { min-height: 36px; padding: 0 14px; font-weight: 700; }
+body[data-ui-level="entry"].runtime #entryRunControls { display: flex; flex: none; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 2px 10px 8px; }
+#entryRunControls > .run-pause-slot > button { min-height: 36px; padding: 0 14px; font-weight: 700; }
+/* はじめて's run screen: what cannot be used while the work runs (the きっかけ buttons, the ＋ だんご… buttons, the tools of
+   the chosen block and the ＋ ここに入れる places) is not shown, and the stage takes the room; ■ 止める brings them back.
+   The built blocks stay, small and to read only. */
+body[data-ui-level="entry"].runtime :is(#entryEvents, #entryAddRow, #blockEditor .blockui-node.blockui-selected > .blockui-node-head, #blockEditor .blockui-insertion) { display: none !important; }
+/* The run screen keeps its rows from ▶ to ■: the saving state is not shown under it (nothing can be saved there; it
+   comes back on the edit screen), and the run-screen bar keeps its place once the run has ended. */
+body.runtime .status > .save-line { display: none !important; }
+/* The line keeps its height on the run screen too: the text and the run state share one row, and the text has the
+   room of its longest sentence there (「おわったよ。もう一度 動かすときは…」, measured in both fonts): two lines up to 700 px
+   wide, three at はじめて (15 px) up to 430 px. The box of the running sentence keeps its place while no sentence runs. */
+body.runtime .status { flex-wrap: nowrap; align-items: center; }
+body.runtime .status > #statusText { flex: 1 1 0; min-width: 0; display: flex; align-items: center; }
+body.runtime .status > .runstate { flex: none; }
+body.runtime #execSentence[hidden] { display: block !important; visibility: hidden !important; }
+@media (max-width: 700px) { body.runtime .status > #statusText { min-height: 2lh; } }
+@media (max-width: 430px) { body[data-ui-level="entry"].runtime .status > #statusText { min-height: 3lh; } }
 body.runtime .menutool > .mode-blocked-note { display: none !important; }
 .editor-modes[hidden] { display: none !important; }
 /* The toggle is one button (final call 22): of the two, only the one that switches away from the view shown is there. */

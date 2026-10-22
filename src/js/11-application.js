@@ -286,6 +286,8 @@
       appState = 'DESIGN',
       // The run screen after the run ended (every body done, or 作品を全部止める): the last picture stays, ■ 止める only.
       runFinished = false,
+      // The run stopped at a mistake (the failure dialog): it cannot go on, so the run screen shows ■ 止める only.
+      runFailed = false,
       // When ▶ 動かす was pressed: ■ 止める takes its place, and a press of it within 0.5 s (the second press of a double
       // press) does nothing.
       runPressedAt = -Infinity,
@@ -384,11 +386,11 @@
     const keptUiLevel=()=>baseUiLevel==='entry'?'basic':baseUiLevel;
     function renderEntrySurface() {
       const entry=document.body.dataset.uiLevel==='entry';
-      // はじめて has no bar under the body: もとにもどす・やり直す go to the toolbar, and ⏸ いったん止める・▶ つづける (final call
-      // 21) under the stage, as on a video.
-      for(const node of [$('#undoBtn'),$('#redoBtn'),$('#pauseBtn'),$('#continueBtn')]){
+      // はじめて has no bar under the body: もとにもどす・やり直す go to the toolbar, and the place of ⏸ いったん止める／▶ つづける
+      // (final call 21; the two take turns in it) under the stage, as on a video.
+      for(const node of [$('#undoBtn'),$('#redoBtn'),$('#runPauseSlot')]){
         if(entry&&!entryLayoutPlaced){const marker=document.createComment('entry control home');node.before(marker);entryControlHomes.set(node,marker);}
-        if(entry&&['pauseBtn','continueBtn'].includes(node.id)){if(node.parentElement!==$('#entryRunControls'))$('#entryRunControls').append(node);}
+        if(entry&&node.id==='runPauseSlot'){if(node.parentElement!==$('#entryRunControls'))$('#entryRunControls').append(node);}
         else if(entry){
           // Keep もとにもどす before やり直す whichever control was moved last.
           const tool=$('.menutool'),anchor=node===$('#undoBtn')&&$('#redoBtn').parentElement===tool?$('#redoBtn'):$('#tutorialStart');
@@ -466,7 +468,9 @@
     function tutorialElementAllowed(element) {
       if(!tutorial)return true;if(!(element instanceof Element))return false;
       const step=tutorialStep(tutorial),action=step?.allowed[0];
-      if(element.closest('#tutorialExit,#stopBtn'))return true;
+      // ⏸ いったん止める and ▶ つづける are the run screen's own controls at every level (final call 21): like ■ 止める and the
+      // exit, the guide never blocks them.
+      if(element.closest('#tutorialExit,#stopBtn,#pauseBtn,#continueBtn'))return true;
       if(action==='choice')return !!element.closest('#tutorialChoices button,#tutorialFinish');
       if(action==='verify-save'&&element.closest('#tutorialVerifySave,#tutorialSavedFile'))return true;
       const direct={'event:click':'entryClickEvent',run:'runBtn',undo:'undoBtn',save:'saveBtn'}[action];if(direct&&element.closest('#'+direct))return true;
@@ -478,8 +482,10 @@
         ||!!element.closest('#blockEditor [data-blockui-action="commit"],#blockEditor [data-blockui-action="cancel"],#editorCancel');}
       if(action==='runtime:click')return !tutorialTrace?.busy&&tutorialTrace?.clicks<step.clicks&&!!element.closest('.component[data-id="'+tutorial.target+'"]');return false;
     }
+    // The step's own place comes first in the guide's Tab order, then ■ 止める and the exit, then ⏸／▶ つづける.
+    const tutorialFocusRank=n=>['pauseBtn','continueBtn'].includes(n.id)?2:['tutorialExit','stopBtn'].includes(n.id)?1:0;
     function tutorialFocusTargets() {
-      return $$('button,input,select,textarea,summary,[tabindex="0"]').filter(n=>!n.disabled&&!n.hidden&&n.getClientRects().length&&tutorialElementAllowed(n)).sort((a,b)=>Number(a.id==='tutorialExit'||a.id==='stopBtn')-Number(b.id==='tutorialExit'||b.id==='stopBtn'));
+      return $$('button,input,select,textarea,summary,[tabindex="0"]').filter(n=>!n.disabled&&!n.hidden&&n.getClientRects().length&&tutorialElementAllowed(n)).sort((a,b)=>tutorialFocusRank(a)-tutorialFocusRank(b));
     }
     // A message above the editor changes its height; the guided place stays in view.
     function keepTutorialTargetInView() {
@@ -570,7 +576,7 @@
             if(n.dataset.tutorialAria===undefined)n.dataset.tutorialAria=n.getAttribute('aria-disabled')??'none';
             if(!allowed)n.setAttribute('aria-disabled','true');else n.dataset.tutorialAria==='none'?n.removeAttribute('aria-disabled'):n.setAttribute('aria-disabled',n.dataset.tutorialAria);
           }
-          if(allowed&&n.id!=='tutorialExit'&&n.id!=='stopBtn')n.classList.add('tutorial-target');
+          if(allowed&&!['tutorialExit','stopBtn','pauseBtn','continueBtn'].includes(n.id))n.classList.add('tutorial-target');
         }
     }
     function tutorialRefresh() {
@@ -1483,21 +1489,25 @@
     // The コード／ブロック toggle (final call 22) is one button that shows the view on the screen with ⇄: 「ブロックモード ⇄」
     // or 「コードモード ⇄」. A press switches to the other view, and the label follows. Of the group's two buttons only the
     // one that switches away from the view shown is there (…Modecode in blocks, …Modeblocks in code); its name says the
-    // view. The toggle is never pale or hidden: where a press cannot switch (はじめて, a work with a 名人 text, a mistake in
-    // the code) it keeps the view and says why under it (modeBlockedNote).
+    // view. The toggle is never pale or hidden on the edit screen: where a press cannot switch (はじめて, a work with a 名人
+    // text, a mistake in the code, a picture, sound or work still being read in) it keeps the view and says why under it
+    // (modeBlockedNote). Only while getting a run ready (the run screen, where the toolbar's toggle is not shown) can it
+    // not be pressed.
     const VIEW_NAMES = { blocks: 'ブロックモード', code: 'コードモード' };
     const MODE_REFUSALS = {
       entry: 'コードで 書くときは、上の「かんたん」か「くわしく」を えらんでね',
       meijin: '名人は、コードモードで だけ 使えるよ',
       error: 'コードの 赤い ところを 直すと、ブロックに もどれるよ',
+      busy: '読みこみが おわるまで、まってね',
     };
     function modeRefusal(binding, shown, codeError = false) {
+      if (appState === 'IMPORTING') return 'busy';
       if (binding === mainEditor && shown === 'blocks' && document.body.dataset.uiLevel === 'entry') return 'entry';
       if (workIsMeijin()) return 'meijin';
       return shown === 'code' && codeError ? 'error' : null;
     }
-    // The toggle of an editor as it is now: the list of all bodies shows the chosen view; a code error keeps the toggle
-    // where it is, in a pale colour, so it does not flicker while the child types.
+    // The toggle of an editor as it is now: the list of all bodies shows the chosen view. A code error does not change the
+    // toggle's look (so it does not flicker while the child types): a press only shows the note.
     function paintBindingModeToggle(binding) {
       const session = binding.session;
       if (!session) return;
@@ -1513,7 +1523,7 @@
         if (!here) continue;
         if (b.textContent !== label) b.textContent = label;
         b.setAttribute('aria-label', VIEW_NAMES[shown]);
-        b.disabled = ['PREPARING', 'IMPORTING'].includes(appState);
+        b.disabled = appState === 'PREPARING';
         if (refusal) {
           if (note.textContent !== MODE_REFUSALS[refusal]) note.textContent = MODE_REFUSALS[refusal];
           b.dataset.refused = refusal;
@@ -1527,8 +1537,8 @@
         }
       }
     }
-    // The note under a コード／ブロック toggle that says why it does not switch: it shows on a press of the pale toggle and
-    // goes away at the next press or key anywhere. In 本文と動きのようす it shows under the toggle there.
+    // The note under a コード／ブロック toggle that says why it does not switch: it shows when a press is refused (the toggle
+    // keeps its look) and goes away at the next press or key anywhere. In 本文と動きのようす it shows under the toggle there.
     function modeBlockedNote(binding) {
       const id = binding.kind === 'draft' ? 'callableModeBlockedNote' : 'modeBlockedNote';
       let note = document.getElementById(id);
@@ -2489,6 +2499,16 @@
       for (const id of ['assetModal', 'procModal', 'dataModal'])
         $('#' + id)?.classList.remove('show');
     }
+    function placeProjectNameText() {
+      const text = $('#projectNameText'), box = el.projectName;
+      if (text.hidden) return;
+      const style = getComputedStyle(box);
+      Object.assign(text.style, {
+        left: box.offsetLeft + 'px', top: box.offsetTop + 'px', width: box.offsetWidth + 'px', height: box.offsetHeight + 'px',
+        paddingLeft: parseFloat(style.paddingLeft) + parseFloat(style.borderLeftWidth) + 'px', font: style.font,
+      });
+    }
+    new ResizeObserver(() => placeProjectNameText()).observe($('.menutool'));
     function updateEditingLock() {
       const locked = modelLocked();
       if (locked && colorEdit) closeColorPicker();
@@ -2522,8 +2542,9 @@
         const n = $('#' + id);
         if (n) n.disabled = locked;
       }
-      // The other toolbar controls cannot be pressed while the work runs (保存, いっしょに作る, and the ヒント and 作品 menus
-      // too); the run screen does not show them, but keeps their room (final call 21).
+      // The other toolbar controls cannot be pressed while the work runs either (保存, いっしょに作る, はじめて's もとにもどす・
+      // やり直す, and the ヒント and 作品 menus): the run screen shows none of the locked toolbar controls, but keeps their
+      // room (final call 21), so ■ 止める stays where ▶ 動かす was.
       $('#saveBtn').disabled = locked;
       $('#tutorialStart').disabled = locked;
       for (const menu of [$('#basicActionGuide'), $('#entryProjectMenu')]) {
@@ -2539,6 +2560,14 @@
       el.obj.disabled = el.event.disabled = appState === 'IMPORTING' || appState === 'PREPARING';
       el.editor.readOnly = locked;
       el.projectName.disabled = locked;
+      // The run screen shows the work's name as plain text in the name box's place: the box keeps its room but is not
+      // shown, so it is not read as an edit field either.
+      const nameText = $('#projectNameText'), runScreen = ['PREPARING', 'RUNNING', 'PAUSED'].includes(appState);
+      nameText.hidden = !runScreen;
+      if (runScreen) {
+        if (nameText.textContent !== project.name) nameText.textContent = nameText.title = project.name;
+        placeProjectNameText();
+      }
       $$('.tool').forEach((b) => {
         b.disabled = locked;
         b.draggable = !locked;
@@ -2555,6 +2584,8 @@
       if (world) world.inert = document.body.dataset.uiLevel === 'entry' && ['PREPARING', 'RUNNING', 'PAUSED'].includes(appState);
       if (locked && appState !== 'IMPORTING') closeEditingModals();
       if (mainEditor.view) renderEditorBinding(mainEditor);
+      // A picture or work being read in refuses the toggle's press (読みこみが おわるまで…), and the refusal ends with it.
+      if (draftEditor.session) paintBindingModeToggle(draftEditor);
       updateDirty();
     }
     function ensureUniqueId(prefix, ids = allIds()) {
@@ -5319,6 +5350,7 @@
         afterStatement: () => requestRuntimePaint(6),
         runtimeError: (task, err) => {
           if(tutorialTrace&&tutorialRunEpoch===tutorial?.epoch&&bridgeGeneration===generationToken)tutorialTrace.failed=true;
+          runFailed = true;
           activeTaskId = task.taskId;
           activeLoc = sourceLocation(task, null, err);
           requestRuntimePaint(7);
@@ -5406,6 +5438,7 @@
         if (req.needsAudio) runtimeCache.ensureAudioContext();
         appState = 'PREPARING';
         runFinished = false;
+        runFailed = false;
         runHint = '';
         keptFail = null;
         setStatus('絵や音を じゅんびしているよ');
@@ -5467,6 +5500,7 @@
       el.form.querySelectorAll('.sprite-bubble').forEach((n) => n.remove());
       appState = 'DESIGN';
       runFinished = false;
+      runFailed = false;
       runHint = '';
       pen.clearRect(0, 0, el.canvas.width, el.canvas.height);
       confirmTutorialOperation('stop');
@@ -5484,12 +5518,13 @@
       else el.editor.focus({ preventScroll: true });
     }
     // The words of the run: the same in the status line and on the right (動いているよ, いったん 止めたよ, おわったよ,
-    // 止まっているよ), and in 動きのようす.
+    // 止まっているよ), and in 動きのようす. A run stopped at a mistake cannot go on: it says とちゅうで 止まったよ on the right
+    // as the status line does (「動きが とちゅうで 止まったよ」), not いったん 止めたよ.
     function runStateText() {
       if (appState === 'PREPARING') return 'じゅんびしているよ';
       if (appState === 'IMPORTING') return '読みこんでいるよ';
       if (runFinished) return 'おわったよ';
-      if (scheduler?.running) return scheduler.paused ? 'いったん 止めたよ' : '動いているよ';
+      if (scheduler?.running) return runFailed ? 'とちゅうで 止まったよ' : scheduler.paused ? 'いったん 止めたよ' : '動いているよ';
       return '止まっているよ';
     }
     // A pause and the continue after it change the status line too, when it only said that the work runs (an error or a
@@ -5505,10 +5540,27 @@
         else if (words === '動いているよ' && el.status.textContent === PAUSED_STATUS) setStatus(runHint || '動いているよ');
       }
       el.runState.className = 'runstate ' + (running ? 'run-on' : 'run-off');
-      $('#pauseBtn').disabled = !running || scheduler.paused;
-      $('#continueBtn').disabled = !running || !scheduler.paused;
-      $('#stepBtn').disabled = !running;
-      $('#runtimeInspectBtn').hidden = !running;
+      // The run screen never shows a button that cannot be pressed (the exported player's rule too). ⏸ いったん止める and
+      // ▶ つづける take turns in one place: ⏸ while the work runs, ▶ つづける while it is paused. 1つずつ 動かす and 本文を見て
+      // たしかめる show while it runs or is paused. While getting ready, once the run has ended, and after a mistake
+      // stopped it (nothing can go on past the failed sentence: ■ 止める only), a button that cannot be pressed is not
+      // shown, but its place stays (data-inactive hides it), so the stage and the other buttons do not move.
+      const focused = document.activeElement, failed = running && runFailed,
+        inactive = {
+          pauseBtn: !running || scheduler.paused || failed,
+          continueBtn: !running || !scheduler.paused || failed,
+          stepBtn: !running || failed,
+          runtimeInspectBtn: !running,
+        };
+      for (const [id, off] of Object.entries(inactive)) {
+        const button = $('#' + id);
+        button.disabled = off;
+        button.dataset.inactive = String(off);
+      }
+      $('#runtimeInspectBtn').hidden = !['PREPARING', 'RUNNING', 'PAUSED'].includes(appState);
+      // A button that went away does not take the focus with it to the page: it goes to the stage (⏸ and ▶ つづける move
+      // it on themselves).
+      if (focused?.dataset?.inactive === 'true' && Object.hasOwn(inactive, focused.id)) el.form.focus({ preventScroll: true });
       $('#runBtn').disabled = appState !== 'DESIGN';
       $('#stopBtn').disabled = appState === 'DESIGN' || appState === 'IMPORTING';
       updateEditingLock();
@@ -7418,8 +7470,26 @@
       if (event.timeStamp - runPressedAt < 500) return;
       stopRun();
     });
-    $('#pauseBtn').onclick = () => scheduler?.pause();
-    $('#continueBtn').onclick = () => scheduler?.resume();
+    // ⏸ いったん止める and ▶ つづける share one place: a press within 0.5 s of the last one there is the second press of a
+    // double press and does nothing (it would pause and go on at once). After ⏸ the focus goes to ▶ つづける in the same
+    // place; after ▶ つづける to the stage, as after ▶ 動かす, so keys reach the work (いっしょに作る keeps its own place).
+    let pauseSlotPressedAt = -Infinity;
+    const pauseSlotPress = (event) => {
+      if (event.timeStamp - pauseSlotPressedAt < 500) return false;
+      pauseSlotPressedAt = event.timeStamp;
+      return true;
+    };
+    $('#pauseBtn').onclick = (event) => {
+      if (!pauseSlotPress(event) || !scheduler) return;
+      scheduler.pause();
+      if ($('#continueBtn').dataset.inactive !== 'true') $('#continueBtn').focus({ preventScroll: true });
+    };
+    $('#continueBtn').onclick = (event) => {
+      if (!pauseSlotPress(event) || !scheduler) return;
+      scheduler.resume();
+      if (tutorial) focusTutorialTarget();
+      else el.form.focus({ preventScroll: true });
+    };
     $('#stepBtn').onclick = () => scheduler?.stepOne();
     $('#formatBtn').onclick = formatCurrent;
     $('#diagnoseBtn').onclick = showDiagnosis;

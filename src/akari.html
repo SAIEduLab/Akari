@@ -53,6 +53,7 @@
       <p><strong>もとにもどす・やり直す</strong>：決めた ことを 1つ もとにもどす・もどした ことを もう一度 やる ボタンです。「入力を やめる」は、いま かえかけている 入力を やめます。</p>
     </div></details>
     <input id="projectName" value="はじめてのあかり" aria-label="作品名">
+    <span id="projectNameText" class="project-name-text" hidden></span>
     <input id="fileInput" type="file" accept=".akari.md,.md,text/markdown,text/plain">
   </div>
 
@@ -300,8 +301,7 @@
       <div class="source-nav"><button id="sourceOverviewBtn" type="button">すべての本文</button><button id="sourceEditBtn" type="button" hidden>本文を なおす ところへ もどる</button><button id="sourceStageBtn" type="button" hidden>画面の本文</button><button id="sourceHeadingBtn" type="button">いつ動く？</button></div>
       <div id="sourceOverview" aria-label="えらんだものの すべての本文" hidden></div>
       <div class="debugbar">
-        <button id="pauseBtn">⏸ いったん止める</button>
-        <button id="continueBtn">▶ つづける</button>
+        <span id="runPauseSlot" class="run-pause-slot"><button id="pauseBtn">⏸ いったん止める</button><button id="continueBtn">▶ つづける</button></span>
         <button id="stepBtn">1つずつ 動かす</button>
         <button id="runtimeInspectBtn" type="button" hidden aria-controls="runtimeInspector">本文を見て たしかめる</button>
         <button id="formatBtn">コードを整える</button>
