@@ -414,16 +414,19 @@
     });
     paletteControls.append(restoreSearch);
     if(options.onData)paletteControls.append(button('＋ へんすう・リストを作る','create-data',()=>options.onData()));
+    // ＾ is a くわしく block (F-21): its help shows there only (renderPalette).
+    const powerHelp=E('p','','「同じ数を くり返し かける」（＾）は、同じ 数を 何回も かける 計算だよ。2＾3 は 2×2×2 で 8 に なるよ。');
     const help=E('details','blockui-local-help');help.append(E('summary','','いまの作り方のヒント'),
-      E('p','','「＋ ここに入れる」で ブロックを 入れます。あいている ところには 文字・数・へんすう・リストを えらびます。「たずねる」で 待った 返事は「答え」で 使えます。とちゅうでも ほぞんできます。'),
-      E('p','','あいている ところに 入れる 中身には、文字「おはよう」、数の 10、「あてはまる・あてはまらない」などが あります。'),
-      E('p','','つなぐブロックは、「話す」「待つ」など、してほしい ことです。本文（ほんぶん）は、ブロックを じゅんばんに ならべる ところです。'),
-      E('p','','ブロックは なかまごとに 分かれています。れい：「よく使う」には「話す」「待つ」が あります。「ブロックを さがす」に ことばを 入れると、さがせます。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない 理由も 読めます。'),
-      E('p','','とちゅうに 入れる：本、ぼうしの 間に かさを 入れると、本、かさ、ぼうしに なります。入れかえる：かさを ぼうしに かえるように、えらんだ 中身を かえます。'),
-      E('p','','リストには、中身が 1つずつ ならんでいます。「中身を 一つずつ 見る」ブロックでは、前から じゅんに 同じ 動きを します。'),
-      E('p','','「同じ数を くり返し かける」（＾）は、同じ 数を 何回も かける 計算です。2＾3 は 2×2×2 で 8 に なります。計算や くらべ方の しるしだけを かえても、左右の 中身は のこります。'),
-      E('p','','メモは、あとで 思い出せるように 書く ひとことです。動きは かわりません。'),
-      E('p','','「見た目のコピー」は、見た目と せっていが 同じ 部品を もう1つ 作ります。本文は コピーしません。「自分のコピーを作る」の コピーは、動いている あいだだけの 部品で、もとの 部品の 本文で 動きます。'),
+      E('p','','「＋ ここに入れる」で ブロックを 入れるよ。あいている ところには 文字・数・へんすう・リストを えらぶよ。「たずねる」で 待った 返事は「答え」で 使えるよ。とちゅうでも ほぞんできるよ。'),
+      E('p','','あいている ところに 入れる 中身には、文字「おはよう」、数の 10、「あてはまる・あてはまらない」などが あるよ。'),
+      E('p','','つなぐブロックは、「話す」「待つ」など、してほしい ことだよ。本文（ほんぶん）は、ブロックを じゅんばんに ならべる ところだよ。'),
+      E('p','','ブロックは なかまごとに 分かれているよ。れい：「よく使う」には「話す」「待つ」が あるよ。「ブロックを さがす」に ことばを 入れると、さがせるよ。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべるよ。「使えないブロックも見せる」を えらぶと、使えない わけも 読めるよ。'),
+      E('p','','とちゅうに 入れる：本、ぼうしの 間に かさを 入れると、本、かさ、ぼうしに なるよ。入れかえる：かさを ぼうしに かえるように、えらんだ 中身を かえるよ。'),
+      E('p','','リストには、中身が 1つずつ ならんでいるよ。「中身を 一つずつ 見る」ブロックでは、前から じゅんに 同じ 動きを するよ。'),
+      E('p','','計算や くらべ方の しるしだけを かえても、左右の 中身は のこるよ。'),
+      powerHelp,
+      E('p','','メモは、あとで 思い出せるように 書く ひとことだよ。動きは かわらないよ。'),
+      E('p','','「見た目のコピー」は、見た目と せっていが 同じ 部品を もう1つ 作るよ。本文は もたないよ。「自分のコピーを作る」の コピーは、動いている あいだだけの 部品で、もとの 部品の 本文で 動くよ。'),
       E('p','','「入力を やめる」「入れるのを やめる」「もっていくのを やめる」は、いま している ことを やめるよ。「もとにもどす」は、もう 決めた ことを 1つ もどすよ。'));
     paletteControls.append(help);
     paletteControls.id = viewId + '-palette-tools';
@@ -496,7 +499,7 @@
       const items = [...paletteList.querySelectorAll('.blockui-palette-item > button')], at = items.indexOf(event.target);
       event.preventDefault(); event.stopPropagation();
       if (event.key === 'ArrowDown') items[Math.min(items.length - 1, at + 1)]?.focus();
-      else if (at <= 0) search.focus(); else items[at - 1].focus();
+      else if (at <= 0) { if (paletteControls.hidden) paletteToggle.click(); search.focus(); } else items[at - 1].focus();
     });
     listen(modeSelect, 'change', () => {
       paletteMode = modeSelect.value;
@@ -548,7 +551,10 @@
         // Persisting a new event gives the same document its permanent key.
         if(displaySession?.ownerKey===owner)displaySession={...displaySession,ownerKey:transition.to};
       }
-      announce(result.changed === false ? '中身は かわっていないよ' : 'ブロックを かえたよ');
+      announce(result.changed === false ? '中身は かわっていないよ'
+        : ['insert', 'wrap', 'expression', 'variadic-insert'].includes(op.type) ? 'ブロックを 入れたよ'
+        : ['remove', 'variadic-remove'].includes(op.type) ? 'ブロックを けしたよ'
+        : ['move', 'move-run'].includes(op.type) ? 'ブロックを もっていったよ' : op.type === 'duplicate' ? 'ブロックを もう1つ 作ったよ' : 'ブロックを かえたよ');
       if (!fromPending) render({ force: true });
       return result;
     }
@@ -1298,8 +1304,8 @@
     // A continuous rule found by search goes into the rules of the body's heading, as with 「＋ つづけて動くルール」.
     function ruleAvailability() {
       const slot = tree && BLOCK_SCHEMA_BY_ID.get(tree.schemaId)?.inputs.find(s => s.key === 'rules');
-      if (!slot) return { enabled: false, reason: 'きっかけの ある 本文で 使えます' };
-      if ((tree.inputs.rules || []).length >= slot.maxItems) return { enabled: false, reason: 'つづけて動くルールは これ以上 ふやせません' };
+      if (!slot) return { enabled: false, reason: 'きっかけの ある 本文で 使えるよ' };
+      if ((tree.inputs.rules || []).length >= slot.maxItems) return { enabled: false, reason: 'つづけて動くルールは これ以上 ふやせないよ' };
       return { enabled: true };
     }
     function paletteAdd(schema) {
@@ -1643,6 +1649,7 @@
       if (options.readOnly) return;
       if (destroyed) return;
       faceSymbols = null;
+      powerHelp.hidden = document.body.dataset.uiLevel !== 'advanced';
       modeSelect.value = paletteMode;
       syncLibraryToggle();
       const entry = document.body.dataset.uiLevel === 'entry';
@@ -1706,7 +1713,7 @@
         : hintCandidates(projectState, context().targetId, {source:session()?.sourceText || '', ...context()});
       const searched = query ? blockSearchCandidates(projectState, context(), query, hints) : all;
       const speech=searched.find(s=>s.id==='Say');
-      if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:entry?'お話しする':'言うことと 秒数を 決めて 話す'});}
+      if(speech){const timed=createBlock('Say',{idPrefix:viewId+'-timed'});timed.inputs.seconds=createBlock('NumberLiteral',{idPrefix:viewId+'-seconds'});timed.inputs.seconds.fields.value=options.tutorialActive?.()?1:2;searched.splice(searched.indexOf(speech),0,{...speech,candidateNode:timed,candidateKey:'timed-speech',searchLabel:entry?'話す':'ことばと 時間を 決めて 話す'});}
       // はじめて: the loop comes with its number of times (F-03); what it repeats goes into its hole, from the next block
       // put in or the blocks below it (E-03).
       const loopAt = entry ? searched.findIndex(s => s.id === 'RepeatCount' && !s.candidateNode) : -1;
@@ -1795,7 +1802,9 @@
           E(
             'p',
             'blockui-empty',
-            location?.input
+            // A search already looks through every なかま: it asks for other words.
+            query ? '「' + searchText.trim() + '」に 合う ブロックが ないよ。ほかの ことばで さがしてみてね。れい：うごく・まつ・いう'
+            : location?.input
               ? 'ここに 入れられる ブロックが ないよ。なかまを かえてね。「ブロックの しゅるい」の「使えないブロックも見せる」で、使えない わけも 見られるよ。つなぐブロックを ふやすときは「＋ ここに入れる」を おしてね'
               : 'この ばしょで 使える ブロックが ないよ。なかまを かえてね。「ブロックの しゅるい」の「使えないブロックも見せる」で、使えない わけも 見られるよ。',
           ),
@@ -2221,7 +2230,10 @@
           moving = null;
           destination = null;
           render({ force: true });
-          if (wraps) attendEmptyValue(placedAt(location, info.node.schemaId));
+          // The block moved keeps the focus, as after putting one in or あとへ (AX-10).
+          const placed = placedAt(location, info.node.schemaId);
+          if (placed) focus({ id: placed });
+          if (wraps) attendEmptyValue(placed);
         }
         return;
       }
@@ -3044,12 +3056,11 @@
         } else if(schema.kind==='RepeatCount'||schema.kind==='Say'||schema.kind==='WaitTime'){
           const {extra,extraControls}=extraDisclosure(node,schema.label+'の数・計算・時間を なおす');
           const actor=schema.fields.find(f=>f.key==='actorRef');if(actor)main.append(fieldControl(node,actor));
-          // 2 秒, 3 回: the unit is text (E-02); 計算で決める puts a calculation in the number's place. はじめて has no value
-          // blocks to put there, so it shows neither 計算で決める nor 計算の答えを話す (E-12).
+          // 2 秒, 3 回: the unit is text (E-02); 計算を入れる (with the value's tools) puts a calculation in the number's place.
+          // はじめて has no value blocks to put there, so it shows no 計算の答えを話す either (E-12).
           const entry=document.body.dataset.uiLevel==='entry';
           const numberSlot=(key,unit)=>{
             main.append(...unitValue(node,key,undefined,unit));
-            if(!entry)extraControls.append(button('計算で決める','quantity-expression',()=>chooseDestination({parentId:node.id,input:key}),{'aria-label':schema.inputs.find(s=>s.key===key).label+'を計算で決める'}));
           };
           if(schema.kind==='Say'){
             main.append(slot('value'));
@@ -4461,7 +4472,11 @@
     // Finish pointer activation before folding the old selection or growing the new one.
     // Keyboard focus selects immediately so Tab can discover the selected block's tools.
     function focusBlockField(target) {
-      if (target.closest('button,summary,.blockui-slot-head')) return;
+      if (target.closest('button,summary,.blockui-slot-head')) {
+        // A field's tools close when the focus goes on to a control outside that field (AX-10).
+        for (const n of root.querySelectorAll('.blockui-slot-active')) if (!n.contains(target)) n.classList.remove('blockui-slot-active');
+        return;
+      }
       const slot = target.closest('.blockui-input-slot'),
         node = target.closest('.blockui-node'),
         field = target.closest('.blockui-field');
@@ -4508,6 +4523,21 @@
         if (pending?.input === event.target && readable(pending)) flush({ focus:false });
         for (const field of root.querySelectorAll('.blockui-editing-field'))
           field.classList.remove('blockui-editing-field');
+      }
+      // A value alone is not deleted (FCB-20): Delete says what to do instead of doing nothing.
+      if (['Delete', 'Backspace'].includes(event.key) && event.target.matches?.('.blockui-world .blockui-node.blockui-expression') &&
+          !options.readOnly && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        announce('この ブロックは けせないよ。ほかの ブロックと 入れかえてね', true);
+        return;
+      }
+      // Space on a focused block selects it, as a press does, and does not scroll the workspace away from it (AX-10).
+      if (event.key === ' ' && event.target.matches?.('.blockui-world .blockui-node') && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        selection(event.target.dataset.blockId);
+        return;
       }
       // Delete or Backspace on a selected sentence deletes it (E-05); in a field they delete characters.
       if (['Delete', 'Backspace'].includes(event.key) && event.target.matches?.('.blockui-world .blockui-node.blockui-statement') &&

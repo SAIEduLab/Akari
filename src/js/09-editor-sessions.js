@@ -1355,7 +1355,7 @@
     return p;
   }
   const TUTORIAL_BLOCKS=Object.freeze({
-    speech:{label:'お話しする',source:'「こんにちは」と1秒話す。'},
+    speech:{label:'話す',source:'「こんにちは」と1秒話す。'},
     escape:{label:'ちがう ばしょへ にげる',source:'画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
     swim:{label:'ゆっくり泳ぐ',source:'1秒かけて、画面の左下のはしから、右へ480歩、上へ187歩のばしょへ行く。'},
     randomSwim:{label:'あちこちへ泳ぐ',source:'0.5秒かけて、画面の左下のはしから、右へ120歩から540歩のどれか、上へ100歩から230歩のどれかのばしょへ行く。'},
@@ -1367,7 +1367,7 @@
     score:{label:'点数を見せる',source:'「点数ボード」の文字を（「つかまえた：」と点数をつなげた文字）にかえる。'},
     finish:{label:'5ひきなら',source:'もし点数が5以上なら、\n  0秒待つ。',hole:'thenBody'},
     bonus:{label:'3ひきなら',source:'もし点数が3と同じなら、\n  0秒待つ。',hole:'thenBody'},
-    bonusPoint:{label:'おまけの点を足す',source:'点数を2ふやす。'},
+    bonusPoint:{label:'おまけの点を ふやす',source:'点数を2ふやす。'},
     cheer:{label:'おいわいのことば',source:'「クリア！」と0.5秒話す。'},
     remaining:{label:'のこりを見せる',source:'「点数ボード」の文字を（「あと：」と最大（0、10－点数）をつなげた文字）にかえる。'},
     tone:{label:'音を鳴らす',source:'880Hzの音を0.1秒鳴らす。'},
@@ -1771,7 +1771,9 @@
     // Pressing with the mouse or a finger (クリック, タッチ) and holding a key.
     'SensorRead:マウスが押されている': ['クリック', 'タッチ', 'おす', '押す'],
     'EventCount:click': ['クリック', 'タッチ', 'おす', '押す'],
-    'SensorRead:KEY_DOWN': ['おす', '押す'],
+    // The keyboard's names, as the block face and the code write them (F-34: 「スペース」キー).
+    'SensorRead:KEY_DOWN': ['おす', '押す', 'キー', 'スペース', 'スペースキー', 'エンター', 'エンターキー', 'やじるし'],
+    'SensorRead:押されたキー': ['キー'],
     // Holding a key to move: the continuous rule first, the repeat while it is held second (C-16).
     ContinuousRule: ['おしているあいだ', 'おしている間', 'おしっぱなし', 'おしつづける', 'キーをおしているあいだ', 'つづけて動く', '動き続ける', 'はやく', 'はやい'],
     RepeatWhile: ['おしているあいだ', 'おしっぱなし', 'あいだ', '間'],
