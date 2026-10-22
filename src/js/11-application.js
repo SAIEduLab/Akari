@@ -3004,10 +3004,14 @@
       hideSourceOverview();
       const evs = eventsFor(id);
       if (!evs.includes(currentEvent)) currentEvent = evs[0];
+      // はじめて opens the start and click bodies only (F-05): a body of another event (ふれたとき, keys …) is kept, and
+      // the note under the event buttons says so.
+      const entry = document.body.dataset.uiLevel === 'entry', shownAtLevel = x => !entry || ['start', 'click'].includes(x.event);
+      if (entry && !['start', 'click'].includes(currentEvent)) currentEvent = 'start';
       if (!sameObject) {
         selectedScriptId = null;
         const matching = project.scripts.find((x) => x.targetId === id && x.event === currentEvent && x.source.trim()),
-          first = matching || project.scripts.find((x) => x.targetId === id && x.source.trim());
+          first = matching || project.scripts.find((x) => x.targetId === id && x.source.trim() && shownAtLevel(x));
         if (first) { currentEvent = first.event; selectedScriptId = first.id || null; }
       }
       renderTree();
