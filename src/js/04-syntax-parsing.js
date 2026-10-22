@@ -709,6 +709,8 @@
     const mask0 = surfaceMask(source);
     if (mask0.includes('になったら')) return out;
     const word = (text, from, to) => {
+      // A word that is not in the text is not in its mask either (the mask only hides characters).
+      if (!text.includes(from)) return text;
       const mask = surfaceMask(text);
       let result = '', at = 0, i;
       while ((i = mask.indexOf(from, at)) >= 0) { result += text.slice(at, i) + to; at = i + from.length; }
@@ -1630,13 +1632,13 @@
   // Which legs a fixed place wrote before the unwritten one became 0歩 (the notice of B-17 reads it).
   const MOVE_WRITTEN_LEGS = new WeakMap();
   // One leg: 右へ10歩 / 10歩右へ. A comma inside one leg (10歩、右へ) is not read.
-  function readMoveLeg(text, start, quantity) {
-    const mask = surfaceMask(text);
+  // mask: the text's surfaceMask, when the caller already has it (a slice of a longer mask cut outside any 「 」 or （ ）).
+  function readMoveLeg(text, start, quantity, mask = surfaceMask(text)) {
     let p = surfaceCapture(/^(右|左|上|下)(?:へ|に)(.*)$/d, text, mask), word, amount;
     if (p) { word = p[0].text; amount = p[1]; }
     else if ((p = surfaceCapture(/^([^、]+歩)(右|左|上|下)(?:へ|に)$/d, text, mask))) { word = p[1].text; amount = p[0]; }
     else return null;
-    const [axis, dir] = MOVE_AXIS[word], amountMask = surfaceMask(amount.text);
+    const [axis, dir] = MOVE_AXIS[word], amountMask = mask.slice(amount.start, amount.end);
     if (!amountMask || amountMask.includes('、')) return null;
     if (!amountMask.endsWith('歩')) throw new AkariError('P205', `歩数の あとに「歩」を 書きます。れい：${word}へ10歩`);
     if (amountMask.length === 1) return null;
@@ -1644,13 +1646,16 @@
   }
   // One leg, or two of different axes: 右へ10歩、上へ5歩 (also without the comma, and either order).
   function readMoveLegs(text, start, quantity, example = 'いまのばしょから、右へ10歩、上へ5歩動く') {
-    const mask = surfaceMask(text), splits = [];
+    const mask = surfaceMask(text), splits = [], firstComma = mask.indexOf('、'), lastComma = mask.lastIndexOf('、');
     for (let i = 0; i < mask.length; i++) if (mask[i] === '、') splits.push([i, i + 1]);
     for (let i = 1; i < mask.length; i++) if (mask[i - 1] === '歩' && /^(?:右|左|上|下)(?:へ|に)/.test(mask.slice(i))) splits.push([i, i]);
     let firstError = null;
     for (const [a, b] of splits) {
+      // A leg has no 、 of its own (readMoveLeg reads none), so a side with a 、 is no leg; skipping it keeps a long
+      // run of 右へ1歩、… linear.
+      if (firstComma >= 0 && firstComma < a) continue;
       let one = null, two = null;
-      try { one = readMoveLeg(text.slice(0, a), start, quantity); two = one && readMoveLeg(text.slice(b), start + b, quantity); }
+      try { one = readMoveLeg(text.slice(0, a), start, quantity, mask.slice(0, a)); two = one && lastComma < b && readMoveLeg(text.slice(b), start + b, quantity, mask.slice(b)); }
       catch (error) { if (!(error instanceof AkariError)) throw error; firstError ||= error; continue; }
       if (!one || !two) continue;
       if (one.axis === two.axis) throw new AkariError('P205', '「右へ」「左へ」と「上へ」「下へ」を 1つずつ 書きます。れい：' + example);
@@ -1736,7 +1741,9 @@
     });
     if(place)return place;
     // 「ロケット」のところへ行く / マウスのところへ行く (the mouse needs no 「 」), with the time first.
-    if(MOVE_VERBS.part.includes(verb)&&(p=surfaceCapture(new RegExp('^、?(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)$','d'),body))){
+    // The ところ forms are tried only when ところ is written (on a long line without it these patterns are slow).
+    const partPlace=/のところ(?:へ|に)/.test(mask);
+    if(partPlace&&MOVE_VERBS.part.includes(verb)&&(p=surfaceCapture(new RegExp('^、?(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)$','d'),body))){
       const text=p[1].text,mouse=['マウス','「マウス」'].includes(text),screen=screenPlaceSource(surfaceMask(text),symbols);
       if(screen)throw new AkariError('P205',screen.message);
       const target=mouse?exprNode('StringLiteral',{value:'マウス'}):partNameTarget(componentTarget(e(text,p[1].start),symbols,ctx),symbols,ctx);
@@ -1769,7 +1776,7 @@
     const removed=removedMoveGuidance(code);
     if(removed)throw new AkariError('P205',removed.message);
     // 「いぬ」のところへ動く / 「いぬ」のところへ1秒かけて行く: a part's place is gone to with 行く, the time first.
-    if((p=surfaceCapture(new RegExp('^、?(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?$','d'),body)))
+    if(partPlace&&(p=surfaceCapture(new RegExp('^、?(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?$','d'),body)))
       throw new AkariError('P205',partPlaceGuidance(p[1].text,(p[0]||p[2])?.text,verb,!!p[2],symbols).message);
     // The steps are asked for only when none are written (3回、前へ10歩進む is no move sentence: other readers take it).
     if(/(?:動く|うごく|進む|すすむ|歩く|あるく)/.test(verb)&&!surfaceMask(body).includes('歩'))throw new AkariError('P205','動くときは 歩数を 書きます。れい：前へ10歩進む／'+MOVE_EXAMPLE_HERE);
@@ -1833,13 +1840,15 @@
     const LEG = '(?:画面の)?(右|左|上|下)(?:へ|に)([^、]+?)歩', LEG_BACK = '([^、]+?)歩、?(?:画面の)?(右|左|上|下)(?:へ|に)';
     const TIME_FIRST = '((?:[^、。]+?秒(?:かけて|で)、?)?)', TIME_LAST = '((?:、?[^、。]+?秒(?:かけて|で))?)';
     let legs = null, time = '';
-    if ((p = surfaceCapture(new RegExp('^' + TIME_FIRST + LEG + '(?:、?' + LEG + ')?' + TIME_LAST + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
+    // Every leg form has 歩 and a direction word; without them the patterns below only search a long line.
+    const stepsWritten = rmask.includes('歩') && /(?:右|左|上|下)(?:へ|に)/.test(rmask);
+    if (stepsWritten && (p = surfaceCapture(new RegExp('^' + TIME_FIRST + LEG + '(?:、?' + LEG + ')?' + TIME_LAST + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
       legs = [[p[1].text, p[2].text], ...(p[3] ? [[p[3].text, p[4].text]] : [])];
       time = (p[0].text || (p[5]?.text || '').replace(/^、/, '')).replace(/、$/, '');
-    } else if ((p = surfaceCapture(new RegExp('^' + TIME_FIRST + LEG_BACK + TIME_LAST + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
+    } else if (stepsWritten && (p = surfaceCapture(new RegExp('^' + TIME_FIRST + LEG_BACK + TIME_LAST + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
       legs = [[p[2].text, p[1].text]];
       time = (p[0].text || (p[3]?.text || '').replace(/^、/, '')).replace(/、$/, '');
-    } else if ((p = surfaceCapture(new RegExp('^([^、]+?)歩、?([^、。]+?秒(?:かけて|で))、?(?:画面の)?(右|左|上|下)(?:へ|に)' + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
+    } else if (stepsWritten && (p = surfaceCapture(new RegExp('^([^、]+?)歩、?([^、。]+?秒(?:かけて|で))、?(?:画面の)?(右|左|上|下)(?:へ|に)' + MOVE_OLD_VERB + '$', 'd'), rest, rmask))) {
       // 10歩、2秒かけて画面の右へ動く: the time between the steps and the direction.
       legs = [[p[2].text, p[0].text]];
       time = p[1].text;
@@ -2107,6 +2116,8 @@
     const add = text => { if (text && text !== code && !out.includes(text)) out.push(text); };
     // Replace every unprotected occurrence of a fixed word.
     const word = (text, from, to) => {
+      // A word that is not in the text is not in its mask either (the mask only hides characters).
+      if (!text.includes(from)) return text;
       const mask = surfaceMask(text);
       let result = '', at = 0, i;
       while ((i = mask.indexOf(from, at)) >= 0) { result += text.slice(at, i) + to; at = i + from.length; }
@@ -2133,6 +2144,7 @@
       for (const te of ['鳴らし始めて', '鳴らして', '進んで', 'すすんで', '動いて', 'うごいて', '歩いて', 'あるいて', '回って', 'まわって', '向いて', '待って', '言って', '話して',
         'かくして', '見せて', '消して', 'けして', '入れて', '足して', '引いて', '変えて', 'かえて', 'すべって', '滑って',
         '増やして', '減らして', '止めて', '作って', '送って', '上げて', '下ろして', 'にして', '行って', 'たずねて', 'はね返って', '追加して', '削除して', '挿入して']) {
+        if (!text.includes(te)) continue;
         const mask = surfaceMask(text);
         let result = '', at = 0, i;
         while ((i = mask.indexOf(te, at)) >= 0) {
@@ -2620,7 +2632,7 @@
       throw sentenceDiagnostic('画面の 外へ 出る 文は ありません。画面の はしの 外まで 動いてから、すがたを かくします。れい：「2秒かけて、いまのばしょから、右へ800歩動く。」と 書いて、次に「すがたをかくす。」と 書きます',line,[],{kind:'MotionCommand'});
     // 「いぬ」のところへ動く / 「いぬ」のところへ1秒かけて行く / 画面のまん中のところへ行く: the readable sentence, with the
     // fix when the place is a part, the mouse or a place of the screen.
-    if((p=surfaceCapture(new RegExp('^((?:[^、。\\u0001]+?は、?)?)(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?('+[...MOVE_VERBS.here,...MOVE_VERBS.part].join('|')+')$','d'),code,mask))){
+    if(/のところ(?:へ|に)/.test(mask)&&(p=surfaceCapture(new RegExp('^((?:[^、。\\u0001]+?は、?)?)(?:(.+?)'+MOVE_TIME+'、?)?(.+?)のところ(?:へ|に)(?:、?(.+?)'+MOVE_TIME+')?('+[...MOVE_VERBS.here,...MOVE_VERBS.part].join('|')+')$','d'),code,mask))){
       const [who,before,target,after,verb]=p,name=target.text.replace(/^「(.*)」$/,'$1'),screen=screenPlaceSource(surfaceMask(target.text),symbols);
       if(screen||after||!MOVE_VERBS.part.includes(verb.text)){
         const found=partPlaceGuidance(target.text,(before||after)?.text,verb.text,!!after,symbols),source=who.text+found.source;
@@ -3155,6 +3167,8 @@
   // One length-preserving scan protects strings, exact names and nested expressions.
   // Only outer fixed markers select a surface frame; names and values never select it.
   function surfaceMask(text) {
+    // Without a quote, a bracket or ※ nothing is hidden (and no bracket can be left open).
+    if (typeof text === 'string' && !/[「『【（［）］※]/.test(text)) return text;
     const out = text.split(''), stack = [];
     let quote = '';
     for (let i = 0; i < text.length; i++) {
