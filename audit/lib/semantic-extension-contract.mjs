@@ -80,6 +80,7 @@ export function verifyResourceBrowser(report){
 export const searchBindingIds=[...['右に行きたい','小さくしたい','おおきさ','2番目に入れたい','点数','てんすう','おじぎ','代金'].map(q=>'search/required/'+q),
  ...['ひだりにすすみたい','上へ動かしたい','シタへイキタイ','画面の右へ移動したい'].map(q=>'search/direction/'+q),
  ...['５番目に入れたい','3ばんめにいれたい','10番目へ挿入'].map(q=>'search/ordinal/'+q),
+ ...['くらべる','ランダム','まわす','やめる','とまる','へる','クリック','タッチ','ひく-subtracts-first'].map(q=>'search/child-words/'+q),
  'search/scopes-remain-distinct','search/callable-arguments-and-kind','search/no-query-mutation','search/rotation-and-replacement-distinct','search/unavailable-reason','search/bound-insertion-semantic'];
 export const searchBrowserIds=[...[1366,1024,390].map(w=>'search/browser-discovery-focus-'+w),'search/browser-scope-binding-undo','search/browser-function-binding','search/browser-intent-values','search/browser-unavailable-reason'];
 export function verifySearchBrowser(report){
@@ -113,7 +114,8 @@ export const structuredOrders=[['condition','seconds','distance'],['distance','c
 export const structuredEditingIds=[...['empty','heading','body'].flatMap(k=>['keyDown','message'].map(e=>'heading/'+k+'/'+e)),...structuredOrders.map(o=>'continuous/'+o.join('-'))];
 export function verifyStructuredEditing(report){
  const count=verifySemanticExtension(report,'akari-structured-editing-browser-v1',structuredEditingIds);assert.deepEqual(report.pageErrors,[]);assert.deepEqual(report.networkRequests,[]);assert.ok(!report.hostFailure);assert.deepEqual(report.environment,{browser:'140.0.7339.207',playwright:'1.55.0'});
- for(const[i,row]of report.results.entries()){const o=row.observed;if(i<6){const[,kind,event]=row.id.split('/');assert.deepEqual(o,{kind,event,filter:event==='keyDown'?'右':'出発',stableId:true,oneHistoryStep:true,undoRedo:true,cancelAtomic:true,bodyPreserved:true,run:true});}else{const{elapsed,moved,...rest}=o;assert.deepEqual(rest,{order:structuredOrders[i-6],key:'左',direction:'right',seconds:2,distance:40,rate:20,cancelAtomic:true,undoRedo:true,designUnchanged:true,stopped:true});assert.ok(Number.isFinite(elapsed)&&elapsed>=1);assert.ok(Number.isFinite(moved)&&Math.abs(moved-20*elapsed)<=6);}}
+ for(const[i,row]of report.results.entries()){const o=row.observed;if(i<6){const[,kind,event]=row.id.split('/');// An empty key body is the only body of its work, which does not run (LANGUAGE.md: 空の作品で「▶ 動かす」を押すと、動かさずに「ブロックが まだ ないよ。…」と案内します).
+  const refused=kind==='empty'&&event==='keyDown';assert.deepEqual(o,{kind,event,filter:event==='keyDown'?'右':'出発',stableId:true,oneHistoryStep:true,undoRedo:true,cancelAtomic:true,bodyPreserved:true,run:!refused,emptyWorkRefused:refused});}else{const{elapsed,moved,...rest}=o;assert.deepEqual(rest,{order:structuredOrders[i-6],key:'左',direction:'right',seconds:2,distance:40,rate:20,cancelAtomic:true,undoRedo:true,designUnchanged:true,stopped:true});assert.ok(Number.isFinite(elapsed)&&elapsed>=1);assert.ok(Number.isFinite(moved)&&Math.abs(moved-20*elapsed)<=6);}}
  return count;
 }
 export function verifyBasicBrowser(report){
