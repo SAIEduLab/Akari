@@ -882,7 +882,8 @@
     if (source.endsWith('、')) {source=source.slice(0,-1);ctx={...ctx,sourcePositions:ctx.sourcePositions?.slice(0,-1)};}
     const mask=surfaceMask(source);
     const fail = message => { throw new AkariError('P205',message,ctx.lineNo||0,1); };
-    if (mask.includes('になったら')) fail('「になったら」は ここでは 使えません。いまの ようすを しらべるなら「もし点数が10なら、」、そうなるまで 待つなら「点数が10になるまで待つ」のように 書きます');
+    // もし答えが「7」になったら: the two readings are named with the words written (final call 12), as for the one with no もし.
+    if (mask.includes('になったら')) fail(becomesIfMessage(mask.endsWith('になったら') ? source.slice(0, -'になったら'.length) : null, symbols, ctx));
     // Explicit Boolean expression: its parentheses determine scope and operator precedence.
     if (source.startsWith('条件（')) {
       const endings = form === 'if' ? ['が成り立つなら','が成り立つならば','が成り立つのであれば','が成り立たないなら','が成り立たないならば','が成り立たないのであれば'] : form === 'while' ? ['が成り立つあいだ','が成り立つ間','が成り立たないあいだ','が成り立たない間'] : form === 'until' ? ['が成り立つまで','が成り立たないまで'] : ['が成り立つ','が成り立たない'];
@@ -2410,6 +2411,11 @@
     try{return parseCondition(/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(written))?written:written+'と同じ',symbols,ctx,'plain');}
     catch(error){if(!(error instanceof AkariError))throw error;return null;}
   }
+  // With もし (もし答えが「7」になったら、) only two readings are meant: now, or after waiting.
+  function becomesIfMessage(written,symbols,ctx){
+    const condition=written===null?null:becomesCondition(written,symbols,ctx);
+    return `「になったら」は ここでは 使えません。いまの ようすを しらべるなら「${condition?'もし'+formatCondition(condition,'if')+'、':'もし点数が10なら、'}」、そうなるまで 待つなら「${condition?formatCondition(condition,'until')+'待つ':'点数が10になるまで待つ'}」のように 書きます`;
+  }
   function becomesMessage(written,symbols,ctx){
     const condition=becomesCondition(written,symbols,ctx);
     const now=condition?'もし'+formatCondition(condition,'if')+'、':'もし〜なら、',wait=condition?formatCondition(condition,'until')+'待つ。':'〜になるまで待つ。';
@@ -3077,8 +3083,10 @@
       let raw=p[0].text;
       if(!/(?:以上|以下|より大きい|より小さい|と同じ|とちがう|と違う)$/.test(surfaceMask(raw)))raw+='と同じ';
       const condition=parseCondition(raw,symbols,ctx,'plain'),body=p[1].text,indent=' '.repeat(line.indent||0);
-      // The wait is the one the message names (点数が10になるまで待つ): when it is so already, it does not wait.
-      throw sentenceDiagnostic(becomesMessage(p[0].text,symbols,ctx),line,[
+      // The wait is the one the message names (点数が10になるまで待つ): when it is so already, it does not wait. With もし
+      // the message names the two readings meant, not the 名人 heading (「もし…になったとき、」 is none).
+      const written=p[0].text.replace(/^もし、?/,'');
+      throw sentenceDiagnostic(written===p[0].text?becomesMessage(written,symbols,ctx):becomesIfMessage(written,symbols,ctx),line,[
         {label:'いま そうなっていたら する',source:`もし${formatCondition(condition,'if')}、${body}`},
         {label:'そうなるのを 待ってから する',source:`${formatCondition(condition,'until')}待つ。\n${indent}${body}`},
       ],{kind:'Condition',missing:['stateOrTransition']});
