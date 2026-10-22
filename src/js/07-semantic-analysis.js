@@ -1773,9 +1773,9 @@
         const location = SOURCE_RANGES.get(node), proposals = [];
         let range = location && !location.rewritten ? location.range : null, chained = false;
         // Inside a 「〜して、」 chain (…のばしょへ行って、) the sentence was read as 行く: the fix is made for the clause as
-        // written and keeps the て-form.
+        // written and keeps the て-form, also with the time after the place (…のばしょへ1秒かけて行って、, R2-B-09).
         if (!range && location?.rewritten && location.extent && source && !lanes) {
-          const clause = /^[^。\n]*?の(?:ばしょ|場所)(?:へ|に)(?:行って|いって|行き|いき)(?=、)/.exec(source.slice(location.extent.start));
+          const clause = /^[^。\n]*?の(?:ばしょ|場所)(?:へ|に)(?:、?[^、。\n]*?秒(?:間)?(?:かけて|で))?(?:行って|いって|行き|いき)(?=、)/.exec(source.slice(location.extent.start));
           if (clause) { range = { start: location.extent.start, end: location.extent.start + clause[0].length }; chained = true; }
         }
         if (range && source) {

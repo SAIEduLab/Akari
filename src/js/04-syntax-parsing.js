@@ -2775,7 +2775,8 @@
         if(pair){clauses.push({start,end:i,pair});start=i+1;}
       }
       clauses.push({start,end:code.length,pair:null});
-      const teForm={動く:'動いて',進む:'進んで'};
+      // 〜のところへ行く (from 〜の位置へ行って, R2-B-09) keeps its て-form too.
+      const teForm={動く:'動いて',進む:'進んで',行く:'行って'};
       let first=null,example=null,whole=code;
       // From the last sentence to the first, so the places of the earlier ones still hold.
       for(const clause of [...clauses].reverse()){
@@ -2790,7 +2791,7 @@
         if(source&&!reads(source))source=removedMoveGuidance(source)?.source||source;
         if(source){
           rewritten=example=canonicalStatementSource(source,symbols);
-          if(clause.pair){const verb=/(?:動く|進む)$/.exec(rewritten);rewritten=verb?rewritten.slice(0,-2)+teForm[verb[0]]:null;}
+          if(clause.pair){const verb=/(?:動く|進む|行く)$/.exec(rewritten);rewritten=verb?rewritten.slice(0,-2)+teForm[verb[0]]:null;}
         }
         whole=rewritten&&whole!==null?whole.slice(0,clause.start)+rewritten+whole.slice(clause.end):null;
       }
@@ -2979,8 +2980,8 @@
     // A 「〜して、」 chain that does not read (R2-B-04): each clause is looked at on its own, in its own words, as a sentence
     // of its own would be; a fix for a clause is offered for the whole line, the clause keeping its て-form.
     // Only the clause forms whose line-wide checks would point the wrong way are looked at (ゆっくり, a time after the
-    // angle or the place), so an ordinary chain is read once (PERF-02).
-    if(!chainLooking&&mask.includes('、')&&/ゆっくり|度、?[^、。]*?秒(?:間)?(?:かけて|で)|のところ(?:へ|に)、?[^、。]*?秒(?:間)?(?:かけて|で)/.test(mask)){
+    // angle or the place, a place written 〜の位置へ: R2-B-09), so an ordinary chain is read once (PERF-02).
+    if(!chainLooking&&mask.includes('、')&&/ゆっくり|度、?[^、。]*?秒(?:間)?(?:かけて|で)|のところ(?:へ|に)、?[^、。]*?秒(?:間)?(?:かけて|で)|の(?:位置|場所|ばしょ)(?:へ|に)(?:行っ|いっ|行き|いき)/.test(mask)){
       const clauses=[];let start=0;
       for(let i=0;i<mask.length;i++){
         if(mask[i]!=='、')continue;
