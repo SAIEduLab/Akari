@@ -1359,6 +1359,8 @@
   const STATEMENT_EXPLICIT_ACTORS = new WeakSet();
   // The symbols a script was read with (the formatter asks them which names are lists; see listCountWord).
   const FORMAT_SYMBOLS = new WeakMap();
+  // The symbols a block tree was encoded with (05 blockEncode), given back to the code it decodes to.
+  const BLOCK_TREE_SYMBOLS = new WeakMap();
   // 「これを6回くり返す」 repeats the one sentence before it (the check says so when more come before it).
   const REPEAT_PREVIOUS = new WeakSet();
   const STATEMENT_LINE = new WeakMap();

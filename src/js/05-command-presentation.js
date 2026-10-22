@@ -1138,7 +1138,11 @@
           tree.annotations[annotation.key] = node[annotation.key] ?? '';
       return tree;
     };
-    return { tree: encode(root, rootType, []), nodeMap, nodeIds };
+    // The names the code was read with stay with the blocks, so block→code writes what 整える writes (F-34:
+    // 点数を言う, 持ち物の数).
+    const tree = encode(root, rootType, []), symbols = context.symbols || FORMAT_SYMBOLS.get(root);
+    if (symbols) BLOCK_TREE_SYMBOLS.set(tree, symbols);
+    return { tree, nodeMap, nodeIds };
   }
   function blockDecode(tree, context = {}) {
     const seen = new WeakSet(),
@@ -1240,6 +1244,8 @@
     const rootType = context.expected || BLOCK_SCHEMA_BY_ID.get(tree?.schemaId)?.category;
     const ast = decode(tree, rootType, 'root', 0, rootType === 'expression' ? 1 : 0);
     validateSyntaxAst(ast, rootType, context);
+    const symbols = context.symbols || (tree && typeof tree === 'object' ? BLOCK_TREE_SYMBOLS.get(tree) : null);
+    if (symbols && ast && typeof ast === 'object') FORMAT_SYMBOLS.set(ast, symbols);
     return ast;
   }
   function createBlock(schemaId, context = {}) {
