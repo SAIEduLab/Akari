@@ -326,14 +326,15 @@
         'aria-label': '作業台の見え方',
       });
     const zoomLabel = button('100%', 'zoom-reset', () => setZoom(1), {
-      'aria-label': '大きさを100%に もどす',
+      'aria-label': '作業台を 100%に もどす',
     });
-    // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back.
+    // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back. They are named by what they zoom,
+    // apart from the stage's 「大きく見る」 and as its own 「作品画面を 大きく」 (Y2-08).
     const minus = button('−', 'zoom-out', () => setZoom(blockZoomStep(zoom, -1)), {
-        'aria-label': '小さく見る',
+        'aria-label': '作業台を 小さく',
       }),
       plus = button('＋', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
-        'aria-label': '大きく見る',
+        'aria-label': '作業台を 大きく',
       });
     // The workspace goes back to its top-left corner: 「さいしょへ」 (F-22).
     const home = button('さいしょへ', 'workspace-home', () => {
