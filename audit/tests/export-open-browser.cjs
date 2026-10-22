@@ -9,6 +9,8 @@ const {verifyExportOpen,checkEvidenceNegatives}=require('../lib/export-open-cont
 const product=path.resolve(currentProductFile()),out=path.resolve(process.argv[3]);
 assert.ok(!fs.existsSync(out),'fresh output');fs.mkdirSync(out,{recursive:true});
 const api=loadApi(fs.readFileSync(product,'utf8'));
+// The contract numbers, the autosave database name and the data marks come from the release record (features.json).
+const contract=JSON.parse(fs.readFileSync('audit/manifests/features.json','utf8')).EXECUTABLE_CONTRACT,autosaveDatabase='akari-workspace-f'+contract.projectFormatVersion;
 const report={schema:'akari-export-open-v1',status:'RUNNING',productSha256:crypto.createHash('sha256').update(fs.readFileSync(product)).digest('hex'),results:[],pageErrors:[],networkRequests:[],humanChildTesting:'NOT_RUN'};
 function make(source,extra={}){const p=makeRegressionProject(api);p.name='検証用の作品';p.scripts=[{targetId:'stage',event:'start',source}];p.actions=[];p.functions=[];Object.assign(p,extra);return p;}
 function generate(name,source,extra={},presentation='artwork'){const p=make(source,extra),file=path.join(out,name+'.html');fs.writeFileSync(file,presentation==='default'?api.generateStandaloneHtml(p,api.makeDefaultAssetStore()):api.generateStandaloneHtml(p,api.makeDefaultAssetStore(),{presentation}));return file;}
@@ -18,6 +20,13 @@ async function page(b,file=product,width=1180){const c=await b.newContext({offli
  // Entry first-start behavior is covered independently by entry-workshop.
  if(file===product)await c.addInitScript(()=>localStorage.setItem('akari.uiLevel.v1','basic'));
  await c.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});const p=await c.newPage();p.setDefaultTimeout(15000);p.on('pageerror',e=>report.pageErrors.push(e.message));await p.goto(pathToFileURL(file).href);return p;}
+// The player's buttons a viewer sees, with the label each shows. ⏸ いったん止める and ▶ つづける share one place: one button
+// holds both labels, and the label that does not apply, like the whole place while neither applies, keeps its room but
+// is not seen (visibility hidden). So a button counts only where it is seen, with its seen label (LANGUAGE.md
+// 書き出した作品のはじめ方).
+function shownControls(){const seen=n=>n.getClientRects().length>0&&getComputedStyle(n).visibility==='visible';
+  return ['playerStart','playerStop','playerPause'].map(id=>document.getElementById(id)).filter(seen).map(n=>[n,n.children.length?[...n.children].filter(seen).map(c=>c.textContent).join(''):n.textContent])
+    .filter(([,label])=>label).map(([n,label])=>n.id+':'+label).join(' ');}
 async function install(p,source=marker){const text=api.serializeProject(make(source),api.makeDefaultAssetStore());await p.locator('#fileInput').setInputFiles({name:'検証.akari.md',mimeType:'text/plain',buffer:Buffer.from(text)});await p.waitForFunction(()=>Akari.app.project.name==='検証用の作品'&&Akari.app.editorState.state==='DESIGN');await p.locator('#uiLevel').selectOption('advanced');await p.locator('#objectSelect').selectOption('stage');await p.locator('#eventSelect').selectOption('start');if(await p.locator('#sourceOverview').isVisible())await p.locator('#sourceEditBtn').click();await chooseView(p,'code');}
 const state=p=>p.evaluate(()=>{const s=Akari.app.editorState;return{project:JSON.stringify(Akari.app.project),source:s.main.sourceText,history:s.history,redo:s.redo,dirty:s.dirty,hasDraft:s.hasDraft};});
 async function edit(p,text='「編集した作品」と言う。'){await p.locator('#codeEditor').fill(text);await p.waitForFunction(t=>Akari.app.editorState.main.sourceText===t,text);await p.waitForTimeout(350);}
@@ -42,33 +51,74 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
   // The player follows the editor: stopped, ▶ 動かす only; running, ■ 止める in ▶'s place and ⏸ いったん止める; paused, ■ and
   // ▶ つづける. A double press of ▶ does not stop at once (its second press lands on ■), and neither does a single press of ■
   // within 0.5 s of ▶ (a click the browser does not count as a double click).
-  await run('EXPORT-CONTROLS-DEFAULT-OPERATIONS',()=>withPage(b,async p=>{const shown=()=>p.evaluate(()=>['playerStart','playerStop','playerPause'].filter(id=>document.getElementById(id).getClientRects().length).map(id=>id+':'+document.getElementById(id).textContent).join(' '));
+  await run('EXPORT-CONTROLS-DEFAULT-OPERATIONS',()=>withPage(b,async p=>{const shown=()=>p.evaluate(shownControls);
     await p.waitForFunction(()=>document.querySelector('#playerRoot')?.dataset.state==='READY');assert.equal(await p.locator('.sprite-bubble').count(),0);assert.equal(await shown(),'playerStart:▶ 動かす');
     const startBox=await p.locator('#playerStart').boundingBox(),pressedAt=Date.now();await p.locator('#playerStart').click();
     await p.locator('#playerStop').waitFor({state:'visible'});await p.locator('#playerStop').click();const singleAfterMs=Date.now()-pressedAt;await p.waitForTimeout(150);
     assert.ok(singleAfterMs<DOUBLE_PRESS_MS,'the single press of ■ came '+singleAfterMs+' ms after ▶, too late to show the 0.5 s rule');const afterSingle=await p.locator('#playerRoot').getAttribute('data-state');assert.equal(afterSingle,'RUNNING','a single press of ■ within 0.5 s of ▶ does nothing');
     await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));
     assert.equal(await shown(),'playerStop:■ 止める playerPause:⏸ いったん止める');assert.equal(Math.round((await p.locator('#playerStop').boundingBox()).x),Math.round(startBox.x),'■ takes the place of ▶');
-    await p.locator('#playerPause').click();assert.equal(await p.locator('#playerRoot').getAttribute('data-state'),'PAUSED');assert.equal(await shown(),'playerStop:■ 止める playerPause:▶ つづける');
-    await p.locator('#playerPause').click();assert.equal(await p.locator('#playerRoot').getAttribute('data-state'),'RUNNING');
+    // ⏸ いったん止める; a second press of that place within 0.5 s does nothing, and the focus is on the place, now ▶ つづける.
+    await p.locator('#playerPause').click();const pausedAt=Date.now();assert.equal(await p.locator('#playerRoot').getAttribute('data-state'),'PAUSED');assert.equal(await shown(),'playerStop:■ 止める playerPause:▶ つづける');
+    assert.equal(await p.evaluate(()=>document.activeElement?.id),'playerPause','after ⏸ the focus is on ▶ つづける');
+    await p.locator('#playerPause').click();const secondAfterMs=Date.now()-pausedAt;assert.ok(secondAfterMs<DOUBLE_PRESS_MS,'the second press came '+secondAfterMs+' ms after ⏸, too late to show the 0.5 s rule');
+    assert.equal(await p.locator('#playerRoot').getAttribute('data-state'),'PAUSED','a press of ▶ つづける within 0.5 s of ⏸ does nothing');
+    // After 0.5 s, ▶ つづける goes on and the keys reach the work.
+    await pressStop(p.locator('#playerPause'));assert.equal(await p.locator('#playerRoot').getAttribute('data-state'),'RUNNING');assert.equal(await shown(),'playerStop:■ 止める playerPause:⏸ いったん止める');
+    assert.equal(await p.evaluate(()=>document.activeElement?.id),'formSurface','after ▶ つづける the keys reach the work');
     await pressStop(p.locator('#playerStop'));assert.equal(await p.locator('#playerRoot').getAttribute('data-state'),'STOPPED');assert.equal(await shown(),'playerStart:▶ 動かす');
     await p.locator('#playerStart').dblclick();await p.waitForTimeout(300);const afterDouble=await p.locator('#playerRoot').getAttribute('data-state');assert.notEqual(afterDouble,'STOPPED','a double press of ▶ does not stop at once');
-    await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));return{title:await p.locator('#playerTitle').innerText(),restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:afterDouble!=='STOPPED',singlePressWithinHalfSecondRuns:afterSingle==='RUNNING'};},generate('controls',marker,{},'default')));
+    await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));return{title:await p.locator('#playerTitle').innerText(),restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:afterDouble!=='STOPPED',singlePressWithinHalfSecondRuns:afterSingle==='RUNNING',pauseSlotGuard:true};},generate('controls',marker,{},'default')));
   // The controls player when the work ends: every body has ended, or 作品を全部止める ran. It shows ■ 止める only, and ■
   // goes back to ▶ 動かす (LANGUAGE.md 書き出した作品のはじめ方).
-  await run('EXPORT-CONTROLS-FINISHED',async()=>{const ended=async file=>withPage(b,async p=>{const shown=()=>p.evaluate(()=>['playerStart','playerStop','playerPause'].filter(id=>document.getElementById(id).getClientRects().length).map(id=>id+':'+document.getElementById(id).textContent).join(' '));
+  await run('EXPORT-CONTROLS-FINISHED',async()=>{const ended=async file=>withPage(b,async p=>{const shown=()=>p.evaluate(shownControls);
     await p.waitForFunction(()=>document.querySelector('#playerRoot')?.dataset.state==='READY');await p.locator('#playerStart').click();
     await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='FINISHED');await p.waitForTimeout(300);const finished={state:await p.locator('#playerRoot').getAttribute('data-state'),shown:await shown(),afterStopAllSaid:(await p.locator('#formSurface').textContent()).includes('とどかない')};
     await pressStop(p.locator('#playerStop'));return{...finished,afterStop:await shown()};},file);
    const bodies=await ended(generate('controls-ended','「おわり」と言う。',{},'default')),stopAll=await ended(generate('controls-stop-all','「とまる」と言う。\n作品を全部止める。\n「とどかない」と言う。',{},'default'));
    return{bodiesEnded:bodies.shown,bodiesState:bodies.state,stopAll:stopAll.shown,stopAllState:stopAll.state,sentenceAfterStopAllSaid:stopAll.afterStopAllSaid,afterStop:[bodies.afterStop,stopAll.afterStop]};});
   await run('EXPORT-CONTROLS-SCALE',async()=>{const sized=(name,width,height)=>{const p=make(marker);p.stage.width=width;p.stage.height=height;const file=path.join(out,name+'.html');fs.writeFileSync(file,api.generateStandaloneHtml(p,api.makeDefaultAssetStore()));return file;};
-   const shown=async(file,window)=>{const c=await b.newContext({offline:true,viewport:window});await c.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});try{const p=await c.newPage();p.on('pageerror',e=>report.pageErrors.push(e.message));await p.goto(pathToFileURL(file).href);
-     await p.waitForFunction(()=>document.querySelector('#playerRoot')?.dataset.state==='READY');return await p.evaluate(()=>{const r=document.querySelector('#formSurface').getBoundingClientRect();return{width:Math.round(r.width),height:Math.round(r.height),right:Math.round(r.right),innerWidth};});}finally{await c.close();}};
-   const small=sized('scale-640',640,400),large=sized('scale-1200',1200,800);
+   const shown=async(file,window,running=false)=>{const c=await b.newContext({offline:true,viewport:window});await c.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});try{const p=await c.newPage();p.on('pageerror',e=>report.pageErrors.push(e.message));await p.goto(pathToFileURL(file).href);
+     await p.waitForFunction(()=>document.querySelector('#playerRoot')?.dataset.state==='READY');const measure=()=>p.evaluate(()=>{const r=document.querySelector('#formSurface').getBoundingClientRect(),stop=document.querySelector('#playerStop').getBoundingClientRect();
+       return{width:Math.round(r.width),height:Math.round(r.height),right:Math.round(r.right),bottom:Math.round(r.bottom),innerWidth,innerHeight,pageHeight:document.documentElement.scrollHeight,stopTop:Math.round(stop.top)};});
+     const ready=await measure();if(!running)return ready;
+     // Running: ■ 止める and the status line come in; the whole stage still fits the window, with ■ on the screen (the
+     // lines under the stage, such as the reason after a mistake, may need the page scrolled).
+     await p.locator('#playerStart').click();await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));return{...ready,running:await measure()};}finally{await c.close();}};
+   // LANGUAGE.md: the ▶ export uses the same scale as the run screen, whose first scale is the one where both the width
+   // and the height fit (幅と高さの両方が収まる倍率); a work that fits stays at 100%.
+   const inside=m=>m.right<=m.innerWidth&&m.bottom<=m.innerHeight&&m.stopTop>=0,fits=m=>inside(m)&&m.pageHeight<=m.innerHeight&&inside(m.running);
+   const small=sized('scale-640',640,400),large=sized('scale-1200',1200,800),tall=sized('scale-1000',1000,700);
    const s1366=await shown(small,{width:1366,height:900}),s1920=await shown(small,{width:1920,height:1200}),l1920=await shown(large,{width:1920,height:1200}),l1366=await shown(large,{width:1366,height:900});
+   const t1366=await shown(tall,{width:1366,height:650},true),s650=await shown(small,{width:1366,height:650},true);
    const near=(a,b)=>Math.abs(a-b)<=2;
-   return{small1366:near(s1366.width,640),small1920:near(s1920.width,640),large1920:near(l1920.width,1200),large1366Fits:l1366.right<=l1366.innerWidth&&l1366.width>640,observed:{s1366,s1920,l1920,l1366}};});
+   return{small1366:near(s1366.width,640),small1920:near(s1920.width,640),large1920:near(l1920.width,1200),large1366Fits:l1366.right<=l1366.innerWidth&&l1366.width>640,
+     tall650Fits:fits(t1366)&&t1366.width<1000&&near(t1366.width/t1366.height,1000/700),small650Fits:near(s650.width,640)&&near(s650.height,400)&&fits(s650),
+     observed:{s1366,s1920,l1920,l1366,t1366,s650}};});
+  // Making a file checks every asset as the player would (PERF-R2-02): the bytes hashed while packing are not decoded and
+  // hashed again, but a record whose bytes do not match its hash is refused (F508), and the file's own check still
+  // refuses a changed asset text, sha256 or byteLength, or a changed program (X602).
+  await run('EXPORT-PACKED-ASSETS-CHECKED',async()=>{const code=f=>{try{f();return 'accepted';}catch(e){return e.code||e.message;}};
+   const p=make('「やあ」と言う。'),sprite=p.components.find(c=>c.type==='sprite'),def=api.makeDefaultAssetStore().get(sprite.costumes[0].assetId);
+   sprite.costumes[0].assetId='asset-own-star';
+   const store=bytes=>{const s=new api.AssetStore();s.addImmutable({id:'asset-own-star',kind:def.kind,mime:def.mime,sha256:def.sha256,bytes,meta:{}});return s;};
+   const good=store(new Uint8Array(def.bytes)),changed=new Uint8Array(def.bytes);changed[200]^=1;
+   const made=code(()=>api.generateStandaloneHtml(p,good)),mismatched=code(()=>api.generateStandaloneHtml(p,store(changed)));
+   const pk=api.packExecutable(p,good),packed=()=>new Map(pk.assets.map(a=>[a.id,{text:a.dataBase64,record:good.get(a.id)}])),i=pk.assets.findIndex(a=>a.id==='asset-own-star');
+   assert.ok(i>=0);const restored=code(()=>api.restoreExecutable(JSON.parse(JSON.stringify(pk)),{packed:packed()}));
+   const variants={text:d=>{const t=d.assets[i].dataBase64;d.assets[i].dataBase64=t.slice(0,40)+(t[40]==='A'?'B':'A')+t.slice(41);},sha256:d=>{d.assets[i].sha256='0'.repeat(64);},
+     byteLength:d=>{d.assets[i].byteLength+=1;},program:d=>{d.program[0].ownerId='nobody';}};
+   const refused=Object.fromEntries(Object.entries(variants).map(([k,m])=>{const d=JSON.parse(JSON.stringify(pk));m(d);return [k,code(()=>api.restoreExecutable(d,{packed:packed()}))];}));
+   return{made,mismatched,restored,refused};});
+  // On a touch screen (coarse pointer) every button of the ▶ player and its question window is at least 40 px tall (E-19).
+  await run('EXPORT-CONTROLS-TOUCH-SIZE',async()=>{const c=await b.newContext({offline:true,viewport:{width:1024,height:768},hasTouch:true,isMobile:true});await c.route(/^https?:/,r=>{report.networkRequests.push(r.request().url());return r.abort();});
+   try{const p=await c.newPage();p.on('pageerror',e=>report.pageErrors.push(e.message));await p.goto(pathToFileURL(generate('controls-touch','「答えは？」とたずねる。\n答えを言う。\n10秒待つ。',{},'default')).href);
+    assert.equal(await p.evaluate(()=>matchMedia('(pointer: coarse)').matches),true,'the page sees a coarse pointer');
+    await p.waitForFunction(()=>document.querySelector('#playerRoot')?.dataset.state==='READY');const height=sel=>p.locator(sel).evaluate(n=>Math.round(n.getBoundingClientRect().height));
+    const sizes={start:await height('#playerStart')};await p.locator('#playerStart').tap();await p.locator('#questionModal.show').waitFor();
+    sizes.stop=await height('#playerStop');sizes.pause=await height('#playerPause');sizes.questionStop=await height('#questionStop');sizes.questionSubmit=await height('#questionSubmit');
+    for(const [k,v] of Object.entries(sizes))assert.ok(v>=40,k+' is '+v+' px tall');
+    return{allAtLeast40:true,sizes};}finally{await c.close();}});
   await run('EXPORT-ARTWORK-SIZE-RELOAD-INPUT',()=>withPage(b,async p=>{await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));const box=await p.locator('#formSurface').boundingBox();assert.deepEqual({x:box.x,y:box.y,width:box.width,height:box.height},{x:0,y:0,width:640,height:400});assert.equal(await p.locator('#playerStart,#playerPause,#playerStop,#playerTitle,#playerStatus').count(),0);await p.locator('.component[data-runtime-id="button-1"]').click();await p.waitForFunction(()=>document.querySelector('#formSurface').textContent.includes('作品のボタン'));await p.locator('#formSurface').focus();await p.keyboard.press('a');await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('作品のキー'));await p.reload();await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));assert.doesNotMatch(await p.locator('#playerOutput').innerText(),/作品のキー/);return{box,noControls:true,nativeButtonAndKey:true};},generate('artwork-input',marker,{scripts:[{targetId:'stage',event:'start',source:marker},{targetId:'button-1',event:'click',source:'「作品のボタン」と言う。'},{targetId:'stage',event:'keyDown',source:'「作品のキー」と言う。'}]}),320));
   await run('EXPORT-ARTWORK-QUESTION-ANSWER-STOP',()=>withPage(b,async p=>{await p.locator('#questionModal.show').waitFor();await p.locator('#questionAnswer').fill('返答');await p.locator('#questionSubmit').click();await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('返答'));await p.reload();await p.locator('#questionModal.show').waitFor();await p.locator('#questionStop').click();assert.equal(await p.locator('#playerRoot').getAttribute('data-state'),'STOPPED');assert.equal(await p.locator('#formSurface').evaluate(n=>document.activeElement===n),true);return{answer:true,stop:true};},generate('artwork-question','「答えは？」とたずねる。\n答えの値を言う。\n10秒待つ。')));
   await run('EXPORT-ARTWORK-AUDIO-PERMITTED',async()=>{const c=await b.newContext({offline:true});await audioProbe(c);const p=await c.newPage();try{p.on('pageerror',e=>report.pageErrors.push(e.message));await p.goto(pathToFileURL(generate('audio-permitted',tone)).href);await p.waitForFunction(()=>document.querySelector('#playerOutput').textContent.includes('冒頭'));assert.equal(await p.locator('#playerActivation').isVisible(),false);assert.equal(await p.evaluate(()=>__tones.length),1);return{starts:await p.evaluate(()=>__tones),automatic:true};}finally{await c.close();}});
@@ -106,8 +156,8 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
       assert.deepEqual(box,{x:0,y:0,width:640,height:400});await p.screenshot({path:path.join(out,'artwork-iframe.png')});return{box,automatic:true};},host);
   });
   await run('EXPORT-ARTWORK-INITIALIZATION-ERROR',async()=>{
-    const file=generate('invalid-contract',marker),html=fs.readFileSync(file,'utf8');assert.equal(html.split('"runtimeContractId":4').length,2);
-    fs.writeFileSync(file,html.replace('"runtimeContractId":4','"runtimeContractId":0'));
+    const file=generate('invalid-contract',marker),html=fs.readFileSync(file,'utf8');const recorded='"runtimeContractId":'+contract.runtimeContractId;assert.equal(html.split(recorded).length,2);
+    fs.writeFileSync(file,html.replace(recorded,'"runtimeContractId":0'));
     return withPage(b,async p=>{await p.waitForFunction(()=>document.querySelector('#playerRoot').dataset.state==='ERROR');
       assert.equal(await p.locator('#playerActivation').isVisible(),false);await p.locator('#playerOutput details summary').click();
       assert.match(await p.locator('#playerOutput').innerText(),/X602/);return{rejected:true,detailsVisible:true,errorCode:(await p.locator('#playerOutput details pre').innerText()).match(/^[A-Z]\d+/)?.[0]};},file);
@@ -225,13 +275,13 @@ async function audioProbe(c){await c.addInitScript(()=>{window.__tones=[];const 
       pendingEditors:[{kind:'script',ownerKey:'script:incoming-second',source:'「読込み途中',mode:'code',pending:{kind:'code',value:'「読込み途中'},draftTree:null}],
       views:[{kind:'script',ownerKey:'script:incoming-second',codeSelection:{start:1,end:3,direction:'forward'},scrollState:{codeTop:0,codeLeft:0}}]};
     const valid=api.serializeProject(incoming,api.makeDefaultAssetStore(),editor),variants=[];
-    const stored=async p=>p.evaluate(async()=>{
-      const req=indexedDB.open('akari-workspace-f5',1),db=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
+    const stored=async p=>p.evaluate(async autosaveDatabase=>{
+      const req=indexedDB.open(autosaveDatabase,1),db=await new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});
       try{const get=db.transaction('workspace','readonly').objectStore('workspace').get('latest'),rec=await new Promise((resolve,reject)=>{get.onsuccess=()=>resolve(get.result);get.onerror=()=>reject(get.error);});
         if(!rec)return null;const decoded=await Akari.decodeWorkspaceHistory(rec.workspace);
         return {cursor:decoded.cursor,frames:decoded.frames.map(f=>({project:JSON.stringify(f.project),pending:f.editorState.pendingEditors,callableDraft:f.editorState.callableDraft}))};
       }finally{db.close();}
-    });
+    },autosaveDatabase);
     for(const kind of ['invalid-file','wrong-target','wrong-event','restore-failure'])await withPage(b,async p=>{
       await install(p);await edit(p,'「残したい作品」と言う。');await edit(p,'「やり直せる作品」と言う。');await p.locator('#undoBtn').click();
       await p.waitForFunction(()=>document.querySelector('#autosaveState').textContent==='このパソコンに のこしたよ');

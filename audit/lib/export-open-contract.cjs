@@ -5,6 +5,8 @@ const ids=[
   "EXPORT-CONTROLS-DEFAULT-OPERATIONS",
   "EXPORT-CONTROLS-FINISHED",
   "EXPORT-CONTROLS-SCALE",
+  "EXPORT-PACKED-ASSETS-CHECKED",
+  "EXPORT-CONTROLS-TOUCH-SIZE",
   "EXPORT-ARTWORK-SIZE-RELOAD-INPUT",
   "EXPORT-ARTWORK-QUESTION-ANSWER-STOP",
   "EXPORT-ARTWORK-AUDIO-PERMITTED",
@@ -36,9 +38,11 @@ const ids=[
 ];
 const fixed={
   'EXPORT-CHOICE-CANCEL-FOCUS':{downloads:0,staticExamples:0},
-  'EXPORT-CONTROLS-DEFAULT-OPERATIONS':{title:'検証用の作品',restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:true,singlePressWithinHalfSecondRuns:true},
+  'EXPORT-CONTROLS-DEFAULT-OPERATIONS':{title:'検証用の作品',restart:true,pauseResumeStop:true,oneSlot:true,doublePressRuns:true,singlePressWithinHalfSecondRuns:true,pauseSlotGuard:true},
   'EXPORT-CONTROLS-FINISHED':{bodiesEnded:'playerStop:■ 止める',bodiesState:'FINISHED',stopAll:'playerStop:■ 止める',stopAllState:'FINISHED',sentenceAfterStopAllSaid:false,afterStop:['playerStart:▶ 動かす','playerStart:▶ 動かす']},
-  'EXPORT-CONTROLS-SCALE':{small1366:true,small1920:true,large1920:true,large1366Fits:true},
+  'EXPORT-CONTROLS-SCALE':{small1366:true,small1920:true,large1920:true,large1366Fits:true,tall650Fits:true,small650Fits:true},
+  'EXPORT-PACKED-ASSETS-CHECKED':{made:'accepted',mismatched:'F508',restored:'accepted',refused:{text:'X602',sha256:'X602',byteLength:'X602',program:'X602'}},
+  'EXPORT-CONTROLS-TOUCH-SIZE':{allAtLeast40:true},
   'EXPORT-ARTWORK-SIZE-RELOAD-INPUT':{noControls:true,nativeButtonAndKey:true},
   'EXPORT-ARTWORK-QUESTION-ANSWER-STOP':{answer:true,stop:true},
   'EXPORT-ARTWORK-AUDIO-PERMITTED':{automatic:true},
@@ -66,6 +70,7 @@ const fixed={
 };
 const extraKeys={
   'EXPORT-CONTROLS-SCALE':['observed'],
+  'EXPORT-CONTROLS-TOUCH-SIZE':['sizes'],
   'EXPORT-CHOICE-NARROW-ONE-DOWNLOAD':['count','box'],
   'EXPORT-ARTWORK-SIZE-RELOAD-INPUT':['box'],
   'EXPORT-ARTWORK-AUDIO-PERMITTED':['starts'],
@@ -95,6 +100,7 @@ function evidenceFor(id,e){
   if(id==='EXPORT-ARTWORK-AUDIO-PERMITTED')oneTone(e.starts);
   if(id==='EXPORT-ARTWORK-IMAGE-PEN-STOP'){assert.ok(e.images.length>0);for(const image of e.images){assert.deepEqual(Object.keys(image).sort(),['complete','width']);assert.equal(image.complete,true);assert.ok(Number.isFinite(image.width)&&image.width>0);}}
   if(id==='EXPORT-ARTWORK-CACHED-RETURN')assert.equal(typeof e.nativeCacheRestored,'boolean');
+  if(id==='EXPORT-CONTROLS-TOUCH-SIZE'){assert.deepEqual(Object.keys(e.sizes).sort(),['pause','questionStop','questionSubmit','start','stop']);for(const v of Object.values(e.sizes))assert.ok(Number.isFinite(v)&&v>=40);}
   if('before'in e){
     assert.deepEqual(e.after,e.before,id+' current work retained');
     assert.equal(typeof e.before.project,'string');assert.ok(Array.isArray(JSON.parse(e.before.project).scripts));
@@ -152,6 +158,8 @@ function checkEvidenceNegatives(report,inputs){
   change('EXPORT-ARTWORK-INVALID-AUDIO',e=>e.errorCode='WAITING');
   change('EXPORT-ARTWORK-AUDIO-DEVICE-ERROR',e=>e.errorCode='WAITING');
   change('EXPORT-AUDIO-WAIT-MOUSE',e=>e.startsBefore=1);
+  change('EXPORT-CONTROLS-TOUCH-SIZE',e=>e.sizes.pause=33);
+  change('EXPORT-PACKED-ASSETS-CHECKED',e=>e.mismatched='accepted');
   const fabricated=structuredClone(report);fabricated.status='PASS';for(const r of fabricated.results){r.status='PASS';r.evidence={width:-1,starts:99,downloads:7};}
   assert.throws(()=>verifyExportOpen(fabricated,inputs),'fabricated PASS must be rejected');
   for(const [mutate,reason] of [[r=>r.results.pop(),'all cases once, in the declared order'],[r=>r.results.push(r.results[0]),'all cases once, in the declared order'],[r=>r.snapshot.productSha256='invalid','current candidate snapshot required']]){
