@@ -5168,9 +5168,11 @@
         return;
       }
       // A work with no sentence in any body (notes do not count) does not run: the status says how to put one in.
+      // A continuing rule (「…あいだ、…動き続ける。」) is a sentence too, even alone in its body.
       const hasSentence = nodes => (nodes || []).some(node => node.kind !== 'CommentLine');
       if (!(compiled.items || []).some(item => !item.definitionKind &&
-        (hasSentence(item.ast?.body) || (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
+        (hasSentence(item.ast?.body) || hasSentence(item.ast?.rules) ||
+          (item.ast?.units || []).some(unit => hasSentence(unit.body))))) {
         setStatus('ブロックが まだ ないよ。「＋ ここに入れる」を おして、ブロックを 入れてね');
         return;
       }
