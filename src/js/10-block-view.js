@@ -985,6 +985,7 @@
         n.classList.toggle('blockui-selected', n.dataset.blockId === id);
       showImpliedDestination();
       placeNodeTools();
+      if (!id) for (const n of workspace.querySelectorAll('.blockui-focused')) n.classList.remove('blockui-focused');
       for (const menu of workspace.querySelectorAll('.blockui-actions[open]'))
         if (menu.closest('.blockui-node')?.dataset.blockId !== id) menu.open = false;
       for(const slot of workspace.querySelectorAll('.blockui-slot-active'))slot.classList.remove('blockui-slot-active');
@@ -994,6 +995,14 @@
         flat=selectedNode&&active?.matches?.('input,textarea')&&selectedNode.contains(active)?active.closest('.blockui-flat-value'):null,
         slot=selectedNode?.parentElement.closest('.blockui-input-slot')||(flat?.closest('.blockui-node')===selectedNode?flat:null);
       if(slot){slot.classList.add('blockui-slot-active');doc.defaultView.requestAnimationFrame(()=>placeSlotHead(slot));}
+    }
+    // With nothing selected the next block from the list goes to the end of the body (E-08); the focus goes to the
+    // workspace, so Delete has no block to take.
+    function letGoOfSelection() {
+      if (!selected) return false;
+      selection('');
+      if (doc.activeElement?.closest?.('.blockui-world')) workspace.focus({ preventScroll: true });
+      return true;
     }
     // The floating tools (E-12) go beside the sentence they belong to, right of its whole block (an enclosure with what
     // is in it), where they cover no other block: first the selected block's tools, under them the selected field's
@@ -1143,9 +1152,8 @@
     }
     // The place a block from the list would go (right after the selected sentence) is shown on its line (E-08).
     function showImpliedDestination() {
-      const info = !destination && !moving && selectedStatement(),
-        implied = info && { parentId: info.parentId, body: info.body, index: info.index + 1 };
-      for (const n of workspace.querySelectorAll('.blockui-insertion'))
+      const implied = !destination && !moving && selectedStatement() && defaultDestination();
+      for (const n of workspace.querySelectorAll('.blockui-insertion,.blockui-hole-target'))
         n.classList.toggle('blockui-implied-destination', !!implied && sameLocation(implied, locationFromElement(n)));
     }
     // A place chosen with the keyboard (Enter on 「＋ ここに入れる」) opens 「ブロックを さがす」 to type in (E-16).
@@ -1175,9 +1183,11 @@
       }
     }
     // A block put in from the list with no place chosen goes right after the selected sentence, or at the end of the
-    // body when nothing is selected (E-08).
+    // body when nothing is selected (E-08). A selected enclosure that holds only its hole (a loop just put in) takes the
+    // block into that hole.
     function defaultDestination() {
-      const info = selectedStatement();
+      const info = selectedStatement(), first = info && schemaOf(info.node)?.bodies?.[0]?.key, inner = first && info.node.bodies?.[first];
+      if (inner?.length === 1 && inner[0].schemaId === 'Hole:statement') return { parentId: info.node.id, body: first, index: 0 };
       if (info) return { parentId: info.parentId, body: info.body, index: info.index + 1 };
       return tree ? { parentId: tree.id, body: 'body', index: tree.bodies.body.length } : null;
     }
@@ -3819,16 +3829,23 @@
       )
         return;
       startPan(event.pointerId, event.clientX, event.clientY);
+      pan.blank = true;
       event.preventDefault();
     });
     listen(workspace, 'pointermove', (event) => {
       if (!pan || pan.id !== event.pointerId) return;
+      if (Math.hypot(event.clientX - pan.x, event.clientY - pan.y) > slopOf(event.pointerType)) pan.moved = true;
       workspace.scrollLeft = pan.left + pan.x - event.clientX;
       workspace.scrollTop = pan.top + pan.y - event.clientY;
       event.preventDefault();
     });
+    // A press on the empty workspace that does not move lets go of the selected block, so the next block from the list
+    // goes to the end of the body (E-08).
     listen(workspace, 'pointerup', (event) => {
-      if (pan?.id === event.pointerId) endPan();
+      if (pan?.id !== event.pointerId) return;
+      const press = pan.blank && !pan.moved;
+      endPan();
+      if (press) letGoOfSelection();
     });
     listen(workspace, 'pointercancel', endPan);
     // A block that hands its finger over to the workspace loses the capture too; only the workspace's own loss ends the move.
@@ -4445,6 +4462,8 @@
           return;
         }
         if (pending) cancelField();
+        else if (!destination && !replacement && !moving && !drag && !session()?.blockDraft && letGoOfSelection())
+          announce('えらぶのを やめたよ。つぎに 入れる ブロックは、本文の さいごに 入るよ');
         else {
           destination = null; replacement = null; moving = null; cancelDrag();
           notifyPending(); renderReplacement(); renderPalette(); updateControls(); showImpliedDestination();
