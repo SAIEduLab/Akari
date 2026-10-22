@@ -1188,7 +1188,7 @@
       if (showsSlotHead) {
         const owner = ownerOf(slot), sr = extent(slot), hr = slotHead.getBoundingClientRect(), w = hr.width, h = hr.height;
         if (inline) {
-          const line = editing.querySelector(':scope > input, :scope > textarea').getBoundingClientRect();
+          const line = (editing.querySelector(':scope > input, :scope > textarea') || editing).getBoundingClientRect();
           moveTo(slotHead, sr.right + 8, line.top + Math.max(0, (Math.min(line.height, 60 * zoom) - h) / 2));
           // A selected value's tools go after them on that line, or right above the value.
           surface.push(slotHead);
@@ -4693,7 +4693,8 @@
         node = target.closest('.blockui-node'),
         field = target.closest('.blockui-field');
       for (const n of root.querySelectorAll('.blockui-editing-field')) n.classList.remove('blockui-editing-field');
-      if (field && field.dataset.fieldType !== 'number' && target.matches('input,textarea')) {
+      // Only a field's own text box has an editing surface; the boxes of a group (だれが, いつ動く？) stay in their group.
+      if (field && field.dataset.fieldType !== 'number' && target.matches('input,textarea') && target.parentElement === field) {
         // The field keeps the box it has now; the editing surface lies over the blocks (E-12).
         const idle = field.getBoundingClientRect();
         field.style.setProperty('--blockui-idle-width', idle.width / zoom + 'px');
