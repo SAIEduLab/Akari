@@ -1525,7 +1525,7 @@
     '四捨五入':'ししゃごにゅう','自然対数':'しぜんたいすう','常用対数':'じょうようたいすう','何文字目':'なんもじめ',
     '切り上げ':'きりあげ','切り捨て':'きりすて','繰り返す':'くりかえす','繰り返し':'くりかえし','追いかける':'おいかける',
     '分かれ道':'わかれみち','見えなく':'みえなく','出てくる':'でてくる','右回り':'みぎまわり','左回り':'ひだりまわり',
-    '非表示':'ひひょうじ','周波数':'しゅうはすう','文字数':'もじすう','絶対値':'ぜったいち','平方根':'へいほうこん',
+    '非表示':'ひひょうじ','周波数':'しゅうはすう','音楽':'おんがく','文字数':'もじすう','絶対値':'ぜったいち','平方根':'へいほうこん',
     '逆正弦':'ぎゃくせいげん','逆余弦':'ぎゃくよげん','逆正接':'ぎゃくせいせつ','何番目':'なんばんめ','持ち物':'もちもの',
     '見た目':'みため','大きさ':'おおきさ','小さく':'ちいさく','小さい':'ちいさい','大きく':'おおきく','新しい':'あたらしい',
     '近づく':'ちかづく','落ちる':'おちる','消える':'きえる','増やす':'ふやす','減らす':'へらす','見せる':'みせる',
@@ -1579,8 +1579,12 @@
     if (direction.length === 1 && /行[くき]|い[くき]|進[むみ]|すす[むみ]|動[くきか]|うご[くきか]|移動/.test(q)
       && !/回|まわ|向[くき]|む[くき]/.test(q))
       return {schemaId:'MotionCommand:MOVE_BY', direction:direction[0][0]};
-    if (/小さ|ちいさ|縮小|縮め/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:50};
-    if (/大きく|おおきく|拡大/.test(q)) return {schemaId:'LooksCommand:SET_SCALE', scale:150};
+    // 音を小さく／大きく is the sound's 大きさ. A comparison (より小さい) and the pen's 太さ are found by their own words.
+    const smaller = /小さ|ちいさ|縮小|縮め/.test(q), larger = /大きく|おおきく|拡大/.test(q),
+      other = /より|くらべ|比べ|ぺん|太さ|ふとさ/.test(q);
+    if ((smaller || larger) && /音|おと/.test(q)) return {schemaId:'SoundCommand:SET_VOLUME', scale:smaller ? 50 : 100};
+    if (smaller && !other) return {schemaId:'LooksCommand:SET_SCALE', scale:50};
+    if (larger && !other) return {schemaId:'LooksCommand:SET_SCALE', scale:150};
     if (/(?:番目|ばんめ)/.test(q) && /入[れる]|いれ|挿入|そうにゅう/.test(q) && !/置き換|おきか|替え/.test(q)) {
       const match = q.match(/(\d+)(?:番目|ばんめ)/), index = match ? Number(match[1]) : null;
       return {schemaId:'ListInsert', ...(Number.isSafeInteger(index) && index >= 1 ? {index} : {})};
@@ -1733,10 +1737,12 @@
           candidateKey:hint.id, candidateReason:hint.reason}); boundSchemas.add(schema.id);
       } catch (_) { /* An unavailable incomplete hint remains visible through the generic schema. */ }
     }
+    // The block of the intent comes first, set as asked; the blocks the words name stay after it (E-13: 小さい finds より小さい too).
     for (const schema of schemas) {
       if (boundSchemas.has(schema.id)) continue;
-      if (!(intent ? schema.id === intent.schemaId : matchesSearch(blockPaletteSearchText(schema), query))) continue;
-      const configured = intent && (intent.direction || intent.scale !== undefined || intent.index !== undefined);
+      const intended = intent && schema.id === intent.schemaId;
+      if (!intended && !matchesSearch(blockPaletteSearchText(schema), query)) continue;
+      const configured = intended && (intent.direction || intent.scale !== undefined || intent.index !== undefined);
       out.push(configured ? {...schema, candidateNode:configureSearchNode(createBlock(schema.id, {
         draft:schema.inputs.some(s=>s.type==='target'), allowHoles:true}), intent)} : schema);
     }
@@ -1767,7 +1773,7 @@
         ...((BLOCK_SEARCH_SYNONYMS[schema.id] || BLOCK_SEARCH_SYNONYMS[schema.kind]) || [])].filter(Boolean).map(searchReading);
       return Math.min(2, ...words.flatMap(word => own.map(text => found(text, word))));
     };
-    const rank = schema => { const q = quality(schema); return (q === 2 ? 60 : 0) + (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 30) + (q ? 10 : 0) + wordStart(schema); };
+    const rank = schema => { if (intent && schema.id === intent.schemaId) return -1; const q = quality(schema); return (q === 2 ? 60 : 0) + (BASIC_BLOCK_SCHEMA_IDS.has(schema.id) ? 0 : 30) + (q ? 10 : 0) + wordStart(schema); };
     out.splice(0, out.length, ...out.map((schema, i) => ({ schema, i, r: rank(schema) })).sort((a, b) => a.r - b.r || a.i - b.i).map(x => x.schema));
     // A key named in the search (スペース, エンター …): the blocks that wait for it, repeat until it is pressed and read it
     // come first, with that key (F2-11).
@@ -1778,7 +1784,7 @@
     }
     // The continuous rule is no statement: search finds it too, and the palette puts it in the body's rules.
     const rule = BLOCK_SCHEMA_BY_ID.get('ContinuousRule');
-    if (rule && !intent && matchesSearch(blockPaletteSearchText(rule), query)) out.splice(holdFirst(rule.id, query) ? 0 : out.length, 0, rule);
+    if (rule && matchesSearch(blockPaletteSearchText(rule), query)) out.splice(holdFirst(rule.id, query) ? 0 : out.length, 0, rule);
     return out;
   }
 
@@ -1790,8 +1796,8 @@
     'MotionCommand:MOVE': ['進む', 'すすむ', '前へ', '後ろへ', 'まっすぐ', '歩く', 'あるく', '動く', 'うごく', '移動'],
     'MotionCommand:GOTO': ['行く', 'いく', 'ばしょ', '場所へ行く', '決めたばしょ', '座標', '移動', '左下のはし', 'もどる', '戻る'],
     'MotionCommand:GOTO_PART': ['ところへ行く', '行く', 'いく', 'マウス', '追いかける', 'ついていく', '近づく', 'ばしょ', '移動'],
-    'MotionCommand:TURN_RIGHT': ['右回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
-    'MotionCommand:TURN_LEFT': ['左回り', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
+    'MotionCommand:TURN_RIGHT': ['右回り', '右へ回る', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
+    'MotionCommand:TURN_LEFT': ['左回り', '左へ回る', '回る', 'まわる', '回す', 'まわす', '向きを変える', '回転'],
     'MotionCommand:BOUNCE': ['はね返る', 'はねかえる', 'はねる', 'かべ', 'ぶつかる'],
     CompareExpression: ['くらべる', '比べる'],
     // 以上・以下 read as their code (F2-03); the older face words and the readings still find them.
@@ -1827,9 +1833,12 @@
     VariableRead: ['変数', '値', '読む', 'スコア'],
     Broadcast: ['合図', 'メッセージ', '知らせる', 'しらせる', 'つたえる'],
     BroadcastAndWait: ['合図', 'メッセージ', '知らせる', 'しらせる', 'つたえる'],
-    // ドレミ and its names (ド・レ・ミ・ファ・ソ・ラ・シ) lead to the Hz tone, as the work check guides them.
-    'SoundCommand:TONE_WAIT': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
-    'SoundCommand:TONE': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ'],
+    // ドレミ and its names (ド・レ・ミ・ファ・ソ・ラ・シ) lead to the Hz tone, as the work check guides them. 鳴る and 音楽
+    // lead to every block that plays a sound.
+    'SoundCommand:TONE_WAIT': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ', '鳴る', '音楽'],
+    'SoundCommand:TONE': ['ドレミ', 'ド', 'レ', 'ミ', 'ファ', 'ソ', 'ラ', 'シ', 'メロディー', 'ピアノ', '音の高さ', '鳴る', '音楽'],
+    'SoundCommand:SAMPLE_WAIT': ['鳴る', '音楽'],
+    'SoundCommand:SAMPLE': ['鳴る', '音楽'],
     // Pressing with the mouse or a finger (クリック, タッチ) and holding a key.
     'SensorRead:マウスが押されている': ['クリック', 'タッチ', 'おす', '押す'],
     'EventCount:click': ['クリック', 'タッチ', 'おす', '押す'],

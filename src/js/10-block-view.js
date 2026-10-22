@@ -331,6 +331,7 @@
       // An input's mistake is shown right under the field, in the floating 決める and やめる (E-12).
       fieldError = E('p', 'blockui-field-error', '', { id: viewId + '-field-error' });
     controls.append(fieldError, destinationLabel, commitButton, cancelButton);
+    commitButton.style.pointerEvents = cancelButton.style.pointerEvents = 'auto';
     root.append(controls, messageBox);
     const layout = E('div', 'blockui-layout'),
       palette = E('aside', 'blockui-palette', null, {
@@ -348,14 +349,15 @@
         'aria-label': '作業台の見え方',
       });
     const zoomLabel = button('100%', 'zoom-reset', () => setZoom(1), {
-      'aria-label': '大きさを100%に もどす',
+      'aria-label': '作業台を 100%に もどす',
     });
-    // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back.
+    // − and ＋ step through 50・75・100・125・150・200% (E-10); the label puts 100% back. They are named by what they zoom,
+    // apart from the stage's 「大きく見る」 and as its own 「作品画面を 大きく」 (Y2-08).
     const minus = button('−', 'zoom-out', () => setZoom(blockZoomStep(zoom, -1)), {
-        'aria-label': '小さく見る',
+        'aria-label': '作業台を 小さく',
       }),
       plus = button('＋', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
-        'aria-label': '大きく見る',
+        'aria-label': '作業台を 大きく',
       });
     // The workspace goes back to its top-left corner: 「さいしょへ」 (F-22).
     const home = button('さいしょへ', 'workspace-home', () => {
@@ -397,6 +399,7 @@
           '作業台を広く',
           'workspace-expand',
           () => {
+            if (isLocked()) return;
             const expanded = options.onExpand();
             wide.textContent = expanded
               ? '画面も見る'
@@ -875,7 +878,7 @@
       return session()?.blockDraft ? '入れるのを やめる' : pending ? '入力を やめる' : replacement || moving ? 'もっていくのを やめる' : '入れるのを やめる';
     }
     function cancel() {
-      const stopped = cancelLabel().replace(/やめる$/, 'やめたよ');
+      const stopped = cancelLabel().replace(/やめる$/, 'やめたよ'), hadKeys = root.contains(doc.activeElement);
       const field = pending;
       pending = null;
       destination = null;
@@ -903,6 +906,8 @@
       }
       announce(stopped);
       render({ force: true });
+      // The pressed やめる (or the field) is no longer shown: the keys stay in the block view, not on the page (E2-01).
+      if (hadKeys && (!doc.activeElement || doc.activeElement === doc.body)) keepKeys();
       return { ok: true };
     }
     function destinationDescription() {
@@ -973,6 +978,9 @@
       const view = doc.documentElement, room = workspace.getBoundingClientRect(),
         w = controls.offsetWidth || 300, h = controls.offsetHeight || 40,
         field = pending?.input?.isConnected && !pending.input.closest('dialog') ? pending.input.getBoundingClientRect() : null;
+      // Lying over the blocks under a field, only 決める and やめる take a press: a press on the words (a mistake shown)
+      // reaches the field under them, so another field starts its input and the old number goes back (LANGUAGE.md 242).
+      controls.style.pointerEvents = field?.width ? 'none' : '';
       let spot;
       if (field?.width) {
         const under = field.bottom + 4 + h <= view.clientHeight - 4 ? field.bottom + 4 : Math.max(4, field.top - h - 4);
@@ -1253,7 +1261,9 @@
       if(options.tutorialActive?.())options.onDestinationSelected?.({...location});
       else {
         if (keyboard && paletteControls.hidden) paletteToggle.click();
+        // The last word is kept, selected, so a new word typed replaces it (E-01, E-16).
         search.focus({ preventScroll: true });
+        search.select();
       }
     }
     // A block put in from the list with no place chosen goes right after the selected sentence, or at the end of the
@@ -1693,13 +1703,15 @@
     // another block of that body asks nothing again (PERF-01). A block whose answer depends on its place is checked there,
     // and pressing a block always checks the place it goes (paletteAdd).
     const PLACE_DEPENDENT_KINDS = new Set(['WaitBroadcastGroup', 'LocalVariableDeclaration', 'LocalListDeclaration']);
+    // A body of 答えを もとめる ends with its 「〜を答えとして返す」, so its end is the place just before it (PERF-R2-01).
     function listedPlace(location) {
       const siblings = !destination && location?.body ? index.get(location.parentId)?.node?.bodies?.[location.body] : null;
-      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement') ? { ...location, index: siblings.length } : location;
+      return siblings && !siblings.some(n => n.schemaId === 'Hole:statement')
+        ? { ...location, index: siblings.length - (siblings.at(-1)?.schemaId === 'ReturnStatement' ? 1 : 0) } : location;
     }
-    function paletteAvailability(schema, location) {
+    function paletteAvailability(schema, location, exact = false) {
       if (schema.candidateReason) return {enabled:false, reason:schema.candidateReason, node:schema.candidateNode};
-      if (location?.body && !PLACE_DEPENDENT_KINDS.has(schema.kind)) location = listedPlace(location);
+      if (!exact && location?.body && !PLACE_DEPENDENT_KINDS.has(schema.kind)) location = listedPlace(location);
       if (schema.category === 'rule') return ruleAvailability();
       // A value may be picked up before its destination is chosen. The actual
       // socket is checked by the existing common validator on preview and drop.
@@ -1726,9 +1738,14 @@
         }
       return out;
     }
+    // A block of the list or a なかま that has the keys keeps them when the list is made again (Escape, もとにもどす): the
+    // same one, else the first block or the search field, never the page (Y2-06).
+    const PALETTE_KEYS = '[data-blockui-action="palette-add"],[data-blockui-action="palette-category"]',
+      paletteKey = n => ['data-blockui-action', 'data-blockui-category', 'data-blockui-schema', 'data-search-binding'].map(a => n.getAttribute(a)).join('|');
     function renderPalette() {
       if (options.readOnly) return;
       if (destroyed) return;
+      const kept = doc.activeElement?.matches?.(PALETTE_KEYS) && palette.contains(doc.activeElement) ? paletteKey(doc.activeElement) : null;
       faceSymbols = null;
       powerHelp.hidden = document.body.dataset.uiLevel !== 'advanced';
       modeSelect.value = paletteMode;
@@ -1846,9 +1863,12 @@
           '',
           'palette-add',
           () => {
-            if (!a.enabled) {
+            // The list was checked at the end of the body (PERF-01): a press checks the place the block really goes.
+            const real = a.enabled ? a : paletteAvailability(schema, destination || defaultDestination(), true);
+            if (!real.enabled) {
+              if (real.reason) reason.textContent = real.reason;
               reason.hidden = false;
-              announce(a.reason, true);
+              announce(real.reason || a.reason, true);
               return;
             }
             paletteAdd(schema);
@@ -1901,6 +1921,9 @@
         );
       if(!options.tutorialActive?.()&&category&&!query&&!candidates.length)paletteList.append(button('すべての なかまで さがす','search-all',()=>{category='';categoryExplicit=false;renderPalette();search.focus();}));
       paletteList.scrollTop = scroll;
+      if (kept && !isLocked() && (!doc.activeElement || doc.activeElement === doc.body))
+        ([...palette.querySelectorAll(PALETTE_KEYS)].find(n => paletteKey(n) === kept) ||
+          palette.querySelector('[data-blockui-action="palette-add"]') || search).focus({ preventScroll: true });
       scheduleGeometry();
       options.onPresentation?.();
     }
@@ -2601,7 +2624,16 @@
       const result = operate({ type: 'remove', id: node.id });
       if (!result.ok && index.get(info?.parentId)?.node.schemaId !== 'Script')
         announce(errorText(result.error || result.reason) + '。「いったん 使わない」で 入れかえるか、まとまりごと けしてね', true);
+      if (result.ok) keepKeys();
       return result;
+    }
+    // After a block is deleted (けす, a drop on the list, Delete) or a やめる is pressed, the keys stay in the block view: on
+    // the block now selected, else on the workspace. On the page, the next Delete would delete the whole part (E2-01).
+    function keepKeys() {
+      // While the work runs, the keys belong to the work.
+      if (isLocked()) return;
+      const id = session()?.blockSelection;
+      ((id && locationElement({ id })) || workspace).focus({ preventScroll: true });
     }
     function statementBody(parent, slot) {
       const enabled = !slot.when || parent.fields[slot.when];
@@ -3492,6 +3524,9 @@
           (s?.notices || []).map(d => d.line + ':' + d.code + ':' + d.message).join(','),
         ].join('|');
       root.dataset.locked = String(!!isLocked());
+      // 作業台を広く cannot be used while the work runs (はじめて shows the blocks then): its place stays, as the run bar's
+      // buttons do (final call 21).
+      if (wide) wide.style.visibility = isLocked() ? 'hidden' : '';
       if (drag && nextSignature !== signature) cancelDrag();
       if (pending) {
         updateControls();
@@ -3644,6 +3679,8 @@
         );
         n?.focus({ preventScroll: true });
       }
+      // A control not drawn again (its block made anew by もとにもどす) leaves the keys in the block view (Y2-06).
+      if ((focusKey || focusNode) && (!doc.activeElement || doc.activeElement === doc.body)) keepKeys();
     }
     function resolveLocation(value) {
       if (!value || (value.key && value.key !== session()?.ownerKey)) return {};
@@ -3922,9 +3959,11 @@
         if (!n.classList.contains('blockui-insertion-end')) right = Math.max(right, (r.right - box.left) / zoom);
         bottom = Math.max(bottom, (r.bottom - box.top) / zoom);
       }
-      const across = (workspace.clientWidth - 24) / (right + 24),
+      // A body that fits at 100% stays at 100% (LANGUAGE.md 250); the margin is kept only for one that has to shrink.
+      const fits = right <= workspace.clientWidth && bottom <= workspace.clientHeight,
+        across = (workspace.clientWidth - 24) / (right + 24),
         down = (workspace.clientHeight - 24) / (bottom + 24);
-      setZoom(Math.min(1, Math.max(0.75, Math.min(across, down))));
+      setZoom(fits ? 1 : Math.min(1, Math.max(0.75, Math.min(across, down))));
       workspace.scrollTo({ top: 0, left: 0 });
       rememberViewState();
     }
@@ -4141,6 +4180,7 @@
       return state.id ? (state.run ? runIds(state.id) : [state.id]) : [];
     }
     function beginGhost(state) {
+      hideDropNote();
       const source = state.schemaId
         ? state.element.querySelector('.blockui-preview')
         : state.element.closest('.blockui-node');
@@ -4242,10 +4282,15 @@
       dragReason.textContent = text;
     }
     // A message near where the block was let go, seen where the child is looking (E-04); the live region reads it too.
-    function showDropNote(text, x, y) {
-      announce(text);
+    // The next carry takes it away, so it never stays over the next drop (E2-10).
+    function hideDropNote() {
       clearTimeout(dropNoteTimer);
       dropNote?.remove();
+      dropNote = null;
+    }
+    function showDropNote(text, x, y) {
+      announce(text);
+      hideDropNote();
       dropNote = E('div', 'blockui-drop-note', text, { 'aria-hidden': 'true' });
       doc.body.append(dropNote);
       const w = dropNote.offsetWidth, h = dropNote.offsetHeight, view = doc.documentElement;
@@ -4597,7 +4642,7 @@
         const ids = carriedIds(state);
         const result = ids.length > 1 ? operate({ type: 'batch', operations: ids.map(id => ({ type: 'remove', id })) })
           : removeBlock(index.get(state.id)?.node || { id: state.id });
-        if (result.ok) showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY);
+        if (result.ok) { keepKeys(); showDropNote('けしたよ。「もとにもどす」で もどせるよ', event.clientX, event.clientY); }
         return;
       }
       if (!state.valid || !state.location) {
