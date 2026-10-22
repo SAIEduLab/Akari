@@ -1946,9 +1946,13 @@
     if (/(?:よこ|たて|横|縦)[^、]+、(?:よこ|たて|横|縦)[^、]+?の(?:ばしょ|場所|位置)(?:へ|に)/.test(rmask) && /(?:行く|いく|動く|うごく|滑る|すべる)$/.test(rmask))
       return { message: '決めた ばしょへ 行くときは、画面の 左下の はしから 数えて「' + MOVE_EXAMPLE_FIXED + '」のように 書きます。ばしょは 部品の まん中で 数えます' };
     if (ichi()) return ichi();
-    // 1秒で前へ10歩すべる: the time is written 〇秒かけて.
-    if (/(?:滑る|すべる)$/.test(mask))
-      return { message: '時間を かけて 動くときは「1秒かけて、前へ10歩進む」のように「〇秒かけて、」を 書きます', source: code.replace(/(?:滑る|すべる)$/, '動く'), label: '「' + /(?:滑る|すべる)$/.exec(mask)[0] + '」を 書きかえる' };
+    // 1秒で前へ10歩すべる: the time is written 〇秒かけて. すべる with no time is a move that takes time, so the rewrite
+    // takes 1秒, after the subject, as the message says (R2-B-11).
+    if (/(?:滑る|すべる)$/.test(mask)) {
+      const moved = code.replace(/(?:滑る|すべる)$/, '動く'), subject = /^[^、。\u0001]+?は、?/.exec(mask)?.[0] || '';
+      const source = /秒(?:間)?(?:かけて|で)/.test(mask) ? moved : moved.slice(0, subject.length) + '1秒かけて、' + moved.slice(subject.length);
+      return { message: '時間を かけて 動くときは「1秒かけて、前へ10歩進む」のように「〇秒かけて、」を 書きます', source, label: '「' + /(?:滑る|すべる)$/.exec(mask)[0] + '」を 書きかえる' };
+    }
     return null;
   }
   // 1秒から3秒のどれか (the unit on both ends, B-12) reads as 1から3のどれか秒. Every character keeps its place in the
