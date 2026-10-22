@@ -4,6 +4,7 @@
 // check the hand-written sentence and runtime result LANGUAGE.md gives them.
 const {pressStop}=require('../../lib/stop-press.cjs');
 const {chooseView}=require('./view-toggle.cjs');
+const {cancelInput}=require('./cancel-input.cjs');
 const {setupRegressionPage, completeRegressionHoles, openPaletteTools, openBodyForTest} = require('./regression-setup.cjs');
 const U=require('./ui-routes.cjs');
 const L=require('./audit-lib.cjs'),assert=require('assert/strict'),{pathToFileURL}=require('url');
@@ -44,7 +45,7 @@ const editActor=async(id,name,schemaId)=>{const before=await session(),current=(
  const input=root().locator('[data-blockui-structured-role="actorRef.name"][data-block-id="'+id+'"]');await (await reveal(input)).fill(name);await input.press('Enter');await settle();
  // Leaving the field also commits; it reports the real refusal when Enter only stages the value.
  if((await session()).pendingEdit&&await input.isVisible()){await input.press('Tab');await settle();}
- if(SUBJECTLESS.has(schemaId)){if((await session()).pendingEdit)await (await reveal(p.locator('#editorCancel'))).click();const after=await session();assert.equal(after.pendingEdit,null);assert.equal(after.sourceText,before.sourceText,'a sentence without a subject keeps its text');assert.deepEqual((await locate(schemaId))[0].fields.actorRef||{kind:'self'},current,'a sentence without a subject keeps its block subject');return{key:'actorRef',type:'actor-ref',before:current,subjectInSentence:false,unchanged:true};}
+ if(SUBJECTLESS.has(schemaId)){if((await session()).pendingEdit)await cancelInput(p,draft?'callable':'editor');const after=await session();assert.equal(after.pendingEdit,null);assert.equal(after.sourceText,before.sourceText,'a sentence without a subject keeps its text');assert.deepEqual((await locate(schemaId))[0].fields.actorRef||{kind:'self'},current,'a sentence without a subject keeps its block subject');return{key:'actorRef',type:'actor-ref',before:current,subjectInSentence:false,unchanged:true};}
  const value={kind:'named',name},after=await session();assert.equal(after.pendingEdit,null,schemaId+' subject '+name+' refused: '+after.pendingEdit?.reason+' '+JSON.stringify(after.pendingEdit?.value));assert.deepEqual((await locate(schemaId))[0].fields.actorRef,value,'block subject');
  if(categoryOf(schemaId)!=='expression')assert.ok(after.sourceText.split('\n').some(line=>line.trimStart().startsWith(name+'は')||line.includes('、'+name+'は')),'sentence names its subject: '+after.sourceText);
  assert.notDeepEqual(value,current);await closeWho();return{key:'actorRef',type:'actor-ref',before:current,value};};
@@ -64,7 +65,7 @@ const editReference=async(id,f)=>{const node0=await byId(id);
  // LANGUAGE.md 439: the broadcast is bound by position, so a typed name cannot rebind it.
  await control.fill(shown+'改');await control.press('Tab');await p.waitForFunction(d=>!!(d?Akari.app.editorState.draft:Akari.app.editorState.main).pendingEdit,draft);
  const pending=(await session()).pendingEdit;assert.ok(pending.reason,'reference change explains its refusal');assert.equal(await projectText(),project,'refused reference leaves the project unchanged');
- await (await reveal(p.locator('#editorCancel'))).click();const after=await session();assert.equal(after.pendingEdit,null);assert.equal(after.sourceText,before.sourceText);assert.equal(await control.inputValue(),shown,'cancel restores the shown reference');
+ await cancelInput(p,draft?'callable':'editor');const after=await session();assert.equal(after.pendingEdit,null);assert.equal(after.sourceText,before.sourceText);assert.equal(await control.inputValue(),shown,'cancel restores the shown reference');
  return{key:f.key,type:f.type,before:shown,refused:true,reason:pending.reason};};
 const editHeading=async(id,f)=>{const before=(await byId(id)).fields.heading,role=suffix=>root().locator('[data-blockui-structured-role="heading.'+suffix+'"][data-block-id="'+id+'"]'),event=await p.locator('#eventSelect').inputValue();
  await (await reveal(role('enabled'))).selectOption('yes');await (await reveal(root().locator('[data-blockui-action="heading-commit"]').first())).click();await settle();
@@ -105,7 +106,9 @@ const bodyPosition=(id,body,position)=>({click:async()=>keyboardActivate(root().
 const slot=(id,input)=>({click:async()=>selectSlot(root().locator('[data-parent-id="'+id+'"][data-blockui-input="'+input+'"]').first())});
 const append=async(schema)=>{const state=await session(),r=state.blockView,position=state.context.definitionKind==='function'&&r.bodies.body.at(-1)?.schemaId==='ReturnStatement'?r.bodies.body.length-1:r.bodies.body.length;await bodyPosition(r.id,'body',position).click();await add(schema);return(await session()).blockView.bodies.body[position];};
 const historyRoundtrip=async before=>{const after=await session();assert.notEqual(after.sourceText,before.sourceText,'operation changes source');await p.keyboard.press('Control+z');assert.equal((await session()).sourceText,before.sourceText,'undo exact source');await p.keyboard.press('Control+y');assert.equal((await session()).sourceText,after.sourceText,'redo exact source');};
-const blockSourceAgreement=async()=>{const before=await session();assert.equal(before.pendingEdit,null);assert.ok(before.syntaxAst);const equivalent=await p.evaluate(d=>{const A=Akari,s=d?A.app.editorState.draft:A.app.editorState.main;const parsed=A.parseSyntax(s.sourceText,s.context);return !!parsed.ast&&A.astEquivalent(s.syntaxAst,parsed.ast)&&A.astEquivalent(A.blockDecode(s.blockView),parsed.ast);},draft);assert.equal(equivalent,true,'block/source AST');await mode('code');const text=await p.locator(draft?'#callableCode':'#codeEditor').inputValue();assert.equal(text,before.sourceText);await mode('blocks');assert.equal((await session()).sourceText,text);return{before,text};};
+// The code is read again with the work's names, as the editor reads it: block→code writes 「点数を言う。」 for a
+// variable's value (E2E-R1-03), which only the names tell from the words 点数 or a sound 点数.
+const blockSourceAgreement=async()=>{const before=await session();assert.equal(before.pendingEdit,null);assert.ok(before.syntaxAst);const equivalent=await p.evaluate(d=>{const A=Akari,s=d?A.app.editorState.draft:A.app.editorState.main;const parsed=A.parseSyntax(s.sourceText,{...s.context,symbols:A.buildSymbols(A.app.project)});return !!parsed.ast&&A.astEquivalent(s.syntaxAst,parsed.ast)&&A.astEquivalent(A.blockDecode(s.blockView),parsed.ast);},draft);assert.equal(equivalent,true,'block/source AST');await mode('code');const text=await p.locator(draft?'#callableCode':'#codeEditor').inputValue();assert.equal(text,before.sourceText);await mode('blocks');assert.equal((await session()).sourceText,text);return{before,text};};
 const eventCountStructural=async s=>{
  const original=(await locate(s.id))[0],first=await append('WaitUntil');await action(original.id,'duplicate').click();await slot(first.id,'condition').click();
  let now=await session(),copied=now.blockView.bodies.body.find(n=>n.id===first.id).inputs.condition;assert.equal(copied.schemaId,s.id);assert.equal(api.astEquivalent(api.blockDecode(now.blockView),api.parseSyntax(now.sourceText,now.context).ast),true,'tree decode agrees after copy');
@@ -185,7 +188,7 @@ const runObserve=async row=>{const design=await projectText(),observed={};
 // generated wording itself is owned by the command catalog, not by these rows.
 const sentenceIs=async row=>{const s=await session();assert.equal(s.pendingEdit,null);
  for(const line of s.sourceText.split('\n'))assert.ok(!/。。$/.test(line),'one sentence end per generated sentence: '+JSON.stringify(s.sourceText));
- const same=await p.evaluate(({d,text})=>{const A=Akari,m=d?A.app.editorState.draft:A.app.editorState.main,parsed=A.parseSyntax(text,m.context);return !!parsed.ast&&A.astEquivalent(parsed.ast,m.syntaxAst);},{d:draft,text:row.sentence});
+ const same=await p.evaluate(({d,text})=>{const A=Akari,m=d?A.app.editorState.draft:A.app.editorState.main,parsed=A.parseSyntax(text,{...m.context,symbols:A.buildSymbols(A.app.project)});return !!parsed.ast&&A.astEquivalent(parsed.ast,m.syntaxAst);},{d:draft,text:row.sentence});
  assert.equal(same,true,'the GUI result means the hand-written sentence '+JSON.stringify(row.sentence)+', got '+JSON.stringify(s.sourceText));return s.sourceText;};
 // Rows whose GUI route is the generic palette route; their semantic step runs after the role edits.
 const semanticStep=async(s,id)=>{const row=semanticRows[s.id],edits=row.edits||{};
@@ -254,9 +257,14 @@ const ruleHoleRow=async(s,evidence)=>{const row=semanticRows[s.id];draft=false;r
  const {text:code}=await blockSourceAgreement();evidence.source=code;evidence.roundtrip=true;evidence.runtime=await runObserve(row);};
 const continuousRuleRow=async(s,evidence)=>{const row=semanticRows[s.id];draft=false;rootId='#blockEditor';await reset({id:'ContinuousRule'});
  await (await reveal(root().locator('[data-blockui-action="rule-add"]'))).click();let rule=(await session()).blockView.inputs.rules[0];assert.equal(rule.schemaId,s.id);
- for(const key of ['condition','seconds','distance'])assert.equal(rule.inputs[key].schemaId,'Hole:expression',key+' starts open, never an implicit value');
+ // A rule added from the list moves 1秒に200歩, the values of its hint (FCB-09); the condition is left open to choose.
+ assert.equal(rule.inputs.condition.schemaId,'Hole:expression','the condition starts open, never an implicit value');
+ for(const [key,value] of [['seconds',1],['distance',200]]){assert.equal(rule.inputs[key].schemaId,'NumberLiteral',key+' starts with the hint value');assert.equal(rule.inputs[key].fields.value,value,key+' starts at '+value);}
  assert.equal((await session()).pendingEdit?.kind,'block-draft');evidence.creation='Script rule list: add a rule';
- for(const [key,schema]of Object.entries(row.fill)){await chooseExpression((await session()).blockView.inputs.rules[0].inputs[key].id,schema);evidence.inputs.push({key,chosen:schema});}
+ for(const [key,schema]of Object.entries(row.fill)){const value=(await session()).blockView.inputs.rules[0].inputs[key];
+  // A value that already is what the row fills in (the hint's numbers) is kept; an open one is chosen from the list.
+  const literal=value.schemaId==='QuantityLiteral'?value.inputs?.value:value;if(literal?.schemaId===schema){evidence.inputs.push({key,kept:schema});continue;}
+  await chooseExpression(value.id,schema);evidence.inputs.push({key,chosen:schema});}
  await settle();assert.equal((await session()).pendingEdit,null,'the rule is complete');rule=(await session()).blockView.inputs.rules[0];
  for(const key of ['seconds','distance'])assert.equal(rule.inputs[key].fields.unit,roleUnit(s.id,key,0),key+' role unit');
  for(const f of s.fields){evidence.fields.push(await editField(rule.id,f,false,row.edits[f.key]));rule=(await session()).blockView.inputs.rules[0];}
