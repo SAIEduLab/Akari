@@ -176,7 +176,7 @@ const checks={
     await s.code();const lines=(await s.text()).split('\n');
     return {expect:{heading:lines[0]==='たくどんは、3回くり返す。',moveWithoutSubject:lines[1]==='  いまのばしょから、右へ10歩動く。',otherSubject:lines[2]==='  だんごは「こんにちは」と言う。'},info:{lines,hole}};},
   'CC-151':async s=>{const pen=()=>s.page.evaluate(()=>{const c=document.querySelector('#penCanvas'),d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0;for(let i=3;i<d.length;i+=4)if(d[i])n++;return n;});
-    await s.select('w-neko');await s.code();await s.write('ペンを下ろす。\nいまのばしょから、右へ100歩動く。');await s.select('stage');await s.code();await s.write('2秒待つ。\n作品の線とスタンプを全部消す。');
+    await s.select('w-neko');await s.page.selectOption('#eventSelect','start');await s.code();await s.write('ペンを下ろす。\nいまのばしょから、右へ100歩動く。');await s.select('stage');await s.code();await s.write('2秒待つ。\n作品の線とスタンプを全部消す。');
     const check=await s.check();await s.run();await s.page.waitForTimeout(1000);const early=await pen();await s.page.waitForTimeout(2300);const late=await pen();
     return {expect:{lineAtOneSecond:early>0,clearedAfterThree:late===0,noIssue:check.issues.length===0},info:{early,late}};},
   'CC-155':async s=>{await s.select('w-neko');await s.code();await s.write('タイマーを0にする。');await s.press('コードモード ⇄');
