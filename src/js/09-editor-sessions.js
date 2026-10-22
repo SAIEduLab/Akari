@@ -617,7 +617,7 @@
       const parent = lookup(parentId).node,
         schema = BLOCK_SCHEMA_BY_ID.get(parent.schemaId),
         slot = schema.inputs.find((x) => x.key === key);
-      if (!slot) editorError('そこには 計算を 入れられないよ。ほかの ばしょを えらんでね。');
+      if (!slot) editorError('そこには はめるブロックを 入れられないよ。ほかの ばしょを えらんでね。');
       if (slot.required === false && slot.multiple && !Object.hasOwn(parent.inputs, key)) parent.inputs[key] = [];
       if (slot.multiple) position(index, parent.inputs[key].length, append);
       else if (index !== undefined && index !== null) editorCheckError('固定入力に番号は指定しません');
@@ -625,7 +625,7 @@
     };
     const setInput = (location, node) => {
       const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId);
-      if (schema?.category !== location.slot.type) editorError('その 計算は そこには 入れられないよ。合う ばしょを えらんでね。');
+      if (schema?.category !== location.slot.type) editorError('その ブロックは そこには 入れられないよ。合う ばしょを えらんでね。');
       if (location.slot.multiple) location.array[location.index] = node;
       else location.parent.inputs[location.slot.key] = node;
     };
@@ -642,7 +642,7 @@
       if (!entry.parentId) editorCheckError('本文全体はこの操作では置換できません');
       if (entry.body) {
         if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement')
-          editorError('ここには ブロックを つなげてね。計算は ここには 入れられないよ。');
+          editorError('ここには つなぐブロックを 入れてね。はめるブロックは ここには 入れられないよ。');
         lookup(entry.parentId).node.bodies[entry.body][entry.index] = node;
       } else setInput(inputSlot(entry.parentId, entry.input, entry.index), node);
     };
@@ -703,7 +703,7 @@
           at = position(op.index, destination.array.length, true),
           node = fresh(op.type === 'duplicate' ? lookup(op.id).node : op.node, op.type === 'duplicate');
         if (BLOCK_SCHEMA_BY_ID.get(node.schemaId)?.category !== 'statement')
-          editorError('ここには ブロックを 入れてね。計算は ここには 入れられないよ。');
+          editorError('ここには つなぐブロックを 入れてね。はめるブロックは ここには 入れられないよ。');
         // A visible body placeholder is replaced by the command the child chooses (inserted, copied or moved there).
         // Complete existing bodies still use ordinary insertion semantics.
         if (loneHole(destination.array)) destination.array.splice(0, 1, node);
@@ -761,7 +761,7 @@
       }
       if (op.type === 'remove') {
         const entry = lookup(op.id);
-        if (!entry.body) editorError('この 計算は けせないよ。ほかの 計算と 入れかえてね。ならんでいる ものは「外す」で 外せるよ。');
+        if (!entry.body) editorError('この ブロックは けせないよ。ほかの ブロックと 入れかえてね。ならんでいる ものは「外す」で 外せるよ。');
         const parent=lookup(entry.parentId).node,array=parent.bodies[entry.body],slot=BLOCK_SCHEMA_BY_ID.get(parent.schemaId).bodies.find(s=>s.key===entry.body);
         if(slot.requiredExecutable&&!array.some((node,i)=>i!==entry.index&&!['CommentLine','Hole:statement'].includes(node.schemaId))){
           if(!options.draft)editorError(`${slot.label}には ブロックが 1つ いるよ。先に 新しい ブロックを 入れるか、「何もしない」に 入れかえてね`);
@@ -821,7 +821,7 @@
           !entry.input ||
           BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId)?.category !== 'expression'
         )
-          editorError('この 計算は ここから もっていけないよ。');
+          editorError('この ブロックは ここから もっていけないよ。');
         const destination = inputSlot(op.parentId, op.input, op.index);
         if (target.node.id === op.id || target.ancestors.includes(op.id))
           editorError('ブロックを 自分の 中には もっていけないよ。ほかの ところを えらんでね。');

@@ -33,7 +33,7 @@
     if (/くらべる 2つの ものを（ ）か【 】で かこんで/.test(message))
       return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。れい：【点数】が10より大きい';
     if (/言う ことは「「文字」と言う」/.test(message))
-      return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。おぼえた 点数を 話すときは：点数を言う。';
+      return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。へんすうの 中身を 話すときは「点数を言う」のように 書きます。';
     if (/そのまま 言う 文字か、入れた 音か/.test(message))
       return 'そのまま 話す 文字・鳴らす 音・へんすう・リストの 中身から えらびます。れい：「おはよう」と言う／「ベル」を鳴らす／点数を言う。';
     if (/重ねるときは、次の 行に 書いて/.test(message))
@@ -58,8 +58,12 @@
       return '「答えを もとめる」では、作品や 部品の へんすう・リストの 中身を かえられません。かえる やることは「てじゅん」へ 入れます。';
     if (/「待つ」と「動く」の 2つの 文に 分けます/.test(message))
       return '待ってから 動くときは、2つの 文に 分けます。\nれい：1秒待つ。\n前へ10歩進む。';
-    if (/「N番目」はリスト/.test(message))
-      return '何番目かを えらぶには、ならんだ ものを おぼえる リストを 使います。れい：【買うもの】の2番目。話す 文字の「買うもの」とは ちがいます。';
+    if (/「N番目」はリスト/.test(message)) {
+      // The name the child wrote before 〜番目, when the line is known; no list of another work is named.
+      const line = typeof source === 'string' && diagnostic?.line ? source.split(/\r\n?|\n/)[diagnostic.line - 1] || '' : '',
+        name = /([^\s（）「」【】、。]+?)の(?:[0-9０-９]+|（[^）]*）)番目/.exec(line)?.[1];
+      return (name ? '「' + name + '」は リストでは ないので、何番目かを えらべません。' : '') + '何番目かを えらべるのは、ならんだ ものを おぼえる リストです。';
+    }
     if (/使われていない絵や音か、足りない絵や音/.test(message))
       return '作品で使う絵や音と、ほぞんする絵や音の組み合わせが合っていません。理由は 下の くわしい せつめいに のこしています。「絵や音」の画面で、使う絵や音を たしかめてください。';
     if (/絵や音の中身を表す文字|同じしるし|絵や音の番号|使うはずの絵や音|同じ中身の絵や音|ではないものを使っています|絵や音「[^」]*」がありません|の種類が、正しくありません|記録と合いません|記録とちがいます|絵や音の記録の形|使える大きさの外|あかりで使えない(?:形|種類)の|中身をたしかめるしるし|同じ絵や音が2つ以上|おまけの情報|ほぞんした音|ほぞんしたときと合いません/.test(message))
@@ -133,6 +137,23 @@
       branchLines = new Map(),
       branchSourceLines = new Map();
     const phraseCache = new Map();
+    // The なかま of the list, in their order: the chips, and the names of the list's blocks elsewhere (FCB-21).
+    const PALETTE_GROUP_LABELS = new Map([
+      ['basic', 'よく使う'],
+      ['', 'すべて'],
+      ['motion', '動き'],
+      ['look', '見た目'],
+      ['control', 'もし・くり返し'],
+      ['event', '合図'],
+      ['data', 'へんすう・リスト'],
+      ['operator', '計算'],
+      ['sense', 'しらべる'],
+      ['sound', '音'],
+      ['pen', 'ペン'],
+      ['action', '自分で作ったブロック'],
+      ['clone', 'コピー'],
+      ['comment', 'メモ'],
+    ]);
     let faceSymbols = null;
     const openEditors = new Set();
     const openAnnotations = new Set(),
@@ -1511,7 +1532,7 @@
     const FACE_READINGS = [['四捨五入', 'ししゃごにゅう'], ['条件', 'じょうけん'], ['手順', 'てじゅん'], ['順番', 'じゅんばん'],
       ['変数', 'へんすう'], ['結果', 'けっか'], ['最初', 'さいしょ'], ['最後', 'さいご'], ['最小', 'さいしょう'], ['最大', 'さいだい'],
       ['表示', 'ひょうじ'], ['段階', 'だんかい'], ['以上', 'いじょう'], ['以下', 'いか'], ['未満', 'みまん'], ['値', 'あたい'],
-      ['成', 'な', 'り'], ['求', 'もと', 'め'], ['増', 'ふ', 'や'], ['減', 'へ', 'ら'], ['残', 'のこ', 'り'], ['呼', 'よ', 'ぶ'], ['捨', 'す', 'て']];
+      ['成', 'な', 'り'], ['求', 'もと', 'め'], ['増', 'ふ', 'や'], ['減', 'へ', 'ら'], ['残', 'のこ', 'り'], ['呼', 'よ', 'ぶ'], ['捨', 'す', 'て'], ['続', 'つづ', 'け']];
     const FACE_READING_SOURCE = FACE_READINGS.map(([word, , next]) => next ? word + '(?=' + next + ')' : word).join('|'),
       FACE_READING_SKIP = '.blockui-node, input, select, textarea, ruby, .blockui-preview-slot, [data-blockui-field]';
     function faceRuby(root) {
@@ -1664,22 +1685,7 @@
         && (!entry || ENTRY_BLOCK_SCHEMA_IDS.has(s.id) && entryWorks(s)) && (unitChoice || s.id !== 'QuantityLiteral')
         && (unitChoice || !ADVANCED_ONLY_SCHEMA_IDS.has(s.id)));
       const all = registry.filter((s) => entry || paletteMode === 'all' || s.category === paletteMode);
-      const groups = [
-        ['basic', 'よく使う'],
-        ['', 'すべて'],
-        ['motion', '動き'],
-        ['look', '見た目'],
-        ['control', 'もし・くり返し'],
-        ['event', '合図'],
-        ['data', 'へんすう・リスト'],
-        ['operator', '計算'],
-        ['sense', 'しらべる'],
-        ['sound', '音'],
-        ['pen', 'ペン'],
-        ['action', '自分で作ったブロック'],
-        ['clone', 'コピー'],
-        ['comment', 'メモ'],
-      ];
+      const groups = [...PALETTE_GROUP_LABELS];
       const categoryScroll = categorySelect.scrollTop;
       categorySelect.replaceChildren();
       for (const [g, label] of groups) {
@@ -2271,8 +2277,10 @@
           'aria-label': 'もとの ばしょに 入れる ブロック',
           'data-blockui-replacement-schema': 'true',
         });
-      for (const s of BLOCK_SCHEMAS.filter((x) => x.category === 'expression'))
-        select.append(E('option', '', s.palette + ' / ' + s.label, { value: s.id }));
+      // The same blocks as the list at this level, named by the list's なかま (FCB-21).
+      const advanced = document.body.dataset.uiLevel === 'advanced';
+      for (const s of BLOCK_SCHEMAS.filter((x) => x.category === 'expression' && !x.draftOnly && (advanced || (x.id !== 'QuantityLiteral' && !ADVANCED_ONLY_SCHEMA_IDS.has(x.id)))))
+        select.append(E('option', '', (PALETTE_GROUP_LABELS.get(blockPaletteGroup(s)) || s.palette) + ' / ' + s.label, { value: s.id }));
       select.value = 'NumberLiteral';
       const accept = button('このブロックを おいて もっていく', 'confirm-expression-move', () => {
         const action = replacement;
@@ -2636,7 +2644,10 @@
         head.append(up, down, remove);
       }
       // A field's tools show when it has some; a name alone is its accessible name (E-12: no noise for beginners).
-      box.append(renderNode(child));
+      const shown = renderNode(child);
+      // A number in its place is read by the place's name (AX-09).
+      if (child?.schemaId === 'NumberLiteral') shown.querySelector(':scope > .blockui-node-content [data-blockui-field="value"]')?.setAttribute('aria-label', label);
+      box.append(shown);
       if (head.childElementCount > 1) box.append(head);
       if (!options.readOnly && parent.schemaId === 'ListRead' && slot.key === 'list' && child.schemaId === 'StringLiteral') {
         const recovery = E('div', 'blockui-list-repair'), select = E('select', '', null, { 'aria-label':'文字の代わりに使うリストを えらぶ' });
@@ -2732,6 +2743,8 @@
       const label = slotLabel(location), wrap = E('span', 'blockui-input-slot blockui-flat-value', null, { 'data-block-id': literal.id, 'aria-label': label });
       if (!options.readOnly) markDrop(wrap, location);
       wrap.append(fieldControl(literal, BLOCK_SCHEMA_BY_ID.get('NumberLiteral').fields.find(f => f.key === 'value')));
+      // The number is read by its place (秒数, よこの歩数 …), not as 「数」 (AX-09).
+      if (label) wrap.querySelector('[data-blockui-field="value"]')?.setAttribute('aria-label', label);
       if (valueToolsShown()) {
         const head = E('div', 'blockui-slot-head');
         head.append(E('span', 'blockui-slot-label', label), ...valueTools(location, label, literal));
@@ -3239,6 +3252,13 @@
       box.append(content);
       return box;
     }
+    // The block view shows no line numbers (FCM-07): a mistake is named by the words of its sentence, with a full-width
+    // colon (I5V-15).
+    function diagnosticPlace(d) {
+      const line = d.line && typeof session()?.sourceText === 'string' ? session().sourceText.split(/\r\n?|\n/)[d.line - 1] : null,
+        words = line ? splitComment(line).code.trim().replace(/。$/, '') : '';
+      return words ? '「' + (Array.from(words).length > 24 ? Array.from(words).slice(0, 23).join('') + '…' : words) + '」の ブロック：' : '';
+    }
     function diagnosticSummary() {
       const diagnostics = session()?.diagnostics || [];
       if (!diagnostics.length) return null;
@@ -3252,7 +3272,7 @@
       diagnosticPage = Math.min(diagnosticPage, pages - 1);
       const ul = E('ul');
       for (const d of diagnostics.slice(diagnosticPage * 20, (diagnosticPage + 1) * 20)) {
-        const item = E('li', 'diagnostic-help', (d.line ? d.line + '行目: ' : '') + childDiagnosticText(d, session()?.sourceText));
+        const item = E('li', 'diagnostic-help', diagnosticPlace(d) + childDiagnosticText(d, session()?.sourceText));
         appendDiagnosticDetails(item, d); ul.append(item);
       }
       details.append(ul);
@@ -3621,8 +3641,8 @@
           kind === 'script'
             ? eventText(tree?.fields.heading?.event||ctx.event||event, tree?.fields.heading ? tree.fields.heading.filter : ctx.filter) || event
             : kind === 'function'
-              ? 'このブロックで 答えを出すとき'
-              : 'このブロックを 使ったとき',
+              ? 'この ブロックで 答えを 出すとき'
+              : 'この ブロックを 使ったとき',
         ),
       );
       return hat;
