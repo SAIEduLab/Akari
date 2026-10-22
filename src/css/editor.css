@@ -6311,6 +6311,10 @@ body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
   /* The rows above the body and はじめて's event buttons are pressed by a finger too (AX-07). */
   body[data-editor-mode] .codewin > :is(.code-head, .source-nav, #entryEvents) :is(button, select) { min-height: 40px !important; }
   body[data-editor-mode] .menutool > button { min-width: 40px; }
+  /* So are the bars' buttons (もとにもどす・やり直す, はじめに もどす, コードを整える, and the run screen's ⏸／▶ つづける,
+     1つずつ 動かす, 本文を見て たしかめる) and はじめて's もとにもどす・やり直す in the toolbar. */
+  body[data-editor-mode] :is(.debugbar, #entryRunControls) button,
+  body[data-editor-mode] .menutool > :is(#undoBtn, #redoBtn) { min-height: 40px !important; }
 }
 
 /* 大きく見る (E-21): the stage at 100% laid over the page with a dim backdrop; 「もどる」 or Escape gives back the layout. */
