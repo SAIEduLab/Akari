@@ -3158,9 +3158,10 @@
           list.append(E('summary', '', rules.length ? 'つづけて動くルール（' + rules.length + 'こ）' : '＋ キーを おす間など、つづけて動かす'));
           for (const [i, rule] of rules.entries()) {
             const row = E('div', 'blockui-rule-row'); row.append(renderNode(rule));
-            row.append(button('このルールを けす', 'rule-remove', () => operate({ type: 'variadic-remove', parentId: node.id, input: 'rules', index: i })));
-            if (i) row.append(button('前のルールへ', 'rule-up', () => operate({ type: 'variadic-move', parentId: node.id, input: 'rules', index: i, toIndex: i - 1 })));
-            if (i + 1 < rules.length) row.append(button('次のルールへ', 'rule-down', () => operate({ type: 'variadic-move', parentId: node.id, input: 'rules', index: i, toIndex: i + 2 })));
+            // The same words as a block's own tools (F-19, F-23): この ルールを けす, ↑ まえへ, ↓ あとへ.
+            row.append(button('この ルールを けす', 'rule-remove', () => operate({ type: 'variadic-remove', parentId: node.id, input: 'rules', index: i })));
+            if (i) row.append(button('↑ まえへ', 'rule-up', () => operate({ type: 'variadic-move', parentId: node.id, input: 'rules', index: i, toIndex: i - 1 })));
+            if (i + 1 < rules.length) row.append(button('↓ あとへ', 'rule-down', () => operate({ type: 'variadic-move', parentId: node.id, input: 'rules', index: i, toIndex: i + 2 })));
             list.append(row);
           }
           const add = button('＋ つづけて動くルール', 'rule-add', () => operate({ type: 'variadic-insert', parentId: node.id, input: 'rules', index: rules.length,
