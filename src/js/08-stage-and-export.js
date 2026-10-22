@@ -85,7 +85,7 @@
       if (options.getScale && (!scaleParent.clientWidth || !scaleParent.clientHeight)) return;
       const p = project(),
         style = getComputedStyle(scaleParent),
-        available =
+        available = options.availableWidth ? options.availableWidth() :
           scaleParent.clientWidth -
           parseFloat(style.paddingLeft || 0) -
           parseFloat(style.paddingRight || 0);
@@ -979,7 +979,15 @@
       view = makeView(core, {
         form,
         canvas,
-        ...(artwork ? { getScale: () => 1 } : {}),
+        ...(artwork ? { getScale: () => 1 } : {
+          // With ▶ the room is the window, not the box around the stage (that box takes the stage's own width): the
+          // stage shows at its own size when it fits and shrinks to fit otherwise, as the editor does.
+          availableWidth: () => {
+            const page = getComputedStyle(root), box = getComputedStyle(form.closest('.player-stage'));
+            return document.documentElement.clientWidth - parseFloat(page.paddingLeft || 0) - parseFloat(page.paddingRight || 0) -
+              parseFloat(box.borderLeftWidth || 0) - parseFloat(box.borderRightWidth || 0);
+          },
+        }),
         getProject: () => session.project,
         getRuntime: () => runtime,
         getScheduler: () => scheduler,
@@ -1032,7 +1040,9 @@
       if (value && typeof value === 'object') {
         const out = {};
         for (const [key, v] of Object.entries(value))
-          if (
+          // 名人: topicEnded and mustName on a 自分 subject are read only by 作品チェック.
+          if (value.kind === 'self' && ['topicEnded', 'mustName'].includes(key)) continue;
+          else if (
             ![
               'source',
               'raw',
@@ -1096,11 +1106,14 @@
     if (!['controls', 'artwork'].includes(presentation)) throw new AkariError('X605', '作品のはじめ方が正しくありません');
     const artwork = presentation === 'artwork';
     const payload = packExecutable(project, assetStore),
+      payloadJson = inlineJson(payload),
       title = escapeHtmlText(payload.project.name);
+    // The file is made only when its player would open it: the same check the player runs on the same JSON.
+    AKARI_RUNTIME.restoreExecutable(JSON.parse(payloadJson));
     const definitions = EXTENSION_HOST.exportDefinitions();
     const selected = AKARI_RUNTIME.profiles.describe();
     const configuration = `{extensions:[${definitions.map(x => `{manifest:${inlineJson(x.manifest)},factory:(${x.factorySource})}`).join(',')}],profiles:${inlineJson(selected.profiles.map(({id,version,limits})=>({id,version,limits})))},profile:${inlineJson(selected.selected ? {id:selected.selected.id,version:selected.selected.version} : null)},allowedCapabilities:${inlineJson(FOUNDATION_CONFIGURATION.allowedCapabilities || [])}}`;
-    const script = `'use strict';\n${createAkariProfiles.toString()}\n${createAkariExtensionHost.toString()}\n${createAkariRuntime.toString()}\n${createAkariStageView.toString()}\n${mountAkariPlayer.toString()}\nmountAkariPlayer(createAkariRuntime(${configuration}),createAkariStageView,${inlineJson(payload)},${inlineJson({artwork})});`;
+    const script = `'use strict';\n${createAkariProfiles.toString()}\n${createAkariExtensionHost.toString()}\n${createAkariRuntime.toString()}\n${createAkariStageView.toString()}\n${mountAkariPlayer.toString()}\nmountAkariPlayer(createAkariRuntime(${configuration}),createAkariStageView,${payloadJson},${inlineJson({artwork})});`;
     if (/<\/script/i.test(script))
       throw new AkariError(
         'X603',

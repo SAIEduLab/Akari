@@ -3246,16 +3246,18 @@
         this.ui.closeQuestion?.();
         this.ui.state?.();
       }
-      // Nothing goes on now: no flow runs, waits or is queued, no continuous rule is kept, and no question is open. A body
-      // may still start again (ended).
+      // Nothing goes on now: no flow runs, waits or is queued, no continuous rule is kept, no question is open, and no
+      // extension event or answer waits to be taken in. A body may still start again (ended).
       idle() {
         return !(!this.running || this.tasks.size || this.ready.length || this.continuous.size || this.questionQueue.length ||
-          this.activeQuestion || this.extensionEvents?.length || extensions.active);
+          this.activeQuestion || this.extensionEvents?.length || this.extensionCompletions?.length);
       }
       // The run has ended by itself: it is idle, and no body can start again (none waits for input, a 名人 condition or
-      // interval, or an extension).
+      // interval, or an extension event while the extensions run). An extension that is only registered keeps nothing going.
       ended() {
-        return this.idle() && !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event));
+        return this.idle() && !(this.compiled.items || []).some(item => RESTARTING_EVENTS.has(item.event) ||
+          (extensions.active && item.event === 'message' &&
+            String((item.filter && typeof item.filter === 'object' ? item.filter.message : item.filter) ?? '').startsWith('拡張:')));
       }
       pause() {
         if (!this.running) return;
@@ -3460,7 +3462,19 @@
             task.execStack.pop();
             continue;
           }
-          if (top.type === 'while' || top.type === 'until') return top;
+          if (top.type === 'while' || top.type === 'until') {
+            // A turn has ended: its condition is read now, before any other flow takes its next step
+            // (くり返しと画面の動き). A body with no sentence, and a condition calculated a little at a time, keep the
+            // check as a step of its own.
+            const condition = top.condition || top.node.condition;
+            if (!top.node.body.some((n) => n.kind !== 'CommentLine') ||
+              (LIMITS.functionOps !== STANDARD_LIMITS.functionOps && hasUserFunction(condition))) return top;
+            this.selectSubject(task, top.node);
+            const v = bool(evalExpression(condition, this.context(task)));
+            if (top.type === 'while' ? v : !v) this.enterLoopTurn(task, top);
+            else task.execStack.pop();
+            continue;
+          }
           break;
         }
         if (guard >= 1000) throw new AkariError('R413', 'くり返しが 多すぎて 先に すすめません');
@@ -4748,11 +4762,16 @@
         const events = ['start', 'click', 'keyDown', 'message', 'backdropChanged',
           ...(type === 'input' ? ['valueChanged'] : []), ...(type === 'sprite' ? ['cloneStart'] : []),
           ...(type && type !== 'stage' ? ['touchStart'] : []), ...(type === 'stage' ? ['conditionTrue', 'interval'] : [])];
+        // A later heading of a body saved without unit IDs keeps the key analysis gives it:
+        // script:document:<the body's key>:unit:<n>, where the body's key is script:<id> or script:<owner>:<event>.
+        const documentUnit = parts[1] === 'document' && parts[2] === 'script' && parts.at(-2) === 'unit' &&
+          /^[1-9][0-9]{0,4}$/.test(parts.at(-1)) && parts.at(-1) !== '1' &&
+          ((parts.length === 6 && safeId(parts[3])) || (parts.length === 7 && ownerIds.has(parts[3]) && /^[A-Za-z]{1,32}$/.test(parts[4])));
         if (
           typeof item.key !== 'string' ||
           !ownerIds.has(item.ownerId) ||
           (item.key.startsWith('script:')
-            ? !((parts.length === 2 && safeId(parts[1]) && item.id === parts[1] &&
+            ? !((((parts.length === 2 && safeId(parts[1])) || documentUnit) && item.id === parts.slice(1).join(':') &&
                 item.targetId === item.ownerId && events.includes(item.event)) ||
               (parts.length === 3 && parts[1] === item.ownerId && events.includes(parts[2])))
             : definitionKeys.get(item.key)?.ownerId !== item.ownerId) ||
