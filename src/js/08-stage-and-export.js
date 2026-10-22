@@ -85,7 +85,7 @@
       if (options.getScale && (!scaleParent.clientWidth || !scaleParent.clientHeight)) return;
       const p = project(),
         style = getComputedStyle(scaleParent),
-        available =
+        available = options.availableWidth ? options.availableWidth() :
           scaleParent.clientWidth -
           parseFloat(style.paddingLeft || 0) -
           parseFloat(style.paddingRight || 0);
@@ -979,7 +979,15 @@
       view = makeView(core, {
         form,
         canvas,
-        ...(artwork ? { getScale: () => 1 } : {}),
+        ...(artwork ? { getScale: () => 1 } : {
+          // With ▶ the room is the window, not the box around the stage (that box takes the stage's own width): the
+          // stage shows at its own size when it fits and shrinks to fit otherwise, as the editor does.
+          availableWidth: () => {
+            const page = getComputedStyle(root), box = getComputedStyle(form.closest('.player-stage'));
+            return document.documentElement.clientWidth - parseFloat(page.paddingLeft || 0) - parseFloat(page.paddingRight || 0) -
+              parseFloat(box.borderLeftWidth || 0) - parseFloat(box.borderRightWidth || 0);
+          },
+        }),
         getProject: () => session.project,
         getRuntime: () => runtime,
         getScheduler: () => scheduler,
