@@ -212,7 +212,8 @@ const html=path.resolve(process.argv[2]||currentProductFile()),prefix=path.resol
    const when=page.locator('#sourceHeadingBtn'),blocks=page.locator('#editorModeblocks'),before=await state();
    assert.equal(await blocks.getAttribute('aria-disabled'),'true','ブロック is pale while the code has a mistake');
    assert.equal(await when.getAttribute('aria-disabled'),'true','いつ動く？ is pale like ブロック');
-   const look=async e=>e.evaluate(n=>{const c=getComputedStyle(n);return{opacity:c.opacity,color:c.color};});assert.deepEqual(await look(when),await look(blocks),'the same pale look as ブロック');
+   // The pale look is the refused state's opacity; each button keeps its own colour in both states.
+   const pale=async e=>Number(await e.evaluate(n=>getComputedStyle(n).opacity));assert.equal(await pale(when),await pale(blocks),'the same pale look as ブロック');assert.ok(await pale(when)<1,'いつ動く？ is pale');
    await when.click({force:true});await page.waitForTimeout(200);
    const note=await when.evaluate(button=>{const b=button.getBoundingClientRect(),words='コードの赤いところを直すと、ブロックにもどれるよ';
     const shown=[...document.querySelectorAll('body *')].filter(n=>n.children.length===0&&n.getClientRects().length&&n.textContent.replace(/\s+/g,'').includes(words));
