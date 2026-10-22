@@ -2760,7 +2760,8 @@
         choices.forEach((row, index) => {
           const option = document.createElement('option');
           option.value = index === 0 ? ev : scriptSourceKey(row);
-          const filter = row?.filter, value = ev === 'touchStart' ? '' : filter?.key || filter?.message || (typeof filter === 'string' ? filter : '');
+          // A key is named as on the keyboard (「スペース」), as the heading writes it.
+          const filter = row?.filter, value = ev === 'touchStart' ? '' : (filter?.key ? keySurface(filter.key) : '') || filter?.message || (typeof filter === 'string' ? filter : '');
           // A touch body is named with what it touches (「星」に ふれたとき); bodies with the same partner are numbered among
           // themselves. A part with no touch body has the one entry ふれたとき.
           const same = ev === 'touchStart' ? rows.filter(x => x.filter?.target === filter?.target) : rows;
@@ -2774,7 +2775,7 @@
         first = project.scripts.find((x) => x.targetId === selectedId && x.event === currentEvent);
       el.event.value = sourceOverviewOpen ? 'all' : row && row !== first ? scriptSourceKey(row) : currentEvent;
       $('#scriptAdd').disabled = modelLocked() || project.scripts.length >= LIMITS.scripts;
-      $('#scriptAdd').textContent = currentIsMeijin() ? '名人の本文を ふやす' : '同じできごとの本文を ふやす';
+      $('#scriptAdd').textContent = currentIsMeijin() ? '名人の本文を ふやす' : '同じ きっかけの 本文を ふやす';
       $('#meijinDelete').hidden = !currentIsMeijin();
       $('#meijinDelete').disabled = modelLocked();
       $('#sourceHeadingBtn').hidden ||= workIsMeijin();

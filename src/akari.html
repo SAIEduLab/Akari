@@ -44,7 +44,7 @@
       <p id="exportActionHelp"><strong>うごく作品を ファイルにする</strong>：ブラウザーで 動かして 見る ファイルを 作ります。</p>
       <p id="assetActionHelp"><strong>絵や音をまとめる</strong>：使う 絵や音を 入れたり、名前を たしかめたりします。</p>
       <p id="dataActionHelp"><strong><ruby class="child-word">変数<rt>へんすう</rt></ruby>・リスト</strong>：点数や 名前を 1つ おぼえる はこと、持ち物のように じゅんばんに ならべる リストを 作ります。</p>
-      <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：えらんだ キャラクターが する ことを ならべた ものです。「なおす動き」で <span class="child-word">えらびます</span>。「いつ動く？」で きっかけを かえます。</p>
+      <p id="bodyActionHelp"><strong><ruby class="child-word">本文<rt>ほんぶん</rt></ruby></strong>：えらんだ キャラクターが する ことを ならべた ものです。「きっかけ」で <span class="child-word">えらびます</span>。「いつ動く？」で きっかけを かえます。</p>
       <p><strong>見た目のコピー</strong>：見た目と せっていが 同じ 部品を もう1つ 作ります。本文は もちません。動かしている ときに 本文で 作る「コピー」とは べつの ものです。</p>
       <p id="addActionHelp"><strong>絵を おく・お絵かき・音を 入れる</strong>：絵の ファイルや かいた 絵を キャラクターにして 画面に おきます。「音を 入れる」は 音の ファイルを 入れます。</p>
       <p id="stageSizeHelp"><strong>画面の 大きさ</strong>：画面の 見出しの「41%」のような 数を おすと、100%で 見られます。「全体」で 画面 全体が 入る 大きさに もどります。「大きく見る」は 画面を 100%で 重ねて 見せます。「もどる」か Escキーで もどります。</p>
@@ -289,8 +289,8 @@
       <div class="win-title" id="codeHeading">本文</div>
       <div class="code-head">
         <label>動かすもの <select id="objectSelect"></select></label>
-        <label>なおす動き <select id="eventSelect" aria-describedby="bodyActionHelp" title="なおす動きを えらびます。きっかけは「いつ動く？」で かえます"></select></label>
-        <button id="scriptAdd" type="button">同じできごとの本文を ふやす</button>
+        <label>きっかけ <select id="eventSelect" aria-describedby="bodyActionHelp" title="どの きっかけの 本文を なおすかを えらびます"></select></label>
+        <button id="scriptAdd" type="button">同じ きっかけの 本文を ふやす</button>
         <button id="meijinDelete" type="button" hidden>この 名人の本文を けす</button>
       </div>
       <div id="entryEvents" role="group" aria-label="いつ動く？"><button id="entryStartEvent" type="button">「動かす」を おしたとき</button><button id="entryClickEvent" type="button">「たくどん」が おされたとき</button></div>
