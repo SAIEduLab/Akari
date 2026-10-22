@@ -1,4 +1,4 @@
-import {makeRegressionProject,installRegressionProject,showAdvancedCode} from '../lib/gate-ui-fixture.mjs';
+import {makeRegressionProject,installRegressionProject,showAdvancedCode,showView} from '../lib/gate-ui-fixture.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -40,7 +40,7 @@ const browserVersion = await withBrowser(browserPath,async browser => {
     await p.locator('#fileInput').setInputFiles({name:'field-width.akari.md',mimeType:'text/plain',buffer:Buffer.from(api.serializeProject(fixture))});
     await p.waitForFunction(()=>Akari.app.project.name==='入力欄の全文表示');await showAdvancedCode(p);await p.locator('#objectSelect').selectOption('stage');
     await p.locator('#eventSelect').selectOption('message');
-    await p.locator('#editorModeblocks').click();
+    await showView(p,'blocks');
     const fields=p.locator('#blockEditor .blockui-world .blockui-field input');
     const literal=p.locator('#blockEditor [data-schema-id="StringLiteral"] input').first();
     // Passive diagnostics only: retain measurement/notification order without
@@ -72,7 +72,7 @@ const browserVersion = await withBrowser(browserPath,async browser => {
           await p.locator('#sourceOverviewBtn').click();await p.locator('[data-source-edit="action:field-action"]').click();await p.locator('#callableModeblocks').click();await settle(p);
           const callable=p.locator('#callableBlocks .blockui-field input:visible');await callable.first().waitFor();await checkFields(callable);await p.locator('#procClose').click();
         } else {
-          if(await p.locator('#sourceEditBtn').isVisible())await p.locator('#sourceEditBtn').click();await p.locator('#editorModeblocks').click();await settle(p);
+          if(await p.locator('#sourceEditBtn').isVisible())await p.locator('#sourceEditBtn').click();await showView(p,'blocks');await settle(p);
           await literal.evaluate(i=>i.style.width='20px');await assert.rejects(()=>checkFields(fields),/clipped/);await literal.evaluate(i=>i.style.removeProperty('width'));await checkFields(fields);
         }
         results.push({id,pass:true});console.log(id+': PASS');
