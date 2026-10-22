@@ -127,20 +127,17 @@
       const b =
         p.stage.backdrops.find((x) => x.id === (r?.stage.backdropId || p.stage.backdropId)) ||
         p.stage.backdrops[0];
-      // The dots lie over the backdrop on every 10 steps from the bottom-left corner, at any screen height.
-      const dots = 'radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px)';
-      form.style.backgroundRepeat = 'repeat, no-repeat';
-      form.style.backgroundPosition = 'left -5px bottom -5px, center';
-      if (b.kind === 'color') {
-        form.style.backgroundColor = b.value;
-        form.style.backgroundImage = dots;
-        form.style.backgroundSize = '10px 10px';
-      } else {
-        const url = options.imageUrl(b.assetId);
-        form.style.backgroundColor = b.fill;
-        form.style.backgroundImage = url ? `${dots}, url("${url}")` : dots;
-        form.style.backgroundSize = '10px 10px, ' + (b.fit === 'stretch' ? '100% 100%' : b.fit);
-      }
+      // The editor's 作る画面 and 動かす画面 draw the dots over the backdrop on every 10 steps from the bottom-left corner,
+      // at any screen height: a ruler for the frame. An exported work (dots: false) shows only its backdrop.
+      const dots = options.dots === false ? null : 'radial-gradient(rgba(94,126,168,.24) 1px,transparent 1px)',
+        url = b.kind === 'color' ? null : options.imageUrl(b.assetId),
+        layers = [dots && [dots, 'repeat', 'left -5px bottom -5px', '10px 10px'],
+          url && [`url("${url}")`, 'no-repeat', 'center', b.fit === 'stretch' ? '100% 100%' : b.fit]].filter(Boolean);
+      form.style.backgroundColor = b.kind === 'color' ? b.value : b.fill;
+      form.style.backgroundImage = layers.length ? layers.map(x => x[0]).join(', ') : 'none';
+      form.style.backgroundRepeat = layers.length ? layers.map(x => x[1]).join(', ') : 'no-repeat';
+      form.style.backgroundPosition = layers.length ? layers.map(x => x[2]).join(', ') : 'center';
+      form.style.backgroundSize = layers.length ? layers.map(x => x[3]).join(', ') : 'auto';
       fitStage();
     }
     function positionBubbles() {
@@ -997,6 +994,8 @@
       view = makeView(core, {
         form,
         canvas,
+        // An exported work is the work alone: no dots (they are the editor's ruler).
+        dots: false,
         ...(artwork ? { getScale: () => 1 } : {
           // With ▶ the room is the window, not the box around the stage (that box takes the stage's own width): the
           // stage shows at its own size when it fits and shrinks to fit otherwise, as the editor does.
@@ -1148,6 +1147,8 @@
       AKARI_STAGE_CSS +
       '\n' +
       AKARI_PLAYER_CSS +
+      // No dots before the first paint either (renderStage paints the backdrop alone).
+      '\n#formSurface{background-image:none}' +
       (artwork ? '\nhtml,body{background:transparent}#playerRoot{min-width:0;max-width:none;margin:0;padding:0}.player-stage{position:relative;max-width:none;overflow:visible;border:0;border-radius:0;background:transparent}.stage-viewport{margin:0!important}#playerActivation{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:1000;background:transparent}#playerActivation[hidden]{display:none}#playerActivate{border:2px solid #000;border-radius:12px;background:#fff;color:#000;opacity:1;max-width:100%;padding:12px 18px;font-weight:700}#playerOutput{max-width:100vw}' : '') +
       '</style>\n</head>\n<body>\n' +
       '<main id="playerRoot">' + (artwork ? '' : '<header><h1 id="playerTitle">' +
