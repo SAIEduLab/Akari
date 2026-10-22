@@ -3000,11 +3000,15 @@
       const sign=/増|ふ/.test(p[3].text)?'＋':'－';
       throw fixed(`${p[1].text}は「${p[1].text}を120％にする」のように、何％に するかを 書きます`,`${p[0].text}${p[1].text}を（${p[1].text}${sign}${p[2].text}）％にする`,'計算して かえる',p[1].text==='大きさ'?'LooksCommand':'SoundCommand');
     }
-    // 「点数は」と点数を言う: two things said together are joined.
-    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(\u0001+)と([^\u0001、。]+?)を(?:つなげて)?(?:([^、。\u0001]+?)秒(?:間)?)?(?:つなげて)?(?:言う|いう|話す|はなす)$/d,code,mask))&&p[1].text.startsWith('「')&&(p[3]||!mask.includes('つなげて')))
+    // 「点数は」と点数を言う: things said together are joined, two or more of them (E2E-R2-09: 「点数は」と点数と「点」), with
+    // or without a 、 before the time or the verb. The items are kept as written; a rewrite is offered only when it reads.
+    if((p=surfaceCapture(/^((?:[^、。\u0001]+?は、?)?)(\u0001+と[^、。]+?)を(つなげて)?、?(?:([^、。\u0001]+?)秒(?:間)?)?(つなげて)?、?(?:言う|いう|話す|はなす)$/d,code,mask))&&p[1].text.startsWith('「')
+      &&(p[3]||!(p[2]||p[4])||mask.includes('、'))){
       // With a time (〜をつなげて2秒話す), the joined text is said for that time: the message names that sentence.
-      throw p[3]?fixed(`時間を つけて 話すときは「${canonicalStatementSource(`${p[0].text}（${p[1].text}と${p[2].text}をつなげた文字）を${p[3].text}秒話す`,symbols)}」と 書きます`,`${p[0].text}（${p[1].text}と${p[2].text}をつなげた文字）を${p[3].text}秒話す`,'時間を つけて 話す','Say')
-        :fixed('2つを ならべて 言うときは、「つなげて言う」と 書きます',`${p[0].text}${p[1].text}と${p[2].text}をつなげて言う`,'つなげて 言う','Say');
+      const timed=`${p[0].text}（${p[1].text}をつなげた文字）を${p[3]?.text}秒話す`,plain=`${p[0].text}${p[1].text}をつなげて言う`;
+      if(p[3]&&reads(timed))throw fixed(`時間を つけて 話すときは「${canonicalStatementSource(timed,symbols)}」と 書きます`,timed,'時間を つけて 話す','Say');
+      if(!p[3]&&reads(plain))throw fixed('いくつかを ならべて 言うときは、「つなげて言う」と 書きます',plain,'つなげて 言う','Say');
+    }
     // もしねこがおされたら: a click starts with its own heading.
     if((p=surfaceCapture(/^もし、?(.+?)が(?:おされ|押され|クリックされ)(?:たら|ていれば|ているなら|れば|ると|てたら)、?$/d,code,mask))){
       const who=p[0].text.replace(/^「(.*)」$/,'$1');
