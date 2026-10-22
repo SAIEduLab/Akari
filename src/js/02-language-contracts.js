@@ -158,7 +158,7 @@
         id: 'ListAppend',
         kind: 'ListAppend',
         op: '',
-        source: '名前一覧の最後に「あかり」を入れる',
+        source: '名前一覧のさいごに「あかり」を入れる',
       },
       {
         id: 'ListReplace',
@@ -212,7 +212,7 @@
         id: 'RepeatUntil',
         kind: 'RepeatUntil',
         op: '',
-        source: '「空白」キーがおされるまで、くり返す。\n  何もしない',
+        source: '「スペース」キーがおされるまで、くり返す。\n  何もしない',
       },
       {
         id: 'WaitTime',
@@ -230,7 +230,7 @@
         id: 'ForEach',
         kind: 'ForEach',
         op: '',
-        source: '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【名前】と呼ぶ。\n  何もしない',
+        source: '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【名前】とよぶ。\n  何もしない',
       },
       {
         id: 'MotionCommand:MOVE',
@@ -296,7 +296,7 @@
         id: 'LooksCommand:SET_COLOR',
         kind: 'LooksCommand',
         op: 'SET_COLOR',
-        source: '表示色を「赤」にする',
+        source: '色を「赤」にする',
       },
       {
         id: 'LooksCommand:HIDE',
@@ -572,7 +572,7 @@
         id: 'UserActionCall',
         kind: 'UserActionCall',
         op: '',
-        source: '3をわたして、【増やす】という手順を行う',
+        source: '3をわたして、【増やす】というてじゅんを行う',
       },
       {
         id: 'NoOperation',
@@ -614,9 +614,10 @@
     let executable = false;
     for (const l of lines) {
       if (!l.code) continue;
-      const indent=l.raw.match(/^ */)[0].length,s=compactOutsideString(l.code);
+      // A full-width space at the start of a line counts as two small spaces, as the parser reads it (F-24).
+      const indent=indentWidth(l.raw.match(/^[ \u3000]*/)[0]),s=compactOutsideString(l.code);
       while(stack.length&&stack.at(-1).indent>=indent)stack.pop();
-      const binding=s.match(/^この中では、今見ているものを(.+?)と呼ぶ$/);
+      const binding=s.match(/^この中では、今見ているものを(.+?)と(?:よぶ|呼ぶ)$/);
       if(binding&&stack.at(-1)?.kind==='ForEach'){stack.at(-1).binder=declarationName(binding[1]);continue;}
       if(!/^(?:この中だけで使う変数.+?を作り、最初は.+?にする|この中だけで使うリスト.+?を空で作る|.+?という変数を作り、初期値を.+?にする|.+?というリストを作る)$/.test(s))executable=true;
       let header=null;
@@ -627,8 +628,8 @@
       }
     }
     const selected = source.slice(start, end),
-      indentText = head.match(/^ */)[0] || (!head && selected ? selected.match(/^ */)[0] : '');
-    const indent = indentText.length;
+      indentText = head.match(/^[ \u3000]*/)[0] || (!head && selected ? selected.match(/^[ \u3000]*/)[0] : '');
+    const indent = indentWidth(indentText);
     while (stack.length && stack.at(-1).indent >= indent) stack.pop();
     const suffix = normalizeSource(after).lines.filter((x) => x.code);
     return {
@@ -810,9 +811,12 @@
       if (x.kind === 'RepeatWhile')
         text = `${v}が10より小さいあいだ、くり返す。\n  何もしない。`;
       if (x.kind === 'RepeatUntil')
-        text = `「空白」キーがおされるまで、くり返す。\n  何もしない。`;
+        text = `「スペース」キーがおされるまで、くり返す。\n  何もしない。`;
       if (x.kind === 'WaitUntil')
-        text = '\u300c\u7a7a\u767d\u300dキーがおされるまで\u5f85\u3064';
+        text = '「スペース」キーがおされるまで待つ';
+      // With data named 色, 色を「赤」にする would change that data: the character's colour is then 表示色 (F-25).
+      if (x.id === 'LooksCommand:SET_COLOR' && usedNames.has('色'))
+        text = '表示色を「赤」にする';
       const actorRequired =
         ['MotionCommand', 'PenCommand'].includes(x.kind) ||
         (x.kind === 'LooksCommand' &&
@@ -889,7 +893,7 @@
       add('read:' + name, 'へんすう・リストの 中身', name, 'expression');
       if (!b.readonly && (!pure || b.local)) {
         if (b.kind !== 'list') {
-          // A variable that starts with text is offered text, not 1増やす.
+          // A variable that starts with text is offered text, not 1ふやす.
           if (typeof b.value === 'string' && !/^－?-?[0-9０-９]+(?:[.．][0-9０-９]+)?$/.test(b.value)) add('set:' + name, 'へんすう', `${name}を「こんにちは」にする`);
           else {
             add('set:' + name, 'へんすう', `${name}を0にする`);
@@ -899,7 +903,7 @@
         }
         if (b.kind !== 'scalar') {
           for (const [id, suffix] of [
-            ['append', '\u306e\u6700\u5f8c\u306b1\u3092\u5165\u308c\u308b'],
+            ['append', '\u306e\u3055\u3044\u3054\u306b1\u3092\u5165\u308c\u308b'],
             ['insert', 'の1番目に1を入れる'],
             ['replace', 'の1番目を1にかえる'],
             ['delete', '\u306e1\u756a\u76ee\u3092\u6d88\u3059'],
@@ -957,7 +961,7 @@
         add(
           'action:' + d.id,
           'てじゅん',
-          `${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】という手順を行う`,
+          `${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】というてじゅんを行う`,
           'statement', '', {kind:'action', id:d.id, name:d.name},
         );
     for (const d of project.functions)
@@ -1016,7 +1020,7 @@
       '\u300c\u3042\u304b\u308a\u300d\u306e1\u6587\u5b57\u76ee',
       '「あかり」の中で「か」がはじめて出てくる番号',
       '\uff3b1\u30012\u30013\uff3d',
-      '「空白」キーがおされている',
+      '「スペース」キーがおされている',
     ];
     if (type !== 'stage')
       exprs.push(

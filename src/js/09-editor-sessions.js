@@ -124,6 +124,13 @@
       nextBlockId: session.nextBlockId,
     };
   }
+  // A text that names a key: what 「〜」キーがおされている tests, or what is compared with おされたキー. Blocks and
+  // block-to-code show it by the keyboard's name (F-34: 「スペース」, not 「空白」).
+  function keyLiteralAt(index, id) {
+    const entry = index.get(id), parent = index.get(entry?.parentId)?.node;
+    return entry?.node?.schemaId === 'StringLiteral' && (parent?.schemaId === 'SensorRead:KEY_DOWN' ||
+      (/^CompareExpression:/.test(parent?.schemaId || '') && Object.values(parent.inputs || {}).some(x => x?.schemaId === 'SensorRead:押されたキー')));
+  }
   function buildBlockIndex(tree) {
     const index = new Map(),
       seen = new WeakSet();
@@ -272,7 +279,8 @@
     walk(ast);
     return out;
   }
-  function preserveBlockSource(session, tree, sourceOrigins = new Map()) {
+  // symbols: the work's names, so a reprinted block uses the F-34 forms (点数を言う, 持ち物の数, 色を…にする).
+  function preserveBlockSource(session, tree, sourceOrigins = new Map(), symbols = null) {
     const source = session.sourceText, oldIndex = buildBlockIndex(session.blockView);
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
     const surface = node => session.nodeMap.get(node.id)?.surface;
@@ -295,14 +303,16 @@
     for(const unit of tree.inputs.units||[])rememberTopics(unit.bodies.body);
     for(const unit of session.blockView.inputs.units||[])rememberTopics(unit.bodies.body,{kind:'self'},originalActors);
     const structuralLines=text=>normalizeSource(text).lines.filter(line=>!line.continuation).map(line=>line.raw);
+    const newIndex = buildBlockIndex(tree);
     const standard = node => {
       const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId), ast = blockDecode(node);
-      if (schema.category === 'expression') return formatExpression(ast, PREC.ATOM);
+      if (schema.category === 'expression')
+        return formatExpression(keyLiteralAt(newIndex, node.id) ? { ...ast, value: keySurface(ast.value) } : ast, PREC.ATOM, { symbols });
       if (schema.category === 'target') return formatTarget(ast);
-      if (schema.category === 'script') return structuralLines(formatScript(ast)).join(newline);
-      if (schema.category === 'rule') return structuralLines(formatScript({kind:'Script',body:[],rules:[ast]})).join(newline);
+      if (schema.category === 'script') return structuralLines(formatScript(ast, { symbols })).join(newline);
+      if (schema.category === 'rule') return structuralLines(formatScript({kind:'Script',body:[],rules:[ast]}, { symbols })).join(newline);
       // Format a replacement in its destination scope, adding self only when needed.
-      return structuralLines(formatScript({kind:'Script', body:[ast]}, {inheritedActor:inheritedActors.get(node.id)})).join(newline);
+      return structuralLines(formatScript({kind:'Script', body:[ast]}, {inheritedActor:inheritedActors.get(node.id), symbols})).join(newline);
     };
     const sameActorContext = (before, after) => {
       if (same(originalActors.get(before?.id), inheritedActors.get(after.id))) return true;
@@ -330,7 +340,7 @@
         same({...before.fields,binder:after.fields.binder},after.fields) && same(before.inputs,after.inputs) && same(before.bodies,after.bodies) && same(before.annotations,after.annotations)) {
         const binder=`【${after.fields.binder}】`;
         if(location?.binderRange)return [{...location.binderRange,text:binder}];
-        if(location?.binderInsert){const {at,indent}=location.binderInsert;return [{start:at,end:at,text:newline+' '.repeat(indent)+`この中では、今見ているものを${binder}と呼ぶ。`}];}
+        if(location?.binderInsert){const {at,indent}=location.binderInsert;return [{start:at,end:at,text:newline+' '.repeat(indent)+`この中では、今見ているものを${binder}とよぶ。`}];}
       }
       if(location?.inlineContainer && location.extent && before.schemaId===after.schemaId &&
         ['IfStatement','RepeatCount'].includes(after.schemaId) && same(before.fields,after.fields) && same(before.annotations,after.annotations)) {
@@ -475,7 +485,7 @@
       return changes;
     };
     const changes = plan(session.blockView, tree);
-    if (!changes) return reprintChangedUnits(session,tree);
+    if (!changes) return reprintChangedUnits(session,tree,symbols);
     changes.sort((a,b) => b.start - a.start || b.end - a.end);
     let result = source, boundary = source.length;
     for (const change of changes) {
@@ -486,14 +496,14 @@
     }
     return result;
   }
-  function reprintChangedUnits(session,tree) {
+  function reprintChangedUnits(session,tree,symbols=null) {
     const units=root=>{const first={...root,inputs:{...root.inputs}};delete first.inputs.units;return [first,...(root.inputs.units||[])];};
     const before=new Map(units(session.blockView).map(unit=>[unit.id,unit])),newline=session.sourceText.includes('\r\n')?'\r\n':'\n';
     let source='';
     for(const unit of units(tree)){
       const original=before.get(unit.id),range=original&&session.nodeMap.get(original.id)?.surface?.range,raw=range?session.sourceText.slice(range.start,range.end):null;
       const same=original&&JSON.stringify(original)===JSON.stringify(unit);
-      const formatted=same&&raw!==null?raw:normalizeSource(formatScript(blockDecode(unit))).lines.filter(line=>!line.continuation).map(line=>line.raw).join(newline)+(raw?.match(/\s*$/)?.[0]||'');
+      const formatted=same&&raw!==null?raw:normalizeSource(formatScript(blockDecode(unit),{symbols})).lines.filter(line=>!line.continuation).map(line=>line.raw).join(newline)+(raw?.match(/\s*$/)?.[0]||'');
       if(source&&!/[\r\n]$/.test(source))source+=newline;
       source+=formatted;
     }
@@ -833,7 +843,7 @@
     const hasHole = [...buildBlockIndex(tree).values()].some(entry =>
       BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId)?.kind === 'Hole');
     if (hasHole) {
-      const draftSource = formatScript(candidateAst, { allowHoles: true });
+      const draftSource = formatScript(candidateAst, { allowHoles: true, symbols: project ? buildSymbols(project) : null });
       const baseline = session.blockDraft?.baseline || {
         sourceText: session.sourceText, syntaxAst: session.syntaxAst, blockView: session.blockView,
         nodeMap: session.nodeMap, nodeIds: session.nodeIds,
@@ -851,11 +861,16 @@
         blockDraft: { baseline, ast: candidateAst, tree, source: draftSource, pending },
       };
     }
-    const parseContext={...context,...(project?{symbols:buildSymbols(project)}:{})};
-    let source = session.blockDraft ? formatScript(candidateAst) : preserveBlockSource(session, tree, sourceOrigins),
+    // Block-to-code writes with the work's names (F-34: 点数を言う, 持ち物の数, 色を「赤」にする). Should that text not read
+    // back as the blocks, the forms that read back without the names are written instead.
+    const symbols=project?buildSymbols(project):null,parseContext={...context,...(symbols?{symbols}:{})};
+    let source = session.blockDraft ? formatScript(candidateAst, { symbols }) : preserveBlockSource(session, tree, sourceOrigins, symbols),
       parsed = parseSyntax(source, parseContext);
     if(!session.blockDraft&&(!parsed.ast||!astEquivalent(candidateAst,parsed.ast))){
-      source=reprintChangedUnits(session,tree);parsed=parseSyntax(source,parseContext);
+      source=reprintChangedUnits(session,tree,symbols);parsed=parseSyntax(source,parseContext);
+    }
+    if(symbols&&(!parsed.ast||!astEquivalent(candidateAst,parsed.ast))){
+      source=session.blockDraft?formatScript(candidateAst):reprintChangedUnits(session,tree);parsed=parseSyntax(source,parseContext);
     }
     if (!parsed.ast) editorError(parsed.syntaxDiagnostics.map((x) => x.message).join('\n'));
     if (!astEquivalent(candidateAst, parsed.ast))
@@ -1598,7 +1613,7 @@
     return matched.map(h => {
       if (!intent || !project) return h;
       try { const node = nodeForSearchHint(h, project, context, intent);
-        return {...h, text:formatScript({kind:'Script',body:[blockDecode(node)]})};
+        return {...h, text:formatScript({kind:'Script',body:[blockDecode(node)]},{symbols:buildSymbols(project)})};
       } catch (_) { return h; }
     }).sort((a,b) => Number(!!b.binding) - Number(!!a.binding) || holdFirst(b.id, query) - holdFirst(a.id, query));
   }

@@ -423,12 +423,10 @@
     }
     function confirmTutorialOperation(action=null) {
       const step=tutorialStep(tutorial);if(!step||action&&step.allowed[0]!==action)return;
-      if(step.free){const role=tutorialField(mainEditor.session?.blockView,step),v=role.node?.fields[role.key];
-        // A free words step (what the fish says) takes the child's own words when they are not empty; the later steps
-        // and the check of the run use them. A free number step takes a new number in its range.
-        if(typeof step.value==='string'){
-          if(typeof v!=='string'||!v.trim()){tutorialNotice={step:step.id,text:'ことばを 入れてね'};return;}
-        }else if(typeof v!=='number'||!Number.isFinite(v)||v<step.min||v>step.max||v===step.value||step.integer&&!Number.isInteger(v))return;
+      if(step.free||step.ownWords){const role=tutorialField(mainEditor.session?.blockView,step),v=role.node?.fields[role.key];
+        // An ownWords step (what the fish says) takes the child's own words when they are not empty (F-04); a free step
+        // takes a new number in its range. The later steps and the check of the run use the accepted value.
+        if(!tutorialFreeValueAccepted(step,v)){if(step.ownWords)tutorialNotice={step:step.id,text:step.emptyMessage};return;}
         tutorialNotice=null;tutorial.values[step.id]=v;tutorialExpected=tutorialExpectedTrees(makeTutorialProject(),tutorial.steps,tutorial.values);
       }
       tutorial.confirmedStep=step.id;
@@ -961,17 +959,26 @@
       const filter = scriptKey ? compiled?.items?.find(item => item.key === scriptKey)?.filter : null;
       return eventText(eventType, filter) || eventType;
     }
-    function diagnosticLocation(diagnostic) {
+    function diagnosticOwner(diagnostic) {
       const key = diagnostic?.where || diagnostic?.key || '', item = compiled?.items?.find(x => x.key === key),
         sourceKey = item?.documentKey || key, script = scriptBySourceKey(project, sourceKey),
         definition = project.actions.find(x => key === 'action:' + x.id) || project.functions.find(x => key === 'function:' + x.id);
+      return { key, item, script, definition };
+    }
+    function diagnosticLocation(diagnostic) {
+      const { key, item, script, definition } = diagnosticOwner(diagnostic);
       const owner = definition ? (key.startsWith('function:') ? '答えを もとめる「' : 'てじゅん「') + definition.name + '」'
         : script || item ? (targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (eventText(item?.event || script?.event, item ? item.filter : script?.filter) || '動き')
         : 'この本文';
       return owner + (diagnostic?.line ? ' / ' + diagnostic.line + '行目' : '');
     }
-    function showDiagnosticMessage(root, diagnostic, location = '', original = null) {
-      const helpText = (location ? location + ': ' : '') + childDiagnosticText(diagnostic),
+    // The text the diagnostic's line numbers count in: the indentation message reads its line (F-24).
+    function diagnosticSource(diagnostic) {
+      const { script, definition } = diagnosticOwner(diagnostic);
+      return definition?.source ?? script?.source ?? null;
+    }
+    function showDiagnosticMessage(root, diagnostic, location = '', original = null, source = null) {
+      const helpText = (location ? location + ': ' : '') + childDiagnosticText(diagnostic, source),
         detailText = diagnosticDetailText(diagnostic, original),
         previousHelp = root.querySelector(':scope > .diagnostic-help'),
         previousDetail = root.querySelector(':scope > .diagnostic-details > pre');
@@ -993,8 +1000,8 @@
       delete n.dataset.notice;
       const originalDetails = [error?.code, reason, error?.detail,
         ...(error?.diagnostics || []).map(d => [d.code, d.where,
-          d.line ? d.line + '行 / ' + (d.column || 1) + '文字目' : '', d.message, d.detail].filter(Boolean).join(' / '))].filter(Boolean).join('\n');
-      showDiagnosticMessage(n, error?.diagnostics?.[0] || error, error?.line ? error.line + '行目' : '', originalDetails);
+          d.line ? d.line + '行目 / ' + (d.column || 1) + '文字目' : '', d.message, d.detail].filter(Boolean).join(' / '))].filter(Boolean).join('\n');
+      showDiagnosticMessage(n, error?.diagnostics?.[0] || error, error?.line ? error.line + '行目' : '', originalDetails, binding.textarea?.value);
       n.querySelector('.intent-choices')?.remove();
       const proposals = error?.proposals || error?.diagnostics?.flatMap(d => d.proposals || d.choices || []) || [];
       if (proposals.length) {
@@ -1037,7 +1044,7 @@
         choices.append(cancel); n.append(choices);
       }
       n.hidden = false;
-      editorFailureStatus = childDiagnosticText(error?.diagnostics?.[0] || error);
+      editorFailureStatus = childDiagnosticText(error?.diagnostics?.[0] || error, binding.textarea?.value);
       setStatus(editorFailureStatus);
       if (binding.session?.pendingEdit && !preservePending) {
         binding.session.pendingEdit.reason = reason;
@@ -2130,7 +2137,7 @@
         if (details?.rounded) {
           const full = document.createElement('button');
           full.type = 'button'; full.textContent = 'もとの数';
-          full.setAttribute('aria-label', '数を 短くして 見せています。もとの 数を 見る');
+          full.setAttribute('aria-label', '数を 短くして 見せているよ。もとの 数を 見る');
           full.onclick = () => showFullValue('出てきた もとの 数', details.value);
           el.console.appendChild(full);
         }
@@ -4348,7 +4355,7 @@
         if (Array.isArray(v) || (typeof v === 'string' && cpLen(v) > 160) || displayValue(v).rounded) {
           const full = document.createElement('button');
           full.textContent = isNumberValue(v) ? 'もとの数' : '全部';
-          full.setAttribute('aria-label', k + (isNumberValue(v) ? 'の もとの 数（ふだんは 数を 短くして 見せています）' : 'の 全部'));
+          full.setAttribute('aria-label', k + (isNumberValue(v) ? 'の もとの 数（ふだんは 数を 短くして 見せているよ）' : 'の 全部'));
           const copy = Array.isArray(v) ? v.slice() : v;
           full.onclick = () => showFullValue(k, copy);
           b.appendChild(full);
@@ -4800,7 +4807,7 @@
         renderTree();
         renderProperties();
         if (loc.error) {
-          showDiagnosticMessage(el.issue, loc.error, loc.line + '行目');
+          showDiagnosticMessage(el.issue, loc.error, loc.line + '行目', null, src);
           el.issue.className = 'issue-error';
         }
       }
@@ -4913,7 +4920,7 @@
         if (!errs.length) notice = pending.reason || '入力を 決めてください';
       }
       if (errs.length) {
-        showDiagnosticMessage(el.issue, errs[0], (errs[0].line || 1) + '行目');
+        showDiagnosticMessage(el.issue, errs[0], (errs[0].line || 1) + '行目', null, el.editor.value);
         el.issue.className = 'issue-error';
       } else {
         el.issue.textContent = notice || '✓ このコードの 書き方は だいじょうぶです';
@@ -5457,7 +5464,7 @@
         for (const d of c.errors) {
           const p = document.createElement('div');
           p.className = 'diagnosis-issue';
-          showDiagnosticMessage(p, d, diagnosticLocation(d));
+          showDiagnosticMessage(p, d, diagnosticLocation(d), null, diagnosticSource(d));
           body.appendChild(p);
         }
       // Notices do not stop anything; they say how a correct sentence will run.
@@ -5486,16 +5493,16 @@
     function exportProject() {
       if(tutorial)return;
       if (!flushActiveEditor()) return;
-      if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから、うごく作品を ファイルにしてください','error');return;}
+      if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから、うごく作品を ファイルにしてね','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
       if (hasCallableDraft()) {
-        log('自分で作ったブロックを なおしている とちゅうです。ほぞんしてから、うごく作品を ファイルにしてください', 'error');
+        log('自分で作ったブロックを なおしている とちゅうだよ。ほぞんしてから、うごく作品を ファイルにしてね', 'error');
         return;
       }
       const errors = compileProject(project).errors;
       if (errors.length) {
         showDiagnosis();
-        log('作品の まちがいを 直してから、うごく作品を ファイルにしてください', 'error');
+        log('作品の まちがいを 直してから、うごく作品を ファイルにしてね', 'error');
         return;
       }
       if (exportBusy) return;

@@ -9,18 +9,18 @@
     try { return insertionContext(source, at, at).depth > 0; } catch (_) { return null; }
   }
   // Presentation only: parser/runtime diagnostics and their original messages stay unchanged. With the body's source,
-  // an indentation message names もし／くり返す only for a line inside one, and Tab only for a Tab (F-24).
+  // an indentation message names もし／くり返す only for a line inside one (F-24); the parser's Tab message is shown as it is.
   function childDiagnosticText(diagnostic, source = null) {
     const message = String(diagnostic?.message || diagnostic || '書き方を たしかめてください');
     if (diagnostic?.code === 'R403')
       return '計算の 答えが 大きすぎるなどの 理由で、あかりで 使える 数に なりませんでした。使う 数や 計算の しかたを たしかめてください。';
     if (/「ではない」が 2つ つづいています/.test(message))
       return '「ではない」を 2つ つづけるときは、「条件（…）が成り立たない」で 書きます。れい：条件（1が2と同じではない）が成り立たない';
-    if (/を2回書いています|入れるものに 同じ 名前が/.test(message))
+    if (/を 2回 書いています|入れるものに 同じ 名前が/.test(message))
       return '入れて使う 数や 文字に、同じ 名前が 2つ いじょう あります。「入れるもの」の 名前は ちがう 名前に してください。れい：点数を10として、';
     if (/入れるものの 名前を たしかめてください/.test(message))
       return '入れて使う 数や 文字の 名前を 1つ 書きます。てじゅんや「答えを もとめる」の「入れるもの」と 同じ 名前に します。れい：点数を10として、';
-    if (/名前と入れるものを「を」でつないで書きます/.test(message))
+    if (/名前と 入れるものを「を」で つないで 書きます/.test(message))
       return '名前と 入れるものを「を」で つなぎます。れい：点数を10として、';
     if (/入れるものを（ ）で かこんでください/.test(message))
       return '入れて使う 数や 文字を（ ）で ひとまとめに します。れい：（10、「あかり」）';
@@ -32,16 +32,12 @@
       return '「で、」「か、」で つなぐ 文の 中に「かつ」「または」は 書けません。ぜんぶを「条件（…）が成り立つ」で ひとまとめに します。れい：もし条件（1が1と同じかつ2が2と同じかつ3が3と同じ）が成り立つなら、';
     if (/くらべる 2つの ものを（ ）か【 】で かこんで/.test(message))
       return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。れい：【点数】が10より大きい';
-    if (/言うことは「「文字」と言う」/.test(message))
+    if (/言う ことは「「文字」と言う」/.test(message))
       return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。おぼえた 点数を 話すときは：点数を言う。';
     if (/そのまま 言う 文字か、入れた 音か/.test(message))
       return 'そのまま 話す 文字・鳴らす 音・へんすう・リストの 中身から えらびます。れい：「おはよう」と言う／「ベル」を鳴らす／点数を言う。';
     if (/重ねるときは、次の 行に 書いて/.test(message))
       return '「もし」「くり返す」の 中の 文は、次の 行に 書いて 行の はじめを 右へ ずらします。\nれい：2回くり返す。\n  2回くり返す。\n    「おはよう」と言う。';
-    if (/小さい 空白で 書きます。Tabキー/.test(message))
-      return typeof source === 'string' && /^[ \u3000]*\t/.test(source.split('\n')[(diagnostic?.line || 1) - 1] || '')
-        ? 'Tabキーでは 行の はじめを ずらせません。スペースキーで 空白を 2つ 入れます。'
-        : '行の はじめを 右へ ずらすには、小さい 空白を 使います。れい：くり返す 中の 行の はじめに 小さい 空白を 2つ。大きい 空白や Tabキーは 使いません。';
     if (/いちばん 外の 文は、行の はじめを 右へ ずらさずに/.test(message))
       return 'いちばん 外の 文は 行の 左から 書きます。行の はじめの 空白を けしてください。';
     if (/などの 次の 行は、行の はじめを 右へ ずらして/.test(message))
@@ -312,7 +308,8 @@
       plus = button('\uff0b', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
         'aria-label': '\u5927\u304d\u304f\u898b\u308b',
       });
-    const home = button('\u306f\u3058\u3081\u3078', 'workspace-home', () => {
+    // The workspace goes back to its top-left corner: 「さいしょへ」 (F-22).
+    const home = button('\u3055\u3044\u3057\u3087\u3078', 'workspace-home', () => {
         workspace.scrollTo({ left: 0, top: 0 });
         workspace.focus({ preventScroll: true });
       }),
@@ -556,10 +553,16 @@
       if (node?.schemaId !== 'StringLiteral' || field?.key !== 'value') return false;
       return index.get(index.get(node.id)?.parentId)?.node?.schemaId === 'SensorRead:TOUCHING';
     }
+    // A key (「スペース」キーがおされている, おされたキーが「エンター」) is shown by its keyboard name, as the code writes it
+    // (F-34), and what is typed is read as the code reads it: スペース is the key 空白, Ａ is a.
+    function keySlot(node, field) {
+      return field?.key === 'value' && !!node && keyLiteralAt(index, node.id);
+    }
     function edgeShown(node, field, value) {
-      return edgeSlot(node, field) && isEdgeTarget(value) ? EDGE_TARGETS[value] : value;
+      return edgeSlot(node, field) && isEdgeTarget(value) ? EDGE_TARGETS[value] : keySlot(node, field) ? keySurface(value) : value;
     }
     function edgeStored(node, field, value) {
+      if (keySlot(node, field) && typeof value === 'string') return keyName(value);
       const written = String(value).trim().replace(/端$/, 'はし'), edge = edgeSlot(node, field) && Object.keys(EDGE_TARGETS).find(key => EDGE_TARGETS[key] === written);
       return edge || value;
     }
@@ -1412,6 +1415,12 @@
     // face in the list read the same as its code (E-14).
     function shownPhrase(schema, node) {
       const parts = phrase(schema);
+      // The character's colour reads 色を〔赤〕にする, as block-to-code writes it, unless the work has data named 色 (F-25).
+      if (parts && schema.id === 'LooksCommand:SET_COLOR') {
+        const work = project();
+        if (!work || buildSymbols(work).allDataNames?.has?.('色')) return parts;
+        return parts.map((part) => (typeof part === 'string' ? part.replace(/^表示色を/, '色を') : part));
+      }
       if (!parts || schema.kind !== 'UserActionCall' || node?.inputs?.args?.length) return parts;
       return parts.map((part) => (typeof part === 'string' ? part.replace(/^をわたして、/, '') : part));
     }
@@ -1530,8 +1539,9 @@
                   : [value];
               for (const [i, child] of children.entries()) {
                 if (i) main.append(doc.createTextNode(slot.separator || '、'));
+                // A key shows by the keyboard's name, as in the workspace (F-34).
                 const text =
-                  scalar(child) ??
+                  (schema.id === 'SensorRead:KEY_DOWN' && child?.schemaId === 'StringLiteral' ? keySurface(child.fields.value) : scalar(child)) ??
                   (slot.type === 'target'
                     ? child?.fields?.name || 'へんすう'
                     : slot.labels?.[part.index ?? i] || slot.label);
@@ -1750,13 +1760,14 @@
           ...Object.keys(COLOR_NAMES).map((name) => COLOR_LABELS[name] || name),
           'マウス',
           ...(edgeSlot(node, field) ? Object.values(EDGE_TARGETS) : []),
-          '空白',
+          // Keys by the keyboard's names, as the code writes them (F-34).
+          'スペース',
           '上',
           '下',
           '左',
           '右',
-          '決定',
-          '取消',
+          'エンター',
+          'エスケープ',
         );
       return [...new Set(names)];
     }
@@ -1805,7 +1816,7 @@
           const text = field.type === 'actor-ref' ? actorText(value)
             : field.type === 'argument-names' ? (value || []).join('、')
               : value ? (eventText(value.event, value.filter) || value.event) + '、' + actorText(value.actorRef) +
-                (value.filter?.key !== undefined ? '、キー「' + value.filter.key + '」'
+                (value.filter?.key !== undefined ? '、キー「' + keySurface(value.filter.key) + '」'
                   : value.filter?.message !== undefined ? '、合図「' + value.filter.message + '」' : '') : '本文で決める';
           wrap.append(title, E('span', 'blockui-readonly-value', text, attrs));
           return wrap;
@@ -1886,7 +1897,7 @@
           const enabled = choice('きっかけ', 'enabled', [['no', '本文だけ'], ['yes', 'きっかけを 決める']], value ? 'yes' : 'no');
           const subject = actor(currentActor, 'actorRef.');
           const filter = choice('どれで動くか', 'filter.kind', [['all', 'すべて'], ['key', 'このキー'], ['message', 'この合図']], currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all');
-          const filterValue = control('キー・合図の文字', 'input', 'filter.value', currentFilter?.key ?? currentFilter?.message ?? '');
+          const filterValue = control('キー・合図の文字', 'input', 'filter.value', currentFilter?.key !== undefined ? keySurface(currentFilter.key) : currentFilter?.message ?? '');
           const sync = () => {
             for (const option of filter.options) option.disabled = (option.value === 'key' && event.value !== 'keyDown') || (option.value === 'message' && event.value !== 'message');
             if (filter.selectedOptions[0]?.disabled) filter.value = 'all';
@@ -1904,7 +1915,7 @@
             if (enabled.value !== 'yes') return undefined;
             const heading = { event: event.value, actorRef: subject.read() };
             if (event.value === 'touchStart') heading.filter = { target: touchTarget.value };
-            else if (filter.value !== 'all') heading.filter = { [filter.value]: filterValue.value };
+            else if (filter.value !== 'all') heading.filter = filter.value === 'key' ? { key: keyName(filterValue.value) } : { message: filterValue.value };
             else if (currentFilter === null) heading.filter = null;
             return heading;
           };
@@ -1912,7 +1923,7 @@
             enabled.value = value ? 'yes' : 'no'; event.value = currentEvent; subject.restore();
             touchTarget.value = currentFilter?.target ?? '端'; syncTouch();
             filter.value = currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all';
-            filterValue.value = currentFilter?.key ?? currentFilter?.message ?? ''; sync();
+            filterValue.value = currentFilter?.key !== undefined ? keySurface(currentFilter.key) : currentFilter?.message ?? ''; sync();
           };
         }
         Object.defineProperty(group, 'value', { get: () => changed ? readValue() : value,
@@ -2333,7 +2344,7 @@
         if (!['NoOperation', 'CommentLine'].includes(schema.id))
           commands.append(
             button(
-              '何もしないへ',
+              'いったん 使わない',
               'replace-noop',
               () =>
                 operate({
@@ -2395,7 +2406,7 @@
     function removeBlock(node, info = index.get(node.id)) {
       const result = operate({ type: 'remove', id: node.id });
       if (!result.ok && index.get(info?.parentId)?.node.schemaId !== 'Script')
-        announce(errorText(result.error || result.reason) + '。「何もしないへ」で 入れかえるか、まとまりごと けしてね', true);
+        announce(errorText(result.error || result.reason) + '。「いったん 使わない」で 入れかえるか、まとまりごと けしてね', true);
       return result;
     }
     function statementBody(parent, slot) {

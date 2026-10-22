@@ -2741,6 +2741,8 @@
         this.waitSeq = 0;
         this.speechTokens = new Map();
         this.running = false;
+        // 作品を全部止める: no later click, key, signal or change starts a body until the next start() (F-30).
+        this.stoppedAll = false;
         this.paused = false;
         this.loopScheduled = false;
         this.loopTimer = null;
@@ -2974,6 +2976,7 @@
       }
       spawnMatching(targetId, runtimeId, eventType, eventContext, waitGroupId) {
         const out = [];
+        if (this.stoppedAll) return out;
         for (const script of this.matchingScripts(targetId, eventType, eventContext)) {
           const t = this.createTask(targetId, runtimeId, eventType, eventContext, waitGroupId, script.id);
           if (t) { this.enqueue(t); out.push(t); }
@@ -3153,6 +3156,7 @@
         this.loopScheduled = false;
         this.runtime.resumeClock();
         this.running = true;
+        this.stoppedAll = false;
         this.paused = false;
         this.ready = [];
         this.tasks.clear();
@@ -4245,6 +4249,7 @@
         }
         if (n.op === 'ALL') {
           this.stop();
+          this.stoppedAll = true;
           this.ui.allStopped?.();
           return { requeue: false };
         }

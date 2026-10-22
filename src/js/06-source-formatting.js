@@ -51,10 +51,15 @@
   }
   function formatExpression(n, parent = 0, options = {}) {
     if (parent && typeof parent === 'object') { options = parent; parent = 0; }
-    return withExpressionFormatOptions(options, () => {
-      validateSyntaxAst(n, 'expression', {allowHoles: expressionDraftFormatDepth > 0});
-      return formatExpressionCore(n, parent);
-    });
+    // options.symbols: the work's names, as for formatScript (持ち物の数 and the other F-34 forms).
+    const outerSymbols = formatSymbols;
+    if (options.symbols) formatSymbols = options.symbols;
+    try {
+      return withExpressionFormatOptions(options, () => {
+        validateSyntaxAst(n, 'expression', {allowHoles: expressionDraftFormatDepth > 0});
+        return formatExpressionCore(n, parent);
+      });
+    } finally { formatSymbols = outerSymbols; }
   }
   // The value before a unit (秒・歩・回・度・％・番目・文字目): a number as it is, a name in 【 】, another expression in （ ）.
   function quantityValueSource(value, bareRange = false) {

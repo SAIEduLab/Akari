@@ -122,7 +122,8 @@
         SET_COLOR: Object.freeze({
           label: '色を決める',
           inputs: Object.freeze(['色']),
-          format: (a) => `表示色を${a(0)}にする`,
+          // 色を「赤」にする where the work has no data named 色, 表示色 otherwise (F-25, colorCommandWord).
+          format: (a) => `${colorCommandWord()}を${a(0)}にする`,
         }),
         SET_COSTUME: Object.freeze({
           label: 'すがたを かえる',
@@ -1033,7 +1034,9 @@
       const make = () => draft ? hole(slot.type, slot.label)
         : slot.type === 'target' ? { name: '値', qualifier: null } : valueNode(slot.initial ?? (
           schema.id === 'LooksCommand:SET_SCALE' ? 100 :
-          ['MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT'].includes(schema.id) ? 15 : 0
+          ['MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT'].includes(schema.id) ? 15 :
+          // A colour is named as the child names it (F-21), as the hints write it: 色を「赤」に, ペンの色を「青」に.
+          schema.id === 'LooksCommand:SET_COLOR' ? '赤' : schema.id === 'PenCommand:SET_COLOR' ? '青' : 0
         ));
       if (slot.multiple && slot.initialValues && !draft) { node[slot.key] = slot.initialValues.map(cloneDesignProject); continue; }
       // A new block runs as it is and shows or plays something (F-03): すがた and はいけい take the next name of the

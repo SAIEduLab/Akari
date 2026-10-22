@@ -10281,6 +10281,8 @@ function createAkariExtensionHost(options) {
         this.waitSeq = 0;
         this.speechTokens = new Map();
         this.running = false;
+        // 作品を全部止める: no later click, key, signal or change starts a body until the next start() (F-30).
+        this.stoppedAll = false;
         this.paused = false;
         this.loopScheduled = false;
         this.loopTimer = null;
@@ -10514,6 +10516,7 @@ function createAkariExtensionHost(options) {
       }
       spawnMatching(targetId, runtimeId, eventType, eventContext, waitGroupId) {
         const out = [];
+        if (this.stoppedAll) return out;
         for (const script of this.matchingScripts(targetId, eventType, eventContext)) {
           const t = this.createTask(targetId, runtimeId, eventType, eventContext, waitGroupId, script.id);
           if (t) { this.enqueue(t); out.push(t); }
@@ -10693,6 +10696,7 @@ function createAkariExtensionHost(options) {
         this.loopScheduled = false;
         this.runtime.resumeClock();
         this.running = true;
+        this.stoppedAll = false;
         this.paused = false;
         this.ready = [];
         this.tasks.clear();
@@ -11785,6 +11789,7 @@ function createAkariExtensionHost(options) {
         }
         if (n.op === 'ALL') {
           this.stop();
+          this.stoppedAll = true;
           this.ui.allStopped?.();
           return { requeue: false };
         }
@@ -12614,7 +12619,7 @@ function createAkariExtensionHost(options) {
         id: 'ListAppend',
         kind: 'ListAppend',
         op: '',
-        source: '名前一覧の最後に「あかり」を入れる',
+        source: '名前一覧のさいごに「あかり」を入れる',
       },
       {
         id: 'ListReplace',
@@ -12668,7 +12673,7 @@ function createAkariExtensionHost(options) {
         id: 'RepeatUntil',
         kind: 'RepeatUntil',
         op: '',
-        source: '「空白」キーがおされるまで、くり返す。\n  何もしない',
+        source: '「スペース」キーがおされるまで、くり返す。\n  何もしない',
       },
       {
         id: 'WaitTime',
@@ -12686,7 +12691,7 @@ function createAkariExtensionHost(options) {
         id: 'ForEach',
         kind: 'ForEach',
         op: '',
-        source: '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【名前】と呼ぶ。\n  何もしない',
+        source: '名前一覧の中身を先頭から一つずつ見て、次のことを行う。\n  この中では、今見ているものを【名前】とよぶ。\n  何もしない',
       },
       {
         id: 'MotionCommand:MOVE',
@@ -12752,7 +12757,7 @@ function createAkariExtensionHost(options) {
         id: 'LooksCommand:SET_COLOR',
         kind: 'LooksCommand',
         op: 'SET_COLOR',
-        source: '表示色を「赤」にする',
+        source: '色を「赤」にする',
       },
       {
         id: 'LooksCommand:HIDE',
@@ -13028,7 +13033,7 @@ function createAkariExtensionHost(options) {
         id: 'UserActionCall',
         kind: 'UserActionCall',
         op: '',
-        source: '3をわたして、【増やす】という手順を行う',
+        source: '3をわたして、【増やす】というてじゅんを行う',
       },
       {
         id: 'NoOperation',
@@ -13070,9 +13075,10 @@ function createAkariExtensionHost(options) {
     let executable = false;
     for (const l of lines) {
       if (!l.code) continue;
-      const indent=l.raw.match(/^ */)[0].length,s=compactOutsideString(l.code);
+      // A full-width space at the start of a line counts as two small spaces, as the parser reads it (F-24).
+      const indent=indentWidth(l.raw.match(/^[ \u3000]*/)[0]),s=compactOutsideString(l.code);
       while(stack.length&&stack.at(-1).indent>=indent)stack.pop();
-      const binding=s.match(/^この中では、今見ているものを(.+?)と呼ぶ$/);
+      const binding=s.match(/^この中では、今見ているものを(.+?)と(?:よぶ|呼ぶ)$/);
       if(binding&&stack.at(-1)?.kind==='ForEach'){stack.at(-1).binder=declarationName(binding[1]);continue;}
       if(!/^(?:この中だけで使う変数.+?を作り、最初は.+?にする|この中だけで使うリスト.+?を空で作る|.+?という変数を作り、初期値を.+?にする|.+?というリストを作る)$/.test(s))executable=true;
       let header=null;
@@ -13083,8 +13089,8 @@ function createAkariExtensionHost(options) {
       }
     }
     const selected = source.slice(start, end),
-      indentText = head.match(/^ */)[0] || (!head && selected ? selected.match(/^ */)[0] : '');
-    const indent = indentText.length;
+      indentText = head.match(/^[ \u3000]*/)[0] || (!head && selected ? selected.match(/^[ \u3000]*/)[0] : '');
+    const indent = indentWidth(indentText);
     while (stack.length && stack.at(-1).indent >= indent) stack.pop();
     const suffix = normalizeSource(after).lines.filter((x) => x.code);
     return {
@@ -13266,9 +13272,12 @@ function createAkariExtensionHost(options) {
       if (x.kind === 'RepeatWhile')
         text = `${v}が10より小さいあいだ、くり返す。\n  何もしない。`;
       if (x.kind === 'RepeatUntil')
-        text = `「空白」キーがおされるまで、くり返す。\n  何もしない。`;
+        text = `「スペース」キーがおされるまで、くり返す。\n  何もしない。`;
       if (x.kind === 'WaitUntil')
-        text = '\u300c\u7a7a\u767d\u300dキーがおされるまで\u5f85\u3064';
+        text = '「スペース」キーがおされるまで待つ';
+      // With data named 色, 色を「赤」にする would change that data: the character's colour is then 表示色 (F-25).
+      if (x.id === 'LooksCommand:SET_COLOR' && usedNames.has('色'))
+        text = '表示色を「赤」にする';
       const actorRequired =
         ['MotionCommand', 'PenCommand'].includes(x.kind) ||
         (x.kind === 'LooksCommand' &&
@@ -13345,7 +13354,7 @@ function createAkariExtensionHost(options) {
       add('read:' + name, 'へんすう・リストの 中身', name, 'expression');
       if (!b.readonly && (!pure || b.local)) {
         if (b.kind !== 'list') {
-          // A variable that starts with text is offered text, not 1増やす.
+          // A variable that starts with text is offered text, not 1ふやす.
           if (typeof b.value === 'string' && !/^－?-?[0-9０-９]+(?:[.．][0-9０-９]+)?$/.test(b.value)) add('set:' + name, 'へんすう', `${name}を「こんにちは」にする`);
           else {
             add('set:' + name, 'へんすう', `${name}を0にする`);
@@ -13355,7 +13364,7 @@ function createAkariExtensionHost(options) {
         }
         if (b.kind !== 'scalar') {
           for (const [id, suffix] of [
-            ['append', '\u306e\u6700\u5f8c\u306b1\u3092\u5165\u308c\u308b'],
+            ['append', '\u306e\u3055\u3044\u3054\u306b1\u3092\u5165\u308c\u308b'],
             ['insert', 'の1番目に1を入れる'],
             ['replace', 'の1番目を1にかえる'],
             ['delete', '\u306e1\u756a\u76ee\u3092\u6d88\u3059'],
@@ -13413,7 +13422,7 @@ function createAkariExtensionHost(options) {
         add(
           'action:' + d.id,
           'てじゅん',
-          `${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】という手順を行う`,
+          `${d.args.length ? d.args.map(arg => `${nameSource(arg)}を1`).join('、') + 'として、' : ''}【${d.name}】というてじゅんを行う`,
           'statement', '', {kind:'action', id:d.id, name:d.name},
         );
     for (const d of project.functions)
@@ -13472,7 +13481,7 @@ function createAkariExtensionHost(options) {
       '\u300c\u3042\u304b\u308a\u300d\u306e1\u6587\u5b57\u76ee',
       '「あかり」の中で「か」がはじめて出てくる番号',
       '\uff3b1\u30012\u30013\uff3d',
-      '「空白」キーがおされている',
+      '「スペース」キーがおされている',
     ];
     if (type !== 'stage')
       exprs.push(
@@ -21597,7 +21606,8 @@ function createAkariExtensionHost(options) {
         SET_COLOR: Object.freeze({
           label: '色を決める',
           inputs: Object.freeze(['色']),
-          format: (a) => `表示色を${a(0)}にする`,
+          // 色を「赤」にする where the work has no data named 色, 表示色 otherwise (F-25, colorCommandWord).
+          format: (a) => `${colorCommandWord()}を${a(0)}にする`,
         }),
         SET_COSTUME: Object.freeze({
           label: 'すがたを かえる',
@@ -22508,7 +22518,9 @@ function createAkariExtensionHost(options) {
       const make = () => draft ? hole(slot.type, slot.label)
         : slot.type === 'target' ? { name: '値', qualifier: null } : valueNode(slot.initial ?? (
           schema.id === 'LooksCommand:SET_SCALE' ? 100 :
-          ['MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT'].includes(schema.id) ? 15 : 0
+          ['MotionCommand:TURN_RIGHT', 'MotionCommand:TURN_LEFT'].includes(schema.id) ? 15 :
+          // A colour is named as the child names it (F-21), as the hints write it: 色を「赤」に, ペンの色を「青」に.
+          schema.id === 'LooksCommand:SET_COLOR' ? '赤' : schema.id === 'PenCommand:SET_COLOR' ? '青' : 0
         ));
       if (slot.multiple && slot.initialValues && !draft) { node[slot.key] = slot.initialValues.map(cloneDesignProject); continue; }
       // A new block runs as it is and shows or plays something (F-03): すがた and はいけい take the next name of the
@@ -22783,10 +22795,15 @@ function createAkariExtensionHost(options) {
   }
   function formatExpression(n, parent = 0, options = {}) {
     if (parent && typeof parent === 'object') { options = parent; parent = 0; }
-    return withExpressionFormatOptions(options, () => {
-      validateSyntaxAst(n, 'expression', {allowHoles: expressionDraftFormatDepth > 0});
-      return formatExpressionCore(n, parent);
-    });
+    // options.symbols: the work's names, as for formatScript (持ち物の数 and the other F-34 forms).
+    const outerSymbols = formatSymbols;
+    if (options.symbols) formatSymbols = options.symbols;
+    try {
+      return withExpressionFormatOptions(options, () => {
+        validateSyntaxAst(n, 'expression', {allowHoles: expressionDraftFormatDepth > 0});
+        return formatExpressionCore(n, parent);
+      });
+    } finally { formatSymbols = outerSymbols; }
   }
   // The value before a unit (秒・歩・回・度・％・番目・文字目): a number as it is, a name in 【 】, another expression in （ ）.
   function quantityValueSource(value, bareRange = false) {
@@ -27616,6 +27633,13 @@ function createAkariExtensionHost(options) {
       nextBlockId: session.nextBlockId,
     };
   }
+  // A text that names a key: what 「〜」キーがおされている tests, or what is compared with おされたキー. Blocks and
+  // block-to-code show it by the keyboard's name (F-34: 「スペース」, not 「空白」).
+  function keyLiteralAt(index, id) {
+    const entry = index.get(id), parent = index.get(entry?.parentId)?.node;
+    return entry?.node?.schemaId === 'StringLiteral' && (parent?.schemaId === 'SensorRead:KEY_DOWN' ||
+      (/^CompareExpression:/.test(parent?.schemaId || '') && Object.values(parent.inputs || {}).some(x => x?.schemaId === 'SensorRead:押されたキー')));
+  }
   function buildBlockIndex(tree) {
     const index = new Map(),
       seen = new WeakSet();
@@ -27764,7 +27788,8 @@ function createAkariExtensionHost(options) {
     walk(ast);
     return out;
   }
-  function preserveBlockSource(session, tree, sourceOrigins = new Map()) {
+  // symbols: the work's names, so a reprinted block uses the F-34 forms (点数を言う, 持ち物の数, 色を…にする).
+  function preserveBlockSource(session, tree, sourceOrigins = new Map(), symbols = null) {
     const source = session.sourceText, oldIndex = buildBlockIndex(session.blockView);
     const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
     const surface = node => session.nodeMap.get(node.id)?.surface;
@@ -27787,14 +27812,16 @@ function createAkariExtensionHost(options) {
     for(const unit of tree.inputs.units||[])rememberTopics(unit.bodies.body);
     for(const unit of session.blockView.inputs.units||[])rememberTopics(unit.bodies.body,{kind:'self'},originalActors);
     const structuralLines=text=>normalizeSource(text).lines.filter(line=>!line.continuation).map(line=>line.raw);
+    const newIndex = buildBlockIndex(tree);
     const standard = node => {
       const schema = BLOCK_SCHEMA_BY_ID.get(node.schemaId), ast = blockDecode(node);
-      if (schema.category === 'expression') return formatExpression(ast, PREC.ATOM);
+      if (schema.category === 'expression')
+        return formatExpression(keyLiteralAt(newIndex, node.id) ? { ...ast, value: keySurface(ast.value) } : ast, PREC.ATOM, { symbols });
       if (schema.category === 'target') return formatTarget(ast);
-      if (schema.category === 'script') return structuralLines(formatScript(ast)).join(newline);
-      if (schema.category === 'rule') return structuralLines(formatScript({kind:'Script',body:[],rules:[ast]})).join(newline);
+      if (schema.category === 'script') return structuralLines(formatScript(ast, { symbols })).join(newline);
+      if (schema.category === 'rule') return structuralLines(formatScript({kind:'Script',body:[],rules:[ast]}, { symbols })).join(newline);
       // Format a replacement in its destination scope, adding self only when needed.
-      return structuralLines(formatScript({kind:'Script', body:[ast]}, {inheritedActor:inheritedActors.get(node.id)})).join(newline);
+      return structuralLines(formatScript({kind:'Script', body:[ast]}, {inheritedActor:inheritedActors.get(node.id), symbols})).join(newline);
     };
     const sameActorContext = (before, after) => {
       if (same(originalActors.get(before?.id), inheritedActors.get(after.id))) return true;
@@ -27822,7 +27849,7 @@ function createAkariExtensionHost(options) {
         same({...before.fields,binder:after.fields.binder},after.fields) && same(before.inputs,after.inputs) && same(before.bodies,after.bodies) && same(before.annotations,after.annotations)) {
         const binder=`【${after.fields.binder}】`;
         if(location?.binderRange)return [{...location.binderRange,text:binder}];
-        if(location?.binderInsert){const {at,indent}=location.binderInsert;return [{start:at,end:at,text:newline+' '.repeat(indent)+`この中では、今見ているものを${binder}と呼ぶ。`}];}
+        if(location?.binderInsert){const {at,indent}=location.binderInsert;return [{start:at,end:at,text:newline+' '.repeat(indent)+`この中では、今見ているものを${binder}とよぶ。`}];}
       }
       if(location?.inlineContainer && location.extent && before.schemaId===after.schemaId &&
         ['IfStatement','RepeatCount'].includes(after.schemaId) && same(before.fields,after.fields) && same(before.annotations,after.annotations)) {
@@ -27967,7 +27994,7 @@ function createAkariExtensionHost(options) {
       return changes;
     };
     const changes = plan(session.blockView, tree);
-    if (!changes) return reprintChangedUnits(session,tree);
+    if (!changes) return reprintChangedUnits(session,tree,symbols);
     changes.sort((a,b) => b.start - a.start || b.end - a.end);
     let result = source, boundary = source.length;
     for (const change of changes) {
@@ -27978,14 +28005,14 @@ function createAkariExtensionHost(options) {
     }
     return result;
   }
-  function reprintChangedUnits(session,tree) {
+  function reprintChangedUnits(session,tree,symbols=null) {
     const units=root=>{const first={...root,inputs:{...root.inputs}};delete first.inputs.units;return [first,...(root.inputs.units||[])];};
     const before=new Map(units(session.blockView).map(unit=>[unit.id,unit])),newline=session.sourceText.includes('\r\n')?'\r\n':'\n';
     let source='';
     for(const unit of units(tree)){
       const original=before.get(unit.id),range=original&&session.nodeMap.get(original.id)?.surface?.range,raw=range?session.sourceText.slice(range.start,range.end):null;
       const same=original&&JSON.stringify(original)===JSON.stringify(unit);
-      const formatted=same&&raw!==null?raw:normalizeSource(formatScript(blockDecode(unit))).lines.filter(line=>!line.continuation).map(line=>line.raw).join(newline)+(raw?.match(/\s*$/)?.[0]||'');
+      const formatted=same&&raw!==null?raw:normalizeSource(formatScript(blockDecode(unit),{symbols})).lines.filter(line=>!line.continuation).map(line=>line.raw).join(newline)+(raw?.match(/\s*$/)?.[0]||'');
       if(source&&!/[\r\n]$/.test(source))source+=newline;
       source+=formatted;
     }
@@ -28325,7 +28352,7 @@ function createAkariExtensionHost(options) {
     const hasHole = [...buildBlockIndex(tree).values()].some(entry =>
       BLOCK_SCHEMA_BY_ID.get(entry.node.schemaId)?.kind === 'Hole');
     if (hasHole) {
-      const draftSource = formatScript(candidateAst, { allowHoles: true });
+      const draftSource = formatScript(candidateAst, { allowHoles: true, symbols: project ? buildSymbols(project) : null });
       const baseline = session.blockDraft?.baseline || {
         sourceText: session.sourceText, syntaxAst: session.syntaxAst, blockView: session.blockView,
         nodeMap: session.nodeMap, nodeIds: session.nodeIds,
@@ -28343,11 +28370,16 @@ function createAkariExtensionHost(options) {
         blockDraft: { baseline, ast: candidateAst, tree, source: draftSource, pending },
       };
     }
-    const parseContext={...context,...(project?{symbols:buildSymbols(project)}:{})};
-    let source = session.blockDraft ? formatScript(candidateAst) : preserveBlockSource(session, tree, sourceOrigins),
+    // Block-to-code writes with the work's names (F-34: 点数を言う, 持ち物の数, 色を「赤」にする). Should that text not read
+    // back as the blocks, the forms that read back without the names are written instead.
+    const symbols=project?buildSymbols(project):null,parseContext={...context,...(symbols?{symbols}:{})};
+    let source = session.blockDraft ? formatScript(candidateAst, { symbols }) : preserveBlockSource(session, tree, sourceOrigins, symbols),
       parsed = parseSyntax(source, parseContext);
     if(!session.blockDraft&&(!parsed.ast||!astEquivalent(candidateAst,parsed.ast))){
-      source=reprintChangedUnits(session,tree);parsed=parseSyntax(source,parseContext);
+      source=reprintChangedUnits(session,tree,symbols);parsed=parseSyntax(source,parseContext);
+    }
+    if(symbols&&(!parsed.ast||!astEquivalent(candidateAst,parsed.ast))){
+      source=session.blockDraft?formatScript(candidateAst):reprintChangedUnits(session,tree);parsed=parseSyntax(source,parseContext);
     }
     if (!parsed.ast) editorError(parsed.syntaxDiagnostics.map((x) => x.message).join('\n'));
     if (!astEquivalent(candidateAst, parsed.ast))
@@ -29090,7 +29122,7 @@ function createAkariExtensionHost(options) {
     return matched.map(h => {
       if (!intent || !project) return h;
       try { const node = nodeForSearchHint(h, project, context, intent);
-        return {...h, text:formatScript({kind:'Script',body:[blockDecode(node)]})};
+        return {...h, text:formatScript({kind:'Script',body:[blockDecode(node)]},{symbols:buildSymbols(project)})};
       } catch (_) { return h; }
     }).sort((a,b) => Number(!!b.binding) - Number(!!a.binding) || holdFirst(b.id, query) - holdFirst(a.id, query));
   }
@@ -29216,18 +29248,18 @@ function createAkariExtensionHost(options) {
     try { return insertionContext(source, at, at).depth > 0; } catch (_) { return null; }
   }
   // Presentation only: parser/runtime diagnostics and their original messages stay unchanged. With the body's source,
-  // an indentation message names もし／くり返す only for a line inside one, and Tab only for a Tab (F-24).
+  // an indentation message names もし／くり返す only for a line inside one (F-24); the parser's Tab message is shown as it is.
   function childDiagnosticText(diagnostic, source = null) {
     const message = String(diagnostic?.message || diagnostic || '書き方を たしかめてください');
     if (diagnostic?.code === 'R403')
       return '計算の 答えが 大きすぎるなどの 理由で、あかりで 使える 数に なりませんでした。使う 数や 計算の しかたを たしかめてください。';
     if (/「ではない」が 2つ つづいています/.test(message))
       return '「ではない」を 2つ つづけるときは、「条件（…）が成り立たない」で 書きます。れい：条件（1が2と同じではない）が成り立たない';
-    if (/を2回書いています|入れるものに 同じ 名前が/.test(message))
+    if (/を 2回 書いています|入れるものに 同じ 名前が/.test(message))
       return '入れて使う 数や 文字に、同じ 名前が 2つ いじょう あります。「入れるもの」の 名前は ちがう 名前に してください。れい：点数を10として、';
     if (/入れるものの 名前を たしかめてください/.test(message))
       return '入れて使う 数や 文字の 名前を 1つ 書きます。てじゅんや「答えを もとめる」の「入れるもの」と 同じ 名前に します。れい：点数を10として、';
-    if (/名前と入れるものを「を」でつないで書きます/.test(message))
+    if (/名前と 入れるものを「を」で つないで 書きます/.test(message))
       return '名前と 入れるものを「を」で つなぎます。れい：点数を10として、';
     if (/入れるものを（ ）で かこんでください/.test(message))
       return '入れて使う 数や 文字を（ ）で ひとまとめに します。れい：（10、「あかり」）';
@@ -29239,16 +29271,12 @@ function createAkariExtensionHost(options) {
       return '「で、」「か、」で つなぐ 文の 中に「かつ」「または」は 書けません。ぜんぶを「条件（…）が成り立つ」で ひとまとめに します。れい：もし条件（1が1と同じかつ2が2と同じかつ3が3と同じ）が成り立つなら、';
     if (/くらべる 2つの ものを（ ）か【 】で かこんで/.test(message))
       return 'くらべる 2つの ものの 名前を【 】で かこむと 分かれます。れい：【点数】が10より大きい';
-    if (/言うことは「「文字」と言う」/.test(message))
+    if (/言う ことは「「文字」と言う」/.test(message))
       return '話す 文字は「 」で かこみます。れい：「おはよう」と言う。おぼえた 点数を 話すときは：点数を言う。';
     if (/そのまま 言う 文字か、入れた 音か/.test(message))
       return 'そのまま 話す 文字・鳴らす 音・へんすう・リストの 中身から えらびます。れい：「おはよう」と言う／「ベル」を鳴らす／点数を言う。';
     if (/重ねるときは、次の 行に 書いて/.test(message))
       return '「もし」「くり返す」の 中の 文は、次の 行に 書いて 行の はじめを 右へ ずらします。\nれい：2回くり返す。\n  2回くり返す。\n    「おはよう」と言う。';
-    if (/小さい 空白で 書きます。Tabキー/.test(message))
-      return typeof source === 'string' && /^[ \u3000]*\t/.test(source.split('\n')[(diagnostic?.line || 1) - 1] || '')
-        ? 'Tabキーでは 行の はじめを ずらせません。スペースキーで 空白を 2つ 入れます。'
-        : '行の はじめを 右へ ずらすには、小さい 空白を 使います。れい：くり返す 中の 行の はじめに 小さい 空白を 2つ。大きい 空白や Tabキーは 使いません。';
     if (/いちばん 外の 文は、行の はじめを 右へ ずらさずに/.test(message))
       return 'いちばん 外の 文は 行の 左から 書きます。行の はじめの 空白を けしてください。';
     if (/などの 次の 行は、行の はじめを 右へ ずらして/.test(message))
@@ -29519,7 +29547,8 @@ function createAkariExtensionHost(options) {
       plus = button('\uff0b', 'zoom-in', () => setZoom(blockZoomStep(zoom, 1)), {
         'aria-label': '\u5927\u304d\u304f\u898b\u308b',
       });
-    const home = button('\u306f\u3058\u3081\u3078', 'workspace-home', () => {
+    // The workspace goes back to its top-left corner: 「さいしょへ」 (F-22).
+    const home = button('\u3055\u3044\u3057\u3087\u3078', 'workspace-home', () => {
         workspace.scrollTo({ left: 0, top: 0 });
         workspace.focus({ preventScroll: true });
       }),
@@ -29763,10 +29792,16 @@ function createAkariExtensionHost(options) {
       if (node?.schemaId !== 'StringLiteral' || field?.key !== 'value') return false;
       return index.get(index.get(node.id)?.parentId)?.node?.schemaId === 'SensorRead:TOUCHING';
     }
+    // A key (「スペース」キーがおされている, おされたキーが「エンター」) is shown by its keyboard name, as the code writes it
+    // (F-34), and what is typed is read as the code reads it: スペース is the key 空白, Ａ is a.
+    function keySlot(node, field) {
+      return field?.key === 'value' && !!node && keyLiteralAt(index, node.id);
+    }
     function edgeShown(node, field, value) {
-      return edgeSlot(node, field) && isEdgeTarget(value) ? EDGE_TARGETS[value] : value;
+      return edgeSlot(node, field) && isEdgeTarget(value) ? EDGE_TARGETS[value] : keySlot(node, field) ? keySurface(value) : value;
     }
     function edgeStored(node, field, value) {
+      if (keySlot(node, field) && typeof value === 'string') return keyName(value);
       const written = String(value).trim().replace(/端$/, 'はし'), edge = edgeSlot(node, field) && Object.keys(EDGE_TARGETS).find(key => EDGE_TARGETS[key] === written);
       return edge || value;
     }
@@ -30619,6 +30654,12 @@ function createAkariExtensionHost(options) {
     // face in the list read the same as its code (E-14).
     function shownPhrase(schema, node) {
       const parts = phrase(schema);
+      // The character's colour reads 色を〔赤〕にする, as block-to-code writes it, unless the work has data named 色 (F-25).
+      if (parts && schema.id === 'LooksCommand:SET_COLOR') {
+        const work = project();
+        if (!work || buildSymbols(work).allDataNames?.has?.('色')) return parts;
+        return parts.map((part) => (typeof part === 'string' ? part.replace(/^表示色を/, '色を') : part));
+      }
       if (!parts || schema.kind !== 'UserActionCall' || node?.inputs?.args?.length) return parts;
       return parts.map((part) => (typeof part === 'string' ? part.replace(/^をわたして、/, '') : part));
     }
@@ -30737,8 +30778,9 @@ function createAkariExtensionHost(options) {
                   : [value];
               for (const [i, child] of children.entries()) {
                 if (i) main.append(doc.createTextNode(slot.separator || '、'));
+                // A key shows by the keyboard's name, as in the workspace (F-34).
                 const text =
-                  scalar(child) ??
+                  (schema.id === 'SensorRead:KEY_DOWN' && child?.schemaId === 'StringLiteral' ? keySurface(child.fields.value) : scalar(child)) ??
                   (slot.type === 'target'
                     ? child?.fields?.name || 'へんすう'
                     : slot.labels?.[part.index ?? i] || slot.label);
@@ -30957,13 +30999,14 @@ function createAkariExtensionHost(options) {
           ...Object.keys(COLOR_NAMES).map((name) => COLOR_LABELS[name] || name),
           'マウス',
           ...(edgeSlot(node, field) ? Object.values(EDGE_TARGETS) : []),
-          '空白',
+          // Keys by the keyboard's names, as the code writes them (F-34).
+          'スペース',
           '上',
           '下',
           '左',
           '右',
-          '決定',
-          '取消',
+          'エンター',
+          'エスケープ',
         );
       return [...new Set(names)];
     }
@@ -31012,7 +31055,7 @@ function createAkariExtensionHost(options) {
           const text = field.type === 'actor-ref' ? actorText(value)
             : field.type === 'argument-names' ? (value || []).join('、')
               : value ? (eventText(value.event, value.filter) || value.event) + '、' + actorText(value.actorRef) +
-                (value.filter?.key !== undefined ? '、キー「' + value.filter.key + '」'
+                (value.filter?.key !== undefined ? '、キー「' + keySurface(value.filter.key) + '」'
                   : value.filter?.message !== undefined ? '、合図「' + value.filter.message + '」' : '') : '本文で決める';
           wrap.append(title, E('span', 'blockui-readonly-value', text, attrs));
           return wrap;
@@ -31093,7 +31136,7 @@ function createAkariExtensionHost(options) {
           const enabled = choice('きっかけ', 'enabled', [['no', '本文だけ'], ['yes', 'きっかけを 決める']], value ? 'yes' : 'no');
           const subject = actor(currentActor, 'actorRef.');
           const filter = choice('どれで動くか', 'filter.kind', [['all', 'すべて'], ['key', 'このキー'], ['message', 'この合図']], currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all');
-          const filterValue = control('キー・合図の文字', 'input', 'filter.value', currentFilter?.key ?? currentFilter?.message ?? '');
+          const filterValue = control('キー・合図の文字', 'input', 'filter.value', currentFilter?.key !== undefined ? keySurface(currentFilter.key) : currentFilter?.message ?? '');
           const sync = () => {
             for (const option of filter.options) option.disabled = (option.value === 'key' && event.value !== 'keyDown') || (option.value === 'message' && event.value !== 'message');
             if (filter.selectedOptions[0]?.disabled) filter.value = 'all';
@@ -31111,7 +31154,7 @@ function createAkariExtensionHost(options) {
             if (enabled.value !== 'yes') return undefined;
             const heading = { event: event.value, actorRef: subject.read() };
             if (event.value === 'touchStart') heading.filter = { target: touchTarget.value };
-            else if (filter.value !== 'all') heading.filter = { [filter.value]: filterValue.value };
+            else if (filter.value !== 'all') heading.filter = filter.value === 'key' ? { key: keyName(filterValue.value) } : { message: filterValue.value };
             else if (currentFilter === null) heading.filter = null;
             return heading;
           };
@@ -31119,7 +31162,7 @@ function createAkariExtensionHost(options) {
             enabled.value = value ? 'yes' : 'no'; event.value = currentEvent; subject.restore();
             touchTarget.value = currentFilter?.target ?? '端'; syncTouch();
             filter.value = currentFilter?.key !== undefined ? 'key' : currentFilter?.message !== undefined ? 'message' : 'all';
-            filterValue.value = currentFilter?.key ?? currentFilter?.message ?? ''; sync();
+            filterValue.value = currentFilter?.key !== undefined ? keySurface(currentFilter.key) : currentFilter?.message ?? ''; sync();
           };
         }
         Object.defineProperty(group, 'value', { get: () => changed ? readValue() : value,
@@ -31540,7 +31583,7 @@ function createAkariExtensionHost(options) {
         if (!['NoOperation', 'CommentLine'].includes(schema.id))
           commands.append(
             button(
-              '何もしないへ',
+              'いったん 使わない',
               'replace-noop',
               () =>
                 operate({
@@ -31602,7 +31645,7 @@ function createAkariExtensionHost(options) {
     function removeBlock(node, info = index.get(node.id)) {
       const result = operate({ type: 'remove', id: node.id });
       if (!result.ok && index.get(info?.parentId)?.node.schemaId !== 'Script')
-        announce(errorText(result.error || result.reason) + '。「何もしないへ」で 入れかえるか、まとまりごと けしてね', true);
+        announce(errorText(result.error || result.reason) + '。「いったん 使わない」で 入れかえるか、まとまりごと けしてね', true);
       return result;
     }
     function statementBody(parent, slot) {
@@ -34183,12 +34226,10 @@ function createAkariExtensionHost(options) {
     }
     function confirmTutorialOperation(action=null) {
       const step=tutorialStep(tutorial);if(!step||action&&step.allowed[0]!==action)return;
-      if(step.free){const role=tutorialField(mainEditor.session?.blockView,step),v=role.node?.fields[role.key];
-        // A free words step (what the fish says) takes the child's own words when they are not empty; the later steps
-        // and the check of the run use them. A free number step takes a new number in its range.
-        if(typeof step.value==='string'){
-          if(typeof v!=='string'||!v.trim()){tutorialNotice={step:step.id,text:'ことばを 入れてね'};return;}
-        }else if(typeof v!=='number'||!Number.isFinite(v)||v<step.min||v>step.max||v===step.value||step.integer&&!Number.isInteger(v))return;
+      if(step.free||step.ownWords){const role=tutorialField(mainEditor.session?.blockView,step),v=role.node?.fields[role.key];
+        // An ownWords step (what the fish says) takes the child's own words when they are not empty (F-04); a free step
+        // takes a new number in its range. The later steps and the check of the run use the accepted value.
+        if(!tutorialFreeValueAccepted(step,v)){if(step.ownWords)tutorialNotice={step:step.id,text:step.emptyMessage};return;}
         tutorialNotice=null;tutorial.values[step.id]=v;tutorialExpected=tutorialExpectedTrees(makeTutorialProject(),tutorial.steps,tutorial.values);
       }
       tutorial.confirmedStep=step.id;
@@ -34721,17 +34762,26 @@ function createAkariExtensionHost(options) {
       const filter = scriptKey ? compiled?.items?.find(item => item.key === scriptKey)?.filter : null;
       return eventText(eventType, filter) || eventType;
     }
-    function diagnosticLocation(diagnostic) {
+    function diagnosticOwner(diagnostic) {
       const key = diagnostic?.where || diagnostic?.key || '', item = compiled?.items?.find(x => x.key === key),
         sourceKey = item?.documentKey || key, script = scriptBySourceKey(project, sourceKey),
         definition = project.actions.find(x => key === 'action:' + x.id) || project.functions.find(x => key === 'function:' + x.id);
+      return { key, item, script, definition };
+    }
+    function diagnosticLocation(diagnostic) {
+      const { key, item, script, definition } = diagnosticOwner(diagnostic);
       const owner = definition ? (key.startsWith('function:') ? '答えを もとめる「' : 'てじゅん「') + definition.name + '」'
         : script || item ? (targetById(item?.targetId || script?.targetId)?.name || '画面') + ' / ' + (eventText(item?.event || script?.event, item ? item.filter : script?.filter) || '動き')
         : 'この本文';
       return owner + (diagnostic?.line ? ' / ' + diagnostic.line + '行目' : '');
     }
-    function showDiagnosticMessage(root, diagnostic, location = '', original = null) {
-      const helpText = (location ? location + ': ' : '') + childDiagnosticText(diagnostic),
+    // The text the diagnostic's line numbers count in: the indentation message reads its line (F-24).
+    function diagnosticSource(diagnostic) {
+      const { script, definition } = diagnosticOwner(diagnostic);
+      return definition?.source ?? script?.source ?? null;
+    }
+    function showDiagnosticMessage(root, diagnostic, location = '', original = null, source = null) {
+      const helpText = (location ? location + ': ' : '') + childDiagnosticText(diagnostic, source),
         detailText = diagnosticDetailText(diagnostic, original),
         previousHelp = root.querySelector(':scope > .diagnostic-help'),
         previousDetail = root.querySelector(':scope > .diagnostic-details > pre');
@@ -34753,8 +34803,8 @@ function createAkariExtensionHost(options) {
       delete n.dataset.notice;
       const originalDetails = [error?.code, reason, error?.detail,
         ...(error?.diagnostics || []).map(d => [d.code, d.where,
-          d.line ? d.line + '行 / ' + (d.column || 1) + '文字目' : '', d.message, d.detail].filter(Boolean).join(' / '))].filter(Boolean).join('\n');
-      showDiagnosticMessage(n, error?.diagnostics?.[0] || error, error?.line ? error.line + '行目' : '', originalDetails);
+          d.line ? d.line + '行目 / ' + (d.column || 1) + '文字目' : '', d.message, d.detail].filter(Boolean).join(' / '))].filter(Boolean).join('\n');
+      showDiagnosticMessage(n, error?.diagnostics?.[0] || error, error?.line ? error.line + '行目' : '', originalDetails, binding.textarea?.value);
       n.querySelector('.intent-choices')?.remove();
       const proposals = error?.proposals || error?.diagnostics?.flatMap(d => d.proposals || d.choices || []) || [];
       if (proposals.length) {
@@ -34797,7 +34847,7 @@ function createAkariExtensionHost(options) {
         choices.append(cancel); n.append(choices);
       }
       n.hidden = false;
-      editorFailureStatus = childDiagnosticText(error?.diagnostics?.[0] || error);
+      editorFailureStatus = childDiagnosticText(error?.diagnostics?.[0] || error, binding.textarea?.value);
       setStatus(editorFailureStatus);
       if (binding.session?.pendingEdit && !preservePending) {
         binding.session.pendingEdit.reason = reason;
@@ -35890,7 +35940,7 @@ function createAkariExtensionHost(options) {
         if (details?.rounded) {
           const full = document.createElement('button');
           full.type = 'button'; full.textContent = 'もとの数';
-          full.setAttribute('aria-label', '数を 短くして 見せています。もとの 数を 見る');
+          full.setAttribute('aria-label', '数を 短くして 見せているよ。もとの 数を 見る');
           full.onclick = () => showFullValue('出てきた もとの 数', details.value);
           el.console.appendChild(full);
         }
@@ -38108,7 +38158,7 @@ function createAkariExtensionHost(options) {
         if (Array.isArray(v) || (typeof v === 'string' && cpLen(v) > 160) || displayValue(v).rounded) {
           const full = document.createElement('button');
           full.textContent = isNumberValue(v) ? 'もとの数' : '全部';
-          full.setAttribute('aria-label', k + (isNumberValue(v) ? 'の もとの 数（ふだんは 数を 短くして 見せています）' : 'の 全部'));
+          full.setAttribute('aria-label', k + (isNumberValue(v) ? 'の もとの 数（ふだんは 数を 短くして 見せているよ）' : 'の 全部'));
           const copy = Array.isArray(v) ? v.slice() : v;
           full.onclick = () => showFullValue(k, copy);
           b.appendChild(full);
@@ -38560,7 +38610,7 @@ function createAkariExtensionHost(options) {
         renderTree();
         renderProperties();
         if (loc.error) {
-          showDiagnosticMessage(el.issue, loc.error, loc.line + '行目');
+          showDiagnosticMessage(el.issue, loc.error, loc.line + '行目', null, src);
           el.issue.className = 'issue-error';
         }
       }
@@ -38673,7 +38723,7 @@ function createAkariExtensionHost(options) {
         if (!errs.length) notice = pending.reason || '入力を 決めてください';
       }
       if (errs.length) {
-        showDiagnosticMessage(el.issue, errs[0], (errs[0].line || 1) + '行目');
+        showDiagnosticMessage(el.issue, errs[0], (errs[0].line || 1) + '行目', null, el.editor.value);
         el.issue.className = 'issue-error';
       } else {
         el.issue.textContent = notice || '✓ このコードの 書き方は だいじょうぶです';
@@ -39217,7 +39267,7 @@ function createAkariExtensionHost(options) {
         for (const d of c.errors) {
           const p = document.createElement('div');
           p.className = 'diagnosis-issue';
-          showDiagnosticMessage(p, d, diagnosticLocation(d));
+          showDiagnosticMessage(p, d, diagnosticLocation(d), null, diagnosticSource(d));
           body.appendChild(p);
         }
       // Notices do not stop anything; they say how a correct sentence will run.
@@ -39246,16 +39296,16 @@ function createAkariExtensionHost(options) {
     function exportProject() {
       if(tutorial)return;
       if (!flushActiveEditor()) return;
-      if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから、うごく作品を ファイルにしてください','error');return;}
+      if(hasPendingEditor()){log('書きかけの 入力を さいごまで 書いてから、うごく作品を ファイルにしてね','error');return;}
       if (modelLocked() || document.querySelector('.modal.show,.modal.open')) return;
       if (hasCallableDraft()) {
-        log('自分で作ったブロックを なおしている とちゅうです。ほぞんしてから、うごく作品を ファイルにしてください', 'error');
+        log('自分で作ったブロックを なおしている とちゅうだよ。ほぞんしてから、うごく作品を ファイルにしてね', 'error');
         return;
       }
       const errors = compileProject(project).errors;
       if (errors.length) {
         showDiagnosis();
-        log('作品の まちがいを 直してから、うごく作品を ファイルにしてください', 'error');
+        log('作品の まちがいを 直してから、うごく作品を ファイルにしてね', 'error');
         return;
       }
       if (exportBusy) return;
