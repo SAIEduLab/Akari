@@ -100,7 +100,8 @@
             availableHeight: scaleParent.clientHeight -
               parseFloat(style.paddingTop || 0) - parseFloat(style.paddingBottom || 0),
           })
-        : Math.min(1, Math.max(1, available) / width);
+        : Math.min(1, Math.max(1, available) / width,
+            options.availableHeight ? Math.max(1, options.availableHeight()) / height : 1);
       scaleTarget.style.transform = 'scale(' + scale + ')';
       viewport.style.width = width * scale + 'px';
       viewport.style.height = height * scale + 'px';
@@ -1005,6 +1006,14 @@
             return document.documentElement.clientWidth - parseFloat(page.paddingLeft || 0) - parseFloat(page.paddingRight || 0) -
               parseFloat(box.borderLeftWidth || 0) - parseFloat(box.borderRightWidth || 0);
           },
+          // The height is the window's below the title and the buttons: a stage too tall for it shrinks until both its
+          // width and its height fit (LANGUAGE.md: the ▶ export 「同じ縮尺処理を使います」).
+          availableHeight: () => {
+            const page = getComputedStyle(root), box = getComputedStyle(form.closest('.player-stage')), header = root.querySelector('header');
+            return document.documentElement.clientHeight - parseFloat(page.paddingTop || 0) - parseFloat(page.paddingBottom || 0) -
+              (header ? header.offsetHeight + parseFloat(getComputedStyle(header).marginBottom || 0) : 0) -
+              parseFloat(box.borderTopWidth || 0) - parseFloat(box.borderBottomWidth || 0);
+          },
         }),
         getProject: () => session.project,
         getRuntime: () => runtime,
@@ -1024,6 +1033,9 @@
         },
         onValueDetails: value => message((typeof value === 'string' ? 'ふきだしの 文 ぜんぶ：' : '数を 短くして 見せているよ。もとの 数：') + core.valueText(value)),
       });
+      // When the title or the status line takes another row (a narrow window), the stage fits again below it.
+      const header = root.querySelector('header');
+      if (header && typeof ResizeObserver === 'function') new ResizeObserver(() => view.fitStage()).observe(header);
       flush();
       phase = 'READY';
       state();
