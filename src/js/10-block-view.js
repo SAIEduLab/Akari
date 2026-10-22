@@ -854,7 +854,7 @@
       return session()?.blockDraft ? '入れるのを やめる' : pending ? '入力を やめる' : replacement || moving ? 'もっていくのを やめる' : '入れるのを やめる';
     }
     function cancel() {
-      const stopped = cancelLabel().replace(/やめる$/, 'やめたよ');
+      const stopped = cancelLabel().replace(/やめる$/, 'やめたよ'), hadKeys = root.contains(doc.activeElement);
       const field = pending;
       pending = null;
       destination = null;
@@ -882,8 +882,8 @@
       }
       announce(stopped);
       render({ force: true });
-      // The pressed やめる is no longer shown: the keys stay in the block view, not on the page (E2-01).
-      if (!doc.activeElement || doc.activeElement === doc.body) keepKeys();
+      // The pressed やめる (or the field) is no longer shown: the keys stay in the block view, not on the page (E2-01).
+      if (hadKeys && (!doc.activeElement || doc.activeElement === doc.body)) keepKeys();
       return { ok: true };
     }
     function destinationDescription() {
@@ -1688,9 +1688,14 @@
         };
       return availability(schema.id, location, schema.candidateNode);
     }
+    // A block of the list or a なかま that has the keys keeps them when the list is made again (Escape, もとにもどす): the
+    // same one, else the first block or the search field, never the page (Y2-06).
+    const PALETTE_KEYS = '[data-blockui-action="palette-add"],[data-blockui-action="palette-category"]',
+      paletteKey = n => ['data-blockui-action', 'data-blockui-category', 'data-blockui-schema', 'data-search-binding'].map(a => n.getAttribute(a)).join('|');
     function renderPalette() {
       if (options.readOnly) return;
       if (destroyed) return;
+      const kept = doc.activeElement?.matches?.(PALETTE_KEYS) && palette.contains(doc.activeElement) ? paletteKey(doc.activeElement) : null;
       faceSymbols = null;
       powerHelp.hidden = document.body.dataset.uiLevel !== 'advanced';
       modeSelect.value = paletteMode;
@@ -1842,6 +1847,9 @@
         );
       if(!options.tutorialActive?.()&&category&&!query&&!candidates.length)paletteList.append(button('すべての なかまで さがす','search-all',()=>{category='';categoryExplicit=false;renderPalette();search.focus();}));
       paletteList.scrollTop = scroll;
+      if (kept && !isLocked() && (!doc.activeElement || doc.activeElement === doc.body))
+        ([...palette.querySelectorAll(PALETTE_KEYS)].find(n => paletteKey(n) === kept) ||
+          palette.querySelector('[data-blockui-action="palette-add"]') || search).focus({ preventScroll: true });
       scheduleGeometry();
       options.onPresentation?.();
     }
@@ -2545,6 +2553,8 @@
     // After a block is deleted (けす, a drop on the list, Delete) or a やめる is pressed, the keys stay in the block view: on
     // the block now selected, else on the workspace. On the page, the next Delete would delete the whole part (E2-01).
     function keepKeys() {
+      // While the work runs, the keys belong to the work.
+      if (isLocked()) return;
       const id = session()?.blockSelection;
       ((id && locationElement({ id })) || workspace).focus({ preventScroll: true });
     }
@@ -3560,6 +3570,8 @@
         );
         n?.focus({ preventScroll: true });
       }
+      // A control not drawn again (its block made anew by もとにもどす) leaves the keys in the block view (Y2-06).
+      if ((focusKey || focusNode) && (!doc.activeElement || doc.activeElement === doc.body)) keepKeys();
     }
     function resolveLocation(value) {
       if (!value || (value.key && value.key !== session()?.ownerKey)) return {};
