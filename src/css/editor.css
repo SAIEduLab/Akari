@@ -6315,6 +6315,10 @@ body:has(.blockui-drag-ghost) { -webkit-user-select: none; user-select: none; }
      1つずつ 動かす, 本文を見て たしかめる) and はじめて's もとにもどす・やり直す in the toolbar. */
   body[data-editor-mode] :is(.debugbar, #entryRunControls) button,
   body[data-editor-mode] .menutool > :is(#undoBtn, #redoBtn) { min-height: 40px !important; }
+  /* The title row of せってい and 動きのようす is as high as its 40 px toggle (▸ せってい, ▸ 動きのようす), and a folded
+     section as high as its title, so a finger can press all of the toggle. */
+  body[data-editor-mode="blocks"] .side > :is(.properties-window, .monitor-window) > .win-title:has(> .blockui-side-toggle) { height: auto; min-height: 40px; }
+  body[data-editor-mode="blocks"] .side > .blockui-side-folded { flex-basis: auto; min-height: 0; }
 }
 
 /* 大きく見る (E-21): the stage at 100% laid over the page with a dim backdrop; 「もどる」 or Escape gives back the layout. */
