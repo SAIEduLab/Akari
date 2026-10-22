@@ -13,6 +13,7 @@ import {childLanguageUiIds,childInsertionConceptHints} from '../lib/child-langua
 import {browserEnvironment as expectedBrowser} from '../lib/browser-environment.mjs';
 import {collectLanguageFrame,childUxProvenance} from '../lib/child-ux-observations.mjs';
 import {openPaletteTools} from '../browser/cases/regression-setup.cjs';
+import {pressStop} from '../lib/stop-press.cjs';
 
 const [browserPath, output = 'audit-evidence/child-language-ui.json'] = process.argv.slice(2);
 const require=createRequire(import.meta.url),playwrightVersion=require('playwright/package.json').version;
@@ -196,10 +197,12 @@ const cases = {
     assert.equal(await p.locator('#exportBtn').innerText(),'うごく作品を ファイルにする');assert.equal(await p.locator('#exportBtn rt').count(),0);
     assert.match(await p.locator('#saveActionHelp').innerText(),/あとで つづきを 作るとき/);
     assert.match(await p.locator('#exportActionHelp').innerText(),/動かして 見る/);
-    assert.match(await p.locator('#bodyActionHelp').innerText(),/やることの まとまり/);
+    assert.match(await p.locator('#bodyActionHelp').innerText(),/する ことを ならべた もの/);
     assert.match(await p.locator('#bodyActionHelp').innerText(),/「なおす動き」で えらびます/);
     assert.equal(await p.locator('#eventSelect').locator('xpath=..').locator('rt').count(),0,'なおす needs no reading');
-    assert.match(await p.locator('#basicActionGuide').innerText(),/本文は コピーしません/);
+    // 見た目のコピー adds a part that holds no body, and is not the 「コピー」 a run makes (F-23, LANGUAGE.md 173).
+    assert.match(await p.locator('#basicActionGuide').innerText(),/本文は もちません/);
+    assert.match(await p.locator('#basicActionGuide').innerText(),/「コピー」とは べつの もの/);
     assert.match(await p.locator('#basicActionGuide').innerText(),/決めた ことを 1つ もとにもどす/);
     const help=await textFits(p.locator('#basicActionGuide p'));
     const tailReach=await keyboardPanelTail(p,'#basicActionGuide');
@@ -230,7 +233,7 @@ const cases = {
     assert.equal(await p.locator('#properties .prop-duplicate').innerText(),'見た目のコピー');
     // What the copy keeps is said by the button's title and description and by ヒント's 見た目のコピー; there is no
     // always-visible line of its own (the side column keeps its tools in view).
-    assert.equal(await p.locator('#properties .prop-duplicate').getAttribute('title'),'見た目と せっていを コピーします（本文は コピーしません）');
+    assert.equal(await p.locator('#properties .prop-duplicate').getAttribute('title'),'見た目と せっていが 同じ 部品を もう1つ 作ります（本文は もちません）');
     assert.equal(await p.locator('.child-copy-help').count(),0,'no separate copy line');
     const copyHelpModes={before:await state(p),steps:[]};
     const copyActionsReference=await p.locator('.prop-actions').elementHandle();
@@ -246,7 +249,7 @@ const cases = {
         },{actionsReference:copyActionsReference});
         const expectedHost=mode==='blocks'?'componentActions':'properties';
         assert.deepEqual(placement,{mode,actionsHost:expectedHost,sameActionsNode:true,helpCount:0,
-          ariaDescription:"見た目と せっていを コピーします。本文は コピーしません。"});
+          ariaDescription:"見た目と せっていが 同じ 部品を もう1つ 作ります。本文は もちません。"});
         const observedState=await state(p);
         assert.deepEqual(observedState,copyHelpModes.before,'mode moves preserve the actual project, source, history, redo, and dirty state');
         copyHelpModes.steps.push({...placement,state:observedState});
@@ -389,7 +392,11 @@ const cases = {
         const reading=await p.locator('#basicActionGuide ruby').evaluateAll(es=>es.map(e=>({text:e.textContent,rects:e.getClientRects().length,whiteSpace:getComputedStyle(e).whiteSpace})));
         for(const term of reading){assert.equal(term.rects,1,'term keeps a natural whole');assert.equal(term.whiteSpace,'nowrap');}
         await summary.press('Enter'); assert.deepEqual(await state(p),before);
-        observations.push({viewport,mode,controls,help,reading,tailReach});
+        // ■ 止める shows on the run screen only, in ▶'s place: it is measured there, at the same sizes and in both views.
+        await click(p,'#runBtn'); await p.waitForFunction(()=>document.body.classList.contains('runtime')&&!!document.querySelector('#stopBtn').getClientRects().length);
+        const stop=p.locator('#stopBtn'),runScreen={stopBtn:await reachable(stop),stopHit:await stop.evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return e===hit||e.contains(hit);}),runShown:await p.locator('#runBtn').isVisible()};
+        await pressStop(stop); await p.waitForFunction(()=>Akari.app.editorState.state==='DESIGN'); assert.deepEqual(await state(p),before,'running and stopping keep the work');
+        observations.push({viewport,mode,controls,runScreen,help,reading,tailReach});
       }
       await shot(p,'child-words-'+viewport.width);
     }

@@ -50,7 +50,7 @@ function exercise(observation) {
   // The column on the right scrolls as one: neither the part list nor the tools are a scroller of their own.
   assert.equal(observation.listScroller,false,'part list is no scroller of its own');
   assert.equal(observation.controlsScroller,false,'tools are no scroller of their own');
-  assert.equal(observation.help,'見た目と せっていを コピーします。本文は コピーしません。');
+  assert.equal(observation.help,'見た目と せっていが 同じ 部品を もう1つ 作ります。本文は もちません。');
   assert.equal(observation.separateHelpLines,0,'the copy scope is the button description, not a line of its own');
   assert.ok(observation.clicks.soundFileChooser&&observation.clicks.assetDialog&&observation.clicks.dataDialog,
     'sound file chooser and both visible dialogs must actually open');

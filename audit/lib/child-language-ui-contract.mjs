@@ -8,8 +8,8 @@ export const childLanguageUiIds = Object.freeze([
 ]);
 
 export const childInsertionConceptHints=Object.freeze({
-  "commandAndBody": "つなぐブロックは、「話す」「待つ」など、してほしいことです。本文（ほんぶん）は、ブロックを じゅん番に ならべるところです。",
-  "palette": "ブロックは なかまごとに分かれています。れい：「よく使う」には「話す」「待つ」があります。「ブロックを さがす」に言葉を入れると、さがせます。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない理由も読めます。"
+  "commandAndBody": "つなぐブロックは、「話す」「待つ」など、してほしい ことです。本文（ほんぶん）は、ブロックを じゅんばんに ならべる ところです。",
+  "palette": "ブロックは なかまごとに 分かれています。れい：「よく使う」には「話す」「待つ」が あります。「ブロックを さがす」に ことばを 入れると、さがせます。「ブロックの しゅるい」で、つなぐブロックと はめるブロックの どちらを 見るか えらべます。「使えないブロックも見せる」を えらぶと、使えない 理由も 読めます。"
 });
 
 function readable(rows,min=1) {
@@ -53,7 +53,7 @@ function panelReach(observation,method,basic=false) {
   }
   if(basic) {
     const text=observation.bottom.tail.map(r=>r.text).join(' ');
-    assert.ok(text.includes('本文は コピーしません')&&text.includes('決めた ことを 1つ もとにもどす')&&text.includes('入力を やめる'));
+    assert.ok(text.includes('本文は もちません')&&text.includes('決めた ことを 1つ もとにもどす')&&text.includes('入力を やめる'));
   }
   if(method==='native-keyboard') {
     panelMeasurement(observation.afterArrow);
@@ -139,7 +139,7 @@ export function verifyChildLanguageUi(report,inputs,environment) {
     const host=step.mode==='blocks'?'componentActions':'properties';
     assert.equal(step.actionsHost,host);assert.equal(step.sameActionsNode,true);
     assert.equal(step.helpCount,0,'no separate copy line');
-    assert.equal(step.ariaDescription,"見た目と せっていを コピーします。本文は コピーしません。");
+    assert.equal(step.ariaDescription,"見た目と せっていが 同じ 部品を もう1つ 作ります。本文は もちません。");
     assert.deepEqual(step.state,copyModes.before,'moving one explanation node leaves the actual project/history intact');
   }
   assert.deepEqual(copyModes.after,copyModes.before);
@@ -174,6 +174,8 @@ export function verifyChildLanguageUi(report,inputs,environment) {
   for(const observation of responsive.observations) {
     assert.deepEqual(Object.keys(observation.controls),['saveBtn','exportBtn','runBtn']);
     for(const rect of Object.values(observation.controls))bounds(rect,observation.viewport);
+    // ■ 止める on the run screen: inside the viewport, the real hit target, and ▶ 動かす is not shown there.
+    bounds(observation.runScreen?.stopBtn,observation.viewport);assert.equal(observation.runScreen.stopHit,true,'■ 止める is the hit target at its centre');assert.equal(observation.runScreen.runShown,false,'the run screen shows no ▶ 動かす');
     readable(observation.help,8);panelReach(observation.tailReach,'native-keyboard',true);assert.deepEqual(observation.reading?.map(r=>r.text),['保存ほぞん','変数へんすう','本文ほんぶん']);
     const text=observation.reading.map(r=>r.text).join(' ');
     for(const reading of ['ほぞん','へんすう','ほんぶん'])assert.ok(text.includes(reading));
