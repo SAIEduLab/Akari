@@ -1399,7 +1399,7 @@
         announce(a.reason, true);
         return;
       }
-      const node = a.node || applyCreationDefaults(createBlock(schema.id, { ...context(), idPrefix: viewId }), project(), context().targetId);
+      const node = a.node || applyCreationDefaults(createBlock(schema.id, { ...context(), ...blockCreationDefaults(project(), context().targetId), idPrefix: viewId }), project(), context().targetId);
       const wraps = wrapCount(schema, node, location);
       const op = location.body
         ? { type: wraps ? 'wrap' : 'insert', ...location, node }

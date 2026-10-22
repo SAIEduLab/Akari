@@ -1081,14 +1081,18 @@
   }
   // What a new block takes from the work: the owner's centre (決めたばしょへ行く), the first other part in the order
   // the parts were made (〜のところへ行く) or the mouse when there is none, and the next costume and backdrop after the
-  // ones shown now (the same one when there is only one), so 「すがたを かえる」 changes what is seen (F-03). The palette
-  // preview shows the same.
+  // ones shown now (the same one when there is only one), so 「すがたを かえる」 changes what is seen (F-03). A copy is
+  // made of another character, else of the owner (LANGUAGE.md 395), and a part's words go to the first 文字・ボタン・四角
+  // or 入力らん part of the work, by its own name, as 書ける ことば writes them (F2-01). The palette preview shows the same.
   function blockCreationDefaults(project, targetId) {
-    const component = project?.components?.find(c => c.id === targetId),
+    const parts = project?.components || [], component = parts.find(c => c.id === targetId),
       next = (items, id) => items?.length ? items[(Math.max(0, items.findIndex(x => x.id === id)) + 1) % items.length].name : undefined;
     return {
       designPosition: component && Number.isFinite(component.x) && Number.isFinite(component.y) ? { x: component.x, y: component.y } : null,
-      partTarget: project?.components?.find(c => c.id !== targetId)?.name || 'マウス',
+      partTarget: parts.find(c => c.id !== targetId)?.name || 'マウス',
+      spriteTarget: (parts.find(c => c.id !== targetId && c.type === 'sprite') || (component?.type === 'sprite' ? component : null))?.name,
+      textTarget: parts.find(c => ['label', 'button', 'box'].includes(c.type))?.name,
+      inputTarget: parts.find(c => c.type === 'input')?.name,
       costume: next(component?.costumes, component?.costumeId),
       backdrop: next(project?.stage?.backdrops, project?.stage?.backdropId),
     };
@@ -1096,28 +1100,38 @@
   // A new block from the list comes with values that run and change something, as the 書ける ことば examples have them
   // (FCB-05): the other part (or the mouse) to face, a part to copy (the other part, else itself), ペンの太さ 3, 音の大きさ
   // 50％, 1つ, 1段階 and 向き 45度 (0度 is where a new part already looks). A part's words go to a part of the work that
-  // has them: 「文字1」の文字を「こんにちは」にかえる, 「入力らん1」に「こんにちは」を入れる (F2-01). 〜のどれか picks from 1
-  // to 6, as a die does. A value other than the one of a new block is kept. The block is changed in place.
+  // has them, whatever it is named: 「文字1」の文字を「こんにちは」にかえる, 「入力らん1」に「こんにちは」を入れる and
+  // （「入力らん1」の中身） (F2-01). 〜のどれか picks from 1 to 6, as a die does. A value other than the one of a new block is kept. The block is changed in place.
   const CREATION_NUMBERS = new Map([['PenCommand:SET_SIZE', 3], ['SoundCommand:SET_VOLUME', 50], ['LooksCommand:FORWARD_LAYERS', 1],
     ['LooksCommand:BACKWARD_LAYERS', 1], ['SoundCommand:PITCH_UP', 1], ['SoundCommand:PITCH_DOWN', 1], ['MotionCommand:SET_DIRECTION', 45]]);
   function applyCreationDefaults(node, project, targetId) {
     const args = node?.inputs?.args, first = args?.[0], parts = project?.components || [];
     const zero = value => value?.schemaId === 'NumberLiteral' && value.fields.value === 0,
-      text = (value, words) => Object.assign(value, { schemaId: 'StringLiteral', fields: { value: words } });
+      text = (value, words) => Object.assign(value, { schemaId: 'StringLiteral', fields: { value: words } }),
+      // The name a new block is given when the editor names no part: the first part of that kind, or one that is not there.
+      unnamed = (value, names) => zero(value) || (value?.schemaId === 'StringLiteral' && names.includes(value.fields.value) && !parts.some(c => c.name === value.fields.value));
     if (node?.schemaId === 'LooksCommand:SET_TARGET_TEXT' || node?.schemaId === 'LooksCommand:SET_INPUT') {
       const input = node.schemaId === 'LooksCommand:SET_INPUT',
         part = parts.find(c => input ? c.type === 'input' : ['label', 'button', 'box'].includes(c.type))?.name;
-      if (part && (zero(first) || (input && first?.schemaId === 'StringLiteral' && first.fields.value === '入力らん'))) text(first, part);
+      if (part && unnamed(first, input ? ['入力らん', '入力らん1'] : ['文字1'])) text(first, part);
       if (zero(args?.[1])) text(args[1], 'こんにちは');
+      return node;
+    }
+    if (node?.schemaId === 'SensorRead:INPUT_VALUE') {
+      const part = parts.find(c => c.type === 'input')?.name;
+      if (part && unnamed(node.inputs?.arg, ['入力らん1'])) text(node.inputs.arg, part);
       return node;
     }
     if (node?.schemaId === 'BuiltinCall:乱数' && args?.length === 2 && args.every(zero)) {
       args[0].fields.value = 1; args[1].fields.value = 6;
       return node;
     }
-    if (!zero(first)) return node;
     const other = parts.find(c => c.id !== targetId)?.name,
       character = (parts.find(c => c.id !== targetId && c.type === 'sprite') || parts.find(c => c.id === targetId && c.type === 'sprite'))?.name;
+    // A copy given the first other part, a button or a label, is a copy of a character instead.
+    if (node?.schemaId === 'CloneCommand:CREATE_TARGET' && character && first?.schemaId === 'StringLiteral'
+      && parts.some(c => c.name === first.fields.value && c.type !== 'sprite')) text(first, character);
+    if (!zero(first)) return node;
     // Only a character (not a button or a label) has copies.
     const name = node.schemaId === 'MotionCommand:POINT_TO' ? other || 'マウス' : node.schemaId === 'CloneCommand:CREATE_TARGET' ? character : null;
     if (name) text(first, name);
